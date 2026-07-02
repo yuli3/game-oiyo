@@ -1,0 +1,18 @@
+---
+interface Props {
+  definition: string;
+}
+
+const { definition } = Astro.props;
+---
+
+<span
+  class="group relative inline-block border-b border-dashed border-primary/50 text-foreground cursor-help transition-colors hover:text-primary"
+>
+  <slot />
+  <span
+    class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block min-w-48 max-w-xs p-3 bg-popover text-popover-foreground text-xs rounded-xl shadow-xl z-50 animate-fade-in border"
+  >
+    {definition}
+  </span>
+</span>

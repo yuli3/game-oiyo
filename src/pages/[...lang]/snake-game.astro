@@ -1,0 +1,47 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SnakeGameComp from "../../components/games/SnakeGame";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "스네이크 게임 — 클래식 뱀 게임",
+    description: "클래식 스네이크 게임을 즐겨보세요. 방향키로 뱀을 조종해 먹이를 먹고 최고 점수에 도전하세요.",
+  },
+  en: {
+    title: "Snake Game",
+    description: "Play the classic Snake game. Use arrow keys to control the snake, eat food, and aim for the highest score.",
+  },
+  ja: {
+    title: "スネークゲーム — クラシックヘビゲーム",
+    description: "クラシックなスネークゲームをお楽しみください。矢印キーでヘビを操作し、食べ物を食べてハイスコアを目指しましょう。",
+  },
+  fr: {
+    title: "Jeu du Serpent — Snake Classique",
+    description: "Jouez au classique jeu du Serpent. Utilisez les touches directionnelles pour contrôler le serpent et visez le meilleur score.",
+  },
+  es: {
+    title: "Juego de la Serpiente — Snake Clásico",
+    description: "Juega al clásico juego de la Serpiente. Usa las teclas de dirección para controlar la serpiente y apunta al máximo puntaje.",
+  },
+  zh: {
+    title: "贪吃蛇游戏 — 经典蛇形游戏",
+    description: "享受经典贪吃蛇游戏。用方向键控制蛇，吃食物，挑战最高分。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <SnakeGameComp client:load locale={locale === 'ko' ? 'ko' : 'en'} />
+  </main>
+</BaseLayout>

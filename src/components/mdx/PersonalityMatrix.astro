@@ -1,0 +1,117 @@
+---
+/**
+ * PersonalityMatrix — 교차 분석 행렬 (MBTI × RIASEC 등)
+ */
+type Quality = 'excellent' | 'very_good' | 'good' | 'neutral' | 'challenging'
+
+interface Cell {
+  row: string
+  col: string
+  quality: Quality
+  label?: string
+  href?: string
+}
+
+interface Props {
+  title?: string
+  rowLabel?: string
+  colLabel?: string
+  rows: string[]
+  cols: string[]
+  cells: Cell[]
+  showLegend?: boolean
+}
+
+const {
+  title,
+  rowLabel,
+  colLabel,
+  rows,
+  cols,
+  cells,
+  showLegend = true,
+} = Astro.props
+
+const QUALITY_STYLE: Record<Quality, { bg: string; color: string; label: string }> = {
+  excellent:   { bg: '#16a34a', color: '#fff',    label: '최상' },
+  very_good:   { bg: '#22c55e', color: '#fff',    label: '매우 좋음' },
+  good:        { bg: '#bbf7d0', color: '#166534', label: '좋음' },
+  neutral:     { bg: '#f1f5f9', color: '#475569', label: '보통' },
+  challenging: { bg: '#fee2e2', color: '#991b1b', label: '어려움' },
+}
+
+function getCell(row: string, col: string): Cell | undefined {
+  return cells.find(c => c.row === row && c.col === col)
+}
+---
+
+<div class="pmx">
+  {title && <div class="pmx__title">{title}</div>}
+  <div class="pmx__wrap">
+    <table>
+      <thead>
+        <tr>
+          <th class="pmx__corner">{rowLabel ?? ''} \ {colLabel ?? ''}</th>
+          {cols.map(c => <th>{c}</th>)}
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map(row => (
+          <tr>
+            <td class="pmx__row-label">{row}</td>
+            {cols.map(col => {
+              const cell = getCell(row, col)
+              const q = cell?.quality ?? 'neutral'
+              const style = QUALITY_STYLE[q]
+              const inner = cell?.label ?? ''
+              return (
+                <td
+                  class="pmx__cell"
+                  style={`background: ${style.bg}; color: ${style.color};`}
+                  title={style.label}
+                >
+                  {cell?.href
+                    ? <a href={cell.href} class="pmx__cell-link">{inner || q.slice(0,1).toUpperCase()}</a>
+                    : <span>{inner || q.slice(0,1).toUpperCase()}</span>
+                  }
+                </td>
+              )
+            })}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+  {showLegend && (
+    <div class="pmx__legend">
+      {Object.entries(QUALITY_STYLE).map(([_key, val]) => (
+        <span class="pmx__legend-item">
+          <span class="pmx__legend-dot" style={`background: ${val.bg}; border: 1px solid ${val.color}22;`}></span>
+          {val.label}
+        </span>
+      ))}
+    </div>
+  )}
+</div>
+
+<style>
+  .pmx { margin: 2rem 0; }
+  .pmx__title {
+    font-weight: 700; font-size: 1rem; color: #1e293b;
+    padding: 0.75rem 1.25rem; background: #f8fafc;
+    border: 1px solid #e2e8f0; border-bottom: none;
+    border-radius: 0.75rem 0.75rem 0 0; text-align: center;
+  }
+  .pmx__wrap { overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 0.75rem; }
+  .pmx__title + .pmx__wrap { border-radius: 0 0 0.75rem 0.75rem; }
+  table { width: 100%; border-collapse: separate; border-spacing: 2px; padding: 0.5rem; }
+  th { padding: 0.4rem 0.6rem; font-size: 0.75rem; font-weight: 700; color: #64748b; text-align: center; white-space: nowrap; }
+  .pmx__corner { text-align: center; font-size: 0.65rem; color: #94a3b8; min-width: 60px; }
+  .pmx__row-label { font-size: 0.8rem; font-weight: 700; color: #334155; padding: 0.4rem 0.75rem 0.4rem 0.25rem; white-space: nowrap; text-align: right; }
+  .pmx__cell { padding: 0.5rem 0.4rem; text-align: center; font-size: 0.75rem; font-weight: 700; border-radius: 5px; min-width: 44px; cursor: default; transition: transform 0.12s; }
+  .pmx__cell:hover { transform: scale(1.12); position: relative; z-index: 10; }
+  .pmx__cell-link { color: inherit; text-decoration: none; display: block; width: 100%; height: 100%; }
+  .pmx__legend { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 0.75rem; padding: 0 0.25rem; }
+  .pmx__legend-item { display: flex; align-items: center; gap: 0.3rem; font-size: 0.7rem; color: #475569; }
+  .pmx__legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+</style>

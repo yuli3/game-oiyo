@@ -1,0 +1,164 @@
+---
+/**
+ * ASADChart — AS-AD 모형 (단기/장기 총공급 + 총수요, SVG)
+ * Props:
+ *   title       - 차트 제목
+ *   xLabel      - X축 레이블 (default: "실질 GDP (Y)")
+ *   yLabel      - Y축 레이블 (default: "물가수준 (P)")
+ *   showLRAS    - 장기 총공급선(LRAS) 표시 (default: true)
+ *   shock       - "demand-positive"|"demand-negative"|"supply-positive"|"supply-negative"
+ *   caption     - 하단 설명
+ */
+interface Props {
+  title?: string;
+  xLabel?: string;
+  yLabel?: string;
+  showLRAS?: boolean;
+  shock?: "demand-positive" | "demand-negative" | "supply-positive" | "supply-negative";
+  caption?: string;
+}
+
+const {
+  title,
+  xLabel = "실질 GDP (Y)",
+  yLabel = "물가수준 (P)",
+  showLRAS = true,
+  shock,
+  caption,
+} = Astro.props;
+
+const W = 480;
+const H = 320;
+const PAD = { top: 30, right: 50, bottom: 55, left: 60 };
+const cW = W - PAD.left - PAD.right;
+const cH = H - PAD.top - PAD.bottom;
+
+const px = (x: number) => PAD.left + (x / 100) * cW;
+const py = (y: number) => PAD.top + cH - (y / 100) * cH;
+
+// Base curves
+const adPts = [{ x: 10, y: 88 }, { x: 90, y: 12 }]; // downward AD
+const srasPts = [{ x: 10, y: 12 }, { x: 90, y: 88 }]; // upward SRAS
+const lrasX = 50; // vertical LRAS
+
+// Equilibrium
+const eqX = 50; const eqY = 50;
+
+// Shifted curves after shock
+const shiftOffset = 18;
+let adShifted: { x: number; y: number }[] | null = null;
+let srasShifted: { x: number; y: number }[] | null = null;
+let newEqX = eqX;
+let newEqY = eqY;
+
+if (shock === "demand-positive") {
+  adShifted = adPts.map(p => ({ x: p.x + shiftOffset, y: p.y }));
+  newEqX = eqX + shiftOffset / 2;
+  newEqY = eqY + shiftOffset / 2;
+} else if (shock === "demand-negative") {
+  adShifted = adPts.map(p => ({ x: p.x - shiftOffset, y: p.y }));
+  newEqX = eqX - shiftOffset / 2;
+  newEqY = eqY - shiftOffset / 2;
+} else if (shock === "supply-positive") {
+  srasShifted = srasPts.map(p => ({ x: p.x + shiftOffset, y: p.y }));
+  newEqX = eqX + shiftOffset / 2;
+  newEqY = eqY - shiftOffset / 2;
+} else if (shock === "supply-negative") {
+  srasShifted = srasPts.map(p => ({ x: p.x - shiftOffset, y: p.y }));
+  newEqX = eqX - shiftOffset / 2;
+  newEqY = eqY + shiftOffset / 2;
+}
+
+function polyline(pts: { x: number; y: number }[]) {
+  return pts.map(p => `${px(p.x)},${py(p.y)}`).join(" ");
+}
+---
+
+<div class="edu-chart-wrap">
+  {title && <div class="edu-chart-title">{title}</div>}
+  <div class="edu-chart-body">
+    <svg viewBox={`0 0 ${W} ${H}`} style={`max-width:${W}px; width:100%;`} aria-label={title}>
+
+      <!-- Axes -->
+      <line x1={PAD.left} y1={PAD.top} x2={PAD.left} y2={PAD.top + cH + 10} stroke="#334155" stroke-width="2" stroke-linecap="round"/>
+      <line x1={PAD.left - 10} y1={PAD.top + cH} x2={PAD.left + cW} y2={PAD.top + cH} stroke="#334155" stroke-width="2" stroke-linecap="round"/>
+
+      <!-- Labels -->
+      <text x={PAD.left + cW / 2} y={H - 8} text-anchor="middle" font-size="12" fill="#64748b" font-weight="600">{xLabel}</text>
+      <text x={14} y={PAD.top + cH / 2} text-anchor="middle" font-size="12" fill="#64748b" font-weight="600" transform={`rotate(-90, 14, ${PAD.top + cH / 2})`}>{yLabel}</text>
+
+      <!-- LRAS (vertical) -->
+      {showLRAS && (
+        <>
+          <line x1={px(lrasX)} y1={PAD.top + 5} x2={px(lrasX)} y2={PAD.top + cH} stroke="#f59e0b" stroke-width="2.5" stroke-dasharray="8,4"/>
+          <text x={px(lrasX) + 6} y={PAD.top + 14} font-size="12" font-weight="700" fill="#d97706">LRAS</text>
+          <text x={px(lrasX)} y={PAD.top + cH + 16} text-anchor="middle" font-size="10" fill="#d97706">Yf</text>
+        </>
+      )}
+
+      <!-- SRAS -->
+      <polyline points={polyline(srasPts)} fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x={px(srasPts[1].x) + 6} y={py(srasPts[1].y)} font-size="12" font-weight="700" fill="#16a34a">SRAS</text>
+
+      <!-- AD -->
+      <polyline points={polyline(adPts)} fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x={px(adPts[1].x) + 6} y={py(adPts[1].y) + 4} font-size="12" font-weight="700" fill="#2563eb">AD</text>
+
+      <!-- Shifted AD -->
+      {adShifted && (
+        <>
+          <polyline points={polyline(adShifted)} fill="none" stroke="#93c5fd" stroke-width="2" stroke-dasharray="7,4" stroke-linecap="round"/>
+          <text x={px(adShifted[1].x) + 6} y={py(adShifted[1].y) + 4} font-size="12" font-weight="700" fill="#3b82f6" opacity="0.7">AD'</text>
+        </>
+      )}
+
+      <!-- Shifted SRAS -->
+      {srasShifted && (
+        <>
+          <polyline points={polyline(srasShifted)} fill="none" stroke="#86efac" stroke-width="2" stroke-dasharray="7,4" stroke-linecap="round"/>
+          <text x={px(srasShifted[1].x) + 6} y={py(srasShifted[1].y)} font-size="12" font-weight="700" fill="#16a34a" opacity="0.7">SRAS'</text>
+        </>
+      )}
+
+      <!-- Equilibrium dashed lines -->
+      <line x1={px(eqX)} y1={py(eqY)} x2={px(eqX)} y2={py(0)} stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
+      <line x1={PAD.left} y1={py(eqY)} x2={px(eqX)} y2={py(eqY)} stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
+      <text x={px(eqX)} y={py(0) + 16} text-anchor="middle" font-size="10" fill="#64748b">Y*</text>
+      <text x={PAD.left - 8} y={py(eqY) + 4} text-anchor="end" font-size="10" fill="#64748b">P*</text>
+
+      <!-- New equilibrium (shock) -->
+      {(adShifted || srasShifted) && (
+        <>
+          <line x1={px(newEqX)} y1={py(newEqY)} x2={px(newEqX)} y2={py(0)} stroke="#cbd5e1" stroke-width="1" stroke-dasharray="4,4"/>
+          <line x1={PAD.left} y1={py(newEqY)} x2={px(newEqX)} y2={py(newEqY)} stroke="#cbd5e1" stroke-width="1" stroke-dasharray="4,4"/>
+          <text x={px(newEqX)} y={py(0) + 16} text-anchor="middle" font-size="10" fill="#94a3b8">Y'</text>
+          <text x={PAD.left - 8} y={py(newEqY) + 4} text-anchor="end" font-size="10" fill="#94a3b8">P'</text>
+          <circle cx={px(newEqX)} cy={py(newEqY)} r="4" fill="#64748b" stroke="#fff" stroke-width="2"/>
+          <text x={px(newEqX) + 8} y={py(newEqY) - 6} font-size="11" font-weight="700" fill="#64748b">E'</text>
+        </>
+      )}
+
+      <!-- Equilibrium dot -->
+      <circle cx={px(eqX)} cy={py(eqY)} r="5" fill="#1e293b" stroke="#fff" stroke-width="2"/>
+      <text x={px(eqX) + 8} y={py(eqY) - 6} font-size="11" font-weight="700" fill="#1e293b">E</text>
+
+    </svg>
+
+    <div class="edu-chart-legend">
+      <div class="edu-chart-legend-item"><span class="edu-chart-legend-line" style="background:#3b82f6"></span><span>AD — 총수요</span></div>
+      <div class="edu-chart-legend-item"><span class="edu-chart-legend-line" style="background:#22c55e"></span><span>SRAS — 단기 총공급</span></div>
+      {showLRAS && <div class="edu-chart-legend-item"><span class="edu-chart-legend-line" style="background:#f59e0b; width:18px; border-top:3px dashed #f59e0b; height:0; margin-top:3px"></span><span>LRAS — 장기 총공급</span></div>}
+    </div>
+  </div>
+  {caption && <p class="edu-chart-caption">{caption}</p>}
+</div>
+
+<style>
+  .edu-chart-wrap { margin:2.5rem 0; background:#fff; border:1px solid #e2e8f0; border-radius:1rem; padding:1.5rem; box-shadow:0 4px 16px rgba(0,0,0,.06); }
+  .edu-chart-title { font-weight:700; font-size:1rem; color:#1e293b; margin-bottom:1.25rem; text-align:center; }
+  .edu-chart-body { display:flex; flex-direction:column; align-items:center; gap:1rem; }
+  .edu-chart-legend { display:flex; flex-wrap:wrap; gap:.75rem 1.5rem; justify-content:center; }
+  .edu-chart-legend-item { display:flex; align-items:center; gap:.5rem; font-size:.78rem; color:#475569; font-weight:600; }
+  .edu-chart-legend-line { width:24px; height:3px; border-radius:2px; display:inline-block; }
+  .edu-chart-caption { font-size:.78rem; color:#64748b; text-align:center; margin-top:.75rem; font-style:italic; }
+</style>

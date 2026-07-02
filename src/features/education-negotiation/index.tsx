@@ -1,0 +1,1 @@
+export function NegotiationSimulator() { return <div style={{padding:'3rem 2rem', backgroundColor:'#fffbeb', borderRadius:'0.75rem', textAlign:'center', color:'#b45309', fontWeight:'bold', border:'1px solid #fde68a', margin:'2rem 0'}}>🤝 Negotiation Simulator (Interactive Module Placeholder)</div>; }

@@ -1,0 +1,93 @@
+---
+/**
+ * ConceptCard — 핵심 이론가/개념 강조 카드
+ * 강의 중 특정 이론가, 개념, 법칙을 시각적으로 강조할 때 사용
+ *
+ * Props:
+ *   icon        - 이모지 또는 기호
+ *   name        - 이론가 이름 또는 개념명
+ *   year        - 연도 (선택)
+ *   type        - 배지 레이블 (예: "Theory", "Model", "Law", "Person")
+ *   summary     - 핵심 설명 (1-3줄)
+ *   quote       - 인용문 (선택)
+ *   color       - 강조 색상 (기본: "blue")
+ *   link        - 외부 링크 (선택)
+ *
+ * 사용 예시:
+ * <ConceptCard
+ *   icon="💡"
+ *   name="John Maynard Keynes"
+ *   year="1936"
+ *   type="경제학자"
+ *   summary="유효수요 이론을 제시하여 정부의 재정지출이 경기침체를 극복할 수 있다고 주장했습니다."
+ *   quote="장기적으로 우리는 모두 죽는다."
+ *   color="blue"
+ * />
+ */
+
+type Color = "blue" | "green" | "purple" | "orange" | "red" | "teal" | "amber";
+
+interface Props {
+  icon?: string;
+  name: string;
+  year?: string;
+  type?: string;
+  summary: string;
+  quote?: string;
+  color?: Color;
+  link?: string;
+}
+
+const { icon = "💡", name, year, type, summary, quote, color = "blue", link } = Astro.props;
+
+const colorMap: Record<Color, { border: string; bg: string; badge: string; quote: string; iconBg: string }> = {
+  blue:   { border: "border-blue-200",   bg: "bg-blue-50/50",   badge: "bg-blue-100 text-blue-800",   quote: "border-blue-300 text-blue-800",   iconBg: "bg-blue-100" },
+  green:  { border: "border-emerald-200", bg: "bg-emerald-50/50", badge: "bg-emerald-100 text-emerald-800", quote: "border-emerald-300 text-emerald-800", iconBg: "bg-emerald-100" },
+  purple: { border: "border-purple-200", bg: "bg-purple-50/50", badge: "bg-purple-100 text-purple-800", quote: "border-purple-300 text-purple-800", iconBg: "bg-purple-100" },
+  orange: { border: "border-orange-200", bg: "bg-orange-50/50", badge: "bg-orange-100 text-orange-800", quote: "border-orange-300 text-orange-800", iconBg: "bg-orange-100" },
+  red:    { border: "border-red-200",     bg: "bg-red-50/50",     badge: "bg-red-100 text-red-800",     quote: "border-red-300 text-red-800",     iconBg: "bg-red-100" },
+  teal:   { border: "border-teal-200",   bg: "bg-teal-50/50",   badge: "bg-teal-100 text-teal-800",   quote: "border-teal-300 text-teal-800",   iconBg: "bg-teal-100" },
+  amber:  { border: "border-amber-200", bg: "bg-amber-50/50", badge: "bg-amber-100 text-amber-800", quote: "border-amber-300 text-amber-800", iconBg: "bg-amber-100" },
+};
+
+const c = colorMap[color];
+---
+
+<div class:list={["not-prose my-6 rounded-2xl border p-5 transition-shadow hover:shadow-md", c.border, c.bg]}>
+  <div class="flex items-start gap-4">
+    <!-- Icon -->
+    <div class:list={["w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 shadow-sm", c.iconBg]}>
+      {icon}
+    </div>
+
+    <!-- Content -->
+    <div class="flex-1 min-w-0">
+      <!-- Header -->
+      <div class="flex flex-wrap items-center gap-2 mb-2">
+        {link ? (
+          <a href={link} target="_blank" rel="noopener noreferrer" class="font-black text-base text-foreground hover:underline underline-offset-2">
+            {name}
+          </a>
+        ) : (
+          <span class="font-black text-base text-foreground">{name}</span>
+        )}
+        {year && <span class="text-xs text-muted-foreground font-mono">({year})</span>}
+        {type && (
+          <span class:list={["text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full", c.badge]}>
+            {type}
+          </span>
+        )}
+      </div>
+
+      <!-- Summary -->
+      <p class="text-sm text-muted-foreground leading-relaxed">{summary}</p>
+
+      <!-- Quote -->
+      {quote && (
+        <blockquote class:list={["mt-3 border-l-2 pl-3 text-sm italic leading-relaxed", c.quote]}>
+          "{quote}"
+        </blockquote>
+      )}
+    </div>
+  </div>
+</div>

@@ -1,0 +1,47 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import JanggiBoardComp from "../../components/games/JanggiBoard";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "장기 — 한국 전통 전략 보드 게임 장기",
+    description: "온라인 장기 게임을 즐겨보세요. 한국의 전통 전략 보드 게임으로 상대방의 왕을 잡으면 승리합니다.",
+  },
+  en: {
+    title: "Janggi — Korean Chess",
+    description: "Play Janggi online. The traditional Korean strategy board game where you capture your opponent's king to win.",
+  },
+  ja: {
+    title: "チャンギ — 韓国伝統戦略ボードゲーム",
+    description: "オンラインチャンギを楽しもう。相手の王を取れば勝利する韓国の伝統的な戦略ボードゲームです。",
+  },
+  fr: {
+    title: "Janggi — Les Échecs Coréens",
+    description: "Jouez au Janggi en ligne. Le jeu de plateau stratégique traditionnel coréen où vous capturez le roi adverse.",
+  },
+  es: {
+    title: "Janggi — El Ajedrez Coreano",
+    description: "Juega al Janggi en línea. El tradicional juego de estrategia coreano donde capturas al rey del oponente para ganar.",
+  },
+  zh: {
+    title: "象棋（韩国将棋） — 韩国传统策略棋盘游戏",
+    description: "享受线上韩国将棋游戏。韩国传统策略棋盘游戏，吃掉对方的王即可获胜。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <JanggiBoardComp client:load locale={locale === 'ko' ? 'ko' : 'en'} />
+  </main>
+</BaseLayout>

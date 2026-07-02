@@ -1,0 +1,141 @@
+---
+import { inlineMd } from "../../lib/utils";
+
+interface ElementItem {
+  name: string;
+  label?: string;
+  score?: number;
+  note?: string;
+  color?: string;
+}
+
+interface Props {
+  title?: string;
+  items?: ElementItem[];
+}
+
+const defaultItems: ElementItem[] = [
+  { name: "목", label: "성장", score: 68, note: "방향, 시작, 확장", color: "#16a34a" },
+  { name: "화", label: "표현", score: 54, note: "열정, 가시성, 명예", color: "#dc2626" },
+  { name: "토", label: "중심", score: 46, note: "안정, 전환, 책임", color: "#ca8a04" },
+  { name: "금", label: "기준", score: 61, note: "판단, 경계, 완성", color: "#64748b" },
+  { name: "수", label: "사고", score: 72, note: "깊이, 회복, 적응", color: "#2563eb" },
+];
+
+const { title = "오행 분포 예시", items = defaultItems } = Astro.props;
+---
+
+<section class="five-elements">
+  <h3>{title}</h3>
+  <div class="five-elements__grid">
+    {
+      items.map((item) => {
+        const score = Math.max(0, Math.min(100, item.score ?? 50));
+        const color = item.color ?? "#334155";
+        return (
+          <article class="five-elements__card" style={`--el:${color}; --score:${score}%;`}>
+            <div class="five-elements__head">
+              <span class="five-elements__name">{item.name}</span>
+              {item.label && <strong>{item.label}</strong>}
+              <span>{score}</span>
+            </div>
+            <div class="five-elements__bar" aria-hidden="true"><span /></div>
+            {item.note && <p set:html={inlineMd(item.note)} />}
+          </article>
+        );
+      })
+    }
+  </div>
+  <div class="five-elements__cycle" aria-label="오행 생극 흐름">
+    <span>목</span><b>생</b><span>화</span><b>생</b><span>토</span><b>생</b><span>금</span><b>생</b><span>수</span><b>생</b><span>목</span>
+  </div>
+</section>
+
+<style>
+  .five-elements {
+    margin: 2.25rem 0;
+    padding: 1.25rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.875rem;
+    background: #fff;
+  }
+  .five-elements h3 {
+    margin: 0 0 1rem;
+    color: #0f172a;
+    font-size: 1.05rem;
+  }
+  .five-elements__grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+  .five-elements__card {
+    min-width: 0;
+    padding: 0.85rem;
+    border: 1px solid color-mix(in srgb, var(--el), white 74%);
+    border-radius: 0.75rem;
+    background: color-mix(in srgb, var(--el), white 94%);
+  }
+  .five-elements__head {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    justify-content: space-between;
+    color: #334155;
+    font-size: 0.75rem;
+    font-weight: 800;
+  }
+  .five-elements__name {
+    display: grid;
+    place-items: center;
+    width: 1.8rem;
+    height: 1.8rem;
+    border-radius: 999px;
+    background: var(--el);
+    color: #fff;
+  }
+  .five-elements__bar {
+    height: 0.5rem;
+    margin: 0.75rem 0;
+    border-radius: 999px;
+    background: #e2e8f0;
+    overflow: hidden;
+  }
+  .five-elements__bar span {
+    display: block;
+    width: var(--score);
+    height: 100%;
+    border-radius: inherit;
+    background: var(--el);
+  }
+  .five-elements p {
+    margin: 0;
+    color: #475569;
+    font-size: 0.78rem;
+    line-height: 1.55;
+  }
+  .five-elements__cycle {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    align-items: center;
+    margin-top: 1rem;
+    color: #475569;
+    font-size: 0.82rem;
+  }
+  .five-elements__cycle span {
+    padding: 0.25rem 0.55rem;
+    border-radius: 999px;
+    background: #f1f5f9;
+    font-weight: 800;
+  }
+  .five-elements__cycle b {
+    color: #94a3b8;
+    font-size: 0.72rem;
+  }
+  @media (max-width: 760px) {
+    .five-elements__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+</style>

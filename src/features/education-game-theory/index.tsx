@@ -1,0 +1,1 @@
+export function GameTheoryPlayground() { return <div style={{padding:'3rem 2rem', backgroundColor:'#f0fdf4', borderRadius:'0.75rem', textAlign:'center', color:'#15803d', fontWeight:'bold', border:'1px solid #bbf7d0', margin:'2rem 0'}}>🎲 Game Theory Playground (Interactive Module Placeholder)</div>; }

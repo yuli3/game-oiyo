@@ -1,0 +1,47 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ConnectFour from "../../components/games/ConnectFour";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "커넥트 포 — 4개 연속 연결 대전 게임",
+    description: "같은 기기에서 2인 대전. 가로, 세로, 대각선 중 하나로 4개를 먼저 연결하는 플레이어가 승리합니다.",
+  },
+  en: {
+    title: "Connect Four — Classic Two-Player Strategy Game",
+    description: "Two-player local game. Drop discs and be the first to connect four in a row — horizontally, vertically, or diagonally.",
+  },
+  ja: {
+    title: "コネクトフォー — 2人対戦ボードゲーム",
+    description: "同じ端末で2人対戦。横・縦・斜めのいずれかに4つのディスクを並べた方が勝ちです。",
+  },
+  fr: {
+    title: "Puissance 4 — Jeu de Stratégie à Deux Joueurs",
+    description: "Jeu local à deux joueurs. Posez des jetons et soyez le premier à en aligner quatre en ligne, en colonne ou en diagonale.",
+  },
+  es: {
+    title: "Conecta Cuatro — Juego de Estrategia para Dos Jugadores",
+    description: "Juego local para dos jugadores. Lanza fichas y sé el primero en conectar cuatro en fila horizontal, vertical o diagonal.",
+  },
+  zh: {
+    title: "四子棋 — 双人对战策略游戏",
+    description: "同一装置上的双人游戏。投入棋子，率先在水平、垂直或对角线方向连接四个棋子者获胜。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <ConnectFour client:load locale={locale} />
+  </main>
+</BaseLayout>

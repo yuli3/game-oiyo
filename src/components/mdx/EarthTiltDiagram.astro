@@ -1,0 +1,206 @@
+---
+interface SeasonItem {
+  label: string;
+  hemisphere: string;
+  note: string;
+  color?: string;
+}
+
+interface Props {
+  title?: string;
+  items?: SeasonItem[];
+}
+
+const { title = "지구 자전축과 계절", items = [
+  { label: "6월 무렵", hemisphere: "북반구 여름", note: "북반구가 태양 쪽으로 기울어 햇빛을 더 직접 받음", color: "#f59e0b" },
+  { label: "12월 무렵", hemisphere: "북반구 겨울", note: "북반구가 태양 반대쪽으로 기울어 햇빛이 비스듬해짐", color: "#2563eb" },
+] } = Astro.props;
+---
+
+<section class="earth-tilt">
+  <h3>{title}</h3>
+  <div class="earth-tilt__stage">
+    <div class="earth-tilt__sun">
+      <span>태양</span>
+    </div>
+    <div class="earth-tilt__rays" aria-hidden="true">
+      <i></i>
+      <i></i>
+      <i></i>
+      <i></i>
+    </div>
+    <div class="earth-tilt__earth">
+      <div class="earth-tilt__axis"></div>
+      <div class="earth-tilt__globe">
+        <span class="earth-tilt__equator"></span>
+        <strong>지구</strong>
+      </div>
+      <p>자전축 약 23.5도</p>
+    </div>
+  </div>
+  <div class="earth-tilt__cards">
+    {
+      items.map((item) => (
+        <article style={`--accent:${item.color ?? "#2563eb"};`}>
+          <strong>{item.label}</strong>
+          <span>{item.hemisphere}</span>
+          <p>{item.note}</p>
+        </article>
+      ))
+    }
+  </div>
+</section>
+
+<style>
+  .earth-tilt {
+    margin: 2rem 0;
+  }
+  .earth-tilt h3 {
+    margin: 0 0 1rem;
+    color: #0f172a;
+    font-size: 1.05rem;
+    font-weight: 800;
+  }
+  .earth-tilt__stage {
+    position: relative;
+    display: grid;
+    grid-template-columns: 8rem 1fr 10rem;
+    align-items: center;
+    min-height: 18rem;
+    border: 1px solid #dbeafe;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #f8fafc, #eef6ff);
+    overflow: hidden;
+  }
+  .earth-tilt__sun {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    width: 5.25rem;
+    height: 5.25rem;
+    margin-left: 1.25rem;
+    border-radius: 999px;
+    background: #f59e0b;
+    color: #fff;
+    font-weight: 900;
+    box-shadow: 0 0 2rem rgba(245, 158, 11, 0.42);
+  }
+  .earth-tilt__rays {
+    position: absolute;
+    left: 7rem;
+    right: 10rem;
+    top: 0;
+    bottom: 0;
+    display: grid;
+    align-content: center;
+    gap: 1.3rem;
+  }
+  .earth-tilt__rays i {
+    display: block;
+    height: 2px;
+    background: linear-gradient(90deg, rgba(245, 158, 11, 0.75), rgba(37, 99, 235, 0.08));
+  }
+  .earth-tilt__earth {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    justify-items: center;
+    gap: 0.6rem;
+    grid-column: 3;
+  }
+  .earth-tilt__axis {
+    position: absolute;
+    top: 1.3rem;
+    width: 2px;
+    height: 8.4rem;
+    transform: rotate(-23.5deg);
+    background: #0f172a;
+    opacity: 0.7;
+  }
+  .earth-tilt__globe {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 6.8rem;
+    height: 6.8rem;
+    border-radius: 999px;
+    background:
+      linear-gradient(130deg, rgba(255, 255, 255, 0.78), transparent 35%),
+      linear-gradient(145deg, #2563eb, #14b8a6);
+    color: #fff;
+    font-weight: 900;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.18);
+  }
+  .earth-tilt__equator {
+    position: absolute;
+    left: 0.7rem;
+    right: 0.7rem;
+    top: 50%;
+    height: 2px;
+    transform: rotate(-12deg);
+    background: rgba(255, 255, 255, 0.7);
+  }
+  .earth-tilt__earth p {
+    margin: 0;
+    color: #475569;
+    font-size: 0.82rem;
+    font-weight: 700;
+  }
+  .earth-tilt__cards {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+  }
+  .earth-tilt__cards article {
+    border: 1px solid #e2e8f0;
+    border-left: 5px solid var(--accent);
+    border-radius: 8px;
+    background: #fff;
+    padding: 0.9rem;
+  }
+  .earth-tilt__cards strong,
+  .earth-tilt__cards span {
+    display: block;
+  }
+  .earth-tilt__cards strong {
+    color: #0f172a;
+    font-size: 0.92rem;
+  }
+  .earth-tilt__cards span {
+    margin-top: 0.2rem;
+    color: var(--accent);
+    font-size: 0.84rem;
+    font-weight: 800;
+  }
+  .earth-tilt__cards p {
+    margin: 0.4rem 0 0;
+    color: #475569;
+    font-size: 0.86rem;
+    line-height: 1.55;
+  }
+  @media (max-width: 700px) {
+    .earth-tilt__stage {
+      grid-template-columns: 1fr;
+      min-height: 24rem;
+      padding: 1rem;
+    }
+    .earth-tilt__sun {
+      margin: 0 auto;
+    }
+    .earth-tilt__rays {
+      left: 1rem;
+      right: 1rem;
+      top: 5.5rem;
+      bottom: auto;
+    }
+    .earth-tilt__earth {
+      grid-column: 1;
+      margin-top: 5rem;
+    }
+    .earth-tilt__cards {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

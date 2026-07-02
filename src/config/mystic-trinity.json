@@ -1,0 +1,283 @@
+{
+  "sites": {
+    "oiyo": {
+      "base": "https://oiyo.net",
+      "trailingSlash": true
+    },
+    "blog": {
+      "base": "https://blog.oiyo.net",
+      "trailingSlash": true
+    },
+    "wiki": {
+      "base": "https://wiki.oiyo.net",
+      "trailingSlash": true
+    },
+    "ahoxy": {
+      "base": "https://ahoxy.com",
+      "trailingSlash": false
+    }
+  },
+  "topics": {
+    "tarot": {
+      "learn": {
+        "site": "blog",
+        "path": "/tarot-beginners-complete-guide",
+        "locales": [
+          "ko"
+        ]
+      },
+      "try": {
+        "site": "oiyo",
+        "path": "/tarot/reading",
+        "locales": "all"
+      },
+      "lookup": {
+        "site": "wiki",
+        "path": "/meaning-of-tarot-major-arcana",
+        "locales": [
+          "ko",
+          "en",
+          "ja"
+        ]
+      }
+    },
+    "saju": {
+      "learn": {
+        "site": "blog",
+        "path": "/fortune-saju-complete-guide",
+        "locales": [
+          "ko",
+          "en"
+        ]
+      },
+      "try": {
+        "site": "oiyo",
+        "path": "/saju/calculator",
+        "locales": "all"
+      },
+      "lookup": {
+        "site": "wiki",
+        "path": "/meaning-of-saju-dictionary",
+        "locales": [
+          "ko",
+          "en",
+          "zh",
+          "fr",
+          "es"
+        ]
+      }
+    },
+    "zodiac": {
+      "learn": {
+        "site": "blog",
+        "path": "/zodiac-rising-sign-guide",
+        "locales": [
+          "ko",
+          "en"
+        ]
+      },
+      "try": {
+        "site": "oiyo",
+        "path": "/zodiac/fortune",
+        "locales": "all"
+      },
+      "lookup": {
+        "site": "wiki",
+        "path": "/meaning-of-zodiac-signs",
+        "locales": "all"
+      }
+    },
+    "chinese-zodiac": {
+      "learn": {
+        "site": "blog",
+        "path": "/chinese-zodiac-compatibility-complete-guide",
+        "locales": [
+          "ko"
+        ]
+      },
+      "try": {
+        "site": "oiyo",
+        "path": "/chinese-zodiac",
+        "locales": "all"
+      },
+      "lookup": {
+        "site": "wiki",
+        "path": "/meaning-of-chinese-zodiac",
+        "locales": "all"
+      }
+    },
+    "astrology": {
+      "lookup": {
+        "site": "wiki",
+        "path": "/meaning-of-astrology",
+        "locales": [
+          "ko",
+          "en",
+          "ja",
+          "zh",
+          "fr",
+          "es"
+        ]
+      },
+      "learn": {
+        "site": "blog",
+        "path": "/academy-astrology-basics-ch1",
+        "locales": [
+          "ko",
+          "en",
+          "ja"
+        ]
+      },
+      "try": {
+        "site": "oiyo",
+        "path": "/zodiac/fortune",
+        "locales": "all"
+      }
+    },
+    "numerology": {
+      "learn": {
+        "site": "blog",
+        "path": "/fortune-numerology-complete-guide",
+        "locales": [
+          "ko"
+        ]
+      },
+      "try": {
+        "site": "oiyo",
+        "path": "/numerology/calculator",
+        "locales": "all"
+      },
+      "lookup": {
+        "site": "wiki",
+        "path": "/meaning-of-numerology",
+        "locales": "all"
+      }
+    },
+    "blood-type": {
+      "learn": {
+        "site": "blog",
+        "path": "/fortune-2026-blood-type-annual",
+        "locales": [
+          "ko"
+        ]
+      },
+      "try": {
+        "site": "oiyo",
+        "path": "/blood-type/fortune",
+        "locales": "all"
+      },
+      "lookup": {
+        "site": "wiki",
+        "path": "/meaning-of-blood-type",
+        "locales": "all"
+      }
+    },
+    "dream": {
+      "learn": {
+        "site": "blog",
+        "path": "/fortune-dream-interpretation-guide",
+        "locales": [
+          "ko"
+        ]
+      },
+      "try": {
+        "site": "wiki",
+        "path": "/dream-interpreter",
+        "locales": "all"
+      },
+      "lookup": {
+        "site": "wiki",
+        "path": "/meaning-of-dream",
+        "locales": "all"
+      }
+    },
+    "oracle": {
+      "try": {
+        "site": "oiyo",
+        "path": "/oracle/draw",
+        "locales": "all"
+      }
+    },
+    "palmistry": {
+      "learn": {
+        "site": "blog",
+        "path": "/palm-reading-complete-guide",
+        "locales": [
+          "ko",
+          "en",
+          "ja"
+        ]
+      }
+    },
+    "physiognomy": {
+      "learn": {
+        "site": "blog",
+        "path": "/face-reading-physiognomy-guide",
+        "locales": [
+          "ko"
+        ]
+      },
+      "try": {
+        "site": "ahoxy",
+        "path": "/face",
+        "locales": "all"
+      }
+    },
+    "fortune": {
+      "learn": {
+        "site": "blog",
+        "path": "/fortune-2026-monthly-forecast",
+        "locales": [
+          "ko"
+        ]
+      },
+      "try": {
+        "site": "oiyo",
+        "path": "/zodiac/fortune",
+        "locales": "all"
+      }
+    },
+    "mbti": {
+      "lookup": {
+        "site": "wiki",
+        "path": "/meaning-of-mbti-types",
+        "locales": [
+          "ko"
+        ]
+      },
+      "learn": {
+        "site": "blog",
+        "path": "/mbti-complete-deep-guide",
+        "locales": [
+          "ko",
+          "en"
+        ]
+      },
+      "try": {
+        "site": "oiyo",
+        "path": "/mbti/test",
+        "locales": "all"
+      }
+    },
+    "riasec": {
+      "lookup": {
+        "site": "wiki",
+        "path": "/meaning-of-riasec",
+        "locales": "all"
+      },
+      "learn": {
+        "site": "blog",
+        "path": "/riasec-career-complete-guide",
+        "locales": [
+          "ko",
+          "en"
+        ]
+      },
+      "try": {
+        "site": "oiyo",
+        "path": "/riasec-career-test",
+        "locales": "all"
+      }
+    }
+  }
+}

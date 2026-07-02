@@ -1,0 +1,109 @@
+---
+interface Pillar {
+  name: string;
+  stem: string;
+  branch: string;
+  element?: string;
+  note?: string;
+  color?: string;
+}
+
+interface Props {
+  title?: string;
+  pillars?: Pillar[];
+}
+
+const defaultPillars: Pillar[] = [
+  { name: "년주", stem: "갑", branch: "자", element: "목/수", note: "초기 환경과 사회적 배경", color: "#16a34a" },
+  { name: "월주", stem: "병", branch: "인", element: "화/목", note: "직업 감각과 성장 리듬", color: "#dc2626" },
+  { name: "일주", stem: "경", branch: "오", element: "금/화", note: "자기감과 관계의 핵심", color: "#64748b" },
+  { name: "시주", stem: "임", branch: "신", element: "수/금", note: "미래 지향과 후반부 관심사", color: "#2563eb" },
+];
+
+const { title = "사주 네 기둥 카드 예시", pillars = defaultPillars } = Astro.props;
+---
+
+<section class="saju-pillars">
+  <h3>{title}</h3>
+  <div class="saju-pillars__grid">
+    {
+      pillars.map((pillar) => (
+        <article class="saju-pillars__card" style={`--pillar:${pillar.color ?? "#334155"};`}>
+          <div class="saju-pillars__label">{pillar.name}</div>
+          <div class="saju-pillars__chars">
+            <strong>{pillar.stem}</strong>
+            <strong>{pillar.branch}</strong>
+          </div>
+          {pillar.element && <div class="saju-pillars__element">{pillar.element}</div>}
+          {pillar.note && <p>{pillar.note}</p>}
+        </article>
+      ))
+    }
+  </div>
+</section>
+
+<style>
+  .saju-pillars {
+    margin: 2.25rem 0;
+  }
+  .saju-pillars h3 {
+    margin: 0 0 1rem;
+    color: #0f172a;
+    font-size: 1.05rem;
+    font-weight: 850;
+  }
+  .saju-pillars__grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.85rem;
+  }
+  .saju-pillars__card {
+    min-width: 0;
+    padding: 1rem;
+    border: 1px solid color-mix(in srgb, var(--pillar), white 72%);
+    border-radius: 0.875rem;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--pillar), white 92%), #fff);
+    text-align: center;
+  }
+  .saju-pillars__label {
+    color: var(--pillar);
+    font-size: 0.78rem;
+    font-weight: 900;
+  }
+  .saju-pillars__chars {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.45rem;
+    margin: 0.85rem 0;
+  }
+  .saju-pillars__chars strong {
+    display: grid;
+    place-items: center;
+    min-height: 3.3rem;
+    border-radius: 0.75rem;
+    background: #fff;
+    border: 1px solid color-mix(in srgb, var(--pillar), white 70%);
+    color: #0f172a;
+    font-size: 1.65rem;
+  }
+  .saju-pillars__element {
+    display: inline-flex;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--pillar), white 85%);
+    color: #334155;
+    font-size: 0.74rem;
+    font-weight: 800;
+  }
+  .saju-pillars p {
+    margin: 0.75rem 0 0;
+    color: #475569;
+    font-size: 0.78rem;
+    line-height: 1.5;
+  }
+  @media (max-width: 760px) {
+    .saju-pillars__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+</style>

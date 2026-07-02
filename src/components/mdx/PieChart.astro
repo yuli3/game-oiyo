@@ -1,0 +1,59 @@
+---
+interface Props {
+  data: { label: string; value: number; color: string }[];
+  title?: string;
+  size?: string;
+}
+
+const { data, title, size = "200px" } = Astro.props;
+const total = data.reduce((acc, d) => acc + d.value, 0);
+
+let currentPos = 0;
+const segments = data.map((d) => {
+  const start = currentPos;
+  const end = currentPos + (d.value / total) * 100;
+  currentPos = end;
+  return `${d.color} ${start}% ${end}%`;
+});
+
+const gradient = `conic-gradient(${segments.join(", ")})`;
+---
+
+<div
+  class="my-12 p-8 bg-muted/20 border border-border/40 rounded-3xl animate-fade-up flex flex-col items-center"
+>
+  {
+    title && (
+      <h3 class="text-sm font-bold uppercase tracking-[0.2em] text-primary/60 mb-8 text-center">
+        {title}
+      </h3>
+    )
+  }
+
+  <div class="flex flex-col md:flex-row items-center gap-12">
+    <div
+      class="rounded-full shadow-2xl transition-transform duration-700 hover:scale-105"
+      style={`width: ${size}; height: ${size}; background: ${gradient};`}
+    >
+    </div>
+
+    <div class="grid grid-cols-1 gap-3">
+      {
+        data.map((item) => (
+          <div class="flex items-center gap-3 group">
+            <div
+              class="w-3 h-3 rounded-full shrink-0"
+              style={`background: ${item.color}`}
+            />
+            <span class="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 group-hover:text-primary transition-colors">
+              {item.label}
+            </span>
+            <span class="text-[10px] font-medium text-muted-foreground/40">
+              {Math.round((item.value / total) * 100)}%
+            </span>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</div>

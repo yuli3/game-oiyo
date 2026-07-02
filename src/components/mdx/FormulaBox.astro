@@ -1,0 +1,67 @@
+---
+/**
+ * FormulaBox — 수식/공식 강조 블록
+ * KaTeX 없이 순수 CSS로 수식을 표현
+ *
+ * Props:
+ *   formula     - 수식 텍스트 (메인 표시)
+ *   label       - 공식 이름 (optional)
+ *   description - 설명 (optional)
+ *   color       - 강조 색 (optional)
+ */
+interface Props {
+  formula: string;
+  label?: string;
+  description?: string;
+  color?: string;
+}
+
+const { formula, label, description, color = "#3b82f6" } = Astro.props;
+---
+
+<div class="edu-formula-box" style={`border-left-color: ${color};`}>
+  {
+    label && (
+      <div class="edu-formula-box__label" style={`color: ${color};`}>
+        {label}
+      </div>
+    )
+  }
+  <div class="edu-formula-box__formula">{formula}</div>
+  {description && <div class="edu-formula-box__description">{description}</div>}
+</div>
+
+<style>
+  .edu-formula-box {
+    margin: 2rem 0;
+    padding: 1.5rem 2rem;
+    background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+    border-left: 5px solid #3b82f6;
+    border-radius: 0 0.75rem 0.75rem 0;
+    box-shadow: 0 2px 12px rgba(59, 130, 246, 0.08);
+  }
+  .edu-formula-box__label {
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+  .edu-formula-box__formula {
+    font-family: "Georgia", "Times New Roman", serif;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1e293b;
+    letter-spacing: 0.03em;
+    margin: 0.25rem 0;
+    line-height: 1.8;
+  }
+  .edu-formula-box__description {
+    margin-top: 0.75rem;
+    font-size: 0.875rem;
+    color: #64748b;
+    line-height: 1.6;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 0.75rem;
+  }
+</style>

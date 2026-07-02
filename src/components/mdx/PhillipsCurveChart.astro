@@ -1,0 +1,158 @@
+---
+/**
+ * PhillipsCurveChart — 필립스 곡선 (단기 SRPC + 장기 LRPC, SVG)
+ * Props:
+ *   title           - 차트 제목
+ *   xLabel          - X축 (default: "실업률 (u)")
+ *   yLabel          - Y축 (default: "인플레이션율 (π)")
+ *   naturalRate     - 자연실업률 X 위치 0-100 (default: 40)
+ *   showLRPC        - 장기 필립스 곡선 표시 (default: true)
+ *   showExpected    - 기대 인플레이션 이동 곡선 표시 (default: false)
+ *   caption         - 하단 설명
+ */
+interface Props {
+  title?: string;
+  xLabel?: string;
+  yLabel?: string;
+  naturalRate?: number;
+  showLRPC?: boolean;
+  showExpected?: boolean;
+  caption?: string;
+}
+
+const {
+  title,
+  xLabel = "실업률 (u%)",
+  yLabel = "인플레이션율 (π%)",
+  naturalRate = 40,
+  showLRPC = true,
+  showExpected = false,
+  caption,
+} = Astro.props;
+
+const W = 480;
+const H = 320;
+const PAD = { top: 30, right: 50, bottom: 55, left: 60 };
+const cW = W - PAD.left - PAD.right;
+const cH = H - PAD.top - PAD.bottom;
+
+const px = (x: number) => PAD.left + (x / 100) * cW;
+const py = (y: number) => PAD.top + cH - (y / 100) * cH;
+
+// SRPC: downward sloping (low unemployment ↔ high inflation)
+const srpcPts = [
+  { x: 8, y: 82 },
+  { x: 20, y: 68 },
+  { x: 35, y: 50 },
+  { x: 55, y: 32 },
+  { x: 75, y: 20 },
+  { x: 90, y: 14 },
+];
+
+// Shifted SRPC (higher expected inflation)
+const srpcShiftedPts = srpcPts.map(p => ({ x: p.x, y: p.y + 22 }));
+
+function curvePath(pts: { x: number; y: number }[]): string {
+  if (pts.length < 2) return "";
+  let d = `M ${px(pts[0].x)} ${py(pts[0].y)}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const x1 = px(pts[i].x);
+    const y1 = py(pts[i].y);
+    const x2 = px(pts[i + 1].x);
+    const y2 = py(pts[i + 1].y);
+    const cpx = (x1 + x2) / 2;
+    d += ` C ${cpx} ${y1}, ${cpx} ${y2}, ${x2} ${y2}`;
+  }
+  return d;
+}
+
+// Tick labels
+const xTicks = [0, 20, 40, 60, 80, 100];
+const yTicks = [0, 20, 40, 60, 80, 100];
+---
+
+<div class="edu-chart-wrap">
+  {title && <div class="edu-chart-title">{title}</div>}
+  <div class="edu-chart-body">
+    <svg viewBox={`0 0 ${W} ${H}`} style={`max-width:${W}px; width:100%;`} aria-label={title}>
+
+      <!-- Grid -->
+      {yTicks.map(v => (
+        <line x1={PAD.left} y1={py(v)} x2={PAD.left + cW} y2={py(v)} stroke="#f1f5f9" stroke-width="1"/>
+      ))}
+      {xTicks.map(v => (
+        <line x1={px(v)} y1={PAD.top} x2={px(v)} y2={PAD.top + cH} stroke="#f1f5f9" stroke-width="1"/>
+      ))}
+
+      <!-- Axes -->
+      <line x1={PAD.left} y1={PAD.top} x2={PAD.left} y2={PAD.top + cH + 10} stroke="#334155" stroke-width="2" stroke-linecap="round"/>
+      <line x1={PAD.left - 10} y1={PAD.top + cH} x2={PAD.left + cW} y2={PAD.top + cH} stroke="#334155" stroke-width="2" stroke-linecap="round"/>
+
+      <!-- Axis labels -->
+      <text x={PAD.left + cW / 2} y={H - 8} text-anchor="middle" font-size="12" fill="#64748b" font-weight="600">{xLabel}</text>
+      <text x={14} y={PAD.top + cH / 2} text-anchor="middle" font-size="12" fill="#64748b" font-weight="600" transform={`rotate(-90, 14, ${PAD.top + cH / 2})`}>{yLabel}</text>
+
+      <!-- Tick labels -->
+      {xTicks.filter(v => v > 0).map(v => (
+        <text x={px(v)} y={PAD.top + cH + 16} text-anchor="middle" font-size="10" fill="#94a3b8">{v}</text>
+      ))}
+      {yTicks.filter(v => v > 0).map(v => (
+        <text x={PAD.left - 8} y={py(v) + 4} text-anchor="end" font-size="10" fill="#94a3b8">{v}</text>
+      ))}
+
+      <!-- LRPC (vertical at natural unemployment rate) -->
+      {showLRPC && (
+        <>
+          <line x1={px(naturalRate)} y1={PAD.top + 5} x2={px(naturalRate)} y2={PAD.top + cH} stroke="#f59e0b" stroke-width="2.5" stroke-dasharray="8,4"/>
+          <text x={px(naturalRate) + 6} y={PAD.top + 14} font-size="11" font-weight="700" fill="#d97706">LRPC</text>
+          <text x={px(naturalRate)} y={PAD.top + cH + 16} text-anchor="middle" font-size="10" fill="#d97706">u*</text>
+        </>
+      )}
+
+      <!-- SRPC curve -->
+      <path d={curvePath(srpcPts)} fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round"/>
+      <text x={px(srpcPts[0].x) - 6} y={py(srpcPts[0].y)} text-anchor="end" font-size="12" font-weight="700" fill="#2563eb">SRPC</text>
+
+      <!-- Shifted SRPC (higher πe) -->
+      {showExpected && (
+        <>
+          <path d={curvePath(srpcShiftedPts)} fill="none" stroke="#93c5fd" stroke-width="2" stroke-dasharray="7,4" stroke-linecap="round"/>
+          <text x={px(srpcShiftedPts[0].x) - 6} y={py(srpcShiftedPts[0].y)} text-anchor="end" font-size="12" font-weight="700" fill="#3b82f6" opacity="0.7">SRPC'</text>
+          <!-- Arrow showing shift -->
+          <defs>
+            <marker id="pcArrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+              <polygon points="0 0, 8 3, 0 6" fill="#94a3b8"/>
+            </marker>
+          </defs>
+          <line x1={px(30)} y1={py(58)} x2={px(30)} y2={py(76)} stroke="#94a3b8" stroke-width="1.5" marker-end="url(#pcArrow)"/>
+          <text x={px(30) + 8} y={py(67)} font-size="10" fill="#94a3b8">πe↑</text>
+        </>
+      )}
+
+      <!-- Equilibrium point on SRPC at natural rate -->
+      {showLRPC && (
+        <>
+          <circle cx={px(naturalRate)} cy={py(50)} r="5" fill="#1e293b" stroke="#fff" stroke-width="2"/>
+          <text x={px(naturalRate) + 8} y={py(50) - 6} font-size="11" font-weight="700" fill="#1e293b">A</text>
+        </>
+      )}
+
+    </svg>
+
+    <div class="edu-chart-legend">
+      <div class="edu-chart-legend-item"><span class="edu-chart-legend-line" style="background:#3b82f6"></span><span>SRPC — 단기 필립스 곡선</span></div>
+      {showLRPC && <div class="edu-chart-legend-item"><span style="display:inline-block; width:18px; border-top:3px dashed #f59e0b; margin-top:3px"></span><span>LRPC — 장기 필립스 곡선 (u* 자연실업률)</span></div>}
+    </div>
+  </div>
+  {caption && <p class="edu-chart-caption">{caption}</p>}
+</div>
+
+<style>
+  .edu-chart-wrap { margin:2.5rem 0; background:#fff; border:1px solid #e2e8f0; border-radius:1rem; padding:1.5rem; box-shadow:0 4px 16px rgba(0,0,0,.06); }
+  .edu-chart-title { font-weight:700; font-size:1rem; color:#1e293b; margin-bottom:1.25rem; text-align:center; }
+  .edu-chart-body { display:flex; flex-direction:column; align-items:center; gap:1rem; }
+  .edu-chart-legend { display:flex; flex-wrap:wrap; gap:.75rem 1.5rem; justify-content:center; }
+  .edu-chart-legend-item { display:flex; align-items:center; gap:.5rem; font-size:.78rem; color:#475569; font-weight:600; }
+  .edu-chart-legend-line { width:24px; height:3px; border-radius:2px; display:inline-block; }
+  .edu-chart-caption { font-size:.78rem; color:#64748b; text-align:center; margin-top:.75rem; font-style:italic; }
+</style>

@@ -1,0 +1,93 @@
+---
+import { inlineMd } from "../../lib/utils";
+
+interface ChecklistGroup {
+  title: string;
+  items: string[];
+  accent?: string;
+}
+
+interface Props {
+  title?: string;
+  groups: ChecklistGroup[];
+}
+
+const { title, groups } = Astro.props;
+const colors = ["#0f766e", "#2563eb", "#7c3aed", "#c2410c", "#be123c", "#0891b2"];
+---
+
+<section class="checklist-grid">
+  {title && <h3>{title}</h3>}
+  <div class="checklist-grid__wrap">
+    {
+      groups.map((group, index) => {
+        const color = group.accent ?? colors[index % colors.length];
+        return (
+          <article class="checklist-grid__group" style={`--accent:${color};`}>
+            <h4 set:html={inlineMd(group.title)} />
+            <ul>
+              {group.items.map((item) => <li set:html={inlineMd(item)} />)}
+            </ul>
+          </article>
+        );
+      })
+    }
+  </div>
+</section>
+
+<style>
+  .checklist-grid {
+    margin: 2rem 0;
+  }
+  .checklist-grid h3 {
+    margin: 0 0 1rem;
+    color: #0f172a;
+    font-size: 1.05rem;
+  }
+  .checklist-grid__wrap {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+  .checklist-grid__group {
+    border: 1px solid #e2e8f0;
+    border-top: 4px solid var(--accent);
+    border-radius: 0.875rem;
+    background: #fff;
+    padding: 1rem;
+  }
+  .checklist-grid h4 {
+    margin: 0 0 0.75rem;
+    color: #0f172a;
+    font-size: 0.95rem;
+  }
+  .checklist-grid ul {
+    display: grid;
+    gap: 0.55rem;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+  .checklist-grid li {
+    position: relative;
+    padding-left: 1.45rem;
+    color: #475569;
+    font-size: 0.88rem;
+    line-height: 1.55;
+  }
+  .checklist-grid li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.35rem;
+    width: 0.8rem;
+    height: 0.8rem;
+    border: 2px solid var(--accent);
+    border-radius: 0.25rem;
+  }
+  @media (max-width: 700px) {
+    .checklist-grid__wrap {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

@@ -1,0 +1,108 @@
+---
+/**
+ * Fraction — 분수 표시 컴포넌트
+ * 수학적 수식/분수를 인라인 또는 블록 형태로 표시
+ *
+ * Props:
+ *   numerator   - 분자
+ *   denominator - 분모
+ *   sign        - 앞에 붙는 기호 (예: "-", "+")
+ *   label       - 수식 뒤 설명 라벨 (optional)
+ *   block       - true이면 블록(중앙 정렬), false이면 인라인
+ */
+interface Props {
+  numerator: string;
+  denominator: string;
+  sign?: string;
+  label?: string;
+  block?: boolean;
+}
+
+const {
+  numerator,
+  denominator,
+  sign = "",
+  label = "",
+  block = false,
+} = Astro.props;
+---
+
+{
+  block ? (
+    <div class="edu-fraction-block">
+      <span class="edu-fraction">
+        {sign && <span class="edu-fraction__sign">{sign}</span>}
+        <span class="edu-fraction__numerator">{numerator}</span>
+        <span class="edu-fraction__line" />
+        <span class="edu-fraction__denominator">{denominator}</span>
+      </span>
+      {label && <span class="edu-fraction__label">{label}</span>}
+    </div>
+  ) : (
+    <span class="edu-fraction edu-fraction--inline">
+      {sign && <span class="edu-fraction__sign">{sign}</span>}
+      <span class="edu-fraction__numerator">{numerator}</span>
+      <span class="edu-fraction__line" />
+      <span class="edu-fraction__denominator">{denominator}</span>
+      {label && <span class="edu-fraction__label">&nbsp;{label}</span>}
+    </span>
+  )
+}
+
+<style>
+  .edu-fraction-block {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 1.5rem 0;
+    padding: 1.25rem 2rem;
+    background: #f8fafc;
+    border-radius: 0.75rem;
+    border: 1px solid #e2e8f0;
+  }
+  .edu-fraction {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    vertical-align: middle;
+    font-family: "Georgia", serif;
+    font-size: 1.1em;
+    line-height: 1.2;
+    color: #1e293b;
+    position: relative;
+  }
+  .edu-fraction--inline {
+    margin: 0 0.2em;
+  }
+  .edu-fraction__sign {
+    position: absolute;
+    left: -1.2em;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.1em;
+    font-weight: 700;
+    color: #475569;
+  }
+  .edu-fraction__numerator,
+  .edu-fraction__denominator {
+    padding: 0.1em 0.35em;
+    text-align: center;
+    white-space: nowrap;
+    font-weight: 600;
+  }
+  .edu-fraction__line {
+    width: 100%;
+    min-width: 1.5em;
+    height: 2px;
+    background: #334155;
+    margin: 1px 0;
+  }
+  .edu-fraction__label {
+    font-size: 0.9em;
+    color: #64748b;
+    font-style: italic;
+    margin-left: 0.5em;
+    align-self: center;
+  }
+</style>

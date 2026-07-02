@@ -1,0 +1,47 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import WordleGame from "../../components/games/WordleGame";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "Wordle — 매일 5글자 영단어 맞추기",
+    description: "매일 새로운 5글자 영단어를 6번 안에 맞춰보세요. 초록=정답 위치, 노란색=다른 위치, 회색=없음.",
+  },
+  en: {
+    title: "Wordle — Guess the Daily 5-Letter Word",
+    description: "Guess the hidden 5-letter word in 6 tries. Green = correct position, yellow = wrong position, grey = not in word.",
+  },
+  ja: {
+    title: "Wordle — 毎日の5文字英単語パズル",
+    description: "6回以内に隠された5文字の英単語を当ててください。緑=正解位置、黄=別の位置、灰=不在。",
+  },
+  fr: {
+    title: "Wordle — Devinez le mot du jour en 5 lettres",
+    description: "Devinez le mot de 5 lettres caché en 6 tentatives. Vert = bonne position, jaune = mauvaise position, gris = absent.",
+  },
+  es: {
+    title: "Wordle — Adivina la palabra de 5 letras del día",
+    description: "Adivina la palabra de 5 letras en 6 intentos. Verde = posición correcta, amarillo = posición incorrecta, gris = ausente.",
+  },
+  zh: {
+    title: "Wordle — 每日5字母英文猜字",
+    description: "6次内猜出隐藏的5个字母英文单词。绿色=正确位置，黄色=不同位置，灰色=不存在。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-lg px-4 py-4">
+    <WordleGame client:load />
+  </main>
+</BaseLayout>

@@ -1,0 +1,4 @@
+content_id,track,status,locale_master,title_ko,slug,category,series_id,chapter_no,source_project,interactive_component,primary_intent,related_credentials,seo_priority,internal_links_required,notes
+academy-management-ch1,academy,planned,ko,Ch1. 경영학 개론,education-business-ch1,Business,management-core,1,blog-oiyo,,lecture,경영지도사|공기업경영학,high,yes,series scaffold first
+interactive-gomoku-origin,interactive,planned,ko,오목의 기원과 두는 법,gomoku-origin-and-play,Interactive Games,,,"ahoxy-nextjs",Gomoku,interactive-reading,,high,yes,essay plus island
+magazine-study-method,magazine,planned,ko,공부 잘하는 방법론,study-method-compression,Learning,,,"blog-oiyo",,magazine,정보처리기사|NCS,high,yes,link to lectures and exam guides

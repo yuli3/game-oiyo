@@ -1,0 +1,151 @@
+---
+/**
+ * BusinessCycle — 경기 순환 그래프 (Business Cycle, SVG)
+ * Props:
+ *   title       - 차트 제목
+ *   showTrend   - 장기 성장 추세선 표시 (default: true)
+ *   caption     - 하단 설명
+ */
+interface Props {
+  title?: string;
+  showTrend?: boolean;
+  caption?: string;
+}
+
+const {
+  title = "경기 순환 (Business Cycle)",
+  showTrend = true,
+  caption,
+} = Astro.props;
+
+const W = 560;
+const H = 300;
+const PAD = { top: 35, right: 30, bottom: 55, left: 55 };
+const cW = W - PAD.left - PAD.right;
+const cH = H - PAD.top - PAD.bottom;
+
+const px = (x: number) => PAD.left + (x / 100) * cW;
+const py = (y: number) => PAD.top + cH - (y / 100) * cH;
+
+// Business cycle: sine-wave-like path, slightly trending up
+// Points: (x=time, y=output)
+const cyclePts = [
+  { x: 0, y: 45 },
+  { x: 8, y: 52 },
+  { x: 16, y: 65 },  // peak 1
+  { x: 24, y: 58 },
+  { x: 32, y: 42 },  // trough 1
+  { x: 40, y: 50 },
+  { x: 48, y: 63 },
+  { x: 55, y: 75 },  // peak 2
+  { x: 63, y: 68 },
+  { x: 70, y: 55 },  // trough 2
+  { x: 78, y: 62 },
+  { x: 86, y: 77 },  // peak 3 (higher = growth trend)
+  { x: 93, y: 72 },
+  { x: 100, y: 65 },
+];
+
+// Trend line (slow upward)
+const trendStart = { x: 0, y: 50 };
+const trendEnd = { x: 100, y: 65 };
+
+function curvePath(pts: { x: number; y: number }[]): string {
+  if (pts.length < 2) return "";
+  let d = `M ${px(pts[0].x)} ${py(pts[0].y)}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const x1 = px(pts[i].x);     const y1 = py(pts[i].y);
+    const x2 = px(pts[i + 1].x); const y2 = py(pts[i + 1].y);
+    const cpx = (x1 + x2) / 2;
+    d += ` C ${cpx} ${y1}, ${cpx} ${y2}, ${x2} ${y2}`;
+  }
+  return d;
+}
+
+// Annotated peaks & troughs
+const peakPts = [{ x: 16, y: 65 }, { x: 55, y: 75 }, { x: 86, y: 77 }];
+const troughPts = [{ x: 32, y: 42 }, { x: 70, y: 55 }];
+---
+
+<div class="edu-chart-wrap">
+  {title && <div class="edu-chart-title">{title}</div>}
+  <div class="edu-chart-body">
+    <svg viewBox={`0 0 ${W} ${H}`} style={`max-width:${W}px; width:100%;`} aria-label={title}>
+
+      <!-- Phase background shading -->
+      <rect x={px(0)} y={PAD.top} width={px(16) - px(0)} height={cH} fill="#22c55e" fill-opacity="0.07"/>
+      <rect x={px(16)} y={PAD.top} width={px(32) - px(16)} height={cH} fill="#ef4444" fill-opacity="0.07"/>
+      <rect x={px(32)} y={PAD.top} width={px(55) - px(32)} height={cH} fill="#22c55e" fill-opacity="0.07"/>
+      <rect x={px(55)} y={PAD.top} width={px(70) - px(55)} height={cH} fill="#ef4444" fill-opacity="0.07"/>
+      <rect x={px(70)} y={PAD.top} width={px(100) - px(70)} height={cH} fill="#22c55e" fill-opacity="0.07"/>
+
+      <!-- Trend line -->
+      {showTrend && (
+        <line
+          x1={px(trendStart.x)} y1={py(trendStart.y)}
+          x2={px(trendEnd.x)} y2={py(trendEnd.y)}
+          stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="10,5"
+        />
+      )}
+
+      <!-- Business cycle curve -->
+      <path d={curvePath(cyclePts)} fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round"/>
+
+      <!-- Axes -->
+      <line x1={PAD.left} y1={PAD.top} x2={PAD.left} y2={PAD.top + cH + 10} stroke="#334155" stroke-width="2" stroke-linecap="round"/>
+      <line x1={PAD.left - 10} y1={PAD.top + cH} x2={PAD.left + cW} y2={PAD.top + cH} stroke="#334155" stroke-width="2" stroke-linecap="round"/>
+
+      <!-- Axis labels -->
+      <text x={PAD.left + cW / 2} y={H - 8} text-anchor="middle" font-size="12" fill="#64748b" font-weight="600">시간 (Time)</text>
+      <text x={14} y={PAD.top + cH / 2} text-anchor="middle" font-size="12" fill="#64748b" font-weight="600" transform={`rotate(-90, 14, ${PAD.top + cH / 2})`}>실질 GDP</text>
+
+      <!-- Potential GDP label on trend -->
+      {showTrend && (
+        <text x={px(85)} y={py(63) - 8} font-size="10" fill="#94a3b8" font-weight="600">잠재 GDP</text>
+      )}
+
+      <!-- Peak annotations -->
+      {peakPts.map(p => (
+        <>
+          <circle cx={px(p.x)} cy={py(p.y)} r="4.5" fill="#ef4444" stroke="#fff" stroke-width="2"/>
+          <text x={px(p.x)} y={py(p.y) - 9} text-anchor="middle" font-size="9" font-weight="700" fill="#ef4444">정점</text>
+        </>
+      ))}
+
+      <!-- Trough annotations -->
+      {troughPts.map(p => (
+        <>
+          <circle cx={px(p.x)} cy={py(p.y)} r="4.5" fill="#22c55e" stroke="#fff" stroke-width="2"/>
+          <text x={px(p.x)} y={py(p.y) + 18} text-anchor="middle" font-size="9" font-weight="700" fill="#22c55e">저점</text>
+        </>
+      ))}
+
+      <!-- Phase labels at top -->
+      <text x={px(8)} y={PAD.top - 6} text-anchor="middle" font-size="9" font-weight="700" fill="#16a34a">↑확장</text>
+      <text x={px(24)} y={PAD.top - 6} text-anchor="middle" font-size="9" font-weight="700" fill="#dc2626">↓수축</text>
+      <text x={px(43)} y={PAD.top - 6} text-anchor="middle" font-size="9" font-weight="700" fill="#16a34a">↑확장</text>
+      <text x={px(62)} y={PAD.top - 6} text-anchor="middle" font-size="9" font-weight="700" fill="#dc2626">↓수축</text>
+      <text x={px(85)} y={PAD.top - 6} text-anchor="middle" font-size="9" font-weight="700" fill="#16a34a">↑확장</text>
+
+    </svg>
+
+    <div class="edu-chart-legend">
+      <div class="edu-chart-legend-item"><span class="edu-chart-legend-line" style="background:#3b82f6"></span><span>경기 순환</span></div>
+      {showTrend && <div class="edu-chart-legend-item"><span style="display:inline-block; width:22px; border-top:2px dashed #94a3b8; margin-top:4px"></span><span>잠재 GDP (추세)</span></div>}
+      <div class="edu-chart-legend-item"><span class="edu-chart-legend-dot" style="background:#ef4444"></span><span>정점 (Peak)</span></div>
+      <div class="edu-chart-legend-item"><span class="edu-chart-legend-dot" style="background:#22c55e"></span><span>저점 (Trough)</span></div>
+    </div>
+  </div>
+  {caption && <p class="edu-chart-caption">{caption}</p>}
+</div>
+
+<style>
+  .edu-chart-wrap { margin:2.5rem 0; background:#fff; border:1px solid #e2e8f0; border-radius:1rem; padding:1.5rem; box-shadow:0 4px 16px rgba(0,0,0,.06); }
+  .edu-chart-title { font-weight:700; font-size:1rem; color:#1e293b; margin-bottom:1.25rem; text-align:center; }
+  .edu-chart-body { display:flex; flex-direction:column; align-items:center; gap:1rem; }
+  .edu-chart-legend { display:flex; flex-wrap:wrap; gap:.75rem 1.5rem; justify-content:center; }
+  .edu-chart-legend-item { display:flex; align-items:center; gap:.5rem; font-size:.78rem; color:#475569; font-weight:600; }
+  .edu-chart-legend-line { width:24px; height:3px; border-radius:2px; display:inline-block; }
+  .edu-chart-legend-dot { width:10px; height:10px; border-radius:50%; display:inline-block; }
+  .edu-chart-caption { font-size:.78rem; color:#64748b; text-align:center; margin-top:.75rem; font-style:italic; }
+</style>

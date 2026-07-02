@@ -1,0 +1,45 @@
+---
+interface Props {
+  steps: { title: string; description?: string; icon?: string }[];
+  title?: string;
+}
+
+import { inlineMd } from "../../lib/utils";
+const { steps, title } = Astro.props;
+---
+
+<div
+  class="my-12 p-8 bg-muted/20 border border-border/40 rounded-3xl animate-fade-up"
+>
+  {
+    title && (
+      <h3 class="text-sm font-bold uppercase tracking-[0.2em] text-primary/60 mb-10 text-center">
+        {title}
+      </h3>
+    )
+  }
+
+  <div class="flex flex-col gap-6 relative">
+    {
+      steps.map((step, index) => (
+        <div class="flex items-start gap-6 relative group">
+          <div class="flex flex-col items-center">
+            <div class="w-10 h-10 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm shadow-lg shadow-primary/20 shrink-0 z-10 transition-transform group-hover:scale-110">
+              {index + 1}
+            </div>
+            {index < steps.length - 1 && (
+              <div class="w-0.5 h-12 bg-border/40 my-1" />
+            )}
+          </div>
+
+          <div class="pt-1">
+            <h4 class="text-base font-bold tracking-tight mb-1 group-hover:text-primary transition-colors" set:html={inlineMd(step.title)} />
+            {step.description && (
+              <p class="text-sm text-muted-foreground leading-relaxed" set:html={inlineMd(step.description)} />
+            )}
+          </div>
+        </div>
+      ))
+    }
+  </div>
+</div>

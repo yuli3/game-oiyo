@@ -1,0 +1,278 @@
+---
+/**
+ * SupplyDemandChart — 수요·공급 곡선 (SVG)
+ * Props:
+ *   title        - 차트 제목
+ *   xLabel       - X축 레이블 (default: "수량 (Q)")
+ *   yLabel       - Y축 레이블 (default: "가격 (P)")
+ *   equilibriumLabel - 균형점 레이블 (default: "E")
+ *   demandLabel  - 수요곡선 레이블 (default: "D")
+ *   supplyLabel  - 공급곡선 레이블 (default: "S")
+ *   shift        - "demand-right"|"demand-left"|"supply-right"|"supply-left" (선택)
+ *   shiftLabel   - 이동된 곡선 레이블 (default: "D'"|"S'")
+ *   showSurplus  - 소비자잉여/생산자잉여 음영 표시 (default: false)
+ *   caption      - 하단 설명
+ */
+interface Props {
+  title?: string;
+  xLabel?: string;
+  yLabel?: string;
+  equilibriumLabel?: string;
+  demandLabel?: string;
+  supplyLabel?: string;
+  shift?: "demand-right" | "demand-left" | "supply-right" | "supply-left";
+  shiftLabel?: string;
+  showSurplus?: boolean;
+  caption?: string;
+}
+
+const {
+  title,
+  xLabel = "수량 (Q)",
+  yLabel = "가격 (P)",
+  equilibriumLabel = "E",
+  demandLabel = "D",
+  supplyLabel = "S",
+  shift,
+  shiftLabel,
+  showSurplus = false,
+  caption,
+} = Astro.props;
+
+const W = 480;
+const H = 320;
+const PAD = { top: 30, right: 50, bottom: 55, left: 60 };
+const cW = W - PAD.left - PAD.right;
+const cH = H - PAD.top - PAD.bottom;
+
+// Coordinate helpers (0-100 normalized → SVG px)
+const px = (x: number) => PAD.left + (x / 100) * cW;
+const py = (y: number) => PAD.top + cH - (y / 100) * cH;
+
+// Baseline curves
+const demandPts = [{ x: 5, y: 90 }, { x: 95, y: 10 }]; // downward
+const supplyPts = [{ x: 5, y: 10 }, { x: 95, y: 90 }]; // upward
+const eqX = 50; const eqY = 50; // baseline equilibrium
+
+function polyline(pts: { x: number; y: number }[]) {
+  return pts.map(p => `${px(p.x)},${py(p.y)}`).join(" ");
+}
+
+// Shifted curve
+let shiftedPts: { x: number; y: number }[] | null = null;
+let newEqX = eqX;
+let newEqY = eqY;
+const shiftOffset = 18;
+
+if (shift === "demand-right") {
+  shiftedPts = demandPts.map(p => ({ x: p.x + shiftOffset, y: p.y }));
+  newEqX = eqX + shiftOffset / 2;
+  newEqY = eqY + shiftOffset / 2;
+} else if (shift === "demand-left") {
+  shiftedPts = demandPts.map(p => ({ x: p.x - shiftOffset, y: p.y }));
+  newEqX = eqX - shiftOffset / 2;
+  newEqY = eqY - shiftOffset / 2;
+} else if (shift === "supply-right") {
+  shiftedPts = supplyPts.map(p => ({ x: p.x + shiftOffset, y: p.y }));
+  newEqX = eqX + shiftOffset / 2;
+  newEqY = eqY - shiftOffset / 2;
+} else if (shift === "supply-left") {
+  shiftedPts = supplyPts.map(p => ({ x: p.x - shiftOffset, y: p.y }));
+  newEqX = eqX - shiftOffset / 2;
+  newEqY = eqY + shiftOffset / 2;
+}
+
+const defaultShiftLabel = shift?.startsWith("demand") ? "D'" : "S'";
+const shiftLabelDisplay = shiftLabel ?? defaultShiftLabel;
+---
+
+<div class="edu-chart-wrap">
+  {title && <div class="edu-chart-title">{title}</div>}
+  <div class="edu-chart-body">
+    <svg viewBox={`0 0 ${W} ${H}`} style={`max-width:${W}px; width:100%;`} aria-label={title}>
+
+      <!-- Axis lines -->
+      <line x1={PAD.left} y1={PAD.top} x2={PAD.left} y2={PAD.top + cH + 10} stroke="#334155" stroke-width="2" stroke-linecap="round"/>
+      <line x1={PAD.left - 10} y1={PAD.top + cH} x2={PAD.left + cW} y2={PAD.top + cH} stroke="#334155" stroke-width="2" stroke-linecap="round"/>
+
+      <!-- Axis labels -->
+      <text x={PAD.left + cW / 2} y={H - 8} text-anchor="middle" font-size="12" fill="#64748b" font-weight="600">{xLabel}</text>
+      <text x={14} y={PAD.top + cH / 2} text-anchor="middle" font-size="12" fill="#64748b" font-weight="600" transform={`rotate(-90, 14, ${PAD.top + cH / 2})`}>{yLabel}</text>
+
+      <!-- Consumer/Producer surplus shading -->
+      {showSurplus && (
+        <>
+          <polygon
+            points={`${px(5)},${py(90)} ${px(eqX)},${py(eqY)} ${px(5)},${py(eqY)}`}
+            fill="#3b82f6" fill-opacity="0.12"
+          />
+          <polygon
+            points={`${px(5)},${py(10)} ${px(eqX)},${py(eqY)} ${px(5)},${py(eqY)}`}
+            fill="#22c55e" fill-opacity="0.12"
+          />
+        </>
+      )}
+
+      <!-- Supply curve (S) -->
+      <polyline points={polyline(supplyPts)} fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x={px(supplyPts[1].x) + 6} y={py(supplyPts[1].y)} font-size="13" font-weight="700" fill="#16a34a">{supplyLabel}</text>
+
+      <!-- Demand curve (D) -->
+      <polyline points={polyline(demandPts)} fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x={px(demandPts[1].x) + 6} y={py(demandPts[1].y) + 4} font-size="13" font-weight="700" fill="#2563eb">{demandLabel}</text>
+
+      <!-- Shifted curve -->
+      {shiftedPts && (
+        <>
+          <polyline
+            points={polyline(shiftedPts)}
+            fill="none"
+            stroke={shift?.startsWith("demand") ? "#93c5fd" : "#86efac"}
+            stroke-width="2"
+            stroke-dasharray="7,4"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <text
+            x={px(shiftedPts[1].x) + 6}
+            y={py(shiftedPts[1].y) + 4}
+            font-size="13"
+            font-weight="700"
+            fill={shift?.startsWith("demand") ? "#3b82f6" : "#16a34a"}
+            opacity="0.8"
+          >{shiftLabelDisplay}</text>
+        </>
+      )}
+
+      <!-- Equilibrium dashed lines (original) -->
+      <line x1={px(eqX)} y1={py(eqY)} x2={px(eqX)} y2={py(0)} stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
+      <line x1={PAD.left} y1={py(eqY)} x2={px(eqX)} y2={py(eqY)} stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"/>
+      <text x={px(eqX)} y={py(0) + 16} text-anchor="middle" font-size="10" fill="#64748b">Q*</text>
+      <text x={PAD.left - 8} y={py(eqY) + 4} text-anchor="end" font-size="10" fill="#64748b">P*</text>
+
+      <!-- New equilibrium dashed lines (shifted) -->
+      {shiftedPts && (
+        <>
+          <line x1={px(newEqX)} y1={py(newEqY)} x2={px(newEqX)} y2={py(0)} stroke="#cbd5e1" stroke-width="1" stroke-dasharray="4,4"/>
+          <line x1={PAD.left} y1={py(newEqY)} x2={px(newEqX)} y2={py(newEqY)} stroke="#cbd5e1" stroke-width="1" stroke-dasharray="4,4"/>
+          <text x={px(newEqX)} y={py(0) + 16} text-anchor="middle" font-size="10" fill="#94a3b8">Q'</text>
+          <text x={PAD.left - 8} y={py(newEqY) + 4} text-anchor="end" font-size="10" fill="#94a3b8">P'</text>
+        </>
+      )}
+
+      <!-- Equilibrium dot (original) -->
+      <circle cx={px(eqX)} cy={py(eqY)} r="5" fill="#1e293b" stroke="#fff" stroke-width="2"/>
+      <text x={px(eqX) + 8} y={py(eqY) - 6} font-size="11" font-weight="700" fill="#1e293b">{equilibriumLabel}</text>
+
+      <!-- New equilibrium dot (shifted) -->
+      {shiftedPts && (
+        <>
+          <circle cx={px(newEqX)} cy={py(newEqY)} r="4" fill="#64748b" stroke="#fff" stroke-width="2"/>
+          <text x={px(newEqX) + 8} y={py(newEqY) - 6} font-size="11" font-weight="700" fill="#64748b">E'</text>
+        </>
+      )}
+
+      <!-- Shift arrow -->
+      {shiftedPts && (
+        <line
+          x1={px(demandPts[0].x + (shift?.startsWith("supply") ? 0 : 0)) + (shift?.endsWith("right") ? 2 : -2) * 10}
+          y1={py(50)}
+          x2={px(demandPts[0].x + (shift?.startsWith("supply") ? 0 : 0)) + (shift?.endsWith("right") ? 2 : -2) * 10 + (shift?.endsWith("right") ? 24 : -24)}
+          y2={py(50)}
+          stroke="#94a3b8"
+          stroke-width="2"
+          marker-end="url(#arrowHead)"
+        />
+      )}
+      <defs>
+        <marker id="arrowHead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#94a3b8"/>
+        </marker>
+      </defs>
+
+    </svg>
+
+    <!-- Legend -->
+    <div class="edu-chart-legend">
+      <div class="edu-chart-legend-item">
+        <span class="edu-chart-legend-line" style="background:#3b82f6"></span>
+        <span>{demandLabel} — 수요곡선</span>
+      </div>
+      <div class="edu-chart-legend-item">
+        <span class="edu-chart-legend-line" style="background:#22c55e"></span>
+        <span>{supplyLabel} — 공급곡선</span>
+      </div>
+      {showSurplus && (
+        <>
+          <div class="edu-chart-legend-item">
+            <span class="edu-chart-legend-box" style="background:#3b82f6; opacity:0.3"></span>
+            <span>소비자잉여</span>
+          </div>
+          <div class="edu-chart-legend-item">
+            <span class="edu-chart-legend-box" style="background:#22c55e; opacity:0.3"></span>
+            <span>생산자잉여</span>
+          </div>
+        </>
+      )}
+    </div>
+  </div>
+  {caption && <p class="edu-chart-caption">{caption}</p>}
+</div>
+
+<style>
+  .edu-chart-wrap {
+    margin: 2.5rem 0;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+  }
+  .edu-chart-title {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #1e293b;
+    margin-bottom: 1.25rem;
+    text-align: center;
+    letter-spacing: 0.01em;
+  }
+  .edu-chart-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+  .edu-chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.5rem;
+    justify-content: center;
+  }
+  .edu-chart-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.78rem;
+    color: #475569;
+    font-weight: 600;
+  }
+  .edu-chart-legend-line {
+    width: 24px;
+    height: 3px;
+    border-radius: 2px;
+    display: inline-block;
+  }
+  .edu-chart-legend-box {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    display: inline-block;
+  }
+  .edu-chart-caption {
+    font-size: 0.78rem;
+    color: #64748b;
+    text-align: center;
+    margin-top: 0.75rem;
+    font-style: italic;
+  }
+</style>

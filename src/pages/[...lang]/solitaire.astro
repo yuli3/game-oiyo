@@ -1,0 +1,47 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SolitaireComp from "../../components/games/Solitaire";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "솔리테어 — 클래식 카드 패시션스 게임",
+    description: "온라인 솔리테어 게임을 즐겨보세요. A부터 K까지 카드를 정렬하는 클래식 혼자 하는 카드 게임입니다.",
+  },
+  en: {
+    title: "Solitaire Card Game",
+    description: "Play Solitaire online. The classic single-player card game where you sort cards from Ace to King.",
+  },
+  ja: {
+    title: "ソリティア — クラシックカードペイシェンスゲーム",
+    description: "オンラインソリティアを楽しもう。エースからキングまでカードを並べるクラシックな一人用カードゲームです。",
+  },
+  fr: {
+    title: "Solitaire — Le classique jeu de cartes Patience",
+    description: "Jouez au Solitaire en ligne. Le classique jeu de cartes en solo où vous triez les cartes de l'As au Roi.",
+  },
+  es: {
+    title: "Solitario — El clásico juego de cartas Paciencia",
+    description: "Juega al Solitario en línea. El clásico juego de cartas individual donde ordenas cartas del As al Rey.",
+  },
+  zh: {
+    title: "接龙 — 经典单人纸牌游戏",
+    description: "享受线上接龙游戏。将牌从A排到K的经典单人纸牌游戏。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <SolitaireComp client:load locale={locale === 'ko' ? 'ko' : 'en'} />
+  </main>
+</BaseLayout>

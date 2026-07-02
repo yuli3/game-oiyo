@@ -1,0 +1,35 @@
+name: Lighthouse CI
+
+on:
+  schedule:
+    # 매주 월요일 01:00 UTC = 10:00 KST
+    - cron: '0 1 * * 1'
+  workflow_dispatch:
+
+jobs:
+  lighthouse:
+    name: Lighthouse audit (representative pages)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Run Lighthouse CI
+        # Monitoring only — thresholds are warnings, never block.
+        run: npx --yes @lhci/cli@0.13 autorun || true
+
+      - name: Summary
+        run: echo "Lighthouse run complete. Report links are in the 'Run Lighthouse CI' step log (temporary-public-storage)." >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,17 @@
+---
+description: Shared harness rules for blog-oiyo
+globs:
+  - "**/*"
+alwaysApply: true
+---
+
+# blog-oiyo shared harness
+
+- Use `/Users/seuncho/coding/blog-oiyo/AGENTS.md` as the primary repository harness.
+- Use `/Users/seuncho/coding/blog-oiyo/docs/implementation-control-board.md` as the live workboard.
+- Do not add MDX components directly to route files.
+- Use `/Users/seuncho/coding/blog-oiyo/src/lib/mdx-component-registry.ts` for renderer exposure changes.
+- Check `/Users/seuncho/coding/blog-oiyo/data/catalog/category-registry.yaml` before introducing categories.
+- Check `/Users/seuncho/coding/blog-oiyo/data/catalog/content-inventory.master.csv` before expanding priority work.
+- Put uncertain work into revisit-later queues instead of forcing decisions.
+- Prefer `npm run build`, `npm run type-check`, `npm run validate:i18n`, and `npm run verify:harness` for validation.

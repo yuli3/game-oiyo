@@ -1,0 +1,105 @@
+---
+interface OrbitItem {
+  name: string;
+  distance?: string;
+  color?: string;
+}
+
+interface Props {
+  title?: string;
+  items?: OrbitItem[];
+}
+
+const { title = "태양계 거리 감각", items = [
+  { name: "수성", distance: "0.39 AU", color: "#94a3b8" },
+  { name: "금성", distance: "0.72 AU", color: "#f59e0b" },
+  { name: "지구", distance: "1.00 AU", color: "#2563eb" },
+  { name: "화성", distance: "1.52 AU", color: "#dc2626" },
+  { name: "목성", distance: "5.20 AU", color: "#c2410c" },
+  { name: "토성", distance: "9.58 AU", color: "#ca8a04" },
+] } = Astro.props;
+---
+
+<section class="orbit-diagram">
+  <h3>{title}</h3>
+  <div class="orbit-diagram__space">
+    <div class="orbit-diagram__sun">태양</div>
+    {
+      items.map((item, index) => (
+        <div class="orbit-diagram__orbit" style={`--i:${index + 1}; --planet:${item.color ?? "#64748b"};`}>
+          <span>{item.name}</span>
+          {item.distance && <em>{item.distance}</em>}
+        </div>
+      ))
+    }
+  </div>
+</section>
+
+<style>
+  .orbit-diagram {
+    margin: 2rem 0;
+  }
+  .orbit-diagram h3 {
+    margin: 0 0 1rem;
+    color: #0f172a;
+    font-size: 1.05rem;
+  }
+  .orbit-diagram__space {
+    position: relative;
+    min-height: 22rem;
+    border: 1px solid #dbeafe;
+    border-radius: 1rem;
+    background:
+      radial-gradient(circle at 15% 50%, rgba(251, 191, 36, 0.25), transparent 15rem),
+      linear-gradient(135deg, #eff6ff, #f8fafc);
+    overflow: hidden;
+  }
+  .orbit-diagram__sun {
+    position: absolute;
+    left: 1.25rem;
+    top: 50%;
+    transform: translateY(-50%);
+    display: grid;
+    place-items: center;
+    width: 4.2rem;
+    height: 4.2rem;
+    border-radius: 999px;
+    background: #f59e0b;
+    color: #fff;
+    font-weight: 900;
+    box-shadow: 0 0 2rem rgba(245, 158, 11, 0.45);
+  }
+  .orbit-diagram__orbit {
+    position: absolute;
+    left: calc(5.5rem + var(--i) * 8.5%);
+    top: calc(50% + ((var(--i) % 2) * 2 - 1) * min(var(--i) * 0.55rem, 3rem));
+    display: grid;
+    gap: 0.2rem;
+    justify-items: center;
+    color: #334155;
+    font-size: 0.78rem;
+    font-weight: 800;
+  }
+  .orbit-diagram__orbit::before {
+    content: "";
+    width: calc(0.85rem + var(--i) * 0.18rem);
+    height: calc(0.85rem + var(--i) * 0.18rem);
+    border-radius: 999px;
+    background: var(--planet);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);
+  }
+  .orbit-diagram__orbit em {
+    color: #64748b;
+    font-style: normal;
+    font-weight: 600;
+  }
+  @media (max-width: 640px) {
+    .orbit-diagram__space {
+      min-height: 26rem;
+    }
+    .orbit-diagram__orbit {
+      left: calc(1rem + (var(--i) - 1) % 2 * 45%);
+      top: calc(5.5rem + var(--i) * 2.8rem);
+    }
+  }
+</style>

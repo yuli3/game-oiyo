@@ -1,0 +1,36 @@
+name: Weekly Link Audit
+
+on:
+  schedule:
+    # 매주 화요일 00:30 UTC = 09:30 KST
+    - cron: '30 0 * * 2'
+  workflow_dispatch:
+
+jobs:
+  audit:
+    name: Broken links & orphan pages
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Link audit
+        run: python3 scripts/link-audit.py dist >> "$GITHUB_STEP_SUMMARY"
+
+      - name: i18n residue audit
+        run: |
+          NS=$(python3 -c "import json; print(','.join(json.load(open('src/locales/ko.json')).keys()))")
+          python3 scripts/i18n-residue-audit.py dist "$NS" >> "$GITHUB_STEP_SUMMARY"

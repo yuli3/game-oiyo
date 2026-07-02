@@ -1,0 +1,47 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PsychologyWordle from "../../components/games/PsychologyWordle";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "심리학 워들 — 심리학 단어 맞추기 게임",
+    description: "심리학 관련 단어를 6번의 기회 안에 맞춰보세요. 각 시도마다 색깔 힌트를 제공합니다.",
+  },
+  en: {
+    title: "Psycho Wordle — Guess the Psychology Term",
+    description: "Guess the psychology-related word within 6 attempts. Color-coded hints guide you after every guess.",
+  },
+  ja: {
+    title: "サイコロジーワードル — 心理学単語当てゲーム",
+    description: "6回以内に心理学関連の単語を当ててください。各試行後にカラーヒントが表示されます。",
+  },
+  fr: {
+    title: "Psycho Wordle — Devinez le Terme de Psychologie",
+    description: "Devinez le terme lié à la psychologie en 6 tentatives. Des indices colorés vous guident après chaque essai.",
+  },
+  es: {
+    title: "Psico Wordle — Adivina el Término de Psicología",
+    description: "Adivina la palabra relacionada con la psicología en 6 intentos. Pistas codificadas por colores te guían después de cada intento.",
+  },
+  zh: {
+    title: "心理学文字猜谜 — 猜猜心理学单词",
+    description: "在6次机会内猜出心理学相关单词。每次猜测后提供颜色提示。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <PsychologyWordle client:load locale={locale === "ko" ? "ko" : "en"} />
+  </main>
+</BaseLayout>

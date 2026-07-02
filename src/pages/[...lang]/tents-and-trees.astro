@@ -1,0 +1,47 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import TentsAndTreesComp from "../../components/games/TentsAndTrees";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "텐트와 나무 — 텐트 배치 논리 퍼즐",
+    description: "온라인 텐트와 나무 퍼즐을 즐겨보세요. 모든 나무 옆에 텐트를 하나씩 배치하는 논리 퍼즐입니다.",
+  },
+  en: {
+    title: "Tents and Trees Puzzle",
+    description: "Play Tents and Trees online. Place one tent adjacent to each tree while following the row and column hints.",
+  },
+  ja: {
+    title: "テントと木 — テント配置論理パズル",
+    description: "オンラインテントと木パズルを楽しもう。すべての木の隣にテントを一つずつ配置する論理パズルです。",
+  },
+  fr: {
+    title: "Tentes et Arbres — Puzzle logique de placement",
+    description: "Jouez aux Tentes et Arbres en ligne. Placez une tente à côté de chaque arbre en respectant les indices des rangées et colonnes.",
+  },
+  es: {
+    title: "Tiendas y Árboles — Puzzle lógico de colocación",
+    description: "Juega a Tiendas y Árboles en línea. Coloca una tienda junto a cada árbol siguiendo las pistas de filas y columnas.",
+  },
+  zh: {
+    title: "帐篷与树 — 帐篷配置逻辑谜题",
+    description: "享受线上帐篷与树谜题游戏。在每棵树旁放置一顶帐篷，同时遵循行列提示的逻辑谜题。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <TentsAndTreesComp client:load locale={locale === 'ko' ? 'ko' : 'en'} />
+  </main>
+</BaseLayout>

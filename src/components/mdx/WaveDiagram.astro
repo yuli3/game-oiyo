@@ -1,0 +1,196 @@
+---
+interface WaveItem {
+  label: string;
+  value: string;
+  note: string;
+  color?: string;
+}
+
+interface Props {
+  title?: string;
+  items?: WaveItem[];
+}
+
+const { title = "파동의 기본 요소", items = [
+  { label: "진폭", value: "얼마나 크게 흔들리는가", note: "소리에서는 대체로 큰 소리와 관련됩니다.", color: "#2563eb" },
+  { label: "주파수", value: "1초에 몇 번 흔들리는가", note: "소리에서는 높은음·낮은음과 관련됩니다.", color: "#db2777" },
+  { label: "파장", value: "마루와 마루 사이 거리", note: "파동이 공간에서 반복되는 간격입니다.", color: "#059669" },
+] } = Astro.props;
+---
+
+<section class="wave-diagram">
+  <h3>{title}</h3>
+  <div class="wave-diagram__stage" aria-hidden="true">
+    <div class="wave-diagram__axis"></div>
+    <svg viewBox="0 0 720 220" role="img">
+      <path class="wave-diagram__soft" d="M0 110 C60 20 120 20 180 110 C240 200 300 200 360 110 C420 20 480 20 540 110 C600 200 660 200 720 110" />
+      <path class="wave-diagram__main" d="M0 110 C60 20 120 20 180 110 C240 200 300 200 360 110 C420 20 480 20 540 110 C600 200 660 200 720 110" />
+      <line class="wave-diagram__amp" x1="90" y1="110" x2="90" y2="34" />
+      <line class="wave-diagram__length" x1="90" y1="34" x2="450" y2="34" />
+      <circle cx="90" cy="34" r="7" />
+      <circle cx="450" cy="34" r="7" />
+    </svg>
+    <div class="wave-diagram__labels">
+      <span class="wave-diagram__label wave-diagram__label--amp">진폭</span>
+      <span class="wave-diagram__label wave-diagram__label--length">파장</span>
+      <span class="wave-diagram__label wave-diagram__label--freq">주파수 = 반복 횟수</span>
+    </div>
+  </div>
+  <div class="wave-diagram__cards">
+    {
+      items.map((item) => (
+        <article style={`--accent:${item.color ?? "#2563eb"};`}>
+          <strong>{item.label}</strong>
+          <span>{item.value}</span>
+          <p>{item.note}</p>
+        </article>
+      ))
+    }
+  </div>
+</section>
+
+<style>
+  .wave-diagram {
+    margin: 2rem 0;
+  }
+  .wave-diagram h3 {
+    margin: 0 0 1rem;
+    color: #0f172a;
+    font-size: 1.05rem;
+    font-weight: 800;
+  }
+  .wave-diagram__stage {
+    position: relative;
+    min-height: 18rem;
+    border: 1px solid #dbeafe;
+    border-radius: 8px;
+    background:
+      linear-gradient(90deg, rgba(226, 232, 240, 0.55) 1px, transparent 1px),
+      linear-gradient(180deg, rgba(226, 232, 240, 0.55) 1px, transparent 1px),
+      linear-gradient(135deg, #f8fafc, #eef6ff);
+    background-size: 3rem 3rem, 3rem 3rem, auto;
+    overflow: hidden;
+  }
+  .wave-diagram__axis {
+    position: absolute;
+    left: 1.25rem;
+    right: 1.25rem;
+    top: 50%;
+    height: 2px;
+    background: rgba(15, 23, 42, 0.18);
+  }
+  .wave-diagram svg {
+    position: absolute;
+    inset: 1rem;
+    width: calc(100% - 2rem);
+    height: calc(100% - 2rem);
+  }
+  .wave-diagram path,
+  .wave-diagram line,
+  .wave-diagram circle {
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .wave-diagram__soft {
+    stroke: rgba(37, 99, 235, 0.14);
+    stroke-width: 20;
+  }
+  .wave-diagram__main {
+    stroke: #2563eb;
+    stroke-width: 7;
+  }
+  .wave-diagram__amp {
+    stroke: #db2777;
+    stroke-width: 5;
+    stroke-dasharray: 8 8;
+  }
+  .wave-diagram__length {
+    stroke: #059669;
+    stroke-width: 5;
+  }
+  .wave-diagram circle {
+    fill: #fff;
+    stroke: #059669;
+    stroke-width: 4;
+  }
+  .wave-diagram__label {
+    position: absolute;
+    display: inline-flex;
+    align-items: center;
+    min-height: 2rem;
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+    background: #fff;
+    color: #0f172a;
+    font-size: 0.78rem;
+    font-weight: 900;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+  }
+  .wave-diagram__label--amp {
+    left: 12%;
+    top: 32%;
+    color: #db2777;
+  }
+  .wave-diagram__label--length {
+    left: 34%;
+    top: 12%;
+    color: #059669;
+  }
+  .wave-diagram__label--freq {
+    right: 7%;
+    bottom: 14%;
+    color: #2563eb;
+  }
+  .wave-diagram__cards {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+  }
+  .wave-diagram__cards article {
+    border: 1px solid #e2e8f0;
+    border-top: 4px solid var(--accent);
+    border-radius: 8px;
+    background: #fff;
+    padding: 0.9rem;
+  }
+  .wave-diagram__cards strong,
+  .wave-diagram__cards span {
+    display: block;
+  }
+  .wave-diagram__cards strong {
+    color: #0f172a;
+    font-size: 0.92rem;
+  }
+  .wave-diagram__cards span {
+    margin-top: 0.25rem;
+    color: var(--accent);
+    font-size: 0.84rem;
+    font-weight: 800;
+  }
+  .wave-diagram__cards p {
+    margin: 0.45rem 0 0;
+    color: #475569;
+    font-size: 0.86rem;
+    line-height: 1.55;
+  }
+  @media (max-width: 760px) {
+    .wave-diagram__stage {
+      min-height: 16rem;
+    }
+    .wave-diagram__cards {
+      grid-template-columns: 1fr;
+    }
+    .wave-diagram__label {
+      font-size: 0.72rem;
+    }
+    .wave-diagram__label--length {
+      left: 28%;
+    }
+    .wave-diagram__label--freq {
+      right: 4%;
+      bottom: 8%;
+    }
+  }
+</style>

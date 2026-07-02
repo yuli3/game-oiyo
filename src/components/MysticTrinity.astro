@@ -1,0 +1,102 @@
+---
+import trinity from "../config/mystic-trinity.json";
+
+// Cross-site "Mystic Trinity" navigation: every mystic page points to the
+// three family verbs — look it up (wiki), learn it (blog), try it (oiyo) —
+// so visitors never dead-end on any domain. Mapping lives in
+// mystic-trinity.json and is duplicated across the three Astro repos.
+const CURRENT_SITE = "blog";
+
+interface Props {
+  topic?: string;
+  slug?: string;
+  locale: string;
+}
+
+const { topic: topicProp, slug, locale } = Astro.props;
+
+function inferTopic(s: string): string | null {
+  if (/chinese-zodiac/.test(s)) return "chinese-zodiac";
+  if (/tarot/.test(s)) return "tarot";
+  if (/saju/.test(s)) return "saju";
+  if (/astrology/.test(s)) return "astrology";
+  if (/zodiac|horoscope/.test(s)) return "zodiac";
+  if (/numerology/.test(s)) return "numerology";
+  if (/blood-type/.test(s)) return "blood-type";
+  if (/dream/.test(s)) return "dream";
+  if (/palm/.test(s)) return "palmistry";
+  if (/face-reading|physiognomy/.test(s)) return "physiognomy";
+  if (/oracle/.test(s)) return "oracle";
+  if (/^fortune-/.test(s)) return "fortune";
+  if (/riasec/.test(s)) return "riasec";
+  if (/mbti/.test(s)) return "mbti";
+  return null;
+}
+
+type TrinityLink = { site: string; path: string; locales: string[] | "all" };
+type SiteInfo = { base: string; trailingSlash: boolean };
+
+const topic = topicProp ?? (slug ? inferTopic(slug) : null);
+const topicData = topic
+  ? (trinity.topics as Record<string, Record<string, TrinityLink>>)[topic]
+  : null;
+
+const LABELS: Record<string, { heading: string; lookup: string; learn: string; try: string }> = {
+  ko: { heading: "이 주제, 세 가지 방법으로 만나보세요", lookup: "📖 개념 알아보기", learn: "🎓 깊이 배우기", try: "✨ 직접 해보기" },
+  en: { heading: "Explore this topic across the Oiyo family", lookup: "📖 Look it up", learn: "🎓 Learn it", try: "✨ Try it" },
+  ja: { heading: "このテーマをもっと深く", lookup: "📖 概念を調べる", learn: "🎓 深く学ぶ", try: "✨ 体験する" },
+  fr: { heading: "Approfondir ce sujet", lookup: "📖 Consulter", learn: "🎓 Apprendre", try: "✨ Essayer" },
+  es: { heading: "Profundiza en este tema", lookup: "📖 Consultar", learn: "🎓 Aprender", try: "✨ Probar" },
+  zh: { heading: "深入这个主题", lookup: "📖 查概念", learn: "🎓 深入学习", try: "✨ 立即体验" },
+};
+const text = LABELS[locale] ?? LABELS.en;
+
+const SITE_NAMES: Record<string, string> = {
+  oiyo: "oiyo.net", blog: "Oiyo Blog", wiki: "Oiyo Wiki", ahoxy: "Ahoxy",
+};
+
+const ACTION_ORDER = ["lookup", "learn", "try"] as const;
+const currentPath = Astro.url.pathname;
+
+const links = topicData
+  ? ACTION_ORDER.flatMap((action) => {
+      const l = topicData[action];
+      if (!l) return [];
+      if (l.locales !== "all" && !l.locales.includes(locale)) return [];
+      const site = (trinity.sites as Record<string, SiteInfo>)[l.site];
+      if (!site) return [];
+      const localizedPath = `/${locale}${l.path}${site.trailingSlash ? "/" : ""}`;
+      // Never link a page to itself
+      if (l.site === CURRENT_SITE && currentPath.startsWith(`/${locale}${l.path}`)) return [];
+      return [{
+        action,
+        href: l.site === CURRENT_SITE ? localizedPath : site.base + localizedPath,
+        siteName: SITE_NAMES[l.site] ?? l.site,
+        external: l.site !== CURRENT_SITE,
+      }];
+    })
+  : [];
+---
+
+{links.length > 0 && (
+  <aside
+    aria-label="Oiyo family related links"
+    class="mt-10 rounded-xl border border-border bg-card/60 px-5 py-4"
+  >
+    <p class="mb-3 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+      {text.heading}
+    </p>
+    <div class="flex flex-wrap gap-2">
+      {links.map((l) => (
+        <a
+          href={l.href}
+          {...(l.external ? { rel: "noopener" } : {})}
+          class="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:border-primary/50 hover:text-primary"
+        >
+          <span>{text[l.action]}</span>
+          <span class="text-[10px] uppercase tracking-wider text-muted-foreground">· {l.siteName}</span>
+        </a>
+      ))}
+    </div>
+  </aside>
+)}

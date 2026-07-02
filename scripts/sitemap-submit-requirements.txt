@@ -1,0 +1,9 @@
+# sitemap-submit.py dependencies
+# Install: pip install -r scripts/sitemap-submit-requirements.txt
+
+requests>=2.32.0
+python-dotenv>=1.0.0
+
+# Optional: required only for Google Search Console submission
+# google-api-python-client>=2.140.0
+# google-auth>=2.35.0

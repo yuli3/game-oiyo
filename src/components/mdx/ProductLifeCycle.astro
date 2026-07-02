@@ -1,0 +1,178 @@
+---
+/**
+ * ProductLifeCycle — 제품 수명 주기 (Product Life Cycle, SVG)
+ * Props:
+ *   title       - 차트 제목
+ *   showProfit  - 이익 곡선 함께 표시 (default: false)
+ *   highlight   - 강조할 단계 "introduction"|"growth"|"maturity"|"decline"
+ *   caption     - 하단 설명
+ */
+interface Props {
+  title?: string;
+  showProfit?: boolean;
+  highlight?: "introduction" | "growth" | "maturity" | "decline";
+  caption?: string;
+}
+
+const {
+  title = "제품 수명 주기 (PLC)",
+  showProfit = false,
+  highlight,
+  caption,
+} = Astro.props;
+
+const W = 560;
+const H = 300;
+const PAD = { top: 35, right: 30, bottom: 65, left: 55 };
+const cW = W - PAD.left - PAD.right;
+const cH = H - PAD.top - PAD.bottom;
+
+const px = (x: number) => PAD.left + (x / 100) * cW;
+const py = (y: number) => PAD.top + cH - (y / 100) * cH;
+
+// Sales curve: S-curve shaped
+const salesPts = [
+  { x: 0, y: 2 },
+  { x: 5, y: 3 },
+  { x: 12, y: 8 },   // intro end
+  { x: 20, y: 20 },
+  { x: 30, y: 48 },
+  { x: 40, y: 72 },  // growth end
+  { x: 50, y: 84 },
+  { x: 60, y: 88 },
+  { x: 68, y: 87 },  // maturity end
+  { x: 76, y: 78 },
+  { x: 84, y: 62 },
+  { x: 90, y: 42 },
+  { x: 95, y: 25 },
+  { x: 100, y: 12 }, // decline
+];
+
+// Profit curve (starts negative, peaks during growth, declines)
+const profitPts = [
+  { x: 0, y: 30 },   // negative (below midline, displayed differently)
+  { x: 8, y: 24 },
+  { x: 15, y: 28 },
+  { x: 22, y: 38 },
+  { x: 32, y: 60 },
+  { x: 42, y: 72 },
+  { x: 55, y: 68 },
+  { x: 65, y: 58 },
+  { x: 75, y: 44 },
+  { x: 85, y: 32 },
+  { x: 95, y: 20 },
+  { x: 100, y: 16 },
+];
+
+function curvePath(pts: { x: number; y: number }[]): string {
+  if (pts.length < 2) return "";
+  let d = `M ${px(pts[0].x)} ${py(pts[0].y)}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const x1 = px(pts[i].x);     const y1 = py(pts[i].y);
+    const x2 = px(pts[i + 1].x); const y2 = py(pts[i + 1].y);
+    const cpx = (x1 + x2) / 2;
+    d += ` C ${cpx} ${y1}, ${cpx} ${y2}, ${x2} ${y2}`;
+  }
+  return d;
+}
+
+// Phase definitions (x boundaries in 0-100 space)
+const phases = [
+  { key: "introduction", label: "도입기", en: "Introduction", xStart: 0, xEnd: 22, color: "#8b5cf6" },
+  { key: "growth",       label: "성장기", en: "Growth",       xStart: 22, xEnd: 52, color: "#3b82f6" },
+  { key: "maturity",     label: "성숙기", en: "Maturity",     xStart: 52, xEnd: 73, color: "#22c55e" },
+  { key: "decline",      label: "쇠퇴기", en: "Decline",      xStart: 73, xEnd: 100, color: "#f59e0b" },
+];
+---
+
+<div class="edu-chart-wrap">
+  {title && <div class="edu-chart-title">{title}</div>}
+  <div class="edu-chart-body">
+    <svg viewBox={`0 0 ${W} ${H}`} style={`max-width:${W}px; width:100%;`} aria-label={title}>
+
+      <!-- Phase background shading -->
+      {phases.map(ph => (
+        <rect
+          x={px(ph.xStart)}
+          y={PAD.top}
+          width={px(ph.xEnd) - px(ph.xStart)}
+          height={cH}
+          fill={ph.color}
+          fill-opacity={highlight === ph.key ? 0.15 : 0.06}
+        />
+      ))}
+
+      <!-- Phase divider lines -->
+      {phases.slice(1).map(ph => (
+        <line x1={px(ph.xStart)} y1={PAD.top} x2={px(ph.xStart)} y2={PAD.top + cH} stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4,3"/>
+      ))}
+
+      <!-- Profit curve -->
+      {showProfit && (
+        <path d={curvePath(profitPts)} fill="none" stroke="#f59e0b" stroke-width="2" stroke-dasharray="6,3" stroke-linecap="round"/>
+      )}
+
+      <!-- Sales curve -->
+      <path d={curvePath(salesPts)} fill="none" stroke="#3b82f6" stroke-width="3" stroke-linecap="round"/>
+
+      <!-- Axes -->
+      <line x1={PAD.left} y1={PAD.top} x2={PAD.left} y2={PAD.top + cH + 10} stroke="#334155" stroke-width="2" stroke-linecap="round"/>
+      <line x1={PAD.left - 10} y1={PAD.top + cH} x2={PAD.left + cW} y2={PAD.top + cH} stroke="#334155" stroke-width="2" stroke-linecap="round"/>
+
+      <!-- Axis labels -->
+      <text x={PAD.left + cW / 2} y={H - 8} text-anchor="middle" font-size="12" fill="#64748b" font-weight="600">시간 (Time)</text>
+      <text x={14} y={PAD.top + cH / 2} text-anchor="middle" font-size="12" fill="#64748b" font-weight="600" transform={`rotate(-90, 14, ${PAD.top + cH / 2})`}>매출 / 이익</text>
+
+      <!-- Phase labels at bottom -->
+      {phases.map(ph => (
+        <>
+          <text
+            x={px((ph.xStart + ph.xEnd) / 2)}
+            y={H - 30}
+            text-anchor="middle"
+            font-size="11"
+            font-weight="700"
+            fill={ph.color}
+          >{ph.label}</text>
+          <text
+            x={px((ph.xStart + ph.xEnd) / 2)}
+            y={H - 16}
+            text-anchor="middle"
+            font-size="9"
+            fill={ph.color}
+            opacity="0.7"
+          >{ph.en}</text>
+        </>
+      ))}
+
+      <!-- Sales curve label -->
+      <text x={px(45)} y={py(82) - 10} font-size="11" font-weight="700" fill="#2563eb">매출 (Sales)</text>
+
+      <!-- Profit curve label -->
+      {showProfit && (
+        <text x={px(38)} y={py(74) + 16} font-size="11" font-weight="700" fill="#d97706">이익 (Profit)</text>
+      )}
+
+    </svg>
+
+    <div class="edu-chart-legend">
+      {phases.map(ph => (
+        <div class="edu-chart-legend-item">
+          <span class="edu-chart-legend-box" style={`background:${ph.color}; opacity:0.6`}></span>
+          <span>{ph.label} ({ph.en})</span>
+        </div>
+      ))}
+    </div>
+  </div>
+  {caption && <p class="edu-chart-caption">{caption}</p>}
+</div>
+
+<style>
+  .edu-chart-wrap { margin:2.5rem 0; background:#fff; border:1px solid #e2e8f0; border-radius:1rem; padding:1.5rem; box-shadow:0 4px 16px rgba(0,0,0,.06); }
+  .edu-chart-title { font-weight:700; font-size:1rem; color:#1e293b; margin-bottom:1.25rem; text-align:center; }
+  .edu-chart-body { display:flex; flex-direction:column; align-items:center; gap:1rem; }
+  .edu-chart-legend { display:flex; flex-wrap:wrap; gap:.75rem 1.5rem; justify-content:center; }
+  .edu-chart-legend-item { display:flex; align-items:center; gap:.5rem; font-size:.78rem; color:#475569; font-weight:600; }
+  .edu-chart-legend-box { width:14px; height:14px; border-radius:3px; display:inline-block; }
+  .edu-chart-caption { font-size:.78rem; color:#64748b; text-align:center; margin-top:.75rem; font-style:italic; }
+</style>

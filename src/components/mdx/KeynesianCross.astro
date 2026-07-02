@@ -1,0 +1,171 @@
+---
+/**
+ * KeynesianCross — 케인지안 크로스 모형 (SVG)
+ * 45° line (Y=E) + AE curve → equilibrium output
+ * Props:
+ *   title         - 차트 제목
+ *   autonomousAE  - AE 곡선의 자율 지출 (y절편 위치 0-100, default: 25)
+ *   mpc           - 한계소비성향 slope (0-0.9, default: 0.7)
+ *   showMultiplier - 승수 효과 화살표 표시 (default: false)
+ *   shiftAE       - AE 곡선 위쪽 이동량 (0-30, default: 0)
+ *   caption       - 하단 설명
+ */
+interface Props {
+  title?: string;
+  autonomousAE?: number;
+  mpc?: number;
+  showMultiplier?: boolean;
+  shiftAE?: number;
+  caption?: string;
+}
+
+const {
+  title = "케인지안 크로스 (Keynesian Cross)",
+  autonomousAE = 25,
+  mpc = 0.7,
+  showMultiplier = false,
+  shiftAE = 0,
+  caption,
+} = Astro.props;
+
+const W = 440;
+const H = 360;
+const PAD = { top: 30, right: 40, bottom: 60, left: 60 };
+const cW = W - PAD.left - PAD.right;
+const cH = H - PAD.top - PAD.bottom;
+
+const px = (x: number) => PAD.left + (x / 100) * cW;
+const py = (y: number) => PAD.top + cH - (y / 100) * cH;
+
+// 45° line: E = Y (Y = 0 → Y = 100)
+const line45Pts = [{ x: 0, y: 0 }, { x: 100, y: 100 }];
+
+// AE curve: E = a + MPC * Y  (a = autonomousAE)
+const aePts = [
+  { x: 0, y: autonomousAE },
+  { x: 100, y: autonomousAE + mpc * 100 },
+];
+
+// Shifted AE (for multiplier demo)
+const aeShiftedPts = shiftAE > 0 ? [
+  { x: 0, y: autonomousAE + shiftAE },
+  { x: 100, y: autonomousAE + shiftAE + mpc * 100 },
+] : null;
+
+// Equilibrium: Y = a + MPC*Y → Y*(1-MPC) = a → Y* = a / (1-MPC)
+const eqY_val = autonomousAE / (1 - mpc);
+const eqY_pct = Math.min(95, eqY_val); // cap at 95 for display
+
+const eqY_shifted = aeShiftedPts ? Math.min(95, (autonomousAE + shiftAE) / (1 - mpc)) : null;
+
+function polyline(pts: { x: number; y: number }[]) {
+  return pts.map(p => `${px(p.x)},${py(p.y)}`).join(" ");
+}
+
+const ticks = [0, 20, 40, 60, 80, 100];
+---
+
+<div class="edu-chart-wrap">
+  {title && <div class="edu-chart-title">{title}</div>}
+  <div class="edu-chart-body">
+    <svg viewBox={`0 0 ${W} ${H}`} style={`max-width:${W}px; width:100%;`} aria-label={title}>
+
+      <!-- Grid -->
+      {ticks.map(v => (
+        <>
+          <line x1={PAD.left} y1={py(v)} x2={PAD.left + cW} y2={py(v)} stroke="#f1f5f9" stroke-width="1"/>
+          <line x1={px(v)} y1={PAD.top} x2={px(v)} y2={PAD.top + cH} stroke="#f1f5f9" stroke-width="1"/>
+        </>
+      ))}
+
+      <!-- 45° line (Y = E) -->
+      <polyline points={polyline(line45Pts)} fill="none" stroke="#94a3b8" stroke-width="2" stroke-dasharray="6,4" stroke-linecap="round"/>
+      <text x={px(85)} y={py(90) - 8} font-size="11" font-weight="700" fill="#64748b">E = Y (45°)</text>
+
+      <!-- Shifted AE curve -->
+      {aeShiftedPts && (
+        <>
+          <polyline points={polyline(aeShiftedPts)} fill="none" stroke="#93c5fd" stroke-width="2" stroke-dasharray="6,3" stroke-linecap="round"/>
+          <text x={px(aeShiftedPts[1].x) - 8} y={py(aeShiftedPts[1].y) + 4} text-anchor="end" font-size="11" font-weight="700" fill="#3b82f6" opacity="0.7">AE'</text>
+        </>
+      )}
+
+      <!-- AE curve -->
+      <polyline points={polyline(aePts)} fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round"/>
+      <text x={px(aePts[1].x) - 8} y={py(aePts[1].y) + 4} text-anchor="end" font-size="11" font-weight="700" fill="#2563eb">AE</text>
+
+      <!-- AE y-intercept annotation -->
+      <circle cx={px(0)} cy={py(autonomousAE)} r="3.5" fill="#3b82f6" stroke="#fff" stroke-width="1.5"/>
+      <text x={PAD.left + 6} y={py(autonomousAE) - 6} font-size="10" fill="#2563eb" font-weight="600">a = {autonomousAE}</text>
+
+      <!-- Equilibrium dashed lines -->
+      <line x1={px(eqY_pct)} y1={py(eqY_pct)} x2={px(eqY_pct)} y2={py(0)} stroke="#22c55e" stroke-width="1.5" stroke-dasharray="5,4"/>
+      <line x1={PAD.left} y1={py(eqY_pct)} x2={px(eqY_pct)} y2={py(eqY_pct)} stroke="#22c55e" stroke-width="1.5" stroke-dasharray="5,4"/>
+      <text x={px(eqY_pct)} y={py(0) + 16} text-anchor="middle" font-size="10" fill="#16a34a" font-weight="700">Y*</text>
+      <text x={PAD.left - 8} y={py(eqY_pct) + 4} text-anchor="end" font-size="10" fill="#16a34a" font-weight="700">E*</text>
+
+      <!-- Equilibrium point -->
+      <circle cx={px(eqY_pct)} cy={py(eqY_pct)} r="5.5" fill="#1e293b" stroke="#fff" stroke-width="2"/>
+
+      <!-- Shifted equilibrium -->
+      {eqY_shifted && (
+        <>
+          <line x1={px(eqY_shifted)} y1={py(eqY_shifted)} x2={px(eqY_shifted)} y2={py(0)} stroke="#cbd5e1" stroke-width="1" stroke-dasharray="4,4"/>
+          <text x={px(eqY_shifted)} y={py(0) + 16} text-anchor="middle" font-size="10" fill="#94a3b8" font-weight="700">Y'</text>
+          <circle cx={px(eqY_shifted)} cy={py(eqY_shifted)} r="4" fill="#64748b" stroke="#fff" stroke-width="2"/>
+
+          <!-- Multiplier arrow -->
+          {showMultiplier && (
+            <>
+              <defs>
+                <marker id="multArrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                  <polygon points="0 0, 8 3, 0 6" fill="#94a3b8"/>
+                </marker>
+              </defs>
+              <line
+                x1={px(eqY_pct) + 4} y1={py(0) + 28}
+                x2={px(eqY_shifted) - 4} y2={py(0) + 28}
+                stroke="#94a3b8" stroke-width="1.5" marker-end="url(#multArrow)"
+              />
+              <text x={px((eqY_pct + eqY_shifted) / 2)} y={py(0) + 42} text-anchor="middle" font-size="9" fill="#64748b">
+                ΔY = ΔAE × 1/(1-MPC)
+              </text>
+            </>
+          )}
+        </>
+      )}
+
+      <!-- Axes -->
+      <line x1={PAD.left} y1={PAD.top} x2={PAD.left} y2={PAD.top + cH + 10} stroke="#334155" stroke-width="2" stroke-linecap="round"/>
+      <line x1={PAD.left - 10} y1={PAD.top + cH} x2={PAD.left + cW} y2={PAD.top + cH} stroke="#334155" stroke-width="2" stroke-linecap="round"/>
+
+      <!-- Axis labels -->
+      <text x={PAD.left + cW / 2} y={H - 8} text-anchor="middle" font-size="12" fill="#64748b" font-weight="600">국민소득 (Y)</text>
+      <text x={14} y={PAD.top + cH / 2} text-anchor="middle" font-size="12" fill="#64748b" font-weight="600" transform={`rotate(-90, 14, ${PAD.top + cH / 2})`}>총지출 (AE)</text>
+
+      <!-- Tick labels -->
+      {ticks.filter(v => v > 0).map(v => (
+        <text x={px(v)} y={PAD.top + cH + 16} text-anchor="middle" font-size="10" fill="#94a3b8">{v}</text>
+      ))}
+
+    </svg>
+
+    <div class="edu-chart-legend">
+      <div class="edu-chart-legend-item"><span class="edu-chart-legend-line" style="background:#3b82f6"></span><span>AE — 총지출곡선 (기울기 = MPC)</span></div>
+      <div class="edu-chart-legend-item"><span style="display:inline-block; width:22px; border-top:2px dashed #94a3b8; margin-top:4px"></span><span>45° 균형선 (E = Y)</span></div>
+      <div class="edu-chart-legend-item"><span class="edu-chart-legend-dot" style="background:#1e293b"></span><span>균형 국민소득 (Y*)</span></div>
+    </div>
+  </div>
+  {caption && <p class="edu-chart-caption">{caption}</p>}
+</div>
+
+<style>
+  .edu-chart-wrap { margin:2.5rem 0; background:#fff; border:1px solid #e2e8f0; border-radius:1rem; padding:1.5rem; box-shadow:0 4px 16px rgba(0,0,0,.06); }
+  .edu-chart-title { font-weight:700; font-size:1rem; color:#1e293b; margin-bottom:1.25rem; text-align:center; }
+  .edu-chart-body { display:flex; flex-direction:column; align-items:center; gap:1rem; }
+  .edu-chart-legend { display:flex; flex-wrap:wrap; gap:.75rem 1.5rem; justify-content:center; }
+  .edu-chart-legend-item { display:flex; align-items:center; gap:.5rem; font-size:.78rem; color:#475569; font-weight:600; }
+  .edu-chart-legend-line { width:24px; height:3px; border-radius:2px; display:inline-block; }
+  .edu-chart-legend-dot { width:10px; height:10px; border-radius:50%; display:inline-block; }
+  .edu-chart-caption { font-size:.78rem; color:#64748b; text-align:center; margin-top:.75rem; font-style:italic; }
+</style>

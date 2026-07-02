@@ -1,0 +1,47 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import DominoesComp from "../../components/games/Dominoes";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "도미노 — 숫자를 이어라! 도미노 게임",
+    description: "온라인 도미노 게임을 즐겨보세요. 같은 숫자끼리 연결하며 패를 모두 내려놓으면 승리합니다.",
+  },
+  en: {
+    title: "Dominoes Game",
+    description: "Play Dominoes online. Connect matching numbers and be the first to play all your tiles to win.",
+  },
+  ja: {
+    title: "ドミノ — 数字をつなげろ！ドミノゲーム",
+    description: "オンラインドミノを楽しもう。同じ数字をつなげながら全タイルを出せば勝ちです。",
+  },
+  fr: {
+    title: "Dominos en ligne — Reliez les chiffres!",
+    description: "Jouez aux Dominos en ligne. Connectez les chiffres identiques et soyez le premier à poser toutes vos tuiles.",
+  },
+  es: {
+    title: "Dominó en línea — ¡Une los números!",
+    description: "Juega al Dominó en línea. Conecta los números iguales y sé el primero en colocar todas tus fichas para ganar.",
+  },
+  zh: {
+    title: "多米诺骨牌 — 连接数字！多米诺游戏",
+    description: "享受线上多米诺骨牌游戏。连接相同数字，最先出完所有牌者获胜。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <DominoesComp client:load locale={locale === 'ko' ? 'ko' : 'en'} />
+  </main>
+</BaseLayout>

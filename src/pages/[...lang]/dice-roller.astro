@@ -1,0 +1,47 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import DiceRollerComp from "../../components/games/DiceRoller";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "주사위 굴리기 — D4~D20 온라인 주사위 롤러",
+    description: "온라인 주사위 롤러입니다. D4, D6, D8, D10, D12, D20 주사위를 선택해 굴리고 합계를 확인하세요.",
+  },
+  en: {
+    title: "Dice Roller — D4 to D20 Online",
+    description: "Online dice roller for D4, D6, D8, D10, D12, and D20. Select your dice, roll, and see the results instantly.",
+  },
+  ja: {
+    title: "ダイスローラー — D4〜D20オンライン",
+    description: "オンラインダイスローラーです。D4、D6、D8、D10、D12、D20を選んで振り、合計を確認しましょう。",
+  },
+  fr: {
+    title: "Lanceur de Dés — D4 à D20 en ligne",
+    description: "Lanceur de dés en ligne pour D4, D6, D8, D10, D12 et D20. Choisissez vos dés, lancez et voyez les résultats.",
+  },
+  es: {
+    title: "Lanzador de Dados — D4 a D20 en línea",
+    description: "Lanzador de dados en línea para D4, D6, D8, D10, D12 y D20. Elige tus dados, lanza y ve los resultados al instante.",
+  },
+  zh: {
+    title: "骰子掷骰器 — D4至D20线上",
+    description: "线上骰子掷骰器，支援D4、D6、D8、D10、D12和D20。选择骰子、投掷并即时查看结果。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <DiceRollerComp client:load locale={locale === 'ko' ? 'ko' : 'en'} />
+  </main>
+</BaseLayout>

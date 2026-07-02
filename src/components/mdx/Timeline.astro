@@ -1,0 +1,191 @@
+---
+/**
+ * Timeline — 시대별 역사/이론 발전 타임라인 컴포넌트
+ * 경영/경제학 이론의 시대별 흐름 표현
+ *
+ * Props:
+ *   events  - [{ year, title, description?, color?, icon? }]
+ *   title   - 제목 (optional)
+ *   layout  - "vertical" | "horizontal" (default "vertical")
+ */
+interface EventItem {
+  year?: string;
+  label?: string;
+  title?: string;
+  description?: string;
+  content?: string;
+  note?: string;
+  color?: string;
+  icon?: string;
+}
+interface Props {
+  title?: string;
+  events?: EventItem[];
+  items?: EventItem[];
+  layout?: "vertical" | "horizontal";
+}
+
+import { inlineMd } from "../../lib/utils";
+const { title, layout = "vertical" } = Astro.props;
+const events = (Astro.props.events ?? Astro.props.items ?? []).map((ev) => ({
+  ...ev,
+  year: ev.year ?? ev.label ?? "",
+  title: ev.title ?? ev.label ?? "",
+  description: ev.description ?? ev.content ?? ev.note,
+}));
+const defaultColors = [
+  "#3b82f6",
+  "#8b5cf6",
+  "#10b981",
+  "#f59e0b",
+  "#ef4444",
+  "#06b6d4",
+];
+---
+
+<div class={`edu-timeline edu-timeline--${layout}`}>
+  {title && <div class="edu-timeline__title">{title}</div>}
+  <div class="edu-timeline__track">
+    {
+      events.map((ev, i) => {
+        const color = ev.color ?? defaultColors[i % defaultColors.length];
+        return (
+          <div class="edu-timeline__event">
+            <div
+              class="edu-timeline__node"
+              style={`background: ${color}; box-shadow: 0 0 0 4px ${color}22;`}
+            >
+              {ev.icon ?? i + 1}
+            </div>
+            <div class="edu-timeline__content">
+              <div class="edu-timeline__year" style={`color: ${color};`}>
+                {ev.year}
+              </div>
+              <div class="edu-timeline__heading" set:html={inlineMd(ev.title)} />
+              {ev.description && (
+                <div class="edu-timeline__desc" set:html={inlineMd(ev.description)} />
+              )}
+            </div>
+          </div>
+        );
+      })
+    }
+  </div>
+</div>
+
+<style>
+  .edu-timeline {
+    margin: 2.5rem 0;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 1rem;
+    padding: 1.75rem 2rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  }
+  .edu-timeline__title {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #1e293b;
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+
+  /* === VERTICAL === */
+  .edu-timeline--vertical .edu-timeline__track {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding-left: 1.5rem;
+    border-left: 2px solid #e2e8f0;
+    margin-left: 1.25rem;
+  }
+  .edu-timeline--vertical .edu-timeline__event {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    position: relative;
+  }
+  .edu-timeline--vertical .edu-timeline__node {
+    position: absolute;
+    left: -2.55rem;
+    top: 0.05rem;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .edu-timeline--vertical .edu-timeline__content {
+    padding-left: 0;
+  }
+
+  /* === HORIZONTAL === */
+  .edu-timeline--horizontal .edu-timeline__track {
+    display: flex;
+    flex-direction: row;
+    gap: 0;
+    overflow-x: auto;
+    padding-bottom: 1rem;
+    position: relative;
+  }
+  .edu-timeline--horizontal .edu-timeline__track::before {
+    content: "";
+    position: absolute;
+    top: 1.5rem;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #e2e8f0;
+  }
+  .edu-timeline--horizontal .edu-timeline__event {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 140px;
+    flex: 1;
+    padding: 0 1rem;
+    position: relative;
+  }
+  .edu-timeline--horizontal .edu-timeline__node {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #fff;
+    z-index: 2;
+    margin-bottom: 1rem;
+  }
+  .edu-timeline--horizontal .edu-timeline__content {
+    text-align: center;
+  }
+
+  .edu-timeline__year {
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.25rem;
+  }
+  .edu-timeline__heading {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.3rem;
+  }
+  .edu-timeline__desc {
+    font-size: 0.82rem;
+    color: #64748b;
+    line-height: 1.5;
+  }
+</style>

@@ -1,0 +1,342 @@
+---
+import { getTranslations } from "../lib/i18n";
+import type { Locale } from "../lib/i18n";
+
+interface Props {
+  locale: string;
+}
+
+const { locale } = Astro.props;
+const t = await getTranslations(locale as Locale);
+const common = t.common as Record<string, string>;
+
+// ── Bundle definitions (fully i18n) ──────────────────────────────────────────
+type LocaleKey = "ko" | "en" | "ja" | "fr" | "es" | "zh";
+
+interface Bundle {
+  title: Partial<Record<LocaleKey, string>>;
+  subtitle: Partial<Record<LocaleKey, string>>;
+  href: string;
+  iconColor: string;
+  bgColor: string;
+  svgPath: string;
+}
+
+const loc = locale as LocaleKey;
+
+const bundles: Bundle[] = [
+  {
+    title: {
+      ko: "심리 테스트", en: "Psychology Tests", ja: "心理テスト",
+      fr: "Tests Psychologiques", es: "Tests Psicológicos", zh: "心理测验",
+    },
+    subtitle: {
+      ko: "MBTI·빅파이브·에니어그램·번아웃·EQ",
+      en: "MBTI, Big Five, Enneagram, Burnout, EQ",
+      ja: "MBTI・ビッグファイブ・エニアグラム・バーンアウト・EQ",
+      fr: "MBTI, Big Five, Ennéagramme, Burnout, EQ",
+      es: "MBTI, Big Five, Eneagrama, Burnout, EQ",
+      zh: "MBTI·大五人格·九型·职业倦怠·EQ",
+    },
+    href: `/${locale}/tools`,
+    iconColor: "text-violet-700",
+    bgColor: "bg-violet-100",
+    svgPath: `<path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z" />`,
+  },
+  {
+    title: {
+      ko: "세금·금융 계산기", en: "Tax & Finance Tools", ja: "税金・金融計算機",
+      fr: "Outils Fiscaux & Finance", es: "Herramientas Fiscales", zh: "税务·金融工具",
+    },
+    subtitle: {
+      ko: "연봉·퇴직금·부가세·복리·연금 계산",
+      en: "Salary, severance, VAT, compound interest, pension",
+      ja: "年収・退職金・消費税・複利・年金計算",
+      fr: "Salaire, indemnité, TVA, intérêts composés, retraite",
+      es: "Salario, indemnización, IVA, interés compuesto, pensión",
+      zh: "薪资、退休金、增值税、复利、年金计算",
+    },
+    href: `/${locale}/tools`,
+    iconColor: "text-amber-700",
+    bgColor: "bg-amber-100",
+    svgPath: `<path stroke-linecap="round" stroke-linejoin="round" d="M15.75 15.75V18m-7.5-6.75h.008v.008H8.25v-.008Zm0 2.25h.008v.008H8.25V13.5Zm0 2.25h.008v.008H8.25v-.008Zm0 2.25h.008v.008H8.25V18Zm2.498-6.75h.007v.008h-.007v-.008Zm0 2.25h.007v.008h-.007V13.5Zm0 2.25h.007v.008h-.007v-.008Zm0 2.25h.007v.008h-.007V18Zm2.504-6.75h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008V13.5Zm0 2.25h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008V18Zm2.498-6.75h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008V13.5ZM8.25 6h7.5v2.25h-7.5V6ZM12 2.25c-1.892 0-3.758.11-5.593.322C5.307 2.7 4.5 3.65 4.5 4.757V19.5a2.25 2.25 0 0 0 2.25 2.25h10.5a2.25 2.25 0 0 0 2.25-2.25V4.757c0-1.108-.806-2.057-1.907-2.185A48.507 48.507 0 0 0 12 2.25Z" />`,
+  },
+  {
+    title: {
+      ko: "시험 준비", en: "Exam Courses", ja: "試験対策コース",
+      fr: "Cours d'Examen", es: "Cursos de Examen", zh: "考试课程",
+    },
+    subtitle: {
+      ko: "자격증·공무원·CPA·세무사 강의 시리즈",
+      en: "CPA, civil service, professional certification series",
+      ja: "資格・公務員・CPA・税理士講義シリーズ",
+      fr: "CPA, fonction publique, certifications professionnelles",
+      es: "CPA, servicio civil, series de certificación",
+      zh: "CPA、公务员、税务师系列课程",
+    },
+    href: `/${locale}/courses`,
+    iconColor: "text-emerald-700",
+    bgColor: "bg-emerald-100",
+    svgPath: `<path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.63 48.63 0 0 1 12 20.904a48.63 48.63 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 3.741-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5" />`,
+  },
+  {
+    title: {
+      ko: "건강 도구", en: "Health Tools", ja: "健康ツール",
+      fr: "Outils Santé", es: "Herramientas de Salud", zh: "健康工具",
+    },
+    subtitle: {
+      ko: "BMI·칼로리·수면·간헐적 단식·카페인",
+      en: "BMI, calories, sleep cycles, fasting timer, caffeine",
+      ja: "BMI・カロリー・睡眠・断食タイマー・カフェイン",
+      fr: "IMC, calories, cycles de sommeil, jeûne, caféine",
+      es: "IMC, calorías, sueño, ayuno intermitente, cafeína",
+      zh: "BMI·卡路里·睡眠·断食计时器·咖啡因",
+    },
+    href: `/${locale}/tools`,
+    iconColor: "text-sky-700",
+    bgColor: "bg-sky-100",
+    svgPath: `<path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />`,
+  },
+  {
+    title: {
+      ko: "게임 & 퍼즐", en: "Games & Puzzles", ja: "ゲーム & パズル",
+      fr: "Jeux & Puzzles", es: "Juegos y Puzzles", zh: "遊戲 & 益智",
+    },
+    subtitle: {
+      ko: "스도쿠·바둑·체스·스네이크·워들·지뢰찾기",
+      en: "Sudoku, chess, Go, Snake, Wordle, Minesweeper",
+      ja: "数独・囲碁・チェス・スネーク・ワードル・マインスイーパー",
+      fr: "Sudoku, échecs, Go, Serpent, Wordle, Démineur",
+      es: "Sudoku, ajedrez, Go, Serpiente, Wordle, Buscaminas",
+      zh: "数独·围棋·西洋棋·贪吃蛇·Wordle·扫雷",
+    },
+    href: `/${locale}/tools`,
+    iconColor: "text-indigo-700",
+    bgColor: "bg-indigo-100",
+    svgPath: `<path stroke-linecap="round" stroke-linejoin="round" d="M14.25 6.087c0-.355.186-.676.401-.959.221-.29.349-.634.349-1.003 0-1.036-1.007-1.875-2.25-1.875s-2.25.84-2.25 1.875c0 .369.128.713.349 1.003.215.283.401.604.401.959v0a.64.64 0 0 1-.657.643 48.39 48.39 0 0 1-4.163-.3c.186 1.613.293 3.25.315 4.907a.656.656 0 0 1-.658.663v0c-.355 0-.676-.186-.959-.401a1.647 1.647 0 0 0-1.003-.349c-1.036 0-1.875 1.007-1.875 2.25s.84 2.25 1.875 2.25c.369 0 .713-.128 1.003-.349.283-.215.604-.401.959-.401v0c.31 0 .555.26.532.57a48.039 48.039 0 0 1-.642 5.056c1.518.19 3.058.309 4.616.354a.64.64 0 0 0 .657-.643v0c0-.355-.186-.676-.401-.959a1.647 1.647 0 0 1-.349-1.003c0-1.035 1.008-1.875 2.25-1.875 1.243 0 2.25.84 2.25 1.875 0 .369-.128.713-.349 1.003-.215.283-.401.604-.401.959v0c0 .333.277.599.61.58a48.1 48.1 0 0 0 5.427-.63 48.05 48.05 0 0 0 .582-4.717.532.532 0 0 0-.533-.57v0c-.355 0-.676.186-.959.401-.29.221-.634.349-1.003.349-1.035 0-1.875-1.007-1.875-2.25s.84-2.25 1.875-2.25c.37 0 .713.128 1.003.349.283.215.604.401.959.401v0a.656.656 0 0 0 .658-.663 48.422 48.422 0 0 0-.37-5.36c-1.886.342-3.81.574-5.766.689a.578.578 0 0 1-.61-.58v0Z" />`,
+  },
+  {
+    title: {
+      ko: "매거진 에세이", en: "Magazine Essays", ja: "マガジンエッセイ",
+      fr: "Essais Magazine", es: "Ensayos de Revista", zh: "雜誌文章",
+    },
+    subtitle: {
+      ko: "인문·심리·경제·사회 인사이트",
+      en: "Humanities, psychology, economics, society",
+      ja: "人文・心理・経済・社会インサイト",
+      fr: "Humanités, psychologie, économie, société",
+      es: "Humanidades, psicología, economía, sociedad",
+      zh: "人文·心理·經濟·社會洞察",
+    },
+    href: `/${locale}/magazine`,
+    iconColor: "text-stone-700",
+    bgColor: "bg-stone-100",
+    svgPath: `<path stroke-linecap="round" stroke-linejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 0 0 2.25 2.25h13.5M6 7.5h3v3H6v-3Z" />`,
+  },
+  {
+    title: {
+      ko: "회계·재무", en: "Accounting & Finance", ja: "会計・財務",
+      fr: "Comptabilité & Finance", es: "Contabilidad y Finanzas", zh: "会计·财务",
+    },
+    subtitle: {
+      ko: "재무제표·비율분석·원가관리 학습 도구",
+      en: "Financial statements, ratio analysis, cost management",
+      ja: "財務諸表・比率分析・原価管理学習ツール",
+      fr: "États financiers, analyse des ratios, gestion des coûts",
+      es: "Estados financieros, análisis de ratios, gestión de costos",
+      zh: "财务报表·比率分析·成本管理学习工具",
+    },
+    href: `/${locale}/accounting-finance-guide`,
+    iconColor: "text-emerald-700",
+    bgColor: "bg-emerald-50 border border-emerald-200",
+    svgPath: `<path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />`,
+  },
+  {
+    title: {
+      ko: "이미지 도구", en: "Image Tools", ja: "画像ツール",
+      fr: "Outils Image", es: "Herramientas de Imagen", zh: "图像工具",
+    },
+    subtitle: {
+      ko: "자르기·픽셀아트·흑백·팔레트·ASCII 아트",
+      en: "Crop, pixel art, grayscale, palette, ASCII art",
+      ja: "クロップ・ピクセルアート・グレースケール・パレット・ASCIIアート",
+      fr: "Rogner, pixel art, niveaux de gris, palette, art ASCII",
+      es: "Recortar, pixel art, escala de grises, paleta, arte ASCII",
+      zh: "裁剪·像素藝術·灰度·調色板·ASCII藝術",
+    },
+    href: `/${locale}/tools`,
+    iconColor: "text-rose-700",
+    bgColor: "bg-rose-100",
+    svgPath: `<path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />`,
+  },
+];
+---
+
+<div class="mb-10">
+  <!-- Section header -->
+  <div class="flex items-center gap-3 mb-6">
+    <div class="flex-1 h-px bg-border"></div>
+    <span class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+      {common.quickNav ?? "Quick Access"}
+    </span>
+    <div class="flex-1 h-px bg-border"></div>
+  </div>
+
+  <!-- Japan / France country spotlight (shown only for ja / fr) -->
+  {locale === "ja" && (
+    <div class="mb-6 p-4 rounded-2xl border border-red-200 bg-red-50/60">
+      <p class="text-[10px] font-black uppercase tracking-widest text-red-600 mb-3">🇯🇵 日本専用ツール</p>
+      <div class="flex flex-wrap gap-2">
+        {[
+          { href: `/${locale}/japan-salary-calculator`, label: "💴 給与手取り計算機" },
+          { href: `/${locale}/japan-consumption-tax-calculator`, label: "🧾 消費税計算機" },
+          { href: `/${locale}/japan-income-tax-complete-guide`, label: "📋 所得税ガイド" },
+          { href: `/${locale}/japan-fp-exam-guide`, label: "📊 FP試験ガイド" },
+          { href: `/${locale}/japan-takken-exam-guide`, label: "🏠 宅建試験ガイド" },
+        ].map(({ href, label }) => (
+          <a href={href} class="inline-flex items-center px-3 py-1.5 rounded-full bg-white border border-red-200 text-xs font-semibold text-red-800 hover:bg-red-100 hover:border-red-300 transition-colors">
+            {label}
+          </a>
+        ))}
+      </div>
+    </div>
+  )}
+
+  {locale === "ko" && (
+    <div class="mb-6 p-4 rounded-2xl border border-emerald-200 bg-emerald-50/60">
+      <p class="text-[10px] font-black uppercase tracking-widest text-emerald-700 mb-3">🇰🇷 한국 특화 도구</p>
+      <div class="flex flex-wrap gap-2">
+        {[
+          { href: `/${locale}/annual-leave-calculator`, label: "🏖️ 연차 계산기" },
+          { href: `/${locale}/anniversary-calculator`, label: "💑 기념일·디데이" },
+          { href: `/${locale}/subscription-points-calculator`, label: "🏢 청약가점" },
+          { href: `/${locale}/early-repayment-calculator`, label: "💸 중도상환" },
+          { href: `/${locale}/year-end-settlement-calculator`, label: "📋 연말정산" },
+        ].map(({ href, label }) => (
+          <a href={href} class="inline-flex items-center px-3 py-1.5 rounded-full bg-white border border-emerald-200 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 hover:border-emerald-300 transition-colors">
+            {label}
+          </a>
+        ))}
+      </div>
+    </div>
+  )}
+
+  {locale === "fr" && (
+    <div class="mb-6 p-4 rounded-2xl border border-blue-200 bg-blue-50/60">
+      <p class="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-3">🇫🇷 Outils France</p>
+      <div class="flex flex-wrap gap-2">
+        {[
+          { href: `/${locale}/france-salary-calculator`, label: "💶 Salaire net" },
+          { href: `/${locale}/france-vat-calculator`, label: "🧾 Calculateur TVA" },
+          { href: `/${locale}/france-impot-revenu-guide`, label: "📋 Guide impôt IR" },
+          { href: `/${locale}/france-micro-entrepreneur-guide`, label: "🚀 Micro-entrepreneur" },
+          { href: `/${locale}/france-dcg-dscg-guide`, label: "🎓 DCG / DSCG" },
+        ].map(({ href, label }) => (
+          <a href={href} class="inline-flex items-center px-3 py-1.5 rounded-full bg-white border border-blue-200 text-xs font-semibold text-blue-800 hover:bg-blue-100 hover:border-blue-300 transition-colors">
+            {label}
+          </a>
+        ))}
+      </div>
+    </div>
+  )}
+
+  {locale === "es" && (
+    <div class="mb-6 p-4 rounded-2xl border border-red-200 bg-red-50/60">
+      <p class="text-[10px] font-black uppercase tracking-widest text-red-600 mb-3">🇪🇸 Herramientas España</p>
+      <div class="flex flex-wrap gap-2">
+        {[
+          { href: `/${locale}/spain-salary-calculator`, label: "💰 Salario neto" },
+          { href: `/${locale}/spain-iva-calculator`, label: "🧾 Calculadora IVA" },
+          { href: `/${locale}/spain-irpf-guide`, label: "📋 Guía IRPF" },
+          { href: `/${locale}/spain-autonomo-guide`, label: "🚀 Guía autónomo" },
+          { href: `/${locale}/spain-oposiciones-guide`, label: "🎓 Oposiciones" },
+        ].map(({ href, label }) => (
+          <a href={href} class="inline-flex items-center px-3 py-1.5 rounded-full bg-white border border-red-200 text-xs font-semibold text-red-800 hover:bg-red-100 hover:border-red-300 transition-colors">
+            {label}
+          </a>
+        ))}
+      </div>
+    </div>
+  )}
+
+  {locale === "zh" && (
+    <div class="mb-6 p-4 rounded-2xl border border-red-200 bg-red-50/60">
+      <p class="text-[10px] font-black uppercase tracking-widest text-red-600 mb-3">🇨🇳 中国专属工具</p>
+      <div class="flex flex-wrap gap-2">
+        {[
+          { href: `/${locale}/china-salary-calculator`, label: "💴 个税计算器" },
+          { href: `/${locale}/china-income-tax-guide`, label: "📋 个税指南" },
+          { href: `/${locale}/china-wuxianyijin-guide`, label: "🏥 五险一金指南" },
+          { href: `/${locale}/china-social-insurance-guide`, label: "👴 养老金指南" },
+        ].map(({ href, label }) => (
+          <a href={href} class="inline-flex items-center px-3 py-1.5 rounded-full bg-white border border-red-200 text-xs font-semibold text-red-800 hover:bg-red-100 hover:border-red-300 transition-colors">
+            {label}
+          </a>
+        ))}
+      </div>
+    </div>
+  )}
+
+  <!-- Intent grid -->
+  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+    {bundles.map((bundle) => {
+      const bundleTitle = bundle.title[loc] ?? bundle.title.en ?? "";
+      const bundleSubtitle = bundle.subtitle[loc] ?? bundle.subtitle.en ?? "";
+      return (
+        <a
+          href={bundle.href}
+          class="group flex flex-col gap-3 p-4 md:p-5 rounded-2xl border border-border bg-background hover:shadow-md hover:border-primary/30 transition-all duration-200 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          aria-label={`${bundleTitle} — ${bundleSubtitle}`}
+        >
+          <!-- Icon circle -->
+          <div
+            class:list={["w-10 h-10 rounded-full flex items-center justify-center shrink-0", bundle.bgColor]}
+            aria-hidden="true"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class:list={["w-5 h-5", bundle.iconColor]}
+            >
+              <Fragment set:html={bundle.svgPath} />
+            </svg>
+          </div>
+
+          <!-- Text -->
+          <div class="min-w-0">
+            <p class="text-sm font-bold text-foreground leading-snug">
+              {bundleTitle}
+            </p>
+            <p class="mt-0.5 text-xs text-muted-foreground leading-relaxed line-clamp-2">
+              {bundleSubtitle}
+            </p>
+          </div>
+        </a>
+      );
+    })}
+  </div>
+
+  <!-- Browse all link -->
+  <div class="mt-4 text-center">
+    <a
+      href={`/${locale}/tools`}
+      class="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors"
+    >
+      {common.browseAll ?? "Browse all"} →
+    </a>
+  </div>
+</div>
+
+<style>
+  @media (prefers-reduced-motion: reduce) {
+    a {
+      transition: none !important;
+    }
+    a:hover {
+      transform: none !important;
+    }
+  }
+</style>

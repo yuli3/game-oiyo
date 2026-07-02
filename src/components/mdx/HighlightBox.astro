@@ -1,0 +1,37 @@
+---
+interface Props {
+  type?: "abstract" | "insight" | "info" | string;
+  title?: string;
+}
+
+const { type = "info", title } = Astro.props;
+
+const typeStyles = {
+  abstract:
+    "bg-blue-500/10 border-blue-500/20 text-blue-900",
+  insight:
+    "bg-amber-500/10 border-amber-500/20 text-amber-900",
+  info: "bg-muted/30 border-border/40 text-foreground",
+};
+
+const currentStyle =
+  typeStyles[type as keyof typeof typeStyles] || typeStyles.info;
+---
+
+<div
+  class:list={[
+    "my-8 p-6 rounded-2xl border backdrop-blur-sm animate-fade-up",
+    currentStyle,
+  ]}
+>
+  {
+    title && (
+      <div class="font-bold text-sm tracking-widest uppercase mb-4 opacity-70">
+        {title}
+      </div>
+    )
+  }
+  <div class="prose-sm max-w-none [&>p]:last:mb-0">
+    <slot />
+  </div>
+</div>

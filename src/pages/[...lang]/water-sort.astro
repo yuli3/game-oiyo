@@ -1,0 +1,47 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import WaterSortComp from "../../components/games/WaterSort";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "물 분류 퍼즐 — 색깔을 맞춰 정렬하라",
+    description: "온라인 물 분류 퍼즐을 즐겨보세요. 시험관에 담긴 색깔 물을 같은 색끼리 정렬하는 퍼즐 게임입니다.",
+  },
+  en: {
+    title: "Water Sort Puzzle",
+    description: "Play Water Sort online. Sort colored water in test tubes so each tube contains only one color.",
+  },
+  ja: {
+    title: "ウォーターソートパズル — 色を揃えて整列せよ",
+    description: "オンラインウォーターソートパズルを楽しもう。試験管の色付き水を同じ色ごとに並べるパズルゲームです。",
+  },
+  fr: {
+    title: "Puzzle Water Sort — Triez les couleurs",
+    description: "Jouez au Water Sort en ligne. Triez l'eau colorée dans des tubes à essai pour que chaque tube ne contienne qu'une seule couleur.",
+  },
+  es: {
+    title: "Puzzle Water Sort — Ordena los colores",
+    description: "Juega al Water Sort en línea. Ordena el agua de colores en tubos de ensayo para que cada tubo contenga solo un color.",
+  },
+  zh: {
+    title: "水排序谜题 — 按颜色分类排列",
+    description: "享受线上水排序谜题游戏。将试管中的彩色水按同色分类，让每支试管只有一种颜色的谜题游戏。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <WaterSortComp client:load locale={locale === 'ko' ? 'ko' : 'en'} />
+  </main>
+</BaseLayout>

@@ -1,0 +1,31 @@
+{
+  "name": "Oiyo Blog",
+  "short_name": "Oiyo Blog",
+  "description": "Long-form content, structured lectures, and interactive reading powered by Oiyo.",
+  "start_url": "/",
+  "display": "browser",
+  "background_color": "#f7fee7",
+  "theme_color": "#65a30d",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "32x32",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

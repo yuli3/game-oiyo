@@ -1,0 +1,47 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import WheelSpinnerComp from "../../components/games/WheelSpinner";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "룰렛 돌리기 — 결정 장애 해결! 랜덤 선택 룰렛",
+    description: "선택이 어려울 때 룰렛이 대신 결정해드립니다. 항목을 입력하고 룰렛을 돌려 랜덤으로 선택해보세요.",
+  },
+  en: {
+    title: "Wheel Spinner — Random Picker",
+    description: "Let the wheel decide when you can't make up your mind. Add your options and spin the wheel for a random pick.",
+  },
+  ja: {
+    title: "ルーレット — 決断障害解消！ランダム選択ルーレット",
+    description: "選択に迷ったときはルーレットにお任せ。項目を入力してルーレットを回してランダムに選択しましょう。",
+  },
+  fr: {
+    title: "Roue de la Fortune — Sélecteur Aléatoire",
+    description: "Laissez la roue décider quand vous hésitez. Ajoutez vos options et faites tourner la roue pour un choix aléatoire.",
+  },
+  es: {
+    title: "Ruleta Giratoria — Selector Aleatorio",
+    description: "Deja que la ruleta decida cuando no puedes elegir. Agrega tus opciones y gira la ruleta para una selección aleatoria.",
+  },
+  zh: {
+    title: "轮盘转转 — 解决选择困难！随机选择轮盘",
+    description: "选择困难时让轮盘替您决定。输入选项并旋转轮盘进行随机选择。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <WheelSpinnerComp client:load locale={locale === 'ko' ? 'ko' : 'en'} />
+  </main>
+</BaseLayout>

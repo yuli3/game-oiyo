@@ -1,0 +1,1 @@
+export function PromptPlayground() { return <div style={{padding:'3rem 2rem', backgroundColor:'#f5f3ff', borderRadius:'0.75rem', textAlign:'center', color:'#6d28d9', fontWeight:'bold', border:'1px solid #ddd6fe', margin:'2rem 0'}}>🤖 AI Prompt Playground (Interactive Module Placeholder)</div>; }

@@ -1,0 +1,160 @@
+---
+/**
+ * QuadrantMatrix — 2x2 사분면 매트릭스 컴포넌트
+ * BCG Matrix, Ansoff Matrix, SWOT 등 모든 2x2 프레임워크에 사용
+ *
+ * Props:
+ *   title      - 차트 제목
+ *   xAxis      - X축 레이블 (가로, 오른쪽 방향)
+ *   yAxis      - Y축 레이블 (세로, 위 방향)
+ *   xLow       - X축 낮은 값 레이블
+ *   xHigh      - X축 높은 값 레이블
+ *   yLow       - Y축 낮은 값 레이블
+ *   yHigh      - Y축 높은 값 레이블
+ *   quadrants  - 4개 사분면 정의
+ *   size       - "sm" | "md" | "lg" (default "md")
+ *
+ * 사용 예시:
+ * <QuadrantMatrix
+ *   title="BCG 매트릭스"
+ *   xAxis="시장점유율" xLow="낮음" xHigh="높음"
+ *   yAxis="시장성장률" yLow="낮음" yHigh="높음"
+ *   quadrants={[
+ *     { position: "top-left",  icon: "❓", label: "Question Mark", description: "높은 성장, 낮은 점유율", color: "yellow" },
+ *     { position: "top-right", icon: "⭐", label: "Star",          description: "높은 성장, 높은 점유율", color: "blue" },
+ *     { position: "bottom-left", icon: "🐕", label: "Dog",         description: "낮은 성장, 낮은 점유율", color: "gray" },
+ *     { position: "bottom-right", icon: "🐄", label: "Cash Cow",   description: "낮은 성장, 높은 점유율", color: "green" },
+ *   ]}
+ * />
+ */
+
+type Color = "blue" | "green" | "yellow" | "red" | "purple" | "orange" | "gray" | "teal";
+type Position = "top-left" | "top-right" | "bottom-left" | "bottom-right";
+
+interface Quadrant {
+  position: Position;
+  icon?: string;
+  label: string;
+  description?: string;
+  color?: Color;
+  bullets?: string[];
+}
+
+interface Props {
+  title?: string;
+  xAxis?: string;
+  yAxis?: string;
+  xLow?: string;
+  xHigh?: string;
+  yLow?: string;
+  yHigh?: string;
+  quadrants: Quadrant[];
+  size?: "sm" | "md" | "lg";
+}
+
+const {
+  title,
+  xAxis,
+  yAxis,
+  xLow = "Low",
+  xHigh = "High",
+  yLow = "Low",
+  yHigh = "High",
+  quadrants,
+  size = "md",
+} = Astro.props;
+
+const colorMap: Record<Color, { bg: string; border: string; badge: string; dot: string }> = {
+  blue:   { bg: "bg-blue-50",   border: "border-blue-200",   badge: "bg-blue-100 text-blue-800",   dot: "bg-blue-500" },
+  green:  { bg: "bg-emerald-50", border: "border-emerald-200", badge: "bg-emerald-100 text-emerald-800", dot: "bg-emerald-500" },
+  yellow: { bg: "bg-amber-50",  border: "border-amber-200",  badge: "bg-amber-100 text-amber-800",  dot: "bg-amber-500" },
+  red:    { bg: "bg-red-50",      border: "border-red-200",      badge: "bg-red-100 text-red-800",          dot: "bg-red-500" },
+  purple: { bg: "bg-purple-50", border: "border-purple-200", badge: "bg-purple-100 text-purple-800", dot: "bg-purple-500" },
+  orange: { bg: "bg-orange-50", border: "border-orange-200", badge: "bg-orange-100 text-orange-800", dot: "bg-orange-500" },
+  gray:   { bg: "bg-slate-50",  border: "border-slate-200",  badge: "bg-slate-100 text-slate-700",  dot: "bg-slate-400" },
+  teal:   { bg: "bg-teal-50",    border: "border-teal-200",    badge: "bg-teal-100 text-teal-800",    dot: "bg-teal-500" },
+};
+
+const sizeMap = {
+  sm: { cell: "min-h-[120px] p-4", icon: "text-2xl", title: "text-sm", desc: "text-xs" },
+  md: { cell: "min-h-[160px] p-5", icon: "text-3xl", title: "text-sm font-bold", desc: "text-xs" },
+  lg: { cell: "min-h-[200px] p-6", icon: "text-4xl", title: "text-base font-bold", desc: "text-sm" },
+};
+
+const sz = sizeMap[size];
+
+const byPos = Object.fromEntries(quadrants.map((q) => [q.position, q])) as Record<Position, Quadrant | undefined>;
+const positions: Position[][] = [
+  ["top-left", "top-right"],
+  ["bottom-left", "bottom-right"],
+];
+---
+
+<figure class="not-prose my-8 rounded-2xl border border-border/60 bg-card overflow-hidden shadow-sm">
+  {title && (
+    <div class="px-6 py-4 border-b border-border/40 bg-muted/20">
+      <h3 class="font-black text-sm uppercase tracking-widest text-foreground">{title}</h3>
+    </div>
+  )}
+
+  <div class="p-6">
+    <div class="relative">
+      <!-- Y-axis label -->
+      {yAxis && (
+        <div class="absolute left-0 top-1/2 -translate-x-8 -translate-y-1/2 rotate-[-90deg] origin-center">
+          <span class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground whitespace-nowrap">{yAxis}</span>
+        </div>
+      )}
+
+      <!-- Y-axis High/Low labels -->
+      {yAxis && (
+        <div class="absolute left-4 top-2 text-[9px] font-bold text-muted-foreground/60 uppercase">{yHigh}</div>
+      )}
+      {yAxis && (
+        <div class="absolute left-4 bottom-8 text-[9px] font-bold text-muted-foreground/60 uppercase">{yLow}</div>
+      )}
+
+      <div class:list={["grid grid-cols-2 gap-0.5 rounded-xl overflow-hidden border border-border/40", yAxis ? "ml-4" : ""]}>
+        {positions.map((row) =>
+          row.map((pos) => {
+            const q = byPos[pos];
+            if (!q) return <div class={`${sz.cell} bg-muted/10`} />;
+            const c = colorMap[q.color ?? "blue"];
+            return (
+              <div class={`${sz.cell} ${c.bg} ${c.border} border flex flex-col gap-2`}>
+                {q.icon && <span class={sz.icon}>{q.icon}</span>}
+                <div>
+                  <span class={`inline-block px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wide ${c.badge} mb-1`}>
+                    {q.label}
+                  </span>
+                  {q.description && (
+                    <p class={`${sz.desc} text-muted-foreground leading-snug`}>{q.description}</p>
+                  )}
+                  {q.bullets && q.bullets.length > 0 && (
+                    <ul class={`mt-2 space-y-0.5 ${sz.desc} text-muted-foreground`}>
+                      {q.bullets.map((b) => (
+                        <li class="flex items-start gap-1">
+                          <span class={`mt-1.5 w-1 h-1 rounded-full flex-shrink-0 ${c.dot}`} />
+                          {b}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      <!-- X-axis labels -->
+      {xAxis && (
+        <div class:list={["flex justify-between items-center mt-2", yAxis ? "ml-4" : ""]}>
+          <span class="text-[9px] font-bold text-muted-foreground/60 uppercase">{xLow}</span>
+          <span class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{xAxis} →</span>
+          <span class="text-[9px] font-bold text-muted-foreground/60 uppercase">{xHigh}</span>
+        </div>
+      )}
+    </div>
+  </div>
+</figure>

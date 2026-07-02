@@ -1,0 +1,484 @@
+---
+interface ToolMeta {
+  name_ko: string;
+  name_en: string;
+  description_ko: string;
+  description_en: string;
+  icon: string;
+}
+
+interface Props {
+  tool: string;
+  locale?: string;
+}
+
+const TOOL_META: Record<string, ToolMeta> = {
+  compound: {
+    name_ko: "복리 계산기",
+    name_en: "Compound Interest",
+    description_ko: "장기 투자 수익을 직접 계산해보세요",
+    description_en: "Calculate your long-term investment returns",
+    icon: "📈",
+  },
+  bmi: {
+    name_ko: "BMI 계산기",
+    name_en: "BMI Calculator",
+    description_ko: "나의 체질량지수를 확인해보세요",
+    description_en: "Check your body mass index",
+    icon: "⚖️",
+  },
+  "year-end-settlement": {
+    name_ko: "연말정산 계산기",
+    name_en: "Year-End Settlement",
+    description_ko: "연말정산 환급액을 미리 계산해보세요",
+    description_en: "Calculate your tax refund",
+    icon: "💰",
+  },
+  "salary-calculator": {
+    name_ko: "연봉 계산기",
+    name_en: "Salary Calculator",
+    description_ko: "월 실수령액을 바로 확인하세요",
+    description_en: "Calculate your take-home pay",
+    icon: "💵",
+  },
+  "insurance-premium": {
+    name_ko: "4대보험 계산기",
+    name_en: "Insurance Calculator",
+    description_ko: "4대보험료를 정확하게 계산해보세요",
+    description_en: "Calculate your social insurance premiums",
+    icon: "🏥",
+  },
+  "early-repayment": {
+    name_ko: "중도상환수수료 계산기",
+    name_en: "Early Repayment Fee",
+    description_ko: "중도상환 시 발생하는 수수료를 알아보세요",
+    description_en: "Calculate early repayment fees",
+    icon: "🏦",
+  },
+  "property-tax": {
+    name_ko: "재산세 계산기",
+    name_en: "Property Tax",
+    description_ko: "재산세를 미리 계산해보세요",
+    description_en: "Calculate your property tax",
+    icon: "🏘️",
+  },
+  pension: {
+    name_ko: "국민연금 계산기",
+    name_en: "Pension Calculator",
+    description_ko: "예상 연금 수령액을 확인해보세요",
+    description_en: "Estimate your pension benefits",
+    icon: "🎯",
+  },
+  mbti: {
+    name_ko: "MBTI 성격 테스트",
+    name_en: "MBTI Personality Test",
+    description_ko: "나의 MBTI 유형을 빠르게 알아보세요",
+    description_en: "Discover your MBTI type in minutes",
+    icon: "🧠",
+  },
+  riasec: {
+    name_ko: "RIASEC 직업 적성 테스트",
+    name_en: "RIASEC Career Test",
+    description_ko: "나에게 맞는 직업 코드를 확인해보세요",
+    description_en: "Find your career personality code",
+    icon: "🎯",
+  },
+  "adhd-screening": {
+    name_ko: "ADHD 자가 진단",
+    name_en: "ADHD Screening",
+    description_ko: "집중력·충동성·과잉행동 패턴을 자가 점검해보세요",
+    description_en: "Screen your attention and focus patterns",
+    icon: "🧠",
+  },
+  "commute-mental": {
+    name_ko: "출퇴근 스트레스 진단",
+    name_en: "Commute Stress Check",
+    description_ko: "통근이 나의 멘탈 건강에 미치는 영향을 확인해보세요",
+    description_en: "Check how your commute affects your mental health",
+    icon: "🚇",
+  },
+
+  // ── 재무 (Finance) ──────────────────────────────────────────
+  vat: {
+    name_ko: "부가세 계산기",
+    name_en: "VAT Calculator",
+    description_ko: "부가가치세를 빠르게 계산해보세요",
+    description_en: "Calculate VAT quickly and accurately",
+    icon: "🧾",
+  },
+  "loan-calculator": {
+    name_ko: "대출 이자 계산기",
+    name_en: "Loan Calculator",
+    description_ko: "월 상환액과 총 이자를 미리 계산해보세요",
+    description_en: "Calculate monthly payments and total interest",
+    icon: "🏦",
+  },
+  savings: {
+    name_ko: "적금 계산기",
+    name_en: "Savings Calculator",
+    description_ko: "목표 금액까지 얼마나 모아야 할지 계산해보세요",
+    description_en: "Calculate how much you need to save",
+    icon: "💰",
+  },
+  "inflation-calculator": {
+    name_ko: "인플레이션 계산기",
+    name_en: "Inflation Calculator",
+    description_ko: "물가 상승이 내 돈의 가치에 미치는 영향을 확인하세요",
+    description_en: "See how inflation erodes your purchasing power",
+    icon: "📉",
+  },
+  "latte-factor": {
+    name_ko: "라테 팩터 계산기",
+    name_en: "Latte Factor",
+    description_ko: "작은 지출이 장기적으로 얼마나 쌓이는지 계산해보세요",
+    description_en: "See how small daily expenses add up over time",
+    icon: "☕",
+  },
+  "dutch-pay": {
+    name_ko: "더치페이 계산기",
+    name_en: "Dutch Pay Calculator",
+    description_ko: "N빵 금액을 바로 계산해보세요",
+    description_en: "Split bills quickly and easily",
+    icon: "🍽️",
+  },
+  "roi-calculator": {
+    name_ko: "ROI 계산기",
+    name_en: "ROI Calculator",
+    description_ko: "투자 수익률을 직접 계산해보세요",
+    description_en: "Calculate your return on investment",
+    icon: "📊",
+  },
+  "stock-yield-calculator": {
+    name_ko: "주식 수익률 계산기",
+    name_en: "Stock Yield Calculator",
+    description_ko: "주식 매매 수익률을 정확하게 계산해보세요",
+    description_en: "Calculate your stock investment returns",
+    icon: "📈",
+  },
+  "dividend-calendar": {
+    name_ko: "배당 캘린더",
+    name_en: "Dividend Calendar",
+    description_ko: "배당 일정을 한눈에 확인해보세요",
+    description_en: "Track dividend payment schedules",
+    icon: "📅",
+  },
+  "severance-pay": {
+    name_ko: "퇴직금 계산기",
+    name_en: "Severance Pay Calculator",
+    description_ko: "퇴직금을 미리 계산해보세요",
+    description_en: "Calculate your severance pay",
+    icon: "🎓",
+  },
+  compound2: {
+    name_ko: "복리 계산기 (심화)",
+    name_en: "Compound Interest (Advanced)",
+    description_ko: "세금·인플레이션을 반영한 복리 계산기",
+    description_en: "Advanced compound interest with tax and inflation",
+    icon: "📈",
+  },
+
+  // ── 세금 (Tax) ───────────────────────────────────────────────
+  "capital-gains-tax": {
+    name_ko: "양도소득세 계산기",
+    name_en: "Capital Gains Tax",
+    description_ko: "부동산·주식 양도소득세를 계산해보세요",
+    description_en: "Calculate capital gains tax on property and stocks",
+    icon: "🏠",
+  },
+  "inheritance-tax": {
+    name_ko: "상속세 계산기",
+    name_en: "Inheritance Tax",
+    description_ko: "상속세를 미리 계산해보세요",
+    description_en: "Estimate your inheritance tax",
+    icon: "📜",
+  },
+  "gift-tax": {
+    name_ko: "증여세 계산기",
+    name_en: "Gift Tax Calculator",
+    description_ko: "증여 시 발생하는 세금을 계산해보세요",
+    description_en: "Calculate gift tax before transferring assets",
+    icon: "🎁",
+  },
+  "acquisition-tax": {
+    name_ko: "취득세 계산기",
+    name_en: "Acquisition Tax",
+    description_ko: "부동산 취득 시 납부할 세금을 미리 확인하세요",
+    description_en: "Calculate acquisition tax for real estate",
+    icon: "🔑",
+  },
+  "freelancer-tax": {
+    name_ko: "프리랜서 세금 계산기",
+    name_en: "Freelancer Tax",
+    description_ko: "프리랜서 소득세와 종합소득세를 계산해보세요",
+    description_en: "Calculate freelancer income and comprehensive tax",
+    icon: "💻",
+  },
+  "crypto-tax-calculator": {
+    name_ko: "암호화폐 세금 계산기",
+    name_en: "Crypto Tax Calculator",
+    description_ko: "가상자산 양도소득세를 계산해보세요",
+    description_en: "Calculate your cryptocurrency capital gains tax",
+    icon: "₿",
+  },
+
+  // ── 건강 (Health) ────────────────────────────────────────────
+  bodyfat: {
+    name_ko: "체지방률 계산기",
+    name_en: "Body Fat Calculator",
+    description_ko: "나의 체지방률을 계산해보세요",
+    description_en: "Calculate your body fat percentage",
+    icon: "⚖️",
+  },
+  calorie: {
+    name_ko: "칼로리 계산기",
+    name_en: "Calorie Calculator",
+    description_ko: "일일 필요 칼로리와 소비 칼로리를 계산해보세요",
+    description_en: "Calculate your daily calorie needs and burn",
+    icon: "🥗",
+  },
+  "caffeine-calculator": {
+    name_ko: "카페인 계산기",
+    name_en: "Caffeine Calculator",
+    description_ko: "하루 카페인 섭취량을 확인해보세요",
+    description_en: "Track your daily caffeine intake",
+    icon: "☕",
+  },
+  "life-expectancy": {
+    name_ko: "기대수명 계산기",
+    name_en: "Life Expectancy",
+    description_ko: "생활습관을 기반으로 기대수명을 예측해보세요",
+    description_en: "Estimate your life expectancy based on lifestyle",
+    icon: "🌱",
+  },
+  "menstrual-tracker": {
+    name_ko: "생리 주기 트래커",
+    name_en: "Menstrual Tracker",
+    description_ko: "생리 주기와 배란일을 추적해보세요",
+    description_en: "Track your menstrual cycle and ovulation",
+    icon: "🌸",
+  },
+  "child-height": {
+    name_ko: "자녀 키 예측기",
+    name_en: "Child Height Predictor",
+    description_ko: "부모 키로 자녀의 예상 키를 계산해보세요",
+    description_en: "Predict your child's adult height",
+    icon: "📏",
+  },
+  hormones: {
+    name_ko: "호르몬 균형 체크",
+    name_en: "Hormone Balance Check",
+    description_ko: "호르몬 불균형 증상을 자가 점검해보세요",
+    description_en: "Check symptoms of hormone imbalance",
+    icon: "🧬",
+  },
+  "fasting-tracker": {
+    name_ko: "단식 트래커",
+    name_en: "Fasting Tracker",
+    description_ko: "간헐적 단식 시간을 트래킹해보세요",
+    description_en: "Track your intermittent fasting schedule",
+    icon: "⏱️",
+  },
+  nutrition: {
+    name_ko: "영양소 계산기",
+    name_en: "Nutrition Calculator",
+    description_ko: "식단의 영양소를 분석해보세요",
+    description_en: "Analyze the nutritional content of your meals",
+    icon: "🥦",
+  },
+
+  // ── 성격/심리 (Psychology) ───────────────────────────────────
+  disc: {
+    name_ko: "DISC 성격 유형 검사",
+    name_en: "DISC Personality Test",
+    description_ko: "나의 DISC 유형을 파악해보세요",
+    description_en: "Discover your DISC personality style",
+    icon: "🎯",
+  },
+  "attachment-style": {
+    name_ko: "애착 유형 검사",
+    name_en: "Attachment Style Test",
+    description_ko: "나의 애착 유형을 알아보세요",
+    description_en: "Discover your attachment style in relationships",
+    icon: "💞",
+  },
+  lovelanguage: {
+    name_ko: "사랑의 언어 테스트",
+    name_en: "Love Language Test",
+    description_ko: "나와 상대방의 사랑의 언어를 알아보세요",
+    description_en: "Find your primary love language",
+    icon: "💌",
+  },
+  egogram: {
+    name_ko: "에고그램 검사",
+    name_en: "Egogram Test",
+    description_ko: "나의 자아 상태 구조를 파악해보세요",
+    description_en: "Analyze your ego state structure",
+    icon: "🧩",
+  },
+  "mbti-stress-relief": {
+    name_ko: "MBTI 스트레스 해소법",
+    name_en: "MBTI Stress Relief",
+    description_ko: "내 MBTI 유형에 맞는 스트레스 해소법을 찾아보세요",
+    description_en: "Find stress relief methods for your MBTI type",
+    icon: "🌊",
+  },
+  "depression-test": {
+    name_ko: "우울감 자가 진단",
+    name_en: "Depression Screening",
+    description_ko: "우울 증상을 자가 점검해보세요",
+    description_en: "Screen for symptoms of depression",
+    icon: "💙",
+  },
+  "stress-type": {
+    name_ko: "스트레스 유형 진단",
+    name_en: "Stress Type Test",
+    description_ko: "나의 스트레스 유형과 반응 패턴을 파악해보세요",
+    description_en: "Find your stress type and coping patterns",
+    icon: "🌀",
+  },
+  "eq-insight": {
+    name_ko: "감성 지능(EQ) 진단",
+    name_en: "EQ Insight",
+    description_ko: "나의 감성 지능 수준을 점검해보세요",
+    description_en: "Assess your emotional intelligence level",
+    icon: "🫀",
+  },
+  "self-esteem-compass": {
+    name_ko: "자존감 나침반",
+    name_en: "Self-Esteem Compass",
+    description_ko: "나의 자존감 수준을 측정하고 개선 방향을 찾아보세요",
+    description_en: "Measure your self-esteem and find ways to improve",
+    icon: "🧭",
+  },
+
+  // ── 생활 도구 (Lifestyle) ────────────────────────────────────
+  dday: {
+    name_ko: "D-DAY 계산기",
+    name_en: "D-Day Calculator",
+    description_ko: "중요한 날까지 남은 날짜를 계산해보세요",
+    description_en: "Count down to your important dates",
+    icon: "📆",
+  },
+  worldclock: {
+    name_ko: "세계 시계",
+    name_en: "World Clock",
+    description_ko: "전 세계 주요 도시의 현재 시간을 확인하세요",
+    description_en: "Check current time in cities around the world",
+    icon: "🌍",
+  },
+  tip: {
+    name_ko: "팁 계산기",
+    name_en: "Tip Calculator",
+    description_ko: "상황에 맞는 팁 금액을 계산해보세요",
+    description_en: "Calculate the right tip for any situation",
+    icon: "💵",
+  },
+  "meeting-cost": {
+    name_ko: "회의 비용 계산기",
+    name_en: "Meeting Cost Calculator",
+    description_ko: "회의에 드는 실제 비용을 계산해보세요",
+    description_en: "Calculate the real cost of your meetings",
+    icon: "🤝",
+  },
+  "empathy-test": {
+    name_ko: "공감 능력 테스트",
+    name_en: "Empathy Test",
+    description_ko: "나의 공감 유형을 확인해보세요",
+    description_en: "Find out your empathy style",
+    icon: "🤝",
+  },
+  "global-etf": {
+    name_ko: "글로벌 ETF 탐색기",
+    name_en: "Global ETF Explorer",
+    description_ko: "해외 ETF를 한눈에 비교해보세요",
+    description_en: "Compare global ETFs at a glance",
+    icon: "🌐",
+  },
+  chess: {
+    name_ko: "체스 게임",
+    name_en: "Chess",
+    description_ko: "브라우저에서 바로 체스를 둬보세요",
+    description_en: "Play chess right in your browser",
+    icon: "♟️",
+  },
+  gomoku: {
+    name_ko: "오목 게임",
+    name_en: "Gomoku",
+    description_ko: "전략 보드게임 오목에 도전해보세요",
+    description_en: "Try the strategy board game Gomoku",
+    icon: "⚫",
+  },
+  investment: {
+    name_ko: "투자 성향 테스트",
+    name_en: "Investor Type Test",
+    description_ko: "나의 투자자 유형을 알아보세요",
+    description_en: "Discover your investor type",
+    icon: "💹",
+  },
+  "learning-style": {
+    name_ko: "학습 스타일 테스트",
+    name_en: "Learning Style Test",
+    description_ko: "나에게 맞는 공부법을 찾아보세요",
+    description_en: "Find the study method that fits you",
+    icon: "📚",
+  },
+  "legal-interest": {
+    name_ko: "법정이자 계산기",
+    name_en: "Legal Interest Calculator",
+    description_ko: "법정이자를 간단히 계산해보세요",
+    description_en: "Calculate statutory interest easily",
+    icon: "⚖️",
+  },
+};
+
+// family-first targets: link the OIYO family page when one exists (#strategy)
+const HREF_OVERRIDES: Record<string, (l: string) => string> = {
+  "empathy-test": (l) => `https://oiyo.net/${l}/empathy/test?utm_source=blog_oiyo&utm_medium=referral&utm_campaign=tool_cta`,
+  investment: (l) => `https://oiyo.net/${l}/investment-type/test?utm_source=blog_oiyo&utm_medium=referral&utm_campaign=tool_cta`,
+  chess: (l) => `/${l}/chess/`,
+  gomoku: (l) => `/${l}/gomoku/`,
+  "learning-style": (l) => `/${l}/learning-style-test/`,
+  "legal-interest": (l) => `/${l}/legal-interest-calculator/`,
+};
+
+const { tool, locale = "ko" } = Astro.props;
+
+const meta = TOOL_META[tool];
+
+const isKo = locale === "ko";
+const name = meta ? (isKo ? meta.name_ko : meta.name_en) : "";
+const description = meta ? (isKo ? meta.description_ko : meta.description_en) : "";
+const ctaLabel = isKo ? "계산해보기 →" : "Try it →";
+import { AHOXY_URL } from '@/config/site.config';
+const href = HREF_OVERRIDES[tool]
+  ? HREF_OVERRIDES[tool](locale)
+  : `${AHOXY_URL}/${locale}/${tool}?utm_source=blog_oiyo&utm_medium=referral&utm_campaign=tool_cta`;
+---
+
+{meta && (
+<aside class="not-prose my-8 rounded-2xl border border-sky-200 bg-sky-50/80 shadow-sm">
+  <a
+    href={href}
+    target="_blank"
+    rel="noopener noreferrer"
+    class="flex items-center justify-between gap-4 px-6 py-5 group"
+  >
+    <div class="flex items-center gap-4 min-w-0">
+      <span class="text-3xl shrink-0" aria-hidden="true">{meta.icon}</span>
+      <div class="min-w-0">
+        <div class="font-bold text-base text-sky-900 leading-snug">
+          {name}
+        </div>
+        <div class="text-sm text-sky-700/80 mt-0.5 leading-relaxed">
+          {description}
+        </div>
+      </div>
+    </div>
+    <span
+      class="shrink-0 inline-flex items-center rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm group-hover:bg-sky-700 transition-colors whitespace-nowrap"
+    >
+      {ctaLabel}
+    </span>
+  </a>
+</aside>
+)}

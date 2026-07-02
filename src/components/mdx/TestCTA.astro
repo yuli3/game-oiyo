@@ -1,0 +1,36 @@
+---
+interface Props {
+  test: string;         // URL slug, e.g. "burnout-test"
+  title: string;        // display title
+  description: string;  // short description
+  locale?: string;
+}
+
+const { test, title, description, locale = "ko" } = Astro.props;
+const ctaLabel = locale === "ko" ? "테스트 해보기 →" : (locale === "ja" ? "テストを受ける →" : "Take the test →");
+const href = `/${locale}/${test}`;
+---
+
+<aside class="not-prose my-8 rounded-2xl border border-indigo-200 bg-indigo-50/80 shadow-sm">
+  <a
+    href={href}
+    class="flex items-center justify-between gap-4 px-6 py-5 group"
+  >
+    <div class="flex items-center gap-4 min-w-0">
+      <span class="text-3xl shrink-0" aria-hidden="true">🧠</span>
+      <div class="min-w-0">
+        <div class="font-bold text-base text-indigo-900 leading-snug">
+          {title}
+        </div>
+        <div class="text-sm text-indigo-700/80 mt-0.5 leading-relaxed">
+          {description}
+        </div>
+      </div>
+    </div>
+    <span
+      class="shrink-0 inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm group-hover:bg-indigo-700 transition-colors whitespace-nowrap"
+    >
+      {ctaLabel}
+    </span>
+  </a>
+</aside>

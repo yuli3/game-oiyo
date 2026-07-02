@@ -1,0 +1,47 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import BlackjackComp from "../../components/games/Blackjack";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "블랙잭 — 딜러를 이겨라! 온라인 블랙잭",
+    description: "온라인 블랙잭 게임을 즐겨보세요. 딜러를 이기고 21에 가장 가까운 패를 만들어 승리하세요.",
+  },
+  en: {
+    title: "Blackjack Card Game",
+    description: "Play online Blackjack. Beat the dealer by getting as close to 21 as possible without going over.",
+  },
+  ja: {
+    title: "ブラックジャック — ディーラーに勝て！オンラインブラックジャック",
+    description: "オンラインブラックジャックを楽しもう。21に近い手札を作ってディーラーを倒しましょう。",
+  },
+  fr: {
+    title: "Blackjack en ligne — Battez le croupier!",
+    description: "Jouez au Blackjack en ligne. Approchez-vous de 21 sans dépasser pour battre le croupier.",
+  },
+  es: {
+    title: "Blackjack en línea — ¡Vence al crupier!",
+    description: "Juega al Blackjack en línea. Acércate a 21 sin pasarte para vencer al crupier.",
+  },
+  zh: {
+    title: "二十一点 — 击败庄家！线上二十一点",
+    description: "享受线上二十一点游戏。尽量接近21点而不超过，击败庄家赢得胜利。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <BlackjackComp client:load locale={locale === 'ko' ? 'ko' : 'en'} />
+  </main>
+</BaseLayout>

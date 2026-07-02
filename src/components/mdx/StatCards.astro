@@ -1,0 +1,151 @@
+---
+/**
+ * StatCards — 핵심 통계/지표 카드 그리드
+ * 핵심 정보를 한눈에 어필하는 스탯 카드
+ *
+ * Props:
+ *   items  - [{ label, value, unit?, description?, color?, icon? }]
+ *   title  - 제목 (optional)
+ *   cols   - 열 수 (default 3)
+ */
+interface StatItem {
+  label: string;
+  value: string;
+  unit?: string;
+  description?: string;
+  note?: string;
+  color?: string;
+  icon?: string;
+}
+interface Props {
+  title?: string;
+  items?: StatItem[];
+  stats?: StatItem[];
+  cols?: number;
+}
+
+import { inlineMd } from "../../lib/utils";
+const { title, cols = 3 } = Astro.props;
+const items = (Astro.props.items ?? Astro.props.stats ?? []).map((item) => ({
+  ...item,
+  description: item.description ?? item.note,
+}));
+const defaultColors = [
+  "#3b82f6",
+  "#10b981",
+  "#f59e0b",
+  "#ef4444",
+  "#8b5cf6",
+  "#06b6d4",
+];
+---
+
+<div class="edu-statcards">
+  {title && <div class="edu-statcards__title">{title}</div>}
+  <div
+    class="edu-statcards__grid"
+    style={`--cols: ${Math.min(cols, items.length)};`}
+  >
+    {
+      items.map((item, i) => {
+        const color = item.color ?? defaultColors[i % defaultColors.length];
+        return (
+          <div
+            class="edu-statcards__card"
+            style={`border-top: 4px solid ${color};`}
+          >
+            {item.icon && (
+              <div class="edu-statcards__icon" style={`color: ${color};`}>
+                {item.icon}
+              </div>
+            )}
+            <div class="edu-statcards__value" style={`color: ${color};`}>
+              {item.value}
+              {item.unit && (
+                <span class="edu-statcards__unit">{item.unit}</span>
+              )}
+            </div>
+            <div class="edu-statcards__label" set:html={inlineMd(item.label)} />
+            {item.description && (
+              <div class="edu-statcards__description" set:html={inlineMd(item.description)} />
+            )}
+          </div>
+        );
+      })
+    }
+  </div>
+</div>
+
+<style>
+  .edu-statcards {
+    margin: 2.5rem 0;
+  }
+  .edu-statcards__title {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #1e293b;
+    margin-bottom: 1.25rem;
+    text-align: center;
+  }
+  .edu-statcards__grid {
+    display: grid;
+    grid-template-columns: repeat(var(--cols, 3), 1fr);
+    gap: 1rem;
+  }
+  @media (max-width: 600px) {
+    .edu-statcards__grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (max-width: 380px) {
+    .edu-statcards__grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  .edu-statcards__card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.875rem;
+    padding: 1.5rem 1.25rem;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+    transition:
+      transform 0.2s,
+      box-shadow 0.2s;
+  }
+  .edu-statcards__card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  }
+  .edu-statcards__icon {
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+  }
+  .edu-statcards__value {
+    font-size: 2.25rem;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 0.4rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .edu-statcards__unit {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-left: 0.2em;
+  }
+  .edu-statcards__label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 0.5rem;
+  }
+  .edu-statcards__description {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    line-height: 1.5;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 0.5rem;
+    margin-top: 0.5rem;
+  }
+</style>

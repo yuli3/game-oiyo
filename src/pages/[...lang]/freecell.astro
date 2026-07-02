@@ -1,0 +1,47 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import FreeCellComp from "../../components/games/FreeCell";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "프리셀 — 전략 카드 게임 프리셀",
+    description: "온라인 프리셀 게임을 즐겨보세요. 4개의 빈 공간을 활용해 모든 카드를 무늬별로 정렬하는 전략 카드 게임입니다.",
+  },
+  en: {
+    title: "FreeCell Card Game",
+    description: "Play FreeCell online. Use four free cells strategically to sort all cards by suit in this classic card game.",
+  },
+  ja: {
+    title: "フリーセル — 戦略カードゲームフリーセル",
+    description: "オンラインフリーセルを楽しもう。4つの空きスペースを活用して全カードをスートごとに並べる戦略カードゲームです。",
+  },
+  fr: {
+    title: "FreeCell — Le jeu de cartes stratégique",
+    description: "Jouez au FreeCell en ligne. Utilisez quatre cellules libres pour trier toutes les cartes par couleur dans ce jeu classique.",
+  },
+  es: {
+    title: "FreeCell — El clásico juego de cartas estratégico",
+    description: "Juega al FreeCell en línea. Usa cuatro celdas libres estratégicamente para ordenar todas las cartas por palo.",
+  },
+  zh: {
+    title: "空当接龙 — 策略纸牌游戏",
+    description: "享受线上空当接龙游戏。利用四个空格策略性地将所有牌按花色排序的经典纸牌游戏。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <FreeCellComp client:load locale={locale === 'ko' ? 'ko' : 'en'} />
+  </main>
+</BaseLayout>

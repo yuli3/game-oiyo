@@ -1,0 +1,161 @@
+---
+import { AHOXY_URL, OIYO_URL } from '@/config/site.config';
+/**
+ * PersonalityTypeCTA — 크로스사이트 성격 테스트 유도 CTA
+ */
+type Framework = 'mbti' | 'riasec' | 'hsp' | 'tci' | 'big5'
+type Variant = 'ahoxy' | 'oiyo' | 'both'
+
+interface Props {
+  framework: Framework
+  type?: string
+  locale?: string
+  variant?: Variant
+}
+
+const {
+  framework,
+  type,
+  locale = 'ko',
+  variant = 'both',
+} = Astro.props
+
+const isKo = locale === 'ko'
+
+const FRAMEWORK_META: Record<Framework, { emoji: string; name_ko: string; name_en: string }> = {
+  mbti:   { emoji: '🧠', name_ko: 'MBTI',   name_en: 'MBTI' },
+  riasec: { emoji: '🎯', name_ko: 'RIASEC', name_en: 'RIASEC' },
+  hsp:    { emoji: '🌿', name_ko: 'HSP',    name_en: 'HSP' },
+  tci:    { emoji: '🔬', name_ko: 'TCI',    name_en: 'TCI' },
+  big5:   { emoji: '📊', name_ko: 'Big5',   name_en: 'Big5' },
+}
+
+const AHOXY_PATHS: Partial<Record<Framework, string>> = {
+  mbti: 'mbti',
+  riasec: 'riasec',
+}
+
+const OIYO_PATHS: Partial<Record<Framework, string>> = {
+  mbti:   'mbti/test',
+  riasec: 'riasec',
+  hsp:    'hsp',
+  tci:    'tci',
+  big5:   'big5',
+}
+
+const meta = FRAMEWORK_META[framework]
+const typeParam = type ? `?type=${type}` : ''
+const utmAhoxy = `utm_source=blog_oiyo&utm_medium=referral&utm_campaign=${framework}_cta`
+const utmOiyo  = `utm_source=blog_oiyo&utm_medium=referral&utm_campaign=${framework}_deep`
+
+const sep = type ? '&' : '?'
+
+const ahoxySuffix = AHOXY_PATHS[framework]
+const ahoxyHref = ahoxySuffix
+  ? `${AHOXY_URL}/${locale}/${ahoxySuffix}${typeParam}${sep}${utmAhoxy}`
+  : null
+
+const oiyoSuffix = OIYO_PATHS[framework]
+const oiyoHref = oiyoSuffix
+  ? `${OIYO_URL}/${locale}/${oiyoSuffix}${typeParam}${sep}${utmOiyo}`
+  : null
+
+const showAhoxy = (variant === 'ahoxy' || variant === 'both') && ahoxyHref
+const showOiyo  = (variant === 'oiyo'  || variant === 'both') && oiyoHref
+---
+
+{(showAhoxy || showOiyo) && (
+  <aside class="ptcta not-prose">
+    <div class="ptcta__header">
+      <span class="ptcta__emoji" aria-hidden="true">{meta.emoji}</span>
+      <span class="ptcta__label">
+        {isKo
+          ? `${meta.name_ko} 테스트 바로 해보기`
+          : `Take the ${meta.name_en} Test`}
+        {type && <strong class="ptcta__type">{type}</strong>}
+      </span>
+    </div>
+    <div class={`ptcta__cards ${variant === 'both' ? 'ptcta__cards--split' : ''}`}>
+      {showAhoxy && (
+        <a href={ahoxyHref} target="_blank" rel="noopener noreferrer" class="ptcta__card ptcta__card--ahoxy">
+          <div class="ptcta__card-logo">ahoxy</div>
+          <div class="ptcta__card-info">
+            <div class="ptcta__card-title">
+              {isKo ? '무료 빠른 테스트' : 'Free Quick Test'}
+            </div>
+            <div class="ptcta__card-desc">
+              {isKo ? '3분 안에 결과 확인' : 'Results in under 3 min'}
+            </div>
+          </div>
+          <span class="ptcta__arrow">→</span>
+        </a>
+      )}
+      {showOiyo && (
+        <a href={oiyoHref} target="_blank" rel="noopener noreferrer" class="ptcta__card ptcta__card--oiyo">
+          <div class="ptcta__card-logo">oiyo</div>
+          <div class="ptcta__card-info">
+            <div class="ptcta__card-title">
+              {isKo ? 'AI 심층 분석' : 'AI Deep Analysis'}
+            </div>
+            <div class="ptcta__card-desc">
+              {isKo ? '맞춤형 성장 인사이트' : 'Personalized growth insights'}
+            </div>
+          </div>
+          <span class="ptcta__arrow">→</span>
+        </a>
+      )}
+    </div>
+  </aside>
+)}
+
+<style>
+  .ptcta {
+    margin: 2rem 0;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 1rem;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  }
+  .ptcta__header {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.875rem 1.25rem;
+    background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+    border-bottom: 1px solid #bae6fd;
+    font-weight: 700; font-size: 0.875rem; color: #0c4a6e;
+  }
+  .ptcta__emoji { font-size: 1.1rem; }
+  .ptcta__type {
+    display: inline-block; margin-left: 0.35rem;
+    background: #0ea5e9; color: #fff; padding: 0.05rem 0.4rem;
+    border-radius: 4px; font-size: 0.8rem;
+  }
+  .ptcta__cards { display: flex; }
+  .ptcta__cards--split .ptcta__card { flex: 1; }
+  .ptcta__card {
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 0.875rem 1.25rem; text-decoration: none;
+    color: inherit; transition: background 0.15s;
+    border-right: 1px solid #e2e8f0;
+  }
+  .ptcta__card:last-child { border-right: none; }
+  .ptcta__card--ahoxy:hover { background: #f0fdf4; }
+  .ptcta__card--oiyo:hover { background: #faf5ff; }
+  .ptcta__card-logo {
+    font-weight: 900; font-size: 0.7rem; letter-spacing: 0.1em;
+    text-transform: uppercase; padding: 0.2rem 0.5rem;
+    border-radius: 4px; flex-shrink: 0;
+  }
+  .ptcta__card--ahoxy .ptcta__card-logo { background: #d1fae5; color: #065f46; }
+  .ptcta__card--oiyo .ptcta__card-logo { background: #ede9fe; color: #4c1d95; }
+  .ptcta__card-info { flex: 1; min-width: 0; }
+  .ptcta__card-title { font-weight: 700; font-size: 0.8rem; color: #1e293b; }
+  .ptcta__card-desc { font-size: 0.7rem; color: #64748b; margin-top: 0.1rem; }
+  .ptcta__arrow { font-size: 1rem; color: #94a3b8; flex-shrink: 0; }
+  .ptcta__card:hover .ptcta__arrow { color: #475569; }
+  @media (max-width: 480px) {
+    .ptcta__cards--split { flex-direction: column; }
+    .ptcta__card { border-right: none; border-bottom: 1px solid #e2e8f0; }
+    .ptcta__card:last-child { border-bottom: none; }
+  }
+</style>

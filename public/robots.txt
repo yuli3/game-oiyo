@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: */search?*
+Disallow: /search
+Disallow: /api/
+
+# Host
+Host: https://game.oiyo.net
+
+# Sitemaps
+Sitemap: https://game.oiyo.net/sitemap-index.xml

@@ -1,0 +1,34 @@
+---
+// Root page redirection to preferred locale
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="canonical" href="https://game.oiyo.net/en/" />
+    <title>Redirecting...</title>
+    <script is:inline>
+      const getPreferredLocale = () => {
+        const languages = navigator.languages || [navigator.language];
+        const supportedLocales = ["ko", "en", "ja", "fr", "es", "zh"];
+
+        for (const lang of languages) {
+          const shortLang = lang.split("-")[0].toLowerCase();
+          if (supportedLocales.includes(shortLang)) {
+            return shortLang;
+          }
+        }
+        return "en";
+      };
+
+      const locale = getPreferredLocale();
+      window.location.href = `/${locale}/`;
+    </script>
+    <meta http-equiv="refresh" content="0;url=/en/" />
+  </head>
+  <body>
+    <p>Redirecting to <a href="/en/">/en/</a>...</p>
+  </body>
+</html>

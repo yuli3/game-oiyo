@@ -1,0 +1,120 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 28종", description: "체스·스도쿠·워들·2048부터 보드·카드·퍼즐까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 모음." },
+  en: { title: "OIYO Arcade — 28 free browser games, no install", description: "Chess, Sudoku, Wordle, 2048 and more — board, card, and puzzle games you can play instantly in your browser, free." },
+  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム28種", description: "チェス・数独・ワードル・2048などボード・カード・パズルまで。インストール不要、ブラウザですぐ遊べる無料ゲーム集。" },
+  zh: { title: "OIYO 街机 — 无需安装的28款免费游戏", description: "国际象棋、数独、猜词、2048，以及棋类、纸牌、益智游戏。无需安装，浏览器即玩，全部免费。" },
+  fr: { title: "OIYO Arcade — 28 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle, 2048 et plus — jeux de plateau, de cartes et de réflexion à jouer instantanément, gratuitement." },
+  es: { title: "OIYO Arcade — 28 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle, 2048 y más — juegos de mesa, cartas y lógica para jugar al instante, gratis." },
+};
+const m = meta[locale] ?? meta.en;
+
+const hero: Record<Locale, { eyebrow: string; title: string; sub: string }> = {
+  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 28종", sub: "보드·카드·퍼즐·아케이드 — 광고 없이 브라우저에서 가볍게." },
+  en: { eyebrow: "🎮 OIYO Arcade", title: "28 free games, right in your browser", sub: "Board, card, puzzle and arcade — light, instant, no install." },
+  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム28種", sub: "ボード・カード・パズル・アーケード — ブラウザで手軽に。" },
+  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的28款免费游戏", sub: "棋类·纸牌·益智·街机 — 浏览器里轻松开玩。" },
+  fr: { eyebrow: "🎮 OIYO Arcade", title: "28 jeux gratuits, directement dans le navigateur", sub: "Plateau, cartes, réflexion et arcade — léger et instantané." },
+  es: { eyebrow: "🎮 OIYO Arcade", title: "28 juegos gratis, directo en tu navegador", sub: "Mesa, cartas, lógica y arcade — ligero e instantáneo." },
+};
+const h = hero[locale] ?? hero.en;
+
+const catLabel: Record<string, Record<Locale, string>> = {
+  board: { ko: "보드게임", en: "Board", ja: "ボード", zh: "棋类", fr: "Plateau", es: "Mesa" },
+  card: { ko: "카드게임", en: "Cards", ja: "カード", zh: "纸牌", fr: "Cartes", es: "Cartas" },
+  puzzle: { ko: "퍼즐", en: "Puzzle", ja: "パズル", zh: "益智", fr: "Réflexion", es: "Lógica" },
+  arcade: { ko: "아케이드", en: "Arcade", ja: "アーケード", zh: "街机", fr: "Arcade", es: "Arcade" },
+  luck: { ko: "운·뽑기", en: "Luck", ja: "運だめし", zh: "运气", fr: "Hasard", es: "Suerte" },
+};
+const catOrder = ["board", "card", "puzzle", "arcade", "luck"];
+
+type Game = { slug: string; emoji: string; cat: string; name: Record<Locale, string> };
+const GAMES: Game[] = [
+  { slug: "chess", emoji: "♟️", cat: "board", name: { ko: "체스", en: "Chess", ja: "チェス", zh: "国际象棋", fr: "Échecs", es: "Ajedrez" } },
+  { slug: "checkers", emoji: "🟤", cat: "board", name: { ko: "체커", en: "Checkers", ja: "チェッカー", zh: "西洋跳棋", fr: "Dames", es: "Damas" } },
+  { slug: "gomoku", emoji: "⚫", cat: "board", name: { ko: "오목", en: "Gomoku", ja: "五目並べ", zh: "五子棋", fr: "Gomoku", es: "Gomoku" } },
+  { slug: "janggi", emoji: "♟️", cat: "board", name: { ko: "장기", en: "Janggi", ja: "チャンギ", zh: "韩国象棋", fr: "Janggi", es: "Janggi" } },
+  { slug: "reversi", emoji: "⚪", cat: "board", name: { ko: "리버시", en: "Reversi", ja: "リバーシ", zh: "黑白棋", fr: "Reversi", es: "Reversi" } },
+  { slug: "connect-four", emoji: "🔴", cat: "board", name: { ko: "사목", en: "Connect Four", ja: "四目並べ", zh: "四子棋", fr: "Puissance 4", es: "Conecta 4" } },
+  { slug: "dominoes", emoji: "🎴", cat: "board", name: { ko: "도미노", en: "Dominoes", ja: "ドミノ", zh: "多米诺", fr: "Dominos", es: "Dominó" } },
+  { slug: "hitori", emoji: "🔲", cat: "board", name: { ko: "히토리", en: "Hitori", ja: "ひとり", zh: "数织", fr: "Hitori", es: "Hitori" } },
+  { slug: "tents-and-trees", emoji: "⛺", cat: "board", name: { ko: "텐트와 나무", en: "Tents & Trees", ja: "テントと木", zh: "帐篷与树", fr: "Tentes & arbres", es: "Tiendas y árboles" } },
+
+  { slug: "blackjack", emoji: "🃏", cat: "card", name: { ko: "블랙잭", en: "Blackjack", ja: "ブラックジャック", zh: "二十一点", fr: "Blackjack", es: "Blackjack" } },
+  { slug: "freecell", emoji: "♠️", cat: "card", name: { ko: "프리셀", en: "FreeCell", ja: "フリーセル", zh: "空当接龙", fr: "FreeCell", es: "FreeCell" } },
+  { slug: "solitaire", emoji: "♣️", cat: "card", name: { ko: "솔리테어", en: "Solitaire", ja: "ソリティア", zh: "纸牌接龙", fr: "Solitaire", es: "Solitario" } },
+  { slug: "hearts-game", emoji: "♥️", cat: "card", name: { ko: "하트", en: "Hearts", ja: "ハート", zh: "红心大战", fr: "Hearts", es: "Corazones" } },
+
+  { slug: "sudoku", emoji: "🔢", cat: "puzzle", name: { ko: "스도쿠", en: "Sudoku", ja: "数独", zh: "数独", fr: "Sudoku", es: "Sudoku" } },
+  { slug: "minesweeper", emoji: "💣", cat: "puzzle", name: { ko: "지뢰찾기", en: "Minesweeper", ja: "マインスイーパ", zh: "扫雷", fr: "Démineur", es: "Buscaminas" } },
+  { slug: "water-sort", emoji: "🧪", cat: "puzzle", name: { ko: "물 정렬", en: "Water Sort", ja: "水ソート", zh: "水排序", fr: "Tri d'eau", es: "Ordenar agua" } },
+  { slug: "light-up", emoji: "💡", cat: "puzzle", name: { ko: "라이트업", en: "Light Up", ja: "美術館", zh: "点灯", fr: "Light Up", es: "Light Up" } },
+  { slug: "game-2048", emoji: "🔟", cat: "puzzle", name: { ko: "2048", en: "2048", ja: "2048", zh: "2048", fr: "2048", es: "2048" } },
+  { slug: "number-sorter", emoji: "↕️", cat: "puzzle", name: { ko: "숫자 정렬", en: "Number Sorter", ja: "数字ソート", zh: "数字排序", fr: "Tri de nombres", es: "Ordenar números" } },
+  { slug: "wordle", emoji: "🟩", cat: "puzzle", name: { ko: "워들", en: "Wordle", ja: "ワードル", zh: "猜词", fr: "Wordle", es: "Wordle" } },
+  { slug: "psychology-wordle", emoji: "🧠", cat: "puzzle", name: { ko: "심리 워들", en: "Psychology Wordle", ja: "心理ワードル", zh: "心理猜词", fr: "Wordle psycho", es: "Wordle psico" } },
+
+  { slug: "snake-game", emoji: "🐍", cat: "arcade", name: { ko: "스네이크", en: "Snake", ja: "スネーク", zh: "贪吃蛇", fr: "Snake", es: "Snake" } },
+  { slug: "aim-trainer", emoji: "🎯", cat: "arcade", name: { ko: "에임 트레이너", en: "Aim Trainer", ja: "エイム練習", zh: "瞄准训练", fr: "Entraîneur de visée", es: "Entrenador de puntería" } },
+  { slug: "memory-card-game", emoji: "🧩", cat: "arcade", name: { ko: "메모리 카드", en: "Memory Match", ja: "神経衰弱", zh: "记忆翻牌", fr: "Memory", es: "Memoria" } },
+  { slug: "number-guessing", emoji: "🔮", cat: "arcade", name: { ko: "숫자 맞히기", en: "Number Guessing", ja: "数当て", zh: "猜数字", fr: "Devine le nombre", es: "Adivina el número" } },
+
+  { slug: "dice-roller", emoji: "🎲", cat: "luck", name: { ko: "주사위", en: "Dice Roller", ja: "サイコロ", zh: "掷骰子", fr: "Dés", es: "Dados" } },
+  { slug: "wheel-spinner", emoji: "🎡", cat: "luck", name: { ko: "룰렛 돌리기", en: "Wheel Spinner", ja: "ルーレット", zh: "转盘", fr: "Roue", es: "Ruleta" } },
+  { slug: "lotto-generator", emoji: "🎰", cat: "luck", name: { ko: "로또 번호 생성", en: "Lotto Generator", ja: "ロト番号生成", zh: "彩票生成", fr: "Générateur loto", es: "Generador lotería" } },
+];
+
+const byCat = (c: string) => GAMES.filter((g) => g.cat === c);
+const cardJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  name: m.title,
+  description: m.description,
+  url: new URL(Astro.url.pathname, Astro.site).toString(),
+  hasPart: GAMES.map((g) => ({
+    "@type": "Game",
+    name: g.name[locale] ?? g.name.en,
+    url: new URL(`/${locale}/${g.slug}/`, Astro.site).toString(),
+  })),
+};
+---
+<BaseLayout title={m.title} description={m.description}>
+  <script type="application/ld+json" set:html={JSON.stringify(cardJsonLd)} />
+
+  <section class="relative overflow-hidden bg-gradient-to-b from-indigo-50 via-violet-50/40 to-white px-4 pt-16 pb-10 text-center">
+    <div class="relative z-10 mx-auto max-w-2xl">
+      <span class="inline-block rounded-full bg-white/70 px-3 py-1 text-xs font-bold text-indigo-700 ring-1 ring-indigo-100">{h.eyebrow}</span>
+      <h1 class="mt-4 text-3xl font-black tracking-tight text-indigo-950 md:text-5xl">{h.title}</h1>
+      <p class="mt-3 text-base leading-relaxed text-indigo-700/90">{h.sub}</p>
+      <p class="mt-2 text-xs font-bold text-indigo-400">{GAMES.length} games · 🔒 100% browser-side</p>
+    </div>
+  </section>
+
+  <div class="mx-auto max-w-6xl px-4 pb-16">
+    {catOrder.map((cat) => (
+      <section class="mt-10">
+        <h2 class="mb-4 flex items-center gap-2 text-lg font-black text-slate-900">
+          {catLabel[cat][locale] ?? catLabel[cat].en}
+          <span class="text-xs font-bold text-slate-400">{byCat(cat).length}</span>
+        </h2>
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          {byCat(cat).map((g) => (
+            <a href={`/${locale}/${g.slug}/`} class="group flex flex-col items-center gap-2 rounded-2xl border border-slate-100 bg-white p-5 text-center shadow-sm transition-all hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-md">
+              <span class="text-4xl transition-transform group-hover:scale-110" aria-hidden="true">{g.emoji}</span>
+              <span class="text-sm font-bold text-slate-800 group-hover:text-indigo-700">{g.name[locale] ?? g.name.en}</span>
+            </a>
+          ))}
+        </div>
+      </section>
+    ))}
+  </div>
+</BaseLayout>

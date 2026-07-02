@@ -1,0 +1,45 @@
+---
+interface ToolMeta {
+  name_ko: string;
+  name_en: string;
+  icon: string;
+}
+
+interface Props {
+  tool: string;
+  locale?: string;
+}
+
+const TOOL_META: Record<string, ToolMeta> = {
+  compound: { name_ko: "복리 계산기", name_en: "Compound Interest", icon: "📈" },
+  bmi: { name_ko: "BMI 계산기", name_en: "BMI Calculator", icon: "⚖️" },
+  "year-end-settlement": { name_ko: "연말정산 계산기", name_en: "Year-End Settlement", icon: "💰" },
+  "salary-calculator": { name_ko: "연봉 계산기", name_en: "Salary Calculator", icon: "💵" },
+  "insurance-premium": { name_ko: "4대보험 계산기", name_en: "Insurance Calculator", icon: "🏥" },
+  "early-repayment": { name_ko: "중도상환수수료 계산기", name_en: "Early Repayment Fee", icon: "🏦" },
+  "property-tax": { name_ko: "재산세 계산기", name_en: "Property Tax", icon: "🏘️" },
+  pension: { name_ko: "국민연금 계산기", name_en: "Pension Calculator", icon: "🎯" },
+};
+
+const { tool, locale = "ko" } = Astro.props;
+
+const meta = TOOL_META[tool];
+if (!meta) return Astro.response;
+
+const isKo = locale === "ko";
+const name = isKo ? meta.name_ko : meta.name_en;
+const label = isKo
+  ? `${meta.icon} ${name}로 직접 계산해보세요 →`
+  : `${meta.icon} Try the ${name} →`;
+import { AHOXY_URL } from '@/config/site.config';
+const href = `${AHOXY_URL}/${locale}/${tool}?utm_source=blog_oiyo&utm_medium=referral&utm_campaign=tool_cta`;
+---
+
+<a
+  href={href}
+  target="_blank"
+  rel="noopener noreferrer"
+  class="not-prose inline-flex items-center gap-1.5 my-1 text-sm font-semibold text-sky-700 hover:text-sky-900 underline underline-offset-2 decoration-sky-400/60 hover:decoration-sky-600 transition-colors"
+>
+  {label}
+</a>

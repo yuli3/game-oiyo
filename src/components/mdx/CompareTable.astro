@@ -1,0 +1,131 @@
+---
+/**
+ * CompareTable — 두 개념의 비교/대조 표
+ * 사용 예: 효율성 vs 효과성, 과학적 관리법 vs 인간관계론
+ *
+ * Props:
+ *   leftTitle   - 왼쪽 열 제목
+ *   rightTitle  - 오른쪽 열 제목
+ *   title       - 전체 제목 (optional)
+ *   rows        - [{ label, left, right }]
+ *   leftColor   - 왼쪽 강조 색 (optional, default blue)
+ *   rightColor  - 오른쪽 강조 색 (optional, default orange)
+ */
+interface Row {
+  label: string;
+  left: string;
+  right: string;
+}
+
+interface Props {
+  title?: string;
+  leftTitle: string;
+  rightTitle: string;
+  rows: Row[];
+  leftColor?: string;
+  rightColor?: string;
+}
+
+import { inlineMd } from "../../lib/utils";
+const {
+  title,
+  leftTitle,
+  rightTitle,
+  rows,
+  leftColor = "#3b82f6",
+  rightColor = "#f59e0b",
+} = Astro.props;
+---
+
+<div class="edu-compare-table">
+  {title && <div class="edu-compare-table__title" set:html={inlineMd(title)} />}
+  <table>
+    <thead>
+      <tr>
+        <th class="edu-compare-table__label-header">구분</th>
+        <th style={`border-top: 3px solid ${leftColor}; color: ${leftColor};`}
+          set:html={inlineMd(leftTitle)}
+        ></th>
+        <th style={`border-top: 3px solid ${rightColor}; color: ${rightColor};`}
+          set:html={inlineMd(rightTitle)}
+        ></th>
+      </tr>
+    </thead>
+    <tbody>
+      {
+        rows.map((row, i) => (
+          <tr class={i % 2 === 0 ? "even" : "odd"}>
+            <td class="edu-compare-table__label" set:html={inlineMd(row.label)} />
+            <td class="edu-compare-table__left" set:html={inlineMd(row.left)} />
+            <td class="edu-compare-table__right" set:html={inlineMd(row.right)} />
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+</div>
+
+<style>
+  .edu-compare-table {
+    margin: 2.5rem 0;
+    border-radius: 1rem;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+    font-size: 0.95rem;
+  }
+  .edu-compare-table__title {
+    padding: 1rem 1.5rem;
+    font-weight: 700;
+    font-size: 1.05rem;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    color: #0f172a;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  th {
+    padding: 0.9rem 1.25rem;
+    background: #f1f5f9;
+    font-weight: 700;
+    text-align: center;
+    font-size: 0.85rem;
+    letter-spacing: 0.05em;
+  }
+  .edu-compare-table__label-header {
+    background: #e2e8f0;
+    color: #475569;
+    width: 22%;
+  }
+  td {
+    padding: 0.85rem 1.25rem;
+    border-bottom: 1px solid #f1f5f9;
+    line-height: 1.6;
+    color: #334155;
+    vertical-align: top;
+  }
+  .edu-compare-table__label {
+    font-weight: 700;
+    color: #0f172a;
+    background: #f8fafc;
+    font-size: 0.85rem;
+  }
+  .even td {
+    background: #fff;
+  }
+  .odd td {
+    background: #fafcff;
+  }
+  .edu-compare-table__left {
+    border-left: 2px solid #dbeafe;
+  }
+  .edu-compare-table__right {
+    border-left: 1px solid #fde68a;
+  }
+  tr:hover td {
+    background: #f0f9ff;
+    transition: background 0.2s;
+  }
+</style>

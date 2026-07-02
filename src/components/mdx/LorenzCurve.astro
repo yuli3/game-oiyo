@@ -1,0 +1,158 @@
+---
+/**
+ * LorenzCurve — 로렌츠 곡선 & 지니계수 (SVG)
+ * Props:
+ *   title     - 차트 제목
+ *   gini      - 지니계수 (0~1, display 전용)
+ *   points    - 로렌츠 곡선 점들 [{x,y}] 0-100 정규화 (default: moderate inequality)
+ *   compare   - 비교 곡선 [{x,y}] (선택)
+ *   compareLabel - 비교 곡선 레이블
+ *   caption   - 하단 설명
+ */
+interface Point { x: number; y: number }
+interface Props {
+  title?: string;
+  gini?: number;
+  points?: Point[];
+  compare?: Point[];
+  compareLabel?: string;
+  caption?: string;
+}
+
+const {
+  title = "로렌츠 곡선",
+  gini,
+  points,
+  compare,
+  compareLabel = "비교 국가",
+  caption,
+} = Astro.props;
+
+// Default: moderate inequality
+const defaultPts: Point[] = [
+  { x: 0, y: 0 },
+  { x: 20, y: 6 },
+  { x: 40, y: 16 },
+  { x: 60, y: 34 },
+  { x: 80, y: 60 },
+  { x: 100, y: 100 },
+];
+const lorenzPts = points ?? defaultPts;
+
+const W = 400;
+const H = 360;
+const PAD = { top: 30, right: 40, bottom: 60, left: 60 };
+const cW = W - PAD.left - PAD.right;
+const cH = H - PAD.top - PAD.bottom;
+
+const px = (x: number) => PAD.left + (x / 100) * cW;
+const py = (y: number) => PAD.top + cH - (y / 100) * cH;
+
+function polyline(pts: Point[]) {
+  return pts.map(p => `${px(p.x)},${py(p.y)}`).join(" ");
+}
+
+// Gini area polygon (between equality line and lorenz curve)
+const areaPolygon = [
+  `${px(0)},${py(0)}`,
+  ...lorenzPts.slice(1).map(p => `${px(p.x)},${py(p.y)}`),
+  `${px(100)},${py(0)}`,
+].join(" ");
+
+const ticks = [0, 20, 40, 60, 80, 100];
+---
+
+<div class="edu-chart-wrap">
+  {title && <div class="edu-chart-title">{title}</div>}
+  <div class="edu-chart-body">
+    <svg viewBox={`0 0 ${W} ${H}`} style={`max-width:${W}px; width:100%;`} aria-label={title}>
+
+      <!-- Grid -->
+      {ticks.map(v => (
+        <>
+          <line x1={PAD.left} y1={py(v)} x2={PAD.left + cW} y2={py(v)} stroke="#f1f5f9" stroke-width="1"/>
+          <line x1={px(v)} y1={PAD.top} x2={px(v)} y2={PAD.top + cH} stroke="#f1f5f9" stroke-width="1"/>
+        </>
+      ))}
+
+      <!-- Gini area shading -->
+      <polygon points={areaPolygon} fill="#3b82f6" fill-opacity="0.12"/>
+
+      <!-- Perfect equality line (diagonal) -->
+      <line x1={px(0)} y1={py(0)} x2={px(100)} y2={py(100)} stroke="#94a3b8" stroke-width="2" stroke-dasharray="8,4"/>
+      <text x={px(55)} y={py(62)} transform={`rotate(-45, ${px(55)}, ${py(62)})`} font-size="10" fill="#94a3b8" font-weight="600">완전 평등선</text>
+
+      <!-- Compare Lorenz curve -->
+      {compare && (
+        <polyline points={polyline(compare)} fill="none" stroke="#f59e0b" stroke-width="2" stroke-dasharray="6,3" stroke-linecap="round" stroke-linejoin="round"/>
+      )}
+
+      <!-- Main Lorenz curve -->
+      <polyline points={polyline(lorenzPts)} fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+      <!-- Axes -->
+      <line x1={PAD.left} y1={PAD.top} x2={PAD.left} y2={PAD.top + cH + 10} stroke="#334155" stroke-width="2" stroke-linecap="round"/>
+      <line x1={PAD.left - 10} y1={PAD.top + cH} x2={PAD.left + cW} y2={PAD.top + cH} stroke="#334155" stroke-width="2" stroke-linecap="round"/>
+
+      <!-- Axis labels -->
+      <text x={PAD.left + cW / 2} y={H - 10} text-anchor="middle" font-size="12" fill="#64748b" font-weight="600">누적 인구 비율 (%)</text>
+      <text x={14} y={PAD.top + cH / 2} text-anchor="middle" font-size="12" fill="#64748b" font-weight="600" transform={`rotate(-90, 14, ${PAD.top + cH / 2})`}>누적 소득 비율 (%)</text>
+
+      <!-- Tick labels -->
+      {ticks.map(v => (
+        <>
+          <text x={px(v)} y={PAD.top + cH + 16} text-anchor="middle" font-size="10" fill="#94a3b8">{v}</text>
+          <text x={PAD.left - 8} y={py(v) + 4} text-anchor="end" font-size="10" fill="#94a3b8">{v}</text>
+        </>
+      ))}
+
+      <!-- Gini annotation -->
+      {gini !== undefined && (
+        <>
+          <rect x={PAD.left + cW * 0.08} y={PAD.top + 10} width="110" height="32" rx="6" fill="#1e293b" fill-opacity="0.85"/>
+          <text x={PAD.left + cW * 0.08 + 55} y={PAD.top + 22} text-anchor="middle" font-size="10" fill="#f8fafc" font-weight="700">지니계수</text>
+          <text x={PAD.left + cW * 0.08 + 55} y={PAD.top + 36} text-anchor="middle" font-size="14" fill="#93c5fd" font-weight="900">G = {gini.toFixed(2)}</text>
+        </>
+      )}
+
+      <!-- Points on lorenz curve -->
+      {lorenzPts.map(p => (
+        <circle cx={px(p.x)} cy={py(p.y)} r="3.5" fill="#3b82f6" stroke="#fff" stroke-width="1.5"/>
+      ))}
+
+    </svg>
+
+    <div class="edu-chart-legend">
+      <div class="edu-chart-legend-item">
+        <span class="edu-chart-legend-line" style="background:#3b82f6"></span>
+        <span>로렌츠 곡선</span>
+      </div>
+      <div class="edu-chart-legend-item">
+        <span style="display:inline-block; width:22px; border-top:2px dashed #94a3b8; margin-top:4px"></span>
+        <span>완전 평등선</span>
+      </div>
+      {compare && (
+        <div class="edu-chart-legend-item">
+          <span style="display:inline-block; width:22px; border-top:2px dashed #f59e0b; margin-top:4px"></span>
+          <span>{compareLabel}</span>
+        </div>
+      )}
+      <div class="edu-chart-legend-item">
+        <span class="edu-chart-legend-box" style="background:#3b82f6; opacity:0.25"></span>
+        <span>불평등 면적 (A)</span>
+      </div>
+    </div>
+  </div>
+  {caption && <p class="edu-chart-caption">{caption}</p>}
+</div>
+
+<style>
+  .edu-chart-wrap { margin:2.5rem 0; background:#fff; border:1px solid #e2e8f0; border-radius:1rem; padding:1.5rem; box-shadow:0 4px 16px rgba(0,0,0,.06); }
+  .edu-chart-title { font-weight:700; font-size:1rem; color:#1e293b; margin-bottom:1.25rem; text-align:center; }
+  .edu-chart-body { display:flex; flex-direction:column; align-items:center; gap:1rem; }
+  .edu-chart-legend { display:flex; flex-wrap:wrap; gap:.75rem 1.5rem; justify-content:center; }
+  .edu-chart-legend-item { display:flex; align-items:center; gap:.5rem; font-size:.78rem; color:#475569; font-weight:600; }
+  .edu-chart-legend-line { width:24px; height:3px; border-radius:2px; display:inline-block; }
+  .edu-chart-legend-box { width:14px; height:14px; border-radius:3px; display:inline-block; }
+  .edu-chart-caption { font-size:.78rem; color:#64748b; text-align:center; margin-top:.75rem; font-style:italic; }
+</style>

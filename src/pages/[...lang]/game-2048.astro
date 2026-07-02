@@ -1,0 +1,47 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Game2048Comp from "../../components/games/Game2048";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "2048 퍼즐 게임 — 숫자를 합쳐 2048을 만들어라",
+    description: "같은 숫자 타일을 합쳐 2048을 만드는 퍼즐 게임. 방향키로 타일을 밀어 최고 점수에 도전하세요.",
+  },
+  en: {
+    title: "2048 Puzzle Game",
+    description: "Merge tiles of the same number to reach 2048. Use arrow keys to slide tiles and aim for the highest score.",
+  },
+  ja: {
+    title: "2048パズルゲーム — 数字を合わせて2048を作れ",
+    description: "同じ数字のタイルを合わせて2048を作るパズルゲーム。矢印キーでタイルを動かして最高スコアを目指しましょう。",
+  },
+  fr: {
+    title: "Jeu de Puzzle 2048",
+    description: "Fusionnez des tuiles du même nombre pour atteindre 2048. Utilisez les touches directionnelles pour glisser les tuiles.",
+  },
+  es: {
+    title: "Juego de Puzzle 2048",
+    description: "Combina fichas del mismo número para llegar a 2048. Usa las teclas de dirección para deslizar las fichas y apunta al máximo puntaje.",
+  },
+  zh: {
+    title: "2048益智游戏 — 合并数字达到2048",
+    description: "合并相同数字的方块达到2048的益智游戏。用方向键滑动方块，挑战最高分。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <Game2048Comp client:load locale={locale === 'ko' ? 'ko' : 'en'} />
+  </main>
+</BaseLayout>

@@ -1,0 +1,47 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ReversiComp from "../../components/games/Reversi";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "리버시 (오델로) — 상대 돌을 뒤집어라",
+    description: "온라인 리버시(오델로) 게임을 즐겨보세요. 상대방의 돌을 뒤집어 가장 많은 돌을 가진 쪽이 승리합니다.",
+  },
+  en: {
+    title: "Reversi (Othello)",
+    description: "Play Reversi (Othello) online. Flip your opponent's pieces and have the most pieces on the board to win.",
+  },
+  ja: {
+    title: "リバーシ（オセロ） — 相手の石を裏返せ",
+    description: "オンラインリバーシ（オセロ）を楽しもう。相手の石を挟んで裏返し、最も多くの石を持つ方が勝ちです。",
+  },
+  fr: {
+    title: "Reversi (Othello) en ligne — Retournez les pièces adverses",
+    description: "Jouez au Reversi (Othello) en ligne. Retournez les pièces de votre adversaire et ayez le plus de pièces pour gagner.",
+  },
+  es: {
+    title: "Reversi (Othello) en línea — Voltea las fichas del rival",
+    description: "Juega al Reversi (Othello) en línea. Voltea las fichas de tu oponente y ten las más fichas para ganar.",
+  },
+  zh: {
+    title: "黑白棋（奥赛罗） — 翻转对手棋子",
+    description: "享受线上黑白棋（奥赛罗）游戏。翻转对手棋子，最终拥有最多棋子者获胜。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <ReversiComp client:load locale={locale} />
+  </main>
+</BaseLayout>

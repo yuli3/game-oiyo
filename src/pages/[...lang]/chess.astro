@@ -1,0 +1,47 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ChessBoardComp from "../../components/games/ChessBoard";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "체스 — 전략의 게임, 온라인 체스",
+    description: "온라인 체스 게임을 즐겨보세요. 상대방의 킹을 체크메이트시키는 전략 보드 게임입니다.",
+  },
+  en: {
+    title: "Chess Game",
+    description: "Play chess online. The classic strategy board game where you aim to checkmate your opponent's king.",
+  },
+  ja: {
+    title: "チェス — 戦略のゲーム、オンラインチェス",
+    description: "オンラインチェスを楽しもう。相手のキングをチェックメイトする戦略ボードゲームです。",
+  },
+  fr: {
+    title: "Jeu d'Échecs en ligne — Le jeu de stratégie classique",
+    description: "Jouez aux échecs en ligne. Le jeu de stratégie classique où vous devez mettre le roi adverse en échec et mat.",
+  },
+  es: {
+    title: "Juego de Ajedrez — El clásico juego de estrategia",
+    description: "Juega al ajedrez en línea. El clásico juego de estrategia donde debes hacer jaque mate al rey contrario.",
+  },
+  zh: {
+    title: "西洋棋 — 策略游戏，线上西洋棋",
+    description: "享受线上西洋棋游戏。将对方国王将死即为胜利的经典策略棋盘游戏。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <ChessBoardComp client:load locale={locale} />
+  </main>
+</BaseLayout>

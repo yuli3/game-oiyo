@@ -1,0 +1,1 @@
+export default function PoisonPillExplorer() { return <div style={{padding:'2rem', backgroundColor:'#fef2f2', border:'1px solid #fca5a5', borderRadius:'0.5rem', textAlign:'center', color:'#991b1b', fontWeight:'bold', margin:'2rem 0'}}>🧪 Poison Pill Explorer (Interactive Preview Placeholder)</div>; }

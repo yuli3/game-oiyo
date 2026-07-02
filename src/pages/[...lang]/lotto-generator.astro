@@ -1,0 +1,47 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import LottoGeneratorComp from "../../components/games/LottoGenerator";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "로또 번호 생성기 — 행운의 번호 추첨",
+    description: "이번 주 행운의 로또 번호를 무작위로 생성해보세요. 여러 세트를 한 번에 생성할 수 있습니다.",
+  },
+  en: {
+    title: "Lotto Number Generator",
+    description: "Generate lucky lottery numbers randomly for this week. Generate multiple sets at once.",
+  },
+  ja: {
+    title: "ロト番号生成機 — 幸運の番号抽選",
+    description: "今週の幸運なロト番号をランダムに生成しましょう。複数のセットを一度に生成できます。",
+  },
+  fr: {
+    title: "Générateur de Numéros Loto",
+    description: "Générez des numéros de loterie chanceux au hasard pour cette semaine. Générez plusieurs combinaisons à la fois.",
+  },
+  es: {
+    title: "Generador de Números de Lotería",
+    description: "Genera números de lotería de la suerte aleatoriamente para esta semana. Genera múltiples combinaciones a la vez.",
+  },
+  zh: {
+    title: "乐透号码生成器 — 幸运号码抽签",
+    description: "随机生成本周幸运乐透号码。可以一次生成多组号码。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <LottoGeneratorComp client:load locale={locale === 'ko' ? 'ko' : 'en'} />
+  </main>
+</BaseLayout>

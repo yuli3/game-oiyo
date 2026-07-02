@@ -1,0 +1,84 @@
+---
+import { getCollection } from "astro:content";
+import { getTranslations } from "../lib/i18n";
+import type { Locale } from "../lib/i18n";
+
+interface Props {
+  currentSlug: string;
+  tags: string[];
+  category?: string;
+  locale?: string;
+  maxItems?: number;
+}
+
+const { currentSlug, tags, category, locale = "en", maxItems = 3 } = Astro.props;
+
+const allPosts = await getCollection("blog", (post) => !post.data.draft);
+
+// Score posts by tag overlap + category match
+const scored = allPosts
+  .filter((post) => post.slug !== currentSlug)
+  .filter((post) => {
+    const postLocale = post.slug.split("/")[0];
+    return postLocale === locale;
+  })
+  .map((post) => {
+    const sharedTags = (post.data.tags ?? []).filter((t: string) => tags.includes(t));
+    const categoryBonus = post.data.category === category ? 2 : 0;
+    return { post, score: sharedTags.length + categoryBonus };
+  })
+  .filter((item) => item.score > 0)
+  .sort((a, b) => b.score - a.score)
+  .slice(0, maxItems)
+  .map((item) => item.post);
+
+const hasResults = scored.length > 0;
+
+const t = await getTranslations(locale as Locale);
+const categoryNames = (t.category.names ?? {}) as Record<string, string>;
+
+const labels: Record<string, string> = {
+  en: "Related Posts",
+  ko: "관련 글",
+  ja: "関連記事",
+  fr: "Articles connexes",
+  es: "Artículos relacionados",
+};
+const label = labels[locale] ?? labels.en;
+---
+
+{hasResults && (
+<section class="mt-12 pt-10 border-t border-border/40 not-prose">
+  <h3 class="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-5">{label}</h3>
+  <div class="grid gap-4 sm:grid-cols-3">
+    {scored.map((post) => {
+      const parts = post.slug.split("/");
+      const slug = parts.slice(1).join("/");
+      const postLocale = parts[0];
+      return (
+        <a
+          href={`/${postLocale}/${slug}/`}
+          class="group block rounded-xl border border-border/60 bg-card p-4 hover:border-primary/50 hover:bg-primary/5 transition-colors"
+        >
+          {post.data.category && (
+            <span class="text-[10px] font-bold uppercase tracking-wider text-primary/70 mb-1 block">
+              {categoryNames[post.data.category] ?? post.data.category}
+            </span>
+          )}
+          <p class="font-semibold text-sm leading-snug group-hover:text-primary transition-colors line-clamp-3">
+            {post.data.title}
+          </p>
+          {post.data.pubDate && (
+            <time
+              datetime={post.data.pubDate.toISOString()}
+              class="text-[11px] text-muted-foreground mt-2 block"
+            >
+              {post.data.pubDate.toLocaleDateString(postLocale, { year: "numeric", month: "short", day: "numeric" })}
+            </time>
+          )}
+        </a>
+      );
+    })}
+  </div>
+</section>
+)}

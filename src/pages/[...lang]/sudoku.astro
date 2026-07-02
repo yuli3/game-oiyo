@@ -1,0 +1,47 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SudokuComp from "../../components/games/Sudoku";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "스도쿠 — 두뇌 트레이닝 수학 퍼즐",
+    description: "집중력과 논리적 사고력을 키우는 클래식 스도쿠 퍼즐. 쉬움, 보통, 어려움 세 가지 난이도를 즐겨보세요.",
+  },
+  en: {
+    title: "Sudoku Puzzle",
+    description: "Classic Sudoku puzzle to train your concentration and logical thinking. Choose from easy, medium, and hard difficulty levels.",
+  },
+  ja: {
+    title: "数独 — 脳トレ数学パズル",
+    description: "集中力と論理的思考力を鍛えるクラシック数独パズル。簡単、普通、難しいの3つの難易度をお楽しみください。",
+  },
+  fr: {
+    title: "Sudoku — Puzzle Mathématique",
+    description: "Le puzzle Sudoku classique pour entraîner votre concentration et votre logique. Choisissez parmi trois niveaux de difficulté.",
+  },
+  es: {
+    title: "Sudoku — Puzzle Matemático",
+    description: "El clásico puzzle Sudoku para entrenar tu concentración y pensamiento lógico. Elige entre tres niveles de dificultad.",
+  },
+  zh: {
+    title: "数独 — 大脑训练数学谜题",
+    description: "培养专注力和逻辑思维的经典数独谜题。享受简单、普通、困难三个难度等级。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-4xl px-4 py-8">
+    <SudokuComp client:load locale={locale === 'ko' ? 'ko' : 'en'} />
+  </main>
+</BaseLayout>

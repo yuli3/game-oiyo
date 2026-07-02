@@ -1,0 +1,27 @@
+---
+interface Props {
+  headings: { depth: number; slug: string; text: string }[];
+}
+
+const { headings } = Astro.props;
+
+// Filter only secondary and tertiary headings for the TOC
+const filteredHeadings = headings.filter((h) => h.depth <= 3);
+---
+
+{filteredHeadings.length > 0 && (
+  <nav class="hidden lg:block sticky top-24 h-fit max-w-[240px] p-6 bg-muted/30 border border-border/40 rounded-2xl animate-fade-up">
+    <h2 class="text-xs font-bold uppercase tracking-widest text-primary mb-4">Contents</h2>
+    <ul class="space-y-3">
+      {filteredHeadings.map((h) => (
+        <li class:list={[
+          "text-sm font-medium transition-colors hover:text-primary",
+          { "pl-4 text-muted-foreground/80": h.depth === 3 },
+          { "text-muted-foreground": h.depth === 2 }
+        ]}>
+          <a href={`#${h.slug}`}>{h.text}</a>
+        </li>
+      ))}
+    </ul>
+  </nav>
+)}

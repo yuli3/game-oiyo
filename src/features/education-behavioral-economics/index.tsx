@@ -1,0 +1,1 @@
+export function BiasLab() { return <div style={{padding:'3rem 2rem', backgroundColor:'#eff6ff', borderRadius:'0.75rem', textAlign:'center', color:'#1d4ed8', fontWeight:'bold', border:'1px solid #bfdbfe', margin:'2rem 0'}}>🧠 Cognitive Bias Lab (Interactive Module Placeholder)</div>; }

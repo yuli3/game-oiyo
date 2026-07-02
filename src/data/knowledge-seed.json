@@ -1,0 +1,254 @@
+{
+  "version": 1,
+  "updatedAt": "2026-06-14",
+  "purpose": "Internal seed catalog for OIYO topic clusters, route ownership, cross-domain linking, and future AI-readable public knowledge indexes.",
+  "topics": [
+    {
+      "id": "saju",
+      "name": {
+        "ko": "사주",
+        "en": "Saju",
+        "ja": "四柱推命",
+        "zh": "四柱八字",
+        "fr": "Saju",
+        "es": "Saju"
+      },
+      "primaryOwner": "oiyo",
+      "definitionOwner": "wiki",
+      "explanationOwner": "blog",
+      "marketPolicy": "global-symbolic",
+      "aliases": ["four pillars", "saju palja", "palja", "bazi", "四柱", "八字"],
+      "routeIds": [
+        "oiyo.saju.calculator",
+        "oiyo.saju.compatibility",
+        "oiyo.saju.fortune",
+        "blog.saju.calculator-guide",
+        "wiki.palja.definition"
+      ],
+      "relatedTopicIds": ["astrology", "chinese-zodiac", "daily-mystic"],
+      "quickWin": "Keep English landing pages aligned to ahoxy GSC queries such as saju palja test and saju astrology."
+    },
+    {
+      "id": "astrology",
+      "name": {
+        "ko": "점성술",
+        "en": "Astrology",
+        "ja": "占星術",
+        "zh": "占星",
+        "fr": "Astrologie",
+        "es": "Astrología"
+      },
+      "primaryOwner": "oiyo",
+      "definitionOwner": "wiki",
+      "explanationOwner": "blog",
+      "marketPolicy": "global-symbolic",
+      "aliases": ["zodiac", "natal chart", "birth chart", "sun sign", "moon sign", "rising sign"],
+      "routeIds": [
+        "oiyo.natal.chart",
+        "oiyo.zodiac.personality",
+        "oiyo.zodiac.compatibility",
+        "oiyo.zodiac.fortune",
+        "blog.astrology-vs-saju",
+        "wiki.astrology.definition",
+        "wiki.astrology.planet-sign-dictionary"
+      ],
+      "relatedTopicIds": ["saju", "daily-mystic", "tarot"],
+      "quickWin": "Use natal chart as the Western counterpart to saju and keep cross-links paired."
+    },
+    {
+      "id": "tarot",
+      "name": {
+        "ko": "타로",
+        "en": "Tarot",
+        "ja": "タロット",
+        "zh": "塔罗",
+        "fr": "Tarot",
+        "es": "Tarot"
+      },
+      "primaryOwner": "oiyo",
+      "definitionOwner": "wiki",
+      "explanationOwner": "blog",
+      "marketPolicy": "global-symbolic",
+      "aliases": ["tarot reading", "daily tarot", "major arcana", "minor arcana"],
+      "routeIds": [
+        "oiyo.tarot.reading",
+        "oiyo.tarot.daily",
+        "blog.tarot-daily-card",
+        "wiki.tarot-major-arcana.definition"
+      ],
+      "relatedTopicIds": ["oracle", "daily-mystic", "astrology"],
+      "quickWin": "Lean into daily tarot as a repeat-visit habit loop, not only a one-off reading."
+    },
+    {
+      "id": "daily-mystic",
+      "name": {
+        "ko": "오늘의 우주",
+        "en": "Today's Universe",
+        "ja": "今日の宇宙",
+        "zh": "今日宇宙",
+        "fr": "Univers du jour",
+        "es": "Universo de hoy"
+      },
+      "primaryOwner": "oiyo",
+      "definitionOwner": "wiki",
+      "explanationOwner": "blog",
+      "marketPolicy": "global-symbolic",
+      "aliases": ["daily fortune", "today's fortune", "daily saju", "daily horoscope", "daily tarot"],
+      "routeIds": ["oiyo.today"],
+      "relatedTopicIds": ["saju", "astrology", "tarot", "blood-type"],
+      "quickWin": "Make this the lightweight return loop for users who do not need a full test every visit."
+    },
+    {
+      "id": "oracle",
+      "name": {
+        "ko": "오라클",
+        "en": "Oracle",
+        "ja": "オラクル",
+        "zh": "神谕卡",
+        "fr": "Oracle",
+        "es": "Oráculo"
+      },
+      "primaryOwner": "oiyo",
+      "definitionOwner": "wiki",
+      "explanationOwner": "blog",
+      "marketPolicy": "global-symbolic",
+      "aliases": ["oracle card", "wisdom card", "sage oracle"],
+      "routeIds": ["oiyo.oracle.draw", "oiyo.oracle.sages"],
+      "relatedTopicIds": ["tarot", "daily-mystic"],
+      "quickWin": "Keep as an oiyo-only execution cluster until a real wiki/blog source exists."
+    },
+    {
+      "id": "palmistry",
+      "name": {
+        "ko": "손금",
+        "en": "Palmistry",
+        "ja": "手相",
+        "zh": "手相",
+        "fr": "Chiromancie",
+        "es": "Quiromancia"
+      },
+      "primaryOwner": "oiyo",
+      "definitionOwner": "wiki",
+      "explanationOwner": "blog",
+      "marketPolicy": "global-symbolic",
+      "aliases": ["palm reading", "life line", "heart line", "head line", "fate line"],
+      "routeIds": ["oiyo.palmistry.explore"],
+      "relatedTopicIds": ["saju", "astrology"],
+      "quickWin": "Keep medical disclaimers explicit; palm lines must not imply health diagnosis."
+    },
+    {
+      "id": "chinese-zodiac",
+      "name": {
+        "ko": "띠",
+        "en": "Chinese Zodiac",
+        "ja": "十二支",
+        "zh": "生肖",
+        "fr": "Zodiaque chinois",
+        "es": "Zodíaco chino"
+      },
+      "primaryOwner": "oiyo",
+      "definitionOwner": "wiki",
+      "explanationOwner": "blog",
+      "marketPolicy": "global-symbolic",
+      "aliases": ["12 zodiac animals", "生肖", "十二支", "animal zodiac"],
+      "routeIds": ["oiyo.chinese-zodiac.index", "oiyo.chinese-zodiac.compatibility"],
+      "relatedTopicIds": ["saju", "daily-mystic"],
+      "quickWin": "Use as a friendly bridge from casual animal-sign searches into deeper saju concepts."
+    },
+    {
+      "id": "blood-type",
+      "name": {
+        "ko": "혈액형 성격",
+        "en": "Blood Type Personality",
+        "ja": "血液型性格",
+        "zh": "血型性格",
+        "fr": "Personnalité par groupe sanguin",
+        "es": "Personalidad por tipo de sangre"
+      },
+      "primaryOwner": "oiyo",
+      "definitionOwner": "wiki",
+      "explanationOwner": "blog",
+      "marketPolicy": "culture-specific-symbolic",
+      "aliases": ["blood type compatibility", "blood type fortune", "ABO personality"],
+      "routeIds": ["oiyo.blood-type.index", "oiyo.blood-type.compatibility", "oiyo.blood-type.fortune"],
+      "relatedTopicIds": ["daily-mystic", "chinese-zodiac"],
+      "quickWin": "Always frame as cultural folklore with weak scientific basis."
+    },
+    {
+      "id": "height-converter",
+      "name": {
+        "ko": "키 변환기",
+        "en": "Height Converter",
+        "ja": "身長変換",
+        "zh": "身高换算",
+        "fr": "Convertisseur de taille",
+        "es": "Conversor de altura"
+      },
+      "primaryOwner": "blog",
+      "definitionOwner": "blog",
+      "explanationOwner": "blog",
+      "marketPolicy": "global-utility",
+      "aliases": ["male to female height converter", "female to male height converter", "남자키 여자키 변환", "height comparison"],
+      "routeIds": ["blog.height-converter", "blog.height-converter.formula-guide", "ahoxy.height-converter.legacy-source"],
+      "relatedTopicIds": [],
+      "quickWin": "Highest ahoxy traffic source; keep the interactive converter as the owner and use the formula guide as supporting content."
+    },
+    {
+      "id": "universal-converter",
+      "name": {
+        "ko": "통합 변환기",
+        "en": "Universal Converter",
+        "ja": "統合コンバーター",
+        "zh": "通用转换器",
+        "fr": "Convertisseur universel",
+        "es": "Convertidor universal"
+      },
+      "primaryOwner": "blog",
+      "definitionOwner": "blog",
+      "explanationOwner": "blog",
+      "marketPolicy": "global-utility",
+      "aliases": ["text to binary", "binary decoder", "base converter", "roman numeral date converter"],
+      "routeIds": ["blog.universal-converter", "ahoxy.universal-converter.legacy-source"],
+      "relatedTopicIds": [],
+      "quickWin": "Finish the ahoxy converter cluster by migrating the multi-purpose converter with HowTo and FAQ schema."
+    },
+    {
+      "id": "birth-year",
+      "name": {
+        "ko": "출생연도별 정보",
+        "en": "Birth Year Info",
+        "ja": "生年別情報",
+        "zh": "出生年份信息",
+        "fr": "Informations par année de naissance",
+        "es": "Información por año de nacimiento"
+      },
+      "primaryOwner": "blog",
+      "definitionOwner": "wiki",
+      "explanationOwner": "blog",
+      "marketPolicy": "korea-specific",
+      "aliases": ["year zodiac", "birth year age", "korean age by birth year", "띠", "한국나이"],
+      "routeIds": ["blog.birth-year.index", "blog.birth-year.detail", "ahoxy.birth-year.legacy-source"],
+      "relatedTopicIds": ["chinese-zodiac"],
+      "quickWin": "Keep this Korean-only because age conventions and birth-year search intent are Korea-specific; migrate only ko ahoxy year routes."
+    },
+    {
+      "id": "dream",
+      "name": {
+        "ko": "꿈해몽",
+        "en": "Dream Interpretation",
+        "ja": "夢占い",
+        "zh": "周公解梦",
+        "fr": "Interprétation des rêves",
+        "es": "Interpretación de sueños"
+      },
+      "primaryOwner": "blog",
+      "definitionOwner": "wiki",
+      "explanationOwner": "blog",
+      "marketPolicy": "global-symbolic",
+      "aliases": ["dream meaning", "dream symbols", "dream dictionary", "해몽", "태몽"],
+      "routeIds": ["blog.dream-interpreter", "blog.dream-symbols-guide", "wiki.dream.definition"],
+      "relatedTopicIds": ["saju", "daily-mystic", "oracle"],
+      "quickWin": "51 Korean dream-symbol definitions already exist on wiki; pair them with the blog dream-interpreter tool and expand other locales."
+    }
+  ]
+}

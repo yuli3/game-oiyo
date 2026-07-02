@@ -1,0 +1,83 @@
+---
+import type { Locale } from "../lib/i18n";
+
+interface Props {
+  locale: Locale;
+  itemName: string;
+  targetPath: string;
+  kind: "test" | "calculator" | "tool";
+}
+
+const { locale, itemName, targetPath, kind } = Astro.props;
+const target = `https://oiyo.net/${locale}${targetPath}`;
+
+const copy: Record<Locale, { moved: string; body: string; link: string; test: string; calculator: string; tool: string }> = {
+  ko: {
+    moved: "oiyo.net에서 진행합니다",
+    body: "blog.oiyo.net은 해설과 활용 가이드를 제공하고, 실제 실행형 도구는 oiyo.net의 정본 페이지로 통합했습니다.",
+    link: "oiyo.net에서 열기",
+    test: "테스트",
+    calculator: "계산기",
+    tool: "도구",
+  },
+  en: {
+    moved: "now lives on oiyo.net",
+    body: "blog.oiyo.net keeps the guides and explanations. The interactive tool is unified on the canonical oiyo.net page.",
+    link: "Open on oiyo.net",
+    test: "test",
+    calculator: "calculator",
+    tool: "tool",
+  },
+  ja: {
+    moved: "は oiyo.net に移動しました",
+    body: "blog.oiyo.net は解説と活用ガイドを提供し、実行型ツールは oiyo.net の正本ページに統合しました。",
+    link: "oiyo.netで開く",
+    test: "テスト",
+    calculator: "計算機",
+    tool: "ツール",
+  },
+  fr: {
+    moved: "est sur oiyo.net",
+    body: "blog.oiyo.net conserve les guides et les explications. L'outil interactif est unifié sur la page canonique oiyo.net.",
+    link: "Ouvrir sur oiyo.net",
+    test: "test",
+    calculator: "calculateur",
+    tool: "outil",
+  },
+  es: {
+    moved: "está en oiyo.net",
+    body: "blog.oiyo.net conserva las guías y explicaciones. La herramienta interactiva está unificada en la página canónica de oiyo.net.",
+    link: "Abrir en oiyo.net",
+    test: "test",
+    calculator: "calculadora",
+    tool: "herramienta",
+  },
+  zh: {
+    moved: "已移至 oiyo.net",
+    body: "blog.oiyo.net 保留解说与使用指南，互动工具统一到 oiyo.net 的规范页面。",
+    link: "在 oiyo.net 打开",
+    test: "测试",
+    calculator: "计算器",
+    tool: "工具",
+  },
+};
+
+const text = copy[locale] ?? copy.en;
+const kindLabel = text[kind];
+const title = `${itemName} ${kindLabel} ${text.moved}`;
+---
+<html lang={locale}>
+  <head>
+    <title>{title}</title>
+    <link rel="canonical" href={target} />
+    <meta name="robots" content="noindex,follow" />
+    <meta http-equiv="refresh" content={`0;url=${target}`} />
+  </head>
+  <body>
+    <main style="font-family: system-ui, sans-serif; max-width: 42rem; margin: 4rem auto; padding: 0 1rem;">
+      <h1>{title}</h1>
+      <p>{text.body}</p>
+      <p><a href={target}>{text.link}</a></p>
+    </main>
+  </body>
+</html>

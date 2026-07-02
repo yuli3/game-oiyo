@@ -1,0 +1,23 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getLocaleFromPath, getTranslations } from '../lib/i18n';
+
+const locale = getLocaleFromPath(Astro.url.pathname);
+const t = await getTranslations(locale);
+---
+
+<BaseLayout title={`404 - ${t.common.notFound}`}>
+  <div class="min-h-[70vh] flex flex-col items-center justify-center text-center px-4">
+    <div class="w-24 h-24 rounded-3xl bg-primary/10 flex items-center justify-center text-primary mb-8 animate-bounce">
+      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    </div>
+    <h1 class="text-6xl font-extrabold tracking-tighter mb-4 font-heading text-primary">404</h1>
+    <p class="text-xl text-muted-foreground mb-12 max-w-md mx-auto italic">
+      {t.page404.description}
+    </p>
+    <a href={locale === 'en' ? '/' : `/${locale}`} class="inline-flex items-center gap-2 px-8 py-4 bg-primary text-primary-foreground rounded-2xl font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-all">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      {t.page404.returnHome}
+    </a>
+  </div>
+</BaseLayout>

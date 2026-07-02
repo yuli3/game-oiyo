@@ -1,0 +1,30 @@
+name: Weekly SEO Report
+
+on:
+  schedule:
+    # 매주 월요일 00:00 UTC = 09:00 KST
+    - cron: '0 0 * * 1'
+  workflow_dispatch:
+
+jobs:
+  report:
+    name: GSC + Bing health report (4 sites)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install requests google-api-python-client google-auth
+
+      - name: Generate report
+        env:
+          GSC_SERVICE_ACCOUNT_JSON: ${{ secrets.GSC_SERVICE_ACCOUNT_JSON }}
+          BING_WEBMASTER_API_KEY: ${{ secrets.BING_WEBMASTER_API_KEY }}
+        run: python scripts/seo-weekly-report.py >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,1 @@
+export function InvestmentSimulator() { return <div style={{padding:'3rem 2rem', backgroundColor:'#fdf4ff', borderRadius:'0.75rem', textAlign:'center', color:'#a21caf', fontWeight:'bold', border:'1px solid #f5d0fe', margin:'2rem 0'}}>📈 Investment Simulator (Interactive Module Placeholder)</div>; }

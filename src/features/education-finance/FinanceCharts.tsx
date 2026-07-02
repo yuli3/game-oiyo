@@ -1,0 +1,6 @@
+
+        export function OptionPayoffChart() { return <div style={{padding:'3rem 2rem', backgroundColor:'#f8fafc', borderRadius:'0.75rem', textAlign:'center', color:'#475569', fontWeight:'bold', border:'2px dashed #cbd5e1', margin:'2rem 0'}}>📈 Option Payoff Chart (Placeholder)</div>; }
+        export function FrontierChart({title}:any) { return <div style={{padding:'3rem 2rem', backgroundColor:'#f8fafc', borderRadius:'0.75rem', textAlign:'center', color:'#475569', fontWeight:'bold', border:'2px dashed #cbd5e1', margin:'2rem 0'}}>📊 Efficient Frontier Chart: {title || 'Untitled'}</div>; }
+        export function NPVChart() { return <div style={{padding:'3rem 2rem', backgroundColor:'#f8fafc', borderRadius:'0.75rem', textAlign:'center', color:'#475569', fontWeight:'bold', border:'2px dashed #cbd5e1', margin:'2rem 0'}}>📉 NPV Chart (Placeholder)</div>; }
+        export function SMLChart() { return <div style={{padding:'3rem 2rem', backgroundColor:'#f8fafc', borderRadius:'0.75rem', textAlign:'center', color:'#475569', fontWeight:'bold', border:'2px dashed #cbd5e1', margin:'2rem 0'}}>📈 SML Chart (Placeholder)</div>; }
+    

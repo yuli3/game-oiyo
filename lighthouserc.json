@@ -1,0 +1,28 @@
+{
+  "ci": {
+    "collect": {
+      "startServerCommand": "npx --yes http-server dist -p 8080 -s",
+      "startServerReadyPattern": "Available on",
+      "url": [
+        "http://localhost:8080/ko/",
+        "http://localhost:8080/en/",
+        "http://localhost:8080/ko/tools/",
+        "http://localhost:8080/ko/courses/",
+        "http://localhost:8080/ko/bmi-calculator/",
+        "http://localhost:8080/ko/academy-technical-analysis-ch1/",
+        "http://localhost:8080/ko/funeral-etiquette-by-country/"
+      ],
+      "numberOfRuns": 1,
+      "settings": { "preset": "desktop" }
+    },
+    "assert": {
+      "assertions": {
+        "categories:performance": ["warn", { "minScore": 0.8 }],
+        "categories:seo": ["warn", { "minScore": 0.9 }],
+        "categories:accessibility": ["warn", { "minScore": 0.9 }],
+        "categories:best-practices": ["warn", { "minScore": 0.9 }]
+      }
+    },
+    "upload": { "target": "temporary-public-storage" }
+  }
+}

@@ -1,0 +1,86 @@
+---
+interface Period {
+  label: string;
+  theme: string;
+  note?: string;
+  color?: string;
+}
+
+interface Props {
+  title?: string;
+  periods?: Period[];
+}
+
+const defaultPeriods: Period[] = [
+  { label: "10대", theme: "기초 형성", note: "가족·학교·초기 습관", color: "#2563eb" },
+  { label: "20대", theme: "방향 탐색", note: "전공, 직업, 관계 실험", color: "#16a34a" },
+  { label: "30대", theme: "구조화", note: "책임, 자산, 커리어 축적", color: "#ca8a04" },
+  { label: "40대", theme: "재배치", note: "역할 전환과 장기 전략", color: "#dc2626" },
+  { label: "50대+", theme: "정리와 확장", note: "후반부 의미와 전승", color: "#7c3aed" },
+];
+
+const { title = "대운 타임라인 예시", periods = defaultPeriods } = Astro.props;
+---
+
+<section class="luck-timeline">
+  <h3>{title}</h3>
+  <div class="luck-timeline__track">
+    {
+      periods.map((period) => (
+        <article class="luck-timeline__period" style={`--period:${period.color ?? "#334155"};`}>
+          <span>{period.label}</span>
+          <strong>{period.theme}</strong>
+          {period.note && <p>{period.note}</p>}
+        </article>
+      ))
+    }
+  </div>
+</section>
+
+<style>
+  .luck-timeline {
+    margin: 2.25rem 0;
+  }
+  .luck-timeline h3 {
+    margin: 0 0 1rem;
+    color: #0f172a;
+    font-size: 1.05rem;
+    font-weight: 850;
+  }
+  .luck-timeline__track {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.75rem;
+    position: relative;
+  }
+  .luck-timeline__period {
+    min-width: 0;
+    padding: 1rem;
+    border: 1px solid color-mix(in srgb, var(--period), white 72%);
+    border-top: 4px solid var(--period);
+    border-radius: 0.875rem;
+    background: #fff;
+  }
+  .luck-timeline__period span {
+    color: var(--period);
+    font-size: 0.78rem;
+    font-weight: 900;
+  }
+  .luck-timeline__period strong {
+    display: block;
+    margin-top: 0.35rem;
+    color: #0f172a;
+    font-size: 0.94rem;
+  }
+  .luck-timeline__period p {
+    margin: 0.45rem 0 0;
+    color: #64748b;
+    font-size: 0.78rem;
+    line-height: 1.45;
+  }
+  @media (max-width: 820px) {
+    .luck-timeline__track {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

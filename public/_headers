@@ -1,0 +1,81 @@
+# Cloudflare Pages cache & security headers
+# blog.oiyo.net
+
+# ──────────────────────────────────────────
+# DATA API — long cache, public CORS
+# blog-oiyo serves as static JSON CDN for ahoxy.com
+# ──────────────────────────────────────────
+/data/*
+  Cache-Control: public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, HEAD, OPTIONS
+  Access-Control-Max-Age: 86400
+  Vary: Accept-Encoding
+  X-Content-Type-Options: nosniff
+
+# ──────────────────────────────────────────
+# STATIC ASSETS — immutable long cache
+# Astro content-hashes filenames, so these are safe to cache permanently
+# ──────────────────────────────────────────
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable
+  X-Content-Type-Options: nosniff
+
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# ──────────────────────────────────────────
+# IMAGES & ICONS — 1 week CDN
+# ──────────────────────────────────────────
+/*.png
+  Cache-Control: public, max-age=604800, s-maxage=604800, stale-while-revalidate=86400
+
+/*.ico
+  Cache-Control: public, max-age=604800, s-maxage=604800
+
+/*.svg
+  Cache-Control: public, max-age=604800, s-maxage=604800
+  X-Content-Type-Options: nosniff
+
+/img/*
+  Cache-Control: public, max-age=604800, s-maxage=604800, stale-while-revalidate=86400
+
+# ──────────────────────────────────────────
+# MANIFEST & SEO — short revalidation
+# ──────────────────────────────────────────
+/brand-facts.json
+  Cache-Control: public, max-age=3600
+  Access-Control-Allow-Origin: *
+  X-Content-Type-Options: nosniff
+
+/api/brand-facts.json
+  Cache-Control: public, max-age=3600
+  Access-Control-Allow-Origin: *
+  X-Content-Type-Options: nosniff
+
+/manifest.json
+  Cache-Control: public, max-age=3600, s-maxage=86400
+  Access-Control-Allow-Origin: *
+
+/robots.txt
+  Cache-Control: public, max-age=86400
+
+/sitemap*.xml
+  Cache-Control: public, max-age=3600, s-maxage=86400
+
+/rss*.xml
+  Cache-Control: public, max-age=3600, s-maxage=86400
+
+# ──────────────────────────────────────────
+# HTML PAGES — short cache, always revalidate
+# CSP intentionally omitted (2026-06-14): static, no-auth, no-user-data site — CSP has no
+# high-value target here and a mis-allowlisted CSP silently breaks ads/analytics. Clickjacking,
+# MIME-sniffing, and HTTPS protections remain via the headers below.
+# ──────────────────────────────────────────
+/*
+  Cache-Control: public, max-age=0, s-maxage=300, stale-while-revalidate=600
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  X-XSS-Protection: 1; mode=block
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()

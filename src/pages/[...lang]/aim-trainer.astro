@@ -1,0 +1,47 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import AimTrainer from "../../components/games/AimTrainer";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "에임 트레이너 — 반응 속도와 정확도 훈련",
+    description: "30초 동안 나타나는 원을 클릭하며 마우스 에임과 반응 속도를 훈련하세요. 정확도와 등급을 확인해보세요.",
+  },
+  en: {
+    title: "Aim Trainer — Train Your Reaction Speed & Accuracy",
+    description: "Click the appearing circles for 30 seconds to train your aim and reaction speed. Check your accuracy and earn a grade.",
+  },
+  ja: {
+    title: "エイムトレーナー — 反応速度と精度のトレーニング",
+    description: "30秒間現れる円をクリックしてマウスのエイムと反応速度をトレーニングしましょう。精度と評価を確認してください。",
+  },
+  fr: {
+    title: "Entraîneur de Visée — Entraînez Votre Réactivité",
+    description: "Cliquez sur les cercles pendant 30 secondes pour améliorer votre visée et votre vitesse de réaction. Vérifiez votre précision.",
+  },
+  es: {
+    title: "Entrenador de Puntería — Entrena tu Reacción y Precisión",
+    description: "Haz clic en los círculos durante 30 segundos para entrenar tu puntería y velocidad de reacción. Comprueba tu precisión.",
+  },
+  zh: {
+    title: "瞄准训练器 — 训练反应速度与准确率",
+    description: "点击30秒内出现的圆圈，训练你的瞄准能力和反应速度。查看你的准确率和等级。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <AimTrainer client:load locale={locale} />
+  </main>
+</BaseLayout>

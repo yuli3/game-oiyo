@@ -1,0 +1,27 @@
+---
+import { getAuthor, pick } from "../lib/authors";
+
+interface Props {
+  authorName: string;
+  locale?: string;
+}
+
+const { authorName, locale = "ko" } = Astro.props;
+const entity = getAuthor(authorName);
+const displayName = entity.name ?? authorName;
+const role = pick(entity.role, locale);
+const bio = pick(entity.bio, locale);
+---
+
+<div class="my-8 flex items-center gap-6 rounded-xl border border-border/60 bg-muted/10 p-6 not-prose">
+  <div class="h-16 w-16 flex-shrink-0 flex items-center justify-center rounded-full bg-primary/10 text-primary font-heading font-extrabold text-2xl">
+    {displayName.charAt(0).toUpperCase()}
+  </div>
+  <div class="flex flex-col gap-1.5">
+    <div class="flex items-center gap-2">
+      <h3 class="font-bold text-lg">{displayName}</h3>
+      <span class="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-primary">{role}</span>
+    </div>
+    <p class="text-sm text-muted-foreground leading-relaxed">{bio}</p>
+  </div>
+</div>

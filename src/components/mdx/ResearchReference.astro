@@ -1,0 +1,23 @@
+---
+interface Props {
+  author?: string;
+  year?: string;
+  source?: string;
+}
+
+const { author, year, source } = Astro.props;
+---
+
+<cite
+  class="block text-sm text-muted-foreground/70 my-4 italic border-l-2 border-primary/30 pl-4 py-2 bg-muted/10 rounded-r-lg"
+>
+  {author && <span class="font-semibold">{author}</span>}
+  {year && <span class="ml-1 opacity-70">({year})</span>}
+  {
+    source && (
+      <span class="ml-2 not-italic text-foreground/80 underline decoration-border/50 underline-offset-4">
+        {source}
+      </span>
+    )
+  }
+</cite>

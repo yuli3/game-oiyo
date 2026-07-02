@@ -1,0 +1,132 @@
+---
+/**
+ * HobbyMatrix — 상황별 취미 추천
+ */
+interface HobbyEntry {
+  name: string
+  why?: string
+  energy_cost?: 'low' | 'medium' | 'high'
+  social?: 'solo' | 'small_group' | 'large_group'
+}
+
+interface MoodSection {
+  id: string
+  label: string
+  icon?: string
+  hobbies: HobbyEntry[]
+}
+
+interface Props {
+  title?: string
+  moods: MoodSection[]
+  alwaysGood?: Array<{ name: string; fit_reason?: string }>
+}
+
+const { title, moods, alwaysGood } = Astro.props
+
+const ENERGY_ICON = { low: '🔋', medium: '⚡', high: '🔥' }
+const SOCIAL_ICON = { solo: '🙋', small_group: '👥', large_group: '🎉' }
+---
+
+<div class="hobby-mx">
+  {title && <div class="hobby-mx__title">{title}</div>}
+
+  <div class="hobby-mx__moods">
+    {moods.map((mood) => (
+      <details class="hobby-mx__mood" open>
+        <summary class="hobby-mx__mood-label">
+          {mood.icon && <span aria-hidden="true">{mood.icon}</span>}
+          {mood.label}
+          <span class="hobby-mx__count">{mood.hobbies.length}개</span>
+        </summary>
+        <ul class="hobby-mx__list">
+          {mood.hobbies.map((h) => (
+            <li class="hobby-mx__item">
+              <div class="hobby-mx__item-header">
+                <span class="hobby-mx__item-name">{h.name}</span>
+                <span class="hobby-mx__item-icons">
+                  {h.energy_cost && <span title={`에너지: ${h.energy_cost}`}>{ENERGY_ICON[h.energy_cost]}</span>}
+                  {h.social && <span title={h.social}>{SOCIAL_ICON[h.social]}</span>}
+                </span>
+              </div>
+              {h.why && <p class="hobby-mx__item-why">{h.why}</p>}
+            </li>
+          ))}
+        </ul>
+      </details>
+    ))}
+  </div>
+
+  {alwaysGood && alwaysGood.length > 0 && (
+    <div class="hobby-mx__always">
+      <div class="hobby-mx__always-title">언제나 좋은 취미 ✨</div>
+      <div class="hobby-mx__always-list">
+        {alwaysGood.map((h) => (
+          <div class="hobby-mx__always-item">
+            <span class="hobby-mx__always-name">{h.name}</span>
+            {h.fit_reason && <span class="hobby-mx__always-reason">{h.fit_reason}</span>}
+          </div>
+        ))}
+      </div>
+    </div>
+  )}
+</div>
+
+<style>
+  .hobby-mx { margin: 2rem 0; }
+  .hobby-mx__title {
+    font-weight: 700; font-size: 1rem; color: #1e293b;
+    margin-bottom: 1rem; padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e2e8f0;
+  }
+  .hobby-mx__moods { display: flex; flex-direction: column; gap: 0.75rem; }
+  .hobby-mx__mood {
+    border: 1px solid #e2e8f0; border-radius: 0.75rem; overflow: hidden;
+  }
+  .hobby-mx__mood-label {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.75rem 1rem; font-weight: 700; font-size: 0.875rem;
+    color: #1e293b; background: #f8fafc; cursor: pointer;
+    list-style: none; user-select: none;
+  }
+  .hobby-mx__mood-label::-webkit-details-marker { display: none; }
+  .hobby-mx__mood-label::before {
+    content: '▶'; font-size: 0.6rem; color: #94a3b8;
+    transition: transform 0.2s; flex-shrink: 0;
+  }
+  details[open] .hobby-mx__mood-label::before { transform: rotate(90deg); }
+  .hobby-mx__count {
+    margin-left: auto; font-size: 0.65rem; font-weight: 600;
+    background: #e2e8f0; color: #64748b; padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+  }
+  .hobby-mx__list {
+    list-style: none; margin: 0; padding: 0.75rem;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.5rem; background: #fff;
+  }
+  .hobby-mx__item {
+    background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.5rem;
+    padding: 0.6rem 0.75rem;
+  }
+  .hobby-mx__item-header { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+  .hobby-mx__item-name { font-weight: 600; font-size: 0.82rem; color: #1e293b; }
+  .hobby-mx__item-icons { display: flex; gap: 0.2rem; font-size: 0.75rem; flex-shrink: 0; }
+  .hobby-mx__item-why { margin: 0.3rem 0 0; font-size: 0.72rem; color: #64748b; line-height: 1.4; }
+  .hobby-mx__always {
+    margin-top: 1.5rem; padding: 1rem; background: #fefce8;
+    border: 1px solid #fef08a; border-radius: 0.75rem;
+  }
+  .hobby-mx__always-title { font-weight: 700; font-size: 0.875rem; color: #713f12; margin-bottom: 0.75rem; }
+  .hobby-mx__always-list { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .hobby-mx__always-item {
+    display: flex; flex-direction: column; gap: 0.1rem;
+    background: #fff; border: 1px solid #fef08a; border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem; min-width: 120px;
+  }
+  .hobby-mx__always-name { font-weight: 700; font-size: 0.8rem; color: #1e293b; }
+  .hobby-mx__always-reason { font-size: 0.68rem; color: #a16207; }
+  @media (max-width: 640px) {
+    .hobby-mx__list { grid-template-columns: 1fr; }
+  }
+</style>

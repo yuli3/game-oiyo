@@ -1,0 +1,47 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import NumberGuessingGameComp from "../../components/games/NumberGuessingGame";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "숫자 맞추기 게임 — 1부터 100 사이의 숫자를 맞춰보세요",
+    description: "컴퓨터가 고른 숫자를 맞춰보세요. 뜨겁다/차갑다 힌트를 참고해 정답을 찾아내는 숫자 추리 게임입니다.",
+  },
+  en: {
+    title: "Number Guessing Game",
+    description: "Guess the number the computer picked. Use hot and cold hints to narrow down the answer in this number guessing game.",
+  },
+  ja: {
+    title: "数当てゲーム — 1から100の数字を当てよう",
+    description: "コンピューターが選んだ数字を当ててみましょう。熱い・冷たいヒントを参考にして答えを探し当てる数字推理ゲームです。",
+  },
+  fr: {
+    title: "Jeu de Devinette de Nombres",
+    description: "Devinez le nombre choisi par l'ordinateur. Utilisez les indices chaud et froid pour trouver la réponse.",
+  },
+  es: {
+    title: "Juego de Adivinar Números",
+    description: "Adivina el número elegido por la computadora. Usa las pistas caliente y frío para encontrar la respuesta.",
+  },
+  zh: {
+    title: "猜数字游戏 — 猜1到100之间的数字",
+    description: "猜猜电脑选的数字。根据热和冷的提示找出答案的数字推理游戏。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <NumberGuessingGameComp client:load locale={locale === 'ko' ? 'ko' : 'en'} />
+  </main>
+</BaseLayout>

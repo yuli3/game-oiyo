@@ -1,0 +1,407 @@
+---
+import SEO from "../components/SEO.astro";
+import { getLocaleFromPath, getTranslations } from "../lib/i18n";
+import { siteConfig } from "../config/site.config";
+import "../styles/global.css";
+import "katex/dist/katex.min.css";
+import "@fontsource-variable/inter";
+
+// BCP-47 mapping: Astro locale → HTML lang attribute standard value
+const BCP47: Record<string, string> = {
+  en: "en", ko: "ko", ja: "ja", fr: "fr", es: "es",
+  zh: "zh-CN", // cn folder = Traditional Chinese
+};
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  type?: "website" | "article";
+  pubDate?: Date;
+  updatedDate?: Date;
+  tags?: string[];
+  category?: string;
+  author?: string;
+  availableLocales?: string[];
+  canonicalUrl?: string;
+}
+
+const { title, description, image, type, pubDate, updatedDate, tags, category, author, availableLocales, canonicalUrl } = Astro.props;
+const locale = getLocaleFromPath(Astro.url.pathname);
+const t = await getTranslations(locale);
+const nav = t.nav as Record<string, string>;
+
+const scrollSnapEnabled = siteConfig.features.scrollSnap;
+
+// Helper to generate localized path preserving current slug
+const locales = siteConfig.locales;
+const currentPathname = Astro.url.pathname;
+
+const getLocalizedPath = (targetLocale: string) => {
+  const firstSegment = currentPathname.split("/")[1];
+
+  // Locale-less pages (e.g. /knowledge) have no per-locale variants; keep them
+  // self-referential so the switcher never points to a non-existent /xx/ copy.
+  if (!locales.includes(firstSegment)) {
+    return currentPathname;
+  }
+  const restOfPath = currentPathname.replace(`/${firstSegment}`, "");
+  const localizedPath = `/${targetLocale}${restOfPath}` || "/";
+  return localizedPath.startsWith("/") ? localizedPath : `/${localizedPath}`;
+};
+
+// game.oiyo.net nav — local pages only; cross-domain family links are absolute
+const navItems = [
+  { href: `/${locale}/`, label: (({ ko: "아케이드", ja: "アーケード", zh: "街机", fr: "Arcade", es: "Arcade", en: "Arcade" } as Record<string, string>)[locale] ?? "Arcade") },
+  { href: `https://blog.oiyo.net/${locale}/tools`, label: nav.tools ?? "Tools" },
+  { href: `https://blog.oiyo.net/${locale}/magazine`, label: nav.magazine ?? "Magazine" },
+  { href: `https://oiyo.net/${locale}/`, label: "OIYO" },
+];
+
+const allLangItems = [
+  { code: "en", label: "EN" },
+  { code: "ko", label: "KO" },
+  { code: "ja", label: "JA" },
+  { code: "fr", label: "FR" },
+  { code: "es", label: "ES" },
+  { code: "zh", label: "ZH" },
+];
+// Only offer locales the current page actually exists in (article pages pass
+// availableLocales); fall back to all. cn is removed from routing entirely.
+const langItems = availableLocales && availableLocales.length
+  ? allLangItems.filter((li) => availableLocales.includes(li.code) || li.code === locale)
+  : allLangItems;
+---
+
+<html
+  lang={BCP47[locale] ?? locale}
+  class:list={["scroll-smooth", { "snap-y snap-mandatory": scrollSnapEnabled }]}
+>
+  <head>
+    <SEO {title} {description} {image} {type} {pubDate} {updatedDate} {tags} {category} {author} {availableLocales} canonicalURL={canonicalUrl} />
+
+    <!-- Mermaid diagram rendering (only executes if mermaid code blocks are present) -->
+    <script type="module" is:inline>
+      if (document.querySelector("code.language-mermaid")) {
+        const { default: mermaid } = await import("https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs");
+        mermaid.initialize({ startOnLoad: false, theme: "neutral", securityLevel: "strict" });
+        document.querySelectorAll("code.language-mermaid").forEach((el) => {
+          const pre = el.parentElement;
+          if (!pre) return;
+          const div = document.createElement("div");
+          div.className = "mermaid not-prose my-8";
+          div.textContent = el.textContent;
+          pre.replaceWith(div);
+        });
+        await mermaid.run();
+      }
+    </script>
+  </head>
+  <body
+    class="min-h-screen bg-background text-foreground font-sans antialiased text-pretty selection:bg-primary/20 selection:text-primary"
+  >
+    <a
+      href="#main-content"
+      class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 z-[100] bg-primary text-primary-foreground px-4 py-2 rounded-lg"
+    >
+      Skip to content
+    </a>
+
+    <!-- ── Header ──────────────────────────────────────────────────────────── -->
+    <header
+      role="banner"
+      class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm"
+    >
+      <div class="container flex h-16 items-center justify-between px-4">
+
+        <!-- Schema.org structured data for navigation -->
+        <script type="application/ld+json" is:inline set:html={JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "SiteNavigationElement",
+          "hasPart": navItems.map(item => ({
+            "@type": "WebPage",
+            "name": item.label,
+            "url": `${siteConfig.url}${item.href}`,
+          })),
+        })} />
+
+        <!-- Logo -->
+        <a
+          href={`/${locale}/`}
+          class="flex items-center space-x-2 shrink-0 z-10"
+          aria-label="Oiyo home"
+        >
+          <span class="font-black text-xl tracking-tighter text-foreground">OIYO</span>
+        </a>
+
+        <!-- Desktop nav (lg+) -->
+        <nav
+          aria-label="Main navigation"
+          class="hidden lg:flex gap-6 items-center"
+        >
+          {navItems.map(({ href, label }) => (
+            <a
+              href={href}
+              class="text-sm font-bold uppercase tracking-widest text-muted-foreground transition-colors hover:text-primary whitespace-nowrap"
+            >{label}</a>
+          ))}
+
+          <!-- Search -->
+          <a
+            href={`/${locale}/search`}
+            class="flex items-center gap-1.5 text-sm font-bold uppercase tracking-widest text-muted-foreground transition-colors hover:text-primary whitespace-nowrap"
+            aria-label="Search"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          </a>
+
+          <!-- Language switcher -->
+          <div class="flex items-center gap-2 border-l border-border/40 pl-4">
+            {langItems.map(({ code, label }) => (
+              <a
+                href={getLocalizedPath(code)}
+                class={`text-[11px] font-bold uppercase tracking-widest transition-colors hover:text-primary ${locale === code ? "text-primary" : "text-muted-foreground/70"}`}
+              >{label}</a>
+            ))}
+          </div>
+        </nav>
+
+        <!-- Right controls: hamburger -->
+        <div class="flex items-center gap-2">
+          <!-- Mobile search -->
+          <a
+            href={`/${locale}/search`}
+            class="lg:hidden flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+            aria-label="Search"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          </a>
+
+          <!-- Hamburger (mobile only) -->
+          <button
+            id="menu-open"
+            aria-label="Open menu"
+            aria-expanded="false"
+            aria-controls="mobile-menu"
+            class="lg:hidden flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <line x1="3" y1="12" x2="21" y2="12"/>
+              <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- ── Mobile menu overlay ───────────────────────────────────────────── -->
+    <div
+      id="mobile-menu-overlay"
+      class="fixed inset-0 z-[60] bg-black/50 opacity-0 pointer-events-none transition-opacity duration-200"
+      aria-hidden="true"
+    ></div>
+
+    <!-- Mobile menu drawer (slides in from right) -->
+    <div
+      id="mobile-menu"
+      role="dialog"
+      aria-label="Navigation menu"
+      aria-modal="true"
+      class="fixed top-0 right-0 h-full w-72 max-w-[85vw] z-[70] bg-background border-l border-border shadow-2xl translate-x-full transition-transform duration-300 ease-out flex flex-col"
+    >
+      <!-- Drawer header -->
+      <div class="flex items-center justify-between px-6 h-16 border-b border-border/40 shrink-0">
+        <span class="font-black text-lg tracking-tighter">OIYO</span>
+        <button
+          id="menu-close"
+          aria-label="Close menu"
+          class="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Nav links -->
+      <nav aria-label="Mobile navigation" class="flex-1 overflow-y-auto px-6 py-6 space-y-1">
+        {navItems.map(({ href, label }) => (
+          <a
+            href={href}
+            class="flex items-center h-11 px-2 rounded-lg text-sm font-bold uppercase tracking-widest text-muted-foreground hover:text-primary hover:bg-muted/40 transition-colors"
+          >{label}</a>
+        ))}
+        <div class="pt-2 border-t border-border/40 mt-4">
+          <a
+            href={`/${locale}/search`}
+            class="flex items-center gap-3 h-11 px-2 rounded-lg text-sm font-bold uppercase tracking-widest text-muted-foreground hover:text-primary hover:bg-muted/40 transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            Search
+          </a>
+        </div>
+      </nav>
+
+      <!-- Language switcher at bottom -->
+      <div class="px-6 pb-6 pt-4 border-t border-border/40 shrink-0">
+        <p class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50 mb-3">
+          {t.common?.selectLanguage ?? "Language"}
+        </p>
+        <div class="flex flex-wrap gap-2">
+          {langItems.map(({ code, label }) => (
+            <a
+              href={getLocalizedPath(code)}
+              class={`px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-widest border transition-colors ${locale === code ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:text-primary hover:border-primary/40"}`}
+            >{label}</a>
+          ))}
+        </div>
+      </div>
+    </div>
+
+    <!-- Reading progress bar -->
+    <div
+      id="reading-progress"
+      class="fixed top-[64px] left-0 z-50 h-0.5 bg-primary transition-none"
+      style="width: 0%"
+      aria-hidden="true"
+    ></div>
+
+    <!-- Interactive scripts (inline to avoid render-blocking) -->
+    <script is:inline>
+      // ── Reading progress ──────────────────────────────────────────────────
+      (function () {
+        var bar = document.getElementById("reading-progress");
+        if (!bar) return;
+        function update() {
+          var scrollTop = window.scrollY || document.documentElement.scrollTop;
+          var docHeight =
+            document.documentElement.scrollHeight -
+            document.documentElement.clientHeight;
+          var pct = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+          bar.style.width = Math.min(100, pct).toFixed(1) + "%";
+        }
+        window.addEventListener("scroll", update, { passive: true });
+        update();
+      })();
+
+      // ── Back to top ──────────────────────────────────────────────────────
+      (function () {
+        var btn = document.getElementById("back-to-top");
+        if (!btn) return;
+        function toggleVisibility() {
+          var show = window.scrollY > 400;
+          btn.classList.toggle("opacity-0", !show);
+          btn.classList.toggle("pointer-events-none", !show);
+          btn.classList.toggle("opacity-100", show);
+        }
+        window.addEventListener("scroll", toggleVisibility, { passive: true });
+        btn.addEventListener("click", function () {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+        toggleVisibility();
+      })();
+
+      // ── Mobile menu ───────────────────────────────────────────────────────
+      (function () {
+        var openBtn   = document.getElementById("menu-open");
+        var closeBtn  = document.getElementById("menu-close");
+        var overlay   = document.getElementById("mobile-menu-overlay");
+        var drawer    = document.getElementById("mobile-menu");
+        if (!openBtn || !closeBtn || !overlay || !drawer) return;
+
+        function openMenu() {
+          drawer.classList.remove("translate-x-full");
+          overlay.classList.remove("opacity-0", "pointer-events-none");
+          overlay.classList.add("opacity-100");
+          overlay.setAttribute("aria-hidden", "false");
+          openBtn.setAttribute("aria-expanded", "true");
+          document.body.style.overflow = "hidden";
+          // Move focus into drawer
+          var firstLink = drawer.querySelector("a, button");
+          if (firstLink) firstLink.focus();
+        }
+
+        function closeMenu() {
+          drawer.classList.add("translate-x-full");
+          overlay.classList.add("opacity-0", "pointer-events-none");
+          overlay.classList.remove("opacity-100");
+          overlay.setAttribute("aria-hidden", "true");
+          openBtn.setAttribute("aria-expanded", "false");
+          document.body.style.overflow = "";
+          openBtn.focus();
+        }
+
+        openBtn.addEventListener("click", openMenu);
+        closeBtn.addEventListener("click", closeMenu);
+        overlay.addEventListener("click", closeMenu);
+
+        // Escape key closes menu
+        document.addEventListener("keydown", function (e) {
+          if (e.key === "Escape") closeMenu();
+        });
+      })();
+    </script>
+
+    <main id="main-content" role="main" class="flex-1">
+      <slot />
+    </main>
+
+    <!-- Back to top button -->
+    <button
+      id="back-to-top"
+      aria-label={t.common?.goToTop ?? "Go to top"}
+      class="fixed bottom-6 right-6 z-40 h-10 w-10 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-200 hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg>
+    </button>
+
+    <footer class="py-12 border-t border-border/40 text-center md:text-left">
+      <div class="container px-4 space-y-6">
+        <div
+          class="flex flex-col md:flex-row justify-between items-center gap-8"
+        >
+          <span class="font-bold text-lg tracking-tighter">OIYO</span>
+          <nav
+            aria-label="Footer navigation"
+            class="flex flex-wrap justify-center gap-x-8 gap-y-3 text-xs font-bold uppercase tracking-widest text-muted-foreground"
+          >
+            <a href={`/${locale}/`} class="hover:text-primary transition-colors">Arcade</a>
+            <a href={`https://blog.oiyo.net/${locale}/tools`} class="hover:text-primary transition-colors">{nav.tools ?? "Tools"}</a>
+            <a href={`https://blog.oiyo.net/${locale}/magazine`} class="hover:text-primary transition-colors">{nav.magazine ?? "Magazine"}</a>
+            <a href="/sitemap-index.xml" class="hover:text-primary transition-colors">Sitemap</a>
+            <a href={`https://blog.oiyo.net/${locale}/privacy`} class="hover:text-primary transition-colors">{t.legal.privacy.title}</a>
+            <a href={`https://blog.oiyo.net/${locale}/terms`} class="hover:text-primary transition-colors">{t.legal.terms.title}</a>
+            <a href="mailto:support@oiyo.net" class="hover:text-primary transition-colors">support@oiyo.net</a>
+            <a href="https://paypal.me/chosean" target="_blank" rel="noopener noreferrer" class="hover:text-primary transition-colors">☕ Support</a>
+          </nav>
+          <div
+            class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50"
+          >
+            © {new Date().getFullYear()} Oiyo Tech
+          </div>
+        </div>
+        <div class="flex flex-wrap justify-center md:justify-start gap-6 text-xs text-muted-foreground/60 items-center border-t border-border/20 pt-4">
+          <span class="font-bold uppercase tracking-widest text-[10px]">Explore</span>
+          <a href={`/${locale}/chess/`} class="hover:text-primary transition-colors">Chess</a>
+          <a href={`/${locale}/gomoku/`} class="hover:text-primary transition-colors">Gomoku</a>
+          <a href={`/${locale}/sudoku/`} class="hover:text-primary transition-colors">Sudoku</a>
+          <a href={`/${locale}/solitaire/`} class="hover:text-primary transition-colors">Solitaire</a>
+        </div>
+        <div class="flex flex-wrap justify-center md:justify-start gap-6 text-xs text-muted-foreground/60 items-center border-t border-border/20 pt-4">
+          <span class="font-bold uppercase tracking-widest text-[10px]">Oiyo Family</span>
+          <a href={`https://oiyo.net/${locale}/?utm_source=blog&utm_medium=footer&utm_campaign=family_nav`}
+             target="_blank" rel="noopener noreferrer" class="hover:text-primary transition-colors">OIYO Tests →
+            <span class="block text-[10px] normal-case tracking-normal opacity-70">{locale === "ko" ? "해보는 곳 — 테스트·도구" : "Try — tests & tools"}</span></a>
+          <a href={`https://wiki.oiyo.net/${locale}/?utm_source=blog&utm_medium=footer&utm_campaign=family_nav`}
+             target="_blank" rel="noopener noreferrer" class="hover:text-primary transition-colors">OIYO Wiki →
+            <span class="block text-[10px] normal-case tracking-normal opacity-70">{locale === "ko" ? "찾아보는 곳 — 개념 사전" : "Look up — concept dictionary"}</span></a>
+          <a href="https://ahoxy.com?utm_source=blog&utm_medium=footer&utm_campaign=family_nav"
+             target="_blank" rel="noopener noreferrer" class="hover:text-primary transition-colors">AHOXY →
+            <span class="block text-[10px] normal-case tracking-normal opacity-70">{locale === "ko" ? "이름·운세 도구" : "Names & fortune tools"}</span></a>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,92 @@
+---
+import { inlineMd } from "../../lib/utils";
+
+interface FlowItem {
+  title: string;
+  body?: string;
+  accent?: string;
+}
+
+interface Props {
+  title?: string;
+  items: FlowItem[];
+  tone?: "tax" | "science" | "neutral";
+}
+
+const { title, items, tone = "neutral" } = Astro.props;
+const palette = {
+  tax: ["#0f766e", "#2563eb", "#7c3aed", "#c2410c", "#be123c"],
+  science: ["#2563eb", "#0891b2", "#059669", "#7c3aed", "#db2777"],
+  neutral: ["#334155", "#475569", "#64748b", "#0f766e", "#2563eb"],
+}[tone];
+---
+
+<section class={`step-flow step-flow--${tone}`}>
+  {title && <h3 class="step-flow__title">{title}</h3>}
+  <div class="step-flow__rail">
+    {
+      items.map((item, index) => {
+        const color = item.accent ?? palette[index % palette.length];
+        return (
+          <article class="step-flow__item" style={`--accent:${color};`}>
+            <div class="step-flow__badge">{index + 1}</div>
+            <div>
+              <h4 set:html={inlineMd(item.title)} />
+              {item.body && <p set:html={inlineMd(item.body)} />}
+            </div>
+          </article>
+        );
+      })
+    }
+  </div>
+</section>
+
+<style>
+  .step-flow {
+    margin: 2rem 0;
+  }
+  .step-flow__title {
+    margin: 0 0 1rem;
+    color: #0f172a;
+    font-size: 1.05rem;
+    font-weight: 800;
+  }
+  .step-flow__rail {
+    display: grid;
+    gap: 0.75rem;
+  }
+  .step-flow__item {
+    display: grid;
+    grid-template-columns: 2.25rem 1fr;
+    gap: 0.85rem;
+    align-items: start;
+    padding: 1rem;
+    border: 1px solid #e2e8f0;
+    border-left: 5px solid var(--accent);
+    border-radius: 0.75rem;
+    background: linear-gradient(90deg, color-mix(in srgb, var(--accent), white 94%), #fff);
+  }
+  .step-flow__badge {
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 999px;
+    background: var(--accent);
+    color: #fff;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+  .step-flow h4 {
+    margin: 0 0 0.25rem;
+    color: #0f172a;
+    font-size: 0.98rem;
+    line-height: 1.35;
+  }
+  .step-flow p {
+    margin: 0;
+    color: #475569;
+    font-size: 0.9rem;
+    line-height: 1.65;
+  }
+</style>

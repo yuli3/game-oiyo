@@ -1,0 +1,155 @@
+version: 2026-06-20
+status: active
+purpose: >
+  Canonical registry for editorial categories. Expanded (v3) to cover ALL live
+  content domains after the WW19 category-normalization passes. Content category
+  strings must map to one of these canonical labels. "Magazine" is NOT canonical —
+  it is a residual catch-all to be reclassified, not a target.
+
+tracks:
+  - academy
+  - magazine
+  - interactive
+
+# slug is slugifyCategory(label): lowercase, non-alphanumeric -> dash.
+categories:
+  - slug: mind-psychology
+    label: Mind & Psychology
+    default_track: magazine
+    notes: Personality, MBTI, attachment, stress, mental health, self-discovery. Interpretation first, test second.
+
+  - slug: mysticism
+    label: Mysticism
+    default_track: interactive
+    notes: Astrology, saju, tarot, zodiac, numerology, dream/fortune. Tools + readings.
+
+  - slug: finance
+    label: Finance
+    default_track: magazine
+    notes: Investing, accounting, economics, insurance, banking. Guide + calculator is often strongest.
+
+  - slug: accounting
+    label: Accounting
+    default_track: academy
+    notes: Accounting lectures and accounting certification prep. Cite official exam bodies when qualification details are discussed.
+
+  - slug: tax
+    label: Tax
+    default_track: academy
+    notes: Income/transfer/inheritance/gift/VAT tax, year-end settlement. Korea-specific; cite official sources.
+
+  - slug: real-estate
+    label: Real Estate
+    default_track: interactive
+    notes: Jeonse/monthly rent, mortgage, property, subscription. Calculator-heavy.
+
+  - slug: law-exam
+    label: Law & Exam
+    default_track: academy
+    notes: Korean law basics and professional license exams (변리사·감평사·노무사·법무사 등). Cite official exam bodies.
+
+  - slug: exam
+    label: Exam
+    default_track: academy
+    notes: General certifications and standardized tests (NCS, language tests, finance certs). Distinct from law-exam.
+
+  - slug: public-admin
+    label: Public Admin
+    default_track: academy
+    notes: Public administration, public document writing, civil-servant prep.
+
+  - slug: business
+    label: Business
+    default_track: academy
+    notes: Management, HRM, marketing, startup/incorporation, freelancing as a business.
+
+  - slug: career
+    label: Career
+    default_track: magazine
+    notes: Job search, resume, interview, employment, transition/retirement. Cite official labor sources.
+
+  - slug: computer-science
+    label: Computer Science
+    default_track: academy
+    notes: Programming, AI/ML, data, cloud/security, dev tools. Lecture + practical.
+
+  - slug: engineering
+    label: Engineering
+    default_track: academy
+    notes: Korean technical engineer certifications and equipment-centered engineering lectures. Cite official exam bodies for qualification details.
+
+  - slug: education
+    label: Education
+    default_track: academy
+    notes: Study methods, language learning, grammar, school subjects.
+
+  - slug: science-nature
+    label: Science & Nature
+    default_track: magazine
+    notes: Statistics, earth/space science, biology, nature. Lecture or essay.
+
+  - slug: health
+    label: Health
+    default_track: magazine
+    notes: Nutrition, fitness, sleep, body metrics, wellness. YMYL — cite authoritative sources.
+
+  - slug: beauty
+    label: Beauty
+    default_track: magazine
+    notes: Skincare, makeup, fragrance, grooming.
+
+  - slug: lifestyle
+    label: Lifestyle
+    default_track: magazine
+    notes: Everyday life, travel, recipes, hobbies, etiquette, growth/self-improvement, productivity.
+
+  - slug: myth-culture
+    label: Myth & Culture
+    default_track: magazine
+    notes: Mythology, history, legends, civilizations.
+
+  - slug: humanities
+    label: Humanities
+    default_track: magazine
+    notes: Culture, liberal arts, social science, arts.
+
+  - slug: philosophy-spirit
+    label: Philosophy & Spirit
+    default_track: magazine
+    notes: Philosophy, logic, Buddhism/Taoism, meditation, spirituality.
+
+  - slug: insights
+    label: Insights
+    default_track: magazine
+    notes: Cross-domain essays and frameworks that do not fit a single domain.
+
+  - slug: strategy
+    label: Strategy
+    default_track: magazine
+    notes: Strategic thinking, decision frameworks, game theory.
+
+  - slug: design
+    label: Design
+    default_track: interactive
+    notes: Visual design, color, image/photo tools and articles.
+
+  - slug: games
+    label: Games
+    default_track: interactive
+    notes: Puzzles, board/logic games, game-specific tools (e.g. Lost Ark), rules guides.
+
+  - slug: society-wealth
+    label: Society & Wealth
+    default_track: magazine
+    notes: Society, wealth, inequality, macro-social themes.
+
+rules:
+  default_behavior:
+    - Prefer explicit track in frontmatter over inferred category mapping.
+    - Every published file's category MUST be one of the labels above (validate via npm run content:manifest report).
+    - Never use a track name (Academy/Magazine/Interactive) as a category.
+  source_authority:
+    - Prefer official / primary sources (org address, phone, URL, statute) over secondary material.
+    - YMYL categories (tax, health, career, real-estate, law-exam) must cite the official source + URL.
+  cleanup_targets:
+    - "Magazine" residual catch-all (~178 files) — reclassify into a canonical domain.

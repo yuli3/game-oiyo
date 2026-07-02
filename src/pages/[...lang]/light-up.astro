@@ -1,0 +1,47 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import LightUpComp from "../../components/games/LightUp";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "라이트업 — 방을 밝혀라! 논리 퍼즐",
+    description: "온라인 라이트업(아카리) 퍼즐을 즐겨보세요. 전구를 배치해 모든 빈 칸을 밝히는 논리 퍼즐입니다.",
+  },
+  en: {
+    title: "Light Up Puzzle",
+    description: "Play Light Up (Akari) online. Place light bulbs to illuminate every empty cell without violating the rules.",
+  },
+  ja: {
+    title: "ライトアップ — 部屋を明るくしろ！論理パズル",
+    description: "オンラインライトアップ（明かり）パズルを楽しもう。電球を置いてすべての空きマスを照らす論理パズルです。",
+  },
+  fr: {
+    title: "Light Up — Éclairez la salle! Puzzle logique",
+    description: "Jouez au Light Up (Akari) en ligne. Placez des ampoules pour illuminer chaque cellule vide sans enfreindre les règles.",
+  },
+  es: {
+    title: "Light Up — ¡Ilumina la habitación! Puzzle lógico",
+    description: "Juega al Light Up (Akari) en línea. Coloca bombillas para iluminar cada celda vacía sin violar las reglas.",
+  },
+  zh: {
+    title: "点灯谜题 — 照亮房间！逻辑谜题",
+    description: "享受线上点灯（明灯）谜题游戏。放置灯泡照亮所有空格，同时不违反规则的逻辑谜题。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <LightUpComp client:load locale={locale === 'ko' ? 'ko' : 'en'} />
+  </main>
+</BaseLayout>

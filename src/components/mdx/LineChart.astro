@@ -1,0 +1,254 @@
+---
+/**
+ * LineChart — 선 그래프 컴포넌트 (SVG 기반, 경제학 수요/공급 곡선 등에 적합)
+ * Props:
+ *   title   - 차트 제목
+ *   xLabel  - X축 이름
+ *   yLabel  - Y축 이름
+ *   lines   - [{label, color, points: [{x, y}]}]
+ *             x, y는 0-100 사이의 정규화된 값
+ *   width   - SVG 너비 (default 500)
+ *   height  - SVG 높이 (default 300)
+ */
+interface Point {
+  x: number;
+  y: number;
+}
+interface Line {
+  label: string;
+  color: string;
+  points: Point[];
+  dashed?: boolean;
+}
+interface Props {
+  title?: string;
+  xLabel?: string;
+  yLabel?: string;
+  lines: Line[];
+  width?: number;
+  height?: number;
+}
+
+const {
+  title,
+  xLabel = "X",
+  yLabel = "Y",
+  lines,
+  width = 500,
+  height = 300,
+} = Astro.props;
+
+const PAD = { top: 30, right: 30, bottom: 50, left: 55 };
+const chartW = width - PAD.left - PAD.right;
+const chartH = height - PAD.top - PAD.bottom;
+
+function toSVG(pts: Point[]) {
+  return pts
+    .map(
+      (p) =>
+        `${PAD.left + (p.x / 100) * chartW},${PAD.top + chartH - (p.y / 100) * chartH}`,
+    )
+    .join(" ");
+}
+---
+
+<div class="edu-linechart">
+  {title && <div class="edu-linechart__title">{title}</div>}
+  <div class="edu-linechart__wrap">
+    <svg
+      viewBox={`0 0 ${width} ${height}`}
+      style={`max-width:${width}px; width:100%;`}
+      aria-label={title}
+    >
+      <!-- Grid lines -->
+      {
+        [0, 25, 50, 75, 100].map((v) => {
+          const y = PAD.top + chartH - (v / 100) * chartH;
+          const x = PAD.left + (v / 100) * chartW;
+          return (
+            <>
+              <line
+                x1={PAD.left}
+                y1={y}
+                x2={PAD.left + chartW}
+                y2={y}
+                stroke="#e2e8f0"
+                stroke-width="1"
+                stroke-dasharray="4,4"
+              />
+              <line
+                x1={x}
+                y1={PAD.top}
+                x2={x}
+                y2={PAD.top + chartH}
+                stroke="#e2e8f0"
+                stroke-width="1"
+                stroke-dasharray="4,4"
+              />
+            </>
+          );
+        })
+      }
+
+      <!-- Axes -->
+      <line
+        x1={PAD.left}
+        y1={PAD.top}
+        x2={PAD.left}
+        y2={PAD.top + chartH + 8}
+        stroke="#334155"
+        stroke-width="2"
+        stroke-linecap="round"></line>
+      <line
+        x1={PAD.left - 8}
+        y1={PAD.top + chartH}
+        x2={PAD.left + chartW}
+        y2={PAD.top + chartH}
+        stroke="#334155"
+        stroke-width="2"
+        stroke-linecap="round"></line>
+
+      <!-- Axis labels -->
+      <text
+        x={PAD.left + chartW / 2}
+        y={height - 6}
+        text-anchor="middle"
+        font-size="12"
+        fill="#64748b"
+        font-weight="600">{xLabel}</text
+      >
+      <text
+        x={14}
+        y={PAD.top + chartH / 2}
+        text-anchor="middle"
+        font-size="12"
+        fill="#64748b"
+        font-weight="600"
+        transform={`rotate(-90, 14, ${PAD.top + chartH / 2})`}>{yLabel}</text
+      >
+
+      <!-- Axis ticks & values -->
+      {
+        [0, 25, 50, 75, 100].map((v) => {
+          const y = PAD.top + chartH - (v / 100) * chartH;
+          const x = PAD.left + (v / 100) * chartW;
+          return (
+            <>
+              <text
+                x={PAD.left - 8}
+                y={y + 4}
+                text-anchor="end"
+                font-size="10"
+                fill="#94a3b8"
+              >
+                {v}
+              </text>
+              <text
+                x={x}
+                y={PAD.top + chartH + 18}
+                text-anchor="middle"
+                font-size="10"
+                fill="#94a3b8"
+              >
+                {v}
+              </text>
+            </>
+          );
+        })
+      }
+
+      <!-- Lines -->
+      {
+        lines.map((line) => (
+          <polyline
+            points={toSVG(line.points)}
+            fill="none"
+            stroke={line.color}
+            stroke-width="2.5"
+            stroke-linejoin="round"
+            stroke-linecap="round"
+            stroke-dasharray={line.dashed ? "8,4" : undefined}
+          />
+        ))
+      }
+
+      <!-- Points on lines -->
+      {
+        lines.map((line) =>
+          line.points.map((p) => (
+            <circle
+              cx={PAD.left + (p.x / 100) * chartW}
+              cy={PAD.top + chartH - (p.y / 100) * chartH}
+              r="4"
+              fill={line.color}
+              stroke="#fff"
+              stroke-width="2"
+            />
+          )),
+        )
+      }
+    </svg>
+
+    <!-- Legend -->
+    {
+      lines.length > 1 && (
+        <div class="edu-linechart__legend">
+          {lines.map((line) => (
+            <div class="edu-linechart__legend-item">
+              <span
+                class="edu-linechart__legend-dot"
+                style={`background:${line.color}; border-style: ${line.dashed ? "dashed" : "solid"};`}
+              />
+              <span>{line.label}</span>
+            </div>
+          ))}
+        </div>
+      )
+    }
+  </div>
+</div>
+
+<style>
+  .edu-linechart {
+    margin: 2.5rem 0;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  }
+  .edu-linechart__title {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #1e293b;
+    margin-bottom: 1.25rem;
+    text-align: center;
+    letter-spacing: 0.01em;
+  }
+  .edu-linechart__wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+  .edu-linechart__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 1.5rem;
+    justify-content: center;
+  }
+  .edu-linechart__legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: #475569;
+    font-weight: 600;
+  }
+  .edu-linechart__legend-dot {
+    width: 24px;
+    height: 3px;
+    border-radius: 2px;
+    display: inline-block;
+  }
+</style>

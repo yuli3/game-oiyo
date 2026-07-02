@@ -1,0 +1,36 @@
+---
+title: "수익 최적화 모델에 관한 연구"
+description: "마진율에 따른 수익 곡선에 대한 인터랙티브 가이드"
+pubDate: 2026-04-14
+locale: ko
+---
+
+import SampleInteractiveCalculator from "../../example/SampleInteractiveCalculator";
+
+# 수익 최적화 가이드
+
+이 글에서는 비즈니스 마진율과 총매출액간의 상호 작용을 다룹니다.
+
+> [!NOTE]
+> Astro에서 마크다운의 Blockquote는 이제 `mdx-components.tsx`를 통해 Shadcn UI의 Alert 컴포넌트로 자동 변환됩니다.
+
+## 1. 개요
+최적의 마진을 찾는 단계는 다음과 같습니다:
+1. 고정 자산 분석
+2. 유동 비용 확인
+
+여기에 표를 만들어 봅시다. 이 표도 `mdxComponents` 맵핑을 통해 Shadcn `Table`로 아름답게 변환됩니다:
+
+| 분류 | 항목 | 월 예상 비용 |
+|:---|:---|:---|
+| 고정비 | 임대료 | 1,500,000 |
+| 변동비 | 식자재 | 800,000 |
+
+## 2. 시뮬레이션
+
+독자들이 직접 숫자를 입력해볼 수 있도록 아래에 리액트 기반의 인터랙티브 계산기를 삽입했습니다. 
+Astro 아일랜드 아키텍쳐인 `client:visible` 옵션 덕분에, 화면에 보일 때만 자바스크립트가 로드되어 사이트 속도가 전혀 느려지지 않습니다.
+
+<SampleInteractiveCalculator client:visible />
+
+이렇게 MDX 안에 필요한 타이밍에만 React/Shadcn UI를 로딩하면, 일반 글도 앱 단위 퀄리티로 확장할 수 있습니다.

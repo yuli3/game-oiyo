@@ -1,0 +1,220 @@
+version: 2026-05-08
+project: blog-oiyo
+mode: harness-first
+
+current_phase:
+  id: phase-3
+  name: controlled-system-building
+  summary: >
+    The repository has moved beyond pure planning. The current focus is renderer
+    narrowing, schema stabilization, inventory-driven execution, and controlled
+    migration.
+
+priorities:
+  - id: p1-renderer-control
+    status: done
+    owner: shared-agent
+    objective: Narrow the authoring surface and keep route-level rendering auditable.
+    primary_refs:
+      - docs/component-registry-by-track.md
+      - src/lib/mdx-component-registry.ts
+      - src/pages/[...lang]/[...slug].astro
+      - reports/260509-magazine-compatibility-audit.md
+      - reports/260509-magazine-compatibility-triage.md
+      - data/catalog/magazine-compatibility-triage.csv
+
+  - id: p2-inventory-operation
+    status: done
+    owner: shared-agent
+    objective: Expand the real master inventory and use it as the operating backlog.
+    primary_refs:
+      - data/catalog/content-inventory.master.csv
+      - data/catalog/category-registry.yaml
+
+  - id: p3-priority-backfill
+    status: done
+    owner: shared-agent
+    objective: Backfill metadata and structure for management, economics, NCS, tax-law, and interactive migration candidates.
+    primary_refs:
+      - docs/lecture-series-registry.md
+      - docs/qualification-family-map.md
+      - docs/interactive-migration-map.md
+
+quick_wins_completed:
+  - qw-1-canonical-category-registry
+  - qw-2-legacy-progress-replaced
+  - qw-3-implementation-board
+  - qw-4-real-inventory-file
+  - qw-5-centralized-mdx-registry
+  - qw-6-interactive-locale-keys
+  - qw-7-track-aware-registry-split
+  - qw-8-cross-agent-harness-files
+  - qw-9-ci-and-magazine-compat-audit
+
+  - qw-track-bulk-interactive-21
+  - qw-game-articles-registry
+  - qw-calculator-articles-6
+  - qw-game-embed-all-22
+  - qw-registry-expand-27
+  - qw-qualification-series-9
+  - qw-qualification-series-15
+  - qw-inventory-master-1352
+  - qw-track-bulk-72-series
+  - qw-series-field-fix-15-files
+  - qw-registry-expand-14-new-tools
+  - qw-tool-articles-13-new
+  - qw-qualification-ch4-7-series
+  - qw-developer-unit-converter-article
+  - qw-qualification-ch5-8-series
+  - qw-exam-prep-json-concepts-30ch
+  - qw-typescript-errors-fixed
+  - qw-inventory-update-1397
+  - qw-economics-series-ch11-12
+  - qw-management-series-ch11-12
+  - qw-accounting-basics-series-10ch
+  - qw-statistics-basics-series-10ch
+  - qw-real-estate-basics-series-10ch
+  - qw-real-estate-agent-exam-series-6ch
+  - qw-inventory-update-1437
+  - qw-civil-law-basics-series-10ch
+  - qw-administrative-law-basics-series-10ch
+  - qw-financial-management-basics-series-10ch
+  - qw-inventory-update-1467
+  - qw-appraisal-theory-series-10ch
+  - qw-constitutional-law-basics-series-10ch
+  - qw-public-document-writing-ch6-10
+  - qw-inventory-update-1492
+  - qw-economics-basics-series-10ch
+  - qw-tax-law-basics-series-10ch
+  - qw-labor-law-basics-series-10ch
+  - qw-inventory-update-1522
+  - qw-commercial-law-basics-series-10ch
+  - qw-public-administration-basics-series-10ch
+  - qw-criminal-law-basics-series-10ch
+  - qw-inventory-update-1552
+  - qw-civil-procedure-basics-series-10ch
+  - qw-real-estate-disclosure-basics-series-10ch
+  - qw-social-welfare-law-basics-series-10ch
+  - qw-inventory-update-1582
+  - qw-real-estate-agent-exam-series-10ch
+  - qw-administrative-agent-exam-series-10ch
+  - qw-appraiser-exam-series-10ch
+  - qw-business-consultant-exam-series-10ch
+  - qw-cpa-exam-series-10ch
+  - qw-judicial-scrivener-exam-series-10ch
+  - qw-labor-attorney-exam-series-10ch
+  - qw-patent-attorney-exam-series-10ch
+  - qw-tax-accountant-exam-series-10ch
+  - qw-inventory-update-1627
+  - qw-marketing-basics-series-10ch
+  - qw-hrm-basics-series-10ch
+  - qw-patent-law-basics-series-10ch
+  - qw-criminal-procedure-basics-series-10ch
+  - qw-insurance-basics-series-10ch
+  - qw-inventory-update-1677
+  - qw-psych-tests-batch1-6-tests
+  - qw-psych-tests-batch2-10-tests
+  - qw-psych-tests-batch3-24-tests
+  - qw-inventory-update-1723
+  - qw-psych-tests-batch3-10-tests
+  - qw-inventory-update-1733
+  - qw-psych-tests-batch4-8-tests
+  - qw-tax-finance-calculators-21-pages
+  - qw-health-tools-13-pages-4-new
+  - qw-image-tools-10-pages
+  - qw-text-utilities-5-new
+  - qw-games-8-pages
+  - qw-special-tools-6-pages
+  - qw-inventory-update-1805
+  - qw-ts-errors-fixed-78
+  - qw-games-14-pages-3-new
+  - qw-tools-hub-page
+  - qw-tax-academy-series-5ch
+  - qw-psych-batch5-5-tests
+  - qw-image-tools-2-new
+  - qw-csv-cleanup
+  - qw-inventory-update-1834
+  - qw-build-fix-mdx-lt-escaping
+  - qw-build-fix-statcards-timeline-props
+  - qw-metadata-series-backfill-300-academy
+  - qw-metadata-embedded-tools-104-interactive
+  - qw-intent-bundles-home-ux
+  - qw-implementation-control-board-sync
+  - qw-validate-personality-tsx-fix
+  - qw-series-dedup-taxlaw-basic-basics
+  - qw-tax-intro-ch6-10
+  - qw-tax-saving-guide-ch3-7
+  - qw-law-basics-ch5-10
+  - qw-series-dedup-labor-law-basic-basics
+  - qw-crypto-basics-ch6-10
+  - qw-advanced-bonds-ch6-10
+  - qw-law-basics-education-law-ch5-10
+  - qw-inventory-update-1861
+  - qw-series-fix-behavioral-econ-singleton
+  - qw-series-fix-management-ch13-to-경영학기초
+  - qw-psychology-basics-ch7-10
+  - qw-inventory-update-1865
+  - qw-interactive-quality-top7
+  - qw-pm-series-ch6-10
+  - qw-technical-analysis-ch6-10
+  - qw-inventory-update-1875
+  - qw-history-series-ch10
+  - qw-medicine-series-ch9-10
+  - qw-cs-series-ch3-10
+  - qw-interactive-quality-batch2-10
+  - qw-inventory-update-1886
+  - qw-negotiation-series-ch5
+  - qw-game-theory-series-ch2-5
+  - qw-ai-literacy-series-ch2-5
+  - qw-inventory-update-1895
+  - qw-internal-linking-top10-interactive
+  - qw-psychology-test-discovery-page
+  - qw-validate-personality-tsx-fix
+  - qw-intent-bundles-ux-update
+  - qw-inventory-update-1896
+  - qw-labor-rights-guide-hub-page
+  - qw-intent-bundles-labor-rights-slot
+  - qw-inventory-update-1897
+  - qw-series-dedup-labor-law-basic-basics-fix
+  - qw-series-dedup-tax-law-basic-basics-fix
+  - qw-metadata-series-backfill-en-ja-468-files
+execution_batches:
+  - id: academy-reclassify-technical-analysis
+    status: done
+    target_track: academy
+    file_count: 15
+    source: data/catalog/magazine-compatibility-triage.csv
+  - id: academy-reclassify-korean-logic
+    status: done
+    target_track: academy
+    file_count: 8
+    source: data/catalog/magazine-compatibility-triage.csv
+  - id: academy-reclassify-negotiation
+    status: done
+    target_track: academy
+    file_count: 3
+    source: data/catalog/magazine-compatibility-triage.csv
+  - id: interactive-reclassify-magazine-labs
+    status: done
+    target_track: interactive
+    file_count: 17
+    source: data/catalog/magazine-compatibility-triage.csv
+  - id: interactive-reclassify-guide-calculators
+    status: done
+    target_track: interactive
+    file_count: 24
+    source: data/catalog/magazine-compatibility-triage.csv
+  - id: magazine-replace-lecture-table
+    status: done
+    target_track: magazine
+    file_count: 6
+    source: data/catalog/magazine-compatibility-triage.csv
+  - id: interactive-reclassify-quick-tests
+    status: done
+    target_track: interactive
+    file_count: 3
+    source: data/catalog/magazine-compatibility-triage.csv
+
+revisit_later_policy:
+  rule: Do not force unresolved items into active migration if editorial fit is weak.
+  queue_file: data/catalog/ahoxy-migration.revisit-later.csv

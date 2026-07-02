@@ -1,0 +1,47 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import HeartsGameComp from "../../components/games/HeartsGame";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "하츠 — 포인트를 피하라! 하츠 카드 게임",
+    description: "온라인 하츠 카드 게임을 즐겨보세요. 하트와 스페이드 퀸을 피해 가장 적은 벌점을 얻으면 승리합니다.",
+  },
+  en: {
+    title: "Hearts Card Game",
+    description: "Play Hearts online. Avoid Hearts and the Queen of Spades to accumulate the fewest penalty points and win.",
+  },
+  ja: {
+    title: "ハーツ — ポイントを避けろ！ハーツカードゲーム",
+    description: "オンラインハーツカードゲームを楽しもう。ハートとスペードのクイーンを避けて最少ペナルティポイントで勝利しましょう。",
+  },
+  fr: {
+    title: "Jeu de Cœurs — Évitez les points de pénalité!",
+    description: "Jouez aux Cœurs en ligne. Évitez les cœurs et la dame de pique pour accumuler le moins de points de pénalité.",
+  },
+  es: {
+    title: "Juego de Corazones — ¡Evita los puntos de penalización!",
+    description: "Juega a Corazones en línea. Evita los corazones y la reina de picas para acumular los menos puntos de penalización.",
+  },
+  zh: {
+    title: "红心大战 — 避免失分！红心纸牌游戏",
+    description: "享受线上红心大战游戏。避开红心牌和黑桃皇后，积累最少罚分者获胜。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <HeartsGameComp client:load locale={locale === 'ko' ? 'ko' : 'en'} />
+  </main>
+</BaseLayout>

@@ -1,0 +1,147 @@
+---
+/**
+ * ForceDiagram — 5력(Five Forces) 혹은 중심-방사형 힘 다이어그램
+ * Porter의 5 Forces, 이해관계자 분석 등에 사용
+ *
+ * Props:
+ *   title             - 차트 제목
+ *   center            - 중앙 박스 텍스트 (예: "산업 내 경쟁")
+ *   centerDescription - 중앙 박스 설명
+ *   forces            - 최대 4개 방향의 힘 (top, bottom, left, right)
+ *
+ * 사용 예시 (Porter's Five Forces):
+ * <ForceDiagram
+ *   title="Porter의 5가지 경쟁 세력"
+ *   center="기존 경쟁자 간의 경쟁"
+ *   centerDescription="산업 내 경쟁 강도"
+ *   forces={[
+ *     { position: "top",   label: "신규 진입자 위협",     description: "진입장벽 낮을수록 위협↑", strength: "medium" },
+ *     { position: "bottom",label: "대체재 위협",          description: "대체재 많을수록 위협↑",   strength: "low" },
+ *     { position: "left",  label: "공급자 교섭력",        description: "공급자 적을수록 위협↑",   strength: "high" },
+ *     { position: "right", label: "구매자 교섭력",        description: "구매자 집중될수록 위협↑", strength: "medium" },
+ *   ]}
+ * />
+ */
+
+type Direction = "top" | "bottom" | "left" | "right";
+type Strength = "low" | "medium" | "high";
+
+interface Force {
+  position: Direction;
+  label: string;
+  description?: string;
+  strength?: Strength;
+}
+
+interface Props {
+  title?: string;
+  center: string;
+  centerDescription?: string;
+  forces: Force[];
+  caption?: string;
+}
+
+const { title, center, centerDescription, forces, caption } = Astro.props;
+
+const strengthColor: Record<Strength, string> = {
+  low:    "bg-emerald-50 border-emerald-200 text-emerald-800",
+  medium: "bg-amber-50 border-amber-200 text-amber-800",
+  high:   "bg-red-50 border-red-200 text-red-800",
+};
+
+const strengthLabel: Record<Strength, string> = { low: "약", medium: "중", high: "강" };
+
+const byPos = Object.fromEntries(forces.map(f => [f.position, f])) as Partial<Record<Direction, Force>>;
+
+const arrowSvg = {
+  top:    `<path d="M12 19V5M5 12l7-7 7 7"/>`,
+  bottom: `<path d="M12 5v14M5 12l7 7 7-7"/>`,
+  left:   `<path d="M19 12H5M12 5l-7 7 7 7"/>`,
+  right:  `<path d="M5 12h14M12 5l7 7-7 7"/>`,
+};
+---
+
+<figure class="not-prose my-8">
+  {title && (
+    <p class="text-center font-black text-sm uppercase tracking-widest text-muted-foreground mb-6">{title}</p>
+  )}
+
+  <div class="max-w-xl mx-auto">
+    <!-- Top force -->
+    {byPos.top && (
+      <div class="flex flex-col items-center gap-1 mb-2">
+        <div class:list={["border rounded-xl px-4 py-3 text-center max-w-[200px] shadow-sm text-sm font-semibold", byPos.top.strength ? strengthColor[byPos.top.strength] : "bg-card border-border"]}>
+          {byPos.top.label}
+          {byPos.top.strength && (
+            <span class="ml-1.5 text-[10px] font-black opacity-70">[{strengthLabel[byPos.top.strength]}]</span>
+          )}
+          {byPos.top.description && (
+            <p class="text-[10px] font-normal opacity-70 mt-0.5 leading-snug">{byPos.top.description}</p>
+          )}
+        </div>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground" set:html={arrowSvg.bottom} />
+      </div>
+    )}
+
+    <!-- Middle row: Left | Center | Right -->
+    <div class="flex items-center gap-2">
+      {byPos.left && (
+        <div class="flex items-center gap-1 flex-1 justify-end">
+          <div class:list={["border rounded-xl px-4 py-3 text-center shadow-sm text-sm font-semibold flex-1 max-w-[160px]", byPos.left.strength ? strengthColor[byPos.left.strength] : "bg-card border-border"]}>
+            {byPos.left.label}
+            {byPos.left.strength && (
+              <span class="ml-1.5 text-[10px] font-black opacity-70">[{strengthLabel[byPos.left.strength]}]</span>
+            )}
+            {byPos.left.description && (
+              <p class="text-[10px] font-normal opacity-70 mt-0.5 leading-snug">{byPos.left.description}</p>
+            )}
+          </div>
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground flex-shrink-0" set:html={arrowSvg.right} />
+        </div>
+      )}
+
+      <!-- Center box -->
+      <div class="bg-primary text-primary-foreground rounded-2xl px-6 py-5 text-center flex-shrink-0 w-[160px] shadow-lg">
+        <div class="font-black text-sm leading-snug">{center}</div>
+        {centerDescription && (
+          <div class="text-[10px] opacity-80 mt-1 leading-snug">{centerDescription}</div>
+        )}
+      </div>
+
+      {byPos.right && (
+        <div class="flex items-center gap-1 flex-1 justify-start">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground flex-shrink-0" set:html={arrowSvg.right} />
+          <div class:list={["border rounded-xl px-4 py-3 text-center shadow-sm text-sm font-semibold flex-1 max-w-[160px]", byPos.right.strength ? strengthColor[byPos.right.strength] : "bg-card border-border"]}>
+            {byPos.right.label}
+            {byPos.right.strength && (
+              <span class="ml-1.5 text-[10px] font-black opacity-70">[{strengthLabel[byPos.right.strength]}]</span>
+            )}
+            {byPos.right.description && (
+              <p class="text-[10px] font-normal opacity-70 mt-0.5 leading-snug">{byPos.right.description}</p>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+
+    <!-- Bottom force -->
+    {byPos.bottom && (
+      <div class="flex flex-col items-center gap-1 mt-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground" set:html={arrowSvg.bottom} />
+        <div class:list={["border rounded-xl px-4 py-3 text-center max-w-[200px] shadow-sm text-sm font-semibold", byPos.bottom.strength ? strengthColor[byPos.bottom.strength] : "bg-card border-border"]}>
+          {byPos.bottom.label}
+          {byPos.bottom.strength && (
+            <span class="ml-1.5 text-[10px] font-black opacity-70">[{strengthLabel[byPos.bottom.strength]}]</span>
+          )}
+          {byPos.bottom.description && (
+            <p class="text-[10px] font-normal opacity-70 mt-0.5 leading-snug">{byPos.bottom.description}</p>
+          )}
+        </div>
+      </div>
+    )}
+  </div>
+
+  {caption && (
+    <p class="text-center text-xs text-muted-foreground mt-4 italic">{caption}</p>
+  )}
+</figure>

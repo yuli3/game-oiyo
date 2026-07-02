@@ -1,0 +1,15 @@
+ahoxy_slugs=302
+misc_reclassified=85
+domain::finance-tax=58
+domain::games-puzzles=31
+domain::image-media-design-dev=60
+domain::legal-public-admin=8
+domain::lifestyle-everyday=16
+domain::lostark-game-specific=7
+domain::psychology-self-discovery=54
+domain::study-productivity=68
+track::academy=5
+track::cross-link-only=57
+track::hold=14
+track::interactive=102
+track::magazine=124

@@ -1,0 +1,47 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import GomokuComp from "../../components/games/Gomoku";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "오목 — 5개를 먼저 놓아라! 오목 게임",
+    description: "온라인 오목 게임을 즐겨보세요. 가로, 세로, 대각선으로 5개의 돌을 먼저 놓으면 승리합니다.",
+  },
+  en: {
+    title: "Gomoku — Five in a Row",
+    description: "Play Gomoku online. Be the first to place five stones in a row horizontally, vertically, or diagonally.",
+  },
+  ja: {
+    title: "五目並べ — 先に5つ並べろ！五目並べゲーム",
+    description: "オンライン五目並べを楽しもう。縦・横・斜めに5つの石を先に並べた方が勝ちです。",
+  },
+  fr: {
+    title: "Gomoku — Cinq à la suite",
+    description: "Jouez au Gomoku en ligne. Soyez le premier à aligner cinq pierres horizontalement, verticalement ou en diagonale.",
+  },
+  es: {
+    title: "Gomoku — Cinco en línea",
+    description: "Juega al Gomoku en línea. Sé el primero en colocar cinco fichas seguidas en horizontal, vertical o diagonal.",
+  },
+  zh: {
+    title: "五子棋 — 先连五子！五子棋游戏",
+    description: "享受线上五子棋游戏。先在横、纵或斜方向连成五子者获胜。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <GomokuComp client:load locale={locale} />
+  </main>
+</BaseLayout>

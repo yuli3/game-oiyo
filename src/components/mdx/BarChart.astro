@@ -1,0 +1,50 @@
+---
+interface Props {
+  data: { label: string; value: number; color?: string }[];
+  title?: string;
+  height?: string;
+}
+
+const { data, title, height = "300px" } = Astro.props;
+const maxValue = Math.max(...data.map((d) => d.value));
+---
+
+<div
+  class="my-12 p-8 bg-muted/20 border border-border/40 rounded-3xl animate-fade-up"
+>
+  {
+    title && (
+      <h3 class="text-sm font-bold uppercase tracking-[0.2em] text-primary/60 mb-8 text-center">
+        {title}
+      </h3>
+    )
+  }
+
+  <div
+    class="flex items-end gap-4 sm:gap-6 w-full"
+    style={`height: ${height};`}
+  >
+    {
+      data.map((item) => {
+        const percentage = (item.value / maxValue) * 100;
+        return (
+          <div class="flex-1 flex flex-col items-center gap-4 h-full group">
+            <div class="flex-1 w-full flex items-end">
+              <div
+                class="w-full rounded-xl transition-all duration-500 group-hover:scale-x-105 group-hover:brightness-110 shadow-lg shadow-primary/5"
+                style={`height: ${percentage}%; background: ${item.color || "var(--color-primary)"}; opacity: 0.8;`}
+              >
+                <div class="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-10 left-1/2 -translate-x-1/2 bg-foreground text-background text-[10px] font-bold px-2 py-1 rounded-md whitespace-nowrap">
+                  {item.value}
+                </div>
+              </div>
+            </div>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 text-center truncate w-full">
+              {item.label}
+            </span>
+          </div>
+        );
+      })
+    }
+  </div>
+</div>

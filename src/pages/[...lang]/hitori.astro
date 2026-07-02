@@ -1,0 +1,47 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import HitoriComp from "../../components/games/Hitori";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "히토리 — 논리 퍼즐 히토리",
+    description: "온라인 히토리 퍼즐을 즐겨보세요. 중복된 숫자를 제거해 가로세로에 유일한 수만 남기는 논리 퍼즐입니다.",
+  },
+  en: {
+    title: "Hitori Puzzle",
+    description: "Play Hitori online. Shade duplicate numbers so each row and column has only unique numbers in this logic puzzle.",
+  },
+  ja: {
+    title: "一人 — 論理パズル一人",
+    description: "オンライン一人パズルを楽しもう。重複する数字を消して縦横に唯一の数字だけ残す論理パズルです。",
+  },
+  fr: {
+    title: "Hitori — Puzzle logique Hitori",
+    description: "Jouez au Hitori en ligne. Éliminez les doublons pour que chaque ligne et colonne n'ait que des chiffres uniques.",
+  },
+  es: {
+    title: "Hitori — Puzzle lógico Hitori",
+    description: "Juega al Hitori en línea. Elimina los duplicados para que cada fila y columna tenga solo números únicos.",
+  },
+  zh: {
+    title: "一人 — 逻辑谜题一人",
+    description: "享受线上一人谜题游戏。消除重复数字，让每行每列只剩唯一数字的逻辑谜题。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <HitoriComp client:load locale={locale === 'ko' ? 'ko' : 'en'} />
+  </main>
+</BaseLayout>

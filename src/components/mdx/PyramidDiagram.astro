@@ -1,0 +1,109 @@
+---
+/**
+ * PyramidDiagram — 계층 피라미드 다이어그램
+ * Maslow 욕구 이론, ERG 이론, Herzberg 이론, 학습 분류 등에 사용
+ *
+ * Props:
+ *   title    - 차트 제목
+ *   levels   - 레벨 배열 (하단 → 상단 순서로 입력)
+ *              [{ label, description?, sublabel?, color? }]
+ *   inverted - true면 역피라미드 (상단이 넓음)
+ *
+ * 사용 예시:
+ * <PyramidDiagram
+ *   title="매슬로우 욕구 5단계"
+ *   levels={[
+ *     { label: "생리적 욕구",   sublabel: "Physiological", description: "음식, 물, 수면, 주거", color: "#ef4444" },
+ *     { label: "안전 욕구",     sublabel: "Safety",        description: "신체 안전, 고용, 재산", color: "#f97316" },
+ *     { label: "소속·애정 욕구", sublabel: "Love/Belonging", description: "우정, 친밀감, 소속감", color: "#eab308" },
+ *     { label: "존경 욕구",     sublabel: "Esteem",        description: "자존감, 성취, 존중", color: "#22c55e" },
+ *     { label: "자아실현 욕구",  sublabel: "Self-Actualization", description: "잠재력 실현, 창의성", color: "#3b82f6" },
+ *   ]}
+ * />
+ */
+
+interface Level {
+  label: string;
+  sublabel?: string;
+  description?: string;
+  color?: string;
+}
+
+interface Props {
+  title?: string;
+  levels: Level[];
+  inverted?: boolean;
+  caption?: string;
+}
+
+const { title, levels, inverted = false, caption } = Astro.props;
+
+// Levels bottom-to-top. We display top-to-bottom so reverse.
+const displayLevels = inverted ? [...levels] : [...levels].reverse();
+const total = displayLevels.length;
+
+// Default colors if not provided
+const defaultColors = [
+  "#3b82f6", "#22c55e", "#eab308", "#f97316", "#ef4444",
+  "#8b5cf6", "#06b6d4", "#ec4899", "#14b8a6", "#f59e0b",
+];
+---
+
+<figure class="not-prose my-8">
+  {title && (
+    <p class="text-center font-black text-sm uppercase tracking-widest text-muted-foreground mb-4">{title}</p>
+  )}
+
+  <div class="flex flex-col items-center gap-0.5 max-w-lg mx-auto">
+    {displayLevels.map((level, i) => {
+      // Width: top level smallest, bottom level widest
+      const idx = inverted ? i : total - 1 - i;
+      const widthPct = 30 + (idx / (total - 1)) * 70; // 30% → 100%
+      const color = level.color ?? defaultColors[idx % defaultColors.length];
+      return (
+        <div
+          class="relative group cursor-default transition-all duration-200"
+          style={`width: ${widthPct}%`}
+        >
+          <div
+            class="rounded-lg px-3 py-3 text-center text-white shadow-sm transition-transform hover:scale-[1.02] hover:shadow-md"
+            style={`background-color: ${color};`}
+          >
+            <div class="font-bold text-sm leading-tight drop-shadow-sm">{level.label}</div>
+            {level.sublabel && (
+              <div class="text-[10px] font-medium opacity-80 mt-0.5">{level.sublabel}</div>
+            )}
+          </div>
+          {level.description && (
+            <div class="absolute left-[102%] top-1/2 -translate-y-1/2 w-max max-w-[160px] z-10
+                        opacity-0 group-hover:opacity-100 transition-opacity duration-200
+                        bg-card border border-border rounded-lg px-3 py-2 shadow-lg text-xs text-foreground
+                        hidden lg:block pointer-events-none">
+              {level.description}
+            </div>
+          )}
+        </div>
+      );
+    })}
+  </div>
+
+  <!-- Description list (visible on mobile / all screens) -->
+  {levels.some(l => l.description) && (
+    <div class="mt-6 max-w-lg mx-auto space-y-1">
+      {(inverted ? [...levels] : [...levels].reverse()).map((level, i) => {
+        const idx = inverted ? i : total - 1 - i;
+        const color = level.color ?? defaultColors[idx % defaultColors.length];
+        return level.description ? (
+          <div class="flex items-start gap-2 text-xs text-muted-foreground">
+            <span class="mt-1 w-2.5 h-2.5 rounded-sm flex-shrink-0" style={`background-color: ${color};`} />
+            <span><strong class="text-foreground">{level.label}</strong> — {level.description}</span>
+          </div>
+        ) : null;
+      })}
+    </div>
+  )}
+
+  {caption && (
+    <p class="text-center text-xs text-muted-foreground mt-3 italic">{caption}</p>
+  )}
+</figure>
