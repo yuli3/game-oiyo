@@ -1,0 +1,125 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import LostarkRaidDistribution from "../../components/tools/LostarkRaidDistribution";
+import ToolShell from "../../components/shared/_oiyo-shared/ToolShell.astro";
+import FaqAccordion from "../../components/shared/_oiyo-shared/FaqAccordion.astro";
+import { buildToolShell } from "../../lib/tool-shell";
+import { siteConfig } from "../../config/site.config";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: { title: "로스트아크 본1부3 품앗이 분배 계산기", description: "본캐·부캐 캐릭터 정보를 입력하면 본1부3(또는 본1부1) 품앗이 파티의 딜러·서포터를 게임별로 균등 분배합니다. 레이드 버스비 계산기와는 별개 도구입니다." },
+  en: { title: "Lost Ark 1-Main/3-Alt Help-Party Distribution Calculator", description: "Enter main and alt character roles to evenly distribute dealers and supporters across games for a 1-main/3-alt (or 1-main/1-alt) help party. A separate tool from the raid bus-fee calculator." },
+  ja: { title: "ロストアーク 本1副3 品앗이 分配計算機", description: "本キャラ・副キャラの情報を入力すると、本1副3（または本1副1）の品앗이パーティのディーラー・サポーターをゲームごとに均等分配します。レイドバス料金計算機とは別ツールです。" },
+  fr: { title: "Calculateur de distribution 1 main / 3 alt (Lost Ark)", description: "Répartit équitablement DPS et supports entre les parties pour une équipe d'entraide 1 main / 3 alt. Outil distinct du calculateur de prix de bus." },
+  es: { title: "Calculadora de distribución 1 main / 3 alt (Lost Ark)", description: "Distribuye DPS y supports de forma equilibrada para una party de ayuda 1 main / 3 alt. Herramienta distinta de la calculadora de tarifa de bus." },
+  zh: { title: "命运方舟 本1副3 互助分配计算器", description: "输入本角色和副角色信息，将本1副3（或本1副1）互助队伍的输出和辅助按场次均衡分配。与团本巴士费用计算器为不同工具。" },
+};
+const m = meta[locale] ?? meta.en;
+
+const content = {
+  ko: {
+    eyebrow: "로스트아크 도구",
+    introTitle: "본1부3 품앗이 분배 계산기란?",
+    intro: "품앗이 파티에서 각자의 본캐·부캐(딜러 ㄷ / 서포터 ㅍ)를 입력하면, 게임마다 딜러·서포터 수가 고르게 맞도록 자동 분배합니다. 레이드 '버스비' 경매가 계산과는 전혀 다른 별개 도구로, 파티 구성·분배에 특화되어 있습니다.",
+    howToTitle: "사용 방법",
+    steps: ["본1부3 또는 본1부1, 파티 인원(4·8·16)을 고릅니다.", "각 플레이어의 캐릭터를 한 줄씩 입력합니다(예: ㄷㄷㄷㅍ — 첫 글자가 본캐).", "'분배하기'를 누르고 결과 표를 확인, 전체 복사로 공유합니다."],
+    highlightsTitle: "주요 특징",
+    highlights: [
+      { title: "자동 균등 분배", body: "딜러·서포터·본캐가 게임별로 최대한 고르게 배치됩니다." },
+      { title: "프리셋 입력", body: "ㄷㄷㄷㅍ 등 자주 쓰는 조합을 버튼으로 빠르게 입력합니다." },
+      { title: "방제·비번 생성", body: "랜덤 방 제목과 비밀번호를 함께 만들어 줍니다." },
+    ],
+    relatedTitle: "관련 도구",
+    related: [
+      { href: "/ko/lostark-bus-calculator/", label: "레이드 버스비 계산기", desc: "분배와 다른 별개 도구 — 버스 경매 최적가." },
+      { href: "/ko/wheel-spinner/", label: "돌림판", desc: "무작위로 정합니다." },
+      { href: "/ko/dutch-pay-calculator/", label: "더치페이 계산기", desc: "비용을 나눕니다." },
+    ],
+    disclaimer: "분배 결과는 입력값 기준 자동 계산이며, 실제 파티 편성은 합의에 따릅니다.",
+  },
+  en: {
+    eyebrow: "Lost Ark Tool",
+    introTitle: "What is the 1-main/3-alt distribution calculator?",
+    intro: "Enter each player's main and alt characters (dealer ㄷ / supporter ㅍ) and it auto-balances the number of dealers and supporters across games. This is a completely separate tool from the raid 'bus' auction-fee calculator — it specializes in party composition and distribution.",
+    howToTitle: "How to use",
+    steps: ["Choose 1-main/3-alt or 1-main/1-alt and the party size (4, 8, 16).", "Enter each player's characters on one line (e.g. DDDS — first char is the main).", "Press Distribute, read the result table, and use Copy all to share."],
+    highlightsTitle: "Highlights",
+    highlights: [
+      { title: "Auto-balancing", body: "Dealers, supporters, and mains are spread as evenly as possible across games." },
+      { title: "Preset input", body: "Insert common combos like DDDS with one tap." },
+      { title: "Room & password", body: "Generates a random room name and password too." },
+    ],
+    relatedTitle: "Related tools",
+    related: [
+      { href: "/en/lostark-bus-calculator/", label: "Raid Bus Fee Calculator", desc: "A different tool from distribution — optimal bus auction price." },
+      { href: "/en/wheel-spinner/", label: "Wheel Spinner", desc: "Decide at random." },
+      { href: "/en/dutch-pay-calculator/", label: "Split Bill Calculator", desc: "Split costs." },
+    ],
+    disclaimer: "Distribution is auto-computed from your inputs; the actual party setup follows your group's agreement.",
+  },
+  ja: {
+    eyebrow: "ロストアークツール",
+    introTitle: "本1副3 品앗이 分配計算機とは？",
+    intro: "品앗이パーティで各自の本キャラ・副キャラ（ディーラー ㄷ / サポーター ㅍ）を入力すると、ゲームごとにディーラー・サポーター数が均等になるよう自動分配します。レイド『バス』のオークション料金計算とはまったく別のツールで、パーティ編成・分配に特化しています。",
+    howToTitle: "使い方",
+    steps: ["本1副3または本1副1、パーティ人数（4・8・16）を選びます。", "各プレイヤーのキャラを1行ずつ入力します（例: ㄷㄷㄷㅍ — 最初の文字が本キャラ）。", "「分配する」を押し、結果表を確認、全てコピーで共有します。"],
+    highlightsTitle: "主な特徴",
+    highlights: [
+      { title: "自動均等分配", body: "ディーラー・サポーター・本キャラがゲームごとに均等配置されます。" },
+      { title: "プリセット入力", body: "ㄷㄷㄷㅍ などよく使う組み合わせをボタンで入力。" },
+      { title: "部屋名・パスワード生成", body: "ランダムな部屋名とパスワードも生成します。" },
+    ],
+    relatedTitle: "関連ツール",
+    related: [
+      { href: "/ja/lostark-bus-calculator/", label: "レイドバス料金計算機", desc: "分配とは別ツール — バスの最適オークション価格。" },
+      { href: "/ja/wheel-spinner/", label: "ルーレット", desc: "ランダムに決めます。" },
+      { href: "/ja/dutch-pay-calculator/", label: "割り勘計算機", desc: "費用を分けます。" },
+    ],
+    disclaimer: "分配結果は入力値に基づく自動計算で、実際の編成はグループの合意に従います。",
+  },
+};
+
+const faqs = {
+  ko: [
+    { q: "이 계산기와 버스비 계산기는 같은 건가요?", a: "아닙니다. 완전히 별개의 도구입니다. 이 도구는 품앗이 파티의 딜러·서포터 분배를 자동화하고, 버스비 계산기는 레이드 버스(대리)의 경매·거래 가격을 계산합니다." },
+    { q: "입력은 어떻게 하나요?", a: "한 플레이어당 한 줄로, 게임 수만큼 ㄷ(딜러)·ㅍ(서포터)를 적습니다. 첫 글자가 본캐입니다(예: 본1부3이면 4글자 ㄷㄷㄷㅍ). D/S 영문도 인식합니다." },
+    { q: "결과의 (M)·밑줄 표시는 무엇인가요?", a: "본캐(메인 캐릭터)를 뜻합니다. 표에서 굵게·밑줄로 표시됩니다." },
+  ],
+  en: [
+    { q: "Is this the same as the bus fee calculator?", a: "No, they are entirely separate. This one auto-distributes dealers/supporters for a help party; the bus fee calculator prices a raid bus (carry) auction/trade." },
+    { q: "How do I enter input?", a: "One line per player, with one ㄷ (dealer) / ㅍ (supporter) per game. The first character is the main (e.g. DDDS for 1-main/3-alt). English D/S are also recognized." },
+    { q: "What do the bold/underlined cells mean?", a: "They mark the main character. The table shows mains in bold and underlined." },
+  ],
+  ja: [
+    { q: "バス料金計算機と同じですか？", a: "いいえ、まったく別です。本ツールは品앗이パーティのディーラー・サポーター分配を自動化し、バス料金計算機はレイドバス（代行）のオークション・取引価格を計算します。" },
+    { q: "入力方法は？", a: "1プレイヤー1行で、ゲーム数だけ ㄷ（ディーラー）・ㅍ（サポーター）を書きます。最初の文字が本キャラ（例: 本1副3なら4文字 ㄷㄷㄷㅍ）。英字D/Sも認識します。" },
+    { q: "太字・下線のセルは？", a: "本キャラ（メイン）を表します。表では太字・下線で表示されます。" },
+  ],
+};
+
+const { content: c, faqHeading, faqItems } = buildToolShell(content, faqs, locale);
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <ToolShell
+    title={m.title}
+    description={m.description}
+    siteUrl={siteConfig.url}
+    locale={locale}
+    slug="lostark-raid-distribution"
+    content={c}
+    applicationCategory="GameApplication"
+  >
+    <div class="mx-auto max-w-3xl">
+      <LostarkRaidDistribution client:load locale={locale} />
+    </div>
+    <FaqAccordion slot="faq" heading={faqHeading} items={faqItems} />
+  </ToolShell>
+</BaseLayout>

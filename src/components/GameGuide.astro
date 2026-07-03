@@ -1,0 +1,68 @@
+---
+// 게임 가이드 섹션 + VideoGame/FAQPage JSON-LD (SEO·AIEO).
+// game-guides.ts에 항목이 없는 슬러그는 아무것도 렌더하지 않는다.
+import { GAME_GUIDES } from "../data/game-guides";
+import type { Locale } from "../lib/i18n";
+
+interface Props { slug: string; locale: Locale; name: string }
+const { slug, locale, name } = Astro.props;
+const g = GAME_GUIDES[slug];
+
+const H = {
+  origin: { ko: "유래와 역사", en: "Origin & history", ja: "由来と歴史", zh: "起源与历史", fr: "Origine et histoire", es: "Origen e historia" } as Record<Locale, string>,
+  how: { ko: "게임 방법", en: "How to play", ja: "遊び方", zh: "玩法", fr: "Comment jouer", es: "Cómo jugar" } as Record<Locale, string>,
+  faq: { ko: "자주 묻는 질문", en: "FAQ", ja: "よくある質問", zh: "常见问题", fr: "FAQ", es: "Preguntas frecuentes" } as Record<Locale, string>,
+};
+
+const jsonLd = g ? [
+  {
+    "@context": "https://schema.org",
+    "@type": "VideoGame",
+    name,
+    url: new URL(Astro.url.pathname, Astro.site).toString(),
+    inLanguage: locale,
+    gamePlatform: "Web browser",
+    applicationCategory: "Game",
+    playMode: "SinglePlayer",
+    isAccessibleForFree: true,
+    publisher: { "@id": "https://oiyo.net/#organization" },
+    description: g.how[locale] ?? g.how.en,
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: g.faqs.map((f) => ({
+      "@type": "Question",
+      name: f.q[locale] ?? f.q.en,
+      acceptedAnswer: { "@type": "Answer", text: f.a[locale] ?? f.a.en },
+    })),
+  },
+] : null;
+---
+
+{g && (
+  <>
+    {jsonLd!.map((o) => <script type="application/ld+json" is:inline set:html={JSON.stringify(o)} />)}
+    <section class="mx-auto mt-12 max-w-lg space-y-6 border-t border-border pt-8 px-1">
+      <div>
+        <h2 class="text-lg font-black">{H.how[locale]}</h2>
+        <p class="mt-2 text-sm leading-7 text-muted-foreground">{g.how[locale] ?? g.how.en}</p>
+      </div>
+      <div>
+        <h2 class="text-lg font-black">{H.origin[locale]}</h2>
+        <p class="mt-2 text-sm leading-7 text-muted-foreground">{g.origin[locale] ?? g.origin.en}</p>
+      </div>
+      <div>
+        <h2 class="text-lg font-black">{H.faq[locale]}</h2>
+        <div class="mt-3 divide-y divide-border rounded-2xl border border-border bg-card">
+          {g.faqs.map((f) => (
+            <details class="group p-4">
+              <summary class="cursor-pointer list-none text-sm font-bold">{f.q[locale] ?? f.q.en}</summary>
+              <p class="mt-2 text-sm leading-6 text-muted-foreground">{f.a[locale] ?? f.a.en}</p>
+            </details>
+          ))}
+        </div>
+      </div>
+    </section>
+  </>
+)}

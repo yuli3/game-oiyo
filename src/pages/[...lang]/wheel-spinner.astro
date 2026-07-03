@@ -3,6 +3,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import WheelSpinnerComp from "../../components/games/WheelSpinner";
 import { locales } from "../../lib/i18n";
 import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
 
 export async function getStaticPaths() {
   return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
@@ -43,5 +44,6 @@ const m = meta[locale] ?? meta.en;
 <BaseLayout title={m.title} description={m.description}>
   <main class="mx-auto max-w-2xl px-4 py-8">
     <WheelSpinnerComp client:load locale={locale === 'ko' ? 'ko' : 'en'} />
+    <GameGuide slug="wheel-spinner" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
   </main>
 </BaseLayout>

@@ -210,3 +210,12 @@
   10%, 50%, 90% { transform: translateX(-4px); }
   30%, 70% { transform: translateX(4px); }
 }
+
+/* ── 모바일 터치 배려 (game.oiyo.net) ──
+   더블탭 줌 지연 제거 + 게임 보드 상의 스크롤 오작동 방지 + 최소 탭 타깃 */
+button, [role="button"] { touch-action: manipulation; }
+main .grid button { -webkit-tap-highlight-color: transparent; }
+@media (pointer: coarse) {
+  main button { min-height: 40px; }
+  main .grid > button, main .grid > div > button { min-height: unset; } /* 보드 셀은 비율 유지 */
+}

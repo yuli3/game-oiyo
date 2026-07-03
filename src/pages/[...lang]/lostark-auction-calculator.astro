@@ -1,0 +1,31 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { LostArkAuctionCalc } from "../../features/games/LostArkTools";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: { title: "로스트아크 경매 계산기 — 군단장 레이드 적정 입찰가", description: "군단장 레이드 경매 아이템의 손익분기 입찰가를 즉시 계산합니다. 거래 수수료 5% 반영, 입찰 눈치싸움 없이 합리적인 상한선 확인." },
+  en: { title: "Lost Ark Auction Calculator — Optimal Raid Bid", description: "Instantly calculate the break-even bid for Legion Raid auction items, with the 5% trade fee applied." },
+  ja: { title: "ロストアーク オークション計算機 — 適正入札額", description: "軍団長レイドのオークションアイテムの損益分岐入札額を即計算。取引手数料5%反映。" },
+  zh: { title: "命运方舟拍卖计算器 — 军团长副本合理出价", description: "即时计算军团长副本拍卖物品的盈亏平衡出价，已计入5%交易手续费。" },
+  fr: { title: "Calculateur d'enchères Lost Ark — Mise optimale de raid", description: "Calculez instantanément la mise seuil de rentabilité des objets d'enchères de raid, frais de 5 % inclus." },
+  es: { title: "Calculadora de subastas Lost Ark — Puja óptima de raid", description: "Calcula al instante la puja de equilibrio de los objetos de subasta de raid, con la comisión del 5 % incluida." },
+};
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-10">
+    <div class="mb-6 text-center">
+      <h1 class="text-2xl font-black">{m.title.split(' — ')[0]}</h1>
+      <p class="mt-2 text-sm text-muted-foreground">{m.description}</p>
+    </div>
+    <LostArkAuctionCalc client:load />
+  </main>
+</BaseLayout>

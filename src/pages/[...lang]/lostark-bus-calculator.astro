@@ -1,0 +1,125 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import LostarkBusCalculator from "../../components/tools/LostarkBusCalculator";
+import ToolShell from "../../components/shared/_oiyo-shared/ToolShell.astro";
+import FaqAccordion from "../../components/shared/_oiyo-shared/FaqAccordion.astro";
+import { buildToolShell } from "../../lib/tool-shell";
+import { siteConfig } from "../../config/site.config";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: { title: "로스트아크 레이드 버스비 계산기 — 경매 최적가", description: "기사·미참·독식 인원과 가격을 입력하면 레이드 버스의 최적 경매가와 기사 분배 금액을 계산합니다. 손님 모두 입찰/독식만 입찰 모드 지원." },
+  en: { title: "Lost Ark Raid Bus Fee Calculator — Optimal Auction Price", description: "Enter carrier, non-bidder, and exclusive-bidder counts and prices to get the optimal raid-bus auction price and per-carrier payout. Supports all-bid and exclusive-only modes." },
+  ja: { title: "ロストアーク レイドバス料金計算機 — 最適オークション価格", description: "騎士・未参・独占の人数と価格を入力すると、レイドバスの最適オークション価格と騎士1人あたりの分配額を計算します。全員入札／独占のみ入札モード対応。" },
+  fr: { title: "Calculateur de prix de bus de raid Lost Ark", description: "Saisissez les effectifs et prix pour obtenir le prix d'enchère optimal du bus de raid et le gain par porteur. Modes enchère générale et exclusif." },
+  es: { title: "Calculadora de tarifa de bus de raid de Lost Ark", description: "Introduce participantes y precios para obtener el precio de subasta óptimo del bus de raid y el pago por carrier. Modos de puja general y exclusiva." },
+  zh: { title: "命运方舟团本巴士费用计算器 — 最佳拍卖价", description: "输入骑士、未参与、独占人数和价格，计算团本巴士的最佳拍卖价和每位骑士的分配金额。支持全员竞拍/仅独占竞拍模式。" },
+};
+const m = meta[locale] ?? meta.en;
+
+const content = {
+  ko: {
+    eyebrow: "로스트아크 도구",
+    introTitle: "레이드 버스비 계산기란?",
+    intro: "레이드 '버스'(대리 클리어)에서 기사가 받을 최적 경매가와 손님(미참·독식)이 낼 금액을 계산합니다. 본1부3 품앗이 '분배' 계산과는 전혀 다른 별개의 도구로, 경매·거래 가격 산정에 특화되어 있습니다.",
+    howToTitle: "사용 방법",
+    steps: ["파티 인원을 고릅니다(4·8·16 또는 직접 입력).", "기사·미참·독식 인원을 입력합니다(합이 파티 인원과 같아야 함).", "미참 가격·독식 가격을 입력하고 모드를 골라 결과를 확인합니다."],
+    highlightsTitle: "주요 특징",
+    highlights: [
+      { title: "두 가지 경매 모드", body: "손님 모두 입찰 / 독식만 입찰 방식을 각각 계산합니다." },
+      { title: "기사 분배 금액", body: "기사 1인이 받을 금액을 즉시 보여줍니다." },
+      { title: "입력 검증", body: "인원 합이 파티 인원과 맞는지 자동으로 확인합니다." },
+    ],
+    relatedTitle: "관련 도구",
+    related: [
+      { href: "/ko/lostark-raid-distribution/", label: "본1부3 품앗이 분배 계산기", desc: "버스비와 다른 별개 도구 — 파티 분배 자동화." },
+      { href: "/ko/dutch-pay-calculator/", label: "더치페이 계산기", desc: "비용을 공평하게 나눕니다." },
+      { href: "/ko/percentage-calculator/", label: "퍼센트 계산기", desc: "비율을 계산합니다." },
+    ],
+    disclaimer: "계산 결과는 입력값 기준 참고치입니다. 실제 경매·거래는 게임 내 시세와 합의에 따릅니다.",
+  },
+  en: {
+    eyebrow: "Lost Ark Tool",
+    introTitle: "What is the raid bus fee calculator?",
+    intro: "It computes the optimal auction price a carrier should set and what passengers (non-bidders and exclusive bidders) pay in a raid 'bus' (carry service). This is a separate tool from the 1-main/3-alt party 'distribution' calculator — it specializes in auction and trade pricing.",
+    howToTitle: "How to use",
+    steps: ["Pick the party size (4, 8, 16, or custom).", "Enter carrier, non-bidder, and exclusive-bidder counts (must sum to party size).", "Enter the non-bidder and exclusive prices, choose a mode, and read the results."],
+    highlightsTitle: "Highlights",
+    highlights: [
+      { title: "Two auction modes", body: "Calculates all-guests-bid and exclusive-only pricing." },
+      { title: "Per-carrier payout", body: "Shows what each carrier receives instantly." },
+      { title: "Input validation", body: "Checks that the counts add up to the party size." },
+    ],
+    relatedTitle: "Related tools",
+    related: [
+      { href: "/en/lostark-raid-distribution/", label: "1-Main/3-Alt Distribution Calculator", desc: "A different tool from bus fee — automates party distribution." },
+      { href: "/en/dutch-pay-calculator/", label: "Split Bill Calculator", desc: "Split costs fairly." },
+      { href: "/en/percentage-calculator/", label: "Percentage Calculator", desc: "Work out percentages." },
+    ],
+    disclaimer: "Results are reference values based on your inputs. Actual auctions and trades follow in-game prices and agreement.",
+  },
+  ja: {
+    eyebrow: "ロストアークツール",
+    introTitle: "レイドバス料金計算機とは？",
+    intro: "レイド『バス』（代行クリア）で騎士が設定すべき最適オークション価格と、客（未参・独占）が支払う金額を計算します。本1副3の品앗이『分配』計算とはまったく別の独立ツールで、オークション・取引価格の算定に特化しています。",
+    howToTitle: "使い方",
+    steps: ["パーティ人数を選びます（4・8・16または直接入力）。", "騎士・未参・独占の人数を入力します（合計がパーティ人数と一致）。", "未参価格・独占価格を入力し、モードを選んで結果を確認します。"],
+    highlightsTitle: "主な特徴",
+    highlights: [
+      { title: "2つのオークションモード", body: "全員入札／独占のみ入札をそれぞれ計算します。" },
+      { title: "騎士の分配額", body: "騎士1人が受け取る額をすぐ表示します。" },
+      { title: "入力チェック", body: "人数合計がパーティ人数と合うか自動確認します。" },
+    ],
+    relatedTitle: "関連ツール",
+    related: [
+      { href: "/ja/lostark-raid-distribution/", label: "本1副3 品앗이 分配計算機", desc: "バス料金とは別ツール — パーティ分配を自動化。" },
+      { href: "/ja/dutch-pay-calculator/", label: "割り勘計算機", desc: "費用を公平に分けます。" },
+      { href: "/ja/percentage-calculator/", label: "パーセント計算機", desc: "比率を計算します。" },
+    ],
+    disclaimer: "計算結果は入力値に基づく参考値です。実際のオークション・取引はゲーム内相場と合意に従います。",
+  },
+};
+
+const faqs = {
+  ko: [
+    { q: "버스비 계산기와 본1부3 계산기는 같은 건가요?", a: "아닙니다. 완전히 별개의 도구입니다. 이 도구는 버스(대리 클리어)의 경매·거래 가격을 계산하고, 본1부3 계산기는 품앗이 파티의 본캐·부캐 분배를 자동화합니다." },
+    { q: "'손님 모두 입찰'과 '독식만 입찰'의 차이는?", a: "모두 입찰은 모든 손님이 경매 아이템에 입찰하는 방식이고, 독식만 입찰은 독식 인원만 입찰하며 미참은 고정 거래 가격을 냅니다. 독식만 입찰은 기사 인원 = 미참 + 독식 인원일 때만 사용 가능합니다." },
+    { q: "골드 단위인가요?", a: "네, 입력·결과 모두 게임 내 골드 기준입니다." },
+  ],
+  en: [
+    { q: "Is this the same as the 1-main/3-alt calculator?", a: "No, they are entirely separate tools. This one prices a bus (carry) auction/trade; the 1-main/3-alt calculator automates main/alt distribution for help parties." },
+    { q: "What's the difference between all-bid and exclusive-only?", a: "All-bid means every guest bids on the auction item; exclusive-only means only exclusive bidders bid while non-bidders pay a fixed trade price. Exclusive-only is available only when carriers = non-bidders + exclusive bidders." },
+    { q: "Are values in gold?", a: "Yes, inputs and results are all in in-game gold." },
+  ],
+  ja: [
+    { q: "本1副3計算機と同じですか？", a: "いいえ、まったく別のツールです。本ツールはバス（代行）のオークション・取引価格を計算し、本1副3計算機は品앗이パーティの本キャラ・副キャラ分配を自動化します。" },
+    { q: "「全員入札」と「独占のみ入札」の違いは？", a: "全員入札は全ての客がオークションに入札、独占のみ入札は独占人員だけ入札し未参は固定取引価格を支払います。独占のみは騎士人数 = 未参 + 独占人数のときのみ使用できます。" },
+    { q: "単位はゴールドですか？", a: "はい、入力・結果ともゲーム内ゴールド基準です。" },
+  ],
+};
+
+const { content: c, faqHeading, faqItems } = buildToolShell(content, faqs, locale);
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <ToolShell
+    title={m.title}
+    description={m.description}
+    siteUrl={siteConfig.url}
+    locale={locale}
+    slug="lostark-bus-calculator"
+    content={c}
+    applicationCategory="GameApplication"
+  >
+    <div class="mx-auto max-w-2xl">
+      <LostarkBusCalculator client:load locale={locale} />
+    </div>
+    <FaqAccordion slot="faq" heading={faqHeading} items={faqItems} />
+  </ToolShell>
+</BaseLayout>
