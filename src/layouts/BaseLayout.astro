@@ -5,6 +5,7 @@ import { siteConfig } from "../config/site.config";
 import "../styles/global.css";
 import "katex/dist/katex.min.css";
 import "@fontsource-variable/inter";
+import AhoxyWelcome from '../components/AhoxyWelcome.astro';
 
 // BCP-47 mapping: Astro locale → HTML lang attribute standard value
 const BCP47: Record<string, string> = {
@@ -403,5 +404,6 @@ const langItems = availableLocales && availableLocales.length
         </div>
       </div>
     </footer>
+    <AhoxyWelcome />
   </body>
 </html>
