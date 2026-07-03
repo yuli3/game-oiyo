@@ -1,0 +1,20 @@
+# OIYO Arcade (game.oiyo.net)
+
+> Free browser games from the OIYO family — board, card, puzzle and arcade titles,
+> playable instantly with no install. Several board games (chess, gomoku, reversi,
+> checkers, connect four) include a built-in AI opponent with three difficulty levels.
+
+## Site role in the OIYO family
+- game.oiyo.net — play (this site)
+- oiyo.net — interactive tests & tools (canonical execution surface)
+- blog.oiyo.net — guides, lessons, explanations
+- wiki.oiyo.net — dictionary & definitions
+
+## Key pages
+- https://game.oiyo.net/en/ — arcade catalog (all games, 6 locales: en/ko/ja/zh/fr/es)
+- https://game.oiyo.net/en/chess/ — chess vs AI
+- https://game.oiyo.net/en/gomoku/ — gomoku (five in a row) vs AI
+- https://game.oiyo.net/en/sudoku/ — sudoku
+
+## Publisher
+Oiyo — https://oiyo.net/#organization
