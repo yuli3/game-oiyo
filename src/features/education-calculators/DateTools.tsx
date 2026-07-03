@@ -99,9 +99,9 @@ export function AnniversaryCalculator({ locale = 'ko' }: { locale?: 'ko' | 'en' 
   const past = milestones.filter(m => m.diff < 0).reverse().slice(0, 3);
 
   const shareText = L === 'ko'
-    ? `우리 ${elapsed}일째! ❤️ — blog.oiyo.net`
-    : L === 'en' ? `We are on Day ${elapsed}! ❤️ — blog.oiyo.net`
-    : `私たちは${elapsed}日目です！❤️ — blog.oiyo.net`;
+    ? `우리 ${elapsed}일째! ❤️ — game.oiyo.net`
+    : L === 'en' ? `We are on Day ${elapsed}! ❤️ — game.oiyo.net`
+    : `私たちは${elapsed}日目です！❤️ — game.oiyo.net`;
 
   return (
     <Card className="p-6 bg-white border-slate-200 shadow-xl mt-8">

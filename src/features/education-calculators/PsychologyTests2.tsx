@@ -185,7 +185,7 @@ export function LoveLanguageTest({ locale = 'ko' }: { locale?: 'ko' | 'en' | 'ja
           </div>
           <div className="flex items-center justify-between">
             <Button variant="outline" onClick={() => dispatch({ type: 'reset' })} className="rounded-full px-6">{resetLabel}</Button>
-            <ShareButton locale={L} text={`${llMeta[primary][L].name} — blog.oiyo.net`} />
+            <ShareButton locale={L} text={`${llMeta[primary][L].name} — game.oiyo.net`} />
           </div>
           <p className="text-[10px] text-slate-400 italic">* Gary Chapman의 《The Five Love Languages》(1992)에 기반한 자기 이해 도구입니다.</p>
         </div>
@@ -288,7 +288,7 @@ export function EmpathyTest({ locale = 'ko' }: { locale?: 'ko' | 'en' | 'ja' }) 
           </div>
           <div className="flex items-center justify-between">
             <Button variant="outline" onClick={() => dispatch({ type: 'reset' })} className="rounded-full px-6">{resetLabel}</Button>
-            <ShareButton locale={L} text={`${level} ${totalPct}% — blog.oiyo.net`} />
+            <ShareButton locale={L} text={`${level} ${totalPct}% — game.oiyo.net`} />
           </div>
           <p className="text-[10px] text-slate-400 italic">* Baron-Cohen & Wheelwright(2004) 공감 지수(EQ) 연구에 기반합니다.</p>
         </div>
@@ -417,7 +417,7 @@ export function AnimalTypeTest({ locale = 'ko' }: { locale?: 'ko' | 'en' | 'ja' 
           </div>
           <div className="flex items-center justify-between">
             <Button variant="outline" onClick={() => dispatch({ type: 'reset' })} className="rounded-full px-6">{resetLabel}</Button>
-            <ShareButton locale={L} text={`${animalMeta[primary].emoji} ${animalMeta[primary][L].name} — blog.oiyo.net`} />
+            <ShareButton locale={L} text={`${animalMeta[primary].emoji} ${animalMeta[primary][L].name} — game.oiyo.net`} />
           </div>
         </div>
       )}
@@ -562,7 +562,7 @@ export function FullMBTITest({ locale = 'ko' }: { locale?: 'ko' | 'en' | 'ja' })
           </div>
           <div className="flex items-center justify-between">
             <Button variant="outline" onClick={() => dispatch({ type: 'reset' })} className="rounded-full px-6">{resetLabel}</Button>
-            <ShareButton locale={L} text={`MBTI: ${type} — blog.oiyo.net`} />
+            <ShareButton locale={L} text={`MBTI: ${type} — game.oiyo.net`} />
           </div>
           <p className="text-[10px] text-slate-400 italic">* Myers-Briggs Type Indicator(MBTI)는 Isabel Myers와 Katharine Briggs가 개발한 자기 이해 도구입니다.</p>
         </div>

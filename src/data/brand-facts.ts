@@ -10,13 +10,13 @@ export const brandFacts = {
       "Oiyo is a three-layer knowledge and tool ecosystem: wiki for definitions, blog for explanations, and oiyo.net for interactive execution.",
   },
   currentSite: {
-    name: "Oiyo Blog",
-    url: "https://blog.oiyo.net/",
-    role: "explanation",
-    contentRole: "Long-form guides, lessons, comparisons, and practical context.",
-    knowledgeManifest: "https://blog.oiyo.net/knowledge/index.json",
-    primaryCatalog: "https://blog.oiyo.net/knowledge/guides.json",
-    llms: "https://blog.oiyo.net/llms.txt",
+    name: "OIYO Arcade",
+    url: "https://game.oiyo.net/",
+    role: "gaming",
+    contentRole: "Free browser games — board, card, puzzle and arcade — playable instantly, no install.",
+    knowledgeManifest: null,
+    primaryCatalog: null,
+    llms: null,
   },
   network: [
     {
@@ -41,13 +41,9 @@ export const brandFacts = {
   locales: ["ko", "en", "ja", "zh", "fr", "es"],
   retiredLocales: ["cn"],
   citation: {
-    attribution: "Oiyo Blog",
-    preferredUrl: "https://blog.oiyo.net/",
-    machineReadableEntryPoints: [
-      "https://blog.oiyo.net/llms.txt",
-      "https://blog.oiyo.net/knowledge/index.json",
-      "https://blog.oiyo.net/knowledge/guides.json",
-    ],
+    attribution: "OIYO Arcade",
+    preferredUrl: "https://game.oiyo.net/",
+    machineReadableEntryPoints: [],
   },
 };
 

@@ -27,5 +27,8 @@ jobs:
       - name: Type check
         run: npm run type-check
 
+      - name: Validate i18n keys
+        run: npm run validate:i18n
+
       - name: Build
         run: npm run build
