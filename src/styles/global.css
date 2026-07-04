@@ -219,3 +219,11 @@ main .grid button { -webkit-tap-highlight-color: transparent; }
   main button { min-height: 40px; }
   main .grid > button, main .grid > div > button { min-height: unset; } /* 보드 셀은 비율 유지 */
 }
+
+/* ── 모바일 가로 넘침 방지 (사용자 요청 2026-07-04) ──
+   페이지는 절대 뷰포트 가로를 넘지 않게 하고, 넓은 보드(솔리테어·지뢰찾기 등)는
+   자기 카드 안에서만 가로 스크롤. 게임 카드는 화면 폭에 맞춘다. */
+html, body { overflow-x: hidden; max-width: 100%; }
+main .not-prose { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+/* 정사각형 보드(체스·오목·리버시 등)는 폭에 맞춰 축소되도록 */
+main .aspect-square { max-width: min(100%, 92vw); }

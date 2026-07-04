@@ -11,8 +11,10 @@ const g = GAME_GUIDES[slug];
 const H = {
   origin: { ko: "유래와 역사", en: "Origin & history", ja: "由来と歴史", zh: "起源与历史", fr: "Origine et histoire", es: "Origen e historia" } as Record<Locale, string>,
   how: { ko: "게임 방법", en: "How to play", ja: "遊び方", zh: "玩法", fr: "Comment jouer", es: "Cómo jugar" } as Record<Locale, string>,
+  rules: { ko: "자세한 규칙", en: "Detailed rules", ja: "詳しいルール", zh: "详细规则", fr: "Règles détaillées", es: "Reglas detalladas" } as Record<Locale, string>,
   faq: { ko: "자주 묻는 질문", en: "FAQ", ja: "よくある質問", zh: "常见问题", fr: "FAQ", es: "Preguntas frecuentes" } as Record<Locale, string>,
 };
+const ruleList = g?.rules ? (g.rules[locale] ?? g.rules.en) : null;
 
 const jsonLd = g ? [
   {
@@ -48,6 +50,16 @@ const jsonLd = g ? [
         <h2 class="text-lg font-black">{H.how[locale]}</h2>
         <p class="mt-2 text-sm leading-7 text-muted-foreground">{g.how[locale] ?? g.how.en}</p>
       </div>
+      {ruleList && (
+        <div>
+          <h2 class="text-lg font-black">{H.rules[locale]}</h2>
+          <ol class="mt-2 space-y-1.5 text-sm leading-7 text-muted-foreground">
+            {ruleList.map((r, i) => (
+              <li class="flex gap-2"><span class="shrink-0 font-black text-primary">{i + 1}.</span><span>{r}</span></li>
+            ))}
+          </ol>
+        </div>
+      )}
       <div>
         <h2 class="text-lg font-black">{H.origin[locale]}</h2>
         <p class="mt-2 text-sm leading-7 text-muted-foreground">{g.origin[locale] ?? g.origin.en}</p>
