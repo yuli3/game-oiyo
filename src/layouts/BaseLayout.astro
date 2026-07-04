@@ -367,15 +367,18 @@ const langItems = availableLocales && availableLocales.length
         </div>
         <div class="flex flex-wrap justify-center md:justify-start gap-6 text-xs text-muted-foreground/60 items-center border-t border-border/20 pt-4">
           <span class="font-bold uppercase tracking-widest text-[10px]">Oiyo Family</span>
-          <a href={`https://oiyo.net/${locale}/?utm_source=blog&utm_medium=footer&utm_campaign=family_nav`}
-             target="_blank" rel="noopener noreferrer" class="hover:text-primary transition-colors">OIYO Tests →
-            <span class="block text-[10px] normal-case tracking-normal opacity-70">{locale === "ko" ? "해보는 곳 — 테스트·도구" : "Try — tests & tools"}</span></a>
-          <a href={`https://wiki.oiyo.net/${locale}/?utm_source=blog&utm_medium=footer&utm_campaign=family_nav`}
-             target="_blank" rel="noopener noreferrer" class="hover:text-primary transition-colors">OIYO Wiki →
-            <span class="block text-[10px] normal-case tracking-normal opacity-70">{locale === "ko" ? "찾아보는 곳 — 개념 사전" : "Look up — concept dictionary"}</span></a>
-          <a href="https://ahoxy.com?utm_source=blog&utm_medium=footer&utm_campaign=family_nav"
-             target="_blank" rel="noopener noreferrer" class="hover:text-primary transition-colors">AHOXY →
-            <span class="block text-[10px] normal-case tracking-normal opacity-70">{locale === "ko" ? "이름·운세 도구" : "Names & fortune tools"}</span></a>
+          {[
+            { host: "oiyo.net", name: "OIYO Tests", tag: { ko: "해보는 곳 — 테스트·도구", en: "Try — tests & tools", ja: "試す — テスト・ツール", zh: "试试 — 测验·工具", fr: "Essayer — tests & outils", es: "Probar — tests y herramientas" } },
+            { host: "blog.oiyo.net", name: "OIYO Blog", tag: { ko: "읽는 곳 — 강의·매거진", en: "Read — guides & magazine", ja: "読む — 講座・マガジン", zh: "阅读 — 课程·杂志", fr: "Lire — guides & magazine", es: "Leer — guías y revista" } },
+            { host: "wiki.oiyo.net", name: "OIYO Wiki", tag: { ko: "찾아보는 곳 — 개념 사전", en: "Look up — dictionary", ja: "調べる — 用語事典", zh: "查找 — 概念辞典", fr: "Chercher — dictionnaire", es: "Buscar — diccionario" } },
+            { host: "game.oiyo.net", name: "OIYO Arcade", tag: { ko: "노는 곳 — 게임", en: "Play — games", ja: "遊ぶ — ゲーム", zh: "玩 — 游戏", fr: "Jouer — jeux", es: "Jugar — juegos" } },
+            { host: "news.oiyo.net", name: "OIYO News", tag: { ko: "보는 곳 — 데일리 큐레이션", en: "Watch — daily curation", ja: "見る — デイリー", zh: "看 — 每日精选", fr: "Voir — curation", es: "Ver — curación diaria" } },
+            { host: "ai.oiyo.net", name: "OIYO AI", tag: { ko: "AX — AI 운영 시스템", en: "AX — AI-native OS", ja: "AX — AI運用", zh: "AX — AI 系统", fr: "AX — OS IA-native", es: "AX — OS con IA" } },
+          ].map((f) => (
+            <a href={`https://${f.host}/${locale}/?utm_source=game&utm_medium=footer&utm_campaign=family_nav`}
+               target="_blank" rel="noopener noreferrer" class="hover:text-primary transition-colors">{f.name} →
+              <span class="block text-[10px] normal-case tracking-normal opacity-70">{f.tag[locale as keyof typeof f.tag] ?? f.tag.en}</span></a>
+          ))}
         </div>
       </div>
     </footer>
