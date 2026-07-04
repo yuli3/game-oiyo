@@ -20,6 +20,24 @@ export const brandFacts = {
   },
   network: [
     {
+      name: "OIYO Arcade",
+      url: "https://game.oiyo.net/",
+      role: "gaming",
+      knowledgeManifest: null,
+    },
+    {
+      name: "OIYO News",
+      url: "https://news.oiyo.net/",
+      role: "curation",
+      knowledgeManifest: null,
+    },
+    {
+      name: "OIYO AI",
+      url: "https://ai.oiyo.net/",
+      role: "ax-showcase",
+      knowledgeManifest: null,
+    },
+    {
       name: "Oiyo Wiki",
       url: "https://wiki.oiyo.net/",
       role: "definition",
