@@ -15,7 +15,6 @@ interface Target {
 }
 
 const GAME_W = 500;
-const GAME_H = 400;
 const GAME_DURATION = 30;
 
 function getTargetSize(elapsed: number): number {
@@ -24,10 +23,11 @@ function getTargetSize(elapsed: number): number {
   return 40;
 }
 
+// Position as a percentage of the playfield so targets stay in-bounds on any
+// screen size (mobile included); center is placed within an 8–92% margin band.
 function randomTarget(size: number): Target {
-  const half = size / 2;
-  const x = Math.random() * (GAME_W - size) + half;
-  const y = Math.random() * (GAME_H - size) + half;
+  const x = 8 + Math.random() * 84;
+  const y = 8 + Math.random() * 84;
   return { x, y, size, key: Date.now() + Math.random() };
 }
 
@@ -287,8 +287,8 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
         <div
           ref={gameAreaRef}
           onClick={handleAreaClick}
-          className="relative bg-muted/40 rounded-2xl border border-border overflow-hidden cursor-crosshair"
-          style={{ width: "100%", maxWidth: `${GAME_W}px`, height: `${GAME_H}px` }}
+          className="relative mx-auto bg-muted/40 rounded-2xl border border-border overflow-hidden cursor-crosshair touch-none"
+          style={{ width: "100%", maxWidth: `${GAME_W}px`, aspectRatio: "5 / 4" }}
         >
           {/* Progress bar */}
           <div className="absolute top-0 left-0 w-full h-1 bg-muted/60">
@@ -306,8 +306,9 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
               style={{
                 width: `${target.size}px`,
                 height: `${target.size}px`,
-                left: `${target.x - target.size / 2}px`,
-                top: `${target.y - target.size / 2}px`,
+                left: `${target.x}%`,
+                top: `${target.y}%`,
+                transform: "translate(-50%, -50%)",
               }}
               aria-label="target"
             />
