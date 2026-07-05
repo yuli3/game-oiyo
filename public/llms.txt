@@ -9,6 +9,8 @@
 - oiyo.net — interactive tests & tools (canonical execution surface)
 - blog.oiyo.net — guides, lessons, explanations
 - wiki.oiyo.net — dictionary & definitions
+- news.oiyo.net — daily curated news & market briefs
+- ai.oiyo.net — AX / AI-native OS showcase
 
 ## Key pages
 - https://game.oiyo.net/en/ — arcade catalog (all games, 6 locales: en/ko/ja/zh/fr/es)
