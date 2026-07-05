@@ -1,27 +1,29 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { GameContainer } from '../ui/game/GamePrimitives';
 
 type Tile = { id: number; value: number; x: number; y: number; mergedFrom?: number[] };
+type Dir = 'up' | 'down' | 'left' | 'right';
 
-const Game2048: React.FC<{ locale?: 'ko' | 'en' }> = ({ locale = 'ko' }) => {
-    const t = {
-        ko: { title: "2048 게임", score: "점수", best: "최고 점수", over: "게임 종료", win: "2048 달성!", reset: "다시 시작" },
-        en: { title: "2048 Game", score: "Score", best: "Best", over: "Game Over", win: "2048 reached!", reset: "Reset" }
-    }[locale === 'ko' ? 'ko' : 'en'];
+const COPY = {
+    ko: { title: "2048 게임", subtitle: "Growth Logic", score: "점수", best: "최고 점수", over: "게임 종료", win: "2048 달성!", reset: "다시 시작", hint: "방향키 또는 스와이프로 이동" },
+    en: { title: "2048 Game", subtitle: "Growth Logic", score: "Score", best: "Best", over: "Game Over", win: "2048 reached!", reset: "Reset", hint: "Arrow keys or swipe to move" },
+    ja: { title: "2048ゲーム", subtitle: "Growth Logic", score: "スコア", best: "ベスト", over: "ゲーム終了", win: "2048達成！", reset: "リスタート", hint: "矢印キーまたはスワイプで移動" },
+    zh: { title: "2048游戏", subtitle: "Growth Logic", score: "分数", best: "最高分", over: "游戏结束", win: "达成2048！", reset: "重新开始", hint: "方向键或滑动操作" },
+    fr: { title: "Jeu 2048", subtitle: "Growth Logic", score: "Score", best: "Record", over: "Partie terminée", win: "2048 atteint !", reset: "Recommencer", hint: "Flèches ou glissez pour jouer" },
+    es: { title: "Juego 2048", subtitle: "Growth Logic", score: "Puntos", best: "Récord", over: "Fin del juego", win: "¡2048 logrado!", reset: "Reiniciar", hint: "Flechas o desliza para mover" },
+} as const;
+
+const BEST_KEY = 'oiyo-2048-best';
+
+const Game2048: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
+    const t = COPY[(locale as keyof typeof COPY)] ?? COPY.en;
 
     const [board, setBoard] = useState<(Tile | null)[][]>(Array(4).fill(null).map(() => Array(4).fill(null)));
     const [score, setScore] = useState(0);
-    const [best] = useState(0);
+    const [best, setBest] = useState(0);
     const [status, setStatus] = useState<'playing' | 'won' | 'over'>('playing');
     const idCounter = useRef(0);
-
-    const initGame = useCallback(() => {
-        const newBoard: (Tile | null)[][] = Array(4).fill(null).map(() => Array(4).fill(null));
-        addRandomTile(newBoard);
-        addRandomTile(newBoard);
-        setBoard(newBoard);
-        setScore(0);
-        setStatus('playing');
-    }, []);
+    const touchStart = useRef<{ x: number; y: number } | null>(null);
 
     const addRandomTile = (currentBoard: (Tile | null)[][]) => {
         const emptyCells = [];
@@ -36,25 +38,40 @@ const Game2048: React.FC<{ locale?: 'ko' | 'en' }> = ({ locale = 'ko' }) => {
         }
     };
 
+    const initGame = useCallback(() => {
+        const newBoard: (Tile | null)[][] = Array(4).fill(null).map(() => Array(4).fill(null));
+        addRandomTile(newBoard);
+        addRandomTile(newBoard);
+        setBoard(newBoard);
+        setScore(0);
+        setStatus('playing');
+    }, []);
+
     useEffect(() => {
         initGame();
+        try {
+            const stored = Number(localStorage.getItem(BEST_KEY));
+            if (Number.isFinite(stored) && stored > 0) setBest(stored);
+        } catch { /* ignore */ }
     }, [initGame]);
 
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (status !== 'playing') return;
-            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-                e.preventDefault();
-                move(e.key.replace('Arrow', '').toLowerCase() as 'up' | 'down' | 'left' | 'right');
+    // No move possible → game over
+    const canMove = (b: (Tile | null)[][]) => {
+        for (let y = 0; y < 4; y++) {
+            for (let x = 0; x < 4; x++) {
+                if (!b[y][x]) return true;
+                const v = b[y][x]!.value;
+                if (x < 3 && b[y][x + 1] && b[y][x + 1]!.value === v) return true;
+                if (y < 3 && b[y + 1][x] && b[y + 1][x]!.value === v) return true;
             }
-        };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [board, status]);
+        }
+        return false;
+    };
 
-    const move = (direction: 'up' | 'down' | 'left' | 'right') => {
+    const move = useCallback((direction: Dir) => {
+        if (status !== 'playing') return;
         let moved = false;
-        const newBoard = board.map(row => [...row]);
+        const newBoard = board.map((row) => [...row]);
         let newScore = score;
 
         const isVertical = direction === 'up' || direction === 'down';
@@ -75,7 +92,7 @@ const Game2048: React.FC<{ locale?: 'ko' | 'en' }> = ({ locale = 'ko' }) => {
                 const current = line[j]!;
                 if (j + 1 < line.length && line[j + 1]!.value === current.value) {
                     const newValue = current.value * 2;
-                    mergedLine.push({ ...current, value: newValue, mergedFrom: [current.id, line[j+1]!.id] });
+                    mergedLine.push({ ...current, value: newValue, mergedFrom: [current.id, line[j + 1]!.id] });
                     newScore += newValue;
                     j++;
                     moved = true;
@@ -99,14 +116,48 @@ const Game2048: React.FC<{ locale?: 'ko' | 'en' }> = ({ locale = 'ko' }) => {
             }
         }
 
-        if (moved) {
-            addRandomTile(newBoard);
-            setBoard(newBoard);
-            setScore(newScore);
-            if (newBoard.flat().some(t => t?.value === 2048)) setStatus('won');
-            // Check Game Over
-            // (Skipped for brevity in this MVP, but logic is: no empty cells and no matches)
+        if (!moved) return;
+
+        addRandomTile(newBoard);
+        setBoard(newBoard);
+        setScore(newScore);
+        if (newScore > best) {
+            setBest(newScore);
+            try { localStorage.setItem(BEST_KEY, String(newScore)); } catch { /* ignore */ }
         }
+        if (newBoard.flat().some((tl) => tl?.value === 2048)) {
+            setStatus('won');
+        } else if (!canMove(newBoard)) {
+            setStatus('over');
+        }
+    }, [board, score, best, status]);
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (status !== 'playing') return;
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                e.preventDefault();
+                move(e.key.replace('Arrow', '').toLowerCase() as Dir);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [move, status]);
+
+    const onTouchStart = (e: React.TouchEvent) => {
+        const tch = e.touches[0];
+        touchStart.current = { x: tch.clientX, y: tch.clientY };
+    };
+    const onTouchEnd = (e: React.TouchEvent) => {
+        if (!touchStart.current) return;
+        const tch = e.changedTouches[0];
+        const dx = tch.clientX - touchStart.current.x;
+        const dy = tch.clientY - touchStart.current.y;
+        touchStart.current = null;
+        const absX = Math.abs(dx), absY = Math.abs(dy);
+        if (Math.max(absX, absY) < 24) return; // ignore taps
+        if (absX > absY) move(dx > 0 ? 'right' : 'left');
+        else move(dy > 0 ? 'down' : 'up');
     };
 
     const getTileColor = (val: number) => {
@@ -121,25 +172,31 @@ const Game2048: React.FC<{ locale?: 'ko' | 'en' }> = ({ locale = 'ko' }) => {
             256: 'bg-chart-1 text-foreground shadow-md',
             512: 'bg-chart-2 text-foreground shadow-md',
             1024: 'bg-chart-3 text-foreground shadow-lg',
-            2048: 'bg-chart-4 text-foreground shadow-xl animate-pulse'
+            2048: 'bg-chart-4 text-foreground shadow-xl animate-pulse motion-reduce:animate-none',
         };
         return colors[val] || 'bg-slate-900 text-white';
     };
 
     return (
-        <div className="not-prose my-12 p-8 bg-card border border-border rounded-4xl shadow-sm max-w-sm mx-auto">
-            <div className="flex justify-between items-end mb-8">
-                <div>
-                    <h3 className="text-xl font-black text-foreground">{t.title}</h3>
-                    <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">Growth Logic</p>
+        <GameContainer title={t.title} subtitle={t.subtitle} onReset={initGame}>
+            <div className="flex justify-end gap-2 mb-6">
+                <div className="px-3 py-1.5 bg-muted rounded-xl text-center min-w-[72px]">
+                    <div className="text-[10px] font-black text-muted-foreground uppercase leading-none">{t.score}</div>
+                    <div className="text-lg font-black text-primary leading-tight">{score.toLocaleString()}</div>
                 </div>
-                <div className="flex flex-col items-end gap-1">
-                    <div className="px-3 py-1 bg-muted rounded-lg text-[10px] font-black text-muted-foreground uppercase">{t.score}</div>
-                    <div className="text-2xl font-black text-primary leading-none">{score.toLocaleString()}</div>
+                <div className="px-3 py-1.5 bg-muted rounded-xl text-center min-w-[72px]">
+                    <div className="text-[10px] font-black text-muted-foreground uppercase leading-none">{t.best}</div>
+                    <div className="text-lg font-black text-chart-2 leading-tight">{best.toLocaleString()}</div>
                 </div>
             </div>
 
-            <div className="relative aspect-square w-full bg-muted/50 rounded-2xl p-2 grid grid-cols-4 grid-rows-4 gap-2 border border-border">
+            <div
+                className="relative aspect-square w-full max-w-sm mx-auto bg-muted/50 rounded-2xl p-2 grid grid-cols-4 grid-rows-4 gap-2 border border-border touch-none"
+                onTouchStart={onTouchStart}
+                onTouchEnd={onTouchEnd}
+                role="grid"
+                aria-label={t.title}
+            >
                 {/* Background Grid */}
                 {Array.from({ length: 16 }).map((_, i) => (
                     <div key={i} className="bg-muted/80 rounded-lg" />
@@ -147,15 +204,15 @@ const Game2048: React.FC<{ locale?: 'ko' | 'en' }> = ({ locale = 'ko' }) => {
 
                 {/* Real Tiles */}
                 <div className="absolute inset-0 p-2 pointer-events-none">
-                    {board.flat().map(tile => tile && (
+                    {board.flat().map((tile) => tile && (
                         <div
                             key={tile.id}
-                            style={{ 
-                                left: `${tile.x * 25}%`, 
+                            style={{
+                                left: `${tile.x * 25}%`,
                                 top: `${tile.y * 25}%`,
                                 width: '25%',
                                 height: '25%',
-                                padding: '4px'
+                                padding: '4px',
                             }}
                             className="absolute transition-all duration-100 ease-in-out"
                         >
@@ -167,11 +224,11 @@ const Game2048: React.FC<{ locale?: 'ko' | 'en' }> = ({ locale = 'ko' }) => {
                 </div>
 
                 {status !== 'playing' && (
-                    <div className="absolute inset-0 z-10 bg-background/80 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center space-y-4 animate-in fade-in zoom-in-95">
+                    <div className="absolute inset-0 z-10 bg-background/80 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center space-y-4 animate-in fade-in zoom-in-95" role="status" aria-live="polite">
                         <h4 className="text-3xl font-black text-foreground">{status === 'won' ? t.win : t.over}</h4>
-                        <button 
+                        <button
                             onClick={initGame}
-                            className="px-8 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg"
+                            className="px-8 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity"
                         >
                             {t.reset}
                         </button>
@@ -179,11 +236,10 @@ const Game2048: React.FC<{ locale?: 'ko' | 'en' }> = ({ locale = 'ko' }) => {
                 )}
             </div>
 
-            <div className="mt-8 flex justify-between items-center text-[10px] text-muted-foreground font-medium italic">
-                <span>* Use Arrow Keys to move</span>
-                <span>Best: {best}</span>
+            <div className="mt-6 text-center text-[10px] text-muted-foreground font-medium italic">
+                {t.hint}
             </div>
-        </div>
+        </GameContainer>
     );
 };
 

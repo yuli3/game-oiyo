@@ -53,12 +53,89 @@ function evaluateGuess(guess: string, target: string): TileState[] {
   return result;
 }
 
+// ─── Locale copy ─────────────────────────────────────────────────────────────
+const COPY = {
+  ko: {
+    subtitle: '매일 새로운 5글자 영단어 퍼즐',
+    loading: '단어 불러오는 중…',
+    loadFail: '단어 데이터를 불러오지 못했습니다.',
+    notEnough: '글자 수가 부족합니다',
+    notInList: '단어 목록에 없습니다',
+    playAgain: '🎉 한 번 더',
+    tryAgain: '🔄 다시 도전',
+    theWordWas: '정답:',
+    hint: '매일 새 단어가 제공됩니다. 실제 키보드 또는 위 자판을 사용하세요.',
+    winMsgs: ['천재!', '대단해요!', '인상적!', '멋져요!', '좋아요!', '휴, 아슬아슬!'],
+  },
+  en: {
+    subtitle: 'Daily 5-letter word puzzle',
+    loading: 'Loading words…',
+    loadFail: 'Failed to load word data.',
+    notEnough: 'Not enough letters',
+    notInList: 'Not in word list',
+    playAgain: '🎉 Play Again',
+    tryAgain: '🔄 Try Again',
+    theWordWas: 'The word was:',
+    hint: 'A new word is available each day. Use physical keyboard or tap letters above.',
+    winMsgs: ['Genius!', 'Magnificent!', 'Impressive!', 'Splendid!', 'Great!', 'Phew!'],
+  },
+  ja: {
+    subtitle: '毎日新しい5文字の英単語パズル',
+    loading: '単語を読み込み中…',
+    loadFail: '単語データを読み込めませんでした。',
+    notEnough: '文字数が足りません',
+    notInList: '単語リストにありません',
+    playAgain: '🎉 もう一度',
+    tryAgain: '🔄 再挑戦',
+    theWordWas: '正解:',
+    hint: '毎日新しい単語が出題されます。キーボードまたは上の文字をタップ。',
+    winMsgs: ['天才！', '見事！', '印象的！', '素晴らしい！', 'いいね！', 'ふう、危なかった！'],
+  },
+  zh: {
+    subtitle: '每日5字母英文单词谜题',
+    loading: '正在加载单词…',
+    loadFail: '无法加载单词数据。',
+    notEnough: '字母数不足',
+    notInList: '不在单词表中',
+    playAgain: '🎉 再来一局',
+    tryAgain: '🔄 再试一次',
+    theWordWas: '答案:',
+    hint: '每天更新一个新单词。可用实体键盘或点击上方字母。',
+    winMsgs: ['天才！', '太棒了！', '了不起！', '精彩！', '不错！', '好险！'],
+  },
+  fr: {
+    subtitle: 'Puzzle quotidien : mot anglais de 5 lettres',
+    loading: 'Chargement des mots…',
+    loadFail: 'Échec du chargement des mots.',
+    notEnough: 'Pas assez de lettres',
+    notInList: 'Absent de la liste',
+    playAgain: '🎉 Rejouer',
+    tryAgain: '🔄 Réessayer',
+    theWordWas: 'Le mot était :',
+    hint: 'Un nouveau mot chaque jour. Clavier physique ou lettres ci-dessus.',
+    winMsgs: ['Génie !', 'Magnifique !', 'Impressionnant !', 'Splendide !', 'Super !', 'Ouf !'],
+  },
+  es: {
+    subtitle: 'Puzle diario: palabra inglesa de 5 letras',
+    loading: 'Cargando palabras…',
+    loadFail: 'No se pudieron cargar las palabras.',
+    notEnough: 'Faltan letras',
+    notInList: 'No está en la lista',
+    playAgain: '🎉 Jugar otra vez',
+    tryAgain: '🔄 Reintentar',
+    theWordWas: 'La palabra era:',
+    hint: 'Cada día una palabra nueva. Teclado físico o letras de arriba.',
+    winMsgs: ['¡Genio!', '¡Magnífico!', '¡Impresionante!', '¡Espléndido!', '¡Genial!', '¡Uf!'],
+  },
+} as const;
+
 // ─── Tile ─────────────────────────────────────────────────────────────────────
+// Wordle green/yellow via semantic tokens (success/warning) per design convention
 const TILE_CLASSES: Record<TileState, string> = {
   empty: 'border-2 border-muted bg-background text-foreground',
   tbd: 'border-2 border-muted-foreground bg-background text-foreground',
-  correct: 'border-2 border-emerald-600 bg-emerald-600 text-white',
-  present: 'border-2 border-amber-500 bg-amber-500 text-white',
+  correct: 'border-2 border-success bg-success text-success-foreground',
+  present: 'border-2 border-warning bg-warning text-warning-foreground',
   absent: 'border-2 border-muted bg-muted/50 text-muted-foreground',
 };
 
@@ -74,14 +151,15 @@ const Tile: React.FC<{ data: TileData; animate?: boolean }> = ({ data, animate }
 // ─── Keyboard key ─────────────────────────────────────────────────────────────
 function keyClass(letter: string, usedMap: Record<string, TileState>): string {
   const s = usedMap[letter];
-  if (s === 'correct') return 'bg-emerald-600 text-white border-emerald-600';
-  if (s === 'present') return 'bg-amber-500 text-white border-amber-500';
+  if (s === 'correct') return 'bg-success text-success-foreground border-success';
+  if (s === 'present') return 'bg-warning text-warning-foreground border-warning';
   if (s === 'absent') return 'bg-muted/60 text-muted-foreground border-muted';
   return 'bg-muted/30 text-foreground border-border hover:bg-muted/60';
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
-const WordleGame: React.FC = () => {
+const WordleGame: React.FC<{ locale?: string }> = ({ locale = 'en' }) => {
+  const t = COPY[(locale as keyof typeof COPY)] ?? COPY.en;
   const [status, setStatus] = useState<GameStatus>('loading');
   const [targetWord, setTargetWord] = useState('');
   const [validWords, setValidWords] = useState<Set<string>>(new Set());
@@ -107,7 +185,7 @@ const WordleGame: React.FC = () => {
         setValidWords(new Set(valids.map((w: string) => w.toUpperCase())));
         setStatus('playing');
       } catch {
-        setMessage('Failed to load word data.');
+        setMessage(t.loadFail);
       }
     }
     load();
@@ -128,12 +206,12 @@ const WordleGame: React.FC = () => {
     if (status !== 'playing') return;
     if (currentGuess.length < WORD_LENGTH) {
       triggerShake();
-      showMessage('Not enough letters');
+      showMessage(t.notEnough);
       return;
     }
     if (!validWords.has(currentGuess) && !validWords.has(currentGuess.toLowerCase())) {
       triggerShake();
-      showMessage('Not in word list');
+      showMessage(t.notInList);
       return;
     }
 
@@ -161,15 +239,14 @@ const WordleGame: React.FC = () => {
     });
 
     if (currentGuess === targetWord) {
-      const msgs = ['Genius!', 'Magnificent!', 'Impressive!', 'Splendid!', 'Great!', 'Phew!'];
-      setTimeout(() => { setStatus('won'); showMessage(msgs[currentRow] ?? 'Nice!', 4000); }, 300);
+      setTimeout(() => { setStatus('won'); showMessage(t.winMsgs[currentRow] ?? t.winMsgs[4], 4000); }, 300);
     } else if (currentRow + 1 >= MAX_GUESSES) {
       setTimeout(() => { setStatus('lost'); showMessage(targetWord, 6000); }, 300);
     }
 
     setCurrentRow(r => r + 1);
     setCurrentGuess('');
-  }, [status, currentGuess, currentRow, targetWord, validWords, triggerShake, showMessage]);
+  }, [status, currentGuess, currentRow, targetWord, validWords, triggerShake, showMessage, t]);
 
   const handleKey = useCallback((key: string) => {
     if (status !== 'playing') return;
@@ -221,8 +298,8 @@ const WordleGame: React.FC = () => {
   if (status === 'loading') {
     return (
       <div className="not-prose flex flex-col items-center justify-center py-24 gap-4">
-        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm text-muted-foreground font-bold">Loading words…</p>
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin motion-reduce:animate-none" />
+        <p className="text-sm text-muted-foreground font-bold">{t.loading}</p>
       </div>
     );
   }
@@ -232,7 +309,7 @@ const WordleGame: React.FC = () => {
       {/* Header */}
       <div className="w-full text-center border-b border-border pb-4">
         <h1 className="text-3xl font-black tracking-widest">WORDLE</h1>
-        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground mt-1">Daily 5-letter word puzzle</p>
+        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground mt-1">{t.subtitle}</p>
       </div>
 
       {/* Message toast */}
@@ -262,10 +339,10 @@ const WordleGame: React.FC = () => {
             onClick={resetGame}
             className="px-6 py-3 rounded-2xl bg-primary text-primary-foreground font-black hover:bg-primary/90 transition-colors"
           >
-            {status === 'won' ? '🎉 Play Again' : '🔄 Try Again'}
+            {status === 'won' ? t.playAgain : t.tryAgain}
           </button>
           {status === 'lost' && (
-            <p className="text-sm text-muted-foreground font-bold">The word was: <span className="font-black text-foreground">{targetWord}</span></p>
+            <p className="text-sm text-muted-foreground font-bold">{t.theWordWas} <span className="font-black text-foreground">{targetWord}</span></p>
           )}
         </div>
       )}
@@ -278,6 +355,7 @@ const WordleGame: React.FC = () => {
               <button
                 key={key}
                 onClick={() => handleKey(key)}
+                onMouseDown={(e) => e.preventDefault()} // keep focus off keys so physical Enter doesn't double-submit
                 aria-label={key === '⌫' ? 'Backspace' : key}
                 className={`h-14 rounded-lg border font-black text-xs sm:text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${key.length > 1 ? 'px-2 sm:px-3 text-[10px] sm:text-xs' : 'w-9 sm:w-10'} ${keyClass(key, usedKeys)}`}
               >
@@ -289,7 +367,7 @@ const WordleGame: React.FC = () => {
       </div>
 
       <p className="text-[10px] text-muted-foreground text-center">
-        A new word is available each day. Use physical keyboard or tap letters above.
+        {t.hint}
       </p>
     </div>
   );

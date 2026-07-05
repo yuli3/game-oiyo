@@ -17,12 +17,13 @@ const requiredFiles = [
   "src/lib/mdx-component-registry.ts",
 ];
 
+// NOTE: no "validate:personality" here — game repo has no public/data/personality
+// (that requirement belongs to blog/wiki, where the harness script originated).
 const requiredScripts = [
   "build",
   "type-check",
   "lint",
   "validate:i18n",
-  "validate:personality",
   "verify:harness",
 ];
 
