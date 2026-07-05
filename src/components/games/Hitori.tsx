@@ -4,11 +4,16 @@ import { GameContainer } from '../ui/game/GamePrimitives';
 const SIZE = 5;
 type Cell = { value: number; isDark: boolean; isError: boolean };
 
-const Hitori: React.FC<{ locale?: 'ko' | 'en' }> = ({ locale = 'ko' }) => {
-    const t = {
+const Hitori: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
+    const COPY = {
         ko: { title: "히토리 (Hitori)", desc: "중복된 숫자를 지워 가로세로 유일한 수만 남기세요!", reset: "판 갈기", win: "본질만 남았습니다!" },
-        en: { title: "Hitori", desc: "Shade duplicate numbers to leave only unique ones!", reset: "Restart", win: "Only essence remains!" }
-    }[locale === 'ko' ? 'ko' : 'en'];
+        en: { title: "Hitori", desc: "Shade duplicate numbers to leave only unique ones!", reset: "Restart", win: "Only essence remains!" },
+        ja: { title: "ひとりにしてくれ", desc: "重複した数字を消して、縦横で唯一の数字だけ残しましょう！", reset: "新しい盤面", win: "本質だけが残りました！" },
+        zh: { title: "数壹（Hitori）", desc: "涂掉重复的数字，让每行每列只留唯一数字！", reset: "换新棋盘", win: "只留下了精华！" },
+        fr: { title: "Hitori", desc: "Noircissez les doublons pour ne garder que des chiffres uniques !", reset: "Nouvelle grille", win: "Il ne reste que l'essentiel !" },
+        es: { title: "Hitori", desc: "¡Sombrea los números repetidos y deja solo los únicos!", reset: "Nuevo tablero", win: "¡Solo queda la esencia!" }
+    };
+    const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
 
     const [grid, setGrid] = useState<Cell[][]>([]);
 

@@ -5,11 +5,16 @@ const SIZE = 5;
 type CellType = 'empty' | 'tree' | 'tent' | 'grass';
 type Cell = { type: CellType; isError: boolean };
 
-const TentsAndTrees: React.FC<{ locale?: 'ko' | 'en' }> = ({ locale = 'ko' }) => {
-    const t = {
+const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
+    const COPY = {
         ko: { title: "텐트와 나무", desc: "나무마다 텐트를 하나씩 설치하세요!", reset: "판 갈기", win: "캠핑 준비 완료!" },
-        en: { title: "Tents & Trees", desc: "Each tree needs exactly one tent!", reset: "Restart", win: "Camping Ready!" }
-    }[locale === 'ko' ? 'ko' : 'en'];
+        en: { title: "Tents & Trees", desc: "Each tree needs exactly one tent!", reset: "Restart", win: "Camping Ready!" },
+        ja: { title: "テントと木", desc: "木ごとにテントを1つずつ設置しましょう！", reset: "新しい盤面", win: "キャンプ準備完了！" },
+        zh: { title: "帐篷与树", desc: "每棵树旁放一顶帐篷！", reset: "换新棋盘", win: "露营准备就绪！" },
+        fr: { title: "Tentes et arbres", desc: "Chaque arbre a besoin d'une tente !", reset: "Nouvelle grille", win: "Prêt à camper !" },
+        es: { title: "Tiendas y árboles", desc: "¡Cada árbol necesita una tienda!", reset: "Nuevo tablero", win: "¡Listos para acampar!" }
+    };
+    const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
 
     const [grid, setGrid] = useState<Cell[][]>([]);
     const [rowHints, setRowHints] = useState<number[]>([]);

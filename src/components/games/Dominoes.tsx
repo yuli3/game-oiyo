@@ -3,11 +3,16 @@ import { GameContainer } from '../ui/game/GamePrimitives';
 
 type Domino = { left: number; right: number; id: number };
 
-const Dominoes: React.FC<{ locale?: 'ko' | 'en' }> = ({ locale = 'ko' }) => {
-    const t = {
+const Dominoes: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
+    const COPY = {
         ko: { title: "도미노 (Dominoes)", turn: "차례", player: "나", cpu: "경쟁자", win: "승리!", over: "게임 종료", reset: "새 판", draw: "가져오기" },
-        en: { title: "Dominoes", turn: "Turn", player: "You", cpu: "CPU", win: "Wins!", over: "Game Over", reset: "New Game", draw: "Draw" }
-    }[locale === 'ko' ? 'ko' : 'en'];
+        en: { title: "Dominoes", turn: "Turn", player: "You", cpu: "CPU", win: "Wins!", over: "Game Over", reset: "New Game", draw: "Draw" },
+        ja: { title: "ドミノ", turn: "手番", player: "あなた", cpu: "CPU", win: "勝利！", over: "ゲーム終了", reset: "新しいゲーム", draw: "引く" },
+        zh: { title: "多米诺骨牌", turn: "回合", player: "你", cpu: "电脑", win: "获胜！", over: "游戏结束", reset: "新游戏", draw: "摸牌" },
+        fr: { title: "Dominos", turn: "Tour", player: "Vous", cpu: "Ordinateur", win: "gagne !", over: "Partie terminée", reset: "Nouvelle partie", draw: "Piocher" },
+        es: { title: "Dominó", turn: "Turno", player: "Tú", cpu: "CPU", win: "¡gana!", over: "Fin de la partida", reset: "Nueva partida", draw: "Robar" }
+    };
+    const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
 
     const [deck, setDeck] = useState<Domino[]>([]);
     const [hand, setHand] = useState<Domino[]>([]);

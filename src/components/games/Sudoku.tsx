@@ -1,11 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
 
-const Sudoku: React.FC<{ locale?: 'ko' | 'en' }> = ({ locale = 'ko' }) => {
-    const t = {
+const Sudoku: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
+    const COPY = {
         ko: { title: "스도쿠 (Sudoku)", desc: "1부터 9까지 겹치지 않게 숫자를 채워보세요!", reset: "판 갈기", win: "완벽한 논리력입니다!" },
-        en: { title: "Sudoku", desc: "Fill in numbers 1-9 without overlap!", reset: "Restart", win: "Perfect Logic!" }
-    }[locale === 'ko' ? 'ko' : 'en'];
+        en: { title: "Sudoku", desc: "Fill in numbers 1-9 without overlap!", reset: "Restart", win: "Perfect Logic!" },
+        ja: { title: "数独", desc: "1から9まで重複なく埋めましょう！", reset: "新しい盤面", win: "完璧な論理力です！" },
+        zh: { title: "数独", desc: "填入1到9，不重复！", reset: "换新棋盘", win: "完美的逻辑力！" },
+        fr: { title: "Sudoku", desc: "Remplissez de 1 à 9 sans doublon !", reset: "Nouvelle grille", win: "Logique parfaite !" },
+        es: { title: "Sudoku", desc: "¡Rellena del 1 al 9 sin repetir!", reset: "Nuevo tablero", win: "¡Lógica perfecta!" }
+    };
+    const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
 
     const [grid, setGrid] = useState<(number | null)[][]>([]);
     const [initial, setInitial] = useState<boolean[][]>([]);

@@ -1,11 +1,16 @@
 import React, { useState } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
 
-const WheelSpinner: React.FC<{ locale?: 'ko' | 'en' }> = ({ locale = 'ko' }) => {
-    const t = {
+const WheelSpinner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
+    const COPY = {
         ko: { title: "행운의 돌림판", spin: "돌리기", reset: "초기화", add: "항목 추가", result: "결과!", placeholder: "메뉴 입력" },
-        en: { title: "Lucky wheel", spin: "Spin", reset: "Reset", add: "Add Item", result: "Result!", placeholder: "Enter item" }
-    }[locale === 'ko' ? 'ko' : 'en'];
+        en: { title: "Lucky wheel", spin: "Spin", reset: "Reset", add: "Add Item", result: "Result!", placeholder: "Enter item" },
+        ja: { title: "幸運のルーレット", spin: "回す", reset: "リセット", add: "項目を追加", result: "結果！", placeholder: "項目を入力" },
+        zh: { title: "幸运转盘", spin: "转动", reset: "重置", add: "添加选项", result: "结果！", placeholder: "输入选项" },
+        fr: { title: "Roue de la chance", spin: "Tourner", reset: "Réinitialiser", add: "Ajouter", result: "Résultat !", placeholder: "Saisir un élément" },
+        es: { title: "Ruleta de la suerte", spin: "Girar", reset: "Restablecer", add: "Añadir", result: "¡Resultado!", placeholder: "Escribe una opción" }
+    };
+    const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
 
     const [items, setItems] = useState<string[]>(['Pizza', 'Burger', 'Sushi', 'Pasta']);
     const [newItem, setNewItem] = useState('');

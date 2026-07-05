@@ -3,11 +3,16 @@ import { GameContainer, PlayingCard } from '../ui/game/GamePrimitives';
 
 type Card = { suit: 'hearts' | 'diamonds' | 'clubs' | 'spades'; value: string; power: number; isRed: boolean; isFaceUp: boolean; id: string };
 
-const Solitaire: React.FC<{ locale?: 'ko' | 'en' }> = ({ locale = 'ko' }) => {
-    const t = {
+const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
+    const COPY = {
         ko: { title: "솔리테어 (Solitaire)", desc: "A부터 K까지 정돈해 보세요!", reset: "판 갈기", score: "완료", win: "정돈 완료! 마음도 한결 가볍네요." },
-        en: { title: "Solitaire", desc: "Organize from Ace to King!", reset: "Restart", score: "Done", win: "Sorted! Organized mind." }
-    }[locale === 'ko' ? 'ko' : 'en'];
+        en: { title: "Solitaire", desc: "Organize from Ace to King!", reset: "Restart", score: "Done", win: "Sorted! Organized mind." },
+        ja: { title: "ソリティア", desc: "AからKまで並べましょう！", reset: "新しいゲーム", score: "完了", win: "整頓完了！心も軽くなりますね。" },
+        zh: { title: "纸牌接龙", desc: "从A到K整理纸牌！", reset: "重新开始", score: "完成", win: "整理完成！心情也轻松了。" },
+        fr: { title: "Solitaire", desc: "Classez de l'as au roi !", reset: "Recommencer", score: "Terminé", win: "Rangé ! L'esprit léger." },
+        es: { title: "Solitario", desc: "¡Ordena del as al rey!", reset: "Reiniciar", score: "Hecho", win: "¡Ordenado! Mente despejada." }
+    };
+    const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
 
     const [deck, setDeck] = useState<Card[]>([]);
     const [tableau, setTableau] = useState<Card[][]>(Array(7).fill([]));

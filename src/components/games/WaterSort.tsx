@@ -4,11 +4,16 @@ import { GameContainer } from '../ui/game/GamePrimitives';
 const COLORS = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'];
 const TUBE_CAPACITY = 4;
 
-const WaterSort: React.FC<{ locale?: 'ko' | 'en' }> = ({ locale = 'ko' }) => {
-    const t = {
+const WaterSort: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
+    const COPY = {
         ko: { title: "워터 소트 (Water Sort)", desc: "같은 색깔의 물을 정렬하세요!", reset: "판 갈기", win: "순수하게 정제되었습니다!" },
-        en: { title: "Water Sort", desc: "Sort matching colored water into tubes!", reset: "Restart", win: "Purely Purified!" }
-    }[locale === 'ko' ? 'ko' : 'en'];
+        en: { title: "Water Sort", desc: "Sort matching colored water into tubes!", reset: "Restart", win: "Purely Purified!" },
+        ja: { title: "ウォーターソート", desc: "同じ色の水を仕分けましょう！", reset: "新しい盤面", win: "純粋に精製されました！" },
+        zh: { title: "倒水排序", desc: "把同色的水分类到试管里！", reset: "换新一局", win: "纯净提纯完成！" },
+        fr: { title: "Water Sort", desc: "Triez l'eau par couleur dans les tubes !", reset: "Recommencer", win: "Purement purifié !" },
+        es: { title: "Water Sort", desc: "¡Ordena el agua por colores en los tubos!", reset: "Reiniciar", win: "¡Puramente purificado!" }
+    };
+    const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
 
     const [tubes, setTubes] = useState<string[][]>([]);
     const [selectedTube, setSelectedTube] = useState<number | null>(null);

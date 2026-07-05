@@ -43,7 +43,7 @@ const m = meta[locale] ?? meta.en;
 
 <BaseLayout title={m.title} description={m.description}>
   <main class="mx-auto max-w-2xl px-4 py-8">
-    <LottoGeneratorComp client:load locale={locale === 'ko' ? 'ko' : 'en'} />
+    <LottoGeneratorComp client:load locale={locale} />
     <GameGuide slug="lotto-generator" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
   </main>
 </BaseLayout>

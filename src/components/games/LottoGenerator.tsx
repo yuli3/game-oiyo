@@ -1,11 +1,16 @@
 import React, { useState } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
 
-const LottoGenerator: React.FC<{ locale?: 'ko' | 'en' }> = ({ locale = 'ko' }) => {
-    const t = {
+const LottoGenerator: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
+    const COPY = {
         ko: { title: "로또 번호 생성기", gen: "번호 자동 생성", reset: "초기화", lucky: "오늘의 행운수", desc: "매주 토요일, 당신의 설레임을 응원합니다." },
-        en: { title: "Lotto Number Generator", gen: "Generate Numbers", lucky: "Your Lucky Numbers", desc: "Wishing you the best luck this week!" }
-    }[locale === 'ko' ? 'ko' : 'en'];
+        en: { title: "Lotto Number Generator", gen: "Generate Numbers", reset: "Reset", lucky: "Your Lucky Numbers", desc: "Wishing you the best luck this week!" },
+        ja: { title: "ロト番号ジェネレーター", gen: "番号を自動生成", reset: "リセット", lucky: "今日のラッキーナンバー", desc: "あなたの幸運を応援します。" },
+        zh: { title: "彩票号码生成器", gen: "自动生成号码", reset: "重置", lucky: "今日幸运号码", desc: "祝你本周好运连连！" },
+        fr: { title: "Générateur de numéros de loto", gen: "Générer les numéros", reset: "Réinitialiser", lucky: "Vos numéros porte-bonheur", desc: "Bonne chance cette semaine !" },
+        es: { title: "Generador de números de lotería", gen: "Generar números", reset: "Restablecer", lucky: "Tus números de la suerte", desc: "¡Mucha suerte esta semana!" }
+    };
+    const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
 
     const [numbers, setNumbers] = useState<number[][]>([]);
     const [isGenerating, setIsGenerating] = useState(false);

@@ -145,8 +145,8 @@ function formatTime(ms: number): string {
   return `${m}:${String(s % 60).padStart(2, '0')}`;
 }
 
-const MemoryCardGame: React.FC<{ locale?: 'ko' | 'en' }> = ({ locale = 'ko' }) => {
-  const t = {
+const MemoryCardGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
+  const COPY = {
     ko: {
       title: '카드 짝 맞추기',
       subtitle: '기억력 훈련 메모리 게임',
@@ -161,6 +161,7 @@ const MemoryCardGame: React.FC<{ locale?: 'ko' | 'en' }> = ({ locale = 'ko' }) =
       won:    '모두 맞췄습니다!',
       chooseLevel: '난이도를 선택하세요',
       pairs: (n: number, total: number) => `${n} / ${total} 쌍`,
+      flipsUnit: '번', cardLabel: '카드',
     },
     en: {
       title: 'Memory Cards',
@@ -176,8 +177,74 @@ const MemoryCardGame: React.FC<{ locale?: 'ko' | 'en' }> = ({ locale = 'ko' }) =
       won:    'All matched!',
       chooseLevel: 'Choose difficulty',
       pairs: (n: number, total: number) => `${n} / ${total} pairs`,
+      flipsUnit: 'flips', cardLabel: 'Card',
     },
-  }[locale === 'ko' ? 'ko' : 'en'];
+    ja: {
+      title: 'カード神経衰弱',
+      subtitle: '記憶力トレーニングゲーム',
+      easy:   'かんたん — 4×4',
+      medium: 'ふつう — 6×4',
+      hard:   'むずかしい — 6×6',
+      start:  'ゲーム開始',
+      reset:  'もう一度',
+      flips:  'めくり回数',
+      matched: '成立ペア',
+      time:   '時間',
+      won:    '全部そろいました！',
+      chooseLevel: '難易度を選んでください',
+      pairs: (n: number, total: number) => `${n} / ${total} ペア`,
+      flipsUnit: '回', cardLabel: 'カード',
+    },
+    zh: {
+      title: '记忆翻牌',
+      subtitle: '记忆力训练游戏',
+      easy:   '简单 — 4×4',
+      medium: '普通 — 6×4',
+      hard:   '困难 — 6×6',
+      start:  '开始游戏',
+      reset:  '再玩一次',
+      flips:  '翻牌次数',
+      matched: '已配对',
+      time:   '时间',
+      won:    '全部配对成功！',
+      chooseLevel: '请选择难度',
+      pairs: (n: number, total: number) => `${n} / ${total} 对`,
+      flipsUnit: '次', cardLabel: '卡牌',
+    },
+    fr: {
+      title: 'Jeu de mémoire',
+      subtitle: 'Jeu de paires pour la mémoire',
+      easy:   'Facile — 4×4',
+      medium: 'Moyen — 6×4',
+      hard:   'Difficile — 6×6',
+      start:  'Commencer',
+      reset:  'Rejouer',
+      flips:  'Retournements',
+      matched: 'Paires',
+      time:   'Temps',
+      won:    'Tout est apparié !',
+      chooseLevel: 'Choisissez la difficulté',
+      pairs: (n: number, total: number) => `${n} / ${total} paires`,
+      flipsUnit: 'retournements', cardLabel: 'Carte',
+    },
+    es: {
+      title: 'Juego de memoria',
+      subtitle: 'Juego de parejas de memoria',
+      easy:   'Fácil — 4×4',
+      medium: 'Normal — 6×4',
+      hard:   'Difícil — 6×6',
+      start:  'Empezar',
+      reset:  'Jugar de nuevo',
+      flips:  'Volteos',
+      matched: 'Parejas',
+      time:   'Tiempo',
+      won:    '¡Todas emparejadas!',
+      chooseLevel: 'Elige la dificultad',
+      pairs: (n: number, total: number) => `${n} / ${total} parejas`,
+      flipsUnit: 'volteos', cardLabel: 'Carta',
+    },
+  };
+  const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
 
   const [state, dispatch] = useReducer(reducer, initialState);
   const [throttledFlip, setThrottledFlip] = useState(false);
@@ -249,7 +316,7 @@ const MemoryCardGame: React.FC<{ locale?: 'ko' | 'en' }> = ({ locale = 'ko' }) =
             <div className="mb-4 p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-300 text-center" role="status" aria-live="assertive">
               <p className="text-lg font-black text-emerald-700">{t.won}</p>
               <p className="text-sm text-emerald-600">
-                {formatTime(state.elapsedMs)} — {state.flips} {locale === 'ko' ? '번' : 'flips'}
+                {formatTime(state.elapsedMs)} — {state.flips} {t.flipsUnit}
               </p>
               <button
                 onClick={() => dispatch({ type: 'RESET' })}
@@ -271,7 +338,7 @@ const MemoryCardGame: React.FC<{ locale?: 'ko' | 'en' }> = ({ locale = 'ko' }) =
                 key={card.id}
                 onClick={() => handleFlip(card.id)}
                 disabled={card.isMatched || card.isFlipped || state.locked || state.status === 'won'}
-                aria-label={card.isFlipped || card.isMatched ? card.emoji : locale === 'ko' ? '카드' : 'Card'}
+                aria-label={card.isFlipped || card.isMatched ? card.emoji : t.cardLabel}
                 aria-pressed={card.isFlipped || card.isMatched}
                 className={[
                   'aspect-square rounded-xl border-2 flex items-center justify-center text-2xl transition-all duration-200',

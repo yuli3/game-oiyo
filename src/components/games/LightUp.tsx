@@ -4,11 +4,16 @@ import { GameContainer } from '../ui/game/GamePrimitives';
 const SIZE = 7;
 type Cell = { type: 'white' | 'black'; count?: number; hasBulb: boolean; isLit: boolean; isError: boolean };
 
-const LightUp: React.FC<{ locale?: 'ko' | 'en' }> = ({ locale = 'ko' }) => {
-    const t = {
+const LightUp: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
+    const COPY = {
         ko: { title: "라이트업 (Akari)", desc: "어두운 구석 없이 모든 칸을 밝히세요!", reset: "판 갈기", win: "세상이 밝아졌습니다!" },
-        en: { title: "Light Up (Akari)", desc: "Light up every corner of the grid!", reset: "Restart", win: "The world is bright!" }
-    }[locale === 'ko' ? 'ko' : 'en'];
+        en: { title: "Light Up (Akari)", desc: "Light up every corner of the grid!", reset: "Restart", win: "The world is bright!" },
+        ja: { title: "美術館（ライトアップ）", desc: "暗い隅なくすべてのマスを照らしましょう！", reset: "新しい盤面", win: "世界が明るくなりました！" },
+        zh: { title: "点灯（Akari）", desc: "点亮棋盘的每个角落！", reset: "换新棋盘", win: "世界亮起来了！" },
+        fr: { title: "Light Up (Akari)", desc: "Éclairez chaque recoin de la grille !", reset: "Nouvelle grille", win: "Le monde s'illumine !" },
+        es: { title: "Light Up (Akari)", desc: "¡Ilumina cada rincón del tablero!", reset: "Nuevo tablero", win: "¡El mundo se iluminó!" }
+    };
+    const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
 
     const [grid, setGrid] = useState<Cell[][]>([]);
     

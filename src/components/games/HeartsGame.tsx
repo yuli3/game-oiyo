@@ -6,11 +6,16 @@ const VALUES = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'
 
 type Card = { suit: typeof SUITS[number]; value: string; power: number };
 
-const HeartsGame: React.FC<{ locale?: 'ko' | 'en' }> = ({ locale = 'ko' }) => {
-    const t = {
+const HeartsGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
+    const COPY = {
         ko: { title: "하트 (Hearts)", desc: "하트와 스페이드 퀸을 피하세요!", player: "나", cpu: "경쟁자", score: "벌점", reset: "다시 시작", win: "최고! 리스크를 피했습니다.", lost: "아뿔싸! 벌점이 많네요." },
-        en: { title: "Hearts Card Game", desc: "Avoid Hearts and the Queen of Spades!", player: "You", cpu: "CPUs", score: "Penalty", reset: "Restart", win: "Great! Risk avoided.", lost: "Oops! High penalty." }
-    }[locale === 'ko' ? 'ko' : 'en'];
+        en: { title: "Hearts Card Game", desc: "Avoid Hearts and the Queen of Spades!", player: "You", cpu: "CPUs", score: "Penalty", reset: "Restart", win: "Great! Risk avoided.", lost: "Oops! High penalty." },
+        ja: { title: "ハーツ", desc: "ハートとスペードのクイーンを避けましょう！", player: "あなた", cpu: "CPU", score: "ペナルティ", reset: "リスタート", win: "お見事！リスクを回避しました。", lost: "残念！ペナルティが多いですね。" },
+        zh: { title: "红心大战", desc: "避开红心和黑桃皇后！", player: "你", cpu: "电脑", score: "罚分", reset: "重新开始", win: "太棒了！成功避险。", lost: "哎呀！罚分太多了。" },
+        fr: { title: "La Dame de pique (Hearts)", desc: "Évitez les cœurs et la dame de pique !", player: "Vous", cpu: "Ordinateurs", score: "Pénalité", reset: "Recommencer", win: "Bravo ! Risque évité.", lost: "Aïe ! Trop de pénalités." },
+        es: { title: "Corazones (Hearts)", desc: "¡Evita los corazones y la reina de picas!", player: "Tú", cpu: "CPUs", score: "Penalización", reset: "Reiniciar", win: "¡Genial! Riesgo evitado.", lost: "¡Vaya! Demasiadas penalizaciones." }
+    };
+    const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
 
     const [deck, setDeck] = useState<Card[]>([]);
     const [hand, setHand] = useState<Card[]>([]);

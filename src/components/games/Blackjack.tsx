@@ -3,11 +3,16 @@ import { GameContainer, PlayingCard } from '../ui/game/GamePrimitives';
 
 type Card = { suit: 'hearts' | 'diamonds' | 'clubs' | 'spades'; value: string; power: number };
 
-const Blackjack: React.FC<{ locale?: 'ko' | 'en' }> = ({ locale = 'ko' }) => {
-    const t = {
+const Blackjack: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
+    const COPY = {
         ko: { title: "블랙잭 (Blackjack)", hit: "카드 받기(Hit)", stand: "멈추기(Stand)", reset: "새 게임", score: "합계", bust: "버스트! (21 초과)", win: "승리!", lost: "패배!", push: "무승부", dealer: "딜러", player: "나" },
-        en: { title: "Blackjack", hit: "Hit", stand: "Stand", reset: "New Game", score: "Score", bust: "Bust!", win: "You Win!", lost: "You Lost!", push: "Push", dealer: "Dealer", player: "You" }
-    }[locale === 'ko' ? 'ko' : 'en'];
+        en: { title: "Blackjack", hit: "Hit", stand: "Stand", reset: "New Game", score: "Score", bust: "Bust!", win: "You Win!", lost: "You Lost!", push: "Push", dealer: "Dealer", player: "You" },
+        ja: { title: "ブラックジャック", hit: "ヒット", stand: "スタンド", reset: "新しいゲーム", score: "合計", bust: "バースト！(21超過)", win: "勝利！", lost: "敗北！", push: "引き分け", dealer: "ディーラー", player: "あなた" },
+        zh: { title: "二十一点", hit: "要牌", stand: "停牌", reset: "新游戏", score: "点数", bust: "爆牌！(超过21)", win: "你赢了！", lost: "你输了！", push: "平局", dealer: "庄家", player: "你" },
+        fr: { title: "Blackjack", hit: "Tirer", stand: "Rester", reset: "Nouvelle partie", score: "Total", bust: "Brûlé ! (plus de 21)", win: "Gagné !", lost: "Perdu !", push: "Égalité", dealer: "Croupier", player: "Vous" },
+        es: { title: "Blackjack", hit: "Pedir", stand: "Plantarse", reset: "Nueva partida", score: "Total", bust: "¡Te pasaste! (más de 21)", win: "¡Ganaste!", lost: "¡Perdiste!", push: "Empate", dealer: "Crupier", player: "Tú" }
+    };
+    const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
 
     const [deck, setDeck] = useState<Card[]>([]);
     const [playerHand, setPlayerHand] = useState<Card[]>([]);

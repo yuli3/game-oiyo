@@ -3,11 +3,16 @@ import { GameContainer, PlayingCard } from '../ui/game/GamePrimitives';
 
 type Card = { suit: 'hearts' | 'diamonds' | 'clubs' | 'spades'; value: string; power: number; isRed: boolean; id: string };
 
-const FreeCell: React.FC<{ locale?: 'ko' | 'en' }> = ({ locale = 'ko' }) => {
-    const t = {
+const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
+    const COPY = {
         ko: { title: "프리셀 (FreeCell)", desc: "빈 공간을 활용해 모든 카드를 정리하세요!", reset: "다시 시작", win: "완벽한 알고리즘! 성공입니다." },
-        en: { title: "FreeCell", desc: "Use the free cells to organize all cards!", reset: "Restart", win: "Perfect Algorithm! Victory." }
-    }[locale === 'ko' ? 'ko' : 'en'];
+        en: { title: "FreeCell", desc: "Use the free cells to organize all cards!", reset: "Restart", win: "Perfect Algorithm! Victory." },
+        ja: { title: "フリーセル", desc: "フリーセルを活用してすべてのカードを整理しましょう！", reset: "リスタート", win: "完璧なアルゴリズム！勝利です。" },
+        zh: { title: "空当接龙", desc: "利用空格整理所有纸牌！", reset: "重新开始", win: "完美的算法！胜利。" },
+        fr: { title: "FreeCell", desc: "Utilisez les cellules libres pour classer toutes les cartes !", reset: "Recommencer", win: "Algorithme parfait ! Victoire." },
+        es: { title: "FreeCell", desc: "¡Usa las celdas libres para ordenar todas las cartas!", reset: "Reiniciar", win: "¡Algoritmo perfecto! Victoria." }
+    };
+    const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
 
     const [tableau, setTableau] = useState<Card[][]>(Array(8).fill([]));
     const [freeCells, setFreeCells] = useState<(Card | null)[]>(Array(4).fill(null));

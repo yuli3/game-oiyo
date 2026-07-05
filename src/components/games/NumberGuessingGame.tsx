@@ -89,8 +89,8 @@ const initialState: State = {
   status: 'idle',
 };
 
-const NumberGuessingGame: React.FC<{ locale?: 'ko' | 'en' }> = ({ locale = 'ko' }) => {
-  const t = {
+const NumberGuessingGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
+  const COPY = {
     ko: {
       title: '숫자 맞추기',
       subtitle: '숨겨진 숫자를 찾아라',
@@ -108,6 +108,8 @@ const NumberGuessingGame: React.FC<{ locale?: 'ko' | 'en' }> = ({ locale = 'ko' 
       hint: { exact: '정답!', hot: '매우 뜨거워요!', warm: '따뜻해요', cold: '차가워요' },
       chooseLevel: '난이도를 선택하세요',
       history: '시도 기록',
+      wonIn: (n: number) => `${n}번 만에 정답!`,
+      changeLevel: '난이도 변경',
     },
     en: {
       title: 'Number Guessing',
@@ -126,8 +128,91 @@ const NumberGuessingGame: React.FC<{ locale?: 'ko' | 'en' }> = ({ locale = 'ko' 
       hint: { exact: 'Exact!', hot: 'Very hot!', warm: 'Warm', cold: 'Cold' },
       chooseLevel: 'Choose difficulty',
       history: 'Guess History',
+      wonIn: (n: number) => `${n} attempt${n !== 1 ? 's' : ''}`,
+      changeLevel: 'Change Level',
     },
-  }[locale === 'ko' ? 'ko' : 'en'];
+    ja: {
+      title: '数当てゲーム',
+      subtitle: '隠された数字を探せ',
+      easy:    'かんたん (1〜50, 無制限)',
+      normal:  'ふつう (1〜100, 10回)',
+      hard:    'むずかしい (1〜1000, 7回)',
+      start:   'ゲーム開始',
+      reset:   'もう一度',
+      placeholder: (max: number) => `1から${max}までの数字を入力`,
+      submit:  '判定',
+      attemptsLeft: (n: number) => `残りチャンス: ${n}回`,
+      unlimited: '無制限',
+      won:  '正解！ 🎯',
+      lost: (n: number) => `残念！正解は${n}でした`,
+      hint: { exact: '正解！', hot: 'とても熱い！', warm: '暖かい', cold: '冷たい' },
+      chooseLevel: '難易度を選んでください',
+      history: '試行履歴',
+      wonIn: (n: number) => `${n}回で正解！`,
+      changeLevel: '難易度変更',
+    },
+    zh: {
+      title: '猜数字',
+      subtitle: '找出隐藏的数字',
+      easy:    '简单 (1~50, 无限次)',
+      normal:  '普通 (1~100, 10次)',
+      hard:    '困难 (1~1000, 7次)',
+      start:   '开始游戏',
+      reset:   '再玩一次',
+      placeholder: (max: number) => `输入1到${max}之间的数字`,
+      submit:  '确认',
+      attemptsLeft: (n: number) => `剩余机会: ${n}次`,
+      unlimited: '无限次机会',
+      won:  '答对了！ 🎯',
+      lost: (n: number) => `可惜！答案是${n}`,
+      hint: { exact: '正确！', hot: '非常热！', warm: '温暖', cold: '很冷' },
+      chooseLevel: '请选择难度',
+      history: '尝试记录',
+      wonIn: (n: number) => `${n}次猜中！`,
+      changeLevel: '更改难度',
+    },
+    fr: {
+      title: 'Devine le nombre',
+      subtitle: 'Trouvez le nombre caché',
+      easy:    'Facile (1–50, illimité)',
+      normal:  'Normal (1–100, 10 essais)',
+      hard:    'Difficile (1–1000, 7 essais)',
+      start:   'Commencer',
+      reset:   'Rejouer',
+      placeholder: (max: number) => `Entrez un nombre de 1 à ${max}`,
+      submit:  'Deviner',
+      attemptsLeft: (n: number) => `Essais restants : ${n}`,
+      unlimited: 'Essais illimités',
+      won:  'Correct ! 🎯',
+      lost: (n: number) => `La réponse était ${n}`,
+      hint: { exact: 'Exact !', hot: 'Très chaud !', warm: 'Tiède', cold: 'Froid' },
+      chooseLevel: 'Choisissez la difficulté',
+      history: 'Historique',
+      wonIn: (n: number) => `en ${n} essai${n > 1 ? 's' : ''} !`,
+      changeLevel: 'Changer de niveau',
+    },
+    es: {
+      title: 'Adivina el número',
+      subtitle: 'Encuentra el número oculto',
+      easy:    'Fácil (1–50, ilimitado)',
+      normal:  'Normal (1–100, 10 intentos)',
+      hard:    'Difícil (1–1000, 7 intentos)',
+      start:   'Empezar',
+      reset:   'Jugar de nuevo',
+      placeholder: (max: number) => `Escribe un número del 1 al ${max}`,
+      submit:  'Probar',
+      attemptsLeft: (n: number) => `Intentos restantes: ${n}`,
+      unlimited: 'Intentos ilimitados',
+      won:  '¡Correcto! 🎯',
+      lost: (n: number) => `La respuesta era ${n}`,
+      hint: { exact: '¡Exacto!', hot: '¡Muy caliente!', warm: 'Templado', cold: 'Frío' },
+      chooseLevel: 'Elige la dificultad',
+      history: 'Historial',
+      wonIn: (n: number) => `¡en ${n} intento${n !== 1 ? 's' : ''}!`,
+      changeLevel: 'Cambiar nivel',
+    },
+  };
+  const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
 
   const [state, dispatch] = useReducer(reducer, initialState);
   const [throttled, setThrottled] = useState(false);
@@ -193,7 +278,7 @@ const NumberGuessingGame: React.FC<{ locale?: 'ko' | 'en' }> = ({ locale = 'ko' 
           {state.status === 'won' && (
             <div className="mb-6 p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-300 text-center" role="status" aria-live="assertive">
               <p className="text-lg font-black text-emerald-700">{t.won}</p>
-              <p className="text-sm text-emerald-600">{state.attempts} {locale === 'ko' ? '번 만에 정답!' : `attempt${state.attempts !== 1 ? 's' : ''}`}</p>
+              <p className="text-sm text-emerald-600">{t.wonIn(state.attempts)}</p>
             </div>
           )}
 
@@ -241,7 +326,7 @@ const NumberGuessingGame: React.FC<{ locale?: 'ko' | 'en' }> = ({ locale = 'ko' 
                 onClick={() => dispatch({ type: 'START', difficulty: state.difficulty === 'easy' ? 'normal' : state.difficulty === 'normal' ? 'hard' : 'easy' })}
                 className="flex-1 py-3 rounded-2xl border-2 border-border bg-muted font-bold hover:bg-accent transition-all text-sm"
               >
-                {locale === 'ko' ? '난이도 변경' : 'Change Level'}
+                {t.changeLevel}
               </button>
             </div>
           )}
