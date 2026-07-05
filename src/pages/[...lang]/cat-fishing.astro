@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import CatFishingComp from "../../components/games/CatFishing";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "고양이 낚시 — 무료 캐주얼 반응속도 게임",
+    description: "도망다니는 물고기를 탭해서 모두 잡으세요! 난이도가 오를수록 물고기가 도망칩니다. 최단 기록에 도전하세요.",
+  },
+  en: {
+    title: "Cat Fishing — Free Casual Reflex Game",
+    description: "Tap the darting fish and catch them all! Higher difficulties make them flee your cursor. Chase your best time.",
+  },
+  ja: {
+    title: "ねこ釣り — 無料カジュアル反射神経ゲーム",
+    description: "泳ぎ回る魚をタップして全部捕まえよう！難易度が上がると魚が逃げます。最短記録に挑戦。",
+  },
+  fr: {
+    title: "Pêche au chat — Jeu de réflexes gratuit",
+    description: "Touchez les poissons fuyants et attrapez-les tous ! Plus c'est dur, plus ils fuient. Battez votre record.",
+  },
+  es: {
+    title: "Pesca gatuna — Juego casual de reflejos gratis",
+    description: "¡Toca los peces escurridizos y atrápalos todos! En dificultades altas huyen de tu cursor. Bate tu récord.",
+  },
+  zh: {
+    title: "猫咪钓鱼 — 免费休闲反应游戏",
+    description: "点击乱窜的小鱼，全部抓住！难度越高鱼越会逃跑。挑战你的最快记录。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <CatFishingComp client:load locale={locale} />
+    <GameGuide slug="cat-fishing" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
+  </main>
+</BaseLayout>

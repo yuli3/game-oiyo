@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import MazeGameComp from "../../components/games/MazeGame";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "미로 찾기 — 무료 온라인 미로 게임",
+    description: "매번 새로 생성되는 미로를 탈출하세요. 쉬움부터 어려움까지, 방향키와 스와이프로 즐기는 무료 미로 게임입니다.",
+  },
+  en: {
+    title: "Maze Escape — Free Online Maze Game",
+    description: "Escape a freshly generated maze every time. Easy to hard, playable with arrow keys or swipe — free online.",
+  },
+  ja: {
+    title: "迷路脱出 — 無料オンライン迷路ゲーム",
+    description: "毎回新しく生成される迷路から脱出しましょう。かんたんから難関まで、矢印キーとスワイプで遊べます。",
+  },
+  fr: {
+    title: "Évasion du labyrinthe — Jeu de labyrinthe gratuit",
+    description: "Échappez-vous d'un labyrinthe généré à chaque partie. Du facile au difficile, aux flèches ou par glissement.",
+  },
+  es: {
+    title: "Escape del laberinto — Juego de laberinto gratis",
+    description: "Escapa de un laberinto generado en cada partida. De fácil a difícil, con flechas o deslizando.",
+  },
+  zh: {
+    title: "走出迷宫 — 免费在线迷宫游戏",
+    description: "每次都全新生成的迷宫等你逃脱。从简单到困难，支持方向键和滑动操作。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <MazeGameComp client:load locale={locale} />
+    <GameGuide slug="maze" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
+  </main>
+</BaseLayout>

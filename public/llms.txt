@@ -1,8 +1,8 @@
 # OIYO Arcade (game.oiyo.net)
 
 > Free browser games from the OIYO family — board, card, puzzle and arcade titles,
-> playable instantly with no install. Several board games (chess, gomoku, reversi,
-> checkers, connect four) include a built-in AI opponent with three difficulty levels.
+> playable instantly with no install. The board games (chess, gomoku, reversi,
+> checkers, connect four, janggi) include a built-in AI opponent with three difficulty levels.
 
 ## Site role in the OIYO family
 - game.oiyo.net — play (this site)
@@ -17,6 +17,8 @@
 - https://game.oiyo.net/en/chess/ — chess vs AI
 - https://game.oiyo.net/en/gomoku/ — gomoku (five in a row) vs AI
 - https://game.oiyo.net/en/sudoku/ — sudoku
+- https://game.oiyo.net/en/yahtzee/ — yahtzee (dice)
+- https://game.oiyo.net/en/janggi/ — korean chess (janggi) vs AI
 
 ## Publisher
 Oiyo — https://oiyo.net/#organization

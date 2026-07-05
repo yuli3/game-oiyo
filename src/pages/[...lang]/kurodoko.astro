@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import KurodokoComp from "../../components/games/Kurodoko";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "쿠로도코 — 무료 온라인 논리 퍼즐",
+    description: "니코리의 논리 퍼즐 쿠로도코를 온라인으로 즐기세요. 숫자 단서에 맞춰 검은 칸을 칠하는 두뇌 게임입니다.",
+  },
+  en: {
+    title: "Kurodoko — Free Online Logic Puzzle",
+    description: "Play Kurodoko (Where is Black Cells?) online. Shade black cells to satisfy number clues in this Nikoli brain teaser.",
+  },
+  ja: {
+    title: "クロドコ — 無料オンライン論理パズル",
+    description: "ニコリの論理パズル「黒どこ」をオンラインで。数字ヒントに合わせて黒マスを塗る頭脳ゲームです。",
+  },
+  fr: {
+    title: "Kurodoko — Puzzle logique gratuit en ligne",
+    description: "Jouez au Kurodoko en ligne. Noircissez des cases selon les indices numériques dans ce casse-tête Nikoli.",
+  },
+  es: {
+    title: "Kurodoko — Puzle lógico gratis en línea",
+    description: "Juega a Kurodoko en línea. Sombrea casillas negras según las pistas numéricas en este rompecabezas de Nikoli.",
+  },
+  zh: {
+    title: "黑格在哪 (Kurodoko) — 免费在线逻辑谜题",
+    description: "在线畅玩Nikoli逻辑谜题Kurodoko。根据数字线索涂黑格子的烧脑游戏。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <KurodokoComp client:load locale={locale} />
+    <GameGuide slug="kurodoko" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
+  </main>
+</BaseLayout>

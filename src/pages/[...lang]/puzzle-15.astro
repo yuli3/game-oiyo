@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Puzzle15Comp from "../../components/games/Puzzle15";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "15 퍼즐 — 무료 온라인 슬라이딩 퍼즐",
+    description: "클래식 15 퍼즐(수 밀기 퍼즐)을 온라인으로 즐기세요. 3×3부터 5×5까지, 최소 이동으로 숫자를 정렬해 보세요.",
+  },
+  en: {
+    title: "15 Puzzle — Free Online Sliding Puzzle",
+    description: "Play the classic 15 puzzle online. From 3×3 to 5×5, slide the tiles into order in as few moves as you can.",
+  },
+  ja: {
+    title: "15パズル — 無料オンラインスライドパズル",
+    description: "クラシックな15パズルをオンラインで。3×3から5×5まで、最少手数で数字を並べましょう。",
+  },
+  fr: {
+    title: "Taquin — Puzzle coulissant gratuit en ligne",
+    description: "Jouez au taquin classique en ligne. De 3×3 à 5×5, remettez les tuiles en ordre en un minimum de coups.",
+  },
+  es: {
+    title: "Puzle 15 — Puzle deslizante gratis en línea",
+    description: "Juega al clásico puzle 15 en línea. De 3×3 a 5×5, ordena las fichas en el menor número de movimientos.",
+  },
+  zh: {
+    title: "数字华容道 — 免费在线滑块拼图",
+    description: "在线畅玩经典15拼图（数字华容道）。从3×3到5×5，用最少步数将数字排好序。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <Puzzle15Comp client:load locale={locale} />
+    <GameGuide slug="puzzle-15" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
+  </main>
+</BaseLayout>
