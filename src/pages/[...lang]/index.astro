@@ -43,8 +43,9 @@ const catLabel: Record<string, Record<Locale, string>> = {
   puzzle: { ko: "퍼즐", en: "Puzzle", ja: "パズル", zh: "益智", fr: "Réflexion", es: "Lógica" },
   arcade: { ko: "아케이드", en: "Arcade", ja: "アーケード", zh: "街机", fr: "Arcade", es: "Arcade" },
   luck: { ko: "운·뽑기", en: "Luck", ja: "運だめし", zh: "运气", fr: "Hasard", es: "Suerte" },
+  lostark: { ko: "로스트아크", en: "Lost Ark", ja: "ロストアーク", zh: "失落的方舟", fr: "Lost Ark", es: "Lost Ark" },
 };
-const catOrder = ["board", "card", "puzzle", "arcade", "luck"];
+const catOrder = ["board", "card", "puzzle", "arcade", "luck", "lostark"];
 
 type Game = { slug: string; emoji: string; cat: string; name: Record<Locale, string> };
 const GAMES: Game[] = [
@@ -80,6 +81,10 @@ const GAMES: Game[] = [
   { slug: "dice-roller", emoji: "🎲", cat: "luck", name: { ko: "주사위", en: "Dice Roller", ja: "サイコロ", zh: "掷骰子", fr: "Dés", es: "Dados" } },
   { slug: "wheel-spinner", emoji: "🎡", cat: "luck", name: { ko: "룰렛 돌리기", en: "Wheel Spinner", ja: "ルーレット", zh: "转盘", fr: "Roue", es: "Ruleta" } },
   { slug: "lotto-generator", emoji: "🎰", cat: "luck", name: { ko: "로또 번호 생성", en: "Lotto Generator", ja: "ロト番号生成", zh: "彩票生成", fr: "Générateur loto", es: "Generador lotería" } },
+
+  { slug: "lostark-raid-distribution", emoji: "⚔️", cat: "lostark", name: { ko: "레이드 골드 분배", en: "Raid Gold Split", ja: "レイド金分配", zh: "团本金币分配", fr: "Partage d'or de raid", es: "Reparto de oro de raid" } },
+  { slug: "lostark-auction-calculator", emoji: "💰", cat: "lostark", name: { ko: "경매 계산기", en: "Auction Calculator", ja: "オークション計算機", zh: "拍卖计算器", fr: "Calculateur d'enchères", es: "Calculadora de subastas" } },
+  { slug: "lostark-bus-calculator", emoji: "🚌", cat: "lostark", name: { ko: "버스비 계산기", en: "Bus Fee Calculator", ja: "バス代計算機", zh: "车费计算器", fr: "Calculateur de bus", es: "Calculadora de bus" } },
 ];
 
 const byCat = (c: string) => GAMES.filter((g) => g.cat === c);
