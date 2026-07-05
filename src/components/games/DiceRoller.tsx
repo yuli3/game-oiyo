@@ -1,7 +1,5 @@
-import React, { useState, useCallback, useReducer } from 'react';
-import { GameContainer } from '@/components/ui/game/GamePrimitives';
-
-type DieType = 'D4' | 'D6' | 'D8' | 'D10' | 'D12' | 'D20';
+import React, { useState, useCallback, useReducer, useRef } from 'react';
+import { GameContainer, Die, type DieType } from '@/components/ui/game/GamePrimitives';
 
 interface RollRecord {
   dice: DieType[];
@@ -25,17 +23,9 @@ type Action =
   | { type: 'ROLL_END'; results: number[] };
 
 const DICE_SIDES: Record<DieType, number> = { D4: 4, D6: 6, D8: 8, D10: 10, D12: 12, D20: 20 };
+const DICE_ORDER: DieType[] = ['D4', 'D6', 'D8', 'D10', 'D12', 'D20'];
 const MAX_DICE = 6;
 const MAX_HISTORY = 10;
-
-const DIE_FACES: Record<DieType, string> = {
-  D4: '▲',
-  D6: '⬡',
-  D8: '◆',
-  D10: '⬟',
-  D12: '⬠',
-  D20: '⬣',
-};
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
@@ -78,54 +68,41 @@ const initialState: State = {
   history: [],
 };
 
-const DiceRoller: React.FC<{ locale?: 'ko' | 'en' }> = ({ locale = 'ko' }) => {
-  const t = {
-    ko: {
-      title: '주사위 굴리기',
-      subtitle: 'D4 ~ D20 온라인 주사위 롤러',
-      addDie: '주사위 추가',
-      roll: '굴리기',
-      clear: '초기화',
-      result: '결과',
-      sum: '합계',
-      history: '기록',
-      noHistory: '아직 기록이 없습니다',
-      maxDice: `최대 ${MAX_DICE}개까지 추가할 수 있습니다`,
-      noDice: '주사위를 추가해주세요',
-      rolling: '굴리는 중...',
-    },
-    en: {
-      title: 'Dice Roller',
-      subtitle: 'D4 to D20 Online Dice Roller',
-      addDie: 'Add Die',
-      roll: 'Roll',
-      clear: 'Clear',
-      result: 'Result',
-      sum: 'Sum',
-      history: 'History',
-      noHistory: 'No rolls yet',
-      maxDice: `Maximum ${MAX_DICE} dice allowed`,
-      noDice: 'Add dice to roll',
-      rolling: 'Rolling...',
-    },
-  }[locale === 'ko' ? 'ko' : 'en'];
+const COPY = {
+  ko: { title: '주사위 굴리기', subtitle: 'D4 ~ D20 온라인 주사위 롤러', addDie: '주사위 추가', roll: '굴리기', sum: '합계', history: '기록', maxDice: `최대 ${MAX_DICE}개까지 추가할 수 있습니다`, noDice: '주사위를 추가해주세요', rolling: '굴리는 중...' },
+  en: { title: 'Dice Roller', subtitle: 'D4 to D20 Online Dice Roller', addDie: 'Add Die', roll: 'Roll', sum: 'Sum', history: 'History', maxDice: `Maximum ${MAX_DICE} dice allowed`, noDice: 'Add dice to roll', rolling: 'Rolling...' },
+  ja: { title: 'サイコロを振る', subtitle: 'D4〜D20 オンラインダイスローラー', addDie: 'サイコロ追加', roll: '振る', sum: '合計', history: '履歴', maxDice: `最大${MAX_DICE}個まで追加できます`, noDice: 'サイコロを追加してください', rolling: '振っています...' },
+  zh: { title: '掷骰子', subtitle: 'D4~D20 在线骰子', addDie: '添加骰子', roll: '掷', sum: '合计', history: '记录', maxDice: `最多可添加${MAX_DICE}个`, noDice: '请添加骰子', rolling: '掷骰中...' },
+  fr: { title: 'Lanceur de dés', subtitle: 'Lanceur de dés D4 à D20', addDie: 'Ajouter un dé', roll: 'Lancer', sum: 'Total', history: 'Historique', maxDice: `Maximum ${MAX_DICE} dés`, noDice: 'Ajoutez des dés', rolling: 'Lancement...' },
+  es: { title: 'Lanzador de dados', subtitle: 'Lanzador de dados D4 a D20', addDie: 'Añadir dado', roll: 'Lanzar', sum: 'Suma', history: 'Historial', maxDice: `Máximo ${MAX_DICE} dados`, noDice: 'Añade dados', rolling: 'Lanzando...' },
+} as const;
+
+const DiceRoller: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
+  const t = COPY[(locale as keyof typeof COPY)] ?? COPY.en;
 
   const [state, dispatch] = useReducer(reducer, initialState);
   const [throttled, setThrottled] = useState(false);
+  const [preview, setPreview] = useState<number[]>([]);
+  const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const rollDice = useCallback(() => {
     if (throttled || state.rolling || state.selectedDice.length === 0) return;
     setThrottled(true);
     dispatch({ type: 'ROLL_START' });
 
+    // Tumble: cycle random faces while rolling for a real dice feel
+    if (tickRef.current) clearInterval(tickRef.current);
+    tickRef.current = setInterval(() => {
+      setPreview(state.selectedDice.map((die) => Math.floor(Math.random() * DICE_SIDES[die]) + 1));
+    }, 70);
+
     setTimeout(() => {
-      const results = state.selectedDice.map((die) => {
-        const sides = DICE_SIDES[die];
-        return Math.floor(Math.random() * sides) + 1;
-      });
+      if (tickRef.current) { clearInterval(tickRef.current); tickRef.current = null; }
+      setPreview([]);
+      const results = state.selectedDice.map((die) => Math.floor(Math.random() * DICE_SIDES[die]) + 1);
       dispatch({ type: 'ROLL_END', results });
-      setTimeout(() => setThrottled(false), 600);
-    }, 600);
+      setTimeout(() => setThrottled(false), 400);
+    }, 700);
   }, [state.selectedDice, state.rolling, throttled]);
 
   const sum = state.lastResults.reduce((a, b) => a + b, 0);
@@ -140,16 +117,16 @@ const DiceRoller: React.FC<{ locale?: 'ko' | 'en' }> = ({ locale = 'ko' }) => {
       <div className="mb-6">
         <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">{t.addDie}</p>
         <div className="flex flex-wrap gap-2">
-          {(Object.keys(DICE_SIDES) as DieType[]).map((die) => (
+          {DICE_ORDER.map((die) => (
             <button
               key={die}
               onClick={() => dispatch({ type: 'ADD_DIE', die })}
               disabled={state.selectedDice.length >= MAX_DICE}
               aria-label={`Add ${die}`}
-              className="flex flex-col items-center justify-center w-14 h-14 rounded-2xl border-2 border-border bg-muted hover:bg-accent hover:border-primary disabled:opacity-40 disabled:cursor-not-allowed transition-all font-black text-xs gap-1"
+              className="flex flex-col items-center justify-center w-16 h-16 rounded-2xl border-2 border-border bg-muted hover:bg-accent hover:border-primary disabled:opacity-40 disabled:cursor-not-allowed transition-all gap-0.5"
             >
-              <span className="text-lg">{DIE_FACES[die]}</span>
-              <span>{die}</span>
+              <Die type={die} value={die === 'D6' ? 6 : DICE_SIDES[die]} size={30} />
+              <span className="text-[10px] font-black text-muted-foreground">{die}</span>
             </button>
           ))}
         </div>
@@ -164,22 +141,17 @@ const DiceRoller: React.FC<{ locale?: 'ko' | 'en' }> = ({ locale = 'ko' }) => {
           <span className="text-sm text-muted-foreground">{t.noDice}</span>
         ) : (
           state.selectedDice.map((die, i) => {
-            const result = state.lastResults[i];
+            const shown = state.rolling ? (preview[i] ?? DICE_SIDES[die]) : state.lastResults[i];
             return (
               <button
                 key={i}
                 onClick={() => dispatch({ type: 'REMOVE_DIE', index: i })}
-                aria-label={`Remove ${die}`}
-                className="relative flex flex-col items-center justify-center w-16 h-16 rounded-2xl border-2 border-primary/40 bg-card hover:border-destructive hover:bg-destructive/10 transition-all group"
+                aria-label={`Remove ${die} (${shown ?? ''})`}
+                title={die}
+                className="relative flex items-center justify-center rounded-2xl p-1 hover:bg-destructive/10 transition-all group"
               >
-                <span className="text-xs font-black text-muted-foreground group-hover:hidden">{die}</span>
-                {result !== undefined && !state.rolling && (
-                  <span className="text-xl font-black text-foreground group-hover:hidden">{result}</span>
-                )}
-                {state.rolling && (
-                  <span className="text-xl font-black text-primary animate-bounce">{DIE_FACES[die]}</span>
-                )}
-                <span className="hidden group-hover:flex text-xs font-black text-destructive">✕</span>
+                <Die type={die} value={shown ?? null} rolling={state.rolling} size={56} />
+                <span className="absolute -top-1 -right-1 hidden group-hover:flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-black text-white">✕</span>
               </button>
             );
           })
