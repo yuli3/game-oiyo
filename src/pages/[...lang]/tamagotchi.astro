@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import TamagotchiComp from "../../components/games/Tamagotchi";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "다마고치 — 무료 온라인 픽셀 가상 펫",
+    description: "레트로 LCD 감성의 픽셀 다마고치를 키워보세요. 알에서 부화해 4단계로 성장하고, 식사 시간과 산책까지 챙겨야 하는 진짜 육성 게임입니다.",
+  },
+  en: {
+    title: "Tamagotchi — Free Online Pixel Virtual Pet",
+    description: "Raise a retro LCD-style pixel pet. Hatch it from an egg, grow it through 4 stages, and keep up with real meal times and walks — real care required.",
+  },
+  ja: {
+    title: "たまごっち風ペット — 無料オンラインピクセル育成",
+    description: "レトロLCD風のピクセルペットを育てよう。たまごから孵化して4段階に成長。食事の時間や散歩まで世話が必要な本格育成ゲーム。",
+  },
+  fr: {
+    title: "Tamagotchi — Animal virtuel pixel gratuit en ligne",
+    description: "Élevez un compagnon pixel façon LCD rétro : éclosion, 4 stades de croissance, repas à heures fixes et promenades — de vrais soins requis.",
+  },
+  es: {
+    title: "Tamagotchi — Mascota virtual pixel gratis en línea",
+    description: "Cría una mascota pixel estilo LCD retro: eclosiona el huevo, crece en 4 etapas y cumple horarios reales de comida y paseos.",
+  },
+  zh: {
+    title: "电子宠物 — 免费在线像素养成游戏",
+    description: "养一只复古LCD风格的像素宠物：从蛋孵化、四阶段成长，还要按时吃饭和散步——需要真正的照顾。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <TamagotchiComp client:load locale={locale} />
+    <GameGuide slug="tamagotchi" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
+  </main>
+</BaseLayout>
