@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import DotJumpKingComp from "../../components/games/DotJumpKing";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "점프 킹 — 무료 차지 점프 게임",
+    description: "꾹 눌러 힘을 모으고 놓아서 점프! 플랫폼을 밟고 끝없이 높이 올라가는 차지 점프 클라이머입니다.",
+  },
+  en: {
+    title: "Dot Jump King — Free Charge-Jump Climber",
+    description: "Hold to charge, release to leap! Land on platforms and climb as high as you can in this charge-jump climber.",
+  },
+  ja: {
+    title: "ドットジャンプキング — 無料チャージジャンプゲーム",
+    description: "長押しでチャージ、離してジャンプ！足場を踏んでどこまでも高く登るクライマーゲーム。",
+  },
+  fr: {
+    title: "Dot Jump King — Grimpeur à saut chargé gratuit",
+    description: "Maintenez pour charger, relâchez pour bondir ! Grimpez de plateforme en plateforme aussi haut que possible.",
+  },
+  es: {
+    title: "Dot Jump King — Escalador de salto cargado gratis",
+    description: "¡Mantén para cargar y suelta para saltar! Sube de plataforma en plataforma tan alto como puedas.",
+  },
+  zh: {
+    title: "点点跳跳王 — 免费蓄力跳跃游戏",
+    description: "按住蓄力、松开起跳！踩着平台不断向上攀登的蓄力跳跃游戏。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <DotJumpKingComp client:load locale={locale} />
+    <GameGuide slug="dot-jumpking" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
+  </main>
+</BaseLayout>

@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import AnimalPopComp from "../../components/games/AnimalPop";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "애니멀 팝 — 무료 매치3 퍼즐 게임",
+    description: "60초 동안 귀여운 동물들을 3마리 이상 맞춰 터뜨리세요! 연쇄 콤보를 쌓으면 점수 2배 피버 타임이 옵니다.",
+  },
+  en: {
+    title: "Animal Pop — Free Match-3 Puzzle Game",
+    description: "Match 3+ cute animals in 60 seconds! Chain cascades to build combos and trigger double-score fever time.",
+  },
+  ja: {
+    title: "アニマルポップ — 無料マッチ3パズルゲーム",
+    description: "60秒でかわいい動物を3匹以上そろえてポップ！連鎖コンボでスコア2倍のフィーバータイム！",
+  },
+  fr: {
+    title: "Animal Pop — Jeu match-3 gratuit",
+    description: "Alignez 3+ animaux mignons en 60 secondes ! Enchaînez les cascades pour déclencher la fièvre double score.",
+  },
+  es: {
+    title: "Animal Pop — Juego match-3 gratis",
+    description: "¡Alinea 3+ animales adorables en 60 segundos! Encadena cascadas para activar la fiebre de puntos dobles.",
+  },
+  zh: {
+    title: "动物消消乐 — 免费三消益智游戏",
+    description: "60秒内把可爱动物凑成3个以上消除！连锁连击触发双倍分数狂热时间。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <AnimalPopComp client:load locale={locale} />
+    <GameGuide slug="animal-pop" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
+  </main>
+</BaseLayout>

@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import DotPetComp from "../../components/games/DotPet";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "픽셀 펫 키우기 — 무료 온라인 가상 펫",
+    description: "나만의 펫을 입양해 먹이 주고 놀아주며 어른으로 키워보세요. 자리를 비워도 스탯이 줄어드는 진짜 육성 게임입니다.",
+  },
+  en: {
+    title: "Dot Pet — Free Online Virtual Pet",
+    description: "Adopt your own pet, feed and play with it, and raise it to adulthood. Stats decay even while you're away — a real care game.",
+  },
+  ja: {
+    title: "ドットペット育成 — 無料オンラインバーチャルペット",
+    description: "自分だけのペットを迎えて、ごはんと遊びで大人まで育てよう。離れている間もステータスが減る本格育成ゲーム。",
+  },
+  fr: {
+    title: "Dot Pet — Animal virtuel gratuit en ligne",
+    description: "Adoptez votre compagnon, nourrissez-le et élevez-le jusqu'à l'âge adulte. Les stats baissent même en votre absence.",
+  },
+  es: {
+    title: "Dot Pet — Mascota virtual gratis en línea",
+    description: "Adopta tu mascota, aliméntala, juega con ella y críala hasta adulta. Las estadísticas bajan incluso cuando no estás.",
+  },
+  zh: {
+    title: "像素宠物 — 免费在线虚拟宠物",
+    description: "领养属于你的宠物，喂食、玩耍，把它养大成年。就算离开数值也会下降的真实养成游戏。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <DotPetComp client:load locale={locale} />
+    <GameGuide slug="dot-pet" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
+  </main>
+</BaseLayout>

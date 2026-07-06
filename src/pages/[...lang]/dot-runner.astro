@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import DotRunnerComp from "../../components/games/DotRunner";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "점프 러너 — 무료 온라인 러너 게임",
+    description: "탭 한 번으로 점프! 장애물을 피하고 코인을 모으는 무한 러너 게임입니다. 최고 점수에 도전하세요.",
+  },
+  en: {
+    title: "Dot Runner — Free Online Endless Runner",
+    description: "One tap to jump! Dodge obstacles and grab coins in this endless runner. Chase your high score.",
+  },
+  ja: {
+    title: "ドットランナー — 無料オンラインランナーゲーム",
+    description: "タップでジャンプ！障害物を避けてコインを集める無限ランナー。ハイスコアに挑戦しよう。",
+  },
+  fr: {
+    title: "Dot Runner — Runner infini gratuit en ligne",
+    description: "Un tap pour sauter ! Évitez les obstacles et ramassez les pièces dans ce runner infini.",
+  },
+  es: {
+    title: "Dot Runner — Runner infinito gratis en línea",
+    description: "¡Un toque para saltar! Esquiva obstáculos y recoge monedas en este runner infinito.",
+  },
+  zh: {
+    title: "点点酷跑 — 免费在线跑酷游戏",
+    description: "一键跳跃！躲避障碍、收集金币的无尽跑酷游戏。挑战你的最高分。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <DotRunnerComp client:load locale={locale} />
+    <GameGuide slug="dot-runner" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
+  </main>
+</BaseLayout>
