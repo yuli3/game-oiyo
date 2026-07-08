@@ -18,15 +18,23 @@ Environment variables (or .env file):
   GOOGLE_APPLICATION_CREDENTIALS  path to service account JSON
   BING_WEBMASTER_API_KEY           Bing Webmaster Tools API key
   INDEXNOW_API_KEY                 IndexNow key (generate at https://www.indexnow.org/signup)
+  SITE_URL                         override auto-detected site (rarely needed)
 
 Requirements:
   pip install requests python-dotenv
   pip install google-api-python-client google-auth  # for Google GSC only
+
+Note: this file is the cross-repo SSOT — see
+  /Users/seuncho/coding/shared/scripts/sitemap-submit.py
+  /Users/seuncho/coding/shared/scripts/sync.sh
+Edit the canonical copy, then re-run sync.sh to fan it out to
+oiyo/blog/wiki/game. Do not hand-edit the per-repo copies.
 """
 
 import argparse
 import json
 import os
+import re
 import sys
 import time
 import xml.etree.ElementTree as ET
@@ -52,13 +60,37 @@ try:
 except ImportError:
     HAS_GOOGLE_CLIENT = False
 
+
 # ── configuration ─────────────────────────────────────────────────────────────
-SITE_URL = "https://blog.oiyo.net"
-SITEMAP_INDEX_URL = "https://blog.oiyo.net/sitemap-index.xml"
+# Every Oiyo repo (oiyo/blog/wiki/game) uses a different production domain, but
+# this script is synced byte-identical across all four (see sync.sh above). So
+# instead of hardcoding a domain, read it from this repo's own astro.config —
+# each repo already declares its `site:` there. SITE_URL env var can override.
+def _detect_site_url() -> str:
+    override = os.environ.get("SITE_URL")
+    if override:
+        return override.rstrip("/")
+
+    repo_root = Path(__file__).parent.parent
+    for name in ("astro.config.mjs", "astro.config.ts"):
+        config_path = repo_root / name
+        if config_path.exists():
+            match = re.search(r"site:\s*['\"]([^'\"]+)['\"]", config_path.read_text())
+            if match:
+                return match.group(1).rstrip("/")
+
+    raise SystemExit(
+        "Cannot determine SITE_URL: set the SITE_URL env var or add "
+        "`site: 'https://example.com'` to astro.config.mjs"
+    )
+
+
+SITE_URL = _detect_site_url()
+SITEMAP_INDEX_URL = f"{SITE_URL}/sitemap-index.xml"
 
 # Additional sitemaps to submit (beyond the index)
 SITEMAPS = [
-    "https://blog.oiyo.net/sitemap-index.xml",
+    SITEMAP_INDEX_URL,
 ]
 
 # ─────────────────────────────────────────────────────────────────────────────
