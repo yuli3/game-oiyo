@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import MahjongComp from "../../components/games/Mahjong";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "마작 — AI와 겨루는 4인 간이 마작",
+    description: "온라인 간이 마작을 AI와 즐겨보세요. 4멘츠+1아타마 또는 치또이쯔로 화료하는 폐형 마작을, 쯔모·론과 3단계 AI로 구현했습니다.",
+  },
+  en: {
+    title: "Mahjong — Simplified 4-Player Mahjong vs AI",
+    description: "Play simplified Mahjong online against the AI. Closed-hand draw-and-discard with tsumo and ron; win with four melds and a pair, or seven pairs.",
+  },
+  ja: {
+    title: "麻雀 — AIと対戦する4人簡易麻雀",
+    description: "オンラインで簡易麻雀をAIと対戦。門前のツモ・ロンで、4面子1雀頭または七対子を目指す3段階AI付き麻雀です。",
+  },
+  fr: {
+    title: "Mahjong — Mahjong simplifié à 4 joueurs contre l'IA",
+    description: "Jouez au Mahjong simplifié contre l'IA. Mains fermées, pioche et défausse avec tsumo et ron ; gagnez avec quatre combinaisons et une paire, ou sept paires.",
+  },
+  es: {
+    title: "Mahjong — Mahjong simplificado de 4 jugadores contra la IA",
+    description: "Juega al Mahjong simplificado contra la IA. Manos cerradas con tsumo y ron; gana con cuatro grupos y una pareja, o siete parejas.",
+  },
+  zh: {
+    title: "麻将 — 与 AI 对战的四人简易麻将",
+    description: "在线与 AI 对战简易麻将。门清摸打，自摸与荣和，以四面子一雀头或七对子和牌，含三档 AI。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <MahjongComp client:load locale={locale} />
+    <GameGuide slug="mahjong" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
+  </main>
+</BaseLayout>

@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import KingdominoComp from "../../components/games/Kingdomino";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "킹도미노 — 도미노로 왕국을 짓는 전략 보드 게임",
+    description: "온라인 킹도미노를 AI와 즐겨보세요. 지형 도미노를 골라 5×5 왕국을 넓히고, 같은 지형이 이어진 영역의 크기 × 왕관 수로 점수를 겨루는 전략 보드 게임입니다.",
+  },
+  en: {
+    title: "Kingdomino — Build a Kingdom from Terrain Dominoes",
+    description: "Play Kingdomino online against the AI. Draft terrain dominoes to grow a 5×5 kingdom and score each connected region by its size times its crowns.",
+  },
+  ja: {
+    title: "キングドミノ — ドミノで王国を築く戦略ボードゲーム",
+    description: "オンラインでAIとキングドミノを対戦。地形ドミノを選んで5×5の王国を広げ、同じ地形が繋がった領域の広さ×王冠数で得点を競う戦略ゲームです。",
+  },
+  fr: {
+    title: "Kingdomino — Bâtissez un royaume avec des dominos de terrain",
+    description: "Jouez à Kingdomino en ligne contre l'IA. Draftez des dominos de terrain pour agrandir un royaume 5×5 et marquez chaque région par sa taille multipliée par ses couronnes.",
+  },
+  es: {
+    title: "Kingdomino — Construye un reino con fichas de terreno",
+    description: "Juega a Kingdomino en línea contra la IA. Reclama fichas de terreno para ampliar un reino de 5×5 y puntúa cada región por su tamaño multiplicado por sus coronas.",
+  },
+  zh: {
+    title: "王国骨牌 — 用骨牌建造王国的策略棋盘游戏",
+    description: "在线与 AI 对战王国骨牌。占取地形骨牌扩展 5×5 王国，按同类地形连通区域的面积×王冠数计分的策略游戏。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <KingdominoComp client:load locale={locale} />
+    <GameGuide slug="kingdomino" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
+  </main>
+</BaseLayout>
