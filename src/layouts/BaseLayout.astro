@@ -59,6 +59,19 @@ const navItems = [
   { href: `https://oiyo.net/${locale}/`, label: "OIYO" },
 ];
 
+// Sister sites for family nav (footer + hamburger drawer).
+// news/ai are single-locale (ko) sites — they have no /{locale}/ routes, so
+// appending the locale path would land on their 404 page.
+const FAMILY = [
+  { host: "oiyo.net", name: "OIYO Tests", localePath: true, tag: { ko: "해보는 곳 — 테스트·도구", en: "Try — tests & tools", ja: "試す — テスト・ツール", zh: "试试 — 测验·工具", fr: "Essayer — tests & outils", es: "Probar — tests y herramientas" } },
+  { host: "blog.oiyo.net", name: "OIYO Blog", localePath: true, tag: { ko: "읽는 곳 — 강의·매거진", en: "Read — guides & magazine", ja: "読む — 講座・マガジン", zh: "阅读 — 课程·杂志", fr: "Lire — guides & magazine", es: "Leer — guías y revista" } },
+  { host: "wiki.oiyo.net", name: "OIYO Wiki", localePath: true, tag: { ko: "찾아보는 곳 — 개념 사전", en: "Look up — dictionary", ja: "調べる — 用語事典", zh: "查找 — 概念辞典", fr: "Chercher — dictionnaire", es: "Buscar — diccionario" } },
+  { host: "news.oiyo.net", name: "OIYO News", localePath: false, tag: { ko: "보는 곳 — 데일리 큐레이션", en: "Watch — daily curation", ja: "見る — デイリー", zh: "看 — 每日精选", fr: "Voir — curation", es: "Ver — curación diaria" } },
+  { host: "ai.oiyo.net", name: "OIYO AI", localePath: false, tag: { ko: "AX — AI 운영 시스템", en: "AX — AI-native OS", ja: "AX — AI運用", zh: "AX — AI 系统", fr: "AX — OS IA-native", es: "AX — OS con IA" } },
+];
+const familyHref = (f: (typeof FAMILY)[number], medium: string) =>
+  `https://${f.host}/${f.localePath ? `${locale}/` : ""}?utm_source=game&utm_medium=${medium}&utm_campaign=family_nav`;
+
 const allLangItems = [
   { code: "en", label: "EN" },
   { code: "ko", label: "KO" },
@@ -218,6 +231,19 @@ const langItems = availableLocales && availableLocales.length
             class="flex items-center h-11 px-2 rounded-lg text-sm font-bold uppercase tracking-widest text-muted-foreground hover:text-primary hover:bg-muted/40 transition-colors"
           >{label}</a>
         ))}
+        <div class="pt-2 border-t border-border/40 mt-4">
+          <p class="px-2 pt-2 pb-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">Oiyo Family</p>
+          {FAMILY.map((f) => (
+            <a
+              href={familyHref(f, "menu")}
+              target="_blank" rel="noopener noreferrer"
+              class="flex flex-col justify-center min-h-11 px-2 py-1.5 rounded-lg text-sm font-bold text-muted-foreground hover:text-primary hover:bg-muted/40 transition-colors"
+            >
+              <span class="uppercase tracking-widest">{f.name} ↗</span>
+              <span class="text-[11px] font-normal normal-case tracking-normal opacity-70">{f.tag[locale as keyof typeof f.tag] ?? f.tag.en}</span>
+            </a>
+          ))}
+        </div>
       </nav>
 
       <!-- Language switcher at bottom -->
@@ -367,15 +393,8 @@ const langItems = availableLocales && availableLocales.length
         </div>
         <div class="flex flex-wrap justify-center md:justify-start gap-6 text-xs text-muted-foreground/60 items-center border-t border-border/20 pt-4">
           <span class="font-bold uppercase tracking-widest text-[10px]">Oiyo Family</span>
-          {[
-            { host: "oiyo.net", name: "OIYO Tests", tag: { ko: "해보는 곳 — 테스트·도구", en: "Try — tests & tools", ja: "試す — テスト・ツール", zh: "试试 — 测验·工具", fr: "Essayer — tests & outils", es: "Probar — tests y herramientas" } },
-            { host: "blog.oiyo.net", name: "OIYO Blog", tag: { ko: "읽는 곳 — 강의·매거진", en: "Read — guides & magazine", ja: "読む — 講座・マガジン", zh: "阅读 — 课程·杂志", fr: "Lire — guides & magazine", es: "Leer — guías y revista" } },
-            { host: "wiki.oiyo.net", name: "OIYO Wiki", tag: { ko: "찾아보는 곳 — 개념 사전", en: "Look up — dictionary", ja: "調べる — 用語事典", zh: "查找 — 概念辞典", fr: "Chercher — dictionnaire", es: "Buscar — diccionario" } },
-            { host: "game.oiyo.net", name: "OIYO Arcade", tag: { ko: "노는 곳 — 게임", en: "Play — games", ja: "遊ぶ — ゲーム", zh: "玩 — 游戏", fr: "Jouer — jeux", es: "Jugar — juegos" } },
-            { host: "news.oiyo.net", name: "OIYO News", tag: { ko: "보는 곳 — 데일리 큐레이션", en: "Watch — daily curation", ja: "見る — デイリー", zh: "看 — 每日精选", fr: "Voir — curation", es: "Ver — curación diaria" } },
-            { host: "ai.oiyo.net", name: "OIYO AI", tag: { ko: "AX — AI 운영 시스템", en: "AX — AI-native OS", ja: "AX — AI運用", zh: "AX — AI 系统", fr: "AX — OS IA-native", es: "AX — OS con IA" } },
-          ].map((f) => (
-            <a href={`https://${f.host}/${locale}/?utm_source=game&utm_medium=footer&utm_campaign=family_nav`}
+          {FAMILY.map((f) => (
+            <a href={familyHref(f, "footer")}
                target="_blank" rel="noopener noreferrer" class="hover:text-primary transition-colors">{f.name} →
               <span class="block text-[10px] normal-case tracking-normal opacity-70">{f.tag[locale as keyof typeof f.tag] ?? f.tag.en}</span></a>
           ))}
