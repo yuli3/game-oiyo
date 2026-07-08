@@ -88,6 +88,23 @@ def _detect_site_url() -> str:
 SITE_URL = _detect_site_url()
 SITEMAP_INDEX_URL = f"{SITE_URL}/sitemap-index.xml"
 
+# Astro's default build output dir. When this exists (i.e. `npm run build` ran
+# earlier in the same CI job), IndexNow URL collection reads the sitemap XML
+# straight from disk instead of HTTP-fetching the live site from within CI —
+# that self-fetch 403s every time on GitHub Actions runners because Cloudflare
+# blocks the datacenter IP range regardless of User-Agent (see
+# AI-Sessions/wiki/errors/recurring-build-deploy-gotchas.md #10).
+DEFAULT_DIST_DIR = Path(__file__).parent.parent / "dist"
+
+# GSC site identifier — usually equals SITE_URL (a URL-prefix property), but
+# some Oiyo properties are registered in Search Console as *domain* properties
+# (siteUrl="sc-domain:example.com" instead of "https://example.com/"). Domain
+# and URL-prefix properties are distinct GSC resources with separate
+# permission grants, so submitting to the wrong form 403s even with a valid
+# service account (see AI-Sessions/wiki/errors/recurring-build-deploy-gotchas.md #9).
+# Set GSC_SITE_URL per-repo in CI when the registered property is a domain property.
+GSC_SITE_URL = os.environ.get("GSC_SITE_URL", SITE_URL).rstrip("/")
+
 # Additional sitemaps to submit (beyond the index)
 SITEMAPS = [
     SITEMAP_INDEX_URL,
@@ -103,7 +120,30 @@ def log(msg: str, level: str = "INFO") -> None:
     print(f"[{ts}] {symbols.get(level, '·')} {msg}")
 
 
-def parse_sitemap(url: str, visited: set | None = None) -> list[str]:
+def _load_sitemap_xml(url: str, dist_dir: Optional[Path]) -> bytes:
+    """
+    Load a sitemap's XML content, preferring a local build artifact over the
+    network. `dist_dir` is the Astro build output (see DEFAULT_DIST_DIR) — if
+    it contains a file matching the <loc> URL's basename, read that instead of
+    fetching the URL. This sidesteps Cloudflare 403'ing the self-fetch from CI
+    (gotcha #10) since the file was already produced by `npm run build` in the
+    same job, from the same commit.
+    """
+    if dist_dir is not None:
+        local_path = dist_dir / url.rstrip("/").rsplit("/", 1)[-1]
+        if local_path.exists():
+            return local_path.read_bytes()
+
+    # Use an honest UA, not a spoofed Googlebot string — impersonating a
+    # named bot (without passing Google's IP/reverse-DNS verification)
+    # trips Cloudflare's verified-bot enforcement and gets 403'd when this
+    # runs from a datacenter IP like GitHub Actions (see gotcha #9).
+    resp = requests.get(url, timeout=30, headers={"User-Agent": "OiyoSitemapSubmitter/1.0 (+https://oiyo.net; sitemap URL enumeration for IndexNow)"})
+    resp.raise_for_status()
+    return resp.content
+
+
+def parse_sitemap(url: str, dist_dir: Optional[Path] = None, visited: set | None = None) -> list[str]:
     """
     Recursively parse a sitemap or sitemap index, returning all <loc> URLs.
     Handles both <sitemapindex> and <urlset> formats.
@@ -116,11 +156,9 @@ def parse_sitemap(url: str, visited: set | None = None) -> list[str]:
 
     urls: list[str] = []
     try:
-        resp = requests.get(url, timeout=30, headers={"User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"})
-        resp.raise_for_status()
-        root = ET.fromstring(resp.content)
+        root = ET.fromstring(_load_sitemap_xml(url, dist_dir))
     except Exception as exc:
-        log(f"Cannot fetch {url}: {exc}", "WARN")
+        log(f"Cannot load {url}: {exc}", "WARN")
         return urls
 
     ns = "http://www.sitemaps.org/schemas/sitemap/0.9"
@@ -131,7 +169,7 @@ def parse_sitemap(url: str, visited: set | None = None) -> list[str]:
         for sitemap in root.findall(f"{{{ns}}}sitemap"):
             loc = sitemap.findtext(f"{{{ns}}}loc")
             if loc:
-                urls.extend(parse_sitemap(loc.strip(), visited))
+                urls.extend(parse_sitemap(loc.strip(), dist_dir, visited))
     else:
         # Regular urlset — collect <loc> entries
         for url_elem in root.findall(f"{{{ns}}}url"):
@@ -336,17 +374,29 @@ def main() -> int:
     parser.add_argument("--bing", action="store_true", help="Submit to Bing Webmaster only")
     parser.add_argument("--indexnow", action="store_true", help="Submit via IndexNow only")
     parser.add_argument("--sitemap", default=SITEMAP_INDEX_URL, help="Sitemap URL to submit")
-    parser.add_argument("--site", default=SITE_URL, help="Site URL (e.g. https://example.com)")
+    parser.add_argument("--site", default=SITE_URL, help="Site URL for Bing/IndexNow (e.g. https://example.com)")
+    parser.add_argument("--gsc-site", default=GSC_SITE_URL, help="GSC siteUrl (e.g. https://example.com/ or sc-domain:example.com)")
+    parser.add_argument("--dist-dir", default=str(DEFAULT_DIST_DIR), help="Local Astro build output dir to read sitemap XML from (avoids CI self-fetch 403s). Falls back to HTTP if a given file isn't found here.")
+    parser.add_argument("--no-dist-dir", action="store_true", help="Always fetch sitemap XML over HTTP, ignoring any local build output")
     parser.add_argument("--dry-run", action="store_true", help="Show what would be submitted without making requests")
     parser.add_argument("--json", action="store_true", dest="json_out", help="Output results as JSON")
     args = parser.parse_args()
 
     run_all = not (args.google or args.bing or args.indexnow)
 
+    dist_dir = None
+    if not args.no_dist_dir:
+        candidate = Path(args.dist_dir)
+        if candidate.is_dir():
+            dist_dir = candidate
+
     print(f"\n{'='*60}")
     print(f"  Sitemap Submission — {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"  Site    : {args.site}")
+    if args.gsc_site != args.site:
+        print(f"  GSC Site: {args.gsc_site}")
     print(f"  Sitemap : {args.sitemap}")
+    print(f"  Dist dir: {dist_dir if dist_dir else '(none — will fetch sitemap over HTTP)'}")
     if args.dry_run:
         print(f"  Mode    : DRY RUN (no requests will be made)")
     print(f"{'='*60}\n")
@@ -356,7 +406,7 @@ def main() -> int:
     # ── Google Search Console ────────────────────────────────────────────────
     if run_all or args.google:
         log("Google Search Console...")
-        result = submit_google_gsc(args.site, args.sitemap, dry_run=args.dry_run)
+        result = submit_google_gsc(args.gsc_site, args.sitemap, dry_run=args.dry_run)
         all_results["google"] = result
         level = "OK" if result["status"] == "ok" else ("WARN" if result["status"] in ("skip", "dry-run") else "ERR")
         log(f"Google GSC: {result}", level)
@@ -375,7 +425,7 @@ def main() -> int:
         if args.dry_run:
             urls = ["(dry-run: sitemap not fetched)"]
         else:
-            urls = parse_sitemap(args.sitemap)
+            urls = parse_sitemap(args.sitemap, dist_dir)
             log(f"Found {len(urls):,} URLs in sitemap", "OK")
 
         log("Submitting via IndexNow...")
