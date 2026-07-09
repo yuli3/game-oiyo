@@ -338,14 +338,15 @@ def submit_indexnow(
                 headers={"Content-Type": "application/json; charset=utf-8"},
                 timeout=30,
             )
-            results.append(
-                {
-                    "batch_start": i,
-                    "count": len(batch),
-                    "http": resp.status_code,
-                    "ok": resp.status_code in (200, 202),
-                }
-            )
+            entry = {
+                "batch_start": i,
+                "count": len(batch),
+                "http": resp.status_code,
+                "ok": resp.status_code in (200, 202),
+            }
+            if resp.status_code not in (200, 202):
+                entry["body"] = resp.text[:300]
+            results.append(entry)
             if i + INDEXNOW_BATCH_SIZE < len(urls):
                 time.sleep(1)  # be polite between batches
         except Exception as exc:
