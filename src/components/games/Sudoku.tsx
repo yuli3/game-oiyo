@@ -1,20 +1,31 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
+import { getBest, recordBest } from '../../lib/games/records';
+
+const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
 const Sudoku: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const COPY = {
-        ko: { title: "스도쿠 (Sudoku)", desc: "1부터 9까지 겹치지 않게 숫자를 채워보세요!", reset: "판 갈기", win: "완벽한 논리력입니다!" },
-        en: { title: "Sudoku", desc: "Fill in numbers 1-9 without overlap!", reset: "Restart", win: "Perfect Logic!" },
-        ja: { title: "数独", desc: "1から9まで重複なく埋めましょう！", reset: "新しい盤面", win: "完璧な論理力です！" },
-        zh: { title: "数独", desc: "填入1到9，不重复！", reset: "换新棋盘", win: "完美的逻辑力！" },
-        fr: { title: "Sudoku", desc: "Remplissez de 1 à 9 sans doublon !", reset: "Nouvelle grille", win: "Logique parfaite !" },
-        es: { title: "Sudoku", desc: "¡Rellena del 1 al 9 sin repetir!", reset: "Nuevo tablero", win: "¡Lógica perfecta!" }
+        ko: { title: "스도쿠 (Sudoku)", desc: "1부터 9까지 겹치지 않게 숫자를 채워보세요!", reset: "판 갈기", win: "완벽한 논리력입니다!", time: "시간", best: "최단 기록" },
+        en: { title: "Sudoku", desc: "Fill in numbers 1-9 without overlap!", reset: "Restart", win: "Perfect Logic!", time: "Time", best: "Best Time" },
+        ja: { title: "数独", desc: "1から9まで重複なく埋めましょう！", reset: "新しい盤面", win: "完璧な論理力です！", time: "時間", best: "最短記録" },
+        zh: { title: "数独", desc: "填入1到9，不重复！", reset: "换新棋盘", win: "完美的逻辑力！", time: "时间", best: "最快记录" },
+        fr: { title: "Sudoku", desc: "Remplissez de 1 à 9 sans doublon !", reset: "Nouvelle grille", win: "Logique parfaite !", time: "Temps", best: "Meilleur temps" },
+        es: { title: "Sudoku", desc: "¡Rellena del 1 al 9 sin repetir!", reset: "Nuevo tablero", win: "¡Lógica perfecta!", time: "Tiempo", best: "Mejor tiempo" }
     };
     const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
 
     const [grid, setGrid] = useState<(number | null)[][]>([]);
     const [initial, setInitial] = useState<boolean[][]>([]);
     const [selected, setSelected] = useState<[number, number] | null>(null);
+    const [seconds, setSeconds] = useState(0);
+    const [bestTime, setBestTime] = useState<number | null>(null);
+    const [recorded, setRecorded] = useState(false);
+
+    useEffect(() => {
+        const existing = getBest('sudoku');
+        if (existing) setBestTime(existing.value);
+    }, []);
 
     const initGame = useCallback(() => {
         // A simple pre-defined puzzle for the demo
@@ -32,6 +43,8 @@ const Sudoku: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
         setGrid(puzzle);
         setInitial(puzzle.map(row => row.map(v => v !== null)));
+        setSeconds(0);
+        setRecorded(false);
     }, []);
 
     useEffect(() => { initGame(); }, [initGame]);
@@ -51,11 +64,28 @@ const Sudoku: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         return set.size === 9; // Simplified check
     });
 
+    useEffect(() => {
+        if (isWon) return;
+        const id = setInterval(() => setSeconds((s) => s + 1), 1000);
+        return () => clearInterval(id);
+    }, [isWon]);
+
+    useEffect(() => {
+        if (isWon && !recorded) {
+            setRecorded(true);
+            setBestTime(recordBest('sudoku', seconds, 'seconds').value);
+        }
+    }, [isWon, recorded, seconds]);
+
     return (
         <GameContainer title={t.title} subtitle="Pure Deduction" onReset={initGame}>
             <div className="flex flex-col items-center">
-                <p className="text-sm font-medium text-muted-foreground mb-8 text-center">{t.desc}</p>
-                
+                <p className="text-sm font-medium text-muted-foreground mb-2 text-center">{t.desc}</p>
+                <div className="mb-6 flex gap-3 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                    <span>{t.time} {fmt(seconds)}</span>
+                    {bestTime !== null && <span>{t.best} {fmt(bestTime)}</span>}
+                </div>
+
                 <div className="bg-stone-800 p-1 rounded-sm shadow-2xl grid grid-cols-9 aspect-square w-full max-w-md border-4 border-stone-800">
                     {grid.map((row, r) => row.map((val, c) => {
                         const isSelected = selected?.[0] === r && selected?.[1] === c;

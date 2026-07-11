@@ -1,16 +1,17 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GameContainer, PlayingCard } from '../ui/game/GamePrimitives';
+import { getRecord, recordResult, type GameRecord } from '../../lib/games/records';
 
 type Card = { suit: 'hearts' | 'diamonds' | 'clubs' | 'spades'; value: string; power: number; isRed: boolean; isFaceUp: boolean; id: string };
 
 const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const COPY = {
-        ko: { title: "솔리테어 (Solitaire)", desc: "A부터 K까지 정돈해 보세요!", reset: "판 갈기", score: "완료", win: "정돈 완료! 마음도 한결 가볍네요." },
-        en: { title: "Solitaire", desc: "Organize from Ace to King!", reset: "Restart", score: "Done", win: "Sorted! Organized mind." },
-        ja: { title: "ソリティア", desc: "AからKまで並べましょう！", reset: "新しいゲーム", score: "完了", win: "整頓完了！心も軽くなりますね。" },
-        zh: { title: "纸牌接龙", desc: "从A到K整理纸牌！", reset: "重新开始", score: "完成", win: "整理完成！心情也轻松了。" },
-        fr: { title: "Solitaire", desc: "Classez de l'as au roi !", reset: "Recommencer", score: "Terminé", win: "Rangé ! L'esprit léger." },
-        es: { title: "Solitario", desc: "¡Ordena del as al rey!", reset: "Reiniciar", score: "Hecho", win: "¡Ordenado! Mente despejada." }
+        ko: { title: "솔리테어 (Solitaire)", desc: "A부터 K까지 정돈해 보세요!", reset: "판 갈기", score: "완료", win: "정돈 완료! 마음도 한결 가볍네요.", record: "전적" },
+        en: { title: "Solitaire", desc: "Organize from Ace to King!", reset: "Restart", score: "Done", win: "Sorted! Organized mind.", record: "Record" },
+        ja: { title: "ソリティア", desc: "AからKまで並べましょう！", reset: "新しいゲーム", score: "完了", win: "整頓完了！心も軽くなりますね。", record: "戦績" },
+        zh: { title: "纸牌接龙", desc: "从A到K整理纸牌！", reset: "重新开始", score: "完成", win: "整理完成！心情也轻松了。", record: "战绩" },
+        fr: { title: "Solitaire", desc: "Classez de l'as au roi !", reset: "Recommencer", score: "Terminé", win: "Rangé ! L'esprit léger.", record: "Bilan" },
+        es: { title: "Solitario", desc: "¡Ordena del as al rey!", reset: "Reiniciar", score: "Hecho", win: "¡Ordenado! Mente despejada.", record: "Historial" }
     };
     const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
 
@@ -18,8 +19,20 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [tableau, setTableau] = useState<Card[][]>(Array(7).fill([]));
     const [foundation, setFoundation] = useState<Card[][]>(Array(4).fill([]));
     const [waste, setWaste] = useState<Card[]>([]);
+    const [record, setRecord] = useState<GameRecord | null>(null);
+    // A round only counts toward the record once the player has made a move; resetting an
+    // untouched board (e.g. the initial mount) must not register as a loss.
+    const moveMadeRef = useRef(false);
+    const wonRef = useRef(false);
+
+    useEffect(() => { setRecord(getRecord('solitaire')); }, []);
 
     const initGame = useCallback(() => {
+        if (moveMadeRef.current && !wonRef.current) {
+            setRecord(recordResult('solitaire', 'l'));
+        }
+        moveMadeRef.current = false;
+        wonRef.current = false;
         const suits = ['hearts', 'diamonds', 'clubs', 'spades'] as const;
         const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
         const fullDeck: Card[] = [];
@@ -71,6 +84,7 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         (targetStack.length > 0 && targetStack[targetStack.length - 1].power === card.power - 1);
 
         if (canMove) {
+            moveMadeRef.current = true;
             const newFoundation = [...foundation];
             newFoundation[fIdx] = [...targetStack, card];
             setFoundation(newFoundation);
@@ -98,9 +112,21 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
     const isWon = foundation.every(f => f.length === 13);
 
+    useEffect(() => {
+        if (isWon && !wonRef.current) {
+            wonRef.current = true;
+            setRecord(recordResult('solitaire', 'w'));
+        }
+    }, [isWon]);
+
     return (
         <GameContainer title={t.title} subtitle="Order & Focus" onReset={initGame}>
             <div className="space-y-8">
+                {record && record.w + record.l > 0 && (
+                    <p className="text-right text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                        {t.record} {record.w}–{record.l}
+                    </p>
+                )}
                 {/* Top Section */}
                 <div className="flex justify-between items-start">
                     <div className="flex gap-4">

@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
+import { getBest, recordBest } from '../../lib/games/records';
 
 type Cell = { x: number; y: number; isMine: boolean; isRevealed: boolean; isFlagged: boolean; neighborMines: number };
 
 const SIZE = 10;
 const MINE_COUNT = 10;
-const BEST_KEY = 'oiyo-minesweeper-best';
+const LEGACY_BEST_KEY = 'oiyo-minesweeper-best'; // pre-unification key, read once for migration
 
 const COPY = {
     ko: { title: "지뢰찾기", subtitle: "Logic Sweep", mines: "남은 지뢰", time: "시간", over: "폭발! 게임 종료", win: "모든 지뢰를 찾았습니다!", reset: "새 게임", dig: "파기", flag: "깃발", best: "최단 기록", hint: "모바일: 깃발 모드 전환 · PC: 우클릭 깃발" },
@@ -81,9 +82,12 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
     useEffect(() => {
         initBoard();
+        const existing = getBest('minesweeper');
+        if (existing) { setBestTime(existing.value); return; }
+        // One-time migration from the pre-unification per-game key
         try {
-            const stored = Number(localStorage.getItem(BEST_KEY));
-            if (Number.isFinite(stored) && stored > 0) setBestTime(stored);
+            const legacy = Number(localStorage.getItem(LEGACY_BEST_KEY));
+            if (Number.isFinite(legacy) && legacy > 0) setBestTime(recordBest('minesweeper', legacy, 'seconds').value);
         } catch { /* ignore */ }
     }, [initBoard]);
 
@@ -130,10 +134,7 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             const hiddenSafe = newBoard.flat().filter((c) => !c.isMine && !c.isRevealed).length;
             if (hiddenSafe === 0) {
                 setStatus('won');
-                if (bestTime === null || timer < bestTime) {
-                    setBestTime(timer);
-                    try { localStorage.setItem(BEST_KEY, String(timer)); } catch { /* ignore */ }
-                }
+                setBestTime(recordBest('minesweeper', timer, 'seconds').value);
             }
         }
         setBoard(newBoard);

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { getStreak, recordStreak, type StreakStats } from '../../lib/games/records';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type TileState = 'empty' | 'tbd' | 'correct' | 'present' | 'absent';
@@ -66,6 +67,7 @@ const COPY = {
     theWordWas: '정답:',
     hint: '매일 새 단어가 제공됩니다. 실제 키보드 또는 위 자판을 사용하세요.',
     winMsgs: ['천재!', '대단해요!', '인상적!', '멋져요!', '좋아요!', '휴, 아슬아슬!'],
+    stats: (s: StreakStats) => `🔥 연승 ${s.currentStreak} · 최고 연승 ${s.maxStreak} · ${s.played}판 ${s.won}승`,
   },
   en: {
     subtitle: 'Daily 5-letter word puzzle',
@@ -78,6 +80,7 @@ const COPY = {
     theWordWas: 'The word was:',
     hint: 'A new word is available each day. Use physical keyboard or tap letters above.',
     winMsgs: ['Genius!', 'Magnificent!', 'Impressive!', 'Splendid!', 'Great!', 'Phew!'],
+    stats: (s: StreakStats) => `🔥 Streak ${s.currentStreak} · Best ${s.maxStreak} · ${s.won}/${s.played} won`,
   },
   ja: {
     subtitle: '毎日新しい5文字の英単語パズル',
@@ -90,6 +93,7 @@ const COPY = {
     theWordWas: '正解:',
     hint: '毎日新しい単語が出題されます。キーボードまたは上の文字をタップ。',
     winMsgs: ['天才！', '見事！', '印象的！', '素晴らしい！', 'いいね！', 'ふう、危なかった！'],
+    stats: (s: StreakStats) => `🔥 連勝 ${s.currentStreak} · 最高連勝 ${s.maxStreak} · ${s.played}戦${s.won}勝`,
   },
   zh: {
     subtitle: '每日5字母英文单词谜题',
@@ -102,6 +106,7 @@ const COPY = {
     theWordWas: '答案:',
     hint: '每天更新一个新单词。可用实体键盘或点击上方字母。',
     winMsgs: ['天才！', '太棒了！', '了不起！', '精彩！', '不错！', '好险！'],
+    stats: (s: StreakStats) => `🔥 连胜 ${s.currentStreak} · 最高连胜 ${s.maxStreak} · ${s.played}局${s.won}胜`,
   },
   fr: {
     subtitle: 'Puzzle quotidien : mot anglais de 5 lettres',
@@ -114,6 +119,7 @@ const COPY = {
     theWordWas: 'Le mot était :',
     hint: 'Un nouveau mot chaque jour. Clavier physique ou lettres ci-dessus.',
     winMsgs: ['Génie !', 'Magnifique !', 'Impressionnant !', 'Splendide !', 'Super !', 'Ouf !'],
+    stats: (s: StreakStats) => `🔥 Série ${s.currentStreak} · Meilleure série ${s.maxStreak} · ${s.won}/${s.played} gagnées`,
   },
   es: {
     subtitle: 'Puzle diario: palabra inglesa de 5 letras',
@@ -126,6 +132,7 @@ const COPY = {
     theWordWas: 'La palabra era:',
     hint: 'Cada día una palabra nueva. Teclado físico o letras de arriba.',
     winMsgs: ['¡Genio!', '¡Magnífico!', '¡Impresionante!', '¡Espléndido!', '¡Genial!', '¡Uf!'],
+    stats: (s: StreakStats) => `🔥 Racha ${s.currentStreak} · Mejor racha ${s.maxStreak} · ${s.won}/${s.played} ganadas`,
   },
 } as const;
 
@@ -172,6 +179,18 @@ const WordleGame: React.FC<{ locale?: string }> = ({ locale = 'en' }) => {
   const [message, setMessage] = useState('');
   const [usedKeys, setUsedKeys] = useState<Record<string, TileState>>({});
   const msgTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const [stats, setStats] = useState<StreakStats | null>(null);
+  const recordedRoundRef = useRef(false);
+
+  useEffect(() => { setStats(getStreak('wordle')); }, []);
+
+  // Record win/loss once per round when the game settles
+  useEffect(() => {
+    if (status !== 'won' && status !== 'lost') return;
+    if (recordedRoundRef.current) return;
+    recordedRoundRef.current = true;
+    setStats(recordStreak('wordle', status === 'won'));
+  }, [status]);
 
   // Load words
   useEffect(() => {
@@ -287,6 +306,7 @@ const WordleGame: React.FC<{ locale?: string }> = ({ locale = 'en' }) => {
     setCurrentGuess('');
     setUsedKeys({});
     setMessage('');
+    recordedRoundRef.current = false;
     // Pick a different random word
     fetch(`${DATA_BASE}/target-words-5.json`).then(r => r.json()).then((list: string[]) => {
       const rand = list[Math.floor(Math.random() * list.length)].toUpperCase();
@@ -310,6 +330,9 @@ const WordleGame: React.FC<{ locale?: string }> = ({ locale = 'en' }) => {
       <div className="w-full text-center border-b border-border pb-4">
         <h1 className="text-3xl font-black tracking-widest">WORDLE</h1>
         <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground mt-1">{t.subtitle}</p>
+        {stats && stats.played > 0 && (
+          <p className="text-[10px] font-bold text-muted-foreground mt-2">{t.stats(stats)}</p>
+        )}
       </div>
 
       {/* Message toast */}

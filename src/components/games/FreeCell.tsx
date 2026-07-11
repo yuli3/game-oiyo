@@ -1,24 +1,37 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GameContainer, PlayingCard } from '../ui/game/GamePrimitives';
+import { getRecord, recordResult, type GameRecord } from '../../lib/games/records';
 
 type Card = { suit: 'hearts' | 'diamonds' | 'clubs' | 'spades'; value: string; power: number; isRed: boolean; id: string };
 
 const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const COPY = {
-        ko: { title: "프리셀 (FreeCell)", desc: "빈 공간을 활용해 모든 카드를 정리하세요!", reset: "다시 시작", win: "완벽한 알고리즘! 성공입니다." },
-        en: { title: "FreeCell", desc: "Use the free cells to organize all cards!", reset: "Restart", win: "Perfect Algorithm! Victory." },
-        ja: { title: "フリーセル", desc: "フリーセルを活用してすべてのカードを整理しましょう！", reset: "リスタート", win: "完璧なアルゴリズム！勝利です。" },
-        zh: { title: "空当接龙", desc: "利用空格整理所有纸牌！", reset: "重新开始", win: "完美的算法！胜利。" },
-        fr: { title: "FreeCell", desc: "Utilisez les cellules libres pour classer toutes les cartes !", reset: "Recommencer", win: "Algorithme parfait ! Victoire." },
-        es: { title: "FreeCell", desc: "¡Usa las celdas libres para ordenar todas las cartas!", reset: "Reiniciar", win: "¡Algoritmo perfecto! Victoria." }
+        ko: { title: "프리셀 (FreeCell)", desc: "빈 공간을 활용해 모든 카드를 정리하세요!", reset: "다시 시작", win: "완벽한 알고리즘! 성공입니다.", record: "전적" },
+        en: { title: "FreeCell", desc: "Use the free cells to organize all cards!", reset: "Restart", win: "Perfect Algorithm! Victory.", record: "Record" },
+        ja: { title: "フリーセル", desc: "フリーセルを活用してすべてのカードを整理しましょう！", reset: "リスタート", win: "完璧なアルゴリズム！勝利です。", record: "戦績" },
+        zh: { title: "空当接龙", desc: "利用空格整理所有纸牌！", reset: "重新开始", win: "完美的算法！胜利。", record: "战绩" },
+        fr: { title: "FreeCell", desc: "Utilisez les cellules libres pour classer toutes les cartes !", reset: "Recommencer", win: "Algorithme parfait ! Victoire.", record: "Bilan" },
+        es: { title: "FreeCell", desc: "¡Usa las celdas libres para ordenar todas las cartas!", reset: "Reiniciar", win: "¡Algoritmo perfecto! Victoria.", record: "Historial" }
     };
     const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
 
     const [tableau, setTableau] = useState<Card[][]>(Array(8).fill([]));
     const [freeCells, setFreeCells] = useState<(Card | null)[]>(Array(4).fill(null));
     const [foundation, setFoundation] = useState<Card[][]>(Array(4).fill([]));
+    const [record, setRecord] = useState<GameRecord | null>(null);
+    // A round only counts toward the record once the player has made a move; resetting an
+    // untouched board (e.g. the initial mount) must not register as a loss.
+    const moveMadeRef = useRef(false);
+    const wonRef = useRef(false);
+
+    useEffect(() => { setRecord(getRecord('freecell')); }, []);
 
     const initGame = useCallback(() => {
+        if (moveMadeRef.current && !wonRef.current) {
+            setRecord(recordResult('freecell', 'l'));
+        }
+        moveMadeRef.current = false;
+        wonRef.current = false;
         const suits = ['hearts', 'diamonds', 'clubs', 'spades'] as const;
         const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
         const fullDeck: Card[] = [];
@@ -52,6 +65,7 @@ const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         (targetStack.length > 0 && targetStack[targetStack.length - 1].power === card.power - 1);
 
         if (canMove) {
+            moveMadeRef.current = true;
             const newFoundation = [...foundation];
             newFoundation[fIdx] = [...targetStack, card];
             setFoundation(newFoundation);
@@ -73,6 +87,7 @@ const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const tryMoveToFreeCell = (card: Card, sourceIndex: number) => {
         const emptyIdx = freeCells.indexOf(null);
         if (emptyIdx !== -1) {
+            moveMadeRef.current = true;
             const newFree = [...freeCells];
             newFree[emptyIdx] = card;
             setFreeCells(newFree);
@@ -99,9 +114,21 @@ const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
     const isWon = foundation.every(f => f.length === 13);
 
+    useEffect(() => {
+        if (isWon && !wonRef.current) {
+            wonRef.current = true;
+            setRecord(recordResult('freecell', 'w'));
+        }
+    }, [isWon]);
+
     return (
         <GameContainer title={t.title} subtitle="Asset Allocation" onReset={initGame}>
             <div className="space-y-8">
+                {record && record.w + record.l > 0 && (
+                    <p className="text-right text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                        {t.record} {record.w}–{record.l}
+                    </p>
+                )}
                 {/* Top: FreeCells & Foundation */}
                 <div className="flex justify-between">
                     <div className="flex gap-2">

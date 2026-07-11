@@ -29,3 +29,76 @@ export function recordResult(game: string, result: "w" | "l" | "d"): GameRecord 
   }
   return r;
 }
+
+// ─── Personal bests (score / time) — separate store, no overlap with GameRecord above ────
+// Score-based games (higher wins, e.g. 2048/Snake) and time-based games (lower wins, e.g.
+// Minesweeper/Sudoku/Puzzle15) share this shape; `unit` tells callers how to compare/format.
+// `extra` carries freeform context shown next to the number (e.g. move count, difficulty).
+export type BestRecord = { value: number; unit: "score" | "seconds"; extra?: string };
+
+const BEST_KEY = "oiyo:game-bests:v1";
+
+function readAllBests(): Record<string, BestRecord> {
+  if (typeof localStorage === "undefined") return {};
+  try {
+    return JSON.parse(localStorage.getItem(BEST_KEY) || "{}");
+  } catch {
+    return {};
+  }
+}
+
+export function getBest(game: string): BestRecord | null {
+  return readAllBests()[game] ?? null;
+}
+
+// Saves `value` as the new best if it beats the stored one (higher for "score", lower for "seconds").
+export function recordBest(game: string, value: number, unit: "score" | "seconds", extra?: string): BestRecord {
+  const all = readAllBests();
+  const cur = all[game];
+  const isBetter = !cur || cur.unit !== unit || (unit === "score" ? value > cur.value : value < cur.value);
+  const next: BestRecord = isBetter ? { value, unit, extra } : cur;
+  all[game] = next;
+  try {
+    localStorage.setItem(BEST_KEY, JSON.stringify(all));
+  } catch {
+    /* quota/private mode — records are best-effort */
+  }
+  return next;
+}
+
+// ─── Streak stats (Wordle-style daily puzzles) — separate store, no score/time involved ──
+export type StreakStats = { played: number; won: number; currentStreak: number; maxStreak: number };
+
+const STREAK_KEY = "oiyo:game-streaks:v1";
+
+function readAllStreaks(): Record<string, StreakStats> {
+  if (typeof localStorage === "undefined") return {};
+  try {
+    return JSON.parse(localStorage.getItem(STREAK_KEY) || "{}");
+  } catch {
+    return {};
+  }
+}
+
+export function getStreak(game: string): StreakStats {
+  return readAllStreaks()[game] ?? { played: 0, won: 0, currentStreak: 0, maxStreak: 0 };
+}
+
+export function recordStreak(game: string, won: boolean): StreakStats {
+  const all = readAllStreaks();
+  const cur = all[game] ?? { played: 0, won: 0, currentStreak: 0, maxStreak: 0 };
+  const nextStreak = won ? cur.currentStreak + 1 : 0;
+  const next: StreakStats = {
+    played: cur.played + 1,
+    won: cur.won + (won ? 1 : 0),
+    currentStreak: nextStreak,
+    maxStreak: Math.max(cur.maxStreak, nextStreak),
+  };
+  all[game] = next;
+  try {
+    localStorage.setItem(STREAK_KEY, JSON.stringify(all));
+  } catch {
+    /* quota/private mode — records are best-effort */
+  }
+  return next;
+}

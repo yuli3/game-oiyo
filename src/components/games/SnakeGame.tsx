@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
+import { getBest, recordBest } from '../../lib/games/records';
 
 const GRID_SIZE = 20;
-const BEST_KEY = 'oiyo-snake-best';
+const LEGACY_BEST_KEY = 'oiyo-snake-best'; // pre-unification key, read once for migration
 
 const COPY = {
     ko: { title: "커리어 성장 스네이크", subtitle: "Know-how Accumulation", score: "경력(경험치)", best: "최고 커리어", start: "게임 시작", over: "번아웃 발생!", reset: "재충전 후 다시 시작", hint: "방향키 또는 스와이프", rank: (n: number) => `최종 등급: ${n}성` },
@@ -108,15 +109,17 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
     useEffect(() => {
         if (score > best) {
-            setBest(score);
-            try { localStorage.setItem(BEST_KEY, String(score)); } catch { /* ignore */ }
+            setBest(recordBest('snake-game', score, 'score').value);
         }
     }, [score, best]);
 
     useEffect(() => {
+        const existing = getBest('snake-game');
+        if (existing) { setBest(existing.value); return; }
+        // One-time migration from the pre-unification per-game key
         try {
-            const stored = Number(localStorage.getItem(BEST_KEY));
-            if (Number.isFinite(stored) && stored > 0) setBest(stored);
+            const legacy = Number(localStorage.getItem(LEGACY_BEST_KEY));
+            if (Number.isFinite(legacy) && legacy > 0) setBest(recordBest('snake-game', legacy, 'score').value);
         } catch { /* ignore */ }
     }, []);
 

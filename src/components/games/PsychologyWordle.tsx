@@ -50,6 +50,48 @@ const COPY = {
         enter: 'ENTER',
         del: 'DEL',
     },
+    // ja/zh/fr/es share the English word pool below (no Korean jamo, no Latin-script word
+    // list curated for these locales yet) — only the surrounding UI copy is localized.
+    ja: {
+        title: '心理学ワードル',
+        subtitle: 'Psychology Vocab',
+        desc: (n: number) => `心理学の英単語を当ててみましょう（${n}文字）`,
+        won: '天才ですね！',
+        lost: '残念、正解は:',
+        playAgain: 'もう一度（新しい単語）',
+        enter: 'ENTER',
+        del: 'DEL',
+    },
+    zh: {
+        title: '心理学猜词',
+        subtitle: 'Psychology Vocab',
+        desc: (n: number) => `猜出这个心理学英语单词（${n}个字母）`,
+        won: '你真是个天才！',
+        lost: '可惜，答案是:',
+        playAgain: '再来一次（新单词）',
+        enter: 'ENTER',
+        del: 'DEL',
+    },
+    fr: {
+        title: 'Wordle Psycho',
+        subtitle: 'Psychology Vocab',
+        desc: (n: number) => `Devinez ce terme de psychologie en anglais (${n} lettres)`,
+        won: 'Vous êtes un génie !',
+        lost: "Dommage. Le mot était :",
+        playAgain: 'Rejouer (nouveau mot)',
+        enter: 'ENTER',
+        del: 'EFF',
+    },
+    es: {
+        title: 'Wordle Psico',
+        subtitle: 'Psychology Vocab',
+        desc: (n: number) => `Adivina este término de psicología en inglés (${n} letras)`,
+        won: '¡Eres un genio!',
+        lost: 'Qué pena. La palabra era:',
+        playAgain: 'Jugar de nuevo (palabra nueva)',
+        enter: 'ENTER',
+        del: 'BORRAR',
+    },
 } as const;
 
 // Two-pass wordle evaluation (handles duplicate letters correctly)
@@ -75,7 +117,7 @@ const TILE_CLASSES: Record<TileState, string> = {
 
 const PsychologyWordle: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const isKo = locale === 'ko';
-    const t = COPY[isKo ? 'ko' : 'en'];
+    const t = COPY[(locale as keyof typeof COPY)] ?? COPY.en;
 
     const pickWord = () => {
         const pool = isKo ? KO_WORDS : EN_WORDS;

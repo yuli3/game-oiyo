@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
+import { getBest, recordBest } from '../../lib/games/records';
 
 type Tile = { id: number; value: number; x: number; y: number; mergedFrom?: number[] };
 type Dir = 'up' | 'down' | 'left' | 'right';
@@ -13,7 +14,7 @@ const COPY = {
     es: { title: "Juego 2048", subtitle: "Growth Logic", score: "Puntos", best: "Récord", over: "Fin del juego", win: "¡2048 logrado!", reset: "Reiniciar", hint: "Flechas o desliza para mover" },
 } as const;
 
-const BEST_KEY = 'oiyo-2048-best';
+const LEGACY_BEST_KEY = 'oiyo-2048-best'; // pre-unification key, read once for migration
 
 const Game2048: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const t = COPY[(locale as keyof typeof COPY)] ?? COPY.en;
@@ -49,9 +50,12 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
     useEffect(() => {
         initGame();
+        const existing = getBest('game-2048');
+        if (existing) { setBest(existing.value); return; }
+        // One-time migration from the pre-unification per-game key
         try {
-            const stored = Number(localStorage.getItem(BEST_KEY));
-            if (Number.isFinite(stored) && stored > 0) setBest(stored);
+            const legacy = Number(localStorage.getItem(LEGACY_BEST_KEY));
+            if (Number.isFinite(legacy) && legacy > 0) setBest(recordBest('game-2048', legacy, 'score').value);
         } catch { /* ignore */ }
     }, [initGame]);
 
@@ -122,8 +126,7 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         setBoard(newBoard);
         setScore(newScore);
         if (newScore > best) {
-            setBest(newScore);
-            try { localStorage.setItem(BEST_KEY, String(newScore)); } catch { /* ignore */ }
+            setBest(recordBest('game-2048', newScore, 'score').value);
         }
         if (newBoard.flat().some((tl) => tl?.value === 2048)) {
             setStatus('won');

@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
+import { getBest, recordBest } from '../../lib/games/records';
 
 // ─── 15 Puzzle (sliding puzzle) — ported from ahoxy-legacy ────────────────────
 // Shuffled by random moves from the solved state, so every board is solvable.
@@ -7,7 +8,8 @@ import { GameContainer } from '../ui/game/GamePrimitives';
 type Board = number[]; // row-major, 0 = empty
 type Size = 3 | 4 | 5;
 
-const BEST_KEY = 'oiyo-puzzle15-best'; // per size: {"3": {moves,seconds}, ...}
+const LEGACY_BEST_KEY = 'oiyo-puzzle15-best'; // pre-unification key: {"3": {moves,seconds}, ...}
+const gameKey = (size: Size) => `puzzle15-${size}`;
 
 const solved = (size: Size): Board => Array.from({ length: size * size }, (_, i) => (i + 1) % (size * size));
 
@@ -56,9 +58,26 @@ const Puzzle15: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const started = useRef(false);
 
     useEffect(() => {
+        const next: Record<string, { moves: number; seconds: number }> = {};
+        ([3, 4, 5] as Size[]).forEach((sz) => {
+            const existing = getBest(gameKey(sz));
+            if (existing) { next[sz] = { moves: Number(existing.extra) || 0, seconds: existing.value }; }
+        });
+        if (Object.keys(next).length > 0) { setBest(next); return; }
+        // One-time migration from the pre-unification per-size key
         try {
-            const stored = JSON.parse(localStorage.getItem(BEST_KEY) || '{}');
-            if (stored && typeof stored === 'object') setBest(stored);
+            const legacy = JSON.parse(localStorage.getItem(LEGACY_BEST_KEY) || '{}');
+            if (legacy && typeof legacy === 'object') {
+                const migrated: Record<string, { moves: number; seconds: number }> = {};
+                for (const sz of [3, 4, 5] as Size[]) {
+                    const rec = legacy[sz];
+                    if (rec && typeof rec.seconds === 'number') {
+                        recordBest(gameKey(sz), rec.seconds, 'seconds', String(rec.moves));
+                        migrated[sz] = rec;
+                    }
+                }
+                if (Object.keys(migrated).length > 0) setBest(migrated);
+            }
         } catch { /* ignore */ }
     }, []);
 
@@ -79,13 +98,8 @@ const Puzzle15: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
     const finish = (finalMoves: number) => {
         setWon(true);
-        setBest((prev) => {
-            const cur = prev[size];
-            if (cur && (cur.moves < finalMoves || (cur.moves === finalMoves && cur.seconds <= seconds))) return prev;
-            const next = { ...prev, [size]: { moves: finalMoves, seconds } };
-            try { localStorage.setItem(BEST_KEY, JSON.stringify(next)); } catch { /* ignore */ }
-            return next;
-        });
+        const saved = recordBest(gameKey(size), seconds, 'seconds', String(finalMoves));
+        setBest((prev) => ({ ...prev, [size]: { moves: Number(saved.extra) || finalMoves, seconds: saved.value } }));
     };
 
     const slide = useCallback((tileIdx: number) => {

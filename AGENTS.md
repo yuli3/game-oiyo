@@ -1,143 +1,81 @@
-# AGENTS.md
+# AGENTS.md — game-oiyo
 
-This file is the canonical agent harness for `blog-oiyo`.
+This is the project harness for `game.oiyo.net`, the arcade layer of the OIYO family.
 
-Before using this project-specific harness, read the cross-project harness:
+Read `/Users/seuncho/coding/AGENTS.md` first, then this file.
 
-1. [/Users/seuncho/coding/AGENTS.md](/Users/seuncho/coding/AGENTS.md)
-2. [/Users/seuncho/coding/docs/AGENT_WORKLOG.md](/Users/seuncho/coding/docs/AGENT_WORKLOG.md)
-3. [/Users/seuncho/coding/docs/route-ownership.json](/Users/seuncho/coding/docs/route-ownership.json)
+## Role
 
-All coding agents working in this repository should treat this file as the first operational document, then follow the linked control documents and verification commands.
+`game-oiyo` is a single-page arcade: ~39 free browser games (board / card / puzzle /
+arcade / luck) plus a handful of Lost Ark calculator tools, served as static Astro pages
+with React islands. No backend, no auth — all game state and personal records live in
+the browser's `localStorage`.
 
-## 1. Mission
+It is not a content platform. There is no MDX, no `track`/`series`/`chapter` taxonomy,
+no article inventory. Do not import concepts from `blog-oiyo`'s authoring system into
+this repo.
 
-`blog-oiyo` is not just a blog.
+## What's different here
 
-It is a structured content platform centered on three tracks:
+- **One component per game**: `src/components/games/*.tsx` — a self-contained React
+  component with its own inline `COPY` object (6 locales: `ko en ja zh fr es`, `zh` =
+  Simplified). There is no separate translation file or CMS; copy lives next to the game.
+- **Shared UI primitives**: `src/components/ui/game/GamePrimitives.tsx`
+  (`GameContainer`, `PlayingCard`, `Die`, …) — reuse these instead of building bespoke
+  chrome per game.
+- **Personal records**: `src/lib/games/records.ts` is the single localStorage module for
+  player history. Three independent stores, each with its own key (never reuse or
+  repurpose an existing key — that discards real user data):
+  - `GameRecord` (`w/l/d`) under `oiyo:game-records:v1` — win/loss/draw, used by the 9
+    vs-AI board games plus Solitaire/FreeCell.
+  - `BestRecord` (`value` + `unit: "score"|"seconds"`) under `oiyo:game-bests:v1` —
+    high score or best time (Minesweeper, Sudoku, 2048, Snake, Puzzle15).
+  - `StreakStats` under `oiyo:game-streaks:v1` — daily-puzzle win streak (Wordle).
+  The arcade card win-rate badge on the homepage (`src/pages/[...lang]/index.astro`)
+  reads the `GameRecord` store directly by `data-game` slug; keep that shape stable.
+  A few games (Minesweeper/2048/Snake/Puzzle15) still carry a legacy per-game
+  localStorage key from before this module existed — components read the legacy key once
+  as a fallback and migrate it into the unified store; they don't delete the legacy key.
+- **Per-game AI**: `src/lib/games/ai/*` — move-generation for the vs-AI board games
+  (chess, checkers, janggi, reversi, connect-four, gomoku, kingdomino, mahjong, dominoes).
+- **Routing**: `src/pages/[...lang]/<slug>.astro` — one static route per game, no dynamic
+  content collection.
+- **No test runner**: this repo has no Jest/Vitest/Playwright config. Verification is
+  build + type-check + the audit scripts below. Don't propose adding a test framework
+  without asking — that's a scope decision for Athena, not an implicit fix.
 
-1. `academy`
-2. `magazine`
-3. `interactive`
+## Known drift (flagged, not fixed here)
 
-The long-term goal is:
+`docs/`, `data/catalog/`, `src/lib/mdx-component-registry.ts`, and
+`scripts/verify-harness.mjs` were inherited wholesale from `blog-oiyo` at some point and
+describe a track/category/CSV-inventory system this repo doesn't use. They are not
+imported by any game route. Leave them alone unless a task specifically asks you to
+clean them up — deleting ~25 files is a scope decision, not a drive-by fix.
 
-1. stable Cloudflare Pages publishing
-2. controlled MDOC-style authoring
-3. structured lecture and qualification systems
-4. selective migration from `ahoxy-nextjs`
-5. content and metadata that stay understandable across tools and agents
+## Verification
 
-## 2. Source of Truth Order
-
-Read these in order before making substantial changes:
-
-1. [docs/implementation-control-board.md](/Users/seuncho/coding/blog/docs/implementation-control-board.md)
-2. [docs/content-charter.md](/Users/seuncho/coding/blog/docs/content-charter.md)
-3. [docs/mdoc-authoring-spec.md](/Users/seuncho/coding/blog/docs/mdoc-authoring-spec.md)
-4. [docs/component-allowlist.md](/Users/seuncho/coding/blog/docs/component-allowlist.md)
-5. [docs/component-disallowlist.md](/Users/seuncho/coding/blog/docs/component-disallowlist.md)
-6. [docs/component-registry-by-track.md](/Users/seuncho/coding/blog/docs/component-registry-by-track.md)
-7. [docs/content-schema-implementation-draft.md](/Users/seuncho/coding/blog/docs/content-schema-implementation-draft.md)
-8. [data/catalog/category-registry.yaml](/Users/seuncho/coding/blog/data/catalog/category-registry.yaml)
-9. [data/catalog/content-inventory.master.csv](/Users/seuncho/coding/blog/data/catalog/content-inventory.master.csv)
-10. [data/catalog/ahoxy-migration.revisit-later.csv](/Users/seuncho/coding/blog/data/catalog/ahoxy-migration.revisit-later.csv)
-
-## 3. Working Rules
-
-### Core rules
-
-1. registry before category growth
-2. metadata before mass migration
-3. renderer control before new component families
-4. priority backfill before broad expansion
-5. uncertain items go to `revisit-later`, not forced decisions
-
-### Content rules
-
-1. prefer explicit `track` over inferred track
-2. `academy` content should be series-aware and chapter-aware
-3. `magazine` should remain the narrowest rendering surface
-4. `interactive` must be reading-first, not tool-only
-5. do not add image-heavy assumptions; the design direction is image-light
-6. **Prose Minimum (FAANG gate)**: any `track: interactive` article must contain ≥ 400 Korean characters of prose before the first component. Count only non-heading, non-import, non-component, non-table lines. Tool-dump articles without context paragraphs will be rejected.
-7. **CSV-on-Create**: every new MDX article must have its row in `data/catalog/content-inventory.master.csv` created in the same commit. Run `verify:harness` immediately after; a missing CSV row is a blocking failure.
-8. **Hreflang Gate (SEO)**: ko-only `interactive` articles must NOT emit hreflang alternate tags for locales without actual content. The `availableLocales` prop mechanism in `[...slug].astro` → `BaseLayout` → `SEO.astro` handles this automatically — do not bypass it by hardcoding locales in frontmatter or layouts.
-
-### Rendering rules
-
-1. do not add MDX components directly to route files
-2. update [src/lib/mdx-component-registry.ts](/Users/seuncho/coding/blog/src/lib/mdx-component-registry.ts) instead
-3. keep `magazine` narrower than `academy` and `interactive`
-4. use the compatibility bridge only when needed to keep legacy content stable
-
-### Data rules
-
-1. new categories must be represented in `data/catalog/category-registry.yaml`
-2. priority work should be reflected in `data/catalog/content-inventory.master.csv`
-3. migration candidates should map back to `ahoxy-migration.audit.csv` or `revisit-later.csv`
-
-## 4. Standard Commands
-
-Use these commands as the default harness interface:
+Commands that actually exist in `package.json` — don't invent others:
 
 ```bash
-npm run build
-npm run type-check
-npm run lint
-npm run validate:i18n
-npm run validate:personality
-npm run verify:harness
-npm run audit:magazine-compat
+npm run build            # astro build (NODE_OPTIONS raised for the 3D/canvas games)
+npm run type-check       # astro check
+npm run lint              # alias of type-check
+npm run validate:i18n     # scripts/audit-i18n.mjs
+npm run audit:localization
+npm run audit:seo
+npm run verify:harness    # inherited blog file-existence check (see "Known drift" above)
 ```
 
-## 5. Definition of Done
+For a records/localStorage change, `npm run build` + `type-check` plus manual code
+review of the read/write paths is the whole verification loop — there is no
+localStorage-mocking test harness to run.
 
-A task is not done just because files changed.
+## Definition of Done
 
-It is done when:
-
-1. it matches the control documents
-2. metadata and taxonomy are still coherent
-3. the appropriate verification commands pass
-4. any new category, track, or series logic is reflected in the registry or inventory
-5. the final note explains what changed and what remains transitional
-
-## 6. Red Flags
-
-Pause and re-align if:
-
-1. a new content family appears without category registry support
-2. route files start accumulating direct component exposure again
-3. `magazine` grows toward an unrestricted MDX surface
-4. content is added without `track`, `series`, or `chapter` where required
-5. an agent starts optimizing for speed over auditability
-6. a new `interactive` article is created without a corresponding CSV row (see Content Rule 7)
-7. `client:load` is used for the 2nd or later component on a multi-component page (use `client:visible` instead)
-8. `dangerouslySetInnerHTML` is used without DOMPurify sanitization in any user-input component
-
-## 7. Agent Adapters
-
-Tool-specific instructions should stay thin.
-
-The following files are adapters and should point back here:
-
-1. [CLAUDE.md](/Users/seuncho/coding/blog/CLAUDE.md)
-2. [GEMINI.md](/Users/seuncho/coding/blog/GEMINI.md)
-3. [CURSOR.md](/Users/seuncho/coding/blog/CURSOR.md)
-4. [.cursor/rules/project-harness.mdc](/Users/seuncho/coding/blog/.cursor/rules/project-harness.mdc)
-
-## 8. Current State
-
-As of 2026-05-25 — see `/Users/seuncho/coding/docs/MASTER_PLAN.md` for the live cross-project roadmap.
-
-1. Schema transition complete — all `academy` files have `series:` + `chapter:`, all `interactive` have `embeddedTools:`
-2. Track-aware MDX registry split complete
-3. Series normalization complete — Korean `series:` field used everywhere (display bugs fixed 2026-05-25)
-4. Build pipeline green — `npm run build` + `type-check` 0 errors
-5. Content: **742 pieces** (Academy 437 · Magazine 280 · Lecture 25) across 7 locales
-6. Civil-law series reclassified: `track: magazine` → `track: academy` (2026-05-25)
-7. Cross-project promotion: ahoxy BlogBanner, footer card, home cross-promo pending commit
-8. Intent-first browse UX: 8 intent bundles, hub pages for accounting/economics live
-9. Data integrity items outstanding: `academy-labor-law-basic` ↔ `academy-labor-law-basics` duplicate; `academy-tax-basics`+`academy-tax-intro` split series
-10. Phase A content: 10 series each at ch1–2, need 3–5 more chapters each (see MASTER_PLAN § 4)
+- `npm run build` and `npm run type-check` pass.
+- New/changed `localStorage` keys never collide with or reshape an existing key's data —
+  existing players' win/loss records and personal bests must survive the change.
+- Every user-facing string is present for all 6 locales (`ko en ja zh fr es`); no bare
+  Korean or English fallback leaking into other locales.
+- Do not commit, push, or deploy without explicit user approval (COMMIT GATE, see root
+  `AGENTS.md`).
