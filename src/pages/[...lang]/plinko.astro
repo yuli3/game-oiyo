@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PlinkoComp from "../../components/games/Plinko";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "플린코 — 핀볼판 물리 게임 무료 플레이",
+    description: "핀 사이로 공을 떨어뜨려 배당 슬롯에 도착시키세요. matter.js 물리 기반의 무료 브라우저 플린코 게임.",
+  },
+  en: {
+    title: "Plinko — Free Physics Peg-Board Drop Game",
+    description: "Drop the ball through the pins and see which payout slot it lands in — a free browser Plinko game with real physics.",
+  },
+  ja: {
+    title: "プリンコ — 無料の物理ピンボードゲーム",
+    description: "ピンの間にボールを落として配当スロットを狙おう。matter.js物理エンジンを使った無料ブラウザゲーム。",
+  },
+  fr: {
+    title: "Plinko — Jeu de plateau à picots gratuit",
+    description: "Lâchez la bille entre les picots et voyez dans quelle case elle atterrit — un jeu Plinko gratuit avec une vraie physique.",
+  },
+  es: {
+    title: "Plinko — Juego gratis de tablero con clavijas",
+    description: "Suelta la bola entre las clavijas y descubre en qué ranura de premio cae — un juego Plinko gratuito con física real.",
+  },
+  zh: {
+    title: "弹珠机 — 免费物理钉板游戏",
+    description: "让小球穿过钉子落入奖励格子。基于matter.js真实物理引擎的免费浏览器弹珠机游戏。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <PlinkoComp client:load locale={locale} />
+    <GameGuide slug="plinko" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
+  </main>
+</BaseLayout>

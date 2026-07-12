@@ -1,5 +1,16 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import Matter from 'matter-js';
 import { GameContainer } from '../ui/game/GamePrimitives';
+
+// ─── Physics: the wheel is a single circular body pinned at its own center
+// (zero gravity, zero linear velocity — it never moves, only spins). Matter's
+// `frictionAir` damps `angularVelocity` every engine tick, giving a natural
+// deceleration curve instead of the old fixed-duration CSS easing. A small
+// random torque each tick (bearing/axle roughness) adds the "흔들림" wobble —
+// the spin doesn't decay perfectly smoothly, it judders like a real wheel.
+const FRICTION_AIR = 0.012;
+const WOBBLE_TORQUE = 0.0015;
+const STOP_THRESHOLD = 0.0008; // rad/tick — below this we call it stopped
 
 const WheelSpinner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const COPY = {
@@ -18,22 +29,67 @@ const WheelSpinner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [isSpinning, setIsSpinning] = useState(false);
     const [winner, setWinner] = useState<string | null>(null);
 
+    // Physics rig lives for the component's lifetime; only one body ever exists
+    // (the wheel itself, pinned at its own center — see constants above).
+    const engineRef = useRef<Matter.Engine | null>(null);
+    const wheelBodyRef = useRef<Matter.Body | null>(null);
+    const runnerRef = useRef<Matter.Runner | null>(null);
+    const itemsRef = useRef(items);
+    itemsRef.current = items;
+
+    useEffect(() => {
+        const engine = Matter.Engine.create({ gravity: { x: 0, y: 0 } });
+        const wheel = Matter.Bodies.circle(0, 0, 100, { frictionAir: FRICTION_AIR, friction: 0, restitution: 0 });
+        Matter.Composite.add(engine.world, wheel);
+        engineRef.current = engine;
+        wheelBodyRef.current = wheel;
+
+        const onAfterUpdate = () => {
+            const body = wheelBodyRef.current;
+            const runner = runnerRef.current;
+            if (!body || !runner) return;
+            // axle/bearing roughness: jitter scales with current speed, fading as it slows
+            const wobble = (Math.random() - 0.5) * WOBBLE_TORQUE * Math.abs(body.angularVelocity);
+            Matter.Body.setAngularVelocity(body, body.angularVelocity + wobble);
+            setRotation((body.angle * 180) / Math.PI);
+
+            if (Math.abs(body.angularVelocity) < STOP_THRESHOLD) {
+                Matter.Runner.stop(runner);
+                setIsSpinning(false);
+                const currentItems = itemsRef.current;
+                if (currentItems.length > 0) {
+                    const degrees = (body.angle * 180) / Math.PI;
+                    const actualRotation = ((degrees % 360) + 360) % 360; // normalize (angle can go negative)
+                    const sliceSize = 360 / currentItems.length;
+                    const winningIndex = Math.floor((360 - actualRotation) / sliceSize) % currentItems.length;
+                    setWinner(currentItems[(winningIndex + currentItems.length) % currentItems.length]);
+                }
+            }
+        };
+        Matter.Events.on(engine, 'afterUpdate', onAfterUpdate);
+
+        return () => {
+            const runner = runnerRef.current;
+            if (runner) Matter.Runner.stop(runner);
+            Matter.Events.off(engine, 'afterUpdate', onAfterUpdate);
+            Matter.Composite.clear(engine.world, false);
+        };
+    }, []);
+
     const spin = () => {
-        if (isSpinning || items.length === 0) return;
+        const body = wheelBodyRef.current;
+        const engine = engineRef.current;
+        if (!body || !engine || isSpinning || items.length === 0) return;
         setIsSpinning(true);
         setWinner(null);
-        
-        const extraRotation = Math.floor(Math.random() * 360) + 1440; // 4 full spins + random
-        const newRotation = rotation + extraRotation;
-        setRotation(newRotation);
 
-        setTimeout(() => {
-            setIsSpinning(false);
-            const actualRotation = newRotation % 360;
-            const sliceSize = 360 / items.length;
-            const winningIndex = Math.floor((360 - actualRotation) / sliceSize) % items.length;
-            setWinner(items[winningIndex]);
-        }, 4000);
+        const direction = Math.random() < 0.5 ? -1 : 1; // spin can go either way
+        const power = 0.35 + Math.random() * 0.3; // rad/tick — varies the number of turns
+        Matter.Body.setAngularVelocity(body, direction * power);
+
+        const runner = Matter.Runner.create();
+        runnerRef.current = runner;
+        Matter.Runner.run(runner, engine);
     };
 
     const addItem = () => {
@@ -53,8 +109,11 @@ const WheelSpinner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[12px] border-t-background translate-y-4" />
                     </div>
                     
-                    <div 
-                        style={{ transform: `rotate(${rotation}deg)`, transition: 'transform 4s cubic-bezier(0.1, 0, 0, 1)' }}
+                    <div
+                        // rotation now comes from the matter.js body's angle every physics
+                        // tick (see the `afterUpdate` handler above), so no CSS transition —
+                        // the frame-by-frame updates already produce a smooth, decelerating spin.
+                        style={{ transform: `rotate(${rotation}deg)` }}
                         className="w-64 h-64 sm:w-80 sm:h-80 rounded-full border-8 border-muted shadow-2xl relative overflow-hidden"
                     >
                         {items.map((_, i) => {

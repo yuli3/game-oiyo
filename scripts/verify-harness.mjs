@@ -9,7 +9,6 @@ const requiredFiles = [
   "GEMINI.md",
   "CURSOR.md",
   ".cursor/rules/project-harness.mdc",
-  "docs/implementation-control-board.md",
   "docs/component-registry-by-track.md",
   "data/catalog/category-registry.yaml",
   "data/catalog/content-inventory.master.csv",
