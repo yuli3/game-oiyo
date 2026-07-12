@@ -54,12 +54,14 @@ game route. Leave them alone unless a task specifically asks you to clean them u
 `docs/` was cleaned up 2026-07-12: 19 cross-project blog-oiyo planning files (content
 taxonomy, GA4/linking playbooks, qualification/lecture roadmaps, historical audits) were
 migrated to `company-brain/AI-Sessions/wiki/` and deleted from this repo. `docs/` now
-holds only game-specific dev docs (`README.md`, `component-allowlist.md`,
-`component-disallowlist.md`, `component-registry-by-track.md`, `mdoc-authoring-spec.md`)
-— note these five are themselves still blog-oiyo MDX/track authoring specs (verbatim
-duplicates of `blog/docs/`), not actually game-specific; they were kept in this pass
-because deleting them wasn't in the approved scope. Cross-project content strategy work
-belongs in `company-brain`, not this repo — do not add new planning docs here.
+holds only `README.md` (game-specific) and `component-registry-by-track.md`. The latter
+is a verbatim duplicate of `blog/docs/` but is **kept because `scripts/verify-harness.mjs`
+requires it** (build input, not just reference). The other three blog-oiyo duplicates
+(`component-allowlist.md`, `component-disallowlist.md`, `mdoc-authoring-spec.md`) were
+removed 2026-07-12 (Athena re-scope decision — canonical lives in `blog/docs/`). If
+`component-registry-by-track.md` ever needs to diverge from blog's, treat it as a
+game-owned copy. Cross-project content strategy work belongs in `company-brain`, not this
+repo — do not add new planning docs here.
 
 ## Verification
 
