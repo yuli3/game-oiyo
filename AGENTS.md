@@ -46,11 +46,20 @@ this repo.
 
 ## Known drift (flagged, not fixed here)
 
-`docs/`, `data/catalog/`, `src/lib/mdx-component-registry.ts`, and
-`scripts/verify-harness.mjs` were inherited wholesale from `blog-oiyo` at some point and
-describe a track/category/CSV-inventory system this repo doesn't use. They are not
-imported by any game route. Leave them alone unless a task specifically asks you to
-clean them up — deleting ~25 files is a scope decision, not a drive-by fix.
+`data/catalog/`, `src/lib/mdx-component-registry.ts`, and `scripts/verify-harness.mjs`
+were inherited wholesale from `blog-oiyo` at some point and describe a
+track/category/CSV-inventory system this repo doesn't use. They are not imported by any
+game route. Leave them alone unless a task specifically asks you to clean them up.
+
+`docs/` was cleaned up 2026-07-12: 19 cross-project blog-oiyo planning files (content
+taxonomy, GA4/linking playbooks, qualification/lecture roadmaps, historical audits) were
+migrated to `company-brain/AI-Sessions/wiki/` and deleted from this repo. `docs/` now
+holds only game-specific dev docs (`README.md`, `component-allowlist.md`,
+`component-disallowlist.md`, `component-registry-by-track.md`, `mdoc-authoring-spec.md`)
+— note these five are themselves still blog-oiyo MDX/track authoring specs (verbatim
+duplicates of `blog/docs/`), not actually game-specific; they were kept in this pass
+because deleting them wasn't in the approved scope. Cross-project content strategy work
+belongs in `company-brain`, not this repo — do not add new planning docs here.
 
 ## Verification
 
