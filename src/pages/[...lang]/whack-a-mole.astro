@@ -1,0 +1,31 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import WhackAMole from "../../components/games/WhackAMole";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: { title: "두더지 잡기 — 무료 반응속도 아케이드 게임", description: "구멍에서 튀어나오는 두더지를 빠르게 두드리고 폭탄은 피하는 30초 두더지 잡기. 반응속도를 겨루는 무료 모바일 아케이드 게임." },
+  en: { title: "Whack-a-Mole — Free Reflex Arcade Game", description: "Bonk the moles that pop from the holes and dodge the bombs in this 30-second Whack-a-Mole. A free mobile reflex arcade game." },
+  ja: { title: "モグラたたき — 無料の反応速度アーケードゲーム", description: "穴から飛び出すモグラを叩き、爆弾は避ける30秒のモグラたたき。反応速度を競う無料モバイルアーケード。" },
+  fr: { title: "Tape-Taupe — Jeu d'arcade de réflexes gratuit", description: "Tapez les taupes qui sortent des trous et évitez les bombes dans ce Tape-Taupe de 30 secondes. Un jeu d'arcade mobile gratuit." },
+  es: { title: "Golpea al Topo — Juego arcade de reflejos gratis", description: "Golpea los topos que salen de los agujeros y esquiva las bombas en este Golpea al Topo de 30 segundos. Un juego arcade móvil gratuito." },
+  zh: { title: "打地鼠 — 免费反应速度街机游戏", description: "敲打从洞里冒出的地鼠并躲开炸弹的30秒打地鼠。比拼反应速度的免费手机街机游戏。" },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <WhackAMole client:load locale={locale} />
+    <GameGuide slug="whack-a-mole" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
+  </main>
+</BaseLayout>
