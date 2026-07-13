@@ -1,0 +1,31 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import RhythmTap from "../../components/games/RhythmTap";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: { title: "리듬 탭 — 무료 4레인 리듬 게임", description: "떨어지는 노트가 판정선에 닿는 순간 레인을 탭하는 4레인 리듬 게임. 콤보를 쌓아 최고 점수에 도전하는 무료 모바일 리듬 게임." },
+  en: { title: "Rhythm Tap — Free 4-Lane Rhythm Game", description: "Tap the lane the instant a falling note hits the line in this 4-lane rhythm game. Build combos and chase your high score — free, on mobile or desktop." },
+  ja: { title: "リズムタップ — 無料の4レーン音ゲー", description: "落ちてくるノーツが判定ラインに来た瞬間、レーンをタップする4レーンのリズムゲーム。コンボを繋いでハイスコアを狙う無料モバイル音ゲー。" },
+  fr: { title: "Rhythm Tap — Jeu de rythme gratuit à 4 voies", description: "Touchez la voie à l'instant où une note tombe sur la ligne dans ce jeu de rythme à 4 voies. Enchaînez les combos et battez votre record, gratuitement." },
+  es: { title: "Rhythm Tap — Juego de ritmo gratis de 4 carriles", description: "Toca el carril justo cuando una nota cae en la línea en este juego de ritmo de 4 carriles. Encadena combos y supera tu récord, gratis." },
+  zh: { title: "节奏点击 — 免费四轨节奏游戏", description: "在下落音符触碰判定线的瞬间点击轨道的四轨节奏游戏。累积连击、挑战最高分的免费手机节奏游戏。" },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <RhythmTap client:load locale={locale} />
+    <GameGuide slug="rhythm-tap" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
+  </main>
+</BaseLayout>
