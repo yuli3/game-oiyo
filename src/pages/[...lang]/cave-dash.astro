@@ -1,0 +1,31 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import CaveDash from "../../components/games/CaveDash";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: { title: "케이브 대시 — 무료 원탭 엔들리스 게임", description: "탭 한 번으로 우주선을 띄워 벽 사이 틈을 통과하는 원탭 엔들리스 게임. 점점 빨라지는 중독성 무료 모바일 게임." },
+  en: { title: "Cave Dash — Free One-Tap Endless Game", description: "Tap to lift your ship and thread the gaps between walls in this one-tap endless game. A free, addictive mobile game that keeps speeding up." },
+  ja: { title: "ケイブダッシュ — 無料のワンタップ・エンドレスゲーム", description: "タップで宇宙船を浮かせ、壁の隙間を抜けるワンタップ・エンドレスゲーム。だんだん速くなる中毒性の無料モバイルゲーム。" },
+  fr: { title: "Cave Dash — Jeu endless gratuit en un tap", description: "Touchez pour faire monter votre vaisseau et passez les trous entre les murs dans ce jeu endless en un tap. Un jeu mobile gratuit et addictif." },
+  es: { title: "Cave Dash — Juego endless gratis de un toque", description: "Toca para elevar tu nave y cruza los huecos entre muros en este juego endless de un toque. Un juego móvil gratuito y adictivo." },
+  zh: { title: "洞穴冲刺 — 免费单点无尽游戏", description: "点一下让飞船上升，穿过墙壁之间的缝隙的单点无尽游戏。越来越快、令人上瘾的免费手机游戏。" },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <CaveDash client:load locale={locale} />
+    <GameGuide slug="cave-dash" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
+  </main>
+</BaseLayout>
