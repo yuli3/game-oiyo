@@ -1,0 +1,31 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import BrickBreaker from "../../components/games/BrickBreaker";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: { title: "벽돌깨기 — 무료 브레이크아웃 아케이드 게임", description: "패들로 공을 튕겨 벽돌을 모두 부수는 클래식 벽돌깨기. 레벨이 오를수록 빨라지는 무료 모바일 아케이드 게임." },
+  en: { title: "Brick Breaker — Free Breakout Arcade Game", description: "Bounce the ball off your paddle to smash every brick in this classic Breakout. A free mobile arcade game that speeds up each level." },
+  ja: { title: "ブロック崩し — 無料アーケードゲーム", description: "パドルでボールを弾いてブロックを全部壊す定番のブロック崩し。レベルごとに速くなる無料モバイルアーケード。" },
+  fr: { title: "Casse-briques — Jeu d'arcade Breakout gratuit", description: "Renvoyez la balle avec la raquette pour casser toutes les briques dans ce Breakout classique. Un jeu d'arcade mobile gratuit." },
+  es: { title: "Rompeladrillos — Juego arcade Breakout gratis", description: "Rebota la bola con la paleta para romper todos los ladrillos en este Breakout clásico. Un juego arcade móvil gratuito." },
+  zh: { title: "打砖块 — 免费 Breakout 街机游戏", description: "用挡板弹球击碎所有砖块的经典打砖块。每关都会加速的免费手机街机游戏。" },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <BrickBreaker client:load locale={locale} />
+    <GameGuide slug="brick-breaker" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
+  </main>
+</BaseLayout>

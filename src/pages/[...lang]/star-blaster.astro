@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import StarBlaster from "../../components/games/StarBlaster";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "스타 블래스터 — 무료 우주 슈팅 아케이드 게임",
+    description: "드래그로 우주선을 조종하고 자동 발사로 적을 격추하세요. 웨이브를 버티며 최고 점수에 도전하는 무료 모바일 슈팅 게임.",
+  },
+  en: {
+    title: "Star Blaster — Free Space Shooter Arcade Game",
+    description: "Drag to steer your ship and auto-fire to blast enemies. Survive the waves and chase your high score in this free mobile shooter.",
+  },
+  ja: {
+    title: "スターブラスター — 無料の宇宙シューティングゲーム",
+    description: "ドラッグで宇宙船を操り、自動発射で敵を撃破。ウェーブを耐えてハイスコアを狙う無料モバイルシューティング。",
+  },
+  fr: {
+    title: "Star Blaster — Jeu d'arcade de tir spatial gratuit",
+    description: "Pilotez votre vaisseau en glissant et tirez automatiquement sur les ennemis. Survivez aux vagues dans ce shooter mobile gratuit.",
+  },
+  es: {
+    title: "Star Blaster — Juego arcade de disparos espaciales gratis",
+    description: "Arrastra para pilotar tu nave y dispara en automático para destruir enemigos. Sobrevive a las oleadas en este shooter móvil gratuito.",
+  },
+  zh: {
+    title: "星际爆破 — 免费太空射击街机游戏",
+    description: "拖动操控飞船，自动开火击落敌人。挺过一波波敌人，挑战最高分的免费手机射击游戏。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <StarBlaster client:load locale={locale} />
+    <GameGuide slug="star-blaster" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
+  </main>
+</BaseLayout>

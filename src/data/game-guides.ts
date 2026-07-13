@@ -92,10 +92,99 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
     how: { ko: "번갈아 원반을 열에 떨어뜨려 가로·세로·대각선으로 4개를 먼저 이으면 승리합니다.", en: "Drop discs into columns; first to connect four in any direction wins.", ja: "交互にディスクを列に落とし、先に4つ並べた方が勝ちです。", zh: "轮流将棋子投入列中，先在任意方向连成四子者胜。", fr: "Lâchez des jetons dans les colonnes ; le premier à en aligner quatre gagne.", es: "Deja caer fichas en las columnas; gana el primero en conectar cuatro." },
     faqs: [{ q: { ko: "첫 수는 어디에 두는 게 좋나요?", en: "Where should the first disc go?", ja: "最初の一手はどこ？", zh: "第一子下在哪里好？", fr: "Où jouer le premier jeton ?", es: "¿Dónde va la primera ficha?" }, a: { ko: "중앙 열이 정답입니다 — 완전 해석상 선공이 중앙에 두면 필승, 다른 열은 무승부 또는 패배로 이어집니다.", en: "The center column — the solved game shows a first move there wins, while other columns draw or lose.", ja: "中央の列です。完全解析では中央先手が必勝、他の列は引き分けか敗北につながります。", zh: "中间列——完全解析表明先手下中间必胜，其他列只能平局或落败。", fr: "La colonne centrale — le jeu résolu montre qu'elle gagne.", es: "La columna central: el juego resuelto muestra que gana." } }],
   },
+  "brick-breaker": {
+    origin: { ko: "벽돌깨기는 1976년 아타리의 '브레이크아웃'에서 시작된 아케이드 고전으로, 이후 '아르카노이드'로 대중화된 패들·공·벽돌 장르입니다.", en: "Brick Breaker descends from Atari's 1976 'Breakout' and the paddle-ball-brick genre later popularized by 'Arkanoid'.", ja: "ブロック崩しは1976年アタリの『ブレイクアウト』に始まり、後に『アルカノイド』で広まったパドル・ボール・ブロックの定番です。", zh: "打砖块源自1976年雅达利的《Breakout》，后由《Arkanoid》发扬光大的挡板-球-砖块类型。", fr: "Le casse-briques descend du 'Breakout' d'Atari (1976), genre raquette-balle-briques popularisé ensuite par 'Arkanoid'.", es: "El rompeladrillos desciende del 'Breakout' de Atari (1976), género de paleta-bola-ladrillos popularizado luego por 'Arkanoid'." },
+    how: { ko: "손가락이나 마우스로 패들을 좌우로 움직여 공을 튕기고, 화면 위쪽 벽돌을 모두 부수면 다음 레벨로 넘어갑니다. 공이 패들 아래로 떨어지면 생명이 줄어듭니다. 공이 패들 가장자리에 맞을수록 더 비스듬히 튕겨 각도를 조절할 수 있습니다.", en: "Move the paddle with your finger or mouse to bounce the ball; clear all the bricks to reach the next level. You lose a life if the ball drops below the paddle. Hitting the ball near the paddle's edge angles it more sharply, letting you aim.", ja: "指かマウスでパドルを動かしてボールを弾き、上のブロックを全部壊すと次のレベルへ。ボールがパドルの下に落ちると残機が減ります。パドルの端で当てるほど角度が鋭くなり、狙いを調整できます。", zh: "用手指或鼠标移动挡板弹球，击碎上方所有砖块即可进入下一关。球掉到挡板下方会失去生命。球打在挡板边缘时弹射角度更大，可用来瞄准。", fr: "Déplacez la raquette au doigt ou à la souris pour renvoyer la balle ; cassez toutes les briques pour passer au niveau suivant. Vous perdez une vie si la balle tombe sous la raquette. Toucher la balle près du bord la renvoie plus en biais, ce qui permet de viser.", es: "Mueve la paleta con el dedo o el ratón para rebotar la bola; rompe todos los ladrillos para pasar de nivel. Pierdes una vida si la bola cae bajo la paleta. Golpear la bola cerca del borde la angula más, para poder apuntar." },
+    faqs: [
+      { q: { ko: "공의 방향을 어떻게 조절하나요?", en: "How do I control the ball's direction?", ja: "ボールの方向はどう操作する？", zh: "如何控制球的方向？", fr: "Comment contrôler la direction de la balle ?", es: "¿Cómo controlo la dirección de la bola?" }, a: { ko: "공이 패들의 어느 지점에 맞느냐로 각도가 정해집니다. 중앙에 맞으면 거의 수직, 가장자리에 맞을수록 옆으로 비스듬히 튕깁니다.", en: "The angle depends on where the ball hits the paddle: center sends it nearly straight up, while the edges send it off at a sharper sideways angle.", ja: "ボールがパドルのどこに当たるかで角度が決まります。中央ならほぼ真上、端ほど横に鋭く弾みます。", zh: "角度取决于球打在挡板的位置：打中间几乎垂直向上，越靠边弹得越斜。", fr: "L'angle dépend de l'endroit où la balle touche la raquette : au centre elle repart presque droit, sur les bords plus en biais.", es: "El ángulo depende de dónde golpea la bola la paleta: en el centro sale casi recta, en los bordes con más inclinación." } },
+      { q: { ko: "레벨이 오르면 뭐가 달라지나요?", en: "What changes as levels go up?", ja: "レベルが上がると何が変わる？", zh: "关卡提升会有什么变化？", fr: "Qu'est-ce qui change à chaque niveau ?", es: "¿Qué cambia al subir de nivel?" }, a: { ko: "레벨마다 공이 빨라지고 벽돌 줄이 늘어나며 패들이 약간 짧아져 난도가 올라갑니다.", en: "Each level makes the ball faster, adds more rows of bricks, and slightly shrinks the paddle for a tougher challenge.", ja: "レベルごとにボールが速くなり、ブロックの列が増え、パドルが少し短くなって難しくなります。", zh: "每关球会更快、砖块行数增加，挡板略微变短，难度提升。", fr: "Chaque niveau accélère la balle, ajoute des rangées de briques et raccourcit un peu la raquette.", es: "Cada nivel acelera la bola, añade más filas de ladrillos y acorta un poco la paleta." } },
+      { q: { ko: "점수와 기록은 저장되나요?", en: "Are score and records saved?", ja: "スコアと記録は保存される？", zh: "分数和记录会保存吗？", fr: "Le score et les records sont-ils sauvegardés ?", es: "¿Se guardan la puntuación y los récords?" }, a: { ko: "최고 점수가 브라우저(localStorage)에 저장되어 다음에 표시됩니다. 계정은 필요 없습니다.", en: "Your best score is stored in the browser (localStorage) and shown next time. No account needed.", ja: "自己ベストがブラウザ(localStorage)に保存され、次回表示されます。アカウント不要です。", zh: "最佳成绩保存在浏览器(localStorage)，下次显示。无需账号。", fr: "Votre meilleur score est enregistré dans le navigateur (localStorage) et affiché la prochaine fois. Aucun compte requis.", es: "Tu mejor puntuación se guarda en el navegador (localStorage) y se muestra la próxima vez. Sin cuenta." } },
+    ],
+  },
+  "star-blaster": {
+    origin: { ko: "스타 블래스터는 1978년 스페이스 인베이더로 시작된 고전 종스크롤 슈팅(슈뮤프) 장르의 계보를 잇는 브라우저 아케이드 게임입니다.", en: "Star Blaster follows the classic vertical-scrolling shooter (shmup) lineage that began with 1978's Space Invaders, reimagined as a browser arcade game.", ja: "スターブラスターは1978年のスペースインベーダーに始まる縦スクロールシューティング(シューティングゲーム)の系譜を継ぐブラウザアーケードです。", zh: "《星际爆破》延续自1978年《太空侵略者》开创的纵向卷轴射击(shmup)血脉，重制为浏览器街机游戏。", fr: "Star Blaster s'inscrit dans la lignée des shoot'em up à défilement vertical né avec Space Invaders (1978), réinventé en jeu d'arcade navigateur.", es: "Star Blaster sigue el linaje de los shooters de desplazamiento vertical (shmup) iniciado por Space Invaders (1978), reinventado como juego arcade de navegador." },
+    how: { ko: "손가락이나 마우스로 우주선을 좌우로 움직이면 자동으로 발사됩니다. 내려오는 적을 격추하고, 적이 지나치거나 부딪히면 생명이 줄어듭니다. 시간이 지날수록 웨이브가 올라 더 빠르고 많은 적이 등장합니다.", en: "Move your ship left/right with finger or mouse — it fires automatically. Shoot the descending enemies; you lose a life if one slips past or hits you. Waves ramp up over time with faster, denser enemies.", ja: "指かマウスで宇宙船を左右に動かすと自動で発射します。降ってくる敵を撃破し、敵が通り抜けたり衝突すると残機が減ります。時間とともにウェーブが上がり、敵が速く多くなります。", zh: "用手指或鼠标左右移动飞船，飞船会自动开火。击落下降的敌人；若敌人溜过或撞到你就会失去生命。随着时间推移波次提升，敌人更快更多。", fr: "Déplacez le vaisseau à gauche/droite au doigt ou à la souris — il tire tout seul. Abattez les ennemis qui descendent ; vous perdez une vie s'ils passent ou vous touchent. Les vagues s'intensifient avec le temps.", es: "Mueve la nave a izquierda/derecha con el dedo o el ratón: dispara sola. Derriba a los enemigos que bajan; pierdes una vida si uno se cuela o te golpea. Las oleadas se intensifican con el tiempo." },
+    faqs: [
+      { q: { ko: "어떻게 조준하나요?", en: "How do I aim?", ja: "どうやって狙う？", zh: "如何瞄准？", fr: "Comment viser ?", es: "¿Cómo apunto?" }, a: { ko: "조준은 따로 없습니다. 우주선을 적 아래로 이동시키면 자동 발사가 명중시킵니다. 위치 선정과 회피가 핵심입니다.", en: "There's no separate aiming — line your ship up under an enemy and the auto-fire does the rest. Positioning and dodging are the skill.", ja: "個別の照準はありません。宇宙船を敵の下に合わせれば自動発射が当てます。位置取りと回避が鍵です。", zh: "没有单独瞄准——把飞船对到敌人下方，自动开火即可命中。走位和闪避才是关键。", fr: "Pas de visée séparée : placez le vaisseau sous un ennemi et le tir auto s'en charge. Le placement et l'esquive font la différence.", es: "No hay puntería aparte: alinea la nave bajo un enemigo y el disparo automático hace el resto. La clave es el posicionamiento y esquivar." } },
+      { q: { ko: "모바일에서도 잘 되나요?", en: "Does it play well on mobile?", ja: "モバイルでも快適？", zh: "手机上流畅吗？", fr: "Est-ce fluide sur mobile ?", es: "¿Va bien en el móvil?" }, a: { ko: "네. 세로 화면에 최적화된 캔버스 게임으로 터치 드래그로 조작합니다. 설치나 로그인이 필요 없습니다.", en: "Yes — it's a portrait-optimized canvas game controlled by touch drag. No install or login needed.", ja: "はい。縦画面に最適化されたキャンバスゲームで、タッチのドラッグで操作します。インストールやログインは不要です。", zh: "流畅。这是为竖屏优化的画布游戏，用触摸拖动操作。无需安装或登录。", fr: "Oui — un jeu canvas optimisé en portrait, contrôlé au glissement tactile. Sans installation ni connexion.", es: "Sí: un juego en canvas optimizado en vertical, controlado arrastrando el dedo. Sin instalación ni inicio de sesión." } },
+      { q: { ko: "점수는 저장되나요?", en: "Is my score saved?", ja: "スコアは保存される？", zh: "分数会保存吗？", fr: "Mon score est-il sauvegardé ?", es: "¿Se guarda mi puntuación?" }, a: { ko: "최고 점수가 브라우저(localStorage)에 저장되어 다음 플레이 때 표시됩니다. 계정은 필요 없습니다.", en: "Your best score is stored in the browser (localStorage) and shown on your next visit. No account required.", ja: "自己ベストがブラウザ(localStorage)に保存され、次回表示されます。アカウント不要です。", zh: "最佳成绩保存在浏览器(localStorage)，下次游玩时显示。无需账号。", fr: "Votre meilleur score est enregistré dans le navigateur (localStorage) et affiché à la prochaine visite. Aucun compte requis.", es: "Tu mejor puntuación se guarda en el navegador (localStorage) y se muestra la próxima vez. Sin cuenta." } },
+    ],
+  },
   "aim-trainer": {
     origin: { ko: "에임 트레이너는 FPS 게이머들의 반응속도·정확도 훈련 도구로 2010년대에 대중화되었습니다.", en: "Aim trainers became popular in the 2010s as reaction and accuracy practice for FPS players.", ja: "エイムトレーナーは2010年代にFPSプレイヤーの反応・精度練習として普及しました。", zh: "瞄准训练器于2010年代流行，用于FPS玩家的反应与精度练习。", fr: "Les aim trainers se sont popularisés dans les années 2010 pour l'entraînement FPS.", es: "Los entrenadores de puntería se popularizaron en los 2010 para práctica de FPS." },
-    how: { ko: "화면에 나타나는 타깃을 최대한 빠르고 정확하게 클릭하세요.", en: "Click the targets as fast and accurately as you can.", ja: "現れるターゲットをできるだけ速く正確にクリック。", zh: "尽快准确点击出现的目标。", fr: "Cliquez les cibles vite et précisément.", es: "Haz clic en los objetivos rápido y con precisión." },
-    faqs: [],
+    how: { ko: "4가지 모드로 훈련합니다 — 그리드샷(동시 다중 타깃), 플릭(순간 조준), 트래킹(움직이는 타깃 추적), 정밀샷(작은 타깃). 난이도 4단계이며 반응속도·정확도·초당 처치·일관성을 측정하고 모드별 최고 기록을 저장합니다.", en: "Train across four modes — Gridshot (many targets at once), Flick (snap to one), Tracking (follow a moving target) and Precision (tiny targets). Four difficulties; it measures reaction, accuracy, targets-per-second and consistency, and saves a best per mode.", ja: "4つのモードで練習 — グリッドショット(同時多数)、フリック(瞬間狙撃)、トラッキング(移動追跡)、精密(小さな的)。難易度4段階で、反応・精度・毎秒撃破・一貫性を測定し、モード別のベストを保存します。", zh: "四种模式训练 — 网格射击(同时多目标)、急甩(瞬间瞄准)、跟踪(追踪移动目标)、精准(小目标)。四档难度，测量反应、准确率、每秒击杀与稳定性，并按模式保存最佳记录。", fr: "Entraînez-vous sur quatre modes — Gridshot (plusieurs cibles), Flick (viser d'un coup), Tracking (suivre une cible mobile) et Précision (petites cibles). Quatre difficultés ; mesure réaction, précision, cibles/s et régularité, avec un record par mode.", es: "Entrena en cuatro modos — Gridshot (varias dianas), Flick (apuntar de golpe), Tracking (seguir una diana móvil) y Precisión (dianas pequeñas). Cuatro dificultades; mide reacción, precisión, dianas/s y consistencia, y guarda un récord por modo." },
+    rules: {
+      ko: [
+        "그리드샷: 화면에 동시에 뜬 여러 타깃을 30초간 최대한 많이 제거 — 속도와 처리량을 측정합니다.",
+        "플릭: 한 번에 하나씩 뜨는 타깃을 순간적으로 조준·클릭 — 평균 반응속도(ms)를 측정합니다.",
+        "트래킹: 움직이는 타깃 위에 커서를 유지한 시간 비율(온타깃 %)로 채점합니다.",
+        "정밀샷: 작은 타깃이 사라지기 전에 명중 — 미세 조준 정확도를 훈련합니다.",
+        "난이도가 오를수록 타깃이 작아지고 빨라지며(그리드샷은 개수 증가), 정밀샷의 제한시간이 짧아집니다.",
+        "결과는 랭크(Bronze→Master)로 표시되고, 모드·난이도별 최고 기록이 브라우저에 저장됩니다. 마우스와 터치 모두 지원합니다.",
+      ],
+      en: [
+        "Gridshot: clear as many simultaneous targets as you can in 30 seconds — raw speed and throughput.",
+        "Flick: one target appears at a time; snap to it and click — measures average reaction time (ms).",
+        "Tracking: scored by the share of time your cursor stays on a moving target (on-target %).",
+        "Precision: hit small targets before they disappear — trains micro-adjustment accuracy.",
+        "Higher difficulty shrinks and speeds up targets (Gridshot adds more), and shortens the Precision timer.",
+        "Results show a rank (Bronze→Master); best scores per mode and difficulty are saved in your browser. Mouse and touch are both supported.",
+      ],
+      ja: [
+        "グリッドショット: 30秒間、同時に出る複数のターゲットをできるだけ多く撃破 — 速度と処理量。",
+        "フリック: 一度に一つ出る的を瞬時に狙ってクリック — 平均反応時間(ms)を測定。",
+        "トラッキング: 動く的にカーソルを維持した時間の割合(オンターゲット%)で採点。",
+        "精密: 小さな的が消える前に命中 — 微調整の精度を鍛えます。",
+        "難易度が上がると的は小さく速くなり(グリッドは数が増加)、精密の制限時間が短くなります。",
+        "結果はランク(Bronze→Master)で表示され、モード・難易度別のベストがブラウザに保存されます。マウスとタッチ両対応。",
+      ],
+      zh: [
+        "网格射击：30秒内尽可能多地清除同时出现的多个目标 — 速度与处理量。",
+        "急甩：一次出现一个目标，瞬间瞄准并点击 — 测量平均反应时间(毫秒)。",
+        "跟踪：以光标停留在移动目标上的时间比例(在目标%)计分。",
+        "精准：在小目标消失前命中 — 训练微调准确度。",
+        "难度越高，目标越小越快(网格射击数量增加)，精准模式限时更短。",
+        "结果以段位(Bronze→Master)显示，各模式与难度的最佳成绩保存在浏览器中。鼠标和触摸均支持。",
+      ],
+      fr: [
+        "Gridshot : éliminez un maximum de cibles simultanées en 30 secondes — vitesse et débit.",
+        "Flick : une cible à la fois ; visez d'un coup et cliquez — mesure la réaction moyenne (ms).",
+        "Tracking : noté sur la part de temps où le curseur reste sur une cible mobile (sur cible %).",
+        "Précision : touchez de petites cibles avant qu'elles disparaissent — micro-ajustements.",
+        "Plus la difficulté monte, plus les cibles rétrécissent et accélèrent (Gridshot en ajoute), et le minuteur de Précision raccourcit.",
+        "Le résultat affiche un rang (Bronze→Master) ; les records par mode et difficulté sont enregistrés dans le navigateur. Souris et tactile pris en charge.",
+      ],
+      es: [
+        "Gridshot: elimina cuantas dianas simultáneas puedas en 30 segundos — velocidad y volumen.",
+        "Flick: aparece una diana a la vez; apunta de golpe y haz clic — mide la reacción media (ms).",
+        "Tracking: se puntúa por el tiempo que tu cursor permanece sobre una diana móvil (en objetivo %).",
+        "Precisión: acierta dianas pequeñas antes de que desaparezcan — ajuste fino.",
+        "A mayor dificultad, las dianas se encogen y aceleran (Gridshot añade más) y el temporizador de Precisión se acorta.",
+        "El resultado muestra un rango (Bronze→Master); los récords por modo y dificultad se guardan en tu navegador. Compatible con ratón y táctil.",
+      ],
+    },
+    faqs: [
+      {
+        q: { ko: "실제 FPS 실력에 도움이 되나요?", en: "Does this actually help my FPS aim?", ja: "実際のFPSの上達に役立ちますか？", zh: "这真的能帮助我的FPS准度吗？", fr: "Est-ce que ça améliore vraiment ma visée FPS ?", es: "¿Ayuda de verdad a mi puntería en FPS?" },
+        a: { ko: "네. 반응속도(플릭), 추적(트래킹), 미세 조준(정밀샷)은 FPS의 핵심 스킬입니다. 게임 전 5~10분 워밍업으로 꾸준히 훈련하면 근육 기억이 형성됩니다.", en: "Yes. Flick reaction, tracking and micro-adjustment are core FPS skills. A steady 5–10 minute warm-up before matches builds muscle memory over time.", ja: "はい。フリック反応・トラッキング・微調整はFPSの核心スキルです。試合前に5〜10分のウォームアップを続けると筋肉の記憶が育ちます。", zh: "会。急甩反应、跟踪与微调是FPS的核心技能。赛前坚持5–10分钟热身，久而久之形成肌肉记忆。", fr: "Oui. Réaction flick, tracking et micro-ajustement sont des compétences FPS clés. Un échauffement régulier de 5 à 10 minutes crée la mémoire musculaire.", es: "Sí. La reacción flick, el tracking y el ajuste fino son habilidades clave de FPS. Un calentamiento constante de 5–10 minutos crea memoria muscular." },
+      },
+      {
+        q: { ko: "어떤 모드부터 해야 하나요?", en: "Which mode should I start with?", ja: "どのモードから始めるべき？", zh: "该从哪个模式开始？", fr: "Par quel mode commencer ?", es: "¿Con qué modo empiezo?" },
+        a: { ko: "워밍업은 그리드샷·플릭으로 시작하세요. 스프레이/지속사격 무기를 쓴다면 트래킹, 헤드샷 정확도를 원하면 정밀샷을 집중 훈련하세요.", en: "Warm up with Gridshot and Flick. If you play spray/sustained-fire weapons, focus on Tracking; for headshot accuracy, drill Precision.", ja: "ウォームアップはグリッドショットとフリックから。スプレー系武器ならトラッキング、ヘッドショット精度なら精密を重点的に。", zh: "先用网格射击和急甩热身。若使用扫射类武器就练跟踪，追求爆头精度就练精准。", fr: "Échauffez-vous avec Gridshot et Flick. Pour les armes à tir soutenu, travaillez le Tracking ; pour la précision des headshots, la Précision.", es: "Calienta con Gridshot y Flick. Si usas armas de fuego sostenido, enfócate en Tracking; para precisión de headshots, practica Precisión." },
+      },
+      {
+        q: { ko: "마우스 감도는 어떻게 맞추나요?", en: "How should I set my mouse sensitivity?", ja: "マウス感度はどう設定する？", zh: "鼠标灵敏度该如何设置？", fr: "Comment régler la sensibilité de ma souris ?", es: "¿Cómo ajusto la sensibilidad del ratón?" },
+        a: { ko: "브라우저는 OS 감도를 따릅니다. 실제 게임과 같은 감도로 연습해야 전이가 잘 되며, 큰 움직임은 팔, 미세 조정은 손목을 쓰는 로우~미드 센스를 권장합니다.", en: "The browser uses your OS sensitivity. Practice at the same sens you play at for transfer, and prefer a low-to-mid sens — big moves from the arm, micro-corrections from the wrist.", ja: "ブラウザはOSの感度に従います。実際のゲームと同じ感度で練習すると転移しやすく、大きな動きは腕・微調整は手首を使うロー〜ミッド感度が有効です。", zh: "浏览器沿用系统灵敏度。用与实战相同的灵敏度练习迁移最好，建议中低灵敏度——大动作用手臂、微调用手腕。", fr: "Le navigateur suit la sensibilité de l'OS. Entraînez-vous à la même sensibilité qu'en jeu, de préférence basse à moyenne — bras pour les grands gestes, poignet pour les corrections.", es: "El navegador usa la sensibilidad del sistema. Practica con la misma sens que juegas para transferir, y prefiere una sens baja-media: brazo para gestos grandes, muñeca para correcciones." },
+      },
+      {
+        q: { ko: "모바일에서도 되나요?", en: "Does it work on mobile?", ja: "モバイルでも動きますか？", zh: "手机上能用吗？", fr: "Ça marche sur mobile ?", es: "¿Funciona en el móvil?" },
+        a: { ko: "네, 터치를 지원합니다. 다만 트래킹 모드는 손가락이 타깃을 가리기 쉬워 데스크탑 마우스가 유리합니다.", en: "Yes, touch is supported. Note that Tracking is easier on desktop since your finger can cover the target on a phone.", ja: "はい、タッチ対応です。ただしトラッキングは指で的が隠れやすく、デスクトップのマウスが有利です。", zh: "支持触摸。不过跟踪模式手指容易挡住目标，桌面鼠标更有优势。", fr: "Oui, le tactile est pris en charge. Le Tracking reste plus facile sur ordinateur, le doigt pouvant masquer la cible.", es: "Sí, admite táctil. El modo Tracking va mejor en ordenador, ya que el dedo puede tapar la diana en el móvil." },
+      },
+      {
+        q: { ko: "기록은 저장되나요?", en: "Are my scores saved?", ja: "記録は保存されますか？", zh: "成绩会保存吗？", fr: "Mes scores sont-ils enregistrés ?", es: "¿Se guardan mis puntuaciones?" },
+        a: { ko: "모드·난이도별 최고 점수가 브라우저(localStorage)에 저장됩니다. 계정은 필요 없으며, 브라우저 데이터를 지우면 초기화됩니다.", en: "Your best score per mode and difficulty is stored in the browser (localStorage). No account is needed; clearing browser data resets it.", ja: "モード・難易度別のベストがブラウザ(localStorage)に保存されます。アカウント不要で、ブラウザデータを消すとリセットされます。", zh: "各模式与难度的最佳成绩保存在浏览器(localStorage)。无需账号；清除浏览器数据会重置。", fr: "Votre meilleur score par mode et difficulté est stocké dans le navigateur (localStorage). Aucun compte requis ; effacer les données le réinitialise.", es: "Tu mejor puntuación por modo y dificultad se guarda en el navegador (localStorage). No requiere cuenta; borrar los datos la reinicia." },
+      },
+    ],
   },
   "dice-roller": {
     origin: { ko: "주사위는 기원전 3000년 메소포타미아 유적에서도 발견되는 가장 오래된 게임 도구입니다.", en: "Dice are humanity's oldest gaming tool, found in Mesopotamian sites from 3000 BC.", ja: "サイコロは紀元前3000年のメソポタミア遺跡でも見つかる最古のゲーム道具です。", zh: "骰子是人类最古老的游戏用具，公元前3000年的美索不达米亚遗址中已有发现。", fr: "Les dés sont le plus ancien outil de jeu, retrouvés dès 3000 av. J.-C.", es: "Los dados son la herramienta de juego más antigua, hallada desde el 3000 a. C." },
