@@ -92,7 +92,7 @@ def main() -> None:
     orphans = [
         k for k in pages
         if inbound[k] == 0
-        and re.match(r"^/(en|ko|ja|zh|cn|fr|es)/.+", k)
+        and re.match(r"^/(en|ko|ja|zh|fr|es)/.+", k)
         and not k.endswith(("/404",))
     ]
 
