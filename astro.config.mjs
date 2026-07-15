@@ -41,8 +41,6 @@ export default defineConfig({
         if (segs.length === 2 && BRIDGE_SLUGS.has(segs[1])) return false;
         return true;
       },
-      // Set lastmod to today's build date
-      lastmod: new Date(),
       // Use serialize for per-URL priority and changefreq
       serialize: (item) => {
         const url = new URL(item.url);

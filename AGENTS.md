@@ -24,13 +24,16 @@ this repo.
   (`GameContainer`, `PlayingCard`, `Die`, …) — reuse these instead of building bespoke
   chrome per game.
 - **Personal records**: `src/lib/games/records.ts` is the single localStorage module for
-  player history. Three independent stores, each with its own key (never reuse or
+  player history. Four independent stores, each with its own key (never reuse or
   repurpose an existing key — that discards real user data):
   - `GameRecord` (`w/l/d`) under `oiyo:game-records:v1` — win/loss/draw, used by the 9
     vs-AI board games plus Solitaire/FreeCell.
   - `BestRecord` (`value` + `unit: "score"|"seconds"`) under `oiyo:game-bests:v1` —
     high score or best time (Minesweeper, Sudoku, 2048, Snake, Puzzle15).
   - `StreakStats` under `oiyo:game-streaks:v1` — daily-puzzle win streak (Wordle).
+  - `DailyStreak` under `oiyo:game-daily-streaks:v1` — calendar-day solve streaks for
+    deterministic daily modes such as Kurodoko and Tents & Trees. Same-day repeats are
+    no-ops and missed days reset only the current streak, not the personal best.
   The arcade card win-rate badge on the homepage (`src/pages/[...lang]/index.astro`)
   reads the `GameRecord` store directly by `data-game` slug; keep that shape stable.
   A few games (Minesweeper/2048/Snake/Puzzle15) still carry a legacy per-game
@@ -40,9 +43,9 @@ this repo.
   (chess, checkers, janggi, reversi, connect-four, gomoku, kingdomino, mahjong, dominoes).
 - **Routing**: `src/pages/[...lang]/<slug>.astro` — one static route per game, no dynamic
   content collection.
-- **No test runner**: this repo has no Jest/Vitest/Playwright config. Verification is
-  build + type-check + the audit scripts below. Don't propose adding a test framework
-  without asking — that's a scope decision for Athena, not an implicit fix.
+- **Vitest logic tests**: `npm run test -- --run` covers pure game engines, seeded daily
+  helpers, and localStorage record contracts. Browser interaction still requires build,
+  audits, and targeted manual review because there is no Playwright suite.
 
 ## Known drift (flagged, not fixed here)
 
@@ -71,19 +74,20 @@ Commands that actually exist in `package.json` — don't invent others:
 npm run build            # astro build (NODE_OPTIONS raised for the 3D/canvas games)
 npm run type-check       # astro check
 npm run lint              # alias of type-check
+npm run test -- --run     # Vitest game logic + records regression suite
 npm run validate:i18n     # scripts/audit-i18n.mjs
 npm run audit:localization
 npm run audit:seo
 npm run verify:harness    # inherited blog file-existence check (see "Known drift" above)
 ```
 
-For a records/localStorage change, `npm run build` + `type-check` plus manual code
-review of the read/write paths is the whole verification loop — there is no
-localStorage-mocking test harness to run.
+For a records/localStorage change, run the Vitest suite as well as build + type-check.
+`src/lib/games/records.test.ts` supplies an in-memory Storage mock so persistence,
+duplicate-day, missed-day, and per-game isolation contracts are executable.
 
 ## Definition of Done
 
-- `npm run build` and `npm run type-check` pass.
+- `npm run build`, `npm run type-check`, and `npm run test -- --run` pass.
 - New/changed `localStorage` keys never collide with or reshape an existing key's data —
   existing players' win/loss records and personal bests must survive the change.
 - Every user-facing string is present for all 6 locales (`ko en ja zh fr es`); no bare

@@ -3,32 +3,28 @@ import path from "node:path";
 
 const root = process.cwd();
 const dist = path.join(root, "dist");
-const siteUrl = "https://blog.oiyo.net";
-const requiredSitemaps = [
-  "sitemap-index.xml",
-  "sitemap-0.xml",
-  "sitemap-1.xml",
-  "sitemap-2.xml",
-];
+const siteUrl = "https://game.oiyo.net";
 
 const failures = [];
 
 if (!fs.existsSync(dist)) {
   failures.push("dist directory is missing; run npm run build first");
 } else {
-  for (const file of requiredSitemaps) {
-    if (!fs.existsSync(path.join(dist, file))) {
-      failures.push(`missing ${file}`);
-    }
-  }
-
   const sitemapIndex = path.join(dist, "sitemap-index.xml");
-  if (fs.existsSync(sitemapIndex)) {
+  if (!fs.existsSync(sitemapIndex)) {
+    failures.push("missing sitemap-index.xml");
+  } else {
     const indexXml = fs.readFileSync(sitemapIndex, "utf8");
-    for (const file of requiredSitemaps.filter((file) => file !== "sitemap-index.xml")) {
-      if (!indexXml.includes(`${siteUrl}/${file}`)) {
-        failures.push(`sitemap-index.xml does not reference ${file}`);
+    const shardUrls = [...indexXml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]);
+    if (!shardUrls.length) failures.push("sitemap-index.xml has no sitemap shards");
+    for (const shardUrl of shardUrls) {
+      const parsed = new URL(shardUrl);
+      if (parsed.origin !== siteUrl) {
+        failures.push(`sitemap-index.xml references a foreign host: ${shardUrl}`);
+        continue;
       }
+      const shard = parsed.pathname.replace(/^\//, "");
+      if (!fs.existsSync(path.join(dist, shard))) failures.push(`missing referenced sitemap shard: ${shard}`);
     }
   }
 }
@@ -54,12 +50,11 @@ for (const file of listHtmlFiles(dist)) {
   const rel = path.relative(dist, file);
   const html = fs.readFileSync(file, "utf8");
 
-  // Bridge stubs are noindex and canonicalize cross-domain to the family
-  // canonical host (oiyo.net / blog.oiyo.net) — any family canonical is valid there.
+  // Bridge stubs are noindex and may canonicalize cross-domain to a family host.
   const isNoindex = /<meta name="robots" content="noindex/.test(html);
   const canonicalRe = isNoindex
-    ? /<link rel="canonical" href="https:\/\/(blog\.|wiki\.)?oiyo\.net\//
-    : /<link rel="canonical" href="https:\/\/blog\.oiyo\.net\//;
+    ? /<link rel="canonical" href="https:\/\/([a-z]+\.)?oiyo\.net\//
+    : /<link rel="canonical" href="https:\/\/game\.oiyo\.net\//;
   if (!canonicalRe.test(html)) {
     failures.push(`${rel}: missing canonical link`);
   }
