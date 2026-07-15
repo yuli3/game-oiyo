@@ -145,3 +145,76 @@ export function validateTents(tents: Pos[], puzzle: TentsPuzzle): TentsValidatio
   const complete = exact && hasPerfectMatching(tents, trees);
   return { ok: true, complete, error: null };
 }
+
+/**
+ * Count valid solutions up to `limit`.
+ *
+ * Daily boards use this as a generation gate: a published logic puzzle must
+ * have exactly one solution, not merely a known generating layout. Candidate
+ * cells are restricted to cells beside a tree and the search prunes touching
+ * tents and exceeded row/column hints, keeping the 5x5/6x6 boards inexpensive.
+ */
+export function countTentsSolutions(puzzle: TentsPuzzle, limit = 2): number {
+  if (limit <= 0) return 0;
+  const { size, trees, rowHints, colHints } = puzzle;
+  const target = rowHints.reduce((sum, value) => sum + value, 0);
+  if (target !== colHints.reduce((sum, value) => sum + value, 0)) return 0;
+
+  const treeKeys = new Set(trees.map(([r, c]) => `${r}:${c}`));
+  const candidates: Pos[] = [];
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      if (treeKeys.has(`${r}:${c}`)) continue;
+      if (trees.some(([tr, tc]) => Math.abs(tr - r) + Math.abs(tc - c) === 1)) {
+        candidates.push([r, c]);
+      }
+    }
+  }
+
+  const selected: Pos[] = [];
+  const rowCount = Array(size).fill(0);
+  const colCount = Array(size).fill(0);
+  let solutions = 0;
+
+  const search = (start: number): void => {
+    if (solutions >= limit) return;
+    if (selected.length === target) {
+      if (validateTents(selected, puzzle).complete) solutions++;
+      return;
+    }
+    const needed = target - selected.length;
+    if (candidates.length - start < needed) return;
+
+    for (let i = start; i <= candidates.length - needed; i++) {
+      const [r, c] = candidates[i];
+      if (rowCount[r] >= rowHints[r] || colCount[c] >= colHints[c]) continue;
+      if (selected.some(([sr, sc]) => Math.abs(sr - r) <= 1 && Math.abs(sc - c) <= 1)) continue;
+
+      selected.push(candidates[i]);
+      rowCount[r]++;
+      colCount[c]++;
+      search(i + 1);
+      colCount[c]--;
+      rowCount[r]--;
+      selected.pop();
+      if (solutions >= limit) return;
+    }
+  };
+
+  search(0);
+  return solutions;
+}
+
+/** Generate a deterministic, uniquely solvable puzzle from the supplied RNG. */
+export function generateUniqueTents(
+  size: number,
+  pairs: number,
+  rng: () => number = Math.random,
+  maxAttempts = 256,
+): { puzzle: TentsPuzzle; solution: Pos[] } {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const generated = generateTents(size, pairs, rng);
+    if (countTentsSolutions(generated.puzzle, 2) === 1) return generated;
+  }
+  throw new Error(`Unable to generate a unique ${size}x${size} Tents & Trees puzzle after ${maxAttempts} attempts`);
+}

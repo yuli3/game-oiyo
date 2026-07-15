@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { dayIndex, mulberry32, previousDayKey, shuffle, todayKey } from '../../lib/games/daily';
 import { getDailyStreak, recordDailyWin, type DailyStreak } from '../../lib/games/records';
@@ -160,6 +160,15 @@ const COPY = {
     es: { title: 'Kurodoko', subtitle: 'Nikoli Logic', desc: 'Sombrea casillas para que cada número vea exactamente esa cantidad de blancas (incluida ella). Las negras no se tocan; las blancas quedan conectadas.', daily: '📅 Puzle diario', easy: 'Fácil 5×5', medium: 'Normal 6×6', hard: 'Difícil 7×7', win: '¡Deducción perfecta!', errNumber: 'Una pista numérica está rota', errAdjacent: 'Hay negras juntas', errDisconnected: 'Las blancas están separadas', moves: 'Movs', streak: 'Racha', best: 'Récord', doneToday: 'Hecho hoy ✓' },
 } as const;
 
+const A11Y_COPY = {
+    ko: { subtitle: '니코리 논리 퍼즐', reset: '다시 시작', row: '행', column: '열', clue: '숫자 단서', black: '검은 칸', white: '흰 칸' },
+    en: { subtitle: 'Nikoli logic puzzle', reset: 'Reset', row: 'Row', column: 'Column', clue: 'Number clue', black: 'Black cell', white: 'White cell' },
+    ja: { subtitle: 'ニコリ論理パズル', reset: 'やり直す', row: '行', column: '列', clue: '数字ヒント', black: '黒マス', white: '白マス' },
+    zh: { subtitle: 'Nikoli 逻辑谜题', reset: '重新开始', row: '行', column: '列', clue: '数字提示', black: '黑格', white: '白格' },
+    fr: { subtitle: 'Puzzle logique Nikoli', reset: 'Recommencer', row: 'Ligne', column: 'Colonne', clue: 'Indice numérique', black: 'Case noire', white: 'Case blanche' },
+    es: { subtitle: 'Puzle lógico Nikoli', reset: 'Reiniciar', row: 'Fila', column: 'Columna', clue: 'Pista numérica', black: 'Casilla negra', white: 'Casilla blanca' },
+} as const;
+
 // Daily puzzle: same board for everyone on the same calendar day (medium 6×6).
 const DAILY_GAME_ID = 'kurodoko';
 const DAILY_DIFFICULTY: Difficulty = 'medium';
@@ -169,6 +178,7 @@ function generateDailyKurodoko() {
 
 const Kurodoko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const t = COPY[(locale as keyof typeof COPY)] ?? COPY.en;
+    const a11y = A11Y_COPY[(locale as keyof typeof A11Y_COPY)] ?? A11Y_COPY.en;
 
     const [mode, setMode] = useState<'daily' | 'free'>('daily');
     const [difficulty, setDifficulty] = useState<Difficulty>(DAILY_DIFFICULTY);
@@ -178,6 +188,8 @@ const Kurodoko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [validation, setValidation] = useState<Validation>({ ok: true, complete: false, error: null });
     const [streak, setStreak] = useState<DailyStreak | null>(null);
     const [dailyDate, setDailyDate] = useState(() => todayKey());
+    const [activeCell, setActiveCell] = useState(0);
+    const cellRefs = useRef<Array<HTMLButtonElement | HTMLDivElement | null>>([]);
 
     useEffect(() => {
         const today = todayKey();
@@ -194,6 +206,7 @@ const Kurodoko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         setBoard(p.map((row) => row.map(() => 0 as Cell)));
         setMoves(0);
         setValidation({ ok: true, complete: false, error: null });
+        setActiveCell(0);
     }, []);
 
     const toggle = (r: number, c: number) => {
@@ -219,60 +232,86 @@ const Kurodoko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
     const solvedToday = streak?.lastWinDate === todayKey();
 
+    const handleGridKeyDown = (event: React.KeyboardEvent, index: number) => {
+        const row = Math.floor(index / size);
+        const column = index % size;
+        let next = index;
+        if (event.key === 'ArrowUp') next = Math.max(0, row - 1) * size + column;
+        else if (event.key === 'ArrowDown') next = Math.min(size - 1, row + 1) * size + column;
+        else if (event.key === 'ArrowLeft') next = row * size + Math.max(0, column - 1);
+        else if (event.key === 'ArrowRight') next = row * size + Math.min(size - 1, column + 1);
+        else if (event.key === 'Home') next = row * size;
+        else if (event.key === 'End') next = row * size + size - 1;
+        else return;
+        event.preventDefault();
+        setActiveCell(next);
+        cellRefs.current[next]?.focus();
+    };
+
     return (
-        <GameContainer title={t.title} subtitle={t.subtitle} onReset={() => newPuzzle(mode === 'daily' ? 'daily' : difficulty)}>
+        <GameContainer title={t.title} subtitle={a11y.subtitle} resetLabel={a11y.reset} onReset={() => newPuzzle(mode === 'daily' ? 'daily' : difficulty)}>
             <p className="text-xs text-muted-foreground mb-4 leading-relaxed">{t.desc}</p>
 
             <div className="mb-4 flex flex-wrap items-center gap-2">
                 <div className="inline-flex flex-wrap gap-1">
                     <button onClick={() => newPuzzle('daily')}
                         aria-pressed={mode === 'daily'}
-                        className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-colors ${mode === 'daily' ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
+                        className={`min-h-11 px-3 py-2 rounded-lg text-xs font-bold border transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${mode === 'daily' ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
                         {t.daily}
                     </button>
                     {(['easy', 'medium', 'hard'] as Difficulty[]).map((d) => (
                         <button key={d} onClick={() => newPuzzle(d)}
                             aria-pressed={mode === 'free' && difficulty === d}
-                            className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-colors ${mode === 'free' && difficulty === d ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
+                            className={`min-h-11 px-3 py-2 rounded-lg text-xs font-bold border transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${mode === 'free' && difficulty === d ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
                             {t[d]}
                         </button>
                     ))}
                 </div>
-                <span className="ml-auto text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{t.moves} {moves}</span>
+                <span className="ml-auto text-xs font-bold text-muted-foreground uppercase tracking-widest">{t.moves} {moves}</span>
             </div>
 
             {mode === 'daily' && streak && (streak.played > 0 || solvedToday) && (
-                <p className="mb-3 text-center text-[11px] font-bold text-muted-foreground">
+                <p className="mb-3 text-center text-xs font-bold text-muted-foreground">
                     🔥 {t.streak} {streak.currentStreak} · {t.best} {streak.maxStreak}
                     {solvedToday && <span className="ml-2 text-success">{t.doneToday}</span>}
                 </p>
             )}
 
             <div
-                className={`grid gap-1 p-2 bg-muted/30 rounded-xl border border-border mx-auto max-w-sm ${validation.complete ? 'ring-2 ring-success' : ''}`}
+                className={`grid gap-0.5 sm:gap-1 p-1 sm:p-2 bg-muted/30 rounded-xl border border-border mx-auto max-w-sm overflow-x-auto ${validation.complete ? 'ring-2 ring-success' : ''}`}
                 style={{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` }}
-                role="grid" aria-label={t.title}
+                role="grid" aria-label={t.title} aria-rowcount={size} aria-colcount={size}
             >
-                {board.map((row, r) => row.map((cell, c) => {
-                    const n = puzzle[r][c];
-                    return (
-                        <button
-                            key={`${r}-${c}`}
-                            onClick={() => toggle(r, c)}
-                            disabled={n !== null || validation.complete}
-                            aria-label={n !== null ? String(n) : cell === 1 ? 'black' : 'white'}
-                            className={`aspect-square flex items-center justify-center rounded-md font-black ${cellCls} border transition-all ${
-                                n !== null
-                                    ? 'bg-card border-2 border-foreground/60 text-foreground cursor-default'
-                                    : cell === 1
-                                        ? 'bg-foreground border-foreground'
-                                        : 'bg-background border-border hover:bg-muted active:scale-95'
-                            }`}
-                        >
-                            {n}
-                        </button>
-                    );
-                }))}
+                {board.map((row, r) => (
+                    <div key={`row-${r}`} role="row" className="contents">
+                        {row.map((cell, c) => {
+                            const n = puzzle[r][c];
+                            const index = r * size + c;
+                            const position = `${a11y.row} ${r + 1}, ${a11y.column} ${c + 1}`;
+                            const common = `min-h-11 min-w-11 aspect-square flex items-center justify-center rounded-md font-black ${cellCls} border transition-all motion-reduce:transition-none motion-reduce:transform-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset`;
+                            if (n !== null) {
+                                return (
+                                    <div key={`${r}-${c}`} ref={(node) => { cellRefs.current[index] = node; }} role="gridcell"
+                                        tabIndex={activeCell === index ? 0 : -1} aria-rowindex={r + 1} aria-colindex={c + 1}
+                                        aria-label={`${position}: ${a11y.clue} ${n}`} onFocus={() => setActiveCell(index)}
+                                        onKeyDown={(event) => handleGridKeyDown(event, index)}
+                                        className={`${common} bg-card border-2 border-foreground/60 text-foreground cursor-default`}>
+                                        {n}
+                                    </div>
+                                );
+                            }
+                            return (
+                                <button key={`${r}-${c}`} ref={(node) => { cellRefs.current[index] = node; }} type="button" role="gridcell"
+                                    onClick={() => { setActiveCell(index); toggle(r, c); }} aria-disabled={validation.complete}
+                                    tabIndex={activeCell === index ? 0 : -1} aria-rowindex={r + 1} aria-colindex={c + 1}
+                                    aria-label={`${position}: ${cell === 1 ? a11y.black : a11y.white}`}
+                                    onFocus={() => setActiveCell(index)} onKeyDown={(event) => handleGridKeyDown(event, index)}
+                                    className={`${common} ${cell === 1 ? 'bg-foreground border-foreground' : 'bg-background border-border hover:bg-muted active:scale-95'}`}>
+                                </button>
+                            );
+                        })}
+                    </div>
+                ))}
             </div>
 
             <div className="mt-4 min-h-[2rem] text-center" role="status" aria-live="polite">

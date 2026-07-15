@@ -113,7 +113,7 @@ export const Die: React.FC<{ type: DieType; value?: number | null; rolling?: boo
   );
 };
 
-export const GameContainer: React.FC<{ title: string; subtitle?: string; onReset?: () => void; children: React.ReactNode }> = ({ title, subtitle, onReset, children }) => {
+export const GameContainer: React.FC<{ title: string; subtitle?: string; resetLabel?: string; onReset?: () => void; children: React.ReactNode }> = ({ title, subtitle, resetLabel = 'RESET', onReset, children }) => {
     return (
         <div className="not-prose my-12 p-6 sm:p-10 bg-card border border-border rounded-4xl shadow-sm max-w-2xl mx-auto">
             <div className="flex justify-between items-end mb-8">
@@ -122,8 +122,8 @@ export const GameContainer: React.FC<{ title: string; subtitle?: string; onReset
                     {subtitle && <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em] mt-1">{subtitle}</p>}
                 </div>
                 {onReset && (
-                    <button onClick={onReset} className="px-4 py-2 bg-muted hover:bg-accent text-accent-foreground rounded-xl text-xs font-bold transition-all border border-border">
-                        RESET
+                    <button onClick={onReset} className={`${resetLabel === 'RESET' ? 'px-4 py-2' : 'min-h-11 px-4 py-2 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2'} bg-muted hover:bg-accent text-accent-foreground rounded-xl text-xs font-bold transition-all border border-border`}>
+                        {resetLabel}
                     </button>
                 )}
             </div>

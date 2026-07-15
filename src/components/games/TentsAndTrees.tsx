@@ -1,8 +1,8 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { dayIndex, mulberry32, previousDayKey, todayKey } from '../../lib/games/daily';
 import { getDailyStreak, recordDailyWin, type DailyStreak } from '../../lib/games/records';
-import { generateTents, validateTents, type Pos, type TentsPuzzle, type TentsValidation } from '../../lib/games/tents';
+import { generateTents, generateUniqueTents, validateTents, type Pos, type TentsPuzzle, type TentsValidation } from '../../lib/games/tents';
 
 // ─── Tents & Trees — logic puzzle with generated boards ─────────────────────
 // Every tree pairs with one tent on an orthogonally adjacent cell; tents never
@@ -17,7 +17,7 @@ const DAILY = { size: 6, pairs: 7 };
 const DAILY_GAME_ID = 'tents-and-trees';
 
 function generateDailyTents() {
-    return generateTents(DAILY.size, DAILY.pairs, mulberry32(0x74656e ^ Math.imul(dayIndex() + 1, 2654435761)));
+    return generateUniqueTents(DAILY.size, DAILY.pairs, mulberry32(0x74656e ^ Math.imul(dayIndex() + 1, 2654435761)));
 }
 
 const COPY = {
@@ -29,8 +29,18 @@ const COPY = {
     es: { title: 'Tiendas y árboles', desc: '¡Cada árbol necesita una tienda!', note: 'Las tiendas van junto a un árbol (arriba/abajo/izquierda/derecha) y nunca se tocan entre sí, ni en diagonal. Los números cuentan las tiendas de cada fila/columna.', daily: '📅 Puzle diario', free: 'Libre 5×5', win: '¡Listos para acampar!', next: 'Siguiente puzle', errAdjacent: 'Dos tiendas se tocan', errOrphan: 'Hay una tienda sin árbol al lado', errCount: 'Se superó un número de fila/columna', streak: 'Racha', best: 'Récord', doneToday: 'Hecho hoy ✓' },
 } as const;
 
+const A11Y_COPY = {
+    ko: { subtitle: '텐트 배치 논리 퍼즐', reset: '다시 시작', row: '행', column: '열', rowHint: '행 텐트 수', columnHint: '열 텐트 수', tree: '나무', empty: '빈 칸', tent: '텐트', grass: '잔디 표시' },
+    en: { subtitle: 'Tent placement logic puzzle', reset: 'Reset', row: 'Row', column: 'Column', rowHint: 'Row tent count', columnHint: 'Column tent count', tree: 'Tree', empty: 'Empty cell', tent: 'Tent', grass: 'Grass mark' },
+    ja: { subtitle: 'テント配置論理パズル', reset: 'やり直す', row: '行', column: '列', rowHint: '行のテント数', columnHint: '列のテント数', tree: '木', empty: '空きマス', tent: 'テント', grass: '草印' },
+    zh: { subtitle: '帐篷配置逻辑谜题', reset: '重新开始', row: '行', column: '列', rowHint: '行帐篷数', columnHint: '列帐篷数', tree: '树', empty: '空格', tent: '帐篷', grass: '草地标记' },
+    fr: { subtitle: 'Puzzle logique de placement', reset: 'Recommencer', row: 'Ligne', column: 'Colonne', rowHint: 'Tentes de la ligne', columnHint: 'Tentes de la colonne', tree: 'Arbre', empty: 'Case vide', tent: 'Tente', grass: 'Marque herbe' },
+    es: { subtitle: 'Puzle lógico de colocación', reset: 'Reiniciar', row: 'Fila', column: 'Columna', rowHint: 'Tiendas de la fila', columnHint: 'Tiendas de la columna', tree: 'Árbol', empty: 'Casilla vacía', tent: 'Tienda', grass: 'Marca de hierba' },
+} as const;
+
 const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
+    const a11y = A11Y_COPY[locale as keyof typeof A11Y_COPY] ?? A11Y_COPY.en;
 
     const [mode, setMode] = useState<'daily' | 'free'>('daily');
     const [puzzle, setPuzzle] = useState<TentsPuzzle>(() => generateDailyTents().puzzle);
@@ -38,6 +48,8 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [validation, setValidation] = useState<TentsValidation>({ ok: true, complete: false, error: null });
     const [streak, setStreak] = useState<DailyStreak | null>(null);
     const [dailyDate, setDailyDate] = useState(() => todayKey());
+    const [activeCell, setActiveCell] = useState(0);
+    const cellRefs = useRef<Array<HTMLButtonElement | HTMLDivElement | null>>([]);
 
     useEffect(() => {
         const today = todayKey();
@@ -51,6 +63,7 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         setPuzzle(p);
         setMarks(Array.from({ length: p.size }, () => Array(p.size).fill('empty' as CellMark)));
         setValidation({ ok: true, complete: false, error: null });
+        setActiveCell(0);
     }, []);
 
     const isTree = (r: number, c: number) => puzzle.trees.some(([tr, tc]) => tr === r && tc === c);
@@ -79,59 +92,94 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const solvedToday = streak?.lastWinDate === todayKey();
     const { size } = puzzle;
 
+    const handleGridKeyDown = (event: React.KeyboardEvent, index: number) => {
+        const row = Math.floor(index / size);
+        const column = index % size;
+        let next = index;
+        if (event.key === 'ArrowUp') next = Math.max(0, row - 1) * size + column;
+        else if (event.key === 'ArrowDown') next = Math.min(size - 1, row + 1) * size + column;
+        else if (event.key === 'ArrowLeft') next = row * size + Math.max(0, column - 1);
+        else if (event.key === 'ArrowRight') next = row * size + Math.min(size - 1, column + 1);
+        else if (event.key === 'Home') next = row * size;
+        else if (event.key === 'End') next = row * size + size - 1;
+        else return;
+        event.preventDefault();
+        setActiveCell(next);
+        cellRefs.current[next]?.focus();
+    };
+
     return (
-        <GameContainer title={t.title} subtitle="Logical Deployment" onReset={() => newPuzzle(mode)}>
+        <GameContainer title={t.title} subtitle={a11y.subtitle} resetLabel={a11y.reset} onReset={() => newPuzzle(mode)}>
             <div className="flex flex-col items-center">
                 <p className="text-sm font-medium text-muted-foreground mb-2 text-center leading-relaxed">{t.desc}</p>
-                <p className="text-[10px] text-muted-foreground/70 mb-4 text-center max-w-xs leading-relaxed">{t.note}</p>
+                <p className="text-xs text-muted-foreground/80 mb-4 text-center max-w-xs leading-relaxed">{t.note}</p>
 
                 <div className="mb-4 inline-flex flex-wrap justify-center gap-1">
                     {(['daily', 'free'] as const).map((m) => (
                         <button key={m} onClick={() => newPuzzle(m)}
                             aria-pressed={mode === m}
-                            className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-colors ${mode === m ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
+                            className={`min-h-11 px-3 py-2 rounded-lg text-xs font-bold border transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${mode === m ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
                             {t[m]}
                         </button>
                     ))}
                 </div>
 
                 {mode === 'daily' && streak && (streak.played > 0 || solvedToday) && (
-                    <p className="mb-3 text-center text-[11px] font-bold text-muted-foreground">
+                    <p className="mb-3 text-center text-xs font-bold text-muted-foreground">
                         🔥 {t.streak} {streak.currentStreak} · {t.best} {streak.maxStreak}
                         {solvedToday && <span className="ml-2 text-success">{t.doneToday}</span>}
                     </p>
                 )}
 
-                <div className="bg-muted/30 p-3 rounded-3xl border border-border shadow-inner w-full max-w-sm">
-                    <div className="grid gap-1" style={{ gridTemplateColumns: `1.25rem repeat(${size}, minmax(0, 1fr))` }}>
-                        <div />
-                        {puzzle.colHints.map((h, i) => (
-                            <div key={`ch-${i}`} className="flex items-center justify-center text-xs font-black text-primary">{h}</div>
-                        ))}
+                <div className="bg-muted/30 p-1 sm:p-3 rounded-2xl sm:rounded-3xl border border-border shadow-inner w-full max-w-sm overflow-x-auto">
+                    <div className="grid gap-0.5 sm:gap-1" role="grid" aria-label={t.title} aria-rowcount={size + 1} aria-colcount={size + 1}
+                        style={{ gridTemplateColumns: `1.5rem repeat(${size}, minmax(2.75rem, 1fr))` }}>
+                        <div role="row" aria-rowindex={1} className="contents">
+                        <div role="columnheader" aria-rowindex={1} aria-colindex={1} aria-label={`${a11y.row} / ${a11y.column}`} />
+                            {puzzle.colHints.map((h, i) => (
+                                <div key={`ch-${i}`} role="columnheader" aria-colindex={i + 2} aria-label={`${a11y.column} ${i + 1}, ${a11y.columnHint} ${h}`}
+                                    className="flex items-center justify-center text-sm font-black text-primary">{h}</div>
+                            ))}
+                        </div>
                         {marks.map((row, r) => (
-                            <React.Fragment key={`r-${r}`}>
-                                <div className="flex items-center justify-center text-xs font-black text-primary">{puzzle.rowHints[r]}</div>
+                            <div key={`r-${r}`} role="row" aria-rowindex={r + 2} className="contents">
+                                <div role="rowheader" aria-colindex={1} aria-label={`${a11y.row} ${r + 1}, ${a11y.rowHint} ${puzzle.rowHints[r]}`}
+                                    className="flex items-center justify-center text-sm font-black text-primary">{puzzle.rowHints[r]}</div>
                                 {row.map((mark, c) => {
                                     const tree = isTree(r, c);
+                                    const index = r * size + c;
+                                    const position = `${a11y.row} ${r + 1}, ${a11y.column} ${c + 1}`;
+                                    const common = 'min-h-11 min-w-11 aspect-square rounded-lg flex items-center justify-center transition-all motion-reduce:transition-none motion-reduce:transform-none border border-border/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset';
+                                    if (tree) {
+                                        return (
+                                            <div key={`${r}-${c}`} ref={(node) => { cellRefs.current[index] = node; }} role="gridcell"
+                                                tabIndex={activeCell === index ? 0 : -1} aria-rowindex={r + 2} aria-colindex={c + 2}
+                                                aria-label={`${position}: ${a11y.tree}`} onFocus={() => setActiveCell(index)}
+                                                onKeyDown={(event) => handleGridKeyDown(event, index)}
+                                                className={`${common} bg-emerald-100 text-emerald-700 cursor-default`}>
+                                                <span className="text-xl" aria-hidden="true">🌲</span>
+                                            </div>
+                                        );
+                                    }
                                     return (
                                         <button
                                             key={`${r}-${c}`}
-                                            onClick={() => handleCellClick(r, c)}
-                                            disabled={tree || validation.complete}
-                                            aria-label={tree ? 'tree' : mark}
-                                            className={`aspect-square rounded-lg flex items-center justify-center transition-all border border-border/40 ${
-                                                tree ? 'bg-emerald-100 text-emerald-700 cursor-default' :
+                                            ref={(node) => { cellRefs.current[index] = node; }} type="button" role="gridcell"
+                                            onClick={() => { setActiveCell(index); handleCellClick(r, c); }} aria-disabled={validation.complete}
+                                            tabIndex={activeCell === index ? 0 : -1} aria-rowindex={r + 2} aria-colindex={c + 2}
+                                            aria-label={`${position}: ${mark === 'tent' ? a11y.tent : mark === 'grass' ? a11y.grass : a11y.empty}`}
+                                            onFocus={() => setActiveCell(index)} onKeyDown={(event) => handleGridKeyDown(event, index)}
+                                            className={`${common} ${
                                                 mark === 'tent' ? 'bg-rose-100 text-rose-700 shadow-md -translate-y-0.5' :
                                                 mark === 'grass' ? 'bg-muted/50 text-muted-foreground/30' : 'bg-background hover:bg-muted/20 active:scale-95'
                                             }`}
                                         >
-                                            {tree && <span className="text-lg sm:text-xl">🌲</span>}
-                                            {!tree && mark === 'tent' && <span className="text-lg sm:text-xl">⛺</span>}
-                                            {!tree && mark === 'grass' && <div className="w-1.5 h-1.5 rounded-full bg-current" />}
+                                            {mark === 'tent' && <span className="text-xl" aria-hidden="true">⛺</span>}
+                                            {mark === 'grass' && <div className="w-2 h-2 rounded-full bg-current" aria-hidden="true" />}
                                         </button>
                                     );
                                 })}
-                            </React.Fragment>
+                            </div>
                         ))}
                     </div>
                 </div>

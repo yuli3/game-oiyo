@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { generateTents, validateTents, type TentsPuzzle } from "./tents";
+import { countTentsSolutions, generateTents, generateUniqueTents, validateTents, type TentsPuzzle } from "./tents";
+import { mulberry32 } from "./daily";
 
-// Hand-built 4×4 board with a known unique-enough solution:
+// Hand-built 4×4 board with a known unique solution:
 //   🌲 ⛺ .  .        trees at (0,0),(2,2)
 //   .  .  .  .        tents at (0,1),(2,3)
 //   .  .  🌲 ⛺
@@ -76,5 +77,30 @@ describe("generateTents", () => {
     const { puzzle, solution } = generateTents(6, 7);
     const treeSet = new Set(puzzle.trees.map(([r, c]) => `${r},${c}`));
     for (const [r, c] of solution) expect(treeSet.has(`${r},${c}`)).toBe(false);
+  });
+});
+
+describe("unique Tents & Trees generation", () => {
+  it("counts a known unique puzzle", () => {
+    expect(countTentsSolutions(PUZZLE, 2)).toBe(1);
+  });
+
+  it("stops at the requested limit for an ambiguous puzzle", () => {
+    const { puzzle } = generateTents(
+      6,
+      7,
+      mulberry32(0x74656e ^ Math.imul(903, 2654435761)),
+    );
+    expect(countTentsSolutions(puzzle, 2)).toBe(2);
+  });
+
+  it("is deterministic and uniquely solvable across representative daily seeds", () => {
+    for (let seed = 900; seed < 960; seed++) {
+      const a = generateUniqueTents(6, 7, mulberry32(seed));
+      const b = generateUniqueTents(6, 7, mulberry32(seed));
+      expect(a).toEqual(b);
+      expect(countTentsSolutions(a.puzzle, 2)).toBe(1);
+      expect(validateTents(a.solution, a.puzzle).complete).toBe(true);
+    }
   });
 });

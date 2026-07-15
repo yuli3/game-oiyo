@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { dayIndex, mulberry32, previousDayKey, shuffle, todayKey } from "./daily";
-import { generateTents, validateTents } from "./tents";
+import { countTentsSolutions, generateUniqueTents, validateTents } from "./tents";
 
 describe("daily: date helpers", () => {
   it("dayIndex counts days since 2024-01-01 at local midnight", () => {
@@ -47,15 +47,16 @@ describe("daily: seeded randomness", () => {
 });
 
 describe("daily: seeded puzzle generation is reproducible", () => {
-  it("generateTents yields the identical puzzle for the same seed", () => {
-    const p1 = generateTents(6, 7, mulberry32(123));
-    const p2 = generateTents(6, 7, mulberry32(123));
+  it("generateUniqueTents yields the identical puzzle for the same seed", () => {
+    const p1 = generateUniqueTents(6, 7, mulberry32(123));
+    const p2 = generateUniqueTents(6, 7, mulberry32(123));
     expect(p1).toEqual(p2);
+    expect(countTentsSolutions(p1.puzzle, 2)).toBe(1);
   });
 
   it("the generated solution actually solves the generated puzzle", () => {
     for (const seed of [1, 2, 3, 99, 20260716]) {
-      const { puzzle, solution } = generateTents(6, 7, mulberry32(seed));
+      const { puzzle, solution } = generateUniqueTents(6, 7, mulberry32(seed));
       const v = validateTents(solution, puzzle);
       expect(v).toEqual({ ok: true, complete: true, error: null });
     }
