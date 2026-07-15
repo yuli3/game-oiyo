@@ -66,6 +66,56 @@ export function recordBest(game: string, value: number, unit: "score" | "seconds
   return next;
 }
 
+// ─── Calendar-day streaks (daily puzzle modes) — separate store, date-aware ──────────────
+// Unlike StreakStats below (which counts consecutive *wins*), this counts consecutive
+// *calendar days* with a solve: skipping a day restarts the run, and solving the same
+// day twice is a no-op. `dateKey` is a local "YYYY-MM-DD" (see lib/games/daily.ts).
+export type DailyStreak = { played: number; currentStreak: number; maxStreak: number; lastWinDate: string | null };
+
+const DAILY_KEY = "oiyo:game-daily-streaks:v1";
+
+function readAllDailies(): Record<string, DailyStreak> {
+  if (typeof localStorage === "undefined") return {};
+  try {
+    return JSON.parse(localStorage.getItem(DAILY_KEY) || "{}");
+  } catch {
+    return {};
+  }
+}
+
+export function getDailyStreak(game: string, dateKey?: string, previousDateKey?: string): DailyStreak {
+  const stored = readAllDailies()[game] ?? { played: 0, currentStreak: 0, maxStreak: 0, lastWinDate: null };
+  if (
+    dateKey &&
+    previousDateKey &&
+    stored.lastWinDate !== dateKey &&
+    stored.lastWinDate !== previousDateKey
+  ) {
+    return { ...stored, currentStreak: 0 };
+  }
+  return stored;
+}
+
+export function recordDailyWin(game: string, dateKey: string, previousDateKey: string): DailyStreak {
+  const all = readAllDailies();
+  const cur = all[game] ?? { played: 0, currentStreak: 0, maxStreak: 0, lastWinDate: null };
+  if (cur.lastWinDate === dateKey) return cur; // already counted today
+  const nextStreak = cur.lastWinDate === previousDateKey ? cur.currentStreak + 1 : 1;
+  const next: DailyStreak = {
+    played: cur.played + 1,
+    currentStreak: nextStreak,
+    maxStreak: Math.max(cur.maxStreak, nextStreak),
+    lastWinDate: dateKey,
+  };
+  all[game] = next;
+  try {
+    localStorage.setItem(DAILY_KEY, JSON.stringify(all));
+  } catch {
+    /* quota/private mode — records are best-effort */
+  }
+  return next;
+}
+
 // ─── Streak stats (Wordle-style daily puzzles) — separate store, no score/time involved ──
 export type StreakStats = { played: number; won: number; currentStreak: number; maxStreak: number };
 

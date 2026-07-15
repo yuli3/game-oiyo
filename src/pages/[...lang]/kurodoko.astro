@@ -43,7 +43,7 @@ const m = meta[locale] ?? meta.en;
 
 <BaseLayout title={m.title} description={m.description}>
   <main class="mx-auto max-w-2xl px-4 py-8">
-    <KurodokoComp client:load locale={locale} />
+    <KurodokoComp client:only="react" locale={locale} />
     <GameGuide slug="kurodoko" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
   </main>
 </BaseLayout>

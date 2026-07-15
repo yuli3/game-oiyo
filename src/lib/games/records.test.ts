@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { getBest, getRecord, getStreak, recordBest, recordResult, recordStreak } from "./records";
+import { getBest, getDailyStreak, getRecord, getStreak, recordBest, recordDailyWin, recordResult, recordStreak } from "./records";
 
 // records.ts is localStorage-backed; provide a minimal in-memory Storage
 // polyfill so persistence across calls can actually be exercised in node.
@@ -105,5 +105,64 @@ describe("records: StreakStats (daily puzzles)", () => {
     recordStreak("wordle", false);
     recordStreak("wordle", true); // currentStreak back to 1, below the prior peak of 2
     expect(getStreak("wordle")).toEqual({ played: 4, won: 3, currentStreak: 1, maxStreak: 2 });
+  });
+});
+
+describe("records: DailyStreak (calendar-day solves)", () => {
+  it("defaults to an empty calendar streak", () => {
+    expect(getDailyStreak("kurodoko")).toEqual({
+      played: 0,
+      currentStreak: 0,
+      maxStreak: 0,
+      lastWinDate: null,
+    });
+  });
+
+  it("counts consecutive calendar days and ignores duplicate solves", () => {
+    expect(recordDailyWin("kurodoko", "2026-07-15", "2026-07-14")).toEqual({
+      played: 1,
+      currentStreak: 1,
+      maxStreak: 1,
+      lastWinDate: "2026-07-15",
+    });
+    expect(recordDailyWin("kurodoko", "2026-07-15", "2026-07-14")).toEqual({
+      played: 1,
+      currentStreak: 1,
+      maxStreak: 1,
+      lastWinDate: "2026-07-15",
+    });
+    expect(recordDailyWin("kurodoko", "2026-07-16", "2026-07-15")).toEqual({
+      played: 2,
+      currentStreak: 2,
+      maxStreak: 2,
+      lastWinDate: "2026-07-16",
+    });
+  });
+
+  it("restarts after a skipped day while preserving the best streak", () => {
+    recordDailyWin("tents-and-trees", "2026-07-14", "2026-07-13");
+    recordDailyWin("tents-and-trees", "2026-07-15", "2026-07-14");
+    expect(recordDailyWin("tents-and-trees", "2026-07-17", "2026-07-16")).toEqual({
+      played: 3,
+      currentStreak: 1,
+      maxStreak: 2,
+      lastWinDate: "2026-07-17",
+    });
+  });
+
+  it("shows a zero current streak on a later visit after a missed day", () => {
+    recordDailyWin("kurodoko", "2026-07-14", "2026-07-13");
+    recordDailyWin("kurodoko", "2026-07-15", "2026-07-14");
+    expect(getDailyStreak("kurodoko", "2026-07-17", "2026-07-16")).toEqual({
+      played: 2,
+      currentStreak: 0,
+      maxStreak: 2,
+      lastWinDate: "2026-07-15",
+    });
+  });
+
+  it("keeps each daily game independent", () => {
+    recordDailyWin("kurodoko", "2026-07-16", "2026-07-15");
+    expect(getDailyStreak("tents-and-trees").played).toBe(0);
   });
 });
