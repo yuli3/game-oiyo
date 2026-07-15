@@ -371,16 +371,16 @@ const WordleGame: React.FC<{ locale?: string }> = ({ locale = 'en' }) => {
       )}
 
       {/* Keyboard */}
-      <div className="flex flex-col items-center gap-2 w-full" aria-label="Keyboard">
+      <div className="flex flex-col items-center gap-1.5 w-full max-w-md" aria-label="Keyboard">
         {KEYBOARD_ROWS.map((row, ri) => (
-          <div key={ri} className="flex gap-1.5 justify-center">
+          <div key={ri} className="flex gap-1 sm:gap-1.5 w-full">
             {row.map(key => (
               <button
                 key={key}
                 onClick={() => handleKey(key)}
                 onMouseDown={(e) => e.preventDefault()} // keep focus off keys so physical Enter doesn't double-submit
                 aria-label={key === '⌫' ? 'Backspace' : key}
-                className={`h-14 rounded-lg border font-black text-xs sm:text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${key.length > 1 ? 'px-2 sm:px-3 text-[10px] sm:text-xs' : 'w-9 sm:w-10'} ${keyClass(key, usedKeys)}`}
+                className={`h-14 min-w-0 rounded-lg border font-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${key.length > 1 ? 'flex-[1.5] text-[10px] sm:text-xs' : 'flex-1 text-xs sm:text-sm'} ${keyClass(key, usedKeys)}`}
               >
                 {key}
               </button>
