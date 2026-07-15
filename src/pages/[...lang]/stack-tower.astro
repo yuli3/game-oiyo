@@ -1,0 +1,31 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import StackTower from "../../components/games/StackTower";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: { title: "스택 타워 — 무료 원탭 블록 쌓기 게임", description: "탭 타이밍으로 블록을 정확히 맞춰 높이 쌓는 원탭 아케이드 게임. 정중앙에 맞추면 퍼펙트 콤보. 점점 빨라지는 중독성 무료 모바일 게임." },
+  en: { title: "Stack Tower — Free One-Tap Block Stacking Game", description: "Time your taps to land blocks dead-centre and stack the tower high in this one-tap arcade game. Nail the centre for perfect combos. A free, addictive mobile game that keeps speeding up." },
+  ja: { title: "スタックタワー — 無料のワンタップ積み上げゲーム", description: "タップのタイミングでブロックを正確に合わせて高く積むワンタップアーケード。ど真ん中でパーフェクトコンボ。だんだん速くなる中毒性の無料モバイルゲーム。" },
+  fr: { title: "Stack Tower — Jeu d'empilement gratuit en un tap", description: "Synchronisez vos taps pour poser les blocs au centre et empiler la tour dans ce jeu d'arcade en un tap. Visez le centre pour des combos parfaits. Un jeu mobile gratuit et addictif." },
+  es: { title: "Stack Tower — Juego gratis de apilar en un toque", description: "Sincroniza tus toques para colocar los bloques al centro y apilar la torre en este juego arcade de un toque. Acierta el centro para combos perfectos. Un juego móvil gratuito y adictivo." },
+  zh: { title: "叠塔 — 免费单点叠方块游戏", description: "把握点击节奏，将方块精准对齐层层叠高的单点街机游戏。正中对齐即为完美连击。越来越快、令人上瘾的免费手机游戏。" },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <StackTower client:load locale={locale} />
+    <GameGuide slug="stack-tower" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
+  </main>
+</BaseLayout>
