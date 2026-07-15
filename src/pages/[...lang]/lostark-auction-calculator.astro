@@ -1,6 +1,10 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { LostArkAuctionCalc } from "../../features/games/LostArkTools";
+import ToolShell from "../../components/shared/_oiyo-shared/ToolShell.astro";
+import FaqAccordion from "../../components/shared/_oiyo-shared/FaqAccordion.astro";
+import { buildToolShell } from "../../lib/tool-shell";
+import { siteConfig } from "../../config/site.config";
 import { locales } from "../../lib/i18n";
 import type { Locale } from "../../lib/i18n";
 
@@ -10,7 +14,7 @@ export async function getStaticPaths() {
 const { locale } = Astro.props as { locale: Locale };
 
 const meta: Record<Locale, { title: string; description: string }> = {
-  ko: { title: "로스트아크 경매 계산기 — 군단장 레이드 적정 입찰가", description: "군단장 레이드 경매 아이템의 손익분기 입찰가를 즉시 계산합니다. 거래 수수료 5% 반영, 입찰 눈치싸움 없이 합리적인 상한선 확인." },
+  ko: { title: "로스트아크 경매 계산기 — 군단장 레이드 적정 입찰가", description: "군단장 레이드 경매 아이템의 손익분기 입찰가를 즉시 계산합니다. 거래소 수수료 5% 반영, 입찰 눈치싸움 없이 합리적인 상한선 확인." },
   en: { title: "Lost Ark Auction Calculator — Optimal Raid Bid", description: "Instantly calculate the break-even bid for Legion Raid auction items, with the 5% trade fee applied." },
   ja: { title: "ロストアーク オークション計算機 — 適正入札額", description: "軍団長レイドのオークションアイテムの損益分岐入札額を即計算。取引手数料5%反映。" },
   zh: { title: "命运方舟拍卖计算器 — 军团长副本合理出价", description: "即时计算军团长副本拍卖物品的盈亏平衡出价，已计入5%交易手续费。" },
@@ -18,14 +22,104 @@ const meta: Record<Locale, { title: string; description: string }> = {
   es: { title: "Calculadora de subastas Lost Ark — Puja óptima de raid", description: "Calcula al instante la puja de equilibrio de los objetos de subasta de raid, con la comisión del 5 % incluida." },
 };
 const m = meta[locale] ?? meta.en;
+
+const content = {
+  ko: {
+    eyebrow: "로스트아크 도구",
+    introTitle: "경매 계산기란?",
+    intro: "군단장 레이드에서 경매(입찰)로 나온 아이템의 적정 입찰가를 계산합니다. 거래소 수수료 5%를 반영해, 파티원 전원이 같은 이득을 보는 '균등 분배 입찰가'와 낙찰자가 최대 이득을 얻는 '최대 이득 입찰가'를 즉시 보여줍니다. 버스비·본1부3 분배와는 별개의 도구입니다.",
+    howToTitle: "사용 방법",
+    steps: ["경매에 나온 아이템의 예상 판매가(골드)를 입력합니다.", "파티 인원을 확인합니다(보통 4인 또는 8인).", "'균등 분배 입찰가'와 '최대 이득 입찰가' 결과를 확인하고 상한선으로 삼습니다."],
+    highlightsTitle: "주요 특징",
+    highlights: [
+      { title: "균등 분배 입찰가", body: "낙찰자를 포함해 파티원 모두가 같은 이득을 보는 입찰가입니다." },
+      { title: "최대 이득 입찰가", body: "낙찰자가 최대 이득을 얻는 상한(거래 이득 ÷ 1.1)입니다." },
+      { title: "수수료 자동 반영", body: "거래소 수수료 5%를 자동으로 빼고 계산합니다." },
+    ],
+    relatedTitle: "관련 로스트아크 도구",
+    related: [
+      { href: "/ko/lostark-bus-calculator/", label: "레이드 버스비 계산기", desc: "버스 경매 최적가와 기사 분배 금액." },
+      { href: "/ko/lostark-raid-distribution/", label: "본1부3 품앗이 분배 계산기", desc: "품앗이 파티 본캐·부캐 분배 자동화." },
+      { href: "/ko/percentage-calculator/", label: "퍼센트 계산기", desc: "비율을 계산합니다." },
+    ],
+    disclaimer: "계산 결과는 입력값 기준 참고치입니다. 실제 경매·거래는 게임 내 시세와 합의에 따릅니다.",
+  },
+  en: {
+    eyebrow: "Lost Ark Tool",
+    introTitle: "What is the auction calculator?",
+    intro: "It computes the optimal bid for an item put up for auction in a Legion Raid. With the 5% trade-house fee applied, it instantly shows the 'equal-share bid' (where every party member profits equally) and the 'max-profit bid' (the ceiling where the winner gains the most). It's a separate tool from the bus-fee and 1-main/3-alt distribution calculators.",
+    howToTitle: "How to use",
+    steps: ["Enter the item's expected sale price in gold.", "Confirm the party size (usually 4 or 8).", "Read the 'equal-share bid' and 'max-profit bid' and use them as your ceiling."],
+    highlightsTitle: "Highlights",
+    highlights: [
+      { title: "Equal-share bid", body: "The bid where every party member — winner included — profits equally." },
+      { title: "Max-profit bid", body: "The ceiling where the winner gains the most (trade gain ÷ 1.1)." },
+      { title: "Fee applied automatically", body: "The 5% trade-house fee is deducted for you." },
+    ],
+    relatedTitle: "Related Lost Ark tools",
+    related: [
+      { href: "/en/lostark-bus-calculator/", label: "Raid Bus Fee Calculator", desc: "Optimal bus auction price and per-carrier payout." },
+      { href: "/en/lostark-raid-distribution/", label: "1-Main/3-Alt Distribution Calculator", desc: "Automates main/alt distribution for help parties." },
+      { href: "/en/percentage-calculator/", label: "Percentage Calculator", desc: "Work out percentages." },
+    ],
+    disclaimer: "Results are reference values based on your inputs. Actual auctions and trades follow in-game prices and agreement.",
+  },
+  ja: {
+    eyebrow: "ロストアークツール",
+    introTitle: "オークション計算機とは？",
+    intro: "軍団長レイドでオークション（入札）に出たアイテムの適正入札額を計算します。取引所手数料5%を反映し、パーティ全員が同じ利益になる「均等分配入札額」と、落札者が最大利益を得る「最大利益入札額」をすぐ表示します。バス料金・本1副3分配とは別のツールです。",
+    howToTitle: "使い方",
+    steps: ["オークションに出たアイテムの想定売却価格（ゴールド）を入力します。", "パーティ人数を確認します（通常4人または8人）。", "「均等分配入札額」と「最大利益入札額」を確認し、上限として使います。"],
+    highlightsTitle: "主な特徴",
+    highlights: [
+      { title: "均等分配入札額", body: "落札者を含めパーティ全員が同じ利益になる入札額です。" },
+      { title: "最大利益入札額", body: "落札者が最大利益を得る上限（取引利益 ÷ 1.1）です。" },
+      { title: "手数料自動反映", body: "取引所手数料5%を自動で差し引いて計算します。" },
+    ],
+    relatedTitle: "関連ロストアークツール",
+    related: [
+      { href: "/ja/lostark-bus-calculator/", label: "レイドバス料金計算機", desc: "バスの最適オークション価格と騎士分配額。" },
+      { href: "/ja/lostark-raid-distribution/", label: "本1副3 品앗이 分配計算機", desc: "品앗이パーティの本・副分配を自動化。" },
+      { href: "/ja/percentage-calculator/", label: "パーセント計算機", desc: "比率を計算します。" },
+    ],
+    disclaimer: "計算結果は入力値に基づく参考値です。実際のオークション・取引はゲーム内相場と合意に従います。",
+  },
+};
+
+const faqs = {
+  ko: [
+    { q: "'균등 분배 입찰가'와 '최대 이득 입찰가'는 어떻게 다른가요?", a: "균등 분배 입찰가는 낙찰자를 포함해 파티원 모두가 같은 이득을 보는 값입니다. 최대 이득 입찰가는 낙찰자가 최대한 이득을 보는 상한선(거래 이득 ÷ 1.1)으로, 이보다 높게 입찰하면 손해입니다." },
+    { q: "거래소 수수료는 반영되나요?", a: "네, 거래소 수수료 5%를 자동으로 빼고 실제 분배될 금액을 기준으로 계산합니다." },
+    { q: "입력·결과 단위는 골드인가요?", a: "네, 모든 입력과 결과는 게임 내 골드 기준입니다." },
+  ],
+  en: [
+    { q: "How do the equal-share and max-profit bids differ?", a: "The equal-share bid is the value where every party member — winner included — profits equally. The max-profit bid is the ceiling where the winner gains the most (trade gain ÷ 1.1); bidding above it loses money." },
+    { q: "Is the trade-house fee included?", a: "Yes. The 5% fee is deducted automatically, and the calculation is based on the net amount to be distributed." },
+    { q: "Are inputs and results in gold?", a: "Yes, everything is in in-game gold." },
+  ],
+  ja: [
+    { q: "「均等分配入札額」と「最大利益入札額」の違いは？", a: "均等分配入札額は落札者を含めパーティ全員が同じ利益になる値です。最大利益入札額は落札者が最大利益を得る上限（取引利益 ÷ 1.1）で、これより高く入札すると損になります。" },
+    { q: "取引所手数料は反映されますか？", a: "はい、手数料5%を自動で差し引き、実際に分配される金額を基準に計算します。" },
+    { q: "単位はゴールドですか？", a: "はい、入力・結果ともゲーム内ゴールド基準です。" },
+  ],
+};
+
+const { content: c, faqHeading, faqItems } = buildToolShell(content, faqs, locale);
 ---
 
 <BaseLayout title={m.title} description={m.description}>
-  <main class="mx-auto max-w-2xl px-4 py-10">
-    <div class="mb-6 text-center">
-      <h1 class="text-2xl font-black">{m.title.split(' — ')[0]}</h1>
-      <p class="mt-2 text-sm text-muted-foreground">{m.description}</p>
+  <ToolShell
+    title={m.title}
+    description={m.description}
+    siteUrl={siteConfig.url}
+    locale={locale}
+    slug="lostark-auction-calculator"
+    content={c}
+    applicationCategory="GameApplication"
+  >
+    <div class="mx-auto max-w-2xl">
+      <LostArkAuctionCalc client:load />
     </div>
-    <LostArkAuctionCalc client:load />
-  </main>
+    <FaqAccordion slot="faq" heading={faqHeading} items={faqItems} />
+  </ToolShell>
 </BaseLayout>
