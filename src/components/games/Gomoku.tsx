@@ -150,7 +150,7 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                         </span>
                     </div>
                 </div>
-                <button onClick={reset} className="px-4 py-2 bg-muted hover:bg-muted/80 text-muted-foreground rounded-xl text-xs font-bold transition-colors border border-border">
+                <button onClick={reset} className="min-h-11 px-4 py-2 bg-muted hover:bg-muted/80 text-muted-foreground rounded-xl text-xs font-bold transition-colors motion-reduce:transition-none border border-border">
                     {t.reset}
                 </button>
             </div>
@@ -161,7 +161,7 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                     {(['local', 'ai'] as GameMode[]).map((m) => (
                         <button key={m} onClick={() => switchMode(m)}
                             aria-pressed={mode === m}
-                            className={`px-3 py-1.5 text-xs font-bold transition-colors ${mode === m ? 'bg-primary text-primary-foreground' : 'bg-muted/50 text-muted-foreground hover:bg-muted'}`}>
+                            className={`min-h-11 px-3 py-1.5 text-xs font-bold transition-colors motion-reduce:transition-none ${mode === m ? 'bg-primary text-primary-foreground' : 'bg-muted/50 text-muted-foreground hover:bg-muted'}`}>
                             {m === 'local' ? t.modeLocal : t.modeAi}
                         </button>
                     ))}
@@ -171,7 +171,7 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                         {([1, 2, 3] as AiLevel[]).map((lv) => (
                             <button key={lv} onClick={() => { setLevel(lv); reset(); }}
                                 aria-pressed={level === lv}
-                                className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-colors ${level === lv ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
+                                className={`min-h-11 px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-colors motion-reduce:transition-none ${level === lv ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
                                 {lv === 1 ? t.level1 : lv === 2 ? t.level2 : t.level3}
                             </button>
                         ))}
@@ -228,7 +228,7 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                         <div className="bg-card p-8 rounded-3xl shadow-xl border border-border text-center">
                             <h4 className="text-3xl font-black text-foreground mb-2">{winLabel}</h4>
                             <p className="text-muted-foreground mb-6 uppercase tracking-widest font-bold text-xs">{t.over}</p>
-                            <button onClick={reset} className="px-10 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg">
+                            <button onClick={reset} className="min-h-11 px-10 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
                                 {t.reset}
                             </button>
                         </div>

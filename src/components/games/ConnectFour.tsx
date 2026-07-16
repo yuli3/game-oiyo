@@ -338,7 +338,7 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
           {(["local", "ai"] as GameMode[]).map((m) => (
             <button key={m} onClick={() => switchMode(m)}
               aria-pressed={mode === m}
-              className={`px-3 py-1.5 text-xs font-bold transition-colors ${mode === m ? "bg-blue-600 text-white" : "bg-muted/50 text-muted-foreground hover:bg-muted"}`}>
+              className={`min-h-11 px-3 py-1.5 text-xs font-bold transition-colors motion-reduce:transition-none ${mode === m ? "bg-blue-600 text-white" : "bg-muted/50 text-muted-foreground hover:bg-muted"}`}>
               {m === "local" ? t.modeLocal : t.modeAi}
             </button>
           ))}
@@ -348,7 +348,7 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
             {([1, 2, 3] as AiLevel[]).map((lv) => (
               <button key={lv} onClick={() => { setLevel(lv); resetGame(); }}
                 aria-pressed={level === lv}
-                className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-colors ${level === lv ? "border-blue-600 text-blue-600 bg-blue-600/10" : "border-border text-muted-foreground hover:bg-muted"}`}>
+                className={`min-h-11 px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-colors motion-reduce:transition-none ${level === lv ? "border-blue-600 text-blue-600 bg-blue-600/10" : "border-border text-muted-foreground hover:bg-muted"}`}>
                 {lv === 1 ? t.level1 : lv === 2 ? t.level2 : t.level3}
               </button>
             ))}
@@ -364,7 +364,7 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
       {/* Status bar */}
       <div className="mb-3 h-8 flex items-center justify-center" aria-live="polite">
         {status === "playing" && thinking && (
-          <span className="text-sm font-semibold text-muted-foreground animate-pulse">{t.thinking}</span>
+          <span className="text-sm font-semibold text-muted-foreground animate-pulse motion-reduce:animate-none">{t.thinking}</span>
         )}
         {status === "playing" && !thinking && (
           <span className="text-sm font-semibold">
@@ -410,7 +410,7 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
                 className="flex items-center justify-center"
               >
                 <div
-                  className={`rounded-full transition-opacity ${
+                  className={`rounded-full transition-opacity motion-reduce:transition-none ${
                     playerColors[currentPlayer]
                   } ${showPreview ? "opacity-30" : "opacity-0"}`}
                   style={{ width: `${cellSize - 10}px`, height: `${cellSize - 10}px` }}
@@ -458,7 +458,7 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
                   />
                   {/* Disk */}
                   <div
-                    className={`absolute rounded-full transition-all ${diskClass} ${
+                    className={`absolute rounded-full transition-all motion-reduce:transition-none ${diskClass} ${
                       isFalling ? "animate-fall" : ""
                     } ${winHighlight ? "ring-4 ring-white ring-offset-1 ring-offset-blue-700 scale-110 z-10" : ""}`}
                     style={{
@@ -539,7 +539,11 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
           animation: fall 0.32s cubic-bezier(0.55, 0, 1, 0.45);
         }
         @media (prefers-reduced-motion: reduce) {
-          .animate-fall { animation: none; }
+          .animate-fall {
+            animation: none;
+            transform: none !important;
+            transition: none !important;
+          }
         }
       `}</style>
     </div>
