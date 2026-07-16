@@ -17,6 +17,8 @@ import { fileURLToPath } from "url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const LOCALES_DIR = join(__dirname, "../src/locales");
 
+// Active locales only. `cn` is retired and should remain redirect-only, not a
+// parity requirement for new UI copy.
 const LOCALES = ["ko", "ja", "es", "fr", "zh"];
 const SOURCE = "en";
 
