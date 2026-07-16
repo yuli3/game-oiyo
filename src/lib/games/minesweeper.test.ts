@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  MINESWEEPER_BEGINNER,
+  canSolveMinesweeperWithoutGuessing,
   chordMinesweeperCell,
   createEmptyBoard,
   createMinesweeperBoard,
+  createNoGuessMinesweeperBoard,
   revealMinesweeperCell,
   toggleMinesweeperFlag,
 } from "./minesweeper";
@@ -75,5 +78,32 @@ describe("minesweeper engine", () => {
     const chorded = chordMinesweeperCell(flagged, numbered.x, numbered.y);
     expect(chorded.changed).toBe(true);
     expect(chorded.status).not.toBe("lost");
+  });
+
+  it("reproduces the same verified no-guess board from the same seed and opening", () => {
+    const first = createNoGuessMinesweeperBoard(MINESWEEPER_BEGINNER, 4, 6, 20260716);
+    const second = createNoGuessMinesweeperBoard(MINESWEEPER_BEGINNER, 4, 6, 20260716);
+    expect(first).toEqual(second);
+    expect(first.verifiedNoGuess).toBe(true);
+    expect(canSolveMinesweeperWithoutGuessing(first.board, 4, 6)).toBe(true);
+  });
+
+  it("generates verified beginner boards across many seeds and opening positions", () => {
+    for (let seed = 0; seed < 120; seed++) {
+      const x = (seed * 7) % MINESWEEPER_BEGINNER.width;
+      const y = (seed * 3) % MINESWEEPER_BEGINNER.height;
+      const generated = createNoGuessMinesweeperBoard(MINESWEEPER_BEGINNER, x, y, seed);
+      expect(generated.verifiedNoGuess, `seed ${seed} at ${x},${y}`).toBe(true);
+      expect(generated.board.flat().filter((cell) => cell.isMine)).toHaveLength(MINESWEEPER_BEGINNER.mineCount);
+      expect(generated.attempts).toBeLessThanOrEqual(MINESWEEPER_BEGINNER.maxGenerationAttempts);
+    }
+  });
+
+  it("honors the bounded generation ceiling and returns promptly", () => {
+    const difficulty = { ...MINESWEEPER_BEGINNER, maxGenerationAttempts: 3 };
+    const started = performance.now();
+    const generated = createNoGuessMinesweeperBoard(difficulty, 5, 5, 31);
+    expect(generated.attempts).toBeLessThanOrEqual(3);
+    expect(performance.now() - started).toBeLessThan(100);
   });
 });

@@ -16,6 +16,28 @@ export type RevealResult = {
   changed: boolean;
 };
 
+export type MinesweeperDifficulty = Readonly<{
+  width: number;
+  height: number;
+  mineCount: number;
+  maxGenerationAttempts: number;
+}>;
+
+export const MINESWEEPER_BEGINNER: MinesweeperDifficulty = {
+  width: 10,
+  height: 10,
+  mineCount: 10,
+  maxGenerationAttempts: 96,
+};
+
+export type NoGuessGenerationResult = {
+  board: MinesweeperBoard;
+  seed: number;
+  attempts: number;
+  verifiedNoGuess: boolean;
+  strategy: "verified" | "safe-fallback";
+};
+
 export function createEmptyBoard(width: number, height: number): MinesweeperBoard {
   if (!Number.isInteger(width) || !Number.isInteger(height) || width < 1 || height < 1) {
     throw new RangeError("Minesweeper dimensions must be positive integers");
@@ -46,6 +68,16 @@ function neighbors(board: MinesweeperBoard, x: number, y: number): MinesweeperCe
 
 function cloneBoard(board: MinesweeperBoard): MinesweeperBoard {
   return board.map((row) => row.map((cell) => ({ ...cell })));
+}
+
+function seededRandom(seed: number): () => number {
+  let state = seed | 0;
+  return () => {
+    state = (state + 0x6d2b79f5) | 0;
+    let value = Math.imul(state ^ (state >>> 15), 1 | state);
+    value = (value + Math.imul(value ^ (value >>> 7), 61 | value)) ^ value;
+    return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+  };
 }
 
 export function createMinesweeperBoard(
@@ -143,4 +175,110 @@ export function toggleMinesweeperFlag(board: MinesweeperBoard, x: number, y: num
   const next = cloneBoard(board);
   next[y][x].isFlagged = !next[y][x].isFlagged;
   return next;
+}
+
+type SolverConstraint = { unknown: Set<string>; mines: number };
+
+const coordinateKey = (x: number, y: number) => `${x}:${y}`;
+
+function isSubset(left: Set<string>, right: Set<string>): boolean {
+  for (const value of left) if (!right.has(value)) return false;
+  return true;
+}
+
+function revealSolverSafeCells(board: MinesweeperBoard, safe: Set<string>): MinesweeperBoard {
+  let current = board;
+  for (const key of safe) {
+    const [x, y] = key.split(":").map(Number);
+    if (current[y]?.[x] && !current[y][x].isRevealed) current = revealMinesweeperCell(current, x, y).board;
+  }
+  return current;
+}
+
+/**
+ * Verifies that a board can be completed from the opening using only standard
+ * deterministic deductions: clue completion, all-mines marking, and subset
+ * differences between overlapping clue constraints. It never uses a hidden
+ * cell's `isMine` value to make a deduction.
+ */
+export function canSolveMinesweeperWithoutGuessing(board: MinesweeperBoard, safeX: number, safeY: number): boolean {
+  if (!board[safeY]?.[safeX] || board[safeY][safeX].isMine) return false;
+  let working = revealMinesweeperCell(cloneBoard(board), safeX, safeY).board;
+  const knownMines = new Set<string>();
+
+  for (let iteration = 0; iteration < board.length * board[0].length * 2; iteration++) {
+    if (isMinesweeperWon(working)) return true;
+    const constraints: SolverConstraint[] = [];
+    const newlySafe = new Set<string>();
+    const newlyMined = new Set<string>();
+
+    for (const clue of working.flat()) {
+      if (!clue.isRevealed || clue.isMine || clue.neighborMines === 0) continue;
+      const adjacent = neighbors(working, clue.x, clue.y);
+      const unknown = new Set(
+        adjacent
+          .filter((cell) => !cell.isRevealed && !knownMines.has(coordinateKey(cell.x, cell.y)))
+          .map((cell) => coordinateKey(cell.x, cell.y)),
+      );
+      const remainingMines = clue.neighborMines - adjacent.filter((cell) => knownMines.has(coordinateKey(cell.x, cell.y))).length;
+      if (remainingMines < 0 || remainingMines > unknown.size) return false;
+      if (unknown.size === 0) continue;
+      constraints.push({ unknown, mines: remainingMines });
+      if (remainingMines === 0) for (const key of unknown) newlySafe.add(key);
+      else if (remainingMines === unknown.size) for (const key of unknown) newlyMined.add(key);
+    }
+
+    for (let leftIndex = 0; leftIndex < constraints.length; leftIndex++) {
+      for (let rightIndex = 0; rightIndex < constraints.length; rightIndex++) {
+        if (leftIndex === rightIndex) continue;
+        const left = constraints[leftIndex];
+        const right = constraints[rightIndex];
+        if (left.unknown.size >= right.unknown.size || !isSubset(left.unknown, right.unknown)) continue;
+        const difference = [...right.unknown].filter((key) => !left.unknown.has(key));
+        const remaining = right.mines - left.mines;
+        if (remaining === 0) difference.forEach((key) => newlySafe.add(key));
+        else if (remaining === difference.length) difference.forEach((key) => newlyMined.add(key));
+      }
+    }
+
+    const mineCountBefore = knownMines.size;
+    for (const key of newlyMined) knownMines.add(key);
+    for (const key of knownMines) newlySafe.delete(key);
+    if (newlySafe.size === 0 && knownMines.size === mineCountBefore) return false;
+    working = revealSolverSafeCells(working, newlySafe);
+  }
+  return isMinesweeperWon(working);
+}
+
+/** Seed-reproducible, bounded no-guess generation with a first-click-safe fallback. */
+export function createNoGuessMinesweeperBoard(
+  difficulty: MinesweeperDifficulty,
+  safeX: number,
+  safeY: number,
+  seed: number,
+): NoGuessGenerationResult {
+  const { width, height, mineCount, maxGenerationAttempts } = difficulty;
+  if (!Number.isInteger(maxGenerationAttempts) || maxGenerationAttempts < 1) {
+    throw new RangeError("Generation attempts must be a positive integer");
+  }
+
+  let fallback: MinesweeperBoard | null = null;
+  for (let attempt = 1; attempt <= maxGenerationAttempts; attempt++) {
+    const attemptSeed = (seed + Math.imul(attempt, 0x9e3779b1)) | 0;
+    const candidate = createMinesweeperBoard(width, height, mineCount, safeX, safeY, seededRandom(attemptSeed));
+    fallback ??= candidate;
+    if (canSolveMinesweeperWithoutGuessing(candidate, safeX, safeY)) {
+      return { board: candidate, seed, attempts: attempt, verifiedNoGuess: true, strategy: "verified" };
+    }
+  }
+
+  // The retry ceiling is an explicit responsiveness boundary. A conventional
+  // first-click-safe board is preferable to freezing the UI on an unlucky seed.
+  return {
+    board: fallback!,
+    seed,
+    attempts: maxGenerationAttempts,
+    verifiedNoGuess: false,
+    strategy: "safe-fallback",
+  };
 }

@@ -7,6 +7,7 @@ import {
 } from '../../lib/games/ai/chess';
 import type { AiLevel, GameMode } from '../../lib/games/ai/types';
 import { getRecord, recordResult, type GameRecord } from '../../lib/games/records';
+import { clearChessSave, loadChessSave, storeChessSave } from '../../lib/games/chess-save';
 
 const AI_IS_WHITE = false; // AI plays black; human opens as white
 const AI_DELAY_MS = 500;
@@ -18,13 +19,14 @@ const i18n: Record<Locale, {
   thinking: string; youWin: string; aiWins: string; draw: string; check: string; checkmate: string; stalemate: string; record: string;
   board: string; empty: string; selectedLabel: string; legalLabel: string;
   promote: string; fiftyMove: string; threefold: string; insufficientMaterial: string;
+  localSave: string; restored: string;
 }> = {
-  ko: { title: "전략의 정수: 체스", turn: "차례", white: "백", black: "흑", reset: "초기화", pawn: "폰", knight: "나이트", bishop: "비숍", rook: "룩", queen: "퀸", king: "킹", modeLocal: "2인 대전", modeAi: "AI 대전", level1: "견습생", level2: "숙련가", level3: "명인", thinking: "상대가 수를 읽고 있습니다…", youWin: "당신의 승리!", aiWins: "AI 승리", draw: "무승부", check: "체크!", checkmate: "체크메이트", stalemate: "스테일메이트", record: "전적", board: "체스판. 화살표 키로 이동하고 Enter 또는 Space로 선택하세요.", empty: "빈 칸", selectedLabel: "선택됨", legalLabel: "이동 가능", promote: "승격할 기물을 선택하세요", fiftyMove: "50수 규칙", threefold: "3회 반복", insufficientMaterial: "기물 부족" },
-  en: { title: "Chess Strategy", turn: "Turn", white: "White", black: "Black", reset: "Reset", pawn: "Pawn", knight: "Knight", bishop: "Bishop", rook: "Rook", queen: "Queen", king: "King", modeLocal: "2 Players", modeAi: "vs AI", level1: "Apprentice", level2: "Adept", level3: "Master", thinking: "Your opponent is thinking…", youWin: "You win!", aiWins: "AI wins", draw: "Draw", check: "Check!", checkmate: "Checkmate", stalemate: "Stalemate", record: "Record", board: "Chess board. Use arrow keys to move and Enter or Space to select.", empty: "Empty", selectedLabel: "Selected", legalLabel: "Legal move", promote: "Choose a promotion piece", fiftyMove: "Fifty-move rule", threefold: "Threefold repetition", insufficientMaterial: "Insufficient material" },
-  ja: { title: "チェス戦略", turn: "手番", white: "白", black: "黒", reset: "リセット", pawn: "ポーン", knight: "ナイト", bishop: "ビショップ", rook: "ルーク", queen: "クイーン", king: "キング", modeLocal: "2人対戦", modeAi: "AI対戦", level1: "見習い", level2: "熟練者", level3: "名人", thinking: "相手が考えています…", youWin: "あなたの勝ち！", aiWins: "AIの勝ち", draw: "引き分け", check: "チェック！", checkmate: "チェックメイト", stalemate: "ステイルメイト", record: "戦績", board: "チェス盤。矢印キーで移動し、EnterまたはSpaceで選択します。", empty: "空き", selectedLabel: "選択中", legalLabel: "移動可能", promote: "昇格する駒を選択", fiftyMove: "50手ルール", threefold: "同一局面3回", insufficientMaterial: "戦力不足" },
-  zh: { title: "国际象棋策略", turn: "回合", white: "白", black: "黑", reset: "重置", pawn: "兵", knight: "马", bishop: "象", rook: "车", queen: "后", king: "王", modeLocal: "双人对战", modeAi: "人机对战", level1: "学徒", level2: "行家", level3: "大师", thinking: "对手正在思考…", youWin: "你赢了！", aiWins: "AI 获胜", draw: "平局", check: "将军！", checkmate: "将死", stalemate: "逼和", record: "战绩", board: "国际象棋棋盘。使用方向键移动，按 Enter 或空格选择。", empty: "空格", selectedLabel: "已选择", legalLabel: "可移动", promote: "选择升变棋子", fiftyMove: "五十回合规则", threefold: "三次重复", insufficientMaterial: "子力不足" },
-  fr: { title: "Stratégie d'échecs", turn: "Tour", white: "Blancs", black: "Noirs", reset: "Réinitialiser", pawn: "Pion", knight: "Cavalier", bishop: "Fou", rook: "Tour", queen: "Dame", king: "Roi", modeLocal: "2 joueurs", modeAi: "contre l'IA", level1: "Apprenti", level2: "Adepte", level3: "Maître", thinking: "Votre adversaire réfléchit…", youWin: "Vous gagnez !", aiWins: "L'IA gagne", draw: "Match nul", check: "Échec !", checkmate: "Échec et mat", stalemate: "Pat", record: "Bilan", board: "Échiquier. Utilisez les flèches puis Entrée ou Espace pour sélectionner.", empty: "Vide", selectedLabel: "Sélectionnée", legalLabel: "Coup possible", promote: "Choisissez la promotion", fiftyMove: "Règle des cinquante coups", threefold: "Triple répétition", insufficientMaterial: "Matériel insuffisant" },
-  es: { title: "Estrategia de ajedrez", turn: "Turno", white: "Blancas", black: "Negras", reset: "Reiniciar", pawn: "Peón", knight: "Caballo", bishop: "Alfil", rook: "Torre", queen: "Dama", king: "Rey", modeLocal: "2 jugadores", modeAi: "contra la IA", level1: "Aprendiz", level2: "Experto", level3: "Maestro", thinking: "Tu rival está pensando…", youWin: "¡Has ganado!", aiWins: "Gana la IA", draw: "Tablas", check: "¡Jaque!", checkmate: "Jaque mate", stalemate: "Rey ahogado", record: "Historial", board: "Tablero de ajedrez. Usa las flechas y Enter o Espacio para seleccionar.", empty: "Vacía", selectedLabel: "Seleccionada", legalLabel: "Movimiento posible", promote: "Elige la pieza de promoción", fiftyMove: "Regla de cincuenta movimientos", threefold: "Triple repetición", insufficientMaterial: "Material insuficiente" },
+  ko: { title: "전략의 정수: 체스", turn: "차례", white: "백", black: "흑", reset: "초기화", pawn: "폰", knight: "나이트", bishop: "비숍", rook: "룩", queen: "퀸", king: "킹", modeLocal: "2인 대전", modeAi: "AI 대전", level1: "견습생", level2: "숙련가", level3: "명인", thinking: "상대가 수를 읽고 있습니다…", youWin: "당신의 승리!", aiWins: "AI 승리", draw: "무승부", check: "체크!", checkmate: "체크메이트", stalemate: "스테일메이트", record: "전적", board: "체스판. 화살표 키로 이동하고 Enter 또는 Space로 선택하세요.", empty: "빈 칸", selectedLabel: "선택됨", legalLabel: "이동 가능", promote: "승격할 기물을 선택하세요", fiftyMove: "50수 규칙", threefold: "3회 반복", insufficientMaterial: "기물 부족", localSave: "진행 상황은 이 브라우저에만 자동 저장됩니다.", restored: "이 브라우저에 저장된 게임을 복원했습니다." },
+  en: { title: "Chess Strategy", turn: "Turn", white: "White", black: "Black", reset: "Reset", pawn: "Pawn", knight: "Knight", bishop: "Bishop", rook: "Rook", queen: "Queen", king: "King", modeLocal: "2 Players", modeAi: "vs AI", level1: "Apprentice", level2: "Adept", level3: "Master", thinking: "Your opponent is thinking…", youWin: "You win!", aiWins: "AI wins", draw: "Draw", check: "Check!", checkmate: "Checkmate", stalemate: "Stalemate", record: "Record", board: "Chess board. Use arrow keys to move and Enter or Space to select.", empty: "Empty", selectedLabel: "Selected", legalLabel: "Legal move", promote: "Choose a promotion piece", fiftyMove: "Fifty-move rule", threefold: "Threefold repetition", insufficientMaterial: "Insufficient material", localSave: "Progress is saved only in this browser.", restored: "Restored the game saved in this browser." },
+  ja: { title: "チェス戦略", turn: "手番", white: "白", black: "黒", reset: "リセット", pawn: "ポーン", knight: "ナイト", bishop: "ビショップ", rook: "ルーク", queen: "クイーン", king: "キング", modeLocal: "2人対戦", modeAi: "AI対戦", level1: "見習い", level2: "熟練者", level3: "名人", thinking: "相手が考えています…", youWin: "あなたの勝ち！", aiWins: "AIの勝ち", draw: "引き分け", check: "チェック！", checkmate: "チェックメイト", stalemate: "ステイルメイト", record: "戦績", board: "チェス盤。矢印キーで移動し、EnterまたはSpaceで選択します。", empty: "空き", selectedLabel: "選択中", legalLabel: "移動可能", promote: "昇格する駒を選択", fiftyMove: "50手ルール", threefold: "同一局面3回", insufficientMaterial: "戦力不足", localSave: "進行状況はこのブラウザ内だけに自動保存されます。", restored: "このブラウザに保存された対局を復元しました。" },
+  zh: { title: "国际象棋策略", turn: "回合", white: "白", black: "黑", reset: "重置", pawn: "兵", knight: "马", bishop: "象", rook: "车", queen: "后", king: "王", modeLocal: "双人对战", modeAi: "人机对战", level1: "学徒", level2: "行家", level3: "大师", thinking: "对手正在思考…", youWin: "你赢了！", aiWins: "AI 获胜", draw: "平局", check: "将军！", checkmate: "将死", stalemate: "逼和", record: "战绩", board: "国际象棋棋盘。使用方向键移动，按 Enter 或空格选择。", empty: "空格", selectedLabel: "已选择", legalLabel: "可移动", promote: "选择升变棋子", fiftyMove: "五十回合规则", threefold: "三次重复", insufficientMaterial: "子力不足", localSave: "进度仅自动保存在此浏览器中。", restored: "已恢复此浏览器中保存的对局。" },
+  fr: { title: "Stratégie d'échecs", turn: "Tour", white: "Blancs", black: "Noirs", reset: "Réinitialiser", pawn: "Pion", knight: "Cavalier", bishop: "Fou", rook: "Tour", queen: "Dame", king: "Roi", modeLocal: "2 joueurs", modeAi: "contre l'IA", level1: "Apprenti", level2: "Adepte", level3: "Maître", thinking: "Votre adversaire réfléchit…", youWin: "Vous gagnez !", aiWins: "L'IA gagne", draw: "Match nul", check: "Échec !", checkmate: "Échec et mat", stalemate: "Pat", record: "Bilan", board: "Échiquier. Utilisez les flèches puis Entrée ou Espace pour sélectionner.", empty: "Vide", selectedLabel: "Sélectionnée", legalLabel: "Coup possible", promote: "Choisissez la promotion", fiftyMove: "Règle des cinquante coups", threefold: "Triple répétition", insufficientMaterial: "Matériel insuffisant", localSave: "La progression est enregistrée uniquement dans ce navigateur.", restored: "Partie enregistrée dans ce navigateur restaurée." },
+  es: { title: "Estrategia de ajedrez", turn: "Turno", white: "Blancas", black: "Negras", reset: "Reiniciar", pawn: "Peón", knight: "Caballo", bishop: "Alfil", rook: "Torre", queen: "Dama", king: "Rey", modeLocal: "2 jugadores", modeAi: "contra la IA", level1: "Aprendiz", level2: "Experto", level3: "Maestro", thinking: "Tu rival está pensando…", youWin: "¡Has ganado!", aiWins: "Gana la IA", draw: "Tablas", check: "¡Jaque!", checkmate: "Jaque mate", stalemate: "Rey ahogado", record: "Historial", board: "Tablero de ajedrez. Usa las flechas y Enter o Espacio para seleccionar.", empty: "Vacía", selectedLabel: "Seleccionada", legalLabel: "Movimiento posible", promote: "Elige la pieza de promoción", fiftyMove: "Regla de cincuenta movimientos", threefold: "Triple repetición", insufficientMaterial: "Material insuficiente", localSave: "El progreso se guarda solo en este navegador.", restored: "Se restauró la partida guardada en este navegador." },
 };
 
 type GameEnd = { result: 'white' | 'black' | 'draw'; reason: 'checkmate' | 'stalemate' | ChessDrawReason } | null;
@@ -42,12 +44,22 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
   const [level, setLevel] = useState<AiLevel>(2);
   const [thinking, setThinking] = useState(false);
   const [record, setRecord] = useState<GameRecord | null>(null);
+  const [restored, setRestored] = useState(false);
   const [focusIndex, setFocusIndex] = useState(56);
   const aiTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const squareRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const positionHistory = useRef<string[]>([chessPositionKey(createInitialChessState())]);
 
   useEffect(() => { setRecord(getRecord('chess')); }, []);
+  useEffect(() => {
+    const saved = loadChessSave();
+    if (!saved) return;
+    setPosition(saved.state);
+    positionHistory.current = saved.positionHistory;
+    setMode(saved.mode);
+    setLevel(saved.level);
+    setRestored(true);
+  }, []);
   useEffect(() => () => { if (aiTimer.current) clearTimeout(aiTimer.current); }, []);
 
   const pieceIcons: Record<string, string> = {
@@ -64,9 +76,12 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     setPendingPromotion(null);
     setGameEnd(null);
     setThinking(false);
+    setRestored(false);
+    clearChessSave();
   };
 
   const finish = (end: NonNullable<GameEnd>) => {
+    clearChessSave();
     setGameEnd(end);
     if (mode === 'ai') {
       const aiColor = AI_IS_WHITE ? 'white' : 'black';
@@ -79,9 +94,11 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     const nextKey = chessPositionKey(next);
     const nextHistory = [...positionHistory.current, nextKey];
     positionHistory.current = nextHistory;
+    storeChessSave({ state: next, positionHistory: nextHistory, mode, level });
     setPosition(next);
     setSelected(null);
     setPendingPromotion(null);
+    setRestored(false);
     // opponent's position after the move: mate / stalemate / continue
     if (chessLegalStateMoves(next).length === 0) {
       if (chessInCheck(next.board, !moverIsWhite)) finish({ result: moverIsWhite ? 'white' : 'black', reason: 'checkmate' });
@@ -204,6 +221,9 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
           </span>
         )}
       </div>
+      <p className="mb-3 text-[11px] text-muted-foreground" aria-live="polite">
+        {restored ? t.restored : t.localSave}
+      </p>
 
       <div className="relative overflow-x-auto pb-2">
         <div className="grid min-w-[352px] grid-cols-8 grid-rows-8 border-4 border-stone-800 shadow-2xl aspect-square w-full" role="grid" aria-label={t.board}>

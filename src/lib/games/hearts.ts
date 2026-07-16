@@ -25,8 +25,20 @@ export interface HeartsState {
   phase: HeartsPhase;
 }
 
+export interface HeartsSavedGame {
+  state: HeartsState;
+  passSelection: string[];
+}
+
+interface HeartsStorage {
+  getItem(key: string): string | null;
+  setItem(key: string, value: string): void;
+  removeItem(key: string): void;
+}
+
 const TWO_OF_CLUBS = "clubs-2";
 const MATCH_LIMIT = 100;
+export const HEARTS_STORAGE_KEY = "oiyo:game:hearts:v1";
 
 export function createHeartsDeck(): HeartsCard[] {
   return HEARTS_SUITS.flatMap((suit) => HEARTS_VALUES.map((value, power) => ({ id: `${suit}-${value}`, suit, value, power })));
@@ -177,4 +189,99 @@ export function chooseHeartsCpuCard(state: HeartsState, player: number): HeartsC
   const losing = byPower.filter((card) => card.power < currentHigh);
   if (losing.length > 0) return losing[losing.length - 1];
   return trickPoints(state.trick) > 0 ? byPower[0] : byPower[byPower.length - 1];
+}
+
+function isIntegerArray(value: unknown, length: number, minimum = 0): value is number[] {
+  return Array.isArray(value) && value.length === length && value.every((item) => Number.isInteger(item) && item >= minimum);
+}
+
+function isHeartsCard(value: unknown): value is HeartsCard {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as Partial<HeartsCard>;
+  if (!HEARTS_SUITS.includes(candidate.suit as HeartsSuit) || !HEARTS_VALUES.includes(candidate.value as HeartsValue)) return false;
+  const power = HEARTS_VALUES.indexOf(candidate.value as HeartsValue);
+  return candidate.id === `${candidate.suit}-${candidate.value}` && candidate.power === power;
+}
+
+function isHeartsPlay(value: unknown): value is HeartsPlay {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as Partial<HeartsPlay>;
+  return Number.isInteger(candidate.player) && candidate.player! >= 0 && candidate.player! < 4 && isHeartsCard(candidate.card);
+}
+
+export function isValidHeartsState(value: unknown): value is HeartsState {
+  if (!value || typeof value !== "object") return false;
+  const state = value as Partial<HeartsState>;
+  if (!Array.isArray(state.hands) || state.hands.length !== 4 || !state.hands.every((hand) => Array.isArray(hand) && hand.every(isHeartsCard))) return false;
+  if (!Array.isArray(state.trick) || state.trick.length > 3 || !state.trick.every(isHeartsPlay)) return false;
+  if (!Array.isArray(state.lastTrick) || ![0, 4].includes(state.lastTrick.length) || !state.lastTrick.every(isHeartsPlay)) return false;
+  if (!Number.isInteger(state.leader) || state.leader! < 0 || state.leader! > 3 || !Number.isInteger(state.currentPlayer) || state.currentPlayer! < 0 || state.currentPlayer! > 3) return false;
+  if (typeof state.heartsBroken !== "boolean" || !Number.isInteger(state.trickNumber) || state.trickNumber! < 1 || state.trickNumber! > 13) return false;
+  if (!isIntegerArray(state.capturedPoints, 4) || state.capturedPoints.some((score) => score > 26) || state.capturedPoints.reduce((sum, score) => sum + score, 0) > 26) return false;
+  if (!isIntegerArray(state.matchScores, 4) || !Number.isInteger(state.roundNumber) || state.roundNumber! < 1) return false;
+  if (!["left", "right", "across", "hold"].includes(state.passDirection as string) || state.passDirection !== passDirectionForRound(state.roundNumber!)) return false;
+  if (!["passing", "playing", "roundComplete", "gameOver"].includes(state.phase as string)) return false;
+  if (state.finalScores !== null && (!isIntegerArray(state.finalScores, 4) || state.finalScores.some((score) => score > 26))) return false;
+
+  const visibleCards = [...state.hands.flat(), ...state.trick.map(({ card }) => card), ...state.lastTrick.map(({ card }) => card)];
+  if (new Set(visibleCards.map(({ id }) => id)).size !== visibleCards.length) return false;
+  if (!state.trick.every(({ player }, index) => player === (state.leader! + index) % 4)) return false;
+
+  if (state.phase === "passing") {
+    return state.passDirection !== "hold" && state.finalScores === null && state.trick.length === 0 && state.lastTrick.length === 0 &&
+      state.trickNumber === 1 && state.hands.every((hand) => hand.length === 13) && state.capturedPoints.every((score) => score === 0) && state.matchScores.every((score) => score < MATCH_LIMIT);
+  }
+  if (state.phase === "playing") {
+    const expectedCurrent = (state.leader! + state.trick.length) % 4;
+    if (state.finalScores !== null || state.currentPlayer !== expectedCurrent || !state.matchScores.every((score) => score < MATCH_LIMIT)) return false;
+    const completedTricks = state.trickNumber! - 1;
+    if (state.hands.some((hand, player) => hand.length !== 13 - completedTricks - (state.trick!.some((play) => play.player === player) ? 1 : 0))) return false;
+    if (state.trickNumber === 1) {
+      if (state.lastTrick.length !== 0) return false;
+      if (state.trick.length === 0) return state.hands[state.leader!].some((card) => card.id === TWO_OF_CLUBS);
+      return state.trick[0].player === state.leader && state.trick[0].card.id === TWO_OF_CLUBS;
+    }
+    return state.lastTrick.length === 4 && trickWinner(state.lastTrick) === state.leader;
+  }
+
+  if (!state.finalScores || state.hands.some((hand) => hand.length > 0) || state.trick.length > 0 || state.trickNumber !== 13) return false;
+  if (state.capturedPoints.reduce((sum, score) => sum + score, 0) !== 26) return false;
+  if (state.finalScores.some((score, player) => score !== applyShootTheMoon(state.capturedPoints!)[player] || state.matchScores![player] < score)) return false;
+  if (state.lastTrick.length !== 4 || state.currentPlayer !== trickWinner(state.lastTrick)) return false;
+  return state.phase === "gameOver" ? state.matchScores.some((score) => score >= MATCH_LIMIT) : state.matchScores.every((score) => score < MATCH_LIMIT);
+}
+
+export function parseHeartsSavedGame(raw: string | null): HeartsSavedGame | null {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as { version?: unknown; state?: unknown; passSelection?: unknown };
+    if (parsed.version !== 1 || !isValidHeartsState(parsed.state) || !Array.isArray(parsed.passSelection) || !parsed.passSelection.every((id) => typeof id === "string")) return null;
+    const state = parsed.state;
+    const passSelection = [...new Set(parsed.passSelection)];
+    if (passSelection.length !== parsed.passSelection.length || passSelection.length > 3) return null;
+    if (state.phase === "passing") {
+      if (!passSelection.every((id) => state.hands[0].some((card) => card.id === id))) return null;
+    } else if (passSelection.length > 0) return null;
+    return { state, passSelection };
+  } catch {
+    return null;
+  }
+}
+
+export function loadHeartsSavedGame(storage: HeartsStorage): HeartsSavedGame | null {
+  try { return parseHeartsSavedGame(storage.getItem(HEARTS_STORAGE_KEY)); } catch { return null; }
+}
+
+export function saveHeartsGame(storage: HeartsStorage, saved: HeartsSavedGame): boolean {
+  if (!isValidHeartsState(saved.state)) return false;
+  const validated = parseHeartsSavedGame(JSON.stringify({ version: 1, ...saved }));
+  if (!validated) return false;
+  try {
+    storage.setItem(HEARTS_STORAGE_KEY, JSON.stringify({ version: 1, ...validated }));
+    return true;
+  } catch { return false; }
+}
+
+export function clearHeartsSavedGame(storage: HeartsStorage): boolean {
+  try { storage.removeItem(HEARTS_STORAGE_KEY); return true; } catch { return false; }
 }

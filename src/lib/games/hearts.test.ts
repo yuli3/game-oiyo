@@ -3,13 +3,18 @@ import {
   applyShootTheMoon,
   chooseHeartsCpuCard,
   chooseHeartsPassCards,
+  clearHeartsSavedGame,
   createHeartsDeck,
   createHeartsGame,
   dealHearts,
+  HEARTS_STORAGE_KEY,
   legalHeartsCards,
+  loadHeartsSavedGame,
+  parseHeartsSavedGame,
   passDirectionForRound,
   passHeartsCards,
   playHeartsCard,
+  saveHeartsGame,
   startNextHeartsRound,
   trickWinner,
   type HeartsCard,
@@ -44,6 +49,15 @@ const finishPassing = (state: HeartsState): HeartsState => passHeartsCards(
   state,
   state.hands.map((hand) => chooseHeartsPassCards(hand).map(({ id }) => id)),
 );
+
+const memoryStorage = () => {
+  const values = new Map<string, string>();
+  return {
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => { values.set(key, value); },
+    removeItem: (key: string) => { values.delete(key); },
+  };
+};
 
 describe("Hearts engine", () => {
   it("deals one unique 52-card deck into four 13-card hands", () => {
@@ -205,5 +219,62 @@ describe("Hearts engine", () => {
     over = playHeartsCard(over, 3, "clubs-5");
     expect(over.phase).toBe("gameOver");
     expect(Math.min(...over.matchScores)).toBe(over.matchScores[1]);
+  });
+
+  it("round-trips passing selections and a partial active trick", () => {
+    const storage = memoryStorage();
+    const passing = createHeartsGame(() => 0.23);
+    const selection = passing.hands[0].slice(0, 3).map(({ id }) => id);
+    expect(saveHeartsGame(storage, { state: passing, passSelection: selection })).toBe(true);
+    expect(loadHeartsSavedGame(storage)).toEqual({ state: passing, passSelection: selection });
+
+    let active = finishPassing(passing);
+    const player = active.currentPlayer;
+    active = playHeartsCard(active, player, legalHeartsCards(active, player)[0].id);
+    expect(saveHeartsGame(storage, { state: active, passSelection: [] })).toBe(true);
+    expect(loadHeartsSavedGame(storage)).toEqual({ state: active, passSelection: [] });
+  });
+
+  it("rejects stale, malformed, duplicate-card, and invalid-selection saves", () => {
+    const passing = createHeartsGame(() => 0.51);
+    expect(parseHeartsSavedGame("not json")).toBeNull();
+    expect(parseHeartsSavedGame(JSON.stringify({ version: 0, state: passing, passSelection: [] }))).toBeNull();
+    const duplicate = structuredClone(passing);
+    duplicate.hands[0][0] = duplicate.hands[1][0];
+    expect(parseHeartsSavedGame(JSON.stringify({ version: 1, state: duplicate, passSelection: [] }))).toBeNull();
+    expect(parseHeartsSavedGame(JSON.stringify({ version: 1, state: passing, passSelection: ["not-owned"] }))).toBeNull();
+    const active = finishPassing(passing);
+    expect(parseHeartsSavedGame(JSON.stringify({ version: 1, state: active, passSelection: [active.hands[0][0].id] }))).toBeNull();
+
+    const wrongLeader = structuredClone(active);
+    wrongLeader.leader = (active.leader + 1) % 4;
+    wrongLeader.currentPlayer = wrongLeader.leader;
+    expect(parseHeartsSavedGame(JSON.stringify({ version: 1, state: wrongLeader, passSelection: [] }))).toBeNull();
+
+    const firstPlayer = active.currentPlayer;
+    const onePlay = playHeartsCard(active, firstPlayer, legalHeartsCards(active, firstPlayer)[0].id);
+    const wrongSequence = structuredClone(onePlay);
+    wrongSequence.trick[0].player = (firstPlayer + 1) % 4;
+    expect(parseHeartsSavedGame(JSON.stringify({ version: 1, state: wrongSequence, passSelection: [] }))).toBeNull();
+  });
+
+  it("uses a dedicated key, preserves other records, and fails safely when storage is blocked", () => {
+    const storage = memoryStorage();
+    const state = createHeartsGame(() => 0.7);
+    storage.setItem("oiyo:game-records:v1", "keep");
+    expect(saveHeartsGame(storage, { state, passSelection: [] })).toBe(true);
+    expect(storage.getItem(HEARTS_STORAGE_KEY)).not.toBeNull();
+    expect(clearHeartsSavedGame(storage)).toBe(true);
+    expect(storage.getItem(HEARTS_STORAGE_KEY)).toBeNull();
+    expect(storage.getItem("oiyo:game-records:v1")).toBe("keep");
+
+    const blocked = {
+      getItem: () => { throw new Error("blocked"); },
+      setItem: () => { throw new Error("blocked"); },
+      removeItem: () => { throw new Error("blocked"); },
+    };
+    expect(loadHeartsSavedGame(blocked)).toBeNull();
+    expect(saveHeartsGame(blocked, { state, passSelection: [] })).toBe(false);
+    expect(clearHeartsSavedGame(blocked)).toBe(false);
   });
 });
