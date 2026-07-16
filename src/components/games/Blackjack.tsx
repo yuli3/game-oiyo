@@ -1,7 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GameContainer, PlayingCard } from '../ui/game/GamePrimitives';
-
-type Card = { suit: 'hearts' | 'diamonds' | 'clubs' | 'spades'; value: string; power: number };
+import {
+    dealerShouldHit,
+    evaluateBlackjackHand,
+    isNaturalBlackjack,
+    settleBlackjack,
+    shuffleBlackjackDeck,
+    type BlackjackCard as Card,
+} from '../../lib/games/blackjack';
 
 const Blackjack: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const COPY = {
@@ -19,32 +25,33 @@ const Blackjack: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [dealerHand, setDealerHand] = useState<Card[]>([]);
     const [status, setStatus] = useState<'betting' | 'playing' | 'dealerTurn' | 'result'>('betting');
     const [message, setMessage] = useState('');
+    const gameGeneration = useRef(0);
 
     const createDeck = () => {
         const suits = ['hearts', 'diamonds', 'clubs', 'spades'] as const;
         const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
         const newDeck: Card[] = [];
         suits.forEach(s => values.forEach((v, i) => newDeck.push({ suit: s, value: v, power: i === 0 ? 11 : (i >= 9 ? 10 : i + 1) })));
-        return newDeck.sort(() => Math.random() - 0.5);
+        return shuffleBlackjackDeck(newDeck);
     };
 
-    const calculateScore = (hand: Card[]) => {
-        let score = hand.reduce((acc, c) => acc + c.power, 0);
-        let aces = hand.filter(c => c.value === 'A').length;
-        while (score > 21 && aces > 0) {
-            score -= 10;
-            aces--;
-        }
-        return score;
-    };
+    const calculateScore = (hand: Card[]) => evaluateBlackjackHand(hand).total;
 
     const initGame = useCallback(() => {
+        gameGeneration.current += 1;
         const newDeck = createDeck();
-        setPlayerHand([newDeck[0], newDeck[1]]);
-        setDealerHand([newDeck[2], newDeck[3]]);
+        const nextPlayer = [newDeck[0], newDeck[1]];
+        const nextDealer = [newDeck[2], newDeck[3]];
+        setPlayerHand(nextPlayer);
+        setDealerHand(nextDealer);
         setDeck(newDeck.slice(4));
-        setStatus('playing');
-        setMessage('');
+        if (isNaturalBlackjack(nextPlayer) || isNaturalBlackjack(nextDealer)) {
+            setStatus('result');
+            setMessage(settleBlackjack(nextPlayer, nextDealer));
+        } else {
+            setStatus('playing');
+            setMessage('');
+        }
     }, []);
 
     useEffect(() => { initGame(); }, [initGame]);
@@ -68,31 +75,35 @@ const Blackjack: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     };
 
     useEffect(() => {
-        if (status === 'dealerTurn') {
-            let currentDealerHand = [...dealerHand];
-            let currentDeck = [...deck];
-            
-            const playDealer = () => {
-                const score = calculateScore(currentDealerHand);
-                if (score < 17) {
-                    currentDealerHand.push(currentDeck[0]);
-                    currentDeck = currentDeck.slice(1);
-                    setDealerHand([...currentDealerHand]);
-                    setDeck([...currentDeck]);
-                    setTimeout(playDealer, 600);
-                } else {
-                    const pScore = calculateScore(playerHand);
-                    const dScore = score;
-                    
-                    if (dScore > 21 || pScore > dScore) setMessage('win');
-                    else if (pScore < dScore) setMessage('lost');
-                    else setMessage('push');
-                    
-                    setStatus('result');
-                }
-            };
-            playDealer();
-        }
+        if (status !== 'dealerTurn') return;
+
+        const generation = gameGeneration.current;
+        let currentDealerHand = [...dealerHand];
+        let currentDeck = [...deck];
+        let timeoutId: ReturnType<typeof setTimeout> | undefined;
+        let cancelled = false;
+
+        const isCurrentGame = () => !cancelled && gameGeneration.current === generation;
+        const playDealer = () => {
+            if (!isCurrentGame()) return;
+            if (dealerShouldHit(currentDealerHand) && currentDeck.length > 0) {
+                currentDealerHand = [...currentDealerHand, currentDeck[0]];
+                currentDeck = currentDeck.slice(1);
+                setDealerHand(currentDealerHand);
+                setDeck(currentDeck);
+                timeoutId = setTimeout(playDealer, 600);
+                return;
+            }
+
+            setMessage(settleBlackjack(playerHand, currentDealerHand));
+            setStatus('result');
+        };
+
+        playDealer();
+        return () => {
+            cancelled = true;
+            if (timeoutId !== undefined) clearTimeout(timeoutId);
+        };
     }, [status]);
 
     return (

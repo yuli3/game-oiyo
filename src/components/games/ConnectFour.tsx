@@ -34,6 +34,11 @@ const i18n: Record<Locale, {
   youWin: string;
   aiWins: string;
   record: string;
+  column: string;
+  columnFull: string;
+  empty: string;
+  red: string;
+  yellow: string;
 }> = {
   ko: {
     title: "커넥트 포",
@@ -45,6 +50,7 @@ const i18n: Record<Locale, {
     desc: "4개를 가로, 세로, 대각선으로 연결하면 승리합니다.",
     modeLocal: "2인 대전", modeAi: "AI 대전", level1: "견습생", level2: "숙련가", level3: "명인",
     thinking: "상대가 수를 읽고 있습니다…", youWin: "당신의 승리!", aiWins: "AI 승리", record: "전적",
+    column: "열", columnFull: "가득 참", empty: "빈 칸", red: "빨간 말", yellow: "노란 말",
   },
   en: {
     title: "Connect Four",
@@ -56,6 +62,7 @@ const i18n: Record<Locale, {
     desc: "Connect four discs horizontally, vertically, or diagonally to win.",
     modeLocal: "2 Players", modeAi: "vs AI", level1: "Apprentice", level2: "Adept", level3: "Master",
     thinking: "Your opponent is thinking…", youWin: "You win!", aiWins: "AI wins", record: "Record",
+    column: "Column", columnFull: "full", empty: "empty", red: "red disc", yellow: "yellow disc",
   },
   ja: {
     title: "コネクトフォー",
@@ -67,6 +74,7 @@ const i18n: Record<Locale, {
     desc: "横・縦・斜めに4つ並べたほうが勝ちです。",
     modeLocal: "2人対戦", modeAi: "AI対戦", level1: "見習い", level2: "熟練者", level3: "名人",
     thinking: "相手が考えています…", youWin: "あなたの勝ち！", aiWins: "AIの勝ち", record: "戦績",
+    column: "列", columnFull: "満杯", empty: "空き", red: "赤いコマ", yellow: "黄色いコマ",
   },
   fr: {
     title: "Puissance 4",
@@ -78,6 +86,7 @@ const i18n: Record<Locale, {
     desc: "Alignez 4 jetons horizontalement, verticalement ou en diagonale.",
     modeLocal: "2 joueurs", modeAi: "contre l'IA", level1: "Apprenti", level2: "Adepte", level3: "Maître",
     thinking: "Votre adversaire réfléchit…", youWin: "Vous gagnez !", aiWins: "L'IA gagne", record: "Bilan",
+    column: "Colonne", columnFull: "pleine", empty: "vide", red: "jeton rouge", yellow: "jeton jaune",
   },
   es: {
     title: "Conecta Cuatro",
@@ -89,6 +98,7 @@ const i18n: Record<Locale, {
     desc: "Conecta cuatro fichas en línea horizontal, vertical o diagonal.",
     modeLocal: "2 jugadores", modeAi: "contra la IA", level1: "Aprendiz", level2: "Experto", level3: "Maestro",
     thinking: "Tu rival está pensando…", youWin: "¡Has ganado!", aiWins: "Gana la IA", record: "Historial",
+    column: "Columna", columnFull: "llena", empty: "vacía", red: "ficha roja", yellow: "ficha amarilla",
   },
   zh: {
     title: "四子棋",
@@ -100,6 +110,7 @@ const i18n: Record<Locale, {
     desc: "在水平、垂直或对角线方向连接四个棋子即获胜。",
     modeLocal: "双人对战", modeAi: "人机对战", level1: "学徒", level2: "行家", level3: "大师",
     thinking: "对手正在思考…", youWin: "你赢了！", aiWins: "AI 获胜", record: "战绩",
+    column: "列", columnFull: "已满", empty: "空格", red: "红色棋子", yellow: "黄色棋子",
   },
 };
 
@@ -171,8 +182,10 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
   const [level, setLevel] = useState<AiLevel>(2);
   const [thinking, setThinking] = useState(false);
   const [record, setRecord] = useState<GameRecord | null>(null);
+  const [activeCol, setActiveCol] = useState(0);
   const animFrameRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const aiTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const columnRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   useEffect(() => { setRecord(getRecord("connectfour")); }, []);
 
@@ -187,6 +200,7 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
     setFallingCell(null);
     setAnimating(false);
     setThinking(false);
+    setActiveCol(0);
   }, []);
 
   // Cleanup on unmount
@@ -263,6 +277,28 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
     return winCells.some(([wr, wc]) => wr === r && wc === c);
   };
 
+  const focusColumn = (column: number) => {
+    const next = Math.max(0, Math.min(COLS - 1, column));
+    setActiveCol(next);
+    columnRefs.current[next]?.focus();
+  };
+
+  const handleColumnKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, column: number) => {
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      focusColumn(column - 1);
+    } else if (event.key === "ArrowRight") {
+      event.preventDefault();
+      focusColumn(column + 1);
+    } else if (event.key === "Home") {
+      event.preventDefault();
+      focusColumn(0);
+    } else if (event.key === "End") {
+      event.preventDefault();
+      focusColumn(COLS - 1);
+    }
+  };
+
   const playerColors: Record<1 | 2, string> = {
     1: "bg-red-500",
     2: "bg-yellow-400",
@@ -282,7 +318,7 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
   const cellGap = 6;
 
   return (
-    <div className="not-prose my-12 p-6 bg-card text-card-foreground rounded-3xl border border-border shadow-sm max-w-xl mx-auto select-none">
+    <div className="not-prose my-12 p-4 sm:p-6 bg-card text-card-foreground rounded-3xl border border-border shadow-sm max-w-xl mx-auto select-none">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <span className="text-sm font-bold text-muted-foreground uppercase tracking-widest">
@@ -290,7 +326,7 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
         </span>
         <button
           onClick={resetGame}
-          className="text-xs px-3 py-1 rounded-full border border-border hover:bg-muted transition-colors"
+          className="min-h-11 text-xs px-3 py-2 rounded-full border border-border hover:bg-muted transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
         >
           {t.restart}
         </button>
@@ -351,6 +387,7 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
       </div>
 
       {/* Board */}
+      <div className="overflow-x-auto pb-2" tabIndex={-1}>
       <div
         className="relative mx-auto"
         style={{
@@ -409,6 +446,8 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
               return (
                 <div
                   key={`${r}-${c}`}
+                  aria-label={`${t.column} ${c + 1}, ${r + 1}: ${cell === 1 ? t.red : cell === 2 ? t.yellow : t.empty}`}
+                  role="img"
                   className="relative flex items-center justify-center"
                   style={{ width: `${cellSize}px`, height: `${cellSize}px` }}
                 >
@@ -450,16 +489,24 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
           }}
         >
           {Array.from({ length: COLS }, (_, c) => (
-            <div
+            <button
               key={c}
-              className="flex-1 cursor-pointer rounded-lg"
+              ref={(node) => { columnRefs.current[c] = node; }}
+              type="button"
+              className="flex-1 cursor-pointer rounded-lg focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/90 aria-disabled:cursor-not-allowed"
               style={{ height: `${ROWS * cellSize + (ROWS - 1) * cellGap}px` }}
               onClick={() => handleColClick(c)}
+              onFocus={() => setActiveCol(c)}
+              onKeyDown={(event) => handleColumnKeyDown(event, c)}
               onMouseEnter={() => setHoveredCol(c)}
               onMouseLeave={() => setHoveredCol(null)}
+              tabIndex={activeCol === c ? 0 : -1}
+              aria-disabled={status !== "playing" || findDropRow(board, c) === -1 || (mode === "ai" && (currentPlayer === AI_PLAYER || thinking))}
+              aria-label={`${t.column} ${c + 1}${findDropRow(board, c) === -1 ? `, ${t.columnFull}` : ""}`}
             />
           ))}
         </div>
+      </div>
       </div>
 
       {/* Player legend */}
@@ -476,7 +523,7 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
         <div className="mt-4 flex justify-center">
           <button
             onClick={resetGame}
-            className="px-10 py-3 bg-blue-600 text-white rounded-full font-bold hover:bg-blue-700 transition-colors"
+            className="min-h-11 px-10 py-3 bg-blue-600 text-white rounded-full font-bold hover:bg-blue-700 transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
           >
             {t.restart}
           </button>
@@ -490,6 +537,9 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
         }
         .animate-fall {
           animation: fall 0.32s cubic-bezier(0.55, 0, 1, 0.45);
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .animate-fall { animation: none; }
         }
       `}</style>
     </div>

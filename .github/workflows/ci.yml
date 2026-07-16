@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+  checks: read
+
 jobs:
   validate:
     name: Validate
@@ -71,8 +75,11 @@ jobs:
         run: pip install requests python-dotenv google-api-python-client google-auth
 
       - name: Wait for Cloudflare Pages deployment
-        # Give Cloudflare Pages ~90s to deploy before submitting URLs
-        run: sleep 90
+        # Search submission must follow the deployment for this exact commit,
+        # not a blind delay that may still leave the previous build live.
+        run: python scripts/wait-cloudflare-check.py
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
 
       - name: Submit sitemap to all engines
         run: python scripts/sitemap-submit.py

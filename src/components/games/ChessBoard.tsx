@@ -1,19 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { Locale } from '../../lib/i18n';
 import {
-  chessApply, chessBestMove, chessInCheck, chessLegalMoves, isWhitePiece,
-  type ChessBoard as Board, type ChessMove,
+  chessApplyState, chessBestStateMove, chessDrawReason, chessInCheck, chessLegalStateMoves,
+  chessPositionKey, createInitialChessState, isWhitePiece,
+  type ChessMove, type ChessDrawReason, type PromotionPiece,
 } from '../../lib/games/ai/chess';
 import type { AiLevel, GameMode } from '../../lib/games/ai/types';
 import { getRecord, recordResult, type GameRecord } from '../../lib/games/records';
-
-const makeInitialBoard = (): Board => [
-  ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
-  ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
-  Array(8).fill(null), Array(8).fill(null), Array(8).fill(null), Array(8).fill(null),
-  ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
-  ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'],
-];
 
 const AI_IS_WHITE = false; // AI plays black; human opens as white
 const AI_DELAY_MS = 500;
@@ -23,29 +16,36 @@ const i18n: Record<Locale, {
   pawn: string; knight: string; bishop: string; rook: string; queen: string; king: string;
   modeLocal: string; modeAi: string; level1: string; level2: string; level3: string;
   thinking: string; youWin: string; aiWins: string; draw: string; check: string; checkmate: string; stalemate: string; record: string;
+  board: string; empty: string; selectedLabel: string; legalLabel: string;
+  promote: string; fiftyMove: string; threefold: string; insufficientMaterial: string;
 }> = {
-  ko: { title: "전략의 정수: 체스", turn: "차례", white: "백", black: "흑", reset: "초기화", pawn: "폰", knight: "나이트", bishop: "비숍", rook: "룩", queen: "퀸", king: "킹", modeLocal: "2인 대전", modeAi: "AI 대전", level1: "견습생", level2: "숙련가", level3: "명인", thinking: "상대가 수를 읽고 있습니다…", youWin: "당신의 승리!", aiWins: "AI 승리", draw: "무승부", check: "체크!", checkmate: "체크메이트", stalemate: "스테일메이트", record: "전적" },
-  en: { title: "Chess Strategy", turn: "Turn", white: "White", black: "Black", reset: "Reset", pawn: "Pawn", knight: "Knight", bishop: "Bishop", rook: "Rook", queen: "Queen", king: "King", modeLocal: "2 Players", modeAi: "vs AI", level1: "Apprentice", level2: "Adept", level3: "Master", thinking: "Your opponent is thinking…", youWin: "You win!", aiWins: "AI wins", draw: "Draw", check: "Check!", checkmate: "Checkmate", stalemate: "Stalemate", record: "Record" },
-  ja: { title: "チェス戦略", turn: "手番", white: "白", black: "黒", reset: "リセット", pawn: "ポーン", knight: "ナイト", bishop: "ビショップ", rook: "ルーク", queen: "クイーン", king: "キング", modeLocal: "2人対戦", modeAi: "AI対戦", level1: "見習い", level2: "熟練者", level3: "名人", thinking: "相手が考えています…", youWin: "あなたの勝ち！", aiWins: "AIの勝ち", draw: "引き分け", check: "チェック！", checkmate: "チェックメイト", stalemate: "ステイルメイト", record: "戦績" },
-  zh: { title: "国际象棋策略", turn: "回合", white: "白", black: "黑", reset: "重置", pawn: "兵", knight: "马", bishop: "象", rook: "车", queen: "后", king: "王", modeLocal: "双人对战", modeAi: "人机对战", level1: "学徒", level2: "行家", level3: "大师", thinking: "对手正在思考…", youWin: "你赢了！", aiWins: "AI 获胜", draw: "平局", check: "将军！", checkmate: "将死", stalemate: "逼和", record: "战绩" },
-  fr: { title: "Stratégie d'échecs", turn: "Tour", white: "Blancs", black: "Noirs", reset: "Réinitialiser", pawn: "Pion", knight: "Cavalier", bishop: "Fou", rook: "Tour", queen: "Dame", king: "Roi", modeLocal: "2 joueurs", modeAi: "contre l'IA", level1: "Apprenti", level2: "Adepte", level3: "Maître", thinking: "Votre adversaire réfléchit…", youWin: "Vous gagnez !", aiWins: "L'IA gagne", draw: "Match nul", check: "Échec !", checkmate: "Échec et mat", stalemate: "Pat", record: "Bilan" },
-  es: { title: "Estrategia de ajedrez", turn: "Turno", white: "Blancas", black: "Negras", reset: "Reiniciar", pawn: "Peón", knight: "Caballo", bishop: "Alfil", rook: "Torre", queen: "Dama", king: "Rey", modeLocal: "2 jugadores", modeAi: "contra la IA", level1: "Aprendiz", level2: "Experto", level3: "Maestro", thinking: "Tu rival está pensando…", youWin: "¡Has ganado!", aiWins: "Gana la IA", draw: "Tablas", check: "¡Jaque!", checkmate: "Jaque mate", stalemate: "Rey ahogado", record: "Historial" },
+  ko: { title: "전략의 정수: 체스", turn: "차례", white: "백", black: "흑", reset: "초기화", pawn: "폰", knight: "나이트", bishop: "비숍", rook: "룩", queen: "퀸", king: "킹", modeLocal: "2인 대전", modeAi: "AI 대전", level1: "견습생", level2: "숙련가", level3: "명인", thinking: "상대가 수를 읽고 있습니다…", youWin: "당신의 승리!", aiWins: "AI 승리", draw: "무승부", check: "체크!", checkmate: "체크메이트", stalemate: "스테일메이트", record: "전적", board: "체스판. 화살표 키로 이동하고 Enter 또는 Space로 선택하세요.", empty: "빈 칸", selectedLabel: "선택됨", legalLabel: "이동 가능", promote: "승격할 기물을 선택하세요", fiftyMove: "50수 규칙", threefold: "3회 반복", insufficientMaterial: "기물 부족" },
+  en: { title: "Chess Strategy", turn: "Turn", white: "White", black: "Black", reset: "Reset", pawn: "Pawn", knight: "Knight", bishop: "Bishop", rook: "Rook", queen: "Queen", king: "King", modeLocal: "2 Players", modeAi: "vs AI", level1: "Apprentice", level2: "Adept", level3: "Master", thinking: "Your opponent is thinking…", youWin: "You win!", aiWins: "AI wins", draw: "Draw", check: "Check!", checkmate: "Checkmate", stalemate: "Stalemate", record: "Record", board: "Chess board. Use arrow keys to move and Enter or Space to select.", empty: "Empty", selectedLabel: "Selected", legalLabel: "Legal move", promote: "Choose a promotion piece", fiftyMove: "Fifty-move rule", threefold: "Threefold repetition", insufficientMaterial: "Insufficient material" },
+  ja: { title: "チェス戦略", turn: "手番", white: "白", black: "黒", reset: "リセット", pawn: "ポーン", knight: "ナイト", bishop: "ビショップ", rook: "ルーク", queen: "クイーン", king: "キング", modeLocal: "2人対戦", modeAi: "AI対戦", level1: "見習い", level2: "熟練者", level3: "名人", thinking: "相手が考えています…", youWin: "あなたの勝ち！", aiWins: "AIの勝ち", draw: "引き分け", check: "チェック！", checkmate: "チェックメイト", stalemate: "ステイルメイト", record: "戦績", board: "チェス盤。矢印キーで移動し、EnterまたはSpaceで選択します。", empty: "空き", selectedLabel: "選択中", legalLabel: "移動可能", promote: "昇格する駒を選択", fiftyMove: "50手ルール", threefold: "同一局面3回", insufficientMaterial: "戦力不足" },
+  zh: { title: "国际象棋策略", turn: "回合", white: "白", black: "黑", reset: "重置", pawn: "兵", knight: "马", bishop: "象", rook: "车", queen: "后", king: "王", modeLocal: "双人对战", modeAi: "人机对战", level1: "学徒", level2: "行家", level3: "大师", thinking: "对手正在思考…", youWin: "你赢了！", aiWins: "AI 获胜", draw: "平局", check: "将军！", checkmate: "将死", stalemate: "逼和", record: "战绩", board: "国际象棋棋盘。使用方向键移动，按 Enter 或空格选择。", empty: "空格", selectedLabel: "已选择", legalLabel: "可移动", promote: "选择升变棋子", fiftyMove: "五十回合规则", threefold: "三次重复", insufficientMaterial: "子力不足" },
+  fr: { title: "Stratégie d'échecs", turn: "Tour", white: "Blancs", black: "Noirs", reset: "Réinitialiser", pawn: "Pion", knight: "Cavalier", bishop: "Fou", rook: "Tour", queen: "Dame", king: "Roi", modeLocal: "2 joueurs", modeAi: "contre l'IA", level1: "Apprenti", level2: "Adepte", level3: "Maître", thinking: "Votre adversaire réfléchit…", youWin: "Vous gagnez !", aiWins: "L'IA gagne", draw: "Match nul", check: "Échec !", checkmate: "Échec et mat", stalemate: "Pat", record: "Bilan", board: "Échiquier. Utilisez les flèches puis Entrée ou Espace pour sélectionner.", empty: "Vide", selectedLabel: "Sélectionnée", legalLabel: "Coup possible", promote: "Choisissez la promotion", fiftyMove: "Règle des cinquante coups", threefold: "Triple répétition", insufficientMaterial: "Matériel insuffisant" },
+  es: { title: "Estrategia de ajedrez", turn: "Turno", white: "Blancas", black: "Negras", reset: "Reiniciar", pawn: "Peón", knight: "Caballo", bishop: "Alfil", rook: "Torre", queen: "Dama", king: "Rey", modeLocal: "2 jugadores", modeAi: "contra la IA", level1: "Aprendiz", level2: "Experto", level3: "Maestro", thinking: "Tu rival está pensando…", youWin: "¡Has ganado!", aiWins: "Gana la IA", draw: "Tablas", check: "¡Jaque!", checkmate: "Jaque mate", stalemate: "Rey ahogado", record: "Historial", board: "Tablero de ajedrez. Usa las flechas y Enter o Espacio para seleccionar.", empty: "Vacía", selectedLabel: "Seleccionada", legalLabel: "Movimiento posible", promote: "Elige la pieza de promoción", fiftyMove: "Regla de cincuenta movimientos", threefold: "Triple repetición", insufficientMaterial: "Material insuficiente" },
 };
 
-type GameEnd = { result: 'white' | 'black' | 'draw'; reason: 'checkmate' | 'stalemate' } | null;
+type GameEnd = { result: 'white' | 'black' | 'draw'; reason: 'checkmate' | 'stalemate' | ChessDrawReason } | null;
 
 const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
   const t = i18n[locale] ?? i18n.en;
 
-  const [board, setBoard] = useState<Board>(makeInitialBoard);
+  const [position, setPosition] = useState(createInitialChessState);
+  const board = position.board;
+  const isWhiteTurn = position.whiteToMove;
   const [selected, setSelected] = useState<[number, number] | null>(null);
-  const [isWhiteTurn, setIsWhiteTurn] = useState(true);
+  const [pendingPromotion, setPendingPromotion] = useState<ChessMove[] | null>(null);
   const [gameEnd, setGameEnd] = useState<GameEnd>(null);
   const [mode, setMode] = useState<GameMode>('local');
   const [level, setLevel] = useState<AiLevel>(2);
   const [thinking, setThinking] = useState(false);
   const [record, setRecord] = useState<GameRecord | null>(null);
+  const [focusIndex, setFocusIndex] = useState(56);
   const aiTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const squareRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const positionHistory = useRef<string[]>([chessPositionKey(createInitialChessState())]);
 
   useEffect(() => { setRecord(getRecord('chess')); }, []);
   useEffect(() => () => { if (aiTimer.current) clearTimeout(aiTimer.current); }, []);
@@ -57,9 +57,11 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
 
   const reset = () => {
     if (aiTimer.current) clearTimeout(aiTimer.current);
-    setBoard(makeInitialBoard());
+    const initial = createInitialChessState();
+    setPosition(initial);
+    positionHistory.current = [chessPositionKey(initial)];
     setSelected(null);
-    setIsWhiteTurn(true);
+    setPendingPromotion(null);
     setGameEnd(null);
     setThinking(false);
   };
@@ -72,20 +74,25 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     }
   };
 
-  const applyMove = (current: Board, m: ChessMove, moverIsWhite: boolean) => {
-    const next = chessApply(current, m);
-    setBoard(next);
+  const applyMove = (current: typeof position, m: ChessMove, moverIsWhite: boolean) => {
+    const next = chessApplyState(current, m);
+    const nextKey = chessPositionKey(next);
+    const nextHistory = [...positionHistory.current, nextKey];
+    positionHistory.current = nextHistory;
+    setPosition(next);
     setSelected(null);
+    setPendingPromotion(null);
     // opponent's position after the move: mate / stalemate / continue
-    if (chessLegalMoves(next, !moverIsWhite).length === 0) {
-      if (chessInCheck(next, !moverIsWhite)) finish({ result: moverIsWhite ? 'white' : 'black', reason: 'checkmate' });
+    if (chessLegalStateMoves(next).length === 0) {
+      if (chessInCheck(next.board, !moverIsWhite)) finish({ result: moverIsWhite ? 'white' : 'black', reason: 'checkmate' });
       else finish({ result: 'draw', reason: 'stalemate' });
-    } else {
-      setIsWhiteTurn(!moverIsWhite);
+      return;
     }
+    const drawReason = chessDrawReason(next, nextHistory);
+    if (drawReason) finish({ result: 'draw', reason: drawReason });
   };
 
-  const legalTargets = selected ? chessLegalMoves(board, isWhiteTurn).filter(
+  const legalTargets = selected ? chessLegalStateMoves(position).filter(
     (m) => m.from[0] === selected[0] && m.from[1] === selected[1]
   ) : [];
 
@@ -96,8 +103,9 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
 
     if (selected) {
       if (selected[0] === r && selected[1] === c) { setSelected(null); return; }
-      const move = legalTargets.find((m) => m.to[0] === r && m.to[1] === c);
-      if (move) { applyMove(board, move, isWhiteTurn); return; }
+      const moves = legalTargets.filter((m) => m.to[0] === r && m.to[1] === c);
+      if (moves.length > 1 && moves.every((move) => move.promotion)) { setPendingPromotion(moves); return; }
+      if (moves[0]) { applyMove(position, moves[0], isWhiteTurn); return; }
       // reselect own piece, otherwise deselect
       if (piece && isWhitePiece(piece) === isWhiteTurn) setSelected([r, c]);
       else setSelected(null);
@@ -106,14 +114,29 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     }
   };
 
+  const moveBoardFocus = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
+    const row = Math.floor(index / 8), col = index % 8;
+    let next = index;
+    if (event.key === 'ArrowUp') next = Math.max(0, row - 1) * 8 + col;
+    else if (event.key === 'ArrowDown') next = Math.min(7, row + 1) * 8 + col;
+    else if (event.key === 'ArrowLeft') next = row * 8 + Math.max(0, col - 1);
+    else if (event.key === 'ArrowRight') next = row * 8 + Math.min(7, col + 1);
+    else if (event.key === 'Home') next = event.ctrlKey ? 0 : row * 8;
+    else if (event.key === 'End') next = event.ctrlKey ? 63 : row * 8 + 7;
+    else return;
+    event.preventDefault();
+    setFocusIndex(next);
+    squareRefs.current[next]?.focus();
+  };
+
   // AI turn
   useEffect(() => {
     if (mode !== 'ai' || gameEnd || isWhiteTurn !== AI_IS_WHITE) return;
     setThinking(true);
     aiTimer.current = setTimeout(() => {
-      const move = chessBestMove(board, AI_IS_WHITE, level);
+      const move = chessBestStateMove(position, level);
       setThinking(false);
-      if (move) applyMove(board, move, AI_IS_WHITE);
+      if (move) applyMove(position, move, AI_IS_WHITE);
       // no legal move is already handled by applyMove's mate/stalemate detection
     }, AI_DELAY_MS);
     return () => { if (aiTimer.current) clearTimeout(aiTimer.current); };
@@ -127,9 +150,13 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
   };
 
   const inCheck = !gameEnd && chessInCheck(board, isWhiteTurn);
+  const drawLabel = gameEnd?.reason === 'stalemate' ? t.stalemate
+    : gameEnd?.reason === 'fiftyMove' ? t.fiftyMove
+      : gameEnd?.reason === 'threefold' ? t.threefold
+        : gameEnd?.reason === 'insufficientMaterial' ? t.insufficientMaterial : '';
   const endLabel = gameEnd
     ? gameEnd.result === 'draw'
-      ? `${t.draw} · ${t.stalemate}`
+      ? `${t.draw} · ${drawLabel}`
       : mode === 'ai'
         ? (gameEnd.result === (AI_IS_WHITE ? 'white' : 'black') ? t.aiWins : t.youWin)
         : `${gameEnd.result === 'white' ? t.white : t.black} ${t.checkmate}`
@@ -178,17 +205,24 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         )}
       </div>
 
-      <div className="relative">
-        <div className="grid grid-cols-8 grid-rows-8 border-4 border-stone-800 shadow-2xl aspect-square w-full">
+      <div className="relative overflow-x-auto pb-2">
+        <div className="grid min-w-[352px] grid-cols-8 grid-rows-8 border-4 border-stone-800 shadow-2xl aspect-square w-full" role="grid" aria-label={t.board}>
           {board.map((row, r) => row.map((piece, c) => {
             const isDark = (r + c) % 2 === 1;
             const isSelected = selected && selected[0] === r && selected[1] === c;
             const isTarget = legalTargets.some((m) => m.to[0] === r && m.to[1] === c);
             return (
-              <div
+              <button
                 key={`${r}-${c}`}
+                ref={(node) => { squareRefs.current[r * 8 + c] = node; }}
                 onClick={() => handleSquareClick(r, c)}
-                className={`relative flex items-center justify-center text-3xl sm:text-4xl cursor-pointer transition-colors ${
+                onFocus={() => setFocusIndex(r * 8 + c)}
+                onKeyDown={(event) => moveBoardFocus(event, r * 8 + c)}
+                tabIndex={focusIndex === r * 8 + c ? 0 : -1}
+                role="gridcell"
+                aria-selected={Boolean(isSelected)}
+                aria-label={`${String.fromCharCode(65 + c)}${8 - r}, ${piece ? `${isWhitePiece(piece) ? t.white : t.black} ${t[{ p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king' }[piece.toLowerCase()] as 'pawn' | 'knight' | 'bishop' | 'rook' | 'queen' | 'king']}` : t.empty}${isSelected ? `, ${t.selectedLabel}` : ''}${isTarget ? `, ${t.legalLabel}` : ''}`}
+                className={`relative flex min-h-11 min-w-11 items-center justify-center text-3xl sm:text-4xl cursor-pointer transition-colors motion-reduce:transition-none focus-visible:z-20 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-[-4px] focus-visible:outline-sky-500 ${
                   isDark ? 'bg-[#b58863]' : 'bg-[#f0d9b5]'
                 } ${isSelected ? 'ring-4 ring-primary inset-0 z-10' : ''}`}
               >
@@ -200,17 +234,32 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                 <span className={`select-none transform ${piece && piece === piece.toLowerCase() ? 'text-black' : 'text-white drop-shadow-sm'}`}>
                   {piece ? pieceIcons[piece] : ''}
                 </span>
-              </div>
+              </button>
             );
           }))}
         </div>
 
+        {pendingPromotion && (
+          <div className="absolute inset-0 z-20 min-w-[352px] bg-background/70 backdrop-blur-sm flex items-center justify-center" role="dialog" aria-modal="true" aria-label={t.promote}>
+            <div className="bg-card p-5 rounded-2xl border border-border shadow-xl text-center">
+              <p className="font-bold mb-3">{t.promote}</p>
+              <div className="flex gap-2">
+                {(['q', 'r', 'b', 'n'] as PromotionPiece[]).map((promotion) => {
+                  const move = pendingPromotion.find((candidate) => candidate.promotion === promotion)!;
+                  const key = promotion as 'queen' | 'rook' | 'bishop' | 'knight';
+                  return <button key={promotion} autoFocus={promotion === 'q'} onClick={() => applyMove(position, move, isWhiteTurn)} aria-label={t[key]} className="min-h-11 min-w-11 rounded-xl border border-border bg-muted text-3xl focus-visible:outline focus-visible:outline-4 focus-visible:outline-primary">{pieceIcons[isWhiteTurn ? promotion.toUpperCase() : promotion]}</button>;
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
         {gameEnd && (
-          <div className="absolute inset-0 z-20 bg-background/60 backdrop-blur-sm flex flex-col items-center justify-center animate-in fade-in zoom-in-95">
+          <div className="absolute inset-0 z-20 min-w-[352px] bg-background/60 backdrop-blur-sm flex flex-col items-center justify-center animate-in fade-in zoom-in-95 motion-reduce:animate-none" role="status" aria-live="assertive">
             <div className="bg-card p-8 rounded-3xl shadow-xl border border-border text-center">
               <h4 className="text-3xl font-black text-foreground mb-2">{endLabel}</h4>
               <p className="text-muted-foreground mb-6 uppercase tracking-widest font-bold text-xs">
-                {gameEnd.reason === 'checkmate' ? t.checkmate : t.stalemate}
+                {gameEnd.reason === 'checkmate' ? t.checkmate : drawLabel}
               </p>
               <button onClick={reset} className="px-10 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg">
                 {t.reset}

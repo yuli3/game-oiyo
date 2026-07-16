@@ -7,8 +7,11 @@ export const TERRAINS: Terrain[] = ["wheat", "forest", "water", "grass", "swamp"
 export interface Square { terrain: Terrain; crowns: number }
 export interface Tile { id: number; a: Square; b: Square }
 
-export const GRID = 5;                 // 5x5 kingdom
-export const CENTER = 2;               // castle sits at (2,2)
+// A 9x9 coordinate canvas lets the castle occupy any position inside the final
+// kingdom. The occupied bounding box itself may never exceed 5x5.
+export const GRID = 9;
+export const KINGDOM_SIZE = 5;
+export const CENTER = 4;
 export const CASTLE: Terrain | "castle" = "castle";
 
 // A placed cell: terrain or the wildcard castle. null = empty.
@@ -82,7 +85,7 @@ function withinKingdom(board: Board, extra: Pos[]): boolean {
   };
   for (let r = 0; r < GRID; r++) for (let c = 0; c < GRID; c++) if (board[r][c] !== null) mark(r, c);
   for (const p of extra) mark(p.r, p.c);
-  return maxR - minR < GRID && maxC - minC < GRID;
+  return maxR - minR < KINGDOM_SIZE && maxC - minC < KINGDOM_SIZE;
 }
 
 // Does a domino square placed at pos connect (orthogonally) to an existing tile
@@ -132,9 +135,26 @@ export function applyPlacement(board: Board, crowns: CrownGrid, tile: Tile, pl: 
 
 // ── Scoring ───────────────────────────────────────────────────────────────
 // Each connected same-terrain region scores (region size × total crowns in region).
-export function scoreBoard(board: Board, crowns: CrownGrid): number {
+export interface RegionScore {
+  terrain: Terrain;
+  size: number;
+  crowns: number;
+  points: number;
+}
+
+export interface BoardScore {
+  points: number;
+  crowns: number;
+  largestRegion: number;
+  regions: RegionScore[];
+}
+
+export function scoreBoardBreakdown(board: Board, crowns: CrownGrid): BoardScore {
   const seen = Array.from({ length: GRID }, () => Array<boolean>(GRID).fill(false));
   let total = 0;
+  let totalCrowns = 0;
+  let largestRegion = 0;
+  const regions: RegionScore[] = [];
   for (let r = 0; r < GRID; r++) {
     for (let c = 0; c < GRID; c++) {
       const cell = board[r][c];
@@ -154,17 +174,37 @@ export function scoreBoard(board: Board, crowns: CrownGrid): number {
           }
         }
       }
-      total += size * regionCrowns;
+      const points = size * regionCrowns;
+      total += points;
+      totalCrowns += regionCrowns;
+      largestRegion = Math.max(largestRegion, size);
+      regions.push({ terrain: cell, size, crowns: regionCrowns, points });
     }
   }
-  return total;
+  return { points: total, crowns: totalCrowns, largestRegion, regions };
 }
 
-// Optional standard bonuses.
-export function bonuses(board: Board): { middleKingdom: boolean; harmony: boolean; points: number } {
+export function scoreBoard(board: Board, crowns: CrownGrid): number {
+  return scoreBoardBreakdown(board, crowns).points;
+}
+
+// Optional standard bonuses. Harmony is 5 points for placing every received domino;
+// Middle Kingdom is 10 points for a 5x5 footprint with the castle in its centre.
+export function bonuses(board: Board, discardedTiles = 0): { middleKingdom: boolean; harmony: boolean; points: number } {
   let filled = 0;
-  for (let r = 0; r < GRID; r++) for (let c = 0; c < GRID; c++) if (board[r][c] !== null) filled++;
-  const harmony = filled === GRID * GRID;           // every square placed
-  const middleKingdom = board[CENTER][CENTER] === "castle" && harmony; // castle centred + full
-  return { middleKingdom, harmony, points: (harmony ? 10 : 0) + (middleKingdom ? 10 : 0) };
+  let minR = GRID, maxR = -1, minC = GRID, maxC = -1;
+  for (let r = 0; r < GRID; r++) {
+    for (let c = 0; c < GRID; c++) {
+      if (board[r][c] === null) continue;
+      filled++;
+      minR = Math.min(minR, r); maxR = Math.max(maxR, r);
+      minC = Math.min(minC, c); maxC = Math.max(maxC, c);
+    }
+  }
+  const complete = filled === KINGDOM_SIZE * KINGDOM_SIZE;
+  const harmony = complete && discardedTiles === 0;
+  const middleKingdom = maxR - minR + 1 === KINGDOM_SIZE
+    && maxC - minC + 1 === KINGDOM_SIZE
+    && board[minR + Math.floor(KINGDOM_SIZE / 2)][minC + Math.floor(KINGDOM_SIZE / 2)] === "castle";
+  return { middleKingdom, harmony, points: (harmony ? 5 : 0) + (middleKingdom ? 10 : 0) };
 }

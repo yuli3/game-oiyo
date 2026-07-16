@@ -10,13 +10,14 @@ const i18n: Record<Locale, {
     title: string; turn: string; black: string; white: string; win: string; over: string; reset: string;
     modeLocal: string; modeAi: string; level1: string; level2: string; level3: string;
     thinking: string; youWin: string; aiWins: string; draw: string; record: string;
+    boardLabel: string; empty: string; stone: string;
 }> = {
-    ko: { title: "오목 (Gomoku)", turn: "차례", black: "흑", white: "백", win: "승리!", over: "게임 종료", reset: "판 갈기", modeLocal: "2인 대전", modeAi: "AI 대전", level1: "견습생", level2: "숙련가", level3: "명인", thinking: "상대가 수를 읽고 있습니다…", youWin: "당신의 승리!", aiWins: "AI 승리", draw: "무승부", record: "전적" },
-    en: { title: "Gomoku", turn: "Turn", black: "Black", white: "White", win: "Wins!", over: "Game Over", reset: "New Match", modeLocal: "2 Players", modeAi: "vs AI", level1: "Apprentice", level2: "Adept", level3: "Master", thinking: "Your opponent is reading the board…", youWin: "You win!", aiWins: "AI wins", draw: "Draw", record: "Record" },
-    ja: { title: "五目並べ", turn: "手番", black: "黒", white: "白", win: "勝利！", over: "ゲーム終了", reset: "新しい対局", modeLocal: "2人対戦", modeAi: "AI対戦", level1: "見習い", level2: "熟練者", level3: "名人", thinking: "相手が盤面を読んでいます…", youWin: "あなたの勝ち！", aiWins: "AIの勝ち", draw: "引き分け", record: "戦績" },
-    zh: { title: "五子棋", turn: "回合", black: "黑", white: "白", win: "获胜！", over: "游戏结束", reset: "重新开局", modeLocal: "双人对战", modeAi: "人机对战", level1: "学徒", level2: "行家", level3: "大师", thinking: "对手正在读盘…", youWin: "你赢了！", aiWins: "AI 获胜", draw: "平局", record: "战绩" },
-    fr: { title: "Gomoku", turn: "Tour", black: "Noir", white: "Blanc", win: "gagne !", over: "Partie terminée", reset: "Nouvelle partie", modeLocal: "2 joueurs", modeAi: "contre l'IA", level1: "Apprenti", level2: "Adepte", level3: "Maître", thinking: "Votre adversaire lit le plateau…", youWin: "Vous gagnez !", aiWins: "L'IA gagne", draw: "Match nul", record: "Bilan" },
-    es: { title: "Gomoku", turn: "Turno", black: "Negras", white: "Blancas", win: "¡gana!", over: "Fin de la partida", reset: "Nueva partida", modeLocal: "2 jugadores", modeAi: "contra la IA", level1: "Aprendiz", level2: "Experto", level3: "Maestro", thinking: "Tu rival está leyendo el tablero…", youWin: "¡Has ganado!", aiWins: "Gana la IA", draw: "Tablas", record: "Historial" },
+    ko: { title: "오목 (Gomoku)", turn: "차례", black: "흑", white: "백", win: "승리!", over: "게임 종료", reset: "판 갈기", modeLocal: "2인 대전", modeAi: "AI 대전", level1: "견습생", level2: "숙련가", level3: "명인", thinking: "상대가 수를 읽고 있습니다…", youWin: "당신의 승리!", aiWins: "AI 승리", draw: "무승부", record: "전적", boardLabel: "오목판. 화살표 키로 이동하고 Enter 또는 Space로 돌을 놓으세요.", empty: "빈 교차점", stone: "돌" },
+    en: { title: "Gomoku", turn: "Turn", black: "Black", white: "White", win: "Wins!", over: "Game Over", reset: "New Match", modeLocal: "2 Players", modeAi: "vs AI", level1: "Apprentice", level2: "Adept", level3: "Master", thinking: "Your opponent is reading the board…", youWin: "You win!", aiWins: "AI wins", draw: "Draw", record: "Record", boardLabel: "Gomoku board. Use arrow keys to move and Enter or Space to place a stone.", empty: "Empty intersection", stone: "stone" },
+    ja: { title: "五目並べ", turn: "手番", black: "黒", white: "白", win: "勝利！", over: "ゲーム終了", reset: "新しい対局", modeLocal: "2人対戦", modeAi: "AI対戦", level1: "見習い", level2: "熟練者", level3: "名人", thinking: "相手が盤面を読んでいます…", youWin: "あなたの勝ち！", aiWins: "AIの勝ち", draw: "引き分け", record: "戦績", boardLabel: "五目並べ盤。矢印キーで移動し、EnterまたはSpaceで石を置きます。", empty: "空き交点", stone: "石" },
+    zh: { title: "五子棋", turn: "回合", black: "黑", white: "白", win: "获胜！", over: "游戏结束", reset: "重新开局", modeLocal: "双人对战", modeAi: "人机对战", level1: "学徒", level2: "行家", level3: "大师", thinking: "对手正在读盘…", youWin: "你赢了！", aiWins: "AI 获胜", draw: "平局", record: "战绩", boardLabel: "五子棋棋盘。使用方向键移动，按 Enter 或空格落子。", empty: "空交叉点", stone: "棋子" },
+    fr: { title: "Gomoku", turn: "Tour", black: "Noir", white: "Blanc", win: "gagne !", over: "Partie terminée", reset: "Nouvelle partie", modeLocal: "2 joueurs", modeAi: "contre l'IA", level1: "Apprenti", level2: "Adepte", level3: "Maître", thinking: "Votre adversaire lit le plateau…", youWin: "Vous gagnez !", aiWins: "L'IA gagne", draw: "Match nul", record: "Bilan", boardLabel: "Plateau de Gomoku. Utilisez les flèches puis Entrée ou Espace pour poser une pierre.", empty: "Intersection vide", stone: "pierre" },
+    es: { title: "Gomoku", turn: "Turno", black: "Negras", white: "Blancas", win: "¡gana!", over: "Fin de la partida", reset: "Nueva partida", modeLocal: "2 jugadores", modeAi: "contra la IA", level1: "Aprendiz", level2: "Experto", level3: "Maestro", thinking: "Tu rival está leyendo el tablero…", youWin: "¡Has ganado!", aiWins: "Gana la IA", draw: "Tablas", record: "Historial", boardLabel: "Tablero de Gomoku. Usa las flechas y Enter o Espacio para colocar una piedra.", empty: "Intersección vacía", stone: "piedra" },
 };
 
 const AI_PLAYER = 2; // AI plays white; human opens as black
@@ -32,7 +33,9 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     const [level, setLevel] = useState<AiLevel>(2);
     const [thinking, setThinking] = useState(false);
     const [record, setRecord] = useState<GameRecord | null>(null);
+    const [focusIndex, setFocusIndex] = useState(112);
     const aiTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const cellRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
     useEffect(() => { setRecord(getRecord('gomoku')); }, []);
     useEffect(() => () => { if (aiTimer.current) clearTimeout(aiTimer.current); }, []);
@@ -107,6 +110,22 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         setIsBlackTurn(true);
         setWinner(null);
         setThinking(false);
+        setFocusIndex(112);
+    };
+
+    const moveBoardFocus = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
+        const row = Math.floor(index / SIZE), col = index % SIZE;
+        let next = index;
+        if (event.key === 'ArrowUp') next = Math.max(0, row - 1) * SIZE + col;
+        else if (event.key === 'ArrowDown') next = Math.min(SIZE - 1, row + 1) * SIZE + col;
+        else if (event.key === 'ArrowLeft') next = row * SIZE + Math.max(0, col - 1);
+        else if (event.key === 'ArrowRight') next = row * SIZE + Math.min(SIZE - 1, col + 1);
+        else if (event.key === 'Home') next = event.ctrlKey ? 0 : row * SIZE;
+        else if (event.key === 'End') next = event.ctrlKey ? SIZE * SIZE - 1 : row * SIZE + SIZE - 1;
+        else return;
+        event.preventDefault();
+        setFocusIndex(next);
+        cellRefs.current[next]?.focus();
     };
 
     const switchMode = (m: GameMode) => {
@@ -165,7 +184,8 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                 )}
             </div>
 
-            <div className="relative aspect-square w-full bg-[#f3e5ab] rounded-sm p-[2%] shadow-inner border-[6px] border-[#d4c38d]">
+            <div className="overflow-x-auto pb-2">
+            <div className="relative h-[660px] w-[660px] bg-[#f3e5ab] rounded-sm p-[2%] shadow-inner border-[6px] border-[#d4c38d]">
                 {/* Board Lines */}
                 <div className="absolute inset-0 grid grid-cols-14 grid-rows-14 pointer-events-none p-[calc(2%+1.3%)]">
                     {Array.from({ length: 196 }).map((_, i) => (
@@ -174,20 +194,26 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                 </div>
 
                 {/* Stone Layer */}
-                <div className={`relative grid grid-cols-15 grid-rows-15 w-full h-full transition-opacity ${thinking ? 'opacity-80' : ''}`}>
+                <div className={`relative grid grid-cols-15 grid-rows-15 w-full h-full transition-opacity motion-reduce:transition-none ${thinking ? 'opacity-80' : ''}`} role="grid" aria-label={t.boardLabel}>
                     {board.map((stone, i) => (
                         <button
                             key={i}
+                            ref={(node) => { cellRefs.current[i] = node; }}
                             onClick={() => handleClick(i)}
-                            className="relative flex items-center justify-center group"
+                            onFocus={() => setFocusIndex(i)}
+                            onKeyDown={(event) => moveBoardFocus(event, i)}
+                            tabIndex={focusIndex === i ? 0 : -1}
+                            role="gridcell"
+                            aria-label={`${String.fromCharCode(65 + (i % SIZE))}${Math.floor(i / SIZE) + 1}, ${stone === null ? t.empty : `${stone === 1 ? t.black : t.white} ${t.stone}`}`}
+                            className="relative flex min-h-11 min-w-11 items-center justify-center group focus-visible:z-20 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-[-4px] focus-visible:outline-sky-600"
                         >
                             {/* Hover Ghost */}
                             {stone === null && winner === null && !thinking && (
-                                <div className={`absolute w-[80%] h-[80%] rounded-full opacity-0 group-hover:opacity-30 transition-opacity ${isBlackTurn ? 'bg-slate-900' : 'bg-white shadow-sm'}`} />
+                                <div className={`absolute w-[80%] h-[80%] rounded-full opacity-0 group-hover:opacity-30 transition-opacity motion-reduce:transition-none ${isBlackTurn ? 'bg-slate-900' : 'bg-white shadow-sm'}`} />
                             )}
                             {/* Real Stone */}
                             {stone !== null && (
-                                <div className={`w-[85%] h-[85%] rounded-full shadow-md transform transition-transform animate-in zoom-in-75 ${
+                                <div className={`w-[85%] h-[85%] rounded-full shadow-md transform transition-transform animate-in zoom-in-75 motion-reduce:transform-none motion-reduce:transition-none motion-reduce:animate-none ${
                                     stone === 1
                                         ? 'bg-gradient-to-br from-slate-700 to-slate-900'
                                         : 'bg-gradient-to-br from-white to-slate-200 border border-slate-300'
@@ -198,7 +224,7 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                 </div>
 
                 {winner !== null && (
-                    <div className="absolute inset-0 z-10 bg-background/60 backdrop-blur-sm flex flex-col items-center justify-center animate-in fade-in zoom-in-95">
+                    <div className="absolute inset-0 z-10 bg-background/60 backdrop-blur-sm flex flex-col items-center justify-center animate-in fade-in zoom-in-95 motion-reduce:animate-none" role="status" aria-live="assertive">
                         <div className="bg-card p-8 rounded-3xl shadow-xl border border-border text-center">
                             <h4 className="text-3xl font-black text-foreground mb-2">{winLabel}</h4>
                             <p className="text-muted-foreground mb-6 uppercase tracking-widest font-bold text-xs">{t.over}</p>
@@ -208,6 +234,7 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                         </div>
                     </div>
                 )}
+            </div>
             </div>
 
             <div className="mt-6 flex justify-center gap-6 text-[10px] text-muted-foreground font-medium uppercase tracking-widest opacity-50">

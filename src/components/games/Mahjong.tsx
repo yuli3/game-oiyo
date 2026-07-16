@@ -3,6 +3,7 @@ import { GameContainer } from "../ui/game/GamePrimitives";
 import type { Locale } from "../../lib/i18n";
 import {
   buildWall, shuffle, isWinningHand, aiDiscard, rankOf, suitOf, isHonor,
+  nextRonCandidate, ronCandidatesInSeatOrder,
   type AiLevel,
 } from "../../lib/games/ai/mahjong";
 import { getRecord, recordResult, type GameRecord } from "../../lib/games/records";
@@ -125,13 +126,9 @@ const Mahjong: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
     s.lastDiscarder = discarder;
     s.drawn = null;
     // Ron check for the other players, in seat order starting after discarder.
-    for (let off = 1; off <= 3; off++) {
-      const pl = (discarder + off) % 4;
-      if (isWinningHand([...s.hands[pl], tile])) {
-        if (pl === 0) { s.phase = "ron"; s.ronTile = tile; force(); return; } // offer human Ron
-        finish(pl, "ron"); force(); return;
-      }
-    }
+    const ronWinner = nextRonCandidate(ronCandidatesInSeatOrder(s.hands, discarder, tile));
+    if (ronWinner === 0) { s.phase = "ron"; s.ronTile = tile; force(); return; } // offer human Ron
+    if (ronWinner != null) { finish(ronWinner, "ron"); force(); return; }
     // No ron → next player's turn.
     s.turn = (discarder + 1) % 4;
     s.phase = "draw";
@@ -158,6 +155,15 @@ const Mahjong: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
     const s = g.current;
     if (!s || s.phase !== "ron") return;
     s.ronTile = null;
+    const discardTile = s.lastDiscard;
+    const discarder = s.lastDiscarder;
+    if (discardTile != null && discarder != null) {
+      const nextWinner = nextRonCandidate(
+        ronCandidatesInSeatOrder(s.hands, discarder, discardTile),
+        [0],
+      );
+      if (nextWinner != null) { finish(nextWinner, "ron"); force(); return; }
+    }
     // Resume normal play from the player after whoever discarded the ron tile.
     s.turn = ((s.lastDiscarder ?? 0) + 1) % 4;
     s.phase = "draw";

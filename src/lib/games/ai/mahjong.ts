@@ -83,6 +83,21 @@ export function isWinningHand(tiles: number[]): boolean {
   return isStandardWin(c) || isSevenPairs(c);
 }
 
+/** Return every player who can ron, in turn order immediately after the discarder. */
+export function ronCandidatesInSeatOrder(hands: number[][], discarder: number, tile: number): number[] {
+  const candidates: number[] = [];
+  for (let offset = 1; offset <= hands.length - 1; offset++) {
+    const player = (discarder + offset) % hands.length;
+    if (isWinningHand([...hands[player], tile])) candidates.push(player);
+  }
+  return candidates;
+}
+
+export function nextRonCandidate(candidates: number[], declinedPlayers: number[] = []): number | null {
+  const declined = new Set(declinedPlayers);
+  return candidates.find((player) => !declined.has(player)) ?? null;
+}
+
 // ── Shanten (how many tiles away from tenpai; -1 = complete, 0 = tenpai) ──────
 // Standard-form shanten via meld/partial extraction, plus a chiitoitsu estimate.
 function standardShanten(c: Counts): number {
@@ -132,7 +147,9 @@ export function shanten(tiles: number[]): number {
 export function isTenpai(tiles13: number[]): boolean {
   // tenpai if some tile completes the hand
   if (tiles13.length !== 13) return shanten(tiles13) <= 0;
+  const counts = toCounts(tiles13);
   for (let k = 0; k < KINDS; k++) {
+    if (counts[k] >= 4) continue; // a physical set has only four copies
     if (isWinningHand([...tiles13, k])) return true;
   }
   return false;

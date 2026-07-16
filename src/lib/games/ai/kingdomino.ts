@@ -3,13 +3,15 @@
 // CLAIM a tile from the new draft (claim order sets next round's placement order).
 import {
   buildDeck, emptyBoard, emptyCrowns, shuffle, allLegalPlacements, applyPlacement,
-  scoreBoard, bonuses, type Board, type CrownGrid, type Tile, type Placement,
+  scoreBoard, scoreBoardBreakdown, bonuses, isLegal,
+  CENTER,
+  type Board, type CrownGrid, type Tile, type Placement,
 } from "../kingdomino";
 
 export type Player = "you" | "ai";
 export type AiLevel = 1 | 2 | 3;
 
-export interface Kingdom { board: Board; crowns: CrownGrid }
+export interface Kingdom { board: Board; crowns: CrownGrid; discarded: number }
 export interface Slot { tile: Tile; owner: Player | null } // owner = who claimed this draft tile
 
 // What the engine is waiting for next.
@@ -47,11 +49,14 @@ function drawLine(s: GameState): Slot[] {
 
 export function startGame(rng: () => number = Math.random): GameState {
   const deck = shuffle(buildDeck(), rng).slice(0, TILES_2P);
+  const first: Player = rng() < 0.5 ? "you" : "ai";
+  const second: Player = first === "you" ? "ai" : "you";
   const s: GameState = {
-    you: { board: emptyBoard(), crowns: emptyCrowns() },
-    ai: { board: emptyBoard(), crowns: emptyCrowns() },
+    you: { board: emptyBoard(), crowns: emptyCrowns(), discarded: 0 },
+    ai: { board: emptyBoard(), crowns: emptyCrowns(), discarded: 0 },
     deck, deckPos: 0, current: [], draft: [], curIdx: 0,
-    claimSeq: shuffle(["you", "you", "ai", "ai"], rng),
+    // Two-player setup uses the snake order A-B-B-A, not an arbitrary shuffle.
+    claimSeq: [first, second, second, first],
     claimPos: 0, phase: "setup", round: 1,
     pending: { kind: "gameover" },
   };
@@ -96,7 +101,14 @@ export function place(s: GameState, placement: Placement | null): GameState {
   if (s.pending.kind !== "place") return s;
   const owner = s.pending.owner;
   const k = s[owner];
-  if (placement) applyPlacement(k.board, k.crowns, s.pending.tile, placement);
+  if (placement) {
+    if (!isLegal(k.board, s.pending.tile, placement)) return s;
+    applyPlacement(k.board, k.crowns, s.pending.tile, placement);
+  } else {
+    // A legal tile may never be discarded voluntarily.
+    if (s.pending.canPlace) return s;
+    k.discarded++;
+  }
   s.curIdx++;
   // After placing, the same actor claims from the draft (if any tiles remain to claim).
   if (s.draft.length > 0 && s.draft.some((sl) => sl.owner === null)) {
@@ -110,6 +122,7 @@ export function place(s: GameState, placement: Placement | null): GameState {
 
 export function claim(s: GameState, slotIdx: number): GameState {
   if (s.pending.kind !== "claim") return s;
+  if (!s.pending.options.includes(slotIdx)) return s;
   const slot = s.draft[slotIdx];
   if (!slot || slot.owner !== null) return s;
   slot.owner = s.pending.owner;
@@ -124,12 +137,58 @@ export function claim(s: GameState, slotIdx: number): GameState {
 }
 
 // ── Scoring ───────────────────────────────────────────────────────────────
-export function totalScore(k: Kingdom): number {
-  return scoreBoard(k.board, k.crowns) + bonuses(k.board).points;
+export interface ScoreSummary {
+  terrain: number;
+  bonus: number;
+  total: number;
+  crowns: number;
+  largestRegion: number;
+  harmony: boolean;
+  middleKingdom: boolean;
 }
-export function finalResult(s: GameState): { you: number; ai: number; winner: Player | "draw" } {
-  const you = totalScore(s.you), ai = totalScore(s.ai);
-  return { you, ai, winner: you === ai ? "draw" : you > ai ? "you" : "ai" };
+
+export function scoreSummary(k: Kingdom): ScoreSummary {
+  const terrain = scoreBoardBreakdown(k.board, k.crowns);
+  const bonus = bonuses(k.board, k.discarded);
+  return {
+    terrain: terrain.points,
+    bonus: bonus.points,
+    total: terrain.points + bonus.points,
+    crowns: terrain.crowns,
+    largestRegion: terrain.largestRegion,
+    harmony: bonus.harmony,
+    middleKingdom: bonus.middleKingdom,
+  };
+}
+
+export function totalScore(k: Kingdom): number {
+  return scoreSummary(k).total;
+}
+
+export interface FinalResult {
+  you: number;
+  ai: number;
+  winner: Player | "draw";
+  youSummary: ScoreSummary;
+  aiSummary: ScoreSummary;
+  tieBreaker: "score" | "largest-region" | "draw";
+}
+
+export function finalResult(s: GameState): FinalResult {
+  const youSummary = scoreSummary(s.you);
+  const aiSummary = scoreSummary(s.ai);
+  let winner: Player | "draw" = "draw";
+  let tieBreaker: FinalResult["tieBreaker"] = "draw";
+  // Blue Orange's second-edition rules resolve a score tie by the largest
+  // connected territory. If that is tied too, the players share the victory.
+  if (youSummary.total !== aiSummary.total) {
+    winner = youSummary.total > aiSummary.total ? "you" : "ai";
+    tieBreaker = "score";
+  } else if (youSummary.largestRegion !== aiSummary.largestRegion) {
+    winner = youSummary.largestRegion > aiSummary.largestRegion ? "you" : "ai";
+    tieBreaker = "largest-region";
+  }
+  return { you: youSummary.total, ai: aiSummary.total, winner, youSummary, aiSummary, tieBreaker };
 }
 
 // ── AI ────────────────────────────────────────────────────────────────────
@@ -146,7 +205,7 @@ function bestPlacementValue(k: Kingdom, tile: Tile): { value: number; placement:
     applyPlacement(b2, c2, tile, pl);
     const gain = scoreBoard(b2, c2) - base;
     // Prefer central-ish placements (more future connection options).
-    const centro = -(Math.abs(pl.a.r - 2) + Math.abs(pl.a.c - 2) + Math.abs(pl.b.r - 2) + Math.abs(pl.b.c - 2)) * 0.05;
+    const centro = -(Math.abs(pl.a.r - CENTER) + Math.abs(pl.a.c - CENTER) + Math.abs(pl.b.r - CENTER) + Math.abs(pl.b.c - CENTER)) * 0.05;
     const score = gain + centro;
     if (score > best) { best = score; bestPl = pl; }
   }
