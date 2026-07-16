@@ -80,6 +80,7 @@ jobs:
         run: python scripts/wait-cloudflare-check.py
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          CLOUDFLARE_CHECK_TIMEOUT: "3600"
 
       - name: Submit sitemap to all engines
         run: python scripts/sitemap-submit.py

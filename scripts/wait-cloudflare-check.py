@@ -57,7 +57,9 @@ def main() -> int:
     repository = os.environ.get("GITHUB_REPOSITORY", "")
     sha = os.environ.get("GITHUB_SHA", "")
     token = os.environ.get("GITHUB_TOKEN", "")
-    timeout_seconds = int(os.environ.get("CLOUDFLARE_CHECK_TIMEOUT", "1800"))
+    # Cloudflare Pages has taken 41m56s for a valid deployment; keep the gate
+    # exact-commit based while allowing a full hour before declaring failure.
+    timeout_seconds = int(os.environ.get("CLOUDFLARE_CHECK_TIMEOUT", "3600"))
     if not repository or not sha or not token:
         print("Missing GITHUB_REPOSITORY, GITHUB_SHA, or GITHUB_TOKEN", file=sys.stderr)
         return 2
