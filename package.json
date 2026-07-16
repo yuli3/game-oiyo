@@ -13,6 +13,7 @@
     "validate:i18n": "node scripts/audit-i18n.mjs",
     "audit:localization": "node scripts/audit-localization.mjs",
     "audit:seo": "node scripts/audit-seo-output.mjs",
+    "audit:game-sessions": "node scripts/audit-game-session-envelope.mjs",
     "verify:harness": "node scripts/verify-harness.mjs"
   },
   "dependencies": {
