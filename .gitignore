@@ -32,3 +32,6 @@ pnpm-debug.log*
 # Generated audit reports
 reports/
 *.log
+
+# Python bytecode caches
+**/__pycache__/
