@@ -10,6 +10,62 @@ export interface GameGuide {
 }
 
 export const GAME_GUIDES: Record<string, GameGuide> = {
+  "korean-semantle": {
+    origin: {
+      ko: "꼬맨틀은 단어 임베딩(의미 벡터) 기반의 의미 유사도 추측 게임으로, 영어 Semantle과 그 한국어 판에서 이어진 형식입니다. 정답 단어와 의미가 가까운 단어일수록 높은 순위를 받습니다.",
+      en: "Kkomantle is a semantic-similarity guessing game built on word embeddings, following the lineage of Semantle and its Korean adaptations. Words closer in meaning to the secret rank higher.",
+      ja: "꼬맨틀は単語埋め込み（意味ベクトル）に基づく意味類似度あてゲームで、英語のSemantleとその韓国語版の系譜を引き継いでいます。正解と意味が近い単語ほど高い順位になります。",
+      zh: "꼬맨틀是基于词嵌入（语义向量）的词义相似度猜词游戏，承袭自英文 Semantle 及其韩语版本。与答案语义越接近的词排名越高。",
+      fr: "Kkomantle est un jeu de proximité sémantique fondé sur les plongements lexicaux, dans la lignée de Semantle et de ses versions coréennes. Plus un mot est proche du secret, meilleur est son rang.",
+      es: "Kkomantle es un juego de similitud semántica basado en incrustaciones de palabras, en la línea de Semantle y sus versiones coreanas. Cuanto más cercana en significado es la palabra al secreto, mejor es su puesto.",
+    },
+    how: {
+      ko: "한글 단어를 입력하면 숨은 정답과의 의미 유사도 순위를 알려줍니다. 순위가 낮을수록(1에 가까울수록) 정답에 가깝습니다. 순위와 온도 색을 단서 삼아 정답 단어를 찾아내세요.",
+      en: "Type a Korean word and see its similarity rank to the hidden answer. A lower rank (closer to 1) means closer in meaning. Use the rank and temperature colors as clues to find the secret word.",
+      ja: "ハングルの単語を入力すると、隠れた正解との意味類似度の順位が表示されます。順位が小さいほど（1に近いほど）正解に近づきます。順位と温度色を手がかりに正解を探しましょう。",
+      zh: "输入一个韩文词，即可看到它与隐藏答案的语义相似度排名。排名越小（越接近1）表示词义越接近。利用排名和温度颜色作为线索找出答案。",
+      fr: "Tapez un mot coréen pour voir son rang de similarité avec la réponse cachée. Un rang plus bas (proche de 1) signifie un sens plus proche. Servez-vous du rang et des couleurs de température comme indices.",
+      es: "Escribe una palabra coreana y verás su puesto de similitud con la respuesta oculta. Un puesto más bajo (cercano a 1) indica mayor cercanía de significado. Usa el puesto y los colores de temperatura como pistas.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "순위가 표시되지 않고 '순위권 밖'이라고 나오는 이유는?",
+          en: "Why do some guesses show 'outside the ranking' with no rank?",
+          ja: "一部の推測で順位が出ず「順位圏外」と表示されるのはなぜ？",
+          zh: "为什么有些猜测显示“排名之外”而没有排名？",
+          fr: "Pourquoi certains essais affichent « hors classement » sans rang ?",
+          es: "¿Por qué algunos intentos muestran «fuera del ranking» sin puesto?",
+        },
+        a: {
+          ko: "각 퍼즐은 정답과 가장 가까운 상위 단어 목록만 담고 있어, 그 목록 밖의 단어는 정확한 순위를 매길 수 없습니다. 없는 값을 지어내지 않고 '순위권 밖'으로 정직하게 표시합니다 — 그 단어는 정답과 꽤 멀다는 뜻입니다.",
+          en: "Each puzzle ships only the top words nearest the answer, so a word outside that list can't be given an exact rank. Rather than invent a number, we honestly mark it 'outside the ranking' — meaning it's fairly far from the answer.",
+          ja: "各パズルは正解に最も近い上位の単語のみを収録しているため、その外の単語には正確な順位を付けられません。値を捏造せず「順位圏外」と正直に表示します。正解からかなり遠いという意味です。",
+          zh: "每个谜题只收录与答案最接近的上位词，因此榜单之外的词无法给出精确排名。我们不会编造数字，而是如实标记为“排名之外”，表示该词离答案较远。",
+          fr: "Chaque puzzle ne contient que les mots les plus proches de la réponse ; un mot hors de cette liste ne peut recevoir de rang exact. Plutôt qu'inventer un nombre, nous indiquons honnêtement « hors classement » — le mot est assez loin de la réponse.",
+          es: "Cada puzle incluye solo las palabras más cercanas a la respuesta, así que una palabra fuera de esa lista no puede recibir un puesto exacto. En lugar de inventar un número, la marcamos honestamente como «fuera del ranking»: está bastante lejos de la respuesta.",
+        },
+      },
+      {
+        q: {
+          ko: "유사도는 어떻게 계산되나요?",
+          en: "How is the similarity computed?",
+          ja: "類似度はどのように計算されますか？",
+          zh: "相似度是如何计算的？",
+          fr: "Comment la similarité est-elle calculée ?",
+          es: "¿Cómo se calcula la similitud?",
+        },
+        a: {
+          ko: "단어를 의미 벡터로 바꾸는 fastText 한국어 임베딩(Facebook AI Research, CC BY-SA 3.0)의 코사인 유사도로 순위를 매깁니다. 사람의 주관이 아니라 대규모 말뭉치에서 학습된 통계적 의미 근접도입니다.",
+          en: "Ranking uses cosine similarity over fastText Korean word embeddings (Facebook AI Research, CC BY-SA 3.0), which map words to meaning vectors. It reflects statistical meaning-closeness learned from a large corpus, not subjective judgment.",
+          ja: "単語を意味ベクトルに変換するfastText韓国語埋め込み（Facebook AI Research, CC BY-SA 3.0）のコサイン類似度で順位を付けます。主観ではなく大規模コーパスから学習された統計的な意味の近さです。",
+          zh: "排名基于将词映射为语义向量的 fastText 韩语词嵌入（Facebook AI Research，CC BY-SA 3.0）的余弦相似度。它反映的是从大规模语料中学到的统计性词义接近度，而非主观判断。",
+          fr: "Le classement utilise la similarité cosinus des plongements coréens fastText (Facebook AI Research, CC BY-SA 3.0), qui associent les mots à des vecteurs de sens. Il reflète une proximité de sens statistique apprise sur un grand corpus, non un jugement subjectif.",
+          es: "El ranking usa la similitud del coseno sobre las incrustaciones coreanas de fastText (Facebook AI Research, CC BY-SA 3.0), que asignan a las palabras vectores de significado. Refleja una cercanía de significado estadística aprendida de un gran corpus, no un juicio subjetivo.",
+        },
+      },
+    ],
+  },
   "plinko": {
     origin: { ko: "플린코는 핀볼판에서 유래한 확률 게임으로, 공이 핀에 부딪히며 이항분포를 그리는 물리 현상을 활용한 게임쇼·카지노의 고전 소재입니다.", en: "Plinko traces back to pinball-style peg boards; the ball bouncing off pins traces a binomial distribution, a classic game-show and casino mechanic.", ja: "プリンコはピンボール式のピン板に由来し、ボールがピンに当たって二項分布を描く物理現象を使ったゲームショー・カジノの定番です。", zh: "弹珠机源自钉板式弹球玩法，小球撞击钉子形成二项分布，是经典的游戏节目和赌场元素。", fr: "Le Plinko vient des planches à picots façon flipper ; la bille rebondissant dessine une distribution binomiale, un classique des jeux télévisés et casinos.", es: "El Plinko proviene de los tableros de clavijas estilo pinball; la bola rebotando traza una distribución binomial, un clásico de concursos y casinos." },
     how: { ko: "공을 떨어뜨리면 핀에 부딪히며 무작위로 튕겨 아래 슬롯 중 하나에 도착합니다. 가장자리 슬롯일수록 배당이 높습니다.", en: "Drop the ball — it bounces off pins at random and lands in one of the slots below. Edge slots pay out more than the center.", ja: "ボールを落とすとピンに当たってランダムに跳ね、下のスロットのいずれかに着地します。端のスロットほど配当が高くなります。", zh: "投放小球后，它会撞击钉子随机弹跳，最终落入下方某个格子。边缘格子的倍率更高。", fr: "Lâchez la bille : elle rebondit au hasard sur les picots et atterrit dans une case. Les cases en bord paient plus que le centre.", es: "Suelta la bola: rebota al azar en las clavijas y cae en una ranura. Las ranuras de los bordes pagan más que el centro." },

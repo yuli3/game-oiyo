@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import KoreanSemantle from "../../components/games/KoreanSemantle";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "꼬맨틀 — 한국어 단어 의미 추측 게임",
+    description: "숨은 단어와 의미가 가까운 단어를 추측하세요. 매 추측마다 의미 유사도 순위를 알려줍니다.",
+  },
+  en: {
+    title: "Kkomantle — Korean Word-Meaning Guessing Game",
+    description: "Guess words that are semantically close to a hidden Korean word. Each guess reveals its similarity rank.",
+  },
+  ja: {
+    title: "꼬맨틀 — 韓国語 意味類似度あてゲーム",
+    description: "隠れた韓国語の単語と意味が近い単語を推測しましょう。推測ごとに類似度の順位が表示されます。",
+  },
+  fr: {
+    title: "Kkomantle — Jeu de proximité sémantique coréen",
+    description: "Devinez des mots proches du sens d'un mot coréen caché. Chaque essai révèle son rang de similarité.",
+  },
+  es: {
+    title: "Kkomantle — Juego de proximidad semántica en coreano",
+    description: "Adivina palabras cercanas en significado a una palabra coreana oculta. Cada intento revela su puesto de similitud.",
+  },
+  zh: {
+    title: "꼬맨틀 — 韩语词义相近猜词游戏",
+    description: "猜出与隐藏韩语词语义相近的词。每次猜测都会显示其相似度排名。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <KoreanSemantle client:load locale={locale} />
+    <GameGuide slug="korean-semantle" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} />
+  </main>
+</BaseLayout>
