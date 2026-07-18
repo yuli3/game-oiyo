@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import TexasHoldem from "../../components/games/TexasHoldem";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "텍사스 홀덤 — 무료 교육용 포커 (족보 배우기)",
+    description: "베팅 없이 포커 족보와 승패를 배우는 무료 헤드업 텍사스 홀덤. 플랍·턴·리버를 넘기며 현재 최선 핸드를 확인하세요.",
+  },
+  en: {
+    title: "Texas Hold'em — Free Educational Poker (Learn Hand Rankings)",
+    description: "Free heads-up Texas Hold'em to learn poker hand rankings and showdowns with no betting. Reveal the flop, turn, and river and see your best hand.",
+  },
+  ja: {
+    title: "テキサスホールデム — 無料の学習用ポーカー（役を学ぶ）",
+    description: "ベットなしでポーカーの役と勝敗を学ぶ無料ヘッズアップ・テキサスホールデム。フロップ・ターン・リバーをめくり、現在の最善手を確認しましょう。",
+  },
+  fr: {
+    title: "Texas Hold'em — Poker éducatif gratuit (apprendre les mains)",
+    description: "Texas Hold'em gratuit en tête-à-tête pour apprendre le classement des mains et les abattages, sans mise. Révélez le flop, le turn et la river.",
+  },
+  es: {
+    title: "Texas Hold'em — Póker educativo gratis (aprende las manos)",
+    description: "Texas Hold'em gratis cara a cara para aprender el ranking de manos y los enfrentamientos, sin apuestas. Descubre el flop, el turn y el river.",
+  },
+  zh: {
+    title: "德州扑克 — 免费教学扑克（学习牌型）",
+    description: "免费单挑德州扑克，无下注学习扑克牌型与比牌。翻开翻牌、转牌和河牌，查看你的当前最佳牌型。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <TexasHoldem client:load locale={locale} />
+    <GameGuide slug="texas-holdem" locale={locale} name={m.title.split(" — ")[0].split(" | ")[0]} />
+  </main>
+</BaseLayout>

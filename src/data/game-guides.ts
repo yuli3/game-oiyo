@@ -10,6 +10,62 @@ export interface GameGuide {
 }
 
 export const GAME_GUIDES: Record<string, GameGuide> = {
+  "texas-holdem": {
+    origin: {
+      ko: "텍사스 홀덤은 20세기 초 미국 텍사스에서 생겨나 현재 가장 널리 플레이되는 포커 변형입니다. 두 장의 개인 패와 다섯 장의 공유 카드로 최고의 다섯 장을 만드는 규칙이 전략 게임으로 사랑받습니다.",
+      en: "Texas Hold'em emerged in early-20th-century Texas and is today the most widely played poker variant. Building the best five cards from two private cards and five shared ones makes it a beloved game of strategy.",
+      ja: "テキサスホールデムは20世紀初頭の米国テキサスで生まれ、今日最も広くプレイされるポーカーの一種です。2枚の手札と5枚の共有カードで最強の5枚を作る戦略性が愛されています。",
+      zh: "德州扑克起源于20世纪初的美国德克萨斯州，如今是最广泛流行的扑克变体。用两张底牌和五张公共牌组成最佳五张牌的规则使其成为备受喜爱的策略游戏。",
+      fr: "Le Texas Hold'em est né au Texas au début du XXe siècle et est aujourd'hui la variante de poker la plus jouée. Composer la meilleure main de cinq cartes à partir de deux cartes privées et cinq communes en fait un jeu de stratégie apprécié.",
+      es: "El Texas Hold'em surgió en Texas a principios del siglo XX y hoy es la variante de póker más jugada. Formar la mejor mano de cinco cartas con dos cartas privadas y cinco comunitarias lo convierte en un querido juego de estrategia.",
+    },
+    how: {
+      ko: "두 장의 핸드를 받고, 커뮤니티 카드(플랍 3장·턴 1장·리버 1장)를 차례로 공개합니다. 개인 패 2장과 공유 5장 중 가장 강한 다섯 장으로 상대와 겨루며, 언제든 폴드할 수 있습니다. 이 게임은 베팅 없이 족보와 승패를 익히는 학습용입니다.",
+      en: "You get two hole cards, then the community cards reveal in turn (flop 3, turn 1, river 1). Make the strongest five from your two and the five shared cards to beat your opponent, and fold any time. This version is for learning hand rankings and showdowns — no betting.",
+      ja: "2枚の手札を受け取り、コミュニティカード（フロップ3枚・ターン1枚・リバー1枚）を順に公開します。手札2枚と共有5枚から最強の5枚を作って相手と競い、いつでもフォールドできます。ベットなしで役と勝敗を学ぶ学習版です。",
+      zh: "你会拿到两张底牌，然后依次公开公共牌（翻牌3张、转牌1张、河牌1张）。用你的两张牌和五张公共牌组成最强的五张牌与对手比拼，随时可以弃牌。此版本用于学习牌型与比牌，无下注。",
+      fr: "Vous recevez deux cartes fermées, puis les cartes communes se révèlent tour à tour (flop 3, turn 1, river 1). Formez la meilleure main de cinq cartes pour battre l'adversaire, et couchez-vous à tout moment. Cette version sert à apprendre les mains et les abattages — sans mise.",
+      es: "Recibes dos cartas propias y luego las comunitarias se descubren por turnos (flop 3, turn 1, river 1). Forma la mejor mano de cinco cartas para vencer al rival y retírate cuando quieras. Esta versión es para aprender manos y enfrentamientos, sin apuestas.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "포커 족보 순서가 어떻게 되나요?",
+          en: "What is the order of poker hands?",
+          ja: "ポーカーの役の順番は？",
+          zh: "扑克牌型的顺序是怎样的？",
+          fr: "Quel est l'ordre des mains au poker ?",
+          es: "¿Cuál es el orden de las manos de póker?",
+        },
+        a: {
+          ko: "강한 순서대로 스트레이트 플러시 › 포카드 › 풀하우스 › 플러시 › 스트레이트 › 트리플 › 투페어 › 원페어 › 하이카드입니다. 게임 안의 '포커 족보' 참고표에서 언제든 확인할 수 있습니다.",
+          en: "From strongest: straight flush › four of a kind › full house › flush › straight › three of a kind › two pair › one pair › high card. You can check the in-game hand-ranking reference any time.",
+          ja: "強い順にストレートフラッシュ › フォーカード › フルハウス › フラッシュ › ストレート › スリーカード › ツーペア › ワンペア › ハイカードです。ゲーム内の「役」参考表でいつでも確認できます。",
+          zh: "从强到弱：同花顺 › 四条 › 葫芦 › 同花 › 顺子 › 三条 › 两对 › 一对 › 高牌。你可以随时查看游戏内的牌型参考表。",
+          fr: "Du plus fort : quinte flush › carré › full › couleur › quinte › brelan › deux paires › paire › carte haute. Consultez le tableau des mains dans le jeu à tout moment.",
+          es: "De más fuerte: escalera de color › póker › full › color › escalera › trío › doble pareja › pareja › carta alta. Consulta la tabla de manos dentro del juego cuando quieras.",
+        },
+      },
+      {
+        q: {
+          ko: "실제 돈을 걸 수 있나요?",
+          en: "Can I bet real money?",
+          ja: "実際のお金を賭けられますか？",
+          zh: "可以下真钱吗？",
+          fr: "Peut-on miser de l'argent réel ?",
+          es: "¿Se puede apostar dinero real?",
+        },
+        a: {
+          ko: "아니요. 실제 화폐·베팅·환전이 전혀 없는 무료 교육용 게임으로, 족보와 승패 판정을 익히는 데 목적이 있습니다.",
+          en: "No. This is a free educational game with no real money, betting, or cash-out — it exists to teach hand rankings and how showdowns are decided.",
+          ja: "いいえ。実際の通貨・ベット・換金は一切ない無料の学習用ゲームで、役と勝敗判定を学ぶことが目的です。",
+          zh: "不可以。这是一款没有任何真实货币、下注或兑现的免费教学游戏，目的是学习牌型和比牌判定。",
+          fr: "Non. C'est un jeu éducatif gratuit sans argent réel, mise ni retrait — il sert à apprendre les mains et la façon dont les abattages sont tranchés.",
+          es: "No. Es un juego educativo gratuito sin dinero real, apuestas ni retiros: existe para enseñar las manos y cómo se deciden los enfrentamientos.",
+        },
+      },
+    ],
+  },
   "korean-semantle": {
     origin: {
       ko: "꼬맨틀은 단어 임베딩(의미 벡터) 기반의 의미 유사도 추측 게임으로, 영어 Semantle과 그 한국어 판에서 이어진 형식입니다. 정답 단어와 의미가 가까운 단어일수록 높은 순위를 받습니다.",
