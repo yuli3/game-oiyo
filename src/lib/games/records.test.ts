@@ -1,6 +1,6 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { getBest, getDailyStreak, getRecord, getStreak, recordBest, recordDailyWin, recordResult, recordStreak } from "./records";
+import { getAllBestAchievedAt, getAllLastPlayed, getBest, getDailyStreak, getRecord, getStreak, recordBest, recordDailyWin, recordResult, recordStreak } from "./records";
 
 // records.ts is localStorage-backed; provide a minimal in-memory Storage
 // polyfill so persistence across calls can actually be exercised in node.
@@ -164,5 +164,48 @@ describe("records: DailyStreak (calendar-day solves)", () => {
   it("keeps each daily game independent", () => {
     recordDailyWin("kurodoko", "2026-07-16", "2026-07-15");
     expect(getDailyStreak("tents-and-trees").played).toBe(0);
+  });
+});
+
+describe("records: last-played and best-achieved timestamps (additive, no shape change)", () => {
+  afterEach(() => vi.useRealTimers());
+
+  it("stamps last-played on every recordResult call without touching the GameRecord shape", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-07-18T10:00:00.000Z"));
+    recordResult("chess", "w");
+    expect(getRecord("chess")).toEqual({ w: 1, l: 0, d: 0 }); // unchanged shape
+    expect(getAllLastPlayed().chess).toBe("2026-07-18T10:00:00.000Z");
+  });
+
+  it("updates last-played on every subsequent call", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-07-18T10:00:00.000Z"));
+    recordResult("chess", "w");
+    vi.setSystemTime(new Date("2026-07-18T11:30:00.000Z"));
+    recordResult("chess", "l");
+    expect(getAllLastPlayed().chess).toBe("2026-07-18T11:30:00.000Z");
+  });
+
+  it("stamps best-achieved only when recordBest actually improves the value", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-07-18T09:00:00.000Z"));
+    recordBest("game2048", 1000, "score");
+    expect(getAllBestAchievedAt().game2048).toBe("2026-07-18T09:00:00.000Z");
+
+    vi.setSystemTime(new Date("2026-07-18T09:30:00.000Z"));
+    recordBest("game2048", 500, "score"); // worse — not a new best
+    expect(getAllBestAchievedAt().game2048).toBe("2026-07-18T09:00:00.000Z"); // unchanged
+
+    vi.setSystemTime(new Date("2026-07-18T10:00:00.000Z"));
+    recordBest("game2048", 2000, "score"); // genuinely better
+    expect(getAllBestAchievedAt().game2048).toBe("2026-07-18T10:00:00.000Z");
+  });
+
+  it("keeps timestamps independent per game", () => {
+    recordResult("chess", "w");
+    recordResult("gomoku", "l");
+    const all = getAllLastPlayed();
+    expect(Object.keys(all).sort()).toEqual(["chess", "gomoku"]);
   });
 });

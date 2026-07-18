@@ -32,7 +32,37 @@ export function recordResult(game: string, result: "w" | "l" | "d"): GameRecord 
   } catch {
     /* quota/private mode — records are best-effort */
   }
+  stampLastPlayed(game);
   return r;
+}
+
+// ─── Last-played timestamps — separate store, purely additive ───────────────────────────
+// Kept apart from GameRecord so its shape (and every existing exact-equality test on it)
+// never changes; this store exists only to answer "what did I play recently".
+const LAST_PLAYED_KEY = "oiyo:game-last-played:v1";
+
+function readAllLastPlayed(): Record<string, string> {
+  if (typeof localStorage === "undefined") return {};
+  try {
+    return JSON.parse(localStorage.getItem(LAST_PLAYED_KEY) || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function stampLastPlayed(game: string): void {
+  try {
+    const all = readAllLastPlayed();
+    all[game] = new Date().toISOString();
+    localStorage.setItem(LAST_PLAYED_KEY, JSON.stringify(all));
+  } catch {
+    /* quota/private mode — best-effort */
+  }
+}
+
+/** Every game's last-played timestamp (ISO), keyed by game id — read-only aggregate for cross-game views. */
+export function getAllLastPlayed(): Record<string, string> {
+  return readAllLastPlayed();
 }
 
 // ─── Personal bests (score / time) — separate store, no overlap with GameRecord above ────
@@ -73,7 +103,37 @@ export function recordBest(game: string, value: number, unit: "score" | "seconds
   } catch {
     /* quota/private mode — records are best-effort */
   }
+  if (isBetter) stampBestAchievedAt(game);
   return next;
+}
+
+// ─── Best-achieved timestamps — separate store, purely additive ────────────────────────
+// Stamped only when recordBest() actually improves the stored value, so this answers
+// "when was this personal best set" without changing BestRecord's shape or its tests.
+const BEST_TS_KEY = "oiyo:game-bests-achieved-at:v1";
+
+function readAllBestAchievedAt(): Record<string, string> {
+  if (typeof localStorage === "undefined") return {};
+  try {
+    return JSON.parse(localStorage.getItem(BEST_TS_KEY) || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function stampBestAchievedAt(game: string): void {
+  try {
+    const all = readAllBestAchievedAt();
+    all[game] = new Date().toISOString();
+    localStorage.setItem(BEST_TS_KEY, JSON.stringify(all));
+  } catch {
+    /* quota/private mode — best-effort */
+  }
+}
+
+/** Every game's personal-best timestamp (ISO), keyed by game id — read-only aggregate for cross-game views. */
+export function getAllBestAchievedAt(): Record<string, string> {
+  return readAllBestAchievedAt();
 }
 
 // ─── Calendar-day streaks (daily puzzle modes) — separate store, date-aware ──────────────
