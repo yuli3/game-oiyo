@@ -117,7 +117,7 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         try {
             if (!getBest('minesweeper')) {
                 const legacy = Number(localStorage.getItem(LEGACY_BEST_KEY));
-                if (Number.isFinite(legacy) && legacy > 0) recordBest('minesweeper', legacy, 'seconds');
+                if (Number.isFinite(legacy) && legacy > 0) recordBest('minesweeper', legacy, 'seconds', undefined, { trackPlay: false });
             }
         } catch { /* ignore */ }
         // eslint-disable-next-line react-hooks/exhaustive-deps

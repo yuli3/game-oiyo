@@ -4,8 +4,13 @@ import path from "node:path";
 const root = process.cwd();
 const dist = path.join(root, "dist");
 const siteUrl = "https://game.oiyo.net";
+const noindexSlugs = JSON.parse(
+  fs.readFileSync(path.join(root, "src/config/noindex-slugs.json"), "utf8"),
+);
+const locales = ["en", "ko", "ja", "fr", "es", "zh"];
 
 const failures = [];
+let sitemapContents = "";
 
 if (!fs.existsSync(dist)) {
   failures.push("dist directory is missing; run npm run build first");
@@ -24,7 +29,28 @@ if (!fs.existsSync(dist)) {
         continue;
       }
       const shard = parsed.pathname.replace(/^\//, "");
-      if (!fs.existsSync(path.join(dist, shard))) failures.push(`missing referenced sitemap shard: ${shard}`);
+      if (!fs.existsSync(path.join(dist, shard))) {
+        failures.push(`missing referenced sitemap shard: ${shard}`);
+      } else {
+        sitemapContents += fs.readFileSync(path.join(dist, shard), "utf8");
+      }
+    }
+  }
+}
+
+for (const slug of noindexSlugs) {
+  if (sitemapContents.includes(`/${slug}/`)) {
+    failures.push(`noindex prototype leaked into sitemap: ${slug}`);
+  }
+  for (const locale of locales) {
+    const file = path.join(dist, locale, slug, "index.html");
+    if (!fs.existsSync(file)) {
+      failures.push(`noindex prototype output is missing: ${locale}/${slug}`);
+      continue;
+    }
+    const html = fs.readFileSync(file, "utf8");
+    if (!/<meta name="robots" content="noindex, follow/.test(html)) {
+      failures.push(`prototype is not noindex: ${locale}/${slug}`);
     }
   }
 }

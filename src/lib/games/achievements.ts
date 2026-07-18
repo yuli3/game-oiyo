@@ -65,19 +65,37 @@ export function evaluateAchievements(snapshot: AchievementSnapshot): EvaluatedAc
 
 /** Browser-only: read every per-game store and fold it into one snapshot. */
 export function buildAchievementSnapshot(): AchievementSnapshot {
-  const records = Object.values(getAllRecords());
-  const totalWins = records.reduce((sum, r) => sum + r.w, 0);
-  const totalPlays = records.reduce((sum, r) => sum + r.w + r.l + r.d, 0);
+  const records = getAllRecords();
+  const dailyStreaks = getAllDailyStreaks();
+  const streaks = getAllStreaks();
+  const bests = getAllBests();
 
   const playedGameIds = new Set<string>();
-  for (const [id, r] of Object.entries(getAllRecords())) if (r.w + r.l + r.d > 0) playedGameIds.add(id);
-  for (const id of Object.keys(getAllDailyStreaks())) playedGameIds.add(id);
-  for (const id of Object.keys(getAllStreaks())) playedGameIds.add(id);
-  for (const id of Object.keys(getAllBests())) playedGameIds.add(id);
+  for (const [id, r] of Object.entries(records)) if (r.w + r.l + r.d > 0) playedGameIds.add(id);
+  for (const [id, stats] of Object.entries(dailyStreaks)) if (stats.played > 0) playedGameIds.add(id);
+  for (const [id, stats] of Object.entries(streaks)) if (stats.played > 0) playedGameIds.add(id);
+  for (const id of Object.keys(bests)) playedGameIds.add(id);
 
-  const bestDailyStreak = Math.max(0, ...Object.values(getAllDailyStreaks()).map((s) => s.maxStreak));
-  const bestWinStreak = Math.max(0, ...Object.values(getAllStreaks()).map((s) => s.maxStreak));
-  const bestRecordCount = Object.keys(getAllBests()).length;
+  // A game may write more than one compatible store on completion (for
+  // example a daily solve can update both a best time and a calendar streak).
+  // Taking the maximum known counter per game avoids double-counting while
+  // still letting PB-only and daily-only games participate in global totals.
+  let totalWins = 0;
+  let totalPlays = 0;
+  for (const id of playedGameIds) {
+    const record = records[id];
+    totalWins += Math.max(record?.w ?? 0, dailyStreaks[id]?.played ?? 0, streaks[id]?.won ?? 0);
+    totalPlays += Math.max(
+      record ? record.w + record.l + record.d : 0,
+      dailyStreaks[id]?.played ?? 0,
+      streaks[id]?.played ?? 0,
+      bests[id] ? 1 : 0,
+    );
+  }
+
+  const bestDailyStreak = Math.max(0, ...Object.values(dailyStreaks).map((s) => s.maxStreak));
+  const bestWinStreak = Math.max(0, ...Object.values(streaks).map((s) => s.maxStreak));
+  const bestRecordCount = Object.keys(bests).length;
 
   return {
     totalWins,

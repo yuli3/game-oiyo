@@ -55,7 +55,7 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         // One-time migration from the pre-unification per-game key
         try {
             const legacy = Number(localStorage.getItem(LEGACY_BEST_KEY));
-            if (Number.isFinite(legacy) && legacy > 0) setBest(recordBest('game-2048', legacy, 'score').value);
+            if (Number.isFinite(legacy) && legacy > 0) setBest(recordBest('game-2048', legacy, 'score', undefined, { trackPlay: false }).value);
         } catch { /* ignore */ }
     }, [initGame]);
 

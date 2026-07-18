@@ -47,6 +47,7 @@ const HeartsGame: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
     if (restored) {
       setGame(restored.state);
       setPassSelection(restored.passSelection);
+      setLevel(restored.level ?? 3);
     }
     setPersistenceReady(true);
   }, []);
@@ -54,8 +55,8 @@ const HeartsGame: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
   useEffect(() => {
     if (!persistenceReady) return;
     if (game.phase === "gameOver") clearHeartsSavedGame(window.localStorage);
-    else saveHeartsGame(window.localStorage, { state: game, passSelection });
-  }, [game, passSelection, persistenceReady]);
+    else saveHeartsGame(window.localStorage, { state: game, passSelection, level });
+  }, [game, passSelection, level, persistenceReady]);
 
   useEffect(() => {
     if (game.phase !== "playing" || game.currentPlayer === 0) return;

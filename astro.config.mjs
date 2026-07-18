@@ -16,6 +16,12 @@ import robotsTxt from "astro-robots-txt";
 const BRIDGE_SLUGS = new Set(
   JSON.parse(readFileSync(new URL("./src/config/bridge-slugs.json", import.meta.url), "utf8")),
 );
+// Prototypes added while the Q3 URL-generation moratorium is active. They may
+// be tested directly, but must not enter search sitemaps until the release gate
+// and route-ownership review explicitly promote them.
+const NOINDEX_SLUGS = new Set(
+  JSON.parse(readFileSync(new URL("./src/config/noindex-slugs.json", import.meta.url), "utf8")),
+);
 
 // https://astro.build/config
 export default defineConfig({
@@ -39,6 +45,7 @@ export default defineConfig({
         // Exclude noindex bridge stubs (canonical lives on oiyo.net)
         const segs = path.split("/").filter(Boolean);
         if (segs.length === 2 && BRIDGE_SLUGS.has(segs[1])) return false;
+        if (segs.length === 2 && NOINDEX_SLUGS.has(segs[1])) return false;
         return true;
       },
       // Use serialize for per-URL priority and changefreq

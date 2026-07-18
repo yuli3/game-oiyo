@@ -1,6 +1,7 @@
 ---
 import { siteConfig } from "../config/site.config";
 import { getAuthor } from "../lib/authors";
+import noindexSlugs from "../config/noindex-slugs.json";
 
 interface Props {
   title?: string;
@@ -77,7 +78,9 @@ const googleAdsenseId = siteConfig.analytics.googleAdsenseId;
 const resolvedCanonicalUrl = new URL(String(canonicalURL), Astro.site);
 const canonicalHost = resolvedCanonicalUrl.hostname;
 const isCrossDomainCanonical = canonicalHost !== new URL(siteConfig.url).hostname;
-const robotsContent = isCrossDomainCanonical
+const currentSlug = currentPathname.split("/").filter(Boolean)[1];
+const isNoindexPrototype = noindexSlugs.includes(currentSlug);
+const robotsContent = isCrossDomainCanonical || isNoindexPrototype
   ? "noindex, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
   : "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1";
 

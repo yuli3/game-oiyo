@@ -15,6 +15,8 @@ export interface StrategyGuide {
   slug: string; // matches the game's own page slug
   title: Record<Locale, string>;
   intro: Record<Locale, string>;
+  variantNote: Record<Locale, string>;
+  sources: { label: string; href: string }[];
   tips: StrategyTip[];
   mistakes: Record<Locale, string[]>;
 }
@@ -31,13 +33,25 @@ export const STRATEGY_GUIDES: Record<string, StrategyGuide> = {
       es: "Estrategia del solitario Klondike — cómo ganar más partidas",
     },
     intro: {
-      ko: "클론다이크는 무작위 배치의 약 80%만 이론상 클리어 가능하지만, 실제 승률은 순서를 어떻게 두느냐에 크게 좌우됩니다. 아래 전략은 카드를 아무렇게나 옮기는 습관을 체계적인 순서로 바꿔줍니다.",
-      en: "Only about 80% of random Klondike deals are theoretically winnable, but your actual win rate depends heavily on move order. These strategies turn haphazard card-moving into a systematic approach.",
-      ja: "クロンダイクは理論上クリア可能な配牌が約8割ですが、実際の勝率は手順次第で大きく変わります。以下の戦略は行き当たりばったりの操作を体系的な手順に変えます。",
-      zh: "理论上只有约80%的克朗代克随机牌局可解，但实际胜率很大程度取决于出牌顺序。以下策略能把随意移牌变成有条理的打法。",
-      fr: "Seuls environ 80 % des donnes Klondike aléatoires sont théoriquement gagnables, mais votre taux de victoire réel dépend surtout de l'ordre des coups. Ces stratégies transforment des mouvements au hasard en méthode.",
-      es: "Solo cerca del 80 % de las partidas aleatorias de Klondike son teóricamente ganables, pero tu tasa de victoria real depende sobre todo del orden de tus movimientos. Estas estrategias convierten el azar en un método.",
+      ko: "클론다이크는 같은 배치라도 이동 순서에 따라 막히거나 길이 열릴 수 있습니다. 아래 전략은 카드를 아무렇게나 옮기는 습관을 체계적인 순서로 바꿔줍니다.",
+      en: "In Klondike, move order can open or close paths even within the same deal. These strategies turn haphazard card-moving into a systematic approach.",
+      ja: "クロンダイクは同じ配牌でも手順によって行き詰まることも道が開くこともあります。以下の戦略は行き当たりばったりの操作を体系的な手順に変えます。",
+      zh: "克朗代克即使牌局相同，也可能因移动顺序不同而卡住或打开局面。以下策略能把随意移牌变成有条理的打法。",
+      fr: "Au Klondike, l'ordre des coups peut ouvrir ou fermer des possibilités dans une même donne. Ces stratégies remplacent les déplacements au hasard par une méthode.",
+      es: "En Klondike, el orden de los movimientos puede abrir o cerrar caminos incluso en una misma partida. Estas estrategias convierten movimientos al azar en un método.",
     },
+    variantNote: {
+      ko: "적용 범위: OIYO 구현은 클론다이크 드로우 1, 스톡 무제한 재순환, 파운데이션에서 테이블로 되돌리기를 사용합니다. 드로우 3이나 재순환 제한 변형에는 일부 조언이 그대로 적용되지 않습니다.",
+      en: "Variant scope: OIYO uses draw-one Klondike, unlimited stock recycling, and foundation-to-tableau moves. Some advice will not transfer unchanged to draw-three or limited-redeal variants.",
+      ja: "適用範囲: OIYO版は1枚めくり、山札の無制限再利用、組札から場札への戻しを採用しています。3枚めくりや再配布制限のある変則では一部の助言がそのまま当てはまりません。",
+      zh: "适用范围：OIYO 采用翻一张、牌库无限重置，并允许从基础堆移回牌桌。翻三张或限制重置次数的变体并不完全适用这些建议。",
+      fr: "Portée de la variante : OIYO utilise le tirage d'une carte, des reprises illimitées de la pioche et le retour fondation-tableau. Certains conseils changent en tirage trois ou avec reprises limitées.",
+      es: "Alcance de la variante: OIYO usa robo de una carta, reciclaje ilimitado del mazo y movimientos de la base al tablero. Algunos consejos cambian al robar tres o limitar los repasos.",
+    },
+    sources: [
+      { label: "Bicycle Cards — Klondike rules", href: "https://bicyclecards.com/how-to-play/klondike/" },
+      { label: "Pagat — Solitaire and patience rule index", href: "https://www.pagat.com/solitaire/card.html" },
+    ],
     tips: [
       {
         heading: { ko: "1. 스톡을 넘기기 전에 테이블로부터 먼저 살펴라", en: "1. Exhaust tableau moves before flipping the stock", ja: "1. 山札をめくる前に場札を確認する", zh: "1. 翻牌库前先检查牌桌区", fr: "1. Épuisez les coups du tableau avant de piocher", es: "1. Agota los movimientos del tablero antes de robar del mazo" },
@@ -45,7 +59,7 @@ export const STRATEGY_GUIDES: Record<string, StrategyGuide> = {
       },
       {
         heading: { ko: "2. 파운데이션으로 너무 일찍 카드를 보내지 마라", en: "2. Don't rush cards to the foundations", ja: "2. 組札へ急いでカードを送らない", zh: "2. 别急着把牌送去基础堆", fr: "2. Ne montez pas les cartes trop vite vers les fondations", es: "2. No subas las cartas demasiado pronto a las bases" },
-        body: { ko: "낮은 숫자 카드를 파운데이션에 너무 일찍 올리면, 테이블로에서 색을 교차해 쌓아야 할 때 그 카드가 없어서 막힙니다. 특히 2~4는 필요할 때까지 테이블로에 남겨두는 것이 안전합니다.", en: "Sending low cards to the foundation too early can strand you later when the tableau needs that exact card to continue an alternating-color sequence. Keep 2s through 4s in the tableau until you actually need to move them up.", ja: "低い数字を早く組札に送ると、場札で色違いの並びを続けるためにその札が必要になった時に詰まります。2〜4は必要になるまで場札に残すのが安全です。", zh: "过早把小牌送进基础堆，日后牌桌区需要用它延续红黑交替序列时就会卡住。2到4的牌最好留在牌桌区，直到真正需要时再移上去。", fr: "Monter trop tôt les petites cartes peut vous bloquer quand le tableau a besoin de cette carte pour continuer une séquence alternée. Gardez les 2 à 4 dans le tableau jusqu'au besoin réel.", es: "Subir cartas bajas demasiado pronto puede dejarte atascado cuando el tablero necesite esa carta para continuar una secuencia de colores alternos. Conserva los 2 al 4 en el tablero hasta que realmente los necesites." },
+        body: { ko: "에이스와 2는 아래 카드를 받쳐야 하는 테이블로 카드가 아니므로 보통 파운데이션으로 올려도 안전합니다. 3 이상은 반대색 하위 카드를 받치는 데 필요할 수 있으니, 올리기 전에 테이블로 이동을 막지 않는지 확인하세요. OIYO에서는 필요하면 파운데이션 카드를 다시 내릴 수 있습니다.", en: "Aces and 2s do not support lower tableau cards, so they are normally safe to send up. Before moving a 3 or higher, check whether it is still needed to support a lower card of the opposite color. OIYO also lets you bring a foundation card back down when needed.", ja: "Aと2は場札で下位カードを支えないため、通常は組札へ送って安全です。3以上は反対色の下位カードを支える場合があるので、上げる前に場札の進行を妨げないか確認してください。OIYO版では必要なら組札から戻せます。", zh: "A和2不会在牌桌区承接更小的牌，通常可以安全移入基础堆。移动3以上的牌前，应确认它是否仍需承接另一颜色的小牌。OIYO 也允许在需要时把基础牌移回牌桌。", fr: "Les as et les 2 ne servent pas de support à une carte plus basse au tableau : on peut généralement les monter. Pour un 3 ou plus, vérifiez qu'il ne doit pas encore recevoir une carte inférieure de couleur opposée. OIYO permet aussi de redescendre une carte de fondation.", es: "Los ases y doses no sostienen cartas inferiores en el tablero, así que normalmente es seguro subirlos. Antes de subir un 3 o mayor, comprueba si aún debe sostener una carta inferior del color opuesto. OIYO también permite bajar una carta de la base." },
       },
       {
         heading: { ko: "3. 뒤집히지 않은 카드가 있는 열을 우선하라", en: "3. Prioritize columns with face-down cards", ja: "3. 裏向きの札があるレーンを優先する", zh: "3. 优先处理有暗牌的那一列", fr: "3. Priorisez les colonnes avec des cartes face cachée", es: "3. Prioriza las columnas con cartas boca abajo" },
@@ -65,12 +79,12 @@ export const STRATEGY_GUIDES: Record<string, StrategyGuide> = {
       },
     ],
     mistakes: {
-      ko: ["에이스·2를 보이는 즉시 무조건 파운데이션으로 보낸다(테이블로 진행을 막을 수 있음)", "빈 열을 아무 카드로나 채운다", "뒤집을 카드가 남은 열을 뒤로 미룬다", "한 번 스톡을 넘겨보고 안 풀리면 바로 새 게임을 시작한다"],
-      en: ["Sending every ace/2 to the foundation the instant it appears, even when it blocks tableau progress", "Filling an empty column with whatever's on top instead of saving it for a king", "Leaving columns with face-down cards for later", "Giving up after one stock cycle instead of running through it again as the board changes"],
-      ja: ["エース・2が出た瞬間に必ず組札へ送る(場札の進行を止めることがある)", "空いた列を手近な札で埋めてしまう", "裏向きの札が残る列を後回しにする", "山札を一周しただけで詰んだと諦め新しいゲームを始める"],
-      zh: ["A、2一出现就立刻送去基础堆(可能阻碍牌桌区进展)", "空列被随便一张牌填满", "把还有暗牌的列往后拖", "翻一轮牌库没解开就直接开新局"],
-      fr: ["Monter systématiquement l'as/le 2 dès qu'il apparaît, même si cela bloque le tableau", "Remplir une colonne vide avec la première carte venue au lieu de la garder pour un roi", "Repousser les colonnes qui ont encore des cartes cachées", "Abandonner après un seul passage de la pioche"],
-      es: ["Subir el as/2 a la base en cuanto aparece, aunque bloquee el progreso del tablero", "Llenar una columna vacía con lo primero a mano en vez de reservarla para un rey", "Dejar para después las columnas con cartas boca abajo", "Rendirte tras un solo repaso del mazo"],
+      ko: ["3 이상의 카드를 테이블로 필요 여부를 확인하지 않고 올린다", "빈 열을 아무 카드로나 채우려 한다", "뒤집을 카드가 남은 열을 뒤로 미룬다", "한 번 스톡을 넘겨보고 안 풀리면 바로 새 게임을 시작한다"],
+      en: ["Sending a 3 or higher up without checking whether the tableau still needs it", "Trying to fill an empty column with a non-king", "Leaving columns with face-down cards for later", "Giving up after one stock cycle instead of running through it again as the board changes"],
+      ja: ["3以上を場札で必要か確認せず組札へ上げる", "空いた列をキング以外で埋めようとする", "裏向きの札が残る列を後回しにする", "山札を一周しただけで詰んだと諦め新しいゲームを始める"],
+      zh: ["未确认牌桌是否仍需要3以上的牌就移入基础堆", "试图用非K牌填空列", "把还有暗牌的列往后拖", "翻一轮牌库没解开就直接开新局"],
+      fr: ["Monter un 3 ou plus sans vérifier si le tableau en a encore besoin", "Essayer de remplir une colonne vide avec autre chose qu'un roi", "Repousser les colonnes qui ont encore des cartes cachées", "Abandonner après un seul passage de la pioche"],
+      es: ["Subir un 3 o mayor sin comprobar si el tablero aún lo necesita", "Intentar llenar una columna vacía con algo que no sea un rey", "Dejar para después las columnas con cartas boca abajo", "Rendirte tras un solo repaso del mazo"],
     },
   },
 
@@ -92,10 +106,22 @@ export const STRATEGY_GUIDES: Record<string, StrategyGuide> = {
       fr: "Le Démineur se résout surtout par la logique, pas la chance. Ces techniques réduisent nettement les moments où vous devez deviner.",
       es: "El Buscaminas se resuelve sobre todo con lógica, no con suerte. Estas técnicas reducen mucho las veces que te ves obligado a adivinar.",
     },
+    variantNote: {
+      ko: "적용 범위: OIYO는 첫 클릭 안전, 논리 풀이 가능 보드 생성 시도, 초급 10×10/10·중급 16×16/40·고급 30×16/99를 사용합니다. 생성 상한 뒤에는 추측이 필요한 보드가 나올 수 있으며 화면에 이를 표시합니다.",
+      en: "Variant scope: OIYO uses first-click safety and attempts no-guess generation at 10×10/10, 16×16/40, and 30×16/99. After the generation cap, an honestly labelled fallback board may still require a guess.",
+      ja: "適用範囲: OIYO版は初手安全で、10×10/10、16×16/40、30×16/99の論理解法可能盤面を生成しようとします。生成上限後の明示された代替盤面では推測が必要な場合があります。",
+      zh: "适用范围：OIYO 保证首次点击安全，并尝试生成10×10/10、16×16/40、30×16/99的无猜测棋盘。达到生成上限后的明确标示备用棋盘仍可能需要猜测。",
+      fr: "Portée de la variante : OIYO sécurise le premier clic et tente de générer des grilles sans supposition en 10×10/10, 16×16/40 et 30×16/99. Après la limite, une grille de repli signalée peut exiger un pari.",
+      es: "Alcance de la variante: OIYO protege el primer clic e intenta generar tableros sin adivinanzas de 10×10/10, 16×16/40 y 30×16/99. Tras el límite, un tablero alternativo marcado puede exigir adivinar.",
+    },
+    sources: [
+      { label: "MIT OpenCourseWare — SmartSweeper specification", href: "https://ocw.mit.edu/courses/6-871-knowledge-based-applications-systems-spring-2005/1844b6c6f67a8beb9da88171b194e64a_ps1.pdf" },
+      { label: "StrategyWiki — Minesweeper walkthrough", href: "https://strategywiki.org/wiki/Minesweeper/Walkthrough" },
+    ],
     tips: [
       {
-        heading: { ko: "1. '1-1 패턴'을 찾아라", en: "1. Spot the 1-1 pattern", ja: "1. 「1-1パターン」を見つける", zh: "1. 找出“1-1模式”", fr: "1. Repérez le motif « 1-1 »", es: "1. Detecta el patrón «1-1»" },
-        body: { ko: "숫자 1이 미공개 칸 2개만 접하고 있고, 그 중 1개가 다른 숫자 1과도 겹쳐 접해 있다면, 겹치지 않는 나머지 칸은 안전합니다 — 각 1이 정확히 지뢰 하나씩만 가리키기 때문입니다.", en: "If a '1' touches exactly two unopened cells and shares one of them with another '1', the non-shared cell of each is safe — each 1 accounts for exactly one mine, and they can't both be pointing at the shared cell alone.", ja: "1が未開のマス2つに接し、その1つが別の1とも重なっている場合、重ならない側のマスは安全です — 各1がちょうど1つの地雷を示すためです。", zh: "如果一个“1”只接触两个未开格，其中一个与另一个“1”共享，那么各自不共享的那格是安全的——因为每个1恰好只指向一颗地雷。", fr: "Si un « 1 » touche exactement deux cases fermées et en partage une avec un autre « 1 », la case non partagée de chacun est sûre — chaque 1 ne pointe que sur une seule mine.", es: "Si un «1» toca exactamente dos casillas cerradas y comparte una con otro «1», la casilla no compartida de cada uno es segura: cada 1 solo señala una mina." },
+        heading: { ko: "1. 미공개 칸 집합을 비교하라", en: "1. Compare sets of unopened cells", ja: "1. 未開マスの集合を比較する", zh: "1. 比较未开格集合", fr: "1. Comparez les ensembles de cases fermées", es: "1. Compara conjuntos de casillas cerradas" },
+        body: { ko: "확정 깃발을 뺀 두 숫자의 미공개 이웃을 집합으로 보세요. 한 집합이 다른 집합에 완전히 포함된다면, 남은 지뢰 수의 차이가 바깥쪽 칸들에 들어갈 지뢰 수입니다. 차이가 0이면 바깥쪽 칸은 모두 안전하고, 차이가 바깥쪽 칸 수와 같으면 모두 지뢰입니다. 단순히 1 두 개가 겹친다는 사실만으로는 안전 칸을 확정할 수 없습니다.", en: "Treat each clue's unopened neighbors as a set after subtracting confirmed flags. If one set is fully contained in another, the difference in their remaining mine counts is the number of mines in the outer cells. A difference of zero makes all outer cells safe; a difference equal to the number of outer cells makes them all mines. Two overlapping 1s alone do not prove that a cell is safe.", ja: "確定した旗を差し引き、各数字の未開の隣接マスを集合として考えます。一方の集合がもう一方に完全に含まれるなら、残りの地雷数の差が外側のマスにある地雷数です。差が0なら外側はすべて安全、差が外側のマス数と同じならすべて地雷です。1が2つ重なるだけでは安全なマスは確定しません。", zh: "扣除已确认的旗子后，把每个数字周围的未开格视为一个集合。若一个集合完全包含于另一个集合，两者剩余雷数之差就是外侧格中的雷数。差为0时外侧格全部安全；差等于外侧格数量时则全部是雷。仅凭两个“1”有重叠并不能确定安全格。", fr: "Après avoir soustrait les drapeaux confirmés, considérez les voisins fermés de chaque indice comme un ensemble. Si un ensemble est entièrement inclus dans l'autre, la différence entre les mines restantes donne le nombre de mines dans les cases extérieures. Une différence nulle les rend toutes sûres ; une différence égale à leur nombre les rend toutes minées. Deux « 1 » qui se chevauchent ne suffisent pas, à eux seuls, à prouver qu'une case est sûre.", es: "Tras restar las banderas confirmadas, trata las vecinas cerradas de cada pista como un conjunto. Si un conjunto está totalmente contenido en otro, la diferencia entre las minas restantes indica cuántas hay en las casillas exteriores. Si la diferencia es cero, todas son seguras; si iguala el número de casillas exteriores, todas son minas. Dos «1» superpuestos por sí solos no demuestran que una casilla sea segura." },
       },
       {
         heading: { ko: "2. 숫자에서 확정 깃발 수를 빼면 남는 칸이 보인다", en: "2. Subtract confirmed flags from the number", ja: "2. 数字から確定した旗の数を引く", zh: "2. 用数字减去已确认的旗子数", fr: "2. Soustrayez les drapeaux confirmés du chiffre", es: "2. Resta las banderas confirmadas del número" },
@@ -107,7 +133,7 @@ export const STRATEGY_GUIDES: Record<string, StrategyGuide> = {
       },
       {
         heading: { ko: "4. 정말 논리로 안 풀리면 확률이 가장 낮은 칸을 골라라", en: "4. When truly stuck, guess the lowest-probability cell", ja: "4. 本当に詰まったら確率が最も低いマスを選ぶ", zh: "4. 真的卡住时选概率最低的格子", fr: "4. Si vous êtes vraiment bloqué, devinez la case la moins probable", es: "4. Si de verdad te atascas, adivina la casilla con menor probabilidad" },
-        body: { ko: "가끔은 순수 논리만으로 풀리지 않는 판도 있습니다. 이때는 아직 어떤 숫자와도 접하지 않은 칸(정보가 전혀 없는 칸)이 인접 숫자로 지뢰 확률이 계산되는 칸보다 대체로 더 안전합니다.", en: "Some boards genuinely can't be solved by pure logic alone. When that happens, an unopened cell with no adjacent numbers at all is usually safer than one where you can calculate even a modest mine probability from a nearby clue.", ja: "純粋な論理だけでは解けない盤面も実際にあります。その場合、隣接する数字が全くない未開マスは、近くの手がかりから地雷確率を計算できるマスより概ね安全です。", zh: "有些棋盘确实无法仅凭纯逻辑解开。这时，完全没有相邻数字线索的未开格，通常比能从附近线索算出雷概率的格子更安全。", fr: "Certaines grilles ne se résolvent vraiment pas par la seule logique. Dans ce cas, une case fermée sans aucun chiffre adjacent est généralement plus sûre qu'une case dont on peut calculer une probabilité de mine, même faible.", es: "Algunos tableros de verdad no se resuelven solo con lógica. En ese caso, una casilla cerrada sin ningún número adyacente suele ser más segura que una en la que puedas calcular aunque sea una probabilidad modesta de mina." },
+        body: { ko: "가끔은 순수 논리만으로 풀리지 않는 판도 있습니다. 추측이 필요하면 가능한 지뢰 배치를 모두 만족시키는 칸별 확률을 비교하고, 남은 전체 지뢰 수와 아직 제약이 없는 칸 수도 함께 계산하세요. 숫자와 접하지 않았다는 이유만으로 그 칸이 더 안전하다고 단정할 수는 없습니다.", en: "Some boards genuinely cannot be solved by logic alone. If you must guess, compare each cell across all mine placements consistent with the clues, including the total mines and unconstrained cells still remaining. A cell is not automatically safer merely because it touches no revealed number.", ja: "純粋な論理だけでは解けない盤面もあります。推測が必要なら、手掛かりと矛盾しない全ての地雷配置で各マスの確率を比較し、残りの総地雷数と制約のないマス数も考慮します。数字に接していないという理由だけで、そのマスが安全とは断定できません。", zh: "有些棋盘确实无法只靠逻辑解开。必须猜测时，应比较所有符合线索的布雷方案中各格的概率，并同时计入剩余总雷数和未受约束的格数。一个格子没有接触已开数字，并不代表它一定更安全。", fr: "Certaines grilles ne se résolvent pas par la seule logique. Si vous devez deviner, comparez chaque case dans toutes les dispositions de mines compatibles avec les indices, en tenant compte du total de mines et des cases encore sans contrainte. Une case n'est pas automatiquement plus sûre parce qu'elle ne touche aucun chiffre révélé.", es: "Algunos tableros no se pueden resolver solo con lógica. Si debes adivinar, compara cada casilla entre todas las distribuciones de minas compatibles con las pistas, incluyendo el total de minas y las casillas aún sin restricciones. Una casilla no es automáticamente más segura solo porque no toque ningún número revelado." },
       },
       {
         heading: { ko: "5. 코드(chord)로 속도를 올려라", en: "5. Use chording to speed up", ja: "5. コード操作(まとめ開け)で速度を上げる", zh: "5. 用连锁开格(chord)提速", fr: "5. Utilisez le chordage pour aller plus vite", es: "5. Usa el «chording» para ir más rápido" },
@@ -142,6 +168,17 @@ export const STRATEGY_GUIDES: Record<string, StrategyGuide> = {
       fr: "Aux Hearts, on ne gagne pas juste en jouant toujours sa carte la plus basse. Le vrai talent, c'est de lire la forme de sa main et de savoir quand se débarrasser des cartes dangereuses.",
       es: "En Corazones no se gana solo jugando siempre la carta más baja. La habilidad real está en leer la forma de tu mano y saber cuándo deshacerte de las cartas peligrosas.",
     },
+    variantNote: {
+      ko: "적용 범위: OIYO는 미국식 4인 규칙을 사용합니다. 클럽 2 선출, 첫 트릭 벌점 카드 제한, 하트 브레이크, 좌·우·맞은편·보류 전달, 100점 종료, 달 쏘기 0/26점 방식입니다. 지역 변형은 다를 수 있습니다.",
+      en: "Variant scope: OIYO follows four-player American Hearts: 2♣ opens, penalty cards are restricted on trick one, hearts must be broken, passes cycle left/right/across/hold, play ends at 100, and moon scoring is 0/26. Regional variants differ.",
+      ja: "適用範囲: OIYO版は米国式4人制です。クラブ2の初手、最初のトリックの罰点札制限、ハートブレイク、左・右・向かい・保留のパス、100点終了、ムーン0/26点方式を採用します。地域ルールは異なります。",
+      zh: "适用范围：OIYO采用美式四人规则：梅花2首出、第一墩限制罚分牌、红心破门后方可领出、左/右/对面/保留传牌、100分结束、全收按0/26计分。地区变体可能不同。",
+      fr: "Portée de la variante : OIYO suit la Dame de pique américaine à quatre joueurs : 2♣ en ouverture, cartes de pénalité limitées au premier pli, cœurs à ouvrir, passes gauche/droite/face/garde, fin à 100 et grand chelem 0/26. Les variantes régionales diffèrent.",
+      es: "Alcance de la variante: OIYO usa Corazones americano para cuatro: abre el 2♣, se limitan cartas de penalización en la primera baza, hay que abrir corazones, pases izquierda/derecha/enfrente/conservar, final a 100 y luna 0/26. Hay variantes regionales.",
+    },
+    sources: [
+      { label: "Pagat — Hearts rules and variants", href: "https://www.pagat.com/reverse/hearts.html" },
+    ],
     tips: [
       {
         heading: { ko: "1. 스페이드 퀸과 높은 스페이드를 일찍 처리하라", en: "1. Get rid of the Queen of Spades early", ja: "1. スペードのQと高いスペードを早めに処理する", zh: "1. 尽早处理黑桃Q和大黑桃", fr: "1. Débarrassez-vous tôt de la dame de pique", es: "1. Deshazte pronto de la reina de picas" },
@@ -177,33 +214,45 @@ export const STRATEGY_GUIDES: Record<string, StrategyGuide> = {
   "texas-holdem": {
     slug: "texas-holdem",
     title: {
-      ko: "텍사스 홀덤 기본 전략 — 핸드 선택과 포지션",
-      en: "Texas Hold'em Strategy — Starting Hands and Position",
-      ja: "テキサスホールデム基本戦略 — ハンド選択とポジション",
-      zh: "德州扑克基础策略 — 起手牌选择与位置",
-      fr: "Stratégie de base au Texas Hold'em — mains de départ et position",
-      es: "Estrategia básica de Texas Hold'em — manos iniciales y posición",
+      ko: "텍사스 홀덤 족보 읽기 — 최선의 5장과 아웃츠",
+      en: "Texas Hold'em Hand Reading — Best Five Cards and Outs",
+      ja: "テキサスホールデムの役読み — 最善の5枚とアウツ",
+      zh: "德州扑克牌型阅读 — 最佳五张与补牌",
+      fr: "Lire une main de Texas Hold'em — cinq meilleures cartes et outs",
+      es: "Lectura de manos de Texas Hold'em — mejores cinco cartas y outs",
     },
     intro: {
-      ko: "이 게임은 베팅 없는 학습용이지만, 어떤 핸드가 강하고 어떤 상황에서 접어야 하는지는 실제 포커와 동일한 원리를 따릅니다. 아래는 초심자가 가장 먼저 익혀야 할 원칙입니다.",
-      en: "This is a no-betting learning mode, but which hands are strong and when to fold follow the same principles as real poker. Here's what beginners should learn first.",
-      ja: "このゲームはベットなしの学習モードですが、どのハンドが強く、いつフォールドすべきかは実際のポーカーと同じ原則に従います。初心者がまず学ぶべき原則です。",
-      zh: "这是无下注的学习模式，但哪些起手牌强、何时该弃牌，遵循与真实扑克相同的原理。以下是初学者应最先掌握的原则。",
-      fr: "Ce mode d'apprentissage n'a pas de mise, mais la force des mains et le moment de se coucher suivent les mêmes principes que le vrai poker. Voici ce qu'un débutant doit apprendre en premier.",
-      es: "Este es un modo de aprendizaje sin apuestas, pero qué manos son fuertes y cuándo retirarse siguen los mismos principios que el póker real. Esto es lo primero que debe aprender un principiante.",
+      ko: "이 학습기는 베팅 없이 두 장의 홀 카드와 다섯 장의 커뮤니티 카드에서 가장 강한 5장을 찾는 연습에 집중합니다. 각 스트리트에서 족보가 어떻게 바뀌는지 확인하세요.",
+      en: "This no-betting trainer focuses on finding the strongest five-card hand from two hole cards and five community cards. Watch how that hand changes on each street.",
+      ja: "このベットなし練習では、2枚のホールカードと5枚のコミュニティカードから最強の5枚を見つけます。各ストリートで役がどう変化するか確認しましょう。",
+      zh: "这个无下注训练器专注于从两张底牌和五张公共牌中找出最强五张。观察每个阶段牌型如何变化。",
+      fr: "Cet exercice sans mise consiste à trouver la meilleure main de cinq cartes parmi deux cartes privées et cinq communes. Observez son évolution à chaque street.",
+      es: "Este entrenador sin apuestas se centra en hallar la mejor mano de cinco cartas entre dos privadas y cinco comunitarias. Observa cómo cambia en cada calle.",
     },
+    variantNote: {
+      ko: "적용 범위: OIYO는 칩·블라인드·베팅·포지션이 없는 헤드업 족보 학습기입니다. 무료로 플랍·턴·리버를 공개하고 최선의 5장을 비교하므로, 실제 포커의 베팅 전략·팟 오즈·뱅크롤 조언을 제공하지 않습니다. 폴드는 자기 판단 연습 버튼일 뿐 비용상 이점이 없습니다.",
+      en: "Variant scope: OIYO is a heads-up hand-reading trainer with no chips, blinds, betting, or position. Streets reveal for free and compare the best five cards, so this guide does not teach betting strategy, pot odds, or bankroll play. Fold is only a self-check and has no cost advantage here.",
+      ja: "適用範囲: OIYO版はチップ、ブラインド、ベット、ポジションのないヘッズアップ役読み練習です。各ストリートは無料で公開され最善の5枚を比較するため、実戦のベット戦略、ポットオッズ、資金管理は扱いません。フォールドは自己判断の練習で、費用上の利点はありません。",
+      zh: "适用范围：OIYO是无筹码、盲注、下注和位置的单挑牌型阅读训练器。各阶段免费揭牌并比较最佳五张，因此不教授真实扑克的下注策略、底池赔率或资金管理。弃牌仅用于自我判断练习，在这里没有成本优势。",
+      fr: "Portée de la variante : OIYO est un exercice de lecture des mains en tête-à-tête, sans jetons, blindes, mises ni position. Les streets sont gratuites et comparent les cinq meilleures cartes ; le guide n'enseigne donc ni mises, ni cote du pot, ni gestion de bankroll. Se coucher est seulement un auto-test, sans avantage de coût ici.",
+      es: "Alcance de la variante: OIYO es un entrenador de lectura de manos cara a cara, sin fichas, ciegas, apuestas ni posición. Las calles se revelan gratis y se comparan las mejores cinco cartas; no enseña apuestas, pot odds ni gestión de banca. Retirarse es solo una autoevaluación y aquí no ofrece ventaja de coste.",
+    },
+    sources: [
+      { label: "2026 WSOP Official Tournament Rules", href: "https://assets.wsopcdn.com/wsop/1a72ba28-781c-409d-a9c3-5ca13c4c5718.pdf" },
+      { label: "Pagat — Texas Hold'em rules", href: "https://www.pagat.com/poker/variants/texasholdem.html" },
+    ],
     tips: [
       {
-        heading: { ko: "1. 시작 핸드의 순위를 익혀라", en: "1. Learn starting-hand strength", ja: "1. スターティングハンドの強さを覚える", zh: "1. 熟记起手牌强弱", fr: "1. Apprenez la force des mains de départ", es: "1. Aprende la fuerza de las manos iniciales" },
-        body: { ko: "같은 무늬 에이스-킹, 페어(특히 10 이상)처럼 강한 핸드로만 적극적으로 플레이하는 습관을 들이세요. 7-2처럼 서로 무늬도 다르고 순위 차이도 큰 핸드는 대부분의 상황에서 접는 게 정답입니다.", en: "Get in the habit of playing aggressively only with strong hands — suited ace-king, high pairs (tens or better). Something like an offsuit 7-2, with a big rank gap and no suit match, is a fold in almost every situation.", ja: "スート同じA-K、ペア(特に10以上)のような強いハンドの時だけ積極的にプレイする習慣をつけましょう。オフスートの7-2のようにランク差が大きくスートも合わないハンドは、ほとんどの場面でフォールドが正解です。", zh: "养成只用强牌（同花A-K、对子尤其是10以上）积极出牌的习惯。像不同花色的7-2这种牌力差距大又不同花色的牌，几乎所有情况下都该弃牌。", fr: "Prenez l'habitude de jouer activement seulement avec des mains fortes — as-roi assortis, grosses paires (dix ou plus). Un 7-2 dépareillé, avec un grand écart de rang, se couche presque toujours.", es: "Acostúmbrate a jugar de forma activa solo con manos fuertes: as-rey del mismo palo, parejas altas (dieces o más). Algo como un 7-2 descartado, con gran diferencia de rango, se retira casi siempre." },
+        heading: { ko: "1. 족보와 동률 비교 순서를 익혀라", en: "1. Learn hand categories and tie-breaks", ja: "1. 役と同役の比較順を覚える", zh: "1. 熟悉牌型和同型比较", fr: "1. Apprenez les catégories et les départages", es: "1. Aprende las categorías y los desempates" },
+        body: { ko: "스트레이트 플러시부터 하이카드까지 순서를 익히고, 같은 족보끼리는 어떤 숫자를 먼저 비교하는지 확인하세요. 예를 들어 원페어는 페어 숫자를 먼저, 그다음 남은 높은 카드(키커)를 차례로 비교합니다.", en: "Learn the order from straight flush down to high card, then how equal categories break ties. With one pair, compare the pair rank first and then the remaining high cards (kickers) in order.", ja: "ストレートフラッシュからハイカードまでの順序と、同じ役の比較方法を覚えます。ワンペアならペアのランクを先に、その後キッカーを高い順に比べます。", zh: "熟悉从同花顺到高牌的顺序，以及同牌型如何决胜。例如一对先比较对子点数，再依次比较剩余高牌（踢脚牌）。", fr: "Mémorisez l'ordre de la quinte flush à la carte haute, puis les départages à catégorie égale. Pour une paire, comparez d'abord son rang, puis les kickers du plus haut au plus bas.", es: "Aprende el orden desde escalera de color hasta carta alta y cómo se desempata la misma categoría. Con una pareja, compara primero su rango y después los kickers de mayor a menor." },
       },
       {
-        heading: { ko: "2. 포지션이 핸드 가치를 바꾼다", en: "2. Position changes what a hand is worth", ja: "2. ポジションでハンドの価値が変わる", zh: "2. 位置会改变牌力的价值", fr: "2. La position change la valeur d'une main", es: "2. La posición cambia el valor de una mano" },
-        body: { ko: "상대가 먼저 행동한 뒤에 결정할 수 있는 '늦은 포지션'에서는 더 많은 정보를 갖고 플레이하므로 약간 약한 핸드도 가치가 올라갑니다. 먼저 행동해야 하는 '이른 포지션'에서는 확실히 강한 핸드만 플레이하세요.", en: "Acting after your opponent (late position) means you decide with more information, so a slightly weaker hand gains value there. Acting first (early position) means you should stick to clearly strong hands only.", ja: "相手より後に行動する「レイトポジション」では、より多くの情報を持って判断できるため、やや弱いハンドでも価値が上がります。先に行動する「アーリーポジション」では、明確に強いハンドだけをプレイしましょう。", zh: "在对手先行动后再决定的“后位”，你能掌握更多信息，稍弱的牌也更有价值。而必须先行动的“前位”，只应出明显强的牌。", fr: "Agir après l'adversaire (position tardive) signifie décider avec plus d'informations, ce qui valorise une main un peu plus faible. Agir en premier (position précoce) signifie s'en tenir aux mains clairement fortes.", es: "Actuar después del rival (posición tardía) significa decidir con más información, lo que da valor a una mano algo más débil. Actuar primero (posición temprana) significa ceñirse solo a manos claramente fuertes." },
+        heading: { ko: "2. 일곱 장 중 최선의 다섯 장만 센다", en: "2. Use only the best five of seven", ja: "2. 7枚中最善の5枚だけを使う", zh: "2. 七张中只取最佳五张", fr: "2. Ne gardez que les cinq meilleures sur sept", es: "2. Usa solo las mejores cinco de siete" },
+        body: { ko: "홀 카드 두 장을 반드시 모두 쓰는 것이 아닙니다. 한 장만 쓰거나, 커뮤니티 카드 다섯 장이 더 강하면 홀 카드를 하나도 쓰지 않을 수도 있습니다. 결과에서 강조되는 최선의 5장을 확인하세요.", en: "You do not have to use both hole cards. The best hand may use one, or none when the five-card board is stronger. Check the five cards highlighted in the result.", ja: "ホールカード2枚を必ず両方使うわけではありません。1枚だけ、またはボード5枚の方が強ければ0枚の場合もあります。結果で強調される最善の5枚を確認してください。", zh: "不必同时使用两张底牌。最佳牌可能只用一张；若公共牌五张更强，也可能一张都不用。请查看结果中高亮的最佳五张。", fr: "Vous n'êtes pas obligé d'utiliser vos deux cartes privées. La meilleure main peut en utiliser une, voire aucune si les cinq cartes du board sont supérieures. Regardez les cinq cartes mises en évidence au résultat.", es: "No tienes que usar las dos cartas privadas. La mejor mano puede usar una o ninguna si las cinco comunitarias son superiores. Revisa las cinco cartas resaltadas en el resultado." },
       },
       {
         heading: { ko: "3. 아웃츠를 세어 확률을 가늠하라", en: "3. Count outs to gauge your odds", ja: "3. アウツを数えて確率を把握する", zh: "3. 数出牌来估算胜率", fr: "3. Comptez vos outs pour évaluer vos chances", es: "3. Cuenta tus outs para calcular tus probabilidades" },
-        body: { ko: "'아웃츠'는 내 핸드를 완성시켜줄 남은 카드 수입니다. 플랍 이후 아웃츠가 8~9장(예: 오픈 스트레이트 드로우)이면 턴에서 맞을 확률이 대략 3분의 1 정도입니다. 아웃츠가 적다면 계속 따라가는 비용을 신중히 따지세요.", en: "'Outs' are the remaining cards that complete your hand. After the flop, roughly 8-9 outs (like an open-ended straight draw) gives you about a one-in-three shot on the turn. With few outs, weigh carefully whether it's worth continuing.", ja: "「アウツ」はハンドを完成させる残りの札の数です。フロップ後にアウツが8〜9枚(オープンエンドのストレートドローなど)あれば、ターンで完成する確率はおよそ3分の1です。アウツが少なければ続けるコストを慎重に考えましょう。", zh: "“出牌”是能让你成牌的剩余牌数。翻牌后若出牌数有8到9张（如两头顺子听牌），转牌命中概率约为三分之一。出牌数少时，要谨慎权衡是否值得继续跟注。", fr: "Les « outs » sont les cartes restantes qui complètent votre main. Après le flop, environ 8-9 outs (comme un tirage quinte ouvert) donnent près d'une chance sur trois au turn. Avec peu d'outs, pesez soigneusement l'intérêt de continuer.", es: "Los «outs» son las cartas restantes que completan tu mano. Tras el flop, unos 8-9 outs (como un proyecto de escalera abierta) te dan cerca de una probabilidad entre tres en el turn. Con pocos outs, sopesa con cuidado si vale la pena seguir." },
+        body: { ko: "'아웃츠'는 원하는 족보를 완성할 수 있는 보이지 않은 카드입니다. 플랍에서 9아웃이면 다음 한 장(턴)에 맞을 확률은 9/47, 약 19%이고 턴 또는 리버 중 한 번 이상 맞을 확률은 약 35%입니다. 상대 홀 카드는 보이지 않으므로 모든 아웃이 실제 승리를 보장하지는 않습니다.", en: "'Outs' are unseen cards that can complete the hand you are drawing to. With 9 outs on the flop, the chance on the next card is 9/47, about 19%; the chance of hitting by either turn or river is about 35%. Hidden opponent cards mean not every apparent out guarantees a win.", ja: "「アウツ」は狙う役を完成させる未見のカードです。フロップで9アウツなら次の1枚で当たる確率は9/47、約19%、ターンかリバーまでに1回以上当たる確率は約35%です。相手の札は見えないため、見かけのアウツ全てが勝利を保証するわけではありません。", zh: "“补牌”是能完成目标牌型的未见牌。翻牌后有9张补牌时，下一张命中概率为9/47，约19%；在转牌或河牌至少命中一次约为35%。对手底牌不可见，因此看似有效的补牌不一定保证获胜。", fr: "Les « outs » sont les cartes invisibles qui peuvent compléter votre tirage. Avec 9 outs au flop, la prochaine carte réussit dans 9/47 des cas, soit environ 19 % ; toucher au turn ou à la river vaut environ 35 %. Les cartes adverses cachées font qu'un out apparent ne garantit pas la victoire.", es: "Los «outs» son cartas no vistas que completan tu proyecto. Con 9 outs en el flop, la siguiente carta acierta 9/47, cerca del 19 %; acertar en turn o river ronda el 35 %. Las cartas ocultas del rival hacen que un out aparente no garantice ganar." },
       },
       {
         heading: { ko: "4. 보드가 위험해지면 핸드를 다시 평가하라", en: "4. Re-evaluate when the board gets scary", ja: "4. ボードが危険になったらハンドを見直す", zh: "4. 牌面变危险时重新评估手牌", fr: "4. Réévaluez votre main quand le board devient dangereux", es: "4. Reevalúa tu mano cuando el board se vuelve peligroso" },
@@ -211,12 +260,12 @@ export const STRATEGY_GUIDES: Record<string, StrategyGuide> = {
       },
     ],
     mistakes: {
-      ko: ["약한 핸드로 이른 포지션에서 계속 참여한다", "아웃츠를 세지 않고 감으로 계속 따라간다", "보드가 위험해져도 처음 핸드 평가를 그대로 유지한다", "포지션을 고려하지 않고 모든 자리에서 같은 기준으로 플레이한다"],
-      en: ["Continuing with weak hands from early position", "Calling on instinct without counting outs", "Sticking with your original hand read even after the board turns dangerous", "Playing the same starting-hand standard regardless of position"],
-      ja: ["アーリーポジションで弱いハンドを続ける", "アウツを数えず勘でコールし続ける", "ボードが危険になっても最初のハンド評価に固執する", "ポジションを考慮せず全ての席で同じ基準でプレイする"],
-      zh: ["前位仍继续跟着弱牌打", "不数出牌数就凭感觉跟注", "牌面变危险后仍固守最初的手牌判断", "不考虑位置，所有座位都用同一标准出牌"],
-      fr: ["Continuer avec des mains faibles en position précoce", "Suivre à l'instinct sans compter les outs", "S'accrocher à sa lecture initiale même quand le board devient dangereux", "Jouer le même standard de main de départ quelle que soit la position"],
-      es: ["Seguir con manos débiles desde posición temprana", "Pagar por instinto sin contar los outs", "Aferrarte a tu lectura inicial aunque el board se vuelva peligroso", "Jugar el mismo estándar de mano inicial sin importar la posición"],
+      ko: ["홀 카드 두 장을 항상 모두 써야 한다고 생각한다", "다음 한 장 확률과 턴·리버 누적 확률을 혼동한다", "보드가 바뀌어도 이전 스트리트의 족보 평가를 유지한다", "베팅이 없는 이 학습기의 폴드를 실제 팟 오즈 결정처럼 해석한다"],
+      en: ["Assuming both hole cards must always be used", "Confusing next-card probability with the combined turn-or-river chance", "Keeping the prior street's hand reading after the board changes", "Treating this no-betting trainer's Fold button as a real pot-odds decision"],
+      ja: ["ホールカード2枚を必ず両方使うと思う", "次の1枚の確率とターン・リバー累積確率を混同する", "ボードが変わっても前ストリートの評価に固執する", "ベットなし練習のフォールドを実戦のポットオッズ判断とみなす"],
+      zh: ["认为两张底牌必须全部使用", "混淆下一张概率与转牌或河牌累计概率", "公共牌变化后仍沿用上一阶段的牌型判断", "把无下注训练器的弃牌按钮当成真实底池赔率决策"],
+      fr: ["Croire qu'il faut toujours utiliser les deux cartes privées", "Confondre la probabilité de la prochaine carte avec celle cumulée turn-ou-river", "Conserver la lecture de la street précédente après un changement du board", "Traiter le bouton Se coucher sans mise comme une décision réelle de cote du pot"],
+      es: ["Creer que siempre deben usarse las dos cartas privadas", "Confundir la probabilidad de la siguiente carta con la acumulada turn-o-river", "Mantener la lectura de la calle anterior tras cambiar el board", "Tratar el botón Retirarse sin apuestas como una decisión real de pot odds"],
     },
   },
 };

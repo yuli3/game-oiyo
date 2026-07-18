@@ -28,6 +28,8 @@ export interface HeartsState {
 export interface HeartsSavedGame {
   state: HeartsState;
   passSelection: string[];
+  /** Added in local save v2; optional so external v1 session envelopes remain compatible. */
+  level?: HeartsAiLevel;
 }
 
 interface HeartsStorage {
@@ -177,11 +179,11 @@ export function playHeartsCard(state: HeartsState, player: number, cardId: strin
 
 export type HeartsAiLevel = 1 | 2 | 3;
 
-/** True when exactly one other player has taken every point captured so far this round — an early "shooting the moon" signal worth breaking. */
+/** True when one opponent has accumulated every point and reached a meaningful moonshot threshold. */
 function isMoonshotBrewing(state: HeartsState, me: number): boolean {
   const threats = state.capturedPoints
     .map((points, idx) => ({ idx, points }))
-    .filter((entry) => entry.idx !== me && entry.points > 0);
+    .filter((entry) => entry.idx !== me && entry.points >= 5);
   if (threats.length !== 1) return false;
   return state.capturedPoints.every((points, idx) => idx === me || idx === threats[0].idx || points === 0);
 }
@@ -205,7 +207,7 @@ export function chooseHeartsCpuCard(state: HeartsState, player: number, level: H
   if (losing.length > 0) {
     // Hard: if someone is quietly accumulating every point card this round, take the
     // trick anyway (smallest card that still wins) to break their shoot-the-moon attempt.
-    if (level === 3 && isMoonshotBrewing(state, player)) {
+    if (level === 3 && trickPoints(state.trick) > 0 && isMoonshotBrewing(state, player)) {
       const winners = byPower.filter((card) => card.power > currentHigh);
       if (winners.length > 0) return winners[0];
     }
@@ -277,15 +279,17 @@ export function isValidHeartsState(value: unknown): value is HeartsState {
 export function parseHeartsSavedGame(raw: string | null): HeartsSavedGame | null {
   if (!raw) return null;
   try {
-    const parsed = JSON.parse(raw) as { version?: unknown; state?: unknown; passSelection?: unknown };
-    if (parsed.version !== 1 || !isValidHeartsState(parsed.state) || !Array.isArray(parsed.passSelection) || !parsed.passSelection.every((id) => typeof id === "string")) return null;
+    const parsed = JSON.parse(raw) as { version?: unknown; state?: unknown; passSelection?: unknown; level?: unknown };
+    if (![1, 2].includes(parsed.version as number) || !isValidHeartsState(parsed.state) || !Array.isArray(parsed.passSelection) || !parsed.passSelection.every((id) => typeof id === "string")) return null;
+    const level: HeartsAiLevel = parsed.version === 1 ? 3 : parsed.level as HeartsAiLevel;
+    if (![1, 2, 3].includes(level)) return null;
     const state = parsed.state;
     const passSelection = [...new Set(parsed.passSelection)];
     if (passSelection.length !== parsed.passSelection.length || passSelection.length > 3) return null;
     if (state.phase === "passing") {
       if (!passSelection.every((id) => state.hands[0].some((card) => card.id === id))) return null;
     } else if (passSelection.length > 0) return null;
-    return { state, passSelection };
+    return { state, passSelection, level };
   } catch {
     return null;
   }
@@ -297,10 +301,10 @@ export function loadHeartsSavedGame(storage: HeartsStorage): HeartsSavedGame | n
 
 export function saveHeartsGame(storage: HeartsStorage, saved: HeartsSavedGame): boolean {
   if (!isValidHeartsState(saved.state)) return false;
-  const validated = parseHeartsSavedGame(JSON.stringify({ version: 1, ...saved }));
+  const validated = parseHeartsSavedGame(JSON.stringify({ version: 2, ...saved, level: saved.level ?? 3 }));
   if (!validated) return false;
   try {
-    storage.setItem(HEARTS_STORAGE_KEY, JSON.stringify({ version: 1, ...validated }));
+    storage.setItem(HEARTS_STORAGE_KEY, JSON.stringify({ version: 2, ...validated }));
     return true;
   } catch { return false; }
 }

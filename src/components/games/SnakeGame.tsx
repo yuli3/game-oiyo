@@ -119,7 +119,7 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         // One-time migration from the pre-unification per-game key
         try {
             const legacy = Number(localStorage.getItem(LEGACY_BEST_KEY));
-            if (Number.isFinite(legacy) && legacy > 0) setBest(recordBest('snake-game', legacy, 'score').value);
+            if (Number.isFinite(legacy) && legacy > 0) setBest(recordBest('snake-game', legacy, 'score', undefined, { trackPlay: false }).value);
         } catch { /* ignore */ }
     }, []);
 

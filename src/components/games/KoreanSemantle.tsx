@@ -57,6 +57,7 @@ const COPY: Record<UILocale, {
   share: string;
   copied: string;
   demoBadge: string;
+  demoCredit: string;
   credit: string;
   stats: (s: StreakStats) => string;
   hint: string;
@@ -80,6 +81,7 @@ const COPY: Record<UILocale, {
     share: "결과 공유",
     copied: "복사됨!",
     demoBadge: "데모 퍼즐",
+    demoCredit: "수작업으로 만든 예시 유사도 표입니다. fastText 데이터가 아닙니다.",
     credit: "단어 벡터: fastText Korean (Facebook AI Research), CC BY-SA 3.0",
     stats: (s) => `🔥 연속 ${s.currentStreak} · 최고 ${s.maxStreak} · ${s.played}판`,
     hint: "의미 유사도(코사인)를 기준으로 순위를 매깁니다. 상위 목록 안에 든 단어만 순위가 표시됩니다.",
@@ -103,6 +105,7 @@ const COPY: Record<UILocale, {
     share: "Share result",
     copied: "Copied!",
     demoBadge: "Demo puzzle",
+    demoCredit: "Handcrafted sample similarity table; this demo does not use fastText data.",
     credit: "Word vectors: fastText Korean (Facebook AI Research), CC BY-SA 3.0",
     stats: (s) => `🔥 Streak ${s.currentStreak} · Best ${s.maxStreak} · ${s.played} played`,
     hint: "Ranking is by semantic (cosine) similarity. Only words inside the served top list show a rank.",
@@ -126,6 +129,7 @@ const COPY: Record<UILocale, {
     share: "結果を共有",
     copied: "コピーしました！",
     demoBadge: "デモパズル",
+    demoCredit: "手作業で作成した類似度のサンプルです。このデモはfastTextデータを使用していません。",
     credit: "単語ベクトル: fastText Korean (Facebook AI Research), CC BY-SA 3.0",
     stats: (s) => `🔥 連続 ${s.currentStreak} · 最高 ${s.maxStreak} · ${s.played}回`,
     hint: "意味的類似度（コサイン）で順位を付けます。上位リスト内の単語のみ順位が表示されます。",
@@ -149,6 +153,7 @@ const COPY: Record<UILocale, {
     share: "分享结果",
     copied: "已复制！",
     demoBadge: "演示谜题",
+    demoCredit: "这是手工制作的相似度示例表；本演示不使用 fastText 数据。",
     credit: "词向量：fastText Korean (Facebook AI Research)，CC BY-SA 3.0",
     stats: (s) => `🔥 连胜 ${s.currentStreak} · 最高 ${s.maxStreak} · ${s.played} 局`,
     hint: "按语义（余弦）相似度排名。只有榜单内的词才显示排名。",
@@ -172,6 +177,7 @@ const COPY: Record<UILocale, {
     share: "Partager",
     copied: "Copié !",
     demoBadge: "Puzzle démo",
+    demoCredit: "Table de similarité d'exemple créée à la main ; cette démo n'utilise pas de données fastText.",
     credit: "Vecteurs : fastText Korean (Facebook AI Research), CC BY-SA 3.0",
     stats: (s) => `🔥 Série ${s.currentStreak} · Record ${s.maxStreak} · ${s.played} parties`,
     hint: "Classement par similarité sémantique (cosinus). Seuls les mots du top affichent un rang.",
@@ -195,6 +201,7 @@ const COPY: Record<UILocale, {
     share: "Compartir",
     copied: "¡Copiado!",
     demoBadge: "Puzle demo",
+    demoCredit: "Tabla de similitud de ejemplo creada a mano; esta demo no usa datos de fastText.",
     credit: "Vectores: fastText Korean (Facebook AI Research), CC BY-SA 3.0",
     stats: (s) => `🔥 Racha ${s.currentStreak} · Mejor ${s.maxStreak} · ${s.played} jugadas`,
     hint: "El ranking es por similitud semántica (coseno). Solo las palabras del top muestran un puesto.",
@@ -411,7 +418,7 @@ const KoreanSemantle: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
       <p className="text-[10px] text-muted-foreground text-center leading-relaxed max-w-md">
         {t.hint}
         <br />
-        <span className="opacity-70">{t.credit}</span>
+        <span className="opacity-70">{isDemo ? t.demoCredit : t.credit}</span>
       </p>
     </div>
   );
@@ -428,13 +435,21 @@ const GuessRow: React.FC<{
     <div className={`relative flex items-center gap-3 rounded-xl border px-3 py-2 ${highlight ? "border-foreground/30 bg-muted/60" : "border-border"}`}>
       <span className="font-black text-sm min-w-0 truncate flex-1">{g.word}</span>
       <div className="flex items-center gap-2 shrink-0">
-        <div className="w-24 h-2 rounded-full bg-muted overflow-hidden">
+        <div
+          className="w-24 h-2 rounded-full bg-muted overflow-hidden"
+          role="progressbar"
+          aria-label={`${g.word}: ${bandLabel[g.band]}`}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(barWidth(g))}
+        >
           <div className={`h-full ${style.bar} transition-all`} style={{ width: `${barWidth(g)}%` }} />
         </div>
         <span className="text-[11px] font-bold text-muted-foreground w-16 text-right tabular-nums">
           {g.known ? `${rankLabel} ${g.rank}` : "—"}
         </span>
-        <span className={`text-[10px] font-black w-2 h-2 rounded-full ${style.dot}`} aria-hidden />
+        <span className={`text-[10px] font-black w-2 h-2 rounded-full ${style.dot}`} aria-hidden="true" />
+        <span className="sr-only">{bandLabel[g.band]}</span>
       </div>
     </div>
   );

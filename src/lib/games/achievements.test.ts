@@ -1,5 +1,22 @@
-import { describe, expect, it } from "vitest";
-import { ACHIEVEMENTS, evaluateAchievements, type AchievementSnapshot } from "./achievements";
+import { beforeEach, describe, expect, it } from "vitest";
+import { ACHIEVEMENTS, buildAchievementSnapshot, evaluateAchievements, type AchievementSnapshot } from "./achievements";
+import { recordBest, recordDailyWin, recordResult, recordStreak } from "./records";
+
+function createMemoryStorage(): Storage {
+  const store = new Map<string, string>();
+  return {
+    getItem: (key: string) => store.get(key) ?? null,
+    setItem: (key: string, value: string) => store.set(key, String(value)),
+    removeItem: (key: string) => store.delete(key),
+    clear: () => store.clear(),
+    key: (index: number) => Array.from(store.keys())[index] ?? null,
+    get length() { return store.size; },
+  } as Storage;
+}
+
+beforeEach(() => {
+  (globalThis as { localStorage?: Storage }).localStorage = createMemoryStorage();
+});
 
 const EMPTY: AchievementSnapshot = {
   totalWins: 0,
@@ -50,5 +67,33 @@ describe("achievements: evaluateAchievements", () => {
   it("has no duplicate achievement ids", () => {
     const ids = ACHIEVEMENTS.map((a) => a.id);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+describe("achievements: cross-store snapshot", () => {
+  it("counts record, PB-only, daily-only and streak-only games as completed", () => {
+    recordResult("chess", "w");
+    recordBest("sudoku", 42, "seconds");
+    recordDailyWin("kurodoko", "2026-07-18", "2026-07-17");
+    recordStreak("wordle", false);
+
+    expect(buildAchievementSnapshot()).toMatchObject({
+      totalWins: 2,
+      totalPlays: 4,
+      distinctGamesPlayed: 4,
+      bestRecordCount: 1,
+    });
+  });
+
+  it("uses the largest compatible counter when one game writes multiple stores", () => {
+    recordBest("daily-minesweeper", 30, "seconds");
+    recordDailyWin("daily-minesweeper", "2026-07-18", "2026-07-17");
+    expect(buildAchievementSnapshot()).toMatchObject({ totalWins: 1, totalPlays: 1, distinctGamesPlayed: 1 });
+  });
+
+  it("survives valid JSON with an invalid root shape", () => {
+    localStorage.setItem("oiyo:game-records:v1", "null");
+    localStorage.setItem("oiyo:game-bests:v1", "[]");
+    expect(buildAchievementSnapshot()).toEqual(EMPTY);
   });
 });

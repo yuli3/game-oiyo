@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { getAllBestAchievedAt, getAllLastPlayed, getBest, getDailyStreak, getRecord, getStreak, recordBest, recordDailyWin, recordResult, recordStreak } from "./records";
+import { getAllBestAchievedAt, getAllBests, getAllDailyStreaks, getAllLastPlayed, getAllRecords, getAllStreaks, getBest, getDailyStreak, getRecord, getStreak, recordBest, recordDailyWin, recordResult, recordStreak } from "./records";
 
 // records.ts is localStorage-backed; provide a minimal in-memory Storage
 // polyfill so persistence across calls can actually be exercised in node.
@@ -207,5 +207,46 @@ describe("records: last-played and best-achieved timestamps (additive, no shape 
     recordResult("gomoku", "l");
     const all = getAllLastPlayed();
     expect(Object.keys(all).sort()).toEqual(["chess", "gomoku"]);
+  });
+
+  it("tracks PB, calendar-daily and streak game completions as recently played", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-07-18T12:00:00.000Z"));
+    recordBest("minesweeper", 30, "seconds");
+    recordDailyWin("kurodoko", "2026-07-18", "2026-07-17");
+    recordStreak("wordle", false);
+    expect(getAllLastPlayed()).toEqual({
+      minesweeper: "2026-07-18T12:00:00.000Z",
+      kurodoko: "2026-07-18T12:00:00.000Z",
+      wordle: "2026-07-18T12:00:00.000Z",
+    });
+  });
+
+  it("does not mark imported legacy bests as a new play", () => {
+    recordBest("game-2048", 2048, "score", undefined, { trackPlay: false });
+    expect(getAllLastPlayed()).toEqual({});
+  });
+});
+
+describe("records: storage schema guards", () => {
+  it("treats null and array roots as empty stores", () => {
+    localStorage.setItem("oiyo:game-records:v1", "null");
+    localStorage.setItem("oiyo:game-bests:v1", "[]");
+    expect(getAllRecords()).toEqual({});
+    expect(getAllBests()).toEqual({});
+  });
+
+  it("keeps valid entries and drops malformed entries in every aggregate store", () => {
+    localStorage.setItem("oiyo:game-records:v1", JSON.stringify({ chess: { w: 2, l: 1, d: 0 }, bad: { w: "2", l: 0, d: 0 } }));
+    localStorage.setItem("oiyo:game-bests:v1", JSON.stringify({ sudoku: { value: 40, unit: "seconds" }, bad: { value: -1, unit: "seconds" } }));
+    localStorage.setItem("oiyo:game-daily-streaks:v1", JSON.stringify({ kurodoko: { played: 2, currentStreak: 2, maxStreak: 2, lastWinDate: "2026-07-18" }, bad: { played: null } }));
+    localStorage.setItem("oiyo:game-streaks:v1", JSON.stringify({ wordle: { played: 3, won: 2, currentStreak: 0, maxStreak: 2 }, bad: { played: -1, won: 0, currentStreak: 0, maxStreak: 0 } }));
+    localStorage.setItem("oiyo:game-last-played:v1", JSON.stringify({ chess: "2026-07-18T00:00:00.000Z", bad: "not-a-date" }));
+
+    expect(Object.keys(getAllRecords())).toEqual(["chess"]);
+    expect(Object.keys(getAllBests())).toEqual(["sudoku"]);
+    expect(Object.keys(getAllDailyStreaks())).toEqual(["kurodoko"]);
+    expect(Object.keys(getAllStreaks())).toEqual(["wordle"]);
+    expect(getAllLastPlayed()).toEqual({ chess: "2026-07-18T00:00:00.000Z" });
   });
 });

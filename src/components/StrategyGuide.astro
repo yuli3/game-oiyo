@@ -12,6 +12,8 @@ const g = STRATEGY_GUIDES[gameId];
 const H = {
   mistakes: { ko: "흔히 하는 실수", en: "Common mistakes", ja: "よくある間違い", zh: "常见错误", fr: "Erreurs fréquentes", es: "Errores comunes" } as Record<Locale, string>,
   playLink: { ko: "게임으로 돌아가기 →", en: "Back to the game →", ja: "ゲームに戻る →", zh: "返回游戏 →", fr: "Retour au jeu →", es: "Volver al juego →" } as Record<Locale, string>,
+  sources: { ko: "참고 자료", en: "Sources", ja: "参考資料", zh: "参考资料", fr: "Sources", es: "Fuentes" } as Record<Locale, string>,
+  scope: { ko: "이 글의 적용 범위", en: "Scope of this guide", ja: "このガイドの適用範囲", zh: "本指南的适用范围", fr: "Portée de ce guide", es: "Alcance de esta guía" } as Record<Locale, string>,
 };
 
 const jsonLd = g ? {
@@ -35,6 +37,11 @@ const jsonLd = g ? {
       <h1 class="text-2xl font-black">{g.title[locale] ?? g.title.en}</h1>
       <p class="mt-3 text-sm leading-7 text-muted-foreground">{g.intro[locale] ?? g.intro.en}</p>
 
+      <aside class="mt-5 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
+        <h2 class="text-sm font-black">{H.scope[locale]}</h2>
+        <p class="mt-1.5 text-sm leading-6 text-muted-foreground">{g.variantNote[locale] ?? g.variantNote.en}</p>
+      </aside>
+
       <div class="mt-8 space-y-6">
         {g.tips.map((tip) => (
           <div>
@@ -52,6 +59,17 @@ const jsonLd = g ? {
           ))}
         </ul>
       </div>
+
+      {g.sources.length > 0 && (
+        <section class="mt-6" aria-labelledby="strategy-sources-heading">
+          <h2 id="strategy-sources-heading" class="text-sm font-black">{H.sources[locale]}</h2>
+          <ul class="mt-2 space-y-1.5 text-sm text-muted-foreground">
+            {g.sources.map((source) => (
+              <li><a class="underline underline-offset-2 hover:text-foreground" href={source.href} rel="noopener noreferrer">{source.label}</a></li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <a href={`/${locale}/${g.slug}`} class="mt-8 inline-block text-sm font-bold text-primary hover:underline">
         {H.playLink[locale]}

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { buildAchievementSnapshot, evaluateAchievements, type AchievementCategory, type EvaluatedAchievement } from "../../lib/games/achievements";
 import { dayIndex } from "../../lib/games/daily";
 import { getAllBestAchievedAt, getAllBests, getAllLastPlayed, type BestRecord } from "../../lib/games/records";
+import { gameDisplayName } from "../../lib/games/display-names";
 
 type UILocale = "ko" | "en" | "ja" | "zh" | "fr" | "es";
 
@@ -132,11 +133,6 @@ const COPY: Record<UILocale, { title: string; subtitle: string; unlocked: string
   es: { title: "🏆 Logros", subtitle: "Se desbloquean según tu historial de juego en este navegador", unlocked: "desbloqueados", empty: "Aún no has jugado ninguna partida. Juega algo y tu progreso aparecerá aquí.", myRecords: "Mis récords", bestLabel: "Mejores marcas", recentLabel: "Jugado recientemente", today: "Hoy", yesterday: "Ayer", daysAgo: (n) => `hace ${n} d`, noRecords: "Aún no hay mejores marcas.", noRecent: "Aún no hay actividad reciente." },
 };
 
-/** "minesweeper-intermediate" → "Minesweeper Intermediate" — a readable fallback since no shared slug→display-name table exists cross-locale. */
-function gameLabel(id: string): string {
-  return id.replace(/[-_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
 function formatBest(record: BestRecord): string {
   if (record.unit === "seconds") return `${record.value}s`;
   return String(record.value);
@@ -206,7 +202,7 @@ const Achievements: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
                 <ul className="space-y-1.5">
                   {bestEntries.map(([id, record]) => (
                     <li key={id} className="flex items-center justify-between text-xs">
-                      <span className="truncate text-muted-foreground">{gameLabel(id)}</span>
+                      <span className="truncate text-muted-foreground">{gameDisplayName(id, locale)}</span>
                       <span className="shrink-0 font-black tabular-nums">{formatBest(record)}</span>
                     </li>
                   ))}
@@ -221,7 +217,7 @@ const Achievements: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
                 <ul className="space-y-1.5">
                   {recentlyPlayed.map(({ id, at }) => (
                     <li key={id} className="flex items-center justify-between text-xs">
-                      <span className="truncate text-muted-foreground">{gameLabel(id)}</span>
+                      <span className="truncate text-muted-foreground">{gameDisplayName(id, locale)}</span>
                       <span className="shrink-0 font-bold text-muted-foreground">{relativeDay(at, t)}</span>
                     </li>
                   ))}
@@ -248,7 +244,14 @@ const Achievements: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
                       <p className={`text-sm font-black ${a.unlocked ? "text-foreground" : "text-muted-foreground"}`}>{copy?.title}</p>
                       <p className="text-[11px] text-muted-foreground leading-snug">{copy?.desc}</p>
                       {!a.unlocked && (
-                        <div className="mt-1.5 h-1.5 rounded-full bg-muted overflow-hidden">
+                        <div
+                          className="mt-1.5 h-1.5 rounded-full bg-muted overflow-hidden"
+                          role="progressbar"
+                          aria-label={`${copy?.title}: ${a.progress} / ${a.target}`}
+                          aria-valuemin={0}
+                          aria-valuemax={a.target}
+                          aria-valuenow={a.progress}
+                        >
                           <div className="h-full rounded-full bg-primary/60" style={{ width: `${pct}%` }} />
                         </div>
                       )}

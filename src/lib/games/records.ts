@@ -3,13 +3,42 @@ export type GameRecord = { w: number; l: number; d: number };
 
 const KEY = "oiyo:game-records:v1";
 
-function readAll(): Record<string, GameRecord> {
+type Validator<T> = (value: unknown) => value is T;
+
+const isObject = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === "object" && !Array.isArray(value);
+const isCount = (value: unknown): value is number =>
+  typeof value === "number" && Number.isInteger(value) && value >= 0;
+const isFiniteNonNegative = (value: unknown): value is number =>
+  typeof value === "number" && Number.isFinite(value) && value >= 0;
+const isIsoTimestamp = (value: unknown): value is string =>
+  typeof value === "string" && !Number.isNaN(Date.parse(value));
+
+/**
+ * localStorage is user-editable and can also contain values written by older
+ * builds. Keep only entries that match the current store schema instead of
+ * letting one corrupt value crash every cross-game aggregate view.
+ */
+function readValidatedStore<T>(key: string, validates: Validator<T>): Record<string, T> {
   if (typeof localStorage === "undefined") return {};
   try {
-    return JSON.parse(localStorage.getItem(KEY) || "{}");
+    const parsed: unknown = JSON.parse(localStorage.getItem(key) || "{}");
+    if (!isObject(parsed)) return {};
+    const valid: Record<string, T> = {};
+    for (const [id, value] of Object.entries(parsed)) {
+      if (id.length > 0 && validates(value)) valid[id] = value;
+    }
+    return valid;
   } catch {
     return {};
   }
+}
+
+const isGameRecord: Validator<GameRecord> = (value): value is GameRecord =>
+  isObject(value) && isCount(value.w) && isCount(value.l) && isCount(value.d);
+
+function readAll(): Record<string, GameRecord> {
+  return readValidatedStore(KEY, isGameRecord);
 }
 
 export function getRecord(game: string): GameRecord {
@@ -42,12 +71,7 @@ export function recordResult(game: string, result: "w" | "l" | "d"): GameRecord 
 const LAST_PLAYED_KEY = "oiyo:game-last-played:v1";
 
 function readAllLastPlayed(): Record<string, string> {
-  if (typeof localStorage === "undefined") return {};
-  try {
-    return JSON.parse(localStorage.getItem(LAST_PLAYED_KEY) || "{}");
-  } catch {
-    return {};
-  }
+  return readValidatedStore(LAST_PLAYED_KEY, isIsoTimestamp);
 }
 
 function stampLastPlayed(game: string): void {
@@ -72,14 +96,14 @@ export function getAllLastPlayed(): Record<string, string> {
 export type BestRecord = { value: number; unit: "score" | "seconds"; extra?: string };
 
 const BEST_KEY = "oiyo:game-bests:v1";
+const isBestRecord: Validator<BestRecord> = (value): value is BestRecord =>
+  isObject(value) &&
+  isFiniteNonNegative(value.value) &&
+  (value.unit === "score" || value.unit === "seconds") &&
+  (value.extra === undefined || typeof value.extra === "string");
 
 function readAllBests(): Record<string, BestRecord> {
-  if (typeof localStorage === "undefined") return {};
-  try {
-    return JSON.parse(localStorage.getItem(BEST_KEY) || "{}");
-  } catch {
-    return {};
-  }
+  return readValidatedStore(BEST_KEY, isBestRecord);
 }
 
 export function getBest(game: string): BestRecord | null {
@@ -92,7 +116,13 @@ export function getAllBests(): Record<string, BestRecord> {
 }
 
 // Saves `value` as the new best if it beats the stored one (higher for "score", lower for "seconds").
-export function recordBest(game: string, value: number, unit: "score" | "seconds", extra?: string): BestRecord {
+export function recordBest(
+  game: string,
+  value: number,
+  unit: "score" | "seconds",
+  extra?: string,
+  options: { trackPlay?: boolean } = {},
+): BestRecord {
   const all = readAllBests();
   const cur = all[game];
   const isBetter = !cur || cur.unit !== unit || (unit === "score" ? value > cur.value : value < cur.value);
@@ -104,6 +134,7 @@ export function recordBest(game: string, value: number, unit: "score" | "seconds
     /* quota/private mode — records are best-effort */
   }
   if (isBetter) stampBestAchievedAt(game);
+  if (options.trackPlay !== false) stampLastPlayed(game);
   return next;
 }
 
@@ -113,12 +144,7 @@ export function recordBest(game: string, value: number, unit: "score" | "seconds
 const BEST_TS_KEY = "oiyo:game-bests-achieved-at:v1";
 
 function readAllBestAchievedAt(): Record<string, string> {
-  if (typeof localStorage === "undefined") return {};
-  try {
-    return JSON.parse(localStorage.getItem(BEST_TS_KEY) || "{}");
-  } catch {
-    return {};
-  }
+  return readValidatedStore(BEST_TS_KEY, isIsoTimestamp);
 }
 
 function stampBestAchievedAt(game: string): void {
@@ -143,14 +169,15 @@ export function getAllBestAchievedAt(): Record<string, string> {
 export type DailyStreak = { played: number; currentStreak: number; maxStreak: number; lastWinDate: string | null };
 
 const DAILY_KEY = "oiyo:game-daily-streaks:v1";
+const isDailyStreak: Validator<DailyStreak> = (value): value is DailyStreak =>
+  isObject(value) &&
+  isCount(value.played) &&
+  isCount(value.currentStreak) &&
+  isCount(value.maxStreak) &&
+  (value.lastWinDate === null || (typeof value.lastWinDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value.lastWinDate)));
 
 function readAllDailies(): Record<string, DailyStreak> {
-  if (typeof localStorage === "undefined") return {};
-  try {
-    return JSON.parse(localStorage.getItem(DAILY_KEY) || "{}");
-  } catch {
-    return {};
-  }
+  return readValidatedStore(DAILY_KEY, isDailyStreak);
 }
 
 export function getDailyStreak(game: string, dateKey?: string, previousDateKey?: string): DailyStreak {
@@ -188,6 +215,7 @@ export function recordDailyWin(game: string, dateKey: string, previousDateKey: s
   } catch {
     /* quota/private mode — records are best-effort */
   }
+  stampLastPlayed(game);
   return next;
 }
 
@@ -195,14 +223,15 @@ export function recordDailyWin(game: string, dateKey: string, previousDateKey: s
 export type StreakStats = { played: number; won: number; currentStreak: number; maxStreak: number };
 
 const STREAK_KEY = "oiyo:game-streaks:v1";
+const isStreakStats: Validator<StreakStats> = (value): value is StreakStats =>
+  isObject(value) &&
+  isCount(value.played) &&
+  isCount(value.won) &&
+  isCount(value.currentStreak) &&
+  isCount(value.maxStreak);
 
 function readAllStreaks(): Record<string, StreakStats> {
-  if (typeof localStorage === "undefined") return {};
-  try {
-    return JSON.parse(localStorage.getItem(STREAK_KEY) || "{}");
-  } catch {
-    return {};
-  }
+  return readValidatedStore(STREAK_KEY, isStreakStats);
 }
 
 export function getStreak(game: string): StreakStats {
@@ -230,5 +259,6 @@ export function recordStreak(game: string, won: boolean): StreakStats {
   } catch {
     /* quota/private mode — records are best-effort */
   }
+  stampLastPlayed(game);
   return next;
 }

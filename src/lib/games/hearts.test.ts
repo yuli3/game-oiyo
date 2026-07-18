@@ -225,20 +225,30 @@ describe("Hearts engine", () => {
     const storage = memoryStorage();
     const passing = createHeartsGame(() => 0.23);
     const selection = passing.hands[0].slice(0, 3).map(({ id }) => id);
-    expect(saveHeartsGame(storage, { state: passing, passSelection: selection })).toBe(true);
-    expect(loadHeartsSavedGame(storage)).toEqual({ state: passing, passSelection: selection });
+    expect(saveHeartsGame(storage, { state: passing, passSelection: selection, level: 2 })).toBe(true);
+    expect(loadHeartsSavedGame(storage)).toEqual({ state: passing, passSelection: selection, level: 2 });
 
     let active = finishPassing(passing);
     const player = active.currentPlayer;
     active = playHeartsCard(active, player, legalHeartsCards(active, player)[0].id);
-    expect(saveHeartsGame(storage, { state: active, passSelection: [] })).toBe(true);
-    expect(loadHeartsSavedGame(storage)).toEqual({ state: active, passSelection: [] });
+    expect(saveHeartsGame(storage, { state: active, passSelection: [], level: 1 })).toBe(true);
+    expect(loadHeartsSavedGame(storage)).toEqual({ state: active, passSelection: [], level: 1 });
+  });
+
+  it("migrates version 1 saves to the former Master default", () => {
+    const passing = createHeartsGame(() => 0.23);
+    expect(parseHeartsSavedGame(JSON.stringify({ version: 1, state: passing, passSelection: [] }))).toEqual({
+      state: passing,
+      passSelection: [],
+      level: 3,
+    });
   });
 
   it("rejects stale, malformed, duplicate-card, and invalid-selection saves", () => {
     const passing = createHeartsGame(() => 0.51);
     expect(parseHeartsSavedGame("not json")).toBeNull();
     expect(parseHeartsSavedGame(JSON.stringify({ version: 0, state: passing, passSelection: [] }))).toBeNull();
+    expect(parseHeartsSavedGame(JSON.stringify({ version: 2, state: passing, passSelection: [], level: 4 }))).toBeNull();
     const duplicate = structuredClone(passing);
     duplicate.hands[0][0] = duplicate.hands[1][0];
     expect(parseHeartsSavedGame(JSON.stringify({ version: 1, state: duplicate, passSelection: [] }))).toBeNull();
@@ -262,7 +272,7 @@ describe("Hearts engine", () => {
     const storage = memoryStorage();
     const state = createHeartsGame(() => 0.7);
     storage.setItem("oiyo:game-records:v1", "keep");
-    expect(saveHeartsGame(storage, { state, passSelection: [] })).toBe(true);
+    expect(saveHeartsGame(storage, { state, passSelection: [], level: 3 })).toBe(true);
     expect(storage.getItem(HEARTS_STORAGE_KEY)).not.toBeNull();
     expect(clearHeartsSavedGame(storage)).toBe(true);
     expect(storage.getItem(HEARTS_STORAGE_KEY)).toBeNull();
@@ -274,7 +284,7 @@ describe("Hearts engine", () => {
       removeItem: () => { throw new Error("blocked"); },
     };
     expect(loadHeartsSavedGame(blocked)).toBeNull();
-    expect(saveHeartsGame(blocked, { state, passSelection: [] })).toBe(false);
+    expect(saveHeartsGame(blocked, { state, passSelection: [], level: 3 })).toBe(false);
     expect(clearHeartsSavedGame(blocked)).toBe(false);
   });
 });
@@ -337,5 +347,23 @@ describe("Hearts CPU difficulty tiers", () => {
       },
     );
     expect(chooseHeartsCpuCard(state, 2, 3).id).toBe("clubs-2");
+  });
+
+  it("Master does not overreact to one early point or take a zero-point trick", () => {
+    const base = stateWith(
+      [[], [], [card("clubs", "2"), card("clubs", "K")], []],
+      {
+        currentPlayer: 2,
+        trick: [
+          { player: 0, card: card("clubs", "5") },
+          { player: 1, card: card("clubs", "7") },
+          { player: 3, card: card("clubs", "9") },
+        ],
+        capturedPoints: [0, 1, 0, 0],
+      },
+    );
+    expect(chooseHeartsCpuCard(base, 2, 3).id).toBe("clubs-2");
+    const zeroPointTrick = { ...base, capturedPoints: [0, 8, 0, 0] };
+    expect(chooseHeartsCpuCard(zeroPointTrick, 2, 3).id).toBe("clubs-2");
   });
 });
