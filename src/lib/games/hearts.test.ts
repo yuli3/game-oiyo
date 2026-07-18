@@ -278,3 +278,64 @@ describe("Hearts engine", () => {
     expect(clearHeartsSavedGame(blocked)).toBe(false);
   });
 });
+
+describe("Hearts CPU difficulty tiers", () => {
+  it("Easy (level 1) always plays a legal card but ignores strategy", () => {
+    const state = stateWith(
+      [[card("spades", "Q"), card("hearts", "K"), card("diamonds", "4")], [], [], []],
+      { currentPlayer: 0, trick: [{ player: 3, card: card("clubs", "7") }] },
+    );
+    for (let seed = 0; seed < 20; seed++) {
+      const choice = chooseHeartsCpuCard(state, 0, 1);
+      expect(legalHeartsCards(state, 0).some(({ id }) => id === choice.id)).toBe(true);
+    }
+  });
+
+  it("Adept (level 2) ducks a trick it could safely lose, even while a moonshot brews", () => {
+    const state = stateWith(
+      [[], [], [card("clubs", "2"), card("clubs", "K")], []],
+      {
+        currentPlayer: 2,
+        trick: [
+          { player: 0, card: card("clubs", "5") },
+          { player: 1, card: card("hearts", "K") },
+          { player: 3, card: card("clubs", "9") },
+        ],
+        capturedPoints: [0, 5, 0, 0], // player 1 has quietly taken every point so far
+      },
+    );
+    expect(chooseHeartsCpuCard(state, 2, 2).id).toBe("clubs-2");
+  });
+
+  it("Master (level 3) breaks a brewing moonshot by taking the trick instead of ducking", () => {
+    const state = stateWith(
+      [[], [], [card("clubs", "2"), card("clubs", "K")], []],
+      {
+        currentPlayer: 2,
+        trick: [
+          { player: 0, card: card("clubs", "5") },
+          { player: 1, card: card("hearts", "K") },
+          { player: 3, card: card("clubs", "9") },
+        ],
+        capturedPoints: [0, 5, 0, 0],
+      },
+    );
+    expect(chooseHeartsCpuCard(state, 2, 3).id).toBe("clubs-K");
+  });
+
+  it("Master does not chase a moonshot override when no single player is running away with points", () => {
+    const state = stateWith(
+      [[], [], [card("clubs", "2"), card("clubs", "K")], []],
+      {
+        currentPlayer: 2,
+        trick: [
+          { player: 0, card: card("clubs", "5") },
+          { player: 1, card: card("hearts", "K") },
+          { player: 3, card: card("clubs", "9") },
+        ],
+        capturedPoints: [3, 5, 0, 0], // two different players already have points — no single runaway
+      },
+    );
+    expect(chooseHeartsCpuCard(state, 2, 3).id).toBe("clubs-2");
+  });
+});

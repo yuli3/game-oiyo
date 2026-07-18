@@ -175,9 +175,24 @@ export function playHeartsCard(state: HeartsState, player: number, cardId: strin
   return { ...state, hands, trick: [], lastTrick: trick, leader: winner, currentPlayer: winner, heartsBroken, trickNumber: state.trickNumber + 1, capturedPoints };
 }
 
-export function chooseHeartsCpuCard(state: HeartsState, player: number): HeartsCard {
+export type HeartsAiLevel = 1 | 2 | 3;
+
+/** True when exactly one other player has taken every point captured so far this round — an early "shooting the moon" signal worth breaking. */
+function isMoonshotBrewing(state: HeartsState, me: number): boolean {
+  const threats = state.capturedPoints
+    .map((points, idx) => ({ idx, points }))
+    .filter((entry) => entry.idx !== me && entry.points > 0);
+  if (threats.length !== 1) return false;
+  return state.capturedPoints.every((points, idx) => idx === me || idx === threats[0].idx || points === 0);
+}
+
+export function chooseHeartsCpuCard(state: HeartsState, player: number, level: HeartsAiLevel = 3): HeartsCard {
   const legal = legalHeartsCards(state, player);
   if (legal.length === 0) throw new Error("CPU has no legal Hearts play");
+
+  // Easy: no lookahead or hand-shape reasoning — a plausible but weak beginner.
+  if (level === 1) return legal[Math.floor(Math.random() * legal.length)];
+
   const byPower = [...legal].sort((left, right) => left.power - right.power);
   if (state.trick.length === 0) return byPower[0];
   const ledSuit = state.trick[0].card.suit;
@@ -187,7 +202,15 @@ export function chooseHeartsCpuCard(state: HeartsState, player: number): HeartsC
   })[0];
   const currentHigh = Math.max(...state.trick.filter(({ card }) => card.suit === ledSuit).map(({ card }) => card.power));
   const losing = byPower.filter((card) => card.power < currentHigh);
-  if (losing.length > 0) return losing[losing.length - 1];
+  if (losing.length > 0) {
+    // Hard: if someone is quietly accumulating every point card this round, take the
+    // trick anyway (smallest card that still wins) to break their shoot-the-moon attempt.
+    if (level === 3 && isMoonshotBrewing(state, player)) {
+      const winners = byPower.filter((card) => card.power > currentHigh);
+      if (winners.length > 0) return winners[0];
+    }
+    return losing[losing.length - 1];
+  }
   return trickPoints(state.trick) > 0 ? byPower[0] : byPower[byPower.length - 1];
 }
 
