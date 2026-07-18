@@ -39,11 +39,25 @@ const meta: Record<Locale, { title: string; description: string }> = {
 };
 
 const m = meta[locale] ?? meta.en;
+const officialRuleCopy: Record<Locale, { label: string; boundary: string }> = {
+  ko: { label: "공식 대회 규칙 원문", boundary: "이 브라우저 게임은 학습·캐주얼 플레이용이며 대회 운영 절차 전체를 구현하지 않습니다." },
+  en: { label: "Official tournament rules", boundary: "This browser game is for learning and casual play; it does not implement every tournament-administration procedure." },
+  ja: { label: "公式大会規則の原文", boundary: "このブラウザゲームは学習・カジュアルプレイ用で、大会運営手続きのすべてを実装しているわけではありません。" },
+  zh: { label: "官方赛事规则原文", boundary: "本浏览器游戏用于学习与休闲游玩，并未实现赛事管理的全部程序。" },
+  fr: { label: "Règles officielles de tournoi", boundary: "Ce jeu dans le navigateur sert à l’apprentissage et au jeu occasionnel; il n’implémente pas toutes les procédures de tournoi." },
+  es: { label: "Reglas oficiales de torneo", boundary: "Este juego de navegador es educativo y casual; no implementa todos los procedimientos de torneo." },
+};
+const ruleCopy = officialRuleCopy[locale];
 ---
 
 <BaseLayout title={m.title} description={m.description}>
   <main class="mx-auto max-w-2xl px-4 py-8">
     <ChessBoardComp client:load locale={locale} />
     <GameGuide slug="chess" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
+    <p class="mt-6 text-sm leading-6 text-slate-600">
+      {ruleCopy.label}: {' '}
+      <a class="underline underline-offset-2" href="https://handbook.fide.com/chapter/E012023" rel="noopener noreferrer" target="_blank">FIDE Laws of Chess</a>
+      . {ruleCopy.boundary}
+    </p>
   </main>
 </BaseLayout>
