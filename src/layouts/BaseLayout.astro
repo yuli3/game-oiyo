@@ -54,6 +54,7 @@ const getLocalizedPath = (targetLocale: string) => {
 // game.oiyo.net nav — local pages only; cross-domain family links are absolute
 const navItems = [
   { href: `/${locale}/`, label: (({ ko: "아케이드", ja: "アーケード", zh: "街机", fr: "Arcade", es: "Arcade", en: "Arcade" } as Record<string, string>)[locale] ?? "Arcade") },
+  { href: `/${locale}/achievements`, label: (({ ko: "🏆 업적", ja: "🏆 実績", zh: "🏆 成就", fr: "🏆 Succès", es: "🏆 Logros", en: "🏆 Achievements" } as Record<string, string>)[locale] ?? "🏆 Achievements") },
   { href: `https://blog.oiyo.net/${locale}/tools`, label: nav.tools ?? "Tools" },
   { href: `https://blog.oiyo.net/${locale}/magazine`, label: nav.magazine ?? "Magazine" },
   { href: `https://oiyo.net/${locale}/`, label: "OIYO" },

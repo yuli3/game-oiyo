@@ -1,0 +1,29 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Achievements from "../../components/games/Achievements";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: { title: "업적 — OIYO 아케이드", description: "OIYO 아케이드에서 플레이한 기록으로 잠금 해제되는 업적을 확인하세요." },
+  en: { title: "Achievements — OIYO Arcade", description: "See the achievements you've unlocked from your play history across OIYO Arcade." },
+  ja: { title: "実績 — OIYOアーケード", description: "OIYOアーケードでのプレイ履歴に基づいて解除された実績を確認しましょう。" },
+  zh: { title: "成就 — OIYO 街机", description: "查看你在 OIYO 街机中根据游玩记录解锁的成就。" },
+  fr: { title: "Succès — OIYO Arcade", description: "Consultez les succès débloqués grâce à votre historique de jeu sur OIYO Arcade." },
+  es: { title: "Logros — OIYO Arcade", description: "Consulta los logros que has desbloqueado según tu historial de juego en OIYO Arcade." },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description}>
+  <main class="mx-auto max-w-2xl px-4 py-8">
+    <Achievements client:load locale={locale} />
+  </main>
+</BaseLayout>

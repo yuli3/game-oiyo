@@ -1,0 +1,90 @@
+// Cross-game achievements — a pure evaluator over a snapshot of the existing
+// per-game record stores (records.ts). No new tracking hooks are added to any
+// game component; every achievement is derived from data already collected
+// (win/loss counts, personal bests, daily streaks, win streaks), so nothing
+// here can be gamed by data that was never real.
+import {
+  getAllBests,
+  getAllDailyStreaks,
+  getAllRecords,
+  getAllStreaks,
+} from "./records";
+
+export interface AchievementSnapshot {
+  totalWins: number;
+  totalPlays: number;
+  distinctGamesPlayed: number;
+  bestRecordCount: number;
+  bestDailyStreak: number;
+  bestWinStreak: number;
+}
+
+export type AchievementCategory = "milestone" | "streak" | "collection" | "record";
+
+export interface AchievementDef {
+  id: string;
+  category: AchievementCategory;
+  icon: string;
+  /** Value the snapshot must reach, and which snapshot field measures it. */
+  metric: keyof AchievementSnapshot;
+  target: number;
+}
+
+export interface EvaluatedAchievement extends AchievementDef {
+  progress: number;
+  unlocked: boolean;
+}
+
+// Ordered weakest → strongest within each category; component groups by category.
+export const ACHIEVEMENTS: readonly AchievementDef[] = [
+  { id: "first-steps", category: "milestone", icon: "🎮", metric: "totalPlays", target: 1 },
+  { id: "first-win", category: "milestone", icon: "🏅", metric: "totalWins", target: 1 },
+  { id: "veteran", category: "milestone", icon: "🏆", metric: "totalPlays", target: 50 },
+  { id: "centurion", category: "milestone", icon: "💯", metric: "totalPlays", target: 100 },
+  { id: "grandmaster", category: "milestone", icon: "⭐", metric: "totalWins", target: 25 },
+
+  { id: "streak-3", category: "streak", icon: "🔥", metric: "bestDailyStreak", target: 3 },
+  { id: "streak-7", category: "streak", icon: "🔥", metric: "bestDailyStreak", target: 7 },
+  { id: "streak-30", category: "streak", icon: "🔥", metric: "bestDailyStreak", target: 30 },
+  { id: "win-streak-5", category: "streak", icon: "🎯", metric: "bestWinStreak", target: 5 },
+  { id: "win-streak-10", category: "streak", icon: "🎯", metric: "bestWinStreak", target: 10 },
+
+  { id: "explorer", category: "collection", icon: "🕹️", metric: "distinctGamesPlayed", target: 5 },
+  { id: "completionist", category: "collection", icon: "🗺️", metric: "distinctGamesPlayed", target: 15 },
+
+  { id: "record-holder", category: "record", icon: "⏱️", metric: "bestRecordCount", target: 1 },
+] as const;
+
+/** Pure: derive the unlocked/progress state of every achievement from a snapshot. */
+export function evaluateAchievements(snapshot: AchievementSnapshot): EvaluatedAchievement[] {
+  return ACHIEVEMENTS.map((def) => {
+    const value = snapshot[def.metric];
+    return { ...def, progress: Math.min(value, def.target), unlocked: value >= def.target };
+  });
+}
+
+/** Browser-only: read every per-game store and fold it into one snapshot. */
+export function buildAchievementSnapshot(): AchievementSnapshot {
+  const records = Object.values(getAllRecords());
+  const totalWins = records.reduce((sum, r) => sum + r.w, 0);
+  const totalPlays = records.reduce((sum, r) => sum + r.w + r.l + r.d, 0);
+
+  const playedGameIds = new Set<string>();
+  for (const [id, r] of Object.entries(getAllRecords())) if (r.w + r.l + r.d > 0) playedGameIds.add(id);
+  for (const id of Object.keys(getAllDailyStreaks())) playedGameIds.add(id);
+  for (const id of Object.keys(getAllStreaks())) playedGameIds.add(id);
+  for (const id of Object.keys(getAllBests())) playedGameIds.add(id);
+
+  const bestDailyStreak = Math.max(0, ...Object.values(getAllDailyStreaks()).map((s) => s.maxStreak));
+  const bestWinStreak = Math.max(0, ...Object.values(getAllStreaks()).map((s) => s.maxStreak));
+  const bestRecordCount = Object.keys(getAllBests()).length;
+
+  return {
+    totalWins,
+    totalPlays,
+    distinctGamesPlayed: playedGameIds.size,
+    bestRecordCount,
+    bestDailyStreak,
+    bestWinStreak,
+  };
+}

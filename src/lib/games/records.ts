@@ -17,6 +17,11 @@ export function getRecord(game: string): GameRecord {
   return r && typeof r.w === "number" ? r : { w: 0, l: 0, d: 0 };
 }
 
+/** Every game's win/loss/draw record, keyed by game id — read-only aggregate for cross-game views (e.g. achievements). */
+export function getAllRecords(): Record<string, GameRecord> {
+  return readAll();
+}
+
 export function recordResult(game: string, result: "w" | "l" | "d"): GameRecord {
   const all = readAll();
   const r = all[game] ?? { w: 0, l: 0, d: 0 };
@@ -49,6 +54,11 @@ function readAllBests(): Record<string, BestRecord> {
 
 export function getBest(game: string): BestRecord | null {
   return readAllBests()[game] ?? null;
+}
+
+/** Every game's personal-best record, keyed by game id — read-only aggregate for cross-game views. */
+export function getAllBests(): Record<string, BestRecord> {
+  return readAllBests();
 }
 
 // Saves `value` as the new best if it beats the stored one (higher for "score", lower for "seconds").
@@ -96,6 +106,11 @@ export function getDailyStreak(game: string, dateKey?: string, previousDateKey?:
   return stored;
 }
 
+/** Every game's daily-puzzle streak, keyed by game id — read-only aggregate for cross-game views. */
+export function getAllDailyStreaks(): Record<string, DailyStreak> {
+  return readAllDailies();
+}
+
 export function recordDailyWin(game: string, dateKey: string, previousDateKey: string): DailyStreak {
   const all = readAllDailies();
   const cur = all[game] ?? { played: 0, currentStreak: 0, maxStreak: 0, lastWinDate: null };
@@ -132,6 +147,11 @@ function readAllStreaks(): Record<string, StreakStats> {
 
 export function getStreak(game: string): StreakStats {
   return readAllStreaks()[game] ?? { played: 0, won: 0, currentStreak: 0, maxStreak: 0 };
+}
+
+/** Every game's win-streak stats, keyed by game id — read-only aggregate for cross-game views. */
+export function getAllStreaks(): Record<string, StreakStats> {
+  return readAllStreaks();
 }
 
 export function recordStreak(game: string, won: boolean): StreakStats {
