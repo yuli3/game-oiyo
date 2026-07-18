@@ -30,6 +30,35 @@ export const MINESWEEPER_BEGINNER: MinesweeperDifficulty = {
   maxGenerationAttempts: 96,
 };
 
+// Classic Microsoft Minesweeper's Intermediate size — matches decades of
+// player expectation and the "minesweeper intermediate" search query.
+export const MINESWEEPER_INTERMEDIATE: MinesweeperDifficulty = {
+  width: 16,
+  height: 16,
+  mineCount: 40,
+  maxGenerationAttempts: 48,
+};
+
+// Classic Expert size. Genuinely logic-solvable Expert boards are rare (real
+// Expert play often requires at least one educated guess), and the solver's
+// cost scales with board area — so this keeps the attempt ceiling low rather
+// than burning many expensive full-board solves chasing a verified board that
+// usually doesn't exist. A quick, honest "safe-fallback" beats a slow one.
+export const MINESWEEPER_EXPERT: MinesweeperDifficulty = {
+  width: 30,
+  height: 16,
+  mineCount: 99,
+  maxGenerationAttempts: 8,
+};
+
+export type MinesweeperDifficultyId = "beginner" | "intermediate" | "expert";
+
+export const MINESWEEPER_DIFFICULTIES: Record<MinesweeperDifficultyId, MinesweeperDifficulty> = {
+  beginner: MINESWEEPER_BEGINNER,
+  intermediate: MINESWEEPER_INTERMEDIATE,
+  expert: MINESWEEPER_EXPERT,
+};
+
 export type NoGuessGenerationResult = {
   board: MinesweeperBoard;
   seed: number;

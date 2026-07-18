@@ -380,6 +380,17 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
     how: { ko: "숫자는 인접 8칸의 지뢰 수입니다. 지뢰가 아닌 모든 칸을 열면 승리하며, 길게 누르거나 우클릭으로 깃발을 꽂습니다.", en: "Each number counts mines in the 8 adjacent cells. Clear every safe cell to win; long-press or right-click to flag.", ja: "数字は隣接8マスの地雷数です。地雷以外を全て開ければ勝利。長押しまたは右クリックで旗を立てます。", zh: "数字表示相邻8格中的地雷数。翻开所有安全格即胜，长按或右键插旗。", fr: "Chaque chiffre compte les mines des 8 cases adjacentes. Ouvrez toutes les cases sûres pour gagner ; appui long ou clic droit pour un drapeau.", es: "Cada número cuenta las minas en las 8 casillas adyacentes. Despeja todas las casillas seguras; mantén pulsado o clic derecho para bandera." },
     faqs: [
       { q: { ko: "첫 클릭에 지뢰가 터질 수 있나요?", en: "Can the first click hit a mine?", ja: "最初のクリックで地雷を踏むことはありますか？", zh: "第一下会踩雷吗？", fr: "Le premier clic peut-il toucher une mine ?", es: "¿Puede el primer clic tocar una mina?" }, a: { ko: "아니요. 첫 클릭은 항상 안전하도록 지뢰가 배치됩니다 — 표준 지뢰찾기 관례입니다.", en: "No — mines are placed after your first click so it is always safe, per standard Minesweeper convention.", ja: "いいえ。最初のクリックが常に安全になるよう地雷が配置されます。標準的な仕様です。", zh: "不会。地雷在你首次点击后才布置，确保首击安全——这是扫雷的标准惯例。", fr: "Non — les mines sont placées après votre premier clic, toujours sûr, selon la convention standard.", es: "No: las minas se colocan tras tu primer clic, que siempre es seguro, según la convención estándar." } },
+      {
+        q: { ko: "초급·중급·고급의 차이는 무엇인가요?", en: "What's the difference between Beginner, Intermediate, and Expert?", ja: "初級・中級・上級の違いは？", zh: "初级、中级、高级有什么区别？", fr: "Quelle est la différence entre Débutant, Intermédiaire et Expert ?", es: "¿Cuál es la diferencia entre Principiante, Intermedio y Experto?" },
+        a: {
+          ko: "판 크기와 지뢰 수가 다릅니다. 초급은 10×10에 지뢰 10개, 중급은 16×16에 40개(오늘의 도전과 같은 크기), 고급은 30×16에 99개로 훨씬 넓고 촘촘합니다. 오늘의 도전은 모두에게 같은 중급 크기 판이 주어지고 연속 기록이 쌓입니다.",
+          en: "The board size and mine density differ. Beginner is 10×10 with 10 mines, Intermediate is 16×16 with 40 (the same size as the Daily Challenge), and Expert is 30×16 with 99 — much larger and denser. The Daily Challenge gives everyone the same Intermediate-sized board and tracks a streak.",
+          ja: "盤面サイズと地雷密度が異なります。初級は10×10で地雷10個、中級は16×16で40個(デイリー挑戦と同サイズ)、上級は30×16で99個とはるかに広く密度も高くなります。デイリー挑戦は全員に同じ中級サイズの盤面が与えられ、連続記録が記録されます。",
+          zh: "棋盘大小和地雷密度不同。初级为10×10共10个地雷，中级为16×16共40个(与每日挑战同尺寸)，高级为30×16共99个，范围更大更密集。每日挑战为所有人提供相同的中级尺寸棋盘并记录连胜。",
+          fr: "La taille de la grille et la densité de mines diffèrent. Débutant fait 10×10 avec 10 mines, Intermédiaire 16×16 avec 40 (même taille que le Défi du jour), et Expert 30×16 avec 99 — bien plus grand et dense. Le Défi du jour donne à tous la même grille Intermédiaire et suit une série.",
+          es: "El tamaño del tablero y la densidad de minas difieren. Principiante es 10×10 con 10 minas, Intermedio 16×16 con 40 (el mismo tamaño que el Reto diario), y Experto 30×16 con 99 — mucho más grande y denso. El Reto diario da a todos el mismo tablero Intermedio y registra una racha.",
+        },
+      },
     ],
   },
   reversi: {

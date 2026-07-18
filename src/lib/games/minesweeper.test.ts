@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   MINESWEEPER_BEGINNER,
+  MINESWEEPER_EXPERT,
+  MINESWEEPER_INTERMEDIATE,
   canSolveMinesweeperWithoutGuessing,
   chordMinesweeperCell,
   createEmptyBoard,
@@ -105,5 +107,27 @@ describe("minesweeper engine", () => {
     const generated = createNoGuessMinesweeperBoard(difficulty, 5, 5, 31);
     expect(generated.attempts).toBeLessThanOrEqual(3);
     expect(performance.now() - started).toBeLessThan(100);
+  });
+});
+
+describe("minesweeper: classic difficulty tiers", () => {
+  it("intermediate generates a correctly-sized, safe-opening board within its attempt ceiling", () => {
+    const generated = createNoGuessMinesweeperBoard(MINESWEEPER_INTERMEDIATE, 8, 8, 12345);
+    expect(generated.board).toHaveLength(MINESWEEPER_INTERMEDIATE.height);
+    expect(generated.board[0]).toHaveLength(MINESWEEPER_INTERMEDIATE.width);
+    expect(generated.board.flat().filter((c) => c.isMine)).toHaveLength(MINESWEEPER_INTERMEDIATE.mineCount);
+    expect(generated.attempts).toBeLessThanOrEqual(MINESWEEPER_INTERMEDIATE.maxGenerationAttempts);
+  });
+
+  it("expert generates a correctly-sized, safe-opening board promptly (bounded attempts)", () => {
+    const started = performance.now();
+    const generated = createNoGuessMinesweeperBoard(MINESWEEPER_EXPERT, 15, 8, 999);
+    expect(generated.board).toHaveLength(MINESWEEPER_EXPERT.height);
+    expect(generated.board[0]).toHaveLength(MINESWEEPER_EXPERT.width);
+    expect(generated.board.flat().filter((c) => c.isMine)).toHaveLength(MINESWEEPER_EXPERT.mineCount);
+    expect(generated.attempts).toBeLessThanOrEqual(MINESWEEPER_EXPERT.maxGenerationAttempts);
+    // safe-fallback or verified — either way, the first click must never be a mine.
+    expect(generated.board[8][15].isMine).toBe(false);
+    expect(performance.now() - started).toBeLessThan(2000);
   });
 });
