@@ -100,6 +100,12 @@ export type BestConditions = {
   assist: "none" | "hint" | "solver";
 };
 export type ConditionalBestRecord = BestRecord & { conditions: BestConditions };
+export type ConditionalBestEntry = {
+  key: string;
+  game: string;
+  record: ConditionalBestRecord;
+  achievedAt: string | null;
+};
 
 const BEST_KEY = "oiyo:game-bests:v1";
 const isBestRecord: Validator<BestRecord> = (value): value is BestRecord =>
@@ -122,6 +128,7 @@ export function getAllBests(): Record<string, BestRecord> {
 }
 
 const CONDITIONAL_BEST_KEY = "oiyo:game-condition-bests:v1";
+const CONDITIONAL_BEST_TS_KEY = "oiyo:game-condition-bests-achieved-at:v1";
 const isConditionValue = (value: unknown): value is string =>
   typeof value === "string" && value.length > 0 && value.length <= 128 && !/[\u0000-\u001f]/.test(value);
 const isBestConditions: Validator<BestConditions> = (value): value is BestConditions =>
@@ -131,7 +138,40 @@ const isConditionalBest: Validator<ConditionalBestRecord> = (value): value is Co
   isObject(value) && isBestRecord(value) && isBestConditions((value as Record<string, unknown>).conditions);
 const conditionKey = (game: string, conditions: BestConditions) =>
   JSON.stringify([game, conditions.seed, conditions.difficulty, conditions.assist]);
-const readConditionalBests = () => readValidatedStore(CONDITIONAL_BEST_KEY, isConditionalBest);
+function parseConditionKey(key: string): { game: string; conditions: BestConditions } | null {
+  try {
+    const value: unknown = JSON.parse(key);
+    if (!Array.isArray(value) || value.length !== 4) return null;
+    const [game, seed, difficulty, assist] = value;
+    const conditions = { seed, difficulty, assist };
+    return isConditionValue(game) && isBestConditions(conditions) ? { game, conditions } : null;
+  } catch {
+    return null;
+  }
+}
+
+function readConditionalBests(): Record<string, ConditionalBestRecord> {
+  const raw = readValidatedStore(CONDITIONAL_BEST_KEY, isConditionalBest);
+  const valid: Record<string, ConditionalBestRecord> = {};
+  for (const [key, record] of Object.entries(raw)) {
+    const parsed = parseConditionKey(key);
+    if (parsed && conditionKey(parsed.game, record.conditions) === key) valid[key] = record;
+  }
+  return valid;
+}
+
+function readConditionalBestAchievedAt(): Record<string, string> {
+  return readValidatedStore(CONDITIONAL_BEST_TS_KEY, isIsoTimestamp);
+}
+
+/** Every exact-board/difficulty/assist PB, with its validated cohort identity. */
+export function getAllConditionalBests(): ConditionalBestEntry[] {
+  const timestamps = readConditionalBestAchievedAt();
+  return Object.entries(readConditionalBests()).flatMap(([key, record]) => {
+    const parsed = parseConditionKey(key);
+    return parsed ? [{ key, game: parsed.game, record, achievedAt: timestamps[key] ?? null }] : [];
+  });
+}
 
 /** A time/score is comparable only inside the exact seed+difficulty+assist cohort. */
 export function getBestForConditions(game: string, conditions: BestConditions): ConditionalBestRecord | null {
@@ -156,6 +196,13 @@ export function recordBestForConditions(
   const next = isBetter ? { value, unit, conditions: { ...conditions }, ...(extra === undefined ? {} : { extra }) } : current;
   all[key] = next;
   try { localStorage.setItem(CONDITIONAL_BEST_KEY, JSON.stringify(all)); } catch { /* best-effort */ }
+  if (isBetter) {
+    try {
+      const timestamps = readConditionalBestAchievedAt();
+      timestamps[key] = new Date().toISOString();
+      localStorage.setItem(CONDITIONAL_BEST_TS_KEY, JSON.stringify(timestamps));
+    } catch { /* best-effort */ }
+  }
   stampLastPlayed(game);
   return next;
 }

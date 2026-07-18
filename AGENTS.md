@@ -24,16 +24,22 @@ this repo.
   (`GameContainer`, `PlayingCard`, `Die`, …) — reuse these instead of building bespoke
   chrome per game.
 - **Personal records**: `src/lib/games/records.ts` is the single localStorage module for
-  player history. Four independent stores, each with its own key (never reuse or
+  player history. Independent versioned stores use separate keys (never reuse or
   repurpose an existing key — that discards real user data):
   - `GameRecord` (`w/l/d`) under `oiyo:game-records:v1` — win/loss/draw, used by the 9
     vs-AI board games plus Solitaire/FreeCell.
   - `BestRecord` (`value` + `unit: "score"|"seconds"`) under `oiyo:game-bests:v1` —
-    high score or best time (Minesweeper, Sudoku, 2048, Snake, Puzzle15).
+    high score or a directly comparable best (2048, Snake and similar games).
+  - `ConditionalBestRecord` under `oiyo:game-condition-bests:v1` — exact
+    `seed+difficulty+assist` cohorts for Minesweeper, Sudoku and Puzzle15. Never compare
+    or migrate records across cohorts. The achievements page reads the validated cohort
+    key and embedded conditions together, so neither side may drift independently.
   - `StreakStats` under `oiyo:game-streaks:v1` — daily-puzzle win streak (Wordle).
   - `DailyStreak` under `oiyo:game-daily-streaks:v1` — calendar-day solve streaks for
-    deterministic daily modes such as Kurodoko and Tents & Trees. Same-day repeats are
-    no-ops and missed days reset only the current streak, not the personal best.
+  deterministic daily modes such as Kurodoko and Tents & Trees. Same-day repeats are
+  no-ops and missed days reset only the current streak, not the personal best.
+  Additive last-played and PB-achieved timestamp stores support recent-record ordering
+  without reshaping any of the record objects above.
   The arcade card win-rate badge on the homepage (`src/pages/[...lang]/index.astro`)
   reads the `GameRecord` store directly by `data-game` slug; keep that shape stable.
   A few games (Minesweeper/2048/Snake/Puzzle15) still carry a legacy per-game

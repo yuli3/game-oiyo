@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { buildAchievementSnapshot, evaluateAchievements, type AchievementCategory, type EvaluatedAchievement } from "../../lib/games/achievements";
 import { dayIndex } from "../../lib/games/daily";
-import { getAllBestAchievedAt, getAllBests, getAllLastPlayed, type BestRecord } from "../../lib/games/records";
+import { getAllBestAchievedAt, getAllBests, getAllConditionalBests, getAllLastPlayed, type BestRecord } from "../../lib/games/records";
 import { gameDisplayName } from "../../lib/games/display-names";
 
 type UILocale = "ko" | "en" | "ja" | "zh" | "fr" | "es";
@@ -145,38 +145,61 @@ function relativeDay(iso: string, t: (typeof COPY)[UILocale]): string {
   return t.daysAgo(diff);
 }
 
-const Achievements: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
-  const t = COPY[locale] ?? COPY.en;
-  const catLabel = CATEGORY_LABEL[locale] ?? CATEGORY_LABEL.en;
-  const [evaluated, setEvaluated] = useState<EvaluatedAchievement[] | null>(null);
-  const [bests, setBests] = useState<Record<string, BestRecord> | null>(null);
-  const [bestAchievedAt, setBestAchievedAt] = useState<Record<string, string>>({});
-  const [recentlyPlayed, setRecentlyPlayed] = useState<{ id: string; at: string }[]>([]);
+export function cohortTag(seed: string): string {
+  const daily = seed.match(/^daily-(\d{4}-\d{2}-\d{2})$/);
+  if (daily) return daily[1];
+  if (seed === "classic-demo-v1") return "v1";
+  return `#${seed.slice(-6)}`;
+}
 
-  useEffect(() => {
-    setEvaluated(evaluateAchievements(buildAchievementSnapshot()));
-    setBests(getAllBests());
-    setBestAchievedAt(getAllBestAchievedAt());
-    const lastPlayed = getAllLastPlayed();
-    setRecentlyPlayed(
-      Object.entries(lastPlayed)
-        .map(([id, at]) => ({ id, at }))
-        .sort((a, b) => b.at.localeCompare(a.at))
-        .slice(0, 5),
-    );
-  }, []);
-
-  if (!evaluated || !bests) return null;
-
-  const unlockedCount = evaluated.filter((a) => a.unlocked).length;
-  const hasAnyProgress = evaluated.some((a) => a.progress > 0);
-  const bestEntries = Object.entries(bests).sort(([a], [b]) => {
-    const ta = bestAchievedAt[a], tb = bestAchievedAt[b];
+export function buildBestEntries(
+  bests: Record<string, BestRecord>,
+  bestAchievedAt: Record<string, string>,
+  conditionalBests: ReturnType<typeof getAllConditionalBests>,
+) {
+  return [
+    ...Object.entries(bests).map(([id, record]) => ({ key: `general:${id}`, game: id, record, achievedAt: bestAchievedAt[id] ?? null, cohort: null as string | null })),
+    ...conditionalBests.map(({ key, game, record, achievedAt }) => ({ key: `conditional:${key}`, game, record, achievedAt, cohort: cohortTag(record.conditions.seed) })),
+  ].sort((a, b) => {
+    const ta = a.achievedAt, tb = b.achievedAt;
     if (ta && tb) return tb.localeCompare(ta);
     if (ta) return -1;
     if (tb) return 1;
-    return a.localeCompare(b);
-  });
+    return a.key.localeCompare(b.key);
+  }).slice(0, 10);
+}
+
+const Achievements: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
+  const t = COPY[locale] ?? COPY.en;
+  const catLabel = CATEGORY_LABEL[locale] ?? CATEGORY_LABEL.en;
+  const [dashboard, setDashboard] = useState<{
+    evaluated: EvaluatedAchievement[];
+    bests: Record<string, BestRecord>;
+    conditionalBests: ReturnType<typeof getAllConditionalBests>;
+    bestAchievedAt: Record<string, string>;
+    recentlyPlayed: { id: string; at: string }[];
+  } | null>(null);
+
+  useEffect(() => {
+    const lastPlayed = getAllLastPlayed();
+    setDashboard({
+      evaluated: evaluateAchievements(buildAchievementSnapshot()),
+      bests: getAllBests(),
+      conditionalBests: getAllConditionalBests(),
+      bestAchievedAt: getAllBestAchievedAt(),
+      recentlyPlayed: Object.entries(lastPlayed)
+        .map(([id, at]) => ({ id, at }))
+        .sort((a, b) => b.at.localeCompare(a.at))
+        .slice(0, 5),
+    });
+  }, []);
+
+  if (!dashboard) return null;
+  const { evaluated, bests, conditionalBests, bestAchievedAt, recentlyPlayed } = dashboard;
+
+  const unlockedCount = evaluated.filter((a) => a.unlocked).length;
+  const hasAnyProgress = evaluated.some((a) => a.progress > 0);
+  const bestEntries = buildBestEntries(bests, bestAchievedAt, conditionalBests);
 
   return (
     <div className="not-prose flex flex-col gap-6 py-6 px-4 max-w-2xl mx-auto">
@@ -200,9 +223,9 @@ const Achievements: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
                 <p className="text-[11px] text-muted-foreground">{t.noRecords}</p>
               ) : (
                 <ul className="space-y-1.5">
-                  {bestEntries.map(([id, record]) => (
-                    <li key={id} className="flex items-center justify-between text-xs">
-                      <span className="truncate text-muted-foreground">{gameDisplayName(id, locale)}</span>
+                  {bestEntries.map(({ key, game, record, cohort }) => (
+                    <li key={key} className="flex items-center justify-between gap-2 text-xs">
+                      <span className="truncate text-muted-foreground">{gameDisplayName(game, locale)}{cohort ? ` · ${cohort}` : ""}</span>
                       <span className="shrink-0 font-black tabular-nums">{formatBest(record)}</span>
                     </li>
                   ))}

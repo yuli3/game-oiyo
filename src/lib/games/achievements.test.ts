@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { ACHIEVEMENTS, buildAchievementSnapshot, evaluateAchievements, type AchievementSnapshot } from "./achievements";
-import { recordBest, recordDailyWin, recordResult, recordStreak } from "./records";
+import { recordBest, recordBestForConditions, recordDailyWin, recordResult, recordStreak } from "./records";
 
 function createMemoryStorage(): Storage {
   const store = new Map<string, string>();
@@ -89,6 +89,18 @@ describe("achievements: cross-store snapshot", () => {
     recordBest("daily-minesweeper", 30, "seconds");
     recordDailyWin("daily-minesweeper", "2026-07-18", "2026-07-17");
     expect(buildAchievementSnapshot()).toMatchObject({ totalWins: 1, totalPlays: 1, distinctGamesPlayed: 1 });
+  });
+
+  it("counts exact-condition PB games without mixing their incomparable boards", () => {
+    recordBestForConditions("sudoku", 42, "seconds", { seed: "classic-demo-v1", difficulty: "standard", assist: "none" });
+    recordBestForConditions("puzzle15-4", 90, "seconds", { seed: "board-a", difficulty: "4x4", assist: "none" });
+    recordBestForConditions("puzzle15-4", 70, "seconds", { seed: "board-b", difficulty: "4x4", assist: "none" });
+    expect(buildAchievementSnapshot()).toMatchObject({
+      totalWins: 0,
+      totalPlays: 2,
+      distinctGamesPlayed: 2,
+      bestRecordCount: 3,
+    });
   });
 
   it("survives valid JSON with an invalid root shape", () => {

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { getAllBestAchievedAt, getAllBests, getAllDailyStreaks, getAllLastPlayed, getAllRecords, getAllStreaks, getBest, getBestForConditions, getDailyStreak, getRecord, getStreak, recordBest, recordBestForConditions, recordDailyWin, recordResult, recordStreak } from "./records";
+import { getAllBestAchievedAt, getAllBests, getAllConditionalBests, getAllDailyStreaks, getAllLastPlayed, getAllRecords, getAllStreaks, getBest, getBestForConditions, getDailyStreak, getRecord, getStreak, recordBest, recordBestForConditions, recordDailyWin, recordResult, recordStreak } from "./records";
 
 // records.ts is localStorage-backed; provide a minimal in-memory Storage
 // polyfill so persistence across calls can actually be exercised in node.
@@ -102,6 +102,28 @@ describe("records: condition-matched personal bests", () => {
   it("rejects incomplete or control-character conditions", () => {
     expect(() => recordBestForConditions("sudoku", 10, "seconds", { ...base, seed: "" })).toThrow(/exact seed/);
     expect(getBestForConditions("sudoku", { ...base, difficulty: "bad\nvalue" })).toBeNull();
+  });
+
+  it("exposes validated cohort records to the cross-game records view", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-07-18T13:00:00.000Z"));
+    recordBestForConditions("minesweeper-intermediate", 80, "seconds", base);
+    expect(getAllConditionalBests()).toEqual([{
+      key: JSON.stringify(["minesweeper-intermediate", base.seed, base.difficulty, base.assist]),
+      game: "minesweeper-intermediate",
+      record: { value: 80, unit: "seconds", conditions: base },
+      achievedAt: "2026-07-18T13:00:00.000Z",
+    }]);
+    vi.useRealTimers();
+  });
+
+  it("rejects a record whose editable storage key disagrees with its embedded conditions", () => {
+    const key = JSON.stringify(["sudoku", base.seed, base.difficulty, base.assist]);
+    localStorage.setItem("oiyo:game-condition-bests:v1", JSON.stringify({
+      [key]: { value: 20, unit: "seconds", conditions: { ...base, difficulty: "expert" } },
+    }));
+    expect(getAllConditionalBests()).toEqual([]);
+    expect(getBestForConditions("sudoku", base)).toBeNull();
   });
 });
 

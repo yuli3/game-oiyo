@@ -5,6 +5,7 @@
 // here can be gamed by data that was never real.
 import {
   getAllBests,
+  getAllConditionalBests,
   getAllDailyStreaks,
   getAllRecords,
   getAllStreaks,
@@ -69,12 +70,15 @@ export function buildAchievementSnapshot(): AchievementSnapshot {
   const dailyStreaks = getAllDailyStreaks();
   const streaks = getAllStreaks();
   const bests = getAllBests();
+  const conditionalBests = getAllConditionalBests();
+  const conditionalBestGameIds = new Set(conditionalBests.map(({ game }) => game));
 
   const playedGameIds = new Set<string>();
   for (const [id, r] of Object.entries(records)) if (r.w + r.l + r.d > 0) playedGameIds.add(id);
   for (const [id, stats] of Object.entries(dailyStreaks)) if (stats.played > 0) playedGameIds.add(id);
   for (const [id, stats] of Object.entries(streaks)) if (stats.played > 0) playedGameIds.add(id);
   for (const id of Object.keys(bests)) playedGameIds.add(id);
+  for (const game of conditionalBestGameIds) playedGameIds.add(game);
 
   // A game may write more than one compatible store on completion (for
   // example a daily solve can update both a best time and a calendar streak).
@@ -89,13 +93,13 @@ export function buildAchievementSnapshot(): AchievementSnapshot {
       record ? record.w + record.l + record.d : 0,
       dailyStreaks[id]?.played ?? 0,
       streaks[id]?.played ?? 0,
-      bests[id] ? 1 : 0,
+      bests[id] || conditionalBestGameIds.has(id) ? 1 : 0,
     );
   }
 
   const bestDailyStreak = Math.max(0, ...Object.values(dailyStreaks).map((s) => s.maxStreak));
   const bestWinStreak = Math.max(0, ...Object.values(streaks).map((s) => s.maxStreak));
-  const bestRecordCount = Object.keys(bests).length;
+  const bestRecordCount = Object.keys(bests).length + conditionalBests.length;
 
   return {
     totalWins,
