@@ -1,0 +1,61 @@
+---
+// Dedicated strategy-guide page body + Article/HowTo JSON-LD (SEO·AIEO).
+// Separate from GameGuide.astro's inline FAQ blurb — this is the deeper,
+// "how to win X" content unit with its own title and search intent.
+import { STRATEGY_GUIDES } from "../data/game-strategy";
+import type { Locale } from "../lib/i18n";
+
+interface Props { gameId: string; locale: Locale }
+const { gameId, locale } = Astro.props;
+const g = STRATEGY_GUIDES[gameId];
+
+const H = {
+  mistakes: { ko: "흔히 하는 실수", en: "Common mistakes", ja: "よくある間違い", zh: "常见错误", fr: "Erreurs fréquentes", es: "Errores comunes" } as Record<Locale, string>,
+  playLink: { ko: "게임으로 돌아가기 →", en: "Back to the game →", ja: "ゲームに戻る →", zh: "返回游戏 →", fr: "Retour au jeu →", es: "Volver al juego →" } as Record<Locale, string>,
+};
+
+const jsonLd = g ? {
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  name: g.title[locale] ?? g.title.en,
+  description: g.intro[locale] ?? g.intro.en,
+  inLanguage: locale,
+  step: g.tips.map((tip) => ({
+    "@type": "HowToStep",
+    name: tip.heading[locale] ?? tip.heading.en,
+    text: tip.body[locale] ?? tip.body.en,
+  })),
+} : null;
+---
+
+{g && (
+  <>
+    <script type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd)} />
+    <div class="not-prose mx-auto max-w-2xl px-4 py-8">
+      <h1 class="text-2xl font-black">{g.title[locale] ?? g.title.en}</h1>
+      <p class="mt-3 text-sm leading-7 text-muted-foreground">{g.intro[locale] ?? g.intro.en}</p>
+
+      <div class="mt-8 space-y-6">
+        {g.tips.map((tip) => (
+          <div>
+            <h2 class="text-base font-black">{tip.heading[locale] ?? tip.heading.en}</h2>
+            <p class="mt-1.5 text-sm leading-7 text-muted-foreground">{tip.body[locale] ?? tip.body.en}</p>
+          </div>
+        ))}
+      </div>
+
+      <div class="mt-8 rounded-xl border border-border bg-muted/30 p-4">
+        <h2 class="text-sm font-black">{H.mistakes[locale]}</h2>
+        <ul class="mt-2 space-y-1.5 text-sm leading-6 text-muted-foreground">
+          {(g.mistakes[locale] ?? g.mistakes.en).map((m) => (
+            <li class="flex gap-2"><span class="shrink-0 text-destructive" aria-hidden="true">✕</span><span>{m}</span></li>
+          ))}
+        </ul>
+      </div>
+
+      <a href={`/${locale}/${g.slug}`} class="mt-8 inline-block text-sm font-bold text-primary hover:underline">
+        {H.playLink[locale]}
+      </a>
+    </div>
+  </>
+)}

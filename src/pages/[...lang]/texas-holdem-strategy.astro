@@ -1,0 +1,22 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import StrategyGuide from "../../components/StrategyGuide.astro";
+import { STRATEGY_GUIDES } from "../../data/game-strategy";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+const g = STRATEGY_GUIDES["texas-holdem"];
+const title = g.title[locale] ?? g.title.en;
+const description = g.intro[locale] ?? g.intro.en;
+---
+
+<BaseLayout title={title} description={description}>
+  <main>
+    <StrategyGuide gameId="texas-holdem" locale={locale} />
+  </main>
+</BaseLayout>
