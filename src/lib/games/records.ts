@@ -94,6 +94,12 @@ export function getAllLastPlayed(): Record<string, string> {
 // Minesweeper/Sudoku/Puzzle15) share this shape; `unit` tells callers how to compare/format.
 // `extra` carries freeform context shown next to the number (e.g. move count, difficulty).
 export type BestRecord = { value: number; unit: "score" | "seconds"; extra?: string };
+export type BestConditions = {
+  seed: string;
+  difficulty: string;
+  assist: "none" | "hint" | "solver";
+};
+export type ConditionalBestRecord = BestRecord & { conditions: BestConditions };
 
 const BEST_KEY = "oiyo:game-bests:v1";
 const isBestRecord: Validator<BestRecord> = (value): value is BestRecord =>
@@ -113,6 +119,45 @@ export function getBest(game: string): BestRecord | null {
 /** Every game's personal-best record, keyed by game id — read-only aggregate for cross-game views. */
 export function getAllBests(): Record<string, BestRecord> {
   return readAllBests();
+}
+
+const CONDITIONAL_BEST_KEY = "oiyo:game-condition-bests:v1";
+const isConditionValue = (value: unknown): value is string =>
+  typeof value === "string" && value.length > 0 && value.length <= 128 && !/[\u0000-\u001f]/.test(value);
+const isBestConditions: Validator<BestConditions> = (value): value is BestConditions =>
+  isObject(value) && isConditionValue(value.seed) && isConditionValue(value.difficulty) &&
+  (value.assist === "none" || value.assist === "hint" || value.assist === "solver");
+const isConditionalBest: Validator<ConditionalBestRecord> = (value): value is ConditionalBestRecord =>
+  isObject(value) && isBestRecord(value) && isBestConditions((value as Record<string, unknown>).conditions);
+const conditionKey = (game: string, conditions: BestConditions) =>
+  JSON.stringify([game, conditions.seed, conditions.difficulty, conditions.assist]);
+const readConditionalBests = () => readValidatedStore(CONDITIONAL_BEST_KEY, isConditionalBest);
+
+/** A time/score is comparable only inside the exact seed+difficulty+assist cohort. */
+export function getBestForConditions(game: string, conditions: BestConditions): ConditionalBestRecord | null {
+  if (!isConditionValue(game) || !isBestConditions(conditions)) return null;
+  return readConditionalBests()[conditionKey(game, conditions)] ?? null;
+}
+
+export function recordBestForConditions(
+  game: string,
+  value: number,
+  unit: "score" | "seconds",
+  conditions: BestConditions,
+  extra?: string,
+): ConditionalBestRecord {
+  if (!isConditionValue(game) || !isFiniteNonNegative(value) || !isBestConditions(conditions)) {
+    throw new TypeError("Conditional best requires finite value and exact seed/difficulty/assist conditions");
+  }
+  const all = readConditionalBests();
+  const key = conditionKey(game, conditions);
+  const current = all[key];
+  const isBetter = !current || current.unit !== unit || (unit === "score" ? value > current.value : value < current.value);
+  const next = isBetter ? { value, unit, conditions: { ...conditions }, ...(extra === undefined ? {} : { extra }) } : current;
+  all[key] = next;
+  try { localStorage.setItem(CONDITIONAL_BEST_KEY, JSON.stringify(all)); } catch { /* best-effort */ }
+  stampLastPlayed(game);
+  return next;
 }
 
 // Saves `value` as the new best if it beats the stored one (higher for "score", lower for "seconds").

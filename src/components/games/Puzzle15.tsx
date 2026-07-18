@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
-import { getBest, recordBest } from '../../lib/games/records';
+import { getBestForConditions, recordBestForConditions, type BestConditions } from '../../lib/games/records';
 
 // ─── 15 Puzzle (sliding puzzle) — ported from ahoxy-legacy ────────────────────
 // Shuffled by random moves from the solved state, so every board is solvable.
@@ -8,8 +8,9 @@ import { getBest, recordBest } from '../../lib/games/records';
 type Board = number[]; // row-major, 0 = empty
 type Size = 3 | 4 | 5;
 
-const LEGACY_BEST_KEY = 'oiyo-puzzle15-best'; // pre-unification key: {"3": {moves,seconds}, ...}
 const gameKey = (size: Size) => `puzzle15-${size}`;
+const boardSeed = (board: Board) => board.join('-');
+const conditionsFor = (size: Size, seed: string): BestConditions => ({ seed, difficulty: `${size}x${size}`, assist: 'none' });
 
 const solved = (size: Size): Board => Array.from({ length: size * size }, (_, i) => (i + 1) % (size * size));
 
@@ -48,9 +49,12 @@ const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '
 
 const Puzzle15: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const t = COPY[(locale as keyof typeof COPY)] ?? COPY.en;
+    const initialBoard = useRef<Board | null>(null);
+    if (!initialBoard.current) initialBoard.current = shuffle(4, 300);
 
     const [size, setSize] = useState<Size>(4);
-    const [board, setBoard] = useState<Board>(() => shuffle(4, 300));
+    const [board, setBoard] = useState<Board>(() => initialBoard.current!);
+    const [puzzleSeed, setPuzzleSeed] = useState(() => boardSeed(initialBoard.current!));
     const [moves, setMoves] = useState(0);
     const [seconds, setSeconds] = useState(0);
     const [won, setWon] = useState(false);
@@ -58,28 +62,9 @@ const Puzzle15: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const started = useRef(false);
 
     useEffect(() => {
-        const next: Record<string, { moves: number; seconds: number }> = {};
-        ([3, 4, 5] as Size[]).forEach((sz) => {
-            const existing = getBest(gameKey(sz));
-            if (existing) { next[sz] = { moves: Number(existing.extra) || 0, seconds: existing.value }; }
-        });
-        if (Object.keys(next).length > 0) { setBest(next); return; }
-        // One-time migration from the pre-unification per-size key
-        try {
-            const legacy = JSON.parse(localStorage.getItem(LEGACY_BEST_KEY) || '{}');
-            if (legacy && typeof legacy === 'object') {
-                const migrated: Record<string, { moves: number; seconds: number }> = {};
-                for (const sz of [3, 4, 5] as Size[]) {
-                    const rec = legacy[sz];
-                    if (rec && typeof rec.seconds === 'number') {
-                        recordBest(gameKey(sz), rec.seconds, 'seconds', String(rec.moves));
-                        migrated[sz] = rec;
-                    }
-                }
-                if (Object.keys(migrated).length > 0) setBest(migrated);
-            }
-        } catch { /* ignore */ }
-    }, []);
+        const existing = getBestForConditions(gameKey(size), conditionsFor(size, puzzleSeed));
+        setBest(existing ? { [size]: { moves: Number(existing.extra) || 0, seconds: existing.value } } : {});
+    }, [puzzleSeed, size]);
 
     useEffect(() => {
         if (won || !started.current) return;
@@ -88,8 +73,10 @@ const Puzzle15: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     }, [won, moves]); // moves>0 starts the timer via started ref
 
     const restart = useCallback((sz: Size = size) => {
+        const nextBoard = shuffle(sz, sz * sz * 20);
         setSize(sz);
-        setBoard(shuffle(sz, sz * sz * 20));
+        setBoard(nextBoard);
+        setPuzzleSeed(boardSeed(nextBoard));
         setMoves(0);
         setSeconds(0);
         setWon(false);
@@ -98,7 +85,7 @@ const Puzzle15: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
     const finish = (finalMoves: number) => {
         setWon(true);
-        const saved = recordBest(gameKey(size), seconds, 'seconds', String(finalMoves));
+        const saved = recordBestForConditions(gameKey(size), seconds, 'seconds', conditionsFor(size, puzzleSeed), String(finalMoves));
         setBest((prev) => ({ ...prev, [size]: { moves: Number(saved.extra) || finalMoves, seconds: saved.value } }));
     };
 

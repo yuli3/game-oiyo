@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
-import { getBest, recordBest, getDailyStreak, recordDailyWin, type DailyStreak } from '../../lib/games/records';
+import { getBest, recordBest, getBestForConditions, recordBestForConditions, getDailyStreak, recordDailyWin, type BestConditions, type DailyStreak } from '../../lib/games/records';
 import { dayIndex, todayKey, previousDayKey } from '../../lib/games/daily';
 import {
     chordMinesweeperCell,
@@ -85,6 +85,12 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const cellRefs = useRef<Array<HTMLButtonElement | null>>([]);
     const recordedRef = useRef(false);
 
+    const recordConditions = useCallback((): BestConditions => ({
+        seed: mode === 'daily' ? `daily-${dailyDate}` : `free-${generationSeed.current}`,
+        difficulty: difficultyId,
+        assist: 'none',
+    }), [dailyDate, difficultyId, mode]);
+
     const initBoard = useCallback((next: Mode) => {
         const id = next === 'daily' ? DAILY_DIFFICULTY_ID : next;
         const dims = MINESWEEPER_DIFFICULTIES[id];
@@ -106,7 +112,12 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             generationSeed.current = createGenerationSeed();
         }
         setStatus('playing');
-        setBestTime(getBest(bestKeyFor(id))?.value ?? null);
+        const conditions: BestConditions = {
+            seed: next === 'daily' ? `daily-${todayKey()}` : `free-${generationSeed.current}`,
+            difficulty: id,
+            assist: 'none',
+        };
+        setBestTime(getBestForConditions(bestKeyFor(id), conditions)?.value ?? null);
     }, []);
 
     useEffect(() => {
@@ -135,7 +146,7 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         setStatus(result.status);
         if (result.status === 'won' && !recordedRef.current) {
             recordedRef.current = true;
-            setBestTime(recordBest(bestKeyFor(difficultyId), Math.max(1, timer), 'seconds').value);
+            setBestTime(recordBestForConditions(bestKeyFor(difficultyId), Math.max(1, timer), 'seconds', recordConditions()).value);
             if (mode === 'daily') {
                 const today = todayKey();
                 setStreak(recordDailyWin(DAILY_GAME_ID, today, previousDayKey(today)));

@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
-import { getBest, recordBest } from '../../lib/games/records';
+import { getBestForConditions, recordBestForConditions, type BestConditions } from '../../lib/games/records';
 import { isSudokuSolved } from '../../lib/games/logic-puzzles';
 
 const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+const SUDOKU_CONDITIONS: BestConditions = { seed: 'classic-demo-v1', difficulty: 'standard', assist: 'none' };
 
 const Sudoku: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const COPY = {
@@ -26,7 +27,7 @@ const Sudoku: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const cellRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
     useEffect(() => {
-        const existing = getBest('sudoku');
+        const existing = getBestForConditions('sudoku', SUDOKU_CONDITIONS);
         if (existing) setBestTime(existing.value);
     }, []);
 
@@ -75,7 +76,7 @@ const Sudoku: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     useEffect(() => {
         if (isWon && !recorded) {
             setRecorded(true);
-            setBestTime(recordBest('sudoku', Math.max(1, seconds), 'seconds').value);
+            setBestTime(recordBestForConditions('sudoku', Math.max(1, seconds), 'seconds', SUDOKU_CONDITIONS).value);
         }
     }, [isWon, recorded, seconds]);
 

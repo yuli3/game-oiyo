@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { getAllBestAchievedAt, getAllBests, getAllDailyStreaks, getAllLastPlayed, getAllRecords, getAllStreaks, getBest, getDailyStreak, getRecord, getStreak, recordBest, recordDailyWin, recordResult, recordStreak } from "./records";
+import { getAllBestAchievedAt, getAllBests, getAllDailyStreaks, getAllLastPlayed, getAllRecords, getAllStreaks, getBest, getBestForConditions, getDailyStreak, getRecord, getStreak, recordBest, recordBestForConditions, recordDailyWin, recordResult, recordStreak } from "./records";
 
 // records.ts is localStorage-backed; provide a minimal in-memory Storage
 // polyfill so persistence across calls can actually be exercised in node.
@@ -78,6 +78,30 @@ describe("records: BestRecord (personal bests)", () => {
     recordBest("hybrid", 10, "seconds");
     recordBest("hybrid", 5, "score"); // different unit — not comparable, treated as better
     expect(getBest("hybrid")).toEqual({ value: 5, unit: "score" });
+  });
+});
+
+describe("records: condition-matched personal bests", () => {
+  const base = { seed: "daily-2026-07-18", difficulty: "intermediate", assist: "none" as const };
+
+  it("compares only inside the exact seed, difficulty, and assist cohort", () => {
+    recordBestForConditions("minesweeper", 80, "seconds", base);
+    recordBestForConditions("minesweeper", 60, "seconds", { ...base, seed: "daily-2026-07-19" });
+    recordBestForConditions("minesweeper", 50, "seconds", { ...base, difficulty: "expert" });
+    recordBestForConditions("minesweeper", 40, "seconds", { ...base, assist: "hint" });
+    expect(getBestForConditions("minesweeper", base)?.value).toBe(80);
+    expect(getBestForConditions("minesweeper", { ...base, seed: "daily-2026-07-19" })?.value).toBe(60);
+  });
+
+  it("keeps the faster time only within the same cohort", () => {
+    recordBestForConditions("sudoku", 100, "seconds", base);
+    recordBestForConditions("sudoku", 130, "seconds", base);
+    expect(recordBestForConditions("sudoku", 70, "seconds", base).value).toBe(70);
+  });
+
+  it("rejects incomplete or control-character conditions", () => {
+    expect(() => recordBestForConditions("sudoku", 10, "seconds", { ...base, seed: "" })).toThrow(/exact seed/);
+    expect(getBestForConditions("sudoku", { ...base, difficulty: "bad\nvalue" })).toBeNull();
   });
 });
 
