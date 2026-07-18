@@ -9,10 +9,18 @@ const expectedGames = ["chess", "hearts", "minesweeper", "solitaire", "freecell"
 const restorableSymbols = {
   chess: ["loadChessSave", "storeChessSave"],
   hearts: ["loadHeartsSavedGame", "saveHeartsGame"],
+  solitaire: ["loadSolitaireSave", "storeSolitaireSave"],
+  freecell: ["loadFreeCellSave", "storeFreeCellSave"],
+  "connect-four": ["loadConnectFourSave", "storeConnectFourSave"],
+  gomoku: ["loadGomokuSave", "storeGomokuSave"],
 };
 const restorableCapabilities = {
   chess: { modes: ["local", "ai"], difficulties: ["level-1", "level-2", "level-3"] },
   hearts: { modes: ["ai"], difficulties: ["heuristic-v1"] },
+  solitaire: { modes: ["solo"], difficulties: ["draw-1"] },
+  freecell: { modes: ["solo"], difficulties: ["standard"] },
+  "connect-four": { modes: ["local", "ai"], difficulties: ["level-1", "level-2", "level-3"] },
+  gomoku: { modes: ["local", "ai"], difficulties: ["level-1", "level-2", "level-3"] },
 };
 
 if (fixture.schema !== "oiyo.game-session-capabilities" || fixture.schemaVersion !== 1) {
@@ -76,7 +84,7 @@ for (const game of fixture.games ?? []) {
 
 for (const gameId of expectedGames) if (!ids.has(gameId)) errors.push(`missing game capability: ${gameId}`);
 const restorable = (fixture.games ?? []).filter((game) => game.supportsRestore).map((game) => game.gameId);
-if (JSON.stringify(restorable) !== JSON.stringify(["chess", "hearts"])) {
+if (JSON.stringify(restorable) !== JSON.stringify(["chess", "hearts", "solitaire", "freecell", "connect-four", "gomoku"])) {
   errors.push(`restore inventory drift: ${restorable.join(", ")}`);
 }
 

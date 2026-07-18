@@ -12,6 +12,7 @@ import {
   type FreeCellDestination,
   type FreeCellSource,
 } from '../../lib/games/freecell';
+import { clearFreeCellSave, loadFreeCellSave, storeFreeCellSave } from '../../lib/games/active-game-save';
 
 const COPY = {
   ko: {
@@ -44,20 +45,24 @@ const SUIT_SYMBOLS = ['♥', '♦', '♣', '♠'];
 
 const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
   const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
-  const [game, setGame] = useState(createFreeCellGame);
+  const [restored] = useState(loadFreeCellSave);
+  const [game, setGame] = useState(() => restored?.state ?? createFreeCellGame());
   const [selected, setSelected] = useState<FreeCellSource | null>(null);
   const [status, setStatus] = useState<string>(t.instructions);
-  const [record, setRecord] = useState<GameRecord | null>(null);
-  const moveMadeRef = useRef(false);
+  const [record, setRecord] = useState<GameRecord | null>(() => getRecord('freecell'));
+  const moveMadeRef = useRef(Boolean(restored));
   const wonRef = useRef(false);
 
-  useEffect(() => { setRecord(getRecord('freecell')); }, []);
   useEffect(() => { setStatus(t.instructions); }, [t]);
+  useEffect(() => {
+    if (moveMadeRef.current && !isFreeCellWon(game)) storeFreeCellSave(game);
+  }, [game]);
 
   const initGame = useCallback(() => {
     if (moveMadeRef.current && !wonRef.current) setRecord(recordResult('freecell', 'l'));
     moveMadeRef.current = false;
     wonRef.current = false;
+    clearFreeCellSave();
     setGame(createFreeCellGame());
     setSelected(null);
     setStatus(t.instructions);
@@ -67,6 +72,7 @@ const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
   useEffect(() => {
     if (isWon && !wonRef.current) {
       wonRef.current = true;
+      clearFreeCellSave();
       setRecord(recordResult('freecell', 'w'));
     }
   }, [isWon]);

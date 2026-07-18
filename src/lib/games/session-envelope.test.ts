@@ -13,6 +13,7 @@ import {
 } from "./hearts";
 import {
   adaptChessSaveToSession,
+  adaptActiveGameSaveToSession,
   adaptHeartsSaveToSession,
   parseGameSessionEnvelope,
   RESTORABLE_GAME_CAPABILITIES,
@@ -188,18 +189,37 @@ describe("GameSessionEnvelope v1", () => {
 
   it("keeps unsupported games explicitly non-restorable", () => {
     const byId = new Map(capabilities.games.map((game) => [game.gameId, game]));
-    expect([...byId.values()].filter((game) => game.supportsRestore).map((game) => game.gameId)).toEqual(["chess", "hearts"]);
-    for (const gameId of ["chess", "hearts"] as const) {
+    expect([...byId.values()].filter((game) => game.supportsRestore).map((game) => game.gameId)).toEqual(["chess", "hearts", "solitaire", "freecell", "connect-four", "gomoku"]);
+    for (const gameId of ["chess", "hearts", "solitaire", "freecell", "connect-four", "gomoku"] as const) {
       expect(byId.get(gameId)?.modes).toEqual([...RESTORABLE_GAME_CAPABILITIES[gameId].modes]);
       expect(byId.get(gameId)?.difficulties).toEqual([...RESTORABLE_GAME_CAPABILITIES[gameId].difficulties]);
     }
-    for (const gameId of ["minesweeper", "solitaire", "freecell", "connect-four", "gomoku"]) {
+    for (const gameId of ["minesweeper"]) {
       expect(byId.get(gameId)).toMatchObject({
         adapterPath: null,
         deterministicResume: false,
         sessionStorageKey: null,
         supportsRestore: false,
       });
+    }
+  });
+
+  it("adapts the four active-board save formats into the common envelope", async () => {
+    const { dealSolitaire } = await import("./solitaire");
+    const { createFreeCellGame } = await import("./freecell");
+    const connectBoard = Array.from({ length: 6 }, () => Array(7).fill(0));
+    connectBoard[5][3] = 1;
+    const gomokuBoard = Array<1 | 2 | null>(225).fill(null); gomokuBoard[112] = 1;
+    const fixtures = [
+      ["solitaire", { version: 1, state: dealSolitaire(() => 0.3) }],
+      ["freecell", { version: 1, state: createFreeCellGame(() => 0.3) }],
+      ["connect-four", { version: 1, board: connectBoard, currentPlayer: 2, mode: "ai", level: 2 }],
+      ["gomoku", { version: 1, board: gomokuBoard, isBlackTurn: false, mode: "local", level: 2 }],
+    ] as const;
+    for (const [gameId, payload] of fixtures) {
+      const envelope = adaptActiveGameSaveToSession(gameId, payload, TIMING);
+      expect(envelope?.gameId).toBe(gameId);
+      expect(parseGameSessionEnvelope(serializeGameSessionEnvelope(envelope!)!)).toEqual(envelope);
     }
   });
 });

@@ -3,6 +3,7 @@ import type { Locale } from '../../lib/i18n';
 import { gomokuBestMove } from '../../lib/games/ai/gomoku';
 import type { AiLevel, GameMode } from '../../lib/games/ai/types';
 import { getRecord, recordResult, type GameRecord } from '../../lib/games/records';
+import { clearGomokuSave, loadGomokuSave, storeGomokuSave } from '../../lib/games/active-game-save';
 
 const SIZE = 15;
 
@@ -26,7 +27,7 @@ const AI_DELAY_MS = 450;
 const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     const t = i18n[locale] ?? i18n.en;
 
-    const [board, setBoard] = useState<(number | null)[]>(Array(SIZE * SIZE).fill(null));
+    const [board, setBoard] = useState<(number | null)[]>(() => Array(SIZE * SIZE).fill(null));
     const [isBlackTurn, setIsBlackTurn] = useState(true);
     const [winner, setWinner] = useState<number | null>(null); // 1|2 winner, 0 = draw
     const [mode, setMode] = useState<GameMode>('local');
@@ -37,7 +38,21 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     const aiTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const cellRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
-    useEffect(() => { setRecord(getRecord('gomoku')); }, []);
+    useEffect(() => {
+        setRecord(getRecord('gomoku'));
+        const restored = loadGomokuSave();
+        if (restored) {
+            setBoard(restored.board);
+            setIsBlackTurn(restored.isBlackTurn);
+            setMode(restored.mode);
+            setLevel(restored.level);
+        }
+    }, []);
+    useEffect(() => {
+        if (board.some((cell) => cell !== null) && winner === null && !thinking) {
+            storeGomokuSave({ board: board as (1 | 2 | null)[], isBlackTurn, mode, level });
+        }
+    }, [board, isBlackTurn, mode, level, winner, thinking]);
     useEffect(() => () => { if (aiTimer.current) clearTimeout(aiTimer.current); }, []);
 
     const checkWinner = (newBoard: (number | null)[], index: number) => {
@@ -68,6 +83,7 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     };
 
     const finish = (result: number) => {
+        clearGomokuSave();
         setWinner(result);
         if (mode === 'ai') {
             const outcome = result === 0 ? 'd' : result === AI_PLAYER ? 'l' : 'w';
@@ -111,6 +127,7 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         setWinner(null);
         setThinking(false);
         setFocusIndex(112);
+        clearGomokuSave();
     };
 
     const moveBoardFocus = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
@@ -150,7 +167,7 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                         </span>
                     </div>
                 </div>
-                <button onClick={reset} className="min-h-11 px-4 py-2 bg-muted hover:bg-muted/80 text-muted-foreground rounded-xl text-xs font-bold transition-colors motion-reduce:transition-none border border-border">
+                <button type="button" onClick={reset} className="min-h-11 px-4 py-2 bg-muted hover:bg-muted/80 text-muted-foreground rounded-xl text-xs font-bold transition-colors motion-reduce:transition-none border border-border">
                     {t.reset}
                 </button>
             </div>
@@ -159,7 +176,7 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
             <div className="mb-4 flex flex-wrap items-center gap-2">
                 <div className="inline-flex rounded-xl border border-border overflow-hidden" role="group" aria-label={`${t.modeLocal} / ${t.modeAi}`}>
                     {(['local', 'ai'] as GameMode[]).map((m) => (
-                        <button key={m} onClick={() => switchMode(m)}
+                        <button type="button" key={m} onClick={() => switchMode(m)}
                             aria-pressed={mode === m}
                             className={`min-h-11 px-3 py-1.5 text-xs font-bold transition-colors motion-reduce:transition-none ${mode === m ? 'bg-primary text-primary-foreground' : 'bg-muted/50 text-muted-foreground hover:bg-muted'}`}>
                             {m === 'local' ? t.modeLocal : t.modeAi}
@@ -169,7 +186,7 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                 {mode === 'ai' && (
                     <div className="inline-flex gap-1">
                         {([1, 2, 3] as AiLevel[]).map((lv) => (
-                            <button key={lv} onClick={() => { setLevel(lv); reset(); }}
+                            <button type="button" key={lv} onClick={() => { setLevel(lv); reset(); }}
                                 aria-pressed={level === lv}
                                 className={`min-h-11 px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-colors motion-reduce:transition-none ${level === lv ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
                                 {lv === 1 ? t.level1 : lv === 2 ? t.level2 : t.level3}
@@ -197,6 +214,7 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                 <div className={`relative grid grid-cols-15 grid-rows-15 w-full h-full transition-opacity motion-reduce:transition-none ${thinking ? 'opacity-80' : ''}`} role="grid" aria-label={t.boardLabel}>
                     {board.map((stone, i) => (
                         <button
+                            type="button"
                             key={i}
                             ref={(node) => { cellRefs.current[i] = node; }}
                             onClick={() => handleClick(i)}
@@ -228,7 +246,7 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                         <div className="bg-card p-8 rounded-3xl shadow-xl border border-border text-center">
                             <h4 className="text-3xl font-black text-foreground mb-2">{winLabel}</h4>
                             <p className="text-muted-foreground mb-6 uppercase tracking-widest font-bold text-xs">{t.over}</p>
-                            <button onClick={reset} className="min-h-11 px-10 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
+                            <button type="button" onClick={reset} className="min-h-11 px-10 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
                                 {t.reset}
                             </button>
                         </div>

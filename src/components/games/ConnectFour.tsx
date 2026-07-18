@@ -3,6 +3,7 @@ import type { Locale } from "../../lib/i18n";
 import { connectFourBestMove } from "../../lib/games/ai/connectfour";
 import type { AiLevel, GameMode } from "../../lib/games/ai/types";
 import { getRecord, recordResult, type GameRecord } from "../../lib/games/records";
+import { clearConnectFourSave, loadConnectFourSave, storeConnectFourSave } from "../../lib/games/active-game-save";
 
 type Cell = 0 | 1 | 2; // 0=empty, 1=player1, 2=player2
 type Board = Cell[][];
@@ -16,6 +17,9 @@ const ROWS = 6;
 const COLS = 7;
 const AI_PLAYER = 2; // AI plays yellow; human opens as red
 const AI_DELAY_MS = 500;
+const PLAYER_COLORS: Record<1 | 2, string> = { 1: "bg-red-500", 2: "bg-yellow-400" };
+const PLAYER_TEXT_COLORS: Record<1 | 2, string> = { 1: "text-red-500", 2: "text-yellow-500" };
+const PLAYER_EMOJI: Record<1 | 2, string> = { 1: "🔴", 2: "🟡" };
 
 const i18n: Record<Locale, {
   title: string;
@@ -187,7 +191,21 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
   const aiTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const columnRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
-  useEffect(() => { setRecord(getRecord("connectfour")); }, []);
+  useEffect(() => {
+    setRecord(getRecord("connectfour"));
+    const restored = loadConnectFourSave();
+    if (restored) {
+      setBoard(restored.board);
+      setCurrentPlayer(restored.currentPlayer);
+      setMode(restored.mode);
+      setLevel(restored.level);
+    }
+  }, []);
+  useEffect(() => {
+    if (board.some((row) => row.some((cell) => cell !== 0)) && status === "playing" && !animating) {
+      storeConnectFourSave({ board, currentPlayer, mode, level });
+    }
+  }, [board, currentPlayer, mode, level, status, animating]);
 
   const resetGame = useCallback(() => {
     if (animFrameRef.current) clearTimeout(animFrameRef.current);
@@ -201,6 +219,7 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
     setAnimating(false);
     setThinking(false);
     setActiveCol(0);
+    clearConnectFourSave();
   }, []);
 
   // Cleanup on unmount
@@ -230,10 +249,12 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
 
         const winning = checkWin(newBoard, dropRow, col, currentPlayer);
         if (winning) {
+          clearConnectFourSave();
           setWinCells(winning);
           setStatus("won");
           if (mode === "ai") setRecord(recordResult("connectfour", currentPlayer === AI_PLAYER ? "l" : "w"));
         } else if (isBoardFull(newBoard)) {
+          clearConnectFourSave();
           setStatus("draw");
           if (mode === "ai") setRecord(recordResult("connectfour", "d"));
         } else {
@@ -299,21 +320,6 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
     }
   };
 
-  const playerColors: Record<1 | 2, string> = {
-    1: "bg-red-500",
-    2: "bg-yellow-400",
-  };
-
-  const playerTextColors: Record<1 | 2, string> = {
-    1: "text-red-500",
-    2: "text-yellow-500",
-  };
-
-  const playerEmoji: Record<1 | 2, string> = {
-    1: "🔴",
-    2: "🟡",
-  };
-
   const cellSize = 52; // px per cell
   const cellGap = 6;
 
@@ -325,6 +331,7 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
           {t.title}
         </span>
         <button
+          type="button"
           onClick={resetGame}
           className="min-h-11 text-xs px-3 py-2 rounded-full border border-border hover:bg-muted transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
         >
@@ -336,7 +343,7 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <div className="inline-flex rounded-xl border border-border overflow-hidden" role="group" aria-label={`${t.modeLocal} / ${t.modeAi}`}>
           {(["local", "ai"] as GameMode[]).map((m) => (
-            <button key={m} onClick={() => switchMode(m)}
+            <button type="button" key={m} onClick={() => switchMode(m)}
               aria-pressed={mode === m}
               className={`min-h-11 px-3 py-1.5 text-xs font-bold transition-colors motion-reduce:transition-none ${mode === m ? "bg-blue-600 text-white" : "bg-muted/50 text-muted-foreground hover:bg-muted"}`}>
               {m === "local" ? t.modeLocal : t.modeAi}
@@ -346,7 +353,7 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
         {mode === "ai" && (
           <div className="inline-flex gap-1">
             {([1, 2, 3] as AiLevel[]).map((lv) => (
-              <button key={lv} onClick={() => { setLevel(lv); resetGame(); }}
+              <button type="button" key={lv} onClick={() => { setLevel(lv); resetGame(); }}
                 aria-pressed={level === lv}
                 className={`min-h-11 px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-colors motion-reduce:transition-none ${level === lv ? "border-blue-600 text-blue-600 bg-blue-600/10" : "border-border text-muted-foreground hover:bg-muted"}`}>
                 {lv === 1 ? t.level1 : lv === 2 ? t.level2 : t.level3}
@@ -368,17 +375,17 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
         )}
         {status === "playing" && !thinking && (
           <span className="text-sm font-semibold">
-            <span className={playerTextColors[currentPlayer]}>
-              {playerEmoji[currentPlayer]} {t.player} {currentPlayer}
+            <span className={PLAYER_TEXT_COLORS[currentPlayer]}>
+              {PLAYER_EMOJI[currentPlayer]} {t.player} {currentPlayer}
             </span>
             <span className="text-foreground">{t.turn}</span>
           </span>
         )}
         {status === "won" && (
-          <span className={`text-sm font-black ${playerTextColors[currentPlayer]}`}>
+          <span className={`text-sm font-black ${PLAYER_TEXT_COLORS[currentPlayer]}`}>
             {mode === "ai"
-              ? (currentPlayer === AI_PLAYER ? `${playerEmoji[currentPlayer]} ${t.aiWins}` : `${playerEmoji[currentPlayer]} ${t.youWin}`)
-              : <>{playerEmoji[currentPlayer]} {t.player} {currentPlayer}{t.wins}</>}
+              ? (currentPlayer === AI_PLAYER ? `${PLAYER_EMOJI[currentPlayer]} ${t.aiWins}` : `${PLAYER_EMOJI[currentPlayer]} ${t.youWin}`)
+              : <>{PLAYER_EMOJI[currentPlayer]} {t.player} {currentPlayer}{t.wins}</>}
           </span>
         )}
         {status === "draw" && (
@@ -411,7 +418,7 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
               >
                 <div
                   className={`rounded-full transition-opacity motion-reduce:transition-none ${
-                    playerColors[currentPlayer]
+                    PLAYER_COLORS[currentPlayer]
                   } ${showPreview ? "opacity-30" : "opacity-0"}`}
                   style={{ width: `${cellSize - 10}px`, height: `${cellSize - 10}px` }}
                 />
@@ -436,7 +443,7 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
 
               let diskClass = "bg-blue-900/60";
               if (isFalling) {
-                diskClass = playerColors[fallingCell!.player];
+                diskClass = PLAYER_COLORS[fallingCell!.player];
               } else if (cell === 1) {
                 diskClass = "bg-red-500";
               } else if (cell === 2) {
@@ -522,6 +529,7 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
       {status !== "playing" && (
         <div className="mt-4 flex justify-center">
           <button
+            type="button"
             onClick={resetGame}
             className="min-h-11 px-10 py-3 bg-blue-600 text-white rounded-full font-bold hover:bg-blue-700 transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
           >

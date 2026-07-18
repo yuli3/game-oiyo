@@ -1,11 +1,17 @@
 import { parseChessSave, type ChessSave } from "./chess-save";
 import { parseHeartsSavedGame, type HeartsSavedGame } from "./hearts";
+import {
+  parseConnectFourSave,
+  parseFreeCellSave,
+  parseGomokuSave,
+  parseSolitaireSave,
+} from "./active-game-save";
 
 export const GAME_SESSION_SCHEMA = "oiyo.game-session" as const;
 export const GAME_SESSION_SCHEMA_VERSION = 1 as const;
 
-export type RestorableGameId = "chess" | "hearts";
-export type GameSessionMode = "local" | "ai";
+export type RestorableGameId = "chess" | "hearts" | "solitaire" | "freecell" | "connect-four" | "gomoku";
+export type GameSessionMode = "local" | "ai" | "solo";
 
 export const RESTORABLE_GAME_CAPABILITIES = {
   chess: {
@@ -16,6 +22,10 @@ export const RESTORABLE_GAME_CAPABILITIES = {
     modes: ["ai"],
     difficulties: ["heuristic-v1"],
   },
+  solitaire: { modes: ["solo"], difficulties: ["draw-1"] },
+  freecell: { modes: ["solo"], difficulties: ["standard"] },
+  "connect-four": { modes: ["local", "ai"], difficulties: ["level-1", "level-2", "level-3"] },
+  gomoku: { modes: ["local", "ai"], difficulties: ["level-1", "level-2", "level-3"] },
 } as const satisfies Record<RestorableGameId, {
   modes: readonly GameSessionMode[];
   difficulties: readonly string[];
@@ -241,9 +251,43 @@ const heartsAdapter: Adapter<VersionedHeartsPayload> = {
   },
 };
 
+type SolitairePayload = NonNullable<ReturnType<typeof parseSolitaireSave>>;
+type FreeCellPayload = NonNullable<ReturnType<typeof parseFreeCellSave>>;
+type ConnectFourPayload = NonNullable<ReturnType<typeof parseConnectFourSave>>;
+type GomokuPayload = NonNullable<ReturnType<typeof parseGomokuSave>>;
+
+const solitaireAdapter: Adapter<SolitairePayload> = {
+  adapterVersion: "solitaire-session-adapter-v1", engineVersion: "solitaire-rules-v1", gameId: "solitaire",
+  modes: ["solo"], difficulties: ["draw-1"], parsePayload: parseSolitaireSave,
+  payloadDifficulty: () => "draw-1", payloadMode: () => "solo",
+  source: { format: "legacy-local-storage", schema: "oiyo.solitaire-save", schemaVersion: 1, storageKey: "oiyo:solitaire-state:v1" },
+};
+const freecellAdapter: Adapter<FreeCellPayload> = {
+  adapterVersion: "freecell-session-adapter-v1", engineVersion: "freecell-rules-v1", gameId: "freecell",
+  modes: ["solo"], difficulties: ["standard"], parsePayload: parseFreeCellSave,
+  payloadDifficulty: () => "standard", payloadMode: () => "solo",
+  source: { format: "legacy-local-storage", schema: "oiyo.freecell-save", schemaVersion: 1, storageKey: "oiyo:freecell-state:v1" },
+};
+const connectFourAdapter: Adapter<ConnectFourPayload> = {
+  adapterVersion: "connect-four-session-adapter-v1", engineVersion: "connect-four-rules-v1", gameId: "connect-four",
+  modes: ["local", "ai"], difficulties: ["level-1", "level-2", "level-3"], parsePayload: parseConnectFourSave,
+  payloadDifficulty: (value) => `level-${value.level}`, payloadMode: (value) => value.mode,
+  source: { format: "legacy-local-storage", schema: "oiyo.connect-four-save", schemaVersion: 1, storageKey: "oiyo:connect-four-state:v1" },
+};
+const gomokuAdapter: Adapter<GomokuPayload> = {
+  adapterVersion: "gomoku-session-adapter-v1", engineVersion: "gomoku-rules-v1", gameId: "gomoku",
+  modes: ["local", "ai"], difficulties: ["level-1", "level-2", "level-3"], parsePayload: parseGomokuSave,
+  payloadDifficulty: (value) => `level-${value.level}`, payloadMode: (value) => value.mode,
+  source: { format: "legacy-local-storage", schema: "oiyo.gomoku-save", schemaVersion: 1, storageKey: "oiyo:gomoku-state:v1" },
+};
+
 const adapters: Record<RestorableGameId, Adapter<unknown>> = {
   chess: chessAdapter as Adapter<unknown>,
   hearts: heartsAdapter as Adapter<unknown>,
+  solitaire: solitaireAdapter as Adapter<unknown>,
+  freecell: freecellAdapter as Adapter<unknown>,
+  "connect-four": connectFourAdapter as Adapter<unknown>,
+  gomoku: gomokuAdapter as Adapter<unknown>,
 };
 
 export function adaptChessSaveToSession(
@@ -265,16 +309,27 @@ export function adaptHeartsSaveToSession(
   return payload ? createEnvelope(heartsAdapter, payload, timing, progress) : null;
 }
 
+export function adaptActiveGameSaveToSession(
+  gameId: "solitaire" | "freecell" | "connect-four" | "gomoku",
+  value: unknown,
+  timing: GameSessionTiming,
+): GameSessionEnvelope | null {
+  const adapter = adapters[gameId];
+  const payload = adapter.parsePayload(value);
+  return payload ? createEnvelope(adapter, payload, timing) : null;
+}
+
 /** Parse an untrusted common envelope and re-run the owning game's state validator. */
 export function parseGameSessionEnvelope(raw: string | null): GameSessionEnvelope | null {
   if (!raw) return null;
   try {
     const value: unknown = JSON.parse(raw);
     if (!isRecord(value) || value.schema !== GAME_SESSION_SCHEMA || value.schemaVersion !== GAME_SESSION_SCHEMA_VERSION) return null;
-    if (value.gameId !== "chess" && value.gameId !== "hearts") return null;
-    const adapter = adapters[value.gameId];
+    if (typeof value.gameId !== "string" || !(value.gameId in adapters)) return null;
+    const gameId = value.gameId as RestorableGameId;
+    const adapter = adapters[gameId];
     if (value.adapterVersion !== adapter.adapterVersion || value.engineVersion !== adapter.engineVersion) return null;
-    if (value.terminal !== false || value.mode !== "local" && value.mode !== "ai" || typeof value.difficulty !== "string" || value.difficulty.length === 0) return null;
+    if (value.terminal !== false || value.mode !== "local" && value.mode !== "ai" && value.mode !== "solo" || typeof value.difficulty !== "string" || value.difficulty.length === 0) return null;
     if (!isRecord(value.determinism) || value.determinism.strategy !== "state-complete" || value.determinism.seed !== null) return null;
     if (!sourceMatches(value.source, adapter.source)) return null;
     const timing = { savedAt: value.savedAt, startedAt: value.startedAt, ...(value.resumedAt === undefined ? {} : { resumedAt: value.resumedAt }) } as GameSessionTiming;

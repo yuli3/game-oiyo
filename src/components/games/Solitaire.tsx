@@ -11,6 +11,7 @@ import {
   type SolitaireState,
   type SolitaireSuit,
 } from '../../lib/games/solitaire';
+import { clearSolitaireSave, loadSolitaireSave, storeSolitaireSave } from '../../lib/games/active-game-save';
 
 type Selection =
   | { type: 'tableau'; column: number; cardIndex: number }
@@ -30,20 +31,24 @@ const SUIT_ICON: Record<SolitaireSuit, string> = { hearts: '♥', diamonds: '♦
 
 const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
   const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
-  const [game, setGame] = useState<SolitaireState>(() => dealSolitaire());
+  const [restored] = useState(loadSolitaireSave);
+  const [game, setGame] = useState<SolitaireState>(() => restored?.state ?? dealSolitaire());
   const [selection, setSelection] = useState<Selection | null>(null);
   const [announcement, setAnnouncement] = useState<string>(t.instructions);
-  const [record, setRecord] = useState<GameRecord | null>(null);
-  const moveMadeRef = useRef(false);
+  const [record, setRecord] = useState<GameRecord | null>(() => getRecord('solitaire'));
+  const moveMadeRef = useRef(Boolean(restored));
   const wonRef = useRef(false);
 
-  useEffect(() => { setRecord(getRecord('solitaire')); }, []);
   useEffect(() => { setAnnouncement(t.instructions); }, [t.instructions]);
+  useEffect(() => {
+    if (moveMadeRef.current && !isSolitaireWon(game)) storeSolitaireSave(game);
+  }, [game]);
 
   const initGame = useCallback(() => {
     if (moveMadeRef.current && !wonRef.current) setRecord(recordResult('solitaire', 'l'));
     moveMadeRef.current = false;
     wonRef.current = false;
+    clearSolitaireSave();
     setGame(dealSolitaire());
     setSelection(null);
     setAnnouncement(t.instructions);
@@ -114,6 +119,7 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
   useEffect(() => {
     if (won && !wonRef.current) {
       wonRef.current = true;
+      clearSolitaireSave();
       setRecord(recordResult('solitaire', 'w'));
     }
   }, [won]);
