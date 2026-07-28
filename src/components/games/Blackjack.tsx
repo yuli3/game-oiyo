@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GameContainer, PlayingCard } from '../ui/game/GamePrimitives';
+import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 import {
     dealerShouldHit,
     evaluateBlackjackHand,
@@ -11,14 +12,15 @@ import {
 
 const Blackjack: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const COPY = {
-        ko: { title: "블랙잭 (Blackjack)", hit: "카드 받기(Hit)", stand: "멈추기(Stand)", reset: "새 게임", score: "합계", bust: "버스트! (21 초과)", win: "승리!", lost: "패배!", push: "무승부", dealer: "딜러", player: "나" },
-        en: { title: "Blackjack", hit: "Hit", stand: "Stand", reset: "New Game", score: "Score", bust: "Bust!", win: "You Win!", lost: "You Lost!", push: "Push", dealer: "Dealer", player: "You" },
-        ja: { title: "ブラックジャック", hit: "ヒット", stand: "スタンド", reset: "新しいゲーム", score: "合計", bust: "バースト！(21超過)", win: "勝利！", lost: "敗北！", push: "引き分け", dealer: "ディーラー", player: "あなた" },
-        zh: { title: "二十一点", hit: "要牌", stand: "停牌", reset: "新游戏", score: "点数", bust: "爆牌！(超过21)", win: "你赢了！", lost: "你输了！", push: "平局", dealer: "庄家", player: "你" },
-        fr: { title: "Blackjack", hit: "Tirer", stand: "Rester", reset: "Nouvelle partie", score: "Total", bust: "Brûlé ! (plus de 21)", win: "Gagné !", lost: "Perdu !", push: "Égalité", dealer: "Croupier", player: "Vous" },
-        es: { title: "Blackjack", hit: "Pedir", stand: "Plantarse", reset: "Nueva partida", score: "Total", bust: "¡Te pasaste! (más de 21)", win: "¡Ganaste!", lost: "¡Perdiste!", push: "Empate", dealer: "Crupier", player: "Tú" }
+        ko: { title: "블랙잭 (Blackjack)", subtitle: "확률과 위험", hit: "카드 받기(Hit)", stand: "멈추기(Stand)", reset: "새 게임", score: "합계", bust: "버스트! (21 초과)", win: "승리!", lost: "패배!", push: "무승부", dealer: "딜러", player: "나" },
+        en: { title: "Blackjack", subtitle: "Probability & Risk", hit: "Hit", stand: "Stand", reset: "New Game", score: "Score", bust: "Bust!", win: "You Win!", lost: "You Lost!", push: "Push", dealer: "Dealer", player: "You" },
+        ja: { title: "ブラックジャック", subtitle: "確率とリスク", hit: "ヒット", stand: "スタンド", reset: "新しいゲーム", score: "合計", bust: "バースト！(21超過)", win: "勝利！", lost: "敗北！", push: "引き分け", dealer: "ディーラー", player: "あなた" },
+        zh: { title: "二十一点", subtitle: "概率与风险", hit: "要牌", stand: "停牌", reset: "新游戏", score: "点数", bust: "爆牌！(超过21)", win: "你赢了！", lost: "你输了！", push: "平局", dealer: "庄家", player: "你" },
+        fr: { title: "Blackjack", subtitle: "Probabilité et risque", hit: "Tirer", stand: "Rester", reset: "Nouvelle partie", score: "Total", bust: "Brûlé ! (plus de 21)", win: "Gagné !", lost: "Perdu !", push: "Égalité", dealer: "Croupier", player: "Vous" },
+        es: { title: "Blackjack", subtitle: "Probabilidad y riesgo", hit: "Pedir", stand: "Plantarse", reset: "Nueva partida", score: "Total", bust: "¡Te pasaste! (más de 21)", win: "¡Ganaste!", lost: "¡Perdiste!", push: "Empate", dealer: "Crupier", player: "Tú" }
     };
     const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
+    const reducedMotion = usePrefersReducedMotion();
 
     const [deck, setDeck] = useState<Card[]>([]);
     const [playerHand, setPlayerHand] = useState<Card[]>([]);
@@ -91,7 +93,7 @@ const Blackjack: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 currentDeck = currentDeck.slice(1);
                 setDealerHand(currentDealerHand);
                 setDeck(currentDeck);
-                timeoutId = setTimeout(playDealer, 600);
+                timeoutId = setTimeout(playDealer, reducedMotion ? 0 : 600);
                 return;
             }
 
@@ -107,7 +109,7 @@ const Blackjack: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     }, [status]);
 
     return (
-        <GameContainer title={t.title} subtitle="Probability & Risk" onReset={initGame}>
+        <GameContainer title={t.title} subtitle={t.subtitle} onReset={initGame}>
             <div className="space-y-12">
                 {/* Dealer Area */}
                 <div className="text-center">
@@ -128,7 +130,7 @@ const Blackjack: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 {/* Info Display */}
                 <div className="h-12 flex items-center justify-center">
                     {message && (
-                        <div className={`px-8 py-2 rounded-full font-black text-lg shadow-sm animate-in zoom-in-95 ${message === 'win' ? 'bg-primary text-primary-foreground' : message === 'lost' ? 'bg-destructive text-destructive-foreground' : 'bg-muted text-muted-foreground'}`}>
+                        <div role="status" aria-live="polite" className={`px-8 py-2 rounded-full font-black text-lg shadow-sm ${!reducedMotion ? 'animate-in zoom-in-95' : ''} ${message === 'win' ? 'bg-primary text-primary-foreground' : message === 'lost' ? 'bg-destructive text-destructive-foreground' : 'bg-muted text-muted-foreground'}`}>
                             {t[message as keyof typeof t]}
                         </div>
                     )}
@@ -151,11 +153,11 @@ const Blackjack: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     <div className="flex justify-center gap-4">
                         {status === 'playing' ? (
                             <>
-                                <button onClick={hit} className="px-10 py-3 bg-primary text-primary-foreground rounded-full font-black shadow-lg hover:opacity-90">{t.hit}</button>
-                                <button onClick={stand} className="px-10 py-3 bg-muted text-foreground rounded-full font-black shadow-sm border border-border">{t.stand}</button>
+                                <button type="button" onClick={hit} className="px-10 py-3 bg-primary text-primary-foreground rounded-full font-black shadow-lg hover:opacity-90">{t.hit}</button>
+                                <button type="button" onClick={stand} className="px-10 py-3 bg-muted text-foreground rounded-full font-black shadow-sm border border-border">{t.stand}</button>
                             </>
                         ) : (
-                            <button onClick={initGame} className="px-10 py-3 bg-primary text-primary-foreground rounded-full font-black shadow-lg">{t.reset}</button>
+                            <button type="button" onClick={initGame} className="px-10 py-3 bg-primary text-primary-foreground rounded-full font-black shadow-lg">{t.reset}</button>
                         )}
                     </div>
                 </div>

@@ -1,16 +1,26 @@
 import { parseChessSave, type ChessSave } from "./chess-save";
 import { parseHeartsSavedGame, type HeartsSavedGame } from "./hearts";
 import {
+  parseCheckersSave,
   parseConnectFourSave,
   parseFreeCellSave,
+  parseGame2048Save,
   parseGomokuSave,
+  parsePuzzle15Save,
+  parseReversiSave,
   parseSolitaireSave,
+  parseSudokuSave,
+  type CheckersSave,
+  type Game2048Save,
+  type Puzzle15Save,
+  type ReversiSave,
+  type SudokuSave,
 } from "./active-game-save";
 
 export const GAME_SESSION_SCHEMA = "oiyo.game-session" as const;
 export const GAME_SESSION_SCHEMA_VERSION = 1 as const;
 
-export type RestorableGameId = "chess" | "hearts" | "solitaire" | "freecell" | "connect-four" | "gomoku";
+export type RestorableGameId = "chess" | "hearts" | "solitaire" | "freecell" | "connect-four" | "gomoku" | "sudoku" | "puzzle15" | "checkers" | "reversi" | "game-2048";
 export type GameSessionMode = "local" | "ai" | "solo";
 
 export const RESTORABLE_GAME_CAPABILITIES = {
@@ -26,6 +36,11 @@ export const RESTORABLE_GAME_CAPABILITIES = {
   freecell: { modes: ["solo"], difficulties: ["standard"] },
   "connect-four": { modes: ["local", "ai"], difficulties: ["level-1", "level-2", "level-3"] },
   gomoku: { modes: ["local", "ai"], difficulties: ["level-1", "level-2", "level-3"] },
+  sudoku: { modes: ["solo"], difficulties: ["classic-demo-v1"] },
+  puzzle15: { modes: ["solo"], difficulties: ["3x3", "4x4", "5x5"] },
+  checkers: { modes: ["local", "ai"], difficulties: ["level-1", "level-2", "level-3"] },
+  reversi: { modes: ["local", "ai"], difficulties: ["level-1", "level-2", "level-3"] },
+  "game-2048": { modes: ["solo"], difficulties: ["classic-4x4"] },
 } as const satisfies Record<RestorableGameId, {
   modes: readonly GameSessionMode[];
   difficulties: readonly string[];
@@ -281,6 +296,39 @@ const gomokuAdapter: Adapter<GomokuPayload> = {
   source: { format: "legacy-local-storage", schema: "oiyo.gomoku-save", schemaVersion: 1, storageKey: "oiyo:gomoku-state:v1" },
 };
 
+const sudokuAdapter: Adapter<SudokuSave> = {
+  adapterVersion: "sudoku-session-adapter-v1", engineVersion: "sudoku-rules-v1", gameId: "sudoku",
+  modes: ["solo"], difficulties: ["classic-demo-v1"], parsePayload: parseSudokuSave,
+  payloadDifficulty: () => "classic-demo-v1", payloadMode: () => "solo",
+  source: { format: "legacy-local-storage", schema: "oiyo.sudoku-save", schemaVersion: 1, storageKey: "oiyo:sudoku-state:v1" },
+};
+const puzzle15Adapter: Adapter<Puzzle15Save> = {
+  adapterVersion: "puzzle15-session-adapter-v1", engineVersion: "puzzle15-rules-v1", gameId: "puzzle15",
+  modes: ["solo"], difficulties: ["3x3", "4x4", "5x5"], parsePayload: parsePuzzle15Save,
+  payloadDifficulty: (value) => `${value.size}x${value.size}`, payloadMode: () => "solo",
+  source: { format: "legacy-local-storage", schema: "oiyo.puzzle15-save", schemaVersion: 1, storageKey: "oiyo:puzzle15-state:v1" },
+};
+
+const checkersAdapter: Adapter<CheckersSave> = {
+  adapterVersion: "checkers-session-adapter-v1", engineVersion: "checkers-rules-v1", gameId: "checkers",
+  modes: ["local", "ai"], difficulties: ["level-1", "level-2", "level-3"], parsePayload: parseCheckersSave,
+  payloadDifficulty: (value) => `level-${value.level}`, payloadMode: (value) => value.mode,
+  source: { format: "legacy-local-storage", schema: "oiyo.checkers-save", schemaVersion: 1, storageKey: "oiyo:checkers-state:v1" },
+};
+const reversiAdapter: Adapter<ReversiSave> = {
+  adapterVersion: "reversi-session-adapter-v1", engineVersion: "reversi-rules-v1", gameId: "reversi",
+  modes: ["local", "ai"], difficulties: ["level-1", "level-2", "level-3"], parsePayload: parseReversiSave,
+  payloadDifficulty: (value) => `level-${value.level}`, payloadMode: (value) => value.mode,
+  source: { format: "legacy-local-storage", schema: "oiyo.reversi-save", schemaVersion: 1, storageKey: "oiyo:reversi-state:v1" },
+};
+
+const game2048Adapter: Adapter<Game2048Save> = {
+  adapterVersion: "game-2048-session-adapter-v1", engineVersion: "game-2048-rules-v1", gameId: "game-2048",
+  modes: ["solo"], difficulties: ["classic-4x4"], parsePayload: parseGame2048Save,
+  payloadDifficulty: () => "classic-4x4", payloadMode: () => "solo",
+  source: { format: "legacy-local-storage", schema: "oiyo.game-2048-save", schemaVersion: 1, storageKey: "oiyo:game-2048-state:v1" },
+};
+
 const adapters: Record<RestorableGameId, Adapter<unknown>> = {
   chess: chessAdapter as Adapter<unknown>,
   hearts: heartsAdapter as Adapter<unknown>,
@@ -288,6 +336,11 @@ const adapters: Record<RestorableGameId, Adapter<unknown>> = {
   freecell: freecellAdapter as Adapter<unknown>,
   "connect-four": connectFourAdapter as Adapter<unknown>,
   gomoku: gomokuAdapter as Adapter<unknown>,
+  sudoku: sudokuAdapter as Adapter<unknown>,
+  puzzle15: puzzle15Adapter as Adapter<unknown>,
+  checkers: checkersAdapter as Adapter<unknown>,
+  reversi: reversiAdapter as Adapter<unknown>,
+  "game-2048": game2048Adapter as Adapter<unknown>,
 };
 
 export function adaptChessSaveToSession(
@@ -310,7 +363,7 @@ export function adaptHeartsSaveToSession(
 }
 
 export function adaptActiveGameSaveToSession(
-  gameId: "solitaire" | "freecell" | "connect-four" | "gomoku",
+  gameId: "solitaire" | "freecell" | "connect-four" | "gomoku" | "sudoku" | "puzzle15" | "checkers" | "reversi" | "game-2048",
   value: unknown,
   timing: GameSessionTiming,
 ): GameSessionEnvelope | null {

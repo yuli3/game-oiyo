@@ -2,12 +2,29 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import confetti from "canvas-confetti";
 import type { Locale } from "../../lib/i18n";
 import { getBest, recordBest } from "../../lib/games/records";
+import { frameDeltaSeconds } from "../../lib/games/time-contracts";
+import {
+  GOOD_MS,
+  beatToSeconds,
+  comboAfterJudgement,
+  generateChart,
+  judgeOffset,
+  levelFromRhythmRecord,
+  noteProgress,
+  rhythmDifficulty,
+  rhythmRecordExtra,
+  scoreForJudgement,
+} from "../../lib/games/rhythm-beatmap";
 
 /* ────────────────────────────────────────────────────────────────────────────
  * Rhythm Tap — a 4-lane falling-note rhythm game. Tap the lane (touch) or press
- * D / F / J / K when a note reaches the hit line; timing is judged Perfect / Good
- * / Miss with a combo. No audio dependency — a purely visual rhythm. Self-contained
- * (one component per game, 6 locales inline, PB via records.ts, rAF loop).
+ * D / F / J / K on the beat; timing is judged Perfect / Good / Miss with a combo.
+ *
+ * The beat grid is the source of truth (`rhythm-beatmap.ts`): notes sit on beats
+ * of a chart rather than appearing at random, so the patterns can be learned.
+ * Positions are derived from the time left until a note arrives and judgement is
+ * measured in milliseconds, so scroll speed never changes how strict the game is.
+ * Audio is a synthesized click layered on top — the game is fully playable muted.
  * ────────────────────────────────────────────────────────────────────────── */
 
 const W = 360;
@@ -16,18 +33,49 @@ const GAME_KEY = "rhythm-tap";
 const LANES = 4;
 const LANE_W = W / LANES;
 const HIT_Y = H - 70;
-const PERFECT = 24;
-const GOOD = 48;
 const MAX_MISS = 5;
 const LANE_KEYS = ["d", "f", "j", "k"];
 const LANE_HUE = [265, 210, 330, 150];
 
 type Phase = "menu" | "playing" | "over";
-interface Note { lane: number; y: number; id: number }
+
+/* Synthesized feedback. No audio files, so the bundle cost is zero, and every
+ * cue below is also shown on screen — muting the tab loses nothing but polish. */
+let audioCtx: AudioContext | null = null;
+
+function ensureAudio(): AudioContext | null {
+  if (typeof window === "undefined") return null;
+  const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  if (!Ctor) return null;
+  if (!audioCtx) audioCtx = new Ctor();
+  // Browsers start the context suspended until a user gesture resumes it.
+  if (audioCtx.state === "suspended") void audioCtx.resume();
+  return audioCtx;
+}
+
+function playClick(bright: boolean) {
+  const ctx = ensureAudio();
+  if (!ctx) return;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "triangle";
+  osc.frequency.value = bright ? 880 : 520;
+  gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.22, ctx.currentTime + 0.005);
+  gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.12);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start();
+  osc.stop(ctx.currentTime + 0.13);
+}
+/** `seconds` is when the note must be hit, measured from the start of the run. */
+interface Note { lane: number; seconds: number; id: number }
 interface GS {
   notes: Note[];
   score: number; combo: number; maxCombo: number; miss: number;
-  speed: number; spawnGap: number; lastSpawn: number; idc: number; t: number;
+  /** Elapsed play time in seconds; the only clock the chart is read against. */
+  songSeconds: number;
+  approachSeconds: number;
+  level: number;
   flash: number[]; // per-lane flash timer
   judge: string; judgeT: number;
 }
@@ -62,6 +110,7 @@ const RhythmTap: React.FC<Props> = ({ locale }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const gsRef = useRef<GS | null>(null);
   const rafRef = useRef<number | undefined>(undefined);
+  const lastFrame = useRef<number | null>(null);
   const phaseRef = useRef<Phase>("menu");
   phaseRef.current = phase;
 
@@ -71,7 +120,13 @@ const RhythmTap: React.FC<Props> = ({ locale }) => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     const prev = getBest(GAME_KEY);
     const beat = !prev || finalScore > prev.value;
-    const saved = recordBest(GAME_KEY, finalScore, "score");
+    // Clearing the chart promotes the next run. `recordBest` only stores `extra`
+    // on a new personal best, so in practice promotion needs a clear *and* a
+    // better score — strict, but it never demotes and never skips a level.
+    const gs = gsRef.current;
+    const cleared = !!gs && gs.miss < MAX_MISS;
+    const nextLevel = gs ? gs.level + (cleared ? 1 : 0) : 1;
+    const saved = recordBest(GAME_KEY, finalScore, "score", rhythmRecordExtra(nextLevel, gs?.maxCombo ?? 0));
     setBest(saved.value);
     setIsNewBest(beat && finalScore > 0);
     if (beat && finalScore > 0) confetti({ particleCount: 90, spread: 72, origin: { y: 0.6 } });
@@ -82,46 +137,49 @@ const RhythmTap: React.FC<Props> = ({ locale }) => {
     const gs = gsRef.current;
     if (!gs || phaseRef.current !== "playing") return;
     gs.flash[lane] = 8;
-    // nearest note in lane within GOOD window of hit line
-    let bestIdx = -1; let bestDist = GOOD + 1;
+    // Nearest note in this lane, judged on time rather than on pixels so the
+    // window means the same number of milliseconds at every scroll speed.
+    let bestIdx = -1;
+    let bestOffsetMs = Number.POSITIVE_INFINITY;
     for (let i = 0; i < gs.notes.length; i++) {
       const n = gs.notes[i];
       if (n.lane !== lane) continue;
-      const d = Math.abs(n.y - HIT_Y);
-      if (d < bestDist) { bestDist = d; bestIdx = i; }
+      const offsetMs = (gs.songSeconds - n.seconds) * 1000;
+      if (Math.abs(offsetMs) < Math.abs(bestOffsetMs)) { bestOffsetMs = offsetMs; bestIdx = i; }
     }
-    if (bestIdx >= 0) {
-      gs.notes.splice(bestIdx, 1);
-      if (bestDist <= PERFECT) { gs.score += 100 + gs.combo * 5; gs.judge = t.perfect; }
-      else { gs.score += 50 + gs.combo * 2; gs.judge = t.good; }
-      gs.combo += 1; gs.maxCombo = Math.max(gs.maxCombo, gs.combo);
-      gs.judgeT = 22;
-      setScore(gs.score); setCombo(gs.combo);
-    }
+    if (bestIdx < 0 || Math.abs(bestOffsetMs) > GOOD_MS) return;
+
+    const judgement = judgeOffset(bestOffsetMs);
+    gs.notes.splice(bestIdx, 1);
+    gs.score += scoreForJudgement(judgement, gs.combo);
+    gs.judge = judgement === "perfect" ? t.perfect : t.good;
+    gs.combo = comboAfterJudgement(gs.combo, judgement);
+    gs.maxCombo = Math.max(gs.maxCombo, gs.combo);
+    gs.judgeT = 22;
+    playClick(judgement === "perfect");
+    setScore(gs.score); setCombo(gs.combo);
   }, [t.perfect, t.good]);
 
-  const loop = useCallback(() => {
+  const loop = useCallback((now?: number) => {
     const gs = gsRef.current; const canvas = canvasRef.current;
     if (!gs || !canvas) return;
     const ctx = canvas.getContext("2d"); if (!ctx) return;
 
-    gs.t += 1;
-    gs.speed = 3.2 + gs.score * 0.00025;
-    gs.spawnGap = Math.max(26, 52 - gs.score * 0.002);
-    // spawn
-    if (gs.t - gs.lastSpawn >= gs.spawnGap) {
-      gs.notes.push({ lane: Math.floor(Math.random() * LANES), y: -24, id: gs.idc++ });
-      gs.lastSpawn = gs.t;
-    }
-    // move + miss detection
+    const frameNow = now ?? performance.now();
+    // Clamped delta, so a backgrounded tab resumes the song instead of skipping
+    // a chunk of the chart and handing the player unavoidable misses.
+    gs.songSeconds += frameDeltaSeconds(lastFrame.current, frameNow);
+    lastFrame.current = frameNow;
+
+    // Miss detection: a note is gone once the GOOD window has fully passed.
     const survivors: Note[] = [];
     let missed = false;
     for (const n of gs.notes) {
-      n.y += gs.speed;
-      if (n.y - HIT_Y > GOOD) { missed = true; gs.miss += 1; gs.combo = 0; }
+      if ((gs.songSeconds - n.seconds) * 1000 > GOOD_MS) { missed = true; gs.miss += 1; gs.combo = 0; }
       else survivors.push(n);
     }
     gs.notes = survivors;
+    if (gs.notes.length === 0) { endGame(gs.score); return; }
     if (missed) { gs.judge = t.missed; gs.judgeT = 20; setMiss(gs.miss); setCombo(0); }
 
     // draw
@@ -143,11 +201,14 @@ const RhythmTap: React.FC<Props> = ({ locale }) => {
       ctx.strokeStyle = "rgba(196,181,253,0.5)"; ctx.lineWidth = 2;
       ctx.strokeRect(l * LANE_W + 8, HIT_Y - 14, LANE_W - 16, 28);
     }
-    // notes
+    // Notes. Position is derived from the time left until the note is due, so
+    // it is identical at 60Hz and 120Hz and never drifts from the judgement.
     for (const n of gs.notes) {
+      const progress = noteProgress(n.seconds, gs.songSeconds, gs.approachSeconds);
+      if (progress < 0) continue; // still in the lead-in, not on screen yet
       ctx.fillStyle = `hsl(${LANE_HUE[n.lane]} 70% 58%)`;
       const x = n.lane * LANE_W + 8;
-      ctx.fillRect(x, n.y - 12, LANE_W - 16, 24);
+      ctx.fillRect(x, HIT_Y * progress - 12, LANE_W - 16, 24);
     }
     // judge text
     if (gs.judgeT > 0) {
@@ -163,9 +224,26 @@ const RhythmTap: React.FC<Props> = ({ locale }) => {
   }, [endGame, t.missed, t.combo]);
 
   const begin = useCallback(() => {
-    gsRef.current = { notes: [], score: 0, combo: 0, maxCombo: 0, miss: 0, speed: 3.2, spawnGap: 52, lastSpawn: 0, idc: 0, t: 0, flash: [0, 0, 0, 0], judge: "", judgeT: 0 };
+    const level = levelFromRhythmRecord(getBest(GAME_KEY)?.extra);
+    const { approachSeconds } = rhythmDifficulty(level);
+    const chart = generateChart(level, Math.floor(Math.random() * 997));
+    // Beats become absolute seconds once, so the loop never re-reads the chart.
+    const leadIn = beatToSeconds(chart.leadInBeats, chart.bpm) + approachSeconds;
+    const notes: Note[] = chart.notes.map((note, index) => ({
+      lane: note.lane,
+      seconds: leadIn + beatToSeconds(note.beat, chart.bpm),
+      id: index,
+    }));
+
+    gsRef.current = {
+      notes, score: 0, combo: 0, maxCombo: 0, miss: 0,
+      songSeconds: 0, approachSeconds, level,
+      flash: [0, 0, 0, 0], judge: "", judgeT: 0,
+    };
+    lastFrame.current = null;
     setScore(0); setCombo(0); setMiss(0); setIsNewBest(false);
     setPhase("playing");
+    ensureAudio(); // resume the context while we still have the start gesture
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     rafRef.current = requestAnimationFrame(loop);
   }, [loop]);

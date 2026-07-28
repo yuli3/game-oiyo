@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { moveSnake as calculateSnakeMove } from '../../lib/games/react-state-transitions';
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { getBest, recordBest } from '../../lib/games/records';
 
@@ -72,40 +73,22 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         if (status !== 'playing') return;
 
         const moveSnake = () => {
-            setSnake((prev) => {
-                const head = prev[0];
-                const newHead = { x: head.x + direction.x, y: head.y + direction.y };
-                lastDirection.current = direction;
-
-                // Wall Collision
-                if (newHead.x < 0 || newHead.x >= GRID_SIZE || newHead.y < 0 || newHead.y >= GRID_SIZE) {
-                    setStatus('over');
-                    return prev;
-                }
-
-                // Self Collision
-                if (prev.some((s) => s.x === newHead.x && s.y === newHead.y)) {
-                    setStatus('over');
-                    return prev;
-                }
-
-                const newSnake = [newHead, ...prev];
-
-                // Food Consumption
-                if (newHead.x === food.x && newHead.y === food.y) {
-                    setScore((s) => s + 10);
-                    setFood(generateFood(newSnake));
-                } else {
-                    newSnake.pop();
-                }
-
-                return newSnake;
-            });
+            const transition = calculateSnakeMove(snake, direction, food, GRID_SIZE);
+            lastDirection.current = direction;
+            if (transition.outcome === 'collision') {
+                setStatus('over');
+                return;
+            }
+            setSnake(transition.snake);
+            if (transition.outcome === 'ate') {
+                setScore((current) => current + 10);
+                setFood(generateFood(transition.snake));
+            }
         };
 
         const interval = setInterval(moveSnake, Math.max(50, 150 - score / 5));
         return () => clearInterval(interval);
-    }, [status, direction, food, score, generateFood]);
+    }, [status, direction, food, score, snake, generateFood]);
 
     useEffect(() => {
         if (score > best) {

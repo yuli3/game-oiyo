@@ -4,6 +4,7 @@ import type { Locale } from '../../lib/i18n';
 import { checkersApply, checkersApplyTurn, checkersBestMove, checkersMoves, type CheckersPiece, type CheckersMove } from '../../lib/games/ai/checkers';
 import type { AiLevel, GameMode } from '../../lib/games/ai/types';
 import { getRecord, recordResult, type GameRecord } from '../../lib/games/records';
+import { clearCheckersSave, loadCheckersSave, storeCheckersSave } from '../../lib/games/active-game-save';
 
 const SIZE = 8;
 
@@ -43,6 +44,7 @@ const Checkers: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     const squareRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
     const initGame = useCallback(() => {
+        clearCheckersSave();
         if (aiTimer.current) clearTimeout(aiTimer.current);
         const newBoard = Array(SIZE * SIZE).fill(null);
         for (let i = 0; i < SIZE * SIZE; i++) {
@@ -62,12 +64,35 @@ const Checkers: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         setFocusIndex(56);
     }, []);
 
-    useEffect(() => { initGame(); }, [initGame]);
+    useEffect(() => {
+        const restored = loadCheckersSave();
+        if (restored) {
+            if (aiTimer.current) clearTimeout(aiTimer.current);
+            setBoard(restored.board);
+            setIsRedTurn(restored.isRedTurn);
+            setForcedFrom(restored.forcedFrom);
+            setSelected(restored.forcedFrom);
+            setMode(restored.mode);
+            setLevel(restored.level);
+            setWinner(null);
+            setThinking(false);
+            setFocusIndex(56);
+        } else {
+            initGame();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     useEffect(() => { setRecord(getRecord('checkers')); }, []);
     useEffect(() => () => { if (aiTimer.current) clearTimeout(aiTimer.current); }, []);
 
+    useEffect(() => {
+        if (winner !== null) { clearCheckersSave(); return; }
+        storeCheckersSave({ board, isRedTurn, forcedFrom, mode, level });
+    }, [board, isRedTurn, forcedFrom, mode, level, winner]);
+
     const finish = (w: number) => {
         setWinner(w);
+        clearCheckersSave();
         if (mode === 'ai') setRecord(recordResult('checkers', w === AI_PLAYER ? 'l' : 'w'));
     };
 

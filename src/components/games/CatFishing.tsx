@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
+import { elapsedSeconds } from '../../lib/games/time-contracts';
+import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 
 // ─── Cat Fishing — catch the fish before they get away ───────────────────────
 // Ported from ahoxy-legacy; play area is contained (was full-viewport) and the
@@ -45,12 +47,14 @@ const makeFish = (count: number, speed: number): FishState[] =>
 
 const CatFishing: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const t = COPY[(locale as keyof typeof COPY)] ?? COPY.en;
+    const prefersReducedMotion = usePrefersReducedMotion();
 
     const [difficulty, setDifficulty] = useState<Difficulty>('normal');
     const [fish, setFish] = useState<FishState[]>(() => makeFish(CONFIGS.normal.fishCount, CONFIGS.normal.baseSpeed));
     const [seconds, setSeconds] = useState(0);
     const [best, setBest] = useState<Record<string, number>>({});
     const started = useRef(false);
+    const startedAt = useRef<number | null>(null);
     const areaRef = useRef<HTMLDivElement>(null);
     const pointer = useRef({ x: -1000, y: -1000 });
     const fishRef = useRef(fish);
@@ -69,7 +73,7 @@ const CatFishing: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     // timer
     useEffect(() => {
         if (won || !started.current) return;
-        const id = setInterval(() => setSeconds((s) => s + 1), 1000);
+        const id = setInterval(() => setSeconds(elapsedSeconds(startedAt.current, performance.now())), 100);
         return () => clearInterval(id);
     }, [won, remaining]);
 
@@ -125,6 +129,7 @@ const CatFishing: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const catchFish = (id: number) => {
         if (won) return;
         started.current = true;
+        if (startedAt.current === null) startedAt.current = performance.now();
         setFish((prev) => {
             const next = prev.map((f) => (f.id === id ? { ...f, caught: true } : f));
             if (next.every((f) => f.caught)) {
@@ -188,7 +193,7 @@ const CatFishing: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 ))}
 
                 {won && (
-                    <div className="absolute inset-0 z-10 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center gap-2 animate-in fade-in zoom-in-95" role="status" aria-live="polite">
+                    <div className={`absolute inset-0 z-10 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center gap-2 ${prefersReducedMotion ? '' : 'animate-in fade-in zoom-in-95'}`} role="status" aria-live="polite">
                         <p className="text-2xl font-black text-primary">{t.win}</p>
                         <p className="text-sm text-muted-foreground">{t.winSub}</p>
                         <p className="text-sm font-bold text-muted-foreground">{t.time} {fmt(seconds)}</p>

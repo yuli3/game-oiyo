@@ -52,6 +52,8 @@ const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
   const [record, setRecord] = useState<GameRecord | null>(() => getRecord('freecell'));
   const moveMadeRef = useRef(Boolean(restored));
   const wonRef = useRef(false);
+  const lastFocusedRef = useRef<HTMLElement | null>(null);
+  const winDialogRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => { setStatus(t.instructions); }, [t]);
   useEffect(() => {
@@ -75,6 +77,9 @@ const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
       clearFreeCellSave();
       setRecord(recordResult('freecell', 'w'));
     }
+  }, [isWon]);
+  useEffect(() => {
+    if (isWon) winDialogRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
   }, [isWon]);
 
   const chooseSource = (source: FreeCellSource) => {
@@ -115,10 +120,17 @@ const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
       action();
     }
   };
+  const closeWin = () => {
+    initGame();
+    requestAnimationFrame(() => lastFocusedRef.current?.focus());
+  };
+  const trapWinFocus = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Escape') { event.preventDefault(); closeWin(); }
+  };
 
   return (
     <GameContainer title={t.title} subtitle={t.desc} resetLabel={t.reset} onReset={initGame}>
-      <div className="space-y-5">
+      <div className="space-y-5" onFocusCapture={(event) => { lastFocusedRef.current = event.target instanceof HTMLElement ? event.target : null; }}>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">{t.instructions}</p>
           {record && record.w + record.l > 0 && (
@@ -194,9 +206,9 @@ const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
       </div>
 
       {isWon && (
-        <div className="fixed inset-0 z-30 flex flex-col items-center justify-center bg-background/90 p-6 text-center backdrop-blur-xl motion-reduce:animate-none" role="dialog" aria-modal="true" aria-labelledby="freecell-win-title">
+        <div ref={winDialogRef} onKeyDown={trapWinFocus} className="fixed inset-0 z-30 flex flex-col items-center justify-center bg-background/90 p-6 text-center backdrop-blur-xl motion-reduce:animate-none" role="dialog" aria-modal="true" aria-labelledby="freecell-win-title">
           <h4 id="freecell-win-title" className="mb-6 text-4xl font-black text-primary">{t.win}</h4>
-          <button type="button" onClick={initGame} className="min-h-11 rounded-full bg-primary px-12 py-4 font-black text-primary-foreground shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">{t.restart}</button>
+          <button type="button" onClick={closeWin} className="min-h-11 rounded-full bg-primary px-12 py-4 font-black text-primary-foreground shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">{t.restart}</button>
         </div>
       )}
     </GameContainer>

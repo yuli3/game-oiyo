@@ -12,6 +12,7 @@ export async function getStaticPaths() {
   return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
 }
 const { locale } = Astro.props as { locale: Locale };
+const blogTool = (slug: string) => `https://blog.oiyo.net/${locale}/${slug}/`;
 
 const meta: Record<Locale, { title: string; description: string }> = {
   ko: { title: "로스트아크 레이드 버스비 계산기 — 경매 최적가", description: "기사·미참·독식 인원과 가격을 입력하면 레이드 버스의 최적 경매가와 기사 분배 금액을 계산합니다. 손님 모두 입찰/독식만 입찰 모드 지원." },
@@ -39,8 +40,8 @@ const content = {
     relatedTitle: "관련 도구",
     related: [
       { href: "/ko/lostark-raid-distribution/", label: "본1부3 품앗이 분배 계산기", desc: "버스비와 다른 별개 도구 — 파티 분배 자동화." },
-      { href: "/ko/dutch-pay-calculator/", label: "더치페이 계산기", desc: "비용을 공평하게 나눕니다." },
-      { href: "/ko/percentage-calculator/", label: "퍼센트 계산기", desc: "비율을 계산합니다." },
+      { href: blogTool("dutch-pay-calculator"), label: "더치페이 계산기", desc: "비용을 공평하게 나눕니다." },
+      { href: blogTool("percentage-calculator"), label: "퍼센트 계산기", desc: "비율을 계산합니다." },
     ],
     disclaimer: "계산 결과는 입력값 기준 참고치입니다. 실제 경매·거래는 게임 내 시세와 합의에 따릅니다.",
   },
@@ -59,8 +60,8 @@ const content = {
     relatedTitle: "Related tools",
     related: [
       { href: "/en/lostark-raid-distribution/", label: "1-Main/3-Alt Distribution Calculator", desc: "A different tool from bus fee — automates party distribution." },
-      { href: "/en/dutch-pay-calculator/", label: "Split Bill Calculator", desc: "Split costs fairly." },
-      { href: "/en/percentage-calculator/", label: "Percentage Calculator", desc: "Work out percentages." },
+      { href: blogTool("dutch-pay-calculator"), label: "Split Bill Calculator", desc: "Split costs fairly." },
+      { href: blogTool("percentage-calculator"), label: "Percentage Calculator", desc: "Work out percentages." },
     ],
     disclaimer: "Results are reference values based on your inputs. Actual auctions and trades follow in-game prices and agreement.",
   },
@@ -79,8 +80,8 @@ const content = {
     relatedTitle: "関連ツール",
     related: [
       { href: "/ja/lostark-raid-distribution/", label: "本1副3 品앗이 分配計算機", desc: "バス料金とは別ツール — パーティ分配を自動化。" },
-      { href: "/ja/dutch-pay-calculator/", label: "割り勘計算機", desc: "費用を公平に分けます。" },
-      { href: "/ja/percentage-calculator/", label: "パーセント計算機", desc: "比率を計算します。" },
+      { href: blogTool("dutch-pay-calculator"), label: "割り勘計算機", desc: "費用を公平に分けます。" },
+      { href: blogTool("percentage-calculator"), label: "パーセント計算機", desc: "比率を計算します。" },
     ],
     disclaimer: "計算結果は入力値に基づく参考値です。実際のオークション・取引はゲーム内相場と合意に従います。",
   },

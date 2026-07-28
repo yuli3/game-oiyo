@@ -1,0 +1,18 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "game-multiplayer-room",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-07-01",
+  "compatibility_flags": ["nodejs_compat"],
+  // NOT deployed as part of this batch — git-freeze period (see
+  // company-brain AI-Sessions/wiki/decisions/cloudflare-game-state-wave0-2026-07-18.md).
+  // `wrangler deploy` requires a human gate (cost/permission) per that decision.
+  "durable_objects": {
+    "bindings": [
+      { "name": "ROOM", "class_name": "RoomDurableObject" }
+    ]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["RoomDurableObject"] }
+  ]
+}

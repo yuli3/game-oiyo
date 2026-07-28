@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useReducer, useRef } from 'react';
 import { GameContainer, Die, type DieType } from '@/components/ui/game/GamePrimitives';
+import { usePrefersReducedMotion } from '@/lib/games/reduced-motion';
 
 interface RollRecord {
   dice: DieType[];
@@ -79,6 +80,7 @@ const COPY = {
 
 const DiceRoller: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
   const t = COPY[(locale as keyof typeof COPY)] ?? COPY.en;
+  const reducedMotion = usePrefersReducedMotion();
 
   const [state, dispatch] = useReducer(reducer, initialState);
   const [throttled, setThrottled] = useState(false);
@@ -89,6 +91,13 @@ const DiceRoller: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     if (throttled || state.rolling || state.selectedDice.length === 0) return;
     setThrottled(true);
     dispatch({ type: 'ROLL_START' });
+
+    if (reducedMotion) {
+      const results = state.selectedDice.map((die) => Math.floor(Math.random() * DICE_SIDES[die]) + 1);
+      dispatch({ type: 'ROLL_END', results });
+      setThrottled(false);
+      return;
+    }
 
     // Tumble: cycle random faces while rolling for a real dice feel
     if (tickRef.current) clearInterval(tickRef.current);
@@ -103,7 +112,7 @@ const DiceRoller: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
       dispatch({ type: 'ROLL_END', results });
       setTimeout(() => setThrottled(false), 400);
     }, 700);
-  }, [state.selectedDice, state.rolling, throttled]);
+  }, [reducedMotion, state.selectedDice, state.rolling, throttled]);
 
   const sum = state.lastResults.reduce((a, b) => a + b, 0);
 

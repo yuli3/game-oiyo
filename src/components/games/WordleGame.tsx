@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { getStreak, recordStreak, type StreakStats } from '../../lib/games/records';
+import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type TileState = 'empty' | 'tbd' | 'correct' | 'present' | 'absent';
@@ -146,9 +147,9 @@ const TILE_CLASSES: Record<TileState, string> = {
   absent: 'border-2 border-muted bg-muted/50 text-muted-foreground',
 };
 
-const Tile: React.FC<{ data: TileData; animate?: boolean }> = ({ data, animate }) => (
+const Tile: React.FC<{ data: TileData; animate?: boolean; reducedMotion: boolean }> = ({ data, animate, reducedMotion }) => (
   <div
-    className={`w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center text-xl sm:text-2xl font-black rounded-lg transition-all duration-200 select-none ${TILE_CLASSES[data.state]} ${animate && data.state === 'tbd' ? 'scale-110' : ''}`}
+    className={`w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center text-xl sm:text-2xl font-black rounded-lg select-none ${reducedMotion ? 'transition-none' : 'transition-all duration-200'} ${TILE_CLASSES[data.state]} ${!reducedMotion && animate && data.state === 'tbd' ? 'scale-110' : ''}`}
     aria-label={`${data.letter || 'empty'} ${data.state}`}
   >
     {data.letter}
@@ -167,6 +168,7 @@ function keyClass(letter: string, usedMap: Record<string, TileState>): string {
 // ─── Main component ───────────────────────────────────────────────────────────
 const WordleGame: React.FC<{ locale?: string }> = ({ locale = 'en' }) => {
   const t = COPY[(locale as keyof typeof COPY)] ?? COPY.en;
+  const reducedMotion = usePrefersReducedMotion();
   const [status, setStatus] = useState<GameStatus>('loading');
   const [targetWord, setTargetWord] = useState('');
   const [validWords, setValidWords] = useState<Set<string>>(new Set());
@@ -217,9 +219,10 @@ const WordleGame: React.FC<{ locale?: string }> = ({ locale = 'en' }) => {
   }, []);
 
   const triggerShake = useCallback(() => {
+    if (reducedMotion) return;
     setShake(true);
     setTimeout(() => setShake(false), 500);
-  }, []);
+  }, [reducedMotion]);
 
   const submitGuess = useCallback(() => {
     if (status !== 'playing') return;
@@ -258,14 +261,14 @@ const WordleGame: React.FC<{ locale?: string }> = ({ locale = 'en' }) => {
     });
 
     if (currentGuess === targetWord) {
-      setTimeout(() => { setStatus('won'); showMessage(t.winMsgs[currentRow] ?? t.winMsgs[4], 4000); }, 300);
+      setTimeout(() => { setStatus('won'); showMessage(t.winMsgs[currentRow] ?? t.winMsgs[4], 4000); }, reducedMotion ? 0 : 300);
     } else if (currentRow + 1 >= MAX_GUESSES) {
-      setTimeout(() => { setStatus('lost'); showMessage(targetWord, 6000); }, 300);
+      setTimeout(() => { setStatus('lost'); showMessage(targetWord, 6000); }, reducedMotion ? 0 : 300);
     }
 
     setCurrentRow(r => r + 1);
     setCurrentGuess('');
-  }, [status, currentGuess, currentRow, targetWord, validWords, triggerShake, showMessage, t]);
+  }, [status, currentGuess, currentRow, targetWord, validWords, triggerShake, showMessage, t, reducedMotion]);
 
   const handleKey = useCallback((key: string) => {
     if (status !== 'playing') return;
@@ -318,7 +321,7 @@ const WordleGame: React.FC<{ locale?: string }> = ({ locale = 'en' }) => {
   if (status === 'loading') {
     return (
       <div className="not-prose flex flex-col items-center justify-center py-24 gap-4">
-        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin motion-reduce:animate-none" />
+        <div className={`w-8 h-8 border-4 border-primary border-t-transparent rounded-full ${reducedMotion ? '' : 'animate-spin'}`} />
         <p className="text-sm text-muted-foreground font-bold">{t.loading}</p>
       </div>
     );
@@ -336,7 +339,7 @@ const WordleGame: React.FC<{ locale?: string }> = ({ locale = 'en' }) => {
       </div>
 
       {/* Message toast */}
-      <div className={`fixed top-20 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 ${message ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'}`}>
+      <div className={`fixed top-20 left-1/2 -translate-x-1/2 z-50 ${reducedMotion ? 'transition-opacity' : 'transition-all duration-300'} ${message ? 'opacity-100 translate-y-0' : `opacity-0 ${reducedMotion ? '' : '-translate-y-2'} pointer-events-none`}`}>
         <div className="bg-foreground text-background px-5 py-2.5 rounded-xl font-black text-sm shadow-xl whitespace-nowrap">
           {message}
         </div>
@@ -347,10 +350,10 @@ const WordleGame: React.FC<{ locale?: string }> = ({ locale = 'en' }) => {
         {displayRows.map((row, ri) => (
           <div
             key={ri}
-            className={`flex gap-2 ${shake && ri === currentRow ? 'animate-[shake_0.5s_ease-in-out]' : ''}`}
+            className={`flex gap-2 ${!reducedMotion && shake && ri === currentRow ? 'animate-[shake_0.5s_ease-in-out]' : ''}`}
             role="row"
           >
-            {row.map((tile, ci) => <Tile key={ci} data={tile} animate={ri === currentRow} />)}
+            {row.map((tile, ci) => <Tile key={ci} data={tile} animate={ri === currentRow} reducedMotion={reducedMotion} />)}
           </div>
         ))}
       </div>

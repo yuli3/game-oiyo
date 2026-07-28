@@ -189,8 +189,8 @@ describe("GameSessionEnvelope v1", () => {
 
   it("keeps unsupported games explicitly non-restorable", () => {
     const byId = new Map(capabilities.games.map((game) => [game.gameId, game]));
-    expect([...byId.values()].filter((game) => game.supportsRestore).map((game) => game.gameId)).toEqual(["chess", "hearts", "solitaire", "freecell", "connect-four", "gomoku"]);
-    for (const gameId of ["chess", "hearts", "solitaire", "freecell", "connect-four", "gomoku"] as const) {
+    expect([...byId.values()].filter((game) => game.supportsRestore).map((game) => game.gameId)).toEqual(["chess", "hearts", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048"]);
+    for (const gameId of ["chess", "hearts", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048"] as const) {
       expect(byId.get(gameId)?.modes).toEqual([...RESTORABLE_GAME_CAPABILITIES[gameId].modes]);
       expect(byId.get(gameId)?.difficulties).toEqual([...RESTORABLE_GAME_CAPABILITIES[gameId].difficulties]);
     }
@@ -204,22 +204,112 @@ describe("GameSessionEnvelope v1", () => {
     }
   });
 
-  it("adapts the four active-board save formats into the common envelope", async () => {
+  it("adapts the nine active-board save formats into the common envelope", async () => {
     const { dealSolitaire } = await import("./solitaire");
     const { createFreeCellGame } = await import("./freecell");
     const connectBoard = Array.from({ length: 6 }, () => Array(7).fill(0));
     connectBoard[5][3] = 1;
     const gomokuBoard = Array<1 | 2 | null>(225).fill(null); gomokuBoard[112] = 1;
+    const sudokuGrid = [
+      [5, 3, null, null, 7, null, null, null, null],
+      [6, null, null, 1, 9, 5, null, null, null],
+      [null, 9, 8, null, null, null, null, 6, null],
+      [8, null, null, null, 6, null, null, null, 3],
+      [4, null, null, 8, null, 3, null, null, 1],
+      [7, null, null, null, 2, null, null, null, 6],
+      [null, 6, null, null, null, null, 2, 8, null],
+      [null, null, null, 4, 1, 9, null, null, 5],
+      [null, null, null, null, 8, null, null, 7, 9],
+    ];
+    sudokuGrid[0][2] = 4;
+    const checkersBoard = Array.from({ length: 64 }, (_, i) => {
+      const r = Math.floor(i / 8), c = i % 8;
+      if ((r + c) % 2 !== 1) return null;
+      if (r < 3) return { player: 2, isKing: false };
+      if (r > 4) return { player: 1, isKing: false };
+      return null;
+    });
+    const reversiBoard = Array<1 | 2 | null>(64).fill(null);
+    reversiBoard[27] = 2; reversiBoard[28] = 1; reversiBoard[35] = 1; reversiBoard[36] = 2;
     const fixtures = [
       ["solitaire", { version: 1, state: dealSolitaire(() => 0.3) }],
       ["freecell", { version: 1, state: createFreeCellGame(() => 0.3) }],
       ["connect-four", { version: 1, board: connectBoard, currentPlayer: 2, mode: "ai", level: 2 }],
       ["gomoku", { version: 1, board: gomokuBoard, isBlackTurn: false, mode: "local", level: 2 }],
+      ["sudoku", { version: 1, grid: sudokuGrid, seconds: 42 }],
+      ["puzzle15", { version: 1, size: 4, board: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0, 13, 14, 15, 12], puzzleSeed: "1-2-3-4-5-6-7-8-9-10-11-12-13-14-15-0", moves: 3, seconds: 12 }],
+      ["checkers", { version: 1, board: checkersBoard, isRedTurn: true, forcedFrom: null, mode: "local", level: 2 }],
+      ["reversi", { version: 1, board: reversiBoard, isBlackTurn: true, mode: "local", level: 2 }],
+      ["game-2048", { version: 1, board: [2, 4, null, null, null, null, null, null, null, null, null, null, null, null, null, 8], score: 12 }],
     ] as const;
     for (const [gameId, payload] of fixtures) {
       const envelope = adaptActiveGameSaveToSession(gameId, payload, TIMING);
       expect(envelope?.gameId).toBe(gameId);
       expect(parseGameSessionEnvelope(serializeGameSessionEnvelope(envelope!)!)).toEqual(envelope);
     }
+  });
+
+  it("rejects tampered sudoku givens and already-solved puzzle15 boards", async () => {
+    const { parseSudokuSave, parsePuzzle15Save } = await import("./active-game-save");
+    expect(parseSudokuSave({ version: 1, grid: (() => {
+      const g = [
+        [5, 3, null, null, 7, null, null, null, null],
+        [6, null, null, 1, 9, 5, null, null, null],
+        [null, 9, 8, null, null, null, null, 6, null],
+        [8, null, null, null, 6, null, null, null, 3],
+        [4, null, null, 8, null, 3, null, null, 1],
+        [7, null, null, null, 2, null, null, null, 6],
+        [null, 6, null, null, null, null, 2, 8, null],
+        [null, null, null, 4, 1, 9, null, null, 5],
+        [null, null, null, null, 8, null, null, 7, 9],
+      ];
+      g[0][0] = 9; // tampered given cell
+      return g;
+    })(), seconds: 5 })).toBeNull();
+    expect(parsePuzzle15Save({ version: 1, size: 4, board: Array.from({ length: 16 }, (_, i) => (i + 1) % 16), puzzleSeed: "seed", moves: 40, seconds: 60 })).toBeNull();
+  });
+
+  it("rejects checkers/reversi states with no legal move for the side to act", async () => {
+    const { parseCheckersSave, parseReversiSave } = await import("./active-game-save");
+    // A lone red man cornered with no legal move, claimed as red's turn: fail-closed.
+    const cornerBoard = Array<{ player: 1 | 2; isKing: boolean } | null>(64).fill(null);
+    cornerBoard[0] = { player: 1, isKing: false };
+    expect(parseCheckersSave({ version: 1, board: cornerBoard, isRedTurn: true, forcedFrom: null, mode: "local", level: 2 })).toBeNull();
+    // forcedFrom pointing at a square the mover doesn't own is rejected outright.
+    const checkersBoard = Array.from({ length: 64 }, (_, i) => {
+      const r = Math.floor(i / 8), c = i % 8;
+      if ((r + c) % 2 !== 1) return null;
+      if (r < 3) return { player: 2 as const, isKing: false };
+      if (r > 4) return { player: 1 as const, isKing: false };
+      return null;
+    });
+    expect(parseCheckersSave({ version: 1, board: checkersBoard, isRedTurn: true, forcedFrom: 2, mode: "local", level: 2 })).toBeNull();
+    // Empty reversi board has no flanking move for either color.
+    expect(parseReversiSave({ version: 1, board: Array(64).fill(null), isBlackTurn: true, mode: "local", level: 2 })).toBeNull();
+  });
+
+  it("rejects terminal, impossible, and score-tampered 2048 boards", async () => {
+    const { parseGame2048Save } = await import("./active-game-save");
+    const empty = Array<number | null>(16).fill(null);
+    const resumable = [...empty]; resumable[0] = 2; resumable[1] = 4;
+    expect(parseGame2048Save({ version: 1, board: resumable, score: 0 })).not.toBeNull();
+    // A tile at or above 2048 means the component already ended the game as won.
+    const won = [...resumable]; won[15] = 2048;
+    expect(parseGame2048Save({ version: 1, board: won, score: 4096 })).toBeNull();
+    // A full board with no adjacent equal pair is game over, not resumable.
+    const dead = Array.from({ length: 16 }, (_, i) => {
+      const row = Math.floor(i / 4);
+      const values = row % 2 === 0 ? [2, 4, 8, 16] : [32, 64, 128, 256];
+      return values[i % 4];
+    });
+    expect(parseGame2048Save({ version: 1, board: dead, score: 0 })).toBeNull();
+    // Non-power-of-two tiles, fewer than two tiles, and impossible scores fail closed.
+    const odd = [...empty]; odd[0] = 6; odd[1] = 2;
+    expect(parseGame2048Save({ version: 1, board: odd, score: 0 })).toBeNull();
+    const lone = [...empty]; lone[0] = 2;
+    expect(parseGame2048Save({ version: 1, board: lone, score: 0 })).toBeNull();
+    // A 2+4 board can have earned at most 4 score, and 10 is not a sum of merge values (each ≥4, power of two).
+    expect(parseGame2048Save({ version: 1, board: resumable, score: 400 })).toBeNull();
+    expect(parseGame2048Save({ version: 1, board: resumable, score: 10 })).toBeNull();
   });
 });

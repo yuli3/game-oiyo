@@ -1,6 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
+import { movePuzzleTile } from '../../lib/games/react-state-transitions';
+import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 import { getBestForConditions, recordBestForConditions, type BestConditions } from '../../lib/games/records';
+import { clearPuzzle15Save, loadPuzzle15Save, storePuzzle15Save } from '../../lib/games/active-game-save';
+import { elapsedSeconds } from '../../lib/games/time-contracts';
 
 // ─── 15 Puzzle (sliding puzzle) — ported from ahoxy-legacy ────────────────────
 // Shuffled by random moves from the solved state, so every board is solvable.
@@ -34,8 +38,6 @@ function shuffle(size: Size, steps: number): Board {
     return b;
 }
 
-const isSolved = (b: Board) => b.every((v, i) => v === (i + 1) % b.length);
-
 const COPY = {
     ko: { title: '15 퍼즐', subtitle: 'Sliding Puzzle', moves: '이동', time: '시간', best: '최고 기록', win: '퍼즐 완성!', hint: '빈 칸 옆 타일을 누르거나 방향키로 미세요', sizes: { 3: '3×3', 4: '4×4', 5: '5×5' } },
     en: { title: '15 Puzzle', subtitle: 'Sliding Puzzle', moves: 'Moves', time: 'Time', best: 'Best', win: 'Puzzle solved!', hint: 'Tap a tile next to the gap, or use arrow keys', sizes: { 3: '3×3', 4: '4×4', 5: '5×5' } },
@@ -49,17 +51,20 @@ const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '
 
 const Puzzle15: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const t = COPY[(locale as keyof typeof COPY)] ?? COPY.en;
+    const reducedMotion = usePrefersReducedMotion();
+    const restored = useRef(loadPuzzle15Save()).current;
     const initialBoard = useRef<Board | null>(null);
-    if (!initialBoard.current) initialBoard.current = shuffle(4, 300);
+    if (!initialBoard.current) initialBoard.current = restored ? restored.board : shuffle(4, 300);
 
-    const [size, setSize] = useState<Size>(4);
+    const [size, setSize] = useState<Size>(restored ? restored.size : 4);
     const [board, setBoard] = useState<Board>(() => initialBoard.current!);
-    const [puzzleSeed, setPuzzleSeed] = useState(() => boardSeed(initialBoard.current!));
-    const [moves, setMoves] = useState(0);
-    const [seconds, setSeconds] = useState(0);
+    const [puzzleSeed, setPuzzleSeed] = useState(() => restored ? restored.puzzleSeed : boardSeed(initialBoard.current!));
+    const [moves, setMoves] = useState(restored ? restored.moves : 0);
+    const [seconds, setSeconds] = useState(restored ? restored.seconds : 0);
     const [won, setWon] = useState(false);
     const [best, setBest] = useState<Record<string, { moves: number; seconds: number }>>({});
-    const started = useRef(false);
+    const started = useRef(restored ? restored.moves > 0 : false);
+    const startedAt = useRef<number | null>(restored && restored.moves > 0 ? performance.now() - restored.seconds * 1000 : null);
 
     useEffect(() => {
         const existing = getBestForConditions(gameKey(size), conditionsFor(size, puzzleSeed));
@@ -68,11 +73,17 @@ const Puzzle15: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
     useEffect(() => {
         if (won || !started.current) return;
-        const id = setInterval(() => setSeconds((s) => s + 1), 1000);
+        const id = setInterval(() => setSeconds(elapsedSeconds(startedAt.current, performance.now())), 100);
         return () => clearInterval(id);
     }, [won, moves]); // moves>0 starts the timer via started ref
 
+    useEffect(() => {
+        if (won) return;
+        storePuzzle15Save({ size, board, puzzleSeed, moves, seconds });
+    }, [size, board, puzzleSeed, moves, seconds, won]);
+
     const restart = useCallback((sz: Size = size) => {
+        clearPuzzle15Save();
         const nextBoard = shuffle(sz, sz * sz * 20);
         setSize(sz);
         setBoard(nextBoard);
@@ -81,34 +92,28 @@ const Puzzle15: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         setSeconds(0);
         setWon(false);
         started.current = false;
+        startedAt.current = null;
     }, [size]);
 
     const finish = (finalMoves: number) => {
         setWon(true);
+        clearPuzzle15Save();
         const saved = recordBestForConditions(gameKey(size), seconds, 'seconds', conditionsFor(size, puzzleSeed), String(finalMoves));
         setBest((prev) => ({ ...prev, [size]: { moves: Number(saved.extra) || finalMoves, seconds: saved.value } }));
     };
 
     const slide = useCallback((tileIdx: number) => {
         if (won) return;
-        setBoard((b) => {
-            const empty = b.indexOf(0);
-            const [tr, tc] = [Math.floor(tileIdx / size), tileIdx % size];
-            const [er, ec] = [Math.floor(empty / size), empty % size];
-            if (Math.abs(tr - er) + Math.abs(tc - ec) !== 1) return b;
-            const next = [...b];
-            next[empty] = next[tileIdx];
-            next[tileIdx] = 0;
-            started.current = true;
-            setMoves((m) => {
-                const nm = m + 1;
-                if (isSolved(next)) finish(nm);
-                return nm;
-            });
-            return next;
-        });
+        const transition = movePuzzleTile(board, tileIdx, size);
+        if (!transition.moved) return;
+        started.current = true;
+        if (startedAt.current === null) startedAt.current = performance.now();
+        const nextMoves = moves + 1;
+        setBoard(transition.board);
+        setMoves(nextMoves);
+        if (transition.solved) finish(nextMoves);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [size, won, seconds]);
+    }, [board, moves, size, won, seconds]);
 
     // arrow keys move the tile INTO the gap (arrow = direction the tile slides)
     useEffect(() => {
@@ -159,7 +164,7 @@ const Puzzle15: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         key={v}
                         onClick={() => slide(i)}
                         aria-label={String(v)}
-                        className={`rounded-xl font-black flex items-center justify-center transition-all active:scale-95 ${
+                        className={`rounded-xl font-black flex items-center justify-center ${!reducedMotion ? 'transition-all active:scale-95' : ''} ${
                             size === 3 ? 'text-2xl' : size === 4 ? 'text-xl' : 'text-base'
                         } ${v === (i + 1) % (size * size)
                             ? 'bg-primary/15 text-primary border border-primary/30'
@@ -170,7 +175,7 @@ const Puzzle15: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 ))}
 
                 {won && (
-                    <div className="absolute inset-0 z-10 bg-background/80 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center gap-3 animate-in fade-in zoom-in-95" role="status" aria-live="polite">
+                    <div className={`absolute inset-0 z-10 bg-background/80 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center gap-3 ${!reducedMotion ? 'animate-in fade-in zoom-in-95' : ''}`} role="status" aria-live="polite">
                         <p className="text-2xl font-black text-success">🎉 {t.win}</p>
                         <p className="text-sm font-bold text-muted-foreground">{t.moves} {moves} · {t.time} {fmt(seconds)}</p>
                         <button onClick={() => restart()} className="mt-2 px-8 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity">

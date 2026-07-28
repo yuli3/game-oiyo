@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
+import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 
 type TileState = 'correct' | 'present' | 'absent';
 
@@ -118,6 +119,7 @@ const TILE_CLASSES: Record<TileState, string> = {
 const PsychologyWordle: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const isKo = locale === 'ko';
     const t = COPY[(locale as keyof typeof COPY)] ?? COPY.en;
+    const reducedMotion = usePrefersReducedMotion();
 
     const pickWord = () => {
         const pool = isKo ? KO_WORDS : EN_WORDS;
@@ -209,7 +211,7 @@ const PsychologyWordle: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     <button onClick={handleSubmit} disabled={currentGuess.length !== wordLen} className="px-3 py-2 bg-primary text-primary-foreground rounded-lg text-xs font-bold shadow-sm disabled:opacity-40 disabled:cursor-not-allowed transition-opacity">{t.enter}</button>
                 </div>
             ) : (
-                <div className="text-center animate-fade-up" role="status" aria-live="polite">
+                <div className={`text-center ${!reducedMotion ? 'animate-fade-up' : ''}`} role="status" aria-live="polite">
                     <p className="text-lg font-bold text-foreground mb-4">
                         {status === 'won' ? t.won : `${t.lost} ${targetDisplay}`}
                     </p>

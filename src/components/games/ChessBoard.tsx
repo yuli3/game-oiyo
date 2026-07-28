@@ -48,6 +48,8 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
   const [focusIndex, setFocusIndex] = useState(56);
   const aiTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const squareRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const promotionTriggerRef = useRef<HTMLElement | null>(null);
+  const promotionDialogRef = useRef<HTMLDivElement | null>(null);
   const positionHistory = useRef<string[]>([chessPositionKey(createInitialChessState())]);
 
   useEffect(() => { setRecord(getRecord('chess')); }, []);
@@ -61,6 +63,9 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     setRestored(true);
   }, []);
   useEffect(() => () => { if (aiTimer.current) clearTimeout(aiTimer.current); }, []);
+  useEffect(() => {
+    if (pendingPromotion) promotionDialogRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
+  }, [pendingPromotion]);
 
   const pieceIcons: Record<string, string> = {
     'r': '♜', 'n': '♞', 'b': '♝', 'q': '♛', 'k': '♚', 'p': '♟',
@@ -121,7 +126,7 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     if (selected) {
       if (selected[0] === r && selected[1] === c) { setSelected(null); return; }
       const moves = legalTargets.filter((m) => m.to[0] === r && m.to[1] === c);
-      if (moves.length > 1 && moves.every((move) => move.promotion)) { setPendingPromotion(moves); return; }
+      if (moves.length > 1 && moves.every((move) => move.promotion)) { promotionTriggerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null; setPendingPromotion(moves); return; }
       if (moves[0]) { applyMove(position, moves[0], isWhiteTurn); return; }
       // reselect own piece, otherwise deselect
       if (piece && isWhitePiece(piece) === isWhiteTurn) setSelected([r, c]);
@@ -144,6 +149,20 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     event.preventDefault();
     setFocusIndex(next);
     squareRefs.current[next]?.focus();
+  };
+
+  const closePromotion = () => {
+    setPendingPromotion(null);
+    requestAnimationFrame(() => promotionTriggerRef.current?.focus());
+  };
+  const trapPromotionFocus = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Escape') { event.preventDefault(); closePromotion(); return; }
+    if (event.key !== 'Tab') return;
+    const buttons = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('button'));
+    if (!buttons.length) return;
+    const first = buttons[0], last = buttons[buttons.length - 1];
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
   };
 
   // AI turn
@@ -188,7 +207,7 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
             {thinking ? t.thinking : `${isWhiteTurn ? t.white : t.black} ${t.turn}${inCheck ? ` · ${t.check}` : ''}`}
           </p>
         </div>
-        <button onClick={reset} className="px-4 py-2 bg-muted text-muted-foreground rounded-xl text-xs font-bold border border-border">
+        <button type="button" onClick={reset} className="px-4 py-2 bg-muted text-muted-foreground rounded-xl text-xs font-bold border border-border">
           {t.reset}
         </button>
       </div>
@@ -197,7 +216,7 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <div className="inline-flex rounded-xl border border-border overflow-hidden" role="group" aria-label={`${t.modeLocal} / ${t.modeAi}`}>
           {(['local', 'ai'] as GameMode[]).map((m) => (
-            <button key={m} onClick={() => switchMode(m)}
+            <button type="button" key={m} onClick={() => switchMode(m)}
               aria-pressed={mode === m}
               className={`px-3 py-1.5 text-xs font-bold transition-colors ${mode === m ? 'bg-primary text-primary-foreground' : 'bg-muted/50 text-muted-foreground hover:bg-muted'}`}>
               {m === 'local' ? t.modeLocal : t.modeAi}
@@ -207,7 +226,7 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         {mode === 'ai' && (
           <div className="inline-flex gap-1">
             {([1, 2, 3] as AiLevel[]).map((lv) => (
-              <button key={lv} onClick={() => { setLevel(lv); reset(); }}
+              <button type="button" key={lv} onClick={() => { setLevel(lv); reset(); }}
                 aria-pressed={level === lv}
                 className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-colors ${level === lv ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
                 {lv === 1 ? t.level1 : lv === 2 ? t.level2 : t.level3}
@@ -260,14 +279,14 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         </div>
 
         {pendingPromotion && (
-          <div className="absolute inset-0 z-20 min-w-[352px] bg-background/70 backdrop-blur-sm flex items-center justify-center" role="dialog" aria-modal="true" aria-label={t.promote}>
+          <div ref={promotionDialogRef} onKeyDown={trapPromotionFocus} className="absolute inset-0 z-20 min-w-[352px] bg-background/70 backdrop-blur-sm flex items-center justify-center" role="dialog" aria-modal="true" aria-label={t.promote}>
             <div className="bg-card p-5 rounded-2xl border border-border shadow-xl text-center">
               <p className="font-bold mb-3">{t.promote}</p>
               <div className="flex gap-2">
                 {(['q', 'r', 'b', 'n'] as PromotionPiece[]).map((promotion) => {
                   const move = pendingPromotion.find((candidate) => candidate.promotion === promotion)!;
                   const key = promotion as 'queen' | 'rook' | 'bishop' | 'knight';
-                  return <button key={promotion} autoFocus={promotion === 'q'} onClick={() => applyMove(position, move, isWhiteTurn)} aria-label={t[key]} className="min-h-11 min-w-11 rounded-xl border border-border bg-muted text-3xl focus-visible:outline focus-visible:outline-4 focus-visible:outline-primary">{pieceIcons[isWhiteTurn ? promotion.toUpperCase() : promotion]}</button>;
+                  return <button type="button" key={promotion} onClick={() => applyMove(position, move, isWhiteTurn)} aria-label={t[key]} className="min-h-11 min-w-11 rounded-xl border border-border bg-muted text-3xl focus-visible:outline focus-visible:outline-4 focus-visible:outline-primary">{pieceIcons[isWhiteTurn ? promotion.toUpperCase() : promotion]}</button>;
                 })}
               </div>
             </div>
@@ -281,7 +300,7 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
               <p className="text-muted-foreground mb-6 uppercase tracking-widest font-bold text-xs">
                 {gameEnd.reason === 'checkmate' ? t.checkmate : drawLabel}
               </p>
-              <button onClick={reset} className="px-10 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg">
+              <button type="button" onClick={reset} className="px-10 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg">
                 {t.reset}
               </button>
             </div>

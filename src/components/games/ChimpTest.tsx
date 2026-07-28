@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
+import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 
 type Tile = { id: number; num: number; x: number; y: number; clicked: boolean };
 type Status = 'idle' | 'memorize' | 'recall' | 'result';
@@ -41,6 +42,7 @@ const COPY = {
 
 const ChimpTest: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const t = COPY[(locale as keyof typeof COPY)] ?? COPY.en;
+    const reducedMotion = usePrefersReducedMotion();
 
     const [status, setStatus] = useState<Status>('idle');
     const [level, setLevel] = useState(1);
@@ -114,7 +116,7 @@ const ChimpTest: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
             {status === 'idle' && (
                 <div className="h-80 flex flex-col items-center justify-center text-center space-y-6">
-                    <div className="w-16 h-16 bg-primary/10 text-primary rounded-2xl flex items-center justify-center animate-bounce motion-reduce:animate-none">
+                    <div className={`w-16 h-16 bg-primary/10 text-primary rounded-2xl flex items-center justify-center ${reducedMotion ? '' : 'animate-bounce'}`}>
                         <span className="text-3xl">🧠</span>
                     </div>
                     <p className="text-muted-foreground px-8 leading-relaxed">{t.desc}</p>
@@ -141,9 +143,9 @@ const ChimpTest: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                                 width: '16%',
                                 height: '16%',
                             }}
-                            className={`absolute flex items-center justify-center rounded-xl font-black text-xl transition-all ${
+                            className={`absolute flex items-center justify-center rounded-xl font-black text-xl ${reducedMotion ? 'transition-opacity' : 'transition-all'} ${
                                 tile.clicked
-                                    ? 'opacity-0 scale-50'
+                                    ? `opacity-0 ${reducedMotion ? '' : 'scale-50'}`
                                     : status === 'memorize'
                                         ? 'bg-card text-card-foreground border-2 border-primary shadow-md'
                                         : 'bg-card text-transparent shadow-sm hover:bg-muted active:scale-95'
@@ -170,7 +172,7 @@ const ChimpTest: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             )}
 
             {status === 'result' && (
-                <div className="h-80 flex flex-col items-center justify-center text-center space-y-6 animate-fade-in motion-reduce:animate-none" role="status" aria-live="polite">
+                <div className={`h-80 flex flex-col items-center justify-center text-center space-y-6 ${reducedMotion ? '' : 'animate-fade-in'}`} role="status" aria-live="polite">
                     {won ? (
                         <>
                             <div className="text-4xl text-primary">🎉</div>

@@ -1,113 +1,276 @@
 {
-  "schema": "oiyo.game-session-capabilities",
-  "schemaVersion": 1,
-  "timestampPolicy": "utc-iso-8601-milliseconds-z",
-  "games": [
-    {
-      "gameId": "chess",
-      "componentPath": "src/components/games/ChessBoard.tsx",
-      "adapterPath": "src/lib/games/chess-save.ts",
-      "supportsRestore": true,
-      "sessionStorageKey": "oiyo:chess-state:v1",
-      "sourceSchema": "oiyo.chess-save",
-      "sourceSchemaVersion": 1,
-      "adapterVersion": "chess-session-adapter-v1",
-      "engineVersion": "chess-state-v1",
-      "modes": ["local", "ai"],
-      "difficulties": ["level-1", "level-2", "level-3"],
-      "deterministicResume": true,
-      "nonSessionPersistence": ["game-record"]
-    },
-    {
-      "gameId": "hearts",
-      "componentPath": "src/components/games/HeartsGame.tsx",
-      "adapterPath": "src/lib/games/hearts.ts",
-      "supportsRestore": true,
-      "sessionStorageKey": "oiyo:game:hearts:v1",
-      "sourceSchema": "oiyo.hearts-save",
-      "sourceSchemaVersion": 1,
-      "adapterVersion": "hearts-session-adapter-v1",
-      "engineVersion": "hearts-rules-v1",
-      "modes": ["ai"],
-      "difficulties": ["heuristic-v1"],
-      "deterministicResume": true,
-      "nonSessionPersistence": []
-    },
-    {
-      "gameId": "minesweeper",
-      "componentPath": "src/components/games/Minesweeper.tsx",
-      "adapterPath": null,
-      "supportsRestore": false,
-      "sessionStorageKey": null,
-      "sourceSchema": null,
-      "sourceSchemaVersion": null,
-      "adapterVersion": null,
-      "engineVersion": null,
-      "modes": ["solo"],
-      "difficulties": ["beginner"],
-      "deterministicResume": false,
-      "nonSessionPersistence": ["best-record", "legacy-best-migration"],
-      "reason": "Generation seed and active board exist only in component memory; only best time is persisted."
-    },
-    {
-      "gameId": "solitaire",
-      "componentPath": "src/components/games/Solitaire.tsx",
-      "adapterPath": "src/lib/games/active-game-save.ts",
-      "supportsRestore": true,
-      "sessionStorageKey": "oiyo:solitaire-state:v1",
-      "sourceSchema": "oiyo.solitaire-save",
-      "sourceSchemaVersion": 1,
-      "adapterVersion": "solitaire-session-adapter-v1",
-      "engineVersion": "solitaire-rules-v1",
-      "modes": ["solo"],
-      "difficulties": ["draw-1"],
-      "deterministicResume": true,
-      "nonSessionPersistence": ["game-record"]
-    },
-    {
-      "gameId": "freecell",
-      "componentPath": "src/components/games/FreeCell.tsx",
-      "adapterPath": "src/lib/games/active-game-save.ts",
-      "supportsRestore": true,
-      "sessionStorageKey": "oiyo:freecell-state:v1",
-      "sourceSchema": "oiyo.freecell-save",
-      "sourceSchemaVersion": 1,
-      "adapterVersion": "freecell-session-adapter-v1",
-      "engineVersion": "freecell-rules-v1",
-      "modes": ["solo"],
-      "difficulties": ["standard"],
-      "deterministicResume": true,
-      "nonSessionPersistence": ["game-record"]
-    },
-    {
-      "gameId": "connect-four",
-      "componentPath": "src/components/games/ConnectFour.tsx",
-      "adapterPath": "src/lib/games/active-game-save.ts",
-      "supportsRestore": true,
-      "sessionStorageKey": "oiyo:connect-four-state:v1",
-      "sourceSchema": "oiyo.connect-four-save",
-      "sourceSchemaVersion": 1,
-      "adapterVersion": "connect-four-session-adapter-v1",
-      "engineVersion": "connect-four-rules-v1",
-      "modes": ["local", "ai"],
-      "difficulties": ["level-1", "level-2", "level-3"],
-      "deterministicResume": true,
-      "nonSessionPersistence": ["game-record"]
-    },
-    {
-      "gameId": "gomoku",
-      "componentPath": "src/components/games/Gomoku.tsx",
-      "adapterPath": "src/lib/games/active-game-save.ts",
-      "supportsRestore": true,
-      "sessionStorageKey": "oiyo:gomoku-state:v1",
-      "sourceSchema": "oiyo.gomoku-save",
-      "sourceSchemaVersion": 1,
-      "adapterVersion": "gomoku-session-adapter-v1",
-      "engineVersion": "gomoku-rules-v1",
-      "modes": ["local", "ai"],
-      "difficulties": ["level-1", "level-2", "level-3"],
-      "deterministicResume": true,
-      "nonSessionPersistence": ["game-record"]
-    }
-  ]
+ "schema": "oiyo.game-session-capabilities",
+ "schemaVersion": 1,
+ "timestampPolicy": "utc-iso-8601-milliseconds-z",
+ "games": [
+  {
+   "gameId": "chess",
+   "componentPath": "src/components/games/ChessBoard.tsx",
+   "adapterPath": "src/lib/games/chess-save.ts",
+   "supportsRestore": true,
+   "sessionStorageKey": "oiyo:chess-state:v1",
+   "sourceSchema": "oiyo.chess-save",
+   "sourceSchemaVersion": 1,
+   "adapterVersion": "chess-session-adapter-v1",
+   "engineVersion": "chess-state-v1",
+   "modes": [
+    "local",
+    "ai"
+   ],
+   "difficulties": [
+    "level-1",
+    "level-2",
+    "level-3"
+   ],
+   "deterministicResume": true,
+   "nonSessionPersistence": [
+    "game-record"
+   ]
+  },
+  {
+   "gameId": "hearts",
+   "componentPath": "src/components/games/HeartsGame.tsx",
+   "adapterPath": "src/lib/games/hearts.ts",
+   "supportsRestore": true,
+   "sessionStorageKey": "oiyo:game:hearts:v1",
+   "sourceSchema": "oiyo.hearts-save",
+   "sourceSchemaVersion": 1,
+   "adapterVersion": "hearts-session-adapter-v1",
+   "engineVersion": "hearts-rules-v1",
+   "modes": [
+    "ai"
+   ],
+   "difficulties": [
+    "heuristic-v1"
+   ],
+   "deterministicResume": true,
+   "nonSessionPersistence": []
+  },
+  {
+   "gameId": "minesweeper",
+   "componentPath": "src/components/games/Minesweeper.tsx",
+   "adapterPath": null,
+   "supportsRestore": false,
+   "sessionStorageKey": null,
+   "sourceSchema": null,
+   "sourceSchemaVersion": null,
+   "adapterVersion": null,
+   "engineVersion": null,
+   "modes": [
+    "solo"
+   ],
+   "difficulties": [
+    "beginner"
+   ],
+   "deterministicResume": false,
+   "nonSessionPersistence": [
+    "best-record",
+    "legacy-best-migration"
+   ],
+   "reason": "Generation seed and active board exist only in component memory; only best time is persisted."
+  },
+  {
+   "gameId": "solitaire",
+   "componentPath": "src/components/games/Solitaire.tsx",
+   "adapterPath": "src/lib/games/active-game-save.ts",
+   "supportsRestore": true,
+   "sessionStorageKey": "oiyo:solitaire-state:v1",
+   "sourceSchema": "oiyo.solitaire-save",
+   "sourceSchemaVersion": 1,
+   "adapterVersion": "solitaire-session-adapter-v1",
+   "engineVersion": "solitaire-rules-v1",
+   "modes": [
+    "solo"
+   ],
+   "difficulties": [
+    "draw-1"
+   ],
+   "deterministicResume": true,
+   "nonSessionPersistence": [
+    "game-record"
+   ]
+  },
+  {
+   "gameId": "freecell",
+   "componentPath": "src/components/games/FreeCell.tsx",
+   "adapterPath": "src/lib/games/active-game-save.ts",
+   "supportsRestore": true,
+   "sessionStorageKey": "oiyo:freecell-state:v1",
+   "sourceSchema": "oiyo.freecell-save",
+   "sourceSchemaVersion": 1,
+   "adapterVersion": "freecell-session-adapter-v1",
+   "engineVersion": "freecell-rules-v1",
+   "modes": [
+    "solo"
+   ],
+   "difficulties": [
+    "standard"
+   ],
+   "deterministicResume": true,
+   "nonSessionPersistence": [
+    "game-record"
+   ]
+  },
+  {
+   "gameId": "connect-four",
+   "componentPath": "src/components/games/ConnectFour.tsx",
+   "adapterPath": "src/lib/games/active-game-save.ts",
+   "supportsRestore": true,
+   "sessionStorageKey": "oiyo:connect-four-state:v1",
+   "sourceSchema": "oiyo.connect-four-save",
+   "sourceSchemaVersion": 1,
+   "adapterVersion": "connect-four-session-adapter-v1",
+   "engineVersion": "connect-four-rules-v1",
+   "modes": [
+    "local",
+    "ai"
+   ],
+   "difficulties": [
+    "level-1",
+    "level-2",
+    "level-3"
+   ],
+   "deterministicResume": true,
+   "nonSessionPersistence": [
+    "game-record"
+   ]
+  },
+  {
+   "gameId": "gomoku",
+   "componentPath": "src/components/games/Gomoku.tsx",
+   "adapterPath": "src/lib/games/active-game-save.ts",
+   "supportsRestore": true,
+   "sessionStorageKey": "oiyo:gomoku-state:v1",
+   "sourceSchema": "oiyo.gomoku-save",
+   "sourceSchemaVersion": 1,
+   "adapterVersion": "gomoku-session-adapter-v1",
+   "engineVersion": "gomoku-rules-v1",
+   "modes": [
+    "local",
+    "ai"
+   ],
+   "difficulties": [
+    "level-1",
+    "level-2",
+    "level-3"
+   ],
+   "deterministicResume": true,
+   "nonSessionPersistence": [
+    "game-record"
+   ]
+  },
+  {
+   "gameId": "sudoku",
+   "componentPath": "src/components/games/Sudoku.tsx",
+   "adapterPath": "src/lib/games/active-game-save.ts",
+   "supportsRestore": true,
+   "sessionStorageKey": "oiyo:sudoku-state:v1",
+   "sourceSchema": "oiyo.sudoku-save",
+   "sourceSchemaVersion": 1,
+   "adapterVersion": "sudoku-session-adapter-v1",
+   "engineVersion": "sudoku-rules-v1",
+   "modes": [
+    "solo"
+   ],
+   "difficulties": [
+    "classic-demo-v1"
+   ],
+   "deterministicResume": true,
+   "nonSessionPersistence": [
+    "game-record"
+   ]
+  },
+  {
+   "gameId": "puzzle15",
+   "componentPath": "src/components/games/Puzzle15.tsx",
+   "adapterPath": "src/lib/games/active-game-save.ts",
+   "supportsRestore": true,
+   "sessionStorageKey": "oiyo:puzzle15-state:v1",
+   "sourceSchema": "oiyo.puzzle15-save",
+   "sourceSchemaVersion": 1,
+   "adapterVersion": "puzzle15-session-adapter-v1",
+   "engineVersion": "puzzle15-rules-v1",
+   "modes": [
+    "solo"
+   ],
+   "difficulties": [
+    "3x3",
+    "4x4",
+    "5x5"
+   ],
+   "deterministicResume": true,
+   "nonSessionPersistence": [
+    "game-record"
+   ]
+  },
+  {
+   "gameId": "checkers",
+   "componentPath": "src/components/games/Checkers.tsx",
+   "adapterPath": "src/lib/games/active-game-save.ts",
+   "supportsRestore": true,
+   "sessionStorageKey": "oiyo:checkers-state:v1",
+   "sourceSchema": "oiyo.checkers-save",
+   "sourceSchemaVersion": 1,
+   "adapterVersion": "checkers-session-adapter-v1",
+   "engineVersion": "checkers-rules-v1",
+   "modes": [
+    "local",
+    "ai"
+   ],
+   "difficulties": [
+    "level-1",
+    "level-2",
+    "level-3"
+   ],
+   "deterministicResume": true,
+   "nonSessionPersistence": [
+    "game-record"
+   ]
+  },
+  {
+   "gameId": "reversi",
+   "componentPath": "src/components/games/Reversi.tsx",
+   "adapterPath": "src/lib/games/active-game-save.ts",
+   "supportsRestore": true,
+   "sessionStorageKey": "oiyo:reversi-state:v1",
+   "sourceSchema": "oiyo.reversi-save",
+   "sourceSchemaVersion": 1,
+   "adapterVersion": "reversi-session-adapter-v1",
+   "engineVersion": "reversi-rules-v1",
+   "modes": [
+    "local",
+    "ai"
+   ],
+   "difficulties": [
+    "level-1",
+    "level-2",
+    "level-3"
+   ],
+   "deterministicResume": true,
+   "nonSessionPersistence": [
+    "game-record"
+   ]
+  },
+  {
+   "gameId": "game-2048",
+   "componentPath": "src/components/games/Game2048.tsx",
+   "adapterPath": "src/lib/games/active-game-save.ts",
+   "supportsRestore": true,
+   "sessionStorageKey": "oiyo:game-2048-state:v1",
+   "sourceSchema": "oiyo.game-2048-save",
+   "sourceSchemaVersion": 1,
+   "adapterVersion": "game-2048-session-adapter-v1",
+   "engineVersion": "game-2048-rules-v1",
+   "modes": [
+    "solo"
+   ],
+   "difficulties": [
+    "classic-4x4"
+   ],
+   "deterministicResume": true,
+   "nonSessionPersistence": [
+    "game-record"
+   ]
+  }
+ ]
 }

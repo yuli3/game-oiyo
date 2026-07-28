@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { getBest, recordBest } from '../../lib/games/records';
+import { clearGame2048Save, loadGame2048Save, storeGame2048Save } from '../../lib/games/active-game-save';
+import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 
 type Tile = { id: number; value: number; x: number; y: number; mergedFrom?: number[] };
 type Dir = 'up' | 'down' | 'left' | 'right';
@@ -18,6 +20,7 @@ const LEGACY_BEST_KEY = 'oiyo-2048-best'; // pre-unification key, read once for 
 
 const Game2048: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const t = COPY[(locale as keyof typeof COPY)] ?? COPY.en;
+    const reducedMotion = usePrefersReducedMotion();
 
     const [board, setBoard] = useState<(Tile | null)[][]>(Array(4).fill(null).map(() => Array(4).fill(null)));
     const [score, setScore] = useState(0);
@@ -40,6 +43,7 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     };
 
     const initGame = useCallback(() => {
+        clearGame2048Save();
         const newBoard: (Tile | null)[][] = Array(4).fill(null).map(() => Array(4).fill(null));
         addRandomTile(newBoard);
         addRandomTile(newBoard);
@@ -49,7 +53,21 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     }, []);
 
     useEffect(() => {
-        initGame();
+        const saved = loadGame2048Save();
+        if (saved) {
+            const restored: (Tile | null)[][] = Array(4).fill(null).map(() => Array(4).fill(null));
+            saved.board.forEach((value, index) => {
+                if (value !== null) {
+                    const x = index % 4, y = Math.floor(index / 4);
+                    restored[y][x] = { id: idCounter.current++, value, x, y };
+                }
+            });
+            setBoard(restored);
+            setScore(saved.score);
+            setStatus('playing');
+        } else {
+            initGame();
+        }
         const existing = getBest('game-2048');
         if (existing) { setBest(existing.value); return; }
         // One-time migration from the pre-unification per-game key
@@ -58,6 +76,17 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             if (Number.isFinite(legacy) && legacy > 0) setBest(recordBest('game-2048', legacy, 'score', undefined, { trackPlay: false }).value);
         } catch { /* ignore */ }
     }, [initGame]);
+
+    // Persist the active board after every applied move; terminal states are not resumable.
+    useEffect(() => {
+        const tiles = board.flat();
+        if (tiles.every((tile) => tile === null)) return; // pre-init render
+        if (status !== 'playing') { clearGame2048Save(); return; }
+        storeGame2048Save({
+            board: Array.from({ length: 16 }, (_, index) => board[Math.floor(index / 4)][index % 4]?.value ?? null),
+            score,
+        });
+    }, [board, score, status]);
 
     // No move possible → game over
     const canMove = (b: (Tile | null)[][]) => {
@@ -175,7 +204,7 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             256: 'bg-chart-1 text-foreground shadow-md',
             512: 'bg-chart-2 text-foreground shadow-md',
             1024: 'bg-chart-3 text-foreground shadow-lg',
-            2048: 'bg-chart-4 text-foreground shadow-xl animate-pulse motion-reduce:animate-none',
+            2048: `bg-chart-4 text-foreground shadow-xl ${reducedMotion ? '' : 'animate-pulse'}`,
         };
         return colors[val] || 'bg-slate-900 text-white';
     };
@@ -217,9 +246,9 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                                 height: '25%',
                                 padding: '4px',
                             }}
-                            className="absolute transition-all duration-100 ease-in-out"
+                            className={`absolute transition-all ease-in-out ${reducedMotion ? 'duration-50' : 'duration-100'}`}
                         >
-                            <div className={`w-full h-full rounded-lg flex items-center justify-center font-black text-lg sm:text-2xl animate-in zoom-in-50 ${getTileColor(tile.value)}`}>
+                            <div className={`w-full h-full rounded-lg flex items-center justify-center font-black text-lg sm:text-2xl ${reducedMotion ? 'animate-in fade-in duration-75' : 'animate-in zoom-in-50'} ${getTileColor(tile.value)}`}>
                                 {tile.value}
                             </div>
                         </div>
@@ -227,7 +256,7 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 </div>
 
                 {status !== 'playing' && (
-                    <div className="absolute inset-0 z-10 bg-background/80 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center space-y-4 animate-in fade-in zoom-in-95" role="status" aria-live="polite">
+                    <div className={`absolute inset-0 z-10 bg-background/80 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center space-y-4 animate-in fade-in ${reducedMotion ? 'duration-75' : 'zoom-in-95'}`} role="status" aria-live="polite">
                         <h4 className="text-3xl font-black text-foreground">{status === 'won' ? t.win : t.over}</h4>
                         <button
                             onClick={initGame}

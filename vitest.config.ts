@@ -1,4 +1,4 @@
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -12,5 +12,9 @@ export default defineConfig({
   },
   test: {
     environment: "node",
+    // workers/* are separate Wrangler/Workers-runtime projects with their own
+    // vitest.config.ts (@cloudflare/vitest-pool-workers) — run via
+    // `npm test --prefix workers/<name>`, not swept up here.
+    exclude: [...configDefaults.exclude, "workers/**"],
   },
 });

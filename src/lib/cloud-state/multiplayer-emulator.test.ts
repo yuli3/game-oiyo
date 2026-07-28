@@ -80,6 +80,31 @@ describe("local authoritative multiplayer emulator", () => {
     expect(room.dispatch(join(), now)).toEqual({ ok: false, error: "room_full" });
   });
 
+  it("rehydrates from a restored snapshot (Durable Object wake-from-hibernation)", () => {
+    const room = makeRoom();
+    const joined = room.dispatch(join(), now);
+    if (!joined.ok || joined.kind !== "joined") throw new Error("join failed");
+    const move = { v: 1 as const, type: "move" as const, roomId, clientCommandId: commandId(), sentAt: sentAt(), seatToken: joined.seatToken, expectedRevision: 1, action: { type: "increment" } };
+    room.dispatch(move, now);
+    const snapshotBefore = room.getSnapshot();
+    const seatsBefore = room.getSeats();
+
+    const revived = createLocalRoomEmulator({
+      roomId,
+      initialState: { count: 999 }, // must be ignored — restore.state wins
+      createdAtMs: now,
+      tokenFactory: () => `token_${String(++tokenNumber).padStart(40, "0")}`,
+      hashSeatToken: (token) => `hash:${token}`,
+      applyAction: (state, action) => action.type === "increment" ? { count: state.count + 1 } : null,
+      restore: { state: snapshotBefore.state, revision: snapshotBefore.revision, lastActivityAtMs: now, seats: seatsBefore },
+    });
+
+    expect(revived.getSnapshot()).toMatchObject({ revision: 2, state: { count: 1 }, connectedPlayers: 1 });
+    // the restored seat's token still authenticates — proves seats (with tokenHash) round-tripped.
+    const ping = revived.dispatch({ v: 1, type: "ping", roomId, clientCommandId: commandId(), sentAt: sentAt(), seatToken: joined.seatToken }, now);
+    expect(ping.ok).toBe(true);
+  });
+
   it("rate-limits commands from one connected seat", () => {
     const room = makeRoom();
     const joined = room.dispatch(join(), now);

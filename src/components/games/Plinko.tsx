@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Matter from 'matter-js';
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { AnimatePresence, motion } from 'motion/react';
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { getBest, recordBest } from '../../lib/games/records';
+import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 import {
     DEFAULT_ROWS,
     MIN_BET,
@@ -50,7 +51,7 @@ interface DropResult { slot: number; multiplier: number; score: number }
 
 const Plinko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
-    const prefersReducedMotion = useReducedMotion();
+    const prefersReducedMotion = usePrefersReducedMotion();
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const engineRef = useRef<Matter.Engine | null>(null);

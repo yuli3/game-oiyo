@@ -2,6 +2,14 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import confetti from "canvas-confetti";
 import type { Locale } from "../../lib/i18n";
 import { getBest, recordBest } from "../../lib/games/records";
+import {
+  computeAimRank,
+  frameScale,
+  targetCenterRange,
+  type AimDifficulty,
+  type AimMode,
+  type AimRank,
+} from "../../lib/games/aim-trainer";
 
 /* ────────────────────────────────────────────────────────────────────────────
  * Pro Aim Trainer — 4 modes × 4 difficulties, mouse + touch, FPS-grade metrics,
@@ -9,8 +17,8 @@ import { getBest, recordBest } from "../../lib/games/records";
  * following the repo convention (one component per game, all 6 locales inline).
  * ────────────────────────────────────────────────────────────────────────── */
 
-type Mode = "gridshot" | "flick" | "tracking" | "precision";
-type Diff = "easy" | "normal" | "hard" | "expert";
+type Mode = AimMode;
+type Diff = AimDifficulty;
 type Phase = "menu" | "playing" | "result";
 
 const MODES: Mode[] = ["gridshot", "flick", "tracking", "precision"];
@@ -40,8 +48,7 @@ const DIFF_CFG: Record<Diff, { size: number; speed: number; grid: number; ttl: n
 };
 
 // Rank thresholds keyed on the primary metric per mode (see computeRank).
-const RANKS = ["Bronze", "Silver", "Gold", "Platinum", "Diamond", "Master"] as const;
-type Rank = (typeof RANKS)[number];
+type Rank = AimRank;
 const RANK_COLOR: Record<Rank, string> = {
   Bronze: "text-amber-700",
   Silver: "text-slate-400",
@@ -51,7 +58,6 @@ const RANK_COLOR: Record<Rank, string> = {
   Master: "text-violet-500",
 };
 
-type Str = Record<Locale, string>;
 interface I18n {
   title: string;
   subtitle: string;
@@ -77,6 +83,7 @@ interface I18n {
   ms: string;
   sec: string;
   tip: string;
+  target: string;
 }
 
 const T: Record<Locale, I18n> = {
@@ -110,6 +117,7 @@ const T: Record<Locale, I18n> = {
     ms: "ms",
     sec: "초",
     tip: "팁: 손목이 아니라 팔꿈치로 큰 움직임을, 미세 조정은 손목으로.",
+    target: "타깃",
   },
   en: {
     title: "Aim Trainer PRO",
@@ -141,6 +149,7 @@ const T: Record<Locale, I18n> = {
     ms: "ms",
     sec: "s",
     tip: "Tip: move with your elbow for big flicks, wrist for micro-adjustments.",
+    target: "Target",
   },
   ja: {
     title: "エイムトレーナー PRO",
@@ -172,6 +181,7 @@ const T: Record<Locale, I18n> = {
     ms: "ms",
     sec: "秒",
     tip: "ヒント：大きな振りは肘、微調整は手首で。",
+    target: "ターゲット",
   },
   fr: {
     title: "Aim Trainer PRO",
@@ -203,6 +213,7 @@ const T: Record<Locale, I18n> = {
     ms: "ms",
     sec: "s",
     tip: "Astuce : coude pour les grands flicks, poignet pour les micro-ajustements.",
+    target: "Cible",
   },
   es: {
     title: "Aim Trainer PRO",
@@ -234,6 +245,7 @@ const T: Record<Locale, I18n> = {
     ms: "ms",
     sec: "s",
     tip: "Consejo: usa el codo para flicks grandes y la muñeca para ajustes finos.",
+    target: "Objetivo",
   },
   zh: {
     title: "瞄准训练器 PRO",
@@ -265,25 +277,12 @@ const T: Record<Locale, I18n> = {
     ms: "毫秒",
     sec: "秒",
     tip: "提示：大甩用手肘，微调用手腕。",
+    target: "目标",
   },
 };
 
 interface Props {
   locale: Locale;
-}
-
-function computeRank(mode: Mode, score: number): Rank {
-  // Per-mode score bands → rank. Bands tuned to normal difficulty feel.
-  const bands: Record<Mode, number[]> = {
-    gridshot: [20, 32, 44, 56, 70], // hits in 30s
-    flick: [16, 26, 36, 46, 58],
-    precision: [12, 20, 28, 36, 46],
-    tracking: [40, 55, 68, 80, 90], // % time on target
-  };
-  const b = bands[mode];
-  let i = 0;
-  while (i < b.length && score >= b[i]) i++;
-  return RANKS[i];
 }
 
 const AimTrainer: React.FC<Props> = ({ locale }) => {
@@ -308,6 +307,11 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
   const reactionsRef = useRef<number[]>([]);
   const rafRef = useRef<number | undefined>(undefined);
   const timerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+  const pausedAtRef = useRef<number | null>(null);
+  const hiddenMsRef = useRef(0);
+  const lastFrameRef = useRef<number | null>(null);
+  const lastTargetRenderRef = useRef(0);
+  const targetsRef = useRef<Target[]>([]);
   // tracking-mode state kept in refs (per-frame)
   const trkTarget = useRef({ x: 50, y: 50, vx: 1, vy: 1, size: 74 });
   const trkOnMs = useRef(0);
@@ -326,16 +330,36 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
   }, []);
 
-  const spawn = useCallback(
-    (size: number): Target => ({
-      id: idRef.current++,
-      x: 8 + Math.random() * 84,
-      y: 8 + Math.random() * 84,
-      size,
-      born: performance.now(),
-    }),
-    []
-  );
+  const spawn = useCallback((size: number, occupied: Target[] = []): Target => {
+    const rect = fieldRef.current?.getBoundingClientRect();
+    const width = rect?.width ?? 600;
+    const height = rect?.height ?? 480;
+    const [minX, maxX] = targetCenterRange(size, width);
+    const [minY, maxY] = targetCenterRange(size, height);
+    let candidate: Target | null = null;
+    for (let attempt = 0; attempt < 12; attempt++) {
+      candidate = {
+        id: idRef.current++,
+        x: minX + Math.random() * (maxX - minX),
+        y: minY + Math.random() * (maxY - minY),
+        size,
+        born: performance.now(),
+      };
+      const overlaps = occupied.some((other) => {
+        const dx = ((candidate!.x - other.x) / 100) * width;
+        const dy = ((candidate!.y - other.y) / 100) * height;
+        return Math.hypot(dx, dy) < (candidate!.size + other.size) / 2 + 6;
+      });
+      if (!overlaps) return candidate;
+    }
+    return candidate!;
+  }, []);
+
+  const spawnMany = useCallback((count: number, size: number): Target[] => {
+    const next: Target[] = [];
+    for (let index = 0; index < count; index++) next.push(spawn(size, next));
+    return next;
+  }, [spawn]);
 
   const finish = useCallback(() => {
     stop();
@@ -353,7 +377,7 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
     const saved = recordBest(key, score, "score", `${t.diffName[diff]}`);
     setBest(saved.value);
     setIsNewBest(beat && score > 0);
-    if (beat && score > 0) {
+    if (beat && score > 0 && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } });
     }
     setPhase("result");
@@ -370,6 +394,10 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
     setMisses(0);
     reactionsRef.current = [];
     trkOnMs.current = 0;
+    hiddenMsRef.current = 0;
+    pausedAtRef.current = null;
+    lastFrameRef.current = null;
+    lastTargetRenderRef.current = 0;
     setIsNewBest(false);
     setTimeLeft(DURATION);
     startRef.current = performance.now();
@@ -378,59 +406,91 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
       trkTarget.current = { x: 50, y: 50, vx: (Math.random() > 0.5 ? 1 : -1), vy: (Math.random() > 0.5 ? 1 : -1), size: targetSize };
       setTargets([{ id: idRef.current++, x: 50, y: 50, size: targetSize, born: performance.now() }]);
     } else {
-      const initial = Array.from({ length: gridCount }, () => spawn(targetSize));
+      const initial = spawnMany(gridCount, targetSize);
       setTargets(initial);
     }
     setPhase("playing");
 
     timerRef.current = setInterval(() => {
-      const remaining = Math.max(0, DURATION - (performance.now() - startRef.current) / 1000);
+      const now = performance.now();
+      const activeNow = pausedAtRef.current ?? now;
+      const elapsed = activeNow - startRef.current - hiddenMsRef.current;
+      const remaining = Math.max(0, DURATION - elapsed / 1000);
       setTimeLeft(Math.ceil(remaining));
       if (remaining <= 0) finishRef.current();
     }, 100);
-  }, [mode, targetSize, gridCount, spawn]);
+  }, [mode, targetSize, gridCount, spawnMany]);
+
+  useEffect(() => {
+    targetsRef.current = targets;
+  }, [targets]);
+
+  useEffect(() => {
+    if (phase !== "playing") return;
+    const handleVisibility = () => {
+      const now = performance.now();
+      if (document.hidden && pausedAtRef.current === null) {
+        pausedAtRef.current = now;
+        lastFrameRef.current = null;
+      } else if (!document.hidden && pausedAtRef.current !== null) {
+        hiddenMsRef.current += now - pausedAtRef.current;
+        pausedAtRef.current = null;
+        lastFrameRef.current = null;
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [phase]);
 
   // Tracking + precision-TTL animation loop
   useEffect(() => {
     if (phase !== "playing") return;
     if (mode !== "tracking" && ttl === 0) return;
 
-    const loop = () => {
+    const loop = (frameNow: number) => {
+      if (pausedAtRef.current !== null) {
+        lastFrameRef.current = null;
+        rafRef.current = requestAnimationFrame(loop);
+        return;
+      }
+      const deltaMs = lastFrameRef.current === null ? 1000 / 60 : Math.max(0, frameNow - lastFrameRef.current);
+      lastFrameRef.current = frameNow;
       const field = fieldRef.current;
       if (field) {
         if (mode === "tracking") {
           const tk = trkTarget.current;
-          const spd = cfg.speed * dc.speed * 0.03; // % per frame-ish
+          const rect = field.getBoundingClientRect();
+          const [minX, maxX] = targetCenterRange(tk.size, rect.width);
+          const [minY, maxY] = targetCenterRange(tk.size, rect.height);
+          const spd = cfg.speed * dc.speed * 0.03 * frameScale(deltaMs);
           tk.x += tk.vx * spd;
           tk.y += tk.vy * spd;
-          if (tk.x < 6 || tk.x > 94) { tk.vx *= -1; tk.x = Math.max(6, Math.min(94, tk.x)); tk.vy += (Math.random() - 0.5) * 0.4; }
-          if (tk.y < 6 || tk.y > 94) { tk.vy *= -1; tk.y = Math.max(6, Math.min(94, tk.y)); tk.vx += (Math.random() - 0.5) * 0.4; }
+          if (tk.x < minX || tk.x > maxX) { tk.vx *= -1; tk.x = Math.max(minX, Math.min(maxX, tk.x)); tk.vy += (Math.random() - 0.5) * 0.4; }
+          if (tk.y < minY || tk.y > maxY) { tk.vy *= -1; tk.y = Math.max(minY, Math.min(maxY, tk.y)); tk.vx += (Math.random() - 0.5) * 0.4; }
           // normalize speed vector so it doesn't runaway
           const mag = Math.hypot(tk.vx, tk.vy) || 1;
           tk.vx /= mag; tk.vy /= mag;
           // is pointer over target?
-          const rect = field.getBoundingClientRect();
           const txPx = (tk.x / 100) * rect.width;
           const tyPx = (tk.y / 100) * rect.height;
           const dist = Math.hypot(pointer.current.x - txPx, pointer.current.y - tyPx);
           const on = pointer.current.inside && dist <= tk.size / 2;
-          if (on) trkOnMs.current += 16;
-          setTargets([{ id: 0, x: tk.x, y: tk.y, size: tk.size, born: 0 }]);
+          if (on) trkOnMs.current += Math.min(deltaMs, 50);
+          if (frameNow - lastTargetRenderRef.current >= 1000 / 60) {
+            lastTargetRenderRef.current = frameNow;
+            setTargets([{ id: 0, x: tk.x, y: tk.y, size: tk.size, born: 0 }]);
+          }
         } else if (ttl > 0) {
           // precision: expire overdue targets as misses
           const now = performance.now();
-          setTargets((prev) => {
-            let expired = 0;
-            const alive = prev.filter((tg) => {
-              if (now - tg.born > ttl) { expired++; return false; }
-              return true;
-            });
-            if (expired > 0) {
-              setMisses((m) => m + expired);
-              return [...alive, ...Array.from({ length: expired }, () => spawn(targetSize))];
-            }
-            return prev;
-          });
+          const alive = targetsRef.current.filter((target) => now - target.born <= ttl);
+          const expired = targetsRef.current.length - alive.length;
+          if (expired > 0) {
+            setMisses((missCount) => missCount + expired);
+            const replacements = [...alive];
+            for (let index = 0; index < expired; index++) replacements.push(spawn(targetSize, replacements));
+            setTargets(replacements);
+          }
         }
       }
       rafRef.current = requestAnimationFrame(loop);
@@ -457,7 +517,7 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
       setHits((h) => h + 1);
       setTargets((prev) => {
         const rest = prev.filter((tg) => tg.id !== id);
-        return [...rest, spawn(targetSize)];
+        return [...rest, spawn(targetSize, rest)];
       });
     },
     [phase, mode, targetSize, spawn]
@@ -478,7 +538,7 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
     ? Math.round(Math.sqrt(reactions.reduce((s, r) => s + (r - avgReaction) ** 2, 0) / reactions.length))
     : 0;
   const consistency = avgReaction > 0 ? Math.max(0, Math.round(100 - (stdev / avgReaction) * 100)) : 0;
-  const rank = computeRank(mode, finalScore);
+  const rank = computeAimRank(mode, diff, finalScore);
 
   useEffect(() => {
     const b = getBest(key);
@@ -577,7 +637,8 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
                 top: `${tg.y}%`,
                 transform: "translate(-50%, -50%)",
               }}
-              aria-label="target"
+              type="button"
+              aria-label={t.target}
             >
               {mode === "tracking" && <span className="absolute inset-0 m-auto h-2 w-2 rounded-full bg-white" />}
             </button>

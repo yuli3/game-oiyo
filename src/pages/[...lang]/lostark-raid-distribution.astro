@@ -12,6 +12,7 @@ export async function getStaticPaths() {
   return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
 }
 const { locale } = Astro.props as { locale: Locale };
+const blogTool = (slug: string) => `https://blog.oiyo.net/${locale}/${slug}/`;
 
 const meta: Record<Locale, { title: string; description: string }> = {
   ko: { title: "로스트아크 본1부3 품앗이 분배 계산기", description: "본캐·부캐 캐릭터 정보를 입력하면 본1부3(또는 본1부1) 품앗이 파티의 딜러·서포터를 게임별로 균등 분배합니다. 레이드 버스비 계산기와는 별개 도구입니다." },
@@ -40,7 +41,7 @@ const content = {
     related: [
       { href: "/ko/lostark-bus-calculator/", label: "레이드 버스비 계산기", desc: "분배와 다른 별개 도구 — 버스 경매 최적가." },
       { href: "/ko/wheel-spinner/", label: "돌림판", desc: "무작위로 정합니다." },
-      { href: "/ko/dutch-pay-calculator/", label: "더치페이 계산기", desc: "비용을 나눕니다." },
+      { href: blogTool("dutch-pay-calculator"), label: "더치페이 계산기", desc: "비용을 나눕니다." },
     ],
     disclaimer: "분배 결과는 입력값 기준 자동 계산이며, 실제 파티 편성은 합의에 따릅니다.",
   },
@@ -60,7 +61,7 @@ const content = {
     related: [
       { href: "/en/lostark-bus-calculator/", label: "Raid Bus Fee Calculator", desc: "A different tool from distribution — optimal bus auction price." },
       { href: "/en/wheel-spinner/", label: "Wheel Spinner", desc: "Decide at random." },
-      { href: "/en/dutch-pay-calculator/", label: "Split Bill Calculator", desc: "Split costs." },
+      { href: blogTool("dutch-pay-calculator"), label: "Split Bill Calculator", desc: "Split costs." },
     ],
     disclaimer: "Distribution is auto-computed from your inputs; the actual party setup follows your group's agreement.",
   },
@@ -80,7 +81,7 @@ const content = {
     related: [
       { href: "/ja/lostark-bus-calculator/", label: "レイドバス料金計算機", desc: "分配とは別ツール — バスの最適オークション価格。" },
       { href: "/ja/wheel-spinner/", label: "ルーレット", desc: "ランダムに決めます。" },
-      { href: "/ja/dutch-pay-calculator/", label: "割り勘計算機", desc: "費用を分けます。" },
+      { href: blogTool("dutch-pay-calculator"), label: "割り勘計算機", desc: "費用を分けます。" },
     ],
     disclaimer: "分配結果は入力値に基づく自動計算で、実際の編成はグループの合意に従います。",
   },

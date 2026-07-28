@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { getBest, recordBest, getBestForConditions, recordBestForConditions, getDailyStreak, recordDailyWin, type BestConditions, type DailyStreak } from '../../lib/games/records';
 import { dayIndex, todayKey, previousDayKey } from '../../lib/games/daily';
+import { displayedGameSeconds, recordedGameSeconds } from '../../lib/games/minesweeper-timing';
 import {
     chordMinesweeperCell,
     createEmptyBoard,
@@ -76,6 +77,7 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [timer, setTimer] = useState(0);
     const [flagMode, setFlagMode] = useState(false);
     const [firstClick, setFirstClick] = useState(true);
+    const [hasStarted, setHasStarted] = useState(false);
     const [bestTime, setBestTime] = useState<number | null>(null);
     const [activeCell, setActiveCell] = useState(0);
     const [generationStrategy, setGenerationStrategy] = useState<'pending' | 'verified' | 'safe-fallback'>('pending');
@@ -84,6 +86,7 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const generationSeed = useRef(createGenerationSeed());
     const cellRefs = useRef<Array<HTMLButtonElement | null>>([]);
     const recordedRef = useRef(false);
+    const startedAtRef = useRef<number | null>(null);
 
     const recordConditions = useCallback((): BestConditions => ({
         seed: mode === 'daily' ? `daily-${dailyDate}` : `free-${generationSeed.current}`,
@@ -98,6 +101,8 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         setFlagMode(false);
         setActiveCell(0);
         setTimer(0);
+        setHasStarted(false);
+        startedAtRef.current = null;
         recordedRef.current = false;
         if (next === 'daily') {
             const daily = generateDailyBoard();
@@ -135,10 +140,12 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     }, []);
 
     useEffect(() => {
-        if (status !== 'playing' || firstClick) return;
-        const interval = setInterval(() => setTimer((s) => s + 1), 1000);
+        if (status !== 'playing' || !hasStarted) return;
+        const updateTimer = () => setTimer(displayedGameSeconds(startedAtRef.current, performance.now()));
+        updateTimer();
+        const interval = setInterval(updateTimer, 250);
         return () => clearInterval(interval);
-    }, [status, firstClick]);
+    }, [status, hasStarted]);
 
     const applyReveal = (result: RevealResult) => {
         if (!result.changed) return;
@@ -146,7 +153,9 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         setStatus(result.status);
         if (result.status === 'won' && !recordedRef.current) {
             recordedRef.current = true;
-            setBestTime(recordBestForConditions(bestKeyFor(difficultyId), Math.max(1, timer), 'seconds', recordConditions()).value);
+            const elapsed = recordedGameSeconds(startedAtRef.current, performance.now());
+            setTimer(elapsed);
+            setBestTime(recordBestForConditions(bestKeyFor(difficultyId), elapsed, 'seconds', recordConditions()).value);
             if (mode === 'daily') {
                 const today = todayKey();
                 setStreak(recordDailyWin(DAILY_GAME_ID, today, previousDayKey(today)));
@@ -157,6 +166,10 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const reveal = (x: number, y: number) => {
         if (status !== 'playing' || board[y]?.[x]?.isFlagged) return;
         if (mode === 'daily' && dailyDate !== todayKey()) { initBoard('daily'); return; }
+        if (!hasStarted) {
+            startedAtRef.current = performance.now();
+            setHasStarted(true);
+        }
 
         // Free play: first click is always safe — build and verify the board around it.
         let base = board;

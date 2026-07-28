@@ -1,0 +1,36 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SpatialMemory from "../../components/games/SpatialMemory";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: { title: "공간 기억 — 3D 위치 기억력 게임", description: "표식이 빛나는 순서를 3D 공간에서 기억하는 무료 게임. 시야를 돌려 등 뒤의 위치까지 떠올리는, 항목이 아닌 '공간' 기억 훈련." },
+  en: { title: "Spatial Memory — 3D Location Memory Game", description: "Remember the order markers light up in a 3D space. Turn the view to recall positions behind you — a free game that trains spatial, not item, memory." },
+  ja: { title: "空間記憶 — 3D位置記憶ゲーム", description: "3D空間でマーカーが光る順番を覚える無料ゲーム。視点を回して背後の位置まで思い出す、項目ではなく空間の記憶トレーニング。" },
+  zh: { title: "空间记忆 — 3D 位置记忆游戏", description: "在 3D 空间中记住标记发光的顺序。转动视角回忆身后的位置——训练空间记忆而非条目记忆的免费游戏。" },
+  fr: { title: "Mémoire spatiale — Jeu de mémoire 3D", description: "Retenez l'ordre d'allumage des repères dans un espace 3D. Tournez la vue pour retrouver ceux placés derrière vous : un jeu gratuit qui entraîne la mémoire spatiale." },
+  es: { title: "Memoria espacial — Juego de memoria 3D", description: "Recuerda el orden en que se iluminan los marcadores en un espacio 3D. Gira la vista para recordar los que quedan detrás: un juego gratuito de memoria espacial." },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-2xl px-4 py-8">
+    {/*
+      `client:visible` rather than `client:load`: the three.js chunk is the
+      heaviest asset in the arcade, so it is only requested once the game is
+      actually scrolled into view.
+    */}
+    <SpatialMemory client:visible locale={locale} />
+    <GameGuide slug="spatial-memory" locale={locale} name={m.title.split(' — ')[0]} />
+  </div>
+</BaseLayout>

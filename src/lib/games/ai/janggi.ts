@@ -3,7 +3,7 @@
 // the enemy general wins; no check/bikjang/repetition rules; a side with no
 // moves passes. Board: (string | null)[][] 10×9 — lowercase = Cho (초, top),
 // uppercase = Han (한, bottom).
-import { pickWeighted, type AiLevel } from "./types";
+import { type AiLevel } from "./types";
 
 export type JanggiBoard = (string | null)[][];
 export type JanggiMove = { from: [number, number]; to: [number, number] };
@@ -208,13 +208,15 @@ function negamax(board: JanggiBoard, depth: number, alpha: number, beta: number,
 }
 
 /** Best move for the side at the given level; null if no legal move (pass). */
-export function janggiBestMove(board: JanggiBoard, cho: boolean, level: AiLevel): JanggiMove | null {
+export function janggiBestMove(board: JanggiBoard, cho: boolean, level: AiLevel, seed = 0): JanggiMove | null {
   const moves = janggiMoves(board, cho);
   if (moves.length === 0) return null;
   const depth = level === 1 ? 1 : level === 2 ? 2 : 3;
   const scored = orderMoves(board, moves)
     .map((m) => ({ m, val: -negamax(janggiApply(board, m), depth - 1, -Infinity, Infinity, !cho) }))
     .sort((a, b) => b.val - a.val);
-  if (level === 1 && scored[0].val < 500_000) return pickWeighted(scored, 4).m;
+  // Apprentice remains shallow, but must still be reproducible and take a
+  // free capture / winning move when one exists.
+  if (level === 1 && scored[0].val < 500_000) return scored[Math.abs(seed) % Math.min(4, scored.length)].m;
   return scored[0].m;
 }

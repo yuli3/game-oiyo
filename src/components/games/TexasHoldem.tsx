@@ -38,6 +38,8 @@ const COPY: Record<UILocale, {
   you: string; opponent: string; community: string; current: string; folded: string;
   win: string; lose: string; tie: string; foldLose: string;
   ranks: string; stats: (w: number, l: number, d: number) => string;
+  dealLabel: string; againLabel: string; foldLabel: string;
+  advanceLabel: (action: string) => string; ranksLabel: (expanded: boolean) => string;
   note: string;
 }> = {
   ko: {
@@ -46,6 +48,8 @@ const COPY: Record<UILocale, {
     you: "나", opponent: "상대", community: "커뮤니티 카드", current: "현재 최선", folded: "폴드함",
     win: "🎉 승리!", lose: "패배", tie: "무승부 (분할)", foldLose: "폴드 — 상대 승",
     ranks: "포커 족보 (강→약)", stats: (w, l, d) => `${w}승 ${l}패 ${d}무`,
+    dealLabel: "새 핸드 딜하기", againLabel: "다음 핸드 딜하기", foldLabel: "폴드, 비용 0",
+    advanceLabel: (action) => `${action}, 비용 0`, ranksLabel: (expanded) => `포커 족보 ${expanded ? "접기" : "펼치기"}`,
     note: "실제 화폐·베팅 없는 학습용 게임입니다. 두 장의 핸드와 커뮤니티 5장으로 가장 강한 5장을 만듭니다. 다음 카드를 보는 비용은 없으며, 폴드는 자기 판단을 확인하는 연습 버튼입니다.",
   },
   en: {
@@ -54,6 +58,8 @@ const COPY: Record<UILocale, {
     you: "You", opponent: "Opponent", community: "Community cards", current: "Best so far", folded: "Folded",
     win: "🎉 You win!", lose: "You lose", tie: "Split pot", foldLose: "Folded — opponent wins",
     ranks: "Poker hand rankings (strong → weak)", stats: (w, l, d) => `${w}W ${l}L ${d}D`,
+    dealLabel: "Deal a new hand", againLabel: "Deal the next hand", foldLabel: "Fold, cost 0",
+    advanceLabel: (action) => `${action}, cost 0`, ranksLabel: (expanded) => `${expanded ? "Collapse" : "Expand"} poker hand rankings`,
     note: "A learning game with no real money or betting. Make the best 5-card hand from your 2 cards plus 5 community cards. Revealing the next card costs nothing; Fold is only a self-check.",
   },
   ja: {
@@ -62,6 +68,8 @@ const COPY: Record<UILocale, {
     you: "あなた", opponent: "相手", community: "コミュニティカード", current: "現在の最善", folded: "フォールド",
     win: "🎉 勝ち！", lose: "負け", tie: "引き分け（分割）", foldLose: "フォールド — 相手の勝ち",
     ranks: "ポーカーの役（強→弱）", stats: (w, l, d) => `${w}勝 ${l}敗 ${d}分`,
+    dealLabel: "新しいハンドを配る", againLabel: "次のハンドを配る", foldLabel: "フォールド、コスト0",
+    advanceLabel: (action) => `${action}、コスト0`, ranksLabel: (expanded) => `ポーカーの役を${expanded ? "閉じる" : "開く"}`,
     note: "実際のお金やベットのない学習用ゲームです。手札2枚とコミュニティ5枚で最強の5枚を作ります。次のカードを見る費用はなく、フォールドは自己判断を確認する練習用です。",
   },
   zh: {
@@ -70,6 +78,8 @@ const COPY: Record<UILocale, {
     you: "你", opponent: "对手", community: "公共牌", current: "当前最佳", folded: "已弃牌",
     win: "🎉 你赢了！", lose: "你输了", tie: "平局（分池）", foldLose: "弃牌 — 对手获胜",
     ranks: "扑克牌型（强→弱）", stats: (w, l, d) => `${w}胜 ${l}负 ${d}平`,
+    dealLabel: "发一手新牌", againLabel: "发下一手牌", foldLabel: "弃牌，费用0",
+    advanceLabel: (action) => `${action}，费用0`, ranksLabel: (expanded) => `${expanded ? "收起" : "展开"}扑克牌型`,
     note: "这是一款无真实货币和下注的学习游戏。用你的2张牌加5张公共牌组成最强的5张牌。查看下一张牌没有成本；弃牌只是自我判断练习。",
   },
   fr: {
@@ -78,6 +88,8 @@ const COPY: Record<UILocale, {
     you: "Vous", opponent: "Adversaire", community: "Cartes communes", current: "Meilleure main", folded: "Couché",
     win: "🎉 Gagné !", lose: "Perdu", tie: "Split (partage)", foldLose: "Couché — l'adversaire gagne",
     ranks: "Classement des mains (fort → faible)", stats: (w, l, d) => `${w}V ${l}D ${d}N`,
+    dealLabel: "Distribuer une nouvelle main", againLabel: "Distribuer la main suivante", foldLabel: "Se coucher, coût 0",
+    advanceLabel: (action) => `${action}, coût 0`, ranksLabel: (expanded) => `${expanded ? "Réduire" : "Développer"} le classement des mains`,
     note: "Jeu d'apprentissage sans argent réel ni mise. Composez la meilleure main de 5 cartes avec vos 2 cartes et les 5 cartes communes. Révéler la carte suivante ne coûte rien ; se coucher est seulement un auto-test.",
   },
   es: {
@@ -86,6 +98,8 @@ const COPY: Record<UILocale, {
     you: "Tú", opponent: "Rival", community: "Cartas comunitarias", current: "Mejor mano", folded: "Retirado",
     win: "🎉 ¡Ganaste!", lose: "Perdiste", tie: "Empate (reparto)", foldLose: "Retirado — gana el rival",
     ranks: "Ranking de manos (fuerte → débil)", stats: (w, l, d) => `${w}G ${l}P ${d}E`,
+    dealLabel: "Repartir una mano nueva", againLabel: "Repartir la siguiente mano", foldLabel: "Retirarse, coste 0",
+    advanceLabel: (action) => `${action}, coste 0`, ranksLabel: (expanded) => `${expanded ? "Contraer" : "Expandir"} el ranking de manos`,
     note: "Un juego de aprendizaje sin dinero real ni apuestas. Forma la mejor mano de 5 cartas con tus 2 cartas y las 5 comunitarias. Ver la siguiente carta no cuesta nada; retirarse es solo una autoevaluación.",
   },
 };
@@ -168,7 +182,7 @@ const TexasHoldem: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
     <GameContainer title={t.title} subtitle={t.subtitle} onReset={stage !== "idle" ? deal : undefined} resetLabel={t.again}>
       {stage === "idle" ? (
         <div className="flex flex-col items-center gap-6 py-10">
-          <button onClick={deal} className="px-8 py-3 rounded-2xl bg-primary text-primary-foreground font-black text-lg hover:bg-primary/90 transition-colors">
+          <button onClick={deal} aria-label={t.dealLabel} className="px-8 py-3 rounded-2xl bg-primary text-primary-foreground font-black text-lg hover:bg-primary/90 transition-colors">
             {t.deal}
           </button>
           <p className="text-xs text-muted-foreground text-center max-w-md leading-relaxed">{t.note}</p>
@@ -210,12 +224,12 @@ const TexasHoldem: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
                   {t.you}: <b className="text-foreground">{catLabel[result.pv.category]}</b> · {t.opponent}: <b className="text-foreground">{catLabel[result.av.category]}</b>
                 </p>
               )}
-              <button onClick={deal} className="min-h-11 px-6 py-2.5 rounded-xl bg-primary text-primary-foreground font-black hover:bg-primary/90 transition-colors">{t.again}</button>
+              <button onClick={deal} aria-label={t.againLabel} className="min-h-11 px-6 py-2.5 rounded-xl bg-primary text-primary-foreground font-black hover:bg-primary/90 transition-colors">{t.again}</button>
             </div>
           ) : (
             <div className="flex justify-center gap-3">
-              <button onClick={fold} className="min-h-11 px-5 py-2.5 rounded-xl border border-border font-bold text-sm hover:bg-muted transition-colors">{t.fold}</button>
-              <button onClick={advance} className="min-h-11 px-6 py-2.5 rounded-xl bg-primary text-primary-foreground font-black hover:bg-primary/90 transition-colors">
+              <button onClick={fold} aria-label={t.foldLabel} className="min-h-11 px-5 py-2.5 rounded-xl border border-border font-bold text-sm hover:bg-muted transition-colors">{t.fold}</button>
+              <button onClick={advance} aria-label={t.advanceLabel(stage === "river" ? t.showdown : t.next[stage === "preflop" ? 0 : stage === "flop" ? 1 : 2])} className="min-h-11 px-6 py-2.5 rounded-xl bg-primary text-primary-foreground font-black hover:bg-primary/90 transition-colors">
                 {stage === "river" ? t.showdown : t.next[stage === "preflop" ? 0 : stage === "flop" ? 1 : 2]}
               </button>
             </div>
@@ -226,7 +240,7 @@ const TexasHoldem: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
 
           {/* Hand-ranking reference (the teaching artifact) */}
           <div className="border-t border-border pt-3">
-            <button onClick={() => setShowRanks((v) => !v)} className="min-h-11 w-full flex items-center justify-between text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+            <button onClick={() => setShowRanks((v) => !v)} aria-label={t.ranksLabel(showRanks)} aria-pressed={showRanks} className="min-h-11 w-full flex items-center justify-between text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
               <span>{t.ranks}</span><span>{showRanks ? "▾" : "▸"}</span>
             </button>
             {showRanks && (

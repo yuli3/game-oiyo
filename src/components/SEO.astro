@@ -2,6 +2,11 @@
 import { siteConfig } from "../config/site.config";
 import { getAuthor } from "../lib/authors";
 import noindexSlugs from "../config/noindex-slugs.json";
+import deindexedLocales from "../config/deindexed-locales.json";
+
+// Crawl-budget policy — see astro.config.mjs. Reachable for users, out of the
+// index, the sitemap, and the hreflang cluster.
+const DEINDEXED_LOCALES = new Set<string>(deindexedLocales);
 
 interface Props {
   title?: string;
@@ -52,8 +57,12 @@ const isLocaleCompleteRoute =
   isLocalePath &&
   (pathSegments.length === 1 ||
     (pathSegments.length === 2 && !/^\d+$/.test(pathSegments[1])));
-const locales =
-  availableLocales ?? (isLocaleCompleteRoute ? supportedLocales : [currentLocale]);
+// Deindexed locales are dropped from the hreflang cluster: Google discards
+// hreflang annotations pointing at noindex URLs, so leaving them in only
+// muddies the signal.
+const locales = (
+  availableLocales ?? (isLocaleCompleteRoute ? supportedLocales : [currentLocale])
+).filter((locale: string) => !DEINDEXED_LOCALES.has(locale));
 const xDefaultLocale = locales.includes(siteConfig.locale)
   ? siteConfig.locale
   : (locales.includes(currentLocale) ? currentLocale : locales[0]);
@@ -80,7 +89,8 @@ const canonicalHost = resolvedCanonicalUrl.hostname;
 const isCrossDomainCanonical = canonicalHost !== new URL(siteConfig.url).hostname;
 const currentSlug = currentPathname.split("/").filter(Boolean)[1];
 const isNoindexPrototype = noindexSlugs.includes(currentSlug);
-const robotsContent = isCrossDomainCanonical || isNoindexPrototype
+const isDeindexedLocale = DEINDEXED_LOCALES.has(currentPathname.split("/").filter(Boolean)[0] ?? "");
+const robotsContent = isCrossDomainCanonical || isNoindexPrototype || isDeindexedLocale
   ? "noindex, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
   : "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1";
 

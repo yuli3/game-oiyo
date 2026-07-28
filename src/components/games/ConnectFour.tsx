@@ -4,6 +4,7 @@ import { connectFourBestMove } from "../../lib/games/ai/connectfour";
 import type { AiLevel, GameMode } from "../../lib/games/ai/types";
 import { getRecord, recordResult, type GameRecord } from "../../lib/games/records";
 import { clearConnectFourSave, loadConnectFourSave, storeConnectFourSave } from "../../lib/games/active-game-save";
+import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 
 type Cell = 0 | 1 | 2; // 0=empty, 1=player1, 2=player2
 type Board = Cell[][];
@@ -174,6 +175,7 @@ interface FallingCell {
 
 const ConnectFour: React.FC<Props> = ({ locale }) => {
   const t = i18n[locale] ?? i18n.en;
+  const reducedMotion = usePrefersReducedMotion();
 
   const [board, setBoard] = useState<Board>(emptyBoard);
   const [currentPlayer, setCurrentPlayer] = useState<1 | 2>(1);
@@ -261,9 +263,9 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
           setCurrentPlayer(currentPlayer === 1 ? 2 : 1);
         }
         setAnimating(false);
-      }, 320);
+      }, reducedMotion ? 60 : 320);
     },
-    [board, currentPlayer, status, animating, mode]
+    [board, currentPlayer, status, animating, mode, reducedMotion]
   );
 
   const handleColClick = useCallback(
@@ -371,7 +373,7 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
       {/* Status bar */}
       <div className="mb-3 h-8 flex items-center justify-center" aria-live="polite">
         {status === "playing" && thinking && (
-          <span className="text-sm font-semibold text-muted-foreground animate-pulse motion-reduce:animate-none">{t.thinking}</span>
+          <span className={`text-sm font-semibold text-muted-foreground ${reducedMotion ? '' : 'animate-pulse'}`}>{t.thinking}</span>
         )}
         {status === "playing" && !thinking && (
           <span className="text-sm font-semibold">
@@ -465,13 +467,13 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
                   />
                   {/* Disk */}
                   <div
-                    className={`absolute rounded-full transition-all motion-reduce:transition-none ${diskClass} ${
-                      isFalling ? "animate-fall" : ""
-                    } ${winHighlight ? "ring-4 ring-white ring-offset-1 ring-offset-blue-700 scale-110 z-10" : ""}`}
+                    className={`absolute rounded-full ${reducedMotion ? 'transition-opacity' : 'transition-all'} ${diskClass} ${
+                      isFalling && !reducedMotion ? "animate-fall" : ""
+                    } ${winHighlight ? `ring-4 ring-white ring-offset-1 ring-offset-blue-700 ${reducedMotion ? '' : 'scale-110'} z-10` : ""}`}
                     style={{
                       margin: "5px",
                       inset: "0",
-                      ...(isFalling
+                      ...(isFalling && !reducedMotion
                         ? {
                             transform: `translateY(${-(fallingCell!.row * (cellSize + cellGap))}px)`,
                             transition: "transform 0.3s cubic-bezier(0.55, 0, 1, 0.45)",

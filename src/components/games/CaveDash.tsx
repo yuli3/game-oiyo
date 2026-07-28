@@ -2,6 +2,8 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import confetti from "canvas-confetti";
 import type { Locale } from "../../lib/i18n";
 import { getBest, recordBest } from "../../lib/games/records";
+import { frameScale } from "../../lib/games/time-contracts";
+import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 
 /* ────────────────────────────────────────────────────────────────────────────
  * Cave Dash — a one-tap endless flyer. Tap (or click / press) to give the ship a
@@ -33,16 +35,16 @@ interface GS {
 
 type I18n = {
   title: string; subtitle: string; tapStart: string; controls: string;
-  score: string; best: string; gameOver: string; restart: string; newBest: string;
+  score: string; best: string; gameOver: string; restart: string; newBest: string; playArea: string;
 };
 
 const T: Record<Locale, I18n> = {
-  ko: { title: "케이브 대시", subtitle: "탭으로 상승, 벽 사이를 통과하라", tapStart: "탭하여 시작", controls: "화면을 탭(또는 클릭·스페이스)하면 위로 떠오릅니다. 놓으면 중력으로 내려갑니다. 벽 사이 틈을 통과하세요.", score: "점수", best: "최고", gameOver: "게임 오버", restart: "다시 하기", newBest: "🎉 신기록!" },
-  en: { title: "Cave Dash", subtitle: "Tap to rise, thread the gaps", tapStart: "Tap to start", controls: "Tap the screen (or click / press Space) to lift; gravity pulls you down. Fly through the gaps between walls.", score: "Score", best: "Best", gameOver: "Game Over", restart: "Play again", newBest: "🎉 New best!" },
-  ja: { title: "ケイブダッシュ", subtitle: "タップで上昇、壁の隙間を抜けろ", tapStart: "タップで開始", controls: "画面をタップ(またはクリック・スペース)すると上昇し、離すと重力で下降します。壁の隙間を通り抜けましょう。", score: "スコア", best: "ベスト", gameOver: "ゲームオーバー", restart: "もう一度", newBest: "🎉 新記録！" },
-  fr: { title: "Cave Dash", subtitle: "Touchez pour monter, passez les trous", tapStart: "Touchez pour commencer", controls: "Touchez l'écran (ou cliquez / Espace) pour monter ; la gravité vous fait descendre. Passez entre les murs.", score: "Score", best: "Record", gameOver: "Game Over", restart: "Rejouer", newBest: "🎉 Nouveau record !" },
-  es: { title: "Cave Dash", subtitle: "Toca para subir, cruza los huecos", tapStart: "Toca para empezar", controls: "Toca la pantalla (o clic / Espacio) para subir; la gravedad te baja. Cruza los huecos entre los muros.", score: "Puntos", best: "Récord", gameOver: "Fin del juego", restart: "Jugar de nuevo", newBest: "🎉 ¡Nuevo récord!" },
-  zh: { title: "洞穴冲刺", subtitle: "点击上升，穿过缝隙", tapStart: "点击开始", controls: "点击屏幕(或点击鼠标/空格)上升，松开后重力下坠。穿过墙壁之间的缝隙。", score: "得分", best: "最佳", gameOver: "游戏结束", restart: "再玩一次", newBest: "🎉 新纪录！" },
+  ko: { title: "케이브 대시", subtitle: "탭으로 상승, 벽 사이를 통과하라", tapStart: "탭하여 시작", controls: "화면을 탭(또는 클릭·스페이스)하면 위로 떠오릅니다. 놓으면 중력으로 내려갑니다. 벽 사이 틈을 통과하세요.", score: "점수", best: "최고", gameOver: "게임 오버", restart: "다시 하기", newBest: "🎉 신기록!", playArea: "케이브 대시 게임 영역" },
+  en: { title: "Cave Dash", subtitle: "Tap to rise, thread the gaps", tapStart: "Tap to start", controls: "Tap the screen (or click / press Space) to lift; gravity pulls you down. Fly through the gaps between walls.", score: "Score", best: "Best", gameOver: "Game Over", restart: "Play again", newBest: "🎉 New best!", playArea: "Cave Dash game area" },
+  ja: { title: "ケイブダッシュ", subtitle: "タップで上昇、壁の隙間を抜けろ", tapStart: "タップで開始", controls: "画面をタップ(またはクリック・スペース)すると上昇し、離すと重力で下降します。壁の隙間を通り抜けましょう。", score: "スコア", best: "ベスト", gameOver: "ゲームオーバー", restart: "もう一度", newBest: "🎉 新記録！", playArea: "ケイブダッシュのゲームエリア" },
+  fr: { title: "Cave Dash", subtitle: "Touchez pour monter, passez les trous", tapStart: "Touchez pour commencer", controls: "Touchez l'écran (ou cliquez / Espace) pour monter ; la gravité vous fait descendre. Passez entre les murs.", score: "Score", best: "Record", gameOver: "Game Over", restart: "Rejouer", newBest: "🎉 Nouveau record !", playArea: "Zone de jeu Cave Dash" },
+  es: { title: "Cave Dash", subtitle: "Toca para subir, cruza los huecos", tapStart: "Toca para empezar", controls: "Toca la pantalla (o clic / Espacio) para subir; la gravedad te baja. Cruza los huecos entre los muros.", score: "Puntos", best: "Récord", gameOver: "Fin del juego", restart: "Jugar de nuevo", newBest: "🎉 ¡Nuevo récord!", playArea: "Área de juego de Cave Dash" },
+  zh: { title: "洞穴冲刺", subtitle: "点击上升，穿过缝隙", tapStart: "点击开始", controls: "点击屏幕(或点击鼠标/空格)上升，松开后重力下坠。穿过墙壁之间的缝隙。", score: "得分", best: "最佳", gameOver: "游戏结束", restart: "再玩一次", newBest: "🎉 新纪录！", playArea: "洞穴冲刺游戏区域" },
 };
 
 interface Props { locale: Locale }
@@ -60,6 +62,8 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
   const phaseRef = useRef<Phase>("menu");
   phaseRef.current = phase;
   const scoreRef = useRef(0);
+  const prefersReducedMotion = usePrefersReducedMotion();
+  const lastFrame = useRef<number | null>(null);
 
   useEffect(() => { const b = getBest(GAME_KEY); setBest(b ? b.value : 0); }, []);
 
@@ -70,22 +74,25 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
     const saved = recordBest(GAME_KEY, finalScore, "score");
     setBest(saved.value);
     setIsNewBest(beat && finalScore > 0);
-    if (beat && finalScore > 0) confetti({ particleCount: 90, spread: 72, origin: { y: 0.6 } });
+    if (beat && finalScore > 0 && !prefersReducedMotion) confetti({ particleCount: 90, spread: 72, origin: { y: 0.6 } });
     setPhase("over");
-  }, []);
+  }, [prefersReducedMotion]);
 
-  const loop = useCallback(() => {
+  const loop = useCallback((now?: number) => {
     const gs = gsRef.current; const canvas = canvasRef.current;
     if (!gs || !canvas) return;
     const ctx = canvas.getContext("2d"); if (!ctx) return;
 
-    gs.t += 1;
+    const frameNow = now ?? performance.now();
+    const scale = frameScale(lastFrame.current, frameNow);
+    lastFrame.current = frameNow;
+    gs.t += scale;
     gs.speed = 2.4 + gs.score * 0.12;
-    gs.vy += GRAVITY;
-    gs.y += gs.vy;
+    gs.vy += GRAVITY * scale;
+    gs.y += gs.vy * scale;
 
     // spawn walls
-    gs.spawnX -= gs.speed;
+    gs.spawnX -= gs.speed * scale;
     if (gs.spawnX <= 0) {
       gs.walls.push({ x: W, gapY: 70 + Math.random() * (H - 140 - GAP), passed: false });
       gs.spawnX = 200;
@@ -93,7 +100,7 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
     // move walls + scoring + collision
     let dead = false;
     for (const wl of gs.walls) {
-      wl.x -= gs.speed;
+      wl.x -= gs.speed * scale;
       if (!wl.passed && wl.x + WALL_W < SHIP_X) { wl.passed = true; gs.score += 1; scoreRef.current = gs.score; setScore(gs.score); }
       // collision: ship overlaps wall x-range and outside gap
       if (SHIP_X + SHIP_R > wl.x && SHIP_X - SHIP_R < wl.x + WALL_W) {
@@ -134,6 +141,7 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
     setScore(0); setIsNewBest(false);
     setPhase("playing");
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    lastFrame.current = null;
     rafRef.current = requestAnimationFrame(loop);
   }, [loop]);
 
@@ -178,6 +186,8 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
           height={H}
           className="w-full rounded-2xl border border-border touch-none bg-[#0b1020] [cursor:pointer]"
           style={{ aspectRatio: `${W} / ${H}` }}
+          role="img"
+          aria-label={t.playArea}
           onPointerDown={(e) => { e.preventDefault(); if (phaseRef.current === "playing") flap(); }}
         />
 
@@ -186,10 +196,7 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
         )}
 
         {phase !== "playing" && (
-          <div
-            className="absolute inset-0 flex flex-col items-center justify-center gap-4 rounded-2xl bg-black/55 px-6 text-center backdrop-blur-sm"
-            onPointerDown={(e) => { e.preventDefault(); begin(); }}
-          >
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 rounded-2xl bg-black/55 px-6 text-center backdrop-blur-sm">
             {phase === "over" && (
               <>
                 {isNewBest && <div className="text-sm font-black text-violet-300">{t.newBest}</div>}
@@ -203,7 +210,7 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
                 <p className="max-w-xs text-xs leading-relaxed text-white/80">{t.controls}</p>
               </>
             )}
-            <button className="rounded-full bg-violet-500 px-8 py-2.5 font-bold text-white transition-colors hover:bg-violet-600">
+            <button type="button" onClick={begin} className="rounded-full bg-violet-500 px-8 py-2.5 font-bold text-white transition-colors hover:bg-violet-600">
               {phase === "over" ? t.restart : t.tapStart}
             </button>
           </div>

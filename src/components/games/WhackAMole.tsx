@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { resolveWhack } from "../../lib/games/react-state-transitions";
+import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import confetti from "canvas-confetti";
 import type { Locale } from "../../lib/i18n";
 import { getBest, recordBest } from "../../lib/games/records";
@@ -41,6 +43,7 @@ const WhackAMole: React.FC<Props> = ({ locale }) => {
   const [timeLeft, setTimeLeft] = useState(DURATION);
   const [best, setBest] = useState(0);
   const [isNewBest, setIsNewBest] = useState(false);
+  const prefersReducedMotion = usePrefersReducedMotion();
   const [hitIdx, setHitIdx] = useState<number | null>(null);
 
   const scoreRef = useRef(0);
@@ -64,9 +67,9 @@ const WhackAMole: React.FC<Props> = ({ locale }) => {
     const saved = recordBest(GAME_KEY, final, "score");
     setBest(saved.value);
     setIsNewBest(beat && final > 0);
-    if (beat && final > 0) confetti({ particleCount: 90, spread: 72, origin: { y: 0.6 } });
+    if (beat && final > 0 && !prefersReducedMotion) confetti({ particleCount: 90, spread: 72, origin: { y: 0.6 } });
     setPhase("over");
-  }, [stop]);
+  }, [prefersReducedMotion, stop]);
 
   const begin = useCallback(() => {
     scoreRef.current = 0;
@@ -120,18 +123,14 @@ const WhackAMole: React.FC<Props> = ({ locale }) => {
 
   const whack = useCallback((i: number) => {
     if (phase !== "playing") return;
-    setCells((prev) => {
-      const c = prev[i];
-      if (!c) return prev;
-      const next = [...prev];
-      next[i] = null;
-      if (c === "mole") { scoreRef.current += 1; setScore(scoreRef.current); }
-      else { scoreRef.current = Math.max(0, scoreRef.current - 2); setScore(scoreRef.current); }
-      return next;
-    });
+    const transition = resolveWhack(cells, i, scoreRef.current);
+    if (!transition.hit) return;
+    scoreRef.current = transition.score;
+    setScore(transition.score);
+    setCells(transition.cells);
     setHitIdx(i);
     setTimeout(() => setHitIdx((h) => (h === i ? null : h)), 120);
-  }, [phase]);
+  }, [cells, phase]);
 
   return (
     <div className="not-prose my-10 mx-auto max-w-sm rounded-3xl border border-border bg-card p-5 text-card-foreground shadow-sm select-none">

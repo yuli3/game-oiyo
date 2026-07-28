@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
+import { elapsedSeconds } from '../../lib/games/time-contracts';
 
 // ─── Animal Pop — 60s match-3, ported from ahoxy-legacy ──────────────────────
 // Swap adjacent animals to match 3+; cascades build combo, combo ≥ 5 ignites
@@ -82,6 +83,7 @@ const AnimalPop: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [score, setScore] = useState(0);
     const [best, setBest] = useState(0);
     const [timeLeft, setTimeLeft] = useState(GAME_SECONDS);
+    const startedAt = useRef<number | null>(null);
     const [combo, setCombo] = useState(0);
     const [feverUntil, setFeverUntil] = useState(0);
     const [selected, setSelected] = useState<[number, number] | null>(null);
@@ -101,25 +103,29 @@ const AnimalPop: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         } catch { /* ignore */ }
     }, []);
 
-    // countdown
+    // Countdown from monotonic wall time so throttled tabs cannot add time.
     useEffect(() => {
         if (status !== 'playing') return;
-        if (timeLeft <= 0) {
+        const update = () => {
+            const left = Math.max(0, GAME_SECONDS - elapsedSeconds(startedAt.current, performance.now()));
+            setTimeLeft(left);
+            if (left > 0) return;
             setStatus('over');
             if (scoreRef.current > bestRef.current) {
                 setBest(scoreRef.current);
                 try { localStorage.setItem(BEST_KEY, String(scoreRef.current)); } catch { /* ignore */ }
             }
-            return;
-        }
-        const id = setTimeout(() => setTimeLeft((s) => s - 1), 1000);
-        return () => clearTimeout(id);
-    }, [status, timeLeft]);
+        };
+        update();
+        const id = setInterval(update, 100);
+        return () => clearInterval(id);
+    }, [status]);
 
     const start = useCallback(() => {
         setBoard(makeBoard());
         setScore(0);
         setTimeLeft(GAME_SECONDS);
+        startedAt.current = performance.now();
         setCombo(0);
         setFeverUntil(0);
         setSelected(null);

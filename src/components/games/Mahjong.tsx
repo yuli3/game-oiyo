@@ -7,6 +7,7 @@ import {
   type AiLevel,
 } from "../../lib/games/ai/mahjong";
 import { getRecord, recordResult, type GameRecord } from "../../lib/games/records";
+import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 
 const AI_DELAY = 700;
 const HAND = 13;
@@ -50,13 +51,17 @@ function tileLabel(k: number): { text: string; color: string } {
   return { text: `${rankOf(k)}${SUIT_GLYPH[suitOf(k)]}`, color: SUIT_COLOR[suitOf(k)] };
 }
 
-function Tile({ k, onClick, dim, small }: { k: number; onClick?: () => void; dim?: boolean; small?: boolean }) {
+function Tile({ k, onClick, dim, small, ariaLabel, reducedMotion }: { k: number; onClick?: () => void; dim?: boolean; small?: boolean; ariaLabel?: string; reducedMotion?: boolean }) {
   const { text, color } = tileLabel(k);
+  const className = `inline-flex items-center justify-center rounded-md border bg-card font-black shadow-sm ${!reducedMotion ? "transition-transform" : ""} ${
+    small ? "w-6 h-8 text-[11px]" : "w-8 h-11 text-sm"
+  } ${onClick ? `${!reducedMotion ? "hover:-translate-y-1" : ""} border-primary cursor-pointer` : "border-border"} ${dim ? "opacity-40" : ""}`;
+  if (!onClick) {
+    return <span aria-label={ariaLabel} className={className} style={{ color }}>{text}</span>;
+  }
   return (
-    <button onClick={onClick} disabled={!onClick}
-      className={`inline-flex items-center justify-center rounded-md border bg-card font-black shadow-sm transition-transform ${
-        small ? "w-6 h-8 text-[11px]" : "w-8 h-11 text-sm"
-      } ${onClick ? "hover:-translate-y-1 border-primary cursor-pointer" : "border-border"} ${dim ? "opacity-40" : ""}`}
+    <button type="button" onClick={onClick} aria-label={ariaLabel}
+      className={className}
       style={{ color }}>
       {text}
     </button>
@@ -70,6 +75,7 @@ const sortHand = (h: number[]) => h.slice().sort((a, b) => a - b);
 
 const Mahjong: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
   const t = i18n[locale] ?? i18n.en;
+  const reducedMotion = usePrefersReducedMotion();
   const [level, setLevel] = useState<AiLevel>(2);
   const [started, setStarted] = useState(false);
   const g = useRef<GameT | null>(null);
@@ -196,13 +202,13 @@ const Mahjong: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
           <p className="text-xs text-gray-500 max-w-md text-center">{t.rules}</p>
           <div className="flex gap-2">
             {([1, 2, 3] as AiLevel[]).map((lv) => (
-              <button key={lv} onClick={() => setLevel(lv)}
+              <button type="button" key={lv} onClick={() => setLevel(lv)} aria-pressed={level === lv}
                 className={`px-3 py-1.5 rounded-md text-sm font-bold border ${level === lv ? "bg-primary text-primary-foreground border-primary" : "border-gray-300 text-gray-600"}`}>
                 {lv === 1 ? t.level1 : lv === 2 ? t.level2 : t.level3}
               </button>
             ))}
           </div>
-          <button onClick={newGame} className="px-6 py-2.5 rounded-lg bg-primary text-primary-foreground font-bold">{t.start}</button>
+          <button type="button" onClick={newGame} className="px-6 py-2.5 rounded-lg bg-primary text-primary-foreground font-bold">{t.start}</button>
           <p className="text-xs text-gray-400">{t.record}: {record.w}W {record.l}L {record.d}D</p>
         </div>
       </GameContainer>
@@ -227,7 +233,7 @@ const Mahjong: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
                 {s.hands[pl].map((_, i) => <TileBack key={i} small />)}
               </div>
               <div className="flex flex-wrap gap-[1px] min-h-[16px]">
-                {s.discards[pl].slice(-8).map((k, i) => <Tile key={i} k={k} small dim />)}
+                {s.discards[pl].slice(-8).map((k, i) => <Tile key={i} k={k} small dim ariaLabel={`${t.discard}: ${tileLabel(k).text}`} />)}
               </div>
             </div>
           ))}
@@ -251,18 +257,18 @@ const Mahjong: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
 
         {/* Action buttons */}
         <div className="flex justify-center gap-2 min-h-[36px]">
-          {canTsumo && <button onClick={humanTsumo} className="px-4 py-1.5 rounded-md bg-amber-500 text-white font-bold">{t.tsumo}</button>}
+          {canTsumo && <button type="button" onClick={humanTsumo} className="px-4 py-1.5 rounded-md bg-amber-500 text-white font-bold">{t.tsumo}</button>}
           {s.phase === "ron" && (
             <>
-              <button onClick={humanRon} className="px-4 py-1.5 rounded-md bg-rose-600 text-white font-bold">{t.ron}</button>
-              <button onClick={humanPassRon} className="px-4 py-1.5 rounded-md border border-gray-300 font-bold">{t.pass}</button>
+              <button type="button" onClick={humanRon} className="px-4 py-1.5 rounded-md bg-rose-600 text-white font-bold">{t.ron}</button>
+              <button type="button" onClick={humanPassRon} className="px-4 py-1.5 rounded-md border border-gray-300 font-bold">{t.pass}</button>
             </>
           )}
         </div>
 
         {/* Your discards */}
         <div className="flex flex-wrap gap-[2px] justify-center min-h-[36px]">
-          {s.discards[0].map((k, i) => <Tile key={i} k={k} small dim />)}
+          {s.discards[0].map((k, i) => <Tile key={i} k={k} small dim ariaLabel={`${t.discard}: ${tileLabel(k).text}`} />)}
         </div>
 
         {/* Your hand */}
@@ -272,7 +278,9 @@ const Mahjong: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
             {s.hands[0].map((k, i) => (
               <Tile key={`${k}-${i}`} k={k}
                 onClick={yourTurn ? () => humanDiscard(k) : undefined}
-                dim={s.phase === "ron"} />
+                dim={s.phase === "ron"}
+                reducedMotion={reducedMotion}
+                ariaLabel={`${t.discard}: ${tileLabel(k).text}`} />
             ))}
           </div>
         </div>

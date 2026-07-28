@@ -15,8 +15,12 @@ const H = {
   how: { ko: "게임 방법", en: "How to play", ja: "遊び方", zh: "玩法", fr: "Comment jouer", es: "Cómo jugar" } as Record<Locale, string>,
   rules: { ko: "자세한 규칙", en: "Detailed rules", ja: "詳しいルール", zh: "详细规则", fr: "Règles détaillées", es: "Reglas detalladas" } as Record<Locale, string>,
   faq: { ko: "자주 묻는 질문", en: "FAQ", ja: "よくある質問", zh: "常见问题", fr: "FAQ", es: "Preguntas frecuentes" } as Record<Locale, string>,
+  related: { ko: "함께 읽기", en: "Related reading", ja: "あわせて読む", zh: "延伸阅读", fr: "À lire aussi", es: "Lectura relacionada" },
   strategyLink: { ko: "🏆 승리 전략 가이드 보기 →", en: "🏆 See the strategy guide →", ja: "🏆 攻略ガイドを見る →", zh: "🏆 查看攻略指南 →", fr: "🏆 Voir le guide de stratégie →", es: "🏆 Ver la guía de estrategia →" } as Record<Locale, string>,
 };
+// 로케일별로만 조회한다. `?? related.en` 같은 폴백을 넣으면 해당 로케일에
+// 없는 페이지로 보내 404가 된다.
+const relatedLinks = g?.related?.[locale];
 const ruleList = g?.rules ? (g.rules[locale] ?? g.rules.en) : null;
 
 const jsonLd = g ? [
@@ -78,6 +82,18 @@ const jsonLd = g ? [
           ))}
         </div>
       </div>
+      {relatedLinks && relatedLinks.length > 0 && (
+        <div>
+          <h2 class="text-lg font-black">{H.related[locale]}</h2>
+          <ul class="mt-2 space-y-1">
+            {relatedLinks.map((r) => (
+              <li>
+                <a href={r.href} class="text-sm font-bold text-primary hover:underline">{r.label}</a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       {strategy && (
         <a href={`/${locale}/${slug}-strategy`} class="inline-block text-sm font-bold text-primary hover:underline">
           {H.strategyLink[locale]}

@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
+import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
+import { elapsedSeconds } from '../../lib/games/time-contracts';
 
 // ─── Maze — recursive-backtracker generator, ported from ahoxy-legacy ────────
 // 0 = path, 1 = wall. Odd dimensions; start (0,0) → exit (rows-1, cols-1).
@@ -67,6 +69,7 @@ const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '
 
 const MazeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const t = COPY[(locale as keyof typeof COPY)] ?? COPY.en;
+    const reducedMotion = usePrefersReducedMotion();
 
     const [difficulty, setDifficulty] = useState<Difficulty>('easy');
     const [maze, setMaze] = useState<number[][]>(() => generateMaze(SIZES.easy, SIZES.easy));
@@ -75,6 +78,7 @@ const MazeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [won, setWon] = useState(false);
     const [best, setBest] = useState<Record<string, number>>({});
     const started = useRef(false);
+    const startedAt = useRef<number | null>(null);
     const touchStart = useRef<{ x: number; y: number } | null>(null);
 
     useEffect(() => {
@@ -86,7 +90,7 @@ const MazeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
     useEffect(() => {
         if (won || !started.current) return;
-        const id = setInterval(() => setSeconds((s) => s + 1), 1000);
+        const id = setInterval(() => setSeconds(elapsedSeconds(startedAt.current, performance.now())), 100);
         return () => clearInterval(id);
     }, [won, pos]);
 
@@ -98,6 +102,7 @@ const MazeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         setSeconds(0);
         setWon(false);
         started.current = false;
+        startedAt.current = null;
     }, [difficulty]);
 
     const move = useCallback((dr: number, dc: number) => {
@@ -107,6 +112,7 @@ const MazeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             const n = maze.length;
             if (nr < 0 || nr >= n || nc < 0 || nc >= n || maze[nr][nc] === 1) return [r, c];
             started.current = true;
+            if (startedAt.current === null) startedAt.current = performance.now();
             if (nr === n - 1 && nc === n - 1) {
                 setWon(true);
                 setBest((prev) => {
@@ -198,7 +204,7 @@ const MazeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 </div>
 
                 {won && (
-                    <div className="absolute inset-0 z-10 bg-background/80 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center gap-3 animate-in fade-in zoom-in-95" role="status" aria-live="polite">
+                    <div className={`absolute inset-0 z-10 bg-background/80 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center gap-3 ${!reducedMotion ? 'animate-in fade-in zoom-in-95' : ''}`} role="status" aria-live="polite">
                         <p className="text-2xl font-black text-success">🎉 {t.win}</p>
                         <p className="text-sm font-bold text-muted-foreground">{t.time} {fmt(seconds)}</p>
                         <button onClick={() => restart()} className="mt-2 px-8 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity">

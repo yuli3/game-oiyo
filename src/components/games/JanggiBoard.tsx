@@ -6,6 +6,7 @@ import {
 } from '../../lib/games/ai/janggi';
 import type { AiLevel, GameMode } from '../../lib/games/ai/types';
 import { getRecord, recordResult, type GameRecord } from '../../lib/games/records';
+import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 
 // ─── Janggi (Korean chess) with real movement rules ──────────────────────────
 // Cho (초, blue, lowercase) opens from the top; Han (한, red, uppercase) from
@@ -49,6 +50,7 @@ const i18n: Record<Locale, {
 
 const JanggiBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     const t = i18n[locale] ?? i18n.en;
+    const reducedMotion = usePrefersReducedMotion();
 
     const [board, setBoard] = useState<Board>(makeInitialBoard);
     const [selected, setSelected] = useState<[number, number] | null>(null);
@@ -191,7 +193,7 @@ const JanggiBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                 </div>
 
                 {/* Pieces */}
-                <div className={`relative grid grid-cols-9 grid-rows-10 w-full h-full transition-opacity ${thinking ? 'opacity-80' : ''}`}>
+                <div className={`relative grid grid-cols-9 grid-rows-10 w-full h-full ${!reducedMotion ? 'transition-opacity' : ''} ${thinking ? 'opacity-80' : ''}`}>
                     {board.map((row, r) => row.map((piece, c) => {
                         const isSelected = selected?.[0] === r && selected?.[1] === c;
                         const isTarget = targets.some(([tr, tc]) => tr === r && tc === c);
@@ -208,8 +210,8 @@ const JanggiBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                                         : <div className="absolute w-1/3 h-1/3 rounded-full bg-primary/40 z-10 pointer-events-none" />
                                 )}
                                 {piece && (
-                                    <div className={`w-full aspect-square flex items-center justify-center rounded-full border-2 font-black text-xs sm:text-lg transition-transform ${
-                                        isSelected ? 'scale-110 ring-2 ring-primary bg-yellow-100 z-10' : 'bg-[#e8dcc4]'
+                                    <div className={`w-full aspect-square flex items-center justify-center rounded-full border-2 font-black text-xs sm:text-lg ${!reducedMotion ? 'transition-transform' : ''} ${
+                                        isSelected ? `${!reducedMotion ? 'scale-110 ' : ''}ring-2 ring-primary bg-yellow-100 z-10` : 'bg-[#e8dcc4]'
                                     } ${isChoPiece(piece) ? 'text-blue-700 border-blue-700' : 'text-red-700 border-red-700'}`}>
                                         {PIECE_ICONS[piece]}
                                     </div>
@@ -220,7 +222,7 @@ const JanggiBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                 </div>
 
                 {winner && (
-                    <div className="absolute inset-0 z-20 bg-background/60 backdrop-blur-sm flex flex-col items-center justify-center animate-in fade-in zoom-in-95" role="status" aria-live="polite">
+                    <div className={`absolute inset-0 z-20 bg-background/60 backdrop-blur-sm flex flex-col items-center justify-center ${!reducedMotion ? 'animate-in fade-in zoom-in-95' : ''}`} role="status" aria-live="polite">
                         <div className="bg-card p-8 rounded-3xl shadow-xl border border-border text-center">
                             <h4 className="text-3xl font-black text-foreground mb-2">{winLabel}</h4>
                             <p className="text-muted-foreground mb-6 uppercase tracking-widest font-bold text-xs">{t.over}</p>

@@ -14,12 +14,12 @@ const STOP_THRESHOLD = 0.0008; // rad/tick — below this we call it stopped
 
 const WheelSpinner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const COPY = {
-        ko: { title: "행운의 돌림판", spin: "돌리기", reset: "초기화", add: "항목 추가", result: "결과!", placeholder: "메뉴 입력" },
-        en: { title: "Lucky wheel", spin: "Spin", reset: "Reset", add: "Add Item", result: "Result!", placeholder: "Enter item" },
-        ja: { title: "幸運のルーレット", spin: "回す", reset: "リセット", add: "項目を追加", result: "結果！", placeholder: "項目を入力" },
-        zh: { title: "幸运转盘", spin: "转动", reset: "重置", add: "添加选项", result: "结果！", placeholder: "输入选项" },
-        fr: { title: "Roue de la chance", spin: "Tourner", reset: "Réinitialiser", add: "Ajouter", result: "Résultat !", placeholder: "Saisir un élément" },
-        es: { title: "Ruleta de la suerte", spin: "Girar", reset: "Restablecer", add: "Añadir", result: "¡Resultado!", placeholder: "Escribe una opción" }
+        ko: { title: "행운의 돌림판", spin: "돌리기", reset: "초기화", add: "항목 추가", result: "결과!", placeholder: "메뉴 입력", wheel: "선택 항목 돌림판", remove: (item: string) => `${item} 삭제`, spinning: "돌리는 중…" },
+        en: { title: "Lucky wheel", spin: "Spin", reset: "Reset", add: "Add Item", result: "Result!", placeholder: "Enter item", wheel: "Wheel of choices", remove: (item: string) => `Remove ${item}`, spinning: "Spinning…" },
+        ja: { title: "幸運のルーレット", spin: "回す", reset: "リセット", add: "項目を追加", result: "結果！", placeholder: "項目を入力", wheel: "選択肢のルーレット", remove: (item: string) => `${item}を削除`, spinning: "回転中…" },
+        zh: { title: "幸运转盘", spin: "转动", reset: "重置", add: "添加选项", result: "结果！", placeholder: "输入选项", wheel: "选项转盘", remove: (item: string) => `删除 ${item}`, spinning: "转动中…" },
+        fr: { title: "Roue de la chance", spin: "Tourner", reset: "Réinitialiser", add: "Ajouter", result: "Résultat !", placeholder: "Saisir un élément", wheel: "Roue des choix", remove: (item: string) => `Supprimer ${item}`, spinning: "La roue tourne…" },
+        es: { title: "Ruleta de la suerte", spin: "Girar", reset: "Restablecer", add: "Añadir", result: "¡Resultado!", placeholder: "Escribe una opción", wheel: "Ruleta de opciones", remove: (item: string) => `Quitar ${item}`, spinning: "Girando…" }
     };
     const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
 
@@ -28,6 +28,7 @@ const WheelSpinner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [rotation, setRotation] = useState(0);
     const [isSpinning, setIsSpinning] = useState(false);
     const [winner, setWinner] = useState<string | null>(null);
+    const [reducedMotion, setReducedMotion] = useState(false);
 
     // Physics rig lives for the component's lifetime; only one body ever exists
     // (the wheel itself, pinned at its own center — see constants above).
@@ -36,6 +37,14 @@ const WheelSpinner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const runnerRef = useRef<Matter.Runner | null>(null);
     const itemsRef = useRef(items);
     itemsRef.current = items;
+
+    useEffect(() => {
+        const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+        const update = () => setReducedMotion(media.matches);
+        update();
+        media.addEventListener('change', update);
+        return () => media.removeEventListener('change', update);
+    }, []);
 
     useEffect(() => {
         const engine = Matter.Engine.create({ gravity: { x: 0, y: 0 } });
@@ -83,6 +92,14 @@ const WheelSpinner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         setIsSpinning(true);
         setWinner(null);
 
+        if (reducedMotion) {
+            const winningIndex = Math.floor(Math.random() * items.length);
+            setRotation(-(winningIndex * (360 / items.length)));
+            setWinner(items[winningIndex]);
+            setIsSpinning(false);
+            return;
+        }
+
         const direction = Math.random() < 0.5 ? -1 : 1; // spin can go either way
         const power = 0.35 + Math.random() * 0.3; // rad/tick — varies the number of turns
         Matter.Body.setAngularVelocity(body, direction * power);
@@ -109,7 +126,7 @@ const WheelSpinner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[12px] border-t-background translate-y-4" />
                     </div>
                     
-                    <div
+                    <div role="img" aria-label={winner ? `${t.wheel}: ${winner}` : t.wheel}
                         // rotation now comes from the matter.js body's angle every physics
                         // tick (see the `afterUpdate` handler above), so no CSS transition —
                         // the frame-by-frame updates already produce a smooth, decelerating spin.
@@ -155,28 +172,29 @@ const WheelSpinner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                             placeholder={t.placeholder}
                             className="flex-1 bg-muted/50 border border-border rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-primary outline-none transition-all"
                         />
-                        <button onClick={addItem} className="px-4 py-2 bg-primary text-primary-foreground rounded-xl font-bold text-xs">{t.add}</button>
+                        <button type="button" onClick={addItem} className="px-4 py-2 bg-primary text-primary-foreground rounded-xl font-bold text-xs">{t.add}</button>
                     </div>
 
                     <div className="max-h-32 overflow-y-auto flex flex-wrap gap-2 p-4 bg-muted/20 rounded-2xl border border-dashed border-border">
                         {items.map((item, i) => (
                             <span key={i} className="px-3 py-1 bg-card border border-border rounded-full text-[10px] font-bold text-muted-foreground flex items-center gap-2">
                                 {item}
-                                <button onClick={() => setItems(items.filter((_, idx) => idx !== i))} className="text-destructive hover:scale-125">×</button>
+                                <button type="button" onClick={() => setItems(items.filter((_, idx) => idx !== i))} aria-label={t.remove(item)} className="text-destructive hover:scale-125">×</button>
                             </span>
                         ))}
                     </div>
 
                     <button 
+                        type="button"
                         onClick={spin}
                         disabled={isSpinning}
                         className="w-full py-4 bg-primary text-primary-foreground rounded-2xl font-black text-xl shadow-lg hover:opacity-90 active:scale-95 transition-all"
                     >
-                        {isSpinning ? 'SPINNING...' : t.spin}
+                        {isSpinning ? t.spinning : t.spin}
                     </button>
 
                     {winner && (
-                        <div className="text-center animate-bounce">
+                        <div className="text-center animate-bounce motion-reduce:animate-none" role="status" aria-live="assertive">
                             <p className="text-[10px] font-black text-muted-foreground uppercase mb-1">{t.result}</p>
                             <h4 className="text-3xl font-black text-primary uppercase">{winner}</h4>
                         </div>

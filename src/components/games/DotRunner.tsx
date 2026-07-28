@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
+import { frameScale } from '../../lib/games/time-contracts';
 
 // ─── Dot Runner — endless runner, ported from ahoxy-legacy ────────────────────
 // Jump over red blocks, grab gold coins. Rewritten from per-frame setState to a
@@ -77,17 +78,20 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         if (!ctx) return;
 
         let raf: number;
+        let lastFrame: number | null = null;
         const px = 50, pw = 20, ph = 20;
 
-        const loop = () => {
+        const loop = (now: number) => {
             const g = game.current;
+            const scale = frameScale(lastFrame, now);
+            lastFrame = now;
 
             if (statusRef.current === 'playing') {
-                g.frame++;
+                g.frame += scale;
 
                 // player physics
-                g.velocityY += GRAVITY;
-                g.playerY += g.velocityY;
+                g.velocityY += GRAVITY * scale;
+                g.playerY += g.velocityY * scale;
                 if (g.playerY + ph > H - GROUND) {
                     g.playerY = H - GROUND - ph;
                     g.velocityY = 0;
@@ -95,17 +99,17 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 }
 
                 // spawn
-                if (Math.random() < OBSTACLE_FREQ) {
+                if (Math.random() < OBSTACLE_FREQ * scale) {
                     const h = 20 + Math.random() * 40;
                     g.obstacles.push({ x: W, y: H - GROUND - h, w: 20, h, speed: GAME_SPEED + Math.random() * 2 });
                 }
-                if (Math.random() < ITEM_FREQ) {
+                if (Math.random() < ITEM_FREQ * scale) {
                     g.items.push({ x: W, y: 100 + Math.random() * 150, w: 15, h: 15, speed: GAME_SPEED });
                 }
 
                 // move + cull
-                g.obstacles = g.obstacles.filter((o) => { o.x -= o.speed; return o.x + o.w > 0; });
-                g.items = g.items.filter((o) => { o.x -= o.speed; return o.x + o.w > 0; });
+                g.obstacles = g.obstacles.filter((o) => { o.x -= o.speed * scale; return o.x + o.w > 0; });
+                g.items = g.items.filter((o) => { o.x -= o.speed * scale; return o.x + o.w > 0; });
 
                 // collisions
                 const hit = (e: Entity) => px < e.x + e.w && px + pw > e.x && g.playerY < e.y + e.h && g.playerY + ph > e.y;

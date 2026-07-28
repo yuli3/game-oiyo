@@ -7,7 +7,7 @@ import {
   type RoomBudget,
 } from "./multiplayer-contract";
 
-type Seat = {
+export type Seat = {
   id: string;
   tokenHash: string;
   connected: boolean;
@@ -49,6 +49,19 @@ export type LocalRoomEmulatorOptions<State> = {
   tokenFactory: () => string;
   hashSeatToken: (token: string) => string;
   budget?: RoomBudget;
+  /**
+   * Rehydrate a room that already had authoritative progress (e.g. a Durable
+   * Object waking from hibernation/eviction). `state`/`revision`/`seats`
+   * override `initialState`/revision-0/no-seats; rate windows and the
+   * idempotency cache are intentionally NOT restorable — they are
+   * short-lived, non-authoritative, and safe to reset on a cold start.
+   */
+  restore?: {
+    state: State;
+    revision: number;
+    lastActivityAtMs: number;
+    seats: Seat[];
+  };
 };
 
 const DEFAULT_BUDGET: RoomBudget = { requestsUsedToday: 0, gbSecondsUsedToday: 0, storedBytes: 0 };
@@ -59,11 +72,11 @@ const DEFAULT_BUDGET: RoomBudget = { requestsUsedToday: 0, gbSecondsUsedToday: 0
  * injected hash is kept on seats. The bounded idempotency cache is memory-only.
  */
 export function createLocalRoomEmulator<State>(options: LocalRoomEmulatorOptions<State>) {
-  let state = structuredClone(options.initialState);
-  let revision = 0;
-  let lastActivityAtMs = options.createdAtMs;
+  let state = structuredClone(options.restore?.state ?? options.initialState);
+  let revision = options.restore?.revision ?? 0;
+  let lastActivityAtMs = options.restore?.lastActivityAtMs ?? options.createdAtMs;
   let budget = options.budget ?? DEFAULT_BUDGET;
-  const seats = new Map<string, Seat>();
+  const seats = new Map<string, Seat>(options.restore?.seats.map((seat) => [seat.id, { ...seat }]));
   const commandReplies = new Map<string, EmulatorReply<State>>();
   const rateWindows = new Map<string, { startedAtMs: number; count: number }>();
 
@@ -173,6 +186,7 @@ export function createLocalRoomEmulator<State>(options: LocalRoomEmulatorOptions
     dispatch,
     disconnect,
     getSnapshot: snapshot,
+    getSeats: (): Seat[] => [...seats.values()].map((seat) => ({ ...seat })),
     setBudget(next: RoomBudget) { budget = next; },
   };
 }

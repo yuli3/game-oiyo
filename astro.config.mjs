@@ -22,6 +22,13 @@ const BRIDGE_SLUGS = new Set(
 const NOINDEX_SLUGS = new Set(
   JSON.parse(readFileSync(new URL("./src/config/noindex-slugs.json", import.meta.url), "utf8")),
 );
+// Crawl-budget policy (2026-07-14 decision) — zh/fr/es stay reachable for users
+// but leave the index, the sitemap and the hreflang cluster. oiyo/blog/wiki
+// adopted this in July; game was never wired up and kept indexing 177 URLs
+// against the policy until the 2026-07-27 audit.
+const DEINDEXED_LOCALES = new Set(
+  JSON.parse(readFileSync(new URL("./src/config/deindexed-locales.json", import.meta.url), "utf8")),
+);
 
 // https://astro.build/config
 export default defineConfig({
@@ -44,6 +51,8 @@ export default defineConfig({
         if (path.endsWith("/index/") || path === "/index") return false;
         // Exclude noindex bridge stubs (canonical lives on oiyo.net)
         const segs = path.split("/").filter(Boolean);
+        // Deindexed locales (crawl budget).
+        if (segs.length > 0 && DEINDEXED_LOCALES.has(segs[0])) return false;
         if (segs.length === 2 && BRIDGE_SLUGS.has(segs[1])) return false;
         if (segs.length === 2 && NOINDEX_SLUGS.has(segs[1])) return false;
         return true;

@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { getBestForConditions, recordBestForConditions, type BestConditions } from '../../lib/games/records';
 import { isSudokuSolved } from '../../lib/games/logic-puzzles';
+import { SUDOKU_DEMO_PUZZLE, clearSudokuSave, loadSudokuSave, storeSudokuSave } from '../../lib/games/active-game-save';
+import { elapsedSeconds } from '../../lib/games/time-contracts';
 
 const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 const SUDOKU_CONDITIONS: BestConditions = { seed: 'classic-demo-v1', difficulty: 'standard', assist: 'none' };
@@ -25,6 +27,7 @@ const Sudoku: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [recorded, setRecorded] = useState(false);
     const [focusIndex, setFocusIndex] = useState(0);
     const cellRefs = useRef<Array<HTMLButtonElement | null>>([]);
+    const startedAt = useRef<number | null>(null);
 
     useEffect(() => {
         const existing = getBestForConditions('sudoku', SUDOKU_CONDITIONS);
@@ -32,34 +35,37 @@ const Sudoku: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     }, []);
 
     const initGame = useCallback(() => {
-        // A simple pre-defined puzzle for the demo
-        const puzzle = [
-            [5, 3, null, null, 7, null, null, null, null],
-            [6, null, null, 1, 9, 5, null, null, null],
-            [null, 9, 8, null, null, null, null, 6, null],
-            [8, null, null, null, 6, null, null, null, 3],
-            [4, null, null, 8, null, 3, null, null, 1],
-            [7, null, null, null, 2, null, null, null, 6],
-            [null, 6, null, null, null, null, 2, 8, null],
-            [null, null, null, 4, 1, 9, null, null, 5],
-            [null, null, null, null, 8, null, null, 7, 9]
-        ];
-
-        setGrid(puzzle);
-        setInitial(puzzle.map(row => row.map(v => v !== null)));
+        clearSudokuSave();
+        setGrid(SUDOKU_DEMO_PUZZLE);
+        setInitial(SUDOKU_DEMO_PUZZLE.map(row => row.map(v => v !== null)));
         setSeconds(0);
+        startedAt.current = null;
         setRecorded(false);
         setSelected(null);
         setFocusIndex(0);
     }, []);
 
-    useEffect(() => { initGame(); }, [initGame]);
+    useEffect(() => {
+        const restored = loadSudokuSave();
+        if (restored) {
+            setGrid(restored.grid);
+            setInitial(restored.grid.map((row, r) => row.map((_, c) => SUDOKU_DEMO_PUZZLE[r][c] !== null)));
+            setSeconds(restored.seconds);
+            setRecorded(false);
+            setSelected(null);
+            setFocusIndex(0);
+        } else {
+            initGame();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const setNumber = (n: number) => {
         if (!selected) return;
         const [r, c] = selected;
         if (initial[r][c]) return;
 
+        if (startedAt.current === null) startedAt.current = performance.now();
         const newGrid = grid.map(row => [...row]);
         newGrid[r][c] = n === grid[r][c] ? null : n;
         setGrid(newGrid);
@@ -69,7 +75,7 @@ const Sudoku: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
     useEffect(() => {
         if (isWon) return;
-        const id = setInterval(() => setSeconds((s) => s + 1), 1000);
+        const id = setInterval(() => setSeconds(elapsedSeconds(startedAt.current, performance.now())), 100);
         return () => clearInterval(id);
     }, [isWon]);
 
@@ -79,6 +85,11 @@ const Sudoku: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             setBestTime(recordBestForConditions('sudoku', Math.max(1, seconds), 'seconds', SUDOKU_CONDITIONS).value);
         }
     }, [isWon, recorded, seconds]);
+
+    useEffect(() => {
+        if (isWon) { clearSudokuSave(); return; }
+        if (grid.length === 9) storeSudokuSave(grid, seconds);
+    }, [grid, seconds, isWon]);
 
     const moveFocus = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
         const row = Math.floor(index / 9), column = index % 9;

@@ -1,6 +1,6 @@
 // Gomoku AI — pattern-scored greedy with shallow lookahead at the top level.
 // Board is the same flat (number | null)[] the Gomoku component uses (15×15, players 1/2).
-import { pickWeighted, type AiLevel } from "./types";
+import { type AiLevel } from "./types";
 
 const SIZE = 15;
 const DIRS: ReadonlyArray<readonly [number, number]> = [
@@ -75,7 +75,7 @@ function candidates(board: Board): number[] {
 }
 
 /** Best move for `ai` (1|2) at the given level. Returns a board index. */
-export function gomokuBestMove(board: Board, ai: number, level: AiLevel): number {
+export function gomokuBestMove(board: Board, ai: number, level: AiLevel, seed = 0): number {
   const foe = ai === 1 ? 2 : 1;
   const cells = candidates(board);
 
@@ -87,13 +87,14 @@ export function gomokuBestMove(board: Board, ai: number, level: AiLevel): number
     if (blockAt < 0 && scoreCell(board, c, foe) >= WIN) blockAt = c;
   }
   if (winAt >= 0) return winAt;
-  if (blockAt >= 0 && (level >= 2 || Math.random() < 0.7)) return blockAt;
+  // A one-move loss is never an acceptable difficulty personality choice.
+  if (blockAt >= 0) return blockAt;
 
   const scored = cells
     .map((c) => ({ c, s: scoreCell(board, c, ai) + scoreCell(board, c, foe) * 0.9 }))
     .sort((a, b) => b.s - a.s);
 
-  if (level === 1) return pickWeighted(scored, 5).c;
+  if (level === 1) return scored[Math.abs(seed) % Math.min(5, scored.length)].c;
   if (level === 2) return scored[0].c;
 
   // Master: 2-ply — penalize moves that hand the opponent a strong reply.

@@ -25,9 +25,16 @@ interface Props {
   author?: string;
   availableLocales?: string[];
   canonicalUrl?: string;
+  /**
+   * 페이지 최상단 `<h1>`. 옵트인인 이유는 전략/도구 페이지가 이미 자기
+   * 컴포넌트에서 h1 을 렌더하기 때문이다 — 무조건 켜면 h1 이 두 개가 된다.
+   * 게임 페이지는 `<title>` 만 있고 본문 첫 헤딩이 GameGuide 의 h2 라서
+   * 2026-07-27 감사에서 로케일 페이지 354개 중 306개가 h1 없이 나갔다.
+   */
+  heading?: string;
 }
 
-const { title, description, image, type, pubDate, updatedDate, tags, category, author, availableLocales, canonicalUrl } = Astro.props;
+const { title, description, image, type, pubDate, updatedDate, tags, category, author, availableLocales, canonicalUrl, heading } = Astro.props;
 const locale = getLocaleFromPath(Astro.url.pathname);
 const t = await getTranslations(locale);
 const nav = t.nav as Record<string, string>;
@@ -348,6 +355,11 @@ const langItems = availableLocales && availableLocales.length
     </script>
 
     <main id="main-content" role="main" class="flex-1">
+      {heading && (
+        <h1 class="mx-auto max-w-2xl px-4 pt-8 text-2xl font-black tracking-tight text-foreground">
+          {heading}
+        </h1>
+      )}
       <slot />
     </main>
 

@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import BalanceGameComp from "../../components/games/BalanceGame";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "밸런스 게임 — 둘 중 하나만 고른다면?",
+    description: "68가지 양자택일 질문에 답하며 내 선택 성향을 알아보는 밸런스 게임. 회원가입 없이 무료로 바로 플레이하세요.",
+  },
+  en: {
+    title: "Balance Game — Which Would You Choose?",
+    description: "68 either-or prompts (Korean-language content) to explore your picks. Free, no sign-up.",
+  },
+  ja: {
+    title: "バランスゲーム — どちらか一つを選ぶなら？",
+    description: "68個の究極の二択に答えて自分の傾向を知るバランスゲーム。無料・登録不要。",
+  },
+  fr: {
+    title: "Jeu du dilemme — Que choisiriez-vous ?",
+    description: "68 dilemmes (contenu en coréen) pour explorer vos choix. Gratuit, sans inscription.",
+  },
+  es: {
+    title: "Juego del dilema — ¿Qué elegirías?",
+    description: "68 dilemas (contenido en coreano) para explorar tus elecciones. Gratis, sin registro.",
+  },
+  zh: {
+    title: "二选一游戏 — 如果只能选一个？",
+    description: "68道二选一难题（韩语内容），了解你的选择倾向。免费，无需注册。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-2xl px-4 py-8">
+    <BalanceGameComp client:load locale={locale} />
+    <GameGuide slug="balance-game" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
+  </div>
+</BaseLayout>

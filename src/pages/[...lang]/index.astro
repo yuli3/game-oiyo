@@ -9,22 +9,22 @@ export async function getStaticPaths() {
 const { locale } = Astro.props as { locale: Locale };
 
 const meta: Record<Locale, { title: string; description: string }> = {
-  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 49종", description: "체스·스도쿠·워들·2048부터 보드·카드·퍼즐까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 모음." },
-  en: { title: "OIYO Arcade — 49 free browser games, no install", description: "Chess, Sudoku, Wordle, 2048 and more — board, card, and puzzle games you can play instantly in your browser, free." },
-  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム49種", description: "チェス・数独・ワードル・2048などボード・カード・パズルまで。インストール不要、ブラウザですぐ遊べる無料ゲーム集。" },
-  zh: { title: "OIYO 街机 — 无需安装的49款免费游戏", description: "国际象棋、数独、猜词、2048，以及棋类、纸牌、益智游戏。无需安装，浏览器即玩，全部免费。" },
-  fr: { title: "OIYO Arcade — 49 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle, 2048 et plus — jeux de plateau, de cartes et de réflexion à jouer instantanément, gratuitement." },
-  es: { title: "OIYO Arcade — 49 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle, 2048 y más — juegos de mesa, cartas y lógica para jugar al instante, gratis." },
+  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 43종", description: "체스·스도쿠·워들·2048부터 보드·카드·퍼즐까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 모음." },
+  en: { title: "OIYO Arcade — 43 free browser games, no install", description: "Chess, Sudoku, Wordle, 2048 and more — board, card, and puzzle games you can play instantly in your browser, free." },
+  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム43種", description: "チェス・数独・ワードル・2048などボード・カード・パズルまで。インストール不要、ブラウザですぐ遊べる無料ゲーム集。" },
+  zh: { title: "OIYO 街机 — 无需安装的43款免费游戏", description: "国际象棋、数独、猜词、2048，以及棋类、纸牌、益智游戏。无需安装，浏览器即玩，全部免费。" },
+  fr: { title: "OIYO Arcade — 43 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle, 2048 et plus — jeux de plateau, de cartes et de réflexion à jouer instantanément, gratuitement." },
+  es: { title: "OIYO Arcade — 43 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle, 2048 y más — juegos de mesa, cartas y lógica para jugar al instante, gratis." },
 };
 const m = meta[locale] ?? meta.en;
 
 const hero: Record<Locale, { eyebrow: string; title: string; sub: string }> = {
-  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 49종", sub: "보드·카드·퍼즐·아케이드 — 광고 없이 브라우저에서 가볍게." },
-  en: { eyebrow: "🎮 OIYO Arcade", title: "49 free games, right in your browser", sub: "Board, card, puzzle and arcade — light, instant, no install." },
-  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム49種", sub: "ボード・カード・パズル・アーケード — ブラウザで手軽に。" },
-  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的49款免费游戏", sub: "棋类·纸牌·益智·街机 — 浏览器里轻松开玩。" },
-  fr: { eyebrow: "🎮 OIYO Arcade", title: "49 jeux gratuits, directement dans le navigateur", sub: "Plateau, cartes, réflexion et arcade — léger et instantané." },
-  es: { eyebrow: "🎮 OIYO Arcade", title: "49 juegos gratis, directo en tu navegador", sub: "Mesa, cartas, lógica y arcade — ligero e instantáneo." },
+  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 43종", sub: "보드·카드·퍼즐·아케이드 — 광고 없이 브라우저에서 가볍게." },
+  en: { eyebrow: "🎮 OIYO Arcade", title: "43 free games, right in your browser", sub: "Board, card, puzzle and arcade — light, instant, no install." },
+  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム43種", sub: "ボード・カード・パズル・アーケード — ブラウザで手軽に。" },
+  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的43款免费游戏", sub: "棋类·纸牌·益智·街机 — 浏览器里轻松开玩。" },
+  fr: { eyebrow: "🎮 OIYO Arcade", title: "43 jeux gratuits, directement dans le navigateur", sub: "Plateau, cartes, réflexion et arcade — léger et instantané." },
+  es: { eyebrow: "🎮 OIYO Arcade", title: "43 juegos gratis, directo en tu navegador", sub: "Mesa, cartas, lógica y arcade — ligero e instantáneo." },
 };
 const h = hero[locale] ?? hero.en;
 
@@ -43,11 +43,18 @@ const catLabel: Record<string, Record<Locale, string>> = {
   puzzle: { ko: "퍼즐", en: "Puzzle", ja: "パズル", zh: "益智", fr: "Réflexion", es: "Lógica" },
   arcade: { ko: "아케이드", en: "Arcade", ja: "アーケード", zh: "街机", fr: "Arcade", es: "Arcade" },
   luck: { ko: "운·뽑기", en: "Luck", ja: "運だめし", zh: "运气", fr: "Hasard", es: "Suerte" },
+  quiz: { ko: "밸런스·퀴즈", en: "Quiz", ja: "クイズ", zh: "问答", fr: "Quiz", es: "Quiz" },
   lostark: { ko: "로스트아크", en: "Lost Ark", ja: "ロストアーク", zh: "失落的方舟", fr: "Lost Ark", es: "Lost Ark" },
 };
-const catOrder = ["board", "card", "puzzle", "arcade", "luck", "lostark"];
+const catOrder = ["board", "card", "puzzle", "arcade", "luck", "quiz", "lostark"];
 
-type Game = { slug: string; emoji: string; cat: string; name: Record<Locale, string> };
+/**
+ * `kind` keeps the public count honest: a dice roller and a raid-split
+ * calculator are useful, but they are not games and must not be counted or
+ * marked up as one. See company-brain decision `game-catalog-classification`.
+ */
+type Kind = "game" | "tool" | "casual" | "calculator";
+type Game = { slug: string; emoji: string; cat: string; kind?: Kind; name: Record<Locale, string> };
 const GAMES: Game[] = [
   { slug: "chess", emoji: "♟️", cat: "board", name: { ko: "체스", en: "Chess", ja: "チェス", zh: "国际象棋", fr: "Échecs", es: "Ajedrez" } },
   { slug: "checkers", emoji: "🟤", cat: "board", name: { ko: "체커", en: "Checkers", ja: "チェッカー", zh: "西洋跳棋", fr: "Dames", es: "Damas" } },
@@ -71,9 +78,9 @@ const GAMES: Game[] = [
   { slug: "water-sort", emoji: "🧪", cat: "puzzle", name: { ko: "물 정렬", en: "Water Sort", ja: "水ソート", zh: "水排序", fr: "Tri d'eau", es: "Ordenar agua" } },
   { slug: "light-up", emoji: "💡", cat: "puzzle", name: { ko: "라이트업", en: "Light Up", ja: "美術館", zh: "点灯", fr: "Light Up", es: "Light Up" } },
   { slug: "game-2048", emoji: "🔟", cat: "puzzle", name: { ko: "2048", en: "2048", ja: "2048", zh: "2048", fr: "2048", es: "2048" } },
-  { slug: "number-sorter", emoji: "↕️", cat: "puzzle", name: { ko: "숫자 정렬", en: "Number Sorter", ja: "数字ソート", zh: "数字排序", fr: "Tri de nombres", es: "Ordenar números" } },
   { slug: "wordle", emoji: "🟩", cat: "puzzle", name: { ko: "워들", en: "Wordle", ja: "ワードル", zh: "猜词", fr: "Wordle", es: "Wordle" } },
   { slug: "psychology-wordle", emoji: "🧠", cat: "puzzle", name: { ko: "심리 워들", en: "Psychology Wordle", ja: "心理ワードル", zh: "心理猜词", fr: "Wordle psycho", es: "Wordle psico" } },
+  { slug: "spatial-memory", emoji: "🧭", cat: "puzzle", name: { ko: "공간 기억", en: "Spatial Memory", ja: "空間記憶", zh: "空间记忆", fr: "Mémoire spatiale", es: "Memoria espacial" } },
   { slug: "korean-semantle", emoji: "🌊", cat: "puzzle", name: { ko: "꼬맨틀", en: "Kkomantle", ja: "꼬맨틀", zh: "韩语猜义", fr: "Kkomantle", es: "Kkomantle" } },
   { slug: "texas-holdem", emoji: "🃏", cat: "card", name: { ko: "텍사스 홀덤", en: "Texas Hold'em", ja: "テキサスホールデム", zh: "德州扑克", fr: "Texas Hold'em", es: "Texas Hold'em" } },
 
@@ -95,20 +102,28 @@ const GAMES: Game[] = [
   { slug: "dot-runner", emoji: "🏃", cat: "arcade", name: { ko: "점프 러너", en: "Dot Runner", ja: "ドットランナー", zh: "点点酷跑", fr: "Dot Runner", es: "Dot Runner" } },
   { slug: "dot-jumpking", emoji: "🦘", cat: "arcade", name: { ko: "점프 킹", en: "Jump King", ja: "ジャンプキング", zh: "跳跳王", fr: "Jump King", es: "Jump King" } },
   { slug: "animal-pop", emoji: "🐵", cat: "arcade", name: { ko: "애니멀 팝", en: "Animal Pop", ja: "アニマルポップ", zh: "动物消消乐", fr: "Animal Pop", es: "Animal Pop" } },
-  { slug: "dot-pet", emoji: "🐣", cat: "arcade", name: { ko: "픽셀 펫", en: "Dot Pet", ja: "ドットペット", zh: "像素宠物", fr: "Dot Pet", es: "Dot Pet" } },
-  { slug: "tamagotchi", emoji: "🥚", cat: "arcade", name: { ko: "다마고치", en: "Tamagotchi", ja: "たまごっち風", zh: "电子宠物", fr: "Tamagotchi", es: "Tamagotchi" } },
+  { slug: "dot-pet", kind: "casual", emoji: "🐣", cat: "arcade", name: { ko: "픽셀 펫", en: "Dot Pet", ja: "ドットペット", zh: "像素宠物", fr: "Dot Pet", es: "Dot Pet" } },
+  { slug: "tamagotchi", kind: "casual", emoji: "🥚", cat: "arcade", name: { ko: "다마고치", en: "Tamagotchi", ja: "たまごっち風", zh: "电子宠物", fr: "Tamagotchi", es: "Tamagotchi" } },
   { slug: "yahtzee", emoji: "🎲", cat: "luck", name: { ko: "야찌", en: "Yahtzee", ja: "ヤッツィー", zh: "快艇骰子", fr: "Yahtzee", es: "Yahtzee" } },
-  { slug: "dice-roller", emoji: "🎲", cat: "luck", name: { ko: "주사위", en: "Dice Roller", ja: "サイコロ", zh: "掷骰子", fr: "Dés", es: "Dados" } },
-  { slug: "wheel-spinner", emoji: "🎡", cat: "luck", name: { ko: "룰렛 돌리기", en: "Wheel Spinner", ja: "ルーレット", zh: "转盘", fr: "Roue", es: "Ruleta" } },
-  { slug: "lotto-generator", emoji: "🎰", cat: "luck", name: { ko: "로또 번호 생성", en: "Lotto Generator", ja: "ロト番号生成", zh: "彩票生成", fr: "Générateur loto", es: "Generador lotería" } },
-  { slug: "plinko", emoji: "🔵", cat: "luck", name: { ko: "플린코", en: "Plinko", ja: "プリンコ", zh: "弹珠机", fr: "Plinko", es: "Plinko" } },
+  { slug: "dice-roller", kind: "tool", emoji: "🎲", cat: "luck", name: { ko: "주사위", en: "Dice Roller", ja: "サイコロ", zh: "掷骰子", fr: "Dés", es: "Dados" } },
+  { slug: "wheel-spinner", kind: "tool", emoji: "🎡", cat: "luck", name: { ko: "룰렛 돌리기", en: "Wheel Spinner", ja: "ルーレット", zh: "转盘", fr: "Roue", es: "Ruleta" } },
+  { slug: "lotto-generator", kind: "tool", emoji: "🎰", cat: "luck", name: { ko: "로또 번호 생성", en: "Lotto Generator", ja: "ロト番号生成", zh: "彩票生成", fr: "Générateur loto", es: "Generador lotería" } },
+  { slug: "plinko", kind: "tool", emoji: "🔵", cat: "luck", name: { ko: "플린코", en: "Plinko", ja: "プリンコ", zh: "弹珠机", fr: "Plinko", es: "Plinko" } },
 
-  { slug: "lostark-raid-distribution", emoji: "⚔️", cat: "lostark", name: { ko: "본1부3 계산기", en: "1-Main/3-Alt Split", ja: "本1副3 分配", zh: "本1副3 分配", fr: "Répartition 1 main/3 alt", es: "Reparto 1 main/3 alt" } },
-  { slug: "lostark-auction-calculator", emoji: "💰", cat: "lostark", name: { ko: "경매 계산기", en: "Auction Calculator", ja: "オークション計算機", zh: "拍卖计算器", fr: "Calculateur d'enchères", es: "Calculadora de subastas" } },
-  { slug: "lostark-bus-calculator", emoji: "🚌", cat: "lostark", name: { ko: "버스비 계산기", en: "Bus Fee Calculator", ja: "バス代計算機", zh: "车费计算器", fr: "Calculateur de bus", es: "Calculadora de bus" } },
+  { slug: "balance-game", kind: "casual", emoji: "⚖️", cat: "quiz", name: { ko: "밸런스 게임", en: "Balance Game", ja: "バランスゲーム", zh: "二选一游戏", fr: "Jeu du dilemme", es: "Juego del dilema" } },
+
+  { slug: "lostark-raid-distribution", kind: "calculator", emoji: "⚔️", cat: "lostark", name: { ko: "본1부3 계산기", en: "1-Main/3-Alt Split", ja: "本1副3 分配", zh: "本1副3 分配", fr: "Répartition 1 main/3 alt", es: "Reparto 1 main/3 alt" } },
+  { slug: "lostark-auction-calculator", kind: "calculator", emoji: "💰", cat: "lostark", name: { ko: "경매 계산기", en: "Auction Calculator", ja: "オークション計算機", zh: "拍卖计算器", fr: "Calculateur d'enchères", es: "Calculadora de subastas" } },
+  { slug: "lostark-bus-calculator", kind: "calculator", emoji: "🚌", cat: "lostark", name: { ko: "버스비 계산기", en: "Bus Fee Calculator", ja: "バス代計算機", zh: "车费计算器", fr: "Calculateur de bus", es: "Calculadora de bus" } },
 ];
 
 const byCat = (c: string) => GAMES.filter((g) => g.cat === c);
+
+/** Entries without an explicit `kind` are games; only the exceptions are tagged. */
+const isGame = (g: Game) => (g.kind ?? "game") === "game";
+const gameCount = GAMES.filter(isGame).length;
+/** Tools and calculators are software, not games — say so in the markup too. */
+const schemaType = (g: Game) => (isGame(g) ? "Game" : "WebApplication");
 const cardJsonLd = {
   "@context": "https://schema.org",
   "@type": "CollectionPage",
@@ -116,7 +131,7 @@ const cardJsonLd = {
   description: m.description,
   url: new URL(Astro.url.pathname, Astro.site).toString(),
   hasPart: GAMES.map((g) => ({
-    "@type": "Game",
+    "@type": schemaType(g),
     name: g.name[locale] ?? g.name.en,
     url: new URL(`/${locale}/${g.slug}/`, Astro.site).toString(),
   })),
@@ -130,7 +145,7 @@ const cardJsonLd = {
       <span class="inline-block rounded-full bg-white/70 px-3 py-1 text-xs font-bold text-primary ring-1 ring-lime-100">{h.eyebrow}</span>
       <h1 class="mt-4 text-3xl font-black tracking-tight text-foreground md:text-5xl">{h.title}</h1>
       <p class="mt-3 text-base leading-relaxed text-muted-foreground">{h.sub}</p>
-      <p class="mt-2 text-xs font-bold text-primary/70">{GAMES.length} {statLine[locale] ?? statLine.en}</p>
+      <p class="mt-2 text-xs font-bold text-primary/70">{gameCount} {statLine[locale] ?? statLine.en}</p>
     </div>
   </section>
 

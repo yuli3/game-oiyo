@@ -1,5 +1,6 @@
 import React, { useReducer, useEffect, useCallback, useState } from 'react';
 import { GameContainer } from '@/components/ui/game/GamePrimitives';
+import { usePrefersReducedMotion } from '@/lib/games/reduced-motion';
 
 type GridSize = '4x4' | '6x4' | '6x6';
 type GameStatus = 'idle' | 'playing' | 'won';
@@ -146,6 +147,7 @@ function formatTime(ms: number): string {
 }
 
 const MemoryCardGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
+  const prefersReducedMotion = usePrefersReducedMotion();
   const COPY = {
     ko: {
       title: '카드 짝 맞추기',
@@ -341,7 +343,7 @@ const MemoryCardGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 aria-label={card.isFlipped || card.isMatched ? card.emoji : t.cardLabel}
                 aria-pressed={card.isFlipped || card.isMatched}
                 className={[
-                  'aspect-square rounded-xl border-2 flex items-center justify-center text-2xl transition-all duration-200',
+                  `aspect-square rounded-xl border-2 flex items-center justify-center text-2xl ${prefersReducedMotion ? '' : 'transition-all duration-200'}`,
                   card.isMatched
                     ? 'bg-emerald-50 border-emerald-300 scale-95'
                     : card.isFlipped

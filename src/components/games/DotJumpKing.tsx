@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
+import { frameScale } from '../../lib/games/time-contracts';
 
 // ─── Dot Jump King — charge-jump vertical climber, ported from ahoxy-legacy ──
 // The original used Matter.js; this port uses a small custom physics step
@@ -117,22 +118,25 @@ const DotJumpKing: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         if (!ctx) return;
 
         let raf: number;
-        const loop = () => {
+        let lastFrame: number | null = null;
+        const loop = (now: number) => {
             const g = game.current;
+            const scale = frameScale(lastFrame, now);
+            lastFrame = now;
 
             if (statusRef.current === 'playing') {
                 // charging
                 if (g.charging && g.onGround) {
-                    g.chargePower = Math.min(100, g.chargePower + CHARGE_RATE);
+                    g.chargePower = Math.min(100, g.chargePower + CHARGE_RATE * scale);
                     setCharge(Math.round(g.chargePower));
                 }
 
                 // physics
                 if (!g.onGround) {
-                    g.vy += GRAVITY;
+                    g.vy += GRAVITY * scale;
                     const prevY = g.y;
-                    g.y += g.vy;
-                    g.x += g.vx;
+                    g.y += g.vy * scale;
+                    g.x += g.vx * scale;
 
                     // wall bounce
                     if (g.x < PLAYER_R) { g.x = PLAYER_R; g.vx *= -0.6; }

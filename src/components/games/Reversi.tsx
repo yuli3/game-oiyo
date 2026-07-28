@@ -4,6 +4,8 @@ import type { Locale } from '../../lib/i18n';
 import { reversiBestMove, reversiFlips, reversiMoves } from '../../lib/games/ai/reversi';
 import type { AiLevel, GameMode } from '../../lib/games/ai/types';
 import { getRecord, recordResult, type GameRecord } from '../../lib/games/records';
+import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
+import { clearReversiSave, loadReversiSave, storeReversiSave } from '../../lib/games/active-game-save';
 
 const SIZE = 8;
 const AI_PLAYER = 2; // AI plays white; human opens as black
@@ -12,18 +14,19 @@ const AI_DELAY_MS = 500;
 const i18n: Record<Locale, {
     title: string; turn: string; black: string; white: string; win: string; over: string; reset: string; score: string;
     modeLocal: string; modeAi: string; level1: string; level2: string; level3: string;
-    thinking: string; youWin: string; aiWins: string; draw: string; record: string;
+    thinking: string; youWin: string; aiWins: string; draw: string; record: string; board: string; square: (row: number, column: number, state: string) => string;
 }> = {
-    ko: { title: "오델로 (Othello)", turn: "차례", black: "흑", white: "백", win: "승리!", over: "게임 종료", reset: "새 게임", score: "점수", modeLocal: "2인 대전", modeAi: "AI 대전", level1: "견습생", level2: "숙련가", level3: "명인", thinking: "상대가 수를 읽고 있습니다…", youWin: "당신의 승리!", aiWins: "AI 승리", draw: "무승부", record: "전적" },
-    en: { title: "Othello", turn: "Turn", black: "Black", white: "White", win: "Wins!", over: "Game Over", reset: "New Game", score: "Score", modeLocal: "2 Players", modeAi: "vs AI", level1: "Apprentice", level2: "Adept", level3: "Master", thinking: "Your opponent is reading the board…", youWin: "You win!", aiWins: "AI wins", draw: "Draw", record: "Record" },
-    ja: { title: "オセロ", turn: "手番", black: "黒", white: "白", win: "勝利！", over: "ゲーム終了", reset: "新しい対局", score: "スコア", modeLocal: "2人対戦", modeAi: "AI対戦", level1: "見習い", level2: "熟練者", level3: "名人", thinking: "相手が盤面を読んでいます…", youWin: "あなたの勝ち！", aiWins: "AIの勝ち", draw: "引き分け", record: "戦績" },
-    zh: { title: "黑白棋", turn: "回合", black: "黑", white: "白", win: "获胜！", over: "游戏结束", reset: "新对局", score: "分数", modeLocal: "双人对战", modeAi: "人机对战", level1: "学徒", level2: "行家", level3: "大师", thinking: "对手正在读盘…", youWin: "你赢了！", aiWins: "AI 获胜", draw: "平局", record: "战绩" },
-    fr: { title: "Othello", turn: "Tour", black: "Noir", white: "Blanc", win: "gagne !", over: "Partie terminée", reset: "Nouvelle partie", score: "Score", modeLocal: "2 joueurs", modeAi: "contre l'IA", level1: "Apprenti", level2: "Adepte", level3: "Maître", thinking: "Votre adversaire lit le plateau…", youWin: "Vous gagnez !", aiWins: "L'IA gagne", draw: "Match nul", record: "Bilan" },
-    es: { title: "Othello", turn: "Turno", black: "Negras", white: "Blancas", win: "¡gana!", over: "Fin de la partida", reset: "Nueva partida", score: "Puntos", modeLocal: "2 jugadores", modeAi: "contra la IA", level1: "Aprendiz", level2: "Experto", level3: "Maestro", thinking: "Tu rival está leyendo el tablero…", youWin: "¡Has ganado!", aiWins: "Gana la IA", draw: "Tablas", record: "Historial" },
+    ko: { title: "오델로 (Othello)", turn: "차례", black: "흑", white: "백", win: "승리!", over: "게임 종료", reset: "새 게임", score: "점수", modeLocal: "2인 대전", modeAi: "AI 대전", level1: "견습생", level2: "숙련가", level3: "명인", thinking: "상대가 수를 읽고 있습니다…", youWin: "당신의 승리!", aiWins: "AI 승리", draw: "무승부", record: "전적", board: "오델로 판", square: (r, c, s) => `${r}행 ${c}열, ${s}` },
+    en: { title: "Othello", turn: "Turn", black: "Black", white: "White", win: "Wins!", over: "Game Over", reset: "New Game", score: "Score", modeLocal: "2 Players", modeAi: "vs AI", level1: "Apprentice", level2: "Adept", level3: "Master", thinking: "Your opponent is reading the board…", youWin: "You win!", aiWins: "AI wins", draw: "Draw", record: "Record", board: "Othello board", square: (r, c, s) => `Row ${r}, column ${c}, ${s}` },
+    ja: { title: "オセロ", turn: "手番", black: "黒", white: "白", win: "勝利！", over: "ゲーム終了", reset: "新しい対局", score: "スコア", modeLocal: "2人対戦", modeAi: "AI対戦", level1: "見習い", level2: "熟練者", level3: "名人", thinking: "相手が盤面を読んでいます…", youWin: "あなたの勝ち！", aiWins: "AIの勝ち", draw: "引き分け", record: "戦績", board: "オセロ盤", square: (r, c, s) => `${r}行 ${c}列、${s}` },
+    zh: { title: "黑白棋", turn: "回合", black: "黑", white: "白", win: "获胜！", over: "游戏结束", reset: "新对局", score: "分数", modeLocal: "双人对战", modeAi: "人机对战", level1: "学徒", level2: "行家", level3: "大师", thinking: "对手正在读盘…", youWin: "你赢了！", aiWins: "AI 获胜", draw: "平局", record: "战绩", board: "黑白棋棋盘", square: (r, c, s) => `第 ${r} 行，第 ${c} 列，${s}` },
+    fr: { title: "Othello", turn: "Tour", black: "Noir", white: "Blanc", win: "gagne !", over: "Partie terminée", reset: "Nouvelle partie", score: "Score", modeLocal: "2 joueurs", modeAi: "contre l'IA", level1: "Apprenti", level2: "Adepte", level3: "Maître", thinking: "Votre adversaire lit le plateau…", youWin: "Vous gagnez !", aiWins: "L'IA gagne", draw: "Match nul", record: "Bilan", board: "Plateau d’Othello", square: (r, c, s) => `Ligne ${r}, colonne ${c}, ${s}` },
+    es: { title: "Othello", turn: "Turno", black: "Negras", white: "Blancas", win: "¡gana!", over: "Fin de la partida", reset: "Nueva partida", score: "Puntos", modeLocal: "2 jugadores", modeAi: "contra la IA", level1: "Aprendiz", level2: "Experto", level3: "Maestro", thinking: "Tu rival está leyendo el tablero…", youWin: "¡Has ganado!", aiWins: "Gana la IA", draw: "Tablas", record: "Historial", board: "Tablero de Othello", square: (r, c, s) => `Fila ${r}, columna ${c}, ${s}` },
 };
 
 const Reversi: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     const t = i18n[locale] ?? i18n.en;
+    const reducedMotion = usePrefersReducedMotion();
 
     const [board, setBoard] = useState<(number | null)[]>(Array(SIZE * SIZE).fill(null));
     const [isBlackTurn, setIsBlackTurn] = useState(true);
@@ -35,6 +38,7 @@ const Reversi: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     const aiTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const initGame = useCallback(() => {
+        clearReversiSave();
         if (aiTimer.current) clearTimeout(aiTimer.current);
         const newBoard = Array(SIZE * SIZE).fill(null);
         newBoard[27] = 2; newBoard[28] = 1;
@@ -45,15 +49,35 @@ const Reversi: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         setThinking(false);
     }, []);
 
-    useEffect(() => { initGame(); }, [initGame]);
+    useEffect(() => {
+        const restored = loadReversiSave();
+        if (restored) {
+            if (aiTimer.current) clearTimeout(aiTimer.current);
+            setBoard(restored.board);
+            setIsBlackTurn(restored.isBlackTurn);
+            setMode(restored.mode);
+            setLevel(restored.level);
+            setWinner(null);
+            setThinking(false);
+        } else {
+            initGame();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     useEffect(() => { setRecord(getRecord('reversi')); }, []);
     useEffect(() => () => { if (aiTimer.current) clearTimeout(aiTimer.current); }, []);
+
+    useEffect(() => {
+        if (winner !== null) { clearReversiSave(); return; }
+        storeReversiSave({ board, isBlackTurn, mode, level });
+    }, [board, isBlackTurn, mode, level, winner]);
 
     const finish = (newBoard: (number | null)[]) => {
         const bCount = newBoard.filter(v => v === 1).length;
         const wCount = newBoard.filter(v => v === 2).length;
         const w = bCount > wCount ? 1 : wCount > bCount ? 2 : 0;
         setWinner(w);
+        clearReversiSave();
         if (mode === 'ai') setRecord(recordResult('reversi', w === 0 ? 'd' : w === AI_PLAYER ? 'l' : 'w'));
     };
 
@@ -143,30 +167,34 @@ const Reversi: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
 
             <div className="flex justify-between items-center mb-6">
                 <div className="flex gap-4">
-                    <div className={`flex items-center gap-2 p-3 rounded-2xl border transition-all ${isBlackTurn ? 'bg-primary/10 border-primary' : 'bg-muted border-transparent opacity-50'}`}>
+                    <div className={`flex items-center gap-2 p-3 rounded-2xl border ${!reducedMotion ? 'transition-all' : ''} ${isBlackTurn ? 'bg-primary/10 border-primary' : 'bg-muted border-transparent opacity-50'}`}>
                         <div className="w-4 h-4 rounded-full bg-slate-900" />
                         <span className="text-xs font-black">{t.black}: {bCount}</span>
                     </div>
-                    <div className={`flex items-center gap-2 p-3 rounded-2xl border transition-all ${!isBlackTurn ? 'bg-primary/10 border-primary' : 'bg-muted border-transparent opacity-50'}`}>
+                    <div className={`flex items-center gap-2 p-3 rounded-2xl border ${!reducedMotion ? 'transition-all' : ''} ${!isBlackTurn ? 'bg-primary/10 border-primary' : 'bg-muted border-transparent opacity-50'}`}>
                         <div className="w-4 h-4 rounded-full bg-white border border-slate-300" />
                         <span className="text-xs font-black">{t.white}: {wCount}</span>
                     </div>
                 </div>
-                {thinking && <span className="text-xs font-semibold text-muted-foreground animate-pulse" aria-live="polite">{t.thinking}</span>}
+                {thinking && <span className={`text-xs font-semibold text-muted-foreground ${!reducedMotion ? 'animate-pulse' : ''}`} aria-live="polite">{t.thinking}</span>}
             </div>
 
-            <div className="relative aspect-square w-full bg-chart-1/30 rounded-2xl p-2 grid grid-cols-8 grid-rows-8 gap-1 border border-chart-1/50 shadow-inner">
+            <div className="relative aspect-square w-full bg-chart-1/30 rounded-2xl p-2 grid grid-cols-8 grid-rows-8 gap-1 border border-chart-1/50 shadow-inner" role="grid" aria-label={t.board}>
                 {board.map((cell, i) => (
                     <button
                         key={i}
                         onClick={() => handleClick(i)}
-                        className={`relative rounded-md flex items-center justify-center transition-all ${
+                        type="button"
+                        role="gridcell"
+                        aria-label={t.square(Math.floor(i / SIZE) + 1, (i % SIZE) + 1, cell === 1 ? t.black : cell === 2 ? t.white : validMoves.includes(i) ? t.turn : t.board)}
+                        aria-disabled={winner !== null || thinking || (mode === 'ai' && !isBlackTurn)}
+                        className={`relative rounded-md flex items-center justify-center ${!reducedMotion ? 'transition-all' : ''} ${
                             validMoves.includes(i) ? 'bg-primary/5 hover:bg-primary/10 cursor-pointer' : 'bg-chart-1/20'
                         }`}
                     >
-                        {validMoves.includes(i) && <div className="w-2 h-2 rounded-full bg-primary/40 animate-pulse" />}
+                        {validMoves.includes(i) && <div className={`w-2 h-2 rounded-full bg-primary/40 ${!reducedMotion ? 'animate-pulse' : ''}`} />}
                         {cell !== null && (
-                            <div className={`w-[85%] h-[85%] rounded-full shadow-lg transform transition-all animate-in zoom-in-75 duration-300 ${
+                            <div className={`w-[85%] h-[85%] rounded-full shadow-lg ${!reducedMotion ? 'transform transition-all animate-in zoom-in-75 duration-300' : ''} ${
                                 cell === 1 ? 'bg-slate-900 border-b-4 border-slate-700' : 'bg-white border-b-4 border-slate-200'
                             }`} />
                         )}
@@ -174,11 +202,11 @@ const Reversi: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                 ))}
 
                 {winner !== null && (
-                    <div className="absolute inset-0 z-10 bg-background/60 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center animate-in fade-in zoom-in-95">
+                    <div className={`absolute inset-0 z-10 bg-background/60 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center ${!reducedMotion ? 'animate-in fade-in zoom-in-95' : ''}`}>
                         <div className="bg-card p-10 rounded-3xl shadow-xl border-4 border-primary/20 text-center">
                             <h4 className="text-4xl font-black text-foreground mb-2">{winLabel}</h4>
                             <p className="text-muted-foreground mb-8 font-bold uppercase tracking-widest">{t.over}</p>
-                            <button onClick={initGame} className="px-12 py-4 bg-primary text-primary-foreground rounded-full font-black shadow-lg hover:scale-105 transition-transform">
+                            <button type="button" onClick={initGame} className={`px-12 py-4 bg-primary text-primary-foreground rounded-full font-black shadow-lg ${!reducedMotion ? 'hover:scale-105 transition-transform' : ''}`}>
                                 {t.reset}
                             </button>
                         </div>

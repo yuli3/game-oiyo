@@ -6,6 +6,7 @@ import {
     currentMealWindow, mealTakenToday, canWalk, WALK_COOLDOWN_HOURS,
 } from '../../lib/games/tamagotchi';
 import { PetDisplay } from './tamagotchi/PetDisplay';
+import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 
 // ─── Tamagotchi — retro virtual pet, ported from ahoxy-legacy ────────────────
 // Pixel-sprite pet in an LCD handheld shell. Egg hatches into dog/cat/bird
@@ -107,6 +108,7 @@ const StatBar: React.FC<{ label: string; icon: string; value: number }> = ({ lab
 
 const Tamagotchi: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const t = COPY[(locale as keyof typeof COPY)] ?? COPY.en;
+    const reducedMotion = usePrefersReducedMotion();
 
     const [pet, setPet] = useState<Pet | null>(null);
     const [loaded, setLoaded] = useState(false);
@@ -292,7 +294,7 @@ const Tamagotchi: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                                             key={m}
                                             onClick={() => available && act((p) => takeMeal(p, m))}
                                             disabled={!available}
-                                            className={`tama-button py-1 text-[10px] tama-pixel-text ${taken ? 'opacity-70' : available ? 'animate-pulse motion-reduce:animate-none' : 'opacity-40'}`}
+                                            className={`tama-button py-1 text-[10px] tama-pixel-text ${taken ? 'opacity-70' : available ? (reducedMotion ? 'ring-2 ring-primary' : 'animate-pulse') : 'opacity-40'}`}
                                         >
                                             {taken ? '✅ ' : ''}{t[m]}
                                         </button>
@@ -369,12 +371,11 @@ const Tamagotchi: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 .tama-button:not(:disabled):active { transform: translate(2px, 2px); border-bottom-width: 2px; border-right-width: 2px; }
                 .tama-progress-fill { background: repeating-linear-gradient(45deg, #4a9e5a, #4a9e5a 5px, #3d8a4d 5px, #3d8a4d 10px); }
                 @keyframes tama-wobble { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(-5deg); } 75% { transform: rotate(5deg); } }
-                .tama-egg-wobble { animation: tama-wobble 2s ease-in-out infinite; }
+                .tama-egg-wobble { animation: ${reducedMotion ? 'none' : 'tama-wobble 2s ease-in-out infinite'}; }
                 @keyframes tama-float-up { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-20px) scale(0.5); opacity: 0; } }
-                .tama-sleep-z { animation: tama-float-up 2s infinite; }
+                .tama-sleep-z { animation: ${reducedMotion ? 'none' : 'tama-float-up 2s infinite'}; }
                 .tama-sleep-z:nth-child(2) { animation-delay: 0.5s; }
                 .tama-sleep-z:nth-child(3) { animation-delay: 1s; }
-                @media (prefers-reduced-motion: reduce) { .tama-egg-wobble, .tama-sleep-z { animation: none; } }
             `}</style>
         </div>
     );

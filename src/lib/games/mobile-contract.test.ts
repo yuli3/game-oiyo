@@ -33,12 +33,14 @@ describe('mobile game interaction contracts', () => {
     expect(component).toMatch(/min-h-11 px-2\.5 py-1\.5 rounded-lg[^`]*level === lv/);
   });
 
-  it('keeps Connect Four controls and falling disk static under reduced motion', () => {
+  it('uses the shared preference hook to simplify Connect Four motion', () => {
     const component = source('../../components/games/ConnectFour.tsx');
-    expect(component).toMatch(/animate-pulse motion-reduce:animate-none/);
+    expect(component).toContain('usePrefersReducedMotion');
+    expect(component).toMatch(/reducedMotion \? 60 : 320/);
+    expect(component).toMatch(/reducedMotion \? '' : 'animate-pulse'/);
+    expect(component).toMatch(/isFalling && !reducedMotion \? "animate-fall"/);
+    expect(component).toMatch(/\.\.\.\(isFalling && !reducedMotion/);
     expect(component).toMatch(/rounded-full transition-opacity motion-reduce:transition-none/);
-    expect(component).toMatch(/transition-all motion-reduce:transition-none/);
-    expect(component).toMatch(/@media \(prefers-reduced-motion: reduce\)[\s\S]*\.animate-fall[\s\S]*transform: none !important;[\s\S]*transition: none !important;/);
   });
 
   it('keeps Gomoku board and result motion disabled when requested', () => {

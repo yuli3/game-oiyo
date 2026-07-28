@@ -7,6 +7,9 @@ export interface GameGuide {
   how: Record<Locale, string>;      // 하는 법 1-2문장
   faqs: { q: Record<Locale, string>; a: Record<Locale, string> }[];
   rules?: Record<Locale, string[]>; // 교육용 상세 룰 (주로 카드게임)
+  // 관련 읽을거리(패밀리 내 교차링크). 로케일별로 **타깃이 실재할 때만** 넣는다.
+  // 없는 로케일에 링크하면 404가 되고 Weekly Link Audit이 깨진다.
+  related?: Partial<Record<Locale, { href: string; label: string }[]>>;
 }
 
 export const GAME_GUIDES: Record<string, GameGuide> = {
@@ -186,6 +189,11 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
     how: { ko: "한 시험관의 맨 위 색을 같은 색 위나 빈 시험관에 부어, 각 시험관을 한 가지 색으로 통일하면 승리합니다.", en: "Pour the top color of a tube onto a matching color or an empty tube; win when each tube holds one color.", ja: "試験管の一番上の色を同色の上か空の試験管に注ぎ、各試験管を一色に揃えれば勝ちです。", zh: "把试管顶部颜色倒到相同颜色上或空试管中，每个试管统一为一色即胜。", fr: "Versez la couleur du haut sur une couleur identique ou un tube vide ; gagnez quand chaque tube est unicolore.", es: "Vierte el color superior sobre uno igual o un tubo vacío; gana cuando cada tubo sea de un color." },
     faqs: [{ q: { ko: "막혔을 때 되돌릴 수 있나요?", en: "Can I undo when stuck?", ja: "詰まったら戻せますか？", zh: "卡住时能撤销吗？", fr: "Peut-on annuler ?", es: "¿Se puede deshacer?" }, a: { ko: "네, 실행 취소로 마지막 붓기를 되돌릴 수 있습니다. 빈 시험관을 여유로 남겨두는 것이 막힘을 푸는 핵심입니다.", en: "Yes, undo reverses your last pour. Keeping an empty tube in reserve is key to escaping dead ends.", ja: "はい、元に戻すで最後の注ぎを取り消せます。空の試験管を残しておくのが行き詰まり回避の鍵です。", zh: "可以，撤销可还原上一次倾倒。留一个空试管是脱困关键。", fr: "Oui, annuler reverse le dernier versement. Garder un tube vide en réserve est essentiel.", es: "Sí, deshacer revierte el último vertido. Reservar un tubo vacío es clave." } }],
   },
+  "balance-game": {
+    origin: { ko: "밸런스 게임은 2010년대 후반 한국 인터넷 커뮤니티에서 유행한 양자택일 놀이로, '이거 아니면 저거' 식의 질문에 답하며 취향과 가치관을 드러냅니다.", en: "The balance game (양자택일) is a late-2010s Korean internet trend of either-or prompts that reveal preferences and values.", ja: "バランスゲームは2010年代後半に韓国のネットコミュニティで流行した二択遊びで、質問に答えながら好みや価値観が表れます。", zh: "二选一游戏（밸런스 게임）是2010年代后期在韩国网络社区流行的二选一玩法，通过回答问题展现喜好与价值观。", fr: "Le jeu du dilemme est une tendance d'internet coréen de la fin des années 2010 : des choix binaires qui révèlent préférences et valeurs.", es: "El juego del dilema es una tendencia de internet coreano de finales de los 2010: elecciones binarias que revelan preferencias y valores." },
+    how: { ko: "두 선택지 중 하나를 고르면 다음 질문으로 넘어갑니다. 정답은 없으며, 68문항을 마치면 내 선택 비율을 볼 수 있습니다.", en: "Pick one of two options to move to the next prompt. There's no right answer — after all 68 you'll see your pick split.", ja: "二つの選択肢から一つ選ぶと次の質問に進みます。正解はなく、68問終えると自分の選択比率が見られます。", zh: "在两个选项中选一个即可进入下一题。没有标准答案，答完68题可查看你的选择比例。", fr: "Choisissez une des deux options pour passer à la question suivante. Il n'y a pas de bonne réponse ; après 68 questions, vous verrez votre répartition.", es: "Elige una de las dos opciones para pasar a la siguiente. No hay respuesta correcta; tras las 68 preguntas verás tu reparto de elecciones." },
+    faqs: [],
+  },
   "wheel-spinner": {
     origin: { ko: "행운의 돌림판은 무작위 선택 도구로, 이름 뽑기·순서 정하기·의사결정 등 다양한 상황에 쓰입니다.", en: "The wheel spinner is a random picker for drawing names, ordering turns, or making decisions.", ja: "ルーレットはランダム選択ツールで、名前選び・順番決め・意思決定などに使えます。", zh: "幸运转盘是随机选择工具，用于抽名字、定顺序、做决定等。", fr: "La roue de la fortune est un sélecteur aléatoire pour tirer des noms, ordonner ou décider.", es: "La ruleta es un selector aleatorio para sortear nombres, ordenar turnos o decidir." },
     how: { ko: "항목을 입력하고 돌림판을 돌리면 무작위로 하나가 선택됩니다. 회의·수업·모임에서 공정한 추첨에 유용합니다.", en: "Enter items and spin — one is chosen at random. Great for fair picks in meetings, classes and gatherings.", ja: "項目を入力して回すとランダムに一つ選ばれます。会議・授業・集まりの公平な抽選に便利。", zh: "输入项目并转动，随机选出一个。适合会议、课堂、聚会的公平抽选。", fr: "Saisissez des éléments et tournez ; un est choisi au hasard. Idéal pour des tirages équitables.", es: "Introduce elementos y gira; se elige uno al azar. Ideal para sorteos justos." },
@@ -241,6 +249,53 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       { q: { ko: "키보드로도 할 수 있나요?", en: "Can I play with a keyboard?", ja: "キーボードでも遊べる？", zh: "能用键盘玩吗？", fr: "Puis-je jouer au clavier ?", es: "¿Puedo jugar con teclado?" }, a: { ko: "네. 스페이스바로 블록을 떨어뜨릴 수 있어 데스크탑에서도 편하게 플레이할 수 있고, 모바일에서는 화면 탭으로 조작합니다.", en: "Yes — press Space to drop the block on desktop, or tap the screen on mobile.", ja: "はい。デスクトップではスペースキーでブロックを落とせ、モバイルでは画面タップで操作します。", zh: "可以。桌面用空格键落下方块，手机则点击屏幕操作。", fr: "Oui — appuyez sur Espace pour lâcher le bloc sur ordinateur, ou touchez l'écran sur mobile.", es: "Sí: pulsa Espacio para soltar el bloque en el ordenador o toca la pantalla en el móvil." } },
       { q: { ko: "최고 점수는 저장되나요?", en: "Is my best score saved?", ja: "自己ベストは保存される？", zh: "最佳成绩会保存吗？", fr: "Mon record est-il sauvegardé ?", es: "¿Se guarda mi récord?" }, a: { ko: "최고 높이가 브라우저(localStorage)에 저장되어 다음에 표시됩니다. 계정은 필요 없습니다.", en: "Your best height is stored in the browser (localStorage) and shown next time. No account needed.", ja: "自己ベストの高さがブラウザ(localStorage)に保存され、次回表示されます。アカウント不要です。", zh: "最高高度保存在浏览器(localStorage)，下次显示。无需账号。", fr: "Votre meilleure hauteur est enregistrée dans le navigateur (localStorage) et affichée la prochaine fois. Aucun compte requis.", es: "Tu mejor altura se guarda en el navegador (localStorage) y se muestra la próxima vez. Sin cuenta." } },
     ],
+  },
+  "spatial-memory": {
+    origin: {
+      ko: "공간 기억은 '무엇을' 보았는지가 아니라 '어디에 있었는지'를 붙잡는 기억으로, 심리학에서는 항목 기억과 구분해 다룹니다. 앳킨슨-쉬프린의 다중 기억 모형에서 단기 저장에 들어온 정보는 되뇌기를 거쳐야 장기 저장으로 넘어가는데, 위치 정보는 시공간 잡기장(visuospatial sketchpad)이라는 별도 경로로 처리된다는 것이 정설입니다. 이 게임은 그 차이를 직접 체감하도록 만들어졌습니다.",
+      en: "Spatial memory holds on to where something was, not what it was — psychology treats it separately from item memory. In the Atkinson–Shiffrin multi-store model, information entering short-term storage needs rehearsal to reach long-term storage, and positional information is generally held on its own channel, the visuospatial sketchpad. This game is built to let you feel that difference directly.",
+      ja: "空間記憶は「何を」見たかではなく「どこにあったか」を保持する記憶で、心理学では項目記憶と区別されます。アトキンソン-シフリンの多重貯蔵モデルでは短期貯蔵に入った情報はリハーサルを経て長期貯蔵へ移りますが、位置情報は視空間スケッチパッドという別経路で処理されるとされます。このゲームはその違いを体感するために作られています。",
+      zh: "空间记忆保存的是「在哪里」而不是「是什么」，心理学将它与条目记忆区分开来。在阿特金森-希夫林的多重存储模型中，进入短时存储的信息需经复述才能转入长时存储，而位置信息通常由视空间模板这一独立通道处理。本游戏正是为了让你直接体会这一差异。",
+      fr: "La mémoire spatiale retient où se trouvait une chose, pas ce qu'elle était — la psychologie la distingue de la mémoire des items. Dans le modèle multi-magasins d'Atkinson et Shiffrin, l'information en mémoire à court terme doit être répétée pour atteindre la mémoire à long terme, et la position est traitée par un canal propre, le calepin visuo-spatial. Ce jeu vous fait éprouver cette différence.",
+      es: "La memoria espacial retiene dónde estaba algo, no qué era — la psicología la distingue de la memoria de ítems. En el modelo multialmacén de Atkinson y Shiffrin, la información en la memoria a corto plazo necesita repaso para pasar a la de largo plazo, y la posición se procesa en un canal propio, la agenda visoespacial. Este juego te hace sentir esa diferencia.",
+    },
+    how: {
+      ko: "표식들이 3D 공간에 흩어져 있고, 그중 몇 개가 순서대로 빛납니다. 빛이 꺼지면 같은 순서로 선택하세요. 레벨이 오르면 표식이 등 뒤까지 퍼지므로 ← → 로 시야를 돌려 찾아야 합니다. 한 번 틀리면 그 판은 끝납니다.",
+      en: "Markers are scattered through a 3D space and some of them light up in order. When the lights go out, select them in the same order. As levels rise the markers spread behind you, so use ← → to turn the view and find them. One wrong pick ends the run.",
+      ja: "3D空間に散らばったマーカーのいくつかが順番に光ります。光が消えたら同じ順に選んでください。レベルが上がるとマーカーは背後まで広がるので、← → で視点を回して探します。一度間違えるとそのラウンドは終了です。",
+      zh: "标记散布在 3D 空间中，其中几个会按顺序发光。灯灭后请按相同顺序选择。随着关卡提升，标记会扩散到你身后，需要用 ← → 转动视角寻找。选错一次本局即结束。",
+      fr: "Des repères sont dispersés dans un espace 3D et certains s'allument dans un ordre donné. Quand la lumière s'éteint, sélectionnez-les dans le même ordre. Aux niveaux élevés ils passent derrière vous : utilisez ← → pour tourner la vue. Une seule erreur termine la partie.",
+      es: "Los marcadores están repartidos por un espacio 3D y algunos se iluminan en orden. Cuando se apaguen, selecciónalos en el mismo orden. Al subir de nivel se extienden detrás de ti: usa ← → para girar la vista. Un solo fallo termina la partida.",
+    },
+    faqs: [
+      {
+        q: { ko: "일반 짝맞추기 기억력 게임과 뭐가 다른가요?", en: "How is this different from a memory match game?", ja: "普通の神経衰弱と何が違いますか？", zh: "这和普通的翻牌记忆游戏有什么不同？", fr: "En quoi est-ce différent d'un jeu de paires ?", es: "¿En qué se diferencia de un juego de parejas?" },
+        a: { ko: "짝맞추기는 '어떤 그림이었나'를 묻는 항목 기억이고, 이 게임은 '어느 방향 어느 깊이였나'를 묻는 공간 기억입니다. 표식이 등 뒤에도 놓이기 때문에 평면으로 옮기면 과제 자체가 사라집니다.", en: "A match game asks which picture it was — item memory. This asks which direction and depth it was — spatial memory. Markers sit behind you too, so flattening the space would remove the task itself.", ja: "神経衰弱は「どの絵だったか」を問う項目記憶、こちらは「どの方向・どの奥行きだったか」を問う空間記憶です。マーカーは背後にも置かれるため、平面にすると課題自体が消えます。", zh: "翻牌游戏问的是「是哪张图」，属于条目记忆；本游戏问的是「在哪个方向、多深」，属于空间记忆。标记也会出现在你身后，压成平面后任务本身就不存在了。", fr: "Un jeu de paires demande quelle image c'était — mémoire des items. Ici on demande quelle direction et quelle profondeur — mémoire spatiale. Des repères sont aussi derrière vous : aplatir l'espace supprimerait la tâche.", es: "Un juego de parejas pregunta qué imagen era — memoria de ítems. Este pregunta en qué dirección y profundidad — memoria espacial. También hay marcadores detrás de ti: aplanar el espacio eliminaría la tarea." },
+      },
+      {
+        q: { ko: "마우스 없이 키보드만으로 할 수 있나요?", en: "Can I play with only a keyboard?", ja: "キーボードだけで遊べますか？", zh: "只用键盘可以玩吗？", fr: "Peut-on jouer au clavier seul ?", es: "¿Se puede jugar solo con teclado?" },
+        a: { ko: "네. 표식은 실제 버튼이라 Tab으로 이동해 Enter로 선택하고, ← → 로 시야를 돌립니다. 3D를 지원하지 않는 브라우저에서는 같은 표식이 평면으로 배치되며 규칙은 동일합니다.", en: "Yes. The markers are real buttons: Tab to one and press Enter, and use ← → to turn the view. On browsers without 3D support the same markers are laid out flat and the rules are unchanged.", ja: "はい。マーカーは実際のボタンなので Tab で移動し Enter で選択、← → で視点を回します。3D非対応のブラウザでは同じマーカーが平面配置され、ルールは同じです。", zh: "可以。标记是真正的按钮，用 Tab 移动后按 Enter 选择，用 ← → 转动视角。在不支持 3D 的浏览器中，同样的标记会平面排列，规则不变。", fr: "Oui. Les repères sont de vrais boutons : atteignez-les avec Tab et validez avec Entrée, et tournez la vue avec ← →. Sans support 3D, les mêmes repères sont disposés à plat, règles inchangées.", es: "Sí. Los marcadores son botones reales: llega con Tab y pulsa Enter, y gira la vista con ← →. Sin soporte 3D los mismos marcadores se colocan en plano y las reglas no cambian." },
+      },
+      {
+        q: { ko: "기록은 저장되나요?", en: "Are records saved?", ja: "記録は保存されますか？", zh: "记录会保存吗？", fr: "Les records sont-ils sauvegardés ?", es: "¿Se guardan los récords?" },
+        a: { ko: "최고 점수와 도달 레벨이 브라우저에만 저장됩니다. 서버로 전송되지 않으며, 다음에 시작할 때 도달했던 레벨에서 이어집니다.", en: "Your best score and reached level are stored in your browser only. Nothing is sent to a server, and your next run starts at the level you reached.", ja: "最高スコアと到達レベルはブラウザ内にのみ保存されます。サーバーには送信されず、次回は到達レベルから始まります。", zh: "最高分和到达的关卡仅保存在浏览器中，不会发送到服务器，下次将从你到达的关卡继续。", fr: "Votre meilleur score et le niveau atteint restent dans votre navigateur. Rien n'est envoyé à un serveur, et la partie suivante reprend à ce niveau.", es: "Tu mejor puntuación y el nivel alcanzado se guardan solo en tu navegador. Nada se envía a un servidor y la siguiente partida empieza en ese nivel." },
+      },
+    ],
+    // ⚠️ 실측(2026-07-27 curl): ko 2개·en 1개만 200이고 ja/zh/fr/es 는 404다.
+    // 없는 로케일에는 링크하지 않는다.
+    related: {
+      ko: [
+        { href: "https://wiki.oiyo.net/ko/education-psychology-ch8/", label: "기억의 심리학 — 앳킨슨-쉬프린 다중 기억 모형" },
+        { href: "https://wiki.oiyo.net/ko/education-cognitive-science-ch2/", label: "인지과학 — 지각과 주의" },
+      ],
+      en: [
+        { href: "https://wiki.oiyo.net/en/education-psychology-ch8/", label: "The psychology of memory — the Atkinson–Shiffrin model" },
+        { href: "https://wiki.oiyo.net/en/education-cognitive-science-ch2/", label: "Cognitive science — reasoning, problem solving, consciousness" },
+      ],
+      ja: [
+        { href: "https://wiki.oiyo.net/ja/education-psychology-ch8/", label: "記憶の心理学 — アトキンソン-シフリンモデル" },
+      ],
+    },
   },
   "brick-breaker": {
     origin: { ko: "벽돌깨기는 1976년 아타리의 '브레이크아웃'에서 시작된 아케이드 고전으로, 이후 '아르카노이드'로 대중화된 패들·공·벽돌 장르입니다.", en: "Brick Breaker descends from Atari's 1976 'Breakout' and the paddle-ball-brick genre later popularized by 'Arkanoid'.", ja: "ブロック崩しは1976年アタリの『ブレイクアウト』に始まり、後に『アルカノイド』で広まったパドル・ボール・ブロックの定番です。", zh: "打砖块源自1976年雅达利的《Breakout》，后由《Arkanoid》发扬光大的挡板-球-砖块类型。", fr: "Le casse-briques descend du 'Breakout' d'Atari (1976), genre raquette-balle-briques popularisé ensuite par 'Arkanoid'.", es: "El rompeladrillos desciende del 'Breakout' de Atari (1976), género de paleta-bola-ladrillos popularizado luego por 'Arkanoid'." },

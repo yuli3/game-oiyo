@@ -2,6 +2,8 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import confetti from "canvas-confetti";
 import type { Locale } from "../../lib/i18n";
 import { getBest, recordBest } from "../../lib/games/records";
+import { frameScale } from "../../lib/games/time-contracts";
+import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 
 /* ────────────────────────────────────────────────────────────────────────────
  * Star Blaster — a mobile-first canvas space shooter. Drag (touch) or move the
@@ -41,12 +43,12 @@ type I18n = {
 };
 
 const T: Record<Locale, I18n> = {
-  ko: { title: "스타 블래스터", subtitle: "드래그로 조준, 자동 발사 — 웨이브를 버텨라", tapStart: "탭하여 시작", controls: "손가락(또는 마우스)으로 우주선을 좌우로 움직이세요. 발사는 자동입니다.", score: "점수", best: "최고", wave: "웨이브", lives: "생명", gameOver: "게임 오버", restart: "다시 하기", newBest: "🎉 신기록!" },
-  en: { title: "Star Blaster", subtitle: "Drag to aim, auto-fire — survive the waves", tapStart: "Tap to start", controls: "Move the ship left/right with your finger (or mouse). Firing is automatic.", score: "Score", best: "Best", wave: "Wave", lives: "Lives", gameOver: "Game Over", restart: "Play again", newBest: "🎉 New best!" },
-  ja: { title: "スターブラスター", subtitle: "ドラッグで狙い、自動発射 — ウェーブを耐えろ", tapStart: "タップで開始", controls: "指(またはマウス)で宇宙船を左右に動かします。発射は自動です。", score: "スコア", best: "ベスト", wave: "ウェーブ", lives: "残機", gameOver: "ゲームオーバー", restart: "もう一度", newBest: "🎉 新記録！" },
-  fr: { title: "Star Blaster", subtitle: "Visez en glissant, tir auto — survivez aux vagues", tapStart: "Touchez pour commencer", controls: "Déplacez le vaisseau avec le doigt (ou la souris). Le tir est automatique.", score: "Score", best: "Record", wave: "Vague", lives: "Vies", gameOver: "Game Over", restart: "Rejouer", newBest: "🎉 Nouveau record !" },
-  es: { title: "Star Blaster", subtitle: "Apunta arrastrando, disparo auto — sobrevive a las oleadas", tapStart: "Toca para empezar", controls: "Mueve la nave con el dedo (o el ratón). El disparo es automático.", score: "Puntos", best: "Récord", wave: "Oleada", lives: "Vidas", gameOver: "Fin del juego", restart: "Jugar de nuevo", newBest: "🎉 ¡Nuevo récord!" },
-  zh: { title: "星际爆破", subtitle: "拖动瞄准，自动开火 — 挺过一波波敌人", tapStart: "点击开始", controls: "用手指(或鼠标)左右移动飞船。开火是自动的。", score: "得分", best: "最佳", wave: "波次", lives: "生命", gameOver: "游戏结束", restart: "再玩一次", newBest: "🎉 新纪录！" },
+  ko: { title: "스타 블래스터", subtitle: "드래그로 조준, 자동 발사 — 웨이브를 버텨라", tapStart: "탭하여 시작", controls: "손가락·마우스 또는 ← → 키로 우주선을 좌우로 움직이세요. 발사는 자동입니다.", score: "점수", best: "최고", wave: "웨이브", lives: "생명", gameOver: "게임 오버", restart: "다시 하기", newBest: "🎉 신기록!" },
+  en: { title: "Star Blaster", subtitle: "Drag to aim, auto-fire — survive the waves", tapStart: "Tap to start", controls: "Move the ship left or right with touch, mouse, or the ← → keys. Firing is automatic.", score: "Score", best: "Best", wave: "Wave", lives: "Lives", gameOver: "Game Over", restart: "Play again", newBest: "🎉 New best!" },
+  ja: { title: "スターブラスター", subtitle: "ドラッグで狙い、自動発射 — ウェーブを耐えろ", tapStart: "タップで開始", controls: "タッチ、マウス、または← →キーで宇宙船を左右に動かします。発射は自動です。", score: "スコア", best: "ベスト", wave: "ウェーブ", lives: "残機", gameOver: "ゲームオーバー", restart: "もう一度", newBest: "🎉 新記録！" },
+  fr: { title: "Star Blaster", subtitle: "Visez en glissant, tir auto — survivez aux vagues", tapStart: "Touchez pour commencer", controls: "Déplacez le vaisseau à gauche ou à droite au toucher, à la souris ou avec les touches ← →. Le tir est automatique.", score: "Score", best: "Record", wave: "Vague", lives: "Vies", gameOver: "Game Over", restart: "Rejouer", newBest: "🎉 Nouveau record !" },
+  es: { title: "Star Blaster", subtitle: "Apunta arrastrando, disparo auto — sobrevive a las oleadas", tapStart: "Toca para empezar", controls: "Mueve la nave a izquierda o derecha con el dedo, el ratón o las teclas ← →. El disparo es automático.", score: "Puntos", best: "Récord", wave: "Oleada", lives: "Vidas", gameOver: "Fin del juego", restart: "Jugar de nuevo", newBest: "🎉 ¡Nuevo récord!" },
+  zh: { title: "星际爆破", subtitle: "拖动瞄准，自动开火 — 挺过一波波敌人", tapStart: "点击开始", controls: "使用触控、鼠标或 ← → 键左右移动飞船。飞船会自动开火。", score: "得分", best: "最佳", wave: "波次", lives: "生命", gameOver: "游戏结束", restart: "再玩一次", newBest: "🎉 新纪录！" },
 };
 
 interface Props { locale: Locale }
@@ -59,10 +61,14 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
   const [lives, setLives] = useState(3);
   const [best, setBest] = useState<number>(0);
   const [isNewBest, setIsNewBest] = useState(false);
+  const reducedMotion = usePrefersReducedMotion();
+  const reducedMotionRef = useRef(reducedMotion);
+  reducedMotionRef.current = reducedMotion;
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const gsRef = useRef<GS | null>(null);
   const rafRef = useRef<number | undefined>(undefined);
+  const lastFrame = useRef<number | null>(null);
   const phaseRef = useRef<Phase>("menu");
   phaseRef.current = phase;
   const waveRef = useRef(1);
@@ -79,34 +85,36 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
     const saved = recordBest(GAME_KEY, finalScore, "score");
     setBest(saved.value);
     setIsNewBest(beat && finalScore > 0);
-    if (beat && finalScore > 0) confetti({ particleCount: 100, spread: 75, origin: { y: 0.6 } });
+    if (beat && finalScore > 0 && !reducedMotionRef.current) confetti({ particleCount: 100, spread: 75, origin: { y: 0.6 } });
     setPhase("over");
   }, []);
 
-  const loop = useCallback(() => {
+  const loop = useCallback((now?: number) => {
     const gs = gsRef.current;
     const canvas = canvasRef.current;
     if (!gs || !canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    const now = performance.now();
-    const elapsed = (now - gs.started) / 1000;
+    const frameNow = now ?? performance.now();
+    const elapsed = (frameNow - gs.started) / 1000;
     gs.wave = Math.min(12, 1 + Math.floor(elapsed / 12));
 
     // ship follows target
-    gs.shipX += (gs.targetX - gs.shipX) * 0.25;
+    const scale = frameScale(lastFrame.current, frameNow);
+    lastFrame.current = frameNow;
+    gs.shipX += (gs.targetX - gs.shipX) * Math.min(1, 0.25 * scale);
     gs.shipX = Math.max(18, Math.min(W - 18, gs.shipX));
     const shipY = H - 44;
 
     // auto-fire
     const fireGap = 180;
-    if (now - gs.lastShot > fireGap) {
+    if (frameNow - gs.lastShot > fireGap) {
       gs.bullets.push({ x: gs.shipX, y: shipY - 14 });
-      gs.lastShot = now;
+      gs.lastShot = frameNow;
     }
     // spawn enemies (rate scales with wave)
     const spawnGap = Math.max(360, 900 - gs.wave * 55);
-    if (now - gs.lastSpawn > spawnGap) {
+    if (frameNow - gs.lastSpawn > spawnGap) {
       const r = 12 + Math.random() * 12;
       gs.enemies.push({
         x: r + Math.random() * (W - 2 * r),
@@ -116,18 +124,18 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
         vx: (Math.random() - 0.5) * (0.4 + gs.wave * 0.08),
         hue: 190 + Math.random() * 120,
       });
-      gs.lastSpawn = now;
+      gs.lastSpawn = frameNow;
     }
 
     // update bullets
-    gs.bullets = gs.bullets.filter((b) => (b.y -= 8) > -12);
+    gs.bullets = gs.bullets.filter((b) => (b.y -= 8 * scale) > -12);
     // update enemies + collisions
     let scored = false;
     let hit = false;
     const survivors: Enemy[] = [];
     for (const e of gs.enemies) {
-      e.y += e.vy;
-      e.x += e.vx;
+      e.y += e.vy * scale;
+      e.x += e.vx * scale;
       if (e.x < e.r || e.x > W - e.r) e.vx *= -1;
       // bullet hit?
       let dead = false;
@@ -138,7 +146,7 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
           dead = true;
           gs.score += 10;
           scored = true;
-          for (let p = 0; p < 8; p++) {
+          for (let p = 0; p < (reducedMotionRef.current ? 0 : 8); p++) {
             const a = Math.random() * Math.PI * 2;
             gs.particles.push({ x: e.x, y: e.y, vx: Math.cos(a) * 2.4, vy: Math.sin(a) * 2.4, life: 1, hue: e.hue });
           }
@@ -149,7 +157,7 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
       // reached ship line or bottom?
       if (e.y + e.r >= shipY - 10 && Math.abs(e.x - gs.shipX) < e.r + 16) {
         hit = true;
-        for (let p = 0; p < 12; p++) {
+        for (let p = 0; p < (reducedMotionRef.current ? 0 : 12); p++) {
           const a = Math.random() * Math.PI * 2;
           gs.particles.push({ x: e.x, y: e.y, vx: Math.cos(a) * 3, vy: Math.sin(a) * 3, life: 1, hue: 0 });
         }
@@ -162,8 +170,8 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
     if (hit) gs.lives -= 1;
 
     // particles
-    gs.particles = gs.particles.filter((p) => {
-      p.x += p.vx; p.y += p.vy; p.vy += 0.04; p.life -= 0.03;
+    gs.particles = reducedMotionRef.current ? [] : gs.particles.filter((p) => {
+      p.x += p.vx * scale; p.y += p.vy * scale; p.vy += 0.04 * scale; p.life -= 0.03 * scale;
       return p.life > 0;
     });
 
@@ -173,7 +181,7 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
     // starfield
     ctx.fillStyle = "rgba(255,255,255,0.5)";
     for (let i = 0; i < 30; i++) {
-      const sy = (i * 53 + (now / 18)) % H;
+      const sy = (i * 53 + (reducedMotionRef.current ? 0 : frameNow / 18)) % H;
       ctx.fillRect((i * 71) % W, sy, 1.5, 1.5);
     }
     // particles
@@ -224,6 +232,7 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
     setScore(0); setLives(3); setWave(1); setIsNewBest(false);
     setPhase("playing");
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    lastFrame.current = null;
     rafRef.current = requestAnimationFrame(loop);
   }, [loop]);
 
@@ -235,6 +244,12 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
     if (!canvas || !gs) return;
     const rect = canvas.getBoundingClientRect();
     gs.targetX = ((clientX - rect.left) / rect.width) * W;
+  }, []);
+
+  const steerByKeyboard = useCallback((direction: -1 | 1) => {
+    const gs = gsRef.current;
+    if (!gs || phaseRef.current !== "playing") return;
+    gs.targetX = Math.max(18, Math.min(W - 18, gs.targetX + direction * 24));
   }, []);
 
   return (
@@ -257,8 +272,16 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
           height={H}
           className="w-full rounded-2xl border border-border touch-none [cursor:none] bg-[#0b1020]"
           style={{ aspectRatio: `${W} / ${H}` }}
+          tabIndex={0}
+          role="application"
+          aria-label={`${t.title}. ${t.controls}`}
           onPointerMove={(e) => phaseRef.current === "playing" && steer(e.clientX)}
           onPointerDown={(e) => { if (phaseRef.current === "playing") steer(e.clientX); }}
+          onKeyDown={(event) => {
+            if (event.key === "ArrowLeft" || event.key === "ArrowRight") event.preventDefault();
+            if (event.key === "ArrowLeft") steerByKeyboard(-1);
+            if (event.key === "ArrowRight") steerByKeyboard(1);
+          }}
         />
 
         {phase === "playing" && (
