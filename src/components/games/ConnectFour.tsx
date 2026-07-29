@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import type { Locale } from "../../lib/i18n";
 import { connectFourBestMove } from "../../lib/games/ai/connectfour";
 import type { AiLevel, GameMode } from "../../lib/games/ai/types";
 import { getRecord, recordResult, type GameRecord } from "../../lib/games/records";
 import { clearConnectFourSave, loadConnectFourSave, storeConnectFourSave } from "../../lib/games/active-game-save";
+import { opponentBlurb, opponentName, pickOpponent } from '../../lib/games/opponents';
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 
 type Cell = 0 | 1 | 2; // 0=empty, 1=player1, 2=player2
@@ -186,6 +187,7 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
   const [animating, setAnimating] = useState(false);
   const [mode, setMode] = useState<GameMode>("local");
   const [level, setLevel] = useState<AiLevel>(2);
+  const opponent = useMemo(() => pickOpponent(level, `connect-four:${level}`), [level]);
   const [thinking, setThinking] = useState(false);
   const [record, setRecord] = useState<GameRecord | null>(null);
   const [activeCol, setActiveCol] = useState(0);
@@ -369,6 +371,16 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
           </span>
         )}
       </div>
+
+      {/* Who you are actually playing. Seeded by slug+tier so the name is stable
+          across re-renders and across visits, not reshuffled mid-match. */}
+      {mode === "ai" && (
+        <p className="mb-3 text-xs text-muted-foreground">
+          <span className="font-black text-foreground">{opponentName(opponent, locale)}</span>
+          <span className="mx-1.5 opacity-40">·</span>
+          {opponentBlurb(opponent, locale)}
+        </p>
+      )}
 
       {/* Status bar */}
       <div className="mb-3 h-8 flex items-center justify-center" aria-live="polite">
