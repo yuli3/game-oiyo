@@ -42,7 +42,13 @@ const i18n: Record<Locale, {
   es: { title: "Mahjong (simple)", you: "Tú", ai: "IA", wall: "Muro", discard: "Descartes", tsumo: "¡Tsumo!", ron: "¡Ron!", pass: "Pasar", yourHand: "Tu mano", draws: "restantes", thinking: "Turno de la IA…", reset: "Nueva partida", start: "Empezar", youWin: "¡Has ganado!", aiWin: " gana", exhaust: "Muro agotado (empate)", record: "Historial", level1: "Aprendiz", level2: "Experto", level3: "Maestro", byTsumo: "Tsumo", byRon: "Ron", rules: "Manos cerradas · 4 grupos + una pareja, o siete parejas" },
 };
 
-const SUIT_GLYPH = ["m", "p", "s"];
+// Latin shorthand (1m/5p/9s) is how players *write* hands online, but on the
+// tile itself it reads as an alphanumeric code rather than a tile. Real tiles
+// carry the CJK suit character, which is also what the honor tiles below
+// already use. Kept as characters rather than the Unicode mahjong block
+// (U+1F000..) because those depend on a font the device may not have, and 🀄
+// in particular renders as a colour emoji on some systems and a glyph on others.
+const SUIT_GLYPH = ["萬", "筒", "索"];
 const SUIT_COLOR = ["#b91c1c", "#1d4ed8", "#15803d", "#4b5563"];
 const HONOR_LABEL = ["東", "南", "西", "北", "白", "發", "中"];
 

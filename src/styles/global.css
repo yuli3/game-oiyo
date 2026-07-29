@@ -245,6 +245,22 @@ main .grid button { -webkit-tap-highlight-color: transparent; }
   main .grid > button, main .grid > div > button { min-height: unset; } /* 보드 셀은 비율 유지 */
 }
 
+/* ── 플레이 표면 예외 (2026-07-29) ──
+   위 두 규칙은 UI 버튼용인데 게임 플레이 표면까지 침범하고 있었다.
+   `.touch-none`(Tailwind touch-action:none)은 "여기는 제스처로 조작하는
+   플레이 표면"이라는 표시이므로, 그 안의 버튼은 두 규칙에서 빼야 한다.
+
+   1) touch-action — touch-action 은 상속되지 않아 필드에 touch-none 을 줘도
+      자식 <button> 은 위의 `manipulation` 을 그대로 받는다. 그러면 브라우저가
+      탭을 팬 제스처 시작으로 보고 취소할 수 있어 **모바일에서 타격이 씹힌다**
+      (에임 트레이너 등 12개 게임 해당).
+   2) min-height — precision+expert 타깃은 지름 19px 인데 40px 이 강제돼
+      2:1 타원이 됐다. 히트 영역과 보이는 원이 어긋난다. */
+.touch-none button, .touch-none [role="button"] { touch-action: none; }
+@media (pointer: coarse) {
+  main .touch-none button { min-height: unset; }
+}
+
 /* ── 모바일 가로 넘침 방지 (사용자 요청 2026-07-04) ──
    페이지는 절대 뷰포트 가로를 넘지 않게 하고, 넓은 보드(솔리테어·지뢰찾기 등)는
    자기 카드 안에서만 가로 스크롤. 게임 카드는 화면 폭에 맞춘다. */

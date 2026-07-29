@@ -17,36 +17,45 @@ export const PlayingCard: React.FC<PlayingCardProps> = ({ suit, value, isFaceUp 
     spades: '♠'
   };
 
+  // `shrink-0` is load-bearing: these sit in flex rows (hands, tableau piles),
+  // and without it the card was squeezed 64px -> 46px on a 375px viewport while
+  // the glyphs kept their size, which is what pushed text outside the card.
+  const frame = 'shrink-0 w-16 h-24 sm:w-20 sm:h-32 rounded-xl';
+
   if (!isFaceUp) {
     return (
-      <div 
+      <div
         onClick={onClick}
-        className={`w-16 h-24 sm:w-20 sm:h-32 bg-primary/20 border-2 border-primary/40 rounded-xl flex items-center justify-center cursor-pointer hover:scale-105 transition-transform ${className}`}
+        className={`${frame} bg-primary/20 border-2 border-primary/40 flex items-center justify-center cursor-pointer hover:scale-105 transition-transform ${className}`}
       >
         <div className="w-12 h-20 sm:w-14 sm:h-24 border border-primary/20 rounded-lg flex items-center justify-center">
-            <span className="text-primary/40 font-black text-2xl">OIYO</span>
+            <span className="text-primary/40 font-black text-xl sm:text-2xl">OIYO</span>
         </div>
       </div>
     );
   }
 
+  // Type scale is budgeted against the card box, not chosen by eye. Mobile:
+  // 96px tall - 4px border - 12px padding = 80px for three rows, and the rows
+  // below total 76px (26 + 24 + 26) with leading-none forced everywhere.
+  // Before this, the rows summed to 140px inside a 92px box — a 48px overflow.
   return (
-    <div 
+    <div
       onClick={onClick}
-      className={`relative w-16 h-24 sm:w-20 sm:h-32 bg-card border-2 border-border rounded-xl shadow-sm flex flex-col justify-between p-2 cursor-pointer hover:border-primary hover:-translate-y-1 transition-all ${isRed ? 'text-destructive' : 'text-foreground'} ${className}`}
+      className={`relative ${frame} overflow-hidden bg-card border-2 border-border shadow-sm flex flex-col justify-between p-1.5 sm:p-2 cursor-pointer hover:border-primary hover:-translate-y-1 transition-all ${isRed ? 'text-destructive' : 'text-foreground'} ${className}`}
     >
       <div className="flex flex-col items-start leading-none">
-        <span className="text-lg sm:text-xl font-black">{value}</span>
-        <span className="text-sm">{suitIcons[suit]}</span>
+        <span className="text-base sm:text-xl font-black leading-none">{value}</span>
+        <span className="text-[10px] sm:text-xs leading-none">{suitIcons[suit]}</span>
       </div>
-      
+
       <div className="flex justify-center items-center">
-        <span className="text-3xl sm:text-4xl">{suitIcons[suit]}</span>
+        <span className="text-2xl sm:text-4xl leading-none">{suitIcons[suit]}</span>
       </div>
-      
+
       <div className="flex flex-col items-end leading-none rotate-180">
-        <span className="text-lg sm:text-xl font-black">{value}</span>
-        <span className="text-sm">{suitIcons[suit]}</span>
+        <span className="text-base sm:text-xl font-black leading-none">{value}</span>
+        <span className="text-[10px] sm:text-xs leading-none">{suitIcons[suit]}</span>
       </div>
     </div>
   );
