@@ -38,13 +38,18 @@ const MULTIPLIERS = computeSlotMultipliers(ROWS);
 const PEGS = generatePegLayout(ROWS);
 const RECORD_KEY = 'plinko';
 
+// Wording is deliberately non-gambling. The mechanic (commit N points, ball
+// lands on a multiplier, gain N x multiplier) is a physics score game, but
+// "bet / balance / win / refill" framed it as a casino format — the exact
+// pattern our own gambling-prevention content warns about. Keep it that way:
+// no wager/stake/win/refill vocabulary in any locale.
 const COPY = {
-    ko: { title: "플린코", subtitle: "Physics Drop Game", drop: "떨어뜨리기", dropping: "떨어지는 중...", bet: "베팅", balance: "포인트", best: "최고 획득", won: "획득!", notEnough: "포인트 부족 — 초기화로 리필하세요" },
-    en: { title: "Plinko", subtitle: "Physics Drop Game", drop: "Drop", dropping: "Dropping...", bet: "Bet", balance: "Points", best: "Best win", won: "Won!", notEnough: "Not enough points — reset to refill" },
-    ja: { title: "プリンコ", subtitle: "Physics Drop Game", drop: "落とす", dropping: "落下中...", bet: "ベット", balance: "ポイント", best: "最高獲得", won: "獲得！", notEnough: "ポイント不足 — リセットで補充" },
-    zh: { title: "弹珠机", subtitle: "Physics Drop Game", drop: "投放", dropping: "掉落中...", bet: "下注", balance: "积分", best: "最高获得", won: "获得！", notEnough: "积分不足 — 请重置补充" },
-    fr: { title: "Plinko", subtitle: "Physics Drop Game", drop: "Lâcher", dropping: "Chute...", bet: "Mise", balance: "Points", best: "Meilleur gain", won: "Gagné !", notEnough: "Pas assez de points — réinitialisez" },
-    es: { title: "Plinko", subtitle: "Physics Drop Game", drop: "Soltar", dropping: "Cayendo...", bet: "Apuesta", balance: "Puntos", best: "Mejor logro", won: "¡Ganado!", notEnough: "Puntos insuficientes — reinicia" },
+    ko: { title: "플린코", subtitle: "Physics Drop Game", drop: "떨어뜨리기", dropping: "떨어지는 중...", bet: "투입", balance: "점수", best: "최고 기록", won: "기록!", notEnough: "점수 부족 — 초기화하세요" },
+    en: { title: "Plinko", subtitle: "Physics Drop Game", drop: "Drop", dropping: "Dropping...", bet: "Input", balance: "Score", best: "Best score", won: "Scored!", notEnough: "Not enough score — reset to start over" },
+    ja: { title: "プリンコ", subtitle: "Physics Drop Game", drop: "落とす", dropping: "落下中...", bet: "投入", balance: "スコア", best: "最高記録", won: "記録！", notEnough: "スコア不足 — リセットしてください" },
+    zh: { title: "弹珠机", subtitle: "Physics Drop Game", drop: "投放", dropping: "掉落中...", bet: "投入", balance: "分数", best: "最高记录", won: "记录！", notEnough: "分数不足 — 请重置" },
+    fr: { title: "Plinko", subtitle: "Physics Drop Game", drop: "Lâcher", dropping: "Chute...", bet: "Apport", balance: "Score", best: "Meilleur score", won: "Marqué !", notEnough: "Score insuffisant — réinitialisez" },
+    es: { title: "Plinko", subtitle: "Physics Drop Game", drop: "Soltar", dropping: "Cayendo...", bet: "Aporte", balance: "Puntuación", best: "Mejor puntuación", won: "¡Anotado!", notEnough: "Puntuación insuficiente — reinicia" },
 } as const;
 
 interface DropResult { slot: number; multiplier: number; score: number }
@@ -169,12 +174,12 @@ const Plinko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const drop = () => {
         const engine = engineRef.current;
         if (!engine || isDropping) return;
-        const wager = clampBet(bet);
-        if (wager > balance) return;
+        const amount = clampBet(bet);
+        if (amount > balance) return;
 
-        betRef.current = wager;
+        betRef.current = amount;
         settledRef.current = false;
-        setBalance((b) => b - wager);
+        setBalance((b) => b - amount);
         setIsDropping(true);
         setLastResult(null);
 
