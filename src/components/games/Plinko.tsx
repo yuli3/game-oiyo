@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Matter from 'matter-js';
 import { AnimatePresence, motion } from 'motion/react';
 import { GameContainer } from '../ui/game/GamePrimitives';
+import { collisionWith, createPhysicsWorld } from '../../lib/games/physics-world';
 import { getBest, recordBest } from '../../lib/games/records';
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 import {
@@ -79,10 +80,8 @@ const Plinko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     // Build the static world (pegs/dividers/walls) once, run the physics
     // engine + canvas draw loop for the component's lifetime.
     useEffect(() => {
-        const engine = Matter.Engine.create({ gravity: { x: 0, y: 1 } });
-        const world = engine.world;
-        engineRef.current = engine;
-
+        // Scenery is built up front so createPhysicsWorld can add it before the
+        // runner's first step (see physics-world.test.ts on why that order matters).
         const pegBodies = PEGS.map((p) =>
             Matter.Bodies.circle(
                 p.xNorm * BOARD_W,
@@ -100,19 +99,17 @@ const Plinko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         const floor = Matter.Bodies.rectangle(BOARD_W / 2, BOARD_H + WALL_T / 2, BOARD_W, WALL_T, { isStatic: true, label: 'floor' });
         const leftWall = Matter.Bodies.rectangle(-WALL_T / 2, BOARD_H / 2, WALL_T, BOARD_H * 2, { isStatic: true, label: 'wall' });
         const rightWall = Matter.Bodies.rectangle(BOARD_W + WALL_T / 2, BOARD_H / 2, WALL_T, BOARD_H * 2, { isStatic: true, label: 'wall' });
-        Matter.Composite.add(world, [...pegBodies, ...dividers, floor, leftWall, rightWall]);
 
-        // Resolve the round once the ball actually settles on the floor — more
-        // reliable than watching a y-threshold, since the ball can still bounce
-        // sideways between dividers for a moment after entering the slot zone.
-        const onCollisionStart = (event: Matter.IEventCollision<Matter.Engine>) => {
-            const ball = ballRef.current;
-            if (!ball || settledRef.current) return;
-            for (const pair of event.pairs) {
-                const hitFloor =
-                    (pair.bodyA === ball && pair.bodyB.label === 'floor') ||
-                    (pair.bodyB === ball && pair.bodyA.label === 'floor');
-                if (!hitFloor) continue;
+        const handle = createPhysicsWorld(Matter as never, {
+            gravity: { x: 0, y: 1 },
+            setup: () => [...pegBodies, ...dividers, floor, leftWall, rightWall],
+            // Resolve the round once the ball actually settles on the floor — more
+            // reliable than watching a y-threshold, since the ball can still bounce
+            // sideways between dividers for a moment after entering the slot zone.
+            onCollisionStart: (pairs) => {
+                const ball = ballRef.current;
+                if (!ball || settledRef.current) return;
+                if (!collisionWith(pairs, ball, 'floor')) return;
                 settledRef.current = true;
                 const xNorm = ball.position.x / BOARD_W;
                 const slot = resolveSlotIndex(xNorm, SLOT_COUNT);
@@ -130,13 +127,11 @@ const Plinko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     }
                     setIsDropping(false);
                 }, 700);
-                break;
-            }
-        };
-        Matter.Events.on(engine, 'collisionStart', onCollisionStart);
-
-        const runner = Matter.Runner.create();
-        Matter.Runner.run(runner, engine);
+            },
+        });
+        const engine = handle.engine as Matter.Engine;
+        const world = handle.world as Matter.World;
+        engineRef.current = engine;
 
         let raf: number;
         const draw = () => {
@@ -165,9 +160,7 @@ const Plinko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
         return () => {
             cancelAnimationFrame(raf);
-            Matter.Runner.stop(runner);
-            Matter.Events.off(engine, 'collisionStart', onCollisionStart);
-            Matter.Composite.clear(world, false);
+            handle.destroy();
         };
     }, []);
 
