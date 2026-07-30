@@ -1,0 +1,55 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import GameGuide from "../../components/GameGuide.astro";
+import WindwardHorizons from "../../components/games/WindwardHorizons";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "Windward Horizons — 무료 3D 항해·교역 게임",
+    description: "광대한 바다를 클래식 범선으로 항해하고 다섯 항구에서 교역하세요. 실시간 파도·포말·풍향·안개·시간대·움직이는 돛과 오리지널 관현악을 갖춘 무료 3D 브라우저 게임.",
+  },
+  en: {
+    title: "Windward Horizons — Free 3D Sailing & Trading Game",
+    description: "Sail a classic tall ship across an open sea and trade between five ports. A free 3D browser game with live waves, foam, wind, fog, time of day, moving sails and an original orchestral score.",
+  },
+  ja: {
+    title: "Windward Horizons — 無料3D航海・交易ゲーム",
+    description: "クラシック帆船で大海原を航海し、五つの港で交易。リアルタイムの波・泡・風・霧・時間帯・動く帆とオリジナル管弦楽を備えた無料3Dブラウザゲーム。",
+  },
+  zh: {
+    title: "Windward Horizons — 免费3D航海贸易游戏",
+    description: "驾驶古典帆船穿越开放海域，在五座港口之间贸易。免费3D浏览器游戏，拥有实时波浪、泡沫、风向、雾、昼夜、动态船帆与原创管弦配乐。",
+  },
+  fr: {
+    title: "Windward Horizons — Jeu 3D gratuit de voile et commerce",
+    description: "Naviguez en grand voilier et commercez entre cinq ports. Jeu 3D gratuit avec vagues, écume, vent, brume, cycle horaire, voiles animées et partition orchestrale originale.",
+  },
+  es: {
+    title: "Windward Horizons — Juego 3D gratis de navegación y comercio",
+    description: "Navega en un velero clásico y comercia entre cinco puertos. Juego 3D gratis con olas, espuma, viento, niebla, ciclo horario, velas animadas y banda sonora orquestal original.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-7xl px-2 py-6 sm:px-4 sm:py-8">
+    {/*
+      The readable React briefing hydrates at viewport visibility. Three.js,
+      the ocean shaders and the procedural score start only after Set sail.
+    */}
+    <WindwardHorizons client:visible locale={locale} />
+    <div class="mx-auto max-w-3xl px-2">
+      <GameGuide slug="windward-horizons" locale={locale} name="Windward Horizons" />
+    </div>
+  </div>
+</BaseLayout>

@@ -9,22 +9,22 @@ export async function getStaticPaths() {
 const { locale } = Astro.props as { locale: Locale };
 
 const meta: Record<Locale, { title: string; description: string }> = {
-  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 43종", description: "체스·스도쿠·워들·2048부터 보드·카드·퍼즐까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 모음." },
-  en: { title: "OIYO Arcade — 43 free browser games, no install", description: "Chess, Sudoku, Wordle, 2048 and more — board, card, and puzzle games you can play instantly in your browser, free." },
-  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム43種", description: "チェス・数独・ワードル・2048などボード・カード・パズルまで。インストール不要、ブラウザですぐ遊べる無料ゲーム集。" },
-  zh: { title: "OIYO 街机 — 无需安装的43款免费游戏", description: "国际象棋、数独、猜词、2048，以及棋类、纸牌、益智游戏。无需安装，浏览器即玩，全部免费。" },
-  fr: { title: "OIYO Arcade — 43 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle, 2048 et plus — jeux de plateau, de cartes et de réflexion à jouer instantanément, gratuitement." },
-  es: { title: "OIYO Arcade — 43 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle, 2048 y más — juegos de mesa, cartas y lógica para jugar al instante, gratis." },
+  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 48종", description: "체스·스도쿠·워들·2048부터 보드·카드·퍼즐까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 모음." },
+  en: { title: "OIYO Arcade — 48 free browser games, no install", description: "Chess, Sudoku, Wordle, 2048 and more — board, card, and puzzle games you can play instantly in your browser, free." },
+  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム48種", description: "チェス・数独・ワードル・2048などボード・カード・パズルまで。インストール不要、ブラウザですぐ遊べる無料ゲーム集。" },
+  zh: { title: "OIYO 街机 — 无需安装的48款免费游戏", description: "国际象棋、数独、猜词、2048，以及棋类、纸牌、益智游戏。无需安装，浏览器即玩，全部免费。" },
+  fr: { title: "OIYO Arcade — 48 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle, 2048 et plus — jeux de plateau, de cartes et de réflexion à jouer instantanément, gratuitement." },
+  es: { title: "OIYO Arcade — 48 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle, 2048 y más — juegos de mesa, cartas y lógica para jugar al instante, gratis." },
 };
 const m = meta[locale] ?? meta.en;
 
 const hero: Record<Locale, { eyebrow: string; title: string; sub: string }> = {
-  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 43종", sub: "보드·카드·퍼즐·아케이드 — 광고 없이 브라우저에서 가볍게." },
-  en: { eyebrow: "🎮 OIYO Arcade", title: "43 free games, right in your browser", sub: "Board, card, puzzle and arcade — light, instant, no install." },
-  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム43種", sub: "ボード・カード・パズル・アーケード — ブラウザで手軽に。" },
-  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的43款免费游戏", sub: "棋类·纸牌·益智·街机 — 浏览器里轻松开玩。" },
-  fr: { eyebrow: "🎮 OIYO Arcade", title: "43 jeux gratuits, directement dans le navigateur", sub: "Plateau, cartes, réflexion et arcade — léger et instantané." },
-  es: { eyebrow: "🎮 OIYO Arcade", title: "43 juegos gratis, directo en tu navegador", sub: "Mesa, cartas, lógica y arcade — ligero e instantáneo." },
+  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 48종", sub: "보드·카드·퍼즐·아케이드 — 광고 없이 브라우저에서 가볍게." },
+  en: { eyebrow: "🎮 OIYO Arcade", title: "48 free games, right in your browser", sub: "Board, card, puzzle and arcade — light, instant, no install." },
+  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム48種", sub: "ボード・カード・パズル・アーケード — ブラウザで手軽に。" },
+  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的48款免费游戏", sub: "棋类·纸牌·益智·街机 — 浏览器里轻松开玩。" },
+  fr: { eyebrow: "🎮 OIYO Arcade", title: "48 jeux gratuits, directement dans le navigateur", sub: "Plateau, cartes, réflexion et arcade — léger et instantané." },
+  es: { eyebrow: "🎮 OIYO Arcade", title: "48 juegos gratis, directo en tu navegador", sub: "Mesa, cartas, lógica y arcade — ligero e instantáneo." },
 };
 const h = hero[locale] ?? hero.en;
 
@@ -81,11 +81,16 @@ const GAMES: Game[] = [
   { slug: "wordle", emoji: "🟩", cat: "puzzle", name: { ko: "워들", en: "Wordle", ja: "ワードル", zh: "猜词", fr: "Wordle", es: "Wordle" } },
   { slug: "psychology-wordle", emoji: "🧠", cat: "puzzle", name: { ko: "심리 워들", en: "Psychology Wordle", ja: "心理ワードル", zh: "心理猜词", fr: "Wordle psycho", es: "Wordle psico" } },
   { slug: "spatial-memory", emoji: "🧭", cat: "puzzle", name: { ko: "공간 기억", en: "Spatial Memory", ja: "空間記憶", zh: "空间记忆", fr: "Mémoire spatiale", es: "Memoria espacial" } },
+  { slug: "spirit-vale", emoji: "🌿", cat: "puzzle", name: { ko: "정령 골짜기", en: "Spirit Vale", ja: "精霊の谷", zh: "精灵山谷", fr: "Val des Esprits", es: "Valle de los Espíritus" } },
   { slug: "korean-semantle", emoji: "🌊", cat: "puzzle", name: { ko: "꼬맨틀", en: "Kkomantle", ja: "꼬맨틀", zh: "韩语猜义", fr: "Kkomantle", es: "Kkomantle" } },
   { slug: "texas-holdem", emoji: "🃏", cat: "card", name: { ko: "텍사스 홀덤", en: "Texas Hold'em", ja: "テキサスホールデム", zh: "德州扑克", fr: "Texas Hold'em", es: "Texas Hold'em" } },
 
   { slug: "snake-game", emoji: "🐍", cat: "arcade", name: { ko: "스네이크", en: "Snake", ja: "スネーク", zh: "贪吃蛇", fr: "Snake", es: "Snake" } },
   { slug: "aim-trainer", emoji: "🎯", cat: "arcade", name: { ko: "에임 트레이너", en: "Aim Trainer", ja: "エイム練習", zh: "瞄准训练", fr: "Entraîneur de visée", es: "Entrenador de puntería" } },
+  { slug: "isometric-city", emoji: "🏗️", cat: "arcade", name: { ko: "Isometric City", en: "Isometric City", ja: "Isometric City", zh: "Isometric City", fr: "Isometric City", es: "Isometric City" } },
+  { slug: "mallow-isle", emoji: "🐇", cat: "arcade", name: { ko: "Mallow Isle", en: "Mallow Isle", ja: "Mallow Isle", zh: "Mallow Isle", fr: "Mallow Isle", es: "Mallow Isle" } },
+  { slug: "urban-strike", emoji: "🔫", cat: "arcade", name: { ko: "Urban Strike", en: "Urban Strike", ja: "Urban Strike", zh: "Urban Strike", fr: "Urban Strike", es: "Urban Strike" } },
+  { slug: "windward-horizons", emoji: "⛵", cat: "arcade", name: { ko: "Windward Horizons", en: "Windward Horizons", ja: "Windward Horizons", zh: "Windward Horizons", fr: "Windward Horizons", es: "Windward Horizons" } },
   { slug: "star-blaster", emoji: "🚀", cat: "arcade", name: { ko: "스타 블래스터", en: "Star Blaster", ja: "スターブラスター", zh: "星际爆破", fr: "Star Blaster", es: "Star Blaster" } },
   { slug: "brick-breaker", emoji: "🧱", cat: "arcade", name: { ko: "벽돌깨기", en: "Brick Breaker", ja: "ブロック崩し", zh: "打砖块", fr: "Casse-briques", es: "Rompeladrillos" } },
   { slug: "cave-dash", emoji: "🛸", cat: "arcade", name: { ko: "케이브 대시", en: "Cave Dash", ja: "ケイブダッシュ", zh: "洞穴冲刺", fr: "Cave Dash", es: "Cave Dash" } },

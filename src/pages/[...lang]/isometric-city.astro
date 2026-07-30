@@ -1,0 +1,55 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import GameGuide from "../../components/GameGuide.astro";
+import IsometricCity from "../../components/games/IsometricCity";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "Isometric City — 무료 3D 도시 건설 시뮬레이션",
+    description: "격자 건설, 실시간 도시 경제, A* 차량·보행자 경로, 낮과 밤, 비와 안개, 가로등과 네온 조명을 갖춘 무료 아이소메트릭 3D 도시 건설 게임.",
+  },
+  en: {
+    title: "Isometric City — Free 3D City Builder Simulation",
+    description: "Free isometric 3D city builder with grid placement, a real-time economy, A* traffic and pedestrians, day and night, rain, fog, streetlights and neon windows.",
+  },
+  ja: {
+    title: "Isometric City — 無料3D都市建設シミュレーション",
+    description: "グリッド建設、リアルタイム経済、A*車両・歩行者経路、昼夜、雨と霧、街灯とネオン窓を備えた無料アイソメトリック3D都市建設ゲーム。",
+  },
+  zh: {
+    title: "Isometric City — 免费3D城市建造模拟",
+    description: "免费的等距3D城市建造游戏，拥有网格放置、实时经济、A*车辆与行人路径、昼夜、雨雾、路灯和霓虹窗。",
+  },
+  fr: {
+    title: "Isometric City — simulation 3D gratuite de ville",
+    description: "City builder 3D isométrique gratuit avec grille, économie en temps réel, trafic et piétons A*, jour et nuit, pluie, brouillard, lampadaires et fenêtres néon.",
+  },
+  es: {
+    title: "Isometric City — simulador 3D gratis de ciudades",
+    description: "City builder 3D isométrico gratis con cuadrícula, economía en tiempo real, tráfico y peatones A*, día y noche, lluvia, niebla, farolas y ventanas de neón.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-7xl px-2 py-6 sm:px-4 sm:py-8">
+    {/*
+      The visible React briefing is light; the Three.js city, simulation
+      renderer and tilt-shift passes load only after the planning button.
+    */}
+    <IsometricCity client:visible locale={locale} />
+    <div class="mx-auto max-w-3xl px-2">
+      <GameGuide slug="isometric-city" locale={locale} name="Isometric City" />
+    </div>
+  </div>
+</BaseLayout>

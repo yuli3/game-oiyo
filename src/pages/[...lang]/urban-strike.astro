@@ -1,0 +1,56 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import UrbanStrike from "../../components/games/UrbanStrike";
+import GameGuide from "../../components/GameGuide.astro";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "Urban Strike — 무료 3D 브라우저 FPS",
+    description: "도심 전술 구역에서 펼쳐지는 6대6 봇 팀전. 히트스캔, 무기별 반동, ADS, 재장전, 스프린트, PBR 조명과 공간 오디오를 갖춘 무료 브라우저 FPS.",
+  },
+  en: {
+    title: "Urban Strike — Free 3D Browser FPS",
+    description: "A 6v6 bot team battle in a tactical city block. Free browser FPS with hit-scan, weapon recoil, ADS, reloads, sprinting, PBR lighting and spatial audio.",
+  },
+  ja: {
+    title: "Urban Strike — 無料3DブラウザFPS",
+    description: "戦術都市区画で戦う6対6のBOTチーム戦。ヒットスキャン、武器別反動、ADS、リロード、ダッシュ、PBR照明と空間音響を備えた無料ブラウザFPS。",
+  },
+  zh: {
+    title: "Urban Strike — 免费3D浏览器FPS",
+    description: "在战术街区展开6对6机器人团队战。免费浏览器FPS，拥有命中扫描、武器后坐力、ADS、换弹、冲刺、PBR灯光和空间音频。",
+  },
+  fr: {
+    title: "Urban Strike — FPS 3D gratuit sur navigateur",
+    description: "Combat 6v6 contre des bots dans un quartier tactique. FPS gratuit avec hit-scan, recul propre à chaque arme, ADS, rechargement, sprint, éclairage PBR et audio spatial.",
+  },
+  es: {
+    title: "Urban Strike — FPS 3D gratis en navegador",
+    description: "Combate 6v6 con bots en un distrito táctico. FPS gratuito con hit-scan, retroceso por arma, ADS, recarga, sprint, iluminación PBR y audio espacial.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-7xl px-2 py-6 sm:px-4 sm:py-8">
+    {/*
+      The React shell is visible-first, and the Three.js combat scene is a
+      second lazy boundary behind the Deploy button. The arcade homepage and
+      visitors who only read the guide never download the 3D engine.
+    */}
+    <UrbanStrike client:visible locale={locale} />
+    <div class="mx-auto max-w-3xl px-2">
+      <GameGuide slug="urban-strike" locale={locale} name="Urban Strike" />
+    </div>
+  </div>
+</BaseLayout>

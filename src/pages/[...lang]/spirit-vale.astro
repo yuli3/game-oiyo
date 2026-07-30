@@ -1,0 +1,36 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SpiritVale from "../../components/games/SpiritVale";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: { title: "정령 골짜기 — 3D 오픈월드 정령 수집 게임", description: "십이지 열두 정령이 사는 3D 골짜기를 걸어다니며 수풀 속 정령을 만나는 무료 게임. 오행 상생·상극이 그대로 상성 시스템이 됩니다." },
+  en: { title: "Spirit Vale — 3D Open-World Spirit Collector", description: "Walk a 3D valley where twelve zodiac spirits live and meet them in the tall grass. A free game where the Five Phases' generating and overcoming cycles are the type system." },
+  ja: { title: "精霊の谷 — 3Dオープンワールド精霊収集ゲーム", description: "十二支の精霊が棲む3Dの谷を歩き、草むらで精霊に出会う無料ゲーム。五行の相生・相剋がそのまま相性システムになっています。" },
+  zh: { title: "精灵山谷 — 3D 开放世界精灵收集游戏", description: "漫步十二生肖精灵栖息的 3D 山谷，在草丛中与精灵相遇的免费游戏。五行相生相剋直接构成属性相性系统。" },
+  fr: { title: "Val des Esprits — Collecte d'esprits en monde ouvert 3D", description: "Parcourez une vallée 3D où vivent douze esprits du zodiaque et croisez-les dans les hautes herbes. Un jeu gratuit où les cycles des Cinq Phases forment le système de types." },
+  es: { title: "Valle de los Espíritus — Coleccionable 3D de mundo abierto", description: "Recorre un valle 3D donde viven doce espíritus del zodiaco y encuéntralos entre la hierba alta. Un juego gratuito donde los ciclos de las Cinco Fases son el sistema de tipos." },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-3xl px-4 py-8">
+    {/*
+      `client:visible` rather than `client:load`: the three.js chunk is by far
+      the heaviest asset in the arcade, so it is only requested once the valley
+      is actually scrolled into view.
+    */}
+    <SpiritVale client:visible locale={locale} />
+    <GameGuide slug="spirit-vale" locale={locale} name={m.title.split(' — ')[0]} />
+  </div>
+</BaseLayout>

@@ -1,0 +1,56 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import GameGuide from "../../components/GameGuide.astro";
+import MallowIsle from "../../components/games/MallowIsle";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "Mallow Isle — 무료 3D 힐링 섬 꾸미기 게임",
+    description: "파스텔 섬을 산책하며 지형을 빚고 나무·꽃·벤치를 배치하는 무료 3D 섬 생활 게임. 치비 동물, 움직이는 바람과 구름, 기기 내 합성 lo-fi 음악을 즐기세요.",
+  },
+  en: {
+    title: "Mallow Isle — Free Cozy 3D Island Life Game",
+    description: "Walk a pastel island, sculpt terrain and place trees, flowers and benches in a free 3D island life game with chibi animals, living wind, soft clouds and on-device lo-fi.",
+  },
+  ja: {
+    title: "Mallow Isle — 無料3D癒やしの島づくりゲーム",
+    description: "パステルの島を歩き、地形を作り、木・花・ベンチを置く無料3D島生活ゲーム。ちび動物、風と雲、端末内合成lo-fiを楽しめます。",
+  },
+  zh: {
+    title: "Mallow Isle — 免费治愈系3D岛屿生活游戏",
+    description: "漫步粉彩小岛，塑造地形并摆放树木、鲜花和长椅。免费3D岛屿生活游戏，拥有迷你动物、动态风与云和设备内合成的 lo-fi 音乐。",
+  },
+  fr: {
+    title: "Mallow Isle — jeu gratuit de vie insulaire 3D",
+    description: "Parcourez une île pastel, modelez le terrain et placez arbres, fleurs et bancs dans un jeu 3D gratuit avec animaux chibi, vent vivant, nuages doux et lo-fi locale.",
+  },
+  es: {
+    title: "Mallow Isle — juego gratis de vida isleña en 3D",
+    description: "Recorre una isla pastel, moldea el terreno y coloca árboles, flores y bancos en un juego 3D gratis con animales chibi, viento vivo, nubes suaves y lo-fi local.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout
+  title={m.title}
+  description={m.description}
+  image="/games/mallow-isle-social.png"
+  heading={m.title}
+>
+  <div class="mx-auto max-w-7xl px-2 py-6 sm:px-4 sm:py-8">
+    <MallowIsle client:visible locale={locale} />
+    <div class="mx-auto max-w-3xl px-2">
+      <GameGuide slug="mallow-isle" locale={locale} name="Mallow Isle" />
+    </div>
+  </div>
+</BaseLayout>
