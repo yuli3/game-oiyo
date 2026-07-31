@@ -5,6 +5,15 @@ import { dayIndex, todayKey, previousDayKey } from '../../lib/games/daily';
 import { displayedGameSeconds, elapsedGameMilliseconds, recordedGameSeconds, restoredElapsedMilliseconds } from '../../lib/games/minesweeper-timing';
 import { clearMinesweeperSave, loadMinesweeperSave, storeMinesweeperSave } from '../../lib/games/minesweeper-save';
 import {
+    advanceMinesweeperOnboarding,
+    freshMinesweeperOnboarding,
+    loadMinesweeperOnboarding,
+    nextMinesweeperOnboardingStep,
+    storeMinesweeperOnboarding,
+    type MinesweeperOnboarding,
+    type MinesweeperOnboardingMilestone,
+} from '../../lib/games/minesweeper-onboarding';
+import {
     chordMinesweeperCell,
     createEmptyBoard,
     createNoGuessMinesweeperBoard,
@@ -73,6 +82,15 @@ const M3_COPY = {
     es: { overview: "Vista del tablero", closeOverview: "Cerrar vista", overviewHelp: "Los colores solo muestran casillas abiertas, marcadas y ocultas. Sigue jugando en el tablero de 44 px inferior.", longPress: "En móvil, mantén pulsada una casilla para colocar una bandera.", boardState: "Estado del tablero", revealed: "abiertas", closed: "ocultas", flags: "banderas", safeProgress: "Progreso seguro", correctFlags: "Banderas correctas", wrongFlags: "Banderas erróneas", newBest: "¡Nuevo mejor tiempo!", nextGoal: "Siguiente objetivo", assistedResult: "Este resultado se registra por separado como partida asistida." },
 } as const;
 
+const ONBOARD_COPY = {
+    ko: { progress: "조작 배우기", reveal: "칸을 탭하면 팝니다. 첫 탭은 항상 안전합니다.", flagTouch: "지뢰로 의심되는 닫힌 칸을 길게 눌러 깃발을 놓아 보세요.", flagMouse: "지뢰로 의심되는 닫힌 칸을 우클릭해 깃발을 놓아 보세요.", chord: "숫자 주변 깃발 수가 그 숫자와 같아지면, 숫자를 다시 탭해 남은 주변 칸을 한꺼번에 여세요." },
+    en: { progress: "Learn the controls", reveal: "Tap a cell to dig. Your first tap is always safe.", flagTouch: "Press and hold a hidden cell you suspect to place a flag.", flagMouse: "Right-click a hidden cell you suspect to place a flag.", chord: "When the flags around a number match it, tap that number again to open the rest around it at once." },
+    ja: { progress: "操作を学ぶ", reveal: "マスをタップすると掘れます。最初のタップは必ず安全です。", flagTouch: "地雷が疑わしい閉じたマスを長押しして旗を置いてみましょう。", flagMouse: "地雷が疑わしい閉じたマスを右クリックして旗を置いてみましょう。", chord: "数字の周囲の旗がその数字と同じになったら、数字を再度タップして残りの周囲を一括で開きます。" },
+    zh: { progress: "学习操作", reveal: "点按格子即可挖开。第一次点按始终安全。", flagTouch: "长按可疑的未开格子来插旗。", flagMouse: "右键点击可疑的未开格子来插旗。", chord: "当数字周围的旗帜数与该数字相同时，再次点按该数字即可一次打开剩余相邻格。" },
+    fr: { progress: "Apprendre les commandes", reveal: "Touchez une case pour creuser. Le premier contact est toujours sûr.", flagTouch: "Maintenez une case fermée suspecte pour poser un drapeau.", flagMouse: "Faites un clic droit sur une case fermée suspecte pour poser un drapeau.", chord: "Quand les drapeaux autour d'un nombre lui correspondent, touchez ce nombre à nouveau pour ouvrir le reste d'un coup." },
+    es: { progress: "Aprende los controles", reveal: "Toca una casilla para cavar. El primer toque siempre es seguro.", flagTouch: "Mantén pulsada una casilla oculta sospechosa para colocar una bandera.", flagMouse: "Haz clic derecho en una casilla oculta sospechosa para colocar una bandera.", chord: "Cuando las banderas alrededor de un número coincidan con él, toca ese número de nuevo para abrir el resto de una vez." },
+} as const;
+
 // Classic minesweeper number colors mapped to design tokens
 const NUM_COLORS: Record<number, string> = {
     1: 'text-chart-2',
@@ -91,6 +109,7 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const t = COPY[(locale as keyof typeof COPY)] ?? COPY.en;
     const ht = HINT_COPY[(locale as keyof typeof HINT_COPY)] ?? HINT_COPY.en;
     const m3 = M3_COPY[(locale as keyof typeof M3_COPY)] ?? M3_COPY.en;
+    const ob = ONBOARD_COPY[(locale as keyof typeof ONBOARD_COPY)] ?? ONBOARD_COPY.en;
 
     const [mode, setMode] = useState<Mode>('daily');
     const difficultyId: MinesweeperDifficultyId = mode === 'daily' ? DAILY_DIFFICULTY_ID : mode;
@@ -113,6 +132,8 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [hintUnavailable, setHintUnavailable] = useState(false);
     const [overviewOpen, setOverviewOpen] = useState(false);
     const [isNewBest, setIsNewBest] = useState(false);
+    const [onboarding, setOnboarding] = useState<MinesweeperOnboarding>(() => freshMinesweeperOnboarding());
+    const [coarsePointer, setCoarsePointer] = useState(false);
     const generationSeed = useRef(createGenerationSeed());
     const cellRefs = useRef<Array<HTMLButtonElement | null>>([]);
     const recordedRef = useRef(false);
@@ -202,8 +223,26 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 if (Number.isFinite(legacy) && legacy > 0) recordBest('minesweeper', legacy, 'seconds', undefined, { trackPlay: false });
             }
         } catch { /* ignore */ }
+        setOnboarding(loadMinesweeperOnboarding());
         setHydrated(true);
         // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    useEffect(() => {
+        if (typeof window.matchMedia !== 'function') return;
+        const media = window.matchMedia('(pointer: coarse)');
+        const sync = () => setCoarsePointer(media.matches);
+        sync();
+        media.addEventListener('change', sync);
+        return () => media.removeEventListener('change', sync);
+    }, []);
+
+    useEffect(() => {
+        if (hydrated) storeMinesweeperOnboarding(onboarding);
+    }, [hydrated, onboarding]);
+
+    const advanceOnboarding = useCallback((milestone: MinesweeperOnboardingMilestone) => {
+        setOnboarding((prev) => advanceMinesweeperOnboarding(prev, milestone));
     }, []);
 
     useEffect(() => {
@@ -276,16 +315,19 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             setGenerationStrategy(generated.strategy);
             setFirstClick(false);
         }
-        applyReveal(base[y][x].isRevealed
-            ? chordMinesweeperCell(base, x, y)
-            : revealMinesweeperCell(base, x, y));
+        const wasRevealed = base[y][x].isRevealed;
+        const result = wasRevealed ? chordMinesweeperCell(base, x, y) : revealMinesweeperCell(base, x, y);
+        if (result.changed) advanceOnboarding(wasRevealed ? 'chorded' : 'revealed');
+        applyReveal(result);
     };
 
     const toggleFlag = (x: number, y: number) => {
         if (status !== 'playing' || board[y]?.[x]?.isRevealed) return;
         setCurrentHint(null);
         setHintUnavailable(false);
-        setBoard((prev) => toggleMinesweeperFlag(prev, x, y, mineCount));
+        const next = toggleMinesweeperFlag(board, x, y, mineCount);
+        if (!board[y][x].isFlagged && next[y]?.[x]?.isFlagged) advanceOnboarding('flagged');
+        setBoard(next);
     };
 
     const requestHint = () => {
@@ -315,7 +357,9 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             longPressTriggeredRef.current = false;
             return;
         }
-        if (flagMode) toggleFlag(x, y);
+        // Flag mode only makes sense on hidden cells; a tap on an open number is
+        // always the chord intent, so don't swallow it while flag mode is on.
+        if (flagMode && !board[y]?.[x]?.isRevealed) toggleFlag(x, y);
         else reveal(x, y);
     };
 
@@ -370,6 +414,11 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             : currentHint.kind === 'mine' ? ht.mine
                 : currentHint.conclusion === 'safe' ? ht.subsetSafe : ht.subsetMine
         : hintUnavailable ? ht.none : null;
+    const onboardingStep = hydrated ? nextMinesweeperOnboardingStep(onboarding) : null;
+    const onboardingText = onboardingStep === 'reveal' ? ob.reveal
+        : onboardingStep === 'flag' ? (coarsePointer ? ob.flagTouch : ob.flagMouse)
+            : onboardingStep === 'chord' ? ob.chord : null;
+    const onboardingIndex = onboardingStep === 'reveal' ? 1 : onboardingStep === 'flag' ? 2 : 3;
     const visibleRevealed = board.flat().filter((cell) => cell.isRevealed).length;
     const visibleHidden = board.flat().filter((cell) => !cell.isRevealed && !cell.isFlagged).length;
     const resultSummary = status === 'playing' ? null : summarizeMinesweeperResult(board);
@@ -519,6 +568,10 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         {t.reset}
                     </button>
                 </div>
+            ) : onboardingText ? (
+                <p role="status" aria-live="polite" className="mx-auto mt-4 max-w-md rounded-xl border border-chart-2/40 bg-chart-2/10 px-3 py-2 text-center text-xs font-bold text-foreground">
+                    🎓 {ob.progress} {onboardingIndex}/3 · {onboardingText}
+                </p>
             ) : (
                 <p className="mt-4 text-center text-[10px] text-muted-foreground font-medium">{t.hint} · {m3.longPress}</p>
             )}
