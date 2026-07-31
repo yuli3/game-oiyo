@@ -276,18 +276,11 @@ describe("GameSessionEnvelope v1", () => {
     const connectBoard = Array.from({ length: 6 }, () => Array(7).fill(0));
     connectBoard[5][3] = 1;
     const gomokuBoard = Array<1 | 2 | null>(225).fill(null); gomokuBoard[112] = 1;
-    const sudokuGrid = [
-      [5, 3, null, null, 7, null, null, null, null],
-      [6, null, null, 1, 9, 5, null, null, null],
-      [null, 9, 8, null, null, null, null, 6, null],
-      [8, null, null, null, 6, null, null, null, 3],
-      [4, null, null, 8, null, 3, null, null, 1],
-      [7, null, null, null, 2, null, null, null, 6],
-      [null, 6, null, null, null, null, 2, 8, null],
-      [null, null, null, 4, 1, 9, null, null, 5],
-      [null, null, null, null, 8, null, null, 7, 9],
-    ];
-    sudokuGrid[0][2] = 4;
+    const { generateSudokuPuzzle } = await import("./sudoku");
+    const sudokuGivens = generateSudokuPuzzle("medium", 42).givens;
+    const sudokuEntries = Array.from({ length: 9 }, () => Array<number | null>(9).fill(null));
+    const sudokuRow = sudokuGivens.findIndex((row) => row.includes(null));
+    sudokuEntries[sudokuRow][sudokuGivens[sudokuRow].indexOf(null)] = 5;
     const checkersBoard = Array.from({ length: 64 }, (_, i) => {
       const r = Math.floor(i / 8), c = i % 8;
       if ((r + c) % 2 !== 1) return null;
@@ -302,7 +295,7 @@ describe("GameSessionEnvelope v1", () => {
       ["freecell", { version: 1, state: createFreeCellGame(() => 0.3) }],
       ["connect-four", { version: 1, board: connectBoard, currentPlayer: 2, mode: "ai", level: 2 }],
       ["gomoku", { version: 1, board: gomokuBoard, isBlackTurn: false, mode: "local", level: 2 }],
-      ["sudoku", { version: 1, grid: sudokuGrid, seconds: 42 }],
+      ["sudoku", { version: 2, mode: "medium", dailyDate: "2026-08-01", seed: 42, entries: sudokuEntries, seconds: 42, savedAtEpochMs: Date.now() - 5_000 }],
       ["puzzle15", { version: 1, size: 4, board: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0, 13, 14, 15, 12], puzzleSeed: "1-2-3-4-5-6-7-8-9-10-11-12-13-14-15-0", moves: 3, seconds: 12 }],
       ["checkers", { version: 1, board: checkersBoard, isRedTurn: true, forcedFrom: null, mode: "local", level: 2 }],
       ["reversi", { version: 1, board: reversiBoard, isBlackTurn: true, mode: "local", level: 2 }],
@@ -316,22 +309,14 @@ describe("GameSessionEnvelope v1", () => {
   });
 
   it("rejects tampered sudoku givens and already-solved puzzle15 boards", async () => {
-    const { parseSudokuSave, parsePuzzle15Save } = await import("./active-game-save");
-    expect(parseSudokuSave({ version: 1, grid: (() => {
-      const g = [
-        [5, 3, null, null, 7, null, null, null, null],
-        [6, null, null, 1, 9, 5, null, null, null],
-        [null, 9, 8, null, null, null, null, 6, null],
-        [8, null, null, null, 6, null, null, null, 3],
-        [4, null, null, 8, null, 3, null, null, 1],
-        [7, null, null, null, 2, null, null, null, 6],
-        [null, 6, null, null, null, null, 2, 8, null],
-        [null, null, null, 4, 1, 9, null, null, 5],
-        [null, null, null, null, 8, null, null, 7, 9],
-      ];
-      g[0][0] = 9; // tampered given cell
-      return g;
-    })(), seconds: 5 })).toBeNull();
+    const { parsePuzzle15Save } = await import("./active-game-save");
+    const { parseSudokuSaveV2 } = await import("./sudoku-save");
+    const { generateSudokuPuzzle } = await import("./sudoku");
+    const givens = generateSudokuPuzzle("medium", 42).givens;
+    const entries = Array.from({ length: 9 }, () => Array<number | null>(9).fill(null));
+    const givenRow = givens.findIndex((row) => row.some((v) => v !== null));
+    entries[givenRow][givens[givenRow].findIndex((v) => v !== null)] = 9; // tampered given cell
+    expect(parseSudokuSaveV2(JSON.stringify({ version: 2, mode: "medium", dailyDate: "2026-08-01", seed: 42, entries, seconds: 5, savedAtEpochMs: Date.now() }), "2026-08-01")).toBeNull();
     expect(parsePuzzle15Save({ version: 1, size: 4, board: Array.from({ length: 16 }, (_, i) => (i + 1) % 16), puzzleSeed: "seed", moves: 40, seconds: 60 })).toBeNull();
   });
 

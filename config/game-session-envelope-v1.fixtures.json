@@ -185,22 +185,26 @@
   {
    "gameId": "sudoku",
    "componentPath": "src/components/games/Sudoku.tsx",
-   "adapterPath": "src/lib/games/active-game-save.ts",
+   "adapterPath": "src/lib/games/sudoku-save.ts",
    "supportsRestore": true,
-   "sessionStorageKey": "oiyo:sudoku-state:v1",
+   "sessionStorageKey": "oiyo:sudoku-state:v2",
    "sourceSchema": "oiyo.sudoku-save",
-   "sourceSchemaVersion": 1,
-   "adapterVersion": "sudoku-session-adapter-v1",
-   "engineVersion": "sudoku-rules-v1",
+   "sourceSchemaVersion": 2,
+   "adapterVersion": "sudoku-session-adapter-v2",
+   "engineVersion": "sudoku-rules-v2",
    "modes": [
     "solo"
    ],
    "difficulties": [
-    "classic-demo-v1"
+    "daily",
+    "easy",
+    "medium",
+    "hard"
    ],
    "deterministicResume": true,
    "nonSessionPersistence": [
-    "game-record"
+    "game-record",
+    "daily-streak"
    ]
   },
   {

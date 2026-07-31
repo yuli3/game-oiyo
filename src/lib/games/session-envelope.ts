@@ -11,13 +11,12 @@ import {
   parsePuzzle15Save,
   parseReversiSave,
   parseSolitaireSave,
-  parseSudokuSave,
   type CheckersSave,
   type Game2048Save,
   type Puzzle15Save,
   type ReversiSave,
-  type SudokuSave,
 } from "./active-game-save";
+import { parseSudokuSaveV2, type SudokuSaveV2 } from "./sudoku-save";
 
 export const GAME_SESSION_SCHEMA = "oiyo.game-session" as const;
 export const GAME_SESSION_SCHEMA_VERSION = 1 as const;
@@ -46,7 +45,7 @@ export const RESTORABLE_GAME_CAPABILITIES = {
   freecell: { modes: ["solo"], difficulties: ["standard"] },
   "connect-four": { modes: ["local", "ai"], difficulties: ["level-1", "level-2", "level-3"] },
   gomoku: { modes: ["local", "ai"], difficulties: ["level-1", "level-2", "level-3"] },
-  sudoku: { modes: ["solo"], difficulties: ["classic-demo-v1"] },
+  sudoku: { modes: ["solo"], difficulties: ["daily", "easy", "medium", "hard"] },
   puzzle15: { modes: ["solo"], difficulties: ["3x3", "4x4", "5x5"] },
   checkers: { modes: ["local", "ai"], difficulties: ["level-1", "level-2", "level-3"] },
   reversi: { modes: ["local", "ai"], difficulties: ["level-1", "level-2", "level-3"] },
@@ -350,11 +349,17 @@ const gomokuAdapter: Adapter<GomokuPayload> = {
   source: { format: "legacy-local-storage", schema: "oiyo.gomoku-save", schemaVersion: 1, storageKey: "oiyo:gomoku-state:v1" },
 };
 
-const sudokuAdapter: Adapter<SudokuSave> = {
-  adapterVersion: "sudoku-session-adapter-v1", engineVersion: "sudoku-rules-v1", gameId: "sudoku",
-  modes: ["solo"], difficulties: ["classic-demo-v1"], parsePayload: parseSudokuSave,
-  payloadDifficulty: () => "classic-demo-v1", payloadMode: () => "solo",
-  source: { format: "legacy-local-storage", schema: "oiyo.sudoku-save", schemaVersion: 1, storageKey: "oiyo:sudoku-state:v1" },
+const sudokuAdapter: Adapter<SudokuSaveV2> = {
+  adapterVersion: "sudoku-session-adapter-v2", engineVersion: "sudoku-rules-v2", gameId: "sudoku",
+  modes: RESTORABLE_GAME_CAPABILITIES.sudoku.modes, difficulties: RESTORABLE_GAME_CAPABILITIES.sudoku.difficulties,
+  parsePayload: (value) => {
+    if (!isRecord(value) || typeof value.dailyDate !== "string" || typeof value.savedAtEpochMs !== "number") return null;
+    const parsed = parseSudokuSaveV2(JSON.stringify(value), value.dailyDate, value.savedAtEpochMs);
+    return parsed ? { ...parsed, entries: parsed.entries.map((row) => [...row]) } : null;
+  },
+  payloadDifficulty: (value) => value.mode === "daily" ? "daily" : value.mode,
+  payloadMode: () => "solo",
+  source: { format: "legacy-local-storage", schema: "oiyo.sudoku-save", schemaVersion: 2, storageKey: "oiyo:sudoku-state:v2" },
 };
 const puzzle15Adapter: Adapter<Puzzle15Save> = {
   adapterVersion: "puzzle15-session-adapter-v1", engineVersion: "puzzle15-rules-v1", gameId: "puzzle15",

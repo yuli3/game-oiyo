@@ -30,7 +30,7 @@ const restorableCapabilities = {
   freecell: { modes: ["solo"], difficulties: ["standard"] },
   "connect-four": { modes: ["local", "ai"], difficulties: ["level-1", "level-2", "level-3"] },
   gomoku: { modes: ["local", "ai"], difficulties: ["level-1", "level-2", "level-3"] },
-  sudoku: { modes: ["solo"], difficulties: ["classic-demo-v1"] },
+  sudoku: { modes: ["solo"], difficulties: ["daily", "easy", "medium", "hard"] },
   puzzle15: { modes: ["solo"], difficulties: ["3x3", "4x4", "5x5"] },
   checkers: { modes: ["local", "ai"], difficulties: ["level-1", "level-2", "level-3"] },
   reversi: { modes: ["local", "ai"], difficulties: ["level-1", "level-2", "level-3"] },
