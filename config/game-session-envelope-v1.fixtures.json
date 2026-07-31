@@ -72,6 +72,27 @@
    ]
   },
   {
+   "gameId": "brick-breaker",
+   "componentPath": "src/components/games/BrickBreaker.tsx",
+   "adapterPath": "src/lib/games/brick-breaker-save.ts",
+   "supportsRestore": true,
+   "sessionStorageKey": "oiyo:brick-breaker-state:v1",
+   "sourceSchema": "oiyo.brick-breaker-save",
+   "sourceSchemaVersion": 1,
+   "adapterVersion": "brick-breaker-session-adapter-v1",
+   "engineVersion": "brick-breaker-state-v1",
+   "modes": [
+    "solo"
+   ],
+   "difficulties": [
+    "endless-v1"
+   ],
+   "deterministicResume": true,
+   "nonSessionPersistence": [
+    "best-record"
+   ]
+  },
+  {
    "gameId": "solitaire",
    "componentPath": "src/components/games/Solitaire.tsx",
    "adapterPath": "src/lib/games/active-game-save.ts",

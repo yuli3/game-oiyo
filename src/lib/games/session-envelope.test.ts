@@ -4,6 +4,8 @@ import { chessApplyState, chessPositionKey, createInitialChessState } from "./ai
 import { serializeChessSave } from "./chess-save";
 import { createMinesweeperBoard, revealMinesweeperCell } from "./minesweeper";
 import { serializeMinesweeperSave } from "./minesweeper-save";
+import { createBrickBreakerState, launchBrickBreakerBall, stepBrickBreaker } from "./brick-breaker";
+import { serializeBrickBreakerSave } from "./brick-breaker-save";
 import {
   chooseHeartsCpuCard,
   chooseHeartsPassCards,
@@ -16,6 +18,7 @@ import {
 import {
   adaptChessSaveToSession,
   adaptActiveGameSaveToSession,
+  adaptBrickBreakerSaveToSession,
   adaptHeartsSaveToSession,
   adaptMinesweeperSaveToSession,
   parseGameSessionEnvelope,
@@ -62,6 +65,18 @@ function activeMinesweeperSave() {
     flagMode: false,
     activeCell: 0,
     assist: "none",
+  }));
+}
+
+function activeBrickBreakerSave() {
+  const state = createBrickBreakerState();
+  launchBrickBreakerBall(state);
+  for (let frame = 0; frame < 20; frame += 1) stepBrickBreaker(state, 16);
+  return JSON.parse(serializeBrickBreakerSave({
+    state,
+    destroyedBricks: state.bricks.filter((brick) => brick.hits === 0).length,
+    maxCombo: state.combo,
+    savedAtEpochMs: Date.parse(TIMING.savedAt),
   }));
 }
 
@@ -128,6 +143,23 @@ describe("GameSessionEnvelope v1", () => {
 
     for (const cell of save.board.flat()) if (!cell.isMine) cell.isRevealed = true;
     expect(adaptMinesweeperSaveToSession(save, TIMING)).toBeNull();
+  });
+
+  it("adapts a validated Brick Breaker run as deterministic paused-resume state", () => {
+    const envelope = adaptBrickBreakerSaveToSession(activeBrickBreakerSave(), TIMING, {
+      personalBest: { unit: "score", value: 2400 },
+    });
+    expect(envelope).toMatchObject({
+      adapterVersion: "brick-breaker-session-adapter-v1",
+      difficulty: "endless-v1",
+      engineVersion: "brick-breaker-state-v1",
+      gameId: "brick-breaker",
+      mode: "solo",
+      payload: { version: 1 },
+      source: { schema: "oiyo.brick-breaker-save", storageKey: "oiyo:brick-breaker-state:v1" },
+      terminal: false,
+    });
+    expect(parseGameSessionEnvelope(serializeGameSessionEnvelope(envelope!))).toEqual(envelope);
   });
 
   it("adapts the existing unversioned Hearts load shape and preserves resumable round state", () => {
@@ -231,8 +263,8 @@ describe("GameSessionEnvelope v1", () => {
 
   it("keeps unsupported games explicitly non-restorable", () => {
     const byId = new Map(capabilities.games.map((game) => [game.gameId, game]));
-    expect([...byId.values()].filter((game) => game.supportsRestore).map((game) => game.gameId)).toEqual(["chess", "hearts", "minesweeper", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048"]);
-    for (const gameId of ["chess", "hearts", "minesweeper", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048"] as const) {
+    expect([...byId.values()].filter((game) => game.supportsRestore).map((game) => game.gameId)).toEqual(["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048"]);
+    for (const gameId of ["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048"] as const) {
       expect(byId.get(gameId)?.modes).toEqual([...RESTORABLE_GAME_CAPABILITIES[gameId].modes]);
       expect(byId.get(gameId)?.difficulties).toEqual([...RESTORABLE_GAME_CAPABILITIES[gameId].difficulties]);
     }

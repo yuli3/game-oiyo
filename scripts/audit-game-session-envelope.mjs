@@ -5,11 +5,12 @@ const root = resolve(new URL("..", import.meta.url).pathname);
 const fixturePath = resolve(root, "config/game-session-envelope-v1.fixtures.json");
 const fixture = JSON.parse(await readFile(fixturePath, "utf8"));
 const errors = [];
-const expectedGames = ["chess", "hearts", "minesweeper", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048"];
+const expectedGames = ["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048"];
 const restorableSymbols = {
   chess: ["loadChessSave", "storeChessSave"],
   hearts: ["loadHeartsSavedGame", "saveHeartsGame"],
   minesweeper: ["loadMinesweeperSave", "storeMinesweeperSave"],
+  "brick-breaker": ["loadBrickBreakerSave", "storeBrickBreakerSave"],
   solitaire: ["loadSolitaireSave", "storeSolitaireSave"],
   freecell: ["loadFreeCellSave", "storeFreeCellSave"],
   "connect-four": ["loadConnectFourSave", "storeConnectFourSave"],
@@ -24,6 +25,7 @@ const restorableCapabilities = {
   chess: { modes: ["local", "ai"], difficulties: ["level-1", "level-2", "level-3"] },
   hearts: { modes: ["ai"], difficulties: ["heuristic-v1"] },
   minesweeper: { modes: ["solo"], difficulties: ["daily", "beginner", "intermediate", "expert"] },
+  "brick-breaker": { modes: ["solo"], difficulties: ["endless-v1"] },
   solitaire: { modes: ["solo"], difficulties: ["draw-1"] },
   freecell: { modes: ["solo"], difficulties: ["standard"] },
   "connect-four": { modes: ["local", "ai"], difficulties: ["level-1", "level-2", "level-3"] },
@@ -96,7 +98,7 @@ for (const game of fixture.games ?? []) {
 
 for (const gameId of expectedGames) if (!ids.has(gameId)) errors.push(`missing game capability: ${gameId}`);
 const restorable = (fixture.games ?? []).filter((game) => game.supportsRestore).map((game) => game.gameId);
-if (JSON.stringify(restorable) !== JSON.stringify(["chess", "hearts", "minesweeper", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048"])) {
+if (JSON.stringify(restorable) !== JSON.stringify(["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048"])) {
   errors.push(`restore inventory drift: ${restorable.join(", ")}`);
 }
 

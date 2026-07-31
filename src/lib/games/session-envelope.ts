@@ -1,6 +1,7 @@
 import { parseChessSave, type ChessSave } from "./chess-save";
 import { parseHeartsSavedGame, type HeartsSavedGame } from "./hearts";
 import { parseMinesweeperSave, type MinesweeperSave } from "./minesweeper-save";
+import { parseBrickBreakerSave, type BrickBreakerSave } from "./brick-breaker-save";
 import {
   parseCheckersSave,
   parseConnectFourSave,
@@ -21,7 +22,7 @@ import {
 export const GAME_SESSION_SCHEMA = "oiyo.game-session" as const;
 export const GAME_SESSION_SCHEMA_VERSION = 1 as const;
 
-export type RestorableGameId = "chess" | "hearts" | "minesweeper" | "solitaire" | "freecell" | "connect-four" | "gomoku" | "sudoku" | "puzzle15" | "checkers" | "reversi" | "game-2048";
+export type RestorableGameId = "chess" | "hearts" | "minesweeper" | "brick-breaker" | "solitaire" | "freecell" | "connect-four" | "gomoku" | "sudoku" | "puzzle15" | "checkers" | "reversi" | "game-2048";
 export type GameSessionMode = "local" | "ai" | "solo";
 
 export const RESTORABLE_GAME_CAPABILITIES = {
@@ -36,6 +37,10 @@ export const RESTORABLE_GAME_CAPABILITIES = {
   minesweeper: {
     modes: ["solo"],
     difficulties: ["daily", "beginner", "intermediate", "expert"],
+  },
+  "brick-breaker": {
+    modes: ["solo"],
+    difficulties: ["endless-v1"],
   },
   solitaire: { modes: ["solo"], difficulties: ["draw-1"] },
   freecell: { modes: ["solo"], difficulties: ["standard"] },
@@ -294,6 +299,27 @@ const minesweeperAdapter: Adapter<MinesweeperSave> = {
   },
 };
 
+const brickBreakerAdapter: Adapter<BrickBreakerSave> = {
+  adapterVersion: "brick-breaker-session-adapter-v1",
+  engineVersion: "brick-breaker-state-v1",
+  gameId: "brick-breaker",
+  modes: RESTORABLE_GAME_CAPABILITIES["brick-breaker"].modes,
+  difficulties: RESTORABLE_GAME_CAPABILITIES["brick-breaker"].difficulties,
+  parsePayload: (value) => {
+    if (!isRecord(value) || typeof value.savedAtEpochMs !== "number") return null;
+    const parsed = parseBrickBreakerSave(JSON.stringify(value), value.savedAtEpochMs);
+    return parsed ? { ...parsed, state: { ...parsed.state, bricks: parsed.state.bricks.map((brick) => ({ ...brick })) } } : null;
+  },
+  payloadDifficulty: () => "endless-v1",
+  payloadMode: () => "solo",
+  source: {
+    format: "legacy-local-storage",
+    schema: "oiyo.brick-breaker-save",
+    schemaVersion: 1,
+    storageKey: "oiyo:brick-breaker-state:v1",
+  },
+};
+
 type SolitairePayload = NonNullable<ReturnType<typeof parseSolitaireSave>>;
 type FreeCellPayload = NonNullable<ReturnType<typeof parseFreeCellSave>>;
 type ConnectFourPayload = NonNullable<ReturnType<typeof parseConnectFourSave>>;
@@ -361,6 +387,7 @@ const adapters: Record<RestorableGameId, Adapter<unknown>> = {
   chess: chessAdapter as Adapter<unknown>,
   hearts: heartsAdapter as Adapter<unknown>,
   minesweeper: minesweeperAdapter as Adapter<unknown>,
+  "brick-breaker": brickBreakerAdapter as Adapter<unknown>,
   solitaire: solitaireAdapter as Adapter<unknown>,
   freecell: freecellAdapter as Adapter<unknown>,
   "connect-four": connectFourAdapter as Adapter<unknown>,
@@ -398,6 +425,15 @@ export function adaptMinesweeperSaveToSession(
 ): GameSessionEnvelope<MinesweeperSave> | null {
   const payload = minesweeperAdapter.parsePayload(value);
   return payload ? createEnvelope(minesweeperAdapter, payload, timing, progress) : null;
+}
+
+export function adaptBrickBreakerSaveToSession(
+  value: unknown,
+  timing: GameSessionTiming,
+  progress?: GameSessionProgress,
+): GameSessionEnvelope<BrickBreakerSave> | null {
+  const payload = brickBreakerAdapter.parsePayload(value);
+  return payload ? createEnvelope(brickBreakerAdapter, payload, timing, progress) : null;
 }
 
 export function adaptActiveGameSaveToSession(
