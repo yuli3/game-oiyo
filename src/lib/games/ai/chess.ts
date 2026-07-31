@@ -268,17 +268,49 @@ function orderMoves(board: ChessBoard, moves: ChessMove[]): ChessMove[] {
     return gain(b) - gain(a);
   });
 }
-function negamax(state: ChessState, depth: number, alpha: number, beta: number): number {
+class SearchAborted extends Error {}
+
+function negamax(state: ChessState, depth: number, alpha: number, beta: number, shouldStop: () => boolean = () => false): number {
+  if (shouldStop()) throw new SearchAborted();
   const moves = chessLegalStateMoves(state);
   if (!moves.length) return chessInCheck(state.board, state.whiteToMove) ? -1_000_000 - depth * 1000 : 0;
   if (depth <= 0 || chessInsufficientMaterial(state.board)) return evaluate(state.board, state.whiteToMove);
   let best = -Infinity;
   for (const move of orderMoves(state.board, moves)) {
-    const value = -negamax(chessApplyState(state, move), depth - 1, -beta, -alpha);
+    const value = -negamax(chessApplyState(state, move), depth - 1, -beta, -alpha, shouldStop);
     best = Math.max(best, value); alpha = Math.max(alpha, best);
     if (alpha >= beta) break;
   }
   return best;
+}
+
+export type ChessSearchResult = { move: ChessMove | null; completedDepth: number; aborted: boolean };
+
+/** Iterative deepening contract for a Worker: always returns a legal fallback,
+ * and never publishes a partially searched depth after cancellation/deadline. */
+export function chessBestStateMoveIterative(
+  state: ChessState,
+  maxDepth: number,
+  shouldStop: () => boolean,
+): ChessSearchResult {
+  const moves = orderMoves(state.board, chessLegalStateMoves(state));
+  if (!moves.length) return { move: null, completedDepth: 0, aborted: false };
+  let best = moves[0];
+  let completedDepth = 0;
+  for (let depth = 1; depth <= Math.max(1, maxDepth); depth += 1) {
+    try {
+      const scored = moves.map((move) => ({
+        move,
+        value: -negamax(chessApplyState(state, move), depth - 1, -Infinity, Infinity, shouldStop),
+      })).sort((left, right) => right.value - left.value);
+      best = scored[0].move;
+      completedDepth = depth;
+    } catch (error) {
+      if (error instanceof SearchAborted) return { move: best, completedDepth, aborted: true };
+      throw error;
+    }
+  }
+  return { move: best, completedDepth, aborted: false };
 }
 export function chessBestStateMove(state: ChessState, level: AiLevel): ChessMove | null {
   const moves = chessLegalStateMoves(state);

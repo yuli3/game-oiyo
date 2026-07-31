@@ -1,16 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { Locale } from '../../lib/i18n';
 import {
-  chessApplyState, chessBestStateMove, chessDrawReason, chessInCheck, chessLegalStateMoves,
+  chessApplyState, chessBestStateMoveIterative, chessDrawReason, chessInCheck, chessLegalStateMoves,
   chessPositionKey, createInitialChessState, isWhitePiece,
   type ChessMove, type ChessDrawReason, type PromotionPiece,
 } from '../../lib/games/ai/chess';
 import type { AiLevel, GameMode } from '../../lib/games/ai/types';
 import { getRecord, recordResult, type GameRecord } from '../../lib/games/records';
 import { clearChessSave, loadChessSave, storeChessSave } from '../../lib/games/chess-save';
+import {
+  CHESS_AI_BUDGET_MS, CHESS_AI_MAX_DEPTH, isCurrentChessSearchResponse,
+  type ChessSearchRequest, type ChessSearchResponse,
+} from '../../lib/games/chess-worker-protocol';
 
 const AI_IS_WHITE = false; // AI plays black; human opens as white
-const AI_DELAY_MS = 500;
+const AI_DELAY_MS = 180;
 
 const i18n: Record<Locale, {
   title: string; turn: string; white: string; black: string; reset: string;
@@ -47,6 +51,8 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
   const [restored, setRestored] = useState(false);
   const [focusIndex, setFocusIndex] = useState(56);
   const aiTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const aiWorker = useRef<Worker | null>(null);
+  const aiRequestId = useRef(0);
   const squareRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const promotionTriggerRef = useRef<HTMLElement | null>(null);
   const promotionDialogRef = useRef<HTMLDivElement | null>(null);
@@ -62,7 +68,10 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     setLevel(saved.level);
     setRestored(true);
   }, []);
-  useEffect(() => () => { if (aiTimer.current) clearTimeout(aiTimer.current); }, []);
+  useEffect(() => () => {
+    if (aiTimer.current) clearTimeout(aiTimer.current);
+    aiWorker.current?.terminate();
+  }, []);
   useEffect(() => {
     if (pendingPromotion) promotionDialogRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
   }, [pendingPromotion]);
@@ -74,6 +83,9 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
 
   const reset = () => {
     if (aiTimer.current) clearTimeout(aiTimer.current);
+    aiWorker.current?.terminate();
+    aiWorker.current = null;
+    aiRequestId.current += 1;
     const initial = createInitialChessState();
     setPosition(initial);
     positionHistory.current = [chessPositionKey(initial)];
@@ -169,13 +181,44 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
   useEffect(() => {
     if (mode !== 'ai' || gameEnd || isWhiteTurn !== AI_IS_WHITE) return;
     setThinking(true);
-    aiTimer.current = setTimeout(() => {
-      const move = chessBestStateMove(position, level);
+    const requestId = ++aiRequestId.current;
+    const positionKey = chessPositionKey(position);
+    let disposed = false;
+
+    const applyResponse = (response: ChessSearchResponse) => {
+      if (disposed || !isCurrentChessSearchResponse(response, requestId, positionKey)) return;
+      aiWorker.current?.terminate();
+      aiWorker.current = null;
       setThinking(false);
-      if (move) applyMove(position, move, AI_IS_WHITE);
-      // no legal move is already handled by applyMove's mate/stalemate detection
+      if (response.move) applyMove(position, response.move, AI_IS_WHITE);
+    };
+
+    aiTimer.current = setTimeout(() => {
+      try {
+        const worker = new Worker(new URL('../../workers/chess-ai.worker.ts', import.meta.url), { type: 'module' });
+        aiWorker.current = worker;
+        worker.onmessage = (event: MessageEvent<ChessSearchResponse>) => applyResponse(event.data);
+        worker.onerror = () => {
+          worker.terminate();
+          if (disposed) return;
+          const startedAt = performance.now();
+          const result = chessBestStateMoveIterative(position, Math.min(2, CHESS_AI_MAX_DEPTH[level]), () => performance.now() - startedAt >= Math.min(80, CHESS_AI_BUDGET_MS[level]));
+          applyResponse({ type: 'result', requestId, positionKey, ...result, elapsedMs: performance.now() - startedAt });
+        };
+        const request: ChessSearchRequest = { type: 'search', requestId, positionKey, state: position, level };
+        worker.postMessage(request);
+      } catch {
+        const startedAt = performance.now();
+        const result = chessBestStateMoveIterative(position, 1, () => performance.now() - startedAt >= 50);
+        applyResponse({ type: 'result', requestId, positionKey, ...result, elapsedMs: performance.now() - startedAt });
+      }
     }, AI_DELAY_MS);
-    return () => { if (aiTimer.current) clearTimeout(aiTimer.current); };
+    return () => {
+      disposed = true;
+      if (aiTimer.current) clearTimeout(aiTimer.current);
+      aiWorker.current?.terminate();
+      aiWorker.current = null;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, isWhiteTurn, gameEnd]);
 

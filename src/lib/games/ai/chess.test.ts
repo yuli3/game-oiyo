@@ -4,6 +4,7 @@ import {
   chessDrawReason,
   chessInCheck,
   chessInsufficientMaterial,
+  chessBestStateMoveIterative,
   chessLegalStateMoves,
   chessPositionKey,
   createInitialChessState,
@@ -116,5 +117,21 @@ describe("stateful chess rules", () => {
   it("ignores a non-capturable en-passant target in repetition keys", () => {
     const state = createInitialChessState();
     expect(chessPositionKey({ ...state, enPassant: [2, 3] })).toBe(chessPositionKey(state));
+  });
+
+  it("keeps a legal fallback when an iterative AI search is cancelled", () => {
+    const state = createInitialChessState();
+    let checks = 0;
+    const result = chessBestStateMoveIterative(state, 5, () => ++checks > 12);
+    expect(result.aborted).toBe(true);
+    expect(chessLegalStateMoves(state)).toContainEqual(result.move);
+    expect(result.completedDepth).toBeLessThan(5);
+  });
+
+  it("publishes only the deepest fully completed AI iteration", () => {
+    const result = chessBestStateMoveIterative(createInitialChessState(), 2, () => false);
+    expect(result.aborted).toBe(false);
+    expect(result.completedDepth).toBe(2);
+    expect(result.move).not.toBeNull();
   });
 });
