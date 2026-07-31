@@ -2,16 +2,20 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { getBest, recordBest, getBestForConditions, recordBestForConditions, getDailyStreak, recordDailyWin, type BestConditions, type DailyStreak } from '../../lib/games/records';
 import { dayIndex, todayKey, previousDayKey } from '../../lib/games/daily';
-import { displayedGameSeconds, recordedGameSeconds } from '../../lib/games/minesweeper-timing';
+import { displayedGameSeconds, elapsedGameMilliseconds, recordedGameSeconds, restoredElapsedMilliseconds } from '../../lib/games/minesweeper-timing';
+import { clearMinesweeperSave, loadMinesweeperSave, storeMinesweeperSave } from '../../lib/games/minesweeper-save';
 import {
     chordMinesweeperCell,
     createEmptyBoard,
     createNoGuessMinesweeperBoard,
+    findMinesweeperHint,
     revealMinesweeperCell,
     toggleMinesweeperFlag,
+    summarizeMinesweeperResult,
     MINESWEEPER_DIFFICULTIES,
     type MinesweeperBoard,
     type MinesweeperDifficultyId,
+    type MinesweeperHint,
     type RevealResult,
 } from '../../lib/games/minesweeper';
 
@@ -39,7 +43,7 @@ function generateDailyBoard() {
     const seed = (0x4d53 ^ Math.imul(dayIndex() + 1, 2654435761)) | 0;
     const generated = createNoGuessMinesweeperBoard(difficulty, cx, cy, seed);
     const opened = revealMinesweeperCell(generated.board, cx, cy).board;
-    return { board: opened, strategy: generated.strategy };
+    return { board: opened, strategy: generated.strategy, seed };
 }
 
 const COPY = {
@@ -49,6 +53,24 @@ const COPY = {
     zh: { title: "扫雷", subtitle: "Logic Sweep", mines: "剩余地雷", time: "时间", over: "爆炸！游戏结束", win: "已打开所有安全格！", reset: "新游戏", dig: "挖开", flag: "插旗", best: "最快记录", hint: "再次按已打开的数字，旗帜数匹配时可一次打开周围 · 手机: 插旗模式 · 电脑: 右键", pending: "首次点击始终安全，棋盘会围绕该位置生成。", verified: "此棋盘已验证可仅用标准逻辑推理完成。", fallback: "首次点击安全，但在生成次数上限内未完成无猜测验证。", row: "行", column: "列", hidden: "未打开", flagged: "已插旗", mine: "地雷", empty: "空格", number: "相邻地雷", daily: "📅 每日挑战", free: "自由模式", beginner: "初级 10×10", intermediate: "中级 16×16", expert: "高级 30×16", streak: "连续", doneToday: "今日已完成 ✓" },
     fr: { title: "Démineur", subtitle: "Logic Sweep", mines: "Mines", time: "Temps", over: "BOUM ! Partie terminée", win: "Toutes les cases sûres sont ouvertes !", reset: "Nouvelle partie", dig: "Creuser", flag: "Drapeau", best: "Meilleur temps", hint: "Réactivez un nombre ouvert pour dégager autour des drapeaux correspondants · Mobile : drapeau · PC : clic droit", pending: "Le premier clic est toujours sûr ; la grille est générée autour de lui.", verified: "Cette grille a été vérifiée comme résoluble uniquement par déductions logiques standard.", fallback: "Le premier clic est sûr, mais la vérification sans conjecture n'a pas abouti dans la limite de génération.", row: "ligne", column: "colonne", hidden: "case fermée", flagged: "drapeau", mine: "mine", empty: "vide", number: "mines voisines", daily: "📅 Défi du jour", free: "Partie libre", beginner: "Débutant 10×10", intermediate: "Intermédiaire 16×16", expert: "Expert 30×16", streak: "Série", doneToday: "Fini aujourd'hui ✓" },
     es: { title: "Buscaminas", subtitle: "Logic Sweep", mines: "Minas", time: "Tiempo", over: "¡BUM! Fin del juego", win: "¡Abriste todas las casillas seguras!", reset: "Nueva partida", dig: "Cavar", flag: "Bandera", best: "Mejor tiempo", hint: "Pulsa de nuevo un número abierto para despejar alrededor de las banderas coincidentes · Móvil: bandera · PC: clic derecho", pending: "El primer clic siempre es seguro; el tablero se genera a su alrededor.", verified: "Se verificó que este tablero puede resolverse solo con deducciones lógicas estándar.", fallback: "El primer clic es seguro, pero la verificación sin adivinar no terminó dentro del límite de generación.", row: "fila", column: "columna", hidden: "casilla cerrada", flagged: "con bandera", mine: "mina", empty: "vacía", number: "minas adyacentes", daily: "📅 Reto diario", free: "Juego libre", beginner: "Principiante 10×10", intermediate: "Intermedio 16×16", expert: "Experto 30×16", streak: "Racha", doneToday: "Hecho hoy ✓" },
+} as const;
+
+const HINT_COPY = {
+    ko: { action: "논리 힌트", none: "현재 공개된 숫자와 깃발만으로 확정할 수 있는 수가 없습니다. 깃발을 다시 확인해 보세요.", assisted: "힌트 사용 기록", safe: "이 숫자 주변의 남은 지뢰가 0개이므로 강조된 칸은 안전합니다.", mine: "남은 닫힌 칸 수와 지뢰 수가 같으므로 강조된 칸은 지뢰입니다.", subsetSafe: "두 숫자의 후보 집합을 비교하면 차이 칸에는 지뢰가 없으므로 안전합니다.", subsetMine: "두 숫자의 후보 집합을 비교하면 차이 칸은 모두 지뢰입니다.", candidates: "후보 칸" },
+    en: { action: "Logic hint", none: "The visible clues and your flags do not prove a move yet. Check the flags and continue.", assisted: "Assisted record", safe: "This clue has no mines left, so the highlighted cells are safe.", mine: "The remaining hidden cells equal the remaining mines, so the highlighted cells are mines.", subsetSafe: "Comparing the two clue sets proves that the difference contains no mines.", subsetMine: "Comparing the two clue sets proves that every cell in the difference is a mine.", candidates: "candidate cells" },
+    ja: { action: "論理ヒント", none: "公開された数字と旗だけでは確定できる手がありません。旗を確認して続けてください。", assisted: "ヒント使用記録", safe: "この数字の周囲に残る地雷は0個なので、強調マスは安全です。", mine: "閉じたマス数と残り地雷数が同じなので、強調マスは地雷です。", subsetSafe: "2つの数字の候補集合を比べると、差分のマスに地雷はありません。", subsetMine: "2つの数字の候補集合を比べると、差分のマスはすべて地雷です。", candidates: "候補マス" },
+    zh: { action: "逻辑提示", none: "仅凭已公开数字和当前旗帜还无法确定下一步。请检查旗帜后继续。", assisted: "已使用提示的记录", safe: "该数字周围剩余地雷为0，因此高亮格安全。", mine: "剩余隐藏格数等于剩余地雷数，因此高亮格都是地雷。", subsetSafe: "比较两个数字的候选集合可知，差集格不含地雷。", subsetMine: "比较两个数字的候选集合可知，差集格全部是地雷。", candidates: "候选格" },
+    fr: { action: "Indice logique", none: "Les indices visibles et vos drapeaux ne prouvent encore aucun coup. Vérifiez les drapeaux et continuez.", assisted: "Record avec indice", safe: "Il ne reste aucune mine autour de cet indice : les cases surlignées sont sûres.", mine: "Le nombre de cases fermées égale celui des mines restantes : les cases surlignées sont des mines.", subsetSafe: "La comparaison des deux ensembles prouve que leur différence ne contient aucune mine.", subsetMine: "La comparaison des deux ensembles prouve que chaque case de la différence est une mine.", candidates: "cases candidates" },
+    es: { action: "Pista lógica", none: "Las pistas visibles y tus banderas todavía no demuestran una jugada. Revisa las banderas y continúa.", assisted: "Récord con pista", safe: "No quedan minas alrededor de esta pista, así que las casillas resaltadas son seguras.", mine: "Las casillas ocultas restantes igualan las minas restantes, así que las resaltadas son minas.", subsetSafe: "Al comparar los dos conjuntos, la diferencia no contiene minas.", subsetMine: "Al comparar los dos conjuntos, todas las casillas de la diferencia son minas.", candidates: "casillas candidatas" },
+} as const;
+
+const M3_COPY = {
+    ko: { overview: "전체판 보기", closeOverview: "전체판 닫기", overviewHelp: "색은 공개·깃발·닫힘 상태만 나타내며, 실제 플레이는 아래 44px 판에서 계속합니다.", longPress: "모바일에서는 칸을 길게 누르면 깃발을 놓습니다.", boardState: "판 상태", revealed: "공개", closed: "닫힘", flags: "깃발", safeProgress: "안전 칸 진행", correctFlags: "정확한 깃발", wrongFlags: "잘못된 깃발", newBest: "새 최단 기록!", nextGoal: "다음 목표", assistedResult: "힌트를 사용한 기록으로 별도 집계됩니다." },
+    en: { overview: "Board overview", closeOverview: "Close overview", overviewHelp: "Colors show only revealed, flagged, and hidden states. Keep playing on the 44px board below.", longPress: "On mobile, press and hold a cell to place a flag.", boardState: "Board status", revealed: "revealed", closed: "hidden", flags: "flags", safeProgress: "Safe-cell progress", correctFlags: "Correct flags", wrongFlags: "Wrong flags", newBest: "New best time!", nextGoal: "Next goal", assistedResult: "This result is tracked separately as an assisted run." },
+    ja: { overview: "全体盤を見る", closeOverview: "全体盤を閉じる", overviewHelp: "色は公開・旗・未公開の状態だけを示します。プレイは下の44px盤で続けます。", longPress: "モバイルではマスを長押しすると旗を置けます。", boardState: "盤面状態", revealed: "公開", closed: "未公開", flags: "旗", safeProgress: "安全マス進行", correctFlags: "正しい旗", wrongFlags: "誤った旗", newBest: "新記録！", nextGoal: "次の目標", assistedResult: "ヒント使用記録として別に集計されます。" },
+    zh: { overview: "查看全盘", closeOverview: "关闭全盘", overviewHelp: "颜色仅表示已开、旗帜和隐藏状态；请继续在下方44px棋盘操作。", longPress: "在手机上长按格子可放置旗帜。", boardState: "棋盘状态", revealed: "已开", closed: "隐藏", flags: "旗帜", safeProgress: "安全格进度", correctFlags: "正确旗帜", wrongFlags: "错误旗帜", newBest: "新的最快记录！", nextGoal: "下一目标", assistedResult: "该成绩将作为使用提示的记录单独统计。" },
+    fr: { overview: "Vue d’ensemble", closeOverview: "Fermer l’aperçu", overviewHelp: "Les couleurs indiquent seulement les cases révélées, marquées et cachées. Jouez sur la grille de 44 px ci-dessous.", longPress: "Sur mobile, maintenez une case pour poser un drapeau.", boardState: "État de la grille", revealed: "révélées", closed: "cachées", flags: "drapeaux", safeProgress: "Progression sûre", correctFlags: "Drapeaux corrects", wrongFlags: "Drapeaux erronés", newBest: "Nouveau meilleur temps !", nextGoal: "Prochain objectif", assistedResult: "Ce résultat est compté séparément comme partie assistée." },
+    es: { overview: "Vista del tablero", closeOverview: "Cerrar vista", overviewHelp: "Los colores solo muestran casillas abiertas, marcadas y ocultas. Sigue jugando en el tablero de 44 px inferior.", longPress: "En móvil, mantén pulsada una casilla para colocar una bandera.", boardState: "Estado del tablero", revealed: "abiertas", closed: "ocultas", flags: "banderas", safeProgress: "Progreso seguro", correctFlags: "Banderas correctas", wrongFlags: "Banderas erróneas", newBest: "¡Nuevo mejor tiempo!", nextGoal: "Siguiente objetivo", assistedResult: "Este resultado se registra por separado como partida asistida." },
 } as const;
 
 // Classic minesweeper number colors mapped to design tokens
@@ -67,6 +89,8 @@ type Mode = 'daily' | MinesweeperDifficultyId;
 
 const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const t = COPY[(locale as keyof typeof COPY)] ?? COPY.en;
+    const ht = HINT_COPY[(locale as keyof typeof HINT_COPY)] ?? HINT_COPY.en;
+    const m3 = M3_COPY[(locale as keyof typeof M3_COPY)] ?? M3_COPY.en;
 
     const [mode, setMode] = useState<Mode>('daily');
     const difficultyId: MinesweeperDifficultyId = mode === 'daily' ? DAILY_DIFFICULTY_ID : mode;
@@ -83,16 +107,24 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [generationStrategy, setGenerationStrategy] = useState<'pending' | 'verified' | 'safe-fallback'>('pending');
     const [streak, setStreak] = useState<DailyStreak | null>(null);
     const [dailyDate, setDailyDate] = useState(() => todayKey());
+    const [hydrated, setHydrated] = useState(false);
+    const [assist, setAssist] = useState<'none' | 'hint'>('none');
+    const [currentHint, setCurrentHint] = useState<MinesweeperHint | null>(null);
+    const [hintUnavailable, setHintUnavailable] = useState(false);
+    const [overviewOpen, setOverviewOpen] = useState(false);
+    const [isNewBest, setIsNewBest] = useState(false);
     const generationSeed = useRef(createGenerationSeed());
     const cellRefs = useRef<Array<HTMLButtonElement | null>>([]);
     const recordedRef = useRef(false);
     const startedAtRef = useRef<number | null>(null);
+    const longPressTimerRef = useRef<number | null>(null);
+    const longPressTriggeredRef = useRef(false);
 
     const recordConditions = useCallback((): BestConditions => ({
         seed: mode === 'daily' ? `daily-${dailyDate}` : `free-${generationSeed.current}`,
         difficulty: difficultyId,
-        assist: 'none',
-    }), [dailyDate, difficultyId, mode]);
+        assist,
+    }), [assist, dailyDate, difficultyId, mode]);
 
     const initBoard = useCallback((next: Mode) => {
         const id = next === 'daily' ? DAILY_DIFFICULTY_ID : next;
@@ -104,12 +136,19 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         setHasStarted(false);
         startedAtRef.current = null;
         recordedRef.current = false;
+        setAssist('none');
+        setCurrentHint(null);
+        setHintUnavailable(false);
+        setOverviewOpen(false);
+        setIsNewBest(false);
+        clearMinesweeperSave();
         if (next === 'daily') {
             const daily = generateDailyBoard();
             setBoard(daily.board);
             setGenerationStrategy(daily.strategy);
             setFirstClick(false);
             setDailyDate(todayKey());
+            generationSeed.current = daily.seed;
         } else {
             setBoard(createEmptyBoard(dims.width, dims.height));
             setGenerationStrategy('pending');
@@ -126,8 +165,35 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     }, []);
 
     useEffect(() => {
-        initBoard('daily');
         const today = todayKey();
+        const nowEpochMs = Date.now();
+        const saved = loadMinesweeperSave(today, nowEpochMs);
+        if (saved) {
+            const restoredElapsed = saved.hasStarted
+                ? restoredElapsedMilliseconds(saved.elapsedMs, saved.savedAtEpochMs, nowEpochMs)
+                : 0;
+            setMode(saved.mode);
+            setBoard(saved.board);
+            setStatus('playing');
+            setTimer(Math.floor(restoredElapsed / 1000));
+            setFlagMode(saved.flagMode);
+            setFirstClick(saved.firstClick);
+            setHasStarted(saved.hasStarted);
+            setActiveCell(saved.activeCell);
+            setGenerationStrategy(saved.generationStrategy);
+            setDailyDate(saved.dailyDate);
+            setAssist(saved.assist);
+            generationSeed.current = saved.generationSeed;
+            startedAtRef.current = saved.hasStarted ? performance.now() - restoredElapsed : null;
+            const restoredDifficulty = saved.mode === 'daily' ? DAILY_DIFFICULTY_ID : saved.mode;
+            setBestTime(getBestForConditions(bestKeyFor(restoredDifficulty), {
+                seed: saved.mode === 'daily' ? `daily-${saved.dailyDate}` : `free-${saved.generationSeed}`,
+                difficulty: restoredDifficulty,
+                assist: saved.assist,
+            })?.value ?? null);
+        } else {
+            initBoard('daily');
+        }
         setStreak(getDailyStreak(DAILY_GAME_ID, today, previousDayKey(today)));
         // One-time migration from the pre-unification per-game key (beginner best time)
         try {
@@ -136,8 +202,32 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 if (Number.isFinite(legacy) && legacy > 0) recordBest('minesweeper', legacy, 'seconds', undefined, { trackPlay: false });
             }
         } catch { /* ignore */ }
+        setHydrated(true);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    useEffect(() => {
+        if (!hydrated) return;
+        if (status !== 'playing') {
+            clearMinesweeperSave();
+            return;
+        }
+        const nowPerformance = performance.now();
+        storeMinesweeperSave({
+            board,
+            mode,
+            dailyDate,
+            generationSeed: generationSeed.current,
+            generationStrategy,
+            firstClick,
+            hasStarted,
+            elapsedMs: hasStarted ? Math.round(elapsedGameMilliseconds(startedAtRef.current, nowPerformance)) : 0,
+            savedAtEpochMs: Date.now(),
+            flagMode,
+            activeCell,
+            assist,
+        });
+    }, [activeCell, assist, board, dailyDate, firstClick, flagMode, generationStrategy, hasStarted, hydrated, mode, status]);
 
     useEffect(() => {
         if (status !== 'playing' || !hasStarted) return;
@@ -149,13 +239,18 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
     const applyReveal = (result: RevealResult) => {
         if (!result.changed) return;
+        setCurrentHint(null);
+        setHintUnavailable(false);
         setBoard(result.board);
         setStatus(result.status);
         if (result.status === 'won' && !recordedRef.current) {
             recordedRef.current = true;
             const elapsed = recordedGameSeconds(startedAtRef.current, performance.now());
             setTimer(elapsed);
-            setBestTime(recordBestForConditions(bestKeyFor(difficultyId), elapsed, 'seconds', recordConditions()).value);
+            const previousBest = bestTime;
+            const nextBest = recordBestForConditions(bestKeyFor(difficultyId), elapsed, 'seconds', recordConditions()).value;
+            setIsNewBest(previousBest === null || elapsed < previousBest);
+            setBestTime(nextBest);
             if (mode === 'daily') {
                 const today = todayKey();
                 setStreak(recordDailyWin(DAILY_GAME_ID, today, previousDayKey(today)));
@@ -188,13 +283,60 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
     const toggleFlag = (x: number, y: number) => {
         if (status !== 'playing' || board[y]?.[x]?.isRevealed) return;
+        setCurrentHint(null);
+        setHintUnavailable(false);
         setBoard((prev) => toggleMinesweeperFlag(prev, x, y, mineCount));
     };
 
+    const requestHint = () => {
+        if (status !== 'playing' || firstClick) {
+            setCurrentHint(null);
+            setHintUnavailable(true);
+            return;
+        }
+        const nextHint = findMinesweeperHint(board);
+        setCurrentHint(nextHint);
+        setHintUnavailable(nextHint === null);
+        if (!nextHint) return;
+        setAssist('hint');
+        if (!hasStarted) {
+            startedAtRef.current = performance.now();
+            setHasStarted(true);
+        }
+        setBestTime(getBestForConditions(bestKeyFor(difficultyId), {
+            seed: mode === 'daily' ? `daily-${dailyDate}` : `free-${generationSeed.current}`,
+            difficulty: difficultyId,
+            assist: 'hint',
+        })?.value ?? null);
+    };
+
     const handleCellClick = (x: number, y: number) => {
+        if (longPressTriggeredRef.current) {
+            longPressTriggeredRef.current = false;
+            return;
+        }
         if (flagMode) toggleFlag(x, y);
         else reveal(x, y);
     };
+
+    const clearLongPress = () => {
+        if (longPressTimerRef.current !== null) window.clearTimeout(longPressTimerRef.current);
+        longPressTimerRef.current = null;
+    };
+
+    const startLongPress = (event: React.PointerEvent, x: number, y: number) => {
+        if (event.pointerType !== 'touch' && event.pointerType !== 'pen' || status !== 'playing') return;
+        clearLongPress();
+        longPressTriggeredRef.current = false;
+        longPressTimerRef.current = window.setTimeout(() => {
+            longPressTriggeredRef.current = true;
+            setActiveCell(y * width + x);
+            toggleFlag(x, y);
+            longPressTimerRef.current = null;
+        }, 450);
+    };
+
+    useEffect(() => () => clearLongPress(), []);
 
     const handleContextMenu = (e: React.MouseEvent, x: number, y: number) => {
         e.preventDefault();
@@ -220,7 +362,17 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     };
 
     const solvedToday = streak?.lastWinDate === todayKey();
-    const cellSize = width > 20 ? '1.75rem' : width > 12 ? '2.25rem' : '2.75rem';
+    const cellSize = width > 20 ? '2.75rem' : width > 12 ? '2.25rem' : '2.75rem';
+    const hintTargets = new Set(currentHint?.targets.map(({ x, y }) => `${x}:${y}`) ?? []);
+    const hintClues = new Set(currentHint?.clues.map(({ x, y }) => `${x}:${y}`) ?? []);
+    const hintMessage = currentHint
+        ? currentHint.kind === 'safe' ? ht.safe
+            : currentHint.kind === 'mine' ? ht.mine
+                : currentHint.conclusion === 'safe' ? ht.subsetSafe : ht.subsetMine
+        : hintUnavailable ? ht.none : null;
+    const visibleRevealed = board.flat().filter((cell) => cell.isRevealed).length;
+    const visibleHidden = board.flat().filter((cell) => !cell.isRevealed && !cell.isFlagged).length;
+    const resultSummary = status === 'playing' ? null : summarizeMinesweeperResult(board);
 
     return (
         <GameContainer title={t.title} subtitle={t.subtitle} resetLabel={t.reset} onReset={() => initBoard(mode)}>
@@ -239,6 +391,23 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
             {mode === 'daily' && streak && streak.played > 0 && (
                 <p className="mb-3 text-center text-[11px] font-bold text-muted-foreground">🔥 {t.streak} {streak.currentStreak} · {t.best} {streak.maxStreak}</p>
+            )}
+
+            {difficultyId === 'expert' && (
+                <div className="mb-3 flex flex-col items-center gap-2">
+                    <button type="button" onClick={() => setOverviewOpen((open) => !open)} aria-expanded={overviewOpen} aria-controls="minesweeper-overview"
+                        className="min-h-11 rounded-xl border border-border bg-background px-4 py-2 text-xs font-black hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
+                        {overviewOpen ? m3.closeOverview : m3.overview}
+                    </button>
+                    {overviewOpen && (
+                        <div id="minesweeper-overview" className="w-full max-w-sm rounded-xl border border-border bg-muted/30 p-3">
+                            <p className="mb-2 text-center text-[10px] font-medium text-muted-foreground">{m3.overviewHelp}</p>
+                            <div className="grid gap-px overflow-hidden rounded-md bg-border" style={{ gridTemplateColumns: `repeat(${width}, minmax(0, 1fr))` }} aria-hidden="true">
+                                {board.flat().map((cell) => <span key={`overview-${cell.x}-${cell.y}`} className={`aspect-square ${cell.isRevealed ? 'bg-background' : cell.isFlagged ? 'bg-chart-2' : 'bg-primary/35'}`} />)}
+                            </div>
+                        </div>
+                    )}
+                </div>
             )}
 
             <div className="flex justify-between items-center mb-4 gap-2">
@@ -261,6 +430,22 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             <p className="mb-3 text-center text-[11px] font-medium text-muted-foreground" role="status" aria-live="polite">
                 {generationStrategy === 'pending' ? t.pending : generationStrategy === 'verified' ? t.verified : t.fallback}
             </p>
+            <p className="sr-only" role="status" aria-live="polite">
+                {m3.boardState}: {m3.revealed} {visibleRevealed}, {m3.closed} {visibleHidden}, {m3.flags} {flaggedCount}.
+            </p>
+
+            <div className="mb-3 flex flex-col items-center gap-2">
+                <button type="button" onClick={requestHint} disabled={status !== 'playing'}
+                    className="min-h-11 rounded-xl border border-border bg-background px-4 py-2 text-xs font-black text-foreground hover:bg-muted disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
+                    💡 {ht.action}
+                </button>
+                {assist === 'hint' && <span className="text-[10px] font-bold text-muted-foreground">{ht.assisted}</span>}
+                {hintMessage && (
+                    <p id="minesweeper-hint" className="max-w-xl rounded-xl border border-primary/30 bg-primary/5 px-3 py-2 text-center text-xs font-semibold text-foreground" role="status" aria-live="polite">
+                        {hintMessage}{currentHint ? ` · ${ht.candidates}: ${currentHint.targets.length}` : ''}
+                    </p>
+                )}
+            </div>
 
             <div className="overflow-x-auto pb-1">
                 <div className="grid gap-1 bg-muted/30 p-2 rounded-xl border border-border w-max mx-auto" style={{ gridTemplateColumns: `repeat(${width}, ${cellSize})` }} role="grid" aria-label={t.title} aria-rowcount={height} aria-colcount={width}>
@@ -278,6 +463,10 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                                         type="button"
                                         role="gridcell"
                                         onClick={() => { setActiveCell(index); handleCellClick(cell.x, cell.y); }}
+                                        onPointerDown={(event) => startLongPress(event, cell.x, cell.y)}
+                                        onPointerUp={clearLongPress}
+                                        onPointerCancel={clearLongPress}
+                                        onPointerLeave={clearLongPress}
                                         onContextMenu={(e) => handleContextMenu(e, cell.x, cell.y)}
                                         onFocus={() => setActiveCell(index)}
                                         onKeyDown={(event) => handleGridKeyDown(event, index)}
@@ -286,12 +475,13 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                                         aria-rowindex={y + 1}
                                         aria-colindex={x + 1}
                                         aria-label={`${t.row} ${y + 1}, ${t.column} ${x + 1}: ${state}`}
+                                        aria-describedby={hintTargets.has(`${x}:${y}`) || hintClues.has(`${x}:${y}`) ? 'minesweeper-hint' : undefined}
                                         style={{ height: cellSize, width: cellSize }}
                                         className={`rounded-md flex items-center justify-center font-black text-sm transition-colors motion-reduce:transition-none motion-reduce:transform-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset ${
                                             cell.isRevealed
                                                 ? cell.isMine ? 'bg-destructive text-destructive-foreground' : 'bg-background border border-border'
                                                 : 'bg-primary/20 hover:bg-primary/30 active:scale-95 border-b-2 border-primary/40'
-                                        }`}
+                                        } ${hintTargets.has(`${x}:${y}`) ? 'ring-4 ring-chart-2 ring-offset-1' : ''} ${hintClues.has(`${x}:${y}`) ? 'ring-4 ring-primary ring-offset-1' : ''}`}
                                     >
                                         {cell.isRevealed
                                             ? cell.isMine ? '💣' : (cell.neighborMines > 0
@@ -311,18 +501,26 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     <p className={`text-lg font-black ${status === 'won' ? 'text-primary' : 'text-destructive'}`}>
                         {status === 'won' ? t.win : t.over}
                     </p>
-                    {status === 'won' && bestTime !== null && (
-                        <p className="text-xs text-muted-foreground mt-1">{t.best}: {bestTime}s</p>
+                    {resultSummary && (
+                        <dl className="mx-auto mt-3 grid max-w-md grid-cols-1 gap-2 text-xs sm:grid-cols-3">
+                            <div className="rounded-xl bg-muted p-2"><dt className="text-muted-foreground">{m3.safeProgress}</dt><dd className="font-black">{resultSummary.safeRevealed}/{resultSummary.safeTotal} · {resultSummary.progressPercent}%</dd></div>
+                            <div className="rounded-xl bg-muted p-2"><dt className="text-muted-foreground">{m3.correctFlags}</dt><dd className="font-black">{resultSummary.correctFlags}/{resultSummary.flags}</dd></div>
+                            <div className="rounded-xl bg-muted p-2"><dt className="text-muted-foreground">{m3.wrongFlags}</dt><dd className="font-black">{resultSummary.incorrectFlags}</dd></div>
+                        </dl>
                     )}
+                    {status === 'won' && bestTime !== null && (
+                        <p className="text-xs text-muted-foreground mt-2">{isNewBest ? m3.newBest : `${t.best}: ${bestTime}s`} · {m3.nextGoal}: {Math.max(1, bestTime - 1)}s</p>
+                    )}
+                    {assist === 'hint' && <p className="mt-1 text-[10px] font-bold text-muted-foreground">{m3.assistedResult}</p>}
                     <button
                         onClick={() => initBoard(mode)}
-                        className="mt-4 px-8 py-2 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity"
+                        className="mt-4 min-h-11 px-8 py-2 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity"
                     >
                         {t.reset}
                     </button>
                 </div>
             ) : (
-                <p className="mt-4 text-center text-[10px] text-muted-foreground font-medium">{t.hint}</p>
+                <p className="mt-4 text-center text-[10px] text-muted-foreground font-medium">{t.hint} · {m3.longPress}</p>
             )}
         </GameContainer>
     );

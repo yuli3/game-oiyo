@@ -7,7 +7,8 @@ import {
 } from '../../lib/games/ai/chess';
 import type { AiLevel, GameMode } from '../../lib/games/ai/types';
 import { getRecord, recordResult, type GameRecord } from '../../lib/games/records';
-import { clearChessSave, loadChessSave, storeChessSave } from '../../lib/games/chess-save';
+import { clearChessSave, loadChessSave, storeChessSave, type ChessMoveRecord } from '../../lib/games/chess-save';
+import { capturedChessPiece, chessMaterialBalance, formatChessMove } from '../../lib/games/chess-notation';
 import {
   CHESS_AI_BUDGET_MS, CHESS_AI_MAX_DEPTH, isCurrentChessSearchResponse,
   type ChessSearchRequest, type ChessSearchResponse,
@@ -34,9 +35,28 @@ const i18n: Record<Locale, {
 };
 
 type GameEnd = { result: 'white' | 'black' | 'draw'; reason: 'checkmate' | 'stalemate' | ChessDrawReason } | null;
+const C2_COPY: Record<Locale, { flip: string; moves: string; captured: string; material: string; lastMove: string; noMoves: string }> = {
+  ko: { flip: "판 뒤집기", moves: "수 기록", captured: "잡힌 기물", material: "기물 점수", lastMove: "마지막 수", noMoves: "아직 둔 수가 없습니다" },
+  en: { flip: "Flip board", moves: "Move history", captured: "Captured", material: "Material", lastMove: "Last move", noMoves: "No moves yet" },
+  ja: { flip: "盤を反転", moves: "棋譜", captured: "取られた駒", material: "駒得", lastMove: "直前の手", noMoves: "まだ指し手はありません" },
+  fr: { flip: "Retourner", moves: "Historique", captured: "Capturées", material: "Matériel", lastMove: "Dernier coup", noMoves: "Aucun coup" },
+  es: { flip: "Girar tablero", moves: "Historial", captured: "Capturadas", material: "Material", lastMove: "Última jugada", noMoves: "Sin jugadas" },
+  zh: { flip: "翻转棋盘", moves: "棋谱", captured: "被吃棋子", material: "子力", lastMove: "上一步", noMoves: "尚未走棋" },
+};
+
+const C3_COPY: Record<Locale, { summary: string; movesPlayed: string; finalMaterial: string; keyMoment: string; noKeyMoment: string; playAgain: string }> = {
+  ko: { summary: "대국 결과", movesPlayed: "총 수", finalMaterial: "최종 기물 점수", keyMoment: "마지막 결정적 장면", noKeyMoment: "기물 손실 없이 승부가 결정됐습니다", playAgain: "다시 대국" },
+  en: { summary: "Game summary", movesPlayed: "Moves played", finalMaterial: "Final material", keyMoment: "Last key moment", noKeyMoment: "The game ended without a capture", playAgain: "Play again" },
+  ja: { summary: "対局結果", movesPlayed: "総手数", finalMaterial: "最終駒得", keyMoment: "最後の重要局面", noKeyMoment: "駒を取らずに決着しました", playAgain: "もう一局" },
+  fr: { summary: "Résumé", movesPlayed: "Coups joués", finalMaterial: "Matériel final", keyMoment: "Dernier moment clé", noKeyMoment: "La partie s'est terminée sans capture", playAgain: "Rejouer" },
+  es: { summary: "Resumen", movesPlayed: "Jugadas", finalMaterial: "Material final", keyMoment: "Último momento clave", noKeyMoment: "La partida terminó sin capturas", playAgain: "Jugar de nuevo" },
+  zh: { summary: "对局结果", movesPlayed: "总步数", finalMaterial: "最终子力", keyMoment: "最后关键时刻", noKeyMoment: "本局未发生吃子", playAgain: "再来一局" },
+};
 
 const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
   const t = i18n[locale] ?? i18n.en;
+  const c2 = C2_COPY[locale] ?? C2_COPY.en;
+  const c3 = C3_COPY[locale] ?? C3_COPY.en;
 
   const [position, setPosition] = useState(createInitialChessState);
   const board = position.board;
@@ -50,6 +70,9 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
   const [record, setRecord] = useState<GameRecord | null>(null);
   const [restored, setRestored] = useState(false);
   const [focusIndex, setFocusIndex] = useState(56);
+  const [orientation, setOrientation] = useState<'white' | 'black'>('white');
+  const [moveHistory, setMoveHistory] = useState<ChessMoveRecord[]>([]);
+  const [lastMove, setLastMove] = useState<ChessMove | null>(null);
   const aiTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const aiWorker = useRef<Worker | null>(null);
   const aiRequestId = useRef(0);
@@ -66,6 +89,8 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     positionHistory.current = saved.positionHistory;
     setMode(saved.mode);
     setLevel(saved.level);
+    setMoveHistory(saved.moveHistory);
+    setOrientation(saved.orientation);
     setRestored(true);
   }, []);
   useEffect(() => () => {
@@ -93,6 +118,8 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     setPendingPromotion(null);
     setGameEnd(null);
     setThinking(false);
+    setMoveHistory([]);
+    setLastMove(null);
     setRestored(false);
     clearChessSave();
   };
@@ -108,10 +135,14 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
 
   const applyMove = (current: typeof position, m: ChessMove, moverIsWhite: boolean) => {
     const next = chessApplyState(current, m);
+    const captured = capturedChessPiece(current, m);
+    const nextMoveHistory = [...moveHistory, { notation: formatChessMove(current, m, next), captured, white: moverIsWhite }];
+    setMoveHistory(nextMoveHistory);
+    setLastMove(m);
     const nextKey = chessPositionKey(next);
     const nextHistory = [...positionHistory.current, nextKey];
     positionHistory.current = nextHistory;
-    storeChessSave({ state: next, positionHistory: nextHistory, mode, level });
+    storeChessSave({ state: next, positionHistory: nextHistory, mode, level, moveHistory: nextMoveHistory, orientation });
     setPosition(next);
     setSelected(null);
     setPendingPromotion(null);
@@ -240,6 +271,21 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         ? (gameEnd.result === (AI_IS_WHITE ? 'white' : 'black') ? t.aiWins : t.youWin)
         : `${gameEnd.result === 'white' ? t.white : t.black} ${t.checkmate}`
     : null;
+  const displaySquares = Array.from({ length: 64 }, (_, displayIndex) => {
+    const logicalIndex = orientation === 'white' ? displayIndex : 63 - displayIndex;
+    return { displayIndex, r: Math.floor(logicalIndex / 8), c: logicalIndex % 8 };
+  });
+  const capturedPieces = moveHistory.flatMap((entry) => entry.captured ? [entry.captured] : []);
+  const material = chessMaterialBalance(capturedPieces);
+  const keyMoment = [...moveHistory].reverse().find((entry) => entry.captured || /[+#]$/.test(entry.notation));
+  const turnSummary = thinking ? t.thinking : `${isWhiteTurn ? t.white : t.black} ${t.turn}${inCheck ? ` · ${t.check}` : ''}${moveHistory.length ? ` · ${c2.lastMove}: ${moveHistory.at(-1)?.notation}` : ''}`;
+
+  const flipBoard = () => {
+    const nextOrientation = orientation === 'white' ? 'black' : 'white';
+    setOrientation(nextOrientation);
+    setFocusIndex(56);
+    storeChessSave({ state: position, positionHistory: positionHistory.current, mode, level, moveHistory, orientation: nextOrientation });
+  };
 
   return (
     <div className="not-prose my-12 p-4 sm:p-8 bg-card border border-border rounded-4xl shadow-sm max-w-lg mx-auto">
@@ -247,7 +293,7 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         <div>
           <h3 className="text-xl font-black text-foreground">{t.title}</h3>
           <p className="text-xs font-bold text-primary uppercase tracking-widest mt-1" aria-live="polite">
-            {thinking ? t.thinking : `${isWhiteTurn ? t.white : t.black} ${t.turn}${inCheck ? ` · ${t.check}` : ''}`}
+            {turnSummary}
           </p>
         </div>
         <button type="button" onClick={reset} className="px-4 py-2 bg-muted text-muted-foreground rounded-xl text-xs font-bold border border-border">
@@ -287,26 +333,38 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         {restored ? t.restored : t.localSave}
       </p>
 
-      <div className="relative overflow-x-auto pb-2">
-        <div className="grid min-w-[352px] grid-cols-8 grid-rows-8 border-4 border-stone-800 shadow-2xl aspect-square w-full" role="grid" aria-label={t.board}>
-          {board.map((row, r) => row.map((piece, c) => {
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <span className="text-[11px] font-bold text-muted-foreground" aria-live="polite">
+          {c2.lastMove}: {moveHistory.at(-1)?.notation ?? c2.noMoves}
+        </span>
+        <button type="button" onClick={flipBoard}
+          className="min-h-11 rounded-xl border border-border bg-muted px-3 text-xs font-bold" aria-pressed={orientation === 'black'}>
+          ↕ {c2.flip}
+        </button>
+      </div>
+
+      <div className="relative pb-2">
+        <div className="grid grid-cols-8 grid-rows-8 border-4 border-stone-800 shadow-2xl aspect-square w-full" role="grid" aria-label={t.board}>
+          {displaySquares.map(({ displayIndex, r, c }) => {
+            const piece = board[r][c];
             const isDark = (r + c) % 2 === 1;
             const isSelected = selected && selected[0] === r && selected[1] === c;
             const isTarget = legalTargets.some((m) => m.to[0] === r && m.to[1] === c);
+            const isLastMove = lastMove && ((lastMove.from[0] === r && lastMove.from[1] === c) || (lastMove.to[0] === r && lastMove.to[1] === c));
             return (
               <button
                 key={`${r}-${c}`}
-                ref={(node) => { squareRefs.current[r * 8 + c] = node; }}
+                ref={(node) => { squareRefs.current[displayIndex] = node; }}
                 onClick={() => handleSquareClick(r, c)}
-                onFocus={() => setFocusIndex(r * 8 + c)}
-                onKeyDown={(event) => moveBoardFocus(event, r * 8 + c)}
-                tabIndex={focusIndex === r * 8 + c ? 0 : -1}
+                onFocus={() => setFocusIndex(displayIndex)}
+                onKeyDown={(event) => moveBoardFocus(event, displayIndex)}
+                tabIndex={focusIndex === displayIndex ? 0 : -1}
                 role="gridcell"
                 aria-selected={Boolean(isSelected)}
-                aria-label={`${String.fromCharCode(65 + c)}${8 - r}, ${piece ? `${isWhitePiece(piece) ? t.white : t.black} ${t[{ p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king' }[piece.toLowerCase()] as 'pawn' | 'knight' | 'bishop' | 'rook' | 'queen' | 'king']}` : t.empty}${isSelected ? `, ${t.selectedLabel}` : ''}${isTarget ? `, ${t.legalLabel}` : ''}`}
-                className={`relative flex min-h-11 min-w-11 items-center justify-center text-3xl sm:text-4xl cursor-pointer transition-colors motion-reduce:transition-none focus-visible:z-20 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-[-4px] focus-visible:outline-sky-500 ${
+                aria-label={`${String.fromCharCode(65 + c)}${8 - r}, ${piece ? `${isWhitePiece(piece) ? t.white : t.black} ${t[{ p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king' }[piece.toLowerCase()] as 'pawn' | 'knight' | 'bishop' | 'rook' | 'queen' | 'king']}` : t.empty}${isSelected ? `, ${t.selectedLabel}` : ''}${isTarget ? `, ${t.legalLabel}` : ''}${isLastMove ? `, ${c2.lastMove}` : ''}`}
+                className={`relative flex min-h-0 min-w-0 items-center justify-center text-[clamp(1.45rem,8vw,2.25rem)] cursor-pointer transition-colors motion-reduce:transition-none focus-visible:z-20 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-[-4px] focus-visible:outline-sky-500 ${
                   isDark ? 'bg-[#b58863]' : 'bg-[#f0d9b5]'
-                } ${isSelected ? 'ring-4 ring-primary inset-0 z-10' : ''}`}
+                } ${isSelected ? 'ring-4 ring-primary inset-0 z-10' : ''} ${isLastMove ? 'after:absolute after:inset-1 after:border-2 after:border-amber-400 after:pointer-events-none' : ''}`}
               >
                 {isTarget && (
                   piece
@@ -318,11 +376,11 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                 </span>
               </button>
             );
-          }))}
+          })}
         </div>
 
         {pendingPromotion && (
-          <div ref={promotionDialogRef} onKeyDown={trapPromotionFocus} className="absolute inset-0 z-20 min-w-[352px] bg-background/70 backdrop-blur-sm flex items-center justify-center" role="dialog" aria-modal="true" aria-label={t.promote}>
+          <div ref={promotionDialogRef} onKeyDown={trapPromotionFocus} className="absolute inset-0 z-20 bg-background/70 backdrop-blur-sm flex items-center justify-center" role="dialog" aria-modal="true" aria-label={t.promote}>
             <div className="bg-card p-5 rounded-2xl border border-border shadow-xl text-center">
               <p className="font-bold mb-3">{t.promote}</p>
               <div className="flex gap-2">
@@ -337,18 +395,50 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         )}
 
         {gameEnd && (
-          <div className="absolute inset-0 z-20 min-w-[352px] bg-background/60 backdrop-blur-sm flex flex-col items-center justify-center animate-in fade-in zoom-in-95 motion-reduce:animate-none" role="status" aria-live="assertive">
-            <div className="bg-card p-8 rounded-3xl shadow-xl border border-border text-center">
-              <h4 className="text-3xl font-black text-foreground mb-2">{endLabel}</h4>
+          <div className="absolute inset-0 z-20 bg-background/70 backdrop-blur-sm flex flex-col items-center justify-center animate-in fade-in zoom-in-95 motion-reduce:animate-none" role="dialog" aria-modal="true" aria-labelledby="chess-result-title">
+            <div className="mx-3 max-w-sm bg-card p-5 sm:p-8 rounded-3xl shadow-xl border border-border text-center">
+              <p className="mb-1 text-[10px] font-black uppercase tracking-widest text-muted-foreground">{c3.summary}</p>
+              <h4 id="chess-result-title" className="text-2xl sm:text-3xl font-black text-foreground mb-2">{endLabel}</h4>
               <p className="text-muted-foreground mb-6 uppercase tracking-widest font-bold text-xs">
                 {gameEnd.reason === 'checkmate' ? t.checkmate : drawLabel}
               </p>
-              <button type="button" onClick={reset} className="px-10 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg">
-                {t.reset}
+              <dl className="mb-5 grid grid-cols-2 gap-2 text-left text-xs">
+                <div className="rounded-xl bg-muted p-2"><dt className="text-muted-foreground">{c3.movesPlayed}</dt><dd className="font-black">{moveHistory.length}</dd></div>
+                <div className="rounded-xl bg-muted p-2"><dt className="text-muted-foreground">{c3.finalMaterial}</dt><dd className="font-black">{material > 0 ? `+${material}` : material}</dd></div>
+                <div className="col-span-2 rounded-xl bg-muted p-2"><dt className="text-muted-foreground">{c3.keyMoment}</dt><dd className="font-black">{keyMoment?.notation ?? c3.noKeyMoment}</dd></div>
+              </dl>
+              <button type="button" onClick={reset} autoFocus className="min-h-11 px-10 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg">
+                {c3.playAgain}
               </button>
             </div>
           </div>
         )}
+      </div>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <section className="rounded-2xl border border-border bg-muted/35 p-3" aria-label={c2.moves}>
+          <h4 className="mb-2 text-xs font-black uppercase tracking-wider">{c2.moves}</h4>
+          {moveHistory.length === 0 ? <p className="text-xs text-muted-foreground">{c2.noMoves}</p> : (
+            <ol className="max-h-28 overflow-y-auto text-xs font-mono" aria-live="polite">
+              {Array.from({ length: Math.ceil(moveHistory.length / 2) }, (_, index) => (
+                <li key={index} className="grid grid-cols-[2rem_1fr_1fr] gap-1 py-0.5">
+                  <span className="text-muted-foreground">{index + 1}.</span>
+                  <span>{moveHistory[index * 2]?.notation}</span>
+                  <span>{moveHistory[index * 2 + 1]?.notation ?? ''}</span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
+        <section className="rounded-2xl border border-border bg-muted/35 p-3" aria-label={c2.captured}>
+          <div className="mb-2 flex items-center justify-between">
+            <h4 className="text-xs font-black uppercase tracking-wider">{c2.captured}</h4>
+            <span className="text-xs font-black">{c2.material}: {material > 0 ? `+${material}` : material}</span>
+          </div>
+          <div className="min-h-7 text-xl" aria-live="polite">
+            {capturedPieces.length ? capturedPieces.map((piece, index) => <span key={`${piece}-${index}`}>{pieceIcons[piece]}</span>) : <span className="text-xs text-muted-foreground">—</span>}
+          </div>
+        </section>
       </div>
 
       <div className="mt-8 grid grid-cols-3 gap-2">

@@ -8,11 +8,11 @@
    "componentPath": "src/components/games/ChessBoard.tsx",
    "adapterPath": "src/lib/games/chess-save.ts",
    "supportsRestore": true,
-   "sessionStorageKey": "oiyo:chess-state:v1",
+   "sessionStorageKey": "oiyo:chess-state:v2",
    "sourceSchema": "oiyo.chess-save",
-   "sourceSchemaVersion": 1,
-   "adapterVersion": "chess-session-adapter-v1",
-   "engineVersion": "chess-state-v1",
+   "sourceSchemaVersion": 2,
+   "adapterVersion": "chess-session-adapter-v2",
+   "engineVersion": "chess-state-v2",
    "modes": [
     "local",
     "ai"
@@ -49,25 +49,27 @@
   {
    "gameId": "minesweeper",
    "componentPath": "src/components/games/Minesweeper.tsx",
-   "adapterPath": null,
-   "supportsRestore": false,
-   "sessionStorageKey": null,
-   "sourceSchema": null,
-   "sourceSchemaVersion": null,
-   "adapterVersion": null,
-   "engineVersion": null,
+   "adapterPath": "src/lib/games/minesweeper-save.ts",
+   "supportsRestore": true,
+   "sessionStorageKey": "oiyo:minesweeper-state:v1",
+   "sourceSchema": "oiyo.minesweeper-save",
+   "sourceSchemaVersion": 1,
+   "adapterVersion": "minesweeper-session-adapter-v1",
+   "engineVersion": "minesweeper-state-v1",
    "modes": [
     "solo"
    ],
    "difficulties": [
-    "beginner"
+    "daily",
+    "beginner",
+    "intermediate",
+    "expert"
    ],
-   "deterministicResume": false,
+   "deterministicResume": true,
    "nonSessionPersistence": [
     "best-record",
     "legacy-best-migration"
-   ],
-   "reason": "Generation seed and active board exist only in component memory; only best time is persisted."
+   ]
   },
   {
    "gameId": "solitaire",

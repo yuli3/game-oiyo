@@ -208,11 +208,106 @@ export function toggleMinesweeperFlag(board: MinesweeperBoard, x: number, y: num
 
 type SolverConstraint = { unknown: Set<string>; mines: number };
 
+export type MinesweeperHint = {
+  kind: "safe" | "mine" | "subset";
+  conclusion: "safe" | "mine";
+  targets: Array<{ x: number; y: number }>;
+  clues: Array<{ x: number; y: number; value: number }>;
+  remainingMines: number;
+};
+
+export type MinesweeperResultSummary = {
+  safeTotal: number;
+  safeRevealed: number;
+  progressPercent: number;
+  flags: number;
+  correctFlags: number;
+  incorrectFlags: number;
+};
+
+export function summarizeMinesweeperResult(board: MinesweeperBoard): MinesweeperResultSummary {
+  const cells = board.flat();
+  const safeTotal = cells.filter((cell) => !cell.isMine).length;
+  const safeRevealed = cells.filter((cell) => !cell.isMine && cell.isRevealed).length;
+  const flags = cells.filter((cell) => cell.isFlagged).length;
+  const correctFlags = cells.filter((cell) => cell.isFlagged && cell.isMine).length;
+  return {
+    safeTotal,
+    safeRevealed,
+    progressPercent: safeTotal === 0 ? 0 : Math.round(safeRevealed / safeTotal * 100),
+    flags,
+    correctFlags,
+    incorrectFlags: flags - correctFlags,
+  };
+}
+
 const coordinateKey = (x: number, y: number) => `${x}:${y}`;
 
 function isSubset(left: Set<string>, right: Set<string>): boolean {
   for (const value of left) if (!right.has(value)) return false;
   return true;
+}
+
+const sortedCoordinates = (keys: Iterable<string>): Array<{ x: number; y: number }> =>
+  [...keys]
+    .map((key) => {
+      const [x, y] = key.split(":").map(Number);
+      return { x, y };
+    })
+    .sort((left, right) => left.y - right.y || left.x - right.x);
+
+/**
+ * Returns one deterministic, explainable deduction from visible clues and the
+ * player's flags. Hidden `isMine` values are never inspected.
+ */
+export function findMinesweeperHint(board: MinesweeperBoard): MinesweeperHint | null {
+  const constraints: Array<SolverConstraint & { clue: MinesweeperCell }> = [];
+  for (const clue of board.flat()) {
+    if (!clue.isRevealed || clue.neighborMines === 0) continue;
+    const adjacent = neighbors(board, clue.x, clue.y);
+    const flagged = adjacent.filter((cell) => cell.isFlagged).length;
+    const unknown = new Set(adjacent
+      .filter((cell) => !cell.isRevealed && !cell.isFlagged)
+      .map((cell) => coordinateKey(cell.x, cell.y)));
+    const remainingMines = clue.neighborMines - flagged;
+    if (remainingMines < 0 || remainingMines > unknown.size || unknown.size === 0) continue;
+    const constraint = { clue, unknown, mines: remainingMines };
+    constraints.push(constraint);
+    if (remainingMines === 0) {
+      return {
+        kind: "safe", conclusion: "safe", targets: sortedCoordinates(unknown),
+        clues: [{ x: clue.x, y: clue.y, value: clue.neighborMines }], remainingMines,
+      };
+    }
+    if (remainingMines === unknown.size) {
+      return {
+        kind: "mine", conclusion: "mine", targets: sortedCoordinates(unknown),
+        clues: [{ x: clue.x, y: clue.y, value: clue.neighborMines }], remainingMines,
+      };
+    }
+  }
+
+  for (let leftIndex = 0; leftIndex < constraints.length; leftIndex++) {
+    for (let rightIndex = 0; rightIndex < constraints.length; rightIndex++) {
+      if (leftIndex === rightIndex) continue;
+      const left = constraints[leftIndex];
+      const right = constraints[rightIndex];
+      if (left.unknown.size >= right.unknown.size || !isSubset(left.unknown, right.unknown)) continue;
+      const difference = new Set([...right.unknown].filter((key) => !left.unknown.has(key)));
+      const remainingMines = right.mines - left.mines;
+      if (difference.size === 0 || remainingMines < 0 || remainingMines > difference.size) continue;
+      if (remainingMines === 0 || remainingMines === difference.size) {
+        return {
+          kind: "subset",
+          conclusion: remainingMines === 0 ? "safe" : "mine",
+          targets: sortedCoordinates(difference),
+          clues: [left.clue, right.clue].map((clue) => ({ x: clue.x, y: clue.y, value: clue.neighborMines })),
+          remainingMines,
+        };
+      }
+    }
+  }
+  return null;
 }
 
 function revealSolverSafeCells(board: MinesweeperBoard, safe: Set<string>): MinesweeperBoard {

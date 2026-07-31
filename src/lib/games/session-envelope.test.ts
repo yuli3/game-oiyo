@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import capabilities from "../../../config/game-session-envelope-v1.fixtures.json";
 import { chessApplyState, chessPositionKey, createInitialChessState } from "./ai/chess";
 import { serializeChessSave } from "./chess-save";
+import { createMinesweeperBoard, revealMinesweeperCell } from "./minesweeper";
+import { serializeMinesweeperSave } from "./minesweeper-save";
 import {
   chooseHeartsCpuCard,
   chooseHeartsPassCards,
@@ -15,6 +17,7 @@ import {
   adaptChessSaveToSession,
   adaptActiveGameSaveToSession,
   adaptHeartsSaveToSession,
+  adaptMinesweeperSaveToSession,
   parseGameSessionEnvelope,
   RESTORABLE_GAME_CAPABILITIES,
   serializeGameSessionEnvelope,
@@ -34,12 +37,32 @@ function activeChessSave() {
     mode: "ai",
     positionHistory: [chessPositionKey(initial), chessPositionKey(state)],
     state,
+    moveHistory: [{ notation: "e4", captured: null, white: true }],
+    orientation: "black",
   }));
 }
 
 function activeHeartsSave() {
   const state = createHeartsGame(() => 0.37);
   return { state, passSelection: state.hands[0].slice(0, 2).map((card) => card.id) };
+}
+
+function activeMinesweeperSave() {
+  const board = createMinesweeperBoard(10, 10, 10, 0, 0, () => 0.37);
+  return JSON.parse(serializeMinesweeperSave({
+    board: revealMinesweeperCell(board, 0, 0).board,
+    mode: "beginner",
+    dailyDate: "2026-07-16",
+    generationSeed: 37,
+    generationStrategy: "verified",
+    firstClick: false,
+    hasStarted: true,
+    elapsedMs: 30_000,
+    savedAtEpochMs: Date.parse(TIMING.savedAt),
+    flagMode: false,
+    activeCell: 0,
+    assist: "none",
+  }));
 }
 
 function finishHeartsMatch(): HeartsState {
@@ -65,18 +88,19 @@ describe("GameSessionEnvelope v1", () => {
   it("declares the canonical UTC timestamp policy", () => {
     expect(capabilities.timestampPolicy).toBe("utc-iso-8601-milliseconds-z");
   });
-  it("adapts a resumable Chess v1 save with mode, difficulty and complete-state determinism", () => {
+  it("adapts a resumable Chess v2 save with mode, difficulty and complete-state determinism", () => {
     const envelope = adaptChessSaveToSession(activeChessSave(), TIMING, {
       personalBest: { unit: "seconds", value: 90 },
     });
 
     expect(envelope).toMatchObject({
-      adapterVersion: "chess-session-adapter-v1",
+      adapterVersion: "chess-session-adapter-v2",
       determinism: { strategy: "state-complete", seed: null },
       difficulty: "level-3",
-      engineVersion: "chess-state-v1",
+      engineVersion: "chess-state-v2",
       gameId: "chess",
       mode: "ai",
+      payload: { version: 2, orientation: "black", moveHistory: [{ notation: "e4" }] },
       savedAt: TIMING.savedAt,
       schema: "oiyo.game-session",
       schemaVersion: 1,
@@ -86,6 +110,24 @@ describe("GameSessionEnvelope v1", () => {
     const serialized = serializeGameSessionEnvelope(envelope!);
     expect(serialized).not.toBeNull();
     expect(parseGameSessionEnvelope(serialized)).toEqual(envelope);
+  });
+
+  it("adapts only an active validated Minesweeper board", () => {
+    const save = activeMinesweeperSave();
+    const envelope = adaptMinesweeperSaveToSession(save, TIMING);
+    expect(envelope).toMatchObject({
+      adapterVersion: "minesweeper-session-adapter-v1",
+      difficulty: "beginner",
+      engineVersion: "minesweeper-state-v1",
+      gameId: "minesweeper",
+      mode: "solo",
+      payload: { version: 1, elapsedMs: 30_000 },
+      terminal: false,
+    });
+    expect(parseGameSessionEnvelope(serializeGameSessionEnvelope(envelope!))?.gameId).toBe("minesweeper");
+
+    for (const cell of save.board.flat()) if (!cell.isMine) cell.isRevealed = true;
+    expect(adaptMinesweeperSaveToSession(save, TIMING)).toBeNull();
   });
 
   it("adapts the existing unversioned Hearts load shape and preserves resumable round state", () => {
@@ -189,18 +231,10 @@ describe("GameSessionEnvelope v1", () => {
 
   it("keeps unsupported games explicitly non-restorable", () => {
     const byId = new Map(capabilities.games.map((game) => [game.gameId, game]));
-    expect([...byId.values()].filter((game) => game.supportsRestore).map((game) => game.gameId)).toEqual(["chess", "hearts", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048"]);
-    for (const gameId of ["chess", "hearts", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048"] as const) {
+    expect([...byId.values()].filter((game) => game.supportsRestore).map((game) => game.gameId)).toEqual(["chess", "hearts", "minesweeper", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048"]);
+    for (const gameId of ["chess", "hearts", "minesweeper", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048"] as const) {
       expect(byId.get(gameId)?.modes).toEqual([...RESTORABLE_GAME_CAPABILITIES[gameId].modes]);
       expect(byId.get(gameId)?.difficulties).toEqual([...RESTORABLE_GAME_CAPABILITIES[gameId].difficulties]);
-    }
-    for (const gameId of ["minesweeper"]) {
-      expect(byId.get(gameId)).toMatchObject({
-        adapterPath: null,
-        deterministicResume: false,
-        sessionStorageKey: null,
-        supportsRestore: false,
-      });
     }
   });
 

@@ -8,7 +8,9 @@ import {
   createEmptyBoard,
   createMinesweeperBoard,
   createNoGuessMinesweeperBoard,
+  findMinesweeperHint,
   revealMinesweeperCell,
+  summarizeMinesweeperResult,
   toggleMinesweeperFlag,
 } from "./minesweeper";
 
@@ -107,6 +109,70 @@ describe("minesweeper engine", () => {
     const generated = createNoGuessMinesweeperBoard(difficulty, 5, 5, 31);
     expect(generated.attempts).toBeLessThanOrEqual(3);
     expect(performance.now() - started).toBeLessThan(100);
+  });
+});
+
+describe("minesweeper explainable hints", () => {
+  const displayBoard = (clues: Array<{ x: number; value: number }>, flagged: number[] = []) => {
+    const board = createEmptyBoard(3, 2);
+    for (const cell of board[1]) cell.isRevealed = true;
+    for (const { x, value } of clues) {
+      board[1][x].neighborMines = value;
+    }
+    for (const x of flagged) board[0][x].isFlagged = true;
+    return board;
+  };
+
+  it("explains clue completion as safe without reading hidden mines", () => {
+    const board = displayBoard([{ x: 0, value: 1 }], [0]);
+    const hint = findMinesweeperHint(board);
+    expect(hint).toMatchObject({ kind: "safe", conclusion: "safe", remainingMines: 0 });
+    expect(hint?.targets).toEqual([{ x: 1, y: 0 }]);
+    board[0][1].isMine = true;
+    expect(findMinesweeperHint(board)).toEqual(hint);
+  });
+
+  it("explains an all-unknown constraint as mines", () => {
+    const board = displayBoard([{ x: 0, value: 2 }]);
+    expect(findMinesweeperHint(board)).toMatchObject({
+      kind: "mine",
+      conclusion: "mine",
+      targets: [{ x: 0, y: 0 }, { x: 1, y: 0 }],
+    });
+  });
+
+  it("explains safe and mined subset differences", () => {
+    const safe = displayBoard([{ x: 0, value: 1 }, { x: 1, value: 1 }]);
+    expect(findMinesweeperHint(safe)).toMatchObject({
+      kind: "subset", conclusion: "safe", targets: [{ x: 2, y: 0 }], remainingMines: 0,
+    });
+    const mine = displayBoard([{ x: 0, value: 1 }, { x: 1, value: 2 }]);
+    expect(findMinesweeperHint(mine)).toMatchObject({
+      kind: "subset", conclusion: "mine", targets: [{ x: 2, y: 0 }], remainingMines: 1,
+    });
+  });
+
+  it("returns no hint when visible constraints cannot prove a move", () => {
+    expect(findMinesweeperHint(displayBoard([{ x: 0, value: 1 }]))).toBeNull();
+  });
+});
+
+describe("minesweeper result summary", () => {
+  it("reports safe progress and correct versus incorrect flags", () => {
+    const board = createMinesweeperBoard(4, 4, 2, 0, 0, seeded(21));
+    const mines = board.flat().filter((cell) => cell.isMine);
+    board[mines[0].y][mines[0].x].isFlagged = true;
+    const wrong = board.flat().find((cell) => !cell.isMine)!;
+    wrong.isFlagged = true;
+    board.flat().find((cell) => !cell.isMine && !cell.isFlagged)!.isRevealed = true;
+    expect(summarizeMinesweeperResult(board)).toEqual({
+      safeTotal: 14,
+      safeRevealed: 1,
+      progressPercent: 7,
+      flags: 2,
+      correctFlags: 1,
+      incorrectFlags: 1,
+    });
   });
 });
 

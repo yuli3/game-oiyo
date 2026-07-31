@@ -1,5 +1,6 @@
 import { parseChessSave, type ChessSave } from "./chess-save";
 import { parseHeartsSavedGame, type HeartsSavedGame } from "./hearts";
+import { parseMinesweeperSave, type MinesweeperSave } from "./minesweeper-save";
 import {
   parseCheckersSave,
   parseConnectFourSave,
@@ -20,7 +21,7 @@ import {
 export const GAME_SESSION_SCHEMA = "oiyo.game-session" as const;
 export const GAME_SESSION_SCHEMA_VERSION = 1 as const;
 
-export type RestorableGameId = "chess" | "hearts" | "solitaire" | "freecell" | "connect-four" | "gomoku" | "sudoku" | "puzzle15" | "checkers" | "reversi" | "game-2048";
+export type RestorableGameId = "chess" | "hearts" | "minesweeper" | "solitaire" | "freecell" | "connect-four" | "gomoku" | "sudoku" | "puzzle15" | "checkers" | "reversi" | "game-2048";
 export type GameSessionMode = "local" | "ai" | "solo";
 
 export const RESTORABLE_GAME_CAPABILITIES = {
@@ -31,6 +32,10 @@ export const RESTORABLE_GAME_CAPABILITIES = {
   hearts: {
     modes: ["ai"],
     difficulties: ["heuristic-v1"],
+  },
+  minesweeper: {
+    modes: ["solo"],
+    difficulties: ["daily", "beginner", "intermediate", "expert"],
   },
   solitaire: { modes: ["solo"], difficulties: ["draw-1"] },
   freecell: { modes: ["solo"], difficulties: ["standard"] },
@@ -176,8 +181,8 @@ function createEnvelope<TPayload>(
 }
 
 const chessAdapter: Adapter<ChessSave> = {
-  adapterVersion: "chess-session-adapter-v1",
-  engineVersion: "chess-state-v1",
+  adapterVersion: "chess-session-adapter-v2",
+  engineVersion: "chess-state-v2",
   gameId: "chess",
   modes: RESTORABLE_GAME_CAPABILITIES.chess.modes,
   difficulties: RESTORABLE_GAME_CAPABILITIES.chess.difficulties,
@@ -187,6 +192,8 @@ const chessAdapter: Adapter<ChessSave> = {
       return parsed ? {
         level: parsed.level,
         mode: parsed.mode,
+        moveHistory: parsed.moveHistory.map((move) => ({ ...move })),
+        orientation: parsed.orientation,
         positionHistory: [...parsed.positionHistory],
         state: {
           board: parsed.state.board.map((row) => [...row]),
@@ -201,7 +208,7 @@ const chessAdapter: Adapter<ChessSave> = {
           halfmoveClock: parsed.state.halfmoveClock,
           fullmoveNumber: parsed.state.fullmoveNumber,
         },
-        version: 1,
+        version: 2,
       } : null;
     } catch { return null; }
   },
@@ -210,8 +217,8 @@ const chessAdapter: Adapter<ChessSave> = {
   source: {
     format: "legacy-local-storage",
     schema: "oiyo.chess-save",
-    schemaVersion: 1,
-    storageKey: "oiyo:chess-state:v1",
+    schemaVersion: 2,
+    storageKey: "oiyo:chess-state:v2",
   },
 };
 
@@ -263,6 +270,27 @@ const heartsAdapter: Adapter<VersionedHeartsPayload> = {
     schema: "oiyo.hearts-save",
     schemaVersion: 1,
     storageKey: "oiyo:game:hearts:v1",
+  },
+};
+
+const minesweeperAdapter: Adapter<MinesweeperSave> = {
+  adapterVersion: "minesweeper-session-adapter-v1",
+  engineVersion: "minesweeper-state-v1",
+  gameId: "minesweeper",
+  modes: RESTORABLE_GAME_CAPABILITIES.minesweeper.modes,
+  difficulties: RESTORABLE_GAME_CAPABILITIES.minesweeper.difficulties,
+  parsePayload: (value) => {
+    if (!isRecord(value) || typeof value.dailyDate !== "string" || typeof value.savedAtEpochMs !== "number") return null;
+    const parsed = parseMinesweeperSave(JSON.stringify(value), value.dailyDate, value.savedAtEpochMs);
+    return parsed ? { ...parsed, board: parsed.board.map((row) => row.map((cell) => ({ ...cell }))) } : null;
+  },
+  payloadDifficulty: (value) => value.mode,
+  payloadMode: () => "solo",
+  source: {
+    format: "legacy-local-storage",
+    schema: "oiyo.minesweeper-save",
+    schemaVersion: 1,
+    storageKey: "oiyo:minesweeper-state:v1",
   },
 };
 
@@ -332,6 +360,7 @@ const game2048Adapter: Adapter<Game2048Save> = {
 const adapters: Record<RestorableGameId, Adapter<unknown>> = {
   chess: chessAdapter as Adapter<unknown>,
   hearts: heartsAdapter as Adapter<unknown>,
+  minesweeper: minesweeperAdapter as Adapter<unknown>,
   solitaire: solitaireAdapter as Adapter<unknown>,
   freecell: freecellAdapter as Adapter<unknown>,
   "connect-four": connectFourAdapter as Adapter<unknown>,
@@ -360,6 +389,15 @@ export function adaptHeartsSaveToSession(
   const candidate = isRecord(value) && value.version === undefined ? { version: 1, ...value } : value;
   const payload = heartsAdapter.parsePayload(candidate);
   return payload ? createEnvelope(heartsAdapter, payload, timing, progress) : null;
+}
+
+export function adaptMinesweeperSaveToSession(
+  value: unknown,
+  timing: GameSessionTiming,
+  progress?: GameSessionProgress,
+): GameSessionEnvelope<MinesweeperSave> | null {
+  const payload = minesweeperAdapter.parsePayload(value);
+  return payload ? createEnvelope(minesweeperAdapter, payload, timing, progress) : null;
 }
 
 export function adaptActiveGameSaveToSession(
