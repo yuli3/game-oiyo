@@ -1,30 +1,30 @@
 {
   "schema": "oiyo.game-modernization-inventory",
   "schemaVersion": 1,
-  "generatedAt": "2026-08-01T14:48:22.320Z",
+  "generatedAt": "2026-08-01T22:44:19.550Z",
   "scorePolicy": "Static scores are prioritization proxies; only scoreStatus=certified is a played AAA scorecard.",
   "summary": {
     "total": 53,
-    "certified": 6,
-    "modernized": 7,
+    "certified": 8,
+    "modernized": 9,
     "byGeneration": {
-      "G1": 17,
+      "G1": 16,
       "G2": 0,
-      "G3": 27,
+      "G3": 28,
       "G4": 9
     },
     "byAction": {
-      "maintain": 6,
+      "maintain": 8,
       "polish": 7,
-      "modernize": 26,
-      "remake": 14
+      "modernize": 25,
+      "remake": 13
     },
     "highRisk": {
-      "mobile": 33,
+      "mobile": 31,
       "accessibility": 2,
       "performance": 9
     },
-    "workingTreeGames": 7
+    "workingTreeGames": 8
   },
   "games": [
     {
@@ -146,7 +146,7 @@
       "owner": "game",
       "route": "src/pages/[...lang]/gomoku.astro",
       "componentLines": 240,
-      "sourceStatus": "working-tree"
+      "sourceStatus": "committed"
     },
     {
       "slug": "janggi",
@@ -1870,44 +1870,39 @@
     {
       "slug": "kurodoko",
       "genre": "puzzle",
-      "generation": "G1",
+      "generation": "G3",
       "component": "src/components/games/Kurodoko.tsx",
-      "engine": null,
-      "tests": null,
-      "restore": false,
+      "engine": "src/lib/games/kurodoko.ts",
+      "tests": "src/lib/games/kurodoko.test.ts",
+      "restore": true,
       "daily": true,
       "progression": true,
       "input": [
         "keyboard"
       ],
       "renderer": "dom",
-      "audio": false,
-      "mobileRisk": "high",
+      "audio": true,
+      "mobileRisk": "low",
       "accessibilityRisk": "low",
       "performanceRisk": "low",
-      "coreLoopScore": 10,
-      "feelScore": 7,
+      "coreLoopScore": 20,
+      "feelScore": 10,
       "progressionScore": 13,
-      "presentationScore": 6,
-      "reliabilityScore": 5,
+      "presentationScore": 8,
+      "reliabilityScore": 14,
       "mobileScore": 6,
       "accessibilityScore": 5,
       "productScore": 2,
-      "total": 54,
-      "scoreStatus": "provisional-static",
-      "certifiedScore": null,
-      "recommendedAction": "remake",
+      "total": 78,
+      "scoreStatus": "certified",
+      "certifiedScore": 87,
+      "recommendedAction": "maintain",
       "wave": "3",
-      "dependencies": [
-        "pure-engine",
-        "characterization-tests",
-        "persistence-decision",
-        "mobile-qa"
-      ],
+      "dependencies": [],
       "owner": "game",
       "route": "src/pages/[...lang]/kurodoko.astro",
-      "componentLines": 331,
-      "sourceStatus": "committed"
+      "componentLines": 303,
+      "sourceStatus": "working-tree"
     },
     {
       "slug": "maze",
@@ -2120,37 +2115,35 @@
       "component": "src/components/games/Yahtzee.tsx",
       "engine": "src/lib/games/yahtzee.ts",
       "tests": "src/lib/games/yahtzee.test.ts",
-      "restore": false,
+      "restore": true,
       "daily": false,
-      "progression": false,
-      "input": [],
-      "renderer": "dom",
-      "audio": false,
-      "mobileRisk": "high",
-      "accessibilityRisk": "medium",
-      "performanceRisk": "low",
-      "coreLoopScore": 18,
-      "feelScore": 7,
-      "progressionScore": 9,
-      "presentationScore": 8,
-      "reliabilityScore": 11,
-      "mobileScore": 4,
-      "accessibilityScore": 4,
-      "productScore": 3,
-      "total": 64,
-      "scoreStatus": "provisional-static",
-      "certifiedScore": null,
-      "recommendedAction": "modernize",
-      "wave": "3",
-      "dependencies": [
-        "persistence-decision",
-        "mobile-qa",
-        "accessibility-qa"
+      "progression": true,
+      "input": [
+        "keyboard"
       ],
+      "renderer": "dom",
+      "audio": true,
+      "mobileRisk": "low",
+      "accessibilityRisk": "low",
+      "performanceRisk": "low",
+      "coreLoopScore": 20,
+      "feelScore": 10,
+      "progressionScore": 12,
+      "presentationScore": 10,
+      "reliabilityScore": 14,
+      "mobileScore": 6,
+      "accessibilityScore": 5,
+      "productScore": 3,
+      "total": 80,
+      "scoreStatus": "certified",
+      "certifiedScore": 88,
+      "recommendedAction": "maintain",
+      "wave": "3",
+      "dependencies": [],
       "owner": "game",
       "route": "src/pages/[...lang]/yahtzee.astro",
-      "componentLines": 247,
-      "sourceStatus": "committed"
+      "componentLines": 375,
+      "sourceStatus": "working-tree"
     }
   ]
 }

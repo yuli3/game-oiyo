@@ -7,6 +7,9 @@ import { serializeMinesweeperSave } from "./minesweeper-save";
 import { createBrickBreakerState, launchBrickBreakerBall, stepBrickBreaker } from "./brick-breaker";
 import { serializeBrickBreakerSave } from "./brick-breaker-save";
 import { createSnakeGame, steerSnake, tickSnake } from "./snake";
+import { generateKurodokoPuzzle, kurodokoDailySeed } from "./kurodoko";
+import { initializeGame as initializeYahtzee, rollDice as rollYahtzeeDice, scoreCategory as scoreYahtzeeCategory } from "./yahtzee";
+import { mulberry32 } from "./daily";
 import {
   chooseHeartsCpuCard,
   chooseHeartsPassCards,
@@ -118,6 +121,28 @@ describe("GameSessionEnvelope v1", () => {
     });
     expect(parseGameSessionEnvelope(serializeGameSessionEnvelope(envelope!))).toEqual(envelope);
     expect(adaptActiveGameSaveToSession("snake-game", { ...payload, state: { ...state, status: "over" } }, TIMING)).toBeNull();
+  });
+  it("adapts seeded Kurodoko progress and rejects clue tampering", () => {
+    const seed = kurodokoDailySeed(42);
+    const puzzle = generateKurodokoPuzzle("medium", mulberry32(seed)).puzzle;
+    const marks = puzzle.map((row) => row.map((clue) => clue === null ? -1 as const : 0 as const));
+    const payload = { version: 1 as const, mode: "daily" as const, difficulty: "medium" as const, dailyDate: "2026-08-02", seed, marks, moves: 1, seconds: 9, savedAtEpochMs: Date.parse(TIMING.savedAt) };
+    const envelope = adaptActiveGameSaveToSession("kurodoko", payload, TIMING);
+    expect(envelope).toMatchObject({ gameId: "kurodoko", difficulty: "daily", mode: "solo", source: { storageKey: "oiyo:kurodoko-state:v1" } });
+    expect(parseGameSessionEnvelope(serializeGameSessionEnvelope(envelope!))).toEqual(envelope);
+    const clueIndex = puzzle.flat().findIndex((value) => value !== null);
+    const tampered = structuredClone(payload) as unknown as { marks: (-1 | 0 | 1)[][] };
+    tampered.marks[Math.floor(clueIndex / puzzle.length)][clueIndex % puzzle.length] = 1;
+    expect(adaptActiveGameSaveToSession("kurodoko", tampered, TIMING)).toBeNull();
+  });
+  it("adapts deterministic Yahtzee progress and rejects terminal state", () => {
+    const rolled = rollYahtzeeDice(initializeYahtzee(() => 0), () => 0);
+    const state = scoreYahtzeeCategory(rolled, "aces");
+    const payload = { version: 1 as const, state, rngState: 42, seconds: 9, savedAtEpochMs: Date.parse(TIMING.savedAt) };
+    const envelope = adaptActiveGameSaveToSession("yahtzee", payload, TIMING);
+    expect(envelope).toMatchObject({ gameId: "yahtzee", difficulty: "classic", mode: "solo", source: { storageKey: "oiyo:yahtzee-state:v1" } });
+    expect(parseGameSessionEnvelope(serializeGameSessionEnvelope(envelope!))).toEqual(envelope);
+    expect(adaptActiveGameSaveToSession("yahtzee", { ...payload, state: { ...state, isGameOver: true } }, TIMING)).toBeNull();
   });
   it("adapts a resumable Chess v2 save with mode, difficulty and complete-state determinism", () => {
     const envelope = adaptChessSaveToSession(activeChessSave(), TIMING, {
@@ -279,8 +304,8 @@ describe("GameSessionEnvelope v1", () => {
 
   it("keeps unsupported games explicitly non-restorable", () => {
     const byId = new Map(capabilities.games.map((game) => [game.gameId, game]));
-    expect([...byId.values()].filter((game) => game.supportsRestore).map((game) => game.gameId)).toEqual(["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game"]);
-    for (const gameId of ["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game"] as const) {
+    expect([...byId.values()].filter((game) => game.supportsRestore).map((game) => game.gameId)).toEqual(["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game", "kurodoko", "yahtzee"]);
+    for (const gameId of ["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game", "kurodoko", "yahtzee"] as const) {
       expect(byId.get(gameId)?.modes).toEqual([...RESTORABLE_GAME_CAPABILITIES[gameId].modes]);
       expect(byId.get(gameId)?.difficulties).toEqual([...RESTORABLE_GAME_CAPABILITIES[gameId].difficulties]);
     }

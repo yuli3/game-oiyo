@@ -1,155 +1,30 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
-import { dayIndex, mulberry32, previousDayKey, shuffle, todayKey } from '../../lib/games/daily';
+import { dayIndex, mulberry32, previousDayKey, todayKey } from '../../lib/games/daily';
 import { getDailyStreak, recordDailyWin, type DailyStreak } from '../../lib/games/records';
+import {
+    generateKurodokoPuzzle,
+    kurodokoDailySeed,
+    validateKurodokoBoard,
+    type KurodokoCell as Cell,
+    type KurodokoDifficulty as Difficulty,
+    type KurodokoPuzzle as Puzzle,
+    type KurodokoValidation as Validation,
+} from '../../lib/games/kurodoko';
+import {
+    clearKurodokoSaveV1,
+    loadKurodokoSaveV1,
+    puzzleFromKurodokoSave,
+    restoredKurodokoSeconds,
+    storeKurodokoSaveV1,
+    type KurodokoMark as Mark,
+    type KurodokoMode as Mode,
+} from '../../lib/games/kurodoko-save';
 
 // ─── Kurodoko (Where is Black Cells?) — Nikoli logic puzzle ──────────────────
 // Shade cells black so each numbered cell sees exactly that many white cells
 // (itself + straight lines until a black cell/edge). Black cells never touch
 // orthogonally; all white cells stay connected. Ported from ahoxy-legacy.
-
-type Cell = 0 | 1; // 0 = white, 1 = black
-type Puzzle = (number | null)[][];
-type Difficulty = 'easy' | 'medium' | 'hard';
-
-// size / black-cell budget / clue count per difficulty.
-// NOTE: the ahoxy-legacy hardcoded puzzles were unsolvable (exhaustive search
-// found no rule-satisfying configuration), so puzzles are generated instead:
-// build a valid black layout first, then derive clues from it — a solution is
-// guaranteed by construction.
-const DIFF: Record<Difficulty, { size: number; blacks: number; clues: number }> = {
-    easy: { size: 5, blacks: 4, clues: 6 },
-    medium: { size: 6, blacks: 6, clues: 7 },
-    hard: { size: 7, blacks: 9, clues: 8 },
-};
-
-function whitesConnected(board: Cell[][]): boolean {
-    const size = board.length;
-    let start: [number, number] | null = null;
-    let whiteCount = 0;
-    for (let r = 0; r < size; r++) for (let c = 0; c < size; c++) if (board[r][c] === 0) { whiteCount++; if (!start) start = [r, c]; }
-    if (!start) return false;
-    const visited = board.map((row) => row.map(() => false));
-    const stack = [start];
-    visited[start[0]][start[1]] = true;
-    let seen = 1;
-    while (stack.length) {
-        const [r, c] = stack.pop()!;
-        for (const [dr, dc] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-            const nr = r + dr, nc = c + dc;
-            if (nr >= 0 && nr < size && nc >= 0 && nc < size && !visited[nr][nc] && board[nr][nc] === 0) {
-                visited[nr][nc] = true;
-                seen++;
-                stack.push([nr, nc]);
-            }
-        }
-    }
-    return seen === whiteCount;
-}
-
-function visibleWhites(board: Cell[][], r: number, c: number): number {
-    const size = board.length;
-    let seen = 1;
-    for (let i = r - 1; i >= 0 && board[i][c] === 0; i--) seen++;
-    for (let i = r + 1; i < size && board[i][c] === 0; i++) seen++;
-    for (let j = c - 1; j >= 0 && board[r][j] === 0; j--) seen++;
-    for (let j = c + 1; j < size && board[r][j] === 0; j++) seen++;
-    return seen;
-}
-
-/** Generate a puzzle with a guaranteed solution. Returns clues + the generating solution.
- *  Pass a seeded rng (see lib/games/daily.ts) for a deterministic daily puzzle. */
-export function generateKurodoko(difficulty: Difficulty, rng: () => number = Math.random): { puzzle: Puzzle; solution: Cell[][] } {
-    const { size, blacks, clues } = DIFF[difficulty];
-    const board: Cell[][] = Array.from({ length: size }, () => Array(size).fill(0) as Cell[]);
-
-    // place blacks: keep no-adjacency + white connectivity invariants
-    const order = shuffle(Array.from({ length: size * size }, (_, i) => i), rng);
-    let placed = 0;
-    for (const idx of order) {
-        if (placed >= blacks) break;
-        const r = Math.floor(idx / size), c = idx % size;
-        if (board[r][c] === 1) continue;
-        const touching = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dr, dc]) => {
-            const nr = r + dr, nc = c + dc;
-            return nr >= 0 && nr < size && nc >= 0 && nc < size && board[nr][nc] === 1;
-        });
-        if (touching) continue;
-        board[r][c] = 1;
-        if (whitesConnected(board)) placed++;
-        else board[r][c] = 0;
-    }
-
-    // derive clues from white cells (prefer informative ones: not the max view)
-    const puzzle: Puzzle = Array.from({ length: size }, () => Array(size).fill(null));
-    const whiteCells: [number, number][] = [];
-    for (let r = 0; r < size; r++) for (let c = 0; c < size; c++) if (board[r][c] === 0) whiteCells.push([r, c]);
-    let given = 0;
-    for (const [r, c] of shuffle(whiteCells, rng)) {
-        if (given >= clues) break;
-        puzzle[r][c] = visibleWhites(board, r, c);
-        given++;
-    }
-
-    return { puzzle, solution: board };
-}
-
-type Validation = { ok: boolean; complete: boolean; error: 'number' | 'adjacent' | 'disconnected' | null };
-
-export function validateKurodoko(board: Cell[][], puzzle: Puzzle): Validation {
-    const size = board.length;
-
-    // numbered cells must see exactly N white cells (only fails when overshot impossible → check exact only for completeness; partial boards may undercount)
-    let numbersExact = true;
-    for (let r = 0; r < size; r++) {
-        for (let c = 0; c < size; c++) {
-            const n = puzzle[r][c];
-            if (n === null) continue;
-            if (board[r][c] === 1) return { ok: false, complete: false, error: 'number' }; // numbered cell can't be black
-            let seen = 1;
-            for (let i = r - 1; i >= 0 && board[i][c] === 0; i--) seen++;
-            for (let i = r + 1; i < size && board[i][c] === 0; i++) seen++;
-            for (let j = c - 1; j >= 0 && board[r][j] === 0; j--) seen++;
-            for (let j = c + 1; j < size && board[r][j] === 0; j++) seen++;
-            if (seen < n) return { ok: false, complete: false, error: 'number' }; // over-shaded: can never recover
-            if (seen !== n) numbersExact = false;
-        }
-    }
-
-    // black cells must not touch orthogonally
-    for (let r = 0; r < size; r++) {
-        for (let c = 0; c < size; c++) {
-            if (board[r][c] !== 1) continue;
-            if ((c + 1 < size && board[r][c + 1] === 1) || (r + 1 < size && board[r + 1][c] === 1)) {
-                return { ok: false, complete: false, error: 'adjacent' };
-            }
-        }
-    }
-
-    // all white cells connected
-    let start: [number, number] | null = null;
-    for (let r = 0; r < size && !start; r++) for (let c = 0; c < size; c++) if (board[r][c] === 0) { start = [r, c]; break; }
-    if (start) {
-        const visited = board.map((row) => row.map(() => false));
-        const stack = [start];
-        visited[start[0]][start[1]] = true;
-        while (stack.length) {
-            const [r, c] = stack.pop()!;
-            for (const [dr, dc] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-                const nr = r + dr, nc = c + dc;
-                if (nr >= 0 && nr < size && nc >= 0 && nc < size && !visited[nr][nc] && board[nr][nc] === 0) {
-                    visited[nr][nc] = true;
-                    stack.push([nr, nc]);
-                }
-            }
-        }
-        for (let r = 0; r < size; r++) for (let c = 0; c < size; c++) {
-            if (board[r][c] === 0 && !visited[r][c]) return { ok: false, complete: false, error: 'disconnected' };
-        }
-    }
-
-    return { ok: true, complete: numbersExact, error: null };
-}
 
 const COPY = {
     ko: { title: '쿠로도코', subtitle: 'Nikoli Logic', desc: '숫자 칸에서 보이는 흰 칸 수(자신 포함)가 숫자와 같아지도록 검은 칸을 칠하세요. 검은 칸은 붙을 수 없고 흰 칸은 모두 연결돼야 합니다.', daily: '📅 오늘의 퍼즐', easy: '쉬움 5×5', medium: '보통 6×6', hard: '어려움 7×7', win: '완벽한 추리력입니다!', errNumber: '숫자 조건이 깨졌습니다', errAdjacent: '검은 칸이 붙어 있습니다', errDisconnected: '흰 칸이 끊겼습니다', moves: '이동', streak: '연속', best: '최고', doneToday: '오늘 완료 ✓' },
@@ -161,70 +36,149 @@ const COPY = {
 } as const;
 
 const A11Y_COPY = {
-    ko: { subtitle: '니코리 논리 퍼즐', reset: '다시 시작', row: '행', column: '열', clue: '숫자 단서', black: '검은 칸', white: '흰 칸' },
-    en: { subtitle: 'Nikoli logic puzzle', reset: 'Reset', row: 'Row', column: 'Column', clue: 'Number clue', black: 'Black cell', white: 'White cell' },
-    ja: { subtitle: 'ニコリ論理パズル', reset: 'やり直す', row: '行', column: '列', clue: '数字ヒント', black: '黒マス', white: '白マス' },
-    zh: { subtitle: 'Nikoli 逻辑谜题', reset: '重新开始', row: '行', column: '列', clue: '数字提示', black: '黑格', white: '白格' },
-    fr: { subtitle: 'Puzzle logique Nikoli', reset: 'Recommencer', row: 'Ligne', column: 'Colonne', clue: 'Indice numérique', black: 'Case noire', white: 'Case blanche' },
-    es: { subtitle: 'Puzle lógico Nikoli', reset: 'Reiniciar', row: 'Fila', column: 'Columna', clue: 'Pista numérica', black: 'Casilla negra', white: 'Casilla blanca' },
+    ko: { subtitle: '니코리 논리 퍼즐', reset: '다시 시작', row: '행', column: '열', clue: '숫자 단서', black: '검은 칸', white: '흰 칸 표시', unknown: '미정 칸', undo: '실행 취소', soundOn: '소리 켜기', soundOff: '소리 끄기', hint: '탭: 검정 → 흰색 표시 → 미정 · 우클릭: 반대 순서' },
+    en: { subtitle: 'Nikoli logic puzzle', reset: 'Reset', row: 'Row', column: 'Column', clue: 'Number clue', black: 'Black cell', white: 'White mark', unknown: 'Unknown cell', undo: 'Undo', soundOn: 'Sound on', soundOff: 'Sound off', hint: 'Tap: black → white mark → unknown · right-click: reverse' },
+    ja: { subtitle: 'ニコリ論理パズル', reset: 'やり直す', row: '行', column: '列', clue: '数字ヒント', black: '黒マス', white: '白マーク', unknown: '未確定マス', undo: '元に戻す', soundOn: '音をオン', soundOff: '音をオフ', hint: 'タップ：黒 → 白印 → 未確定 · 右クリック：逆順' },
+    zh: { subtitle: 'Nikoli 逻辑谜题', reset: '重新开始', row: '行', column: '列', clue: '数字提示', black: '黑格', white: '白格标记', unknown: '未定格', undo: '撤销', soundOn: '开启声音', soundOff: '关闭声音', hint: '点击：黑格 → 白色标记 → 未定 · 右键：反向' },
+    fr: { subtitle: 'Puzzle logique Nikoli', reset: 'Recommencer', row: 'Ligne', column: 'Colonne', clue: 'Indice numérique', black: 'Case noire', white: 'Marque blanche', unknown: 'Case inconnue', undo: 'Annuler', soundOn: 'Activer le son', soundOff: 'Couper le son', hint: 'Toucher : noir → marque blanche → inconnu · clic droit : inverse' },
+    es: { subtitle: 'Puzle lógico Nikoli', reset: 'Reiniciar', row: 'Fila', column: 'Columna', clue: 'Pista numérica', black: 'Casilla negra', white: 'Marca blanca', unknown: 'Casilla sin decidir', undo: 'Deshacer', soundOn: 'Activar sonido', soundOff: 'Silenciar', hint: 'Toca: negra → marca blanca → sin decidir · clic derecho: inverso' },
 } as const;
 
 // Daily puzzle: same board for everyone on the same calendar day (medium 6×6).
 const DAILY_GAME_ID = 'kurodoko';
 const DAILY_DIFFICULTY: Difficulty = 'medium';
 function generateDailyKurodoko() {
-    return generateKurodoko(DAILY_DIFFICULTY, mulberry32(0x6b7264 ^ Math.imul(dayIndex() + 1, 2654435761)));
+    const seed = kurodokoDailySeed(dayIndex());
+    return { ...generateKurodokoPuzzle(DAILY_DIFFICULTY, mulberry32(seed)), seed };
+}
+
+function initialMarks(puzzle: Puzzle): Mark[][] {
+    return puzzle.map((row) => row.map((clue) => clue === null ? -1 : 0));
+}
+
+function playableBoard(marks: Mark[][]): Cell[][] {
+    return marks.map((row) => row.map((mark) => mark === 1 ? 1 : 0));
+}
+
+function randomSeed(): number {
+    return (Math.random() * 0x1_0000_0000) | 0;
+}
+
+function playTone(kind: 'move' | 'win', muted: boolean) {
+    if (muted || typeof window === 'undefined') return;
+    const AudioContextClass = window.AudioContext ?? (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioContextClass) return;
+    const context = new AudioContextClass();
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    oscillator.type = kind === 'win' ? 'sine' : 'triangle';
+    oscillator.frequency.value = kind === 'win' ? 660 : 180;
+    gain.gain.setValueAtTime(0.045, context.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + (kind === 'win' ? 0.35 : 0.08));
+    oscillator.connect(gain).connect(context.destination);
+    oscillator.start();
+    oscillator.stop(context.currentTime + (kind === 'win' ? 0.35 : 0.08));
+    oscillator.addEventListener('ended', () => void context.close(), { once: true });
 }
 
 const Kurodoko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const t = COPY[(locale as keyof typeof COPY)] ?? COPY.en;
     const a11y = A11Y_COPY[(locale as keyof typeof A11Y_COPY)] ?? A11Y_COPY.en;
 
-    const [mode, setMode] = useState<'daily' | 'free'>('daily');
+    const [mode, setMode] = useState<Mode>('daily');
     const [difficulty, setDifficulty] = useState<Difficulty>(DAILY_DIFFICULTY);
     const [puzzle, setPuzzle] = useState<Puzzle>(() => generateDailyKurodoko().puzzle);
-    const [board, setBoard] = useState<Cell[][]>(() => puzzle.map((row) => row.map(() => 0 as Cell)));
+    const [seed, setSeed] = useState(() => generateDailyKurodoko().seed);
+    const [board, setBoard] = useState<Mark[][]>(() => initialMarks(puzzle));
+    const [history, setHistory] = useState<Mark[][][]>([]);
     const [moves, setMoves] = useState(0);
+    const [seconds, setSeconds] = useState(0);
     const [validation, setValidation] = useState<Validation>({ ok: true, complete: false, error: null });
     const [streak, setStreak] = useState<DailyStreak | null>(null);
     const [dailyDate, setDailyDate] = useState(() => todayKey());
     const [activeCell, setActiveCell] = useState(0);
+    const [muted, setMuted] = useState(false);
+    const [hydrated, setHydrated] = useState(false);
     const cellRefs = useRef<Array<HTMLButtonElement | HTMLDivElement | null>>([]);
 
     useEffect(() => {
         const today = todayKey();
         setStreak(getDailyStreak(DAILY_GAME_ID, today, previousDayKey(today)));
+        const saved = loadKurodokoSaveV1(today);
+        if (saved) {
+            const restoredPuzzle = puzzleFromKurodokoSave(saved);
+            setMode(saved.mode);
+            setDifficulty(saved.difficulty);
+            setDailyDate(saved.dailyDate);
+            setSeed(saved.seed);
+            setPuzzle(restoredPuzzle);
+            setBoard(saved.marks);
+            setMoves(saved.moves);
+            setSeconds(restoredKurodokoSeconds(saved));
+            setValidation(validateKurodokoBoard(playableBoard(saved.marks), restoredPuzzle));
+        }
+        setHydrated(true);
     }, []);
+
+    useEffect(() => {
+        if (!hydrated || moves === 0 || validation.complete) return;
+        const timer = window.setInterval(() => setSeconds((value) => value + 1), 1000);
+        return () => window.clearInterval(timer);
+    }, [hydrated, moves, validation.complete]);
+
+    useEffect(() => {
+        if (!hydrated || moves === 0 || validation.complete) return;
+        storeKurodokoSaveV1({ mode, difficulty, dailyDate, seed, marks: board, moves, seconds, savedAtEpochMs: Date.now() });
+    }, [board, dailyDate, difficulty, hydrated, mode, moves, seconds, seed, validation.complete]);
 
     const newPuzzle = useCallback((next: 'daily' | Difficulty) => {
         const isDaily = next === 'daily';
-        const { puzzle: p } = isDaily ? generateDailyKurodoko() : generateKurodoko(next);
+        const nextSeed = isDaily ? kurodokoDailySeed(dayIndex()) : randomSeed();
+        const p = generateKurodokoPuzzle(isDaily ? DAILY_DIFFICULTY : next, mulberry32(nextSeed)).puzzle;
         setMode(isDaily ? 'daily' : 'free');
         setDifficulty(isDaily ? DAILY_DIFFICULTY : next);
-        if (isDaily) setDailyDate(todayKey());
+        setDailyDate(todayKey());
+        setSeed(nextSeed);
         setPuzzle(p);
-        setBoard(p.map((row) => row.map(() => 0 as Cell)));
+        setBoard(initialMarks(p));
+        setHistory([]);
         setMoves(0);
+        setSeconds(0);
         setValidation({ ok: true, complete: false, error: null });
         setActiveCell(0);
+        clearKurodokoSaveV1();
     }, []);
 
-    const toggle = (r: number, c: number) => {
+    const toggle = (r: number, c: number, reverse = false) => {
         if (validation.complete || puzzle[r][c] !== null) return;
         if (mode === 'daily' && dailyDate !== todayKey()) {
             newPuzzle('daily');
             return;
         }
         const next = board.map((row) => [...row]);
-        next[r][c] = next[r][c] === 0 ? 1 : 0;
+        const order: Mark[] = reverse ? [-1, 0, 1] : [-1, 1, 0];
+        next[r][c] = order[(order.indexOf(next[r][c]) + 1) % order.length];
+        setHistory((items) => [...items.slice(-49), board.map((row) => [...row])]);
         setBoard(next);
         setMoves((m) => m + 1);
-        const v = validateKurodoko(next, puzzle);
+        const v = validateKurodokoBoard(playableBoard(next), puzzle);
         setValidation(v);
+        playTone(v.complete ? 'win' : 'move', muted);
+        if (v.complete) clearKurodokoSaveV1();
         if (v.complete && mode === 'daily') {
             const today = todayKey();
             setStreak(recordDailyWin(DAILY_GAME_ID, today, previousDayKey(today)));
         }
+    };
+
+    const undo = () => {
+        const previous = history.at(-1);
+        if (!previous || validation.complete) return;
+        setHistory((items) => items.slice(0, -1));
+        setBoard(previous);
+        setMoves((value) => Math.max(0, value - 1));
+        setValidation(validateKurodokoBoard(playableBoard(previous), puzzle));
+        playTone('move', muted);
     };
 
     const size = puzzle.length;
@@ -267,8 +221,21 @@ const Kurodoko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         </button>
                     ))}
                 </div>
-                <span className="ml-auto text-xs font-bold text-muted-foreground uppercase tracking-widest">{t.moves} {moves}</span>
+                <div className="ml-auto flex items-center gap-1">
+                    <button type="button" onClick={undo} disabled={history.length === 0 || validation.complete}
+                        className="min-h-11 rounded-lg border border-border px-3 text-xs font-bold text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                        ↶ {a11y.undo}
+                    </button>
+                    <button type="button" onClick={() => setMuted((value) => !value)}
+                        aria-label={muted ? a11y.soundOn : a11y.soundOff} aria-pressed={!muted}
+                        className="grid min-h-11 min-w-11 place-items-center rounded-lg border border-border text-base text-muted-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                        {muted ? '🔇' : '🔊'}
+                    </button>
+                    <span className="pl-2 text-xs font-bold text-muted-foreground uppercase tracking-widest">{t.moves} {moves} · {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')}</span>
+                </div>
             </div>
+
+            <p className="mb-3 text-center text-[11px] font-medium text-muted-foreground">{a11y.hint}</p>
 
             {mode === 'daily' && streak && (streak.played > 0 || solvedToday) && (
                 <p className="mb-3 text-center text-xs font-bold text-muted-foreground">
@@ -302,11 +269,13 @@ const Kurodoko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                             }
                             return (
                                 <button key={`${r}-${c}`} ref={(node) => { cellRefs.current[index] = node; }} type="button" role="gridcell"
-                                    onClick={() => { setActiveCell(index); toggle(r, c); }} aria-disabled={validation.complete}
+                                    onClick={() => { setActiveCell(index); toggle(r, c); }}
+                                    onContextMenu={(event) => { event.preventDefault(); setActiveCell(index); toggle(r, c, true); }} aria-disabled={validation.complete}
                                     tabIndex={activeCell === index ? 0 : -1} aria-rowindex={r + 1} aria-colindex={c + 1}
-                                    aria-label={`${position}: ${cell === 1 ? a11y.black : a11y.white}`}
+                                    aria-label={`${position}: ${cell === 1 ? a11y.black : cell === 0 ? a11y.white : a11y.unknown}`}
                                     onFocus={() => setActiveCell(index)} onKeyDown={(event) => handleGridKeyDown(event, index)}
-                                    className={`${common} ${cell === 1 ? 'bg-foreground border-foreground' : 'bg-background border-border hover:bg-muted active:scale-95'}`}>
+                                    className={`${common} ${cell === 1 ? 'bg-foreground border-foreground shadow-inner' : cell === 0 ? 'bg-primary/10 border-primary/40 text-primary' : 'bg-background border-border hover:bg-muted active:scale-95'}`}>
+                                    {cell === 0 && <span aria-hidden="true" className="block size-2 rounded-full bg-primary/70" />}
                                 </button>
                             );
                         })}
@@ -316,7 +285,10 @@ const Kurodoko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
             <div className="mt-4 min-h-[2rem] text-center" role="status" aria-live="polite">
                 {validation.complete ? (
-                    <p className="text-lg font-black text-success animate-fade-up motion-reduce:animate-none">🎉 {t.win}</p>
+                    <div className="animate-fade-up rounded-xl border border-success/30 bg-success/10 px-4 py-3 motion-reduce:animate-none">
+                        <p className="text-lg font-black text-success">🎉 {t.win}</p>
+                        <p className="mt-1 text-xs font-bold text-muted-foreground">{t.moves} {moves} · {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')} · {mode === 'daily' ? t.daily : t[difficulty]}</p>
+                    </div>
                 ) : validation.error ? (
                     <p className="text-xs font-bold text-destructive">
                         {validation.error === 'number' ? t.errNumber : validation.error === 'adjacent' ? t.errAdjacent : t.errDisconnected}

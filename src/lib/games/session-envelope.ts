@@ -18,11 +18,13 @@ import {
 import { parseSudokuSaveV2, type SudokuSaveV2 } from "./sudoku-save";
 import { parseSolitaireSaveV2, type SolitaireSaveV2 } from "./solitaire-save";
 import { parseSnakeSave, type SnakeSaveV1 } from "./snake-save";
+import { parseKurodokoSaveV1, type KurodokoSaveV1 } from "./kurodoko-save";
+import { parseYahtzeeSave, type YahtzeeSaveV1 } from "./yahtzee-save";
 
 export const GAME_SESSION_SCHEMA = "oiyo.game-session" as const;
 export const GAME_SESSION_SCHEMA_VERSION = 1 as const;
 
-export type RestorableGameId = "chess" | "hearts" | "minesweeper" | "brick-breaker" | "solitaire" | "freecell" | "connect-four" | "gomoku" | "sudoku" | "puzzle15" | "checkers" | "reversi" | "game-2048" | "snake-game";
+export type RestorableGameId = "chess" | "hearts" | "minesweeper" | "brick-breaker" | "solitaire" | "freecell" | "connect-four" | "gomoku" | "sudoku" | "puzzle15" | "checkers" | "reversi" | "game-2048" | "snake-game" | "kurodoko" | "yahtzee";
 export type GameSessionMode = "local" | "ai" | "solo";
 
 export const RESTORABLE_GAME_CAPABILITIES = {
@@ -52,6 +54,8 @@ export const RESTORABLE_GAME_CAPABILITIES = {
   reversi: { modes: ["local", "ai"], difficulties: ["level-1", "level-2", "level-3"] },
   "game-2048": { modes: ["solo"], difficulties: ["classic-4x4"] },
   "snake-game": { modes: ["solo"], difficulties: ["classic-20x20"] },
+  kurodoko: { modes: ["solo"], difficulties: ["daily", "easy", "medium", "hard"] },
+  yahtzee: { modes: ["solo"], difficulties: ["classic"] },
 } as const satisfies Record<RestorableGameId, {
   modes: readonly GameSessionMode[];
   difficulties: readonly string[];
@@ -405,6 +409,29 @@ const snakeAdapter: Adapter<SnakeSaveV1> = {
   source: { format: "legacy-local-storage", schema: "oiyo.snake-save", schemaVersion: 1, storageKey: "oiyo:snake-state:v1" },
 };
 
+const kurodokoAdapter: Adapter<KurodokoSaveV1> = {
+  adapterVersion: "kurodoko-session-adapter-v1", engineVersion: "kurodoko-rules-v1", gameId: "kurodoko",
+  modes: ["solo"], difficulties: ["daily", "easy", "medium", "hard"],
+  parsePayload: (value) => {
+    if (!isRecord(value) || typeof value.dailyDate !== "string" || typeof value.savedAtEpochMs !== "number") return null;
+    return parseKurodokoSaveV1(JSON.stringify(value), value.dailyDate, value.savedAtEpochMs);
+  },
+  payloadDifficulty: (value) => value.mode === "daily" ? "daily" : value.difficulty,
+  payloadMode: () => "solo",
+  source: { format: "legacy-local-storage", schema: "oiyo.kurodoko-save", schemaVersion: 1, storageKey: "oiyo:kurodoko-state:v1" },
+};
+
+const yahtzeeAdapter: Adapter<YahtzeeSaveV1> = {
+  adapterVersion: "yahtzee-session-adapter-v1", engineVersion: "yahtzee-rules-v1", gameId: "yahtzee",
+  modes: ["solo"], difficulties: ["classic"],
+  parsePayload: (value) => {
+    if (!isRecord(value) || typeof value.savedAtEpochMs !== "number") return null;
+    return parseYahtzeeSave(JSON.stringify(value), value.savedAtEpochMs);
+  },
+  payloadDifficulty: () => "classic", payloadMode: () => "solo",
+  source: { format: "legacy-local-storage", schema: "oiyo.yahtzee-save", schemaVersion: 1, storageKey: "oiyo:yahtzee-state:v1" },
+};
+
 const adapters: Record<RestorableGameId, Adapter<unknown>> = {
   chess: chessAdapter as Adapter<unknown>,
   hearts: heartsAdapter as Adapter<unknown>,
@@ -420,6 +447,8 @@ const adapters: Record<RestorableGameId, Adapter<unknown>> = {
   reversi: reversiAdapter as Adapter<unknown>,
   "game-2048": game2048Adapter as Adapter<unknown>,
   "snake-game": snakeAdapter as Adapter<unknown>,
+  kurodoko: kurodokoAdapter as Adapter<unknown>,
+  yahtzee: yahtzeeAdapter as Adapter<unknown>,
 };
 
 export function adaptChessSaveToSession(
@@ -460,7 +489,7 @@ export function adaptBrickBreakerSaveToSession(
 }
 
 export function adaptActiveGameSaveToSession(
-  gameId: "solitaire" | "freecell" | "connect-four" | "gomoku" | "sudoku" | "puzzle15" | "checkers" | "reversi" | "game-2048" | "snake-game",
+  gameId: "solitaire" | "freecell" | "connect-four" | "gomoku" | "sudoku" | "puzzle15" | "checkers" | "reversi" | "game-2048" | "snake-game" | "kurodoko" | "yahtzee",
   value: unknown,
   timing: GameSessionTiming,
 ): GameSessionEnvelope | null {

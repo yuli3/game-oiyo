@@ -321,6 +321,36 @@
     "best-record",
     "legacy-best-migration"
    ]
+  },
+  {
+   "gameId": "kurodoko",
+   "componentPath": "src/components/games/Kurodoko.tsx",
+   "adapterPath": "src/lib/games/kurodoko-save.ts",
+   "supportsRestore": true,
+   "sessionStorageKey": "oiyo:kurodoko-state:v1",
+   "sourceSchema": "oiyo.kurodoko-save",
+   "sourceSchemaVersion": 1,
+   "adapterVersion": "kurodoko-session-adapter-v1",
+   "engineVersion": "kurodoko-rules-v1",
+   "modes": ["solo"],
+   "difficulties": ["daily", "easy", "medium", "hard"],
+   "deterministicResume": true,
+   "nonSessionPersistence": ["daily-streak"]
+  },
+  {
+   "gameId": "yahtzee",
+   "componentPath": "src/components/games/Yahtzee.tsx",
+   "adapterPath": "src/lib/games/yahtzee-save.ts",
+   "supportsRestore": true,
+   "sessionStorageKey": "oiyo:yahtzee-state:v1",
+   "sourceSchema": "oiyo.yahtzee-save",
+   "sourceSchemaVersion": 1,
+   "adapterVersion": "yahtzee-session-adapter-v1",
+   "engineVersion": "yahtzee-rules-v1",
+   "modes": ["solo"],
+   "difficulties": ["classic"],
+   "deterministicResume": true,
+   "nonSessionPersistence": ["best-record", "legacy-best-migration"]
   }
  ]
 }

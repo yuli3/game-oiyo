@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { categoryScore, initializeGame, scoreCategory, type DiceValue, type GameState } from "./yahtzee";
+import { categoryScore, initializeGame, legalCategories, recommendYahtzeeCategory, rollDice, scoreCategory, scoreForState, toggleHoldDie, type DiceValue, type GameState } from "./yahtzee";
 
 describe("yahtzee: categoryScore (pure scoring)", () => {
   it("scores upper-section categories as count × face value", () => {
@@ -52,6 +52,15 @@ describe("yahtzee: initializeGame", () => {
     expect(state.isGameOver).toBe(false);
     expect(state.scorecard.totalScore).toBe(0);
     expect(state.scorecard.upper.aces.used).toBe(false);
+  });
+
+  it("is deterministic when the same rng stream is injected", () => {
+    const stream = (values: number[]) => { let index = 0; return () => values[index++ % values.length]; };
+    const values = [0, 0.2, 0.4, 0.6, 0.99];
+    const left = rollDice(initializeGame(stream(values)), stream(values));
+    const right = rollDice(initializeGame(stream(values)), stream(values));
+    expect(left).toEqual(right);
+    expect(left.diceValues).toEqual([1, 2, 3, 4, 6]);
   });
 });
 
@@ -105,5 +114,51 @@ describe("yahtzee: scoreCategory (state transitions)", () => {
     }
     expect(state.round).toBe(14);
     expect(state.isGameOver).toBe(true);
+  });
+
+  it("forces an extra Yahtzee into the matching open upper box", () => {
+    let state = stateWithDice([6, 6, 6, 6, 6]);
+    state = scoreCategory(state, "yahtzee");
+    state = { ...state, diceValues: [6, 6, 6, 6, 6], rollsLeft: 2 };
+    expect(legalCategories(state)).toEqual(["sixes"]);
+    expect(scoreCategory(state, "chance")).toBe(state);
+    const scored = scoreCategory(state, "sixes");
+    expect(scored.scorecard.upper.sixes.score).toBe(30);
+    expect(scored.scorecard.yahtzeeBonusCount).toBe(1);
+  });
+
+  it("applies fixed Joker scores after the matching upper box is used", () => {
+    let state = stateWithDice([4, 4, 4, 4, 4]);
+    state = scoreCategory(state, "yahtzee");
+    state = { ...state, diceValues: [4, 4, 4, 4, 4], rollsLeft: 2 };
+    state = scoreCategory(state, "fours");
+    state = { ...state, diceValues: [4, 4, 4, 4, 4], rollsLeft: 2 };
+    expect(legalCategories(state)).toContain("largeStraight");
+    expect(scoreForState(state, "fullHouse")).toBe(25);
+    expect(scoreForState(state, "smallStraight")).toBe(30);
+    expect(scoreForState(state, "largeStraight")).toBe(40);
+    const scored = scoreCategory(state, "largeStraight");
+    expect(scored.scorecard.lower.largeStraight.score).toBe(40);
+    expect(scored.scorecard.yahtzeeBonusCount).toBe(2);
+  });
+
+  it("recommends only legal categories and explains forced Joker choices", () => {
+    let state = stateWithDice([5, 5, 5, 5, 5]);
+    state = scoreCategory(state, "yahtzee");
+    state = { ...state, diceValues: [5, 5, 5, 5, 5], rollsLeft: 2 };
+    expect(recommendYahtzeeCategory(state)).toEqual({ category: "fives", score: 25, reason: "joker" });
+  });
+
+  it("uses a stable highest-score recommendation without mutating state", () => {
+    const state = stateWithDice([6, 6, 6, 6, 5]);
+    const snapshot = structuredClone(state);
+    expect(recommendYahtzeeCategory(state)).toMatchObject({ category: "threeOfAKind", score: 29 });
+    expect(state).toEqual(snapshot);
+  });
+
+  it("rejects out-of-range hold indexes without mutating state", () => {
+    const state = { ...initializeGame(), rollsLeft: 2 };
+    expect(toggleHoldDie(state, -1)).toBe(state);
+    expect(toggleHoldDie(state, 5)).toBe(state);
   });
 });
