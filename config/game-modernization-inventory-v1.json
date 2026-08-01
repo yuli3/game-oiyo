@@ -1,30 +1,30 @@
 {
   "schema": "oiyo.game-modernization-inventory",
   "schemaVersion": 1,
-  "generatedAt": "2026-08-01T14:38:29.834Z",
+  "generatedAt": "2026-08-01T14:48:22.320Z",
   "scorePolicy": "Static scores are prioritization proxies; only scoreStatus=certified is a played AAA scorecard.",
   "summary": {
     "total": 53,
     "certified": 6,
     "modernized": 7,
     "byGeneration": {
-      "G1": 18,
+      "G1": 17,
       "G2": 0,
-      "G3": 26,
+      "G3": 27,
       "G4": 9
     },
     "byAction": {
       "maintain": 6,
       "polish": 7,
-      "modernize": 25,
-      "remake": 15
+      "modernize": 26,
+      "remake": 14
     },
     "highRisk": {
       "mobile": 33,
       "accessibility": 2,
       "performance": 9
     },
-    "workingTreeGames": 8
+    "workingTreeGames": 7
   },
   "games": [
     {
@@ -111,10 +111,10 @@
     {
       "slug": "gomoku",
       "genre": "board",
-      "generation": "G1",
+      "generation": "G3",
       "component": "src/components/games/Gomoku.tsx",
-      "engine": null,
-      "tests": null,
+      "engine": "src/lib/games/gomoku.ts",
+      "tests": "src/lib/games/gomoku.test.ts",
       "restore": false,
       "daily": false,
       "progression": true,
@@ -126,29 +126,27 @@
       "mobileRisk": "high",
       "accessibilityRisk": "low",
       "performanceRisk": "low",
-      "coreLoopScore": 8,
+      "coreLoopScore": 18,
       "feelScore": 7,
       "progressionScore": 13,
       "presentationScore": 8,
-      "reliabilityScore": 5,
+      "reliabilityScore": 11,
       "mobileScore": 6,
       "accessibilityScore": 5,
       "productScore": 3,
-      "total": 55,
+      "total": 71,
       "scoreStatus": "provisional-static",
       "certifiedScore": null,
-      "recommendedAction": "remake",
+      "recommendedAction": "modernize",
       "wave": "3",
       "dependencies": [
-        "pure-engine",
-        "characterization-tests",
         "persistence-decision",
         "mobile-qa"
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/gomoku.astro",
-      "componentLines": 267,
-      "sourceStatus": "committed"
+      "componentLines": 240,
+      "sourceStatus": "working-tree"
     },
     {
       "slug": "janggi",
@@ -587,7 +585,7 @@
       "owner": "game",
       "route": "src/pages/[...lang]/solitaire.astro",
       "componentLines": 364,
-      "sourceStatus": "working-tree"
+      "sourceStatus": "committed"
     },
     {
       "slug": "hearts-game",
@@ -1105,7 +1103,7 @@
       "owner": "game",
       "route": "src/pages/[...lang]/snake-game.astro",
       "componentLines": 249,
-      "sourceStatus": "working-tree"
+      "sourceStatus": "committed"
     },
     {
       "slug": "aim-trainer",

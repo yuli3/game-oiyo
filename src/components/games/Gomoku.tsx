@@ -4,8 +4,9 @@ import { gomokuBestMove } from '../../lib/games/ai/gomoku';
 import type { AiLevel, GameMode } from '../../lib/games/ai/types';
 import { getRecord, recordResult, type GameRecord } from '../../lib/games/records';
 import { clearGomokuSave, loadGomokuSave, storeGomokuSave } from '../../lib/games/active-game-save';
+import { createGomokuBoard, GOMOKU_SIZE, placeGomokuStone, type GomokuCell, type GomokuPlayer } from '../../lib/games/gomoku';
 
-const SIZE = 15;
+const SIZE = GOMOKU_SIZE;
 
 const i18n: Record<Locale, {
     title: string; turn: string; black: string; white: string; win: string; over: string; reset: string;
@@ -27,7 +28,7 @@ const AI_DELAY_MS = 450;
 const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     const t = i18n[locale] ?? i18n.en;
 
-    const [board, setBoard] = useState<(number | null)[]>(() => Array(SIZE * SIZE).fill(null));
+    const [board, setBoard] = useState<GomokuCell[]>(createGomokuBoard);
     const [isBlackTurn, setIsBlackTurn] = useState(true);
     const [winner, setWinner] = useState<number | null>(null); // 1|2 winner, 0 = draw
     const [mode, setMode] = useState<GameMode>('local');
@@ -55,33 +56,6 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     }, [board, isBlackTurn, mode, level, winner, thinking]);
     useEffect(() => () => { if (aiTimer.current) clearTimeout(aiTimer.current); }, []);
 
-    const checkWinner = (newBoard: (number | null)[], index: number) => {
-        const player = newBoard[index];
-        if (player === null) return false;
-
-        const x = index % SIZE;
-        const y = Math.floor(index / SIZE);
-
-        const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
-        for (const [dx, dy] of directions) {
-            let count = 1;
-            // Check one side
-            for (let i = 1; i < 5; i++) {
-                const nx = x + dx * i, ny = y + dy * i;
-                if (nx >= 0 && nx < SIZE && ny >= 0 && ny < SIZE && newBoard[ny * SIZE + nx] === player) count++;
-                else break;
-            }
-            // Check other side
-            for (let i = 1; i < 5; i++) {
-                const nx = x - dx * i, ny = y - dy * i;
-                if (nx >= 0 && nx < SIZE && ny >= 0 && ny < SIZE && newBoard[ny * SIZE + nx] === player) count++;
-                else break;
-            }
-            if (count >= 5) return true;
-        }
-        return false;
-    };
-
     const finish = (result: number) => {
         clearGomokuSave();
         setWinner(result);
@@ -91,14 +65,13 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         }
     };
 
-    const place = (index: number, player: number) => {
+    const place = (index: number, player: GomokuPlayer) => {
         if (board[index] !== null || winner !== null) return;
-        const newBoard = [...board];
-        newBoard[index] = player;
-        setBoard(newBoard);
-        if (checkWinner(newBoard, index)) finish(player);
-        else if (newBoard.every((c) => c !== null)) finish(0);
-        else setIsBlackTurn(player !== 1);
+        const move = placeGomokuStone(board, index, player);
+        if (!move) return;
+        setBoard(move.board);
+        if (move.result !== null) finish(move.result);
+        else setIsBlackTurn(move.nextPlayer === 1);
     };
 
     const handleClick = (index: number) => {
@@ -122,7 +95,7 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
 
     const reset = () => {
         if (aiTimer.current) clearTimeout(aiTimer.current);
-        setBoard(Array(SIZE * SIZE).fill(null));
+        setBoard(createGomokuBoard());
         setIsBlackTurn(true);
         setWinner(null);
         setThinking(false);
