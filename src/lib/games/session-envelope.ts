@@ -10,18 +10,19 @@ import {
   parseGomokuSave,
   parsePuzzle15Save,
   parseReversiSave,
-  parseSolitaireSave,
   type CheckersSave,
   type Game2048Save,
   type Puzzle15Save,
   type ReversiSave,
 } from "./active-game-save";
 import { parseSudokuSaveV2, type SudokuSaveV2 } from "./sudoku-save";
+import { parseSolitaireSaveV2, type SolitaireSaveV2 } from "./solitaire-save";
+import { parseSnakeSave, type SnakeSaveV1 } from "./snake-save";
 
 export const GAME_SESSION_SCHEMA = "oiyo.game-session" as const;
 export const GAME_SESSION_SCHEMA_VERSION = 1 as const;
 
-export type RestorableGameId = "chess" | "hearts" | "minesweeper" | "brick-breaker" | "solitaire" | "freecell" | "connect-four" | "gomoku" | "sudoku" | "puzzle15" | "checkers" | "reversi" | "game-2048";
+export type RestorableGameId = "chess" | "hearts" | "minesweeper" | "brick-breaker" | "solitaire" | "freecell" | "connect-four" | "gomoku" | "sudoku" | "puzzle15" | "checkers" | "reversi" | "game-2048" | "snake-game";
 export type GameSessionMode = "local" | "ai" | "solo";
 
 export const RESTORABLE_GAME_CAPABILITIES = {
@@ -50,6 +51,7 @@ export const RESTORABLE_GAME_CAPABILITIES = {
   checkers: { modes: ["local", "ai"], difficulties: ["level-1", "level-2", "level-3"] },
   reversi: { modes: ["local", "ai"], difficulties: ["level-1", "level-2", "level-3"] },
   "game-2048": { modes: ["solo"], difficulties: ["classic-4x4"] },
+  "snake-game": { modes: ["solo"], difficulties: ["classic-20x20"] },
 } as const satisfies Record<RestorableGameId, {
   modes: readonly GameSessionMode[];
   difficulties: readonly string[];
@@ -319,16 +321,20 @@ const brickBreakerAdapter: Adapter<BrickBreakerSave> = {
   },
 };
 
-type SolitairePayload = NonNullable<ReturnType<typeof parseSolitaireSave>>;
 type FreeCellPayload = NonNullable<ReturnType<typeof parseFreeCellSave>>;
 type ConnectFourPayload = NonNullable<ReturnType<typeof parseConnectFourSave>>;
 type GomokuPayload = NonNullable<ReturnType<typeof parseGomokuSave>>;
 
-const solitaireAdapter: Adapter<SolitairePayload> = {
-  adapterVersion: "solitaire-session-adapter-v1", engineVersion: "solitaire-rules-v1", gameId: "solitaire",
-  modes: ["solo"], difficulties: ["draw-1"], parsePayload: parseSolitaireSave,
+const solitaireAdapter: Adapter<SolitaireSaveV2> = {
+  adapterVersion: "solitaire-session-adapter-v2", engineVersion: "solitaire-rules-v1", gameId: "solitaire",
+  modes: ["solo"], difficulties: ["draw-1"],
+  parsePayload: (value) => {
+    if (!isRecord(value) || typeof value.dailyDate !== "string" || typeof value.savedAtEpochMs !== "number") return null;
+    const parsed = parseSolitaireSaveV2(JSON.stringify(value), value.dailyDate, value.savedAtEpochMs);
+    return parsed ? { ...parsed, state: { ...parsed.state, tableau: parsed.state.tableau.map((pile) => [...pile]) } } : null;
+  },
   payloadDifficulty: () => "draw-1", payloadMode: () => "solo",
-  source: { format: "legacy-local-storage", schema: "oiyo.solitaire-save", schemaVersion: 1, storageKey: "oiyo:solitaire-state:v1" },
+  source: { format: "legacy-local-storage", schema: "oiyo.solitaire-save", schemaVersion: 2, storageKey: "oiyo:solitaire-state:v2" },
 };
 const freecellAdapter: Adapter<FreeCellPayload> = {
   adapterVersion: "freecell-session-adapter-v1", engineVersion: "freecell-rules-v1", gameId: "freecell",
@@ -388,6 +394,17 @@ const game2048Adapter: Adapter<Game2048Save> = {
   source: { format: "legacy-local-storage", schema: "oiyo.game-2048-save", schemaVersion: 1, storageKey: "oiyo:game-2048-state:v1" },
 };
 
+const snakeAdapter: Adapter<SnakeSaveV1> = {
+  adapterVersion: "snake-session-adapter-v1", engineVersion: "snake-rules-v1", gameId: "snake-game",
+  modes: ["solo"], difficulties: ["classic-20x20"],
+  parsePayload: (value) => {
+    if (!isRecord(value) || typeof value.savedAtEpochMs !== "number") return null;
+    return parseSnakeSave(JSON.stringify(value), value.savedAtEpochMs);
+  },
+  payloadDifficulty: () => "classic-20x20", payloadMode: () => "solo",
+  source: { format: "legacy-local-storage", schema: "oiyo.snake-save", schemaVersion: 1, storageKey: "oiyo:snake-state:v1" },
+};
+
 const adapters: Record<RestorableGameId, Adapter<unknown>> = {
   chess: chessAdapter as Adapter<unknown>,
   hearts: heartsAdapter as Adapter<unknown>,
@@ -402,6 +419,7 @@ const adapters: Record<RestorableGameId, Adapter<unknown>> = {
   checkers: checkersAdapter as Adapter<unknown>,
   reversi: reversiAdapter as Adapter<unknown>,
   "game-2048": game2048Adapter as Adapter<unknown>,
+  "snake-game": snakeAdapter as Adapter<unknown>,
 };
 
 export function adaptChessSaveToSession(
@@ -442,7 +460,7 @@ export function adaptBrickBreakerSaveToSession(
 }
 
 export function adaptActiveGameSaveToSession(
-  gameId: "solitaire" | "freecell" | "connect-four" | "gomoku" | "sudoku" | "puzzle15" | "checkers" | "reversi" | "game-2048",
+  gameId: "solitaire" | "freecell" | "connect-four" | "gomoku" | "sudoku" | "puzzle15" | "checkers" | "reversi" | "game-2048" | "snake-game",
   value: unknown,
   timing: GameSessionTiming,
 ): GameSessionEnvelope | null {

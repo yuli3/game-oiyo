@@ -1,12 +1,12 @@
 {
   "schema": "oiyo.game-modernization-inventory",
   "schemaVersion": 1,
-  "generatedAt": "2026-08-01T09:43:06.044Z",
+  "generatedAt": "2026-08-01T14:38:29.834Z",
   "scorePolicy": "Static scores are prioritization proxies; only scoreStatus=certified is a played AAA scorecard.",
   "summary": {
     "total": 53,
-    "certified": 5,
-    "modernized": 6,
+    "certified": 6,
+    "modernized": 7,
     "byGeneration": {
       "G1": 18,
       "G2": 0,
@@ -14,9 +14,9 @@
       "G4": 9
     },
     "byAction": {
-      "maintain": 5,
+      "maintain": 6,
       "polish": 7,
-      "modernize": 26,
+      "modernize": 25,
       "remake": 15
     },
     "highRisk": {
@@ -1076,7 +1076,7 @@
       "component": "src/components/games/SnakeGame.tsx",
       "engine": "src/lib/games/snake.ts",
       "tests": "src/lib/games/snake.test.ts",
-      "restore": false,
+      "restore": true,
       "daily": false,
       "progression": true,
       "input": [
@@ -1084,30 +1084,27 @@
         "keyboard"
       ],
       "renderer": "dom",
-      "audio": false,
-      "mobileRisk": "medium",
+      "audio": true,
+      "mobileRisk": "low",
       "accessibilityRisk": "low",
       "performanceRisk": "low",
       "coreLoopScore": 20,
-      "feelScore": 7,
+      "feelScore": 10,
       "progressionScore": 10,
-      "presentationScore": 6,
-      "reliabilityScore": 11,
-      "mobileScore": 6,
+      "presentationScore": 8,
+      "reliabilityScore": 15,
+      "mobileScore": 8,
       "accessibilityScore": 5,
       "productScore": 4,
-      "total": 69,
-      "scoreStatus": "provisional-static",
-      "certifiedScore": null,
-      "recommendedAction": "modernize",
+      "total": 80,
+      "scoreStatus": "certified",
+      "certifiedScore": 85,
+      "recommendedAction": "maintain",
       "wave": "3",
-      "dependencies": [
-        "persistence-decision",
-        "mobile-qa"
-      ],
+      "dependencies": [],
       "owner": "game",
       "route": "src/pages/[...lang]/snake-game.astro",
-      "componentLines": 157,
+      "componentLines": 249,
       "sourceStatus": "working-tree"
     },
     {

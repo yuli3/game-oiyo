@@ -95,12 +95,12 @@
   {
    "gameId": "solitaire",
    "componentPath": "src/components/games/Solitaire.tsx",
-   "adapterPath": "src/lib/games/active-game-save.ts",
+   "adapterPath": "src/lib/games/solitaire-save.ts",
    "supportsRestore": true,
-   "sessionStorageKey": "oiyo:solitaire-state:v1",
+   "sessionStorageKey": "oiyo:solitaire-state:v2",
    "sourceSchema": "oiyo.solitaire-save",
-   "sourceSchemaVersion": 1,
-   "adapterVersion": "solitaire-session-adapter-v1",
+   "sourceSchemaVersion": 2,
+   "adapterVersion": "solitaire-session-adapter-v2",
    "engineVersion": "solitaire-rules-v1",
    "modes": [
     "solo"
@@ -110,7 +110,8 @@
    ],
    "deterministicResume": true,
    "nonSessionPersistence": [
-    "game-record"
+    "game-record",
+    "daily-streak"
    ]
   },
   {
@@ -297,6 +298,28 @@
    "deterministicResume": true,
    "nonSessionPersistence": [
     "game-record"
+   ]
+  },
+  {
+   "gameId": "snake-game",
+   "componentPath": "src/components/games/SnakeGame.tsx",
+   "adapterPath": "src/lib/games/snake-save.ts",
+   "supportsRestore": true,
+   "sessionStorageKey": "oiyo:snake-state:v1",
+   "sourceSchema": "oiyo.snake-save",
+   "sourceSchemaVersion": 1,
+   "adapterVersion": "snake-session-adapter-v1",
+   "engineVersion": "snake-rules-v1",
+   "modes": [
+    "solo"
+   ],
+   "difficulties": [
+    "classic-20x20"
+   ],
+   "deterministicResume": true,
+   "nonSessionPersistence": [
+    "best-record",
+    "legacy-best-migration"
    ]
   }
  ]

@@ -23,6 +23,7 @@ const certified = new Map([
   ["minesweeper", 92],
   ["brick-breaker", 93],
   ["solitaire", 90],
+  ["snake-game", 85],
 ]);
 const completed = new Set([...certified.keys(), "sudoku"]);
 const completedRisk = {
@@ -94,7 +95,7 @@ async function inspect(entry) {
   const accessibilityRisk = evidenceRisk?.accessibility ?? risk([!signals.aria ? "high" : "low", !signals.keyboard ? "medium" : "low", signals.canvas && !signals.liveRegion ? "medium" : "low"]);
   const performanceRisk = evidenceRisk?.performance ?? risk([signals.scene ? "high" : "low", signals.canvas && !signals.visibilitySafe ? "medium" : "low", componentLines > 1000 ? "medium" : "low"]);
   const generation = signals.scene ? "G4" : signals.engine && signals.tests && signals.persistence ? "G3" : signals.canvas ? "G2" : "G1";
-  const wave = completed.has(entry.slug) ? (entry.slug === "star-blaster" || entry.slug === "chess" || entry.slug === "minesweeper" ? "pilot" : "2") : wave3.has(entry.slug) ? "3" : wave4.has(entry.slug) ? "4" : "5";
+  const wave = wave3.has(entry.slug) ? "3" : completed.has(entry.slug) ? (entry.slug === "star-blaster" || entry.slug === "chess" || entry.slug === "minesweeper" ? "pilot" : "2") : wave4.has(entry.slug) ? "4" : "5";
   const certifiedScore = certified.get(entry.slug) ?? null;
   const recommendedAction = certifiedScore ? "maintain" : scores.total >= 78 ? "polish" : scores.total >= 62 ? "modernize" : "remake";
   return {

@@ -2,7 +2,7 @@ import { moveSnake } from "./react-state-transitions";
 
 export type SnakePoint = { x: number; y: number };
 export type SnakeDirection = SnakePoint;
-export type SnakeStatus = "ready" | "playing" | "over";
+export type SnakeStatus = "ready" | "playing" | "paused" | "over";
 export type SnakeState = {
   snake: SnakePoint[];
   food: SnakePoint;
@@ -46,6 +46,35 @@ export function steerSnake(state: SnakeState, direction: SnakeDirection): SnakeS
   if (!isUnitDirection) return state;
   if (state.direction && state.snake.length > 1 && direction.x === -state.direction.x && direction.y === -state.direction.y) return state;
   return { ...state, direction: { ...direction }, status: "playing" };
+}
+
+export function pauseSnake(state: SnakeState): SnakeState {
+  return state.status === "playing" ? { ...state, status: "paused" } : state;
+}
+
+export function resumeSnake(state: SnakeState): SnakeState {
+  return state.status === "paused" && state.direction ? { ...state, status: "playing" } : state;
+}
+
+export function isValidSnakeState(value: unknown, allowTerminal = false): value is SnakeState {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const state = value as Partial<SnakeState>;
+  if (!Array.isArray(state.snake) || state.snake.length < 1 || state.snake.length > SNAKE_GRID_SIZE ** 2) return false;
+  const isPoint = (point: unknown): point is SnakePoint => Boolean(point) && typeof point === "object" && !Array.isArray(point)
+    && Number.isInteger((point as SnakePoint).x) && (point as SnakePoint).x >= 0 && (point as SnakePoint).x < SNAKE_GRID_SIZE
+    && Number.isInteger((point as SnakePoint).y) && (point as SnakePoint).y >= 0 && (point as SnakePoint).y < SNAKE_GRID_SIZE;
+  if (!state.snake.every(isPoint) || !isPoint(state.food)) return false;
+  const cells = state.snake.map((point) => `${point.x},${point.y}`);
+  if (new Set(cells).size !== cells.length || cells.includes(`${state.food.x},${state.food.y}`)) return false;
+  if (state.snake.slice(1).some((point, index) => Math.abs(point.x - state.snake![index].x) + Math.abs(point.y - state.snake![index].y) !== 1)) return false;
+  if (!Number.isInteger(state.score) || state.score !== (state.snake.length - 1) * 10) return false;
+  if (!Number.isInteger(state.rngState) || state.rngState! < 0 || state.rngState! > 0xffff_ffff) return false;
+  if (state.status !== "ready" && state.status !== "playing" && state.status !== "paused" && state.status !== "over") return false;
+  if (!allowTerminal && state.status === "over") return false;
+  if (state.status === "ready") return state.direction === null && state.snake.length === 1 && state.score === 0;
+  const direction = state.direction;
+  return Boolean(direction) && Number.isInteger(direction?.x) && Number.isInteger(direction?.y)
+    && Math.abs(direction!.x) + Math.abs(direction!.y) === 1;
 }
 
 export function tickSnake(state: SnakeState): SnakeState {

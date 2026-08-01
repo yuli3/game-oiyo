@@ -1,11 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { createSnakeGame, steerSnake, tickSnake, type SnakeState } from "./snake";
+import { createSnakeGame, pauseSnake, resumeSnake, steerSnake, tickSnake, type SnakeState } from "./snake";
 
 describe("snake engine", () => {
   it("waits for the first direction instead of killing an idle player", () => {
     const ready = createSnakeGame(42);
     expect(ready.status).toBe("ready");
     expect(tickSnake(ready)).toEqual(ready);
+  });
+
+  it("pauses hidden play and resumes only through a fresh direction", () => {
+    const playing = steerSnake(createSnakeGame(42), { x: 1, y: 0 });
+    const paused = pauseSnake(playing);
+    expect(paused.status).toBe("paused");
+    expect(tickSnake(paused)).toBe(paused);
+    expect(resumeSnake(paused).status).toBe("playing");
+    expect(steerSnake(paused, { x: 0, y: 1 }).status).toBe("playing");
   });
 
   it("is deterministic for the same seed and inputs", () => {
