@@ -1,30 +1,30 @@
 {
   "schema": "oiyo.game-modernization-inventory",
   "schemaVersion": 1,
-  "generatedAt": "2026-08-01T09:29:40.463Z",
+  "generatedAt": "2026-08-01T09:43:06.044Z",
   "scorePolicy": "Static scores are prioritization proxies; only scoreStatus=certified is a played AAA scorecard.",
   "summary": {
     "total": 53,
     "certified": 5,
     "modernized": 6,
     "byGeneration": {
-      "G1": 19,
+      "G1": 18,
       "G2": 0,
-      "G3": 25,
+      "G3": 26,
       "G4": 9
     },
     "byAction": {
       "maintain": 5,
       "polish": 7,
-      "modernize": 25,
-      "remake": 16
+      "modernize": 26,
+      "remake": 15
     },
     "highRisk": {
       "mobile": 33,
       "accessibility": 2,
       "performance": 9
     },
-    "workingTreeGames": 7
+    "workingTreeGames": 8
   },
   "games": [
     {
@@ -1072,10 +1072,10 @@
     {
       "slug": "snake-game",
       "genre": "arcade",
-      "generation": "G1",
+      "generation": "G3",
       "component": "src/components/games/SnakeGame.tsx",
-      "engine": null,
-      "tests": null,
+      "engine": "src/lib/games/snake.ts",
+      "tests": "src/lib/games/snake.test.ts",
       "restore": false,
       "daily": false,
       "progression": true,
@@ -1088,29 +1088,27 @@
       "mobileRisk": "medium",
       "accessibilityRisk": "low",
       "performanceRisk": "low",
-      "coreLoopScore": 8,
+      "coreLoopScore": 20,
       "feelScore": 7,
       "progressionScore": 10,
       "presentationScore": 6,
-      "reliabilityScore": 5,
+      "reliabilityScore": 11,
       "mobileScore": 6,
       "accessibilityScore": 5,
       "productScore": 4,
-      "total": 51,
+      "total": 69,
       "scoreStatus": "provisional-static",
       "certifiedScore": null,
-      "recommendedAction": "remake",
+      "recommendedAction": "modernize",
       "wave": "3",
       "dependencies": [
-        "pure-engine",
-        "characterization-tests",
         "persistence-decision",
         "mobile-qa"
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/snake-game.astro",
-      "componentLines": 194,
-      "sourceStatus": "committed"
+      "componentLines": 157,
+      "sourceStatus": "working-tree"
     },
     {
       "slug": "aim-trainer",
