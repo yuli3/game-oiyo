@@ -351,6 +351,21 @@
    "difficulties": ["classic"],
    "deterministicResume": true,
    "nonSessionPersistence": ["best-record", "legacy-best-migration"]
+  },
+  {
+   "gameId": "cave-dash",
+   "componentPath": "src/components/games/CaveDash.tsx",
+   "adapterPath": "src/lib/games/cave-dash-save.ts",
+   "supportsRestore": true,
+   "sessionStorageKey": "oiyo:cave-dash-state:v1",
+   "sourceSchema": "oiyo.cave-dash-save",
+   "sourceSchemaVersion": 1,
+   "adapterVersion": "cave-dash-session-adapter-v1",
+   "engineVersion": "cave-dash-physics-v1",
+   "modes": ["solo"],
+   "difficulties": ["endless-v1"],
+   "deterministicResume": true,
+   "nonSessionPersistence": ["best-record"]
   }
  ]
 }

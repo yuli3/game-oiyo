@@ -20,11 +20,12 @@ import { parseSolitaireSaveV2, type SolitaireSaveV2 } from "./solitaire-save";
 import { parseSnakeSave, type SnakeSaveV1 } from "./snake-save";
 import { parseKurodokoSaveV1, type KurodokoSaveV1 } from "./kurodoko-save";
 import { parseYahtzeeSave, type YahtzeeSaveV1 } from "./yahtzee-save";
+import { parseCaveDashSave, type CaveDashSaveV1 } from "./cave-dash-save";
 
 export const GAME_SESSION_SCHEMA = "oiyo.game-session" as const;
 export const GAME_SESSION_SCHEMA_VERSION = 1 as const;
 
-export type RestorableGameId = "chess" | "hearts" | "minesweeper" | "brick-breaker" | "solitaire" | "freecell" | "connect-four" | "gomoku" | "sudoku" | "puzzle15" | "checkers" | "reversi" | "game-2048" | "snake-game" | "kurodoko" | "yahtzee";
+export type RestorableGameId = "chess" | "hearts" | "minesweeper" | "brick-breaker" | "solitaire" | "freecell" | "connect-four" | "gomoku" | "sudoku" | "puzzle15" | "checkers" | "reversi" | "game-2048" | "snake-game" | "kurodoko" | "yahtzee" | "cave-dash";
 export type GameSessionMode = "local" | "ai" | "solo";
 
 export const RESTORABLE_GAME_CAPABILITIES = {
@@ -56,6 +57,7 @@ export const RESTORABLE_GAME_CAPABILITIES = {
   "snake-game": { modes: ["solo"], difficulties: ["classic-20x20"] },
   kurodoko: { modes: ["solo"], difficulties: ["daily", "easy", "medium", "hard"] },
   yahtzee: { modes: ["solo"], difficulties: ["classic"] },
+  "cave-dash": { modes: ["solo"], difficulties: ["endless-v1"] },
 } as const satisfies Record<RestorableGameId, {
   modes: readonly GameSessionMode[];
   difficulties: readonly string[];
@@ -432,6 +434,17 @@ const yahtzeeAdapter: Adapter<YahtzeeSaveV1> = {
   source: { format: "legacy-local-storage", schema: "oiyo.yahtzee-save", schemaVersion: 1, storageKey: "oiyo:yahtzee-state:v1" },
 };
 
+const caveDashAdapter: Adapter<CaveDashSaveV1> = {
+  adapterVersion: "cave-dash-session-adapter-v1", engineVersion: "cave-dash-physics-v1", gameId: "cave-dash",
+  modes: ["solo"], difficulties: ["endless-v1"],
+  parsePayload: (value) => {
+    if (!isRecord(value) || typeof value.savedAtEpochMs !== "number") return null;
+    return parseCaveDashSave(JSON.stringify(value), value.savedAtEpochMs);
+  },
+  payloadDifficulty: () => "endless-v1", payloadMode: () => "solo",
+  source: { format: "legacy-local-storage", schema: "oiyo.cave-dash-save", schemaVersion: 1, storageKey: "oiyo:cave-dash-state:v1" },
+};
+
 const adapters: Record<RestorableGameId, Adapter<unknown>> = {
   chess: chessAdapter as Adapter<unknown>,
   hearts: heartsAdapter as Adapter<unknown>,
@@ -449,6 +462,7 @@ const adapters: Record<RestorableGameId, Adapter<unknown>> = {
   "snake-game": snakeAdapter as Adapter<unknown>,
   kurodoko: kurodokoAdapter as Adapter<unknown>,
   yahtzee: yahtzeeAdapter as Adapter<unknown>,
+  "cave-dash": caveDashAdapter as Adapter<unknown>,
 };
 
 export function adaptChessSaveToSession(
@@ -489,7 +503,7 @@ export function adaptBrickBreakerSaveToSession(
 }
 
 export function adaptActiveGameSaveToSession(
-  gameId: "solitaire" | "freecell" | "connect-four" | "gomoku" | "sudoku" | "puzzle15" | "checkers" | "reversi" | "game-2048" | "snake-game" | "kurodoko" | "yahtzee",
+  gameId: "solitaire" | "freecell" | "connect-four" | "gomoku" | "sudoku" | "puzzle15" | "checkers" | "reversi" | "game-2048" | "snake-game" | "kurodoko" | "yahtzee" | "cave-dash",
   value: unknown,
   timing: GameSessionTiming,
 ): GameSessionEnvelope | null {

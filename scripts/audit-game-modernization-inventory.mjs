@@ -26,6 +26,7 @@ const certified = new Map([
   ["snake-game", 85],
   ["kurodoko", 87],
   ["yahtzee", 88],
+  ["cave-dash", 86],
 ]);
 const completed = new Set([...certified.keys(), "sudoku"]);
 const completedRisk = {
@@ -37,6 +38,7 @@ const completedRisk = {
   solitaire: { mobile: "medium", accessibility: "low", performance: "low" },
   kurodoko: { mobile: "low", accessibility: "low", performance: "low" },
   yahtzee: { mobile: "low", accessibility: "low", performance: "low" },
+  "cave-dash": { mobile: "low", accessibility: "low", performance: "low" },
 };
 const wave3 = new Set(["snake-game", "gomoku", "kurodoko", "yahtzee"]);
 const wave4 = new Set(["cave-dash", "dot-runner", "mahjong"]);
@@ -99,7 +101,7 @@ async function inspect(entry) {
   const accessibilityRisk = evidenceRisk?.accessibility ?? risk([!signals.aria ? "high" : "low", !signals.keyboard ? "medium" : "low", signals.canvas && !signals.liveRegion ? "medium" : "low"]);
   const performanceRisk = evidenceRisk?.performance ?? risk([signals.scene ? "high" : "low", signals.canvas && !signals.visibilitySafe ? "medium" : "low", componentLines > 1000 ? "medium" : "low"]);
   const generation = signals.scene ? "G4" : signals.engine && signals.tests && signals.persistence ? "G3" : signals.canvas ? "G2" : "G1";
-  const wave = wave3.has(entry.slug) ? "3" : completed.has(entry.slug) ? (entry.slug === "star-blaster" || entry.slug === "chess" || entry.slug === "minesweeper" ? "pilot" : "2") : wave4.has(entry.slug) ? "4" : "5";
+  const wave = wave3.has(entry.slug) ? "3" : wave4.has(entry.slug) ? "4" : completed.has(entry.slug) ? (entry.slug === "star-blaster" || entry.slug === "chess" || entry.slug === "minesweeper" ? "pilot" : "2") : "5";
   const certifiedScore = certified.get(entry.slug) ?? null;
   const recommendedAction = certifiedScore ? "maintain" : scores.total >= 78 ? "polish" : scores.total >= 62 ? "modernize" : "remake";
   return {

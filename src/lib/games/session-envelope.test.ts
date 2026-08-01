@@ -9,6 +9,7 @@ import { serializeBrickBreakerSave } from "./brick-breaker-save";
 import { createSnakeGame, steerSnake, tickSnake } from "./snake";
 import { generateKurodokoPuzzle, kurodokoDailySeed } from "./kurodoko";
 import { initializeGame as initializeYahtzee, rollDice as rollYahtzeeDice, scoreCategory as scoreYahtzeeCategory } from "./yahtzee";
+import { createCaveDash, flapCaveDash, stepCaveDash } from "./cave-dash";
 import { mulberry32 } from "./daily";
 import {
   chooseHeartsCpuCard,
@@ -143,6 +144,15 @@ describe("GameSessionEnvelope v1", () => {
     expect(envelope).toMatchObject({ gameId: "yahtzee", difficulty: "classic", mode: "solo", source: { storageKey: "oiyo:yahtzee-state:v1" } });
     expect(parseGameSessionEnvelope(serializeGameSessionEnvelope(envelope!))).toEqual(envelope);
     expect(adaptActiveGameSaveToSession("yahtzee", { ...payload, state: { ...state, isGameOver: true } }, TIMING)).toBeNull();
+  });
+  it("adapts deterministic Cave Dash progress and rejects terminal state", () => {
+    let state = createCaveDash(42);
+    for (let frame = 0; frame < 20; frame += 1) state = stepCaveDash(frame % 10 === 0 ? flapCaveDash(state) : state);
+    const payload = { version: 1 as const, state, savedAtEpochMs: Date.parse(TIMING.savedAt) };
+    const envelope = adaptActiveGameSaveToSession("cave-dash", payload, TIMING);
+    expect(envelope).toMatchObject({ gameId: "cave-dash", difficulty: "endless-v1", mode: "solo", source: { storageKey: "oiyo:cave-dash-state:v1" } });
+    expect(parseGameSessionEnvelope(serializeGameSessionEnvelope(envelope!))).toEqual(envelope);
+    expect(adaptActiveGameSaveToSession("cave-dash", { ...payload, state: { ...state, status: "over" } }, TIMING)).toBeNull();
   });
   it("adapts a resumable Chess v2 save with mode, difficulty and complete-state determinism", () => {
     const envelope = adaptChessSaveToSession(activeChessSave(), TIMING, {
@@ -304,8 +314,8 @@ describe("GameSessionEnvelope v1", () => {
 
   it("keeps unsupported games explicitly non-restorable", () => {
     const byId = new Map(capabilities.games.map((game) => [game.gameId, game]));
-    expect([...byId.values()].filter((game) => game.supportsRestore).map((game) => game.gameId)).toEqual(["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game", "kurodoko", "yahtzee"]);
-    for (const gameId of ["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game", "kurodoko", "yahtzee"] as const) {
+    expect([...byId.values()].filter((game) => game.supportsRestore).map((game) => game.gameId)).toEqual(["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game", "kurodoko", "yahtzee", "cave-dash"]);
+    for (const gameId of ["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game", "kurodoko", "yahtzee", "cave-dash"] as const) {
       expect(byId.get(gameId)?.modes).toEqual([...RESTORABLE_GAME_CAPABILITIES[gameId].modes]);
       expect(byId.get(gameId)?.difficulties).toEqual([...RESTORABLE_GAME_CAPABILITIES[gameId].difficulties]);
     }

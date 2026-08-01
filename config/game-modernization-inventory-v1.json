@@ -1,12 +1,12 @@
 {
   "schema": "oiyo.game-modernization-inventory",
   "schemaVersion": 1,
-  "generatedAt": "2026-08-01T22:44:19.550Z",
+  "generatedAt": "2026-08-01T23:47:47.099Z",
   "scorePolicy": "Static scores are prioritization proxies; only scoreStatus=certified is a played AAA scorecard.",
   "summary": {
     "total": 53,
-    "certified": 8,
-    "modernized": 9,
+    "certified": 9,
+    "modernized": 10,
     "byGeneration": {
       "G1": 16,
       "G2": 0,
@@ -14,9 +14,9 @@
       "G4": 9
     },
     "byAction": {
-      "maintain": 8,
+      "maintain": 9,
       "polish": 7,
-      "modernize": 25,
+      "modernize": 24,
       "remake": 13
     },
     "highRisk": {
@@ -24,7 +24,7 @@
       "accessibility": 2,
       "performance": 9
     },
-    "workingTreeGames": 8
+    "workingTreeGames": 7
   },
   "games": [
     {
@@ -1580,9 +1580,9 @@
       "genre": "arcade",
       "generation": "G3",
       "component": "src/components/games/CaveDash.tsx",
-      "engine": "src/lib/games/time-contracts.ts",
-      "tests": "src/lib/games/time-contracts.test.ts",
-      "restore": false,
+      "engine": "src/lib/games/cave-dash.ts",
+      "tests": "src/lib/games/cave-dash.test.ts",
+      "restore": true,
       "daily": false,
       "progression": true,
       "input": [
@@ -1590,32 +1590,28 @@
         "keyboard"
       ],
       "renderer": "canvas",
-      "audio": false,
-      "mobileRisk": "medium",
-      "accessibilityRisk": "medium",
+      "audio": true,
+      "mobileRisk": "low",
+      "accessibilityRisk": "low",
       "performanceRisk": "low",
-      "coreLoopScore": 18,
-      "feelScore": 10,
+      "coreLoopScore": 20,
+      "feelScore": 13,
       "progressionScore": 12,
-      "presentationScore": 9,
-      "reliabilityScore": 12,
-      "mobileScore": 5,
-      "accessibilityScore": 3,
+      "presentationScore": 11,
+      "reliabilityScore": 15,
+      "mobileScore": 7,
+      "accessibilityScore": 4,
       "productScore": 5,
-      "total": 74,
-      "scoreStatus": "provisional-static",
-      "certifiedScore": null,
-      "recommendedAction": "modernize",
+      "total": 87,
+      "scoreStatus": "certified",
+      "certifiedScore": 86,
+      "recommendedAction": "maintain",
       "wave": "4",
-      "dependencies": [
-        "persistence-decision",
-        "mobile-qa",
-        "accessibility-qa"
-      ],
+      "dependencies": [],
       "owner": "game",
       "route": "src/pages/[...lang]/cave-dash.astro",
-      "componentLines": 224,
-      "sourceStatus": "committed"
+      "componentLines": 295,
+      "sourceStatus": "working-tree"
     },
     {
       "slug": "stack-tower",
@@ -1902,7 +1898,7 @@
       "owner": "game",
       "route": "src/pages/[...lang]/kurodoko.astro",
       "componentLines": 303,
-      "sourceStatus": "working-tree"
+      "sourceStatus": "committed"
     },
     {
       "slug": "maze",
@@ -2143,7 +2139,7 @@
       "owner": "game",
       "route": "src/pages/[...lang]/yahtzee.astro",
       "componentLines": 375,
-      "sourceStatus": "working-tree"
+      "sourceStatus": "committed"
     }
   ]
 }
