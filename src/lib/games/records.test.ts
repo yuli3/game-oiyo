@@ -99,6 +99,14 @@ describe("records: condition-matched personal bests", () => {
     expect(recordBestForConditions("sudoku", 70, "seconds", base).value).toBe(70);
   });
 
+  it("keeps undo-assisted Solitaire times outside the unassisted cohort", () => {
+    const solitaire = { seed: "daily-2026-08-01", difficulty: "draw-1", assist: "none" as const };
+    recordBestForConditions("solitaire", 180, "seconds", solitaire);
+    recordBestForConditions("solitaire", 120, "seconds", { ...solitaire, assist: "undo" });
+    expect(getBestForConditions("solitaire", solitaire)?.value).toBe(180);
+    expect(getBestForConditions("solitaire", { ...solitaire, assist: "undo" })?.value).toBe(120);
+  });
+
   it("rejects incomplete or control-character conditions", () => {
     expect(() => recordBestForConditions("sudoku", 10, "seconds", { ...base, seed: "" })).toThrow(/exact seed/);
     expect(getBestForConditions("sudoku", { ...base, difficulty: "bad\nvalue" })).toBeNull();

@@ -97,7 +97,7 @@ export type BestRecord = { value: number; unit: "score" | "seconds"; extra?: str
 export type BestConditions = {
   seed: string;
   difficulty: string;
-  assist: "none" | "hint" | "solver";
+  assist: "none" | "hint" | "solver" | "undo";
 };
 export type ConditionalBestRecord = BestRecord & { conditions: BestConditions };
 export type ConditionalBestEntry = {
@@ -133,7 +133,7 @@ const isConditionValue = (value: unknown): value is string =>
   typeof value === "string" && value.length > 0 && value.length <= 128 && !/[\u0000-\u001f]/.test(value);
 const isBestConditions: Validator<BestConditions> = (value): value is BestConditions =>
   isObject(value) && isConditionValue(value.seed) && isConditionValue(value.difficulty) &&
-  (value.assist === "none" || value.assist === "hint" || value.assist === "solver");
+  (value.assist === "none" || value.assist === "hint" || value.assist === "solver" || value.assist === "undo");
 const isConditionalBest: Validator<ConditionalBestRecord> = (value): value is ConditionalBestRecord =>
   isObject(value) && isBestRecord(value) && isBestConditions((value as Record<string, unknown>).conditions);
 const conditionKey = (game: string, conditions: BestConditions) =>
