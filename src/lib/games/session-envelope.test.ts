@@ -371,16 +371,18 @@ describe("GameSessionEnvelope v1", () => {
 
   it("keeps unsupported games explicitly non-restorable", () => {
     const byId = new Map(capabilities.games.map((game) => [game.gameId, game]));
-    expect([...byId.values()].filter((game) => game.supportsRestore).map((game) => game.gameId)).toEqual(["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game", "kurodoko", "yahtzee", "cave-dash", "dot-runner", "mahjong", "water-sort", "psychology-wordle", "memory-card-game", "number-guessing", "wordle"]);
-    for (const gameId of ["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game", "kurodoko", "yahtzee", "cave-dash", "dot-runner", "mahjong", "water-sort", "psychology-wordle", "memory-card-game", "number-guessing", "wordle"] as const) {
+    expect([...byId.values()].filter((game) => game.supportsRestore).map((game) => game.gameId)).toEqual(["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game", "kurodoko", "yahtzee", "cave-dash", "dot-runner", "mahjong", "water-sort", "psychology-wordle", "memory-card-game", "number-guessing", "wordle", "janggi"]);
+    for (const gameId of ["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game", "kurodoko", "yahtzee", "cave-dash", "dot-runner", "mahjong", "water-sort", "psychology-wordle", "memory-card-game", "number-guessing", "wordle", "janggi"] as const) {
       expect(byId.get(gameId)?.modes).toEqual([...RESTORABLE_GAME_CAPABILITIES[gameId].modes]);
       expect(byId.get(gameId)?.difficulties).toEqual([...RESTORABLE_GAME_CAPABILITIES[gameId].difficulties]);
     }
   });
 
-  it("adapts the nine active-board save formats into the common envelope", async () => {
+  it("adapts the ten active-board save formats into the common envelope", async () => {
     const { dealSolitaire } = await import("./solitaire");
     const { createFreeCellGame } = await import("./freecell");
+    const { createJanggi, playJanggi } = await import("./janggi");
+    const janggiState = playJanggi(createJanggi(), { from: [3, 0], to: [4, 0] });
     const connectBoard = Array.from({ length: 6 }, () => Array(7).fill(0));
     connectBoard[5][3] = 1;
     const gomokuBoard = Array<1 | 2 | null>(225).fill(null); gomokuBoard[112] = 1;
@@ -408,6 +410,7 @@ describe("GameSessionEnvelope v1", () => {
       ["checkers", { version: 1, board: checkersBoard, isRedTurn: true, forcedFrom: null, mode: "local", level: 2 }],
       ["reversi", { version: 1, board: reversiBoard, isBlackTurn: true, mode: "local", level: 2 }],
       ["game-2048", { version: 1, board: [2, 4, null, null, null, null, null, null, null, null, null, null, null, null, null, 8], score: 12 }],
+      ["janggi", { version: 1, state: janggiState, mode: "ai", level: 2, savedAtEpochMs: Date.now() - 5_000 }],
     ] as const;
     for (const [gameId, payload] of fixtures) {
       const envelope = adaptActiveGameSaveToSession(gameId, payload, TIMING);

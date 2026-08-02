@@ -18,6 +18,7 @@ import {
 import { parseSudokuSaveV2, type SudokuSaveV2 } from "./sudoku-save";
 import { parseSolitaireSaveV2, type SolitaireSaveV2 } from "./solitaire-save";
 import { parseSnakeSave, type SnakeSaveV1 } from "./snake-save";
+import { parseJanggiSave, type JanggiSaveV1 } from "./janggi-save";
 import { parseKurodokoSaveV1, type KurodokoSaveV1 } from "./kurodoko-save";
 import { parseYahtzeeSave, type YahtzeeSaveV1 } from "./yahtzee-save";
 import { parseCaveDashSave, type CaveDashSaveV1 } from "./cave-dash-save";
@@ -32,7 +33,7 @@ import { parseWordleSave, type WordleSaveV1 } from "./wordle-save";
 export const GAME_SESSION_SCHEMA = "oiyo.game-session" as const;
 export const GAME_SESSION_SCHEMA_VERSION = 1 as const;
 
-export type RestorableGameId = "chess" | "hearts" | "minesweeper" | "brick-breaker" | "solitaire" | "freecell" | "connect-four" | "gomoku" | "sudoku" | "puzzle15" | "checkers" | "reversi" | "game-2048" | "snake-game" | "kurodoko" | "yahtzee" | "cave-dash" | "dot-runner" | "mahjong" | "water-sort" | "psychology-wordle" | "memory-card-game" | "number-guessing" | "wordle";
+export type RestorableGameId = "chess" | "hearts" | "minesweeper" | "brick-breaker" | "solitaire" | "freecell" | "connect-four" | "gomoku" | "sudoku" | "puzzle15" | "checkers" | "reversi" | "game-2048" | "snake-game" | "kurodoko" | "yahtzee" | "cave-dash" | "dot-runner" | "mahjong" | "water-sort" | "psychology-wordle" | "memory-card-game" | "number-guessing" | "wordle" | "janggi";
 export type GameSessionMode = "local" | "ai" | "solo";
 
 export const RESTORABLE_GAME_CAPABILITIES = {
@@ -60,6 +61,7 @@ export const RESTORABLE_GAME_CAPABILITIES = {
   puzzle15: { modes: ["solo"], difficulties: ["3x3", "4x4", "5x5"] },
   checkers: { modes: ["local", "ai"], difficulties: ["level-1", "level-2", "level-3"] },
   reversi: { modes: ["local", "ai"], difficulties: ["level-1", "level-2", "level-3"] },
+  janggi: { modes: ["local", "ai"], difficulties: ["level-1", "level-2", "level-3"] },
   "game-2048": { modes: ["solo"], difficulties: ["classic-4x4"] },
   "snake-game": { modes: ["solo"], difficulties: ["classic-20x20"] },
   kurodoko: { modes: ["solo"], difficulties: ["daily", "easy", "medium", "hard"] },
@@ -406,6 +408,16 @@ const reversiAdapter: Adapter<ReversiSave> = {
   payloadDifficulty: (value) => `level-${value.level}`, payloadMode: (value) => value.mode,
   source: { format: "legacy-local-storage", schema: "oiyo.reversi-save", schemaVersion: 1, storageKey: "oiyo:reversi-state:v1" },
 };
+const janggiAdapter: Adapter<JanggiSaveV1> = {
+  adapterVersion: "janggi-session-adapter-v1", engineVersion: "janggi-rules-v1", gameId: "janggi",
+  modes: ["local", "ai"], difficulties: ["level-1", "level-2", "level-3"],
+  parsePayload: (value) => {
+    if (!isRecord(value) || typeof value.savedAtEpochMs !== "number") return null;
+    return parseJanggiSave(JSON.stringify(value), value.savedAtEpochMs);
+  },
+  payloadDifficulty: (value) => `level-${value.level}`, payloadMode: (value) => value.mode,
+  source: { format: "legacy-local-storage", schema: "oiyo.janggi-save", schemaVersion: 1, storageKey: "oiyo:janggi-state:v1" },
+};
 
 const game2048Adapter: Adapter<Game2048Save> = {
   adapterVersion: "game-2048-session-adapter-v1", engineVersion: "game-2048-rules-v1", gameId: "game-2048",
@@ -541,6 +553,7 @@ const adapters: Record<RestorableGameId, Adapter<unknown>> = {
   puzzle15: puzzle15Adapter as Adapter<unknown>,
   checkers: checkersAdapter as Adapter<unknown>,
   reversi: reversiAdapter as Adapter<unknown>,
+  janggi: janggiAdapter as Adapter<unknown>,
   "game-2048": game2048Adapter as Adapter<unknown>,
   "snake-game": snakeAdapter as Adapter<unknown>,
   kurodoko: kurodokoAdapter as Adapter<unknown>,
@@ -593,7 +606,7 @@ export function adaptBrickBreakerSaveToSession(
 }
 
 export function adaptActiveGameSaveToSession(
-  gameId: "solitaire" | "freecell" | "connect-four" | "gomoku" | "sudoku" | "puzzle15" | "checkers" | "reversi" | "game-2048" | "snake-game" | "kurodoko" | "yahtzee" | "cave-dash" | "dot-runner" | "mahjong" | "water-sort" | "psychology-wordle" | "memory-card-game" | "number-guessing" | "wordle",
+  gameId: "solitaire" | "freecell" | "connect-four" | "gomoku" | "sudoku" | "puzzle15" | "checkers" | "reversi" | "game-2048" | "snake-game" | "kurodoko" | "yahtzee" | "cave-dash" | "dot-runner" | "mahjong" | "water-sort" | "psychology-wordle" | "memory-card-game" | "number-guessing" | "wordle" | "janggi",
   value: unknown,
   timing: GameSessionTiming,
 ): GameSessionEnvelope | null {

@@ -152,7 +152,7 @@ const JanggiBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                     {(['local', 'ai'] as GameMode[]).map((m) => (
                         <button key={m} onClick={() => switchMode(m)}
                             aria-pressed={mode === m}
-                            className={`px-3 py-1.5 text-xs font-bold transition-colors ${mode === m ? 'bg-stone-800 text-[#e8dcc4]' : 'bg-[#f4ebd0] text-stone-600 hover:bg-[#e8dcc4]'}`}>
+                            className={`min-h-11 px-3 py-1.5 text-xs font-bold transition-colors ${mode === m ? 'bg-stone-800 text-[#e8dcc4]' : 'bg-[#f4ebd0] text-stone-600 hover:bg-[#e8dcc4]'}`}>
                             {m === 'local' ? t.modeLocal : t.modeAi}
                         </button>
                     ))}
@@ -162,7 +162,7 @@ const JanggiBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                         {([1, 2, 3] as AiLevel[]).map((lv) => (
                             <button key={lv} onClick={() => { setLevel(lv); reset(); }}
                                 aria-pressed={level === lv}
-                                className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-colors ${level === lv ? 'border-stone-800 text-stone-800 bg-stone-800/10' : 'border-stone-800/30 text-stone-500 hover:bg-[#f4ebd0]'}`}>
+                                className={`min-h-11 px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-colors ${level === lv ? 'border-stone-800 text-stone-800 bg-stone-800/10' : 'border-stone-800/30 text-stone-500 hover:bg-[#f4ebd0]'}`}>
                                 {lv === 1 ? t.level1 : lv === 2 ? t.level2 : t.level3}
                             </button>
                         ))}

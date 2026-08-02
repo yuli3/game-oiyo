@@ -5,7 +5,7 @@ const root = resolve(new URL("..", import.meta.url).pathname);
 const fixturePath = resolve(root, "config/game-session-envelope-v1.fixtures.json");
 const fixture = JSON.parse(await readFile(fixturePath, "utf8"));
 const errors = [];
-const expectedGames = ["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game", "kurodoko", "yahtzee", "cave-dash", "dot-runner", "mahjong", "water-sort", "psychology-wordle", "memory-card-game", "number-guessing", "wordle"];
+const expectedGames = ["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game", "kurodoko", "yahtzee", "cave-dash", "dot-runner", "mahjong", "water-sort", "psychology-wordle", "memory-card-game", "number-guessing", "wordle", "janggi"];
 const restorableSymbols = {
   chess: ["loadChessSave", "storeChessSave"],
   hearts: ["loadHeartsSavedGame", "saveHeartsGame"],
@@ -31,6 +31,7 @@ const restorableSymbols = {
   "memory-card-game": ["loadMemoryCardSave", "storeMemoryCardSave"],
   "number-guessing": ["loadNumberGuessingSave", "storeNumberGuessingSave"],
   wordle: ["loadWordleSave", "storeWordleSave"],
+  janggi: ["loadJanggiSave", "storeJanggiSave"],
 };
 const restorableCapabilities = {
   chess: { modes: ["local", "ai"], difficulties: ["level-1", "level-2", "level-3"] },
@@ -57,6 +58,7 @@ const restorableCapabilities = {
   "memory-card-game": { modes: ["solo"], difficulties: ["4x4", "6x4", "6x6"] },
   "number-guessing": { modes: ["solo"], difficulties: ["easy", "normal", "hard"] },
   wordle: { modes: ["solo"], difficulties: ["daily", "random"] },
+  janggi: { modes: ["local", "ai"], difficulties: ["level-1", "level-2", "level-3"] },
 };
 
 if (fixture.schema !== "oiyo.game-session-capabilities" || fixture.schemaVersion !== 1) {
@@ -120,7 +122,7 @@ for (const game of fixture.games ?? []) {
 
 for (const gameId of expectedGames) if (!ids.has(gameId)) errors.push(`missing game capability: ${gameId}`);
 const restorable = (fixture.games ?? []).filter((game) => game.supportsRestore).map((game) => game.gameId);
-if (JSON.stringify(restorable) !== JSON.stringify(["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game", "kurodoko", "yahtzee", "cave-dash", "dot-runner", "mahjong", "water-sort", "psychology-wordle", "memory-card-game", "number-guessing", "wordle"])) {
+if (JSON.stringify(restorable) !== JSON.stringify(["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game", "kurodoko", "yahtzee", "cave-dash", "dot-runner", "mahjong", "water-sort", "psychology-wordle", "memory-card-game", "number-guessing", "wordle", "janggi"])) {
   errors.push(`restore inventory drift: ${restorable.join(", ")}`);
 }
 

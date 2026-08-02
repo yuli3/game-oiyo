@@ -332,10 +332,19 @@
    "sourceSchemaVersion": 1,
    "adapterVersion": "kurodoko-session-adapter-v1",
    "engineVersion": "kurodoko-rules-v1",
-   "modes": ["solo"],
-   "difficulties": ["daily", "easy", "medium", "hard"],
+   "modes": [
+    "solo"
+   ],
+   "difficulties": [
+    "daily",
+    "easy",
+    "medium",
+    "hard"
+   ],
    "deterministicResume": true,
-   "nonSessionPersistence": ["daily-streak"]
+   "nonSessionPersistence": [
+    "daily-streak"
+   ]
   },
   {
    "gameId": "yahtzee",
@@ -347,10 +356,17 @@
    "sourceSchemaVersion": 1,
    "adapterVersion": "yahtzee-session-adapter-v1",
    "engineVersion": "yahtzee-rules-v1",
-   "modes": ["solo"],
-   "difficulties": ["classic"],
+   "modes": [
+    "solo"
+   ],
+   "difficulties": [
+    "classic"
+   ],
    "deterministicResume": true,
-   "nonSessionPersistence": ["best-record", "legacy-best-migration"]
+   "nonSessionPersistence": [
+    "best-record",
+    "legacy-best-migration"
+   ]
   },
   {
    "gameId": "cave-dash",
@@ -362,10 +378,16 @@
    "sourceSchemaVersion": 1,
    "adapterVersion": "cave-dash-session-adapter-v1",
    "engineVersion": "cave-dash-physics-v1",
-   "modes": ["solo"],
-   "difficulties": ["endless-v1"],
+   "modes": [
+    "solo"
+   ],
+   "difficulties": [
+    "endless-v1"
+   ],
    "deterministicResume": true,
-   "nonSessionPersistence": ["best-record"]
+   "nonSessionPersistence": [
+    "best-record"
+   ]
   },
   {
    "gameId": "dot-runner",
@@ -377,10 +399,17 @@
    "sourceSchemaVersion": 1,
    "adapterVersion": "dot-runner-session-adapter-v1",
    "engineVersion": "dot-runner-physics-v1",
-   "modes": ["solo"],
-   "difficulties": ["endless-v1"],
+   "modes": [
+    "solo"
+   ],
+   "difficulties": [
+    "endless-v1"
+   ],
    "deterministicResume": true,
-   "nonSessionPersistence": ["best-record", "legacy-best-migration"]
+   "nonSessionPersistence": [
+    "best-record",
+    "legacy-best-migration"
+   ]
   },
   {
    "gameId": "mahjong",
@@ -392,10 +421,18 @@
    "sourceSchemaVersion": 1,
    "adapterVersion": "mahjong-session-adapter-v1",
    "engineVersion": "mahjong-closed-hand-v1",
-   "modes": ["ai"],
-   "difficulties": ["level-1", "level-2", "level-3"],
+   "modes": [
+    "ai"
+   ],
+   "difficulties": [
+    "level-1",
+    "level-2",
+    "level-3"
+   ],
    "deterministicResume": true,
-   "nonSessionPersistence": ["game-record"]
+   "nonSessionPersistence": [
+    "game-record"
+   ]
   },
   {
    "gameId": "water-sort",
@@ -407,8 +444,14 @@
    "sourceSchemaVersion": 1,
    "adapterVersion": "water-sort-session-adapter-v1",
    "engineVersion": "water-sort-rules-v1",
-   "modes": ["solo"],
-   "difficulties": ["easy", "medium", "hard"],
+   "modes": [
+    "solo"
+   ],
+   "difficulties": [
+    "easy",
+    "medium",
+    "hard"
+   ],
    "deterministicResume": true,
    "nonSessionPersistence": []
   },
@@ -422,10 +465,17 @@
    "sourceSchemaVersion": 1,
    "adapterVersion": "psychology-wordle-session-adapter-v1",
    "engineVersion": "psychology-wordle-rules-v1",
-   "modes": ["solo"],
-   "difficulties": ["daily", "random"],
+   "modes": [
+    "solo"
+   ],
+   "difficulties": [
+    "daily",
+    "random"
+   ],
    "deterministicResume": true,
-   "nonSessionPersistence": ["daily-streak"]
+   "nonSessionPersistence": [
+    "daily-streak"
+   ]
   },
   {
    "gameId": "memory-card-game",
@@ -437,10 +487,18 @@
    "sourceSchemaVersion": 1,
    "adapterVersion": "memory-card-session-adapter-v1",
    "engineVersion": "memory-card-rules-v1",
-   "modes": ["solo"],
-   "difficulties": ["4x4", "6x4", "6x6"],
+   "modes": [
+    "solo"
+   ],
+   "difficulties": [
+    "4x4",
+    "6x4",
+    "6x6"
+   ],
    "deterministicResume": true,
-   "nonSessionPersistence": ["conditional-personal-best"]
+   "nonSessionPersistence": [
+    "conditional-personal-best"
+   ]
   },
   {
    "gameId": "number-guessing",
@@ -452,10 +510,18 @@
    "sourceSchemaVersion": 1,
    "adapterVersion": "number-guessing-session-adapter-v1",
    "engineVersion": "number-guessing-rules-v1",
-   "modes": ["solo"],
-   "difficulties": ["easy", "normal", "hard"],
+   "modes": [
+    "solo"
+   ],
+   "difficulties": [
+    "easy",
+    "normal",
+    "hard"
+   ],
    "deterministicResume": true,
-   "nonSessionPersistence": ["difficulty-personal-best"]
+   "nonSessionPersistence": [
+    "difficulty-personal-best"
+   ]
   },
   {
    "gameId": "wordle",
@@ -467,10 +533,41 @@
    "sourceSchemaVersion": 1,
    "adapterVersion": "wordle-session-adapter-v1",
    "engineVersion": "wordle-rules-v1",
-   "modes": ["solo"],
-   "difficulties": ["daily", "random"],
+   "modes": [
+    "solo"
+   ],
+   "difficulties": [
+    "daily",
+    "random"
+   ],
    "deterministicResume": true,
-   "nonSessionPersistence": ["streak"]
+   "nonSessionPersistence": [
+    "streak"
+   ]
+  },
+  {
+   "gameId": "janggi",
+   "componentPath": "src/components/games/JanggiBoard.tsx",
+   "adapterPath": "src/lib/games/janggi-save.ts",
+   "supportsRestore": true,
+   "sessionStorageKey": "oiyo:janggi-state:v1",
+   "sourceSchema": "oiyo.janggi-save",
+   "sourceSchemaVersion": 1,
+   "adapterVersion": "janggi-session-adapter-v1",
+   "engineVersion": "janggi-rules-v1",
+   "modes": [
+    "local",
+    "ai"
+   ],
+   "difficulties": [
+    "level-1",
+    "level-2",
+    "level-3"
+   ],
+   "deterministicResume": true,
+   "nonSessionPersistence": [
+    "game-record"
+   ]
   }
  ]
 }
