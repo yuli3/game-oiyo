@@ -3,9 +3,7 @@ import { GameContainer } from '../ui/game/GamePrimitives';
 import { getBest, recordBest } from '../../lib/games/records';
 import { clearGame2048Save, loadGame2048Save, storeGame2048Save } from '../../lib/games/active-game-save';
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
-
-type Tile = { id: number; value: number; x: number; y: number; mergedFrom?: number[] };
-type Dir = 'up' | 'down' | 'left' | 'right';
+import { createGame2048, game2048Analysis, moveGame2048, restoreGame2048, type Game2048Direction, type Game2048State } from '../../lib/games/game-2048';
 
 const COPY = {
     ko: { title: "2048 게임", subtitle: "Growth Logic", score: "점수", best: "최고 점수", over: "게임 종료", win: "2048 달성!", reset: "다시 시작", hint: "방향키 또는 스와이프로 이동" },
@@ -17,54 +15,27 @@ const COPY = {
 } as const;
 
 const LEGACY_BEST_KEY = 'oiyo-2048-best'; // pre-unification key, read once for migration
+const EXTRA={ko:{pause:"일시정지",resume:"계속",restored:"게임을 복원했습니다",sound:"소리",max:"최대 타일",empty:"빈 칸"},en:{pause:"Pause",resume:"Resume",restored:"Game restored",sound:"Sound",max:"Max tile",empty:"empty cells"},ja:{pause:"一時停止",resume:"再開",restored:"ゲームを復元しました",sound:"音",max:"最大タイル",empty:"空きマス"},zh:{pause:"暂停",resume:"继续",restored:"已恢复游戏",sound:"声音",max:"最大方块",empty:"空格"},fr:{pause:"Pause",resume:"Reprendre",restored:"Partie restaurée",sound:"Son",max:"Tuile max",empty:"cases vides"},es:{pause:"Pausa",resume:"Continuar",restored:"Partida restaurada",sound:"Sonido",max:"Ficha máxima",empty:"casillas vacías"}} as const;
 
 const Game2048: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const t = COPY[(locale as keyof typeof COPY)] ?? COPY.en;
+    const x=EXTRA[(locale as keyof typeof EXTRA)]??EXTRA.en;
     const reducedMotion = usePrefersReducedMotion();
 
-    const [board, setBoard] = useState<(Tile | null)[][]>(Array(4).fill(null).map(() => Array(4).fill(null)));
-    const [score, setScore] = useState(0);
+    const [game, setGame] = useState<Game2048State>(()=>createGame2048(1));
     const [best, setBest] = useState(0);
-    const [status, setStatus] = useState<'playing' | 'won' | 'over'>('playing');
-    const idCounter = useRef(0);
+    const [paused,setPaused]=useState(false);const[restored,setRestored]=useState(false);const[muted,setMuted]=useState(false);const audio=useRef<AudioContext|null>(null);
     const touchStart = useRef<{ x: number; y: number } | null>(null);
-
-    const addRandomTile = (currentBoard: (Tile | null)[][]) => {
-        const emptyCells = [];
-        for (let y = 0; y < 4; y++) {
-            for (let x = 0; x < 4; x++) {
-                if (!currentBoard[y][x]) emptyCells.push({ x, y });
-            }
-        }
-        if (emptyCells.length > 0) {
-            const { x, y } = emptyCells[Math.floor(Math.random() * emptyCells.length)];
-            currentBoard[y][x] = { id: idCounter.current++, value: Math.random() < 0.9 ? 2 : 4, x, y };
-        }
-    };
 
     const initGame = useCallback(() => {
         clearGame2048Save();
-        const newBoard: (Tile | null)[][] = Array(4).fill(null).map(() => Array(4).fill(null));
-        addRandomTile(newBoard);
-        addRandomTile(newBoard);
-        setBoard(newBoard);
-        setScore(0);
-        setStatus('playing');
+        const seed=typeof crypto!=="undefined"?crypto.getRandomValues(new Uint32Array(1))[0]:Date.now()>>>0;setGame(createGame2048(seed));setPaused(false);setRestored(false);
     }, []);
 
     useEffect(() => {
         const saved = loadGame2048Save();
         if (saved) {
-            const restored: (Tile | null)[][] = Array(4).fill(null).map(() => Array(4).fill(null));
-            saved.board.forEach((value, index) => {
-                if (value !== null) {
-                    const x = index % 4, y = Math.floor(index / 4);
-                    restored[y][x] = { id: idCounter.current++, value, x, y };
-                }
-            });
-            setBoard(restored);
-            setScore(saved.score);
-            setStatus('playing');
+            const restoredState=restoreGame2048(saved.board,saved.score);if(restoredState){setGame(restoredState);setPaused(true);setRestored(true)}else initGame();
         } else {
             initGame();
         }
@@ -76,105 +47,26 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             if (Number.isFinite(legacy) && legacy > 0) setBest(recordBest('game-2048', legacy, 'score', undefined, { trackPlay: false }).value);
         } catch { /* ignore */ }
     }, [initGame]);
+    useEffect(()=>{const hidden=()=>{if(document.hidden)setPaused(true)};document.addEventListener("visibilitychange",hidden);return()=>{document.removeEventListener("visibilitychange",hidden);void audio.current?.close()}},[]);
 
     // Persist the active board after every applied move; terminal states are not resumable.
     useEffect(() => {
-        const tiles = board.flat();
-        if (tiles.every((tile) => tile === null)) return; // pre-init render
-        if (status !== 'playing') { clearGame2048Save(); return; }
-        storeGame2048Save({
-            board: Array.from({ length: 16 }, (_, index) => board[Math.floor(index / 4)][index % 4]?.value ?? null),
-            score,
-        });
-    }, [board, score, status]);
+        if (game.status !== 'playing') { clearGame2048Save(); return; } storeGame2048Save({board:game.board,score:game.score});
+    }, [game]);
 
-    // No move possible → game over
-    const canMove = (b: (Tile | null)[][]) => {
-        for (let y = 0; y < 4; y++) {
-            for (let x = 0; x < 4; x++) {
-                if (!b[y][x]) return true;
-                const v = b[y][x]!.value;
-                if (x < 3 && b[y][x + 1] && b[y][x + 1]!.value === v) return true;
-                if (y < 3 && b[y + 1][x] && b[y + 1][x]!.value === v) return true;
-            }
-        }
-        return false;
-    };
-
-    const move = useCallback((direction: Dir) => {
-        if (status !== 'playing') return;
-        let moved = false;
-        const newBoard = board.map((row) => [...row]);
-        let newScore = score;
-
-        const isVertical = direction === 'up' || direction === 'down';
-        const isForward = direction === 'right' || direction === 'down';
-
-        for (let i = 0; i < 4; i++) {
-            const line = [];
-            for (let j = 0; j < 4; j++) {
-                const x = isVertical ? i : j;
-                const y = isVertical ? j : i;
-                if (newBoard[y][x]) line.push(newBoard[y][x]);
-            }
-
-            if (isForward) line.reverse();
-
-            const mergedLine: (Tile | null)[] = [];
-            for (let j = 0; j < line.length; j++) {
-                const current = line[j]!;
-                if (j + 1 < line.length && line[j + 1]!.value === current.value) {
-                    const newValue = current.value * 2;
-                    mergedLine.push({ ...current, value: newValue, mergedFrom: [current.id, line[j + 1]!.id] });
-                    newScore += newValue;
-                    j++;
-                    moved = true;
-                } else {
-                    mergedLine.push(current);
-                }
-            }
-
-            while (mergedLine.length < 4) mergedLine.push(null);
-            if (isForward) mergedLine.reverse();
-
-            for (let j = 0; j < 4; j++) {
-                const x = isVertical ? i : j;
-                const y = isVertical ? j : i;
-                const oldTile = newBoard[y][x];
-                const newTile = mergedLine[j];
-                if (newTile) newTile.x = x;
-                if (newTile) newTile.y = y;
-                if (JSON.stringify(oldTile) !== JSON.stringify(newTile)) moved = true;
-                newBoard[y][x] = newTile;
-            }
-        }
-
-        if (!moved) return;
-
-        addRandomTile(newBoard);
-        setBoard(newBoard);
-        setScore(newScore);
-        if (newScore > best) {
-            setBest(recordBest('game-2048', newScore, 'score').value);
-        }
-        if (newBoard.flat().some((tl) => tl?.value === 2048)) {
-            setStatus('won');
-        } else if (!canMove(newBoard)) {
-            setStatus('over');
-        }
-    }, [board, score, best, status]);
+    const move = useCallback((direction: Game2048Direction) => { if(paused)return;const next=moveGame2048(game,direction);if(next===game)return;setGame(next);if(!muted){const context=audio.current??new AudioContext();audio.current=context;const o=context.createOscillator(),g=context.createGain();o.frequency.value=next.lastGain?440:220;g.gain.setValueAtTime(.04,context.currentTime);g.gain.exponentialRampToValueAtTime(.001,context.currentTime+.07);o.connect(g).connect(context.destination);o.start();o.stop(context.currentTime+.07)}if(next.score>best)setBest(recordBest('game-2048',next.score,'score').value); }, [game,best,paused,muted]);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (status !== 'playing') return;
+            if (game.status !== 'playing') return;
             if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
                 e.preventDefault();
-                move(e.key.replace('Arrow', '').toLowerCase() as Dir);
+                move(e.key.replace('Arrow', '').toLowerCase() as Game2048Direction);
             }
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [move, status]);
+    }, [move, game.status]);
 
     const onTouchStart = (e: React.TouchEvent) => {
         const tch = e.touches[0];
@@ -208,19 +100,22 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         };
         return colors[val] || 'bg-slate-900 text-white';
     };
+    const analysis=game2048Analysis(game);const tiles=game.board.map((value,index)=>value===null?null:{id:`${index}-${value}`,value,x:index%4,y:Math.floor(index/4)});
 
     return (
         <GameContainer title={t.title} subtitle={t.subtitle} onReset={initGame}>
             <div className="flex justify-end gap-2 mb-6">
+                <button type="button" onClick={()=>{setPaused(v=>!v);setRestored(false)}} className="min-h-11 px-3 rounded-xl border border-border font-bold text-xs">{paused?`▶ ${x.resume}`:`Ⅱ ${x.pause}`}</button><button type="button" onClick={()=>setMuted(v=>!v)} aria-pressed={muted} className="min-h-11 px-3 rounded-xl border border-border font-bold text-xs">{muted?'🔇':'🔊'} {x.sound}</button>
                 <div className="px-3 py-1.5 bg-muted rounded-xl text-center min-w-[72px]">
                     <div className="text-[10px] font-black text-muted-foreground uppercase leading-none">{t.score}</div>
-                    <div className="text-lg font-black text-primary leading-tight">{score.toLocaleString()}</div>
+                    <div className="text-lg font-black text-primary leading-tight">{game.score.toLocaleString()}</div>
                 </div>
                 <div className="px-3 py-1.5 bg-muted rounded-xl text-center min-w-[72px]">
                     <div className="text-[10px] font-black text-muted-foreground uppercase leading-none">{t.best}</div>
                     <div className="text-lg font-black text-chart-2 leading-tight">{best.toLocaleString()}</div>
                 </div>
             </div>
+            {(paused||restored)&&<p className="mb-3 text-center text-xs font-bold text-muted-foreground" role="status">{x.restored} · {x.pause}</p>}
 
             <div
                 className="relative aspect-square w-full max-w-sm mx-auto bg-muted/50 rounded-2xl p-2 grid grid-cols-4 grid-rows-4 gap-2 border border-border touch-none"
@@ -236,7 +131,7 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
                 {/* Real Tiles */}
                 <div className="absolute inset-0 p-2 pointer-events-none">
-                    {board.flat().map((tile) => tile && (
+                    {tiles.map((tile) => tile && (
                         <div
                             key={tile.id}
                             style={{
@@ -255,9 +150,10 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     ))}
                 </div>
 
-                {status !== 'playing' && (
+                {game.status !== 'playing' && (
                     <div className={`absolute inset-0 z-10 bg-background/80 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center space-y-4 animate-in fade-in ${reducedMotion ? 'duration-75' : 'zoom-in-95'}`} role="status" aria-live="polite">
-                        <h4 className="text-3xl font-black text-foreground">{status === 'won' ? t.win : t.over}</h4>
+                        <h4 className="text-3xl font-black text-foreground">{game.status === 'won' ? t.win : t.over}</h4>
+                        <p className="text-sm text-muted-foreground">{x.max} {analysis.max} · {analysis.empty} {x.empty}</p>
                         <button
                             onClick={initGame}
                             className="px-8 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity"

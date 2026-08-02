@@ -6,6 +6,8 @@ import {
   normalizeGuess,
   orderGuesses,
   scoreGuess,
+  parseKoreanSemantle,
+  serializeKoreanSemantle,
   type Guess,
   type SimilarityTable,
 } from "./korean-semantle";
@@ -36,6 +38,19 @@ describe("korean-semantle: normalizeGuess", () => {
   it("trims and strips internal whitespace", () => {
     expect(normalizeGuess("  바다 ")).toBe("바다");
     expect(normalizeGuess("바 다")).toBe("바다");
+  });
+});
+
+describe("korean-semantle: active save", () => {
+  it("replays an active puzzle and rejects terminal or mismatched payloads", () => {
+    const guess = scoreGuess(TABLE, "바닷가");
+    if (!guess.ok) throw new Error("fixture");
+    const raw = serializeKoreanSemantle("daily-a", [guess.guess], 1000);
+    expect(parseKoreanSemantle(raw, "daily-a", TABLE, 2000)?.[0].rank).toBe(2);
+    expect(parseKoreanSemantle(raw, "daily-b", TABLE, 2000)).toBeNull();
+    const solved = scoreGuess(TABLE, "바다");
+    if (!solved.ok) throw new Error("fixture");
+    expect(parseKoreanSemantle(serializeKoreanSemantle("daily-a", [solved.guess], 1000), "daily-a", TABLE, 2000)).toBeNull();
   });
 });
 

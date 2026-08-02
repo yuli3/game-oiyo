@@ -1,402 +1,50 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getStreak, recordStreak, type StreakStats } from '../../lib/games/records';
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
+import { createWordle, evaluateWordleGuess, inputWordle, submitWordle, wordleDateSeed, type WordleMark, type WordleMode, type WordleState } from '../../lib/games/wordle';
+import { clearWordleSave, loadWordleSave, storeWordleSave } from '../../lib/games/wordle-save';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-type TileState = 'empty' | 'tbd' | 'correct' | 'present' | 'absent';
-type GameStatus = 'playing' | 'won' | 'lost' | 'loading';
-type WordLength = 4 | 5 | 6;
-
-interface TileData { letter: string; state: TileState }
-
-// ─── Constants ────────────────────────────────────────────────────────────────
-const MAX_GUESSES = 6;
-const WORD_LENGTH: WordLength = 5;
-const DATA_BASE = '/data/wordle';
-
-const KEYBOARD_ROWS = [
-  ['Q','W','E','R','T','Y','U','I','O','P'],
-  ['A','S','D','F','G','H','J','K','L'],
-  ['ENTER','Z','X','C','V','B','N','M','⌫'],
-];
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-/** Pick today's word deterministically from the list */
-function getDailyWord(list: string[]): string {
-  const epoch = new Date('2024-01-01').getTime();
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const dayIndex = Math.floor((today.getTime() - epoch) / 86400000);
-  return list[((dayIndex % list.length) + list.length) % list.length].toUpperCase();
-}
-
-function evaluateGuess(guess: string, target: string): TileState[] {
-  const result: TileState[] = Array(WORD_LENGTH).fill('absent');
-  const targetArr = target.split('');
-  const guessArr = guess.split('');
-  const used = Array(WORD_LENGTH).fill(false);
-
-  // First pass: correct positions
-  for (let i = 0; i < WORD_LENGTH; i++) {
-    if (guessArr[i] === targetArr[i]) {
-      result[i] = 'correct';
-      used[i] = true;
-    }
-  }
-  // Second pass: present but wrong position
-  for (let i = 0; i < WORD_LENGTH; i++) {
-    if (result[i] === 'correct') continue;
-    const idx = targetArr.findIndex((c, j) => c === guessArr[i] && !used[j]);
-    if (idx !== -1) {
-      result[i] = 'present';
-      used[idx] = true;
-    }
-  }
-  return result;
-}
-
-// ─── Locale copy ─────────────────────────────────────────────────────────────
+const DATA_BASE = '/data/wordle'; const ROWS = [['Q','W','E','R','T','Y','U','I','O','P'], ['A','S','D','F','G','H','J','K','L'], ['ENTER','Z','X','C','V','B','N','M','⌫']];
+const localDateKey = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+const formatTime = (ms: number) => `${Math.floor(ms / 60000)}:${String(Math.floor(ms / 1000) % 60).padStart(2, '0')}`;
 const COPY = {
-  ko: {
-    subtitle: '매일 새로운 5글자 영단어 퍼즐',
-    loading: '단어 불러오는 중…',
-    loadFail: '단어 데이터를 불러오지 못했습니다.',
-    notEnough: '글자 수가 부족합니다',
-    notInList: '단어 목록에 없습니다',
-    playAgain: '🎉 한 번 더',
-    tryAgain: '🔄 다시 도전',
-    theWordWas: '정답:',
-    hint: '매일 새 단어가 제공됩니다. 실제 키보드 또는 위 자판을 사용하세요.',
-    winMsgs: ['천재!', '대단해요!', '인상적!', '멋져요!', '좋아요!', '휴, 아슬아슬!'],
-    stats: (s: StreakStats) => `🔥 연승 ${s.currentStreak} · 최고 연승 ${s.maxStreak} · ${s.played}판 ${s.won}승`,
-  },
-  en: {
-    subtitle: 'Daily 5-letter word puzzle',
-    loading: 'Loading words…',
-    loadFail: 'Failed to load word data.',
-    notEnough: 'Not enough letters',
-    notInList: 'Not in word list',
-    playAgain: '🎉 Play Again',
-    tryAgain: '🔄 Try Again',
-    theWordWas: 'The word was:',
-    hint: 'A new word is available each day. Use physical keyboard or tap letters above.',
-    winMsgs: ['Genius!', 'Magnificent!', 'Impressive!', 'Splendid!', 'Great!', 'Phew!'],
-    stats: (s: StreakStats) => `🔥 Streak ${s.currentStreak} · Best ${s.maxStreak} · ${s.won}/${s.played} won`,
-  },
-  ja: {
-    subtitle: '毎日新しい5文字の英単語パズル',
-    loading: '単語を読み込み中…',
-    loadFail: '単語データを読み込めませんでした。',
-    notEnough: '文字数が足りません',
-    notInList: '単語リストにありません',
-    playAgain: '🎉 もう一度',
-    tryAgain: '🔄 再挑戦',
-    theWordWas: '正解:',
-    hint: '毎日新しい単語が出題されます。キーボードまたは上の文字をタップ。',
-    winMsgs: ['天才！', '見事！', '印象的！', '素晴らしい！', 'いいね！', 'ふう、危なかった！'],
-    stats: (s: StreakStats) => `🔥 連勝 ${s.currentStreak} · 最高連勝 ${s.maxStreak} · ${s.played}戦${s.won}勝`,
-  },
-  zh: {
-    subtitle: '每日5字母英文单词谜题',
-    loading: '正在加载单词…',
-    loadFail: '无法加载单词数据。',
-    notEnough: '字母数不足',
-    notInList: '不在单词表中',
-    playAgain: '🎉 再来一局',
-    tryAgain: '🔄 再试一次',
-    theWordWas: '答案:',
-    hint: '每天更新一个新单词。可用实体键盘或点击上方字母。',
-    winMsgs: ['天才！', '太棒了！', '了不起！', '精彩！', '不错！', '好险！'],
-    stats: (s: StreakStats) => `🔥 连胜 ${s.currentStreak} · 最高连胜 ${s.maxStreak} · ${s.played}局${s.won}胜`,
-  },
-  fr: {
-    subtitle: 'Puzzle quotidien : mot anglais de 5 lettres',
-    loading: 'Chargement des mots…',
-    loadFail: 'Échec du chargement des mots.',
-    notEnough: 'Pas assez de lettres',
-    notInList: 'Absent de la liste',
-    playAgain: '🎉 Rejouer',
-    tryAgain: '🔄 Réessayer',
-    theWordWas: 'Le mot était :',
-    hint: 'Un nouveau mot chaque jour. Clavier physique ou lettres ci-dessus.',
-    winMsgs: ['Génie !', 'Magnifique !', 'Impressionnant !', 'Splendide !', 'Super !', 'Ouf !'],
-    stats: (s: StreakStats) => `🔥 Série ${s.currentStreak} · Meilleure série ${s.maxStreak} · ${s.won}/${s.played} gagnées`,
-  },
-  es: {
-    subtitle: 'Puzle diario: palabra inglesa de 5 letras',
-    loading: 'Cargando palabras…',
-    loadFail: 'No se pudieron cargar las palabras.',
-    notEnough: 'Faltan letras',
-    notInList: 'No está en la lista',
-    playAgain: '🎉 Jugar otra vez',
-    tryAgain: '🔄 Reintentar',
-    theWordWas: 'La palabra era:',
-    hint: 'Cada día una palabra nueva. Teclado físico o letras de arriba.',
-    winMsgs: ['¡Genio!', '¡Magnífico!', '¡Impresionante!', '¡Espléndido!', '¡Genial!', '¡Uf!'],
-    stats: (s: StreakStats) => `🔥 Racha ${s.currentStreak} · Mejor racha ${s.maxStreak} · ${s.won}/${s.played} ganadas`,
-  },
-} as const;
-
-// ─── Tile ─────────────────────────────────────────────────────────────────────
-// Wordle green/yellow via semantic tokens (success/warning) per design convention
-const TILE_CLASSES: Record<TileState, string> = {
-  empty: 'border-2 border-muted bg-background text-foreground',
-  tbd: 'border-2 border-muted-foreground bg-background text-foreground',
-  correct: 'border-2 border-success bg-success text-success-foreground',
-  present: 'border-2 border-warning bg-warning text-warning-foreground',
-  absent: 'border-2 border-muted bg-muted/50 text-muted-foreground',
+  ko: { subtitle:'매일 새로운 5글자 영단어 퍼즐', loading:'단어 불러오는 중…', fail:'단어 데이터를 불러오지 못했습니다', daily:'오늘의 단어', random:'무작위 연습', restored:'이전 게임을 일시정지 상태로 복원했습니다', short:'글자 수가 부족합니다', invalid:'단어 목록에 없습니다', pause:'일시정지', resume:'계속하기', sound:'소리', won:'정답입니다!', lost:(w:string)=>`정답은 ${w}`, again:'다시 하기', attempts:'시도', time:'시간', streak:(s:StreakStats)=>`연승 ${s.currentStreak} · 최고 ${s.maxStreak} · ${s.won}/${s.played}승`, share:'결과 복사', correct:'정확한 위치', present:'다른 위치에 있음', absent:'단어에 없음', hint:'실제 키보드 또는 화면 자판을 사용하세요.' },
+  en: { subtitle:'Daily 5-letter word puzzle', loading:'Loading words…', fail:'Failed to load word data', daily:'Daily word', random:'Random practice', restored:'Previous game restored and paused', short:'Not enough letters', invalid:'Not in word list', pause:'Pause', resume:'Resume', sound:'Sound', won:'Correct!', lost:(w:string)=>`The word was ${w}`, again:'Play again', attempts:'Attempts', time:'Time', streak:(s:StreakStats)=>`Streak ${s.currentStreak} · Best ${s.maxStreak} · ${s.won}/${s.played} won`, share:'Copy result', correct:'Correct position', present:'Present elsewhere', absent:'Not in word', hint:'Use your physical keyboard or the keys on screen.' },
+  ja: { subtitle:'毎日新しい5文字の英単語パズル', loading:'単語を読み込み中…', fail:'単語データを読み込めません', daily:'今日の単語', random:'ランダム練習', restored:'前のゲームを一時停止で復元しました', short:'文字数が足りません', invalid:'単語リストにありません', pause:'一時停止', resume:'再開', sound:'サウンド', won:'正解！', lost:(w:string)=>`正解は ${w}`, again:'もう一度', attempts:'回数', time:'時間', streak:(s:StreakStats)=>`連勝 ${s.currentStreak} · 最高 ${s.maxStreak} · ${s.won}/${s.played}勝`, share:'結果をコピー', correct:'正しい位置', present:'別の位置にある', absent:'単語にない', hint:'キーボードまたは画面のキーを使用してください。' },
+  zh: { subtitle:'每日5字母英文单词谜题', loading:'正在加载单词…', fail:'无法加载单词数据', daily:'每日单词', random:'随机练习', restored:'已恢复并暂停上一局', short:'字母数不足', invalid:'不在单词表中', pause:'暂停', resume:'继续', sound:'声音', won:'答对了！', lost:(w:string)=>`答案是 ${w}`, again:'再玩一次', attempts:'次数', time:'时间', streak:(s:StreakStats)=>`连胜 ${s.currentStreak} · 最佳 ${s.maxStreak} · ${s.won}/${s.played}胜`, share:'复制结果', correct:'位置正确', present:'在其他位置', absent:'单词中没有', hint:'请使用实体键盘或屏幕键盘。' },
+  fr: { subtitle:'Mot anglais quotidien en 5 lettres', loading:'Chargement des mots…', fail:'Échec du chargement des mots', daily:'Mot du jour', random:'Entraînement aléatoire', restored:'Partie restaurée en pause', short:'Pas assez de lettres', invalid:'Absent de la liste', pause:'Pause', resume:'Reprendre', sound:'Son', won:'Correct !', lost:(w:string)=>`Le mot était ${w}`, again:'Rejouer', attempts:'Essais', time:'Temps', streak:(s:StreakStats)=>`Série ${s.currentStreak} · Record ${s.maxStreak} · ${s.won}/${s.played} gagnées`, share:'Copier le résultat', correct:'Bonne position', present:'Présent ailleurs', absent:'Absent du mot', hint:'Utilisez le clavier physique ou les touches à l’écran.' },
+  es: { subtitle:'Palabra inglesa diaria de 5 letras', loading:'Cargando palabras…', fail:'No se pudieron cargar las palabras', daily:'Palabra diaria', random:'Práctica aleatoria', restored:'Partida restaurada y pausada', short:'Faltan letras', invalid:'No está en la lista', pause:'Pausa', resume:'Continuar', sound:'Sonido', won:'¡Correcto!', lost:(w:string)=>`La palabra era ${w}`, again:'Jugar otra vez', attempts:'Intentos', time:'Tiempo', streak:(s:StreakStats)=>`Racha ${s.currentStreak} · Mejor ${s.maxStreak} · ${s.won}/${s.played} ganadas`, share:'Copiar resultado', correct:'Posición correcta', present:'Está en otra posición', absent:'No está en la palabra', hint:'Usa el teclado físico o las teclas en pantalla.' },
 };
+const markSymbol: Record<WordleMark,string> = { correct:'✓', present:'◆', absent:'×' };
+const markClass: Record<WordleMark,string> = { correct:'border-green-700 bg-green-700 text-white', present:'border-amber-500 bg-amber-400 text-slate-950', absent:'border-slate-500 bg-slate-500 text-white' };
 
-const Tile: React.FC<{ data: TileData; animate?: boolean; reducedMotion: boolean }> = ({ data, animate, reducedMotion }) => (
-  <div
-    className={`w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center text-xl sm:text-2xl font-black rounded-lg select-none ${reducedMotion ? 'transition-none' : 'transition-all duration-200'} ${TILE_CLASSES[data.state]} ${!reducedMotion && animate && data.state === 'tbd' ? 'scale-110' : ''}`}
-    aria-label={`${data.letter || 'empty'} ${data.state}`}
-  >
-    {data.letter}
-  </div>
-);
-
-// ─── Keyboard key ─────────────────────────────────────────────────────────────
-function keyClass(letter: string, usedMap: Record<string, TileState>): string {
-  const s = usedMap[letter];
-  if (s === 'correct') return 'bg-success text-success-foreground border-success';
-  if (s === 'present') return 'bg-warning text-warning-foreground border-warning';
-  if (s === 'absent') return 'bg-muted/60 text-muted-foreground border-muted';
-  return 'bg-muted/30 text-foreground border-border hover:bg-muted/60';
+export default function WordleGame({ locale='en' }: { locale?:string }) {
+  const t = COPY[locale as keyof typeof COPY] ?? COPY.en; const reduced = usePrefersReducedMotion();
+  const [targets,setTargets]=useState<string[]>([]); const [valid,setValid]=useState<Set<string>>(new Set()); const [game,setGame]=useState<WordleState|null>(null); const [loading,setLoading]=useState(true); const [error,setError]=useState(''); const [paused,setPaused]=useState(false); const [restored,setRestored]=useState(false); const [muted,setMuted]=useState(false); const [elapsed,setElapsed]=useState(0); const [stats,setStats]=useState<StreakStats|null>(null);
+  const elapsedBase=useRef(0); const startedAt=useRef<number|null>(null); const audio=useRef<AudioContext|null>(null); const recorded=useRef(false);
+  const target=game && targets[game.targetIndex] ? targets[game.targetIndex].toUpperCase() : '';
+  const tone=(frequency:number,duration=.07)=>{if(muted||typeof window==='undefined')return; const c=audio.current??new AudioContext();audio.current=c;const o=c.createOscillator(),g=c.createGain();o.frequency.value=frequency;g.gain.setValueAtTime(.03,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+duration);o.connect(g).connect(c.destination);o.start();o.stop(c.currentTime+duration);};
+  const start=(mode:WordleMode)=>{if(!targets.length)return;const date=mode==='daily'?localDateKey():null;const seed=mode==='daily'?wordleDateSeed(date!):(crypto.getRandomValues?.(new Uint32Array(1))[0]??Date.now())>>>0;clearWordleSave();setGame(createWordle(seed,targets.length,mode,date));setPaused(false);setRestored(false);setElapsed(0);elapsedBase.current=0;startedAt.current=Date.now();recorded.current=false;setError('');};
+  useEffect(()=>{Promise.all([fetch(`${DATA_BASE}/target-words-5.json`).then(r=>{if(!r.ok)throw Error();return r.json() as Promise<string[]>;}),fetch(`${DATA_BASE}/valid-words-5.json`).then(r=>{if(!r.ok)throw Error();return r.json() as Promise<string[]>;})]).then(([targetWords,validWords])=>{setTargets(targetWords);setValid(new Set(validWords.map(w=>w.toUpperCase())));const saved=loadWordleSave();if(saved&&saved.state.targetCount===targetWords.length&&!(saved.state.mode==='daily'&&saved.state.dateKey!==localDateKey())){setGame(saved.state);setElapsed(saved.elapsedMs);elapsedBase.current=saved.elapsedMs;setPaused(true);setRestored(true);}else{clearWordleSave();const date=localDateKey();setGame(createWordle(wordleDateSeed(date),targetWords.length,'daily',date));startedAt.current=Date.now();}setLoading(false);}).catch(()=>{setError(t.fail);setLoading(false);});setStats(getStreak('wordle'));return()=>{void audio.current?.close();};},[]);
+  useEffect(()=>{if(!game||game.status!=='playing'||paused||startedAt.current===null)return;const id=setInterval(()=>setElapsed(elapsedBase.current+Date.now()-(startedAt.current??Date.now())),250);return()=>clearInterval(id);},[game?.status,paused]);
+  useEffect(()=>{if(!game)return;if(game.status==='playing')storeWordleSave(game,elapsed);else{clearWordleSave();if(!recorded.current){recorded.current=true;setStats(recordStreak('wordle',game.status==='won'));}}},[game]);
+  const pause=useCallback(()=>{if(!game||game.status!=='playing')return;if(paused){startedAt.current=Date.now();setPaused(false);}else{elapsedBase.current=elapsed;startedAt.current=null;setPaused(true);storeWordleSave(game,elapsed);}},[game,paused,elapsed]);
+  useEffect(()=>{const hidden=()=>{if(document.hidden&&!paused)pause();};document.addEventListener('visibilitychange',hidden);return()=>document.removeEventListener('visibilitychange',hidden);},[pause,paused]);
+  const submit=useCallback(()=>{if(!game||paused||!target)return;if(game.current.length<5){setError(t.short);tone(160);return;}if(!valid.has(game.current)){setError(t.invalid);tone(160);return;}const next=submitWordle(game,target,true);setError('');setRestored(false);setGame(next);tone(next.status==='won'?880:next.status==='lost'?180:520,next.status==='playing'?.08:.22);},[game,paused,target,valid,t]);
+  const key=useCallback((value:string)=>{if(!game||paused||game.status!=='playing')return;if(value==='ENTER'){submit();return;}const normalized=value==='⌫'?'BACKSPACE':value;const next=inputWordle(game,normalized);if(next!==game){setGame(next);setError('');tone(normalized==='BACKSPACE'?240:360,.035);}},[game,paused,submit]);
+  useEffect(()=>{const handler=(event:KeyboardEvent)=>{if(event.ctrlKey||event.altKey||event.metaKey)return;const value=event.key==='Enter'?'ENTER':event.key==='Backspace'?'BACKSPACE':event.key.toUpperCase();if(value==='ENTER'||value==='BACKSPACE'||/^[A-Z]$/.test(value)){event.preventDefault();key(value);}};window.addEventListener('keydown',handler);return()=>window.removeEventListener('keydown',handler);},[key]);
+  const evidence=useMemo(()=>{const order={absent:1,present:2,correct:3};const map:Record<string,WordleMark>={};if(!target)return map;for(const guess of game?.guesses??[])evaluateWordleGuess(guess,target).forEach((mark,i)=>{if(!map[guess[i]]||order[mark]>order[map[guess[i]]])map[guess[i]]=mark;});return map;},[game?.guesses,target]);
+  const share=async()=>{if(!game||!target)return;const grid=game.guesses.map(g=>evaluateWordleGuess(g,target).map(m=>m==='correct'?'🟩':m==='present'?'🟨':'⬜').join('')).join('\n');try{await navigator.clipboard.writeText(`OIYO Wordle ${game.mode} ${game.status==='won'?game.guesses.length:'X'}/6\n${grid}`);}catch{/* best effort */}};
+  if(loading)return <div className="flex min-h-64 flex-col items-center justify-center gap-3"><div className={`h-8 w-8 rounded-full border-4 border-primary border-t-transparent ${reduced?'':'animate-spin'}`}/><p>{t.loading}</p></div>;
+  if(!game)return <p role="alert" className="p-6 text-center font-bold text-red-700">{error||t.fail}</p>;
+  const display=[...game.guesses,game.current,...Array(Math.max(0,6-game.guesses.length-1)).fill('')].slice(0,6);
+  return <div className="not-prose mx-auto flex max-w-lg select-none flex-col items-center gap-4 px-1 py-5">
+    <div className="w-full text-center"><h2 className="text-3xl font-black tracking-widest">WORDLE</h2><p className="text-xs font-bold text-muted-foreground">{t.subtitle}</p>{stats&&stats.played>0&&<p className="mt-1 text-xs">{t.streak(stats)}</p>}</div>
+    <div className="flex w-full flex-wrap justify-center gap-2"><button type="button" onClick={()=>start('daily')} aria-pressed={game.mode==='daily'} className={`min-h-11 rounded-xl border px-4 text-sm font-bold ${game.mode==='daily'?'bg-primary text-primary-foreground':''}`}>{t.daily}</button><button type="button" onClick={()=>start('random')} aria-pressed={game.mode==='random'} className={`min-h-11 rounded-xl border px-4 text-sm font-bold ${game.mode==='random'?'bg-primary text-primary-foreground':''}`}>{t.random}</button><button type="button" onClick={pause} className="min-h-11 rounded-xl border px-3" aria-pressed={paused}>{paused?'▶':'Ⅱ'}<span className="sr-only">{paused?t.resume:t.pause}</span></button><button type="button" onClick={()=>setMuted(v=>!v)} className="min-h-11 rounded-xl border px-3" aria-pressed={muted}>{muted?'🔇':'🔊'}<span className="sr-only">{t.sound}</span></button></div>
+    <p className="min-h-5 text-xs font-bold" role="status" aria-live="polite">{restored?t.restored:`${game.mode==='daily'?t.daily:t.random} · ${t.time} ${formatTime(elapsed)}`}</p>
+    <div className="grid gap-1.5" role="grid" aria-label="Wordle">{display.map((word,row)=>{const submitted=row<game.guesses.length;const marks=submitted?evaluateWordleGuess(word,target):[];return <div key={row} className="flex gap-1.5" role="row">{Array.from({length:5},(_,column)=>{const mark=marks[column];const letter=word[column]??'';return <div key={column} role="gridcell" aria-label={`${letter||'empty'}${mark?` ${t[mark]}`:''}`} className={`flex h-12 w-12 items-center justify-center rounded-lg border-2 text-xl font-black ${mark?markClass[mark]:letter?'border-slate-600':'border-slate-300'} ${reduced?'':'transition-transform'}`}>{letter}{mark&&<span className="ml-0.5 text-[9px]" aria-hidden="true">{markSymbol[mark]}</span>}</div>;})}</div>;})}</div>
+    {game.status!=='playing'&&<div className={`w-full rounded-2xl border-2 p-4 text-center ${game.status==='won'?'border-green-400 bg-green-50':'border-red-300 bg-red-50'}`} role="status" aria-live="assertive"><p className="text-xl font-black">{game.status==='won'?t.won:t.lost(target)}</p><p className="mt-1 text-sm font-bold">{t.attempts} {game.guesses.length}/6 · {t.time} {formatTime(elapsed)}</p><div className="mt-3 flex justify-center gap-2"><button type="button" onClick={()=>start(game.mode)} className="min-h-11 rounded-xl bg-primary px-4 font-bold text-primary-foreground">{t.again}</button><button type="button" onClick={share} className="min-h-11 rounded-xl border px-4 font-bold">{t.share}</button></div></div>}
+    <p id="wordle-error" className="min-h-5 text-sm font-bold text-red-700" role="alert">{error}</p>
+    <div className="flex w-full max-w-md flex-col gap-1" aria-label="Keyboard">{ROWS.map((row,i)=><div key={i} className="flex w-full gap-1">{row.map(k=>{const mark=evidence[k];return <button key={k} type="button" onClick={()=>key(k)} disabled={paused||game.status!=='playing'} aria-label={k==='⌫'?'Backspace':k} className={`h-12 min-w-0 rounded-md border text-xs font-black ${k.length>1?'flex-[1.5]':'flex-1'} ${mark?markClass[mark]:'bg-muted/40'} disabled:opacity-50`}>{k}{mark&&<span className="ml-0.5" aria-hidden="true">{markSymbol[mark]}</span>}</button>;})}</div>)}</div><p className="text-center text-xs text-muted-foreground">{t.hint}</p>
+  </div>;
 }
-
-// ─── Main component ───────────────────────────────────────────────────────────
-const WordleGame: React.FC<{ locale?: string }> = ({ locale = 'en' }) => {
-  const t = COPY[(locale as keyof typeof COPY)] ?? COPY.en;
-  const reducedMotion = usePrefersReducedMotion();
-  const [status, setStatus] = useState<GameStatus>('loading');
-  const [targetWord, setTargetWord] = useState('');
-  const [validWords, setValidWords] = useState<Set<string>>(new Set());
-  const [rows, setRows] = useState<TileData[][]>(
-    Array.from({ length: MAX_GUESSES }, () => Array(WORD_LENGTH).fill({ letter: '', state: 'empty' as TileState }))
-  );
-  const [currentRow, setCurrentRow] = useState(0);
-  const [currentGuess, setCurrentGuess] = useState('');
-  const [shake, setShake] = useState(false);
-  const [message, setMessage] = useState('');
-  const [usedKeys, setUsedKeys] = useState<Record<string, TileState>>({});
-  const msgTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const [stats, setStats] = useState<StreakStats | null>(null);
-  const recordedRoundRef = useRef(false);
-
-  useEffect(() => { setStats(getStreak('wordle')); }, []);
-
-  // Record win/loss once per round when the game settles
-  useEffect(() => {
-    if (status !== 'won' && status !== 'lost') return;
-    if (recordedRoundRef.current) return;
-    recordedRoundRef.current = true;
-    setStats(recordStreak('wordle', status === 'won'));
-  }, [status]);
-
-  // Load words
-  useEffect(() => {
-    async function load() {
-      try {
-        const [targets, valids] = await Promise.all([
-          fetch(`${DATA_BASE}/target-words-5.json`).then(r => r.json() as Promise<string[]>),
-          fetch(`${DATA_BASE}/valid-words-5.json`).then(r => r.json() as Promise<string[]>),
-        ]);
-        setTargetWord(getDailyWord(targets));
-        setValidWords(new Set(valids.map((w: string) => w.toUpperCase())));
-        setStatus('playing');
-      } catch {
-        setMessage(t.loadFail);
-      }
-    }
-    load();
-  }, []);
-
-  const showMessage = useCallback((msg: string, duration = 2000) => {
-    setMessage(msg);
-    clearTimeout(msgTimeout.current);
-    msgTimeout.current = setTimeout(() => setMessage(''), duration);
-  }, []);
-
-  const triggerShake = useCallback(() => {
-    if (reducedMotion) return;
-    setShake(true);
-    setTimeout(() => setShake(false), 500);
-  }, [reducedMotion]);
-
-  const submitGuess = useCallback(() => {
-    if (status !== 'playing') return;
-    if (currentGuess.length < WORD_LENGTH) {
-      triggerShake();
-      showMessage(t.notEnough);
-      return;
-    }
-    if (!validWords.has(currentGuess) && !validWords.has(currentGuess.toLowerCase())) {
-      triggerShake();
-      showMessage(t.notInList);
-      return;
-    }
-
-    const evaluation = evaluateGuess(currentGuess, targetWord);
-    const newRow = currentGuess.split('').map((letter, i) => ({ letter, state: evaluation[i] }));
-
-    setRows(prev => {
-      const next = [...prev];
-      next[currentRow] = newRow;
-      return next;
-    });
-
-    // Update used keys
-    setUsedKeys(prev => {
-      const next = { ...prev };
-      currentGuess.split('').forEach((letter, i) => {
-        const prevState = next[letter];
-        const newState = evaluation[i];
-        if (prevState !== 'correct') {
-          if (newState === 'correct' || !prevState) next[letter] = newState;
-          else if (newState === 'present') next[letter] = newState;
-        }
-      });
-      return next;
-    });
-
-    if (currentGuess === targetWord) {
-      setTimeout(() => { setStatus('won'); showMessage(t.winMsgs[currentRow] ?? t.winMsgs[4], 4000); }, reducedMotion ? 0 : 300);
-    } else if (currentRow + 1 >= MAX_GUESSES) {
-      setTimeout(() => { setStatus('lost'); showMessage(targetWord, 6000); }, reducedMotion ? 0 : 300);
-    }
-
-    setCurrentRow(r => r + 1);
-    setCurrentGuess('');
-  }, [status, currentGuess, currentRow, targetWord, validWords, triggerShake, showMessage, t, reducedMotion]);
-
-  const handleKey = useCallback((key: string) => {
-    if (status !== 'playing') return;
-    if (key === 'ENTER') { submitGuess(); return; }
-    if (key === '⌫' || key === 'BACKSPACE') {
-      setCurrentGuess(g => g.slice(0, -1));
-      return;
-    }
-    if (/^[A-Z]$/.test(key) && currentGuess.length < WORD_LENGTH) {
-      setCurrentGuess(g => g + key);
-    }
-  }, [status, currentGuess, submitGuess]);
-
-  // Physical keyboard
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.ctrlKey || e.altKey || e.metaKey) return;
-      handleKey(e.key.toUpperCase());
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [handleKey]);
-
-  // Build display rows
-  const displayRows = rows.map((row, ri) => {
-    if (ri === currentRow && status === 'playing') {
-      return Array.from({ length: WORD_LENGTH }, (_, ci) => ({
-        letter: currentGuess[ci] ?? '',
-        state: (currentGuess[ci] ? 'tbd' : 'empty') as TileState,
-      }));
-    }
-    return row;
-  });
-
-  const resetGame = () => {
-    setRows(Array.from({ length: MAX_GUESSES }, () => Array(WORD_LENGTH).fill({ letter: '', state: 'empty' as TileState })));
-    setCurrentRow(0);
-    setCurrentGuess('');
-    setUsedKeys({});
-    setMessage('');
-    recordedRoundRef.current = false;
-    // Pick a different random word
-    fetch(`${DATA_BASE}/target-words-5.json`).then(r => r.json()).then((list: string[]) => {
-      const rand = list[Math.floor(Math.random() * list.length)].toUpperCase();
-      setTargetWord(rand);
-      setStatus('playing');
-    });
-  };
-
-  if (status === 'loading') {
-    return (
-      <div className="not-prose flex flex-col items-center justify-center py-24 gap-4">
-        <div className={`w-8 h-8 border-4 border-primary border-t-transparent rounded-full ${reducedMotion ? '' : 'animate-spin'}`} />
-        <p className="text-sm text-muted-foreground font-bold">{t.loading}</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="not-prose flex flex-col items-center gap-6 py-8 px-4 max-w-lg mx-auto select-none">
-      {/* Header */}
-      <div className="w-full text-center border-b border-border pb-4">
-        <h1 className="text-3xl font-black tracking-widest">WORDLE</h1>
-        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground mt-1">{t.subtitle}</p>
-        {stats && stats.played > 0 && (
-          <p className="text-[10px] font-bold text-muted-foreground mt-2">{t.stats(stats)}</p>
-        )}
-      </div>
-
-      {/* Message toast */}
-      <div className={`fixed top-20 left-1/2 -translate-x-1/2 z-50 ${reducedMotion ? 'transition-opacity' : 'transition-all duration-300'} ${message ? 'opacity-100 translate-y-0' : `opacity-0 ${reducedMotion ? '' : '-translate-y-2'} pointer-events-none`}`}>
-        <div className="bg-foreground text-background px-5 py-2.5 rounded-xl font-black text-sm shadow-xl whitespace-nowrap">
-          {message}
-        </div>
-      </div>
-
-      {/* Grid */}
-      <div className="flex flex-col gap-2" role="grid" aria-label="Wordle game board">
-        {displayRows.map((row, ri) => (
-          <div
-            key={ri}
-            className={`flex gap-2 ${!reducedMotion && shake && ri === currentRow ? 'animate-[shake_0.5s_ease-in-out]' : ''}`}
-            role="row"
-          >
-            {row.map((tile, ci) => <Tile key={ci} data={tile} animate={ri === currentRow} reducedMotion={reducedMotion} />)}
-          </div>
-        ))}
-      </div>
-
-      {/* Status */}
-      {status !== 'playing' && (
-        <div className="flex flex-col items-center gap-3">
-          <button
-            onClick={resetGame}
-            className="px-6 py-3 rounded-2xl bg-primary text-primary-foreground font-black hover:bg-primary/90 transition-colors"
-          >
-            {status === 'won' ? t.playAgain : t.tryAgain}
-          </button>
-          {status === 'lost' && (
-            <p className="text-sm text-muted-foreground font-bold">{t.theWordWas} <span className="font-black text-foreground">{targetWord}</span></p>
-          )}
-        </div>
-      )}
-
-      {/* Keyboard */}
-      <div className="flex flex-col items-center gap-1.5 w-full max-w-md" aria-label="Keyboard">
-        {KEYBOARD_ROWS.map((row, ri) => (
-          <div key={ri} className="flex gap-1 sm:gap-1.5 w-full">
-            {row.map(key => (
-              <button
-                key={key}
-                onClick={() => handleKey(key)}
-                onMouseDown={(e) => e.preventDefault()} // keep focus off keys so physical Enter doesn't double-submit
-                aria-label={key === '⌫' ? 'Backspace' : key}
-                className={`h-14 min-w-0 rounded-lg border font-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${key.length > 1 ? 'flex-[1.5] text-[10px] sm:text-xs' : 'flex-1 text-xs sm:text-sm'} ${keyClass(key, usedKeys)}`}
-              >
-                {key}
-              </button>
-            ))}
-          </div>
-        ))}
-      </div>
-
-      <p className="text-[10px] text-muted-foreground text-center">
-        {t.hint}
-      </p>
-    </div>
-  );
-};
-
-export default WordleGame;

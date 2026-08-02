@@ -7,6 +7,9 @@ export type BlackjackCard = {
 };
 
 export type BlackjackOutcome = "win" | "lost" | "push";
+export type BlackjackAction = "hit" | "stand";
+export type BlackjackStatus = "playing" | "result";
+export interface BlackjackState { seed: number; deck: BlackjackCard[]; player: BlackjackCard[]; dealer: BlackjackCard[]; status: BlackjackStatus; outcome: BlackjackOutcome | null; actions: BlackjackAction[] }
 
 /** Unbiased Fisher–Yates shuffle. Injecting RNG keeps simulations reproducible. */
 export function shuffleBlackjackDeck(
@@ -59,4 +62,38 @@ export function settleBlackjack(
   if (dealerTotal > 21 || playerTotal > dealerTotal) return "win";
   if (playerTotal < dealerTotal) return "lost";
   return "push";
+}
+
+const nextRandom = (rng: number) => { const state = (Math.imul(rng, 1_664_525) + 1_013_904_223) >>> 0; return { state, value: state / 0x1_0000_0000 }; };
+export function createBlackjackDeck(): BlackjackCard[] {
+  const suits: BlackjackSuit[] = ["hearts", "diamonds", "clubs", "spades"];
+  const values = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+  return suits.flatMap(suit => values.map((value, index) => ({ suit, value, power: index === 0 ? 11 : index >= 9 ? 10 : index + 1 })));
+}
+export function createBlackjackGame(seed: number): BlackjackState {
+  let rng = seed >>> 0;
+  const deck = shuffleBlackjackDeck(createBlackjackDeck(), () => { const roll = nextRandom(rng); rng = roll.state; return roll.value; });
+  const player = [deck[0], deck[1]], dealer = [deck[2], deck[3]];
+  const natural = isNaturalBlackjack(player) || isNaturalBlackjack(dealer);
+  return { seed: seed >>> 0, deck: deck.slice(4), player, dealer, status: natural ? "result" : "playing", outcome: natural ? settleBlackjack(player, dealer) : null, actions: [] };
+}
+export function hitBlackjack(state: BlackjackState): BlackjackState {
+  if (state.status !== "playing" || !state.deck.length) return state;
+  const player = [...state.player, state.deck[0]], bust = evaluateBlackjackHand(player).total > 21;
+  return { ...state, deck: state.deck.slice(1), player, status: bust ? "result" : "playing", outcome: bust ? "lost" : null, actions: [...state.actions, "hit"] };
+}
+export function standBlackjack(state: BlackjackState): BlackjackState {
+  if (state.status !== "playing") return state;
+  const deck = [...state.deck], dealer = [...state.dealer];
+  while (dealerShouldHit(dealer) && deck.length) dealer.push(deck.shift()!);
+  return { ...state, deck, dealer, status: "result", outcome: settleBlackjack(state.player, dealer), actions: [...state.actions, "stand"] };
+}
+export function replayBlackjack(seed: number, actions: readonly BlackjackAction[]): BlackjackState | null {
+  let state = createBlackjackGame(seed);
+  for (const action of actions) {
+    const before = state.actions.length;
+    state = action === "hit" ? hitBlackjack(state) : standBlackjack(state);
+    if (state.actions.length !== before + 1) return null;
+  }
+  return state;
 }

@@ -6,6 +6,10 @@ import {
   settleBlackjack,
   shuffleBlackjackDeck,
   type BlackjackCard,
+  createBlackjackGame,
+  hitBlackjack,
+  replayBlackjack,
+  standBlackjack,
 } from "./blackjack";
 
 const card = (value: string, power = Number(value)): BlackjackCard => ({
@@ -43,5 +47,23 @@ describe("blackjack rules", () => {
     expect(settleBlackjack([card("A"), card("K")], [card("7"), card("7"), card("7")])).toBe("win");
     expect(settleBlackjack([card("7"), card("7"), card("7")], [card("A"), card("K")])).toBe("lost");
     expect(settleBlackjack([card("A"), card("K")], [card("A"), card("K")])).toBe("push");
+  });
+
+  it("deals and replays the same seeded round", () => {
+    let state = createBlackjackGame(77);
+    if (state.status === "playing") state = hitBlackjack(state);
+    if (state.status === "playing") state = standBlackjack(state);
+    expect(replayBlackjack(77, state.actions)).toEqual(state);
+    expect(createBlackjackGame(77)).toEqual(createBlackjackGame(77));
+  });
+
+  it("freezes terminal rounds and resolves the dealer with S17", () => {
+    const initial = createBlackjackGame(19);
+    if (initial.status !== "playing") return;
+    const result = standBlackjack(initial);
+    expect(result.status).toBe("result");
+    expect(result.outcome).not.toBeNull();
+    expect(dealerShouldHit(result.dealer)).toBe(false);
+    expect(hitBlackjack(result)).toBe(result);
   });
 });

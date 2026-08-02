@@ -3,15 +3,16 @@ import { GameContainer } from "../ui/game/GamePrimitives";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import type { Locale } from "../../lib/i18n";
 import {
-  makeSet, shuffle, tileFits, newEndValue, aiChoose, handPips,
-  type Tile, type Ends, type End, type AiLevel,
+  tileFits, type Tile, type End, type AiLevel,
 } from "../../lib/games/ai/dominoes";
+import { cpuDominoes, createDominoes, dominoEnds, dominoHasMove, dominoesAnalysis, drawDominoes, passDominoes, playDominoes, type DominoesState } from "../../lib/games/dominoes";
+import { clearDominoesSave, loadDominoesSave, storeDominoesSave } from "../../lib/games/dominoes-save";
 import { getRecord, recordResult, type GameRecord } from "../../lib/games/records";
 
 const AI_DELAY = 800;
-
-type Placed = { a: number; b: number; id: number };
-type Winner = "you" | "cpu" | "draw" | null;
+const extra: Record<Locale,{pause:string;resume:string;restored:string;paused:string;played:string;drawn:string;pips:string;sound:string}>={
+  ko:{pause:"일시정지",resume:"계속",restored:"저장된 게임 복원",paused:"게임 일시정지",played:"놓은 패",drawn:"가져온 패",pips:"남은 점수",sound:"소리"},en:{pause:"Pause",resume:"Resume",restored:"Saved game restored",paused:"Game paused",played:"played",drawn:"drawn",pips:"pips",sound:"Sound"},ja:{pause:"一時停止",resume:"再開",restored:"保存ゲームを復元",paused:"ゲーム一時停止",played:"配置",drawn:"ドロー",pips:"残点",sound:"音"},zh:{pause:"暂停",resume:"继续",restored:"已恢复游戏",paused:"游戏已暂停",played:"出牌",drawn:"摸牌",pips:"剩余点数",sound:"声音"},fr:{pause:"Pause",resume:"Reprendre",restored:"Partie restaurée",paused:"Partie en pause",played:"posés",drawn:"piochés",pips:"points",sound:"Son"},es:{pause:"Pausa",resume:"Continuar",restored:"Partida restaurada",paused:"Partida en pausa",played:"jugadas",drawn:"robadas",pips:"puntos",sound:"Sonido"}
+};
 
 const i18n: Record<Locale, {
   title: string; you: string; cpu: string; turn: string; reset: string; draw: string; pass: string;
@@ -40,42 +41,31 @@ function Pips({ n }: { n: number }) {
 
 const Dominoes: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
   const t = i18n[locale] ?? i18n.en;
+  const x=extra[locale]??extra.en;
   const reducedMotion = usePrefersReducedMotion();
   const [level, setLevel] = useState<AiLevel>(2);
-  const [started, setStarted] = useState(false);
-
-  const [player, setPlayer] = useState<Tile[]>([]);
-  const [cpu, setCpu] = useState<Tile[]>([]);
-  const [bone, setBone] = useState<Tile[]>([]);
-  const [board, setBoard] = useState<Placed[]>([]);
-  const [turn, setTurn] = useState<"you" | "cpu">("you");
-  const [winner, setWinner] = useState<Winner>(null);
+  const [game, setGame] = useState<DominoesState | null>(null);
+  const [paused, setPaused] = useState(false);
+  const [restored, setRestored] = useState(false);
+  const[muted,setMuted]=useState(false);const audio=useRef<AudioContext|null>(null);const tone=(hz:number)=>{if(muted)return;const c=audio.current??new AudioContext();audio.current=c;const o=c.createOscillator(),g=c.createGain();o.frequency.value=hz;g.gain.setValueAtTime(.04,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+.07);o.connect(g).connect(c.destination);o.start();o.stop(c.currentTime+.07)};
   const [pendingTile, setPendingTile] = useState<Tile | null>(null); // fits both ends → ask
   const [record, setRecord] = useState<GameRecord>({ w: 0, l: 0, d: 0 });
-  const passRef = useRef(0);
   const recorded = useRef(false);
 
-  useEffect(() => { setRecord(getRecord("dominoes")); }, []);
+  useEffect(() => { setRecord(getRecord("dominoes")); const saved=loadDominoesSave(); if(saved){setGame(saved.state);setLevel(saved.level);setPaused(true);setRestored(true)} }, []);
+  useEffect(()=>{if(game?.status==="playing")storeDominoesSave(game,level);else if(game)clearDominoesSave()},[game,level]);
+  useEffect(()=>{const hidden=()=>{if(document.hidden)setPaused(true)};document.addEventListener("visibilitychange",hidden);return()=>document.removeEventListener("visibilitychange",hidden)},[]);
+  useEffect(()=>()=>{void audio.current?.close()},[]);
 
-  const ends: Ends = board.length
-    ? { left: board[0].a, right: board[board.length - 1].b }
-    : { left: -1, right: -1 };
+  const ends = game ? dominoEnds(game) : { left: -1, right: -1 };
 
   const newGame = useCallback(() => {
-    const deck = shuffle(makeSet());
-    const p = deck.slice(0, 7);
-    const c = deck.slice(7, 14);
-    const rest = deck.slice(14);
-    const opening = rest.shift()!;                 // opening tile on the board
-    setPlayer(p); setCpu(c); setBone(rest);
-    setBoard([{ a: opening.a, b: opening.b, id: opening.id }]);
-    setTurn("you"); setWinner(null); setPendingTile(null);
-    passRef.current = 0; recorded.current = false;
-    setStarted(true);
+    const seed = typeof crypto !== "undefined" ? crypto.getRandomValues(new Uint32Array(1))[0] : Date.now() >>> 0;
+    setGame(createDominoes(seed)); setPendingTile(null); setPaused(false); setRestored(false); clearDominoesSave(); recorded.current = false;
   }, []);
 
-  const finish = useCallback((w: Winner) => {
-    setWinner(w);
+  const recordWinner = useCallback((w: DominoesState["winner"]) => {
+    if (!w) return;
     if (!recorded.current) {
       recorded.current = true;
       const r = w === "you" ? "w" : w === "cpu" ? "l" : "d";
@@ -83,31 +73,13 @@ const Dominoes: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
     }
   }, []);
 
-  // Place a tile onto the board at a given end, keeping adjacency invariant.
-  const placeTile = (bd: Placed[], tile: Tile, end: End): Placed[] => {
-    if (end === "left") {
-      const L = bd[0].a;
-      const other = newEndValue(tile, L);
-      return [{ a: other, b: L, id: tile.id }, ...bd];
-    }
-    const R = bd[bd.length - 1].b;
-    const other = newEndValue(tile, R);
-    return [...bd, { a: R, b: other, id: tile.id }];
-  };
-
   const humanPlay = (tile: Tile, end: End) => {
-    if (turn !== "you" || winner) return;
-    if (!tileFits(tile, end === "left" ? ends.left : ends.right)) return;
-    const nb = placeTile(board, tile, end);
-    const nh = player.filter((x) => x.id !== tile.id);
-    setBoard(nb); setPlayer(nh); setPendingTile(null);
-    passRef.current = 0;
-    if (nh.length === 0) { finish("you"); return; }
-    setTurn("cpu");
+    if (!game || paused) return; const next = playDominoes(game, tile.id, end); if (next === game) return;
+    setGame(next); setPendingTile(null);tone(next.winner?660:320); if (next.winner) recordWinner(next.winner);
   };
 
   const clickHandTile = (tile: Tile) => {
-    if (turn !== "you" || winner) return;
+    if (!game || paused || game.turn !== "you" || game.status === "over") return;
     const fitsL = tileFits(tile, ends.left);
     const fitsR = tileFits(tile, ends.right);
     if (fitsL && fitsR) setPendingTile(tile);         // ask which end
@@ -115,59 +87,22 @@ const Dominoes: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
     else if (fitsR) humanPlay(tile, "right");
   };
 
-  const humanHasMove = player.some((tl) => tileFits(tl, ends.left) || tileFits(tl, ends.right));
+  const humanHasMove = game ? dominoHasMove(game.player, ends) : false;
 
   const humanDrawOrPass = () => {
-    if (turn !== "you" || winner) return;
-    if (bone.length > 0) {
-      const [drawn, ...rest] = bone;
-      setPlayer((h) => [...h, drawn]);
-      setBone(rest);
-      return; // player may now have a move; re-evaluate on next render
-    }
-    // boneyard empty and no move → pass
-    passRef.current += 1;
-    if (passRef.current >= 2) {
-      const pa = handPips(player), pb = handPips(cpu);
-      finish(pa === pb ? "draw" : pa < pb ? "you" : "cpu");
-    } else {
-      setTurn("cpu");
-    }
+    if (!game || paused) return; const next = game.bone.length ? drawDominoes(game) : passDominoes(game); if (next === game) return; setGame(next);tone(game.bone.length?180:120); if (next.winner) recordWinner(next.winner);
   };
 
   // CPU turn.
   useEffect(() => {
-    if (!started || winner || turn !== "cpu") return;
+    if (!game || paused || game.status === "over" || game.turn !== "cpu") return;
     const id = setTimeout(() => {
-      let hand = cpu.slice();
-      let pool = bone.slice();
-      let move = aiChoose(hand, ends, level);
-      while (!move && pool.length) {
-        hand = [...hand, pool[0]]; pool = pool.slice(1);
-        move = aiChoose(hand, ends, level);
-      }
-      if (move) {
-        const nb = placeTile(board, move.tile, move.end);
-        const nh = hand.filter((x) => x.id !== move!.tile.id);
-        setBoard(nb); setCpu(nh); setBone(pool);
-        passRef.current = 0;
-        if (nh.length === 0) { finish("cpu"); return; }
-        setTurn("you");
-      } else {
-        setCpu(hand); setBone(pool);
-        passRef.current += 1;
-        if (passRef.current >= 2) {
-          const pa = handPips(player), pb = handPips(hand);
-          finish(pa === pb ? "draw" : pa < pb ? "you" : "cpu");
-        } else {
-          setTurn("you");
-        }
-      }
+      const next = cpuDominoes(game, level); setGame(next);tone(next.winner?560:240); if (next.winner) recordWinner(next.winner);
     }, AI_DELAY);
     return () => clearTimeout(id);
-  }, [started, winner, turn, cpu, bone, board, level]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [game, level, recordWinner, paused]);
 
-  if (!started) {
+  if (!game) {
     return (
       <GameContainer title={t.title}>
         <div className="flex flex-col items-center gap-4 py-8">
@@ -185,22 +120,26 @@ const Dominoes: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
       </GameContainer>
     );
   }
+  const analysis=dominoesAnalysis(game);
 
   return (
-    <GameContainer title={t.title} subtitle={`${t.cpu}: ${cpu.length} · ${t.boneyard}: ${bone.length}`} onReset={newGame}>
+    <GameContainer title={t.title} subtitle={`${t.cpu}: ${game.cpu.length} · ${t.boneyard}: ${game.bone.length}`} onReset={newGame}>
       {/* Turn / status */}
       <div className="flex justify-between items-center mb-4">
-        <div className={`px-4 py-2 rounded-2xl border ${turn === "you" && !winner ? "bg-primary/10 border-primary" : "bg-muted border-transparent opacity-50"}`}>
+        <div className={`px-4 py-2 rounded-2xl border ${game.turn === "you" && game.status === "playing" ? "bg-primary/10 border-primary" : "bg-muted border-transparent opacity-50"}`}>
           <span className="text-xs font-black uppercase tracking-widest">
-            {winner ? "—" : turn === "you" ? `${t.you} ${t.turn}` : t.thinking}
+            {game.winner ? "—" : game.turn === "you" ? `${t.you} ${t.turn}` : t.thinking}
           </span>
         </div>
         <div className="text-[10px] font-bold text-muted-foreground uppercase">{t.record}: {record.w}/{record.l}/{record.d}</div>
       </div>
+      {game.history.length>0&&game.status==="playing"&&<div className="mb-3 flex justify-center"><button type="button" onClick={()=>{setPaused(v=>!v);setRestored(false)}} className="min-h-11 px-4 rounded-xl border border-border font-bold text-sm">{paused?"▶":"Ⅱ"} {paused?x.resume:x.pause}</button></div>}
+      <div className="mb-3 flex justify-center"><button type="button" onClick={()=>setMuted(v=>!v)} aria-pressed={muted} className="min-h-11 px-4 rounded-xl border border-border font-bold text-sm">{muted?'🔇':'🔊'} {x.sound}</button></div>
+      {(paused||restored)&&<p className="mb-3 text-center text-xs font-bold text-muted-foreground" role="status">{restored?`${x.restored} · `:""}{x.paused}</p>}
 
       {/* Board */}
       <div className="h-40 bg-muted/40 rounded-3xl border border-border flex items-center p-4 overflow-x-auto gap-1 shadow-inner mb-6">
-        {board.map((d) => (
+        {game.board.map((d) => (
           <div key={d.id} className="flex flex-shrink-0 bg-card border border-border rounded-md shadow-sm divide-x divide-border">
             <div className="p-1"><Pips n={d.a} /></div>
             <div className="p-1"><Pips n={d.b} /></div>
@@ -221,11 +160,11 @@ const Dominoes: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
       <div className="space-y-3">
         <p className="text-[10px] font-black text-muted-foreground uppercase text-center tracking-widest">{t.yourTiles}</p>
         <div className="flex flex-wrap justify-center gap-2">
-          {player.map((d) => {
-            const playable = turn === "you" && !winner && (tileFits(d, ends.left) || tileFits(d, ends.right));
+          {game.player.map((d) => {
+            const playable = game.turn === "you" && game.status === "playing" && (tileFits(d, ends.left) || tileFits(d, ends.right));
             return (
-              <button type="button" key={d.id} onClick={() => clickHandTile(d)} disabled={!playable} aria-disabled={!playable} aria-pressed={pendingTile?.id === d.id} aria-label={`${t.tile}: ${d.a}-${d.b}`}
-                className={`bg-card border-2 rounded-lg shadow-sm flex flex-col divide-y divide-border ${!reducedMotion ? "transition-all" : ""} ${
+              <button type="button" key={d.id} data-domino-tile={d.id} onPointerUp={() => clickHandTile(d)} onKeyDown={(event)=>{if(!["ArrowLeft","ArrowRight","Home","End"].includes(event.key))return;event.preventDefault();const playableTiles=game.player.filter(tile=>tileFits(tile,ends.left)||tileFits(tile,ends.right));const index=playableTiles.findIndex(tile=>tile.id===d.id);const target=event.key==="Home"?0:event.key==="End"?playableTiles.length-1:event.key==="ArrowLeft"?Math.max(0,index-1):Math.min(playableTiles.length-1,index+1);document.querySelector<HTMLElement>(`[data-domino-tile="${playableTiles[target]?.id}"]`)?.focus()}} style={{touchAction:"manipulation"}} disabled={!playable} aria-disabled={!playable} aria-pressed={pendingTile?.id === d.id} aria-label={`${t.tile}: ${d.a}-${d.b}`}
+                className={`min-w-11 min-h-11 bg-card border-2 rounded-lg shadow-sm flex flex-col divide-y divide-border ${!reducedMotion ? "transition-all" : ""} ${
                   playable ? `border-primary ${!reducedMotion ? "hover:-translate-y-1 active:scale-95" : ""}` : "border-border opacity-60"
                 } ${pendingTile?.id === d.id ? "ring-2 ring-primary" : ""}`}>
                 <div className="p-2 sm:p-3"><Pips n={d.a} /></div>
@@ -235,22 +174,23 @@ const Dominoes: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
           })}
         </div>
         {/* Draw / pass */}
-        {turn === "you" && !winner && !humanHasMove && (
+        {game.turn === "you" && game.status === "playing" && !humanHasMove && (
           <div className="flex flex-col items-center gap-1">
             <button type="button" onClick={humanDrawOrPass} className="px-5 py-2 rounded-lg bg-amber-500 text-white font-bold">
-              {bone.length > 0 ? `${t.draw} (${bone.length})` : t.pass}
+              {game.bone.length > 0 ? `${t.draw} (${game.bone.length})` : t.pass}
             </button>
             <span className="text-[10px] text-muted-foreground">{t.noMove}</span>
           </div>
         )}
       </div>
 
-      {winner && (
+      {game.winner && (
         <div className={`absolute inset-0 z-20 bg-background/80 backdrop-blur-md rounded-4xl flex flex-col items-center justify-center ${!reducedMotion ? "animate-in fade-in zoom-in-95" : ""}`}>
           <h4 className="text-3xl font-black text-primary mb-2">
-            {winner === "you" ? `🎉 ${t.youWin}` : winner === "cpu" ? t.cpuWins : t.blockDraw}
+            {game.winner === "you" ? `🎉 ${t.youWin}` : game.winner === "cpu" ? t.cpuWins : t.blockDraw}
           </h4>
           <p className="text-xs text-muted-foreground mb-4">{t.record}: {record.w}W {record.l}L {record.d}D</p>
+          <p className="text-xs text-muted-foreground mb-4">{analysis.plays} {x.played} · {analysis.draws} {x.drawn} · {analysis.yourPips}–{analysis.cpuPips} {x.pips}</p>
           <button type="button" onClick={newGame} className="px-10 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg">{t.reset}</button>
         </div>
       )}

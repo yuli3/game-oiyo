@@ -1,144 +1,10 @@
-import React, { useReducer, useEffect, useCallback, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { GameContainer } from '@/components/ui/game/GamePrimitives';
 import { usePrefersReducedMotion } from '@/lib/games/reduced-motion';
-
-type GridSize = '4x4' | '6x4' | '6x6';
-type GameStatus = 'idle' | 'playing' | 'won';
-
-interface GridConfig {
-  cols: number;
-  rows: number;
-  label: string;
-}
-
-const GRID_CONFIG: Record<GridSize, GridConfig> = {
-  '4x4': { cols: 4, rows: 4, label: '4×4' },
-  '6x4': { cols: 6, rows: 4, label: '6×4' },
-  '6x6': { cols: 6, rows: 6, label: '6×6' },
-};
+import { createMemoryGame, flipMemoryCard, MEMORY_GRID_CONFIG, memoryPairCount, resolveMemoryPair, type MemoryGridSize, type MemoryState } from '@/lib/games/memory-card-game';
+import { clearMemoryCardSave, loadMemoryCardSave, storeMemoryCardSave } from '@/lib/games/memory-card-game-save';
 
 const EMOJI_POOL = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐸', '🐙', '🦋', '🌸', '⭐', '🍎', '🍊', '🍋', '🍇', '🍓', '🌈', '🎸', '🚀', '🎃', '🔮', '🎯', '💎', '🏆', '🎪', '🌴', '🦄', '🐝', '🦀'];
-
-interface Card {
-  id: number;
-  emoji: string;
-  isFlipped: boolean;
-  isMatched: boolean;
-}
-
-interface State {
-  gridSize: GridSize;
-  cards: Card[];
-  flipped: number[];
-  matched: number;
-  flips: number;
-  status: GameStatus;
-  startTime: number | null;
-  elapsedMs: number;
-  locked: boolean;
-}
-
-type Action =
-  | { type: 'START'; gridSize: GridSize }
-  | { type: 'FLIP'; cardId: number }
-  | { type: 'CHECK_MATCH' }
-  | { type: 'TICK'; elapsedMs: number }
-  | { type: 'RESET' };
-
-function buildCards(gridSize: GridSize): Card[] {
-  const { cols, rows } = GRID_CONFIG[gridSize];
-  const total = cols * rows;
-  const pairCount = total / 2;
-  const emojis = EMOJI_POOL.slice(0, pairCount);
-  const doubled = [...emojis, ...emojis];
-  // Fisher-Yates shuffle
-  for (let i = doubled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [doubled[i], doubled[j]] = [doubled[j], doubled[i]];
-  }
-  return doubled.map((emoji, i) => ({ id: i, emoji, isFlipped: false, isMatched: false }));
-}
-
-function reducer(state: State, action: Action): State {
-  switch (action.type) {
-    case 'START':
-      return {
-        ...state,
-        gridSize: action.gridSize,
-        cards: buildCards(action.gridSize),
-        flipped: [],
-        matched: 0,
-        flips: 0,
-        status: 'playing',
-        startTime: Date.now(),
-        elapsedMs: 0,
-        locked: false,
-      };
-    case 'FLIP': {
-      if (state.locked || state.status !== 'playing') return state;
-      if (state.flipped.includes(action.cardId)) return state;
-      const card = state.cards.find((c) => c.id === action.cardId);
-      if (!card || card.isMatched || card.isFlipped) return state;
-
-      const newCards = state.cards.map((c) =>
-        c.id === action.cardId ? { ...c, isFlipped: true } : c
-      );
-      const newFlipped = [...state.flipped, action.cardId];
-      const locked = newFlipped.length === 2;
-
-      return {
-        ...state,
-        cards: newCards,
-        flipped: newFlipped,
-        flips: state.flips + 1,
-        locked,
-      };
-    }
-    case 'CHECK_MATCH': {
-      if (state.flipped.length !== 2) return state;
-      const [a, b] = state.flipped.map((id) => state.cards.find((c) => c.id === id)!);
-      const isMatch = a.emoji === b.emoji;
-
-      const newCards = state.cards.map((c) => {
-        if (c.id === a.id || c.id === b.id) {
-          return isMatch ? { ...c, isMatched: true } : { ...c, isFlipped: false };
-        }
-        return c;
-      });
-
-      const newMatched = state.matched + (isMatch ? 1 : 0);
-      const totalPairs = (GRID_CONFIG[state.gridSize].cols * GRID_CONFIG[state.gridSize].rows) / 2;
-      const won = newMatched === totalPairs;
-
-      return {
-        ...state,
-        cards: newCards,
-        flipped: [],
-        matched: newMatched,
-        locked: false,
-        status: won ? 'won' : 'playing',
-      };
-    }
-    case 'TICK':
-      return state.status === 'playing' ? { ...state, elapsedMs: action.elapsedMs } : state;
-    case 'RESET':
-      return { ...state, ...{ cards: buildCards(state.gridSize), flipped: [], matched: 0, flips: 0, status: 'playing' as GameStatus, startTime: Date.now(), elapsedMs: 0, locked: false } };
-    default:
-      return state;
-  }
-}
-
-const initialState: State = {
-  gridSize: '4x4',
-  cards: [],
-  flipped: [],
-  matched: 0,
-  flips: 0,
-  status: 'idle',
-  startTime: null,
-  elapsedMs: 0,
-  locked: false,
-};
 
 function formatTime(ms: number): string {
   const s = Math.floor(ms / 1000);
@@ -248,51 +114,95 @@ const MemoryCardGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
   };
   const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
 
-  const [state, dispatch] = useReducer(reducer, initialState);
-  const [throttledFlip, setThrottledFlip] = useState(false);
+  const [state, setState] = useState<MemoryState | null>(null);
+  const [elapsedMs, setElapsedMs] = useState(0);
+  const [startTime, setStartTime] = useState<number | null>(null);
+  const [restored, setRestored] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const [best, setBest] = useState<{ timeMs: number; flips: number } | null>(null);
+  const elapsedBase = useRef(0);
+  const audio = useRef<AudioContext | null>(null);
+
+  const tone = (frequency: number, duration = 0.08) => {
+    if (muted || typeof window === 'undefined') return;
+    const context = audio.current ?? new AudioContext(); audio.current = context;
+    const oscillator = context.createOscillator(); const gain = context.createGain();
+    oscillator.frequency.value = frequency; gain.gain.setValueAtTime(0.035, context.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + duration);
+    oscillator.connect(gain).connect(context.destination); oscillator.start(); oscillator.stop(context.currentTime + duration);
+  };
+
+  const startGame = (gridSize: MemoryGridSize, seed?: number) => {
+    const nextSeed = seed ?? (crypto.getRandomValues?.(new Uint32Array(1))[0] ?? Date.now()) >>> 0;
+    clearMemoryCardSave(); elapsedBase.current = 0; setRestored(false); setPaused(false);
+    try { setBest(JSON.parse(localStorage.getItem(`oiyo:memory-card-game-best:${gridSize}`) ?? 'null')); } catch { setBest(null); }
+    setState(createMemoryGame(nextSeed, gridSize)); setElapsedMs(0); setStartTime(Date.now());
+  };
+
+  useEffect(() => {
+    const saved = loadMemoryCardSave();
+    if (saved) { elapsedBase.current = saved.elapsedMs; setElapsedMs(saved.elapsedMs); setState(saved.state); setStartTime(null); setPaused(true); setRestored(true); try { setBest(JSON.parse(localStorage.getItem(`oiyo:memory-card-game-best:${saved.state.gridSize}`) ?? 'null')); } catch { /* ignore */ } }
+    return () => { audio.current?.close(); };
+  }, []);
 
   // Timer tick
   useEffect(() => {
-    if (state.status !== 'playing' || !state.startTime) return;
-    const id = setInterval(() => {
-      dispatch({ type: 'TICK', elapsedMs: Date.now() - (state.startTime ?? 0) });
-    }, 500);
+    if (state?.status !== 'playing' || paused || !startTime) return;
+    const id = setInterval(() => setElapsedMs(elapsedBase.current + Date.now() - startTime), 250);
     return () => clearInterval(id);
-  }, [state.status, state.startTime]);
+  }, [state?.status, paused, startTime]);
 
   // Auto check match after 2 flips
   useEffect(() => {
-    if (state.flipped.length === 2) {
-      const id = setTimeout(() => dispatch({ type: 'CHECK_MATCH' }), 800);
+    if (state?.flipped.length === 2) {
+      const ids = state.flipped; const matched = state.cards[ids[0]].symbolId === state.cards[ids[1]].symbolId;
+      const id = setTimeout(() => { tone(matched ? 660 : 180, matched ? 0.14 : 0.1); setState((current) => current ? resolveMemoryPair(current) : current); }, prefersReducedMotion ? 180 : 650);
       return () => clearTimeout(id);
     }
-  }, [state.flipped]);
+  }, [state?.flipped, prefersReducedMotion]);
 
-  const handleFlip = useCallback((cardId: number) => {
-    if (throttledFlip || state.locked) return;
-    setThrottledFlip(true);
-    dispatch({ type: 'FLIP', cardId });
-    setTimeout(() => setThrottledFlip(false), 200);
-  }, [throttledFlip, state.locked]);
+  useEffect(() => {
+    if (!state) return;
+    if (state.status === 'won') { clearMemoryCardSave(); tone(880, 0.24); const key = `oiyo:memory-card-game-best:${state.gridSize}`; const result = { timeMs: elapsedMs, flips: state.flips }; try { const previous = JSON.parse(localStorage.getItem(key) ?? 'null'); if (!previous || result.flips < previous.flips || result.flips === previous.flips && result.timeMs < previous.timeMs) { localStorage.setItem(key, JSON.stringify(result)); setBest(result); } } catch { /* best effort */ } return; }
+    if (state.flipped.length < 2) storeMemoryCardSave(state, elapsedMs);
+  }, [state]);
 
-  const { cols } = state.status !== 'idle' ? GRID_CONFIG[state.gridSize] : GRID_CONFIG['4x4'];
-  const totalPairs = state.status !== 'idle' ? (GRID_CONFIG[state.gridSize].cols * GRID_CONFIG[state.gridSize].rows) / 2 : 0;
+  useEffect(() => {
+    const hidden = () => { if (document.hidden && state?.status === 'playing') { const current = startTime ? elapsedBase.current + Date.now() - startTime : elapsedMs; elapsedBase.current = current; setElapsedMs(current); setStartTime(null); setPaused(true); if (state.flipped.length < 2) storeMemoryCardSave(state, current); } };
+    document.addEventListener('visibilitychange', hidden); return () => document.removeEventListener('visibilitychange', hidden);
+  }, [state, elapsedMs, startTime]);
+
+  const togglePause = () => { if (!state || state.status !== 'playing') return; if (paused) { setStartTime(Date.now()); setPaused(false); } else { elapsedBase.current = elapsedMs; setStartTime(null); setPaused(true); storeMemoryCardSave(state, elapsedMs); } };
+  const shareResult = async () => { if (!state) return; const message = `OIYO Memory ${state.gridSize} · ${state.flips} flips · ${formatTime(elapsedMs)}`; try { await navigator.clipboard.writeText(message); } catch { /* best effort */ } };
+
+  const handleFlip = (cardId: number) => { tone(360); setRestored(false); setState((current) => current ? flipMemoryCard(current, cardId) : current); };
+  const handleKey = (event: React.KeyboardEvent<HTMLButtonElement>, cardId: number) => {
+    if (!state || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return;
+    event.preventDefault(); const count = state.cards.length; let next = cardId;
+    if (event.key === 'ArrowLeft') next = Math.max(0, cardId - 1); if (event.key === 'ArrowRight') next = Math.min(count - 1, cardId + 1);
+    if (event.key === 'ArrowUp') next = Math.max(0, cardId - cols); if (event.key === 'ArrowDown') next = Math.min(count - 1, cardId + cols);
+    if (event.key === 'Home') next = 0; if (event.key === 'End') next = count - 1;
+    document.querySelector<HTMLButtonElement>(`[data-memory-card="${next}"]`)?.focus();
+  };
+
+  const { cols } = state ? MEMORY_GRID_CONFIG[state.gridSize] : MEMORY_GRID_CONFIG['4x4'];
+  const totalPairs = state ? memoryPairCount(state) : 0;
 
   return (
     <GameContainer
       title={t.title}
       subtitle={t.subtitle}
-      onReset={state.status !== 'idle' ? () => dispatch({ type: 'RESET' }) : undefined}
+      onReset={state ? () => startGame(state.gridSize) : undefined}
     >
       {/* Difficulty selection */}
-      {state.status === 'idle' && (
+      {!state && (
         <div>
           <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">{t.chooseLevel}</p>
           <div className="flex flex-col gap-3">
-            {(['4x4', '6x4', '6x6'] as GridSize[]).map((size, i) => (
+            {(['4x4', '6x4', '6x6'] as MemoryGridSize[]).map((size, i) => (
               <button
                 key={size}
-                onClick={() => dispatch({ type: 'START', gridSize: size })}
+                onClick={() => startGame(size)}
                 aria-label={[t.easy, t.medium, t.hard][i]}
                 className="w-full py-3 px-4 rounded-2xl border-2 border-border bg-muted hover:bg-accent hover:border-primary font-bold text-sm transition-all text-left"
               >
@@ -304,13 +214,17 @@ const MemoryCardGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
       )}
 
       {/* Game board */}
-      {state.status !== 'idle' && (
+      {state && (
         <>
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <span className="text-xs font-bold text-muted-foreground" role="status" aria-live="polite">{restored ? (locale === 'ko' ? '이전 게임을 복원했습니다' : 'Game restored') : `${state.gridSize} · ${state.cards.length} cards`}</span>
+            <div className="flex gap-2"><button type="button" onClick={togglePause} className="min-h-11 rounded-xl border px-3 text-sm font-bold" aria-pressed={paused}>{paused ? '▶' : 'Ⅱ'} <span className="sr-only">Pause</span></button><button type="button" onClick={() => setMuted((value) => !value)} className="min-h-11 rounded-xl border px-3 text-sm font-bold" aria-pressed={muted}>{muted ? '🔇' : '🔊'} <span className="sr-only">Sound</span></button></div>
+          </div>
           {/* Stats bar */}
           <div className="flex items-center justify-between mb-4 text-sm font-bold text-muted-foreground">
             <span>{t.flips}: <span className="text-foreground">{state.flips}</span></span>
-            <span aria-live="polite">{t.matched}: <span className="text-primary">{t.pairs(state.matched, totalPairs)}</span></span>
-            <span>{t.time}: <span className="text-foreground">{formatTime(state.elapsedMs)}</span></span>
+            <span aria-live="polite">{t.matched}: <span className="text-primary">{t.pairs(state.matchedPairs, totalPairs)}</span></span>
+            <span>{t.time}: <span className="text-foreground">{formatTime(elapsedMs)}</span></span>
           </div>
 
           {/* Win message */}
@@ -318,32 +232,38 @@ const MemoryCardGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             <div className="mb-4 p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-300 text-center" role="status" aria-live="assertive">
               <p className="text-lg font-black text-emerald-700">{t.won}</p>
               <p className="text-sm text-emerald-600">
-                {formatTime(state.elapsedMs)} — {state.flips} {t.flipsUnit}
+                {formatTime(elapsedMs)} — {state.flips} {t.flipsUnit}
               </p>
+              <p className="mt-1 text-xs font-bold text-emerald-700">{locale === 'ko' ? `쌍당 ${(state.flips / totalPairs).toFixed(1)}회 · 다음 목표 ${Math.max(totalPairs * 2, state.flips - 2)}회` : `${(state.flips / totalPairs).toFixed(1)} flips/pair · Next ${Math.max(totalPairs * 2, state.flips - 2)}`}</p>
+              {best && <p className="mt-1 text-xs text-emerald-700">PB · {best.flips} · {formatTime(best.timeMs)}</p>}
               <button
-                onClick={() => dispatch({ type: 'RESET' })}
+                onClick={() => startGame(state.gridSize)}
                 className="mt-3 px-6 py-2 rounded-xl bg-primary text-primary-foreground font-black text-sm hover:bg-primary/90 transition-all"
               >
                 {t.reset}
               </button>
+              <button onClick={shareResult} className="ml-2 mt-3 min-h-11 rounded-xl border border-emerald-500 px-4 text-sm font-black text-emerald-700">Share</button>
             </div>
           )}
 
           {/* Card grid */}
           <div
             className="grid gap-2"
-            style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
+            style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, touchAction: 'manipulation' }}
             aria-label={t.title}
           >
             {state.cards.map((card) => (
               <button
                 key={card.id}
-                onClick={() => handleFlip(card.id)}
-                disabled={card.isMatched || card.isFlipped || state.locked || state.status === 'won'}
-                aria-label={card.isFlipped || card.isMatched ? card.emoji : t.cardLabel}
+                onPointerUp={() => handleFlip(card.id)}
+                onClick={(event) => { if (event.detail === 0) handleFlip(card.id); }}
+                onKeyDown={(event) => handleKey(event, card.id)}
+                data-memory-card={card.id}
+                disabled={paused || card.isMatched || card.isFlipped || state.flipped.length === 2 || state.status === 'won'}
+                aria-label={card.isFlipped || card.isMatched ? EMOJI_POOL[card.symbolId] : `${t.cardLabel} ${card.id + 1}`}
                 aria-pressed={card.isFlipped || card.isMatched}
                 className={[
-                  `aspect-square rounded-xl border-2 flex items-center justify-center text-2xl ${prefersReducedMotion ? '' : 'transition-all duration-200'}`,
+                  `min-h-11 min-w-11 aspect-square rounded-xl border-2 flex items-center justify-center text-xl sm:text-2xl ${prefersReducedMotion ? '' : 'transition-all duration-200'}`,
                   card.isMatched
                     ? 'bg-emerald-50 border-emerald-300 scale-95'
                     : card.isFlipped
@@ -351,7 +271,7 @@ const MemoryCardGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     : 'bg-primary/10 border-primary/30 hover:bg-primary/20 hover:border-primary cursor-pointer active:scale-95',
                 ].join(' ')}
               >
-                {card.isFlipped || card.isMatched ? card.emoji : ''}
+                {card.isFlipped || card.isMatched ? <><span aria-hidden="true">{EMOJI_POOL[card.symbolId]}</span>{card.isMatched && <span className="sr-only"> matched</span>}</> : <span aria-hidden="true" className="text-xs font-black opacity-60">{card.id + 1}</span>}
               </button>
             ))}
           </div>

@@ -44,7 +44,7 @@ const COPY: Record<Locale, Copy> = {
       place: "배치", rotate: "드래그 회전 · 휠 확대", needsRoad: "건물은 도로 옆에 배치하세요.", occupied: "이미 사용 중인 칸입니다.", empty: "철거할 대상이 없습니다.",
       insufficient: "예산이 부족합니다.", built: "건설 완료", demolished: "철거 완료", selected: "선택한 구역", level: "레벨", upgrade: "업그레이드",
       maxLevel: "최고 레벨", noSelection: "도시를 클릭해 구역을 살펴보세요.", connected: "연결 도로", congestion: "혼잡도", balance: "시간당 수지",
-      citizens: "시민", capacity: "수용", pause: "일시정지", play: "재생", fast: "빠르게", night: "밤으로", dayTime: "낮으로", tiltShift: "틸트시프트",
+      citizens: "시민", capacity: "수용", pause: "일시정지", play: "재생", fast: "빠르게", night: "밤으로", dayTime: "낮으로", tiltShift: "틸트시프트", sound: "소리",
     },
   },
   en: {
@@ -71,7 +71,7 @@ const COPY: Record<Locale, Copy> = {
       place: "Place", rotate: "Drag to rotate · wheel to zoom", needsRoad: "Buildings need road frontage.", occupied: "That tile is already occupied.", empty: "There is nothing to demolish.",
       insufficient: "Not enough funds.", built: "Construction complete", demolished: "Demolition complete", selected: "Selected district", level: "Level", upgrade: "Upgrade",
       maxLevel: "Max level", noSelection: "Select a city tile to inspect it.", connected: "Road network", congestion: "Congestion", balance: "Hourly balance",
-      citizens: "citizens", capacity: "capacity", pause: "Pause", play: "Play", fast: "Fast", night: "Jump to night", dayTime: "Jump to day", tiltShift: "Tilt-shift",
+      citizens: "citizens", capacity: "capacity", pause: "Pause", play: "Play", fast: "Fast", night: "Jump to night", dayTime: "Jump to day", tiltShift: "Tilt-shift", sound: "Sound",
     },
   },
   ja: {
@@ -98,7 +98,7 @@ const COPY: Record<Locale, Copy> = {
       place: "配置", rotate: "ドラッグ回転 · ホイールズーム", needsRoad: "建物は道路沿いに配置してください。", occupied: "すでに使用中のマスです。", empty: "撤去対象がありません。",
       insufficient: "予算が足りません。", built: "建設完了", demolished: "撤去完了", selected: "選択地区", level: "レベル", upgrade: "アップグレード",
       maxLevel: "最高レベル", noSelection: "都市のマスを選んで確認できます。", connected: "接続道路", congestion: "混雑度", balance: "時間収支",
-      citizens: "市民", capacity: "収容", pause: "一時停止", play: "再生", fast: "高速", night: "夜へ", dayTime: "昼へ", tiltShift: "チルトシフト",
+      citizens: "市民", capacity: "収容", pause: "一時停止", play: "再生", fast: "高速", night: "夜へ", dayTime: "昼へ", tiltShift: "チルトシフト", sound: "サウンド",
     },
   },
   zh: {
@@ -125,7 +125,7 @@ const COPY: Record<Locale, Copy> = {
       place: "建造", rotate: "拖动旋转 · 滚轮缩放", needsRoad: "建筑必须临近道路。", occupied: "该地块已被占用。", empty: "没有可拆除的对象。",
       insufficient: "资金不足。", built: "建造完成", demolished: "拆除完成", selected: "选中街区", level: "等级", upgrade: "升级",
       maxLevel: "最高等级", noSelection: "选择城市地块查看详情。", connected: "道路网络", congestion: "拥堵度", balance: "每小时收支",
-      citizens: "市民", capacity: "容量", pause: "暂停", play: "播放", fast: "加速", night: "跳到夜晚", dayTime: "跳到白天", tiltShift: "移轴",
+      citizens: "市民", capacity: "容量", pause: "暂停", play: "播放", fast: "加速", night: "跳到夜晚", dayTime: "跳到白天", tiltShift: "移轴", sound: "声音",
     },
   },
   fr: {
@@ -152,7 +152,7 @@ const COPY: Record<Locale, Copy> = {
       place: "Placer", rotate: "Glisser pour tourner · molette pour zoomer", needsRoad: "Les bâtiments doivent border une route.", occupied: "Cette case est déjà occupée.", empty: "Rien à démolir.",
       insufficient: "Budget insuffisant.", built: "Construction terminée", demolished: "Démolition terminée", selected: "Quartier sélectionné", level: "Niveau", upgrade: "Améliorer",
       maxLevel: "Niveau maximal", noSelection: "Sélectionnez une case pour l'inspecter.", connected: "Réseau routier", congestion: "Congestion", balance: "Solde horaire",
-      citizens: "habitants", capacity: "capacité", pause: "Pause", play: "Lecture", fast: "Rapide", night: "Passer à la nuit", dayTime: "Passer au jour", tiltShift: "Bascule-décentrement",
+      citizens: "habitants", capacity: "capacité", pause: "Pause", play: "Lecture", fast: "Rapide", night: "Passer à la nuit", dayTime: "Passer au jour", tiltShift: "Bascule-décentrement", sound: "Son",
     },
   },
   es: {
@@ -179,7 +179,7 @@ const COPY: Record<Locale, Copy> = {
       place: "Colocar", rotate: "Arrastra para girar · rueda para zoom", needsRoad: "Los edificios necesitan acceso a carretera.", occupied: "Esa casilla ya está ocupada.", empty: "No hay nada que demoler.",
       insufficient: "Fondos insuficientes.", built: "Construcción terminada", demolished: "Demolición terminada", selected: "Distrito seleccionado", level: "Nivel", upgrade: "Mejorar",
       maxLevel: "Nivel máximo", noSelection: "Selecciona una casilla para inspeccionarla.", connected: "Red vial", congestion: "Congestión", balance: "Balance horario",
-      citizens: "habitantes", capacity: "capacidad", pause: "Pausa", play: "Jugar", fast: "Rápido", night: "Ir a la noche", dayTime: "Ir al día", tiltShift: "Desenfoque tilt-shift",
+      citizens: "habitantes", capacity: "capacidad", pause: "Pausa", play: "Jugar", fast: "Rápido", night: "Ir a la noche", dayTime: "Ir al día", tiltShift: "Desenfoque tilt-shift", sound: "Sonido",
     },
   },
 };
@@ -187,15 +187,7 @@ const COPY: Record<Locale, Copy> = {
 function PreviewCity() {
   return (
     <div className="relative h-72 overflow-hidden rounded-[2rem] border border-white/70 bg-[#d9e8cf] shadow-2xl shadow-olive-900/10 sm:h-80">
-      <div className="absolute inset-[-22%] rotate-[30deg] scale-75 bg-[linear-gradient(rgba(255,255,255,.52)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.52)_1px,transparent_1px)] bg-[size:44px_44px] [transform:rotateX(58deg)_rotateZ(-45deg)]" />
-      <div className="absolute left-[22%] top-[22%] h-28 w-24 rotate-[30deg] rounded-md bg-[#f6d79c] shadow-[-18px_20px_0_#c99e61]" />
-      <div className="absolute left-[46%] top-[12%] h-40 w-28 rotate-[30deg] rounded-md bg-[#9db6ae] shadow-[-22px_24px_0_#5f7e75]" />
-      <div className="absolute right-[15%] top-[38%] h-24 w-24 rotate-[30deg] rounded-md bg-[#d8ae86] shadow-[-16px_18px_0_#9f7251]" />
-      <div className="absolute bottom-[12%] left-[12%] flex items-end gap-2 rotate-[30deg]">
-        <span className="h-11 w-5 rounded-t-full bg-[#4f7143]" />
-        <span className="h-16 w-6 rounded-t-full bg-[#6a8b52]" />
-        <span className="h-9 w-5 rounded-t-full bg-[#3f6338]" />
-      </div>
+      <img src="/games/isometric-city-social.png" alt="" className="absolute inset-0 h-full w-full object-cover" />
       <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[#b4cfa5] to-transparent" />
       <span className="absolute right-5 top-5 rounded-full border border-white/70 bg-white/75 px-3 py-1 text-[10px] font-black tracking-[.2em] text-[#526347] backdrop-blur">LIVE CITY SYSTEMS</span>
     </div>

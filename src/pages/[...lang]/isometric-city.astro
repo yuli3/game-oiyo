@@ -41,7 +41,7 @@ const meta: Record<Locale, { title: string; description: string }> = {
 const m = meta[locale] ?? meta.en;
 ---
 
-<BaseLayout title={m.title} description={m.description} heading={m.title}>
+<BaseLayout title={m.title} description={m.description} heading={m.title} image="/games/isometric-city-social.png">
   <div class="mx-auto max-w-7xl px-2 py-6 sm:px-4 sm:py-8">
     {/*
       The visible React briefing is light; the Three.js city, simulation

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
 import type { Locale } from '../../lib/i18n';
-import { checkersApply, checkersApplyTurn, checkersBestMove, checkersMoves, type CheckersPiece, type CheckersMove } from '../../lib/games/ai/checkers';
+import { checkersApply, checkersApplyTurn, checkersBestMove, checkersMoves, type CheckersPiece, type CheckersMove } from '../../lib/games/checkers';
 import type { AiLevel, GameMode } from '../../lib/games/ai/types';
 import { getRecord, recordResult, type GameRecord } from '../../lib/games/records';
 import { clearCheckersSave, loadCheckersSave, storeCheckersSave } from '../../lib/games/active-game-save';
@@ -11,6 +11,14 @@ const SIZE = 8;
 type Piece = CheckersPiece;
 const AI_PLAYER = 2; // AI plays black; human opens as red
 const AI_DELAY_MS = 500;
+const EXTRA: Record<Locale, { pause: string; resume: string; sound: string; restored: string; redLeft: string; blackLeft: string; captured: string; next: string }> = {
+    ko: { pause: '일시정지', resume: '계속하기', sound: '소리', restored: '이전 대국을 일시정지 상태로 복원했습니다', redLeft: '남은 홍', blackLeft: '남은 흑', captured: '잡은 말', next: '다음 목표' },
+    en: { pause: 'Pause', resume: 'Resume', sound: 'Sound', restored: 'Previous match restored and paused', redLeft: 'Red left', blackLeft: 'Black left', captured: 'Captured', next: 'Next target' },
+    ja: { pause: '一時停止', resume: '再開', sound: 'サウンド', restored: '前の対局を一時停止で復元しました', redLeft: '赤の残り', blackLeft: '黒の残り', captured: '取った駒', next: '次の目標' },
+    zh: { pause: '暂停', resume: '继续', sound: '声音', restored: '已恢复并暂停上一局', redLeft: '剩余红棋', blackLeft: '剩余黑棋', captured: '吃子', next: '下个目标' },
+    fr: { pause: 'Pause', resume: 'Reprendre', sound: 'Son', restored: 'Partie précédente restaurée en pause', redLeft: 'Rouges restantes', blackLeft: 'Noires restantes', captured: 'Prises', next: 'Prochain objectif' },
+    es: { pause: 'Pausa', resume: 'Continuar', sound: 'Sonido', restored: 'Partida anterior restaurada y pausada', redLeft: 'Rojas restantes', blackLeft: 'Negras restantes', captured: 'Capturadas', next: 'Siguiente meta' },
+};
 
 const i18n: Record<Locale, {
     title: string; turn: string; red: string; black: string; win: string; over: string; reset: string;
@@ -29,6 +37,7 @@ const i18n: Record<Locale, {
 
 const Checkers: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     const t = i18n[locale] ?? i18n.en;
+    const x = EXTRA[locale] ?? EXTRA.en;
 
     const [board, setBoard] = useState<(Piece | null)[]>(Array(SIZE * SIZE).fill(null));
     const [isRedTurn, setIsRedTurn] = useState(true);
@@ -40,8 +49,21 @@ const Checkers: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     const [thinking, setThinking] = useState(false);
     const [record, setRecord] = useState<GameRecord | null>(null);
     const [focusIndex, setFocusIndex] = useState(56);
+    const [paused, setPaused] = useState(false);
+    const [restored, setRestored] = useState(false);
+    const [muted, setMuted] = useState(false);
     const aiTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const squareRefs = useRef<(HTMLButtonElement | null)[]>([]);
+    const audio = useRef<AudioContext | null>(null);
+
+    const tone = useCallback((kind: 'move' | 'capture' | 'win') => {
+        if (muted || typeof AudioContext === 'undefined') return;
+        const context = audio.current ?? new AudioContext(); audio.current = context;
+        const oscillator = context.createOscillator(), gain = context.createGain();
+        oscillator.frequency.value = kind === 'capture' ? 180 : kind === 'win' ? 620 : 360;
+        gain.gain.setValueAtTime(.045, context.currentTime); gain.gain.exponentialRampToValueAtTime(.001, context.currentTime + .1);
+        oscillator.connect(gain).connect(context.destination); oscillator.start(); oscillator.stop(context.currentTime + .1);
+    }, [muted]);
 
     const initGame = useCallback(() => {
         clearCheckersSave();
@@ -62,6 +84,8 @@ const Checkers: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         setWinner(null);
         setThinking(false);
         setFocusIndex(56);
+        setPaused(false);
+        setRestored(false);
     }, []);
 
     useEffect(() => {
@@ -77,13 +101,19 @@ const Checkers: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
             setWinner(null);
             setThinking(false);
             setFocusIndex(56);
+            setPaused(true);
+            setRestored(true);
         } else {
             initGame();
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     useEffect(() => { setRecord(getRecord('checkers')); }, []);
-    useEffect(() => () => { if (aiTimer.current) clearTimeout(aiTimer.current); }, []);
+    useEffect(() => {
+        const hidden = () => { if (document.hidden && winner === null) setPaused(true); };
+        document.addEventListener('visibilitychange', hidden);
+        return () => { document.removeEventListener('visibilitychange', hidden); if (aiTimer.current) clearTimeout(aiTimer.current); void audio.current?.close(); };
+    }, [winner]);
 
     useEffect(() => {
         if (winner !== null) { clearCheckersSave(); return; }
@@ -92,12 +122,13 @@ const Checkers: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
 
     const finish = (w: number) => {
         setWinner(w);
+        tone('win');
         clearCheckersSave();
         if (mode === 'ai') setRecord(recordResult('checkers', w === AI_PLAYER ? 'l' : 'w'));
     };
 
     const handleSquareClick = (index: number) => {
-        if (winner !== null || thinking) return;
+        if (winner !== null || thinking || paused) return;
         if (mode === 'ai' && !isRedTurn) return; // AI's turn
         const piece = board[index];
         const player = isRedTurn ? 1 : 2;
@@ -127,6 +158,7 @@ const Checkers: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         const crowned = !before.isKing && newBoard[move.to]?.isKing;
 
         setBoard(newBoard);
+        tone(move.jumpOver !== undefined ? 'capture' : 'move');
         if (move.jumpOver !== undefined && !crowned && checkersMoves(newBoard, before.player, move.to).length > 0) {
             setForcedFrom(move.to);
             setSelected(move.to);
@@ -137,7 +169,7 @@ const Checkers: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
 
     // AI turn
     useEffect(() => {
-        if (mode !== 'ai' || winner !== null || isRedTurn) return;
+        if (mode !== 'ai' || winner !== null || isRedTurn || paused) return;
         setThinking(true);
         aiTimer.current = setTimeout(() => {
             const move = checkersBestMove(board, AI_PLAYER, level);
@@ -151,7 +183,7 @@ const Checkers: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         }, AI_DELAY_MS);
         return () => { if (aiTimer.current) clearTimeout(aiTimer.current); };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [mode, isRedTurn, winner]);
+    }, [mode, isRedTurn, winner, paused]);
 
     const switchMode = (m: GameMode) => {
         if (m === mode) return;
@@ -181,6 +213,11 @@ const Checkers: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
 
     return (
         <GameContainer title={t.title} subtitle={t.subtitle} onReset={initGame}>
+            <div className="mb-3 flex flex-wrap justify-end gap-2">
+                <button type="button" onClick={() => { setPaused(value => !value); setRestored(false); }} className="min-h-11 rounded-xl border border-border px-3 text-xs font-bold">{paused ? `▶ ${x.resume}` : `Ⅱ ${x.pause}`}</button>
+                <button type="button" onClick={() => setMuted(value => !value)} aria-pressed={muted} className="min-h-11 rounded-xl border border-border px-3 text-xs font-bold">{muted ? '🔇' : '🔊'} {x.sound}</button>
+            </div>
+            {(paused || restored) && winner === null && <p role="status" className="mb-3 text-center text-xs font-bold text-muted-foreground">{restored ? x.restored : x.pause}</p>}
             {/* Mode + difficulty */}
             <div className="mb-4 flex flex-wrap items-center gap-2">
                 <div className="inline-flex rounded-xl border border-border overflow-hidden" role="group" aria-label={`${t.modeLocal} / ${t.modeAi}`}>
@@ -223,8 +260,8 @@ const Checkers: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                 </div>
             </div>
 
-            <div className="overflow-x-auto pb-2">
-            <div className="grid min-w-[352px] grid-cols-8 grid-rows-8 aspect-square w-full border-4 border-stone-800 shadow-2xl overflow-hidden rounded-lg" role="grid" aria-label={t.boardLabel}>
+            <div className="pb-2">
+            <div className="grid grid-cols-8 grid-rows-8 aspect-square w-full border-4 border-stone-800 shadow-lg overflow-hidden rounded-lg" role="grid" aria-label={t.boardLabel} aria-disabled={paused}>
                 {board.map((piece, i) => {
                     const r = Math.floor(i / SIZE), c = i % SIZE;
                     const isDark = (r + c) % 2 === 1;
@@ -235,6 +272,7 @@ const Checkers: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                             key={i}
                             ref={(node) => { squareRefs.current[i] = node; }}
                             onClick={() => handleSquareClick(i)}
+                            disabled={paused}
                             onFocus={() => setFocusIndex(i)}
                             onKeyDown={(event) => moveBoardFocus(event, i)}
                             tabIndex={focusIndex === i ? 0 : -1}
@@ -267,6 +305,8 @@ const Checkers: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
             {winner && (
                 <div className="absolute inset-0 z-20 bg-background/60 backdrop-blur-sm rounded-4xl flex flex-col items-center justify-center animate-in fade-in zoom-in-95 motion-reduce:animate-none" role="status" aria-live="assertive">
                     <h4 className="text-4xl font-black text-foreground mb-4">{winLabel}</h4>
+                    <p className="mb-4 text-sm font-bold text-muted-foreground">{x.redLeft} {board.filter(piece => piece?.player === 1).length} · {x.blackLeft} {board.filter(piece => piece?.player === 2).length}</p>
+                    <p className="mb-4 text-xs text-muted-foreground">{x.captured} {winner === 1 ? 12 - board.filter(piece => piece?.player === 2).length : 12 - board.filter(piece => piece?.player === 1).length} · {x.next} 12</p>
                     <button onClick={initGame} className="px-10 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg">
                         {t.reset}
                     </button>

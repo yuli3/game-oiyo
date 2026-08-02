@@ -13,6 +13,9 @@ import { createCaveDash, flapCaveDash, stepCaveDash } from "./cave-dash";
 import { createDotRunner, jumpDotRunner, stepDotRunner } from "./dot-runner";
 import { createMahjong, drawMahjong } from "./mahjong";
 import { createWaterSort, legalWaterSortMoves, moveWaterSort } from "./water-sort";
+import { createPsychologyWordle, inputPsychologyWordle } from "./psychology-wordle";
+import { createNumberGuessingGame, guessNumber } from "./number-guessing";
+import { createWordle, inputWordle } from "./wordle";
 import { mulberry32 } from "./daily";
 import {
   chooseHeartsCpuCard,
@@ -183,6 +186,31 @@ describe("GameSessionEnvelope v1", () => {
     expect(parseGameSessionEnvelope(serializeGameSessionEnvelope(envelope!))).toEqual(envelope);
     expect(adaptActiveGameSaveToSession("water-sort", { ...payload, state: { ...state, status: "solved" } }, TIMING)).toBeNull();
   });
+  it("adapts deterministic Psychology Wordle progress and rejects forged targets", () => {
+    const initial = createPsychologyWordle(42, "latin");
+    const state = inputPsychologyWordle(initial, "A");
+    const payload = { version: 1 as const, state, mode: "daily" as const, dateKey: "2026-08-02", savedAtEpochMs: Date.parse(TIMING.savedAt) };
+    const envelope = adaptActiveGameSaveToSession("psychology-wordle", payload, TIMING);
+    expect(envelope).toMatchObject({ gameId: "psychology-wordle", difficulty: "daily", mode: "solo", source: { storageKey: "oiyo:psychology-wordle-state:v1" } });
+    expect(parseGameSessionEnvelope(serializeGameSessionEnvelope(envelope!))).toEqual(envelope);
+    expect(adaptActiveGameSaveToSession("psychology-wordle", { ...payload, state: { ...state, targetDisplay: "ANGER" } }, TIMING)).toBeNull();
+  });
+  it("adapts deterministic Number Guessing progress and rejects forged secrets", () => {
+    const state = guessNumber(createNumberGuessingGame(72, "normal"), 50);
+    const payload = { version: 1 as const, state, elapsedMs: 1200, assisted: false, savedAtEpochMs: Date.parse(TIMING.savedAt) };
+    const envelope = adaptActiveGameSaveToSession("number-guessing", payload, TIMING);
+    expect(envelope).toMatchObject({ gameId: "number-guessing", difficulty: "normal", mode: "solo", source: { storageKey: "oiyo:number-guessing-state:v1" } });
+    expect(parseGameSessionEnvelope(serializeGameSessionEnvelope(envelope!))).toEqual(envelope);
+    expect(adaptActiveGameSaveToSession("number-guessing", { ...payload, state: { ...state, secret: 1 } }, TIMING)).toBeNull();
+  });
+  it("adapts deterministic Wordle progress and rejects forged target indices", () => {
+    const state = inputWordle(createWordle(42, 736, "daily", "2026-08-02"), "A");
+    const payload = { version: 1 as const, state, elapsedMs: 1200, savedAtEpochMs: Date.parse(TIMING.savedAt) };
+    const envelope = adaptActiveGameSaveToSession("wordle", payload, TIMING);
+    expect(envelope).toMatchObject({ gameId: "wordle", difficulty: "daily", mode: "solo", source: { storageKey: "oiyo:wordle-state:v1" } });
+    expect(parseGameSessionEnvelope(serializeGameSessionEnvelope(envelope!))).toEqual(envelope);
+    expect(adaptActiveGameSaveToSession("wordle", { ...payload, state: { ...state, targetIndex: 99 } }, TIMING)).toBeNull();
+  });
   it("adapts a resumable Chess v2 save with mode, difficulty and complete-state determinism", () => {
     const envelope = adaptChessSaveToSession(activeChessSave(), TIMING, {
       personalBest: { unit: "seconds", value: 90 },
@@ -343,8 +371,8 @@ describe("GameSessionEnvelope v1", () => {
 
   it("keeps unsupported games explicitly non-restorable", () => {
     const byId = new Map(capabilities.games.map((game) => [game.gameId, game]));
-    expect([...byId.values()].filter((game) => game.supportsRestore).map((game) => game.gameId)).toEqual(["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game", "kurodoko", "yahtzee", "cave-dash", "dot-runner", "mahjong", "water-sort"]);
-    for (const gameId of ["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game", "kurodoko", "yahtzee", "cave-dash", "dot-runner", "mahjong", "water-sort"] as const) {
+    expect([...byId.values()].filter((game) => game.supportsRestore).map((game) => game.gameId)).toEqual(["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game", "kurodoko", "yahtzee", "cave-dash", "dot-runner", "mahjong", "water-sort", "psychology-wordle", "memory-card-game", "number-guessing", "wordle"]);
+    for (const gameId of ["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game", "kurodoko", "yahtzee", "cave-dash", "dot-runner", "mahjong", "water-sort", "psychology-wordle", "memory-card-game", "number-guessing", "wordle"] as const) {
       expect(byId.get(gameId)?.modes).toEqual([...RESTORABLE_GAME_CAPABILITIES[gameId].modes]);
       expect(byId.get(gameId)?.difficulties).toEqual([...RESTORABLE_GAME_CAPABILITIES[gameId].difficulties]);
     }

@@ -411,6 +411,66 @@
    "difficulties": ["easy", "medium", "hard"],
    "deterministicResume": true,
    "nonSessionPersistence": []
+  },
+  {
+   "gameId": "psychology-wordle",
+   "componentPath": "src/components/games/PsychologyWordle.tsx",
+   "adapterPath": "src/lib/games/psychology-wordle-save.ts",
+   "supportsRestore": true,
+   "sessionStorageKey": "oiyo:psychology-wordle-state:v1",
+   "sourceSchema": "oiyo.psychology-wordle-save",
+   "sourceSchemaVersion": 1,
+   "adapterVersion": "psychology-wordle-session-adapter-v1",
+   "engineVersion": "psychology-wordle-rules-v1",
+   "modes": ["solo"],
+   "difficulties": ["daily", "random"],
+   "deterministicResume": true,
+   "nonSessionPersistence": ["daily-streak"]
+  },
+  {
+   "gameId": "memory-card-game",
+   "componentPath": "src/components/games/MemoryCardGame.tsx",
+   "adapterPath": "src/lib/games/memory-card-game-save.ts",
+   "supportsRestore": true,
+   "sessionStorageKey": "oiyo:memory-card-game-state:v1",
+   "sourceSchema": "oiyo.memory-card-save",
+   "sourceSchemaVersion": 1,
+   "adapterVersion": "memory-card-session-adapter-v1",
+   "engineVersion": "memory-card-rules-v1",
+   "modes": ["solo"],
+   "difficulties": ["4x4", "6x4", "6x6"],
+   "deterministicResume": true,
+   "nonSessionPersistence": ["conditional-personal-best"]
+  },
+  {
+   "gameId": "number-guessing",
+   "componentPath": "src/components/games/NumberGuessingGame.tsx",
+   "adapterPath": "src/lib/games/number-guessing-save.ts",
+   "supportsRestore": true,
+   "sessionStorageKey": "oiyo:number-guessing-state:v1",
+   "sourceSchema": "oiyo.number-guessing-save",
+   "sourceSchemaVersion": 1,
+   "adapterVersion": "number-guessing-session-adapter-v1",
+   "engineVersion": "number-guessing-rules-v1",
+   "modes": ["solo"],
+   "difficulties": ["easy", "normal", "hard"],
+   "deterministicResume": true,
+   "nonSessionPersistence": ["difficulty-personal-best"]
+  },
+  {
+   "gameId": "wordle",
+   "componentPath": "src/components/games/WordleGame.tsx",
+   "adapterPath": "src/lib/games/wordle-save.ts",
+   "supportsRestore": true,
+   "sessionStorageKey": "oiyo:wordle-state:v1",
+   "sourceSchema": "oiyo.wordle-save",
+   "sourceSchemaVersion": 1,
+   "adapterVersion": "wordle-session-adapter-v1",
+   "engineVersion": "wordle-rules-v1",
+   "modes": ["solo"],
+   "difficulties": ["daily", "random"],
+   "deterministicResume": true,
+   "nonSessionPersistence": ["streak"]
   }
  ]
 }

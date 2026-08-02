@@ -108,7 +108,10 @@ export interface IsometricCitySceneCopy {
   night: string;
   dayTime: string;
   tiltShift: string;
+  sound: string;
 }
+
+declare global { interface Window { webkitAudioContext?: typeof AudioContext } }
 
 interface Props {
   copy: IsometricCitySceneCopy;
@@ -146,11 +149,12 @@ export default function IsometricCityScene({ copy }: Props) {
   const [notice, setNotice] = useState<string | null>(null);
   const [coarse, setCoarse] = useState(false);
   const [tiltShift, setTiltShift] = useState(true);
+  const [sound, setSound] = useState(true);
   const lastHover = useRef<string>("");
 
   useEffect(() => {
     const saved = parseCitySave(window.localStorage.getItem(CITY_SAVE_KEY));
-    if (saved) setCity(saved);
+    if (saved) setCity({ ...saved, speed: 0 });
     setHydrated(true);
   }, []);
 
@@ -191,6 +195,11 @@ export default function IsometricCityScene({ copy }: Props) {
   }, [notice]);
 
   const summary = useMemo(() => citySummary(city), [city]);
+  const tone = useCallback((frequency: number) => {
+    if (!sound) return; const AudioCtor = window.AudioContext || window.webkitAudioContext; if (!AudioCtor) return;
+    const audio = new AudioCtor(), oscillator = audio.createOscillator(), gain = audio.createGain(); oscillator.frequency.value = frequency;
+    gain.gain.setValueAtTime(0.025, audio.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.14); oscillator.connect(gain).connect(audio.destination); oscillator.start(); oscillator.stop(audio.currentTime + 0.14);
+  }, [sound]);
   const clock = formatClock(city);
   const selectedCell = selected ? getCell(city, selected.x, selected.z) : undefined;
   const weatherLabel = city.weather === "rain" ? copy.rain : city.weather === "fog" ? copy.fog : copy.clear;
@@ -212,8 +221,9 @@ export default function IsometricCityScene({ copy }: Props) {
       return;
     }
     setCity(result.state);
+    tone(tool === "bulldoze" ? 160 : 420);
     setNotice(tool === "bulldoze" ? copy.demolished : copy.built);
-  }, [city, copy, tool]);
+  }, [city, copy, tool, tone]);
 
   const handleUpgrade = useCallback(() => {
     if (!selected) return;
@@ -223,8 +233,9 @@ export default function IsometricCityScene({ copy }: Props) {
       return;
     }
     setCity(result.state);
+    tone(620);
     setNotice(copy.built);
-  }, [city, copy, selected]);
+  }, [city, copy, selected, tone]);
 
   const changeSpeed = (speed: SimulationSpeed) => setCity((current) => ({ ...current, speed }));
   const toggleTime = () => setCity((current) => jumpToTime(current, night ? 9 * 60 : 21 * 60));
@@ -289,6 +300,7 @@ export default function IsometricCityScene({ copy }: Props) {
             <ControlButton active={city.speed === 1} label={copy.play} onClick={() => changeSpeed(1)}><CirclePlay size={15} /></ControlButton>
             <ControlButton active={city.speed === 4} label={copy.fast} onClick={() => changeSpeed(4)}><FastForward size={15} /></ControlButton>
             <ControlButton label={night ? copy.dayTime : copy.night} onClick={toggleTime}>{night ? <Sun size={15} /> : <Moon size={15} />}</ControlButton>
+            <ControlButton active={sound} label={copy.sound} onClick={() => setSound((value) => !value)}><span aria-hidden="true">♪</span></ControlButton>
           </div>
         </div>
 

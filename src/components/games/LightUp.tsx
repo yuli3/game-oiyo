@@ -1,125 +1,29 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { GameContainer } from '../ui/game/GamePrimitives';
-import { evaluateAkari } from '../../lib/games/logic-puzzles';
+import React,{useCallback,useEffect,useRef,useState} from 'react';
+import {GameContainer} from '../ui/game/GamePrimitives';
+import {evaluateAkari} from '../../lib/games/logic-puzzles';
+import {createLightUp,hintLightUp,LIGHT_UP_SPEC,parseLightUp,serializeLightUp,toggleLightUp,undoLightUp,type LightUpState} from '../../lib/games/light-up';
 
-const SIZE = 7;
-type Cell = { type: 'white' | 'black'; count?: number; hasBulb: boolean; isLit: boolean; isError: boolean };
-
-const LightUp: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
-    const COPY = {
-        ko: { title: "라이트업 (Akari)", desc: "모든 흰 칸을 밝히고 숫자만큼 전구를 붙이세요. 전구끼리는 서로 비추면 안 됩니다.", reset: "판 갈기", win: "세상이 밝아졌습니다!", again: "다시 하기", row: "행", column: "열", wall: "벽", bulb: "전구", lit: "밝음", unlit: "어두움", error: "규칙 충돌" },
-        en: { title: "Light Up (Akari)", desc: "Light every white cell, match each numbered wall, and never let bulbs see each other.", reset: "Restart", win: "The world is bright!", again: "Play again", row: "row", column: "column", wall: "wall", bulb: "bulb", lit: "lit", unlit: "unlit", error: "rule conflict" },
-        ja: { title: "美術館（ライトアップ）", desc: "すべての白マスを照らし、数字どおりに電球を置きます。電球同士を照らしてはいけません。", reset: "新しい盤面", win: "世界が明るくなりました！", again: "もう一度", row: "行", column: "列", wall: "壁", bulb: "電球", lit: "点灯", unlit: "未点灯", error: "ルール違反" },
-        zh: { title: "点灯（Akari）", desc: "点亮所有白格，使数字墙周围的灯数相符，灯泡之间不能互相照射。", reset: "换新棋盘", win: "世界亮起来了！", again: "再玩一次", row: "行", column: "列", wall: "墙", bulb: "灯泡", lit: "已点亮", unlit: "未点亮", error: "规则冲突" },
-        fr: { title: "Light Up (Akari)", desc: "Éclairez chaque case blanche, respectez les murs numérotés et ne laissez jamais deux ampoules se voir.", reset: "Nouvelle grille", win: "Le monde s'illumine !", again: "Rejouer", row: "ligne", column: "colonne", wall: "mur", bulb: "ampoule", lit: "éclairée", unlit: "éteinte", error: "conflit de règle" },
-        es: { title: "Light Up (Akari)", desc: "Ilumina cada casilla blanca, respeta los muros numerados y evita que dos bombillas se vean.", reset: "Nuevo tablero", win: "¡El mundo se iluminó!", again: "Jugar de nuevo", row: "fila", column: "columna", wall: "muro", bulb: "bombilla", lit: "iluminada", unlit: "apagada", error: "conflicto de regla" }
-    };
-    const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
-
-    const [grid, setGrid] = useState<Cell[][]>([]);
-    const [activeCell, setActiveCell] = useState(0);
-    const cellRefs = useRef<Array<HTMLButtonElement | null>>([]);
-    
-    const initGame = useCallback(() => {
-        const newGrid: Cell[][] = Array(SIZE).fill(null).map(() => 
-            Array(SIZE).fill(null).map(() => ({ type: 'white', hasBulb: false, isLit: false, isError: false }))
-        );
-
-        // Simple Random Black Blocks
-        const blackPos = [[1, 1, 1], [1, 5, 2], [3, 3, 0], [5, 1, 1], [5, 5, 2]];
-        blackPos.forEach(([r, c, n]) => {
-            newGrid[r][c] = { type: 'black', count: n, hasBulb: false, isLit: false, isError: false };
-        });
-
-        setGrid(newGrid);
-        setActiveCell(0);
-    }, []);
-
-    useEffect(() => { initGame(); }, [initGame]);
-
-    const updateLighting = (currentGrid: Cell[][]) => {
-        const spec = currentGrid.map((row) => row.map((cell) => cell.type === 'black' ? cell.count ?? 0 : null));
-        const bulbs = currentGrid.map((row) => row.map((cell) => cell.hasBulb));
-        const result = evaluateAkari(spec, bulbs);
-        return currentGrid.map((row, r) => row.map((cell, c) => ({
-            ...cell,
-            isLit: result.lit[r][c],
-            isError: cell.type === 'black' ? result.clueErrors[r][c] : result.bulbErrors[r][c],
-        })));
-    };
-
-    const toggleBulb = (r: number, c: number) => {
-        if (grid[r][c].type === 'black') return;
-        const newGrid = grid.map(row => row.map(cell => ({ ...cell })));
-        newGrid[r][c].hasBulb = !newGrid[r][c].hasBulb;
-        setGrid(updateLighting(newGrid));
-    };
-
-    const isWon = grid.length > 0 && grid.every(row => row.every(cell => (cell.type === 'black') || cell.isLit)) && 
-                 grid.every(row => row.every(cell => !cell.isError));
-
-    const moveFocus = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
-        const row = Math.floor(index / SIZE), column = index % SIZE;
-        let next = index;
-        if (event.key === 'ArrowUp') next = Math.max(0, row - 1) * SIZE + column;
-        else if (event.key === 'ArrowDown') next = Math.min(SIZE - 1, row + 1) * SIZE + column;
-        else if (event.key === 'ArrowLeft') next = row * SIZE + Math.max(0, column - 1);
-        else if (event.key === 'ArrowRight') next = row * SIZE + Math.min(SIZE - 1, column + 1);
-        else if (event.key === 'Home') next = row * SIZE;
-        else if (event.key === 'End') next = row * SIZE + SIZE - 1;
-        else return;
-        event.preventDefault();
-        if (grid[Math.floor(next / SIZE)]?.[next % SIZE]?.type === 'black') return;
-        setActiveCell(next);
-        cellRefs.current[next]?.focus();
-    };
-
-    return (
-        <GameContainer title={t.title} subtitle="Logic & Illumination" resetLabel={t.reset} onReset={initGame}>
-            <p className="text-sm font-medium text-muted-foreground mb-8 text-center">{t.desc}</p>
-            
-            <div className="overflow-x-auto pb-1">
-            <div className="grid gap-1 bg-muted/30 p-2 rounded-2xl border border-border w-max mx-auto" style={{ gridTemplateColumns: `repeat(${SIZE}, 2.75rem)` }} role="grid" aria-label={t.title} aria-rowcount={SIZE} aria-colcount={SIZE}>
-                {grid.map((row, r) => row.map((cell, c) => {
-                    const index = r * SIZE + c;
-                    const label = `${t.row} ${r + 1}, ${t.column} ${c + 1}: ${cell.type === 'black' ? `${t.wall}${cell.count !== undefined ? ` ${cell.count}` : ''}` : cell.hasBulb ? t.bulb : cell.isLit ? t.lit : t.unlit}${cell.isError ? `, ${t.error}` : ''}`;
-                    if (cell.type === 'black') return (
-                        <div key={`${r}-${c}`} role="gridcell" aria-label={label} className={`relative h-11 w-11 rounded-md flex items-center justify-center bg-stone-800 text-white shadow-sm border border-border/20 ${cell.isError ? 'ring-2 ring-destructive' : ''}`}>
-                            {cell.count !== undefined && <span className={`text-xs font-black ${cell.isError ? 'text-destructive' : ''}`}>{cell.count}</span>}
-                        </div>
-                    );
-                    return (
-                        <button
-                            key={`${r}-${c}`}
-                            ref={(node) => { cellRefs.current[index] = node; }}
-                            type="button"
-                            role="gridcell"
-                            onClick={() => toggleBulb(r, c)}
-                            onFocus={() => setActiveCell(index)}
-                            onKeyDown={(event) => moveFocus(event, index)}
-                            tabIndex={activeCell === index ? 0 : -1}
-                            aria-pressed={cell.hasBulb}
-                            aria-label={label}
-                            className={`relative h-11 w-11 rounded-md flex items-center justify-center transition-all motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
-                                cell.hasBulb ? cell.isError ? 'bg-destructive' : 'bg-primary' : cell.isLit ? 'bg-primary/20' : 'bg-background'
-                            } shadow-sm border border-border/20`}
-                        >
-                            {cell.hasBulb && <span className="text-xl sm:text-2xl drop-shadow-md">💡</span>}
-                            {cell.isLit && !cell.hasBulb && <div className="w-1.5 h-1.5 rounded-full bg-primary/40" />}
-                        </button>
-                    );
-                }))}
-            </div>
-            </div>
-
-            {isWon && (
-                <div className="mt-8 text-center animate-in fade-in slide-in-from-bottom-2 motion-reduce:animate-none" role="status" aria-live="polite">
-                    <h4 className="text-2xl font-black text-primary mb-4">{t.win}</h4>
-                    <button onClick={initGame} className="min-h-11 px-10 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg">{t.again}</button>
-                </div>
-            )}
-        </GameContainer>
-    );
+const SAVE='oiyo:light-up:v1';
+const COPY={
+ ko:{title:'라이트 업',sub:'빛의 논리 극장',desc:'모든 방을 밝히되 전구끼리 마주 보지 않게 배치하세요.',newGame:'새 무대',undo:'되돌리기',hint:'빛 힌트',sound:'소리',pause:'일시정지',resume:'계속하기',moves:'수',bulbs:'전구',dark:'어두운 칸',win:'모든 조명이 켜졌습니다',next:'다음 무대',restored:'저장된 무대를 불러왔어요'},
+ en:{title:'Light Up',sub:'The theatre of illumination',desc:'Light every room without letting two bulbs see each other.',newGame:'New stage',undo:'Undo',hint:'Light hint',sound:'Sound',pause:'Pause',resume:'Resume',moves:'Moves',bulbs:'Bulbs',dark:'Dark cells',win:'Every light is on',next:'Next stage',restored:'Your saved stage is ready'},
+ ja:{title:'美術館',sub:'光の論理劇場',desc:'電球同士を向かい合わせず、すべての部屋を照らします。',newGame:'新しい舞台',undo:'戻す',hint:'光のヒント',sound:'サウンド',pause:'一時停止',resume:'続ける',moves:'手数',bulbs:'電球',dark:'暗いマス',win:'すべての光が灯りました',next:'次の舞台',restored:'保存した舞台を復元しました'},
+ zh:{title:'点灯',sub:'光之逻辑剧场',desc:'点亮所有房间，同时避免灯泡互相照射。',newGame:'新舞台',undo:'撤销',hint:'光提示',sound:'声音',pause:'暂停',resume:'继续',moves:'步数',bulbs:'灯泡',dark:'暗格',win:'所有灯光都亮了',next:'下一舞台',restored:'已恢复保存的舞台'},
+ fr:{title:'Light Up',sub:"Le théâtre de lumière",desc:'Éclairez chaque pièce sans que deux ampoules se voient.',newGame:'Nouvelle scène',undo:'Annuler',hint:'Indice',sound:'Son',pause:'Pause',resume:'Reprendre',moves:'Coups',bulbs:'Ampoules',dark:'Cases sombres',win:'Toutes les lumières brillent',next:'Scène suivante',restored:'Votre scène a été restaurée'},
+ es:{title:'Light Up',sub:'El teatro de la luz',desc:'Ilumina cada sala sin que dos bombillas se vean.',newGame:'Nuevo escenario',undo:'Deshacer',hint:'Pista de luz',sound:'Sonido',pause:'Pausa',resume:'Continuar',moves:'Movimientos',bulbs:'Bombillas',dark:'Casillas oscuras',win:'Todas las luces están encendidas',next:'Siguiente escenario',restored:'Tu escenario fue restaurado'}
 };
+export default function LightUp({locale='ko'}:{locale?:string}){
+ const t=COPY[locale as keyof typeof COPY]??COPY.en;const [state,setState]=useState<LightUpState>(()=>createLightUp());const [paused,setPaused]=useState(false);const [sound,setSound]=useState(true);const [restored,setRestored]=useState(false);const [active,setActive]=useState(0);const refs=useRef<Array<HTMLButtonElement|null>>([]);
+ useEffect(()=>{const saved=parseLightUp(localStorage.getItem(SAVE));if(saved){setState(saved);setRestored(true);setPaused(true);}},[]);useEffect(()=>localStorage.setItem(SAVE,serializeLightUp(state)),[state]);
+ const tone=useCallback((win=false)=>{if(!sound)return;const A=window.AudioContext||window.webkitAudioContext;if(!A)return;const a=new A(),o=a.createOscillator(),g=a.createGain();o.frequency.value=win?880:520;g.gain.setValueAtTime(.03,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+.16);o.connect(g).connect(a.destination);o.start();o.stop(a.currentTime+.16);},[sound]);
+ const act=(fn:(s:LightUpState)=>LightUpState)=>{if(paused)return;setState(s=>{const n=fn(s);if(n!==s)tone(n.won);return n;});};const fresh=()=>{setState(createLightUp(state.seed+1));setPaused(false);setRestored(false);};const ev=evaluateAkari(LIGHT_UP_SPEC,state.bulbs);const bulbs=state.bulbs.flat().filter(Boolean).length, dark=ev.lit.flat().filter((lit,i)=>LIGHT_UP_SPEC[Math.floor(i/7)][i%7]===null&&!lit).length;
+ const focus=(e:React.KeyboardEvent,index:number)=>{const r=Math.floor(index/7),c=index%7;let n=index;if(e.key==='ArrowUp')n=Math.max(0,r-1)*7+c;else if(e.key==='ArrowDown')n=Math.min(6,r+1)*7+c;else if(e.key==='ArrowLeft')n=r*7+Math.max(0,c-1);else if(e.key==='ArrowRight')n=r*7+Math.min(6,c+1);else return;e.preventDefault();while(n>=0&&n<49&&LIGHT_UP_SPEC[Math.floor(n/7)][n%7]!==null)n+=e.key==='ArrowLeft'||e.key==='ArrowUp'?-1:1;setActive(n);refs.current[n]?.focus();};
+ return <GameContainer title={t.title} subtitle={t.sub} resetLabel={t.newGame} onReset={fresh}><div className="mx-auto max-w-lg space-y-5"><p className="text-center text-sm text-muted-foreground">{t.desc}</p><div className="grid grid-cols-3 gap-2"><Stat label={t.moves} value={state.moves}/><Stat label={t.bulbs} value={bulbs}/><Stat label={t.dark} value={dark}/></div>{restored&&<p className="rounded-xl bg-amber-400/15 p-3 text-center text-xs font-bold text-amber-700" role="status">{t.restored}</p>}
+ <div className="relative mx-auto w-full max-w-[25rem] rounded-3xl border bg-slate-950 p-2 shadow-2xl"><div className="grid grid-cols-7 gap-1" role="grid" aria-label={t.title}>{LIGHT_UP_SPEC.flatMap((row,r)=>row.map((wall,c)=>{const i=r*7+c;if(wall!==null)return <div key={i} role="gridcell" aria-label={`wall ${wall}`} className={`aspect-square rounded-lg border border-white/10 bg-slate-800 flex items-center justify-center font-black text-white ${ev.clueErrors[r][c]?'ring-2 ring-rose-500':''}`}>{wall}</div>;const bulb=state.bulbs[r][c],lit=ev.lit[r][c],error=ev.bulbErrors[r][c];return <button key={i} ref={n=>{refs.current[i]=n;}} role="gridcell" aria-pressed={bulb} aria-label={`${r+1}, ${c+1}: ${bulb?t.bulbs:lit?'lit':t.dark}`} tabIndex={active===i?0:-1} disabled={paused||state.won} onFocus={()=>setActive(i)} onKeyDown={e=>focus(e,i)} onClick={()=>act(s=>toggleLightUp(s,i))} className={`aspect-square min-h-10 rounded-lg border transition focus-visible:ring-2 focus-visible:ring-cyan-300 ${error?'bg-rose-500':bulb?'bg-amber-300 text-xl shadow-[0_0_22px_#fcd34d]':lit?'bg-amber-100':'bg-slate-900'}`}>{bulb?'💡':''}</button>}))}</div>{paused&&<button onClick={()=>setPaused(false)} className="absolute inset-2 rounded-2xl bg-slate-950/95 text-lg font-black text-white backdrop-blur">{t.resume}</button>}</div>
+ <div className="grid grid-cols-2 gap-2 sm:grid-cols-4"><Control text={t.undo} onClick={()=>act(undoLightUp)} disabled={!state.history.length||state.won}/><Control text={t.hint} onClick={()=>act(hintLightUp)} disabled={state.won}/><Control text={`${t.sound} ${sound?'ON':'OFF'}`} onClick={()=>setSound(x=>!x)}/><Control text={paused?t.resume:t.pause} onClick={()=>setPaused(x=>!x)}/></div>
+ {state.won&&<div className="rounded-3xl border border-amber-300 bg-amber-100 p-6 text-center text-slate-900" role="status" aria-live="polite"><div className="text-4xl">✨</div><h3 className="mt-2 text-xl font-black">{t.win}</h3><p className="mt-1 text-sm">{state.moves} {t.moves} · {state.hints} {t.hint}</p><button onClick={fresh} className="mt-4 min-h-11 rounded-full bg-slate-900 px-8 font-bold text-white">{t.next}</button></div>}</div></GameContainer>;
+}
+function Stat({label,value}:{label:string;value:number}){return <div className="rounded-2xl border bg-card p-2 text-center"><div className="text-xl font-black">{value}</div><div className="text-[10px] uppercase text-muted-foreground">{label}</div></div>};
+function Control({text,onClick,disabled=false}:{text:string;onClick:()=>void;disabled?:boolean}){return <button type="button" onClick={onClick} disabled={disabled} className="min-h-11 rounded-xl border bg-card px-2 text-xs font-bold disabled:opacity-40">{text}</button>}
 
-export default LightUp;
+declare global{interface Window{webkitAudioContext?:typeof AudioContext}}

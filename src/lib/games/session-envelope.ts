@@ -24,11 +24,15 @@ import { parseCaveDashSave, type CaveDashSaveV1 } from "./cave-dash-save";
 import { parseDotRunnerSave, type DotRunnerSaveV1 } from "./dot-runner-save";
 import { parseMahjongSave, type MahjongSaveV1 } from "./mahjong-save";
 import { parseWaterSortSave, type WaterSortSaveV1 } from "./water-sort-save";
+import { parsePsychologyWordleSave, type PsychologyWordleSaveV1 } from "./psychology-wordle-save";
+import { parseMemoryCardSave, type MemoryCardSaveV1 } from "./memory-card-game-save";
+import { parseNumberGuessingSave, type NumberGuessingSaveV1 } from "./number-guessing-save";
+import { parseWordleSave, type WordleSaveV1 } from "./wordle-save";
 
 export const GAME_SESSION_SCHEMA = "oiyo.game-session" as const;
 export const GAME_SESSION_SCHEMA_VERSION = 1 as const;
 
-export type RestorableGameId = "chess" | "hearts" | "minesweeper" | "brick-breaker" | "solitaire" | "freecell" | "connect-four" | "gomoku" | "sudoku" | "puzzle15" | "checkers" | "reversi" | "game-2048" | "snake-game" | "kurodoko" | "yahtzee" | "cave-dash" | "dot-runner" | "mahjong" | "water-sort";
+export type RestorableGameId = "chess" | "hearts" | "minesweeper" | "brick-breaker" | "solitaire" | "freecell" | "connect-four" | "gomoku" | "sudoku" | "puzzle15" | "checkers" | "reversi" | "game-2048" | "snake-game" | "kurodoko" | "yahtzee" | "cave-dash" | "dot-runner" | "mahjong" | "water-sort" | "psychology-wordle" | "memory-card-game" | "number-guessing" | "wordle";
 export type GameSessionMode = "local" | "ai" | "solo";
 
 export const RESTORABLE_GAME_CAPABILITIES = {
@@ -64,6 +68,10 @@ export const RESTORABLE_GAME_CAPABILITIES = {
   "dot-runner": { modes: ["solo"], difficulties: ["endless-v1"] },
   mahjong: { modes: ["ai"], difficulties: ["level-1", "level-2", "level-3"] },
   "water-sort": { modes: ["solo"], difficulties: ["easy", "medium", "hard"] },
+  "psychology-wordle": { modes: ["solo"], difficulties: ["daily", "random"] },
+  "memory-card-game": { modes: ["solo"], difficulties: ["4x4", "6x4", "6x6"] },
+  "number-guessing": { modes: ["solo"], difficulties: ["easy", "normal", "hard"] },
+  wordle: { modes: ["solo"], difficulties: ["daily", "random"] },
 } as const satisfies Record<RestorableGameId, {
   modes: readonly GameSessionMode[];
   difficulties: readonly string[];
@@ -485,6 +493,41 @@ const waterSortAdapter: Adapter<WaterSortSaveV1> = {
   source: { format: "legacy-local-storage", schema: "oiyo.water-sort-save", schemaVersion: 1, storageKey: "oiyo:water-sort-state:v1" },
 };
 
+const psychologyWordleAdapter: Adapter<PsychologyWordleSaveV1> = {
+  adapterVersion: "psychology-wordle-session-adapter-v1", engineVersion: "psychology-wordle-rules-v1", gameId: "psychology-wordle",
+  modes: ["solo"], difficulties: ["daily", "random"],
+  parsePayload: (value) => {
+    if (!isRecord(value) || typeof value.savedAtEpochMs !== "number") return null;
+    return parsePsychologyWordleSave(JSON.stringify(value), value.savedAtEpochMs);
+  },
+  payloadDifficulty: (payload) => payload.mode, payloadMode: () => "solo",
+  source: { format: "legacy-local-storage", schema: "oiyo.psychology-wordle-save", schemaVersion: 1, storageKey: "oiyo:psychology-wordle-state:v1" },
+};
+
+const memoryCardAdapter: Adapter<MemoryCardSaveV1> = {
+  adapterVersion: "memory-card-session-adapter-v1", engineVersion: "memory-card-rules-v1", gameId: "memory-card-game",
+  modes: ["solo"], difficulties: ["4x4", "6x4", "6x6"],
+  parsePayload: (value) => { if (!isRecord(value) || typeof value.savedAtEpochMs !== "number") return null; return parseMemoryCardSave(JSON.stringify(value), value.savedAtEpochMs); },
+  payloadDifficulty: (payload) => payload.state.gridSize, payloadMode: () => "solo",
+  source: { format: "legacy-local-storage", schema: "oiyo.memory-card-save", schemaVersion: 1, storageKey: "oiyo:memory-card-game-state:v1" },
+};
+
+const numberGuessingAdapter: Adapter<NumberGuessingSaveV1> = {
+  adapterVersion: "number-guessing-session-adapter-v1", engineVersion: "number-guessing-rules-v1", gameId: "number-guessing",
+  modes: ["solo"], difficulties: ["easy", "normal", "hard"],
+  parsePayload: (value) => { if (!isRecord(value) || typeof value.savedAtEpochMs !== "number") return null; return parseNumberGuessingSave(JSON.stringify(value), value.savedAtEpochMs); },
+  payloadDifficulty: (payload) => payload.state.difficulty, payloadMode: () => "solo",
+  source: { format: "legacy-local-storage", schema: "oiyo.number-guessing-save", schemaVersion: 1, storageKey: "oiyo:number-guessing-state:v1" },
+};
+
+const wordleAdapter: Adapter<WordleSaveV1> = {
+  adapterVersion: "wordle-session-adapter-v1", engineVersion: "wordle-rules-v1", gameId: "wordle",
+  modes: ["solo"], difficulties: ["daily", "random"],
+  parsePayload: (value) => { if (!isRecord(value) || typeof value.savedAtEpochMs !== "number") return null; return parseWordleSave(JSON.stringify(value), value.savedAtEpochMs); },
+  payloadDifficulty: (payload) => payload.state.mode, payloadMode: () => "solo",
+  source: { format: "legacy-local-storage", schema: "oiyo.wordle-save", schemaVersion: 1, storageKey: "oiyo:wordle-state:v1" },
+};
+
 const adapters: Record<RestorableGameId, Adapter<unknown>> = {
   chess: chessAdapter as Adapter<unknown>,
   hearts: heartsAdapter as Adapter<unknown>,
@@ -506,6 +549,10 @@ const adapters: Record<RestorableGameId, Adapter<unknown>> = {
   "dot-runner": dotRunnerAdapter as Adapter<unknown>,
   mahjong: mahjongAdapter as Adapter<unknown>,
   "water-sort": waterSortAdapter as Adapter<unknown>,
+  "psychology-wordle": psychologyWordleAdapter as Adapter<unknown>,
+  "memory-card-game": memoryCardAdapter as Adapter<unknown>,
+  "number-guessing": numberGuessingAdapter as Adapter<unknown>,
+  wordle: wordleAdapter as Adapter<unknown>,
 };
 
 export function adaptChessSaveToSession(
@@ -546,7 +593,7 @@ export function adaptBrickBreakerSaveToSession(
 }
 
 export function adaptActiveGameSaveToSession(
-  gameId: "solitaire" | "freecell" | "connect-four" | "gomoku" | "sudoku" | "puzzle15" | "checkers" | "reversi" | "game-2048" | "snake-game" | "kurodoko" | "yahtzee" | "cave-dash" | "dot-runner" | "mahjong" | "water-sort",
+  gameId: "solitaire" | "freecell" | "connect-four" | "gomoku" | "sudoku" | "puzzle15" | "checkers" | "reversi" | "game-2048" | "snake-game" | "kurodoko" | "yahtzee" | "cave-dash" | "dot-runner" | "mahjong" | "water-sort" | "psychology-wordle" | "memory-card-game" | "number-guessing" | "wordle",
   value: unknown,
   timing: GameSessionTiming,
 ): GameSessionEnvelope | null {

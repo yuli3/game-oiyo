@@ -1,169 +1,70 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { GameContainer, PlayingCard } from '../ui/game/GamePrimitives';
-import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
-import {
-    dealerShouldHit,
-    evaluateBlackjackHand,
-    isNaturalBlackjack,
-    settleBlackjack,
-    shuffleBlackjackDeck,
-    type BlackjackCard as Card,
-} from '../../lib/games/blackjack';
+import { useCallback, useEffect, useRef, useState } from "react";
+import { GameContainer, PlayingCard } from "../ui/game/GamePrimitives";
+import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
+import { createBlackjackGame, evaluateBlackjackHand, hitBlackjack, standBlackjack, type BlackjackOutcome, type BlackjackState } from "../../lib/games/blackjack";
+import { clearBlackjackSave, loadBlackjackSave, storeBlackjackSave } from "../../lib/games/blackjack-save";
+import { getRecord, recordResult, type GameRecord } from "../../lib/games/records";
 
-const Blackjack: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
-    const COPY = {
-        ko: { title: "블랙잭 (Blackjack)", subtitle: "확률과 위험", hit: "카드 받기(Hit)", stand: "멈추기(Stand)", reset: "새 게임", score: "합계", bust: "버스트! (21 초과)", win: "승리!", lost: "패배!", push: "무승부", dealer: "딜러", player: "나" },
-        en: { title: "Blackjack", subtitle: "Probability & Risk", hit: "Hit", stand: "Stand", reset: "New Game", score: "Score", bust: "Bust!", win: "You Win!", lost: "You Lost!", push: "Push", dealer: "Dealer", player: "You" },
-        ja: { title: "ブラックジャック", subtitle: "確率とリスク", hit: "ヒット", stand: "スタンド", reset: "新しいゲーム", score: "合計", bust: "バースト！(21超過)", win: "勝利！", lost: "敗北！", push: "引き分け", dealer: "ディーラー", player: "あなた" },
-        zh: { title: "二十一点", subtitle: "概率与风险", hit: "要牌", stand: "停牌", reset: "新游戏", score: "点数", bust: "爆牌！(超过21)", win: "你赢了！", lost: "你输了！", push: "平局", dealer: "庄家", player: "你" },
-        fr: { title: "Blackjack", subtitle: "Probabilité et risque", hit: "Tirer", stand: "Rester", reset: "Nouvelle partie", score: "Total", bust: "Brûlé ! (plus de 21)", win: "Gagné !", lost: "Perdu !", push: "Égalité", dealer: "Croupier", player: "Vous" },
-        es: { title: "Blackjack", subtitle: "Probabilidad y riesgo", hit: "Pedir", stand: "Plantarse", reset: "Nueva partida", score: "Total", bust: "¡Te pasaste! (más de 21)", win: "¡Ganaste!", lost: "¡Perdiste!", push: "Empate", dealer: "Crupier", player: "Tú" }
-    };
-    const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
-    const reducedMotion = usePrefersReducedMotion();
+const COPY = {
+  ko: { title: "블랙잭", subtitle: "S17 클래식 · 확률과 위험", hit: "카드 받기 · H", stand: "멈추기 · S", reset: "새 라운드", score: "합계", win: "승리!", lost: "패배", push: "무승부", dealer: "딜러", player: "나", hidden: "숨은 카드", pause: "일시정지", resume: "계속하기", sound: "소리", restored: "이전 라운드를 일시정지 상태로 복원했습니다", soft: "소프트", hard: "하드", cards: "받은 카드", remaining: "남은 덱", record: "전적", next: "다음 목표", rules: "딜러는 모든 17에서 멈춥니다. 자연 블랙잭을 일반 21보다 먼저 판정합니다." },
+  en: { title: "Blackjack", subtitle: "Classic S17 · probability and risk", hit: "Hit · H", stand: "Stand · S", reset: "New round", score: "Total", win: "You win!", lost: "You lost", push: "Push", dealer: "Dealer", player: "You", hidden: "Hidden card", pause: "Pause", resume: "Resume", sound: "Sound", restored: "Previous round restored and paused", soft: "Soft", hard: "Hard", cards: "Cards drawn", remaining: "Deck left", record: "Record", next: "Next target", rules: "Dealer stands on every 17. Natural blackjack is settled before an ordinary 21." },
+  ja: { title: "ブラックジャック", subtitle: "クラシックS17 · 確率とリスク", hit: "ヒット · H", stand: "スタンド · S", reset: "新しいラウンド", score: "合計", win: "勝利！", lost: "敗北", push: "引き分け", dealer: "ディーラー", player: "あなた", hidden: "伏せ札", pause: "一時停止", resume: "再開", sound: "サウンド", restored: "前のラウンドを一時停止で復元しました", soft: "ソフト", hard: "ハード", cards: "引いた枚数", remaining: "残り山札", record: "戦績", next: "次の目標", rules: "ディーラーはすべての17でスタンド。ナチュラルを通常の21より先に判定します。" },
+  zh: { title: "二十一点", subtitle: "经典S17 · 概率与风险", hit: "要牌 · H", stand: "停牌 · S", reset: "新一局", score: "点数", win: "你赢了！", lost: "你输了", push: "平局", dealer: "庄家", player: "你", hidden: "暗牌", pause: "暂停", resume: "继续", sound: "声音", restored: "已恢复并暂停上一局", soft: "软牌", hard: "硬牌", cards: "要牌数", remaining: "剩余牌", record: "战绩", next: "下个目标", rules: "庄家在所有17点停牌。天然黑杰克优先于普通21点结算。" },
+  fr: { title: "Blackjack", subtitle: "S17 classique · probabilité et risque", hit: "Tirer · H", stand: "Rester · S", reset: "Nouvelle manche", score: "Total", win: "Gagné !", lost: "Perdu", push: "Égalité", dealer: "Croupier", player: "Vous", hidden: "Carte cachée", pause: "Pause", resume: "Reprendre", sound: "Son", restored: "Manche précédente restaurée en pause", soft: "Souple", hard: "Dur", cards: "Cartes tirées", remaining: "Paquet restant", record: "Bilan", next: "Prochain objectif", rules: "Le croupier reste sur tous les 17. Un blackjack naturel prime un 21 ordinaire." },
+  es: { title: "Blackjack", subtitle: "S17 clásico · probabilidad y riesgo", hit: "Pedir · H", stand: "Plantarse · S", reset: "Nueva ronda", score: "Total", win: "¡Ganaste!", lost: "Perdiste", push: "Empate", dealer: "Crupier", player: "Tú", hidden: "Carta oculta", pause: "Pausa", resume: "Continuar", sound: "Sonido", restored: "Ronda anterior restaurada y pausada", soft: "Suave", hard: "Dura", cards: "Cartas pedidas", remaining: "Mazo restante", record: "Historial", next: "Siguiente meta", rules: "El crupier se planta en todo 17. El blackjack natural se resuelve antes que un 21 normal." },
+} as const;
 
-    const [deck, setDeck] = useState<Card[]>([]);
-    const [playerHand, setPlayerHand] = useState<Card[]>([]);
-    const [dealerHand, setDealerHand] = useState<Card[]>([]);
-    const [status, setStatus] = useState<'betting' | 'playing' | 'dealerTurn' | 'result'>('betting');
-    const [message, setMessage] = useState('');
-    const gameGeneration = useRef(0);
+const Blackjack = ({ locale = "ko" }: { locale?: string }) => {
+  const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
+  const reducedMotion = usePrefersReducedMotion();
+  const [game, setGame] = useState<BlackjackState>(() => createBlackjackGame(1));
+  const [paused, setPaused] = useState(false), [restored, setRestored] = useState(false), [muted, setMuted] = useState(false);
+  const [record, setRecord] = useState<GameRecord | null>(null);
+  const audio = useRef<AudioContext | null>(null), endedSeed = useRef<number | null>(null);
 
-    const createDeck = () => {
-        const suits = ['hearts', 'diamonds', 'clubs', 'spades'] as const;
-        const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
-        const newDeck: Card[] = [];
-        suits.forEach(s => values.forEach((v, i) => newDeck.push({ suit: s, value: v, power: i === 0 ? 11 : (i >= 9 ? 10 : i + 1) })));
-        return shuffleBlackjackDeck(newDeck);
-    };
+  const tone = useCallback((kind: "card" | BlackjackOutcome) => {
+    if (muted || typeof AudioContext === "undefined") return;
+    const context = audio.current ?? new AudioContext(); audio.current = context;
+    const oscillator = context.createOscillator(), gain = context.createGain();
+    oscillator.frequency.value = kind === "card" ? 320 : kind === "win" ? 620 : kind === "push" ? 420 : 150;
+    oscillator.type = kind === "lost" ? "sawtooth" : "sine"; gain.gain.setValueAtTime(.045, context.currentTime); gain.gain.exponentialRampToValueAtTime(.001, context.currentTime + .11);
+    oscillator.connect(gain).connect(context.destination); oscillator.start(); oscillator.stop(context.currentTime + .11);
+  }, [muted]);
+  const start = useCallback(() => {
+    clearBlackjackSave(); const seed = typeof crypto !== "undefined" ? crypto.getRandomValues(new Uint32Array(1))[0] : Date.now() >>> 0;
+    setGame(createBlackjackGame(seed)); setPaused(false); setRestored(false); endedSeed.current = null;
+  }, []);
+  useEffect(() => {
+    setRecord(getRecord("blackjack")); const saved = loadBlackjackSave();
+    if (saved) { setGame(saved.state); setPaused(true); setRestored(true); } else start();
+    const hidden = () => { if (document.hidden) setPaused(true); }; document.addEventListener("visibilitychange", hidden);
+    return () => { document.removeEventListener("visibilitychange", hidden); void audio.current?.close(); };
+  }, [start]);
+  useEffect(() => {
+    if (game.status === "playing") { storeBlackjackSave(game); return; }
+    clearBlackjackSave(); if (!game.outcome || endedSeed.current === game.seed) return;
+    endedSeed.current = game.seed; tone(game.outcome); setRecord(recordResult("blackjack", game.outcome === "win" ? "w" : game.outcome === "push" ? "d" : "l"));
+  }, [game, tone]);
+  const hit = useCallback(() => { if (paused || game.status !== "playing") return; const next = hitBlackjack(game); if (next !== game) { tone("card"); setGame(next); } }, [game, paused, tone]);
+  const stand = useCallback(() => { if (paused || game.status !== "playing") return; setGame(standBlackjack(game)); }, [game, paused]);
+  useEffect(() => { const keys = (event: KeyboardEvent) => { if (event.key.toLowerCase() === "h") { event.preventDefault(); hit(); } else if (event.key.toLowerCase() === "s") { event.preventDefault(); stand(); } }; window.addEventListener("keydown", keys); return () => window.removeEventListener("keydown", keys); }, [hit, stand]);
 
-    const calculateScore = (hand: Card[]) => evaluateBlackjackHand(hand).total;
-
-    const initGame = useCallback(() => {
-        gameGeneration.current += 1;
-        const newDeck = createDeck();
-        const nextPlayer = [newDeck[0], newDeck[1]];
-        const nextDealer = [newDeck[2], newDeck[3]];
-        setPlayerHand(nextPlayer);
-        setDealerHand(nextDealer);
-        setDeck(newDeck.slice(4));
-        if (isNaturalBlackjack(nextPlayer) || isNaturalBlackjack(nextDealer)) {
-            setStatus('result');
-            setMessage(settleBlackjack(nextPlayer, nextDealer));
-        } else {
-            setStatus('playing');
-            setMessage('');
-        }
-    }, []);
-
-    useEffect(() => { initGame(); }, [initGame]);
-
-    const hit = () => {
-        if (status !== 'playing') return;
-        const newCard = deck[0];
-        const newHand = [...playerHand, newCard];
-        setPlayerHand(newHand);
-        setDeck(deck.slice(1));
-        
-        if (calculateScore(newHand) > 21) {
-            setStatus('result');
-            setMessage('lost');
-        }
-    };
-
-    const stand = () => {
-        if (status !== 'playing') return;
-        setStatus('dealerTurn');
-    };
-
-    useEffect(() => {
-        if (status !== 'dealerTurn') return;
-
-        const generation = gameGeneration.current;
-        let currentDealerHand = [...dealerHand];
-        let currentDeck = [...deck];
-        let timeoutId: ReturnType<typeof setTimeout> | undefined;
-        let cancelled = false;
-
-        const isCurrentGame = () => !cancelled && gameGeneration.current === generation;
-        const playDealer = () => {
-            if (!isCurrentGame()) return;
-            if (dealerShouldHit(currentDealerHand) && currentDeck.length > 0) {
-                currentDealerHand = [...currentDealerHand, currentDeck[0]];
-                currentDeck = currentDeck.slice(1);
-                setDealerHand(currentDealerHand);
-                setDeck(currentDeck);
-                timeoutId = setTimeout(playDealer, reducedMotion ? 0 : 600);
-                return;
-            }
-
-            setMessage(settleBlackjack(playerHand, currentDealerHand));
-            setStatus('result');
-        };
-
-        playDealer();
-        return () => {
-            cancelled = true;
-            if (timeoutId !== undefined) clearTimeout(timeoutId);
-        };
-    }, [status]);
-
-    return (
-        <GameContainer title={t.title} subtitle={t.subtitle} onReset={initGame}>
-            <div className="space-y-12">
-                {/* Dealer Area */}
-                <div className="text-center">
-                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-4">{t.dealer} {status === 'result' ? `(${calculateScore(dealerHand)})` : ''}</p>
-                    <div className="flex justify-center -space-x-8">
-                        {dealerHand.map((c, i) => (
-                            <PlayingCard 
-                                key={i} 
-                                suit={c.suit} 
-                                value={c.value} 
-                                isFaceUp={i === 0 || status === 'result' || status === 'dealerTurn'} 
-                                className="shadow-lg border-2 border-primary/20"
-                            />
-                        ))}
-                    </div>
-                </div>
-
-                {/* Info Display */}
-                <div className="h-12 flex items-center justify-center">
-                    {message && (
-                        <div role="status" aria-live="polite" className={`px-8 py-2 rounded-full font-black text-lg shadow-sm ${!reducedMotion ? 'animate-in zoom-in-95' : ''} ${message === 'win' ? 'bg-primary text-primary-foreground' : message === 'lost' ? 'bg-destructive text-destructive-foreground' : 'bg-muted text-muted-foreground'}`}>
-                            {t[message as keyof typeof t]}
-                        </div>
-                    )}
-                </div>
-
-                {/* Player Area */}
-                <div className="text-center">
-                    <div className="flex justify-center -space-x-8 mb-4">
-                        {playerHand.map((c, i) => (
-                            <PlayingCard 
-                                key={i} 
-                                suit={c.suit} 
-                                value={c.value} 
-                                className="shadow-lg border-2 border-primary"
-                            />
-                        ))}
-                    </div>
-                    <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-6">{t.player} ({calculateScore(playerHand)})</p>
-                    
-                    <div className="flex justify-center gap-4">
-                        {status === 'playing' ? (
-                            <>
-                                <button type="button" onClick={hit} className="px-10 py-3 bg-primary text-primary-foreground rounded-full font-black shadow-lg hover:opacity-90">{t.hit}</button>
-                                <button type="button" onClick={stand} className="px-10 py-3 bg-muted text-foreground rounded-full font-black shadow-sm border border-border">{t.stand}</button>
-                            </>
-                        ) : (
-                            <button type="button" onClick={initGame} className="px-10 py-3 bg-primary text-primary-foreground rounded-full font-black shadow-lg">{t.reset}</button>
-                        )}
-                    </div>
-                </div>
-            </div>
-        </GameContainer>
-    );
+  const playerScore = evaluateBlackjackHand(game.player), dealerScore = evaluateBlackjackHand(game.dealer), reveal = game.status === "result";
+  const totalGames = record ? record.w + record.l + record.d : 0;
+  return <GameContainer title={t.title} subtitle={t.subtitle} onReset={start}>
+    <div className="mb-4 flex flex-wrap items-center justify-between gap-2 text-xs font-bold">
+      <span>{t.record} {record ? `${record.w}–${record.l}–${record.d}` : "0–0–0"}</span>
+      <div className="flex gap-2"><button type="button" onClick={() => { setPaused(value => !value); setRestored(false); }} disabled={game.status !== "playing"} className="min-h-11 rounded-xl border px-3">{paused ? `▶ ${t.resume}` : `Ⅱ ${t.pause}`}</button><button type="button" onClick={() => setMuted(value => !value)} aria-pressed={muted} className="min-h-11 rounded-xl border px-3">{muted ? "🔇" : "🔊"} {t.sound}</button></div>
+    </div>
+    {(paused || restored) && game.status === "playing" && <p role="status" className="mb-4 text-center text-xs font-bold text-muted-foreground">{restored ? t.restored : t.pause}</p>}
+    <div className="space-y-7 sm:space-y-10">
+      <section className="text-center" aria-label={t.dealer}><p className="mb-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">{t.dealer} {reveal ? `· ${dealerScore.total} ${dealerScore.soft ? t.soft : t.hard}` : ""}</p><div className="flex min-h-28 justify-center -space-x-9">{game.dealer.map((card, index) => <PlayingCard key={`${card.suit}-${card.value}-${index}`} suit={card.suit} value={card.value} isFaceUp={index === 0 || reveal} className="border-2 border-primary/20 shadow-md" />)}</div></section>
+      <div className="min-h-12 text-center" aria-live="assertive">{game.outcome && <div role="status" className={`inline-block rounded-full px-7 py-2 text-lg font-black ${!reducedMotion ? "animate-in zoom-in-95" : ""} ${game.outcome === "win" ? "bg-primary text-primary-foreground" : game.outcome === "lost" ? "bg-destructive text-destructive-foreground" : "bg-muted"}`}>{t[game.outcome]}</div>}</div>
+      <section className="text-center" aria-label={t.player}><div className="mb-3 flex min-h-28 justify-center -space-x-9">{game.player.map((card, index) => <PlayingCard key={`${card.suit}-${card.value}-${index}`} suit={card.suit} value={card.value} className="border-2 border-primary shadow-md" />)}</div><p className="mb-4 text-xs font-black uppercase tracking-widest text-primary">{t.player} · {t.score} {playerScore.total} · {playerScore.soft ? t.soft : t.hard}</p>
+        {game.status === "playing" ? <div className="flex flex-wrap justify-center gap-3"><button type="button" onClick={hit} disabled={paused} className="min-h-12 rounded-full bg-primary px-7 font-black text-primary-foreground disabled:opacity-50">{t.hit}</button><button type="button" onClick={stand} disabled={paused} className="min-h-12 rounded-full border bg-muted px-7 font-black disabled:opacity-50">{t.stand}</button></div> : <div><p className="mb-3 text-xs font-bold text-muted-foreground">{t.cards} {Math.max(0, game.player.length - 2)} · {t.remaining} {game.deck.length} · {t.next} {game.outcome === "win" ? Math.max(2, record?.w ?? 1) : 1}</p><button type="button" onClick={start} className="min-h-12 rounded-full bg-primary px-8 font-black text-primary-foreground">{t.reset}</button></div>}
+      </section>
+    </div>
+    <p className="mt-6 rounded-xl border bg-muted/40 p-3 text-xs leading-relaxed text-muted-foreground">{t.rules}{totalGames > 0 ? ` · ${t.record} ${Math.round((record?.w ?? 0) / totalGames * 100)}%` : ""}</p>
+  </GameContainer>;
 };
-
 export default Blackjack;

@@ -161,3 +161,24 @@ export function dailyPuzzleId(puzzleIds: readonly string[], now: Date = new Date
   const idx = ((dayIndex(now) % puzzleIds.length) + puzzleIds.length) % puzzleIds.length;
   return puzzleIds[idx];
 }
+
+export type KoreanSemantleSave = { v: 1; puzzleId: string; words: string[]; savedAt: number };
+
+export function serializeKoreanSemantle(puzzleId: string, guesses: readonly Guess[], savedAt = Date.now()): string {
+  return JSON.stringify({ v: 1, puzzleId, words: guesses.map((guess) => guess.word), savedAt });
+}
+
+export function parseKoreanSemantle(raw: string | null, puzzleId: string, table: SimilarityTable, now = Date.now()): Guess[] | null {
+  try {
+    const value = JSON.parse(raw ?? "") as KoreanSemantleSave;
+    if (value?.v !== 1 || value.puzzleId !== puzzleId || !Array.isArray(value.words) || value.words.length > 500 || !Number.isFinite(value.savedAt) || value.savedAt > now + 60_000 || now - value.savedAt > 36 * 60 * 60 * 1000) return null;
+    const guesses: Guess[] = [];
+    for (const word of value.words) {
+      if (typeof word !== "string") return null;
+      const result = scoreGuess(table, word, guesses.map((guess) => guess.word));
+      if (!result.ok || result.solved) return null;
+      guesses.push(result.guess);
+    }
+    return guesses;
+  } catch { return null; }
+}

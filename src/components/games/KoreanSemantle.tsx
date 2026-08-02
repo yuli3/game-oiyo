@@ -2,7 +2,9 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   dailyPuzzleId,
   orderGuesses,
+  parseKoreanSemantle,
   scoreGuess,
+  serializeKoreanSemantle,
   type Guess,
   type ProximityBand,
   type SimilarityTable,
@@ -14,6 +16,7 @@ type Status = "loading" | "playing" | "won" | "revealed" | "error";
 
 const DATA_BASE = "/data/korean-semantle";
 const GAME_ID = "korean-semantle";
+const SAVE_KEY = "oiyo:korean-semantle:v1";
 
 // ─── Band presentation ─────────────────────────────────────────────────────────
 // Temperature palette — games keep their own vivid surface (not the olive tool
@@ -40,6 +43,7 @@ const BAND_LABEL: Record<UILocale, Record<ProximityBand, string>> = {
 // ─── Copy ──────────────────────────────────────────────────────────────────────
 const COPY: Record<UILocale, {
   subtitle: string;
+  title: string;
   placeholder: string;
   submit: string;
   loading: string;
@@ -61,8 +65,11 @@ const COPY: Record<UILocale, {
   credit: string;
   stats: (s: StreakStats) => string;
   hint: string;
+  sound: string;
+  restored: string;
 }> = {
   ko: {
+    title: "꼬맨틀",
     subtitle: "숨은 단어와 의미가 가까운 단어를 추측하세요",
     placeholder: "단어 입력",
     submit: "추측",
@@ -85,8 +92,10 @@ const COPY: Record<UILocale, {
     credit: "단어 벡터: fastText Korean (Facebook AI Research), CC BY-SA 3.0",
     stats: (s) => `🔥 연속 ${s.currentStreak} · 최고 ${s.maxStreak} · ${s.played}판`,
     hint: "의미 유사도(코사인)를 기준으로 순위를 매깁니다. 상위 목록 안에 든 단어만 순위가 표시됩니다.",
+    sound: "소리", restored: "오늘의 추측을 이어서 불러왔어요",
   },
   en: {
+    title: "Kkomantle",
     subtitle: "Guess words semantically close to the hidden word",
     placeholder: "Type a word",
     submit: "Guess",
@@ -109,8 +118,10 @@ const COPY: Record<UILocale, {
     credit: "Word vectors: fastText Korean (Facebook AI Research), CC BY-SA 3.0",
     stats: (s) => `🔥 Streak ${s.currentStreak} · Best ${s.maxStreak} · ${s.played} played`,
     hint: "Ranking is by semantic (cosine) similarity. Only words inside the served top list show a rank.",
+    sound: "Sound", restored: "Today's guesses were restored",
   },
   ja: {
+    title: "꼬맨틀",
     subtitle: "隠れた単語と意味が近い単語を推測しましょう",
     placeholder: "単語を入力",
     submit: "推測",
@@ -133,8 +144,10 @@ const COPY: Record<UILocale, {
     credit: "単語ベクトル: fastText Korean (Facebook AI Research), CC BY-SA 3.0",
     stats: (s) => `🔥 連続 ${s.currentStreak} · 最高 ${s.maxStreak} · ${s.played}回`,
     hint: "意味的類似度（コサイン）で順位を付けます。上位リスト内の単語のみ順位が表示されます。",
+    sound: "サウンド", restored: "今日の推測を復元しました",
   },
   zh: {
+    title: "꼬맨틀",
     subtitle: "猜出与隐藏词语义相近的词",
     placeholder: "输入词语",
     submit: "猜测",
@@ -157,8 +170,10 @@ const COPY: Record<UILocale, {
     credit: "词向量：fastText Korean (Facebook AI Research)，CC BY-SA 3.0",
     stats: (s) => `🔥 连胜 ${s.currentStreak} · 最高 ${s.maxStreak} · ${s.played} 局`,
     hint: "按语义（余弦）相似度排名。只有榜单内的词才显示排名。",
+    sound: "声音", restored: "已恢复今天的猜测",
   },
   fr: {
+    title: "Kkomantle",
     subtitle: "Devinez des mots proches du sens du mot caché",
     placeholder: "Tapez un mot",
     submit: "Deviner",
@@ -181,8 +196,10 @@ const COPY: Record<UILocale, {
     credit: "Vecteurs : fastText Korean (Facebook AI Research), CC BY-SA 3.0",
     stats: (s) => `🔥 Série ${s.currentStreak} · Record ${s.maxStreak} · ${s.played} parties`,
     hint: "Classement par similarité sémantique (cosinus). Seuls les mots du top affichent un rang.",
+    sound: "Son", restored: "Les essais du jour ont été restaurés",
   },
   es: {
+    title: "Kkomantle",
     subtitle: "Adivina palabras cercanas en significado a la palabra oculta",
     placeholder: "Escribe una palabra",
     submit: "Adivinar",
@@ -205,6 +222,7 @@ const COPY: Record<UILocale, {
     credit: "Vectores: fastText Korean (Facebook AI Research), CC BY-SA 3.0",
     stats: (s) => `🔥 Racha ${s.currentStreak} · Mejor ${s.maxStreak} · ${s.played} jugadas`,
     hint: "El ranking es por similitud semántica (coseno). Solo las palabras del top muestran un puesto.",
+    sound: "Sonido", restored: "Se restauraron los intentos de hoy",
   },
 };
 
@@ -228,6 +246,9 @@ const KoreanSemantle: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
   const [lastWord, setLastWord] = useState<string | null>(null);
   const [stats, setStats] = useState<StreakStats | null>(null);
   const [copied, setCopied] = useState(false);
+  const [puzzleId, setPuzzleId] = useState("");
+  const [sound, setSound] = useState(true);
+  const [restored, setRestored] = useState(false);
   const recordedRef = useRef(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -246,8 +267,11 @@ const KoreanSemantle: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
       const res = await fetch(`${DATA_BASE}/${id}.json`);
       if (!res.ok) throw new Error("puzzle fetch failed");
       const data = (await res.json()) as SimilarityTable;
+      const saved = parseKoreanSemantle(localStorage.getItem(SAVE_KEY), id, data);
       setTable(data);
-      setGuesses([]);
+      setPuzzleId(id);
+      setGuesses(saved ?? []);
+      setRestored(Boolean(saved?.length));
       setLastWord(null);
       recordedRef.current = false;
       setStatus("playing");
@@ -261,6 +285,17 @@ const KoreanSemantle: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
     setStats(getStreak(GAME_ID));
   }, [loadPuzzle]);
 
+  useEffect(() => {
+    if (table && puzzleId && status === "playing") localStorage.setItem(SAVE_KEY, serializeKoreanSemantle(puzzleId, guesses));
+  }, [guesses, puzzleId, status, table]);
+
+  const tone = useCallback((frequency: number) => {
+    if (!sound) return; const AudioCtor = window.AudioContext || window.webkitAudioContext; if (!AudioCtor) return;
+    const audio = new AudioCtor(), oscillator = audio.createOscillator(), gain = audio.createGain();
+    oscillator.frequency.value = frequency; gain.gain.setValueAtTime(0.035, audio.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.12);
+    oscillator.connect(gain).connect(audio.destination); oscillator.start(); oscillator.stop(audio.currentTime + 0.12);
+  }, [sound]);
+
   const submit = useCallback(() => {
     if (!table || status !== "playing") return;
     const result = scoreGuess(table, input, guesses.map((g) => g.word));
@@ -271,18 +306,21 @@ const KoreanSemantle: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
     setInput("");
     setLastWord(result.guess.word);
     setGuesses((prev) => [...prev, result.guess]);
+    tone(result.solved ? 760 : result.guess.known ? 320 + Math.max(0, 300 - (result.guess.rank ?? 300)) : 180);
     if (!result.guess.known) flashToast(t.unknown);
     if (result.solved) {
+      localStorage.removeItem(SAVE_KEY);
       setStatus("won");
       if (!recordedRef.current) {
         recordedRef.current = true;
         setStats(recordStreak(GAME_ID, true));
       }
     }
-  }, [table, status, input, guesses, flashToast, t]);
+  }, [table, status, input, guesses, flashToast, t, tone]);
 
   const reveal = useCallback(() => {
     if (!table) return;
+    localStorage.removeItem(SAVE_KEY);
     setStatus("revealed");
     if (!recordedRef.current) {
       recordedRef.current = true;
@@ -334,9 +372,10 @@ const KoreanSemantle: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
   return (
     <div className="not-prose flex flex-col items-center gap-5 py-6 px-4 max-w-lg mx-auto">
       {/* Header */}
+      <img src="/games/korean-semantle-social.png" alt="" className="h-36 w-full rounded-3xl object-cover shadow-sm sm:h-44" />
       <div className="w-full text-center border-b border-border pb-4">
         <div className="flex items-center justify-center gap-2">
-          <h1 className="text-2xl font-black tracking-tight">꼬맨틀</h1>
+          <h1 className="text-2xl font-black tracking-tight">{t.title}</h1>
           {isDemo && (
             <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400">
               {t.demoBadge}
@@ -347,7 +386,9 @@ const KoreanSemantle: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
         {stats && stats.played > 0 && (
           <p className="text-[10px] font-bold text-muted-foreground mt-2">{t.stats(stats)}</p>
         )}
+        <button type="button" onClick={() => setSound((value) => !value)} className="mt-2 min-h-10 rounded-full border px-4 text-[11px] font-black">{t.sound} {sound ? "ON" : "OFF"}</button>
       </div>
+      {restored && <p role="status" className="w-full rounded-xl bg-primary/10 p-3 text-center text-xs font-bold text-primary">{t.restored}</p>}
 
       {/* Toast */}
       <div className={`fixed top-20 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 ${toast ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2 pointer-events-none"}`}>
@@ -456,3 +497,5 @@ const GuessRow: React.FC<{
 };
 
 export default KoreanSemantle;
+
+declare global { interface Window { webkitAudioContext?: typeof AudioContext } }

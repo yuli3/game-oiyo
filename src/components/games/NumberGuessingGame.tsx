@@ -1,357 +1,49 @@
-import React, { useReducer, useCallback, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { GameContainer } from '@/components/ui/game/GamePrimitives';
+import { createNumberGuessingGame, guessNumber, suggestedGuess, type NumberGuessingDifficulty, type NumberGuessingState } from '@/lib/games/number-guessing';
+import { clearNumberGuessingSave, loadNumberGuessingSave, storeNumberGuessingSave } from '@/lib/games/number-guessing-save';
 
-type Difficulty = 'easy' | 'normal' | 'hard';
-type GameStatus = 'idle' | 'playing' | 'won' | 'lost';
+type Best = { attempts: number; elapsedMs: number };
+const formatTime = (ms: number) => `${Math.floor(ms / 60000)}:${String(Math.floor(ms / 1000) % 60).padStart(2, '0')}`;
 
-interface DifficultyConfig {
-  max: number;
-  tries: number | null;
-}
-
-const DIFFICULTY_CONFIG: Record<Difficulty, DifficultyConfig> = {
-  easy:   { max: 50,   tries: null },
-  normal: { max: 100,  tries: 10 },
-  hard:   { max: 1000, tries: 7 },
-};
-
-interface State {
-  difficulty: Difficulty;
-  secret: number;
-  guess: string;
-  attempts: number;
-  maxTries: number | null;
-  history: { guess: number; hint: 'hot' | 'warm' | 'cold' | 'exact' }[];
-  status: GameStatus;
-}
-
-type Action =
-  | { type: 'START'; difficulty: Difficulty }
-  | { type: 'SET_GUESS'; value: string }
-  | { type: 'SUBMIT' }
-  | { type: 'RESET' };
-
-function getHint(guess: number, secret: number): 'hot' | 'warm' | 'cold' | 'exact' {
-  if (guess === secret) return 'exact';
-  const diff = Math.abs(guess - secret);
-  const range = secret;
-  if (diff <= range * 0.05) return 'hot';
-  if (diff <= range * 0.2)  return 'warm';
-  return 'cold';
-}
-
-function createGame(difficulty: Difficulty): Partial<State> {
-  const config = DIFFICULTY_CONFIG[difficulty];
-  const secret = Math.floor(Math.random() * config.max) + 1;
-  return {
-    difficulty,
-    secret,
-    guess: '',
-    attempts: 0,
-    maxTries: config.tries,
-    history: [],
-    status: 'playing',
-  };
-}
-
-function reducer(state: State, action: Action): State {
-  switch (action.type) {
-    case 'START':
-      return { ...state, ...createGame(action.difficulty) };
-    case 'SET_GUESS':
-      return { ...state, guess: action.value };
-    case 'SUBMIT': {
-      const val = parseInt(state.guess, 10);
-      const config = DIFFICULTY_CONFIG[state.difficulty];
-      if (isNaN(val) || val < 1 || val > config.max) return state;
-      const hint = getHint(val, state.secret);
-      const newAttempts = state.attempts + 1;
-      const newHistory = [{ guess: val, hint }, ...state.history];
-      let status: GameStatus = 'playing';
-      if (hint === 'exact') status = 'won';
-      else if (state.maxTries !== null && newAttempts >= state.maxTries) status = 'lost';
-      return { ...state, guess: '', attempts: newAttempts, history: newHistory, status };
-    }
-    case 'RESET':
-      return { ...state, ...createGame(state.difficulty) };
-    default:
-      return state;
-  }
-}
-
-const initialState: State = {
-  difficulty: 'normal',
-  secret: 0,
-  guess: '',
-  attempts: 0,
-  maxTries: 10,
-  history: [],
-  status: 'idle',
+const COPY = {
+  ko: { title: '숫자 맞히기', subtitle: '가능한 범위를 좁혀 숨은 숫자를 찾으세요', easy: '쉬움 · 1–50 · 무제한', normal: '보통 · 1–100 · 10번', hard: '어려움 · 1–1000 · 7번', choose: '난이도를 선택하세요', range: '가능한 범위', tries: (n: number) => `남은 기회 ${n}번`, unlimited: '무제한 기회', placeholder: (n: number) => `1–${n} 숫자`, guess: '추리하기', higher: '더 높은 숫자', lower: '더 낮은 숫자', hot: '매우 가까워요', warm: '가까워지고 있어요', cold: '아직 멀어요', history: '추리 기록', pause: '일시정지', resume: '계속하기', sound: '소리', restored: '이전 게임을 일시정지 상태로 복원했습니다', helper: '중간값 보기', helperUsed: '중간값 도움 사용 · PB 제외', won: '정답입니다!', lost: (n: number) => `정답은 ${n}이었습니다`, again: '같은 난이도 다시', level: '난이도 선택', attempts: '시도', time: '시간', efficiency: '탐색 효율', next: (n: number) => `다음 목표 ${n}번`, best: '개인 최고', share: '결과 복사', invalid: '범위 안의 새로운 정수를 입력하세요' },
+  en: { title: 'Number Guessing', subtitle: 'Narrow the range and find the hidden number', easy: 'Easy · 1–50 · unlimited', normal: 'Normal · 1–100 · 10 tries', hard: 'Hard · 1–1000 · 7 tries', choose: 'Choose difficulty', range: 'Possible range', tries: (n: number) => `${n} tries left`, unlimited: 'Unlimited tries', placeholder: (n: number) => `Number 1–${n}`, guess: 'Guess', higher: 'Go higher', lower: 'Go lower', hot: 'Very close', warm: 'Getting close', cold: 'Still far', history: 'Guess history', pause: 'Pause', resume: 'Resume', sound: 'Sound', restored: 'Previous game restored and paused', helper: 'Show midpoint', helperUsed: 'Midpoint used · PB excluded', won: 'Correct!', lost: (n: number) => `The answer was ${n}`, again: 'Play same level', level: 'Choose level', attempts: 'Attempts', time: 'Time', efficiency: 'Search efficiency', next: (n: number) => `Next target ${n}`, best: 'Personal best', share: 'Copy result', invalid: 'Enter a new whole number inside the range' },
+  ja: { title: '数当てゲーム', subtitle: '範囲を絞って隠れた数字を見つけよう', easy: 'かんたん · 1–50 · 無制限', normal: 'ふつう · 1–100 · 10回', hard: 'むずかしい · 1–1000 · 7回', choose: '難易度を選んでください', range: '可能な範囲', tries: (n: number) => `残り${n}回`, unlimited: '回数無制限', placeholder: (n: number) => `1–${n}の数字`, guess: '予想する', higher: 'もっと大きい', lower: 'もっと小さい', hot: 'とても近い', warm: '近づいています', cold: 'まだ遠い', history: '予想履歴', pause: '一時停止', resume: '再開', sound: 'サウンド', restored: '前のゲームを一時停止で復元しました', helper: '中間値を見る', helperUsed: '中間値を使用 · PB対象外', won: '正解！', lost: (n: number) => `正解は${n}でした`, again: '同じ難易度でもう一度', level: '難易度を選ぶ', attempts: '回数', time: '時間', efficiency: '探索効率', next: (n: number) => `次の目標 ${n}回`, best: '自己ベスト', share: '結果をコピー', invalid: '範囲内の新しい整数を入力してください' },
+  zh: { title: '猜数字', subtitle: '缩小范围，找出隐藏数字', easy: '简单 · 1–50 · 无限', normal: '普通 · 1–100 · 10次', hard: '困难 · 1–1000 · 7次', choose: '请选择难度', range: '可能范围', tries: (n: number) => `剩余${n}次`, unlimited: '无限次数', placeholder: (n: number) => `输入1–${n}`, guess: '猜一猜', higher: '再大一些', lower: '再小一些', hot: '非常接近', warm: '越来越近', cold: '还很远', history: '猜测记录', pause: '暂停', resume: '继续', sound: '声音', restored: '已恢复并暂停上一局', helper: '显示中间值', helperUsed: '使用了中间值 · 不计PB', won: '答对了！', lost: (n: number) => `答案是${n}`, again: '同难度再玩', level: '选择难度', attempts: '次数', time: '时间', efficiency: '搜索效率', next: (n: number) => `下个目标 ${n}次`, best: '个人最佳', share: '复制结果', invalid: '请输入范围内未猜过的整数' },
+  fr: { title: 'Devine le nombre', subtitle: 'Réduisez la plage et trouvez le nombre caché', easy: 'Facile · 1–50 · illimité', normal: 'Normal · 1–100 · 10 essais', hard: 'Difficile · 1–1000 · 7 essais', choose: 'Choisissez la difficulté', range: 'Plage possible', tries: (n: number) => `${n} essais restants`, unlimited: 'Essais illimités', placeholder: (n: number) => `Nombre 1–${n}`, guess: 'Deviner', higher: 'Plus haut', lower: 'Plus bas', hot: 'Très proche', warm: 'Vous approchez', cold: 'Encore loin', history: 'Historique', pause: 'Pause', resume: 'Reprendre', sound: 'Son', restored: 'Partie restaurée en pause', helper: 'Voir le milieu', helperUsed: 'Milieu utilisé · PB exclu', won: 'Correct !', lost: (n: number) => `La réponse était ${n}`, again: 'Rejouer ce niveau', level: 'Choisir le niveau', attempts: 'Essais', time: 'Temps', efficiency: 'Efficacité', next: (n: number) => `Prochain objectif ${n}`, best: 'Record personnel', share: 'Copier le résultat', invalid: 'Entrez un nouvel entier dans la plage' },
+  es: { title: 'Adivina el número', subtitle: 'Reduce el rango y encuentra el número oculto', easy: 'Fácil · 1–50 · ilimitado', normal: 'Normal · 1–100 · 10 intentos', hard: 'Difícil · 1–1000 · 7 intentos', choose: 'Elige la dificultad', range: 'Rango posible', tries: (n: number) => `${n} intentos restantes`, unlimited: 'Intentos ilimitados', placeholder: (n: number) => `Número 1–${n}`, guess: 'Probar', higher: 'Más alto', lower: 'Más bajo', hot: 'Muy cerca', warm: 'Te acercas', cold: 'Aún lejos', history: 'Historial', pause: 'Pausa', resume: 'Continuar', sound: 'Sonido', restored: 'Partida restaurada y pausada', helper: 'Ver punto medio', helperUsed: 'Punto medio usado · PB excluido', won: '¡Correcto!', lost: (n: number) => `La respuesta era ${n}`, again: 'Repetir nivel', level: 'Elegir nivel', attempts: 'Intentos', time: 'Tiempo', efficiency: 'Eficiencia', next: (n: number) => `Siguiente meta ${n}`, best: 'Mejor marca', share: 'Copiar resultado', invalid: 'Introduce un entero nuevo dentro del rango' },
 };
 
 const NumberGuessingGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
-  const COPY = {
-    ko: {
-      title: '숫자 맞추기',
-      subtitle: '숨겨진 숫자를 찾아라',
-      easy:    '쉬움 (1~50, 무제한)',
-      normal:  '보통 (1~100, 10번)',
-      hard:    '어려움 (1~1000, 7번)',
-      start:   '게임 시작',
-      reset:   '다시 시작',
-      placeholder: (max: number) => `1에서 ${max} 사이 숫자 입력`,
-      submit:  '확인',
-      attemptsLeft: (n: number) => `남은 기회: ${n}번`,
-      unlimited: '무제한 기회',
-      won:  '정답! 🎯',
-      lost: (n: number) => `아쉽! 정답은 ${n}이었습니다`,
-      hint: { exact: '정답!', hot: '매우 뜨거워요!', warm: '따뜻해요', cold: '차가워요' },
-      chooseLevel: '난이도를 선택하세요',
-      history: '시도 기록',
-      wonIn: (n: number) => `${n}번 만에 정답!`,
-      changeLevel: '난이도 변경',
-    },
-    en: {
-      title: 'Number Guessing',
-      subtitle: 'Find the hidden number',
-      easy:    'Easy (1–50, unlimited)',
-      normal:  'Normal (1–100, 10 tries)',
-      hard:    'Hard (1–1000, 7 tries)',
-      start:   'Start Game',
-      reset:   'Play Again',
-      placeholder: (max: number) => `Enter a number from 1 to ${max}`,
-      submit:  'Guess',
-      attemptsLeft: (n: number) => `Tries left: ${n}`,
-      unlimited: 'Unlimited tries',
-      won:  'Correct! 🎯',
-      lost: (n: number) => `The answer was ${n}`,
-      hint: { exact: 'Exact!', hot: 'Very hot!', warm: 'Warm', cold: 'Cold' },
-      chooseLevel: 'Choose difficulty',
-      history: 'Guess History',
-      wonIn: (n: number) => `${n} attempt${n !== 1 ? 's' : ''}`,
-      changeLevel: 'Change Level',
-    },
-    ja: {
-      title: '数当てゲーム',
-      subtitle: '隠された数字を探せ',
-      easy:    'かんたん (1〜50, 無制限)',
-      normal:  'ふつう (1〜100, 10回)',
-      hard:    'むずかしい (1〜1000, 7回)',
-      start:   'ゲーム開始',
-      reset:   'もう一度',
-      placeholder: (max: number) => `1から${max}までの数字を入力`,
-      submit:  '判定',
-      attemptsLeft: (n: number) => `残りチャンス: ${n}回`,
-      unlimited: '無制限',
-      won:  '正解！ 🎯',
-      lost: (n: number) => `残念！正解は${n}でした`,
-      hint: { exact: '正解！', hot: 'とても熱い！', warm: '暖かい', cold: '冷たい' },
-      chooseLevel: '難易度を選んでください',
-      history: '試行履歴',
-      wonIn: (n: number) => `${n}回で正解！`,
-      changeLevel: '難易度変更',
-    },
-    zh: {
-      title: '猜数字',
-      subtitle: '找出隐藏的数字',
-      easy:    '简单 (1~50, 无限次)',
-      normal:  '普通 (1~100, 10次)',
-      hard:    '困难 (1~1000, 7次)',
-      start:   '开始游戏',
-      reset:   '再玩一次',
-      placeholder: (max: number) => `输入1到${max}之间的数字`,
-      submit:  '确认',
-      attemptsLeft: (n: number) => `剩余机会: ${n}次`,
-      unlimited: '无限次机会',
-      won:  '答对了！ 🎯',
-      lost: (n: number) => `可惜！答案是${n}`,
-      hint: { exact: '正确！', hot: '非常热！', warm: '温暖', cold: '很冷' },
-      chooseLevel: '请选择难度',
-      history: '尝试记录',
-      wonIn: (n: number) => `${n}次猜中！`,
-      changeLevel: '更改难度',
-    },
-    fr: {
-      title: 'Devine le nombre',
-      subtitle: 'Trouvez le nombre caché',
-      easy:    'Facile (1–50, illimité)',
-      normal:  'Normal (1–100, 10 essais)',
-      hard:    'Difficile (1–1000, 7 essais)',
-      start:   'Commencer',
-      reset:   'Rejouer',
-      placeholder: (max: number) => `Entrez un nombre de 1 à ${max}`,
-      submit:  'Deviner',
-      attemptsLeft: (n: number) => `Essais restants : ${n}`,
-      unlimited: 'Essais illimités',
-      won:  'Correct ! 🎯',
-      lost: (n: number) => `La réponse était ${n}`,
-      hint: { exact: 'Exact !', hot: 'Très chaud !', warm: 'Tiède', cold: 'Froid' },
-      chooseLevel: 'Choisissez la difficulté',
-      history: 'Historique',
-      wonIn: (n: number) => `en ${n} essai${n > 1 ? 's' : ''} !`,
-      changeLevel: 'Changer de niveau',
-    },
-    es: {
-      title: 'Adivina el número',
-      subtitle: 'Encuentra el número oculto',
-      easy:    'Fácil (1–50, ilimitado)',
-      normal:  'Normal (1–100, 10 intentos)',
-      hard:    'Difícil (1–1000, 7 intentos)',
-      start:   'Empezar',
-      reset:   'Jugar de nuevo',
-      placeholder: (max: number) => `Escribe un número del 1 al ${max}`,
-      submit:  'Probar',
-      attemptsLeft: (n: number) => `Intentos restantes: ${n}`,
-      unlimited: 'Intentos ilimitados',
-      won:  '¡Correcto! 🎯',
-      lost: (n: number) => `La respuesta era ${n}`,
-      hint: { exact: '¡Exacto!', hot: '¡Muy caliente!', warm: 'Templado', cold: 'Frío' },
-      chooseLevel: 'Elige la dificultad',
-      history: 'Historial',
-      wonIn: (n: number) => `¡en ${n} intento${n !== 1 ? 's' : ''}!`,
-      changeLevel: 'Cambiar nivel',
-    },
-  };
   const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
+  const [state, setState] = useState<NumberGuessingState | null>(null);
+  const [input, setInput] = useState(''); const [elapsedMs, setElapsedMs] = useState(0); const [paused, setPaused] = useState(false); const [restored, setRestored] = useState(false); const [assisted, setAssisted] = useState(false); const [muted, setMuted] = useState(false); const [error, setError] = useState(''); const [best, setBest] = useState<Best | null>(null);
+  const elapsedBase = useRef(0); const startedAt = useRef<number | null>(null); const audio = useRef<AudioContext | null>(null);
+  const tone = (frequency: number, duration = .08) => { if (muted || typeof window === 'undefined') return; const context = audio.current ?? new AudioContext(); audio.current = context; const oscillator = context.createOscillator(); const gain = context.createGain(); oscillator.frequency.value = frequency; gain.gain.setValueAtTime(.035, context.currentTime); gain.gain.exponentialRampToValueAtTime(.001, context.currentTime + duration); oscillator.connect(gain).connect(context.destination); oscillator.start(); oscillator.stop(context.currentTime + duration); };
+  const loadBest = (difficulty: NumberGuessingDifficulty) => { try { setBest(JSON.parse(localStorage.getItem(`oiyo:number-guessing-best:${difficulty}`) ?? 'null')); } catch { setBest(null); } };
+  const startGame = (difficulty: NumberGuessingDifficulty) => { const seed = (crypto.getRandomValues?.(new Uint32Array(1))[0] ?? Date.now()) >>> 0; clearNumberGuessingSave(); setState(createNumberGuessingGame(seed, difficulty)); setInput(''); setElapsedMs(0); elapsedBase.current = 0; startedAt.current = Date.now(); setPaused(false); setRestored(false); setAssisted(false); setError(''); loadBest(difficulty); };
 
-  const [state, dispatch] = useReducer(reducer, initialState);
-  const [throttled, setThrottled] = useState(false);
+  useEffect(() => { const saved = loadNumberGuessingSave(); if (saved) { setState(saved.state); setElapsedMs(saved.elapsedMs); elapsedBase.current = saved.elapsedMs; setAssisted(saved.assisted); setPaused(true); setRestored(true); loadBest(saved.state.difficulty); } return () => { void audio.current?.close(); }; }, []);
+  useEffect(() => { if (!state || state.status !== 'playing' || paused || startedAt.current === null) return; const id = setInterval(() => setElapsedMs(elapsedBase.current + Date.now() - (startedAt.current ?? Date.now())), 250); return () => clearInterval(id); }, [state?.status, paused]);
+  useEffect(() => { if (!state) return; if (state.status === 'playing') storeNumberGuessingSave(state, elapsedMs, assisted); else { clearNumberGuessingSave(); if (state.status === 'won' && !assisted) { const result = { attempts: state.attempts.length, elapsedMs }; const key = `oiyo:number-guessing-best:${state.difficulty}`; try { const previous: Best | null = JSON.parse(localStorage.getItem(key) ?? 'null'); if (!previous || result.attempts < previous.attempts || result.attempts === previous.attempts && result.elapsedMs < previous.elapsedMs) { localStorage.setItem(key, JSON.stringify(result)); setBest(result); } } catch { /* best effort */ } } } }, [state, assisted]);
+  useEffect(() => { const onVisibility = () => { if (document.hidden && state?.status === 'playing' && !paused) pause(); }; document.addEventListener('visibilitychange', onVisibility); return () => document.removeEventListener('visibilitychange', onVisibility); });
+  const pause = () => { if (!state || state.status !== 'playing') return; if (paused) { startedAt.current = Date.now(); setPaused(false); } else { elapsedBase.current = elapsedMs; startedAt.current = null; setPaused(true); storeNumberGuessingSave(state, elapsedMs, assisted); } };
+  const submit = () => { if (!state || paused || state.status !== 'playing') return; const value = Number(input); const next = guessNumber(state, value); if (next === state) { setError(t.invalid); tone(160); return; } setError(''); setInput(''); setRestored(false); setState(next); const attempt = next.attempts.at(-1)!; tone(attempt.direction === 'exact' ? 880 : attempt.temperature === 'hot' ? 660 : attempt.temperature === 'warm' ? 440 : 240, attempt.direction === 'exact' ? .22 : .08); };
+  const showHelper = () => { if (!state) return; setInput(String(suggestedGuess(state))); setAssisted(true); setError(''); };
+  const share = async () => { if (!state) return; try { await navigator.clipboard.writeText(`OIYO Number Guessing ${state.difficulty} · ${state.attempts.length} guesses · ${formatTime(elapsedMs)}${assisted ? ' · assisted' : ''}`); } catch { /* best effort */ } };
+  const triesLeft = state?.maxTries === null ? null : state ? state.maxTries! - state.attempts.length : null;
+  const ideal = state ? Math.ceil(Math.log2(state.max)) : 0; const efficiency = state?.attempts.length ? Math.round(ideal / state.attempts.length * 100) : 100;
 
-  const handleSubmit = useCallback(() => {
-    if (throttled || state.status !== 'playing') return;
-    setThrottled(true);
-    dispatch({ type: 'SUBMIT' });
-    setTimeout(() => setThrottled(false), 400);
-  }, [throttled, state.status]);
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') handleSubmit();
-  };
-
-  const config = DIFFICULTY_CONFIG[state.difficulty];
-  const triesLeft = state.maxTries !== null ? state.maxTries - state.attempts : null;
-
-  const HINT_COLORS: Record<string, string> = {
-    exact: 'bg-emerald-100 text-emerald-800 border-emerald-300',
-    hot:   'bg-red-100 text-red-800 border-red-300',
-    warm:  'bg-orange-100 text-orange-800 border-orange-300',
-    cold:  'bg-blue-100 text-blue-800 border-blue-300',
-  };
-
-  return (
-    <GameContainer
-      title={t.title}
-      subtitle={t.subtitle}
-      onReset={state.status !== 'idle' ? () => dispatch({ type: 'RESET' }) : undefined}
-    >
-      {/* Difficulty selection */}
-      {state.status === 'idle' && (
-        <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">{t.chooseLevel}</p>
-          <div className="flex flex-col gap-3">
-            {(['easy', 'normal', 'hard'] as Difficulty[]).map((d) => (
-              <button
-                key={d}
-                onClick={() => dispatch({ type: 'START', difficulty: d })}
-                aria-label={t[d]}
-                className="w-full py-3 px-4 rounded-2xl border-2 border-border bg-muted hover:bg-accent hover:border-primary font-bold text-sm transition-all text-left"
-              >
-                {t[d]}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Active game */}
-      {state.status !== 'idle' && (
-        <>
-          {/* Status bar */}
-          <div className="flex items-center justify-between mb-6 text-sm font-bold">
-            <span className="text-muted-foreground capitalize">{t[state.difficulty]}</span>
-            <span className="text-primary" aria-live="polite">
-              {triesLeft !== null ? t.attemptsLeft(triesLeft) : t.unlimited}
-            </span>
-          </div>
-
-          {/* Result message */}
-          {state.status === 'won' && (
-            <div className="mb-6 p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-300 text-center" role="status" aria-live="assertive">
-              <p className="text-lg font-black text-emerald-700">{t.won}</p>
-              <p className="text-sm text-emerald-600">{t.wonIn(state.attempts)}</p>
-            </div>
-          )}
-
-          {state.status === 'lost' && (
-            <div className="mb-6 p-4 rounded-2xl bg-red-50 border-2 border-red-300 text-center" role="status" aria-live="assertive">
-              <p className="text-lg font-black text-red-700">{t.lost(state.secret)}</p>
-            </div>
-          )}
-
-          {/* Input */}
-          {state.status === 'playing' && (
-            <div className="mb-6 flex gap-3">
-              <input
-                type="number"
-                min={1}
-                max={config.max}
-                value={state.guess}
-                onChange={(e) => dispatch({ type: 'SET_GUESS', value: e.target.value })}
-                onKeyDown={handleKeyDown}
-                placeholder={t.placeholder(config.max)}
-                aria-label={t.placeholder(config.max)}
-                className="flex-1 px-4 py-3 rounded-2xl border-2 border-border bg-background font-bold text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-all"
-              />
-              <button
-                onClick={handleSubmit}
-                disabled={!state.guess || throttled}
-                aria-label={t.submit}
-                className="px-6 py-3 rounded-2xl bg-primary text-primary-foreground font-black hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
-              >
-                {t.submit}
-              </button>
-            </div>
-          )}
-
-          {/* Change difficulty button */}
-          {(state.status === 'won' || state.status === 'lost') && (
-            <div className="flex gap-3 mb-6">
-              <button
-                onClick={() => dispatch({ type: 'RESET' })}
-                className="flex-1 py-3 rounded-2xl bg-primary text-primary-foreground font-black hover:bg-primary/90 transition-all"
-              >
-                {t.reset}
-              </button>
-              <button
-                onClick={() => dispatch({ type: 'START', difficulty: state.difficulty === 'easy' ? 'normal' : state.difficulty === 'normal' ? 'hard' : 'easy' })}
-                className="flex-1 py-3 rounded-2xl border-2 border-border bg-muted font-bold hover:bg-accent transition-all text-sm"
-              >
-                {t.changeLevel}
-              </button>
-            </div>
-          )}
-
-          {/* History */}
-          {state.history.length > 0 && (
-            <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">{t.history}</p>
-              <div className="space-y-2 max-h-56 overflow-y-auto" role="log" aria-label={t.history}>
-                {state.history.map((entry, i) => (
-                  <div
-                    key={i}
-                    className={`flex items-center justify-between px-4 py-2 rounded-xl border text-sm font-bold ${HINT_COLORS[entry.hint]}`}
-                  >
-                    <span>{entry.guess}</span>
-                    <span>{t.hint[entry.hint]}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </>
-      )}
-    </GameContainer>
-  );
+  return <GameContainer title={t.title} subtitle={t.subtitle} onReset={state ? () => startGame(state.difficulty) : undefined}>
+    {!state ? <div><p className="mb-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.choose}</p><div className="flex flex-col gap-3">{(['easy', 'normal', 'hard'] as NumberGuessingDifficulty[]).map((difficulty) => <button key={difficulty} type="button" onClick={() => startGame(difficulty)} className="min-h-11 w-full rounded-2xl border-2 bg-muted px-4 py-3 text-left text-sm font-bold hover:border-primary hover:bg-accent">{t[difficulty]}</button>)}</div></div> : <>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2"><div role="status" aria-live="polite"><p className="text-xs font-bold text-muted-foreground">{restored ? t.restored : t[state.difficulty]}</p><p className="text-lg font-black text-primary">{t.range}: {state.lowerBound}–{state.upperBound}</p></div><div className="flex gap-2"><button type="button" onClick={pause} className="min-h-11 rounded-xl border px-3 text-sm font-bold" aria-pressed={paused}>{paused ? '▶' : 'Ⅱ'} <span className="sr-only">{paused ? t.resume : t.pause}</span></button><button type="button" onClick={() => setMuted((value) => !value)} className="min-h-11 rounded-xl border px-3" aria-pressed={muted}>{muted ? '🔇' : '🔊'} <span className="sr-only">{t.sound}</span></button></div></div>
+      <div className="mb-4 flex justify-between text-sm font-bold text-muted-foreground"><span>{triesLeft === null ? t.unlimited : t.tries(triesLeft)}</span><span>{t.time} {formatTime(elapsedMs)}</span></div>
+      {state.status === 'playing' && <><form className="mb-3 flex flex-col gap-2 sm:flex-row" onSubmit={(event) => { event.preventDefault(); submit(); }}><input inputMode="numeric" pattern="[0-9]*" min={1} max={state.max} value={input} onChange={(event) => setInput(event.target.value)} disabled={paused} aria-describedby="number-error" placeholder={t.placeholder(state.max)} aria-label={t.placeholder(state.max)} className="min-h-11 min-w-0 flex-1 rounded-2xl border-2 bg-background px-4 font-bold focus:border-primary focus:outline-none"/><button type="submit" disabled={paused || !input} className="min-h-11 rounded-2xl bg-primary px-6 font-black text-primary-foreground disabled:opacity-50">{t.guess}</button></form><div className="mb-5 flex flex-wrap items-center gap-2"><button type="button" onClick={showHelper} disabled={paused} className="min-h-11 rounded-xl border px-4 text-sm font-bold">{t.helper}</button>{assisted && <span className="text-xs font-bold text-amber-700">{t.helperUsed}</span>}<span id="number-error" role="alert" className="text-xs font-bold text-red-700">{error}</span></div></>}
+      {state.status !== 'playing' && <div className={`mb-5 rounded-2xl border-2 p-5 text-center ${state.status === 'won' ? 'border-green-400 bg-green-50 text-green-800' : 'border-red-300 bg-red-50 text-red-800'}`} role="status" aria-live="assertive"><p className="text-xl font-black">{state.status === 'won' ? t.won : t.lost(state.secret)}</p><p className="mt-2 text-sm font-bold">{t.attempts} {state.attempts.length} · {t.time} {formatTime(elapsedMs)} · {t.efficiency} {efficiency}%</p>{assisted && <p className="mt-1 text-xs font-bold">{t.helperUsed}</p>}{best && <p className="mt-1 text-xs">{t.best} · {best.attempts} · {formatTime(best.elapsedMs)}</p>}<p className="mt-1 text-xs font-bold">{t.next(Math.max(1, state.attempts.length - 1))}</p><div className="mt-4 flex flex-wrap justify-center gap-2"><button type="button" onClick={() => startGame(state.difficulty)} className="min-h-11 rounded-xl bg-primary px-4 text-sm font-black text-primary-foreground">{t.again}</button><button type="button" onClick={() => setState(null)} className="min-h-11 rounded-xl border px-4 text-sm font-bold">{t.level}</button><button type="button" onClick={share} className="min-h-11 rounded-xl border px-4 text-sm font-bold">{t.share}</button></div></div>}
+      {state.attempts.length > 0 && <div><p className="mb-2 text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.history}</p><ol className="max-h-64 space-y-2 overflow-y-auto" aria-label={t.history}>{[...state.attempts].reverse().map((attempt, index) => <li key={attempt.guess} className="flex min-h-11 items-center justify-between rounded-xl border bg-muted/50 px-4 text-sm font-bold"><span>#{state.attempts.length - index} · {attempt.guess}</span><span>{attempt.direction === 'higher' ? '↑ ' + t.higher : attempt.direction === 'lower' ? '↓ ' + t.lower : '✓ ' + t.won} · {attempt.temperature === 'exact' ? '' : t[attempt.temperature]}</span></li>)}</ol></div>}
+    </>}
+  </GameContainer>;
 };
 
 export default NumberGuessingGame;

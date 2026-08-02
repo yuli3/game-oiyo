@@ -1,268 +1,346 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { GameContainer } from '../ui/game/GamePrimitives';
-import { elapsedSeconds } from '../../lib/games/time-contracts';
-
-// ─── Animal Pop — 60s match-3, ported from ahoxy-legacy ──────────────────────
-// Swap adjacent animals to match 3+; cascades build combo, combo ≥ 5 ignites
-// 10s of double-score fever. Rewritten with generalized run detection (the
-// original hand-rolled 3/4/5 cases) and without the coin/level meta layer.
-
-const SIZE = 7;
-const ANIMALS = ['🐵', '🐱', '🐷', '🐭', '🐰', '🐶', '🐤'];
-const GAME_SECONDS = 60;
-const FEVER_COMBO = 5, FEVER_SECONDS = 10;
-const BEST_KEY = 'oiyo-animal-pop-best';
-
-type Board = string[][];
-type Status = 'idle' | 'playing' | 'over';
-
-const randAnimal = () => ANIMALS[Math.floor(Math.random() * ANIMALS.length)];
-
-/** All cells that belong to a horizontal/vertical run of 3+. */
-export function findMatches(board: Board): boolean[][] {
-    const matched: boolean[][] = board.map((row) => row.map(() => false));
-    for (let r = 0; r < SIZE; r++) {
-        for (let c = 0; c < SIZE; c++) {
-            // horizontal run starting here
-            if (c === 0 || board[r][c - 1] !== board[r][c]) {
-                let len = 1;
-                while (c + len < SIZE && board[r][c + len] === board[r][c]) len++;
-                if (len >= 3) for (let i = 0; i < len; i++) matched[r][c + i] = true;
-            }
-            // vertical run starting here
-            if (r === 0 || board[r - 1][c] !== board[r][c]) {
-                let len = 1;
-                while (r + len < SIZE && board[r + len][c] === board[r][c]) len++;
-                if (len >= 3) for (let i = 0; i < len; i++) matched[r + i][c] = true;
-            }
-        }
-    }
-    return matched;
-}
-
-const hasAny = (m: boolean[][]) => m.some((row) => row.some(Boolean));
-
-/** Remove matched cells, drop the rest, refill from the top. */
-export function collapse(board: Board, matched: boolean[][]): Board {
-    const next: Board = Array.from({ length: SIZE }, () => Array(SIZE).fill(''));
-    for (let c = 0; c < SIZE; c++) {
-        const keep: string[] = [];
-        for (let r = SIZE - 1; r >= 0; r--) if (!matched[r][c]) keep.push(board[r][c]);
-        for (let r = SIZE - 1, i = 0; r >= 0; r--, i++) {
-            next[r][c] = i < keep.length ? keep[i] : randAnimal();
-        }
-    }
-    return next;
-}
-
-export function makeBoard(): Board {
-    let board: Board = Array.from({ length: SIZE }, () => Array.from({ length: SIZE }, randAnimal));
-    // settle any accidental initial matches without scoring
-    for (let guard = 0; guard < 20; guard++) {
-        const m = findMatches(board);
-        if (!hasAny(m)) break;
-        board = collapse(board, m);
-    }
-    return board;
-}
-
+import { useCallback, useEffect, useRef, useState } from "react";
+import { GameContainer } from "../ui/game/GamePrimitives";
+import {
+  createAnimalBoard,
+  parseAnimal,
+  serializeAnimal,
+  swapAnimals,
+  type AnimalBoard,
+} from "../../lib/games/animal-pop";
+const SAVE = "oiyo:animal-pop:v1",
+  BEST = "oiyo-animal-pop-best";
 const COPY = {
-    ko: { title: '애니멀 팝', subtitle: 'Match 3', time: '남은 시간', score: '점수', best: '최고 점수', combo: '콤보', fever: '피버! ×2', start: '게임 시작', over: '타임 업!', restart: '다시 하기', hint: '이웃한 동물을 맞바꿔 3마리 이상 맞추세요 · 연쇄로 콤보 → 피버!' },
-    en: { title: 'Animal Pop', subtitle: 'Match 3', time: 'Time', score: 'Score', best: 'Best', combo: 'Combo', fever: 'FEVER! ×2', start: 'Start', over: "Time's Up!", restart: 'Play Again', hint: 'Swap neighbors to match 3+ · chain cascades for combo → fever!' },
-    ja: { title: 'アニマルポップ', subtitle: 'Match 3', time: '残り時間', score: 'スコア', best: 'ベスト', combo: 'コンボ', fever: 'フィーバー！×2', start: 'スタート', over: 'タイムアップ！', restart: 'もう一度', hint: '隣り合う動物を入れ替えて3匹以上そろえよう · 連鎖でコンボ→フィーバー！' },
-    zh: { title: '动物消消乐', subtitle: 'Match 3', time: '剩余时间', score: '分数', best: '最高分', combo: '连击', fever: '狂热！×2', start: '开始游戏', over: '时间到！', restart: '再玩一次', hint: '交换相邻动物凑成3个以上 · 连锁触发连击→狂热模式！' },
-    fr: { title: 'Animal Pop', subtitle: 'Match 3', time: 'Temps', score: 'Score', best: 'Record', combo: 'Combo', fever: 'FIÈVRE ! ×2', start: 'Démarrer', over: 'Temps écoulé !', restart: 'Rejouer', hint: 'Échangez des voisins pour aligner 3+ · les cascades donnent des combos → fièvre !' },
-    es: { title: 'Animal Pop', subtitle: 'Match 3', time: 'Tiempo', score: 'Puntos', best: 'Récord', combo: 'Combo', fever: '¡FIEBRE! ×2', start: 'Empezar', over: '¡Se acabó el tiempo!', restart: 'Jugar otra vez', hint: 'Intercambia vecinos para alinear 3+ · encadena cascadas para combo → ¡fiebre!' },
+  ko: {
+    title: "애니멀 팝",
+    sub: "포레스트 피버",
+    start: "퍼즐 시작",
+    time: "남은 시간",
+    score: "점수",
+    best: "최고",
+    combo: "연쇄",
+    fever: "피버 ×2",
+    pause: "일시정지",
+    resume: "계속하기",
+    sound: "소리",
+    over: "숲의 축제가 끝났어요",
+    again: "다시 하기",
+    hint: "이웃한 동물을 바꿔 3마리 이상 연결하세요.",
+    restored: "저장된 퍼즐을 이어서 불러왔어요",
+  },
+  en: {
+    title: "Animal Pop",
+    sub: "Forest Fever",
+    start: "Start puzzle",
+    time: "Time",
+    score: "Score",
+    best: "Best",
+    combo: "Chain",
+    fever: "FEVER ×2",
+    pause: "Pause",
+    resume: "Resume",
+    sound: "Sound",
+    over: "The forest festival is over",
+    again: "Play again",
+    hint: "Swap neighboring animals to connect three or more.",
+    restored: "Your saved puzzle was restored",
+  },
+  ja: {
+    title: "アニマルポップ",
+    sub: "フォレストフィーバー",
+    start: "パズル開始",
+    time: "残り時間",
+    score: "スコア",
+    best: "ベスト",
+    combo: "連鎖",
+    fever: "フィーバー ×2",
+    pause: "一時停止",
+    resume: "続ける",
+    sound: "サウンド",
+    over: "森のお祭りが終わりました",
+    again: "もう一度",
+    hint: "隣り合う動物を入れ替えて3匹以上つなげます。",
+    restored: "保存したパズルを復元しました",
+  },
+  zh: {
+    title: "动物消消乐",
+    sub: "森林狂热",
+    start: "开始谜题",
+    time: "时间",
+    score: "分数",
+    best: "最高",
+    combo: "连锁",
+    fever: "狂热 ×2",
+    pause: "暂停",
+    resume: "继续",
+    sound: "声音",
+    over: "森林庆典结束了",
+    again: "再玩一次",
+    hint: "交换相邻动物，连接三个或更多。",
+    restored: "已恢复保存的谜题",
+  },
+  fr: {
+    title: "Animal Pop",
+    sub: "Fièvre forestière",
+    start: "Commencer",
+    time: "Temps",
+    score: "Score",
+    best: "Record",
+    combo: "Chaîne",
+    fever: "FIÈVRE ×2",
+    pause: "Pause",
+    resume: "Reprendre",
+    sound: "Son",
+    over: "La fête de la forêt est terminée",
+    again: "Rejouer",
+    hint: "Échangez deux voisins pour en relier au moins trois.",
+    restored: "Votre puzzle a été restauré",
+  },
+  es: {
+    title: "Animal Pop",
+    sub: "Fiebre del bosque",
+    start: "Comenzar",
+    time: "Tiempo",
+    score: "Puntos",
+    best: "Récord",
+    combo: "Cadena",
+    fever: "FIEBRE ×2",
+    pause: "Pausa",
+    resume: "Continuar",
+    sound: "Sonido",
+    over: "Terminó la fiesta del bosque",
+    again: "Jugar otra vez",
+    hint: "Intercambia animales vecinos para conectar tres o más.",
+    restored: "Se restauró tu puzle",
+  },
 } as const;
-
-const AnimalPop: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
-    const t = COPY[(locale as keyof typeof COPY)] ?? COPY.en;
-
-    const [board, setBoard] = useState<Board>(makeBoard);
-    const [status, setStatus] = useState<Status>('idle');
-    const [score, setScore] = useState(0);
-    const [best, setBest] = useState(0);
-    const [timeLeft, setTimeLeft] = useState(GAME_SECONDS);
-    const startedAt = useRef<number | null>(null);
-    const [combo, setCombo] = useState(0);
-    const [feverUntil, setFeverUntil] = useState(0);
-    const [selected, setSelected] = useState<[number, number] | null>(null);
-    const [popping, setPopping] = useState<boolean[][] | null>(null);
-    const busy = useRef(false);
-    const scoreRef = useRef(0);
-    scoreRef.current = score;
-    const bestRef = useRef(0);
-    bestRef.current = best;
-
-    const isFever = Date.now() < feverUntil;
-
-    useEffect(() => {
-        try {
-            const stored = Number(localStorage.getItem(BEST_KEY));
-            if (Number.isFinite(stored) && stored > 0) setBest(stored);
-        } catch { /* ignore */ }
-    }, []);
-
-    // Countdown from monotonic wall time so throttled tabs cannot add time.
-    useEffect(() => {
-        if (status !== 'playing') return;
-        const update = () => {
-            const left = Math.max(0, GAME_SECONDS - elapsedSeconds(startedAt.current, performance.now()));
-            setTimeLeft(left);
-            if (left > 0) return;
-            setStatus('over');
-            if (scoreRef.current > bestRef.current) {
-                setBest(scoreRef.current);
-                try { localStorage.setItem(BEST_KEY, String(scoreRef.current)); } catch { /* ignore */ }
-            }
-        };
-        update();
-        const id = setInterval(update, 100);
-        return () => clearInterval(id);
-    }, [status]);
-
-    const start = useCallback(() => {
-        setBoard(makeBoard());
-        setScore(0);
-        setTimeLeft(GAME_SECONDS);
-        startedAt.current = performance.now();
-        setCombo(0);
-        setFeverUntil(0);
-        setSelected(null);
-        setPopping(null);
-        busy.current = false;
-        setStatus('playing');
-    }, []);
-
-    const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
-
-    /** Resolve cascades on a board, awarding score per wave. */
-    const resolve = useCallback(async (input: Board) => {
-        busy.current = true;
-        let current = input;
-        let wave = 0;
-        for (; ;) {
-            const m = findMatches(current);
-            if (!hasAny(m)) break;
-            wave++;
-            const count = m.flat().filter(Boolean).length;
-            const multiplier = Date.now() < feverUntil ? 2 : 1;
-            setPopping(m);
-            setScore((s) => s + count * 10 * wave * multiplier);
-            await sleep(220);
-            setPopping(null);
-            current = collapse(current, m);
-            setBoard(current);
-            await sleep(120);
-        }
-        if (wave > 0) {
-            setCombo((c) => {
-                const next = c + wave;
-                if (next >= FEVER_COMBO) setFeverUntil(Date.now() + FEVER_SECONDS * 1000);
-                return next;
+export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
+  const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
+  const [board, setBoard] = useState<AnimalBoard>(
+      () => createAnimalBoard(1).board,
+    ),
+    [seed, setSeed] = useState(1),
+    [phase, setPhase] = useState<"briefing" | "playing" | "paused" | "over">(
+      "briefing",
+    ),
+    [selected, setSelected] = useState<number | null>(null),
+    [score, setScore] = useState(0),
+    [time, setTime] = useState(60),
+    [best, setBest] = useState(0),
+    [combo, setCombo] = useState(0),
+    [sound, setSound] = useState(true),
+    [restored, setRestored] = useState(false);
+  const phaseRef = useRef(phase);
+  phaseRef.current = phase;
+  const tone = useCallback(
+    (f: number) => {
+      if (!sound) return;
+      const A = window.AudioContext || window.webkitAudioContext;
+      if (!A) return;
+      const a = new A(),
+        o = a.createOscillator(),
+        g = a.createGain();
+      o.frequency.value = f;
+      g.gain.setValueAtTime(0.03, a.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, a.currentTime + 0.12);
+      o.connect(g).connect(a.destination);
+      o.start();
+      o.stop(a.currentTime + 0.12);
+    },
+    [sound],
+  );
+  useEffect(() => {
+    const b = Number(localStorage.getItem(BEST));
+    if (Number.isFinite(b)) setBest(b);
+    const s = parseAnimal(localStorage.getItem(SAVE));
+    if (s) {
+      setBoard(s.board);
+      setSeed(s.seed);
+      setScore(s.score);
+      setTime(s.timeLeft);
+      setRestored(true);
+      setPhase("paused");
+    }
+  }, []);
+  useEffect(() => {
+    if (phase !== "playing") return;
+    const id = setInterval(
+      () =>
+        setTime((v) => {
+          if (v <= 1) {
+            setPhase("over");
+            localStorage.removeItem(SAVE);
+            tone(140);
+            setBest((b) => {
+              const n = Math.max(b, score);
+              localStorage.setItem(BEST, String(n));
+              return n;
             });
-        } else {
-            setCombo(0);
-        }
-        busy.current = false;
-    }, [combo, feverUntil]);
-
-    const trySwap = useCallback(async (r1: number, c1: number, r2: number, c2: number) => {
-        if (busy.current || status !== 'playing') return;
-        if (Math.abs(r1 - r2) + Math.abs(c1 - c2) !== 1) return;
-        const next = board.map((row) => [...row]);
-        [next[r1][c1], next[r2][c2]] = [next[r2][c2], next[r1][c1]];
-        if (!hasAny(findMatches(next))) {
-            // no match — brief swap-back feedback
-            busy.current = true;
-            setBoard(next);
-            await sleep(160);
-            setBoard(board);
-            busy.current = false;
-            setCombo(0);
-            return;
-        }
-        setBoard(next);
-        await resolve(next);
-    }, [board, status, resolve]);
-
-    const onCell = (r: number, c: number) => {
-        if (busy.current || status !== 'playing') return;
-        if (!selected) { setSelected([r, c]); return; }
-        const [sr, sc] = selected;
-        setSelected(null);
-        if (sr === r && sc === c) return;
-        void trySwap(sr, sc, r, c);
-    };
-
-    return (
-        <GameContainer title={t.title} subtitle={t.subtitle} onReset={start}>
-            <div className="flex justify-between items-center mb-3 text-xs font-bold text-muted-foreground">
-                <span>⏱ {t.time}: <span className={`text-base font-black ${timeLeft <= 10 ? 'text-destructive' : 'text-foreground'}`}>{timeLeft}s</span></span>
-                <div className="flex items-center gap-3">
-                    <span>{t.score}: <span className="text-primary text-base font-black">{score.toLocaleString()}</span></span>
-                    <span>{t.best}: <span className="text-chart-2 font-black">{best.toLocaleString()}</span></span>
-                </div>
-            </div>
-
-            {/* combo / fever banner */}
-            <div className="h-6 mb-2 text-center" aria-live="polite">
-                {isFever ? (
-                    <span className="px-3 py-0.5 rounded-full bg-warning text-warning-foreground text-xs font-black animate-pulse motion-reduce:animate-none">🔥 {t.fever}</span>
-                ) : combo >= 2 ? (
-                    <span className="text-xs font-black text-primary">{combo} {t.combo}!</span>
-                ) : null}
-            </div>
-
-            <div className="relative">
-                <div
-                    className="grid gap-1 p-2 rounded-2xl bg-muted/40 border border-border select-none"
-                    style={{ gridTemplateColumns: `repeat(${SIZE}, minmax(0, 1fr))` }}
-                    role="grid" aria-label={t.title}
-                >
-                    {board.map((row, r) => row.map((animal, c) => {
-                        const isSel = selected?.[0] === r && selected?.[1] === c;
-                        const isPop = popping?.[r]?.[c];
-                        return (
-                            <button
-                                key={`${r}-${c}`}
-                                onClick={() => onCell(r, c)}
-                                aria-label={animal}
-                                className={`aspect-square flex items-center justify-center text-xl sm:text-2xl rounded-lg transition-all ${
-                                    isPop
-                                        ? 'scale-0 opacity-0 duration-200'
-                                        : isSel
-                                            ? 'bg-primary/20 ring-2 ring-primary scale-110'
-                                            : 'bg-card hover:bg-muted active:scale-95'
-                                }`}
-                            >
-                                {animal}
-                            </button>
-                        );
-                    }))}
-                </div>
-
-                {status !== 'playing' && (
-                    <div className="absolute inset-0 z-10 bg-background/80 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center gap-3 animate-in fade-in zoom-in-95" role="status" aria-live="polite">
-                        {status === 'over' && (
-                            <>
-                                <p className="text-2xl font-black text-foreground">{t.over}</p>
-                                <p className="text-3xl font-black text-primary">{score.toLocaleString()}</p>
-                            </>
-                        )}
-                        <button
-                            onClick={start}
-                            className="px-8 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity"
-                        >
-                            {status === 'over' ? t.restart : t.start}
-                        </button>
-                    </div>
-                )}
-            </div>
-
-            <p className="mt-4 text-center text-[10px] text-muted-foreground font-medium">{t.hint}</p>
-        </GameContainer>
+            return 0;
+          }
+          return v - 1;
+        }),
+      1000,
     );
-};
-
-export default AnimalPop;
+    return () => clearInterval(id);
+  }, [phase, score, tone]);
+  useEffect(() => {
+    if (phase === "playing")
+      localStorage.setItem(SAVE, serializeAnimal(seed, board, score, time));
+  }, [phase, seed, board, score, time]);
+  const start = () => {
+    const a = new Uint32Array(1);
+    crypto.getRandomValues(a);
+    const x = createAnimalBoard(a[0]);
+    setSeed(x.seed);
+    setBoard(x.board);
+    setScore(0);
+    setTime(60);
+    setCombo(0);
+    setSelected(null);
+    setRestored(false);
+    setPhase("playing");
+  };
+  const pick = (i: number) => {
+    if (phase !== "playing") return;
+    if (selected === null) {
+      setSelected(i);
+      return;
+    }
+    const x = swapAnimals(board, selected, i, seed);
+    setSelected(null);
+    if (!x.valid) {
+      tone(150);
+      return;
+    }
+    setBoard(x.board);
+    setSeed(x.seed);
+    setCombo(x.waves);
+    setScore((v) => v + x.cleared * 10 * x.waves * (x.waves >= 5 ? 2 : 1));
+    tone(x.waves >= 5 ? 780 : 420 + x.waves * 50);
+  };
+  if (phase === "briefing")
+    return (
+      <GameContainer title={t.title} subtitle={t.sub} onReset={start}>
+        <div className="overflow-hidden rounded-3xl border">
+          <img
+            src="/games/animal-pop-social.png"
+            alt=""
+            className="h-64 w-full object-cover sm:h-80"
+          />
+          <div className="p-5 text-center">
+            <p className="text-sm text-muted-foreground">{t.hint}</p>
+            <button
+              onClick={start}
+              className="mt-4 min-h-12 rounded-full bg-primary px-8 font-black text-primary-foreground"
+            >
+              {t.start}
+            </button>
+          </div>
+        </div>
+      </GameContainer>
+    );
+  return (
+    <GameContainer title={t.title} subtitle={t.sub} onReset={start}>
+      <div className="mx-auto max-w-md">
+        <div className="grid grid-cols-3 gap-2">
+          <Stat l={t.time} v={`${time}s`} />
+          <Stat l={t.score} v={String(score)} />
+          <Stat l={t.best} v={String(best)} />
+        </div>
+        {restored && (
+          <p
+            role="status"
+            className="mt-3 rounded-xl bg-primary/10 p-3 text-center text-xs font-bold text-primary"
+          >
+            {t.restored}
+          </p>
+        )}
+        <div
+          className="my-3 h-6 text-center text-sm font-black text-amber-600"
+          aria-live="polite"
+        >
+          {combo >= 5 ? t.fever : combo > 1 ? `${t.combo} ×${combo}` : ""}
+        </div>
+        <div
+          className="relative grid grid-cols-7 gap-1 rounded-3xl border bg-[#edf1df] p-2"
+          role="grid"
+          aria-label={t.title}
+        >
+          {board.flatMap((row, r) =>
+            row.map((animal, c) => {
+              const i = r * 7 + c;
+              return (
+                <button
+                  key={i}
+                  role="gridcell"
+                  aria-label={`${animal} ${r + 1},${c + 1}`}
+                  aria-pressed={selected === i}
+                  onClick={() => pick(i)}
+                  disabled={phase !== "playing"}
+                  className={`aspect-square min-h-10 rounded-xl bg-white text-xl shadow-sm focus-visible:ring-2 focus-visible:ring-primary ${selected === i ? "ring-2 ring-primary scale-105" : ""}`}
+                >
+                  {animal}
+                </button>
+              );
+            }),
+          )}
+          {phase === "paused" && (
+            <button
+              onClick={() => setPhase("playing")}
+              className="absolute inset-2 rounded-2xl bg-white/95 text-xl font-black"
+            >
+              {t.resume}
+            </button>
+          )}
+          {phase === "over" && (
+            <div
+              className="absolute inset-2 flex flex-col items-center justify-center rounded-2xl bg-white/95"
+              role="status"
+            >
+              <h3 className="text-xl font-black">{t.over}</h3>
+              <p className="mt-2 text-3xl font-black text-primary">{score}</p>
+              <button
+                onClick={start}
+                className="mt-4 min-h-12 rounded-full bg-primary px-8 font-black text-primary-foreground"
+              >
+                {t.again}
+              </button>
+            </div>
+          )}
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={() =>
+              setPhase((p) => (p === "playing" ? "paused" : "playing"))
+            }
+            className="min-h-11 rounded-xl border bg-card font-bold"
+          >
+            {phase === "paused" ? t.resume : t.pause}
+          </button>
+          <button
+            onClick={() => setSound((v) => !v)}
+            className="min-h-11 rounded-xl border bg-card font-bold"
+          >
+            {t.sound} {sound ? "ON" : "OFF"}
+          </button>
+        </div>
+        <p className="mt-3 text-center text-xs text-muted-foreground">
+          {t.hint}
+        </p>
+      </div>
+    </GameContainer>
+  );
+}
+function Stat({ l, v }: { l: string; v: string }) {
+  return (
+    <div className="rounded-2xl border bg-card p-2 text-center">
+      <div className="text-lg font-black">{v}</div>
+      <div className="text-[10px] text-muted-foreground">{l}</div>
+    </div>
+  );
+}
+declare global {
+  interface Window {
+    webkitAudioContext?: typeof AudioContext;
+  }
+}
