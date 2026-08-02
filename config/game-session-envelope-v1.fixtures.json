@@ -162,12 +162,12 @@
   {
    "gameId": "gomoku",
    "componentPath": "src/components/games/Gomoku.tsx",
-   "adapterPath": "src/lib/games/active-game-save.ts",
+   "adapterPath": "src/lib/games/gomoku-save.ts",
    "supportsRestore": true,
-   "sessionStorageKey": "oiyo:gomoku-state:v1",
+   "sessionStorageKey": "oiyo:gomoku-state:v2",
    "sourceSchema": "oiyo.gomoku-save",
-   "sourceSchemaVersion": 1,
-   "adapterVersion": "gomoku-session-adapter-v1",
+   "sourceSchemaVersion": 2,
+   "adapterVersion": "gomoku-session-adapter-v2",
    "engineVersion": "gomoku-rules-v1",
    "modes": [
     "local",

@@ -7,7 +7,6 @@ import {
   parseConnectFourSave,
   parseFreeCellSave,
   parseGame2048Save,
-  parseGomokuSave,
   parsePuzzle15Save,
   parseReversiSave,
   type CheckersSave,
@@ -19,6 +18,7 @@ import { parseSudokuSaveV2, type SudokuSaveV2 } from "./sudoku-save";
 import { parseSolitaireSaveV2, type SolitaireSaveV2 } from "./solitaire-save";
 import { parseSnakeSave, type SnakeSaveV1 } from "./snake-save";
 import { parseJanggiSave, type JanggiSaveV1 } from "./janggi-save";
+import { parseGomokuSaveV2, type GomokuSaveV2 } from "./gomoku-save";
 import { parseKurodokoSaveV1, type KurodokoSaveV1 } from "./kurodoko-save";
 import { parseYahtzeeSave, type YahtzeeSaveV1 } from "./yahtzee-save";
 import { parseCaveDashSave, type CaveDashSaveV1 } from "./cave-dash-save";
@@ -345,7 +345,6 @@ const brickBreakerAdapter: Adapter<BrickBreakerSave> = {
 
 type FreeCellPayload = NonNullable<ReturnType<typeof parseFreeCellSave>>;
 type ConnectFourPayload = NonNullable<ReturnType<typeof parseConnectFourSave>>;
-type GomokuPayload = NonNullable<ReturnType<typeof parseGomokuSave>>;
 
 const solitaireAdapter: Adapter<SolitaireSaveV2> = {
   adapterVersion: "solitaire-session-adapter-v2", engineVersion: "solitaire-rules-v1", gameId: "solitaire",
@@ -370,11 +369,15 @@ const connectFourAdapter: Adapter<ConnectFourPayload> = {
   payloadDifficulty: (value) => `level-${value.level}`, payloadMode: (value) => value.mode,
   source: { format: "legacy-local-storage", schema: "oiyo.connect-four-save", schemaVersion: 1, storageKey: "oiyo:connect-four-state:v1" },
 };
-const gomokuAdapter: Adapter<GomokuPayload> = {
-  adapterVersion: "gomoku-session-adapter-v1", engineVersion: "gomoku-rules-v1", gameId: "gomoku",
-  modes: ["local", "ai"], difficulties: ["level-1", "level-2", "level-3"], parsePayload: parseGomokuSave,
+const gomokuAdapter: Adapter<GomokuSaveV2> = {
+  adapterVersion: "gomoku-session-adapter-v2", engineVersion: "gomoku-rules-v1", gameId: "gomoku",
+  modes: ["local", "ai"], difficulties: ["level-1", "level-2", "level-3"],
+  parsePayload: (value) => {
+    if (!isRecord(value) || typeof value.savedAtEpochMs !== "number") return null;
+    return parseGomokuSaveV2(JSON.stringify(value), value.savedAtEpochMs);
+  },
   payloadDifficulty: (value) => `level-${value.level}`, payloadMode: (value) => value.mode,
-  source: { format: "legacy-local-storage", schema: "oiyo.gomoku-save", schemaVersion: 1, storageKey: "oiyo:gomoku-state:v1" },
+  source: { format: "legacy-local-storage", schema: "oiyo.gomoku-save", schemaVersion: 2, storageKey: "oiyo:gomoku-state:v2" },
 };
 
 const sudokuAdapter: Adapter<SudokuSaveV2> = {

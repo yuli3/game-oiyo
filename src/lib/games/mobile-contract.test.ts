@@ -15,9 +15,9 @@ describe('mobile game interaction contracts', () => {
     expect(component).toMatch(/className="overflow-x-auto[^\"]*"[^>]*tabIndex=\{-1\}[^>]*>\s*<div\s+className="relative mx-auto"\s+style=\{\{\s*width:/);
   });
 
-  it('keeps Gomoku fixed-width board inside its own scroller', () => {
+  it('keeps Gomoku fixed-cell board inside its own scroller', () => {
     const component = source('../../components/games/Gomoku.tsx');
-    expect(component).toMatch(/className="overflow-x-auto[^\"]*"[^>]*>\s*<div className="relative h-\[660px\] w-\[660px\]/);
+    expect(component).toMatch(/className="overflow-x-auto[^\"]*"[^>]*>\s*<div\s+className="relative[^"]*"\s+style=\{\{\s*width: BOARD_PX/);
   });
 
   it('keeps Connect Four mode and level targets at least 44px high', () => {
