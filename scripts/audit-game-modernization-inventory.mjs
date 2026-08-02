@@ -27,6 +27,9 @@ const certified = new Map([
   ["kurodoko", 87],
   ["yahtzee", 88],
   ["cave-dash", 86],
+  ["dot-runner", 87],
+  ["mahjong", 88],
+  ["water-sort", 87],
 ]);
 const completed = new Set([...certified.keys(), "sudoku"]);
 const completedRisk = {
@@ -39,6 +42,9 @@ const completedRisk = {
   kurodoko: { mobile: "low", accessibility: "low", performance: "low" },
   yahtzee: { mobile: "low", accessibility: "low", performance: "low" },
   "cave-dash": { mobile: "low", accessibility: "low", performance: "low" },
+  "dot-runner": { mobile: "low", accessibility: "low", performance: "low" },
+  mahjong: { mobile: "low", accessibility: "low", performance: "low" },
+  "water-sort": { mobile: "low", accessibility: "low", performance: "low" },
 };
 const wave3 = new Set(["snake-game", "gomoku", "kurodoko", "yahtzee"]);
 const wave4 = new Set(["cave-dash", "dot-runner", "mahjong"]);

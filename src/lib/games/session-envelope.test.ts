@@ -10,6 +10,9 @@ import { createSnakeGame, steerSnake, tickSnake } from "./snake";
 import { generateKurodokoPuzzle, kurodokoDailySeed } from "./kurodoko";
 import { initializeGame as initializeYahtzee, rollDice as rollYahtzeeDice, scoreCategory as scoreYahtzeeCategory } from "./yahtzee";
 import { createCaveDash, flapCaveDash, stepCaveDash } from "./cave-dash";
+import { createDotRunner, jumpDotRunner, stepDotRunner } from "./dot-runner";
+import { createMahjong, drawMahjong } from "./mahjong";
+import { createWaterSort, legalWaterSortMoves, moveWaterSort } from "./water-sort";
 import { mulberry32 } from "./daily";
 import {
   chooseHeartsCpuCard,
@@ -153,6 +156,32 @@ describe("GameSessionEnvelope v1", () => {
     expect(envelope).toMatchObject({ gameId: "cave-dash", difficulty: "endless-v1", mode: "solo", source: { storageKey: "oiyo:cave-dash-state:v1" } });
     expect(parseGameSessionEnvelope(serializeGameSessionEnvelope(envelope!))).toEqual(envelope);
     expect(adaptActiveGameSaveToSession("cave-dash", { ...payload, state: { ...state, status: "over" } }, TIMING)).toBeNull();
+  });
+  it("adapts deterministic Dot Runner progress and rejects terminal state", () => {
+    let state = jumpDotRunner(createDotRunner(42));
+    for (let frame = 0; frame < 20; frame += 1) state = stepDotRunner(state);
+    const payload = { version: 1 as const, state, savedAtEpochMs: Date.parse(TIMING.savedAt) };
+    const envelope = adaptActiveGameSaveToSession("dot-runner", payload, TIMING);
+    expect(envelope).toMatchObject({ gameId: "dot-runner", difficulty: "endless-v1", mode: "solo", source: { storageKey: "oiyo:dot-runner-state:v1" } });
+    expect(parseGameSessionEnvelope(serializeGameSessionEnvelope(envelope!))).toEqual(envelope);
+    expect(adaptActiveGameSaveToSession("dot-runner", { ...payload, state: { ...state, status: "over" } }, TIMING)).toBeNull();
+  });
+  it("adapts deterministic Mahjong progress and rejects terminal state", () => {
+    const state = drawMahjong(createMahjong(42));
+    const payload = { version: 1 as const, state, level: 2 as const, savedAtEpochMs: Date.parse(TIMING.savedAt) };
+    const envelope = adaptActiveGameSaveToSession("mahjong", payload, TIMING);
+    expect(envelope).toMatchObject({ gameId: "mahjong", difficulty: "level-2", mode: "ai", source: { storageKey: "oiyo:mahjong-state:v1" } });
+    expect(parseGameSessionEnvelope(serializeGameSessionEnvelope(envelope!))).toEqual(envelope);
+    expect(adaptActiveGameSaveToSession("mahjong", { ...payload, state: { ...state, phase: "over", winner: -1 } }, TIMING)).toBeNull();
+  });
+  it("adapts deterministic Water Sort progress and rejects terminal state", () => {
+    const initial = createWaterSort(42, "medium");
+    const state = moveWaterSort(initial, legalWaterSortMoves(initial.tubes)[0]);
+    const payload = { version: 1 as const, state, undo: [initial], elapsedSeconds: 12, assist: "none" as const, savedAtEpochMs: Date.parse(TIMING.savedAt) };
+    const envelope = adaptActiveGameSaveToSession("water-sort", payload, TIMING);
+    expect(envelope).toMatchObject({ gameId: "water-sort", difficulty: "medium", mode: "solo", source: { storageKey: "oiyo:water-sort-state:v1" } });
+    expect(parseGameSessionEnvelope(serializeGameSessionEnvelope(envelope!))).toEqual(envelope);
+    expect(adaptActiveGameSaveToSession("water-sort", { ...payload, state: { ...state, status: "solved" } }, TIMING)).toBeNull();
   });
   it("adapts a resumable Chess v2 save with mode, difficulty and complete-state determinism", () => {
     const envelope = adaptChessSaveToSession(activeChessSave(), TIMING, {
@@ -314,8 +343,8 @@ describe("GameSessionEnvelope v1", () => {
 
   it("keeps unsupported games explicitly non-restorable", () => {
     const byId = new Map(capabilities.games.map((game) => [game.gameId, game]));
-    expect([...byId.values()].filter((game) => game.supportsRestore).map((game) => game.gameId)).toEqual(["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game", "kurodoko", "yahtzee", "cave-dash"]);
-    for (const gameId of ["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game", "kurodoko", "yahtzee", "cave-dash"] as const) {
+    expect([...byId.values()].filter((game) => game.supportsRestore).map((game) => game.gameId)).toEqual(["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game", "kurodoko", "yahtzee", "cave-dash", "dot-runner", "mahjong", "water-sort"]);
+    for (const gameId of ["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game", "kurodoko", "yahtzee", "cave-dash", "dot-runner", "mahjong", "water-sort"] as const) {
       expect(byId.get(gameId)?.modes).toEqual([...RESTORABLE_GAME_CAPABILITIES[gameId].modes]);
       expect(byId.get(gameId)?.difficulties).toEqual([...RESTORABLE_GAME_CAPABILITIES[gameId].difficulties]);
     }

@@ -21,11 +21,14 @@ import { parseSnakeSave, type SnakeSaveV1 } from "./snake-save";
 import { parseKurodokoSaveV1, type KurodokoSaveV1 } from "./kurodoko-save";
 import { parseYahtzeeSave, type YahtzeeSaveV1 } from "./yahtzee-save";
 import { parseCaveDashSave, type CaveDashSaveV1 } from "./cave-dash-save";
+import { parseDotRunnerSave, type DotRunnerSaveV1 } from "./dot-runner-save";
+import { parseMahjongSave, type MahjongSaveV1 } from "./mahjong-save";
+import { parseWaterSortSave, type WaterSortSaveV1 } from "./water-sort-save";
 
 export const GAME_SESSION_SCHEMA = "oiyo.game-session" as const;
 export const GAME_SESSION_SCHEMA_VERSION = 1 as const;
 
-export type RestorableGameId = "chess" | "hearts" | "minesweeper" | "brick-breaker" | "solitaire" | "freecell" | "connect-four" | "gomoku" | "sudoku" | "puzzle15" | "checkers" | "reversi" | "game-2048" | "snake-game" | "kurodoko" | "yahtzee" | "cave-dash";
+export type RestorableGameId = "chess" | "hearts" | "minesweeper" | "brick-breaker" | "solitaire" | "freecell" | "connect-four" | "gomoku" | "sudoku" | "puzzle15" | "checkers" | "reversi" | "game-2048" | "snake-game" | "kurodoko" | "yahtzee" | "cave-dash" | "dot-runner" | "mahjong" | "water-sort";
 export type GameSessionMode = "local" | "ai" | "solo";
 
 export const RESTORABLE_GAME_CAPABILITIES = {
@@ -58,6 +61,9 @@ export const RESTORABLE_GAME_CAPABILITIES = {
   kurodoko: { modes: ["solo"], difficulties: ["daily", "easy", "medium", "hard"] },
   yahtzee: { modes: ["solo"], difficulties: ["classic"] },
   "cave-dash": { modes: ["solo"], difficulties: ["endless-v1"] },
+  "dot-runner": { modes: ["solo"], difficulties: ["endless-v1"] },
+  mahjong: { modes: ["ai"], difficulties: ["level-1", "level-2", "level-3"] },
+  "water-sort": { modes: ["solo"], difficulties: ["easy", "medium", "hard"] },
 } as const satisfies Record<RestorableGameId, {
   modes: readonly GameSessionMode[];
   difficulties: readonly string[];
@@ -445,6 +451,40 @@ const caveDashAdapter: Adapter<CaveDashSaveV1> = {
   source: { format: "legacy-local-storage", schema: "oiyo.cave-dash-save", schemaVersion: 1, storageKey: "oiyo:cave-dash-state:v1" },
 };
 
+const dotRunnerAdapter: Adapter<DotRunnerSaveV1> = {
+  adapterVersion: "dot-runner-session-adapter-v1", engineVersion: "dot-runner-physics-v1", gameId: "dot-runner",
+  modes: ["solo"], difficulties: ["endless-v1"],
+  parsePayload: (value) => {
+    if (!isRecord(value) || typeof value.savedAtEpochMs !== "number") return null;
+    return parseDotRunnerSave(JSON.stringify(value), value.savedAtEpochMs);
+  },
+  payloadDifficulty: () => "endless-v1", payloadMode: () => "solo",
+  source: { format: "legacy-local-storage", schema: "oiyo.dot-runner-save", schemaVersion: 1, storageKey: "oiyo:dot-runner-state:v1" },
+};
+
+const mahjongAdapter: Adapter<MahjongSaveV1> = {
+  adapterVersion: "mahjong-session-adapter-v1", engineVersion: "mahjong-closed-hand-v1", gameId: "mahjong",
+  modes: ["ai"], difficulties: ["level-1", "level-2", "level-3"],
+  parsePayload: (value) => {
+    if (!isRecord(value) || typeof value.savedAtEpochMs !== "number") return null;
+    return parseMahjongSave(JSON.stringify(value), value.savedAtEpochMs);
+  },
+  payloadDifficulty: (payload) => `level-${payload.level}`,
+  payloadMode: () => "ai",
+  source: { format: "legacy-local-storage", schema: "oiyo.mahjong-save", schemaVersion: 1, storageKey: "oiyo:mahjong-state:v1" },
+};
+
+const waterSortAdapter: Adapter<WaterSortSaveV1> = {
+  adapterVersion: "water-sort-session-adapter-v1", engineVersion: "water-sort-rules-v1", gameId: "water-sort",
+  modes: ["solo"], difficulties: ["easy", "medium", "hard"],
+  parsePayload: (value) => {
+    if (!isRecord(value) || typeof value.savedAtEpochMs !== "number") return null;
+    return parseWaterSortSave(JSON.stringify(value), value.savedAtEpochMs);
+  },
+  payloadDifficulty: (payload) => payload.state.difficulty, payloadMode: () => "solo",
+  source: { format: "legacy-local-storage", schema: "oiyo.water-sort-save", schemaVersion: 1, storageKey: "oiyo:water-sort-state:v1" },
+};
+
 const adapters: Record<RestorableGameId, Adapter<unknown>> = {
   chess: chessAdapter as Adapter<unknown>,
   hearts: heartsAdapter as Adapter<unknown>,
@@ -463,6 +503,9 @@ const adapters: Record<RestorableGameId, Adapter<unknown>> = {
   kurodoko: kurodokoAdapter as Adapter<unknown>,
   yahtzee: yahtzeeAdapter as Adapter<unknown>,
   "cave-dash": caveDashAdapter as Adapter<unknown>,
+  "dot-runner": dotRunnerAdapter as Adapter<unknown>,
+  mahjong: mahjongAdapter as Adapter<unknown>,
+  "water-sort": waterSortAdapter as Adapter<unknown>,
 };
 
 export function adaptChessSaveToSession(
@@ -503,7 +546,7 @@ export function adaptBrickBreakerSaveToSession(
 }
 
 export function adaptActiveGameSaveToSession(
-  gameId: "solitaire" | "freecell" | "connect-four" | "gomoku" | "sudoku" | "puzzle15" | "checkers" | "reversi" | "game-2048" | "snake-game" | "kurodoko" | "yahtzee" | "cave-dash",
+  gameId: "solitaire" | "freecell" | "connect-four" | "gomoku" | "sudoku" | "puzzle15" | "checkers" | "reversi" | "game-2048" | "snake-game" | "kurodoko" | "yahtzee" | "cave-dash" | "dot-runner" | "mahjong" | "water-sort",
   value: unknown,
   timing: GameSessionTiming,
 ): GameSessionEnvelope | null {

@@ -1,27 +1,37 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import confetti from 'canvas-confetti';
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { frameScale } from '../../lib/games/time-contracts';
+import { getBest, recordBest } from '../../lib/games/records';
+import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
+import { clearDotRunnerSave, loadDotRunnerSave, storeDotRunnerSave } from '../../lib/games/dot-runner-save';
+import {
+    DOT_RUNNER_GROUND,
+    DOT_RUNNER_HEIGHT,
+    DOT_RUNNER_PLAYER_SIZE,
+    DOT_RUNNER_PLAYER_X,
+    DOT_RUNNER_WIDTH,
+    createDotRunner,
+    jumpDotRunner,
+    stepDotRunner,
+    type DotRunnerState,
+} from '../../lib/games/dot-runner';
 
 // ─── Dot Runner — endless runner, ported from ahoxy-legacy ────────────────────
 // Jump over red blocks, grab gold coins. Rewritten from per-frame setState to a
 // ref-driven canvas loop (React state only for HUD/status).
 
-const W = 800, H = 400, GROUND = 50;
-const GRAVITY = 0.5, JUMP_FORCE = -10, GAME_SPEED = 5;
-const OBSTACLE_FREQ = 0.02, ITEM_FREQ = 0.008;
 const BEST_KEY = 'oiyo-dot-runner-best';
-
-interface Entity { x: number; y: number; w: number; h: number; speed: number }
 
 type Status = 'idle' | 'playing' | 'paused' | 'over';
 
 const COPY = {
-    ko: { title: '점프 러너', subtitle: 'Dot Runner', score: '점수', best: '최고 점수', start: '게임 시작', over: '게임 오버!', restart: '다시 시작 (R)', pause: '일시정지 (P)', resume: '계속 (P)', hint: '탭/클릭/스페이스로 점프 · 장애물을 피하고 코인을 모으세요' },
-    en: { title: 'Dot Runner', subtitle: 'Dot Runner', score: 'Score', best: 'Best', start: 'Start', over: 'Game Over!', restart: 'Restart (R)', pause: 'Pause (P)', resume: 'Resume (P)', hint: 'Tap/click/space to jump · dodge blocks, grab coins' },
-    ja: { title: 'ドットランナー', subtitle: 'Dot Runner', score: 'スコア', best: 'ベスト', start: 'スタート', over: 'ゲームオーバー！', restart: 'リスタート (R)', pause: '一時停止 (P)', resume: '再開 (P)', hint: 'タップ/クリック/スペースでジャンプ · 障害物を避けてコインを集めよう' },
-    zh: { title: '点点酷跑', subtitle: 'Dot Runner', score: '分数', best: '最高分', start: '开始游戏', over: '游戏结束！', restart: '重新开始 (R)', pause: '暂停 (P)', resume: '继续 (P)', hint: '点按/空格跳跃 · 躲避障碍并收集金币' },
-    fr: { title: 'Dot Runner', subtitle: 'Dot Runner', score: 'Score', best: 'Record', start: 'Démarrer', over: 'Partie terminée !', restart: 'Recommencer (R)', pause: 'Pause (P)', resume: 'Reprendre (P)', hint: 'Touchez/cliquez/espace pour sauter · évitez les blocs, prenez les pièces' },
-    es: { title: 'Dot Runner', subtitle: 'Dot Runner', score: 'Puntos', best: 'Récord', start: 'Empezar', over: '¡Fin del juego!', restart: 'Reiniciar (R)', pause: 'Pausa (P)', resume: 'Seguir (P)', hint: 'Toca/clic/espacio para saltar · esquiva bloques, coge monedas' },
+    ko: { title: '닷 러너', subtitle: '리듬을 타고 장애물을 넘어 코인을 수집하세요', score: '점수', best: '최고 점수', coins: '코인', time: '생존 시간', next: '다음 목표', seconds: '초', start: '게임 시작', over: '게임 오버!', newBest: '🎉 신기록!', restart: '다시 시작 (R)', pause: '일시정지 (P)', paused: '일시정지', resume: '계속 (P)', soundOn: '소리 켜기', soundOff: '소리 끄기', area: '닷 러너 게임 영역', playing: '달리는 중', hint: '탭/클릭/스페이스로 점프 · 장애물을 피하고 코인을 모으세요' },
+    en: { title: 'Dot Runner', subtitle: 'Find the rhythm, clear obstacles, collect coins', score: 'Score', best: 'Best', coins: 'Coins', time: 'Survival time', next: 'Next target', seconds: 'sec', start: 'Start', over: 'Game Over!', newBest: '🎉 New best!', restart: 'Restart (R)', pause: 'Pause (P)', paused: 'Paused', resume: 'Resume (P)', soundOn: 'Turn sound on', soundOff: 'Turn sound off', area: 'Dot Runner game area', playing: 'Running', hint: 'Tap/click/space to jump · dodge blocks, grab coins' },
+    ja: { title: 'ドットランナー', subtitle: 'リズムに乗って障害物を越え、コインを集めよう', score: 'スコア', best: 'ベスト', coins: 'コイン', time: '生存時間', next: '次の目標', seconds: '秒', start: 'スタート', over: 'ゲームオーバー！', newBest: '🎉 新記録！', restart: 'リスタート (R)', pause: '一時停止 (P)', paused: '一時停止', resume: '再開 (P)', soundOn: '音をオン', soundOff: '音をオフ', area: 'ドットランナーのゲーム領域', playing: '走行中', hint: 'タップ/クリック/スペースでジャンプ · 障害物を避けてコインを集めよう' },
+    zh: { title: '点点酷跑', subtitle: '把握节奏，越过障碍，收集金币', score: '分数', best: '最高分', coins: '金币', time: '生存时间', next: '下一目标', seconds: '秒', start: '开始游戏', over: '游戏结束！', newBest: '🎉 新纪录！', restart: '重新开始 (R)', pause: '暂停 (P)', paused: '已暂停', resume: '继续 (P)', soundOn: '开启声音', soundOff: '关闭声音', area: '点点酷跑游戏区域', playing: '奔跑中', hint: '点按/空格跳跃 · 躲避障碍并收集金币' },
+    fr: { title: 'Dot Runner', subtitle: 'Trouvez le rythme, évitez les obstacles, prenez les pièces', score: 'Score', best: 'Record', coins: 'Pièces', time: 'Temps de survie', next: 'Prochain objectif', seconds: 's', start: 'Démarrer', over: 'Partie terminée !', newBest: '🎉 Nouveau record !', restart: 'Recommencer (R)', pause: 'Pause (P)', paused: 'En pause', resume: 'Reprendre (P)', soundOn: 'Activer le son', soundOff: 'Couper le son', area: 'Zone de jeu Dot Runner', playing: 'Course en cours', hint: 'Touchez/cliquez/espace pour sauter · évitez les blocs, prenez les pièces' },
+    es: { title: 'Dot Runner', subtitle: 'Sigue el ritmo, supera obstáculos y recoge monedas', score: 'Puntos', best: 'Récord', coins: 'Monedas', time: 'Tiempo vivo', next: 'Próximo objetivo', seconds: 's', start: 'Empezar', over: '¡Fin del juego!', newBest: '🎉 ¡Nuevo récord!', restart: 'Reiniciar (R)', pause: 'Pausa (P)', paused: 'En pausa', resume: 'Seguir (P)', soundOn: 'Activar sonido', soundOff: 'Silenciar', area: 'Área de juego Dot Runner', playing: 'Corriendo', hint: 'Toca/clic/espacio para saltar · esquiva bloques, coge monedas' },
 } as const;
 
 const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
@@ -31,44 +41,90 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [status, setStatus] = useState<Status>('idle');
     const [score, setScore] = useState(0);
     const [best, setBest] = useState(0);
+    const [coins, setCoins] = useState(0);
+    const [muted, setMuted] = useState(false);
+    const [isNewBest, setIsNewBest] = useState(false);
+    const [finalFrames, setFinalFrames] = useState(0);
+    const prefersReducedMotion = usePrefersReducedMotion();
+    const mutedRef = useRef(false);
+    mutedRef.current = muted;
+    const audioContext = useRef<AudioContext | null>(null);
 
     const statusRef = useRef<Status>('idle');
     statusRef.current = status;
     const bestRef = useRef(0);
     bestRef.current = best;
 
-    const game = useRef({
-        playerY: H - GROUND - 20,
-        velocityY: 0,
-        jumping: false,
-        obstacles: [] as Entity[],
-        items: [] as Entity[],
-        score: 0,
-        frame: 0,
-    });
+    const game = useRef<DotRunnerState | null>(null);
+
+    const playTone = useCallback((kind: 'jump' | 'coin' | 'crash') => {
+        if (mutedRef.current || typeof window === 'undefined') return;
+        const AudioContextClass = window.AudioContext ?? (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+        if (!AudioContextClass) return;
+        const context = audioContext.current ?? new AudioContextClass();
+        audioContext.current = context;
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        oscillator.type = kind === 'crash' ? 'sawtooth' : 'sine';
+        oscillator.frequency.setValueAtTime(kind === 'jump' ? 360 : kind === 'coin' ? 760 : 120, context.currentTime);
+        if (kind === 'coin') oscillator.frequency.exponentialRampToValueAtTime(1080, context.currentTime + 0.1);
+        gain.gain.setValueAtTime(kind === 'crash' ? 0.07 : 0.04, context.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + (kind === 'crash' ? 0.25 : 0.12));
+        oscillator.connect(gain); gain.connect(context.destination);
+        oscillator.start(); oscillator.stop(context.currentTime + (kind === 'crash' ? 0.25 : 0.12));
+    }, []);
 
     useEffect(() => {
+        const unified = getBest('dot-runner')?.value ?? 0;
+        let legacy = 0;
         try {
             const stored = Number(localStorage.getItem(BEST_KEY));
-            if (Number.isFinite(stored) && stored > 0) setBest(stored);
+            if (Number.isFinite(stored) && stored > 0) legacy = stored;
         } catch { /* ignore */ }
+        const initialBest = Math.max(unified, legacy);
+        if (legacy > unified) recordBest('dot-runner', legacy, 'score');
+        setBest(initialBest);
+        const saved = loadDotRunnerSave();
+        if (saved) {
+            game.current = saved.state;
+            setScore(saved.state.score);
+            setCoins(saved.state.coins);
+            statusRef.current = 'paused';
+            setStatus('paused');
+        }
     }, []);
 
     const reset = useCallback(() => {
-        game.current = { playerY: H - GROUND - 20, velocityY: 0, jumping: false, obstacles: [], items: [], score: 0, frame: 0 };
+        clearDotRunnerSave();
+        const seed = typeof crypto !== 'undefined' && crypto.getRandomValues ? crypto.getRandomValues(new Uint32Array(1))[0] : Date.now();
+        game.current = createDotRunner(seed);
         setScore(0);
+        setCoins(0);
+        setIsNewBest(false);
+        setFinalFrames(0);
+        statusRef.current = 'playing';
         setStatus('playing');
     }, []);
 
     const jump = useCallback(() => {
         if (statusRef.current === 'idle' || statusRef.current === 'over') { reset(); return; }
         if (statusRef.current !== 'playing') return;
-        const g = game.current;
-        if (!g.jumping) {
-            g.velocityY = JUMP_FORCE;
-            g.jumping = true;
+        const current = game.current;
+        if (current) {
+            const next = jumpDotRunner(current);
+            game.current = next;
+            if (next !== current) playTone('jump');
         }
-    }, [reset]);
+    }, [playTone, reset]);
+
+    const togglePause = useCallback(() => {
+        const current = statusRef.current;
+        if (current !== 'playing' && current !== 'paused') return;
+        if (current === 'playing' && game.current) storeDotRunnerSave(game.current);
+        const next = current === 'playing' ? 'paused' : 'playing';
+        statusRef.current = next;
+        setStatus(next);
+    }, []);
 
     // main loop
     useEffect(() => {
@@ -79,69 +135,49 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
         let raf: number;
         let lastFrame: number | null = null;
-        const px = 50, pw = 20, ph = 20;
-
         const loop = (now: number) => {
-            const g = game.current;
             const scale = frameScale(lastFrame, now);
             lastFrame = now;
 
-            if (statusRef.current === 'playing') {
-                g.frame += scale;
-
-                // player physics
-                g.velocityY += GRAVITY * scale;
-                g.playerY += g.velocityY * scale;
-                if (g.playerY + ph > H - GROUND) {
-                    g.playerY = H - GROUND - ph;
-                    g.velocityY = 0;
-                    g.jumping = false;
-                }
-
-                // spawn
-                if (Math.random() < OBSTACLE_FREQ * scale) {
-                    const h = 20 + Math.random() * 40;
-                    g.obstacles.push({ x: W, y: H - GROUND - h, w: 20, h, speed: GAME_SPEED + Math.random() * 2 });
-                }
-                if (Math.random() < ITEM_FREQ * scale) {
-                    g.items.push({ x: W, y: 100 + Math.random() * 150, w: 15, h: 15, speed: GAME_SPEED });
-                }
-
-                // move + cull
-                g.obstacles = g.obstacles.filter((o) => { o.x -= o.speed * scale; return o.x + o.w > 0; });
-                g.items = g.items.filter((o) => { o.x -= o.speed * scale; return o.x + o.w > 0; });
-
-                // collisions
-                const hit = (e: Entity) => px < e.x + e.w && px + pw > e.x && g.playerY < e.y + e.h && g.playerY + ph > e.y;
-                g.items = g.items.filter((it) => { if (hit(it)) { g.score += 10; return false; } return true; });
-                if (g.obstacles.some(hit)) {
+            if (statusRef.current === 'playing' && game.current) {
+                const next = stepDotRunner(game.current, scale);
+                const previousCoins = game.current.coins;
+                game.current = next;
+                setScore((previous) => previous === next.score ? previous : next.score);
+                if (next.coins !== previousCoins) { setCoins(next.coins); playTone('coin'); }
+                if (next.status === 'over') {
+                    clearDotRunnerSave();
+                    statusRef.current = 'over';
                     setStatus('over');
-                    setScore(g.score);
-                    if (g.score > bestRef.current) {
-                        setBest(g.score);
-                        try { localStorage.setItem(BEST_KEY, String(g.score)); } catch { /* ignore */ }
+                    const beat = next.score > bestRef.current;
+                    setFinalFrames(next.elapsedFrames);
+                    setIsNewBest(beat && next.score > 0);
+                    playTone('crash');
+                    if (beat && next.score > 0 && !prefersReducedMotion) confetti({ particleCount: 80, spread: 68, origin: { y: 0.62 } });
+                    if (beat) {
+                        const savedBest = recordBest('dot-runner', next.score, 'score');
+                        setBest(savedBest.value);
+                        try { localStorage.setItem(BEST_KEY, String(next.score)); } catch { /* ignore */ }
                     }
                 }
-
-                if (g.frame % 5 === 0) g.score += 1;
-                if (g.frame % 10 === 0) setScore(g.score);
             }
 
             // draw
-            ctx.clearRect(0, 0, W, H);
+            ctx.clearRect(0, 0, DOT_RUNNER_WIDTH, DOT_RUNNER_HEIGHT);
             ctx.fillStyle = '#f8fafc';
-            ctx.fillRect(0, 0, W, H);
+            ctx.fillRect(0, 0, DOT_RUNNER_WIDTH, DOT_RUNNER_HEIGHT);
             ctx.fillStyle = 'rgba(100,116,139,0.25)';
-            ctx.fillRect(0, H - GROUND, W, GROUND);
+            ctx.fillRect(0, DOT_RUNNER_HEIGHT - DOT_RUNNER_GROUND, DOT_RUNNER_WIDTH, DOT_RUNNER_GROUND);
 
             ctx.fillStyle = '#3b82f6';
-            ctx.fillRect(px, game.current.playerY, pw, ph);
+            const current = game.current;
+            ctx.fillRect(DOT_RUNNER_PLAYER_X, current?.playerY ?? DOT_RUNNER_HEIGHT - DOT_RUNNER_GROUND - DOT_RUNNER_PLAYER_SIZE, DOT_RUNNER_PLAYER_SIZE, DOT_RUNNER_PLAYER_SIZE);
 
             ctx.fillStyle = '#ef4444';
-            for (const o of game.current.obstacles) ctx.fillRect(o.x, o.y, o.w, o.h);
+            for (const o of current?.obstacles ?? []) ctx.fillRect(o.x, o.y, o.w, o.h);
 
             ctx.fillStyle = '#f1c40f';
-            for (const it of game.current.items) {
+            for (const it of current?.items ?? []) {
                 ctx.beginPath();
                 ctx.arc(it.x + it.w / 2, it.y + it.h / 2, it.w / 2, 0, Math.PI * 2);
                 ctx.fill();
@@ -151,57 +187,90 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         };
         raf = requestAnimationFrame(loop);
         return () => cancelAnimationFrame(raf);
+    }, [playTone, prefersReducedMotion]);
+
+    useEffect(() => () => { void audioContext.current?.close(); }, []);
+
+    useEffect(() => {
+        if (status !== 'playing' && status !== 'paused') return;
+        const timer = window.setInterval(() => { if (game.current?.status === 'playing') storeDotRunnerSave(game.current); }, 1000);
+        return () => window.clearInterval(timer);
+    }, [status]);
+
+    useEffect(() => {
+        const onVisibility = () => {
+            if (document.hidden && statusRef.current === 'playing' && game.current?.status === 'playing') {
+                storeDotRunnerSave(game.current);
+                statusRef.current = 'paused';
+                setStatus('paused');
+            }
+        };
+        document.addEventListener('visibilitychange', onVisibility);
+        return () => document.removeEventListener('visibilitychange', onVisibility);
     }, []);
+
+    useEffect(() => () => { if (game.current?.status === 'playing' && statusRef.current !== 'over') storeDotRunnerSave(game.current); }, []);
 
     // keyboard
     useEffect(() => {
         const onKey = (e: KeyboardEvent) => {
             if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); jump(); }
             else if (e.code === 'KeyP' && (statusRef.current === 'playing' || statusRef.current === 'paused')) {
-                setStatus((s) => (s === 'playing' ? 'paused' : 'playing'));
+                togglePause();
             } else if (e.code === 'KeyR') reset();
         };
         window.addEventListener('keydown', onKey);
         return () => window.removeEventListener('keydown', onKey);
-    }, [jump, reset]);
+    }, [jump, reset, togglePause]);
 
     return (
         <GameContainer title={t.title} subtitle={t.subtitle} onReset={reset}>
             <div className="flex justify-between items-center mb-3 text-xs font-bold text-muted-foreground">
                 <span>{t.score}: <span className="text-primary text-base font-black">{score}</span></span>
                 <div className="flex items-center gap-3">
+                    <span>{t.coins}: <span className="text-amber-500 font-black">{coins}</span></span>
                     <span>{t.best}: <span className="text-chart-2 font-black">{best}</span></span>
                     {(status === 'playing' || status === 'paused') && (
                         <button
-                            onClick={() => setStatus(status === 'playing' ? 'paused' : 'playing')}
-                            className="px-3 py-1 rounded-lg border border-border bg-muted hover:bg-accent transition-colors"
+                            onClick={togglePause}
+                            className="min-h-11 px-3 rounded-lg border border-border bg-muted hover:bg-accent transition-colors"
                         >
                             {status === 'playing' ? t.pause : t.resume}
                         </button>
                     )}
+                    <button type="button" onClick={() => setMuted((value) => !value)} aria-label={muted ? t.soundOn : t.soundOff} aria-pressed={!muted} className="grid min-h-11 min-w-11 place-items-center rounded-lg border border-border hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                        {muted ? '🔇' : '🔊'}
+                    </button>
                 </div>
             </div>
 
             <div className="relative w-full rounded-2xl overflow-hidden border border-border touch-none select-none">
                 <canvas
                     ref={canvasRef}
-                    width={W}
-                    height={H}
+                    width={DOT_RUNNER_WIDTH}
+                    height={DOT_RUNNER_HEIGHT}
                     className="w-full h-auto block cursor-pointer"
                     onPointerDown={(e) => { e.preventDefault(); jump(); }}
-                    aria-label={t.title}
+                    role="img"
+                    aria-label={t.area}
                 />
 
                 {status !== 'playing' && (
                     <div className="absolute inset-0 bg-background/70 backdrop-blur-sm flex flex-col items-center justify-center gap-3" role="status" aria-live="polite">
                         {status === 'over' && (
                             <>
+                                {isNewBest && <p className="text-sm font-black text-amber-500">{t.newBest}</p>}
                                 <p className="text-2xl font-black text-destructive">{t.over}</p>
                                 <p className="text-lg font-bold text-foreground">{t.score}: {score}</p>
+                                <div className="grid w-full max-w-xs grid-cols-3 gap-2 text-xs text-foreground">
+                                    <div className="rounded-xl bg-muted/80 p-2"><span className="block text-muted-foreground">{t.coins}</span><b>{coins}</b></div>
+                                    <div className="rounded-xl bg-muted/80 p-2"><span className="block text-muted-foreground">{t.time}</span><b>{Math.max(1, Math.round(finalFrames / 60))} {t.seconds}</b></div>
+                                    <div className="rounded-xl bg-muted/80 p-2"><span className="block text-muted-foreground">{t.next}</span><b>{Math.max(best, score) + 1}</b></div>
+                                </div>
                             </>
                         )}
                         {status === 'paused' ? (
-                            <p className="text-2xl font-black text-foreground">⏸</p>
+                            <><p className="text-2xl font-black text-foreground">⏸</p><p className="font-bold text-foreground">{t.paused}</p><button type="button" onClick={togglePause} className="min-h-11 rounded-full bg-primary px-8 py-2 font-bold text-primary-foreground">{t.resume}</button></>
                         ) : (
                             <button
                                 onClick={reset}
@@ -215,6 +284,7 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             </div>
 
             <p className="mt-4 text-center text-[10px] text-muted-foreground font-medium">{t.hint}</p>
+            <p className="sr-only" role="status" aria-live="polite">{status === 'playing' ? `${t.playing}. ${t.score} ${score}. ${t.coins} ${coins}` : status === 'paused' ? t.paused : status === 'over' ? `${t.over} ${t.score} ${score}` : ''}</p>
         </GameContainer>
     );
 };

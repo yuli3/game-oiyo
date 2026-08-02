@@ -366,6 +366,51 @@
    "difficulties": ["endless-v1"],
    "deterministicResume": true,
    "nonSessionPersistence": ["best-record"]
+  },
+  {
+   "gameId": "dot-runner",
+   "componentPath": "src/components/games/DotRunner.tsx",
+   "adapterPath": "src/lib/games/dot-runner-save.ts",
+   "supportsRestore": true,
+   "sessionStorageKey": "oiyo:dot-runner-state:v1",
+   "sourceSchema": "oiyo.dot-runner-save",
+   "sourceSchemaVersion": 1,
+   "adapterVersion": "dot-runner-session-adapter-v1",
+   "engineVersion": "dot-runner-physics-v1",
+   "modes": ["solo"],
+   "difficulties": ["endless-v1"],
+   "deterministicResume": true,
+   "nonSessionPersistence": ["best-record", "legacy-best-migration"]
+  },
+  {
+   "gameId": "mahjong",
+   "componentPath": "src/components/games/Mahjong.tsx",
+   "adapterPath": "src/lib/games/mahjong-save.ts",
+   "supportsRestore": true,
+   "sessionStorageKey": "oiyo:mahjong-state:v1",
+   "sourceSchema": "oiyo.mahjong-save",
+   "sourceSchemaVersion": 1,
+   "adapterVersion": "mahjong-session-adapter-v1",
+   "engineVersion": "mahjong-closed-hand-v1",
+   "modes": ["ai"],
+   "difficulties": ["level-1", "level-2", "level-3"],
+   "deterministicResume": true,
+   "nonSessionPersistence": ["game-record"]
+  },
+  {
+   "gameId": "water-sort",
+   "componentPath": "src/components/games/WaterSort.tsx",
+   "adapterPath": "src/lib/games/water-sort-save.ts",
+   "supportsRestore": true,
+   "sessionStorageKey": "oiyo:water-sort-state:v1",
+   "sourceSchema": "oiyo.water-sort-save",
+   "sourceSchemaVersion": 1,
+   "adapterVersion": "water-sort-session-adapter-v1",
+   "engineVersion": "water-sort-rules-v1",
+   "modes": ["solo"],
+   "difficulties": ["easy", "medium", "hard"],
+   "deterministicResume": true,
+   "nonSessionPersistence": []
   }
  ]
 }

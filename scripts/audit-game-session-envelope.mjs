@@ -5,7 +5,7 @@ const root = resolve(new URL("..", import.meta.url).pathname);
 const fixturePath = resolve(root, "config/game-session-envelope-v1.fixtures.json");
 const fixture = JSON.parse(await readFile(fixturePath, "utf8"));
 const errors = [];
-const expectedGames = ["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game", "kurodoko", "yahtzee", "cave-dash"];
+const expectedGames = ["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game", "kurodoko", "yahtzee", "cave-dash", "dot-runner", "mahjong", "water-sort"];
 const restorableSymbols = {
   chess: ["loadChessSave", "storeChessSave"],
   hearts: ["loadHeartsSavedGame", "saveHeartsGame"],
@@ -24,6 +24,9 @@ const restorableSymbols = {
   kurodoko: ["loadKurodokoSaveV1", "storeKurodokoSaveV1"],
   yahtzee: ["loadYahtzeeSave", "storeYahtzeeSave"],
   "cave-dash": ["loadCaveDashSave", "storeCaveDashSave"],
+  "dot-runner": ["loadDotRunnerSave", "storeDotRunnerSave"],
+  mahjong: ["loadMahjongSave", "storeMahjongSave"],
+  "water-sort": ["loadWaterSortSave", "storeWaterSortSave"],
 };
 const restorableCapabilities = {
   chess: { modes: ["local", "ai"], difficulties: ["level-1", "level-2", "level-3"] },
@@ -43,6 +46,9 @@ const restorableCapabilities = {
   kurodoko: { modes: ["solo"], difficulties: ["daily", "easy", "medium", "hard"] },
   yahtzee: { modes: ["solo"], difficulties: ["classic"] },
   "cave-dash": { modes: ["solo"], difficulties: ["endless-v1"] },
+  "dot-runner": { modes: ["solo"], difficulties: ["endless-v1"] },
+  mahjong: { modes: ["ai"], difficulties: ["level-1", "level-2", "level-3"] },
+  "water-sort": { modes: ["solo"], difficulties: ["easy", "medium", "hard"] },
 };
 
 if (fixture.schema !== "oiyo.game-session-capabilities" || fixture.schemaVersion !== 1) {
@@ -106,7 +112,7 @@ for (const game of fixture.games ?? []) {
 
 for (const gameId of expectedGames) if (!ids.has(gameId)) errors.push(`missing game capability: ${gameId}`);
 const restorable = (fixture.games ?? []).filter((game) => game.supportsRestore).map((game) => game.gameId);
-if (JSON.stringify(restorable) !== JSON.stringify(["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game", "kurodoko", "yahtzee", "cave-dash"])) {
+if (JSON.stringify(restorable) !== JSON.stringify(["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game", "kurodoko", "yahtzee", "cave-dash", "dot-runner", "mahjong", "water-sort"])) {
   errors.push(`restore inventory drift: ${restorable.join(", ")}`);
 }
 
