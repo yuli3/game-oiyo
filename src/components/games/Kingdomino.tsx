@@ -9,6 +9,7 @@ import {
   isLegal, scoreBoard, GRID, type Cell, type Tile, type Placement,
 } from "../../lib/games/kingdomino";
 import { getRecord, recordResult, type GameRecord } from "../../lib/games/records";
+import { clearKingdominoSave, loadKingdominoSave, storeKingdominoSave } from "../../lib/games/kingdomino-save";
 
 const AI_DELAY = 620;
 const DIRS = [[0, 1], [1, 0], [0, -1], [-1, 0]]; // right, down, left, up
@@ -24,13 +25,14 @@ const i18n: Record<Locale, {
   thinking: string; reset: string; score: string; youWin: string; aiWins: string; draw: string;
   record: string; level1: string; level2: string; level3: string; start: string; crowns: string; round: string;
   terrainScore: string; bonus: string; harmony: string; middleKingdom: string; tieRegion: string;
+  sound: string; pause: string; resume: string; paused: string; restored: string;
 }> = {
-  ko: { title: "킹도미노", you: "나의 왕국", ai: "AI 왕국", draft: "고를 타일", toPlace: "놓을 타일", toClaim: "타일 확보", claimHint: "가져올 타일을 고르세요 (낮은 번호일수록 다음 턴 순서가 빨라집니다).", placeHint: "왕국에 놓을 칸을 누르세요. 회전으로 방향을 바꿀 수 있어요.", rotate: "회전", discard: "버리기", noSpot: "놓을 자리가 없어 이 타일은 버려집니다.", thinking: "AI가 생각 중…", reset: "새 게임", score: "점수", youWin: "당신의 승리!", aiWins: "AI 승리", draw: "무승부", record: "전적", level1: "견습생", level2: "숙련가", level3: "명인", start: "게임 시작", crowns: "왕관", round: "라운드", terrainScore: "영역 점수", bonus: "보너스", harmony: "하모니 +5", middleKingdom: "중앙 왕국 +10", tieRegion: "동점 후 가장 큰 영역으로 결정" },
-  en: { title: "Kingdomino", you: "Your Kingdom", ai: "AI Kingdom", draft: "Draft", toPlace: "Place tile", toClaim: "Claim a tile", claimHint: "Pick a tile to claim (a lower number moves you earlier next round).", placeHint: "Tap a spot in your kingdom to place it. Rotate to change orientation.", rotate: "Rotate", discard: "Discard", noSpot: "No legal spot — this tile is discarded.", thinking: "AI is thinking…", reset: "New Game", score: "Score", youWin: "You win!", aiWins: "AI wins", draw: "Draw", record: "Record", level1: "Apprentice", level2: "Adept", level3: "Master", start: "Start Game", crowns: "crowns", round: "Round", terrainScore: "Region score", bonus: "Bonus", harmony: "Harmony +5", middleKingdom: "Middle Kingdom +10", tieRegion: "Tie decided by largest region" },
-  ja: { title: "キングドミノ", you: "あなたの王国", ai: "AIの王国", draft: "選択タイル", toPlace: "配置するタイル", toClaim: "タイル獲得", claimHint: "獲得するタイルを選びます（番号が小さいほど次の手番が早くなります）。", placeHint: "王国の置くマスをタップ。回転で向きを変えられます。", rotate: "回転", discard: "捨てる", noSpot: "置ける場所がなく、このタイルは捨てられます。", thinking: "AIが思考中…", reset: "新しいゲーム", score: "スコア", youWin: "あなたの勝ち！", aiWins: "AIの勝ち", draw: "引き分け", record: "戦績", level1: "見習い", level2: "熟練者", level3: "名人", start: "ゲーム開始", crowns: "王冠", round: "ラウンド", terrainScore: "領域点", bonus: "ボーナス", harmony: "ハーモニー +5", middleKingdom: "中央王国 +10", tieRegion: "同点のため最大領域で決定" },
-  zh: { title: "王国骨牌", you: "你的王国", ai: "AI 王国", draft: "可选骨牌", toPlace: "放置骨牌", toClaim: "占取骨牌", claimHint: "选择要占取的骨牌（编号越小，下轮出手越早）。", placeHint: "点击王国中的格子放置。可旋转改变方向。", rotate: "旋转", discard: "弃置", noSpot: "无合法位置，此骨牌被弃置。", thinking: "AI 思考中…", reset: "新对局", score: "分数", youWin: "你赢了！", aiWins: "AI 获胜", draw: "平局", record: "战绩", level1: "学徒", level2: "行家", level3: "大师", start: "开始游戏", crowns: "王冠", round: "回合", terrainScore: "区域分", bonus: "奖励分", harmony: "和谐王国 +5", middleKingdom: "中央王国 +10", tieRegion: "同分后按最大区域决胜" },
-  fr: { title: "Kingdomino", you: "Votre royaume", ai: "Royaume IA", draft: "Tuiles", toPlace: "Placer la tuile", toClaim: "Choisir une tuile", claimHint: "Choisissez une tuile (un numéro plus bas vous fait jouer plus tôt au tour suivant).", placeHint: "Touchez une case de votre royaume pour la placer. Pivotez pour changer l'orientation.", rotate: "Pivoter", discard: "Défausser", noSpot: "Aucune case légale — cette tuile est défaussée.", thinking: "L'IA réfléchit…", reset: "Nouvelle partie", score: "Score", youWin: "Vous gagnez !", aiWins: "L'IA gagne", draw: "Match nul", record: "Bilan", level1: "Apprenti", level2: "Adepte", level3: "Maître", start: "Commencer", crowns: "couronnes", round: "Tour", terrainScore: "Score des régions", bonus: "Bonus", harmony: "Harmonie +5", middleKingdom: "Royaume du Milieu +10", tieRegion: "Égalité départagée par la plus grande région" },
-  es: { title: "Kingdomino", you: "Tu reino", ai: "Reino IA", draft: "Fichas", toPlace: "Colocar ficha", toClaim: "Reclamar ficha", claimHint: "Elige una ficha (un número más bajo te hace jugar antes la próxima ronda).", placeHint: "Toca una casilla de tu reino para colocarla. Rota para cambiar la orientación.", rotate: "Rotar", discard: "Descartar", noSpot: "Sin lugar legal: esta ficha se descarta.", thinking: "La IA está pensando…", reset: "Nueva partida", score: "Puntos", youWin: "¡Has ganado!", aiWins: "Gana la IA", draw: "Empate", record: "Historial", level1: "Aprendiz", level2: "Experto", level3: "Maestro", start: "Empezar", crowns: "coronas", round: "Ronda", terrainScore: "Puntos de región", bonus: "Bonificación", harmony: "Armonía +5", middleKingdom: "Reino central +10", tieRegion: "Empate decidido por la región mayor" },
+  ko: { title: "킹도미노", you: "나의 왕국", ai: "AI 왕국", draft: "고를 타일", toPlace: "놓을 타일", toClaim: "타일 확보", claimHint: "가져올 타일을 고르세요 (낮은 번호일수록 다음 턴 순서가 빨라집니다).", placeHint: "왕국에 놓을 칸을 누르세요. 회전으로 방향을 바꿀 수 있어요.", rotate: "회전", discard: "버리기", noSpot: "놓을 자리가 없어 이 타일은 버려집니다.", thinking: "AI가 생각 중…", reset: "새 게임", score: "점수", youWin: "당신의 승리!", aiWins: "AI 승리", draw: "무승부", record: "전적", level1: "견습생", level2: "숙련가", level3: "명인", start: "게임 시작", crowns: "왕관", round: "라운드", terrainScore: "영역 점수", bonus: "보너스", harmony: "하모니 +5", middleKingdom: "중앙 왕국 +10", tieRegion: "동점 후 가장 큰 영역으로 결정", sound: "소리", pause: "일시정지", resume: "계속", paused: "게임 일시정지", restored: "저장된 게임 복원" },
+  en: { title: "Kingdomino", you: "Your Kingdom", ai: "AI Kingdom", draft: "Draft", toPlace: "Place tile", toClaim: "Claim a tile", claimHint: "Pick a tile to claim (a lower number moves you earlier next round).", placeHint: "Tap a spot in your kingdom to place it. Rotate to change orientation.", rotate: "Rotate", discard: "Discard", noSpot: "No legal spot — this tile is discarded.", thinking: "AI is thinking…", reset: "New Game", score: "Score", youWin: "You win!", aiWins: "AI wins", draw: "Draw", record: "Record", level1: "Apprentice", level2: "Adept", level3: "Master", start: "Start Game", crowns: "crowns", round: "Round", terrainScore: "Region score", bonus: "Bonus", harmony: "Harmony +5", middleKingdom: "Middle Kingdom +10", tieRegion: "Tie decided by largest region", sound: "Sound", pause: "Pause", resume: "Resume", paused: "Game paused", restored: "Saved game restored" },
+  ja: { title: "キングドミノ", you: "あなたの王国", ai: "AIの王国", draft: "選択タイル", toPlace: "配置するタイル", toClaim: "タイル獲得", claimHint: "獲得するタイルを選びます（番号が小さいほど次の手番が早くなります）。", placeHint: "王国の置くマスをタップ。回転で向きを変えられます。", rotate: "回転", discard: "捨てる", noSpot: "置ける場所がなく、このタイルは捨てられます。", thinking: "AIが思考中…", reset: "新しいゲーム", score: "スコア", youWin: "あなたの勝ち！", aiWins: "AIの勝ち", draw: "引き分け", record: "戦績", level1: "見習い", level2: "熟練者", level3: "名人", start: "ゲーム開始", crowns: "王冠", round: "ラウンド", terrainScore: "領域点", bonus: "ボーナス", harmony: "ハーモニー +5", middleKingdom: "中央王国 +10", tieRegion: "同点のため最大領域で決定", sound: "音", pause: "一時停止", resume: "再開", paused: "ゲームを一時停止", restored: "保存したゲームを復元" },
+  zh: { title: "王国骨牌", you: "你的王国", ai: "AI 王国", draft: "可选骨牌", toPlace: "放置骨牌", toClaim: "占取骨牌", claimHint: "选择要占取的骨牌（编号越小，下轮出手越早）。", placeHint: "点击王国中的格子放置。可旋转改变方向。", rotate: "旋转", discard: "弃置", noSpot: "无合法位置，此骨牌被弃置。", thinking: "AI 思考中…", reset: "新对局", score: "分数", youWin: "你赢了！", aiWins: "AI 获胜", draw: "平局", record: "战绩", level1: "学徒", level2: "行家", level3: "大师", start: "开始游戏", crowns: "王冠", round: "回合", terrainScore: "区域分", bonus: "奖励分", harmony: "和谐王国 +5", middleKingdom: "中央王国 +10", tieRegion: "同分后按最大区域决胜", sound: "声音", pause: "暂停", resume: "继续", paused: "游戏已暂停", restored: "已恢复保存的游戏" },
+  fr: { title: "Kingdomino", you: "Votre royaume", ai: "Royaume IA", draft: "Tuiles", toPlace: "Placer la tuile", toClaim: "Choisir une tuile", claimHint: "Choisissez une tuile (un numéro plus bas vous fait jouer plus tôt au tour suivant).", placeHint: "Touchez une case de votre royaume pour la placer. Pivotez pour changer l'orientation.", rotate: "Pivoter", discard: "Défausser", noSpot: "Aucune case légale — cette tuile est défaussée.", thinking: "L'IA réfléchit…", reset: "Nouvelle partie", score: "Score", youWin: "Vous gagnez !", aiWins: "L'IA gagne", draw: "Match nul", record: "Bilan", level1: "Apprenti", level2: "Adepte", level3: "Maître", start: "Commencer", crowns: "couronnes", round: "Tour", terrainScore: "Score des régions", bonus: "Bonus", harmony: "Harmonie +5", middleKingdom: "Royaume du Milieu +10", tieRegion: "Égalité départagée par la plus grande région", sound: "Son", pause: "Pause", resume: "Reprendre", paused: "Partie en pause", restored: "Partie restaurée" },
+  es: { title: "Kingdomino", you: "Tu reino", ai: "Reino IA", draft: "Fichas", toPlace: "Colocar ficha", toClaim: "Reclamar ficha", claimHint: "Elige una ficha (un número más bajo te hace jugar antes la próxima ronda).", placeHint: "Toca una casilla de tu reino para colocarla. Rota para cambiar la orientación.", rotate: "Rotar", discard: "Descartar", noSpot: "Sin lugar legal: esta ficha se descarta.", thinking: "La IA está pensando…", reset: "Nueva partida", score: "Puntos", youWin: "¡Has ganado!", aiWins: "Gana la IA", draw: "Empate", record: "Historial", level1: "Aprendiz", level2: "Experto", level3: "Maestro", start: "Empezar", crowns: "coronas", round: "Ronda", terrainScore: "Puntos de región", bonus: "Bonificación", harmony: "Armonía +5", middleKingdom: "Reino central +10", tieRegion: "Empate decidido por la región mayor", sound: "Sonido", pause: "Pausa", resume: "Continuar", paused: "Partida en pausa", restored: "Partida restaurada" },
 };
 
 const cellNames: Record<Locale, Record<string, string>> = {
@@ -133,28 +135,67 @@ function TileChip({ tile, owner, dim, onClick, youLabel, aiLabel, locale }: {
 
 const Kingdomino: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
   const t = i18n[locale] ?? i18n.en;
-  const [level, setLevel] = useState<AiLevel>(2);
-  const [started, setStarted] = useState(false);
-  const gs = useRef<GameState | null>(null);
+  const restored = useRef(loadKingdominoSave()).current;
+  const [level, setLevel] = useState<AiLevel>(restored?.level ?? 2);
+  const [started, setStarted] = useState(Boolean(restored));
+  const gs = useRef<GameState | null>(restored?.state ?? null);
   const [, force] = useReducer((x) => x + 1, 0);
   const [orient, setOrient] = useState(0);
   const [record, setRecord] = useState<GameRecord>({ w: 0, l: 0, d: 0 });
+  const [paused, setPaused] = useState(Boolean(restored));
+  const [wasRestored, setWasRestored] = useState(Boolean(restored));
+  const [muted, setMuted] = useState(false);
   const recorded = useRef(false);
+  const audioRef = useRef<AudioContext | null>(null);
+
+  const tone = useCallback((frequency: number, duration = 0.05) => {
+    if (muted || typeof window === "undefined") return;
+    const context = audioRef.current ?? new AudioContext();
+    audioRef.current = context;
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    oscillator.frequency.value = frequency;
+    gain.gain.setValueAtTime(0.05, context.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + duration);
+    oscillator.connect(gain).connect(context.destination);
+    oscillator.start();
+    oscillator.stop(context.currentTime + duration);
+  }, [muted]);
+  useEffect(() => () => { void audioRef.current?.close(); }, []);
 
   useEffect(() => { setRecord(getRecord("kingdomino")); }, []);
+
+  // Pause on hidden tab: stop the AI's pending timer rather than let it fire
+  // into a backgrounded, possibly-stale kingdom. The player must explicitly resume.
+  useEffect(() => {
+    const onHidden = () => { if (document.hidden) setPaused(true); };
+    document.addEventListener("visibilitychange", onHidden);
+    return () => document.removeEventListener("visibilitychange", onHidden);
+  }, []);
 
   const newGame = useCallback(() => {
     gs.current = startGame();
     setOrient(0);
     recorded.current = false;
     setStarted(true);
+    setPaused(false);
+    setWasRestored(false);
+    clearKingdominoSave();
     force();
   }, []);
+
+  // Persist active progress after every state-changing render; clear once the match ends.
+  useEffect(() => {
+    const s = gs.current;
+    if (!s || !started) return;
+    if (s.phase === "gameover" || s.pending.kind === "gameover") clearKingdominoSave();
+    else storeKingdominoSave({ state: s, level, savedAtEpochMs: Date.now() });
+  }); // deliberately no deps — mirrors the AI-turn effect below, runs after every render
 
   // AI turns advance automatically.
   useEffect(() => {
     const s = gs.current;
-    if (!s || !started) return;
+    if (!s || !started || paused) return;
     const p = s.pending;
     if (p.kind === "gameover") {
       if (!recorded.current) {
@@ -162,6 +203,7 @@ const Kingdomino: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
         const res = finalResult(s);
         const r = res.winner === "draw" ? "d" : res.winner === "you" ? "w" : "l";
         setRecord(recordResult("kingdomino", r as "w" | "l" | "d"));
+        tone(res.winner === "you" ? 660 : res.winner === "ai" ? 220 : 440, 0.18);
       }
       return;
     }
@@ -170,6 +212,7 @@ const Kingdomino: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
         if (p.kind === "claim") claim(s, aiClaim(s, level));
         else place(s, aiPlace(s, level));
         setOrient(0);
+        tone(300, 0.05);
         force();
       }, AI_DELAY);
       return () => clearTimeout(id);
@@ -197,25 +240,28 @@ const Kingdomino: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
   }
 
   const doPlace = (r: number, c: number) => {
-    if (!s || pending?.kind !== "place") return;
+    if (!s || pending?.kind !== "place" || paused) return;
     const [dr, dc] = DIRS[orient];
     const pl: Placement = { a: { r, c }, b: { r: r + dr, c: c + dc } };
     if (!isLegal(s.you.board, pending.tile, pl)) return;
     place(s, pl);
     setOrient(0);
+    tone(300, 0.05);
     force();
   };
 
   const doClaim = (slotIdx: number) => {
-    if (!s || pending?.kind !== "claim") return;
+    if (!s || pending?.kind !== "claim" || paused) return;
     claim(s, slotIdx);
+    tone(300, 0.05);
     force();
   };
 
   const doDiscard = () => {
-    if (!s || pending?.kind !== "place") return;
+    if (!s || pending?.kind !== "place" || paused) return;
     place(s, null);
     setOrient(0);
+    tone(150, 0.06);
     force();
   };
 
@@ -250,6 +296,21 @@ const Kingdomino: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
   return (
     <GameContainer title={t.title} subtitle={`${t.round} ${s.round}`} onReset={newGame}>
       <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-end gap-2">
+          {!over && (
+            <button type="button" onClick={() => setPaused((value) => { if (value) setWasRestored(false); return !value; })} className="min-h-11 px-3 rounded-md border border-gray-300 text-xs font-bold text-gray-600">
+              {paused ? `▶ ${t.resume}` : `Ⅱ ${t.pause}`}
+            </button>
+          )}
+          <button type="button" onClick={() => setMuted((value) => !value)} aria-pressed={muted} className="min-h-11 px-3 rounded-md border border-gray-300 text-xs font-bold text-gray-600">
+            {muted ? "🔇" : "🔊"} {t.sound}
+          </button>
+        </div>
+        {paused && !over && (
+          <div className="rounded-xl border border-gray-300 bg-gray-50 p-3 text-center text-xs font-bold text-gray-600" role="status">
+            {wasRestored ? `${t.restored} · ` : ""}{t.paused}
+          </div>
+        )}
         {/* Status bar */}
         <div className="text-center min-h-[24px]" aria-live="polite">
           {over ? (
@@ -295,7 +356,7 @@ const Kingdomino: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
             <div className="flex flex-wrap justify-center gap-2">
               <span className="text-[10px] font-bold text-gray-400 self-center">{t.draft}</span>
               {s.draft.map((sl, i) => {
-                const claimable = yourTurn && pending?.kind === "claim" && pending.options.includes(i);
+                const claimable = !paused && yourTurn && pending?.kind === "claim" && pending.options.includes(i);
                 return (
                   <TileChip key={`draft-${sl.tile.id}`} tile={sl.tile} owner={sl.owner}
                     youLabel={t.you.slice(0, 2)} aiLabel="AI"
@@ -314,7 +375,7 @@ const Kingdomino: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
               <span className="text-emerald-700">{t.you}</span>
               <span>{t.terrainScore} {scoreBoard(s.you.board, s.you.crowns)}{over ? ` + ${t.bonus} ${res!.youSummary.bonus} = ${res!.you}` : ""}</span>
             </div>
-            <KingdomGrid k={s.you} interactive={yourTurn && pending?.kind === "place" && !mustDiscard}
+            <KingdomGrid k={s.you} interactive={!paused && yourTurn && pending?.kind === "place" && !mustDiscard}
               legalA={legalA} onPlace={doPlace} locale={locale} />
             {over && res!.youSummary.bonus > 0 && (
               <p className="text-[11px] text-emerald-700">

@@ -17,6 +17,7 @@ import { createPsychologyWordle, inputPsychologyWordle } from "./psychology-word
 import { createNumberGuessingGame, guessNumber } from "./number-guessing";
 import { createWordle, inputWordle } from "./wordle";
 import { mulberry32 } from "./daily";
+import { startGame as startKingdomino, claim as claimKingdomino } from "./ai/kingdomino";
 import {
   chooseHeartsCpuCard,
   chooseHeartsPassCards,
@@ -377,14 +378,14 @@ describe("GameSessionEnvelope v1", () => {
 
   it("keeps unsupported games explicitly non-restorable", () => {
     const byId = new Map(capabilities.games.map((game) => [game.gameId, game]));
-    expect([...byId.values()].filter((game) => game.supportsRestore).map((game) => game.gameId)).toEqual(["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game", "kurodoko", "yahtzee", "cave-dash", "dot-runner", "mahjong", "water-sort", "psychology-wordle", "memory-card-game", "number-guessing", "wordle", "janggi"]);
-    for (const gameId of ["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game", "kurodoko", "yahtzee", "cave-dash", "dot-runner", "mahjong", "water-sort", "psychology-wordle", "memory-card-game", "number-guessing", "wordle", "janggi"] as const) {
+    expect([...byId.values()].filter((game) => game.supportsRestore).map((game) => game.gameId)).toEqual(["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game", "kurodoko", "yahtzee", "cave-dash", "dot-runner", "mahjong", "water-sort", "psychology-wordle", "memory-card-game", "number-guessing", "wordle", "janggi", "kingdomino"]);
+    for (const gameId of ["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game", "kurodoko", "yahtzee", "cave-dash", "dot-runner", "mahjong", "water-sort", "psychology-wordle", "memory-card-game", "number-guessing", "wordle", "janggi", "kingdomino"] as const) {
       expect(byId.get(gameId)?.modes).toEqual([...RESTORABLE_GAME_CAPABILITIES[gameId].modes]);
       expect(byId.get(gameId)?.difficulties).toEqual([...RESTORABLE_GAME_CAPABILITIES[gameId].difficulties]);
     }
   });
 
-  it("adapts the ten active-board save formats into the common envelope", async () => {
+  it("adapts the eleven active-board save formats into the common envelope", async () => {
     const { dealSolitaire } = await import("./solitaire");
     const { createFreeCellGame } = await import("./freecell");
     const { createJanggi, playJanggi } = await import("./janggi");
@@ -406,6 +407,8 @@ describe("GameSessionEnvelope v1", () => {
     });
     const reversiBoard = Array<1 | 2 | null>(64).fill(null);
     reversiBoard[27] = 2; reversiBoard[28] = 1; reversiBoard[35] = 1; reversiBoard[36] = 2;
+    const kingdominoState = startKingdomino(() => 0.3);
+    while (kingdominoState.pending.kind === "claim") claimKingdomino(kingdominoState, kingdominoState.pending.options[0]);
     const fixtures = [
       ["solitaire", { version: 2, mode: "free", dailyDate: "2026-08-01", seed: 7, state: dealSolitaire(() => 0.3), elapsedSeconds: 30, moves: 4, undoCount: 0, legacyMigrated: false, savedAtEpochMs: Date.now() - 5_000 }],
       ["freecell", { version: 2, state: createFreeCellGame(() => 0.3), moves: 1, elapsedSeconds: 5, legacyMigrated: false, savedAtEpochMs: Date.now() - 1_000 }],
@@ -417,6 +420,7 @@ describe("GameSessionEnvelope v1", () => {
       ["reversi", { version: 1, board: reversiBoard, isBlackTurn: true, mode: "local", level: 2 }],
       ["game-2048", { version: 1, board: [2, 4, null, null, null, null, null, null, null, null, null, null, null, null, null, 8], score: 12 }],
       ["janggi", { version: 1, state: janggiState, mode: "ai", level: 2, savedAtEpochMs: Date.now() - 5_000 }],
+      ["kingdomino", { version: 1, state: kingdominoState, level: 2, savedAtEpochMs: Date.now() - 5_000 }],
     ] as const;
     for (const [gameId, payload] of fixtures) {
       const envelope = adaptActiveGameSaveToSession(gameId, payload, TIMING);

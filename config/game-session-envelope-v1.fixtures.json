@@ -570,6 +570,29 @@
    "nonSessionPersistence": [
     "game-record"
    ]
+  },
+  {
+   "gameId": "kingdomino",
+   "componentPath": "src/components/games/Kingdomino.tsx",
+   "adapterPath": "src/lib/games/kingdomino-save.ts",
+   "supportsRestore": true,
+   "sessionStorageKey": "oiyo:kingdomino-state:v1",
+   "sourceSchema": "oiyo.kingdomino-save",
+   "sourceSchemaVersion": 1,
+   "adapterVersion": "kingdomino-session-adapter-v1",
+   "engineVersion": "kingdomino-rules-v1",
+   "modes": [
+    "ai"
+   ],
+   "difficulties": [
+    "level-1",
+    "level-2",
+    "level-3"
+   ],
+   "deterministicResume": true,
+   "nonSessionPersistence": [
+    "game-record"
+   ]
   }
  ]
 }
