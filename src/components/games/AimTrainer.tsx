@@ -4,11 +4,15 @@ import type { Locale } from "../../lib/i18n";
 import { getBest, recordBest } from "../../lib/games/records";
 import {
   computeAimRank,
+  computeConsistency,
   frameScale,
-  targetCenterRange,
+  isPointerOnTrackingTarget,
+  placeTarget,
+  stepTrackingTarget,
   type AimDifficulty,
   type AimMode,
   type AimRank,
+  type TrackingTargetState,
 } from "../../lib/games/aim-trainer";
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -84,6 +88,7 @@ interface I18n {
   sec: string;
   tip: string;
   target: string;
+  sound: string;
 }
 
 const T: Record<Locale, I18n> = {
@@ -118,6 +123,7 @@ const T: Record<Locale, I18n> = {
     sec: "초",
     tip: "팁: 손목이 아니라 팔꿈치로 큰 움직임을, 미세 조정은 손목으로.",
     target: "타깃",
+    sound: "소리",
   },
   en: {
     title: "Aim Trainer PRO",
@@ -150,6 +156,7 @@ const T: Record<Locale, I18n> = {
     sec: "s",
     tip: "Tip: move with your elbow for big flicks, wrist for micro-adjustments.",
     target: "Target",
+    sound: "Sound",
   },
   ja: {
     title: "エイムトレーナー PRO",
@@ -182,6 +189,7 @@ const T: Record<Locale, I18n> = {
     sec: "秒",
     tip: "ヒント：大きな振りは肘、微調整は手首で。",
     target: "ターゲット",
+    sound: "音",
   },
   fr: {
     title: "Aim Trainer PRO",
@@ -214,6 +222,7 @@ const T: Record<Locale, I18n> = {
     sec: "s",
     tip: "Astuce : coude pour les grands flicks, poignet pour les micro-ajustements.",
     target: "Cible",
+    sound: "Son",
   },
   es: {
     title: "Aim Trainer PRO",
@@ -246,6 +255,7 @@ const T: Record<Locale, I18n> = {
     sec: "s",
     tip: "Consejo: usa el codo para flicks grandes y la muñeca para ajustes finos.",
     target: "Objetivo",
+    sound: "Sonido",
   },
   zh: {
     title: "瞄准训练器 PRO",
@@ -278,6 +288,7 @@ const T: Record<Locale, I18n> = {
     sec: "秒",
     tip: "提示：大甩用手肘，微调用手腕。",
     target: "目标",
+    sound: "声音",
   },
 };
 
@@ -299,6 +310,23 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
   const [best, setBest] = useState<number | null>(null);
   const [isNewBest, setIsNewBest] = useState(false);
   const [finalScore, setFinalScore] = useState(0);
+  const [muted, setMuted] = useState(false);
+  const audioRef = useRef<AudioContext | null>(null);
+
+  const tone = useCallback((frequency: number, duration = 0.05) => {
+    if (muted || typeof window === "undefined") return;
+    const context = audioRef.current ?? new AudioContext();
+    audioRef.current = context;
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    oscillator.frequency.value = frequency;
+    gain.gain.setValueAtTime(0.05, context.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + duration);
+    oscillator.connect(gain).connect(context.destination);
+    oscillator.start();
+    oscillator.stop(context.currentTime + duration);
+  }, [muted]);
+  useEffect(() => () => { void audioRef.current?.close(); }, []);
 
   // refs that must not trigger re-render
   const fieldRef = useRef<HTMLDivElement | null>(null);
@@ -313,7 +341,7 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
   const lastTargetRenderRef = useRef(0);
   const targetsRef = useRef<Target[]>([]);
   // tracking-mode state kept in refs (per-frame)
-  const trkTarget = useRef({ x: 50, y: 50, vx: 1, vy: 1, size: 74 });
+  const trkTarget = useRef<TrackingTargetState>({ x: 50, y: 50, vx: 1, vy: 1, size: 74 });
   const trkOnMs = useRef(0);
   const pointer = useRef({ x: -999, y: -999, inside: false });
 
@@ -334,25 +362,8 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
     const rect = fieldRef.current?.getBoundingClientRect();
     const width = rect?.width ?? 600;
     const height = rect?.height ?? 480;
-    const [minX, maxX] = targetCenterRange(size, width);
-    const [minY, maxY] = targetCenterRange(size, height);
-    let candidate: Target | null = null;
-    for (let attempt = 0; attempt < 12; attempt++) {
-      candidate = {
-        id: idRef.current++,
-        x: minX + Math.random() * (maxX - minX),
-        y: minY + Math.random() * (maxY - minY),
-        size,
-        born: performance.now(),
-      };
-      const overlaps = occupied.some((other) => {
-        const dx = ((candidate!.x - other.x) / 100) * width;
-        const dy = ((candidate!.y - other.y) / 100) * height;
-        return Math.hypot(dx, dy) < (candidate!.size + other.size) / 2 + 6;
-      });
-      if (!overlaps) return candidate;
-    }
-    return candidate!;
+    const placed = placeTarget(size, occupied, width, height);
+    return { id: idRef.current++, x: placed.x, y: placed.y, size, born: performance.now() };
   }, []);
 
   const spawnMany = useCallback((count: number, size: number): Target[] => {
@@ -377,11 +388,12 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
     const saved = recordBest(key, score, "score", `${t.diffName[diff]}`);
     setBest(saved.value);
     setIsNewBest(beat && score > 0);
+    tone(beat && score > 0 ? 880 : 440, beat && score > 0 ? 0.22 : 0.15);
     if (beat && score > 0 && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } });
     }
     setPhase("result");
-  }, [stop, mode, hits, key, diff, t.diffName]);
+  }, [stop, mode, hits, key, diff, t.diffName, tone]);
 
   // keep finish() fresh inside the interval without re-subscribing
   const finishRef = useRef(finish);
@@ -458,23 +470,11 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
       const field = fieldRef.current;
       if (field) {
         if (mode === "tracking") {
-          const tk = trkTarget.current;
           const rect = field.getBoundingClientRect();
-          const [minX, maxX] = targetCenterRange(tk.size, rect.width);
-          const [minY, maxY] = targetCenterRange(tk.size, rect.height);
           const spd = cfg.speed * dc.speed * 0.03 * frameScale(deltaMs);
-          tk.x += tk.vx * spd;
-          tk.y += tk.vy * spd;
-          if (tk.x < minX || tk.x > maxX) { tk.vx *= -1; tk.x = Math.max(minX, Math.min(maxX, tk.x)); tk.vy += (Math.random() - 0.5) * 0.4; }
-          if (tk.y < minY || tk.y > maxY) { tk.vy *= -1; tk.y = Math.max(minY, Math.min(maxY, tk.y)); tk.vx += (Math.random() - 0.5) * 0.4; }
-          // normalize speed vector so it doesn't runaway
-          const mag = Math.hypot(tk.vx, tk.vy) || 1;
-          tk.vx /= mag; tk.vy /= mag;
-          // is pointer over target?
-          const txPx = (tk.x / 100) * rect.width;
-          const tyPx = (tk.y / 100) * rect.height;
-          const dist = Math.hypot(pointer.current.x - txPx, pointer.current.y - tyPx);
-          const on = pointer.current.inside && dist <= tk.size / 2;
+          trkTarget.current = stepTrackingTarget(trkTarget.current, spd, rect.width, rect.height);
+          const tk = trkTarget.current;
+          const on = isPointerOnTrackingTarget(pointer.current.x, pointer.current.y, pointer.current.inside, tk, rect.width, rect.height);
           if (on) trkOnMs.current += Math.min(deltaMs, 50);
           if (frameNow - lastTargetRenderRef.current >= 1000 / 60) {
             lastTargetRenderRef.current = frameNow;
@@ -515,18 +515,20 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
       if (phase !== "playing" || mode === "tracking") return;
       reactionsRef.current.push(performance.now() - born);
       setHits((h) => h + 1);
+      tone(700, 0.05);
       setTargets((prev) => {
         const rest = prev.filter((tg) => tg.id !== id);
         return [...rest, spawn(targetSize, rest)];
       });
     },
-    [phase, mode, targetSize, spawn]
+    [phase, mode, targetSize, spawn, tone]
   );
 
   const missField = useCallback(() => {
     if (phase !== "playing" || mode === "tracking") return;
     setMisses((m) => m + 1);
-  }, [phase, mode]);
+    tone(180, 0.06);
+  }, [phase, mode, tone]);
 
   // ── derived stats ──
   const totalClicks = hits + misses;
@@ -534,10 +536,7 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
   const reactions = reactionsRef.current;
   const avgReaction = reactions.length ? Math.round(reactions.reduce((a, b) => a + b, 0) / reactions.length) : 0;
   const tps = (hits / DURATION).toFixed(1);
-  const stdev = reactions.length > 1
-    ? Math.round(Math.sqrt(reactions.reduce((s, r) => s + (r - avgReaction) ** 2, 0) / reactions.length))
-    : 0;
-  const consistency = avgReaction > 0 ? Math.max(0, Math.round(100 - (stdev / avgReaction) * 100)) : 0;
+  const consistency = computeConsistency(reactions);
   const rank = computeAimRank(mode, diff, finalScore);
 
   useEffect(() => {
@@ -549,17 +548,25 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
   return (
     <div className="not-prose my-10 rounded-3xl border border-border bg-card p-5 text-card-foreground shadow-sm select-none max-w-xl mx-auto">
       {/* header */}
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex items-center justify-between gap-2">
         <div>
           <div className="text-sm font-black uppercase tracking-widest text-primary">{t.title}</div>
           <div className="text-[11px] text-muted-foreground">{t.subtitle}</div>
         </div>
         {phase === "playing" && (
-          <div className="flex gap-3 text-xs font-bold">
+          <div className="flex items-center gap-3 text-xs font-bold">
             <span>{t.timeLeft} <b className={timeLeft <= 5 ? "text-red-500" : "text-primary"}>{timeLeft}{t.sec}</b></span>
             {mode !== "tracking" && <span className="text-green-500">{hits}</span>}
           </div>
         )}
+        <button
+          type="button"
+          onClick={() => setMuted((value) => !value)}
+          aria-pressed={muted}
+          className="min-h-11 shrink-0 rounded-xl border border-border px-3 text-xs font-bold text-muted-foreground"
+        >
+          {muted ? "🔇" : "🔊"} {t.sound}
+        </button>
       </div>
 
       {/* ── MENU ── */}
@@ -625,24 +632,38 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
           <div className="absolute left-0 top-0 z-10 h-1 w-full bg-muted/60">
             <div className="h-full bg-violet-500 transition-[width] duration-100" style={{ width: `${(timeLeft / DURATION) * 100}%` }} />
           </div>
-          {targets.map((tg) => (
-            <button
-              key={tg.id}
-              onPointerDown={(e) => hitTarget(tg.id, tg.born, e)}
-              className={`absolute rounded-full shadow-lg focus:outline-none ${mode === "tracking" ? "bg-violet-500/80 ring-4 ring-violet-300/40" : "bg-violet-500 hover:bg-violet-400"}`}
-              style={{
-                width: `${tg.size}px`,
-                height: `${tg.size}px`,
-                left: `${tg.x}%`,
-                top: `${tg.y}%`,
-                transform: "translate(-50%, -50%)",
-              }}
-              type="button"
-              aria-label={t.target}
-            >
-              {mode === "tracking" && <span className="absolute inset-0 m-auto h-2 w-2 rounded-full bg-white" />}
-            </button>
-          ))}
+          {targets.map((tg) => {
+            // Precision/expert targets can render well under 44px — the whole
+            // point of Precision mode is a tiny visual target. Rather than
+            // enlarging the target itself (which would erase the challenge),
+            // the tap-hitbox is widened independently so the game stays
+            // playable by touch; Tracking's hit-test is pointer-position based
+            // and doesn't go through this button, so it keeps its true size.
+            const hitboxSize = mode === "tracking" ? tg.size : Math.max(tg.size, 44);
+            return (
+              <button
+                key={tg.id}
+                onPointerDown={(e) => hitTarget(tg.id, tg.born, e)}
+                className="absolute flex items-center justify-center focus:outline-none"
+                style={{
+                  width: `${hitboxSize}px`,
+                  height: `${hitboxSize}px`,
+                  left: `${tg.x}%`,
+                  top: `${tg.y}%`,
+                  transform: "translate(-50%, -50%)",
+                }}
+                type="button"
+                aria-label={t.target}
+              >
+                <span
+                  className={`relative block rounded-full shadow-lg ${mode === "tracking" ? "bg-violet-500/80 ring-4 ring-violet-300/40" : "bg-violet-500 hover:bg-violet-400"}`}
+                  style={{ width: `${tg.size}px`, height: `${tg.size}px` }}
+                >
+                  {mode === "tracking" && <span className="absolute inset-0 m-auto h-2 w-2 rounded-full bg-white" />}
+                </span>
+              </button>
+            );
+          })}
         </div>
       )}
 
