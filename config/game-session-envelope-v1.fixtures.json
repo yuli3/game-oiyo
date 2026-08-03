@@ -34,14 +34,16 @@
    "supportsRestore": true,
    "sessionStorageKey": "oiyo:game:hearts:v1",
    "sourceSchema": "oiyo.hearts-save",
-   "sourceSchemaVersion": 1,
-   "adapterVersion": "hearts-session-adapter-v1",
+   "sourceSchemaVersion": 2,
+   "adapterVersion": "hearts-session-adapter-v2",
    "engineVersion": "hearts-rules-v1",
    "modes": [
     "ai"
    ],
    "difficulties": [
-    "heuristic-v1"
+    "level-1",
+    "level-2",
+    "level-3"
    ],
    "deterministicResume": true,
    "nonSessionPersistence": []

@@ -1,5 +1,5 @@
 import { parseChessSave, type ChessSave } from "./chess-save";
-import { parseHeartsSavedGame, type HeartsSavedGame } from "./hearts";
+import { parseHeartsSavedGame, type HeartsAiLevel, type HeartsSavedGame } from "./hearts";
 import { parseMinesweeperSave, type MinesweeperSave } from "./minesweeper-save";
 import { parseBrickBreakerSave, type BrickBreakerSave } from "./brick-breaker-save";
 import {
@@ -43,7 +43,7 @@ export const RESTORABLE_GAME_CAPABILITIES = {
   },
   hearts: {
     modes: ["ai"],
-    difficulties: ["heuristic-v1"],
+    difficulties: ["level-1", "level-2", "level-3"],
   },
   minesweeper: {
     modes: ["solo"],
@@ -250,15 +250,15 @@ const chessAdapter: Adapter<ChessSave> = {
   },
 };
 
-type VersionedHeartsPayload = HeartsSavedGame & { version: 1 };
+type VersionedHeartsPayload = HeartsSavedGame & { version: 1 | 2; level: HeartsAiLevel };
 const heartsAdapter: Adapter<VersionedHeartsPayload> = {
-  adapterVersion: "hearts-session-adapter-v1",
+  adapterVersion: "hearts-session-adapter-v2",
   engineVersion: "hearts-rules-v1",
   gameId: "hearts",
   modes: RESTORABLE_GAME_CAPABILITIES.hearts.modes,
   difficulties: RESTORABLE_GAME_CAPABILITIES.hearts.difficulties,
   parsePayload: (value) => {
-    if (!isRecord(value) || value.version !== 1) return null;
+    if (!isRecord(value) || (value.version !== 1 && value.version !== 2)) return null;
     const parsed = parseHeartsSavedGame(JSON.stringify(value));
     if (!parsed || parsed.state.phase === "gameOver") return null;
     const card = (value: HeartsSavedGame["state"]["hands"][number][number]) => ({
@@ -272,7 +272,8 @@ const heartsAdapter: Adapter<VersionedHeartsPayload> = {
       card: card(value.card),
     });
     return {
-      version: 1,
+      version: value.version,
+      level: parsed.level as HeartsAiLevel,
       state: {
         hands: parsed.state.hands.map((hand) => hand.map(card)),
         trick: parsed.state.trick.map(play),
@@ -291,12 +292,12 @@ const heartsAdapter: Adapter<VersionedHeartsPayload> = {
       passSelection: [...parsed.passSelection],
     };
   },
-  payloadDifficulty: () => "heuristic-v1",
+  payloadDifficulty: (value) => `level-${value.level}`,
   payloadMode: () => "ai",
   source: {
     format: "legacy-local-storage",
     schema: "oiyo.hearts-save",
-    schemaVersion: 1,
+    schemaVersion: 2,
     storageKey: "oiyo:game:hearts:v1",
   },
 };
@@ -600,7 +601,12 @@ export function adaptHeartsSaveToSession(
   timing: GameSessionTiming,
   progress?: GameSessionProgress,
 ): GameSessionEnvelope<VersionedHeartsPayload> | null {
-  const candidate = isRecord(value) && value.version === undefined ? { version: 1, ...value } : value;
+  // A HeartsSavedGame carries no version of its own; tag it here so the
+  // adapter can tell an AI level was actually recorded (v2) from a caller
+  // that never set one (v1, falls back to level 3 inside parseHeartsSavedGame).
+  const candidate = isRecord(value) && value.version === undefined
+    ? { version: value.level !== undefined ? 2 : 1, ...value }
+    : value;
   const payload = heartsAdapter.parsePayload(candidate);
   return payload ? createEnvelope(heartsAdapter, payload, timing, progress) : null;
 }

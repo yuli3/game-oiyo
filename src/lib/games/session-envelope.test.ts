@@ -270,18 +270,24 @@ describe("GameSessionEnvelope v1", () => {
     expect(parseGameSessionEnvelope(serializeGameSessionEnvelope(envelope!))).toEqual(envelope);
   });
 
-  it("adapts the existing unversioned Hearts load shape and preserves resumable round state", () => {
+  it("adapts the existing unversioned Hearts load shape, defaulting to level 3 when no level was recorded", () => {
     const envelope = adaptHeartsSaveToSession(activeHeartsSave(), TIMING);
 
     expect(envelope).toMatchObject({
-      adapterVersion: "hearts-session-adapter-v1",
-      difficulty: "heuristic-v1",
+      adapterVersion: "hearts-session-adapter-v2",
+      difficulty: "level-3",
       gameId: "hearts",
       mode: "ai",
-      payload: { version: 1 },
-      source: { schemaVersion: 1, storageKey: "oiyo:game:hearts:v1" },
+      payload: { version: 1, level: 3 },
+      source: { schemaVersion: 2, storageKey: "oiyo:game:hearts:v1" },
       terminal: false,
     });
+    expect(parseGameSessionEnvelope(serializeGameSessionEnvelope(envelope!)!)).toEqual(envelope);
+  });
+
+  it("adapts a Hearts save with a recorded AI level, reporting the real difficulty instead of a fixed label", () => {
+    const envelope = adaptHeartsSaveToSession({ ...activeHeartsSave(), level: 1 }, TIMING);
+    expect(envelope).toMatchObject({ difficulty: "level-1", payload: { version: 2, level: 1 } });
     expect(parseGameSessionEnvelope(serializeGameSessionEnvelope(envelope!)!)).toEqual(envelope);
   });
 

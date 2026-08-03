@@ -35,7 +35,7 @@ const restorableSymbols = {
 };
 const restorableCapabilities = {
   chess: { modes: ["local", "ai"], difficulties: ["level-1", "level-2", "level-3"] },
-  hearts: { modes: ["ai"], difficulties: ["heuristic-v1"] },
+  hearts: { modes: ["ai"], difficulties: ["level-1", "level-2", "level-3"] },
   minesweeper: { modes: ["solo"], difficulties: ["daily", "beginner", "intermediate", "expert"] },
   "brick-breaker": { modes: ["solo"], difficulties: ["endless-v1"] },
   solitaire: { modes: ["solo"], difficulties: ["draw-1"] },
