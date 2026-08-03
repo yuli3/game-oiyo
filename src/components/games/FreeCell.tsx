@@ -12,72 +12,120 @@ import {
   type FreeCellDestination,
   type FreeCellSource,
 } from '../../lib/games/freecell';
-import { clearFreeCellSave, loadFreeCellSave, storeFreeCellSave } from '../../lib/games/active-game-save';
+import { clearFreeCellSaveV2, loadFreeCellSaveV2, storeFreeCellSaveV2 } from '../../lib/games/freecell-save';
 
 const COPY = {
   ko: {
     title: '프리셀 (FreeCell)', desc: '색을 번갈아 내림차순으로 쌓고, 네 무늬를 A부터 K까지 완성하세요.', reset: '다시 시작', win: '모든 무늬를 완성했습니다!', record: '전적',
     instructions: '카드 또는 정렬된 묶음을 선택한 뒤 목적지를 선택하세요. 빈 셀 하나에는 카드 한 장만 둘 수 있습니다.', selected: (count: number) => `${count}장 선택됨. 목적지를 선택하세요.`, moved: '합법적인 이동을 완료했습니다.', invalid: '그곳으로 이동할 수 없습니다. 색·숫자 순서와 빈 공간 수를 확인하세요.', emptyCell: (index: number) => `빈 프리셀 ${index}`, emptyColumn: (index: number) => `빈 열 ${index}`, foundation: (suit: string) => `${suit} 기초 더미`, restart: '새 게임', freeArea: '프리셀', foundationArea: '기초 더미', tableauArea: '게임 열', suits: ['하트', '다이아몬드', '클럽', '스페이드'],
+    sound: '소리', moves: '이동', time: '시간', untimed: '이전 버전에서 이어진 판이라 시간 기록은 남지 않습니다.',
   },
   en: {
     title: 'FreeCell', desc: 'Build downward in alternating colors and complete each suit from Ace to King.', reset: 'Restart', win: 'All four suits are complete!', record: 'Record',
     instructions: 'Choose a card or ordered run, then choose its destination. Each free cell holds one card.', selected: (count: number) => `${count} card${count === 1 ? '' : 's'} selected. Choose a destination.`, moved: 'Legal move completed.', invalid: 'That move is not legal. Check color, rank, and available empty spaces.', emptyCell: (index: number) => `Empty free cell ${index}`, emptyColumn: (index: number) => `Empty column ${index}`, foundation: (suit: string) => `${suit} foundation`, restart: 'New game', freeArea: 'Free cells', foundationArea: 'Foundations', tableauArea: 'Tableau', suits: ['Hearts', 'Diamonds', 'Clubs', 'Spades'],
+    sound: 'Sound', moves: 'Moves', time: 'Time', untimed: 'This game continued from an older version, so no time record is kept.',
   },
   ja: {
     title: 'フリーセル', desc: '色を交互に数字の降順で並べ、4つのスートをAからKまで完成させます。', reset: 'リスタート', win: '4つのスートが完成しました！', record: '戦績',
     instructions: 'カードまたは整列した列を選び、移動先を選択してください。各フリーセルには1枚だけ置けます。', selected: (count: number) => `${count}枚を選択中。移動先を選んでください。`, moved: '有効な移動が完了しました。', invalid: 'そこには移動できません。色・数字・空きスペースを確認してください。', emptyCell: (index: number) => `空のフリーセル ${index}`, emptyColumn: (index: number) => `空の列 ${index}`, foundation: (suit: string) => `${suit}の組札`, restart: '新しいゲーム', freeArea: 'フリーセル', foundationArea: '組札', tableauArea: '場札', suits: ['ハート', 'ダイヤ', 'クラブ', 'スペード'],
+    sound: '音', moves: '手数', time: '時間', untimed: '旧バージョンから続いた盤面のため、時間記録は残りません。',
   },
   zh: {
     title: '空当接龙', desc: '按红黑交替降序排列，并将四种花色从A叠到K。', reset: '重新开始', win: '四种花色全部完成！', record: '战绩',
     instructions: '先选择一张牌或有效牌组，再选择目的地。每个空位只能放一张牌。', selected: (count: number) => `已选择 ${count} 张牌，请选择目的地。`, moved: '已完成合法移动。', invalid: '不能移动到那里。请检查颜色、点数和可用空位。', emptyCell: (index: number) => `空的自由单元 ${index}`, emptyColumn: (index: number) => `空列 ${index}`, foundation: (suit: string) => `${suit}基础牌堆`, restart: '新游戏', freeArea: '自由单元', foundationArea: '基础牌堆', tableauArea: '游戏牌列', suits: ['红桃', '方块', '梅花', '黑桃'],
+    sound: '声音', moves: '步数', time: '时间', untimed: '此局从旧版本延续，因此不保留时间记录。',
   },
   fr: {
     title: 'FreeCell', desc: 'Empilez en ordre décroissant en alternant les couleurs, puis complétez chaque couleur de l’As au Roi.', reset: 'Recommencer', win: 'Les quatre couleurs sont complètes !', record: 'Bilan',
     instructions: 'Choisissez une carte ou une suite valide, puis sa destination. Chaque cellule libre contient une seule carte.', selected: (count: number) => `${count} carte${count > 1 ? 's' : ''} sélectionnée${count > 1 ? 's' : ''}. Choisissez une destination.`, moved: 'Déplacement valide effectué.', invalid: 'Ce déplacement est impossible. Vérifiez la couleur, le rang et les espaces libres.', emptyCell: (index: number) => `Cellule libre vide ${index}`, emptyColumn: (index: number) => `Colonne vide ${index}`, foundation: (suit: string) => `Fondation ${suit}`, restart: 'Nouvelle partie', freeArea: 'Cellules libres', foundationArea: 'Fondations', tableauArea: 'Tableau', suits: ['Cœurs', 'Carreaux', 'Trèfles', 'Piques'],
+    sound: 'Son', moves: 'Coups', time: 'Temps', untimed: 'Partie reprise d’une ancienne version : aucun temps n’est enregistré.',
   },
   es: {
     title: 'FreeCell', desc: 'Ordena en descenso alternando colores y completa cada palo del As al Rey.', reset: 'Reiniciar', win: '¡Los cuatro palos están completos!', record: 'Historial',
     instructions: 'Elige una carta o secuencia válida y después su destino. Cada celda libre admite una sola carta.', selected: (count: number) => `${count} carta${count === 1 ? '' : 's'} seleccionada${count === 1 ? '' : 's'}. Elige un destino.`, moved: 'Movimiento válido completado.', invalid: 'Ese movimiento no es válido. Comprueba el color, el rango y los espacios libres.', emptyCell: (index: number) => `Celda libre vacía ${index}`, emptyColumn: (index: number) => `Columna vacía ${index}`, foundation: (suit: string) => `Base de ${suit}`, restart: 'Nueva partida', freeArea: 'Celdas libres', foundationArea: 'Bases', tableauArea: 'Tablero', suits: ['Corazones', 'Diamantes', 'Tréboles', 'Picas'],
+    sound: 'Sonido', moves: 'Jugadas', time: 'Tiempo', untimed: 'Esta partida continuó de una versión anterior, así que no se guarda el tiempo.',
   },
 } as const;
+
+function fmt(totalSeconds: number): string {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, '0')}`;
+}
 
 const SUIT_SYMBOLS = ['♥', '♦', '♣', '♠'];
 
 const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
   const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
-  const [restored] = useState(loadFreeCellSave);
+  const [restored] = useState(loadFreeCellSaveV2);
   const [game, setGame] = useState(() => restored?.state ?? createFreeCellGame());
   const [selected, setSelected] = useState<FreeCellSource | null>(null);
   const [status, setStatus] = useState<string>(t.instructions);
   const [record, setRecord] = useState<GameRecord | null>(() => getRecord('freecell'));
+  const [moves, setMoves] = useState(restored?.moves ?? 0);
+  const [seconds, setSeconds] = useState(restored?.elapsedSeconds ?? 0);
+  const [legacyMigrated, setLegacyMigrated] = useState(restored?.legacyMigrated ?? false);
+  const [muted, setMuted] = useState(false);
   const moveMadeRef = useRef(Boolean(restored));
   const wonRef = useRef(false);
   const lastFocusedRef = useRef<HTMLElement | null>(null);
   const winDialogRef = useRef<HTMLDivElement | null>(null);
+  const startedAt = useRef<number>(performance.now() - (restored?.elapsedSeconds ?? 0) * 1000);
+  const audioRef = useRef<AudioContext | null>(null);
+
+  const tone = useCallback((frequency: number, duration = 0.05) => {
+    if (muted || typeof window === 'undefined') return;
+    const context = audioRef.current ?? new AudioContext();
+    audioRef.current = context;
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    oscillator.frequency.value = frequency;
+    gain.gain.setValueAtTime(0.05, context.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + duration);
+    oscillator.connect(gain).connect(context.destination);
+    oscillator.start();
+    oscillator.stop(context.currentTime + duration);
+  }, [muted]);
+  useEffect(() => () => { void audioRef.current?.close(); }, []);
 
   useEffect(() => { setStatus(t.instructions); }, [t]);
   useEffect(() => {
-    if (moveMadeRef.current && !isFreeCellWon(game)) storeFreeCellSave(game);
-  }, [game]);
+    if (moveMadeRef.current && !isFreeCellWon(game)) {
+      storeFreeCellSaveV2({ state: game, moves, elapsedSeconds: seconds, legacyMigrated, savedAtEpochMs: Date.now() });
+    }
+  }, [game, moves, seconds, legacyMigrated]);
+
+  const isWon = isFreeCellWon(game);
+  useEffect(() => {
+    if (isWon || legacyMigrated) return;
+    const id = setInterval(() => {
+      setSeconds(Math.max(0, Math.floor((performance.now() - startedAt.current) / 1000)));
+    }, 250);
+    return () => clearInterval(id);
+  }, [isWon, legacyMigrated]);
 
   const initGame = useCallback(() => {
     if (moveMadeRef.current && !wonRef.current) setRecord(recordResult('freecell', 'l'));
     moveMadeRef.current = false;
     wonRef.current = false;
-    clearFreeCellSave();
+    clearFreeCellSaveV2();
     setGame(createFreeCellGame());
     setSelected(null);
     setStatus(t.instructions);
+    setMoves(0);
+    setSeconds(0);
+    setLegacyMigrated(false);
+    startedAt.current = performance.now();
   }, [t.instructions]);
 
-  const isWon = isFreeCellWon(game);
   useEffect(() => {
     if (isWon && !wonRef.current) {
       wonRef.current = true;
-      clearFreeCellSave();
+      clearFreeCellSaveV2();
       setRecord(recordResult('freecell', 'w'));
+      tone(660, 0.18);
     }
-  }, [isWon]);
+  }, [isWon, tone]);
   useEffect(() => {
     if (isWon) winDialogRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
   }, [isWon]);
@@ -86,6 +134,7 @@ const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const cards = getSourceCards(game, source);
     if (!cards.length || (source.type === 'tableau' && !isDescendingAlternatingRun(cards))) {
       setStatus(t.invalid);
+      tone(150, 0.06);
       return;
     }
     setSelected(source);
@@ -97,12 +146,16 @@ const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const result = moveFreeCellCards(game, selected, destination);
     if (!result.ok) {
       setStatus(t.invalid);
+      tone(150, 0.06);
       return false;
     }
+    if (!moveMadeRef.current) startedAt.current = performance.now();
     moveMadeRef.current = true;
     setGame(result.state);
     setSelected(null);
+    setMoves((count) => count + 1);
     setStatus(t.moved);
+    tone(300, 0.05);
     return true;
   };
 
@@ -133,10 +186,16 @@ const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
       <div className="space-y-5" onFocusCapture={(event) => { lastFocusedRef.current = event.target instanceof HTMLElement ? event.target : null; }}>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">{t.instructions}</p>
-          {record && record.w + record.l > 0 && (
-            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.record} {record.w}–{record.l}</p>
-          )}
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={() => setMuted((value) => !value)} aria-pressed={muted} className="min-h-11 rounded-lg border border-border px-3 text-xs font-bold text-muted-foreground">
+              {muted ? '🔇' : '🔊'} {t.sound}
+            </button>
+            {record && record.w + record.l > 0 && (
+              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.record} {record.w}–{record.l}</p>
+            )}
+          </div>
         </div>
+        {legacyMigrated && <p className="text-[11px] font-medium text-muted-foreground">{t.untimed}</p>}
         <p className="min-h-6 text-sm font-semibold text-primary" aria-live="polite">{status}</p>
 
         <div className="overflow-x-auto pb-2">
@@ -207,7 +266,10 @@ const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
       {isWon && (
         <div ref={winDialogRef} onKeyDown={trapWinFocus} className="fixed inset-0 z-30 flex flex-col items-center justify-center bg-background/90 p-6 text-center backdrop-blur-xl motion-reduce:animate-none" role="dialog" aria-modal="true" aria-labelledby="freecell-win-title">
-          <h4 id="freecell-win-title" className="mb-6 text-4xl font-black text-primary">{t.win}</h4>
+          <h4 id="freecell-win-title" className="mb-2 text-4xl font-black text-primary">{t.win}</h4>
+          <p className="mb-6 text-sm font-bold text-muted-foreground">
+            {legacyMigrated ? `${t.moves} ${moves}` : `${t.time} ${fmt(seconds)} · ${t.moves} ${moves}`}
+          </p>
           <button type="button" onClick={closeWin} className="min-h-11 rounded-full bg-primary px-12 py-4 font-black text-primary-foreground shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">{t.restart}</button>
         </div>
       )}

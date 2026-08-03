@@ -4,7 +4,6 @@ import { parseMinesweeperSave, type MinesweeperSave } from "./minesweeper-save";
 import { parseBrickBreakerSave, type BrickBreakerSave } from "./brick-breaker-save";
 import {
   parseCheckersSave,
-  parseFreeCellSave,
   parseGame2048Save,
   parsePuzzle15Save,
   parseReversiSave,
@@ -19,6 +18,7 @@ import { parseSnakeSave, type SnakeSaveV1 } from "./snake-save";
 import { parseJanggiSave, type JanggiSaveV1 } from "./janggi-save";
 import { parseGomokuSaveV2, type GomokuSaveV2 } from "./gomoku-save";
 import { parseConnectFourSaveV2, type ConnectFourSaveV2 } from "./connect-four-save";
+import { parseFreeCellSaveV2, type FreeCellSaveV2 } from "./freecell-save";
 import { parseKurodokoSaveV1, type KurodokoSaveV1 } from "./kurodoko-save";
 import { parseYahtzeeSave, type YahtzeeSaveV1 } from "./yahtzee-save";
 import { parseCaveDashSave, type CaveDashSaveV1 } from "./cave-dash-save";
@@ -343,8 +343,6 @@ const brickBreakerAdapter: Adapter<BrickBreakerSave> = {
   },
 };
 
-type FreeCellPayload = NonNullable<ReturnType<typeof parseFreeCellSave>>;
-
 const solitaireAdapter: Adapter<SolitaireSaveV2> = {
   adapterVersion: "solitaire-session-adapter-v2", engineVersion: "solitaire-rules-v1", gameId: "solitaire",
   modes: ["solo"], difficulties: ["draw-1"],
@@ -356,11 +354,25 @@ const solitaireAdapter: Adapter<SolitaireSaveV2> = {
   payloadDifficulty: () => "draw-1", payloadMode: () => "solo",
   source: { format: "legacy-local-storage", schema: "oiyo.solitaire-save", schemaVersion: 2, storageKey: "oiyo:solitaire-state:v2" },
 };
-const freecellAdapter: Adapter<FreeCellPayload> = {
-  adapterVersion: "freecell-session-adapter-v1", engineVersion: "freecell-rules-v1", gameId: "freecell",
-  modes: ["solo"], difficulties: ["standard"], parsePayload: parseFreeCellSave,
+const freecellAdapter: Adapter<FreeCellSaveV2> = {
+  adapterVersion: "freecell-session-adapter-v2", engineVersion: "freecell-rules-v1", gameId: "freecell",
+  modes: ["solo"], difficulties: ["standard"],
+  parsePayload: (value) => {
+    if (!isRecord(value) || typeof value.savedAtEpochMs !== "number") return null;
+    const parsed = parseFreeCellSaveV2(JSON.stringify(value), value.savedAtEpochMs);
+    return parsed
+      ? {
+          ...parsed,
+          state: {
+            tableau: parsed.state.tableau.map((pile) => [...pile]),
+            freeCells: [...parsed.state.freeCells],
+            foundation: parsed.state.foundation.map((pile) => [...pile]),
+          },
+        }
+      : null;
+  },
   payloadDifficulty: () => "standard", payloadMode: () => "solo",
-  source: { format: "legacy-local-storage", schema: "oiyo.freecell-save", schemaVersion: 1, storageKey: "oiyo:freecell-state:v1" },
+  source: { format: "legacy-local-storage", schema: "oiyo.freecell-save", schemaVersion: 2, storageKey: "oiyo:freecell-state:v2" },
 };
 const connectFourAdapter: Adapter<ConnectFourSaveV2> = {
   adapterVersion: "connect-four-session-adapter-v2", engineVersion: "connect-four-rules-v1", gameId: "connect-four",

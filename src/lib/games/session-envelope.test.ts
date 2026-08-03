@@ -402,7 +402,7 @@ describe("GameSessionEnvelope v1", () => {
     reversiBoard[27] = 2; reversiBoard[28] = 1; reversiBoard[35] = 1; reversiBoard[36] = 2;
     const fixtures = [
       ["solitaire", { version: 2, mode: "free", dailyDate: "2026-08-01", seed: 7, state: dealSolitaire(() => 0.3), elapsedSeconds: 30, moves: 4, undoCount: 0, legacyMigrated: false, savedAtEpochMs: Date.now() - 5_000 }],
-      ["freecell", { version: 1, state: createFreeCellGame(() => 0.3) }],
+      ["freecell", { version: 2, state: createFreeCellGame(() => 0.3), moves: 1, elapsedSeconds: 5, legacyMigrated: false, savedAtEpochMs: Date.now() - 1_000 }],
       ["connect-four", { version: 2, board: connectBoard, currentPlayer: 2, mode: "ai", level: 2, lastMove: { row: 5, col: 3 }, startedAtEpochMs: Date.now() - 10_000, savedAtEpochMs: Date.now() - 1_000 }],
       ["gomoku", { version: 2, board: gomokuBoard, isBlackTurn: false, mode: "local", level: 2, lastMove: 112, startedAtEpochMs: Date.now() - 10_000, savedAtEpochMs: Date.now() - 1_000 }],
       ["sudoku", { version: 2, mode: "medium", dailyDate: "2026-08-01", seed: 42, entries: sudokuEntries, seconds: 42, savedAtEpochMs: Date.now() - 5_000 }],

@@ -117,12 +117,12 @@
   {
    "gameId": "freecell",
    "componentPath": "src/components/games/FreeCell.tsx",
-   "adapterPath": "src/lib/games/active-game-save.ts",
+   "adapterPath": "src/lib/games/freecell-save.ts",
    "supportsRestore": true,
-   "sessionStorageKey": "oiyo:freecell-state:v1",
+   "sessionStorageKey": "oiyo:freecell-state:v2",
    "sourceSchema": "oiyo.freecell-save",
-   "sourceSchemaVersion": 1,
-   "adapterVersion": "freecell-session-adapter-v1",
+   "sourceSchemaVersion": 2,
+   "adapterVersion": "freecell-session-adapter-v2",
    "engineVersion": "freecell-rules-v1",
    "modes": [
     "solo"
