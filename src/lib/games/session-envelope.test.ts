@@ -403,7 +403,7 @@ describe("GameSessionEnvelope v1", () => {
     const fixtures = [
       ["solitaire", { version: 2, mode: "free", dailyDate: "2026-08-01", seed: 7, state: dealSolitaire(() => 0.3), elapsedSeconds: 30, moves: 4, undoCount: 0, legacyMigrated: false, savedAtEpochMs: Date.now() - 5_000 }],
       ["freecell", { version: 1, state: createFreeCellGame(() => 0.3) }],
-      ["connect-four", { version: 1, board: connectBoard, currentPlayer: 2, mode: "ai", level: 2 }],
+      ["connect-four", { version: 2, board: connectBoard, currentPlayer: 2, mode: "ai", level: 2, lastMove: { row: 5, col: 3 }, startedAtEpochMs: Date.now() - 10_000, savedAtEpochMs: Date.now() - 1_000 }],
       ["gomoku", { version: 2, board: gomokuBoard, isBlackTurn: false, mode: "local", level: 2, lastMove: 112, startedAtEpochMs: Date.now() - 10_000, savedAtEpochMs: Date.now() - 1_000 }],
       ["sudoku", { version: 2, mode: "medium", dailyDate: "2026-08-01", seed: 42, entries: sudokuEntries, seconds: 42, savedAtEpochMs: Date.now() - 5_000 }],
       ["puzzle15", { version: 1, size: 4, board: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0, 13, 14, 15, 12], puzzleSeed: "1-2-3-4-5-6-7-8-9-10-11-12-13-14-15-0", moves: 3, seconds: 12 }],

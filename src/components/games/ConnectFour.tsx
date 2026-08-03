@@ -3,12 +3,16 @@ import type { Locale } from "../../lib/i18n";
 import { connectFourBestMove } from "../../lib/games/ai/connectfour";
 import type { AiLevel, GameMode } from "../../lib/games/ai/types";
 import { getRecord, recordResult, type GameRecord } from "../../lib/games/records";
-import { clearConnectFourSave, loadConnectFourSave, storeConnectFourSave } from "../../lib/games/active-game-save";
+import {
+  clearConnectFourSaveV2,
+  loadConnectFourSaveV2,
+  storeConnectFourSaveV2,
+  type ConnectFourLastMove,
+} from "../../lib/games/connect-four-save";
+import { createConnectFourBoard, dropDisc, findDropRow, type ConnectFourBoard } from "../../lib/games/connect-four";
 import { opponentBlurb, opponentName, pickOpponent } from '../../lib/games/opponents';
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 
-type Cell = 0 | 1 | 2; // 0=empty, 1=player1, 2=player2
-type Board = Cell[][];
 type GameStatus = "playing" | "won" | "draw";
 
 interface Props {
@@ -120,51 +124,14 @@ const i18n: Record<Locale, {
   },
 };
 
-function emptyBoard(): Board {
-  return Array.from({ length: ROWS }, () => Array(COLS).fill(0) as Cell[]);
-}
-
-function findDropRow(board: Board, col: number): number {
-  for (let r = ROWS - 1; r >= 0; r--) {
-    if (board[r][col] === 0) return r;
-  }
-  return -1;
-}
-
-function checkWin(board: Board, row: number, col: number, player: 1 | 2): number[][] | null {
-  const directions = [
-    [0, 1],   // horizontal
-    [1, 0],   // vertical
-    [1, 1],   // diagonal down-right
-    [1, -1],  // diagonal down-left
-  ];
-
-  for (const [dr, dc] of directions) {
-    const cells: number[][] = [[row, col]];
-
-    for (let step = 1; step < 4; step++) {
-      const r = row + dr * step;
-      const c = col + dc * step;
-      if (r >= 0 && r < ROWS && c >= 0 && c < COLS && board[r][c] === player) {
-        cells.push([r, c]);
-      } else break;
-    }
-    for (let step = 1; step < 4; step++) {
-      const r = row - dr * step;
-      const c = col - dc * step;
-      if (r >= 0 && r < ROWS && c >= 0 && c < COLS && board[r][c] === player) {
-        cells.push([r, c]);
-      } else break;
-    }
-
-    if (cells.length >= 4) return cells.slice(0, 4);
-  }
-  return null;
-}
-
-function isBoardFull(board: Board): boolean {
-  return board[0].every((cell) => cell !== 0);
-}
+const extra: Record<Locale, { pause: string; resume: string; restored: string; paused: string; sound: string; moves: string; nextGoal: string }> = {
+  ko: { pause: "일시정지", resume: "계속", restored: "저장된 대국 복원", paused: "대국 일시정지", sound: "소리", moves: "수", nextGoal: "다음 목표: 중앙 열을 장악해 다양한 방향으로 4개를 노리세요" },
+  en: { pause: "Pause", resume: "Resume", restored: "Saved match restored", paused: "Match paused", sound: "Sound", moves: "moves", nextGoal: "Next goal: control the center column to threaten in multiple directions" },
+  ja: { pause: "一時停止", resume: "再開", restored: "保存した対局を復元", paused: "対局を一時停止", sound: "音", moves: "手", nextGoal: "次の目標: 中央の列を制し、複数方向に4つを狙いましょう" },
+  zh: { pause: "暂停", resume: "继续", restored: "已恢复保存的对局", paused: "对局已暂停", sound: "声音", moves: "步", nextGoal: "下个目标：控制中间列，威胁多个方向连四" },
+  fr: { pause: "Pause", resume: "Reprendre", restored: "Partie restaurée", paused: "Partie en pause", sound: "Son", moves: "coups", nextGoal: "Prochain objectif : contrôlez la colonne centrale pour menacer dans plusieurs directions" },
+  es: { pause: "Pausa", resume: "Continuar", restored: "Partida restaurada", paused: "Partida en pausa", sound: "Sonido", moves: "jugadas", nextGoal: "Siguiente objetivo: controla la columna central para amenazar en varias direcciones" },
+};
 
 // Falling animation state per cell
 interface FallingCell {
@@ -176,9 +143,10 @@ interface FallingCell {
 
 const ConnectFour: React.FC<Props> = ({ locale }) => {
   const t = i18n[locale] ?? i18n.en;
+  const x = extra[locale] ?? extra.en;
   const reducedMotion = usePrefersReducedMotion();
 
-  const [board, setBoard] = useState<Board>(emptyBoard);
+  const [board, setBoard] = useState<ConnectFourBoard>(createConnectFourBoard);
   const [currentPlayer, setCurrentPlayer] = useState<1 | 2>(1);
   const [status, setStatus] = useState<GameStatus>("playing");
   const [winCells, setWinCells] = useState<number[][] | null>(null);
@@ -191,30 +159,74 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
   const [thinking, setThinking] = useState(false);
   const [record, setRecord] = useState<GameRecord | null>(null);
   const [activeCol, setActiveCol] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [restored, setRestored] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [lastMove, setLastMove] = useState<ConnectFourLastMove | null>(null);
+  const [moveCount, setMoveCount] = useState(0);
   const animFrameRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const aiTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const columnRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const startedAtRef = useRef<number>(Date.now());
+  const audioRef = useRef<AudioContext | null>(null);
+
+  const tone = useCallback((frequency: number, duration = 0.05) => {
+    if (muted || typeof window === "undefined") return;
+    const context = audioRef.current ?? new AudioContext();
+    audioRef.current = context;
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    oscillator.frequency.value = frequency;
+    gain.gain.setValueAtTime(0.05, context.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + duration);
+    oscillator.connect(gain).connect(context.destination);
+    oscillator.start();
+    oscillator.stop(context.currentTime + duration);
+  }, [muted]);
 
   useEffect(() => {
     setRecord(getRecord("connectfour"));
-    const restored = loadConnectFourSave();
-    if (restored) {
-      setBoard(restored.board);
-      setCurrentPlayer(restored.currentPlayer);
-      setMode(restored.mode);
-      setLevel(restored.level);
+    const restoredSave = loadConnectFourSaveV2();
+    if (restoredSave) {
+      setBoard(restoredSave.board);
+      setCurrentPlayer(restoredSave.currentPlayer);
+      setMode(restoredSave.mode);
+      setLevel(restoredSave.level);
+      setLastMove(restoredSave.lastMove);
+      setMoveCount(restoredSave.board.flat().filter((cell) => cell !== 0).length);
+      startedAtRef.current = restoredSave.startedAtEpochMs;
+      setPaused(true);
+      setRestored(true);
     }
   }, []);
   useEffect(() => {
     if (board.some((row) => row.some((cell) => cell !== 0)) && status === "playing" && !animating) {
-      storeConnectFourSave({ board, currentPlayer, mode, level });
+      storeConnectFourSaveV2({
+        board, currentPlayer, mode, level, lastMove,
+        startedAtEpochMs: startedAtRef.current,
+        savedAtEpochMs: Date.now(),
+      });
     }
-  }, [board, currentPlayer, mode, level, status, animating]);
+  }, [board, currentPlayer, mode, level, status, animating, lastMove]);
+
+  // Pause on hidden tab: stop the AI's pending timer rather than let it fire
+  // into a backgrounded, possibly-stale board.
+  useEffect(() => {
+    const onHidden = () => {
+      if (document.hidden) {
+        setPaused(true);
+        if (aiTimerRef.current) clearTimeout(aiTimerRef.current);
+        setThinking(false);
+      }
+    };
+    document.addEventListener("visibilitychange", onHidden);
+    return () => document.removeEventListener("visibilitychange", onHidden);
+  }, []);
 
   const resetGame = useCallback(() => {
     if (animFrameRef.current) clearTimeout(animFrameRef.current);
     if (aiTimerRef.current) clearTimeout(aiTimerRef.current);
-    setBoard(emptyBoard());
+    setBoard(createConnectFourBoard());
     setCurrentPlayer(1);
     setStatus("playing");
     setWinCells(null);
@@ -223,7 +235,12 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
     setAnimating(false);
     setThinking(false);
     setActiveCol(0);
-    clearConnectFourSave();
+    setPaused(false);
+    setRestored(false);
+    setLastMove(null);
+    setMoveCount(0);
+    startedAtRef.current = Date.now();
+    clearConnectFourSaveV2();
   }, []);
 
   // Cleanup on unmount
@@ -231,65 +248,73 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
     return () => {
       if (animFrameRef.current) clearTimeout(animFrameRef.current);
       if (aiTimerRef.current) clearTimeout(aiTimerRef.current);
+      void audioRef.current?.close();
     };
   }, []);
 
-  const dropDisc = useCallback(
+  const dropDiscAt = useCallback(
     (col: number) => {
-      if (status !== "playing" || animating) return;
+      if (status !== "playing" || animating || paused) return;
 
       const dropRow = findDropRow(board, col);
       if (dropRow === -1) return; // column full
 
       setAnimating(true);
       setFallingCell({ row: dropRow, col, player: currentPlayer, fromRow: 0 });
+      if (!board.some((row) => row.some((cell) => cell !== 0))) startedAtRef.current = Date.now();
 
       // After animation settles, commit
       animFrameRef.current = setTimeout(() => {
-        const newBoard = board.map((r) => [...r]) as Board;
-        newBoard[dropRow][col] = currentPlayer;
-        setBoard(newBoard);
+        const move = dropDisc(board, col, currentPlayer);
+        if (!move) { setAnimating(false); setFallingCell(null); return; }
+        setBoard(move.board);
         setFallingCell(null);
+        setLastMove({ row: dropRow, col });
+        setMoveCount((count) => count + 1);
 
-        const winning = checkWin(newBoard, dropRow, col, currentPlayer);
-        if (winning) {
-          clearConnectFourSave();
-          setWinCells(winning);
-          setStatus("won");
-          if (mode === "ai") setRecord(recordResult("connectfour", currentPlayer === AI_PLAYER ? "l" : "w"));
-        } else if (isBoardFull(newBoard)) {
-          clearConnectFourSave();
-          setStatus("draw");
-          if (mode === "ai") setRecord(recordResult("connectfour", "d"));
+        if (move.result !== null) {
+          clearConnectFourSaveV2();
+          if (move.result === 0) {
+            setStatus("draw");
+            tone(220, 0.08);
+            if (mode === "ai") setRecord(recordResult("connectfour", "d"));
+          } else {
+            setWinCells(move.winCells);
+            setStatus("won");
+            tone(660, 0.18);
+            if (mode === "ai") setRecord(recordResult("connectfour", currentPlayer === AI_PLAYER ? "l" : "w"));
+          }
         } else {
+          tone(300, 0.05);
           setCurrentPlayer(currentPlayer === 1 ? 2 : 1);
         }
         setAnimating(false);
       }, reducedMotion ? 60 : 320);
     },
-    [board, currentPlayer, status, animating, mode, reducedMotion]
+    [board, currentPlayer, status, animating, paused, mode, reducedMotion, tone]
   );
 
   const handleColClick = useCallback(
     (col: number) => {
+      if (paused) return;
       if (mode === "ai" && (currentPlayer === AI_PLAYER || thinking)) return; // AI's turn
-      dropDisc(col);
+      dropDiscAt(col);
     },
-    [mode, currentPlayer, thinking, dropDisc]
+    [mode, currentPlayer, thinking, paused, dropDiscAt]
   );
 
   // AI turn: think briefly, then drop (reuses the same falling animation).
   useEffect(() => {
-    if (mode !== "ai" || status !== "playing" || currentPlayer !== AI_PLAYER || animating) return;
+    if (mode !== "ai" || status !== "playing" || currentPlayer !== AI_PLAYER || animating || paused) return;
     setThinking(true);
     aiTimerRef.current = setTimeout(() => {
-      const col = connectFourBestMove(board.map((r) => [...r]) as Board, AI_PLAYER, level);
+      const col = connectFourBestMove(board.map((r) => [...r]) as ConnectFourBoard, AI_PLAYER, level);
       setThinking(false);
-      if (col >= 0) dropDisc(col);
+      if (col >= 0) dropDiscAt(col);
     }, AI_DELAY_MS);
     return () => { if (aiTimerRef.current) clearTimeout(aiTimerRef.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, status, currentPlayer, animating]);
+  }, [mode, status, currentPlayer, animating, paused]);
 
   const switchMode = (m: GameMode) => {
     if (m === mode) return;
@@ -365,6 +390,14 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
             ))}
           </div>
         )}
+        {moveCount > 0 && status === "playing" && (
+          <button type="button" onClick={() => setPaused((value) => { if (value) setRestored(false); return !value; })} className="min-h-11 px-3 rounded-lg border border-border text-xs font-bold text-muted-foreground">
+            {paused ? `▶ ${x.resume}` : `Ⅱ ${x.pause}`}
+          </button>
+        )}
+        <button type="button" onClick={() => setMuted((value) => !value)} aria-pressed={muted} className="min-h-11 px-3 rounded-lg border border-border text-xs font-bold text-muted-foreground">
+          {muted ? "🔇" : "🔊"} {x.sound}
+        </button>
         {mode === "ai" && record && record.w + record.l + record.d > 0 && (
           <span className="ml-auto text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
             {t.record} {record.w}–{record.l}{record.d ? `–${record.d}` : ""}
@@ -380,6 +413,12 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
           <span className="mx-1.5 opacity-40">·</span>
           {opponentBlurb(opponent, locale)}
         </p>
+      )}
+
+      {(paused || restored) && (
+        <div className="mb-3 rounded-xl border border-border bg-muted/40 p-3 text-center text-xs font-bold text-muted-foreground" role="status">
+          {restored ? `${x.restored} · ` : ""}{x.paused}
+        </div>
       )}
 
       {/* Status bar */}
@@ -423,7 +462,7 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
           {Array.from({ length: COLS }, (_, c) => {
             const dropRow = status === "playing" ? findDropRow(board, c) : -1;
             const showPreview =
-              hoveredCol === c && dropRow !== -1 && status === "playing" && !animating;
+              hoveredCol === c && dropRow !== -1 && status === "playing" && !animating && !paused;
             return (
               <div
                 key={c}
@@ -443,7 +482,7 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
 
         {/* Grid */}
         <div
-          className="bg-blue-700 rounded-2xl p-2 shadow-xl"
+          className={`bg-blue-700 rounded-2xl p-2 shadow-xl transition-opacity motion-reduce:transition-none ${paused ? "opacity-70" : ""}`}
           style={{ display: "grid", gridTemplateColumns: `repeat(${COLS}, ${cellSize}px)`, gap: `${cellGap}px` }}
         >
           {Array.from({ length: ROWS }, (_, r) =>
@@ -454,6 +493,7 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
                 fallingCell.col === c &&
                 fallingCell.row === r;
               const winHighlight = isWinCell(r, c);
+              const isLastMove = lastMove !== null && lastMove.row === r && lastMove.col === c;
 
               let diskClass = "bg-blue-900/60";
               if (isFalling) {
@@ -481,7 +521,7 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
                   <div
                     className={`absolute rounded-full ${reducedMotion ? 'transition-opacity' : 'transition-all'} ${diskClass} ${
                       isFalling && !reducedMotion ? "animate-fall" : ""
-                    } ${winHighlight ? `ring-4 ring-white ring-offset-1 ring-offset-blue-700 ${reducedMotion ? '' : 'scale-110'} z-10` : ""}`}
+                    } ${winHighlight ? `ring-4 ring-white ring-offset-1 ring-offset-blue-700 ${reducedMotion ? '' : 'scale-110'} z-10` : isLastMove ? "ring-2 ring-white/80 ring-offset-1 ring-offset-blue-700 z-10" : ""}`}
                     style={{
                       margin: "5px",
                       inset: "0",
@@ -522,7 +562,7 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
               onMouseEnter={() => setHoveredCol(c)}
               onMouseLeave={() => setHoveredCol(null)}
               tabIndex={activeCol === c ? 0 : -1}
-              aria-disabled={status !== "playing" || findDropRow(board, c) === -1 || (mode === "ai" && (currentPlayer === AI_PLAYER || thinking))}
+              aria-disabled={status !== "playing" || paused || findDropRow(board, c) === -1 || (mode === "ai" && (currentPlayer === AI_PLAYER || thinking))}
               aria-label={`${t.column} ${c + 1}${findDropRow(board, c) === -1 ? `, ${t.columnFull}` : ""}`}
             />
           ))}
@@ -541,7 +581,9 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
       </div>
 
       {status !== "playing" && (
-        <div className="mt-4 flex justify-center">
+        <div className="mt-4 flex flex-col items-center gap-2">
+          <p className="text-xs text-muted-foreground">{moveCount} {x.moves}</p>
+          {status === "won" && <p className="text-[11px] text-muted-foreground max-w-xs text-center">{x.nextGoal}</p>}
           <button
             type="button"
             onClick={resetGame}

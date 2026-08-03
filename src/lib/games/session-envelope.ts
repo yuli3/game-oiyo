@@ -4,7 +4,6 @@ import { parseMinesweeperSave, type MinesweeperSave } from "./minesweeper-save";
 import { parseBrickBreakerSave, type BrickBreakerSave } from "./brick-breaker-save";
 import {
   parseCheckersSave,
-  parseConnectFourSave,
   parseFreeCellSave,
   parseGame2048Save,
   parsePuzzle15Save,
@@ -19,6 +18,7 @@ import { parseSolitaireSaveV2, type SolitaireSaveV2 } from "./solitaire-save";
 import { parseSnakeSave, type SnakeSaveV1 } from "./snake-save";
 import { parseJanggiSave, type JanggiSaveV1 } from "./janggi-save";
 import { parseGomokuSaveV2, type GomokuSaveV2 } from "./gomoku-save";
+import { parseConnectFourSaveV2, type ConnectFourSaveV2 } from "./connect-four-save";
 import { parseKurodokoSaveV1, type KurodokoSaveV1 } from "./kurodoko-save";
 import { parseYahtzeeSave, type YahtzeeSaveV1 } from "./yahtzee-save";
 import { parseCaveDashSave, type CaveDashSaveV1 } from "./cave-dash-save";
@@ -344,7 +344,6 @@ const brickBreakerAdapter: Adapter<BrickBreakerSave> = {
 };
 
 type FreeCellPayload = NonNullable<ReturnType<typeof parseFreeCellSave>>;
-type ConnectFourPayload = NonNullable<ReturnType<typeof parseConnectFourSave>>;
 
 const solitaireAdapter: Adapter<SolitaireSaveV2> = {
   adapterVersion: "solitaire-session-adapter-v2", engineVersion: "solitaire-rules-v1", gameId: "solitaire",
@@ -363,11 +362,15 @@ const freecellAdapter: Adapter<FreeCellPayload> = {
   payloadDifficulty: () => "standard", payloadMode: () => "solo",
   source: { format: "legacy-local-storage", schema: "oiyo.freecell-save", schemaVersion: 1, storageKey: "oiyo:freecell-state:v1" },
 };
-const connectFourAdapter: Adapter<ConnectFourPayload> = {
-  adapterVersion: "connect-four-session-adapter-v1", engineVersion: "connect-four-rules-v1", gameId: "connect-four",
-  modes: ["local", "ai"], difficulties: ["level-1", "level-2", "level-3"], parsePayload: parseConnectFourSave,
+const connectFourAdapter: Adapter<ConnectFourSaveV2> = {
+  adapterVersion: "connect-four-session-adapter-v2", engineVersion: "connect-four-rules-v1", gameId: "connect-four",
+  modes: ["local", "ai"], difficulties: ["level-1", "level-2", "level-3"],
+  parsePayload: (value) => {
+    if (!isRecord(value) || typeof value.savedAtEpochMs !== "number") return null;
+    return parseConnectFourSaveV2(JSON.stringify(value), value.savedAtEpochMs);
+  },
   payloadDifficulty: (value) => `level-${value.level}`, payloadMode: (value) => value.mode,
-  source: { format: "legacy-local-storage", schema: "oiyo.connect-four-save", schemaVersion: 1, storageKey: "oiyo:connect-four-state:v1" },
+  source: { format: "legacy-local-storage", schema: "oiyo.connect-four-save", schemaVersion: 2, storageKey: "oiyo:connect-four-state:v2" },
 };
 const gomokuAdapter: Adapter<GomokuSaveV2> = {
   adapterVersion: "gomoku-session-adapter-v2", engineVersion: "gomoku-rules-v1", gameId: "gomoku",

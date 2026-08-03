@@ -138,12 +138,12 @@
   {
    "gameId": "connect-four",
    "componentPath": "src/components/games/ConnectFour.tsx",
-   "adapterPath": "src/lib/games/active-game-save.ts",
+   "adapterPath": "src/lib/games/connect-four-save.ts",
    "supportsRestore": true,
-   "sessionStorageKey": "oiyo:connect-four-state:v1",
+   "sessionStorageKey": "oiyo:connect-four-state:v2",
    "sourceSchema": "oiyo.connect-four-save",
-   "sourceSchemaVersion": 1,
-   "adapterVersion": "connect-four-session-adapter-v1",
+   "sourceSchemaVersion": 2,
+   "adapterVersion": "connect-four-session-adapter-v2",
    "engineVersion": "connect-four-rules-v1",
    "modes": [
     "local",
