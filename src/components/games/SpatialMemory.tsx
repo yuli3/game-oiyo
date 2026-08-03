@@ -45,6 +45,7 @@ const COPY: Record<Locale, {
   watch: string; recall: string; correct: string; wrong: string; cleared: string;
   rotateLeft: string; rotateRight: string; controls: string;
   marker: (n: number) => string; newBest: string; loading: string; noWebgl: string;
+  sound: string; paused: string; resume: string;
 }> = {
   ko: {
     title: "공간 기억", subtitle: "무엇이 아니라 '어디였는지'를 기억하세요",
@@ -56,6 +57,7 @@ const COPY: Record<Locale, {
     marker: (n) => `${n}번 표식`, newBest: "최고 기록!",
     loading: "3D 공간을 불러오는 중…",
     noWebgl: "이 브라우저에서는 3D 보기를 쓸 수 없어 평면 배치로 진행합니다. 규칙은 같습니다.",
+    sound: "소리", paused: "탭이 백그라운드에 있어 일시정지되었습니다", resume: "이어서 보기",
   },
   en: {
     title: "Spatial Memory", subtitle: "Remember where it was, not just what it was",
@@ -67,6 +69,7 @@ const COPY: Record<Locale, {
     marker: (n) => `Marker ${n}`, newBest: "New best!",
     loading: "Loading the 3D space…",
     noWebgl: "This browser can't show the 3D view, so the markers are laid out flat. The rules are the same.",
+    sound: "Sound", paused: "Paused — the tab was in the background", resume: "Resume",
   },
   ja: {
     title: "空間記憶", subtitle: "何かではなく「どこだったか」を覚える",
@@ -78,6 +81,7 @@ const COPY: Record<Locale, {
     marker: (n) => `マーカー${n}`, newBest: "自己ベスト!",
     loading: "3D空間を読み込み中…",
     noWebgl: "このブラウザでは3D表示が使えないため平面配置で進めます。ルールは同じです。",
+    sound: "音", paused: "タブがバックグラウンドのため一時停止しました", resume: "再開して見る",
   },
   zh: {
     title: "空间记忆", subtitle: "记住的不是「什么」，而是「在哪里」",
@@ -89,6 +93,7 @@ const COPY: Record<Locale, {
     marker: (n) => `标记 ${n}`, newBest: "新纪录!",
     loading: "正在加载 3D 空间…",
     noWebgl: "此浏览器无法显示 3D 视图，改用平面排列。规则相同。",
+    sound: "声音", paused: "标签页在后台，已暂停", resume: "继续观看",
   },
   fr: {
     title: "Mémoire spatiale", subtitle: "Retenez où c'était, pas seulement ce que c'était",
@@ -100,6 +105,7 @@ const COPY: Record<Locale, {
     marker: (n) => `Repère ${n}`, newBest: "Nouveau record !",
     loading: "Chargement de l'espace 3D…",
     noWebgl: "Ce navigateur ne peut pas afficher la vue 3D : les repères sont disposés à plat. Les règles ne changent pas.",
+    sound: "Son", paused: "En pause — l'onglet était en arrière-plan", resume: "Reprendre",
   },
   es: {
     title: "Memoria espacial", subtitle: "Recuerda dónde estaba, no solo qué era",
@@ -111,6 +117,7 @@ const COPY: Record<Locale, {
     marker: (n) => `Marcador ${n}`, newBest: "¡Nuevo récord!",
     loading: "Cargando el espacio 3D…",
     noWebgl: "Este navegador no puede mostrar la vista 3D, así que los marcadores se colocan en plano. Las reglas son las mismas.",
+    sound: "Sonido", paused: "En pausa: la pestaña estaba en segundo plano", resume: "Continuar",
   },
 };
 
@@ -141,6 +148,24 @@ export default function SpatialMemory({ locale }: { locale: Locale }) {
   const [status, setStatus] = useState("");
   const [yaw, setYaw] = useState(0);
   const [webgl, setWebgl] = useState(true);
+  const [muted, setMuted] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const wasShowingRef = useRef(false);
+  const audioRef = useRef<AudioContext | null>(null);
+
+  const tone = useCallback((frequency: number, duration = 0.05) => {
+    if (muted || typeof window === "undefined") return;
+    const context = audioRef.current ?? new AudioContext();
+    audioRef.current = context;
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    oscillator.frequency.value = frequency;
+    gain.gain.setValueAtTime(0.05, context.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + duration);
+    oscillator.connect(gain).connect(context.destination);
+    oscillator.start();
+    oscillator.stop(context.currentTime + duration);
+  }, [muted]);
 
   const timers = useRef<number[]>([]);
   const clearTimers = useCallback(() => {
@@ -155,6 +180,8 @@ export default function SpatialMemory({ locale }: { locale: Locale }) {
     return clearTimers;
   }, [clearTimers]);
 
+  useEffect(() => () => { void audioRef.current?.close(); }, []);
+
   const markers = useMemo(() => markerPositions(level), [level]);
   const order = useMemo(() => keyboardOrder(level), [level]);
   const label = useCallback((index: number) => t.marker(order.indexOf(index) + 1), [order, t]);
@@ -168,7 +195,7 @@ export default function SpatialMemory({ locale }: { locale: Locale }) {
     setEntered([]);
     next.forEach((markerIndex, step) => {
       timers.current.push(
-        window.setTimeout(() => setLit(markerIndex), step * showMs),
+        window.setTimeout(() => { setLit(markerIndex); tone(440, 0.08); }, step * showMs),
       );
       timers.current.push(
         window.setTimeout(() => setLit(null), step * showMs + showMs * 0.62),
@@ -181,7 +208,28 @@ export default function SpatialMemory({ locale }: { locale: Locale }) {
         setStatus(t.recall);
       }, next.length * showMs),
     );
-  }, [clearTimers, t]);
+  }, [clearTimers, t, tone]);
+
+  // Pause on hidden tab: a memory game cannot fairly resume from wherever a
+  // background timer left off, so stop the timers and — if playback was in
+  // progress — replay that round from the start once the player returns,
+  // rather than silently skipping frames of a sequence nobody saw.
+  useEffect(() => {
+    const onHidden = () => {
+      if (!document.hidden) return;
+      if (phase !== "showing" && phase !== "input") return;
+      wasShowingRef.current = phase === "showing";
+      clearTimers();
+      setPaused(true);
+    };
+    document.addEventListener("visibilitychange", onHidden);
+    return () => document.removeEventListener("visibilitychange", onHidden);
+  }, [phase, clearTimers]);
+
+  const resumeFromPause = useCallback(() => {
+    setPaused(false);
+    if (wasShowingRef.current) playback(sequence, level);
+  }, [playback, sequence, level]);
 
   const startRound = useCallback((forLevel: number) => {
     const next = generateSequence(forLevel, Math.floor(Math.random() * 99991));
@@ -208,18 +256,20 @@ export default function SpatialMemory({ locale }: { locale: Locale }) {
     const saved = recordBest(GAME_KEY, finalScore, "score", spatialRecordExtra(atLevel, finalStreak));
     setBest(saved.value);
     setIsNewBest(beat && finalScore > 0);
+    tone(beat && finalScore > 0 ? 880 : 220, beat && finalScore > 0 ? 0.22 : 0.15);
     if (beat && finalScore > 0 && !reducedMotion) {
       confetti({ particleCount: 90, spread: 72, origin: { y: 0.6 } });
     }
-  }, [clearTimers, reducedMotion]);
+  }, [clearTimers, reducedMotion, tone]);
 
   const select = useCallback((index: number) => {
-    if (phase !== "input") return;
+    if (phase !== "input" || paused) return;
     const step = entered.length;
     const result = judgeStep(sequence, step, index);
 
     if (result === "wrong") {
       setStatus(t.wrong);
+      tone(140, 0.18);
       endGame(score, level, streak);
       return;
     }
@@ -228,10 +278,12 @@ export default function SpatialMemory({ locale }: { locale: Locale }) {
 
     if (result === "correct") {
       setStatus(t.correct);
+      tone(560, 0.06);
       return;
     }
 
     // Round cleared.
+    tone(700, 0.14);
     const gained = scoreForRound(level, streak);
     const nextScore = score + gained;
     const advanced = nextLevel(level, true);
@@ -240,7 +292,7 @@ export default function SpatialMemory({ locale }: { locale: Locale }) {
     setStatus(t.cleared);
     setLevel(advanced);
     timers.current.push(window.setTimeout(() => startRound(advanced), 850));
-  }, [phase, entered, sequence, t, endGame, score, level, streak, startRound]);
+  }, [phase, paused, entered, sequence, t, endGame, score, level, streak, startRound, tone]);
 
   // Arrow keys turn the view. Without this the game cannot be finished with a
   // keyboard alone, because markers behind the camera would be unreachable.
@@ -256,7 +308,7 @@ export default function SpatialMemory({ locale }: { locale: Locale }) {
   }, [phase]);
 
   const sceneProps: SceneProps = {
-    markers, lit, entered, interactive: phase === "input",
+    markers, lit, entered, interactive: phase === "input" && !paused,
     reducedMotion, yaw, label, onSelect: select,
   };
 
@@ -278,6 +330,14 @@ export default function SpatialMemory({ locale }: { locale: Locale }) {
       <div className="mb-2 flex items-center gap-3 text-xs font-bold">
         <span>{t.level} {level}/{MAX_SPATIAL_LEVEL}</span>
         <span className="text-muted-foreground">{t.streak} {streak}</span>
+        <button
+          type="button"
+          onClick={() => setMuted((value) => !value)}
+          aria-pressed={muted}
+          className="ml-auto min-h-11 rounded-xl border border-border px-3 text-xs font-bold text-muted-foreground"
+        >
+          {muted ? "🔇" : "🔊"} {t.sound}
+        </button>
       </div>
 
       {/* The live region is how a screen-reader user follows the round. */}
@@ -292,6 +352,18 @@ export default function SpatialMemory({ locale }: { locale: Locale }) {
           </Suspense>
         )}
         {playing && !webgl && <StaticField {...sceneProps} notice={t.noWebgl} />}
+        {playing && paused && (
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-[#070b16]/90 px-6 text-center" role="status" aria-live="polite">
+            <p className="text-sm font-bold text-slate-200">{t.paused}</p>
+            <button
+              type="button"
+              onClick={resumeFromPause}
+              className="min-h-11 rounded-2xl bg-primary px-8 py-3 font-black text-primary-foreground"
+            >
+              {t.resume}
+            </button>
+          </div>
+        )}
         {!playing && (
           <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
             <p className="text-sm leading-relaxed text-slate-300">{t.controls}</p>
