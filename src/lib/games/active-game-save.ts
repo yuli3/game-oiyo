@@ -2,6 +2,7 @@ import { isFreeCellWon, type FreeCellCard, type FreeCellState } from "./freecell
 import { isSolitaireWon, type SolitaireCard, type SolitaireState } from "./solitaire";
 import { isSudokuSolved, type SudokuValue } from "./logic-puzzles";
 import { checkersMoves, type CheckersPiece } from "./ai/checkers";
+import { isPuzzle15Solvable } from "./puzzle15";
 import { reversiMoves } from "./ai/reversi";
 import type { AiLevel, GameMode } from "./ai/types";
 
@@ -207,6 +208,7 @@ export function parsePuzzle15Save(value: unknown): Puzzle15Save | null {
   if (!board.every((cell) => Number.isInteger(cell) && cell >= 0 && cell < cellCount)) return null;
   if (new Set(board).size !== cellCount) return null;
   if (board.every((v, i) => v === (i + 1) % cellCount)) return null; // already solved: not resumable
+  if (!isPuzzle15Solvable(board, size)) return null; // a tampered board could otherwise be permanently stuck
   return { version: 1, size, board, puzzleSeed: value.puzzleSeed, moves: value.moves as number, seconds: value.seconds as number };
 }
 
