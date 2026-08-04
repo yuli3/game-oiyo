@@ -3,6 +3,7 @@ import confetti from "canvas-confetti";
 import type { Locale } from "../../lib/i18n";
 import { getBest, recordBest } from "../../lib/games/records";
 import { frameDeltaSeconds } from "../../lib/games/time-contracts";
+import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import {
   GOOD_MS,
   beatToSeconds,
@@ -84,16 +85,16 @@ type I18n = {
   title: string; subtitle: string; tapStart: string; controls: string;
   score: string; best: string; combo: string; miss: string;
   perfect: string; good: string; missed: string;
-  gameOver: string; restart: string; newBest: string;
+  gameOver: string; restart: string; newBest: string; sound: string;
 };
 
 const T: Record<Locale, I18n> = {
-  ko: { title: "리듬 탭", subtitle: "노트가 라인에 닿을 때 탭하라", tapStart: "탭하여 시작", controls: "노트가 아래 판정선에 닿는 순간 해당 레인을 탭하세요(데스크탑: D·F·J·K). 5번 놓치면 끝납니다.", score: "점수", best: "최고", combo: "콤보", miss: "미스", perfect: "퍼펙트!", good: "굿", missed: "미스", gameOver: "게임 오버", restart: "다시 하기", newBest: "🎉 신기록!" },
-  en: { title: "Rhythm Tap", subtitle: "Tap the lane as notes hit the line", tapStart: "Tap to start", controls: "Tap a lane the moment its note reaches the hit line (desktop: D, F, J, K). Miss 5 times and it's over.", score: "Score", best: "Best", combo: "Combo", miss: "Miss", perfect: "Perfect!", good: "Good", missed: "Miss", gameOver: "Game Over", restart: "Play again", newBest: "🎉 New best!" },
-  ja: { title: "リズムタップ", subtitle: "ノーツがラインに来たらタップ", tapStart: "タップで開始", controls: "ノーツが下の判定ラインに来た瞬間、そのレーンをタップ(PC: D・F・J・K)。5回ミスで終了です。", score: "スコア", best: "ベスト", combo: "コンボ", miss: "ミス", perfect: "パーフェクト！", good: "グッド", missed: "ミス", gameOver: "ゲームオーバー", restart: "もう一度", newBest: "🎉 新記録！" },
-  fr: { title: "Rhythm Tap", subtitle: "Touchez la voie quand la note arrive", tapStart: "Touchez pour commencer", controls: "Touchez une voie au moment où sa note atteint la ligne (PC : D, F, J, K). 5 ratés et c'est fini.", score: "Score", best: "Record", combo: "Combo", miss: "Raté", perfect: "Parfait !", good: "Bien", missed: "Raté", gameOver: "Game Over", restart: "Rejouer", newBest: "🎉 Nouveau record !" },
-  es: { title: "Rhythm Tap", subtitle: "Toca el carril cuando la nota llegue", tapStart: "Toca para empezar", controls: "Toca un carril justo cuando su nota llega a la línea (PC: D, F, J, K). 5 fallos y se acaba.", score: "Puntos", best: "Récord", combo: "Combo", miss: "Fallo", perfect: "¡Perfecto!", good: "Bien", missed: "Fallo", gameOver: "Fin del juego", restart: "Jugar de nuevo", newBest: "🎉 ¡Nuevo récord!" },
-  zh: { title: "节奏点击", subtitle: "音符到线时点击对应轨道", tapStart: "点击开始", controls: "当音符到达下方判定线时点击对应轨道(桌面：D、F、J、K)。失误5次即结束。", score: "得分", best: "最佳", combo: "连击", miss: "失误", perfect: "完美！", good: "不错", missed: "失误", gameOver: "游戏结束", restart: "再玩一次", newBest: "🎉 新纪录！" },
+  ko: { title: "리듬 탭", subtitle: "노트가 라인에 닿을 때 탭하라", tapStart: "탭하여 시작", controls: "노트가 아래 판정선에 닿는 순간 해당 레인을 탭하세요(데스크탑: D·F·J·K). 5번 놓치면 끝납니다.", score: "점수", best: "최고", combo: "콤보", miss: "미스", perfect: "퍼펙트!", good: "굿", missed: "미스", gameOver: "게임 오버", restart: "다시 하기", newBest: "🎉 신기록!", sound: "소리" },
+  en: { title: "Rhythm Tap", subtitle: "Tap the lane as notes hit the line", tapStart: "Tap to start", controls: "Tap a lane the moment its note reaches the hit line (desktop: D, F, J, K). Miss 5 times and it's over.", score: "Score", best: "Best", combo: "Combo", miss: "Miss", perfect: "Perfect!", good: "Good", missed: "Miss", gameOver: "Game Over", restart: "Play again", newBest: "🎉 New best!", sound: "Sound" },
+  ja: { title: "リズムタップ", subtitle: "ノーツがラインに来たらタップ", tapStart: "タップで開始", controls: "ノーツが下の判定ラインに来た瞬間、そのレーンをタップ(PC: D・F・J・K)。5回ミスで終了です。", score: "スコア", best: "ベスト", combo: "コンボ", miss: "ミス", perfect: "パーフェクト！", good: "グッド", missed: "ミス", gameOver: "ゲームオーバー", restart: "もう一度", newBest: "🎉 新記録！", sound: "音" },
+  fr: { title: "Rhythm Tap", subtitle: "Touchez la voie quand la note arrive", tapStart: "Touchez pour commencer", controls: "Touchez une voie au moment où sa note atteint la ligne (PC : D, F, J, K). 5 ratés et c'est fini.", score: "Score", best: "Record", combo: "Combo", miss: "Raté", perfect: "Parfait !", good: "Bien", missed: "Raté", gameOver: "Game Over", restart: "Rejouer", newBest: "🎉 Nouveau record !", sound: "Son" },
+  es: { title: "Rhythm Tap", subtitle: "Toca el carril cuando la nota llegue", tapStart: "Toca para empezar", controls: "Toca un carril justo cuando su nota llega a la línea (PC: D, F, J, K). 5 fallos y se acaba.", score: "Puntos", best: "Récord", combo: "Combo", miss: "Fallo", perfect: "¡Perfecto!", good: "Bien", missed: "Fallo", gameOver: "Fin del juego", restart: "Jugar de nuevo", newBest: "🎉 ¡Nuevo récord!", sound: "Sonido" },
+  zh: { title: "节奏点击", subtitle: "音符到线时点击对应轨道", tapStart: "点击开始", controls: "当音符到达下方判定线时点击对应轨道(桌面：D、F、J、K)。失误5次即结束。", score: "得分", best: "最佳", combo: "连击", miss: "失误", perfect: "完美！", good: "不错", missed: "失误", gameOver: "游戏结束", restart: "再玩一次", newBest: "🎉 新纪录！", sound: "声音" },
 };
 
 interface Props { locale: Locale }
@@ -106,6 +107,10 @@ const RhythmTap: React.FC<Props> = ({ locale }) => {
   const [miss, setMiss] = useState(0);
   const [best, setBest] = useState(0);
   const [isNewBest, setIsNewBest] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const mutedRef = useRef(false);
+  useEffect(() => { mutedRef.current = muted; }, [muted]);
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const gsRef = useRef<GS | null>(null);
@@ -129,9 +134,9 @@ const RhythmTap: React.FC<Props> = ({ locale }) => {
     const saved = recordBest(GAME_KEY, finalScore, "score", rhythmRecordExtra(nextLevel, gs?.maxCombo ?? 0));
     setBest(saved.value);
     setIsNewBest(beat && finalScore > 0);
-    if (beat && finalScore > 0) confetti({ particleCount: 90, spread: 72, origin: { y: 0.6 } });
+    if (beat && finalScore > 0 && !prefersReducedMotion) confetti({ particleCount: 90, spread: 72, origin: { y: 0.6 } });
     setPhase("over");
-  }, []);
+  }, [prefersReducedMotion]);
 
   const hitLane = useCallback((lane: number) => {
     const gs = gsRef.current;
@@ -156,7 +161,7 @@ const RhythmTap: React.FC<Props> = ({ locale }) => {
     gs.combo = comboAfterJudgement(gs.combo, judgement);
     gs.maxCombo = Math.max(gs.maxCombo, gs.combo);
     gs.judgeT = 22;
-    playClick(judgement === "perfect");
+    if (!mutedRef.current) playClick(judgement === "perfect");
     setScore(gs.score); setCombo(gs.combo);
   }, [t.perfect, t.good]);
 
@@ -268,11 +273,20 @@ const RhythmTap: React.FC<Props> = ({ locale }) => {
 
   return (
     <div className="not-prose my-10 mx-auto max-w-md rounded-3xl border border-border bg-card p-4 text-card-foreground shadow-sm select-none">
-      <div className="mb-3 flex items-center justify-between">
+      <div className="mb-3 flex items-center justify-between gap-2">
         <div>
           <div className="text-sm font-black uppercase tracking-widest text-primary">{t.title}</div>
           <div className="text-[11px] text-muted-foreground">{t.subtitle}</div>
         </div>
+        <button
+          type="button"
+          onClick={() => setMuted((value) => !value)}
+          aria-pressed={muted}
+          className="min-h-11 min-w-11 rounded-lg border border-border text-sm text-muted-foreground hover:bg-muted"
+        >
+          <span aria-hidden="true">{muted ? "🔇" : "🔊"}</span>
+          <span className="sr-only">{t.sound}</span>
+        </button>
         <div className="text-right text-xs font-bold">
           <div>{t.score}: <b className="text-primary">{score}</b></div>
           <div className="text-muted-foreground">{t.best}: {best}</div>
@@ -284,6 +298,7 @@ const RhythmTap: React.FC<Props> = ({ locale }) => {
           ref={canvasRef}
           width={W}
           height={H}
+          aria-label={t.title}
           className="w-full rounded-2xl border border-border touch-none bg-[#0b1020] [cursor:pointer]"
           style={{ aspectRatio: `${W} / ${H}` }}
           onPointerDown={(e) => { e.preventDefault(); if (phaseRef.current === "playing") onTap(e.clientX); }}
@@ -300,11 +315,11 @@ const RhythmTap: React.FC<Props> = ({ locale }) => {
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 rounded-2xl bg-black/55 px-6 text-center backdrop-blur-sm"
             onPointerDown={(e) => { e.preventDefault(); begin(); }}>
             {phase === "over" && (
-              <>
+              <div role="status" aria-live="polite">
                 {isNewBest && <div className="text-sm font-black text-violet-300">{t.newBest}</div>}
                 <div className="text-xl font-black text-white">{t.gameOver}</div>
                 <div className="text-sm text-white/80">{t.score}: <b>{score}</b> · {t.best}: {best}</div>
-              </>
+              </div>
             )}
             {phase === "menu" && (
               <>
