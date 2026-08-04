@@ -378,8 +378,8 @@ describe("GameSessionEnvelope v1", () => {
 
   it("keeps unsupported games explicitly non-restorable", () => {
     const byId = new Map(capabilities.games.map((game) => [game.gameId, game]));
-    expect([...byId.values()].filter((game) => game.supportsRestore).map((game) => game.gameId)).toEqual(["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game", "kurodoko", "yahtzee", "cave-dash", "dot-runner", "mahjong", "water-sort", "psychology-wordle", "memory-card-game", "number-guessing", "wordle", "janggi", "kingdomino"]);
-    for (const gameId of ["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game", "kurodoko", "yahtzee", "cave-dash", "dot-runner", "mahjong", "water-sort", "psychology-wordle", "memory-card-game", "number-guessing", "wordle", "janggi", "kingdomino"] as const) {
+    expect([...byId.values()].filter((game) => game.supportsRestore).map((game) => game.gameId)).toEqual(["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game", "kurodoko", "yahtzee", "cave-dash", "dot-runner", "mahjong", "water-sort", "psychology-wordle", "memory-card-game", "number-guessing", "wordle", "janggi", "kingdomino", "windward-horizons"]);
+    for (const gameId of ["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game", "kurodoko", "yahtzee", "cave-dash", "dot-runner", "mahjong", "water-sort", "psychology-wordle", "memory-card-game", "number-guessing", "wordle", "janggi", "kingdomino", "windward-horizons"] as const) {
       expect(byId.get(gameId)?.modes).toEqual([...RESTORABLE_GAME_CAPABILITIES[gameId].modes]);
       expect(byId.get(gameId)?.difficulties).toEqual([...RESTORABLE_GAME_CAPABILITIES[gameId].difficulties]);
     }
@@ -421,6 +421,14 @@ describe("GameSessionEnvelope v1", () => {
       ["game-2048", { version: 1, board: [2, 4, null, null, null, null, null, null, null, null, null, null, null, null, null, 8], score: 12 }],
       ["janggi", { version: 1, state: janggiState, mode: "ai", level: 2, savedAtEpochMs: Date.now() - 5_000 }],
       ["kingdomino", { version: 1, state: kingdominoState, level: 2, savedAtEpochMs: Date.now() - 5_000 }],
+      ["windward-horizons", {
+        version: 1,
+        vessel: { x: -12, z: 40, heading: 1.1, speed: 3, sail: 0.5, rudder: 0.1, heel: -0.02 },
+        trade: { gold: 2_500, cargo: { spices: 0, silk: 0, tea: 0, timber: 0 }, capacity: 30, tradeProfit: 100, visited: ["azurehaven"] },
+        foundMarks: ["astral-arch"],
+        elapsedSeconds: 60,
+        savedAtEpochMs: Date.now() - 5_000,
+      }],
     ] as const;
     for (const [gameId, payload] of fixtures) {
       const envelope = adaptActiveGameSaveToSession(gameId, payload, TIMING);

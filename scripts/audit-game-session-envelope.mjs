@@ -5,7 +5,7 @@ const root = resolve(new URL("..", import.meta.url).pathname);
 const fixturePath = resolve(root, "config/game-session-envelope-v1.fixtures.json");
 const fixture = JSON.parse(await readFile(fixturePath, "utf8"));
 const errors = [];
-const expectedGames = ["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game", "kurodoko", "yahtzee", "cave-dash", "dot-runner", "mahjong", "water-sort", "psychology-wordle", "memory-card-game", "number-guessing", "wordle", "janggi", "kingdomino"];
+const expectedGames = ["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game", "kurodoko", "yahtzee", "cave-dash", "dot-runner", "mahjong", "water-sort", "psychology-wordle", "memory-card-game", "number-guessing", "wordle", "janggi", "kingdomino", "windward-horizons"];
 const restorableSymbols = {
   chess: ["loadChessSave", "storeChessSave"],
   hearts: ["loadHeartsSavedGame", "saveHeartsGame"],
@@ -33,6 +33,12 @@ const restorableSymbols = {
   wordle: ["loadWordleSave", "storeWordleSave"],
   janggi: ["loadJanggiSave", "storeJanggiSave"],
   kingdomino: ["loadKingdominoSave", "storeKingdominoSave"],
+  // Only "load" lives in the wrapper (this game's declared componentPath) — the
+  // periodic "store" and end-of-voyage "clear" calls live in the lazy-loaded
+  // WindwardHorizonsScene.tsx instead, since that's where the live vessel/trade
+  // refs actually are. Checking "load" here still proves the wrapper is really
+  // wired to the save module rather than importing it for nothing.
+  "windward-horizons": ["loadWindwardSave"],
 };
 const restorableCapabilities = {
   chess: { modes: ["local", "ai"], difficulties: ["level-1", "level-2", "level-3"] },
@@ -61,6 +67,7 @@ const restorableCapabilities = {
   wordle: { modes: ["solo"], difficulties: ["daily", "random"] },
   janggi: { modes: ["local", "ai"], difficulties: ["level-1", "level-2", "level-3"] },
   kingdomino: { modes: ["ai"], difficulties: ["level-1", "level-2", "level-3"] },
+  "windward-horizons": { modes: ["solo"], difficulties: ["voyage"] },
 };
 
 if (fixture.schema !== "oiyo.game-session-capabilities" || fixture.schemaVersion !== 1) {
@@ -124,7 +131,7 @@ for (const game of fixture.games ?? []) {
 
 for (const gameId of expectedGames) if (!ids.has(gameId)) errors.push(`missing game capability: ${gameId}`);
 const restorable = (fixture.games ?? []).filter((game) => game.supportsRestore).map((game) => game.gameId);
-if (JSON.stringify(restorable) !== JSON.stringify(["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game", "kurodoko", "yahtzee", "cave-dash", "dot-runner", "mahjong", "water-sort", "psychology-wordle", "memory-card-game", "number-guessing", "wordle", "janggi", "kingdomino"])) {
+if (JSON.stringify(restorable) !== JSON.stringify(["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game", "kurodoko", "yahtzee", "cave-dash", "dot-runner", "mahjong", "water-sort", "psychology-wordle", "memory-card-game", "number-guessing", "wordle", "janggi", "kingdomino", "windward-horizons"])) {
   errors.push(`restore inventory drift: ${restorable.join(", ")}`);
 }
 

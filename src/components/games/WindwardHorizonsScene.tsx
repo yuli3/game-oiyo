@@ -44,6 +44,7 @@ import {
   type TradeState,
   type VesselState,
 } from "../../lib/games/windward-horizons";
+import { clearWindwardSave, storeWindwardSave, type WindwardSaveV1 } from "../../lib/games/windward-save";
 
 export interface WindwardSceneCopy {
   voyage: string;
@@ -60,6 +61,7 @@ export interface WindwardSceneCopy {
   endVoyage: string;
   soundOn: string;
   soundOff: string;
+  resumed: string;
   cameraHint: string;
   market: string;
   buy: string;
@@ -87,6 +89,7 @@ interface Props {
   audioEnabled: boolean;
   onToggleAudio: () => void;
   onFinish: (result: VoyageResult) => void;
+  restore: WindwardSaveV1 | null;
 }
 
 interface Controls {
@@ -152,14 +155,15 @@ export default function WindwardHorizonsScene({
   audioEnabled,
   onToggleAudio,
   onFinish,
+  restore,
 }: Props) {
   const controls = useRef<Controls>(initialControls());
   const [hud, setHud] = useState(initialHud);
-  const [trade, setTrade] = useState<TradeState>(() => createTradeState());
+  const [trade, setTrade] = useState<TradeState>(() => restore?.trade ?? createTradeState());
   const tradeRef = useRef(trade);
   const [docked, setDocked] = useState<PortId | null>(null);
   const [coarse, setCoarse] = useState(false);
-  const [discoveries, setDiscoveries] = useState(0);
+  const [discoveries, setDiscoveries] = useState(() => restore?.foundMarks.length ?? 0);
   const discoveriesRef = useRef(discoveries);
   const [notice, setNotice] = useState<string | null>(null);
   const dragRef = useRef<{ id: number; x: number; y: number } | null>(null);
@@ -190,9 +194,19 @@ export default function WindwardHorizonsScene({
     return () => window.clearTimeout(timeout);
   }, [notice]);
 
+  // Mount-only: shows once for a resumed voyage, via the same toast the rest
+  // of the HUD already uses. Deliberately not tied to any sibling state
+  // change, so it can't be raced away the way a derived "clear on resume"
+  // effect can (see the Connect Four restored-banner fix for that failure).
+  useEffect(() => {
+    if (restore) setNotice(copy.resumed);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const finish = useCallback(() => {
     if (finishedRef.current) return;
     finishedRef.current = true;
+    clearWindwardSave();
     const state = tradeRef.current;
     onFinish({
       score: voyageScore(state, discoveriesRef.current),
@@ -232,6 +246,16 @@ export default function WindwardHorizonsScene({
     setDiscoveries((value) => Math.min(3, value + 1));
     setNotice(copy.discovery);
   }, [copy.discovery]);
+
+  const onSnapshot = useCallback((vessel: VesselState, elapsedSeconds: number, foundMarks: string[]) => {
+    storeWindwardSave({
+      vessel,
+      trade: tradeRef.current,
+      foundMarks,
+      elapsedSeconds,
+      savedAtEpochMs: Date.now(),
+    });
+  }, []);
 
   const port = docked ? PORTS.find((candidate) => candidate.id === docked) ?? null : null;
   const prices = useMemo(() => port ? marketQuote(port, Math.floor(hud.day * 12)) : null, [hud.day, port]);
@@ -302,6 +326,8 @@ export default function WindwardHorizonsScene({
           onHud={setHud}
           onDiscover={onDiscover}
           onFinish={finish}
+          onSnapshot={onSnapshot}
+          restore={restore}
           portNames={copy.ports}
           coarse={coarse}
         />
@@ -572,24 +598,32 @@ interface OceanWorldProps {
   onHud: (state: HudState) => void;
   onDiscover: () => void;
   onFinish: () => void;
+  onSnapshot: (vessel: VesselState, elapsedSeconds: number, foundMarks: string[]) => void;
+  restore: WindwardSaveV1 | null;
   portNames: Record<PortId, string>;
   coarse: boolean;
 }
 
-function OceanWorld({ controls, paused, onHud, onDiscover, onFinish, portNames, coarse }: OceanWorldProps) {
-  const vessel = useRef<VesselState>({
-    x: 0,
-    z: 51,
-    heading: Math.PI / 2,
-    speed: 0,
-    sail: 0.18,
-    rudder: 0,
-    heel: 0,
-  });
+function OceanWorld({ controls, paused, onHud, onDiscover, onFinish, onSnapshot, restore, portNames, coarse }: OceanWorldProps) {
+  const vessel = useRef<VesselState>(
+    restore?.vessel ?? {
+      x: 0,
+      z: 51,
+      heading: Math.PI / 2,
+      speed: 0,
+      sail: 0.18,
+      rudder: 0,
+      heel: 0,
+    },
+  );
   const environment = useRef<SailingEnvironment>({ windHeading: Math.PI * 1.08, windSpeed: 10 });
-  const elapsed = useRef(0);
+  // Wind is a deterministic function of `elapsed`, not a separate random seed
+  // (see the useFrame block below) — restoring this one number is enough to
+  // put the environment exactly where it was when the save was written.
+  const elapsed = useRef(restore?.elapsedSeconds ?? 0);
   const lastHud = useRef(0);
-  const discovered = useRef(new Set<string>());
+  const lastSnapshot = useRef(0);
+  const discovered = useRef(new Set<string>(restore?.foundMarks ?? []));
   const finished = useRef(false);
 
   useFrame((state, delta) => {
@@ -617,6 +651,11 @@ function OceanWorld({ controls, paused, onHud, onDiscover, onFinish, portNames, 
     if (timeLeft <= 0 && !finished.current) {
       finished.current = true;
       onFinish();
+    }
+
+    if (!finished.current && renderTime - lastSnapshot.current > 3) {
+      lastSnapshot.current = renderTime;
+      onSnapshot(vessel.current, elapsed.current, [...discovered.current]);
     }
 
     if (renderTime - lastHud.current > 0.09) {

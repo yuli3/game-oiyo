@@ -593,6 +593,27 @@
    "nonSessionPersistence": [
     "game-record"
    ]
+  },
+  {
+   "gameId": "windward-horizons",
+   "componentPath": "src/components/games/WindwardHorizons.tsx",
+   "adapterPath": "src/lib/games/windward-save.ts",
+   "supportsRestore": true,
+   "sessionStorageKey": "oiyo:windward-horizons-state:v1",
+   "sourceSchema": "oiyo.windward-horizons-save",
+   "sourceSchemaVersion": 1,
+   "adapterVersion": "windward-horizons-session-adapter-v1",
+   "engineVersion": "windward-horizons-rules-v1",
+   "modes": [
+    "solo"
+   ],
+   "difficulties": [
+    "voyage"
+   ],
+   "deterministicResume": true,
+   "nonSessionPersistence": [
+    "game-record"
+   ]
   }
  ]
 }

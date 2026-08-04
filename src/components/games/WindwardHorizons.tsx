@@ -4,6 +4,7 @@ import { useThrottle } from "../../hooks/_oiyo-shared/useThrottle";
 import type { Locale } from "../../lib/i18n";
 import { getBest, recordBest } from "../../lib/games/records";
 import { WindwardScore } from "../../lib/games/windward-score";
+import { loadWindwardSave, type WindwardSaveV1 } from "../../lib/games/windward-save";
 import type { VoyageResult, WindwardSceneCopy } from "./WindwardHorizonsScene";
 
 const Scene = lazy(() => import("./WindwardHorizonsScene"));
@@ -17,6 +18,7 @@ interface Copy {
   subtitle: string;
   start: string;
   again: string;
+  resume: string;
   loading: string;
   unavailable: string;
   best: string;
@@ -42,6 +44,7 @@ const COPY: Record<Locale, Copy> = {
     subtitle: "바람을 읽고 돛을 조절해 다섯 항구를 잇는 자유 항해. 변화하는 시세를 이용해 교역하고, 안개 너머 잊힌 해상 표식을 발견하세요.",
     start: "출항하기",
     again: "새 항해",
+    resume: "항해 재개",
     loading: "바다와 무역로를 펼치는 중…",
     unavailable: "이 브라우저에서는 WebGL을 사용할 수 없어 3D 항해를 시작할 수 없습니다.",
     best: "최고 항해 점수",
@@ -64,7 +67,7 @@ const COPY: Record<Locale, Copy> = {
     scene: {
       voyage: "항해", time: "남은 시간", gold: "금화", cargo: "화물", speed: "속력", knots: "노트",
       sails: "돛", wind: "바람", dock: "입항", slowToDock: "돛을 줄여 속력을 낮추세요", near: "가까운 항구",
-      endVoyage: "항해 종료", soundOn: "음악 켜짐", soundOff: "음악 꺼짐", cameraHint: "드래그하여 선박 주위를 둘러보세요",
+      endVoyage: "항해 종료", soundOn: "음악 켜짐", soundOff: "음악 꺼짐", resumed: "항해가 복원되었습니다", cameraHint: "드래그하여 선박 주위를 둘러보세요",
       market: "항구 시장", buy: "구매", sell: "판매", hold: "화물창", close: "출항", profit: "교역 손익",
       discovery: "해상 표식 발견", dayPhases: { dawn: "새벽", day: "낮", dusk: "해질녘", night: "밤" },
       ports: { azurehaven: "푸른항", sunspire: "태양첨탑", jadegate: "비취관문", ironcape: "철갑곶", amberreach: "호박해안" },
@@ -78,6 +81,7 @@ const COPY: Record<Locale, Copy> = {
     subtitle: "Read the wind and trim sail across an open sea linking five ports. Trade shifting markets and discover forgotten sea marks beyond the fog.",
     start: "Set sail",
     again: "New voyage",
+    resume: "Resume voyage",
     loading: "Charting the sea and trade routes…",
     unavailable: "WebGL is unavailable in this browser, so the 3D voyage cannot start.",
     best: "Best voyage score",
@@ -100,7 +104,7 @@ const COPY: Record<Locale, Copy> = {
     scene: {
       voyage: "VOYAGE", time: "TIME", gold: "GOLD", cargo: "CARGO", speed: "SPEED", knots: "KT",
       sails: "SAILS", wind: "WIND", dock: "DOCK", slowToDock: "Reduce sail and slow down", near: "NEAREST PORT",
-      endVoyage: "END VOYAGE", soundOn: "SCORE ON", soundOff: "SCORE OFF", cameraHint: "Drag to orbit the ship",
+      endVoyage: "END VOYAGE", soundOn: "SCORE ON", soundOff: "SCORE OFF", resumed: "Voyage resumed", cameraHint: "Drag to orbit the ship",
       market: "PORT MARKET", buy: "BUY", sell: "SELL", hold: "HOLD", close: "SET SAIL", profit: "TRADE BALANCE",
       discovery: "SEA MARK DISCOVERED", dayPhases: { dawn: "DAWN", day: "DAY", dusk: "DUSK", night: "NIGHT" },
       ports: { azurehaven: "Azurehaven", sunspire: "Sunspire", jadegate: "Jade Gate", ironcape: "Iron Cape", amberreach: "Amber Reach" },
@@ -114,6 +118,7 @@ const COPY: Record<Locale, Copy> = {
     subtitle: "風を読み、帆を調整して五つの港を結ぶ自由航海。変動する相場で交易し、霧の向こうの忘れられた海標を発見しよう。",
     start: "出航する",
     again: "新しい航海",
+    resume: "航海を再開",
     loading: "海と交易路を展開中…",
     unavailable: "このブラウザではWebGLを利用できないため、3D航海を開始できません。",
     best: "最高航海スコア",
@@ -136,7 +141,7 @@ const COPY: Record<Locale, Copy> = {
     scene: {
       voyage: "航海", time: "残り", gold: "金貨", cargo: "積荷", speed: "速力", knots: "ノット",
       sails: "帆", wind: "風", dock: "入港", slowToDock: "帆を縮めて減速してください", near: "最寄りの港",
-      endVoyage: "航海終了", soundOn: "音楽 ON", soundOff: "音楽 OFF", cameraHint: "ドラッグで船の周囲を見る",
+      endVoyage: "航海終了", soundOn: "音楽 ON", soundOff: "音楽 OFF", resumed: "航海を再開しました", cameraHint: "ドラッグで船の周囲を見る",
       market: "港の市場", buy: "購入", sell: "売却", hold: "船倉", close: "出航", profit: "交易収支",
       discovery: "海標を発見", dayPhases: { dawn: "夜明け", day: "昼", dusk: "夕暮れ", night: "夜" },
       ports: { azurehaven: "蒼港", sunspire: "陽光塔", jadegate: "翡翠門", ironcape: "鉄岬", amberreach: "琥珀海岸" },
@@ -150,6 +155,7 @@ const COPY: Record<Locale, Copy> = {
     subtitle: "研判风向、调整风帆，在连接五座港口的开放海域自由航行。利用波动行情贸易，并发现雾后的古老海标。",
     start: "扬帆起航",
     again: "新的航程",
+    resume: "继续航行",
     loading: "正在展开海洋与贸易航线…",
     unavailable: "此浏览器无法使用 WebGL，不能开始3D航行。",
     best: "最高航行分数",
@@ -172,7 +178,7 @@ const COPY: Record<Locale, Copy> = {
     scene: {
       voyage: "航程", time: "剩余", gold: "金币", cargo: "货物", speed: "航速", knots: "节",
       sails: "风帆", wind: "风", dock: "靠港", slowToDock: "收帆减速后靠港", near: "最近港口",
-      endVoyage: "结束航程", soundOn: "配乐开启", soundOff: "配乐关闭", cameraHint: "拖动查看船只周围",
+      endVoyage: "结束航程", soundOn: "配乐开启", soundOff: "配乐关闭", resumed: "航程已恢复", cameraHint: "拖动查看船只周围",
       market: "港口市场", buy: "购买", sell: "出售", hold: "货舱", close: "离港", profit: "贸易盈亏",
       discovery: "发现海上标记", dayPhases: { dawn: "黎明", day: "白昼", dusk: "黄昏", night: "夜晚" },
       ports: { azurehaven: "蔚蓝港", sunspire: "日耀塔", jadegate: "翡翠关", ironcape: "铁甲岬", amberreach: "琥珀岸" },
@@ -186,6 +192,7 @@ const COPY: Record<Locale, Copy> = {
     subtitle: "Lisez le vent et réglez les voiles sur une mer ouverte reliant cinq ports. Négociez des marchés mouvants et découvrez des balises oubliées derrière la brume.",
     start: "Prendre la mer",
     again: "Nouveau voyage",
+    resume: "Reprendre le voyage",
     loading: "Déploiement de la mer et des routes commerciales…",
     unavailable: "WebGL n'est pas disponible dans ce navigateur : le voyage 3D ne peut pas commencer.",
     best: "Meilleur score",
@@ -208,7 +215,7 @@ const COPY: Record<Locale, Copy> = {
     scene: {
       voyage: "VOYAGE", time: "TEMPS", gold: "OR", cargo: "CALE", speed: "VITESSE", knots: "ND",
       sails: "VOILES", wind: "VENT", dock: "ACCOSTER", slowToDock: "Réduisez la voilure et ralentissez", near: "PORT PROCHE",
-      endVoyage: "FIN DU VOYAGE", soundOn: "MUSIQUE ON", soundOff: "MUSIQUE OFF", cameraHint: "Glissez pour tourner autour du navire",
+      endVoyage: "FIN DU VOYAGE", soundOn: "MUSIQUE ON", soundOff: "MUSIQUE OFF", resumed: "Voyage repris", cameraHint: "Glissez pour tourner autour du navire",
       market: "MARCHÉ DU PORT", buy: "ACHETER", sell: "VENDRE", hold: "CALE", close: "APPAREILLER", profit: "BILAN",
       discovery: "BALISE MARITIME DÉCOUVERTE", dayPhases: { dawn: "AUBE", day: "JOUR", dusk: "CRÉPUSCULE", night: "NUIT" },
       ports: { azurehaven: "Havre d'Azur", sunspire: "Flèche-Soleil", jadegate: "Porte de Jade", ironcape: "Cap de Fer", amberreach: "Rive d'Ambre" },
@@ -222,6 +229,7 @@ const COPY: Record<Locale, Copy> = {
     subtitle: "Lee el viento y ajusta las velas en un mar abierto que conecta cinco puertos. Comercia en mercados cambiantes y descubre antiguas balizas tras la niebla.",
     start: "Zarpar",
     again: "Nuevo viaje",
+    resume: "Reanudar viaje",
     loading: "Trazando el mar y las rutas comerciales…",
     unavailable: "WebGL no está disponible en este navegador, así que el viaje 3D no puede comenzar.",
     best: "Mejor puntuación",
@@ -244,7 +252,7 @@ const COPY: Record<Locale, Copy> = {
     scene: {
       voyage: "VIAJE", time: "TIEMPO", gold: "ORO", cargo: "CARGA", speed: "VELOCIDAD", knots: "NUD",
       sails: "VELAS", wind: "VIENTO", dock: "ATRACAR", slowToDock: "Reduce vela y velocidad", near: "PUERTO CERCANO",
-      endVoyage: "TERMINAR VIAJE", soundOn: "MÚSICA ON", soundOff: "MÚSICA OFF", cameraHint: "Arrastra para orbitar el barco",
+      endVoyage: "TERMINAR VIAJE", soundOn: "MÚSICA ON", soundOff: "MÚSICA OFF", resumed: "Viaje reanudado", cameraHint: "Arrastra para orbitar el barco",
       market: "MERCADO DEL PUERTO", buy: "COMPRAR", sell: "VENDER", hold: "BODEGA", close: "ZARPAR", profit: "BALANCE",
       discovery: "BALIZA MARÍTIMA DESCUBIERTA", dayPhases: { dawn: "AMANECER", day: "DÍA", dusk: "ATARDECER", night: "NOCHE" },
       ports: { azurehaven: "Puerto Azul", sunspire: "Aguja Solar", jadegate: "Puerta de Jade", ironcape: "Cabo de Hierro", amberreach: "Costa Ámbar" },
@@ -271,11 +279,17 @@ export default function WindwardHorizons({ locale }: { locale: Locale }) {
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [best, setBest] = useState(0);
   const [result, setResult] = useState<VoyageResult | null>(null);
+  const [hasSave, setHasSave] = useState(false);
   const scoreRef = useRef<WindwardScore | null>(null);
+  // Captured fresh at click time (not on mount) so a "New voyage" after a
+  // completed voyage — which already cleared storage — never resumes a stale
+  // in-memory save from earlier in the session.
+  const restoreRef = useRef<WindwardSaveV1 | null>(null);
 
   useEffect(() => {
     setAvailable(supportsWebgl());
     setBest(getBest(GAME_KEY)?.value ?? 0);
+    setHasSave(Boolean(loadWindwardSave()));
     return () => {
       void scoreRef.current?.stop();
     };
@@ -283,6 +297,7 @@ export default function WindwardHorizons({ locale }: { locale: Locale }) {
 
   const begin = useCallback(async () => {
     if (!available) return;
+    restoreRef.current = loadWindwardSave();
     setPhase("loading");
     setResult(null);
     scoreRef.current ??= new WindwardScore();
@@ -305,6 +320,8 @@ export default function WindwardHorizons({ locale }: { locale: Locale }) {
   const finish = useCallback((next: VoyageResult) => {
     void scoreRef.current?.stop();
     setAudioEnabled(false);
+    // Scene's own finish() already cleared the save before calling this.
+    setHasSave(false);
     const saved = recordBest(GAME_KEY, next.score, "score", JSON.stringify({
       gold: next.gold,
       tradeProfit: next.tradeProfit,
@@ -322,7 +339,13 @@ export default function WindwardHorizons({ locale }: { locale: Locale }) {
         <div className="h-[min(84vh,880px)] min-h-[680px] w-full">
           <Suspense fallback={<Loading label={t.loading} />}>
             {phase === "playing" ? (
-              <Scene copy={t.scene} audioEnabled={audioEnabled} onToggleAudio={toggleAudio} onFinish={finish} />
+              <Scene
+                copy={t.scene}
+                audioEnabled={audioEnabled}
+                onToggleAudio={toggleAudio}
+                onFinish={finish}
+                restore={restoreRef.current}
+              />
             ) : (
               <Loading label={t.loading} />
             )}
@@ -349,7 +372,7 @@ export default function WindwardHorizons({ locale }: { locale: Locale }) {
               disabled={!available || isStarting}
               className="min-h-12 rounded-xl bg-[#e3bd72] px-8 py-3 text-sm font-black uppercase tracking-[.13em] text-[#102325] shadow-[0_0_32px_rgba(227,189,114,.2)] transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              {phase === "result" ? t.again : t.start}
+              {phase === "result" ? t.again : hasSave ? t.resume : t.start}
             </button>
             <span className="rounded-lg border border-white/10 bg-white/5 px-4 py-3 font-mono text-xs text-[#c8d5d2]">
               {t.best}: <strong className="text-white">{best.toLocaleString()}</strong>
