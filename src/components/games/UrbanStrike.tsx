@@ -67,7 +67,7 @@ const COPY: Record<Locale, Copy> = {
       reload: "재장전", respawn: "재배치", headshot: "헤드샷", eliminated: "처치",
       assist: "지원", pointer: "전장을 클릭해 마우스를 고정하세요", paused: "클릭하여 작전 복귀",
       m4: "M4A1 카빈", ak: "AK-12 라이플", mp5: "MP5 전술형",
-      fire: "FIRE", ads: "ADS", jump: "↥", crouch: "C", weapon: "무기",
+      fire: "FIRE", ads: "ADS", jump: "↥", crouch: "C", weapon: "무기", sound: "소리",
     },
   },
   en: {
@@ -102,7 +102,7 @@ const COPY: Record<Locale, Copy> = {
       reload: "RELOADING", respawn: "RESPAWNING", headshot: "HEADSHOT", eliminated: "ELIMINATED",
       assist: "ASSIST", pointer: "Click the battlefield to lock your mouse", paused: "CLICK TO RETURN TO COMBAT",
       m4: "M4A1 CARBINE", ak: "AK-12 RIFLE", mp5: "MP5 TACTICAL",
-      fire: "FIRE", ads: "ADS", jump: "↥", crouch: "C", weapon: "WEAPON",
+      fire: "FIRE", ads: "ADS", jump: "↥", crouch: "C", weapon: "WEAPON", sound: "Sound",
     },
   },
   ja: {
@@ -137,7 +137,7 @@ const COPY: Record<Locale, Copy> = {
       reload: "リロード", respawn: "再配置", headshot: "ヘッドショット", eliminated: "キル",
       assist: "アシスト", pointer: "戦場をクリックしてマウスを固定", paused: "クリックして戦闘に復帰",
       m4: "M4A1 カービン", ak: "AK-12 ライフル", mp5: "MP5 タクティカル",
-      fire: "FIRE", ads: "ADS", jump: "↥", crouch: "C", weapon: "武器",
+      fire: "FIRE", ads: "ADS", jump: "↥", crouch: "C", weapon: "武器", sound: "音",
     },
   },
   zh: {
@@ -172,7 +172,7 @@ const COPY: Record<Locale, Copy> = {
       reload: "换弹中", respawn: "重新部署", headshot: "爆头", eliminated: "击杀",
       assist: "助攻", pointer: "点击战场锁定鼠标", paused: "点击返回战斗",
       m4: "M4A1 卡宾枪", ak: "AK-12 步枪", mp5: "MP5 战术型",
-      fire: "FIRE", ads: "ADS", jump: "↥", crouch: "C", weapon: "武器",
+      fire: "FIRE", ads: "ADS", jump: "↥", crouch: "C", weapon: "武器", sound: "声音",
     },
   },
   fr: {
@@ -207,7 +207,7 @@ const COPY: Record<Locale, Copy> = {
       reload: "RECHARGEMENT", respawn: "RÉAPPARITION", headshot: "TIR À LA TÊTE", eliminated: "ÉLIMINÉ",
       assist: "ASSISTANCE", pointer: "Cliquez sur le champ de bataille pour verrouiller la souris", paused: "CLIQUEZ POUR REPRENDRE",
       m4: "CARABINE M4A1", ak: "FUSIL AK-12", mp5: "MP5 TACTIQUE",
-      fire: "FIRE", ads: "ADS", jump: "↥", crouch: "C", weapon: "ARME",
+      fire: "FIRE", ads: "ADS", jump: "↥", crouch: "C", weapon: "ARME", sound: "Son",
     },
   },
   es: {
@@ -242,7 +242,7 @@ const COPY: Record<Locale, Copy> = {
       reload: "RECARGANDO", respawn: "REAPARECIENDO", headshot: "TIRO A LA CABEZA", eliminated: "ELIMINADO",
       assist: "ASISTENCIA", pointer: "Haz clic en el campo para fijar el ratón", paused: "HAZ CLIC PARA VOLVER",
       m4: "CARABINA M4A1", ak: "RIFLE AK-12", mp5: "MP5 TÁCTICO",
-      fire: "FIRE", ads: "ADS", jump: "↥", crouch: "C", weapon: "ARMA",
+      fire: "FIRE", ads: "ADS", jump: "↥", crouch: "C", weapon: "ARMA", sound: "Sonido",
     },
   },
 };
@@ -263,6 +263,7 @@ export default function UrbanStrike({ locale }: { locale: Locale }) {
   const [best, setBest] = useState(0);
   const [available, setAvailable] = useState(true);
   const [result, setResult] = useState<MatchResult | null>(null);
+  const [muted, setMuted] = useState(false);
 
   useEffect(() => {
     setAvailable(supportsWebgl());
@@ -293,7 +294,11 @@ export default function UrbanStrike({ locale }: { locale: Locale }) {
       <div className="not-prose relative left-1/2 my-6 w-[min(100vw-1rem,1440px)] -translate-x-1/2 overflow-hidden rounded-2xl border border-slate-800 bg-[#07090c] shadow-2xl">
         <div className="aspect-[16/10] min-h-[560px] max-h-[82vh] w-full">
           <Suspense fallback={<Loading label={t.loading} />}>
-            {phase === "playing" ? <Scene copy={t.scene} onFinish={finish} /> : <Loading label={t.loading} />}
+            {phase === "playing" ? (
+              <Scene copy={t.scene} onFinish={finish} muted={muted} onToggleMute={() => setMuted((value) => !value)} />
+            ) : (
+              <Loading label={t.loading} />
+            )}
           </Suspense>
         </div>
       </div>

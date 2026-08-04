@@ -71,6 +71,7 @@ export interface UrbanStrikeSceneCopy {
   jump: string;
   crouch: string;
   weapon: string;
+  sound: string;
 }
 
 export interface MatchResult {
@@ -85,6 +86,8 @@ export interface MatchResult {
 interface Props {
   copy: UrbanStrikeSceneCopy;
   onFinish: (result: MatchResult) => void;
+  muted: boolean;
+  onToggleMute: () => void;
 }
 
 interface HudState {
@@ -177,7 +180,7 @@ const initialHud = (): HudState => ({
   killfeed: [],
 });
 
-export default function UrbanStrikeScene({ copy, onFinish }: Props) {
+export default function UrbanStrikeScene({ copy, onFinish, muted, onToggleMute }: Props) {
   const controls = useRef<Controls>(initialControls());
   const [hud, setHud] = useState<HudState>(initialHud);
   const [coarse, setCoarse] = useState(false);
@@ -297,6 +300,7 @@ export default function UrbanStrikeScene({ copy, onFinish }: Props) {
           copy={copy}
           setHud={setHud}
           onFinish={onFinish}
+          muted={muted}
         />
       </Canvas>
 
@@ -307,10 +311,21 @@ export default function UrbanStrikeScene({ copy, onFinish }: Props) {
       />
 
       <header className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-4 p-3 sm:p-5">
-        <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/45 px-3 py-2 backdrop-blur-sm">
-          <span className="size-2 rounded-full bg-lime-400 shadow-[0_0_9px_#a3e635]" />
-          <span className="font-mono text-[10px] font-black tracking-[.18em] text-slate-300">{copy.objective}</span>
-          <strong className={`font-mono text-[10px] ${hud.objective === "contested" ? "text-amber-300" : "text-white"}`}>{objectiveLabel}</strong>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={(event) => { event.stopPropagation(); onToggleMute(); }}
+            aria-pressed={muted}
+            className="pointer-events-auto relative z-30 flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-white/10 bg-black/45 text-sm backdrop-blur-sm"
+          >
+            <span aria-hidden="true">{muted ? "🔇" : "🔊"}</span>
+            <span className="sr-only">{copy.sound}</span>
+          </button>
+          <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/45 px-3 py-2 backdrop-blur-sm">
+            <span className="size-2 rounded-full bg-lime-400 shadow-[0_0_9px_#a3e635]" />
+            <span className="font-mono text-[10px] font-black tracking-[.18em] text-slate-300">{copy.objective}</span>
+            <strong className={`font-mono text-[10px] ${hud.objective === "contested" ? "text-amber-300" : "text-white"}`}>{objectiveLabel}</strong>
+          </div>
         </div>
 
         <div className="rounded-xl border border-white/10 bg-black/55 px-4 py-2 text-center backdrop-blur-sm">
@@ -518,6 +533,7 @@ interface CombatSceneProps {
   copy: UrbanStrikeSceneCopy;
   setHud: Dispatch<SetStateAction<HudState>>;
   onFinish: (result: MatchResult) => void;
+  muted: boolean;
 }
 
 const ENEMY_NAMES = ["VIPER", "NOMAD", "KILO", "RAZOR", "GHOST", "MERCURY"];
@@ -527,7 +543,7 @@ const ENEMY_SPAWNS = [
 ] as const;
 const PLAYER_SPAWNS = [[0, 18], [-8, 20], [9, 18]] as const;
 
-function CombatScene({ controls, active, coarse, copy, setHud, onFinish }: CombatSceneProps) {
+function CombatScene({ controls, active, coarse, copy, setHud, onFinish, muted }: CombatSceneProps) {
   const { camera, gl } = useThree();
   const bots = useRef<BotState[]>(createBots());
   const botGroups = useRef<Array<Group | null>>([]);
@@ -591,7 +607,12 @@ function CombatScene({ controls, active, coarse, copy, setHud, onFinish }: Comba
   }, [camera, copy.pointer, gl.domElement]);
 
   useEffect(() => {
+    audio.current?.setMuted(muted);
+  }, [muted]);
+
+  useEffect(() => {
     audio.current = new CombatAudio();
+    audio.current.setMuted(muted);
     return () => {
       audio.current?.close();
       audio.current = null;
@@ -1533,6 +1554,11 @@ class CombatAudio {
 
   resume() {
     if (this.context?.state === "suspended") void this.context.resume();
+  }
+
+  setMuted(muted: boolean) {
+    if (!this.master) return;
+    this.master.gain.value = muted ? 0 : 0.33;
   }
 
   private createNoiseBuffer() {
