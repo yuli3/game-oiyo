@@ -246,7 +246,7 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                     </div>
                 )}
                 {moveCount > 0 && winner === null && (
-                    <button type="button" onClick={() => setPaused((value) => !value)} className="min-h-11 px-3 rounded-lg border border-border text-xs font-bold text-muted-foreground">
+                    <button type="button" onClick={() => setPaused((value) => { if (value) setRestored(false); return !value; })} className="min-h-11 px-3 rounded-lg border border-border text-xs font-bold text-muted-foreground">
                         {paused ? `▶ ${x.resume}` : `Ⅱ ${x.pause}`}
                     </button>
                 )}
