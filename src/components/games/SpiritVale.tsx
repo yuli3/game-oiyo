@@ -21,6 +21,8 @@ import {
   captureChance,
   createBattle,
   resolveTurn,
+  skillsFor,
+  type BattleAction,
   type BattleState,
   type LogEntry,
 } from "../../lib/games/spirit-vale-battle";
@@ -34,6 +36,7 @@ import {
 } from "../../lib/games/spirit-vale-evolution";
 import { recordResult } from "../../lib/games/records";
 import type { SceneProps } from "./SpiritValeScene";
+import type { SpiritAction } from "./SpiritModel";
 
 /* ────────────────────────────────────────────────────────────────────────────
  * Spirit Vale — an open valley of 십이지 spirits, typed by 오행.
@@ -115,6 +118,12 @@ const COPY: Record<
     logFaint: (who: string) => string;
     evolved: (who: string, stage: number) => string;
     stageTitle: (stage: number) => string;
+    skillName: (id: string) => string;
+    logMiss: (who: string, skill: string) => string;
+    logGuard: (who: string) => string;
+    logDrain: (amount: number) => string;
+    logWeaken: string;
+    sound: string;
   }
 > = {
   ko: {
@@ -158,6 +167,20 @@ const COPY: Record<
     logFaint: (who) => `${who}이(가) 쓰러졌습니다`,
     evolved: (who, stage) => `${who}이(가) ${stage}단계로 성장했습니다`,
     stageTitle: (stage) => ["", "어린", "성체", "정수"][stage] ?? "",
+    skillName: (id) => {
+      const t: Record<string, string> = { strike: "일격", surge: "오행격", guard: "굳히기", drain: "흡정", weaken: "약화" };
+      if (id === "strike") return t.strike;
+      if (id.endsWith("-surge")) return t.surge;
+      if (id === "earth-art" || id === "metal-art") return t.guard;
+      if (id === "wood-art" || id === "water-art") return t.drain;
+      if (id === "fire-art") return t.weaken;
+      return "일격";
+    },
+    logMiss: (who, skill) => `${who}의 ${skill} — 빗나감`,
+    logGuard: (who) => `${who}이(가) 자세를 굳혔습니다`,
+    logDrain: (amount) => `기운을 흡수해 ${amount} 회복`,
+    logWeaken: "상대를 약화시켰습니다 — 포획 확률 상승",
+    sound: "소리",
   },
   en: {
     title: "Spirit Vale",
@@ -200,6 +223,20 @@ const COPY: Record<
     logFaint: (who) => `${who} fainted`,
     evolved: (who, stage) => `${who} grew to stage ${stage}`,
     stageTitle: (stage) => ["", "Young", "Grown", "Ascended"][stage] ?? "",
+    skillName: (id) => {
+      const t: Record<string, string> = { strike: "Strike", surge: "Surge", guard: "Brace", drain: "Siphon", weaken: "Scorch" };
+      if (id === "strike") return t.strike;
+      if (id.endsWith("-surge")) return t.surge;
+      if (id === "earth-art" || id === "metal-art") return t.guard;
+      if (id === "wood-art" || id === "water-art") return t.drain;
+      if (id === "fire-art") return t.weaken;
+      return "Strike";
+    },
+    logMiss: (who, skill) => `${who}'s ${skill} missed`,
+    logGuard: (who) => `${who} braced`,
+    logDrain: (amount) => `Siphoned ${amount} health`,
+    logWeaken: "The target is weakened — capture odds up",
+    sound: "Sound",
   },
   ja: {
     title: "精霊の谷",
@@ -242,6 +279,20 @@ const COPY: Record<
     logFaint: (who) => `${who}は倒れた`,
     evolved: (who, stage) => `${who}は第${stage}段階に成長した`,
     stageTitle: (stage) => ["", "幼", "成体", "精髄"][stage] ?? "",
+    skillName: (id) => {
+      const t: Record<string, string> = { strike: "一撃", surge: "五行撃", guard: "かため", drain: "吸精", weaken: "弱体" };
+      if (id === "strike") return t.strike;
+      if (id.endsWith("-surge")) return t.surge;
+      if (id === "earth-art" || id === "metal-art") return t.guard;
+      if (id === "wood-art" || id === "water-art") return t.drain;
+      if (id === "fire-art") return t.weaken;
+      return "一撃";
+    },
+    logMiss: (who, skill) => `${who}の${skill} — はずれた`,
+    logGuard: (who) => `${who}は身をかためた`,
+    logDrain: (amount) => `気を吸収して${amount}回復`,
+    logWeaken: "相手を弱らせた — 捕獲確率アップ",
+    sound: "音",
   },
   zh: {
     title: "精灵山谷",
@@ -284,6 +335,20 @@ const COPY: Record<
     logFaint: (who) => `${who}倒下了`,
     evolved: (who, stage) => `${who}成长到第${stage}阶段`,
     stageTitle: (stage) => ["", "幼", "成体", "精髓"][stage] ?? "",
+    skillName: (id) => {
+      const t: Record<string, string> = { strike: "一击", surge: "五行击", guard: "固守", drain: "吸精", weaken: "弱化" };
+      if (id === "strike") return t.strike;
+      if (id.endsWith("-surge")) return t.surge;
+      if (id === "earth-art" || id === "metal-art") return t.guard;
+      if (id === "wood-art" || id === "water-art") return t.drain;
+      if (id === "fire-art") return t.weaken;
+      return "一击";
+    },
+    logMiss: (who, skill) => `${who}的${skill} — 落空`,
+    logGuard: (who) => `${who}稳住了架势`,
+    logDrain: (amount) => `吸取气息，回复${amount}`,
+    logWeaken: "对手被削弱 — 捕获概率上升",
+    sound: "声音",
   },
   fr: {
     title: "Val des Esprits",
@@ -326,6 +391,20 @@ const COPY: Record<
     logFaint: (who) => `${who} est K.O.`,
     evolved: (who, stage) => `${who} a atteint le stade ${stage}`,
     stageTitle: (stage) => ["", "Jeune", "Adulte", "Ascendant"][stage] ?? "",
+    skillName: (id) => {
+      const t: Record<string, string> = { strike: "Frappe", surge: "Déferlante", guard: "Garde", drain: "Siphon", weaken: "Brûlure" };
+      if (id === "strike") return t.strike;
+      if (id.endsWith("-surge")) return t.surge;
+      if (id === "earth-art" || id === "metal-art") return t.guard;
+      if (id === "wood-art" || id === "water-art") return t.drain;
+      if (id === "fire-art") return t.weaken;
+      return "Frappe";
+    },
+    logMiss: (who, skill) => `${skill} de ${who} — manqué`,
+    logGuard: (who) => `${who} se met en garde`,
+    logDrain: (amount) => `Siphonne ${amount} points de vie`,
+    logWeaken: "La cible est affaiblie — capture facilitée",
+    sound: "Son",
   },
   es: {
     title: "Valle de los Espíritus",
@@ -368,6 +447,20 @@ const COPY: Record<
     logFaint: (who) => `${who} ha caído`,
     evolved: (who, stage) => `${who} alcanzó la etapa ${stage}`,
     stageTitle: (stage) => ["", "Joven", "Adulto", "Ascendido"][stage] ?? "",
+    skillName: (id) => {
+      const t: Record<string, string> = { strike: "Golpe", surge: "Oleada", guard: "Guardia", drain: "Sifón", weaken: "Quemadura" };
+      if (id === "strike") return t.strike;
+      if (id.endsWith("-surge")) return t.surge;
+      if (id === "earth-art" || id === "metal-art") return t.guard;
+      if (id === "wood-art" || id === "water-art") return t.drain;
+      if (id === "fire-art") return t.weaken;
+      return "Golpe";
+    },
+    logMiss: (who, skill) => `${skill} de ${who} — falló`,
+    logGuard: (who) => `${who} se puso en guardia`,
+    logDrain: (amount) => `Absorbe ${amount} de vida`,
+    logWeaken: "El objetivo está debilitado — más captura",
+    sound: "Sonido",
   },
 };
 
@@ -418,6 +511,14 @@ function describeLog(
       if (entry.matchup === "generates") return `${base} · ${t.logFeed}`;
       return base;
     }
+    case "miss":
+      return t.logMiss(nameOf(entry.spiritId), t.skillName(entry.skillId));
+    case "guard":
+      return t.logGuard(nameOf(entry.spiritId));
+    case "drain":
+      return t.logDrain(entry.amount);
+    case "weaken":
+      return t.logWeaken;
     case "capture":
       return entry.success ? t.caughtIt : t.logCaptureFail;
     case "faint":
@@ -455,6 +556,84 @@ export default function SpiritVale({ locale = "en" }: { locale?: Locale }) {
   const [battle, setBattle] = useState<BattleState | null>(null);
   /** Set when a win pushed a spirit over a stage threshold. */
   const [evolved, setEvolved] = useState<{ id: string; stage: Stage } | null>(null);
+  /** One-shot animation state for the two combatants. */
+  const [anim, setAnim] = useState<{ wild: SpiritAction; party: SpiritAction; key: number }>({
+    wild: "idle",
+    party: "idle",
+    key: 0,
+  });
+  const [muted, setMuted] = useState(false);
+
+  // `tone` must stay referentially stable so the persistent movement rAF loop
+  // (below) can call it without restarting every time the mute toggle flips —
+  // the mirrored ref is the same trick `metRef`/`xpRef` use for the same reason.
+  const mutedRef = useRef(false);
+  useEffect(() => {
+    mutedRef.current = muted;
+  }, [muted]);
+  const audioRef = useRef<AudioContext | null>(null);
+  const tone = useCallback((frequency: number, duration = 0.08) => {
+    if (mutedRef.current || typeof window === "undefined") return;
+    const context = audioRef.current ?? new AudioContext();
+    audioRef.current = context;
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    oscillator.frequency.value = frequency;
+    gain.gain.setValueAtTime(0.05, context.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + duration);
+    oscillator.connect(gain).connect(context.destination);
+    oscillator.start();
+    oscillator.stop(context.currentTime + duration);
+  }, []);
+  useEffect(() => () => { void audioRef.current?.close(); }, []);
+
+  /**
+   * One sting per battle event, staggered slightly so a turn with two events
+   * (e.g. an attack that also faints the target) reads as two beats rather
+   * than one muddy chord. Matchup coloring mirrors what `describeLog` already
+   * tells the player in text — `overcomes` brightens, `overcomeBy`/`generates`
+   * (a hit that only feeds the target) dulls, everything else is the plain hit.
+   */
+  const playBattleEvents = useCallback((events: LogEntry[]) => {
+    events.forEach((event, index) => {
+      window.setTimeout(() => {
+        switch (event.kind) {
+          case "attack":
+            if (event.matchup === "overcomes") tone(560, 0.1);
+            else if (event.matchup === "overcomeBy" || event.matchup === "generates") tone(260, 0.08);
+            else tone(380, 0.08);
+            break;
+          case "miss":
+            tone(160, 0.06);
+            break;
+          case "guard":
+            tone(220, 0.09);
+            break;
+          case "drain":
+            tone(430, 0.1);
+            break;
+          case "weaken":
+            tone(300, 0.08);
+            break;
+          case "capture":
+            if (event.success) {
+              tone(520, 0.08);
+              window.setTimeout(() => tone(700, 0.08), 90);
+              window.setTimeout(() => tone(880, 0.14), 180);
+            } else {
+              tone(180, 0.12);
+            }
+            break;
+          case "faint":
+            tone(event.side === "wild" ? 640 : 150, event.side === "wild" ? 0.16 : 0.22);
+            break;
+          case "flee":
+            tone(260, 0.05);
+            break;
+        }
+      }, index * 90);
+    });
+  }, [tone]);
 
   // The save is restored after mount rather than during render: reading
   // localStorage while rendering would break the server-rendered markup match.
@@ -494,14 +673,22 @@ export default function SpiritVale({ locale = "en" }: { locale?: Locale }) {
   // Grass budget scales with the device: a phone gets a third of the blades,
   // which is the difference between 60fps and a slideshow.
   const grassBudget = useMemo(() => {
-    if (typeof window === "undefined") return 24000;
+    if (typeof window === "undefined") return 34000;
     const small = window.innerWidth < 820;
     const cores = navigator.hardwareConcurrency ?? 4;
-    if (small || cores <= 4) return 9000;
-    return cores >= 8 ? 30000 : 18000;
+    // Budgets scale with the valley: the world got much larger, and holding the
+    // old counts would have thinned the meadow into stubble.
+    if (small || cores <= 4) return 16000;
+    return cores >= 8 ? 52000 : 32000;
   }, []);
 
   useEffect(() => setWebgl(hasWebGL()), []);
+
+  // A fresh valley per visit. This is deliberately done after mount rather than
+  // in the initial state: the island is server-rendered, and a random seed
+  // chosen during render would differ between the server and the client and
+  // tear the hydration.
+  useEffect(() => setSeed(Math.floor(Math.random() * 1_000_000)), []);
   useEffect(() => {
     rng.current = mulberry32(seed ^ 0xbeef);
     pos.current = { x: 0, z: 0 };
@@ -590,13 +777,20 @@ export default function SpiritVale({ locale = "en" }: { locale?: Locale }) {
               // The party member fights at the strength its experience has
               // earned it, so evolving actually changes the fight.
               const champion = bestAgainst(spirit, metRef.current);
+              const champStage = champion ? stageOf(xpRef.current[champion.id] ?? 0) : 1;
               setBattle(
                 createBattle(
                   spirit,
-                  champion ? grownSpirit(champion, stageOf(xpRef.current[champion.id] ?? 0)) : null,
+                  champion ? grownSpirit(champion, champStage) : null,
+                  1,
+                  champStage,
                 ),
               );
+              // Both sides hop in rather than blinking into place.
+              setAnim({ wild: "appear", party: "appear", key: Date.now() });
               setPhase("encounter");
+              tone(600, 0.06);
+              window.setTimeout(() => tone(800, 0.09), 90);
               setRender((r) => ({ ...r, x: next.x, z: next.z, moving: false }));
               return;
             }
@@ -646,10 +840,22 @@ export default function SpiritVale({ locale = "en" }: { locale?: Locale }) {
   }, []);
 
   const act = useCallback(
-    (action: "attack" | "capture" | "flee") => {
+    (action: BattleAction) => {
       setBattle((prev) => {
         if (!prev || prev.phase !== "active") return prev;
-        const next = resolveTurn(prev, { type: action }, rng.current);
+        const next = resolveTurn(prev, action, rng.current);
+
+        // Translate what just happened into one animation per side. A faint
+        // outranks everything, then landing a hit, then taking one.
+        const events = next.lastEvents;
+        playBattleEvents(events);
+        const pick = (side: "player" | "wild"): SpiritAction => {
+          if (events.some((e) => e.kind === "faint" && e.side === side)) return "faint";
+          if (events.some((e) => e.kind === "attack" && e.by === side)) return "attack";
+          if (events.some((e) => e.kind === "attack" && e.by !== side)) return "hurt";
+          return "idle";
+        };
+        setAnim({ wild: pick("wild"), party: pick("player"), key: Date.now() });
 
         // Persist the moment it resolves, so closing the tab mid-celebration
         // still keeps the catch.
@@ -667,7 +873,13 @@ export default function SpiritVale({ locale = "en" }: { locale?: Locale }) {
             const save = addXp(fighter.id, xpForWin(next.wild.spirit));
             setXp(save.xp);
             const after = stageOf(xpOf(save, fighter.id));
-            if (after > before) setEvolved({ id: fighter.id, stage: after });
+            if (after > before) {
+              setEvolved({ id: fighter.id, stage: after });
+              tone(440, 0.09);
+              window.setTimeout(() => tone(550, 0.09), 100);
+              window.setTimeout(() => tone(660, 0.09), 200);
+              window.setTimeout(() => tone(880, 0.22), 300);
+            }
           }
         } else if (next.phase === "lost") {
           recordResult(GAME_KEY, "l");
@@ -699,6 +911,9 @@ export default function SpiritVale({ locale = "en" }: { locale?: Locale }) {
     wildXp: 0,
     partySpiritId: battle?.player?.spirit.id ?? null,
     partyXp: battle?.player ? xp[battle.player.spirit.id] ?? 0 : 0,
+    wildAction: anim.wild,
+    partyAction: anim.party,
+    actionKey: anim.key,
   };
 
   return (
@@ -757,124 +972,138 @@ export default function SpiritVale({ locale = "en" }: { locale?: Locale }) {
               </div>
             )}
 
+            {/* Battle HUD.
+                Deliberately NOT a full-screen modal: an earlier version covered
+                the canvas with a centred card, which hid the two spirits
+                standing in the world and reduced a 3D battle to two buttons.
+                Health sits at the top, controls at the bottom, and the middle
+                of the frame — where the creatures actually are — stays clear. */}
             {phase === "encounter" && encounter && battle && (
-              <div className="absolute inset-0 flex items-end justify-center bg-emerald-950/40 p-3 backdrop-blur-[2px] sm:items-center">
-                <div className="max-h-full w-full max-w-md overflow-y-auto rounded-3xl border border-emerald-200 bg-white p-5 shadow-2xl">
-                  <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-600">
-                    {t.found}
-                  </p>
-
-                  {/* Wild spirit */}
-                  <div className="mt-1 flex items-baseline justify-between gap-2">
-                    <h3 className="text-xl font-black text-emerald-950">
-                      {encounter.name[locale] ?? encounter.name.en}
-                    </h3>
-                    <span
-                      className="shrink-0 rounded-full px-2.5 py-0.5 text-xs font-bold text-white"
-                      style={{ background: ELEMENT_COLOR[encounter.element] }}
-                    >
-                      {ELEMENT_LABEL[encounter.element][locale]}
-                    </span>
-                  </div>
-                  <HealthBar
-                    hp={battle.wild.hp}
-                    max={battle.wild.maxHp}
-                    color={ELEMENT_COLOR[encounter.element]}
-                  />
-
-                  {/* Player's spirit, or the bare-handed notice */}
-                  {battle.player ? (
-                    <div className="mt-4 rounded-2xl bg-emerald-50 p-3">
-                      <p className="text-[10px] font-black uppercase tracking-wider text-emerald-600">
-                        {t.sendOut}
+              <>
+                {/* Wild spirit's bar, top */}
+                <div className="pointer-events-none absolute inset-x-0 top-0 flex justify-center p-3">
+                  <div className="w-full max-w-xs rounded-2xl bg-white/85 px-3 py-2 shadow-lg backdrop-blur-sm">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <p className="truncate text-sm font-black text-emerald-950">
+                        {encounter.name[locale] ?? encounter.name.en}
                       </p>
-                      <div className="mt-0.5 flex items-baseline justify-between gap-2">
-                        <p className="text-sm font-black text-emerald-950">
+                      <span
+                        className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold text-white"
+                        style={{ background: ELEMENT_COLOR[encounter.element] }}
+                      >
+                        {ELEMENT_LABEL[encounter.element][locale]}
+                      </span>
+                    </div>
+                    <HealthBar
+                      hp={battle.wild.hp}
+                      max={battle.wild.maxHp}
+                      color={ELEMENT_COLOR[encounter.element]}
+                    />
+                  </div>
+                </div>
+
+                {/* Rolling log, floating clear of both bars */}
+                {battle.log.length > 0 && (
+                  <ul className="pointer-events-none absolute inset-x-0 top-24 mx-auto w-full max-w-xs space-y-1 px-3 text-center">
+                    {battle.log.slice(-2).map((entry, i) => (
+                      <li
+                        key={battle.log.length - 2 + i}
+                        className="inline-block rounded-full bg-emerald-950/70 px-3 py-1 text-[11px] font-semibold text-emerald-50"
+                      >
+                        {describeLog(entry, t, locale)}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                {/* Controls, bottom */}
+                <div className="absolute inset-x-0 bottom-0 p-3">
+                  <div className="mx-auto w-full max-w-md rounded-2xl bg-white/92 p-3 shadow-xl backdrop-blur-sm">
+                    {battle.player ? (
+                      <div className="mb-2 flex items-center gap-2">
+                        <p className="shrink-0 text-xs font-black text-emerald-950">
                           {battle.player.spirit.name[locale] ?? battle.player.spirit.name.en}
                         </p>
-                        <span className="shrink-0 text-[11px] font-bold text-emerald-700">
-                          {ELEMENT_LABEL[battle.player.spirit.element][locale]}
-                        </span>
+                        <div className="min-w-0 flex-1">
+                          <HealthBar
+                            hp={battle.player.hp}
+                            max={battle.player.maxHp}
+                            color={ELEMENT_COLOR[battle.player.spirit.element]}
+                          />
+                        </div>
                       </div>
-                      <HealthBar
-                        hp={battle.player.hp}
-                        max={battle.player.maxHp}
-                        color={ELEMENT_COLOR[battle.player.spirit.element]}
-                      />
-                    </div>
-                  ) : (
-                    <p className="mt-4 rounded-2xl bg-amber-50 p-3 text-xs leading-5 text-amber-900">
-                      {t.barehanded}
-                    </p>
-                  )}
-
-                  {/* Log — newest last, capped so the panel can't grow forever */}
-                  {battle.log.length > 0 && (
-                    <ul className="mt-3 space-y-1 rounded-2xl bg-slate-50 p-3 text-xs leading-5 text-slate-700">
-                      {battle.log.slice(-4).map((entry, i) => (
-                        <li key={i}>{describeLog(entry, t, locale)}</li>
-                      ))}
-                    </ul>
-                  )}
-
-                  {battle.phase === "active" ? (
-                    <>
-                      <p className="mt-3 text-center text-[11px] font-semibold text-emerald-700">
-                        {t.captureOdds} {Math.round(captureChance(battle.wild) * 100)}%
+                    ) : (
+                      <p className="mb-2 rounded-xl bg-amber-50 p-2 text-[11px] leading-4 text-amber-900">
+                        {t.barehanded}
                       </p>
-                      <div className="mt-2 grid grid-cols-3 gap-2">
-                        <button
-                          onClick={() => act("attack")}
-                          disabled={!battle.player}
-                          className="rounded-xl bg-emerald-700 px-3 py-2.5 text-sm font-bold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-40"
-                        >
-                          {t.attack}
-                        </button>
-                        <button
-                          onClick={() => act("capture")}
-                          className="rounded-xl bg-amber-600 px-3 py-2.5 text-sm font-bold text-white hover:bg-amber-700"
-                        >
-                          {t.capture}
-                        </button>
-                        <button
-                          onClick={() => act("flee")}
-                          className="rounded-xl border border-emerald-200 px-3 py-2.5 text-sm font-bold text-emerald-800 hover:bg-emerald-50"
-                        >
-                          {t.flee}
-                        </button>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      {evolved && (
-                        <p className="mt-3 rounded-2xl bg-amber-50 p-3 text-center text-sm font-black text-amber-900">
-                          {t.evolved(
-                            SPIRITS.find((s) => s.id === evolved.id)?.name[locale] ?? evolved.id,
-                            evolved.stage,
-                          )}
+                    )}
+
+                    {battle.phase === "active" ? (
+                      <>
+                        {/* One button per skill, so a turn is a choice. */}
+                        {battle.player && (
+                          <div className="grid grid-cols-3 gap-1.5">
+                            {skillsFor(battle.player.spirit, battle.player.stage).map((skill) => (
+                              <button
+                                key={skill.id}
+                                onClick={() => act({ type: "skill", skillId: skill.id })}
+                                className="rounded-xl bg-emerald-700 px-2 py-2 text-xs font-bold text-white hover:bg-emerald-800"
+                              >
+                                <span className="block truncate">{t.skillName(skill.id)}</span>
+                                <span className="block text-[10px] font-semibold text-emerald-200">
+                                  {Math.round(skill.accuracy * 100)}%
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        <div className="mt-1.5 grid grid-cols-2 gap-1.5">
+                          <button
+                            onClick={() => act({ type: "capture" })}
+                            className="rounded-xl bg-amber-600 px-3 py-2 text-xs font-bold text-white hover:bg-amber-700"
+                          >
+                            {t.capture} · {Math.round(captureChance(battle.wild, battle.captureBonus) * 100)}%
+                          </button>
+                          <button
+                            onClick={() => act({ type: "flee" })}
+                            className="rounded-xl border border-emerald-200 px-3 py-2 text-xs font-bold text-emerald-800 hover:bg-emerald-50"
+                          >
+                            {t.flee}
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        {evolved && (
+                          <p className="mb-2 rounded-xl bg-amber-50 p-2 text-center text-xs font-black text-amber-900">
+                            {t.evolved(
+                              SPIRITS.find((s) => s.id === evolved.id)?.name[locale] ?? evolved.id,
+                              evolved.stage,
+                            )}
+                          </p>
+                        )}
+                        <p role="status" aria-live="polite" className="text-center text-sm font-black text-emerald-950">
+                          {battle.phase === "caught"
+                            ? t.caughtIt
+                            : battle.phase === "won"
+                              ? t.won
+                              : battle.phase === "lost"
+                                ? t.lost
+                                : battle.phase === "fled"
+                                  ? t.fledAway
+                                  : t.exhausted}
                         </p>
-                      )}
-                      <p className="mt-4 text-center text-sm font-black text-emerald-950">
-                        {battle.phase === "caught"
-                          ? t.caughtIt
-                          : battle.phase === "won"
-                            ? t.won
-                            : battle.phase === "lost"
-                              ? t.lost
-                              : battle.phase === "fled"
-                                ? t.fledAway
-                                : t.exhausted}
-                      </p>
-                      <button
-                        onClick={leaveBattle}
-                        className="mt-3 w-full rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-800"
-                      >
-                        {t.close}
-                      </button>
-                    </>
-                  )}
+                        <button
+                          onClick={leaveBattle}
+                          className="mt-2 w-full rounded-xl bg-emerald-700 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-800"
+                        >
+                          {t.close}
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
-              </div>
+              </>
             )}
           </div>
 
@@ -885,6 +1114,15 @@ export default function SpiritVale({ locale = "en" }: { locale?: Locale }) {
                 <span className="sm:hidden">{t.touchHint}</span>
               </p>
               <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setMuted((value) => !value)}
+                  aria-pressed={muted}
+                  className="min-h-11 min-w-11 rounded-full border border-emerald-200 px-3 py-1 text-xs font-bold text-emerald-800 hover:bg-emerald-50"
+                >
+                  <span aria-hidden="true">{muted ? "🔇" : "🔊"}</span>
+                  <span className="sr-only">{t.sound}</span>
+                </button>
                 <button
                   onClick={() => setSeed((s) => s + 1)}
                   className="rounded-full border border-emerald-200 px-3 py-1 text-xs font-bold text-emerald-800 hover:bg-emerald-50"

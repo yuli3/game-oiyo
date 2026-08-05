@@ -15,7 +15,7 @@ import {
 import { formFor } from "../../lib/games/spirit-vale-forms";
 import { stageOf, type Stage } from "../../lib/games/spirit-vale-evolution";
 import { spiritById } from "../../lib/games/spirit-vale";
-import SpiritModel from "./SpiritModel";
+import SpiritModel, { type SpiritAction } from "./SpiritModel";
 import { KEY_LIGHT, TOON_CHUNK, WIND_CHUNK } from "./spirit-vale-toon";
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -51,6 +51,11 @@ export interface SceneProps {
   /** The spirit the player sent out, if any. */
   partySpiritId?: string | null;
   partyXp?: number;
+  /** Current one-shot animation per side, driven by the battle log. */
+  wildAction?: SpiritAction;
+  partyAction?: SpiritAction;
+  /** Bumped each turn so a repeated action replays. */
+  actionKey?: number;
 }
 
 /* ── Palette ───────────────────────────────────────────────────────────────
@@ -648,6 +653,9 @@ function Combatants({
   partySpiritId,
   partyXp,
   reducedMotion,
+  wildAction,
+  partyAction,
+  actionKey,
 }: {
   playerX: number;
   playerZ: number;
@@ -657,6 +665,9 @@ function Combatants({
   partySpiritId?: string | null;
   partyXp?: number;
   reducedMotion: boolean;
+  wildAction?: SpiritAction;
+  partyAction?: SpiritAction;
+  actionKey?: number;
 }) {
   const wild = wildSpiritId ? spiritById(wildSpiritId) : null;
   const mine = partySpiritId ? spiritById(partySpiritId) : null;
@@ -684,6 +695,8 @@ function Combatants({
           // Turned to face back down the axis, at the player.
           facing={facing + Math.PI}
           reducedMotion={reducedMotion}
+          action={wildAction}
+          actionKey={actionKey}
         />
       )}
       {mine && (
@@ -692,6 +705,8 @@ function Combatants({
           position={[mineAt.x, mineAt.y, mineAt.z]}
           facing={facing}
           reducedMotion={reducedMotion}
+          action={partyAction}
+          actionKey={actionKey}
         />
       )}
     </>
@@ -707,6 +722,9 @@ function Valley({
   wildXp,
   partySpiritId,
   partyXp,
+  wildAction,
+  partyAction,
+  actionKey,
   ...player
 }: SceneProps) {
   const uniforms = useToonUniforms(reducedMotion);
@@ -758,6 +776,9 @@ function Valley({
           partySpiritId={partySpiritId}
           partyXp={partyXp}
           reducedMotion={reducedMotion}
+          wildAction={wildAction}
+          partyAction={partyAction}
+          actionKey={actionKey}
         />
       )}
     </>

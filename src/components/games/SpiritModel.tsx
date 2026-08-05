@@ -22,6 +22,9 @@ import { makeFlatMaterial, makeOutlineMaterial, makeToonMaterial } from "./spiri
  * point is derived from that same angle so nothing detaches at the extremes.
  * ────────────────────────────────────────────────────────────────────────── */
 
+/** What the creature is currently doing, driven by the battle log. */
+export type SpiritAction = "idle" | "attack" | "hurt" | "faint" | "appear";
+
 export interface SpiritModelProps {
   plan: BodyPlan;
   /** World position of the creature's feet. */
@@ -30,6 +33,9 @@ export interface SpiritModelProps {
   reducedMotion?: boolean;
   /** Drives the idle breath — set false to freeze during a menu. */
   animate?: boolean;
+  action?: SpiritAction;
+  /** Changes whenever a new action fires, so repeats replay. */
+  actionKey?: number;
 }
 
 /** A solid part: ink outline plus a flat-shaded fill. */
@@ -80,9 +86,14 @@ export default function SpiritModel({
   facing = 0,
   reducedMotion = false,
   animate = true,
+  action = "idle",
+  actionKey = 0,
 }: SpiritModelProps) {
   const root = useRef<THREE.Group>(null);
   const breath = useRef(0);
+  /** Seconds elapsed in the current one-shot action. */
+  const clock = useRef(0);
+  const lastKey = useRef(actionKey);
 
   // Shared primitives — built once and reused by every part, so a creature is
   // a few dozen draws over a handful of buffers rather than a buffer per limb.
@@ -126,15 +137,91 @@ export default function SpiritModel({
   useFrame((_, delta) => {
     const g = root.current;
     if (!g) return;
+
+    // Restart the one-shot whenever the caller bumps the key, so two attacks in
+    // a row both play instead of the second being swallowed.
+    if (actionKey !== lastKey.current) {
+      lastKey.current = actionKey;
+      clock.current = 0;
+    }
+
     if (reducedMotion || !animate) {
+      // Reduced motion still needs the *state* to read: a fainted creature lies
+      // down, it just gets there without the animation.
       g.scale.setScalar(1);
+      g.position.set(position[0], position[1], position[2]);
+      g.rotation.set(action === "faint" ? -Math.PI / 2.2 : 0, facing, 0);
       return;
     }
+
+    clock.current += delta;
+    const t = clock.current;
+
     breath.current += delta * 1.9;
     // A shallow, slightly anisotropic breath: creatures widen more than they
     // rise, which is what separates breathing from pulsing.
     const b = Math.sin(breath.current);
-    g.scale.set(1 + b * 0.018, 1 + b * 0.012, 1 + b * 0.018);
+    let sx = 1 + b * 0.018;
+    let sy = 1 + b * 0.012;
+    let sz = 1 + b * 0.018;
+
+    // Offsets are applied in the creature's own facing, so a lunge always goes
+    // forward regardless of which way it is turned.
+    let forward = 0;
+    let lift = 0;
+    let pitch = 0;
+    let roll = 0;
+
+    switch (action) {
+      case "attack": {
+        // A quick lunge out and a slower settle back — fast out, slow back is
+        // what makes a hit feel like it landed rather than like a drift.
+        const d = 0.42;
+        const k = Math.min(1, t / d);
+        const punch = k < 0.35 ? k / 0.35 : 1 - (k - 0.35) / 0.65;
+        forward = punch * 1.5 * plan.scale;
+        lift = punch * 0.35 * plan.scale;
+        pitch = -punch * 0.22;
+        break;
+      }
+      case "hurt": {
+        const d = 0.36;
+        const k = Math.min(1, t / d);
+        const shake = Math.sin(k * Math.PI * 5) * (1 - k);
+        forward = -shake * 0.55 * plan.scale;
+        roll = shake * 0.2;
+        // Squash on impact, easing back out.
+        sx += shake * 0.09;
+        sy -= shake * 0.09;
+        break;
+      }
+      case "faint": {
+        // Topple over and stay down.
+        const k = Math.min(1, t / 0.7);
+        const eased = 1 - Math.pow(1 - k, 3);
+        pitch = -eased * (Math.PI / 2.2);
+        lift = -eased * 0.25 * plan.scale;
+        break;
+      }
+      case "appear": {
+        // A short hop on entry, so a spirit arrives rather than blinks in.
+        const k = Math.min(1, t / 0.55);
+        lift = Math.sin(k * Math.PI) * 1.1 * plan.scale;
+        sy += Math.sin(k * Math.PI) * 0.08;
+        break;
+      }
+      case "idle":
+      default:
+        break;
+    }
+
+    g.scale.set(sx, sy, sz);
+    g.rotation.set(pitch, facing, roll);
+    g.position.set(
+      position[0] + Math.sin(facing) * forward,
+      position[1] + lift,
+      position[2] + Math.cos(facing) * forward,
+    );
   });
 
   const p = plan.palette;

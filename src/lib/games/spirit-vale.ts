@@ -225,9 +225,9 @@ function fbm2(x: number, y: number, octaves = 4): number {
 
 export const WORLD = {
   /** Half-extent in metres; the valley spans -SIZE..SIZE on both axes. */
-  size: 60,
+  size: 115,
   /** Terrain mesh subdivisions per axis. */
-  segments: 128,
+  segments: 160,
   /** Peak hill height. */
   amplitude: 5.2,
   /** Noise scale — smaller means broader, gentler hills. */
@@ -309,17 +309,20 @@ export interface TallGrassZone {
 export function generateTallGrassZones(seed: number): TallGrassZone[] {
   const rng = mulberry32(seed ^ 0x2a17);
   const zones: TallGrassZone[] = [];
-  const count = 5;
+  const count = 10;
   for (let i = 0; i < count; i++) {
     // Even angular spread with jitter: reliably spaced, never mechanical.
-    const angle = (i / count) * Math.PI * 2 + (rng() - 0.5) * 0.7;
-    const dist = WORLD.clearingRadius + 6 + rng() * 22;
+    const angle = (i / count) * Math.PI * 2 + (rng() - 0.5) * 0.55;
+    // Thickets are pushed out across the whole valley rather than ringing the
+    // spawn point, so reaching a new one is a walk and not a step.
+    const reach = WORLD.size - 22;
+    const dist = WORLD.clearingRadius + 10 + rng() * (reach - WORLD.clearingRadius - 10);
     const x = Math.cos(angle) * dist;
     const z = Math.sin(angle) * dist;
     zones.push({
       x,
       z,
-      radius: 5 + rng() * 3.5,
+      radius: 6 + rng() * 4.5,
       element: ELEMENT_IDS[i % ELEMENT_IDS.length],
     });
   }

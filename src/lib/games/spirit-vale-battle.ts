@@ -1,4 +1,6 @@
 import { SPIRITS, damageMultiplier, matchup, type Matchup, type Spirit } from "./spirit-vale";
+import { stageOf, type Stage } from "./spirit-vale-evolution";
+import { chooseWildSkill, skillById, skillsFor, type Skill } from "./spirit-vale-skills";
 
 /* ────────────────────────────────────────────────────────────────────────────
  * Spirit Vale — turn-based battles, with no renderer and no strings.
@@ -18,12 +20,26 @@ export interface Combatant {
   spirit: Spirit;
   hp: number;
   maxHp: number;
+  stage: Stage;
+  /** Damage reduction applied to the next hit taken, from a guard art. */
+  guard: number;
 }
 
 export type BattlePhase = "active" | "won" | "lost" | "caught" | "fled" | "exhausted";
 
 export type LogEntry =
-  | { kind: "attack"; by: "player" | "wild"; spiritId: string; damage: number; matchup: Matchup }
+  | {
+      kind: "attack";
+      by: "player" | "wild";
+      spiritId: string;
+      skillId: string;
+      damage: number;
+      matchup: Matchup;
+    }
+  | { kind: "miss"; by: "player" | "wild"; spiritId: string; skillId: string }
+  | { kind: "guard"; by: "player" | "wild"; spiritId: string }
+  | { kind: "drain"; by: "player" | "wild"; amount: number }
+  | { kind: "weaken"; by: "player" | "wild" }
   | { kind: "capture"; success: boolean; chance: number }
   | { kind: "faint"; side: "player" | "wild"; spiritId: string }
   | { kind: "flee" };
@@ -34,9 +50,16 @@ export interface BattleState {
   turn: number;
   phase: BattlePhase;
   log: LogEntry[];
+  /** Accumulated from `weaken` arts, added to the capture chance. */
+  captureBonus: number;
+  /** Entries added by the most recent turn, for driving hit animations. */
+  lastEvents: LogEntry[];
 }
 
-export type BattleAction = { type: "attack" } | { type: "capture" } | { type: "flee" };
+export type BattleAction =
+  | { type: "skill"; skillId: string }
+  | { type: "capture" }
+  | { type: "flee" };
 
 /**
  * Battles end after this many turns. Two mutually resistant spirits with low
@@ -49,8 +72,8 @@ export const MAX_TURNS = 30;
 const VARIANCE_MIN = 0.85;
 const VARIANCE_SPAN = 0.3;
 
-export function makeCombatant(spirit: Spirit): Combatant {
-  return { spirit, hp: spirit.hp, maxHp: spirit.hp };
+export function makeCombatant(spirit: Spirit, stage: Stage = 1): Combatant {
+  return { spirit, hp: spirit.hp, maxHp: spirit.hp, stage, guard: 0 };
 }
 
 /**
@@ -59,22 +82,41 @@ export function makeCombatant(spirit: Spirit): Combatant {
  * the first catch the hard one and every catch after it easier, which is the
  * loop we want rather than a starter handed over for free.
  */
-export function createBattle(wild: Spirit, player: Spirit | null): BattleState {
+export function createBattle(
+  wild: Spirit,
+  player: Spirit | null,
+  wildStage: Stage = 1,
+  playerStage: Stage = 1,
+): BattleState {
   return {
-    player: player ? makeCombatant(player) : null,
-    wild: makeCombatant(wild),
+    player: player ? makeCombatant(player, playerStage) : null,
+    wild: makeCombatant(wild, wildStage),
     turn: 1,
     phase: "active",
     log: [],
+    captureBonus: 0,
+    lastEvents: [],
   };
 }
 
-export function computeDamage(attacker: Spirit, defender: Spirit, roll: () => number): number {
-  const mult = damageMultiplier(attacker.element, defender.element);
+/**
+ * Damage for one skill. Untyped strikes ignore the 오행 matchup entirely, which
+ * is what makes them the reliable option against a bad pairing.
+ */
+export function computeDamage(
+  attacker: Combatant,
+  defender: Combatant,
+  skill: Skill,
+  roll: () => number,
+): number {
+  if (skill.power <= 0) return 0;
+  const mult = skill.typed ? damageMultiplier(attacker.spirit.element, defender.spirit.element) : 1;
   const variance = VARIANCE_MIN + roll() * VARIANCE_SPAN;
+  const raw = attacker.spirit.attack * skill.power * mult * variance;
+  const blocked = raw * (1 - defender.guard);
   // Floor of 1: a resisted hit should still register as a hit, otherwise a bad
   // matchup reads as a broken button.
-  return Math.max(1, Math.round(attacker.attack * mult * variance));
+  return Math.max(1, Math.round(blocked));
 }
 
 /**
@@ -82,9 +124,9 @@ export function computeDamage(attacker: Spirit, defender: Spirit, roll: () => nu
  * shot; nearly fainted it is likely but never certain, so the last point of HP
  * can't be treated as a guaranteed catch.
  */
-export function captureChance(wild: Combatant): number {
+export function captureChance(wild: Combatant, bonus = 0): number {
   const ratio = wild.maxHp > 0 ? wild.hp / wild.maxHp : 0;
-  return Math.min(0.9, 0.15 + 0.6 * (1 - ratio));
+  return Math.min(0.9, 0.15 + 0.6 * (1 - ratio) + bonus);
 }
 
 function damaged(c: Combatant, amount: number): Combatant {
@@ -104,99 +146,147 @@ export function resolveTurn(state: BattleState, action: BattleAction, roll: () =
   const log: LogEntry[] = [];
 
   if (action.type === "flee") {
-    return { ...state, phase: "fled", log: [...state.log, { kind: "flee" }] };
+    return {
+      ...state,
+      phase: "fled",
+      log: [...state.log, { kind: "flee" }],
+      lastEvents: [{ kind: "flee" }],
+    };
   }
 
+  // Guard is not cleared here: it is consumed by the hit it absorbs, inside
+  // `useSkill`. That keeps "blocks the next attack" true no matter whose turn
+  // order the speed check produced.
+  const cur: BattleState = state;
+
   if (action.type === "capture") {
-    const chance = captureChance(state.wild);
+    const chance = captureChance(cur.wild, cur.captureBonus);
     const success = roll() < chance;
     log.push({ kind: "capture", success, chance });
     if (success) {
-      return { ...state, phase: "caught", log: [...state.log, ...log] };
+      return { ...cur, phase: "caught", log: [...cur.log, ...log], lastEvents: log };
     }
     // A failed capture costs the turn: the wild spirit still gets to act.
-    return afterPlayerAction(state, log, roll);
+    return wildTurn(cur, log, roll);
   }
 
-  // attack
-  if (!state.player) {
-    // Nothing to attack with; treat as a wasted turn rather than a crash.
-    return afterPlayerAction(state, log, roll);
+  if (!cur.player) {
+    // Nothing to act with; treat as a wasted turn rather than a crash.
+    return wildTurn(cur, log, roll);
   }
 
-  const wildFirst = state.wild.spirit.speed > state.player.spirit.speed;
+  const skill = skillById(cur.player.spirit, cur.player.stage, action.skillId)
+    ?? skillsFor(cur.player.spirit, cur.player.stage)[0];
+
+  const wildFirst = cur.wild.spirit.speed > cur.player.spirit.speed;
   if (wildFirst) {
-    const afterWild = wildStrike(state, log, roll);
-    if (afterWild.phase !== "active") return afterWild;
-    return playerStrike(afterWild, log, roll, true);
+    const afterWild = wildAct(cur, log, roll);
+    if (afterWild.phase !== "active") return { ...afterWild, lastEvents: log };
+    const afterPlayer = useSkill(afterWild, "player", skill, log, roll);
+    if (afterPlayer.phase !== "active") return { ...afterPlayer, lastEvents: log };
+    return finishTurn(afterPlayer, log);
   }
 
-  const afterPlayer = playerStrike(state, log, roll, false);
-  if (afterPlayer.phase !== "active") return afterPlayer;
-  return wildStrikeAndAdvance(afterPlayer, log, roll);
+  const afterPlayer = useSkill(cur, "player", skill, log, roll);
+  if (afterPlayer.phase !== "active") return { ...afterPlayer, lastEvents: log };
+  return wildTurn(afterPlayer, log, roll);
 }
 
-function playerStrike(
-  state: BattleState,
-  log: LogEntry[],
-  roll: () => number,
-  advance: boolean,
-): BattleState {
-  if (!state.player) return state;
-  const dmg = computeDamage(state.player.spirit, state.wild.spirit, roll);
-  log.push({
-    kind: "attack",
-    by: "player",
-    spiritId: state.player.spirit.id,
-    damage: dmg,
-    matchup: matchup(state.player.spirit.element, state.wild.spirit.element),
-  });
-  const wild = damaged(state.wild, dmg);
-  if (wild.hp <= 0) {
-    log.push({ kind: "faint", side: "wild", spiritId: wild.spirit.id });
-    return { ...state, wild, phase: "won", log: [...state.log, ...log] };
-  }
-  const next = { ...state, wild };
-  return advance ? finishTurn(next, log) : next;
-}
-
-function wildStrike(state: BattleState, log: LogEntry[], roll: () => number): BattleState {
-  if (!state.player) return state;
-  const dmg = computeDamage(state.wild.spirit, state.player.spirit, roll);
-  log.push({
-    kind: "attack",
-    by: "wild",
-    spiritId: state.wild.spirit.id,
-    damage: dmg,
-    matchup: matchup(state.wild.spirit.element, state.player.spirit.element),
-  });
-  const player = damaged(state.player, dmg);
-  if (player.hp <= 0) {
-    log.push({ kind: "faint", side: "player", spiritId: player.spirit.id });
-    return { ...state, player, phase: "lost", log: [...state.log, ...log] };
-  }
-  return { ...state, player };
-}
-
-function wildStrikeAndAdvance(state: BattleState, log: LogEntry[], roll: () => number): BattleState {
-  const next = wildStrike(state, log, roll);
-  if (next.phase !== "active") return next;
+/** The wild spirit acts, then the turn closes. */
+function wildTurn(state: BattleState, log: LogEntry[], roll: () => number): BattleState {
+  const next = wildAct(state, log, roll);
+  if (next.phase !== "active") return { ...next, lastEvents: log };
   return finishTurn(next, log);
 }
 
-/** The wild spirit's free swing after a capture attempt or an empty party. */
-function afterPlayerAction(state: BattleState, log: LogEntry[], roll: () => number): BattleState {
-  if (!state.player) {
-    // No one to hit, so the turn simply passes.
-    return finishTurn(state, log);
+function wildAct(state: BattleState, log: LogEntry[], roll: () => number): BattleState {
+  if (!state.player) return state;
+  const skill = chooseWildSkill(state.wild.spirit, state.wild.stage, roll);
+  return useSkill(state, "wild", skill, log, roll);
+}
+
+/**
+ * Apply one skill from one side. Damage, misses, guards, drains and capture
+ * softening all flow through here so the two sides can never diverge.
+ */
+function useSkill(
+  state: BattleState,
+  by: "player" | "wild",
+  skill: Skill,
+  log: LogEntry[],
+  roll: () => number,
+): BattleState {
+  const attacker = by === "player" ? state.player : state.wild;
+  const defender = by === "player" ? state.wild : state.player;
+  if (!attacker || !defender) return state;
+
+  if (roll() >= skill.accuracy) {
+    log.push({ kind: "miss", by, spiritId: attacker.spirit.id, skillId: skill.id });
+    return state;
   }
-  return wildStrikeAndAdvance(state, log, roll);
+
+  let nextAttacker: Combatant = attacker;
+  let nextDefender: Combatant = defender;
+  let captureBonus = state.captureBonus;
+
+  if (skill.effect === "guard" && skill.guard) {
+    nextAttacker = { ...attacker, guard: skill.guard };
+    log.push({ kind: "guard", by, spiritId: attacker.spirit.id });
+  }
+
+  if (skill.power > 0) {
+    const dmg = computeDamage(attacker, defender, skill, roll);
+    log.push({
+      kind: "attack",
+      by,
+      spiritId: attacker.spirit.id,
+      skillId: skill.id,
+      damage: dmg,
+      matchup: matchup(attacker.spirit.element, defender.spirit.element),
+    });
+    // The block is spent on the hit it just absorbed.
+    nextDefender = { ...damaged(defender, dmg), guard: 0 };
+
+    if (skill.drain) {
+      // Healing is capped at the pool it came from, so a drain can top a
+      // spirit up but never inflate it past full.
+      const healed = Math.max(1, Math.round(dmg * skill.drain));
+      const before = nextAttacker.hp;
+      nextAttacker = { ...nextAttacker, hp: Math.min(nextAttacker.maxHp, nextAttacker.hp + healed) };
+      const gained = nextAttacker.hp - before;
+      if (gained > 0) log.push({ kind: "drain", by, amount: gained });
+    }
+  }
+
+  if (skill.effect === "weaken" && skill.captureBonus) {
+    // Only the player's softening helps a capture; a wild spirit using it is
+    // just chipping away.
+    if (by === "player") captureBonus = Math.min(0.5, captureBonus + skill.captureBonus);
+    log.push({ kind: "weaken", by });
+  }
+
+  const merged: BattleState =
+    by === "player"
+      ? { ...state, player: nextAttacker, wild: nextDefender, captureBonus }
+      : { ...state, wild: nextAttacker, player: nextDefender, captureBonus };
+
+  if (nextDefender.hp <= 0) {
+    const side = by === "player" ? "wild" : "player";
+    log.push({ kind: "faint", side, spiritId: nextDefender.spirit.id });
+    return {
+      ...merged,
+      phase: by === "player" ? "won" : "lost",
+      log: [...state.log, ...log],
+    };
+  }
+
+  return merged;
 }
 
 function finishTurn(state: BattleState, log: LogEntry[]): BattleState {
   const turn = state.turn + 1;
   const phase: BattlePhase = turn > MAX_TURNS ? "exhausted" : "active";
-  return { ...state, turn, phase, log: [...state.log, ...log] };
+  return { ...state, turn, phase, log: [...state.log, ...log], lastEvents: log };
 }
 
 /**
@@ -205,6 +295,8 @@ function finishTurn(state: BattleState, log: LogEntry[]): BattleState {
  * doesn't want to micromanage still benefits from having caught a spread of
  * elements — the collection has a mechanical payoff, not just a checklist.
  */
+export { skillsFor, stageOf };
+
 export function bestAgainst(wild: Spirit, partyIds: string[]): Spirit | null {
   const party = partyIds
     .map((id) => SPIRITS.find((s) => s.id === id))
