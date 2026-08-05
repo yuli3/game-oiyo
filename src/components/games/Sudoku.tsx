@@ -24,12 +24,12 @@ function createGenerationSeed(): number {
 
 const Sudoku: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const COPY = {
-        ko: { title: "스도쿠 (Sudoku)", desc: "1부터 9까지 겹치지 않게 숫자를 채워보세요!", reset: "새 퍼즐", win: "완벽한 논리력입니다!", time: "시간", best: "최단 기록", row: "행", column: "열", empty: "빈 칸", given: "주어진 숫자", entered: "입력한 숫자", selectedLabel: "선택됨", conflict: "충돌", daily: "📅 오늘의 도전", easy: "초급", medium: "중급", hard: "고급", streak: "연속", newBest: "새 최단 기록!", nextGoal: "다음 목표", clues: "단서" },
-        en: { title: "Sudoku", desc: "Fill in numbers 1-9 without overlap!", reset: "New Puzzle", win: "Perfect Logic!", time: "Time", best: "Best Time", row: "row", column: "column", empty: "empty", given: "given", entered: "entered", selectedLabel: "selected", conflict: "conflict", daily: "📅 Daily Challenge", easy: "Easy", medium: "Medium", hard: "Hard", streak: "Streak", newBest: "New best time!", nextGoal: "Next goal", clues: "clues" },
-        ja: { title: "数独", desc: "1から9まで重複なく埋めましょう！", reset: "新しいパズル", win: "完璧な論理力です！", time: "時間", best: "最短記録", row: "行", column: "列", empty: "空き", given: "初期数字", entered: "入力数字", selectedLabel: "選択中", conflict: "重複", daily: "📅 デイリー挑戦", easy: "初級", medium: "中級", hard: "上級", streak: "連続", newBest: "新記録！", nextGoal: "次の目標", clues: "ヒント数" },
-        zh: { title: "数独", desc: "填入1到9，不重复！", reset: "新谜题", win: "完美的逻辑力！", time: "时间", best: "最快记录", row: "行", column: "列", empty: "空格", given: "给定数字", entered: "输入数字", selectedLabel: "已选择", conflict: "冲突", daily: "📅 每日挑战", easy: "初级", medium: "中级", hard: "高级", streak: "连续", newBest: "新的最快记录！", nextGoal: "下一目标", clues: "线索" },
-        fr: { title: "Sudoku", desc: "Remplissez de 1 à 9 sans doublon !", reset: "Nouvelle grille", win: "Logique parfaite !", time: "Temps", best: "Meilleur temps", row: "ligne", column: "colonne", empty: "vide", given: "chiffre donné", entered: "chiffre saisi", selectedLabel: "sélectionnée", conflict: "conflit", daily: "📅 Défi du jour", easy: "Facile", medium: "Moyen", hard: "Difficile", streak: "Série", newBest: "Nouveau meilleur temps !", nextGoal: "Prochain objectif", clues: "indices" },
-        es: { title: "Sudoku", desc: "¡Rellena del 1 al 9 sin repetir!", reset: "Nuevo puzle", win: "¡Lógica perfecta!", time: "Tiempo", best: "Mejor tiempo", row: "fila", column: "columna", empty: "vacía", given: "número dado", entered: "número introducido", selectedLabel: "seleccionada", conflict: "conflicto", daily: "📅 Reto diario", easy: "Fácil", medium: "Medio", hard: "Difícil", streak: "Racha", newBest: "¡Nuevo mejor tiempo!", nextGoal: "Siguiente objetivo", clues: "pistas" }
+        ko: { title: "스도쿠 (Sudoku)", desc: "1부터 9까지 겹치지 않게 숫자를 채워보세요!", reset: "새 퍼즐", win: "완벽한 논리력입니다!", time: "시간", best: "최단 기록", row: "행", column: "열", empty: "빈 칸", given: "주어진 숫자", entered: "입력한 숫자", selectedLabel: "선택됨", conflict: "충돌", daily: "📅 오늘의 도전", easy: "초급", medium: "중급", hard: "고급", streak: "연속", newBest: "새 최단 기록!", nextGoal: "다음 목표", clues: "단서", sound: "소리" },
+        en: { title: "Sudoku", desc: "Fill in numbers 1-9 without overlap!", reset: "New Puzzle", win: "Perfect Logic!", time: "Time", best: "Best Time", row: "row", column: "column", empty: "empty", given: "given", entered: "entered", selectedLabel: "selected", conflict: "conflict", daily: "📅 Daily Challenge", easy: "Easy", medium: "Medium", hard: "Hard", streak: "Streak", newBest: "New best time!", nextGoal: "Next goal", clues: "clues", sound: "Sound" },
+        ja: { title: "数独", desc: "1から9まで重複なく埋めましょう！", reset: "新しいパズル", win: "完璧な論理力です！", time: "時間", best: "最短記録", row: "行", column: "列", empty: "空き", given: "初期数字", entered: "入力数字", selectedLabel: "選択中", conflict: "重複", daily: "📅 デイリー挑戦", easy: "初級", medium: "中級", hard: "上級", streak: "連続", newBest: "新記録！", nextGoal: "次の目標", clues: "ヒント数", sound: "サウンド" },
+        zh: { title: "数独", desc: "填入1到9，不重复！", reset: "新谜题", win: "完美的逻辑力！", time: "时间", best: "最快记录", row: "行", column: "列", empty: "空格", given: "给定数字", entered: "输入数字", selectedLabel: "已选择", conflict: "冲突", daily: "📅 每日挑战", easy: "初级", medium: "中级", hard: "高级", streak: "连续", newBest: "新的最快记录！", nextGoal: "下一目标", clues: "线索", sound: "声音" },
+        fr: { title: "Sudoku", desc: "Remplissez de 1 à 9 sans doublon !", reset: "Nouvelle grille", win: "Logique parfaite !", time: "Temps", best: "Meilleur temps", row: "ligne", column: "colonne", empty: "vide", given: "chiffre donné", entered: "chiffre saisi", selectedLabel: "sélectionnée", conflict: "conflit", daily: "📅 Défi du jour", easy: "Facile", medium: "Moyen", hard: "Difficile", streak: "Série", newBest: "Nouveau meilleur temps !", nextGoal: "Prochain objectif", clues: "indices", sound: "Son" },
+        es: { title: "Sudoku", desc: "¡Rellena del 1 al 9 sin repetir!", reset: "Nuevo puzle", win: "¡Lógica perfecta!", time: "Tiempo", best: "Mejor tiempo", row: "fila", column: "columna", empty: "vacía", given: "número dado", entered: "número introducido", selectedLabel: "seleccionada", conflict: "conflicto", daily: "📅 Reto diario", easy: "Fácil", medium: "Medio", hard: "Difícil", streak: "Racha", newBest: "¡Nuevo mejor tiempo!", nextGoal: "Siguiente objetivo", clues: "pistas", sound: "Sonido" }
     };
     const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
 
@@ -48,6 +48,25 @@ const Sudoku: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const cellRefs = useRef<Array<HTMLButtonElement | null>>([]);
     const seedRef = useRef(0);
     const startedAt = useRef<number | null>(null);
+
+    const [muted, setMuted] = useState(false);
+    const mutedRef = useRef(false);
+    useEffect(() => { mutedRef.current = muted; }, [muted]);
+    const audioRef = useRef<AudioContext | null>(null);
+    const tone = useCallback((frequency: number, duration = 0.05) => {
+        if (mutedRef.current || typeof window === 'undefined') return;
+        const context = audioRef.current ?? new AudioContext();
+        audioRef.current = context;
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        oscillator.frequency.value = frequency;
+        gain.gain.setValueAtTime(0.05, context.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + duration);
+        oscillator.connect(gain).connect(context.destination);
+        oscillator.start();
+        oscillator.stop(context.currentTime + duration);
+    }, []);
+    useEffect(() => () => { void audioRef.current?.close(); }, []);
 
     const conditionsFor = useCallback((nextMode: SudokuMode, seed: number, date: string): BestConditions => ({
         seed: nextMode === 'daily' ? `daily-${date}` : `free-${seed}`,
@@ -119,6 +138,8 @@ const Sudoku: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         const newGrid = grid.map(row => [...row]);
         newGrid[r][c] = n === grid[r][c] ? null : n;
         setGrid(newGrid);
+        if (newGrid[r][c] !== null && findSudokuConflicts(newGrid)[r][c]) tone(180, 0.08);
+        else if (newGrid[r][c] !== null) tone(420, 0.04);
     };
 
     useEffect(() => {
@@ -130,6 +151,8 @@ const Sudoku: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     useEffect(() => {
         if (isWon && !recorded) {
             setRecorded(true);
+            tone(880, 0.1);
+            window.setTimeout(() => tone(1100, 0.16), 90);
             const finalSeconds = Math.max(1, seconds);
             const previousBest = bestTime;
             const next = recordBestForConditions('sudoku', finalSeconds, 'seconds', conditionsFor(mode, seedRef.current, dailyDate)).value;
@@ -140,7 +163,7 @@ const Sudoku: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 setStreak(recordDailyWin(DAILY_GAME_ID, today, previousDayKey(today)));
             }
         }
-    }, [isWon, recorded, seconds, bestTime, conditionsFor, dailyDate, mode]);
+    }, [isWon, recorded, seconds, bestTime, conditionsFor, dailyDate, mode, tone]);
 
     const moveFocus = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
         const row = Math.floor(index / 9), column = index % 9;
@@ -175,6 +198,14 @@ const Sudoku: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                             {t[id]}
                         </button>
                     ))}
+                    <button
+                        onClick={() => setMuted((value) => !value)}
+                        aria-pressed={muted}
+                        aria-label={t.sound}
+                        className="min-h-11 min-w-11 rounded-lg border border-border text-sm text-muted-foreground hover:bg-muted"
+                    >
+                        <span aria-hidden="true">{muted ? '🔇' : '🔊'}</span>
+                    </button>
                 </div>
 
                 {mode === 'daily' && streak && streak.played > 0 && (
