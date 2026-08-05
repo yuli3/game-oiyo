@@ -1,0 +1,29 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import NeonFormation from "../../components/games/NeonFormation";
+import GameGuide from "../../components/GameGuide.astro";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+const { locale } = Astro.props as { locale: Locale };
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: { title: "Neon Formation — 무료 3D 편대형 우주 슈터", description: "급강하 편대, 트랙터 빔 포획·구출, 네온 3D 함선과 웨이브 최고 점수를 갖춘 무료 싱글플레이 브라우저 슈터." },
+  en: { title: "Neon Formation — Free 3D Formation Space Shooter", description: "A free single-player browser shooter with dive-bomb formations, tractor-beam capture and rescue, neon 3D ships and wave high scores." },
+  ja: { title: "Neon Formation — 無料3D編隊宇宙シューター", description: "急降下編隊、トラクタービームの捕獲と救出、ネオン3D宇宙船、ウェーブハイスコアを備えた無料ブラウザゲーム。" },
+  zh: { title: "Neon Formation — 免费3D编队太空射击", description: "免费单人浏览器射击游戏，含俯冲编队、牵引光束捕获与救援、霓虹3D飞船和波次最高分。" },
+  fr: { title: "Neon Formation — Shoot spatial 3D gratuit", description: "Jeu solo gratuit avec formations en piqué, capture et sauvetage par rayon tracteur, vaisseaux 3D néon et meilleur score." },
+  es: { title: "Neon Formation — Shooter espacial 3D gratis", description: "Juego individual gratis con formaciones en picado, captura y rescate por rayo tractor, naves 3D neón y récord por oleadas." },
+};
+const m = meta[locale] ?? meta.en;
+---
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-7xl px-2 py-6 sm:px-4 sm:py-8">
+    <NeonFormation client:visible locale={locale} />
+    <div class="mx-auto max-w-3xl px-2">
+      <GameGuide slug="neon-formation" locale={locale} name="Neon Formation" />
+    </div>
+  </div>
+</BaseLayout>

@@ -1,0 +1,29 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Emberdeep from "../../components/games/Emberdeep";
+import GameGuide from "../../components/GameGuide.astro";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+const { locale } = Astro.props as { locale: Locale };
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: { title: "Emberdeep — 무료 판타지 횡스크롤 액션 RPG", description: "4연타 콤보, 주문, 회피, 2.5D 깊이 이동과 분기 던전을 갖춘 오리지널 싱글플레이 브라우저 판타지 액션 RPG." },
+  en: { title: "Emberdeep — Free Fantasy Beat 'Em Up RPG", description: "An original single-player browser fantasy action RPG with four-hit combos, spells, dodges, 2.5D lane movement and branching dungeons." },
+  ja: { title: "Emberdeep — 無料ファンタジー横スクロールRPG", description: "4連撃、魔法、回避、2.5D奥行き移動、分岐ダンジョンを備えたオリジナルのブラウザ・アクションRPG。" },
+  zh: { title: "Emberdeep — 免费奇幻横版动作RPG", description: "原创单人浏览器奇幻动作RPG，包含四连击、法术、闪避、2.5D纵深移动与分支地牢。" },
+  fr: { title: "Emberdeep — Beat 'em up fantasy RPG gratuit", description: "RPG d'action fantasy original en solo avec combos de quatre coups, sorts, esquives, profondeur 2.5D et donjons à embranchements." },
+  es: { title: "Emberdeep — RPG fantástico beat 'em up gratis", description: "RPG de acción fantástico original para un jugador con combos de cuatro golpes, hechizos, esquivas, profundidad 2.5D y mazmorras ramificadas." },
+};
+const m = meta[locale] ?? meta.en;
+---
+<BaseLayout title={m.title} description={m.description} heading={m.title} image="/games/emberdeep-social.png">
+  <div class="mx-auto max-w-7xl px-2 py-6 sm:px-4 sm:py-8">
+    <Emberdeep client:visible locale={locale} />
+    <div class="mx-auto max-w-3xl px-2">
+      <GameGuide slug="emberdeep" locale={locale} name="Emberdeep" />
+    </div>
+  </div>
+</BaseLayout>

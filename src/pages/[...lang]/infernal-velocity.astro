@@ -1,0 +1,29 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import InfernalVelocity from "../../components/games/InfernalVelocity";
+import GameGuide from "../../components/GameGuide.astro";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+const { locale } = Astro.props as { locale: Locale };
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: { title: "Infernal Velocity — 무료 3D 레트로 FPS", description: "더블 점프, 방향 대시, 세 가지 중화기와 연속 몬스터 웨이브를 갖춘 고속 싱글플레이 3D 브라우저 FPS." },
+  en: { title: "Infernal Velocity — Free 3D Retro FPS", description: "A fast single-player 3D browser FPS with double jumps, directional dash, three heavy weapons and relentless monster waves." },
+  ja: { title: "Infernal Velocity — 無料3DレトロFPS", description: "二段ジャンプ、方向ダッシュ、3種の重火器、連続モンスターウェーブを備えた高速シングルプレイ3DブラウザFPS。" },
+  zh: { title: "Infernal Velocity — 免费3D复古FPS", description: "高速单人3D浏览器FPS，拥有二段跳、方向冲刺、三种重武器与连续怪物波次。" },
+  fr: { title: "Infernal Velocity — FPS rétro 3D gratuit", description: "FPS 3D solo rapide sur navigateur avec double saut, dash directionnel, trois armes lourdes et vagues de monstres." },
+  es: { title: "Infernal Velocity — FPS retro 3D gratis", description: "FPS 3D individual y veloz para navegador con doble salto, dash direccional, tres armas pesadas y oleadas de monstruos." },
+};
+const m = meta[locale] ?? meta.en;
+---
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-7xl px-2 py-6 sm:px-4 sm:py-8">
+    <InfernalVelocity client:visible locale={locale} />
+    <div class="mx-auto max-w-3xl px-2">
+      <GameGuide slug="infernal-velocity" locale={locale} name="Infernal Velocity" />
+    </div>
+  </div>
+</BaseLayout>

@@ -1,0 +1,27 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import IronTempest from "../../components/games/IronTempest";
+import GameGuide from "../../components/GameGuide.astro";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+const { locale } = Astro.props as { locale: Locale };
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: { title: "Iron Tempest — 무료 2.5D 런앤건 게임", description: "중화기 보급, 파괴 가능한 전장, 돌격 차량과 거대 전쟁열차 보스를 갖춘 폭발적인 오리지널 픽셀 아트 런앤건." },
+  en: { title: "Iron Tempest — Free 2.5D Run-and-Gun", description: "An explosive original pixel-art run-and-gun with heavy weapon drops, destructible battlefields, an assault vehicle and a colossal War Train boss." },
+  ja: { title: "Iron Tempest — 無料2.5Dラン＆ガン", description: "重火器ドロップ、破壊可能な戦場、突撃車両、巨大戦闘列車ボスを備えたオリジナルのピクセルアート・ラン＆ガン。" },
+  zh: { title: "Iron Tempest — 免费2.5D跑轰游戏", description: "原创像素跑轰动作游戏，拥有重武器掉落、可破坏战场、突击载具与巨型战争列车首领。" },
+  fr: { title: "Iron Tempest — Run-and-gun 2.5D gratuit", description: "Run-and-gun pixel art original avec armes lourdes, champ de bataille destructible, véhicule d'assaut et gigantesque train de guerre." },
+  es: { title: "Iron Tempest — Run-and-gun 2.5D gratis", description: "Run-and-gun pixel art original con armas pesadas, campo destructible, vehículo de asalto y un gigantesco Tren de Guerra." },
+};
+const m = meta[locale] ?? meta.en;
+---
+<BaseLayout title={m.title} description={m.description} heading={m.title} image="/games/iron-tempest-social.png">
+  <div class="mx-auto max-w-7xl px-2 py-6 sm:px-4 sm:py-8">
+    <IronTempest client:visible locale={locale} />
+    <div class="mx-auto max-w-3xl px-2"><GameGuide slug="iron-tempest" locale={locale} name="Iron Tempest" /></div>
+  </div>
+</BaseLayout>

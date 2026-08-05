@@ -1,0 +1,28 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import GameGuide from "../../components/GameGuide.astro";
+import SkywardAtlas from "../../components/games/SkywardAtlas";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+const { locale } = Astro.props as { locale: Locale };
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: { title: "Skyward Atlas — 무료 3D 비행 시뮬레이션", description: "공기역학, 실속, 바람, 높이맵 산맥, 볼류메트릭 구름, 낮밤과 조종석 시점을 갖춘 오리지널 무료 3D 브라우저 비행 게임." },
+  en: { title: "Skyward Atlas — Free 3D Flight Simulator", description: "An original free 3D browser flight game with aerodynamic stalls, wind, heightmap mountains, volumetric clouds, day-night lighting and cockpit view." },
+  ja: { title: "Skyward Atlas — 無料3Dフライトシミュレーター", description: "空力・失速・風・山岳ハイトマップ・雲・昼夜照明・コックピット視点を備えたオリジナル無料3Dブラウザ飛行ゲーム。" },
+  zh: { title: "Skyward Atlas — 免费3D飞行模拟器", description: "原创免费3D浏览器飞行游戏，拥有空气动力失速、风、高度图山脉、体积云、昼夜光照与驾驶舱视角。" },
+  fr: { title: "Skyward Atlas — Simulateur de vol 3D gratuit", description: "Jeu de vol 3D original avec aérodynamique, décrochage, vent, relief, nuages volumétriques, cycle jour-nuit et vue cockpit." },
+  es: { title: "Skyward Atlas — Simulador de vuelo 3D gratis", description: "Juego de vuelo 3D original con aerodinámica, pérdida, viento, montañas, nubes volumétricas, ciclo día-noche y vista de cabina." },
+};
+const m = meta[locale] ?? meta.en;
+---
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-7xl px-2 py-6 sm:px-4 sm:py-8">
+    <SkywardAtlas client:visible locale={locale} />
+    <div class="mx-auto max-w-3xl px-2"><GameGuide slug="skyward-atlas" locale={locale} name="Skyward Atlas" /></div>
+  </div>
+</BaseLayout>
+
