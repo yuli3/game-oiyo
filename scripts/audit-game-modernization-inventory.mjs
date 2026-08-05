@@ -65,6 +65,11 @@ const certified = new Map([
   ["animal-pop", 88],
   ["texas-holdem", 87],
   ["maze", 87],
+  ["emberdeep", 87],
+  ["infernal-velocity", 88],
+  ["iron-tempest", 86],
+  ["neon-formation", 87],
+  ["skyward-atlas", 89],
 ]);
 /*
  * Craft judgements (G-scale v2, 12 points). A person enters these AFTER playing.
@@ -133,6 +138,11 @@ const completedRisk = {
   "rhythm-tap": { mobile: "low", accessibility: "low", performance: "low" },
   "stack-tower": { mobile: "low", accessibility: "low", performance: "low" },
   "tents-and-trees": { mobile: "low", accessibility: "low", performance: "low" },
+  emberdeep: { mobile: "low", accessibility: "low", performance: "low" },
+  "infernal-velocity": { mobile: "low", accessibility: "low", performance: "medium" },
+  "iron-tempest": { mobile: "low", accessibility: "low", performance: "low" },
+  "neon-formation": { mobile: "low", accessibility: "low", performance: "medium" },
+  "skyward-atlas": { mobile: "low", accessibility: "low", performance: "medium" },
 };
 const wave3 = new Set(["snake-game", "gomoku", "kurodoko", "yahtzee"]);
 const wave4 = new Set(["cave-dash", "dot-runner", "mahjong"]);
