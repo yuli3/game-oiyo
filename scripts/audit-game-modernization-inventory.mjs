@@ -46,8 +46,46 @@ const certified = new Map([
   ["korean-semantle", 88],
   ["isometric-city", 93],
   ["dot-jumpking", 88],
+  ["janggi", 89],
+  ["gomoku", 86],
+  ["connect-four", 92],
+  ["freecell", 87],
+  ["hearts-game", 91],
+  ["puzzle-15", 89],
+  ["kingdomino", 89],
+  ["spatial-memory", 95],
+  ["aim-trainer", 94],
+  ["urban-strike", 89],
+  ["windward-horizons", 92],
+  ["cat-fishing", 85],
+  ["rhythm-tap", 85],
+  ["stack-tower", 87],
+  ["tents-and-trees", 91],
+  ["sudoku", 92],
+  ["animal-pop", 88],
+  ["texas-holdem", 87],
+  ["maze", 87],
 ]);
-const completed = new Set([...certified.keys(), "sudoku", "animal-pop", "texas-holdem", "maze"]);
+/*
+ * Craft judgements (G-scale v2, 12 points). A person enters these AFTER playing.
+ * Absent slug = not yet judged, and the entry stays on v1 rather than pretending.
+ *
+ *   score : 0-12   sum of intent(4) + differentiation(4) + narrative-or-depth(4)
+ *   mode  : "narrative" (adventure/RPG/collection/sim) | "abstract" (puzzle/board/arcade)
+ *   note  : one line a human can argue with
+ *
+ * Do NOT compute these. If you can derive it from source, it belongs in one of
+ * the eight automated axes instead.
+ */
+const craftJudgements = {
+  "spirit-vale": {
+    score: 3,
+    mode: "narrative",
+    note: "오행 상성은 우리만 만들 수 있는 차별점(3/4). 그러나 수집형인데 주인공·대립·갈등·퀘스트가 전무해 서사 0/4, 의도된 경험은 실기 플레이 미확인이라 0/4로 둔다. 세운의 '뭔가 많이 부족함' 평가가 여기서 수치로 잡힌다.",
+  },
+};
+
+const completed = new Set([...certified.keys()]);
 const completedRisk = {
   "star-blaster": { mobile: "low", accessibility: "low", performance: "low" },
   chess: { mobile: "medium", accessibility: "low", performance: "low" },
@@ -80,6 +118,21 @@ const completedRisk = {
   "animal-pop": { mobile: "low", accessibility: "low", performance: "low" },
   "texas-holdem": { mobile: "low", accessibility: "low", performance: "low" },
   maze: { mobile: "low", accessibility: "low", performance: "low" },
+  janggi: { mobile: "low", accessibility: "low", performance: "low" },
+  gomoku: { mobile: "low", accessibility: "low", performance: "low" },
+  "connect-four": { mobile: "low", accessibility: "low", performance: "low" },
+  freecell: { mobile: "low", accessibility: "low", performance: "low" },
+  hearts: { mobile: "low", accessibility: "low", performance: "low" },
+  "puzzle-15": { mobile: "low", accessibility: "low", performance: "low" },
+  kingdomino: { mobile: "low", accessibility: "medium", performance: "low" },
+  "spatial-memory": { mobile: "low", accessibility: "low", performance: "low" },
+  "aim-trainer": { mobile: "low", accessibility: "low", performance: "low" },
+  "urban-strike": { mobile: "low", accessibility: "low", performance: "medium" },
+  "windward-horizons": { mobile: "low", accessibility: "low", performance: "low" },
+  "cat-fishing": { mobile: "low", accessibility: "low", performance: "low" },
+  "rhythm-tap": { mobile: "low", accessibility: "low", performance: "low" },
+  "stack-tower": { mobile: "low", accessibility: "low", performance: "low" },
+  "tents-and-trees": { mobile: "low", accessibility: "low", performance: "low" },
 };
 const wave3 = new Set(["snake-game", "gomoku", "kurodoko", "yahtzee"]);
 const wave4 = new Set(["cave-dash", "dot-runner", "mahjong"]);
@@ -96,6 +149,20 @@ function risk(levels) {
   return "low";
 }
 
+/*
+ * These eight axes are derived from static code signals, so a script can compute
+ * them. The ninth axis - craft - deliberately is not here.
+ *
+ * G-scale v2 (2026-08-04) reserves 12 points for craft: the intended experience,
+ * what makes this ours rather than a generic clone, and either narrative or
+ * genre depth. None of that is visible in the source. Spirit Vale passed 570
+ * tests, scored full marks on every automated axis, and still read as hollow -
+ * because the scoreboard only measured what we had already systematised.
+ *
+ * So craft is a human field (`craftScore`), entered after actually playing, and
+ * the validator below refuses to accept a v2 total without it. A number a script
+ * can produce is not a judgement.
+ */
 function calculateScores(signals) {
   const coreLoopScore = cap(8 + (signals.engine ? 5 : 0) + (signals.tests ? 5 : 0) + (signals.deterministic ? 2 : 0), 20);
   const feelScore = cap(5 + (signals.canvas || signals.scene ? 3 : 0) + (signals.audio ? 3 : 0) + (signals.pointer ? 2 : 0) + (signals.reducedMotion ? 2 : 0), 15);
@@ -144,6 +211,8 @@ async function inspect(entry) {
   const generation = signals.scene ? "G4" : signals.engine && signals.tests && signals.persistence ? "G3" : signals.canvas ? "G2" : "G1";
   const wave = wave3.has(entry.slug) ? "3" : wave4.has(entry.slug) ? "4" : completed.has(entry.slug) ? (entry.slug === "star-blaster" || entry.slug === "chess" || entry.slug === "minesweeper" ? "pilot" : "2") : "5";
   const certifiedScore = certified.get(entry.slug) ?? null;
+  // Craft is judged by a person after playing; the script only carries it through.
+  const craft = craftJudgements[entry.slug] ?? null;
   const recommendedAction = certifiedScore ? "maintain" : scores.total >= 78 ? "polish" : scores.total >= 62 ? "modernize" : "remake";
   return {
     slug: entry.slug, genre: entry.genre, generation, component, engine, tests: engineTest ?? componentTest,
@@ -151,7 +220,11 @@ async function inspect(entry) {
     input: [signals.pointer && "pointer", signals.touch && "touch", signals.keyboard && "keyboard"].filter(Boolean),
     renderer: signals.scene ? "three-scene" : signals.canvas ? "canvas" : "dom", audio: signals.audio,
     mobileRisk, accessibilityRisk, performanceRisk, ...scores, scoreStatus: certifiedScore ? "certified" : "provisional-static",
-    certifiedScore, recommendedAction, wave, dependencies: [!signals.engine && "pure-engine", !signals.tests && "characterization-tests", !signals.versionedParser && "persistence-decision", mobileRisk !== "low" && "mobile-qa", accessibilityRisk !== "low" && "accessibility-qa"].filter(Boolean),
+    certifiedScore, recommendedAction, wave,
+    scaleVersion: craft ? "v2" : "v1",
+    craftScore: craft?.score ?? null,
+    craftMode: craft?.mode ?? null,
+    craftNote: craft?.note ?? null, dependencies: [!signals.engine && "pure-engine", !signals.tests && "characterization-tests", !signals.versionedParser && "persistence-decision", mobileRisk !== "low" && "mobile-qa", accessibilityRisk !== "low" && "accessibility-qa"].filter(Boolean),
     owner: "game", route, componentLines,
     sourceStatus: [route, component, engine, engineTest, componentTest, saveFile].filter(Boolean).some((path) => dirtyPaths.has(path))
       ? "working-tree"
@@ -203,7 +276,15 @@ const invalid = games.filter((game) => {
   const certifiedInvalid = game.scoreStatus === "certified"
     ? !Number.isInteger(game.certifiedScore) || game.certifiedScore < 0 || game.certifiedScore > 100
     : game.certifiedScore !== null;
+  // v2 entries must carry a real craft judgement; v1 entries must carry none.
+  const craftInvalid = game.scaleVersion === "v2"
+    ? !Number.isInteger(game.craftScore) || game.craftScore < 0 || game.craftScore > 12
+      || !["narrative", "abstract"].includes(game.craftMode)
+      || typeof game.craftNote !== "string" || game.craftNote.trim().length < 10
+    : game.craftScore !== null || game.craftMode !== null || game.craftNote !== null;
   return scoresInvalid
+    || craftInvalid
+    || !["v1", "v2"].includes(game.scaleVersion)
     || scoreTotal !== game.total
     || !["G1", "G2", "G3", "G4"].includes(game.generation)
     || !["maintain", "polish", "modernize", "remake"].includes(game.recommendedAction)
@@ -217,5 +298,12 @@ if (invalid.length) {
   process.exit(1);
 }
 if (process.argv.includes("--write")) await writeFile(outputPath, `${JSON.stringify(report, null, 2)}\n`);
+const v2 = games.filter((game) => game.scaleVersion === "v2");
+const craftFloor = v2.filter((game) => game.craftScore < 6);
 console.log(`Game modernization inventory PASS: ${summary.total} games, ${summary.modernized} modernized, ${summary.certified} certified`);
+console.log(`G-scale: ${games.length - v2.length} on v1 (craft unmeasured), ${v2.length} on v2`);
+if (craftFloor.length) {
+  // Reported, not fatal: the floor gates a release, not the inventory.
+  console.log(`craft below the 6/12 release floor: ${craftFloor.map((game) => `${game.slug} (${game.craftScore})`).join(", ")}`);
+}
 console.log(JSON.stringify(summary, null, 2));
