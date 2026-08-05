@@ -28,11 +28,13 @@ const H = 480;
 const GAME_KEY = "stack-tower";
 
 type Phase = "menu" | "playing" | "over";
+interface FallingPiece { x: number; w: number; y: number; vy: number; hue: number; alpha: number }
 interface GS {
   tower: TowerState;
   camY: number;             // camera offset (world scrolls down as tower grows)
   flash: number;            // perfect-flash frames
   score: number;
+  falling: FallingPiece[];  // shaved-off slices tumbling away after a non-perfect drop
 }
 
 type I18n = {
@@ -134,6 +136,20 @@ const StackTower: React.FC<Props> = ({ locale }) => {
     ctx.fillStyle = gs.flash > 0 ? "#fef08a" : `hsl(${gs.tower.cur.hue} 72% 60%)`;
     ctx.fillRect(gs.tower.cur.x, curY, gs.tower.cur.w, BLOCK_HEIGHT - 2);
 
+    // shaved-off slices tumbling away
+    if (gs.falling.length > 0) {
+      for (const piece of gs.falling) {
+        piece.vy += 0.9 * scale;
+        piece.y += piece.vy * scale;
+        piece.alpha -= 0.02 * scale;
+        ctx.globalAlpha = Math.max(0, piece.alpha);
+        ctx.fillStyle = `hsl(${piece.hue} 70% 58%)`;
+        ctx.fillRect(piece.x, piece.y, piece.w, BLOCK_HEIGHT - 2);
+      }
+      ctx.globalAlpha = 1;
+      gs.falling = gs.falling.filter((piece) => piece.alpha > 0 && piece.y < H + BLOCK_HEIGHT);
+    }
+
     rafRef.current = requestAnimationFrame(loop);
   }, []);
 
@@ -141,7 +157,8 @@ const StackTower: React.FC<Props> = ({ locale }) => {
     const gs = gsRef.current;
     if (!gs || phaseRef.current !== "playing") return;
     const prev = gs.tower.stack[gs.tower.stack.length - 1];
-    const outcome = dropOnto(gs.tower.cur, prev, gs.tower.combo);
+    const cur = gs.tower.cur;
+    const outcome = dropOnto(cur, prev, gs.tower.combo);
     if (outcome.kind === "miss") { endGame(gs.tower.stack.length - 1); return; }
 
     gs.tower.combo = outcome.combo;
@@ -151,6 +168,19 @@ const StackTower: React.FC<Props> = ({ locale }) => {
       tone(880, 0.08);
     } else {
       tone(320, 0.05);
+      // The shaved-off slice(s) of the moving block tumble away — the classic
+      // stack-game tell that a drop wasn't perfect, skipped under reduced motion.
+      if (!prefersReducedMotion) {
+        const dropY = screenY((gs.tower.stack.length + 1) * BLOCK_HEIGHT, gs.camY);
+        const survivedLeft = outcome.block.x;
+        const survivedRight = outcome.block.x + outcome.block.w;
+        if (survivedLeft > cur.x) {
+          gs.falling.push({ x: cur.x, w: survivedLeft - cur.x, y: dropY, vy: 0, hue: cur.hue, alpha: 1 });
+        }
+        if (cur.x + cur.w > survivedRight) {
+          gs.falling.push({ x: survivedRight, w: cur.x + cur.w - survivedRight, y: dropY, vy: 0, hue: cur.hue, alpha: 1 });
+        }
+      }
     }
 
     gs.tower.stack.push(outcome.block);
@@ -168,7 +198,7 @@ const StackTower: React.FC<Props> = ({ locale }) => {
   }, [endGame, tone]);
 
   const begin = useCallback(() => {
-    gsRef.current = { tower: createTowerState(W), camY: 0, flash: 0, score: 0 };
+    gsRef.current = { tower: createTowerState(W), camY: 0, flash: 0, score: 0, falling: [] };
     setScore(0); setCombo(0); setIsNewBest(false);
     setPhase("playing");
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
