@@ -282,3 +282,11 @@ main .aspect-square { max-width: min(100%, 92vw); }
 }
 .animate-dice-roll { animation: dice-roll 0.28s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .animate-dice-roll { animation: none; } }
+
+@keyframes cat-fishing-pop {
+  0%   { transform: translate(-50%, -50%) scale(0.6); opacity: 0; }
+  20%  { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+  100% { transform: translate(-50%, -170%) scale(1); opacity: 0; }
+}
+.animate-cat-fishing-pop { animation: cat-fishing-pop 0.5s ease-out forwards; }
+@media (prefers-reduced-motion: reduce) { .animate-cat-fishing-pop { animation: none; display: none; } }

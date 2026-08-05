@@ -64,6 +64,8 @@ const CatFishing: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const pointer = useRef({ x: -1000, y: -1000 });
     const fishRef = useRef(fish);
     fishRef.current = fish;
+    const [pops, setPops] = useState<{ id: number; x: number; y: number }[]>([]);
+    const popId = useRef(0);
 
     const remaining = fish.filter((f) => !f.caught).length;
     const won = fish.length > 0 && remaining === 0;
@@ -113,6 +115,12 @@ const CatFishing: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         if (won) return;
         started.current = true;
         if (startedAt.current === null) startedAt.current = performance.now();
+        const caughtAt = fishRef.current.find((f) => f.id === id);
+        if (caughtAt && !prefersReducedMotion) {
+            const popKey = popId.current++;
+            setPops((prev) => [...prev, { id: popKey, x: caughtAt.x, y: caughtAt.y }]);
+            window.setTimeout(() => setPops((prev) => prev.filter((p) => p.id !== popKey)), 500);
+        }
         setFish((prev) => {
             const next = catchFishAt(prev, id);
             if (allCaught(next)) {
@@ -187,6 +195,17 @@ const CatFishing: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                             glyph shrinks/grows, so the tap target never shrinks with it. */}
                         <span className="text-2xl transition-transform hover:scale-110 sm:text-3xl">🐟</span>
                     </button>
+                ))}
+
+                {pops.map((p) => (
+                    <span
+                        key={p.id}
+                        aria-hidden="true"
+                        className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 text-lg font-black text-primary animate-cat-fishing-pop"
+                        style={{ left: `${p.x}%`, top: `${p.y}%` }}
+                    >
+                        +1
+                    </span>
                 ))}
 
                 {won && (
