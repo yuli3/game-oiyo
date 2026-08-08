@@ -1,0 +1,6 @@
+{
+  "schema": "oiyo.game-release-evidence",
+  "schemaVersion": 1,
+  "policy": "Release certification is earned from ordered evidence. Static source signals and legacy scores never certify a game.",
+  "games": {}
+}

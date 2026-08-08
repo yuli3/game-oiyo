@@ -1,96 +1,24 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { execFile } from "node:child_process";
-import { promisify } from "node:util";
+import { certificationStage, validateReleaseEvidenceDocument } from "./lib/game-release-evidence.mjs";
 
 const root = resolve(new URL("..", import.meta.url).pathname);
-const execFileAsync = promisify(execFile);
-const gitStatus = (await execFileAsync("git", ["status", "--porcelain"], { cwd: root })).stdout;
-const dirtyPaths = new Map(gitStatus.split("\n").filter(Boolean).map((line) => [line.slice(3), line.slice(0, 2).trim()]));
 const catalogPath = resolve(root, "src/pages/[...lang]/index.astro");
 const outputPath = resolve(root, "config/game-modernization-inventory-v1.json");
+const releaseEvidencePath = resolve(root, "config/game-release-evidence-v1.json");
+const gameArtPath = resolve(root, "config/game-art-v1.json");
 const catalog = await readFile(catalogPath, "utf8");
 const guidesSource = await readFile(resolve(root, "src/data/game-guides.ts"), "utf8");
+const releaseEvidenceDocument = JSON.parse(await readFile(releaseEvidencePath, "utf8"));
+const gameArtDocument = JSON.parse(await readFile(gameArtPath, "utf8"));
+const gameArt = gameArtDocument.games ?? {};
 const gameBlock = catalog.match(/const GAMES: Game\[\] = \[([\s\S]*?)\n\];/)?.[1] ?? "";
 const entries = [...gameBlock.matchAll(/\{ slug: "([^"]+)"(?:, kind: "([^"]+)")?, emoji: "[^"]+", cat: "([^"]+)"/g)]
   .map((match) => ({ slug: match[1], kind: match[2] ?? "game", genre: match[3] }))
   .filter((entry) => entry.kind === "game");
 
-const certified = new Map([
-  ["star-blaster", 91],
-  ["chess", 90],
-  ["minesweeper", 92],
-  ["brick-breaker", 93],
-  ["solitaire", 90],
-  ["snake-game", 85],
-  ["kurodoko", 87],
-  ["yahtzee", 88],
-  ["cave-dash", 86],
-  ["dot-runner", 87],
-  ["mahjong", 88],
-  ["water-sort", 87],
-  ["psychology-wordle", 87],
-  ["memory-card-game", 86],
-  ["number-guessing", 86],
-  ["wordle", 87],
-  ["reversi", 88],
-  ["dominoes", 86],
-  ["game-2048", 87],
-  ["whack-a-mole", 86],
-  ["checkers", 88],
-  ["blackjack", 87],
-  ["mallow-isle", 91],
-  ["hitori", 89],
-  ["light-up", 89],
-  ["korean-semantle", 88],
-  ["isometric-city", 93],
-  ["dot-jumpking", 88],
-  ["janggi", 89],
-  ["gomoku", 86],
-  ["connect-four", 92],
-  ["freecell", 87],
-  ["hearts-game", 91],
-  ["puzzle-15", 89],
-  ["kingdomino", 89],
-  ["spatial-memory", 95],
-  ["aim-trainer", 94],
-  ["urban-strike", 89],
-  ["windward-horizons", 92],
-  ["cat-fishing", 85],
-  ["rhythm-tap", 85],
-  ["stack-tower", 87],
-  ["tents-and-trees", 91],
-  ["sudoku", 92],
-  ["animal-pop", 88],
-  ["texas-holdem", 87],
-  ["maze", 87],
-  ["emberdeep", 87],
-  ["infernal-velocity", 88],
-  ["iron-tempest", 86],
-  ["neon-formation", 87],
-  ["skyward-atlas", 89],
-]);
-/*
- * Craft judgements (G-scale v2, 12 points). A person enters these AFTER playing.
- * Absent slug = not yet judged, and the entry stays on v1 rather than pretending.
- *
- *   score : 0-12   sum of intent(4) + differentiation(4) + narrative-or-depth(4)
- *   mode  : "narrative" (adventure/RPG/collection/sim) | "abstract" (puzzle/board/arcade)
- *   note  : one line a human can argue with
- *
- * Do NOT compute these. If you can derive it from source, it belongs in one of
- * the eight automated axes instead.
- */
-const craftJudgements = {
-  "spirit-vale": {
-    score: 3,
-    mode: "narrative",
-    note: "오행 상성은 우리만 만들 수 있는 차별점(3/4). 그러나 수집형인데 주인공·대립·갈등·퀘스트가 전무해 서사 0/4, 의도된 경험은 실기 플레이 미확인이라 0/4로 둔다. 세운의 '뭔가 많이 부족함' 평가가 여기서 수치로 잡힌다.",
-  },
-};
-
-const completed = new Set([...certified.keys()]);
+const releaseEvidence = releaseEvidenceDocument.games ?? {};
 const completedRisk = {
   "star-blaster": { mobile: "low", accessibility: "low", performance: "low" },
   chess: { mobile: "medium", accessibility: "low", performance: "low" },
@@ -153,6 +81,16 @@ const present = (path) => existsSync(resolve(root, path));
 const countLines = (source) => source.split("\n").length;
 const cap = (value, max) => Math.min(max, value);
 
+async function inspectPng(publicPath) {
+  if (!publicPath?.startsWith("/games/") || !publicPath.endsWith(".png")) return null;
+  const filePath = resolve(root, "public", publicPath.slice(1));
+  if (!existsSync(filePath)) return null;
+  const bytes = await readFile(filePath);
+  const pngSignature = "89504e470d0a1a0a";
+  if (bytes.subarray(0, 8).toString("hex") !== pngSignature || bytes.length < 24) return null;
+  return { path: publicPath, width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) };
+}
+
 function risk(levels) {
   if (levels.includes("high")) return "high";
   if (levels.includes("medium")) return "medium";
@@ -213,32 +151,37 @@ async function inspect(entry) {
     sixLocales: ["ko", "en", "ja", "zh", "fr", "es"].every((locale) => new RegExp(`(?:^|\\s)${locale}:`).test(componentSource)),
   };
   const scores = calculateScores(signals);
+  const art = await inspectPng(gameArt[entry.slug]);
   const componentLines = countLines(componentSource);
   const evidenceRisk = completedRisk[entry.slug];
   const mobileRisk = evidenceRisk?.mobile ?? risk([!signals.pointer && !signals.touch ? "high" : "low", !signals.minTouchTarget ? "medium" : "low", componentLines > 900 ? "medium" : "low"]);
   const accessibilityRisk = evidenceRisk?.accessibility ?? risk([!signals.aria ? "high" : "low", !signals.keyboard ? "medium" : "low", signals.canvas && !signals.liveRegion ? "medium" : "low"]);
   const performanceRisk = evidenceRisk?.performance ?? risk([signals.scene ? "high" : "low", signals.canvas && !signals.visibilitySafe ? "medium" : "low", componentLines > 1000 ? "medium" : "low"]);
   const generation = signals.scene ? "G4" : signals.engine && signals.tests && signals.persistence ? "G3" : signals.canvas ? "G2" : "G1";
-  const wave = wave3.has(entry.slug) ? "3" : wave4.has(entry.slug) ? "4" : completed.has(entry.slug) ? (entry.slug === "star-blaster" || entry.slug === "chess" || entry.slug === "minesweeper" ? "pilot" : "2") : "5";
-  const certifiedScore = certified.get(entry.slug) ?? null;
-  // Craft is judged by a person after playing; the script only carries it through.
-  const craft = craftJudgements[entry.slug] ?? null;
-  const recommendedAction = certifiedScore ? "maintain" : scores.total >= 78 ? "polish" : scores.total >= 62 ? "modernize" : "remake";
+  const implementationComplete = Boolean(component && signals.engine && signals.tests);
+  const wave = wave3.has(entry.slug) ? "3" : wave4.has(entry.slug) ? "4" : implementationComplete ? (entry.slug === "star-blaster" || entry.slug === "chess" || entry.slug === "minesweeper" ? "pilot" : "2") : "5";
+  const evidence = releaseEvidence[entry.slug] ?? null;
+  const stage = certificationStage(implementationComplete, evidence);
+  const technicalGatesPassed = ["technical-gates-passed", "playtested", "craft-reviewed", "release-certified"].includes(stage);
+  const playtested = ["playtested", "craft-reviewed", "release-certified"].includes(stage);
+  const craftReviewed = ["craft-reviewed", "release-certified"].includes(stage);
+  const releaseCertified = stage === "release-certified";
+  const recommendedAction = releaseCertified ? "maintain" : scores.total >= 78 ? "polish" : scores.total >= 62 ? "modernize" : "remake";
   return {
     slug: entry.slug, genre: entry.genre, generation, component, engine, tests: engineTest ?? componentTest,
     restore: signals.persistence && signals.versionedParser, daily: signals.daily, progression: signals.records || signals.daily,
     input: [signals.pointer && "pointer", signals.touch && "touch", signals.keyboard && "keyboard"].filter(Boolean),
     renderer: signals.scene ? "three-scene" : signals.canvas ? "canvas" : "dom", audio: signals.audio,
-    mobileRisk, accessibilityRisk, performanceRisk, ...scores, scoreStatus: certifiedScore ? "certified" : "provisional-static",
-    certifiedScore, recommendedAction, wave,
-    scaleVersion: craft ? "v2" : "v1",
-    craftScore: craft?.score ?? null,
-    craftMode: craft?.mode ?? null,
-    craftNote: craft?.note ?? null, dependencies: [!signals.engine && "pure-engine", !signals.tests && "characterization-tests", !signals.versionedParser && "persistence-decision", mobileRisk !== "low" && "mobile-qa", accessibilityRisk !== "low" && "accessibility-qa"].filter(Boolean),
+    mobileRisk, accessibilityRisk, performanceRisk, ...scores,
+    scoreStatus: "provisional-static", certifiedScore: null,
+    implementationComplete, certificationStage: stage, releaseCertified,
+    keyArt: art?.path ?? null, keyArtWidth: art?.width ?? null, keyArtHeight: art?.height ?? null,
+    evidenceRef: evidence ? `config/game-release-evidence-v1.json#games.${entry.slug}` : null,
+    recommendedAction, wave,
+    craftScore: evidence?.craftReview?.score ?? null,
+    craftMode: evidence?.craftReview?.mode ?? null,
+    craftNote: evidence?.craftReview?.note ?? null, dependencies: [!signals.engine && "pure-engine", !signals.tests && "characterization-tests", !signals.versionedParser && "persistence-decision", !art && "key-art", art && (art.width !== 1200 || art.height !== 630) && "key-art-normalization", !technicalGatesPassed && "technical-gates-evidence", !playtested && "playtest-evidence", !craftReviewed && "craft-review", mobileRisk !== "low" && "mobile-qa", accessibilityRisk !== "low" && "accessibility-qa"].filter(Boolean),
     owner: "game", route, componentLines,
-    sourceStatus: [route, component, engine, engineTest, componentTest, saveFile].filter(Boolean).some((path) => dirtyPaths.has(path))
-      ? "working-tree"
-      : "committed",
   };
 }
 
@@ -246,8 +189,13 @@ const games = [];
 for (const entry of entries) games.push(await inspect(entry));
 const summary = {
   total: games.length,
-  certified: games.filter((game) => game.scoreStatus === "certified").length,
-  modernized: games.filter((game) => completed.has(game.slug)).length,
+  implementationComplete: games.filter((game) => game.implementationComplete).length,
+  technicalGatesPassed: games.filter((game) => ["technical-gates-passed", "playtested", "craft-reviewed", "release-certified"].includes(game.certificationStage)).length,
+  playtested: games.filter((game) => ["playtested", "craft-reviewed", "release-certified"].includes(game.certificationStage)).length,
+  craftReviewed: games.filter((game) => ["craft-reviewed", "release-certified"].includes(game.certificationStage)).length,
+  releaseCertified: games.filter((game) => game.releaseCertified).length,
+  keyArtLinked: games.filter((game) => game.keyArt).length,
+  keyArtReady: games.filter((game) => game.keyArtWidth === 1200 && game.keyArtHeight === 630).length,
   byGeneration: Object.fromEntries(["G1", "G2", "G3", "G4"].map((value) => [value, games.filter((game) => game.generation === value).length])),
   byAction: Object.fromEntries(["maintain", "polish", "modernize", "remake"].map((value) => [value, games.filter((game) => game.recommendedAction === value).length])),
   highRisk: {
@@ -255,9 +203,8 @@ const summary = {
     accessibility: games.filter((game) => game.accessibilityRisk === "high").length,
     performance: games.filter((game) => game.performanceRisk === "high").length,
   },
-  workingTreeGames: games.filter((game) => game.sourceStatus === "working-tree").length,
 };
-const report = { schema: "oiyo.game-modernization-inventory", schemaVersion: 1, generatedAt: new Date().toISOString(), scorePolicy: "Static scores are prioritization proxies; only scoreStatus=certified is a played AAA scorecard.", summary, games };
+const report = { schema: "oiyo.game-modernization-inventory", schemaVersion: 2, generatedAt: new Date().toISOString(), scorePolicy: "Static scores are prioritization proxies and never certify a game. Release certification requires ordered evidence from config/game-release-evidence-v1.json.", summary, games };
 
 if (games.length !== 53) {
   console.error(`inventory audit failed: expected 53 games, found ${games.length}`);
@@ -280,40 +227,56 @@ const scoreFields = [
   "reliabilityScore", "mobileScore", "accessibilityScore", "productScore",
 ];
 const scoreLimits = [20, 15, 15, 15, 15, 10, 5, 5];
+const evidenceErrors = validateReleaseEvidenceDocument(releaseEvidenceDocument, new Set(games.map((game) => game.slug)));
+if (evidenceErrors.length) {
+  console.error(`inventory audit failed: ${evidenceErrors.join("; ")}`);
+  process.exit(1);
+}
+if (gameArtDocument.schema !== "oiyo.game-art" || gameArtDocument.schemaVersion !== 1 || !gameArtDocument.games || typeof gameArtDocument.games !== "object") {
+  console.error("inventory audit failed: invalid game art document");
+  process.exit(1);
+}
+const unknownArtSlugs = Object.keys(gameArt).filter((slug) => !games.some((game) => game.slug === slug));
+const missingArt = Object.keys(gameArt).filter((slug) => !games.find((game) => game.slug === slug)?.keyArt);
+if (unknownArtSlugs.length || missingArt.length) {
+  console.error(`inventory audit failed: invalid game art entries ${[...new Set([...unknownArtSlugs, ...missingArt])].join(", ")}`);
+  process.exit(1);
+}
 const invalid = games.filter((game) => {
   const scoreTotal = scoreFields.reduce((sum, field) => sum + game[field], 0);
   const scoresInvalid = scoreFields.some((field, index) => !Number.isInteger(game[field]) || game[field] < 0 || game[field] > scoreLimits[index]);
-  const certifiedInvalid = game.scoreStatus === "certified"
-    ? !Number.isInteger(game.certifiedScore) || game.certifiedScore < 0 || game.certifiedScore > 100
-    : game.certifiedScore !== null;
-  // v2 entries must carry a real craft judgement; v1 entries must carry none.
-  const craftInvalid = game.scaleVersion === "v2"
-    ? !Number.isInteger(game.craftScore) || game.craftScore < 0 || game.craftScore > 12
-      || !["narrative", "abstract"].includes(game.craftMode)
-      || typeof game.craftNote !== "string" || game.craftNote.trim().length < 10
+  const evidence = releaseEvidence[game.slug] ?? null;
+  const craftInvalid = evidence?.craftReview
+    ? game.craftScore !== evidence.craftReview.score || game.craftMode !== evidence.craftReview.mode || game.craftNote !== evidence.craftReview.note
     : game.craftScore !== null || game.craftMode !== null || game.craftNote !== null;
   return scoresInvalid
     || craftInvalid
-    || !["v1", "v2"].includes(game.scaleVersion)
+    || game.scoreStatus !== "provisional-static"
+    || game.certifiedScore !== null
+    || !["static-assessed", "implementation-complete", "technical-gates-passed", "playtested", "craft-reviewed", "release-certified"].includes(game.certificationStage)
+    || game.releaseCertified !== (game.certificationStage === "release-certified")
     || scoreTotal !== game.total
     || !["G1", "G2", "G3", "G4"].includes(game.generation)
     || !["maintain", "polish", "modernize", "remake"].includes(game.recommendedAction)
     || !["low", "medium", "high"].includes(game.mobileRisk)
     || !["low", "medium", "high"].includes(game.accessibilityRisk)
-    || !["low", "medium", "high"].includes(game.performanceRisk)
-    || certifiedInvalid;
+    || !["low", "medium", "high"].includes(game.performanceRisk);
 });
 if (invalid.length) {
   console.error(`inventory audit failed: invalid contracts for ${invalid.map((game) => game.slug).join(", ")}`);
   process.exit(1);
 }
-if (process.argv.includes("--write")) await writeFile(outputPath, `${JSON.stringify(report, null, 2)}\n`);
-const v2 = games.filter((game) => game.scaleVersion === "v2");
-const craftFloor = v2.filter((game) => game.craftScore < 6);
-console.log(`Game modernization inventory PASS: ${summary.total} games, ${summary.modernized} modernized, ${summary.certified} certified`);
-console.log(`G-scale: ${games.length - v2.length} on v1 (craft unmeasured), ${v2.length} on v2`);
-if (craftFloor.length) {
-  // Reported, not fatal: the floor gates a release, not the inventory.
-  console.log(`craft below the 6/12 release floor: ${craftFloor.map((game) => `${game.slug} (${game.craftScore})`).join(", ")}`);
+if (process.argv.includes("--write")) {
+  await writeFile(outputPath, `${JSON.stringify(report, null, 2)}\n`);
+} else {
+  const committedReport = JSON.parse(await readFile(outputPath, "utf8"));
+  const comparableReport = { ...report, generatedAt: committedReport.generatedAt };
+  if (JSON.stringify(committedReport) !== JSON.stringify(comparableReport)) {
+    console.error("inventory audit failed: generated inventory drift; run npm run audit:game-modernization -- --write");
+    process.exit(1);
+  }
 }
+console.log(`Game modernization inventory PASS: ${summary.total} games, ${summary.implementationComplete} implementation-complete, ${summary.releaseCertified} release-certified`);
+console.log(`Evidence stages: ${summary.technicalGatesPassed} technical gates, ${summary.playtested} playtested, ${summary.craftReviewed} craft-reviewed`);
+console.log(`Key art: ${summary.keyArtLinked} linked, ${summary.keyArtReady} exact 1200x630`);
 console.log(JSON.stringify(summary, null, 2));
