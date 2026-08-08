@@ -4,6 +4,7 @@ import SpatialMemory from "../../components/games/SpatialMemory";
 import { locales } from "../../lib/i18n";
 import type { Locale } from "../../lib/i18n";
 import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
 
 export async function getStaticPaths() {
   return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
@@ -23,7 +24,7 @@ const meta: Record<Locale, { title: string; description: string }> = {
 const m = meta[locale] ?? meta.en;
 ---
 
-<BaseLayout title={m.title} description={m.description} heading={m.title}>
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["spatial-memory"]}>
   <div class="mx-auto max-w-2xl px-4 py-8">
     {/*
       `client:visible` rather than `client:load`: the three.js chunk is the

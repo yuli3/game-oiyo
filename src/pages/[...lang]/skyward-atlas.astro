@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
 import GameGuide from "../../components/GameGuide.astro";
 import SkywardAtlas from "../../components/games/SkywardAtlas";
 import { locales } from "../../lib/i18n";
@@ -19,10 +20,9 @@ const meta: Record<Locale, { title: string; description: string }> = {
 };
 const m = meta[locale] ?? meta.en;
 ---
-<BaseLayout title={m.title} description={m.description} heading={m.title}>
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["skyward-atlas"]}>
   <div class="mx-auto max-w-7xl px-2 py-6 sm:px-4 sm:py-8">
     <SkywardAtlas client:visible locale={locale} />
     <div class="mx-auto max-w-3xl px-2"><GameGuide slug="skyward-atlas" locale={locale} name="Skyward Atlas" /></div>
   </div>
 </BaseLayout>
-

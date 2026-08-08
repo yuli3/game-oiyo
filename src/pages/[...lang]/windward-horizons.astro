@@ -1,6 +1,7 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
 import WindwardHorizons from "../../components/games/WindwardHorizons";
 import { locales } from "../../lib/i18n";
 import type { Locale } from "../../lib/i18n";
@@ -41,7 +42,7 @@ const meta: Record<Locale, { title: string; description: string }> = {
 const m = meta[locale] ?? meta.en;
 ---
 
-<BaseLayout title={m.title} description={m.description} heading={m.title}>
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["windward-horizons"]}>
   <div class="mx-auto max-w-7xl px-2 py-6 sm:px-4 sm:py-8">
     {/*
       The readable React briefing hydrates at viewport visibility. Three.js,

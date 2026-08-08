@@ -4,6 +4,7 @@ import MahjongComp from "../../components/games/Mahjong";
 import { locales } from "../../lib/i18n";
 import type { Locale } from "../../lib/i18n";
 import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
 
 export async function getStaticPaths() {
   return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
@@ -41,7 +42,7 @@ const meta: Record<Locale, { title: string; description: string }> = {
 const m = meta[locale] ?? meta.en;
 ---
 
-<BaseLayout title={m.title} description={m.description} heading={m.title}>
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games.mahjong}>
   <div class="mx-auto max-w-2xl px-4 py-8">
     <MahjongComp client:load locale={locale} />
     <GameGuide slug="mahjong" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
