@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
-import { movePuzzle15Tile, shufflePuzzle15 } from '../../lib/games/puzzle15';
+import { createSolvedPuzzle15Board, movePuzzle15Tile, shufflePuzzle15 } from '../../lib/games/puzzle15';
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 import { getBestForConditions, recordBestForConditions, type BestConditions } from '../../lib/games/records';
 import { clearPuzzle15Save, loadPuzzle15Save, storePuzzle15Save } from '../../lib/games/active-game-save';
@@ -32,20 +32,17 @@ const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '
 const Puzzle15: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const t = COPY[(locale as keyof typeof COPY)] ?? COPY.en;
     const reducedMotion = usePrefersReducedMotion();
-    const restored = useRef(loadPuzzle15Save()).current;
-    const initialBoard = useRef<Board | null>(null);
-    if (!initialBoard.current) initialBoard.current = restored ? restored.board : shuffle(4, 300);
-
-    const [size, setSize] = useState<Size>(restored ? restored.size : 4);
-    const [board, setBoard] = useState<Board>(() => initialBoard.current!);
-    const [puzzleSeed, setPuzzleSeed] = useState(() => restored ? restored.puzzleSeed : boardSeed(initialBoard.current!));
-    const [moves, setMoves] = useState(restored ? restored.moves : 0);
-    const [seconds, setSeconds] = useState(restored ? restored.seconds : 0);
+    const hydrationBoard = createSolvedPuzzle15Board(4);
+    const [size, setSize] = useState<Size>(4);
+    const [board, setBoard] = useState<Board>(hydrationBoard);
+    const [puzzleSeed, setPuzzleSeed] = useState(() => boardSeed(hydrationBoard));
+    const [moves, setMoves] = useState(0);
+    const [seconds, setSeconds] = useState(0);
     const [won, setWon] = useState(false);
     const [best, setBest] = useState<Record<string, { moves: number; seconds: number }>>({});
     const [muted, setMuted] = useState(false);
-    const started = useRef(restored ? restored.moves > 0 : false);
-    const startedAt = useRef<number | null>(restored && restored.moves > 0 ? performance.now() - restored.seconds * 1000 : null);
+    const started = useRef(false);
+    const startedAt = useRef<number | null>(null);
     const audioRef = useRef<AudioContext | null>(null);
 
     const tone = useCallback((frequency: number, duration = 0.05) => {
@@ -62,6 +59,20 @@ const Puzzle15: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         oscillator.stop(context.currentTime + duration);
     }, [muted]);
     useEffect(() => () => { void audioRef.current?.close(); }, []);
+
+    useEffect(() => {
+        const restored = loadPuzzle15Save();
+        const nextBoard = restored?.board ?? shuffle(4, 300);
+        setSize(restored?.size ?? 4);
+        setBoard(nextBoard);
+        setPuzzleSeed(restored?.puzzleSeed ?? boardSeed(nextBoard));
+        setMoves(restored?.moves ?? 0);
+        setSeconds(restored?.seconds ?? 0);
+        started.current = Boolean(restored && restored.moves > 0);
+        startedAt.current = restored && restored.moves > 0
+            ? performance.now() - restored.seconds * 1000
+            : null;
+    }, []);
 
     useEffect(() => {
         const existing = getBestForConditions(gameKey(size), conditionsFor(size, puzzleSeed));
