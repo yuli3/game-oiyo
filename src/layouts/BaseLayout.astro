@@ -68,14 +68,14 @@ const navItems = [
 ];
 
 // Sister sites for family nav (footer + hamburger drawer).
-// news/ai are single-locale (ko) sites — they have no /{locale}/ routes, so
+// news is a single-locale (ko) site — it has no /{locale}/ routes, so
 // appending the locale path would land on their 404 page.
 const FAMILY = [
-  { host: "oiyo.net", name: "OIYO Tests", localePath: true, tag: { ko: "해보는 곳 — 테스트·도구", en: "Try — tests & tools", ja: "試す — テスト・ツール", zh: "试试 — 测验·工具", fr: "Essayer — tests & outils", es: "Probar — tests y herramientas" } },
-  { host: "blog.oiyo.net", name: "OIYO Blog", localePath: true, tag: { ko: "읽는 곳 — 강의·매거진", en: "Read — guides & magazine", ja: "読む — 講座・マガジン", zh: "阅读 — 课程·杂志", fr: "Lire — guides & magazine", es: "Leer — guías y revista" } },
-  { host: "wiki.oiyo.net", name: "OIYO Wiki", localePath: true, tag: { ko: "찾아보는 곳 — 개념 사전", en: "Look up — dictionary", ja: "調べる — 用語事典", zh: "查找 — 概念辞典", fr: "Chercher — dictionnaire", es: "Buscar — diccionario" } },
-  { host: "news.oiyo.net", name: "OIYO News", localePath: false, tag: { ko: "보는 곳 — 데일리 큐레이션", en: "Watch — daily curation", ja: "見る — デイリー", zh: "看 — 每日精选", fr: "Voir — curation", es: "Ver — curación diaria" } },
-  { host: "ai.oiyo.net", name: "OIYO AI", localePath: false, tag: { ko: "AX — AI 운영 시스템", en: "AX — AI-native OS", ja: "AX — AI運用", zh: "AX — AI 系统", fr: "AX — OS IA-native", es: "AX — OS con IA" } },
+  { host: "oiyo.net", name: "OIYO tests", localePath: true, tag: { ko: "테스트·도구", en: "Tests & tools", ja: "テスト・ツール", zh: "测验·工具", fr: "Tests et outils", es: "Tests y herramientas" } },
+  { host: "blog.oiyo.net", name: "OIYO blog", localePath: true, tag: { ko: "강의·매거진", en: "Guides & magazine", ja: "講座・マガジン", zh: "课程·杂志", fr: "Guides et magazine", es: "Guías y revista" } },
+  { host: "wiki.oiyo.net", name: "OIYO wiki", localePath: true, tag: { ko: "정의·참고 자료", en: "Definitions & reference", ja: "定義・参考資料", zh: "定义·参考资料", fr: "Définitions et références", es: "Definiciones y referencias" } },
+  { host: "game.oiyo.net", name: "OIYO game", localePath: true, tag: { ko: "게임", en: "Games", ja: "ゲーム", zh: "游戏", fr: "Jeux", es: "Juegos" } },
+  { host: "news.oiyo.net", name: "OIYO news", localePath: false, tag: { ko: "뉴스·AI", en: "News & AI", ja: "ニュース・AI", zh: "新闻·AI", fr: "Actualités et IA", es: "Noticias e IA" } },
 ];
 const familyHref = (f: (typeof FAMILY)[number], medium: string) =>
   `https://${f.host}/${f.localePath ? `${locale}/` : ""}?utm_source=game&utm_medium=${medium}&utm_campaign=family_nav`;
@@ -93,6 +93,15 @@ const allLangItems = [
 const langItems = availableLocales && availableLocales.length
   ? allLangItems.filter((li) => availableLocales.includes(li.code) || li.code === locale)
   : allLangItems;
+const copy: Record<string, { arcade: string; info: string; family: string; sitemap: string; support: string; home: string }> = {
+  en: { arcade: "Arcade", info: "Information", family: "OIYO family", sitemap: "Sitemap", support: "Support OIYO", home: "Arcade" },
+  ko: { arcade: "아케이드", info: "안내", family: "OIYO 패밀리", sitemap: "사이트맵", support: "OIYO 후원", home: "아케이드" },
+  ja: { arcade: "アーケード", info: "ご案内", family: "OIYOファミリー", sitemap: "サイトマップ", support: "OIYOを支援", home: "アーケード" },
+  zh: { arcade: "街机", info: "信息", family: "OIYO 系列", sitemap: "网站地图", support: "支持 OIYO", home: "街机" },
+  fr: { arcade: "Arcade", info: "Informations", family: "Famille OIYO", sitemap: "Plan du site", support: "Soutenir OIYO", home: "Arcade" },
+  es: { arcade: "Arcade", info: "Información", family: "Familia OIYO", sitemap: "Mapa del sitio", support: "Apoyar OIYO", home: "Arcade" },
+};
+const labels = copy[locale] ?? copy.en;
 ---
 
 <html
@@ -153,7 +162,7 @@ const langItems = availableLocales && availableLocales.length
           class="flex items-center space-x-2 shrink-0 z-10"
           aria-label="Oiyo home"
         >
-          <span class="font-black text-xl tracking-tighter text-foreground">OIYO</span>
+          <span class="font-black text-xl tracking-tighter text-foreground">OIYO</span><span class="text-sm font-semibold lowercase tracking-wide text-primary">game</span>
         </a>
 
         <!-- Desktop nav (lg+) -->
@@ -161,13 +170,6 @@ const langItems = availableLocales && availableLocales.length
           aria-label="Main navigation"
           class="hidden lg:flex gap-6 items-center"
         >
-          {navItems.map(({ href, label }) => (
-            <a
-              href={href}
-              class="text-sm font-bold uppercase tracking-widest text-muted-foreground transition-colors hover:text-primary whitespace-nowrap"
-            >{label}</a>
-          ))}
-
 
           <!-- Language switcher -->
           <div class="flex items-center gap-2 border-l border-border/40 pl-4">
@@ -226,7 +228,7 @@ const langItems = availableLocales && availableLocales.length
     >
       <!-- Drawer header -->
       <div class="flex items-center justify-between px-6 h-16 border-b border-border/40 shrink-0">
-        <span class="font-black text-lg tracking-tighter">OIYO</span>
+        <span class="font-black text-lg tracking-tighter">OIYO <span class="font-semibold lowercase text-primary">game</span></span>
         <button
           id="menu-close"
           aria-label="Close menu"
@@ -356,9 +358,10 @@ const langItems = availableLocales && availableLocales.length
 
     <main id="main-content" role="main" class="flex-1">
       {heading && (
-        <h1 class="mx-auto max-w-2xl px-4 pt-8 text-2xl font-black tracking-tight text-foreground">
-          {heading}
-        </h1>
+        <div class="mx-auto max-w-2xl px-4 pt-5">
+          <nav aria-label="Breadcrumb" class="mb-4 flex items-center gap-2 text-xs text-muted-foreground"><a href={`/${locale}/`} class="hover:text-primary hover:underline">{labels.home}</a><span aria-hidden="true">/</span><span aria-current="page" class="truncate">{heading}</span></nav>
+          <h1 class="text-2xl font-black tracking-tight text-foreground">{heading}</h1>
+        </div>
       )}
       <slot />
     </main>
@@ -372,47 +375,13 @@ const langItems = availableLocales && availableLocales.length
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg>
     </button>
 
-    <footer class="py-12 border-t border-border/40 text-center md:text-left">
-      <div class="container px-4 space-y-6">
-        <div
-          class="flex flex-col md:flex-row justify-between items-center gap-8"
-        >
-          <span class="font-bold text-lg tracking-tighter">OIYO</span>
-          <nav
-            aria-label="Footer navigation"
-            class="flex flex-wrap justify-center gap-x-8 gap-y-3 text-xs font-bold uppercase tracking-widest text-muted-foreground"
-          >
-            <a href={`/${locale}/`} class="hover:text-primary transition-colors">Arcade</a>
-            <a href={`https://blog.oiyo.net/${locale}/tools`} class="hover:text-primary transition-colors">{nav.tools ?? "Tools"}</a>
-            <a href={`https://blog.oiyo.net/${locale}/magazine`} class="hover:text-primary transition-colors">{nav.magazine ?? "Magazine"}</a>
-            <a href="/sitemap-index.xml" class="hover:text-primary transition-colors">Sitemap</a>
-            <a href={`https://blog.oiyo.net/${locale}/privacy`} class="hover:text-primary transition-colors">{t.legal.privacy.title}</a>
-            <a href={`https://blog.oiyo.net/${locale}/terms`} class="hover:text-primary transition-colors">{t.legal.terms.title}</a>
-            <a href="mailto:support@oiyo.net" class="hover:text-primary transition-colors">support@oiyo.net</a>
-            <a href="https://paypal.me/chosean" target="_blank" rel="noopener noreferrer" class="hover:text-primary transition-colors">☕ Support</a>
-          </nav>
-          <div
-            class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50"
-          >
-            © {new Date().getFullYear()} Oiyo Tech
-          </div>
-        </div>
-        <div class="flex flex-wrap justify-center md:justify-start gap-6 text-xs text-muted-foreground/60 items-center border-t border-border/20 pt-4">
-          <span class="font-bold uppercase tracking-widest text-[10px]">Explore</span>
-          <a href={`/${locale}/chess/`} class="hover:text-primary transition-colors">Chess</a>
-          <a href={`/${locale}/gomoku/`} class="hover:text-primary transition-colors">Gomoku</a>
-          <a href={`/${locale}/sudoku/`} class="hover:text-primary transition-colors">Sudoku</a>
-          <a href={`/${locale}/solitaire/`} class="hover:text-primary transition-colors">Solitaire</a>
-        </div>
-        <div class="flex flex-wrap justify-center md:justify-start gap-6 text-xs text-muted-foreground/60 items-center border-t border-border/20 pt-4">
-          <span class="font-bold uppercase tracking-widest text-[10px]">Oiyo Family</span>
-          {FAMILY.map((f) => (
-            <a href={familyHref(f, "footer")}
-               target="_blank" rel="noopener noreferrer" class="hover:text-primary transition-colors">{f.name} →
-              <span class="block text-[10px] normal-case tracking-normal opacity-70">{f.tag[locale as keyof typeof f.tag] ?? f.tag.en}</span></a>
-          ))}
-        </div>
+    <footer class="border-t border-border bg-muted/25 py-10 text-left">
+      <div class="container grid gap-8 px-4 sm:grid-cols-2 lg:grid-cols-[0.8fr_1fr_2fr]">
+        <section><p class="mb-3 text-sm font-black">OIYO <span class="font-semibold lowercase text-primary">game</span></p><nav aria-label={labels.arcade} class="grid gap-2 text-sm text-muted-foreground"><a href={`/${locale}/`} class="hover:text-primary">{labels.arcade}</a><a href={`/${locale}/achievements`} class="hover:text-primary">{navItems[1].label}</a><a href={`/${locale}/chess/`} class="hover:text-primary">Chess</a><a href={`/${locale}/sudoku/`} class="hover:text-primary">Sudoku</a></nav></section>
+        <section><p class="mb-3 text-xs font-bold uppercase tracking-widest">{labels.info}</p><nav aria-label={labels.info} class="grid gap-2 text-sm text-muted-foreground"><a href="/sitemap-index.xml" class="hover:text-primary">{labels.sitemap}</a><a href={`https://blog.oiyo.net/${locale}/privacy`} class="hover:text-primary">{t.legal.privacy.title}</a><a href={`https://blog.oiyo.net/${locale}/terms`} class="hover:text-primary">{t.legal.terms.title}</a><a href="https://paypal.me/chosean" class="hover:text-primary">{labels.support}</a></nav></section>
+        <section><p class="mb-3 text-xs font-bold uppercase tracking-widest">{labels.family}</p><nav aria-label={labels.family} class="grid grid-cols-2 gap-x-5 gap-y-3 sm:grid-cols-3">{FAMILY.map((f) => (<a href={familyHref(f, "footer")} class="group text-sm font-semibold hover:text-primary">{f.name}<span class="block text-xs font-normal text-muted-foreground">{f.tag[locale as keyof typeof f.tag] ?? f.tag.en}</span></a>))}</nav></section>
       </div>
+      <div class="container mt-8 flex justify-between border-t border-border px-4 pt-5 text-xs text-muted-foreground"><span>© {new Date().getFullYear()} Oiyo Tech</span><a href="mailto:support@oiyo.net">support@oiyo.net</a></div>
     </footer>
     <AhoxyWelcome />
   </body>

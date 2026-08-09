@@ -3,6 +3,10 @@ import { buildAchievementSnapshot, evaluateAchievements, type AchievementCategor
 import { dayIndex } from "../../lib/games/daily";
 import { getAllBestAchievedAt, getAllBests, getAllConditionalBests, getAllLastPlayed, type BestRecord } from "../../lib/games/records";
 import { gameDisplayName } from "../../lib/games/display-names";
+import { Button } from "../ui/button";
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "../ui/empty";
+import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from "../ui/item";
+import { Skeleton } from "../shared/_oiyo-shared-react/Skeleton";
 
 type UILocale = "ko" | "en" | "ja" | "zh" | "fr" | "es";
 
@@ -124,13 +128,13 @@ const ACHIEVEMENT_COPY: Record<string, Record<UILocale, { title: string; desc: s
   },
 };
 
-const COPY: Record<UILocale, { title: string; subtitle: string; unlocked: string; empty: string; myRecords: string; bestLabel: string; recentLabel: string; today: string; yesterday: string; daysAgo: (n: number) => string; noRecords: string; noRecent: string }> = {
-  ko: { title: "🏆 업적", subtitle: "이 브라우저에서 플레이한 기록을 바탕으로 잠금 해제됩니다", unlocked: "개 달성", empty: "아직 아무 게임도 플레이하지 않았습니다. 게임을 플레이하면 여기에 진행 상황이 쌓입니다.", myRecords: "내 기록", bestLabel: "최고 기록", recentLabel: "최근 플레이", today: "오늘", yesterday: "어제", daysAgo: (n) => `${n}일 전`, noRecords: "아직 최고 기록이 없습니다.", noRecent: "아직 플레이 기록이 없습니다." },
-  en: { title: "🏆 Achievements", subtitle: "Unlocked from your play history in this browser", unlocked: "unlocked", empty: "No games played yet. Play any game and your progress will show up here.", myRecords: "My Records", bestLabel: "Personal Bests", recentLabel: "Recently Played", today: "Today", yesterday: "Yesterday", daysAgo: (n) => `${n}d ago`, noRecords: "No personal bests yet.", noRecent: "No recent activity yet." },
-  ja: { title: "🏆 実績", subtitle: "このブラウザでのプレイ履歴に基づいて解除されます", unlocked: "個達成", empty: "まだ何もプレイしていません。ゲームをプレイすると進捗がここに表示されます。", myRecords: "自分の記録", bestLabel: "自己ベスト", recentLabel: "最近プレイ", today: "今日", yesterday: "昨日", daysAgo: (n) => `${n}日前`, noRecords: "まだ自己ベストはありません。", noRecent: "まだプレイ履歴がありません。" },
-  zh: { title: "🏆 成就", subtitle: "根据你在此浏览器中的游玩记录解锁", unlocked: "个已达成", empty: "还没有玩过任何游戏。开始游玩后，进度会显示在这里。", myRecords: "我的记录", bestLabel: "个人最佳", recentLabel: "最近游玩", today: "今天", yesterday: "昨天", daysAgo: (n) => `${n}天前`, noRecords: "还没有个人最佳纪录。", noRecent: "还没有游玩记录。" },
-  fr: { title: "🏆 Succès", subtitle: "Débloqués à partir de votre historique de jeu dans ce navigateur", unlocked: "débloqués", empty: "Aucune partie jouée pour l'instant. Jouez à un jeu et votre progression apparaîtra ici.", myRecords: "Mes records", bestLabel: "Meilleurs scores", recentLabel: "Joués récemment", today: "Aujourd'hui", yesterday: "Hier", daysAgo: (n) => `il y a ${n} j`, noRecords: "Aucun record personnel pour l'instant.", noRecent: "Aucune activité récente." },
-  es: { title: "🏆 Logros", subtitle: "Se desbloquean según tu historial de juego en este navegador", unlocked: "desbloqueados", empty: "Aún no has jugado ninguna partida. Juega algo y tu progreso aparecerá aquí.", myRecords: "Mis récords", bestLabel: "Mejores marcas", recentLabel: "Jugado recientemente", today: "Hoy", yesterday: "Ayer", daysAgo: (n) => `hace ${n} d`, noRecords: "Aún no hay mejores marcas.", noRecent: "Aún no hay actividad reciente." },
+const COPY: Record<UILocale, { title: string; subtitle: string; unlocked: string; emptyTitle: string; empty: string; browseGames: string; loading: string; myRecords: string; bestLabel: string; recentLabel: string; today: string; yesterday: string; daysAgo: (n: number) => string; noRecords: string; noRecent: string }> = {
+  ko: { title: "🏆 업적", subtitle: "이 브라우저에서 플레이한 기록을 바탕으로 잠금 해제됩니다", unlocked: "개 달성", emptyTitle: "첫 게임을 시작해 보세요", empty: "아직 아무 게임도 플레이하지 않았습니다. 게임을 플레이하면 여기에 진행 상황이 쌓입니다.", browseGames: "게임 둘러보기", loading: "업적 불러오는 중", myRecords: "내 기록", bestLabel: "최고 기록", recentLabel: "최근 플레이", today: "오늘", yesterday: "어제", daysAgo: (n) => `${n}일 전`, noRecords: "아직 최고 기록이 없습니다.", noRecent: "아직 플레이 기록이 없습니다." },
+  en: { title: "🏆 Achievements", subtitle: "Unlocked from your play history in this browser", unlocked: "unlocked", emptyTitle: "Start your first game", empty: "No games played yet. Play any game and your progress will show up here.", browseGames: "Browse games", loading: "Loading achievements", myRecords: "My Records", bestLabel: "Personal Bests", recentLabel: "Recently Played", today: "Today", yesterday: "Yesterday", daysAgo: (n) => `${n}d ago`, noRecords: "No personal bests yet.", noRecent: "No recent activity yet." },
+  ja: { title: "🏆 実績", subtitle: "このブラウザでのプレイ履歴に基づいて解除されます", unlocked: "個達成", emptyTitle: "最初のゲームを始めましょう", empty: "まだ何もプレイしていません。ゲームをプレイすると進捗がここに表示されます。", browseGames: "ゲームを見る", loading: "実績を読み込み中", myRecords: "自分の記録", bestLabel: "自己ベスト", recentLabel: "最近プレイ", today: "今日", yesterday: "昨日", daysAgo: (n) => `${n}日前`, noRecords: "まだ自己ベストはありません。", noRecent: "まだプレイ履歴がありません。" },
+  zh: { title: "🏆 成就", subtitle: "根据你在此浏览器中的游玩记录解锁", unlocked: "个已达成", emptyTitle: "开始你的第一局游戏", empty: "还没有玩过任何游戏。开始游玩后，进度会显示在这里。", browseGames: "浏览游戏", loading: "正在加载成就", myRecords: "我的记录", bestLabel: "个人最佳", recentLabel: "最近游玩", today: "今天", yesterday: "昨天", daysAgo: (n) => `${n}天前`, noRecords: "还没有个人最佳纪录。", noRecent: "还没有游玩记录。" },
+  fr: { title: "🏆 Succès", subtitle: "Débloqués à partir de votre historique de jeu dans ce navigateur", unlocked: "débloqués", emptyTitle: "Lancez votre première partie", empty: "Aucune partie jouée pour l'instant. Jouez à un jeu et votre progression apparaîtra ici.", browseGames: "Voir les jeux", loading: "Chargement des succès", myRecords: "Mes records", bestLabel: "Meilleurs scores", recentLabel: "Joués récemment", today: "Aujourd'hui", yesterday: "Hier", daysAgo: (n) => `il y a ${n} j`, noRecords: "Aucun record personnel pour l'instant.", noRecent: "Aucune activité récente." },
+  es: { title: "🏆 Logros", subtitle: "Se desbloquean según tu historial de juego en este navegador", unlocked: "desbloqueados", emptyTitle: "Empieza tu primera partida", empty: "Aún no has jugado ninguna partida. Juega algo y tu progreso aparecerá aquí.", browseGames: "Ver juegos", loading: "Cargando logros", myRecords: "Mis récords", bestLabel: "Mejores marcas", recentLabel: "Jugado recientemente", today: "Hoy", yesterday: "Ayer", daysAgo: (n) => `hace ${n} d`, noRecords: "Aún no hay mejores marcas.", noRecent: "Aún no hay actividad reciente." },
 };
 
 function formatBest(record: BestRecord): string {
@@ -194,7 +198,13 @@ const Achievements: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
     });
   }, []);
 
-  if (!dashboard) return null;
+  if (!dashboard) return (
+    <div className="not-prose mx-auto flex max-w-2xl flex-col gap-4 px-4 py-6" aria-label={t.loading} aria-busy="true">
+      <Skeleton variant="text" className="mx-auto max-w-48" />
+      <Skeleton variant="card" className="h-36" />
+      <Skeleton variant="card" className="h-36" />
+    </div>
+  );
   const { evaluated, bests, conditionalBests, bestAchievedAt, recentlyPlayed } = dashboard;
 
   const unlockedCount = evaluated.filter((a) => a.unlocked).length;
@@ -210,7 +220,18 @@ const Achievements: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
       </div>
 
       {!hasAnyProgress && (
-        <p className="text-center text-sm text-muted-foreground">{t.empty}</p>
+        <Empty>
+          <EmptyMedia aria-hidden="true">🎮</EmptyMedia>
+          <EmptyHeader>
+            <EmptyTitle>{t.emptyTitle}</EmptyTitle>
+            <EmptyDescription>{t.empty}</EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button asChild className="min-h-11 px-5">
+              <a href={`/${locale}/`}>{t.browseGames}</a>
+            </Button>
+          </EmptyContent>
+        </Empty>
       )}
 
       {hasAnyProgress && (
@@ -222,14 +243,14 @@ const Achievements: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
               {bestEntries.length === 0 ? (
                 <p className="text-[11px] text-muted-foreground">{t.noRecords}</p>
               ) : (
-                <ul className="space-y-1.5">
+                <ItemGroup>
                   {bestEntries.map(({ key, game, record, cohort }) => (
-                    <li key={key} className="flex items-center justify-between gap-2 text-xs">
-                      <span className="truncate text-muted-foreground">{gameDisplayName(game, locale)}{cohort ? ` · ${cohort}` : ""}</span>
-                      <span className="shrink-0 font-black tabular-nums">{formatBest(record)}</span>
-                    </li>
+                    <Item key={key} role="listitem" size="sm" variant="muted">
+                      <ItemContent><ItemTitle className="truncate text-xs text-muted-foreground">{gameDisplayName(game, locale)}{cohort ? ` · ${cohort}` : ""}</ItemTitle></ItemContent>
+                      <ItemActions className="text-xs font-black tabular-nums">{formatBest(record)}</ItemActions>
+                    </Item>
                   ))}
-                </ul>
+                </ItemGroup>
               )}
             </div>
             <div className="rounded-xl border border-border p-3">
@@ -237,14 +258,14 @@ const Achievements: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
               {recentlyPlayed.length === 0 ? (
                 <p className="text-[11px] text-muted-foreground">{t.noRecent}</p>
               ) : (
-                <ul className="space-y-1.5">
+                <ItemGroup>
                   {recentlyPlayed.map(({ id, at }) => (
-                    <li key={id} className="flex items-center justify-between text-xs">
-                      <span className="truncate text-muted-foreground">{gameDisplayName(id, locale)}</span>
-                      <span className="shrink-0 font-bold text-muted-foreground">{relativeDay(at, t)}</span>
-                    </li>
+                    <Item key={id} role="listitem" size="sm" variant="muted">
+                      <ItemContent><ItemTitle className="truncate text-xs text-muted-foreground">{gameDisplayName(id, locale)}</ItemTitle></ItemContent>
+                      <ItemActions className="text-xs font-bold text-muted-foreground">{relativeDay(at, t)}</ItemActions>
+                    </Item>
                   ))}
-                </ul>
+                </ItemGroup>
               )}
             </div>
           </div>
@@ -261,11 +282,11 @@ const Achievements: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
                 const copy = ACHIEVEMENT_COPY[a.id]?.[locale] ?? ACHIEVEMENT_COPY[a.id]?.en;
                 const pct = a.target > 0 ? Math.round((a.progress / a.target) * 100) : 0;
                 return (
-                  <div key={a.id} className={`rounded-xl border p-3 flex gap-3 items-start ${a.unlocked ? "border-primary/40 bg-primary/5" : "border-border"}`}>
-                    <span className={`text-2xl ${a.unlocked ? "" : "opacity-30 grayscale"}`} aria-hidden="true">{a.icon}</span>
-                    <div className="min-w-0 flex-1">
-                      <p className={`text-sm font-black ${a.unlocked ? "text-foreground" : "text-muted-foreground"}`}>{copy?.title}</p>
-                      <p className="text-[11px] text-muted-foreground leading-snug">{copy?.desc}</p>
+                  <Item key={a.id} role="listitem" variant="outline" className={a.unlocked ? "border-primary/40 bg-primary/5" : undefined}>
+                    <ItemMedia className={`text-2xl ${a.unlocked ? "" : "opacity-30 grayscale"}`} aria-hidden="true">{a.icon}</ItemMedia>
+                    <ItemContent>
+                      <ItemTitle className={a.unlocked ? "text-foreground" : "text-muted-foreground"}>{copy?.title}</ItemTitle>
+                      <ItemDescription>{copy?.desc}</ItemDescription>
                       {!a.unlocked && (
                         <div
                           className="mt-1.5 h-1.5 rounded-full bg-muted overflow-hidden"
@@ -278,8 +299,8 @@ const Achievements: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
                           <div className="h-full rounded-full bg-primary/60" style={{ width: `${pct}%` }} />
                         </div>
                       )}
-                    </div>
-                  </div>
+                    </ItemContent>
+                  </Item>
                 );
               })}
             </div>
