@@ -119,7 +119,7 @@ const { content: c, faqHeading, faqItems } = buildToolShell(content, faqs, local
     applicationCategory="GameApplication"
   >
     <div class="mx-auto max-w-2xl">
-      <LostArkAuctionCalc client:load />
+      <LostArkAuctionCalc locale={locale} client:load />
     </div>
     <FaqAccordion slot="faq" heading={faqHeading} items={faqItems} />
   </ToolShell>

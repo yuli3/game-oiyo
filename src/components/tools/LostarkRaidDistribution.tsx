@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Locale } from "../../lib/i18n";
+import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from "../ui/item";
 import {
   generateDistribution,
   calculateSupporterInfo,
@@ -34,6 +35,11 @@ interface UiLabels {
   pw: string;
   errCount: string;
   errInvalid: string;
+  nextTitle: string;
+  busTool: string;
+  busToolDescription: string;
+  auctionTool: string;
+  auctionToolDescription: string;
 }
 
 const L: Record<string, UiLabels> = {
@@ -43,6 +49,8 @@ const L: Record<string, UiLabels> = {
     analyze: "Distribute", result: "Result", player: "Player", game: "Game", copyAll: "Copy all", copied: "Copied!",
     reqSup: "Recommended supporters", curSup: "Current supporters", roomBtn: "Generate room / password", room: "Room", pw: "Password",
     errCount: "Player count mismatch — expected {expected}, got {actual}.", errInvalid: "Invalid input on line(s): {lines}",
+    nextTitle: "Continue with a Lost Ark tool", busTool: "Raid bus fee calculator", busToolDescription: "Calculate the optimal auction and trade price.",
+    auctionTool: "Lost Ark auction calculator", auctionToolDescription: "Compare party auction break-even prices.",
   },
   ko: {
     raidSettings: "레이드 설정", method13: "본1부3", method11: "본1부1", partySize: "파티 인원",
@@ -50,6 +58,8 @@ const L: Record<string, UiLabels> = {
     analyze: "분배하기", result: "결과", player: "플레이어", game: "게임", copyAll: "전체 복사", copied: "복사됨!",
     reqSup: "권장 서포터", curSup: "현재 서포터", roomBtn: "랜덤 방제/비번 생성", room: "방제", pw: "비밀번호",
     errCount: "예상 플레이어 수: {expected}, 실제 입력: {actual}", errInvalid: "잘못된 입력 줄 번호: {lines}",
+    nextTitle: "로스트아크 도구 이어서 사용하기", busTool: "레이드 버스비 계산기", busToolDescription: "경매·거래 최적 가격을 계산합니다.",
+    auctionTool: "로스트아크 경매 계산기", auctionToolDescription: "파티 경매 손익분기 가격을 비교합니다.",
   },
   ja: {
     raidSettings: "レイド設定", method13: "本1副3", method11: "本1副1", partySize: "パーティ人数",
@@ -57,6 +67,8 @@ const L: Record<string, UiLabels> = {
     analyze: "分配する", result: "結果", player: "プレイヤー", game: "ゲーム", copyAll: "全てコピー", copied: "コピーしました!",
     reqSup: "推奨サポーター", curSup: "現在のサポーター", roomBtn: "ランダム部屋名/パスワード生成", room: "部屋名", pw: "パスワード",
     errCount: "予想プレイヤー数: {expected}, 実際の入力: {actual}", errInvalid: "無効な入力の行番号: {lines}",
+    nextTitle: "Lost Arkツールを続けて使う", busTool: "レイドバス料金計算機", busToolDescription: "オークション・取引の最適価格を計算します。",
+    auctionTool: "Lost Arkオークション計算機", auctionToolDescription: "パーティオークションの損益分岐価格を比較します。",
   },
 };
 
@@ -118,6 +130,11 @@ export default function LostarkRaidDistribution({ locale }: Props) {
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     });
+  };
+
+  const trackRelatedClick = (itemId: string) => {
+    const analytics = window as Window & { gtag?: (...args: unknown[]) => void };
+    analytics.gtag?.("event", "select_content", { content_type: "related_tool", item_id: itemId });
   };
 
   const inputCls =
@@ -203,6 +220,32 @@ export default function LostarkRaidDistribution({ locale }: Props) {
               <span>{t.pw}: <b className="font-mono">{room.password}</b></span>
             </div>
           )}
+
+          <div className="mt-6 border-t border-border pt-5">
+            <p className="mb-2 text-sm font-bold text-foreground">{t.nextTitle}</p>
+            <ItemGroup>
+              <a href={`/${locale}/lostark-bus-calculator/`} role="listitem" onClick={() => trackRelatedClick("lostark-bus-calculator")}>
+                <Item variant="outline" size="sm" className="hover:border-primary/40 hover:bg-primary/5">
+                  <ItemMedia aria-hidden="true">🚌</ItemMedia>
+                  <ItemContent>
+                    <ItemTitle>{t.busTool}</ItemTitle>
+                    <ItemDescription>{t.busToolDescription}</ItemDescription>
+                  </ItemContent>
+                  <ItemActions aria-hidden="true" className="text-primary">→</ItemActions>
+                </Item>
+              </a>
+              <a href={`/${locale}/lostark-auction-calculator/`} role="listitem" onClick={() => trackRelatedClick("lostark-auction-calculator")}>
+                <Item variant="outline" size="sm" className="hover:border-primary/40 hover:bg-primary/5">
+                  <ItemMedia aria-hidden="true">⚖️</ItemMedia>
+                  <ItemContent>
+                    <ItemTitle>{t.auctionTool}</ItemTitle>
+                    <ItemDescription>{t.auctionToolDescription}</ItemDescription>
+                  </ItemContent>
+                  <ItemActions aria-hidden="true" className="text-primary">→</ItemActions>
+                </Item>
+              </a>
+            </ItemGroup>
+          </div>
         </div>
       )}
     </div>
