@@ -12,30 +12,35 @@ export async function getStaticPaths() {
 
 const { locale } = Astro.props as { locale: Locale };
 
+// 이 페이지는 **열면 오늘의 도전이 먼저 뜬다**(`Minesweeper.tsx` 의 `mode` 기본값이
+// 'daily'). 그런데 2026-08-10 까지 title·h1·description 어디에도 그 말이 없어서
+// "클래식 지뢰찾기"로만 보였고, 'Daily' 라는 단어가 HTML 25KB 지점에 처음 나왔다.
+// 지뢰찾기 클론은 수천 개고 우리 차별점은 **매일 같은 판·연속 기록·무추측 검증**인데,
+// 그걸 안 말하면 검색 스니펫에서도 디렉터리 심사에서도 그냥 또 하나의 클론이다.
 const meta: Record<Locale, { title: string; description: string }> = {
   ko: {
-    title: "지뢰 찾기 — 클래식 마인스위퍼",
-    description: "클래식 지뢰 찾기 게임을 온라인에서 즐겨보세요. 논리적 추리로 모든 지뢰를 피해 깃발을 꽂아보세요.",
+    title: "지뢰 찾기 — 매일 새로운 무추측 데일리 퍼즐",
+    description: "온라인 지뢰 찾기를 즐겨보세요. 매일 같은 판으로 겨루는 오늘의 도전과 연속 기록, 오늘의 판은 찍기 없이 논리만으로 풀린다는 것을 검증했습니다. 무료·로그인 불필요.",
   },
   en: {
-    title: "Minesweeper",
-    description: "Play the classic Minesweeper game online. Use logical deduction to avoid all mines and flag them safely.",
+    title: "Minesweeper — Free Daily No-Guess Puzzle",
+    description: "Play Minesweeper online with a new daily challenge everyone shares, streak tracking, and a daily board verified solvable by logic alone — no guessing. Free, no login.",
   },
   ja: {
-    title: "マインスイーパー — クラシック地雷探し",
-    description: "クラシックなマインスイーパーゲームをオンラインでお楽しみください。論理的推理で地雷を避けてフラグを立てましょう。",
+    title: "マインスイーパー — 毎日更新の推測なしデイリーパズル",
+    description: "オンラインでマインスイーパーを。全員が同じ盤で競うデイリー挑戦、連続記録、本日の盤面は推測なしで論理だけで解けることを検証済みです。無料・ログイン不要。",
   },
   fr: {
-    title: "Démineur — Minesweeper Classique",
-    description: "Jouez au classique jeu du Démineur en ligne. Utilisez la déduction logique pour éviter toutes les mines.",
+    title: "Démineur — Puzzle quotidien sans devinette",
+    description: "Jouez au Démineur en ligne avec un défi du jour partagé par tous, un suivi de série et une grille du jour vérifiée soluble par la seule logique, sans deviner. Gratuit, sans compte.",
   },
   es: {
-    title: "Buscaminas — Minesweeper Clásico",
-    description: "Juega al clásico Buscaminas en línea. Usa la deducción lógica para evitar todas las minas y marcarlas de forma segura.",
+    title: "Buscaminas — Puzle diario sin adivinar",
+    description: "Juega al Buscaminas en línea con un reto diario que todos comparten, racha de días y un tablero diario verificado para resolverse solo con lógica, sin adivinar. Gratis, sin cuenta.",
   },
   zh: {
-    title: "踩地雷 — 经典扫雷游戏",
-    description: "在线享受经典踩地雷游戏。用逻辑推理避开所有地雷并插上旗帜。",
+    title: "踩地雷 — 每日更新的无需猜测谜题",
+    description: "在线畅玩踩地雷。每日挑战全员同一盘面、连续记录，当日盘面已验证可仅用逻辑推理完成，无需猜测。免费，无需登录。",
   },
 };
 
