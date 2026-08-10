@@ -56,7 +56,16 @@ const { eyebrow, heading, intro, layers = [] } = Astro.props as Props;
                 <span>Read more</span>
                 <span class="text-primary transition-transform duration-150 group-open:rotate-45">+</span>
               </summary>
-              {layer.details && <p class="mt-3 text-sm leading-6 text-muted-foreground">{layer.details}</p>}
+              {/*
+                긴 설명은 **자기 계층에서만** 낸다. 세 사이트의 /knowledge 가 모든 계층의
+                details 를 똑같이 렌더하는 바람에 blog·wiki 본문이 65% 겹쳤다(2026-08-11 실측).
+                각자 다른 데이터 카탈로그를 노출하는 페이지라 canonical 통합은 틀린 처방이고,
+                중복의 원인은 이 공유 산문이었다. 링크·요약·카탈로그는 그대로 두어 지도로서의
+                가치와 내부 링크는 유지한다.
+              */}
+              {layer.current && layer.details && (
+                <p class="mt-3 text-sm leading-6 text-muted-foreground">{layer.details}</p>
+              )}
               {(layer.catalogs?.length ?? 0) > 0 && (
                 <div class="mt-3 flex flex-wrap gap-2">
                   {layer.catalogs?.map((catalog) => (
