@@ -10,6 +10,7 @@ import {
   type SimilarityTable,
 } from "../../lib/games/korean-semantle";
 import { getStreak, recordStreak, type StreakStats } from "../../lib/games/records";
+import { Spinner } from "../ui/spinner";
 
 type UILocale = "ko" | "en" | "ja" | "zh" | "fr" | "es";
 type Status = "loading" | "playing" | "won" | "revealed" | "error";
@@ -350,7 +351,7 @@ const KoreanSemantle: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
   if (status === "loading") {
     return (
       <div className="not-prose flex flex-col items-center justify-center py-24 gap-4">
-        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin motion-reduce:animate-none" />
+        <Spinner className="size-8 text-primary motion-reduce:animate-none" />
         <p className="text-sm text-muted-foreground font-bold">{t.loading}</p>
       </div>
     );

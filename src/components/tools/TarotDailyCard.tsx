@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import type { Locale } from "../../lib/i18n";
+import { Spinner } from "../ui/spinner";
 
 interface Props {
   locale: Locale;
@@ -331,7 +332,7 @@ export default function TarotDailyCard({ locale }: Props) {
 
       {phase === "loading" && (
         <div className="text-center py-12">
-          <div className="inline-block w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mb-4" />
+          <Spinner className="mb-4 inline-block size-12 text-purple-600 motion-reduce:animate-none" />
           <p className="text-gray-500">{ui.drawingText}</p>
         </div>
       )}

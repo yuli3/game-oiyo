@@ -6,7 +6,7 @@ import { gameDisplayName } from "../../lib/games/display-names";
 import { Button } from "../ui/button";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "../ui/empty";
 import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from "../ui/item";
-import { Skeleton } from "../shared/_oiyo-shared-react/Skeleton";
+import { Skeleton } from "../ui/skeleton";
 
 type UILocale = "ko" | "en" | "ja" | "zh" | "fr" | "es";
 
@@ -200,9 +200,9 @@ const Achievements: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
 
   if (!dashboard) return (
     <div className="not-prose mx-auto flex max-w-2xl flex-col gap-4 px-4 py-6" aria-label={t.loading} aria-busy="true">
-      <Skeleton variant="text" className="mx-auto max-w-48" />
-      <Skeleton variant="card" className="h-36" />
-      <Skeleton variant="card" className="h-36" />
+      <Skeleton className="mx-auto h-4 w-full max-w-48" />
+      <Skeleton className="h-36 w-full rounded-xl" />
+      <Skeleton className="h-36 w-full rounded-xl" />
     </div>
   );
   const { evaluated, bests, conditionalBests, bestAchievedAt, recentlyPlayed } = dashboard;

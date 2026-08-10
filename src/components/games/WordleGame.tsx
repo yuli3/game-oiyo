@@ -3,6 +3,7 @@ import { getStreak, recordStreak, type StreakStats } from '../../lib/games/recor
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 import { createWordle, evaluateWordleGuess, inputWordle, submitWordle, wordleDateSeed, type WordleMark, type WordleMode, type WordleState } from '../../lib/games/wordle';
 import { clearWordleSave, loadWordleSave, storeWordleSave } from '../../lib/games/wordle-save';
+import { Spinner } from '../ui/spinner';
 
 const DATA_BASE = '/data/wordle'; const ROWS = [['Q','W','E','R','T','Y','U','I','O','P'], ['A','S','D','F','G','H','J','K','L'], ['ENTER','Z','X','C','V','B','N','M','⌫']];
 const localDateKey = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
@@ -35,7 +36,7 @@ export default function WordleGame({ locale='en' }: { locale?:string }) {
   useEffect(()=>{const handler=(event:KeyboardEvent)=>{if(event.ctrlKey||event.altKey||event.metaKey)return;const value=event.key==='Enter'?'ENTER':event.key==='Backspace'?'BACKSPACE':event.key.toUpperCase();if(value==='ENTER'||value==='BACKSPACE'||/^[A-Z]$/.test(value)){event.preventDefault();key(value);}};window.addEventListener('keydown',handler);return()=>window.removeEventListener('keydown',handler);},[key]);
   const evidence=useMemo(()=>{const order={absent:1,present:2,correct:3};const map:Record<string,WordleMark>={};if(!target)return map;for(const guess of game?.guesses??[])evaluateWordleGuess(guess,target).forEach((mark,i)=>{if(!map[guess[i]]||order[mark]>order[map[guess[i]]])map[guess[i]]=mark;});return map;},[game?.guesses,target]);
   const share=async()=>{if(!game||!target)return;const grid=game.guesses.map(g=>evaluateWordleGuess(g,target).map(m=>m==='correct'?'🟩':m==='present'?'🟨':'⬜').join('')).join('\n');try{await navigator.clipboard.writeText(`OIYO Wordle ${game.mode} ${game.status==='won'?game.guesses.length:'X'}/6\n${grid}`);}catch{/* best effort */}};
-  if(loading)return <div className="flex min-h-64 flex-col items-center justify-center gap-3"><div className={`h-8 w-8 rounded-full border-4 border-primary border-t-transparent ${reduced?'':'animate-spin'}`}/><p>{t.loading}</p></div>;
+  if(loading)return <div className="flex min-h-64 flex-col items-center justify-center gap-3"><Spinner className="size-8 text-primary motion-reduce:animate-none"/><p>{t.loading}</p></div>;
   if(!game)return <p role="alert" className="p-6 text-center font-bold text-red-700">{error||t.fail}</p>;
   const display=[...game.guesses,game.current,...Array(Math.max(0,6-game.guesses.length-1)).fill('')].slice(0,6);
   return <div className="not-prose mx-auto flex max-w-lg select-none flex-col items-center gap-4 px-1 py-5">
