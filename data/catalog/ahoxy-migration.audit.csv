@@ -49,7 +49,6 @@ color-picker,image-media-design-dev,tool-or-test,cross-link-only,,,cross-link-on
 color-recognition-test,image-media-design-dev,tool-or-test,cross-link-only,,,cross-link-only,,,low,hold,misc-reclassified
 colorPicker,image-media-design-dev,tool-or-test,cross-link-only,,,cross-link-only,,,low,hold,misc-reclassified
 common,image-media-design-dev,tool-or-test,cross-link-only,,,cross-link-only,,,low,hold,misc-reclassified
-commute-mental,psychology-self-discovery,tool-or-test,magazine,,,interpretive-guide,,,medium,candidate,
 compatibility,psychology-self-discovery,tool-or-test,magazine,,,interpretive-guide,,,medium,candidate,misc-reclassified
 compound,finance-tax,tool-or-test,hold,,,guide-plus-calculator,,,high,candidate,
 compound2,finance-tax,tool-or-test,hold,,,guide-plus-calculator,,,medium,candidate,
@@ -175,7 +174,6 @@ mbti-stress-relief,psychology-self-discovery,tool-or-test,magazine,,,interpretiv
 md-table,image-media-design-dev,tool-or-test,cross-link-only,,,cross-link-only,,,low,hold,
 md-to-html,image-media-design-dev,tool-or-test,cross-link-only,,,cross-link-only,,,low,hold,
 meeting-cost,finance-tax,tool-or-test,interactive,,,guide-plus-calculator,,,high,candidate,
-meeting-style,study-productivity,tool-or-test,magazine,,,strategy-guide,,,medium,candidate,
 memory-test-card,games-puzzles,tool-or-test,interactive,,,interactive-article,,,medium,candidate,
 menstrual-tracker,lifestyle-everyday,tool-or-test,magazine,,,guide-plus-tool,,,review,candidate,
 metadata,study-productivity,tool-or-test,magazine,,,strategy-guide,,,review,candidate,misc-reclassified

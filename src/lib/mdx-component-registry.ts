@@ -160,13 +160,11 @@ import MindClearTest from "../components/tests/MindClearTest";
 // Batch-2 psych tests (2026-05-16)
 import HormonesTest from "../components/tests/HormonesTest";
 import InsightQuestTest from "../components/tests/InsightQuestTest";
-import CommuteMentalTest from "../components/tests/CommuteMentalTest";
 import CritiQuestTest from "../components/tests/CritiQuestTest";
 import CollabRiskTest from "../components/tests/CollabRiskTest";
 import BondInsightTest from "../components/tests/BondInsightTest";
 import MindEaseTest from "../components/tests/MindEaseTest";
 import MindRestTest from "../components/tests/MindRestTest";
-import MeetingStyleTest from "../components/tests/MeetingStyleTest";
 import PersonaScopeTest from "../components/tests/PersonaScopeTest";
 
 // Batch-5 psych/social tests (2026-06-02)
@@ -420,13 +418,11 @@ const islandComponents = {
   // Batch-2 psych tests
   HormonesTest,
   InsightQuestTest,
-  CommuteMentalTest,
   CritiQuestTest,
   CollabRiskTest,
   BondInsightTest,
   MindEaseTest,
   MindRestTest,
-  MeetingStyleTest,
   PersonaScopeTest,
   // Batch-5 psych/social tests (2026-06-02)
   MbtiCareerTest,
