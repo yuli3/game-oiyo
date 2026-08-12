@@ -111,3 +111,6 @@ jobs:
           BING_WEBMASTER_API_KEY: ${{ secrets.BING_WEBMASTER_API_KEY }}
           INDEXNOW_API_KEY: ${{ secrets.INDEXNOW_API_KEY }}
           GSC_SERVICE_ACCOUNT_JSON: ${{ secrets.GSC_SERVICE_ACCOUNT_JSON }}
+          # game.oiyo.net is registered in Search Console as a domain property,
+          # not a URL-prefix property — must match exactly or GSC returns 403.
+          GSC_SITE_URL: sc-domain:game.oiyo.net
