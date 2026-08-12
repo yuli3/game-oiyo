@@ -16,7 +16,7 @@ priorities:
     owner: shared-agent
     objective: Narrow the authoring surface and keep route-level rendering auditable.
     primary_refs:
-      - docs/component-registry-by-track.md
+      - ../company-brain/AI-Sessions/raw/project-docs/game/docs/component-registry-by-track.md
       - src/lib/mdx-component-registry.ts
       - src/pages/[...lang]/[...slug].astro
       - reports/260509-magazine-compatibility-audit.md
@@ -36,9 +36,9 @@ priorities:
     owner: shared-agent
     objective: Backfill metadata and structure for management, economics, NCS, tax-law, and interactive migration candidates.
     primary_refs:
-      - docs/lecture-series-registry.md
-      - docs/qualification-family-map.md
-      - docs/interactive-migration-map.md
+      - ../company-brain/AI-Sessions/raw/project-docs/game/docs/lecture-series-registry.md
+      - ../company-brain/AI-Sessions/raw/project-docs/game/docs/qualification-family-map.md
+      - ../company-brain/AI-Sessions/raw/project-docs/game/docs/interactive-migration-map.md
 
 quick_wins_completed:
   - qw-1-canonical-category-registry

@@ -9,7 +9,9 @@ const requiredFiles = [
   "GEMINI.md",
   "CURSOR.md",
   ".cursor/rules/project-harness.mdc",
-  "docs/component-registry-by-track.md",
+  // Internal prose moved to company-brain/AI-Sessions/raw/project-docs/game/docs/
+  // on 2026-08-12 before this repo went public. Nothing here parsed those files —
+  // this list only checked that they existed.
   "data/catalog/category-registry.yaml",
   "data/catalog/content-inventory.master.csv",
   "data/catalog/workboard.yaml",
