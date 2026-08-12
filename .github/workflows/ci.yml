@@ -10,6 +10,13 @@ permissions:
   contents: read
   checks: read
 
+# Pushes land in bursts here, and every superseded run used to build the whole
+# site to completion. Cloudflare Pages deploys from its own git integration, so
+# cancelling a run never cancels a deployment.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate:
     name: Validate
@@ -41,6 +48,16 @@ jobs:
       - name: Build
         run: npm run build
 
+      # sitemap-submit only reads dist/sitemap*.xml. Handing those over costs a
+      # few hundred KB and saves that job a second full site build.
+      - name: Upload sitemap XML for the submit job
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: sitemap-xml
+          path: dist/sitemap*.xml
+          retention-days: 1
+
   sitemap-submit:
     name: Submit Sitemap (GSC + Bing + IndexNow)
     runs-on: ubuntu-latest
@@ -48,7 +65,7 @@ jobs:
     # 이 잡은 Cloudflare 배포가 19분을 넘기는 순간 **반드시** cancelled 였고, 대기
     # 스크립트는 자기 예산을 한 번도 쓸 수 없었다(2026-08-09 ff9ee57: 배포는 성공했는데
     # 게이트만 잘림). 나머지 5개 repo 는 이미 80분인데 game 만 롤아웃에서 빠져 있었다.
-    timeout-minutes: 80
+    timeout-minutes: 20
     needs: validate
     # Only run on pushes to main, not on PRs
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -57,20 +74,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
+      # IndexNow URL collection reads the sitemap XML from disk rather than
+      # HTTP-fetching the live site, which Cloudflare 403s from CI. Validate
+      # already built these, so take them instead of building again.
+      - name: Download sitemap XML from validate
+        uses: actions/download-artifact@v4
         with:
-          node-version: '24'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build
-        # Produces dist/sitemap-index.xml + dist/sitemap-*.xml so IndexNow URL
-        # collection can read them from disk instead of HTTP-fetching the live
-        # site from CI (Cloudflare 403s that self-fetch — see gotcha #10).
-        run: npm run build
+          name: sitemap-xml
+          path: dist
 
       - name: Setup Python
         uses: actions/setup-python@v6
@@ -81,12 +92,16 @@ jobs:
         run: pip install requests python-dotenv google-api-python-client google-auth
 
       - name: Wait for Cloudflare Pages deployment
+        # Waiting up to an hour for this exact commit was 59% of the Actions
+        # bill. Five minutes covers a normal deploy; then submit regardless —
+        # the engines fetch the sitemap URL on their own schedule anyway.
+        continue-on-error: true
         # Search submission must follow the deployment for this exact commit,
         # not a blind delay that may still leave the previous build live.
         run: python scripts/wait-cloudflare-check.py
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          CLOUDFLARE_CHECK_TIMEOUT: "3600"
+          CLOUDFLARE_CHECK_TIMEOUT: "300"
 
       - name: Submit sitemap to all engines
         run: python scripts/sitemap-submit.py
