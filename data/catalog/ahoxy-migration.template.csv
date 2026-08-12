@@ -1,4 +1,0 @@
-source_slug,source_family,source_type,target_track,target_slug,target_title_ko,target_format,embedded_island,content_angle,migration_priority,status,notes
-gomoku,games,game,interactive,gomoku-origin-and-play,오목의 유래와 두는 법,interactive-article,Gomoku,history-rules-strategy,high,mapped,board-game editorial model
-meeting-cost,finance,calculator,interactive,meeting-cost-corporate-efficiency,회의 비용과 조직 생산성,guide-plus-calculator,MeetingCostCalculator,productivity-finance,high,mapped,links to work and management content
-image-metadata,image-tools,utility,,,cross-link-only,,forensics utility,low,hold,not aligned with current image-light priority

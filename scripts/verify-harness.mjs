@@ -14,7 +14,6 @@ const requiredFiles = [
   // this list only checked that they existed.
   "data/catalog/category-registry.yaml",
   "data/catalog/content-inventory.master.csv",
-  "data/catalog/workboard.yaml",
   "src/lib/mdx-component-registry.ts",
 ];
 

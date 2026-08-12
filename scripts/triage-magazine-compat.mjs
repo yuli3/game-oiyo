@@ -2,8 +2,12 @@ import fs from "node:fs";
 import path from "node:path";
 
 const root = process.cwd();
-const inputPath = path.join(root, "data/catalog/magazine-compatibility-audit.csv");
-const outputCsv = path.join(root, "data/catalog/magazine-compatibility-triage.csv");
+// Magazine compatibility audit data is internal working data, so it lives in
+// company-brain rather than in this repo, which is public. These are local-only
+// tools — CI never runs them — so failing loudly here is the right behaviour.
+const catalogRoot = path.join(root, "..", "company-brain/AI-Sessions/raw/project-docs/game/data/catalog");
+const inputPath = path.join(catalogRoot, "magazine-compatibility-audit.csv");
+const outputCsv = path.join(catalogRoot, "magazine-compatibility-triage.csv");
 const outputMd = path.join(root, "reports/260509-magazine-compatibility-triage.md");
 
 function parseCsvLine(line) {

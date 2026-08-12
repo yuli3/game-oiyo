@@ -3,8 +3,12 @@ import path from "node:path";
 import matter from "gray-matter";
 
 const root = process.cwd();
+// Magazine compatibility audit data is internal working data, so it lives in
+// company-brain rather than in this repo, which is public. These are local-only
+// tools — CI never runs them — so failing loudly here is the right behaviour.
+const catalogRoot = path.join(root, "..", "company-brain/AI-Sessions/raw/project-docs/game/data/catalog");
 const contentRoot = path.join(root, "src/content/blog");
-const outputCsv = path.join(root, "data/catalog/magazine-compatibility-audit.csv");
+const outputCsv = path.join(catalogRoot, "magazine-compatibility-audit.csv");
 const outputMd = path.join(root, "reports/260509-magazine-compatibility-audit.md");
 
 const academyCategories = new Set([
