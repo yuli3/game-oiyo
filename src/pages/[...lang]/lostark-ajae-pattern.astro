@@ -1,0 +1,59 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import AjaePattern from "../../components/games/AjaePattern";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+// The Korean copy carries the community's own word for this mechanic — 아재패턴.
+// That is what the ahoxy build ranks ~3rd for, and the generic phrasing
+// ("keyboard reaction test") is what the family page it redirects to could not
+// rank for. Keep the jargon in the title and the h1, not just in the body.
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "로스트아크 아재패턴 연습 — QWERASDF 키보드 게임",
+    description:
+      "QWERASDF 8개 키로 로스트아크 아재패턴을 연습하세요. 4~8키 랜덤 패턴, 제한시간, 연승과 최고기록을 브라우저에 저장합니다.",
+  },
+  en: {
+    title: "Lost Ark Ajae Pattern Trainer — QWERASDF Key Sequence",
+    description:
+      "Practise the Lost Ark 아재패턴 key sequence on QWERASDF. Random 4–8 key patterns on a timer, with streaks and best times kept in your browser.",
+  },
+  ja: {
+    title: "ロストアーク アジェパターン練習 — QWERASDFキーボードゲーム",
+    description:
+      "QWERASDFの8キーでロストアークのキーシーケンスを練習。4〜8キーのランダムパターンと制限時間、連勝と最高記録をブラウザに保存します。",
+  },
+  zh: {
+    title: "命运方舟 按键序列练习 — QWERASDF 键盘游戏",
+    description:
+      "用 QWERASDF 八个键练习命运方舟的按键序列机制。4–8 键随机图案与限时，连胜和最佳记录保存在浏览器中。",
+  },
+  fr: {
+    title: "Entraîneur de séquence Lost Ark — Clavier QWERASDF",
+    description:
+      "Entraînez la séquence de touches de Lost Ark sur QWERASDF. Motifs aléatoires de 4 à 8 touches chronométrés, séries et records conservés dans votre navigateur.",
+  },
+  es: {
+    title: "Entrenador de secuencia de Lost Ark — Teclado QWERASDF",
+    description:
+      "Practica la secuencia de teclas de Lost Ark en QWERASDF. Patrones aleatorios de 4 a 8 teclas con tiempo límite, rachas y récords en tu navegador.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-2xl px-4 py-8">
+    <AjaePattern client:load locale={locale} />
+    <GameGuide slug="lostark-ajae-pattern" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>
