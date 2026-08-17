@@ -5,7 +5,10 @@ const LOCALES = ["ko", "en", "ja", "zh", "fr", "es"] as const;
 
 describe("strategy guide evidence contract", () => {
   it("gives every pilot a six-locale variant scope and visible HTTPS sources", () => {
-    expect(Object.keys(STRATEGY_GUIDES).sort()).toEqual(["hearts-game", "minesweeper", "solitaire", "texas-holdem"]);
+    // chess joined the pilot on 2026-08-17: /chess is the highest-impression page
+    // on game.oiyo.net (zh 54, ko 14 over 60 days) and sits at position ~72, which
+    // is the depth-shortage signal this guide format exists to answer.
+    expect(Object.keys(STRATEGY_GUIDES).sort()).toEqual(["chess", "hearts-game", "minesweeper", "solitaire", "texas-holdem"]);
     for (const guide of Object.values(STRATEGY_GUIDES)) {
       for (const locale of LOCALES) expect(guide.variantNote[locale].trim().length).toBeGreaterThan(40);
       expect(guide.sources.length).toBeGreaterThan(0);

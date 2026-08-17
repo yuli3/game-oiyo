@@ -88,6 +88,103 @@ export const STRATEGY_GUIDES: Record<string, StrategyGuide> = {
     },
   },
 
+  chess: {
+    slug: "chess",
+    title: {
+      ko: "체스 전략 — 초보를 벗어나는 다섯 가지 원칙",
+      en: "Chess Strategy — Five Principles That Get You Past Beginner",
+      ja: "チェス戦略 — 初心者を抜け出す5つの原則",
+      zh: "国际象棋策略 — 摆脱新手的五个原则",
+      fr: "Stratégie aux échecs — cinq principes pour dépasser le niveau débutant",
+      es: "Estrategia de ajedrez — cinco principios para dejar de ser principiante",
+    },
+    intro: {
+      ko: "체스에서 초보와 중급을 가르는 것은 외운 수순의 양이 아니라, 매 수마다 무엇을 확인하는지입니다. 아래 다섯 가지는 오프닝 정석을 하나도 외우지 않아도 바로 쓸 수 있는 판단 기준입니다.",
+      en: "What separates a beginner from an intermediate player is not how many opening lines they have memorised — it is what they check before every move. These five principles work without memorising a single opening.",
+      ja: "チェスで初心者と中級者を分けるのは、暗記した手順の量ではなく、一手ごとに何を確認するかです。以下の5つは定跡を一つも覚えなくてもすぐ使える判断基準です。",
+      zh: "在国际象棋中，区分新手与中级棋手的不是背了多少开局，而是每一步之前检查什么。以下五条原则，不用背任何开局也能立刻使用。",
+      fr: "Ce qui sépare un débutant d’un joueur intermédiaire n’est pas le nombre d’ouvertures mémorisées, mais ce qu’il vérifie avant chaque coup. Ces cinq principes fonctionnent sans apprendre la moindre ouverture par cœur.",
+      es: "Lo que separa a un principiante de un jugador intermedio no es cuántas aperturas memorizó, sino qué comprueba antes de cada jugada. Estos cinco principios funcionan sin memorizar ni una sola apertura.",
+    },
+    variantNote: {
+      ko: "적용 범위: OIYO 구현은 표준 체스 규칙 전체를 따릅니다 — 캐슬링, 앙파상, 승격(기물 선택), 스테일메이트, 50수 규칙, 3회 반복, 기물 부족 무승부. AI는 견습생·숙련가·명인 3단계이며 시간 제한은 없습니다. 아래 조언은 속기(블리츠)가 아니라 시간 여유가 있는 대국을 전제로 합니다.",
+      en: "Variant scope: OIYO implements full standard chess — castling, en passant, promotion with piece choice, stalemate, the fifty-move rule, threefold repetition, and insufficient material. The AI has three levels (Apprentice, Adept, Master) and there is no clock. This advice assumes untimed play rather than blitz.",
+      ja: "適用範囲: OIYOの実装は標準ルール全体に従います — キャスリング、アンパッサン、昇格(駒選択)、ステイルメイト、50手ルール、同一局面3回、戦力不足による引き分け。AIは見習い・熟練者・名人の3段階で持ち時間はありません。以下の助言はブリッツではなく時間に余裕のある対局を前提とします。",
+      zh: "适用范围：OIYO 实现完整的标准规则 — 王车易位、吃过路兵、升变（可选棋子）、逼和、五十回合规则、三次重复、子力不足和棋。AI 分学徒、行家、大师三档，且没有计时。以下建议以慢棋而非快棋为前提。",
+      fr: "Portée : OIYO applique les règles standard complètes — roque, prise en passant, promotion avec choix de la pièce, pat, règle des cinquante coups, triple répétition et matériel insuffisant. L’IA propose trois niveaux (Apprenti, Adepte, Maître) et il n’y a pas de pendule. Ces conseils supposent une partie sans cadence rapide.",
+      es: "Alcance: OIYO aplica las reglas estándar completas — enroque, captura al paso, promoción con elección de pieza, rey ahogado, regla de cincuenta movimientos, triple repetición y material insuficiente. La IA tiene tres niveles (Aprendiz, Experto, Maestro) y no hay reloj. Estos consejos suponen partidas sin prisa, no blitz.",
+    },
+    sources: [
+      { label: "FIDE — Laws of Chess", href: "https://handbook.fide.com/chapter/E012023" },
+      { label: "Chess.com — Basic opening principles", href: "https://www.chess.com/article/view/chess-opening-principles" },
+    ],
+    tips: [
+      {
+        heading: { ko: "1. 오프닝은 외우지 말고 세 가지만 지켜라", en: "1. Do not memorise openings — satisfy three goals instead", ja: "1. 定跡は暗記せず、3つだけ守る", zh: "1. 别背开局，只守三条", fr: "1. N’apprenez pas d’ouvertures : visez trois objectifs", es: "1. No memorices aperturas: cumple tres objetivos" },
+        body: { ko: "첫 10수의 목표는 딱 셋입니다. 중앙(e4·d4·e5·d5)에 폰을 두고, 나이트와 비숍을 꺼내고, 캐슬링으로 킹을 치웁니다. 이 셋을 상대보다 먼저 끝내면 정석을 몰라도 좋은 포지션이 됩니다. 나이트를 비숍보다 먼저 꺼내는 편이 대체로 무난한데, 나이트는 갈 자리가 뻔한 반면 비숍은 폰 구조를 보고 정해야 하기 때문입니다.", en: "Your first ten moves have exactly three jobs: put a pawn in the centre (e4/d4/e5/d5), develop your knights and bishops, and castle your king to safety. Finish those three before your opponent does and you will have a good position without knowing any theory. Develop knights before bishops as a default — a knight has obvious squares, while a bishop’s best diagonal depends on how the pawns settle.", ja: "最初の10手の目的は3つだけです。中央(e4・d4・e5・d5)にポーンを置き、ナイトとビショップを展開し、キャスリングでキングを安全にする。この3つを相手より先に終えれば、定跡を知らなくても良い局面になります。基本はナイトを先に展開します — ナイトは行き先が明快ですが、ビショップの最善の斜線はポーン構造が決まってから見えるからです。", zh: "开局十步只有三个任务：把兵推到中心（e4/d4/e5/d5）、出动马和象、王车易位保证王的安全。比对手更早完成这三件事，即使不懂理论也能得到好局面。默认先出马再出象 — 马的好格子一目了然，而象走哪条斜线要看兵形定型后才清楚。", fr: "Vos dix premiers coups n’ont que trois tâches : occuper le centre avec un pion (e4/d4/e5/d5), développer cavaliers et fous, et roquer pour mettre le roi à l’abri. Terminez ces trois choses avant l’adversaire et vous aurez une bonne position sans connaître la théorie. Développez les cavaliers avant les fous par défaut : le cavalier a des cases évidentes, alors que la meilleure diagonale du fou dépend de la structure de pions.", es: "Tus diez primeras jugadas tienen solo tres tareas: poner un peón en el centro (e4/d4/e5/d5), desarrollar caballos y alfiles, y enrocar para poner al rey a salvo. Termina esas tres antes que tu rival y tendrás buena posición sin saber teoría. Desarrolla los caballos antes que los alfiles por defecto: el caballo tiene casillas evidentes, mientras que la mejor diagonal del alfil depende de cómo se fije la estructura de peones." },
+      },
+      {
+        heading: { ko: "2. 두기 전에 상대의 직전 수가 무엇을 노리는지 묻는다", en: "2. Before you move, ask what your opponent’s last move threatened", ja: "2. 指す前に、相手の直前の手が何を狙っているか問う", zh: "2. 落子前先问：对手上一步在威胁什么", fr: "2. Avant de jouer, demandez ce que menaçait le dernier coup adverse", es: "2. Antes de mover, pregunta qué amenazaba la última jugada rival" },
+        body: { ko: "초급 대국에서 승패의 대부분은 전략이 아니라 그냥 기물을 공짜로 주는 데서 갈립니다. 매 수마다 두 가지만 확인하세요. 상대의 직전 수가 새로 공격하는 칸이 어디인가, 그리고 내가 두려는 수가 내 기물을 무방비로 남기는가. 특히 상대 나이트가 내 킹과 퀸(또는 룩)을 동시에 노리는 포크 자리에 갈 수 있는지 매번 보세요. 이 확인 하나로 초급 구간의 실수 대부분이 사라집니다.", en: "At beginner level most games are decided not by strategy but by pieces given away for free. Check two things every move: which squares did my opponent’s last move newly attack, and does my intended move leave any of my pieces undefended? Watch especially for squares where an enemy knight would fork your king and queen (or a rook). This single habit removes most beginner losses.", ja: "初級の対局は戦略ではなく、駒をただで渡すことで勝敗が決まります。一手ごとに2点だけ確認しましょう。相手の直前の手が新たに攻撃している升はどこか、そして自分の指そうとする手が駒を無防備に残さないか。特に相手のナイトがキングとクイーン(またはルーク)を同時に狙うフォークの升に入れるかを毎回見てください。この習慣だけで初級の負けの大半が消えます。", zh: "初级对局的胜负多半不取决于战略，而在于白送棋子。每步只查两件事：对手上一步新攻击了哪些格子，我想走的这步会不会让某个子失去保护？尤其要留意对方马能否跳到同时叉击你的王和后（或车）的格子。仅这一个习惯就能消除初学者的大部分败局。", fr: "Au niveau débutant, la plupart des parties se décident non par la stratégie mais par des pièces données gratuitement. Vérifiez deux choses à chaque coup : quelles cases le dernier coup adverse attaque-t-il désormais, et mon coup laisse-t-il une pièce sans défense ? Surveillez surtout les cases d’où un cavalier adverse ferait une fourchette sur votre roi et votre dame (ou une tour). Cette seule habitude supprime l’essentiel des défaites de débutant.", es: "En el nivel principiante la mayoría de partidas no se deciden por estrategia sino por piezas regaladas. Comprueba dos cosas en cada jugada: qué casillas ataca ahora la última jugada rival, y si tu jugada deja alguna pieza sin defensa. Vigila sobre todo las casillas desde las que un caballo rival haría un tenedor a tu rey y tu dama (o una torre). Este único hábito elimina la mayoría de derrotas de principiante." },
+      },
+      {
+        heading: { ko: "3. 교환은 기물 값이 아니라 남는 포지션으로 판단하라", en: "3. Judge trades by the position left behind, not by point count", ja: "3. 交換は駒の点数ではなく、残る局面で判断する", zh: "3. 判断兑子要看留下的局面，而非子力分值", fr: "3. Jugez les échanges à la position qui reste, pas au décompte", es: "3. Juzga los cambios por la posición que queda, no por los puntos" },
+        body: { ko: "폰 1, 나이트·비숍 3, 룩 5, 퀸 9라는 값은 출발점일 뿐입니다. 실전에서는 세 가지가 값을 뒤집습니다. 내가 기물이 많으면 교환할수록 유리해지고(적을 때는 반대), 상대의 잘 놓인 기물은 내 나쁜 기물과 바꿔도 이득이며, 상대 킹 앞을 지키는 수비수는 값보다 비쌉니다. 그냥 잡을 수 있어서 잡는 교환이 가장 흔한 손해입니다.", en: "The values — pawn 1, knight and bishop 3, rook 5, queen 9 — are only a starting point. Three things override them in practice: when you are ahead in material, every trade helps you (and hurts you when you are behind); trading your bad piece for their good one is a win even at equal points; and a piece defending the squares around their king is worth more than its value. Trading simply because a capture is available is the most common way to lose ground.", ja: "ポーン1、ナイト・ビショップ3、ルーク5、クイーン9という点数は出発点にすぎません。実戦では3つがこれを覆します。駒得しているなら交換するほど有利になり(劣勢なら逆)、相手の good な駒と自分の悪い駒の交換は同点でも得であり、相手キング周辺を守る駒は点数以上の価値があります。取れるから取る交換が最も多い損です。", zh: "兵1、马象3、车5、后9 只是起点。实战中有三点会推翻它：子力领先时每次兑子都对你有利（落后时相反）；用你的坏子换对方的好子，即使分值相等也是赚；守在对方王前的子价值高于其分值。仅因为能吃就吃，是最常见的亏损方式。", fr: "Les valeurs — pion 1, cavalier et fou 3, tour 5, dame 9 — ne sont qu’un point de départ. Trois éléments les renversent en pratique : quand vous menez au matériel, chaque échange vous aide (et vous nuit si vous êtes en retard) ; échanger votre mauvaise pièce contre leur bonne pièce est un gain même à points égaux ; et une pièce qui défend les cases autour de leur roi vaut plus que sa valeur. Échanger simplement parce qu’une prise est possible est la façon la plus courante de perdre du terrain.", es: "Los valores — peón 1, caballo y alfil 3, torre 5, dama 9 — son solo un punto de partida. Tres cosas los invalidan en la práctica: si vas ganando material, cada cambio te favorece (y te perjudica si vas por detrás); cambiar tu pieza mala por la buena del rival es una ganancia aunque los puntos sean iguales; y una pieza que defiende las casillas junto a su rey vale más que su valor. Cambiar solo porque hay una captura disponible es la forma más común de perder terreno." },
+      },
+      {
+        heading: { ko: "4. 나이트는 막힌 판, 비숍은 열린 판", en: "4. Knights for closed positions, bishops for open ones", ja: "4. ナイトは閉じた局面、ビショップは開いた局面", zh: "4. 封闭局面用马，开放局面用象", fr: "4. Cavaliers en position fermée, fous en position ouverte", es: "4. Caballos en posiciones cerradas, alfiles en abiertas" },
+        body: { ko: "나이트와 비숍은 둘 다 3점이지만 어울리는 판이 다릅니다. 폰이 서로 맞물려 막힌 판에서는 기물을 뛰어넘는 나이트가 낫고, 폰이 많이 교환돼 대각선이 뚫린 판에서는 비숍이 훨씬 멉니다. 그래서 두 비숍을 다 가진 쪽은 판을 여는 교환을, 나이트를 가진 쪽은 폰을 맞물리게 하는 수를 노립니다. 나이트는 판 가장자리에서 갈 수 있는 칸이 절반으로 줄어드니 중앙 쪽에 두세요.", en: "Knights and bishops are both worth three, but they want different boards. In a closed position where pawns are locked together, the knight that jumps over pieces is better; in an open position where pawns have been traded off, the bishop reaches much further. So the side holding both bishops looks for trades that open the position, while the side with knights tries to lock the pawns. Keep knights near the centre — on the edge of the board a knight loses half its squares.", ja: "ナイトとビショップはどちらも3点ですが、合う局面が違います。ポーンが噛み合った閉じた局面では駒を飛び越えるナイトが優れ、ポーンが交換されて斜線が開いた局面ではビショップの方がはるかに遠くまで届きます。だから二枚のビショップを持つ側は局面を開く交換を、ナイトを持つ側はポーンを噛み合わせる手を狙います。ナイトは盤の端では利きが半減するので中央寄りに置きましょう。", zh: "马和象都值三分，但适合的局面不同。兵互相锁死的封闭局面里，能跳过棋子的马更强；兵大量兑掉、斜线打开的局面里，象的射程远得多。因此拥有双象的一方会寻求打开局面的兑换，而有马的一方则设法锁住兵形。马要靠近中心 — 在棋盘边缘，马的可走格子少了一半。", fr: "Cavaliers et fous valent tous deux trois points, mais ils veulent des échiquiers différents. En position fermée où les pions sont bloqués, le cavalier qui saute par-dessus les pièces est meilleur ; en position ouverte où les pions ont été échangés, le fou porte bien plus loin. Le camp qui possède les deux fous cherche donc les échanges qui ouvrent le jeu, tandis que celui aux cavaliers tente de bloquer les pions. Gardez les cavaliers vers le centre : au bord, un cavalier perd la moitié de ses cases.", es: "Caballos y alfiles valen ambos tres puntos, pero quieren tableros distintos. En posición cerrada, con los peones trabados, el caballo que salta por encima es mejor; en posición abierta, con peones ya cambiados, el alfil llega mucho más lejos. Por eso quien tiene la pareja de alfiles busca cambios que abran el juego, y quien tiene caballos intenta trabar los peones. Mantén los caballos cerca del centro: en el borde, un caballo pierde la mitad de sus casillas." },
+      },
+      {
+        heading: { ko: "5. 기물이 줄면 킹을 숨기지 말고 앞으로 내보내라", en: "5. Once the pieces come off, march your king forward", ja: "5. 駒が減ったらキングは隠さず前に出す", zh: "5. 子力减少后，让王走向前场", fr: "5. Une fois les pièces échangées, avancez votre roi", es: "5. Cuando quedan pocas piezas, adelanta tu rey" },
+        body: { ko: "오프닝과 미들게임 내내 킹은 숨겨야 할 약점이지만, 퀸과 룩이 사라진 엔드게임에서는 킹이 가장 강한 기물 중 하나가 됩니다. 체크메이트당할 위험이 사라진 순간 킹을 중앙으로 걸어 나가게 하세요. 엔드게임의 승패는 대개 폰 하나를 승격시키느냐인데, 그 폰을 밀어주고 상대 폰을 막는 일을 킹이 합니다. 엔드게임에서 킹을 뒤에 남겨두는 것은 기물 하나를 안 쓰고 두는 것과 같습니다.", en: "Through the opening and middlegame the king is a liability to be hidden, but in an endgame with the queens and rooks gone it becomes one of your strongest pieces. The moment there is no mating danger left, walk your king toward the centre. Endgames are usually decided by whether one pawn promotes, and it is the king that escorts your pawn forward and blocks theirs. Leaving your king at the back in an endgame is playing a piece short.", ja: "序盤と中盤を通じてキングは隠すべき弱点ですが、クイーンとルークが消えた終盤では最強クラスの駒になります。詰まされる危険がなくなった瞬間、キングを中央へ歩かせましょう。終盤の勝敗はたいていポーン1枚が昇格できるかで決まり、そのポーンを押し上げ相手のポーンを止めるのがキングです。終盤にキングを後方に残すのは駒を1枚使わずに指すのと同じです。", zh: "开局和中局里王是需要藏起来的弱点，但在后与车都已消失的残局中，王会变成最强的棋子之一。一旦没有被将死的危险，就把王走向中心。残局胜负通常取决于能否升变一个兵，而护送己方兵前进、拦住对方兵的正是王。残局把王留在后方，等于少用一个子在下棋。", fr: "Pendant l’ouverture et le milieu de partie, le roi est une faiblesse à cacher ; mais en finale, dames et tours disparues, il devient l’une de vos pièces les plus fortes. Dès qu’il n’y a plus de danger de mat, avancez votre roi vers le centre. Les finales se décident généralement sur la promotion d’un pion, et c’est le roi qui escorte le vôtre et bloque celui de l’adversaire. Laisser son roi au fond en finale, c’est jouer avec une pièce en moins.", es: "Durante la apertura y el medio juego el rey es una debilidad que hay que esconder, pero en un final sin damas ni torres se convierte en una de tus piezas más fuertes. En cuanto desaparezca el peligro de mate, lleva tu rey hacia el centro. Los finales suelen decidirse por si un peón corona, y es el rey quien escolta al tuyo y frena el suyo. Dejar el rey atrás en un final es jugar con una pieza menos." },
+      },
+    ],
+    mistakes: {
+      ko: [
+        "퀸을 2~3수 만에 꺼낸다 — 상대가 나이트와 비숍을 전개하면서 퀸을 쫓아내면, 상대는 공짜로 발전하고 나는 같은 퀸만 계속 움직이게 됩니다.",
+        "오프닝에서 같은 기물을 두 번 이상 움직인다 — 한 수는 한 기물을 꺼내는 데 쓰는 것이 원칙입니다.",
+        "캐슬링을 미루다 판이 열린다 — 중앙 폰이 교환된 뒤의 킹은 그대로 표적입니다.",
+        "가장자리 폰을 욕심내다 전개가 늦는다 — 폰 하나 값보다 두세 수의 발전이 큽니다.",
+        "내 공격만 계산하고 상대의 응수를 보지 않는다 — 상대가 그 자리에서 무엇을 두는지 한 수만 더 보세요.",
+      ],
+      en: [
+        "Bringing the queen out on move two or three — your opponent develops knights and bishops while chasing her, gaining free moves while you shuffle one piece.",
+        "Moving the same piece twice in the opening — as a rule, each move should bring a new piece into play.",
+        "Delaying castling until the position opens — once the central pawns are traded, an uncastled king is simply a target.",
+        "Grabbing a wing pawn at the cost of development — two or three developing moves are worth more than one pawn.",
+        "Calculating only your own attack — always look one move further at what your opponent gets to play in reply.",
+      ],
+      ja: [
+        "2〜3手目でクイーンを出す — 相手はナイトやビショップを展開しながらクイーンを追い払い、無料で駒を発展させます。",
+        "序盤に同じ駒を2回以上動かす — 一手で新しい駒を一つ展開するのが原則です。",
+        "キャスリングを先延ばしにして局面が開く — 中央のポーンが交換された後の未キャスリングのキングは的でしかありません。",
+        "端のポーンを欲張って展開が遅れる — ポーン1枚より2〜3手の発展の方が価値があります。",
+        "自分の攻めだけ読んで相手の応手を見ない — 相手がそこで何を指せるかを必ず一手先まで見てください。",
+      ],
+      zh: [
+        "第二三步就出后 — 对手一边出马出象一边驱赶你的后，白赚发展步数，而你只在挪同一个子。",
+        "开局阶段同一个子走两次以上 — 原则上每一步都应该带出一个新棋子。",
+        "拖延王车易位直到局面打开 — 中心兵一旦兑掉，未易位的王就只是靶子。",
+        "为贪边兵而耽误出子 — 两三步发展的价值高于一个兵。",
+        "只算自己的进攻，不看对手的应招 — 一定要多看一步，看对手能回什么。",
+      ],
+      fr: [
+        "Sortir la dame au deuxième ou troisième coup : l’adversaire développe cavaliers et fous en la chassant, gagnant des temps pendant que vous déplacez une seule pièce.",
+        "Jouer deux fois la même pièce dans l’ouverture : en principe, chaque coup doit mettre en jeu une pièce nouvelle.",
+        "Retarder le roque jusqu’à l’ouverture de la position : une fois les pions centraux échangés, un roi non roqué n’est qu’une cible.",
+        "Prendre un pion d’aile au prix du développement : deux ou trois coups de développement valent plus qu’un pion.",
+        "Ne calculer que votre attaque : regardez toujours un coup plus loin ce que l’adversaire pourra répondre.",
+      ],
+      es: [
+        "Sacar la dama en la segunda o tercera jugada: el rival desarrolla caballos y alfiles mientras la persigue, ganando tiempos mientras tú mueves una sola pieza.",
+        "Mover la misma pieza dos veces en la apertura: por norma, cada jugada debe incorporar una pieza nueva.",
+        "Retrasar el enroque hasta que la posición se abra: cambiados los peones centrales, un rey sin enrocar es solo un blanco.",
+        "Capturar un peón de flanco a costa del desarrollo: dos o tres jugadas de desarrollo valen más que un peón.",
+        "Calcular solo tu ataque: mira siempre una jugada más allá, a lo que el rival podrá responder.",
+      ],
+    },
+  },
   minesweeper: {
     slug: "minesweeper",
     title: {
