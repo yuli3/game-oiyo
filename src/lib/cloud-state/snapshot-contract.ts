@@ -1,10 +1,8 @@
 /**
  * Wave 0 contract for optional anonymous cloud sharing.
  *
- * This module does not call Cloudflare and does not make game.oiyo.net the
- * owner of the tier-list page. `tier-list.v1` stays owned by blog.oiyo.net;
- * the shared contract lives here only so one dependency-free validator can be
- * exercised by the existing game Vitest harness.
+ * `tier-list.v1` owner is game.oiyo.net (2026-08-18 move from blog).
+ * blog and ahoxy URLs 301 here. Identity fields stay forbidden.
  */
 
 export const SNAPSHOT_CONTRACT_VERSION = 1 as const;
@@ -28,7 +26,7 @@ export type TierListSnapshotPayload = {
   tiers: Array<{
     id: string;
     label: string;
-    items: Array<{ id: string; label: string }>;
+    items: Array<{ id: string; label: string; imageUrl?: string }>;
   }>;
 };
 
@@ -114,9 +112,18 @@ function isTierListPayload(value: unknown): value is TierListSnapshotPayload {
     itemCount += tier.items.length;
     if (itemCount > 200) return false;
     for (const item of tier.items) {
-      if (!isObject(item) || !hasOnlyFields(item, ["id", "label"])) return false;
+      if (!isObject(item) || !hasOnlyFields(item, ["id", "label", "imageUrl"])) return false;
       if (typeof item.id !== "string" || !PAYLOAD_ID_PATTERN.test(item.id) || itemIds.has(item.id)) return false;
       if (!isSafeLabel(item.label)) return false;
+      if (item.imageUrl !== undefined) {
+        if (typeof item.imageUrl !== "string" || item.imageUrl.length > 400) return false;
+        try {
+          const parsed = new URL(item.imageUrl);
+          if (parsed.protocol !== "https:" || parsed.username || parsed.password) return false;
+        } catch {
+          return false;
+        }
+      }
       itemIds.add(item.id);
     }
   }
@@ -157,7 +164,7 @@ export function validateAnonymousShareSnapshot(
     return { ok: false, error: "invalid_envelope" };
   }
 
-  const expectedOwner = input.kind === "tier-list.v1" ? "blog.oiyo.net" : "game.oiyo.net";
+  const expectedOwner = "game.oiyo.net";
   if (input.owner !== expectedOwner) return { ok: false, error: "invalid_owner" };
 
   const createdAt = Date.parse(input.createdAt);

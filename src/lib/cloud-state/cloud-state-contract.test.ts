@@ -22,7 +22,7 @@ function tierSnapshot() {
     version: 1,
     snapshotId: "snapshot_1234567",
     kind: "tier-list.v1",
-    owner: "blog.oiyo.net",
+    owner: "game.oiyo.net",
     createdAt: "2026-07-18T03:00:00.000Z",
     expiresAt: "2026-07-25T03:00:00.000Z",
     payload: {
@@ -52,8 +52,8 @@ describe("anonymous KV snapshot contract", () => {
     if (result.ok) expect(snapshotKvKey(result.value)).toBe("share:v1:tier-list.v1:snapshot_1234567");
   });
 
-  it("keeps the existing blog owner and rejects a game owner substitution", () => {
-    expect(validateAnonymousShareSnapshot({ ...tierSnapshot(), owner: "game.oiyo.net" }, now)).toEqual({
+  it("keeps the game owner and rejects a blog owner substitution", () => {
+    expect(validateAnonymousShareSnapshot({ ...tierSnapshot(), owner: "blog.oiyo.net" }, now)).toEqual({
       ok: false,
       error: "invalid_owner",
     });

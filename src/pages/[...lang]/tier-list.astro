@@ -1,0 +1,46 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import TierListStudio from "../../components/games/TierListStudio";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "티어표 만들기 — 이미지·저장·공유",
+    description: "브라우저에서 S~D 티어표를 만들고 저장·비교·공유합니다. 이미지 주소, 템플릿, 추천/비추천을 지원합니다.",
+  },
+  en: {
+    title: "Make a tier list — save, compare, share",
+    description: "Build an S–D tier list in the browser. Save locally, compare versions, share via Cloudflare KV, and attach image URLs.",
+  },
+  ja: {
+    title: "ティア表メーカー — 保存・比較・共有",
+    description: "ブラウザでS〜Dのティア表を作り、保存・比較・共有します。画像URLとテンプレートに対応。",
+  },
+  zh: {
+    title: "制作等级表 — 保存、比较、分享",
+    description: "在浏览器里制作 S–D 等级表。本地保存、比较、通过 KV 分享，并支持图片地址。",
+  },
+  fr: {
+    title: "Créer une tier list — sauver, comparer, partager",
+    description: "Fabriquez une tier list S–D dans le navigateur. Sauvegarde locale, comparaison, partage KV, images par URL.",
+  },
+  es: {
+    title: "Haz una lista de tiers — guarda, compara, comparte",
+    description: "Crea una lista S–D en el navegador. Guarda, compara, comparte con KV y usa URLs de imagen.",
+  },
+};
+const m = meta[locale] ?? meta.en;
+---
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-xl px-4 py-8">
+    <p class="mb-4 text-sm leading-relaxed text-stone-600">{m.description}</p>
+    <TierListStudio client:load locale={locale} />
+  </div>
+</BaseLayout>

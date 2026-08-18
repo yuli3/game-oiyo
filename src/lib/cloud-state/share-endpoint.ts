@@ -68,7 +68,7 @@ export async function createShareSnapshot(
     version: SNAPSHOT_CONTRACT_VERSION,
     snapshotId: options.snapshotId ?? generateSnapshotId(),
     kind: input.kind,
-    owner: input.kind === "tier-list.v1" ? "blog.oiyo.net" : "game.oiyo.net",
+    owner: "game.oiyo.net",
     createdAt: new Date(nowMs).toISOString(),
     expiresAt: new Date(nowMs + ttlMs).toISOString(),
     payload: input.payload,

@@ -1,1 +1,19 @@
-# game.oiyo.net — Cloudflare Pages redirects (none yet)
+# game.oiyo.net — short aliases into the locale tier studio
+/tier  /ko/tier-list/  301
+/tier/  /ko/tier-list/  301
+/ko/tier  /ko/tier-list/  301
+/ko/tier/  /ko/tier-list/  301
+/en/tier  /en/tier-list/  301
+/en/tier/  /en/tier-list/  301
+/ja/tier  /ja/tier-list/  301
+/ja/tier/  /ja/tier-list/  301
+/zh/tier  /zh/tier-list/  301
+/zh/tier/  /zh/tier-list/  301
+/fr/tier  /fr/tier-list/  301
+/fr/tier/  /fr/tier-list/  301
+/es/tier  /es/tier-list/  301
+/es/tier/  /es/tier-list/  301
+/game-tier-list  /ko/tier-list/  301
+/game-tier-list/  /ko/tier-list/  301
+/ko/game-tier-list  /ko/tier-list/  301
+/ko/game-tier-list/  /ko/tier-list/  301
