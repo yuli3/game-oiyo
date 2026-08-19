@@ -3,11 +3,14 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import type { StallId, Weather } from "@/lib/games/run-a-business";
+import { STALLS } from "@/lib/games/run-a-business";
 
 const STALL_COLOR: Record<StallId, string> = {
   ramen: "#c45c3e",
   lemonade: "#e6b422",
   pcbang: "#3d5a80",
+  salon: "#d4a0b8",
+  retail: "#6b705c",
 };
 
 function toon() {
@@ -25,6 +28,75 @@ function toon() {
   map.minFilter = THREE.NearestFilter;
   map.magFilter = THREE.NearestFilter;
   return map;
+}
+
+function Crates({ stall, onBuy }: { stall: StallId; onBuy?: (key: string) => void }) {
+  const keys = STALLS[stall].keys.slice(0, 3);
+  return (
+    <group>
+      {keys.map((key, i) => (
+        <mesh
+          key={key}
+          position={[-2.2 + i * 0.7, 0.28, 1.6]}
+          castShadow
+          onClick={(e) => {
+            e.stopPropagation();
+            onBuy?.(key);
+            ping(880 - i * 80);
+          }}
+        >
+          <boxGeometry args={[0.55, 0.4, 0.55]} />
+          <meshToonMaterial color={i === 0 ? "#c08457" : i === 1 ? "#8d6b4a" : "#6f4e37"} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function ping(freq: number) {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const pan = ctx.createStereoPanner();
+    osc.frequency.value = freq;
+    osc.type = "triangle";
+    gain.gain.setValueAtTime(0.05, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18);
+    pan.pan.value = freq > 800 ? -0.3 : 0.3;
+    osc.connect(gain);
+    gain.connect(pan);
+    pan.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.2);
+  } catch {
+    /* autoplay lock */
+  }
+}
+
+function hum(on: boolean) {
+  if (!on || typeof window === "undefined") return () => undefined;
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return () => undefined;
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = 196;
+    gain.gain.value = 0.012;
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    return () => {
+      osc.stop();
+      void ctx.close();
+    };
+  } catch {
+    return () => undefined;
+  }
 }
 
 function Ground() {
@@ -96,6 +168,18 @@ function Stall({ stall }: { stall: StallId }) {
         <mesh position={[0, 1.05, 0.2]}>
           <boxGeometry args={[2.2, 0.7, 1.1]} />
           <meshStandardMaterial color="#1b2430" emissive="#3d8bfd" emissiveIntensity={0.15} />
+        </mesh>
+      )}
+      {stall === "salon" && (
+        <mesh position={[0.4, 0.95, 0.9]} rotation={[0, 0.3, 0]}>
+          <cylinderGeometry args={[0.18, 0.22, 0.7, 10]} />
+          <meshToonMaterial color="#f4e1d2" />
+        </mesh>
+      )}
+      {stall === "retail" && (
+        <mesh position={[0, 1.1, 0.15]}>
+          <boxGeometry args={[2.6, 1.1, 0.9]} />
+          <meshToonMaterial color="#8a8178" />
         </mesh>
       )}
     </group>
@@ -216,7 +300,7 @@ function Customer({
       z = 1.8 + u * 8;
       x += buying ? -1.4 * u : 1.6 * u;
     }
-    mesh.current.position.set(x, 0, z);
+    mesh.current.position.set(x, leave ? 0 : Math.abs(Math.sin(state.clock.elapsedTime * 11)) * 0.07, z);
     mesh.current.rotation.y = leave ? (buying ? 0.6 : -0.6) : Math.PI;
     if (wait && buying && served <= index) onServe(index);
   });
@@ -239,12 +323,14 @@ function World({
   weather,
   sold,
   demand,
+  onBuy,
   onProgress,
 }: {
   stall: StallId;
   weather: Weather;
   sold: number;
   demand: number;
+  onBuy?: (key: string) => void;
   onProgress: (served: number, night: number) => void;
 }) {
   const [served, setServed] = useState(0);
@@ -267,9 +353,22 @@ function World({
         shadow-mapSize-width={1024}
         shadow-mapSize-height={1024}
       />
+      <spotLight
+        position={[-3, 7, 4]}
+        angle={0.38}
+        penumbra={0.7}
+        intensity={1.4}
+        color="#ffe7b8"
+        castShadow
+      />
+      <mesh position={[-1.2, 3.2, 0.4]} rotation={[0.4, 0.3, 0]}>
+        <planeGeometry args={[1.6, 5]} />
+        <meshBasicMaterial color="#ffe7b8" transparent opacity={0.07} depthWrite={false} />
+      </mesh>
       <Ground />
       <Trees />
       <Stall stall={stall} />
+      <Crates stall={stall} onBuy={onBuy} />
       <Lanterns night={night} />
       <Steam on={stall === "ramen"} />
       {weather === "rain" && <Rain count={700} />}
@@ -279,7 +378,10 @@ function World({
           index={i}
           sold={sold}
           served={served}
-          onServe={(n) => setServed((cur) => Math.max(cur, n + 1))}
+          onServe={(n) => {
+            setServed((cur) => Math.max(cur, n + 1));
+            ping(520);
+          }}
         />
       ))}
     </>
@@ -291,6 +393,8 @@ export default function RunABusinessScene({
   weather,
   sold,
   demand,
+  prep,
+  onBuy,
   onDone,
   skipLabel,
 }: {
@@ -298,6 +402,8 @@ export default function RunABusinessScene({
   weather: Weather;
   sold: number;
   demand: number;
+  prep?: { buy: Record<string, number> };
+  onBuy?: (key: string) => void;
   onDone: () => void;
   skipLabel: string;
 }) {
@@ -311,6 +417,7 @@ export default function RunABusinessScene({
     query.addEventListener("change", sync);
     return () => query.removeEventListener("change", sync);
   }, []);
+  useEffect(() => hum(true), []);
   useEffect(() => {
     const ms = 7000 + Math.min(demand, 16) * 700;
     const id = window.setTimeout(() => {
@@ -334,6 +441,7 @@ export default function RunABusinessScene({
           weather={weather}
           sold={sold}
           demand={demand}
+          onBuy={onBuy}
           onProgress={(n) => setServed(n)}
         />
         <OrbitControls

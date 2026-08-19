@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  HORIZON_DAYS,
   START_CASH_CENTS,
   forecastShift,
   morning,
   playDay,
+  playPeriod,
   startRun,
 } from "./run-a-business";
 
@@ -113,5 +115,60 @@ describe("run-a-business engine", () => {
     expect(after.result?.sold).toBe(0);
     expect(after.cashCents).toBeLessThan(2000);
     expect(after.result?.profitCents ?? 0).toBeLessThan(0);
+  });
+
+  it("keeps retail leftover as inventory instead of waste", () => {
+    const after = playDay(startRun({ seed: "s10", stall: "retail" }), {
+      buy: { cases: 20, shelf: 4 },
+      priceCents: 500,
+      richness: 1,
+    });
+    expect(after.result?.wasteCents).toBe(0);
+    expect(after.stock.cases).toBeGreaterThan(0);
+  });
+
+  it("gives a bulk discount when retail buys a full case lot", () => {
+    const small = forecastShift(startRun({ seed: "s10", stall: "retail" }), {
+      buy: { cases: 4, shelf: 4 },
+      priceCents: 500,
+      richness: 1,
+    });
+    const bulk = forecastShift(startRun({ seed: "s10", stall: "retail" }), {
+      buy: { cases: 10, shelf: 8 },
+      priceCents: 500,
+      richness: 1,
+    });
+    expect(bulk.costs.cases).toBeLessThan(small.costs.cases);
+  });
+
+  it("charges salon labor even when chairs stay empty", () => {
+    const after = playDay(startRun({ seed: "s6", stall: "salon", cashCents: 2000 }), {
+      buy: { dye: 0, shampoo: 0, chairs: 3 },
+      priceCents: 2000,
+      richness: 0,
+    });
+    expect(after.result?.overheadCents).toBeGreaterThan(0);
+    expect(after.cashCents).toBeLessThan(2000);
+  });
+
+  it("runs a week as seven days and keeps the sheet in balance", () => {
+    const after = playPeriod(startRun({ seed: "s10", stall: "ramen", horizon: "week" }), {
+      buy: { noodles: 12, soup: 12, topping: 12 },
+      priceCents: 400,
+      richness: 1,
+    });
+    expect(after.period?.sold).toBeGreaterThan(0);
+    expect(after.day).toBe(1 + HORIZON_DAYS.week);
+    const sheet = after.sheet;
+    expect(sheet).toBeTruthy();
+    expect(sheet!.assetsCents).toBe(sheet!.liabilitiesCents + sheet!.equityCents);
+  });
+
+  it("depreciates equipment without taking the cash", () => {
+    const run = startRun({ seed: "alpha", stall: "ramen" });
+    const after = playDay(run, { buy: { noodles: 0, soup: 0, topping: 0 }, priceCents: 400, richness: 1 });
+    expect(after.equipmentCents).toBeLessThan(run.equipmentCents);
+    expect(after.cashCents).toBe(START_CASH_CENTS);
+    expect(after.result?.depreciationCents).toBeGreaterThan(0);
   });
 });
