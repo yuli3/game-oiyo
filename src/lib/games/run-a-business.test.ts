@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   START_CASH_CENTS,
+  forecastShift,
   morning,
   playDay,
   startRun,
@@ -95,6 +96,12 @@ describe("run-a-business engine", () => {
       richness: 1,
     });
     expect(drink.result?.sold ?? 0).toBeGreaterThan(ramen.result?.sold ?? 0);
+  });
+
+  it("forecasts the same sold count the day books will record", () => {
+    const run = startRun({ seed: "s10" });
+    const prep = { buy: { noodles: 18, soup: 18, topping: 18 }, priceCents: 400, richness: 1 as const };
+    expect(forecastShift(run, prep).sold).toBe(playDay(run, prep).result?.sold);
   });
 
   it("charges pc-bang overhead even when nobody comes", () => {

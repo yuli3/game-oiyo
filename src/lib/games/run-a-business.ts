@@ -179,19 +179,24 @@ function capacity(stock: Stock, recipe: Stock, stall: StallPack, prep: Prep): nu
   return Number.isFinite(cap) ? cap : 0;
 }
 
-export function playDay(run: RunState, prep: Prep): RunState {
-  if (run.bust) return run;
+export function forecastShift(run: RunState, prep: Prep) {
   const stall = STALLS[run.stall];
   const card = morning(run.seed, run.day);
   const costs = unitCosts(stall, card.eventId);
   const buy = affordableBuy(run.cashCents, prep.buy, costs, stall.keys);
-  const purchaseCents = stall.keys.reduce((sum, key) => sum + (buy[key] ?? 0) * (costs[key] ?? 0), 0);
   const stock: Stock = { ...stall.empty() };
   for (const key of stall.keys) stock[key] = (run.stock[key] ?? 0) + (buy[key] ?? 0);
-  let cashCents = run.cashCents - purchaseCents;
-
   const recipe = stall.recipe(prep.richness);
-  const sold = Math.min(demandFor(stall, card, prep.priceCents, prep.richness), capacity(stock, recipe, stall, prep));
+  const demand = demandFor(stall, card, prep.priceCents, prep.richness);
+  const sold = Math.min(demand, capacity(stock, recipe, stall, prep));
+  return { stall, card, costs, buy, stock, recipe, demand, sold };
+}
+
+export function playDay(run: RunState, prep: Prep): RunState {
+  if (run.bust) return run;
+  const { stall, card, costs, buy, stock, recipe, sold } = forecastShift(run, prep);
+  const purchaseCents = stall.keys.reduce((sum, key) => sum + (buy[key] ?? 0) * (costs[key] ?? 0), 0);
+  let cashCents = run.cashCents - purchaseCents;
   for (const [key, need] of Object.entries(recipe)) {
     stock[key] = (stock[key] ?? 0) - sold * need;
   }
@@ -202,7 +207,7 @@ export function playDay(run: RunState, prep: Prep): RunState {
     stall.id === "pcbang"
       ? 0
       : stall.keys.reduce((sum, key) => sum + (stock[key] ?? 0) * (costs[key] ?? 0), 0);
-  const leftover = stall.id === "pcbang" ? stall.empty() : stall.empty();
+  const leftover = stall.empty();
   const overheadCents = stall.overheadCents;
   cashCents += revenueCents - overheadCents;
   const profitCents = revenueCents - cogsCents - wasteCents - overheadCents;
