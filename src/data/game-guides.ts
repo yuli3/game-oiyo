@@ -977,4 +977,82 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
     ],
     rules: { ko: ["136장(만·통·삭 1~9와 자패)으로 4명이 13장씩 들고 시작합니다.", "차례마다 1장 뽑고 1장 버리며 손패를 다듬습니다.", "3장짜리 멘츠(연속 또는 같은 패) 4개 + 머리 1쌍이면 화료입니다.", "직접 뽑아 완성=쯔모, 남의 버림패로 완성=론.", "패산이 다 떨어지면 유국(무승부)입니다."], en: ["136 tiles (man/pin/sou 1–9 plus honors); four players start with 13 each.", "On your turn draw one tile and discard one, shaping your hand.", "Four melds (runs or triplets) of three plus one pair is a win.", "Completing on your draw is tsumo; on another's discard, ron.", "If the wall runs out, the round is an exhaustive draw."], ja: ["136枚（萬・筒・索の1〜9と字牌）で4人が13枚ずつ持って開始。", "手番ごとに1枚引いて1枚捨て、手牌を整えます。", "3枚の面子（順子か刻子）4つ＋雀頭1対で和了。", "自分で引けばツモ、他家の捨て牌で完成すればロン。", "牌山が尽きたら流局（引き分け）です。"], zh: ["136张（万筒索1~9与字牌），四人各持13张开局。", "每回合摸一张、打一张，整理手牌。", "四组三张面子（顺子或刻子）加一对将牌即和牌。", "自己摸到为自摸，靠他人弃牌为荣和。", "牌山摸完则荒庄（平局）。"], fr: ["136 tuiles (man/pin/sou 1–9 plus honneurs) ; quatre joueurs, 13 chacun.", "À votre tour, piochez une tuile et défaussez-en une.", "Quatre combinaisons de trois (suites ou brelans) plus une paire = victoire.", "Compléter sur sa pioche = tsumo ; sur une défausse = ron.", "Si le mur est épuisé, la manche est nulle."], es: ["136 fichas (man/pin/sou 1–9 más honores); cuatro jugadores, 13 cada uno.", "En tu turno roba una ficha y descarta otra.", "Cuatro grupos de tres (escaleras o tríos) más una pareja = victoria.", "Completar con tu robada = tsumo; con un descarte = ron.", "Si se agota el muro, la ronda es empate."] },
   },
+  "run-a-business": {
+    origin: {
+      ko: "하루 장사는 레모네이드 타이쿤·라면장사 계열의 짧은 장부 놀이입니다. 업종과 기간은 같은 주소에서 팩으로 늘어납니다.",
+      en: "Run a Business is a short ledger game in the lemonade-stand / ramen-cart family. More stalls and time horizons share one URL.",
+      ja: "一日商売はレモネードタイクーンやラーメン屋台系の短い帳簿ゲームです。業種と期間は同じURLのパックで増えます。",
+      zh: "一天生意是柠檬水摊、拉面摊一类的短账本游戏。更多业种和周期共用同一个网址。",
+      fr: "Une journée de commerce est un petit jeu de livres, cousin des stands de limonade et de ramen. D'autres stands partagent la même URL.",
+      es: "Un día de negocio es un juego corto de libros, de la familia del puesto de limonada y ramyeon. Más puestos comparten la misma URL.",
+    },
+    how: {
+      ko: "아침 날씨와 사건을 보고 면·스프·토핑을 사입하고 가격과 레시피를 고른 뒤 장사를 엽니다. 저녁에 매출·원가·폐기가 남습니다. 남은 재료는 그날 폐기됩니다.",
+      en: "Read the morning weather and event, buy noodles, soup and topping, set price and recipe, then open. The evening books show sales, cost and waste. Leftovers spoil the same day.",
+      ja: "朝の天気と出来事を見て麺・スープ・トッピングを仕入れ、価格とレシピを決めて開店します。夜に売上・原価・廃棄が残ります。残りは当日廃棄です。",
+      zh: "看早晨天气和事件，采购面、汤底和浇头，定价和配方后开张。晚上留下销售额、成本和报废。剩料当天报废。",
+      fr: "Lisez la météo et l'événement, achetez nouilles, bouillon et garniture, fixez prix et recette, puis ouvrez. Le soir : ventes, coût, pertes. Les restes sont perdus le jour même.",
+      es: "Lee el clima y el suceso, compra fideos, caldo y topping, fija precio y receta y abre. Por la noche: ventas, coste y merma. Lo que sobra se pierde ese día.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "이게 회계 수업인가요?",
+          en: "Is this an accounting class?",
+          ja: "会計の授業ですか？",
+          zh: "这是会计课吗？",
+          fr: "Est-ce un cours de comptabilité ?",
+          es: "¿Es una clase de contabilidad?",
+        },
+        a: {
+          ko: "아닙니다. 숫자는 장사에서 생깁니다. 분류를 배우려면 oiyo 손익 게임을 보세요.",
+          en: "No. The numbers come from the stall. Use the oiyo income-statement game to learn the labels.",
+          ja: "いいえ。数字は商売から出ます。科目はoiyoの損益ゲームで。",
+          zh: "不是。数字来自摆摊。科目请看 oiyo 损益游戏。",
+          fr: "Non. Les chiffres viennent du stand. Les libellés sont sur oiyo.",
+          es: "No. Los números salen del puesto. Las etiquetas están en oiyo.",
+        },
+      },
+      {
+        q: {
+          ko: "돈은 어디에 저장되나요?",
+          en: "Where is the money saved?",
+          ja: "お金はどこに保存されますか？",
+          zh: "钱存在哪里？",
+          fr: "Où est sauvegardé l'argent ?",
+          es: "¿Dónde se guarda el dinero?",
+        },
+        a: {
+          ko: "이 브라우저에만 있습니다. 계정과 서버가 없습니다.",
+          en: "Only in this browser. There is no account or server.",
+          ja: "このブラウザだけです。アカウントもサーバーもありません。",
+          zh: "只在这台浏览器。没有账号和服务器。",
+          fr: "Dans ce navigateur seulement. Pas de compte ni de serveur.",
+          es: "Solo en este navegador. No hay cuenta ni servidor.",
+        },
+      },
+      {
+        q: {
+          ko: "피씨방이나 일년은요?",
+          en: "What about a PC bang or a year?",
+          ja: "ネットカフェや一年は？",
+          zh: "网吧或一年呢？",
+          fr: "Et un cybercafé ou une année ?",
+          es: "¿Y un cibercafé o un año?",
+        },
+        a: {
+          ko: "같은 주소에 나중에 팩으로 붙습니다. 지금 판은 라면·하루·달러입니다.",
+          en: "They join this same URL as later packs. This slice is ramen, one day, and USD.",
+          ja: "同じURLに後からパックで足します。今はラーメン・一日・ドルです。",
+          zh: "之后作为资料包加在同一网址。现在是拉面、一天、美元。",
+          fr: "Ils arriveront sur la même URL. Cette version est ramen, un jour, USD.",
+          es: "Llegarán en esta misma URL. Esta tajada es ramyeon, un día y USD.",
+        },
+      },
+    ],
+    related: {
+      ko: [{ href: "https://oiyo.net/ko/income-statement-game/", label: "손익계산서 게임" }],
+      en: [{ href: "https://oiyo.net/en/income-statement-game/", label: "Income statement game" }],
+    },
+  },
 };

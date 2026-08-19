@@ -19,6 +19,7 @@ const NOT_GAMES: Record<string, string> = {
   "wheel-spinner": "tool",
   "lotto-generator": "tool",
   plinko: "tool",
+  "tier-list": "tool",
   "balance-game": "casual",
   "dot-pet": "casual",
   tamagotchi: "casual",

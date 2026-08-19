@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import RunABusiness from "../../components/games/RunABusiness";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "하루 장사 — 라면 포장마차 시뮬",
+    description: "날씨와 가격을 맞추고 하루 라면을 팝니다. 매출·원가·폐기가 저녁에 남습니다. 무료, 설치 없음.",
+  },
+  en: {
+    title: "Run a Business — ramen stall day sim",
+    description: "Match weather and price, sell ramen for a day. Sales, cost and waste close the books. Free, no install.",
+  },
+  ja: {
+    title: "一日商売 — ラーメン屋台シミュ",
+    description: "天気と価格を合わせて一日ラーメンを売ります。売上・原価・廃棄が夜に残ります。無料。",
+  },
+  zh: {
+    title: "一天生意 — 拉面摊模拟",
+    description: "根据天气和价格卖一天拉面。晚上留下销售额、成本和报废。免费，无需安装。",
+  },
+  fr: {
+    title: "Une journée de commerce — stand de ramen",
+    description: "Ajustez météo et prix, vendez des ramens. Ventes, coût et pertes le soir. Gratuit.",
+  },
+  es: {
+    title: "Un día de negocio — puesto de ramyeon",
+    description: "Ajusta clima y precio y vende ramyeon un día. Ventas, coste y merma por la noche. Gratis.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-2xl px-4 py-8">
+    <RunABusiness client:load locale={locale} />
+    <GameGuide slug="run-a-business" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>
