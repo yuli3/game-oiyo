@@ -52,6 +52,9 @@ const COPY = {
     books: "오늘 장부",
     oiyo: "손익이 궁금하면 oiyo 손익 게임",
     stall: "업종",
+    choose: "어떤 장사를 하시겠습니까?",
+    start: "이 업종으로 시작",
+    other: "다른 업종",
     overhead: "고정비",
     stalls: {
       ramen: { name: "라면", keys: { noodles: "면", soup: "스프", topping: "토핑" } },
@@ -94,6 +97,9 @@ const COPY = {
     books: "Today's books",
     oiyo: "See the income-statement game on oiyo",
     stall: "Stall",
+    choose: "Which stall will you open?",
+    start: "Open this stall",
+    other: "Another stall",
     overhead: "Overhead",
     stalls: {
       ramen: { name: "Ramen", keys: { noodles: "Noodles", soup: "Soup", topping: "Topping" } },
@@ -136,6 +142,9 @@ const COPY = {
     books: "今日の帳簿",
     oiyo: "損益はoiyoの損益ゲームへ",
     stall: "業種",
+    choose: "どの商売を始めますか？",
+    start: "この業種で始める",
+    other: "別の業種",
     overhead: "固定費",
     stalls: {
       ramen: { name: "ラーメン", keys: { noodles: "麺", soup: "スープ", topping: "トッピング" } },
@@ -178,6 +187,9 @@ const COPY = {
     books: "今日账本",
     oiyo: "想看损益结构请到 oiyo",
     stall: "业种",
+    choose: "要开哪一门生意？",
+    start: "用这个业种开始",
+    other: "换业种",
     overhead: "固定费用",
     stalls: {
       ramen: { name: "拉面", keys: { noodles: "面", soup: "汤底", topping: "浇头" } },
@@ -220,6 +232,9 @@ const COPY = {
     books: "Livre du jour",
     oiyo: "Voir le jeu de compte de résultat sur oiyo",
     stall: "Stand",
+    choose: "Quel commerce ouvrez-vous ?",
+    start: "Ouvrir ce stand",
+    other: "Un autre stand",
     overhead: "Charges",
     stalls: {
       ramen: { name: "Ramen", keys: { noodles: "Nouilles", soup: "Bouillon", topping: "Garniture" } },
@@ -262,6 +277,9 @@ const COPY = {
     books: "Libro de hoy",
     oiyo: "Ver el juego de resultados en oiyo",
     stall: "Puesto",
+    choose: "¿Qué negocio abres?",
+    start: "Abrir este puesto",
+    other: "Otro puesto",
     overhead: "Fijos",
     stalls: {
       ramen: { name: "Ramyeon", keys: { noodles: "Fideos", soup: "Caldo", topping: "Topping" } },
@@ -325,6 +343,7 @@ function defaultPrep(stall: StallId): Prep {
 export default function RunABusiness({ locale }: { locale: Locale }) {
   const t = COPY[locale] ?? COPY.en;
   const [seed, setSeed] = useState("s10");
+  const [phase, setPhase] = useState<"pick" | "play">("pick");
   const [run, setRun] = useState<RunState>(() => startRun({ seed: "s10" }));
   const [prep, setPrep] = useState<Prep>(() => defaultPrep("ramen"));
   const card = useMemo(() => morning(run.seed, run.day), [run.seed, run.day]);
@@ -339,10 +358,45 @@ export default function RunABusiness({ locale }: { locale: Locale }) {
   const pickStall = (stall: StallId) => {
     setPrep(defaultPrep(stall));
     apply(startRun({ seed: seed || newSeed(), stall }));
+    setPhase("play");
   };
 
   const weather = t.weather[card.weather as Weather];
   const event = t.event[card.eventId as EventId];
+
+  if (phase === "pick") {
+    return (
+      <div className="mx-auto max-w-lg space-y-4">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.stall}</p>
+          <h2 className="text-2xl font-black">{t.title}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">{t.choose}</p>
+        </div>
+        <label className="block text-sm">
+          <span className="font-bold">{t.seed}</span>
+          <input
+            value={seed}
+            onChange={(e) => setSeed(e.target.value)}
+            className="mt-1 h-11 w-full rounded-xl border px-3 font-mono"
+          />
+        </label>
+        <div className="grid gap-3">
+          {(Object.keys(STALLS) as StallId[]).map((id) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => pickStall(id)}
+              className="min-h-14 rounded-2xl border bg-white px-4 py-3 text-left"
+            >
+              <p className="font-black">{t.stalls[id].name}</p>
+              <p className="text-xs text-muted-foreground">{t.start}</p>
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-muted-foreground">{t.hint}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-lg space-y-4">
@@ -354,22 +408,6 @@ export default function RunABusiness({ locale }: { locale: Locale }) {
         <p className="mt-1 text-sm text-muted-foreground">
           {t.day} {run.day} · {t.cash} {formatUsd(run.cashCents)}
         </p>
-      </div>
-
-      <div>
-        <p className="mb-2 text-sm font-bold">{t.stall}</p>
-        <div className="flex flex-wrap gap-2">
-          {(Object.keys(STALLS) as StallId[]).map((id) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => pickStall(id)}
-              className={`min-h-11 rounded-full px-4 text-sm font-black ${run.stall === id ? "bg-slate-900 text-white" : "border bg-white"}`}
-            >
-              {t.stalls[id].name}
-            </button>
-          ))}
-        </div>
       </div>
 
       <label className="block text-sm">
@@ -442,8 +480,11 @@ export default function RunABusiness({ locale }: { locale: Locale }) {
       )}
 
       <div className="flex gap-2">
-        <button type="button" className="min-h-11 flex-1 rounded-xl border text-sm font-bold" onClick={() => pickStall(run.stall)}>
+        <button type="button" className="min-h-11 flex-1 rounded-xl border text-sm font-bold" onClick={() => apply(startRun({ seed: seed || newSeed(), stall: run.stall }))}>
           {t.again}
+        </button>
+        <button type="button" className="min-h-11 flex-1 rounded-xl border text-sm font-bold" onClick={() => setPhase("pick")}>
+          {t.other}
         </button>
       </div>
       <p className="text-xs text-muted-foreground">{t.hint}</p>
