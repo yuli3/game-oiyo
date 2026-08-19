@@ -7,6 +7,7 @@ import {
   getAllBests,
   getAllConditionalBests,
   getAllDailyStreaks,
+  getAllOpened,
   getAllRecords,
   getAllStreaks,
 } from "./records";
@@ -52,6 +53,7 @@ export const ACHIEVEMENTS: readonly AchievementDef[] = [
 
   { id: "explorer", category: "collection", icon: "🕹️", metric: "distinctGamesPlayed", target: 5 },
   { id: "completionist", category: "collection", icon: "🗺️", metric: "distinctGamesPlayed", target: 15 },
+  { id: "arcade-atlas", category: "collection", icon: "🌏", metric: "distinctGamesPlayed", target: 40 },
 
   { id: "record-holder", category: "record", icon: "⏱️", metric: "bestRecordCount", target: 1 },
 ] as const;
@@ -70,6 +72,7 @@ export function buildAchievementSnapshot(): AchievementSnapshot {
   const dailyStreaks = getAllDailyStreaks();
   const streaks = getAllStreaks();
   const bests = getAllBests();
+  const opened = getAllOpened();
   const conditionalBests = getAllConditionalBests();
   const conditionalBestGameIds = new Set(conditionalBests.map(({ game }) => game));
 
@@ -79,6 +82,7 @@ export function buildAchievementSnapshot(): AchievementSnapshot {
   for (const [id, stats] of Object.entries(streaks)) if (stats.played > 0) playedGameIds.add(id);
   for (const id of Object.keys(bests)) playedGameIds.add(id);
   for (const game of conditionalBestGameIds) playedGameIds.add(game);
+  for (const id of Object.keys(opened)) playedGameIds.add(id);
 
   // A game may write more than one compatible store on completion (for
   // example a daily solve can update both a best time and a calendar streak).
@@ -93,7 +97,7 @@ export function buildAchievementSnapshot(): AchievementSnapshot {
       record ? record.w + record.l + record.d : 0,
       dailyStreaks[id]?.played ?? 0,
       streaks[id]?.played ?? 0,
-      bests[id] || conditionalBestGameIds.has(id) ? 1 : 0,
+      bests[id] || conditionalBestGameIds.has(id) || opened[id] ? 1 : 0,
     );
   }
 

@@ -60,6 +60,7 @@ export interface RunState {
   stock: Stock;
   equipmentCents: number;
   retainedCents: number;
+  reputation: number;
   bust: boolean;
   result?: DayBooks;
   period?: DayBooks;
@@ -199,6 +200,7 @@ export function startRun(opts: {
     stock: pack.empty(),
     equipmentCents: pack.equipmentCents,
     retainedCents: 0,
+    reputation: 50,
     bust: false,
   };
 }
@@ -215,12 +217,13 @@ function unitCosts(stall: StallPack, eventId: EventId, want: Stock): Stock {
   );
 }
 
-function demandFor(stall: StallPack, card: Morning, priceCents: number, richness: Richness): number {
+function demandFor(stall: StallPack, card: Morning, priceCents: number, richness: Richness, reputation = 50): number {
   let demand = 12 + stall.weather[card.weather];
   if (card.eventId === "overtime") demand += 8;
   if (card.eventId === "food_scare") demand -= stall.id === "pcbang" || stall.id === "salon" || stall.id === "retail" ? 2 : 10;
   demand += Math.floor((stall.refPrice - priceCents) / 50);
   demand += richness === 2 ? 3 : richness === 0 ? -3 : 0;
+  demand += Math.floor((reputation - 50) / 10);
   return Math.max(0, demand);
 }
 
@@ -275,7 +278,7 @@ export function forecastShift(run: RunState, prep: Prep) {
   const stock: Stock = { ...stall.empty() };
   for (const key of stall.keys) stock[key] = (run.stock[key] ?? 0) + (buy[key] ?? 0);
   const recipe = stall.recipe(prep.richness);
-  const demand = demandFor(stall, card, prep.priceCents, prep.richness);
+  const demand = demandFor(stall, card, prep.priceCents, prep.richness, run.reputation ?? 50);
   const sold = Math.min(demand, capacity(stock, recipe, stall, prep));
   return { stall, card, costs, buy, stock, recipe, demand, sold };
 }
@@ -297,7 +300,7 @@ function sheetFor(run: RunState, stock: Stock, costs: Stock, stall: StallPack): 
 
 export function playDay(run: RunState, prep: Prep): RunState {
   if (run.bust) return run;
-  const { stall, card, costs, buy, stock, recipe, sold } = forecastShift(run, prep);
+  const { stall, card, costs, buy, stock, recipe, sold, demand } = forecastShift(run, prep);
   const purchaseCents = stall.keys.reduce((sum, key) => sum + (buy[key] ?? 0) * (costs[key] ?? 0), 0);
   let cashCents = run.cashCents - purchaseCents;
   for (const [key, need] of Object.entries(recipe)) {
@@ -314,6 +317,11 @@ export function playDay(run: RunState, prep: Prep): RunState {
   const profitCents = revenueCents - cogsCents - wasteCents - overheadCents - depreciationCents;
   const equipmentCents = run.equipmentCents - depreciationCents;
   const retainedCents = run.retainedCents + profitCents;
+  let reputation = run.reputation ?? 50;
+  if (profitCents > 0) reputation += 1;
+  if (sold > 0 && sold >= demand) reputation += 1;
+  if (card.eventId === "food_scare" || (sold === 0 && wasteCents > 0)) reputation -= 2;
+  reputation = Math.max(0, Math.min(100, reputation));
   const bust = cashCents <= 0;
   const next: RunState = {
     ...run,
@@ -322,6 +330,7 @@ export function playDay(run: RunState, prep: Prep): RunState {
     stock: leftover,
     equipmentCents,
     retainedCents,
+    reputation,
     bust,
     result: {
       weather: card.weather,
@@ -378,4 +387,18 @@ export function formatUsd(cents: number): string {
   const sign = cents < 0 ? "-" : "";
   const abs = Math.abs(cents);
   return `${sign}$${Math.floor(abs / 100)}.${String(abs % 100).padStart(2, "0")}`;
+}
+
+export function parseShareQuery(search: string): { seed?: string; stall?: StallId; horizon?: HorizonId } {
+  const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
+  const seed = params.get("s")?.trim() || undefined;
+  const stallRaw = params.get("stall");
+  const horizonRaw = params.get("horizon");
+  const stall = stallRaw && stallRaw in STALLS ? (stallRaw as StallId) : undefined;
+  const horizon = horizonRaw && horizonRaw in HORIZON_DAYS ? (horizonRaw as HorizonId) : undefined;
+  return { seed, stall, horizon };
+}
+
+export function shareQuery(run: Pick<RunState, "seed" | "stall" | "horizon">): string {
+  return `?s=${encodeURIComponent(run.seed)}&stall=${run.stall}&horizon=${run.horizon}`;
 }

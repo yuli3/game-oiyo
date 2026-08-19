@@ -118,6 +118,14 @@ const ACHIEVEMENT_COPY: Record<string, Record<UILocale, { title: string; desc: s
     fr: { title: "Complétiste", desc: "Jouez à 15 jeux différents." },
     es: { title: "Completista", desc: "Juega 15 juegos diferentes." },
   },
+  "arcade-atlas": {
+    ko: { title: "아케이드 지도", desc: "서로 다른 40개 게임을 열어 보세요." },
+    en: { title: "Arcade Atlas", desc: "Open 40 different games." },
+    ja: { title: "アーケード地図", desc: "異なる40のゲームを開きましょう。" },
+    zh: { title: "街机地图", desc: "打开40款不同的游戏。" },
+    fr: { title: "Atlas de l'arcade", desc: "Ouvrez 40 jeux différents." },
+    es: { title: "Atlas del arcade", desc: "Abre 40 juegos distintos." },
+  },
   "record-holder": {
     ko: { title: "기록 보유자", desc: "어떤 게임에서든 최고 기록을 세우세요." },
     en: { title: "Record Holder", desc: "Set a personal best in any game." },

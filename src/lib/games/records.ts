@@ -354,3 +354,26 @@ export function recordStreak(game: string, won: boolean): StreakStats {
   stampLastPlayed(game);
   return next;
 }
+
+const OPENED_KEY = "oiyo:game-opened:v1";
+const isOpenedStamp: Validator<string> = (value): value is string => typeof value === "string" && value.length > 0;
+
+function readOpened(): Record<string, string> {
+  return readValidatedStore(OPENED_KEY, isOpenedStamp);
+}
+
+export function recordOpened(game: string): void {
+  if (!game) return;
+  const all = readOpened();
+  if (all[game]) return;
+  all[game] = "1";
+  try {
+    localStorage.setItem(OPENED_KEY, JSON.stringify(all));
+  } catch {
+    /* best-effort */
+  }
+}
+
+export function getAllOpened(): Record<string, string> {
+  return readOpened();
+}

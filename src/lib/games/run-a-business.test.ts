@@ -4,6 +4,7 @@ import {
   START_CASH_CENTS,
   forecastShift,
   morning,
+  parseShareQuery,
   playDay,
   playPeriod,
   startRun,
@@ -170,5 +171,32 @@ describe("run-a-business engine", () => {
     expect(after.equipmentCents).toBeLessThan(run.equipmentCents);
     expect(after.cashCents).toBe(START_CASH_CENTS);
     expect(after.result?.depreciationCents).toBeGreaterThan(0);
+  });
+
+  it("starts reputation at 50 and raises it after a profitable full house", () => {
+    const run = startRun({ seed: "s10" });
+    expect(run.reputation).toBe(50);
+    const after = playDay(run, {
+      buy: { noodles: 18, soup: 18, topping: 18 },
+      priceCents: 400,
+      richness: 1,
+    });
+    expect(after.reputation).toBeGreaterThan(50);
+  });
+
+  it("lets high reputation sell more than a fresh stall on the same morning", () => {
+    const prep = { buy: { noodles: 30, soup: 30, topping: 30 }, priceCents: 400, richness: 1 as const };
+    const fresh = startRun({ seed: "s10" });
+    const known = { ...fresh, reputation: 80 };
+    expect(forecastShift(known, prep).demand).toBeGreaterThan(forecastShift(fresh, prep).demand);
+  });
+
+  it("reads a share query into seed, stall and horizon", () => {
+    expect(parseShareQuery("?s=s10&stall=salon&horizon=week")).toEqual({
+      seed: "s10",
+      stall: "salon",
+      horizon: "week",
+    });
+    expect(parseShareQuery("?s=bad&stall=hospital")).toEqual({ seed: "bad" });
   });
 });

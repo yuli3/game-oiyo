@@ -4,6 +4,7 @@
 import { GAME_GUIDES } from "../data/game-guides";
 import { STRATEGY_GUIDES } from "../data/game-strategy";
 import type { Locale } from "../lib/i18n";
+import GamePlayBeacon from "./games/GamePlayBeacon";
 
 interface Props { slug: string; locale: Locale; name: string }
 const { slug, locale, name } = Astro.props;
@@ -49,6 +50,7 @@ const jsonLd = g ? [
 ] : null;
 ---
 
+<GamePlayBeacon client:load slug={slug} />
 {g && (
   <>
     {jsonLd!.map((o) => <script type="application/ld+json" is:inline set:html={JSON.stringify(o)} />)}

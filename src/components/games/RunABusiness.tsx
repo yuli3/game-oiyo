@@ -1,6 +1,7 @@
-import { lazy, Suspense, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import type { Locale } from "@/lib/i18n";
 import { hasWebGL } from "@/lib/games/webgl";
+import { recordResult } from "@/lib/games/records";
 import {
   BEST_KEY,
   HORIZON_DAYS,
@@ -9,7 +10,9 @@ import {
   forecastShift,
   formatUsd,
   morning,
+  parseShareQuery,
   playPeriod,
+  shareQuery,
   startRun,
   type EventId,
   type HorizonId,
@@ -27,6 +30,10 @@ const COPY = {
     day: "일차",
     seed: "시드",
     open: "장사 열기",
+    rematch: "이 아침 다시",
+    share: "이 시드 공유",
+    copied: "링크를 복사했습니다",
+    reputation: "평판",
     again: "다시 시작",
     price: "가격",
     plain: "담백",
@@ -79,6 +86,10 @@ const COPY = {
     day: "Day",
     seed: "Seed",
     open: "Open shop",
+    rematch: "This morning again",
+    share: "Share this seed",
+    copied: "Link copied",
+    reputation: "Reputation",
     again: "Start over",
     price: "Price",
     plain: "Plain",
@@ -131,6 +142,10 @@ const COPY = {
     day: "日目",
     seed: "シード",
     open: "開店",
+    rematch: "この朝をもう一度",
+    share: "このシードを共有",
+    copied: "リンクをコピーしました",
+    reputation: "評判",
     again: "やり直す",
     price: "価格",
     plain: "あっさり",
@@ -183,6 +198,10 @@ const COPY = {
     day: "第几天",
     seed: "种子",
     open: "开张",
+    rematch: "再打这个早晨",
+    share: "分享这个种子",
+    copied: "已复制链接",
+    reputation: "口碑",
     again: "重来",
     price: "价格",
     plain: "清淡",
@@ -235,6 +254,10 @@ const COPY = {
     day: "Jour",
     seed: "Graine",
     open: "Ouvrir",
+    rematch: "Ce matin encore",
+    share: "Partager cette graine",
+    copied: "Lien copié",
+    reputation: "Réputation",
     again: "Recommencer",
     price: "Prix",
     plain: "Léger",
@@ -287,6 +310,10 @@ const COPY = {
     day: "Día",
     seed: "Semilla",
     open: "Abrir",
+    rematch: "Esta mañana otra vez",
+    share: "Compartir esta semilla",
+    copied: "Enlace copiado",
+    reputation: "Reputación",
     again: "Empezar de nuevo",
     price: "Precio",
     plain: "Suave",
@@ -341,13 +368,16 @@ function newSeed(): string {
   return `d${Math.floor(Math.random() * 1_000_000)}`;
 }
 
-function persist(run: RunState) {
+function persist(run: RunState, books?: RunState["result"]) {
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify(run));
     const bestRaw = localStorage.getItem(BEST_KEY);
     const best = bestRaw ? (JSON.parse(bestRaw) as { cashCents: number }) : { cashCents: 0 };
     if (run.cashCents > (best.cashCents ?? 0)) {
       localStorage.setItem(BEST_KEY, JSON.stringify({ cashCents: run.cashCents, stall: run.stall, horizon: run.horizon, currency: "USD" }));
+    }
+    if (books) {
+      recordResult("run-a-business", books.profitCents > 0 ? "w" : run.bust ? "l" : "d");
     }
   } catch {
     /* private mode */
@@ -396,14 +426,50 @@ export default function RunABusiness({ locale }: { locale: Locale }) {
   const [rush, setRush] = useState<{ demand: number; sold: number } | null>(null);
   const [run, setRun] = useState<RunState>(() => startRun({ seed: "s10" }));
   const [prep, setPrep] = useState<Prep>(() => defaultPrep("ramen"));
+  const [copied, setCopied] = useState(false);
   const card = useMemo(() => morning(run.seed, run.day), [run.seed, run.day]);
   const pack = STALLS[run.stall];
   const stallCopy = t.stalls[run.stall];
   const books = run.period ?? run.result;
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const shared = parseShareQuery(window.location.search);
+    if (shared.seed) {
+      setSeed(shared.seed);
+      setHorizon(shared.horizon ?? "day");
+      if (shared.stall) {
+        setPrep(defaultPrep(shared.stall));
+        setRun(startRun({ seed: shared.seed, stall: shared.stall, horizon: shared.horizon }));
+        setPhase("play");
+      }
+    }
+  }, []);
+
   const apply = (next: RunState) => {
     setRun(next);
-    persist(next);
+    persist(next, next.period ?? next.result);
+  };
+
+  const rematch = () => {
+    apply(startRun({ seed: run.seed, stall: run.stall, horizon: run.horizon }));
+    setRush(null);
+  };
+
+  const share = async () => {
+    const url = `${window.location.origin}${window.location.pathname}${shareQuery(run)}`;
+    try {
+      if (navigator.share) await navigator.share({ url });
+      else await navigator.clipboard.writeText(url);
+      setCopied(true);
+    } catch {
+      try {
+        await navigator.clipboard.writeText(url);
+        setCopied(true);
+      } catch {
+        /* ignore */
+      }
+    }
   };
 
   const closeShift = () => {
@@ -478,7 +544,7 @@ export default function RunABusiness({ locale }: { locale: Locale }) {
         </p>
         <h2 className="text-2xl font-black">{t.title}</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          {t.day} {run.day} · {t.cash} {formatUsd(run.cashCents)}
+          {t.day} {run.day} · {t.cash} {formatUsd(run.cashCents)} · {t.reputation} {run.reputation ?? 50}
         </p>
       </div>
 
@@ -581,6 +647,14 @@ export default function RunABusiness({ locale }: { locale: Locale }) {
         </>
       )}
 
+      <div className="flex gap-2">
+        <button type="button" className="min-h-11 flex-1 rounded-xl border text-sm font-bold" onClick={rematch}>
+          {t.rematch}
+        </button>
+        <button type="button" className="min-h-11 flex-1 rounded-xl border text-sm font-bold" onClick={() => void share()}>
+          {copied ? t.copied : t.share}
+        </button>
+      </div>
       <div className="flex gap-2">
         <button type="button" className="min-h-11 flex-1 rounded-xl border text-sm font-bold" onClick={() => apply(startRun({ seed: seed || newSeed(), stall: run.stall, horizon: run.horizon }))}>
           {t.again}
