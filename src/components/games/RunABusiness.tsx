@@ -3,6 +3,7 @@ import type { Locale } from "@/lib/i18n";
 import {
   BEST_KEY,
   SAVE_KEY,
+  STALLS,
   formatUsd,
   morning,
   playDay,
@@ -11,6 +12,7 @@ import {
   type Prep,
   type Richness,
   type RunState,
+  type StallId,
   type Weather,
 } from "@/lib/games/run-a-business";
 
@@ -49,6 +51,13 @@ const COPY = {
     hint: "회계 수업이 아닙니다. 이 기기에만 저장됩니다.",
     books: "오늘 장부",
     oiyo: "손익이 궁금하면 oiyo 손익 게임",
+    stall: "업종",
+    overhead: "고정비",
+    stalls: {
+      ramen: { name: "라면", keys: { noodles: "면", soup: "스프", topping: "토핑" } },
+      lemonade: { name: "레모네이드", keys: { lemons: "레몬", sugar: "설탕", ice: "얼음" } },
+      pcbang: { name: "피씨방", keys: { snacks: "간식", drinks: "음료", seats: "자리" } },
+    },
   },
   en: {
     title: "Run a Business",
@@ -84,6 +93,13 @@ const COPY = {
     hint: "Not an accounting class. Saved on this device only.",
     books: "Today's books",
     oiyo: "See the income-statement game on oiyo",
+    stall: "Stall",
+    overhead: "Overhead",
+    stalls: {
+      ramen: { name: "Ramen", keys: { noodles: "Noodles", soup: "Soup", topping: "Topping" } },
+      lemonade: { name: "Lemonade", keys: { lemons: "Lemons", sugar: "Sugar", ice: "Ice" } },
+      pcbang: { name: "PC bang", keys: { snacks: "Snacks", drinks: "Drinks", seats: "Seats" } },
+    },
   },
   ja: {
     title: "一日商売",
@@ -119,6 +135,13 @@ const COPY = {
     hint: "会計の授業ではありません。この端末にだけ保存します。",
     books: "今日の帳簿",
     oiyo: "損益はoiyoの損益ゲームへ",
+    stall: "業種",
+    overhead: "固定費",
+    stalls: {
+      ramen: { name: "ラーメン", keys: { noodles: "麺", soup: "スープ", topping: "トッピング" } },
+      lemonade: { name: "レモネード", keys: { lemons: "レモン", sugar: "砂糖", ice: "氷" } },
+      pcbang: { name: "ネットカフェ", keys: { snacks: "軽食", drinks: "ドリンク", seats: "席" } },
+    },
   },
   zh: {
     title: "一天生意",
@@ -154,6 +177,13 @@ const COPY = {
     hint: "这不是会计课。只保存在这台设备。",
     books: "今日账本",
     oiyo: "想看损益结构请到 oiyo",
+    stall: "业种",
+    overhead: "固定费用",
+    stalls: {
+      ramen: { name: "拉面", keys: { noodles: "面", soup: "汤底", topping: "浇头" } },
+      lemonade: { name: "柠檬水", keys: { lemons: "柠檬", sugar: "糖", ice: "冰" } },
+      pcbang: { name: "网吧", keys: { snacks: "零食", drinks: "饮料", seats: "座位" } },
+    },
   },
   fr: {
     title: "Une journée de commerce",
@@ -189,6 +219,13 @@ const COPY = {
     hint: "Ce n'est pas un cours de comptabilité. Sauvé sur cet appareil seulement.",
     books: "Livre du jour",
     oiyo: "Voir le jeu de compte de résultat sur oiyo",
+    stall: "Stand",
+    overhead: "Charges",
+    stalls: {
+      ramen: { name: "Ramen", keys: { noodles: "Nouilles", soup: "Bouillon", topping: "Garniture" } },
+      lemonade: { name: "Limonade", keys: { lemons: "Citrons", sugar: "Sucre", ice: "Glace" } },
+      pcbang: { name: "Cybercafé", keys: { snacks: "Snacks", drinks: "Boissons", seats: "Places" } },
+    },
   },
   es: {
     title: "Un día de negocio",
@@ -224,6 +261,13 @@ const COPY = {
     hint: "No es una clase de contabilidad. Solo se guarda en este aparato.",
     books: "Libro de hoy",
     oiyo: "Ver el juego de resultados en oiyo",
+    stall: "Puesto",
+    overhead: "Fijos",
+    stalls: {
+      ramen: { name: "Ramyeon", keys: { noodles: "Fideos", soup: "Caldo", topping: "Topping" } },
+      lemonade: { name: "Limonada", keys: { lemons: "Limones", sugar: "Azúcar", ice: "Hielo" } },
+      pcbang: { name: "Cibercafé", keys: { snacks: "Snacks", drinks: "Bebidas", seats: "Asientos" } },
+    },
   },
 } as const;
 
@@ -271,16 +315,30 @@ function Stepper({
   );
 }
 
+function defaultPrep(stall: StallId): Prep {
+  const pack = STALLS[stall];
+  const buy = pack.empty();
+  for (const key of pack.keys) buy[key] = key === "seats" ? 6 : 12;
+  return { buy, priceCents: pack.refPrice, richness: 1 };
+}
+
 export default function RunABusiness({ locale }: { locale: Locale }) {
   const t = COPY[locale] ?? COPY.en;
   const [seed, setSeed] = useState("s10");
   const [run, setRun] = useState<RunState>(() => startRun({ seed: "s10" }));
-  const [prep, setPrep] = useState<Prep>({ buy: { noodles: 12, soup: 12, topping: 12 }, priceCents: 400, richness: 1 });
+  const [prep, setPrep] = useState<Prep>(() => defaultPrep("ramen"));
   const card = useMemo(() => morning(run.seed, run.day), [run.seed, run.day]);
+  const pack = STALLS[run.stall];
+  const stallCopy = t.stalls[run.stall];
 
   const apply = (next: RunState) => {
     setRun(next);
     persist(next);
+  };
+
+  const pickStall = (stall: StallId) => {
+    setPrep(defaultPrep(stall));
+    apply(startRun({ seed: seed || newSeed(), stall }));
   };
 
   const weather = t.weather[card.weather as Weather];
@@ -289,11 +347,29 @@ export default function RunABusiness({ locale }: { locale: Locale }) {
   return (
     <div className="mx-auto max-w-lg space-y-4">
       <div>
-        <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.sub}</p>
+        <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+          {stallCopy.name} · {t.sub.split("·").slice(1).join("·").trim() || t.sub}
+        </p>
         <h2 className="text-2xl font-black">{t.title}</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           {t.day} {run.day} · {t.cash} {formatUsd(run.cashCents)}
         </p>
+      </div>
+
+      <div>
+        <p className="mb-2 text-sm font-bold">{t.stall}</p>
+        <div className="flex flex-wrap gap-2">
+          {(Object.keys(STALLS) as StallId[]).map((id) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => pickStall(id)}
+              className={`min-h-11 rounded-full px-4 text-sm font-black ${run.stall === id ? "bg-slate-900 text-white" : "border bg-white"}`}
+            >
+              {t.stalls[id].name}
+            </button>
+          ))}
+        </div>
       </div>
 
       <label className="block text-sm">
@@ -301,7 +377,7 @@ export default function RunABusiness({ locale }: { locale: Locale }) {
         <input
           value={seed}
           onChange={(e) => setSeed(e.target.value)}
-          onBlur={() => apply(startRun({ seed: seed || newSeed() }))}
+          onBlur={() => apply(startRun({ seed: seed || newSeed(), stall: run.stall }))}
           className="mt-1 h-11 w-full rounded-xl border px-3 font-mono"
         />
       </label>
@@ -319,6 +395,12 @@ export default function RunABusiness({ locale }: { locale: Locale }) {
             <div>{t.revenue}</div><div className="text-right font-mono">{formatUsd(run.result.revenueCents)}</div>
             <div>{t.cogs}</div><div className="text-right font-mono">{formatUsd(run.result.cogsCents)}</div>
             <div>{t.waste}</div><div className="text-right font-mono">{formatUsd(run.result.wasteCents)}</div>
+            {run.result.overheadCents > 0 && (
+              <>
+                <div>{t.overhead}</div>
+                <div className="text-right font-mono">{formatUsd(run.result.overheadCents)}</div>
+              </>
+            )}
             <div className="font-black">{t.profit}</div>
             <div className={`text-right font-mono font-black ${run.result.profitCents < 0 ? "text-red-700" : "text-emerald-800"}`}>
               {formatUsd(run.result.profitCents)}
@@ -331,9 +413,15 @@ export default function RunABusiness({ locale }: { locale: Locale }) {
         <p className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-800">{t.bust}</p>
       ) : (
         <>
-          <Stepper label={t.buyNoodles} value={prep.buy.noodles} step={1} onChange={(n) => setPrep({ ...prep, buy: { ...prep.buy, noodles: n } })} />
-          <Stepper label={t.buySoup} value={prep.buy.soup} step={1} onChange={(n) => setPrep({ ...prep, buy: { ...prep.buy, soup: n } })} />
-          <Stepper label={t.buyTopping} value={prep.buy.topping} step={1} onChange={(n) => setPrep({ ...prep, buy: { ...prep.buy, topping: n } })} />
+          {pack.keys.map((key) => (
+            <Stepper
+              key={key}
+              label={stallCopy.keys[key as keyof typeof stallCopy.keys] ?? key}
+              value={prep.buy[key] ?? 0}
+              step={1}
+              onChange={(n) => setPrep({ ...prep, buy: { ...prep.buy, [key]: n } })}
+            />
+          ))}
           <Stepper label={t.price} value={prep.priceCents} step={50} onChange={(n) => setPrep({ ...prep, priceCents: Math.max(50, n) })} />
           <div className="flex gap-2">
             {([0, 1, 2] as Richness[]).map((r) => (
@@ -354,7 +442,7 @@ export default function RunABusiness({ locale }: { locale: Locale }) {
       )}
 
       <div className="flex gap-2">
-        <button type="button" className="min-h-11 flex-1 rounded-xl border text-sm font-bold" onClick={() => apply(startRun({ seed: seed || newSeed() }))}>
+        <button type="button" className="min-h-11 flex-1 rounded-xl border text-sm font-bold" onClick={() => pickStall(run.stall)}>
           {t.again}
         </button>
       </div>

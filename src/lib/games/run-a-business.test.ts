@@ -81,4 +81,30 @@ describe("run-a-business engine", () => {
     expect(src).not.toContain("oiyo:game-bests:v1");
     expect(src).toContain("oiyo:game-run-a-business");
   });
+
+  it("sells more lemonade than ramen on a hot day", () => {
+    expect(morning("s6", 1).weather).toBe("hot");
+    const ramen = playDay(startRun({ seed: "s6", stall: "ramen" }), {
+      buy: { noodles: 20, soup: 20, topping: 20 },
+      priceCents: 400,
+      richness: 1,
+    });
+    const drink = playDay(startRun({ seed: "s6", stall: "lemonade" }), {
+      buy: { lemons: 20, sugar: 20, ice: 20 },
+      priceCents: 250,
+      richness: 1,
+    });
+    expect(drink.result?.sold ?? 0).toBeGreaterThan(ramen.result?.sold ?? 0);
+  });
+
+  it("charges pc-bang overhead even when nobody comes", () => {
+    const after = playDay(startRun({ seed: "s6", stall: "pcbang", cashCents: 2000 }), {
+      buy: { snacks: 0, drinks: 0, seats: 4 },
+      priceCents: 900,
+      richness: 0,
+    });
+    expect(after.result?.sold).toBe(0);
+    expect(after.cashCents).toBeLessThan(2000);
+    expect(after.result?.profitCents ?? 0).toBeLessThan(0);
+  });
 });
