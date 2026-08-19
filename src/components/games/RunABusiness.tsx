@@ -12,8 +12,10 @@ import {
   morning,
   parseShareQuery,
   playPeriod,
+  repayCredit,
   shareQuery,
   startRun,
+  takeCredit,
   type EventId,
   type HorizonId,
   type Prep,
@@ -34,6 +36,9 @@ const COPY = {
     share: "이 시드 공유",
     copied: "링크를 복사했습니다",
     reputation: "평판",
+    credit: "오늘만 외상 $5",
+    repay: "외상 갚기",
+    debt: "빚",
     again: "다시 시작",
     price: "가격",
     plain: "담백",
@@ -90,6 +95,9 @@ const COPY = {
     share: "Share this seed",
     copied: "Link copied",
     reputation: "Reputation",
+    credit: "Borrow $5 today",
+    repay: "Repay credit",
+    debt: "Debt",
     again: "Start over",
     price: "Price",
     plain: "Plain",
@@ -146,6 +154,9 @@ const COPY = {
     share: "このシードを共有",
     copied: "リンクをコピーしました",
     reputation: "評判",
+    credit: "今日だけ$5の掛け",
+    repay: "掛けを返す",
+    debt: "借金",
     again: "やり直す",
     price: "価格",
     plain: "あっさり",
@@ -202,6 +213,9 @@ const COPY = {
     share: "分享这个种子",
     copied: "已复制链接",
     reputation: "口碑",
+    credit: "今天先赊 $5",
+    repay: "还赊账",
+    debt: "负债",
     again: "重来",
     price: "价格",
     plain: "清淡",
@@ -258,6 +272,9 @@ const COPY = {
     share: "Partager cette graine",
     copied: "Lien copié",
     reputation: "Réputation",
+    credit: "Emprunter 5 $ aujourd'hui",
+    repay: "Rembourser",
+    debt: "Dette",
     again: "Recommencer",
     price: "Prix",
     plain: "Léger",
@@ -314,6 +331,9 @@ const COPY = {
     share: "Compartir esta semilla",
     copied: "Enlace copiado",
     reputation: "Reputación",
+    credit: "Pedir $5 hoy",
+    repay: "Pagar la deuda",
+    debt: "Deuda",
     again: "Empezar de nuevo",
     price: "Precio",
     plain: "Suave",
@@ -545,6 +565,7 @@ export default function RunABusiness({ locale }: { locale: Locale }) {
         <h2 className="text-2xl font-black">{t.title}</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           {t.day} {run.day} · {t.cash} {formatUsd(run.cashCents)} · {t.reputation} {run.reputation ?? 50}
+          {(run.debtCents ?? 0) > 0 ? ` · ${t.debt} ${formatUsd(run.debtCents)}` : ""}
         </p>
       </div>
 
@@ -607,6 +628,7 @@ export default function RunABusiness({ locale }: { locale: Locale }) {
                 <div>{t.equipment}</div><div className="text-right font-mono">{formatUsd(run.sheet.equipmentCents)}</div>
                 <div className="font-black">{t.assets}</div>
                 <div className="text-right font-mono font-black">{formatUsd(run.sheet.assetsCents)}</div>
+                <div>{t.debt}</div><div className="text-right font-mono">{formatUsd(run.sheet.liabilitiesCents)}</div>
                 <div>{t.equity}</div><div className="text-right font-mono">{formatUsd(run.sheet.equityCents)}</div>
               </dl>
               <p className="mt-3 text-xs leading-5 text-muted-foreground">{t.sheetTip}</p>
@@ -648,6 +670,16 @@ export default function RunABusiness({ locale }: { locale: Locale }) {
       )}
 
       <div className="flex gap-2">
+        {!run.creditUsed && (
+          <button type="button" className="min-h-11 flex-1 rounded-xl border text-sm font-bold" onClick={() => apply(takeCredit(run))}>
+            {t.credit}
+          </button>
+        )}
+        {(run.debtCents ?? 0) > 0 && (
+          <button type="button" className="min-h-11 flex-1 rounded-xl border text-sm font-bold" onClick={() => apply(repayCredit(run))}>
+            {t.repay}
+          </button>
+        )}
         <button type="button" className="min-h-11 flex-1 rounded-xl border text-sm font-bold" onClick={rematch}>
           {t.rematch}
         </button>

@@ -61,6 +61,8 @@ export interface RunState {
   equipmentCents: number;
   retainedCents: number;
   reputation: number;
+  debtCents: number;
+  creditUsed: boolean;
   bust: boolean;
   result?: DayBooks;
   period?: DayBooks;
@@ -201,6 +203,8 @@ export function startRun(opts: {
     equipmentCents: pack.equipmentCents,
     retainedCents: 0,
     reputation: 50,
+    debtCents: 0,
+    creditUsed: false,
     bust: false,
   };
 }
@@ -217,13 +221,14 @@ function unitCosts(stall: StallPack, eventId: EventId, want: Stock): Stock {
   );
 }
 
-function demandFor(stall: StallPack, card: Morning, priceCents: number, richness: Richness, reputation = 50): number {
+function demandFor(stall: StallPack, card: Morning, priceCents: number, richness: Richness, reputation = 50, debtCents = 0): number {
   let demand = 12 + stall.weather[card.weather];
   if (card.eventId === "overtime") demand += 8;
   if (card.eventId === "food_scare") demand -= stall.id === "pcbang" || stall.id === "salon" || stall.id === "retail" ? 2 : 10;
   demand += Math.floor((stall.refPrice - priceCents) / 50);
   demand += richness === 2 ? 3 : richness === 0 ? -3 : 0;
   demand += Math.floor((reputation - 50) / 10);
+  if (debtCents > 0) demand -= 4;
   return Math.max(0, demand);
 }
 
@@ -278,7 +283,7 @@ export function forecastShift(run: RunState, prep: Prep) {
   const stock: Stock = { ...stall.empty() };
   for (const key of stall.keys) stock[key] = (run.stock[key] ?? 0) + (buy[key] ?? 0);
   const recipe = stall.recipe(prep.richness);
-  const demand = demandFor(stall, card, prep.priceCents, prep.richness, run.reputation ?? 50);
+  const demand = demandFor(stall, card, prep.priceCents, prep.richness, run.reputation ?? 50, run.debtCents ?? 0);
   const sold = Math.min(demand, capacity(stock, recipe, stall, prep));
   return { stall, card, costs, buy, stock, recipe, demand, sold };
 }
@@ -286,8 +291,8 @@ export function forecastShift(run: RunState, prep: Prep) {
 function sheetFor(run: RunState, stock: Stock, costs: Stock, stall: StallPack): BalanceSheet {
   const inventoryCents = inventoryValue(stock, costs, stall.keys.filter((key) => key !== stall.seatKey && key !== "shelf"));
   const assetsCents = run.cashCents + inventoryCents + run.equipmentCents;
-  const liabilitiesCents = 0;
-  const equityCents = run.startCashCents + stall.equipmentCents + run.retainedCents;
+  const liabilitiesCents = Math.max(0, run.debtCents ?? 0);
+  const equityCents = assetsCents - liabilitiesCents;
   return {
     cashCents: run.cashCents,
     inventoryCents,
@@ -322,7 +327,9 @@ export function playDay(run: RunState, prep: Prep): RunState {
   if (sold > 0 && sold >= demand) reputation += 1;
   if (card.eventId === "food_scare" || (sold === 0 && wasteCents > 0)) reputation -= 2;
   reputation = Math.max(0, Math.min(100, reputation));
-  const bust = cashCents <= 0;
+  let debtCents = run.debtCents ?? 0;
+  if (debtCents > 0) debtCents += 50;
+  const bust = cashCents <= 0 && debtCents <= 0;
   const next: RunState = {
     ...run,
     cashCents,
@@ -331,6 +338,7 @@ export function playDay(run: RunState, prep: Prep): RunState {
     equipmentCents,
     retainedCents,
     reputation,
+    debtCents,
     bust,
     result: {
       weather: card.weather,
@@ -381,6 +389,37 @@ export function playPeriod(run: RunState, prep: Prep): RunState {
     period.eventId = day.eventId;
   }
   return { ...current, period };
+}
+
+export const CREDIT_CENTS = 500;
+
+function refreshSheet(run: RunState): RunState {
+  if (!run.sheet) return run;
+  const liabilitiesCents = Math.max(0, run.debtCents ?? 0);
+  const assetsCents = run.cashCents + run.sheet.inventoryCents + run.equipmentCents;
+  return {
+    ...run,
+    sheet: {
+      ...run.sheet,
+      cashCents: run.cashCents,
+      equipmentCents: run.equipmentCents,
+      assetsCents,
+      liabilitiesCents,
+      equityCents: assetsCents - liabilitiesCents,
+    },
+  };
+}
+
+export function takeCredit(run: RunState): RunState {
+  if (run.creditUsed) return run;
+  return refreshSheet({ ...run, cashCents: run.cashCents + CREDIT_CENTS, debtCents: (run.debtCents ?? 0) + CREDIT_CENTS, creditUsed: true });
+}
+
+export function repayCredit(run: RunState): RunState {
+  const debt = run.debtCents ?? 0;
+  if (debt <= 0 || run.cashCents <= 0) return run;
+  const pay = Math.min(debt, run.cashCents);
+  return refreshSheet({ ...run, cashCents: run.cashCents - pay, debtCents: debt - pay });
 }
 
 export function formatUsd(cents: number): string {

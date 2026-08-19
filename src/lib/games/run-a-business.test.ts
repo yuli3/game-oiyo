@@ -8,6 +8,7 @@ import {
   playDay,
   playPeriod,
   startRun,
+  takeCredit,
 } from "./run-a-business";
 
 describe("run-a-business engine", () => {
@@ -198,5 +199,24 @@ describe("run-a-business engine", () => {
       horizon: "week",
     });
     expect(parseShareQuery("?s=bad&stall=hospital")).toEqual({ seed: "bad" });
+  });
+
+  it("lends five dollars once and puts the debt on the sheet", () => {
+    const run = startRun({ seed: "s10", cashCents: 300 });
+    const lent = takeCredit(run);
+    expect(lent.cashCents).toBe(800);
+    expect(lent.debtCents).toBe(500);
+    expect(lent.creditUsed).toBe(true);
+    expect(takeCredit(lent).cashCents).toBe(800);
+    const after = playDay(lent, { buy: { noodles: 0, soup: 0, topping: 0 }, priceCents: 400, richness: 1 });
+    expect(after.sheet?.liabilitiesCents).toBeGreaterThan(0);
+    expect(after.sheet!.assetsCents).toBe(after.sheet!.liabilitiesCents + after.sheet!.equityCents);
+  });
+
+  it("cuts tomorrow's demand if yesterday's credit is still unpaid", () => {
+    const owed = { ...startRun({ seed: "s10" }), debtCents: 500, creditUsed: true };
+    const fresh = startRun({ seed: "s10" });
+    const prep = { buy: { noodles: 30, soup: 30, topping: 30 }, priceCents: 400, richness: 1 as const };
+    expect(forecastShift(owed, prep).demand).toBeLessThan(forecastShift(fresh, prep).demand);
   });
 });
