@@ -66,6 +66,7 @@ const COPY = {
     wasteTip: "폐기 — 못 팔고 버린 재료.",
     opexTip: "고정비 — 손님이 없어도 나가는 임대·전기·인건비.",
     profitTip: "순손익 — 매출 − 원가 − 폐기 − 고정비 − 감가.",
+    profitCash: "흑자여도 사입·폐기가 크면 통장은 줄 수 있어요. 이익이랑 현금은 다른 줄입니다.",
     overhead: "고정비",
     horizon: "기간",
     sheet: "대차대조표",
@@ -125,6 +126,7 @@ const COPY = {
     wasteTip: "Waste — leftover stock thrown out.",
     opexTip: "Overhead — rent, power, labor even if nobody comes.",
     profitTip: "Net — sales minus COGS, waste, overhead, depreciation.",
+    profitCash: "Profit can be up while cash is down. Buying stock and waste leave the register even when the P&L looks fine.",
     overhead: "Overhead",
     horizon: "Horizon",
     sheet: "Balance sheet",
@@ -184,6 +186,7 @@ const COPY = {
     wasteTip: "廃棄。売れ残った材料。",
     opexTip: "固定費。客がいなくてもかかる電気・家賃・人件費。",
     profitTip: "純損益。売上−原価−廃棄−固定費−減価償却。",
+    profitCash: "黒字でも仕入れや廃棄が大きければ手元現金は減ります。利益と現金は別の行です。",
     overhead: "固定費",
     horizon: "期間",
     sheet: "貸借対照表",
@@ -243,6 +246,7 @@ const COPY = {
     wasteTip: "报废——没卖掉扔掉的材料。",
     opexTip: "固定费用——没客人也要付的电、租、人工。",
     profitTip: "净损益——收入减成本、报废、固定费用和折旧。",
+    profitCash: "就算账面盈利，进货和报废多了，抽屉里的现金也会少。利润和现金不是同一行。",
     overhead: "固定费用",
     horizon: "期间",
     sheet: "资产负债表",
@@ -302,6 +306,7 @@ const COPY = {
     wasteTip: "Pertes — stock jeté.",
     opexTip: "Charges — loyer, électricité, main-d'œuvre même sans clients.",
     profitTip: "Net — ventes moins coûts, pertes, charges et amortissement.",
+    profitCash: "Le résultat peut être vert et la caisse rouge. Achats et pertes sortent du tiroir.",
     overhead: "Charges",
     horizon: "Horizon",
     sheet: "Bilan",
@@ -361,6 +366,7 @@ const COPY = {
     wasteTip: "Merma — stock tirado.",
     opexTip: "Fijos — luz, renta y labor aunque no venga nadie.",
     profitTip: "Neto — ventas menos costo, merma, fijos y depreciación.",
+    profitCash: "Puedes ganar en el P&L y perder efectivo. Compras y merma salen de la caja.",
     overhead: "Fijos",
     horizon: "Horizonte",
     sheet: "Balance",
@@ -617,6 +623,9 @@ export default function RunABusiness({ locale }: { locale: Locale }) {
                 {formatUsd(books.profitCents)}
               </div>
             </dl>
+            {(books.profitCents > 0 && (books.wasteCents > 0 || books.purchaseCents > books.revenueCents - books.cogsCents)) && (
+              <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-900">{t.profitCash}</p>
+            )}
             <p className="mt-3 text-xs leading-5 text-muted-foreground">{t.cogsTip} {t.depTip}</p>
           </div>
           {run.sheet && (
