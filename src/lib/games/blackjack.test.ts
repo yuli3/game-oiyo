@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  blackjackAdvice,
+  blackjackResultReason,
   dealerShouldHit,
   evaluateBlackjackHand,
   isNaturalBlackjack,
@@ -19,6 +21,22 @@ const card = (value: string, power = Number(value)): BlackjackCard => ({
 });
 
 describe("blackjack rules", () => {
+  it("gives bounded hit/stand guidance for hard and soft totals", () => {
+    expect(blackjackAdvice([card("10"), card("6")], card("6"))).toEqual({ action: "stand", reason: "dealer-weak" });
+    expect(blackjackAdvice([card("10"), card("6")], card("K"))).toEqual({ action: "hit", reason: "dealer-strong" });
+    expect(blackjackAdvice([card("A"), card("7")], card("9"))).toEqual({ action: "hit", reason: "dealer-strong" });
+    expect(blackjackAdvice([card("A"), card("8")], card("K"))).toEqual({ action: "stand", reason: "safe-total" });
+    expect(blackjackAdvice([card("5"), card("4")], card("K"))).toEqual({ action: "hit", reason: "low-total" });
+  });
+
+  it("explains terminal results without inventing strategy claims", () => {
+    const bust = { ...createBlackjackGame(1), player: [card("K"), card("8"), card("7")], dealer: [card("10"), card("7")], status: "result" as const, outcome: "lost" as const };
+    const dealerBust = { ...bust, player: [card("10"), card("8")], dealer: [card("K"), card("8"), card("7")], outcome: "win" as const };
+    expect(blackjackResultReason(bust)).toBe("player-bust");
+    expect(blackjackResultReason(dealerBust)).toBe("dealer-bust");
+    expect(blackjackResultReason({ ...bust, player: [card("A"), card("K")], dealer: [card("10"), card("9")] })).toBe("natural");
+  });
+
   it("uses an injected Fisher–Yates RNG without changing the source deck", () => {
     const deck = [card("A"), card("2", 2), card("3", 3), card("4", 4)];
     const shuffled = shuffleBlackjackDeck(deck, () => 0);

@@ -40,6 +40,40 @@ export function isNaturalBlackjack(hand: BlackjackCard[]): boolean {
   return hand.length === 2 && evaluateBlackjackHand(hand).total === 21;
 }
 
+export type BlackjackAdviceReason = "low-total" | "dealer-weak" | "dealer-strong" | "soft-flex" | "safe-total";
+export type BlackjackAdvice = { action: BlackjackAction; reason: BlackjackAdviceReason };
+
+/** Hit/stand-only basic guidance for the current S17 ruleset. No betting advice. */
+export function blackjackAdvice(player: BlackjackCard[], dealerUp: BlackjackCard): BlackjackAdvice {
+  const { total, soft } = evaluateBlackjackHand(player);
+  const dealer = Math.min(10, dealerUp.power);
+  if (soft) {
+    if (total <= 17) return { action: "hit", reason: "soft-flex" };
+    if (total === 18 && ![2, 7, 8].includes(dealer)) return { action: "hit", reason: "dealer-strong" };
+    return { action: "stand", reason: "safe-total" };
+  }
+  if (total <= 11) return { action: "hit", reason: "low-total" };
+  if (total === 12) return [4, 5, 6].includes(dealer)
+    ? { action: "stand", reason: "dealer-weak" }
+    : { action: "hit", reason: "dealer-strong" };
+  if (total <= 16) return dealer >= 2 && dealer <= 6
+    ? { action: "stand", reason: "dealer-weak" }
+    : { action: "hit", reason: "dealer-strong" };
+  return { action: "stand", reason: "safe-total" };
+}
+
+export type BlackjackResultReason = "natural" | "player-bust" | "dealer-bust" | "higher" | "lower" | "equal";
+export function blackjackResultReason(state: BlackjackState): BlackjackResultReason | null {
+  if (state.status !== "result" || !state.outcome) return null;
+  if (isNaturalBlackjack(state.player) || isNaturalBlackjack(state.dealer)) return "natural";
+  const player = evaluateBlackjackHand(state.player).total;
+  const dealer = evaluateBlackjackHand(state.dealer).total;
+  if (player > 21) return "player-bust";
+  if (dealer > 21) return "dealer-bust";
+  if (player === dealer) return "equal";
+  return player > dealer ? "higher" : "lower";
+}
+
 /** Standard S17 dealer policy: hit below 17, including soft 16; stand on every 17. */
 export function dealerShouldHit(hand: BlackjackCard[]): boolean {
   return evaluateBlackjackHand(hand).total < 17;
