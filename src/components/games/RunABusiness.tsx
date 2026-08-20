@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import type { Locale } from "@/lib/i18n";
 import { hasWebGL } from "@/lib/games/webgl";
-import { recordResult } from "@/lib/games/records";
+import { recordAchievementEvent, recordResult } from "@/lib/games/records";
 import {
   BEST_KEY,
   HORIZON_DAYS,
@@ -499,6 +499,7 @@ export default function RunABusiness({ locale }: { locale: Locale }) {
   };
 
   const closeShift = () => {
+    recordAchievementEvent("run-a-business", "played");
     apply(playPeriod(run, prep));
     setRush(null);
   };

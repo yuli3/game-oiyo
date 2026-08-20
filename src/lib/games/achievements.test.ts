@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { ACHIEVEMENTS, buildAchievementSnapshot, evaluateAchievements, type AchievementSnapshot } from "./achievements";
-import { recordBest, recordBestForConditions, recordDailyWin, recordOpened, recordResult, recordStreak } from "./records";
+import { recordAchievementEvent, recordBest, recordBestForConditions, recordDailyWin, recordOpened, recordResult, recordStreak } from "./records";
 
 function createMemoryStorage(): Storage {
   const store = new Map<string, string>();
@@ -22,6 +22,7 @@ const EMPTY: AchievementSnapshot = {
   totalWins: 0,
   totalPlays: 0,
   distinctGamesPlayed: 0,
+  distinctGamesOpened: 0,
   bestRecordCount: 0,
   bestDailyStreak: 0,
   bestWinStreak: 0,
@@ -104,12 +105,19 @@ describe("achievements: cross-store snapshot", () => {
     });
   });
 
-  it("counts a game that was only opened as a distinct play for the atlas", () => {
+  it("keeps opened games out of play milestones but counts them for Arcade Atlas", () => {
     recordOpened("run-a-business");
     recordOpened("run-a-business");
     expect(buildAchievementSnapshot()).toMatchObject({
+      totalPlays: 0,
+      distinctGamesPlayed: 0,
+      distinctGamesOpened: 1,
+    });
+    recordAchievementEvent("run-a-business", "played");
+    expect(buildAchievementSnapshot()).toMatchObject({
       totalPlays: 1,
       distinctGamesPlayed: 1,
+      distinctGamesOpened: 1,
     });
   });
 
