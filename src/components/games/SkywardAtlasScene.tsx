@@ -3,12 +3,13 @@ import { Cloud, Environment, Float, Sky } from "@react-three/drei";
 import { Camera, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Volume2, VolumeX } from "lucide-react";
 import { type MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
-import { FLIGHT_SECONDS, START_STATE, airDensity, flightScore, stepFlight, type FlightState } from "../../lib/games/skyward-atlas";
+import { FLIGHT_SECONDS, START_STATE, airDensity, flightScore, nextSkywardTutorialStep, stepFlight, type FlightState, type SkywardTutorialStep } from "../../lib/games/skyward-atlas";
 
 export interface SkywardSceneCopy {
   altitude: string; speed: string; verticalSpeed: string; heading: string; throttle: string;
   fuel: string; gate: string; cockpit: string; chase: string; soundOn: string; soundOff: string;
   stall: string; terrain: string; time: string; end: string; cameraHint: string;
+  tutorialThrottle: string; tutorialControl: string; tutorialGate: string;
 }
 export interface FlightResult { score: number; gates: number; distance: number; }
 interface Props {
@@ -30,10 +31,14 @@ export default function SkywardAtlasScene({ copy, audioEnabled, onToggleAudio, o
   const controls = useRef<Controls>({ pitch: 0, roll: 0, yaw: 0, throttle: 0, lookX: 0, lookY: 0 });
   const [view, setView] = useState<"chase"|"cockpit">("chase");
   const [hud, setHud] = useState(initialHud);
+  const [tutorialStep, setTutorialStep] = useState<SkywardTutorialStep>(0);
   const [coarse, setCoarse] = useState(false);
   const done = useRef(false);
   const resultRef = useRef({ gates: 0, distance: 0 });
   const drag = useRef<{ id: number; x: number; y: number } | null>(null);
+  useEffect(() => {
+    setTutorialStep(current => nextSkywardTutorialStep(current, hud.state, hud.gates));
+  }, [hud]);
   useEffect(() => {
     const query = matchMedia("(pointer: coarse)");
     const update = () => setCoarse(query.matches); update();
@@ -92,6 +97,7 @@ export default function SkywardAtlasScene({ copy, audioEnabled, onToggleAudio, o
     </Canvas>
     <HudPanel copy={copy} hud={hud} view={view} setView={setView} audioEnabled={audioEnabled} toggleAudio={onToggleAudio} finish={finish}/>
     {hud.state.stalled && <div className="pointer-events-none absolute left-1/2 top-28 -translate-x-1/2 animate-pulse rounded-xl bg-red-600 px-5 py-3 font-black tracking-widest text-white shadow-2xl">{copy.stall}</div>}
+    {tutorialStep < 3 && <div className="pointer-events-none absolute bottom-24 left-1/2 w-[min(90%,28rem)] -translate-x-1/2 rounded-2xl border border-white/30 bg-slate-950/75 p-4 text-center text-sm font-bold text-white shadow-2xl backdrop-blur" role="status" aria-live="polite"><span className="mr-2 text-amber-300">{tutorialStep + 1}/3</span>{tutorialStep === 0 ? copy.tutorialThrottle : tutorialStep === 1 ? copy.tutorialControl : copy.tutorialGate}</div>}
     {coarse && <TouchControls controls={controls}/>}
   </div>;
 }

@@ -1,12 +1,13 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { CloudSun, Gauge, Headphones, Mountain, Plane, Wind } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
-import { getBest, recordBest } from "../../lib/games/records";
+import { getBest, recordAchievementEvent, recordBest } from "../../lib/games/records";
+import { hasWebGL } from "../../lib/games/webgl";
 import type { FlightResult, SkywardSceneCopy } from "./SkywardAtlasScene";
 
 const Scene = lazy(() => import("./SkywardAtlasScene"));
 const GAME_KEY = "skyward-atlas";
-type Phase = "briefing" | "loading" | "playing" | "result";
+type Phase = "briefing" | "loading" | "playing" | "result" | "unavailable";
 
 interface Copy {
   title: string; subtitle: string; start: string; again: string; loading: string;
@@ -21,13 +22,14 @@ const sceneEn: SkywardSceneCopy = {
   fuel: "FUEL", gate: "GATES", cockpit: "COCKPIT", chase: "CHASE", soundOn: "AUDIO ON",
   soundOff: "AUDIO OFF", stall: "STALL — LOWER NOSE", terrain: "TERRAIN", time: "TIME",
   end: "END FLIGHT", cameraHint: "C changes view · drag to look around",
+  tutorialThrottle: "Adjust throttle once with ↑/↓ or the on-screen lever.", tutorialControl: "Move pitch or roll with W/S or A/D.", tutorialGate: "Hold a steady line through the first gold gate.",
 };
 const localScenes: Partial<Record<Locale, SkywardSceneCopy>> = {
-  ko: { ...sceneEn, altitude: "고도", speed: "대기속도", verticalSpeed: "승강률", heading: "방위", throttle: "출력", fuel: "연료", gate: "게이트", cockpit: "조종석", chase: "추적", soundOn: "오디오 켜짐", soundOff: "오디오 꺼짐", stall: "실속 — 기수를 내리세요", terrain: "지형", time: "시간", end: "비행 종료", cameraHint: "C 시점 전환 · 드래그로 둘러보기" },
-  ja: { ...sceneEn, altitude: "高度", speed: "対気速度", verticalSpeed: "昇降率", heading: "方位", throttle: "出力", fuel: "燃料", gate: "ゲート", cockpit: "操縦席", chase: "追跡", soundOn: "音声 ON", soundOff: "音声 OFF", stall: "失速 — 機首を下げて", terrain: "地形", time: "時間", end: "飛行終了", cameraHint: "C 視点切替 · ドラッグで見回す" },
-  zh: { ...sceneEn, altitude: "高度", speed: "空速", verticalSpeed: "升降率", heading: "航向", throttle: "推力", fuel: "燃油", gate: "航门", cockpit: "驾驶舱", chase: "追随", soundOn: "音效开启", soundOff: "音效关闭", stall: "失速 — 压低机头", terrain: "地形", time: "时间", end: "结束飞行", cameraHint: "C 切换视角 · 拖动环顾" },
-  fr: { ...sceneEn, altitude: "ALT", speed: "VITESSE", verticalSpeed: "V/S", heading: "CAP", throttle: "GAZ", fuel: "CARB", gate: "PORTES", cockpit: "COCKPIT", chase: "SUIVI", soundOn: "AUDIO ON", soundOff: "AUDIO OFF", stall: "DÉCROCHAGE — PIQUEZ", terrain: "RELIEF", time: "TEMPS", end: "FIN DU VOL", cameraHint: "C change la vue · glisser pour regarder" },
-  es: { ...sceneEn, altitude: "ALT", speed: "VELOCIDAD", verticalSpeed: "V/S", heading: "RUMBO", throttle: "POT", fuel: "COMB", gate: "PUERTAS", cockpit: "CABINA", chase: "SEGUIMIENTO", soundOn: "AUDIO SÍ", soundOff: "AUDIO NO", stall: "PÉRDIDA — BAJA EL MORRO", terrain: "TERRENO", time: "TIEMPO", end: "FIN DEL VUELO", cameraHint: "C cambia vista · arrastra para mirar" },
+  ko: { ...sceneEn, altitude: "고도", speed: "대기속도", verticalSpeed: "승강률", heading: "방위", throttle: "출력", fuel: "연료", gate: "게이트", cockpit: "조종석", chase: "추적", soundOn: "오디오 켜짐", soundOff: "오디오 꺼짐", stall: "실속 — 기수를 내리세요", terrain: "지형", time: "시간", end: "비행 종료", cameraHint: "C 시점 전환 · 드래그로 둘러보기", tutorialThrottle: "↑/↓ 또는 화면 레버로 출력을 한 번 조절하세요.", tutorialControl: "W/S 또는 A/D로 기수나 롤을 움직이세요.", tutorialGate: "첫 금빛 게이트를 향해 자세를 유지하세요." },
+  ja: { ...sceneEn, altitude: "高度", speed: "対気速度", verticalSpeed: "昇降率", heading: "方位", throttle: "出力", fuel: "燃料", gate: "ゲート", cockpit: "操縦席", chase: "追跡", soundOn: "音声 ON", soundOff: "音声 OFF", stall: "失速 — 機首を下げて", terrain: "地形", time: "時間", end: "飛行終了", cameraHint: "C 視点切替 · ドラッグで見回す", tutorialThrottle: "↑/↓または画面レバーで出力を一度調整。", tutorialControl: "W/SまたはA/Dでピッチかロールを動かす。", tutorialGate: "最初の金色ゲートへ姿勢を保つ。" },
+  zh: { ...sceneEn, altitude: "高度", speed: "空速", verticalSpeed: "升降率", heading: "航向", throttle: "推力", fuel: "燃油", gate: "航门", cockpit: "驾驶舱", chase: "追随", soundOn: "音效开启", soundOff: "音效关闭", stall: "失速 — 压低机头", terrain: "地形", time: "时间", end: "结束飞行", cameraHint: "C 切换视角 · 拖动环顾", tutorialThrottle: "用↑/↓或屏幕推杆调一次推力。", tutorialControl: "用W/S或A/D改变俯仰或横滚。", tutorialGate: "保持姿态穿过第一个金色航门。" },
+  fr: { ...sceneEn, altitude: "ALT", speed: "VITESSE", verticalSpeed: "V/S", heading: "CAP", throttle: "GAZ", fuel: "CARB", gate: "PORTES", cockpit: "COCKPIT", chase: "SUIVI", soundOn: "AUDIO ON", soundOff: "AUDIO OFF", stall: "DÉCROCHAGE — PIQUEZ", terrain: "RELIEF", time: "TEMPS", end: "FIN DU VOL", cameraHint: "C change la vue · glisser pour regarder", tutorialThrottle: "Réglez une fois les gaz avec ↑/↓ ou le levier.", tutorialControl: "Modifiez tangage ou roulis avec Z/S ou Q/D.", tutorialGate: "Gardez une trajectoire stable vers la première porte dorée." },
+  es: { ...sceneEn, altitude: "ALT", speed: "VELOCIDAD", verticalSpeed: "V/S", heading: "RUMBO", throttle: "POT", fuel: "COMB", gate: "PUERTAS", cockpit: "CABINA", chase: "SEGUIMIENTO", soundOn: "AUDIO SÍ", soundOff: "AUDIO NO", stall: "PÉRDIDA — BAJA EL MORRO", terrain: "TERRENO", time: "TIEMPO", end: "FIN DEL VUELO", cameraHint: "C cambia vista · arrastra para mirar", tutorialThrottle: "Ajusta una vez la potencia con ↑/↓ o la palanca.", tutorialControl: "Mueve cabeceo o alabeo con W/S o A/D.", tutorialGate: "Mantén la línea hacia la primera puerta dorada." },
 };
 
 const COPY: Record<Locale, Copy> = {
@@ -58,8 +60,18 @@ for (const locale of ["ko", "ja", "zh", "fr", "es"] as const) {
   COPY[locale] = { ...COPY.en, ...translated[locale], title: "Skyward Atlas", scene: localScenes[locale] ?? sceneEn };
 }
 
+const FALLBACK_COPY: Record<Locale, { title: string; body: string; retry: string }> = {
+  ko: { title: "3D 비행을 시작할 수 없습니다", body: "이 기기에서는 WebGL을 확인하지 못했습니다. 3D 장면은 내려받지 않았습니다. 그래픽 가속을 켠 뒤 다시 확인해 주세요.", retry: "다시 확인" },
+  en: { title: "3D flight cannot start", body: "WebGL was not detected on this device, so the 3D scene was not downloaded. Enable graphics acceleration and try again.", retry: "Check again" },
+  ja: { title: "3D飛行を開始できません", body: "WebGLを確認できないため、3Dシーンはダウンロードしていません。グラフィックアクセラレーションを有効にして再確認してください。", retry: "再確認" },
+  zh: { title: "无法启动3D飞行", body: "此设备未检测到WebGL，因此没有下载3D场景。请开启图形加速后重试。", retry: "重新检查" },
+  fr: { title: "Le vol 3D ne peut pas démarrer", body: "WebGL n’a pas été détecté; la scène 3D n’a donc pas été téléchargée. Activez l’accélération graphique puis réessayez.", retry: "Vérifier à nouveau" },
+  es: { title: "No se puede iniciar el vuelo 3D", body: "No se detectó WebGL; la escena 3D no se descargó. Activa la aceleración gráfica y vuelve a intentarlo.", retry: "Comprobar de nuevo" },
+};
+
 export default function SkywardAtlas({ locale }: { locale: Locale }) {
   const copy = COPY[locale] ?? COPY.en;
+  const fallback = FALLBACK_COPY[locale] ?? FALLBACK_COPY.en;
   const [phase, setPhase] = useState<Phase>("briefing");
   const [best, setBest] = useState(0);
   const [result, setResult] = useState<FlightResult | null>(null);
@@ -67,15 +79,17 @@ export default function SkywardAtlas({ locale }: { locale: Locale }) {
   const audioRef = useRef<AudioContext | null>(null);
   useEffect(() => { setBest(getBest(GAME_KEY)?.value ?? 0); }, []);
   const start = useCallback(() => {
-    try {
-      const canvas = document.createElement("canvas");
-      if (!canvas.getContext("webgl2") && !canvas.getContext("webgl")) { setPhase("briefing"); alert(copy.unavailable); return; }
-      setPhase("loading");
-      window.setTimeout(() => setPhase("playing"), 80);
-    } catch { setPhase("briefing"); }
-  }, [copy.unavailable]);
+    if (!hasWebGL()) { setPhase("unavailable"); return; }
+    setPhase("loading");
+    window.setTimeout(() => setPhase("playing"), 80);
+  }, []);
   const finish = useCallback((next: FlightResult) => {
-    setResult(next); recordBest(GAME_KEY, next.score, "score"); setBest(getBest(GAME_KEY)?.value ?? next.score); setPhase("result");
+    const previous = getBest(GAME_KEY)?.value ?? 0;
+    const beat = next.score > previous;
+    recordBest(GAME_KEY, next.score, "score", undefined, { trackPlay: false });
+    recordAchievementEvent(GAME_KEY, "played");
+    if (beat && next.score > 0) recordAchievementEvent(GAME_KEY, "personal-best");
+    setResult(next); setBest(Math.max(previous, next.score)); setPhase("result");
   }, []);
   return (
     <section className="overflow-hidden rounded-[2rem] border border-slate-200 bg-[#f4f0e7] shadow-xl">
@@ -90,8 +104,9 @@ export default function SkywardAtlas({ locale }: { locale: Locale }) {
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-slate-900/15 bg-white/70 px-4 py-2 text-xs font-bold tracking-[.18em]"><Plane size={16}/> ALPINE FLIGHT / ORIGINAL</div>
             <h2 className="max-w-3xl text-5xl font-black tracking-[-.05em] text-slate-900 sm:text-7xl">{copy.title}</h2>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-700">{copy.subtitle}</p>
+            {phase === "unavailable" && <div role="alert" className="mt-6 max-w-2xl rounded-2xl border border-amber-300 bg-amber-50 p-4 text-amber-950"><p className="font-black">{fallback.title}</p><p className="mt-1 text-sm leading-6">{fallback.body}</p></div>}
             <div className="mt-8 flex flex-wrap gap-3">
-              <button onClick={phase === "result" ? start : start} className="rounded-full bg-slate-900 px-7 py-4 font-bold text-white shadow-lg hover:bg-slate-700">{phase === "result" ? copy.again : copy.start}</button>
+              <button onClick={start} className="rounded-full bg-slate-900 px-7 py-4 font-bold text-white shadow-lg hover:bg-slate-700">{phase === "result" ? copy.again : phase === "unavailable" ? fallback.retry : copy.start}</button>
               <div className="rounded-full border border-slate-300 bg-white/70 px-6 py-4 font-semibold">{copy.best}: {best.toLocaleString()}</div>
             </div>
             {result && <div role="status" aria-live="polite" className="mt-6 max-w-md rounded-3xl bg-white/75 p-6 backdrop-blur"><div className="text-sm font-bold uppercase tracking-widest">{copy.result}</div><div className="mt-2 text-4xl font-black">{result.score.toLocaleString()}</div><div className="mt-2 text-sm text-slate-600">{result.gates} gates · {Math.round(result.distance / 1000)} km</div></div>}

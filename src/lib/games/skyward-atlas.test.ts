@@ -1,12 +1,21 @@
 import { describe, expect, it } from "vitest";
 import {
-  START_STATE, airDensity, flightScore, indicatedAirspeed, stallSpeed, stepFlight,
+  START_STATE, airDensity, flightScore, indicatedAirspeed, nextSkywardTutorialStep, stallSpeed, stepFlight,
 } from "./skyward-atlas";
 
 const calm = { windX: 0, windZ: 0, density: 0.92 };
 const neutral = { pitch: 0, roll: 0, yaw: 0, throttle: 0 };
 
 describe("Skyward Atlas flight model", () => {
+  it("advances control onboarding only after real flight actions", () => {
+    expect(nextSkywardTutorialStep(0, START_STATE, 0)).toBe(0);
+    expect(nextSkywardTutorialStep(0, { ...START_STATE, throttle: 0.7 }, 0)).toBe(1);
+    expect(nextSkywardTutorialStep(1, { ...START_STATE, pitch: 0.05 }, 0)).toBe(2);
+    expect(nextSkywardTutorialStep(2, START_STATE, 0)).toBe(2);
+    expect(nextSkywardTutorialStep(2, START_STATE, 1)).toBe(3);
+    expect(nextSkywardTutorialStep(3, START_STATE, 5)).toBe(3);
+  });
+
   it("reduces density and raises true stall speed with altitude", () => {
     expect(airDensity(8_500)).toBeLessThan(airDensity(0));
     expect(stallSpeed(8_500)).toBeGreaterThan(stallSpeed(0));

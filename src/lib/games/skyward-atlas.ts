@@ -28,6 +28,14 @@ export const START_STATE: FlightState = {
   verticalSpeed: 0, throttle: 0.62, fuel: 100, stalled: false,
 };
 
+export type SkywardTutorialStep = 0 | 1 | 2 | 3;
+export function nextSkywardTutorialStep(step: SkywardTutorialStep, state: FlightState, gates: number): SkywardTutorialStep {
+  if (step === 0 && Math.abs(state.throttle - START_STATE.throttle) >= 0.04) return 1;
+  if (step === 1 && (Math.abs(state.pitch) >= 0.04 || Math.abs(state.roll) >= 0.08)) return 2;
+  if (step === 2 && gates > 0) return 3;
+  return step;
+}
+
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));
 
