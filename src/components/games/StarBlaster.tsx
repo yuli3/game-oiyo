@@ -2,7 +2,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import confetti from "canvas-confetti";
 import type { Locale } from "../../lib/i18n";
 import { getBest, recordAchievementEvent, recordBest } from "../../lib/games/records";
+import { loadReplayEnvelope, saveReplayEnvelope, verifyReplayEnvelope, type ReplayInput } from "../../lib/games/replay";
 import { frameDeltaSeconds } from "../../lib/games/time-contracts";
+import { createStarBlasterReplay, replayStarBlaster, starBlasterGhostTrack, type StarBlasterReplayAction } from "../../lib/games/star-blaster-replay";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import {
   STAR_BLASTER_HEIGHT as H,
@@ -63,13 +65,13 @@ const T: Record<Locale, I18n> = {
   zh: { title: "星际爆破", subtitle: "拖动瞄准，自动开火 — 挺过一波波敌人", tapStart: "点击开始", controls: "使用触控、鼠标或 ← → 键左右移动飞船。飞船会自动开火。", score: "得分", best: "最佳", wave: "波次", lives: "生命", gameOver: "游戏结束", restart: "再玩一次", newBest: "🎉 新纪录！", pause: "暂停", resume: "继续", weapon: "武器", upgrade: "波次完成", choose: "选择强化", upgradeNames: { "pulse-overdrive": "脉冲超频", "scatter-array": "散射阵列", "arc-coil": "电弧线圈", "hull-repair": "修复船体", "score-multiplier": "战术倍率" }, upgradeDescriptions: { "pulse-overdrive": "提高直线脉冲炮的射速与威力。", "scatter-array": "切换为近距离三向散射火力。", "arc-coil": "切换为命中后连锁附近敌人的电弧弹。", "hull-repair": "恢复一条生命。", "score-multiplier": "永久提升一级击落得分倍率。" } },
 };
 
-const RESULT_T: Record<Locale, { victory: string; boss: string; kills: string; damage: string; weaponBest: string; lastHit: string; collision: string; escaped: string; sameSector: string; newSector: string; soundOn: string; soundOff: string }> = {
-  ko: { victory: "헬릭스 코어 격파", boss: "보스", kills: "격추", damage: "피해", weaponBest: "무기 최고", lastHit: "마지막 피격", collision: "적과 충돌", escaped: "적을 놓침", sameSector: "같은 구역 재도전", newSector: "새 구역", soundOn: "사운드 켜짐", soundOff: "사운드 꺼짐" },
-  en: { victory: "Helix Core Destroyed", boss: "Boss", kills: "Kills", damage: "Damage", weaponBest: "Weapon best", lastHit: "Last hit", collision: "Enemy collision", escaped: "Enemy escaped", sameSector: "Retry same sector", newSector: "New sector", soundOn: "Sound on", soundOff: "Sound off" },
-  ja: { victory: "ヘリックスコア撃破", boss: "ボス", kills: "撃破", damage: "被害", weaponBest: "武器ベスト", lastHit: "最後の被弾", collision: "敵と衝突", escaped: "敵を逃した", sameSector: "同じ宙域で再挑戦", newSector: "新しい宙域", soundOn: "サウンドオン", soundOff: "サウンドオフ" },
-  fr: { victory: "Noyau Helix détruit", boss: "Boss", kills: "Éliminations", damage: "Dégâts", weaponBest: "Record d'arme", lastHit: "Dernier impact", collision: "Collision ennemie", escaped: "Ennemi échappé", sameSector: "Rejouer ce secteur", newSector: "Nouveau secteur", soundOn: "Son activé", soundOff: "Son coupé" },
-  es: { victory: "Núcleo Helix destruido", boss: "Jefe", kills: "Bajas", damage: "Daño", weaponBest: "Récord de arma", lastHit: "Último impacto", collision: "Colisión enemiga", escaped: "Enemigo escapado", sameSector: "Reintentar sector", newSector: "Nuevo sector", soundOn: "Sonido activado", soundOff: "Sonido desactivado" },
-  zh: { victory: "螺旋核心已摧毁", boss: "首领", kills: "击落", damage: "受损", weaponBest: "武器最佳", lastHit: "最后受击", collision: "与敌人相撞", escaped: "敌人漏过", sameSector: "重试同一区域", newSector: "新区域", soundOn: "声音开启", soundOff: "声音关闭" },
+const RESULT_T: Record<Locale, { victory: string; boss: string; kills: string; damage: string; weaponBest: string; lastHit: string; collision: string; escaped: string; sameSector: string; newSector: string; ghost: string; soundOn: string; soundOff: string }> = {
+  ko: { victory: "헬릭스 코어 격파", boss: "보스", kills: "격추", damage: "피해", weaponBest: "무기 최고", lastHit: "마지막 피격", collision: "적과 충돌", escaped: "적을 놓침", sameSector: "같은 구역 재도전", newSector: "새 구역", ghost: "PB 고스트", soundOn: "사운드 켜짐", soundOff: "사운드 꺼짐" },
+  en: { victory: "Helix Core Destroyed", boss: "Boss", kills: "Kills", damage: "Damage", weaponBest: "Weapon best", lastHit: "Last hit", collision: "Enemy collision", escaped: "Enemy escaped", sameSector: "Retry same sector", newSector: "New sector", ghost: "PB ghost", soundOn: "Sound on", soundOff: "Sound off" },
+  ja: { victory: "ヘリックスコア撃破", boss: "ボス", kills: "撃破", damage: "被害", weaponBest: "武器ベスト", lastHit: "最後の被弾", collision: "敵と衝突", escaped: "敵を逃した", sameSector: "同じ宙域で再挑戦", newSector: "新しい宙域", ghost: "PBゴースト", soundOn: "サウンドオン", soundOff: "サウンドオフ" },
+  fr: { victory: "Noyau Helix détruit", boss: "Boss", kills: "Éliminations", damage: "Dégâts", weaponBest: "Record d'arme", lastHit: "Dernier impact", collision: "Collision ennemie", escaped: "Ennemi échappé", sameSector: "Rejouer ce secteur", newSector: "Nouveau secteur", ghost: "Fantôme PB", soundOn: "Son activé", soundOff: "Son coupé" },
+  es: { victory: "Núcleo Helix destruido", boss: "Jefe", kills: "Bajas", damage: "Daño", weaponBest: "Récord de arma", lastHit: "Último impacto", collision: "Colisión enemiga", escaped: "Enemigo escapado", sameSector: "Reintentar sector", newSector: "Nuevo sector", ghost: "Fantasma PB", soundOn: "Sonido activado", soundOff: "Sonido desactivado" },
+  zh: { victory: "螺旋核心已摧毁", boss: "首领", kills: "击落", damage: "受损", weaponBest: "武器最佳", lastHit: "最后受击", collision: "与敌人相撞", escaped: "敌人漏过", sameSector: "重试同一区域", newSector: "新区域", ghost: "PB幽灵", soundOn: "声音开启", soundOff: "声音关闭" },
 };
 
 const CONTROL_T: Record<Locale, { controls: string; left: string; right: string; pause: string; pressKey: string; gamepad: string; performance: string; high: string; balanced: string; reset: string }> = {
@@ -89,6 +91,7 @@ function drawGame(
   particles: Particle[],
   renderTime: number,
   reducedMotion: boolean,
+  ghostX?: number,
 ) {
   ctx.fillStyle = "#0b1020";
   ctx.fillRect(0, 0, W, H);
@@ -163,6 +166,19 @@ function drawGame(
   }
 
   const shipY = H - 44;
+  if (Number.isFinite(ghostX)) {
+    ctx.save();
+    ctx.globalAlpha = 0.34;
+    ctx.strokeStyle = "#fbbf24";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(ghostX!, shipY - 16);
+    ctx.lineTo(ghostX! - 14, shipY + 12);
+    ctx.lineTo(ghostX! + 14, shipY + 12);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.restore();
+  }
   ctx.fillStyle = "#8b5cf6";
   ctx.beginPath();
   ctx.moveTo(state.shipX, shipY - 16);
@@ -218,6 +234,9 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
   const soundEnabledRef = useRef(true);
   const lastHitRef = useRef<Debrief["lastHit"]>(null);
   const lastSeedRef = useRef<number | null>(null);
+  const replayInputsRef = useRef<ReplayInput<StarBlasterReplayAction>[]>([]);
+  const lastReplayTargetRef = useRef<number | null>(null);
+  const ghostTrackRef = useRef<number[]>([]);
   soundEnabledRef.current = soundEnabled;
   const pausedRef = useRef(false);
   pausedRef.current = paused;
@@ -249,6 +268,12 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
     const finalScore = finalState.score;
     const previous = getBest(GAME_KEY);
     const beat = !previous || finalScore > previous.value;
+    if (beat && finalScore > 0) {
+      try {
+        const replay = createStarBlasterReplay(finalState, replayInputsRef.current);
+        if (verifyReplayEnvelope(replay, replayStarBlaster)) saveReplayEnvelope(replay);
+      } catch { /* incomplete or drifting replays never replace the PB ghost */ }
+    }
     const saved = recordBest(GAME_KEY, finalScore, "score", undefined, { trackPlay: false });
     recordAchievementEvent(GAME_KEY, "played");
     if (beat && finalScore > 0) recordAchievementEvent(GAME_KEY, "personal-best");
@@ -279,7 +304,12 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
       accumulatorRef.current += frameDeltaSeconds(previousFrameRef.current, now);
       let steps = 0;
       while (accumulatorRef.current >= STAR_BLASTER_STEP_SECONDS && steps < MAX_STEPS_PER_FRAME) {
-        stepStarBlaster(state, { targetX: targetXRef.current });
+        const replayTarget = Math.round(targetXRef.current * 2) / 2;
+        if (lastReplayTargetRef.current !== replayTarget) {
+          replayInputsRef.current.push({ tick: state.tick, input: { type: "target", value: replayTarget } });
+          lastReplayTargetRef.current = replayTarget;
+        }
+        stepStarBlaster(state, { targetX: replayTarget });
         accumulatorRef.current -= STAR_BLASTER_STEP_SECONDS;
         steps += 1;
         for (const event of state.events) {
@@ -343,7 +373,7 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
     }
 
     previousFrameRef.current = now;
-    drawGame(ctx, state, particlesRef.current, now, reducedMotionRef.current);
+    drawGame(ctx, state, particlesRef.current, now, reducedMotionRef.current, ghostTrackRef.current[state.tick]);
     if (state.phase === "upgrade") {
       setUpgradeOptions((current) => current.length ? current : [...state.pendingUpgrades]);
     } else if (state.phase === "over") {
@@ -362,6 +392,13 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
     const seed = seedOverride ?? ((Date.now() ^ Math.floor(performance.now() * 1000)) >>> 0);
     lastSeedRef.current = seed;
     const state = createStarBlasterState(seed);
+    replayInputsRef.current = [];
+    lastReplayTargetRef.current = null;
+    ghostTrackRef.current = [];
+    const prior = loadReplayEnvelope<StarBlasterReplayAction>(GAME_KEY);
+    if (prior?.seed === seed) {
+      try { if (verifyReplayEnvelope(prior, replayStarBlaster)) ghostTrackRef.current = starBlasterGhostTrack(prior); } catch { ghostTrackRef.current = []; }
+    }
     simulationRef.current = state;
     particlesRef.current = [];
     targetXRef.current = W / 2;
@@ -421,6 +458,7 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
   const chooseUpgrade = useCallback((upgrade: StarBlasterUpgradeId) => {
     const state = simulationRef.current;
     if (!state || !chooseStarBlasterUpgrade(state, upgrade)) return;
+    replayInputsRef.current.push({ tick: state.tick, input: { type: "upgrade", value: upgrade } });
     setUpgradeOptions([]);
     setWave(state.wave);
     setLives(state.lives);
@@ -547,6 +585,7 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
               <span>{t.wave} {wave}</span>
               {simulationRef.current?.phase === "boss" && <span className="text-pink-300">{resultT.boss} {simulationRef.current.boss?.phase}/3</span>}
               <span>{t.weapon}: {weapon.toUpperCase()}</span>
+              {ghostTrackRef.current.length > 0 && <span className="text-amber-300">◇ {resultT.ghost}</span>}
               <span aria-label={`${t.lives}: ${lives}`}>{"❤️".repeat(Math.max(0, lives))}</span>
             </div>
             {!paused && upgradeOptions.length === 0 && (
