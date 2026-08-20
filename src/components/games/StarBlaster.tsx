@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import confetti from "canvas-confetti";
 import type { Locale } from "../../lib/i18n";
-import { getBest, recordBest } from "../../lib/games/records";
+import { getBest, recordAchievementEvent, recordBest } from "../../lib/games/records";
 import { frameDeltaSeconds } from "../../lib/games/time-contracts";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import {
@@ -20,7 +20,7 @@ const MAX_STEPS_PER_FRAME = 8;
 
 type Phase = "menu" | "playing" | "victory" | "over";
 interface Particle { x: number; y: number; vx: number; vy: number; life: number; hue: number }
-interface Debrief { kills: number; damageTaken: number; weaponBest: number }
+interface Debrief { kills: number; damageTaken: number; weaponBest: number; lastHit: { cause: "collision" | "escaped"; kind: string } | null }
 type BindableAction = "left" | "right" | "pause";
 type KeyBindings = Record<BindableAction, string>;
 interface PerformanceReadout { fps: number; entities: number; quality: "high" | "balanced" }
@@ -63,13 +63,13 @@ const T: Record<Locale, I18n> = {
   zh: { title: "星际爆破", subtitle: "拖动瞄准，自动开火 — 挺过一波波敌人", tapStart: "点击开始", controls: "使用触控、鼠标或 ← → 键左右移动飞船。飞船会自动开火。", score: "得分", best: "最佳", wave: "波次", lives: "生命", gameOver: "游戏结束", restart: "再玩一次", newBest: "🎉 新纪录！", pause: "暂停", resume: "继续", weapon: "武器", upgrade: "波次完成", choose: "选择强化", upgradeNames: { "pulse-overdrive": "脉冲超频", "scatter-array": "散射阵列", "arc-coil": "电弧线圈", "hull-repair": "修复船体", "score-multiplier": "战术倍率" }, upgradeDescriptions: { "pulse-overdrive": "提高直线脉冲炮的射速与威力。", "scatter-array": "切换为近距离三向散射火力。", "arc-coil": "切换为命中后连锁附近敌人的电弧弹。", "hull-repair": "恢复一条生命。", "score-multiplier": "永久提升一级击落得分倍率。" } },
 };
 
-const RESULT_T: Record<Locale, { victory: string; boss: string; kills: string; damage: string; weaponBest: string; soundOn: string; soundOff: string }> = {
-  ko: { victory: "헬릭스 코어 격파", boss: "보스", kills: "격추", damage: "피해", weaponBest: "무기 최고", soundOn: "사운드 켜짐", soundOff: "사운드 꺼짐" },
-  en: { victory: "Helix Core Destroyed", boss: "Boss", kills: "Kills", damage: "Damage", weaponBest: "Weapon best", soundOn: "Sound on", soundOff: "Sound off" },
-  ja: { victory: "ヘリックスコア撃破", boss: "ボス", kills: "撃破", damage: "被害", weaponBest: "武器ベスト", soundOn: "サウンドオン", soundOff: "サウンドオフ" },
-  fr: { victory: "Noyau Helix détruit", boss: "Boss", kills: "Éliminations", damage: "Dégâts", weaponBest: "Record d'arme", soundOn: "Son activé", soundOff: "Son coupé" },
-  es: { victory: "Núcleo Helix destruido", boss: "Jefe", kills: "Bajas", damage: "Daño", weaponBest: "Récord de arma", soundOn: "Sonido activado", soundOff: "Sonido desactivado" },
-  zh: { victory: "螺旋核心已摧毁", boss: "首领", kills: "击落", damage: "受损", weaponBest: "武器最佳", soundOn: "声音开启", soundOff: "声音关闭" },
+const RESULT_T: Record<Locale, { victory: string; boss: string; kills: string; damage: string; weaponBest: string; lastHit: string; collision: string; escaped: string; sameSector: string; newSector: string; soundOn: string; soundOff: string }> = {
+  ko: { victory: "헬릭스 코어 격파", boss: "보스", kills: "격추", damage: "피해", weaponBest: "무기 최고", lastHit: "마지막 피격", collision: "적과 충돌", escaped: "적을 놓침", sameSector: "같은 구역 재도전", newSector: "새 구역", soundOn: "사운드 켜짐", soundOff: "사운드 꺼짐" },
+  en: { victory: "Helix Core Destroyed", boss: "Boss", kills: "Kills", damage: "Damage", weaponBest: "Weapon best", lastHit: "Last hit", collision: "Enemy collision", escaped: "Enemy escaped", sameSector: "Retry same sector", newSector: "New sector", soundOn: "Sound on", soundOff: "Sound off" },
+  ja: { victory: "ヘリックスコア撃破", boss: "ボス", kills: "撃破", damage: "被害", weaponBest: "武器ベスト", lastHit: "最後の被弾", collision: "敵と衝突", escaped: "敵を逃した", sameSector: "同じ宙域で再挑戦", newSector: "新しい宙域", soundOn: "サウンドオン", soundOff: "サウンドオフ" },
+  fr: { victory: "Noyau Helix détruit", boss: "Boss", kills: "Éliminations", damage: "Dégâts", weaponBest: "Record d'arme", lastHit: "Dernier impact", collision: "Collision ennemie", escaped: "Ennemi échappé", sameSector: "Rejouer ce secteur", newSector: "Nouveau secteur", soundOn: "Son activé", soundOff: "Son coupé" },
+  es: { victory: "Núcleo Helix destruido", boss: "Jefe", kills: "Bajas", damage: "Daño", weaponBest: "Récord de arma", lastHit: "Último impacto", collision: "Colisión enemiga", escaped: "Enemigo escapado", sameSector: "Reintentar sector", newSector: "Nuevo sector", soundOn: "Sonido activado", soundOff: "Sonido desactivado" },
+  zh: { victory: "螺旋核心已摧毁", boss: "首领", kills: "击落", damage: "受损", weaponBest: "武器最佳", lastHit: "最后受击", collision: "与敌人相撞", escaped: "敌人漏过", sameSector: "重试同一区域", newSector: "新区域", soundOn: "声音开启", soundOff: "声音关闭" },
 };
 
 const CONTROL_T: Record<Locale, { controls: string; left: string; right: string; pause: string; pressKey: string; gamepad: string; performance: string; high: string; balanced: string; reset: string }> = {
@@ -188,7 +188,7 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
   const [upgradeOptions, setUpgradeOptions] = useState<StarBlasterUpgradeId[]>([]);
   const [weapon, setWeapon] = useState("pulse");
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [debrief, setDebrief] = useState<Debrief>({ kills: 0, damageTaken: 0, weaponBest: 0 });
+  const [debrief, setDebrief] = useState<Debrief>({ kills: 0, damageTaken: 0, weaponBest: 0, lastHit: null });
   const [bindings, setBindings] = useState<KeyBindings>(DEFAULT_BINDINGS);
   const [controlsOpen, setControlsOpen] = useState(false);
   const [captureAction, setCaptureAction] = useState<BindableAction | null>(null);
@@ -216,6 +216,8 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
   const lastPerformanceUpdateRef = useRef(0);
   const qualityRef = useRef<PerformanceReadout["quality"]>("high");
   const soundEnabledRef = useRef(true);
+  const lastHitRef = useRef<Debrief["lastHit"]>(null);
+  const lastSeedRef = useRef<number | null>(null);
   soundEnabledRef.current = soundEnabled;
   const pausedRef = useRef(false);
   pausedRef.current = paused;
@@ -247,12 +249,14 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
     const finalScore = finalState.score;
     const previous = getBest(GAME_KEY);
     const beat = !previous || finalScore > previous.value;
-    const saved = recordBest(GAME_KEY, finalScore, "score");
+    const saved = recordBest(GAME_KEY, finalScore, "score", undefined, { trackPlay: false });
+    recordAchievementEvent(GAME_KEY, "played");
+    if (beat && finalScore > 0) recordAchievementEvent(GAME_KEY, "personal-best");
     setBest(saved.value);
     setIsNewBest(beat && finalScore > 0);
     const weaponKey = `${GAME_KEY}:${finalState.weapon}`;
-    const weaponRecord = recordBest(weaponKey, finalScore, "score");
-    setDebrief({ kills: finalState.stats.kills, damageTaken: finalState.stats.damageTaken, weaponBest: weaponRecord.value });
+    const weaponRecord = recordBest(weaponKey, finalScore, "score", undefined, { trackPlay: false });
+    setDebrief({ kills: finalState.stats.kills, damageTaken: finalState.stats.damageTaken, weaponBest: weaponRecord.value, lastHit: lastHitRef.current });
     if (beat && finalScore > 0 && !reducedMotionRef.current) {
       confetti({ particleCount: 100, spread: 75, origin: { y: 0.6 } });
     }
@@ -281,7 +285,10 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
         for (const event of state.events) {
           if (event.type === "shot" && state.tick % 3 === 0) playTone(state.weapon === "arc" ? 760 : state.weapon === "scatter" ? 220 : 440, 0.035, "square", 0.012);
           if (event.type === "enemy-hit" || event.type === "boss-hit") playTone(event.type === "boss-hit" ? 110 : 160, 0.04, "sawtooth", 0.018);
-          if (event.type === "player-hit") playTone(72, 0.18, "sawtooth", 0.06);
+          if (event.type === "player-hit") {
+            playTone(72, 0.18, "sawtooth", 0.06);
+            if (event.hitCause) lastHitRef.current = { cause: event.hitCause, kind: event.enemyKind ?? "enemy" };
+          }
           if (event.type === "boss-start" || event.type === "boss-phase") playTone(event.type === "boss-start" ? 92 : 138, 0.35, "sawtooth", 0.06);
           if (event.type !== "enemy-destroyed" && event.type !== "player-hit") continue;
           const count = reducedMotionRef.current ? 0 : qualityRef.current === "balanced" ? (event.type === "player-hit" ? 6 : 4) : event.type === "player-hit" ? 12 : 8;
@@ -349,10 +356,11 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
     rafRef.current = requestAnimationFrame(loop);
   }, [finish, playTone]);
 
-  const begin = useCallback(() => {
+  const begin = useCallback((seedOverride?: number) => {
     if (!audioRef.current) audioRef.current = new AudioContext();
     if (audioRef.current.state === "suspended") void audioRef.current.resume();
-    const seed = (Date.now() ^ Math.floor(performance.now() * 1000)) >>> 0;
+    const seed = seedOverride ?? ((Date.now() ^ Math.floor(performance.now() * 1000)) >>> 0);
+    lastSeedRef.current = seed;
     const state = createStarBlasterState(seed);
     simulationRef.current = state;
     particlesRef.current = [];
@@ -369,7 +377,8 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
     setPerformance({ fps: 60, entities: 0, quality: "high" });
     qualityRef.current = "high";
     frameSamplesRef.current = [];
-    setDebrief({ kills: 0, damageTaken: 0, weaponBest: getBest(`${GAME_KEY}:pulse`)?.value ?? 0 });
+    lastHitRef.current = null;
+    setDebrief({ kills: 0, damageTaken: 0, weaponBest: getBest(`${GAME_KEY}:pulse`)?.value ?? 0, lastHit: null });
     setPhase("playing");
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     rafRef.current = requestAnimationFrame(loop);
@@ -459,7 +468,7 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
       if (phaseRef.current === "playing" && event.code === current.left) steerByKeyboard(-1);
       if (phaseRef.current === "playing" && event.code === current.right) steerByKeyboard(1);
       if (phaseRef.current === "playing" && (event.code === current.pause || event.code === "Escape")) togglePause();
-      if ((phaseRef.current === "over" || phaseRef.current === "victory") && event.code === "Enter") begin();
+      if ((phaseRef.current === "over" || phaseRef.current === "victory") && event.code === "Enter") begin(lastSeedRef.current ?? undefined);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -489,7 +498,7 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
         if (nextIndex !== gamepadUpgradeIndexRef.current) setGamepadUpgradeIndex(nextIndex);
         if (edge(0)) chooseUpgrade(upgradeOptions[nextIndex]);
       } else if ((phaseRef.current === "over" || phaseRef.current === "victory") && edge(0)) {
-        begin();
+        begin(lastSeedRef.current ?? undefined);
       }
       gamepadButtonsRef.current = pressed;
     }, 50);
@@ -574,6 +583,12 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
                 <div className="rounded-lg bg-white/10 p-2"><b className="block text-white">{debrief.kills}</b>{resultT.kills}</div>
                 <div className="rounded-lg bg-white/10 p-2"><b className="block text-white">{debrief.damageTaken}</b>{resultT.damage}</div>
                 <div className="rounded-lg bg-white/10 p-2"><b className="block text-white">{debrief.weaponBest}</b>{resultT.weaponBest}</div>
+                {debrief.lastHit && (
+                  <div className="col-span-3 rounded-lg bg-rose-500/15 p-2 text-left">
+                    <b className="text-white">{resultT.lastHit}:</b>{" "}
+                    {debrief.lastHit.cause === "collision" ? resultT.collision : resultT.escaped} · {debrief.lastHit.kind}
+                  </div>
+                )}
               </div>
             )}
             {phase === "menu" && (
@@ -597,13 +612,30 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
                   </button>
                 ))}
               </div>
+            ) : phase === "over" || phase === "victory" ? (
+              <div className="flex flex-wrap justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => begin(lastSeedRef.current ?? undefined)}
+                  className="min-h-11 rounded-full bg-violet-500 px-6 py-2.5 font-bold text-white hover:bg-violet-600"
+                >
+                  {resultT.sameSector}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => begin()}
+                  className="min-h-11 rounded-full border border-white/30 bg-white/10 px-6 py-2.5 font-bold text-white hover:bg-white/20"
+                >
+                  {resultT.newSector}
+                </button>
+              </div>
             ) : (
               <button
                 type="button"
-                onClick={paused ? togglePause : begin}
+                onClick={() => paused ? togglePause() : begin()}
                 className="min-h-11 rounded-full bg-violet-500 px-8 py-2.5 font-bold text-white transition-colors hover:bg-violet-600"
               >
-                {paused ? t.resume : phase === "over" || phase === "victory" ? t.restart : t.tapStart}
+                {paused ? t.resume : t.tapStart}
               </button>
             )}
           </div>

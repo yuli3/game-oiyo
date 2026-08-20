@@ -55,6 +55,8 @@ export interface StarBlasterEvent {
   x?: number;
   y?: number;
   hue?: number;
+  hitCause?: "collision" | "escaped";
+  enemyKind?: StarBlasterEnemyKind;
 }
 
 export interface StarBlasterState {
@@ -352,7 +354,14 @@ export function stepStarBlaster(
       // Preserve the original game's frame-level damage gate: simultaneous
       // contacts are one damage event, not an instant multi-life loss.
       damage = 1;
-      state.events.push({ type: "player-hit", x: enemy.x, y: enemy.y, hue: 0 });
+      state.events.push({
+        type: "player-hit",
+        x: enemy.x,
+        y: enemy.y,
+        hue: enemy.hue,
+        hitCause: collidesWithShip ? "collision" : "escaped",
+        enemyKind: enemy.kind,
+      });
       continue;
     }
     survivingEnemies.push(enemy);

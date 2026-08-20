@@ -82,6 +82,8 @@ describe("Star Blaster deterministic simulation", () => {
       ageTicks: 0,
     }];
     stepStarBlaster(state);
+    const hit = state.events.find((event) => event.type === "player-hit");
+    expect(hit).toMatchObject({ type: "player-hit", hitCause: "escaped", enemyKind: "drifter" });
     expect(state.lives).toBe(0);
     expect(state.phase).toBe("over");
     expect(state.events.at(-1)?.type).toBe("game-over");
