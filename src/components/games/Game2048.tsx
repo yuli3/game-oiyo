@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
-import { getBest, recordBest } from '../../lib/games/records';
+import { getBest, recordAchievementEvent, recordBest } from '../../lib/games/records';
+import { loadReplayEnvelope, saveReplayEnvelope, verifyReplayEnvelope, type ReplayInput } from '../../lib/games/replay';
+import { createGame2048Replay, game2048GhostBoards, replayGame2048, type Game2048ReplayAction } from '../../lib/games/game-2048-replay';
 import { clearGame2048Save, loadGame2048Save, storeGame2048Save } from '../../lib/games/active-game-save';
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 import { createGame2048, game2048Analysis, moveGame2048, restoreGame2048, type Game2048Direction, type Game2048State } from '../../lib/games/game-2048';
@@ -17,24 +19,35 @@ const COPY = {
 const LEGACY_BEST_KEY = 'oiyo-2048-best'; // pre-unification key, read once for migration
 const EXTRA={ko:{pause:"일시정지",resume:"계속",restored:"게임을 복원했습니다",sound:"소리",max:"최대 타일",empty:"빈 칸"},en:{pause:"Pause",resume:"Resume",restored:"Game restored",sound:"Sound",max:"Max tile",empty:"empty cells"},ja:{pause:"一時停止",resume:"再開",restored:"ゲームを復元しました",sound:"音",max:"最大タイル",empty:"空きマス"},zh:{pause:"暂停",resume:"继续",restored:"已恢复游戏",sound:"声音",max:"最大方块",empty:"空格"},fr:{pause:"Pause",resume:"Reprendre",restored:"Partie restaurée",sound:"Son",max:"Tuile max",empty:"cases vides"},es:{pause:"Pausa",resume:"Continuar",restored:"Partida restaurada",sound:"Sonido",max:"Ficha máxima",empty:"casillas vacías"}} as const;
 
+const REPLAY={ko:{same:"같은 보드 재도전",fresh:"새 보드",ghost:"PB 고스트 보드"},en:{same:"Retry same board",fresh:"New board",ghost:"PB ghost board"},ja:{same:"同じ盤面で再挑戦",fresh:"新しい盤面",ghost:"PBゴースト盤面"},zh:{same:"重试同一棋盘",fresh:"新棋盘",ghost:"PB幽灵棋盘"},fr:{same:"Rejouer la même grille",fresh:"Nouvelle grille",ghost:"Grille fantôme PB"},es:{same:"Reintentar tablero",fresh:"Nuevo tablero",ghost:"Tablero fantasma PB"}} as const;
+
 const Game2048: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const t = COPY[(locale as keyof typeof COPY)] ?? COPY.en;
     const x=EXTRA[(locale as keyof typeof EXTRA)]??EXTRA.en;
+    const replayCopy=REPLAY[(locale as keyof typeof REPLAY)]??REPLAY.en;
     const reducedMotion = usePrefersReducedMotion();
 
     const [game, setGame] = useState<Game2048State>(()=>createGame2048(1));
     const [best, setBest] = useState(0);
-    const [paused,setPaused]=useState(false);const[restored,setRestored]=useState(false);const[muted,setMuted]=useState(false);const audio=useRef<AudioContext|null>(null);
+    const [paused,setPaused]=useState(false);const[restored,setRestored]=useState(false);const[muted,setMuted]=useState(false);const[hasGhost,setHasGhost]=useState(false);const audio=useRef<AudioContext|null>(null);
+    const seedRef=useRef<number|null>(null);const replayInputsRef=useRef<ReplayInput<Game2048ReplayAction>[]>([]);const ghostBoardsRef=useRef<(number|null)[][]>([]);const terminalRef=useRef(false);
     const touchStart = useRef<{ x: number; y: number } | null>(null);
 
-    const initGame = useCallback(() => {
+    const startRun = useCallback((seedOverride?:number) => {
         clearGame2048Save();
-        const seed=typeof crypto!=="undefined"?crypto.getRandomValues(new Uint32Array(1))[0]:Date.now()>>>0;setGame(createGame2048(seed));setPaused(false);setRestored(false);
+        const seed=seedOverride??(typeof crypto!=="undefined"?crypto.getRandomValues(new Uint32Array(1))[0]:Date.now()>>>0);
+        seedRef.current=seed>>>0;replayInputsRef.current=[];ghostBoardsRef.current=[];terminalRef.current=false;
+        const prior=loadReplayEnvelope<Game2048ReplayAction>('game-2048');
+        if(prior?.seed===seedRef.current){try{if(verifyReplayEnvelope(prior,replayGame2048))ghostBoardsRef.current=game2048GhostBoards(prior)}catch{ghostBoardsRef.current=[]}}
+        setHasGhost(ghostBoardsRef.current.length>0);setGame(createGame2048(seedRef.current));setPaused(false);setRestored(false);
     }, []);
+    const initGame=useCallback(()=>startRun(),[startRun]);
+    const retrySame=useCallback(()=>startRun(seedRef.current??undefined),[startRun]);
 
     useEffect(() => {
         const saved = loadGame2048Save();
         if (saved) {
+            seedRef.current=null;replayInputsRef.current=[];ghostBoardsRef.current=[];setHasGhost(false);
             const restoredState=restoreGame2048(saved.board,saved.score);if(restoredState){setGame(restoredState);setPaused(true);setRestored(true)}else initGame();
         } else {
             initGame();
@@ -54,7 +67,12 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         if (game.status !== 'playing') { clearGame2048Save(); return; } storeGame2048Save({board:game.board,score:game.score});
     }, [game]);
 
-    const move = useCallback((direction: Game2048Direction) => { if(paused)return;const next=moveGame2048(game,direction);if(next===game)return;setGame(next);if(!muted){const context=audio.current??new AudioContext();audio.current=context;const o=context.createOscillator(),g=context.createGain();o.frequency.value=next.lastGain?440:220;g.gain.setValueAtTime(.04,context.currentTime);g.gain.exponentialRampToValueAtTime(.001,context.currentTime+.07);o.connect(g).connect(context.destination);o.start();o.stop(context.currentTime+.07)}if(next.score>best)setBest(recordBest('game-2048',next.score,'score').value); }, [game,best,paused,muted]);
+    useEffect(() => {
+        if(game.status==='playing'){terminalRef.current=false;return}
+        if(!terminalRef.current){terminalRef.current=true;recordAchievementEvent('game-2048','played')}
+    },[game.status]);
+
+    const move = useCallback((direction: Game2048Direction) => { if(paused)return;const next=moveGame2048(game,direction);if(next===game)return;const nextInputs=[...replayInputsRef.current,{tick:game.moves,input:{type:'move' as const,direction}}];replayInputsRef.current=nextInputs;setGame(next);if(!muted){const context=audio.current??new AudioContext();audio.current=context;const o=context.createOscillator(),g=context.createGain();o.frequency.value=next.lastGain?440:220;g.gain.setValueAtTime(.04,context.currentTime);g.gain.exponentialRampToValueAtTime(.001,context.currentTime+.07);o.connect(g).connect(context.destination);o.start();o.stop(context.currentTime+.07)}if(next.score>best){if(seedRef.current!==null){try{const replay=createGame2048Replay(seedRef.current,next,nextInputs);if(verifyReplayEnvelope(replay,replayGame2048))saveReplayEnvelope(replay)}catch{/* drifted replay is discarded */}}recordAchievementEvent('game-2048','personal-best');setBest(recordBest('game-2048',next.score,'score',undefined,{trackPlay:false}).value);} }, [game,best,paused,muted]);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -100,7 +118,7 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         };
         return colors[val] || 'bg-slate-900 text-white';
     };
-    const analysis=game2048Analysis(game);const tiles=game.board.map((value,index)=>value===null?null:{id:`${index}-${value}`,value,x:index%4,y:Math.floor(index/4)});
+    const analysis=game2048Analysis(game);const tiles=game.board.map((value,index)=>value===null?null:{id:`${index}-${value}`,value,x:index%4,y:Math.floor(index/4)});const ghostBoard=ghostBoardsRef.current[game.moves];
 
     return (
         <GameContainer title={t.title} subtitle={t.subtitle} onReset={initGame}>
@@ -154,15 +172,15 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     <div className={`absolute inset-0 z-10 bg-background/80 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center space-y-4 animate-in fade-in ${reducedMotion ? 'duration-75' : 'zoom-in-95'}`} role="status" aria-live="polite">
                         <h4 className="text-3xl font-black text-foreground">{game.status === 'won' ? t.win : t.over}</h4>
                         <p className="text-sm text-muted-foreground">{x.max} {analysis.max} · {analysis.empty} {x.empty}</p>
-                        <button
-                            onClick={initGame}
-                            className="px-8 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity"
-                        >
-                            {t.reset}
-                        </button>
+                        <div className="flex flex-wrap justify-center gap-2">
+                            <button onClick={retrySame} disabled={seedRef.current===null} className="min-h-11 rounded-full bg-primary px-6 font-bold text-primary-foreground disabled:opacity-50">{replayCopy.same}</button>
+                            <button onClick={initGame} className="min-h-11 rounded-full border bg-muted px-6 font-bold">{replayCopy.fresh}</button>
+                        </div>
                     </div>
                 )}
             </div>
+
+            {hasGhost && ghostBoard && game.status==='playing' && <section className="mx-auto mt-4 w-full max-w-sm rounded-2xl border border-amber-300/60 bg-amber-50 p-3" aria-label={replayCopy.ghost}><p className="mb-2 text-[10px] font-black uppercase tracking-wider text-amber-800">◇ {replayCopy.ghost} · {game.moves}</p><div className="grid grid-cols-4 gap-1">{ghostBoard.map((value,index)=><div key={index} className="grid aspect-square place-items-center rounded bg-white/70 text-[10px] font-black text-amber-900">{value??''}</div>)}</div></section>}
 
             <div className="mt-6 text-center text-[10px] text-muted-foreground font-medium italic">
                 {t.hint}
