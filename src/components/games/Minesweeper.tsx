@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
-import { getBest, recordBest, getBestForConditions, recordBestForConditions, getDailyStreak, recordDailyWin, type BestConditions, type DailyStreak } from '../../lib/games/records';
+import { getBest, recordBest, getBestForConditions, recordBestForConditions, getDailyStreak, recordAchievementEvent, recordDailyWin, type BestConditions, type DailyStreak } from '../../lib/games/records';
 import { dayIndex, todayKey, previousDayKey } from '../../lib/games/daily';
 import { displayedGameSeconds, elapsedGameMilliseconds, recordedGameSeconds, restoredElapsedMilliseconds } from '../../lib/games/minesweeper-timing';
 import { clearMinesweeperSave, loadMinesweeperSave, storeMinesweeperSave } from '../../lib/games/minesweeper-save';
@@ -282,13 +282,19 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         setHintUnavailable(false);
         setBoard(result.board);
         setStatus(result.status);
-        if (result.status === 'won' && !recordedRef.current) {
+        const firstTerminal = result.status !== 'playing' && !recordedRef.current;
+        if (firstTerminal) {
             recordedRef.current = true;
+            recordAchievementEvent('minesweeper', 'played');
+        }
+        if (result.status === 'won' && firstTerminal) {
             const elapsed = recordedGameSeconds(startedAtRef.current, performance.now());
             setTimer(elapsed);
             const previousBest = bestTime;
+            const isNewBest = previousBest === null || elapsed < previousBest;
             const nextBest = recordBestForConditions(bestKeyFor(difficultyId), elapsed, 'seconds', recordConditions()).value;
-            setIsNewBest(previousBest === null || elapsed < previousBest);
+            if (isNewBest) recordAchievementEvent('minesweeper', 'personal-best');
+            setIsNewBest(isNewBest);
             setBestTime(nextBest);
             if (mode === 'daily') {
                 const today = todayKey();
