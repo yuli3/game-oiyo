@@ -1,11 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   dailyPuzzleId,
+  koreanSemantleHints,
+  minutesUntilNextPuzzle,
   orderGuesses,
   parseKoreanSemantle,
   scoreGuess,
   serializeKoreanSemantle,
   type Guess,
+  type KoreanSemantleHint,
   type ProximityBand,
   type SimilarityTable,
 } from "../../lib/games/korean-semantle";
@@ -18,6 +21,7 @@ type Status = "loading" | "playing" | "won" | "revealed" | "error";
 const DATA_BASE = "/data/korean-semantle";
 const GAME_ID = "korean-semantle";
 const SAVE_KEY = "oiyo:korean-semantle:v1";
+const HINT_KEY_PREFIX = "oiyo:korean-semantle:hints:v1:";
 
 // ─── Band presentation ─────────────────────────────────────────────────────────
 // Temperature palette — games keep their own vivid surface (not the olive tool
@@ -227,6 +231,15 @@ const COPY: Record<UILocale, {
   },
 };
 
+const HINT_COPY: Record<UILocale, { open: string; locked: (n: number) => string; next: (m: number) => string; format: (h: KoreanSemantleHint) => string }> = {
+  ko: { open: "공정 힌트 열기", locked: n => `${n}회 추측에서 다음 힌트`, next: m => `다음 퍼즐까지 ${Math.floor(m / 60)}시간 ${m % 60}분`, format: h => h.kind === "length" ? `정답은 ${h.value}글자입니다.` : h.kind === "initial" ? `첫 초성은 ${h.value}입니다.` : `고정된 중간 거리 단어: ${h.value} (순위 ${h.rank})` },
+  en: { open: "Open fair hint", locked: n => `Next hint at ${n} guesses`, next: m => `Next puzzle in ${Math.floor(m / 60)}h ${m % 60}m`, format: h => h.kind === "length" ? `The answer has ${h.value} syllables.` : h.kind === "initial" ? `The first Korean initial is ${h.value}.` : `Fixed mid-distance word: ${h.value} (rank ${h.rank})` },
+  ja: { open: "公平ヒントを開く", locked: n => `${n}回で次のヒント`, next: m => `次のパズルまで ${Math.floor(m / 60)}時間${m % 60}分`, format: h => h.kind === "length" ? `答えは${h.value}文字です。` : h.kind === "initial" ? `最初の初声は${h.value}です。` : `固定の中距離語: ${h.value}（順位${h.rank}）` },
+  zh: { open: "打开公平提示", locked: n => `猜到${n}次解锁下一提示`, next: m => `距下一题 ${Math.floor(m / 60)}小时${m % 60}分`, format: h => h.kind === "length" ? `答案有${h.value}个韩文音节。` : h.kind === "initial" ? `第一个韩文声母是${h.value}。` : `固定中距离词：${h.value}（排名${h.rank}）` },
+  fr: { open: "Ouvrir l’indice équitable", locked: n => `Prochain indice à ${n} essais`, next: m => `Prochain puzzle dans ${Math.floor(m / 60)} h ${m % 60} min`, format: h => h.kind === "length" ? `La réponse compte ${h.value} syllabes.` : h.kind === "initial" ? `L’initiale coréenne est ${h.value}.` : `Mot fixe à distance moyenne : ${h.value} (rang ${h.rank})` },
+  es: { open: "Abrir pista justa", locked: n => `Siguiente pista al intento ${n}`, next: m => `Próximo puzle en ${Math.floor(m / 60)} h ${m % 60} min`, format: h => h.kind === "length" ? `La respuesta tiene ${h.value} sílabas.` : h.kind === "initial" ? `La inicial coreana es ${h.value}.` : `Palabra fija de distancia media: ${h.value} (puesto ${h.rank})` },
+};
+
 /** Progress width for a guess: closer rank → fuller bar (log-scaled). */
 function barWidth(g: Guess): number {
   if (g.band === "secret") return 100;
@@ -238,6 +251,7 @@ function barWidth(g: Guess): number {
 const KoreanSemantle: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
   const t = COPY[locale] ?? COPY.en;
   const bandLabel = BAND_LABEL[locale] ?? BAND_LABEL.en;
+  const hintCopy = HINT_COPY[locale] ?? HINT_COPY.en;
 
   const [status, setStatus] = useState<Status>("loading");
   const [table, setTable] = useState<SimilarityTable | null>(null);
@@ -250,6 +264,8 @@ const KoreanSemantle: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
   const [puzzleId, setPuzzleId] = useState("");
   const [sound, setSound] = useState(true);
   const [restored, setRestored] = useState(false);
+  const [shownHints, setShownHints] = useState(0);
+  const [nextMinutes, setNextMinutes] = useState(() => minutesUntilNextPuzzle());
   const recordedRef = useRef(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -273,6 +289,9 @@ const KoreanSemantle: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
       setPuzzleId(id);
       setGuesses(saved ?? []);
       setRestored(Boolean(saved?.length));
+      const unlocked = koreanSemantleHints(data, saved?.length ?? 0).length;
+      const storedHints = Number(localStorage.getItem(`${HINT_KEY_PREFIX}${id}`));
+      setShownHints(Number.isInteger(storedHints) ? Math.max(0, Math.min(unlocked, storedHints)) : 0);
       setLastWord(null);
       recordedRef.current = false;
       setStatus("playing");
@@ -285,6 +304,13 @@ const KoreanSemantle: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
     loadPuzzle();
     setStats(getStreak(GAME_ID));
   }, [loadPuzzle]);
+
+  useEffect(() => {
+    const update = () => setNextMinutes(minutesUntilNextPuzzle());
+    update();
+    const timer = window.setInterval(update, 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (table && puzzleId && status === "playing") localStorage.setItem(SAVE_KEY, serializeKoreanSemantle(puzzleId, guesses));
@@ -346,6 +372,14 @@ const KoreanSemantle: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
   }, [status, guesses, t]);
 
   const ordered = useMemo(() => orderGuesses(guesses), [guesses]);
+  const availableHints = useMemo(() => table ? koreanSemantleHints(table, guesses.length) : [], [table, guesses.length]);
+  const nextHintAt = [5, 12, 20].find(value => value > guesses.length) ?? null;
+  const openNextHint = useCallback(() => {
+    if (!puzzleId || shownHints >= availableHints.length) return;
+    const next = shownHints + 1;
+    setShownHints(next);
+    localStorage.setItem(`${HINT_KEY_PREFIX}${puzzleId}`, String(next));
+  }, [availableHints.length, puzzleId, shownHints]);
   const isDemo = table?.meta.source === "handcrafted-demo";
 
   if (status === "loading") {
@@ -387,6 +421,7 @@ const KoreanSemantle: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
         {stats && stats.played > 0 && (
           <p className="text-[10px] font-bold text-muted-foreground mt-2">{t.stats(stats)}</p>
         )}
+        <p className="mt-1 text-[10px] font-bold text-primary">{hintCopy.next(nextMinutes)}</p>
         <button type="button" onClick={() => setSound((value) => !value)} className="mt-2 min-h-10 rounded-full border px-4 text-[11px] font-black">{t.sound} {sound ? "ON" : "OFF"}</button>
       </div>
       {restored && <p role="status" className="w-full rounded-xl bg-primary/10 p-3 text-center text-xs font-bold text-primary">{t.restored}</p>}
@@ -420,6 +455,11 @@ const KoreanSemantle: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
 
       {/* Guess count */}
       <p className="text-[11px] font-bold text-muted-foreground self-start">{t.guessCount(guesses.length)}</p>
+
+      {!over && (availableHints.length > 0 || nextHintAt) && <section className="w-full rounded-2xl border border-amber-300/60 bg-amber-50 p-3 text-xs text-stone-800" aria-label={hintCopy.open}>
+        {availableHints.slice(0, shownHints).map(hint => <p key={hint.kind} className="mb-1 font-bold">{hintCopy.format(hint)}</p>)}
+        {shownHints < availableHints.length ? <button type="button" onClick={openNextHint} className="mt-1 min-h-10 rounded-full bg-amber-700 px-4 font-black text-white">{hintCopy.open}</button> : nextHintAt ? <p className="text-stone-600">{hintCopy.locked(nextHintAt)}</p> : null}
+      </section>}
 
       {/* Latest guess highlight */}
       {lastWord && (() => {

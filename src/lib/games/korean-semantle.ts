@@ -152,6 +152,37 @@ export function orderGuesses(guesses: readonly Guess[]): Guess[] {
     .map(({ g }) => g);
 }
 
+export type KoreanSemantleHint =
+  | { kind: "length"; value: number; unlockAt: 5 }
+  | { kind: "initial"; value: string; unlockAt: 12 }
+  | { kind: "neighbor"; value: string; rank: number; unlockAt: 20 };
+
+const CHOSEONG = ["ㄱ", "ㄲ", "ㄴ", "ㄷ", "ㄸ", "ㄹ", "ㅁ", "ㅂ", "ㅃ", "ㅅ", "ㅆ", "ㅇ", "ㅈ", "ㅉ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ"];
+function firstChoseong(word: string): string {
+  const code = word.charCodeAt(0) - 0xac00;
+  return code >= 0 && code <= 11171 ? CHOSEONG[Math.floor(code / 588)] : "";
+}
+
+/** Same unlock thresholds and clue values for everyone on the same puzzle. */
+export function koreanSemantleHints(table: SimilarityTable, guessCount: number): KoreanSemantleHint[] {
+  const count = Number.isFinite(guessCount) ? Math.max(0, Math.floor(guessCount)) : 0;
+  const hints: KoreanSemantleHint[] = [];
+  if (count >= 5) hints.push({ kind: "length", value: table.meta.secret.length, unlockAt: 5 });
+  if (count >= 12) hints.push({ kind: "initial", value: firstChoseong(table.meta.secret), unlockAt: 12 });
+  if (count >= 20 && table.top.length > 1) {
+    const index = Math.min(table.top.length - 1, Math.max(1, Math.floor(table.top.length * 0.25)));
+    const word = table.top[index][0];
+    hints.push({ kind: "neighbor", value: word, rank: table.rank[word] ?? index + 1, unlockAt: 20 });
+  }
+  return hints;
+}
+
+export function minutesUntilNextPuzzle(now: Date = new Date()): number {
+  const next = new Date(now);
+  next.setHours(24, 0, 0, 0);
+  return Math.max(1, Math.ceil((next.getTime() - now.getTime()) / 60_000));
+}
+
 /**
  * Which curated puzzle is "today's", rotating deterministically through the
  * available puzzle ids so everyone on the same calendar day gets the same one.

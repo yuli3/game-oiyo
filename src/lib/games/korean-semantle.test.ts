@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   bandFor,
   dailyPuzzleId,
+  koreanSemantleHints,
+  minutesUntilNextPuzzle,
   normalizeGuess,
   orderGuesses,
   scoreGuess,
@@ -120,7 +122,27 @@ describe("korean-semantle: orderGuesses", () => {
   });
 });
 
+describe("korean-semantle: fair hints", () => {
+  it("unlocks the same deterministic clues only at fixed guess counts", () => {
+    expect(koreanSemantleHints(TABLE, 4)).toEqual([]);
+    expect(koreanSemantleHints(TABLE, 5)).toEqual([{ kind: "length", value: 2, unlockAt: 5 }]);
+    expect(koreanSemantleHints(TABLE, 12).at(-1)).toEqual({ kind: "initial", value: "ㅂ", unlockAt: 12 });
+    expect(koreanSemantleHints(TABLE, 20).at(-1)).toEqual({ kind: "neighbor", value: "바닷가", rank: 2, unlockAt: 20 });
+    expect(koreanSemantleHints(TABLE, 20)).toEqual(koreanSemantleHints(TABLE, 20));
+  });
+
+  it("does not unlock hints from invalid counts", () => {
+    expect(koreanSemantleHints(TABLE, Number.NaN)).toEqual([]);
+    expect(koreanSemantleHints(TABLE, -100)).toEqual([]);
+  });
+});
+
 describe("korean-semantle: dailyPuzzleId", () => {
+  it("reports whole minutes until the next local puzzle", () => {
+    expect(minutesUntilNextPuzzle(new Date(2026, 7, 21, 23, 30, 1))).toBe(30);
+    expect(minutesUntilNextPuzzle(new Date(2026, 7, 21, 0, 0, 0))).toBe(1440);
+  });
+
   it("rotates deterministically through available puzzles by calendar day", () => {
     const ids = ["a", "b", "c"];
     // dayIndex(2024-01-01) === 0 → ids[0]; +1 day → ids[1]; wraps at length.
