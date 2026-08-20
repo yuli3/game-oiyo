@@ -61,8 +61,43 @@ export function recordResult(game: string, result: "w" | "l" | "d"): GameRecord 
   } catch {
     /* quota/private mode — records are best-effort */
   }
-  stampLastPlayed(game);
+  recordAchievementEvent(game, "cleared");
   return r;
+}
+
+// ─── Achievement events v1 — additive; legacy records remain unchanged ─────────────
+export type AchievementEventType = "opened" | "played" | "cleared" | "personal-best";
+export type AchievementEventCounts = Record<AchievementEventType, number>;
+const ACHIEVEMENT_EVENT_KEY = "oiyo:game-achievement-events:v1";
+const EMPTY_EVENTS: AchievementEventCounts = { opened: 0, played: 0, cleared: 0, "personal-best": 0 };
+const isAchievementEventCounts: Validator<AchievementEventCounts> = (value): value is AchievementEventCounts =>
+  isObject(value) && isCount(value.opened) && isCount(value.played) &&
+  isCount(value.cleared) && isCount(value["personal-best"]);
+
+function readAchievementEvents(): Record<string, AchievementEventCounts> {
+  return readValidatedStore(ACHIEVEMENT_EVENT_KEY, isAchievementEventCounts);
+}
+
+export function getAchievementEvents(game: string): AchievementEventCounts {
+  return { ...EMPTY_EVENTS, ...(readAchievementEvents()[game] ?? {}) };
+}
+
+export function getAllAchievementEvents(): Record<string, AchievementEventCounts> {
+  return readAchievementEvents();
+}
+
+export function recordAchievementEvent(game: string, event: AchievementEventType): AchievementEventCounts {
+  const all = readAchievementEvents();
+  const counts = { ...EMPTY_EVENTS, ...(all[game] ?? {}) };
+  counts[event] += 1;
+  all[game] = counts;
+  try {
+    localStorage.setItem(ACHIEVEMENT_EVENT_KEY, JSON.stringify(all));
+  } catch {
+    /* quota/private mode — best-effort */
+  }
+  if (event !== "opened") stampLastPlayed(game);
+  return counts;
 }
 
 // ─── Last-played timestamps — separate store, purely additive ───────────────────────────

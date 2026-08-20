@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { getAllBestAchievedAt, getAllBests, getAllConditionalBests, getAllDailyStreaks, getAllLastPlayed, getAllRecords, getAllStreaks, getBest, getBestForConditions, getDailyStreak, getRecord, getStreak, recordBest, recordBestForConditions, recordDailyWin, recordResult, recordStreak } from "./records";
+import { getAchievementEvents, getAllAchievementEvents, getAllBestAchievedAt, getAllBests, getAllConditionalBests, getAllDailyStreaks, getAllLastPlayed, getAllRecords, getAllStreaks, getBest, getBestForConditions, getDailyStreak, getRecord, getStreak, recordAchievementEvent, recordBest, recordBestForConditions, recordDailyWin, recordResult, recordStreak } from "./records";
 
 // records.ts is localStorage-backed; provide a minimal in-memory Storage
 // polyfill so persistence across calls can actually be exercised in node.
@@ -24,6 +24,33 @@ function createMemoryStorage(): Storage {
 
 beforeEach(() => {
   (globalThis as { localStorage?: Storage }).localStorage = createMemoryStorage();
+});
+
+describe("records: achievement events v1", () => {
+  it("keeps opened separate from actual play", () => {
+    recordAchievementEvent("snake", "opened");
+    expect(getAchievementEvents("snake")).toEqual({ opened: 1, played: 0, cleared: 0, "personal-best": 0 });
+    expect(getAllLastPlayed()).toEqual({});
+
+    recordAchievementEvent("snake", "played");
+    expect(getAchievementEvents("snake").played).toBe(1);
+    expect(getAllLastPlayed().snake).toBeTruthy();
+  });
+
+  it("adds cleared when a legacy result is recorded without reshaping the old record", () => {
+    expect(recordResult("chess", "w")).toEqual({ w: 1, l: 0, d: 0 });
+    expect(getAchievementEvents("chess")).toEqual({ opened: 0, played: 0, cleared: 1, "personal-best": 0 });
+  });
+
+  it("drops corrupt event entries without losing valid games", () => {
+    localStorage.setItem("oiyo:game-achievement-events:v1", JSON.stringify({
+      chess: { opened: 1, played: 2, cleared: 1, "personal-best": 1 },
+      bad: { opened: -1, played: "many", cleared: 0, "personal-best": 0 },
+    }));
+    expect(getAllAchievementEvents()).toEqual({
+      chess: { opened: 1, played: 2, cleared: 1, "personal-best": 1 },
+    });
+  });
 });
 
 describe("records: w/l/d", () => {
