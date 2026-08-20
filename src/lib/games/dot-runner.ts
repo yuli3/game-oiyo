@@ -10,6 +10,30 @@ const GAME_SPEED = 5;
 const OBSTACLE_FREQUENCY = 0.02;
 const ITEM_FREQUENCY = 0.008;
 const MAX_FRAME_SCALE = 4;
+export const DOT_RUNNER_PACE_FRAMES = 600;
+export const DOT_RUNNER_MAX_PACE = 6;
+
+export interface DotRunnerPace {
+  level: number;
+  multiplier: number;
+  nextLevelFrame: number | null;
+}
+
+export function getDotRunnerPace(elapsedFrames: number): DotRunnerPace {
+  const safeFrames = Number.isFinite(elapsedFrames) ? Math.max(0, elapsedFrames) : 0;
+  const level = Math.min(DOT_RUNNER_MAX_PACE, Math.floor(safeFrames / DOT_RUNNER_PACE_FRAMES) + 1);
+  return {
+    level,
+    multiplier: 1 + (level - 1) * 0.08,
+    nextLevelFrame: level < DOT_RUNNER_MAX_PACE ? level * DOT_RUNNER_PACE_FRAMES : null,
+  };
+}
+
+export function nextDotRunnerGoal(best: number, score: number): number {
+  const baseline = Math.max(0, best, score);
+  if (baseline === 0) return 50;
+  return Math.max(baseline + 10, Math.ceil((baseline * 1.1) / 10) * 10);
+}
 
 export interface DotRunnerEntity { x: number; y: number; w: number; h: number; speed: number }
 export interface DotRunnerState {
@@ -92,8 +116,9 @@ function simulateSubstep(state: DotRunnerState, scale: number): DotRunnerState {
     next.items.push({ x: DOT_RUNNER_WIDTH, y, w: 15, h: 15, speed: GAME_SPEED });
   }
 
-  for (const entity of next.obstacles) entity.x -= entity.speed * scale;
-  for (const entity of next.items) entity.x -= entity.speed * scale;
+  const pace = getDotRunnerPace(next.elapsedFrames);
+  for (const entity of next.obstacles) entity.x -= entity.speed * pace.multiplier * scale;
+  for (const entity of next.items) entity.x -= entity.speed * pace.multiplier * scale;
   next.obstacles = next.obstacles.filter((entity) => entity.x + entity.w > 0);
   next.items = next.items.filter((entity) => {
     if (!overlapsPlayer(entity, next.playerY)) return entity.x + entity.w > 0;

@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import confetti from 'canvas-confetti';
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { frameScale } from '../../lib/games/time-contracts';
-import { getBest, recordBest } from '../../lib/games/records';
+import { getBest, recordAchievementEvent, recordBest } from '../../lib/games/records';
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 import { clearDotRunnerSave, loadDotRunnerSave, storeDotRunnerSave } from '../../lib/games/dot-runner-save';
 import {
@@ -12,7 +12,9 @@ import {
     DOT_RUNNER_PLAYER_X,
     DOT_RUNNER_WIDTH,
     createDotRunner,
+    getDotRunnerPace,
     jumpDotRunner,
+    nextDotRunnerGoal,
     stepDotRunner,
     type DotRunnerState,
 } from '../../lib/games/dot-runner';
@@ -26,12 +28,12 @@ const BEST_KEY = 'oiyo-dot-runner-best';
 type Status = 'idle' | 'playing' | 'paused' | 'over';
 
 const COPY = {
-    ko: { title: '닷 러너', subtitle: '리듬을 타고 장애물을 넘어 코인을 수집하세요', score: '점수', best: '최고 점수', coins: '코인', time: '생존 시간', next: '다음 목표', seconds: '초', start: '게임 시작', over: '게임 오버!', newBest: '🎉 신기록!', restart: '다시 시작 (R)', pause: '일시정지 (P)', paused: '일시정지', resume: '계속 (P)', soundOn: '소리 켜기', soundOff: '소리 끄기', area: '닷 러너 게임 영역', playing: '달리는 중', hint: '탭/클릭/스페이스로 점프 · 장애물을 피하고 코인을 모으세요' },
-    en: { title: 'Dot Runner', subtitle: 'Find the rhythm, clear obstacles, collect coins', score: 'Score', best: 'Best', coins: 'Coins', time: 'Survival time', next: 'Next target', seconds: 'sec', start: 'Start', over: 'Game Over!', newBest: '🎉 New best!', restart: 'Restart (R)', pause: 'Pause (P)', paused: 'Paused', resume: 'Resume (P)', soundOn: 'Turn sound on', soundOff: 'Turn sound off', area: 'Dot Runner game area', playing: 'Running', hint: 'Tap/click/space to jump · dodge blocks, grab coins' },
-    ja: { title: 'ドットランナー', subtitle: 'リズムに乗って障害物を越え、コインを集めよう', score: 'スコア', best: 'ベスト', coins: 'コイン', time: '生存時間', next: '次の目標', seconds: '秒', start: 'スタート', over: 'ゲームオーバー！', newBest: '🎉 新記録！', restart: 'リスタート (R)', pause: '一時停止 (P)', paused: '一時停止', resume: '再開 (P)', soundOn: '音をオン', soundOff: '音をオフ', area: 'ドットランナーのゲーム領域', playing: '走行中', hint: 'タップ/クリック/スペースでジャンプ · 障害物を避けてコインを集めよう' },
-    zh: { title: '点点酷跑', subtitle: '把握节奏，越过障碍，收集金币', score: '分数', best: '最高分', coins: '金币', time: '生存时间', next: '下一目标', seconds: '秒', start: '开始游戏', over: '游戏结束！', newBest: '🎉 新纪录！', restart: '重新开始 (R)', pause: '暂停 (P)', paused: '已暂停', resume: '继续 (P)', soundOn: '开启声音', soundOff: '关闭声音', area: '点点酷跑游戏区域', playing: '奔跑中', hint: '点按/空格跳跃 · 躲避障碍并收集金币' },
-    fr: { title: 'Dot Runner', subtitle: 'Trouvez le rythme, évitez les obstacles, prenez les pièces', score: 'Score', best: 'Record', coins: 'Pièces', time: 'Temps de survie', next: 'Prochain objectif', seconds: 's', start: 'Démarrer', over: 'Partie terminée !', newBest: '🎉 Nouveau record !', restart: 'Recommencer (R)', pause: 'Pause (P)', paused: 'En pause', resume: 'Reprendre (P)', soundOn: 'Activer le son', soundOff: 'Couper le son', area: 'Zone de jeu Dot Runner', playing: 'Course en cours', hint: 'Touchez/cliquez/espace pour sauter · évitez les blocs, prenez les pièces' },
-    es: { title: 'Dot Runner', subtitle: 'Sigue el ritmo, supera obstáculos y recoge monedas', score: 'Puntos', best: 'Récord', coins: 'Monedas', time: 'Tiempo vivo', next: 'Próximo objetivo', seconds: 's', start: 'Empezar', over: '¡Fin del juego!', newBest: '🎉 ¡Nuevo récord!', restart: 'Reiniciar (R)', pause: 'Pausa (P)', paused: 'En pausa', resume: 'Seguir (P)', soundOn: 'Activar sonido', soundOff: 'Silenciar', area: 'Área de juego Dot Runner', playing: 'Corriendo', hint: 'Toca/clic/espacio para saltar · esquiva bloques, coge monedas' },
+    ko: { title: '닷 러너', subtitle: '리듬을 타고 장애물을 넘어 코인을 수집하세요', score: '점수', best: '최고 점수', coins: '코인', time: '생존 시간', pace: '속도', next: '다음 목표', seconds: '초', start: '게임 시작', over: '게임 오버!', newBest: '🎉 신기록!', restart: '다시 시작 (R)', pause: '일시정지 (P)', paused: '일시정지', resume: '계속 (P)', soundOn: '소리 켜기', soundOff: '소리 끄기', area: '닷 러너 게임 영역', playing: '달리는 중', hint: '탭/클릭/스페이스로 점프 · 장애물을 피하고 코인을 모으세요' },
+    en: { title: 'Dot Runner', subtitle: 'Find the rhythm, clear obstacles, collect coins', score: 'Score', best: 'Best', coins: 'Coins', time: 'Survival time', pace: 'Pace', next: 'Next target', seconds: 'sec', start: 'Start', over: 'Game Over!', newBest: '🎉 New best!', restart: 'Restart (R)', pause: 'Pause (P)', paused: 'Paused', resume: 'Resume (P)', soundOn: 'Turn sound on', soundOff: 'Turn sound off', area: 'Dot Runner game area', playing: 'Running', hint: 'Tap/click/space to jump · dodge blocks, grab coins' },
+    ja: { title: 'ドットランナー', subtitle: 'リズムに乗って障害物を越え、コインを集めよう', score: 'スコア', best: 'ベスト', coins: 'コイン', time: '生存時間', pace: '速度', next: '次の目標', seconds: '秒', start: 'スタート', over: 'ゲームオーバー！', newBest: '🎉 新記録！', restart: 'リスタート (R)', pause: '一時停止 (P)', paused: '一時停止', resume: '再開 (P)', soundOn: '音をオン', soundOff: '音をオフ', area: 'ドットランナーのゲーム領域', playing: '走行中', hint: 'タップ/クリック/スペースでジャンプ · 障害物を避けてコインを集めよう' },
+    zh: { title: '点点酷跑', subtitle: '把握节奏，越过障碍，收集金币', score: '分数', best: '最高分', coins: '金币', time: '生存时间', pace: '速度', next: '下一目标', seconds: '秒', start: '开始游戏', over: '游戏结束！', newBest: '🎉 新纪录！', restart: '重新开始 (R)', pause: '暂停 (P)', paused: '已暂停', resume: '继续 (P)', soundOn: '开启声音', soundOff: '关闭声音', area: '点点酷跑游戏区域', playing: '奔跑中', hint: '点按/空格跳跃 · 躲避障碍并收集金币' },
+    fr: { title: 'Dot Runner', subtitle: 'Trouvez le rythme, évitez les obstacles, prenez les pièces', score: 'Score', best: 'Record', coins: 'Pièces', time: 'Temps de survie', pace: 'Vitesse', next: 'Prochain objectif', seconds: 's', start: 'Démarrer', over: 'Partie terminée !', newBest: '🎉 Nouveau record !', restart: 'Recommencer (R)', pause: 'Pause (P)', paused: 'En pause', resume: 'Reprendre (P)', soundOn: 'Activer le son', soundOff: 'Couper le son', area: 'Zone de jeu Dot Runner', playing: 'Course en cours', hint: 'Touchez/cliquez/espace pour sauter · évitez les blocs, prenez les pièces' },
+    es: { title: 'Dot Runner', subtitle: 'Sigue el ritmo, supera obstáculos y recoge monedas', score: 'Puntos', best: 'Récord', coins: 'Monedas', time: 'Tiempo vivo', pace: 'Ritmo', next: 'Próximo objetivo', seconds: 's', start: 'Empezar', over: '¡Fin del juego!', newBest: '🎉 ¡Nuevo récord!', restart: 'Reiniciar (R)', pause: 'Pausa (P)', paused: 'En pausa', resume: 'Seguir (P)', soundOn: 'Activar sonido', soundOff: 'Silenciar', area: 'Área de juego Dot Runner', playing: 'Corriendo', hint: 'Toca/clic/espacio para saltar · esquiva bloques, coge monedas' },
 } as const;
 
 const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
@@ -42,6 +44,8 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [score, setScore] = useState(0);
     const [best, setBest] = useState(0);
     const [coins, setCoins] = useState(0);
+    const [paceLevel, setPaceLevel] = useState(1);
+    const paceMultiplier = (1 + (paceLevel - 1) * 0.08).toFixed(2);
     const [muted, setMuted] = useState(false);
     const [isNewBest, setIsNewBest] = useState(false);
     const [finalFrames, setFinalFrames] = useState(0);
@@ -82,13 +86,14 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             if (Number.isFinite(stored) && stored > 0) legacy = stored;
         } catch { /* ignore */ }
         const initialBest = Math.max(unified, legacy);
-        if (legacy > unified) recordBest('dot-runner', legacy, 'score');
+        if (legacy > unified) recordBest('dot-runner', legacy, 'score', undefined, { trackPlay: false });
         setBest(initialBest);
         const saved = loadDotRunnerSave();
         if (saved) {
             game.current = saved.state;
             setScore(saved.state.score);
             setCoins(saved.state.coins);
+            setPaceLevel(getDotRunnerPace(saved.state.elapsedFrames).level);
             statusRef.current = 'paused';
             setStatus('paused');
         }
@@ -100,6 +105,7 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         game.current = createDotRunner(seed);
         setScore(0);
         setCoins(0);
+        setPaceLevel(1);
         setIsNewBest(false);
         setFinalFrames(0);
         statusRef.current = 'playing';
@@ -144,18 +150,22 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 const previousCoins = game.current.coins;
                 game.current = next;
                 setScore((previous) => previous === next.score ? previous : next.score);
+                const nextPace = getDotRunnerPace(next.elapsedFrames).level;
+                setPaceLevel((previous) => previous === nextPace ? previous : nextPace);
                 if (next.coins !== previousCoins) { setCoins(next.coins); playTone('coin'); }
                 if (next.status === 'over') {
                     clearDotRunnerSave();
                     statusRef.current = 'over';
                     setStatus('over');
                     const beat = next.score > bestRef.current;
+                    recordAchievementEvent('dot-runner', 'played');
+                    if (beat && next.score > 0) recordAchievementEvent('dot-runner', 'personal-best');
                     setFinalFrames(next.elapsedFrames);
                     setIsNewBest(beat && next.score > 0);
                     playTone('crash');
                     if (beat && next.score > 0 && !prefersReducedMotion) confetti({ particleCount: 80, spread: 68, origin: { y: 0.62 } });
                     if (beat) {
-                        const savedBest = recordBest('dot-runner', next.score, 'score');
+                        const savedBest = recordBest('dot-runner', next.score, 'score', undefined, { trackPlay: false });
                         setBest(savedBest.value);
                         try { localStorage.setItem(BEST_KEY, String(next.score)); } catch { /* ignore */ }
                     }
@@ -225,10 +235,11 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
     return (
         <GameContainer title={t.title} subtitle={t.subtitle} onReset={reset}>
-            <div className="flex justify-between items-center mb-3 text-xs font-bold text-muted-foreground">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-muted-foreground">
                 <span>{t.score}: <span className="text-primary text-base font-black">{score}</span></span>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center justify-end gap-3">
                     <span>{t.coins}: <span className="text-amber-500 font-black">{coins}</span></span>
+                    <span>{t.pace}: <span className="text-primary font-black">×{paceMultiplier}</span></span>
                     <span>{t.best}: <span className="text-chart-2 font-black">{best}</span></span>
                     {(status === 'playing' || status === 'paused') && (
                         <button
@@ -262,10 +273,11 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                                 {isNewBest && <p className="text-sm font-black text-amber-500">{t.newBest}</p>}
                                 <p className="text-2xl font-black text-destructive">{t.over}</p>
                                 <p className="text-lg font-bold text-foreground">{t.score}: {score}</p>
-                                <div className="grid w-full max-w-xs grid-cols-3 gap-2 text-xs text-foreground">
+                                <div className="grid w-full max-w-xs grid-cols-2 gap-2 text-xs text-foreground">
                                     <div className="rounded-xl bg-muted/80 p-2"><span className="block text-muted-foreground">{t.coins}</span><b>{coins}</b></div>
                                     <div className="rounded-xl bg-muted/80 p-2"><span className="block text-muted-foreground">{t.time}</span><b>{Math.max(1, Math.round(finalFrames / 60))} {t.seconds}</b></div>
-                                    <div className="rounded-xl bg-muted/80 p-2"><span className="block text-muted-foreground">{t.next}</span><b>{Math.max(best, score) + 1}</b></div>
+                                    <div className="rounded-xl bg-muted/80 p-2"><span className="block text-muted-foreground">{t.pace}</span><b>×{paceMultiplier}</b></div>
+                                    <div className="rounded-xl bg-primary/10 p-2"><span className="block text-muted-foreground">{t.next}</span><b>{nextDotRunnerGoal(best, score)}</b></div>
                                 </div>
                             </>
                         )}
@@ -284,7 +296,7 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             </div>
 
             <p className="mt-4 text-center text-[10px] text-muted-foreground font-medium">{t.hint}</p>
-            <p className="sr-only" role="status" aria-live="polite">{status === 'playing' ? `${t.playing}. ${t.score} ${score}. ${t.coins} ${coins}` : status === 'paused' ? t.paused : status === 'over' ? `${t.over} ${t.score} ${score}` : ''}</p>
+            <p className="sr-only" role="status" aria-live="polite">{status === 'playing' ? `${t.playing}. ${t.score} ${score}. ${t.coins} ${coins}. ${t.pace} ${paceMultiplier}` : status === 'paused' ? t.paused : status === 'over' ? `${t.over} ${t.score} ${score}` : ''}</p>
         </GameContainer>
     );
 };

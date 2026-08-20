@@ -4,11 +4,33 @@ import {
   DOT_RUNNER_GROUND,
   DOT_RUNNER_PLAYER_SIZE,
   createDotRunner,
+  getDotRunnerPace,
   jumpDotRunner,
+  nextDotRunnerGoal,
   stepDotRunner,
 } from "./dot-runner";
 
 describe("dot runner engine", () => {
+  it("raises pace every ten seconds and caps it", () => {
+    expect(getDotRunnerPace(0)).toEqual({ level: 1, multiplier: 1, nextLevelFrame: 600 });
+    expect(getDotRunnerPace(600)).toEqual({ level: 2, multiplier: 1.08, nextLevelFrame: 1200 });
+    expect(getDotRunnerPace(3_000)).toEqual({ level: 6, multiplier: 1.4, nextLevelFrame: null });
+    expect(getDotRunnerPace(Number.NaN).level).toBe(1);
+  });
+
+  it("moves the same obstacle farther at a higher pace", () => {
+    const obstacle = { x: 500, y: 320, w: 20, h: 30, speed: 5 };
+    const early = stepDotRunner({ ...createDotRunner(10), elapsedFrames: 0, obstacles: [obstacle], spawnCooldown: 0 } as ReturnType<typeof createDotRunner>);
+    const late = stepDotRunner({ ...createDotRunner(10), elapsedFrames: 3_000, obstacles: [obstacle], spawnCooldown: 0 } as ReturnType<typeof createDotRunner>);
+    expect(late.obstacles[0].x).toBeLessThan(early.obstacles[0].x);
+  });
+
+  it("sets a meaningful PB target instead of score plus one", () => {
+    expect(nextDotRunnerGoal(0, 0)).toBe(50);
+    expect(nextDotRunnerGoal(80, 72)).toBe(90);
+    expect(nextDotRunnerGoal(245, 250)).toBe(280);
+  });
+
   it("replays the same seed and jump schedule byte-for-byte", () => {
     const replay = () => {
       let state = createDotRunner(0x12345678);
