@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { chessApplyState, createInitialChessState, type ChessMove } from "./ai/chess";
-import { capturedChessPiece, chessMaterialBalance, chessSquareName, formatChessMove } from "./chess-notation";
+import { capturedChessPiece, chessMaterialBalance, chessReviewMoment, chessSquareName, formatChessMove } from "./chess-notation";
 
 describe("chess notation and material", () => {
   it("formats quiet moves and square names", () => {
@@ -25,6 +25,24 @@ describe("chess notation and material", () => {
     state.board[1][0] = "P";
     const promotion: ChessMove = { from: [1, 0], to: [0, 0], promotion: "q" };
     expect(formatChessMove(state, promotion, chessApplyState(state, promotion))).toContain("a8=Q");
+  });
+
+  it("finds the opponent's last forcing move for a loss review", () => {
+    const history = [
+      { notation: "e4", captured: null, white: true },
+      { notation: "e5", captured: null, white: false },
+      { notation: "Nf3", captured: null, white: true },
+      { notation: "Qxh2+", captured: "P", white: false },
+      { notation: "Ke2", captured: null, white: true },
+      { notation: "Qe2#", captured: null, white: false },
+    ];
+    expect(chessReviewMoment(history, true)).toEqual({ notation: "Qe2#", moveNumber: 3, kind: "check" });
+    expect(chessReviewMoment(history.slice(0, 5), true)).toEqual({ notation: "Qxh2+", moveNumber: 2, kind: "capture" });
+  });
+
+  it("falls back to the last move when there was no forcing move", () => {
+    expect(chessReviewMoment([{ notation: "e4", captured: null, white: true }], true)).toEqual({ notation: "e4", moveNumber: 1, kind: "last-move" });
+    expect(chessReviewMoment([])).toBeNull();
   });
 
   it("scores captured material from White's perspective", () => {

@@ -8,7 +8,7 @@ import {
 import type { AiLevel, GameMode } from '../../lib/games/ai/types';
 import { getRecord, recordResult, type GameRecord } from '../../lib/games/records';
 import { clearChessSave, loadChessSave, storeChessSave, type ChessMoveRecord } from '../../lib/games/chess-save';
-import { capturedChessPiece, chessMaterialBalance, formatChessMove } from '../../lib/games/chess-notation';
+import { capturedChessPiece, chessMaterialBalance, chessReviewMoment, formatChessMove } from '../../lib/games/chess-notation';
 import {
   CHESS_AI_BUDGET_MS, CHESS_AI_MAX_DEPTH, isCurrentChessSearchResponse,
   type ChessSearchRequest, type ChessSearchResponse,
@@ -44,6 +44,24 @@ const C2_COPY: Record<Locale, { flip: string; moves: string; captured: string; m
   zh: { flip: "翻转棋盘", moves: "棋谱", captured: "被吃棋子", material: "子力", lastMove: "上一步", noMoves: "尚未走棋" },
 };
 
+const AI_DESC: Record<Locale, Record<AiLevel, string>> = {
+  ko: { 1: "최대 2 ply · 80ms", 2: "최대 4 ply · 250ms", 3: "최대 6 ply · 800ms" },
+  en: { 1: "Up to 2 ply · 80ms", 2: "Up to 4 ply · 250ms", 3: "Up to 6 ply · 800ms" },
+  ja: { 1: "最大2 ply · 80ms", 2: "最大4 ply · 250ms", 3: "最大6 ply · 800ms" },
+  zh: { 1: "最多2 ply · 80ms", 2: "最多4 ply · 250ms", 3: "最多6 ply · 800ms" },
+  fr: { 1: "Jusqu’à 2 ply · 80ms", 2: "Jusqu’à 4 ply · 250ms", 3: "Jusqu’à 6 ply · 800ms" },
+  es: { 1: "Hasta 2 ply · 80ms", 2: "Hasta 4 ply · 250ms", 3: "Hasta 6 ply · 800ms" },
+};
+
+const REVIEW_COPY: Record<Locale, { title: string; move: string; capture: string; check: string; last: string; difficulty: string }> = {
+  ko: { title: "패배 복기", move: "번째 수", capture: "이 수에서 기물을 잃었습니다. 다음 판에는 상대가 공격하는 칸을 먼저 확인해 보세요.", check: "이 체크가 응수 범위를 좁혔습니다. 체크를 막기 전에 킹이 갈 수 있는 칸도 함께 보세요.", last: "마지막 수에서 선택지가 닫혔습니다. 한 수 전의 안전한 대안을 찾아보세요.", difficulty: "AI 난이도" },
+  en: { title: "Loss review", move: "move", capture: "This move lost material. Next game, scan every square the opponent attacks before committing.", check: "This check narrowed your replies. Before blocking, also count the king’s escape squares.", last: "Choices closed on the final move. Look for a safer alternative one move earlier.", difficulty: "AI difficulty" },
+  ja: { title: "敗局の振り返り", move: "手目", capture: "この手で駒を失いました。次は相手の利いているマスを先に確認しましょう。", check: "このチェックで応手が狭まりました。受ける前にキングの逃げ道も確認しましょう。", last: "最後の手で選択肢が閉じました。一手前の安全な代案を探しましょう。", difficulty: "AI難易度" },
+  zh: { title: "败局复盘", move: "回合", capture: "这一步损失了子力。下次落子前先检查对手控制的格子。", check: "这次将军缩小了应对范围。挡将前也要查看王的逃生格。", last: "最后一步使选择关闭。回看前一步是否有更安全的方案。", difficulty: "AI难度" },
+  fr: { title: "Revoir la défaite", move: "coup", capture: "Ce coup a perdu du matériel. Vérifiez d’abord toutes les cases attaquées par l’adversaire.", check: "Cet échec a réduit vos réponses. Comptez aussi les cases de fuite du roi avant de parer.", last: "Les choix se sont fermés au dernier coup. Cherchez une option plus sûre un coup avant.", difficulty: "Difficulté IA" },
+  es: { title: "Revisión de la derrota", move: "jugada", capture: "Esta jugada perdió material. Revisa primero todas las casillas atacadas por el rival.", check: "Este jaque redujo tus respuestas. Cuenta también las casillas de escape del rey antes de bloquear.", last: "Las opciones se cerraron en la última jugada. Busca una alternativa segura un turno antes.", difficulty: "Dificultad IA" },
+};
+
 const C3_COPY: Record<Locale, { summary: string; movesPlayed: string; finalMaterial: string; keyMoment: string; noKeyMoment: string; playAgain: string }> = {
   ko: { summary: "대국 결과", movesPlayed: "총 수", finalMaterial: "최종 기물 점수", keyMoment: "마지막 결정적 장면", noKeyMoment: "기물 손실 없이 승부가 결정됐습니다", playAgain: "다시 대국" },
   en: { summary: "Game summary", movesPlayed: "Moves played", finalMaterial: "Final material", keyMoment: "Last key moment", noKeyMoment: "The game ended without a capture", playAgain: "Play again" },
@@ -57,6 +75,7 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
   const t = i18n[locale] ?? i18n.en;
   const c2 = C2_COPY[locale] ?? C2_COPY.en;
   const c3 = C3_COPY[locale] ?? C3_COPY.en;
+  const reviewCopy = REVIEW_COPY[locale] ?? REVIEW_COPY.en;
 
   const [position, setPosition] = useState(createInitialChessState);
   const board = position.board;
@@ -66,6 +85,7 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
   const [gameEnd, setGameEnd] = useState<GameEnd>(null);
   const [mode, setMode] = useState<GameMode>('local');
   const [level, setLevel] = useState<AiLevel>(2);
+  const aiDescription = (AI_DESC[locale] ?? AI_DESC.en)[level];
   const [thinking, setThinking] = useState(false);
   const [record, setRecord] = useState<GameRecord | null>(null);
   const [restored, setRestored] = useState(false);
@@ -278,6 +298,9 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
   const capturedPieces = moveHistory.flatMap((entry) => entry.captured ? [entry.captured] : []);
   const material = chessMaterialBalance(capturedPieces);
   const keyMoment = [...moveHistory].reverse().find((entry) => entry.captured || /[+#]$/.test(entry.notation));
+  const humanLost = Boolean(gameEnd && mode === 'ai' && gameEnd.result === (AI_IS_WHITE ? 'white' : 'black'));
+  const reviewMoment = humanLost ? chessReviewMoment(moveHistory, !AI_IS_WHITE) : null;
+  const reviewTip = reviewMoment?.kind === 'capture' ? reviewCopy.capture : reviewMoment?.kind === 'check' ? reviewCopy.check : reviewCopy.last;
   const turnSummary = thinking ? t.thinking : `${isWhiteTurn ? t.white : t.black} ${t.turn}${inCheck ? ` · ${t.check}` : ''}${moveHistory.length ? ` · ${c2.lastMove}: ${moveHistory.at(-1)?.notation}` : ''}`;
 
   const flipBoard = () => {
@@ -322,6 +345,11 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
               </button>
             ))}
           </div>
+        )}
+        {mode === 'ai' && (
+          <p className="basis-full text-[11px] font-medium text-muted-foreground">
+            {reviewCopy.difficulty}: {level === 1 ? t.level1 : level === 2 ? t.level2 : t.level3} · {aiDescription}
+          </p>
         )}
         {mode === 'ai' && record && (record.w + record.l + record.d > 0) && (
           <span className="ml-auto text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
@@ -407,6 +435,13 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                 <div className="rounded-xl bg-muted p-2"><dt className="text-muted-foreground">{c3.finalMaterial}</dt><dd className="font-black">{material > 0 ? `+${material}` : material}</dd></div>
                 <div className="col-span-2 rounded-xl bg-muted p-2"><dt className="text-muted-foreground">{c3.keyMoment}</dt><dd className="font-black">{keyMoment?.notation ?? c3.noKeyMoment}</dd></div>
               </dl>
+              {humanLost && reviewMoment && (
+                <div className="mb-5 rounded-2xl border border-amber-300/60 bg-amber-50 p-3 text-left text-xs text-stone-800">
+                  <p className="font-black text-amber-900">{reviewCopy.title} · {reviewMoment.moveNumber}{reviewCopy.move} · {reviewMoment.notation}</p>
+                  <p className="mt-1 leading-5">{reviewTip}</p>
+                  <p className="mt-2 text-[10px] font-bold text-stone-500">{reviewCopy.difficulty}: {level === 1 ? t.level1 : level === 2 ? t.level2 : t.level3} · {aiDescription}</p>
+                </div>
+              )}
               <button type="button" onClick={reset} autoFocus className="min-h-11 px-10 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg">
                 {c3.playAgain}
               </button>

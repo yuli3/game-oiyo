@@ -32,6 +32,26 @@ export function formatChessMove(state: ChessState, move: ChessMove, next: ChessS
   return `${PIECE_LETTER[piece.toLowerCase()]}${pawnFile}${captured ? "x" : ""}${chessSquareName(move.to)}${promotion}${check}`;
 }
 
+export type ChessReviewEntry = { notation: string; captured: string | null; white: boolean };
+export type ChessReviewMoment = { notation: string; moveNumber: number; kind: "capture" | "check" | "last-move" };
+
+/** Last forcing move by the opponent, from the requested player's perspective. */
+export function chessReviewMoment(history: ChessReviewEntry[], perspectiveWhite = true): ChessReviewMoment | null {
+  if (!history.length) return null;
+  let index = -1;
+  for (let i = history.length - 1; i >= 0; i -= 1) {
+    const entry = history[i];
+    if (entry.white !== perspectiveWhite && (entry.captured || /[+#]$/.test(entry.notation))) { index = i; break; }
+  }
+  if (index < 0) index = history.length - 1;
+  const entry = history[index];
+  return {
+    notation: entry.notation,
+    moveNumber: Math.floor(index / 2) + 1,
+    kind: entry.captured ? "capture" : /[+#]$/.test(entry.notation) ? "check" : "last-move",
+  };
+}
+
 export function chessMaterialBalance(captured: string[]): number {
   return captured.reduce((balance, piece) => balance + (isWhitePiece(piece) ? -1 : 1) * PIECE_VALUE[piece.toLowerCase()], 0);
 }
