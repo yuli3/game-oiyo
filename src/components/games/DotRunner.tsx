@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import confetti from 'canvas-confetti';
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { frameScale } from '../../lib/games/time-contracts';
+import { loadReplayEnvelope, saveReplayEnvelope, verifyReplayEnvelope, type ReplayInput } from '../../lib/games/replay';
+import { createDotRunnerReplay, dotRunnerGhostTrack, replayDotRunner, type DotRunnerReplayAction } from '../../lib/games/dot-runner-replay';
 import { getBest, recordAchievementEvent, recordBest } from '../../lib/games/records';
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 import { clearDotRunnerSave, loadDotRunnerSave, storeDotRunnerSave } from '../../lib/games/dot-runner-save';
@@ -36,8 +38,18 @@ const COPY = {
     es: { title: 'Dot Runner', subtitle: 'Sigue el ritmo, supera obstáculos y recoge monedas', score: 'Puntos', best: 'Récord', coins: 'Monedas', time: 'Tiempo vivo', pace: 'Ritmo', next: 'Próximo objetivo', seconds: 's', start: 'Empezar', over: '¡Fin del juego!', newBest: '🎉 ¡Nuevo récord!', restart: 'Reiniciar (R)', pause: 'Pausa (P)', paused: 'En pausa', resume: 'Seguir (P)', soundOn: 'Activar sonido', soundOff: 'Silenciar', area: 'Área de juego Dot Runner', playing: 'Corriendo', hint: 'Toca/clic/espacio para saltar · esquiva bloques, coge monedas' },
 } as const;
 
+const REPLAY_COPY: Record<keyof typeof COPY, { same: string; fresh: string; ghost: string }> = {
+    ko: { same: '같은 코스 재도전', fresh: '새 코스', ghost: 'PB 고스트' },
+    en: { same: 'Retry same course', fresh: 'New course', ghost: 'PB ghost' },
+    ja: { same: '同じコースで再挑戦', fresh: '新しいコース', ghost: 'PBゴースト' },
+    zh: { same: '重试同一路线', fresh: '新路线', ghost: 'PB幽灵' },
+    fr: { same: 'Rejouer ce parcours', fresh: 'Nouveau parcours', ghost: 'Fantôme PB' },
+    es: { same: 'Reintentar recorrido', fresh: 'Nuevo recorrido', ghost: 'Fantasma PB' },
+};
+
 const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const t = COPY[(locale as keyof typeof COPY)] ?? COPY.en;
+    const replayCopy = REPLAY_COPY[(locale as keyof typeof COPY)] ?? REPLAY_COPY.en;
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [status, setStatus] = useState<Status>('idle');
@@ -49,6 +61,7 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [muted, setMuted] = useState(false);
     const [isNewBest, setIsNewBest] = useState(false);
     const [finalFrames, setFinalFrames] = useState(0);
+    const [hasGhost, setHasGhost] = useState(false);
     const prefersReducedMotion = usePrefersReducedMotion();
     const mutedRef = useRef(false);
     mutedRef.current = muted;
@@ -60,6 +73,9 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     bestRef.current = best;
 
     const game = useRef<DotRunnerState | null>(null);
+    const seedRef = useRef<number | null>(null);
+    const replayInputsRef = useRef<ReplayInput<DotRunnerReplayAction>[]>([]);
+    const ghostTrackRef = useRef<number[]>([]);
 
     const playTone = useCallback((kind: 'jump' | 'coin' | 'crash') => {
         if (mutedRef.current || typeof window === 'undefined') return;
@@ -90,6 +106,10 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         setBest(initialBest);
         const saved = loadDotRunnerSave();
         if (saved) {
+            seedRef.current = null;
+            replayInputsRef.current = [];
+            ghostTrackRef.current = [];
+            setHasGhost(false);
             game.current = saved.state;
             setScore(saved.state.score);
             setCoins(saved.state.coins);
@@ -99,10 +119,18 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         }
     }, []);
 
-    const reset = useCallback(() => {
+    const startRun = useCallback((seedOverride?: number) => {
         clearDotRunnerSave();
-        const seed = typeof crypto !== 'undefined' && crypto.getRandomValues ? crypto.getRandomValues(new Uint32Array(1))[0] : Date.now();
-        game.current = createDotRunner(seed);
+        const seed = seedOverride ?? (typeof crypto !== 'undefined' && crypto.getRandomValues ? crypto.getRandomValues(new Uint32Array(1))[0] : Date.now());
+        seedRef.current = seed >>> 0;
+        replayInputsRef.current = [];
+        ghostTrackRef.current = [];
+        const prior = loadReplayEnvelope<DotRunnerReplayAction>('dot-runner');
+        if (prior?.seed === seedRef.current) {
+            try { if (verifyReplayEnvelope(prior, replayDotRunner)) ghostTrackRef.current = dotRunnerGhostTrack(prior); } catch { ghostTrackRef.current = []; }
+        }
+        setHasGhost(ghostTrackRef.current.length > 0);
+        game.current = createDotRunner(seedRef.current);
         setScore(0);
         setCoins(0);
         setPaceLevel(1);
@@ -111,6 +139,8 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         statusRef.current = 'playing';
         setStatus('playing');
     }, []);
+    const reset = useCallback(() => startRun(), [startRun]);
+    const retrySame = useCallback(() => startRun(seedRef.current ?? undefined), [startRun]);
 
     const jump = useCallback(() => {
         if (statusRef.current === 'idle' || statusRef.current === 'over') { reset(); return; }
@@ -119,7 +149,10 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         if (current) {
             const next = jumpDotRunner(current);
             game.current = next;
-            if (next !== current) playTone('jump');
+            if (next !== current) {
+                replayInputsRef.current.push({ tick: Math.floor(current.elapsedFrames), input: { type: 'jump' } });
+                playTone('jump');
+            }
         }
     }, [playTone, reset]);
 
@@ -141,35 +174,49 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
         let raf: number;
         let lastFrame: number | null = null;
+        let accumulator = 0;
         const loop = (now: number) => {
             const scale = frameScale(lastFrame, now);
             lastFrame = now;
 
             if (statusRef.current === 'playing' && game.current) {
-                const next = stepDotRunner(game.current, scale);
-                const previousCoins = game.current.coins;
-                game.current = next;
-                setScore((previous) => previous === next.score ? previous : next.score);
-                const nextPace = getDotRunnerPace(next.elapsedFrames).level;
-                setPaceLevel((previous) => previous === nextPace ? previous : nextPace);
-                if (next.coins !== previousCoins) { setCoins(next.coins); playTone('coin'); }
-                if (next.status === 'over') {
-                    clearDotRunnerSave();
-                    statusRef.current = 'over';
-                    setStatus('over');
-                    const beat = next.score > bestRef.current;
-                    recordAchievementEvent('dot-runner', 'played');
-                    if (beat && next.score > 0) recordAchievementEvent('dot-runner', 'personal-best');
-                    setFinalFrames(next.elapsedFrames);
-                    setIsNewBest(beat && next.score > 0);
-                    playTone('crash');
-                    if (beat && next.score > 0 && !prefersReducedMotion) confetti({ particleCount: 80, spread: 68, origin: { y: 0.62 } });
-                    if (beat) {
-                        const savedBest = recordBest('dot-runner', next.score, 'score', undefined, { trackPlay: false });
-                        setBest(savedBest.value);
-                        try { localStorage.setItem(BEST_KEY, String(next.score)); } catch { /* ignore */ }
+                accumulator += scale;
+                let steps = 0;
+                while (accumulator >= 1 && steps < 4 && game.current?.status === 'playing') {
+                    const previousCoins = game.current.coins;
+                    const next = stepDotRunner(game.current, 1);
+                    game.current = next;
+                    accumulator -= 1;
+                    steps += 1;
+                    setScore((previous) => previous === next.score ? previous : next.score);
+                    const nextPace = getDotRunnerPace(next.elapsedFrames).level;
+                    setPaceLevel((previous) => previous === nextPace ? previous : nextPace);
+                    if (next.coins !== previousCoins) { setCoins(next.coins); playTone('coin'); }
+                    if (next.status === 'over') {
+                        clearDotRunnerSave();
+                        statusRef.current = 'over';
+                        setStatus('over');
+                        const beat = next.score > bestRef.current;
+                        if (beat && next.score > 0 && seedRef.current !== null) {
+                            try {
+                                const replay = createDotRunnerReplay(seedRef.current, next, replayInputsRef.current);
+                                if (verifyReplayEnvelope(replay, replayDotRunner)) saveReplayEnvelope(replay);
+                            } catch { /* drifting runs never replace the PB replay */ }
+                        }
+                        recordAchievementEvent('dot-runner', 'played');
+                        if (beat && next.score > 0) recordAchievementEvent('dot-runner', 'personal-best');
+                        setFinalFrames(next.elapsedFrames);
+                        setIsNewBest(beat && next.score > 0);
+                        playTone('crash');
+                        if (beat && next.score > 0 && !prefersReducedMotion) confetti({ particleCount: 80, spread: 68, origin: { y: 0.62 } });
+                        if (beat) {
+                            const savedBest = recordBest('dot-runner', next.score, 'score', undefined, { trackPlay: false });
+                            setBest(savedBest.value);
+                            try { localStorage.setItem(BEST_KEY, String(next.score)); } catch { /* ignore */ }
+                        }
                     }
                 }
+                if (steps === 4) accumulator = Math.min(accumulator, 1);
             }
 
             // draw
@@ -181,6 +228,11 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
             ctx.fillStyle = '#3b82f6';
             const current = game.current;
+            const ghostY = current ? ghostTrackRef.current[Math.floor(current.elapsedFrames)] : undefined;
+            if (Number.isFinite(ghostY)) {
+                ctx.save(); ctx.globalAlpha = 0.42; ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 3;
+                ctx.strokeRect(DOT_RUNNER_PLAYER_X, ghostY!, DOT_RUNNER_PLAYER_SIZE, DOT_RUNNER_PLAYER_SIZE); ctx.restore();
+            }
             ctx.fillRect(DOT_RUNNER_PLAYER_X, current?.playerY ?? DOT_RUNNER_HEIGHT - DOT_RUNNER_GROUND - DOT_RUNNER_PLAYER_SIZE, DOT_RUNNER_PLAYER_SIZE, DOT_RUNNER_PLAYER_SIZE);
 
             ctx.fillStyle = '#ef4444';
@@ -241,6 +293,7 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     <span>{t.coins}: <span className="text-amber-500 font-black">{coins}</span></span>
                     <span>{t.pace}: <span className="text-primary font-black">×{paceMultiplier}</span></span>
                     <span>{t.best}: <span className="text-chart-2 font-black">{best}</span></span>
+                    {hasGhost && <span className="text-amber-600">◇ {replayCopy.ghost}</span>}
                     {(status === 'playing' || status === 'paused') && (
                         <button
                             onClick={togglePause}
@@ -283,12 +336,17 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         )}
                         {status === 'paused' ? (
                             <><p className="text-2xl font-black text-foreground">⏸</p><p className="font-bold text-foreground">{t.paused}</p><button type="button" onClick={togglePause} className="min-h-11 rounded-full bg-primary px-8 py-2 font-bold text-primary-foreground">{t.resume}</button></>
+                        ) : status === 'over' ? (
+                            <div className="flex flex-wrap justify-center gap-2">
+                                <button type="button" onClick={retrySame} disabled={seedRef.current === null} className="min-h-11 rounded-full bg-primary px-6 py-2 font-bold text-primary-foreground disabled:opacity-50">{replayCopy.same}</button>
+                                <button type="button" onClick={reset} className="min-h-11 rounded-full border bg-muted px-6 py-2 font-bold">{replayCopy.fresh}</button>
+                            </div>
                         ) : (
                             <button
                                 onClick={reset}
                                 className="px-8 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity"
                             >
-                                {status === 'over' ? t.restart : t.start}
+                                {t.start}
                             </button>
                         )}
                     </div>

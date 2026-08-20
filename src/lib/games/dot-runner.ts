@@ -130,6 +130,21 @@ function simulateSubstep(state: DotRunnerState, scale: number): DotRunnerState {
   return next;
 }
 
+export function dotRunnerFingerprint(state: DotRunnerState): string {
+  return JSON.stringify({
+    playerY: Number(state.playerY.toFixed(6)),
+    velocityY: Number(state.velocityY.toFixed(6)),
+    jumping: state.jumping,
+    score: state.score,
+    coins: state.coins,
+    elapsedFrames: state.elapsedFrames,
+    rngState: state.rngState,
+    status: state.status,
+    obstacles: state.obstacles.map(entity => [Number(entity.x.toFixed(4)), Number(entity.y.toFixed(4)), entity.w, entity.h, Number(entity.speed.toFixed(4))]),
+    items: state.items.map(entity => [Number(entity.x.toFixed(4)), Number(entity.y.toFixed(4)), entity.w, entity.h, Number(entity.speed.toFixed(4))]),
+  });
+}
+
 /** Advances at most four 60 Hz frames, subdividing long deltas for collision safety. */
 export function stepDotRunner(state: DotRunnerState, frameScale = 1): DotRunnerState {
   if (state.status !== "playing" || !Number.isFinite(frameScale) || frameScale <= 0) return state;
