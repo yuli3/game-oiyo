@@ -33,5 +33,16 @@ export function cpuDominoes(state: DominoesState, level: AiLevel): DominoesState
   return state.passes + 1 >= 2 ? finishBlocked(prepared, history) : { ...prepared, turn: "you", passes: state.passes + 1, history };
 }
 
+export type DominoCpuReview = { tile:Tile; end:End; draws:number; reason:'variation'|'heavy-pips'|'double'|'flexibility' };
+export function dominoCpuReview(state:DominoesState,level:AiLevel):DominoCpuReview|null{
+  if(state.status!=="playing"||state.turn!=="cpu")return null;
+  const next=cpuDominoes(state,level);if(next.board.length===state.board.length)return null;
+  const before=new Set(state.board.map(tile=>tile.id));const placed=next.board.find(tile=>!before.has(tile.id));if(!placed)return null;
+  const end:End=next.board[0].id===placed.id?'left':'right';const source=next.cpu.length<state.cpu.length?state.cpu:[...state.cpu,...state.bone.slice(0,next.draws-state.draws)];const tile=source.find(item=>item.id===placed.id);if(!tile)return null;
+  const remaining=source.filter(item=>item.id!==tile.id),ends=dominoEnds(next),flex=remaining.filter(item=>tileFits(item,ends.left)||tileFits(item,ends.right)).length;
+  const reason=level===1?'variation':tile.a===tile.b?'double':level===3&&flex>0?'flexibility':'heavy-pips';
+  return{tile,end,draws:next.draws-state.draws,reason};
+}
+
 export function replayDominoes(seed: number, level: AiLevel, actions: readonly DominoAction[]): DominoesState | null { let state = createDominoes(seed); for (const action of actions) { const next = action.kind === "play" ? playDominoes(state, action.tileId, action.end) : action.kind === "draw" ? drawDominoes(state) : action.kind === "pass" ? passDominoes(state) : cpuDominoes(state, level); if (next === state) return null; state = next; if (state.status === "over" && action !== actions.at(-1)) return null; } return state; }
 export function dominoesAnalysis(state: DominoesState) { return { yourPips: handPips(state.player), cpuPips: handPips(state.cpu), draws: state.draws, plays: state.plays, blocked: state.passes >= 2 }; }

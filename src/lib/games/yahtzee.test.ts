@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { categoryScore, initializeGame, legalCategories, recommendYahtzeeCategory, rollDice, scoreCategory, scoreForState, toggleHoldDie, type DiceValue, type GameState } from "./yahtzee";
+import { categoryScore, initializeGame, legalCategories, recommendYahtzeeCategory, reviewYahtzeeChoice, rollDice, scoreCategory, scoreForState, toggleHoldDie, type DiceValue, type GameState } from "./yahtzee";
 
 describe("yahtzee: categoryScore (pure scoring)", () => {
   it("scores upper-section categories as count × face value", () => {
@@ -154,6 +154,12 @@ describe("yahtzee: scoreCategory (state transitions)", () => {
     const snapshot = structuredClone(state);
     expect(recommendYahtzeeCategory(state)).toMatchObject({ category: "threeOfAKind", score: 29 });
     expect(state).toEqual(snapshot);
+  });
+
+  it("reviews the immediate opportunity cost of a category choice", () => {
+    const state = stateWithDice([6, 6, 6, 6, 5]);
+    expect(reviewYahtzeeChoice(state,"chance")).toMatchObject({chosen:"chance",chosenScore:29,recommended:"threeOfAKind",recommendedScore:29,opportunityCost:0});
+    expect(reviewYahtzeeChoice(state,"aces")?.opportunityCost).toBe(29);
   });
 
   it("rejects out-of-range hold indexes without mutating state", () => {

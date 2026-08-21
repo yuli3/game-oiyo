@@ -178,6 +178,12 @@ export function recommendYahtzeeCategory(state: GameState): YahtzeeRecommendatio
   };
 }
 
+export interface YahtzeeChoiceReview { chosen:Category; chosenScore:number; recommended:Category; recommendedScore:number; opportunityCost:number; reason:YahtzeeRecommendation['reason'] }
+export function reviewYahtzeeChoice(state:GameState,chosen:Category):YahtzeeChoiceReview|null{
+  if(!legalCategories(state).includes(chosen))return null;const recommendation=recommendYahtzeeCategory(state);if(!recommendation)return null;const chosenScore=scoreForState(state,chosen);
+  return{chosen,chosenScore,recommended:recommendation.category,recommendedScore:recommendation.score,opportunityCost:Math.max(0,recommendation.score-chosenScore),reason:recommendation.reason};
+}
+
 function withPossibleScores(state: GameState): GameState {
   const upper = { ...state.scorecard.upper };
   const lower = { ...state.scorecard.lower };

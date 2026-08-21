@@ -5,13 +5,22 @@ import type { Locale } from "../../lib/i18n";
 import {
   tileFits, type Tile, type End, type AiLevel,
 } from "../../lib/games/ai/dominoes";
-import { cpuDominoes, createDominoes, dominoEnds, dominoHasMove, dominoesAnalysis, drawDominoes, passDominoes, playDominoes, type DominoesState } from "../../lib/games/dominoes";
 import { clearDominoesSave, loadDominoesSave, storeDominoesSave } from "../../lib/games/dominoes-save";
+import { cpuDominoes, createDominoes, dominoCpuReview, dominoEnds, dominoHasMove, dominoesAnalysis, drawDominoes, passDominoes, playDominoes, type DominoCpuReview, type DominoesState } from "../../lib/games/dominoes";
 import { getRecord, recordResult, type GameRecord } from "../../lib/games/records";
 
 const AI_DELAY = 800;
 const extra: Record<Locale,{pause:string;resume:string;restored:string;paused:string;played:string;drawn:string;pips:string;sound:string}>={
   ko:{pause:"일시정지",resume:"계속",restored:"저장된 게임 복원",paused:"게임 일시정지",played:"놓은 패",drawn:"가져온 패",pips:"남은 점수",sound:"소리"},en:{pause:"Pause",resume:"Resume",restored:"Saved game restored",paused:"Game paused",played:"played",drawn:"drawn",pips:"pips",sound:"Sound"},ja:{pause:"一時停止",resume:"再開",restored:"保存ゲームを復元",paused:"ゲーム一時停止",played:"配置",drawn:"ドロー",pips:"残点",sound:"音"},zh:{pause:"暂停",resume:"继续",restored:"已恢复游戏",paused:"游戏已暂停",played:"出牌",drawn:"摸牌",pips:"剩余点数",sound:"声音"},fr:{pause:"Pause",resume:"Reprendre",restored:"Partie restaurée",paused:"Partie en pause",played:"posés",drawn:"piochés",pips:"points",sound:"Son"},es:{pause:"Pausa",resume:"Continuar",restored:"Partida restaurada",paused:"Partida en pausa",played:"jugadas",drawn:"robadas",pips:"puntos",sound:"Sonido"}
+};
+
+const AI_INFO:Record<Locale,{policy:string;level:Record<AiLevel,string>;review:string;reason:Record<DominoCpuReview['reason'],string>;draws:string}>={
+ ko:{policy:'AI 정책',level:{1:'합법 수 결정적 변주',2:'높은 점수·더블 우선',3:'높은 점수·더블·다음 연결'},review:'AI 마지막 선택',reason:{variation:'합법 수 변주', 'heavy-pips':'남은 점수를 먼저 줄임',double:'놓기 어려운 더블을 먼저 처리',flexibility:'다음에도 연결할 수 있는 끝점 유지'},draws:'장 가져온 뒤'},
+ en:{policy:'AI policy',level:{1:'deterministic legal variation',2:'high pips and doubles',3:'pips, doubles, future replies'},review:'Last AI choice',reason:{variation:'legal variation','heavy-pips':'reduced heavy remaining pips',double:'unloaded a difficult double',flexibility:'kept an end it can answer next'},draws:'draws first'},
+ ja:{policy:'AI方針',level:{1:'合法手の決定的変化',2:'高い目・ダブル優先',3:'目・ダブル・次の接続'},review:'AIの最後の選択',reason:{variation:'合法手の変化','heavy-pips':'残りの目を先に減らす',double:'置きにくいダブルを処理',flexibility:'次もつなげる端を維持'},draws:'枚引いた後'},
+ zh:{policy:'AI策略',level:{1:'合法着法的确定性变体',2:'高点数与对子优先',3:'点数、对子与后续连接'},review:'AI最后选择',reason:{variation:'合法着法变体','heavy-pips':'优先减少手中点数',double:'先处理难出的对子',flexibility:'保留下一步可连接的端点'},draws:'张后'},
+ fr:{policy:'Politique IA',level:{1:'variation légale déterministe',2:'points forts et doubles',3:'points, doubles et réponse future'},review:'Dernier choix IA',reason:{variation:'variation légale','heavy-pips':'réduit les gros points restants',double:'joue un double difficile',flexibility:'garde une extrémité rejouable'},draws:'pioches avant'},
+ es:{policy:'Política IA',level:{1:'variación legal determinista',2:'puntos altos y dobles',3:'puntos, dobles y respuesta futura'},review:'Última decisión IA',reason:{variation:'variación legal','heavy-pips':'reduce puntos altos restantes',double:'descarga un doble difícil',flexibility:'mantiene un extremo jugable'},draws:'robos antes'},
 };
 
 const i18n: Record<Locale, {
@@ -42,6 +51,7 @@ function Pips({ n }: { n: number }) {
 const Dominoes: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
   const t = i18n[locale] ?? i18n.en;
   const x=extra[locale]??extra.en;
+  const aiInfo=AI_INFO[locale]??AI_INFO.en;
   const reducedMotion = usePrefersReducedMotion();
   const [level, setLevel] = useState<AiLevel>(2);
   const [game, setGame] = useState<DominoesState | null>(null);
@@ -50,6 +60,7 @@ const Dominoes: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
   const[muted,setMuted]=useState(false);const audio=useRef<AudioContext|null>(null);const tone=(hz:number)=>{if(muted)return;const c=audio.current??new AudioContext();audio.current=c;const o=c.createOscillator(),g=c.createGain();o.frequency.value=hz;g.gain.setValueAtTime(.04,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+.07);o.connect(g).connect(c.destination);o.start();o.stop(c.currentTime+.07)};
   const [pendingTile, setPendingTile] = useState<Tile | null>(null); // fits both ends → ask
   const [record, setRecord] = useState<GameRecord>({ w: 0, l: 0, d: 0 });
+  const [lastCpuReview,setLastCpuReview]=useState<DominoCpuReview|null>(null);
   const recorded = useRef(false);
 
   useEffect(() => { setRecord(getRecord("dominoes")); const saved=loadDominoesSave(); if(saved){setGame(saved.state);setLevel(saved.level);setPaused(true);setRestored(true)} }, []);
@@ -61,7 +72,7 @@ const Dominoes: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
 
   const newGame = useCallback(() => {
     const seed = typeof crypto !== "undefined" ? crypto.getRandomValues(new Uint32Array(1))[0] : Date.now() >>> 0;
-    setGame(createDominoes(seed)); setPendingTile(null); setPaused(false); setRestored(false); clearDominoesSave(); recorded.current = false;
+    setGame(createDominoes(seed)); setPendingTile(null); setPaused(false); setRestored(false); setLastCpuReview(null); clearDominoesSave(); recorded.current = false;
   }, []);
 
   const recordWinner = useCallback((w: DominoesState["winner"]) => {
@@ -97,6 +108,7 @@ const Dominoes: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
   useEffect(() => {
     if (!game || paused || game.status === "over" || game.turn !== "cpu") return;
     const id = setTimeout(() => {
+      setLastCpuReview(dominoCpuReview(game,level));
       const next = cpuDominoes(game, level); setGame(next);tone(next.winner?560:240); if (next.winner) recordWinner(next.winner);
     }, AI_DELAY);
     return () => clearTimeout(id);
@@ -114,6 +126,7 @@ const Dominoes: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
               </button>
             ))}
           </div>
+          <p className="text-xs text-muted-foreground">{aiInfo.policy}: {aiInfo.level[level]}</p>
           <button type="button" onClick={newGame} className="px-6 py-2.5 rounded-lg bg-primary text-primary-foreground font-bold">{t.start}</button>
           <p className="text-xs text-gray-400">{t.record}: {record.w}W {record.l}L {record.d}D</p>
         </div>
@@ -133,6 +146,7 @@ const Dominoes: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
         </div>
         <div className="text-[10px] font-bold text-muted-foreground uppercase">{t.record}: {record.w}/{record.l}/{record.d}</div>
       </div>
+      <p className="mb-3 text-center text-[11px] font-medium text-muted-foreground">{aiInfo.policy}: {aiInfo.level[level]}</p>
       {game.history.length>0&&game.status==="playing"&&<div className="mb-3 flex justify-center"><button type="button" onClick={()=>{setPaused(v=>!v);setRestored(false)}} className="min-h-11 px-4 rounded-xl border border-border font-bold text-sm">{paused?"▶":"Ⅱ"} {paused?x.resume:x.pause}</button></div>}
       <div className="mb-3 flex justify-center"><button type="button" onClick={()=>setMuted(v=>!v)} aria-pressed={muted} className="min-h-11 px-4 rounded-xl border border-border font-bold text-sm">{muted?'🔇':'🔊'} {x.sound}</button></div>
       {(paused||restored)&&<p className="mb-3 text-center text-xs font-bold text-muted-foreground" role="status">{restored?`${x.restored} · `:""}{x.paused}</p>}
@@ -191,6 +205,7 @@ const Dominoes: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
           </h4>
           <p className="text-xs text-muted-foreground mb-4">{t.record}: {record.w}W {record.l}L {record.d}D</p>
           <p className="text-xs text-muted-foreground mb-4">{analysis.plays} {x.played} · {analysis.draws} {x.drawn} · {analysis.yourPips}–{analysis.cpuPips} {x.pips}</p>
+          {game.winner==='cpu'&&lastCpuReview&&<div className="mb-4 max-w-xs rounded-2xl border border-amber-300/60 bg-amber-50 p-3 text-left text-xs text-stone-800"><p className="font-black text-amber-900">{aiInfo.review} · {lastCpuReview.tile.a}-{lastCpuReview.tile.b} · {lastCpuReview.end==='left'?t.left:t.right}</p><p className="mt-1">{lastCpuReview.draws>0?`${lastCpuReview.draws} ${aiInfo.draws} · `:''}{aiInfo.reason[lastCpuReview.reason]}</p><p className="mt-1 text-[10px] text-stone-500">{aiInfo.policy}: {aiInfo.level[level]}</p></div>}
           <button type="button" onClick={newGame} className="px-10 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg">{t.reset}</button>
         </div>
       )}

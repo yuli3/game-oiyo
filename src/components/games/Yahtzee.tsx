@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Die, GameContainer } from '../ui/game/GamePrimitives';
 import {
-    hasYahtzeeBonus, initializeGame, legalCategories, nextYahtzeeRandom, recommendYahtzeeCategory, rollDice, scoreCategory, toggleHoldDie,
+    hasYahtzeeBonus, initializeGame, legalCategories, nextYahtzeeRandom, recommendYahtzeeCategory, reviewYahtzeeChoice, rollDice, scoreCategory, toggleHoldDie,
     UPPER_CATEGORIES, LOWER_CATEGORIES,
-    type Category, type GameState,
+    type Category, type GameState, type YahtzeeChoiceReview,
 } from '../../lib/games/yahtzee';
 import { clearYahtzeeSave, loadYahtzeeSave, restoredYahtzeeSeconds, storeYahtzeeSave } from '../../lib/games/yahtzee-save';
 import { getBest, recordBest } from '../../lib/games/records';
@@ -89,8 +89,11 @@ const COPY = {
     },
 } as const;
 
+const CHOICE_COPY:Record<keyof typeof COPY,{last:string;cost:string;matched:string}>={ko:{last:'직전 선택',cost:'즉시 점수 차이',matched:'추천과 같은 점수'},en:{last:'Last choice',cost:'immediate score gap',matched:'matched the suggested score'},ja:{last:'直前の選択',cost:'即時得点差',matched:'おすすめと同点'},zh:{last:'上次选择',cost:'即时分差',matched:'与建议同分'},fr:{last:'Dernier choix',cost:'écart immédiat',matched:'même score que le conseil'},es:{last:'Última elección',cost:'diferencia inmediata',matched:'igualó la puntuación sugerida'}};
+
 const Yahtzee: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const t = COPY[(locale as keyof typeof COPY)] ?? COPY.en;
+    const choiceCopy=CHOICE_COPY[locale as keyof typeof COPY]??CHOICE_COPY.en;
 
     const rngState = useRef(0x5eed_cafe);
     const nextRandom = useCallback(() => {
@@ -105,6 +108,7 @@ const Yahtzee: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [rolling, setRolling] = useState(false);
     const [showRules, setShowRules] = useState(false);
     const [muted, setMuted] = useState(false);
+    const [lastChoice,setLastChoice]=useState<YahtzeeChoiceReview|null>(null);
     const rollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const audioContext = useRef<AudioContext | null>(null);
     const scoreButtonRefs = useRef(new Map<Category, HTMLButtonElement>());
@@ -181,6 +185,7 @@ const Yahtzee: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
     const handleScore = (category: Category) => {
         if (rolling) return;
+        setLastChoice(reviewYahtzeeChoice(state,category));
         setState((s) => {
             const next = scoreCategory(s, category);
             playTone(hasYahtzeeBonus(s) ? 880 : 440, hasYahtzeeBonus(s) ? 0.25 : 0.1);
@@ -198,6 +203,7 @@ const Yahtzee: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         clearYahtzeeSave();
         rngState.current = createRandomSeed();
         setSeconds(0);
+        setLastChoice(null);
         setState(initializeGame(nextRandom));
     };
 
@@ -311,6 +317,7 @@ const Yahtzee: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     </p>
                     {forcedJoker && <p className="mb-3 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-center text-xs font-bold text-primary" role="status">🎯 {t.joker}</p>}
                     {recommendation && <p className="mb-3 text-center text-xs text-muted-foreground" role="status" aria-live="polite">💡 {t.recommendation}: <strong>{t.cats[recommendation.category]} · {recommendation.score}</strong> — {recommendationReason}</p>}
+                    {lastChoice && <div className="mb-3 rounded-xl border border-border bg-muted/30 px-3 py-2 text-center text-xs text-muted-foreground"><strong>{choiceCopy.last}: {t.cats[lastChoice.chosen]} · {lastChoice.chosenScore}</strong>{lastChoice.opportunityCost>0?` · ${choiceCopy.cost} ${lastChoice.opportunityCost} (${t.cats[lastChoice.recommended]} ${lastChoice.recommendedScore})`:` · ${choiceCopy.matched}`}</div>}
 
                     <button
                         onClick={handleRoll}
