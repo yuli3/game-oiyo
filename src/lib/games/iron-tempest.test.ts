@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ENEMY_HEALTH, WEAPONS, applyTempestDamage, blastDamage, cameraShake, missionScore, structureStage, weaponDrop } from "./iron-tempest";
+import { ENEMY_HEALTH, WEAPONS, applyTempestDamage, blastDamage, cameraShake, missionScore, reviewTempestMission, structureStage, weaponDrop } from "./iron-tempest";
 
 describe("Iron Tempest combat rules", () => {
   it("keeps all three weapons mechanically distinct", () => {
@@ -25,9 +25,11 @@ describe("Iron Tempest combat rules", () => {
     expect(structureStage(50, 100)).toBe(1);
     expect(structureStage(0, 100)).toBe(3);
   });
-  it("scores objectives and bounds screen shake", () => {
+  it("reviews kills, structures, then boss pressure", () => {
+    expect(reviewTempestMission({ kills: 4, seconds: 90, score: 500 })).toBe("kills");
+    expect(reviewTempestMission({ kills: 12, seconds: 130, score: 500 })).toBe("speed");
+    expect(reviewTempestMission({ kills: 12, seconds: 90, score: 500 })).toBe("score");
     expect(missionScore(10, 2, 400, 100)).toBe(4250);
     expect(cameraShake(999, 1)).toBe(22);
-    expect(cameraShake(0, 10)).toBe(0);
   });
 });

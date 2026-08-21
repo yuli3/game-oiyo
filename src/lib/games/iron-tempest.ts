@@ -43,6 +43,13 @@ export function missionScore(kills: number, structures: number, bossDamage: numb
   return Math.max(0, Math.round(kills * 125 + structures * 600 + bossDamage * 2 + Math.max(0, 150 - seconds) * 20));
 }
 
+export type TempestReview = "kills" | "speed" | "score";
+export function reviewTempestMission(result: { kills: number; seconds: number; score: number }): TempestReview {
+  if (result.kills < 10) return "kills";
+  if (result.seconds > 120) return "speed";
+  return "score";
+}
+
 export function cameraShake(impact: number, distance: number) {
   return Math.min(22, Math.max(0, impact) / Math.max(1, distance * 0.22));
 }

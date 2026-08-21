@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Bomb, Crosshair, Gamepad2, Headphones, Shield } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
 import { getBest, recordBest } from "../../lib/games/records";
+import { reviewTempestMission } from "../../lib/games/iron-tempest";
 import { ENEMY_HEALTH, WEAPONS, applyTempestDamage, blastDamage, missionScore, structureStage, weaponDrop, type TempestEnemy, type TempestWeapon } from "../../lib/games/iron-tempest";
 
 const GAME_KEY = "iron-tempest";
@@ -42,7 +43,7 @@ export default function IronTempest({ locale }: { locale: Locale }) {
     <div className="relative min-h-[520px] bg-cover bg-center p-5 sm:p-10 lg:p-14" style={{ backgroundImage: "linear-gradient(90deg,rgba(6,8,8,.96),rgba(6,8,8,.72) 48%,rgba(6,8,8,.08)),url('/games/iron-tempest-social.png')" }}>
       <div className="max-w-xl"><p className="font-mono text-[10px] font-black tracking-[.28em] text-[#ffbe3f]">{t.eyebrow}</p><h2 className="mt-4 font-mono text-5xl font-black leading-[.82] tracking-[-.08em] text-white [text-shadow:4px_4px_0_#7a1f0b] sm:text-7xl">{t.title}</h2><p className="mt-6 max-w-lg text-sm font-semibold leading-7 text-[#eadfc8] sm:text-base">{t.subtitle}</p>
         <div className="mt-7 flex flex-wrap items-center gap-3"><button onClick={() => setPhase("playing")} className="min-h-12 border-b-4 border-[#8b290f] bg-[#ffb11b] px-9 py-3 font-mono text-sm font-black text-[#1d1204] active:translate-y-1 active:border-b-0">{phase === "result" ? t.again : t.start}</button><span className="bg-black/75 px-4 py-3 font-mono text-xs">{t.best} <b className="text-[#ffcf4f]">{best.toLocaleString()}</b></span></div>
-        {phase === "result" && <dl role="status" aria-live="polite" className="mt-5 grid grid-cols-3 border-2 border-white/15 bg-black/75 p-3 text-center font-mono">{[[t.score, result.score], [t.kills, result.kills], [t.time, `${result.seconds}s`]].map(([a,b])=><div key={a}><dt className="text-[9px] text-[#c7bca8]">{a}</dt><dd className="text-xl font-black">{b}</dd></div>)}</dl>}
+        {phase === "result" && <><dl role="status" aria-live="polite" className="mt-5 grid grid-cols-3 border-2 border-white/15 bg-black/75 p-3 text-center font-mono">{[[t.score, result.score], [t.kills, result.kills], [t.time, `${result.seconds}s`]].map(([a,b])=><div key={a}><dt className="text-[9px] text-[#c7bca8]">{a}</dt><dd className="text-xl font-black">{b}</dd></div>)}</dl><p className="mt-2 text-center font-mono text-xs font-black text-[#ffcf4f]">→ {reviewTempestMission(result) === "kills" ? t.kills : reviewTempestMission(result) === "speed" ? t.time : t.score}</p></>}
       </div>
     </div>
     <div className="grid gap-px bg-[#3c3327] md:grid-cols-3">{t.features.map(([a,b],i)=>{const Icon=[Crosshair,Bomb,Shield][i];return <div key={a} className="flex gap-3 bg-[#211b14] p-5"><Icon className="size-5 shrink-0 text-[#ffad1a]"/><div><h3 className="font-mono text-xs font-black">{a}</h3><p className="mt-1 text-xs leading-5 text-[#bdb09b]">{b}</p></div></div>})}</div>

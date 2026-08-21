@@ -62,6 +62,13 @@ export function applyDamage(health: number, damage: number): { health: number; k
   return { health: next, killed: next === 0 };
 }
 
+export type InfernalReview = "accuracy" | "kills" | "wave";
+export function reviewInfernalRun(result: { accuracy: number; kills: number; wave: number }): InfernalReview {
+  if (result.accuracy < 30) return "accuracy";
+  if (result.kills < result.wave * 5) return "kills";
+  return "wave";
+}
+
 export function shotIntervalMs(weapon: InfernalWeapon): number {
   return 60_000 / weapon.rpm;
 }

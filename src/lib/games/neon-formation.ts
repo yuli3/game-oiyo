@@ -63,6 +63,13 @@ export function waveBonus(wave: number, capturedShipRescued: boolean): number {
   return Math.max(1, Math.floor(wave)) * 500 + (capturedShipRescued ? 1_500 : 0);
 }
 
+export type NeonReview = "accuracy" | "rescue" | "wave";
+export function reviewNeonSortie(result: { accuracy: number; rescues: number; wave: number }): NeonReview {
+  if (result.accuracy < 35) return "accuracy";
+  if (result.rescues === 0 && result.wave >= 2) return "rescue";
+  return "wave";
+}
+
 export function nextExtraLifeThreshold(score: number): number {
   return (Math.floor(Math.max(0, score) / 20_000) + 1) * 20_000;
 }

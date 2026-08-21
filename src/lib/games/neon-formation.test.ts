@@ -8,6 +8,7 @@ import {
   nextExtraLifeThreshold,
   tractorRadius,
   waveBonus,
+  reviewNeonSortie,
 } from "./neon-formation";
 
 describe("neon formation rules", () => {
@@ -40,7 +41,10 @@ describe("neon formation rules", () => {
     expect(enemyScore("scout", false, 99)).toBe(enemyScore("scout", false, 10));
   });
 
-  it("computes wave/rescue bonuses and safe bounds", () => {
+  it("reviews aim, rescue, then wave progress", () => {
+    expect(reviewNeonSortie({ accuracy: 20, rescues: 1, wave: 3 })).toBe("accuracy");
+    expect(reviewNeonSortie({ accuracy: 50, rescues: 0, wave: 3 })).toBe("rescue");
+    expect(reviewNeonSortie({ accuracy: 50, rescues: 1, wave: 3 })).toBe("wave");
     expect(waveBonus(3, true)).toBe(3_000);
     expect(nextExtraLifeThreshold(20_000)).toBe(40_000);
     expect(clampShipX(99)).toBe(7.2);

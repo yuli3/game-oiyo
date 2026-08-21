@@ -2,6 +2,7 @@ import { Suspense, lazy, useCallback, useEffect, useState } from "react";
 import { Crosshair, Flame, Gauge, Headphones, Skull, Zap } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
 import { getBest, recordBest } from "../../lib/games/records";
+import { reviewInfernalRun } from "../../lib/games/infernal-velocity";
 import type { InfernalResult, InfernalSceneCopy } from "./InfernalVelocityScene";
 
 const Scene = lazy(() => import("./InfernalVelocityScene"));
@@ -65,7 +66,7 @@ export default function InfernalVelocity({ locale }: { locale: Locale }) {
       <div><p className="font-mono text-[11px] font-black tracking-[.28em] text-orange-500">{t.eyebrow}</p><h2 className="mt-4 text-5xl font-black uppercase leading-[.86] tracking-[-.055em] sm:text-7xl">{t.title}</h2><p className="mt-6 max-w-2xl text-sm leading-7 text-zinc-300 sm:text-base">{t.subtitle}</p>
         <div className="mt-7 flex flex-wrap gap-3"><button disabled={!available} onClick={() => { setResult(null); setPhase("playing"); }} className="min-h-12 skew-x-[-5deg] bg-orange-500 px-8 py-3 text-sm font-black uppercase tracking-widest text-black shadow-[0_0_30px_rgba(249,115,22,.25)] disabled:opacity-40">{phase === "result" ? t.again : t.start}</button><span className="border border-white/10 bg-white/5 px-4 py-3 font-mono text-xs">{t.best}: <strong>{best.toLocaleString()}</strong></span></div>
         {!available && <p role="alert" className="mt-4 text-sm font-bold text-orange-300">{t.unavailable}</p>}
-        {result && <dl role="status" aria-live="polite" className="mt-7 grid grid-cols-4 gap-2 border border-white/10 bg-black/40 p-4 text-center">{[[t.score, result.score], [t.kills, result.kills], [t.wave, result.wave], [t.accuracy, `${result.accuracy}%`]].map(([label, value]) => <div key={label}><dt className="text-[9px] font-bold uppercase text-zinc-500">{label}</dt><dd className="mt-1 font-mono text-lg font-black">{value}</dd></div>)}</dl>}
+        {result && <><dl role="status" aria-live="polite" className="mt-7 grid grid-cols-4 gap-2 border border-white/10 bg-black/40 p-4 text-center">{[[t.score, result.score], [t.kills, result.kills], [t.wave, result.wave], [t.accuracy, `${result.accuracy}%`]].map(([label, value]) => <div key={label}><dt className="text-[9px] font-bold uppercase text-zinc-500">{label}</dt><dd className="mt-1 font-mono text-lg font-black">{value}</dd></div>)}</dl><p className="mt-2 text-center text-xs font-black text-orange-300">→ {reviewInfernalRun(result) === "accuracy" ? t.accuracy : reviewInfernalRun(result) === "kills" ? t.kills : t.wave}</p></>}
       </div>
       <div className="grid content-center gap-3">{t.features.map((feature, index) => { const Icon = [Gauge, Crosshair, Flame][index]; return <div key={feature.title} className="flex gap-4 border-l-2 border-orange-600 bg-white/[.04] p-4"><Icon className="size-5 shrink-0 text-orange-500" /><div><h3 className="text-sm font-black uppercase">{feature.title}</h3><p className="mt-1 text-xs leading-5 text-zinc-400">{feature.body}</p></div></div>; })}
         <div className="mt-2 border border-white/10 bg-black/40 p-4"><div className="flex items-center gap-2 text-xs font-black uppercase"><Skull className="size-4 text-red-500" />{t.local}</div><p className="mt-2 text-xs leading-5 text-zinc-500">{t.localBody}</p></div>

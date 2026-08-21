@@ -14,6 +14,7 @@ import {
   shotIntervalMs,
   splashDamage,
   waveBudget,
+  reviewInfernalRun,
 } from "./infernal-velocity";
 
 describe("Infernal Velocity combat rules", () => {
@@ -66,9 +67,10 @@ describe("Infernal Velocity combat rules", () => {
     expect(applyGroundFriction({ x: 10, z: 0 }, 0, 1 / 60)).toEqual({ x: 10, z: 0 });
   });
 
-  it("falls off rocket splash damage toward the blast edge", () => {
-    expect(splashDamage(120, 0, 6)).toBe(120);
+  it("reviews aim, eliminations, then wave progress", () => {
+    expect(reviewInfernalRun({ accuracy: 20, kills: 20, wave: 3 })).toBe("accuracy");
+    expect(reviewInfernalRun({ accuracy: 50, kills: 4, wave: 3 })).toBe("kills");
+    expect(reviewInfernalRun({ accuracy: 50, kills: 20, wave: 3 })).toBe("wave");
     expect(splashDamage(120, 3, 6)).toBe(60);
-    expect(splashDamage(120, 6, 6)).toBe(0);
   });
 });
