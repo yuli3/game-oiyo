@@ -91,6 +91,13 @@ export function stepFlight(
   };
 }
 
+export type SkywardReview = "gates" | "distance" | "complete";
+export function reviewSkywardFlight(result: { gates: number; distance: number }): SkywardReview {
+  if (result.gates < 1) return "gates";
+  if (result.distance < 5_000) return "distance";
+  return "complete";
+}
+
 export function flightScore(distance: number, gates: number, landingQuality: number): number {
   return Math.max(0, Math.round(distance * 0.18 + gates * 1_500 + clamp(landingQuality, 0, 1) * 4_000));
 }

@@ -74,6 +74,13 @@ export type DropOutcome =
  * dead-centre) keeps the moving block's own width, regrown toward
  * `BASE_WIDTH` by `PERFECT_REWARD`, and extends the combo.
  */
+export type TowerMissSide = "left" | "right";
+export function explainTowerMiss(cur: Block, prev: Block): TowerMissSide | null {
+  if (cur.x + cur.w <= prev.x) return "left";
+  if (cur.x >= prev.x + prev.w) return "right";
+  return null;
+}
+
 export function dropOnto(cur: Block, prev: Block, comboBefore: number): DropOutcome {
   const left = Math.max(cur.x, prev.x);
   const right = Math.min(cur.x + cur.w, prev.x + prev.w);

@@ -3,7 +3,17 @@ import { CloudSun, Gauge, Headphones, Mountain, Plane, Wind } from "lucide-react
 import type { Locale } from "../../lib/i18n";
 import { getBest, recordAchievementEvent, recordBest } from "../../lib/games/records";
 import { hasWebGL } from "../../lib/games/webgl";
+import { reviewSkywardFlight } from "../../lib/games/skyward-atlas";
 import type { FlightResult, SkywardSceneCopy } from "./SkywardAtlasScene";
+
+const REVIEW: Record<Locale, Record<"gates" | "distance" | "complete", string>> = {
+  ko: { gates: "다음 비행: 첫 게이트 진입선을 먼저 잡으세요.", distance: "다음 비행: 자세를 안정시켜 항속 거리를 늘리세요.", complete: "게이트와 항속 모두 안정적입니다." },
+  en: { gates: "Next flight: establish the first gate line.", distance: "Next flight: stabilize attitude and extend range.", complete: "Gate reading and range were both stable." },
+  ja: { gates: "次の飛行：最初のゲートへの進入線を作る。", distance: "次の飛行：姿勢を安定させ航続距離を伸ばす。", complete: "ゲートと航続距離の両方が安定。" },
+  zh: { gates: "下次飞行：先建立第一道航门的进场线。", distance: "下次飞行：稳定姿态并延长航程。", complete: "航门判断和航程都很稳定。" },
+  fr: { gates: "Prochain vol : alignez la première porte.", distance: "Prochain vol : stabilisez l'assiette et prolongez la distance.", complete: "Portes et distance étaient stables." },
+  es: { gates: "Próximo vuelo: alinea la primera puerta.", distance: "Próximo vuelo: estabiliza la actitud y amplía la distancia.", complete: "Puertas y distancia fueron estables." },
+};
 
 const Scene = lazy(() => import("./SkywardAtlasScene"));
 const GAME_KEY = "skyward-atlas";
@@ -109,7 +119,7 @@ export default function SkywardAtlas({ locale }: { locale: Locale }) {
               <button onClick={start} className="rounded-full bg-slate-900 px-7 py-4 font-bold text-white shadow-lg hover:bg-slate-700">{phase === "result" ? copy.again : phase === "unavailable" ? fallback.retry : copy.start}</button>
               <div className="rounded-full border border-slate-300 bg-white/70 px-6 py-4 font-semibold">{copy.best}: {best.toLocaleString()}</div>
             </div>
-            {result && <div role="status" aria-live="polite" className="mt-6 max-w-md rounded-3xl bg-white/75 p-6 backdrop-blur"><div className="text-sm font-bold uppercase tracking-widest">{copy.result}</div><div className="mt-2 text-4xl font-black">{result.score.toLocaleString()}</div><div className="mt-2 text-sm text-slate-600">{result.gates} gates · {Math.round(result.distance / 1000)} km</div></div>}
+            {result && <div role="status" aria-live="polite" className="mt-6 max-w-md rounded-3xl bg-white/75 p-6 backdrop-blur"><div className="text-sm font-bold uppercase tracking-widest">{copy.result}</div><div className="mt-2 text-4xl font-black">{result.score.toLocaleString()}</div><div className="mt-2 text-sm text-slate-600">{result.gates} gates · {Math.round(result.distance / 1000)} km</div><p className="mt-3 text-sm font-bold text-sky-800">{REVIEW[locale][reviewSkywardFlight(result)]}</p></div>}
             <div className="mt-12 grid gap-4 md:grid-cols-3">
               {[Gauge, CloudSun, Mountain].map((Icon, index) => <article key={copy.features[index].title} className="rounded-3xl border border-white bg-white/60 p-6 backdrop-blur"><Icon className="mb-5" /><h2 className="font-black">{copy.features[index].title}</h2><p className="mt-2 text-sm leading-6 text-slate-600">{copy.features[index].body}</p></article>)}
             </div>

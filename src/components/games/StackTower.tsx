@@ -9,6 +9,7 @@ import {
   cameraOffset,
   createTowerState,
   dropOnto,
+  explainTowerMiss,
   spawnNextBlock,
   stepBlock,
   type TowerState,
@@ -53,12 +54,22 @@ const T: Record<Locale, I18n> = {
 
 interface Props { locale: Locale }
 
+const MISS: Record<Locale, Record<"left" | "right", string>> = {
+  ko: { left: "블록이 왼쪽으로 완전히 빗나갔습니다.", right: "블록이 오른쪽으로 완전히 빗나갔습니다." },
+  en: { left: "The block missed completely to the left.", right: "The block missed completely to the right." },
+  ja: { left: "ブロックが左へ完全に外れました。", right: "ブロックが右へ完全に外れました。" },
+  zh: { left: "方块完全偏到了左侧。", right: "方块完全偏到了右侧。" },
+  fr: { left: "Le bloc a complètement manqué à gauche.", right: "Le bloc a complètement manqué à droite." },
+  es: { left: "El bloque falló por completo a la izquierda.", right: "El bloque falló por completo a la derecha." },
+};
+
 const StackTower: React.FC<Props> = ({ locale }) => {
   const t = T[locale] ?? T.en;
   const [phase, setPhase] = useState<Phase>("menu");
   const [score, setScore] = useState(0);
   const [best, setBest] = useState(0);
   const [combo, setCombo] = useState(0);
+  const [missSide, setMissSide] = useState<"left" | "right" | null>(null);
   const [isNewBest, setIsNewBest] = useState(false);
   const [muted, setMuted] = useState(false);
   const mutedRef = useRef(false);
@@ -159,7 +170,7 @@ const StackTower: React.FC<Props> = ({ locale }) => {
     const prev = gs.tower.stack[gs.tower.stack.length - 1];
     const cur = gs.tower.cur;
     const outcome = dropOnto(cur, prev, gs.tower.combo);
-    if (outcome.kind === "miss") { endGame(gs.tower.stack.length - 1); return; }
+    if (outcome.kind === "miss") { setMissSide(explainTowerMiss(cur, prev)); endGame(gs.tower.stack.length - 1); return; }
 
     gs.tower.combo = outcome.combo;
     setCombo(outcome.combo);
@@ -199,7 +210,7 @@ const StackTower: React.FC<Props> = ({ locale }) => {
 
   const begin = useCallback(() => {
     gsRef.current = { tower: createTowerState(W), camY: 0, flash: 0, score: 0, falling: [] };
-    setScore(0); setCombo(0); setIsNewBest(false);
+    setScore(0); setCombo(0); setMissSide(null); setIsNewBest(false);
     setPhase("playing");
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     rafRef.current = requestAnimationFrame(loop);
@@ -268,6 +279,7 @@ const StackTower: React.FC<Props> = ({ locale }) => {
                 {isNewBest && <div className="text-sm font-black text-amber-300">{t.newBest}</div>}
                 <div className="text-xl font-black text-white">{t.gameOver}</div>
                 <div className="text-sm text-white/80">{t.score}: <b>{score}</b> · {t.best}: {best}</div>
+                {missSide && <div className="mt-2 text-xs font-bold text-amber-300">{MISS[locale][missSide]}</div>}
               </div>
             )}
             {phase === "menu" && (

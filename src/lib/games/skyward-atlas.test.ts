@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  START_STATE, airDensity, flightScore, indicatedAirspeed, nextSkywardTutorialStep, stallSpeed, stepFlight,
+  START_STATE, airDensity, flightScore, indicatedAirspeed, nextSkywardTutorialStep, reviewSkywardFlight, stallSpeed, stepFlight,
 } from "./skyward-atlas";
 
 const calm = { windX: 0, windZ: 0, density: 0.92 };
@@ -39,7 +39,10 @@ describe("Skyward Atlas flight model", () => {
     expect(state.stalled).toBe(true);
     expect(state.verticalSpeed).toBeLessThan(0);
   });
-  it("scores gates and landing quality", () => {
+  it("reviews gate reading before route distance", () => {
     expect(flightScore(10_000, 3, 1)).toBe(10_300);
+    expect(reviewSkywardFlight({ gates: 0, distance: 12_000 })).toBe("gates");
+    expect(reviewSkywardFlight({ gates: 2, distance: 3_000 })).toBe("distance");
+    expect(reviewSkywardFlight({ gates: 2, distance: 12_000 })).toBe("complete");
   });
 });

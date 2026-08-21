@@ -8,6 +8,7 @@ import {
   cameraOffset,
   createTowerState,
   dropOnto,
+  explainTowerMiss,
   spawnNextBlock,
   stepBlock,
   type Block,
@@ -58,6 +59,12 @@ describe("stack tower drop resolution", () => {
 
   it("misses when there is no overlap at all", () => {
     expect(dropOnto({ x: 400, w: 50, hue: 0 }, prev, 3)).toEqual({ kind: "miss" });
+  });
+
+  it("names the side of a complete miss", () => {
+    expect(explainTowerMiss({ x: 0, w: 50, hue: 0 }, prev)).toBe("left");
+    expect(explainTowerMiss({ x: 260, w: 50, hue: 0 }, prev)).toBe("right");
+    expect(explainTowerMiss({ x: 120, w: 50, hue: 0 }, prev)).toBeNull();
   });
 
   it("keeps only the geometric overlap on a non-perfect landing and resets the combo", () => {
