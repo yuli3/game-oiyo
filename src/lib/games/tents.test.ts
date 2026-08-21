@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { countTentsSolutions, generateTents, generateUniqueTents, validateTents, type TentsPuzzle } from "./tents";
+import { countTentsSolutions, explainTentsHint, generateTents, generateUniqueTents, validateTents, type TentsPuzzle } from "./tents";
 import { mulberry32 } from "./daily";
 
 // Hand-built 4×4 board with a known unique solution:
@@ -54,6 +54,15 @@ describe("validateTents", () => {
     const v = validateTents([[0, 1], [2, 1]], puzzle);
     expect(v.error).toBeNull();
     expect(v.complete).toBe(false);
+  });
+});
+
+describe("explainTentsHint", () => {
+  it("points at a violating pair without changing the board", () => {
+    const puzzle: TentsPuzzle = { size: 4, trees: [[0, 0], [1, 2]], rowHints: [1, 1, 0, 0], colHints: [0, 1, 1, 0] };
+    const tents: [number, number][] = [[0, 1], [1, 2]];
+    expect(explainTentsHint(tents, puzzle)).toEqual({ reason: "adjacent", cells: [[0, 1], [1, 2]] });
+    expect(tents).toEqual([[0, 1], [1, 2]]);
   });
 });
 

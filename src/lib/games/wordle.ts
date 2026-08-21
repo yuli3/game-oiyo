@@ -22,11 +22,35 @@ export function inputWordle(state: WordleState, key: string): WordleState {
   return /^[A-Z]$/.test(letter) && state.current.length < 5 ? { ...state, current: state.current + letter } : state;
 }
 
-export function submitWordle(state: WordleState, target: string, valid: boolean): WordleState {
+export function submitWordle(state: WordleState, target: string, valid: boolean, hard = false): WordleState {
+  if (state.status !== "playing") return state;
+  const reason = explainWordleSubmit(state, target, valid, hard);
+  if (reason) return state;
   const normalizedTarget = target.toUpperCase();
-  if (state.status !== "playing" || state.current.length !== 5 || !valid || !/^[A-Z]{5}$/.test(normalizedTarget)) return state;
   const guesses = [...state.guesses, state.current];
   return { ...state, current: "", guesses, status: state.current === normalizedTarget ? "won" : guesses.length >= 6 ? "lost" : "playing" };
+}
+
+export type WordleSubmitFailure = "too-short" | "invalid" | "hard-mode";
+export function wordleHardModeOk(guess: string, guesses: string[], target: string): boolean {
+  const word = guess.toUpperCase();
+  for (const previous of guesses) {
+    const marks = evaluateWordleGuess(previous, target);
+    const needed: Record<string, number> = {};
+    for (let index = 0; index < 5; index += 1) {
+      if (marks[index] === "correct" && word[index] !== previous[index]) return false;
+      if (marks[index] === "present") needed[previous[index]] = (needed[previous[index]] ?? 0) + 1;
+    }
+    for (const [letter, count] of Object.entries(needed)) if ((word.split(letter).length - 1) < count) return false;
+  }
+  return true;
+}
+export function explainWordleSubmit(state: WordleState, target: string, valid: boolean, hard = false): WordleSubmitFailure | null {
+  if (state.status !== "playing") return null;
+  if (state.current.length !== 5) return "too-short";
+  if (!valid || !/^[A-Z]{5}$/.test(target.toUpperCase())) return "invalid";
+  if (hard && !wordleHardModeOk(state.current, state.guesses, target)) return "hard-mode";
+  return null;
 }
 
 export function evaluateWordleGuess(guess: string, target: string): WordleMark[] {

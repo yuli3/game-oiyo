@@ -146,6 +146,29 @@ export function validateTents(tents: Pos[], puzzle: TentsPuzzle): TentsValidatio
   return { ok: true, complete, error: null };
 }
 
+export type TentsHint = { reason: "adjacent" | "orphan" | "count" | "pairing"; cells: Pos[] };
+export function explainTentsHint(tents: Pos[], puzzle: TentsPuzzle): TentsHint {
+  const { size, trees, rowHints, colHints } = puzzle;
+  for (let i = 0; i < tents.length; i++) {
+    for (let j = i + 1; j < tents.length; j++) {
+      if (Math.abs(tents[i][0] - tents[j][0]) <= 1 && Math.abs(tents[i][1] - tents[j][1]) <= 1) {
+        return { reason: "adjacent", cells: [tents[i], tents[j]] };
+      }
+    }
+  }
+  for (const tent of tents) {
+    if (!trees.some(([tr, tc]) => Math.abs(tr - tent[0]) + Math.abs(tc - tent[1]) === 1)) return { reason: "orphan", cells: [tent] };
+  }
+  const rowCount = Array(size).fill(0);
+  const colCount = Array(size).fill(0);
+  for (const [r, c] of tents) { rowCount[r]++; colCount[c]++; }
+  for (let i = 0; i < size; i++) {
+    if (rowCount[i] > rowHints[i]) return { reason: "count", cells: tents.filter(([r]) => r === i) };
+    if (colCount[i] > colHints[i]) return { reason: "count", cells: tents.filter(([, c]) => c === i) };
+  }
+  return { reason: "pairing", cells: [] };
+}
+
 /**
  * Count valid solutions up to `limit`.
  *

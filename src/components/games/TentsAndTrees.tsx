@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { dayIndex, mulberry32, previousDayKey, todayKey } from '../../lib/games/daily';
 import { getDailyStreak, recordDailyWin, type DailyStreak } from '../../lib/games/records';
-import { generateTents, generateUniqueTents, validateTents, type Pos, type TentsPuzzle, type TentsValidation } from '../../lib/games/tents';
+import { explainTentsHint, generateTents, generateUniqueTents, validateTents, type Pos, type TentsHint, type TentsPuzzle, type TentsValidation } from '../../lib/games/tents';
 import {
     DAILY_BOARD,
     FREE_BOARD,
@@ -59,6 +59,16 @@ const COPY = {
     es: { title: 'Tiendas y árboles', desc: '¡Cada árbol necesita una tienda!', note: 'Las tiendas van junto a un árbol (arriba/abajo/izquierda/derecha) y nunca se tocan entre sí, ni en diagonal. Los números cuentan las tiendas de cada fila/columna.', daily: '📅 Puzle diario', free: 'Libre 5×5', win: '¡Listos para acampar!', next: 'Siguiente puzle', errAdjacent: 'Dos tiendas se tocan', errOrphan: 'Hay una tienda sin árbol al lado', errCount: 'Se superó un número de fila/columna', streak: 'Racha', best: 'Récord', doneToday: 'Hecho hoy ✓', sound: 'Sonido' },
 } as const;
 
+const TENTS_HINT: Record<keyof typeof COPY, Record<TentsHint['reason'], string>> = {
+    ko: { adjacent: '붙어 있는 텐트를 확인하세요.', orphan: '나무 옆이 아닌 텐트를 확인하세요.', count: '행·열 숫자를 초과한 텐트를 확인하세요.', pairing: '나무와 텐트가 1:1로 짝이 맞는지 확인하세요.' },
+    en: { adjacent: 'Check the tents that are touching.', orphan: 'Check the tent that is not beside a tree.', count: 'Check tents that exceed a row or column count.', pairing: 'Check that every tree has exactly one tent.' },
+    ja: { adjacent: '隣り合うテントを確認しましょう。', orphan: '木の隣にないテントを確認しましょう。', count: '行・列の数字を超えたテントを確認しましょう。', pairing: '木とテントが1対1か確認しましょう。' },
+    zh: { adjacent: '检查相邻的帐篷。', orphan: '检查不在树旁的帐篷。', count: '检查超过行列数字的帐篷。', pairing: '检查每棵树是否正好配一顶帐篷。' },
+    fr: { adjacent: 'Vérifiez les tentes qui se touchent.', orphan: 'Vérifiez la tente éloignée de tout arbre.', count: 'Vérifiez les tentes qui dépassent un compteur.', pairing: 'Vérifiez qu’arbre et tente vont par paires.' },
+    es: { adjacent: 'Revisa las tiendas que se tocan.', orphan: 'Revisa la tienda que no está junto a un árbol.', count: 'Revisa las tiendas que superan un recuento.', pairing: 'Comprueba que cada árbol tenga una tienda.' },
+};
+const HINT_LABEL: Record<keyof typeof COPY, string> = { ko: '힌트', en: 'Hint', ja: 'ヒント', zh: '提示', fr: 'Indice', es: 'Pista' };
+
 const A11Y_COPY = {
     ko: { subtitle: '텐트 배치 논리 퍼즐', reset: '다시 시작', row: '행', column: '열', rowHint: '행 텐트 수', columnHint: '열 텐트 수', tree: '나무', empty: '빈 칸', tent: '텐트', grass: '잔디 표시' },
     en: { subtitle: 'Tent placement logic puzzle', reset: 'Reset', row: 'Row', column: 'Column', rowHint: 'Row tent count', columnHint: 'Column tent count', tree: 'Tree', empty: 'Empty cell', tent: 'Tent', grass: 'Grass mark' },
@@ -84,6 +94,7 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const cellRefs = useRef<Array<HTMLButtonElement | HTMLDivElement | null>>([]);
 
     const [muted, setMuted] = useState(false);
+    const [hint, setHint] = useState<TentsHint | null>(null);
     const mutedRef = useRef(false);
     useEffect(() => { mutedRef.current = muted; }, [muted]);
     const audioRef = useRef<AudioContext | null>(null);
@@ -126,6 +137,7 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             setMarks(emptyMarksFor(p.size));
         }
         setValidation({ ok: true, complete: false, error: null });
+        setHint(null);
         setActiveCell(0);
     }, []);
 
@@ -194,6 +206,13 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                             {t[m]}
                         </button>
                     ))}
+                    <button type="button" onClick={() => {
+                        const tents: Pos[] = [];
+                        for (let rr = 0; rr < puzzle.size; rr++) for (let cc = 0; cc < puzzle.size; cc++) if (marks[rr][cc] === 'tent') tents.push([rr, cc]);
+                        setHint(explainTentsHint(tents, puzzle));
+                    }} disabled={validation.complete} className="min-h-11 rounded-lg border border-border px-3 text-xs font-bold text-muted-foreground hover:bg-muted disabled:opacity-40">
+                        {HINT_LABEL[locale as keyof typeof HINT_LABEL] ?? HINT_LABEL.en}
+                    </button>
                     <button
                         type="button"
                         onClick={() => setMuted((value) => !value)}
@@ -253,7 +272,7 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                                             className={`${common} ${
                                                 mark === 'tent' ? 'bg-rose-100 text-rose-700 shadow-md -translate-y-0.5' :
                                                 mark === 'grass' ? 'bg-muted/50 text-muted-foreground/30' : 'bg-background hover:bg-muted/20 active:scale-95'
-                                            }`}
+                                            } ${hint?.cells.some(([hr, hc]) => hr === r && hc === c) ? 'ring-4 ring-amber-400' : ''}`}
                                         >
                                             {mark === 'tent' && <span className="text-xl" aria-hidden="true">⛺</span>}
                                             {mark === 'grass' && <div className="w-2 h-2 rounded-full bg-current" aria-hidden="true" />}
@@ -279,6 +298,8 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         <p className="text-xs font-bold text-destructive">
                             {validation.error === 'adjacent' ? t.errAdjacent : validation.error === 'orphan' ? t.errOrphan : t.errCount}
                         </p>
+                    ) : hint ? (
+                        <p className="text-xs font-bold text-primary">{(TENTS_HINT[locale as keyof typeof TENTS_HINT] ?? TENTS_HINT.en)[hint.reason]}</p>
                     ) : null}
                 </div>
             </div>

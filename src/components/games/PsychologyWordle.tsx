@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
-import { backspacePsychologyWordle, createPsychologyWordle, evaluatePsychologyWordleGuess, inputPsychologyWordle, PSYCHOLOGY_WORDLE_MAX_GUESSES, restartPsychologyWordle, submitPsychologyWordle, type PsychologyWordleTile } from '../../lib/games/psychology-wordle';
+import { backspacePsychologyWordle, createPsychologyWordle, evaluatePsychologyWordleGuess, explainPsychologyWordleHint, inputPsychologyWordle, PSYCHOLOGY_WORDLE_MAX_GUESSES, restartPsychologyWordle, submitPsychologyWordle, type PsychologyWordleHint, type PsychologyWordleTile } from '../../lib/games/psychology-wordle';
 import { dayIndex, previousDayKey, todayKey } from '../../lib/games/daily';
 import { getDailyStreak, recordDailyWin, type DailyStreak } from '../../lib/games/records';
 import { clearPsychologyWordleSave, loadPsychologyWordleSave, storePsychologyWordleSave, type PsychologyWordleMode } from '../../lib/games/psychology-wordle-save';
@@ -82,6 +82,16 @@ const COPY = {
     },
 } as const;
 
+const HINT_LABEL: Record<keyof typeof COPY, string> = { ko: '힌트', en: 'Hint', ja: 'ヒント', zh: '提示', fr: 'Indice', es: 'Pista' };
+const SLOT_HINT: Record<keyof typeof COPY, (index: number) => string> = {
+    ko: (index) => `${index}번째 칸은 아직 초록이 아닙니다.`,
+    en: (index) => `Slot ${index} has never been green.`,
+    ja: (index) => `${index}番目のマスはまだ緑になっていません。`,
+    zh: (index) => `第 ${index} 格还没有变成绿色。`,
+    fr: (index) => `La case ${index} n’a jamais été verte.`,
+    es: (index) => `La casilla ${index} aún no ha sido verde.`,
+};
+
 const TILE_CLASSES: Record<PsychologyWordleTile, string> = {
     correct: 'bg-success text-success-foreground border-success',
     present: 'bg-warning text-warning-foreground border-warning',
@@ -100,6 +110,7 @@ const PsychologyWordle: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [restored, setRestored] = useState(false);
     const [muted, setMuted] = useState(false);
     const [copied, setCopied] = useState(false);
+    const [hint, setHint] = useState<PsychologyWordleHint | null>(null);
     const countedSeed = useRef<number | null>(null);
     const audioRef = useRef<AudioContext | null>(null);
     const { targetDisplay, target, guesses, currentGuess, status } = game;
@@ -124,7 +135,7 @@ const PsychologyWordle: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
     const startMode = (nextMode: PsychologyWordleMode) => {
         const key = todayKey(); const seed = nextMode === 'daily' ? (dayIndex() ^ (isKo ? 0x4b4f : 0x454e)) >>> 0 : (crypto.getRandomValues?.(new Uint32Array(1))[0] ?? Date.now()) >>> 0;
-        clearPsychologyWordleSave(); setMode(nextMode); setActiveDateKey(nextMode === 'daily' ? key : null); setGame(createPsychologyWordle(seed, isKo ? 'ko' : 'latin')); setRestored(false); countedSeed.current = null;
+        clearPsychologyWordleSave(); setMode(nextMode); setActiveDateKey(nextMode === 'daily' ? key : null); setGame(createPsychologyWordle(seed, isKo ? 'ko' : 'latin')); setRestored(false); countedSeed.current = null; setHint(null);
     };
 
     const handleInput = (char: string) => {
@@ -136,6 +147,7 @@ const PsychologyWordle: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const handleSubmit = useCallback(() => { setGame((state) => { const next = submitPsychologyWordle(state); if (next === state) playTone(150); else playTone(next.status === 'won' ? 760 : next.status === 'lost' ? 130 : 520, next.status === 'playing' ? 0.1 : 0.25); return next; }); }, [playTone]);
 
     const restart = () => {
+        setHint(null);
         if (mode === 'daily') startMode('daily'); else setGame(restartPsychologyWordle);
     };
 
@@ -173,6 +185,8 @@ const PsychologyWordle: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             </div>
             <p className="mb-3 text-center text-xs font-bold text-muted-foreground">{t.streak}: {streak.currentStreak} {t.days}</p>
             {restored && <p className="mb-3 text-center text-xs font-bold text-primary" role="status">{t.restored}</p>}
+            {status === 'playing' && <div className="mb-3 flex justify-center"><button type="button" disabled={guesses.length === 0} onClick={() => setHint(explainPsychologyWordleHint(game))} className="min-h-11 rounded-full border border-border px-4 text-xs font-bold disabled:opacity-40">{HINT_LABEL[locale as keyof typeof HINT_LABEL] ?? HINT_LABEL.en}</button></div>}
+            {hint && hint.index >= 0 && <p className="mb-3 text-center text-xs font-bold text-primary" role="status">{(SLOT_HINT[locale as keyof typeof SLOT_HINT] ?? SLOT_HINT.en)(hint.index + 1)}</p>}
             <p className="text-[10px] text-center text-muted-foreground uppercase tracking-widest mb-6">
                 {isKo ? (t.desc as (n: number, s: number) => string)(wordLen, targetDisplay.length) : (t.desc as (n: number) => string)(wordLen)}
             </p>

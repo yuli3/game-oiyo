@@ -79,6 +79,15 @@ export function submitPsychologyWordle(state: PsychologyWordleState): Psychology
   return { ...state, guesses, currentGuess: [], status: won ? "won" : guesses.length >= PSYCHOLOGY_WORDLE_MAX_GUESSES ? "lost" : "playing" };
 }
 
+export type PsychologyWordleHint = { reason: "unknown-slot"; index: number };
+export function explainPsychologyWordleHint(state: PsychologyWordleState): PsychologyWordleHint {
+  const known = Array(state.target.length).fill(false);
+  for (const guess of state.guesses) {
+    evaluatePsychologyWordleGuess(guess, state.target).forEach((tile, index) => { if (tile === "correct") known[index] = true; });
+  }
+  return { reason: "unknown-slot", index: known.findIndex((value) => !value) };
+}
+
 export function restartPsychologyWordle(state: PsychologyWordleState): PsychologyWordleState {
   return createPsychologyWordle(state.rngState, state.locale);
 }
