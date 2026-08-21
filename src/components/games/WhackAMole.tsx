@@ -45,9 +45,9 @@ const WhackAMole = ({ locale }: { locale: Locale }) => {
     oscillator.connect(gain).connect(context.destination); oscillator.start(); oscillator.stop(context.currentTime + 0.1);
   }, [muted]);
 
-  const start = useCallback(() => {
+  const start = useCallback((seedOverride?: number) => {
     clearWhackSave();
-    const seed = typeof crypto !== "undefined" ? crypto.getRandomValues(new Uint32Array(1))[0] : Date.now() >>> 0;
+    const seed = seedOverride ?? (typeof crypto !== "undefined" ? crypto.getRandomValues(new Uint32Array(1))[0] : Date.now() >>> 0);
     setGame(createWhackGame(seed)); setPaused(false); setRestored(false); setHitIndex(null);
     baseElapsed.current = 0; resumedAt.current = performance.now(); endedSeed.current = null; savedElapsed.current = 0;
   }, []);
@@ -131,7 +131,11 @@ const WhackAMole = ({ locale }: { locale: Locale }) => {
         </div>
         {(!game || game.status === "over") && <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-2xl bg-card/90 px-5 text-center backdrop-blur-sm" role={game ? "status" : undefined} aria-live="polite">
           {!game ? <><div className="text-4xl">🔨</div><p className="max-w-xs text-xs leading-relaxed text-muted-foreground">{t.controls}</p></> : <><p className="text-xs font-black uppercase tracking-widest text-primary">{game.score > 0 && game.score >= best ? t.newBest : t.over}</p><p className="text-2xl font-black">{game.score} {t.score}</p><div className="grid grid-cols-2 gap-x-5 gap-y-1 text-xs text-muted-foreground"><span>{t.hits} <b>{analysis?.hits}</b></span><span>{t.accuracy} <b>{analysis?.accuracy}%</b></span><span>{t.bombs} <b>{analysis?.bombs}</b></span><span>{t.combo} <b>×{analysis?.maxCombo}</b></span><span>{t.escaped} <b>{analysis?.escaped}</b></span><span>{t.next} <b>{Math.max(best + 1, game.score + 1)}</b></span></div></>}
-          <div className="flex flex-wrap justify-center gap-2"><button type="button" onClick={start} className="min-h-11 rounded-full bg-primary px-7 font-black text-primary-foreground">{game ? t.again : t.start}</button>{game && <button type="button" onClick={share} className="min-h-11 rounded-full border px-5 text-sm font-bold">{t.share}</button>}</div>
+          <div className="flex flex-wrap justify-center gap-2">
+            <button type="button" onClick={() => start()} className="min-h-11 rounded-full bg-primary px-7 font-black text-primary-foreground">{game ? t.again : t.start}</button>
+            {game && <button type="button" onClick={() => start(game.seed)} className="min-h-11 rounded-full border px-5 text-sm font-bold">{locale === "ko" ? "같은 판" : locale === "ja" ? "同じ盤" : locale === "zh" ? "同一局" : locale === "fr" ? "Même manche" : locale === "es" ? "Misma ronda" : "Same round"}</button>}
+            {game && <button type="button" onClick={share} className="min-h-11 rounded-full border px-5 text-sm font-bold">{t.share}</button>}
+          </div>
         </div>}
       </div>
       <p className="sr-only" aria-live="polite">{game ? `${t.score} ${game.score}, ${t.time} ${timeLeft}` : ""}</p>

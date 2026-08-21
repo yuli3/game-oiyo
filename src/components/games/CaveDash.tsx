@@ -12,8 +12,10 @@ import {
   CAVE_WALL_WIDTH,
   CAVE_WIDTH,
   createCaveDash,
+  explainCaveDashDeath,
   flapCaveDash,
   stepCaveDash,
+  type CaveDashDeath,
   type CaveDashState,
 } from "../../lib/games/cave-dash";
 import { clearCaveDashSave, loadCaveDashSave, storeCaveDashSave } from "../../lib/games/cave-dash-save";
@@ -32,15 +34,16 @@ type I18n = {
   title: string; subtitle: string; tapStart: string; controls: string;
   score: string; best: string; gameOver: string; restart: string; newBest: string; playArea: string; paused: string; resume: string;
   pause: string; soundOn: string; soundOff: string; flightTime: string; nextTarget: string; seconds: string; livePlaying: string;
+  retrySame: string; retryNew: string; death: Record<CaveDashDeath, string>;
 };
 
 const T: Record<Locale, I18n> = {
-  ko: { title: "케이브 대시", subtitle: "탭으로 상승, 벽 사이를 통과하라", tapStart: "탭하여 시작", controls: "화면을 탭(또는 클릭·스페이스)하면 위로 떠오릅니다. 놓으면 중력으로 내려갑니다. 벽 사이 틈을 통과하세요.", score: "점수", best: "최고", gameOver: "게임 오버", restart: "다시 하기", newBest: "🎉 신기록!", playArea: "케이브 대시 게임 영역", paused: "일시정지", resume: "계속하기", pause: "일시정지", soundOn: "소리 켜기", soundOff: "소리 끄기", flightTime: "비행 시간", nextTarget: "다음 목표", seconds: "초", livePlaying: "비행 중" },
-  en: { title: "Cave Dash", subtitle: "Tap to rise, thread the gaps", tapStart: "Tap to start", controls: "Tap the screen (or click / press Space) to lift; gravity pulls you down. Fly through the gaps between walls.", score: "Score", best: "Best", gameOver: "Game Over", restart: "Play again", newBest: "🎉 New best!", playArea: "Cave Dash game area", paused: "Paused", resume: "Resume", pause: "Pause", soundOn: "Turn sound on", soundOff: "Turn sound off", flightTime: "Flight time", nextTarget: "Next target", seconds: "sec", livePlaying: "Flying" },
-  ja: { title: "ケイブダッシュ", subtitle: "タップで上昇、壁の隙間を抜けろ", tapStart: "タップで開始", controls: "画面をタップ(またはクリック・スペース)すると上昇し、離すと重力で下降します。壁の隙間を通り抜けましょう。", score: "スコア", best: "ベスト", gameOver: "ゲームオーバー", restart: "もう一度", newBest: "🎉 新記録！", playArea: "ケイブダッシュのゲームエリア", paused: "一時停止", resume: "再開", pause: "一時停止", soundOn: "音をオン", soundOff: "音をオフ", flightTime: "飛行時間", nextTarget: "次の目標", seconds: "秒", livePlaying: "飛行中" },
-  fr: { title: "Cave Dash", subtitle: "Touchez pour monter, passez les trous", tapStart: "Touchez pour commencer", controls: "Touchez l'écran (ou cliquez / Espace) pour monter ; la gravité vous fait descendre. Passez entre les murs.", score: "Score", best: "Record", gameOver: "Game Over", restart: "Rejouer", newBest: "🎉 Nouveau record !", playArea: "Zone de jeu Cave Dash", paused: "En pause", resume: "Reprendre", pause: "Pause", soundOn: "Activer le son", soundOff: "Couper le son", flightTime: "Temps de vol", nextTarget: "Prochain objectif", seconds: "s", livePlaying: "En vol" },
-  es: { title: "Cave Dash", subtitle: "Toca para subir, cruza los huecos", tapStart: "Toca para empezar", controls: "Toca la pantalla (o clic / Espacio) para subir; la gravedad te baja. Cruza los huecos entre los muros.", score: "Puntos", best: "Récord", gameOver: "Fin del juego", restart: "Jugar de nuevo", newBest: "🎉 ¡Nuevo récord!", playArea: "Área de juego de Cave Dash", paused: "En pausa", resume: "Continuar", pause: "Pausar", soundOn: "Activar sonido", soundOff: "Silenciar", flightTime: "Tiempo de vuelo", nextTarget: "Próximo objetivo", seconds: "s", livePlaying: "Volando" },
-  zh: { title: "洞穴冲刺", subtitle: "点击上升，穿过缝隙", tapStart: "点击开始", controls: "点击屏幕(或点击鼠标/空格)上升，松开后重力下坠。穿过墙壁之间的缝隙。", score: "得分", best: "最佳", gameOver: "游戏结束", restart: "再玩一次", newBest: "🎉 新纪录！", playArea: "洞穴冲刺游戏区域", paused: "已暂停", resume: "继续", pause: "暂停", soundOn: "开启声音", soundOff: "关闭声音", flightTime: "飞行时间", nextTarget: "下一目标", seconds: "秒", livePlaying: "飞行中" },
+  ko: { title: "케이브 대시", subtitle: "탭으로 상승, 벽 사이를 통과하라", tapStart: "탭하여 시작", controls: "화면을 탭(또는 클릭·스페이스)하면 위로 떠오릅니다. 놓으면 중력으로 내려갑니다. 벽 사이 틈을 통과하세요.", score: "점수", best: "최고", gameOver: "게임 오버", restart: "다시 하기", newBest: "🎉 신기록!", playArea: "케이브 대시 게임 영역", paused: "일시정지", resume: "계속하기", pause: "일시정지", soundOn: "소리 켜기", soundOff: "소리 끄기", flightTime: "비행 시간", nextTarget: "다음 목표", seconds: "초", livePlaying: "비행 중", retrySame: "같은 동굴", retryNew: "새 동굴", death: { ceiling: "천장에 부딪힘", floor: "바닥에 부딪힘", wall: "벽에 부딪힘" } },
+  en: { title: "Cave Dash", subtitle: "Tap to rise, thread the gaps", tapStart: "Tap to start", controls: "Tap the screen (or click / press Space) to lift; gravity pulls you down. Fly through the gaps between walls.", score: "Score", best: "Best", gameOver: "Game Over", restart: "Play again", newBest: "🎉 New best!", playArea: "Cave Dash game area", paused: "Paused", resume: "Resume", pause: "Pause", soundOn: "Turn sound on", soundOff: "Turn sound off", flightTime: "Flight time", nextTarget: "Next target", seconds: "sec", livePlaying: "Flying", retrySame: "Same cave", retryNew: "New cave", death: { ceiling: "Hit the ceiling", floor: "Hit the floor", wall: "Hit a wall" } },
+  ja: { title: "ケイブダッシュ", subtitle: "タップで上昇、壁の隙間を抜けろ", tapStart: "タップで開始", controls: "画面をタップ(またはクリック・スペース)すると上昇し、離すと重力で下降します。壁の隙間を通り抜けましょう。", score: "スコア", best: "ベスト", gameOver: "ゲームオーバー", restart: "もう一度", newBest: "🎉 新記録！", playArea: "ケイブダッシュのゲームエリア", paused: "一時停止", resume: "再開", pause: "一時停止", soundOn: "音をオン", soundOff: "音をオフ", flightTime: "飛行時間", nextTarget: "次の目標", seconds: "秒", livePlaying: "飛行中", retrySame: "同じ洞窟", retryNew: "新しい洞窟", death: { ceiling: "天井に衝突", floor: "床に衝突", wall: "壁に衝突" } },
+  fr: { title: "Cave Dash", subtitle: "Touchez pour monter, passez les trous", tapStart: "Touchez pour commencer", controls: "Touchez l'écran (ou cliquez / Espace) pour monter ; la gravité vous fait descendre. Passez entre les murs.", score: "Score", best: "Record", gameOver: "Game Over", restart: "Rejouer", newBest: "🎉 Nouveau record !", playArea: "Zone de jeu Cave Dash", paused: "En pause", resume: "Reprendre", pause: "Pause", soundOn: "Activer le son", soundOff: "Couper le son", flightTime: "Temps de vol", nextTarget: "Prochain objectif", seconds: "s", livePlaying: "En vol", retrySame: "Même grotte", retryNew: "Nouvelle grotte", death: { ceiling: "Plafond", floor: "Sol", wall: "Mur" } },
+  es: { title: "Cave Dash", subtitle: "Toca para subir, cruza los huecos", tapStart: "Toca para empezar", controls: "Toca la pantalla (o clic / Espacio) para subir; la gravedad te baja. Cruza los huecos entre los muros.", score: "Puntos", best: "Récord", gameOver: "Fin del juego", restart: "Jugar de nuevo", newBest: "🎉 ¡Nuevo récord!", playArea: "Área de juego de Cave Dash", paused: "En pausa", resume: "Continuar", pause: "Pausar", soundOn: "Activar sonido", soundOff: "Silenciar", flightTime: "Tiempo de vuelo", nextTarget: "Próximo objetivo", seconds: "s", livePlaying: "Volando", retrySame: "Misma cueva", retryNew: "Nueva cueva", death: { ceiling: "Techo", floor: "Suelo", wall: "Pared" } },
+  zh: { title: "洞穴冲刺", subtitle: "点击上升，穿过缝隙", tapStart: "点击开始", controls: "点击屏幕(或点击鼠标/空格)上升，松开后重力下坠。穿过墙壁之间的缝隙。", score: "得分", best: "最佳", gameOver: "游戏结束", restart: "再玩一次", newBest: "🎉 新纪录！", playArea: "洞穴冲刺游戏区域", paused: "已暂停", resume: "继续", pause: "暂停", soundOn: "开启声音", soundOff: "关闭声音", flightTime: "飞行时间", nextTarget: "下一目标", seconds: "秒", livePlaying: "飞行中", retrySame: "同一洞穴", retryNew: "新洞穴", death: { ceiling: "撞到顶部", floor: "撞到底部", wall: "撞到墙壁" } },
 };
 
 interface Props { locale: Locale }
@@ -53,6 +56,8 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
   const [isNewBest, setIsNewBest] = useState(false);
   const [muted, setMuted] = useState(false);
   const [finalFrames, setFinalFrames] = useState(0);
+  const [death, setDeath] = useState<CaveDashDeath | null>(null);
+  const seedRef = useRef<number | null>(null);
   const mutedRef = useRef(false);
   mutedRef.current = muted;
 
@@ -105,6 +110,7 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
     const saved = recordBest(GAME_KEY, finalScore, "score");
     setBest(saved.value);
     setFinalFrames(gsRef.current?.elapsedFrames ?? 0);
+    setDeath(gsRef.current ? explainCaveDashDeath(gsRef.current) : null);
     setIsNewBest(beat && finalScore > 0);
     playTone("crash");
     if (beat && finalScore > 0 && !prefersReducedMotion) confetti({ particleCount: 90, spread: 72, origin: { y: 0.6 } });
@@ -148,12 +154,13 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
     rafRef.current = requestAnimationFrame(loop);
   }, [endGame, playTone]);
 
-  const begin = useCallback(() => {
+  const begin = useCallback((seedOverride?: number) => {
     clearCaveDashSave();
-    const seed = typeof crypto !== "undefined" && crypto.getRandomValues ? crypto.getRandomValues(new Uint32Array(1))[0] : Date.now();
+    const seed = seedOverride ?? (typeof crypto !== "undefined" && crypto.getRandomValues ? crypto.getRandomValues(new Uint32Array(1))[0] : Date.now());
+    seedRef.current = seed;
     gsRef.current = createCaveDash(seed);
     scoreRef.current = 0;
-    setScore(0); setIsNewBest(false); setFinalFrames(0);
+    setScore(0); setIsNewBest(false); setFinalFrames(0); setDeath(null);
     phaseRef.current = "playing";
     setPhase("playing");
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
@@ -266,6 +273,7 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
               <>
                 {isNewBest && <div className="text-sm font-black text-violet-300">{t.newBest}</div>}
                 <div className="text-xl font-black text-white">{t.gameOver}</div>
+                {death && <div className="text-sm font-bold text-amber-200">{t.death[death]}</div>}
                 <div className="text-sm text-white/80">{t.score}: <b>{score}</b> · {t.best}: {best}</div>
                 <div className="grid w-full max-w-xs grid-cols-2 gap-2 text-left text-xs text-white/80">
                   <div className="rounded-xl bg-white/10 p-3"><span className="block text-white/60">{t.flightTime}</span><b>{Math.max(1, Math.round(finalFrames / 60))} {t.seconds}</b></div>
@@ -280,9 +288,12 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
                 <p className="max-w-xs text-xs leading-relaxed text-white/80">{t.controls}</p>
               </>
             )}
-            <button type="button" onClick={phase === "paused" ? resume : begin} className="min-h-11 rounded-full bg-violet-500 px-8 py-2.5 font-bold text-white transition-colors hover:bg-violet-600">
-              {phase === "paused" ? t.resume : phase === "over" ? t.restart : t.tapStart}
-            </button>
+            <div className="flex flex-wrap justify-center gap-2">
+              {phase === "over" && <button type="button" onClick={() => seedRef.current !== null ? begin(seedRef.current) : begin()} disabled={seedRef.current === null} className="min-h-11 rounded-full border border-white/40 px-6 py-2.5 font-bold text-white disabled:opacity-40">{t.retrySame}</button>}
+              <button type="button" onClick={phase === "paused" ? resume : () => begin()} className="min-h-11 rounded-full bg-violet-500 px-8 py-2.5 font-bold text-white transition-colors hover:bg-violet-600">
+                {phase === "paused" ? t.resume : phase === "over" ? t.retryNew : t.tapStart}
+              </button>
+            </div>
           </div>
         )}
       </div>

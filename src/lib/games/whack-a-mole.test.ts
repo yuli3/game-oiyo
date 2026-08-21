@@ -2,6 +2,12 @@ import { describe, expect, it } from "vitest";
 import { advanceWhack, createWhackGame, hitWhack, replayWhack, whackAnalysis } from "./whack-a-mole";
 
 describe("whack-a-mole engine", () => {
+  it("replays a finished round from the same seed", () => {
+    const finished = advanceWhack(createWhackGame(19), 30_000);
+    expect(createWhackGame(19).seed).toBe(finished.seed);
+    expect(replayWhack(finished.seed, [])).toEqual(createWhackGame(19));
+  });
+
   it("replays the same seeded critter stream", () => {
     const first = advanceWhack(createWhackGame(77), 2_000);
     const second = advanceWhack(createWhackGame(77), 2_000);

@@ -420,6 +420,7 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
               <>
                 {isNewBest && <div className="text-sm font-black text-violet-300">{t.newBest}</div>}
                 <div className="text-xl font-black text-white">{t.gameOver}</div>
+                <div className="text-sm font-bold text-amber-200">{locale === "ko" ? "공을 놓쳤습니다" : locale === "ja" ? "ボールを落とした" : locale === "zh" ? "球掉下去了" : locale === "fr" ? "Balle perdue" : locale === "es" ? "Perdiste la bola" : "Ball dropped"}</div>
                 <div className="text-sm text-white/80">{t.score}: <b>{score}</b> · {t.level}: {level}</div>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-white/80">
                   <span>{bb2.bricks}: <b>{debrief.bricks}</b></span>

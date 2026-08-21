@@ -96,3 +96,15 @@ export function stepCaveDash(state: CaveDashState, frameScale = 1): CaveDashStat
   }
   return next;
 }
+
+export type CaveDashDeath = "ceiling" | "floor" | "wall";
+export function explainCaveDashDeath(state: CaveDashState): CaveDashDeath | null {
+  if (state.status !== "over") return null;
+  if (state.y - CAVE_SHIP_RADIUS <= 0) return "ceiling";
+  if (state.y + CAVE_SHIP_RADIUS >= CAVE_HEIGHT) return "floor";
+  for (const wall of state.walls) {
+    const overlapsX = CAVE_SHIP_X + CAVE_SHIP_RADIUS > wall.x && CAVE_SHIP_X - CAVE_SHIP_RADIUS < wall.x + CAVE_WALL_WIDTH;
+    if (overlapsX && (state.y - CAVE_SHIP_RADIUS < wall.gapY || state.y + CAVE_SHIP_RADIUS > wall.gapY + CAVE_GAP)) return "wall";
+  }
+  return "wall";
+}

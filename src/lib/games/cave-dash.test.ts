@@ -1,10 +1,23 @@
 import { describe, expect, it } from "vitest";
 import {
   CAVE_GAP, CAVE_HEIGHT, CAVE_SHIP_RADIUS, CAVE_SHIP_X, CAVE_WALL_WIDTH,
-  createCaveDash, flapCaveDash, stepCaveDash, type CaveDashState,
+  createCaveDash, explainCaveDashDeath, flapCaveDash, stepCaveDash, type CaveDashState,
 } from "./cave-dash";
 
 describe("Cave Dash deterministic physics", () => {
+  it("names ceiling, floor, and wall deaths without changing state", () => {
+    const ceiling = { ...createCaveDash(1), y: CAVE_SHIP_RADIUS, vy: -1, status: "over" as const };
+    const floor = { ...createCaveDash(1), y: CAVE_HEIGHT - CAVE_SHIP_RADIUS, vy: 1, status: "over" as const };
+    const wall: CaveDashState = {
+      ...createCaveDash(1), y: 200, vy: 0, status: "over",
+      walls: [{ x: CAVE_SHIP_X, gapY: 40, passed: false }],
+    };
+    expect(explainCaveDashDeath(ceiling)).toBe("ceiling");
+    expect(explainCaveDashDeath(floor)).toBe("floor");
+    expect(explainCaveDashDeath(wall)).toBe("wall");
+    expect(explainCaveDashDeath(createCaveDash(1))).toBeNull();
+  });
+
   it("replays the same seed and flap sequence byte-for-byte", () => {
     const run = () => {
       let state = createCaveDash(42);
