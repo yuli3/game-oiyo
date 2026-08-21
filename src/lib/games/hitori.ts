@@ -23,10 +23,16 @@ export function undoHitori(state: HitoriState): HitoriState {
   const history=[...state.history], index=history.pop()!, dark=state.dark.map(row=>[...row]); dark[Math.floor(index/5)][index%5]=!dark[Math.floor(index/5)][index%5];
   return {...state,dark,history,moves:Math.max(0,state.moves-1),won:false};
 }
+export type HitoriHint = { reason:'duplicate'|'adjacent'|'connected'; cells:number[] };
+export function explainHitoriHint(state:HitoriState):HitoriHint{
+  const size=HITORI_SIZE;
+  for(let r=0;r<size;r++)for(let a=0;a<size;a++)if(!state.dark[r][a])for(let b=a+1;b<size;b++)if(!state.dark[r][b]&&state.values[r][a]===state.values[r][b])return{reason:'duplicate',cells:[r*size+a,r*size+b]};
+  for(let c=0;c<size;c++)for(let a=0;a<size;a++)if(!state.dark[a][c])for(let b=a+1;b<size;b++)if(!state.dark[b][c]&&state.values[a][c]===state.values[b][c])return{reason:'duplicate',cells:[a*size+c,b*size+c]};
+  for(let r=0;r<size;r++)for(let c=0;c<size;c++)if(state.dark[r][c])for(const[dr,dc]of[[1,0],[0,1]])if(state.dark[r+dr]?.[c+dc])return{reason:'adjacent',cells:[r*size+c,(r+dr)*size+c+dc]};
+  return{reason:'connected',cells:[]};
+}
 export function hintHitori(state: HitoriState): HitoriState {
-  if (state.won) return state; const solution=hitoriSolution(state.seed);
-  for(let i=0;i<25;i++){const r=Math.floor(i/5),c=i%5;if(state.dark[r][c]!==solution[r][c]) return {...toggleHitori(state,i),hints:state.hints+1};}
-  return state;
+  return state.won ? state : {...state,hints:state.hints+1};
 }
 export function serializeHitori(state:HitoriState){return JSON.stringify({v:1,seed:state.seed,history:state.history});}
 export function parseHitori(raw:string|null):HitoriState|null{try{const x=JSON.parse(raw??'');if(x?.v!==1||!Number.isInteger(x.seed)||!Array.isArray(x.history)||x.history.some((i:unknown)=>!Number.isInteger(i)||Number(i)<0||Number(i)>=25))return null;return x.history.reduce((s:HitoriState,i:number)=>toggleHitori(s,i),createHitori(x.seed));}catch{return null;}}
