@@ -7,6 +7,7 @@ import {
   createDefaultMallowSave,
   createIslandTerrain,
   eraseDecoration,
+  explainPlaceDecoration,
   movePlayer,
   parseMallowSave,
   placeDecoration,
@@ -36,6 +37,15 @@ describe("Mallow Isle terrain", () => {
 });
 
 describe("Mallow Isle decorating and movement", () => {
+  it("explains full, shoreline and crowded placement without changing decorations", () => {
+    const crowded = [{ id: "tree-1", type: "tree" as const, x: 1, z: 1, rotation: 0, variant: 0 }];
+    expect(explainPlaceDecoration([], "tree", ISLAND_RADIUS, 0)).toBe("shore");
+    expect(explainPlaceDecoration(crowded, "flowers", 1.2, 1.1)).toBe("crowded");
+    const packed = Array.from({ length: 72 }, (_, index) => ({ id: `d-${index}`, type: "flowers" as const, x: 0, z: 0, rotation: 0, variant: 0 }));
+    expect(explainPlaceDecoration(packed, "tree", 0, 0)).toBe("full");
+    expect(explainPlaceDecoration([], "tree", 1, 1)).toBeNull();
+  });
+
   it("places with spacing, erases the nearest item and caps comfort", () => {
     const placed = placeDecoration([], "tree", 1, 1, "tree-1");
     expect(placed).toHaveLength(1);

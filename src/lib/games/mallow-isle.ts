@@ -114,6 +114,15 @@ export function sculptTerrain(
   return changed ? next : heights;
 }
 
+export type PlaceDecorationFailure = "full" | "shore" | "crowded";
+export function explainPlaceDecoration(current: Decoration[], type: DecorationType, x: number, z: number): PlaceDecorationFailure | null {
+  if (current.length >= 72) return "full";
+  if (Math.hypot(x, z) > ISLAND_RADIUS - 1.3) return "shore";
+  const minDistance = type === "tree" ? 1.45 : type === "bench" ? 1.2 : 0.75;
+  if (current.some((item) => Math.hypot(item.x - x, item.z - z) < minDistance)) return "crowded";
+  return null;
+}
+
 export function placeDecoration(
   current: Decoration[],
   type: DecorationType,
@@ -121,9 +130,7 @@ export function placeDecoration(
   z: number,
   id: string,
 ): Decoration[] {
-  if (current.length >= 72 || Math.hypot(x, z) > ISLAND_RADIUS - 1.3) return current;
-  const minDistance = type === "tree" ? 1.45 : type === "bench" ? 1.2 : 0.75;
-  if (current.some((item) => Math.hypot(item.x - x, item.z - z) < minDistance)) return current;
+  if (explainPlaceDecoration(current, type, x, z)) return current;
   const variant = Math.abs(Math.floor((x * 17 + z * 31) * 10)) % 3;
   const rotation = ((Math.abs(x * 13 + z * 19) % 6.28) + 6.28) % 6.28;
   return [...current, { id, type, x, z, rotation, variant }];

@@ -2,11 +2,12 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { elapsedSeconds, frameScale } from '../../lib/games/time-contracts';
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
+import { mulberry32 } from '../../lib/games/daily';
 import {
     CONFIGS,
     allCaught,
     catchFish as catchFishAt,
-    createFish,
+    createFishFromSeed,
     formatElapsed,
     stepFish,
     type Difficulty,
@@ -20,12 +21,12 @@ import {
 const BEST_KEY = 'oiyo-cat-fishing-best'; // per difficulty: seconds
 
 const COPY = {
-    ko: { title: '고양이 낚시', subtitle: 'Cat Fishing', normal: '보통', hard: '어려움', hell: '헬', caught: '잡은 물고기', time: '시간', best: '최단 기록', win: '다 잡았다! 🐱', winSub: '오늘 밤 고양이들은 만찬입니다.', hintNormal: '물고기를 탭해서 잡으세요!', hintHard: '조심! 도망갑니다!', hintHell: '초고속 모드!', again: '다시 하기', sound: '소리' },
-    en: { title: 'Cat Fishing', subtitle: 'Cat Fishing', normal: 'Normal', hard: 'Hard', hell: 'Hell', caught: 'Caught', time: 'Time', best: 'Best', win: "Caught 'em all! 🐱", winSub: 'Your kitties feast tonight.', hintNormal: 'Tap the fish to catch them!', hintHard: 'Watch out! They run away!', hintHell: 'Super speed mode!', again: 'Play Again', sound: 'Sound' },
-    ja: { title: 'ねこ釣り', subtitle: 'Cat Fishing', normal: 'ふつう', hard: 'むずかしい', hell: '地獄', caught: '釣った魚', time: '時間', best: '最短記録', win: '全部釣った！ 🐱', winSub: '今夜は猫たちのごちそうです。', hintNormal: '魚をタップして捕まえよう！', hintHard: '注意！逃げます！', hintHell: '超高速モード！', again: 'もう一度', sound: '音' },
-    zh: { title: '猫咪钓鱼', subtitle: 'Cat Fishing', normal: '普通', hard: '困难', hell: '地狱', caught: '已捕获', time: '时间', best: '最快记录', win: '全抓到了！🐱', winSub: '今晚猫咪们有大餐了。', hintNormal: '点击鱼来捕捉！', hintHard: '小心！它们会逃跑！', hintHell: '超高速模式！', again: '再玩一次', sound: '声音' },
-    fr: { title: 'Pêche au chat', subtitle: 'Cat Fishing', normal: 'Normal', hard: 'Difficile', hell: 'Enfer', caught: 'Attrapés', time: 'Temps', best: 'Record', win: 'Tous attrapés ! 🐱', winSub: 'Vos chats festoient ce soir.', hintNormal: 'Touchez les poissons pour les attraper !', hintHard: 'Attention ! Ils fuient !', hintHell: 'Mode super vitesse !', again: 'Rejouer', sound: 'Son' },
-    es: { title: 'Pesca gatuna', subtitle: 'Cat Fishing', normal: 'Normal', hard: 'Difícil', hell: 'Infierno', caught: 'Atrapados', time: 'Tiempo', best: 'Récord', win: '¡Todos atrapados! 🐱', winSub: 'Tus gatitos festejan esta noche.', hintNormal: '¡Toca los peces para atraparlos!', hintHard: '¡Cuidado! ¡Se escapan!', hintHell: '¡Modo super velocidad!', again: 'Jugar otra vez', sound: 'Sonido' },
+    ko: { title: '고양이 낚시', subtitle: 'Cat Fishing', normal: '보통', hard: '어려움', hell: '헬', caught: '잡은 물고기', time: '시간', best: '최단 기록', win: '다 잡았다! 🐱', winSub: '오늘 밤 고양이들은 만찬입니다.', hintNormal: '물고기를 탭해서 잡으세요!', hintHard: '조심! 도망갑니다!', hintHell: '초고속 모드!', again: '다시 하기', same: '같은 연못', sound: '소리' },
+    en: { title: 'Cat Fishing', subtitle: 'Cat Fishing', normal: 'Normal', hard: 'Hard', hell: 'Hell', caught: 'Caught', time: 'Time', best: 'Best', win: "Caught 'em all! 🐱", winSub: 'Your kitties feast tonight.', hintNormal: 'Tap the fish to catch them!', hintHard: 'Watch out! They run away!', hintHell: 'Super speed mode!', again: 'Play Again', same: 'Same pond', sound: 'Sound' },
+    ja: { title: 'ねこ釣り', subtitle: 'Cat Fishing', normal: 'ふつう', hard: 'むずかしい', hell: '地獄', caught: '釣った魚', time: '時間', best: '最短記録', win: '全部釣った！ 🐱', winSub: '今夜は猫たちのごちそうです。', hintNormal: '魚をタップして捕まえよう！', hintHard: '注意！逃げます！', hintHell: '超高速モード！', again: 'もう一度', same: '同じ池', sound: '音' },
+    zh: { title: '猫咪钓鱼', subtitle: 'Cat Fishing', normal: '普通', hard: '困难', hell: '地狱', caught: '已捕获', time: '时间', best: '最快记录', win: '全抓到了！🐱', winSub: '今晚猫咪们有大餐了。', hintNormal: '点击鱼来捕捉！', hintHard: '小心！它们会逃跑！', hintHell: '超高速模式！', again: '再玩一次', same: '同一池塘', sound: '声音' },
+    fr: { title: 'Pêche au chat', subtitle: 'Cat Fishing', normal: 'Normal', hard: 'Difficile', hell: 'Enfer', caught: 'Attrapés', time: 'Temps', best: 'Record', win: 'Tous attrapés ! 🐱', winSub: 'Vos chats festoient ce soir.', hintNormal: 'Touchez les poissons pour les attraper !', hintHard: 'Attention ! Ils fuient !', hintHell: 'Mode super vitesse !', again: 'Rejouer', same: 'Même étang', sound: 'Son' },
+    es: { title: 'Pesca gatuna', subtitle: 'Cat Fishing', normal: 'Normal', hard: 'Difícil', hell: 'Infierno', caught: 'Atrapados', time: 'Tiempo', best: 'Récord', win: '¡Todos atrapados! 🐱', winSub: 'Tus gatitos festejan esta noche.', hintNormal: '¡Toca los peces para atraparlos!', hintHard: '¡Cuidado! ¡Se escapan!', hintHell: '¡Modo super velocidad!', again: 'Jugar otra vez', same: 'Mismo estanque', sound: 'Sonido' },
 } as const;
 
 const CatFishing: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
@@ -62,6 +63,8 @@ const CatFishing: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const startedAt = useRef<number | null>(null);
     const areaRef = useRef<HTMLDivElement>(null);
     const pointer = useRef({ x: -1000, y: -1000 });
+    const seedRef = useRef(1);
+    const rngRef = useRef(mulberry32(1));
     const fishRef = useRef(fish);
     fishRef.current = fish;
     const [pops, setPops] = useState<{ id: number; x: number; y: number }[]>([]);
@@ -71,7 +74,10 @@ const CatFishing: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const won = fish.length > 0 && remaining === 0;
 
     useEffect(() => {
-        setFish(createFish(CONFIGS.normal.fishCount, CONFIGS.normal.baseSpeed));
+        const seed = typeof crypto !== 'undefined' ? crypto.getRandomValues(new Uint32Array(1))[0] : Date.now();
+        seedRef.current = seed;
+        rngRef.current = mulberry32(seed);
+        setFish(createFishFromSeed(CONFIGS.normal.fishCount, CONFIGS.normal.baseSpeed, seed));
         try {
             const stored = JSON.parse(localStorage.getItem(BEST_KEY) || '{}');
             if (stored && typeof stored === 'object') setBest(stored);
@@ -95,7 +101,7 @@ const CatFishing: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         const step = (now: number) => {
             const deltaScale = frameScale(previous, now);
             previous = now;
-            setFish((prev) => prev.map((f) => stepFish(f, cfg, pointer.current, deltaScale)));
+            setFish((prev) => prev.map((f) => stepFish(f, cfg, pointer.current, deltaScale, rngRef.current)));
             raf = requestAnimationFrame(step);
         };
         raf = requestAnimationFrame(step);
@@ -138,12 +144,16 @@ const CatFishing: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         });
     };
 
-    const restart = useCallback((diff: Difficulty = difficulty) => {
+    const restart = useCallback((diff: Difficulty = difficulty, seedOverride?: number) => {
         const cfg = CONFIGS[diff];
+        const seed = seedOverride ?? (typeof crypto !== 'undefined' ? crypto.getRandomValues(new Uint32Array(1))[0] : Date.now());
+        seedRef.current = seed;
+        rngRef.current = mulberry32(seed);
         setDifficulty(diff);
-        setFish(createFish(cfg.fishCount, cfg.baseSpeed));
+        setFish(createFishFromSeed(cfg.fishCount, cfg.baseSpeed, seed));
         setSeconds(0);
         started.current = false;
+        startedAt.current = null;
     }, [difficulty]);
 
     const hint = difficulty === 'normal' ? t.hintNormal : difficulty === 'hard' ? t.hintHard : t.hintHell;
@@ -213,9 +223,14 @@ const CatFishing: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         <p className="text-2xl font-black text-primary">{t.win}</p>
                         <p className="text-sm text-muted-foreground">{t.winSub}</p>
                         <p className="text-sm font-bold text-muted-foreground">{t.time} {formatElapsed(seconds)}</p>
-                        <button onClick={() => restart()} className="mt-3 px-8 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity">
+                        <div className="mt-3 flex flex-wrap justify-center gap-2">
+                        <button type="button" onClick={() => restart()} className="px-8 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity">
                             {t.again}
                         </button>
+                        <button type="button" onClick={() => restart(difficulty, seedRef.current)} className="px-6 py-3 rounded-full border font-bold">
+                            {t.same}
+                        </button>
+                        </div>
                     </div>
                 )}
             </div>

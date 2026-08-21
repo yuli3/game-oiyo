@@ -4,6 +4,7 @@ import {
   allCaught,
   catchFish,
   createFish,
+  createFishFromSeed,
   formatElapsed,
   stepFish,
   type FishState,
@@ -15,6 +16,11 @@ function fixedRng(sequence: number[]): () => number {
 }
 
 describe("cat fishing spawn", () => {
+  it("replays the same pond from the same seed", () => {
+    expect(createFishFromSeed(5, CONFIGS.normal.baseSpeed, 42)).toEqual(createFishFromSeed(5, CONFIGS.normal.baseSpeed, 42));
+    expect(createFishFromSeed(5, CONFIGS.normal.baseSpeed, 42)).not.toEqual(createFishFromSeed(5, CONFIGS.normal.baseSpeed, 43));
+  });
+
   it("places every fish inside the play area with the configured speed and no fish caught", () => {
     const fish = createFish(5, CONFIGS.normal.baseSpeed, fixedRng([0.1, 0.5, 0.9, 0.2, 0.6, 0.3, 0.7, 0.4, 0.8, 0.0]));
     expect(fish).toHaveLength(5);

@@ -47,7 +47,7 @@ const COPY: Record<Locale, Copy> = {
         bench: "동물 이웃이 쉬어 갈 아늑한 벤치를 둡니다.",
         erase: "가장 가까운 장식을 조심스럽게 치웁니다.",
       },
-      notices: { shaped: "섬이 말랑하게 빚어졌어요", placed: "포근함이 한 조각 늘었어요", erased: "장식을 정리했어요", crowded: "조금 더 넓은 자리를 골라주세요", shoreline: "물가는 그대로 두어 파도를 지켜요" },
+      notices: { shaped: "섬이 말랑하게 빚어졌어요", placed: "포근함이 한 조각 늘었어요", erased: "장식을 정리했어요", crowded: "조금 더 넓은 자리를 골라주세요", shoreline: "물가는 그대로 두어 파도를 지켜요", full: "섬이 가득 찼어요" },
     },
   },
   en: {
@@ -78,7 +78,7 @@ const COPY: Record<Locale, Copy> = {
         bench: "Place a cozy resting spot for your animal neighbors.",
         erase: "Carefully remove the decoration closest to your pointer.",
       },
-      notices: { shaped: "The island feels a little softer", placed: "One more cozy detail", erased: "That spot is tidy again", crowded: "Choose a roomier patch of grass", shoreline: "The shoreline stays gentle for the waves" },
+      notices: { shaped: "The island feels a little softer", placed: "One more cozy detail", erased: "That spot is tidy again", crowded: "Choose a roomier patch of grass", shoreline: "The shoreline stays gentle for the waves", full: "The island is full" },
     },
   },
   ja: {
@@ -109,7 +109,7 @@ const COPY: Record<Locale, Copy> = {
         bench: "動物の隣人が休めるベンチを置きます。",
         erase: "ポインターに一番近い飾りを丁寧に片付けます。",
       },
-      notices: { shaped: "島が少しふんわりしました", placed: "心地よさがひとつ増えました", erased: "きれいに片付きました", crowded: "もう少し広い草地を選んでください", shoreline: "波のために水辺はそのままにします" },
+      notices: { shaped: "島が少しふんわりしました", placed: "心地よさがひとつ増えました", erased: "きれいに片付きました", crowded: "もう少し広い草地を選んでください", shoreline: "波のために水辺はそのままにします", full: "島がいっぱいです" },
     },
   },
   zh: {
@@ -140,7 +140,7 @@ const COPY: Record<Locale, Copy> = {
         bench: "为动物邻居放置舒适的休息长椅。",
         erase: "小心移除离指针最近的装饰。",
       },
-      notices: { shaped: "岛屿又柔软了一点", placed: "又多了一处温馨细节", erased: "这里整理好了", crowded: "请选择更宽敞的草地", shoreline: "让海岸保持柔和，留给浪花" },
+      notices: { shaped: "岛屿又柔软了一点", placed: "又多了一处温馨细节", erased: "这里整理好了", crowded: "请选择更宽敞的草地", shoreline: "让海岸保持柔和，留给浪花", full: "小岛已经放满了" },
     },
   },
   fr: {
@@ -171,7 +171,7 @@ const COPY: Record<Locale, Copy> = {
         bench: "Créez une halte confortable pour vos voisins animaux.",
         erase: "Retirez avec soin la décoration la plus proche du pointeur.",
       },
-      notices: { shaped: "L'île est encore plus moelleuse", placed: "Un détail douillet de plus", erased: "Cet endroit est rangé", crowded: "Choisissez un coin d'herbe plus spacieux", shoreline: "Le rivage reste doux pour les vagues" },
+      notices: { shaped: "L'île est encore plus moelleuse", placed: "Un détail douillet de plus", erased: "Cet endroit est rangé", crowded: "Choisissez un coin d'herbe plus spacieux", shoreline: "Le rivage reste doux pour les vagues", full: "L'île est pleine" },
     },
   },
   es: {
@@ -202,7 +202,7 @@ const COPY: Record<Locale, Copy> = {
         bench: "Coloca un rincón de descanso para tus vecinos animales.",
         erase: "Retira con cuidado la decoración más cercana al puntero.",
       },
-      notices: { shaped: "La isla está un poco más mullida", placed: "Un detalle acogedor más", erased: "Este rincón vuelve a estar ordenado", crowded: "Elige una zona de hierba más amplia", shoreline: "La costa se queda suave para las olas" },
+      notices: { shaped: "La isla está un poco más mullida", placed: "Un detalle acogedor más", erased: "Este rincón vuelve a estar ordenado", crowded: "Elige una zona de hierba más amplia", shoreline: "La costa se queda suave para las olas", full: "La isla está llena" },
     },
   },
 };

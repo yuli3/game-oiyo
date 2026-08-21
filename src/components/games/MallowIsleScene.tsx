@@ -32,6 +32,7 @@ import {
   cozyScore,
   createDefaultMallowSave,
   eraseDecoration,
+  explainPlaceDecoration,
   movePlayer,
   parseMallowSave,
   placeDecoration,
@@ -60,11 +61,12 @@ export interface MallowSceneCopy {
   tools: Record<ToolId, string>;
   descriptions: Record<ToolId, string>;
   notices: {
-    shaped: string;
-    placed: string;
-    erased: string;
-    crowded: string;
-    shoreline: string;
+  shaped: string;
+  placed: string;
+  erased: string;
+  crowded: string;
+  shoreline: string;
+  full: string;
   };
 }
 
@@ -307,7 +309,8 @@ export default function MallowIsleScene({ copy, audioEnabled, onToggleAudio }: P
         `mallow-${tool}-${Date.now()}-${idRef.current++}`,
       );
       if (decorations === current.decorations) {
-        setNotice(copy.notices.crowded);
+        const reason = explainPlaceDecoration(current.decorations, tool, x, z);
+        setNotice(reason === "full" ? copy.notices.full : reason === "shore" ? copy.notices.shoreline : copy.notices.crowded);
         return current;
       }
       const next = { ...current, decorations };

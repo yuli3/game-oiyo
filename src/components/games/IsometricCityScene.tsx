@@ -137,6 +137,8 @@ function reasonMessage(reason: ReturnType<typeof placementReason>, copy: Isometr
   if (reason === "occupied") return copy.occupied;
   if (reason === "empty") return copy.empty;
   if (reason === "funds") return copy.insufficient;
+  if (reason === "max-level") return copy.maxLevel;
+  if (reason === "bounds") return copy.empty;
   return "";
 }
 

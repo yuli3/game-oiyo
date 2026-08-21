@@ -7,6 +7,8 @@
  * a 60Hz and a 120Hz display instead of doubling with the refresh rate.
  */
 
+import { mulberry32 } from "./daily";
+
 export type Difficulty = "normal" | "hard" | "hell";
 
 export interface FishState {
@@ -49,6 +51,10 @@ export function createFish(count: number, speed: number, random: () => number = 
       caught: false,
     };
   });
+}
+
+export function createFishFromSeed(count: number, speed: number, seed: number): FishState[] {
+  return createFish(count, speed, mulberry32(seed));
 }
 
 /** One physics step for a single fish; a caught fish is returned unchanged. */
