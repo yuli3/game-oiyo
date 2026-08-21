@@ -4,6 +4,7 @@ import {
   isWinningHand,
   nextRonCandidate,
   ronCandidatesInSeatOrder,
+  shanten,
   shuffle,
   type AiLevel,
 } from "./ai/mahjong";
@@ -150,4 +151,16 @@ export function discardMahjongAi(state: MahjongState, level: AiLevel): MahjongSt
   const choice = chooseAiDiscard(state, level);
   if (!choice) return state;
   return discardMahjong({ ...state, rngState: choice.rngState }, choice.tileIndex);
+}
+
+export type MahjongCpuReview = { tile: number; shantenAfter: number; reason: "variation" | "tenpai" | "shanten" | "disposable" };
+export function mahjongCpuReview(state: MahjongState, level: AiLevel): MahjongCpuReview | null {
+  const choice = chooseAiDiscard(state, level);
+  if (!choice) return null;
+  const hand = state.hands[state.turn];
+  const tile = hand[choice.tileIndex];
+  const rest = hand.filter((_, index) => index !== choice.tileIndex);
+  const shantenAfter = shanten(rest);
+  const reason = level === 1 ? "variation" : shantenAfter <= 0 ? "tenpai" : shantenAfter < shanten(hand.slice(0, 13)) ? "shanten" : "disposable";
+  return { tile, shantenAfter, reason };
 }

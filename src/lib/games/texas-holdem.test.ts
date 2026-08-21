@@ -8,6 +8,12 @@ import {
   serializeHoldem,
 } from "./texas-holdem";
 describe("texas holdem round", () => {
+  it("keeps the same deal from the same seed after a fold", () => {
+    const folded = actHoldem(createHoldem(8), "fold");
+    expect(createHoldem(folded.seed).deck).toEqual(createHoldem(8).deck);
+    expect(holdemOutcome(folded)).toBe("lose");
+  });
+
   it("deals deterministic unique cards", () => {
     const a = createHoldem(7),
       b = createHoldem(7);

@@ -6,6 +6,7 @@ import {
   discardMahjong,
   discardMahjongAi,
   drawMahjong,
+  mahjongCpuReview,
   passHumanRon,
   type MahjongState,
 } from "./mahjong";
@@ -13,6 +14,20 @@ import {
 const waiting = [0, 1, 2, 9, 10, 11, 18, 19, 20, 27, 27, 27, 5];
 
 describe("mahjong match engine", () => {
+  it("reviews the AI discard without changing state", () => {
+    let state = createMahjong(21);
+    for (let step = 0; step < 8 && !(state.phase === "discard" && state.turn !== 0); step += 1) {
+      if (state.phase === "draw") state = drawMahjong(state);
+      else if (state.phase === "discard" && state.turn === 0) state = discardMahjong(state, state.hands[0].length - 1);
+      else if (state.phase === "ron") state = passHumanRon(state);
+    }
+    expect(state.phase).toBe("discard");
+    expect(state.turn).not.toBe(0);
+    const before = structuredClone(state);
+    expect(mahjongCpuReview(state, 3)).toMatchObject({ tile: expect.any(Number), reason: expect.stringMatching(/variation|tenpai|shanten|disposable/) });
+    expect(state).toEqual(before);
+  });
+
   it("deals the same physical wall and hands for the same seed", () => {
     const first = createMahjong(0x12345678);
     expect(createMahjong(0x12345678)).toEqual(first);

@@ -433,8 +433,8 @@ const TexasHoldem: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
   const board = useMemo(() => (deck.length ? deck.slice(4, 9) : []), [deck]);
   const shownBoard = board.slice(0, REVEAL[stage]);
 
-  const deal = useCallback(() => {
-    const nextSeed = crypto.getRandomValues(new Uint32Array(1))[0];
+  const deal = useCallback((seedOverride?: number) => {
+    const nextSeed = seedOverride ?? crypto.getRandomValues(new Uint32Array(1))[0];
     const next = createHoldem(nextSeed);
     setSeed(next.seed);
     setDeck(next.deck);
@@ -516,7 +516,7 @@ const TexasHoldem: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
     <GameContainer
       title={t.title}
       subtitle={t.subtitle}
-      onReset={stage !== "idle" ? deal : undefined}
+      onReset={stage !== "idle" ? () => deal() : undefined}
       resetLabel={t.again}
     >
       {stage === "idle" ? (
@@ -530,7 +530,7 @@ const TexasHoldem: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
             {t.briefing}
           </p>
           <button
-            onClick={deal}
+            onClick={() => deal()}
             aria-label={t.dealLabel}
             className="px-8 py-3 rounded-2xl bg-primary text-primary-foreground font-black text-lg hover:bg-primary/90 transition-colors"
           >
@@ -631,13 +631,22 @@ const TexasHoldem: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
                   </b>
                 </p>
               )}
+              <div className="flex flex-wrap justify-center gap-2">
               <button
-                onClick={deal}
+                onClick={() => deal()}
                 aria-label={t.againLabel}
                 className="min-h-11 px-6 py-2.5 rounded-xl bg-primary text-primary-foreground font-black hover:bg-primary/90 transition-colors"
               >
                 {t.again}
               </button>
+              <button
+                type="button"
+                onClick={() => deal(seed)}
+                className="min-h-11 px-5 py-2.5 rounded-xl border border-border font-bold text-sm hover:bg-muted"
+              >
+                {locale === "ko" ? "같은 딜" : locale === "ja" ? "同じディール" : locale === "zh" ? "同一手牌" : locale === "fr" ? "Même donne" : locale === "es" ? "Misma mano" : "Same deal"}
+              </button>
+              </div>
             </div>
           ) : (
             <div className="flex justify-center gap-3">

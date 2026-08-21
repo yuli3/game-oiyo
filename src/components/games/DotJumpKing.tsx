@@ -156,9 +156,10 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
       setPhase("paused");
     }
   }, []);
-  const start = useCallback(() => {
+  const start = useCallback((seedOverride?: number) => {
     const seed = new Uint32Array(1);
-    crypto.getRandomValues(seed);
+    if (seedOverride !== undefined) seed[0] = seedOverride >>> 0;
+    else crypto.getRandomValues(seed);
     state.current = createJumpState(seed[0]);
     setHeight(0);
     setCharge(0);
@@ -264,7 +265,7 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
           <div className="p-5 text-center">
             <p className="text-sm text-muted-foreground">{t.hint}</p>
             <button
-              onClick={start}
+              onClick={() => start()}
               className="mt-5 min-h-12 rounded-full bg-primary px-8 font-black text-primary-foreground"
             >
               {t.start}
@@ -321,10 +322,17 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
                 {t.result}: {height}m
               </p>
               <button
-                onClick={start}
+                onClick={() => start()}
                 className="mt-5 min-h-12 rounded-full bg-primary px-8 font-black text-primary-foreground"
               >
                 {t.again}
+              </button>
+              <button
+                type="button"
+                onClick={() => start(state.current.seed)}
+                className="mt-2 min-h-11 rounded-full border px-6 text-sm font-bold"
+              >
+                {locale === "ko" ? "같은 탑" : locale === "ja" ? "同じ塔" : locale === "zh" ? "同一塔" : locale === "fr" ? "Même tour" : locale === "es" ? "Misma torre" : "Same tower"}
               </button>
             </div>
           )}

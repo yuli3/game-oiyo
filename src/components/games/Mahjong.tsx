@@ -12,7 +12,9 @@ import {
   discardMahjong,
   discardMahjongAi,
   drawMahjong,
+  mahjongCpuReview,
   passHumanRon,
+  type MahjongCpuReview,
   type MahjongState,
 } from "../../lib/games/mahjong";
 import { clearMahjongSave, loadMahjongSave, storeMahjongSave } from "../../lib/games/mahjong-save";
@@ -46,12 +48,12 @@ const SUIT_COLOR = ["#b91c1c", "#1d4ed8", "#15803d", "#4b5563"];
 const HONOR_LABEL = ["東", "南", "西", "北", "白", "發", "中"];
 
 const extra = {
-  ko: { soundOn: "소리 켜기", soundOff: "소리 끄기", recommended: "추천", recommendation: "추천 버림패", shanten: "샹텐", turns: "순 진행", remaining: "남은 패", next: "다음 목표", liveTurn: "내 차례" },
-  en: { soundOn: "Turn sound on", soundOff: "Turn sound off", recommended: "Recommended", recommendation: "Suggested discard", shanten: "Shanten", turns: "Turns", remaining: "Tiles left", next: "Next goal", liveTurn: "Your turn" },
-  ja: { soundOn: "音をオン", soundOff: "音をオフ", recommended: "おすすめ", recommendation: "おすすめの捨て牌", shanten: "シャンテン", turns: "巡目", remaining: "残り牌", next: "次の目標", liveTurn: "あなたの番" },
-  zh: { soundOn: "开启声音", soundOff: "关闭声音", recommended: "推荐", recommendation: "推荐弃牌", shanten: "向听", turns: "巡数", remaining: "剩余牌", next: "下一目标", liveTurn: "你的回合" },
-  fr: { soundOn: "Activer le son", soundOff: "Couper le son", recommended: "Conseillée", recommendation: "Défausse conseillée", shanten: "Shanten", turns: "Tours", remaining: "Tuiles restantes", next: "Prochain objectif", liveTurn: "À vous" },
-  es: { soundOn: "Activar sonido", soundOff: "Silenciar", recommended: "Recomendada", recommendation: "Descarte sugerido", shanten: "Shanten", turns: "Turnos", remaining: "Fichas restantes", next: "Próximo objetivo", liveTurn: "Tu turno" },
+  ko: { soundOn: "소리 켜기", soundOff: "소리 끄기", recommended: "추천", recommendation: "추천 버림패", shanten: "샹텐", turns: "순 진행", remaining: "남은 패", next: "다음 목표", liveTurn: "내 차례", policy: "AI 정책", last: "마지막 버림", reason: { variation: "합법 수 변주", tenpai: "텐파이 유지", shanten: "샹텐 줄이기", disposable: "고립패 정리" } },
+  en: { soundOn: "Turn sound on", soundOff: "Turn sound off", recommended: "Recommended", recommendation: "Suggested discard", shanten: "Shanten", turns: "Turns", remaining: "Tiles left", next: "Next goal", liveTurn: "Your turn", policy: "AI policy", last: "Last discard", reason: { variation: "legal variation", tenpai: "keep tenpai", shanten: "cut shanten", disposable: "isolated tile" } },
+  ja: { soundOn: "音をオン", soundOff: "音をオフ", recommended: "おすすめ", recommendation: "おすすめの捨て牌", shanten: "シャンテン", turns: "巡目", remaining: "残り牌", next: "次の目標", liveTurn: "あなたの番", policy: "AI方針", last: "最後の捨て牌", reason: { variation: "合法手の変奏", tenpai: "テンパイ維持", shanten: "シャンテン短縮", disposable: "孤立牌整理" } },
+  zh: { soundOn: "开启声音", soundOff: "关闭声音", recommended: "推荐", recommendation: "推荐弃牌", shanten: "向听", turns: "巡数", remaining: "剩余牌", next: "下一目标", liveTurn: "你的回合", policy: "AI 策略", last: "最后弃牌", reason: { variation: "合法变奏", tenpai: "维持听牌", shanten: "降低向听", disposable: "整理孤张" } },
+  fr: { soundOn: "Activer le son", soundOff: "Couper le son", recommended: "Conseillée", recommendation: "Défausse conseillée", shanten: "Shanten", turns: "Tours", remaining: "Tuiles restantes", next: "Prochain objectif", liveTurn: "À vous", policy: "Politique IA", last: "Dernière défausse", reason: { variation: "variation légale", tenpai: "garder tenpai", shanten: "baisser shanten", disposable: "tuile isolée" } },
+  es: { soundOn: "Activar sonido", soundOff: "Silenciar", recommended: "Recomendada", recommendation: "Descarte sugerido", shanten: "Shanten", turns: "Turnos", remaining: "Fichas restantes", next: "Próximo objetivo", liveTurn: "Tu turno", policy: "Política IA", last: "Último descarte", reason: { variation: "variación legal", tenpai: "mantener tenpai", shanten: "bajar shanten", disposable: "ficha aislada" } },
 } as const;
 
 function tileLabel(k: number): { text: string; color: string } {
@@ -93,6 +95,7 @@ const Mahjong: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
   const mutedRef = useRef(false);
   mutedRef.current = muted;
   const [record, setRecord] = useState<GameRecord>({ w: 0, l: 0, d: 0 });
+  const [lastCpu, setLastCpu] = useState<MahjongCpuReview | null>(null);
   const recorded = useRef(false);
 
   const playTone = useCallback((kind: "draw" | "discard" | "win") => {
@@ -132,6 +135,7 @@ const Mahjong: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
     recorded.current = false;
     setPaused(false);
     setSelectedTile(0);
+    setLastCpu(null);
     setGame(createMahjong(seed));
   }, []);
 
@@ -158,7 +162,10 @@ const Mahjong: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
       return () => clearTimeout(id);
     }
     if (game.phase === "discard" && game.turn !== 0) {
-      const id = setTimeout(() => setGame((state) => state ? discardMahjongAi(state, level) : state), AI_DELAY);
+      const id = setTimeout(() => {
+        setLastCpu(mahjongCpuReview(game, level));
+        setGame((state) => state ? discardMahjongAi(state, level) : state);
+      }, AI_DELAY);
       return () => clearTimeout(id);
     }
   }, [game, level, paused]);
@@ -282,6 +289,8 @@ const Mahjong: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
         </div>
 
         {over && <div className="grid grid-cols-3 gap-2 text-center text-xs"><div className="rounded-xl bg-muted p-3"><span className="block text-muted-foreground">{x.turns}</span><b>{s.turns}</b></div><div className="rounded-xl bg-muted p-3"><span className="block text-muted-foreground">{x.remaining}</span><b>{drawsLeft}</b></div><div className="rounded-xl bg-muted p-3"><span className="block text-muted-foreground">{x.next}</span><b>{s.winner === 0 ? x.shanten : x.recommendation}</b></div></div>}
+        {over && lastCpu && s.winner !== 0 && s.winner !== -1 && <p className="text-center text-xs text-muted-foreground">{x.last}: {tileLabel(lastCpu.tile).text} · {x.reason[lastCpu.reason]} · {x.shanten} {lastCpu.shantenAfter}</p>}
+        <p className="text-center text-[11px] text-muted-foreground">{x.policy}: {level === 1 ? t.level1 : level === 2 ? t.level2 : t.level3}</p>
 
         <p className="text-center text-xs text-gray-400">{t.record}: {record.w}W {record.l}L {record.d}D</p>
         {paused && <div className="absolute inset-0 z-10 grid place-items-center rounded-2xl bg-background/80 backdrop-blur-sm"><div className="text-center"><p className="mb-3 font-black">{t.paused}</p><button type="button" onClick={() => setPaused(false)} className="min-h-11 rounded-full bg-primary px-8 font-bold text-primary-foreground">{t.resume}</button></div></div>}
