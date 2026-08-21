@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
-import { getBest, recordBest } from '../../lib/games/records';
-import { createSnakeGame, pauseSnake, resumeSnake, SNAKE_GRID_SIZE, steerSnake, tickSnake, type SnakeState } from '../../lib/games/snake';
+import { getBest, recordAchievementEvent, recordBest } from '../../lib/games/records';
+import { bufferSnakeDirection, createSnakeGame, pauseSnake, resumeSnake, SNAKE_GRID_SIZE, snakeTickMilliseconds, steerSnake, tickSnakeWithCause, type SnakeDeathCause, type SnakeDirection, type SnakeState } from '../../lib/games/snake';
 import { clearSnakeSave, loadSnakeSave, storeSnakeSave } from '../../lib/games/snake-save';
 
 const LEGACY_BEST_KEY = 'oiyo-snake-best'; // pre-unification key, read once for migration
@@ -16,12 +16,12 @@ const COPY = {
 } as const;
 
 const DETAILS = {
-    ko: { pause: "일시정지", resume: "계속하기", soundOn: "소리 켜짐", soundOff: "소리 꺼짐", length: "길이", next: "다음 목표", points: "점", summary: (score: number, length: number) => `점수 ${score}, 길이 ${length}` },
-    en: { pause: "Pause", resume: "Resume", soundOn: "Sound on", soundOff: "Sound off", length: "Length", next: "Next target", points: "pts", summary: (score: number, length: number) => `Score ${score}, length ${length}` },
-    ja: { pause: "一時停止", resume: "続ける", soundOn: "サウンドオン", soundOff: "サウンドオフ", length: "長さ", next: "次の目標", points: "点", summary: (score: number, length: number) => `スコア ${score}、長さ ${length}` },
-    zh: { pause: "暂停", resume: "继续", soundOn: "声音开启", soundOff: "声音关闭", length: "长度", next: "下一个目标", points: "分", summary: (score: number, length: number) => `得分 ${score}，长度 ${length}` },
-    fr: { pause: "Pause", resume: "Continuer", soundOn: "Son activé", soundOff: "Son coupé", length: "Longueur", next: "Prochain objectif", points: "pts", summary: (score: number, length: number) => `Score ${score}, longueur ${length}` },
-    es: { pause: "Pausa", resume: "Continuar", soundOn: "Sonido activado", soundOff: "Sonido desactivado", length: "Longitud", next: "Próximo objetivo", points: "pts", summary: (score: number, length: number) => `Puntuación ${score}, longitud ${length}` },
+    ko: { pause: "일시정지", resume: "계속하기", soundOn: "소리 켜짐", soundOff: "소리 꺼짐", length: "길이", next: "다음 목표", points: "점", wall: "벽과 충돌했습니다", self: "몸통과 충돌했습니다", summary: (score: number, length: number) => `점수 ${score}, 길이 ${length}` },
+    en: { pause: "Pause", resume: "Resume", soundOn: "Sound on", soundOff: "Sound off", length: "Length", next: "Next target", points: "pts", wall: "You hit the wall", self: "You crossed your own body", summary: (score: number, length: number) => `Score ${score}, length ${length}` },
+    ja: { pause: "一時停止", resume: "続ける", soundOn: "サウンドオン", soundOff: "サウンドオフ", length: "長さ", next: "次の目標", points: "点", wall: "壁に衝突しました", self: "自分の体に衝突しました", summary: (score: number, length: number) => `スコア ${score}、長さ ${length}` },
+    zh: { pause: "暂停", resume: "继续", soundOn: "声音开启", soundOff: "声音关闭", length: "长度", next: "下一个目标", points: "分", wall: "撞到了墙", self: "撞到了自己的身体", summary: (score: number, length: number) => `得分 ${score}，长度 ${length}` },
+    fr: { pause: "Pause", resume: "Continuer", soundOn: "Son activé", soundOff: "Son coupé", length: "Longueur", next: "Prochain objectif", points: "pts", wall: "Vous avez heurté le mur", self: "Vous avez croisé votre propre corps", summary: (score: number, length: number) => `Score ${score}, longueur ${length}` },
+    es: { pause: "Pausa", resume: "Continuar", soundOn: "Sonido activado", soundOff: "Sonido desactivado", length: "Longitud", next: "Próximo objetivo", points: "pts", wall: "Chocaste contra la pared", self: "Chocaste contra tu propio cuerpo", summary: (score: number, length: number) => `Puntuación ${score}, longitud ${length}` },
 } as const;
 
 const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
@@ -32,11 +32,13 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [hydrated, setHydrated] = useState(false);
     const [best, setBest] = useState(0);
     const [muted, setMuted] = useState(false);
+    const [deathCause, setDeathCause] = useState<SnakeDeathCause | null>(null);
     const gameRef = useRef<SnakeState | null>(null);
     const audioRef = useRef<AudioContext | null>(null);
     const previousScoreRef = useRef(0);
     const previousStatusRef = useRef<string>('idle');
     const touchStart = useRef<{ x: number; y: number } | null>(null);
+    const queuedDirectionRef = useRef<SnakeDirection | null>(null);
     const score = game?.score ?? 0;
     const status = game?.status ?? 'idle';
     const length = game?.snake.length ?? 1;
@@ -46,6 +48,8 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         if (!muted && !audioRef.current) {
             try { audioRef.current = new AudioContext(); } catch { /* audio is optional */ }
         }
+        queuedDirectionRef.current = null;
+        setDeathCause(null);
         setGame(createSnakeGame(Date.now()));
     };
 
@@ -63,7 +67,15 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     }, [muted]);
 
     const changeDir = useCallback((nx: number, ny: number) => {
-        setGame((current) => current ? steerSnake(current, { x: nx, y: ny }) : current);
+        const requested = { x: nx, y: ny };
+        setGame((current) => {
+            if (!current) return current;
+            const buffered = bufferSnakeDirection(current.direction, queuedDirectionRef.current, requested, current.snake.length);
+            if (!buffered) return current;
+            if (current.status === 'playing') { queuedDirectionRef.current = buffered; return current; }
+            queuedDirectionRef.current = null;
+            return steerSnake(current, buffered);
+        });
     }, []);
 
     useEffect(() => {
@@ -82,9 +94,31 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
     useEffect(() => {
         if (status !== 'playing') return;
-        const interval = setInterval(() => setGame((current) => current ? tickSnake(current) : current), Math.max(50, 150 - score / 5));
-        return () => clearInterval(interval);
-    }, [status, score]);
+        let raf = 0, last: number | null = null, accumulator = 0;
+        const loop = (now: number) => {
+            const delta = last === null ? 0 : Math.min(250, Math.max(0, now - last));
+            last = now;
+            accumulator += delta;
+            let current = gameRef.current;
+            let changed = false, steps = 0;
+            while (current?.status === 'playing' && accumulator >= snakeTickMilliseconds(current.score) && steps < 4) {
+                const interval = snakeTickMilliseconds(current.score);
+                const queued = queuedDirectionRef.current;
+                if (queued) { current = steerSnake(current, queued); queuedDirectionRef.current = null; }
+                const result = tickSnakeWithCause(current);
+                current = result.state;
+                if (result.deathCause) setDeathCause(result.deathCause);
+                accumulator -= interval;
+                steps += 1;
+                changed = true;
+            }
+            if (steps === 4 && current) accumulator = Math.min(accumulator, snakeTickMilliseconds(current.score));
+            if (changed && current) { gameRef.current = current; setGame(current); }
+            raf = requestAnimationFrame(loop);
+        };
+        raf = requestAnimationFrame(loop);
+        return () => cancelAnimationFrame(raf);
+    }, [status]);
 
     useEffect(() => {
         const saved = loadSnakeSave();
@@ -113,6 +147,7 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     useEffect(() => {
         const handleVisibility = () => {
             if (!document.hidden) return;
+            queuedDirectionRef.current = null;
             setGame((current) => {
                 if (!current) return current;
                 const paused = pauseSnake(current);
@@ -126,13 +161,14 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
     useEffect(() => {
         if (score > best) {
-            setBest(recordBest('snake-game', score, 'score').value);
+            recordAchievementEvent('snake-game', 'personal-best');
+            setBest(recordBest('snake-game', score, 'score', undefined, { trackPlay: false }).value);
         }
     }, [score, best]);
 
     useEffect(() => {
         if (score > previousScoreRef.current) playTone(620, 0.12);
-        if (status === 'over' && previousStatusRef.current !== 'over') playTone(150, 0.3);
+        if (status === 'over' && previousStatusRef.current !== 'over') { playTone(150, 0.3); recordAchievementEvent('snake-game', 'played'); }
         previousScoreRef.current = score;
         previousStatusRef.current = status;
     }, [playTone, score, status]);
@@ -218,6 +254,7 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         ) : (
                             <div className="space-y-4">
                                 <h4 className="text-2xl font-black text-destructive">{t.over}</h4>
+                                {deathCause && <p className="rounded-xl bg-destructive/10 px-4 py-2 text-sm font-black text-destructive">{d[deathCause]}</p>}
                                 <p className="text-sm font-medium text-muted-foreground">{t.rank(score / 10)}</p>
                                 <div className="grid grid-cols-2 gap-2 text-sm">
                                     <div className="rounded-xl bg-background/80 p-3"><strong>{score}</strong><br />{d.points}</div>

@@ -77,13 +77,36 @@ export function isValidSnakeState(value: unknown, allowTerminal = false): value 
     && Math.abs(direction!.x) + Math.abs(direction!.y) === 1;
 }
 
-export function tickSnake(state: SnakeState): SnakeState {
-  if (state.status !== "playing" || !state.direction) return state;
+export type SnakeDeathCause = "wall" | "self";
+export type SnakeTickResult = { state: SnakeState; deathCause: SnakeDeathCause | null };
+
+export function snakeTickMilliseconds(score: number): number {
+  return Math.max(50, 150 - Math.max(0, Number.isFinite(score) ? score : 0) / 5);
+}
+
+export function bufferSnakeDirection(current: SnakeDirection | null, queued: SnakeDirection | null, requested: SnakeDirection, length: number): SnakeDirection | null {
+  if (Math.abs(requested.x) + Math.abs(requested.y) !== 1) return queued;
+  if (queued) return queued;
+  const basis = current;
+  if (basis && length > 1 && requested.x === -basis.x && requested.y === -basis.y) return queued;
+  return { ...requested };
+}
+
+export function tickSnakeWithCause(state: SnakeState): SnakeTickResult {
+  if (state.status !== "playing" || !state.direction) return { state, deathCause: null };
+  const head = state.snake[0];
+  const nextHead = { x: head.x + state.direction.x, y: head.y + state.direction.y };
+  const wall = nextHead.x < 0 || nextHead.x >= SNAKE_GRID_SIZE || nextHead.y < 0 || nextHead.y >= SNAKE_GRID_SIZE;
+  const self = !wall && state.snake.some(segment => segment.x === nextHead.x && segment.y === nextHead.y);
   const transition = moveSnake(state.snake, state.direction, state.food, SNAKE_GRID_SIZE);
-  if (transition.outcome === "collision") return { ...state, status: "over" };
+  if (transition.outcome === "collision") return { state: { ...state, status: "over" }, deathCause: wall ? "wall" : self ? "self" : "self" };
   if (transition.outcome === "ate") {
     const placed = placeFood(transition.snake, state.rngState);
-    return { ...state, snake: transition.snake, food: placed.food, score: state.score + 10, rngState: placed.rngState };
+    return { state: { ...state, snake: transition.snake, food: placed.food, score: state.score + 10, rngState: placed.rngState }, deathCause: null };
   }
-  return { ...state, snake: transition.snake };
+  return { state: { ...state, snake: transition.snake }, deathCause: null };
+}
+
+export function tickSnake(state: SnakeState): SnakeState {
+  return tickSnakeWithCause(state).state;
 }

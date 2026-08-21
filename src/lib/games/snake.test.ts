@@ -1,7 +1,27 @@
 import { describe, expect, it } from "vitest";
-import { createSnakeGame, pauseSnake, resumeSnake, steerSnake, tickSnake, type SnakeState } from "./snake";
+import { bufferSnakeDirection, createSnakeGame, pauseSnake, resumeSnake, snakeTickMilliseconds, steerSnake, tickSnake, tickSnakeWithCause, type SnakeState } from "./snake";
 
 describe("snake engine", () => {
+  it("buffers one legal turn and rejects reversal against the queued turn", () => {
+    expect(bufferSnakeDirection({ x: 1, y: 0 }, null, { x: 0, y: -1 }, 4)).toEqual({ x: 0, y: -1 });
+    expect(bufferSnakeDirection({ x: 1, y: 0 }, { x: 0, y: -1 }, { x: 0, y: 1 }, 4)).toEqual({ x: 0, y: -1 });
+    expect(bufferSnakeDirection({ x: 1, y: 0 }, null, { x: -1, y: 0 }, 4)).toBeNull();
+  });
+
+  it("uses a bounded deterministic tick interval", () => {
+    expect(snakeTickMilliseconds(0)).toBe(150);
+    expect(snakeTickMilliseconds(250)).toBe(100);
+    expect(snakeTickMilliseconds(10_000)).toBe(50);
+    expect(snakeTickMilliseconds(Number.NaN)).toBe(150);
+  });
+
+  it("names wall and self collisions", () => {
+    const wall: SnakeState = { ...createSnakeGame(9), snake: [{ x: 0, y: 5 }], direction: { x: -1, y: 0 }, status: "playing" };
+    expect(tickSnakeWithCause(wall).deathCause).toBe("wall");
+    const self: SnakeState = { ...createSnakeGame(9), snake: [{ x: 2, y: 2 }, { x: 2, y: 3 }, { x: 1, y: 3 }, { x: 1, y: 2 }], direction: { x: -1, y: 0 }, status: "playing", score: 30 };
+    expect(tickSnakeWithCause(self).deathCause).toBe("self");
+  });
+
   it("waits for the first direction instead of killing an idle player", () => {
     const ready = createSnakeGame(42);
     expect(ready.status).toBe("ready");
