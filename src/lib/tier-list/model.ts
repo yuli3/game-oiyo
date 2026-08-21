@@ -92,6 +92,48 @@ export function moveTierItem(doc: TierListDocument, itemId: string, targetTierId
   };
 }
 
+export function removeTierItem(doc: TierListDocument, itemId: string): TierListDocument {
+  if (!doc.tiers.some((tier) => tier.items.some((item) => item.id === itemId))) return doc;
+  return {
+    ...doc,
+    savedAt: new Date().toISOString(),
+    tiers: doc.tiers.map((tier) => ({ ...tier, items: tier.items.filter((item) => item.id !== itemId) })),
+  };
+}
+
+export type TierExportLayout = {
+  width: number;
+  height: number;
+  titleHeight: number;
+  rows: Array<{ id: TierId; y: number; height: number; items: Array<TierItem & { x: number; y: number; width: number; height: number }> }>;
+};
+
+export function exportLayout(doc: TierListDocument, requestedWidth = 1200): TierExportLayout {
+  const width = Math.max(640, Math.min(2400, Math.floor(requestedWidth)));
+  const titleHeight = 88;
+  const labelWidth = 96;
+  const gap = 8;
+  const cardWidth = 80;
+  const cardHeight = 96;
+  const columns = Math.max(1, Math.floor((width - labelWidth - gap * 2) / (cardWidth + gap)));
+  let y = titleHeight;
+  const rows = doc.tiers.map((tier) => {
+    const lines = Math.max(1, Math.ceil(tier.items.length / columns));
+    const height = gap * 2 + lines * cardHeight + (lines - 1) * gap;
+    const items = tier.items.map((item, index) => ({
+      ...item,
+      x: labelWidth + gap + (index % columns) * (cardWidth + gap),
+      y: y + gap + Math.floor(index / columns) * (cardHeight + gap),
+      width: cardWidth,
+      height: cardHeight,
+    }));
+    const row = { id: tier.id, y, height, items };
+    y += height;
+    return row;
+  });
+  return { width, height: y, titleHeight, rows };
+}
+
 export function parseDocument(input: unknown): TierListDocument | null {
   let value = input;
   if (typeof value === "string") {
