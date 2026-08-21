@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { gomokuBestMove } from './gomoku';
+import { gomokuBestMove, gomokuThreatAt } from './gomoku';
 
 const empty = () => Array<number | null>(225).fill(null);
 const put = (b: (number | null)[], cells: Array<[number, number]>, player: number) => {
@@ -7,6 +7,15 @@ const put = (b: (number | null)[], cells: Array<[number, number]>, player: numbe
 };
 
 describe('Gomoku tactical move quality', () => {
+  it('names the threat created by a move', () => {
+    const five = empty(); put(five, [[3, 7], [4, 7], [5, 7], [6, 7], [7, 7]], 2);
+    expect(gomokuThreatAt(five, 7 + 7 * 15, 2)).toBe('five');
+    const openFour = empty(); put(openFour, [[4, 7], [5, 7], [6, 7], [7, 7]], 2);
+    expect(gomokuThreatAt(openFour, 6 + 7 * 15, 2)).toBe('open-four');
+    const openThree = empty(); put(openThree, [[5, 7], [6, 7], [7, 7]], 2);
+    expect(gomokuThreatAt(openThree, 6 + 7 * 15, 2)).toBe('open-three');
+  });
+
   const budgets = { 1: 200, 2: 600, 3: 1500 } as const;
   for (const level of [1, 2, 3] as const) {
     it(`level ${level} completes its five`, () => {

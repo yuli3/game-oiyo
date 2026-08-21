@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { Locale } from '../../lib/i18n';
-import { gomokuBestMove } from '../../lib/games/ai/gomoku';
+import { gomokuBestMove, gomokuThreatAt, type GomokuThreat } from '../../lib/games/ai/gomoku';
 import type { AiLevel, GameMode } from '../../lib/games/ai/types';
 import { getRecord, recordResult, type GameRecord } from '../../lib/games/records';
 import {
@@ -45,9 +45,19 @@ const AI_DELAY_MS = 450;
 const CELL = 36;
 const BOARD_PX = SIZE * CELL;
 
+const AI_INFO: Record<Locale, { difficulty:string; level:Record<AiLevel,string>; review:string; threats:Record<GomokuThreat,string> }> = {
+    ko:{difficulty:'AI 탐색',level:{1:'상위 5개 후보 변주',2:'1수 패턴 최선',3:'상위 6개 · 2수 응답'},review:'패배 복기',threats:{five:'오목 완성', 'open-four':'양쪽이 열린 4', four:'한쪽이 열린 4', 'open-three':'양쪽이 열린 3', none:'마지막 강제 수'}},
+    en:{difficulty:'AI search',level:{1:'weighted top 5',2:'best 1-ply pattern',3:'top 6 · 2-ply reply'},review:'Loss review',threats:{five:'completed five','open-four':'open four','four':'one-sided four','open-three':'open three',none:'last forcing move'}},
+    ja:{difficulty:'AI探索',level:{1:'上位5候補を変化',2:'1手パターン最善',3:'上位6候補 · 2手応答'},review:'敗局の振り返り',threats:{five:'五目完成','open-four':'両端が開いた四','four':'片側が開いた四','open-three':'両端が開いた三',none:'最後の強制手'}},
+    zh:{difficulty:'AI搜索',level:{1:'前5候选变体',2:'1步最佳形状',3:'前6候选 · 2步应对'},review:'败局复盘',threats:{five:'完成五连','open-four':'活四',four:'冲四','open-three':'活三',none:'最后强制手'}},
+    fr:{difficulty:'Recherche IA',level:{1:'top 5 pondéré',2:'meilleur motif à 1 ply',3:'top 6 · réponse à 2 ply'},review:'Revoir la défaite',threats:{five:'cinq alignés','open-four':'quatre ouvert','four':'quatre à une issue','open-three':'trois ouvert',none:'dernier coup forcé'}},
+    es:{difficulty:'Búsqueda IA',level:{1:'top 5 ponderado',2:'mejor patrón a 1 ply',3:'top 6 · respuesta a 2 ply'},review:'Revisión de derrota',threats:{five:'cinco en línea','open-four':'cuatro abierto','four':'cuatro con un extremo','open-three':'tres abierto',none:'última jugada forzada'}},
+};
+
 const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     const t = i18n[locale] ?? i18n.en;
     const x = extra[locale] ?? extra.en;
+    const aiInfo = AI_INFO[locale] ?? AI_INFO.en;
 
     const [board, setBoard] = useState<GomokuCell[]>(createGomokuBoard);
     const [isBlackTurn, setIsBlackTurn] = useState(true);
@@ -62,6 +72,7 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     const [focusIndex, setFocusIndex] = useState(112);
     const [lastMove, setLastMove] = useState<number | null>(null);
     const [moveCount, setMoveCount] = useState(0);
+    const [lastAiForcing, setLastAiForcing] = useState<{ index:number; threat:GomokuThreat } | null>(null);
     const aiTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const cellRefs = useRef<(HTMLButtonElement | null)[]>([]);
     const startedAtRef = useRef<number>(Date.now());
@@ -142,6 +153,10 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         setBoard(move.board);
         setLastMove(index);
         setMoveCount((count) => count + 1);
+        if (player === AI_PLAYER) {
+            const threat = gomokuThreatAt(move.board, index, player);
+            if (threat !== 'none') setLastAiForcing(current => threat === 'five' && current ? current : { index, threat });
+        }
         tone(move.result !== null && move.result !== 0 ? 660 : 300, 0.05);
         if (move.result !== null) finish(move.result);
         else setIsBlackTurn(move.nextPlayer === 1);
@@ -177,6 +192,7 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         setFocusIndex(112);
         setLastMove(null);
         setMoveCount(0);
+        setLastAiForcing(null);
         startedAtRef.current = Date.now();
         clearGomokuSaveV2();
     };
@@ -205,6 +221,10 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     const winLabel = winner === 0 ? t.draw
         : mode === 'ai' ? (winner === AI_PLAYER ? t.aiWins : t.youWin)
         : `${winner === 1 ? t.black : t.white} ${t.win}`;
+    const aiReview = mode === 'ai' && winner === AI_PLAYER
+        ? lastAiForcing ?? (lastMove !== null ? { index:lastMove, threat:gomokuThreatAt(board,lastMove,AI_PLAYER) } : null)
+        : null;
+    const coordinate = (index:number) => `${String.fromCharCode(65 + index % SIZE)}${Math.floor(index / SIZE) + 1}`;
 
     return (
         <div className="not-prose my-12 p-4 sm:p-8 bg-card border border-border rounded-4xl shadow-sm max-w-lg mx-auto">
@@ -245,6 +265,7 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                         ))}
                     </div>
                 )}
+                {mode === 'ai' && <p className="basis-full text-[11px] font-medium text-muted-foreground">{aiInfo.difficulty}: {aiInfo.level[level]}</p>}
                 {moveCount > 0 && winner === null && (
                     <button type="button" onClick={() => setPaused((value) => { if (value) setRestored(false); return !value; })} className="min-h-11 px-3 rounded-lg border border-border text-xs font-bold text-muted-foreground">
                         {paused ? `▶ ${x.resume}` : `Ⅱ ${x.pause}`}
@@ -333,7 +354,8 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                             <h4 className="text-3xl font-black text-foreground mb-2">{winLabel}</h4>
                             <p className="text-muted-foreground mb-2 uppercase tracking-widest font-bold text-xs">{t.over}</p>
                             <p className="text-sm text-muted-foreground mb-1">{moveCount} {x.moves}</p>
-                            {winner !== 0 && <p className="text-[11px] text-muted-foreground mb-6 max-w-xs">{x.nextGoal}</p>}
+                            {winner !== 0 && <p className="text-[11px] text-muted-foreground mb-4 max-w-xs">{x.nextGoal}</p>}
+                            {aiReview && <div className="mb-5 max-w-xs rounded-2xl border border-amber-300/60 bg-amber-50 p-3 text-left text-xs text-stone-800"><p className="font-black text-amber-900">{aiInfo.review} · {coordinate(aiReview.index)}</p><p className="mt-1">{aiInfo.threats[aiReview.threat]}</p><p className="mt-1 text-[10px] text-stone-500">{aiInfo.difficulty}: {aiInfo.level[level]}</p></div>}
                             <button type="button" onClick={reset} className="min-h-11 px-10 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
                                 {t.reset}
                             </button>

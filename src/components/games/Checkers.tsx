@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
 import type { Locale } from '../../lib/i18n';
-import { checkersApply, checkersApplyTurn, checkersBestMove, checkersMoves, type CheckersPiece, type CheckersMove } from '../../lib/games/checkers';
+import { checkersApply, checkersApplyTurn, checkersBestMove, checkersMoves, checkersTurnReview, type CheckersPiece, type CheckersMove, type CheckersTurnReview } from '../../lib/games/checkers';
 import type { AiLevel, GameMode } from '../../lib/games/ai/types';
 import { getRecord, recordResult, type GameRecord } from '../../lib/games/records';
 import { clearCheckersSave, loadCheckersSave, storeCheckersSave } from '../../lib/games/active-game-save';
@@ -35,9 +35,19 @@ const i18n: Record<Locale, {
     es: { title: "Damas americanas", turn: "Turno", red: "Rojas", black: "Negras", win: "¡gana!", over: "Fin de la partida", reset: "Nueva partida", modeLocal: "2 jugadores", modeAi: "contra la IA", level1: "Aprendiz", level2: "Experto", level3: "Maestro", thinking: "Tu rival está pensando…", youWin: "¡Has ganado!", aiWins: "Gana la IA", record: "Historial", subtitle: "Damas americanas · contra la IA", rules: "Las capturas son obligatorias y los saltos múltiples continúan con la misma pieza. Las fichas normales solo avanzan y capturan hacia delante. Coronar durante un salto termina el turno. Pierde quien no tenga jugadas legales.", continueJump: "Sigue saltando con la misma pieza", captureRequired: "La captura es obligatoria", boardLabel: "Tablero de damas. Usa las flechas y Enter o Espacio para seleccionar.", empty: "Vacía", king: "dama", selectedLabel: "Seleccionada", destinationLabel: "Destino posible" },
 };
 
+const AI_INFO: Record<Locale, { difficulty: string; depth: Record<AiLevel,string>; review: string; captures: string; quiet: string }> = {
+    ko:{difficulty:'AI 탐색',depth:{1:'2수 · 상위 3개 변주',2:'4수 · 최선 수',3:'6수 · 최선 수'},review:'패배 복기',captures:'개 연속 잡기',quiet:'이 수로 다음 합법 수가 막혔습니다'},
+    en:{difficulty:'AI search',depth:{1:'2 ply · weighted top 3',2:'4 ply · best move',3:'6 ply · best move'},review:'Loss review',captures:'captures in chain',quiet:'This turn closed your remaining legal moves'},
+    ja:{difficulty:'AI探索',depth:{1:'2 ply · 上位3手を変化',2:'4 ply · 最善手',3:'6 ply · 最善手'},review:'敗局の振り返り',captures:'連続取り',quiet:'この手で合法手がなくなりました'},
+    zh:{difficulty:'AI搜索',depth:{1:'2 ply · 前3候选变体',2:'4 ply · 最佳着',3:'6 ply · 最佳着'},review:'败局复盘',captures:'次连续吃子',quiet:'这一步封住了剩余合法走法'},
+    fr:{difficulty:'Recherche IA',depth:{1:'2 ply · top 3 pondéré',2:'4 ply · meilleur coup',3:'6 ply · meilleur coup'},review:'Revoir la défaite',captures:'prises en chaîne',quiet:'Ce tour a fermé vos derniers coups légaux'},
+    es:{difficulty:'Búsqueda IA',depth:{1:'2 ply · top 3 ponderado',2:'4 ply · mejor jugada',3:'6 ply · mejor jugada'},review:'Revisión de derrota',captures:'capturas encadenadas',quiet:'Este turno cerró tus jugadas legales'},
+};
+
 const Checkers: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     const t = i18n[locale] ?? i18n.en;
     const x = EXTRA[locale] ?? EXTRA.en;
+    const aiInfo = AI_INFO[locale] ?? AI_INFO.en;
 
     const [board, setBoard] = useState<(Piece | null)[]>(Array(SIZE * SIZE).fill(null));
     const [isRedTurn, setIsRedTurn] = useState(true);
@@ -52,6 +62,7 @@ const Checkers: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     const [paused, setPaused] = useState(false);
     const [restored, setRestored] = useState(false);
     const [muted, setMuted] = useState(false);
+    const [lastAiReview, setLastAiReview] = useState<CheckersTurnReview | null>(null);
     const aiTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const squareRefs = useRef<(HTMLButtonElement | null)[]>([]);
     const audio = useRef<AudioContext | null>(null);
@@ -86,6 +97,7 @@ const Checkers: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         setFocusIndex(56);
         setPaused(false);
         setRestored(false);
+        setLastAiReview(null);
     }, []);
 
     useEffect(() => {
@@ -175,6 +187,7 @@ const Checkers: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
             const move = checkersBestMove(board, AI_PLAYER, level);
             setThinking(false);
             if (move) {
+                setLastAiReview(checkersTurnReview(move));
                 const newBoard = checkersApplyTurn(board, move);
                 setBoard(newBoard);
                 endTurn(newBoard, AI_PLAYER);
@@ -210,6 +223,7 @@ const Checkers: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         ? (winner === AI_PLAYER ? t.aiWins : t.youWin)
         : `${winner === 1 ? t.red : t.black} ${t.win}`;
     const availableMoves = checkersMoves(board, isRedTurn ? 1 : 2, forcedFrom ?? undefined);
+    const squareName = (index: number) => `${String.fromCharCode(65 + index % SIZE)}${8 - Math.floor(index / SIZE)}`;
 
     return (
         <GameContainer title={t.title} subtitle={t.subtitle} onReset={initGame}>
@@ -240,6 +254,7 @@ const Checkers: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                         ))}
                     </div>
                 )}
+                {mode === 'ai' && <p className="basis-full text-[11px] font-medium text-muted-foreground">{aiInfo.difficulty}: {aiInfo.depth[level]}</p>}
                 {mode === 'ai' && record && (record.w + record.l + record.d > 0) && (
                     <span className="ml-auto text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                         {t.record} {record.w}–{record.l}{record.d ? `–${record.d}` : ''}
@@ -307,6 +322,7 @@ const Checkers: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                     <h4 className="text-4xl font-black text-foreground mb-4">{winLabel}</h4>
                     <p className="mb-4 text-sm font-bold text-muted-foreground">{x.redLeft} {board.filter(piece => piece?.player === 1).length} · {x.blackLeft} {board.filter(piece => piece?.player === 2).length}</p>
                     <p className="mb-4 text-xs text-muted-foreground">{x.captured} {winner === 1 ? 12 - board.filter(piece => piece?.player === 2).length : 12 - board.filter(piece => piece?.player === 1).length} · {x.next} 12</p>
+                    {mode === 'ai' && winner === AI_PLAYER && lastAiReview && <div className="mb-4 max-w-xs rounded-2xl border border-amber-300/60 bg-amber-50 p-3 text-left text-xs text-stone-800"><p className="font-black text-amber-900">{aiInfo.review} · {squareName(lastAiReview.from)}→{squareName(lastAiReview.to)}</p><p className="mt-1">{lastAiReview.captures > 0 ? `${lastAiReview.captures} ${aiInfo.captures}` : aiInfo.quiet}</p><p className="mt-1 text-[10px] text-stone-500">{aiInfo.difficulty}: {aiInfo.depth[level]}</p></div>}
                     <button onClick={initGame} className="px-10 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg">
                         {t.reset}
                     </button>

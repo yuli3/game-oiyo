@@ -142,6 +142,11 @@ function negamax(board: CheckersBoard, depth: number, alpha: number, beta: numbe
   return best;
 }
 
+export type CheckersTurnReview = { from: number; to: number; captures: number; chain: boolean };
+export function checkersTurnReview(turn: CheckersTurn): CheckersTurnReview {
+  return { from: turn.from, to: turn.path.at(-1) ?? turn.from, captures: turn.captures.length, chain: turn.captures.length > 1 };
+}
+
 /** Best complete turn for `ai`; null means the player loses because no legal move exists. */
 export function checkersBestMove(board: CheckersBoard, ai: number, level: AiLevel): CheckersTurn | null {
   const opponent = ai === 1 ? 2 : 1;

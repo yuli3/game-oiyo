@@ -4,6 +4,7 @@ import {
   checkersBestMove,
   checkersMoves,
   checkersTurns,
+  checkersTurnReview,
   type CheckersBoard,
 } from './checkers';
 
@@ -14,6 +15,11 @@ function board(entries: Array<[number, number, boolean?]>): CheckersBoard {
 }
 
 describe('American checkers rules', () => {
+  it('summarizes the final square and capture chain for review', () => {
+    expect(checkersTurnReview({ from: 42, path: [24, 10], captures: [33, 17] })).toEqual({ from: 42, to: 10, captures: 2, chain: true });
+    expect(checkersTurnReview({ from: 42, path: [33], captures: [] })).toEqual({ from: 42, to: 33, captures: 0, chain: false });
+  });
+
   it('requires a capture anywhere on the board', () => {
     const position = board([[42, 1], [33, 2], [46, 1]]);
     expect(checkersMoves(position, 1)).toEqual([{ from: 42, to: 24, jumpOver: 33 }]);

@@ -74,6 +74,32 @@ function candidates(board: Board): number[] {
   return Array.from(seen);
 }
 
+export type GomokuThreat = "five" | "open-four" | "four" | "open-three" | "none";
+export function gomokuThreatAt(board: Board, idx: number, player: number): GomokuThreat {
+  if (idx < 0 || idx >= board.length || board[idx] !== player) return "none";
+  const x = idx % SIZE, y = Math.floor(idx / SIZE);
+  let best: GomokuThreat = "none";
+  for (const [dx, dy] of DIRS) {
+    let count = 1, openEnds = 0;
+    for (const sign of [1, -1]) {
+      let step = 1;
+      while (step < 5) {
+        const nx = x + dx * step * sign, ny = y + dy * step * sign;
+        if (nx < 0 || nx >= SIZE || ny < 0 || ny >= SIZE) break;
+        const cell = board[ny * SIZE + nx];
+        if (cell === player) { count += 1; step += 1; continue; }
+        if (cell === null) openEnds += 1;
+        break;
+      }
+    }
+    if (count >= 5) return "five";
+    if (count === 4 && openEnds === 2) best = "open-four";
+    else if (best !== "open-four" && count === 4 && openEnds === 1) best = "four";
+    else if (best === "none" && count === 3 && openEnds === 2) best = "open-three";
+  }
+  return best;
+}
+
 /** Best move for `ai` (1|2) at the given level. Returns a board index. */
 export function gomokuBestMove(board: Board, ai: number, level: AiLevel, seed = 0): number {
   const foe = ai === 1 ? 2 : 1;
