@@ -29,6 +29,7 @@ import {
   canDock,
   cargoUsed,
   createTradeState,
+  explainDockFailure,
   formatVoyageTime,
   marketQuote,
   nearestPort,
@@ -117,6 +118,7 @@ interface HudState {
   nearestPort: PortId;
   nearestDistance: number;
   dockable: boolean;
+  dockFailure: "far" | "fast" | null;
 }
 
 const GOOD_IDS: GoodId[] = ["spices", "silk", "tea", "timber"];
@@ -148,6 +150,7 @@ const initialHud: HudState = {
   nearestPort: "azurehaven",
   nearestDistance: 31,
   dockable: true,
+  dockFailure: null,
 };
 
 export default function WindwardHorizonsScene({
@@ -417,7 +420,7 @@ export default function WindwardHorizonsScene({
               className="min-h-12 rounded-xl bg-[#e3bd72] px-5 font-mono text-[10px] font-black tracking-[.14em] text-[#102325] disabled:cursor-not-allowed disabled:bg-[#5d6966] disabled:text-white/60"
             >
               <Anchor className="mr-2 inline size-4" />
-              {hud.dockable ? copy.dock : copy.slowToDock}
+              {hud.dockable ? copy.dock : hud.dockFailure === "fast" ? copy.slowToDock : copy.near}
             </button>
           )}
         </div>
@@ -676,6 +679,7 @@ function OceanWorld({ controls, paused, onHud, onDiscover, onFinish, onSnapshot,
         nearestPort: closest.port.id,
         nearestDistance: closest.distance,
         dockable: canDock(vessel.current, closest.port),
+        dockFailure: explainDockFailure(vessel.current, closest.port),
       });
     }
   });

@@ -3,6 +3,7 @@ import {
   WEAPONS,
   damageForHit,
   directionFromAim,
+  explainFireFailure,
   finishReload,
   formatMatchTime,
   recoilAt,
@@ -11,6 +12,7 @@ import {
   scoreForElimination,
   shotIntervalMs,
   spreadFor,
+  reviewUrbanStrikeResult,
 } from "./urban-strike";
 
 describe("urban strike weapon handling", () => {
@@ -45,11 +47,28 @@ describe("urban strike weapon handling", () => {
     expect(Math.hypot(a.x, a.y, a.z)).toBeCloseTo(1, 8);
   });
 
+  it("names empty, sprint, reload, respawn and rate-limit fire blocks without shooting", () => {
+    expect(explainFireFailure({ magazine: 0, reloading: false, sprinting: false, respawning: false, rateLimited: false })).toBe("empty");
+    expect(explainFireFailure({ magazine: 10, reloading: true, sprinting: false, respawning: false, rateLimited: false })).toBe("reloading");
+    expect(explainFireFailure({ magazine: 10, reloading: false, sprinting: true, respawning: false, rateLimited: false })).toBe("sprinting");
+    expect(explainFireFailure({ magazine: 10, reloading: false, sprinting: false, respawning: true, rateLimited: false })).toBe("respawn");
+    expect(explainFireFailure({ magazine: 10, reloading: false, sprinting: false, respawning: false, rateLimited: true })).toBe("rate");
+    expect(explainFireFailure({ magazine: 10, reloading: false, sprinting: false, respawning: false, rateLimited: false })).toBeNull();
+  });
+
   it("handles tactical and empty reloads without creating ammunition", () => {
     expect(reloadDuration(WEAPONS.m4, 8)).toBe(WEAPONS.m4.tacticalReloadMs);
     expect(reloadDuration(WEAPONS.m4, 0)).toBe(WEAPONS.m4.reloadMs);
     expect(finishReload(WEAPONS.m4, 8, 12)).toEqual({ magazine: 20, reserve: 0 });
     expect(finishReload(WEAPONS.m4, 0, 120)).toEqual({ magazine: 30, reserve: 90 });
+  });
+});
+
+describe("urban strike result review", () => {
+  it("prioritizes aim, then survival, then objective", () => {
+    expect(reviewUrbanStrikeResult({ accuracy: 20, deaths: 12, blueScore: 8, redScore: 12 })).toBe("aim");
+    expect(reviewUrbanStrikeResult({ accuracy: 40, deaths: 9, blueScore: 8, redScore: 12 })).toBe("survival");
+    expect(reviewUrbanStrikeResult({ accuracy: 40, deaths: 3, blueScore: 8, redScore: 12 })).toBe("objective");
   });
 });
 

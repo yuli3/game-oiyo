@@ -6,6 +6,7 @@ import {
   canDock,
   cargoUsed,
   createTradeState,
+  explainDockFailure,
   formatVoyageTime,
   marketQuote,
   nearestPort,
@@ -50,6 +51,9 @@ describe("windward horizons sailing", () => {
     expect(found.port.id).toBe("azurehaven");
     expect(canDock({ ...vessel, x: 0, z: 45, speed: 1 }, PORTS[0])).toBe(true);
     expect(canDock({ ...vessel, x: 0, z: 45, speed: 2 }, PORTS[0])).toBe(false);
+    expect(explainDockFailure({ ...vessel, x: 0, z: 45, speed: 2 }, PORTS[0])).toBe("fast");
+    expect(explainDockFailure({ ...vessel, x: 400, z: 400, speed: 0 }, PORTS[0])).toBe("far");
+    expect(explainDockFailure({ ...vessel, x: 0, z: 45, speed: 1 }, PORTS[0])).toBeNull();
   });
 
   it("pushes a vessel outside an island instead of trapping it", () => {

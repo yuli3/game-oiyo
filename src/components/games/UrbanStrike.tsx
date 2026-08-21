@@ -2,6 +2,7 @@ import { Suspense, lazy, useCallback, useEffect, useState } from "react";
 import { Crosshair, Headphones, Radio, Shield, Smartphone, Target } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
 import { getBest, recordBest } from "../../lib/games/records";
+import { reviewUrbanStrikeResult } from "../../lib/games/urban-strike";
 import type { MatchResult, UrbanStrikeSceneCopy } from "./UrbanStrikeScene";
 
 const Scene = lazy(() => import("./UrbanStrikeScene"));
@@ -349,6 +350,9 @@ export default function UrbanStrike({ locale }: { locale: Locale }) {
                   </div>
                 ))}
               </dl>
+              <p className="mt-3 text-center text-xs font-black uppercase tracking-widest text-amber-300">
+                → {reviewUrbanStrikeResult(result) === "aim" ? t.accuracy : reviewUrbanStrikeResult(result) === "survival" ? t.deaths : t.scene.objective}
+              </p>
             </div>
           )}
         </div>

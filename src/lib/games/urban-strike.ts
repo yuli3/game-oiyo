@@ -225,6 +225,22 @@ export function scoreForElimination(zone: HitZone, streak: number): number {
   return 100 + (zone === "head" ? 50 : 0) + Math.min(Math.max(streak, 0), 5) * 10;
 }
 
+export type FireFailure = "empty" | "reloading" | "sprinting" | "respawn" | "rate";
+export function explainFireFailure(state: {
+  magazine: number;
+  reloading: boolean;
+  sprinting: boolean;
+  respawning: boolean;
+  rateLimited: boolean;
+}): FireFailure | null {
+  if (state.respawning) return "respawn";
+  if (state.reloading) return "reloading";
+  if (state.sprinting) return "sprinting";
+  if (state.rateLimited) return "rate";
+  if (state.magazine <= 0) return "empty";
+  return null;
+}
+
 export function reloadDuration(weapon: WeaponSpec, roundsInMagazine: number): number {
   return roundsInMagazine > 0 ? weapon.tacticalReloadMs : weapon.reloadMs;
 }
@@ -240,6 +256,18 @@ export function finishReload(
     magazine: roundsInMagazine + loaded,
     reserve: reserve - loaded,
   };
+}
+
+export type MatchWeakness = "aim" | "survival" | "objective";
+export function reviewUrbanStrikeResult(result: {
+  accuracy: number;
+  deaths: number;
+  blueScore: number;
+  redScore: number;
+}): MatchWeakness {
+  if (result.accuracy < 25) return "aim";
+  if (result.deaths > 8) return "survival";
+  return "objective";
 }
 
 export function formatMatchTime(seconds: number): string {

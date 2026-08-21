@@ -173,8 +173,15 @@ export function nearestPort(position: { x: number; z: number }): { port: PortDef
   return { port, distance };
 }
 
+export type DockFailure = "far" | "fast";
+export function explainDockFailure(vessel: VesselState, port: PortDefinition): DockFailure | null {
+  if (distance2d(vessel, port) > port.radius + 13) return "far";
+  if (vessel.speed > 1.25) return "fast";
+  return null;
+}
+
 export function canDock(vessel: VesselState, port: PortDefinition): boolean {
-  return distance2d(vessel, port) <= port.radius + 13 && vessel.speed <= 1.25;
+  return explainDockFailure(vessel, port) === null;
 }
 
 export function resolveIslandCollision(

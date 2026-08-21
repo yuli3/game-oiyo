@@ -4,9 +4,9 @@ import type { Locale } from "../../lib/i18n";
 import {
   EMBERDEEP_SAVE_KEY,
   HERO_STATS,
-  SPELL_COST,
   attackConnects,
   comboDamage,
+  explainCastFailure,
   hitStopFrames,
   parseEmberdeepSave,
   scoreForHit,
@@ -19,12 +19,12 @@ type Phase = "briefing" | "playing" | "result";
 type EnemyKind = "raider" | "hound" | "knight";
 interface Enemy { id: number; kind: EnemyKind; x: number; y: number; hp: number; maxHp: number; vx: number; hit: number; attack: number; }
 interface Particle { x: number; y: number; vx: number; vy: number; life: number; color: string; size: number; }
-interface Result { score: number; room: number; kills: number; path: string; }
+interface Result { score: number; room: number; kills: number; path: string; won: boolean; }
 interface Copy {
   eyebrow: string; title: string; subtitle: string; start: string; again: string; best: string;
   choose: string; controls: string; desktop: string; mobile: string; local: string; localBody: string;
   features: { title: string; body: string }[]; heroes: Record<HeroClass, { name: string; role: string }>;
-  hud: { score: string; room: string; combo: string; choosePath: string; crypt: string; foundry: string; victory: string; fallen: string };
+  hud: { score: string; room: string; combo: string; choosePath: string; crypt: string; foundry: string; victory: string; fallen: string; mana: string };
 }
 
 const EN: Copy = {
@@ -45,11 +45,11 @@ const EN: Copy = {
     warden: { name: "Brom", role: "Armored oath-warden" },
     arcanist: { name: "Ilyra", role: "High-mana arcanist" },
   },
-  hud: { score: "SCORE", room: "ROOM", combo: "CHAIN", choosePath: "CHOOSE THE NEXT WING", crypt: "CRYPT OF WHISPERS", foundry: "ASHEN FOUNDRY", victory: "OATH FULFILLED", fallen: "THE DEEP CLAIMS ANOTHER" },
+  hud: { score: "SCORE", room: "ROOM", combo: "CHAIN", choosePath: "CHOOSE THE NEXT WING", crypt: "CRYPT OF WHISPERS", foundry: "ASHEN FOUNDRY", victory: "OATH FULFILLED", fallen: "THE DEEP CLAIMS ANOTHER", mana: "NOT ENOUGH MANA" },
 };
 const COPY: Record<Locale, Copy> = {
   en: EN,
-  ko: { ...EN, eyebrow: "잿빛 관문 / 로컬 판타지 원정", subtitle: "살아 움직이는 잿빛 요새로 내려가세요. 깊이 레인을 오가며 적을 몰아붙이고, 4연타 무기 콤보와 비전 주문을 엮은 뒤 다음 던전 경로를 직접 선택합니다.", start: "관문 진입", again: "다시 원정", best: "최고 점수", choose: "서약 선택", controls: "조작", desktop: "WASD/방향키 이동 · J 공격 · K 주문 · L 회피 · 1–3 주문 변경 · Space 점프", mobile: "방향 패드 · 공격 · 주문 · 회피 · 점프", local: "기기 안에서 완결되는 던전", localBody: "적 AI, 진행, 저장, 조명과 레트로 사운드는 이 탭에서만 실행됩니다. 계정·네트워크 플레이어·다운로드 음원이 없습니다.", features: [{ title: "묵직한 콤보 전투", body: "4연타, 띄우기, 공중 공격, 히트스톱, 넉백과 화면 흔들림으로 강철 충돌의 무게를 살렸습니다." }, { title: "검과 주문", body: "재생되는 마나로 불꽃 파동, 서리 폭발, 연쇄 번개를 사용하고 근접 후딜을 주문으로 취소합니다." }, { title: "갈라지는 지하 세계", body: "전투 사이에 속삭임의 묘실과 잿빛 주조소 중 하나를 선택합니다. 적, 색감, 위험과 수호자가 달라집니다." }], heroes: { spellblade: { name: "메일린", role: "균형형 스펠블레이드" }, warden: { name: "브롬", role: "중갑 서약 수호자" }, arcanist: { name: "일리라", role: "고마나 비전술사" } }, hud: { score: "점수", room: "방", combo: "연계", choosePath: "다음 구역을 선택하세요", crypt: "속삭임의 묘실", foundry: "잿빛 주조소", victory: "서약 완수", fallen: "심연에 쓰러짐" } },
+  ko: { ...EN, eyebrow: "잿빛 관문 / 로컬 판타지 원정", subtitle: "살아 움직이는 잿빛 요새로 내려가세요. 깊이 레인을 오가며 적을 몰아붙이고, 4연타 무기 콤보와 비전 주문을 엮은 뒤 다음 던전 경로를 직접 선택합니다.", start: "관문 진입", again: "다시 원정", best: "최고 점수", choose: "서약 선택", controls: "조작", desktop: "WASD/방향키 이동 · J 공격 · K 주문 · L 회피 · 1–3 주문 변경 · Space 점프", mobile: "방향 패드 · 공격 · 주문 · 회피 · 점프", local: "기기 안에서 완결되는 던전", localBody: "적 AI, 진행, 저장, 조명과 레트로 사운드는 이 탭에서만 실행됩니다. 계정·네트워크 플레이어·다운로드 음원이 없습니다.", features: [{ title: "묵직한 콤보 전투", body: "4연타, 띄우기, 공중 공격, 히트스톱, 넉백과 화면 흔들림으로 강철 충돌의 무게를 살렸습니다." }, { title: "검과 주문", body: "재생되는 마나로 불꽃 파동, 서리 폭발, 연쇄 번개를 사용하고 근접 후딜을 주문으로 취소합니다." }, { title: "갈라지는 지하 세계", body: "전투 사이에 속삭임의 묘실과 잿빛 주조소 중 하나를 선택합니다. 적, 색감, 위험과 수호자가 달라집니다." }], heroes: { spellblade: { name: "메일린", role: "균형형 스펠블레이드" }, warden: { name: "브롬", role: "중갑 서약 수호자" }, arcanist: { name: "일리라", role: "고마나 비전술사" } }, hud: { ...EN.hud, score: "점수", room: "방", combo: "연계", choosePath: "다음 구역을 선택하세요", crypt: "속삭임의 묘실", foundry: "잿빛 주조소", victory: "서약 완수", fallen: "심연에 쓰러짐", mana: "마나가 부족합니다" } },
   ja: { ...EN, eyebrow: "灰の門 / ローカル幻想遠征", subtitle: "生きた灰の要塞へ降下。奥行きレーンで敵を追い込み、4連撃と魔法をつなぎ、次のダンジョン分岐を選びます。", start: "門へ入る", again: "再び降りる", best: "最高スコア", choose: "誓いを選ぶ", controls: "操作", desktop: "WASD/矢印 移動 · J 攻撃 · K 魔法 · L 回避 · 1–3 魔法 · Space ジャンプ", mobile: "方向パッド · 攻撃 · 魔法 · 回避 · ジャンプ", local: "端末内ダンジョン", localBody: "敵AI、進行、保存、照明、レトロ音源はこのタブ内だけで動作します。", heroes: { spellblade: { name: "メイリン", role: "万能魔剣士" }, warden: { name: "ブロム", role: "重装の守護者" }, arcanist: { name: "イリラ", role: "高マナの秘術師" } }, hud: { ...EN.hud, score: "スコア", room: "部屋", combo: "連撃", choosePath: "次の区画を選択", crypt: "囁きの墓所", foundry: "灰の鋳造所", victory: "誓約達成", fallen: "深淵に倒れた" } },
   zh: { ...EN, eyebrow: "灰烬之门 / 本地幻想远征", subtitle: "深入活着的灰烬要塞，在纵深战线上逼退敌人，将四连击与奥术法术串联，并选择下一条地牢分支。", start: "进入大门", again: "再次深入", best: "最高分", choose: "选择誓约", controls: "操作", desktop: "WASD/方向键移动 · J攻击 · K法术 · L闪避 · 1–3切换法术 · 空格跳跃", mobile: "方向键 · 攻击 · 法术 · 闪避 · 跳跃", local: "设备内完整地牢", localBody: "敌人AI、进度、存档、光照与复古音频仅在本标签运行。", heroes: { spellblade: { name: "梅琳", role: "均衡魔剑士" }, warden: { name: "布罗姆", role: "重甲守誓者" }, arcanist: { name: "伊莉拉", role: "高魔力秘法师" } }, hud: { ...EN.hud, score: "分数", room: "房间", combo: "连击", choosePath: "选择下一区域", crypt: "低语墓穴", foundry: "灰烬铸造厂", victory: "誓约完成", fallen: "深渊吞没了你" } },
   fr: { ...EN, eyebrow: "PORTE DES CENDRES / EXPÉDITION LOCALE", subtitle: "Descendez dans une forteresse vivante. Repoussez les ennemis entre les couloirs de profondeur, liez quatre coups aux sorts et choisissez la prochaine branche.", start: "Franchir la porte", again: "Redescendre", best: "Meilleur score", choose: "Choisir le serment", controls: "Commandes", desktop: "WASD/flèches bouger · J attaquer · K sort · L esquive · 1–3 sort · Espace sauter", mobile: "Croix · ATTAQUE · SORT · ESQUIVE · SAUT", local: "Donjon local complet", localBody: "IA, progression, sauvegarde, éclairage et audio rétro restent dans cet onglet.", heroes: { spellblade: { name: "Maelin", role: "Lame-sort équilibrée" }, warden: { name: "Brom", role: "Gardien lourd" }, arcanist: { name: "Ilyra", role: "Arcaniste à forte mana" } }, hud: { ...EN.hud, score: "SCORE", room: "SALLE", combo: "CHAÎNE", choosePath: "CHOISISSEZ L'AILE", crypt: "CRYPTE DES MURMURES", foundry: "FORGE DE CENDRES", victory: "SERMENT ACCOMPLI", fallen: "L'ABÎME VOUS RÉCLAME" } },
@@ -122,6 +122,7 @@ function Dungeon({ hero, copy, onFinish }: { hero: HeroClass; copy: Copy; onFini
   const [pathChoice, setPathChoice] = useState<null | ((path: "crypt" | "foundry") => void)>(null);
   const spellRef = useRef(spell); spellRef.current = spell;
   const [muted, setMuted] = useState(false);
+  const [castNotice, setCastNotice] = useState<string | null>(null);
   const audioRef = useRef<ReturnType<typeof startAudio> | null>(null);
 
   useEffect(() => {
@@ -152,7 +153,10 @@ function Dungeon({ hero, copy, onFinish }: { hero: HeroClass; copy: Copy; onFini
       });
     };
     const cast = () => {
-      const chosen = spellRef.current; if (state.choosing || state.mana < SPELL_COST[chosen]) return;
+      const chosen = spellRef.current;
+      if (state.choosing) return;
+      if (explainCastFailure(state.mana, chosen)) { setCastNotice(copy.hud.mana); return; }
+      setCastNotice(null);
       state.mana = spendMana(state.mana, chosen); state.attackT = .2; audio.cast();
       const radius = chosen === "storm" ? 250 : chosen === "frost" ? 175 : 135, damage = chosen === "storm" ? 52 : chosen === "frost" ? 38 : 31;
       enemies.forEach(e => { if (e.hp > 0 && Math.hypot(e.x - state.x, (e.y - state.y) * 1.5) < radius) { e.hp -= damage; e.hit = .22; state.score += scoreForHit(damage, state.combo, e.hp <= 0); burst(e.x, e.y - 40, chosen === "ember" ? "#ff7438" : chosen === "frost" ? "#8be5ff" : "#d8b8ff", 18); if (e.hp <= 0) { state.kills++; state.combo++; } } });
@@ -194,7 +198,7 @@ function Dungeon({ hero, copy, onFinish }: { hero: HeroClass; copy: Copy; onFini
     };
     const finish = (won: boolean) => {
       if (state.finished) return; state.finished = true; cancelAnimationFrame(raf); audio.stop();
-      onFinish({ score: state.score + (won ? 2500 : 0), room: state.room, kills: state.kills, path: state.path });
+      onFinish({ score: state.score + (won ? 2500 : 0), room: state.room, kills: state.kills, path: state.path, won });
     };
     const draw = (now: number) => {
       ctx.save(); ctx.clearRect(0, 0, width, height); ctx.translate((Math.random() - .5) * shake, (Math.random() - .5) * shake);
@@ -237,6 +241,7 @@ function Dungeon({ hero, copy, onFinish }: { hero: HeroClass; copy: Copy; onFini
       </div>
     </div>
     <div className="absolute right-4 top-4 flex gap-1">{(["ember", "frost", "storm"] as SpellId[]).map((id, i) => <button key={id} onClick={() => setSpell(id)} className={`min-h-11 border px-3 font-mono text-xs font-black ${spell === id ? "border-amber-300 bg-amber-400 text-black" : "border-white/20 bg-black/70 text-white"}`}>{i + 1} {id.toUpperCase()}</button>)}</div>
+    {castNotice && <p role="status" className="absolute right-4 top-16 bg-black/80 px-3 py-2 font-mono text-xs font-black text-cyan-200">{castNotice}</p>}
     {pathChoice && <div className="absolute inset-0 grid place-items-center bg-black/80 p-6"><div className="w-full max-w-2xl text-center"><h3 className="text-xl font-black tracking-[.18em] text-amber-200">{copy.hud.choosePath}</h3><div className="mt-6 grid gap-3 sm:grid-cols-2"><button onClick={() => pathChoice("crypt")} className="min-h-28 border border-cyan-800 bg-[#07151b] p-5 text-lg font-black text-cyan-100">{copy.hud.crypt}<span className="mt-2 block text-xs font-normal text-cyan-300/70">Frost shades · mana wells</span></button><button onClick={() => pathChoice("foundry")} className="min-h-28 border border-orange-800 bg-[#1b0b06] p-5 text-lg font-black text-orange-100">{copy.hud.foundry}<span className="mt-2 block text-xs font-normal text-orange-300/70">Armored raiders · flame vents</span></button></div></div></div>}
   </div>;
 }
@@ -259,7 +264,7 @@ export default function Emberdeep({ locale }: { locale: Locale }) {
       <div className="self-center"><p className="font-mono text-[11px] font-black tracking-[.28em] text-amber-400">{t.eyebrow}</p><h2 className="mt-4 text-6xl font-black uppercase leading-[.82] tracking-[-.06em] sm:text-8xl">{t.title}</h2><p className="mt-6 max-w-xl text-sm leading-7 text-stone-300 sm:text-base">{t.subtitle}</p>
         <p className="mt-7 text-xs font-black uppercase tracking-[.18em] text-stone-500">{t.choose}</p><div className="mt-3 grid grid-cols-3 gap-2">{(Object.keys(t.heroes) as HeroClass[]).map(id => <button key={id} onClick={() => setHero(id)} className={`min-h-20 border p-2 text-left ${hero === id ? "border-amber-400 bg-amber-400/15" : "border-white/10 bg-black/40"}`}><strong className="block text-sm text-white">{t.heroes[id].name}</strong><span className="mt-1 block text-[10px] text-stone-400">{t.heroes[id].role}</span></button>)}</div>
         <div className="mt-5 flex flex-wrap gap-3"><button onClick={() => { setResult(null); setPhase("playing"); }} className="min-h-12 bg-amber-500 px-8 py-3 text-sm font-black uppercase tracking-widest text-black shadow-[0_0_30px_rgba(245,158,11,.25)]">{phase === "result" ? t.again : t.start}</button><span className="border border-white/10 bg-black/60 px-4 py-3 font-mono text-xs">{t.best}: <strong>{best.toLocaleString()}</strong></span></div>
-        {result && <p role="status" aria-live="polite" className="mt-4 border-l-2 border-amber-500 pl-4 font-mono text-sm text-amber-100">{result.score.toLocaleString()} · {t.hud.room} {result.room} · {result.kills} KOs · {result.path}</p>}
+        {result && <p role="status" aria-live="polite" className="mt-4 border-l-2 border-amber-500 pl-4 font-mono text-sm text-amber-100"><strong>{result.won ? t.hud.victory : t.hud.fallen}</strong> · {result.score.toLocaleString()} · {t.hud.room} {result.room} · {result.kills} KOs · {result.path}</p>}
       </div>
       <div className="grid content-center gap-3">{t.features.map((feature, i) => { const Icon = [Swords, Sparkles, Route][i]; return <div key={feature.title} className="flex gap-4 border-l-2 border-amber-700 bg-black/55 p-4 backdrop-blur-sm"><Icon className="size-5 shrink-0 text-amber-400" /><div><h3 className="text-sm font-black uppercase">{feature.title}</h3><p className="mt-1 text-xs leading-5 text-stone-400">{feature.body}</p></div></div>; })}<div className="mt-2 border border-white/10 bg-black/55 p-4"><div className="flex items-center gap-2 text-xs font-black uppercase"><Flame className="size-4 text-orange-500" />{t.local}</div><p className="mt-2 text-xs leading-5 text-stone-400">{t.localBody}</p></div></div>
     </div>

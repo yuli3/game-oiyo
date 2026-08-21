@@ -30,7 +30,11 @@ export function comboDamage(base: number, comboStep: number, air = false): numbe
 }
 
 export function canCast(mana: number, spell: SpellId): boolean {
-  return Number.isFinite(mana) && mana >= SPELL_COST[spell];
+  return explainCastFailure(mana, spell) === null;
+}
+
+export function explainCastFailure(mana: number, spell: SpellId): "mana" | null {
+  return Number.isFinite(mana) && mana >= SPELL_COST[spell] ? null : "mana";
 }
 
 export function spendMana(mana: number, spell: SpellId): number {

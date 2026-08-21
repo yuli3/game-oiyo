@@ -5,6 +5,7 @@ import {
   canCast,
   chooseBranch,
   comboDamage,
+  explainCastFailure,
   hitStopFrames,
   parseEmberdeepSave,
   scoreForHit,
@@ -24,6 +25,8 @@ describe("Emberdeep combat rules", () => {
 
   it("requires enough mana without partially spending", () => {
     expect(canCast(23, "ember")).toBe(false);
+    expect(explainCastFailure(23, "ember")).toBe("mana");
+    expect(explainCastFailure(24, "ember")).toBeNull();
     expect(spendMana(23, "ember")).toBe(23);
     expect(spendMana(45, "storm")).toBe(0);
   });
