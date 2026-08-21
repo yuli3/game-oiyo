@@ -1,7 +1,7 @@
 {
   "schema": "oiyo.game-modernization-inventory",
   "schemaVersion": 2,
-  "generatedAt": "2026-08-08T21:13:04.501Z",
+  "generatedAt": "2026-08-21T10:17:15.182Z",
   "scorePolicy": "Static scores are prioritization proxies and never certify a game. Release certification requires ordered evidence from config/game-release-evidence-v1.json.",
   "summary": {
     "total": 53,
@@ -10,13 +10,13 @@
     "playtested": 0,
     "craftReviewed": 0,
     "releaseCertified": 0,
-    "keyArtLinked": 53,
-    "keyArtReady": 53,
+    "keyArtLinked": 52,
+    "keyArtReady": 52,
     "byGeneration": {
       "G1": 0,
       "G2": 0,
-      "G3": 44,
-      "G4": 9
+      "G3": 43,
+      "G4": 10
     },
     "byAction": {
       "maintain": 0,
@@ -25,9 +25,9 @@
       "remake": 0
     },
     "highRisk": {
-      "mobile": 1,
-      "accessibility": 0,
-      "performance": 1
+      "mobile": 2,
+      "accessibility": 1,
+      "performance": 2
     }
   },
   "games": [
@@ -80,7 +80,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/chess.astro",
-      "componentLines": 457
+      "componentLines": 492
     },
     {
       "slug": "checkers",
@@ -131,7 +131,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/checkers.astro",
-      "componentLines": 320
+      "componentLines": 336
     },
     {
       "slug": "gomoku",
@@ -181,7 +181,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/gomoku.astro",
-      "componentLines": 355
+      "componentLines": 377
     },
     {
       "slug": "janggi",
@@ -233,7 +233,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/janggi.astro",
-      "componentLines": 252
+      "componentLines": 267
     },
     {
       "slug": "reversi",
@@ -284,7 +284,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/reversi.astro",
-      "componentLines": 205
+      "componentLines": 217
     },
     {
       "slug": "connect-four",
@@ -334,7 +334,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/connect-four.astro",
-      "componentLines": 618
+      "componentLines": 633
     },
     {
       "slug": "dominoes",
@@ -386,7 +386,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/dominoes.astro",
-      "componentLines": 202
+      "componentLines": 217
     },
     {
       "slug": "kingdomino",
@@ -435,7 +435,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/kingdomino.astro",
-      "componentLines": 415
+      "componentLines": 431
     },
     {
       "slug": "mahjong",
@@ -535,7 +535,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/hitori.astro",
-      "componentLines": 40
+      "componentLines": 42
     },
     {
       "slug": "tents-and-trees",
@@ -585,7 +585,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/tents-and-trees.astro",
-      "componentLines": 290
+      "componentLines": 311
     },
     {
       "slug": "blackjack",
@@ -635,7 +635,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/blackjack.astro",
-      "componentLines": 71
+      "componentLines": 97
     },
     {
       "slug": "freecell",
@@ -655,7 +655,7 @@
       "mobileRisk": "low",
       "accessibilityRisk": "low",
       "performanceRisk": "low",
-      "coreLoopScore": 18,
+      "coreLoopScore": 20,
       "feelScore": 13,
       "progressionScore": 12,
       "presentationScore": 12,
@@ -663,7 +663,7 @@
       "mobileScore": 6,
       "accessibilityScore": 5,
       "productScore": 5,
-      "total": 85,
+      "total": 87,
       "scoreStatus": "provisional-static",
       "certifiedScore": null,
       "implementationComplete": true,
@@ -685,7 +685,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/freecell.astro",
-      "componentLines": 281
+      "componentLines": 298
     },
     {
       "slug": "solitaire",
@@ -734,7 +734,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/solitaire.astro",
-      "componentLines": 364
+      "componentLines": 377
     },
     {
       "slug": "hearts-game",
@@ -886,7 +886,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/minesweeper.astro",
-      "componentLines": 583
+      "componentLines": 589
     },
     {
       "slug": "water-sort",
@@ -986,7 +986,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/light-up.astro",
-      "componentLines": 30
+      "componentLines": 32
     },
     {
       "slug": "game-2048",
@@ -1038,7 +1038,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/game-2048.astro",
-      "componentLines": 175
+      "componentLines": 193
     },
     {
       "slug": "wordle",
@@ -1059,70 +1059,20 @@
       "accessibilityRisk": "low",
       "performanceRisk": "low",
       "coreLoopScore": 20,
-      "feelScore": 8,
+      "feelScore": 10,
       "progressionScore": 12,
-      "presentationScore": 9,
+      "presentationScore": 10,
       "reliabilityScore": 15,
-      "mobileScore": 5,
-      "accessibilityScore": 4,
+      "mobileScore": 6,
+      "accessibilityScore": 5,
       "productScore": 3,
-      "total": 76,
+      "total": 81,
       "scoreStatus": "provisional-static",
       "certifiedScore": null,
       "implementationComplete": true,
       "certificationStage": "implementation-complete",
       "releaseCertified": false,
       "keyArt": "/games/wordle-social.png",
-      "keyArtWidth": 1200,
-      "keyArtHeight": 630,
-      "evidenceRef": null,
-      "recommendedAction": "modernize",
-      "wave": "2",
-      "craftScore": null,
-      "craftMode": null,
-      "craftNote": null,
-      "dependencies": [
-        "technical-gates-evidence",
-        "playtest-evidence",
-        "craft-review"
-      ],
-      "owner": "game",
-      "route": "src/pages/[...lang]/wordle.astro",
-      "componentLines": 51
-    },
-    {
-      "slug": "psychology-wordle",
-      "genre": "puzzle",
-      "generation": "G3",
-      "component": "src/components/games/PsychologyWordle.tsx",
-      "engine": "src/lib/games/psychology-wordle.ts",
-      "tests": "src/lib/games/psychology-wordle.test.ts",
-      "restore": true,
-      "daily": true,
-      "progression": true,
-      "input": [
-        "keyboard"
-      ],
-      "renderer": "dom",
-      "audio": true,
-      "mobileRisk": "low",
-      "accessibilityRisk": "low",
-      "performanceRisk": "low",
-      "coreLoopScore": 20,
-      "feelScore": 8,
-      "progressionScore": 15,
-      "presentationScore": 9,
-      "reliabilityScore": 14,
-      "mobileScore": 5,
-      "accessibilityScore": 4,
-      "productScore": 5,
-      "total": 80,
-      "scoreStatus": "provisional-static",
-      "certifiedScore": null,
-      "implementationComplete": true,
-      "certificationStage": "implementation-complete",
-      "releaseCertified": false,
-      "keyArt": "/games/psychology-wordle-social.png",
       "keyArtWidth": 1200,
       "keyArtHeight": 630,
       "evidenceRef": null,
@@ -1137,8 +1087,8 @@
         "craft-review"
       ],
       "owner": "game",
-      "route": "src/pages/[...lang]/psychology-wordle.astro",
-      "componentLines": 247
+      "route": "src/pages/[...lang]/wordle.astro",
+      "componentLines": 52
     },
     {
       "slug": "spatial-memory",
@@ -1289,7 +1239,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/korean-semantle.astro",
-      "componentLines": 502
+      "componentLines": 543
     },
     {
       "slug": "texas-holdem",
@@ -1353,20 +1303,20 @@
         "touch",
         "keyboard"
       ],
-      "renderer": "dom",
+      "renderer": "canvas",
       "audio": true,
       "mobileRisk": "low",
       "accessibilityRisk": "low",
       "performanceRisk": "low",
       "coreLoopScore": 20,
-      "feelScore": 10,
-      "progressionScore": 10,
-      "presentationScore": 8,
+      "feelScore": 13,
+      "progressionScore": 12,
+      "presentationScore": 12,
       "reliabilityScore": 15,
       "mobileScore": 8,
       "accessibilityScore": 5,
-      "productScore": 4,
-      "total": 80,
+      "productScore": 5,
+      "total": 90,
       "scoreStatus": "provisional-static",
       "certifiedScore": null,
       "implementationComplete": true,
@@ -1388,7 +1338,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/snake-game.astro",
-      "componentLines": 249
+      "componentLines": 286
     },
     {
       "slug": "aim-trainer",
@@ -1539,6 +1489,57 @@
       "owner": "game",
       "route": "src/pages/[...lang]/isometric-city.astro",
       "componentLines": 267
+    },
+    {
+      "slug": "run-a-business",
+      "genre": "arcade",
+      "generation": "G4",
+      "component": "src/components/games/RunABusiness.tsx",
+      "engine": "src/lib/games/run-a-business.ts",
+      "tests": "src/lib/games/run-a-business.test.ts",
+      "restore": true,
+      "daily": false,
+      "progression": true,
+      "input": [],
+      "renderer": "three-scene",
+      "audio": false,
+      "mobileRisk": "high",
+      "accessibilityRisk": "high",
+      "performanceRisk": "high",
+      "coreLoopScore": 20,
+      "feelScore": 8,
+      "progressionScore": 13,
+      "presentationScore": 11,
+      "reliabilityScore": 14,
+      "mobileScore": 5,
+      "accessibilityScore": 0,
+      "productScore": 5,
+      "total": 76,
+      "scoreStatus": "provisional-static",
+      "certifiedScore": null,
+      "implementationComplete": true,
+      "certificationStage": "implementation-complete",
+      "releaseCertified": false,
+      "keyArt": null,
+      "keyArtWidth": null,
+      "keyArtHeight": null,
+      "evidenceRef": null,
+      "recommendedAction": "modernize",
+      "wave": "2",
+      "craftScore": null,
+      "craftMode": null,
+      "craftNote": null,
+      "dependencies": [
+        "key-art",
+        "technical-gates-evidence",
+        "playtest-evidence",
+        "craft-review",
+        "mobile-qa",
+        "accessibility-qa"
+      ],
+      "owner": "game",
+      "route": "src/pages/[...lang]/run-a-business.astro",
+      "componentLines": 715
     },
     {
       "slug": "mallow-isle",
@@ -1883,7 +1884,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/skyward-atlas.astro",
-      "componentLines": 112
+      "componentLines": 127
     },
     {
       "slug": "star-blaster",
@@ -1934,7 +1935,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/star-blaster.astro",
-      "componentLines": 667
+      "componentLines": 738
     },
     {
       "slug": "brick-breaker",
@@ -2518,13 +2519,13 @@
       "performanceRisk": "low",
       "coreLoopScore": 20,
       "feelScore": 13,
-      "progressionScore": 10,
+      "progressionScore": 11,
       "presentationScore": 9,
       "reliabilityScore": 15,
       "mobileScore": 7,
       "accessibilityScore": 4,
       "productScore": 4,
-      "total": 82,
+      "total": 83,
       "scoreStatus": "provisional-static",
       "certifiedScore": null,
       "implementationComplete": true,
@@ -2546,7 +2547,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/dot-runner.astro",
-      "componentLines": 293
+      "componentLines": 363
     },
     {
       "slug": "dot-jumpking",
@@ -2616,14 +2617,14 @@
       "accessibilityRisk": "low",
       "performanceRisk": "low",
       "coreLoopScore": 20,
-      "feelScore": 8,
-      "progressionScore": 7,
-      "presentationScore": 7,
+      "feelScore": 10,
+      "progressionScore": 8,
+      "presentationScore": 8,
       "reliabilityScore": 14,
-      "mobileScore": 5,
-      "accessibilityScore": 3,
+      "mobileScore": 6,
+      "accessibilityScore": 4,
       "productScore": 4,
-      "total": 68,
+      "total": 74,
       "scoreStatus": "provisional-static",
       "certifiedScore": null,
       "implementationComplete": true,
@@ -2645,7 +2646,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/animal-pop.astro",
-      "componentLines": 347
+      "componentLines": 415
     },
     {
       "slug": "yahtzee",
@@ -2695,7 +2696,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/yahtzee.astro",
-      "componentLines": 375
+      "componentLines": 382
     }
   ]
 }

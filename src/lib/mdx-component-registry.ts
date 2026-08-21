@@ -91,7 +91,6 @@ import LightUp from "../components/games/LightUp";
 import JanggiBoard from "../components/games/JanggiBoard";
 import LottoGenerator from "../components/games/LottoGenerator";
 import ChimpTest from "../components/games/ChimpTest";
-import PsychologyWordle from "../components/games/PsychologyWordle";
 import TentsAndTrees from "../components/games/TentsAndTrees";
 import WaterSort from "../components/games/WaterSort";
 import WheelSpinner from "../components/games/WheelSpinner";
@@ -376,7 +375,6 @@ const islandComponents = {
   JanggiBoard,
   LottoGenerator,
   ChimpTest,
-  PsychologyWordle,
   TentsAndTrees,
   WaterSort,
   WheelSpinner,

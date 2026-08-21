@@ -32,7 +32,6 @@ const completedRisk = {
   "dot-runner": { mobile: "low", accessibility: "low", performance: "low" },
   mahjong: { mobile: "low", accessibility: "low", performance: "low" },
   "water-sort": { mobile: "low", accessibility: "low", performance: "low" },
-  "psychology-wordle": { mobile: "low", accessibility: "low", performance: "low" },
   "memory-card-game": { mobile: "low", accessibility: "low", performance: "low" },
   "number-guessing": { mobile: "low", accessibility: "low", performance: "low" },
   wordle: { mobile: "low", accessibility: "low", performance: "low" },

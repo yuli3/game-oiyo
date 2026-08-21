@@ -458,28 +458,6 @@
    "nonSessionPersistence": []
   },
   {
-   "gameId": "psychology-wordle",
-   "componentPath": "src/components/games/PsychologyWordle.tsx",
-   "adapterPath": "src/lib/games/psychology-wordle-save.ts",
-   "supportsRestore": true,
-   "sessionStorageKey": "oiyo:psychology-wordle-state:v1",
-   "sourceSchema": "oiyo.psychology-wordle-save",
-   "sourceSchemaVersion": 1,
-   "adapterVersion": "psychology-wordle-session-adapter-v1",
-   "engineVersion": "psychology-wordle-rules-v1",
-   "modes": [
-    "solo"
-   ],
-   "difficulties": [
-    "daily",
-    "random"
-   ],
-   "deterministicResume": true,
-   "nonSessionPersistence": [
-    "daily-streak"
-   ]
-  },
-  {
    "gameId": "memory-card-game",
    "componentPath": "src/components/games/MemoryCardGame.tsx",
    "adapterPath": "src/lib/games/memory-card-game-save.ts",

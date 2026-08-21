@@ -13,7 +13,6 @@ import { createCaveDash, flapCaveDash, stepCaveDash } from "./cave-dash";
 import { createDotRunner, jumpDotRunner, stepDotRunner } from "./dot-runner";
 import { createMahjong, drawMahjong } from "./mahjong";
 import { createWaterSort, legalWaterSortMoves, moveWaterSort } from "./water-sort";
-import { createPsychologyWordle, inputPsychologyWordle } from "./psychology-wordle";
 import { createNumberGuessingGame, guessNumber } from "./number-guessing";
 import { createWordle, inputWordle } from "./wordle";
 import { mulberry32 } from "./daily";
@@ -186,15 +185,6 @@ describe("GameSessionEnvelope v1", () => {
     expect(envelope).toMatchObject({ gameId: "water-sort", difficulty: "medium", mode: "solo", source: { storageKey: "oiyo:water-sort-state:v1" } });
     expect(parseGameSessionEnvelope(serializeGameSessionEnvelope(envelope!))).toEqual(envelope);
     expect(adaptActiveGameSaveToSession("water-sort", { ...payload, state: { ...state, status: "solved" } }, TIMING)).toBeNull();
-  });
-  it("adapts deterministic Psychology Wordle progress and rejects forged targets", () => {
-    const initial = createPsychologyWordle(42, "latin");
-    const state = inputPsychologyWordle(initial, "A");
-    const payload = { version: 1 as const, state, mode: "daily" as const, dateKey: "2026-08-02", savedAtEpochMs: Date.parse(TIMING.savedAt) };
-    const envelope = adaptActiveGameSaveToSession("psychology-wordle", payload, TIMING);
-    expect(envelope).toMatchObject({ gameId: "psychology-wordle", difficulty: "daily", mode: "solo", source: { storageKey: "oiyo:psychology-wordle-state:v1" } });
-    expect(parseGameSessionEnvelope(serializeGameSessionEnvelope(envelope!))).toEqual(envelope);
-    expect(adaptActiveGameSaveToSession("psychology-wordle", { ...payload, state: { ...state, targetDisplay: "ANGER" } }, TIMING)).toBeNull();
   });
   it("adapts deterministic Number Guessing progress and rejects forged secrets", () => {
     const state = guessNumber(createNumberGuessingGame(72, "normal"), 50);
@@ -378,8 +368,8 @@ describe("GameSessionEnvelope v1", () => {
 
   it("keeps unsupported games explicitly non-restorable", () => {
     const byId = new Map(capabilities.games.map((game) => [game.gameId, game]));
-    expect([...byId.values()].filter((game) => game.supportsRestore).map((game) => game.gameId)).toEqual(["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game", "kurodoko", "yahtzee", "cave-dash", "dot-runner", "mahjong", "water-sort", "psychology-wordle", "memory-card-game", "number-guessing", "wordle", "janggi", "kingdomino", "windward-horizons"]);
-    for (const gameId of ["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game", "kurodoko", "yahtzee", "cave-dash", "dot-runner", "mahjong", "water-sort", "psychology-wordle", "memory-card-game", "number-guessing", "wordle", "janggi", "kingdomino", "windward-horizons"] as const) {
+    expect([...byId.values()].filter((game) => game.supportsRestore).map((game) => game.gameId)).toEqual(["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game", "kurodoko", "yahtzee", "cave-dash", "dot-runner", "mahjong", "water-sort", "memory-card-game", "number-guessing", "wordle", "janggi", "kingdomino", "windward-horizons"]);
+    for (const gameId of ["chess", "hearts", "minesweeper", "brick-breaker", "solitaire", "freecell", "connect-four", "gomoku", "sudoku", "puzzle15", "checkers", "reversi", "game-2048", "snake-game", "kurodoko", "yahtzee", "cave-dash", "dot-runner", "mahjong", "water-sort", "memory-card-game", "number-guessing", "wordle", "janggi", "kingdomino", "windward-horizons"] as const) {
       expect(byId.get(gameId)?.modes).toEqual([...RESTORABLE_GAME_CAPABILITIES[gameId].modes]);
       expect(byId.get(gameId)?.difficulties).toEqual([...RESTORABLE_GAME_CAPABILITIES[gameId].difficulties]);
     }
