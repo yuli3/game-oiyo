@@ -3,13 +3,14 @@ import { GameContainer, PlayingCard } from '../ui/game/GamePrimitives';
 import { getRecord, recordResult, type GameRecord } from '../../lib/games/records';
 import {
   FREECELL_SUITS,
-  createFreeCellGame,
+  createSeededFreeCellGame,
   getSourceCards,
   isDescendingAlternatingRun,
   isFreeCellWon,
   moveFreeCellCards,
   type FreeCellCard,
   type FreeCellDestination,
+  type FreeCellMoveResult,
   type FreeCellSource,
 } from '../../lib/games/freecell';
 import { clearFreeCellSaveV2, loadFreeCellSaveV2, storeFreeCellSaveV2 } from '../../lib/games/freecell-save';
@@ -47,6 +48,17 @@ const COPY = {
   },
 } as const;
 
+const REASON:Record<keyof typeof COPY,Record<Extract<FreeCellMoveResult,{ok:false}>['reason'],string>>={
+ ko:{'empty-source':'옮길 카드가 없습니다.','invalid-run':'묶음은 색을 번갈아 한 단계씩 내려가야 합니다.','occupied-cell':'그 프리셀은 이미 차 있습니다.','wrong-foundation':'같은 무늬를 A부터 차례대로 올려야 합니다.','blocked-tableau':'목적지보다 한 단계 낮고 색이 다른 카드만 놓을 수 있습니다.','supermove-limit':'빈 프리셀과 빈 열이 부족해 이 묶음을 한 번에 옮길 수 없습니다.','same-pile':'같은 위치로는 옮길 수 없습니다.'},
+ en:{'empty-source':'There is no card to move.','invalid-run':'The run must descend by one in alternating colors.','occupied-cell':'That free cell is already occupied.','wrong-foundation':'Build the matching suit from Ace upward.','blocked-tableau':'Place it on the next higher rank of the opposite color.','supermove-limit':'There are not enough empty cells and columns to move this run.','same-pile':'It is already in that position.'},
+ ja:{'empty-source':'移動するカードがありません。','invalid-run':'列は色を交互に1つずつ降順にします。','occupied-cell':'そのフリーセルは使用中です。','wrong-foundation':'同じスートをAから順に置きます。','blocked-tableau':'色が異なる1つ上の数字の上に置きます。','supermove-limit':'空きセルと空き列が足りず、この列をまとめて移動できません。','same-pile':'同じ場所には移動できません。'},
+ zh:{'empty-source':'没有可移动的牌。','invalid-run':'牌组必须红黑交替并逐级递减。','occupied-cell':'该自由单元已被占用。','wrong-foundation':'同花色必须从A开始依次放置。','blocked-tableau':'只能放在异色且大一级的牌上。','supermove-limit':'空单元和空列不足，无法一次移动这组牌。','same-pile':'不能移到原位置。'},
+ fr:{'empty-source':'Aucune carte à déplacer.','invalid-run':'La suite doit descendre en alternant les couleurs.','occupied-cell':'Cette cellule libre est occupée.','wrong-foundation':'Construisez la même couleur à partir de l’as.','blocked-tableau':'Placez-la sous la valeur supérieure de couleur opposée.','supermove-limit':'Pas assez de cellules et colonnes vides pour cette suite.','same-pile':'La carte est déjà à cet endroit.'},
+ es:{'empty-source':'No hay carta para mover.','invalid-run':'La secuencia debe bajar alternando colores.','occupied-cell':'Esa celda libre está ocupada.','wrong-foundation':'Construye el mismo palo desde el as.','blocked-tableau':'Colócala bajo el rango superior de color opuesto.','supermove-limit':'No hay suficientes celdas y columnas vacías para mover la secuencia.','same-pile':'Ya está en esa posición.'},
+};
+const RETRY:Record<keyof typeof COPY,{same:string;fresh:string}>={ko:{same:'같은 판 재도전',fresh:'새 판'},en:{same:'Retry same deal',fresh:'New deal'},ja:{same:'同じ配りで再挑戦',fresh:'新しい配り'},zh:{same:'重试同一牌局',fresh:'新牌局'},fr:{same:'Rejouer la même donne',fresh:'Nouvelle donne'},es:{same:'Reintentar reparto',fresh:'Nuevo reparto'}};
+const freshSeed=()=>typeof crypto!=='undefined'&&crypto.getRandomValues?crypto.getRandomValues(new Uint32Array(1))[0]:Date.now()>>>0;
+
 function fmt(totalSeconds: number): string {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
@@ -57,8 +69,11 @@ const SUIT_SYMBOLS = ['♥', '♦', '♣', '♠'];
 
 const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
   const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
+  const reasonCopy=REASON[locale as keyof typeof COPY]??REASON.en;
+  const retryCopy=RETRY[locale as keyof typeof COPY]??RETRY.en;
   const [restored] = useState(loadFreeCellSaveV2);
-  const [game, setGame] = useState(() => restored?.state ?? createFreeCellGame());
+  const initialSeed=useRef<number|null>(restored?null:freshSeed()).current;
+  const [game, setGame] = useState(() => restored?.state ?? createSeededFreeCellGame(initialSeed!));
   const [selected, setSelected] = useState<FreeCellSource | null>(null);
   const [status, setStatus] = useState<string>(t.instructions);
   const [record, setRecord] = useState<GameRecord | null>(() => getRecord('freecell'));
@@ -66,6 +81,7 @@ const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
   const [seconds, setSeconds] = useState(restored?.elapsedSeconds ?? 0);
   const [legacyMigrated, setLegacyMigrated] = useState(restored?.legacyMigrated ?? false);
   const [muted, setMuted] = useState(false);
+  const seedRef=useRef<number|null>(initialSeed);
   const moveMadeRef = useRef(Boolean(restored));
   const wonRef = useRef(false);
   const lastFocusedRef = useRef<HTMLElement | null>(null);
@@ -104,12 +120,13 @@ const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     return () => clearInterval(id);
   }, [isWon, legacyMigrated]);
 
-  const initGame = useCallback(() => {
+  const initGame = useCallback((seedOverride?:number) => {
     if (moveMadeRef.current && !wonRef.current) setRecord(recordResult('freecell', 'l'));
     moveMadeRef.current = false;
     wonRef.current = false;
     clearFreeCellSaveV2();
-    setGame(createFreeCellGame());
+    const seed=seedOverride??freshSeed();seedRef.current=seed;
+    setGame(createSeededFreeCellGame(seed));
     setSelected(null);
     setStatus(t.instructions);
     setMoves(0);
@@ -145,7 +162,7 @@ const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     if (!selected) return false;
     const result = moveFreeCellCards(game, selected, destination);
     if (!result.ok) {
-      setStatus(t.invalid);
+      setStatus(reasonCopy[result.reason]);
       tone(150, 0.06);
       return false;
     }
@@ -173,8 +190,8 @@ const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
       action();
     }
   };
-  const closeWin = () => {
-    initGame();
+  const closeWin = (same=false) => {
+    initGame(same&&seedRef.current!==null?seedRef.current:undefined);
     requestAnimationFrame(() => lastFocusedRef.current?.focus());
   };
   const trapWinFocus = (event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -182,7 +199,7 @@ const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
   };
 
   return (
-    <GameContainer title={t.title} subtitle={t.desc} resetLabel={t.reset} onReset={initGame}>
+    <GameContainer title={t.title} subtitle={t.desc} resetLabel={t.reset} onReset={() => initGame()}>
       <div className="space-y-5" onFocusCapture={(event) => { lastFocusedRef.current = event.target instanceof HTMLElement ? event.target : null; }}>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">{t.instructions}</p>
@@ -270,7 +287,7 @@ const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
           <p className="mb-6 text-sm font-bold text-muted-foreground">
             {legacyMigrated ? `${t.moves} ${moves}` : `${t.time} ${fmt(seconds)} · ${t.moves} ${moves}`}
           </p>
-          <button type="button" onClick={closeWin} className="min-h-11 rounded-full bg-primary px-12 py-4 font-black text-primary-foreground shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">{t.restart}</button>
+          <div className="flex flex-wrap justify-center gap-2"><button type="button" onClick={() => closeWin(true)} disabled={seedRef.current===null} className="min-h-11 rounded-full border border-primary px-6 py-3 font-black text-primary disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">{retryCopy.same}</button><button type="button" onClick={() => closeWin(false)} className="min-h-11 rounded-full bg-primary px-8 py-3 font-black text-primary-foreground shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">{retryCopy.fresh}</button></div>
         </div>
       )}
     </GameContainer>

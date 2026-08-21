@@ -56,6 +56,12 @@ export function createFreeCellGame(random: () => number = Math.random): FreeCell
   };
 }
 
+export function createSeededFreeCellGame(seed:number):FreeCellState{
+  let value=seed>>>0;
+  const random=()=>{value=(Math.imul(value,1664525)+1013904223)>>>0;return value/0x1_0000_0000;};
+  return createFreeCellGame(random);
+}
+
 export function isDescendingAlternatingRun(cards: readonly FreeCellCard[]): boolean {
   return cards.every((card, index) => {
     if (index === cards.length - 1) return true;

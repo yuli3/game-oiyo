@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   FREECELL_SUITS,
   createFreeCellGame,
+  createSeededFreeCellGame,
   isDescendingAlternatingRun,
   isFreeCellWon,
   maxSupermoveCards,
@@ -26,6 +27,11 @@ const state = (overrides: Partial<FreeCellState> = {}): FreeCellState => ({
 });
 
 describe('FreeCell engine', () => {
+  it('replays the same deal from the same seed', () => {
+    expect(createSeededFreeCellGame(42)).toEqual(createSeededFreeCellGame(42));
+    expect(createSeededFreeCellGame(42)).not.toEqual(createSeededFreeCellGame(43));
+  });
+
   it('deals 52 unique cards into 7/7/7/7/6/6/6/6 columns', () => {
     const game = createFreeCellGame(() => 0.42);
     expect(game.tableau.map((pile) => pile.length)).toEqual([7, 7, 7, 7, 6, 6, 6, 6]);

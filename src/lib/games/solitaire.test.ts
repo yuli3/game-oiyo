@@ -6,6 +6,7 @@ import {
   canPlaceOnTableau,
   createSolitaireDeck,
   dealSolitaire,
+  explainSolitaireMove,
   isSolitaireWon,
   isValidTableauRun,
   listSolitaireMoves,
@@ -34,6 +35,15 @@ function emptyState(): SolitaireState {
 }
 
 describe('Klondike solitaire engine', () => {
+  it('explains why a move fails without changing the board', () => {
+    const state = emptyState();
+    state.tableau[0] = [card('spades', 12)];
+    expect(explainSolitaireMove(state,{type:'tableau-to-tableau',from:0,cardIndex:0,to:1})).toBe('empty-needs-king');
+    state.tableau[1] = [card('clubs',13)];
+    expect(explainSolitaireMove(state,{type:'tableau-to-tableau',from:0,cardIndex:0,to:1})).toBe('needs-alternating-next-rank');
+    expect(explainSolitaireMove(state,{type:'tableau-to-foundation',from:0})).toBe('foundation-needs-ace');
+  });
+
   it('creates 52 unique cards and deals 7 columns with only each top card exposed', () => {
     const deck = createSolitaireDeck(() => 0.42);
     expect(deck).toHaveLength(52);

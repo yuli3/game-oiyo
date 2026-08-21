@@ -6,9 +6,11 @@ import {
   SOLITAIRE_SUITS,
   applySolitaireMove,
   createSeededSolitaireDeal,
+  explainSolitaireMove,
   isSolitaireWon,
   isValidTableauRun,
   type SolitaireMove,
+  type SolitaireMoveFailure,
   type SolitaireState,
   type SolitaireSuit,
 } from '../../lib/games/solitaire';
@@ -35,6 +37,15 @@ const COPY = {
   es: { title: 'Solitario', subtitle: 'Klondike · Robar 1', desc: 'Baja alternando colores y completa cada palo del as al rey.', reset: 'Nueva partida', win: '¡Los cuatro palos están completos!', record: 'Historial', stock: 'Robar una carta', recycle: 'Devolver el descarte al mazo', waste: 'Descarte', foundation: 'Base', tableau: 'Columna', selected: 'Seleccionada', illegal: 'Ese movimiento no es válido.', moved: 'Carta movida.', instructions: 'Selecciona una carta o secuencia visible y luego una columna o base. Solo un rey puede ocupar una columna vacía.', empty: 'Columna vacía', daily: '📅 Reto diario', free: 'Juego libre', streak: 'Racha', time: 'Tiempo', moves: 'Jugadas', undo: 'Deshacer', undone: 'Se deshizo una jugada.', best: 'Mejor tiempo', newBest: '¡Nuevo mejor tiempo!', nextGoal: 'Siguiente objetivo', assisted: 'Récord con deshacer', untimed: 'Esta partida continuó de una versión anterior, así que no se guarda el tiempo.' },
 } as const;
 
+const MOVE_REASON:Record<keyof typeof COPY,Record<SolitaireMoveFailure,string>>={
+ ko:{'empty-source':'옮길 카드가 없습니다.','same-column':'같은 열로는 옮길 수 없습니다.','hidden-card':'뒤집히지 않은 카드는 옮길 수 없습니다.','broken-run':'묶음은 색을 번갈아 한 단계씩 내려가야 합니다.','empty-needs-king':'빈 열에는 K부터 놓아야 합니다.','needs-alternating-next-rank':'목적지보다 한 단계 낮고 색이 다른 카드만 놓을 수 있습니다.','foundation-needs-ace':'빈 파운데이션은 A부터 시작합니다.','foundation-needs-next-suit':'같은 무늬의 다음 숫자만 올릴 수 있습니다.','stock-empty':'스톡이 비었습니다.','waste-empty':'되돌릴 폐기 카드가 없습니다.'},
+ en:{'empty-source':'There is no card to move.','same-column':'A card cannot move to the same column.','hidden-card':'A face-down card cannot move.','broken-run':'A run must descend by one in alternating colors.','empty-needs-king':'Only a King can start an empty column.','needs-alternating-next-rank':'Place it on the next higher rank of the opposite color.','foundation-needs-ace':'An empty foundation starts with an Ace.','foundation-needs-next-suit':'Only the next rank of the same suit can move here.','stock-empty':'The stock is empty.','waste-empty':'There is no waste pile to recycle.'},
+ ja:{'empty-source':'移動するカードがありません。','same-column':'同じ列には移動できません。','hidden-card':'裏向きのカードは移動できません。','broken-run':'列は色を交互に1つずつ降順にします。','empty-needs-king':'空の列はKから始めます。','needs-alternating-next-rank':'色が異なる1つ上の数字の上に置きます。','foundation-needs-ace':'空の組札はAから始めます。','foundation-needs-next-suit':'同じスートの次の数字だけ置けます。','stock-empty':'山札が空です。','waste-empty':'戻す捨て札がありません。'},
+ zh:{'empty-source':'没有可移动的牌。','same-column':'不能移到同一列。','hidden-card':'背面牌不能移动。','broken-run':'牌组必须红黑交替并逐级递减。','empty-needs-king':'空列只能从K开始。','needs-alternating-next-rank':'只能放在异色且大一级的牌上。','foundation-needs-ace':'空基础牌堆从A开始。','foundation-needs-next-suit':'这里只能放同花色的下一张。','stock-empty':'牌堆已空。','waste-empty':'没有可回收的废牌。'},
+ fr:{'empty-source':'Aucune carte à déplacer.','same-column':'Impossible de déplacer vers la même colonne.','hidden-card':'Une carte face cachée ne peut pas bouger.','broken-run':'La suite doit descendre en alternant les couleurs.','empty-needs-king':'Seul un roi ouvre une colonne vide.','needs-alternating-next-rank':'Placez-la sous la valeur supérieure de couleur opposée.','foundation-needs-ace':'Une fondation vide commence par un as.','foundation-needs-next-suit':'Seule la carte suivante de la même couleur convient.','stock-empty':'La pioche est vide.','waste-empty':'Aucune défausse à recycler.'},
+ es:{'empty-source':'No hay carta para mover.','same-column':'No se puede mover a la misma columna.','hidden-card':'Una carta boca abajo no se puede mover.','broken-run':'La secuencia debe bajar alternando colores.','empty-needs-king':'Solo un rey inicia una columna vacía.','needs-alternating-next-rank':'Colócala bajo el rango superior de color opuesto.','foundation-needs-ace':'Una base vacía empieza con un as.','foundation-needs-next-suit':'Solo cabe el siguiente rango del mismo palo.','stock-empty':'El mazo está vacío.','waste-empty':'No hay descarte para reciclar.'},
+};
+
 const SUIT_ICON: Record<SolitaireSuit, string> = { hearts: '♥', diamonds: '♦', clubs: '♣', spades: '♠' };
 const UNDO_STACK_LIMIT = 100;
 const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
@@ -46,6 +57,7 @@ function createGenerationSeed(): number {
 
 const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
   const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
+  const moveReason=MOVE_REASON[locale as keyof typeof COPY]??MOVE_REASON.en;
   const [mode, setMode] = useState<SolitaireMode>('daily');
   const [dailyDate, setDailyDate] = useState(() => todayKey());
   const [game, setGame] = useState<SolitaireState>(() => createSeededSolitaireDeal(solitaireDailySeed()));
@@ -152,7 +164,8 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
   const commit = useCallback((move: SolitaireMove) => {
     const next = applySolitaireMove(game, move);
     if (!next) {
-      setAnnouncement(t.illegal);
+      const reason=explainSolitaireMove(game,move);
+      setAnnouncement(reason?moveReason[reason]:t.illegal);
       return false;
     }
     if (startedAt.current === null) startedAt.current = performance.now();
@@ -163,7 +176,7 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     setSelection(null);
     setAnnouncement(t.moved);
     return true;
-  }, [game, t.illegal, t.moved]);
+  }, [game, moveReason, t.illegal, t.moved]);
 
   const undo = useCallback(() => {
     setUndoStack((stack) => {

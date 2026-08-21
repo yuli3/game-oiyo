@@ -146,6 +146,23 @@ export function applySolitaireMove(state: SolitaireState, move: SolitaireMove): 
   return { ...state, tableau, foundations };
 }
 
+export type SolitaireMoveFailure = 'empty-source' | 'same-column' | 'hidden-card' | 'broken-run' | 'empty-needs-king' | 'needs-alternating-next-rank' | 'foundation-needs-ace' | 'foundation-needs-next-suit' | 'stock-empty' | 'waste-empty';
+export function explainSolitaireMove(state:SolitaireState,move:SolitaireMove):SolitaireMoveFailure|null{
+  if(applySolitaireMove(state,move))return null;
+  if(move.type==='draw')return'stock-empty';
+  if(move.type==='recycle')return'waste-empty';
+  if(move.type==='flip')return'hidden-card';
+  if(move.type==='tableau-to-tableau'){
+    if(move.from===move.to)return'same-column';const source=state.tableau[move.from],target=state.tableau[move.to],run=source?.slice(move.cardIndex)??[];
+    if(!run.length)return'empty-source';if(run.some(card=>!card.isFaceUp))return'hidden-card';if(!isValidTableauRun(run))return'broken-run';
+    return target?.length?'needs-alternating-next-rank':'empty-needs-king';
+  }
+  const card=move.type==='waste-to-tableau'||move.type==='waste-to-foundation'?state.waste.at(-1):move.type==='foundation-to-tableau'?state.foundations[move.suit].at(-1):state.tableau[move.from]?.at(-1);
+  if(!card)return'empty-source';
+  if(move.type==='waste-to-tableau'||move.type==='foundation-to-tableau')return state.tableau[move.to]?.length?'needs-alternating-next-rank':'empty-needs-king';
+  return state.foundations[card.suit].length===0?'foundation-needs-ace':'foundation-needs-next-suit';
+}
+
 export function listSolitaireMoves(state: SolitaireState): SolitaireMove[] {
   const moves: SolitaireMove[] = [];
   if (state.stock.length > 0) moves.push({ type: 'draw' });
