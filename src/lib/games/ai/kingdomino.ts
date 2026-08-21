@@ -4,7 +4,7 @@
 import {
   buildDeck, emptyBoard, emptyCrowns, shuffle, allLegalPlacements, applyPlacement,
   scoreBoard, scoreBoardBreakdown, bonuses, isLegal,
-  CENTER,
+  CENTER, GRID,
   type Board, type CrownGrid, type Tile, type Placement,
 } from "../kingdomino";
 
@@ -194,7 +194,7 @@ export function finalResult(s: GameState): FinalResult {
 // ── AI ────────────────────────────────────────────────────────────────────
 // Marginal value of placing `tile` on a board: best achievable score gain, with a
 // small compactness nudge so the AI keeps room to grow.
-function bestPlacementValue(k: Kingdom, tile: Tile): { value: number; placement: Placement | null } {
+function bestPlacementValue(k: Kingdom, tile: Tile, strategic = false): { value: number; placement: Placement | null } {
   const legals = allLegalPlacements(k.board, tile);
   if (legals.length === 0) return { value: -5, placement: null }; // forced discard is bad
   const base = scoreBoard(k.board, k.crowns);
@@ -204,21 +204,27 @@ function bestPlacementValue(k: Kingdom, tile: Tile): { value: number; placement:
     const c2 = k.crowns.map((row) => row.slice());
     applyPlacement(b2, c2, tile, pl);
     const gain = scoreBoard(b2, c2) - base;
+    const futureOpen = new Set<string>();
+    if (strategic) for (const cell of [pl.a, pl.b]) for (const [dr, dc] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+      const r=cell.r+dr,c=cell.c+dc;if(r>=0&&r<GRID&&c>=0&&c<GRID&&b2[r][c]===null)futureOpen.add(`${r},${c}`);
+    }
     // Prefer central-ish placements (more future connection options).
     const centro = -(Math.abs(pl.a.r - CENTER) + Math.abs(pl.a.c - CENTER) + Math.abs(pl.b.r - CENTER) + Math.abs(pl.b.c - CENTER)) * 0.05;
-    const score = gain + centro;
+    const score = gain + centro + futureOpen.size * 0.12;
     if (score > best) { best = score; bestPl = pl; }
   }
   return { value: best, placement: bestPl };
 }
 
+function stableRoll(...values:number[]):number{let state=2166136261;for(const value of values)state=Math.imul(state^(value>>>0),16777619)>>>0;return state/0x1_0000_0000}
+
 export function aiPlace(s: GameState, level: AiLevel): Placement | null {
   if (s.pending.kind !== "place" || s.pending.owner !== "ai") return null;
-  const { placement } = bestPlacementValue(s.ai, s.pending.tile);
+  const { placement } = bestPlacementValue(s.ai, s.pending.tile, level === 3);
   if (level === 1 && placement) {
     // Apprentice: sometimes takes a decent-but-not-best spot.
     const legals = allLegalPlacements(s.ai.board, s.pending.tile);
-    if (legals.length && Math.random() < 0.35) return legals[Math.floor(Math.random() * legals.length)];
+    if (legals.length && stableRoll(s.round,s.deckPos,s.pending.tile.id) < 0.35) return legals[Math.floor(stableRoll(s.pending.tile.id,s.round,level)*legals.length)];
   }
   return placement;
 }
@@ -229,12 +235,27 @@ export function aiClaim(s: GameState, level: AiLevel): number {
   let best = opts[0], bestVal = -Infinity;
   for (const i of opts) {
     const tile = s.draft[i].tile;
-    const { value } = bestPlacementValue(s.ai, tile);
+    const { value } = bestPlacementValue(s.ai, tile, level === 3);
     const crowns = tile.a.crowns + tile.b.crowns;
     // Higher tiles (larger id) act later next round — a mild penalty at higher levels.
     const orderPenalty = level >= 2 ? (tile.id / 48) * 0.6 : 0;
-    const v = value + crowns * 1.5 - orderPenalty + (level === 1 ? Math.random() * 0.5 : 0);
+    const v = value + crowns * 1.5 - orderPenalty + (level === 1 ? stableRoll(s.round,s.deckPos,tile.id) * 0.5 : 0);
     if (v > bestVal) { bestVal = v; best = i; }
   }
   return best;
+}
+
+export type KingdominoAiReview = { kind:"claim"; tileId:number; crowns:number; projectedValue:number } | { kind:"place"; tileId:number; scoreGain:number; discarded:boolean };
+export function kingdominoAiReview(s:GameState,level:AiLevel):KingdominoAiReview|null{
+  if(s.pending.kind==="claim"&&s.pending.owner==="ai"){
+    const index=aiClaim(s,level),slot=s.draft[index];if(!slot)return null;const projected=bestPlacementValue(s.ai,slot.tile,level===3).value;
+    return{kind:"claim",tileId:slot.tile.id,crowns:slot.tile.a.crowns+slot.tile.b.crowns,projectedValue:Number(projected.toFixed(2))};
+  }
+  if(s.pending.kind==="place"&&s.pending.owner==="ai"){
+    const tile=s.pending.tile,placement=aiPlace(s,level),before=scoreBoard(s.ai.board,s.ai.crowns);
+    if(!placement)return{kind:"place",tileId:tile.id,scoreGain:0,discarded:true};
+    const board=s.ai.board.map(row=>row.slice()),crowns=s.ai.crowns.map(row=>row.slice());applyPlacement(board,crowns,tile,placement);
+    return{kind:"place",tileId:tile.id,scoreGain:scoreBoard(board,crowns)-before,discarded:false};
+  }
+  return null;
 }

@@ -80,6 +80,17 @@ function negamax(board: Board, depth: number, alpha: number, beta: number, p: Ce
   return best;
 }
 
+export type ConnectFourMoveKind = "win" | "block" | "center" | "build";
+export function connectFourMoveReview(board: Board, col: number, ai: Cell): { row:number; col:number; kind:ConnectFourMoveKind } | null {
+  const row = dropRow(board, col); if (row < 0) return null;
+  const work = board.map(line => [...line]) as Board;
+  work[row][col] = ai;
+  if (wins(work,row,col,ai)) return {row,col,kind:"win"};
+  work[row][col] = ai === 1 ? 2 : 1;
+  if (wins(work,row,col,ai === 1 ? 2 : 1)) return {row,col,kind:"block"};
+  return {row,col,kind:col===3?"center":"build"};
+}
+
 /** Best column for `ai` at the given level. Returns -1 only if the board is full. */
 export function connectFourBestMove(board: Board, ai: Cell, level: AiLevel): number {
   const depth = level === 1 ? 2 : level === 2 ? 4 : 7;

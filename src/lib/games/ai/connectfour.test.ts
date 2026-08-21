@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { connectFourBestMove } from "./connectfour";
+import { connectFourBestMove, connectFourMoveReview } from "./connectfour";
 
 type Cell = 0 | 1 | 2;
 type Board = Cell[][];
@@ -24,6 +24,13 @@ function drop(board: Board, col: number, player: Cell): void {
 }
 
 describe("connectFourBestMove", () => {
+  it("names immediate wins, blocks, and center control", () => {
+    const win = emptyBoard(); drop(win,0,2);drop(win,1,2);drop(win,2,2);
+    expect(connectFourMoveReview(win,3,2)?.kind).toBe("win");
+    const block = emptyBoard(); drop(block,0,1);drop(block,1,1);drop(block,2,1);
+    expect(connectFourMoveReview(block,3,2)?.kind).toBe("block");
+    expect(connectFourMoveReview(emptyBoard(),3,2)?.kind).toBe("center");
+  });
   it("takes an immediate winning move (3-in-a-row with an open 4th) at every level", () => {
     const board = emptyBoard();
     // Bottom row: three black discs at cols 0,1,2 — col 3 wins.

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { allLegalPlacements, emptyBoard, emptyCrowns } from "../kingdomino";
-import { aiClaim, claim, finalResult, place, startGame } from "./kingdomino";
+import { aiClaim, claim, finalResult, kingdominoAiReview, place, startGame } from "./kingdomino";
 
 function seeded(seed: number) {
   let value = seed >>> 0;
@@ -20,6 +20,14 @@ function finishSetup() {
 }
 
 describe("kingdomino draft flow", () => {
+  it("keeps apprentice choices deterministic and explains its claim", () => {
+    const state = startGame(() => 0);
+    claim(state, state.pending.kind === "claim" ? state.pending.options[0] : -1);
+    expect(state.pending).toMatchObject({ kind:"claim", owner:"ai" });
+    expect(aiClaim(state,1)).toBe(aiClaim(state,1));
+    expect(kingdominoAiReview(state,1)).toMatchObject({ kind:"claim", tileId: expect.any(Number), crowns: expect.any(Number), projectedValue: expect.any(Number) });
+  });
+
   it("uses the two-player A-B-B-A snake order for the opening draft", () => {
     const state = startGame(() => 0);
     expect(state.claimSeq).toEqual(["you", "ai", "ai", "you"]);

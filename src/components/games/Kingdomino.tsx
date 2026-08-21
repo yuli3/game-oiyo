@@ -2,8 +2,8 @@ import React, { useCallback, useEffect, useReducer, useRef, useState } from "rea
 import { GameContainer } from "../ui/game/GamePrimitives";
 import type { Locale } from "../../lib/i18n";
 import {
-  startGame, place, claim, aiPlace, aiClaim, finalResult,
-  type GameState, type AiLevel, type Kingdom,
+  startGame, place, claim, aiPlace, aiClaim, finalResult, kingdominoAiReview,
+  type GameState, type AiLevel, type Kingdom, type KingdominoAiReview,
 } from "../../lib/games/ai/kingdomino";
 import {
   isLegal, scoreBoard, GRID, type Cell, type Tile, type Placement,
@@ -42,6 +42,15 @@ const cellNames: Record<Locale, Record<string, string>> = {
   zh: { empty: "空格", castle: "城堡", wheat: "麦田", forest: "森林", water: "水域", grass: "草原", swamp: "沼泽", mine: "矿山" },
   fr: { empty: "case vide", castle: "château", wheat: "blé", forest: "forêt", water: "eau", grass: "prairie", swamp: "marais", mine: "mine" },
   es: { empty: "casilla vacía", castle: "castillo", wheat: "trigo", forest: "bosque", water: "agua", grass: "pradera", swamp: "pantano", mine: "mina" },
+};
+
+const AI_INFO:Record<Locale,{difficulty:string;level:Record<AiLevel,string>;review:string;claim:string;place:string;discard:string}>={
+ ko:{difficulty:'AI 정책',level:{1:'결정적 변주 · 35%',2:'현재 점수·왕관·순서',3:'점수·왕관·순서·확장 공간'},review:'AI 마지막 선택',claim:'확보한 도미노',place:'배치 점수 변화',discard:'배치 불가로 버림'},
+ en:{difficulty:'AI policy',level:{1:'deterministic variation · 35%',2:'score/crowns/order',3:'score/crowns/order/future space'},review:'Last AI choice',claim:'claimed domino',place:'placement score gain',discard:'discarded: no legal spot'},
+ ja:{difficulty:'AI方針',level:{1:'決定的な変化 · 35%',2:'点・王冠・順番',3:'点・王冠・順番・拡張余地'},review:'AIの最後の選択',claim:'獲得ドミノ',place:'配置得点差',discard:'配置不可で破棄'},
+ zh:{difficulty:'AI策略',level:{1:'确定性变体 · 35%',2:'分数·王冠·顺序',3:'分数·王冠·顺序·扩展空间'},review:'AI最后选择',claim:'占取骨牌',place:'放置得分变化',discard:'无合法位置而弃置'},
+ fr:{difficulty:'Politique IA',level:{1:'variation déterministe · 35%',2:'score/couronnes/ordre',3:'score/couronnes/ordre/espace futur'},review:'Dernier choix IA',claim:'domino choisi',place:'gain de placement',discard:'défaussé faute de place'},
+ es:{difficulty:'Política IA',level:{1:'variación determinista · 35%',2:'puntos/coronas/orden',3:'puntos/coronas/orden/espacio futuro'},review:'Última decisión IA',claim:'dominó elegido',place:'ganancia de colocación',discard:'descartado sin lugar legal'},
 };
 
 function Crowns({ n, size = 8 }: { n: number; size?: number }) {
@@ -135,6 +144,7 @@ function TileChip({ tile, owner, dim, onClick, youLabel, aiLabel, locale }: {
 
 const Kingdomino: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
   const t = i18n[locale] ?? i18n.en;
+  const aiInfo=AI_INFO[locale]??AI_INFO.en;
   const restored = useRef(loadKingdominoSave()).current;
   const [level, setLevel] = useState<AiLevel>(restored?.level ?? 2);
   const [started, setStarted] = useState(Boolean(restored));
@@ -145,6 +155,7 @@ const Kingdomino: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
   const [paused, setPaused] = useState(Boolean(restored));
   const [wasRestored, setWasRestored] = useState(Boolean(restored));
   const [muted, setMuted] = useState(false);
+  const [lastAiReview,setLastAiReview]=useState<KingdominoAiReview|null>(null);
   const recorded = useRef(false);
   const audioRef = useRef<AudioContext | null>(null);
 
@@ -180,6 +191,7 @@ const Kingdomino: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
     setStarted(true);
     setPaused(false);
     setWasRestored(false);
+    setLastAiReview(null);
     clearKingdominoSave();
     force();
   }, []);
@@ -209,6 +221,7 @@ const Kingdomino: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
     }
     if (p.owner === "ai") {
       const id = setTimeout(() => {
+        setLastAiReview(kingdominoAiReview(s,level));
         if (p.kind === "claim") claim(s, aiClaim(s, level));
         else place(s, aiPlace(s, level));
         setOrient(0);
@@ -278,6 +291,7 @@ const Kingdomino: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
               </button>
             ))}
           </div>
+          <p className="text-xs font-medium text-gray-500">{aiInfo.difficulty}: {aiInfo.level[level]}</p>
           <button onClick={newGame} className="min-h-11 px-6 py-2.5 rounded-lg bg-emerald-600 text-white font-bold hover:bg-emerald-700">
             {t.start}
           </button>
@@ -306,6 +320,7 @@ const Kingdomino: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
             {muted ? "🔇" : "🔊"} {t.sound}
           </button>
         </div>
+        <p className="text-center text-[11px] font-medium text-gray-500">{aiInfo.difficulty}: {aiInfo.level[level]}</p>
         {paused && !over && (
           <div className="rounded-xl border border-gray-300 bg-gray-50 p-3 text-center text-xs font-bold text-gray-600" role="status">
             {wasRestored ? `${t.restored} · ` : ""}{t.paused}
@@ -402,6 +417,7 @@ const Kingdomino: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
             {t.tieRegion}
           </p>
         )}
+        {over&&res!.winner==='ai'&&lastAiReview&&<div className="mx-auto w-full max-w-md rounded-2xl border border-amber-300/60 bg-amber-50 p-3 text-left text-xs text-stone-800"><p className="font-black text-amber-900">{aiInfo.review}</p><p className="mt-1">{lastAiReview.kind==='claim'?`${aiInfo.claim} #${lastAiReview.tileId} · ${lastAiReview.crowns} ${t.crowns} · ${lastAiReview.projectedValue}`:lastAiReview.discarded?`${aiInfo.discard} · #${lastAiReview.tileId}`:`${aiInfo.place} +${lastAiReview.scoreGain} · #${lastAiReview.tileId}`}</p><p className="mt-1 text-[10px] text-stone-500">{aiInfo.difficulty}: {aiInfo.level[level]}</p></div>}
 
         <p className="text-center text-xs text-gray-400">
           {t.record}: {record.w}W {record.l}L {record.d}D

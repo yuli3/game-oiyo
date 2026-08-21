@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import type { Locale } from "../../lib/i18n";
-import { connectFourBestMove } from "../../lib/games/ai/connectfour";
+import { connectFourBestMove, connectFourMoveReview, type ConnectFourMoveKind } from "../../lib/games/ai/connectfour";
 import type { AiLevel, GameMode } from "../../lib/games/ai/types";
 import { getRecord, recordResult, type GameRecord } from "../../lib/games/records";
 import {
@@ -133,6 +133,15 @@ const extra: Record<Locale, { pause: string; resume: string; restored: string; p
   es: { pause: "Pausa", resume: "Continuar", restored: "Partida restaurada", paused: "Partida en pausa", sound: "Sonido", moves: "jugadas", nextGoal: "Siguiente objetivo: controla la columna central para amenazar en varias direcciones" },
 };
 
+const AI_INFO:Record<Locale,{difficulty:string;level:Record<AiLevel,string>;review:string;kind:Record<ConnectFourMoveKind,string>}>= {
+ ko:{difficulty:'AI 탐색',level:{1:'2수 · 상위 3열 변주',2:'4수 · 최선 열',3:'7수 · 최선 열'},review:'패배 복기',kind:{win:'즉시 4개 완성',block:'내 즉시 승리 차단',center:'중앙 열 장악',build:'다음 연결 준비'}},
+ en:{difficulty:'AI search',level:{1:'2 ply · weighted top 3',2:'4 ply · best column',3:'7 ply · best column'},review:'Loss review',kind:{win:'completed four immediately',block:'blocked your immediate win',center:'controlled the center',build:'built the next threat'}},
+ ja:{difficulty:'AI探索',level:{1:'2 ply · 上位3列を変化',2:'4 ply · 最善列',3:'7 ply · 最善列'},review:'敗局の振り返り',kind:{win:'即座に4つ完成',block:'あなたの即勝ちを阻止',center:'中央列を確保',build:'次の連結を準備'}},
+ zh:{difficulty:'AI搜索',level:{1:'2 ply · 前3列变体',2:'4 ply · 最佳列',3:'7 ply · 最佳列'},review:'败局复盘',kind:{win:'立即完成四连',block:'挡住你的即时获胜',center:'控制中间列',build:'建立下一步威胁'}},
+ fr:{difficulty:'Recherche IA',level:{1:'2 ply · top 3 pondéré',2:'4 ply · meilleure colonne',3:'7 ply · meilleure colonne'},review:'Revoir la défaite',kind:{win:'alignement de quatre immédiat',block:'victoire immédiate bloquée',center:'contrôle du centre',build:'préparation de la menace'}},
+ es:{difficulty:'Búsqueda IA',level:{1:'2 ply · top 3 ponderado',2:'4 ply · mejor columna',3:'7 ply · mejor columna'},review:'Revisión de derrota',kind:{win:'cuatro inmediato',block:'bloqueó tu victoria inmediata',center:'controló el centro',build:'preparó la siguiente amenaza'}},
+};
+
 // Falling animation state per cell
 interface FallingCell {
   row: number;
@@ -144,6 +153,7 @@ interface FallingCell {
 const ConnectFour: React.FC<Props> = ({ locale }) => {
   const t = i18n[locale] ?? i18n.en;
   const x = extra[locale] ?? extra.en;
+  const aiInfo=AI_INFO[locale]??AI_INFO.en;
   const reducedMotion = usePrefersReducedMotion();
 
   const [board, setBoard] = useState<ConnectFourBoard>(createConnectFourBoard);
@@ -164,6 +174,7 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
   const [muted, setMuted] = useState(false);
   const [lastMove, setLastMove] = useState<ConnectFourLastMove | null>(null);
   const [moveCount, setMoveCount] = useState(0);
+  const [lastAiReview,setLastAiReview]=useState<{row:number;col:number;kind:ConnectFourMoveKind}|null>(null);
   const animFrameRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const aiTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const columnRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -239,6 +250,7 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
     setRestored(false);
     setLastMove(null);
     setMoveCount(0);
+    setLastAiReview(null);
     startedAtRef.current = Date.now();
     clearConnectFourSaveV2();
   }, []);
@@ -309,6 +321,7 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
     setThinking(true);
     aiTimerRef.current = setTimeout(() => {
       const col = connectFourBestMove(board.map((r) => [...r]) as ConnectFourBoard, AI_PLAYER, level);
+      if(col>=0)setLastAiReview(connectFourMoveReview(board.map(r=>[...r]) as ConnectFourBoard,col,AI_PLAYER));
       setThinking(false);
       if (col >= 0) dropDiscAt(col);
     }, AI_DELAY_MS);
@@ -390,6 +403,7 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
             ))}
           </div>
         )}
+        {mode==='ai'&&<p className="basis-full text-[11px] font-medium text-muted-foreground">{aiInfo.difficulty}: {aiInfo.level[level]}</p>}
         {moveCount > 0 && status === "playing" && (
           <button type="button" onClick={() => setPaused((value) => { if (value) setRestored(false); return !value; })} className="min-h-11 px-3 rounded-lg border border-border text-xs font-bold text-muted-foreground">
             {paused ? `▶ ${x.resume}` : `Ⅱ ${x.pause}`}
@@ -584,6 +598,7 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
         <div className="mt-4 flex flex-col items-center gap-2">
           <p className="text-xs text-muted-foreground">{moveCount} {x.moves}</p>
           {status === "won" && <p className="text-[11px] text-muted-foreground max-w-xs text-center">{x.nextGoal}</p>}
+          {status==='won'&&currentPlayer===AI_PLAYER&&lastAiReview&&<div className="max-w-xs rounded-2xl border border-amber-300/60 bg-amber-50 p-3 text-left text-xs text-stone-800"><p className="font-black text-amber-900">{aiInfo.review} · {t.column} {lastAiReview.col+1}</p><p className="mt-1">{aiInfo.kind[lastAiReview.kind]}</p><p className="mt-1 text-[10px] text-stone-500">{aiInfo.difficulty}: {aiInfo.level[level]}</p></div>}
           <button
             type="button"
             onClick={resetGame}
