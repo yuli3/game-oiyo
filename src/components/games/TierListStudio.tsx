@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent as ReactDragEvent, type PointerEvent as ReactPointerEvent } from "react";
 import type { Locale } from "../../lib/i18n";
 import {
   RECOMMENDED_IMAGE_PX,
@@ -8,6 +8,7 @@ import {
   TIER_LIST_STORAGE_KEY,
   emptyDocument,
   isHttpsImageUrl,
+  moveTierItem,
   parseDocument,
   parseSaves,
   toSharePayload,
@@ -44,6 +45,8 @@ const COPY = {
     compare: "비교",
     hideCompare: "비교 닫기",
     templates: "템플릿",
+    templateSearch: "템플릿 검색",
+    fullscreen: "방송 전체화면",
     publish: "템플릿 공개",
     published: "공개됨",
     up: "추천",
@@ -73,6 +76,9 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
   const [compareId, setCompareId] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [templateQuery, setTemplateQuery] = useState("");
+  const studioRef = useRef<HTMLElement>(null);
+  const draggingRef = useRef<{ id: string; x: number; y: number } | null>(null);
 
   useEffect(() => {
     const stored = parseDocument(window.localStorage.getItem(TIER_LIST_STORAGE_KEY));
@@ -106,24 +112,14 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
     return null;
   }, [doc, selected]);
 
-  const moveTo = useCallback((tierId: TierId) => {
-    if (!selected) return;
-    setDoc((prev) => {
-      let moving: TierItem | undefined;
-      const stripped = prev.tiers.map((tier) => {
-        const item = tier.items.find((entry) => entry.id === selected);
-        if (item) moving = item;
-        return { ...tier, items: tier.items.filter((entry) => entry.id !== selected) };
-      });
-      if (!moving) return prev;
-      return {
-        ...prev,
-        savedAt: new Date().toISOString(),
-        tiers: stripped.map((tier) => (tier.id === tierId ? { ...tier, items: [...tier.items, moving!] } : tier)),
-      };
-    });
+  const moveItem = useCallback((itemId: string, tierId: TierId, index = Number.MAX_SAFE_INTEGER) => {
+    setDoc((prev) => moveTierItem(prev, itemId, tierId, index));
     setSelected(null);
-  }, [selected]);
+  }, []);
+
+  const moveTo = useCallback((tierId: TierId) => {
+    if (selected) moveItem(selected, tierId);
+  }, [moveItem, selected]);
 
   const addItem = useCallback(() => {
     const name = label.trim();
@@ -180,9 +176,23 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
   }, []);
 
   const compareDoc = saves.find((save) => save.id === compareId)?.document ?? null;
+  const visibleTemplates = useMemo(() => {
+    const query = templateQuery.trim().toLocaleLowerCase();
+    return query ? BUILTIN_TEMPLATES.filter((template) => Object.values(template.title).some((title) => title.toLocaleLowerCase().includes(query))) : BUILTIN_TEMPLATES;
+  }, [templateQuery]);
+
+  const finishPointerDrag = useCallback((event: ReactPointerEvent) => {
+    const drag = draggingRef.current;
+    draggingRef.current = null;
+    if (!drag || Math.hypot(event.clientX - drag.x, event.clientY - drag.y) < 8) return;
+    const itemId = drag.id;
+    const target = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>("[data-tier-id]");
+    const tierId = target?.dataset.tierId as TierId | undefined;
+    if (tierId && TIER_IDS.includes(tierId)) moveItem(itemId, tierId);
+  }, [moveItem]);
 
   return (
-    <section className="mx-auto max-w-xl space-y-4">
+    <section ref={studioRef} onPointerUp={finishPointerDrag} className="mx-auto max-w-6xl space-y-4 px-1">
       <label className="block">
         <span className="sr-only">제목</span>
         <input
@@ -192,22 +202,26 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
         />
       </label>
 
-      <div className="flex flex-wrap gap-2">
-        {BUILTIN_TEMPLATES.map((template) => (
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <input value={templateQuery} onChange={(event) => setTemplateQuery(event.target.value)} placeholder={copy.templateSearch} className="min-h-11 flex-1 rounded-xl border border-stone-300 px-3" />
+        <button type="button" className="min-h-11 rounded-xl bg-stone-900 px-4 font-bold text-white" onClick={() => void studioRef.current?.requestFullscreen?.()}>{copy.fullscreen}</button>
+      </div>
+      <div className="flex gap-2 overflow-x-auto pb-2">
+        {visibleTemplates.map((template) => (
           <button
             key={template.id}
             type="button"
-            className="min-h-11 rounded-full border border-stone-300 px-3 text-sm font-bold"
+            className="min-h-11 shrink-0 rounded-full border border-stone-300 px-3 text-sm font-bold"
             onClick={() => setDoc(documentFromTemplate(template, loc === "ko" || loc === "en" || loc === "ja" || loc === "zh" || loc === "fr" || loc === "es" ? loc : "en"))}
           >
-            {template.title.ko}
+            {template.title[loc]} · {template.items.length}
           </button>
         ))}
       </div>
 
       <div className="space-y-2">
         {doc.tiers.filter((tier): tier is typeof tier & { id: Exclude<TierId, "unranked"> } => tier.id !== "unranked").map((tier) => (
-          <div key={tier.id} className="overflow-hidden rounded-xl border border-stone-200">
+          <div key={tier.id} data-tier-id={tier.id} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); const id = event.dataTransfer.getData("text/tier-item"); if (id) moveItem(id, tier.id); }} className="overflow-hidden rounded-xl border border-stone-200">
             <button
               type="button"
               className={`flex min-h-11 w-20 items-center justify-center text-lg font-black ${TIER_TONE[tier.id]}`}
@@ -218,16 +232,16 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
             <div className="-mt-11 ml-20 flex min-h-11 flex-wrap gap-2 bg-white p-2">
               {tier.items.length === 0 ? <span className="self-center text-xs text-stone-400">{copy.empty}</span> : null}
               {tier.items.map((item) => (
-                <Chip key={item.id} item={item} selected={selected === item.id} onSelect={() => setSelected(item.id)} />
+                <Chip key={item.id} item={item} selected={selected === item.id} onSelect={() => setSelected(item.id)} onPointerStart={(event) => { draggingRef.current = { id: item.id, x: event.clientX, y: event.clientY }; }} onDragStart={(event) => { event.dataTransfer.setData("text/tier-item", item.id); }} />
               ))}
             </div>
           </div>
         ))}
-        <div className="rounded-xl border border-dashed border-stone-300 p-2">
+        <div data-tier-id="unranked" onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); const id = event.dataTransfer.getData("text/tier-item"); if (id) moveItem(id, "unranked"); }} className="rounded-xl border border-dashed border-stone-300 p-2">
           <p className="mb-2 text-xs font-bold text-stone-500">{copy.unranked}</p>
           <div className="flex flex-wrap gap-2">
             {doc.tiers.find((tier) => tier.id === "unranked")?.items.map((item) => (
-              <Chip key={item.id} item={item} selected={selected === item.id} onSelect={() => setSelected(item.id)} />
+              <Chip key={item.id} item={item} selected={selected === item.id} onSelect={() => setSelected(item.id)} onPointerStart={(event) => { draggingRef.current = { id: item.id, x: event.clientX, y: event.clientY }; }} onDragStart={(event) => { event.dataTransfer.setData("text/tier-item", item.id); }} />
             ))}
           </div>
         </div>
@@ -311,17 +325,20 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
   );
 }
 
-function Chip({ item, selected, onSelect }: { item: TierItem; selected: boolean; onSelect: () => void }) {
+function Chip({ item, selected, onSelect, onPointerStart, onDragStart }: { item: TierItem; selected: boolean; onSelect: () => void; onPointerStart: (event: ReactPointerEvent<HTMLButtonElement>) => void; onDragStart: (event: ReactDragEvent<HTMLButtonElement>) => void }) {
   return (
     <button
       type="button"
+      draggable
+      onDragStart={onDragStart}
+      onPointerDown={onPointerStart}
       onClick={onSelect}
-      className={`flex min-h-11 items-center gap-2 rounded-full border px-2 text-sm ${selected ? "border-lime-700 bg-lime-50" : "border-stone-200 bg-white"}`}
+      className={`flex w-20 touch-none flex-col items-center overflow-hidden rounded-lg border bg-white text-[11px] shadow-sm transition ${selected ? "border-lime-700 ring-2 ring-lime-300" : "border-stone-200"}`}
     >
       {item.imageUrl ? (
-        <img src={item.imageUrl} alt="" width={32} height={32} className="size-8 rounded-full object-cover" referrerPolicy="no-referrer" onError={(event) => { (event.currentTarget as HTMLImageElement).style.display = "none"; }} />
-      ) : null}
-      <span>{item.label}</span>
+        <img src={item.imageUrl} alt="" width={72} height={72} className="size-[72px] object-cover" draggable={false} referrerPolicy="no-referrer" onError={(event) => { (event.currentTarget as HTMLImageElement).style.display = "none"; }} />
+      ) : <span className="grid size-[72px] place-items-center bg-stone-100 text-2xl font-black text-stone-400">{item.label.slice(0, 1)}</span>}
+      <span className="w-full truncate px-1 py-1.5 font-bold">{item.label}</span>
     </button>
   );
 }

@@ -2,7 +2,7 @@ export const TIER_LIST_SCHEMA = "oiyo.tier-list" as const;
 export const TIER_LIST_VERSION = 2 as const;
 export const TIER_LIST_STORAGE_KEY = "oiyo:tier-list:v2";
 export const TIER_LIST_SAVES_KEY = "oiyo:tier-list-saves:v1";
-export const TIER_LIST_MAX_ITEMS = 48;
+export const TIER_LIST_MAX_ITEMS = 256;
 export const TIER_LIST_MAX_SAVES = 8;
 export const RECOMMENDED_IMAGE_PX = 128;
 export const SOURCE_IMAGE_PX = 256;
@@ -68,6 +68,27 @@ export function emptyDocument(title = "새 티어표"): TierListDocument {
     title: cleanLabel(title) ?? "새 티어표",
     savedAt: new Date().toISOString(),
     tiers: TIER_IDS.map((id) => ({ id, items: [] })),
+  };
+}
+
+export function moveTierItem(doc: TierListDocument, itemId: string, targetTierId: TierId, targetIndex: number): TierListDocument {
+  let moving: TierItem | undefined;
+  const tiers = doc.tiers.map((tier) => {
+    const found = tier.items.find((item) => item.id === itemId);
+    if (found) moving = found;
+    return { ...tier, items: tier.items.filter((item) => item.id !== itemId) };
+  });
+  if (!moving) return doc;
+  return {
+    ...doc,
+    savedAt: new Date().toISOString(),
+    tiers: tiers.map((tier) => {
+      if (tier.id !== targetTierId) return tier;
+      const index = Math.max(0, Math.min(Math.floor(targetIndex), tier.items.length));
+      const items = tier.items.slice();
+      items.splice(index, 0, moving!);
+      return { ...tier, items };
+    }),
   };
 }
 
