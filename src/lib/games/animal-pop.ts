@@ -27,22 +27,28 @@ export function findAnimalMatches(board: AnimalBoard) {
   return m;
 }
 const any = (m: boolean[][]) => m.some((r) => r.some(Boolean));
-function collapse(board: AnimalBoard, m: boolean[][], seed: number) {
+export type AnimalFall = { animal:string; fromRow:number; toRow:number; column:number; spawned:boolean };
+export type AnimalCascadeStep = { before:AnimalBoard; matched:number[]; collapsed:AnimalBoard; falls:AnimalFall[]; seed:number };
+function collapseWithMotion(board: AnimalBoard, m: boolean[][], seed: number) {
   const out = Array.from({ length: 7 }, () => Array<string>(7).fill(""));
+  const falls:AnimalFall[]=[];
   let rng = seed;
   for (let c = 0; c < 7; c++) {
-    const keep = [];
-    for (let r = 6; r >= 0; r--) if (!m[r][c]) keep.push(board[r][c]);
+    const keep:{animal:string;row:number}[]=[];
+    for (let r = 6; r >= 0; r--) if (!m[r][c]) keep.push({animal:board[r][c],row:r});
+    let spawnIndex=0;
     for (let r = 6, i = 0; r >= 0; r--, i++) {
-      if (i < keep.length) out[r][c] = keep[i];
+      if (i < keep.length) {out[r][c]=keep[i].animal;if(keep[i].row!==r)falls.push({animal:keep[i].animal,fromRow:keep[i].row,toRow:r,column:c,spawned:false});}
       else {
-        const n = next(rng);
-        rng = n[0];
-        out[r][c] = ANIMAL_TYPES[Math.floor(n[1] * ANIMAL_TYPES.length)];
+        const n = next(rng); rng = n[0]; const animal=ANIMAL_TYPES[Math.floor(n[1] * ANIMAL_TYPES.length)];
+        out[r][c] = animal; falls.push({animal,fromRow:-1-spawnIndex++,toRow:r,column:c,spawned:true});
       }
     }
   }
-  return { board: out, seed: rng };
+  return { board: out, seed: rng, falls };
+}
+function collapse(board: AnimalBoard, m: boolean[][], seed: number) {
+  const {board:nextBoard,seed:nextSeed}=collapseWithMotion(board,m,seed);return{board:nextBoard,seed:nextSeed};
 }
 export function createAnimalBoard(seed: number) {
   let rng = seed >>> 0,
@@ -75,7 +81,7 @@ export function swapAnimals(
       Math.abs((from % 7) - (to % 7)) !==
       1
   )
-    return { valid: false, board, seed, cleared: 0, waves: 0 };
+    return { valid: false, board, seed, cleared: 0, waves: 0, steps: [] as AnimalCascadeStep[] };
   let current = board.map((r) => [...r]);
   [
     current[Math.floor(from / 7)][from % 7],
@@ -85,20 +91,24 @@ export function swapAnimals(
     current[Math.floor(from / 7)][from % 7],
   ];
   if (!any(findAnimalMatches(current)))
-    return { valid: false, board, seed, cleared: 0, waves: 0 };
+    return { valid: false, board, seed, cleared: 0, waves: 0, steps: [] as AnimalCascadeStep[] };
   let cleared = 0,
     waves = 0,
     rng = seed;
+  const steps:AnimalCascadeStep[]=[];
   while (waves < 20) {
     const m = findAnimalMatches(current);
     if (!any(m)) break;
     waves++;
-    cleared += m.flat().filter(Boolean).length;
-    const x = collapse(current, m, rng);
+    const matched=m.flatMap((row,r)=>row.flatMap((value,c)=>value?[r*7+c]:[]));
+    cleared += matched.length;
+    const before=current.map(row=>[...row]);
+    const x = collapseWithMotion(current, m, rng);
+    steps.push({before,matched,collapsed:x.board.map(row=>[...row]),falls:x.falls,seed:x.seed});
     current = x.board;
     rng = x.seed;
   }
-  return { valid: true, board: current, seed: rng, cleared, waves };
+  return { valid: true, board: current, seed: rng, cleared, waves, steps };
 }
 export function serializeAnimal(
   seed: number,

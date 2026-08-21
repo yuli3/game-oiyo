@@ -30,6 +30,10 @@ describe("animal pop engine", () => {
     const x = swapAnimals(board, 2, 3, 3);
     expect(x.valid).toBe(true);
     expect(x.cleared).toBeGreaterThanOrEqual(3);
+    expect(x.steps).toHaveLength(x.waves);
+    expect(x.steps[0].matched.length).toBeGreaterThanOrEqual(3);
+    expect(x.steps[0].falls.some((fall) => fall.spawned)).toBe(true);
+    expect(x.steps.at(-1)?.collapsed).toEqual(x.board);
   });
   it("validates active save", () => {
     const a = createAnimalBoard(4);

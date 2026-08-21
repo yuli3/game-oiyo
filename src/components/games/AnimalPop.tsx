@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
+import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { GameContainer } from "../ui/game/GamePrimitives";
 import {
   createAnimalBoard,
@@ -6,9 +7,11 @@ import {
   serializeAnimal,
   swapAnimals,
   type AnimalBoard,
+  type AnimalFall,
 } from "../../lib/games/animal-pop";
 const SAVE = "oiyo:animal-pop:v1",
   BEST = "oiyo-animal-pop-best";
+const wait = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms));
 const COPY = {
   ko: {
     title: "애니멀 팝",
@@ -128,9 +131,24 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
     [best, setBest] = useState(0),
     [combo, setCombo] = useState(0),
     [sound, setSound] = useState(true),
-    [restored, setRestored] = useState(false);
+    [restored, setRestored] = useState(false),
+    [resolving, setResolving] = useState(false),
+    [bursting, setBursting] = useState<number[]>([]),
+    [falls, setFalls] = useState<AnimalFall[]>([]),
+    [waveLabel, setWaveLabel] = useState(0);
+  const reducedMotion = usePrefersReducedMotion();
+  const animationRun = useRef(0);
   const phaseRef = useRef(phase);
   phaseRef.current = phase;
+  useEffect(() => () => { animationRun.current += 1; }, []);
+  useEffect(() => {
+    if (phase === "playing") return;
+    animationRun.current += 1;
+    setResolving(false);
+    setBursting([]);
+    setFalls([]);
+    setWaveLabel(0);
+  }, [phase]);
   const tone = useCallback(
     (f: number) => {
       if (!sound) return;
@@ -197,11 +215,16 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
     setTime(60);
     setCombo(0);
     setSelected(null);
+    setResolving(false);
+    setBursting([]);
+    setFalls([]);
+    setWaveLabel(0);
     setRestored(false);
+    animationRun.current += 1;
     setPhase("playing");
   };
-  const pick = (i: number) => {
-    if (phase !== "playing") return;
+  const pick = async (i: number) => {
+    if (phase !== "playing" || resolving) return;
     if (selected === null) {
       setSelected(i);
       return;
@@ -212,12 +235,35 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
       tone(150);
       return;
     }
+    const run = ++animationRun.current;
+    setResolving(true);
+    const burstMs = reducedMotion ? 55 : 210;
+    const fallMs = reducedMotion ? 65 : 300;
+    for (let wave = 0; wave < x.steps.length; wave++) {
+      const step = x.steps[wave];
+      if (run !== animationRun.current) return;
+      setBoard(step.before);
+      setWaveLabel(wave + 1);
+      setBursting(step.matched);
+      tone(Math.min(920, 430 + wave * 85));
+      await wait(burstMs);
+      if (run !== animationRun.current) return;
+      setBursting([]);
+      setFalls(step.falls);
+      setBoard(step.collapsed);
+      await wait(fallMs);
+      setFalls([]);
+      if (!reducedMotion && wave < x.steps.length - 1) await wait(90);
+    }
+    if (run !== animationRun.current) return;
     setBoard(x.board);
     setSeed(x.seed);
     setCombo(x.waves);
     setScore((v) => v + x.cleared * 10 * x.waves * (x.waves >= 5 ? 2 : 1));
-    tone(x.waves >= 5 ? 780 : 420 + x.waves * 50);
+    setWaveLabel(0);
+    setResolving(false);
   };
+  const fallAt = (row:number,column:number) => falls.find((fall) => fall.toRow === row && fall.column === column);
   if (phase === "briefing")
     return (
       <GameContainer title={t.title} subtitle={t.sub} onReset={start}>
@@ -259,16 +305,19 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
           className="my-3 h-6 text-center text-sm font-black text-amber-600"
           aria-live="polite"
         >
-          {combo >= 5 ? t.fever : combo > 1 ? `${t.combo} ×${combo}` : ""}
+          {waveLabel > 0 ? `${t.combo} ×${waveLabel}` : combo >= 5 ? t.fever : combo > 1 ? `${t.combo} ×${combo}` : ""}
         </div>
         <div
-          className="relative grid grid-cols-7 gap-1 rounded-3xl border bg-[#edf1df] p-2"
+          className={`relative grid grid-cols-7 gap-1 overflow-hidden rounded-3xl border bg-[#edf1df] p-2 ${bursting.length ? "animal-board-hit" : ""}`}
           role="grid"
           aria-label={t.title}
         >
           {board.flatMap((row, r) =>
             row.map((animal, c) => {
               const i = r * 7 + c;
+              const isBursting = bursting.includes(i);
+              const fall = fallAt(r,c);
+              const fallRows = fall ? Math.max(1, fall.toRow - fall.fromRow) : 0;
               return (
                 <button
                   key={i}
@@ -276,10 +325,12 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
                   aria-label={`${animal} ${r + 1},${c + 1}`}
                   aria-pressed={selected === i}
                   onClick={() => pick(i)}
-                  disabled={phase !== "playing"}
-                  className={`aspect-square min-h-10 rounded-xl bg-white text-xl shadow-sm focus-visible:ring-2 focus-visible:ring-primary ${selected === i ? "ring-2 ring-primary scale-105" : ""}`}
+                  disabled={phase !== "playing" || resolving}
+                  style={fall ? ({ "--animal-fall": `${fallRows * 108}%`, animationDuration: reducedMotion ? "65ms" : `${Math.min(430,180+fallRows*34)}ms` } as CSSProperties) : undefined}
+                  className={`animal-tile relative aspect-square min-h-10 rounded-xl bg-white text-xl shadow-sm focus-visible:ring-2 focus-visible:ring-primary ${selected === i ? "ring-2 ring-primary scale-105" : ""} ${isBursting ? "animal-burst z-10" : ""} ${fall ? "animal-fall" : ""}`}
                 >
                   {animal}
+                  {isBursting && <><span className="animal-ring" aria-hidden="true"/><span className="animal-spark animal-spark-a" aria-hidden="true">✦</span><span className="animal-spark animal-spark-b" aria-hidden="true">●</span><span className="animal-spark animal-spark-c" aria-hidden="true">✦</span></>}
                 </button>
               );
             }),
@@ -311,8 +362,9 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
         <div className="grid grid-cols-2 gap-2">
           <button
             onClick={() =>
-              setPhase((p) => (p === "playing" ? "paused" : "playing"))
+              !resolving && setPhase((p) => (p === "playing" ? "paused" : "playing"))
             }
+            disabled={resolving}
             className="min-h-11 rounded-xl border bg-card font-bold"
           >
             {phase === "paused" ? t.resume : t.pause}
@@ -324,6 +376,22 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
             {t.sound} {sound ? "ON" : "OFF"}
           </button>
         </div>
+        <style>{`
+          @keyframes animalBurst { 0%{transform:scale(1);filter:brightness(1)} 42%{transform:scale(1.34,.76);filter:brightness(1.4) saturate(1.5)} 72%{transform:scale(.72,1.3);opacity:1} 100%{transform:scale(1.6);opacity:0;filter:brightness(1.8)} }
+          @keyframes animalRing { from{transform:scale(.35);opacity:.95} to{transform:scale(1.75);opacity:0} }
+          @keyframes animalFall { from{transform:translateY(calc(-1 * var(--animal-fall))) scale(.92);opacity:.2} 72%{transform:translateY(5%) scale(1.03);opacity:1} to{transform:translateY(0) scale(1);opacity:1} }
+          @keyframes animalBoardHit { 0%,100%{transform:translateX(0)} 30%{transform:translateX(-2px) rotate(-.25deg)} 65%{transform:translateX(2px) rotate(.25deg)} }
+          @keyframes animalSparkA { to{transform:translate(-20px,-18px) rotate(80deg);opacity:0} }
+          @keyframes animalSparkB { to{transform:translate(21px,-9px) scale(.2);opacity:0} }
+          @keyframes animalSparkC { to{transform:translate(7px,22px) rotate(-70deg);opacity:0} }
+          .animal-burst{animation:animalBurst 210ms cubic-bezier(.2,.8,.3,1) both;box-shadow:0 0 18px rgba(251,191,36,.8)}
+          .animal-ring{position:absolute;inset:-3px;border:3px solid #fbbf24;border-radius:999px;animation:animalRing 220ms ease-out both;pointer-events:none}
+          .animal-spark{position:absolute;left:45%;top:42%;color:#f59e0b;font-size:10px;pointer-events:none;z-index:2}
+          .animal-spark-a{animation:animalSparkA 240ms ease-out both}.animal-spark-b{animation:animalSparkB 230ms ease-out both}.animal-spark-c{animation:animalSparkC 250ms ease-out both}
+          .animal-fall{animation-name:animalFall;animation-timing-function:cubic-bezier(.18,.72,.22,1.08);animation-fill-mode:both}
+          .animal-board-hit{animation:animalBoardHit 150ms ease-out}
+          @media(prefers-reduced-motion:reduce){.animal-burst{animation-duration:55ms;box-shadow:none}.animal-ring,.animal-spark{display:none}.animal-board-hit{animation:none}.animal-fall{animation-duration:65ms!important}}
+        `}</style>
         <p className="mt-3 text-center text-xs text-muted-foreground">
           {t.hint}
         </p>
