@@ -32,4 +32,4 @@ export function reversiAnalysis(state: ReversiState, player: ReversiDisc) {
   return { discs: state.board.filter((cell) => cell === player).length, mobility: reversiMoves(state.board, player).length, opponentMobility: reversiMoves(state.board, opponent).length, corners: corners.filter((index) => state.board[index] === player).length };
 }
 
-export { reversiBestMove, reversiFlips, reversiMoves } from "./ai/reversi";
+export { reversiBestMove, reversiFlips, reversiMoveReview, reversiMoves, type ReversiMoveReview } from "./ai/reversi";

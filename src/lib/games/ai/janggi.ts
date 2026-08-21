@@ -207,6 +207,12 @@ function negamax(board: JanggiBoard, depth: number, alpha: number, beta: number,
   return best;
 }
 
+export type JanggiMoveReview = { from:[number,number]; to:[number,number]; captured:string|null; capturedValue:number; general:boolean };
+export function janggiMoveReview(board: JanggiBoard, move: JanggiMove): JanggiMoveReview {
+  const captured = board[move.to[0]][move.to[1]];
+  return { from:[...move.from], to:[...move.to], captured, capturedValue: captured ? VALUES[captured.toLowerCase()] / 100 : 0, general: captured?.toLowerCase() === "k" };
+}
+
 /** Best move for the side at the given level; null if no legal move (pass). */
 export function janggiBestMove(board: JanggiBoard, cho: boolean, level: AiLevel, seed = 0): JanggiMove | null {
   const moves = janggiMoves(board, cho);

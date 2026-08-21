@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { Locale } from '../../lib/i18n';
 import {
-    createJanggi, janggiAnalysis, janggiBestMove, janggiTargets, isChoPiece, playJanggi,
-    type JanggiMove, type JanggiState,
+    createJanggi, janggiAnalysis, janggiBestMove, janggiMoveReview, janggiTargets, isChoPiece, playJanggi,
+    type JanggiMove, type JanggiMoveReview, type JanggiState,
 } from '../../lib/games/janggi';
 import { clearJanggiSave, loadJanggiSave, storeJanggiSave } from '../../lib/games/janggi-save';
 import type { AiLevel, GameMode } from '../../lib/games/ai/types';
@@ -44,9 +44,19 @@ const i18n: Record<Locale, {
     es: { title: "Ajedrez coreano: Janggi", turn: "Turno", han: "Han", cho: "Cho", reset: "Nueva partida", win: "¡gana!", over: "Fin de la partida", goal: "Captura al general enemigo para ganar", modeLocal: "2 jugadores", modeAi: "contra la IA", level1: "Aprendiz", level2: "Experto", level3: "Maestro", thinking: "Tu rival está leyendo el tablero…", youWin: "¡Has ganado!", aiWins: "Gana la IA", record: "Historial" },
 };
 
+const AI_INFO: Record<Locale,{difficulty:string;level:Record<AiLevel,string>;review:string;capture:string;quiet:string;scope:string}>={
+ ko:{difficulty:'AI 탐색',level:{1:'1수 · 상위 4개 변주',2:'2수 · 최선 수',3:'3수 · 최선 수'},review:'패배 복기',capture:'잡은 기물',quiet:'마지막 AI 이동',scope:'캐주얼 규칙: 궁 포획 승리 · 장군/빅장/반복 없음'},
+ en:{difficulty:'AI search',level:{1:'1 ply · weighted top 4',2:'2 ply · best move',3:'3 ply · best move'},review:'Loss review',capture:'captured',quiet:'last AI move',scope:'Casual rules: general capture wins; no check, bikjang, or repetition'},
+ ja:{difficulty:'AI探索',level:{1:'1 ply · 上位4手を変化',2:'2 ply · 最善手',3:'3 ply · 最善手'},review:'敗局の振り返り',capture:'取った駒',quiet:'最後のAI手',scope:'カジュアル規則：宮取りで勝利・王手/ビクチャン/反復なし'},
+ zh:{difficulty:'AI搜索',level:{1:'1 ply · 前4候选变体',2:'2 ply · 最佳着',3:'3 ply · 最佳着'},review:'败局复盘',capture:'吃掉棋子',quiet:'AI最后一步',scope:'休闲规则：吃主将获胜；无将军、对将与重复规则'},
+ fr:{difficulty:'Recherche IA',level:{1:'1 ply · top 4 pondéré',2:'2 ply · meilleur coup',3:'3 ply · meilleur coup'},review:'Revoir la défaite',capture:'pièce prise',quiet:'dernier coup IA',scope:'Règles casual : capture du général; sans échec, bikjang ni répétition'},
+ es:{difficulty:'Búsqueda IA',level:{1:'1 ply · top 4 ponderado',2:'2 ply · mejor jugada',3:'3 ply · mejor jugada'},review:'Revisión de derrota',capture:'pieza capturada',quiet:'última jugada IA',scope:'Reglas casuales: capturar al general; sin jaque, bikjang ni repetición'},
+};
+
 const JanggiBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     const t = i18n[locale] ?? i18n.en;
     const x = extra[locale] ?? extra.en;
+    const aiInfo=AI_INFO[locale]??AI_INFO.en;
     const reducedMotion = usePrefersReducedMotion();
 
     const [game, setGame] = useState<JanggiState>(createJanggi);
@@ -58,6 +68,7 @@ const JanggiBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     const [restored, setRestored] = useState(false);
     const [muted, setMuted] = useState(false);
     const [record, setRecord] = useState<GameRecord | null>(null);
+    const [lastAiReview,setLastAiReview]=useState<JanggiMoveReview|null>(null);
     const aiTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const audio = useRef<AudioContext | null>(null);
     const tone = (frequency: number, duration = 0.06) => { if (muted || typeof window === 'undefined') return; const context = audio.current ?? new AudioContext(); audio.current = context; const oscillator = context.createOscillator(); const gain = context.createGain(); oscillator.frequency.value = frequency; gain.gain.setValueAtTime(0.05, context.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + duration); oscillator.connect(gain).connect(context.destination); oscillator.start(); oscillator.stop(context.currentTime + duration); };
@@ -75,11 +86,13 @@ const JanggiBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         setGame(createJanggi()); clearJanggiSave();
         setSelected(null);
         setThinking(false);
-        setPaused(false); setRestored(false);
+        setPaused(false); setRestored(false); setLastAiReview(null);
     };
 
     const applyMove = (current: JanggiState, m: JanggiMove) => {
+        const movingCho=current.current==='cho';const review=movingCho===AI_IS_CHO?janggiMoveReview(current.board,m):null;
         const next = playJanggi(current, m); if (next === current) return;
+        if(review)setLastAiReview(review);
         const captured = Boolean(current.board[m.to[0]][m.to[1]]); tone(next.winner ? 660 : captured ? 420 : 260, next.winner ? 0.18 : 0.06);
         setGame(next);
         setSelected(null);
@@ -168,6 +181,7 @@ const JanggiBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                         ))}
                     </div>
                 )}
+                {mode === 'ai' && <p className="basis-full text-[11px] font-medium text-stone-600">{aiInfo.difficulty}: {aiInfo.level[level]} · {aiInfo.scope}</p>}
                 {mode === 'ai' && record && (record.w + record.l + record.d > 0) && (
                     <span className="ml-auto text-[10px] font-bold text-stone-600 uppercase tracking-widest">
                         {t.record} {record.w}–{record.l}{record.d ? `–${record.d}` : ''}
@@ -228,6 +242,7 @@ const JanggiBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                             <h4 className="text-3xl font-black text-foreground mb-2">{winLabel}</h4>
                             <p className="text-muted-foreground mb-6 uppercase tracking-widest font-bold text-xs">{t.over}</p>
                             <p className="text-sm text-muted-foreground mb-4">{game.moves} {x.moves} · {analysis.captures} {x.captures} · {analysis.mobility} {x.mobility}</p>
+                            {mode==='ai'&&winner&&((winner==='cho')===AI_IS_CHO)&&lastAiReview&&<div className="mb-5 max-w-xs rounded-2xl border border-amber-300/60 bg-amber-50 p-3 text-left text-xs text-stone-800"><p className="font-black text-amber-900">{aiInfo.review} · {String.fromCharCode(65+lastAiReview.from[1])}{10-lastAiReview.from[0]}→{String.fromCharCode(65+lastAiReview.to[1])}{10-lastAiReview.to[0]}</p><p className="mt-1">{lastAiReview.captured?`${aiInfo.capture}: ${PIECE_ICONS[lastAiReview.captured]} · ${lastAiReview.capturedValue} ${x.material}`:aiInfo.quiet}</p><p className="mt-1 text-[10px] text-stone-500">{aiInfo.difficulty}: {aiInfo.level[level]} · {aiInfo.scope}</p></div>}
                             <button onClick={reset} className="px-10 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity">
                                 {t.reset}
                             </button>

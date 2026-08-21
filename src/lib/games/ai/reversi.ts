@@ -100,6 +100,15 @@ function negamax(board: Board, depth: number, alpha: number, beta: number, p: nu
   return best;
 }
 
+export type ReversiMoveReview = { index:number; flips:number; corner:boolean; edge:boolean; opponentMobility:number };
+export function reversiMoveReview(board: Board, index: number, player: number): ReversiMoveReview | null {
+  const flips = reversiFlips(board, index, player);
+  if (flips.length === 0) return null;
+  const row = Math.floor(index / SIZE), column = index % SIZE;
+  const next = apply(board, index, player);
+  return { index, flips: flips.length, corner: (row === 0 || row === 7) && (column === 0 || column === 7), edge: row === 0 || row === 7 || column === 0 || column === 7, opponentMobility: reversiMoves(next, player === 1 ? 2 : 1).length };
+}
+
 /** Best move index for `ai` at the given level; -1 if no legal move (pass). */
 export function reversiBestMove(board: Board, ai: number, level: AiLevel): number {
   const foe = ai === 1 ? 2 : 1;

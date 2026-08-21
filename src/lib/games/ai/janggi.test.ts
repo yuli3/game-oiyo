@@ -1,10 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { janggiBestMove, type JanggiBoard } from './janggi';
+import { janggiBestMove, janggiMoveReview, type JanggiBoard } from './janggi';
 
 const board = (): JanggiBoard => Array.from({ length: 10 }, () => Array<string | null>(9).fill(null));
 const levels = [1, 2, 3] as const;
 
 describe('Janggi tactical move quality', () => {
+  it('summarizes a capture without claiming unsupported check rules', () => {
+    const b = board(); b[8][4] = 'R'; b[2][4] = 's';
+    expect(janggiMoveReview(b, { from:[8,4], to:[2,4] })).toEqual({ from:[8,4], to:[2,4], captured:'s', capturedValue:2, general:false });
+    b[2][4] = 'k';
+    expect(janggiMoveReview(b, { from:[8,4], to:[2,4] }).general).toBe(true);
+  });
+
   const budgets = { 1: 200, 2: 600, 3: 1500 } as const;
   for (const level of levels) {
     it(`level ${level} takes a free general`, () => {

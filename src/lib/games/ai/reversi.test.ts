@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { reversiBestMove, reversiFlips, reversiMoves } from "./reversi";
+import { reversiBestMove, reversiFlips, reversiMoveReview, reversiMoves } from "./reversi";
 
 type Board = (number | null)[];
 
@@ -15,6 +15,13 @@ function startingBoard(): Board {
 }
 
 describe("reversi: reversiFlips + reversiMoves", () => {
+  it("summarizes flips, edge, corner, and reply mobility", () => {
+    const board = new Array<number | null>(64).fill(null);
+    board[1] = 2; board[2] = 1;
+    expect(reversiMoveReview(board, 0, 1)).toEqual({ index: 0, flips: 1, corner: true, edge: true, opponentMobility: 0 });
+    expect(reversiMoveReview(board, 7, 1)).toBeNull();
+  });
+
   it("finds the 4 classic opening moves for black", () => {
     const board = startingBoard();
     const moves = reversiMoves(board, 1).sort((a, b) => a - b);

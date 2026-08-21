@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
 import type { Locale } from '../../lib/i18n';
-import { createReversi, playReversi, restoreReversi, reversiAnalysis, reversiBestMove, reversiMoves, type ReversiState } from '../../lib/games/reversi';
+import { createReversi, playReversi, restoreReversi, reversiAnalysis, reversiBestMove, reversiMoveReview, reversiMoves, type ReversiMoveReview, type ReversiState } from '../../lib/games/reversi';
 import type { AiLevel, GameMode } from '../../lib/games/ai/types';
 import { getRecord, recordResult, type GameRecord } from '../../lib/games/records';
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
@@ -25,8 +25,18 @@ const i18n: Record<Locale, {
 };
 const soundLabel: Record<Locale, string> = { ko: "소리", en: "Sound", ja: "サウンド", zh: "声音", fr: "Son", es: "Sonido" };
 
+const AI_INFO: Record<Locale,{difficulty:string;level:Record<AiLevel,string>;review:string;corner:string;edge:string;flips:string;mobility:string}>={
+ ko:{difficulty:'AI 탐색',level:{1:'상위 4개 · 뒤집기 우선',2:'2수 · 위치와 이동성',3:'4수 · 위치와 이동성'},review:'패배 복기',corner:'모서리 확보',edge:'변 확보',flips:'개 뒤집기',mobility:'내 다음 수'},
+ en:{difficulty:'AI search',level:{1:'top 4 · max flips',2:'2 ply · position/mobility',3:'4 ply · position/mobility'},review:'Loss review',corner:'secured corner',edge:'secured edge',flips:'flips',mobility:'your replies'},
+ ja:{difficulty:'AI探索',level:{1:'上位4手 · 返し優先',2:'2 ply · 位置と手数',3:'4 ply · 位置と手数'},review:'敗局の振り返り',corner:'隅を確保',edge:'辺を確保',flips:'枚返し',mobility:'次の合法手'},
+ zh:{difficulty:'AI搜索',level:{1:'前4候选 · 翻子优先',2:'2 ply · 位置与行动力',3:'4 ply · 位置与行动力'},review:'败局复盘',corner:'占据角',edge:'占据边',flips:'枚翻转',mobility:'你的后续着法'},
+ fr:{difficulty:'Recherche IA',level:{1:'top 4 · prises max',2:'2 ply · position/mobilité',3:'4 ply · position/mobilité'},review:'Revoir la défaite',corner:'coin sécurisé',edge:'bord sécurisé',flips:'retournements',mobility:'vos réponses'},
+ es:{difficulty:'Búsqueda IA',level:{1:'top 4 · giros máximos',2:'2 ply · posición/movilidad',3:'4 ply · posición/movilidad'},review:'Revisión de derrota',corner:'esquina asegurada',edge:'borde asegurado',flips:'giros',mobility:'tus respuestas'},
+};
+
 const Reversi: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     const t = i18n[locale] ?? i18n.en;
+    const aiInfo=AI_INFO[locale]??AI_INFO.en;
     const reducedMotion = usePrefersReducedMotion();
 
     const [game, setGame] = useState<ReversiState>(createReversi);
@@ -34,7 +44,7 @@ const Reversi: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     const [level, setLevel] = useState<AiLevel>(2);
     const [thinking, setThinking] = useState(false);
     const [record, setRecord] = useState<GameRecord | null>(null);
-    const [paused, setPaused] = useState(false); const [restored, setRestored] = useState(false); const [muted, setMuted] = useState(false);
+    const [paused, setPaused] = useState(false); const [restored, setRestored] = useState(false); const [muted, setMuted] = useState(false); const [lastAiReview,setLastAiReview]=useState<ReversiMoveReview|null>(null);
     const aiTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const audio = useRef<AudioContext | null>(null);
     const tone = (frequency: number, duration = .08) => { if (muted || typeof window === 'undefined') return; const context = audio.current ?? new AudioContext(); audio.current = context; const oscillator = context.createOscillator(), gain = context.createGain(); oscillator.frequency.value = frequency; gain.gain.setValueAtTime(.035, context.currentTime); gain.gain.exponentialRampToValueAtTime(.001, context.currentTime + duration); oscillator.connect(gain).connect(context.destination); oscillator.start(); oscillator.stop(context.currentTime + duration); };
@@ -42,7 +52,7 @@ const Reversi: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     const initGame = useCallback(() => {
         clearReversiSave();
         if (aiTimer.current) clearTimeout(aiTimer.current);
-        setGame(createReversi()); setThinking(false); setPaused(false); setRestored(false);
+        setGame(createReversi()); setThinking(false); setPaused(false); setRestored(false); setLastAiReview(null);
     }, []);
 
     useEffect(() => {
@@ -68,7 +78,7 @@ const Reversi: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         storeReversiSave({ board: game.board, isBlackTurn: game.current === 1, mode, level });
     }, [game, mode, level]);
 
-    const applyMove = (index: number) => { const next = playReversi(game, index); if (next === game) { tone(150); return false; } setGame(next); setRestored(false); tone(next.status === 'over' ? 880 : next.passed ? 260 : 520, next.status === 'over' ? .24 : .08); if (next.status === 'over' && mode === 'ai') setRecord(recordResult('reversi', next.winner === 0 ? 'd' : next.winner === AI_PLAYER ? 'l' : 'w')); return true; };
+    const applyMove = (index: number) => { const review=game.current===AI_PLAYER?reversiMoveReview(game.board,index,AI_PLAYER):null;const next = playReversi(game, index); if (next === game) { tone(150); return false; } if(review)setLastAiReview(review);setGame(next); setRestored(false); tone(next.status === 'over' ? 880 : next.passed ? 260 : 520, next.status === 'over' ? .24 : .08); if (next.status === 'over' && mode === 'ai') setRecord(recordResult('reversi', next.winner === 0 ? 'd' : next.winner === AI_PLAYER ? 'l' : 'w')); return true; };
 
     const handleClick = (index: number) => {
         if (game.status === 'over' || thinking || paused) return;
@@ -132,6 +142,7 @@ const Reversi: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                         ))}
                     </div>
                 )}
+                {mode === 'ai' && <p className="basis-full text-[11px] font-medium text-muted-foreground">{aiInfo.difficulty}: {aiInfo.level[level]}</p>}
                 {mode === 'ai' && record && (record.w + record.l + record.d > 0) && (
                     <span className="ml-auto text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                         {t.record} {record.w}–{record.l}{record.d ? `–${record.d}` : ''}
@@ -190,6 +201,7 @@ const Reversi: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                         <div className="m-3 rounded-3xl border-4 border-primary/20 bg-card p-5 text-center shadow-xl">
                             <h4 className="text-2xl font-black text-foreground mb-2">{winLabel}</h4>
                             <p className="text-sm font-bold text-muted-foreground">{bCount}–{wCount} · {t.moves} {game.moves}</p><p className="text-xs font-bold text-muted-foreground">{t.mobility} {analysis.mobility} · {t.corners} {analysis.corners}</p><p className="mt-1 text-xs font-bold text-primary">{t.next}</p>
+                            {mode === 'ai' && game.winner === AI_PLAYER && lastAiReview && <div className="mx-auto mt-3 max-w-xs rounded-2xl border border-amber-300/60 bg-amber-50 p-3 text-left text-xs text-stone-800"><p className="font-black text-amber-900">{aiInfo.review} · {String.fromCharCode(65+lastAiReview.index%8)}{8-Math.floor(lastAiReview.index/8)}</p><p className="mt-1">{lastAiReview.corner?aiInfo.corner:lastAiReview.edge?aiInfo.edge:`${lastAiReview.flips} ${aiInfo.flips}`} · {aiInfo.mobility} ${lastAiReview.opponentMobility}</p><p className="mt-1 text-[10px] text-stone-500">{aiInfo.difficulty}: {aiInfo.level[level]}</p></div>}
                             <div className="mt-4 flex justify-center gap-2"><button type="button" onClick={initGame} className={`min-h-11 rounded-xl bg-primary px-5 font-black text-primary-foreground ${!reducedMotion ? 'hover:scale-105 transition-transform' : ''}`}>
                                 {t.reset}
                             </button><button type="button" onClick={share} className="min-h-11 rounded-xl border px-4 text-sm font-bold">{t.share}</button></div>

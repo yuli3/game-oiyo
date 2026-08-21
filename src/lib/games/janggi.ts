@@ -45,5 +45,5 @@ export function janggiAnalysis(state: JanggiState, side: JanggiSide) {
   return { material, pieces, captures, mobility: janggiMoves(state.board, side === "cho").length };
 }
 
-export { janggiBestMove, janggiMoves, janggiTargets, isChoPiece } from "./ai/janggi";
+export { janggiBestMove, janggiMoveReview, janggiMoves, janggiTargets, isChoPiece, type JanggiMoveReview } from "./ai/janggi";
 export type { JanggiBoard, JanggiMove } from "./ai/janggi";
