@@ -6,6 +6,7 @@ import {
   captureChance,
   computeDamage,
   createBattle,
+  explainBattleEnd,
   makeCombatant,
   resolveTurn,
   type BattleState,
@@ -237,6 +238,18 @@ describe("termination", () => {
       return { phase: s.phase, turn: s.turn, log: s.log.length };
     };
     expect(run()).toEqual(run());
+  });
+
+  it("explains a faint without changing state", () => {
+    let s = createBattle(earth, wood);
+    const rng = mulberry32(3);
+    while (s.phase === "active") s = resolveTurn(s, { type: "skill", skillId: "strike" }, rng);
+    const before = structuredClone(s);
+    const review = explainBattleEnd(s);
+    expect(review.phase).toBe(s.phase);
+    expect(s).toEqual(before);
+    if (s.phase === "lost" || s.phase === "won") expect(review.faintMatchup).not.toBeNull();
+    if (s.phase === "exhausted") expect(review.faintMatchup).toBeNull();
   });
 });
 

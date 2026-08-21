@@ -297,6 +297,17 @@ function finishTurn(state: BattleState, log: LogEntry[]): BattleState {
  */
 export { skillsFor, stageOf };
 
+export function explainBattleEnd(state: BattleState): { phase: BattlePhase; faintMatchup: Matchup | null } {
+  const faint = [...state.log].reverse().find((entry) => entry.kind === "faint");
+  const attack = faint
+    ? [...state.log].reverse().find((entry) => entry.kind === "attack")
+    : undefined;
+  return {
+    phase: state.phase,
+    faintMatchup: attack && attack.kind === "attack" ? attack.matchup : null,
+  };
+}
+
 export function bestAgainst(wild: Spirit, partyIds: string[]): Spirit | null {
   const party = partyIds
     .map((id) => SPIRITS.find((s) => s.id === id))

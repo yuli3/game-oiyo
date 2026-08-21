@@ -4,6 +4,7 @@ import {
     createPet, tick, feed, giveWater, play, clean, heal, petPet, careForEgg,
     takeMeal, completeWalk, isOnCooldown, cooldownRemainingMin,
     currentMealWindow, mealTakenToday, canWalk, WALK_COOLDOWN_HOURS,
+    explainTamagotchiDeath,
 } from '../../lib/games/tamagotchi';
 import { PetDisplay } from './tamagotchi/PetDisplay';
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
@@ -251,6 +252,11 @@ const Tamagotchi: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     {message && (
                         <span className="tama-pixel-text text-xs bg-background/80 px-3 py-1 rounded">
                             {(t.msg as Record<string, string>)[message] ?? message}
+                        </span>
+                    )}
+                    {!message && pet && explainTamagotchiDeath(pet) && (
+                        <span className="tama-pixel-text text-xs bg-background/80 px-3 py-1 rounded">
+                            {(t.msg as Record<string, string>)[explainTamagotchiDeath(pet)!]}
                         </span>
                     )}
                 </div>

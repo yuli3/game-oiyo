@@ -20,6 +20,7 @@ import {
   bestAgainst,
   captureChance,
   createBattle,
+  explainBattleEnd,
   resolveTurn,
   skillsFor,
   type BattleAction,
@@ -1093,6 +1094,11 @@ export default function SpiritVale({ locale = "en" }: { locale?: Locale }) {
                                   ? t.fledAway
                                   : t.exhausted}
                         </p>
+                        {(() => {
+                          const why = explainBattleEnd(battle);
+                          const note = why.faintMatchup === "overcomes" ? t.logSuper : why.faintMatchup === "overcomeBy" ? t.logWeak : why.faintMatchup === "generates" ? t.logFeed : null;
+                          return note ? <p className="mt-1 text-center text-xs font-bold text-amber-800">{note}</p> : null;
+                        })()}
                         <button
                           onClick={leaveBattle}
                           className="mt-2 w-full rounded-xl bg-emerald-700 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-800"

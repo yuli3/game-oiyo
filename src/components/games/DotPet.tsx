@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
+import { explainDotPetAction, type DotPetAction } from '../../lib/games/dot-pet';
 
 // ─── Dot Pet — virtual pet, ported from ahoxy-legacy ─────────────────────────
 // Pick a pet, keep it fed/happy/rested; stats decay over time (including while
@@ -39,6 +40,7 @@ const COPY = {
         feed: '먹이 주기', play: '놀아주기', rest: '재우기',
         resetAsk: '정말 새로 시작할까요?', reset: '새 펫 입양', confirm: '확인',
         grown: '성장했습니다!', tip: '스탯은 시간이 지나면 줄어들어요. 자리를 비워도요!',
+        full: '이미 배불러요', tired: '너무 지쳤어요', rested: '이미 푹 쉬었어요',
     },
     en: {
         title: 'Dot Pet', subtitle: 'Dot Pet', choose: 'Choose your pet',
@@ -49,6 +51,7 @@ const COPY = {
         feed: 'Feed', play: 'Play', rest: 'Rest',
         resetAsk: 'Really start over?', reset: 'Adopt New Pet', confirm: 'Confirm',
         grown: 'Your pet grew up!', tip: 'Stats decay over time — even while you are away!',
+        full: 'Already full', tired: 'Too tired', rested: 'Already rested',
     },
     ja: {
         title: 'ドットペット育成', subtitle: 'Dot Pet', choose: 'どのペットを育てる？',
@@ -59,6 +62,7 @@ const COPY = {
         xp: '経験値', feed: 'ごはん', play: '遊ぶ', rest: '寝かせる',
         resetAsk: '本当に最初から？', reset: '新しいペット', confirm: '確認',
         grown: '成長しました！', tip: 'ステータスは時間とともに減ります。離れている間も！',
+        full: 'もうお腹いっぱい', tired: '疲れすぎ', rested: 'もう十分休んだ',
     },
     zh: {
         title: '像素宠物', subtitle: 'Dot Pet', choose: '选择你的宠物',
@@ -69,6 +73,7 @@ const COPY = {
         feed: '喂食', play: '玩耍', rest: '休息',
         resetAsk: '真的要重新开始吗？', reset: '领养新宠物', confirm: '确认',
         grown: '宠物成长了！', tip: '数值会随时间下降——就算你不在也一样！',
+        full: '已经吃饱了', tired: '太累了', rested: '已经休息过了',
     },
     fr: {
         title: 'Dot Pet', subtitle: 'Dot Pet', choose: 'Choisissez votre compagnon',
@@ -79,6 +84,7 @@ const COPY = {
         feed: 'Nourrir', play: 'Jouer', rest: 'Coucher',
         resetAsk: 'Vraiment recommencer ?', reset: 'Nouveau compagnon', confirm: 'Confirmer',
         grown: 'Votre compagnon a grandi !', tip: 'Les stats baissent avec le temps — même en votre absence !',
+        full: 'Déjà rassasié', tired: 'Trop fatigué', rested: 'Déjà reposé',
     },
     es: {
         title: 'Dot Pet', subtitle: 'Dot Pet', choose: 'Elige tu mascota',
@@ -89,6 +95,7 @@ const COPY = {
         feed: 'Alimentar', play: 'Jugar', rest: 'Dormir',
         resetAsk: '¿Empezar de nuevo?', reset: 'Adoptar otra mascota', confirm: 'Confirmar',
         grown: '¡Tu mascota creció!', tip: 'Las estadísticas bajan con el tiempo, ¡incluso si no estás!',
+        full: 'Ya está lleno', tired: 'Demasiado cansado', rested: 'Ya descansó',
     },
 } as const;
 
@@ -138,6 +145,7 @@ const DotPet: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [loaded, setLoaded] = useState(false);
     const [confirmReset, setConfirmReset] = useState(false);
     const [grewUp, setGrewUp] = useState(false);
+    const [notice, setNotice] = useState<string | null>(null);
     const grewTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
@@ -179,9 +187,17 @@ const DotPet: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         });
     }, []);
 
-    const feed = () => pet && update({ hunger: Math.min(100, pet.hunger + 20), energy: Math.min(100, pet.energy + 5) }, 5);
-    const play = () => pet && update({ happiness: Math.min(100, pet.happiness + 20), hunger: Math.max(0, pet.hunger - 10), energy: Math.max(0, pet.energy - 15) }, 10);
-    const rest = () => pet && update({ energy: Math.min(100, pet.energy + 30), happiness: Math.max(0, pet.happiness - 5) }, 3);
+    const feed = () => pet && care('feed', { hunger: Math.min(100, pet.hunger + 20), energy: Math.min(100, pet.energy + 5) }, 5);
+    const play = () => pet && care('play', { happiness: Math.min(100, pet.happiness + 20), hunger: Math.max(0, pet.hunger - 10), energy: Math.max(0, pet.energy - 15) }, 10);
+    const rest = () => pet && care('rest', { energy: Math.min(100, pet.energy + 30), happiness: Math.max(0, pet.happiness - 5) }, 3);
+
+    const care = (action: DotPetAction, delta: Partial<Pet>, xp: number) => {
+        if (!pet) return;
+        const reason = explainDotPetAction(pet, action);
+        if (reason) { setNotice(t[reason]); return; }
+        setNotice(null);
+        update(delta, xp);
+    };
 
     const adopt = (type: PetType) => {
         setPet({ type, stage: 'baby', happiness: 80, hunger: 80, energy: 80, experience: 0, lastInteraction: Date.now() });
@@ -243,16 +259,17 @@ const DotPet: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
             {/* Actions */}
             <div className="grid grid-cols-3 gap-3 mb-6">
-                <button onClick={feed} disabled={pet.hunger >= 100} className="py-3 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-sm hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-95">
+                <button type="button" onClick={feed} className="py-3 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-sm hover:opacity-90 transition-all active:scale-95">
                     🍚 {t.feed}
                 </button>
-                <button onClick={play} disabled={pet.energy <= 10} className="py-3 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-sm hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-95">
+                <button type="button" onClick={play} className="py-3 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-sm hover:opacity-90 transition-all active:scale-95">
                     🎮 {t.play}
                 </button>
-                <button onClick={rest} disabled={pet.energy >= 100} className="py-3 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-sm hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-95">
+                <button type="button" onClick={rest} className="py-3 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-sm hover:opacity-90 transition-all active:scale-95">
                     🛏️ {t.rest}
                 </button>
             </div>
+            {notice && <p className="mb-4 text-center text-xs font-bold text-amber-700" role="status">{notice}</p>}
 
             {/* XP */}
             <StatBar label={t.xp} icon="⭐" value={pet.experience} max={xpMax} />

@@ -43,6 +43,11 @@ export interface Pet {
 export const MAX_AGE_DAYS = 365;
 export const WALK_COOLDOWN_HOURS = 4;
 
+export function explainTamagotchiDeath(pet: Pet): "died_neglect" | "died_old_age" | null {
+    if (pet.state !== "dead") return null;
+    return pet.age >= MAX_AGE_DAYS ? "died_old_age" : "died_neglect";
+}
+
 // Cooldowns in minutes
 export const COOLDOWN_TIMES: Record<ActionName, number> = {
     feed: 30, water: 20, play: 45, clean: 60, heal: 120, pet: 5,
