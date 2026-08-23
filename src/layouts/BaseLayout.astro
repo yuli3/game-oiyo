@@ -80,13 +80,15 @@ const FAMILY = [
 const familyHref = (f: (typeof FAMILY)[number], medium: string) =>
   `https://${f.host}/${f.localePath ? `${locale}/` : ""}?utm_source=game&utm_medium=${medium}&utm_campaign=family_nav`;
 
+// Flags + native names for the language switcher (family-wide convention:
+// flag emoji plus a visible text label so it is never icon-only).
 const allLangItems = [
-  { code: "en", label: "EN" },
-  { code: "ko", label: "KO" },
-  { code: "ja", label: "JA" },
-  { code: "fr", label: "FR" },
-  { code: "es", label: "ES" },
-  { code: "zh", label: "ZH" },
+  { code: "en", label: "EN", flag: "\u{1F1FA}\u{1F1F8}", name: "English" },
+  { code: "ko", label: "KO", flag: "\u{1F1F0}\u{1F1F7}", name: "한국어" },
+  { code: "ja", label: "JA", flag: "\u{1F1EF}\u{1F1F5}", name: "日本語" },
+  { code: "fr", label: "FR", flag: "\u{1F1EB}\u{1F1F7}", name: "Français" },
+  { code: "es", label: "ES", flag: "\u{1F1EA}\u{1F1F8}", name: "Español" },
+  { code: "zh", label: "ZH", flag: "\u{1F1E8}\u{1F1F3}", name: "中文" },
 ];
 // Only offer locales the current page actually exists in (article pages pass
 // availableLocales); fall back to all. cn is removed from routing entirely.
@@ -173,11 +175,11 @@ const labels = copy[locale] ?? copy.en;
 
           <!-- Language switcher -->
           <div class="flex items-center gap-2 border-l border-border/40 pl-4">
-            {langItems.map(({ code, label }) => (
+            {langItems.map(({ code, label, flag, name }) => (
               <a
                 href={getLocalizedPath(code)}
                 class={`text-[11px] font-bold uppercase tracking-widest transition-colors hover:text-primary ${locale === code ? "text-primary" : "text-muted-foreground/70"}`}
-              >{label}</a>
+               aria-label={name} title={name}>{flag} {label}</a>
             ))}
           </div>
         </nav>
@@ -270,11 +272,11 @@ const labels = copy[locale] ?? copy.en;
           {t.common?.selectLanguage ?? "Language"}
         </p>
         <div class="flex flex-wrap gap-2">
-          {langItems.map(({ code, label }) => (
+          {langItems.map(({ code, label, flag, name }) => (
             <a
               href={getLocalizedPath(code)}
               class={`px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-widest border transition-colors ${locale === code ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:text-primary hover:border-primary/40"}`}
-            >{label}</a>
+            ><span aria-hidden="true">{flag}</span>{name}</a>
           ))}
         </div>
       </div>
