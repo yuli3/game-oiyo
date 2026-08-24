@@ -20,7 +20,6 @@ export const ACADEMY_CATEGORIES = [
   "Law",
   "Business",
   "Financial Engineering",
-  "AI Literacy",
   "Behavioral Economics",
   "Crypto",
   "Game Theory",
