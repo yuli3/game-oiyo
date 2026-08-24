@@ -1,6 +1,6 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { locales } from "../../lib/i18n";
+import { getTranslations, locales } from "../../lib/i18n";
 import type { Locale } from "../../lib/i18n";
 import gameArtDocument from "../../../config/game-art-v1.json";
 
@@ -8,6 +8,7 @@ export async function getStaticPaths() {
   return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
 }
 const { locale } = Astro.props as { locale: Locale };
+const translations = await getTranslations(locale);
 
 const meta: Record<Locale, { title: string; description: string }> = {
   ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 53종", description: "체스·스도쿠·워들·2048부터 보드·카드·퍼즐까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 모음." },
@@ -131,6 +132,14 @@ const GAMES: Game[] = [
 ];
 
 const byCat = (c: string) => GAMES.filter((g) => g.cat === c);
+const featuredSlugs = locale === "ko"
+  ? ["lostark-raid-distribution", "aim-trainer"]
+  : locale === "en"
+    ? ["tents-and-trees"]
+    : [];
+const featuredGames = featuredSlugs
+  .map((slug) => GAMES.find((game) => game.slug === slug))
+  .filter((game): game is Game => Boolean(game));
 
 /** Entries without an explicit `kind` are games; only the exceptions are tagged. */
 const isGame = (g: Game) => (g.kind ?? "game") === "game";
@@ -163,6 +172,25 @@ const cardJsonLd = {
   </section>
 
   <div class="mx-auto max-w-6xl px-4 pb-16">
+    {featuredGames.length > 0 && (
+      <section class="mt-10">
+        <h2 class="mb-4 text-lg font-black text-slate-900">{translations.magazine.featured}</h2>
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          {featuredGames.map((g) => (
+            <a href={`/${locale}/${g.slug}/`} data-game={g.slug} class="group relative flex min-h-36 flex-col justify-end overflow-hidden rounded-2xl border border-slate-100 bg-white text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md">
+              {gameArt[g.slug] ? (
+                <img src={gameArt[g.slug]} alt="" width="1200" height="630" loading="lazy" decoding="async" class="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
+              ) : (
+                <span class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-lime-50 to-stone-100 text-4xl transition-transform group-hover:scale-110" aria-hidden="true">{g.emoji}</span>
+              )}
+              <span class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" aria-hidden="true"></span>
+              <span class="relative z-10 p-4 text-sm font-bold text-white drop-shadow-sm">{g.name[locale] ?? g.name.en}</span>
+              <span data-winrate hidden class="absolute right-2 top-2 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-black text-primary"></span>
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
     {catOrder.map((cat) => (
       <section class="mt-10">
         <h2 class="mb-4 flex items-center gap-2 text-lg font-black text-slate-900">
