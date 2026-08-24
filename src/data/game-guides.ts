@@ -484,15 +484,13 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
     // 없는 로케일에는 링크하지 않는다.
     related: {
       ko: [
-        { href: "https://wiki.oiyo.net/ko/education-psychology-ch8/", label: "기억의 심리학 — 앳킨슨-쉬프린 다중 기억 모형" },
-        { href: "https://wiki.oiyo.net/ko/education-cognitive-science-ch2/", label: "인지과학 — 지각과 주의" },
+        { href: "https://blog.oiyo.net/ko/education-psychology-ch8/", label: "기억의 심리학 — 앳킨슨-쉬프린 다중 기억 모형" },
       ],
       en: [
-        { href: "https://wiki.oiyo.net/en/education-psychology-ch8/", label: "The psychology of memory — the Atkinson–Shiffrin model" },
-        { href: "https://wiki.oiyo.net/en/education-cognitive-science-ch2/", label: "Cognitive science — reasoning, problem solving, consciousness" },
+        { href: "https://blog.oiyo.net/en/education-psychology-ch8/", label: "The psychology of memory — the Atkinson–Shiffrin model" },
       ],
       ja: [
-        { href: "https://wiki.oiyo.net/ja/education-psychology-ch8/", label: "記憶の心理学 — アトキンソン-シフリンモデル" },
+        { href: "https://blog.oiyo.net/ja/education-psychology-ch8/", label: "記憶の心理学 — アトキンソン-シフリンモデル" },
       ],
     },
   },
