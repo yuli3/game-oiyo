@@ -13,6 +13,7 @@ import {
     type Difficulty,
     type FishState,
 } from '../../lib/games/cat-fishing';
+import { CAT_FISHING_KOI } from '../../lib/games/sprites';
 
 // ─── Cat Fishing — catch the fish before they get away ───────────────────────
 // Ported from ahoxy-legacy; play area is contained (was full-viewport) and the
@@ -203,7 +204,7 @@ const CatFishing: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     >
                         {/* Hitbox above is 44px regardless of difficulty; only this inner
                             glyph shrinks/grows, so the tap target never shrinks with it. */}
-                        <span className="text-2xl transition-transform hover:scale-110 sm:text-3xl">🐟</span>
+                        <img src={CAT_FISHING_KOI[f.id % CAT_FISHING_KOI.length]} alt="" draggable={false} className="h-10 w-10 object-contain transition-transform hover:scale-110 sm:h-12 sm:w-12 pointer-events-none" />
                     </button>
                 ))}
 

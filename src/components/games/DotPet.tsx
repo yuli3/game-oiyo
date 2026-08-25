@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { explainDotPetAction, type DotPetAction } from '../../lib/games/dot-pet';
+import { DOT_PET_SPRITES } from '../../lib/games/sprites';
 
 // ─── Dot Pet — virtual pet, ported from ahoxy-legacy ─────────────────────────
 // Pick a pet, keep it fed/happy/rested; stats decay over time (including while
@@ -22,13 +23,6 @@ interface Pet {
 }
 
 const STORE_KEY = 'oiyo-dot-pet:v1';
-
-const PET_EMOJI: Record<PetType, [string, string, string, string]> = {
-    normal: ['🐣', '🐥', '🐤', '🐓'],
-    water: ['🫧', '🐠', '🐬', '🐳'],
-    fire: ['🔥', '🦎', '🐲', '🐉'],
-    plant: ['🌱', '🌿', '🪴', '🌳'],
-};
 
 const COPY = {
     ko: {
@@ -217,7 +211,7 @@ const DotPet: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                             onClick={() => adopt(type)}
                             className="p-5 rounded-2xl border-2 border-border bg-card hover:border-primary hover:-translate-y-0.5 transition-all text-center space-y-2"
                         >
-                            <div className="text-4xl">{PET_EMOJI[type][0]}</div>
+                            <img src={DOT_PET_SPRITES[type][0]} alt="" draggable={false} className="mx-auto h-16 w-16 object-contain" />
                             <div className="font-black text-foreground">{t.types[type]}</div>
                             <div className="text-[10px] text-muted-foreground">{t.typeDesc[type]}</div>
                         </button>
@@ -229,16 +223,17 @@ const DotPet: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
     const stageIdx = STAGES.indexOf(pet.stage);
     const xpMax = (stageIdx + 1) * 100;
-    const emoji = PET_EMOJI[pet.type][stageIdx];
+    const petSprite = DOT_PET_SPRITES[pet.type][stageIdx];
     const mood = pet.happiness > 50 && pet.hunger > 30 ? '' : pet.hunger <= 30 ? '💦' : '💧';
-    const emojiSize = ['text-4xl', 'text-5xl', 'text-6xl', 'text-7xl'][stageIdx];
+    const spriteSize = ['h-16 w-16', 'h-20 w-20', 'h-24 w-24', 'h-28 w-28'][stageIdx];
 
     return (
         <GameContainer title={t.title} subtitle={t.subtitle}>
             {/* Pet stage area */}
             <div className="relative min-h-[220px] rounded-2xl border-2 border-primary/30 bg-gradient-to-b from-muted/20 to-muted/60 flex flex-col items-center justify-center mb-6 overflow-hidden">
-                <div className={`${emojiSize} animate-bounce motion-reduce:animate-none`} role="img" aria-label={t.types[pet.type]}>
-                    {emoji}{mood && <span className="text-xl align-top">{mood}</span>}
+                <div className={`${spriteSize} relative animate-bounce motion-reduce:animate-none`} role="img" aria-label={t.types[pet.type]}>
+                    <img src={petSprite} alt="" draggable={false} className="h-full w-full object-contain" />
+                    {mood && <span className="absolute -right-2 -top-1 text-xl">{mood}</span>}
                 </div>
                 <div className="absolute bottom-3 text-[10px] font-black text-muted-foreground bg-background/70 px-3 py-1 rounded-full uppercase tracking-widest">
                     {t.stages[pet.stage]} · {t.types[pet.type]}

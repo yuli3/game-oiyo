@@ -13,6 +13,7 @@ import {
     type CellMark,
     type TentsMode,
 } from '../../lib/games/tents-save';
+import { TENTS_SPRITES } from '../../lib/games/sprites';
 
 // ─── Tents & Trees — logic puzzle with generated boards ─────────────────────
 // Every tree pairs with one tent on an orthogonally adjacent cell; tents never
@@ -257,7 +258,7 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                                                 aria-label={`${position}: ${a11y.tree}`} onFocus={() => setActiveCell(index)}
                                                 onKeyDown={(event) => handleGridKeyDown(event, index)}
                                                 className={`${common} bg-emerald-100 text-emerald-700 cursor-default`}>
-                                                <span className="text-xl" aria-hidden="true">🌲</span>
+                                                <img src={TENTS_SPRITES.tree} alt="" draggable={false} className="h-7 w-7 object-contain pointer-events-none" aria-hidden="true" />
                                             </div>
                                         );
                                     }
@@ -274,8 +275,8 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                                                 mark === 'grass' ? 'bg-muted/50 text-muted-foreground/30' : 'bg-background hover:bg-muted/20 active:scale-95'
                                             } ${hint?.cells.some(([hr, hc]) => hr === r && hc === c) ? 'ring-4 ring-amber-400' : ''}`}
                                         >
-                                            {mark === 'tent' && <span className="text-xl" aria-hidden="true">⛺</span>}
-                                            {mark === 'grass' && <div className="w-2 h-2 rounded-full bg-current" aria-hidden="true" />}
+                                            {mark === 'tent' && <img src={TENTS_SPRITES.tent} alt="" draggable={false} className="h-7 w-7 object-contain pointer-events-none" aria-hidden="true" />}
+                                            {mark === 'grass' && <img src={TENTS_SPRITES.grass} alt="" draggable={false} className="h-6 w-6 object-contain pointer-events-none opacity-80" aria-hidden="true" />}
                                         </button>
                                     );
                                 })}
