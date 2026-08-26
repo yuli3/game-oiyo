@@ -5,6 +5,13 @@ import { checkersApply, checkersApplyTurn, checkersBestMove, checkersMoves, chec
 import type { AiLevel, GameMode } from '../../lib/games/ai/types';
 import { getRecord, recordResult, type GameRecord } from '../../lib/games/records';
 import { clearCheckersSave, loadCheckersSave, storeCheckersSave } from '../../lib/games/active-game-save';
+import { CHECKERS_SPRITES } from '../../lib/games/sprites';
+
+function checkersSrc(piece: CheckersPiece) {
+    return piece.player === 1
+        ? (piece.isKing ? CHECKERS_SPRITES.redKing : CHECKERS_SPRITES.red)
+        : (piece.isKing ? CHECKERS_SPRITES.blackKing : CHECKERS_SPRITES.black);
+}
 
 const SIZE = 8;
 
@@ -301,11 +308,12 @@ const Checkers: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                             {isSelected && <div className="absolute inset-0 bg-primary/20 ring-4 ring-primary ring-inset z-10" />}
                             {isDestination && <div className="absolute w-3 h-3 rounded-full bg-primary/70 z-10" />}
                             {piece && (
-                                <div className={`w-[80%] h-[80%] rounded-full shadow-lg border-b-4 transform transition-all animate-in zoom-in-75 motion-reduce:transform-none motion-reduce:transition-none motion-reduce:animate-none ${
-                                    piece.player === 1 ? 'bg-destructive border-destructive-foreground/30' : 'bg-slate-900 border-slate-700'
-                                } flex items-center justify-center`}>
-                                    {piece.isKing && <span className="text-white text-xs sm:text-lg">👑</span>}
-                                </div>
+                                <img
+                                    src={checkersSrc(piece)}
+                                    alt=""
+                                    draggable={false}
+                                    className="pointer-events-none h-[80%] w-[80%] object-contain drop-shadow-md animate-in zoom-in-75 motion-reduce:animate-none"
+                                />
                             )}
                         </button>
                     );

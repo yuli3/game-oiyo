@@ -74,6 +74,28 @@ export const CAVE_DASH_SPRITES = {
   wall: "/assets/sprites/cave-dash/wall.png",
 } as const;
 
+export const CHECKERS_SPRITES = {
+  red: "/assets/sprites/checkers/red.png",
+  black: "/assets/sprites/checkers/black.png",
+  redKing: "/assets/sprites/checkers/red-king.png",
+  blackKing: "/assets/sprites/checkers/black-king.png",
+} as const;
+
+export const GOMOKU_SPRITES = {
+  black: "/assets/sprites/gomoku/black.png",
+  white: "/assets/sprites/gomoku/white.png",
+} as const;
+
+export const REVERSI_SPRITES = {
+  black: "/assets/sprites/reversi/black.png",
+  white: "/assets/sprites/reversi/white.png",
+} as const;
+
+export const CONNECT_FOUR_SPRITES = {
+  red: "/assets/sprites/connect-four/red.png",
+  yellow: "/assets/sprites/connect-four/yellow.png",
+} as const;
+
 export const CHESS_SPRITES: Record<string, string> = {
   P: "/assets/sprites/chess/white-pawn.png",
   N: "/assets/sprites/chess/white-knight.png",
