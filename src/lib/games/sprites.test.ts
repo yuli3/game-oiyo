@@ -10,11 +10,13 @@ import {
   DOMINO_SPRITES,
   GOMOKU_SPRITES,
   KINGDOMINO_SPRITES,
+  MAHJONG_SPRITES,
   MEMORY_SPRITES,
   PIP_SPRITES,
   PLAYING_CARD_SPRITES,
   REVERSI_SPRITES,
   SNAKE_SPRITES,
+  mahjongTileSrc,
   pipSprite,
 } from "./sprites";
 
@@ -38,6 +40,8 @@ describe("in-game sprite maps", () => {
       ...Object.values(PLAYING_CARD_SPRITES),
       ...Object.values(PIP_SPRITES),
       ...Object.values(DOMINO_SPRITES),
+      MAHJONG_SPRITES.back,
+      ...MAHJONG_SPRITES.kinds,
       MEMORY_SPRITES.back,
       ...MEMORY_SPRITES.faces,
     ];
@@ -47,6 +51,10 @@ describe("in-game sprite maps", () => {
     expect(pipSprite(-1)).toBe(PIP_SPRITES[0]);
     expect(pipSprite(6)).toBe(PIP_SPRITES[6]);
     expect(pipSprite(9)).toBe(PIP_SPRITES[6]);
+    expect(MAHJONG_SPRITES.kinds).toHaveLength(34);
+    expect(mahjongTileSrc(-1)).toBe(MAHJONG_SPRITES.kinds[0]);
+    expect(mahjongTileSrc(33)).toBe(MAHJONG_SPRITES.kinds[33]);
+    expect(mahjongTileSrc(99)).toBe(MAHJONG_SPRITES.kinds[33]);
     expect(MEMORY_SPRITES.faces).toHaveLength(8);
     for (const url of urls) {
       expect(existsSync(publicFile(url)), url).toBe(true);

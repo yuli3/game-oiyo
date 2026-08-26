@@ -96,6 +96,16 @@ export const CONNECT_FOUR_SPRITES = {
   yellow: "/assets/sprites/connect-four/yellow.png",
 } as const;
 
+export const MAHJONG_SPRITES = {
+  back: "/assets/sprites/mahjong/back.png",
+  kinds: Array.from({ length: 34 }, (_, i) => `/assets/sprites/mahjong/${i}.png`),
+};
+
+export function mahjongTileSrc(k: number): string {
+  const i = Math.min(33, Math.max(0, Math.trunc(Number.isFinite(k) ? k : 0)));
+  return MAHJONG_SPRITES.kinds[i];
+}
+
 export const PLAYING_CARD_SPRITES = {
   back: "/assets/sprites/playing-card/back.png",
   face: "/assets/sprites/playing-card/face.png",
