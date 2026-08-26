@@ -467,7 +467,10 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             )}
 
             <div className="flex justify-between items-center mb-4 gap-2">
-                <div className="px-3 py-1.5 bg-muted rounded-lg text-xs font-black text-muted-foreground" aria-label={t.mines}>🚩 {mineCount - flaggedCount}</div>
+                <div className="flex items-center gap-1 px-3 py-1.5 bg-muted rounded-lg text-xs font-black text-muted-foreground" aria-label={t.mines}>
+                    <img src={MINESWEEPER_SPRITES.flag} alt="" draggable={false} className="h-4 w-4 object-contain" />
+                    {mineCount - flaggedCount}
+                </div>
                 <button
                     onClick={() => setFlagMode((f) => !f)}
                     aria-pressed={flagMode}
@@ -478,7 +481,7 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                             : 'bg-muted text-muted-foreground border-border'
                     }`}
                 >
-                    {flagMode ? `🚩 ${t.flag}` : `⛏️ ${t.dig}`}
+                    {flagMode ? <span className="inline-flex items-center gap-1"><img src={MINESWEEPER_SPRITES.flag} alt="" draggable={false} className="h-4 w-4 object-contain" />{t.flag}</span> : `⛏️ ${t.dig}`}
                 </button>
                 <div className="px-3 py-1.5 bg-muted rounded-lg text-xs font-black text-muted-foreground" aria-label={t.time}>⏱️ {timer}s</div>
             </div>

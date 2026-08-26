@@ -272,7 +272,14 @@ const MemoryCardGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     : 'bg-primary/10 border-primary/30 hover:bg-primary/20 hover:border-primary cursor-pointer active:scale-95',
                 ].join(' ')}
               >
-                {card.isFlipped || card.isMatched ? <><span aria-hidden="true">{EMOJI_POOL[card.symbolId]}</span>{card.isMatched && <span className="sr-only"> matched</span>}</> : <img src={MEMORY_SPRITES.back} alt="" draggable={false} className="h-[70%] w-[70%] object-contain pointer-events-none" />}
+                {card.isFlipped || card.isMatched ? (
+                  <>
+                    {MEMORY_SPRITES.faces[card.symbolId]
+                      ? <img src={MEMORY_SPRITES.faces[card.symbolId]} alt="" draggable={false} className="h-[78%] w-[78%] object-contain pointer-events-none" />
+                      : <span aria-hidden="true">{EMOJI_POOL[card.symbolId]}</span>}
+                    {card.isMatched && <span className="sr-only"> matched</span>}
+                  </>
+                ) : <img src={MEMORY_SPRITES.back} alt="" draggable={false} className="h-[70%] w-[70%] object-contain pointer-events-none" />}
               </button>
             ))}
           </div>

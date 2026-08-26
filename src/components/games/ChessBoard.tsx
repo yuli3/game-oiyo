@@ -13,6 +13,13 @@ import {
   CHESS_AI_BUDGET_MS, CHESS_AI_MAX_DEPTH, isCurrentChessSearchResponse,
   type ChessSearchRequest, type ChessSearchResponse,
 } from '../../lib/games/chess-worker-protocol';
+import { CHESS_SPRITES } from '../../lib/games/sprites';
+
+function ChessPiece({ piece, className }: { piece: string; className?: string }) {
+  const src = CHESS_SPRITES[piece];
+  if (!src) return null;
+  return <img src={src} alt="" draggable={false} className={`pointer-events-none select-none object-contain ${className ?? 'h-[86%] w-[86%]'}`} />;
+}
 
 const AI_IS_WHITE = false; // AI plays black; human opens as white
 const AI_DELAY_MS = 180;
@@ -120,11 +127,6 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
   useEffect(() => {
     if (pendingPromotion) promotionDialogRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
   }, [pendingPromotion]);
-
-  const pieceIcons: Record<string, string> = {
-    'r': '♜', 'n': '♞', 'b': '♝', 'q': '♛', 'k': '♚', 'p': '♟',
-    'R': '♖', 'N': '♘', 'B': '♗', 'Q': '♕', 'K': '♔', 'P': '♙'
-  };
 
   const reset = () => {
     if (aiTimer.current) clearTimeout(aiTimer.current);
@@ -399,9 +401,7 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                     ? <div className="absolute inset-0 ring-4 ring-inset ring-primary/60 z-10 pointer-events-none" />
                     : <div className="absolute w-1/4 h-1/4 rounded-full bg-primary/40 z-10 pointer-events-none" />
                 )}
-                <span className={`select-none transform ${piece && piece === piece.toLowerCase() ? 'text-black' : 'text-white drop-shadow-sm'}`}>
-                  {piece ? pieceIcons[piece] : ''}
-                </span>
+                {piece ? <ChessPiece piece={piece} /> : null}
               </button>
             );
           })}
@@ -415,7 +415,7 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                 {(['q', 'r', 'b', 'n'] as PromotionPiece[]).map((promotion) => {
                   const move = pendingPromotion.find((candidate) => candidate.promotion === promotion)!;
                   const key = promotion as 'queen' | 'rook' | 'bishop' | 'knight';
-                  return <button type="button" key={promotion} onClick={() => applyMove(position, move, isWhiteTurn)} aria-label={t[key]} className="min-h-11 min-w-11 rounded-xl border border-border bg-muted text-3xl focus-visible:outline focus-visible:outline-4 focus-visible:outline-primary">{pieceIcons[isWhiteTurn ? promotion.toUpperCase() : promotion]}</button>;
+                  return <button type="button" key={promotion} onClick={() => applyMove(position, move, isWhiteTurn)} aria-label={t[key]} className="flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-border bg-muted focus-visible:outline focus-visible:outline-4 focus-visible:outline-primary"><ChessPiece piece={isWhiteTurn ? promotion.toUpperCase() : promotion} className="h-8 w-8" /></button>;
                 })}
               </div>
             </div>
@@ -471,7 +471,7 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
             <span className="text-xs font-black">{c2.material}: {material > 0 ? `+${material}` : material}</span>
           </div>
           <div className="min-h-7 text-xl" aria-live="polite">
-            {capturedPieces.length ? capturedPieces.map((piece, index) => <span key={`${piece}-${index}`}>{pieceIcons[piece]}</span>) : <span className="text-xs text-muted-foreground">—</span>}
+            {capturedPieces.length ? capturedPieces.map((piece, index) => <ChessPiece key={`${piece}-${index}`} piece={piece} className="inline-block h-6 w-6" />) : <span className="text-xs text-muted-foreground">—</span>}
           </div>
         </section>
       </div>
@@ -479,7 +479,7 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
       <div className="mt-8 grid grid-cols-3 gap-2">
         {([['p', t.pawn], ['n', t.knight], ['b', t.bishop], ['r', t.rook], ['q', t.queen], ['k', t.king]] as const).map(([key, label]) => (
           <div key={key} className="flex items-center gap-2 p-2 bg-muted rounded-xl">
-            <span className="text-xl">{pieceIcons[key]}</span>
+            <ChessPiece piece={key.toUpperCase()} className="h-7 w-7" />
             <span className="text-[10px] font-black text-muted-foreground uppercase">{label}</span>
           </div>
         ))}

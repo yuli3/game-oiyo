@@ -46,12 +46,48 @@ export const JUMP_KING_SPRITES = {
 
 export const MEMORY_SPRITES = {
   back: "/assets/sprites/memory-card/card-back.png",
+  faces: [
+    ANIMAL_POP_SPRITES["🐶"],
+    ANIMAL_POP_SPRITES["🐱"],
+    ANIMAL_POP_SPRITES["🐭"],
+    "/assets/sprites/memory-card/hamster.png",
+    ANIMAL_POP_SPRITES["🐰"],
+    "/assets/sprites/memory-card/fox.png",
+    "/assets/sprites/memory-card/bear.png",
+    "/assets/sprites/memory-card/panda.png",
+  ],
 } as const;
 
 export const MINESWEEPER_SPRITES = {
   mine: "/assets/sprites/minesweeper/mine.png",
   flag: "/assets/sprites/minesweeper/flag.png",
 } as const;
+
+export const SNAKE_SPRITES = {
+  head: "/assets/sprites/snake/head.png",
+  body: "/assets/sprites/snake/body.png",
+  apple: "/assets/sprites/snake/apple.png",
+} as const;
+
+export const CAVE_DASH_SPRITES = {
+  ship: "/assets/sprites/cave-dash/ship.png",
+  wall: "/assets/sprites/cave-dash/wall.png",
+} as const;
+
+export const CHESS_SPRITES: Record<string, string> = {
+  P: "/assets/sprites/chess/white-pawn.png",
+  N: "/assets/sprites/chess/white-knight.png",
+  B: "/assets/sprites/chess/white-bishop.png",
+  R: "/assets/sprites/chess/white-rook.png",
+  Q: "/assets/sprites/chess/white-queen.png",
+  K: "/assets/sprites/chess/white-king.png",
+  p: "/assets/sprites/chess/black-pawn.png",
+  n: "/assets/sprites/chess/black-knight.png",
+  b: "/assets/sprites/chess/black-bishop.png",
+  r: "/assets/sprites/chess/black-rook.png",
+  q: "/assets/sprites/chess/black-queen.png",
+  k: "/assets/sprites/chess/black-king.png",
+};
 
 export const CAT_FISHING_KOI = [
   "/assets/sprites/cat-fishing/koi-gold.png",
