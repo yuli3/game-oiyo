@@ -1,5 +1,5 @@
 import React from 'react';
-import { PLAYING_CARD_SPRITES } from '../../../lib/games/sprites';
+import { PLAYING_CARD_SPRITES, pipSprite } from '../../../lib/games/sprites';
 
 interface PlayingCardProps {
   suit: 'hearts' | 'diamonds' | 'clubs' | 'spades';
@@ -59,18 +59,8 @@ export const PlayingCard: React.FC<PlayingCardProps> = ({ suit, value, isFaceUp 
   );
 };
 
-// ─── Die: shared dice component (real pips for D6, polygon for polyhedral) ───
+// ─── Die: shared dice component (painted D6 faces, polygon for polyhedral) ───
 export type DieType = 'D4' | 'D6' | 'D8' | 'D10' | 'D12' | 'D20';
-
-// D6 pip layout on a 3×3 grid (col,row), 0..2
-const D6_PIPS: Record<number, [number, number][]> = {
-  1: [[1, 1]],
-  2: [[0, 0], [2, 2]],
-  3: [[0, 0], [1, 1], [2, 2]],
-  4: [[0, 0], [2, 0], [0, 2], [2, 2]],
-  5: [[0, 0], [2, 0], [1, 1], [0, 2], [2, 2]],
-  6: [[0, 0], [2, 0], [0, 1], [2, 1], [0, 2], [2, 2]],
-};
 
 // Polyhedral outline (SVG polygon points in a 100×100 box)
 const POLY: Record<Exclude<DieType, 'D6'>, string> = {
@@ -81,8 +71,8 @@ const POLY: Record<Exclude<DieType, 'D6'>, string> = {
   D20: '50,3 88,25 88,68 50,92 12,68 12,25',
 };
 
-const DIE_HUE: Record<DieType, string> = {
-  D4: '#ef4444', D6: '#1e293b', D8: '#f59e0b', D10: '#10b981', D12: '#6366f1', D20: '#a855f7',
+const DIE_HUE: Record<Exclude<DieType, 'D6'>, string> = {
+  D4: '#ef4444', D8: '#f59e0b', D10: '#10b981', D12: '#6366f1', D20: '#a855f7',
 };
 
 export const Die: React.FC<{ type: DieType; value?: number | null; rolling?: boolean; size?: number; onClick?: () => void; className?: string }> = ({ type, value, rolling = false, size = 56, onClick, className = '' }) => {
@@ -91,20 +81,10 @@ export const Die: React.FC<{ type: DieType; value?: number | null; rolling?: boo
   const common = `inline-flex items-center justify-center select-none ${onClick ? 'cursor-pointer' : ''} ${roll} ${className}`;
 
   if (type === 'D6') {
-    const pips = D6_PIPS[Math.min(6, Math.max(1, shown))] ?? D6_PIPS[1];
+    const face = Math.min(6, Math.max(1, shown));
     return (
       <span onClick={onClick} className={common} style={{ width: size, height: size }} role="img" aria-label={`D6: ${shown}`}>
-        <svg viewBox="0 0 100 100" width={size} height={size} className="drop-shadow-md">
-          <defs>
-            <linearGradient id="d6g" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stopColor="#ffffff" /><stop offset="1" stopColor="#e2e8f0" />
-            </linearGradient>
-          </defs>
-          <rect x="6" y="6" width="88" height="88" rx="18" fill="url(#d6g)" stroke="#cbd5e1" strokeWidth="2" />
-          {pips.map(([c, r], i) => (
-            <circle key={i} cx={26 + c * 24} cy={26 + r * 24} r="8" fill="#1e293b" />
-          ))}
-        </svg>
+        <img src={pipSprite(face)} alt="" draggable={false} width={size} height={size} className="pointer-events-none h-full w-full object-contain drop-shadow-md" />
       </span>
     );
   }

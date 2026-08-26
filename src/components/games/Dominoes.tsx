@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { GameContainer } from "../ui/game/GamePrimitives";
+import { pipSprite } from "../../lib/games/sprites";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import type { Locale } from "../../lib/i18n";
 import {
@@ -38,13 +39,8 @@ const i18n: Record<Locale, {
 };
 
 function Pips({ n }: { n: number }) {
-  const pos = [[], [4], [0, 8], [0, 4, 8], [0, 2, 6, 8], [0, 2, 4, 6, 8], [0, 2, 3, 5, 6, 8]][n];
   return (
-    <div className="grid grid-cols-3 grid-rows-3 w-6 h-6 gap-0.5">
-      {Array.from({ length: 9 }).map((_, i) => (
-        <div key={i} className={`rounded-full ${pos.includes(i) ? "bg-foreground" : "bg-transparent"}`} />
-      ))}
-    </div>
+    <img src={pipSprite(n)} alt="" draggable={false} className="pointer-events-none h-6 w-6 object-contain" />
   );
 }
 

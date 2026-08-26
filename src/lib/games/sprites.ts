@@ -105,6 +105,26 @@ export const PLAYING_CARD_SPRITES = {
   spades: "/assets/sprites/playing-card/spades.png",
 } as const;
 
+/** D6 faces 1–6 (Yahtzee, DiceRoller) and Dominoes half-tiles 0–6. */
+export const PIP_SPRITES = {
+  0: "/assets/sprites/pips/0.png",
+  1: "/assets/sprites/pips/1.png",
+  2: "/assets/sprites/pips/2.png",
+  3: "/assets/sprites/pips/3.png",
+  4: "/assets/sprites/pips/4.png",
+  5: "/assets/sprites/pips/5.png",
+  6: "/assets/sprites/pips/6.png",
+} as const;
+
+export const DOMINO_SPRITES = {
+  blank: "/assets/sprites/domino/blank.png",
+} as const;
+
+export function pipSprite(n: number): string {
+  const clamped = Math.min(6, Math.max(0, Math.trunc(Number.isFinite(n) ? n : 0))) as 0 | 1 | 2 | 3 | 4 | 5 | 6;
+  return PIP_SPRITES[clamped];
+}
+
 export const KINGDOMINO_SPRITES = {
   wheat: "/assets/sprites/kingdomino/wheat.png",
   forest: "/assets/sprites/kingdomino/forest.png",
