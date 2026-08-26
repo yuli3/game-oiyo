@@ -487,13 +487,12 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
                 style={{ width: `${cellSize}px`, height: `${cellSize * 0.55}px` }}
                 className="flex items-center justify-center"
               >
-                <img
-                  src={connectFourSrc(currentPlayer)}
-                  alt=""
-                  draggable={false}
-                  className={`object-contain transition-opacity motion-reduce:transition-none ${showPreview ? "opacity-30" : "opacity-0"}`}
+                <div
+                  className={`rounded-full transition-opacity motion-reduce:transition-none ${showPreview ? "opacity-30" : "opacity-0"}`}
                   style={{ width: `${cellSize - 10}px`, height: `${cellSize - 10}px` }}
-                />
+                >
+                  <img src={connectFourSrc(currentPlayer)} alt="" draggable={false} className="h-full w-full object-contain" />
+                </div>
               </div>
             );
           })}
@@ -537,14 +536,14 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
                       className={`absolute inset-[5px] object-contain ${reducedMotion ? "transition-opacity" : "transition-all"} ${
                         isFalling && !reducedMotion ? "animate-fall" : ""
                       } ${winHighlight ? `ring-4 ring-white ring-offset-1 ring-offset-blue-700 ${reducedMotion ? "" : "scale-110"} z-10` : isLastMove ? "ring-2 ring-white/80 ring-offset-1 ring-offset-blue-700 z-10" : ""}`}
-                      style={
-                        isFalling && !reducedMotion
+                      style={{
+                        ...(isFalling && !reducedMotion
                           ? {
                               transform: `translateY(${-(fallingCell!.row * (cellSize + cellGap))}px)`,
                               transition: "transform 0.3s cubic-bezier(0.55, 0, 1, 0.45)",
                             }
-                          : undefined
-                      }
+                          : {}),
+                      }}
                     />
                   ) : null}
                 </div>

@@ -337,7 +337,7 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                             )}
                             {/* Real Stone */}
                             {stone !== null && (
-                                <div className="relative flex h-[85%] w-[85%] items-center justify-center animate-in zoom-in-75 motion-reduce:animate-none">
+                                <div className="relative flex h-[85%] w-[85%] items-center justify-center animate-in zoom-in-75 motion-reduce:transform-none motion-reduce:transition-none motion-reduce:animate-none">
                                     <img src={stone === 1 ? GOMOKU_SPRITES.black : GOMOKU_SPRITES.white} alt="" draggable={false} className="pointer-events-none h-full w-full object-contain drop-shadow-md" />
                                     {i === lastMove && <div className="absolute inset-[-3px] rounded-full ring-2 ring-primary" />}
                                 </div>

@@ -8,6 +8,7 @@ import {
   CHESS_SPRITES,
   CONNECT_FOUR_SPRITES,
   GOMOKU_SPRITES,
+  KINGDOMINO_SPRITES,
   MEMORY_SPRITES,
   REVERSI_SPRITES,
   SNAKE_SPRITES,
@@ -29,6 +30,7 @@ describe("in-game sprite maps", () => {
       ...Object.values(GOMOKU_SPRITES),
       ...Object.values(REVERSI_SPRITES),
       ...Object.values(CONNECT_FOUR_SPRITES),
+      ...Object.values(KINGDOMINO_SPRITES),
       MEMORY_SPRITES.back,
       ...MEMORY_SPRITES.faces,
     ];

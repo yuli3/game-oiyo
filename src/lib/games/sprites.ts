@@ -96,6 +96,16 @@ export const CONNECT_FOUR_SPRITES = {
   yellow: "/assets/sprites/connect-four/yellow.png",
 } as const;
 
+export const KINGDOMINO_SPRITES = {
+  wheat: "/assets/sprites/kingdomino/wheat.png",
+  forest: "/assets/sprites/kingdomino/forest.png",
+  water: "/assets/sprites/kingdomino/water.png",
+  grass: "/assets/sprites/kingdomino/grass.png",
+  swamp: "/assets/sprites/kingdomino/swamp.png",
+  mine: "/assets/sprites/kingdomino/mine.png",
+  castle: "/assets/sprites/kingdomino/castle.png",
+} as const;
+
 export const CHESS_SPRITES: Record<string, string> = {
   P: "/assets/sprites/chess/white-pawn.png",
   N: "/assets/sprites/chess/white-knight.png",
