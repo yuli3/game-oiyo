@@ -10,6 +10,7 @@ import {
   GOMOKU_SPRITES,
   KINGDOMINO_SPRITES,
   MEMORY_SPRITES,
+  PLAYING_CARD_SPRITES,
   REVERSI_SPRITES,
   SNAKE_SPRITES,
 } from "./sprites";
@@ -31,6 +32,7 @@ describe("in-game sprite maps", () => {
       ...Object.values(REVERSI_SPRITES),
       ...Object.values(CONNECT_FOUR_SPRITES),
       ...Object.values(KINGDOMINO_SPRITES),
+      ...Object.values(PLAYING_CARD_SPRITES),
       MEMORY_SPRITES.back,
       ...MEMORY_SPRITES.faces,
     ];

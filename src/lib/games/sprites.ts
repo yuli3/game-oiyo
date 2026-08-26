@@ -96,6 +96,15 @@ export const CONNECT_FOUR_SPRITES = {
   yellow: "/assets/sprites/connect-four/yellow.png",
 } as const;
 
+export const PLAYING_CARD_SPRITES = {
+  back: "/assets/sprites/playing-card/back.png",
+  face: "/assets/sprites/playing-card/face.png",
+  hearts: "/assets/sprites/playing-card/hearts.png",
+  diamonds: "/assets/sprites/playing-card/diamonds.png",
+  clubs: "/assets/sprites/playing-card/clubs.png",
+  spades: "/assets/sprites/playing-card/spades.png",
+} as const;
+
 export const KINGDOMINO_SPRITES = {
   wheat: "/assets/sprites/kingdomino/wheat.png",
   forest: "/assets/sprites/kingdomino/forest.png",

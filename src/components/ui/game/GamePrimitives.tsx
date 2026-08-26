@@ -1,4 +1,5 @@
 import React from 'react';
+import { PLAYING_CARD_SPRITES } from '../../../lib/games/sprites';
 
 interface PlayingCardProps {
   suit: 'hearts' | 'diamonds' | 'clubs' | 'spades';
@@ -8,14 +9,12 @@ interface PlayingCardProps {
   className?: string;
 }
 
+function SuitPip({ suit, className }: { suit: PlayingCardProps['suit']; className: string }) {
+  return <img src={PLAYING_CARD_SPRITES[suit]} alt="" draggable={false} className={`pointer-events-none object-contain ${className}`} />;
+}
+
 export const PlayingCard: React.FC<PlayingCardProps> = ({ suit, value, isFaceUp = true, onClick, className = '' }) => {
   const isRed = suit === 'hearts' || suit === 'diamonds';
-  const suitIcons = {
-    hearts: '♥',
-    diamonds: '♦',
-    clubs: '♣',
-    spades: '♠'
-  };
 
   // `shrink-0` is load-bearing: these sit in flex rows (hands, tableau piles),
   // and without it the card was squeezed 64px -> 46px on a 375px viewport while
@@ -26,11 +25,9 @@ export const PlayingCard: React.FC<PlayingCardProps> = ({ suit, value, isFaceUp 
     return (
       <div
         onClick={onClick}
-        className={`${frame} bg-primary/20 border-2 border-primary/40 flex items-center justify-center cursor-pointer hover:scale-105 transition-transform ${className}`}
+        className={`${frame} overflow-hidden cursor-pointer hover:scale-105 transition-transform ${className}`}
       >
-        <div className="w-12 h-20 sm:w-14 sm:h-24 border border-primary/20 rounded-lg flex items-center justify-center">
-            <span className="text-primary/40 font-black text-xl sm:text-2xl">OIYO</span>
-        </div>
+        <img src={PLAYING_CARD_SPRITES.back} alt="" draggable={false} className="pointer-events-none h-full w-full object-cover" />
       </div>
     );
   }
@@ -42,20 +39,21 @@ export const PlayingCard: React.FC<PlayingCardProps> = ({ suit, value, isFaceUp 
   return (
     <div
       onClick={onClick}
-      className={`relative ${frame} overflow-hidden bg-card border-2 border-border shadow-sm flex flex-col justify-between p-1.5 sm:p-2 cursor-pointer hover:border-primary hover:-translate-y-1 transition-all ${isRed ? 'text-destructive' : 'text-foreground'} ${className}`}
+      className={`relative ${frame} overflow-hidden shadow-sm flex flex-col justify-between p-1.5 sm:p-2 cursor-pointer hover:-translate-y-1 transition-all ${isRed ? 'text-destructive' : 'text-foreground'} ${className}`}
     >
-      <div className="flex flex-col items-start leading-none">
+      <img src={PLAYING_CARD_SPRITES.face} alt="" draggable={false} className="pointer-events-none absolute inset-0 h-full w-full object-cover" />
+      <div className="relative z-[1] flex flex-col items-start leading-none">
         <span className="text-base sm:text-xl font-black leading-none">{value}</span>
-        <span className="text-[10px] sm:text-xs leading-none">{suitIcons[suit]}</span>
+        <SuitPip suit={suit} className="mt-0.5 h-2.5 w-2.5 sm:h-3 sm:w-3" />
       </div>
 
-      <div className="flex justify-center items-center">
-        <span className="text-2xl sm:text-4xl leading-none">{suitIcons[suit]}</span>
+      <div className="relative z-[1] flex justify-center items-center">
+        <SuitPip suit={suit} className="h-7 w-7 sm:h-9 sm:w-9" />
       </div>
 
-      <div className="flex flex-col items-end leading-none rotate-180">
+      <div className="relative z-[1] flex flex-col items-end leading-none rotate-180">
         <span className="text-base sm:text-xl font-black leading-none">{value}</span>
-        <span className="text-[10px] sm:text-xs leading-none">{suitIcons[suit]}</span>
+        <SuitPip suit={suit} className="mt-0.5 h-2.5 w-2.5 sm:h-3 sm:w-3" />
       </div>
     </div>
   );
