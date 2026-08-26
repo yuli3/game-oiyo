@@ -273,6 +273,11 @@ export default function UrbanStrikeScene({ copy, onFinish, muted, onToggleMute }
   }, [hud.weapon]);
 
   const weaponLabel = copy[hud.weapon];
+  const weaponIcon = hud.weapon === "m4"
+    ? "/assets/sprites/weapons/assault-rifle.webp"
+    : hud.weapon === "ak"
+      ? "/assets/sprites/weapons/battle-rifle.webp"
+      : "/assets/sprites/weapons/compact-smg.webp";
   const accuracy = hud.shots ? Math.round((hud.hits / hud.shots) * 100) : 0;
   const objectiveLabel = hud.objective === "capture" ? copy.capture : hud.objective === "contested" ? copy.contested : copy.hold;
   const dead = hud.respawn > 0;
@@ -386,7 +391,10 @@ export default function UrbanStrikeScene({ copy, onFinish, muted, onToggleMute }
         </div>
 
         <div className="rounded-xl border border-white/10 bg-black/48 px-4 py-3 text-right backdrop-blur-sm">
-          <p className="font-mono text-[9px] font-black tracking-[.16em] text-lime-300">{weaponLabel}</p>
+          <div className="mb-1 flex items-center justify-end gap-2">
+            <img src={weaponIcon} alt="" width="92" height="38" draggable={false} className="h-8 w-20 select-none object-contain drop-shadow-[0_2px_5px_rgba(0,0,0,.8)] sm:w-24" />
+            <p className="font-mono text-[9px] font-black tracking-[.16em] text-lime-300">{weaponLabel}</p>
+          </div>
           <p className="font-mono text-3xl font-black leading-none text-white">
             {hud.ammo}<span className="text-base text-slate-500"> / {hud.reserve}</span>
           </p>
@@ -400,8 +408,9 @@ export default function UrbanStrikeScene({ copy, onFinish, muted, onToggleMute }
           onClick={(event) => { event.stopPropagation(); requestLock(); }}
           className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-black/58 text-center backdrop-blur-[2px]"
         >
+          <img src={weaponIcon} alt="" width="280" height="112" draggable={false} className="w-52 select-none object-contain drop-shadow-[0_10px_18px_rgba(0,0,0,.8)] sm:w-64" />
           <span className="rounded-lg border border-lime-300/30 bg-black/50 px-5 py-3 font-mono text-xs font-black uppercase tracking-[.18em] text-lime-300">
-            {copy.paused}
+            {weaponLabel} · {copy.paused}
           </span>
           <span className="text-xs text-slate-300">{copy.pointer}</span>
         </button>

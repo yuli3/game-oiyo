@@ -582,7 +582,14 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
                   className={`rounded-2xl border p-3 text-left transition-colors ${mode === m ? "border-violet-500 bg-violet-500/10" : "border-border hover:border-violet-300"}`}
                 >
                   <div className="flex items-center gap-2 font-bold">
-                    <span className="text-lg">{MODE_CFG[m].emoji}</span>
+                    <img
+                      src={`/assets/sprites/aim-trainer/target-${m === "precision" ? 64 : m === "tracking" ? 256 : 128}.png`}
+                      alt=""
+                      width="28"
+                      height="28"
+                      draggable={false}
+                      className={`size-7 select-none object-contain ${m === "tracking" ? "animate-pulse" : ""}`}
+                    />
                     {t.modeName[m]}
                   </div>
                   <div className="mt-1 text-[11px] leading-snug text-muted-foreground">{t.modeDesc[m]}</div>
@@ -611,9 +618,10 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
           )}
           <button
             onClick={begin}
-            className="w-full rounded-full bg-violet-500 py-3 font-bold text-white transition-colors hover:bg-violet-600"
+            className="flex w-full items-center justify-center gap-2 rounded-full bg-violet-500 py-3 font-bold text-white transition-colors hover:bg-violet-600"
           >
-            {MODE_CFG[mode].emoji} {t.start}
+            <img src="/assets/sprites/aim-trainer/target-64.png" alt="" width="24" height="24" draggable={false} className="size-6 select-none" />
+            {t.start}
           </button>
           <p className="text-center text-[11px] italic text-muted-foreground">{t.tip}</p>
         </div>
@@ -655,12 +663,17 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
                 type="button"
                 aria-label={t.target}
               >
-                <span
-                  className={`relative block rounded-full shadow-lg ${mode === "tracking" ? "bg-violet-500/80 ring-4 ring-violet-300/40" : "bg-violet-500 hover:bg-violet-400"}`}
+                <img
+                  src="/assets/sprites/aim-trainer/target-128.png"
+                  srcSet="/assets/sprites/aim-trainer/target-64.png 64w, /assets/sprites/aim-trainer/target-128.png 128w, /assets/sprites/aim-trainer/target-256.png 256w"
+                  sizes={`${Math.ceil(tg.size)}px`}
+                  width={Math.ceil(tg.size)}
+                  height={Math.ceil(tg.size)}
+                  alt=""
+                  draggable={false}
+                  className={`block select-none rounded-full ${mode === "tracking" ? "drop-shadow-[0_0_12px_rgba(34,211,238,.65)]" : "drop-shadow-[0_0_8px_rgba(168,85,247,.55)] hover:brightness-125"}`}
                   style={{ width: `${tg.size}px`, height: `${tg.size}px` }}
-                >
-                  {mode === "tracking" && <span className="absolute inset-0 m-auto h-2 w-2 rounded-full bg-white" />}
-                </span>
+                />
               </button>
             );
           })}
