@@ -20,6 +20,48 @@ import {
   type BrickBreakerState,
 } from "../../lib/games/brick-breaker";
 import { getPrefersReducedMotion, subscribeToReducedMotion } from "../../lib/games/reduced-motion";
+import { BRICK_BREAKER_SPRITES } from "../../lib/games/sprites";
+
+type BrickArt = Record<keyof typeof BRICK_BREAKER_SPRITES, HTMLImageElement>;
+function loadBrickArt(): BrickArt | null {
+  if (typeof Image === "undefined") return null;
+  const art = {} as BrickArt;
+  for (const [key, src] of Object.entries(BRICK_BREAKER_SPRITES)) {
+    const image = new Image();
+    image.src = src;
+    art[key as keyof BrickArt] = image;
+  }
+  return art;
+}
+function paintCentered(
+  ctx: CanvasRenderingContext2D,
+  image: HTMLImageElement | undefined,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+) {
+  if (!image?.complete || image.naturalWidth === 0) return false;
+  ctx.drawImage(image, x - width / 2, y - height / 2, width, height);
+  return true;
+}
+function paintBox(
+  ctx: CanvasRenderingContext2D,
+  image: HTMLImageElement | undefined,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+) {
+  if (!image?.complete || image.naturalWidth === 0) return false;
+  ctx.drawImage(image, x, y, width, height);
+  return true;
+}
+function brickSprite(art: BrickArt | null, hue: number) {
+  if (!art) return undefined;
+  const band = Math.round((hue - 200) / 22);
+  return band % 3 === 0 ? art.olive : band % 3 === 1 ? art.terracotta : art.cream;
+}
 
 /* ────────────────────────────────────────────────────────────────────────────
  * Brick Breaker — a mobile-first canvas Breakout/Arkanoid. Drag (touch) or move
@@ -107,6 +149,8 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
   const lastSaveAtRef = useRef(0);
   const restoredRef = useRef(false);
   const qualityRef = useRef<"high" | "balanced">("high");
+  const artRef = useRef<BrickArt | null>(null);
+  if (artRef.current === null) artRef.current = loadBrickArt();
 
   useEffect(() => {
     const b = getBest(GAME_KEY);
@@ -221,14 +265,20 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
     }
 
     // draw
-    ctx.fillStyle = "#0b1020"; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = "#1a2416"; ctx.fillRect(0, 0, W, H);
+    const art = artRef.current;
     for (const br of gs.bricks) {
       if (br.hits <= 0) continue;
-      ctx.fillStyle = br.flashUntil > gs.elapsedMs
-        ? "#ffffff"
-        : `hsl(${br.hue} ${br.maxHits > 1 ? 78 : 65}% ${br.maxHits > 1 ? 68 : 55}%)`;
       const inset = !reducedMotionRef.current && br.flashUntil > gs.elapsedMs ? -1 : 1;
-      ctx.fillRect(br.x + inset, br.y + inset, br.w - inset * 2, BRICK_BREAKER_BOARD.brickHeight - inset * 2);
+      const painted = br.flashUntil > gs.elapsedMs
+        ? false
+        : paintBox(ctx, brickSprite(art, br.hue), br.x + inset, br.y + inset, br.w - inset * 2, BRICK_BREAKER_BOARD.brickHeight - inset * 2);
+      if (!painted) {
+        ctx.fillStyle = br.flashUntil > gs.elapsedMs
+          ? "#ffffff"
+          : `hsl(${br.hue} ${br.maxHits > 1 ? 78 : 65}% ${br.maxHits > 1 ? 68 : 55}%)`;
+        ctx.fillRect(br.x + inset, br.y + inset, br.w - inset * 2, BRICK_BREAKER_BOARD.brickHeight - inset * 2);
+      }
       if (br.maxHits > 1) {
         ctx.strokeStyle = "rgba(255,255,255,.85)";
         ctx.lineWidth = 2;
@@ -248,13 +298,15 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
       });
       ctx.globalAlpha = 1;
     }
-    // paddle
-    ctx.fillStyle = gs.paddleFlashUntil > gs.elapsedMs ? "#ffffff" : "#8b5cf6";
     const paddleLift = !reducedMotionRef.current && gs.paddleFlashUntil > gs.elapsedMs ? 2 : 0;
-    ctx.fillRect(gs.padX - gs.padW / 2, padY - paddleLift, gs.padW, 10 + paddleLift);
-    // ball
-    ctx.beginPath(); ctx.fillStyle = "#c4b5fd";
-    ctx.arc(gs.bx, gs.by, BRICK_BREAKER_BOARD.ballRadius, 0, Math.PI * 2); ctx.fill();
+    if (gs.paddleFlashUntil > gs.elapsedMs || !paintCentered(ctx, art?.paddle, gs.padX, padY + 5 - paddleLift, gs.padW, 14 + paddleLift)) {
+      ctx.fillStyle = gs.paddleFlashUntil > gs.elapsedMs ? "#ffffff" : "#8b5cf6";
+      ctx.fillRect(gs.padX - gs.padW / 2, padY - paddleLift, gs.padW, 10 + paddleLift);
+    }
+    if (!paintCentered(ctx, art?.ball, gs.bx, gs.by, BRICK_BREAKER_BOARD.ballRadius * 2.4, BRICK_BREAKER_BOARD.ballRadius * 2.4)) {
+      ctx.beginPath(); ctx.fillStyle = "#c4b5fd";
+      ctx.arc(gs.bx, gs.by, BRICK_BREAKER_BOARD.ballRadius, 0, Math.PI * 2); ctx.fill();
+    }
 
     rafRef.current = requestAnimationFrame(loop);
   }, [bb2.lifeLost, bb2.ready, endGame, playTone, t.level, t.levelClear, t.lives]);

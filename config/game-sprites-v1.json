@@ -11,7 +11,9 @@
     "tents-and-trees": { "tokens": ["tree", "tent", "grass"] },
     "whack-a-mole": { "tokens": ["mole", "bomb", "hole", "mallet"], "wired": true },
     "cat-fishing": { "tokens": ["koi-gold", "koi-red", "koi-white", "koi-calico"] },
-    "star-blaster": { "tokens": ["ship", "enemy-drone", "enemy-warden", "boss", "bolt-pulse"], "wired": true },
+    "star-blaster": { "tokens": ["ship", "enemy-drone", "enemy-warden", "boss", "bolt-pulse", "burst"], "wired": true },
+    "brick-breaker": { "tokens": ["brick-olive", "brick-terracotta", "brick-cream", "paddle", "ball"], "wired": true },
+    "dot-jumpking": { "tokens": ["jumper", "platform"], "wired": true },
     "dot-pet": { "tokens": ["normal-baby", "normal-adult", "water-baby", "fire-baby", "plant-baby"] },
     "memory-card": { "tokens": ["card-back"], "wired": true },
     "minesweeper": { "tokens": ["mine", "flag"], "wired": true }

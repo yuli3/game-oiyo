@@ -14,6 +14,31 @@ import {
   visiblePlatforms,
   type JumpState,
 } from "../../lib/games/dot-jumpking";
+import { JUMP_KING_SPRITES } from "../../lib/games/sprites";
+
+type JumpArt = Record<keyof typeof JUMP_KING_SPRITES, HTMLImageElement>;
+function loadJumpArt(): JumpArt | null {
+  if (typeof Image === "undefined") return null;
+  const art = {} as JumpArt;
+  for (const [key, src] of Object.entries(JUMP_KING_SPRITES)) {
+    const image = new Image();
+    image.src = src;
+    art[key as keyof JumpArt] = image;
+  }
+  return art;
+}
+function paintCentered(
+  ctx: CanvasRenderingContext2D,
+  image: HTMLImageElement | undefined,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+) {
+  if (!image?.complete || image.naturalWidth === 0) return false;
+  ctx.drawImage(image, x - width / 2, y - height / 2, width, height);
+  return true;
+}
 const BEST_KEY = "oiyo-dot-jumpking-best",
   SAVE_KEY = "oiyo:dot-jumpking:v1";
 const COPY = {
@@ -118,6 +143,8 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
   const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
   const canvas = useRef<HTMLCanvasElement>(null),
     state = useRef<JumpState>(createJumpState());
+  const artRef = useRef<JumpArt | null>(null);
+  if (artRef.current === null) artRef.current = loadJumpArt();
   const [phase, setPhase] = useState<
       "briefing" | "playing" | "paused" | "over"
     >("briefing"),
@@ -247,7 +274,7 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
           }
         }
       }
-      draw(ctx, state.current);
+      draw(ctx, state.current, artRef.current);
       if (phaseRef.current === "playing") raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
@@ -375,28 +402,32 @@ function Stat({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-function draw(ctx: CanvasRenderingContext2D, s: JumpState) {
+function draw(ctx: CanvasRenderingContext2D, s: JumpState, art: JumpArt | null) {
   const sky = ctx.createLinearGradient(0, 0, 0, 600);
-  sky.addColorStop(0, "#d9edc6");
-  sky.addColorStop(1, "#fff7dc");
+  sky.addColorStop(0, "#9fd4f0");
+  sky.addColorStop(1, "#fff4c8");
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, 400, 600);
   const sy = (y: number) => y - s.camY;
   for (const p of visiblePlatforms(s)) {
     const y = sy(p.y);
-    ctx.fillStyle = "#586b3a";
-    ctx.fillRect(p.x, y, p.w, 12);
-    ctx.fillStyle = "#9eb66d";
-    ctx.fillRect(p.x, y, p.w, 4);
+    if (!paintCentered(ctx, art?.platform, p.x + p.w / 2, y + 8, p.w + 8, 28)) {
+      ctx.fillStyle = "#586b3a";
+      ctx.fillRect(p.x, y, p.w, 12);
+      ctx.fillStyle = "#9eb66d";
+      ctx.fillRect(p.x, y, p.w, 4);
+    }
   }
   const y = sy(s.y);
-  ctx.beginPath();
-  ctx.arc(s.x, y, 12, 0, Math.PI * 2);
-  ctx.fillStyle = s.charge ? "#e67f51" : "#708447";
-  ctx.fill();
-  ctx.strokeStyle = "#fff";
-  ctx.lineWidth = 3;
-  ctx.stroke();
+  if (!paintCentered(ctx, art?.jumper, s.x, y - 2, 36, 36)) {
+    ctx.beginPath();
+    ctx.arc(s.x, y, 12, 0, Math.PI * 2);
+    ctx.fillStyle = s.charge ? "#e67f51" : "#708447";
+    ctx.fill();
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  }
   if (s.charge) {
     ctx.fillStyle = "#ead39b";
     ctx.fillRect(s.x - 25, y - 28, 50, 6);

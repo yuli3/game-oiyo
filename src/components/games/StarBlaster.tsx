@@ -48,7 +48,7 @@ const GAME_KEY = "star-blaster";
 const MAX_STEPS_PER_FRAME = 8;
 
 type Phase = "menu" | "playing" | "victory" | "over";
-interface Particle { x: number; y: number; vx: number; vy: number; life: number; hue: number }
+interface Particle { x: number; y: number; vx: number; vy: number; life: number; hue: number; kind?: "spark" | "burst" }
 interface Debrief { kills: number; damageTaken: number; weaponBest: number; lastHit: { cause: "collision" | "escaped"; kind: string } | null }
 type BindableAction = "left" | "right" | "pause";
 type KeyBindings = Record<BindableAction, string>;
@@ -132,6 +132,16 @@ function drawGame(
 
   for (const particle of particles) {
     ctx.globalAlpha = Math.max(0, particle.life);
+    if (particle.kind === "burst") {
+      const size = 22 + (1 - particle.life) * 38;
+      if (!paintSprite(ctx, art?.burst, particle.x, particle.y, size, size)) {
+        ctx.fillStyle = `hsl(${particle.hue} 90% 60%)`;
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, size / 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      continue;
+    }
     ctx.fillStyle = `hsl(${particle.hue} 90% 60%)`;
     ctx.fillRect(particle.x - 1.5, particle.y - 1.5, 3, 3);
   }
@@ -361,12 +371,25 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
           }
           if (event.type === "boss-start" || event.type === "boss-phase") playTone(event.type === "boss-start" ? 92 : 138, 0.35, "sawtooth", 0.06);
           if (event.type !== "enemy-destroyed" && event.type !== "player-hit") continue;
+          const originX = event.x ?? state.shipX;
+          const originY = event.y ?? H - 44;
+          if (!reducedMotionRef.current) {
+            particlesRef.current.push({
+              x: originX,
+              y: originY,
+              vx: 0,
+              vy: 0,
+              life: 1,
+              hue: event.hue ?? 30,
+              kind: "burst",
+            });
+          }
           const count = reducedMotionRef.current ? 0 : qualityRef.current === "balanced" ? (event.type === "player-hit" ? 6 : 4) : event.type === "player-hit" ? 12 : 8;
           for (let index = 0; index < count; index += 1) {
             const angle = (index / Math.max(1, count)) * Math.PI * 2;
             particlesRef.current.push({
-              x: event.x ?? state.shipX,
-              y: event.y ?? H - 44,
+              x: originX,
+              y: originY,
               vx: Math.cos(angle) * (event.type === "player-hit" ? 3 : 2.4),
               vy: Math.sin(angle) * (event.type === "player-hit" ? 3 : 2.4),
               life: 1,
@@ -385,8 +408,8 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
         particlesRef.current = particlesRef.current.filter((particle) => {
           particle.x += particle.vx;
           particle.y += particle.vy;
-          particle.vy += 0.04;
-          particle.life -= 0.03;
+          if (particle.kind !== "burst") particle.vy += 0.04;
+          particle.life -= particle.kind === "burst" ? 0.055 : 0.03;
           return particle.life > 0;
         });
       }

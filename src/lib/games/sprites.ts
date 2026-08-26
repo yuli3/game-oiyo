@@ -28,6 +28,20 @@ export const STAR_BLASTER_SPRITES = {
   warden: "/assets/sprites/star-blaster/enemy-warden.png",
   boss: "/assets/sprites/star-blaster/boss.png",
   bolt: "/assets/sprites/star-blaster/bolt-pulse.png",
+  burst: "/assets/sprites/star-blaster/burst.png",
+} as const;
+
+export const BRICK_BREAKER_SPRITES = {
+  olive: "/assets/sprites/brick-breaker/brick-olive.png",
+  terracotta: "/assets/sprites/brick-breaker/brick-terracotta.png",
+  cream: "/assets/sprites/brick-breaker/brick-cream.png",
+  paddle: "/assets/sprites/brick-breaker/paddle.png",
+  ball: "/assets/sprites/brick-breaker/ball.png",
+} as const;
+
+export const JUMP_KING_SPRITES = {
+  jumper: "/assets/sprites/dot-jumpking/jumper.png",
+  platform: "/assets/sprites/dot-jumpking/platform.png",
 } as const;
 
 export const MEMORY_SPRITES = {
