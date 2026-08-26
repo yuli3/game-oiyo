@@ -61,11 +61,184 @@ const COPY = {
     privacy: "공유·공개 링크는 누구나 볼 수 있습니다. 이름·얼굴·개인정보를 적지 마세요.",
     empty: "비어 있음",
     unranked: "미분류",
+    titleLabel: "제목",
+    compareCurrent: "지금",
+    compareSaved: "저장",
+  },
+  en: {
+    add: "Add",
+    addPh: "Name",
+    imagePh: "https://… image URL (optional)",
+    imageHint: `Recommended ${RECOMMENDED_IMAGE_PX}×${RECOMMENDED_IMAGE_PX}px, source square ${SOURCE_IMAGE_PX}px`,
+    move: "Move",
+    reset: "Clear",
+    save: "Save to My Lists",
+    saved: "Saved",
+    share: "Share Link",
+    sharing: "Uploading…",
+    shareFail: "The share server isn't available right now. Local saving still works.",
+    load: "Load",
+    compare: "Compare",
+    hideCompare: "Close Compare",
+    templates: "Templates",
+    templateSearch: "Search templates",
+    fullscreen: "Broadcast Fullscreen",
+    present: "Present",
+    edit: "Back to Editing",
+    exportPng: "Save PNG",
+    itemSearch: "Search cards",
+    remove: "Remove Selected",
+    publish: "Publish Template",
+    published: "Published",
+    up: "Upvote",
+    down: "Downvote",
+    privacy: "Share and public links can be viewed by anyone. Don't include names, faces, or personal information.",
+    empty: "Empty",
+    unranked: "Unranked",
+    titleLabel: "Title",
+    compareCurrent: "Now",
+    compareSaved: "Saved",
+  },
+  ja: {
+    add: "追加",
+    addPh: "名前",
+    imagePh: "https://… 画像URL（任意）",
+    imageHint: `推奨 ${RECOMMENDED_IMAGE_PX}×${RECOMMENDED_IMAGE_PX}px、元画像 ${SOURCE_IMAGE_PX}px 正方形`,
+    move: "移動",
+    reset: "空にする",
+    save: "マイリストに保存",
+    saved: "保存済み",
+    share: "共有リンク",
+    sharing: "アップロード中…",
+    shareFail: "現在、共有サーバーを利用できません。ローカル保存は可能です。",
+    load: "読み込み",
+    compare: "比較",
+    hideCompare: "比較を閉じる",
+    templates: "テンプレート",
+    templateSearch: "テンプレート検索",
+    fullscreen: "配信用フルスクリーン",
+    present: "プレゼンテーション",
+    edit: "編集に戻る",
+    exportPng: "PNG保存",
+    itemSearch: "カード検索",
+    remove: "選択削除",
+    publish: "テンプレート公開",
+    published: "公開済み",
+    up: "おすすめ",
+    down: "おすすめしない",
+    privacy: "共有・公開リンクは誰でも閲覧できます。名前・顔・個人情報は記載しないでください。",
+    empty: "空です",
+    unranked: "未分類",
+    titleLabel: "タイトル",
+    compareCurrent: "現在",
+    compareSaved: "保存",
+  },
+  zh: {
+    add: "添加",
+    addPh: "名称",
+    imagePh: "https://… 图片链接（可选）",
+    imageHint: `推荐 ${RECOMMENDED_IMAGE_PX}×${RECOMMENDED_IMAGE_PX}px，原图 ${SOURCE_IMAGE_PX}px 正方形`,
+    move: "移动",
+    reset: "清空",
+    save: "保存到我的列表",
+    saved: "已保存",
+    share: "分享链接",
+    sharing: "上传中…",
+    shareFail: "目前无法使用分享服务器，仍可本地保存。",
+    load: "加载",
+    compare: "对比",
+    hideCompare: "关闭对比",
+    templates: "模板",
+    templateSearch: "搜索模板",
+    fullscreen: "直播全屏",
+    present: "演示模式",
+    edit: "返回编辑",
+    exportPng: "保存PNG",
+    itemSearch: "搜索卡片",
+    remove: "删除所选",
+    publish: "发布模板",
+    published: "已发布",
+    up: "推荐",
+    down: "不推荐",
+    privacy: "分享和公开链接任何人都可查看，请勿填写姓名、照片或个人信息。",
+    empty: "空",
+    unranked: "未分类",
+    titleLabel: "标题",
+    compareCurrent: "当前",
+    compareSaved: "已保存",
+  },
+  fr: {
+    add: "Ajouter",
+    addPh: "Nom",
+    imagePh: "https://… URL de l'image (facultatif)",
+    imageHint: `Recommandé ${RECOMMENDED_IMAGE_PX}×${RECOMMENDED_IMAGE_PX}px, original carré de ${SOURCE_IMAGE_PX}px`,
+    move: "Déplacer",
+    reset: "Vider",
+    save: "Enregistrer dans mes listes",
+    saved: "Enregistré",
+    share: "Lien de partage",
+    sharing: "Envoi en cours…",
+    shareFail: "Le serveur de partage est indisponible pour le moment. L'enregistrement local fonctionne toujours.",
+    load: "Charger",
+    compare: "Comparer",
+    hideCompare: "Fermer la comparaison",
+    templates: "Modèles",
+    templateSearch: "Rechercher un modèle",
+    fullscreen: "Plein écran diffusion",
+    present: "Présentation",
+    edit: "Retour à l'édition",
+    exportPng: "Enregistrer en PNG",
+    itemSearch: "Rechercher une carte",
+    remove: "Supprimer la sélection",
+    publish: "Publier le modèle",
+    published: "Publié",
+    up: "Recommander",
+    down: "Ne pas recommander",
+    privacy: "Les liens de partage et publics sont visibles par tous. N'incluez ni noms, ni visages, ni informations personnelles.",
+    empty: "Vide",
+    unranked: "Non classé",
+    titleLabel: "Titre",
+    compareCurrent: "Actuel",
+    compareSaved: "Enregistré",
+  },
+  es: {
+    add: "Añadir",
+    addPh: "Nombre",
+    imagePh: "https://… URL de imagen (opcional)",
+    imageHint: `Recomendado ${RECOMMENDED_IMAGE_PX}×${RECOMMENDED_IMAGE_PX}px, original cuadrado de ${SOURCE_IMAGE_PX}px`,
+    move: "Mover",
+    reset: "Vaciar",
+    save: "Guardar en mis listas",
+    saved: "Guardado",
+    share: "Enlace para compartir",
+    sharing: "Subiendo…",
+    shareFail: "El servidor para compartir no está disponible ahora. El guardado local sigue funcionando.",
+    load: "Cargar",
+    compare: "Comparar",
+    hideCompare: "Cerrar comparación",
+    templates: "Plantillas",
+    templateSearch: "Buscar plantillas",
+    fullscreen: "Pantalla completa para transmisión",
+    present: "Presentación",
+    edit: "Volver a editar",
+    exportPng: "Guardar PNG",
+    itemSearch: "Buscar tarjetas",
+    remove: "Eliminar selección",
+    publish: "Publicar plantilla",
+    published: "Publicado",
+    up: "Recomendar",
+    down: "No recomendar",
+    privacy: "Los enlaces compartidos y públicos pueden verlos cualquier persona. No incluyas nombres, caras ni información personal.",
+    empty: "Vacío",
+    unranked: "Sin clasificar",
+    titleLabel: "Título",
+    compareCurrent: "Ahora",
+    compareSaved: "Guardado",
   },
 } as const;
 
-function copyFor(_locale: Locale) {
-  return COPY.ko;
+function copyFor(locale: Locale) {
+  return COPY[(locale in COPY ? locale : "en") as keyof typeof COPY];
 }
 
 function newId(prefix: string) {
@@ -226,7 +399,7 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
   return (
     <section ref={studioRef} onPointerUp={finishPointerDrag} className="mx-auto max-w-6xl space-y-4 px-1">
       {presenting ? <h2 className="text-center text-3xl font-black">{doc.title}</h2> : <label className="block">
-        <span className="sr-only">제목</span>
+        <span className="sr-only">{copy.titleLabel}</span>
         <input
           className="min-h-11 w-full rounded-lg border border-stone-300 bg-white px-3 text-base font-bold"
           value={doc.title}
@@ -342,8 +515,8 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
         <div className="rounded-xl border p-3 text-sm">
           {TIER_IDS.filter((id) => id !== "unranked").map((id) => (
             <p key={id} className="mt-1">
-              <b>{id.toUpperCase()}</b> 지금 {doc.tiers.find((tier) => tier.id === id)?.items.map((item) => item.label).join(", ") || "—"}
-              {" / "}저장 {compareDoc.tiers.find((tier) => tier.id === id)?.items.map((item) => item.label).join(", ") || "—"}
+              <b>{id.toUpperCase()}</b> {copy.compareCurrent} {doc.tiers.find((tier) => tier.id === id)?.items.map((item) => item.label).join(", ") || "—"}
+              {" / "}{copy.compareSaved} {compareDoc.tiers.find((tier) => tier.id === id)?.items.map((item) => item.label).join(", ") || "—"}
             </p>
           ))}
         </div>
@@ -353,7 +526,7 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
         <p className="text-xs font-bold">{copy.templates}</p>
         {BUILTIN_TEMPLATES.map((template) => (
           <div key={template.id} className="flex min-h-11 items-center justify-between gap-2 rounded-lg border px-3">
-            <span>{template.title.ko}</span>
+            <span>{template.title[loc]}</span>
             <span className="flex gap-1">
               <button type="button" className="min-h-11 px-2" onClick={() => void vote(template.id, "up")}>{copy.up}</button>
               <button type="button" className="min-h-11 px-2" onClick={() => void vote(template.id, "down")}>{copy.down}</button>
