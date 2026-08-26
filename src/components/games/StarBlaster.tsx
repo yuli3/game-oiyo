@@ -16,6 +16,33 @@ import {
   type StarBlasterUpgradeId,
   type StarBlasterState,
 } from "../../lib/games/star-blaster";
+import { STAR_BLASTER_SPRITES } from "../../lib/games/sprites";
+
+type BlasterArt = Record<keyof typeof STAR_BLASTER_SPRITES, HTMLImageElement>;
+
+function loadBlasterArt(): BlasterArt | null {
+  if (typeof Image === "undefined") return null;
+  const art = {} as BlasterArt;
+  for (const [key, src] of Object.entries(STAR_BLASTER_SPRITES)) {
+    const image = new Image();
+    image.src = src;
+    art[key as keyof BlasterArt] = image;
+  }
+  return art;
+}
+
+function paintSprite(
+  ctx: CanvasRenderingContext2D,
+  image: HTMLImageElement | undefined,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+) {
+  if (!image?.complete || image.naturalWidth === 0) return false;
+  ctx.drawImage(image, x - width / 2, y - height / 2, width, height);
+  return true;
+}
 
 const GAME_KEY = "star-blaster";
 const MAX_STEPS_PER_FRAME = 8;
@@ -92,6 +119,7 @@ function drawGame(
   renderTime: number,
   reducedMotion: boolean,
   ghostX?: number,
+  art?: BlasterArt | null,
 ) {
   ctx.fillStyle = "#0b1020";
   ctx.fillRect(0, 0, W, H);
@@ -110,24 +138,30 @@ function drawGame(
   ctx.globalAlpha = 1;
 
   for (const bullet of state.bullets) {
-    ctx.fillStyle = bullet.weapon === "arc" ? "#67e8f9" : bullet.weapon === "scatter" ? "#fb923c" : "#c4b5fd";
-    ctx.fillRect(bullet.x - 1.5, bullet.y - 8, 3, 10);
+    if (!paintSprite(ctx, art?.bolt, bullet.x, bullet.y - 4, 10, 18)) {
+      ctx.fillStyle = bullet.weapon === "arc" ? "#67e8f9" : bullet.weapon === "scatter" ? "#fb923c" : "#c4b5fd";
+      ctx.fillRect(bullet.x - 1.5, bullet.y - 8, 3, 10);
+    }
   }
 
   for (const enemy of state.enemies) {
-    ctx.beginPath();
-    ctx.fillStyle = `hsl(${enemy.hue} 70% 55%)`;
-    ctx.arc(enemy.x, enemy.y, enemy.radius, 0, Math.PI * 2);
-    ctx.fill();
-    if (enemy.kind === "swooper") {
-      ctx.strokeStyle = "rgba(255,255,255,.75)";
-      ctx.lineWidth = 2;
-      ctx.stroke();
-    }
-    if (enemy.kind === "warden") {
-      ctx.strokeStyle = "#fef08a";
-      ctx.lineWidth = 3;
-      ctx.strokeRect(enemy.x - enemy.radius * 0.72, enemy.y - enemy.radius * 0.72, enemy.radius * 1.44, enemy.radius * 1.44);
+    const sprite = enemy.kind === "warden" ? art?.warden : art?.drone;
+    const painted = paintSprite(ctx, sprite, enemy.x, enemy.y, enemy.radius * 2.4, enemy.radius * 2.4);
+    if (!painted) {
+      ctx.beginPath();
+      ctx.fillStyle = `hsl(${enemy.hue} 70% 55%)`;
+      ctx.arc(enemy.x, enemy.y, enemy.radius, 0, Math.PI * 2);
+      ctx.fill();
+      if (enemy.kind === "swooper") {
+        ctx.strokeStyle = "rgba(255,255,255,.75)";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+      if (enemy.kind === "warden") {
+        ctx.strokeStyle = "#fef08a";
+        ctx.lineWidth = 3;
+        ctx.strokeRect(enemy.x - enemy.radius * 0.72, enemy.y - enemy.radius * 0.72, enemy.radius * 1.44, enemy.radius * 1.44);
+      }
     }
     if (enemy.maxHp > 1) {
       ctx.fillStyle = "rgba(0,0,0,.55)";
@@ -142,23 +176,25 @@ function drawGame(
   if (state.boss) {
     const boss = state.boss;
     const colors = ["#a78bfa", "#f472b6", "#fb7185"];
-    ctx.save();
-    ctx.translate(boss.x, boss.y);
-    ctx.rotate(reducedMotion ? 0 : renderTime / 900);
-    ctx.strokeStyle = colors[boss.phase - 1];
-    ctx.lineWidth = 7;
-    ctx.beginPath();
-    for (let point = 0; point < 6; point += 1) {
-      const angle = point * Math.PI / 3;
-      const x = Math.cos(angle) * 34;
-      const y = Math.sin(angle) * 34;
-      if (point === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    if (!paintSprite(ctx, art?.boss, boss.x, boss.y, 84, 84)) {
+      ctx.save();
+      ctx.translate(boss.x, boss.y);
+      ctx.rotate(reducedMotion ? 0 : renderTime / 900);
+      ctx.strokeStyle = colors[boss.phase - 1];
+      ctx.lineWidth = 7;
+      ctx.beginPath();
+      for (let point = 0; point < 6; point += 1) {
+        const angle = point * Math.PI / 3;
+        const x = Math.cos(angle) * 34;
+        const y = Math.sin(angle) * 34;
+        if (point === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.stroke();
+      ctx.fillStyle = "rgba(139,92,246,.35)";
+      ctx.fill();
+      ctx.restore();
     }
-    ctx.closePath();
-    ctx.stroke();
-    ctx.fillStyle = "rgba(139,92,246,.35)";
-    ctx.fill();
-    ctx.restore();
     ctx.fillStyle = "rgba(0,0,0,.65)";
     ctx.fillRect(40, 14, W - 80, 8);
     ctx.fillStyle = colors[boss.phase - 1];
@@ -179,15 +215,17 @@ function drawGame(
     ctx.stroke();
     ctx.restore();
   }
-  ctx.fillStyle = "#8b5cf6";
-  ctx.beginPath();
-  ctx.moveTo(state.shipX, shipY - 16);
-  ctx.lineTo(state.shipX - 14, shipY + 12);
-  ctx.lineTo(state.shipX + 14, shipY + 12);
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillStyle = "#c4b5fd";
-  ctx.fillRect(state.shipX - 3, shipY - 6, 6, 10);
+  if (!paintSprite(ctx, art?.ship, state.shipX, shipY, 40, 44)) {
+    ctx.fillStyle = "#8b5cf6";
+    ctx.beginPath();
+    ctx.moveTo(state.shipX, shipY - 16);
+    ctx.lineTo(state.shipX - 14, shipY + 12);
+    ctx.lineTo(state.shipX + 14, shipY + 12);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "#c4b5fd";
+    ctx.fillRect(state.shipX - 3, shipY - 6, 6, 10);
+  }
 }
 
 const StarBlaster: React.FC<Props> = ({ locale }) => {
@@ -216,6 +254,8 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
   const reducedMotionRef = useRef(reducedMotion);
   reducedMotionRef.current = reducedMotion;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const artRef = useRef<BlasterArt | null>(null);
+  if (artRef.current === null) artRef.current = loadBlasterArt();
   const simulationRef = useRef<StarBlasterState | null>(null);
   const particlesRef = useRef<Particle[]>([]);
   const targetXRef = useRef(W / 2);
@@ -373,7 +413,7 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
     }
 
     previousFrameRef.current = now;
-    drawGame(ctx, state, particlesRef.current, now, reducedMotionRef.current, ghostTrackRef.current[state.tick]);
+    drawGame(ctx, state, particlesRef.current, now, reducedMotionRef.current, ghostTrackRef.current[state.tick], artRef.current);
     if (state.phase === "upgrade") {
       setUpgradeOptions((current) => current.length ? current : [...state.pendingUpgrades]);
     } else if (state.phase === "over") {

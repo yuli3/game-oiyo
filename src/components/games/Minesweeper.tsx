@@ -27,6 +27,7 @@ import {
     type MinesweeperHint,
     type RevealResult,
 } from '../../lib/games/minesweeper';
+import { MINESWEEPER_SPRITES } from '../../lib/games/sprites';
 
 const LEGACY_BEST_KEY = 'oiyo-minesweeper-best'; // pre-unification key, read once for migration
 
@@ -539,10 +540,10 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                                         } ${hintTargets.has(`${x}:${y}`) ? 'ring-4 ring-chart-2 ring-offset-1' : ''} ${hintClues.has(`${x}:${y}`) ? 'ring-4 ring-primary ring-offset-1' : ''}`}
                                     >
                                         {cell.isRevealed
-                                            ? cell.isMine ? '💣' : (cell.neighborMines > 0
+                                            ? cell.isMine ? <img src={MINESWEEPER_SPRITES.mine} alt="" draggable={false} className="h-[70%] w-[70%] object-contain pointer-events-none" /> : (cell.neighborMines > 0
                                                 ? <span className={NUM_COLORS[cell.neighborMines] ?? 'text-primary'}>{cell.neighborMines}</span>
                                                 : '')
-                                            : cell.isFlagged ? '🚩' : ''}
+                                            : cell.isFlagged ? <img src={MINESWEEPER_SPRITES.flag} alt="" draggable={false} className="h-[70%] w-[70%] object-contain pointer-events-none" /> : ''}
                                     </button>
                                 );
                             })}

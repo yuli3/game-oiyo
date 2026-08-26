@@ -9,11 +9,11 @@
       "mapsEmoji": ["🐵", "🐱", "🐷", "🐭", "🐰", "🐶", "🐤"]
     },
     "tents-and-trees": { "tokens": ["tree", "tent", "grass"] },
-    "whack-a-mole": { "tokens": ["mole", "bomb", "hole", "mallet"] },
+    "whack-a-mole": { "tokens": ["mole", "bomb", "hole", "mallet"], "wired": true },
     "cat-fishing": { "tokens": ["koi-gold", "koi-red", "koi-white", "koi-calico"] },
-    "star-blaster": { "tokens": ["ship", "enemy-drone", "enemy-warden", "boss", "bolt-pulse"], "wired": false },
+    "star-blaster": { "tokens": ["ship", "enemy-drone", "enemy-warden", "boss", "bolt-pulse"], "wired": true },
     "dot-pet": { "tokens": ["normal-baby", "normal-adult", "water-baby", "fire-baby", "plant-baby"] },
-    "memory-card": { "tokens": ["card-back"], "wired": false },
-    "minesweeper": { "tokens": ["mine", "flag"], "wired": false }
+    "memory-card": { "tokens": ["card-back"], "wired": true },
+    "minesweeper": { "tokens": ["mine", "flag"], "wired": true }
   }
 }

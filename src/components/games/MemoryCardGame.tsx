@@ -3,6 +3,7 @@ import { GameContainer } from '@/components/ui/game/GamePrimitives';
 import { usePrefersReducedMotion } from '@/lib/games/reduced-motion';
 import { createMemoryGame, flipMemoryCard, MEMORY_GRID_CONFIG, memoryPairCount, resolveMemoryPair, type MemoryGridSize, type MemoryState } from '@/lib/games/memory-card-game';
 import { clearMemoryCardSave, loadMemoryCardSave, storeMemoryCardSave } from '@/lib/games/memory-card-game-save';
+import { MEMORY_SPRITES } from '@/lib/games/sprites';
 
 const EMOJI_POOL = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐸', '🐙', '🦋', '🌸', '⭐', '🍎', '🍊', '🍋', '🍇', '🍓', '🌈', '🎸', '🚀', '🎃', '🔮', '🎯', '💎', '🏆', '🎪', '🌴', '🦄', '🐝', '🦀'];
 
@@ -271,7 +272,7 @@ const MemoryCardGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     : 'bg-primary/10 border-primary/30 hover:bg-primary/20 hover:border-primary cursor-pointer active:scale-95',
                 ].join(' ')}
               >
-                {card.isFlipped || card.isMatched ? <><span aria-hidden="true">{EMOJI_POOL[card.symbolId]}</span>{card.isMatched && <span className="sr-only"> matched</span>}</> : <span aria-hidden="true" className="text-xs font-black opacity-60">{card.id + 1}</span>}
+                {card.isFlipped || card.isMatched ? <><span aria-hidden="true">{EMOJI_POOL[card.symbolId]}</span>{card.isMatched && <span className="sr-only"> matched</span>}</> : <img src={MEMORY_SPRITES.back} alt="" draggable={false} className="h-[70%] w-[70%] object-contain pointer-events-none" />}
               </button>
             ))}
           </div>

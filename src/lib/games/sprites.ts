@@ -19,6 +19,24 @@ export const WHACK_SPRITES = {
   mole: "/assets/sprites/whack-a-mole/mole.png",
   bomb: "/assets/sprites/whack-a-mole/bomb.png",
   hole: "/assets/sprites/whack-a-mole/hole.png",
+  mallet: "/assets/sprites/whack-a-mole/mallet.png",
+} as const;
+
+export const STAR_BLASTER_SPRITES = {
+  ship: "/assets/sprites/star-blaster/ship.png",
+  drone: "/assets/sprites/star-blaster/enemy-drone.png",
+  warden: "/assets/sprites/star-blaster/enemy-warden.png",
+  boss: "/assets/sprites/star-blaster/boss.png",
+  bolt: "/assets/sprites/star-blaster/bolt-pulse.png",
+} as const;
+
+export const MEMORY_SPRITES = {
+  back: "/assets/sprites/memory-card/card-back.png",
+} as const;
+
+export const MINESWEEPER_SPRITES = {
+  mine: "/assets/sprites/minesweeper/mine.png",
+  flag: "/assets/sprites/minesweeper/flag.png",
 } as const;
 
 export const CAT_FISHING_KOI = [
