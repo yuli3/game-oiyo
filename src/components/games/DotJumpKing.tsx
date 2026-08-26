@@ -248,10 +248,17 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
         }
       }
       draw(ctx, state.current);
-      raf = requestAnimationFrame(loop);
+      if (phaseRef.current === "playing") raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(raf);
+    const onVisibility = () => {
+      if (document.hidden && phaseRef.current === "playing") setPhase("paused");
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      cancelAnimationFrame(raf);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, [best, tone, phase]);
   if (phase === "briefing")
     return (

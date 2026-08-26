@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
-import { elapsedSeconds, frameScale } from '../../lib/games/time-contracts';
+import { createDeltaLoop, elapsedSeconds } from '../../lib/games/time-contracts';
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 import { mulberry32 } from '../../lib/games/daily';
 import {
@@ -68,6 +68,7 @@ const CatFishing: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const rngRef = useRef(mulberry32(1));
     const fishRef = useRef(fish);
     fishRef.current = fish;
+    const fishNodes = useRef(new Map<number, HTMLButtonElement>());
     const [pops, setPops] = useState<{ id: number; x: number; y: number }[]>([]);
     const popId = useRef(0);
 
@@ -92,21 +93,24 @@ const CatFishing: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         return () => clearInterval(id);
     }, [won, remaining]);
 
-    // movement loop — deltaScale keeps speed and turn frequency the same on a
-    // 60Hz and a 120Hz display instead of doubling with the refresh rate.
+    // Move fish in a ref and write transforms to the DOM. setState every frame
+    // was recommitting the whole pond at display refresh.
     useEffect(() => {
         if (won) return;
         const cfg = CONFIGS[difficulty];
-        let raf: number;
-        let previous: number | null = null;
-        const step = (now: number) => {
-            const deltaScale = frameScale(previous, now);
-            previous = now;
-            setFish((prev) => prev.map((f) => stepFish(f, cfg, pointer.current, deltaScale, rngRef.current)));
-            raf = requestAnimationFrame(step);
-        };
-        raf = requestAnimationFrame(step);
-        return () => cancelAnimationFrame(raf);
+        const loop = createDeltaLoop((deltaSeconds) => {
+            const next = fishRef.current.map((f) => stepFish(f, cfg, pointer.current, deltaSeconds * 60, rngRef.current));
+            fishRef.current = next;
+            for (const f of next) {
+                const node = fishNodes.current.get(f.id);
+                if (!node || f.caught) continue;
+                node.style.left = `${f.x}%`;
+                node.style.top = `${f.y}%`;
+                node.style.transform = `translate(-50%,-50%) scaleX(${f.vx < 0 ? 1 : -1})`;
+            }
+        });
+        loop.start();
+        return () => loop.stop();
     }, [difficulty, won]);
 
     const trackPointer = (clientX: number, clientY: number) => {
@@ -197,6 +201,10 @@ const CatFishing: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 {fish.map((f) => !f.caught && (
                     <button
                         key={f.id}
+                        ref={(node) => {
+                            if (node) fishNodes.current.set(f.id, node);
+                            else fishNodes.current.delete(f.id);
+                        }}
                         onPointerDown={() => catchFish(f.id)}
                         aria-label="fish"
                         className="absolute flex min-h-11 min-w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center"

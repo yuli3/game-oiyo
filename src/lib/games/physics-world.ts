@@ -46,6 +46,10 @@ export interface PhysicsWorldHandle {
   world: unknown;
   /** Idempotent — calling it twice must not throw or double-stop. */
   destroy: () => void;
+  /** Pause the Matter runner without tearing the world down. */
+  stop: () => void;
+  /** Resume the Matter runner after `stop`. */
+  run: () => void;
 }
 
 /**
@@ -70,15 +74,27 @@ export function createPhysicsWorld(
 
   const runner = Matter.Runner.create();
   Matter.Runner.run(runner, engine);
+  let running = true;
 
   let destroyed = false;
   return {
     engine,
     world,
+    stop() {
+      if (destroyed || !running) return;
+      Matter.Runner.stop(runner);
+      running = false;
+    },
+    run() {
+      if (destroyed || running) return;
+      Matter.Runner.run(runner, engine);
+      running = true;
+    },
     destroy() {
       if (destroyed) return;
       destroyed = true;
-      Matter.Runner.stop(runner);
+      if (running) Matter.Runner.stop(runner);
+      running = false;
       if (onCollisionStart) Matter.Events.off(engine, "collisionStart", handler);
       Matter.Composite.clear(world, false);
     },

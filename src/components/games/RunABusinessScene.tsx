@@ -1,5 +1,6 @@
 import { OrbitControls, OrthographicCamera } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
+import { usePlayFrameloop } from "../../lib/games/play-frameloop";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import type { StallId, Weather } from "@/lib/games/run-a-business";
@@ -480,10 +481,12 @@ export default function RunABusinessScene({
     }, ms);
     return () => window.clearTimeout(id);
   }, [active, demand, onDone]);
+  const frameloop = usePlayFrameloop(active);
 
   return (
     <section className="relative h-[430px] overflow-hidden rounded-2xl bg-[#182016] shadow-[0_28px_90px_rgba(24,20,10,.34)] sm:h-[620px]">
       <Canvas
+        frameloop={frameloop}
         shadows={coarse ? false : "basic"}
         dpr={coarse ? 1 : [1, 1.5]}
         gl={{ antialias: !coarse, alpha: false }}

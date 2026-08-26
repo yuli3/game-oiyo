@@ -1,4 +1,5 @@
 import { Canvas, useFrame } from "@react-three/fiber";
+import { usePlayFrameloop } from "../../lib/games/play-frameloop";
 import { Html } from "@react-three/drei";
 import { useRef } from "react";
 import type { Group, Mesh } from "three";
@@ -104,8 +105,10 @@ function Marker({
 
 export default function SpatialMemoryScene(props: SceneProps) {
   const { markers, lit, entered, interactive, reducedMotion, yaw, label, onSelect } = props;
+  const frameloop = usePlayFrameloop(true);
   return (
     <Canvas
+      frameloop={frameloop}
       camera={{ position: [0, 0, 12], fov: 55 }}
       // Capped for phones: an uncapped pixel ratio is the usual cause of a
       // handset heating up on a 3D page.

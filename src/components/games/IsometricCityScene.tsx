@@ -1,5 +1,6 @@
 import { OrbitControls, OrthographicCamera } from "@react-three/drei";
 import { Canvas, type ThreeEvent, useFrame, useThree } from "@react-three/fiber";
+import { usePlayFrameloop } from "../../lib/games/play-frameloop";
 import {
   Banknote,
   BriefcaseBusiness,
@@ -150,7 +151,8 @@ export default function IsometricCityScene({ copy }: Props) {
   const [selected, setSelected] = useState<GridPoint | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [coarse, setCoarse] = useState(false);
-  const [tiltShift, setTiltShift] = useState(true);
+  const [tiltShift, setTiltShift] = useState(false);
+  const frameloop = usePlayFrameloop(true);
   const [sound, setSound] = useState(true);
   const lastHover = useRef<string>("");
 
@@ -253,9 +255,10 @@ export default function IsometricCityScene({ copy }: Props) {
   return (
     <section className="relative h-[720px] min-h-[680px] touch-none overflow-hidden rounded-[1.7rem] border border-[#cdd9c5] bg-[#dbe8d3] shadow-[0_24px_80px_rgba(53,69,44,.18)] sm:h-[780px]">
       <Canvas
+        frameloop={frameloop}
         shadows={coarse ? false : "basic"}
         dpr={coarse ? 1 : [1, 1.65]}
-        gl={{ antialias: !coarse, powerPreference: "high-performance", alpha: false }}
+        gl={{ antialias: !coarse, powerPreference: coarse ? "default" : "high-performance", alpha: false }}
         onPointerMissed={() => setSelected(null)}
       >
         <OrthographicCamera makeDefault position={[28, 28, 28]} zoom={coarse ? 20 : 26} near={0.1} far={180} />
@@ -916,13 +919,13 @@ function PedestrianSystem({ city, coarse }: { city: CityState; coarse: boolean }
 function Weather({ city, coarse }: { city: CityState; coarse: boolean }) {
   return (
     <>
-      {city.weather === "rain" && <Rain count={coarse ? 600 : 1_500} />}
-      {city.weather !== "clear" && <CloudLayer dense={city.weather === "rain"} />}
+      {city.weather === "rain" && <Rain count={coarse ? 600 : 1_500} frozen={city.speed === 0} />}
+      {city.weather !== "clear" && <CloudLayer dense={city.weather === "rain"} frozen={city.speed === 0} />}
     </>
   );
 }
 
-function Rain({ count }: { count: number }) {
+function Rain({ count, frozen = false }: { count: number; frozen?: boolean }) {
   const points = useRef<THREE.Points>(null);
   const positions = useMemo(() => {
     const array = new Float32Array(count * 3);
@@ -940,7 +943,7 @@ function Rain({ count }: { count: number }) {
   }, [count]);
 
   useFrame((_, delta) => {
-    if (!points.current) return;
+    if (frozen || !points.current) return;
     const attribute = points.current.geometry.getAttribute("position") as THREE.BufferAttribute;
     for (let i = 0; i < count; i += 1) {
       const offset = i * 3 + 1;
@@ -960,10 +963,10 @@ function Rain({ count }: { count: number }) {
   );
 }
 
-function CloudLayer({ dense }: { dense: boolean }) {
+function CloudLayer({ dense, frozen = false }: { dense: boolean; frozen?: boolean }) {
   const group = useRef<THREE.Group>(null);
   useFrame((_, delta) => {
-    if (!group.current) return;
+    if (frozen || !group.current) return;
     group.current.position.x += delta * 0.38;
     if (group.current.position.x > 17) group.current.position.x = -17;
   });

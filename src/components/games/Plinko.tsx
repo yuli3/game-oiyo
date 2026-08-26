@@ -61,6 +61,7 @@ const Plinko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const engineRef = useRef<Matter.Engine | null>(null);
+    const paintLoop = useRef<(() => void) | null>(null);
     const ballRef = useRef<Matter.Body | null>(null);
     const betRef = useRef(50);
     const settledRef = useRef(true);
@@ -77,8 +78,8 @@ const Plinko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         if (b) setBest(b.value);
     }, []);
 
-    // Build the static world (pegs/dividers/walls) once, run the physics
-    // engine + canvas draw loop for the component's lifetime.
+    // Build the static world once. The Matter runner and draw loop only run
+    // while a ball is in the air.
     useEffect(() => {
         // Scenery is built up front so createPhysicsWorld can add it before the
         // runner's first step (see physics-world.test.ts on why that order matters).
@@ -132,34 +133,47 @@ const Plinko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         const engine = handle.engine as Matter.Engine;
         const world = handle.world as Matter.World;
         engineRef.current = engine;
+        handle.stop();
 
-        let raf: number;
-        const draw = () => {
+        let raf = 0;
+        const paint = () => {
             const ctx = canvasRef.current?.getContext('2d');
-            if (ctx) {
-                ctx.clearRect(0, 0, BOARD_W, BOARD_H);
-                ctx.fillStyle = '#cbd5e1';
-                for (const d of dividers) ctx.fillRect(d.position.x - 2, BOARD_H - SLOT_ZONE_H, 4, SLOT_ZONE_H);
-                ctx.fillStyle = '#94a3b8';
-                for (const p of pegBodies) {
-                    ctx.beginPath();
-                    ctx.arc(p.position.x, p.position.y, PEG_R, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-                const ball = ballRef.current;
-                if (ball) {
-                    ctx.fillStyle = '#f59e0b';
-                    ctx.beginPath();
-                    ctx.arc(ball.position.x, ball.position.y, BALL_R, 0, Math.PI * 2);
-                    ctx.fill();
-                }
+            if (!ctx) return;
+            ctx.clearRect(0, 0, BOARD_W, BOARD_H);
+            ctx.fillStyle = '#cbd5e1';
+            for (const d of dividers) ctx.fillRect(d.position.x - 2, BOARD_H - SLOT_ZONE_H, 4, SLOT_ZONE_H);
+            ctx.fillStyle = '#94a3b8';
+            for (const p of pegBodies) {
+                ctx.beginPath();
+                ctx.arc(p.position.x, p.position.y, PEG_R, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            const ball = ballRef.current;
+            if (ball) {
+                ctx.fillStyle = '#f59e0b';
+                ctx.beginPath();
+                ctx.arc(ball.position.x, ball.position.y, BALL_R, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        };
+        const draw = () => {
+            paint();
+            if (!ballRef.current) {
+                raf = 0;
+                handle.stop();
+                return;
             }
             raf = requestAnimationFrame(draw);
         };
-        raf = requestAnimationFrame(draw);
+        paintLoop.current = () => {
+            if (raf) return;
+            handle.run();
+            raf = requestAnimationFrame(draw);
+        };
+        paint();
 
         return () => {
-            cancelAnimationFrame(raf);
+            if (raf) cancelAnimationFrame(raf);
             handle.destroy();
         };
     }, []);
@@ -185,6 +199,7 @@ const Plinko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         });
         Matter.Composite.add(engine.world, ball);
         ballRef.current = ball;
+        paintLoop.current?.();
     };
 
     const adjustBet = (delta: number) => setBet((b) => clampBet(b + delta));

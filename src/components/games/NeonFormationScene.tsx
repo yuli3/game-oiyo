@@ -1,4 +1,5 @@
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { usePlayFrameloop } from "../../lib/games/play-frameloop";
 import { AdditiveBlending, Color, MathUtils } from "three";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Points } from "three";
@@ -267,8 +268,9 @@ function Battle({ copy, highScore, onFinish }: Props) {
     const rect = event.currentTarget.getBoundingClientRect();
     shipX.current = clampShipX(((event.clientX - rect.left) / rect.width - 0.5) * 16);
   };
+  const frameloop = usePlayFrameloop(true);
   return <div className="relative h-full select-none overflow-hidden bg-[#02030a]" onPointerMove={(event) => { if (event.buttons) drag(event); }} onPointerDown={(event) => { audio.current.start(); drag(event); fire(); }}>
-    <Canvas dpr={isCoarse() ? 1 : [1, 1.5]} camera={{ position: [0, 0, 18], fov: 46 }} gl={{ antialias: !isCoarse(), alpha: false }} onCreated={({ gl }) => { gl.setClearColor(new Color("#02030a")); }}>
+    <Canvas frameloop={frameloop} dpr={isCoarse() ? 1 : [1, 1.5]} camera={{ position: [0, 0, 18], fov: 46 }} gl={{ antialias: !isCoarse(), alpha: false }} onCreated={({ gl }) => { gl.setClearColor(new Color("#02030a")); }}>
       <ambientLight intensity={0.34} /><pointLight position={[-6, 5, 5]} color="#22d3ee" intensity={28} distance={18} /><pointLight position={[6, 2, 4]} color="#e879f9" intensity={24} distance={18} />
       <Nebula /><CameraRig clearing={clearing} /><FrameLoop tick={tick} />
       <Ship x={shipX.current} captured={captured} dual={dual} />

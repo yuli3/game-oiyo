@@ -1,4 +1,5 @@
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { usePlayFrameloop } from "../../lib/games/play-frameloop";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AdditiveBlending, CanvasTexture, MathUtils, NearestFilter, RepeatWrapping, Vector3, type Group, type Mesh, type MeshBasicMaterial } from "three";
 import {
@@ -100,10 +101,11 @@ export default function InfernalVelocityScene({ copy, onFinish }: Props) {
     void canvas?.requestPointerLock?.();
   };
   const press = (key: keyof ControlState, value: boolean) => { (controls.current[key] as boolean) = value; };
+  const frameloop = usePlayFrameloop(true);
 
   return (
     <div ref={root} className="relative h-full min-h-[560px] select-none overflow-hidden bg-black text-white" onClick={lock}>
-      <Canvas shadows={!coarse} dpr={[1, coarse ? 1 : 1.45]} camera={{ fov: 76, near: 0.06, far: 120, position: [0, 1.7, 12] }} gl={{ antialias: !coarse }}>
+      <Canvas frameloop={frameloop} shadows={!coarse} dpr={[1, coarse ? 1 : 1.45]} camera={{ fov: 76, near: 0.06, far: 120, position: [0, 1.7, 12] }} gl={{ antialias: !coarse }}>
         <color attach="background" args={["#050001"]} />
         <fog attach="fog" args={["#160003", 12, 56]} />
         <InfernalWorld controls={controls} setHud={setHud} onFinish={onFinish} coarse={coarse} muted={muted} />

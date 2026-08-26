@@ -1,4 +1,5 @@
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { usePlayFrameloop } from "../../lib/games/play-frameloop";
 import {
   forwardRef,
   useCallback,
@@ -281,6 +282,7 @@ export default function UrbanStrikeScene({ copy, onFinish, muted, onToggleMute }
   const accuracy = hud.shots ? Math.round((hud.hits / hud.shots) * 100) : 0;
   const objectiveLabel = hud.objective === "capture" ? copy.capture : hud.objective === "contested" ? copy.contested : copy.hold;
   const dead = hud.respawn > 0;
+  const frameloop = usePlayFrameloop(true);
 
   return (
     <div
@@ -290,10 +292,11 @@ export default function UrbanStrikeScene({ copy, onFinish, muted, onToggleMute }
       onContextMenu={(event) => event.preventDefault()}
     >
       <Canvas
+        frameloop={frameloop}
         shadows={coarse ? false : "percentage"}
         dpr={coarse ? 1 : [1, 1.5]}
         camera={{ fov: 72, near: 0.06, far: 180, position: [0, 1.72, 16] }}
-        gl={{ antialias: !coarse, alpha: false, powerPreference: "high-performance" }}
+        gl={{ antialias: !coarse, alpha: false, powerPreference: coarse ? "default" : "high-performance" }}
         onCreated={({ gl }) => {
           gl.setClearColor("#0b1015");
         }}

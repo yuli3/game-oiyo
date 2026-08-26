@@ -1,5 +1,6 @@
 import { Sparkles } from "@react-three/drei";
 import { Canvas, type ThreeEvent, useFrame, useThree } from "@react-three/fiber";
+import { usePlayFrameloop } from "../../lib/games/play-frameloop";
 import {
   Armchair,
   ArrowDown,
@@ -360,6 +361,7 @@ export default function MallowIsleScene({ copy, audioEnabled, onToggleAudio }: P
   const hour = Math.floor(clockMinutes / 60).toString().padStart(2, "0");
   const minute = (clockMinutes % 60).toString().padStart(2, "0");
   const description = copy.descriptions[tool];
+  const frameloop = usePlayFrameloop(true);
 
   return (
     <div
@@ -371,10 +373,11 @@ export default function MallowIsleScene({ copy, audioEnabled, onToggleAudio }: P
       onWheel={zoomCamera}
     >
       <Canvas
+        frameloop={frameloop}
         shadows={coarse ? false : "soft"}
         dpr={coarse ? 1 : [1, 1.5]}
         camera={{ fov: 48, near: 0.08, far: 180, position: [5, 5, 9] }}
-        gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
+        gl={{ antialias: true, alpha: false, powerPreference: coarse ? "default" : "high-performance" }}
         onCreated={({ gl }) => {
           gl.outputColorSpace = THREE.SRGBColorSpace;
           gl.toneMapping = THREE.ACESFilmicToneMapping;
