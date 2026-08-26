@@ -5,6 +5,7 @@ import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 import { getBestForConditions, recordBestForConditions, type BestConditions } from '../../lib/games/records';
 import { clearPuzzle15Save, loadPuzzle15Save, storePuzzle15Save } from '../../lib/games/active-game-save';
 import { elapsedSeconds } from '../../lib/games/time-contracts';
+import { PUZZLE15_SPRITES } from '../../lib/games/sprites';
 
 // ─── 15 Puzzle (sliding puzzle) — ported from ahoxy-legacy ────────────────────
 // Shuffled by random moves from the solved state, so every board is solvable.
@@ -177,13 +178,12 @@ const Puzzle15: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         key={v}
                         onClick={() => slide(i)}
                         aria-label={String(v)}
-                        className={`min-h-11 min-w-11 rounded-xl font-black flex items-center justify-center ${!reducedMotion ? 'transition-all active:scale-95' : ''} ${
+                        className={`relative min-h-11 min-w-11 overflow-hidden rounded-xl font-black ${!reducedMotion ? 'transition-all active:scale-95' : ''} ${
                             size === 3 ? 'text-2xl' : size === 4 ? 'text-xl' : 'text-base'
-                        } ${v === (i + 1) % (size * size)
-                            ? 'bg-primary/15 text-primary border border-primary/30'
-                            : 'bg-card text-foreground border border-border shadow-sm hover:bg-muted'}`}
+                        } ${v === (i + 1) % (size * size) ? 'ring-2 ring-primary' : ''}`}
                     >
-                        {v}
+                        <img src={PUZZLE15_SPRITES.tile} alt="" draggable={false} className="pointer-events-none absolute inset-0 h-full w-full object-cover" />
+                        <span className={`relative z-[1] flex h-full w-full items-center justify-center ${v === (i + 1) % (size * size) ? 'text-primary' : 'text-stone-900'}`}>{v}</span>
                     </button>
                 ))}
 

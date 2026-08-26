@@ -106,6 +106,18 @@ export function mahjongTileSrc(k: number): string {
   return MAHJONG_SPRITES.kinds[i];
 }
 
+export const PUZZLE15_SPRITES = {
+  tile: "/assets/sprites/puzzle15/tile.png",
+} as const;
+
+export const LIGHT_UP_SPRITES = {
+  bulb: "/assets/sprites/light-up/bulb.png",
+} as const;
+
+export const LOGIC_CELL_SPRITES = {
+  black: "/assets/sprites/logic-cell/black.png",
+} as const;
+
 export const PLAYING_CARD_SPRITES = {
   back: "/assets/sprites/playing-card/back.png",
   face: "/assets/sprites/playing-card/face.png",
