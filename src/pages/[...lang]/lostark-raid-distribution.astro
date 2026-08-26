@@ -18,7 +18,7 @@ const gameTool = (slug: string) => `/${locale}/${slug}/`;
 const meta: Record<Locale, { title: string; description: string }> = {
   ko: { title: "로스트아크 본1부3 품앗이 분배 계산기", description: "본캐·부캐 캐릭터 정보를 입력하면 본1부3(또는 본1부1) 품앗이 파티의 딜러·서포터를 게임별로 균등 분배합니다. 레이드 버스비 계산기와는 별개 도구입니다." },
   en: { title: "Lost Ark 1-Main/3-Alt Help-Party Distribution Calculator", description: "Enter main and alt character roles to evenly distribute dealers and supporters across games for a 1-main/3-alt (or 1-main/1-alt) help party. A separate tool from the raid bus-fee calculator." },
-  ja: { title: "ロストアーク 本1副3 品앗이 分配計算機", description: "本キャラ・副キャラの情報を入力すると、本1副3（または本1副1）の品앗이パーティのディーラー・サポーターをゲームごとに均等分配します。レイドバス料金計算機とは別ツールです。" },
+  ja: { title: "ロストアーク 本1副3 プマシ 分配計算機", description: "本キャラ・副キャラの情報を入力すると、本1副3（または本1副1）のプマシパーティのディーラー・サポーターをゲームごとに均等分配します。レイドバス料金計算機とは別ツールです。" },
   fr: { title: "Calculateur de distribution 1 main / 3 alt (Lost Ark)", description: "Répartit équitablement DPS et supports entre les parties pour une équipe d'entraide 1 main / 3 alt. Outil distinct du calculateur de prix de bus." },
   es: { title: "Calculadora de distribución 1 main / 3 alt (Lost Ark)", description: "Distribuye DPS y supports de forma equilibrada para una party de ayuda 1 main / 3 alt. Herramienta distinta de la calculadora de tarifa de bus." },
   zh: { title: "命运方舟 本1副3 互助分配计算器", description: "输入本角色和副角色信息，将本1副3（或本1副1）互助队伍的输出和辅助按场次均衡分配。与团本巴士费用计算器为不同工具。" },
@@ -72,8 +72,8 @@ const content = {
   },
   ja: {
     eyebrow: "ロストアークツール",
-    introTitle: "本1副3 品앗이 分配計算機とは？",
-    intro: "品앗이パーティで各自の本キャラ・副キャラ（ディーラー ㄷ / サポーター ㅍ）を入力すると、ゲームごとにディーラー・サポーター数が均等になるよう自動分配します。レイド『バス』のオークション料金計算とはまったく別のツールで、パーティ編成・分配に特化しています。",
+    introTitle: "本1副3 プマシ 分配計算機とは？",
+    intro: "プマシパーティで各自の本キャラ・副キャラ（ディーラー ㄷ / サポーター ㅍ）を入力すると、ゲームごとにディーラー・サポーター数が均等になるよう自動分配します。レイド『バス』のオークション料金計算とはまったく別のツールで、パーティ編成・分配に特化しています。",
     howToTitle: "使い方",
     steps: ["本1副3または本1副1、パーティ人数（4・8・16）を選びます。", "各プレイヤーのキャラを1行ずつ入力します（例: ㄷㄷㄷㅍ — 最初の文字が本キャラ）。", "「分配する」を押し、結果表を確認、全てコピーで共有します。"],
     highlightsTitle: "主な特徴",
@@ -107,7 +107,7 @@ const faqs = {
     { q: "What do the bold/underlined cells mean?", a: "They mark the main character. The table shows mains in bold and underlined." },
   ],
   ja: [
-    { q: "バス料金計算機と同じですか？", a: "いいえ、まったく別です。本ツールは品앗이パーティのディーラー・サポーター分配を自動化し、バス料金計算機はレイドバス（代行）のオークション・取引価格を計算します。" },
+    { q: "バス料金計算機と同じですか？", a: "いいえ、まったく別です。本ツールはプマシパーティのディーラー・サポーター分配を自動化し、バス料金計算機はレイドバス（代行）のオークション・取引価格を計算します。" },
     { q: "入力方法は？", a: "1プレイヤー1行で、ゲーム数だけ ㄷ（ディーラー）・ㅍ（サポーター）を書きます。最初の文字が本キャラ（例: 本1副3なら4文字 ㄷㄷㄷㅍ）。英字D/Sも認識します。" },
     { q: "太字・下線のセルは？", a: "本キャラ（メイン）を表します。表では太字・下線で表示されます。" },
   ],
