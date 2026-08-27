@@ -14,9 +14,9 @@ const releaseEvidenceDocument = JSON.parse(await readFile(releaseEvidencePath, "
 const gameArtDocument = JSON.parse(await readFile(gameArtPath, "utf8"));
 const gameArt = gameArtDocument.games ?? {};
 const gameBlock = catalog.match(/const GAMES: Game\[\] = \[([\s\S]*?)\n\];/)?.[1] ?? "";
-const entries = [...gameBlock.matchAll(/\{ slug: "([^"]+)"(?:, kind: "([^"]+)")?, emoji: "[^"]+", cat: "([^"]+)"/g)]
-  .map((match) => ({ slug: match[1], kind: match[2] ?? "game", genre: match[3] }))
-  .filter((entry) => entry.kind === "game");
+const catalogEntries = [...gameBlock.matchAll(/\{ slug: "([^"]+)"(?:, kind: "([^"]+)")?, emoji: "[^"]+", cat: "([^"]+)"/g)]
+  .map((match) => ({ slug: match[1], kind: match[2] ?? "game", genre: match[3] }));
+const entries = catalogEntries.filter((entry) => entry.kind === "game");
 
 const releaseEvidence = releaseEvidenceDocument.games ?? {};
 const completedRisk = {
@@ -235,10 +235,14 @@ if (gameArtDocument.schema !== "oiyo.game-art" || gameArtDocument.schemaVersion 
   console.error("inventory audit failed: invalid game art document");
   process.exit(1);
 }
-const unknownArtSlugs = Object.keys(gameArt).filter((slug) => !games.some((game) => game.slug === slug));
-const missingArt = Object.keys(gameArt).filter((slug) => !games.find((game) => game.slug === slug)?.keyArt);
-if (unknownArtSlugs.length || missingArt.length) {
-  console.error(`inventory audit failed: invalid game art entries ${[...new Set([...unknownArtSlugs, ...missingArt])].join(", ")}`);
+const catalogSlugs = new Set(catalogEntries.map((entry) => entry.slug));
+const unknownArtSlugs = Object.keys(gameArt).filter((slug) => !catalogSlugs.has(slug));
+const invalidArtSlugs = [];
+for (const [slug, publicPath] of Object.entries(gameArt)) {
+  if (!await inspectPng(publicPath)) invalidArtSlugs.push(slug);
+}
+if (unknownArtSlugs.length || invalidArtSlugs.length) {
+  console.error(`inventory audit failed: invalid game art entries ${[...new Set([...unknownArtSlugs, ...invalidArtSlugs])].join(", ")}`);
   process.exit(1);
 }
 const invalid = games.filter((game) => {

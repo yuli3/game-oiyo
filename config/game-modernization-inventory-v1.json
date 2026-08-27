@@ -1,17 +1,17 @@
 {
   "schema": "oiyo.game-modernization-inventory",
   "schemaVersion": 2,
-  "generatedAt": "2026-08-21T10:17:15.182Z",
+  "generatedAt": "2026-08-27T06:17:15.558Z",
   "scorePolicy": "Static scores are prioritization proxies and never certify a game. Release certification requires ordered evidence from config/game-release-evidence-v1.json.",
   "summary": {
     "total": 53,
     "implementationComplete": 53,
-    "technicalGatesPassed": 0,
-    "playtested": 0,
-    "craftReviewed": 0,
+    "technicalGatesPassed": 1,
+    "playtested": 1,
+    "craftReviewed": 1,
     "releaseCertified": 0,
-    "keyArtLinked": 52,
-    "keyArtReady": 52,
+    "keyArtLinked": 53,
+    "keyArtReady": 53,
     "byGeneration": {
       "G1": 0,
       "G2": 0,
@@ -20,8 +20,8 @@
     },
     "byAction": {
       "maintain": 0,
-      "polish": 33,
-      "modernize": 20,
+      "polish": 34,
+      "modernize": 19,
       "remake": 0
     },
     "highRisk": {
@@ -131,7 +131,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/checkers.astro",
-      "componentLines": 336
+      "componentLines": 344
     },
     {
       "slug": "gomoku",
@@ -181,7 +181,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/gomoku.astro",
-      "componentLines": 377
+      "componentLines": 375
     },
     {
       "slug": "janggi",
@@ -233,7 +233,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/janggi.astro",
-      "componentLines": 267
+      "componentLines": 273
     },
     {
       "slug": "reversi",
@@ -284,7 +284,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/reversi.astro",
-      "componentLines": 217
+      "componentLines": 221
     },
     {
       "slug": "connect-four",
@@ -334,7 +334,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/connect-four.astro",
-      "componentLines": 633
+      "componentLines": 632
     },
     {
       "slug": "dominoes",
@@ -386,7 +386,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/dominoes.astro",
-      "componentLines": 217
+      "componentLines": 213
     },
     {
       "slug": "kingdomino",
@@ -435,7 +435,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/kingdomino.astro",
-      "componentLines": 431
+      "componentLines": 437
     },
     {
       "slug": "mahjong",
@@ -485,7 +485,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/mahjong.astro",
-      "componentLines": 295
+      "componentLines": 322
     },
     {
       "slug": "hitori",
@@ -535,7 +535,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/hitori.astro",
-      "componentLines": 42
+      "componentLines": 43
     },
     {
       "slug": "tents-and-trees",
@@ -585,7 +585,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/tents-and-trees.astro",
-      "componentLines": 311
+      "componentLines": 335
     },
     {
       "slug": "blackjack",
@@ -834,7 +834,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/sudoku.astro",
-      "componentLines": 291
+      "componentLines": 293
     },
     {
       "slug": "minesweeper",
@@ -886,7 +886,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/minesweeper.astro",
-      "componentLines": 589
+      "componentLines": 593
     },
     {
       "slug": "water-sort",
@@ -986,7 +986,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/light-up.astro",
-      "componentLines": 32
+      "componentLines": 33
     },
     {
       "slug": "game-2048",
@@ -1088,7 +1088,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/wordle.astro",
-      "componentLines": 52
+      "componentLines": 62
     },
     {
       "slug": "spatial-memory",
@@ -1191,7 +1191,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/spirit-vale.astro",
-      "componentLines": 1234
+      "componentLines": 1238
     },
     {
       "slug": "korean-semantle",
@@ -1287,7 +1287,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/texas-holdem.astro",
-      "componentLines": 714
+      "componentLines": 723
     },
     {
       "slug": "snake-game",
@@ -1338,7 +1338,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/snake-game.astro",
-      "componentLines": 286
+      "componentLines": 315
     },
     {
       "slug": "aim-trainer",
@@ -1364,9 +1364,9 @@
       "presentationScore": 12,
       "reliabilityScore": 12,
       "mobileScore": 8,
-      "accessibilityScore": 3,
+      "accessibilityScore": 4,
       "productScore": 5,
-      "total": 86,
+      "total": 87,
       "scoreStatus": "provisional-static",
       "certifiedScore": null,
       "implementationComplete": true,
@@ -1389,7 +1389,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/aim-trainer.astro",
-      "componentLines": 716
+      "componentLines": 797
     },
     {
       "slug": "emberdeep",
@@ -1414,11 +1414,11 @@
       "feelScore": 13,
       "progressionScore": 9,
       "presentationScore": 11,
-      "reliabilityScore": 14,
+      "reliabilityScore": 15,
       "mobileScore": 7,
       "accessibilityScore": 4,
       "productScore": 3,
-      "total": 79,
+      "total": 80,
       "scoreStatus": "provisional-static",
       "certifiedScore": null,
       "implementationComplete": true,
@@ -1440,7 +1440,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/emberdeep.astro",
-      "componentLines": 269
+      "componentLines": 293
     },
     {
       "slug": "isometric-city",
@@ -1507,30 +1507,29 @@
       "accessibilityRisk": "high",
       "performanceRisk": "high",
       "coreLoopScore": 20,
-      "feelScore": 8,
+      "feelScore": 10,
       "progressionScore": 13,
-      "presentationScore": 11,
+      "presentationScore": 12,
       "reliabilityScore": 14,
-      "mobileScore": 5,
-      "accessibilityScore": 0,
+      "mobileScore": 6,
+      "accessibilityScore": 1,
       "productScore": 5,
-      "total": 76,
+      "total": 81,
       "scoreStatus": "provisional-static",
       "certifiedScore": null,
       "implementationComplete": true,
       "certificationStage": "implementation-complete",
       "releaseCertified": false,
-      "keyArt": null,
-      "keyArtWidth": null,
-      "keyArtHeight": null,
+      "keyArt": "/games/run-a-business-social.png",
+      "keyArtWidth": 1200,
+      "keyArtHeight": 630,
       "evidenceRef": null,
-      "recommendedAction": "modernize",
+      "recommendedAction": "polish",
       "wave": "2",
       "craftScore": null,
       "craftMode": null,
       "craftNote": null,
       "dependencies": [
-        "key-art",
         "technical-gates-evidence",
         "playtest-evidence",
         "craft-review",
@@ -1539,7 +1538,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/run-a-business.astro",
-      "componentLines": 715
+      "componentLines": 749
     },
     {
       "slug": "mallow-isle",
@@ -1636,7 +1635,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/urban-strike.astro",
-      "componentLines": 400
+      "componentLines": 404
     },
     {
       "slug": "infernal-velocity",
@@ -1685,7 +1684,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/infernal-velocity.astro",
-      "componentLines": 77
+      "componentLines": 78
     },
     {
       "slug": "iron-tempest",
@@ -1710,11 +1709,11 @@
       "feelScore": 13,
       "progressionScore": 12,
       "presentationScore": 11,
-      "reliabilityScore": 11,
+      "reliabilityScore": 12,
       "mobileScore": 7,
       "accessibilityScore": 4,
       "productScore": 3,
-      "total": 79,
+      "total": 80,
       "scoreStatus": "provisional-static",
       "certifiedScore": null,
       "implementationComplete": true,
@@ -1737,7 +1736,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/iron-tempest.astro",
-      "componentLines": 114
+      "componentLines": 126
     },
     {
       "slug": "neon-formation",
@@ -1786,7 +1785,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/neon-formation.astro",
-      "componentLines": 77
+      "componentLines": 78
     },
     {
       "slug": "windward-horizons",
@@ -1884,7 +1883,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/skyward-atlas.astro",
-      "componentLines": 127
+      "componentLines": 137
     },
     {
       "slug": "star-blaster",
@@ -1917,25 +1916,21 @@
       "scoreStatus": "provisional-static",
       "certifiedScore": null,
       "implementationComplete": true,
-      "certificationStage": "implementation-complete",
+      "certificationStage": "craft-reviewed",
       "releaseCertified": false,
       "keyArt": "/games/star-blaster-social.png",
       "keyArtWidth": 1200,
       "keyArtHeight": 630,
-      "evidenceRef": null,
+      "evidenceRef": "config/game-release-evidence-v1.json#games.star-blaster",
       "recommendedAction": "polish",
       "wave": "pilot",
-      "craftScore": null,
-      "craftMode": null,
-      "craftNote": null,
-      "dependencies": [
-        "technical-gates-evidence",
-        "playtest-evidence",
-        "craft-review"
-      ],
+      "craftScore": 10,
+      "craftMode": "narrative",
+      "craftNote": "The mobile loop communicates movement, auto-fire, damage cause, PB ghost, and same-seed retry clearly; weapon upgrades and deterministic replay add depth beyond a disposable shooter skin.",
+      "dependencies": [],
       "owner": "game",
       "route": "src/pages/[...lang]/star-blaster.astro",
-      "componentLines": 738
+      "componentLines": 801
     },
     {
       "slug": "brick-breaker",
@@ -1986,7 +1981,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/brick-breaker.astro",
-      "componentLines": 464
+      "componentLines": 517
     },
     {
       "slug": "cave-dash",
@@ -2037,7 +2032,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/cave-dash.astro",
-      "componentLines": 295
+      "componentLines": 363
     },
     {
       "slug": "stack-tower",
@@ -2089,7 +2084,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/stack-tower.astro",
-      "componentLines": 290
+      "componentLines": 302
     },
     {
       "slug": "rhythm-tap",
@@ -2192,7 +2187,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/whack-a-mole.astro",
-      "componentLines": 143
+      "componentLines": 148
     },
     {
       "slug": "memory-card-game",
@@ -2244,7 +2239,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/memory-card-game.astro",
-      "componentLines": 285
+      "componentLines": 293
     },
     {
       "slug": "number-guessing",
@@ -2393,7 +2388,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/kurodoko.astro",
-      "componentLines": 303
+      "componentLines": 305
     },
     {
       "slug": "maze",
@@ -2454,26 +2449,26 @@
       "engine": "src/lib/games/cat-fishing.ts",
       "tests": "src/lib/games/cat-fishing.test.ts",
       "restore": false,
-      "daily": false,
-      "progression": false,
+      "daily": true,
+      "progression": true,
       "input": [
         "pointer",
         "touch"
       ],
-      "renderer": "canvas",
+      "renderer": "dom",
       "audio": true,
       "mobileRisk": "low",
       "accessibilityRisk": "low",
       "performanceRisk": "low",
       "coreLoopScore": 20,
-      "feelScore": 13,
-      "progressionScore": 10,
-      "presentationScore": 11,
+      "feelScore": 10,
+      "progressionScore": 12,
+      "presentationScore": 9,
       "reliabilityScore": 11,
       "mobileScore": 9,
       "accessibilityScore": 3,
       "productScore": 5,
-      "total": 82,
+      "total": 79,
       "scoreStatus": "provisional-static",
       "certifiedScore": null,
       "implementationComplete": true,
@@ -2496,7 +2491,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/cat-fishing.astro",
-      "componentLines": 229
+      "componentLines": 253
     },
     {
       "slug": "dot-runner",
@@ -2572,11 +2567,11 @@
       "feelScore": 13,
       "progressionScore": 9,
       "presentationScore": 11,
-      "reliabilityScore": 14,
+      "reliabilityScore": 15,
       "mobileScore": 7,
       "accessibilityScore": 3,
       "productScore": 5,
-      "total": 82,
+      "total": 83,
       "scoreStatus": "provisional-static",
       "certifiedScore": null,
       "implementationComplete": true,
@@ -2598,7 +2593,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/dot-jumpking.astro",
-      "componentLines": 402
+      "componentLines": 448
     },
     {
       "slug": "animal-pop",
@@ -2646,7 +2641,7 @@
       ],
       "owner": "game",
       "route": "src/pages/[...lang]/animal-pop.astro",
-      "componentLines": 415
+      "componentLines": 420
     },
     {
       "slug": "yahtzee",
