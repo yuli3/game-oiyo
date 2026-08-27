@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Matter from 'matter-js';
 import { GameContainer } from '../ui/game/GamePrimitives';
+import { normalizeWheelItems, parseStoredWheelItems, WHEEL_ITEM_LIMIT } from '../../lib/games/wheel-spinner';
 
 // ─── Physics: the wheel is a single circular body pinned at its own center
 // (zero gravity, zero linear velocity — it never moves, only spins). Matter's
@@ -11,19 +12,22 @@ import { GameContainer } from '../ui/game/GamePrimitives';
 const FRICTION_AIR = 0.012;
 const WOBBLE_TORQUE = 0.0015;
 const STOP_THRESHOLD = 0.0008; // rad/tick — below this we call it stopped
+const STORAGE_KEY = 'oiyo:wheel-spinner:items:v1';
+const DEFAULT_ITEMS = ['Pizza', 'Burger', 'Sushi', 'Pasta'];
 
 const WheelSpinner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const COPY = {
-        ko: { title: "행운의 돌림판", spin: "돌리기", reset: "초기화", add: "항목 추가", result: "결과!", placeholder: "메뉴 입력", wheel: "선택 항목 돌림판", remove: (item: string) => `${item} 삭제`, spinning: "돌리는 중…" },
-        en: { title: "Lucky wheel", spin: "Spin", reset: "Reset", add: "Add Item", result: "Result!", placeholder: "Enter item", wheel: "Wheel of choices", remove: (item: string) => `Remove ${item}`, spinning: "Spinning…" },
-        ja: { title: "幸運のルーレット", spin: "回す", reset: "リセット", add: "項目を追加", result: "結果！", placeholder: "項目を入力", wheel: "選択肢のルーレット", remove: (item: string) => `${item}を削除`, spinning: "回転中…" },
-        zh: { title: "幸运转盘", spin: "转动", reset: "重置", add: "添加选项", result: "结果！", placeholder: "输入选项", wheel: "选项转盘", remove: (item: string) => `删除 ${item}`, spinning: "转动中…" },
-        fr: { title: "Roue de la chance", spin: "Tourner", reset: "Réinitialiser", add: "Ajouter", result: "Résultat !", placeholder: "Saisir un élément", wheel: "Roue des choix", remove: (item: string) => `Supprimer ${item}`, spinning: "La roue tourne…" },
-        es: { title: "Ruleta de la suerte", spin: "Girar", reset: "Restablecer", add: "Añadir", result: "¡Resultado!", placeholder: "Escribe una opción", wheel: "Ruleta de opciones", remove: (item: string) => `Quitar ${item}`, spinning: "Girando…" }
+        ko: { title: "행운의 돌림판", subtitle: "선택지를 저장해 다음에도 그대로 돌리세요", spin: "돌리기", reset: "초기화", add: "항목 추가", result: "결과!", placeholder: "선택지 입력", wheel: "선택 항목 돌림판", remove: (item: string) => `${item} 삭제`, spinning: "돌리는 중…" },
+        en: { title: "Lucky wheel", subtitle: "Your choices stay saved for the next spin", spin: "Spin", reset: "Reset", add: "Add Item", result: "Result!", placeholder: "Enter an option", wheel: "Wheel of choices", remove: (item: string) => `Remove ${item}`, spinning: "Spinning…" },
+        ja: { title: "幸運のルーレット", subtitle: "選択肢を保存して次回もそのまま回せます", spin: "回す", reset: "リセット", add: "項目を追加", result: "結果！", placeholder: "項目を入力", wheel: "選択肢のルーレット", remove: (item: string) => `${item}を削除`, spinning: "回転中…" },
+        zh: { title: "幸运转盘", subtitle: "选项会保存在此设备上，方便下次继续使用", spin: "转动", reset: "重置", add: "添加选项", result: "结果！", placeholder: "输入选项", wheel: "选项转盘", remove: (item: string) => `删除 ${item}`, spinning: "转动中…" },
+        fr: { title: "Roue de la chance", subtitle: "Vos choix restent enregistrés pour la prochaine fois", spin: "Tourner", reset: "Réinitialiser", add: "Ajouter", result: "Résultat !", placeholder: "Saisir un choix", wheel: "Roue des choix", remove: (item: string) => `Supprimer ${item}`, spinning: "La roue tourne…" },
+        es: { title: "Ruleta de la suerte", subtitle: "Tus opciones quedan guardadas para la próxima vez", spin: "Girar", reset: "Restablecer", add: "Añadir", result: "¡Resultado!", placeholder: "Escribe una opción", wheel: "Ruleta de opciones", remove: (item: string) => `Quitar ${item}`, spinning: "Girando…" }
     };
     const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
 
-    const [items, setItems] = useState<string[]>(['Pizza', 'Burger', 'Sushi', 'Pasta']);
+    const [items, setItems] = useState<string[]>(DEFAULT_ITEMS);
+    const [itemsLoaded, setItemsLoaded] = useState(false);
     const [newItem, setNewItem] = useState('');
     const [rotation, setRotation] = useState(0);
     const [isSpinning, setIsSpinning] = useState(false);
@@ -45,6 +49,22 @@ const WheelSpinner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         media.addEventListener('change', update);
         return () => media.removeEventListener('change', update);
     }, []);
+
+    useEffect(() => {
+        try {
+            const saved = parseStoredWheelItems(localStorage.getItem(STORAGE_KEY));
+            if (saved.length >= 2) setItems(saved);
+        } catch {
+            // Storage is optional; the wheel remains fully usable without it.
+        } finally {
+            setItemsLoaded(true);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (!itemsLoaded) return;
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); } catch { /* non-blocking */ }
+    }, [items, itemsLoaded]);
 
     useEffect(() => {
         const engine = Matter.Engine.create({ gravity: { x: 0, y: 0 } });
@@ -110,14 +130,22 @@ const WheelSpinner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     };
 
     const addItem = () => {
-        if (newItem.trim()) {
-            setItems([...items, newItem.trim()]);
+        if (newItem.trim() && items.length < WHEEL_ITEM_LIMIT) {
+            setItems(normalizeWheelItems([...items, newItem]));
             setNewItem('');
         }
     };
 
+    const reset = () => {
+        setItems(DEFAULT_ITEMS);
+        setNewItem('');
+        setWinner(null);
+        setRotation(0);
+        try { localStorage.removeItem(STORAGE_KEY); } catch { /* non-blocking */ }
+    };
+
     return (
-        <GameContainer title={t.title} subtitle="Decision Making Assistance" onReset={() => setItems(['Pizza', 'Burger', 'Sushi', 'Pasta'])}>
+        <GameContainer title={t.title} subtitle={t.subtitle} onReset={reset}>
             <div className="flex flex-col md:flex-row gap-12 items-center">
                 {/* Wheel UI */}
                 <div className="relative">
