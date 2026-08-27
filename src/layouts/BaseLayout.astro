@@ -177,7 +177,7 @@ const currentLangItem = langItems.find((li) => li.code === locale) ?? langItems[
           <!-- Language switcher: native <details>/<summary> disclosure so every
                locale stays a real, crawlable <a href> in the DOM whether the
                panel is open or closed — no JS <select>, no framework state. -->
-          <details class="group relative border-l border-border/40 pl-4" aria-label="Language">
+          <details id="header-lang-switcher" class="group relative border-l border-border/40 pl-4" aria-label="Language">
             <summary
               class="flex cursor-pointer list-none items-center gap-1 text-[11px] font-bold uppercase tracking-widest text-muted-foreground/70 transition-colors hover:text-primary [&::-webkit-details-marker]:hidden"
             >
@@ -328,6 +328,18 @@ const currentLangItem = langItems.find((li) => li.code === locale) ?? langItems[
           window.scrollTo({ top: 0, behavior: "smooth" });
         });
         toggleVisibility();
+      })();
+
+      // ── Language switcher: close on outside click / Escape ──────────────────
+      (function () {
+        var lang = document.getElementById("header-lang-switcher");
+        if (!lang) return;
+        document.addEventListener("click", function (e) {
+          if (lang.open && !lang.contains(e.target)) lang.removeAttribute("open");
+        });
+        document.addEventListener("keydown", function (e) {
+          if (e.key === "Escape" && lang.open) lang.removeAttribute("open");
+        });
       })();
 
       // ── Mobile menu ───────────────────────────────────────────────────────
