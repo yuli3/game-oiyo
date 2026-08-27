@@ -2,5 +2,45 @@
   "schema": "oiyo.game-release-evidence",
   "schemaVersion": 1,
   "policy": "Release certification is earned from ordered evidence. Static source signals and legacy scores never certify a game.",
-  "games": {}
+  "games": {
+    "star-blaster": {
+      "technicalGates": {
+        "verifiedAt": "2026-08-27T06:09:58Z",
+        "commit": "b4f4440483072782774200718fbab3cf46930ed5",
+        "commands": [
+          "npm run test -- --run",
+          "npm run type-check",
+          "npm run build"
+        ],
+        "result": "pass"
+      },
+      "playtest": {
+        "reviewedAt": "2026-08-27T06:09:58Z",
+        "reviewer": "Codex",
+        "viewports": [
+          "390x844"
+        ],
+        "scenarios": [
+          "Start from the Korean route and steer left and right while auto-fire advances score and wave feedback.",
+          "Survive through three hits and confirm the debrief names the last damage cause, kill count, score, and personal best.",
+          "Retry the same sector, observe the PB ghost cue, pause and continue immediately, then mute audio."
+        ],
+        "findings": [
+          "No horizontal overflow at 390px; the canvas, HUD, controls, and debrief remain inside the viewport.",
+          "Production preview held 60 FPS during the sampled run and emitted no console warnings or errors.",
+          "The first run ended quickly without active steering, but the explicit missed-enemy cause and same-sector retry make the failure actionable."
+        ]
+      },
+      "craftReview": {
+        "reviewedAt": "2026-08-27T06:09:58Z",
+        "reviewer": "Codex",
+        "mode": "narrative",
+        "intent": 4,
+        "differentiation": 3,
+        "depth": 3,
+        "score": 10,
+        "note": "The mobile loop communicates movement, auto-fire, damage cause, PB ghost, and same-seed retry clearly; weapon upgrades and deterministic replay add depth beyond a disposable shooter skin."
+      }
+    }
+  }
 }
