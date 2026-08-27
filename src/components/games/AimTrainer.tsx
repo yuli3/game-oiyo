@@ -16,7 +16,7 @@ import {
 } from "../../lib/games/aim-trainer";
 
 /* ────────────────────────────────────────────────────────────────────────────
- * Pro Aim Trainer — 4 modes × 4 difficulties, mouse + touch, FPS-grade metrics,
+ * Pro Aim Trainer — 5 modes × 4 difficulties, mouse + touch, FPS-grade metrics,
  * personal bests (localStorage via records.ts) and rank flavour. Single-file game
  * following the repo convention (one component per game, all 6 locales inline).
  * ────────────────────────────────────────────────────────────────────────── */
@@ -25,7 +25,7 @@ type Mode = AimMode;
 type Diff = AimDifficulty;
 type Phase = "menu" | "playing" | "result";
 
-const MODES: Mode[] = ["gridshot", "flick", "tracking", "precision"];
+const MODES: Mode[] = ["gridshot", "flick", "tracking", "precision", "recovery"];
 const DIFFS: Diff[] = ["easy", "normal", "hard", "expert"];
 const DURATION = 30; // seconds, all modes
 
@@ -42,6 +42,7 @@ const MODE_CFG: Record<Mode, { emoji: string; base: number; grid: number; ttl: n
   flick: { emoji: "⚡", base: 54, grid: 1, ttl: 0, speed: 0 },
   precision: { emoji: "🔬", base: 34, grid: 1, ttl: 1100, speed: 0 },
   tracking: { emoji: "🛰️", base: 74, grid: 1, ttl: 0, speed: 150 },
+  recovery: { emoji: "👁️", base: 54, grid: 1, ttl: 0, speed: 0 },
 };
 
 const DIFF_CFG: Record<Diff, { size: number; speed: number; grid: number; ttl: number }> = {
@@ -89,6 +90,7 @@ interface I18n {
   tip: string;
   target: string;
   sound: string;
+  obscured: string;
 }
 
 const T: Record<Locale, I18n> = {
@@ -98,12 +100,13 @@ const T: Record<Locale, I18n> = {
     chooseMode: "훈련 모드",
     chooseDiff: "난이도",
     start: "훈련 시작",
-    modeName: { gridshot: "그리드샷", flick: "플릭샷", tracking: "트래킹", precision: "정밀샷" },
+    modeName: { gridshot: "그리드샷", flick: "플릭샷", tracking: "트래킹", precision: "정밀샷", recovery: "회복 훈련" },
     modeDesc: {
       gridshot: "동시에 뜬 여러 타깃을 빠르게 제거 — 전체 속도와 처리량",
       flick: "한 번에 하나, 순간적으로 조준해 클릭 — 플릭 반응속도",
       tracking: "움직이는 타깃 위에 커서를 유지 — 추적 정확도",
       precision: "작은 타깃이 사라지기 전에 명중 — 정밀 정확도",
+      recovery: "시야가 가려진 뒤 새 타깃을 빠르게 재획득 — 시각 회복 속도",
     },
     diffName: { easy: "쉬움", normal: "보통", hard: "어려움", expert: "전문가" },
     timeLeft: "시간",
@@ -124,6 +127,7 @@ const T: Record<Locale, I18n> = {
     tip: "팁: 손목이 아니라 팔꿈치로 큰 움직임을, 미세 조정은 손목으로.",
     target: "타깃",
     sound: "소리",
+    obscured: "시야 차단 — 곧 나타날 타깃을 준비하세요",
   },
   en: {
     title: "Aim Trainer PRO",
@@ -131,12 +135,13 @@ const T: Record<Locale, I18n> = {
     chooseMode: "Training mode",
     chooseDiff: "Difficulty",
     start: "Start training",
-    modeName: { gridshot: "Gridshot", flick: "Flick", tracking: "Tracking", precision: "Precision" },
+    modeName: { gridshot: "Gridshot", flick: "Flick", tracking: "Tracking", precision: "Precision", recovery: "Recovery" },
     modeDesc: {
       gridshot: "Clear many targets on screen at once — raw speed & throughput",
       flick: "One at a time, snap and click — flick reaction speed",
       tracking: "Keep your cursor on a moving target — tracking accuracy",
       precision: "Hit small targets before they vanish — micro accuracy",
+      recovery: "Reacquire a new target after a visual obstruction — recovery speed",
     },
     diffName: { easy: "Easy", normal: "Normal", hard: "Hard", expert: "Expert" },
     timeLeft: "Time",
@@ -157,6 +162,7 @@ const T: Record<Locale, I18n> = {
     tip: "Tip: move with your elbow for big flicks, wrist for micro-adjustments.",
     target: "Target",
     sound: "Sound",
+    obscured: "Vision blocked — prepare to reacquire",
   },
   ja: {
     title: "エイムトレーナー PRO",
@@ -164,12 +170,13 @@ const T: Record<Locale, I18n> = {
     chooseMode: "練習モード",
     chooseDiff: "難易度",
     start: "練習開始",
-    modeName: { gridshot: "グリッドショット", flick: "フリック", tracking: "トラッキング", precision: "精密" },
+    modeName: { gridshot: "グリッドショット", flick: "フリック", tracking: "トラッキング", precision: "精密", recovery: "リカバリー" },
     modeDesc: {
       gridshot: "同時に出る複数のターゲットを素早く撃破 — 速度と処理量",
       flick: "一度に一つ、瞬時に狙ってクリック — フリック反応",
       tracking: "動くターゲットにカーソルを維持 — 追跡精度",
       precision: "消える前に小さなターゲットを命中 — 精密精度",
+      recovery: "視界が遮られた後に新しいターゲットを再捕捉 — 回復速度",
     },
     diffName: { easy: "やさしい", normal: "普通", hard: "難しい", expert: "エキスパート" },
     timeLeft: "時間",
@@ -190,6 +197,7 @@ const T: Record<Locale, I18n> = {
     tip: "ヒント：大きな振りは肘、微調整は手首で。",
     target: "ターゲット",
     sound: "音",
+    obscured: "視界遮断 — 次のターゲットに備えてください",
   },
   fr: {
     title: "Aim Trainer PRO",
@@ -197,12 +205,13 @@ const T: Record<Locale, I18n> = {
     chooseMode: "Mode d'entraînement",
     chooseDiff: "Difficulté",
     start: "Commencer",
-    modeName: { gridshot: "Gridshot", flick: "Flick", tracking: "Tracking", precision: "Précision" },
+    modeName: { gridshot: "Gridshot", flick: "Flick", tracking: "Tracking", precision: "Précision", recovery: "Récupération" },
     modeDesc: {
       gridshot: "Éliminez plusieurs cibles à la fois — vitesse et débit",
       flick: "Une à la fois, visez et cliquez — vitesse de flick",
       tracking: "Gardez le curseur sur une cible mobile — précision de suivi",
       precision: "Touchez de petites cibles avant qu'elles disparaissent — précision fine",
+      recovery: "Retrouvez une nouvelle cible après une obstruction visuelle — vitesse de récupération",
     },
     diffName: { easy: "Facile", normal: "Normal", hard: "Difficile", expert: "Expert" },
     timeLeft: "Temps",
@@ -223,6 +232,7 @@ const T: Record<Locale, I18n> = {
     tip: "Astuce : coude pour les grands flicks, poignet pour les micro-ajustements.",
     target: "Cible",
     sound: "Son",
+    obscured: "Vision masquée — préparez-vous à retrouver la cible",
   },
   es: {
     title: "Aim Trainer PRO",
@@ -230,12 +240,13 @@ const T: Record<Locale, I18n> = {
     chooseMode: "Modo de entrenamiento",
     chooseDiff: "Dificultad",
     start: "Empezar",
-    modeName: { gridshot: "Gridshot", flick: "Flick", tracking: "Tracking", precision: "Precisión" },
+    modeName: { gridshot: "Gridshot", flick: "Flick", tracking: "Tracking", precision: "Precisión", recovery: "Recuperación" },
     modeDesc: {
       gridshot: "Elimina varios objetivos a la vez — velocidad y volumen",
       flick: "Uno a la vez, apunta y haz clic — velocidad de flick",
       tracking: "Mantén el cursor sobre un objetivo en movimiento — precisión de seguimiento",
       precision: "Acierta objetivos pequeños antes de que desaparezcan — precisión fina",
+      recovery: "Recupera un objetivo nuevo tras una obstrucción visual — velocidad de recuperación",
     },
     diffName: { easy: "Fácil", normal: "Normal", hard: "Difícil", expert: "Experto" },
     timeLeft: "Tiempo",
@@ -256,6 +267,7 @@ const T: Record<Locale, I18n> = {
     tip: "Consejo: usa el codo para flicks grandes y la muñeca para ajustes finos.",
     target: "Objetivo",
     sound: "Sonido",
+    obscured: "Visión bloqueada — prepárate para recuperar el objetivo",
   },
   zh: {
     title: "瞄准训练器 PRO",
@@ -263,12 +275,13 @@ const T: Record<Locale, I18n> = {
     chooseMode: "训练模式",
     chooseDiff: "难度",
     start: "开始训练",
-    modeName: { gridshot: "网格射击", flick: "急甩", tracking: "跟踪", precision: "精准" },
+    modeName: { gridshot: "网格射击", flick: "急甩", tracking: "跟踪", precision: "精准", recovery: "恢复训练" },
     modeDesc: {
       gridshot: "同时清除多个目标 — 速度与处理量",
       flick: "一次一个，瞬间瞄准点击 — 急甩反应",
       tracking: "让光标保持在移动目标上 — 跟踪精度",
       precision: "在小目标消失前命中 — 微操精度",
+      recovery: "视野受阻后快速重新捕捉新目标 — 恢复速度",
     },
     diffName: { easy: "简单", normal: "普通", hard: "困难", expert: "专家" },
     timeLeft: "时间",
@@ -289,6 +302,7 @@ const T: Record<Locale, I18n> = {
     tip: "提示：大甩用手肘，微调用手腕。",
     target: "目标",
     sound: "声音",
+    obscured: "视野受阻 — 准备重新捕捉目标",
   },
 };
 
@@ -311,6 +325,7 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
   const [isNewBest, setIsNewBest] = useState(false);
   const [finalScore, setFinalScore] = useState(0);
   const [muted, setMuted] = useState(false);
+  const [recoveryObscured, setRecoveryObscured] = useState(false);
   const audioRef = useRef<AudioContext | null>(null);
 
   const tone = useCallback((frequency: number, duration = 0.05) => {
@@ -335,6 +350,8 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
   const reactionsRef = useRef<number[]>([]);
   const rafRef = useRef<number | undefined>(undefined);
   const timerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+  const recoveryTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const completedRef = useRef(false);
   const pausedAtRef = useRef<number | null>(null);
   const hiddenMsRef = useRef(0);
   const lastFrameRef = useRef<number | null>(null);
@@ -355,6 +372,7 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
 
   const stop = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
+    if (recoveryTimerRef.current) clearTimeout(recoveryTimerRef.current);
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
   }, []);
 
@@ -372,9 +390,27 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
     return next;
   }, [spawn]);
 
+  const track = useCallback((event: "aim_training_start" | "aim_training_complete", details: Record<string, string | number>) => {
+    const analytics = window as Window & { gtag?: (...args: unknown[]) => void };
+    analytics.gtag?.("event", event, { game_id: "aim-trainer", ...details });
+  }, []);
+
+  const scheduleRecoveryTarget = useCallback(() => {
+    setTargets([]);
+    setRecoveryObscured(true);
+    if (recoveryTimerRef.current) clearTimeout(recoveryTimerRef.current);
+    recoveryTimerRef.current = setTimeout(() => {
+      setTargets([spawn(targetSize)]);
+      setRecoveryObscured(false);
+    }, 700);
+  }, [spawn, targetSize]);
+
   const finish = useCallback(() => {
+    if (completedRef.current) return;
+    completedRef.current = true;
     stop();
     setTargets([]);
+    setRecoveryObscured(false);
     let score: number;
     if (mode === "tracking") {
       const pct = Math.round((trkOnMs.current / (DURATION * 1000)) * 100);
@@ -383,6 +419,18 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
       score = hits;
     }
     setFinalScore(score);
+    const totalAttempts = hits + misses;
+    const completedAccuracy = totalAttempts > 0 ? Math.round((hits / totalAttempts) * 100) : 0;
+    const completedAverage = reactionsRef.current.length
+      ? Math.round(reactionsRef.current.reduce((sum, value) => sum + value, 0) / reactionsRef.current.length)
+      : 0;
+    track("aim_training_complete", {
+      mode,
+      difficulty: diff,
+      score,
+      accuracy: mode === "tracking" ? score : completedAccuracy,
+      average_reaction_ms: completedAverage,
+    });
     const prev = getBest(key);
     const beat = !prev || score > prev.value;
     const saved = recordBest(key, score, "score", `${t.diffName[diff]}`);
@@ -393,7 +441,7 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
       confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } });
     }
     setPhase("result");
-  }, [stop, mode, hits, key, diff, t.diffName, tone]);
+  }, [stop, mode, hits, misses, key, diff, t.diffName, tone, track]);
 
   // keep finish() fresh inside the interval without re-subscribing
   const finishRef = useRef(finish);
@@ -402,6 +450,8 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
   }, [finish]);
 
   const begin = useCallback(() => {
+    stop();
+    completedRef.current = false;
     setHits(0);
     setMisses(0);
     reactionsRef.current = [];
@@ -413,10 +463,13 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
     setIsNewBest(false);
     setTimeLeft(DURATION);
     startRef.current = performance.now();
+    track("aim_training_start", { mode, difficulty: diff });
 
     if (mode === "tracking") {
       trkTarget.current = { x: 50, y: 50, vx: (Math.random() > 0.5 ? 1 : -1), vy: (Math.random() > 0.5 ? 1 : -1), size: targetSize };
       setTargets([{ id: idRef.current++, x: 50, y: 50, size: targetSize, born: performance.now() }]);
+    } else if (mode === "recovery") {
+      scheduleRecoveryTarget();
     } else {
       const initial = spawnMany(gridCount, targetSize);
       setTargets(initial);
@@ -431,7 +484,7 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
       setTimeLeft(Math.ceil(remaining));
       if (remaining <= 0) finishRef.current();
     }, 100);
-  }, [mode, targetSize, gridCount, spawnMany]);
+  }, [stop, track, mode, diff, targetSize, gridCount, spawnMany, scheduleRecoveryTarget]);
 
   useEffect(() => {
     targetsRef.current = targets;
@@ -444,15 +497,21 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
       if (document.hidden && pausedAtRef.current === null) {
         pausedAtRef.current = now;
         lastFrameRef.current = null;
+        if (mode === "recovery") {
+          if (recoveryTimerRef.current) clearTimeout(recoveryTimerRef.current);
+          setTargets([]);
+          setRecoveryObscured(true);
+        }
       } else if (!document.hidden && pausedAtRef.current !== null) {
         hiddenMsRef.current += now - pausedAtRef.current;
         pausedAtRef.current = null;
         lastFrameRef.current = null;
+        if (mode === "recovery") scheduleRecoveryTarget();
       }
     };
     document.addEventListener("visibilitychange", handleVisibility);
     return () => document.removeEventListener("visibilitychange", handleVisibility);
-  }, [phase]);
+  }, [phase, mode, scheduleRecoveryTarget]);
 
   // Tracking + precision-TTL animation loop
   useEffect(() => {
@@ -516,19 +575,23 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
       reactionsRef.current.push(performance.now() - born);
       setHits((h) => h + 1);
       tone(700, 0.05);
+      if (mode === "recovery") {
+        scheduleRecoveryTarget();
+        return;
+      }
       setTargets((prev) => {
         const rest = prev.filter((tg) => tg.id !== id);
         return [...rest, spawn(targetSize, rest)];
       });
     },
-    [phase, mode, targetSize, spawn, tone]
+    [phase, mode, targetSize, spawn, tone, scheduleRecoveryTarget]
   );
 
   const missField = useCallback(() => {
-    if (phase !== "playing" || mode === "tracking") return;
+    if (phase !== "playing" || mode === "tracking" || recoveryObscured) return;
     setMisses((m) => m + 1);
     tone(180, 0.06);
-  }, [phase, mode, tone]);
+  }, [phase, mode, recoveryObscured, tone]);
 
   // ── derived stats ──
   const totalClicks = hits + misses;
@@ -640,6 +703,11 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
           <div className="absolute left-0 top-0 z-10 h-1 w-full bg-muted/60">
             <div className="h-full bg-violet-500 transition-[width] duration-100" style={{ width: `${(timeLeft / DURATION) * 100}%` }} />
           </div>
+          {mode === "recovery" && recoveryObscured && (
+            <div className="absolute inset-0 z-20 flex items-center justify-center bg-slate-950 text-center text-sm font-bold text-white" role="status" aria-live="polite">
+              <span className="max-w-56 px-4">{t.obscured}</span>
+            </div>
+          )}
           {targets.map((tg) => {
             // Precision/expert targets can render well under 44px — the whole
             // point of Precision mode is a tiny visual target. Rather than
