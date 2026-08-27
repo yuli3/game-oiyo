@@ -20,7 +20,7 @@ import {
   type TierItem,
   type TierListDocument,
 } from "../../lib/tier-list/model";
-import { BUILTIN_TEMPLATES, documentFromTemplate } from "../../lib/tier-list/templates";
+import { documentFromTemplate, templatesForLocale } from "../../lib/tier-list/templates";
 
 const TIER_TONE: Record<Exclude<TierId, "unranked">, string> = {
   s: "bg-red-500 text-white",
@@ -362,8 +362,9 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
   const compareDoc = saves.find((save) => save.id === compareId)?.document ?? null;
   const visibleTemplates = useMemo(() => {
     const query = templateQuery.trim().toLocaleLowerCase();
-    return query ? BUILTIN_TEMPLATES.filter((template) => Object.values(template.title).some((title) => title.toLocaleLowerCase().includes(query))) : BUILTIN_TEMPLATES;
-  }, [templateQuery]);
+    const localized = templatesForLocale(loc);
+    return query ? localized.filter((template) => Object.values(template.title).some((title) => title.toLocaleLowerCase().includes(query))) : localized;
+  }, [loc, templateQuery]);
 
   const followDrag = useCallback((clientX: number, clientY: number) => {
     if (!draggingRef.current) return;
@@ -557,7 +558,7 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
 
       <div className="space-y-2">
         <p className="text-xs font-bold">{copy.templates}</p>
-        {BUILTIN_TEMPLATES.map((template) => (
+        {templatesForLocale(loc).map((template) => (
           <div key={template.id} className="flex min-h-11 items-center justify-between gap-2 rounded-lg border px-3">
             <span>{template.title[loc]}</span>
             <span className="flex gap-1">

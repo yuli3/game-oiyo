@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parseDocument } from "./model";
-import { BUILTIN_TEMPLATES, documentFromTemplate } from "./templates";
+import { BUILTIN_TEMPLATES, documentFromTemplate, templatesForLocale } from "./templates";
 
 describe("tier list built-in templates", () => {
   it("contains complete current game rosters", () => {
@@ -40,5 +40,19 @@ describe("tier list built-in templates", () => {
     expect(unranked.items.map((item) => item.label)).toEqual(
       expect.arrayContaining(["Lion", "Fox", "Panda"]),
     );
+  });
+
+  it("only exposes templates whose item labels are localized", () => {
+    expect(templatesForLocale("en").map((template) => template.id)).toEqual(["animals", "snacks", "weekdays"]);
+    expect(templatesForLocale("ja").map((template) => template.id)).toEqual(["animals", "snacks", "weekdays"]);
+    expect(templatesForLocale("ko").map((template) => template.id)).toEqual(BUILTIN_TEMPLATES.map((template) => template.id));
+    for (const template of templatesForLocale("en")) {
+      for (const item of template.items) expect(item.labels?.en).toBeTruthy();
+    }
+  });
+
+  it("fails closed when an unavailable locale is requested", () => {
+    const league = BUILTIN_TEMPLATES.find((template) => template.id === "league-champions")!;
+    expect(() => documentFromTemplate(league, "en")).toThrow("not available");
   });
 });
