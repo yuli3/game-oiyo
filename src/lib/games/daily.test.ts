@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { dayIndex, mulberry32, previousDayKey, shuffle, todayKey } from "./daily";
+import { dayIndex, minutesUntilNextDaily, mulberry32, previousDayKey, shuffle, todayKey } from "./daily";
 import { countTentsSolutions, generateUniqueTents, validateTents } from "./tents";
 
 describe("daily: date helpers", () => {
@@ -21,6 +21,11 @@ describe("daily: date helpers", () => {
     expect(previousDayKey("2026-07-01")).toBe("2026-06-30");
     expect(previousDayKey("2026-01-01")).toBe("2025-12-31");
     expect(previousDayKey("2024-03-01")).toBe("2024-02-29"); // leap year
+  });
+
+  it("counts whole minutes to the next local day", () => {
+    expect(minutesUntilNextDaily(new Date(2026, 7, 27, 23, 59, 1))).toBe(1);
+    expect(minutesUntilNextDaily(new Date(2026, 7, 27, 22, 30, 0))).toBe(90);
   });
 });
 

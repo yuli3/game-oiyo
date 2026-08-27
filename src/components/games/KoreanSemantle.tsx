@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   dailyPuzzleId,
   koreanSemantleHints,
-  minutesUntilNextPuzzle,
   orderGuesses,
   parseKoreanSemantle,
   scoreGuess,
@@ -12,6 +11,7 @@ import {
   type ProximityBand,
   type SimilarityTable,
 } from "../../lib/games/korean-semantle";
+import { minutesUntilNextDaily } from "../../lib/games/daily";
 import { getStreak, recordStreak, type StreakStats } from "../../lib/games/records";
 import { Spinner } from "../ui/spinner";
 
@@ -265,7 +265,7 @@ const KoreanSemantle: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
   const [sound, setSound] = useState(true);
   const [restored, setRestored] = useState(false);
   const [shownHints, setShownHints] = useState(0);
-  const [nextMinutes, setNextMinutes] = useState(() => minutesUntilNextPuzzle());
+  const [nextMinutes, setNextMinutes] = useState(() => minutesUntilNextDaily());
   const recordedRef = useRef(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -306,7 +306,7 @@ const KoreanSemantle: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
   }, [loadPuzzle]);
 
   useEffect(() => {
-    const update = () => setNextMinutes(minutesUntilNextPuzzle());
+    const update = () => setNextMinutes(minutesUntilNextDaily());
     update();
     const timer = window.setInterval(update, 60_000);
     return () => window.clearInterval(timer);

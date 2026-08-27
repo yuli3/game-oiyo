@@ -177,12 +177,6 @@ export function koreanSemantleHints(table: SimilarityTable, guessCount: number):
   return hints;
 }
 
-export function minutesUntilNextPuzzle(now: Date = new Date()): number {
-  const next = new Date(now);
-  next.setHours(24, 0, 0, 0);
-  return Math.max(1, Math.ceil((next.getTime() - now.getTime()) / 60_000));
-}
-
 /**
  * Which curated puzzle is "today's", rotating deterministically through the
  * available puzzle ids so everyone on the same calendar day gets the same one.
