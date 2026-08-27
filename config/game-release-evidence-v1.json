@@ -80,6 +80,240 @@
         "score": 11,
         "note": "The one-tap runner makes failure actionable through a next-score target, same-seed retry, deterministic PB ghost, rising pace, and resumable local state while keeping the mobile interaction immediately legible."
       }
+    },
+    "minesweeper": {
+      "technicalGates": {
+        "verifiedAt": "2026-08-27T10:50:24Z",
+        "commit": "91ca604d89bc8ec168e8b329c11064c70da05d6b",
+        "commands": [
+          "npm run test -- --run src/lib/games/minesweeper.test.ts src/lib/games/minesweeper-save.test.ts src/lib/games/minesweeper-onboarding.test.ts src/lib/games/minesweeper-timing.test.ts",
+          "npm run type-check",
+          "npm run build"
+        ],
+        "result": "pass"
+      },
+      "playtest": {
+        "reviewedAt": "2026-08-27T10:50:24Z",
+        "reviewer": "Codex",
+        "viewports": [
+          "390x844"
+        ],
+        "scenarios": [
+          "Switch from the daily board to a fresh beginner board, reveal the top-left cell, and confirm the first move is safe and advances the onboarding guidance.",
+          "Request a logic hint and confirm it explains the deduction, reports the candidate count, and records that assistance was used.",
+          "Enter mobile flag mode, flag a closed cell, reload the page, and confirm the revealed board, flag, hint history, and active game restore."
+        ],
+        "findings": [
+          "The sampled first click safely opened 72 of 100 beginner cells and advanced the three-step onboarding instead of risking an immediate mine.",
+          "The hint stated that the remaining closed-cell and mine counts forced a mine and highlighted one candidate, separating a logical deduction from a guess.",
+          "At 390px the restored board retained the flagged cell, revealed cells, and hint-use marker; innerWidth was 390, scrollWidth 375, and console warnings/errors were zero."
+        ]
+      },
+      "craftReview": {
+        "reviewedAt": "2026-08-27T10:50:24Z",
+        "reviewer": "Codex",
+        "mode": "narrative",
+        "intent": 4,
+        "differentiation": 4,
+        "depth": 4,
+        "score": 12,
+        "note": "Verified no-guess boards, first-click safety, explainable deductions, assistance-aware records, progressive onboarding, and durable mobile board state turn the familiar ruleset into a trustworthy mastery puzzle rather than a luck-driven clone."
+      }
+    },
+    "chess": {
+      "technicalGates": {
+        "verifiedAt": "2026-08-27T10:53:59Z",
+        "commit": "91ca604d89bc8ec168e8b329c11064c70da05d6b",
+        "commands": [
+          "npm run test -- --run src/lib/games/ai/chess.test.ts src/lib/games/chess-save.test.ts src/lib/games/chess-notation.test.ts src/lib/games/chess-worker-protocol.test.ts",
+          "npm run type-check",
+          "npm run build"
+        ],
+        "result": "pass"
+      },
+      "playtest": {
+        "reviewedAt": "2026-08-27T10:53:59Z",
+        "reviewer": "Codex",
+        "viewports": [
+          "390x844"
+        ],
+        "scenarios": [
+          "Switch the Korean route from local play to AI play and confirm Apprentice, Adept, and Master expose distinct search-depth and time budgets.",
+          "Play e4 against the Adept AI, wait for its Nf6 reply, and confirm both moves appear in notation and last-move feedback.",
+          "Flip the board, reload the page, and confirm AI mode, Adept difficulty, move history, last move, and black-side orientation restore."
+        ],
+        "findings": [
+          "Adept answered e4 with Nf6 and the move-history region exposed both half-moves as readable notation rather than relying on board position alone.",
+          "Reload restored the saved game message, AI mode, Adept difficulty, e4/Nf6 history, Nf6 last-move label, and flipped orientation with H1 first.",
+          "Master clearly advertised a maximum 6-ply, 800ms budget; at 390px innerWidth was 390, scrollWidth 375, and console warnings/errors were zero."
+        ]
+      },
+      "craftReview": {
+        "reviewedAt": "2026-08-27T10:53:59Z",
+        "reviewer": "Codex",
+        "mode": "narrative",
+        "intent": 4,
+        "differentiation": 4,
+        "depth": 4,
+        "score": 12,
+        "note": "Explicit AI search budgets, complete legal-rule tests, notation and material tracking, durable orientation and game state, keyboard semantics, and a tested loss-review selector make the compact board useful for deliberate practice rather than opaque casual play."
+      }
+    },
+    "blackjack": {
+      "technicalGates": {
+        "verifiedAt": "2026-08-27T11:02:54Z",
+        "commit": "91ca604d89bc8ec168e8b329c11064c70da05d6b",
+        "commands": [
+          "npm run test -- --run src/lib/games/blackjack.test.ts src/lib/games/blackjack-save.test.ts src/lib/games/run-a-business.test.ts",
+          "npm run type-check",
+          "npm run build"
+        ],
+        "result": "pass"
+      },
+      "playtest": {
+        "reviewedAt": "2026-08-27T11:02:54Z",
+        "reviewer": "Codex",
+        "viewports": [
+          "390x844"
+        ],
+        "scenarios": [
+          "Play a Korean S17 round from hard 14 against a dealer 6 and compare the contextual stand recommendation with its risk explanation.",
+          "Stand and confirm the result names the exact dealer-total cause, selected action, cards drawn, deck remainder, next goal, and updated record.",
+          "Start another live hand, pause it, reload, and confirm the paused hand and record restore with hit and stand unavailable."
+        ],
+        "findings": [
+          "The live guide recommended standing against the weak dealer up-card and explained the bust-risk tradeoff before the decision.",
+          "The sampled loss reported dealer hard 17 versus player hard 14, the stand action trail, zero cards drawn, 47 cards remaining, and the next record goal.",
+          "Reload restored a hard-19 hand in paused state with the explicit restored-round message; at 390px innerWidth was 390 and scrollWidth 375."
+        ]
+      },
+      "craftReview": {
+        "reviewedAt": "2026-08-27T11:02:54Z",
+        "reviewer": "Codex",
+        "mode": "narrative",
+        "intent": 4,
+        "differentiation": 4,
+        "depth": 4,
+        "score": 12,
+        "note": "S17 rules, hand-aware risk guidance, explicit result causes and action trails, deck context, record goals, and resumable deterministic hands make each short round teach a decision instead of merely revealing a random outcome."
+      }
+    },
+    "run-a-business": {
+      "technicalGates": {
+        "verifiedAt": "2026-08-27T11:02:54Z",
+        "commit": "91ca604d89bc8ec168e8b329c11064c70da05d6b",
+        "commands": [
+          "npm run test -- --run src/lib/games/blackjack.test.ts src/lib/games/blackjack-save.test.ts src/lib/games/run-a-business.test.ts",
+          "npm run type-check",
+          "npm run build"
+        ],
+        "result": "pass"
+      },
+      "playtest": {
+        "reviewedAt": "2026-08-27T11:02:54Z",
+        "reviewer": "Codex",
+        "viewports": [
+          "390x844"
+        ],
+        "scenarios": [
+          "Start the Korean ramen stand with seed s10, raise noodle stock and price, choose a rich recipe, and open for a one-day result.",
+          "Review the resulting income statement and balance sheet, including revenue, COGS, gross profit, waste, overhead, depreciation, profit, cash, assets, debt, and equity.",
+          "Run the same seeded stand over the one-week horizon and confirm the aggregate day-8 summary remains readable at 390px."
+        ],
+        "findings": [
+          "The adjusted one-day run sold six servings and separated $30.00 revenue, $7.50 COGS, $4.90 waste, $0.50 depreciation, $17.10 profit, and $117.60 cash.",
+          "The ledger explicitly warns that profit and cash are different lines and explains why depreciation lowers profit without spending cash; the balance sheet reconciled assets and equity.",
+          "The seeded one-week run summarized 84 sales, $336.00 revenue, $242.50 profit, and $346.00 cash; at 390px innerWidth was 390 and scrollWidth 375."
+        ]
+      },
+      "craftReview": {
+        "reviewedAt": "2026-08-27T11:02:54Z",
+        "reviewer": "Codex",
+        "mode": "narrative",
+        "intent": 4,
+        "differentiation": 4,
+        "depth": 4,
+        "score": 12,
+        "note": "Seeded weather and events, stock, recipe and pricing choices, multiple horizons, and a reconciled ledger that distinguishes profit from cash turn a compact stand simulation into an explainable operating-decision exercise."
+      }
+    },
+    "korean-semantle": {
+      "technicalGates": {
+        "verifiedAt": "2026-08-27T11:40:47Z",
+        "commit": "91ca604d89bc8ec168e8b329c11064c70da05d6b",
+        "commands": [
+          "npm run test -- --run src/lib/games/korean-semantle.test.ts src/lib/games/skyward-atlas.test.ts",
+          "npm run type-check",
+          "npm run build"
+        ],
+        "result": "pass"
+      },
+      "playtest": {
+        "reviewedAt": "2026-08-27T11:40:47Z",
+        "reviewer": "Codex",
+        "viewports": [
+          "390x844"
+        ],
+        "scenarios": [
+          "Enter five Korean guesses spanning cold to very hot similarity bands and confirm rank, temperature, and progress feedback order the search.",
+          "Open the first fair hint at guess five, confirm it reveals only the two-character answer length and announces the next hint at guess twelve, then reload.",
+          "Confirm all five guesses restore, solve with the sixth guess, and verify the result, streak, play count, sharing action, and next-puzzle countdown."
+        ],
+        "findings": [
+          "The sampled trail moved from 컴퓨터 rank 36 through 하늘 26, 섬 11, 해변 5, and 파도 2 with distinct ice-to-very-hot labels.",
+          "The five-guess hint disclosed only answer length and preserved the twelve-guess gate; reload restored the five guesses and their ranked feedback.",
+          "바다 solved the demo on guess six, producing streak 1, best streak 1, one played puzzle, a share action, and a visible next-puzzle countdown; innerWidth was 390 and scrollWidth 375."
+        ]
+      },
+      "craftReview": {
+        "reviewedAt": "2026-08-27T11:40:47Z",
+        "reviewer": "Codex",
+        "mode": "narrative",
+        "intent": 4,
+        "differentiation": 4,
+        "depth": 4,
+        "score": 12,
+        "note": "Ordered semantic bands, deliberately gated non-answer hints, durable daily guesses, streak and next-puzzle return cues, and transparent handcrafted-data disclosure make the word search fair, legible, and repeatable."
+      }
+    },
+    "skyward-atlas": {
+      "technicalGates": {
+        "verifiedAt": "2026-08-27T11:40:47Z",
+        "commit": "91ca604d89bc8ec168e8b329c11064c70da05d6b",
+        "commands": [
+          "npm run test -- --run src/lib/games/korean-semantle.test.ts src/lib/games/skyward-atlas.test.ts",
+          "npm run type-check",
+          "npm run build"
+        ],
+        "result": "pass"
+      },
+      "playtest": {
+        "reviewedAt": "2026-08-27T11:40:47Z",
+        "reviewer": "Codex",
+        "viewports": [
+          "390x844"
+        ],
+        "scenarios": [
+          "Start the Korean WebGL flight and confirm the live HUD exposes airspeed, altitude, vertical speed, heading, throttle, fuel, gates, time, and a three-step input tutorial.",
+          "Switch from chase to cockpit view, mute flight audio, and confirm both controls reflect their new states during the same run.",
+          "End the flight manually, inspect its score, gate and distance log plus actionable next-flight review, then reload and confirm the personal best persists."
+        ],
+        "findings": [
+          "The production scene initialized at 159 knots, 2,034 feet, 62% throttle, full fuel, zero of five gates, and an explicit first-step throttle prompt without falling back from WebGL.",
+          "Cockpit switching changed the control to the chase-view action and muting changed the accessible audio label to off during live rendering.",
+          "The sampled flight logged score 817, zero gates, five kilometers, and the concrete recommendation to establish the first gate line; score 817 survived reload and the 390px page reported scrollWidth 375."
+        ]
+      },
+      "craftReview": {
+        "reviewedAt": "2026-08-27T11:40:47Z",
+        "reviewer": "Codex",
+        "mode": "narrative",
+        "intent": 4,
+        "differentiation": 4,
+        "depth": 3,
+        "score": 11,
+        "note": "A tested aerodynamic model, progressive input tutorial, cockpit and chase views, optional audio, persistent best score, and result-specific next-flight advice give the short WebGL flight a clear learning and retry loop."
+      }
     }
   }
 }
