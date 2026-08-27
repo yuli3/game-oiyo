@@ -261,6 +261,8 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
   const [presenting, setPresenting] = useState(false);
   const studioRef = useRef<HTMLElement>(null);
   const draggingRef = useRef<{ id: string; x: number; y: number } | null>(null);
+  const [ghost, setGhost] = useState<{ item: TierItem; x: number; y: number } | null>(null);
+  const [hoverTier, setHoverTier] = useState<TierId | null>(null);
 
   useEffect(() => {
     const stored = parseDocument(window.localStorage.getItem(TIER_LIST_STORAGE_KEY));
@@ -363,15 +365,35 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
     return query ? BUILTIN_TEMPLATES.filter((template) => Object.values(template.title).some((title) => title.toLocaleLowerCase().includes(query))) : BUILTIN_TEMPLATES;
   }, [templateQuery]);
 
+  const followDrag = useCallback((clientX: number, clientY: number) => {
+    if (!draggingRef.current) return;
+    setGhost((prev) => (prev ? { ...prev, x: clientX, y: clientY } : prev));
+    const target = document.elementFromPoint(clientX, clientY)?.closest<HTMLElement>("[data-tier-id]");
+    const tierId = target?.dataset.tierId as TierId | undefined;
+    setHoverTier(tierId && TIER_IDS.includes(tierId) ? tierId : null);
+  }, []);
+
+  const beginDrag = useCallback((item: TierItem, clientX: number, clientY: number) => {
+    draggingRef.current = { id: item.id, x: clientX, y: clientY };
+    setGhost({ item, x: clientX, y: clientY });
+  }, []);
+
+  const clearDrag = useCallback(() => {
+    draggingRef.current = null;
+    setGhost(null);
+    setHoverTier(null);
+  }, []);
+
   const finishPointerDrag = useCallback((event: ReactPointerEvent) => {
     const drag = draggingRef.current;
-    draggingRef.current = null;
-    if (!drag || Math.hypot(event.clientX - drag.x, event.clientY - drag.y) < 8) return;
-    const itemId = drag.id;
+    const itemId = drag?.id;
+    const moved = drag ? Math.hypot(event.clientX - drag.x, event.clientY - drag.y) >= 8 : false;
+    clearDrag();
+    if (!itemId || !moved) return;
     const target = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>("[data-tier-id]");
     const tierId = target?.dataset.tierId as TierId | undefined;
     if (tierId && TIER_IDS.includes(tierId)) moveItem(itemId, tierId);
-  }, [moveItem]);
+  }, [clearDrag, moveItem]);
 
   const exportPng = useCallback(async () => {
     const layout = exportLayout(doc, 1200);
@@ -397,7 +419,18 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
   }, [doc]);
 
   return (
-    <section ref={studioRef} onPointerUp={finishPointerDrag} className="mx-auto max-w-6xl space-y-4 px-1">
+    <section
+      ref={studioRef}
+      onPointerMove={(event) => followDrag(event.clientX, event.clientY)}
+      onPointerUp={finishPointerDrag}
+      onPointerCancel={clearDrag}
+      onDragOver={(event) => {
+        event.preventDefault();
+        followDrag(event.clientX, event.clientY);
+      }}
+      onDragEnd={clearDrag}
+      className="mx-auto max-w-6xl space-y-4 px-1"
+    >
       {presenting ? <h2 className="text-center text-3xl font-black">{doc.title}</h2> : <label className="block">
         <span className="sr-only">{copy.titleLabel}</span>
         <input
@@ -436,7 +469,7 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
 
       <div className="space-y-2">
         {doc.tiers.filter((tier): tier is typeof tier & { id: Exclude<TierId, "unranked"> } => tier.id !== "unranked").map((tier) => (
-          <div key={tier.id} data-tier-id={tier.id} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); const id = event.dataTransfer.getData("text/tier-item"); if (id) moveItem(id, tier.id); }} className="overflow-hidden rounded-xl border border-stone-200">
+          <div key={tier.id} data-tier-id={tier.id} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); const id = event.dataTransfer.getData("text/tier-item"); if (id) moveItem(id, tier.id); clearDrag(); }} className={`overflow-hidden rounded-xl border border-stone-200 ${hoverTier === tier.id ? "ring-2 ring-lime-400" : ""}`}>
             <button
               type="button"
               className={`flex min-h-11 w-20 items-center justify-center text-lg font-black ${TIER_TONE[tier.id]}`}
@@ -447,16 +480,16 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
             <div className="-mt-11 ml-20 flex min-h-11 flex-wrap gap-2 bg-white p-2">
               {tier.items.length === 0 ? <span className="self-center text-xs text-stone-400">{copy.empty}</span> : null}
               {tier.items.filter((item) => !itemQuery.trim() || item.label.toLocaleLowerCase().includes(itemQuery.trim().toLocaleLowerCase())).map((item) => (
-                <Chip key={item.id} item={item} selected={selected === item.id} onSelect={() => setSelected(item.id)} onPointerStart={(event) => { draggingRef.current = { id: item.id, x: event.clientX, y: event.clientY }; }} onDragStart={(event) => { event.dataTransfer.setData("text/tier-item", item.id); }} />
+                <Chip key={item.id} item={item} selected={selected === item.id} dimmed={ghost?.item.id === item.id} onSelect={() => setSelected(item.id)} onPointerStart={(event) => beginDrag(item, event.clientX, event.clientY)} onDragStart={(event) => { beginDrag(item, event.clientX, event.clientY); event.dataTransfer.setData("text/tier-item", item.id); event.dataTransfer.setData("text/plain", item.label); event.dataTransfer.effectAllowed = "move"; const blank = document.createElement("canvas"); blank.width = 1; blank.height = 1; event.dataTransfer.setDragImage(blank, 0, 0); }} />
               ))}
             </div>
           </div>
         ))}
-        <div data-tier-id="unranked" onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); const id = event.dataTransfer.getData("text/tier-item"); if (id) moveItem(id, "unranked"); }} className="rounded-xl border border-dashed border-stone-300 p-2">
+        <div data-tier-id="unranked" onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); const id = event.dataTransfer.getData("text/tier-item"); if (id) moveItem(id, "unranked"); clearDrag(); }} className={`rounded-xl border border-dashed border-stone-300 p-2 ${hoverTier === "unranked" ? "ring-2 ring-lime-400" : ""}`}>
           <p className="mb-2 text-xs font-bold text-stone-500">{copy.unranked}</p>
           <div className="flex flex-wrap gap-2">
             {doc.tiers.find((tier) => tier.id === "unranked")?.items.filter((item) => !itemQuery.trim() || item.label.toLocaleLowerCase().includes(itemQuery.trim().toLocaleLowerCase())).map((item) => (
-              <Chip key={item.id} item={item} selected={selected === item.id} onSelect={() => setSelected(item.id)} onPointerStart={(event) => { draggingRef.current = { id: item.id, x: event.clientX, y: event.clientY }; }} onDragStart={(event) => { event.dataTransfer.setData("text/tier-item", item.id); }} />
+              <Chip key={item.id} item={item} selected={selected === item.id} dimmed={ghost?.item.id === item.id} onSelect={() => setSelected(item.id)} onPointerStart={(event) => beginDrag(item, event.clientX, event.clientY)} onDragStart={(event) => { beginDrag(item, event.clientX, event.clientY); event.dataTransfer.setData("text/tier-item", item.id); event.dataTransfer.setData("text/plain", item.label); event.dataTransfer.effectAllowed = "move"; const blank = document.createElement("canvas"); blank.width = 1; blank.height = 1; event.dataTransfer.setDragImage(blank, 0, 0); }} />
             ))}
           </div>
         </div>
@@ -538,11 +571,31 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
       <p className="text-xs leading-relaxed text-stone-500">{copy.privacy}</p>
       {status ? <p className="break-all text-sm font-bold text-lime-800">{status}</p> : null}
       </div>
+      {ghost ? (
+        <div
+          aria-hidden
+          className="pointer-events-none fixed z-50 -translate-x-1/2 -translate-y-1/2 opacity-50"
+          style={{ left: ghost.x, top: ghost.y }}
+        >
+          <ChipFace item={ghost.item} />
+        </div>
+      ) : null}
     </section>
   );
 }
 
-function Chip({ item, selected, onSelect, onPointerStart, onDragStart }: { item: TierItem; selected: boolean; onSelect: () => void; onPointerStart: (event: ReactPointerEvent<HTMLButtonElement>) => void; onDragStart: (event: ReactDragEvent<HTMLButtonElement>) => void }) {
+function ChipFace({ item }: { item: TierItem }) {
+  return (
+    <div className="flex w-20 flex-col items-center overflow-hidden rounded-lg border border-stone-200 bg-white text-[11px] shadow-sm">
+      {item.imageUrl ? (
+        <img src={item.imageUrl} alt="" width={72} height={72} className="size-[72px] object-cover" draggable={false} referrerPolicy="no-referrer" onError={(event) => { (event.currentTarget as HTMLImageElement).style.display = "none"; }} />
+      ) : <span className="grid size-[72px] place-items-center bg-stone-100 text-2xl font-black text-stone-400">{item.label.slice(0, 1)}</span>}
+      <span className="w-full truncate px-1 py-1.5 font-bold">{item.label}</span>
+    </div>
+  );
+}
+
+function Chip({ item, selected, dimmed, onSelect, onPointerStart, onDragStart }: { item: TierItem; selected: boolean; dimmed: boolean; onSelect: () => void; onPointerStart: (event: ReactPointerEvent<HTMLButtonElement>) => void; onDragStart: (event: ReactDragEvent<HTMLButtonElement>) => void }) {
   return (
     <button
       type="button"
@@ -550,7 +603,7 @@ function Chip({ item, selected, onSelect, onPointerStart, onDragStart }: { item:
       onDragStart={onDragStart}
       onPointerDown={onPointerStart}
       onClick={onSelect}
-      className={`flex w-20 touch-none flex-col items-center overflow-hidden rounded-lg border bg-white text-[11px] shadow-sm transition ${selected ? "border-lime-700 ring-2 ring-lime-300" : "border-stone-200"}`}
+      className={`flex w-20 touch-none flex-col items-center overflow-hidden rounded-lg border bg-white text-[11px] shadow-sm transition ${selected ? "border-lime-700 ring-2 ring-lime-300" : "border-stone-200"} ${dimmed ? "opacity-40" : ""}`}
     >
       {item.imageUrl ? (
         <img src={item.imageUrl} alt="" width={72} height={72} className="size-[72px] object-cover" draggable={false} referrerPolicy="no-referrer" onError={(event) => { (event.currentTarget as HTMLImageElement).style.display = "none"; }} />

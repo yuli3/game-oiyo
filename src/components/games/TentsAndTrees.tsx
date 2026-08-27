@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
-import { dayIndex, mulberry32, previousDayKey, todayKey } from '../../lib/games/daily';
+import { dayIndex, minutesUntilNextDaily, mulberry32, previousDayKey, todayKey } from '../../lib/games/daily';
 import { getDailyStreak, recordDailyWin, type DailyStreak } from '../../lib/games/records';
 import { explainTentsHint, generateTents, generateUniqueTents, validateTents, type Pos, type TentsHint, type TentsPuzzle, type TentsValidation } from '../../lib/games/tents';
 import {
@@ -60,6 +60,15 @@ const COPY = {
     es: { title: 'Tiendas y árboles', desc: '¡Cada árbol necesita una tienda!', note: 'Las tiendas van junto a un árbol (arriba/abajo/izquierda/derecha) y nunca se tocan entre sí, ni en diagonal. Los números cuentan las tiendas de cada fila/columna.', daily: '📅 Puzle diario', free: 'Libre 5×5', win: '¡Listos para acampar!', next: 'Siguiente puzle', errAdjacent: 'Dos tiendas se tocan', errOrphan: 'Hay una tienda sin árbol al lado', errCount: 'Se superó un número de fila/columna', streak: 'Racha', best: 'Récord', doneToday: 'Hecho hoy ✓', sound: 'Sonido' },
 } as const;
 
+const NEXT_DAILY_COPY = {
+    ko: (m: number) => `다음 퍼즐까지 ${Math.floor(m / 60)}시간 ${m % 60}분`,
+    en: (m: number) => `Next puzzle in ${Math.floor(m / 60)}h ${m % 60}m`,
+    ja: (m: number) => `次のパズルまで ${Math.floor(m / 60)}時間${m % 60}分`,
+    zh: (m: number) => `距下一题 ${Math.floor(m / 60)}小时${m % 60}分`,
+    fr: (m: number) => `Prochain puzzle dans ${Math.floor(m / 60)} h ${m % 60} min`,
+    es: (m: number) => `Próximo puzle en ${Math.floor(m / 60)} h ${m % 60} min`,
+} as const;
+
 const TENTS_HINT: Record<keyof typeof COPY, Record<TentsHint['reason'], string>> = {
     ko: { adjacent: '붙어 있는 텐트를 확인하세요.', orphan: '나무 옆이 아닌 텐트를 확인하세요.', count: '행·열 숫자를 초과한 텐트를 확인하세요.', pairing: '나무와 텐트가 1:1로 짝이 맞는지 확인하세요.' },
     en: { adjacent: 'Check the tents that are touching.', orphan: 'Check the tent that is not beside a tree.', count: 'Check tents that exceed a row or column count.', pairing: 'Check that every tree has exactly one tent.' },
@@ -82,6 +91,7 @@ const A11Y_COPY = {
 const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
     const a11y = A11Y_COPY[locale as keyof typeof A11Y_COPY] ?? A11Y_COPY.en;
+    const nextDailyCopy = NEXT_DAILY_COPY[locale as keyof typeof NEXT_DAILY_COPY] ?? NEXT_DAILY_COPY.en;
 
     const [initial] = useState(initialGame);
     const [mode, setMode] = useState<TentsMode>(initial.mode);
@@ -91,6 +101,7 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [validation, setValidation] = useState<TentsValidation>({ ok: true, complete: false, error: null });
     const [streak, setStreak] = useState<DailyStreak | null>(null);
     const [dailyDate, setDailyDate] = useState(initial.dailyDate);
+    const [nextMinutes, setNextMinutes] = useState(() => minutesUntilNextDaily());
     const [activeCell, setActiveCell] = useState(0);
     const cellRefs = useRef<Array<HTMLButtonElement | HTMLDivElement | null>>([]);
 
@@ -117,6 +128,13 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     useEffect(() => {
         const today = todayKey();
         setStreak(getDailyStreak(DAILY_GAME_ID, today, previousDayKey(today)));
+    }, []);
+
+    useEffect(() => {
+        const update = () => setNextMinutes(minutesUntilNextDaily());
+        update();
+        const timer = window.setInterval(update, 60_000);
+        return () => window.clearInterval(timer);
     }, []);
 
     const newPuzzle = useCallback((nextMode: TentsMode) => {
@@ -229,6 +247,11 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     <p className="mb-3 text-center text-xs font-bold text-muted-foreground">
                         🔥 {t.streak} {streak.currentStreak} · {t.best} {streak.maxStreak}
                         {solvedToday && <span className="ml-2 text-success">{t.doneToday}</span>}
+                    </p>
+                )}
+                {mode === 'daily' && solvedToday && (
+                    <p className="mb-3 text-center text-xs font-bold text-muted-foreground">
+                        {nextDailyCopy(nextMinutes)}
                     </p>
                 )}
 

@@ -1,5 +1,6 @@
 import { OrbitControls, OrthographicCamera } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
+import { usePlayFrameloop } from "../../lib/games/play-frameloop";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import type { StallId, Weather } from "@/lib/games/run-a-business";
@@ -30,7 +31,7 @@ function toon() {
   return map;
 }
 
-function Crates({ stall, onBuy }: { stall: StallId; onBuy?: (key: string) => void }) {
+function Crates({ stall, stock, onBuy }: { stall: StallId; stock?: Record<string, number>; onBuy?: (key: string) => void }) {
   const keys = STALLS[stall].keys.slice(0, 3);
   return (
     <group>
@@ -39,6 +40,7 @@ function Crates({ stall, onBuy }: { stall: StallId; onBuy?: (key: string) => voi
           key={key}
           position={[-2.2 + i * 0.7, 0.28, 1.6]}
           castShadow
+          scale={[1, 0.72 + Math.min(1, (stock?.[key] ?? 0) / 18) * 0.55, 1]}
           onClick={(e) => {
             e.stopPropagation();
             onBuy?.(key);
@@ -73,29 +75,6 @@ function ping(freq: number) {
     osc.stop(ctx.currentTime + 0.2);
   } catch {
     /* autoplay lock */
-  }
-}
-
-function hum(on: boolean) {
-  if (!on || typeof window === "undefined") return () => undefined;
-  try {
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (!AudioCtx) return () => undefined;
-    const ctx = new AudioCtx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = "sine";
-    osc.frequency.value = 196;
-    gain.gain.value = 0.012;
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    return () => {
-      osc.stop();
-      void ctx.close();
-    };
-  } catch {
-    return () => undefined;
   }
 }
 
@@ -148,6 +127,12 @@ function Stall({ stall }: { stall: StallId }) {
         <boxGeometry args={[3.8, 0.22, 2.6]} />
         <meshToonMaterial color={color} gradientMap={toon()} />
       </mesh>
+      {[-1.45, -0.5, 0.5, 1.45].map((x, index) => (
+        <mesh key={x} position={[x, 1.38, 1.2]} rotation={[0.12, 0, 0]} castShadow>
+          <boxGeometry args={[0.72, 0.48, 0.08]} />
+          <meshToonMaterial color={index % 2 ? "#f5ead3" : color} gradientMap={toon()} />
+        </mesh>
+      ))}
       <mesh position={[0, 0.55, 1.18]} castShadow>
         <boxGeometry args={[2.6, 0.18, 0.7]} />
         <meshToonMaterial color="#5a3a22" gradientMap={toon()} />
@@ -183,6 +168,67 @@ function Stall({ stall }: { stall: StallId }) {
         </mesh>
       )}
     </group>
+  );
+}
+
+function Shopkeeper({ stall }: { stall: StallId }) {
+  const group = useRef<THREE.Group>(null);
+  useFrame((state) => {
+    if (!group.current) return;
+    group.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.65) * 0.06;
+    group.current.position.y = Math.sin(state.clock.elapsedTime * 1.3) * 0.018;
+  });
+  return (
+    <group ref={group} position={[0.75, 0, -0.05]} rotation={[0, Math.PI, 0]}>
+      <mesh position={[0, 0.66, 0]} castShadow>
+        <capsuleGeometry args={[0.22, 0.55, 6, 10]} />
+        <meshToonMaterial color={STALL_COLOR[stall]} gradientMap={toon()} />
+      </mesh>
+      <mesh position={[0, 1.12, 0]} castShadow>
+        <sphereGeometry args={[0.23, 16, 16]} />
+        <meshToonMaterial color="#f0c7a0" gradientMap={toon()} />
+      </mesh>
+      <mesh position={[0, 1.28, -0.02]} castShadow>
+        <sphereGeometry args={[0.24, 12, 10, 0, Math.PI * 2, 0, Math.PI * 0.52]} />
+        <meshToonMaterial color="#3a281d" gradientMap={toon()} />
+      </mesh>
+      <mesh position={[-0.24, 0.72, 0.14]} rotation={[0.1, 0, -0.55]} castShadow>
+        <capsuleGeometry args={[0.06, 0.35, 4, 8]} />
+        <meshToonMaterial color="#f0c7a0" gradientMap={toon()} />
+      </mesh>
+      <mesh position={[0.24, 0.72, 0.14]} rotation={[0.1, 0, 0.55]} castShadow>
+        <capsuleGeometry args={[0.06, 0.35, 4, 8]} />
+        <meshToonMaterial color="#f0c7a0" gradientMap={toon()} />
+      </mesh>
+    </group>
+  );
+}
+
+function Fireflies({ count = 36 }: { count?: number }) {
+  const ref = useRef<THREE.InstancedMesh>(null);
+  const dummy = useMemo(() => new THREE.Object3D(), []);
+  const points = useMemo(() => Array.from({ length: count }, (_, index) => ({
+    x: (Math.random() - 0.5) * 8,
+    y: 0.5 + Math.random() * 3.6,
+    z: -3 + Math.random() * 8,
+    phase: index * 0.73,
+  })), [count]);
+  useFrame((state) => {
+    if (!ref.current) return;
+    points.forEach((point, index) => {
+      const t = state.clock.elapsedTime + point.phase;
+      dummy.position.set(point.x + Math.sin(t * 0.35) * 0.18, point.y + Math.sin(t) * 0.12, point.z);
+      dummy.scale.setScalar(0.7 + Math.sin(t * 1.7) * 0.25);
+      dummy.updateMatrix();
+      ref.current!.setMatrixAt(index, dummy.matrix);
+    });
+    ref.current.instanceMatrix.needsUpdate = true;
+  });
+  return (
+    <instancedMesh ref={ref} args={[undefined, undefined, count]} raycast={() => null}>
+      <sphereGeometry args={[0.025, 6, 6]} />
+      <meshBasicMaterial color="#ffe6a1" transparent opacity={0.75} />
+    </instancedMesh>
   );
 }
 
@@ -325,6 +371,8 @@ function World({
   demand,
   onBuy,
   onProgress,
+  active,
+  stock,
 }: {
   stall: StallId;
   weather: Weather;
@@ -332,6 +380,8 @@ function World({
   demand: number;
   onBuy?: (key: string) => void;
   onProgress: (served: number, night: number) => void;
+  active: boolean;
+  stock?: Record<string, number>;
 }) {
   const [served, setServed] = useState(0);
   const night = weather === "cold" ? 0.25 : weather === "rain" ? 0.45 : weather === "hot" ? 0.05 : 0.15;
@@ -368,15 +418,17 @@ function World({
       <Ground />
       <Trees />
       <Stall stall={stall} />
-      <Crates stall={stall} onBuy={onBuy} />
+      <Shopkeeper stall={stall} />
+      <Crates stall={stall} stock={stock} onBuy={onBuy} />
       <Lanterns night={night} />
+      <Fireflies count={weather === "rain" ? 16 : 36} />
       <Steam on={stall === "ramen"} />
       {weather === "rain" && <Rain count={700} />}
-      {Array.from({ length: Math.max(demand, 1) }, (_, i) => (
+      {Array.from({ length: active ? Math.max(demand, 1) : 3 }, (_, i) => (
         <Customer
           key={i}
           index={i}
-          sold={sold}
+          sold={active ? sold : 0}
           served={served}
           onServe={(n) => {
             setServed((cur) => Math.max(cur, n + 1));
@@ -397,6 +449,7 @@ export default function RunABusinessScene({
   onBuy,
   onDone,
   skipLabel,
+  active = true,
 }: {
   stall: StallId;
   weather: Weather;
@@ -404,8 +457,9 @@ export default function RunABusinessScene({
   demand: number;
   prep?: { buy: Record<string, number> };
   onBuy?: (key: string) => void;
-  onDone: () => void;
+  onDone?: () => void;
   skipLabel: string;
+  active?: boolean;
 }) {
   const [coarse, setCoarse] = useState(false);
   const [served, setServed] = useState(0);
@@ -417,8 +471,8 @@ export default function RunABusinessScene({
     query.addEventListener("change", sync);
     return () => query.removeEventListener("change", sync);
   }, []);
-  useEffect(() => hum(true), []);
   useEffect(() => {
+    if (!active || !onDone) return;
     const ms = 7000 + Math.min(demand, 16) * 700;
     const id = window.setTimeout(() => {
       if (finished.current) return;
@@ -426,22 +480,26 @@ export default function RunABusinessScene({
       onDone();
     }, ms);
     return () => window.clearTimeout(id);
-  }, [demand, onDone]);
+  }, [active, demand, onDone]);
+  const frameloop = usePlayFrameloop(active);
 
   return (
-    <section className="relative h-[560px] overflow-hidden rounded-[1.6rem] border border-[#d7c4a3] bg-[#cfe3b8] shadow-[0_20px_60px_rgba(70,50,20,.16)] sm:h-[640px]">
+    <section className="relative h-[430px] overflow-hidden rounded-2xl bg-[#182016] shadow-[0_28px_90px_rgba(24,20,10,.34)] sm:h-[620px]">
       <Canvas
+        frameloop={frameloop}
         shadows={coarse ? false : "basic"}
         dpr={coarse ? 1 : [1, 1.5]}
         gl={{ antialias: !coarse, alpha: false }}
       >
-        <OrthographicCamera makeDefault position={[11, 12, 11]} zoom={coarse ? 28 : 36} near={0.1} far={80} />
+        <OrthographicCamera makeDefault position={[9, 8.5, 10]} zoom={coarse ? 49 : 58} near={0.1} far={80} />
         <World
           stall={stall}
           weather={weather}
           sold={sold}
           demand={demand}
           onBuy={onBuy}
+          active={active}
+          stock={prep?.buy}
           onProgress={(n) => setServed(n)}
         />
         <OrbitControls
@@ -450,25 +508,26 @@ export default function RunABusinessScene({
           enablePan={false}
           minPolarAngle={Math.PI * 0.24}
           maxPolarAngle={Math.PI * 0.4}
-          minZoom={22}
-          maxZoom={52}
-          target={[0, 0.4, 0]}
+          minZoom={38}
+          maxZoom={72}
+          target={[0, 0.78, -0.15]}
         />
       </Canvas>
-      <div className="pointer-events-none absolute inset-x-0 top-0 flex justify-between p-3">
-        <p className="rounded-full bg-white/85 px-3 py-1 text-xs font-black text-stone-800 shadow">{served}/{sold} sold</p>
-        <button
+      <div className="pointer-events-none absolute inset-x-0 top-0 flex justify-between bg-gradient-to-b from-black/55 to-transparent p-3 sm:p-4">
+        <p className="rounded-lg border border-white/15 bg-black/55 px-3 py-2 font-mono text-xs font-black text-white shadow-lg backdrop-blur-md">{active ? `${served}/${sold}` : "LIVE"}</p>
+        {active && <button
           type="button"
           className="pointer-events-auto rounded-full bg-stone-900 px-3 py-1 text-xs font-black text-white"
           onClick={() => {
             if (finished.current) return;
             finished.current = true;
-            onDone();
+            onDone?.();
           }}
         >
           {skipLabel}
-        </button>
+        </button>}
       </div>
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/60 to-transparent" />
     </section>
   );
 }

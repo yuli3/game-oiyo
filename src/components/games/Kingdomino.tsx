@@ -10,6 +10,7 @@ import {
 } from "../../lib/games/kingdomino";
 import { getRecord, recordResult, type GameRecord } from "../../lib/games/records";
 import { clearKingdominoSave, loadKingdominoSave, storeKingdominoSave } from "../../lib/games/kingdomino-save";
+import { KINGDOMINO_SPRITES } from "../../lib/games/sprites";
 
 const AI_DELAY = 620;
 const DIRS = [[0, 1], [1, 0], [0, -1], [-1, 0]]; // right, down, left, up
@@ -68,11 +69,12 @@ function CellView({ cell, crowns, highlight, onClick, label }: {
   cell: Cell; crowns: number; highlight?: "legal" | "preview" | null; onClick?: () => void; label: string;
 }) {
   const bg = cell ? TERRAIN_COLOR[cell] : "#f4f1ea";
+  const src = cell ? KINGDOMINO_SPRITES[cell] : undefined;
   return (
     <button
       onClick={onClick}
       disabled={!onClick}
-      className={`relative aspect-square min-h-11 w-full rounded-[3px] border transition-transform motion-reduce:transition-none ${
+      className={`relative aspect-square min-h-11 w-full overflow-hidden rounded-[3px] border transition-transform motion-reduce:transition-none ${
         highlight === "legal" ? "border-emerald-500 ring-2 ring-emerald-400/60 cursor-pointer hover:scale-[1.05]"
         : highlight === "preview" ? "border-amber-500 ring-2 ring-amber-400/70"
         : "border-black/10"
@@ -80,7 +82,8 @@ function CellView({ cell, crowns, highlight, onClick, label }: {
       style={{ background: bg }}
       aria-label={label}
     >
-      {cell === "castle" && <span className="absolute inset-0 flex items-center justify-center text-white text-[10px]">🏰</span>}
+      {src && <img src={src} alt="" draggable={false} className="pointer-events-none absolute inset-0 h-full w-full object-cover" />}
+      {cell === "castle" && !src && <span className="absolute inset-0 flex items-center justify-center text-white text-[10px]">🏰</span>}
       <Crowns n={crowns} />
     </button>
   );
@@ -117,7 +120,10 @@ function TileChip({ tile, owner, dim, onClick, youLabel, aiLabel, locale }: {
   tile: Tile; owner: "you" | "ai" | null; dim?: boolean; onClick?: () => void; youLabel: string; aiLabel: string; locale: Locale;
 }) {
   const sq = (s: { terrain: string; crowns: number }) => (
-    <div className="relative w-6 h-6 rounded-[3px] border border-black/10" style={{ background: TERRAIN_COLOR[s.terrain] }}>
+    <div className="relative h-6 w-6 overflow-hidden rounded-[3px] border border-black/10" style={{ background: TERRAIN_COLOR[s.terrain] }}>
+      {KINGDOMINO_SPRITES[s.terrain as keyof typeof KINGDOMINO_SPRITES] && (
+        <img src={KINGDOMINO_SPRITES[s.terrain as keyof typeof KINGDOMINO_SPRITES]} alt="" draggable={false} className="absolute inset-0 h-full w-full object-cover" />
+      )}
       <Crowns n={s.crowns} size={7} />
     </div>
   );

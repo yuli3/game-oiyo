@@ -1,8 +1,9 @@
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Cloud, Environment, Float, Sky } from "@react-three/drei";
+import { Cloud, Environment, Sky } from "@react-three/drei";
 import { Camera, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Volume2, VolumeX } from "lucide-react";
 import { type MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
+import { usePlayFrameloop } from "../../lib/games/play-frameloop";
 import { FLIGHT_SECONDS, START_STATE, airDensity, flightScore, nextSkywardTutorialStep, stepFlight, type FlightState, type SkywardTutorialStep } from "../../lib/games/skyward-atlas";
 
 export interface SkywardSceneCopy {
@@ -83,11 +84,12 @@ export default function SkywardAtlasScene({ copy, audioEnabled, onToggleAudio, o
     if (done.current) return; done.current = true;
     const value = resultRef.current; onFinish({ ...value, score: flightScore(value.distance, value.gates, 0) });
   }, [onFinish]);
+  const frameloop = usePlayFrameloop(true);
   return <div className="relative h-[78vh] min-h-[620px] w-full touch-none overflow-hidden bg-[#b8d8de]"
     onPointerDown={e => { if ((e.target as HTMLElement).closest("button")) return; drag.current={id:e.pointerId,x:e.clientX,y:e.clientY}; e.currentTarget.setPointerCapture(e.pointerId); }}
     onPointerMove={e => { const d=drag.current;if(!d||d.id!==e.pointerId)return;controls.current.lookX=THREE.MathUtils.clamp(controls.current.lookX-(e.clientX-d.x)*.004,-.8,.8);controls.current.lookY=THREE.MathUtils.clamp(controls.current.lookY+(e.clientY-d.y)*.003,-.35,.4);d.x=e.clientX;d.y=e.clientY; }}
     onPointerUp={() => { drag.current=null; }}>
-    <Canvas dpr={coarse ? 1 : [1, 1.45]} shadows={!coarse} camera={{ fov: 62, near: .2, far: 8500 }}>
+    <Canvas frameloop={frameloop} dpr={coarse ? 1 : [1, 1.45]} shadows={!coarse} camera={{ fov: 62, near: .2, far: 8500 }}>
       <color attach="background" args={["#a9ced5"]}/><fogExp2 attach="fog" args={["#b9d2d1", .00032]}/>
       <Sky distance={7000} sunPosition={[350, 480, -500]} inclination={.51} azimuth={.18}/>
       <ambientLight intensity={.72}/><AtmosphereRig shadows={!coarse}/>
@@ -153,7 +155,7 @@ function Terrain({ coarse }: { coarse: boolean }) {
   const geometry=useMemo(()=>{const size=4200,segments=coarse?48:90,g=new THREE.PlaneGeometry(size,size,segments,segments),p=g.attributes.position;for(let i=0;i<p.count;i++)p.setZ(i,terrainHeight(p.getX(i),-p.getY(i)));g.rotateX(-Math.PI/2);g.computeVertexNormals();return g;},[coarse]);
   return <group><mesh geometry={geometry} receiveShadow><meshStandardMaterial color="#71836b" roughness={.95} vertexColors={false}/></mesh>
     <mesh position={[0,72,20]} rotation={[-Math.PI/2,0,0]}><circleGeometry args={[315,64]}/><meshPhysicalMaterial color="#668f98" roughness={.18} metalness={.2} transparent opacity={.82}/></mesh>
-    {Array.from({length:coarse?60:150},(_,i)=>{const x=((i*7919)%3200)-1600,z=((i*3571)%3200)-1600,y=terrainHeight(x,z);return <mesh key={i} position={[x,y+9,z]} castShadow={!coarse}><coneGeometry args={[5+(i%5),18+(i%11),6]}/><meshStandardMaterial color={i%3?"#345846":"#48654d"}/></mesh>;})}
+    {Array.from({length:coarse?40:80},(_,i)=>{const x=((i*7919)%3200)-1600,z=((i*3571)%3200)-1600,y=terrainHeight(x,z);return <mesh key={i} position={[x,y+9,z]} castShadow={!coarse}><coneGeometry args={[5+(i%5),18+(i%11),6]}/><meshStandardMaterial color={i%3?"#345846":"#48654d"}/></mesh>;})}
   </group>;
 }
 function AtmosphereRig({shadows}:{shadows:boolean}) {
@@ -175,7 +177,7 @@ function AtmosphereRig({shadows}:{shadows:boolean}) {
   return <directionalLight ref={sun} castShadow={shadows} position={[300,450,-220]} intensity={2.7} color="#fff1c8" shadow-mapSize={[1024,1024]}/>;
 }
 function CloudLayer({ coarse }: { coarse: boolean }) {
-  return <group>{Array.from({length:coarse?12:24},(_,i)=>{const x=((i*503)%3600)-1800,z=((i*887)%3600)-1800,y=480+(i%6)*95;return <Float key={i} speed={.18} rotationIntensity={.08} floatIntensity={6}><Cloud position={[x,y,z]} opacity={.28} speed={.12} scale={55+(i%4)*12} segments={coarse?8:16} color={i%5===0?"#d9c8b5":"#f5f2e8"}/></Float>;})}</group>;
+  return <group>{Array.from({length:coarse?4:8},(_,i)=>{const x=((i*503)%3600)-1800,z=((i*887)%3600)-1800,y=480+(i%6)*95;return <Cloud key={i} position={[x,y,z]} opacity={.28} speed={.12} scale={55+(i%4)*12} segments={coarse?8:16} color={i%5===0?"#d9c8b5":"#f5f2e8"}/>;})}</group>;
 }
 function Runway(){return <group position={[0,terrainHeight(0,1200)+2,1200]}><mesh rotation={[-Math.PI/2,0,0]} receiveShadow><planeGeometry args={[42,620]}/><meshStandardMaterial color="#48504e" roughness={.95}/></mesh>{Array.from({length:14},(_,i)=><group key={i} position={[0,.5,-280+i*43]}><mesh rotation={[-Math.PI/2,0,0]}><planeGeometry args={[2,18]}/><meshBasicMaterial color="#eee9d5"/></mesh><pointLight position={[-19,1,0]} color="#f6d978" intensity={5} distance={20}/><pointLight position={[19,1,0]} color="#f6d978" intensity={5} distance={20}/></group>)}</group>;}
 function Gates(){return <>{[0,1,2,3,4].map(i=>{const x=Math.sin(i*1.73)*700,z=780-i*600,y=terrainHeight(x,z)+170;return <group key={i} position={[x,y,z]}><mesh><torusGeometry args={[55,3.5,8,36]}/><meshStandardMaterial color="#f2c66d" emissive="#db8b28" emissiveIntensity={2}/></mesh><pointLight color="#eeb34d" intensity={20} distance={160}/></group>;})}</>;}

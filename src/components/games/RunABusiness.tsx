@@ -390,6 +390,14 @@ const COPY = {
 
 const Scene = lazy(() => import("./RunABusinessScene"));
 
+const STALL_ART: Record<StallId, string> = {
+  ramen: "/games/run-business/ramen-stall.webp",
+  lemonade: "/games/run-business/lemonade-stall.webp",
+  pcbang: "/games/run-business/pcbang-stall.webp",
+  salon: "/games/run-business/salon-stall.webp",
+  retail: "/games/run-business/retail-stall.webp",
+};
+
 function newSeed(): string {
   return `d${Math.floor(Math.random() * 1_000_000)}`;
 }
@@ -422,14 +430,14 @@ function Stepper({
   step: number;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card px-3 py-2">
-      <span className="text-sm font-bold">{label}</span>
+    <div className="flex items-center justify-between gap-3 rounded-xl border border-[#d7c8a7] bg-[#fffaf0] px-3 py-2 shadow-sm">
+      <span className="text-sm font-black text-[#3a3529]">{label}</span>
       <div className="flex items-center gap-2">
-        <button type="button" className="min-h-11 min-w-11 rounded-xl border bg-muted text-lg font-black" onClick={() => onChange(Math.max(0, value - step))}>
+        <button type="button" className="min-h-11 min-w-11 rounded-lg border border-[#c9b990] bg-white text-lg font-black text-[#26351f] shadow-sm active:translate-y-px" onClick={() => onChange(Math.max(0, value - step))}>
           −
         </button>
         <span className="w-14 text-center font-mono text-sm font-bold">{step >= 50 ? formatUsd(value) : value}</span>
-        <button type="button" className="min-h-11 min-w-11 rounded-xl border bg-muted text-lg font-black" onClick={() => onChange(value + step)}>
+        <button type="button" className="min-h-11 min-w-11 rounded-lg border border-[#c9b990] bg-white text-lg font-black text-[#26351f] shadow-sm active:translate-y-px" onClick={() => onChange(value + step)}>
           +
         </button>
       </div>
@@ -525,85 +533,108 @@ export default function RunABusiness({ locale }: { locale: Locale }) {
 
   if (phase === "pick") {
     return (
-      <div className="mx-auto max-w-lg space-y-4">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.stall}</p>
-          <h2 className="text-2xl font-black">{t.title}</h2>
-          <p className="mt-1 text-sm text-muted-foreground">{t.choose}</p>
+      <div className="mx-auto max-w-5xl overflow-hidden rounded-2xl bg-[#1d2419] text-white shadow-[0_30px_90px_rgba(30,28,18,.24)]">
+        <div className="relative overflow-hidden px-5 pb-5 pt-7 sm:px-8 sm:pb-7 sm:pt-10">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(198,153,75,.24),transparent_45%),linear-gradient(135deg,#273322,#171b16)]" />
+          <div className="relative max-w-2xl">
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-[#d9bd7a]">{t.stall}</p>
+            <h2 className="mt-2 text-3xl font-black tracking-tight sm:text-5xl">{t.title}</h2>
+            <p className="mt-3 text-sm leading-6 text-white/70 sm:text-base">{t.choose}</p>
+          </div>
         </div>
-        <label className="block text-sm">
-          <span className="font-bold">{t.seed}</span>
-          <input value={seed} onChange={(e) => setSeed(e.target.value)} className="mt-1 h-11 w-full rounded-xl border px-3 font-mono" />
-        </label>
-        <div>
-          <p className="mb-2 text-sm font-bold">{t.horizon}</p>
-          <div className="grid grid-cols-2 gap-2">
-            {(Object.keys(HORIZON_DAYS) as HorizonId[]).map((id) => (
+        <div className="space-y-5 bg-[#f5efe2] p-4 text-[#211f18] sm:p-7">
+          <div className="grid gap-3 sm:grid-cols-[1fr_1.4fr]">
+            <label className="block text-sm">
+              <span className="font-black">{t.seed}</span>
+              <input value={seed} onChange={(e) => setSeed(e.target.value)} className="mt-2 h-12 w-full rounded-xl border border-[#cbbd9d] bg-white px-3 font-mono shadow-inner" />
+            </label>
+            <div>
+              <p className="text-sm font-black">{t.horizon}</p>
+              <div className="mt-2 grid grid-cols-4 gap-1.5">
+                {(Object.keys(HORIZON_DAYS) as HorizonId[]).map((id) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setHorizon(id)}
+                    className={`min-h-12 rounded-xl px-2 text-xs font-black sm:text-sm ${horizon === id ? "bg-[#26351f] text-white shadow-md" : "border border-[#cbbd9d] bg-white text-[#514a39]"}`}
+                  >
+                    {t.horizons[id]}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {(Object.keys(STALLS) as StallId[]).map((id, index) => (
               <button
                 key={id}
                 type="button"
-                onClick={() => setHorizon(id)}
-                className={`min-h-11 rounded-xl px-3 text-sm font-black ${horizon === id ? "bg-slate-900 text-white" : "border bg-white"}`}
+                onClick={() => pickStall(id)}
+                className={`group relative min-h-52 overflow-hidden rounded-2xl text-left shadow-[0_12px_34px_rgba(40,32,18,.16)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#9fb67d] ${index === 0 ? "sm:col-span-2 sm:min-h-72" : ""}`}
               >
-                {t.horizons[id]}
+                <img src={STALL_ART[id]} alt="" width="960" height="640" loading={index === 0 ? "eager" : "lazy"} className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.035] motion-reduce:transition-none" />
+                <span className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
+                <span className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
+                  <span className="block text-xl font-black text-white sm:text-2xl">{t.stalls[id].name}</span>
+                  <span className="mt-1 block text-xs font-bold text-white/70">{t.start} · {t.horizons[horizon]}</span>
+                </span>
               </button>
             ))}
           </div>
+          <p className="text-xs text-[#706752]">{t.hint}</p>
         </div>
-        <div className="grid gap-3">
-          {(Object.keys(STALLS) as StallId[]).map((id) => (
-            <button key={id} type="button" onClick={() => pickStall(id)} className="min-h-14 rounded-2xl border bg-white px-4 py-3 text-left">
-              <p className="font-black">{t.stalls[id].name}</p>
-              <p className="text-xs text-muted-foreground">{t.start} · {t.horizons[horizon]}</p>
-            </button>
-          ))}
-        </div>
-        <p className="text-xs text-muted-foreground">{t.hint}</p>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4">
-      <div>
-        <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+    <div className="mx-auto max-w-5xl space-y-4">
+      <div className="overflow-hidden rounded-2xl bg-[#172016] text-white shadow-[0_28px_90px_rgba(30,28,18,.22)]">
+        <div className="flex flex-wrap items-end justify-between gap-3 border-b border-white/10 px-4 py-4 sm:px-6">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-[#d9bd7a]">
           {stallCopy.name} · {t.horizons[run.horizon]} · USD
-        </p>
-        <h2 className="text-2xl font-black">{t.title}</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {t.day} {run.day} · {t.cash} {formatUsd(run.cashCents)} · {t.reputation} {run.reputation ?? 50}
-          {(run.debtCents ?? 0) > 0 ? ` · ${t.debt} ${formatUsd(run.debtCents)}` : ""}
-        </p>
-      </div>
-
-      {rush && (
-        <Suspense fallback={<p className="rounded-2xl border p-6 text-sm font-bold">{t.loading}</p>}>
-          <Scene
-            stall={run.stall}
-            weather={card.weather}
-            sold={rush.sold}
-            demand={rush.demand}
-            prep={prep}
-            onBuy={(key) => setPrep((cur) => ({ ...cur, buy: { ...cur.buy, [key]: (cur.buy[key] ?? 0) + 1 } }))}
-            onDone={closeShift}
-            skipLabel={t.skip}
-          />
-        </Suspense>
-      )}
-
-      <label className="block text-sm">
-        <span className="font-bold">{t.seed}</span>
-        <input
-          value={seed}
-          onChange={(e) => setSeed(e.target.value)}
-          onBlur={() => apply(startRun({ seed: seed || newSeed(), stall: run.stall, horizon: run.horizon }))}
-          className="mt-1 h-11 w-full rounded-xl border px-3 font-mono"
-        />
-      </label>
-
-      <div className="rounded-2xl border bg-lime-50/60 p-4 text-sm leading-6">
-        <p className="font-black">{weather}</p>
-        <p className="text-muted-foreground">{event}</p>
+            </p>
+            <h2 className="mt-1 text-2xl font-black tracking-tight sm:text-3xl">{t.title}</h2>
+          </div>
+          <div className="grid grid-cols-3 gap-2 text-right">
+            <div><p className="text-[10px] font-bold uppercase tracking-wider text-white/50">{t.day}</p><p className="font-mono text-sm font-black">{run.day}</p></div>
+            <div><p className="text-[10px] font-bold uppercase tracking-wider text-white/50">{t.cash}</p><p className="font-mono text-sm font-black text-[#f0d58f]">{formatUsd(run.cashCents)}</p></div>
+            <div><p className="text-[10px] font-bold uppercase tracking-wider text-white/50">{t.reputation}</p><p className="font-mono text-sm font-black">{run.reputation ?? 50}</p></div>
+          </div>
+        </div>
+        {rush ? (
+          <Suspense fallback={<p className="min-h-96 p-6 text-sm font-bold">{t.loading}</p>}>
+            <Scene
+              key={`rush-${run.day}-${rush.sold}`}
+              stall={run.stall}
+              weather={card.weather}
+              sold={rush.sold}
+              demand={rush.demand}
+              prep={prep}
+              onBuy={(key) => setPrep((cur) => ({ ...cur, buy: { ...cur.buy, [key]: (cur.buy[key] ?? 0) + 1 } }))}
+              onDone={closeShift}
+              skipLabel={t.skip}
+            />
+          </Suspense>
+        ) : (
+          <div className="group relative h-[430px] overflow-hidden sm:h-[620px]">
+            <img src={STALL_ART[run.stall]} alt="" width="960" height="640" className="h-full w-full object-cover transition-transform duration-[1800ms] group-hover:scale-[1.025] motion-reduce:transition-none" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20" />
+            <div className="absolute inset-x-0 bottom-0 p-4 sm:p-6">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-[#f0d58f]">{weather}</p>
+              <p className="mt-1 max-w-lg text-sm font-bold text-white/80">{event}</p>
+            </div>
+          </div>
+        )}
+        <div className="grid gap-2 border-t border-white/10 bg-[#202a1d] px-4 py-3 text-sm sm:grid-cols-[1fr_auto] sm:px-6">
+          {rush ? (
+            <div><p className="font-black text-[#f0d58f]">{weather}</p><p className="text-xs text-white/65">{event}</p></div>
+          ) : (
+            <div><p className="font-black text-[#f0d58f]">{t.inventory}</p><p className="text-xs text-white/65">{pack.keys.map((key) => `${stallCopy.keys[key as keyof typeof stallCopy.keys] ?? key} ${prep.buy[key] ?? 0}`).join(" · ")}</p></div>
+          )}
+          {!rush && <p className="self-center text-xs font-bold text-white/50">{t.price} {formatUsd(prep.priceCents)}</p>}
+        </div>
       </div>
 
       {books && (
@@ -650,33 +681,36 @@ export default function RunABusiness({ locale }: { locale: Locale }) {
       {run.bust ? (
         <p className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-800">{t.bust}</p>
       ) : rush ? null : (
-        <>
-          {pack.keys.map((key) => (
-            <Stepper
-              key={key}
-              label={stallCopy.keys[key as keyof typeof stallCopy.keys] ?? key}
-              value={prep.buy[key] ?? 0}
-              step={1}
-              onChange={(n) => setPrep({ ...prep, buy: { ...prep.buy, [key]: n } })}
-            />
-          ))}
-          <Stepper label={t.price} value={prep.priceCents} step={50} onChange={(n) => setPrep({ ...prep, priceCents: Math.max(50, n) })} />
-          <div className="flex gap-2">
-            {([0, 1, 2] as Richness[]).map((r) => (
-              <button
-                key={r}
-                type="button"
-                onClick={() => setPrep({ ...prep, richness: r })}
-                className={`min-h-11 flex-1 rounded-full px-3 text-sm font-black ${prep.richness === r ? "bg-slate-900 text-white" : "border bg-white"}`}
-              >
-                {r === 0 ? t.plain : r === 1 ? t.normal : t.rich}
-              </button>
+        <div className="overflow-hidden rounded-2xl border border-[#cbbd9d] bg-[#efe5d1] shadow-[0_16px_48px_rgba(50,40,22,.12)]">
+          <div className="border-b border-[#cbbd9d] bg-[#26351f] px-4 py-3 text-xs font-black uppercase tracking-[0.18em] text-[#f0d58f]">{t.open}</div>
+          <div className="grid gap-3 p-3 sm:grid-cols-2 sm:p-4">
+            {pack.keys.map((key) => (
+              <Stepper
+                key={key}
+                label={stallCopy.keys[key as keyof typeof stallCopy.keys] ?? key}
+                value={prep.buy[key] ?? 0}
+                step={1}
+                onChange={(n) => setPrep({ ...prep, buy: { ...prep.buy, [key]: n } })}
+              />
             ))}
+            <Stepper label={t.price} value={prep.priceCents} step={50} onChange={(n) => setPrep({ ...prep, priceCents: Math.max(50, n) })} />
           </div>
-          <button type="button" onClick={openShop} className="min-h-11 w-full rounded-2xl bg-slate-900 text-sm font-black text-white">
+          <div className="grid grid-cols-3 gap-2 px-3 pb-3 sm:px-4">
+              {([0, 1, 2] as Richness[]).map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => setPrep({ ...prep, richness: r })}
+                  className={`min-h-12 rounded-xl px-3 text-sm font-black ${prep.richness === r ? "bg-[#26351f] text-white shadow-md" : "border border-[#c9b990] bg-[#fffaf0] text-[#514a39]"}`}
+                >
+                  {r === 0 ? t.plain : r === 1 ? t.normal : t.rich}
+                </button>
+              ))}
+          </div>
+          <button type="button" onClick={openShop} className="min-h-14 w-full bg-[#b95032] px-4 text-base font-black text-white shadow-[inset_0_1px_rgba(255,255,255,.2)] transition-colors hover:bg-[#a64228] active:bg-[#913921] motion-reduce:transition-none">
             {t.open}
           </button>
-        </>
+        </div>
       )}
 
       <div className="flex gap-2">

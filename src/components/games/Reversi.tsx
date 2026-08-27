@@ -6,6 +6,7 @@ import type { AiLevel, GameMode } from '../../lib/games/ai/types';
 import { getRecord, recordResult, type GameRecord } from '../../lib/games/records';
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 import { clearReversiSave, loadReversiSave, storeReversiSave } from '../../lib/games/active-game-save';
+import { REVERSI_SPRITES } from '../../lib/games/sprites';
 
 const SIZE = 8;
 const AI_PLAYER = 2; // AI plays white; human opens as black
@@ -153,11 +154,11 @@ const Reversi: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
             <div className="flex justify-between items-center mb-6">
                 <div className="flex gap-4">
                     <div className={`flex items-center gap-2 p-3 rounded-2xl border ${!reducedMotion ? 'transition-all' : ''} ${game.current === 1 ? 'bg-primary/10 border-primary' : 'bg-muted border-transparent opacity-50'}`}>
-                        <div className="w-4 h-4 rounded-full bg-slate-900" />
+                        <img src={REVERSI_SPRITES.black} alt="" draggable={false} className="h-4 w-4 object-contain" />
                         <span className="text-xs font-black">{t.black}: {bCount}</span>
                     </div>
                     <div className={`flex items-center gap-2 p-3 rounded-2xl border ${!reducedMotion ? 'transition-all' : ''} ${game.current === 2 ? 'bg-primary/10 border-primary' : 'bg-muted border-transparent opacity-50'}`}>
-                        <div className="w-4 h-4 rounded-full bg-white border border-slate-300" />
+                        <img src={REVERSI_SPRITES.white} alt="" draggable={false} className="h-4 w-4 object-contain" />
                         <span className="text-xs font-black">{t.white}: {wCount}</span>
                     </div>
                 </div>
@@ -189,9 +190,12 @@ const Reversi: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                     >
                         {validMoves.includes(i) && <div className="h-2.5 w-2.5 rounded-full border-2 border-white bg-slate-900/70" />}
                         {cell !== null && (
-                            <div className={`w-[85%] h-[85%] rounded-full shadow-lg ${!reducedMotion ? 'transform transition-all animate-in zoom-in-75 duration-300' : ''} ${
-                                cell === 1 ? 'bg-slate-900 border-b-4 border-slate-700' : 'bg-white border-b-4 border-slate-200'
-                            }`} />
+                            <img
+                                src={cell === 1 ? REVERSI_SPRITES.black : REVERSI_SPRITES.white}
+                                alt=""
+                                draggable={false}
+                                className={`pointer-events-none h-[85%] w-[85%] object-contain drop-shadow-md ${!reducedMotion ? 'animate-in zoom-in-75 duration-300' : ''}`}
+                            />
                         )}
                     </button>
                 ))}

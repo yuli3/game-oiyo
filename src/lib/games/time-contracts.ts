@@ -28,19 +28,55 @@ export function recordedElapsedSeconds(startedAt: number | null, now: number): n
 
 export type DeltaFrame = (deltaSeconds: number, now: number) => void;
 
-/** RAF driver: pauses while hidden and caps the first frame after a stall. */
+/** RAF driver: cancels the frame callback while hidden; resumes on visible. */
 export function createDeltaLoop(step: DeltaFrame): { start: () => void; stop: () => void } {
   let raf = 0;
   let previous: number | null = null;
+  let running = false;
+
   const tick = (now: number) => {
-    if (document.hidden) { previous = null; raf = requestAnimationFrame(tick); return; }
+    raf = 0;
+    if (!running) return;
+    if (typeof document !== "undefined" && document.hidden) {
+      previous = null;
+      return;
+    }
     const delta = frameDeltaSeconds(previous, now);
     previous = now;
     step(delta, now);
     raf = requestAnimationFrame(tick);
   };
+
+  const onVisibility = () => {
+    if (!running) return;
+    if (typeof document !== "undefined" && document.hidden) {
+      if (raf) cancelAnimationFrame(raf);
+      raf = 0;
+      previous = null;
+      return;
+    }
+    if (!raf) raf = requestAnimationFrame(tick);
+  };
+
   return {
-    start: () => { if (!raf) { previous = null; raf = requestAnimationFrame(tick); } },
-    stop: () => { if (raf) cancelAnimationFrame(raf); raf = 0; previous = null; },
+    start: () => {
+      if (running) return;
+      running = true;
+      previous = null;
+      if (typeof document !== "undefined") {
+        document.addEventListener("visibilitychange", onVisibility);
+        if (document.hidden) return;
+      }
+      raf = requestAnimationFrame(tick);
+    },
+    stop: () => {
+      running = false;
+      if (raf) cancelAnimationFrame(raf);
+      raf = 0;
+      previous = null;
+      if (typeof document !== "undefined") {
+        document.removeEventListener("visibilitychange", onVisibility);
+      }
+    },
   };
 }

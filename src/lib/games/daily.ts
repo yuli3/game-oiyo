@@ -26,6 +26,13 @@ export function previousDayKey(key: string): string {
   return `${prev.getUTCFullYear()}-${String(prev.getUTCMonth() + 1).padStart(2, "0")}-${String(prev.getUTCDate()).padStart(2, "0")}`;
 }
 
+/** Whole minutes until the next device-local calendar day. */
+export function minutesUntilNextDaily(now: Date = new Date()): number {
+  const next = new Date(now);
+  next.setHours(24, 0, 0, 0);
+  return Math.max(1, Math.ceil((next.getTime() - now.getTime()) / 60_000));
+}
+
 /** Deterministic PRNG (mulberry32) — same seed, same sequence, every engine. */
 export function mulberry32(seed: number): () => number {
   let a = seed >>> 0;

@@ -12,6 +12,11 @@ import {
 import { createConnectFourBoard, dropDisc, findDropRow, type ConnectFourBoard } from "../../lib/games/connect-four";
 import { opponentBlurb, opponentName, pickOpponent } from '../../lib/games/opponents';
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
+import { CONNECT_FOUR_SPRITES } from "../../lib/games/sprites";
+
+function connectFourSrc(player: 1 | 2) {
+  return player === 1 ? CONNECT_FOUR_SPRITES.red : CONNECT_FOUR_SPRITES.yellow;
+}
 
 type GameStatus = "playing" | "won" | "draw";
 
@@ -23,7 +28,6 @@ const ROWS = 6;
 const COLS = 7;
 const AI_PLAYER = 2; // AI plays yellow; human opens as red
 const AI_DELAY_MS = 500;
-const PLAYER_COLORS: Record<1 | 2, string> = { 1: "bg-red-500", 2: "bg-yellow-400" };
 const PLAYER_TEXT_COLORS: Record<1 | 2, string> = { 1: "text-red-500", 2: "text-yellow-500" };
 const PLAYER_EMOJI: Record<1 | 2, string> = { 1: "🔴", 2: "🟡" };
 
@@ -484,11 +488,11 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
                 className="flex items-center justify-center"
               >
                 <div
-                  className={`rounded-full transition-opacity motion-reduce:transition-none ${
-                    PLAYER_COLORS[currentPlayer]
-                  } ${showPreview ? "opacity-30" : "opacity-0"}`}
+                  className={`rounded-full transition-opacity motion-reduce:transition-none ${showPreview ? "opacity-30" : "opacity-0"}`}
                   style={{ width: `${cellSize - 10}px`, height: `${cellSize - 10}px` }}
-                />
+                >
+                  <img src={connectFourSrc(currentPlayer)} alt="" draggable={false} className="h-full w-full object-contain" />
+                </div>
               </div>
             );
           })}
@@ -509,14 +513,7 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
               const winHighlight = isWinCell(r, c);
               const isLastMove = lastMove !== null && lastMove.row === r && lastMove.col === c;
 
-              let diskClass = "bg-blue-900/60";
-              if (isFalling) {
-                diskClass = PLAYER_COLORS[fallingCell!.player];
-              } else if (cell === 1) {
-                diskClass = "bg-red-500";
-              } else if (cell === 2) {
-                diskClass = "bg-yellow-400";
-              }
+              const discPlayer: 1 | 2 | null = isFalling ? fallingCell!.player : cell === 1 || cell === 2 ? cell : null;
 
               return (
                 <div
@@ -531,22 +528,24 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
                     className="absolute inset-0 rounded-full bg-card/90"
                     style={{ margin: "4px" }}
                   />
-                  {/* Disk */}
-                  <div
-                    className={`absolute rounded-full ${reducedMotion ? 'transition-opacity' : 'transition-all'} ${diskClass} ${
-                      isFalling && !reducedMotion ? "animate-fall" : ""
-                    } ${winHighlight ? `ring-4 ring-white ring-offset-1 ring-offset-blue-700 ${reducedMotion ? '' : 'scale-110'} z-10` : isLastMove ? "ring-2 ring-white/80 ring-offset-1 ring-offset-blue-700 z-10" : ""}`}
-                    style={{
-                      margin: "5px",
-                      inset: "0",
-                      ...(isFalling && !reducedMotion
-                        ? {
-                            transform: `translateY(${-(fallingCell!.row * (cellSize + cellGap))}px)`,
-                            transition: "transform 0.3s cubic-bezier(0.55, 0, 1, 0.45)",
-                          }
-                        : {}),
-                    }}
-                  />
+                  {discPlayer ? (
+                    <img
+                      src={connectFourSrc(discPlayer)}
+                      alt=""
+                      draggable={false}
+                      className={`absolute inset-[5px] object-contain ${reducedMotion ? "transition-opacity" : "transition-all"} ${
+                        isFalling && !reducedMotion ? "animate-fall" : ""
+                      } ${winHighlight ? `ring-4 ring-white ring-offset-1 ring-offset-blue-700 ${reducedMotion ? "" : "scale-110"} z-10` : isLastMove ? "ring-2 ring-white/80 ring-offset-1 ring-offset-blue-700 z-10" : ""}`}
+                      style={{
+                        ...(isFalling && !reducedMotion
+                          ? {
+                              transform: `translateY(${-(fallingCell!.row * (cellSize + cellGap))}px)`,
+                              transition: "transform 0.3s cubic-bezier(0.55, 0, 1, 0.45)",
+                            }
+                          : {}),
+                      }}
+                    />
+                  ) : null}
                 </div>
               );
             })
@@ -586,11 +585,11 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
 
       {/* Player legend */}
       <div className="mt-4 flex justify-center gap-6 text-xs text-muted-foreground">
-        <span>
-          🔴 {t.player} 1
+        <span className="inline-flex items-center gap-1">
+          <img src={CONNECT_FOUR_SPRITES.red} alt="" draggable={false} className="h-4 w-4 object-contain" /> {t.player} 1
         </span>
-        <span>
-          🟡 {t.player} 2
+        <span className="inline-flex items-center gap-1">
+          <img src={CONNECT_FOUR_SPRITES.yellow} alt="" draggable={false} className="h-4 w-4 object-contain" /> {t.player} 2
         </span>
       </div>
 

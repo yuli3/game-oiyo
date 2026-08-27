@@ -1,4 +1,4 @@
-export type AimMode = "gridshot" | "flick" | "tracking" | "precision";
+export type AimMode = "gridshot" | "flick" | "tracking" | "precision" | "recovery";
 export type AimDifficulty = "easy" | "normal" | "hard" | "expert";
 
 export const AIM_RANKS = ["Bronze", "Silver", "Gold", "Platinum", "Diamond", "Master"] as const;
@@ -9,6 +9,7 @@ const NORMAL_RANK_BANDS: Record<AimMode, number[]> = {
   flick: [16, 26, 36, 46, 58],
   precision: [12, 20, 28, 36, 46],
   tracking: [40, 55, 68, 80, 90],
+  recovery: [12, 20, 28, 36, 46],
 };
 
 const DIFFICULTY_RANK_FACTOR: Record<AimDifficulty, number> = {

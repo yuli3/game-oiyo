@@ -170,6 +170,7 @@ function Dungeon({ hero, copy, onFinish }: { hero: HeroClass; copy: Copy; onFini
     const keyUp = (e: KeyboardEvent) => keys.current.delete(e.key.toLowerCase());
     window.addEventListener("resize", resize); window.addEventListener("keydown", keyDown); window.addEventListener("keyup", keyUp); resize(); spawnRoom();
     const loop = (now: number) => {
+      if (document.hidden) { raf = 0; return; }
       raf = requestAnimationFrame(loop); const dt = Math.min(.033, (now - last) / 1000); last = now;
       if (frozen > 0) { frozen--; draw(now); return; }
       const down = keys.current, touch = input.current;
@@ -219,8 +220,26 @@ function Dungeon({ hero, copy, onFinish }: { hero: HeroClass; copy: Copy; onFini
       if (state.combo > 1) { ctx.fillStyle = "#ffd36b"; ctx.font = "900 24px ui-monospace"; ctx.fillText(`${state.combo} ${copy.hud.combo}`, width - 170, 48); }
       ctx.restore();
     };
+    const onVisibility = () => {
+      if (document.hidden) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+        return;
+      }
+      if (state.finished || raf) return;
+      last = performance.now();
+      raf = requestAnimationFrame(loop);
+    };
+    document.addEventListener("visibilitychange", onVisibility);
     raf = requestAnimationFrame(loop);
-    return () => { cancelAnimationFrame(raf); audio.stop(); window.removeEventListener("resize", resize); window.removeEventListener("keydown", keyDown); window.removeEventListener("keyup", keyUp); };
+    return () => {
+      cancelAnimationFrame(raf);
+      audio.stop();
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("resize", resize);
+      window.removeEventListener("keydown", keyDown);
+      window.removeEventListener("keyup", keyUp);
+    };
   }, [copy, hero, onFinish]);
 
   const press = (key: keyof typeof input.current, value: number | boolean) => { (input.current as unknown as Record<string, number | boolean>)[key] = value; };

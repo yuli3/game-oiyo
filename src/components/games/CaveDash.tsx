@@ -19,6 +19,50 @@ import {
   type CaveDashState,
 } from "../../lib/games/cave-dash";
 import { clearCaveDashSave, loadCaveDashSave, storeCaveDashSave } from "../../lib/games/cave-dash-save";
+import { CAVE_DASH_SPRITES } from "../../lib/games/sprites";
+
+type CaveArt = Record<keyof typeof CAVE_DASH_SPRITES, HTMLImageElement>;
+function loadCaveArt(): CaveArt | null {
+  if (typeof Image === "undefined") return null;
+  const art = {} as CaveArt;
+  for (const [key, src] of Object.entries(CAVE_DASH_SPRITES)) {
+    const image = new Image();
+    image.src = src;
+    art[key as keyof CaveArt] = image;
+  }
+  return art;
+}
+function paintBox(
+  ctx: CanvasRenderingContext2D,
+  image: HTMLImageElement | undefined,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+) {
+  if (!image?.complete || image.naturalWidth === 0 || width <= 0 || height <= 0) return false;
+  const tileH = width * (image.naturalHeight / image.naturalWidth);
+  let yy = y;
+  while (yy < y + height) {
+    const slice = Math.min(tileH, y + height - yy);
+    const srcH = image.naturalHeight * (slice / tileH);
+    ctx.drawImage(image, 0, 0, image.naturalWidth, srcH, x, yy, width, slice);
+    yy += slice;
+  }
+  return true;
+}
+function paintCentered(
+  ctx: CanvasRenderingContext2D,
+  image: HTMLImageElement | undefined,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+) {
+  if (!image?.complete || image.naturalWidth === 0) return false;
+  ctx.drawImage(image, x - width / 2, y - height / 2, width, height);
+  return true;
+}
 
 /* ────────────────────────────────────────────────────────────────────────────
  * Cave Dash — a one-tap endless flyer. Tap (or click / press) to give the ship a
@@ -70,6 +114,8 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
   const prefersReducedMotion = usePrefersReducedMotion();
   const lastFrame = useRef<number | null>(null);
   const audioContext = useRef<AudioContext | null>(null);
+  const artRef = useRef<CaveArt | null>(null);
+  if (artRef.current === null) artRef.current = loadCaveArt();
 
   const playTone = useCallback((kind: "flap" | "point" | "crash") => {
     if (mutedRef.current || typeof window === "undefined") return;
@@ -135,20 +181,31 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
     // parallax stars
     ctx.fillStyle = "rgba(255,255,255,0.4)";
     for (let i = 0; i < 24; i++) ctx.fillRect((i * 97 - gs.elapsedFrames * 0.6) % CAVE_WIDTH + (((i * 97 - gs.elapsedFrames * 0.6) % CAVE_WIDTH) < 0 ? CAVE_WIDTH : 0), (i * 71) % CAVE_HEIGHT, 1.5, 1.5);
-    // walls
+    const art = artRef.current;
     for (const wl of gs.walls) {
-      ctx.fillStyle = "#8b5cf6";
-      ctx.fillRect(wl.x, 0, CAVE_WALL_WIDTH, wl.gapY);
-      ctx.fillRect(wl.x, wl.gapY + CAVE_GAP, CAVE_WALL_WIDTH, CAVE_HEIGHT - (wl.gapY + CAVE_GAP));
-      ctx.fillStyle = "#a78bfa";
-      ctx.fillRect(wl.x, wl.gapY - 6, CAVE_WALL_WIDTH, 6);
-      ctx.fillRect(wl.x, wl.gapY + CAVE_GAP, CAVE_WALL_WIDTH, 6);
+      if (!paintBox(ctx, art?.wall, wl.x, 0, CAVE_WALL_WIDTH, wl.gapY)) {
+        ctx.fillStyle = "#8b5cf6";
+        ctx.fillRect(wl.x, 0, CAVE_WALL_WIDTH, wl.gapY);
+      }
+      const bottomY = wl.gapY + CAVE_GAP;
+      const bottomH = CAVE_HEIGHT - bottomY;
+      if (!paintBox(ctx, art?.wall, wl.x, bottomY, CAVE_WALL_WIDTH, bottomH)) {
+        ctx.fillStyle = "#8b5cf6";
+        ctx.fillRect(wl.x, bottomY, CAVE_WALL_WIDTH, bottomH);
+      }
     }
-    // ship
-    ctx.beginPath(); ctx.fillStyle = "#c4b5fd";
-    ctx.arc(CAVE_SHIP_X, gs.y, CAVE_SHIP_RADIUS, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = "#0b1020";
-    ctx.fillRect(CAVE_SHIP_X - 2, gs.y - 2, 4, 4);
+    const shipW = CAVE_SHIP_RADIUS * 3.6;
+    const shipH = CAVE_SHIP_RADIUS * 2.1;
+    ctx.save();
+    ctx.translate(CAVE_SHIP_X, gs.y);
+    ctx.rotate(Math.atan2(gs.vy, 8) * 0.35);
+    if (!paintCentered(ctx, art?.ship, 0, 0, shipW, shipH)) {
+      ctx.beginPath(); ctx.fillStyle = "#c4b5fd";
+      ctx.arc(0, 0, CAVE_SHIP_RADIUS, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#0b1020";
+      ctx.fillRect(-2, -2, 4, 4);
+    }
+    ctx.restore();
 
     if (gs.status === "over") { endGame(gs.score); return; }
     rafRef.current = requestAnimationFrame(loop);

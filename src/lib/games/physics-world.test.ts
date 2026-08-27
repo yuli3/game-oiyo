@@ -54,6 +54,19 @@ describe("createPhysicsWorld", () => {
     expect(calls).toEqual(["runner.stop", "events.off", "composite.clear"]);
   });
 
+  it("stop is idempotent and run restarts the runner", () => {
+    const { Matter, calls } = makeMatter();
+    const handle = createPhysicsWorld(Matter, { setup: () => [] });
+    calls.length = 0;
+    handle.stop();
+    handle.stop();
+    expect(calls).toEqual(["runner.stop"]);
+    calls.length = 0;
+    handle.run();
+    handle.run();
+    expect(calls).toEqual(["runner.run"]);
+  });
+
   it("destroy is idempotent", () => {
     // StrictMode double-invoke and an unmount racing a state update both call
     // this twice; stopping a stopped runner must not throw or double-clear.

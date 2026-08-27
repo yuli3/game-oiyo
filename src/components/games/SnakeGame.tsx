@@ -3,6 +3,7 @@ import { GameContainer } from '../ui/game/GamePrimitives';
 import { getBest, recordAchievementEvent, recordBest } from '../../lib/games/records';
 import { bufferSnakeDirection, createSnakeGame, pauseSnake, resumeSnake, SNAKE_GRID_SIZE, snakeTickMilliseconds, steerSnake, tickSnakeWithCause, type SnakeDeathCause, type SnakeDirection, type SnakeState } from '../../lib/games/snake';
 import { clearSnakeSave, loadSnakeSave, storeSnakeSave } from '../../lib/games/snake-save';
+import { SNAKE_SPRITES } from '../../lib/games/sprites';
 
 const LEGACY_BEST_KEY = 'oiyo-snake-best'; // pre-unification key, read once for migration
 
@@ -219,18 +220,46 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             >
                 {/* SVG Grid for Snake */}
                 <svg viewBox={`0 0 ${SNAKE_GRID_SIZE} ${SNAKE_GRID_SIZE}`} className="w-full h-full" aria-label={t.title}>
-                    {/* Food */}
                     <rect
                         x={(game?.food.x ?? 5) + 0.1} y={(game?.food.y ?? 5) + 0.1} width={0.8} height={0.8} rx="0.2"
                         className="fill-chart-1 animate-pulse motion-reduce:animate-none"
                     />
-                    {/* Snake */}
-                    {(game?.snake ?? [{ x: 10, y: 10 }]).map((s, i) => (
-                        <rect
-                            key={i} x={s.x + 0.05} y={s.y + 0.05} width={0.9} height={0.9} rx="0.25"
-                            className={i === 0 ? "fill-primary" : "fill-primary/60"}
-                        />
-                    ))}
+                    <image
+                        href={SNAKE_SPRITES.apple}
+                        x={(game?.food.x ?? 5)}
+                        y={(game?.food.y ?? 5)}
+                        width={1}
+                        height={1}
+                    />
+                    {(game?.snake ?? [{ x: 10, y: 10 }]).map((segment, i) => {
+                        if (i === 0) {
+                            const dir = game?.direction ?? { x: 1, y: 0 };
+                            const angle = dir.x === 1 ? 0 : dir.x === -1 ? 180 : dir.y === 1 ? 90 : -90;
+                            const cx = segment.x + 0.5;
+                            const cy = segment.y + 0.5;
+                            return (
+                                <image
+                                    key={i}
+                                    href={SNAKE_SPRITES.head}
+                                    x={segment.x}
+                                    y={segment.y}
+                                    width={1}
+                                    height={1}
+                                    transform={`rotate(${angle} ${cx} ${cy})`}
+                                />
+                            );
+                        }
+                        return (
+                            <image
+                                key={i}
+                                href={SNAKE_SPRITES.body}
+                                x={segment.x}
+                                y={segment.y}
+                                width={1}
+                                height={1}
+                            />
+                        );
+                    })}
                 </svg>
 
                 {status !== 'playing' && (

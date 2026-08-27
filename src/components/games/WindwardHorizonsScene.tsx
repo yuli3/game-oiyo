@@ -1,5 +1,6 @@
 import { Html, Line } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { usePlayFrameloop } from "../../lib/games/play-frameloop";
 import {
   Anchor,
   ChevronLeft,
@@ -302,6 +303,7 @@ export default function WindwardHorizonsScene({
 
   const windRelativeDegrees = THREE.MathUtils.radToDeg(signedAngleDifference(hud.windHeading, hud.heading));
   const used = cargoUsed(trade.cargo);
+  const frameloop = usePlayFrameloop(true);
 
   return (
     <div
@@ -313,10 +315,11 @@ export default function WindwardHorizonsScene({
       onWheel={zoomCamera}
     >
       <Canvas
+        frameloop={frameloop}
         shadows={coarse ? false : "percentage"}
         dpr={coarse ? 1 : [1, 1.55]}
         camera={{ fov: 53, near: 0.08, far: 900, position: [0, 9, 20] }}
-        gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
+        gl={{ antialias: true, alpha: false, powerPreference: coarse ? "default" : "high-performance" }}
         onCreated={({ gl }) => {
           gl.outputColorSpace = THREE.SRGBColorSpace;
           gl.toneMapping = THREE.ACESFilmicToneMapping;
@@ -821,7 +824,7 @@ function OceanSurface({
 
   return (
     <mesh ref={mesh} rotation={[-Math.PI / 2, 0, 0]} receiveShadow frustumCulled={false}>
-      <planeGeometry args={[580, 580, coarse ? 92 : 144, coarse ? 92 : 144]} />
+      <planeGeometry args={[580, 580, coarse ? 48 : 72, coarse ? 48 : 72]} />
       <primitive object={material} attach="material" />
     </mesh>
   );

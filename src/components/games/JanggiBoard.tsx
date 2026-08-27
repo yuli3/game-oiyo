@@ -225,10 +225,16 @@ const JanggiBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                                         : <div className="absolute w-1/3 h-1/3 rounded-full bg-primary/40 z-10 pointer-events-none" />
                                 )}
                                 {piece && (
-                                    <div className={`w-full aspect-square flex items-center justify-center rounded-full border-2 font-black text-xs sm:text-lg ${!reducedMotion ? 'transition-transform' : ''} ${
-                                        isSelected ? `${!reducedMotion ? 'scale-110 ' : ''}ring-2 ring-primary bg-yellow-100 z-10` : 'bg-[#e8dcc4]'
-                                    } ${isChoPiece(piece) ? 'text-blue-700 border-blue-700' : 'text-red-700 border-red-700'}`}>
-                                        {PIECE_ICONS[piece]}
+                                    <div className={`relative w-full aspect-square flex items-center justify-center font-black text-xs sm:text-lg ${!reducedMotion ? 'transition-transform' : ''} ${
+                                        isSelected ? `${!reducedMotion ? 'scale-110 ' : ''}z-10 drop-shadow-[0_0_7px_rgba(245,158,11,.9)]` : 'drop-shadow-[0_2px_2px_rgba(41,25,12,.35)]'
+                                    } ${isChoPiece(piece) ? 'text-blue-800' : 'text-red-800'}`}>
+                                        <img
+                                            src={`/assets/sprites/janggi/piece-${isChoPiece(piece) ? 'blue' : 'red'}.webp`}
+                                            alt=""
+                                            draggable={false}
+                                            className="absolute inset-0 size-full select-none object-contain"
+                                        />
+                                        <span className="relative z-[1] -translate-y-[2%] [font-family:serif] [text-shadow:0_1px_0_rgba(255,255,255,.55)]">{PIECE_ICONS[piece]}</span>
                                     </div>
                                 )}
                             </button>
@@ -242,7 +248,7 @@ const JanggiBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                             <h4 className="text-3xl font-black text-foreground mb-2">{winLabel}</h4>
                             <p className="text-muted-foreground mb-6 uppercase tracking-widest font-bold text-xs">{t.over}</p>
                             <p className="text-sm text-muted-foreground mb-4">{game.moves} {x.moves} · {analysis.captures} {x.captures} · {analysis.mobility} {x.mobility}</p>
-                            {mode==='ai'&&winner&&((winner==='cho')===AI_IS_CHO)&&lastAiReview&&<div className="mb-5 max-w-xs rounded-2xl border border-amber-300/60 bg-amber-50 p-3 text-left text-xs text-stone-800"><p className="font-black text-amber-900">{aiInfo.review} · {String.fromCharCode(65+lastAiReview.from[1])}{10-lastAiReview.from[0]}→{String.fromCharCode(65+lastAiReview.to[1])}{10-lastAiReview.to[0]}</p><p className="mt-1">{lastAiReview.captured?`${aiInfo.capture}: ${PIECE_ICONS[lastAiReview.captured]} · ${lastAiReview.capturedValue} ${x.material}`:aiInfo.quiet}</p><p className="mt-1 text-[10px] text-stone-500">{aiInfo.difficulty}: {aiInfo.level[level]} · {aiInfo.scope}</p></div>}
+                            {mode==='ai'&&winner&&((winner==='cho')===AI_IS_CHO)&&lastAiReview&&<div className="mb-5 max-w-xs rounded-2xl border border-amber-300/60 bg-amber-50 p-3 text-left text-xs text-amber-950"><p className="font-black text-amber-950">{aiInfo.review} · {String.fromCharCode(65+lastAiReview.from[1])}{10-lastAiReview.from[0]}→{String.fromCharCode(65+lastAiReview.to[1])}{10-lastAiReview.to[0]}</p><p className="mt-1">{lastAiReview.captured?`${aiInfo.capture}: ${PIECE_ICONS[lastAiReview.captured]} · ${lastAiReview.capturedValue} ${x.material}`:aiInfo.quiet}</p><p className="mt-1 text-[10px] text-amber-800">{aiInfo.difficulty}: {aiInfo.level[level]} · {aiInfo.scope}</p></div>}
                             <button onClick={reset} className="px-10 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity">
                                 {t.reset}
                             </button>
@@ -253,8 +259,8 @@ const JanggiBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
 
             <div className="mt-6 flex flex-col items-center gap-2">
                 <div className="flex justify-center gap-8 text-[10px] font-black text-stone-600 uppercase tracking-widest">
-                    <div className="flex items-center gap-2"><span className="text-blue-600">{t.cho}</span> Blue</div>
-                    <div className="flex items-center gap-2"><span className="text-red-600">{t.han}</span> Red</div>
+                    <div className="flex items-center gap-2"><img src="/assets/sprites/janggi/piece-blue.webp" alt="" width="32" height="32" className="size-8 object-contain"/><span className="text-blue-700">{t.cho}</span></div>
+                    <div className="flex items-center gap-2"><img src="/assets/sprites/janggi/piece-red.webp" alt="" width="32" height="32" className="size-8 object-contain"/><span className="text-red-700">{t.han}</span></div>
                 </div>
                 <p className="text-[10px] text-stone-500 font-medium">{t.goal}</p>
                 <p className="text-[10px] text-stone-500">{game.moves} {x.moves} · {t.cho} {analysis.material} {x.material} · {analysis.mobility} {x.mobility}</p>

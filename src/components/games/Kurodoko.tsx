@@ -20,6 +20,7 @@ import {
     type KurodokoMark as Mark,
     type KurodokoMode as Mode,
 } from '../../lib/games/kurodoko-save';
+import { LOGIC_CELL_SPRITES } from '../../lib/games/sprites';
 
 // ─── Kurodoko (Where is Black Cells?) — Nikoli logic puzzle ──────────────────
 // Shade cells black so each numbered cell sees exactly that many white cells
@@ -274,7 +275,8 @@ const Kurodoko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                                     tabIndex={activeCell === index ? 0 : -1} aria-rowindex={r + 1} aria-colindex={c + 1}
                                     aria-label={`${position}: ${cell === 1 ? a11y.black : cell === 0 ? a11y.white : a11y.unknown}`}
                                     onFocus={() => setActiveCell(index)} onKeyDown={(event) => handleGridKeyDown(event, index)}
-                                    className={`${common} ${cell === 1 ? 'bg-foreground border-foreground shadow-inner' : cell === 0 ? 'bg-primary/10 border-primary/40 text-primary' : 'bg-background border-border hover:bg-muted active:scale-95'}`}>
+                                    className={`${common} relative overflow-hidden ${cell === 1 ? 'border-foreground shadow-inner' : cell === 0 ? 'bg-primary/10 border-primary/40 text-primary' : 'bg-background border-border hover:bg-muted active:scale-95'}`}>
+                                    {cell === 1 && <img src={LOGIC_CELL_SPRITES.black} alt="" draggable={false} className="pointer-events-none absolute inset-0 h-full w-full object-cover" />}
                                     {cell === 0 && <span aria-hidden="true" className="block size-2 rounded-full bg-primary/70" />}
                                 </button>
                             );

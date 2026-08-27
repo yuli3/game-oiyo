@@ -22,4 +22,23 @@ describe("tier list built-in templates", () => {
       expect(parseDocument(JSON.stringify(doc)), template.id).not.toBeNull();
     }
   });
+
+  it("localizes titles instead of copying Korean into ja/zh", () => {
+    const animals = BUILTIN_TEMPLATES.find((template) => template.id === "animals")!;
+    expect(animals.title.ja).toBe("動物");
+    expect(animals.title.zh).toBe("动物");
+    expect(animals.title.fr).toBe("Animaux");
+    const league = BUILTIN_TEMPLATES.find((template) => template.id === "league-champions")!;
+    expect(league.title.ja).not.toBe(league.title.ko);
+    expect(league.title.zh).not.toBe(league.title.ko);
+  });
+
+  it("localizes small template item labels", () => {
+    const animals = BUILTIN_TEMPLATES.find((template) => template.id === "animals")!;
+    const en = documentFromTemplate(animals, "en");
+    const unranked = en.tiers.find((tier) => tier.id === "unranked")!;
+    expect(unranked.items.map((item) => item.label)).toEqual(
+      expect.arrayContaining(["Lion", "Fox", "Panda"]),
+    );
+  });
 });

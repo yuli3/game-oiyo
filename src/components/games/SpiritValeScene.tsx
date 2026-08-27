@@ -1,5 +1,6 @@
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
+import { usePlayFrameloop } from "../../lib/games/play-frameloop";
 import * as THREE from "three";
 import {
   WORLD,
@@ -786,8 +787,10 @@ function Valley({
 }
 
 export default function SpiritValeScene(props: SceneProps) {
+  const frameloop = usePlayFrameloop(true);
   return (
     <Canvas
+      frameloop={frameloop}
       // Capped DPR: at 3× the blade count becomes fill-rate bound on phones for
       // detail nobody can resolve.
       dpr={[1, 1.75]}

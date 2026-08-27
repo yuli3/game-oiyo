@@ -674,13 +674,11 @@ export default function SpiritVale({ locale = "en" }: { locale?: Locale }) {
   // Grass budget scales with the device: a phone gets a third of the blades,
   // which is the difference between 60fps and a slideshow.
   const grassBudget = useMemo(() => {
-    if (typeof window === "undefined") return 34000;
+    if (typeof window === "undefined") return 16000;
     const small = window.innerWidth < 820;
     const cores = navigator.hardwareConcurrency ?? 4;
-    // Budgets scale with the valley: the world got much larger, and holding the
-    // old counts would have thinned the meadow into stubble.
-    if (small || cores <= 4) return 16000;
-    return cores >= 8 ? 52000 : 32000;
+    if (small || cores <= 4) return 8000;
+    return cores >= 8 ? 24000 : 16000;
   }, []);
 
   useEffect(() => setWebgl(hasWebGL()), []);

@@ -14,6 +14,7 @@ import {
     type SudokuMode,
 } from '../../lib/games/sudoku-save';
 import { elapsedSeconds } from '../../lib/games/time-contracts';
+import { PUZZLE15_SPRITES } from '../../lib/games/sprites';
 
 const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 const DAILY_GAME_ID = 'sudoku-daily';
@@ -242,11 +243,12 @@ const Sudoku: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                                 aria-rowindex={r + 1}
                                 aria-colindex={c + 1}
                                 aria-label={`${t.row} ${r + 1}, ${t.column} ${c + 1}: ${val === null ? t.empty : `${val}, ${isInit ? t.given : t.entered}`}${inConflict ? `, ${t.conflict}` : ''}${isSelected ? `, ${t.selectedLabel}` : ''}`}
-                                className={`h-11 w-11 flex items-center justify-center text-lg sm:text-2xl font-bold transition-all motion-reduce:transition-none focus-visible:z-20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset ${borderR} ${borderB} ${
-                                    isSelected ? 'bg-primary text-primary-foreground z-10' : isInit ? 'bg-stone-100 text-stone-800' : 'bg-stone-50 text-primary'
-                                } ${inConflict && !isSelected ? 'text-destructive underline decoration-2 underline-offset-4' : ''}`}
+                                className={`relative overflow-hidden h-11 w-11 flex items-center justify-center text-lg sm:text-2xl font-bold transition-all motion-reduce:transition-none focus-visible:z-20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset ${borderR} ${borderB} ${
+                                    isSelected ? 'z-10 ring-2 ring-inset ring-primary' : ''
+                                } ${isInit ? 'text-stone-800' : isSelected ? 'bg-primary text-primary-foreground' : 'bg-stone-50 text-primary'} ${inConflict && !isSelected ? 'text-destructive underline decoration-2 underline-offset-4' : ''}`}
                             >
-                                {val}
+                                {isInit && <img src={PUZZLE15_SPRITES.tile} alt="" draggable={false} className="pointer-events-none absolute inset-0 h-full w-full object-cover" />}
+                                <span className="relative z-[1]">{val}</span>
                             </button>
                         );
                     }))}

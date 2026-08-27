@@ -20,6 +20,7 @@ import {
 import { clearMahjongSave, loadMahjongSave, storeMahjongSave } from "../../lib/games/mahjong-save";
 import { getRecord, recordResult, type GameRecord } from "../../lib/games/records";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
+import { MAHJONG_SPRITES, mahjongTileSrc } from "../../lib/games/sprites";
 
 const AI_DELAY = 700;
 
@@ -61,24 +62,41 @@ function tileLabel(k: number): { text: string; color: string } {
   return { text: `${rankOf(k)}${SUIT_GLYPH[suitOf(k)]}`, color: SUIT_COLOR[suitOf(k)] };
 }
 
+function TileFace({ k, small }: { k: number; small?: boolean }) {
+  return (
+    <img
+      src={mahjongTileSrc(k)}
+      alt=""
+      draggable={false}
+      className={`pointer-events-none object-contain ${small ? "h-8 w-6" : "h-12 w-9"}`}
+    />
+  );
+}
+
 function Tile({ k, onClick, dim, small, ariaLabel, reducedMotion, selected, recommended, tabIndex, onKeyDown, buttonRef }: { k: number; onClick?: () => void; dim?: boolean; small?: boolean; ariaLabel?: string; reducedMotion?: boolean; selected?: boolean; recommended?: boolean; tabIndex?: number; onKeyDown?: (event: React.KeyboardEvent<HTMLButtonElement>) => void; buttonRef?: (element: HTMLButtonElement | null) => void }) {
-  const { text, color } = tileLabel(k);
-  const className = `inline-flex items-center justify-center rounded-md border bg-card font-black shadow-sm ${!reducedMotion ? "transition-transform" : ""} ${
-    small ? "w-6 h-8 text-[11px]" : "min-h-12 w-full min-w-0 text-sm"
-  } ${onClick ? `${!reducedMotion ? "hover:-translate-y-1" : ""} border-primary cursor-pointer` : "border-border"} ${selected ? "ring-2 ring-primary ring-offset-1" : ""} ${recommended ? "bg-amber-50 border-amber-500" : ""} ${dim ? "opacity-40" : ""}`;
+  const { text } = tileLabel(k);
+  const className = `inline-flex items-center justify-center overflow-hidden rounded-md ${!reducedMotion ? "transition-transform" : ""} ${
+    small ? "h-8 w-6" : "min-h-12 w-full min-w-0"
+  } ${onClick ? `${!reducedMotion ? "hover:-translate-y-1" : ""} cursor-pointer` : ""} ${selected ? "ring-2 ring-primary ring-offset-1" : ""} ${recommended ? "ring-2 ring-amber-500" : ""} ${dim ? "opacity-40" : ""}`;
   if (!onClick) {
-    return <span aria-label={ariaLabel} className={className} style={{ color }}>{text}</span>;
+    return <span aria-label={ariaLabel ?? text} className={className}><TileFace k={k} small={small} /></span>;
   }
   return (
-    <button type="button" ref={buttonRef} onClick={onClick} onKeyDown={onKeyDown} tabIndex={tabIndex} aria-label={ariaLabel} aria-current={recommended ? "true" : undefined}
-      className={className}
-      style={{ color }}>
-      {text}
+    <button type="button" ref={buttonRef} onClick={onClick} onKeyDown={onKeyDown} tabIndex={tabIndex} aria-label={ariaLabel ?? text} aria-current={recommended ? "true" : undefined}
+      className={className}>
+      <TileFace k={k} small={small} />
     </button>
   );
 }
 function TileBack({ small }: { small?: boolean }) {
-  return <div className={`inline-block rounded-md bg-emerald-800 border border-emerald-900 ${small ? "w-5 h-7" : "w-6 h-9"}`} />;
+  return (
+    <img
+      src={MAHJONG_SPRITES.back}
+      alt=""
+      draggable={false}
+      className={`inline-block object-contain ${small ? "h-7 w-5" : "h-9 w-6"}`}
+    />
+  );
 }
 
 const Mahjong: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {

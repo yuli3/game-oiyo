@@ -9,6 +9,7 @@ import {
     storeGomokuSaveV2,
 } from '../../lib/games/gomoku-save';
 import { createGomokuBoard, GOMOKU_SIZE, placeGomokuStone, type GomokuCell, type GomokuPlayer } from '../../lib/games/gomoku';
+import { GOMOKU_SPRITES } from '../../lib/games/sprites';
 
 const SIZE = GOMOKU_SIZE;
 
@@ -294,8 +295,8 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                 <div className="grid gap-px bg-[#d4c38d]/60 p-1 rounded-lg" style={{ gridTemplateColumns: `repeat(${SIZE}, 1fr)`, width: 180, height: 180 }}>
                     {board.map((stone, i) => (
                         <div key={i} className={`relative flex items-center justify-center bg-[#f3e5ab] ${i === lastMove ? 'ring-1 ring-primary z-10' : ''}`}>
-                            {stone === 1 && <div className="w-[70%] h-[70%] rounded-full bg-slate-900" />}
-                            {stone === 2 && <div className="w-[70%] h-[70%] rounded-full border-2 border-slate-600 bg-white" />}
+                            {stone === 1 && <img src={GOMOKU_SPRITES.black} alt="" draggable={false} className="h-[70%] w-[70%] object-contain" />}
+                            {stone === 2 && <img src={GOMOKU_SPRITES.white} alt="" draggable={false} className="h-[70%] w-[70%] object-contain" />}
                         </div>
                     ))}
                 </div>
@@ -336,11 +337,8 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                             )}
                             {/* Real Stone */}
                             {stone !== null && (
-                                <div className={`relative w-[85%] h-[85%] rounded-full shadow-md transform transition-transform animate-in zoom-in-75 motion-reduce:transform-none motion-reduce:transition-none motion-reduce:animate-none ${
-                                    stone === 1
-                                        ? 'bg-gradient-to-br from-slate-700 to-slate-900'
-                                        : 'bg-gradient-to-br from-white to-slate-200 border border-slate-300'
-                                }`}>
+                                <div className="relative flex h-[85%] w-[85%] items-center justify-center animate-in zoom-in-75 motion-reduce:transform-none motion-reduce:transition-none motion-reduce:animate-none">
+                                    <img src={stone === 1 ? GOMOKU_SPRITES.black : GOMOKU_SPRITES.white} alt="" draggable={false} className="pointer-events-none h-full w-full object-contain drop-shadow-md" />
                                     {i === lastMove && <div className="absolute inset-[-3px] rounded-full ring-2 ring-primary" />}
                                 </div>
                             )}
