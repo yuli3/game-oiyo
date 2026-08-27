@@ -41,6 +41,45 @@
         "score": 10,
         "note": "The mobile loop communicates movement, auto-fire, damage cause, PB ghost, and same-seed retry clearly; weapon upgrades and deterministic replay add depth beyond a disposable shooter skin."
       }
+    },
+    "dot-runner": {
+      "technicalGates": {
+        "verifiedAt": "2026-08-27T10:45:15Z",
+        "commit": "3a4d7d9d98ca89baac4191fe213da0ce5b711c0e",
+        "commands": [
+          "npm run test -- --run src/lib/games/dot-runner.test.ts src/lib/games/dot-runner-replay.test.ts src/lib/games/dot-runner-save.test.ts",
+          "npm run type-check",
+          "npm run build"
+        ],
+        "result": "pass"
+      },
+      "playtest": {
+        "reviewedAt": "2026-08-27T10:45:15Z",
+        "reviewer": "Codex",
+        "viewports": [
+          "390x844"
+        ],
+        "scenarios": [
+          "Reset the Korean route and use repeated canvas taps to jump until the first run ends with a personal best and a concrete next-score target.",
+          "Retry the same course and confirm the PB ghost cue appears while score, pace, and controls remain readable during play.",
+          "Pause mid-run, mute audio, reload the page, and confirm the paused run score and personal best restore without horizontal overflow."
+        ],
+        "findings": [
+          "The first sampled run reached score 54 in five seconds, then presented the personal best, survival time, pace, next target, same-course retry, and new-course choice together.",
+          "Same-course retry exposed the PB ghost cue immediately; pausing at score 21 and reloading restored the paused state, score 21, and best score 54.",
+          "The 390px production preview reported innerWidth 390 and scrollWidth 375 with no console warnings or errors."
+        ]
+      },
+      "craftReview": {
+        "reviewedAt": "2026-08-27T10:45:15Z",
+        "reviewer": "Codex",
+        "mode": "narrative",
+        "intent": 4,
+        "differentiation": 3,
+        "depth": 4,
+        "score": 11,
+        "note": "The one-tap runner makes failure actionable through a next-score target, same-seed retry, deterministic PB ghost, rising pace, and resumable local state while keeping the mobile interaction immediately legible."
+      }
     }
   }
 }
