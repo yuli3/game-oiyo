@@ -15,12 +15,12 @@ const { locale } = Astro.props as { locale: Locale };
 const blogTool = (slug: string) => `https://blog.oiyo.net/${locale}/${slug}/`;
 
 const meta: Record<Locale, { title: string; description: string }> = {
-  ko: { title: "로스트아크 경매 계산기 — 군단장 레이드 적정 입찰가", description: "군단장 레이드 경매 아이템의 손익분기 입찰가를 즉시 계산합니다. 거래소 수수료 5% 반영, 입찰 눈치싸움 없이 합리적인 상한선 확인." },
-  en: { title: "Lost Ark Auction Calculator — Optimal Raid Bid", description: "Instantly calculate the break-even bid for Legion Raid auction items, with the 5% trade fee applied." },
-  ja: { title: "ロストアーク オークション計算機 — 適正入札額", description: "軍団長レイドのオークションアイテムの損益分岐入札額を即計算。取引手数料5%反映。" },
-  zh: { title: "命运方舟拍卖计算器 — 军团长副本合理出价", description: "即时计算军团长副本拍卖物品的盈亏平衡出价，已计入5%交易手续费。" },
-  fr: { title: "Calculateur d'enchères Lost Ark — Mise optimale de raid", description: "Calculez instantanément la mise seuil de rentabilité des objets d'enchères de raid, frais de 5 % inclus." },
-  es: { title: "Calculadora de subastas Lost Ark — Puja óptima de raid", description: "Calcula al instante la puja de equilibrio de los objetos de subasta de raid, con la comisión del 5 % incluida." },
+  ko: { title: "로스트아크 경매 계산기 — 군단장 레이드 적정 입찰가", description: "예상 판매가를 입력해 군단장 레이드 경매 아이템의 손익분기 입찰가를 계산합니다. 실시간 거래소 매물·시세 조회 도구는 아닙니다." },
+  en: { title: "Lost Ark Auction Calculator — Optimal Raid Bid", description: "Enter an expected sale price to calculate a Legion Raid auction break-even bid. This is not a live market-price or listing lookup." },
+  ja: { title: "ロストアーク オークション計算機 — 適正入札額", description: "想定売却価格から軍団長レイドの損益分岐入札額を計算します。リアルタイムの取引所相場・出品検索ではありません。" },
+  zh: { title: "命运方舟拍卖计算器 — 军团长副本合理出价", description: "输入预计售价，计算军团长副本拍卖物品的盈亏平衡出价。本工具不提供实时交易所价格或商品查询。" },
+  fr: { title: "Calculateur d'enchères Lost Ark — Mise optimale de raid", description: "Saisissez un prix de vente estimé pour calculer la mise rentable d'un raid. Ce n'est pas un outil de cours ou d'annonces en temps réel." },
+  es: { title: "Calculadora de subastas Lost Ark — Puja óptima de raid", description: "Introduce el precio de venta estimado para calcular la puja de equilibrio. No consulta precios ni anuncios del mercado en tiempo real." },
 };
 const m = meta[locale] ?? meta.en;
 
@@ -28,7 +28,7 @@ const content = {
   ko: {
     eyebrow: "로스트아크 도구",
     introTitle: "경매 계산기란?",
-    intro: "군단장 레이드에서 경매(입찰)로 나온 아이템의 적정 입찰가를 계산합니다. 거래소 수수료 5%를 반영해, 파티원 전원이 같은 이득을 보는 '균등 분배 입찰가'와 낙찰자가 최대 이득을 얻는 '최대 이득 입찰가'를 즉시 보여줍니다. 버스비·본1부3 분배와는 별개의 도구입니다.",
+    intro: "군단장 레이드에서 경매(입찰)로 나온 아이템의 적정 입찰가를 계산합니다. 사용자가 입력한 예상 판매가에 거래소 수수료 5%를 반영해, 파티원 전원이 같은 이득을 보는 '균등 분배 입찰가'와 낙찰자가 최대 이득을 얻는 '최대 이득 입찰가'를 보여줍니다. 실시간 거래소 매물이나 현재 시세를 조회하지 않으며, 버스비·본1부3 분배와도 별개의 도구입니다.",
     howToTitle: "사용 방법",
     steps: ["경매에 나온 아이템의 예상 판매가(골드)를 입력합니다.", "파티 인원을 확인합니다(보통 4인 또는 8인).", "'균등 분배 입찰가'와 '최대 이득 입찰가' 결과를 확인하고 상한선으로 삼습니다."],
     highlightsTitle: "주요 특징",
@@ -48,7 +48,7 @@ const content = {
   en: {
     eyebrow: "Lost Ark Tool",
     introTitle: "What is the auction calculator?",
-    intro: "It computes the optimal bid for an item put up for auction in a Legion Raid. With the 5% trade-house fee applied, it instantly shows the 'equal-share bid' (where every party member profits equally) and the 'max-profit bid' (the ceiling where the winner gains the most). It's a separate tool from the bus-fee and 1-main/3-alt distribution calculators.",
+    intro: "It computes the optimal bid for an item put up for auction in a Legion Raid. It applies the 5% trade-house fee to the expected sale price you enter, then shows the 'equal-share bid' and 'max-profit bid'. It does not look up live listings or market prices, and it is separate from the bus-fee and 1-main/3-alt distribution calculators.",
     howToTitle: "How to use",
     steps: ["Enter the item's expected sale price in gold.", "Confirm the party size (usually 4 or 8).", "Read the 'equal-share bid' and 'max-profit bid' and use them as your ceiling."],
     highlightsTitle: "Highlights",
@@ -68,7 +68,7 @@ const content = {
   ja: {
     eyebrow: "ロストアークツール",
     introTitle: "オークション計算機とは？",
-    intro: "軍団長レイドでオークション（入札）に出たアイテムの適正入札額を計算します。取引所手数料5%を反映し、パーティ全員が同じ利益になる「均等分配入札額」と、落札者が最大利益を得る「最大利益入札額」をすぐ表示します。バス料金・本1副3分配とは別のツールです。",
+    intro: "軍団長レイドでオークション（入札）に出たアイテムの適正入札額を計算します。入力した想定売却価格に取引所手数料5%を反映し、「均等分配入札額」と「最大利益入札額」を表示します。リアルタイムの出品や相場は検索せず、バス料金・本1副3分配とも別のツールです。",
     howToTitle: "使い方",
     steps: ["オークションに出たアイテムの想定売却価格（ゴールド）を入力します。", "パーティ人数を確認します（通常4人または8人）。", "「均等分配入札額」と「最大利益入札額」を確認し、上限として使います。"],
     highlightsTitle: "主な特徴",
