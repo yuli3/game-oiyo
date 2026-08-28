@@ -53,24 +53,12 @@ this repo.
   helpers, and localStorage record contracts. Browser interaction still requires build,
   audits, and targeted manual review because there is no Playwright suite.
 
-## Known drift (flagged, not fixed here)
+## Removed inherited Blog harness
 
-`data/catalog/`, `src/lib/mdx-component-registry.ts`, and `scripts/verify-harness.mjs`
-were inherited wholesale from `blog-oiyo` at some point and describe a
-track/category/CSV-inventory system this repo doesn't use. They are not imported by any
-game route. Leave them alone unless a task specifically asks you to clean them up.
-
-`docs/` was cleaned up 2026-07-12: 19 cross-project blog-oiyo planning files (content
-taxonomy, GA4/linking playbooks, qualification/lecture roadmaps, historical audits) were
-migrated to `company-brain/AI-Sessions/wiki/` and deleted from this repo. `docs/` now
-holds only `README.md` (game-specific) and `component-registry-by-track.md`. The latter
-is a verbatim duplicate of `blog/docs/` but is **kept because `scripts/verify-harness.mjs`
-requires it** (build input, not just reference). The other three blog-oiyo duplicates
-(`component-allowlist.md`, `component-disallowlist.md`, `mdoc-authoring-spec.md`) were
-removed 2026-07-12 (Athena re-scope decision — canonical lives in `blog/docs/`). If
-`component-registry-by-track.md` ever needs to diverge from blog's, treat it as a
-game-owned copy. Cross-project content strategy work belongs in `company-brain`, not this
-repo — do not add new planning docs here.
+The unused Blog authoring harness (`data/catalog/`, the MDX component registry, and its
+catalog/compatibility scripts) was removed in 2026-08. Game has no MDX content inventory
+or Academy/Magazine taxonomy. Do not recreate those surfaces here; cross-project content
+strategy belongs in `company-brain` and Blog authoring contracts belong in `blog`.
 
 ## Verification
 
@@ -84,7 +72,6 @@ npm run test -- --run     # Vitest game logic + records regression suite
 npm run validate:i18n     # scripts/audit-i18n.mjs
 npm run audit:localization
 npm run audit:seo
-npm run verify:harness    # inherited blog file-existence check (see "Known drift" above)
 ```
 
 For a records/localStorage change, run the Vitest suite as well as build + type-check.

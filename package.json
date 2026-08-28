@@ -14,8 +14,7 @@
     "audit:localization": "node scripts/audit-localization.mjs",
     "audit:seo": "node scripts/audit-seo-output.mjs",
     "audit:game-sessions": "node scripts/audit-game-session-envelope.mjs",
-    "audit:game-modernization": "node scripts/audit-game-modernization-inventory.mjs",
-    "verify:harness": "node scripts/verify-harness.mjs"
+    "audit:game-modernization": "node scripts/audit-game-modernization-inventory.mjs"
   },
   "dependencies": {
     "@astrojs/mdx": "^4.3.13",
