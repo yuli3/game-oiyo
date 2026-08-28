@@ -64,7 +64,7 @@ const korea: MenuItem[] = [
   { menu: "잔치국수", image: `${IMG}/jcgs.webp` },
   { menu: "육회 육회비빔밥", image: `${IMG}/yookhoe.webp` },
   { menu: "삼겹살 오겹살 갈매기살 항정살", image: `${IMG}/samgyeopsal.webp`, tags: ["고기", "봄"] },
-  { menu: "제육볶음 제육쌈밥 제육덮밥", image: `${IMG}/jeyook.jfif` },
+  { menu: "제육볶음 제육쌈밥 제육덮밥", image: `${IMG}/ddb.webp` },
   { menu: "닭갈비 불닭 치즈닭갈비", image: `${IMG}/dgb.webp` },
   { menu: "닭꼬치", image: `${IMG}/dkch.webp` },
   { menu: "훈제오리 오리주물럭", image: `${IMG}/hjori.webp` },
@@ -109,10 +109,10 @@ const korea: MenuItem[] = [
   { menu: "나주영산포홍어", image: `${IMG}/converted_나주영산포홍어.webp` },
   { menu: "남원추어탕", image: `${IMG}/converted_남원추어탕.webp` },
   { menu: "대구납작만두", image: `${IMG}/converted_대구납작만두.webp` },
-  { menu: "대구동인동찜갈비", image: `${IMG}/converted_대구동인동찜갈비.webp` },
+  { menu: "대구동인동찜갈비", image: `${IMG}/converted_대구찜갈비.webp` },
   { menu: "대구막창", image: `${IMG}/converted_대구막창.webp` },
   { menu: "목포세발낙지", image: `${IMG}/converted_목포세발낙지.webp` },
-  { menu: "목포홍어삼합", image: `${IMG}/converted_목포홍어삼합.webp` },
+  { menu: "목포홍어삼합", image: `${IMG}/converted_목포홍탁삼합.webp` },
   { menu: "부산돼지국밥", image: `${IMG}/converted_부산돼지국밥.webp` },
   { menu: "부산밀면", image: `${IMG}/converted_부산밀면.webp` },
   { menu: "순천짱뚱어탕", image: `${IMG}/converted_순천짱뚱어탕.webp` },
@@ -133,7 +133,7 @@ const korea: MenuItem[] = [
   { menu: "장흥삼합", image: `${IMG}/converted_장흥삼합.webp` },
   { menu: "담양창평국밥", image: `${IMG}/converted_담양창평국밥.webp` },
   { menu: "양양섭국", image: `${IMG}/converted_양양섭국.webp` },
-  { menu: "화순순두부", image: `${IMG}/converted_화순순두부.webp` },
+  { menu: "화순순두부", image: `${IMG}/converted_화순흑두부.webp` },
   { menu: "보성양탕", image: `${IMG}/converted_보성양탕.webp` },
 ];
 
@@ -163,10 +163,10 @@ const pizza: MenuItem[] = [
 const china: MenuItem[] = [
   { menu: "짜장면 짬뽕 삼선짜장", image: `${IMG}/jjajangmyun.webp` },
   { menu: "탕수육", image: `${IMG}/tangsuyook.webp` },
-  { menu: "마라탕", image: `${IMG}/malatang.jfif` },
+  { menu: "마라탕", image: `${IMG}/shabu.webp` },
   { menu: "마라샹궈", image: `${IMG}/mlsg.webp` },
   { menu: "고추잡채", image: `${IMG}/gcj.webp` },
-  { menu: "깐풍기", image: `${IMG}/kpg.jfif` },
+  { menu: "깐풍기", image: `${IMG}/chicken.webp` },
   { menu: "딤섬", image: `${IMG}/dim-sum.webp` },
   { menu: "팔보채", image: `${IMG}/pbc.webp` },
   { menu: "꿔바로우", image: `${IMG}/gbr.webp` },
@@ -174,7 +174,7 @@ const china: MenuItem[] = [
   { menu: "훠궈 샤브샤브 핫팟", image: `${IMG}/shabu.webp` },
   { menu: "샤브톡톡 샤브샤브 1인샤브", image: `${IMG}/shabu.webp`, tags: ["따뜻함", "채소", "국물"] },
   { menu: "북경오리 베이징덕", image: `${IMG}/pekingduck.webp` },
-  { menu: "샤오롱바오", image: `${IMG}/xiaolong.webp` },
+  { menu: "샤오롱바오", image: `${IMG}/dim-sum.webp` },
 ];
 
 const japan: MenuItem[] = [
@@ -250,7 +250,7 @@ const france: MenuItem[] = [
   { menu: "크레페", image: `${IMG}/crepe.webp` },
   { menu: "그라탕", image: `${IMG}/gratin.webp` },
   { menu: "에스까르고", image: `${IMG}/escargot.webp` },
-  { menu: "포아그라", image: `${IMG}/foie-Gras.webp` },
+  { menu: "포아그라", image: `${IMG}/foie-gras.webp` },
   { menu: "마카롱", image: `${IMG}/macaron.webp` },
   { menu: "양파 수프", image: `${IMG}/onionsoup.webp` },
   { menu: "클레멘타인 크럼블", image: `${IMG}/clementine.webp` },
