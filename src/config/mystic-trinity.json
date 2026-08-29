@@ -107,18 +107,6 @@
       }
     },
     "astrology": {
-      "lookup": {
-        "site": "wiki",
-        "path": "/meaning-of-astrology",
-        "locales": [
-          "ko",
-          "en",
-          "ja",
-          "zh",
-          "fr",
-          "es"
-        ]
-      },
       "learn": {
         "site": "blog",
         "path": "/academy-astrology-basics-ch1",
@@ -145,11 +133,6 @@
       "try": {
         "site": "oiyo",
         "path": "/numerology/calculator",
-        "locales": "all"
-      },
-      "lookup": {
-        "site": "wiki",
-        "path": "/meaning-of-numerology",
         "locales": "all"
       }
     },
