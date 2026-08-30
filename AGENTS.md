@@ -1,89 +1,24 @@
-# AGENTS.md — game-oiyo
+# Game 작업 규칙
 
-This is the project harness for `game.oiyo.net`, the arcade layer of the OIYO family.
+시작·안전·승인 계약은 `/Users/seuncho/coding/AGENTS.md`를 따른다. Astro/React 게임과 Lost Ark 도구의 저장소이며 Blog의 MDX·track/series/chapter·카탈로그를 복원하지 않는다.
 
-Read `/Users/seuncho/coding/AGENTS.md` first, then this file.
+## 구현
 
-## Role
+- 게임은 `src/components/games/`의 독립 컴포넌트, 정적 route는 `src/pages/[...lang]/`에 둔다. 공통 프레임은 `src/components/ui/game/GamePrimitives.tsx`를 재사용한다.
+- 컴포넌트 COPY의 ko/en/ja/zh/fr/es를 함께 유지한다. zh는 간체이며 다른 언어에 KO/EN이 새지 않게 한다.
+- AI 로직은 `src/lib/games/ai/`, 개인 기록 계약은 `src/lib/games/records.ts`와 해당 테스트가 정본이다. 현행 Workers 등 별도 기능의 존재를 확인하지 않고 “백엔드 없음”으로 가정하지 않는다.
 
-`game-oiyo` is a single-page arcade: ~39 free browser games (board / card / puzzle /
-arcade / luck) plus a handful of Lost Ark calculator tools, served as static Astro pages
-with React islands. No backend, no auth — all game state and personal records live in
-the browser's `localStorage`.
+## 개인 기록 보호
 
-It is not a content platform. There is no MDX, no `track`/`series`/`chapter` taxonomy,
-no article inventory. Do not import concepts from `blog-oiyo`'s authoring system into
-this repo.
+- 기존 localStorage 키·객체 모양을 재사용하거나 덮어써 기록을 버리지 않는다.
+- GameRecord는 승/패/무, BestRecord는 서로 비교 가능한 value/unit, ConditionalBestRecord는 정확한 seed+difficulty+assist 조건에서만 비교한다. 조건 키와 내장 조건은 함께 검증하며 다른 cohort로 이관하지 않는다.
+- StreakStats와 calendar-day DailyStreak는 별도 계약이다. 같은 날 반복은 streak를 늘리지 않고 누락일은 current만 초기화하며 best를 보존한다.
+- 최근 플레이·PB 시각은 부가 저장소로 유지한다. 홈 win-rate는 data-game slug와 GameRecord를 읽으므로 형태를 보존한다.
+- legacy per-game 키는 기존 fallback 이관을 유지하며 원본 키를 삭제하지 않는다.
 
-## What's different here
+## 검증
 
-- **One component per game**: `src/components/games/*.tsx` — a self-contained React
-  component with its own inline `COPY` object (6 locales: `ko en ja zh fr es`, `zh` =
-  Simplified). There is no separate translation file or CMS; copy lives next to the game.
-- **Shared UI primitives**: `src/components/ui/game/GamePrimitives.tsx`
-  (`GameContainer`, `PlayingCard`, `Die`, …) — reuse these instead of building bespoke
-  chrome per game.
-- **Personal records**: `src/lib/games/records.ts` is the single localStorage module for
-  player history. Independent versioned stores use separate keys (never reuse or
-  repurpose an existing key — that discards real user data):
-  - `GameRecord` (`w/l/d`) under `oiyo:game-records:v1` — win/loss/draw, used by the 9
-    vs-AI board games plus Solitaire/FreeCell.
-  - `BestRecord` (`value` + `unit: "score"|"seconds"`) under `oiyo:game-bests:v1` —
-    high score or a directly comparable best (2048, Snake and similar games).
-  - `ConditionalBestRecord` under `oiyo:game-condition-bests:v1` — exact
-    `seed+difficulty+assist` cohorts for Minesweeper, Sudoku and Puzzle15. Never compare
-    or migrate records across cohorts. The achievements page reads the validated cohort
-    key and embedded conditions together, so neither side may drift independently.
-  - `StreakStats` under `oiyo:game-streaks:v1` — daily-puzzle win streak (Wordle).
-  - `DailyStreak` under `oiyo:game-daily-streaks:v1` — calendar-day solve streaks for
-  deterministic daily modes such as Kurodoko and Tents & Trees. Same-day repeats are
-  no-ops and missed days reset only the current streak, not the personal best.
-  Additive last-played and PB-achieved timestamp stores support recent-record ordering
-  without reshaping any of the record objects above.
-  The arcade card win-rate badge on the homepage (`src/pages/[...lang]/index.astro`)
-  reads the `GameRecord` store directly by `data-game` slug; keep that shape stable.
-  A few games (Minesweeper/2048/Snake/Puzzle15) still carry a legacy per-game
-  localStorage key from before this module existed — components read the legacy key once
-  as a fallback and migrate it into the unified store; they don't delete the legacy key.
-- **Per-game AI**: `src/lib/games/ai/*` — move-generation for the vs-AI board games
-  (chess, checkers, janggi, reversi, connect-four, gomoku, kingdomino, mahjong, dominoes).
-- **Routing**: `src/pages/[...lang]/<slug>.astro` — one static route per game, no dynamic
-  content collection.
-- **Vitest logic tests**: `npm run test -- --run` covers pure game engines, seeded daily
-  helpers, and localStorage record contracts. Browser interaction still requires build,
-  audits, and targeted manual review because there is no Playwright suite.
-
-## Removed inherited Blog harness
-
-The unused Blog authoring harness (`data/catalog/`, the MDX component registry, and its
-catalog/compatibility scripts) was removed in 2026-08. Game has no MDX content inventory
-or Academy/Magazine taxonomy. Do not recreate those surfaces here; cross-project content
-strategy belongs in `company-brain` and Blog authoring contracts belong in `blog`.
-
-## Verification
-
-Commands that actually exist in `package.json` — don't invent others:
-
-```bash
-npm run build            # astro build (NODE_OPTIONS raised for the 3D/canvas games)
-npm run type-check       # astro check
-npm run lint              # alias of type-check
-npm run test -- --run     # Vitest game logic + records regression suite
-npm run validate:i18n     # scripts/audit-i18n.mjs
-npm run audit:localization
-npm run audit:seo
-```
-
-For a records/localStorage change, run the Vitest suite as well as build + type-check.
-`src/lib/games/records.test.ts` supplies an in-memory Storage mock so persistence,
-duplicate-day, missed-day, and per-game isolation contracts are executable.
-
-## Definition of Done
-
-- `npm run build`, `npm run type-check`, and `npm run test -- --run` pass.
-- New/changed `localStorage` keys never collide with or reshape an existing key's data —
-  existing players' win/loss records and personal bests must survive the change.
-- Every user-facing string is present for all 6 locales (`ko en ja zh fr es`); no bare
-  Korean or English fallback leaking into other locales.
-- Do not commit, push, or deploy without explicit user approval (COMMIT GATE, see root
-  `AGENTS.md`).
+- 기본: `npm run type-check`, `npm run test -- --run`, `npm run validate:i18n`, `npm run build`, 이후 `npm run audit:localization`·`npm run audit:seo`.
+- 기록 변경은 records.test.ts의 저장·일자 중복·누락일·게임 격리 계약을 반드시 통과시킨다.
+- Vitest는 순수 게임 로직과 기록을 검증한다. 브라우저 상호작용 검증을 대신하지 않으므로 변경 화면을 별도로 확인한다.
+- 명령은 package.json, 저장 키는 records.ts를 조회한다. 게임 수·테스트 수·과거 진행 상태를 여기에 복제하지 않는다.

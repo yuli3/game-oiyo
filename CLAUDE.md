@@ -1,23 +1,3 @@
-# CLAUDE.md
+# Claude Code
 
-Claude Code should use [AGENTS.md](/Users/seuncho/coding/game/AGENTS.md) — this repo's
-own harness — as the canonical source of truth. It is not `blog-oiyo`; do not use
-blog's track/category/MDX rules here.
-
-## Claude Adapter Notes
-
-1. treat `AGENTS.md` as primary
-2. this is a game arcade repo (React game components + shared `GamePrimitives`), not a
-   content platform — see "What's different here" in `AGENTS.md`
-3. `localStorage` records (`src/lib/games/records.ts`) are the only persistence layer;
-   never reshape or collide with an existing key
-4. keep edits auditable — small diffs per game, no drive-by refactors of unrelated games
-
-## Default Verification
-
-```bash
-npm run build
-npm run type-check
-npm run validate:i18n
-npm run verify:harness
-```
+현재 checkout의 [AGENTS.md](AGENTS.md)를 따른다. 공통 계약·현재 상태·검증 명령을 여기 복제하지 않는다.
