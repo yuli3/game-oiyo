@@ -18,15 +18,18 @@
 /*.png
   Cache-Control: public, max-age=604800, s-maxage=604800, stale-while-revalidate=86400
 
+/*.jpg
+  Cache-Control: public, max-age=604800, s-maxage=604800, stale-while-revalidate=86400
+
+/*.webp
+  Cache-Control: public, max-age=604800, s-maxage=604800, stale-while-revalidate=86400
+
 /*.ico
   Cache-Control: public, max-age=604800, s-maxage=604800
 
 /*.svg
   Cache-Control: public, max-age=604800, s-maxage=604800
   X-Content-Type-Options: nosniff
-
-/img/*
-  Cache-Control: public, max-age=604800, s-maxage=604800, stale-while-revalidate=86400
 
 # ──────────────────────────────────────────
 # MANIFEST & SEO — short revalidation
@@ -60,8 +63,35 @@
 # high-value target here and a mis-allowlisted CSP silently breaks ads/analytics. Clickjacking,
 # MIME-sniffing, and HTTPS protections remain via the headers below.
 # ──────────────────────────────────────────
-/*
+# HTML — 엣지에서만 캐시하고 브라우저는 매번 재검증
+# ──────────────────────────────────────────
+# 이 정책은 예전에 아래 `/*` 블록에 있었다. **Cloudflare Pages 는 매칭되는 규칙을
+# 전부 적용하고 같은 헤더를 이어 붙인다**(교체가 아니다). 그래서 자산이 자기 규칙과
+# `/*` 에 둘 다 걸려 `max-age` 가 두 개인 헤더를 받았고, 해시 자산의 1년 불변 캐시가
+# 무효화돼 있었다(2026-09-01 실측, 다섯 사이트 전부). audit:headers-collision 이 막는다.
+/
   Cache-Control: public, max-age=0, s-maxage=300, stale-while-revalidate=600
+
+/ko/*
+  Cache-Control: public, max-age=0, s-maxage=300, stale-while-revalidate=600
+
+/en/*
+  Cache-Control: public, max-age=0, s-maxage=300, stale-while-revalidate=600
+
+/ja/*
+  Cache-Control: public, max-age=0, s-maxage=300, stale-while-revalidate=600
+
+/zh/*
+  Cache-Control: public, max-age=0, s-maxage=300, stale-while-revalidate=600
+
+/fr/*
+  Cache-Control: public, max-age=0, s-maxage=300, stale-while-revalidate=600
+
+/es/*
+  Cache-Control: public, max-age=0, s-maxage=300, stale-while-revalidate=600
+
+# ──────────────────────────────────────────
+/*
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   X-XSS-Protection: 1; mode=block
