@@ -7,6 +7,8 @@ import { createDotRunnerReplay, dotRunnerGhostTrack, replayDotRunner, type DotRu
 import { getBest, recordAchievementEvent, recordBest } from '../../lib/games/records';
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 import { clearDotRunnerSave, loadDotRunnerSave, storeDotRunnerSave } from '../../lib/games/dot-runner-save';
+import { blitSheetFrame, sheetFrameIndex } from '../../lib/games/sprite-sheet';
+import { DOT_RUNNER_JUMP_FRAME, DOT_RUNNER_RUN_SHEET, DOT_RUNNER_SPRITES } from '../../lib/games/sprites';
 import {
     DOT_RUNNER_GROUND,
     DOT_RUNNER_HEIGHT,
@@ -20,6 +22,18 @@ import {
     stepDotRunner,
     type DotRunnerState,
 } from '../../lib/games/dot-runner';
+
+type RunnerArt = Record<keyof typeof DOT_RUNNER_SPRITES, HTMLImageElement>;
+function loadRunnerArt(): RunnerArt | null {
+    if (typeof Image === 'undefined') return null;
+    const art = {} as RunnerArt;
+    for (const [key, src] of Object.entries(DOT_RUNNER_SPRITES)) {
+        const image = new Image();
+        image.src = src;
+        art[key as keyof RunnerArt] = image;
+    }
+    return art;
+}
 
 // ─── Dot Runner — endless runner, ported from ahoxy-legacy ────────────────────
 // Jump over red blocks, grab gold coins. Rewritten from per-frame setState to a
@@ -73,6 +87,7 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     bestRef.current = best;
 
     const game = useRef<DotRunnerState | null>(null);
+    const artRef = useRef<RunnerArt | null>(loadRunnerArt());
     const seedRef = useRef<number | null>(null);
     const replayInputsRef = useRef<ReplayInput<DotRunnerReplayAction>[]>([]);
     const ghostTrackRef = useRef<number[]>([]);
@@ -226,17 +241,36 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             ctx.fillStyle = 'rgba(100,116,139,0.25)';
             ctx.fillRect(0, DOT_RUNNER_HEIGHT - DOT_RUNNER_GROUND, DOT_RUNNER_WIDTH, DOT_RUNNER_GROUND);
 
-            ctx.fillStyle = '#3b82f6';
             const current = game.current;
+            const art = artRef.current;
+            const vis = 36;
+            const playerY = current?.playerY ?? DOT_RUNNER_HEIGHT - DOT_RUNNER_GROUND - DOT_RUNNER_PLAYER_SIZE;
+            const drawRunner = (y: number, alpha = 1) => {
+                const frame = current?.jumping
+                    ? DOT_RUNNER_JUMP_FRAME
+                    : sheetFrameIndex(DOT_RUNNER_RUN_SHEET, ((current?.elapsedFrames ?? 0) / 60) * 1000, prefersReducedMotion);
+                const dx = DOT_RUNNER_PLAYER_X + DOT_RUNNER_PLAYER_SIZE / 2 - vis / 2;
+                const dy = y + DOT_RUNNER_PLAYER_SIZE - vis;
+                ctx.save();
+                ctx.globalAlpha = alpha;
+                if (!art?.runnerSheet || !blitSheetFrame(ctx, art.runnerSheet, { ...DOT_RUNNER_RUN_SHEET, frameCount: 3 }, frame, dx, dy, vis, vis)) {
+                    ctx.fillStyle = alpha < 1 ? '#f59e0b' : '#3b82f6';
+                    ctx.fillRect(DOT_RUNNER_PLAYER_X, y, DOT_RUNNER_PLAYER_SIZE, DOT_RUNNER_PLAYER_SIZE);
+                }
+                ctx.restore();
+            };
             const ghostY = current ? ghostTrackRef.current[Math.floor(current.elapsedFrames)] : undefined;
-            if (Number.isFinite(ghostY)) {
-                ctx.save(); ctx.globalAlpha = 0.42; ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 3;
-                ctx.strokeRect(DOT_RUNNER_PLAYER_X, ghostY!, DOT_RUNNER_PLAYER_SIZE, DOT_RUNNER_PLAYER_SIZE); ctx.restore();
-            }
-            ctx.fillRect(DOT_RUNNER_PLAYER_X, current?.playerY ?? DOT_RUNNER_HEIGHT - DOT_RUNNER_GROUND - DOT_RUNNER_PLAYER_SIZE, DOT_RUNNER_PLAYER_SIZE, DOT_RUNNER_PLAYER_SIZE);
+            if (Number.isFinite(ghostY)) drawRunner(ghostY!, 0.42);
+            drawRunner(playerY);
 
-            ctx.fillStyle = '#ef4444';
-            for (const o of current?.obstacles ?? []) ctx.fillRect(o.x, o.y, o.w, o.h);
+            for (const o of current?.obstacles ?? []) {
+                if (!art?.cactus || !art.cactus.complete || art.cactus.naturalWidth === 0) {
+                    ctx.fillStyle = '#ef4444';
+                    ctx.fillRect(o.x, o.y, o.w, o.h);
+                } else {
+                    ctx.drawImage(art.cactus, o.x, o.y, o.w, o.h);
+                }
+            }
 
             ctx.fillStyle = '#f1c40f';
             for (const it of current?.items ?? []) {

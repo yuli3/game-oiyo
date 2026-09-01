@@ -153,6 +153,39 @@
         "key-art-matches-play": "fail"
       },
       "note": "Fake 4-frame URL copies removed. Baby/child share baby art, teen/adult share adult art. Element adults added."
+    },
+    "dot-runner": {
+      "cluster": "arcade-feel",
+      "gates": {
+        "style-bible": "pass",
+        "frame-motion": "pass",
+        "readable-hit": "pass",
+        "no-production-residue": "pass",
+        "key-art-matches-play": "fail"
+      },
+      "note": "Player is a clay runner sheet instead of a blue square. Obstacles use cactus art. Hitbox unchanged."
+    },
+    "whack-a-mole": {
+      "cluster": "arcade-feel",
+      "gates": {
+        "style-bible": "pass",
+        "frame-motion": "pass",
+        "readable-hit": "pass",
+        "no-production-residue": "pass",
+        "key-art-matches-play": "fail"
+      },
+      "note": "Moles and bombs pop up from the hole. Hit squash kept. Reduced motion skips the pop."
+    },
+    "cave-dash": {
+      "cluster": "arcade-feel",
+      "gates": {
+        "style-bible": "pass",
+        "frame-motion": "pass",
+        "readable-hit": "pass",
+        "no-production-residue": "pass",
+        "key-art-matches-play": "fail"
+      },
+      "note": "Baked ship flame cropped; 4-frame pixel exhaust loops behind the hull. Physics radius unchanged."
     }
   }
 }

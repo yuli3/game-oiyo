@@ -19,7 +19,8 @@ import {
   type CaveDashState,
 } from "../../lib/games/cave-dash";
 import { clearCaveDashSave, loadCaveDashSave, storeCaveDashSave } from "../../lib/games/cave-dash-save";
-import { CAVE_DASH_SPRITES } from "../../lib/games/sprites";
+import { blitSheetFrame, sheetFrameIndex } from "../../lib/games/sprite-sheet";
+import { CAVE_DASH_EXHAUST_SHEET, CAVE_DASH_SHIP_HULL_SX, CAVE_DASH_SPRITES } from "../../lib/games/sprites";
 
 type CaveArt = Record<keyof typeof CAVE_DASH_SPRITES, HTMLImageElement>;
 function loadCaveArt(): CaveArt | null {
@@ -51,16 +52,24 @@ function paintBox(
   }
   return true;
 }
-function paintCentered(
+function paintShip(
   ctx: CanvasRenderingContext2D,
-  image: HTMLImageElement | undefined,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
+  art: CaveArt | null,
+  shipW: number,
+  shipH: number,
+  exhaustFrame: number,
+  reducedMotion: boolean,
 ) {
-  if (!image?.complete || image.naturalWidth === 0) return false;
-  ctx.drawImage(image, x - width / 2, y - height / 2, width, height);
+  const ship = art?.ship;
+  if (!ship?.complete || ship.naturalWidth === 0) return false;
+  const sx = Math.round(ship.naturalWidth * CAVE_DASH_SHIP_HULL_SX);
+  const sw = ship.naturalWidth - sx;
+  const hullW = shipW * (sw / ship.naturalWidth);
+  const hullX = -hullW / 2;
+  if (!reducedMotion && art?.exhaustSheet) {
+    blitSheetFrame(ctx, art.exhaustSheet, CAVE_DASH_EXHAUST_SHEET, exhaustFrame, hullX - shipW * 0.38, -shipH * 0.28, shipW * 0.48, shipH * 0.56);
+  }
+  ctx.drawImage(ship, sx, 0, sw, ship.naturalHeight, hullX, -shipH / 2, hullW, shipH);
   return true;
 }
 
@@ -199,7 +208,8 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
     ctx.save();
     ctx.translate(CAVE_SHIP_X, gs.y);
     ctx.rotate(Math.atan2(gs.vy, 8) * 0.35);
-    if (!paintCentered(ctx, art?.ship, 0, 0, shipW, shipH)) {
+    const exhaustFrame = sheetFrameIndex(CAVE_DASH_EXHAUST_SHEET, (gs.elapsedFrames / 60) * 1000, prefersReducedMotion);
+    if (!paintShip(ctx, art, shipW, shipH, exhaustFrame, prefersReducedMotion)) {
       ctx.beginPath(); ctx.fillStyle = "#c4b5fd";
       ctx.arc(0, 0, CAVE_SHIP_RADIUS, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = "#0b1020";
@@ -209,7 +219,7 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
 
     if (gs.status === "over") { endGame(gs.score); return; }
     rafRef.current = requestAnimationFrame(loop);
-  }, [endGame, playTone]);
+  }, [endGame, playTone, prefersReducedMotion]);
 
   const begin = useCallback((seedOverride?: number) => {
     clearCaveDashSave();

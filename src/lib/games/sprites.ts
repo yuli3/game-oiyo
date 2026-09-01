@@ -174,7 +174,34 @@ export const SNAKE_SPRITES = {
 export const CAVE_DASH_SPRITES = {
   ship: "/assets/sprites/cave-dash/ship.png",
   wall: "/assets/sprites/cave-dash/wall.png",
+  exhaustSheet: "/assets/sprites/cave-dash/exhaust-sheet.png",
 } as const;
+
+export const CAVE_DASH_EXHAUST_SHEET = {
+  cols: 4,
+  rows: 1,
+  frameCount: 4,
+  fps: 12,
+  loop: true,
+} as const;
+
+/** Baked flame occupies the left of ship.png; hull draw starts after this. */
+export const CAVE_DASH_SHIP_HULL_SX = 75 / 256;
+
+export const DOT_RUNNER_SPRITES = {
+  runnerSheet: "/assets/sprites/dot-runner/runner-sheet.png",
+  cactus: "/assets/sprites/dot-runner/cactus.png",
+} as const;
+
+export const DOT_RUNNER_RUN_SHEET = {
+  cols: 3,
+  rows: 1,
+  frameCount: 2,
+  fps: 10,
+  loop: true,
+} as const;
+
+export const DOT_RUNNER_JUMP_FRAME = 2;
 
 export const MAZE_SPRITES = {
   exit: "/assets/sprites/maze/exit.png",

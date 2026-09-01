@@ -21,6 +21,7 @@ import {
   memoryFaceSrc,
   MAZE_SPRITES,
   DOT_PET_SPRITES,
+  DOT_RUNNER_SPRITES,
   dotPetSprite,
   PIP_SPRITES,
   PLAYING_CARD_SPRITES,
@@ -67,6 +68,7 @@ describe("in-game sprite maps", () => {
       ...MEMORY_SPRITES.faces,
       MAZE_SPRITES.exit,
       ...Object.values(DOT_PET_SPRITES).flatMap((set) => [set.baby, set.adult]),
+      ...Object.values(DOT_RUNNER_SPRITES),
     ];
     expect(Object.keys(CHESS_SPRITES)).toHaveLength(12);
     expect(Object.keys(CHECKERS_SPRITES)).toHaveLength(4);

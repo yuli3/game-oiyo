@@ -280,6 +280,11 @@ main .aspect-square { max-width: min(100%, 92vw); }
   100% { transform: scaleX(1); }
 }
 .oiyo-disc-flip { animation: oiyo-disc-flip 280ms ease-in-out both; }
+@keyframes oiyo-whack-pop {
+  from { transform: translateY(72%); }
+  to { transform: translateY(0); }
+}
+.oiyo-whack-pop { animation: oiyo-whack-pop 160ms cubic-bezier(0.16, 1, 0.3, 1) both; }
 @media (prefers-reduced-motion: reduce) {
-  .oiyo-piece-slide, .oiyo-disc-flip { animation: none; }
+  .oiyo-piece-slide, .oiyo-disc-flip, .oiyo-whack-pop { animation: none; }
 }
