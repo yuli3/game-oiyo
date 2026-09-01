@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Locale } from "../../lib/i18n";
+import { distributionAnalyticsPayload, type DistributionAnalyticsEvent } from "../../lib/lostark/distribution-analytics";
 import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from "../ui/item";
 import {
   generateDistribution,
@@ -96,6 +97,11 @@ export default function LostarkRaidDistribution({ locale }: Props) {
 
   const sup = calculateSupporterInfo(inputs, partySize, raidType);
 
+  const track = (event: DistributionAnalyticsEvent, details: { playerCount?: number; errorType?: "count" | "invalid" } = {}) => {
+    const analytics = window as Window & { gtag?: (...args: unknown[]) => void };
+    analytics.gtag?.("event", event, distributionAnalyticsPayload({ raidType, partySize, gameCount: games, ...details }));
+  };
+
   const setInput = (i: number, v: string) => {
     const next = [...inputs];
     next[i] = v;
@@ -110,19 +116,25 @@ export default function LostarkRaidDistribution({ locale }: Props) {
     setRoom(null);
     const out = generateDistribution(inputs.slice(0, partyCount), raidType, partySize);
     if (out.error === "count") {
+      track("distribution_error", { errorType: "count" });
       setError(t.errCount.replace("{expected}", String(out.errorDetail?.expected)).replace("{actual}", String(out.errorDetail?.actual)));
       setResult(null);
     } else if (out.error === "invalid") {
+      track("distribution_error", { errorType: "invalid" });
       setError(t.errInvalid.replace("{lines}", out.errorDetail?.lines ?? ""));
       setResult(null);
     } else {
+      const distribution = out.result;
+      if (!distribution) return;
+      track("distribution_complete", { playerCount: distribution.length });
       setError(null);
-      setResult(out.result);
+      setResult(distribution);
     }
   };
 
   const copyAll = () => {
     if (!result) return;
+    track("result_copy");
     const text = result
       .map((player, i) => `${Math.floor(i / 4) + 1}-${(i % 4) + 1} ${player.map(cleanChar).join("")}`)
       .join("\n");
@@ -213,7 +225,7 @@ export default function LostarkRaidDistribution({ locale }: Props) {
             </table>
           </div>
 
-          <button type="button" onClick={() => setRoom(generateRoomCode())} className="mt-4 rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:border-primary/40">{t.roomBtn}</button>
+          <button type="button" onClick={() => { track("room_code_generate"); setRoom(generateRoomCode()); }} className="mt-4 rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:border-primary/40">{t.roomBtn}</button>
           {room && (
             <div className="mt-2 flex gap-4 text-sm text-foreground">
               <span>{t.room}: <b className="font-mono">{room.roomCode}</b></span>
