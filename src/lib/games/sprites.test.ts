@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -17,6 +17,11 @@ import {
   LOGIC_CELL_SPRITES,
   MAHJONG_SPRITES,
   MEMORY_SPRITES,
+  MEMORY_FACE_NAMES,
+  memoryFaceSrc,
+  MAZE_SPRITES,
+  DOT_PET_SPRITES,
+  dotPetSprite,
   PIP_SPRITES,
   PLAYING_CARD_SPRITES,
   PUZZLE15_SPRITES,
@@ -60,6 +65,8 @@ describe("in-game sprite maps", () => {
       ...Object.values(LOGIC_CELL_SPRITES),
       MEMORY_SPRITES.back,
       ...MEMORY_SPRITES.faces,
+      MAZE_SPRITES.exit,
+      ...Object.values(DOT_PET_SPRITES).flatMap((set) => [set.baby, set.adult]),
     ];
     expect(Object.keys(CHESS_SPRITES)).toHaveLength(12);
     expect(Object.keys(CHECKERS_SPRITES)).toHaveLength(4);
@@ -71,9 +78,23 @@ describe("in-game sprite maps", () => {
     expect(mahjongTileSrc(-1)).toBe(MAHJONG_SPRITES.kinds[0]);
     expect(mahjongTileSrc(33)).toBe(MAHJONG_SPRITES.kinds[33]);
     expect(mahjongTileSrc(99)).toBe(MAHJONG_SPRITES.kinds[33]);
-    expect(MEMORY_SPRITES.faces).toHaveLength(8);
+    expect(MEMORY_SPRITES.faces).toHaveLength(18);
+    expect(MEMORY_FACE_NAMES).toHaveLength(18);
+    expect(memoryFaceSrc(17)).toBe(MEMORY_SPRITES.faces[17]);
+    expect(memoryFaceSrc(99)).toBe(MEMORY_SPRITES.faces[0]);
+    expect(new Set(MEMORY_SPRITES.faces).size).toBe(18);
+    expect(dotPetSprite("water", "baby")).toBe(DOT_PET_SPRITES.water.baby);
+    expect(dotPetSprite("water", "teen")).toBe(DOT_PET_SPRITES.water.adult);
+    expect(dotPetSprite("fire", "adult")).not.toBe(DOT_PET_SPRITES.fire.baby);
     for (const url of urls) {
       expect(existsSync(publicFile(url)), url).toBe(true);
     }
+  });
+
+  it("keeps memory and maze renderers off emoji tokens", () => {
+    const memory = readFileSync(new URL("../../components/games/MemoryCardGame.tsx", import.meta.url), "utf8");
+    const maze = readFileSync(new URL("../../components/games/MazeGame.tsx", import.meta.url), "utf8");
+    expect(memory).not.toMatch(/EMOJI_POOL/);
+    expect(maze).not.toMatch("✨");
   });
 });

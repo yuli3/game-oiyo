@@ -114,8 +114,51 @@ export const MEMORY_SPRITES = {
     "/assets/sprites/memory-card/fox.png",
     "/assets/sprites/memory-card/bear.png",
     "/assets/sprites/memory-card/panda.png",
+    "/assets/sprites/memory-card/koala.png",
+    "/assets/sprites/memory-card/tiger.png",
+    "/assets/sprites/memory-card/lion.png",
+    "/assets/sprites/memory-card/frog.png",
+    "/assets/sprites/memory-card/pig.png",
+    "/assets/sprites/memory-card/owl.png",
+    "/assets/sprites/memory-card/penguin.png",
+    "/assets/sprites/memory-card/cow.png",
+    "/assets/sprites/memory-card/monkey.png",
+    "/assets/sprites/memory-card/chick.png",
   ],
 } as const;
+
+export const MEMORY_FACE_NAMES = [
+  "dog",
+  "cat",
+  "mouse",
+  "hamster",
+  "rabbit",
+  "fox",
+  "bear",
+  "panda",
+  "koala",
+  "tiger",
+  "lion",
+  "frog",
+  "pig",
+  "owl",
+  "penguin",
+  "cow",
+  "monkey",
+  "chick",
+] as const;
+
+export function memoryFaceSrc(symbolId: number): string {
+  const faces = MEMORY_SPRITES.faces;
+  if (!Number.isInteger(symbolId) || symbolId < 0 || symbolId >= faces.length) return faces[0];
+  return faces[symbolId];
+}
+
+export function memoryFaceName(symbolId: number): string {
+  const names = MEMORY_FACE_NAMES;
+  if (!Number.isInteger(symbolId) || symbolId < 0 || symbolId >= names.length) return names[0];
+  return names[symbolId];
+}
 
 export const MINESWEEPER_SPRITES = {
   mine: "/assets/sprites/minesweeper/mine.png",
@@ -131,6 +174,10 @@ export const SNAKE_SPRITES = {
 export const CAVE_DASH_SPRITES = {
   ship: "/assets/sprites/cave-dash/ship.png",
   wall: "/assets/sprites/cave-dash/wall.png",
+} as const;
+
+export const MAZE_SPRITES = {
+  exit: "/assets/sprites/maze/exit.png",
 } as const;
 
 export const CHECKERS_SPRITES = {
@@ -238,29 +285,26 @@ export const CAT_FISHING_KOI = [
   "/assets/sprites/cat-fishing/koi-calico.png",
 ] as const;
 
-export const DOT_PET_SPRITES: Record<string, readonly [string, string, string, string]> = {
-  normal: [
-    "/assets/sprites/dot-pet/normal-baby.png",
-    "/assets/sprites/dot-pet/normal-baby.png",
-    "/assets/sprites/dot-pet/normal-adult.png",
-    "/assets/sprites/dot-pet/normal-adult.png",
-  ],
-  water: [
-    "/assets/sprites/dot-pet/water-baby.png",
-    "/assets/sprites/dot-pet/water-baby.png",
-    "/assets/sprites/dot-pet/water-baby.png",
-    "/assets/sprites/dot-pet/water-baby.png",
-  ],
-  fire: [
-    "/assets/sprites/dot-pet/fire-baby.png",
-    "/assets/sprites/dot-pet/fire-baby.png",
-    "/assets/sprites/dot-pet/fire-baby.png",
-    "/assets/sprites/dot-pet/fire-baby.png",
-  ],
-  plant: [
-    "/assets/sprites/dot-pet/plant-baby.png",
-    "/assets/sprites/dot-pet/plant-baby.png",
-    "/assets/sprites/dot-pet/plant-baby.png",
-    "/assets/sprites/dot-pet/plant-baby.png",
-  ],
+export const DOT_PET_SPRITES: Record<string, { baby: string; adult: string }> = {
+  normal: {
+    baby: "/assets/sprites/dot-pet/normal-baby.png",
+    adult: "/assets/sprites/dot-pet/normal-adult.png",
+  },
+  water: {
+    baby: "/assets/sprites/dot-pet/water-baby.png",
+    adult: "/assets/sprites/dot-pet/water-adult.png",
+  },
+  fire: {
+    baby: "/assets/sprites/dot-pet/fire-baby.png",
+    adult: "/assets/sprites/dot-pet/fire-adult.png",
+  },
+  plant: {
+    baby: "/assets/sprites/dot-pet/plant-baby.png",
+    adult: "/assets/sprites/dot-pet/plant-adult.png",
+  },
 };
+
+export function dotPetSprite(type: string, stage: "baby" | "child" | "teen" | "adult"): string {
+  const set = DOT_PET_SPRITES[type] ?? DOT_PET_SPRITES.normal;
+  return stage === "teen" || stage === "adult" ? set.adult : set.baby;
+}

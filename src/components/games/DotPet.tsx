@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { explainDotPetAction, type DotPetAction } from '../../lib/games/dot-pet';
-import { DOT_PET_SPRITES } from '../../lib/games/sprites';
+import { DOT_PET_SPRITES, dotPetSprite } from '../../lib/games/sprites';
 
 // ─── Dot Pet — virtual pet, ported from ahoxy-legacy ─────────────────────────
 // Pick a pet, keep it fed/happy/rested; stats decay over time (including while
@@ -211,7 +211,7 @@ const DotPet: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                             onClick={() => adopt(type)}
                             className="p-5 rounded-2xl border-2 border-border bg-card hover:border-primary hover:-translate-y-0.5 transition-all text-center space-y-2"
                         >
-                            <img src={DOT_PET_SPRITES[type][0]} alt="" draggable={false} className="mx-auto h-16 w-16 object-contain" />
+                            <img src={DOT_PET_SPRITES[type].baby} alt="" draggable={false} className="mx-auto h-16 w-16 object-contain" />
                             <div className="font-black text-foreground">{t.types[type]}</div>
                             <div className="text-[10px] text-muted-foreground">{t.typeDesc[type]}</div>
                         </button>
@@ -223,7 +223,7 @@ const DotPet: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
     const stageIdx = STAGES.indexOf(pet.stage);
     const xpMax = (stageIdx + 1) * 100;
-    const petSprite = DOT_PET_SPRITES[pet.type][stageIdx];
+    const petSprite = dotPetSprite(pet.type, pet.stage);
     const mood = pet.happiness > 50 && pet.hunger > 30 ? '' : pet.hunger <= 30 ? '💦' : '💧';
     const spriteSize = ['h-16 w-16', 'h-20 w-20', 'h-24 w-24', 'h-28 w-28'][stageIdx];
 

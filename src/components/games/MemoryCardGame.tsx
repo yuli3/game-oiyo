@@ -3,9 +3,7 @@ import { GameContainer } from '@/components/ui/game/GamePrimitives';
 import { usePrefersReducedMotion } from '@/lib/games/reduced-motion';
 import { createMemoryGame, flipMemoryCard, MEMORY_GRID_CONFIG, memoryPairCount, resolveMemoryPair, type MemoryGridSize, type MemoryState } from '@/lib/games/memory-card-game';
 import { clearMemoryCardSave, loadMemoryCardSave, storeMemoryCardSave } from '@/lib/games/memory-card-game-save';
-import { MEMORY_SPRITES } from '@/lib/games/sprites';
-
-const EMOJI_POOL = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐸', '🐙', '🦋', '🌸', '⭐', '🍎', '🍊', '🍋', '🍇', '🍓', '🌈', '🎸', '🚀', '🎃', '🔮', '🎯', '💎', '🏆', '🎪', '🌴', '🦄', '🐝', '🦀'];
+import { MEMORY_SPRITES, memoryFaceName, memoryFaceSrc } from '@/lib/games/sprites';
 
 function formatTime(ms: number): string {
   const s = Math.floor(ms / 1000);
@@ -261,7 +259,7 @@ const MemoryCardGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 onKeyDown={(event) => handleKey(event, card.id)}
                 data-memory-card={card.id}
                 disabled={paused || card.isMatched || card.isFlipped || state.flipped.length === 2 || state.status === 'won'}
-                aria-label={card.isFlipped || card.isMatched ? EMOJI_POOL[card.symbolId] : `${t.cardLabel} ${card.id + 1}`}
+                aria-label={card.isFlipped || card.isMatched ? memoryFaceName(card.symbolId) : `${t.cardLabel} ${card.id + 1}`}
                 aria-pressed={card.isFlipped || card.isMatched}
                 className={[
                   `min-h-11 min-w-11 aspect-square rounded-xl border-2 flex items-center justify-center text-xl sm:text-2xl ${prefersReducedMotion ? '' : 'transition-all duration-200'}`,
@@ -274,9 +272,7 @@ const MemoryCardGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
               >
                 {card.isFlipped || card.isMatched ? (
                   <>
-                    {MEMORY_SPRITES.faces[card.symbolId]
-                      ? <img src={MEMORY_SPRITES.faces[card.symbolId]} alt="" draggable={false} className="h-[78%] w-[78%] object-contain pointer-events-none" />
-                      : <span aria-hidden="true">{EMOJI_POOL[card.symbolId]}</span>}
+                    <img src={memoryFaceSrc(card.symbolId)} alt="" draggable={false} className="h-[78%] w-[78%] object-contain pointer-events-none" />
                     {card.isMatched && <span className="sr-only"> matched</span>}
                   </>
                 ) : <img src={MEMORY_SPRITES.back} alt="" draggable={false} className="h-[70%] w-[70%] object-contain pointer-events-none" />}

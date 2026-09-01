@@ -8,6 +8,7 @@ import {
   serializeMaze,
   type MazeDifficulty,
 } from "../../lib/games/maze";
+import { MAZE_SPRITES } from "../../lib/games/sprites";
 const SAVE = "oiyo:maze:v1",
   BEST = "oiyo-maze-best";
 const C = {
@@ -315,7 +316,7 @@ export default function MazeGame({ locale = "ko" }: { locale?: string }) {
                   {pos[0] === r && pos[1] === c ? (
                     <span className="h-3/4 w-3/4 rounded-full bg-[#df7655]" />
                   ) : r === maze.length - 1 && c === maze.length - 1 ? (
-                    "✨"
+                    <img src={MAZE_SPRITES.exit} alt="" draggable={false} className="h-3/4 w-3/4 object-contain pointer-events-none" />
                   ) : (
                     ""
                   )}
