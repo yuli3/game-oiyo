@@ -36,6 +36,7 @@ export const GAME_DISPLAY_NAMES: Record<string, LocalizedName> = {
   "rhythm-tap": name("리듬 탭", "Rhythm Tap", "リズムタップ", "节奏点击", "Rythme tactile", "Toque rítmico"),
   "cave-dash": name("케이브 대시", "Cave Dash", "ケイブダッシュ", "洞穴冲刺", "Course des cavernes", "Carrera cavernícola"),
   "aim-trainer": name("에임 트레이너", "Aim Trainer", "エイムトレーナー", "瞄准训练", "Entraîneur de visée", "Entrenador de puntería"),
+  "block-burst": name("블록 버스트", "Block Burst", "ブロックバースト", "方块爆裂", "Block Burst", "Block Burst"),
   "puzzle-15": name("15 퍼즐", "15 Puzzle", "15パズル", "十五数码", "Taquin", "Rompecabezas del 15"),
 };
 

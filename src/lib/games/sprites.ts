@@ -1,4 +1,15 @@
 /** In-game sprite URLs. Engine state still stores emoji/ids; only the renderer reads these. */
+export const BLOCK_BURST_SPRITES: Record<1 | 2 | 3 | 4 | 5, string> = {
+  1: "/assets/sprites/block-burst/gem-olive.png",
+  2: "/assets/sprites/block-burst/gem-amber.png",
+  3: "/assets/sprites/block-burst/gem-coral.png",
+  4: "/assets/sprites/block-burst/gem-teal.png",
+  5: "/assets/sprites/block-burst/gem-gold.png",
+};
+export const BLOCK_BURST_FX = {
+  burst: "/assets/sprites/block-burst/burst.png",
+} as const;
+
 export const ANIMAL_POP_SPRITES: Record<string, string> = {
   "🐵": "/assets/sprites/animal-pop/monkey.png",
   "🐱": "/assets/sprites/animal-pop/cat.png",

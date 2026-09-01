@@ -6,6 +6,13 @@ export interface GameInsight {
 }
 
 export const GAME_INSIGHTS: Record<string, GameInsight> = {
+  "block-burst": {
+    title: { ko: "가로만 보지 말고 세로 기둥을 남긴다", en: "Keep a column climbing while you clear rows" },
+    paragraphs: {
+      ko: ["가로 8칸을 채우는 편이 쉽지만, 세로 10칸이 동시에 차면 교차 폭발로 점수가 두 배가 됩니다. 한쪽 벽을 높게 쌓아 기둥을 만들고 반대편에서 줄을 지우는 리듬이 안정적입니다.", "하드 드롭은 빠르지만 다음 블록의 자리를 빼앗습니다. 연쇄가 열릴 때만 쓰고, 그 외에는 한 칸씩 내려 모양을 맞추세요."],
+      en: ["Filling a row of eight is easier, but a simultaneous full column doubles the burst. Stack one wall as a rising column and clear rows on the opposite side.", "Hard drops are fast and steal the next piece's landing. Use them when a chain is open; otherwise nudge down and fit the shape."],
+    },
+  },
   "game-2048": {
     title: { ko: "빈칸과 합성의 우선순위", en: "Prioritize space and merges" },
     paragraphs: {

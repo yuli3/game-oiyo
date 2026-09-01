@@ -1,0 +1,50 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import BlockBurstComp from "../../components/games/BlockBurst";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "블록 버스트 — 가로·세로가 터지는 낙하 퍼즐",
+    description: "네다섯 칸짜리 보석 블록을 쌓아 가로 줄이나 세로 줄을 꽉 채우면 폭발합니다. 연쇄 콤보와 이펙트로 최고 점수에 도전하세요.",
+  },
+  en: {
+    title: "Block Burst — Detonate full rows and columns",
+    description: "Drop jewel blocks of four or five cells. Fill a whole row or column to explode it, chain combos, and chase a high score.",
+  },
+  ja: {
+    title: "ブロックバースト — 縦横ラインが爆発する落下パズル",
+    description: "4〜5マスの宝石ブロックを積み、横一列または縦一列を埋めると爆発。連鎖コンボでハイスコアを狙います。",
+  },
+  zh: {
+    title: "方块爆裂 — 填满行列就会爆炸的下落益智",
+    description: "落下四到五格宝石方块，填满整行或整列即可引爆，连锁连击冲击高分。",
+  },
+  fr: {
+    title: "Block Burst — Faites exploser lignes et colonnes",
+    description: "Laissez tomber des blocs-joyaux de 4 ou 5 cases. Remplissez une ligne ou une colonne entière pour l'exploser et enchaîner les combos.",
+  },
+  es: {
+    title: "Block Burst — Detona filas y columnas llenas",
+    description: "Deja caer bloques joya de cuatro o cinco celdas. Llena una fila o columna entera para detonarla y encadenar combos.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["block-burst"]}>
+  <div class="mx-auto max-w-2xl px-4 py-8">
+    <BlockBurstComp client:load locale={locale} />
+    <GameGuide slug="block-burst" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
+  </div>
+</BaseLayout>

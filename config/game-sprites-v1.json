@@ -4,6 +4,10 @@
   "chroma": "transparent PNG; generated on hot-magenta then keyed",
   "sizePx": 256,
   "games": {
+    "block-burst": {
+      "tokens": ["gem-olive", "gem-amber", "gem-coral", "gem-teal", "gem-gold", "burst"],
+      "wired": true
+    },
     "animal-pop": {
       "tokens": ["monkey", "cat", "pig", "mouse", "rabbit", "dog", "chick"],
       "mapsEmoji": ["🐵", "🐱", "🐷", "🐭", "🐰", "🐶", "🐤"]

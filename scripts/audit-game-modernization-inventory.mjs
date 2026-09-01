@@ -48,6 +48,7 @@ const completedRisk = {
   "isometric-city": { mobile: "low", accessibility: "low", performance: "medium" },
   "dot-jumpking": { mobile: "low", accessibility: "low", performance: "low" },
   "animal-pop": { mobile: "low", accessibility: "low", performance: "low" },
+  "block-burst": { mobile: "low", accessibility: "low", performance: "low" },
   "texas-holdem": { mobile: "low", accessibility: "low", performance: "low" },
   maze: { mobile: "low", accessibility: "low", performance: "low" },
   janggi: { mobile: "low", accessibility: "low", performance: "low" },
@@ -205,8 +206,8 @@ const summary = {
 };
 const report = { schema: "oiyo.game-modernization-inventory", schemaVersion: 2, generatedAt: new Date().toISOString(), scorePolicy: "Static scores are prioritization proxies and never certify a game. Release certification requires ordered evidence from config/game-release-evidence-v1.json.", summary, games };
 
-if (games.length !== 53) {
-  console.error(`inventory audit failed: expected 53 games, found ${games.length}`);
+if (games.length !== 54) {
+  console.error(`inventory audit failed: expected 54 games, found ${games.length}`);
   process.exit(1);
 }
 const duplicateSlugs = games

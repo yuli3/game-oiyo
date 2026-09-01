@@ -3,6 +3,8 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
+  BLOCK_BURST_FX,
+  BLOCK_BURST_SPRITES,
   CAVE_DASH_SPRITES,
   CHECKERS_SPRITES,
   CHESS_SPRITES,
@@ -32,6 +34,8 @@ function publicFile(url: string) {
 describe("in-game sprite maps", () => {
   it("exposes snake, cave, chess, and memory face URLs that exist on disk", () => {
     const urls = [
+      ...Object.values(BLOCK_BURST_SPRITES),
+      BLOCK_BURST_FX.burst,
       ...Object.values(SNAKE_SPRITES),
       ...Object.values(CAVE_DASH_SPRITES),
       ...Object.values(CHESS_SPRITES),
