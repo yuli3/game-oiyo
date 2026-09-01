@@ -121,17 +121,6 @@
       },
       "note": "W5 remesh: no GLTF on host so parametric lathe/taper/capsule kit. Body plans and save keys unchanged. Key art still cinematic."
     },
-    "memory-card-game": {
-      "cluster": "craft-token",
-      "gates": {
-        "style-bible": "fail",
-        "frame-motion": "pass",
-        "readable-hit": "pass",
-        "no-production-residue": "pass",
-        "key-art-matches-play": "fail"
-      },
-      "note": "Emoji fallback removed. 18 PNG faces cover 6x6. First 8 still mix animal-pop bodies with felt faces."
-    },
     "maze": {
       "cluster": "craft-token",
       "gates": {
@@ -186,6 +175,39 @@
         "key-art-matches-play": "fail"
       },
       "note": "Baked ship flame cropped; 4-frame pixel exhaust loops behind the hull. Physics radius unchanged."
+    },
+    "wordle": {
+      "cluster": "tile-motion",
+      "gates": {
+        "style-bible": "pass",
+        "frame-motion": "pass",
+        "readable-hit": "pass",
+        "no-production-residue": "pass",
+        "key-art-matches-play": "fail"
+      },
+      "note": "Submitted row reveals left-to-right with a flip. Win banner waits for the last tile."
+    },
+    "puzzle15": {
+      "cluster": "tile-motion",
+      "gates": {
+        "style-bible": "pass",
+        "frame-motion": "pass",
+        "readable-hit": "pass",
+        "no-production-residue": "pass",
+        "key-art-matches-play": "fail"
+      },
+      "note": "Moving tile lerps from the origin cell into the gap. Engine board already at destination."
+    },
+    "memory-card-game": {
+      "cluster": "tile-motion",
+      "gates": {
+        "style-bible": "fail",
+        "frame-motion": "pass",
+        "readable-hit": "pass",
+        "no-production-residue": "pass",
+        "key-art-matches-play": "fail"
+      },
+      "note": "18 PNG faces, no emoji fallback. Cards rotateY on flip. First 8 faces still mix animal-pop bodies with felt."
     }
   }
 }

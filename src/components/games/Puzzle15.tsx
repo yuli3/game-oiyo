@@ -1,10 +1,11 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { createSolvedPuzzle15Board, movePuzzle15Tile, shufflePuzzle15 } from '../../lib/games/puzzle15';
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 import { getBestForConditions, recordBestForConditions, type BestConditions } from '../../lib/games/records';
 import { clearPuzzle15Save, loadPuzzle15Save, storePuzzle15Save } from '../../lib/games/active-game-save';
 import { elapsedSeconds } from '../../lib/games/time-contracts';
+import { indexToRowCol } from '../../lib/games/piece-tween';
 import { PUZZLE15_SPRITES } from '../../lib/games/sprites';
 
 // ─── 15 Puzzle (sliding puzzle) — ported from ahoxy-legacy ────────────────────
@@ -42,6 +43,8 @@ const Puzzle15: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [won, setWon] = useState(false);
     const [best, setBest] = useState<Record<string, { moves: number; seconds: number }>>({});
     const [muted, setMuted] = useState(false);
+    const [lastSlide, setLastSlide] = useState<{ from: number; to: number; key: number } | null>(null);
+    const slideKey = useRef(0);
     const started = useRef(false);
     const startedAt = useRef<number | null>(null);
     const audioRef = useRef<AudioContext | null>(null);
@@ -100,6 +103,7 @@ const Puzzle15: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         setMoves(0);
         setSeconds(0);
         setWon(false);
+        setLastSlide(null);
         started.current = false;
         startedAt.current = null;
     }, [size]);
@@ -118,6 +122,9 @@ const Puzzle15: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         if (!transition.moved) return;
         started.current = true;
         if (startedAt.current === null) startedAt.current = performance.now();
+        const empty = board.indexOf(0);
+        slideKey.current += 1;
+        setLastSlide({ from: tileIdx, to: empty, key: slideKey.current });
         const nextMoves = moves + 1;
         setBoard(transition.board);
         setMoves(nextMoves);
@@ -175,12 +182,16 @@ const Puzzle15: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     <div key="empty" className="rounded-xl bg-muted/40" />
                 ) : (
                     <button
-                        key={v}
+                        key={lastSlide?.to === i ? `${v}-${lastSlide.key}` : v}
                         onClick={() => slide(i)}
                         aria-label={String(v)}
-                        className={`relative min-h-11 min-w-11 overflow-hidden rounded-xl font-black ${!reducedMotion ? 'transition-all active:scale-95' : ''} ${
+                        className={`relative min-h-11 min-w-11 overflow-hidden rounded-xl font-black ${!reducedMotion && lastSlide?.to === i ? 'oiyo-piece-slide' : ''} ${!reducedMotion ? 'active:scale-95' : ''} ${
                             size === 3 ? 'text-2xl' : size === 4 ? 'text-xl' : 'text-base'
                         } ${v === (i + 1) % (size * size) ? 'ring-2 ring-primary' : ''}`}
+                        style={lastSlide?.to === i && !reducedMotion ? {
+                            '--dx': indexToRowCol(lastSlide.from, size).col - indexToRowCol(lastSlide.to, size).col,
+                            '--dy': indexToRowCol(lastSlide.from, size).row - indexToRowCol(lastSlide.to, size).row,
+                        } as CSSProperties : undefined}
                     >
                         <img src={PUZZLE15_SPRITES.tile} alt="" draggable={false} className="pointer-events-none absolute inset-0 h-full w-full object-cover" />
                         <span className={`relative z-[1] flex h-full w-full items-center justify-center ${v === (i + 1) % (size * size) ? 'text-primary' : 'text-stone-900'}`}>{v}</span>

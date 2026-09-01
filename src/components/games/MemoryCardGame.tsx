@@ -262,20 +262,23 @@ const MemoryCardGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 aria-label={card.isFlipped || card.isMatched ? memoryFaceName(card.symbolId) : `${t.cardLabel} ${card.id + 1}`}
                 aria-pressed={card.isFlipped || card.isMatched}
                 className={[
-                  `min-h-11 min-w-11 aspect-square rounded-xl border-2 flex items-center justify-center text-xl sm:text-2xl ${prefersReducedMotion ? '' : 'transition-all duration-200'}`,
+                  'min-h-11 min-w-11 aspect-square rounded-xl border-2 [perspective:700px]',
                   card.isMatched
-                    ? 'bg-emerald-50 border-emerald-300 scale-95'
+                    ? 'border-emerald-300 bg-emerald-50 scale-95'
                     : card.isFlipped
-                    ? 'bg-card border-primary shadow-sm scale-105'
-                    : 'bg-primary/10 border-primary/30 hover:bg-primary/20 hover:border-primary cursor-pointer active:scale-95',
+                    ? 'border-primary bg-transparent'
+                    : 'border-primary/30 bg-transparent hover:border-primary cursor-pointer active:scale-95',
                 ].join(' ')}
               >
-                {card.isFlipped || card.isMatched ? (
-                  <>
+                <span className={`oiyo-memory-inner ${card.isFlipped || card.isMatched ? 'is-flipped' : ''}`}>
+                  <span className="oiyo-memory-face rounded-xl bg-primary/10">
+                    <img src={MEMORY_SPRITES.back} alt="" draggable={false} className="h-[70%] w-[70%] object-contain pointer-events-none" />
+                  </span>
+                  <span className="oiyo-memory-face is-front rounded-xl bg-card">
                     <img src={memoryFaceSrc(card.symbolId)} alt="" draggable={false} className="h-[78%] w-[78%] object-contain pointer-events-none" />
-                    {card.isMatched && <span className="sr-only"> matched</span>}
-                  </>
-                ) : <img src={MEMORY_SPRITES.back} alt="" draggable={false} className="h-[70%] w-[70%] object-contain pointer-events-none" />}
+                  </span>
+                </span>
+                {card.isMatched && <span className="sr-only"> matched</span>}
               </button>
             ))}
           </div>
