@@ -340,6 +340,39 @@
         "key-art-matches-play": "fail"
       },
       "note": "The two cells of a newly placed domino land on mount. Castle and restored kingdoms stay still."
+    },
+    "minesweeper": {
+      "cluster": "tile-motion",
+      "gates": {
+        "style-bible": "pass",
+        "frame-motion": "pass",
+        "readable-hit": "pass",
+        "no-production-residue": "pass",
+        "key-art-matches-play": "fail"
+      },
+      "note": "Newly opened cells and flags land. Flood reveal staggers from the click. Restore does not replay the board."
+    },
+    "sudoku": {
+      "cluster": "tile-motion",
+      "gates": {
+        "style-bible": "pass",
+        "frame-motion": "pass",
+        "readable-hit": "pass",
+        "no-production-residue": "pass",
+        "key-art-matches-play": "fail"
+      },
+      "note": "Only the digit just entered lands. Givens and restored entries stay still."
+    },
+    "light-up": {
+      "cluster": "tile-motion",
+      "gates": {
+        "style-bible": "pass",
+        "frame-motion": "pass",
+        "readable-hit": "pass",
+        "no-production-residue": "pass",
+        "key-art-matches-play": "fail"
+      },
+      "note": "A newly placed bulb lands. Undo and restore do not replay existing lights."
     }
   }
 }

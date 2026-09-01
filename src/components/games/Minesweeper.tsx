@@ -28,6 +28,7 @@ import {
     type RevealResult,
 } from '../../lib/games/minesweeper';
 import { MINESWEEPER_SPRITES } from '../../lib/games/sprites';
+import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 
 const LEGACY_BEST_KEY = 'oiyo-minesweeper-best'; // pre-unification key, read once for migration
 
@@ -132,6 +133,9 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [currentHint, setCurrentHint] = useState<MinesweeperHint | null>(null);
     const [hintUnavailable, setHintUnavailable] = useState(false);
     const [overviewOpen, setOverviewOpen] = useState(false);
+    const [freshReveal, setFreshReveal] = useState<Map<string, number>>(() => new Map());
+    const [freshFlag, setFreshFlag] = useState<string | null>(null);
+    const reducedMotion = usePrefersReducedMotion();
     const [isNewBest, setIsNewBest] = useState(false);
     const [onboarding, setOnboarding] = useState<MinesweeperOnboarding>(() => freshMinesweeperOnboarding());
     const [coarsePointer, setCoarsePointer] = useState(false);
@@ -162,6 +166,8 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         setCurrentHint(null);
         setHintUnavailable(false);
         setOverviewOpen(false);
+        setFreshReveal(new Map());
+        setFreshFlag(null);
         setIsNewBest(false);
         clearMinesweeperSave();
         if (next === 'daily') {
@@ -277,8 +283,18 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         return () => clearInterval(interval);
     }, [status, hasStarted]);
 
-    const applyReveal = (result: RevealResult) => {
+    const applyReveal = (result: RevealResult, origin: { x: number; y: number }) => {
         if (!result.changed) return;
+        const delays = new Map<string, number>();
+        for (const row of result.board) {
+            for (const cell of row) {
+                if (!cell.isRevealed || board[cell.y]?.[cell.x]?.isRevealed) continue;
+                const dist = Math.abs(cell.x - origin.x) + Math.abs(cell.y - origin.y);
+                delays.set(`${cell.x}:${cell.y}`, Math.min(7, dist) * 28);
+            }
+        }
+        setFreshReveal(delays);
+        setFreshFlag(null);
         setCurrentHint(null);
         setHintUnavailable(false);
         setBoard(result.board);
@@ -325,7 +341,7 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         const wasRevealed = base[y][x].isRevealed;
         const result = wasRevealed ? chordMinesweeperCell(base, x, y) : revealMinesweeperCell(base, x, y);
         if (result.changed) advanceOnboarding(wasRevealed ? 'chorded' : 'revealed');
-        applyReveal(result);
+        applyReveal(result, { x, y });
     };
 
     const toggleFlag = (x: number, y: number) => {
@@ -333,7 +349,10 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         setCurrentHint(null);
         setHintUnavailable(false);
         const next = toggleMinesweeperFlag(board, x, y, mineCount);
-        if (!board[y][x].isFlagged && next[y]?.[x]?.isFlagged) advanceOnboarding('flagged');
+        if (!board[y][x].isFlagged && next[y]?.[x]?.isFlagged) {
+            advanceOnboarding('flagged');
+            setFreshFlag(`${x}:${y}`);
+        } else setFreshFlag(null);
         setBoard(next);
     };
 
@@ -542,11 +561,23 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                                                 : 'bg-primary/20 hover:bg-primary/30 active:scale-95 border-b-2 border-primary/40'
                                         } ${hintTargets.has(`${x}:${y}`) ? 'ring-4 ring-chart-2 ring-offset-1' : ''} ${hintClues.has(`${x}:${y}`) ? 'ring-4 ring-primary ring-offset-1' : ''}`}
                                     >
-                                        {cell.isRevealed
-                                            ? cell.isMine ? <img src={MINESWEEPER_SPRITES.mine} alt="" draggable={false} className="h-[70%] w-[70%] object-contain pointer-events-none" /> : (cell.neighborMines > 0
-                                                ? <span className={NUM_COLORS[cell.neighborMines] ?? 'text-primary'}>{cell.neighborMines}</span>
-                                                : '')
-                                            : cell.isFlagged ? <img src={MINESWEEPER_SPRITES.flag} alt="" draggable={false} className="h-[70%] w-[70%] object-contain pointer-events-none" /> : ''}
+                                        {(() => {
+                                            const key = `${x}:${y}`;
+                                            const delay = freshReveal.get(key);
+                                            const land = !reducedMotion && (delay !== undefined || freshFlag === key);
+                                            const inner = cell.isRevealed
+                                                ? (cell.isMine
+                                                    ? <img src={MINESWEEPER_SPRITES.mine} alt="" draggable={false} className="h-[70%] w-[70%] object-contain pointer-events-none" />
+                                                    : (cell.neighborMines > 0 ? <span className={NUM_COLORS[cell.neighborMines] ?? 'text-primary'}>{cell.neighborMines}</span> : null))
+                                                : (cell.isFlagged ? <img src={MINESWEEPER_SPRITES.flag} alt="" draggable={false} className="h-[70%] w-[70%] object-contain pointer-events-none" /> : null);
+                                            return (
+                                                <span
+                                                    key={cell.isRevealed ? 'open' : cell.isFlagged ? 'flag' : 'shut'}
+                                                    className={`flex h-full w-full items-center justify-center ${land ? 'oiyo-tile-land' : ''}`}
+                                                    style={land && delay !== undefined ? { animationDelay: `${delay}ms` } : undefined}
+                                                >{inner}</span>
+                                            );
+                                        })()}
                                     </button>
                                 );
                             })}

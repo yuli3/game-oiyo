@@ -15,6 +15,7 @@ import {
 } from '../../lib/games/sudoku-save';
 import { elapsedSeconds } from '../../lib/games/time-contracts';
 import { PUZZLE15_SPRITES } from '../../lib/games/sprites';
+import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 
 const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 const DAILY_GAME_ID = 'sudoku-daily';
@@ -46,6 +47,8 @@ const Sudoku: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [focusIndex, setFocusIndex] = useState(0);
     const [streak, setStreak] = useState<DailyStreak | null>(null);
     const [hydrated, setHydrated] = useState(false);
+    const [freshEntry, setFreshEntry] = useState<string | null>(null);
+    const reducedMotion = usePrefersReducedMotion();
     const cellRefs = useRef<Array<HTMLButtonElement | null>>([]);
     const seedRef = useRef(0);
     const startedAt = useRef<number | null>(null);
@@ -83,6 +86,7 @@ const Sudoku: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         setGivens(puzzleGivens);
         setGrid(puzzleGivens.map((row, r) => row.map((v, c) => v ?? entries?.[r]?.[c] ?? null)));
         setSelected(null);
+        setFreshEntry(null);
         setFocusIndex(0);
         setRecorded(false);
         setIsNewBest(false);
@@ -138,6 +142,7 @@ const Sudoku: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         if (startedAt.current === null) startedAt.current = performance.now();
         const newGrid = grid.map(row => [...row]);
         newGrid[r][c] = n === grid[r][c] ? null : n;
+        setFreshEntry(newGrid[r][c] !== null ? `${r}-${c}` : null);
         setGrid(newGrid);
         if (newGrid[r][c] !== null && findSudokuConflicts(newGrid)[r][c]) tone(180, 0.08);
         else if (newGrid[r][c] !== null) tone(420, 0.04);
@@ -248,7 +253,7 @@ const Sudoku: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                                 } ${isInit ? 'text-stone-800' : isSelected ? 'bg-primary text-primary-foreground' : 'bg-stone-50 text-primary'} ${inConflict && !isSelected ? 'text-destructive underline decoration-2 underline-offset-4' : ''}`}
                             >
                                 {isInit && <img src={PUZZLE15_SPRITES.tile} alt="" draggable={false} className="pointer-events-none absolute inset-0 h-full w-full object-cover" />}
-                                <span className="relative z-[1]">{val}</span>
+                                <span key={val ?? 'empty'} className={`relative z-[1] ${!isInit && freshEntry === `${r}-${c}` && val !== null && !reducedMotion ? 'oiyo-tile-land' : ''}`}>{val}</span>
                             </button>
                         );
                     }))}
