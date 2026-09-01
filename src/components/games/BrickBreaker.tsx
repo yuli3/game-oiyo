@@ -20,13 +20,14 @@ import {
   type BrickBreakerState,
 } from "../../lib/games/brick-breaker";
 import { getPrefersReducedMotion, subscribeToReducedMotion } from "../../lib/games/reduced-motion";
-import { BRICK_BREAKER_SPRITES } from "../../lib/games/sprites";
+import { blitSheetFrame } from "../../lib/games/sprite-sheet";
+import { BRICK_BREAKER_SPRITES, FX_SPARK_SHEET, FX_SPRITES } from "../../lib/games/sprites";
 
-type BrickArt = Record<keyof typeof BRICK_BREAKER_SPRITES, HTMLImageElement>;
+type BrickArt = Record<keyof typeof BRICK_BREAKER_SPRITES, HTMLImageElement> & { sparkSheet: HTMLImageElement };
 function loadBrickArt(): BrickArt | null {
   if (typeof Image === "undefined") return null;
   const art = {} as BrickArt;
-  for (const [key, src] of Object.entries(BRICK_BREAKER_SPRITES)) {
+  for (const [key, src] of Object.entries({ ...BRICK_BREAKER_SPRITES, sparkSheet: FX_SPRITES.sparkSheet })) {
     const image = new Image();
     image.src = src;
     art[key as keyof BrickArt] = image;
@@ -151,6 +152,7 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
   const qualityRef = useRef<"high" | "balanced">("high");
   const artRef = useRef<BrickArt | null>(null);
   if (artRef.current === null) artRef.current = loadBrickArt();
+  const trailRef = useRef<{ x: number; y: number }[]>([]);
 
   useEffect(() => {
     const b = getBest(GAME_KEY);
@@ -286,17 +288,37 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
       }
     }
     if (!reducedMotionRef.current) {
+      const trail = trailRef.current;
+      trail.unshift({ x: gs.bx, y: gs.by });
+      if (trail.length > 6) trail.length = 6;
+      trail.forEach((point, index) => {
+        ctx.globalAlpha = 0.28 * (1 - index / trail.length);
+        ctx.beginPath();
+        ctx.fillStyle = "#fbbf24";
+        ctx.arc(point.x, point.y, Math.max(1.5, BRICK_BREAKER_BOARD.ballRadius * (1 - index * 0.12)), 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.globalAlpha = 1;
       gs.particles = gs.particles.filter((particle) => {
         particle.x += particle.vx * scale;
         particle.y += particle.vy * scale;
         particle.life -= 0.07 * scale;
         if (particle.life <= 0) return false;
+        const sparkSize = 5 + (1 - particle.life) * 7;
+        const sparkFrame = Math.min(FX_SPARK_SHEET.frameCount - 1, Math.floor((1 - particle.life) * FX_SPARK_SHEET.frameCount));
         ctx.globalAlpha = particle.life;
-        ctx.fillStyle = `hsl(${particle.hue} 80% 65%)`;
-        ctx.fillRect(particle.x, particle.y, 3, 3);
+        const sparked = art?.sparkSheet
+          ? blitSheetFrame(ctx, art.sparkSheet, FX_SPARK_SHEET, sparkFrame, particle.x - sparkSize / 2, particle.y - sparkSize / 2, sparkSize, sparkSize)
+          : false;
+        if (!sparked) {
+          ctx.fillStyle = `hsl(${particle.hue} 80% 65%)`;
+          ctx.fillRect(particle.x, particle.y, 3, 3);
+        }
         return true;
       });
       ctx.globalAlpha = 1;
+    } else {
+      trailRef.current = [];
     }
     const paddleLift = !reducedMotionRef.current && gs.paddleFlashUntil > gs.elapsedMs ? 2 : 0;
     if (gs.paddleFlashUntil > gs.elapsedMs || !paintCentered(ctx, art?.paddle, gs.padX, padY + 5 - paddleLift, gs.padW, 14 + paddleLift)) {

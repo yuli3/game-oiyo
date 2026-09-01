@@ -92,6 +92,15 @@ export const BRICK_BREAKER_SPRITES = {
 export const JUMP_KING_SPRITES = {
   jumper: "/assets/sprites/dot-jumpking/jumper.png",
   platform: "/assets/sprites/dot-jumpking/platform.png",
+  jumperSheet: "/assets/sprites/dot-jumpking/jumper-sheet.png",
+} as const;
+
+export const JUMP_KING_JUMPER_SHEET = {
+  cols: 3,
+  rows: 1,
+  frameCount: 3,
+  fps: 8,
+  loop: false,
 } as const;
 
 export const MEMORY_SPRITES = {

@@ -14,7 +14,8 @@ import {
   visiblePlatforms,
   type JumpState,
 } from "../../lib/games/dot-jumpking";
-import { JUMP_KING_SPRITES } from "../../lib/games/sprites";
+import { blitSheetFrame } from "../../lib/games/sprite-sheet";
+import { JUMP_KING_JUMPER_SHEET, JUMP_KING_SPRITES } from "../../lib/games/sprites";
 
 type JumpArt = Record<keyof typeof JUMP_KING_SPRITES, HTMLImageElement>;
 function loadJumpArt(): JumpArt | null {
@@ -419,7 +420,11 @@ function draw(ctx: CanvasRenderingContext2D, s: JumpState, art: JumpArt | null) 
     }
   }
   const y = sy(s.y);
-  if (!paintCentered(ctx, art?.jumper, s.x, y - 2, 36, 36)) {
+  const jumperFrame = s.charge > 8 ? 1 : s.vy < -1.5 ? 2 : s.vy > 3 ? 1 : 0;
+  const jumperDrawn = art?.jumperSheet
+    ? blitSheetFrame(ctx, art.jumperSheet, JUMP_KING_JUMPER_SHEET, jumperFrame, s.x - 18, y - 20, 36, 36)
+    : paintCentered(ctx, art?.jumper, s.x, y - 2, 36, 36);
+  if (!jumperDrawn) {
     ctx.beginPath();
     ctx.arc(s.x, y, 12, 0, Math.PI * 2);
     ctx.fillStyle = s.charge ? "#e67f51" : "#708447";

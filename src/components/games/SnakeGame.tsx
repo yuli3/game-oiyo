@@ -3,7 +3,7 @@ import { GameContainer } from '../ui/game/GamePrimitives';
 import { getBest, recordAchievementEvent, recordBest } from '../../lib/games/records';
 import { bufferSnakeDirection, createSnakeGame, pauseSnake, resumeSnake, SNAKE_GRID_SIZE, snakeTickMilliseconds, steerSnake, tickSnakeWithCause, type SnakeDeathCause, type SnakeDirection, type SnakeState } from '../../lib/games/snake';
 import { clearSnakeSave, loadSnakeSave, storeSnakeSave } from '../../lib/games/snake-save';
-import { SNAKE_SPRITES } from '../../lib/games/sprites';
+import { FX_SPRITES, SNAKE_SPRITES } from '../../lib/games/sprites';
 
 const LEGACY_BEST_KEY = 'oiyo-snake-best'; // pre-unification key, read once for migration
 
@@ -38,6 +38,8 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const audioRef = useRef<AudioContext | null>(null);
     const previousScoreRef = useRef(0);
     const previousStatusRef = useRef<string>('idle');
+    const lastFoodRef = useRef({ x: 5, y: 5 });
+    const [eatBurst, setEatBurst] = useState<{ x: number; y: number; at: number } | null>(null);
     const touchStart = useRef<{ x: number; y: number } | null>(null);
     const queuedDirectionRef = useRef<SnakeDirection | null>(null);
     const score = game?.score ?? 0;
@@ -168,11 +170,21 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     }, [score, best]);
 
     useEffect(() => {
-        if (score > previousScoreRef.current) playTone(620, 0.12);
+        if (score > previousScoreRef.current) {
+            playTone(620, 0.12);
+            setEatBurst({ x: lastFoodRef.current.x, y: lastFoodRef.current.y, at: Date.now() });
+        }
         if (status === 'over' && previousStatusRef.current !== 'over') { playTone(150, 0.3); recordAchievementEvent('snake-game', 'played'); }
         previousScoreRef.current = score;
         previousStatusRef.current = status;
-    }, [playTone, score, status]);
+        if (game?.food) lastFoodRef.current = game.food;
+    }, [game?.food, playTone, score, status]);
+
+    useEffect(() => {
+        if (!eatBurst) return;
+        const timer = window.setTimeout(() => setEatBurst(null), 280);
+        return () => window.clearTimeout(timer);
+    }, [eatBurst]);
 
     useEffect(() => {
         const existing = getBest('snake-game');
@@ -261,6 +273,16 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         );
                     })}
                 </svg>
+                {eatBurst ? (
+                    <span
+                        className="snake-eat-spark"
+                        style={{
+                            left: `${((eatBurst.x + 0.5) / SNAKE_GRID_SIZE) * 100}%`,
+                            top: `${((eatBurst.y + 0.5) / SNAKE_GRID_SIZE) * 100}%`,
+                        }}
+                        aria-hidden="true"
+                    />
+                ) : null}
 
                 {status !== 'playing' && (
                     <div className={`absolute inset-0 bg-background/60 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center animate-in fade-in zoom-in-95 ${status === 'ready' ? 'pointer-events-none' : ''}`} role="status" aria-live="polite">
@@ -307,6 +329,11 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 <span>{t.best}: {best}</span>
             </div>
             <p className="sr-only" aria-live="polite">{d.summary(score, length)}. {status}.</p>
+            <style>{`
+                .snake-eat-spark{position:absolute;width:12%;height:12%;transform:translate(-50%,-50%);pointer-events:none;background:url(${FX_SPRITES.sparkSheet}) 0 0 / 400% 100% no-repeat;animation:snakeEatSpark 280ms steps(3) both;z-index:2}
+                @keyframes snakeEatSpark { from { background-position: 0 0; } to { background-position: 100% 0; } }
+                @media (prefers-reduced-motion: reduce) { .snake-eat-spark { display: none; } }
+            `}</style>
         </GameContainer>
     );
 };

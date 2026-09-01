@@ -23,6 +23,7 @@ import {
   REVERSI_SPRITES,
   SNAKE_SPRITES,
   STAR_BLASTER_SPRITES,
+  JUMP_KING_SPRITES,
   mahjongTileSrc,
   pipSprite,
 } from "./sprites";
@@ -40,6 +41,7 @@ describe("in-game sprite maps", () => {
       ...Object.values(BLOCK_BURST_FX),
       ...Object.values(FX_SPRITES),
       ...Object.values(STAR_BLASTER_SPRITES),
+      ...Object.values(JUMP_KING_SPRITES),
       ...Object.values(SNAKE_SPRITES),
       ...Object.values(CAVE_DASH_SPRITES),
       ...Object.values(CHESS_SPRITES),

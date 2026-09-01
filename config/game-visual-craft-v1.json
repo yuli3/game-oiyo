@@ -43,6 +43,39 @@
         "key-art-matches-play": "fail"
       },
       "note": "Batch 1: rekey gems, shatter sheet. Key art not recaptured."
+    },
+    "brick-breaker": {
+      "cluster": "ceramic-vector",
+      "gates": {
+        "style-bible": "pass",
+        "frame-motion": "pass",
+        "readable-hit": "pass",
+        "no-production-residue": "pass",
+        "key-art-matches-play": "fail"
+      },
+      "note": "Batch 2: keyed gold ball, spark impacts, ball trail. Key art unmatched."
+    },
+    "snake-game": {
+      "cluster": "flat-vector-cel",
+      "gates": {
+        "style-bible": "pass",
+        "frame-motion": "pass",
+        "readable-hit": "pass",
+        "no-production-residue": "pass",
+        "key-art-matches-play": "fail"
+      },
+      "note": "Batch 2: vector head/body/apple, eat spark overlay. Key art unmatched."
+    },
+    "dot-jumpking": {
+      "cluster": "clay-character",
+      "gates": {
+        "style-bible": "pass",
+        "frame-motion": "pass",
+        "readable-hit": "pass",
+        "no-production-residue": "pass",
+        "key-art-matches-play": "fail"
+      },
+      "note": "Batch 2: idle/squash/stretch jumper sheet. Key art unmatched."
     }
   }
 }
