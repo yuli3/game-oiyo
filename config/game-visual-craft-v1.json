@@ -76,6 +76,39 @@
         "key-art-matches-play": "fail"
       },
       "note": "Batch 2: idle/squash/stretch jumper sheet. Key art unmatched."
+    },
+    "chess": {
+      "cluster": "board-tween",
+      "gates": {
+        "style-bible": "pass",
+        "frame-motion": "pass",
+        "readable-hit": "pass",
+        "no-production-residue": "pass",
+        "key-art-matches-play": "fail"
+      },
+      "note": "Batch 3: cell lerp + castle rook. Pieces not regenerated."
+    },
+    "checkers": {
+      "cluster": "board-tween",
+      "gates": {
+        "style-bible": "pass",
+        "frame-motion": "pass",
+        "readable-hit": "pass",
+        "no-production-residue": "pass",
+        "key-art-matches-play": "fail"
+      },
+      "note": "Batch 3: cell lerp on executeMove."
+    },
+    "reversi": {
+      "cluster": "board-tween",
+      "gates": {
+        "style-bible": "pass",
+        "frame-motion": "pass",
+        "readable-hit": "pass",
+        "no-production-residue": "pass",
+        "key-art-matches-play": "fail"
+      },
+      "note": "Batch 3: disc flip on captured discs, zoom on placed disc."
     }
   }
 }

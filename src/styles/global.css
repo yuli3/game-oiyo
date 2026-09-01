@@ -265,3 +265,21 @@ main .aspect-square { max-width: min(100%, 92vw); }
 }
 .animate-cat-fishing-pop { animation: cat-fishing-pop 0.5s ease-out forwards; }
 @media (prefers-reduced-motion: reduce) { .animate-cat-fishing-pop { animation: none; display: none; } }
+
+@keyframes oiyo-piece-slide {
+  from { transform: translate(calc(var(--dx, 0) * 100%), calc(var(--dy, 0) * 100%)); }
+  to { transform: translate(0, 0); }
+}
+.oiyo-piece-slide {
+  animation: oiyo-piece-slide 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes oiyo-disc-flip {
+  0% { transform: scaleX(1); }
+  45% { transform: scaleX(0.12); }
+  55% { transform: scaleX(0.12); }
+  100% { transform: scaleX(1); }
+}
+.oiyo-disc-flip { animation: oiyo-disc-flip 280ms ease-in-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .oiyo-piece-slide, .oiyo-disc-flip { animation: none; }
+}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, type CSSProperties } from 'react';
 import type { Locale } from '../../lib/i18n';
 import {
   chessApplyState, chessBestStateMoveIterative, chessDrawReason, chessInCheck, chessLegalStateMoves,
@@ -14,6 +14,7 @@ import {
   type ChessSearchRequest, type ChessSearchResponse,
 } from '../../lib/games/chess-worker-protocol';
 import { CHESS_SPRITES } from '../../lib/games/sprites';
+import { castleRookDelta, visualSquare } from '../../lib/games/piece-tween';
 
 function ChessPiece({ piece, className }: { piece: string; className?: string }) {
   const src = CHESS_SPRITES[piece];
@@ -297,6 +298,8 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     const logicalIndex = orientation === 'white' ? displayIndex : 63 - displayIndex;
     return { displayIndex, r: Math.floor(logicalIndex / 8), c: logicalIndex % 8 };
   });
+  const flipped = orientation === 'black';
+  const rookSlide = lastMove ? castleRookDelta(lastMove.from[0], lastMove.from[1], lastMove.to[0], lastMove.to[1]) : null;
   const capturedPieces = moveHistory.flatMap((entry) => entry.captured ? [entry.captured] : []);
   const material = chessMaterialBalance(capturedPieces);
   const keyMoment = [...moveHistory].reverse().find((entry) => entry.captured || /[+#]$/.test(entry.notation));
@@ -401,7 +404,33 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                     ? <div className="absolute inset-0 ring-4 ring-inset ring-primary/60 z-10 pointer-events-none" />
                     : <div className="absolute w-1/4 h-1/4 rounded-full bg-primary/40 z-10 pointer-events-none" />
                 )}
-                {piece ? <ChessPiece piece={piece} /> : null}
+                {piece ? (
+                  lastMove && lastMove.to[0] === r && lastMove.to[1] === c ? (
+                    <span
+                      key={`slide-${moveHistory.length}`}
+                      className="oiyo-piece-slide absolute inset-0 z-20 flex items-center justify-center"
+                      style={{
+                        '--dx': visualSquare(lastMove.from[0], lastMove.from[1], flipped).col - visualSquare(r, c, flipped).col,
+                        '--dy': visualSquare(lastMove.from[0], lastMove.from[1], flipped).row - visualSquare(r, c, flipped).row,
+                      } as CSSProperties}
+                    >
+                      <ChessPiece piece={piece} />
+                    </span>
+                  ) : rookSlide && rookSlide.toRow === r && rookSlide.toCol === c ? (
+                    <span
+                      key={`rook-${moveHistory.length}`}
+                      className="oiyo-piece-slide absolute inset-0 z-20 flex items-center justify-center"
+                      style={{
+                        '--dx': visualSquare(rookSlide.fromRow, rookSlide.fromCol, flipped).col - visualSquare(r, c, flipped).col,
+                        '--dy': visualSquare(rookSlide.fromRow, rookSlide.fromCol, flipped).row - visualSquare(r, c, flipped).row,
+                      } as CSSProperties}
+                    >
+                      <ChessPiece piece={piece} />
+                    </span>
+                  ) : (
+                    <ChessPiece piece={piece} />
+                  )
+                ) : null}
               </button>
             );
           })}

@@ -53,7 +53,7 @@ const Reversi: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     const initGame = useCallback(() => {
         clearReversiSave();
         if (aiTimer.current) clearTimeout(aiTimer.current);
-        setGame(createReversi()); setThinking(false); setPaused(false); setRestored(false); setLastAiReview(null);
+        setGame(createReversi()); setThinking(false); setPaused(false); setRestored(false); setLastAiReview(null); setLastPlace(null);
     }, []);
 
     useEffect(() => {
@@ -79,7 +79,9 @@ const Reversi: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         storeReversiSave({ board: game.board, isBlackTurn: game.current === 1, mode, level });
     }, [game, mode, level]);
 
-    const applyMove = (index: number) => { const review=game.current===AI_PLAYER?reversiMoveReview(game.board,index,AI_PLAYER):null;const next = playReversi(game, index); if (next === game) { tone(150); return false; } if(review)setLastAiReview(review);setGame(next); setRestored(false); tone(next.status === 'over' ? 880 : next.passed ? 260 : 520, next.status === 'over' ? .24 : .08); if (next.status === 'over' && mode === 'ai') setRecord(recordResult('reversi', next.winner === 0 ? 'd' : next.winner === AI_PLAYER ? 'l' : 'w')); return true; };
+    const [lastPlace, setLastPlace] = useState<{ index: number; flips: number[]; key: number } | null>(null);
+    const flipKey = useRef(0);
+    const applyMove = (index: number) => { const review=game.current===AI_PLAYER?reversiMoveReview(game.board,index,AI_PLAYER):null;const prevBoard=game.board;const next = playReversi(game, index); if (next === game) { tone(150); return false; } if(review)setLastAiReview(review);const flips=prevBoard.flatMap((cell, i) => cell !== null && next.board[i] !== cell && i !== index ? [i] : []);flipKey.current+=1;setLastPlace({ index, flips, key: flipKey.current });setGame(next); setRestored(false); tone(next.status === 'over' ? 880 : next.passed ? 260 : 520, next.status === 'over' ? .24 : .08); if (next.status === 'over' && mode === 'ai') setRecord(recordResult('reversi', next.winner === 0 ? 'd' : next.winner === AI_PLAYER ? 'l' : 'w')); return true; };
 
     const handleClick = (index: number) => {
         if (game.status === 'over' || thinking || paused) return;
@@ -191,10 +193,17 @@ const Reversi: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                         {validMoves.includes(i) && <div className="h-2.5 w-2.5 rounded-full border-2 border-white bg-slate-900/70" />}
                         {cell !== null && (
                             <img
+                                key={lastPlace?.flips.includes(i) ? `flip-${lastPlace.key}-${i}` : lastPlace?.index === i ? `place-${lastPlace.key}` : `disc-${i}`}
                                 src={cell === 1 ? REVERSI_SPRITES.black : REVERSI_SPRITES.white}
                                 alt=""
                                 draggable={false}
-                                className={`pointer-events-none h-[85%] w-[85%] object-contain drop-shadow-md ${!reducedMotion ? 'animate-in zoom-in-75 duration-300' : ''}`}
+                                className={`pointer-events-none h-[85%] w-[85%] object-contain drop-shadow-md ${
+                                    lastPlace && lastPlace.flips.includes(i) && !reducedMotion
+                                        ? 'oiyo-disc-flip'
+                                        : lastPlace?.index === i && !reducedMotion
+                                            ? 'animate-in zoom-in-75 duration-300'
+                                            : ''
+                                }`}
                             />
                         )}
                     </button>
