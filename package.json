@@ -17,7 +17,8 @@
     "audit:game-modernization": "node scripts/audit-game-modernization-inventory.mjs",
     "audit:headers-collision": "node scripts/audit-headers-collision.mjs",
     "sprites:key": "node scripts/key-sprite-edge.mjs",
-    "sprites:sheet": "node scripts/compose-sprite-sheet.mjs"
+    "sprites:sheet": "node scripts/compose-sprite-sheet.mjs",
+    "sprites:keyart": "node scripts/compose-play-keyart.mjs"
   },
   "dependencies": {
     "@astrojs/mdx": "^4.3.13",

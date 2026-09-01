@@ -18,9 +18,9 @@
         "frame-motion": "pass",
         "readable-hit": "pass",
         "no-production-residue": "pass",
-        "key-art-matches-play": "fail"
+        "key-art-matches-play": "pass"
       },
-      "note": "Batch 1: exhaust loop + burst sequence + spark sheet. Key art still cinematic 3D. Video pipeline blocked by ZDR; image_edit keyframes used."
+      "note": "Batch 1 VFX + W4 play-matching key art from in-game sprites."
     },
     "animal-pop": {
       "cluster": "clay-token",
@@ -29,9 +29,9 @@
         "frame-motion": "pass",
         "readable-hit": "pass",
         "no-production-residue": "pass",
-        "key-art-matches-play": "fail"
+        "key-art-matches-play": "pass"
       },
-      "note": "Batch 1: rekey cat, spark sheet. CSS squash/ring/fall kept. Key art not recaptured."
+      "note": "Batch 1 VFX + W4 play-matching key art from in-game sprites."
     },
     "block-burst": {
       "cluster": "vector-gem",
@@ -40,9 +40,9 @@
         "frame-motion": "pass",
         "readable-hit": "pass",
         "no-production-residue": "pass",
-        "key-art-matches-play": "fail"
+        "key-art-matches-play": "pass"
       },
-      "note": "Batch 1: rekey gems, shatter sheet. Key art not recaptured."
+      "note": "Batch 1 VFX + W4 play-matching key art from in-game sprites."
     },
     "brick-breaker": {
       "cluster": "ceramic-vector",
@@ -51,9 +51,9 @@
         "frame-motion": "pass",
         "readable-hit": "pass",
         "no-production-residue": "pass",
-        "key-art-matches-play": "fail"
+        "key-art-matches-play": "pass"
       },
-      "note": "Batch 2: keyed gold ball, spark impacts, ball trail. Key art unmatched."
+      "note": "Batch 2 VFX + W4 play-matching key art from in-game sprites."
     },
     "snake-game": {
       "cluster": "flat-vector-cel",
@@ -62,9 +62,9 @@
         "frame-motion": "pass",
         "readable-hit": "pass",
         "no-production-residue": "pass",
-        "key-art-matches-play": "fail"
+        "key-art-matches-play": "pass"
       },
-      "note": "Batch 2: vector head/body/apple, eat spark overlay. Key art unmatched."
+      "note": "Batch 2 VFX + W4 play-matching key art from in-game sprites."
     },
     "dot-jumpking": {
       "cluster": "clay-character",
@@ -73,9 +73,9 @@
         "frame-motion": "pass",
         "readable-hit": "pass",
         "no-production-residue": "pass",
-        "key-art-matches-play": "fail"
+        "key-art-matches-play": "pass"
       },
-      "note": "Batch 2: idle/squash/stretch jumper sheet. Key art unmatched."
+      "note": "Batch 2 VFX + W4 play-matching key art from in-game sprites."
     },
     "chess": {
       "cluster": "board-tween",

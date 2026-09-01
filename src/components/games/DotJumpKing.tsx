@@ -293,7 +293,7 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
       <GameContainer title={t.title} subtitle={t.sub} onReset={start}>
         <div className="overflow-hidden rounded-3xl border bg-card">
           <img
-            src="/games/dot-jumpking-social.png"
+            src="/games/dot-jumpking-social-play.png"
             alt=""
             className="h-64 w-full object-cover sm:h-80"
           />

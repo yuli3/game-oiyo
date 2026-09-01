@@ -270,7 +270,7 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
       <GameContainer title={t.title} subtitle={t.sub} onReset={start}>
         <div className="overflow-hidden rounded-3xl border">
           <img
-            src="/games/animal-pop-social.png"
+            src="/games/animal-pop-social-play.png"
             alt=""
             className="h-64 w-full object-cover sm:h-80"
           />
