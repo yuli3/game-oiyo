@@ -1,0 +1,48 @@
+{
+  "schema": "oiyo.game-visual-craft",
+  "schemaVersion": 1,
+  "policy": "Five visual gates for flagship games. Scores are prioritization proxies and never certify a game. releaseCertified stays in game-release-evidence-v1.json.",
+  "gates": [
+    "style-bible",
+    "frame-motion",
+    "readable-hit",
+    "no-production-residue",
+    "key-art-matches-play"
+  ],
+  "flagship": ["star-blaster", "animal-pop", "block-burst", "brick-breaker", "snake-game", "dot-jumpking"],
+  "games": {
+    "star-blaster": {
+      "cluster": "flat-vector-topdown",
+      "gates": {
+        "style-bible": "pass",
+        "frame-motion": "pass",
+        "readable-hit": "pass",
+        "no-production-residue": "pass",
+        "key-art-matches-play": "fail"
+      },
+      "note": "Batch 1: exhaust loop + burst sequence + spark sheet. Key art still cinematic 3D. Video pipeline blocked by ZDR; image_edit keyframes used."
+    },
+    "animal-pop": {
+      "cluster": "clay-token",
+      "gates": {
+        "style-bible": "pass",
+        "frame-motion": "pass",
+        "readable-hit": "pass",
+        "no-production-residue": "pass",
+        "key-art-matches-play": "fail"
+      },
+      "note": "Batch 1: rekey cat, spark sheet. CSS squash/ring/fall kept. Key art not recaptured."
+    },
+    "block-burst": {
+      "cluster": "vector-gem",
+      "gates": {
+        "style-bible": "pass",
+        "frame-motion": "pass",
+        "readable-hit": "pass",
+        "no-production-residue": "pass",
+        "key-art-matches-play": "fail"
+      },
+      "note": "Batch 1: rekey gems, shatter sheet. Key art not recaptured."
+    }
+  }
+}

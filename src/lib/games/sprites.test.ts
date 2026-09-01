@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import {
   BLOCK_BURST_FX,
   BLOCK_BURST_SPRITES,
+  FX_SPRITES,
   CAVE_DASH_SPRITES,
   CHECKERS_SPRITES,
   CHESS_SPRITES,
@@ -21,6 +22,7 @@ import {
   PUZZLE15_SPRITES,
   REVERSI_SPRITES,
   SNAKE_SPRITES,
+  STAR_BLASTER_SPRITES,
   mahjongTileSrc,
   pipSprite,
 } from "./sprites";
@@ -35,7 +37,9 @@ describe("in-game sprite maps", () => {
   it("exposes snake, cave, chess, and memory face URLs that exist on disk", () => {
     const urls = [
       ...Object.values(BLOCK_BURST_SPRITES),
-      BLOCK_BURST_FX.burst,
+      ...Object.values(BLOCK_BURST_FX),
+      ...Object.values(FX_SPRITES),
+      ...Object.values(STAR_BLASTER_SPRITES),
       ...Object.values(SNAKE_SPRITES),
       ...Object.values(CAVE_DASH_SPRITES),
       ...Object.values(CHESS_SPRITES),

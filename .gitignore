@@ -35,3 +35,6 @@ reports/
 
 # Python bytecode caches
 **/__pycache__/
+
+# sprite frame harvest scratch
+.tmp-frames/

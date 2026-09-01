@@ -191,14 +191,7 @@ function Gem({ color, ghost, bursting }: { color: BurstColor; ghost?: boolean; b
         draggable={false}
         className="pointer-events-none h-full w-full object-contain"
       />
-      {bursting ? (
-        <img
-          src={BLOCK_BURST_FX.burst}
-          alt=""
-          draggable={false}
-          className="pointer-events-none absolute inset-[-18%] h-[136%] w-[136%] object-contain"
-        />
-      ) : null}
+      {bursting ? <span className="burst-sheet" aria-hidden="true" /> : null}
     </div>
   );
 }
@@ -604,6 +597,11 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
         <button type="button" className={btn} onClick={() => setSound((v) => !v)} aria-pressed={sound}>{t.sound}</button>
       </div>
       <p className="mt-3 text-xs leading-relaxed text-muted-foreground">{t.hint}</p>
+      <style>{`
+        .burst-sheet{position:absolute;inset:-22%;background:url(${BLOCK_BURST_FX.burstSheet}) 0 0 / 800% 100% no-repeat;animation:burstSheet 220ms steps(7) both;pointer-events:none}
+        @keyframes burstSheet { from { background-position: 0 0; } to { background-position: 100% 0; } }
+        @media (prefers-reduced-motion: reduce) { .burst-sheet { animation: none; background-position: 0 0; } }
+      `}</style>
     </GameContainer>
   );
 }

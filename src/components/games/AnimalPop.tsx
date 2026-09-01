@@ -335,7 +335,7 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
                   ) : (
                     animal
                   )}
-                  {isBursting && <><span className="animal-ring" aria-hidden="true"/><span className="animal-spark animal-spark-a" aria-hidden="true">✦</span><span className="animal-spark animal-spark-b" aria-hidden="true">●</span><span className="animal-spark animal-spark-c" aria-hidden="true">✦</span></>}
+                  {isBursting && <><span className="animal-ring" aria-hidden="true"/><span className="animal-spark-sheet animal-spark-a" aria-hidden="true"/><span className="animal-spark-sheet animal-spark-b" aria-hidden="true"/><span className="animal-spark-sheet animal-spark-c" aria-hidden="true"/></>}
                 </button>
               );
             }),
@@ -391,11 +391,14 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
           @keyframes animalSparkC { to{transform:translate(7px,22px) rotate(-70deg);opacity:0} }
           .animal-burst{animation:animalBurst 210ms cubic-bezier(.2,.8,.3,1) both;box-shadow:0 0 18px rgba(251,191,36,.8)}
           .animal-ring{position:absolute;inset:-3px;border:3px solid #fbbf24;border-radius:999px;animation:animalRing 220ms ease-out both;pointer-events:none}
-          .animal-spark{position:absolute;left:45%;top:42%;color:#f59e0b;font-size:10px;pointer-events:none;z-index:2}
-          .animal-spark-a{animation:animalSparkA 240ms ease-out both}.animal-spark-b{animation:animalSparkB 230ms ease-out both}.animal-spark-c{animation:animalSparkC 250ms ease-out both}
+          .animal-spark-sheet{position:absolute;width:22px;height:22px;pointer-events:none;z-index:2;background-image:url(/assets/sprites/fx/spark-sheet.png);background-repeat:no-repeat;background-size:400% 100%;animation:animalSparkSheet 240ms steps(3) both}
+          .animal-spark-a{left:16%;top:18%;animation:animalSparkSheet 240ms steps(3) both,animalSparkA 240ms ease-out both}
+          .animal-spark-b{left:58%;top:26%;animation:animalSparkSheet 230ms steps(3) both,animalSparkB 230ms ease-out both}
+          .animal-spark-c{left:38%;top:56%;animation:animalSparkSheet 250ms steps(3) both,animalSparkC 250ms ease-out both}
+          @keyframes animalSparkSheet { from { background-position: 0 0; } to { background-position: 100% 0; } }
           .animal-fall{animation-name:animalFall;animation-timing-function:cubic-bezier(.18,.72,.22,1.08);animation-fill-mode:both}
           .animal-board-hit{animation:animalBoardHit 150ms ease-out}
-          @media(prefers-reduced-motion:reduce){.animal-burst{animation-duration:55ms;box-shadow:none}.animal-ring,.animal-spark{display:none}.animal-board-hit{animation:none}.animal-fall{animation-duration:65ms!important}}
+          @media(prefers-reduced-motion:reduce){.animal-burst{animation-duration:55ms;box-shadow:none}.animal-ring,.animal-spark-sheet{display:none}.animal-board-hit{animation:none}.animal-fall{animation-duration:65ms!important}}
         `}</style>
         <p className="mt-3 text-center text-xs text-muted-foreground">
           {t.hint}

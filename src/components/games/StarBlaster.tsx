@@ -16,14 +16,21 @@ import {
   type StarBlasterUpgradeId,
   type StarBlasterState,
 } from "../../lib/games/star-blaster";
-import { STAR_BLASTER_SPRITES } from "../../lib/games/sprites";
+import { blitSheetFrame, sheetFrameIndex } from "../../lib/games/sprite-sheet";
+import {
+  FX_SPARK_SHEET,
+  FX_SPRITES,
+  STAR_BLASTER_BURST_SHEET,
+  STAR_BLASTER_EXHAUST_SHEET,
+  STAR_BLASTER_SPRITES,
+} from "../../lib/games/sprites";
 
-type BlasterArt = Record<keyof typeof STAR_BLASTER_SPRITES, HTMLImageElement>;
+type BlasterArt = Record<keyof typeof STAR_BLASTER_SPRITES, HTMLImageElement> & { sparkSheet: HTMLImageElement };
 
 function loadBlasterArt(): BlasterArt | null {
   if (typeof Image === "undefined") return null;
   const art = {} as BlasterArt;
-  for (const [key, src] of Object.entries(STAR_BLASTER_SPRITES)) {
+  for (const [key, src] of Object.entries({ ...STAR_BLASTER_SPRITES, sparkSheet: FX_SPRITES.sparkSheet })) {
     const image = new Image();
     image.src = src;
     art[key as keyof BlasterArt] = image;
@@ -120,9 +127,12 @@ function drawGame(
   reducedMotion: boolean,
   ghostX?: number,
   art?: BlasterArt | null,
+  shake = 0,
 ) {
+  ctx.save();
+  if (shake && !reducedMotion) ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
   ctx.fillStyle = "#0b1020";
-  ctx.fillRect(0, 0, W, H);
+  ctx.fillRect(-8, -8, W + 16, H + 16);
 
   ctx.fillStyle = "rgba(255,255,255,0.5)";
   for (let i = 0; i < 30; i += 1) {
@@ -134,7 +144,11 @@ function drawGame(
     ctx.globalAlpha = Math.max(0, particle.life);
     if (particle.kind === "burst") {
       const size = 22 + (1 - particle.life) * 38;
-      if (!paintSprite(ctx, art?.burst, particle.x, particle.y, size, size)) {
+      const frame = Math.min(STAR_BLASTER_BURST_SHEET.frameCount - 1, Math.floor((1 - particle.life) * STAR_BLASTER_BURST_SHEET.frameCount));
+      const painted = art?.burstSheet
+        ? blitSheetFrame(ctx, art.burstSheet, STAR_BLASTER_BURST_SHEET, frame, particle.x - size / 2, particle.y - size / 2, size, size)
+        : paintSprite(ctx, art?.burst, particle.x, particle.y, size, size);
+      if (!painted) {
         ctx.fillStyle = `hsl(${particle.hue} 90% 60%)`;
         ctx.beginPath();
         ctx.arc(particle.x, particle.y, size / 3, 0, Math.PI * 2);
@@ -142,8 +156,15 @@ function drawGame(
       }
       continue;
     }
-    ctx.fillStyle = `hsl(${particle.hue} 90% 60%)`;
-    ctx.fillRect(particle.x - 1.5, particle.y - 1.5, 3, 3);
+    const sparkSize = 6 + (1 - particle.life) * 8;
+    const sparkFrame = Math.min(FX_SPARK_SHEET.frameCount - 1, Math.floor((1 - particle.life) * FX_SPARK_SHEET.frameCount));
+    const sparked = art?.sparkSheet
+      ? blitSheetFrame(ctx, art.sparkSheet, FX_SPARK_SHEET, sparkFrame, particle.x - sparkSize / 2, particle.y - sparkSize / 2, sparkSize, sparkSize)
+      : false;
+    if (!sparked) {
+      ctx.fillStyle = `hsl(${particle.hue} 90% 60%)`;
+      ctx.fillRect(particle.x - 1.5, particle.y - 1.5, 3, 3);
+    }
   }
   ctx.globalAlpha = 1;
 
@@ -212,6 +233,10 @@ function drawGame(
   }
 
   const shipY = H - 44;
+  if (!reducedMotion && art?.exhaustSheet) {
+    const exhaustFrame = sheetFrameIndex(STAR_BLASTER_EXHAUST_SHEET, renderTime, reducedMotion);
+    blitSheetFrame(ctx, art.exhaustSheet, STAR_BLASTER_EXHAUST_SHEET, exhaustFrame, state.shipX - 16, shipY + 8, 32, 36);
+  }
   if (Number.isFinite(ghostX)) {
     ctx.save();
     ctx.globalAlpha = 0.34;
@@ -236,6 +261,7 @@ function drawGame(
     ctx.fillStyle = "#c4b5fd";
     ctx.fillRect(state.shipX - 3, shipY - 6, 6, 10);
   }
+  ctx.restore();
 }
 
 const StarBlaster: React.FC<Props> = ({ locale }) => {
@@ -268,6 +294,7 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
   if (artRef.current === null) artRef.current = loadBlasterArt();
   const simulationRef = useRef<StarBlasterState | null>(null);
   const particlesRef = useRef<Particle[]>([]);
+  const shakeRef = useRef(0);
   const targetXRef = useRef(W / 2);
   const rafRef = useRef<number | undefined>(undefined);
   const previousFrameRef = useRef<number | null>(null);
@@ -370,6 +397,7 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
             if (event.hitCause) lastHitRef.current = { cause: event.hitCause, kind: event.enemyKind ?? "enemy" };
           }
           if (event.type === "boss-start" || event.type === "boss-phase") playTone(event.type === "boss-start" ? 92 : 138, 0.35, "sawtooth", 0.06);
+          if (event.type === "enemy-destroyed" && !reducedMotionRef.current) shakeRef.current = Math.max(shakeRef.current, 6);
           if (event.type !== "enemy-destroyed" && event.type !== "player-hit") continue;
           const originX = event.x ?? state.shipX;
           const originY = event.y ?? H - 44;
@@ -412,6 +440,8 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
           particle.life -= particle.kind === "burst" ? 0.055 : 0.03;
           return particle.life > 0;
         });
+        shakeRef.current *= 0.82;
+        if (shakeRef.current < 0.4) shakeRef.current = 0;
       }
       if (state.tick % 6 === 0) {
         setScore((current) => current === state.score ? current : state.score);
@@ -436,7 +466,7 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
     }
 
     previousFrameRef.current = now;
-    drawGame(ctx, state, particlesRef.current, now, reducedMotionRef.current, ghostTrackRef.current[state.tick], artRef.current);
+    drawGame(ctx, state, particlesRef.current, now, reducedMotionRef.current, ghostTrackRef.current[state.tick], artRef.current, shakeRef.current);
     if (state.phase === "upgrade") {
       setUpgradeOptions((current) => current.length ? current : [...state.pendingUpgrades]);
     } else if (state.phase === "over") {

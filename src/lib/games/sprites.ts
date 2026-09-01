@@ -8,6 +8,15 @@ export const BLOCK_BURST_SPRITES: Record<1 | 2 | 3 | 4 | 5, string> = {
 };
 export const BLOCK_BURST_FX = {
   burst: "/assets/sprites/block-burst/burst.png",
+  burstSheet: "/assets/sprites/block-burst/burst-sheet.png",
+} as const;
+
+export const BLOCK_BURST_BURST_SHEET = {
+  cols: 8,
+  rows: 1,
+  frameCount: 8,
+  fps: 16,
+  loop: false,
 } as const;
 
 export const ANIMAL_POP_SPRITES: Record<string, string> = {
@@ -40,6 +49,36 @@ export const STAR_BLASTER_SPRITES = {
   boss: "/assets/sprites/star-blaster/boss.png",
   bolt: "/assets/sprites/star-blaster/bolt-pulse.png",
   burst: "/assets/sprites/star-blaster/burst.png",
+  burstSheet: "/assets/sprites/star-blaster/burst-sheet.png",
+  exhaustSheet: "/assets/sprites/star-blaster/exhaust-sheet.png",
+} as const;
+
+export const STAR_BLASTER_BURST_SHEET = {
+  cols: 8,
+  rows: 1,
+  frameCount: 8,
+  fps: 16,
+  loop: false,
+} as const;
+
+export const STAR_BLASTER_EXHAUST_SHEET = {
+  cols: 4,
+  rows: 1,
+  frameCount: 4,
+  fps: 10,
+  loop: true,
+} as const;
+
+export const FX_SPRITES = {
+  sparkSheet: "/assets/sprites/fx/spark-sheet.png",
+} as const;
+
+export const FX_SPARK_SHEET = {
+  cols: 4,
+  rows: 1,
+  frameCount: 4,
+  fps: 16,
+  loop: false,
 } as const;
 
 export const BRICK_BREAKER_SPRITES = {
