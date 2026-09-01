@@ -109,6 +109,17 @@
         "key-art-matches-play": "fail"
       },
       "note": "Batch 3: disc flip on captured discs, zoom on placed disc."
+    },
+    "spirit-vale": {
+      "cluster": "toon-lathe",
+      "gates": {
+        "style-bible": "pass",
+        "frame-motion": "pass",
+        "readable-hit": "pass",
+        "no-production-residue": "pass",
+        "key-art-matches-play": "fail"
+      },
+      "note": "W5 remesh: no GLTF on host so parametric lathe/taper/capsule kit. Body plans and save keys unchanged. Key art still cinematic."
     }
   }
 }

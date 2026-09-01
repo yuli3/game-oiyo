@@ -2,14 +2,16 @@ import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import * as THREE from "three";
 import type { BodyPlan } from "../../lib/games/spirit-vale-forms";
+import { makeSpiritGeometries, type SpiritDetail, type SpiritGeometryKit } from "./spirit-vale-geometry";
 import { makeFlatMaterial, makeOutlineMaterial, makeToonMaterial } from "./spirit-vale-toon";
 
 /* ────────────────────────────────────────────────────────────────────────────
- * A spirit, assembled from primitives at runtime.
+ * A spirit, assembled from the remesh kit at runtime.
  *
- * There are no model files on this host, so anatomy has to come from geometry
- * placement. The rules that make that read as a creature rather than as stacked
- * shapes, in order of how much they matter:
+ * There are no GLTF files on this host, so anatomy still comes from placement.
+ * The kit itself is lathes, tapers, and capsules — not boxes or cones. The
+ * rules that make that read as a creature rather than as stacked shapes, in
+ * order of how much they matter:
  *
  *   1. Eyes. Large, forward-facing, unlit, with an offset catchlight. Nothing
  *      else comes close for making a shape feel alive.
@@ -36,6 +38,7 @@ export interface SpiritModelProps {
   action?: SpiritAction;
   /** Changes whenever a new action fires, so repeats replay. */
   actionKey?: number;
+  detail?: SpiritDetail;
 }
 
 /** A solid part: ink outline plus a flat-shaded fill. */
@@ -88,6 +91,7 @@ export default function SpiritModel({
   animate = true,
   action = "idle",
   actionKey = 0,
+  detail = "high",
 }: SpiritModelProps) {
   const root = useRef<THREE.Group>(null);
   const breath = useRef(0);
@@ -97,16 +101,7 @@ export default function SpiritModel({
 
   // Shared primitives — built once and reused by every part, so a creature is
   // a few dozen draws over a handful of buffers rather than a buffer per limb.
-  const geo = useMemo(
-    () => ({
-      sphere: new THREE.SphereGeometry(1, 16, 12),
-      capsule: new THREE.CapsuleGeometry(1, 1, 4, 12),
-      cone: new THREE.ConeGeometry(1, 1, 8),
-      cylinder: new THREE.CylinderGeometry(1, 0.82, 1, 8),
-      box: new THREE.BoxGeometry(1, 1, 1),
-    }),
-    [],
-  );
+  const geo = useMemo(() => makeSpiritGeometries(detail), [detail]);
 
   const s = plan.scale;
   const outline = 0.035 / Math.max(s, 0.35);
@@ -259,15 +254,17 @@ export default function SpiritModel({
           zero, which would leave a z-fighting sliver on the face. */}
       {plan.head.snout > 0.05 && (
         <Part
-          geometry={geo.sphere}
+          geometry={geo.snout}
           color={p.belly}
           outline={outline * 0.7}
           position={[
             headPos.x,
-            headPos.y - headSize * 0.12,
-            headPos.z + headSize * 0.42,
+            headPos.y - headSize * 0.1,
+            headPos.z + headSize * 0.32,
           ]}
-          scale={[headSize * 0.26, headSize * 0.22, headSize * plan.head.snout * 0.6]}
+          // Lathe is +Y; +π/2 around X aims the tip at +Z (facing).
+          rotation={[Math.PI / 2, 0, 0]}
+          scale={[headSize * 0.55, headSize * plan.head.snout * 0.9, headSize * 0.55]}
         />
       )}
 
@@ -312,27 +309,26 @@ export default function SpiritModel({
               />
             );
           }
-          // Pointed ears, horns and antlers are all cones; they differ in tilt
-          // and length, which is enough to tell them apart in silhouette.
           const tilt = plan.ears.kind === "pointed" ? 0.18 : plan.ears.kind === "horns" ? 0.8 : 0.45;
+          const hornGeo = plan.ears.kind === "pointed" ? geo.ear : geo.horn;
           return (
             <group key={side}>
               <Part
-                geometry={geo.cone}
+                geometry={hornGeo}
                 color={plan.ears.kind === "pointed" ? p.body : p.accent}
                 outline={outline}
                 position={base}
                 rotation={[0, 0, -side * tilt]}
-                scale={[size * 0.26, size, size * 0.26]}
+                scale={[size * 0.55, size, size * 0.55]}
               />
               {plan.ears.kind === "antlers" && (
                 <Part
-                  geometry={geo.cone}
+                  geometry={geo.horn}
                   color={p.accent}
                   outline={outline}
                   position={[base[0] + side * size * 0.3, base[1] + size * 0.42, base[2]]}
                   rotation={[0, 0, -side * 1.1]}
-                  scale={[size * 0.16, size * 0.55, size * 0.16]}
+                  scale={[size * 0.32, size * 0.55, size * 0.32]}
                 />
               )}
             </group>
@@ -342,14 +338,22 @@ export default function SpiritModel({
       {/* Limbs */}
       {plan.limbs.kind !== "serpentine" &&
         legPositions(plan, halfLen, girth).map(([lx, lz], i) => (
-          <Part
-            key={i}
-            geometry={geo.cylinder}
-            color={p.body}
-            outline={outline}
-            position={[lx, legLen * 0.5, lz]}
-            scale={[plan.limbs.thickness * s, legLen, plan.limbs.thickness * s]}
-          />
+          <group key={i}>
+            <Part
+              geometry={geo.taper}
+              color={p.body}
+              outline={outline}
+              position={[lx, legLen * 0.5, lz]}
+              scale={[plan.limbs.thickness * s, legLen, plan.limbs.thickness * s]}
+            />
+            <Part
+              geometry={geo.paw}
+              color={p.body}
+              outline={outline * 0.8}
+              position={[lx, plan.limbs.thickness * s * 0.4, lz]}
+              scale={[plan.limbs.thickness * s * 1.25, plan.limbs.thickness * s * 0.7, plan.limbs.thickness * s * 1.25]}
+            />
+          </group>
         ))}
 
       {/* Tail */}
@@ -404,7 +408,7 @@ function Tail({
   scale,
 }: {
   plan: BodyPlan;
-  geo: Record<string, THREE.BufferGeometry>;
+  geo: SpiritGeometryKit;
   at: THREE.Vector3;
   fwd: THREE.Vector3;
   outline: number;
@@ -421,12 +425,12 @@ function Tail({
         {[-2, -1, 0, 1, 2].map((i) => (
           <Part
             key={i}
-            geometry={geo.box}
+            geometry={geo.blade}
             color={i % 2 === 0 ? plan.palette.accent : color}
             outline={outline}
             position={[i * thick * 0.9, at.y + len * 0.4, at.z - len * 0.3]}
             rotation={[0.5, 0, i * 0.14]}
-            scale={[thick * 0.5, len, thick * 0.3]}
+            scale={[thick * 0.9, len, thick * 0.9]}
           />
         ))}
       </>
@@ -477,7 +481,7 @@ function Accent({
   size,
 }: {
   kind: BodyPlan["accent"]["kind"];
-  geo: Record<string, THREE.BufferGeometry>;
+  geo: SpiritGeometryKit;
   color: string;
   outline: number;
   position: [number, number, number];
@@ -485,26 +489,25 @@ function Accent({
 }) {
   switch (kind) {
     case "flame":
-      // Tall, narrow, leaning back — reads as fire even without animation.
       return (
         <Part
-          geometry={geo.cone}
+          geometry={geo.flame}
           color={color}
           outline={outline}
           position={position}
           rotation={[-0.35, 0, 0]}
-          scale={[size * 0.55, size * 2.1, size * 0.55]}
+          scale={[size * 0.7, size * 1.6, size * 0.7]}
         />
       );
     case "fin":
       return (
         <Part
-          geometry={geo.cone}
+          geometry={geo.blade}
           color={color}
           outline={outline}
           position={position}
-          rotation={[0, 0, 0]}
-          scale={[size * 0.18, size * 1.5, size * 0.9]}
+          rotation={[0.15, 0, 0]}
+          scale={[size * 0.55, size * 1.4, size * 0.55]}
         />
       );
     case "leaf":
@@ -521,18 +524,18 @@ function Accent({
     case "plate":
       return (
         <Part
-          geometry={geo.box}
+          geometry={geo.disc}
           color={color}
           outline={outline}
           position={position}
           rotation={[0.25, 0, 0]}
-          scale={[size * 1.5, size * 0.28, size * 0.7]}
+          scale={[size * 1.15, size * 0.35, size * 0.7]}
         />
       );
     case "stone":
       return (
         <Part
-          geometry={geo.box}
+          geometry={geo.pebble}
           color={color}
           outline={outline}
           position={position}

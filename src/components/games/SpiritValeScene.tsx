@@ -17,6 +17,7 @@ import { formFor } from "../../lib/games/spirit-vale-forms";
 import { stageOf, type Stage } from "../../lib/games/spirit-vale-evolution";
 import { spiritById } from "../../lib/games/spirit-vale";
 import SpiritModel, { type SpiritAction } from "./SpiritModel";
+import type { SpiritDetail } from "./spirit-vale-geometry";
 import { KEY_LIGHT, TOON_CHUNK, WIND_CHUNK } from "./spirit-vale-toon";
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -287,7 +288,7 @@ function Trees({
   const canopyRef = useRef<THREE.InstancedMesh>(null);
 
   const trunkGeo = useMemo(() => {
-    const geo = new THREE.CylinderGeometry(0.16, 0.28, 2.4, 6);
+    const geo = new THREE.CylinderGeometry(0.12, 0.3, 2.4, 10);
     geo.translate(0, 1.2, 0);
     return geo;
   }, []);
@@ -506,7 +507,7 @@ function Player({
 
   const bodyGeo = useMemo(() => new THREE.CapsuleGeometry(0.3, 0.46, 4, 12), []);
   const headGeo = useMemo(() => new THREE.SphereGeometry(0.31, 16, 12), []);
-  const satchelGeo = useMemo(() => new THREE.BoxGeometry(0.26, 0.22, 0.16), []);
+  const satchelGeo = useMemo(() => new THREE.CapsuleGeometry(0.12, 0.14, 4, 10), []);
 
   useFrame((_, delta) => {
     const g = group.current;
@@ -686,6 +687,11 @@ function Combatants({
 
   const wildAt = spot(6.2, 0.6);
   const mineAt = spot(2.6, -1.4);
+  const detail = useMemo<SpiritDetail>(
+    () =>
+      typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches ? "low" : "high",
+    [],
+  );
 
   return (
     <>
@@ -698,6 +704,7 @@ function Combatants({
           reducedMotion={reducedMotion}
           action={wildAction}
           actionKey={actionKey}
+          detail={detail}
         />
       )}
       {mine && (
@@ -708,6 +715,7 @@ function Combatants({
           reducedMotion={reducedMotion}
           action={partyAction}
           actionKey={actionKey}
+          detail={detail}
         />
       )}
     </>
