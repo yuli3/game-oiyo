@@ -352,9 +352,8 @@ const Hand: React.FC<{
       return (
         <div
           key={i}
-          className={
-            dim ? "opacity-35 transition-opacity" : "transition-opacity"
-          }
+          className={`oiyo-card-deal ${dim ? "opacity-35 transition-opacity" : "transition-opacity"}`}
+          style={{ animationDelay: `${i * 70}ms` }}
         >
           <PlayingCard
             suit={c.suit}

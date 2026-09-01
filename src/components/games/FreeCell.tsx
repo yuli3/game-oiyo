@@ -226,7 +226,7 @@ const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                   <div key={index} className="relative h-24 w-16 sm:h-28 sm:w-18">
                     {card ? (
                       <div role="button" tabIndex={0} aria-pressed={isSelected({ type: 'free', index })} aria-label={cardLabel(card)} onClick={action} onKeyDown={(event) => keyActivate(event, action)} className={`rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${isSelected({ type: 'free', index }) ? 'ring-4 ring-primary' : ''}`}>
-                        <PlayingCard suit={card.suit} value={card.value} className="pointer-events-none !h-24 !w-16 sm:!h-28 sm:!w-18 motion-reduce:transition-none" />
+                        <PlayingCard suit={card.suit} value={card.value} className="pointer-events-none oiyo-card-deal !h-24 !w-16 sm:!h-28 sm:!w-18 motion-reduce:transition-none" />
                       </div>
                     ) : (
                       <button type="button" onClick={action} aria-label={t.emptyCell(index + 1)} className="h-full w-full rounded-xl border-2 border-dashed border-border bg-muted/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" />
@@ -247,7 +247,7 @@ const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     <span aria-hidden="true" className={`absolute text-3xl opacity-20 ${index < 2 ? 'text-destructive' : 'text-foreground'}`}>{SUIT_SYMBOLS[index]}</span>
                     {card ? (
                       <div role="button" tabIndex={0} aria-pressed={isSelected({ type: 'foundation', index })} aria-label={cardLabel(card)} onClick={action} onKeyDown={(event) => keyActivate(event, action)} className={`absolute inset-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${isSelected({ type: 'foundation', index }) ? 'ring-4 ring-primary' : ''}`}>
-                        <PlayingCard suit={card.suit} value={card.value} className="pointer-events-none !h-24 !w-16 sm:!h-28 sm:!w-18 motion-reduce:transition-none" />
+                        <PlayingCard suit={card.suit} value={card.value} className="pointer-events-none oiyo-card-deal !h-24 !w-16 sm:!h-28 sm:!w-18 motion-reduce:transition-none" />
                       </div>
                     ) : (
                       <button type="button" onClick={action} aria-label={t.foundation(t.suits[index])} className="absolute inset-0 min-h-11 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" />
@@ -271,7 +271,7 @@ const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                   const action = () => activateOccupied(source, { type: 'tableau', index: pileIndex });
                   return (
                     <div key={card.id} role="button" tabIndex={0} aria-pressed={isSelected(source)} aria-label={cardLabel(card)} onClick={action} onKeyDown={(event) => keyActivate(event, action)} style={{ marginTop: cardIndex === 0 ? 0 : -62 }} className={`relative rounded-xl focus-visible:z-20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${isSelected(source) ? 'z-20 ring-4 ring-primary' : 'z-10'}`}>
-                      <PlayingCard suit={card.suit} value={card.value} className="pointer-events-none !h-24 !w-16 shadow-md sm:!h-28 sm:!w-18 motion-reduce:transition-none" />
+                      <PlayingCard suit={card.suit} value={card.value} className="pointer-events-none oiyo-card-deal !h-24 !w-16 shadow-md sm:!h-28 sm:!w-18 motion-reduce:transition-none" />
                     </div>
                   );
                 })}

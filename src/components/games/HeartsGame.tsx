@@ -177,7 +177,7 @@ const HeartsGame: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
         <section className="mb-6 min-h-52 rounded-3xl border border-dashed border-chart-1/30 bg-chart-1/10 p-4" aria-label={showingPrevious ? t.previous : t.table}>
           <p className="mb-3 text-center text-[11px] font-black uppercase tracking-widest text-muted-foreground">{showingPrevious ? t.previous : t.table}</p>
           {shownTrick.length > 0 ? <div className="flex flex-wrap items-center justify-center gap-2">{shownTrick.map(({ player, card }) => (
-            <div key={`${player}-${card.id}`} className="motion-safe:animate-in motion-safe:fade-in motion-reduce:transition-none"><span className="mb-1 block text-center text-[10px] font-bold text-muted-foreground">{playerName(player, t)}</span><PlayingCard suit={card.suit} value={card.value} className="pointer-events-none scale-75 cursor-default sm:scale-90" /></div>
+            <div key={`${player}-${card.id}`} className="oiyo-card-deal motion-reduce:transition-none"><span className="mb-1 block text-center text-[10px] font-bold text-muted-foreground">{playerName(player, t)}</span><PlayingCard suit={card.suit} value={card.value} className="pointer-events-none scale-75 cursor-default sm:scale-90" /></div>
           ))}</div> : <p className="py-14 text-center text-sm text-muted-foreground">{t.empty}</p>}
         </section>
       )}

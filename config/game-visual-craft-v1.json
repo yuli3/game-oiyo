@@ -252,6 +252,39 @@
         "key-art-matches-play": "fail"
       },
       "note": "Latest discard lands with a short drop. Hand glyphs unchanged."
+    },
+    "hearts-game": {
+      "cluster": "card-flip",
+      "gates": {
+        "style-bible": "pass",
+        "frame-motion": "pass",
+        "readable-hit": "pass",
+        "no-production-residue": "pass",
+        "key-art-matches-play": "fail"
+      },
+      "note": "Trick cards deal onto the table instead of fading in."
+    },
+    "texas-holdem": {
+      "cluster": "card-flip",
+      "gates": {
+        "style-bible": "pass",
+        "frame-motion": "pass",
+        "readable-hit": "pass",
+        "no-production-residue": "pass",
+        "key-art-matches-play": "fail"
+      },
+      "note": "Hole and community cards deal in with stagger. Flop/turn/river only remount new indices."
+    },
+    "freecell": {
+      "cluster": "card-flip",
+      "gates": {
+        "style-bible": "pass",
+        "frame-motion": "pass",
+        "readable-hit": "pass",
+        "no-production-residue": "pass",
+        "key-art-matches-play": "fail"
+      },
+      "note": "Cards landing in a new cell/column deal in on mount. Cross-column move is still remount, not FLIP."
     }
   }
 }
