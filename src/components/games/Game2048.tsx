@@ -6,6 +6,7 @@ import { createGame2048Replay, game2048GhostBoards, replayGame2048, type Game204
 import { clearGame2048Save, loadGame2048Save, storeGame2048Save } from '../../lib/games/active-game-save';
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 import { createGame2048, game2048Analysis, moveGame2048, restoreGame2048, type Game2048Direction, type Game2048State } from '../../lib/games/game-2048';
+import { advance2048Tiles, tilesFromBoard, type Visual2048Tile } from '../../lib/games/game-2048-tiles';
 
 const COPY = {
     ko: { title: "2048 게임", subtitle: "Growth Logic", score: "점수", best: "최고 점수", over: "게임 종료", win: "2048 달성!", reset: "다시 시작", hint: "방향키 또는 스와이프로 이동" },
@@ -32,6 +33,15 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [paused,setPaused]=useState(false);const[restored,setRestored]=useState(false);const[muted,setMuted]=useState(false);const[hasGhost,setHasGhost]=useState(false);const audio=useRef<AudioContext|null>(null);
     const seedRef=useRef<number|null>(null);const replayInputsRef=useRef<ReplayInput<Game2048ReplayAction>[]>([]);const ghostBoardsRef=useRef<(number|null)[][]>([]);const terminalRef=useRef(false);
     const touchStart = useRef<{ x: number; y: number } | null>(null);
+    const visualRef = useRef(tilesFromBoard(Array(16).fill(null)));
+    const [tiles, setTiles] = useState<Visual2048Tile[]>([]);
+    const adoptTiles = useCallback((board: readonly (number | null)[], direction?: Game2048Direction) => {
+        const next = direction
+            ? advance2048Tiles(visualRef.current.tiles, board, direction, visualRef.current.nextId)
+            : tilesFromBoard(board);
+        visualRef.current = next;
+        setTiles(next.tiles);
+    }, []);
 
     const startRun = useCallback((seedOverride?:number) => {
         clearGame2048Save();
@@ -39,8 +49,8 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         seedRef.current=seed>>>0;replayInputsRef.current=[];ghostBoardsRef.current=[];terminalRef.current=false;
         const prior=loadReplayEnvelope<Game2048ReplayAction>('game-2048');
         if(prior?.seed===seedRef.current){try{if(verifyReplayEnvelope(prior,replayGame2048))ghostBoardsRef.current=game2048GhostBoards(prior)}catch{ghostBoardsRef.current=[]}}
-        setHasGhost(ghostBoardsRef.current.length>0);setGame(createGame2048(seedRef.current));setPaused(false);setRestored(false);
-    }, []);
+        setHasGhost(ghostBoardsRef.current.length>0);const opening=createGame2048(seedRef.current);adoptTiles(opening.board);setGame(opening);setPaused(false);setRestored(false);
+    }, [adoptTiles]);
     const initGame=useCallback(()=>startRun(),[startRun]);
     const retrySame=useCallback(()=>startRun(seedRef.current??undefined),[startRun]);
 
@@ -48,7 +58,7 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         const saved = loadGame2048Save();
         if (saved) {
             seedRef.current=null;replayInputsRef.current=[];ghostBoardsRef.current=[];setHasGhost(false);
-            const restoredState=restoreGame2048(saved.board,saved.score);if(restoredState){setGame(restoredState);setPaused(true);setRestored(true)}else initGame();
+            const restoredState=restoreGame2048(saved.board,saved.score);if(restoredState){adoptTiles(restoredState.board);setGame(restoredState);setPaused(true);setRestored(true)}else initGame();
         } else {
             initGame();
         }
@@ -59,7 +69,7 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             const legacy = Number(localStorage.getItem(LEGACY_BEST_KEY));
             if (Number.isFinite(legacy) && legacy > 0) setBest(recordBest('game-2048', legacy, 'score', undefined, { trackPlay: false }).value);
         } catch { /* ignore */ }
-    }, [initGame]);
+    }, [initGame, adoptTiles]);
     useEffect(()=>{const hidden=()=>{if(document.hidden)setPaused(true)};document.addEventListener("visibilitychange",hidden);return()=>{document.removeEventListener("visibilitychange",hidden);void audio.current?.close()}},[]);
 
     // Persist the active board after every applied move; terminal states are not resumable.
@@ -72,7 +82,7 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         if(!terminalRef.current){terminalRef.current=true;recordAchievementEvent('game-2048','played')}
     },[game.status]);
 
-    const move = useCallback((direction: Game2048Direction) => { if(paused)return;const next=moveGame2048(game,direction);if(next===game)return;const nextInputs=[...replayInputsRef.current,{tick:game.moves,input:{type:'move' as const,direction}}];replayInputsRef.current=nextInputs;setGame(next);if(!muted){const context=audio.current??new AudioContext();audio.current=context;const o=context.createOscillator(),g=context.createGain();o.frequency.value=next.lastGain?440:220;g.gain.setValueAtTime(.04,context.currentTime);g.gain.exponentialRampToValueAtTime(.001,context.currentTime+.07);o.connect(g).connect(context.destination);o.start();o.stop(context.currentTime+.07)}if(next.score>best){if(seedRef.current!==null){try{const replay=createGame2048Replay(seedRef.current,next,nextInputs);if(verifyReplayEnvelope(replay,replayGame2048))saveReplayEnvelope(replay)}catch{/* drifted replay is discarded */}}recordAchievementEvent('game-2048','personal-best');setBest(recordBest('game-2048',next.score,'score',undefined,{trackPlay:false}).value);} }, [game,best,paused,muted]);
+    const move = useCallback((direction: Game2048Direction) => { if(paused)return;const next=moveGame2048(game,direction);if(next===game)return;const nextInputs=[...replayInputsRef.current,{tick:game.moves,input:{type:'move' as const,direction}}];replayInputsRef.current=nextInputs;adoptTiles(next.board,direction);setGame(next);if(!muted){const context=audio.current??new AudioContext();audio.current=context;const o=context.createOscillator(),g=context.createGain();o.frequency.value=next.lastGain?440:220;g.gain.setValueAtTime(.04,context.currentTime);g.gain.exponentialRampToValueAtTime(.001,context.currentTime+.07);o.connect(g).connect(context.destination);o.start();o.stop(context.currentTime+.07)}if(next.score>best){if(seedRef.current!==null){try{const replay=createGame2048Replay(seedRef.current,next,nextInputs);if(verifyReplayEnvelope(replay,replayGame2048))saveReplayEnvelope(replay)}catch{/* drifted replay is discarded */}}recordAchievementEvent('game-2048','personal-best');setBest(recordBest('game-2048',next.score,'score',undefined,{trackPlay:false}).value);} }, [game,best,paused,muted,adoptTiles]);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -118,7 +128,7 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         };
         return colors[val] || 'bg-slate-900 text-white';
     };
-    const analysis=game2048Analysis(game);const tiles=game.board.map((value,index)=>value===null?null:{id:`${index}-${value}`,value,x:index%4,y:Math.floor(index/4)});const ghostBoard=ghostBoardsRef.current[game.moves];
+    const analysis=game2048Analysis(game);const ghostBoard=ghostBoardsRef.current[game.moves];
 
     return (
         <GameContainer title={t.title} subtitle={t.subtitle} onReset={initGame}>
@@ -149,19 +159,19 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
                 {/* Real Tiles */}
                 <div className="absolute inset-0 p-2 pointer-events-none">
-                    {tiles.map((tile) => tile && (
+                    {tiles.map((tile) => (
                         <div
                             key={tile.id}
                             style={{
-                                left: `${tile.x * 25}%`,
-                                top: `${tile.y * 25}%`,
+                                left: `${(tile.index % 4) * 25}%`,
+                                top: `${Math.floor(tile.index / 4) * 25}%`,
                                 width: '25%',
                                 height: '25%',
                                 padding: '4px',
                             }}
-                            className={`absolute transition-all ease-in-out ${reducedMotion ? 'duration-50' : 'duration-100'}`}
+                            className={`absolute ease-out ${reducedMotion ? 'duration-50' : 'duration-200'} transition-[left,top]`}
                         >
-                            <div className={`w-full h-full rounded-lg flex items-center justify-center font-black text-lg sm:text-2xl ${reducedMotion ? 'animate-in fade-in duration-75' : 'animate-in zoom-in-50'} ${getTileColor(tile.value)}`}>
+                            <div className={`flex h-full w-full items-center justify-center rounded-lg text-lg font-black sm:text-2xl ${getTileColor(tile.value)} ${!reducedMotion && tile.spawned ? 'oiyo-2048-spawn' : ''} ${!reducedMotion && tile.merged ? 'oiyo-2048-merge' : ''}`}>
                                 {tile.value}
                             </div>
                         </div>

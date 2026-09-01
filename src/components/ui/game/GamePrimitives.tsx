@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { PLAYING_CARD_SPRITES, pipSprite } from '../../../lib/games/sprites';
 
 interface PlayingCardProps {
@@ -15,22 +15,13 @@ function SuitPip({ suit, className }: { suit: PlayingCardProps['suit']; classNam
 
 export const PlayingCard: React.FC<PlayingCardProps> = ({ suit, value, isFaceUp = true, onClick, className = '' }) => {
   const isRed = suit === 'hearts' || suit === 'diamonds';
+  const [live, setLive] = useState(false);
+  useEffect(() => { setLive(true); }, []);
 
   // `shrink-0` is load-bearing: these sit in flex rows (hands, tableau piles),
   // and without it the card was squeezed 64px -> 46px on a 375px viewport while
   // the glyphs kept their size, which is what pushed text outside the card.
   const frame = 'shrink-0 w-16 h-24 sm:w-20 sm:h-32 rounded-xl';
-
-  if (!isFaceUp) {
-    return (
-      <div
-        onClick={onClick}
-        className={`${frame} overflow-hidden cursor-pointer hover:scale-105 transition-transform ${className}`}
-      >
-        <img src={PLAYING_CARD_SPRITES.back} alt="" draggable={false} className="pointer-events-none h-full w-full object-cover" />
-      </div>
-    );
-  }
 
   // Type scale is budgeted against the card box, not chosen by eye. Mobile:
   // 96px tall - 4px border - 12px padding = 80px for three rows, and the rows
@@ -39,21 +30,26 @@ export const PlayingCard: React.FC<PlayingCardProps> = ({ suit, value, isFaceUp 
   return (
     <div
       onClick={onClick}
-      className={`relative ${frame} overflow-hidden shadow-sm flex flex-col justify-between p-1.5 sm:p-2 cursor-pointer hover:-translate-y-1 transition-all ${isRed ? 'text-destructive' : 'text-foreground'} ${className}`}
+      className={`relative ${frame} cursor-pointer [perspective:900px] ${className}`}
     >
-      <img src={PLAYING_CARD_SPRITES.face} alt="" draggable={false} className="pointer-events-none absolute inset-0 h-full w-full object-cover" />
-      <div className="relative z-[1] flex flex-col items-start leading-none">
-        <span className="text-base sm:text-xl font-black leading-none">{value}</span>
-        <SuitPip suit={suit} className="mt-0.5 h-2.5 w-2.5 sm:h-3 sm:w-3" />
-      </div>
-
-      <div className="relative z-[1] flex justify-center items-center">
-        <SuitPip suit={suit} className="h-7 w-7 sm:h-9 sm:w-9" />
-      </div>
-
-      <div className="relative z-[1] flex flex-col items-end leading-none rotate-180">
-        <span className="text-base sm:text-xl font-black leading-none">{value}</span>
-        <SuitPip suit={suit} className="mt-0.5 h-2.5 w-2.5 sm:h-3 sm:w-3" />
+      <div className={`oiyo-card-inner ${isFaceUp ? 'is-flipped' : ''} ${live ? '' : 'no-motion'}`}>
+        <div className="oiyo-card-face rounded-xl">
+          <img src={PLAYING_CARD_SPRITES.back} alt="" draggable={false} className="pointer-events-none h-full w-full object-cover" />
+        </div>
+        <div className={`oiyo-card-face is-front flex flex-col justify-between rounded-xl p-1.5 shadow-sm sm:p-2 ${isRed ? 'text-destructive' : 'text-foreground'}`}>
+          <img src={PLAYING_CARD_SPRITES.face} alt="" draggable={false} className="pointer-events-none absolute inset-0 h-full w-full object-cover" />
+          <div className="relative z-[1] flex flex-col items-start leading-none">
+            <span className="text-base font-black leading-none sm:text-xl">{value}</span>
+            <SuitPip suit={suit} className="mt-0.5 h-2.5 w-2.5 sm:h-3 sm:w-3" />
+          </div>
+          <div className="relative z-[1] flex items-center justify-center">
+            <SuitPip suit={suit} className="h-7 w-7 sm:h-9 sm:w-9" />
+          </div>
+          <div className="relative z-[1] flex flex-col items-end leading-none rotate-180">
+            <span className="text-base font-black leading-none sm:text-xl">{value}</span>
+            <SuitPip suit={suit} className="mt-0.5 h-2.5 w-2.5 sm:h-3 sm:w-3" />
+          </div>
+        </div>
       </div>
     </div>
   );

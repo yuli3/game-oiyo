@@ -208,6 +208,28 @@
         "key-art-matches-play": "fail"
       },
       "note": "18 PNG faces, no emoji fallback. Cards rotateY on flip. First 8 faces still mix animal-pop bodies with felt."
+    },
+    "game-2048": {
+      "cluster": "tile-motion",
+      "gates": {
+        "style-bible": "pass",
+        "frame-motion": "pass",
+        "readable-hit": "pass",
+        "no-production-residue": "pass",
+        "key-art-matches-play": "fail"
+      },
+      "note": "Stable tile ids so slides and merges actually travel. Spawn/merge pulses. Engine board unchanged."
+    },
+    "blackjack": {
+      "cluster": "card-flip",
+      "gates": {
+        "style-bible": "pass",
+        "frame-motion": "pass",
+        "readable-hit": "pass",
+        "no-production-residue": "pass",
+        "key-art-matches-play": "fail"
+      },
+      "note": "Shared PlayingCard now rotateY-flips when isFaceUp changes. Hole card reveal is the beat."
     }
   }
 }
