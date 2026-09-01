@@ -41,6 +41,11 @@ export function topGroupSize(tube: number[]): number {
   return size;
 }
 
+export function pouredLayerCount(before: readonly number[][], after: readonly number[][], to: number): number {
+  if (!Number.isInteger(to) || to < 0 || to >= before.length || to >= after.length) return 0;
+  return Math.max(0, after[to].length - before[to].length);
+}
+
 export function pourWater(tubes: number[][], from: number, to: number): number[][] | null {
   if (!Number.isInteger(from) || !Number.isInteger(to) || from === to || from < 0 || to < 0 || from >= tubes.length || to >= tubes.length) return null;
   const source = tubes[from], target = tubes[to];

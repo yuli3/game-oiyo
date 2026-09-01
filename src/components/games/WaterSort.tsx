@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 import { getBestForConditions, recordBestForConditions, type BestConditions, type ConditionalBestRecord } from '../../lib/games/records';
-import { createWaterSort, generateWaterSortPuzzle, isWaterSortDeadEnd, moveWaterSort, waterSortHint, type WaterSortDifficulty, type WaterSortMove, type WaterSortState } from '../../lib/games/water-sort';
+import { createWaterSort, generateWaterSortPuzzle, isWaterSortDeadEnd, moveWaterSort, pouredLayerCount, waterSortHint, type WaterSortDifficulty, type WaterSortMove, type WaterSortState } from '../../lib/games/water-sort';
 import { clearWaterSortSave, loadWaterSortSave, storeWaterSortSave, type WaterSortAssist } from '../../lib/games/water-sort-save';
 
 const COLORS = ['#ef4444', '#2563eb', '#059669', '#d97706', '#7c3aed'];
@@ -35,6 +35,7 @@ const WaterSort: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [assist, setAssist] = useState<WaterSortAssist>('none');
     const [muted, setMuted] = useState(false);
     const [best, setBest] = useState<ConditionalBestRecord | null>(null);
+    const [lastPour, setLastPour] = useState<{ to: number; count: number } | null>(null);
     const audioRef = useRef<AudioContext | null>(null);
     const recordedSeedRef = useRef<number | null>(null);
     const tubeRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -55,7 +56,7 @@ const WaterSort: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         clearWaterSortSave();
         const seed = typeof crypto !== 'undefined' && crypto.getRandomValues ? crypto.getRandomValues(new Uint32Array(1))[0] : Date.now() >>> 0;
         setGame(createWaterSort(seed, nextDifficulty)); setDifficulty(nextDifficulty); setSelectedTube(null); setFocusedTube(0);
-        setUndo([]); setHint(null); setElapsedSeconds(0); setAssist('none'); setBest(null); recordedSeedRef.current = null;
+        setUndo([]); setHint(null); setElapsedSeconds(0); setAssist('none'); setBest(null); setLastPour(null); recordedSeedRef.current = null;
     }, []);
 
     useEffect(() => {
@@ -94,14 +95,18 @@ const WaterSort: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         }
         if (selectedTube === index) { setSelectedTube(null); playTone(330); return; }
         const next = moveWaterSort(game, { from: selectedTube, to: index });
-        if (next !== game) { setUndo((history) => [...history.slice(-49), game]); setGame(next); playTone(620, 0.12); }
+        if (next !== game) {
+            setUndo((history) => [...history.slice(-49), game]);
+            setLastPour({ to: index, count: pouredLayerCount(game.tubes, next.tubes, index) });
+            setGame(next); playTone(620, 0.12);
+        }
         else playTone(160, 0.12);
         setHint(null); setSelectedTube(null);
     };
 
     const undoMove = () => {
         const previous = undo[undo.length - 1]; if (!previous) return;
-        setGame(previous); setUndo((history) => history.slice(0, -1)); setSelectedTube(null); setHint(null);
+        setGame(previous); setUndo((history) => history.slice(0, -1)); setSelectedTube(null); setHint(null); setLastPour(null);
         setAssist((value) => value === 'hint' ? value : 'undo'); playTone(300);
     };
     const showHint = () => {
@@ -137,7 +142,10 @@ const WaterSort: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 {deadEnd && <p className="mb-5 max-w-sm text-center text-xs font-bold text-destructive" role="alert">{t.deadEnd}</p>}
                 <div className="mb-8 grid grid-cols-4 gap-3 sm:grid-cols-7 sm:gap-4" role="group" aria-label={t.title}>
                     {tubes.map((tube, i) => <button type="button" key={i} ref={(element) => { tubeRefs.current[i] = element; }} tabIndex={focusedTube === i ? 0 : -1} onFocus={() => setFocusedTube(i)} onKeyDown={(event) => { if (event.key === 'ArrowRight' || event.key === 'ArrowDown') { event.preventDefault(); focusTube(i + 1); } if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') { event.preventDefault(); focusTube(i - 1); } if (event.key === 'Home') { event.preventDefault(); focusTube(0); } if (event.key === 'End') { event.preventDefault(); focusTube(tubes.length - 1); } }} onClick={() => handleTubeClick(i)} aria-pressed={selectedTube === i} aria-label={`${t.tube(i + 1, tube.length, tube.map((color) => String(color + 1)).join('-'))}${selectedTube === i ? `, ${t.selected}` : ''}`} className={`relative h-32 w-12 cursor-pointer overflow-hidden rounded-b-3xl border-4 border-muted sm:h-40 sm:w-14 ${!reducedMotion ? 'transition-all' : ''} focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary focus-visible:ring-offset-4 ${selectedTube === i ? `ring-4 ring-primary ring-offset-4 ${!reducedMotion ? '-translate-y-3' : ''}` : (!reducedMotion ? 'hover:-translate-y-1' : '')}`}>
-                        <span className="absolute inset-0 flex flex-col-reverse">{tube.map((color, idx) => <span key={idx} style={{ backgroundColor: COLORS[color], backgroundImage: PATTERNS[color], backgroundSize: color === 1 ? '12px 12px' : undefined }} className={`h-1/4 w-full ${!reducedMotion ? 'animate-in slide-in-from-bottom duration-300' : ''}`} />)}</span>
+                        <span className="absolute inset-0 flex flex-col-reverse">{tube.map((color, idx) => {
+                            const poured = Boolean(lastPour && lastPour.to === i && lastPour.count > 0 && idx >= tube.length - lastPour.count);
+                            return <span key={idx} style={{ backgroundColor: COLORS[color], backgroundImage: PATTERNS[color], backgroundSize: color === 1 ? '12px 12px' : undefined }} className={`h-1/4 w-full ${poured && !reducedMotion ? 'oiyo-pour' : ''}`} />;
+                        })}</span>
                     </button>)}
                 </div>
                 {isWon && game && <div className={`w-full max-w-md rounded-3xl border border-primary/30 bg-primary/5 p-6 text-center ${!reducedMotion ? 'animate-in zoom-in-95' : ''}`} role="status">

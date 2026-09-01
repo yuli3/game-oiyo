@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { Locale } from '../../lib/i18n';
 import {
     createJanggi, janggiAnalysis, janggiBestMove, janggiMoveReview, janggiTargets, isChoPiece, playJanggi,
@@ -69,6 +69,7 @@ const JanggiBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     const [muted, setMuted] = useState(false);
     const [record, setRecord] = useState<GameRecord | null>(null);
     const [lastAiReview,setLastAiReview]=useState<JanggiMoveReview|null>(null);
+    const [lastMove, setLastMove] = useState<JanggiMove | null>(null);
     const aiTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const audio = useRef<AudioContext | null>(null);
     const tone = (frequency: number, duration = 0.06) => { if (muted || typeof window === 'undefined') return; const context = audio.current ?? new AudioContext(); audio.current = context; const oscillator = context.createOscillator(); const gain = context.createGain(); oscillator.frequency.value = frequency; gain.gain.setValueAtTime(0.05, context.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + duration); oscillator.connect(gain).connect(context.destination); oscillator.start(); oscillator.stop(context.currentTime + duration); };
@@ -85,6 +86,7 @@ const JanggiBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         if (aiTimer.current) clearTimeout(aiTimer.current);
         setGame(createJanggi()); clearJanggiSave();
         setSelected(null);
+        setLastMove(null);
         setThinking(false);
         setPaused(false); setRestored(false); setLastAiReview(null);
     };
@@ -95,6 +97,7 @@ const JanggiBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         if(review)setLastAiReview(review);
         const captured = Boolean(current.board[m.to[0]][m.to[1]]); tone(next.winner ? 660 : captured ? 420 : 260, next.winner ? 0.18 : 0.06);
         setGame(next);
+        setLastMove(m);
         setSelected(null);
         if (next.winner && mode === 'ai') { const aiWon = (next.winner === 'cho') === AI_IS_CHO; setRecord(recordResult('janggi', aiWon ? 'l' : 'w')); }
     };
@@ -209,6 +212,8 @@ const JanggiBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                     {board.map((row, r) => row.map((piece, c) => {
                         const isSelected = selected?.[0] === r && selected?.[1] === c;
                         const isTarget = targets.some(([tr, tc]) => tr === r && tc === c);
+                        const isLastMove = lastMove && ((lastMove.from[0] === r && lastMove.from[1] === c) || (lastMove.to[0] === r && lastMove.to[1] === c));
+                        const sliding = Boolean(!reducedMotion && lastMove && lastMove.to[0] === r && lastMove.to[1] === c);
                         return (
                             <button
                                 key={`${r}-${c}`}
@@ -217,7 +222,7 @@ const JanggiBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                                 onKeyDown={(event) => { const keys = ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Home','End']; if (!keys.includes(event.key)) return; event.preventDefault(); let nr = r, nc = c; if (event.key === 'ArrowUp') nr = Math.max(0, r - 1); if (event.key === 'ArrowDown') nr = Math.min(9, r + 1); if (event.key === 'ArrowLeft') nc = Math.max(0, c - 1); if (event.key === 'ArrowRight') nc = Math.min(8, c + 1); if (event.key === 'Home') nc = 0; if (event.key === 'End') nc = 8; document.querySelector<HTMLElement>(`[data-janggi-cell="${nr}-${nc}"]`)?.focus(); }}
                                 aria-label={`${String.fromCharCode(65 + c)}${10-r} ${piece ? PIECE_ICONS[piece] : x.empty}${isTarget ? ` ${x.target}` : ''}`}
                                 style={{ touchAction: 'manipulation' }}
-                                className="relative flex items-center justify-center cursor-pointer p-0.5 sm:p-1"
+                                className={`relative flex items-center justify-center cursor-pointer p-0.5 sm:p-1 ${isLastMove ? 'after:pointer-events-none after:absolute after:inset-1 after:rounded-full after:border after:border-amber-500/70' : ''}`}
                             >
                                 {isTarget && (
                                     piece
@@ -225,9 +230,13 @@ const JanggiBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                                         : <div className="absolute w-1/3 h-1/3 rounded-full bg-primary/40 z-10 pointer-events-none" />
                                 )}
                                 {piece && (
-                                    <div className={`relative w-full aspect-square flex items-center justify-center font-black text-xs sm:text-lg ${!reducedMotion ? 'transition-transform' : ''} ${
+                                    <div
+                                        key={sliding ? `slide-${game.moves}` : undefined}
+                                        className={`${sliding ? 'oiyo-piece-slide ' : ''}relative z-20 flex aspect-square w-full items-center justify-center font-black text-xs sm:text-lg ${!reducedMotion && !sliding ? 'transition-transform' : ''} ${
                                         isSelected ? `${!reducedMotion ? 'scale-110 ' : ''}z-10 drop-shadow-[0_0_7px_rgba(245,158,11,.9)]` : 'drop-shadow-[0_2px_2px_rgba(41,25,12,.35)]'
-                                    } ${isChoPiece(piece) ? 'text-blue-800' : 'text-red-800'}`}>
+                                    } ${isChoPiece(piece) ? 'text-blue-800' : 'text-red-800'}`}
+                                        style={sliding && lastMove ? { '--dx': lastMove.from[1] - c, '--dy': lastMove.from[0] - r } as CSSProperties : undefined}
+                                    >
                                         <img
                                             src={`/assets/sprites/janggi/piece-${isChoPiece(piece) ? 'blue' : 'red'}.webp`}
                                             alt=""

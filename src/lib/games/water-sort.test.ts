@@ -6,6 +6,7 @@ import {
   isWaterSortSolved,
   moveWaterSort,
   pourWater,
+  pouredLayerCount,
   topGroupSize,
   legalWaterSortMoves,
   waterSortHint,
@@ -45,6 +46,16 @@ describe("water sort engine", () => {
     expect(topGroupSize(tubes[0])).toBe(3);
     expect(pourWater(tubes, 0, 1)).toEqual([[0], [1, 1, 1, 1], [], [], [], [], []]);
     expect(tubes).toEqual([[0, 1, 1, 1], [1], [], [], [], [], []]);
+  });
+
+  it("counts only layers that landed in the destination tube", () => {
+    const before = [[0, 1, 1, 1], [1], [], [], [], [], []];
+    const after = pourWater(before, 0, 1);
+    expect(after).not.toBeNull();
+    expect(pouredLayerCount(before, after!, 1)).toBe(3);
+    expect(pouredLayerCount(before, after!, 0)).toBe(0);
+    expect(pouredLayerCount(before, after!, 2)).toBe(0);
+    expect(pouredLayerCount(before, after!, -1)).toBe(0);
   });
 
   it("rejects mismatched, full, empty, same-tube, and out-of-range moves", () => {

@@ -285,6 +285,39 @@
         "key-art-matches-play": "fail"
       },
       "note": "Cards landing in a new cell/column deal in on mount. Cross-column move is still remount, not FLIP."
+    },
+    "janggi": {
+      "cluster": "board-tween",
+      "gates": {
+        "style-bible": "pass",
+        "frame-motion": "pass",
+        "readable-hit": "pass",
+        "no-production-residue": "pass",
+        "key-art-matches-play": "fail"
+      },
+      "note": "Last move slides cell-to-cell like chess. Save history unchanged; restore does not replay the slide."
+    },
+    "dominoes": {
+      "cluster": "card-flip",
+      "gates": {
+        "style-bible": "pass",
+        "frame-motion": "pass",
+        "readable-hit": "pass",
+        "no-production-residue": "pass",
+        "key-art-matches-play": "fail"
+      },
+      "note": "Newly played chain tiles land on stable d.id. Opening tile and restored boards stay still."
+    },
+    "water-sort": {
+      "cluster": "tile-motion",
+      "gates": {
+        "style-bible": "pass",
+        "frame-motion": "pass",
+        "readable-hit": "pass",
+        "no-production-residue": "pass",
+        "key-art-matches-play": "fail"
+      },
+      "note": "Only newly poured layers drop in. Existing layers, undo, and restore do not re-pour."
     }
   }
 }

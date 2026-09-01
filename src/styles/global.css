@@ -347,7 +347,12 @@ main .aspect-square { max-width: min(100%, 92vw); }
   to { transform: none; opacity: 1; }
 }
 .oiyo-tile-land { animation: oiyo-tile-land 180ms ease-out both; }
+@keyframes oiyo-pour {
+  from { transform: translateY(-45%); opacity: 0.35; }
+  to { transform: none; opacity: 1; }
+}
+.oiyo-pour { animation: oiyo-pour 240ms cubic-bezier(0.16, 1, 0.3, 1) both; }
 @media (prefers-reduced-motion: reduce) {
-  .oiyo-piece-slide, .oiyo-disc-flip, .oiyo-whack-pop, .oiyo-wordle-flip, .oiyo-2048-spawn, .oiyo-2048-merge, .oiyo-card-deal, .oiyo-tile-land { animation: none; }
+  .oiyo-piece-slide, .oiyo-disc-flip, .oiyo-whack-pop, .oiyo-wordle-flip, .oiyo-2048-spawn, .oiyo-2048-merge, .oiyo-card-deal, .oiyo-tile-land, .oiyo-pour { animation: none; }
   .oiyo-memory-inner, .oiyo-card-inner { transition: none; }
 }

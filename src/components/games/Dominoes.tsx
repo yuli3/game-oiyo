@@ -57,6 +57,7 @@ const Dominoes: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
   const [pendingTile, setPendingTile] = useState<Tile | null>(null); // fits both ends → ask
   const [record, setRecord] = useState<GameRecord>({ w: 0, l: 0, d: 0 });
   const [lastCpuReview,setLastCpuReview]=useState<DominoCpuReview|null>(null);
+  const [freshId, setFreshId] = useState<number | null>(null);
   const recorded = useRef(false);
 
   useEffect(() => { setRecord(getRecord("dominoes")); const saved=loadDominoesSave(); if(saved){setGame(saved.state);setLevel(saved.level);setPaused(true);setRestored(true)} }, []);
@@ -68,7 +69,7 @@ const Dominoes: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
 
   const newGame = useCallback(() => {
     const seed = typeof crypto !== "undefined" ? crypto.getRandomValues(new Uint32Array(1))[0] : Date.now() >>> 0;
-    setGame(createDominoes(seed)); setPendingTile(null); setPaused(false); setRestored(false); setLastCpuReview(null); clearDominoesSave(); recorded.current = false;
+    setGame(createDominoes(seed)); setPendingTile(null); setPaused(false); setRestored(false); setLastCpuReview(null); setFreshId(null); clearDominoesSave(); recorded.current = false;
   }, []);
 
   const recordWinner = useCallback((w: DominoesState["winner"]) => {
@@ -80,9 +81,14 @@ const Dominoes: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
     }
   }, []);
 
+  const landNewTile = (before: DominoesState, next: DominoesState) => {
+    const seen = new Set(before.board.map((d) => d.id));
+    setFreshId(next.board.find((d) => !seen.has(d.id))?.id ?? null);
+  };
+
   const humanPlay = (tile: Tile, end: End) => {
     if (!game || paused) return; const next = playDominoes(game, tile.id, end); if (next === game) return;
-    setGame(next); setPendingTile(null);tone(next.winner?660:320); if (next.winner) recordWinner(next.winner);
+    landNewTile(game, next); setGame(next); setPendingTile(null);tone(next.winner?660:320); if (next.winner) recordWinner(next.winner);
   };
 
   const clickHandTile = (tile: Tile) => {
@@ -105,7 +111,7 @@ const Dominoes: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
     if (!game || paused || game.status === "over" || game.turn !== "cpu") return;
     const id = setTimeout(() => {
       setLastCpuReview(dominoCpuReview(game,level));
-      const next = cpuDominoes(game, level); setGame(next);tone(next.winner?560:240); if (next.winner) recordWinner(next.winner);
+      const next = cpuDominoes(game, level); landNewTile(game, next); setGame(next);tone(next.winner?560:240); if (next.winner) recordWinner(next.winner);
     }, AI_DELAY);
     return () => clearTimeout(id);
   }, [game, level, recordWinner, paused]);
@@ -150,7 +156,7 @@ const Dominoes: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
       {/* Board */}
       <div className="h-40 bg-muted/40 rounded-3xl border border-border flex items-center p-4 overflow-x-auto gap-1 shadow-inner mb-6">
         {game.board.map((d) => (
-          <div key={d.id} className="flex flex-shrink-0 bg-card border border-border rounded-md shadow-sm divide-x divide-border">
+          <div key={d.id} className={`flex flex-shrink-0 bg-card border border-border rounded-md shadow-sm divide-x divide-border ${d.id === freshId && !reducedMotion ? "oiyo-tile-land" : ""}`}>
             <div className="p-1"><Pips n={d.a} /></div>
             <div className="p-1"><Pips n={d.b} /></div>
           </div>
