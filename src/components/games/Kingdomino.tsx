@@ -11,6 +11,7 @@ import {
 import { getRecord, recordResult, type GameRecord } from "../../lib/games/records";
 import { clearKingdominoSave, loadKingdominoSave, storeKingdominoSave } from "../../lib/games/kingdomino-save";
 import { KINGDOMINO_SPRITES } from "../../lib/games/sprites";
+import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 
 const AI_DELAY = 620;
 const DIRS = [[0, 1], [1, 0], [0, -1], [-1, 0]]; // right, down, left, up
@@ -65,8 +66,8 @@ function Crowns({ n, size = 8 }: { n: number; size?: number }) {
   );
 }
 
-function CellView({ cell, crowns, highlight, onClick, label }: {
-  cell: Cell; crowns: number; highlight?: "legal" | "preview" | null; onClick?: () => void; label: string;
+function CellView({ cell, crowns, highlight, onClick, label, fresh, reducedMotion }: {
+  cell: Cell; crowns: number; highlight?: "legal" | "preview" | null; onClick?: () => void; label: string; fresh?: boolean; reducedMotion?: boolean;
 }) {
   const bg = cell ? TERRAIN_COLOR[cell] : "#f4f1ea";
   const src = cell ? KINGDOMINO_SPRITES[cell] : undefined;
@@ -82,15 +83,15 @@ function CellView({ cell, crowns, highlight, onClick, label }: {
       style={{ background: bg }}
       aria-label={label}
     >
-      {src && <img src={src} alt="" draggable={false} className="pointer-events-none absolute inset-0 h-full w-full object-cover" />}
+      {src && <img src={src} alt="" draggable={false} className={`pointer-events-none absolute inset-0 h-full w-full object-cover ${fresh && !reducedMotion ? "oiyo-tile-land" : ""}`} />}
       {cell === "castle" && !src && <span className="absolute inset-0 flex items-center justify-center text-white text-[10px]">🏰</span>}
       <Crowns n={crowns} />
     </button>
   );
 }
 
-function KingdomGrid({ k, interactive, legalA, onPlace, locale }: {
-  k: Kingdom; interactive: boolean; legalA?: Set<string>; onPlace?: (r: number, c: number) => void; locale: Locale;
+function KingdomGrid({ k, interactive, legalA, onPlace, locale, freshCells, reducedMotion }: {
+  k: Kingdom; interactive: boolean; legalA?: Set<string>; onPlace?: (r: number, c: number) => void; locale: Locale; freshCells?: Set<string>; reducedMotion?: boolean;
 }) {
   return (
     <div className="overflow-x-auto pb-1">
@@ -105,6 +106,8 @@ function KingdomGrid({ k, interactive, legalA, onPlace, locale }: {
                 cell={cell}
                 crowns={k.crowns[r][c]}
                 highlight={hl}
+                fresh={freshCells?.has(key)}
+                reducedMotion={reducedMotion}
                 label={`${cellNames[locale][cell ?? "empty"]}, ${r + 1}-${c + 1}${k.crowns[r][c] ? `, ${k.crowns[r][c]} ${i18n[locale].crowns}` : ""}`}
                 onClick={interactive && legalA?.has(key) && onPlace ? () => onPlace(r, c) : undefined}
               />
@@ -162,6 +165,8 @@ const Kingdomino: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
   const [wasRestored, setWasRestored] = useState(Boolean(restored));
   const [muted, setMuted] = useState(false);
   const [lastAiReview,setLastAiReview]=useState<KingdominoAiReview|null>(null);
+  const [freshLand, setFreshLand] = useState<{ owner: "you" | "ai"; cells: Set<string> } | null>(null);
+  const reducedMotion = usePrefersReducedMotion();
   const recorded = useRef(false);
   const audioRef = useRef<AudioContext | null>(null);
 
@@ -198,6 +203,7 @@ const Kingdomino: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
     setPaused(false);
     setWasRestored(false);
     setLastAiReview(null);
+    setFreshLand(null);
     clearKingdominoSave();
     force();
   }, []);
@@ -229,7 +235,12 @@ const Kingdomino: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
       const id = setTimeout(() => {
         setLastAiReview(kingdominoAiReview(s,level));
         if (p.kind === "claim") claim(s, aiClaim(s, level));
-        else place(s, aiPlace(s, level));
+        else {
+          const pl = aiPlace(s, level);
+          place(s, pl);
+          if (pl) setFreshLand({ owner: "ai", cells: new Set([`${pl.a.r},${pl.a.c}`, `${pl.b.r},${pl.b.c}`]) });
+          else setFreshLand(null);
+        }
         setOrient(0);
         tone(300, 0.05);
         force();
@@ -264,6 +275,7 @@ const Kingdomino: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
     const pl: Placement = { a: { r, c }, b: { r: r + dr, c: c + dc } };
     if (!isLegal(s.you.board, pending.tile, pl)) return;
     place(s, pl);
+    setFreshLand({ owner: "you", cells: new Set([`${pl.a.r},${pl.a.c}`, `${pl.b.r},${pl.b.c}`]) });
     setOrient(0);
     tone(300, 0.05);
     force();
@@ -279,6 +291,7 @@ const Kingdomino: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
   const doDiscard = () => {
     if (!s || pending?.kind !== "place" || paused) return;
     place(s, null);
+    setFreshLand(null);
     setOrient(0);
     tone(150, 0.06);
     force();
@@ -397,7 +410,8 @@ const Kingdomino: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
               <span>{t.terrainScore} {scoreBoard(s.you.board, s.you.crowns)}{over ? ` + ${t.bonus} ${res!.youSummary.bonus} = ${res!.you}` : ""}</span>
             </div>
             <KingdomGrid k={s.you} interactive={!paused && yourTurn && pending?.kind === "place" && !mustDiscard}
-              legalA={legalA} onPlace={doPlace} locale={locale} />
+              legalA={legalA} onPlace={doPlace} locale={locale}
+              freshCells={freshLand?.owner === "you" ? freshLand.cells : undefined} reducedMotion={reducedMotion} />
             {over && res!.youSummary.bonus > 0 && (
               <p className="text-[11px] text-emerald-700">
                 {res!.youSummary.harmony ? t.harmony : ""}{res!.youSummary.harmony && res!.youSummary.middleKingdom ? " · " : ""}{res!.youSummary.middleKingdom ? t.middleKingdom : ""}
@@ -409,7 +423,8 @@ const Kingdomino: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
               <span className="text-rose-700">{t.ai}</span>
               <span>{t.terrainScore} {scoreBoard(s.ai.board, s.ai.crowns)}{over ? ` + ${t.bonus} ${res!.aiSummary.bonus} = ${res!.ai}` : ""}</span>
             </div>
-            <KingdomGrid k={s.ai} interactive={false} locale={locale} />
+            <KingdomGrid k={s.ai} interactive={false} locale={locale}
+              freshCells={freshLand?.owner === "ai" ? freshLand.cells : undefined} reducedMotion={reducedMotion} />
             {over && res!.aiSummary.bonus > 0 && (
               <p className="text-[11px] text-rose-700">
                 {res!.aiSummary.harmony ? t.harmony : ""}{res!.aiSummary.harmony && res!.aiSummary.middleKingdom ? " · " : ""}{res!.aiSummary.middleKingdom ? t.middleKingdom : ""}

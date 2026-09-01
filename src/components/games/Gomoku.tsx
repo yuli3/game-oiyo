@@ -72,6 +72,7 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     const [record, setRecord] = useState<GameRecord | null>(null);
     const [focusIndex, setFocusIndex] = useState(112);
     const [lastMove, setLastMove] = useState<number | null>(null);
+    const [freshMove, setFreshMove] = useState<number | null>(null);
     const [moveCount, setMoveCount] = useState(0);
     const [lastAiForcing, setLastAiForcing] = useState<{ index:number; threat:GomokuThreat } | null>(null);
     const aiTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -153,6 +154,7 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         if (!board.some((cell) => cell !== null)) startedAtRef.current = Date.now();
         setBoard(move.board);
         setLastMove(index);
+        setFreshMove(index);
         setMoveCount((count) => count + 1);
         if (player === AI_PLAYER) {
             const threat = gomokuThreatAt(move.board, index, player);
@@ -192,6 +194,7 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         setRestored(false);
         setFocusIndex(112);
         setLastMove(null);
+        setFreshMove(null);
         setMoveCount(0);
         setLastAiForcing(null);
         startedAtRef.current = Date.now();
@@ -337,7 +340,7 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                             )}
                             {/* Real Stone */}
                             {stone !== null && (
-                                <div className="relative flex h-[85%] w-[85%] items-center justify-center animate-in zoom-in-75 motion-reduce:transform-none motion-reduce:transition-none motion-reduce:animate-none">
+                                <div className={`relative flex h-[85%] w-[85%] items-center justify-center ${i === freshMove ? 'animate-in zoom-in-75 motion-reduce:transform-none motion-reduce:transition-none motion-reduce:animate-none' : ''}`}>
                                     <img src={stone === 1 ? GOMOKU_SPRITES.black : GOMOKU_SPRITES.white} alt="" draggable={false} className="pointer-events-none h-full w-full object-contain drop-shadow-md" />
                                     {i === lastMove && <div className="absolute inset-[-3px] rounded-full ring-2 ring-primary" />}
                                 </div>
