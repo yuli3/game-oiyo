@@ -313,7 +313,7 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             <div className="min-h-24 min-w-16">
               {game.waste.length > 0 && (
                 <button type="button" onClick={() => { setSelection({ type: 'waste' }); setAnnouncement(t.selected); }} onDoubleClick={() => commit({ type: 'waste-to-foundation' })} aria-label={`${t.waste}: ${game.waste.at(-1)?.value} ${game.waste.at(-1) ? SUIT_ICON[game.waste.at(-1)!.suit] : ''}`} aria-pressed={selection?.type === 'waste'} className={`rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${selection?.type === 'waste' ? 'ring-4 ring-primary' : ''}`}>
-                  <PlayingCard {...game.waste.at(-1)!} className="pointer-events-none motion-reduce:transition-none" />
+                  <PlayingCard key={game.waste.at(-1)!.id} {...game.waste.at(-1)!} className="pointer-events-none oiyo-card-deal motion-reduce:transition-none" />
                 </button>
               )}
             </div>
@@ -326,7 +326,7 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
               return (
                 <button type="button" key={suit} onClick={() => chooseFoundation(suit)} aria-label={`${t.foundation} ${SUIT_ICON[suit]}${top ? `: ${top.value}` : ''}`} aria-pressed={active} className={`relative flex h-24 w-16 items-center justify-center rounded-xl border-2 border-dashed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:h-32 sm:w-20 ${active ? 'ring-4 ring-primary' : ''}`}>
                   <span aria-hidden="true" className={`text-3xl opacity-30 ${suit === 'hearts' || suit === 'diamonds' ? 'text-destructive' : ''}`}>{SUIT_ICON[suit]}</span>
-                  {top && <PlayingCard {...top} className="pointer-events-none absolute inset-0 motion-reduce:transition-none" />}
+                  {top && <PlayingCard key={top.id} {...top} className="pointer-events-none absolute inset-0 oiyo-card-deal motion-reduce:transition-none" />}
                 </button>
               );
             })}

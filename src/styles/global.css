@@ -337,7 +337,17 @@ main .aspect-square { max-width: min(100%, 92vw); }
   100% { transform: scale(1); }
 }
 .oiyo-2048-merge { animation: oiyo-2048-merge 180ms ease-out both; }
+@keyframes oiyo-card-deal {
+  from { transform: translateY(-16px) rotate(-8deg); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+.oiyo-card-deal { animation: oiyo-card-deal 220ms ease-out both; }
+@keyframes oiyo-tile-land {
+  from { transform: translateY(-10px) scale(0.86); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+.oiyo-tile-land { animation: oiyo-tile-land 180ms ease-out both; }
 @media (prefers-reduced-motion: reduce) {
-  .oiyo-piece-slide, .oiyo-disc-flip, .oiyo-whack-pop, .oiyo-wordle-flip, .oiyo-2048-spawn, .oiyo-2048-merge { animation: none; }
+  .oiyo-piece-slide, .oiyo-disc-flip, .oiyo-whack-pop, .oiyo-wordle-flip, .oiyo-2048-spawn, .oiyo-2048-merge, .oiyo-card-deal, .oiyo-tile-land { animation: none; }
   .oiyo-memory-inner, .oiyo-card-inner { transition: none; }
 }

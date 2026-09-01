@@ -229,7 +229,29 @@
         "no-production-residue": "pass",
         "key-art-matches-play": "fail"
       },
-      "note": "Shared PlayingCard now rotateY-flips when isFaceUp changes. Hole card reveal is the beat."
+      "note": "Shared PlayingCard rotateY-flips when isFaceUp changes. New cards deal in with a short drop."
+    },
+    "solitaire": {
+      "cluster": "card-flip",
+      "gates": {
+        "style-bible": "pass",
+        "frame-motion": "pass",
+        "readable-hit": "pass",
+        "no-production-residue": "pass",
+        "key-art-matches-play": "fail"
+      },
+      "note": "Waste and foundation tops deal in when the arriving card mounts. Tableau still uses card ids."
+    },
+    "mahjong": {
+      "cluster": "card-flip",
+      "gates": {
+        "style-bible": "pass",
+        "frame-motion": "pass",
+        "readable-hit": "pass",
+        "no-production-residue": "pass",
+        "key-art-matches-play": "fail"
+      },
+      "note": "Latest discard lands with a short drop. Hand glyphs unchanged."
     }
   }
 }

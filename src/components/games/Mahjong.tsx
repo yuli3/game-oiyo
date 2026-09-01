@@ -73,11 +73,11 @@ function TileFace({ k, small }: { k: number; small?: boolean }) {
   );
 }
 
-function Tile({ k, onClick, dim, small, ariaLabel, reducedMotion, selected, recommended, tabIndex, onKeyDown, buttonRef }: { k: number; onClick?: () => void; dim?: boolean; small?: boolean; ariaLabel?: string; reducedMotion?: boolean; selected?: boolean; recommended?: boolean; tabIndex?: number; onKeyDown?: (event: React.KeyboardEvent<HTMLButtonElement>) => void; buttonRef?: (element: HTMLButtonElement | null) => void }) {
+function Tile({ k, onClick, dim, small, ariaLabel, reducedMotion, selected, recommended, fresh, tabIndex, onKeyDown, buttonRef }: { k: number; onClick?: () => void; dim?: boolean; small?: boolean; ariaLabel?: string; reducedMotion?: boolean; selected?: boolean; recommended?: boolean; fresh?: boolean; tabIndex?: number; onKeyDown?: (event: React.KeyboardEvent<HTMLButtonElement>) => void; buttonRef?: (element: HTMLButtonElement | null) => void }) {
   const { text } = tileLabel(k);
   const className = `inline-flex items-center justify-center overflow-hidden rounded-md ${!reducedMotion ? "transition-transform" : ""} ${
     small ? "h-8 w-6" : "min-h-12 w-full min-w-0"
-  } ${onClick ? `${!reducedMotion ? "hover:-translate-y-1" : ""} cursor-pointer` : ""} ${selected ? "ring-2 ring-primary ring-offset-1" : ""} ${recommended ? "ring-2 ring-amber-500" : ""} ${dim ? "opacity-40" : ""}`;
+  } ${onClick ? `${!reducedMotion ? "hover:-translate-y-1" : ""} cursor-pointer` : ""} ${selected ? "ring-2 ring-primary ring-offset-1" : ""} ${recommended ? "ring-2 ring-amber-500" : ""} ${dim ? "opacity-40" : ""} ${fresh && !reducedMotion ? "oiyo-tile-land" : ""}`;
   if (!onClick) {
     return <span aria-label={ariaLabel ?? text} className={className}><TileFace k={k} small={small} /></span>;
   }
@@ -248,7 +248,7 @@ const Mahjong: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
                 {s.hands[pl].map((_, i) => <TileBack key={i} small />)}
               </div>
               <div className="flex flex-wrap gap-[1px] min-h-[16px]">
-                {s.discards[pl].slice(-8).map((k, i) => <Tile key={i} k={k} small dim ariaLabel={`${t.discard}: ${tileLabel(k).text}`} />)}
+                {s.discards[pl].slice(-8).map((k, i) => { const start = Math.max(0, s.discards[pl].length - 8); return <Tile key={`${pl}-${start + i}`} k={k} small dim fresh={start + i === s.discards[pl].length - 1} reducedMotion={reducedMotion} ariaLabel={`${t.discard}: ${tileLabel(k).text}`} />; })}
               </div>
             </div>
           ))}
@@ -283,7 +283,7 @@ const Mahjong: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
 
         {/* Your discards */}
         <div className="flex flex-wrap gap-[2px] justify-center min-h-[36px]">
-          {s.discards[0].map((k, i) => <Tile key={i} k={k} small dim ariaLabel={`${t.discard}: ${tileLabel(k).text}`} />)}
+          {s.discards[0].map((k, i) => <Tile key={i} k={k} small dim fresh={i === s.discards[0].length - 1} reducedMotion={reducedMotion} ariaLabel={`${t.discard}: ${tileLabel(k).text}`} />)}
         </div>
 
         {/* Your hand */}
