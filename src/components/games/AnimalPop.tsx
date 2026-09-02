@@ -2,6 +2,9 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties } from "re
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { GameContainer } from "../ui/game/GamePrimitives";
 import {
+  ANIMAL_TIME_LIMIT,
+  addAnimalTime,
+  animalMatchTimeBonus,
   createAnimalBoard,
   parseAnimal,
   serializeAnimal,
@@ -128,7 +131,7 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
     ),
     [selected, setSelected] = useState<number | null>(null),
     [score, setScore] = useState(0),
-    [time, setTime] = useState(60),
+    [time, setTime] = useState(ANIMAL_TIME_LIMIT),
     [best, setBest] = useState(0),
     [combo, setCombo] = useState(0),
     [sound, setSound] = useState(true),
@@ -213,7 +216,7 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
     setSeed(x.seed);
     setBoard(x.board);
     setScore(0);
-    setTime(60);
+    setTime(ANIMAL_TIME_LIMIT);
     setCombo(0);
     setSelected(null);
     setResolving(false);
@@ -261,6 +264,7 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
     setSeed(x.seed);
     setCombo(x.waves);
     setScore((v) => v + x.cleared * 10 * x.waves * (x.waves >= 5 ? 2 : 1));
+    setTime((v) => addAnimalTime(v, animalMatchTimeBonus(x.cleared, x.waves)));
     setWaveLabel(0);
     setResolving(false);
   };

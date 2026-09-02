@@ -1,5 +1,24 @@
 export const ANIMAL_SIZE = 7,
   ANIMAL_TYPES = ["🐵", "🐱", "🐷", "🐭", "🐰", "🐶", "🐤"] as const;
+/** Round length and remaining-time cap (seconds). Matches save-game validation. */
+export const ANIMAL_TIME_LIMIT = 60;
+/** Successful 3-match. */
+export const ANIMAL_TIME_BONUS_MATCH = 1;
+/** Extra second when 4+ tiles clear in one swap (including cascades). */
+export const ANIMAL_TIME_BONUS_LONG = 1;
+/** Extra second when a cascade continues (waves >= 2). */
+export const ANIMAL_TIME_BONUS_COMBO = 1;
+export function animalMatchTimeBonus(cleared: number, waves: number) {
+  if (cleared < 3 || waves < 1) return 0;
+  return (
+    ANIMAL_TIME_BONUS_MATCH +
+    (cleared >= 4 ? ANIMAL_TIME_BONUS_LONG : 0) +
+    (waves >= 2 ? ANIMAL_TIME_BONUS_COMBO : 0)
+  );
+}
+export function addAnimalTime(timeLeft: number, bonus: number) {
+  return Math.min(ANIMAL_TIME_LIMIT, Math.max(0, timeLeft + bonus));
+}
 export type AnimalBoard = string[][];
 export type AnimalSwap = { from: number; to: number };
 function next(seed: number) {
@@ -143,7 +162,7 @@ export function parseAnimal(raw: string | null, now = Date.now()) {
       x.score < 0 ||
       !Number.isInteger(x.timeLeft) ||
       x.timeLeft <= 0 ||
-      x.timeLeft > 60 ||
+      x.timeLeft > ANIMAL_TIME_LIMIT ||
       !Number.isFinite(x.savedAt) ||
       now - x.savedAt > 24 * 3600000 ||
       x.savedAt > now + 60000
