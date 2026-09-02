@@ -28,12 +28,16 @@ import { join, basename, dirname } from "node:path";
 // 18.6% → 31.1%). 투명도 변형(`bg-white/[0.04]` 등 67곳)은 건드리지 않았다 —
 // 어두운 패널 위의 반투명 흰색이라 "떠 있는 표면"과 뜻이 다르다.
 //
+// 2026-09-02 두 번째 라운드: `bg-green-50`(308) → `bg-surface-subtle`.
+// 기존 토큰 중에는 맞는 값이 없어서 **원본에 토큰을 하나 더했다** —
+// `--accent`(0.915)로 옮기면 눈에 띄게 어두워진다. 6,695 → 6,388 (34.3%).
+//
 // 이 감사가 첫 실행에서 세 가지를 잡았다 — blog 에 팔레트가 아예 적용되지
 // 않았고(폰트만 했다), wiki·game 은 `--card-foreground` 를 빠뜨렸고, oiyo 는
 // 기록해 둔 예산보다 17개가 늘어 있었다. 셋 다 눈으로는 안 보이는 것들이다.
 // 줄이는 방향으로만 갱신한다 — 늘리는 것은 하드코딩을 승인하는 것이다.
 const PALETTE_BUDGET = {
-  oiyo: 6695,
+  oiyo: 6388,
   blog: 10764,
   wiki: 5370,
   game: 7428,
@@ -67,7 +71,7 @@ const TOKEN_FILES = [
 const TOKEN_CLASS = new RegExp(
   String.raw`\b(?:bg|text|border|ring|fill|stroke|from|to|via|divide|outline|decoration|shadow|accent|caret|placeholder)-` +
     String.raw`(?:background|foreground|card|card-foreground|popover|popover-foreground|primary|primary-foreground|` +
-    String.raw`secondary|secondary-foreground|muted|muted-foreground|accent|accent-foreground|destructive|border|input|ring|chart-[1-5]|sidebar[\w-]*)\b`,
+    String.raw`secondary|secondary-foreground|muted|muted-foreground|accent|accent-foreground|destructive|border|input|ring|chart-[1-5]|surface-subtle|sidebar[\w-]*)\b`,
   "g",
 );
 const PALETTE_CLASS = new RegExp(
