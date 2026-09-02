@@ -14,6 +14,7 @@ import {
     type TentsMode,
 } from '../../lib/games/tents-save';
 import { TENTS_SPRITES } from '../../lib/games/sprites';
+import { tentsAnalyticsPayload, type TentsAnalyticsEvent } from '../../lib/games/tents-analytics';
 
 // ─── Tents & Trees — logic puzzle with generated boards ─────────────────────
 // Every tree pairs with one tent on an orthogonally adjacent cell; tents never
@@ -37,6 +38,7 @@ interface InitialGame {
     marks: CellMark[][];
     seed: number;
     dailyDate: string;
+    resumed: boolean;
 }
 
 /** Restores an in-progress save if one matches today, otherwise starts a fresh daily puzzle. */
@@ -45,10 +47,10 @@ function initialGame(): InitialGame {
     const saved = loadTentsSave(today);
     if (saved) {
         const puzzle = puzzleForTentsSave(saved.mode, saved.dailyDate, saved.seed);
-        return { mode: saved.mode, puzzle, marks: saved.marks, seed: saved.seed, dailyDate: saved.dailyDate };
+        return { mode: saved.mode, puzzle, marks: saved.marks, seed: saved.seed, dailyDate: saved.dailyDate, resumed: true };
     }
     const { puzzle } = generateDailyTents();
-    return { mode: 'daily', puzzle, marks: emptyMarksFor(puzzle.size), seed: 0, dailyDate: today };
+    return { mode: 'daily', puzzle, marks: emptyMarksFor(puzzle.size), seed: 0, dailyDate: today, resumed: false };
 }
 
 const COPY = {
@@ -104,6 +106,12 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [nextMinutes, setNextMinutes] = useState(() => minutesUntilNextDaily());
     const [activeCell, setActiveCell] = useState(0);
     const cellRefs = useRef<Array<HTMLButtonElement | HTMLDivElement | null>>([]);
+    const startedRef = useRef(initial.resumed);
+
+    const track = useCallback((event: TentsAnalyticsEvent, eventMode: TentsMode) => {
+        const analytics = window as Window & { gtag?: (...args: unknown[]) => void };
+        analytics.gtag?.('event', event, tentsAnalyticsPayload({ mode: eventMode, locale }));
+    }, [locale]);
 
     const [muted, setMuted] = useState(false);
     const [hint, setHint] = useState<TentsHint | null>(null);
@@ -128,7 +136,8 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     useEffect(() => {
         const today = todayKey();
         setStreak(getDailyStreak(DAILY_GAME_ID, today, previousDayKey(today)));
-    }, []);
+        if (initial.resumed) track('game_resume', initial.mode);
+    }, [initial.mode, initial.resumed, track]);
 
     useEffect(() => {
         const update = () => setNextMinutes(minutesUntilNextDaily());
@@ -158,6 +167,7 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         setValidation({ ok: true, complete: false, error: null });
         setHint(null);
         setActiveCell(0);
+        startedRef.current = false;
     }, []);
 
     const isTree = (r: number, c: number) => puzzle.trees.some(([tr, tc]) => tr === r && tc === c);
@@ -167,6 +177,10 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         if (mode === 'daily' && dailyDate !== todayKey()) {
             newPuzzle('daily');
             return;
+        }
+        if (!startedRef.current) {
+            startedRef.current = true;
+            track('game_start', mode);
         }
         const next = marks.map((row) => [...row]);
         const cycle: CellMark[] = ['empty', 'tent', 'grass'];
@@ -179,6 +193,7 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         const v = validateTents(tents, puzzle);
         setValidation(v);
         if (v.complete) {
+            track('game_complete', mode);
             clearTentsSave();
             tone(880, 0.1);
             window.setTimeout(() => tone(1100, 0.16), 90);
@@ -219,13 +234,17 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
                 <div className="mb-4 inline-flex flex-wrap justify-center gap-1">
                     {(['daily', 'free'] as const).map((m) => (
-                        <button key={m} onClick={() => newPuzzle(m)}
+                        <button key={m} onClick={() => {
+                            if (m !== mode) track('mode_change', m);
+                            newPuzzle(m);
+                        }}
                             aria-pressed={mode === m}
                             className={`min-h-11 px-3 py-2 rounded-lg text-xs font-bold border transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${mode === m ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
                             {t[m]}
                         </button>
                     ))}
                     <button type="button" onClick={() => {
+                        track('hint_used', mode);
                         const tents: Pos[] = [];
                         for (let rr = 0; rr < puzzle.size; rr++) for (let cc = 0; cc < puzzle.size; cc++) if (marks[rr][cc] === 'tent') tents.push([rr, cc]);
                         setHint(explainTentsHint(tents, puzzle));
@@ -313,7 +332,7 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         <div className="animate-fade-up motion-reduce:animate-none">
                             <p className="text-xl font-black text-success mb-3">🎉 {t.win}</p>
                             {mode === 'free' && (
-                                <button onClick={() => newPuzzle('free')} className="px-8 py-2.5 bg-primary text-primary-foreground rounded-full font-bold shadow-lg">
+                                <button onClick={() => { track('play_again', 'free'); newPuzzle('free'); }} className="px-8 py-2.5 bg-primary text-primary-foreground rounded-full font-bold shadow-lg">
                                     {t.next}
                                 </button>
                             )}
