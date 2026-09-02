@@ -42,12 +42,18 @@ import { join, basename, dirname } from "node:path";
 // **호버가 사라진다.** `--primary-hover` 를 더해 호버를 한 단계 더 어둡게
 // 했다(ΔL -0.060 은 옮기기 전 호버 폭 -0.054 와 거의 같다). 6,211 → 6,093.
 //
+// 다섯 번째 라운드: `bg-green-800`(40). 세어 보니 **27곳이 바탕이 아니라
+// 호버**였고 그중 22곳은 바탕이 이미 primary 였다. 나머지 13곳은 선택된
+// 토글과 강한 CTA — 호버와 같은 의미다. 그래서 `--primary-hover` 를
+// `--primary-strong` 으로 **이름을 고치고**(상태마다 비슷한 진녹을 따로 두면
+// 어느 것을 써야 할지 알 수 없다) 40곳을 모두 옮겼다. 6,093 → 6,053.
+//
 // 이 감사가 첫 실행에서 세 가지를 잡았다 — blog 에 팔레트가 아예 적용되지
 // 않았고(폰트만 했다), wiki·game 은 `--card-foreground` 를 빠뜨렸고, oiyo 는
 // 기록해 둔 예산보다 17개가 늘어 있었다. 셋 다 눈으로는 안 보이는 것들이다.
 // 줄이는 방향으로만 갱신한다 — 늘리는 것은 하드코딩을 승인하는 것이다.
 const PALETTE_BUDGET = {
-  oiyo: 6093,
+  oiyo: 6053,
   blog: 10764,
   wiki: 5370,
   game: 7428,
@@ -81,7 +87,7 @@ const TOKEN_FILES = [
 const TOKEN_CLASS = new RegExp(
   String.raw`\b(?:bg|text|border|ring|fill|stroke|from|to|via|divide|outline|decoration|shadow|accent|caret|placeholder)-` +
     String.raw`(?:background|foreground|card|card-foreground|popover|popover-foreground|primary|primary-foreground|` +
-    String.raw`secondary|secondary-foreground|muted|muted-foreground|accent|accent-foreground|destructive|border|input|ring|chart-[1-5]|surface-subtle|primary-hover|sidebar[\w-]*)\b`,
+    String.raw`secondary|secondary-foreground|muted|muted-foreground|accent|accent-foreground|destructive|border|input|ring|chart-[1-5]|surface-subtle|primary-strong|sidebar[\w-]*)\b`,
   "g",
 );
 const PALETTE_CLASS = new RegExp(
