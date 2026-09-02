@@ -4,6 +4,23 @@
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/inter";
 
+/* 한글 본문 서체. `@fontsource-variable/inter` 에는 한글 글리프가 없어서
+   지금까지 한글은 OS 폴백으로 렌더됐다 — Mac 은 Apple SD Gothic Neo, Windows 는
+   맑은 고딕. 본문의 대부분이 한글인데 아무도 고르지 않은 얼굴이었다.
+
+   KS X 1001 완성형 2,350자로 자른 191KB 서브셋(원본 8.2MB). 콘텐츠가 늘어도
+   재생성이 필요 없다. 재생성은 `bash scripts/build-korean-subset.sh`.
+
+   이 서체에는 한자·가나 글리프가 없다. ja·zh 로케일은 지금과 같이 OS 폴백으로
+   렌더된다 — ko 만 개선된다. */
+@font-face {
+  font-family: 'Gowun Batang';
+  src: url('/fonts/GowunBatang-ks-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 
 @theme inline {
   /* Flatten all shadows */
@@ -20,6 +37,9 @@
   --tw-duration: 100ms;
 
   --font-sans: 'Inter Variable', sans-serif;
+  /* 라틴만 Inter, 한글만 Gowun Batang 으로 섞는 스택은 숫자가 산세리프로 튀어
+     한 문장 안에서 두 서체가 다툰다. 본문은 한 목소리로 간다. */
+  --font-serif: 'Gowun Batang', Georgia, serif;
   --radius: 0.625rem;
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
@@ -66,24 +86,24 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-serif);
 }
 
 :root {
   /* DESIGN.md canonical olive + green system */
-  --background:            oklch(0.988 0.003 106.5);
-  --foreground:            oklch(0.153 0.006 107.1);
-  --card:                  oklch(0.990 0.005 106.5);
+  --background:            oklch(0.951 0.011 123.5);
+  --foreground:            oklch(0.207 0.020 138.8);
+  --card:                  oklch(0.985 0.007 124.4);
   --card-foreground:       oklch(0.153 0.006 107.1);
-  --popover:               oklch(0.990 0.005 106.5);
+  --popover:               oklch(0.985 0.007 124.4);
   --popover-foreground:    oklch(0.153 0.006 107.1);
-  --primary:               oklch(0.532 0.157 131.589);
+  --primary:               oklch(0.470 0.095 133.2);
   --primary-foreground:    oklch(0.986 0.031 120.757);
   --secondary:             oklch(0.967 0.001 286.375);
   --secondary-foreground:  oklch(0.210 0.006 285.885);
-  --muted:                 oklch(0.970 0.010 106.5);
-  --muted-foreground:      oklch(0.580 0.031 107.3);
-  --accent:                oklch(0.970 0.010 106.5);
+  --muted:                 oklch(0.926 0.020 125.8);
+  --muted-foreground:      oklch(0.520 0.028 132.3);
+  --accent:                oklch(0.915 0.038 125.2);
   --accent-foreground:     oklch(0.228 0.013 107.4);
   --destructive:           oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.985 0.018 20);
@@ -94,9 +114,9 @@
   --warning-foreground:    oklch(0.268 0.052 75);
   --info:                  oklch(0.588 0.156 252);
   --info-foreground:       oklch(0.985 0.020 252);
-  --border:                oklch(0.930 0.007 106.5);
-  --input:                 oklch(0.930 0.007 106.5);
-  --ring:                  oklch(0.737 0.021 106.9);
+  --border:                oklch(0.857 0.030 126.0);
+  --input:                 oklch(0.857 0.030 126.0);
+  --ring:                  oklch(0.640 0.055 130.0);
   /* Categorical palette — distinct hues, harmonized lightness/chroma.
      chart-1 stays green (Wordle correct tile, Reversi/Snake/Hearts board). */
   --chart-1:               oklch(0.640 0.170 145);
@@ -121,13 +141,13 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply font-sans antialiased bg-background text-foreground;
+    @apply font-serif antialiased bg-background text-foreground;
   }
   h1, h2, h3, h4, h5, h6 {
-    @apply font-sans tracking-tight font-semibold;
+    @apply font-serif tracking-tight font-semibold;
   }
   html {
-    @apply font-sans;
+    @apply font-serif;
   }
 }
 
@@ -191,7 +211,7 @@
 }
 
 .prose blockquote {
-  @apply border-l-4 border-primary bg-primary/5 px-8 py-4 rounded-r-2xl font-sans text-xl italic tracking-tight text-primary/80;
+  @apply border-l-4 border-primary bg-primary/5 px-8 py-4 rounded-r-2xl font-serif text-xl italic tracking-tight text-primary/80;
 }
 
 .prose p {
