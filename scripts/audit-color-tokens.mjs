@@ -18,16 +18,22 @@
 //
 // usage: node scripts/audit-color-tokens.mjs
 import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
-import { join, basename } from "node:path";
+import { execSync } from "node:child_process";
+import { join, basename, dirname } from "node:path";
 
 // repo 이름 → 토큰 밖 색 사용 예산. 2026-09-02 실측.
+//
+// oiyo 는 2026-09-02 에 `bg-white`→`bg-card`(516), `text-green-950`→
+// `text-foreground`(704) 를 치환해 7,915 → 6,695 로 줄였다(토큰 비율
+// 18.6% → 31.1%). 투명도 변형(`bg-white/[0.04]` 등 67곳)은 건드리지 않았다 —
+// 어두운 패널 위의 반투명 흰색이라 "떠 있는 표면"과 뜻이 다르다.
 //
 // 이 감사가 첫 실행에서 세 가지를 잡았다 — blog 에 팔레트가 아예 적용되지
 // 않았고(폰트만 했다), wiki·game 은 `--card-foreground` 를 빠뜨렸고, oiyo 는
 // 기록해 둔 예산보다 17개가 늘어 있었다. 셋 다 눈으로는 안 보이는 것들이다.
 // 줄이는 방향으로만 갱신한다 — 늘리는 것은 하드코딩을 승인하는 것이다.
 const PALETTE_BUDGET = {
-  oiyo: 7915,
+  oiyo: 6695,
   blog: 10764,
   wiki: 5370,
   game: 7428,
@@ -71,16 +77,37 @@ const PALETTE_CLASS = new RegExp(
 );
 
 const repoRoot = process.cwd();
-const repo = basename(repoRoot);
+// 워크트리 디렉터리명은 repo 이름이 아니다(`.worktrees/oiyotok`). 원격 URL 로
+// 판정하되 **규칙으로 유추하지 않는다** — 이름이 제각각이라(`oiyo-astro`,
+// `blog-oiyo`, `wiki-oiyo`…) 접두사를 떼는 식의 규칙은 `oiyo-astro` 를
+// `astro` 로 만든다. 대응표를 적어 두는 편이 짧고 틀리지 않는다.
+const REMOTE_TO_REPO = {
+  "oiyo-astro": "oiyo",
+  "blog-oiyo": "blog",
+  "wiki-oiyo": "wiki",
+  "game-oiyo": "game",
+  "news-oiyo": "news",
+};
+let repo = basename(repoRoot);
+try {
+  const url = execSync("git config --get remote.origin.url", { cwd: repoRoot, encoding: "utf8" }).trim();
+  const m = url.match(/([^/]+?)(?:\.git)?$/);
+  if (m && REMOTE_TO_REPO[m[1]]) repo = REMOTE_TO_REPO[m[1]];
+} catch { /* git 이 없거나 remote 가 없으면 디렉터리명을 쓴다 */ }
 const failures = [];
 
 // ── 원본 찾기 ───────────────────────────────────────────────────────────────
 // repo 안에서 돌 수도 있고(동기화된 사본) 루트에서 돌 수도 있다.
-const ssotCandidates = [
-  join(repoRoot, "..", "shared", "tokens", "oiyo-light.css"),
-  join(repoRoot, "shared", "tokens", "oiyo-light.css"),
-];
-const ssotPath = ssotCandidates.find((p) => existsSync(p));
+// 위로 올라가며 찾는다. repo 가 루트 하네스 바로 아래 있다고 가정하면
+// **워크트리에서 깨진다** — `.worktrees/<name>/` 은 한 단계 더 깊다.
+let ssotPath = null;
+for (let dir = repoRoot, i = 0; i < 6; i++) {
+  const candidate = join(dir, "shared", "tokens", "oiyo-light.css");
+  if (existsSync(candidate)) { ssotPath = candidate; break; }
+  const parent = dirname(dir);
+  if (parent === dir) break;
+  dir = parent;
+}
 
 if (!ssotPath) {
   console.log("색 토큰 감사 SKIP — shared/tokens/oiyo-light.css 를 찾지 못했다(루트 하네스 밖에서 도는 중).");
