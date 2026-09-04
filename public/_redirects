@@ -17,3 +17,9 @@
 /game-tier-list/  /ko/tier-list/  301
 /ko/game-tier-list  /ko/tier-list/  301
 /ko/game-tier-list/  /ko/tier-list/  301
+
+# 2026-09-04 GA4 실측 404. 봇/도구가 두드리는 잘못된 sitemap 이름과,
+# game 이 아니라 blog 에 있는 글 하나.
+/sitemap.xml  /sitemap-index.xml  301
+/:lang/psychology-wordle  https://blog.oiyo.net/:lang/psychology-wordle/  301
+/:lang/psychology-wordle/  https://blog.oiyo.net/:lang/psychology-wordle/  301
