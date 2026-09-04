@@ -3,6 +3,10 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import { getTranslations, locales } from "../../lib/i18n";
 import type { Locale } from "../../lib/i18n";
 import gameArtDocument from "../../../config/game-art-v1.json";
+import { Image } from "astro:assets";
+import type { ImageMetadata } from "astro";
+const cardSources = import.meta.glob<ImageMetadata>("../../../public/games/*.png", { eager: true, import: "default" });
+const cardSource = (url: string) => cardSources[`../../../public${url}`];
 
 export async function getStaticPaths() {
   return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
@@ -180,7 +184,7 @@ const cardJsonLd = {
           {featuredGames.map((g) => (
             <a href={`/${locale}/${g.slug}/`} data-game={g.slug} class="group relative flex min-h-36 flex-col justify-end overflow-hidden rounded-2xl border border-slate-100 bg-white text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md">
               {gameArt[g.slug] ? (
-                <img src={gameArt[g.slug]} alt="" width="1200" height="630" loading="lazy" decoding="async" class="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
+                <Image src={cardSource(gameArt[g.slug])} alt="" width={640} widths={[320, 640]} sizes="(min-width: 1024px) 270px, (min-width: 640px) 33vw, 50vw" format="webp" loading="lazy" decoding="async" class="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
               ) : (
                 <span class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-lime-50 to-stone-100 text-4xl transition-transform group-hover:scale-110" aria-hidden="true">{g.emoji}</span>
               )}
@@ -202,7 +206,7 @@ const cardJsonLd = {
           {byCat(cat).map((g) => (
             <a href={`/${locale}/${g.slug}/`} data-game={g.slug} class="group relative flex min-h-36 flex-col justify-end overflow-hidden rounded-2xl border border-slate-100 bg-white text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md">
               {gameArt[g.slug] ? (
-                <img src={gameArt[g.slug]} alt="" width="1200" height="630" loading="lazy" decoding="async" class="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
+                <Image src={cardSource(gameArt[g.slug])} alt="" width={640} widths={[320, 640]} sizes="(min-width: 1024px) 270px, (min-width: 640px) 33vw, 50vw" format="webp" loading="lazy" decoding="async" class="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
               ) : (
                 <span class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-lime-50 to-stone-100 text-4xl transition-transform group-hover:scale-110" aria-hidden="true">{g.emoji}</span>
               )}
