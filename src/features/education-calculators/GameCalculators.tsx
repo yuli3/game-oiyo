@@ -78,10 +78,6 @@ export const StoneSimulator: React.FC = () => {
                 {history.length === 0 && <span className="text-slate-600 italic text-sm">도전 결과가 여기에 표시됩니다.</span>}
             </div>
         </div>
-
-        <p className="text-[10px] text-slate-600 text-center">
-            * 이 도구는 ahoxy.com의 시뮬레이션 알고리즘을 체험용으로 blog-oiyo로 포팅한 것입니다.
-        </p>
       </div>
     </Card>
   );
