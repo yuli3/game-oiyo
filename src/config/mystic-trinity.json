@@ -11,10 +11,6 @@
     "wiki": {
       "base": "https://wiki.oiyo.net",
       "trailingSlash": true
-    },
-    "ahoxy": {
-      "base": "https://ahoxy.com",
-      "trailingSlash": false
     }
   },
   "topics": {
@@ -201,8 +197,8 @@
         ]
       },
       "try": {
-        "site": "ahoxy",
-        "path": "/face",
+        "site": "oiyo",
+        "path": "/face-reading",
         "locales": "all"
       }
     },

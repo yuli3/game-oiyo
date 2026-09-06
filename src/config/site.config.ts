@@ -1,5 +1,8 @@
+/** Legacy ahoxy.com redirect shell — do not use for new CTAs or content links. */
 export const AHOXY_URL = 'https://ahoxy.com';
 export const OIYO_URL = 'https://oiyo.net';
+export const BLOG_URL = 'https://blog.oiyo.net';
+export const GAME_URL = 'https://game.oiyo.net';
 
 export const siteConfig = {
   name: "Oiyo",

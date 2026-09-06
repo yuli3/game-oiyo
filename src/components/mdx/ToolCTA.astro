@@ -1,4 +1,5 @@
 ---
+import { toolCtaHref } from '@/lib/tool-cta-href';
 interface ToolMeta {
   name_ko: string;
   name_en: string;
@@ -416,15 +417,6 @@ const TOOL_META: Record<string, ToolMeta> = {
   },
 };
 
-// family-first targets: link the OIYO family page when one exists (#strategy)
-const HREF_OVERRIDES: Record<string, (l: string) => string> = {
-  "empathy-test": (l) => `https://oiyo.net/${l}/empathy/test?utm_source=blog_oiyo&utm_medium=referral&utm_campaign=tool_cta`,
-  investment: (l) => `https://oiyo.net/${l}/investment-type/test?utm_source=blog_oiyo&utm_medium=referral&utm_campaign=tool_cta`,
-  chess: (l) => `/${l}/chess/`,
-  gomoku: (l) => `/${l}/gomoku/`,
-  "learning-style": (l) => `/${l}/learning-style-test/`,
-  "legal-interest": (l) => `/${l}/legal-interest-calculator/`,
-};
 
 const { tool, locale = "ko" } = Astro.props;
 
@@ -434,10 +426,7 @@ const isKo = locale === "ko";
 const name = meta ? (isKo ? meta.name_ko : meta.name_en) : "";
 const description = meta ? (isKo ? meta.description_ko : meta.description_en) : "";
 const ctaLabel = isKo ? "계산해보기 →" : "Try it →";
-import { AHOXY_URL } from '@/config/site.config';
-const href = HREF_OVERRIDES[tool]
-  ? HREF_OVERRIDES[tool](locale)
-  : `${AHOXY_URL}/${locale}/${tool}?utm_source=blog_oiyo&utm_medium=referral&utm_campaign=tool_cta`;
+const href = toolCtaHref(tool, locale);
 ---
 
 {meta && (
