@@ -15,6 +15,7 @@
     "audit:seo": "node scripts/audit-seo-output.mjs",
     "audit:game-sessions": "node scripts/audit-game-session-envelope.mjs",
     "audit:game-modernization": "node scripts/audit-game-modernization-inventory.mjs",
+    "audit:chunk-isolation": "node scripts/audit-chunk-isolation.mjs",
     "audit:headers-collision": "node scripts/audit-headers-collision.mjs",
     "sprites:key": "node scripts/key-sprite-edge.mjs",
     "sprites:sheet": "node scripts/compose-sprite-sheet.mjs",
