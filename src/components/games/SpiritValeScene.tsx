@@ -80,6 +80,92 @@ function useToonUniforms(reducedMotion: boolean) {
   );
 }
 
+/* ── Sky & grounding ───────────────────────────────────────────────────────
+ * Two cheap, asset-free touches the shader look was missing: a vertical sky
+ * gradient (a flat clear colour reads as a wall the moment you tilt up) and a
+ * soft contact shadow under anything that stands on the ground (without one the
+ * wanderer and the spirits hover a few centimetres above their own feet).
+ * ────────────────────────────────────────────────────────────────────────── */
+
+/** A vertical gradient set as `scene.background`, so fog never touches it. */
+function SkyGradient() {
+  const { scene } = useThree();
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const height = 256;
+    const canvas = document.createElement("canvas");
+    canvas.width = 4;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const grad = ctx.createLinearGradient(0, 0, 0, height);
+    grad.addColorStop(0, "#a6d4ea"); // zenith — a shade deeper than the old flat sky
+    grad.addColorStop(0.58, "#c3e3ef");
+    grad.addColorStop(1, "#d9edf0"); // horizon, landing on the fog colour
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 4, height);
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    const previous = scene.background;
+    scene.background = texture;
+    return () => {
+      scene.background = previous;
+      texture.dispose();
+    };
+  }, [scene]);
+  return null;
+}
+
+let contactShadowTextureCache: THREE.Texture | null = null;
+function contactShadowTexture(): THREE.Texture | null {
+  if (contactShadowTextureCache) return contactShadowTextureCache;
+  if (typeof document === "undefined") return null;
+  const size = 64;
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+  const grad = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+  grad.addColorStop(0, "rgba(18,28,20,0.58)");
+  grad.addColorStop(0.55, "rgba(18,28,20,0.30)");
+  grad.addColorStop(1, "rgba(18,28,20,0)");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, size, size);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  contactShadowTextureCache = texture;
+  return texture;
+}
+
+function ContactShadow({ x, z, radius }: { x: number; z: number; radius: number }) {
+  const texture = useMemo(() => contactShadowTexture(), []);
+  const geometry = useMemo(() => new THREE.PlaneGeometry(1, 1), []);
+  const material = useMemo(
+    () =>
+      new THREE.MeshBasicMaterial({
+        map: texture ?? undefined,
+        color: texture ? 0xffffff : 0x121c14,
+        transparent: true,
+        opacity: texture ? 0.95 : 0.28,
+        depthWrite: false,
+        // Nudge it out of the terrain so it never z-fights on a slope.
+        polygonOffset: true,
+        polygonOffsetFactor: -2,
+        polygonOffsetUnits: -2,
+      }),
+    [texture],
+  );
+  return (
+    <mesh
+      geometry={geometry}
+      material={material}
+      position={[x, terrainHeight(x, z) + 0.03, z]}
+      rotation={[-Math.PI / 2, 0, 0]}
+      scale={[radius * 2, radius * 2, 1]}
+    />
+  );
+}
+
 /* ── Terrain ─────────────────────────────────────────────────────────────── */
 
 function Terrain({ uniforms }: { uniforms: Record<string, THREE.IUniform> }) {
@@ -696,27 +782,33 @@ function Combatants({
   return (
     <>
       {wild && (
-        <SpiritModel
-          plan={formFor(wild, stageOf(wildXp ?? 0) as Stage)}
-          position={[wildAt.x, wildAt.y, wildAt.z]}
-          // Turned to face back down the axis, at the player.
-          facing={facing + Math.PI}
-          reducedMotion={reducedMotion}
-          action={wildAction}
-          actionKey={actionKey}
-          detail={detail}
-        />
+        <>
+          <ContactShadow x={wildAt.x} z={wildAt.z} radius={0.72} />
+          <SpiritModel
+            plan={formFor(wild, stageOf(wildXp ?? 0) as Stage)}
+            position={[wildAt.x, wildAt.y, wildAt.z]}
+            // Turned to face back down the axis, at the player.
+            facing={facing + Math.PI}
+            reducedMotion={reducedMotion}
+            action={wildAction}
+            actionKey={actionKey}
+            detail={detail}
+          />
+        </>
       )}
       {mine && (
-        <SpiritModel
-          plan={formFor(mine, stageOf(partyXp ?? 0) as Stage)}
-          position={[mineAt.x, mineAt.y, mineAt.z]}
-          facing={facing}
-          reducedMotion={reducedMotion}
-          action={partyAction}
-          actionKey={actionKey}
-          detail={detail}
-        />
+        <>
+          <ContactShadow x={mineAt.x} z={mineAt.z} radius={0.72} />
+          <SpiritModel
+            plan={formFor(mine, stageOf(partyXp ?? 0) as Stage)}
+            position={[mineAt.x, mineAt.y, mineAt.z]}
+            facing={facing}
+            reducedMotion={reducedMotion}
+            action={partyAction}
+            actionKey={actionKey}
+            detail={detail}
+          />
+        </>
       )}
     </>
   );
@@ -750,7 +842,10 @@ function Valley({
 
   return (
     <>
+      {/* Flat clear colour for the first frame; SkyGradient swaps in a vertical
+          gradient once mounted (and fog leaves scene.background alone). */}
       <color attach="background" args={[SKY]} />
+      <SkyGradient />
       {/* Fog matched to the sky so the far rim dissolves rather than ending. */}
       <fog attach="fog" args={[FOG.getHex(), 42, 118]} />
 
@@ -767,6 +862,7 @@ function Valley({
       <ZoneMarkers zones={world.zones} />
       <GrassField blades={world.blades} uniforms={uniforms} />
       <Trees trees={world.trees} uniforms={uniforms} />
+      <ContactShadow x={player.playerX} z={player.playerZ} radius={0.5} />
       <Player
         x={player.playerX}
         z={player.playerZ}

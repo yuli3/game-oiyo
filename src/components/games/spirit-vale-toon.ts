@@ -29,16 +29,25 @@ export const TOON_CHUNK = /* glsl */ `
   }
 
   vec3 toonLight(vec3 baseColor, vec3 normal, vec3 viewDir) {
-    float ndl = dot(normalize(normal), normalize(uKeyDir));
+    vec3 n = normalize(normal);
+    float ndl = dot(n, normalize(uKeyDir));
     float band = toonRamp(ndl);
+
+    // A single cool fill from low and behind the key. smoothstep clamps it to
+    // the shadow side so it never lifts a lit face — the cel bands stay crisp
+    // while the darks pick up sky-bounce colour instead of going muddy grey.
+    // This is the whole "two-light rig" a flat toon ramp otherwise lacks.
+    float fill = max(dot(n, normalize(vec3(-0.35, 0.30, -0.55))), 0.0);
+    fill *= smoothstep(0.50, -0.12, ndl);
 
     // Rim: the anime edge-glow. Strongest perpendicular to the eye, and only on
     // surfaces already facing away from the key, so it reads as bounced sky
     // rather than as a second sun.
-    float rim = 1.0 - max(dot(normalize(normal), normalize(viewDir)), 0.0);
+    float rim = 1.0 - max(dot(n, normalize(viewDir)), 0.0);
     rim = pow(rim, 2.6) * smoothstep(0.55, -0.15, ndl);
 
     vec3 lit = baseColor * band;
+    lit += vec3(0.30, 0.44, 0.58) * fill * 0.24;
     lit += vec3(0.42, 0.60, 0.72) * rim * 0.55;
     return lit;
   }
