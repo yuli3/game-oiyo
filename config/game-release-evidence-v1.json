@@ -40,6 +40,12 @@
         "depth": 3,
         "score": 10,
         "note": "The mobile loop communicates movement, auto-fire, damage cause, PB ghost, and same-seed retry clearly; weapon upgrades and deterministic replay add depth beyond a disposable shooter skin."
+      },
+      "releaseApproval": {
+        "approvedAt": "2026-09-07T09:45:00Z",
+        "approver": "세운 (yuli3)",
+        "decision": "approved",
+        "note": "8 flagship games — technical gates + 390px playtest + craft review (2026-08-27, Codex) plus 2026-09-07 VFX/motion wave guardrail re-verification (390px / 6 locales / reduced-motion / mute). See company-brain/projects/game/vfx-motion-wave-verification-2026-09-07.md. Content-depth follow-ups tracked separately (skyward-atlas GameGuide entry; ja/zh/fr/es GAME_INSIGHTS for minesweeper/chess/blackjack; dot-runner FAQ)."
       }
     },
     "dot-runner": {
@@ -79,6 +85,12 @@
         "depth": 4,
         "score": 11,
         "note": "The one-tap runner makes failure actionable through a next-score target, same-seed retry, deterministic PB ghost, rising pace, and resumable local state while keeping the mobile interaction immediately legible."
+      },
+      "releaseApproval": {
+        "approvedAt": "2026-09-07T09:45:00Z",
+        "approver": "세운 (yuli3)",
+        "decision": "approved",
+        "note": "8 flagship games — technical gates + 390px playtest + craft review (2026-08-27, Codex) plus 2026-09-07 VFX/motion wave guardrail re-verification (390px / 6 locales / reduced-motion / mute). See company-brain/projects/game/vfx-motion-wave-verification-2026-09-07.md. Content-depth follow-ups tracked separately (skyward-atlas GameGuide entry; ja/zh/fr/es GAME_INSIGHTS for minesweeper/chess/blackjack; dot-runner FAQ)."
       }
     },
     "minesweeper": {
@@ -118,6 +130,12 @@
         "depth": 4,
         "score": 12,
         "note": "Verified no-guess boards, first-click safety, explainable deductions, assistance-aware records, progressive onboarding, and durable mobile board state turn the familiar ruleset into a trustworthy mastery puzzle rather than a luck-driven clone."
+      },
+      "releaseApproval": {
+        "approvedAt": "2026-09-07T09:45:00Z",
+        "approver": "세운 (yuli3)",
+        "decision": "approved",
+        "note": "8 flagship games — technical gates + 390px playtest + craft review (2026-08-27, Codex) plus 2026-09-07 VFX/motion wave guardrail re-verification (390px / 6 locales / reduced-motion / mute). See company-brain/projects/game/vfx-motion-wave-verification-2026-09-07.md. Content-depth follow-ups tracked separately (skyward-atlas GameGuide entry; ja/zh/fr/es GAME_INSIGHTS for minesweeper/chess/blackjack; dot-runner FAQ)."
       }
     },
     "chess": {
@@ -157,6 +175,12 @@
         "depth": 4,
         "score": 12,
         "note": "Explicit AI search budgets, complete legal-rule tests, notation and material tracking, durable orientation and game state, keyboard semantics, and a tested loss-review selector make the compact board useful for deliberate practice rather than opaque casual play."
+      },
+      "releaseApproval": {
+        "approvedAt": "2026-09-07T09:45:00Z",
+        "approver": "세운 (yuli3)",
+        "decision": "approved",
+        "note": "8 flagship games — technical gates + 390px playtest + craft review (2026-08-27, Codex) plus 2026-09-07 VFX/motion wave guardrail re-verification (390px / 6 locales / reduced-motion / mute). See company-brain/projects/game/vfx-motion-wave-verification-2026-09-07.md. Content-depth follow-ups tracked separately (skyward-atlas GameGuide entry; ja/zh/fr/es GAME_INSIGHTS for minesweeper/chess/blackjack; dot-runner FAQ)."
       }
     },
     "blackjack": {
@@ -196,6 +220,12 @@
         "depth": 4,
         "score": 12,
         "note": "S17 rules, hand-aware risk guidance, explicit result causes and action trails, deck context, record goals, and resumable deterministic hands make each short round teach a decision instead of merely revealing a random outcome."
+      },
+      "releaseApproval": {
+        "approvedAt": "2026-09-07T09:45:00Z",
+        "approver": "세운 (yuli3)",
+        "decision": "approved",
+        "note": "8 flagship games — technical gates + 390px playtest + craft review (2026-08-27, Codex) plus 2026-09-07 VFX/motion wave guardrail re-verification (390px / 6 locales / reduced-motion / mute). See company-brain/projects/game/vfx-motion-wave-verification-2026-09-07.md. Content-depth follow-ups tracked separately (skyward-atlas GameGuide entry; ja/zh/fr/es GAME_INSIGHTS for minesweeper/chess/blackjack; dot-runner FAQ)."
       }
     },
     "run-a-business": {
@@ -235,6 +265,12 @@
         "depth": 4,
         "score": 12,
         "note": "Seeded weather and events, stock, recipe and pricing choices, multiple horizons, and a reconciled ledger that distinguishes profit from cash turn a compact stand simulation into an explainable operating-decision exercise."
+      },
+      "releaseApproval": {
+        "approvedAt": "2026-09-07T09:45:00Z",
+        "approver": "세운 (yuli3)",
+        "decision": "approved",
+        "note": "8 flagship games — technical gates + 390px playtest + craft review (2026-08-27, Codex) plus 2026-09-07 VFX/motion wave guardrail re-verification (390px / 6 locales / reduced-motion / mute). See company-brain/projects/game/vfx-motion-wave-verification-2026-09-07.md. Content-depth follow-ups tracked separately (skyward-atlas GameGuide entry; ja/zh/fr/es GAME_INSIGHTS for minesweeper/chess/blackjack; dot-runner FAQ)."
       }
     },
     "korean-semantle": {
@@ -274,6 +310,12 @@
         "depth": 4,
         "score": 12,
         "note": "Ordered semantic bands, deliberately gated non-answer hints, durable daily guesses, streak and next-puzzle return cues, and transparent handcrafted-data disclosure make the word search fair, legible, and repeatable."
+      },
+      "releaseApproval": {
+        "approvedAt": "2026-09-07T09:45:00Z",
+        "approver": "세운 (yuli3)",
+        "decision": "approved",
+        "note": "8 flagship games — technical gates + 390px playtest + craft review (2026-08-27, Codex) plus 2026-09-07 VFX/motion wave guardrail re-verification (390px / 6 locales / reduced-motion / mute). See company-brain/projects/game/vfx-motion-wave-verification-2026-09-07.md. Content-depth follow-ups tracked separately (skyward-atlas GameGuide entry; ja/zh/fr/es GAME_INSIGHTS for minesweeper/chess/blackjack; dot-runner FAQ)."
       }
     },
     "skyward-atlas": {
@@ -313,6 +355,12 @@
         "depth": 3,
         "score": 11,
         "note": "A tested aerodynamic model, progressive input tutorial, cockpit and chase views, optional audio, persistent best score, and result-specific next-flight advice give the short WebGL flight a clear learning and retry loop."
+      },
+      "releaseApproval": {
+        "approvedAt": "2026-09-07T09:45:00Z",
+        "approver": "세운 (yuli3)",
+        "decision": "approved",
+        "note": "8 flagship games — technical gates + 390px playtest + craft review (2026-08-27, Codex) plus 2026-09-07 VFX/motion wave guardrail re-verification (390px / 6 locales / reduced-motion / mute). See company-brain/projects/game/vfx-motion-wave-verification-2026-09-07.md. Content-depth follow-ups tracked separately (skyward-atlas GameGuide entry; ja/zh/fr/es GAME_INSIGHTS for minesweeper/chess/blackjack; dot-runner FAQ)."
       }
     }
   }
