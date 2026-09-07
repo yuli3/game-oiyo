@@ -85,7 +85,7 @@
     "title": "Table of Contents"
   },
   "footer": {
-    "copyright": "© 2025 Oiyo Blog. All rights reserved.",
+    "copyright": "© 2025 OIYO Arcade. All rights reserved.",
     "poweredBy": "Powered by Astro"
   },
   "page404": {
@@ -183,28 +183,8 @@
     },
     "terms": {
       "title": "Terms of Service",
-      "description": "Terms and conditions for using Oiyo Blog."
+      "description": "Terms and conditions for using OIYO Arcade."
     }
-  },
-  "about": {
-    "missionBadge": "About the Mission",
-    "headline": "Engineering a clearer future.",
-    "description": "Oiyo Blog is a knowledge academy that unpacks psychology, fortune, money, science, and everyday life with well-sourced material — a place to understand your test results, build practical skills, and see the world one layer deeper.",
-    "philosophyHeading": "The Philosophy",
-    "philosophyText": "We value evidence over verdicts. Psychology content names its academic scales and limits, money and tax guides are checked against official sources, and mystic topics are treated as a language for self-observation, not destiny.",
-    "whatWeCoverHeading": "What we cover",
-    "coverItem1Title": "Self-understanding & psychology:",
-    "coverItem1Text": "Scale-based explainers for MBTI, Big Five, attachment styles, and more.",
-    "coverItem2Title": "Money & everyday skills:",
-    "coverItem2Text": "Ready-to-use checklists and guides for tax, finance, moving, and travel.",
-    "coverItem3Title": "Knowledge & mystic:",
-    "coverItem3Text": "From science primers to saju, tarot, and astrology — reading in depth.",
-    "quote": "The best way to predict the future is to engineer it.",
-    "connectHeading": "Connect with the Team",
-    "teamHeading": "Who writes this — our editorial desks",
-    "teamIntro": "OIYO content is not written by an anonymous individual but by topic-specific editorial desks that verify against primary sources and public statistics. Each desk's remit:",
-    "methodHeading": "How we work — editorial principles",
-    "methodText": "Every piece (1) checks facts against primary sources, official statistics, and academic literature; (2) states limits and disclaimers for sensitive topics like psychology and health; and (3) carries an updated date and is revised on a regular cycle when the topic changes. Our goal is to give you a basis to judge for yourself rather than a verdict."
   },
   "components": {
     "knowledgeCheck": "Knowledge Check",

@@ -85,7 +85,7 @@
     "title": "Tabla de contenidos"
   },
   "footer": {
-    "copyright": "© 2025 Oiyo Blog. Todos los derechos reservados.",
+    "copyright": "© 2025 OIYO Arcade. Todos los derechos reservados.",
     "poweredBy": "Desarrollado con Astro"
   },
   "page404": {
@@ -183,28 +183,8 @@
     },
     "terms": {
       "title": "Términos de servicio",
-      "description": "Términos y condiciones de uso de Oiyo Blog."
+      "description": "Términos y condiciones de uso de OIYO Arcade."
     }
-  },
-  "about": {
-    "missionBadge": "Sobre la misión",
-    "headline": "Construyendo un futuro más claro.",
-    "description": "Oiyo Blog es una academia de conocimiento que aborda psicología, fortuna, dinero, ciencia y vida diaria con material bien documentado: un lugar para entender tus resultados, adquirir habilidades prácticas y ver el mundo con más profundidad.",
-    "philosophyHeading": "La filosofía",
-    "philosophyText": "Valoramos la evidencia sobre los veredictos. El contenido de psicología indica sus escalas académicas y límites, las guías de dinero e impuestos se verifican con fuentes oficiales, y los temas místicos se tratan como un lenguaje de autoobservación, no de destino.",
-    "whatWeCoverHeading": "Lo que cubrimos",
-    "coverItem1Title": "Autoconocimiento y psicología:",
-    "coverItem1Text": "Explicaciones basadas en escalas: MBTI, Big Five, estilos de apego y más.",
-    "coverItem2Title": "Dinero y habilidades cotidianas:",
-    "coverItem2Text": "Listas y guías listas para usar sobre impuestos, finanzas, mudanzas y viajes.",
-    "coverItem3Title": "Cultura y místico:",
-    "coverItem3Text": "Desde divulgación científica hasta saju, tarot y astrología, en profundidad.",
-    "quote": "La mejor forma de predecir el futuro es diseñarlo.",
-    "connectHeading": "Conéctate con el equipo",
-    "teamHeading": "Quién escribe esto — nuestras mesas editoriales",
-    "teamIntro": "El contenido de OIYO no lo escribe una persona anónima, sino mesas editoriales por tema que verifican con fuentes primarias y estadísticas públicas. La función de cada mesa:",
-    "methodHeading": "Cómo trabajamos — principios editoriales",
-    "methodText": "Cada artículo (1) verifica los hechos con fuentes primarias, estadísticas oficiales y literatura académica; (2) indica límites y descargos en temas sensibles como psicología y salud; y (3) lleva fecha de actualización y se revisa periódicamente. Nuestro objetivo es darte una base para juzgar por ti mismo, no un veredicto."
   },
   "components": {
     "knowledgeCheck": "Verificación de conocimientos",

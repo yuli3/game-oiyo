@@ -85,7 +85,7 @@
     "title": "Table des matières"
   },
   "footer": {
-    "copyright": "© 2025 Oiyo Blog. Tous droits réservés.",
+    "copyright": "© 2025 OIYO Arcade. Tous droits réservés.",
     "poweredBy": "Propulsé par Astro"
   },
   "page404": {
@@ -183,28 +183,8 @@
     },
     "terms": {
       "title": "Conditions d'utilisation",
-      "description": "Conditions générales d'utilisation d'Oiyo Blog."
+      "description": "Conditions générales d'utilisation d'OIYO Arcade."
     }
-  },
-  "about": {
-    "missionBadge": "À propos de la mission",
-    "headline": "Concevoir un avenir plus clair.",
-    "description": "Oiyo Blog est une académie du savoir qui décrypte psychologie, divination, argent, science et vie quotidienne avec des sources solides — un lieu pour comprendre vos résultats, acquérir des compétences pratiques et voir le monde plus en profondeur.",
-    "philosophyHeading": "La philosophie",
-    "philosophyText": "Nous privilégions les preuves aux verdicts. Le contenu psychologique précise ses échelles et ses limites, les guides argent et impôts sont vérifiés auprès de sources officielles, et les sujets mystiques sont traités comme un langage d'observation de soi, non de destin.",
-    "whatWeCoverHeading": "Ce que nous couvrons",
-    "coverItem1Title": "Connaissance de soi et psychologie:",
-    "coverItem1Text": "Explications fondées sur des échelles : MBTI, Big Five, styles d'attachement, etc.",
-    "coverItem2Title": "Argent et compétences du quotidien:",
-    "coverItem2Text": "Listes et guides prêts à l'emploi : impôts, finances, déménagement, voyages.",
-    "coverItem3Title": "Culture et mystique:",
-    "coverItem3Text": "De la vulgarisation scientifique au saju, tarot et astrologie, en profondeur.",
-    "quote": "La meilleure façon de prédire l'avenir est de le concevoir.",
-    "connectHeading": "Rejoindre l'équipe",
-    "teamHeading": "Qui écrit ceci — nos pôles éditoriaux",
-    "teamIntro": "Le contenu d'OIYO n'est pas écrit par une personne anonyme, mais par des pôles éditoriaux thématiques qui vérifient les sources primaires et les statistiques publiques. Le rôle de chaque pôle :",
-    "methodHeading": "Comment nous travaillons — principes éditoriaux",
-    "methodText": "Chaque article (1) vérifie les faits à partir de sources primaires, de statistiques officielles et de la littérature universitaire ; (2) précise les limites et avertissements pour les sujets sensibles comme la psychologie et la santé ; et (3) porte une date de mise à jour et est révisé régulièrement. Notre objectif est de vous donner de quoi juger par vous-même, pas un verdict."
   },
   "components": {
     "knowledgeCheck": "Vérification des connaissances",

@@ -5,7 +5,6 @@ import { siteConfig } from "../config/site.config";
 import "../styles/global.css";
 import "katex/dist/katex.min.css";
 import "@fontsource-variable/inter";
-import AhoxyWelcome from '../components/AhoxyWelcome.astro';
 
 // BCP-47 mapping: Astro locale → HTML lang attribute standard value
 const BCP47: Record<string, string> = {
@@ -410,6 +409,5 @@ const currentLangItem = langItems.find((li) => li.code === locale) ?? langItems[
       </div>
       <div class="container mt-8 flex justify-between border-t border-border px-4 pt-5 text-xs text-muted-foreground"><span>© {new Date().getFullYear()} Oiyo Tech</span><a href="mailto:support@oiyo.net">support@oiyo.net</a></div>
     </footer>
-    <AhoxyWelcome locale={locale} />
   </body>
 </html>

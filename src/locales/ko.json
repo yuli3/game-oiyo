@@ -85,7 +85,7 @@
     "title": "목차"
   },
   "footer": {
-    "copyright": "© 2025 Oiyo Blog. 모든 권리 보유.",
+    "copyright": "© 2025 OIYO Arcade. 모든 권리 보유.",
     "poweredBy": "Astro로 구동"
   },
   "page404": {
@@ -183,28 +183,8 @@
     },
     "terms": {
       "title": "이용약관",
-      "description": "Oiyo Blog 이용에 관한 약관 및 조건입니다."
+      "description": "OIYO Arcade 이용에 관한 약관 및 조건입니다."
     }
-  },
-  "about": {
-    "missionBadge": "미션 소개",
-    "headline": "더 명확한 미래를 설계합니다.",
-    "description": "Oiyo 블로그는 심리·운세·돈·과학·생활을 검증된 자료로 풀어내는 지식 아카데미입니다. 테스트 결과를 깊이 이해하고, 실무를 익히고, 세상을 한 겹 더 알아가는 곳입니다.",
-    "philosophyHeading": "철학",
-    "philosophyText": "저희는 단정보다 근거를 중시합니다. 심리 검사는 학술 척도와 한계를 함께 밝히고, 돈·세금 정보는 공식 자료로 확인하며, 미스틱 주제는 운명이 아니라 자기관찰의 언어로 다룹니다.",
-    "whatWeCoverHeading": "다루는 주제",
-    "coverItem1Title": "자기이해 & 심리:",
-    "coverItem1Text": "MBTI·Big5·애착유형 등 검증된 척도 기반 테스트 해설.",
-    "coverItem2Title": "돈 & 생활 실무:",
-    "coverItem2Text": "세금·재무·이사·여행 등 바로 쓰는 체크리스트와 가이드.",
-    "coverItem3Title": "교양 & 미스틱:",
-    "coverItem3Text": "과학 입문부터 사주·타로·점성술까지, 깊이 읽는 콘텐츠.",
-    "quote": "미래를 예측하는 가장 좋은 방법은 그것을 직접 설계하는 것입니다.",
-    "connectHeading": "팀과 소통하기",
-    "teamHeading": "누가 쓰나요 — 편집 데스크",
-    "teamIntro": "OIYO의 글은 익명의 한 사람이 아니라, 주제별 편집 데스크가 1차 자료와 공개 통계로 검증해 작성합니다. 각 데스크의 역할은 다음과 같습니다.",
-    "methodHeading": "어떻게 만드나요 — 작업 원칙",
-    "methodText": "모든 글은 ① 1차 자료·공식 통계·학술 문헌으로 사실을 확인하고, ② 심리·건강 등 민감 주제는 한계와 면책을 함께 밝히며, ③ 변동이 있는 주제는 수정일을 표기해 정기적으로 갱신합니다. 단정보다 스스로 판단할 근거를 제공하는 것을 목표로 합니다."
   },
   "components": {
     "knowledgeCheck": "개념 확인",
