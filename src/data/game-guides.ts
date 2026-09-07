@@ -904,7 +904,20 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
   "dot-runner": {
     origin: { ko: "한 번의 탭으로 즐기는 무한 러너입니다. 크롬 공룡 게임처럼 장애물을 뛰어넘으며 최대한 오래 달리는 장르의 미니멀 버전입니다.", en: "A one-tap endless runner — a minimal take on the genre made famous by Chrome's dinosaur game: jump obstacles and survive as long as you can.", ja: "ワンタップで遊ぶ無限ランナー。Chromeの恐竜ゲームで有名なジャンルのミニマル版で、障害物を跳び越えて走り続けます。", zh: "一键操作的无尽跑酷，是Chrome小恐龙所代表的跑酷玩法的极简版：跳过障碍，尽量跑得更远。", fr: "Un runner infini à un doigt — version minimaliste du genre rendu célèbre par le dinosaure de Chrome.", es: "Un runner infinito de un toque: versión mínima del género que hizo famoso el dinosaurio de Chrome." },
     how: { ko: "탭·클릭·스페이스로 점프해 빨간 장애물을 피하고 노란 코인을 모으세요. 달릴수록 점수가 오릅니다.", en: "Tap, click or press space to jump; dodge red blocks and grab gold coins. Score rises the longer you run.", ja: "タップ・クリック・スペースでジャンプ。赤い障害物を避け、金のコインを集めます。走るほどスコアが上がります。", zh: "点按、点击或按空格跳跃；躲开红色障碍并收集金币。跑得越久分数越高。", fr: "Touchez, cliquez ou appuyez sur espace pour sauter ; évitez les blocs rouges et prenez les pièces.", es: "Toca, haz clic o pulsa espacio para saltar; esquiva los bloques rojos y coge monedas." },
-    faqs: [],
+    faqs: [
+      {
+        q: { ko: "속도는 어떻게 올라가나요?", en: "How does the speed increase?", ja: "スピードはどう上がりますか？", zh: "速度是怎么变快的？", fr: "Comment la vitesse augmente-t-elle ?", es: "¿Cómo aumenta la velocidad?" },
+        a: { ko: "10초마다 주행 속도가 한 단계 빨라져 최대 1.40배까지 올라가고, 현재 배율은 화면의 HUD에 표시됩니다. 점프 물리는 그대로라 타이밍만 점점 촘촘해집니다.", en: "Every 10 seconds the run speeds up one step, up to 1.40×, and the current multiplier is shown in the HUD. Jump physics stay the same, so only the timing windows tighten.", ja: "10秒ごとに走行速度が1段階上がり、最大1.40倍まで加速します。現在の倍率はHUDに表示され、ジャンプの物理は変わらないため判定だけが厳しくなります。", zh: "每10秒跑速提升一档，最高到1.40倍，当前倍率显示在HUD上。跳跃物理不变，只是操作窗口越来越紧。", fr: "Toutes les 10 secondes, la course accélère d'un cran, jusqu'à 1,40×, et le multiplicateur s'affiche dans le HUD. La physique du saut ne change pas : seules les fenêtres de timing se resserrent.", es: "Cada 10 segundos la carrera sube un nivel de velocidad, hasta 1,40×, y el multiplicador actual se muestra en el HUD. La física del salto no cambia; solo se estrechan los márgenes de tiempo." },
+      },
+      {
+        q: { ko: "같은 코스를 다시 달릴 수 있나요?", en: "Can I run the same course again?", ja: "同じコースをもう一度走れますか？", zh: "可以再跑同一条赛道吗？", fr: "Puis-je refaire le même parcours ?", es: "¿Puedo repetir el mismo recorrido?" },
+        a: { ko: "네. 코스는 시드로 생성되므로 같은 시드로 재도전하면 장애물 배치가 동일하고, 개인 기록을 세운 판의 점프 지점이 골드 고스트로 겹쳐 보입니다. 새 코스를 고르면 시드가 분리됩니다.", en: "Yes. Courses are seeded, so retrying the same seed gives identical obstacle placement, and your personal-best run's jump points overlay as a gold ghost. Choosing a new course separates the seed.", ja: "はい。コースはシードで生成されるため、同じシードで再挑戦すると障害物配置が同一になり、自己ベスト時のジャンプ位置がゴールドのゴーストとして重なります。新しいコースを選ぶとシードが分かれます。", zh: "可以。赛道由种子生成，用相同种子重跑时障碍布局完全一致，你个人最佳那局的起跳点会以金色幻影叠加显示。选择新赛道会更换种子。", fr: "Oui. Les parcours sont générés par graine : rejouer la même graine donne des obstacles identiques, et les sauts de votre meilleur run apparaissent en fantôme doré. Choisir un nouveau parcours change la graine.", es: "Sí. Los recorridos se generan por semilla: repetir la misma semilla da los mismos obstáculos, y los saltos de tu mejor partida se superponen como un fantasma dorado. Elegir un recorrido nuevo cambia la semilla." },
+      },
+      {
+        q: { ko: "기록은 어디에 저장되나요?", en: "Where is my record saved?", ja: "記録はどこに保存されますか？", zh: "记录保存在哪里？", fr: "Où est enregistré mon record ?", es: "¿Dónde se guarda mi récord?" },
+        a: { ko: "최고 점수와 진행 중이던 판은 이 브라우저의 localStorage에만 저장됩니다. 계정, 서버 저장, 실제 화폐는 없습니다.", en: "Your best score and any run in progress are stored only in this browser's localStorage. There is no account, server save or real currency.", ja: "最高スコアと中断中のプレイはこのブラウザのlocalStorageにのみ保存されます。アカウント、サーバー保存、実通貨はありません。", zh: "最高分和进行中的对局只保存在本浏览器的localStorage中。没有账号、服务器存档或真实货币。", fr: "Votre meilleur score et une partie en cours ne sont conservés que dans le localStorage de ce navigateur. Aucun compte, sauvegarde serveur ni argent réel.", es: "Tu mejor puntuación y cualquier partida en curso se guardan solo en el localStorage de este navegador. No hay cuenta, guardado en servidor ni dinero real." },
+      },
+    ],
   },
   "dot-pet": {
     origin: { ko: "다마고치식 가상 펫 육성 게임입니다. 방치하면 스탯이 떨어지는 것까지 그대로 — 지난 접속 시각을 기억해 자리를 비운 시간만큼 배고파집니다.", en: "A tamagotchi-style virtual pet. It remembers when you last visited — leave it alone and it gets hungry while you're away.", ja: "たまごっち式のバーチャルペット育成。最後の訪問時刻を覚えていて、離れていた分だけお腹が空きます。", zh: "电子宠物式的养成游戏。它会记住你上次来的时间——离开多久，它就饿多久。", fr: "Un animal virtuel façon tamagotchi. Il se souvient de votre dernière visite et a faim pendant votre absence.", es: "Una mascota virtual estilo tamagotchi. Recuerda tu última visita y pasa hambre mientras no estás." },
@@ -1054,5 +1067,81 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       ko: [{ href: "https://oiyo.net/ko/income-statement-game/", label: "손익계산서 게임" }],
       en: [{ href: "https://oiyo.net/en/income-statement-game/", label: "Income statement game" }],
     },
+  },
+  "skyward-atlas": {
+    origin: {
+      ko: "Skyward Atlas는 20세기 중반의 경비행기 조종과 산악 부시 파일럿 전통에서 영감을 받은 OIYO 오리지널 3D 브라우저 비행 게임입니다. 외부 게임의 항공기 모델·텍스처·음원을 복제하지 않고, 지형·구름·대기·소리를 모두 절차적으로 구성했습니다.",
+      en: "Skyward Atlas is an original OIYO 3D browser flight game inspired by mid-century light-aircraft flying and the tradition of mountain bush pilots. It copies no external aircraft model, texture or recording; terrain, clouds, atmosphere and sound are all procedural.",
+      ja: "Skyward Atlasは、20世紀半ばの軽飛行機操縦と山岳ブッシュパイロットの伝統に着想を得たOIYOオリジナルの3Dブラウザ飛行ゲームです。外部ゲームの機体モデル・テクスチャ・音源を複製せず、地形・雲・大気・音をすべてプロシージャルに構成しています。",
+      zh: "Skyward Atlas 是 OIYO 原创3D浏览器飞行游戏，灵感来自20世纪中叶的轻型飞机驾驶与山地丛林飞行员传统。游戏不复制任何外部飞机模型、纹理或录音；地形、云层、大气与声音均由程序生成。",
+      fr: "Skyward Atlas est un jeu de vol 3D original d'OIYO inspiré du pilotage d'avions légers du milieu du XXe siècle et de la tradition des pilotes de brousse en montagne. Aucun modèle d'avion, texture ou enregistrement externe n'est copié : relief, nuages, atmosphère et son sont procéduraux.",
+      es: "Skyward Atlas es un juego de vuelo 3D original de OIYO inspirado en el pilotaje de avionetas de mediados del siglo XX y en la tradición de los pilotos de montaña. No copia modelos de avión, texturas ni grabaciones externas: terreno, nubes, atmósfera y sonido son procedurales.",
+    },
+    how: {
+      ko: "엔진을 시동한 뒤 ↑/↓ 또는 화면 레버로 출력을 맞추고, W/S로 기수(피치), A/D로 롤, Q/E로 요를 조절합니다. HUD의 대기속도·고도·승강률·연료를 보며 실속 경고가 뜨면 기수를 내리세요. 첫 금빛 산악 게이트를 향해 안정된 진입선을 유지하고 C로 추적·조종석 시점을 전환합니다. WebGL이 없는 기기에서는 3D 장면을 내려받지 않고 안내 화면만 표시됩니다.",
+      en: "Start the engine, set power with ↑/↓ or the on-screen lever, then pitch with W/S, roll with A/D and yaw with Q/E. Watch the HUD airspeed, altitude, vertical speed and fuel, and lower the nose whenever the stall warning shows. Hold a steady line into the first gold mountain gate and press C to switch chase and cockpit views. On devices without WebGL the 3D scene is not downloaded and only a notice is shown.",
+      ja: "エンジンを始動し、↑/↓または画面レバーで出力を設定。W/Sでピッチ、A/Dでロール、Q/Eでヨーを操作します。HUDの対気速度・高度・昇降率・燃料を見て、失速警告が出たら機首を下げます。最初の金色の山岳ゲートへ安定した進入線を保ち、Cで追跡視点と操縦席視点を切り替えます。WebGL非対応の端末では3Dシーンをダウンロードせず、案内のみ表示します。",
+      zh: "启动引擎，用↑/↓或屏幕推杆设定推力，然后用W/S控制俯仰、A/D控制横滚、Q/E控制偏航。观察HUD的空速、高度、升降率与燃油，出现失速警告时压低机头。保持稳定的进场线穿过第一个金色山门，按C在追随与驾驶舱视角间切换。在不支持WebGL的设备上不会下载3D场景，只显示提示。",
+      fr: "Démarrez le moteur, réglez la puissance avec ↑/↓ ou le levier à l'écran, puis le tangage avec Z/S, le roulis avec Q/D et le lacet avec A/E. Surveillez vitesse, altitude, vitesse verticale et carburant sur le HUD, et piquez du nez dès que l'alarme de décrochage s'affiche. Gardez une trajectoire stable vers la première porte dorée et appuyez sur C pour alterner vues extérieure et cockpit. Sans WebGL, la scène 3D n'est pas téléchargée et seul un message s'affiche.",
+      es: "Arranca el motor, ajusta la potencia con ↑/↓ o la palanca en pantalla, y controla cabeceo con W/S, alabeo con A/D y guiñada con Q/E. Vigila velocidad, altitud, velocidad vertical y combustible en el HUD, y baja el morro en cuanto aparezca el aviso de pérdida. Mantén una línea estable hacia la primera puerta dorada y pulsa C para alternar vista de persecución y de cabina. En dispositivos sin WebGL no se descarga la escena 3D y solo se muestra un aviso.",
+    },
+    rules: {
+      ko: [
+        "비행 모델은 양력·항력·대기 밀도·실속을 시뮬레이션합니다. 받음각이 커지면 실속하고, 조화 선회를 하려면 롤과 요를 함께 써야 합니다.",
+        "출력과 연료는 유한합니다. 연료가 떨어지면 활공만 가능하며, 착지나 종료 시점의 상태가 비행 일지에 기록됩니다.",
+        "점수는 통과한 게이트 수와 안정적으로 비행한 거리로 계산되고, 최고 비행 점수만 저장됩니다.",
+        "낮과 밤이 순환하고 구름·안개·태양 그림자는 실시간으로 바뀝니다. 미리 렌더한 영상이 아닙니다.",
+        "최고 점수는 이 브라우저의 localStorage에만 저장됩니다. 계정·서버 저장·실제 화폐·실비행 항법 용도는 없습니다.",
+      ],
+      en: [
+        "The flight model simulates lift, drag, air density and stalls. Too high an angle of attack stalls the wing, and a coordinated turn needs roll and yaw together.",
+        "Power and fuel are finite. When fuel runs out you can only glide, and your state at landing or end is written to the flight log.",
+        "Score comes from gates passed and the distance flown under stable control; only the best flight score is kept.",
+        "Day and night cycle, and clouds, fog and sun shadows change in real time. It is not a pre-rendered video.",
+        "The best score is stored only in this browser's localStorage. There is no account, server save, real currency or real-flight navigation use.",
+      ],
+      ja: [
+        "飛行モデルは揚力・抗力・大気密度・失速をシミュレートします。迎角が大きすぎると失速し、協調旋回にはロールとヨーの併用が必要です。",
+        "出力と燃料は有限です。燃料が尽きると滑空のみになり、着陸または終了時の状態がフライトログに記録されます。",
+        "スコアは通過ゲート数と安定制御で飛んだ距離で決まり、最高飛行スコアのみ保存されます。",
+        "昼夜が循環し、雲・霧・太陽影はリアルタイムで変化します。事前レンダリング動画ではありません。",
+        "最高スコアはこのブラウザのlocalStorageにのみ保存。アカウント・サーバー保存・実通貨・実飛行の航法用途はありません。",
+      ],
+      zh: [
+        "飞行模型模拟升力、阻力、空气密度与失速。迎角过大机翼会失速，协调转弯需要横滚与偏航配合。",
+        "推力与燃油有限。燃油耗尽后只能滑翔，着陆或结束时的状态会写入飞行日志。",
+        "得分来自通过的航门数量与稳定操控下飞行的距离，只保存最佳飞行得分。",
+        "昼夜循环，云、雾与日照阴影实时变化。这不是预渲染视频。",
+        "最佳得分只保存在本浏览器的localStorage中。没有账号、服务器存档、真实货币，也不可用于真实飞行导航。",
+      ],
+      fr: [
+        "Le modèle simule portance, traînée, densité de l'air et décrochage. Un angle d'incidence trop élevé fait décrocher l'aile, et un virage coordonné demande roulis et lacet ensemble.",
+        "Puissance et carburant sont limités. À sec, vous ne pouvez que planer, et votre état à l'atterrissage ou à la fin est inscrit au journal de vol.",
+        "Le score vient des portes franchies et de la distance parcourue sous contrôle stable ; seul le meilleur score de vol est conservé.",
+        "Le jour et la nuit alternent, et nuages, brume et ombres du soleil changent en temps réel. Ce n'est pas une vidéo précalculée.",
+        "Le meilleur score est stocké uniquement dans le localStorage de ce navigateur. Aucun compte, sauvegarde serveur, argent réel ni usage de navigation aérienne réelle.",
+      ],
+      es: [
+        "El modelo de vuelo simula sustentación, resistencia, densidad del aire y pérdida. Un ángulo de ataque excesivo hace entrar en pérdida al ala, y un viraje coordinado necesita alabeo y guiñada a la vez.",
+        "Potencia y combustible son finitos. Al agotarse solo puedes planear, y tu estado al aterrizar o terminar se anota en el registro de vuelo.",
+        "La puntuación viene de las puertas superadas y la distancia volada con control estable; solo se guarda la mejor puntuación de vuelo.",
+        "El día y la noche se alternan, y nubes, niebla y sombras del sol cambian en tiempo real. No es un vídeo prerenderizado.",
+        "La mejor puntuación se guarda solo en el localStorage de este navegador. No hay cuenta, guardado en servidor, dinero real ni uso para navegación de vuelo real.",
+      ],
+    },
+    faqs: [
+      {
+        q: { ko: "이 게임으로 실제 비행을 배울 수 있나요?", en: "Can I learn real flying from this game?", ja: "このゲームで実際の操縦を学べますか？", zh: "能用这款游戏学真实飞行吗？", fr: "Puis-je apprendre à piloter avec ce jeu ?", es: "¿Puedo aprender a volar de verdad con este juego?" },
+        a: { ko: "아니요. 오리지널 브라우저 엔터테인먼트이며 실제 비행 훈련이나 항법용이 아닙니다. 비행 모델은 재미와 학습 곡선을 위해 단순화되어 있습니다.", en: "No. It is original browser entertainment, not for real flight training or navigation. The flight model is simplified for fun and a readable learning curve.", ja: "いいえ。オリジナルのブラウザ娯楽作品であり、実際の飛行訓練や航法には使えません。飛行モデルは楽しさと学びやすさのために簡略化しています。", zh: "不能。这是原创浏览器娱乐作品，不用于真实飞行训练或导航。飞行模型为了趣味和易懂的学习曲线做了简化。", fr: "Non. C'est un divertissement original pour navigateur, pas un outil de formation ou de navigation réelle. Le modèle de vol est simplifié pour le plaisir et une courbe d'apprentissage lisible.", es: "No. Es entretenimiento original para navegador, no sirve para entrenamiento ni navegación real. El modelo de vuelo está simplificado para divertir y ofrecer una curva de aprendizaje clara." },
+      },
+      {
+        q: { ko: "구름과 지형은 미리 만들어 둔 것인가요?", en: "Are the clouds and terrain pre-made?", ja: "雲と地形はあらかじめ作られたものですか？", zh: "云层和地形是预先做好的吗？", fr: "Les nuages et le relief sont-ils préfabriqués ?", es: "¿Las nubes y el terreno están prefabricados?" },
+        a: { ko: "아니요. 산맥은 높이맵으로, 구름은 다층 볼류메트릭 셰이더로 생성되며 거리 안개와 태양 그림자, 낮밤 조명이 매 프레임 실시간으로 계산됩니다.", en: "No. Mountains come from a heightmap and clouds from a layered volumetric shader, with distance fog, sun shadows and day-night lighting computed live every frame.", ja: "いいえ。山岳はハイトマップ、雲は多層のボリュメトリックシェーダーで生成され、遠景霧・太陽影・昼夜照明が毎フレーム実時間で計算されます。", zh: "不是。山脉由高度图生成，云层由多层体积着色器生成，远景雾、日照阴影与昼夜光照每帧实时计算。", fr: "Non. Les montagnes viennent d'une heightmap et les nuages d'un shader volumétrique multicouche, avec brume, ombres solaires et éclairage jour-nuit calculés à chaque image.", es: "No. Las montañas provienen de un mapa de alturas y las nubes de un shader volumétrico multicapa, con niebla, sombras del sol e iluminación día-noche calculadas en cada fotograma." },
+      },
+      {
+        q: { ko: "WebGL이 안 되는 기기에서는 어떻게 되나요?", en: "What happens on a device without WebGL?", ja: "WebGL非対応の端末ではどうなりますか？", zh: "在不支持 WebGL 的设备上会怎样？", fr: "Que se passe-t-il sur un appareil sans WebGL ?", es: "¿Qué pasa en un dispositivo sin WebGL?" },
+        a: { ko: "3D 장면 자체를 내려받지 않고, 그래픽 가속을 켜고 다시 시도하라는 안내 화면만 표시됩니다. 진행 중 데이터나 최고 점수는 영향받지 않습니다.", en: "The 3D scene is never downloaded; you only see a notice suggesting you enable graphics acceleration and try again. Progress data and best score are unaffected.", ja: "3Dシーン自体をダウンロードせず、グラフィックアクセラレーションを有効にして再試行するよう促す案内のみ表示します。進行データや最高スコアには影響しません。", zh: "根本不会下载3D场景，只显示提示，建议开启图形加速后重试。进度数据与最佳得分不受影响。", fr: "La scène 3D n'est jamais téléchargée ; un simple message invite à activer l'accélération graphique puis à réessayer. Les données de progression et le meilleur score ne sont pas touchés.", es: "La escena 3D nunca se descarga; solo ves un aviso que sugiere activar la aceleración gráfica y reintentar. Los datos de progreso y la mejor puntuación no se ven afectados." },
+      },
+    ],
   },
 };
