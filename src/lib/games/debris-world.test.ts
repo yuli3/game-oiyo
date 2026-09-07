@@ -4,7 +4,7 @@ import {
   createDebrisWorld,
   DEBRIS_LIFETIME_MS,
   type DebrisMatterLike,
-} from "./brick-breaker-debris";
+} from "./debris-world";
 
 /**
  * A tiny matter-js double. It only has to track which bodies are in the world
@@ -34,7 +34,7 @@ function makeMatterDouble() {
   return { Matter, inWorld };
 }
 
-describe("brick breaker debris world", () => {
+describe("debris world", () => {
   it("adds three static scenery bodies on creation", () => {
     const { Matter, inWorld } = makeMatterDouble();
     createDebrisWorld(Matter, { width: 360, height: 480, cap: 40 });
@@ -109,7 +109,7 @@ describe("brick breaker debris world", () => {
   });
 });
 
-describe("brick breaker debris — real matter.js integration", () => {
+describe("debris world — real matter.js integration", () => {
   it("shards fall under gravity and stay on the board", () => {
     const world = createDebrisWorld(Matter as unknown as DebrisMatterLike, {
       width: 360,

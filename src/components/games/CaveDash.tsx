@@ -21,6 +21,11 @@ import {
 import { clearCaveDashSave, loadCaveDashSave, storeCaveDashSave } from "../../lib/games/cave-dash-save";
 import { blitSheetFrame, sheetFrameIndex } from "../../lib/games/sprite-sheet";
 import { CAVE_DASH_EXHAUST_SHEET, CAVE_DASH_SHIP_HULL_SX, CAVE_DASH_SPRITES } from "../../lib/games/sprites";
+import {
+  createDebrisWorld,
+  type DebrisMatterLike,
+  type DebrisWorld,
+} from "../../lib/games/debris-world";
 
 type CaveArt = Record<keyof typeof CAVE_DASH_SPRITES, HTMLImageElement>;
 function loadCaveArt(): CaveArt | null {
@@ -126,6 +131,36 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
   const artRef = useRef<CaveArt | null>(null);
   if (artRef.current === null) artRef.current = loadCaveArt();
 
+  // matter.js "juice" — the ship shatters into shards on impact and the loop
+  // holds for ~0.55s of debris before the Game Over card. Lazy-loaded on Start,
+  // skipped under reduced motion (crash → Game Over is instant then).
+  const debrisRef = useRef<DebrisWorld | null>(null);
+  const debrisLoadingRef = useRef(false);
+  const pmRef = useRef(prefersReducedMotion);
+  const deathAnimRef = useRef<number | null>(null);
+  const deathScoreRef = useRef(0);
+  useEffect(() => {
+    pmRef.current = prefersReducedMotion;
+    if (prefersReducedMotion) debrisRef.current?.clear();
+  }, [prefersReducedMotion]);
+
+  const ensureDebris = useCallback(() => {
+    if (debrisRef.current || debrisLoadingRef.current || pmRef.current || typeof window === "undefined") return;
+    debrisLoadingRef.current = true;
+    void import("matter-js")
+      .then((mod) => {
+        if (pmRef.current || debrisRef.current) return;
+        debrisRef.current = createDebrisWorld(mod.default as unknown as DebrisMatterLike, { width: CAVE_WIDTH, height: CAVE_HEIGHT, cap: 40 });
+      })
+      .catch(() => {})
+      .finally(() => { debrisLoadingRef.current = false; });
+  }, []);
+
+  const teardownDebris = useCallback(() => {
+    debrisRef.current?.destroy();
+    debrisRef.current = null;
+  }, []);
+
   const playTone = useCallback((kind: "flap" | "point" | "crash") => {
     if (mutedRef.current || typeof window === "undefined") return;
     const AudioContextClass = window.AudioContext ?? (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
@@ -159,6 +194,7 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
 
   const endGame = useCallback((finalScore: number) => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    deathAnimRef.current = null;
     clearCaveDashSave();
     const prev = getBest(GAME_KEY);
     const beat = !prev || finalScore > prev.value;
@@ -167,27 +203,13 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
     setFinalFrames(gsRef.current?.elapsedFrames ?? 0);
     setDeath(gsRef.current ? explainCaveDashDeath(gsRef.current) : null);
     setIsNewBest(beat && finalScore > 0);
-    playTone("crash");
     if (beat && finalScore > 0 && !prefersReducedMotion) confetti({ particleCount: 90, spread: 72, origin: { y: 0.6 } });
     phaseRef.current = "over";
     setPhase("over");
-  }, [playTone, prefersReducedMotion]);
+  }, [prefersReducedMotion]);
 
-  const loop = useCallback((now?: number) => {
-    const current = gsRef.current; const canvas = canvasRef.current;
-    if (!current || !canvas || phaseRef.current !== "playing") return;
-    const ctx = canvas.getContext("2d"); if (!ctx) return;
-
-    const frameNow = now ?? performance.now();
-    const scale = frameScale(lastFrame.current, frameNow);
-    lastFrame.current = frameNow;
-    const gs = stepCaveDash(current, scale);
-    gsRef.current = gs;
-    if (gs.score !== scoreRef.current) { scoreRef.current = gs.score; setScore(gs.score); playTone("point"); }
-
-    // draw
+  const drawScene = useCallback((ctx: CanvasRenderingContext2D, gs: CaveDashState, drawShip: boolean) => {
     ctx.fillStyle = "#0b1020"; ctx.fillRect(0, 0, CAVE_WIDTH, CAVE_HEIGHT);
-    // parallax stars
     ctx.fillStyle = "rgba(255,255,255,0.4)";
     for (let i = 0; i < 24; i++) ctx.fillRect((i * 97 - gs.elapsedFrames * 0.6) % CAVE_WIDTH + (((i * 97 - gs.elapsedFrames * 0.6) % CAVE_WIDTH) < 0 ? CAVE_WIDTH : 0), (i * 71) % CAVE_HEIGHT, 1.5, 1.5);
     const art = artRef.current;
@@ -203,23 +225,82 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
         ctx.fillRect(wl.x, bottomY, CAVE_WALL_WIDTH, bottomH);
       }
     }
-    const shipW = CAVE_SHIP_RADIUS * 3.6;
-    const shipH = CAVE_SHIP_RADIUS * 2.1;
-    ctx.save();
-    ctx.translate(CAVE_SHIP_X, gs.y);
-    ctx.rotate(Math.atan2(gs.vy, 8) * 0.35);
-    const exhaustFrame = sheetFrameIndex(CAVE_DASH_EXHAUST_SHEET, (gs.elapsedFrames / 60) * 1000, prefersReducedMotion);
-    if (!paintShip(ctx, art, shipW, shipH, exhaustFrame, prefersReducedMotion)) {
-      ctx.beginPath(); ctx.fillStyle = "#c4b5fd";
-      ctx.arc(0, 0, CAVE_SHIP_RADIUS, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = "#0b1020";
-      ctx.fillRect(-2, -2, 4, 4);
+    if (drawShip) {
+      const shipW = CAVE_SHIP_RADIUS * 3.6;
+      const shipH = CAVE_SHIP_RADIUS * 2.1;
+      ctx.save();
+      ctx.translate(CAVE_SHIP_X, gs.y);
+      ctx.rotate(Math.atan2(gs.vy, 8) * 0.35);
+      const exhaustFrame = sheetFrameIndex(CAVE_DASH_EXHAUST_SHEET, (gs.elapsedFrames / 60) * 1000, pmRef.current);
+      if (!paintShip(ctx, art, shipW, shipH, exhaustFrame, pmRef.current)) {
+        ctx.beginPath(); ctx.fillStyle = "#c4b5fd";
+        ctx.arc(0, 0, CAVE_SHIP_RADIUS, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#0b1020";
+        ctx.fillRect(-2, -2, 4, 4);
+      }
+      ctx.restore();
     }
-    ctx.restore();
+    const shardViews = debrisRef.current?.shards();
+    if (shardViews && shardViews.length) {
+      for (const shard of shardViews) {
+        ctx.save();
+        ctx.globalAlpha = shard.alpha * 0.9;
+        ctx.translate(shard.x, shard.y);
+        ctx.rotate(shard.angle);
+        ctx.fillStyle = `hsl(${shard.hue} 68% 62%)`;
+        ctx.fillRect(-shard.size / 2, -shard.size / 2, shard.size, shard.size);
+        ctx.restore();
+      }
+      ctx.globalAlpha = 1;
+    }
+  }, []);
 
-    if (gs.status === "over") { endGame(gs.score); return; }
+  const loop = useCallback((now?: number) => {
+    const current = gsRef.current; const canvas = canvasRef.current;
+    if (!current || !canvas || phaseRef.current !== "playing") return;
+    const ctx = canvas.getContext("2d"); if (!ctx) return;
+
+    const frameNow = now ?? performance.now();
+    const deltaMs = lastFrame.current === null ? 16 : frameNow - lastFrame.current;
+    const scale = frameScale(lastFrame.current, frameNow);
+    lastFrame.current = frameNow;
+
+    // ship-shatter hold: no more simulation, just debris settling on the frozen scene
+    if (deathAnimRef.current !== null) {
+      debrisRef.current?.update(deltaMs, frameNow);
+      drawScene(ctx, current, false);
+      deathAnimRef.current -= 1;
+      if (deathAnimRef.current <= 0) {
+        deathAnimRef.current = null;
+        endGame(deathScoreRef.current);
+        return;
+      }
+      rafRef.current = requestAnimationFrame(loop);
+      return;
+    }
+
+    const gs = stepCaveDash(current, scale);
+    gsRef.current = gs;
+    if (gs.score !== scoreRef.current) { scoreRef.current = gs.score; setScore(gs.score); playTone("point"); }
+
+    if (gs.status === "over") {
+      playTone("crash");
+      if (!pmRef.current && debrisRef.current) {
+        debrisRef.current.spawn(CAVE_SHIP_X, gs.y, 258, 9);
+        deathScoreRef.current = gs.score;
+        deathAnimRef.current = 34; // ~0.55s hold on the shatter
+        drawScene(ctx, gs, false);
+        rafRef.current = requestAnimationFrame(loop);
+        return;
+      }
+      endGame(gs.score);
+      return;
+    }
+
+    debrisRef.current?.update(deltaMs, frameNow);
+    drawScene(ctx, gs, true);
     rafRef.current = requestAnimationFrame(loop);
-  }, [endGame, playTone, prefersReducedMotion]);
+  }, [drawScene, endGame, playTone]);
 
   const begin = useCallback((seedOverride?: number) => {
     clearCaveDashSave();
@@ -228,12 +309,15 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
     gsRef.current = createCaveDash(seed);
     scoreRef.current = 0;
     setScore(0); setIsNewBest(false); setFinalFrames(0); setDeath(null);
+    deathAnimRef.current = null;
+    debrisRef.current?.clear();
+    ensureDebris();
     phaseRef.current = "playing";
     setPhase("playing");
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     lastFrame.current = null;
     rafRef.current = requestAnimationFrame(loop);
-  }, [loop]);
+  }, [ensureDebris, loop]);
 
   const flap = useCallback(() => {
     const gs = gsRef.current;
@@ -261,7 +345,8 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
   useEffect(() => () => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     if (gsRef.current?.status === "playing" && phaseRef.current !== "over") storeCaveDashSave(gsRef.current);
-  }, []);
+    teardownDebris();
+  }, [teardownDebris]);
 
   useEffect(() => () => { void audioContext.current?.close(); }, []);
 
@@ -275,7 +360,7 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
 
   useEffect(() => {
     const onVisibility = () => {
-      if (document.hidden && phaseRef.current === "playing") {
+      if (document.hidden && phaseRef.current === "playing" && deathAnimRef.current === null) {
         if (rafRef.current) cancelAnimationFrame(rafRef.current);
         if (gsRef.current?.status === "playing") storeCaveDashSave(gsRef.current);
         phaseRef.current = "paused";

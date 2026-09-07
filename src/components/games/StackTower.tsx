@@ -14,6 +14,11 @@ import {
   stepBlock,
   type TowerState,
 } from "../../lib/games/stack-tower";
+import {
+  createDebrisWorld,
+  type DebrisMatterLike,
+  type DebrisWorld,
+} from "../../lib/games/debris-world";
 
 /* ────────────────────────────────────────────────────────────────────────────
  * Stack Tower — a one-tap timing game. A block slides back and forth; tap to drop
@@ -98,6 +103,33 @@ const StackTower: React.FC<Props> = ({ locale }) => {
   const prefersReducedMotion = usePrefersReducedMotion();
   phaseRef.current = phase;
 
+  // matter.js "juice" — cosmetic shards off the shear line on a non-perfect
+  // drop. Lazy-loaded on Start, skipped under reduced motion. See debris-world.ts.
+  const debrisRef = useRef<DebrisWorld | null>(null);
+  const debrisLoadingRef = useRef(false);
+  const pmRef = useRef(prefersReducedMotion);
+  useEffect(() => {
+    pmRef.current = prefersReducedMotion;
+    if (prefersReducedMotion) debrisRef.current?.clear();
+  }, [prefersReducedMotion]);
+
+  const ensureDebris = useCallback(() => {
+    if (debrisRef.current || debrisLoadingRef.current || pmRef.current || typeof window === "undefined") return;
+    debrisLoadingRef.current = true;
+    void import("matter-js")
+      .then((mod) => {
+        if (pmRef.current || debrisRef.current) return;
+        debrisRef.current = createDebrisWorld(mod.default as unknown as DebrisMatterLike, { width: W, height: H, cap: 56 });
+      })
+      .catch(() => {})
+      .finally(() => { debrisLoadingRef.current = false; });
+  }, []);
+
+  const teardownDebris = useCallback(() => {
+    debrisRef.current?.destroy();
+    debrisRef.current = null;
+  }, []);
+
   useEffect(() => { const b = getBest(GAME_KEY); setBest(b ? b.value : 0); }, []);
 
   const endGame = useCallback((finalScore: number) => {
@@ -121,8 +153,13 @@ const StackTower: React.FC<Props> = ({ locale }) => {
     const ctx = canvas.getContext("2d"); if (!ctx) return;
 
     const frameNow = now ?? performance.now();
+    const deltaMs = lastFrame.current === null ? 16 : frameNow - lastFrame.current;
     const scale = frameScale(lastFrame.current, frameNow);
     lastFrame.current = frameNow;
+    if (debrisRef.current) {
+      if (pmRef.current) debrisRef.current.clear();
+      else debrisRef.current.update(deltaMs, frameNow);
+    }
     // move current block
     const stepped = stepBlock(gs.tower.cur, gs.tower.dir, gs.tower.speed, scale, W);
     gs.tower.cur = stepped.block;
@@ -161,6 +198,20 @@ const StackTower: React.FC<Props> = ({ locale }) => {
       gs.falling = gs.falling.filter((piece) => piece.alpha > 0 && piece.y < H + BLOCK_HEIGHT);
     }
 
+    const shardViews = debrisRef.current?.shards();
+    if (shardViews && shardViews.length) {
+      for (const shard of shardViews) {
+        ctx.save();
+        ctx.globalAlpha = shard.alpha * 0.9;
+        ctx.translate(shard.x, shard.y);
+        ctx.rotate(shard.angle);
+        ctx.fillStyle = `hsl(${shard.hue} 68% 60%)`;
+        ctx.fillRect(-shard.size / 2, -shard.size / 2, shard.size, shard.size);
+        ctx.restore();
+      }
+      ctx.globalAlpha = 1;
+    }
+
     rafRef.current = requestAnimationFrame(loop);
   }, []);
 
@@ -181,15 +232,18 @@ const StackTower: React.FC<Props> = ({ locale }) => {
       tone(320, 0.05);
       // The shaved-off slice(s) of the moving block tumble away — the classic
       // stack-game tell that a drop wasn't perfect, skipped under reduced motion.
-      if (!prefersReducedMotion) {
+      if (!pmRef.current) {
         const dropY = screenY((gs.tower.stack.length + 1) * BLOCK_HEIGHT, gs.camY);
         const survivedLeft = outcome.block.x;
         const survivedRight = outcome.block.x + outcome.block.w;
         if (survivedLeft > cur.x) {
           gs.falling.push({ x: cur.x, w: survivedLeft - cur.x, y: dropY, vy: 0, hue: cur.hue, alpha: 1 });
+          // shards spray from the left shear line
+          debrisRef.current?.spawn(survivedLeft, dropY + BLOCK_HEIGHT / 2, cur.hue, 5);
         }
         if (cur.x + cur.w > survivedRight) {
           gs.falling.push({ x: survivedRight, w: cur.x + cur.w - survivedRight, y: dropY, vy: 0, hue: cur.hue, alpha: 1 });
+          debrisRef.current?.spawn(survivedRight, dropY + BLOCK_HEIGHT / 2, cur.hue, 5);
         }
       }
     }
@@ -213,10 +267,15 @@ const StackTower: React.FC<Props> = ({ locale }) => {
     setScore(0); setCombo(0); setMissSide(null); setIsNewBest(false);
     setPhase("playing");
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    debrisRef.current?.clear();
+    ensureDebris();
     rafRef.current = requestAnimationFrame(loop);
-  }, [loop]);
+  }, [ensureDebris, loop]);
 
-  useEffect(() => () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); }, []);
+  useEffect(() => () => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    teardownDebris();
+  }, [teardownDebris]);
 
   // keyboard (space) support
   useEffect(() => {

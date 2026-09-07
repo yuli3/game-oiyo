@@ -1,18 +1,21 @@
 /**
- * Brick Breaker debris — a matter.js "juice" layer that runs *beside* the
- * deterministic core in `brick-breaker.ts`.
+ * Debris world — a shared matter.js "juice" layer that runs *beside* a game's
+ * own deterministic loop, never inside it.
  *
- * Why a hybrid and not a port: the ball / paddle / brick simulation is a pure,
- * unit-tested, serialisable step function. Replacing it with a physics world
- * would trade away that determinism (and the save contract) to solve a problem
- * — tunnelling a 6px ball through a 16px brick at 6.75 px/frame — that matter.js
- * has no CCD for anyway. So the core stays as-is and matter.js only drives the
- * cosmetic shards that fly off a destroyed brick, tumble under gravity, clatter
- * on the floor and fade. Nothing here feeds back into score, lives or the save.
+ * A game keeps its hand-rolled, unit-tested, serialisable simulation exactly as
+ * it is (replacing it with a physics world would trade away that determinism —
+ * and any save contract — to fight fast-small-body tunnelling that matter.js has
+ * no CCD for). This module only spawns cosmetic shards on a discrete "something
+ * broke" event — a destroyed brick, a sheared block, a wrecked ship — lets them
+ * tumble under gravity, clatter on a floor body and fade. Nothing here feeds
+ * back into score, lives or the save.
  *
- * `Matter` is injected, never imported, so the 84KB engine stays out of the
- * brick-breaker route chunk until the player taps Start, and so the eviction /
- * expiry / teardown ordering can be unit-tested with a small double.
+ * First used by Brick Breaker (2026-09-07 physics vertical slice), then rolled
+ * out to Stack Tower and Cave Dash.
+ *
+ * `Matter` is injected, never imported, so the 84KB engine stays out of a game's
+ * route chunk until the player taps Start, and so the eviction / expiry /
+ * teardown ordering can be unit-tested with a small double.
  */
 
 export interface DebrisBodyLike {

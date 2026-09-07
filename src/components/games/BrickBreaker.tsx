@@ -22,7 +22,7 @@ import {
 import { getPrefersReducedMotion, subscribeToReducedMotion } from "../../lib/games/reduced-motion";
 import { blitSheetFrame } from "../../lib/games/sprite-sheet";
 import { BRICK_BREAKER_SPRITES, FX_SPARK_SHEET, FX_SPRITES } from "../../lib/games/sprites";
-import { createDebrisWorld, type DebrisMatterLike, type DebrisWorld } from "../../lib/games/brick-breaker-debris";
+import { createDebrisWorld, type DebrisMatterLike, type DebrisWorld } from "../../lib/games/debris-world";
 
 type BrickArt = Record<keyof typeof BRICK_BREAKER_SPRITES, HTMLImageElement> & { sparkSheet: HTMLImageElement };
 function loadBrickArt(): BrickArt | null {
