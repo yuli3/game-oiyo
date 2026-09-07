@@ -22,6 +22,7 @@ import {
 import { getPrefersReducedMotion, subscribeToReducedMotion } from "../../lib/games/reduced-motion";
 import { blitSheetFrame } from "../../lib/games/sprite-sheet";
 import { BRICK_BREAKER_SPRITES, FX_SPARK_SHEET, FX_SPRITES } from "../../lib/games/sprites";
+import { createDebrisWorld, type DebrisMatterLike, type DebrisWorld } from "../../lib/games/brick-breaker-debris";
 
 type BrickArt = Record<keyof typeof BRICK_BREAKER_SPRITES, HTMLImageElement> & { sparkSheet: HTMLImageElement };
 function loadBrickArt(): BrickArt | null {
@@ -153,6 +154,37 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
   const artRef = useRef<BrickArt | null>(null);
   if (artRef.current === null) artRef.current = loadBrickArt();
   const trailRef = useRef<{ x: number; y: number }[]>([]);
+  // matter.js "juice" layer — cosmetic brick shards only, never touches score /
+  // lives / save. Loaded lazily so the 84KB engine stays out of the route chunk
+  // until the first Start tap, and skipped entirely under reduced motion.
+  const debrisRef = useRef<DebrisWorld | null>(null);
+  const debrisLoadingRef = useRef(false);
+
+  const ensureDebris = useCallback(() => {
+    if (
+      debrisRef.current
+      || debrisLoadingRef.current
+      || reducedMotionRef.current
+      || typeof window === "undefined"
+    ) return;
+    debrisLoadingRef.current = true;
+    void import("matter-js")
+      .then((mod) => {
+        if (reducedMotionRef.current || debrisRef.current) return;
+        debrisRef.current = createDebrisWorld(mod.default as unknown as DebrisMatterLike, {
+          width: W,
+          height: H,
+          cap: qualityRef.current === "balanced" ? 48 : 90,
+        });
+      })
+      .catch(() => {})
+      .finally(() => { debrisLoadingRef.current = false; });
+  }, []);
+
+  const teardownDebris = useCallback(() => {
+    debrisRef.current?.destroy();
+    debrisRef.current = null;
+  }, []);
 
   useEffect(() => {
     const b = getBest(GAME_KEY);
@@ -221,6 +253,7 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
         if (event.destroyed) destroyedRef.current += 1;
         playTone(event.destroyed ? 330 + Math.min(gs.combo, 8) * 24 : 180, 0.045, event.destroyed ? "square" : "triangle", 0.018);
         if (event.destroyed && !reducedMotionRef.current) {
+          debrisRef.current?.spawn(event.x, event.y, event.hue, qualityRef.current === "balanced" ? 4 : 7);
           const particleCount = qualityRef.current === "balanced" ? 3 : 5;
           for (let index = 0; index < particleCount; index += 1) {
             const angle = (Math.PI * 2 * index) / particleCount;
@@ -232,6 +265,7 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
       }
       if (event.type === "level-clear") {
         levelRef.current = event.level;
+        debrisRef.current?.clear();
         playTone(523, 0.12, "triangle", 0.045);
         window.setTimeout(() => playTone(659, 0.14, "triangle", 0.04), 80);
         setLiveSummary(`${t.level} ${event.level}. ${bb2.ready}.`);
@@ -248,6 +282,10 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
         endGame(event.score);
         return;
       }
+    }
+    if (debrisRef.current) {
+      if (reducedMotionRef.current) debrisRef.current.clear();
+      else if (!pausedRef.current) debrisRef.current.update(deltaMs, frameNow);
     }
     if (frameNow - lastHudUpdateRef.current >= 100 || events.some((event) => event.type === "life-lost" || event.type === "level-clear")) {
       setScore((current) => current === gs.score ? current : gs.score);
@@ -317,6 +355,19 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
         return true;
       });
       ctx.globalAlpha = 1;
+      const shardViews = debrisRef.current?.shards();
+      if (shardViews && shardViews.length) {
+        for (const shard of shardViews) {
+          ctx.save();
+          ctx.globalAlpha = shard.alpha * 0.9;
+          ctx.translate(shard.x, shard.y);
+          ctx.rotate(shard.angle);
+          ctx.fillStyle = `hsl(${shard.hue} 68% 60%)`;
+          ctx.fillRect(-shard.size / 2, -shard.size / 2, shard.size, shard.size);
+          ctx.restore();
+        }
+        ctx.globalAlpha = 1;
+      }
     } else {
       trailRef.current = [];
     }
@@ -348,8 +399,9 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
     setScore(gs.score); setLives(gs.lives); setLevel(gs.level); setCombo(gs.combo);
     setPaused(true); setLiveSummary(bb2.restored); setPhase("playing");
     lastFrame.current = null;
+    ensureDebris();
     rafRef.current = requestAnimationFrame(loop);
-  }, [bb2.restored, loop]);
+  }, [bb2.restored, ensureDebris, loop]);
 
   const begin = useCallback(() => {
     if (!audioRef.current) audioRef.current = new AudioContext();
@@ -371,8 +423,10 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
     setPhase("playing");
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     lastFrame.current = null;
+    debrisRef.current?.clear();
+    ensureDebris();
     rafRef.current = requestAnimationFrame(loop);
-  }, [bb2.ready, loop]);
+  }, [bb2.ready, ensureDebris, loop]);
 
   useEffect(() => {
     const persistActive = () => {
@@ -391,8 +445,9 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
       void audioRef.current?.close();
+      teardownDebris();
     };
-  }, []);
+  }, [teardownDebris]);
 
   const steer = useCallback((clientX: number) => {
     const canvas = canvasRef.current; const gs = gsRef.current;
