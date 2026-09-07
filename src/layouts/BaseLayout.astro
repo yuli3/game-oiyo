@@ -31,9 +31,11 @@ interface Props {
    * 2026-07-27 감사에서 로케일 페이지 354개 중 306개가 h1 없이 나갔다.
    */
   heading?: string;
+  /** 색인에서 빼는 페이지(오류 페이지 등). SEO.astro 로 그대로 넘긴다. */
+  noindex?: boolean;
 }
 
-const { title, description, image, type, pubDate, updatedDate, tags, category, author, availableLocales, canonicalUrl, heading } = Astro.props;
+const { title, description, image, type, pubDate, updatedDate, tags, category, author, availableLocales, canonicalUrl, heading, noindex } = Astro.props;
 const locale = getLocaleFromPath(Astro.url.pathname);
 const t = await getTranslations(locale);
 const nav = t.nav as Record<string, string>;
@@ -111,7 +113,7 @@ const currentLangItem = langItems.find((li) => li.code === locale) ?? langItems[
   class:list={["scroll-smooth", { "snap-y snap-mandatory": scrollSnapEnabled }]}
 >
   <head>
-    <SEO {title} {description} {image} {type} {pubDate} {updatedDate} {tags} {category} {author} {availableLocales} canonicalURL={canonicalUrl} />
+    <SEO {title} {description} {image} {type} {pubDate} {updatedDate} {tags} {category} {author} {availableLocales} canonicalURL={canonicalUrl} {noindex} />
 
     <!-- Mermaid diagram rendering (only executes if mermaid code blocks are present) -->
     <script type="module" is:inline>

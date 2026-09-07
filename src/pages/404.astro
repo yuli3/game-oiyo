@@ -6,7 +6,7 @@ const locale = getLocaleFromPath(Astro.url.pathname);
 const t = await getTranslations(locale);
 ---
 
-<BaseLayout title={`404 - ${t.common.notFound}`}>
+<BaseLayout title={`404 - ${t.common.notFound}`} noindex>
   <div class="min-h-[70vh] flex flex-col items-center justify-center text-center px-4">
     <div class="w-24 h-24 rounded-3xl bg-primary/10 flex items-center justify-center text-primary mb-8 animate-bounce">
       <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>

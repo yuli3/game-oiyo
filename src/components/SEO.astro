@@ -20,6 +20,10 @@ interface Props {
   category?: string;
   author?: string;
   availableLocales?: string[];
+  /** Error and other no-content pages must stay out of the index — and, since
+   *  they have nothing to monetize, out of AdSense too. blog and wiki carry the
+   *  same prop; game was the one host missing it. */
+  noindex?: boolean;
 }
 
 const {
@@ -34,6 +38,7 @@ const {
   category,
   author = siteConfig.author,
   availableLocales,
+  noindex = false,
 } = Astro.props;
 
 const siteTitle =
@@ -90,7 +95,7 @@ const isCrossDomainCanonical = canonicalHost !== new URL(siteConfig.url).hostnam
 const currentSlug = currentPathname.split("/").filter(Boolean)[1];
 const isNoindexPrototype = noindexSlugs.includes(currentSlug);
 const isDeindexedLocale = DEINDEXED_LOCALES.has(currentPathname.split("/").filter(Boolean)[0] ?? "");
-const robotsContent = isCrossDomainCanonical || isNoindexPrototype || isDeindexedLocale
+const robotsContent = noindex || isCrossDomainCanonical || isNoindexPrototype || isDeindexedLocale
   ? "noindex, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
   : "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1";
 
@@ -149,7 +154,12 @@ const hreflangMap: Record<string, string> = {
   </script>
 )}
 
-{googleAdsenseId && (
+{/* Pages the author explicitly keeps out of the index carry no ads. The 404 was
+    serving `index, follow` *and* ca-pub, which is an AdSense policy risk (ads on
+    an error page with no content), not just an SEO leak. Gated on the explicit
+    prop only — noindex prototypes and deindexed locales are playable games and
+    keep earning. */}
+{googleAdsenseId && !noindex && (
   <script is:inline async src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${googleAdsenseId}`}
      crossorigin="anonymous"></script>
 )}
