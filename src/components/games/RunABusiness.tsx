@@ -408,6 +408,7 @@ function persist(run: RunState, books?: RunState["result"]) {
     const bestRaw = localStorage.getItem(BEST_KEY);
     const best = bestRaw ? (JSON.parse(bestRaw) as { cashCents: number }) : { cashCents: 0 };
     if (run.cashCents > (best.cashCents ?? 0)) {
+      recordAchievementEvent("run-a-business", "personal-best");
       localStorage.setItem(BEST_KEY, JSON.stringify({ cashCents: run.cashCents, stall: run.stall, horizon: run.horizon, currency: "USD" }));
     }
     if (books) {

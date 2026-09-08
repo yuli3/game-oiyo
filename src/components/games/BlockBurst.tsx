@@ -340,8 +340,12 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
     setPhase("over");
     recordAchievementEvent(GAME, "played");
     if (next.score > 0) {
+      // 개인 최고 갱신은 "played" 와 다른 사건이다. 둘을 한 이벤트로 묶으면
+      // 업적 화면이 "몇 판 했나"와 "얼마나 늘었나"를 구분하지 못한다.
+      const previousBest = best;
       const saved = recordBest(GAME, next.score, "score");
       setBest(saved.value);
+      if (next.score > previousBest) recordAchievementEvent(GAME, "personal-best");
     }
     tone(140, 0.28);
   }, [tone]);
