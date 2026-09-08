@@ -9,7 +9,6 @@ import {
   advanceTimeLoop,
   createTimeLoopMission,
   isTimeLoopPlateHeld,
-  timeLoopFingerprint,
   timeLoopGhosts,
   type TimeLoopInput,
   type TimeLoopMission,
@@ -140,10 +139,12 @@ export default function TimeLoopRescue({ locale = "ko" }: { locale?: string }) {
     const plate=TIME_LOOP_ROOM.plate; context.beginPath(); context.arc(px(plate.x),px(plate.y),px(plate.radius),0,Math.PI*2); context.fillStyle=doorOpen?"#ffd166":"#6f5c21"; context.fill(); context.strokeStyle="#ffe39a";context.lineWidth=4;context.stroke();
     const exit=TIME_LOOP_ROOM.exit; context.fillStyle="#0d493f";context.fillRect(px(exit.x),px(exit.y),76,62);context.strokeStyle="#55ead4";context.lineWidth=3;context.strokeRect(px(exit.x),px(exit.y),76,62);
     const rescue=TIME_LOOP_ROOM.rescue;
-    const actor=(point:{x:number;y:number},fill:string,label:string,alpha=1)=>{context.save();context.globalAlpha=alpha;context.beginPath();context.arc(px(point.x),px(point.y),17,0,Math.PI*2);context.fillStyle=fill;context.fill();context.fillStyle="#061019";context.font="900 15px system-ui";context.textAlign="center";context.textBaseline="middle";context.fillText(label,px(point.x),px(point.y)+1);context.restore();};
+    const actor=(point:{x:number;y:number},fill:string,label:string,alpha=1)=>{context.save();context.globalAlpha=alpha;context.translate(px(point.x),px(point.y));context.fillStyle=fill;context.beginPath();context.arc(0,-4,10,0,Math.PI*2);context.fill();context.fillRect(-12,7,24,18);context.strokeStyle="#071521";context.lineWidth=3;context.strokeRect(-12,7,24,18);context.fillStyle="#071521";context.font="900 13px system-ui";context.textAlign="center";context.textBaseline="middle";context.fillText(label,0,16);context.restore();};
+    context.fillStyle="#ffd166";context.font="800 15px system-ui";context.textAlign="center";context.fillText("SWITCH",px(plate.x),px(plate.y)+58);
+    context.fillStyle="#55ead4";context.fillText("EXIT",px(exit.x)+38,px(exit.y)+88);
     if (!mission.carrying) actor(rescue,"#ffd166","!");
     ghosts.forEach((ghost,index)=>actor(ghost,"#b3a3ff",String(index+1),reducedMotion?.82:.68));
-    actor(mission.player,"#55ead4",mission.carrying?"2":"◆");
+    actor(mission.player,"#55ead4",mission.carrying?"+":"◆");
   }, [mission, reducedMotion]);
 
   useEffect(() => {
@@ -179,7 +180,6 @@ export default function TimeLoopRescue({ locale = "ko" }: { locale?: string }) {
         <DirectionButton label="◀" direction="left" setDirection={setDirection}/><DirectionButton label="▼" direction="down" setDirection={setDirection}/><DirectionButton label="▶" direction="right" setDirection={setDirection}/>
       </div>
       <p className="text-center text-xs font-medium text-muted-foreground">{t.hint}</p>
-      <details className="rounded-xl bg-muted px-4 py-3 text-xs"><summary className="cursor-pointer font-bold">Replay fingerprint</summary><code className="mt-2 block break-all text-muted-foreground">{timeLoopFingerprint(mission)}</code></details>
     </div>
   </GameContainer>;
 }

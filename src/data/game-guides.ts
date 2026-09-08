@@ -13,6 +13,30 @@ export interface GameGuide {
 }
 
 export const GAME_GUIDES: Record<string, GameGuide> = {
+  "time-loop-rescue": {
+    origin: {
+      ko: "타임루프 구조대는 이전 루프의 내 움직임을 동료로 바꾸는 OIYO 오리지널 1인 협동 퍼즐입니다. 잔상은 임의로 움직이는 AI가 아니라 플레이어가 방금 기록한 입력을 그대로 재생합니다.",
+      en: "Time Loop Rescue is an original OIYO solo-cooperation puzzle that turns your previous run into a teammate. Each echo replays the inputs you just recorded instead of acting as random AI.",
+      ja: "タイムループ・レスキューは、直前の自分の動きを仲間に変えるOIYOオリジナルの一人協力パズルです。残像はランダムなAIではなく、記録した入力をそのまま再生します。",
+      zh: "时光回环救援队是 OIYO 原创的单人协作解谜游戏，把上一轮的自己变成队友。残影不会随机行动，而会原样重放你刚才记录的输入。",
+      fr: "Sauvetage temporel est un puzzle coopératif solo original d'OIYO qui transforme votre boucle précédente en partenaire. Chaque écho reproduit exactement vos commandes enregistrées.",
+      es: "Rescate temporal es un puzle cooperativo para una persona original de OIYO que convierte tu vuelta anterior en compañero. Cada eco repite exactamente los movimientos que grabaste.",
+    },
+    how: {
+      ko: "첫 루프에서 왼쪽 위 스위치로 이동한 뒤 기록 버튼을 누르세요. 다음 루프에는 잔상이 같은 길을 되밟으므로, 잔상이 스위치를 누르는 동안 중앙 문을 통과해 대원과 접촉하고 오른쪽 아래 출구로 이동하면 됩니다.",
+      en: "In the first loop, reach the upper-left switch and record the run. In the next loop, cross the center door while your echo holds the switch, touch the trapped teammate, and carry them to the lower-right exit.",
+      ja: "最初のループで左上のスイッチへ行き、記録ボタンを押します。次のループでは残像がスイッチを踏んでいる間に中央扉を抜け、仲間に触れて右下の出口へ運びます。",
+      zh: "第一轮先走到左上方开关并记录。本轮残影踩住开关时穿过中央门，接到被困队友，再前往右下方出口。",
+      fr: "Lors de la première boucle, rejoignez l'interrupteur en haut à gauche et enregistrez. À la suivante, franchissez la porte pendant que l'écho maintient l'interrupteur, récupérez l'équipier et gagnez la sortie en bas à droite.",
+      es: "En la primera vuelta, llega al interruptor superior izquierdo y graba. En la siguiente, cruza la puerta mientras el eco mantiene el interruptor, recoge al compañero y llega a la salida inferior derecha.",
+    },
+    faqs: [
+      {
+        q: { ko: "잔상은 매번 똑같이 움직이나요?", en: "Does an echo always move the same way?", ja: "残像は毎回同じように動きますか？", zh: "残影每次都会走同样的路线吗？", fr: "L'écho suit-il toujours le même trajet ?", es: "¿El eco siempre repite el mismo recorrido?" },
+        a: { ko: "네. 같은 입력은 같은 위치와 결과를 만듭니다. 그래서 빠르게 움직이는 것보다 스위치에 도착한 뒤 충분히 기다리는 기록이 더 안정적입니다.", en: "Yes. The same inputs produce the same positions and outcome. A recording that waits on the switch is more reliable than one that only gets there quickly.", ja: "はい。同じ入力は同じ位置と結果を生みます。素早く着くだけでなく、スイッチ上で十分待つ記録の方が安定します。", zh: "是的，相同输入会产生相同位置和结果。因此，到达开关后留出等待时间的记录会更稳定。", fr: "Oui. Les mêmes commandes donnent les mêmes positions et le même résultat. Attendre sur l'interrupteur rend l'enregistrement plus fiable.", es: "Sí. Las mismas entradas producen las mismas posiciones y el mismo resultado. Conviene grabar unos segundos de espera sobre el interruptor." },
+      },
+    ],
+  },
   "mallow-isle": {
     origin: {
       ko: "Mallow Isle는 편안한 섬 생활과 손으로 만지는 듯한 지형 꾸미기를 한 장면에 담은 OIYO 오리지널 3D 브라우저 게임입니다. 섬, 동물, 식물, 구름과 음악은 외부 게임 에셋이나 음원 없이 절차적으로 구성됩니다.",
