@@ -37,12 +37,9 @@ export const brandFacts = {
       role: "ax-showcase",
       knowledgeManifest: null,
     },
-    {
-      name: "Oiyo Wiki",
-      url: "https://wiki.oiyo.net/",
-      role: "definition",
-      knowledgeManifest: "https://wiki.oiyo.net/knowledge/index.json",
-    },
+    // 2026-09-08: wiki 항목을 뺐다 — 문서 0건이라 패밀리에서 정리 중이다.
+    // `role` 의 definition/explanation 구분은 2026-08-27 에 폐기된 모델이다
+    // (blog·wiki 는 같은 성격의 사이트). 남은 라벨은 이 파일의 다음 개정 대상.
     {
       name: "Oiyo Blog",
       url: "https://blog.oiyo.net/",
