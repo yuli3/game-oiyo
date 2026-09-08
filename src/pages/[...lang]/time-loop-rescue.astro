@@ -1,0 +1,29 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import TimeLoopRescue from "../../components/games/TimeLoopRescue";
+import GameGuide from "../../components/GameGuide.astro";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+const meta: Record<Locale, { title: string; description: string; name: string }> = {
+  ko: { title: "타임루프 구조대 — 과거의 나와 푸는 협동 퍼즐", description: "20초 전의 내 움직임을 잔상으로 기록해 스위치를 누르고, 격리 구역의 대원을 구출하는 무료 브라우저 퍼즐 게임.", name: "타임루프 구조대" },
+  en: { title: "Time Loop Rescue — Cooperate With Your Past Self", description: "Record your movements as an echo, hold the switch, and rescue a trapped teammate in this free browser puzzle game.", name: "Time Loop Rescue" },
+  ja: { title: "タイムループ・レスキュー — 過去の自分と協力するパズル", description: "自分の動きを残像として記録し、スイッチを押さえながら仲間を救出する無料ブラウザパズルです。", name: "タイムループ・レスキュー" },
+  zh: { title: "时光回环救援队 — 与过去的自己协作", description: "把自己的移动记录为残影，踩住开关并救出隔离区队友的免费浏览器解谜游戏。", name: "时光回环救援队" },
+  fr: { title: "Sauvetage temporel — Coopérez avec votre double passé", description: "Enregistrez vos mouvements sous forme d'écho, maintenez l'interrupteur et sauvez un équipier dans ce jeu de réflexion gratuit.", name: "Sauvetage temporel" },
+  es: { title: "Rescate temporal — Coopera con tu yo del pasado", description: "Graba tus movimientos como un eco, mantén el interruptor y rescata a un compañero en este juego de lógica gratuito.", name: "Rescate temporal" },
+};
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-3xl px-4 py-8">
+    <TimeLoopRescue client:load locale={locale} />
+    <GameGuide slug="time-loop-rescue" locale={locale} name={m.name} />
+  </div>
+</BaseLayout>
