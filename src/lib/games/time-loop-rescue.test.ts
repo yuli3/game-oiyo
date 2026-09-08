@@ -18,6 +18,11 @@ const tick = (mission: TimeLoopMission, value: TimeLoopInput, count = 1) => {
 };
 
 describe("time-loop rescue", () => {
+  it("does not create an empty echo", () => {
+    const mission = createTimeLoopMission();
+    expect(advanceTimeLoop(mission, { type: "commit-loop" })).toBe(mission);
+  });
+
   it("replays the same inputs to the same fingerprint", () => {
     const run = () => {
       let mission = createTimeLoopMission();

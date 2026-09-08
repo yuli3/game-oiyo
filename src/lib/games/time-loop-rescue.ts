@@ -96,6 +96,7 @@ export function createTimeLoopMission(): TimeLoopMission {
 
 function commitLoop(mission: TimeLoopMission): TimeLoopMission {
   if (mission.phase !== "playing") return mission;
+  if (mission.currentRecording.length === 0) return mission;
   if (mission.loop >= TIME_LOOP_MAX_LOOPS) return { ...mission, phase: "failed" };
   return {
     ...mission,
