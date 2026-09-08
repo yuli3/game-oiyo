@@ -48,5 +48,6 @@ export function getLocaleFromPath(pathname: string): Locale {
 // 언어별 URL 생성
 export function getLocalizedPath(locale: Locale, path: string): string {
   const basePath = localePaths[locale];
-  return `${basePath}${path}`;
+  // 정본 URL 은 후행 슬래시를 쓴다 — 없으면 호스트가 308 로 넘긴다.
+  return `${basePath}${path}`.replace(/\/?$/, "/");
 }

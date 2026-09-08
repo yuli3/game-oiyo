@@ -62,9 +62,9 @@ const getLocalizedPath = (targetLocale: string) => {
 // game.oiyo.net nav — local pages only; cross-domain family links are absolute
 const navItems = [
   { href: `/${locale}/`, label: (({ ko: "아케이드", ja: "アーケード", zh: "街机", fr: "Arcade", es: "Arcade", en: "Arcade" } as Record<string, string>)[locale] ?? "Arcade") },
-  { href: `/${locale}/achievements`, label: (({ ko: "🏆 업적", ja: "🏆 実績", zh: "🏆 成就", fr: "🏆 Succès", es: "🏆 Logros", en: "🏆 Achievements" } as Record<string, string>)[locale] ?? "🏆 Achievements") },
-  { href: `https://blog.oiyo.net/${locale}/tools`, label: nav.tools ?? "Tools" },
-  { href: `https://blog.oiyo.net/${locale}/magazine`, label: nav.magazine ?? "Magazine" },
+  { href: `/${locale}/achievements/`, label: (({ ko: "🏆 업적", ja: "🏆 実績", zh: "🏆 成就", fr: "🏆 Succès", es: "🏆 Logros", en: "🏆 Achievements" } as Record<string, string>)[locale] ?? "🏆 Achievements") },
+  { href: `https://blog.oiyo.net/${locale}/tools/`, label: nav.tools ?? "Tools" },
+  { href: `https://blog.oiyo.net/${locale}/`, label: nav.magazine ?? "Magazine" },
   { href: `https://oiyo.net/${locale}/`, label: "OIYO" },
 ];
 
@@ -405,8 +405,8 @@ const currentLangItem = langItems.find((li) => li.code === locale) ?? langItems[
 
     <footer class="border-t border-border bg-muted/25 py-10 text-left">
       <div class="container grid gap-8 px-4 sm:grid-cols-2 lg:grid-cols-[0.8fr_1fr_2fr]">
-        <section><p class="mb-3 text-sm font-black">OIYO <span class="font-semibold lowercase text-primary">game</span></p><nav aria-label={labels.arcade} class="grid gap-2 text-sm text-muted-foreground"><a href={`/${locale}/`} class="hover:text-primary">{labels.arcade}</a><a href={`/${locale}/achievements`} class="hover:text-primary">{navItems[1].label}</a><a href={`/${locale}/chess/`} class="hover:text-primary">Chess</a><a href={`/${locale}/sudoku/`} class="hover:text-primary">Sudoku</a></nav></section>
-        <section><p class="mb-3 text-xs font-bold uppercase tracking-widest">{labels.info}</p><nav aria-label={labels.info} class="grid gap-2 text-sm text-muted-foreground"><a href="/sitemap-index.xml" class="hover:text-primary">{labels.sitemap}</a><a href={`https://blog.oiyo.net/${locale}/privacy`} class="hover:text-primary">{t.legal.privacy.title}</a><a href={`https://blog.oiyo.net/${locale}/terms`} class="hover:text-primary">{t.legal.terms.title}</a><a href="https://paypal.me/chosean" class="hover:text-primary">{labels.support}</a></nav></section>
+        <section><p class="mb-3 text-sm font-black">OIYO <span class="font-semibold lowercase text-primary">game</span></p><nav aria-label={labels.arcade} class="grid gap-2 text-sm text-muted-foreground"><a href={`/${locale}/`} class="hover:text-primary">{labels.arcade}</a><a href={`/${locale}/achievements/`} class="hover:text-primary">{navItems[1].label}</a><a href={`/${locale}/chess/`} class="hover:text-primary">Chess</a><a href={`/${locale}/sudoku/`} class="hover:text-primary">Sudoku</a></nav></section>
+        <section><p class="mb-3 text-xs font-bold uppercase tracking-widest">{labels.info}</p><nav aria-label={labels.info} class="grid gap-2 text-sm text-muted-foreground"><a href="/sitemap-index.xml" class="hover:text-primary">{labels.sitemap}</a><a href={`https://blog.oiyo.net/${locale}/privacy/`} class="hover:text-primary">{t.legal.privacy.title}</a><a href={`https://blog.oiyo.net/${locale}/terms/`} class="hover:text-primary">{t.legal.terms.title}</a><a href="https://paypal.me/chosean" class="hover:text-primary">{labels.support}</a></nav></section>
         <section><p class="mb-3 text-xs font-bold uppercase tracking-widest">{labels.family}</p><nav aria-label={labels.family} class="grid grid-cols-2 gap-x-5 gap-y-3 sm:grid-cols-3">{FAMILY.map((f) => (<a href={familyHref(f, "footer")} class="group text-sm font-semibold hover:text-primary">{f.name}<span class="block text-xs font-normal text-muted-foreground">{f.tag[locale as keyof typeof f.tag] ?? f.tag.en}</span></a>))}</nav></section>
       </div>
       <div class="container mt-8 flex justify-between border-t border-border px-4 pt-5 text-xs text-muted-foreground"><span>© {new Date().getFullYear()} Oiyo Tech</span><a href="mailto:support@oiyo.net">support@oiyo.net</a></div>
