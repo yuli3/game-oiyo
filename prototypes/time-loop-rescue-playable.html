@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>타임루프 구조대 — 60초 플레이 프로토타입</title>
+  <style>
+    :root { color-scheme:dark; --bg:#07111e; --panel:#101d2f; --line:#29425d; --ink:#f4f8ff; --muted:#9cb0c7; --cyan:#55ead4; --violet:#ad9cff; --amber:#ffd166; --red:#ff718b; }
+    * { box-sizing:border-box; touch-action:manipulation; }
+    body { margin:0; min-height:100vh; font-family:ui-rounded,system-ui,-apple-system,"Apple SD Gothic Neo",sans-serif; background:radial-gradient(circle at 50% 0,#15304e 0,var(--bg) 50%); color:var(--ink); }
+    main { width:min(920px,100% - 24px); margin:auto; padding:20px 0 48px; }
+    header { display:flex; justify-content:space-between; align-items:end; gap:16px; margin-bottom:14px; }
+    h1 { margin:0; font-size:clamp(25px,6vw,42px); }
+    p { margin:5px 0 0; color:var(--muted); line-height:1.55; }
+    .badge { flex:none; padding:6px 10px; border:1px solid #1c8d82; border-radius:999px; color:var(--cyan); font-size:12px; }
+    .panel { padding:14px; border:1px solid var(--line); border-radius:18px; background:rgba(16,29,47,.94); box-shadow:0 22px 70px #0007; }
+    .hud { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:10px; }
+    .metric { min-width:0; padding:9px; border-radius:11px; background:#091523; text-align:center; }
+    .metric strong { display:block; font-size:clamp(16px,4vw,23px); white-space:nowrap; }
+    .metric span { color:var(--muted); font-size:11px; }
+    .clock.danger { color:var(--red); }
+    canvas { display:block; width:100%; aspect-ratio:16/9; border:1px solid #35516f; border-radius:12px; background:#07111e; image-rendering:auto; }
+    .message { min-height:48px; display:flex; align-items:center; margin:10px 0; padding:10px 12px; border-left:3px solid var(--cyan); border-radius:6px; background:#091523; line-height:1.4; }
+    .actions { display:flex; gap:8px; flex-wrap:wrap; }
+    button { min-height:45px; border:1px solid #3a5675; border-radius:11px; padding:9px 14px; background:#0a1727; color:var(--ink); font:inherit; font-weight:800; cursor:pointer; }
+    button:active,button.active { transform:translateY(1px); border-color:var(--cyan); background:#12384a; }
+    button.primary { background:#087b70; border-color:#2dd4bf; }
+    button.warn { border-color:#a96012; color:#ffe0a3; }
+    .lower { display:grid; grid-template-columns:220px 1fr; gap:12px; margin-top:12px; }
+    .pad { display:grid; grid-template-columns:repeat(3,58px); gap:7px; place-content:center; padding:12px; border:1px solid var(--line); border-radius:15px; background:#0a1727; }
+    .pad button { width:58px; height:52px; padding:0; font-size:20px; user-select:none; -webkit-user-select:none; }
+    .pad .empty { visibility:hidden; }
+    .brief { padding:14px; border:1px solid var(--line); border-radius:15px; background:#0a1727; }
+    .brief h2 { margin:0 0 7px; font-size:17px; }
+    .brief ol { margin:0; padding-left:20px; color:#c5d2e1; line-height:1.55; }
+    .debug { margin-top:12px; }
+    details { border:1px solid var(--line); border-radius:12px; padding:10px 12px; background:#091523; }
+    summary { cursor:pointer; color:var(--muted); }
+    pre { overflow:auto; max-height:190px; margin:10px 0 0; color:#b9f5eb; font-size:11px; }
+    @media(max-width:650px){ header{align-items:start;flex-direction:column}.hud{grid-template-columns:repeat(2,1fr)}.lower{grid-template-columns:1fr}.pad{order:2}.actions button{flex:1}.badge{align-self:flex-start} }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div><h1>타임루프 구조대</h1><p>과거의 나와 협동해 격리문을 열고 대원을 구조하세요.</p></div>
+    <span class="badge">PLAYABLE PROTOTYPE · 제품 미연결</span>
+  </header>
+  <section class="panel">
+    <div class="hud">
+      <div class="metric"><strong id="loop">1 / 3</strong><span>루프</span></div>
+      <div class="metric"><strong id="clock" class="clock">20.0초</strong><span>현재 루프</span></div>
+      <div class="metric"><strong id="ghosts">0명</strong><span>잔상 대원</span></div>
+      <div class="metric"><strong id="status">탐색 중</strong><span>임무</span></div>
+    </div>
+    <canvas id="game" width="960" height="540" aria-label="타임루프 구조 게임"></canvas>
+    <div id="message" class="message" role="status">청록색 대원을 움직여 왼쪽 위 스위치 위에 서세요.</div>
+    <div class="actions">
+      <button id="record" class="primary">R · 이 루프 기록</button>
+      <button id="restart">처음부터</button>
+      <button id="pause">일시정지</button>
+      <button id="motion" class="warn">잔상 궤적 켜짐</button>
+    </div>
+    <div class="lower">
+      <div class="pad" aria-label="방향 조작">
+        <button class="empty"></button><button data-key="up">▲</button><button class="empty"></button>
+        <button data-key="left">◀</button><button data-key="down">▼</button><button data-key="right">▶</button>
+      </div>
+      <div class="brief">
+        <h2>60초 안에 푸는 법</h2>
+        <ol>
+          <li>1루프: 왼쪽 위 노란 스위치에 서서 <strong>기록</strong>.</li>
+          <li>2루프: 보라색 잔상이 스위치를 밟으면 중앙 문 통과.</li>
+          <li>오른쪽의 구조 대원과 접촉한 뒤 오른쪽 아래 출구로 이동.</li>
+        </ol>
+        <p>키보드: 방향키/WASD · R 기록 · P 일시정지</p>
+      </div>
+    </div>
+    <div class="debug">
+      <details><summary>결정론 상태 보기</summary><pre id="debug"></pre></details>
+    </div>
+  </section>
+</main>
+<script>
+(() => {
+  const canvas=document.querySelector('#game'), ctx=canvas.getContext('2d');
+  const FIXED=1/30, LOOP_SECONDS=20, MAX_LOOPS=3, SPEED=178, RADIUS=17;
+  const room={w:960,h:540,door:{x:468,y:205,w:24,h:130},plate:{x:160,y:120,r:34},victim:{x:750,y:255,r:18},exit:{x:830,y:440,w:76,h:62}};
+  const start={x:92,y:270};
+  const keys={up:false,down:false,left:false,right:false};
+  let accumulator=0,last=performance.now(),paused=false,showTrail=true;
+  let state;
+
+  const fresh=()=>({phase:'playing',loop:1,tick:0,player:{...start},carrying:false,recordings:[],current:[],hash:2166136261,message:'청록색 대원을 움직여 왼쪽 위 스위치 위에 서세요.'});
+  const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
+  const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+  const input=()=>({x:(keys.right?1:0)-(keys.left?1:0),y:(keys.down?1:0)-(keys.up?1:0)});
+  const hashStep=(hash,value)=>{ hash^=value; return Math.imul(hash,16777619)>>>0; };
+  function move(position,command,doorOpen){
+    let mag=Math.hypot(command.x,command.y)||1;
+    let next={x:clamp(position.x+command.x/mag*SPEED*FIXED,RADIUS,room.w-RADIUS),y:clamp(position.y+command.y/mag*SPEED*FIXED,RADIUS,room.h-RADIUS)};
+    const d=room.door;
+    if(!doorOpen && next.x+RADIUS>d.x && next.x-RADIUS<d.x+d.w && next.y+RADIUS>d.y && next.y-RADIUS<d.y+d.h){
+      if(position.x<d.x) next.x=d.x-RADIUS; else if(position.x>d.x+d.w) next.x=d.x+d.w+RADIUS;
+    }
+    return next;
+  }
+  function replay(recording,tick){
+    let p={...start};
+    for(let i=0;i<Math.min(tick,recording.length);i++) p=move(p,recording[i],true);
+    return p;
+  }
+  function ghostPositions(tick=state.tick){ return state.recordings.map(r=>replay(r,tick)); }
+  function plateHeld(player,ghosts){ return dist(player,room.plate)<=room.plate.r+RADIUS || ghosts.some(g=>dist(g,room.plate)<=room.plate.r+RADIUS); }
+  function update(){
+    if(paused||state.phase!=='playing') return;
+    const command=input(), ghosts=ghostPositions(), open=plateHeld(state.player,ghosts);
+    state.player=move(state.player,command,open);
+    state.current.push(command);
+    state.hash=hashStep(hashStep(state.hash,Math.round(state.player.x)),Math.round(state.player.y));
+    state.tick++;
+    if(!state.carrying && dist(state.player,room.victim)<RADIUS+room.victim.r){ state.carrying=true; state.message='구조 대원이 합류했습니다. 오른쪽 아래 출구로 이동하세요.'; }
+    if(state.carrying && state.player.x>room.exit.x && state.player.y>room.exit.y){ state.phase='won'; state.message=`구조 성공! ${state.loop}개 루프 · 재생 해시 ${state.hash.toString(16).padStart(8,'0')}`; }
+    if(state.tick>=LOOP_SECONDS/FIXED) commitLoop(true);
+  }
+  function commitLoop(automatic=false){
+    if(state.phase!=='playing') return;
+    if(state.loop>=MAX_LOOPS){ state.phase='failed'; state.message='3개 루프를 모두 사용했습니다. 동선을 줄여 다시 시도하세요.'; return; }
+    state.recordings.push(state.current); state.current=[]; state.loop++; state.tick=0; state.player={...start}; state.carrying=false;
+    state.message=automatic?'20초 종료. 잔상이 생성되고 다음 루프가 시작됐습니다.':`잔상 ${state.recordings.length}명이 생성됐습니다. 잔상과 같은 타이밍으로 움직이세요.`;
+  }
+  function reset(){ state=fresh(); accumulator=0; paused=false; document.querySelector('#pause').textContent='일시정지'; }
+  function roundRect(x,y,w,h,r,fill,stroke){ ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fillStyle=fill;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=2;ctx.stroke();} }
+  function drawActor(p,color,label,alpha=1){ ctx.save();ctx.globalAlpha=alpha;ctx.beginPath();ctx.arc(p.x,p.y,RADIUS,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();ctx.fillStyle='#06101c';ctx.font='bold 16px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(label,p.x,p.y+1);ctx.restore(); }
+  function draw(){
+    const ghosts=ghostPositions(), open=plateHeld(state.player,ghosts);
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    const grid=54; ctx.strokeStyle='#14263a';ctx.lineWidth=1;for(let x=0;x<=canvas.width;x+=grid){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,canvas.height);ctx.stroke();}for(let y=0;y<=canvas.height;y+=grid){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(canvas.width,y);ctx.stroke();}
+    ctx.fillStyle='#1a3149';ctx.fillRect(room.door.x,0,room.door.w,room.door.y);ctx.fillRect(room.door.x,room.door.y+room.door.h,room.door.w,room.h-room.door.y-room.door.h);
+    roundRect(room.exit.x,room.exit.y,room.exit.w,room.exit.h,12,'#143d35','#55ead4');ctx.fillStyle='#a7f3d0';ctx.font='bold 13px system-ui';ctx.textAlign='center';ctx.fillText('EXIT',room.exit.x+room.exit.w/2,room.exit.y+37);
+    ctx.beginPath();ctx.arc(room.plate.x,room.plate.y,room.plate.r,0,Math.PI*2);ctx.fillStyle=open?'#facc15':'#6b5714';ctx.fill();ctx.strokeStyle='#ffe28a';ctx.lineWidth=4;ctx.stroke();ctx.fillStyle='#2d2607';ctx.font='bold 14px system-ui';ctx.fillText('SW',room.plate.x,room.plate.y+5);
+    roundRect(room.door.x,room.door.y,room.door.w,room.door.h,5,open?'#145c50':'#9f3046',open?'#55ead4':'#ff8ca0');
+    if(showTrail) state.recordings.forEach((recording,index)=>{ctx.beginPath();let p={...start};ctx.moveTo(p.x,p.y);for(let i=0;i<Math.min(state.tick,recording.length);i+=4){p=replay(recording,i);ctx.lineTo(p.x,p.y);}ctx.strokeStyle=`rgba(173,156,255,${.22+index*.12})`;ctx.lineWidth=5;ctx.stroke();});
+    ghosts.forEach((g,i)=>drawActor(g,'#ad9cff',String(i+1),.72));
+    if(!state.carrying) drawActor(room.victim,'#ffd166','!',1);
+    drawActor(state.player,'#55ead4',state.carrying?'2':'◆',1);
+    if(state.phase!=='playing'){ctx.fillStyle='#06101ccc';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle=state.phase==='won'?'#55ead4':'#ff718b';ctx.font='900 52px system-ui';ctx.textAlign='center';ctx.fillText(state.phase==='won'?'구조 성공':'시간 종료',480,245);ctx.fillStyle='#d5e2ef';ctx.font='22px system-ui';ctx.fillText('처음부터 버튼으로 다시 도전하세요',480,290);}
+    document.querySelector('#loop').textContent=`${state.loop} / ${MAX_LOOPS}`;
+    const remain=Math.max(0,LOOP_SECONDS-state.tick*FIXED);const clock=document.querySelector('#clock');clock.textContent=`${remain.toFixed(1)}초`;clock.classList.toggle('danger',remain<5);
+    document.querySelector('#ghosts').textContent=`${state.recordings.length}명`;
+    document.querySelector('#status').textContent=state.phase==='won'?'구조 성공':state.phase==='failed'?'임무 실패':state.carrying?'탈출 중':'탐색 중';
+    document.querySelector('#message').textContent=state.message;
+    document.querySelector('#debug').textContent=JSON.stringify({phase:state.phase,loop:state.loop,tick:state.tick,player:{x:+state.player.x.toFixed(2),y:+state.player.y.toFixed(2)},carrying:state.carrying,doorOpen:open,recordingLengths:state.recordings.map(r=>r.length),currentLength:state.current.length,replayHash:state.hash.toString(16).padStart(8,'0')},null,2);
+  }
+  function frame(now){ let elapsed=Math.min(.1,(now-last)/1000);last=now;accumulator+=elapsed;while(accumulator>=FIXED){update();accumulator-=FIXED;}draw();requestAnimationFrame(frame); }
+  const keyMap={ArrowUp:'up',w:'up',W:'up',ArrowDown:'down',s:'down',S:'down',ArrowLeft:'left',a:'left',A:'left',ArrowRight:'right',d:'right',D:'right'};
+  addEventListener('keydown',e=>{if(keyMap[e.key]){e.preventDefault();keys[keyMap[e.key]]=true;}if(e.key==='r'||e.key==='R')commitLoop();if(e.key==='p'||e.key==='P')togglePause();});
+  addEventListener('keyup',e=>{if(keyMap[e.key])keys[keyMap[e.key]]=false;});
+  document.querySelectorAll('[data-key]').forEach(button=>{const k=button.dataset.key;const on=e=>{e.preventDefault();keys[k]=true;button.classList.add('active')};const off=e=>{e.preventDefault();keys[k]=false;button.classList.remove('active')};button.addEventListener('pointerdown',on);button.addEventListener('pointerup',off);button.addEventListener('pointercancel',off);button.addEventListener('pointerleave',off);});
+  function togglePause(){paused=!paused;document.querySelector('#pause').textContent=paused?'계속하기':'일시정지';state.message=paused?'일시정지했습니다. 잔상과 타이머도 멈춥니다.':'임무를 계속합니다.';}
+  document.querySelector('#record').addEventListener('click',()=>commitLoop());
+  document.querySelector('#restart').addEventListener('click',reset);
+  document.querySelector('#pause').addEventListener('click',togglePause);
+  document.querySelector('#motion').addEventListener('click',e=>{showTrail=!showTrail;e.currentTarget.textContent=`잔상 궤적 ${showTrail?'켜짐':'꺼짐'}`;});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden&&!paused)togglePause();});
+  reset();requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
