@@ -52,6 +52,24 @@ try:
 except ImportError:
     pass
 
+# The repo-local .env files are optional and often stale; the SSOT for these
+# credentials is ~/.config/oiyo/credentials.env, outside every repo. Read it
+# last and only for keys nothing else supplied, so CI secrets and an explicit
+# export always win. Without this a local run just skips Bing silently.
+_CANON_ENV = Path.home() / ".config" / "oiyo" / "credentials.env"
+if _CANON_ENV.exists():
+    try:
+        for _line in _CANON_ENV.read_text(encoding="utf-8").splitlines():
+            _line = _line.strip()
+            if not _line or _line.startswith("#") or "=" not in _line:
+                continue
+            _k, _v = _line.split("=", 1)
+            _k = _k.strip()
+            if _k and _k not in os.environ:
+                os.environ[_k] = _v.strip().strip('"').strip("'")
+    except OSError:
+        pass
+
 # ── optional: Google API client ──────────────────────────────────────────────
 try:
     from google.oauth2 import service_account
@@ -450,6 +468,20 @@ def main() -> int:
         log(f"Submission errors (bing is non-fatal): {all_errors}", "WARN")
     if fatal_errors:
         return 1
+
+    # Say what actually happened. Printing "All submissions complete" after a
+    # failed engine is how a stale Bing key went unnoticed through every deploy
+    # until 2026-09-08 — the run was green and the last line said success.
+    skipped = [k for k, v in all_results.items()
+               if isinstance(v, dict) and v.get("status") == "skip"]
+    if all_errors or skipped:
+        parts = []
+        if all_errors:
+            parts.append(f"failed: {all_errors}")
+        if skipped:
+            parts.append(f"skipped: {skipped}")
+        log(f"Finished with problems ({'; '.join(parts)}).", "WARN")
+        return 0
 
     log("All submissions complete.", "OK")
     return 0
