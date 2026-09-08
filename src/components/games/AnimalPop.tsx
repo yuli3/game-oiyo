@@ -13,6 +13,19 @@ import {
   type AnimalFall,
 } from "../../lib/games/animal-pop";
 import { ANIMAL_POP_SPRITES } from "../../lib/games/sprites";
+import { createDebrisWorld, type DebrisMatterLike, type DebrisWorld } from "../../lib/games/debris-world";
+// 매치된 타일에서 튀는 파편. 이 게임의 핵심 동사는 "터뜨린다"인데 지금까지
+// 매치된 동물은 CSS 펄스 210ms 뒤에 그냥 사라졌다 — 터지는 장면이 없었다.
+// debris-world 는 결정론적 게임 루프 바깥에서 도는 장식 레이어라 점수·저장에
+// 영향을 주지 않는다. matter-js 84KB 는 첫 매치 때만 로드되고, reduced-motion
+// 이면 아예 로드하지 않는다.
+const SHARDS_PER_TILE = 7;
+const animalHue = (animal: string): number => {
+  let h = 0;
+  for (const ch of animal) h = (h * 31 + ch.codePointAt(0)!) % 360;
+  return h;
+};
+
 const SAVE = "oiyo:animal-pop:v1",
   BEST = "oiyo-animal-pop-best";
 const wait = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms));
@@ -142,6 +155,13 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
     [waveLabel, setWaveLabel] = useState(0);
   const reducedMotion = usePrefersReducedMotion();
   const animationRun = useRef(0);
+  const boardRef = useRef<HTMLDivElement>(null);
+  const fxCanvasRef = useRef<HTMLCanvasElement>(null);
+  const debrisRef = useRef<DebrisWorld | null>(null);
+  const debrisLoadingRef = useRef(false);
+  const rafRef = useRef(0);
+  const reducedMotionRef = useRef(reducedMotion);
+  reducedMotionRef.current = reducedMotion;
   const phaseRef = useRef(phase);
   phaseRef.current = phase;
   useEffect(() => () => { animationRun.current += 1; }, []);
@@ -152,7 +172,97 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
     setBursting([]);
     setFalls([]);
     setWaveLabel(0);
+    cancelAnimationFrame(rafRef.current);
+    debrisRef.current?.clear();
+    fxCanvasRef.current?.getContext("2d")?.clearRect(0, 0, fxCanvasRef.current.width, fxCanvasRef.current.height);
   }, [phase]);
+  // 파편 렌더 루프. 남은 파편이 없으면 스스로 멈춘다 — 상시 rAF 를 돌리지 않는다.
+  const pumpDebris = useCallback(() => {
+    cancelAnimationFrame(rafRef.current);
+    let previous = performance.now();
+    const frame = (now: number) => {
+      const world = debrisRef.current;
+      const canvas = fxCanvasRef.current;
+      const ctx = canvas?.getContext("2d");
+      if (!world || !canvas || !ctx) return;
+      world.update(now - previous, now);
+      previous = now;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (const shard of world.shards()) {
+        ctx.save();
+        ctx.globalAlpha = shard.alpha * 0.9;
+        ctx.translate(shard.x, shard.y);
+        ctx.rotate(shard.angle);
+        ctx.fillStyle = `hsl(${shard.hue} 70% 58%)`;
+        ctx.fillRect(-shard.size / 2, -shard.size / 2, shard.size, shard.size);
+        ctx.restore();
+      }
+      ctx.globalAlpha = 1;
+      if (world.count() > 0) rafRef.current = requestAnimationFrame(frame);
+    };
+    rafRef.current = requestAnimationFrame(frame);
+  }, []);
+
+  // 매치된 타일의 실제 위치에서 파편을 뿌린다. 그리드 간격·패딩을 계산으로
+  // 추정하지 않고 DOM 이 배치한 좌표를 읽는다.
+  const burstShards = useCallback((matched: number[], board: AnimalBoard) => {
+    if (reducedMotionRef.current || !matched.length) return;
+    const host = boardRef.current;
+    const canvas = fxCanvasRef.current;
+    if (!host || !canvas) return;
+
+    const width = host.clientWidth;
+    const height = host.clientHeight;
+    if (!width || !height) return;
+    if (canvas.width !== width || canvas.height !== height) {
+      canvas.width = width;
+      canvas.height = height;
+    }
+
+    const place = () => {
+      const world = debrisRef.current;
+      if (!world) return;
+      // spawn 은 파편의 생년을 world 의 마지막 update 시각으로 찍는데, 그 값은 첫
+      // update 전까지 0 이다. BrickBreaker 처럼 상시 도는 루프 안에서는 문제가
+      // 없지만 여기서는 매치 때만 루프를 돌리므로, 뿌리기 전에 시계를 맞춰야
+      // 파편이 첫 프레임에 수명 초과로 즉시 사라지지 않는다.
+      world.update(0, performance.now());
+      const cells = host.querySelectorAll<HTMLElement>("[role='gridcell']");
+      for (const index of matched) {
+        const cell = cells[index];
+        if (!cell) continue;
+        const animal = board[Math.floor(index / 7)]?.[index % 7] ?? "";
+        world.spawn(
+          cell.offsetLeft + cell.offsetWidth / 2,
+          cell.offsetTop + cell.offsetHeight / 2,
+          animalHue(animal),
+          SHARDS_PER_TILE,
+        );
+      }
+      pumpDebris();
+    };
+
+    if (debrisRef.current) { place(); return; }
+    if (debrisLoadingRef.current) return;
+    debrisLoadingRef.current = true;
+    void import("matter-js")
+      .then((mod) => {
+        if (reducedMotionRef.current || debrisRef.current) return;
+        debrisRef.current = createDebrisWorld(mod.default as unknown as DebrisMatterLike, {
+          width, height, cap: 90,
+        });
+        place();
+      })
+      .catch(() => { /* 장식이다. 못 불러오면 게임은 그대로 돈다. */ })
+      .finally(() => { debrisLoadingRef.current = false; });
+  }, [pumpDebris]);
+
+  useEffect(() => () => {
+    cancelAnimationFrame(rafRef.current);
+    debrisRef.current?.destroy();
+    debrisRef.current = null;
+  }, []);
+
   const tone = useCallback(
     (f: number) => {
       if (!sound) return;
@@ -249,6 +359,7 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
       setBoard(step.before);
       setWaveLabel(wave + 1);
       setBursting(step.matched);
+      burstShards(step.matched, step.before);
       tone(Math.min(920, 430 + wave * 85));
       await wait(burstMs);
       if (run !== animationRun.current) return;
@@ -313,10 +424,16 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
           {waveLabel > 0 ? `${t.combo} ×${waveLabel}` : combo >= 5 ? t.fever : combo > 1 ? `${t.combo} ×${combo}` : ""}
         </div>
         <div
+          ref={boardRef}
           className={`relative grid grid-cols-7 gap-1 overflow-hidden rounded-3xl border bg-[#edf1df] p-2 ${bursting.length ? "animal-board-hit" : ""}`}
           role="grid"
           aria-label={t.title}
         >
+          <canvas
+            ref={fxCanvasRef}
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 z-20 h-full w-full"
+          />
           {board.flatMap((row, r) =>
             row.map((animal, c) => {
               const i = r * 7 + c;

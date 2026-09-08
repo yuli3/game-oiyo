@@ -86,6 +86,26 @@ describe("debris world", () => {
     expect(world.shards()[0].alpha).toBeLessThan(1);
   });
 
+  it("kills shards spawned before the first update — prime the clock first", () => {
+    // spawn() stamps bornMs from the world's last update time, which starts at 0.
+    // A caller that only runs its loop while shards exist (Animal Pop) therefore
+    // spawns at bornMs 0 and, on the very first frame at a real clock value,
+    // every shard is already past its lifetime and vanishes before it is drawn.
+    // Games with an always-on loop (Brick Breaker) never see this.
+    const cold = createDebrisWorld(makeMatterDouble().Matter, { width: 200, height: 200, cap: 40 });
+    cold.spawn(50, 50, 120, 6);
+    expect(cold.count()).toBe(6);
+    cold.update(16, 30_000);
+    expect(cold.count()).toBe(0);
+
+    // Priming with a zero-length step first is what makes them survive.
+    const primed = createDebrisWorld(makeMatterDouble().Matter, { width: 200, height: 200, cap: 40 });
+    primed.update(0, 30_000);
+    primed.spawn(50, 50, 120, 6);
+    primed.update(16, 30_016);
+    expect(primed.count()).toBe(6);
+  });
+
   it("clear() empties shards but keeps the world usable", () => {
     const { Matter, inWorld } = makeMatterDouble();
     const world = createDebrisWorld(Matter, { width: 360, height: 480, cap: 40 });
