@@ -6,11 +6,11 @@ export function shipIncident(elapsed: number): System | null {
 }
 export type ShipState = Readonly<{
   elapsed: number; oxygen: number; heat: number; power: number; distance: number;
-  primary: System; secondary: System; status: 'ready' | 'flying' | 'lost' | 'arrived';
+  primary: System; secondary: System; crew: 'computer' | 'human'; status: 'ready' | 'flying' | 'lost' | 'arrived';
 }>;
-export function createShip(): ShipState {
+export function createShip(crew: ShipState['crew'] = 'computer'): ShipState {
   return {elapsed: 0, oxygen: 75, heat: 25, power: 75, distance: 0,
-    primary: 'thrust', secondary: 'oxygen', status: 'ready'};
+    primary: 'thrust', secondary: 'oxygen', crew, status: 'ready'};
 }
 export function crewChoice(s: ShipState): System {
   const risk: Record<System, number> = {
@@ -20,16 +20,23 @@ export function crewChoice(s: ShipState): System {
   return SYSTEMS.filter(k => k !== s.primary).sort((a, b) => risk[b] - risk[a])[0]!;
 }
 export function assignShip(s: ShipState, primary: System): ShipState {
+  if (s.status === 'lost' || s.status === 'arrived') return s;
+  if (s.primary === primary) return s;
+  if (s.crew === 'human' && s.secondary === primary) return s;
   const next = {...s, primary};
-  return {...next, secondary: crewChoice(next)};
+  return s.crew === 'human' ? next : {...next, secondary: crewChoice(next)};
+}
+export function assignCrew(s: ShipState, secondary: System): ShipState {
+  if (s.crew !== 'human' || s.primary === secondary || s.status === 'lost' || s.status === 'arrived') return s;
+  return {...s, secondary};
 }
 export function startShip(s: ShipState): ShipState {
   return s.status === 'ready' ? {...s, status: 'flying'} : s;
 }
-/** One deterministic second. Crew reallocates only at ten-second boundaries. */
+/** One deterministic second. Crew also reallocates when the captain changes stations. */
 export function stepShip(s: ShipState): ShipState {
   if (s.status !== 'flying') return s;
-  const secondary = s.elapsed % 10 === 0 ? crewChoice(s) : s.secondary;
+  const secondary = s.crew === 'computer' && s.elapsed % 10 === 0 ? crewChoice(s) : s.secondary;
   const active = (k: System) => s.primary === k || secondary === k;
   const storm = Math.floor(s.elapsed / 10) % 3 === 1;
   const incident = shipIncident(s.elapsed);
