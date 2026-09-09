@@ -1,0 +1,18 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import MemoryPalaceThieves from "../../components/games/MemoryPalaceThieves";
+import GameGuide from "../../components/GameGuide.astro";
+import {locales} from "../../lib/i18n";
+import type {Locale} from "../../lib/i18n";
+export async function getStaticPaths(){return locales.map(lang=>({params:{lang},props:{locale:lang}}));}
+const {locale}=Astro.props as {locale:Locale};
+const meta:Record<Locale,{title:string;description:string;name:string}>={
+ ko:{title:"기억 궁전 도둑들 — 3D 공간 기억 잠입 게임",description:"경비의 순찰 경로를 관찰하고 기억만으로 어두운 미술관에 잠입해 유물을 훔치는 무료 3D 브라우저 게임.",name:"기억 궁전 도둑들"},
+ en:{title:"Memory Palace Thieves — 3D Memory Stealth Game",description:"Study a guard patrol, infiltrate a dark museum from memory, steal the artifact, and escape in this free 3D browser game.",name:"Memory Palace Thieves"},
+ ja:{title:"記憶宮殿の盗賊 — 3D空間記憶ステルス",description:"警備ルートを観察し、暗い美術館へ記憶だけで潜入して秘宝を盗む無料3Dブラウザゲーム。",name:"記憶宮殿の盗賊"},
+ zh:{title:"记忆宫殿盗贼 — 3D空间记忆潜行游戏",description:"观察警卫巡逻路线，凭记忆潜入黑暗美术馆，盗取藏品并逃脱的免费3D浏览器游戏。",name:"记忆宫殿盗贼"},
+ fr:{title:"Voleurs du palais mental — infiltration 3D de mémoire",description:"Étudiez la ronde, infiltrez le musée obscur de mémoire, volez l'œuvre et évadez-vous dans ce jeu 3D gratuit.",name:"Voleurs du palais mental"},
+ es:{title:"Ladrones del palacio mental — sigilo 3D de memoria",description:"Estudia la patrulla, infíltrate de memoria en el museo oscuro, roba la pieza y escapa en este juego 3D gratuito.",name:"Ladrones del palacio mental"}
+}; const m=meta[locale]??meta.en;
+---
+<BaseLayout title={m.title} description={m.description} heading={m.title}><div class="mx-auto max-w-3xl px-4 py-8"><MemoryPalaceThieves client:load locale={locale}/><GameGuide slug="memory-palace-thieves" locale={locale} name={m.name}/></div></BaseLayout>

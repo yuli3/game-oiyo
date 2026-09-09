@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>한 칸짜리 우주선 · 내부 플레이테스트</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#101915;color:#edf1da;font:16px system-ui}main{max-width:940px;margin:auto;padding:32px 20px}header{display:flex;justify-content:space-between;align-items:center;gap:20px}h1{font-size:clamp(26px,5vw,46px);margin:8px 0}small{color:#bac8a4;letter-spacing:.12em}.window{height:180px;border:10px solid #3d493a;border-radius:80px 80px 18px 18px;background:radial-gradient(ellipse at 75% 130%,#8fa577 0 27%,#23352e 28%,#101d24 46%,#080e16 70%);position:relative;margin:24px 0;overflow:hidden}.window:before{content:'✦       ·                 ✧           ·';position:absolute;inset:22px;color:#e4d6a1;word-spacing:40px}.window p{position:absolute;bottom:6px;left:20px;font:14px monospace}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.panel{background:#202e25;border:1px solid #56654b;padding:18px;border-radius:12px}.panel strong{display:block;font-size:30px;margin:14px 0}meter{width:100%;height:18px;accent-color:#b8d17c}button{font:inherit;border:1px solid #819067;border-radius:9px;background:#2a3d2c;color:#f0f2df;padding:14px;cursor:pointer}button:focus-visible{outline:3px solid #f3ca74;outline-offset:3px}button:disabled{opacity:.45;cursor:default}button[aria-pressed=true]{background:#c7d78e;color:#172419;border-color:#e8f1c4}.actions{margin:18px 0}.status{border-left:4px solid #d9bb71;padding:14px 18px;background:#202a21;line-height:1.7}footer{display:flex;gap:12px;margin-top:20px;flex-wrap:wrap}#launch{background:#d0c181;color:#18231a;font-weight:700}p{line-height:1.7}.muted{color:#b5c2ac}.danger{color:#ffb694}@media(max-width:620px){.grid{grid-template-columns:repeat(2,1fr)}main{padding:20px 14px}.panel{padding:12px}.window{height:145px}header{display:block}}
+</style></head><body><main>
+<header><div><small>OIYO · FLIGHT 06 / INTERNAL PLAYTEST</small><h1>한 칸짜리 우주선</h1></div><div><b id="clock">90초</b><p id="distance">항로 0 / 65</p></div></header>
+<div class="window" aria-hidden="true"><p>DESTINATION · HOME / SECTOR 09</p></div>
+<div class="grid"><section class="panel">산소<strong id="oxygen">75%</strong><meter id="oxygen-meter" min="0" max="100" value="75"></meter></section><section class="panel">선실 열<strong id="heat">25%</strong><meter id="heat-meter" min="0" max="100" value="25"></meter></section><section class="panel">전력<strong id="power">75%</strong><meter id="power-meter" min="0" max="100" value="75"></meter></section><section class="panel">추진<strong id="thrust">대기</strong><p class="muted">90초 안에 항로 65 도달</p></section></div>
+<p>당신과 컴퓨터 승무원이 각각 한 시스템을 맡습니다. 산소·전력이 바닥나거나 열이 100에 닿으면 실패합니다. 추진을 오래 포기해도 도착할 수 없습니다.</p>
+<div class="grid actions" aria-label="내 담당 시스템"><button data-system="oxygen" aria-pressed="false">1 · 산소 공급</button><button data-system="cooling" aria-pressed="false">2 · 열 배출</button><button data-system="power" aria-pressed="false">3 · 전력 충전</button><button data-system="thrust" aria-pressed="true">4 · 추진 유지</button></div>
+<div class="status" id="status" role="status">출항 준비. 추진을 맡고 계기 변화를 관찰하세요.</div>
+<p id="crew" class="muted">컴퓨터 승무원: 산소 공급</p><p id="weather" class="muted">우주 기상: 안정</p>
+<footer><button id="launch">출항</button><button id="pause" disabled>일시정지</button><button id="reset">새 항해</button></footer>
+<p class="muted">키보드 1–4로 담당을 바꿉니다. 창을 벗어나면 자동으로 일시정지합니다. 이 내부 시제품은 승무원 판단·생존 규칙 검증용입니다.</p>
+</main><script type="module">
+import {createShip,startShip,assignShip,stepShip,shipIncident} from './one-room-spaceship-engine.js';
+let ship=createShip(),paused=false,timer;
+const labels={oxygen:'산소 공급',cooling:'열 배출',power:'전력 충전',thrust:'추진 유지'};
+const $=id=>document.getElementById(id);
+function draw(){
+ for(const key of ['oxygen','heat','power']){$(key).textContent=Math.max(0,ship[key]).toFixed(0)+'%';$(key+'-meter').value=ship[key];}
+ $('clock').textContent=(90-ship.elapsed)+'초';$('distance').textContent='항로 '+ship.distance.toFixed(1)+' / 65';
+ $('thrust').textContent=ship.primary==='thrust'||ship.secondary==='thrust'?'가동':'관성';
+ $('crew').textContent='컴퓨터 승무원: '+labels[ship.secondary]+' · 다른 담당을 제외하고 산소 부족·열·전력 부족·항로 지연을 비교합니다.';
+ const incident=shipIncident(ship.elapsed);
+ $('weather').textContent=incident?'선장 직접 조치: '+labels[incident]+' · '+(10-ship.elapsed%10)+'초 뒤 고장 확정. 해당 담당을 선택해 유지하세요.':'우주 기상: 안정';
+ $('weather').className=incident?'danger':'muted';
+ document.querySelectorAll('[data-system]').forEach(b=>{b.setAttribute('aria-pressed',String(b.dataset.system===ship.primary));b.disabled=ship.status==='lost'||ship.status==='arrived';});
+ $('launch').disabled=ship.status!=='ready';$('pause').disabled=ship.status!=='flying';$('pause').textContent=paused?'계속':'일시정지';
+ $('status').textContent=ship.status==='arrived'?'귀환 성공. 네 시스템을 지키며 목적지에 도착했습니다.':ship.status==='lost'?(ship.oxygen<=0?'산소 고갈.':ship.heat>=100?'과열로 항해 중단.':ship.power<=0?'전력 고갈.':'추진 거리 부족.')+' 새 항해에서 담당 순서를 바꿔보세요.':paused?'일시정지됨. 계기를 살핀 뒤 계속하세요.':ship.status==='ready'?'출항 준비. 추진을 맡고 계기 변화를 관찰하세요.':'항해 중 · 내 담당: '+labels[ship.primary];
+}
+function choose(k){if(ship.status==='lost'||ship.status==='arrived')return;ship=assignShip(ship,k);draw();}
+document.querySelectorAll('[data-system]').forEach(b=>b.onclick=()=>choose(b.dataset.system));
+$('launch').onclick=()=>{ship=startShip(ship);draw();};$('pause').onclick=()=>{paused=!paused;draw();};$('reset').onclick=()=>{ship=createShip();paused=false;draw();};
+document.addEventListener('keydown',e=>{if(e.altKey||e.ctrlKey||e.metaKey||e.target instanceof HTMLInputElement)return;const k=['oxygen','cooling','power','thrust'][Number(e.key)-1];if(k){e.preventDefault();choose(k);}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&ship.status==='flying'){paused=true;draw();}});
+timer=setInterval(()=>{if(!paused&&ship.status==='flying'){ship=stepShip(ship);draw();}},1000);
+window.addEventListener('pagehide',()=>clearInterval(timer),{once:true});draw();
+</script></body></html>
