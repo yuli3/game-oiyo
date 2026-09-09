@@ -1,4 +1,4 @@
-import {createShip,startShip,assignShip,assignCrew,stepShip,shipIncident,getBestForConditions,recordBestForConditions} from './one-room-spaceship-engine.js';
+import {createShip,startShip,assignShip,assignCrew,stepShip,shipIncident,getBestForConditions,recordShipArrival} from './one-room-spaceship-engine.js';
 import {COPY} from './one-room-spaceship-copy.js';
 const $ = id => document.getElementById(id);
 const systems = ['oxygen','cooling','power','thrust'];
@@ -78,7 +78,7 @@ function draw() {
   $('pause').textContent = paused ? t.resume : t.pause;
   if (ship.status === 'arrived' && !recorded) {
     recorded = true;
-    recordBestForConditions('one-room-spaceship',Math.round(ship.distance*10)/10,'route',conditions());
+    recordShipArrival(ship,conditions());
   }
   const best = getBestForConditions('one-room-spaceship',conditions());
   $('best').textContent = t.best+': '+(best?.value ?? '—');

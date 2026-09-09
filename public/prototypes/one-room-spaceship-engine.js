@@ -154,6 +154,12 @@ function recordBestForConditions(game, value, unit, conditions, extra) {
   stampLastPlayed(game);
   return next;
 }
+
+// src/lib/games/one-room-spaceship-client.ts
+function recordShipArrival(ship, conditions) {
+  if (ship.status !== "arrived") return null;
+  return recordBestForConditions("one-room-spaceship", Math.round(ship.distance * 10) / 10, "score", conditions);
+}
 export {
   SYSTEMS,
   assignCrew,
@@ -161,7 +167,7 @@ export {
   createShip,
   crewChoice,
   getBestForConditions,
-  recordBestForConditions,
+  recordShipArrival,
   shipIncident,
   startShip,
   stepShip

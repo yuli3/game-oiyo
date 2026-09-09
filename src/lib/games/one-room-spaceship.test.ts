@@ -1,6 +1,21 @@
-import {describe, expect, it} from 'vitest';
+import {recordShipArrival, getBestForConditions} from './one-room-spaceship-client';
+import {describe, expect, it, vi} from 'vitest';
 import {SYSTEMS, assignShip, assignCrew, createShip, crewChoice, startShip, stepShip, shipIncident} from './one-room-spaceship';
 describe('one room spaceship', () => {
+  it('persists an arrival through the validated records contract and isolates modes', () => {
+    const store = new Map<string, string>();
+    vi.stubGlobal('localStorage', {getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => store.set(key, value)});
+    try {
+      const conditions = {seed: 'voyage-v2', difficulty: 'computer', assist: 'hint' as const};
+      expect(recordShipArrival(createShip(), conditions)).toBeNull();
+      recordShipArrival({...createShip(), status: 'arrived', distance: 82.5}, conditions);
+      expect(getBestForConditions('one-room-spaceship', conditions)?.value).toBe(82.5);
+      recordShipArrival({...createShip(), status: 'arrived', distance: 70}, conditions);
+      expect(getBestForConditions('one-room-spaceship', conditions)?.value).toBe(82.5);
+      expect(getBestForConditions('one-room-spaceship', {...conditions, difficulty: 'human'})).toBeNull();
+    } finally {vi.unstubAllGlobals();}
+  });
   it('requires the captain, not the crew, at the incident deadline', () => {
     const s = {...startShip(createShip('human')), elapsed: 19, heat: 25,
       primary: 'thrust' as const, secondary: 'cooling' as const};
