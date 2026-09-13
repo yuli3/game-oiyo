@@ -1,4 +1,4 @@
-export const TIME_LOOP_RULESET_VERSION = "time-loop-rescue-v1";
+export const TIME_LOOP_RULESET_VERSION = "time-loop-rescue-v2";
 export const TIME_LOOP_STEP_SECONDS = 1 / 30;
 export const TIME_LOOP_TICKS = 600;
 export const TIME_LOOP_MAX_LOOPS = 3;
@@ -13,8 +13,8 @@ export type TimeLoopMission = Readonly<{
   tick: number;
   player: TimeLoopPoint;
   carrying: boolean;
-  recordings: readonly (readonly TimeLoopInput[])[];
-  currentRecording: readonly TimeLoopInput[];
+  recordings: readonly (readonly TimeLoopPoint[])[];
+  currentRecording: readonly TimeLoopPoint[];
 }>;
 
 export type TimeLoopAction =
@@ -33,7 +33,7 @@ export const TIME_LOOP_ROOM = Object.freeze({
   door: Object.freeze({ x: 468 * SCALE, y: 205 * SCALE, width: 24 * SCALE, height: 130 * SCALE }),
   plate: Object.freeze({ x: 160 * SCALE, y: 120 * SCALE, radius: 34 * SCALE }),
   rescue: Object.freeze({ x: 750 * SCALE, y: 255 * SCALE, radius: 18 * SCALE }),
-  exit: Object.freeze({ x: 830 * SCALE, y: 440 * SCALE }),
+  exit: Object.freeze({ x: 830 * SCALE, y: 440 * SCALE, width: 76 * SCALE, height: 62 * SCALE }),
 });
 
 const clamp = (value: number, minimum: number, maximum: number) =>
@@ -53,23 +53,22 @@ function move(point: TimeLoopPoint, input: TimeLoopInput, doorOpen: boolean): Ti
     y: clamp(point.y + input.y * delta, PLAYER_RADIUS, TIME_LOOP_ROOM.height - PLAYER_RADIUS),
   };
   const door = TIME_LOOP_ROOM.door;
-  const overlapsDoor = next.x + PLAYER_RADIUS > door.x
-    && next.x - PLAYER_RADIUS < door.x + door.width
-    && next.y + PLAYER_RADIUS > door.y
-    && next.y - PLAYER_RADIUS < door.y + door.height;
-  if (!doorOpen && overlapsDoor) {
-    if (point.x < door.x) return { ...next, x: door.x - PLAYER_RADIUS };
-    if (point.x > door.x + door.width) return { ...next, x: door.x + door.width + PLAYER_RADIUS };
+  const overlapsDivider = (x: number) => x + PLAYER_RADIUS > door.x && x - PLAYER_RADIUS < door.x + door.width;
+  const inPassage = doorOpen && point.y - PLAYER_RADIUS >= door.y && point.y + PLAYER_RADIUS <= door.y + door.height;
+  if (overlapsDivider(next.x) && !inPassage) {
+    next.x = point.x < door.x + door.width / 2 ? door.x - PLAYER_RADIUS : door.x + door.width + PLAYER_RADIUS;
+  }
+  if (overlapsDivider(next.x)) {
+    next.y = clamp(next.y, door.y + PLAYER_RADIUS, door.y + door.height - PLAYER_RADIUS);
   }
   return next;
 }
 
-export function timeLoopGhostPosition(recording: readonly TimeLoopInput[], tick: number): TimeLoopPoint {
-  let point: TimeLoopPoint = TIME_LOOP_ROOM.start;
-  for (let index = 0; index < Math.min(tick, recording.length); index += 1) {
-    point = move(point, recording[index]!, true);
-  }
-  return point;
+// Capture resolved positions: replay must preserve collisions and the door state
+// experienced by the original run, without re-simulating it in a different loop.
+export function timeLoopGhostPosition(recording: readonly TimeLoopPoint[], tick: number): TimeLoopPoint {
+  const index = Math.min(Math.max(0, Math.trunc(tick)), recording.length) - 1;
+  return recording[index] ?? TIME_LOOP_ROOM.start;
 }
 
 export function timeLoopGhosts(mission: TimeLoopMission): readonly TimeLoopPoint[] {
@@ -118,14 +117,16 @@ export function advanceTimeLoop(mission: TimeLoopMission, action: TimeLoopAction
   const rescueReach = TIME_LOOP_ROOM.rescue.radius + PLAYER_RADIUS;
   const carrying = mission.carrying
     || squaredDistance(player, TIME_LOOP_ROOM.rescue) <= rescueReach * rescueReach;
-  const rescued = carrying && player.x >= TIME_LOOP_ROOM.exit.x && player.y >= TIME_LOOP_ROOM.exit.y;
+  const exit = TIME_LOOP_ROOM.exit;
+  const rescued = carrying && player.x >= exit.x && player.x <= exit.x + exit.width
+    && player.y >= exit.y && player.y <= exit.y + exit.height;
   const next: TimeLoopMission = {
     ...mission,
     phase: rescued ? "rescued" : "playing",
     tick: mission.tick + 1,
     player,
     carrying,
-    currentRecording: [...mission.currentRecording, action.input],
+    currentRecording: [...mission.currentRecording, player],
   };
   return next.tick >= TIME_LOOP_TICKS ? commitLoop(next) : next;
 }

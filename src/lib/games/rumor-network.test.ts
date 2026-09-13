@@ -1,0 +1,9 @@
+import {describe,it,expect} from 'vitest';
+import {createRumorNetwork,transmitRumor,correctRumor,rumorScore,rumorEffects,RUMOR_LINKS,type RumorState} from './rumor-network';
+describe('rumor network',()=>{
+ it('preserves originals and refuses jumps',()=>{const s=createRumorNetwork(0);expect(transmitRumor(s,7)).toBe(s);expect(transmitRumor(s,NaN)).toBe(s);const n=transmitRumor(s,1);expect(n.message[0]).toBe(1);expect(s.message).toEqual([0,0,0]);});
+ it('requires the whole message to survive at the destination',()=>{let s=createRumorNetwork(0);for(const n of [1,4,7])s=transmitRumor(s,n);expect(s.phase).toBe('lost');expect(correctRumor(s,0)).toBe(s);expect(rumorScore(s)).toBe(0);});
+ it('limits corrections and does not charge for unchanged fields',()=>{let s=transmitRumor(createRumorNetwork(0),1);expect(correctRumor(s,1)).toBe(s);s=correctRumor(s,0);s=transmitRumor(s,4);s=correctRumor(s,2);expect(s.corrections).toBe(0);expect(correctRumor(s,-1)).toBe(s);s=transmitRumor(s,7);expect(s.phase).toBe('won');expect(rumorScore(s)).toBe(65);expect(transmitRumor(s,0)).toBe(s);});
+ it('offers a winning route for every rule rotation',()=>{for(let seed=0;seed<30;seed++){const queue:RumorState[]=[createRumorNetwork(seed)],seen=new Set<string>();let won=false;while(queue.length){const s=queue.shift()!;const key=JSON.stringify([s.node,s.message,s.corrections]);if(seen.has(key))continue;seen.add(key);if(s.phase==='won'){won=true;break;}if(s.phase!=='playing')continue;for(const n of RUMOR_LINKS[s.node]!)queue.push(transmitRumor(s,n));for(let f=0;f<3;f++)queue.push(correctRumor(s,f));}expect(won,`seed ${seed}`).toBe(true);}});
+ it('is deterministic and normalizes invalid seeds',()=>{expect(rumorEffects(42)).toEqual(rumorEffects(42));expect(createRumorNetwork(NaN)).toEqual(createRumorNetwork(0));});
+});

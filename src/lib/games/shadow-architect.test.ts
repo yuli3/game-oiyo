@@ -1,5 +1,13 @@
 import{describe,expect,it}from"vitest";import{SHADOW_SOLUTIONS,createShadowArchitect,isShadowComplete,selectShadowBlock,shadowArchitectFingerprint,shadowMatch,shadowCells,solveShadowArchitect,targetShadow,transformShadowBlock}from"./shadow-architect";
 describe("shadow architect",()=>{
+ it("does not charge moves for clamped or empty actions",()=>{
+  let state=createShadowArchitect(0);for(let i=0;i<10;i++)state=transformShadowBlock(state,{x:-1});
+  expect(transformShadowBlock(state,{x:-1})).toBe(state);expect(transformShadowBlock(state,{})).toBe(state);
+ });
+ it("normalizes puzzle indexes and rejects invalid transforms",()=>{
+  expect(createShadowArchitect(-1).puzzle).toBe(9);expect(createShadowArchitect(NaN).puzzle).toBe(0);
+  const state=createShadowArchitect();expect(transformShadowBlock(state,{x:NaN})).toBe(state);expect(transformShadowBlock(state,{rotate:.5})).toBe(state);
+ });
  it("ships ten distinct target silhouettes",()=>{const targets=SHADOW_SOLUTIONS.map((_,i)=>targetShadow(i).join("|"));expect(new Set(targets).size).toBe(10);});
  it("every target has a certified five-block solution",()=>{for(let i=0;i<10;i++){const solved=solveShadowArchitect(createShadowArchitect(i));expect(isShadowComplete(solved)).toBe(true);expect(shadowCells(solved.poses)).toEqual(targetShadow(i));}});
  it("starts unsolved and reports a bounded match",()=>{for(let i=0;i<10;i++){const state=createShadowArchitect(i),match=shadowMatch(state);expect(isShadowComplete(state)).toBe(false);expect(match.percent).toBeGreaterThanOrEqual(0);expect(match.percent).toBeLessThanOrEqual(100);}});

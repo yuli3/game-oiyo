@@ -52,11 +52,11 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
   },
   "time-loop-rescue": {
     origin: {
-      ko: "타임루프 구조대는 이전 루프의 내 움직임을 동료로 바꾸는 OIYO 오리지널 1인 협동 퍼즐입니다. 잔상은 임의로 움직이는 AI가 아니라 플레이어가 방금 기록한 입력을 그대로 재생합니다.",
-      en: "Time Loop Rescue is an original OIYO solo-cooperation puzzle that turns your previous run into a teammate. Each echo replays the inputs you just recorded instead of acting as random AI.",
-      ja: "タイムループ・レスキューは、直前の自分の動きを仲間に変えるOIYOオリジナルの一人協力パズルです。残像はランダムなAIではなく、記録した入力をそのまま再生します。",
-      zh: "时光回环救援队是 OIYO 原创的单人协作解谜游戏，把上一轮的自己变成队友。残影不会随机行动，而会原样重放你刚才记录的输入。",
-      fr: "Sauvetage temporel est un puzzle coopératif solo original d'OIYO qui transforme votre boucle précédente en partenaire. Chaque écho reproduit exactement vos commandes enregistrées.",
+      ko: "타임루프 구조대는 이전 루프의 내 움직임을 동료로 바꾸는 OIYO 오리지널 1인 협동 퍼즐입니다. 잔상은 임의로 움직이는 AI가 아니라 플레이어가 실제로 이동한 경로와 타이밍을 그대로 재생합니다.",
+      en: "Time Loop Rescue is an original OIYO solo-cooperation puzzle that turns your previous run into a teammate. Each echo replays your actual recorded route and timing instead of acting as random AI.",
+      ja: "タイムループ・レスキューは、直前の自分の動きを仲間に変えるOIYOオリジナルの一人協力パズルです。残像はランダムなAIではなく、実際に移動した経路とタイミングをそのまま再生します。",
+      zh: "时光回环救援队是 OIYO 原创的单人协作解谜游戏，把上一轮的自己变成队友。残影不会随机行动，而会原样重放你实际走过的路线和时序。",
+      fr: "Sauvetage temporel est un puzzle coopératif solo original d'OIYO qui transforme votre boucle précédente en partenaire. Chaque écho reproduit exactement votre trajet réel et son rythme.",
       es: "Rescate temporal es un puzle cooperativo para una persona original de OIYO que convierte tu vuelta anterior en compañero. Cada eco repite exactamente los movimientos que grabaste.",
     },
     how: {
@@ -70,7 +70,7 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
     faqs: [
       {
         q: { ko: "잔상은 매번 똑같이 움직이나요?", en: "Does an echo always move the same way?", ja: "残像は毎回同じように動きますか？", zh: "残影每次都会走同样的路线吗？", fr: "L'écho suit-il toujours le même trajet ?", es: "¿El eco siempre repite el mismo recorrido?" },
-        a: { ko: "네. 같은 입력은 같은 위치와 결과를 만듭니다. 그래서 빠르게 움직이는 것보다 스위치에 도착한 뒤 충분히 기다리는 기록이 더 안정적입니다.", en: "Yes. The same inputs produce the same positions and outcome. A recording that waits on the switch is more reliable than one that only gets there quickly.", ja: "はい。同じ入力は同じ位置と結果を生みます。素早く着くだけでなく、スイッチ上で十分待つ記録の方が安定します。", zh: "是的，相同输入会产生相同位置和结果。因此，到达开关后留出等待时间的记录会更稳定。", fr: "Oui. Les mêmes commandes donnent les mêmes positions et le même résultat. Attendre sur l'interrupteur rend l'enregistrement plus fiable.", es: "Sí. Las mismas entradas producen las mismas posiciones y el mismo resultado. Conviene grabar unos segundos de espera sobre el interruptor." },
+        a: { ko: "네. 잔상은 벽에 막혔던 구간까지 실제 경로를 재현하고, 기록이 끝나면 마지막 위치에 머뭅니다. 스위치에 도착한 상태로 기록하면 다음 루프에서 계속 스위치를 누릅니다.", en: "Yes. The echo follows your actual route, including stops at walls, then stays at its final position. End the recording on the switch to keep it held in the next loop.", ja: "はい。壁に遮られた区間も含めて実際の経路を再現し、記録の最後の位置に留まります。スイッチ上で記録を終えると、次のループでも押し続けます。", zh: "是的，残影会重现实际路线，包括被墙挡住的停顿，随后停留在记录的最后位置。在开关上结束记录，就能在下一轮持续按住开关。", fr: "Oui. L'écho reproduit le trajet réel, y compris les arrêts contre les murs, puis reste à sa dernière position. Terminez l'enregistrement sur l'interrupteur pour le maintenir lors de la boucle suivante.", es: "Sí. El eco reproduce la ruta real, incluidas las paradas ante las paredes, y permanece en su última posición. Termina la grabación sobre el interruptor para mantenerlo pulsado en la siguiente vuelta." },
       },
     ],
   },

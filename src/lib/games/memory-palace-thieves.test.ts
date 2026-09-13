@@ -50,4 +50,15 @@ describe("memory palace thieves", () => {
       expect(escaped,`seed ${seed}`).toBe(true);
     }
   });
+  it("normalizes nonfinite seeds and rejects invalid sight coordinates",()=>{
+    expect(createMemoryPalace(NaN)).toEqual(createMemoryPalace(0));
+    expect(palaceLineOfSight({x:1,y:NaN},{x:1,y:5})).toBe(false);
+    expect(palaceLineOfSight({x:1,y:1.5},{x:1,y:5})).toBe(false);
+  });
+  it("leaves a finished run unchanged",()=>{
+    const state={...createMemoryPalace(0),phase:"caught" as const};
+    expect(moveMemoryPalace(state,"right")).toBe(state);
+    expect(revealMemoryPalace(state)).toBe(state);
+  });
+
 });

@@ -1,6 +1,17 @@
 import {describe,expect,it} from "vitest";import {GRAVITY_GARDEN_STEP,createGravityGarden,gravityGardenFingerprint,gravityGardenScore,plantGardenSeed,startGravityGarden,stepGravityGarden} from "./gravity-garden";
 const run=(state:ReturnType<typeof createGravityGarden>)=>{let s=startGravityGarden(state);for(let i=0;i<12/GRAVITY_GARDEN_STEP;i++)s=stepGravityGarden(s);return s;};
 describe("gravity garden",()=>{
+ it("rejects non-finite placement without poisoning the simulation",()=>{
+  const s=createGravityGarden();for(const value of [NaN,Infinity,-Infinity])expect(plantGardenSeed(s,"moss",value,100)).toBe(s);
+ });
+ it("cannot restart or edit a finished run",()=>{
+  const s=run(plantGardenSeed(createGravityGarden(),"moss",100,100));
+  expect(startGravityGarden(s)).toBe(s);expect(plantGardenSeed(s,"moss",200,200)).toBe(s);
+ });
+ it("rejects invalid or oversized simulation steps",()=>{
+  const s=startGravityGarden(plantGardenSeed(createGravityGarden(),"moss",100,100));
+  for(const dt of [NaN,Infinity,-1,0,1])expect(stepGravityGarden(s,dt)).toBe(s);
+ });
  it("is deterministic at a fixed step",()=>{const setup=plantGardenSeed(plantGardenSeed(createGravityGarden(),"wind-reed",180,110),"gravity-bloom",590,300);expect(gravityGardenFingerprint(run(setup))).toBe(gravityGardenFingerprint(run(setup)));});
  it("does not start without a planted field",()=>{const s=createGravityGarden();expect(startGravityGarden(s)).toBe(s);});
  it("caps the garden at six seeds",()=>{let s=createGravityGarden();for(let i=0;i<9;i++)s=plantGardenSeed(s,"moss",40+i*40,200);expect(s.seeds).toHaveLength(6);});

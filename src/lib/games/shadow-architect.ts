@@ -34,19 +34,23 @@ export function worldVoxels(poses:readonly ShadowPose[]):ReadonlyArray<Voxel&{bl
 export function shadowCells(poses:readonly ShadowPose[]):readonly string[]{
  return [...new Set(worldVoxels(poses).filter(v=>v.x>=0&&v.y>=0&&v.x<SHADOW_WALL_WIDTH&&v.y<SHADOW_WALL_HEIGHT).map(v=>`${v.x},${v.y}`))].sort();
 }
-export function targetShadow(puzzle:number):readonly string[]{return shadowCells(SHADOW_SOLUTIONS[puzzle%SHADOW_SOLUTIONS.length]!);}
+function puzzleIndex(value:number):number{return Number.isFinite(value)?((Math.trunc(value)%SHADOW_SOLUTIONS.length)+SHADOW_SOLUTIONS.length)%SHADOW_SOLUTIONS.length:0;}
+export function targetShadow(puzzle:number):readonly string[]{return shadowCells(SHADOW_SOLUTIONS[puzzleIndex(puzzle)]!);}
 export function shadowMatch(state:ShadowArchitectState):Readonly<{matched:number;target:number;extra:number;percent:number}>{
  const current=new Set(shadowCells(state.poses)),target=new Set(targetShadow(state.puzzle));let matched=0;for(const cell of current)if(target.has(cell))matched++;
  const extra=current.size-matched;return{matched,target:target.size,extra,percent:Math.round(matched/Math.max(1,new Set([...current,...target]).size)*100)};
 }
 export function isShadowComplete(state:ShadowArchitectState):boolean{const m=shadowMatch(state);return m.matched===m.target&&m.extra===0;}
 export function createShadowArchitect(puzzle=0):ShadowArchitectState{
- const solution=SHADOW_SOLUTIONS[puzzle%SHADOW_SOLUTIONS.length]!;
- return{puzzle:puzzle%SHADOW_SOLUTIONS.length,selected:0,moves:0,poses:solution.map((p,i)=>({...p,x:(p.x+1+i%2)%6,rotation:((p.rotation+1)%4) as ShadowPose["rotation"]}))};
+ const solution=SHADOW_SOLUTIONS[puzzleIndex(puzzle)]!;
+ return{puzzle:puzzleIndex(puzzle),selected:0,moves:0,poses:solution.map((p,i)=>({...p,x:(p.x+1+i%2)%6,rotation:((p.rotation+1)%4) as ShadowPose["rotation"]}))};
 }
 export function selectShadowBlock(state:ShadowArchitectState,selected:ShadowBlockId):ShadowArchitectState{return{...state,selected};}
 export function transformShadowBlock(state:ShadowArchitectState,change:Partial<Pick<ShadowPose,"x"|"y"|"z">>&{rotate?:number}):ShadowArchitectState{
+ if(Object.values(change).some(value=>!Number.isFinite(value)||!Number.isInteger(value)))return state;
  const poses=state.poses.map((pose,index)=>{if(index!==state.selected)return pose;return{x:Math.max(0,Math.min(6,pose.x+(change.x??0))),y:Math.max(0,Math.min(5,pose.y+(change.y??0))),z:Math.max(0,Math.min(3,pose.z+(change.z??0))),rotation:((pose.rotation+(change.rotate??0)+4)%4) as ShadowPose["rotation"]};});
+ const old=state.poses[state.selected],next=poses[state.selected];
+ if(!old||!next||(old.x===next.x&&old.y===next.y&&old.z===next.z&&old.rotation===next.rotation))return state;
  return{...state,poses,moves:state.moves+1};
 }
 export function solveShadowArchitect(state:ShadowArchitectState):ShadowArchitectState{return{...state,poses:SHADOW_SOLUTIONS[state.puzzle]!.map(p=>({...p}))};}

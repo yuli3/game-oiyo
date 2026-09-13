@@ -1,4 +1,4 @@
-export const RIVALS_MIND_RULESET="rivals-mind-v1";
+export const RIVALS_MIND_RULESET="rivals-mind-v2";
 export const RIVALS_MIND_MAX_ROUNDS=5;
 export type DuelAction="strike"|"guard"|"evade-left"|"evade-right";
 export type DuelPhase="playing"|"won"|"lost"|"draw";
@@ -7,7 +7,12 @@ export type DuelRound=Readonly<{round:number;player:DuelAction;rival:DuelAction;
 export type RivalsMindState=Readonly<{seed:number;round:number;playerHealth:number;rivalHealth:number;phase:DuelPhase;history:readonly DuelRound[]}>;
 
 const ACTIONS:readonly DuelAction[]=["strike","guard","evade-left","evade-right"];
-const COUNTER:Record<DuelAction,DuelAction>={strike:"guard",guard:"strike","evade-left":"evade-right","evade-right":"evade-left"};
+function bestResponse(predicted:DuelAction):DuelAction {
+ return ACTIONS.reduce((best,candidate)=>{
+  const current=resolve(predicted,candidate),previous=resolve(predicted,best);
+  return current.playerDamage-current.rivalDamage>previous.playerDamage-previous.rivalDamage?candidate:best;
+ },ACTIONS[0]!);
+}
 
 export function createRivalsMind(seed:number):RivalsMindState{return {seed:Math.trunc(seed),round:0,playerHealth:5,rivalHealth:5,phase:"playing",history:[]};}
 
@@ -34,7 +39,7 @@ function resolve(player:DuelAction,rival:DuelAction):{playerDamage:number;rivalD
 export function chooseRivalAction(state:RivalsMindState):{action:DuelAction;read:DuelRead;reason:string}{
  const habit=readRivalHabit(state.history);
  if(state.history.length<2){const action=ACTIONS[Math.abs(state.seed+state.round)%ACTIONS.length]!;return {action,read:habit.read,reason:"sampling"};}
- return {action:COUNTER[habit.predicted],read:habit.read,reason:habit.reason};
+ return {action:bestResponse(habit.predicted),read:habit.read,reason:habit.reason};
 }
 
 export function playRivalsMindRound(state:RivalsMindState,player:DuelAction):RivalsMindState{

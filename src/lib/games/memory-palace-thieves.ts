@@ -1,7 +1,8 @@
-export const MEMORY_PALACE_RULESET = "memory-palace-thieves-v1";
+export const MEMORY_PALACE_RULESET = "memory-palace-thieves-v2";
 export const MEMORY_PALACE_WIDTH = 9;
 export const MEMORY_PALACE_HEIGHT = 7;
 export const MEMORY_PALACE_OBSERVE_TURNS = 12;
+export const MEMORY_PALACE_OBSERVE_INTERVAL_MS = 1000;
 
 export type PalacePoint = Readonly<{ x: number; y: number }>;
 export type PalaceDirection = "up" | "down" | "left" | "right" | "wait";
@@ -36,25 +37,26 @@ const PATROLS: readonly (readonly PalacePoint[])[] = [
 export const MEMORY_PALACE_EXIT: PalacePoint = Object.freeze({x:1,y:5});
 
 export function isPalaceWall(point: PalacePoint): boolean {
-  return point.x < 0 || point.y < 0 || point.x >= MEMORY_PALACE_WIDTH || point.y >= MEMORY_PALACE_HEIGHT || WALLS.has(`${point.x},${point.y}`);
+  return !Number.isInteger(point.x) || !Number.isInteger(point.y) || point.x < 0 || point.y < 0 || point.x >= MEMORY_PALACE_WIDTH || point.y >= MEMORY_PALACE_HEIGHT || WALLS.has(`${point.x},${point.y}`);
 }
 
 export function palacePatrol(seed: number): readonly PalacePoint[] {
   const base = PATROLS[0]!;
-  const offset = Math.abs(Math.trunc(seed)) % base.length;
+  const offset = Math.abs(Number.isFinite(seed)?Math.trunc(seed):0) % base.length;
   return [...base.slice(offset), ...base.slice(0, offset)];
 }
 
 export function createMemoryPalace(seed: number): MemoryPalaceState {
   const patrol = palacePatrol(seed);
   return {
-    seed: Math.trunc(seed), phase:"observing", turn:0, observationTurn:0,
+    seed: Number.isFinite(seed)?Math.trunc(seed):0, phase:"observing", turn:0, observationTurn:0,
     player:MEMORY_PALACE_EXIT, guard:patrol[0]!, artifact:{x:7,y:5},
     carrying:false, alarms:0, reveals:2,
   };
 }
 
 export function palaceLineOfSight(guard: PalacePoint, player: PalacePoint): boolean {
+  if (isPalaceWall(guard) || isPalaceWall(player)) return false;
   if (guard.x !== player.x && guard.y !== player.y) return false;
   const dx = Math.sign(player.x - guard.x);
   const dy = Math.sign(player.y - guard.y);

@@ -12,6 +12,7 @@ import {
   timeLoopGhosts,
   type TimeLoopInput,
   type TimeLoopMission,
+  type TimeLoopPoint,
 } from "../../lib/games/time-loop-rescue";
 
 type Status = "idle" | "playing" | "paused";
@@ -26,11 +27,40 @@ const COPY = {
   es: { title:"Rescate temporal", subtitle:"Coopera con tu yo del pasado para rescatar a un compañero", start:"Iniciar rescate", record:"Grabar este bucle", reset:"Empezar de nuevo", pause:"Pausa", resume:"Continuar", mute:"Silenciar", unmute:"Activar sonido", loop:"Bucle", time:"Tiempo restante", echoes:"Ecos", mission:"Misión", idle:"Listo", search:"Rescatando", carry:"Evacuando", won:"Rescate completo", failed:"Tiempo agotado", hint:"Muévete con flechas, WASD o el panel · la puerta se abre cuando un eco pisa el interruptor", first:"Ponte sobre el interruptor superior izquierdo y graba este bucle.", echo:"Cruza la puerta central cuando el eco violeta llegue al interruptor.", extract:"Compañero asegurado. Llega a la salida inferior derecha.", success:"Cooperaste con tu yo del pasado y completaste el rescate.", retry:"Acorta la ruta e inténtalo de nuevo.", area:"Área de juego de Rescate temporal" },
 } as const;
 
+const BOARD_COPY = {
+  ko: {switch:"스위치",exit:"출구",up:"위",down:"아래",left:"왼쪽",right:"오른쪽"},
+  en: {switch:"SWITCH",exit:"EXIT",up:"Up",down:"Down",left:"Left",right:"Right"},
+  ja: {switch:"スイッチ",exit:"出口",up:"上",down:"下",left:"左",right:"右"},
+  zh: {switch:"开关",exit:"出口",up:"上",down:"下",left:"左",right:"右"},
+  fr: {switch:"INTERRUPTEUR",exit:"SORTIE",up:"Haut",down:"Bas",left:"Gauche",right:"Droite"},
+  es: {switch:"INTERRUPTOR",exit:"SALIDA",up:"Arriba",down:"Abajo",left:"Izquierda",right:"Derecha"},
+} as const;
+type SpriteFrame = readonly [number, number, number, number];
+const OPERATIVE_FRAMES: Record<Direction, readonly SpriteFrame[]> = {
+  down:[[197,8,118,156],[393,8,117,157],[580,8,117,157],[773,8,119,157]],
+  right:[[206,354,96,141],[397,356,103,144],[587,355,95,142],[772,357,109,139]],
+  up:[[199,700,114,163],[390,700,117,163],[581,700,113,163],[771,700,118,163]],
+  left:[[205,1046,96,133],[398,1046,103,139],[585,1046,97,134],[781,1046,97,144]],
+};
+const ECHO_FRAMES: Record<Direction, SpriteFrame> = {
+  down:[55,19,137,178],right:[502,17,108,182],up:[932,18,136,181],left:[1385,17,113,182],
+};
+const CREW_FRAME: SpriteFrame = [54,462,138,177];
+function traceFacing(trace: readonly TimeLoopPoint[], tick=trace.length): Direction {
+  for(let i=Math.min(tick,trace.length)-1;i>=0;i--){
+    const previous=trace[i-1]??TIME_LOOP_ROOM.start,point=trace[i]!;
+    const dx=point.x-previous.x,dy=point.y-previous.y;
+    if(dx||dy)return Math.abs(dx)>Math.abs(dy)?(dx>0?"right":"left"):(dy>0?"down":"up");
+  }
+  return "down";
+}
+
 const SCALE = 1_000;
 const px = (value: number) => value / SCALE;
 
 export default function TimeLoopRescue({ locale = "ko" }: { locale?: string }) {
   const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
+  const boardText = BOARD_COPY[locale as keyof typeof BOARD_COPY] ?? BOARD_COPY.en;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const missionRef = useRef<TimeLoopMission>(createTimeLoopMission());
   const inputRef = useRef<Record<Direction, boolean>>({ up:false, down:false, left:false, right:false });
@@ -41,12 +71,19 @@ export default function TimeLoopRescue({ locale = "ko" }: { locale?: string }) {
   const [status, setStatus] = useState<Status>("idle");
   const [mission, setMission] = useState<TimeLoopMission>(missionRef.current);
   const [muted, setMuted] = useState(false);
+  const [sprites,setSprites]=useState<Partial<Record<"operative"|"crew"|"floor",HTMLImageElement>>>({});
+  useEffect(()=>{
+    let active=true;
+    const images=(["operative","crew","floor"] as const).map(name=>{const image=new Image();image.onload=()=>{if(active)setSprites(old=>({...old,[name]:image}));};image.src=`/games/time-loop-rescue-${name}.webp`;return image;});
+    return()=>{active=false;images.forEach(image=>{image.onload=null;});};
+  },[]);
   const reducedMotion = usePrefersReducedMotion();
 
   const tone = useCallback((kind: "record" | "door" | "rescue" | "win") => {
     if (mutedRef.current || typeof window === "undefined") return;
     const AudioCtor = window.AudioContext ?? (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!AudioCtor) return;
+    try {
     const context = new AudioCtor();
     const oscillator = context.createOscillator();
     const gain = context.createGain();
@@ -58,7 +95,8 @@ export default function TimeLoopRescue({ locale = "ko" }: { locale?: string }) {
     gain.gain.exponentialRampToValueAtTime(.0001, context.currentTime + .26);
     oscillator.connect(gain).connect(context.destination);
     oscillator.start(); oscillator.stop(context.currentTime + .27);
-    oscillator.addEventListener("ended", () => void context.close(), { once:true });
+    oscillator.addEventListener("ended", () => void context.close().catch(() => {}), { once:true });
+    } catch { /* Audio availability must not interrupt the simulation. */ }
   }, []);
 
   const publish = useCallback((next: TimeLoopMission) => {
@@ -66,21 +104,38 @@ export default function TimeLoopRescue({ locale = "ko" }: { locale?: string }) {
     setMission(next);
   }, []);
 
+  const clearInput = useCallback(() => {
+    inputRef.current = {up:false,down:false,left:false,right:false};
+  }, []);
+  const pause = useCallback(() => {
+    clearInput();
+    if (statusRef.current === "playing") {statusRef.current="paused";setStatus("paused");}
+  }, [clearInput]);
+  const togglePause = useCallback(() => {
+    if (statusRef.current === "idle" || missionRef.current.phase !== "playing") return;
+    clearInput();
+    const next = statusRef.current === "playing" ? "paused" : "playing";
+    statusRef.current=next;setStatus(next);
+    if(next === "playing")canvasRef.current?.focus();
+  }, [clearInput]);
+
   const reset = useCallback(() => {
+    clearInput();
     const next = createTimeLoopMission();
     publish(next); statusRef.current = "idle"; setStatus("idle"); lastDoorRef.current = false;
-  }, [publish]);
+  }, [publish, clearInput]);
 
   const start = useCallback(() => {
+    clearInput();
     statusRef.current = "playing"; setStatus("playing"); canvasRef.current?.focus();
-  }, []);
+  }, [clearInput]);
 
   const commit = useCallback(() => {
     if (statusRef.current !== "playing") return;
     const previous = missionRef.current;
     const next = advanceTimeLoop(previous, { type:"commit-loop" });
-    if (next !== previous) { publish(next); tone("record"); }
-  }, [publish, tone]);
+    if (next !== previous) { clearInput();publish(next);lastDoorRef.current=false;tone("record");canvasRef.current?.focus(); }
+  }, [publish, tone, clearInput]);
 
   useEffect(() => {
     let active = true;
@@ -90,13 +145,13 @@ export default function TimeLoopRescue({ locale = "ko" }: { locale?: string }) {
       if (!active) return;
       const elapsed = Math.min(.1, Math.max(0, now - previous) / 1_000);
       previous = now;
-      if (statusRef.current === "playing") {
+      if (statusRef.current === "playing" && missionRef.current.phase === "playing") {
         accumulator += elapsed;
         while (accumulator >= TIME_LOOP_STEP_SECONDS) {
           const held = inputRef.current;
           const input: TimeLoopInput = {
-            x: held.right ? 1 : held.left ? -1 : 0,
-            y: held.down ? 1 : held.up ? -1 : 0,
+            x: held.right === held.left ? 0 : held.right ? 1 : -1,
+            y: held.down === held.up ? 0 : held.down ? 1 : -1,
           };
           const before = missionRef.current;
           const next = advanceTimeLoop(before, { type:"tick", input });
@@ -108,18 +163,20 @@ export default function TimeLoopRescue({ locale = "ko" }: { locale?: string }) {
           lastDoorRef.current = doorOpen;
           setMission(next);
           accumulator -= TIME_LOOP_STEP_SECONDS;
+          if (next.phase !== "playing") {clearInput();accumulator=0;break;}
         }
-      }
+      } else { accumulator=0; }
       frameRef.current = requestAnimationFrame(run);
     };
     frameRef.current = requestAnimationFrame(run);
     const visibility = () => {
-      if (document.hidden && statusRef.current === "playing") { statusRef.current = "paused"; setStatus("paused"); }
+      if (document.hidden) pause();
       previous = performance.now(); accumulator = 0;
     };
     document.addEventListener("visibilitychange", visibility);
-    return () => { active = false; cancelAnimationFrame(frameRef.current); document.removeEventListener("visibilitychange", visibility); };
-  }, [tone]);
+    window.addEventListener("blur", pause);
+    return () => { active = false; cancelAnimationFrame(frameRef.current); document.removeEventListener("visibilitychange", visibility);window.removeEventListener("blur",pause); };
+  }, [tone, pause, clearInput]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -130,31 +187,55 @@ export default function TimeLoopRescue({ locale = "ko" }: { locale?: string }) {
     const doorOpen = isTimeLoopPlateHeld(mission);
     context.clearRect(0, 0, 960, 540);
     context.fillStyle = "#071521"; context.fillRect(0, 0, 960, 540);
-    context.strokeStyle = "#173149"; context.lineWidth = 1;
-    for (let x=0;x<=960;x+=60){ context.beginPath(); context.moveTo(x,0); context.lineTo(x,540); context.stroke(); }
-    for (let y=0;y<=540;y+=60){ context.beginPath(); context.moveTo(0,y); context.lineTo(960,y); context.stroke(); }
+    if(sprites.floor){context.drawImage(sprites.floor,0,0,960,540);context.fillStyle="rgba(2,12,24,.38)";context.fillRect(0,0,960,540);}
+    context.strokeStyle="#19384b";context.lineWidth=8;context.strokeRect(4,4,952,532);
+    context.fillStyle="#44c6c0";
+    for(const x of [40,260,620,840]){context.fillRect(x,8,70,3);context.fillRect(x,529,70,3);}
     const door=TIME_LOOP_ROOM.door;
     context.fillStyle="#203a51"; context.fillRect(px(door.x),0,px(door.width),px(door.y)); context.fillRect(px(door.x),px(door.y+door.height),px(door.width),540-px(door.y+door.height));
+    context.strokeStyle="#7293a1";context.lineWidth=2;
+    context.strokeRect(px(door.x),0,px(door.width),px(door.y));context.strokeRect(px(door.x),px(door.y+door.height),px(door.width),540-px(door.y+door.height));
     context.fillStyle=doorOpen?"#147a6b":"#b33b52"; context.fillRect(px(door.x),px(door.y),px(door.width),px(door.height));
+    context.strokeStyle=doorOpen?"#55ead4":"#ff6d80";context.lineWidth=3;context.strokeRect(px(door.x)+3,px(door.y)+3,px(door.width)-6,px(door.height)-6);
     const plate=TIME_LOOP_ROOM.plate; context.beginPath(); context.arc(px(plate.x),px(plate.y),px(plate.radius),0,Math.PI*2); context.fillStyle=doorOpen?"#ffd166":"#6f5c21"; context.fill(); context.strokeStyle="#ffe39a";context.lineWidth=4;context.stroke();
     const exit=TIME_LOOP_ROOM.exit; context.fillStyle="#0d493f";context.fillRect(px(exit.x),px(exit.y),76,62);context.strokeStyle="#55ead4";context.lineWidth=3;context.strokeRect(px(exit.x),px(exit.y),76,62);
     const rescue=TIME_LOOP_ROOM.rescue;
     const actor=(point:{x:number;y:number},fill:string,label:string,alpha=1)=>{context.save();context.globalAlpha=alpha;context.translate(px(point.x),px(point.y));context.fillStyle=fill;context.beginPath();context.arc(0,-4,10,0,Math.PI*2);context.fill();context.fillRect(-12,7,24,18);context.strokeStyle="#071521";context.lineWidth=3;context.strokeRect(-12,7,24,18);context.fillStyle="#071521";context.font="900 13px system-ui";context.textAlign="center";context.textBaseline="middle";context.fillText(label,0,16);context.restore();};
-    context.fillStyle="#ffd166";context.font="800 15px system-ui";context.textAlign="center";context.fillText("SWITCH",px(plate.x),px(plate.y)+58);
-    context.fillStyle="#55ead4";context.fillText("EXIT",px(exit.x)+38,px(exit.y)+88);
-    if (!mission.carrying) actor(rescue,"#ffd166","!");
-    ghosts.forEach((ghost,index)=>actor(ghost,"#b3a3ff",String(index+1),reducedMotion?.82:.68));
-    actor(mission.player,"#55ead4",mission.carrying?"+":"◆");
-  }, [mission, reducedMotion]);
+    context.fillStyle="#ffd166";context.font="800 15px system-ui";context.textAlign="center";context.fillText(boardText.switch,px(plate.x),px(plate.y)+58);
+    context.fillStyle="#55ead4";context.fillText(boardText.exit,px(exit.x)+38,px(exit.y)+88);
+    const sprite=(point:TimeLoopPoint,image:HTMLImageElement|undefined,frame:SpriteFrame,color:string,label:string,alpha=1)=>{
+      if(!image){actor(point,color,label,alpha);return;}
+      const [sx,sy,sw,sh]=frame,height=52,width=height*sw/sh;
+      context.save();context.globalAlpha=alpha;
+      context.strokeStyle=color;context.lineWidth=2;context.beginPath();context.ellipse(px(point.x),px(point.y)+14,17,8,0,0,Math.PI*2);context.stroke();
+      context.drawImage(image,sx,sy,sw,sh,px(point.x)-width/2,px(point.y)-30,width,height);
+      if(label){context.fillStyle="#071521";context.beginPath();context.arc(px(point.x)+18,px(point.y)-20,9,0,Math.PI*2);context.fill();context.fillStyle=color;context.font="900 12px system-ui";context.textAlign="center";context.textBaseline="middle";context.fillText(label,px(point.x)+18,px(point.y)-20);}
+      context.restore();
+    };
+    if (!mission.carrying) sprite(rescue,sprites.crew,CREW_FRAME,"#ffd166","!");
+    ghosts.forEach((ghost,index)=>sprite(ghost,sprites.crew,ECHO_FRAMES[traceFacing(mission.recordings[index]!,mission.tick)],"#b3a3ff",String(index+1),.78));
+    const last=mission.currentRecording.at(-1),previous=mission.currentRecording.at(-2)??TIME_LOOP_ROOM.start;
+    const moving=last&&(last.x!==previous.x||last.y!==previous.y);
+    const frame=!reducedMotion&&moving?Math.floor(mission.tick/4)%4:0;
+    if(mission.carrying)sprite({x:mission.player.x-25_000,y:mission.player.y+15_000},sprites.crew,CREW_FRAME,"#ffd166","");
+    sprite(mission.player,sprites.operative,OPERATIVE_FRAMES[traceFacing(mission.currentRecording)][frame]!,"#55ead4",mission.carrying?"+":"");
+  }, [mission, reducedMotion, boardText, sprites]);
 
   useEffect(() => {
     const map: Record<string, Direction> = { ArrowUp:"up",w:"up",W:"up",ArrowDown:"down",s:"down",S:"down",ArrowLeft:"left",a:"left",A:"left",ArrowRight:"right",d:"right",D:"right" };
-    const down=(event:KeyboardEvent)=>{const direction=map[event.key];if(direction){event.preventDefault();inputRef.current[direction]=true;}if(event.key==="r"||event.key==="R")commit();if(event.key==="p"||event.key==="P"){statusRef.current=statusRef.current==="playing"?"paused":"playing";setStatus(statusRef.current);}};
+    const down=(event:KeyboardEvent)=>{
+      if(event.target!==canvasRef.current||event.ctrlKey||event.metaKey||event.altKey)return;
+      const direction=map[event.key];
+      if(direction&&statusRef.current==="playing"&&missionRef.current.phase==="playing"){event.preventDefault();inputRef.current[direction]=true;}
+      if(event.repeat)return;
+      if(event.key.toLowerCase()==="r"){event.preventDefault();commit();}
+      if(event.key.toLowerCase()==="p"){event.preventDefault();togglePause();}
+    };
     const up=(event:KeyboardEvent)=>{const direction=map[event.key];if(direction)inputRef.current[direction]=false;};
     window.addEventListener("keydown",down);window.addEventListener("keyup",up);return()=>{window.removeEventListener("keydown",down);window.removeEventListener("keyup",up);};
-  }, [commit]);
+  }, [commit,togglePause]);
 
-  const setDirection = (direction: Direction, pressed: boolean) => { inputRef.current[direction] = pressed; };
+  const setDirection = (direction: Direction, pressed: boolean) => { inputRef.current[direction] = pressed && statusRef.current === "playing" && missionRef.current.phase === "playing"; };
   const remaining = Math.max(0, (TIME_LOOP_TICKS - mission.tick) * TIME_LOOP_STEP_SECONDS);
   const label = mission.phase === "rescued" ? t.won : mission.phase === "failed" ? t.failed : mission.carrying ? t.carry : status === "idle" ? t.idle : t.search;
   const message = mission.phase === "rescued" ? t.success : mission.phase === "failed" ? t.retry : mission.carrying ? t.extract : mission.recordings.length ? t.echo : t.first;
@@ -165,25 +246,27 @@ export default function TimeLoopRescue({ locale = "ko" }: { locale?: string }) {
         {[[t.loop,`${mission.loop} / ${TIME_LOOP_MAX_LOOPS}`],[t.time,`${remaining.toFixed(1)}s`],[t.echoes,String(mission.recordings.length)],[t.mission,label]].map(([name,value])=><div key={name} className="rounded-xl bg-slate-950 px-3 py-2 text-center shadow-[0_8px_24px_rgba(2,8,23,.24)]"><strong className="block tabular-nums text-lg text-white">{value}</strong><span className="text-[11px] font-bold text-slate-300">{name}</span></div>)}
       </div>
       <div className="relative overflow-hidden rounded-2xl bg-slate-950 shadow-[0_18px_50px_rgba(2,8,23,.32)]">
-        <canvas ref={canvasRef} width={960} height={540} tabIndex={0} aria-label={t.area} className="block aspect-video w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-teal-300" />
+        <canvas ref={canvasRef} width={960} height={540} tabIndex={0} onBlur={clearInput} aria-label={t.area} className="block aspect-video w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-teal-300" />
+        {status === "paused" && mission.phase === "playing" && <button type="button" onClick={togglePause} className="absolute inset-0 grid place-items-center bg-slate-950/70 text-lg font-bold text-white">{t.resume}</button>}
+        {mission.phase !== "playing" && <div role="status" className="absolute inset-x-0 bottom-0 bg-slate-950/90 px-4 py-3 text-center font-bold text-white">{mission.phase === "rescued" ? t.won : t.failed}</div>}
         {status === "idle" && <button type="button" onClick={start} className="absolute inset-0 m-auto h-14 w-fit rounded-xl bg-teal-300 px-8 font-black text-teal-950 shadow-[0_12px_32px_rgba(45,212,191,.28)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">{t.start}</button>}
       </div>
       <p className="min-h-12 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-100" aria-live="polite">{message}</p>
       <div className="flex flex-wrap gap-2">
         <button type="button" onClick={commit} disabled={status!=="playing"||mission.currentRecording.length===0||mission.phase!=="playing"} className="min-h-11 flex-1 rounded-xl bg-teal-300 px-4 font-black text-teal-950 disabled:cursor-not-allowed disabled:opacity-40">{t.record}</button>
-        <button type="button" onClick={()=>{const next=statusRef.current==="playing"?"paused":"playing";statusRef.current=next;setStatus(next);}} disabled={status==="idle"||mission.phase!=="playing"} className="min-h-11 rounded-xl bg-slate-800 px-4 font-bold text-white disabled:opacity-40">{status==="paused"?t.resume:t.pause}</button>
+        <button type="button" onClick={togglePause} disabled={status==="idle"||mission.phase!=="playing"} className="min-h-11 rounded-xl bg-slate-800 px-4 font-bold text-white disabled:opacity-40">{status==="paused"?t.resume:t.pause}</button>
         <button type="button" onClick={()=>{mutedRef.current=!mutedRef.current;setMuted(mutedRef.current);}} className="min-h-11 rounded-xl bg-slate-800 px-4 font-bold text-white">{muted?t.unmute:t.mute}</button>
         <button type="button" onClick={reset} className="min-h-11 rounded-xl bg-slate-800 px-4 font-bold text-white">{t.reset}</button>
       </div>
-      <div className="mx-auto grid w-fit grid-cols-3 gap-2 sm:hidden" aria-label={t.hint}>
-        <span/><DirectionButton label="▲" direction="up" setDirection={setDirection}/><span/>
-        <DirectionButton label="◀" direction="left" setDirection={setDirection}/><DirectionButton label="▼" direction="down" setDirection={setDirection}/><DirectionButton label="▶" direction="right" setDirection={setDirection}/>
+      <div className="mx-auto grid w-fit grid-cols-3 gap-2" aria-label={t.hint}>
+        <span/><DirectionButton label="▲" direction="up" accessibleLabel={boardText.up} setDirection={setDirection}/><span/>
+        <DirectionButton label="◀" direction="left" accessibleLabel={boardText.left} setDirection={setDirection}/><DirectionButton label="▼" direction="down" accessibleLabel={boardText.down} setDirection={setDirection}/><DirectionButton label="▶" direction="right" accessibleLabel={boardText.right} setDirection={setDirection}/>
       </div>
       <p className="text-center text-xs font-medium text-muted-foreground">{t.hint}</p>
     </div>
   </GameContainer>;
 }
 
-function DirectionButton({ label, direction, setDirection }: { label:string; direction:Direction; setDirection:(direction:Direction,pressed:boolean)=>void }) {
-  return <button type="button" aria-label={direction} onPointerDown={(event)=>{event.currentTarget.setPointerCapture(event.pointerId);setDirection(direction,true);}} onPointerUp={()=>setDirection(direction,false)} onPointerCancel={()=>setDirection(direction,false)} onPointerLeave={()=>setDirection(direction,false)} className="h-14 w-14 rounded-xl bg-slate-800 text-lg font-black text-white shadow-[0_7px_18px_rgba(2,8,23,.26)] active:translate-y-px active:bg-teal-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-300">{label}</button>;
+function DirectionButton({ label, accessibleLabel, direction, setDirection }: { label:string; accessibleLabel:string; direction:Direction; setDirection:(direction:Direction,pressed:boolean)=>void }) {
+  return <button type="button" aria-label={accessibleLabel} onPointerDown={(event)=>{event.currentTarget.setPointerCapture(event.pointerId);setDirection(direction,true);}} onPointerUp={()=>setDirection(direction,false)} onPointerCancel={()=>setDirection(direction,false)} onLostPointerCapture={()=>setDirection(direction,false)} onPointerLeave={()=>setDirection(direction,false)} className="touch-none h-14 w-14 rounded-xl bg-slate-800 text-lg font-black text-white shadow-[0_7px_18px_rgba(2,8,23,.26)] active:translate-y-px active:bg-teal-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-300">{label}</button>;
 }
