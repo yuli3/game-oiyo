@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { buildAchievementSnapshot, evaluateAchievements, type AchievementCategory, type EvaluatedAchievement } from "../../lib/games/achievements";
+import { buildAchievementSnapshot, evaluateAchievements, type AchievementCategory, type AchievementSnapshot, type EvaluatedAchievement } from "../../lib/games/achievements";
 import { dayIndex } from "../../lib/games/daily";
-import { getAllBestAchievedAt, getAllBests, getAllConditionalBests, getAllLastPlayed, type BestRecord } from "../../lib/games/records";
+import { getAllBestAchievedAt, getAllBests, getAllConditionalBests, getAllLastPlayed, getRecentRecords, type BestRecord, type RecentGameRecord } from "../../lib/games/records";
 import { gameDisplayName } from "../../lib/games/display-names";
 import { Button } from "../ui/button";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "../ui/empty";
@@ -134,6 +134,27 @@ const ACHIEVEMENT_COPY: Record<string, Record<UILocale, { title: string; desc: s
     fr: { title: "Détenteur de record", desc: "Établissez un record personnel dans un jeu." },
     es: { title: "Poseedor de récord", desc: "Establece tu mejor marca personal en un juego." },
   },
+  regular: {
+    ko:{title:"단골 플레이어",desc:"누적 10판을 플레이하세요."},en:{title:"Regular Player",desc:"Play 10 games in total."},ja:{title:"常連プレイヤー",desc:"合計10回プレイしましょう。"},zh:{title:"常客玩家",desc:"累计游玩10局。"},fr:{title:"Joueur régulier",desc:"Jouez 10 parties au total."},es:{title:"Jugador habitual",desc:"Juega 10 partidas en total."},
+  },
+  "winner-10": {
+    ko:{title:"승리의 감각",desc:"누적 10승을 거두세요."},en:{title:"Winning Habit",desc:"Win 10 games in total."},ja:{title:"勝利の感覚",desc:"合計10勝しましょう。"},zh:{title:"胜利习惯",desc:"累计赢得10场。"},fr:{title:"Goût de la victoire",desc:"Remportez 10 victoires."},es:{title:"Hábito ganador",desc:"Consigue 10 victorias."},
+  },
+  "arcade-legend": {
+    ko:{title:"아케이드 전설",desc:"누적 250판을 플레이하세요."},en:{title:"Arcade Legend",desc:"Play 250 games in total."},ja:{title:"アーケード伝説",desc:"合計250回プレイしましょう。"},zh:{title:"街机传奇",desc:"累计游玩250局。"},fr:{title:"Légende de l'arcade",desc:"Jouez 250 parties."},es:{title:"Leyenda del arcade",desc:"Juega 250 partidas."},
+  },
+  curator: {
+    ko:{title:"게임 큐레이터",desc:"서로 다른 30개 게임을 플레이하세요."},en:{title:"Game Curator",desc:"Play 30 different games."},ja:{title:"ゲームキュレーター",desc:"異なる30作品をプレイしましょう。"},zh:{title:"游戏策展人",desc:"游玩30款不同游戏。"},fr:{title:"Curateur de jeux",desc:"Jouez à 30 jeux différents."},es:{title:"Curador de juegos",desc:"Juega a 30 juegos distintos."},
+  },
+  "versatile-finisher": {
+    ko:{title:"다재다능한 완주자",desc:"서로 다른 5개 게임을 끝까지 플레이하세요."},en:{title:"Versatile Finisher",desc:"Finish 5 different games."},ja:{title:"多才な完走者",desc:"異なる5作品を最後までプレイしましょう。"},zh:{title:"多面完赛者",desc:"完成5款不同游戏。"},fr:{title:"Finisseur polyvalent",desc:"Terminez 5 jeux différents."},es:{title:"Finalista versátil",desc:"Termina 5 juegos distintos."},
+  },
+  "record-cabinet": {
+    ko:{title:"기록 진열장",desc:"최고 기록 5개를 보유하세요."},en:{title:"Record Cabinet",desc:"Hold 5 personal bests."},ja:{title:"記録棚",desc:"自己ベストを5件残しましょう。"},zh:{title:"纪录陈列柜",desc:"拥有5项个人最佳。"},fr:{title:"Vitrine de records",desc:"Détenez 5 records personnels."},es:{title:"Vitrina de récords",desc:"Consigue 5 marcas personales."},
+  },
+  "record-archive": {
+    ko:{title:"기록 보관소",desc:"최고 기록 15개를 보유하세요."},en:{title:"Record Archive",desc:"Hold 15 personal bests."},ja:{title:"記録保管庫",desc:"自己ベストを15件残しましょう。"},zh:{title:"纪录档案馆",desc:"拥有15项个人最佳。"},fr:{title:"Archives des records",desc:"Détenez 15 records personnels."},es:{title:"Archivo de récords",desc:"Consigue 15 marcas personales."},
+  },
 };
 
 const COPY: Record<UILocale, { title: string; subtitle: string; unlocked: string; emptyTitle: string; empty: string; browseGames: string; loading: string; myRecords: string; bestLabel: string; recentLabel: string; today: string; yesterday: string; daysAgo: (n: number) => string; noRecords: string; noRecent: string }> = {
@@ -145,9 +166,25 @@ const COPY: Record<UILocale, { title: string; subtitle: string; unlocked: string
   es: { title: "🏆 Logros", subtitle: "Se desbloquean según tu historial de juego en este navegador", unlocked: "desbloqueados", emptyTitle: "Empieza tu primera partida", empty: "Aún no has jugado ninguna partida. Juega algo y tu progreso aparecerá aquí.", browseGames: "Ver juegos", loading: "Cargando logros", myRecords: "Mis récords", bestLabel: "Mejores marcas", recentLabel: "Jugado recientemente", today: "Hoy", yesterday: "Ayer", daysAgo: (n) => `hace ${n} d`, noRecords: "Aún no hay mejores marcas.", noRecent: "Aún no hay actividad reciente." },
 };
 
+const RECORD_COPY: Record<UILocale, { recentResults: string; plays: string; wins: string; games: string; bests: string; newBest: string; win: string; loss: string; draw: string; daily: string }> = {
+  ko:{recentResults:"최근 결과",plays:"플레이",wins:"승리",games:"플레이한 게임",bests:"최고 기록",newBest:"신기록",win:"승리",loss:"패배",draw:"무승부",daily:"연속 성공"},
+  en:{recentResults:"Recent Results",plays:"Plays",wins:"Wins",games:"Games Played",bests:"Personal Bests",newBest:"New best",win:"Win",loss:"Loss",draw:"Draw",daily:"Daily streak"},
+  ja:{recentResults:"最近の結果",plays:"プレイ",wins:"勝利",games:"プレイ作品",bests:"自己ベスト",newBest:"新記録",win:"勝利",loss:"敗北",draw:"引分",daily:"連続成功"},
+  zh:{recentResults:"最近结果",plays:"游玩",wins:"胜利",games:"玩过的游戏",bests:"个人最佳",newBest:"新纪录",win:"胜利",loss:"失败",draw:"平局",daily:"连续成功"},
+  fr:{recentResults:"Résultats récents",plays:"Parties",wins:"Victoires",games:"Jeux joués",bests:"Records",newBest:"Nouveau record",win:"Victoire",loss:"Défaite",draw:"Nul",daily:"Série quotidienne"},
+  es:{recentResults:"Resultados recientes",plays:"Partidas",wins:"Victorias",games:"Juegos",bests:"Récords",newBest:"Nuevo récord",win:"Victoria",loss:"Derrota",draw:"Empate",daily:"Racha diaria"},
+};
+
 function formatBest(record: BestRecord): string {
   if (record.unit === "seconds") return `${record.value}s`;
   return String(record.value);
+}
+
+function formatRecent(record: RecentGameRecord, copy: (typeof RECORD_COPY)[UILocale]): string {
+  if (record.kind === "seconds") return `${record.value}s`;
+  if (record.kind === "score") return String(record.value);
+  if (record.kind === "daily") return `${copy.daily} ${record.value}`;
+  return record.value === "w" ? copy.win : record.value === "l" ? copy.loss : copy.draw;
 }
 
 function relativeDay(iso: string, t: (typeof COPY)[UILocale]): string {
@@ -183,19 +220,24 @@ export function buildBestEntries(
 
 const Achievements: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
   const t = COPY[locale] ?? COPY.en;
+  const recordCopy = RECORD_COPY[locale] ?? RECORD_COPY.en;
   const catLabel = CATEGORY_LABEL[locale] ?? CATEGORY_LABEL.en;
   const [dashboard, setDashboard] = useState<{
     evaluated: EvaluatedAchievement[];
+    snapshot: AchievementSnapshot;
     bests: Record<string, BestRecord>;
     conditionalBests: ReturnType<typeof getAllConditionalBests>;
     bestAchievedAt: Record<string, string>;
     recentlyPlayed: { id: string; at: string }[];
+    recentRecords: RecentGameRecord[];
   } | null>(null);
 
   useEffect(() => {
     const lastPlayed = getAllLastPlayed();
+    const snapshot = buildAchievementSnapshot();
     setDashboard({
-      evaluated: evaluateAchievements(buildAchievementSnapshot()),
+      snapshot,
+      evaluated: evaluateAchievements(snapshot),
       bests: getAllBests(),
       conditionalBests: getAllConditionalBests(),
       bestAchievedAt: getAllBestAchievedAt(),
@@ -203,6 +245,7 @@ const Achievements: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
         .map(([id, at]) => ({ id, at }))
         .sort((a, b) => b.at.localeCompare(a.at))
         .slice(0, 5),
+      recentRecords: getRecentRecords(10),
     });
   }, []);
 
@@ -213,7 +256,7 @@ const Achievements: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
       <Skeleton className="h-36 w-full rounded-xl" />
     </div>
   );
-  const { evaluated, bests, conditionalBests, bestAchievedAt, recentlyPlayed } = dashboard;
+  const { evaluated, snapshot, bests, conditionalBests, bestAchievedAt, recentlyPlayed, recentRecords } = dashboard;
 
   const unlockedCount = evaluated.filter((a) => a.unlocked).length;
   const hasAnyProgress = evaluated.some((a) => a.progress > 0);
@@ -226,6 +269,22 @@ const Achievements: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
         <p className="mt-1 text-xs font-bold text-muted-foreground">{t.subtitle}</p>
         <p className="mt-3 text-3xl font-black text-primary">{unlockedCount}<span className="text-base text-muted-foreground"> / {evaluated.length} {t.unlocked}</span></p>
       </div>
+
+      {hasAnyProgress && (
+        <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {[
+            [recordCopy.plays, snapshot.totalPlays],
+            [recordCopy.wins, snapshot.totalWins],
+            [recordCopy.games, snapshot.distinctGamesPlayed],
+            [recordCopy.bests, snapshot.bestRecordCount],
+          ].map(([label, value]) => (
+            <div key={label} className="rounded-xl bg-muted p-3 text-center">
+              <dt className="text-[11px] font-bold text-muted-foreground">{label}</dt>
+              <dd className="mt-1 text-2xl font-black tabular-nums text-foreground">{value}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
 
       {!hasAnyProgress && (
         <Empty>
@@ -278,6 +337,26 @@ const Achievements: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
             </div>
           </div>
         </div>
+      )}
+
+      {recentRecords.length > 0 && (
+        <section>
+          <h2 className="mb-2 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">{recordCopy.recentResults}</h2>
+          <ItemGroup>
+            {recentRecords.map((record) => (
+              <Item key={record.id} role="listitem" variant="outline">
+                <ItemContent>
+                  <ItemTitle>{gameDisplayName(record.game, locale)}</ItemTitle>
+                  <ItemDescription>{relativeDay(record.at, t)}{record.extra ? ` · ${record.extra}` : ""}</ItemDescription>
+                </ItemContent>
+                <ItemActions className="flex items-center gap-2 text-sm font-black tabular-nums">
+                  {record.personalBest && <span className="rounded-full bg-primary/10 px-2 py-1 text-[10px] text-primary">{recordCopy.newBest}</span>}
+                  {formatRecent(record, recordCopy)}
+                </ItemActions>
+              </Item>
+            ))}
+          </ItemGroup>
+        </section>
       )}
 
       {CATEGORY_ORDER.map((category) => {

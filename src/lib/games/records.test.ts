@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { getAchievementEvents, getAllAchievementEvents, getAllBestAchievedAt, getAllBests, getAllConditionalBests, getAllDailyStreaks, getAllLastPlayed, getAllRecords, getAllStreaks, getBest, getBestForConditions, getDailyStreak, getRecord, getStreak, recordAchievementEvent, recordBest, recordBestForConditions, recordDailyWin, recordResult, recordStreak } from "./records";
+import { getAchievementEvents, getAllAchievementEvents, getAllBestAchievedAt, getAllBests, getAllConditionalBests, getAllDailyStreaks, getAllLastPlayed, getAllRecords, getAllStreaks, getBest, getBestForConditions, getDailyStreak, getRecentRecords, getRecord, getStreak, recordAchievementEvent, recordBest, recordBestForConditions, recordDailyWin, recordResult, recordStreak } from "./records";
 
 // records.ts is localStorage-backed; provide a minimal in-memory Storage
 // polyfill so persistence across calls can actually be exercised in node.
@@ -306,6 +306,49 @@ describe("records: last-played and best-achieved timestamps (additive, no shape 
   it("does not mark imported legacy bests as a new play", () => {
     recordBest("game-2048", 2048, "score", undefined, { trackPlay: false });
     expect(getAllLastPlayed()).toEqual({});
+  });
+});
+
+describe("records: bounded recent result history", () => {
+  afterEach(() => vi.useRealTimers());
+
+  it("keeps scored runs newest-first and marks only genuine personal bests", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-07-18T10:00:00.000Z"));
+    recordBest("gravity-garden", 500, "score", "3/5 drops");
+    vi.setSystemTime(new Date("2026-07-18T10:05:00.000Z"));
+    recordBest("gravity-garden", 420, "score", "2/5 drops");
+    expect(getRecentRecords()).toMatchObject([
+      { game: "gravity-garden", value: 420, kind: "score", personalBest: false },
+      { game: "gravity-garden", value: 500, kind: "score", personalBest: true },
+    ]);
+    expect(getAchievementEvents("gravity-garden")["personal-best"]).toBe(1);
+  });
+
+  it("records competitive and daily outcomes without changing legacy stores", () => {
+    recordResult("chess", "w");
+    recordDailyWin("kurodoko", "2026-07-18", "2026-07-17");
+    expect(getRecentRecords()).toMatchObject([
+      { game: "kurodoko", kind: "daily", value: 1 },
+      { game: "chess", kind: "result", value: "w" },
+    ]);
+    expect(getRecord("chess")).toEqual({ w: 1, l: 0, d: 0 });
+  });
+
+  it("caps history at 50 and discards corrupt entries independently", () => {
+    for (let i = 0; i < 60; i += 1) recordBest("runner", i, "score");
+    expect(getRecentRecords(99)).toHaveLength(50);
+    localStorage.setItem("oiyo:game-recent-records:v1", JSON.stringify([
+      { id: "ok", game: "chess", at: "2026-07-18T00:00:00.000Z", kind: "result", value: "w" },
+      { id: "bad", game: "chess", at: "never", kind: "result", value: "w" },
+    ]));
+    expect(getRecentRecords()).toHaveLength(1);
+  });
+
+  it("does not create activity when importing a legacy best", () => {
+    recordBest("game-2048", 2048, "score", undefined, { trackPlay: false });
+    expect(getRecentRecords()).toEqual([]);
+    expect(getAchievementEvents("game-2048")["personal-best"]).toBe(0);
   });
 });
 

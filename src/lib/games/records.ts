@@ -62,6 +62,7 @@ export function recordResult(game: string, result: "w" | "l" | "d"): GameRecord 
     /* quota/private mode — records are best-effort */
   }
   recordAchievementEvent(game, "cleared");
+  appendRecentRecord({ game, kind: "result", value: result });
   return r;
 }
 
@@ -122,6 +123,59 @@ function stampLastPlayed(game: string): void {
 /** Every game's last-played timestamp (ISO), keyed by game id — read-only aggregate for cross-game views. */
 export function getAllLastPlayed(): Record<string, string> {
   return readAllLastPlayed();
+}
+
+// ─── Recent scored results — bounded, additive history ────────────────────────────────
+// Last-played answers "which game did I touch?"; this store answers "how did my recent
+// runs go?". It is deliberately separate from every legacy record shape and capped so a
+// long-lived browser profile cannot grow without bound.
+export type RecentGameRecord = {
+  id: string;
+  game: string;
+  at: string;
+  kind: "score" | "seconds" | "result" | "daily";
+  value: number | "w" | "l" | "d";
+  extra?: string;
+  personalBest?: boolean;
+};
+
+const RECENT_RECORDS_KEY = "oiyo:game-recent-records:v1";
+const RECENT_RECORD_LIMIT = 50;
+const isRecentGameRecord: Validator<RecentGameRecord> = (value): value is RecentGameRecord =>
+  isObject(value) && isConditionValue(value.id) && isConditionValue(value.game) &&
+  isIsoTimestamp(value.at) &&
+  (value.kind === "score" || value.kind === "seconds" || value.kind === "result" || value.kind === "daily") &&
+  (isFiniteNonNegative(value.value) || value.value === "w" || value.value === "l" || value.value === "d") &&
+  (value.extra === undefined || typeof value.extra === "string") &&
+  (value.personalBest === undefined || typeof value.personalBest === "boolean");
+
+function readRecentRecords(): RecentGameRecord[] {
+  if (typeof localStorage === "undefined") return [];
+  try {
+    const parsed: unknown = JSON.parse(localStorage.getItem(RECENT_RECORDS_KEY) || "[]");
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(isRecentGameRecord).slice(0, RECENT_RECORD_LIMIT);
+  } catch {
+    return [];
+  }
+}
+
+function appendRecentRecord(input: Omit<RecentGameRecord, "id" | "at">): void {
+  if (!isConditionValue(input.game)) return;
+  const at = new Date().toISOString();
+  const recent = readRecentRecords();
+  const entry: RecentGameRecord = { ...input, at, id: `${at}:${input.game}:${recent.length}` };
+  try {
+    localStorage.setItem(RECENT_RECORDS_KEY, JSON.stringify([entry, ...recent].slice(0, RECENT_RECORD_LIMIT)));
+  } catch {
+    /* quota/private mode — recent history is best-effort */
+  }
+}
+
+/** Newest first. Invalid or user-edited entries are ignored independently. */
+export function getRecentRecords(limit = 20): RecentGameRecord[] {
+  const safeLimit = Number.isInteger(limit) ? Math.max(0, Math.min(limit, RECENT_RECORD_LIMIT)) : 20;
+  return readRecentRecords().slice(0, safeLimit);
 }
 
 // ─── Personal bests (score / time) — separate store, no overlap with GameRecord above ────
@@ -237,7 +291,9 @@ export function recordBestForConditions(
       timestamps[key] = new Date().toISOString();
       localStorage.setItem(CONDITIONAL_BEST_TS_KEY, JSON.stringify(timestamps));
     } catch { /* best-effort */ }
+    recordAchievementEvent(game, "personal-best");
   }
+  appendRecentRecord({ game, kind: unit, value, ...(extra === undefined ? {} : { extra }), personalBest: isBetter });
   stampLastPlayed(game);
   return next;
 }
@@ -260,7 +316,11 @@ export function recordBest(
   } catch {
     /* quota/private mode — records are best-effort */
   }
-  if (isBetter) stampBestAchievedAt(game);
+  if (isBetter) {
+    stampBestAchievedAt(game);
+    if (options.trackPlay !== false) recordAchievementEvent(game, "personal-best");
+  }
+  if (options.trackPlay !== false) appendRecentRecord({ game, kind: unit, value, ...(extra === undefined ? {} : { extra }), personalBest: isBetter });
   if (options.trackPlay !== false) stampLastPlayed(game);
   return next;
 }
@@ -343,6 +403,7 @@ export function recordDailyWin(game: string, dateKey: string, previousDateKey: s
     /* quota/private mode — records are best-effort */
   }
   stampLastPlayed(game);
+  appendRecentRecord({ game, kind: "daily", value: nextStreak, extra: dateKey });
   return next;
 }
 
@@ -387,6 +448,7 @@ export function recordStreak(game: string, won: boolean): StreakStats {
     /* quota/private mode — records are best-effort */
   }
   stampLastPlayed(game);
+  appendRecentRecord({ game, kind: "result", value: won ? "w" : "l", extra: `${nextStreak}` });
   return next;
 }
 

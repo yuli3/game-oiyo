@@ -6,6 +6,8 @@ describe("gameDisplayName", () => {
     expect(gameDisplayName("chess", "ko")).toBe("체스");
     expect(gameDisplayName("chess", "zh")).toBe("国际象棋");
     expect(gameDisplayName("texas-holdem", "fr")).toBe("Texas Hold'em");
+    expect(gameDisplayName("living-maze", "ko")).toBe("살아 있는 미로");
+    expect(gameDisplayName("whale-city", "en")).toBe("City on a Whale");
   });
 
   it("localizes difficulty, puzzle size and aim-trainer dimensions", () => {

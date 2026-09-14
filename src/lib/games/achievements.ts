@@ -16,7 +16,9 @@ import {
 export interface AchievementSnapshot {
   totalWins: number;
   totalPlays: number;
+  totalClears: number;
   distinctGamesPlayed: number;
+  distinctGamesCleared: number;
   distinctGamesOpened: number;
   bestRecordCount: number;
   bestDailyStreak: number;
@@ -43,8 +45,11 @@ export interface EvaluatedAchievement extends AchievementDef {
 export const ACHIEVEMENTS: readonly AchievementDef[] = [
   { id: "first-steps", category: "milestone", icon: "🎮", metric: "totalPlays", target: 1 },
   { id: "first-win", category: "milestone", icon: "🏅", metric: "totalWins", target: 1 },
+  { id: "regular", category: "milestone", icon: "🧭", metric: "totalPlays", target: 10 },
+  { id: "winner-10", category: "milestone", icon: "🥇", metric: "totalWins", target: 10 },
   { id: "veteran", category: "milestone", icon: "🏆", metric: "totalPlays", target: 50 },
   { id: "centurion", category: "milestone", icon: "💯", metric: "totalPlays", target: 100 },
+  { id: "arcade-legend", category: "milestone", icon: "👑", metric: "totalPlays", target: 250 },
   { id: "grandmaster", category: "milestone", icon: "⭐", metric: "totalWins", target: 25 },
 
   { id: "streak-3", category: "streak", icon: "🔥", metric: "bestDailyStreak", target: 3 },
@@ -55,9 +60,13 @@ export const ACHIEVEMENTS: readonly AchievementDef[] = [
 
   { id: "explorer", category: "collection", icon: "🕹️", metric: "distinctGamesPlayed", target: 5 },
   { id: "completionist", category: "collection", icon: "🗺️", metric: "distinctGamesPlayed", target: 15 },
+  { id: "curator", category: "collection", icon: "🧩", metric: "distinctGamesPlayed", target: 30 },
+  { id: "versatile-finisher", category: "collection", icon: "🏁", metric: "distinctGamesCleared", target: 5 },
   { id: "arcade-atlas", category: "collection", icon: "🌏", metric: "distinctGamesOpened", target: 40 },
 
   { id: "record-holder", category: "record", icon: "⏱️", metric: "bestRecordCount", target: 1 },
+  { id: "record-cabinet", category: "record", icon: "📚", metric: "bestRecordCount", target: 5 },
+  { id: "record-archive", category: "record", icon: "💎", metric: "bestRecordCount", target: 15 },
 ] as const;
 
 /** Pure: derive the unlocked/progress state of every achievement from a snapshot. */
@@ -80,13 +89,24 @@ export function buildAchievementSnapshot(): AchievementSnapshot {
   const conditionalBestGameIds = new Set(conditionalBests.map(({ game }) => game));
 
   const playedGameIds = new Set<string>();
-  for (const [id, r] of Object.entries(records)) if (r.w + r.l + r.d > 0) playedGameIds.add(id);
-  for (const [id, stats] of Object.entries(dailyStreaks)) if (stats.played > 0) playedGameIds.add(id);
-  for (const [id, stats] of Object.entries(streaks)) if (stats.played > 0) playedGameIds.add(id);
+  const clearedGameIds = new Set<string>();
+  for (const [id, r] of Object.entries(records)) {
+    if (r.w + r.l + r.d > 0) playedGameIds.add(id);
+    if (r.w > 0) clearedGameIds.add(id);
+  }
+  for (const [id, stats] of Object.entries(dailyStreaks)) {
+    if (stats.played > 0) playedGameIds.add(id);
+    if (stats.played > 0) clearedGameIds.add(id);
+  }
+  for (const [id, stats] of Object.entries(streaks)) {
+    if (stats.played > 0) playedGameIds.add(id);
+    if (stats.won > 0) clearedGameIds.add(id);
+  }
   for (const id of Object.keys(bests)) playedGameIds.add(id);
   for (const game of conditionalBestGameIds) playedGameIds.add(game);
   for (const [id, counts] of Object.entries(events)) {
     if (counts.played + counts.cleared + counts["personal-best"] > 0) playedGameIds.add(id);
+    if (counts.cleared > 0) clearedGameIds.add(id);
   }
 
   // A game may write more than one compatible store on completion (for
@@ -95,9 +115,11 @@ export function buildAchievementSnapshot(): AchievementSnapshot {
   // still letting PB-only and daily-only games participate in global totals.
   let totalWins = 0;
   let totalPlays = 0;
+  let totalClears = 0;
   for (const id of playedGameIds) {
     const record = records[id];
     totalWins += Math.max(record?.w ?? 0, dailyStreaks[id]?.played ?? 0, streaks[id]?.won ?? 0);
+    totalClears += Math.max(record?.w ?? 0, dailyStreaks[id]?.played ?? 0, streaks[id]?.won ?? 0, events[id]?.cleared ?? 0);
     totalPlays += Math.max(
       record ? record.w + record.l + record.d : 0,
       dailyStreaks[id]?.played ?? 0,
@@ -114,7 +136,9 @@ export function buildAchievementSnapshot(): AchievementSnapshot {
   return {
     totalWins,
     totalPlays,
+    totalClears,
     distinctGamesPlayed: playedGameIds.size,
+    distinctGamesCleared: clearedGameIds.size,
     distinctGamesOpened: Object.keys(opened).length,
     bestRecordCount,
     bestDailyStreak,

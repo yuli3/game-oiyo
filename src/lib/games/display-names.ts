@@ -38,6 +38,14 @@ export const GAME_DISPLAY_NAMES: Record<string, LocalizedName> = {
   "aim-trainer": name("에임 트레이너", "Aim Trainer", "エイムトレーナー", "瞄准训练", "Entraîneur de visée", "Entrenador de puntería"),
   "block-burst": name("블록 버스트", "Block Burst", "ブロックバースト", "方块爆裂", "Block Burst", "Block Burst"),
   "puzzle-15": name("15 퍼즐", "15 Puzzle", "15パズル", "十五数码", "Taquin", "Rompecabezas del 15"),
+  "one-room-spaceship": name("한 칸짜리 우주선", "One-Room Spaceship", "ワンルーム宇宙船", "单舱飞船", "Vaisseau une pièce", "Nave de una habitación"),
+  "rumor-network": name("소문 네트워크", "Rumor Network", "うわさネットワーク", "传言网络", "Réseau de rumeurs", "Red de rumores"),
+  "echo-shift": name("에코 시프트", "Echo Shift", "エコーシフト", "回声移位", "Décalage d'écho", "Cambio de eco"),
+  "foldworld-delivery": name("폴드월드 택배", "Foldworld Delivery", "フォールドワールド便", "折叠世界快递", "Livraison pliée", "Reparto plegado"),
+  "living-maze": name("살아 있는 미로", "Living Maze", "生きている迷路", "活体迷宫", "Labyrinthe vivant", "Laberinto vivo"),
+  "orbit-gardener": name("궤도 정원사", "Orbit Gardener", "軌道庭師", "轨道园丁", "Jardinier orbital", "Jardinero orbital"),
+  "disaster-control": name("재난 관제실", "Disaster Control", "災害管制室", "灾害控制室", "Centre de crise", "Control de desastres"),
+  "whale-city": name("고래 위의 도시", "City on a Whale", "クジラの上の街", "鲸背之城", "La ville sur la baleine", "La ciudad sobre la ballena"),
 };
 
 const DIFFICULTY: Record<string, LocalizedName> = {

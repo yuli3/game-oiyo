@@ -21,7 +21,9 @@ beforeEach(() => {
 const EMPTY: AchievementSnapshot = {
   totalWins: 0,
   totalPlays: 0,
+  totalClears: 0,
   distinctGamesPlayed: 0,
+  distinctGamesCleared: 0,
   distinctGamesOpened: 0,
   bestRecordCount: 0,
   bestDailyStreak: 0,
@@ -70,6 +72,21 @@ describe("achievements: evaluateAchievements", () => {
     const ids = ACHIEVEMENTS.map((a) => a.id);
     expect(new Set(ids).size).toBe(ids.length);
   });
+
+  it("unlocks the expanded play, collection, clear, and record ladders independently", () => {
+    const result = evaluateAchievements({
+      ...EMPTY,
+      totalPlays: 250,
+      totalWins: 10,
+      distinctGamesPlayed: 30,
+      distinctGamesCleared: 5,
+      bestRecordCount: 15,
+    });
+    const byId = Object.fromEntries(result.map((a) => [a.id, a]));
+    for (const id of ["regular", "winner-10", "arcade-legend", "curator", "versatile-finisher", "record-cabinet", "record-archive"]) {
+      expect(byId[id].unlocked).toBe(true);
+    }
+  });
 });
 
 describe("achievements: cross-store snapshot", () => {
@@ -82,7 +99,9 @@ describe("achievements: cross-store snapshot", () => {
     expect(buildAchievementSnapshot()).toMatchObject({
       totalWins: 2,
       totalPlays: 4,
+      totalClears: 2,
       distinctGamesPlayed: 4,
+      distinctGamesCleared: 2,
       bestRecordCount: 1,
     });
   });

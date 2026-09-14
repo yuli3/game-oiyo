@@ -28,8 +28,8 @@ const jsonLd = {
 ---
 
 <script type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd)} />
-<GamePlayBeacon client:load slug={game.slug} />
-<section class="release" data-release-shell data-locale={locale}>
+<GamePlayBeacon client:load slug={game.slug} prototype />
+<section class="release" data-release-shell={game.slug} data-locale={locale}>
   <div class="release__bar">
     <p>{game.controls[locale] ?? game.controls.en}</p>
     <button type="button" data-fullscreen aria-label={ui.fullscreen}>
