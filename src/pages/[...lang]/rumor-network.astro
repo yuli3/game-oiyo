@@ -1,0 +1,19 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PrototypeGameShell from "../../components/games/PrototypeGameShell.astro";
+import { ORIGINAL_GAME_RELEASES } from "../../data/original-game-releases";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+const { locale } = Astro.props as { locale: Locale };
+const game = ORIGINAL_GAME_RELEASES["rumor-network"];
+---
+
+<BaseLayout title={game.title[locale]} description={game.description[locale]} heading={game.title[locale]}>
+  <div class="mx-auto max-w-6xl px-4 py-8">
+    <PrototypeGameShell {game} {locale} />
+  </div>
+</BaseLayout>

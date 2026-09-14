@@ -67,6 +67,14 @@
     "whack-a-mole": "/games/whack-a-mole-social.png",
     "windward-horizons": "/games/windward-horizons-social.png",
     "wordle": "/games/wordle-social.png",
-    "yahtzee": "/games/yahtzee-social.png"
+    "yahtzee": "/games/yahtzee-social.png",
+    "one-room-spaceship": "/prototypes/one-room-spaceship-home.webp",
+    "rumor-network": "/prototypes/rumor-network-cover.webp",
+    "echo-shift": "/prototypes/echo-shift-cover.webp",
+    "foldworld-delivery": "/prototypes/foldworld-delivery-cover.webp",
+    "living-maze": "/prototypes/living-maze-cover.webp",
+    "orbit-gardener": "/prototypes/orbit-gardener-cover.webp",
+    "disaster-control": "/prototypes/disaster-control-cover.webp",
+    "whale-city": "/prototypes/whale-city-cover.webp"
   }
 }

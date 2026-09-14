@@ -1,0 +1,110 @@
+---
+import type { Locale } from "../../lib/i18n";
+import type { OriginalGameRelease } from "../../data/original-game-releases";
+import GamePlayBeacon from "./GamePlayBeacon";
+
+const { game, locale } = Astro.props as { game: OriginalGameRelease; locale: Locale };
+const labels: Record<Locale, { fullscreen: string; exit: string; hint: string }> = {
+  ko: { fullscreen: "전체 화면", exit: "전체 화면 닫기", hint: "게임 안을 한 번 누르면 키보드 조작이 활성화됩니다." },
+  en: { fullscreen: "Full screen", exit: "Exit full screen", hint: "Click inside the game once to activate keyboard controls." },
+  ja: { fullscreen: "全画面", exit: "全画面を終了", hint: "ゲーム内を一度押すとキーボード操作が有効になります。" },
+  zh: { fullscreen: "全屏", exit: "退出全屏", hint: "点击游戏区域一次即可启用键盘控制。" },
+  fr: { fullscreen: "Plein écran", exit: "Quitter le plein écran", hint: "Cliquez une fois dans le jeu pour activer le clavier." },
+  es: { fullscreen: "Pantalla completa", exit: "Salir de pantalla completa", hint: "Haz clic una vez en el juego para activar el teclado." },
+};
+const ui = labels[locale] ?? labels.en;
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "VideoGame",
+  name: game.name[locale] ?? game.name.en,
+  description: game.description[locale] ?? game.description.en,
+  url: new URL(Astro.url.pathname, Astro.site).toString(),
+  inLanguage: locale,
+  gamePlatform: "Web browser",
+  playMode: "SinglePlayer",
+  isAccessibleForFree: true,
+  publisher: { "@id": "https://oiyo.net/#organization" },
+};
+---
+
+<script type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd)} />
+<GamePlayBeacon client:load slug={game.slug} />
+<section class="release" data-release-shell data-locale={locale}>
+  <div class="release__bar">
+    <p>{game.controls[locale] ?? game.controls.en}</p>
+    <button type="button" data-fullscreen aria-label={ui.fullscreen}>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5m13 5h5v-5" /></svg>
+      <span>{ui.fullscreen}</span>
+    </button>
+  </div>
+  <div class="release__frame" data-frame>
+    <button type="button" class="release__exit" data-exit-fullscreen aria-label={ui.exit} hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3v5H3m13-5v5h5M8 21v-5H3m13 5v-5h5" /></svg>
+      <span>{ui.exit}</span>
+    </button>
+    <iframe
+      src={`/prototypes/${game.prototype}?lang=${locale}&release=1`}
+      title={game.name[locale] ?? game.name.en}
+      loading="eager"
+      allow="fullscreen"
+      referrerpolicy="same-origin"
+    ></iframe>
+  </div>
+  <p class="release__hint">{ui.hint}</p>
+</section>
+
+<script is:inline define:vars={{ ui }}>
+  for (const shell of document.querySelectorAll("[data-release-shell]")) {
+    const frame = shell.querySelector("[data-frame]");
+    const iframe = shell.querySelector("iframe");
+    const button = shell.querySelector("[data-fullscreen]");
+    const exitButton = shell.querySelector("[data-exit-fullscreen]");
+    const label = button?.querySelector("span");
+    iframe?.addEventListener("load", () => {
+      try {
+        const select = iframe.contentDocument?.querySelector("select#lang, select#locale");
+        if (select && select.value !== shell.dataset.locale) {
+          select.value = shell.dataset.locale;
+          select.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+      } catch {}
+    });
+    if (button && (!document.fullscreenEnabled || !frame?.requestFullscreen)) button.hidden = true;
+    button?.addEventListener("click", async () => {
+      try { await frame?.requestFullscreen(); } catch { if (button) button.hidden = true; }
+    });
+    exitButton?.addEventListener("click", () => document.exitFullscreen());
+    document.addEventListener("fullscreenchange", () => {
+      const active = document.fullscreenElement === frame;
+      button?.setAttribute("aria-label", active ? ui.exit : ui.fullscreen);
+      if (label) label.textContent = active ? ui.exit : ui.fullscreen;
+      if (exitButton) exitButton.hidden = !active;
+    });
+  }
+</script>
+
+<style>
+  .release { color: #dce9e4; }
+  .release__bar { display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:.75rem; }
+  .release__bar p { max-width:68ch; margin:0; color:#52645f; font-size:.875rem; line-height:1.55; }
+  .release__bar button { display:inline-flex; min-height:44px; align-items:center; gap:.5rem; flex:none; border:1px solid #b8c8c2; border-radius:12px; background:#fff; padding:.6rem .85rem; color:#173f38; font-weight:750; cursor:pointer; }
+  .release__bar button:hover { background:#edf7f2; }
+  .release__bar button:focus-visible { outline:3px solid #2a806a; outline-offset:3px; }
+  .release__bar svg { width:1.1rem; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+  .release__frame { position:relative; overflow:hidden; min-height:760px; border-radius:16px; background:#101915; box-shadow:0 18px 45px rgba(23,63,56,.18); }
+  .release__exit { position:absolute; z-index:3; top:1rem; right:1rem; display:inline-flex; min-height:44px; align-items:center; gap:.5rem; border:1px solid rgba(255,255,255,.35); border-radius:12px; background:rgba(8,25,22,.9); padding:.65rem .85rem; color:#fff; font-weight:750; cursor:pointer; box-shadow:0 8px 24px rgba(0,0,0,.25); }
+  .release__exit[hidden] { display:none; }
+  .release__exit:focus-visible { outline:3px solid #fff; outline-offset:3px; }
+  .release__exit svg { width:1.1rem; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+  .release__frame:fullscreen { width:100vw; height:100vh; border-radius:0; }
+  iframe { display:block; width:100%; height:clamp(760px,84vh,980px); border:0; background:#101915; }
+  .release__frame:fullscreen iframe { height:100vh; }
+  .release__hint { margin:.65rem 0 0; color:#6c7b76; font-size:.78rem; text-align:center; }
+  @media (max-width: 640px) {
+    .release__bar { align-items:flex-start; }
+    .release__bar p { font-size:.8rem; }
+    .release__bar button span { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); }
+    .release__frame { min-height:720px; margin-inline:-1rem; border-radius:0; }
+    iframe { height:820px; }
+  }
+</style>
