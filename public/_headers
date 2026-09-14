@@ -99,5 +99,5 @@
   Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
 
 /prototypes/*
-  X-Frame-Options: SAMEORIGIN
+  ! X-Frame-Options
   Content-Security-Policy: frame-ancestors 'self'
