@@ -60,12 +60,12 @@ function draw() {
   $('captain-controls').hidden = split && role !== 'captain';
   $('crew-controls').hidden = ship.crew !== 'human' || split && role !== 'crew';
   document.querySelectorAll('[data-system]').forEach((b,i) => {
-    b.textContent = (i+1)+' · '+t[b.dataset.system];
+    b.querySelector('span').textContent = (i+1)+' · '+t[b.dataset.system];
     b.setAttribute('aria-pressed',String(b.dataset.system === ship.primary));
     b.disabled = ended || ship.crew === 'human' && b.dataset.system === ship.secondary;
   });
   document.querySelectorAll('[data-crew]').forEach((b,i) => {
-    b.textContent = ['Q','W','E','R'][i]+' · '+t[b.dataset.crew];
+    b.querySelector('span').textContent = ['Q','W','E','R'][i]+' · '+t[b.dataset.crew];
     b.setAttribute('aria-pressed',String(b.dataset.crew === ship.secondary));
     b.disabled = ended || b.dataset.crew === ship.primary;
   });
