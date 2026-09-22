@@ -5,6 +5,7 @@ import {Lazy3DStage} from "../ui/game/Lazy3DStage";
 import {usePrefersReducedMotion} from "../../lib/games/reduced-motion";
 import {getBestForConditions,recordAchievementEvent,recordBestForConditions} from "../../lib/games/records";
 import {MEMORY_PALACE_RULESET, MEMORY_PALACE_OBSERVE_INTERVAL_MS, MEMORY_PALACE_EXIT, MEMORY_PALACE_HEIGHT, MEMORY_PALACE_OBSERVE_TURNS, MEMORY_PALACE_WIDTH, createMemoryPalace, isPalaceWall, palaceLineOfSight, moveMemoryPalace, observeMemoryPalace, revealMemoryPalace, type MemoryPalaceState, type PalaceDirection} from "../../lib/games/memory-palace-thieves";
+import {MEMORY_PALACE_SPRITES} from "../../lib/games/sprites";
 
 const Scene=lazy(()=>import("./MemoryPalaceThievesScene"));
 const COPY={
@@ -27,7 +28,7 @@ const CONTROLS={
 
 function PalaceFallback({state,visible}:{state:MemoryPalaceState;visible:boolean}){
  const cells=Array.from({length:MEMORY_PALACE_WIDTH*MEMORY_PALACE_HEIGHT},(_,i)=>({x:i%MEMORY_PALACE_WIDTH,y:Math.floor(i/MEMORY_PALACE_WIDTH)}));
- return <div className="grid h-full place-items-center bg-[#080b08] p-4"><div className="grid w-full max-w-md gap-1" style={{gridTemplateColumns:`repeat(${MEMORY_PALACE_WIDTH},minmax(0,1fr))`}}>{cells.map(p=>{const wall=isPalaceWall(p);const player=p.x===state.player.x&&p.y===state.player.y;const guard=p.x===state.guard.x&&p.y===state.guard.y;const artifact=p.x===state.artifact.x&&p.y===state.artifact.y&&!state.carrying;const exit=p.x===MEMORY_PALACE_EXIT.x&&p.y===MEMORY_PALACE_EXIT.y;return <div key={`${p.x}-${p.y}`} className={`grid aspect-square place-items-center rounded-sm text-sm ${wall&&visible?"bg-[#596248]":visible&&!wall&&palaceLineOfSight(state.guard,p)?"bg-[#9d514b]":"bg-[#171c16]"}`}>{player?"◆":visible&&guard?"●":visible&&artifact?"◇":visible&&exit?"○":""}</div>;})}</div></div>;
+ return <div className="grid h-full place-items-center bg-[#080b08] p-4"><div className="grid w-full max-w-md gap-1" style={{gridTemplateColumns:`repeat(${MEMORY_PALACE_WIDTH},minmax(0,1fr))`}}>{cells.map(p=>{const wall=isPalaceWall(p);const player=p.x===state.player.x&&p.y===state.player.y;const guard=p.x===state.guard.x&&p.y===state.guard.y;const artifact=p.x===state.artifact.x&&p.y===state.artifact.y&&!state.carrying;const exit=p.x===MEMORY_PALACE_EXIT.x&&p.y===MEMORY_PALACE_EXIT.y;return <div key={`${p.x}-${p.y}`} className={`grid aspect-square place-items-center rounded-sm text-sm ${wall&&visible?"bg-[#596248]":visible&&!wall&&palaceLineOfSight(state.guard,p)?"bg-[#9d514b]":"bg-[#171c16]"}`}>{player?<img src={MEMORY_PALACE_SPRITES.thief} alt="" className="h-4/5 w-4/5 object-contain"/>:visible&&guard?<img src={MEMORY_PALACE_SPRITES.guard} alt="" className="h-4/5 w-4/5 object-contain"/>:visible&&artifact?"◇":visible&&exit?"○":""}</div>;})}</div></div>;
 }
 
 export default function MemoryPalaceThieves({locale="ko"}:{locale?:string}){

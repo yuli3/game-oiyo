@@ -219,6 +219,12 @@ export const EMBERDEEP_ENEMY_SPRITES: Record<"raider" | "hound" | "knight", stri
 export const EMBERDEEP_ENEMY_DRAW_H = { raider: 96, hound: 58, knight: 124 } as const;
 
 /** Flat cel bodies. Weapons stay the existing photoreal overlays. Figures face right. */
+/** Existing portraits. The 2D fallback uses these; the WebGL stage does not. */
+export const MEMORY_PALACE_SPRITES = {
+  thief: "/games/memory-palace-thief.webp",
+  guard: "/games/memory-palace-guard.webp",
+} as const;
+
 export const IRON_TEMPEST_SPRITES = {
   player: "/assets/sprites/iron-tempest/player.png",
   duck: "/assets/sprites/iron-tempest/duck.png",

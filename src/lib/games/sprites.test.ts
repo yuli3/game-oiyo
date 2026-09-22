@@ -32,6 +32,7 @@ import {
   EMBERDEEP_SPRITES,
   EMBERDEEP_ENEMY_SPRITES,
   IRON_TEMPEST_SPRITES,
+  MEMORY_PALACE_SPRITES,
   JUMP_KING_SPRITES,
   mahjongTileSrc,
   pipSprite,
@@ -75,6 +76,7 @@ describe("in-game sprite maps", () => {
       ...Object.values(EMBERDEEP_SPRITES),
       ...Object.values(EMBERDEEP_ENEMY_SPRITES),
       ...Object.values(IRON_TEMPEST_SPRITES),
+      ...Object.values(MEMORY_PALACE_SPRITES),
     ];
     expect(Object.keys(CHESS_SPRITES)).toHaveLength(12);
     expect(Object.keys(CHECKERS_SPRITES)).toHaveLength(4);
@@ -115,6 +117,10 @@ describe("in-game sprite maps", () => {
     expect(tempest).toMatch("IRON_TEMPEST_SPRITES");
     expect(tempest).toMatch("drawBody");
     expect(Object.keys(IRON_TEMPEST_SPRITES)).toEqual(["player", "duck", "jeep", "rifleman", "shield", "rocketeer", "boss"]);
+    const palace = readFileSync(new URL("../../components/games/MemoryPalaceThieves.tsx", import.meta.url), "utf8");
+    expect(palace).toMatch("MEMORY_PALACE_SPRITES.thief");
+    expect(palace).toMatch("MEMORY_PALACE_SPRITES.guard");
+    expect(palace).not.toMatch('player?"◆"');
     expect(source).toMatch("drawImage");
     expect(Object.keys(EMBERDEEP_SPRITES)).toEqual(["spellblade", "warden", "arcanist"]);
     expect(Object.keys(EMBERDEEP_ENEMY_SPRITES)).toEqual(["raider", "hound", "knight"]);
