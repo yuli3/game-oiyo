@@ -225,6 +225,13 @@ export const MEMORY_PALACE_SPRITES = {
   guard: "/games/memory-palace-guard.webp",
 } as const;
 
+/** Neutral albedo. Block color is multiplied in the scene so the five ceramics stay distinct. */
+export const SHADOW_ARCHITECT_MAPS = {
+  ceramic: "/assets/sprites/shadow-architect/ceramic.webp",
+  parchment: "/assets/sprites/shadow-architect/parchment.webp",
+  felt: "/assets/sprites/shadow-architect/felt.webp",
+} as const;
+
 export const IRON_TEMPEST_SPRITES = {
   player: "/assets/sprites/iron-tempest/player.png",
   duck: "/assets/sprites/iron-tempest/duck.png",
