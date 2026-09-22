@@ -75,6 +75,11 @@
     "living-maze": "/prototypes/living-maze-cover.webp",
     "orbit-gardener": "/prototypes/orbit-gardener-cover.webp",
     "disaster-control": "/prototypes/disaster-control-cover.webp",
-    "whale-city": "/prototypes/whale-city-cover.webp"
+    "whale-city": "/prototypes/whale-city-cover.webp",
+    "gravity-garden": "/games/gravity-garden-keyart.webp",
+    "memory-palace-thieves": "/games/memory-palace-thieves-keyart.webp",
+    "rivals-mind": "/games/rivals-mind-keyart.webp",
+    "shadow-architect": "/games/shadow-architect-keyart.webp",
+    "time-loop-rescue": "/games/time-loop-rescue-social-play.png"
   }
 }
