@@ -203,6 +203,21 @@ export const DOT_RUNNER_RUN_SHEET = {
 
 export const DOT_RUNNER_JUMP_FRAME = 2;
 
+/** Right-facing idle heroes. Canvas flips for left. Feet sit 8px above the PNG bottom. */
+export const EMBERDEEP_SPRITES: Record<"spellblade" | "warden" | "arcanist", string> = {
+  spellblade: "/assets/sprites/emberdeep/spellblade.png",
+  warden: "/assets/sprites/emberdeep/warden.png",
+  arcanist: "/assets/sprites/emberdeep/arcanist.png",
+};
+export const EMBERDEEP_HERO_DRAW_H = 108;
+
+export const EMBERDEEP_ENEMY_SPRITES: Record<"raider" | "hound" | "knight", string> = {
+  raider: "/assets/sprites/emberdeep/raider.png",
+  hound: "/assets/sprites/emberdeep/hound.png",
+  knight: "/assets/sprites/emberdeep/knight.png",
+};
+export const EMBERDEEP_ENEMY_DRAW_H = { raider: 96, hound: 58, knight: 124 } as const;
+
 export const MAZE_SPRITES = {
   exit: "/assets/sprites/maze/exit.png",
 } as const;

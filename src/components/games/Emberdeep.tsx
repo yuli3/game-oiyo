@@ -14,6 +14,7 @@ import {
   type HeroClass,
   type SpellId,
 } from "../../lib/games/emberdeep";
+import { EMBERDEEP_ENEMY_DRAW_H, EMBERDEEP_ENEMY_SPRITES, EMBERDEEP_HERO_DRAW_H, EMBERDEEP_SPRITES } from "../../lib/games/sprites";
 
 type Phase = "briefing" | "playing" | "result";
 type EnemyKind = "raider" | "hound" | "knight";
@@ -78,29 +79,72 @@ function startAudio() {
   };
 }
 
+function loadHeroArt(): Record<HeroClass, HTMLImageElement> | null {
+  if (typeof Image === "undefined") return null;
+  const art = {} as Record<HeroClass, HTMLImageElement>;
+  for (const key of Object.keys(EMBERDEEP_SPRITES) as HeroClass[]) {
+    const image = new Image();
+    image.src = EMBERDEEP_SPRITES[key];
+    art[key] = image;
+  }
+  return art;
+}
+const heroArt = loadHeroArt();
+
+function loadEnemyArt(): Record<EnemyKind, HTMLImageElement> | null {
+  if (typeof Image === "undefined") return null;
+  const art = {} as Record<EnemyKind, HTMLImageElement>;
+  for (const key of Object.keys(EMBERDEEP_ENEMY_SPRITES) as EnemyKind[]) {
+    const image = new Image();
+    image.src = EMBERDEEP_ENEMY_SPRITES[key];
+    art[key] = image;
+  }
+  return art;
+}
+const enemyArt = loadEnemyArt();
+
 function drawHero(ctx: CanvasRenderingContext2D, x: number, y: number, facing: number, hero: HeroClass, attack: number, jump: number) {
   ctx.save(); ctx.translate(x, y - jump); ctx.scale(facing, 1);
-  ctx.fillStyle = "rgba(0,0,0,.45)"; ctx.beginPath(); ctx.ellipse(0, jump + 8, 30, 9, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = hero === "warden" ? "#7b4b2e" : hero === "arcanist" ? "#244b5a" : "#38532c";
-  ctx.beginPath(); ctx.moveTo(-15, -55); ctx.lineTo(-31, -4); ctx.lineTo(13, -10); ctx.lineTo(20, -53); ctx.fill();
-  ctx.strokeStyle = "#0b1110"; ctx.lineWidth = 5; ctx.stroke();
-  ctx.fillStyle = "#b8b0a0"; ctx.fillRect(-14, -62, 27, 30); ctx.strokeRect(-14, -62, 27, 30);
-  ctx.fillStyle = "#d2a171"; ctx.fillRect(-9, -83, 19, 21); ctx.strokeRect(-9, -83, 19, 21);
-  ctx.fillStyle = "#251a16"; ctx.fillRect(-13, -87, 25, 8);
+  ctx.fillStyle = "rgba(0,0,0,.45)"; ctx.beginPath(); ctx.ellipse(0, jump + 8, 22, 7, 0, 0, Math.PI * 2); ctx.fill();
+  const img = heroArt?.[hero];
+  if (img?.complete && img.naturalWidth > 0) {
+    const height = EMBERDEEP_HERO_DRAW_H;
+    const width = height * (img.naturalWidth / img.naturalHeight);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(img, -width / 2, -height + 6, width, height);
+  } else {
+    ctx.fillStyle = hero === "warden" ? "#7b4b2e" : hero === "arcanist" ? "#244b5a" : "#38532c";
+    ctx.beginPath(); ctx.moveTo(-15, -55); ctx.lineTo(-31, -4); ctx.lineTo(13, -10); ctx.lineTo(20, -53); ctx.fill();
+    ctx.strokeStyle = "#0b1110"; ctx.lineWidth = 5; ctx.stroke();
+    ctx.fillStyle = "#b8b0a0"; ctx.fillRect(-14, -62, 27, 30); ctx.strokeRect(-14, -62, 27, 30);
+    ctx.fillStyle = "#d2a171"; ctx.fillRect(-9, -83, 19, 21); ctx.strokeRect(-9, -83, 19, 21);
+    ctx.fillStyle = "#251a16"; ctx.fillRect(-13, -87, 25, 8);
+    ctx.fillStyle = "#141414"; ctx.fillRect(-14, -34, 10, 35); ctx.fillRect(6, -34, 10, 35);
+  }
   const swing = attack > 0 ? -1.2 + attack * .24 : .42;
-  ctx.save(); ctx.translate(9, -50); ctx.rotate(swing);
+  ctx.save(); ctx.translate(16, -48); ctx.rotate(swing);
   ctx.strokeStyle = "#252525"; ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(34, 0); ctx.stroke();
   ctx.strokeStyle = "#f3d17d"; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(28, 0); ctx.lineTo(75, 0); ctx.stroke();
   ctx.strokeStyle = "#fff6c8"; ctx.lineWidth = 2; ctx.stroke(); ctx.restore();
-  ctx.fillStyle = "#141414"; ctx.fillRect(-14, -34, 10, 35); ctx.fillRect(6, -34, 10, 35);
   ctx.restore();
 }
 
 function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy) {
-  const scale = enemy.kind === "knight" ? 1.25 : enemy.kind === "hound" ? .72 : 1;
+  const img = enemyArt?.[enemy.kind];
+  const drawn = Boolean(img?.complete && img.naturalWidth > 0);
+  const scale = drawn ? 1 : enemy.kind === "knight" ? 1.25 : enemy.kind === "hound" ? .72 : 1;
   ctx.save(); ctx.translate(enemy.x, enemy.y); ctx.scale(enemy.vx < 0 ? -scale : scale, scale);
-  ctx.fillStyle = "rgba(0,0,0,.4)"; ctx.beginPath(); ctx.ellipse(0, 7, 27, 8, 0, 0, Math.PI * 2); ctx.fill();
-  if (enemy.kind === "hound") {
+  ctx.fillStyle = "rgba(0,0,0,.4)"; ctx.beginPath(); ctx.ellipse(0, 7, enemy.kind === "hound" ? 24 : 16, 6, 0, 0, Math.PI * 2); ctx.fill();
+  let top = -98;
+  if (drawn && img) {
+    const height = EMBERDEEP_ENEMY_DRAW_H[enemy.kind];
+    const width = height * (img.naturalWidth / img.naturalHeight);
+    top = -height - 8;
+    ctx.imageSmoothingEnabled = false;
+    ctx.filter = enemy.hit > 0 ? "brightness(2.6)" : "none";
+    ctx.drawImage(img, -width / 2, -height + 4, width, height);
+    ctx.filter = "none";
+  } else if (enemy.kind === "hound") {
     ctx.fillStyle = enemy.hit > 0 ? "#fff" : "#5b3327"; ctx.fillRect(-24, -34, 48, 24);
     ctx.beginPath(); ctx.moveTo(16, -34); ctx.lineTo(30, -45); ctx.lineTo(25, -26); ctx.fill();
   } else {
@@ -110,7 +154,7 @@ function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy) {
     ctx.fillStyle = "#e75b31"; ctx.fillRect(6, -73, 8, 4);
     if (enemy.kind === "knight") { ctx.fillStyle = "#8c7a5f"; ctx.beginPath(); ctx.moveTo(-14, -83); ctx.lineTo(-28, -101); ctx.lineTo(-6, -86); ctx.fill(); }
   }
-  ctx.fillStyle = "#180907"; ctx.fillRect(-25, -98, 50, 6); ctx.fillStyle = "#b33525"; ctx.fillRect(-25, -98, 50 * enemy.hp / enemy.maxHp, 6);
+  ctx.fillStyle = "#180907"; ctx.fillRect(-25, top, 50, 6); ctx.fillStyle = "#b33525"; ctx.fillRect(-25, top, 50 * enemy.hp / enemy.maxHp, 6);
   ctx.restore();
 }
 
@@ -281,7 +325,7 @@ export default function Emberdeep({ locale }: { locale: Locale }) {
     <div className="absolute inset-0 bg-gradient-to-r from-[#080b09] via-[#080b09]/90 to-[#080b09]/35" />
     <div className="relative grid min-h-[590px] gap-10 p-6 sm:p-10 lg:grid-cols-[1.05fr_.95fr] lg:p-14">
       <div className="self-center"><p className="font-mono text-[11px] font-black tracking-[.28em] text-amber-400">{t.eyebrow}</p><h2 className="mt-4 text-6xl font-black uppercase leading-[.82] tracking-[-.06em] sm:text-8xl">{t.title}</h2><p className="mt-6 max-w-xl text-sm leading-7 text-stone-300 sm:text-base">{t.subtitle}</p>
-        <p className="mt-7 text-xs font-black uppercase tracking-[.18em] text-stone-500">{t.choose}</p><div className="mt-3 grid grid-cols-3 gap-2">{(Object.keys(t.heroes) as HeroClass[]).map(id => <button key={id} onClick={() => setHero(id)} className={`min-h-20 border p-2 text-left ${hero === id ? "border-amber-400 bg-amber-400/15" : "border-white/10 bg-black/40"}`}><strong className="block text-sm text-white">{t.heroes[id].name}</strong><span className="mt-1 block text-[10px] text-stone-400">{t.heroes[id].role}</span></button>)}</div>
+        <p className="mt-7 text-xs font-black uppercase tracking-[.18em] text-stone-500">{t.choose}</p><div className="mt-3 grid grid-cols-3 gap-2">{(Object.keys(t.heroes) as HeroClass[]).map(id => <button key={id} onClick={() => setHero(id)} className={`min-h-20 border p-2 text-left ${hero === id ? "border-amber-400 bg-amber-400/15" : "border-white/10 bg-black/40"}`}><img src={EMBERDEEP_SPRITES[id]} alt="" width={48} height={58} className="mb-1 h-14 w-12 object-contain [image-rendering:pixelated]" /><strong className="block text-sm text-white">{t.heroes[id].name}</strong><span className="mt-1 block text-[10px] text-stone-200">{t.heroes[id].role}</span></button>)}</div>
         <div className="mt-5 flex flex-wrap gap-3"><button onClick={() => { setResult(null); setPhase("playing"); }} className="min-h-12 bg-amber-500 px-8 py-3 text-sm font-black uppercase tracking-widest text-black shadow-[0_0_30px_rgba(245,158,11,.25)]">{phase === "result" ? t.again : t.start}</button><span className="border border-white/10 bg-black/60 px-4 py-3 font-mono text-xs">{t.best}: <strong>{best.toLocaleString()}</strong></span></div>
         {result && <p role="status" aria-live="polite" className="mt-4 border-l-2 border-amber-500 pl-4 font-mono text-sm text-amber-100"><strong>{result.won ? t.hud.victory : t.hud.fallen}</strong> · {result.score.toLocaleString()} · {t.hud.room} {result.room} · {result.kills} KOs · {result.path}</p>}
       </div>

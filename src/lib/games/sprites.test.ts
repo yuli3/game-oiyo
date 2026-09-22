@@ -29,6 +29,8 @@ import {
   REVERSI_SPRITES,
   SNAKE_SPRITES,
   STAR_BLASTER_SPRITES,
+  EMBERDEEP_SPRITES,
+  EMBERDEEP_ENEMY_SPRITES,
   JUMP_KING_SPRITES,
   mahjongTileSrc,
   pipSprite,
@@ -69,6 +71,8 @@ describe("in-game sprite maps", () => {
       MAZE_SPRITES.exit,
       ...Object.values(DOT_PET_SPRITES).flatMap((set) => [set.baby, set.adult]),
       ...Object.values(DOT_RUNNER_SPRITES),
+      ...Object.values(EMBERDEEP_SPRITES),
+      ...Object.values(EMBERDEEP_ENEMY_SPRITES),
     ];
     expect(Object.keys(CHESS_SPRITES)).toHaveLength(12);
     expect(Object.keys(CHECKERS_SPRITES)).toHaveLength(4);
@@ -98,5 +102,15 @@ describe("in-game sprite maps", () => {
     const maze = readFileSync(new URL("../../components/games/MazeGame.tsx", import.meta.url), "utf8");
     expect(memory).not.toMatch(/EMOJI_POOL/);
     expect(maze).not.toMatch("✨");
+  });
+
+  it("draws emberdeep heroes from the sprite files", () => {
+    const source = readFileSync(new URL("../../components/games/Emberdeep.tsx", import.meta.url), "utf8");
+    expect(source).toMatch("EMBERDEEP_SPRITES");
+    expect(source).toMatch("EMBERDEEP_HERO_DRAW_H");
+    expect(source).toMatch("EMBERDEEP_ENEMY_SPRITES");
+    expect(source).toMatch("drawImage");
+    expect(Object.keys(EMBERDEEP_SPRITES)).toEqual(["spellblade", "warden", "arcanist"]);
+    expect(Object.keys(EMBERDEEP_ENEMY_SPRITES)).toEqual(["raider", "hound", "knight"]);
   });
 });
