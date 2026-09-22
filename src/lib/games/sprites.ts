@@ -218,6 +218,17 @@ export const EMBERDEEP_ENEMY_SPRITES: Record<"raider" | "hound" | "knight", stri
 };
 export const EMBERDEEP_ENEMY_DRAW_H = { raider: 96, hound: 58, knight: 124 } as const;
 
+/** Flat cel bodies. Weapons stay the existing photoreal overlays. Figures face right. */
+export const IRON_TEMPEST_SPRITES = {
+  player: "/assets/sprites/iron-tempest/player.png",
+  duck: "/assets/sprites/iron-tempest/duck.png",
+  jeep: "/assets/sprites/iron-tempest/jeep.png",
+  rifleman: "/assets/sprites/iron-tempest/rifleman.png",
+  shield: "/assets/sprites/iron-tempest/shield.png",
+  rocketeer: "/assets/sprites/iron-tempest/rocketeer.png",
+  boss: "/assets/sprites/iron-tempest/boss.png",
+} as const;
+
 export const MAZE_SPRITES = {
   exit: "/assets/sprites/maze/exit.png",
 } as const;

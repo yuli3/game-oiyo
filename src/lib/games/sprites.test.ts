@@ -31,6 +31,7 @@ import {
   STAR_BLASTER_SPRITES,
   EMBERDEEP_SPRITES,
   EMBERDEEP_ENEMY_SPRITES,
+  IRON_TEMPEST_SPRITES,
   JUMP_KING_SPRITES,
   mahjongTileSrc,
   pipSprite,
@@ -73,6 +74,7 @@ describe("in-game sprite maps", () => {
       ...Object.values(DOT_RUNNER_SPRITES),
       ...Object.values(EMBERDEEP_SPRITES),
       ...Object.values(EMBERDEEP_ENEMY_SPRITES),
+      ...Object.values(IRON_TEMPEST_SPRITES),
     ];
     expect(Object.keys(CHESS_SPRITES)).toHaveLength(12);
     expect(Object.keys(CHECKERS_SPRITES)).toHaveLength(4);
@@ -109,6 +111,10 @@ describe("in-game sprite maps", () => {
     expect(source).toMatch("EMBERDEEP_SPRITES");
     expect(source).toMatch("EMBERDEEP_HERO_DRAW_H");
     expect(source).toMatch("EMBERDEEP_ENEMY_SPRITES");
+    const tempest = readFileSync(new URL("../../components/games/IronTempest.tsx", import.meta.url), "utf8");
+    expect(tempest).toMatch("IRON_TEMPEST_SPRITES");
+    expect(tempest).toMatch("drawBody");
+    expect(Object.keys(IRON_TEMPEST_SPRITES)).toEqual(["player", "duck", "jeep", "rifleman", "shield", "rocketeer", "boss"]);
     expect(source).toMatch("drawImage");
     expect(Object.keys(EMBERDEEP_SPRITES)).toEqual(["spellblade", "warden", "arcanist"]);
     expect(Object.keys(EMBERDEEP_ENEMY_SPRITES)).toEqual(["raider", "hound", "knight"]);

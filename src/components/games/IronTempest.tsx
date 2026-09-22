@@ -4,6 +4,7 @@ import type { Locale } from "../../lib/i18n";
 import { getBest, recordBest } from "../../lib/games/records";
 import { reviewTempestMission } from "../../lib/games/iron-tempest";
 import { ENEMY_HEALTH, WEAPONS, applyTempestDamage, blastDamage, missionScore, structureStage, weaponDrop, type TempestEnemy, type TempestWeapon } from "../../lib/games/iron-tempest";
+import { IRON_TEMPEST_SPRITES } from "../../lib/games/sprites";
 
 const GAME_KEY = "iron-tempest";
 type Phase = "briefing" | "playing" | "result";
@@ -113,11 +114,31 @@ function TempestGame({copy,onFinish}:{copy:HudCopy;onFinish:(r:{score:number;kil
 }
 function Touch({k,label,press,hot=false}:{k:string;label:string;press:(k:string,v:boolean)=>void;hot?:boolean}){return <button className={`min-h-12 min-w-12 border-2 font-mono text-[9px] font-black ${hot?"border-yellow-200 bg-orange-500/80":"border-white/40 bg-black/60"} text-white`} onPointerDown={e=>{e.preventDefault();press(k,true)}} onPointerUp={()=>press(k,false)} onPointerCancel={()=>press(k,false)}>{label}</button>}
 
+type TempestBody = keyof typeof IRON_TEMPEST_SPRITES;
+function loadTempestBodies(): Record<TempestBody, HTMLImageElement> | null {
+  if (typeof Image === "undefined") return null;
+  const art = {} as Record<TempestBody, HTMLImageElement>;
+  for (const key of Object.keys(IRON_TEMPEST_SPRITES) as TempestBody[]) {
+    const image = new Image();
+    image.src = IRON_TEMPEST_SPRITES[key];
+    art[key] = image;
+  }
+  return art;
+}
+const tempestBodies = loadTempestBodies();
+function drawBody(c: CanvasRenderingContext2D, key: TempestBody, footX: number, footY: number, height: number) {
+  const img = tempestBodies?.[key];
+  if (!img?.complete || img.naturalWidth === 0) return false;
+  const width = height * (img.naturalWidth / img.naturalHeight);
+  c.drawImage(img, footX - width / 2, footY - height, width, height);
+  return true;
+}
+
 function draw(c:CanvasRenderingContext2D,s:any){const q=Math.round((Math.random()-.5)*s.shake);c.save();c.translate(q,Math.round((Math.random()-.5)*s.shake));const cam=Math.floor(s.camera);c.fillStyle="#f2a34d";c.fillRect(0,0,W,H);c.fillStyle="#c65f38";for(let i=0;i<9;i++){const x=((i*190-cam*.14)%1200)-150;c.beginPath();c.moveTo(x,310);c.lineTo(x+130,80+(i%3)*50);c.lineTo(x+300,310);c.fill()}c.fillStyle="#593427";for(let i=0;i<18;i++){const x=((i*110-cam*.38)%1150)-100;c.fillRect(x,275+(i%3)*18,85,160)}c.fillStyle="#5b4127";c.fillRect(0,GROUND,W,H-GROUND);c.fillStyle="#8f6636";for(let i=0;i<45;i++)c.fillRect(((i*97-cam)%1100)-70,GROUND+(i%4)*23,35,5);
   for(const st of s.structures){const x=st.x-cam;if(x<-200||x>W+100)continue;const stage=structureStage(st.hp,Math.abs(st.max));if(st.max<0){c.fillStyle="#49382b";c.fillRect(x,GROUND-12,st.w,12);continue}c.fillStyle=["#847052","#705b42","#574737"][stage];c.fillRect(x,st.y,st.w,st.h);c.strokeStyle="#30261d";c.lineWidth=5;c.strokeRect(x,st.y,st.w,st.h);for(let i=0;i<stage*4;i++){c.beginPath();c.moveTo(x+15+i*17,st.y+8);c.lineTo(x+30+i*13,st.y+st.h*.7);c.stroke()}}
   for(const p of s.pickups){const x=p.x-cam,img=s.weaponImages[p.kind] as HTMLImageElement;if(img.complete&&img.naturalWidth)c.drawImage(img,x-27,p.y-21,54,34);else{c.fillStyle=p.kind==="heavy"?"#ffd340":"#e74420";c.fillRect(x-18,p.y-18,36,28)}}
-  for(const e of s.enemies){const x=e.x-cam;if(e.kind==="boss"){c.fillStyle="#2c3332";c.fillRect(x-110,e.y,220,150);c.fillStyle="#56605b";c.fillRect(x-78,e.y-40,155,70);c.fillStyle="#171b1b";c.fillRect(x-150,e.y-20,150,25);for(let i=0;i<7;i++){c.fillStyle="#171717";c.beginPath();c.arc(x-85+i*29,e.y+145,18,0,7);c.fill()}continue}c.save();c.translate(x,e.y);if(e.dead)c.rotate(Math.min(1.5,e.dead*5));c.fillStyle=e.kind==="shield"?"#35443b":"#49543b";c.fillRect(-13,8,27,28);c.fillStyle="#d0a16b";c.fillRect(-9,-5,19,17);c.fillStyle="#2e3528";c.fillRect(-13,-10,27,8);c.fillStyle="#161819";c.fillRect(e.dead?0:8,17,28,7);if(e.dead){c.fillStyle="#f3dfb0";c.font="18px monospace";c.fillText("✦",-10,-18)}c.restore()}
-  const px=s.player.x-cam;c.save();c.translate(px,s.player.y+(s.player.duck?17:0));c.fillStyle=s.player.vehicle?"#596239":"#b44723";if(s.player.vehicle){c.fillRect(-30,8,76,32);c.fillStyle="#1a1a16";c.beginPath();c.arc(-12,41,13,0,7);c.arc(31,41,13,0,7);c.fill()}else{c.fillRect(-11,10,24,s.player.duck?17:25);c.fillStyle="#d49a62";c.fillRect(-8,-7,18,18);c.fillStyle="#b51e16";c.fillRect(-13,-10,30,6);c.fillStyle="#343626";c.fillRect(-12,s.player.duck?26:34,9,s.player.duck?5:14);c.fillRect(7,s.player.duck?26:34,9,s.player.duck?5:14)}const held=s.weaponImages[s.player.weapon] as HTMLImageElement;if(held.complete&&held.naturalWidth)c.drawImage(held,6,5,s.player.weapon==="rocket"?58:48,28);else{c.fillStyle="#171919";c.fillRect(8,15,s.player.weapon==="rocket"?39:31,8)}c.restore();
+  for(const e of s.enemies){const x=e.x-cam;const body:TempestBody=e.kind==="boss"?"boss":e.kind==="shield"?"shield":e.kind==="rocketeer"?"rocketeer":"rifleman";c.save();c.translate(x,e.y);if(e.dead)c.rotate(Math.min(1.5,e.dead*5));c.scale(s.player.x<e.x?-1:1,1);const drawn=drawBody(c,body,0,e.kind==="boss"?150:42,e.kind==="boss"?120:e.kind==="shield"?72:62);c.restore();if(drawn){if(e.dead){c.save();c.translate(x,e.y);c.fillStyle="#f3dfb0";c.font="18px monospace";c.fillText("✦",-10,-18);c.restore()}continue}if(e.kind==="boss"){c.fillStyle="#2c3332";c.fillRect(x-110,e.y,220,150);c.fillStyle="#56605b";c.fillRect(x-78,e.y-40,155,70);c.fillStyle="#171b1b";c.fillRect(x-150,e.y-20,150,25);for(let i=0;i<7;i++){c.fillStyle="#171717";c.beginPath();c.arc(x-85+i*29,e.y+145,18,0,7);c.fill()}continue}c.save();c.translate(x,e.y);if(e.dead)c.rotate(Math.min(1.5,e.dead*5));c.fillStyle=e.kind==="shield"?"#35443b":"#49543b";c.fillRect(-13,8,27,28);c.fillStyle="#d0a16b";c.fillRect(-9,-5,19,17);c.fillStyle="#2e3528";c.fillRect(-13,-10,27,8);c.fillStyle="#161819";c.fillRect(e.dead?0:8,17,28,7);if(e.dead){c.fillStyle="#f3dfb0";c.font="18px monospace";c.fillText("✦",-10,-18)}c.restore()}
+  const px=s.player.x-cam;c.save();c.translate(px,s.player.y);const bodyDrawn=s.player.vehicle?drawBody(c,"jeep",8,46,42):s.player.duck?drawBody(c,"duck",6,46,50):drawBody(c,"player",2,46,68);if(!bodyDrawn){c.translate(0,s.player.duck?17:0);c.fillStyle=s.player.vehicle?"#596239":"#b44723";if(s.player.vehicle){c.fillRect(-30,8,76,32);c.fillStyle="#1a1a16";c.beginPath();c.arc(-12,41,13,0,7);c.arc(31,41,13,0,7);c.fill()}else{c.fillRect(-11,10,24,s.player.duck?17:25);c.fillStyle="#d49a62";c.fillRect(-8,-7,18,18);c.fillStyle="#b51e16";c.fillRect(-13,-10,30,6);c.fillStyle="#343626";c.fillRect(-12,s.player.duck?26:34,9,s.player.duck?5:14);c.fillRect(7,s.player.duck?26:34,9,s.player.duck?5:14)}}if(!s.player.vehicle){const held=s.weaponImages[s.player.weapon] as HTMLImageElement;if(held.complete&&held.naturalWidth)c.drawImage(held,6,5,s.player.weapon==="rocket"?58:48,28);else{c.fillStyle="#171919";c.fillRect(8,15,s.player.weapon==="rocket"?39:31,8)}}c.restore();
   for(const b of s.shots){c.fillStyle=b.enemy?"#ff5540":"#fff09b";c.fillRect(b.x-cam,b.y,b.rocket?14:8,b.rocket?7:3)}for(const p of s.particles){c.globalAlpha=Math.max(0,p.life*2);c.fillStyle=p.color;c.fillRect(p.x-cam,p.y,p.size,p.size)}c.globalAlpha=1;
   c.fillStyle="rgba(8,8,6,.78)";c.fillRect(12,12,245,76);c.fillStyle="#fff4d0";c.font="bold 13px monospace";c.fillText(`${s.copy.hp} ${Math.ceil(s.player.hp)}  ${s.copy.grenade} ${s.player.grenades}`,24,35);c.fillStyle="#f6bf31";c.font="bold 22px monospace";c.fillText(`${s.player.weapon.toUpperCase()} ${Number.isFinite(s.player.ammo)?s.player.ammo:"∞"}`,24,65);c.fillStyle="#fff";c.textAlign="right";c.font="bold 18px monospace";c.fillText(`${s.player.score.toLocaleString()}  ×${s.player.kills}`,W-20,35);c.textAlign="left";
   if(s.bossHp<ENEMY_HEALTH.boss){c.fillStyle="#1d1713";c.fillRect(250,20,460,26);c.fillStyle="#d4351e";c.fillRect(255,25,450*Math.max(0,s.bossHp)/ENEMY_HEALTH.boss,16);c.fillStyle="#fff1c3";c.textAlign="center";c.font="bold 12px monospace";c.fillText(s.copy.boss,480,38);c.textAlign="left"}if(s.message){c.fillStyle="rgba(0,0,0,.75)";c.fillRect(235,220,490,70);c.fillStyle="#ffd23d";c.textAlign="center";c.font="bold 30px monospace";c.fillText(s.message,480,265);c.textAlign="left"}c.restore()}
