@@ -34,6 +34,7 @@ import {
   IRON_TEMPEST_SPRITES,
   MEMORY_PALACE_SPRITES,
   RIVALS_MIND_POSES,
+  SHADOW_ARCHITECT_MAPS,
   JUMP_KING_SPRITES,
   mahjongTileSrc,
   pipSprite,
@@ -80,6 +81,7 @@ describe("in-game sprite maps", () => {
       ...Object.values(MEMORY_PALACE_SPRITES),
       ...Object.values(RIVALS_MIND_POSES.player),
       ...Object.values(RIVALS_MIND_POSES.rival),
+      ...Object.values(SHADOW_ARCHITECT_MAPS),
     ];
     expect(Object.keys(CHESS_SPRITES)).toHaveLength(12);
     expect(Object.keys(CHECKERS_SPRITES)).toHaveLength(4);
