@@ -225,6 +225,22 @@ export const MEMORY_PALACE_SPRITES = {
   guard: "/games/memory-palace-guard.webp",
 } as const;
 
+/** Action poses. Idle keeps the original standing portraits. Feet share the canvas bottom. */
+export const RIVALS_MIND_POSES = {
+  player: {
+    strike: "/games/rivals-mind-player-strike.webp",
+    guard: "/games/rivals-mind-player-guard.webp",
+    "evade-left": "/games/rivals-mind-player-evade-left.webp",
+    "evade-right": "/games/rivals-mind-player-evade-right.webp",
+  },
+  rival: {
+    strike: "/games/rivals-mind-rival-strike.webp",
+    guard: "/games/rivals-mind-rival-guard.webp",
+    "evade-left": "/games/rivals-mind-rival-evade-left.webp",
+    "evade-right": "/games/rivals-mind-rival-evade-right.webp",
+  },
+} as const;
+
 export const IRON_TEMPEST_SPRITES = {
   player: "/assets/sprites/iron-tempest/player.png",
   duck: "/assets/sprites/iron-tempest/duck.png",

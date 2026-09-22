@@ -3,6 +3,7 @@ import confetti from "canvas-confetti";
 import {GameContainer} from "../ui/game/GamePrimitives";
 import {recordAchievementEvent,recordBestForConditions} from "../../lib/games/records";
 import {RIVALS_MIND_RULESET,createRivalsMind,playRivalsMindRound,readRivalHabit,type DuelAction,type DuelRead} from "../../lib/games/rivals-mind";
+import {RIVALS_MIND_POSES} from "../../lib/games/sprites";
 
 const ACTIONS:readonly DuelAction[]=["strike","guard","evade-left","evade-right"];
 const COPY={
@@ -16,7 +17,7 @@ const COPY={
 
 export default function RivalsMind({locale="ko"}:{locale?:string}){
  const t=COPY[locale as keyof typeof COPY]??COPY.en; const seed=useMemo(()=>Date.now()%1_000_003,[]);const [state,setState]=useState(()=>createRivalsMind(seed));const [started,setStarted]=useState(false);const [impact,setImpact]=useState<"player"|"rival"|null>(null);
- const read=readRivalHabit(state.history);
+ const read=readRivalHabit(state.history); const last=state.history.at(-1);
  const impactTimer=useRef<number|undefined>(undefined);
  useEffect(()=>()=>window.clearTimeout(impactTimer.current),[]);
  const play=(action:DuelAction)=>{if(!started||state.phase!=="playing"||impactTimer.current!==undefined)return;const next=playRivalsMindRound(state,action),round=next.history.at(-1);setState(next);setImpact(round?.playerDamage?"player":round?.rivalDamage?"rival":null);impactTimer.current=window.setTimeout(()=>{setImpact(null);impactTimer.current=undefined;},220);};
@@ -28,8 +29,8 @@ export default function RivalsMind({locale="ko"}:{locale?:string}){
   <div className="relative overflow-hidden rounded-2xl border bg-[linear-gradient(180deg,#eee8d5,#c9c2a3)] p-5">
    <div className="mb-5 flex justify-between text-xs font-bold uppercase tracking-widest"><span>{t.you} · {"♥".repeat(state.playerHealth)}</span><span>{t.round} {state.round}/5</span><span>{"♥".repeat(state.rivalHealth)} · {t.rival}</span></div>
    <div className="relative grid h-44 grid-cols-2 sm:h-64 items-end border-b-4 border-[#68704d]">
-    <img src="/games/rivals-mind-player.webp" alt="" width={512} height={512} draggable={false} className={`w-full origin-bottom object-contain drop-shadow-xl transition-transform motion-reduce:transition-none ${impact==="player"?"-translate-x-3 rotate-6":""}`}/>
-    <img src="/games/rivals-mind-rival.webp" alt="" width={512} height={512} draggable={false} className={`w-full origin-bottom object-contain drop-shadow-xl transition-transform motion-reduce:transition-none ${impact==="rival"?"translate-x-3 -rotate-6":""}`}/>
+    <img src={last?RIVALS_MIND_POSES.player[last.player]:"/games/rivals-mind-player.webp"} alt="" width={512} height={512} draggable={false} className={`w-full origin-bottom object-contain drop-shadow-xl transition-transform motion-reduce:transition-none ${impact==="player"?"-translate-x-3 rotate-6":""}`}/>
+    <img src={last?RIVALS_MIND_POSES.rival[last.rival]:"/games/rivals-mind-rival.webp"} alt="" width={512} height={512} draggable={false} className={`w-full origin-bottom object-contain drop-shadow-xl transition-transform motion-reduce:transition-none ${impact==="rival"?"translate-x-3 -rotate-6":""}`}/>
    </div>
   </div>
   {!started?<button onClick={()=>{setStarted(true);recordAchievementEvent("rivals-mind","played");}} className="w-full rounded-xl bg-primary px-5 py-3 font-bold text-primary-foreground">{t.start}</button>:state.phase==="playing"?<div className="grid grid-cols-2 gap-2">{ACTIONS.map(a=><button key={a} onClick={()=>play(a)} className="min-h-12 rounded-xl border bg-background px-3 py-2 font-semibold active:scale-[.98]">{t.actions[a]}</button>)}</div>:<><div aria-live="polite" className="rounded-xl bg-muted p-4 text-center font-bold">{result}</div><button onClick={reset} className="w-full rounded-xl bg-primary px-5 py-3 font-bold text-primary-foreground">{t.again}</button></>}

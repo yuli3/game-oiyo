@@ -33,6 +33,7 @@ import {
   EMBERDEEP_ENEMY_SPRITES,
   IRON_TEMPEST_SPRITES,
   MEMORY_PALACE_SPRITES,
+  RIVALS_MIND_POSES,
   JUMP_KING_SPRITES,
   mahjongTileSrc,
   pipSprite,
@@ -77,6 +78,8 @@ describe("in-game sprite maps", () => {
       ...Object.values(EMBERDEEP_ENEMY_SPRITES),
       ...Object.values(IRON_TEMPEST_SPRITES),
       ...Object.values(MEMORY_PALACE_SPRITES),
+      ...Object.values(RIVALS_MIND_POSES.player),
+      ...Object.values(RIVALS_MIND_POSES.rival),
     ];
     expect(Object.keys(CHESS_SPRITES)).toHaveLength(12);
     expect(Object.keys(CHECKERS_SPRITES)).toHaveLength(4);
@@ -124,5 +127,9 @@ describe("in-game sprite maps", () => {
     expect(source).toMatch("drawImage");
     expect(Object.keys(EMBERDEEP_SPRITES)).toEqual(["spellblade", "warden", "arcanist"]);
     expect(Object.keys(EMBERDEEP_ENEMY_SPRITES)).toEqual(["raider", "hound", "knight"]);
+    const rivals = readFileSync(new URL("../../components/games/RivalsMind.tsx", import.meta.url), "utf8");
+    expect(rivals).toMatch("RIVALS_MIND_POSES.player[last.player]");
+    expect(rivals).toMatch("RIVALS_MIND_POSES.rival[last.rival]");
+    expect(Object.keys(RIVALS_MIND_POSES.player)).toEqual(["strike", "guard", "evade-left", "evade-right"]);
   });
 });
