@@ -263,19 +263,7 @@ const currentLangItem = langItems.find((li) => li.code === locale) ?? langItems[
             class="flex items-center h-11 px-2 rounded-lg text-sm font-bold uppercase tracking-widest text-muted-foreground hover:text-primary hover:bg-muted/40 transition-colors"
           >{label}</a>
         ))}
-        <div class="pt-2 border-t border-border/40 mt-4">
-          <p class="px-2 pt-2 pb-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">Oiyo Family</p>
-          {FAMILY.map((f) => (
-            <a
-              href={familyHref(f, "menu")}
-              target="_blank" rel="noopener noreferrer"
-              class="flex flex-col justify-center min-h-11 px-2 py-1.5 rounded-lg text-sm font-bold text-muted-foreground hover:text-primary hover:bg-muted/40 transition-colors"
-            >
-              <span class="uppercase tracking-widest">{f.name} ↗</span>
-              <span class="text-[11px] font-normal normal-case tracking-normal opacity-70">{f.tag[locale as keyof typeof f.tag] ?? f.tag.en}</span>
-            </a>
-          ))}
-        </div>
+        {/* 패밀리 링크는 공통 푸터에만 둔다(세운 결정 2026-09-24). */}
       </nav>
 
       <!-- Language switcher at bottom -->
