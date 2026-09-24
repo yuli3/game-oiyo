@@ -45,6 +45,9 @@ export default defineConfig({
       filter: (page) => {
         const url = new URL(page);
         const path = url.pathname;
+        // Root is a server 301 to /en/ (public/_redirects); canonical English
+        // content lives at /en/. Same rule as wiki.
+        if (path === "/" || path === "") return false;
         // Exclude paths with underscore segments
         if (path.split("/").some((seg) => seg.startsWith("_"))) return false;
         // Exclude /index duplicate (trailing slash version is canonical)
@@ -61,10 +64,6 @@ export default defineConfig({
       serialize: (item) => {
         const url = new URL(item.url);
         const path = url.pathname;
-        // Homepage — highest priority
-        if (path === "/" || path === "") {
-          return { ...item, priority: 1.0 };
-        }
         // Locale homepages (e.g. /ko/, /ja/, /fr/)
         if (/^\/(ko|ja|fr|es|zh)\/$/.test(path)) {
           return { ...item, priority: 0.9 };
