@@ -36,8 +36,10 @@ describe("색인 정책", () => {
   it("deindexed-locales 가 SEO 와 사이트맵 양쪽에 배선돼 있다", () => {
     // 파일만 만들고 배선하지 않으면 정책이 있는 것처럼 보이면서
     // 실제로는 계속 색인된다 — game 이 2026-07-27 까지 그 상태였다.
+    // 2026-09-24 세운 결정으로 zh/fr/es 비색인을 되돌렸다. 목록은 비어 있지만
+    // 배선은 레버로 남긴다 — 다시 채우면 SEO·사이트맵·hreflang 이 함께 움직여야 한다.
     const locales = JSON.parse(readFileSync("src/config/deindexed-locales.json", "utf8"));
-    expect(locales).toEqual(["zh", "fr", "es"]);
+    expect(locales).toEqual([]);
 
     const seo = readFileSync("src/components/SEO.astro", "utf8");
     expect(seo).toContain("deindexed-locales.json");

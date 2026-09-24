@@ -4,8 +4,9 @@ import { getAuthor } from "../lib/authors";
 import noindexSlugs from "../config/noindex-slugs.json";
 import deindexedLocales from "../config/deindexed-locales.json";
 
-// Crawl-budget policy — see astro.config.mjs. Reachable for users, out of the
-// index, the sitemap, and the hreflang cluster.
+// Locale deindex list — see astro.config.mjs. Empty since 2026-09-24 (all six
+// locales indexable); a listed locale would leave the index, the sitemap, and
+// the hreflang cluster together.
 const DEINDEXED_LOCALES = new Set<string>(deindexedLocales);
 
 interface Props {
