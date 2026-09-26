@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 const source = (relativePath: string) => readFileSync(new URL(relativePath, import.meta.url), 'utf8');
 
 describe('mobile game interaction contracts', () => {
-  it.each(['solitaire', 'freecell'])('%s avoids random SSR deal hydration', (slug) => {
+  it.each(['solitaire', 'freecell', 'balance-game'])('%s avoids random SSR state hydration', (slug) => {
     const route = source(`../../pages/[...lang]/${slug}.astro`);
     expect(route).toContain('client:only="react"');
     expect(route).not.toContain('client:load');
