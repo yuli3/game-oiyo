@@ -6,8 +6,10 @@ import {
   createAnimalBoard,
   findAnimalMatches,
   parseAnimal,
+  scoreAnimalMatch,
   serializeAnimal,
   swapAnimals,
+  tickAnimalFever,
 } from "./animal-pop";
 describe("animal pop engine", () => {
   it("creates deterministic settled boards", () => {
@@ -45,6 +47,14 @@ describe("animal pop engine", () => {
     );
     expect(parseAnimal('{"v":1}')).toBeNull();
   });
+  it("restores remaining Fever time while accepting older saves without it", () => {
+    const board = createAnimalBoard(4);
+    expect(parseAnimal(serializeAnimal(board.seed, board.board, 120, 40, 7))?.feverSeconds).toBe(7);
+    const oldSave = JSON.parse(serializeAnimal(board.seed, board.board, 120, 40));
+    delete oldSave.feverSeconds;
+    expect(parseAnimal(JSON.stringify(oldSave))?.feverSeconds).toBe(0);
+    expect(parseAnimal(serializeAnimal(board.seed, board.board, 120, 40, 11))).toBeNull();
+  });
   it("adds time only for successful matches, capped at the round limit", () => {
     expect(animalMatchTimeBonus(0, 0)).toBe(0);
     expect(animalMatchTimeBonus(2, 1)).toBe(0);
@@ -58,5 +68,16 @@ describe("animal pop engine", () => {
     const miss = swapAnimals(a.board, 0, 8, a.seed);
     expect(miss.valid).toBe(false);
     expect(animalMatchTimeBonus(miss.cleared, miss.waves)).toBe(0);
+  });
+  it("starts ten seconds of double-score fever on a five-wave cascade", () => {
+    expect(scoreAnimalMatch(12, 5, 0)).toEqual({ points: 1200, feverSeconds: 10 });
+  });
+  it("keeps double score for later matches, then expires after ten active ticks", () => {
+    let remaining = 10;
+    for (let second = 0; second < 9; second++) remaining = tickAnimalFever(remaining);
+    expect(remaining).toBe(1);
+    expect(scoreAnimalMatch(3, 1, remaining).points).toBe(60);
+    expect(tickAnimalFever(remaining)).toBe(0);
+    expect(scoreAnimalMatch(3, 1, 0).points).toBe(30);
   });
 });
