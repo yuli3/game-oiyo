@@ -1376,20 +1376,40 @@ const BotSoldier = forwardRef<Group, { name: string; position: Vector3; phase: n
   function BotSoldier({ position, phase, coarse }, ref) {
     return (
       <group ref={ref} position={[position.x, 0, position.z]}>
-        <mesh position={[0, 1.07, 0]} castShadow={!coarse}>
-          <capsuleGeometry args={[0.34, 0.72, 6, 10]} />
-          <meshStandardMaterial color="#763333" roughness={0.79} metalness={0.08} />
+        <mesh position={[-0.14, 0.16, 0]} castShadow={!coarse}>
+          <boxGeometry args={[0.16, 0.32, 0.22]} />
+          <meshStandardMaterial color="#1c1a18" roughness={0.9} />
         </mesh>
-        <mesh position={[0, 1.73, 0]} castShadow={!coarse}>
-          <sphereGeometry args={[0.21, coarse ? 8 : 14, coarse ? 6 : 10]} />
-          <meshStandardMaterial color="#b98b6d" roughness={0.82} />
+        <mesh position={[0.14, 0.16, 0]} castShadow={!coarse}>
+          <boxGeometry args={[0.16, 0.32, 0.22]} />
+          <meshStandardMaterial color="#1c1a18" roughness={0.9} />
         </mesh>
-        <mesh position={[0, 1.82, -0.02]} castShadow={!coarse}>
-          <sphereGeometry args={[0.225, coarse ? 8 : 14, coarse ? 5 : 8, 0, Math.PI * 2, 0, Math.PI * 0.55]} />
-          <meshStandardMaterial color="#3f2421" roughness={0.75} />
+        <mesh position={[-0.12, 0.58, 0]} castShadow={!coarse}>
+          <boxGeometry args={[0.16, 0.52, 0.2]} />
+          <meshStandardMaterial color="#3a332c" roughness={0.88} />
         </mesh>
-        <mesh position={[0, 1.38, -0.22]} rotation={[Math.PI / 2, 0, 0]}>
-          <boxGeometry args={[0.13, 0.13, 0.95]} />
+        <mesh position={[0.12, 0.58, 0]} castShadow={!coarse}>
+          <boxGeometry args={[0.16, 0.52, 0.2]} />
+          <meshStandardMaterial color="#3a332c" roughness={0.88} />
+        </mesh>
+        <mesh position={[0, 1.08, 0]} castShadow={!coarse}>
+          <boxGeometry args={[0.52, 0.58, 0.3]} />
+          <meshStandardMaterial color="#6a4034" roughness={0.84} metalness={0.04} />
+        </mesh>
+        <mesh position={[0, 1.22, 0.12]}>
+          <boxGeometry args={[0.36, 0.22, 0.08]} />
+          <meshStandardMaterial color="#2e3830" roughness={0.8} />
+        </mesh>
+        <mesh position={[0, 1.68, 0]} castShadow={!coarse}>
+          <boxGeometry args={[0.32, 0.3, 0.32]} />
+          <meshStandardMaterial color="#2c3234" roughness={0.72} metalness={0.12} />
+        </mesh>
+        <mesh position={[0, 1.66, 0.16]}>
+          <boxGeometry args={[0.2, 0.07, 0.04]} />
+          <meshStandardMaterial color="#14181a" roughness={0.4} metalness={0.3} />
+        </mesh>
+        <mesh position={[0.22, 1.22, 0.42]} castShadow={!coarse}>
+          <boxGeometry args={[0.08, 0.08, 0.72]} />
           <meshStandardMaterial color="#20282a" metalness={0.82} roughness={0.31} />
         </mesh>
         <mesh position={[0, 2.15, 0]}>
