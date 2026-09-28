@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Locale } from "../../lib/i18n";
 import { distributionAnalyticsPayload, type DistributionAnalyticsEvent } from "../../lib/lostark/distribution-analytics";
+import { formatDistributionShare } from "../../lib/lostark/distribution-share";
 import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from "../ui/item";
 import {
   generateDistribution,
@@ -41,6 +42,8 @@ interface UiLabels {
   busToolDescription: string;
   auctionTool: string;
   auctionToolDescription: string;
+  shareHeader: string;
+  shareRoom: string;
 }
 
 const L: Record<string, UiLabels> = {
@@ -52,6 +55,7 @@ const L: Record<string, UiLabels> = {
     errCount: "Player count mismatch — expected {expected}, got {actual}.", errInvalid: "Invalid input on line(s): {lines}",
     nextTitle: "Continue with a Lost Ark tool", busTool: "Raid bus fee calculator", busToolDescription: "Calculate the optimal auction and trade price.",
     auctionTool: "Lost Ark auction calculator", auctionToolDescription: "Compare party auction break-even prices.",
+    shareHeader: "Lost Ark {method} split · {games} games", shareRoom: "Room {room} · Password {pw}",
   },
   ko: {
     raidSettings: "레이드 설정", method13: "본1부3", method11: "본1부1", partySize: "파티 인원",
@@ -61,6 +65,7 @@ const L: Record<string, UiLabels> = {
     errCount: "예상 플레이어 수: {expected}, 실제 입력: {actual}", errInvalid: "잘못된 입력 줄 번호: {lines}",
     nextTitle: "로스트아크 도구 이어서 사용하기", busTool: "레이드 버스비 계산기", busToolDescription: "경매·거래 최적 가격을 계산합니다.",
     auctionTool: "로스트아크 경매 계산기", auctionToolDescription: "파티 경매 손익분기 가격을 비교합니다.",
+    shareHeader: "로스트아크 {method} 품앗이 분배 · {games}판", shareRoom: "방제 {room} · 비번 {pw}",
   },
   ja: {
     raidSettings: "レイド設定", method13: "本1副3", method11: "本1副1", partySize: "パーティ人数",
@@ -70,6 +75,37 @@ const L: Record<string, UiLabels> = {
     errCount: "予想プレイヤー数: {expected}, 実際の入力: {actual}", errInvalid: "無効な入力の行番号: {lines}",
     nextTitle: "Lost Arkツールを続けて使う", busTool: "レイドバス料金計算機", busToolDescription: "オークション・取引の最適価格を計算します。",
     auctionTool: "Lost Arkオークション計算機", auctionToolDescription: "パーティオークションの損益分岐価格を比較します。",
+    shareHeader: "ロストアーク {method} 分配 · {games}ゲーム", shareRoom: "部屋名 {room} · パスワード {pw}",
+  },
+  zh: {
+    raidSettings: "团本设置", method13: "本1副3", method11: "本1副1", partySize: "队伍人数",
+    partyInput: "队伍输入", party: "队伍", placeholder: "输入角色信息（例：DDDS）", clear: "清空",
+    analyze: "分配", result: "结果", player: "玩家", game: "场次", copyAll: "全部复制", copied: "已复制！",
+    reqSup: "建议辅助", curSup: "当前辅助", roomBtn: "随机生成房名/密码", room: "房名", pw: "密码",
+    errCount: "玩家人数不符：应为 {expected}，实际输入 {actual}。", errInvalid: "以下行输入无效：{lines}",
+    nextTitle: "继续使用命运方舟工具", busTool: "团本巴士费用计算器", busToolDescription: "计算拍卖与交易的最佳价格。",
+    auctionTool: "命运方舟拍卖计算器", auctionToolDescription: "比较队伍拍卖的保本价格。",
+    shareHeader: "命运方舟 {method} 互助分配 · 共{games}场", shareRoom: "房名 {room} · 密码 {pw}",
+  },
+  fr: {
+    raidSettings: "Réglages du raid", method13: "1 main / 3 alt", method11: "1 main / 1 alt", partySize: "Taille du groupe",
+    partyInput: "Saisie des groupes", party: "Groupe", placeholder: "Saisissez les personnages (ex. DDDS)", clear: "Effacer",
+    analyze: "Répartir", result: "Résultat", player: "Joueur", game: "Partie", copyAll: "Tout copier", copied: "Copié !",
+    reqSup: "Supports conseillés", curSup: "Supports actuels", roomBtn: "Générer salon / mot de passe", room: "Salon", pw: "Mot de passe",
+    errCount: "Nombre de joueurs incorrect : {expected} attendus, {actual} saisis.", errInvalid: "Saisie invalide à la ou aux lignes : {lines}",
+    nextTitle: "Continuer avec un outil Lost Ark", busTool: "Calculateur de frais de bus", busToolDescription: "Calcule le meilleur prix d'enchère et d'échange.",
+    auctionTool: "Calculateur d'enchères Lost Ark", auctionToolDescription: "Compare les prix d'équilibre des enchères de groupe.",
+    shareHeader: "Lost Ark · répartition {method} · {games} parties", shareRoom: "Salon {room} · Mot de passe {pw}",
+  },
+  es: {
+    raidSettings: "Ajustes de la raid", method13: "1 main / 3 alt", method11: "1 main / 1 alt", partySize: "Tamaño del grupo",
+    partyInput: "Entrada de grupos", party: "Grupo", placeholder: "Escribe los personajes (ej. DDDS)", clear: "Borrar",
+    analyze: "Repartir", result: "Resultado", player: "Jugador", game: "Partida", copyAll: "Copiar todo", copied: "¡Copiado!",
+    reqSup: "Supports recomendados", curSup: "Supports actuales", roomBtn: "Generar sala / contraseña", room: "Sala", pw: "Contraseña",
+    errCount: "Número de jugadores incorrecto: se esperaban {expected}, hay {actual}.", errInvalid: "Entrada no válida en la(s) línea(s): {lines}",
+    nextTitle: "Sigue con otra herramienta de Lost Ark", busTool: "Calculadora de tarifa de bus", busToolDescription: "Calcula el mejor precio de subasta e intercambio.",
+    auctionTool: "Calculadora de subastas de Lost Ark", auctionToolDescription: "Compara los precios de equilibrio de las subastas de grupo.",
+    shareHeader: "Lost Ark · reparto {method} · {games} partidas", shareRoom: "Sala {room} · Contraseña {pw}",
   },
 };
 
@@ -135,9 +171,13 @@ export default function LostarkRaidDistribution({ locale }: Props) {
   const copyAll = () => {
     if (!result) return;
     track("result_copy");
-    const text = result
-      .map((player, i) => `${Math.floor(i / 4) + 1}-${(i % 4) + 1} ${player.map(cleanChar).join("")}`)
-      .join("\n");
+    const text = formatDistributionShare({
+      result,
+      header: t.shareHeader.replace("{method}", raidType === "1-3" ? t.method13 : t.method11).replace("{games}", String(result[0].length)),
+      url: `https://game.oiyo.net/${locale}/lostark-raid-distribution/`,
+      room,
+      roomLine: t.shareRoom,
+    });
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
