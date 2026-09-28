@@ -33,7 +33,7 @@ const COPY = {
         happiness: '행복', hunger: '포만감', energy: '에너지', xp: '경험치',
         feed: '먹이 주기', play: '놀아주기', rest: '재우기',
         resetAsk: '정말 새로 시작할까요?', reset: '새 펫 입양', confirm: '확인',
-        grown: '성장했습니다!', tip: '스탯은 시간이 지나면 줄어들어요. 자리를 비워도요!',
+        grown: '성장했어요!', tip: '스탯은 시간이 지나면 줄어들어요. 자리를 비워도요!',
         full: '이미 배불러요', tired: '너무 지쳤어요', rested: '이미 푹 쉬었어요',
     },
     en: {

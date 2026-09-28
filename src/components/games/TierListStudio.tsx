@@ -58,7 +58,7 @@ const COPY = {
     published: "공개됨",
     up: "추천",
     down: "비추천",
-    privacy: "공유·공개 링크는 누구나 볼 수 있습니다. 이름·얼굴·개인정보를 적지 마세요.",
+    privacy: "공유·공개 링크는 누구나 볼 수 있어요. 이름·얼굴·개인정보를 적지 마세요.",
     empty: "비어 있음",
     unranked: "미분류",
     titleLabel: "제목",

@@ -39,7 +39,7 @@ const COPY: Record<Locale, Copy> = {
   ko: {
     eyebrow: "URBAN COMBAT / 6V6 SIMULATION",
     title: "Urban Strike",
-    subtitle: "전술 도심에서 펼쳐지는 120초 팀 데스매치. 정밀 히트스캔, 학습 가능한 반동, ADS와 빠른 이동을 하나의 브라우저 FPS로 구현했습니다.",
+    subtitle: "전술 도심에서 펼쳐지는 120초 팀 데스매치. 정밀 히트스캔, 학습 가능한 반동, ADS와 빠른 이동을 하나의 브라우저 FPS로 구현했어요.",
     start: "작전 투입",
     again: "재배치",
     loading: "전장을 배치하는 중…",

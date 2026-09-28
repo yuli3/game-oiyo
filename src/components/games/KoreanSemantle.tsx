@@ -96,7 +96,7 @@ const COPY: Record<UILocale, {
     demoCredit: "수작업으로 만든 예시 유사도 표입니다. fastText 데이터가 아닙니다.",
     credit: "단어 벡터: fastText Korean (Facebook AI Research), CC BY-SA 3.0",
     stats: (s) => `🔥 연속 ${s.currentStreak} · 최고 ${s.maxStreak} · ${s.played}판`,
-    hint: "의미 유사도(코사인)를 기준으로 순위를 매깁니다. 상위 목록 안에 든 단어만 순위가 표시됩니다.",
+    hint: "의미 유사도(코사인)를 기준으로 순위를 매겨요. 상위 목록 안에 든 단어만 순위가 표시돼요.",
     sound: "소리", restored: "오늘의 추측을 이어서 불러왔어요",
   },
   en: {

@@ -22,7 +22,7 @@ import { CAT_FISHING_KOI } from '../../lib/games/sprites';
 const BEST_KEY = 'oiyo-cat-fishing-best'; // per difficulty: seconds
 
 const COPY = {
-    ko: { title: '고양이 낚시', subtitle: 'Cat Fishing', normal: '보통', hard: '어려움', hell: '헬', caught: '잡은 물고기', time: '시간', best: '최단 기록', win: '다 잡았다! 🐱', winSub: '오늘 밤 고양이들은 만찬입니다.', hintNormal: '물고기를 탭해서 잡으세요!', hintHard: '조심! 도망갑니다!', hintHell: '초고속 모드!', again: '다시 하기', same: '같은 연못', sound: '소리' },
+    ko: { title: '고양이 낚시', subtitle: 'Cat Fishing', normal: '보통', hard: '어려움', hell: '헬', caught: '잡은 물고기', time: '시간', best: '최단 기록', win: '다 잡았어요! 🐱', winSub: '오늘 밤 고양이들은 만찬이에요.', hintNormal: '물고기를 탭해서 잡으세요!', hintHard: '조심! 도망가요!', hintHell: '초고속 모드!', again: '다시 하기', same: '같은 연못', sound: '소리' },
     en: { title: 'Cat Fishing', subtitle: 'Cat Fishing', normal: 'Normal', hard: 'Hard', hell: 'Hell', caught: 'Caught', time: 'Time', best: 'Best', win: "Caught 'em all! 🐱", winSub: 'Your kitties feast tonight.', hintNormal: 'Tap the fish to catch them!', hintHard: 'Watch out! They run away!', hintHell: 'Super speed mode!', again: 'Play Again', same: 'Same pond', sound: 'Sound' },
     ja: { title: 'ねこ釣り', subtitle: 'Cat Fishing', normal: 'ふつう', hard: 'むずかしい', hell: '地獄', caught: '釣った魚', time: '時間', best: '最短記録', win: '全部釣った！ 🐱', winSub: '今夜は猫たちのごちそうです。', hintNormal: '魚をタップして捕まえよう！', hintHard: '注意！逃げます！', hintHell: '超高速モード！', again: 'もう一度', same: '同じ池', sound: '音' },
     zh: { title: '猫咪钓鱼', subtitle: 'Cat Fishing', normal: '普通', hard: '困难', hell: '地狱', caught: '已捕获', time: '时间', best: '最快记录', win: '全抓到了！🐱', winSub: '今晚猫咪们有大餐了。', hintNormal: '点击鱼来捕捉！', hintHard: '小心！它们会逃跑！', hintHell: '超高速模式！', again: '再玩一次', same: '同一池塘', sound: '声音' },

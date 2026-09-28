@@ -52,7 +52,7 @@ const COPY = {
     bust: "파산. 현금과 재고가 없습니다.",
     weather: { clear: "맑음", hot: "더움", cold: "추움", rain: "비" },
     event: { none: "평범한 아침", overtime: "근처 야근이 많다", food_scare: "식중독 뉴스", cost_hike: "재료값이 올랐다" },
-    hint: "회계 수업이 아닙니다. 이 기기에만 저장됩니다.",
+    hint: "회계 수업이 아니에요. 이 기기에만 저장돼요.",
     oiyo: "손익이 궁금하면 oiyo 손익 게임",
     stall: "업종",
     choose: "어떤 장사를 하시겠습니까?",

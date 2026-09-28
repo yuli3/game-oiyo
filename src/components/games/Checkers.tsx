@@ -20,7 +20,7 @@ type Piece = CheckersPiece;
 const AI_PLAYER = 2; // AI plays black; human opens as red
 const AI_DELAY_MS = 500;
 const EXTRA: Record<Locale, { pause: string; resume: string; sound: string; restored: string; redLeft: string; blackLeft: string; captured: string; next: string }> = {
-    ko: { pause: '일시정지', resume: '계속하기', sound: '소리', restored: '이전 대국을 일시정지 상태로 복원했습니다', redLeft: '남은 홍', blackLeft: '남은 흑', captured: '잡은 말', next: '다음 목표' },
+    ko: { pause: '일시정지', resume: '계속하기', sound: '소리', restored: '이전 대국을 일시정지 상태로 복원했어요', redLeft: '남은 홍', blackLeft: '남은 흑', captured: '잡은 말', next: '다음 목표' },
     en: { pause: 'Pause', resume: 'Resume', sound: 'Sound', restored: 'Previous match restored and paused', redLeft: 'Red left', blackLeft: 'Black left', captured: 'Captured', next: 'Next target' },
     ja: { pause: '一時停止', resume: '再開', sound: 'サウンド', restored: '前の対局を一時停止で復元しました', redLeft: '赤の残り', blackLeft: '黒の残り', captured: '取った駒', next: '次の目標' },
     zh: { pause: '暂停', resume: '继续', sound: '声音', restored: '已恢复并暂停上一局', redLeft: '剩余红棋', blackLeft: '剩余黑棋', captured: '吃子', next: '下个目标' },
@@ -44,7 +44,7 @@ const i18n: Record<Locale, {
 };
 
 const AI_INFO: Record<Locale, { difficulty: string; depth: Record<AiLevel,string>; review: string; captures: string; quiet: string }> = {
-    ko:{difficulty:'AI 탐색',depth:{1:'2수 · 상위 3개 변주',2:'4수 · 최선 수',3:'6수 · 최선 수'},review:'패배 복기',captures:'개 연속 잡기',quiet:'이 수로 다음 합법 수가 막혔습니다'},
+    ko:{difficulty:'AI 탐색',depth:{1:'2수 · 상위 3개 변주',2:'4수 · 최선 수',3:'6수 · 최선 수'},review:'패배 복기',captures:'개 연속 잡기',quiet:'이 수로 다음 합법 수가 막혔어요'},
     en:{difficulty:'AI search',depth:{1:'2 ply · weighted top 3',2:'4 ply · best move',3:'6 ply · best move'},review:'Loss review',captures:'captures in chain',quiet:'This turn closed your remaining legal moves'},
     ja:{difficulty:'AI探索',depth:{1:'2 ply · 上位3手を変化',2:'4 ply · 最善手',3:'6 ply · 最善手'},review:'敗局の振り返り',captures:'連続取り',quiet:'この手で合法手がなくなりました'},
     zh:{difficulty:'AI搜索',depth:{1:'2 ply · 前3候选变体',2:'4 ply · 最佳着',3:'6 ply · 最佳着'},review:'败局复盘',captures:'次连续吃子',quiet:'这一步封住了剩余合法走法'},

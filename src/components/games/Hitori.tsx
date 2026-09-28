@@ -6,7 +6,7 @@ import { LOGIC_CELL_SPRITES } from '../../lib/games/sprites';
 
 const SAVE='oiyo:hitori:v1';
 const COPY={
- ko:{title:'히토리',sub:'고요한 논리 정원',desc:'중복 숫자를 가리고, 흰 칸의 연결을 지키세요.',newGame:'새 퍼즐',undo:'되돌리기',hint:'힌트',sound:'소리',pause:'일시정지',resume:'계속하기',moves:'수',shaded:'검은 칸',win:'정원이 완성되었습니다',next:'다음 퍼즐',restored:'이어서 플레이할 준비가 됐어요',duplicate:'중복',adjacent:'검은 칸 인접',connected:'흰 칸 연결'},
+ ko:{title:'히토리',sub:'고요한 논리 정원',desc:'중복 숫자를 가리고, 흰 칸의 연결을 지키세요.',newGame:'새 퍼즐',undo:'되돌리기',hint:'힌트',sound:'소리',pause:'일시정지',resume:'계속하기',moves:'수',shaded:'검은 칸',win:'정원이 완성되었어요',next:'다음 퍼즐',restored:'이어서 플레이할 준비가 됐어요',duplicate:'중복',adjacent:'검은 칸 인접',connected:'흰 칸 연결'},
  en:{title:'Hitori',sub:'A quiet logic garden',desc:'Shade duplicates while keeping every white cell connected.',newGame:'New puzzle',undo:'Undo',hint:'Hint',sound:'Sound',pause:'Pause',resume:'Resume',moves:'Moves',shaded:'Shaded',win:'The garden is complete',next:'Next puzzle',restored:'Your puzzle is ready to continue',duplicate:'Unique lines',adjacent:'Black spacing',connected:'White network'},
  ja:{title:'ひとりにしてくれ',sub:'静かな論理の庭',desc:'重複を黒くして、白マスをつなげましょう。',newGame:'新しい問題',undo:'戻す',hint:'ヒント',sound:'サウンド',pause:'一時停止',resume:'続ける',moves:'手数',shaded:'黒マス',win:'庭が完成しました',next:'次の問題',restored:'続きから遊べます',duplicate:'重複なし',adjacent:'黒の間隔',connected:'白の接続'},
  zh:{title:'数壹',sub:'静谧逻辑花园',desc:'涂掉重复数字，并保持所有白格相连。',newGame:'新谜题',undo:'撤销',hint:'提示',sound:'声音',pause:'暂停',resume:'继续',moves:'步数',shaded:'黑格',win:'花园完成了',next:'下一题',restored:'可以继续上次谜题',duplicate:'行列唯一',adjacent:'黑格间距',connected:'白格连通'},

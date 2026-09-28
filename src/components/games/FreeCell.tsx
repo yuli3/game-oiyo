@@ -17,9 +17,9 @@ import { clearFreeCellSaveV2, loadFreeCellSaveV2, storeFreeCellSaveV2 } from '..
 
 const COPY = {
   ko: {
-    title: '프리셀 (FreeCell)', desc: '색을 번갈아 내림차순으로 쌓고, 네 무늬를 A부터 K까지 완성하세요.', reset: '다시 시작', win: '모든 무늬를 완성했습니다!', record: '전적',
-    instructions: '카드 또는 정렬된 묶음을 선택한 뒤 목적지를 선택하세요. 빈 셀 하나에는 카드 한 장만 둘 수 있습니다.', selected: (count: number) => `${count}장 선택됨. 목적지를 선택하세요.`, moved: '합법적인 이동을 완료했습니다.', invalid: '그곳으로 이동할 수 없습니다. 색·숫자 순서와 빈 공간 수를 확인하세요.', emptyCell: (index: number) => `빈 프리셀 ${index}`, emptyColumn: (index: number) => `빈 열 ${index}`, foundation: (suit: string) => `${suit} 기초 더미`, restart: '새 게임', freeArea: '프리셀', foundationArea: '기초 더미', tableauArea: '게임 열', suits: ['하트', '다이아몬드', '클럽', '스페이드'],
-    sound: '소리', moves: '이동', time: '시간', untimed: '이전 버전에서 이어진 판이라 시간 기록은 남지 않습니다.',
+    title: '프리셀 (FreeCell)', desc: '색을 번갈아 내림차순으로 쌓고, 네 무늬를 A부터 K까지 완성하세요.', reset: '다시 시작', win: '모든 무늬를 완성했어요!', record: '전적',
+    instructions: '카드 또는 정렬된 묶음을 선택한 뒤 목적지를 선택하세요. 빈 셀 하나에는 카드 한 장만 둘 수 있어요.', selected: (count: number) => `${count}장 선택됨. 목적지를 선택하세요.`, moved: '합법적인 이동을 완료했어요.', invalid: '그곳으로 이동할 수 없어요. 색·숫자 순서와 빈 공간 수를 확인하세요.', emptyCell: (index: number) => `빈 프리셀 ${index}`, emptyColumn: (index: number) => `빈 열 ${index}`, foundation: (suit: string) => `${suit} 기초 더미`, restart: '새 게임', freeArea: '프리셀', foundationArea: '기초 더미', tableauArea: '게임 열', suits: ['하트', '다이아몬드', '클럽', '스페이드'],
+    sound: '소리', moves: '이동', time: '시간', untimed: '이전 버전에서 이어진 판이라 시간 기록은 남지 않아요.',
   },
   en: {
     title: 'FreeCell', desc: 'Build downward in alternating colors and complete each suit from Ace to King.', reset: 'Restart', win: 'All four suits are complete!', record: 'Record',

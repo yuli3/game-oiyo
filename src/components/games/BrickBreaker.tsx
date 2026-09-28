@@ -103,7 +103,7 @@ type BB2I18n = {
 };
 
 const BB2_T: Record<Locale, BB2I18n> = {
-  ko: { launch: "공 발사", pause: "일시정지", resume: "계속하기", paused: "일시정지됨", soundOn: "사운드 켜짐", soundOff: "사운드 꺼짐", bricks: "부순 벽돌", maxCombo: "최대 콤보", nextGoal: "다음 목표", ready: "발사 준비", lifeLost: "생명 감소", restored: "이전 게임을 일시정지 상태로 복원했습니다" },
+  ko: { launch: "공 발사", pause: "일시정지", resume: "계속하기", paused: "일시정지됨", soundOn: "사운드 켜짐", soundOff: "사운드 꺼짐", bricks: "부순 벽돌", maxCombo: "최대 콤보", nextGoal: "다음 목표", ready: "발사 준비", lifeLost: "생명 감소", restored: "이전 게임을 일시정지 상태로 복원했어요" },
   en: { launch: "Launch ball", pause: "Pause", resume: "Resume", paused: "Paused", soundOn: "Sound on", soundOff: "Sound off", bricks: "Bricks broken", maxCombo: "Max combo", nextGoal: "Next goal", ready: "Ready to launch", lifeLost: "Life lost", restored: "Previous game restored in pause" },
   ja: { launch: "ボール発射", pause: "一時停止", resume: "再開", paused: "一時停止中", soundOn: "サウンドオン", soundOff: "サウンドオフ", bricks: "壊したブロック", maxCombo: "最大コンボ", nextGoal: "次の目標", ready: "発射準備", lifeLost: "残機減少", restored: "前回のゲームを一時停止状態で復元しました" },
   fr: { launch: "Lancer la balle", pause: "Pause", resume: "Reprendre", paused: "En pause", soundOn: "Son activé", soundOff: "Son coupé", bricks: "Briques cassées", maxCombo: "Combo max", nextGoal: "Prochain objectif", ready: "Prêt à lancer", lifeLost: "Vie perdue", restored: "Partie précédente restaurée en pause" },

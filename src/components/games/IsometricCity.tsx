@@ -23,7 +23,7 @@ const COPY: Record<Locale, Copy> = {
   ko: {
     eyebrow: "CITY SYSTEMS / ORIGINAL 3D BROWSER GAME",
     title: "Isometric City",
-    subtitle: "도로를 잇고 주거·상업·공원을 배치해 작은 도시를 살아 있는 대도시로 키우세요. 시민, 전력, 일자리와 교통 흐름이 실시간으로 맞물립니다.",
+    subtitle: "도로를 잇고 주거·상업·공원을 배치해 작은 도시를 살아 있는 대도시로 키우세요. 시민, 전력, 일자리와 교통 흐름이 실시간으로 맞물려요.",
     start: "도시 계획 시작",
     loading: "도시 지형과 교통망을 준비하는 중…",
     unavailable: "이 브라우저에서는 WebGL을 사용할 수 없어 3D 도시를 시작할 수 없습니다.",
@@ -41,7 +41,7 @@ const COPY: Record<Locale, Copy> = {
         road: "구역을 연결하고 이동 흐름을 만듭니다.", residential: "시민이 살 집과 인구 수용력을 만듭니다.", commercial: "일자리와 세수를 만듭니다.",
         park: "행복도를 높이고 빗물을 흡수합니다.", civic: "공공 서비스와 일자리를 제공합니다.", power: "도시 전체에 전력을 공급합니다.", bulldoze: "건물 또는 도로를 철거하고 일부 비용을 돌려받습니다.",
       },
-      place: "배치", rotate: "드래그 회전 · 휠 확대", needsRoad: "건물은 도로 옆에 배치하세요.", occupied: "이미 사용 중인 칸입니다.", empty: "철거할 대상이 없습니다.",
+      place: "배치", rotate: "드래그 회전 · 휠 확대", needsRoad: "건물은 도로 옆에 배치하세요.", occupied: "이미 사용 중인 칸입니다.", empty: "철거할 대상이 없어요.",
       insufficient: "예산이 부족합니다.", built: "건설 완료", demolished: "철거 완료", selected: "선택한 구역", level: "레벨", upgrade: "업그레이드",
       maxLevel: "최고 레벨", noSelection: "도시를 클릭해 구역을 살펴보세요.", connected: "연결 도로", congestion: "혼잡도", balance: "시간당 수지",
       citizens: "시민", capacity: "수용", pause: "일시정지", play: "재생", fast: "빠르게", night: "밤으로", dayTime: "낮으로", tiltShift: "틸트시프트", sound: "소리",

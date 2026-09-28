@@ -7,7 +7,7 @@ import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 
 const SAVE='oiyo:light-up:v1';
 const COPY={
- ko:{title:'라이트 업',sub:'빛의 논리 극장',desc:'모든 방을 밝히되 전구끼리 마주 보지 않게 배치하세요.',newGame:'새 무대',undo:'되돌리기',hint:'빛 힌트',sound:'소리',pause:'일시정지',resume:'계속하기',moves:'수',bulbs:'전구',dark:'어두운 칸',win:'모든 조명이 켜졌습니다',next:'다음 무대',restored:'저장된 무대를 불러왔어요'},
+ ko:{title:'라이트 업',sub:'빛의 논리 극장',desc:'모든 방을 밝히되 전구끼리 마주 보지 않게 배치하세요.',newGame:'새 무대',undo:'되돌리기',hint:'빛 힌트',sound:'소리',pause:'일시정지',resume:'계속하기',moves:'수',bulbs:'전구',dark:'어두운 칸',win:'모든 조명이 켜졌어요',next:'다음 무대',restored:'저장된 무대를 불러왔어요'},
  en:{title:'Light Up',sub:'The theatre of illumination',desc:'Light every room without letting two bulbs see each other.',newGame:'New stage',undo:'Undo',hint:'Light hint',sound:'Sound',pause:'Pause',resume:'Resume',moves:'Moves',bulbs:'Bulbs',dark:'Dark cells',win:'Every light is on',next:'Next stage',restored:'Your saved stage is ready'},
  ja:{title:'美術館',sub:'光の論理劇場',desc:'電球同士を向かい合わせず、すべての部屋を照らします。',newGame:'新しい舞台',undo:'戻す',hint:'光のヒント',sound:'サウンド',pause:'一時停止',resume:'続ける',moves:'手数',bulbs:'電球',dark:'暗いマス',win:'すべての光が灯りました',next:'次の舞台',restored:'保存した舞台を復元しました'},
  zh:{title:'点灯',sub:'光之逻辑剧场',desc:'点亮所有房间，同时避免灯泡互相照射。',newGame:'新舞台',undo:'撤销',hint:'光提示',sound:'声音',pause:'暂停',resume:'继续',moves:'步数',bulbs:'灯泡',dark:'暗格',win:'所有灯光都亮了',next:'下一舞台',restored:'已恢复保存的舞台'},

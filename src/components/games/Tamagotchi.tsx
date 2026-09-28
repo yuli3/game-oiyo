@@ -25,7 +25,7 @@ const COPY = {
         feed: '먹이', water: '물', play: '놀기', clean: '씻기', heal: '치료',
         meals: '오늘의 식사', breakfast: '아침', lunch: '점심', dinner: '저녁', streak: '연속',
         walk: '산책', startWalk: '산책 가기', walkUnavailable: `산책은 ${WALK_COOLDOWN_HOURS}시간마다`, lastWalk: '마지막 산책',
-        tapEgg: '알을 톡톡 두드려 주세요', guide: '설명서', newPet: '새로 키우기', confirmReset: '정말 처음부터? (현재 펫은 사라집니다)',
+        tapEgg: '알을 톡톡 두드려 주세요', guide: '설명서', newPet: '새로 키우기', confirmReset: '정말 처음부터? (현재 펫은 사라져요)',
         guideBody: ['알은 하루가 지나면 부화합니다(6시간 이상 돌봤다면 두드려서 조기 부화).', '스탯은 실시간으로 줄어듭니다 — 접속하지 않은 동안에도!', '식사 버튼은 아침 6-10시·점심 11-14시·저녁 17-21시에만 열립니다. 세 끼를 다 챙기면 건강 보너스.', '산책은 4시간마다 가능하고 행복·건강을 크게 올립니다.', '건강이 0이 되거나 너무 나이 들면 펫은 무지개 다리를 건넙니다.', '밤 10시~아침 6시에는 잠들 수 있어요. 자는 동안엔 아무것도 못 합니다.', '펫을 탭하면 쓰다듬기(+행복).'],
         msg: { fed: '냠냠! 맛있게 먹었어요', gave_water: '꿀꺽꿀꺽! 시원해요', played: '신나게 놀았어요!', cleaned: '반짝반짝 깨끗해요', healed: '몸이 나아졌어요', petted: '기분이 좋아요 💗', hatched: '알에서 태어났어요! 🎉', grew_to_child: '어린이로 자랐어요!', grew_to_adult: '어른이 되었어요!', sleeping: '쿨쿨... 잠들었어요', woke_up: '잠에서 깼어요!', egg_cared: '알이 따뜻해졌어요', meal_breakfast: '아침을 먹었어요 🌅', meal_lunch: '점심을 먹었어요 ☀️', meal_dinner: '저녁을 먹었어요 🌙', walked: '즐거운 산책이었어요 🐾', walk_unavailable: '아직 산책할 수 없어요', heal_not_needed: '지금은 건강해요', dead_cant_act: '...', sleeping_cant_act: '자고 있어요...', feed_cooldown: '아직 배불러요', water_cooldown: '목마르지 않아요', play_cooldown: '조금 쉬고 싶어요', clean_cooldown: '이미 깨끗해요', heal_cooldown: '약은 아직이에요', pet_cooldown: '쓰다듬기는 잠시 후에', died_neglect: '돌봄이 부족해 떠났어요... 🌈', died_old_age: '천수를 누리고 떠났어요 🌈' },
     },

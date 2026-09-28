@@ -22,7 +22,7 @@ const COPY: Record<Locale, Copy> = {
   ko: {
     eyebrow: "SOFT ISLAND LIFE / ORIGINAL 3D BROWSER GAME",
     title: "Mallow Isle",
-    subtitle: "말랑한 언덕을 빚고 꽃과 나무, 벤치를 놓아 작은 섬을 나만의 쉼터로 가꾸세요. 토끼가 되어 동물 이웃과 바람 부는 하루를 천천히 걸어봅니다.",
+    subtitle: "말랑한 언덕을 빚고 꽃과 나무, 벤치를 놓아 작은 섬을 나만의 쉼터로 가꾸세요. 토끼가 되어 동물 이웃과 바람 부는 하루를 천천히 걸어봐요.",
     start: "섬으로 산책 가기",
     loading: "구름과 풀바람을 불러오는 중…",
     unavailable: "이 브라우저에서는 WebGL을 사용할 수 없어 3D 섬을 시작할 수 없습니다.",

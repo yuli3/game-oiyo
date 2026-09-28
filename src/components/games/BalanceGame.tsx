@@ -42,8 +42,8 @@ const BalanceGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
   const COPY = {
     ko: {
       title: '밸런스 게임', subtitle: '둘 중 하나만 고를 수 있다면?',
-      note: '이 게임은 한국어 전용 콘텐츠입니다.', progress: (n: number, total: number) => `${n} / ${total}`,
-      restart: '처음부터 다시', done: '68문항을 모두 골랐습니다!', doneSub: '당신의 선택 기록',
+      note: '이 게임은 한국어 전용 콘텐츠예요.', progress: (n: number, total: number) => `${n} / ${total}`,
+      restart: '처음부터 다시', done: '68문항을 모두 골랐어요!', doneSub: '당신의 선택 기록',
       pickA: 'A 선택', pickB: 'B 선택', myPicks: '내 선택 비율', vs: 'VS',
       crowd: '다른 사람들의 선택', crowdFirst: '이 질문에 처음 답했어요', crowdNote: (n: number) => `${n.toLocaleString()}명 참여 · 집계는 잠시 뒤 반영됩니다`,
     },
