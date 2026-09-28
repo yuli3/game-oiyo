@@ -269,7 +269,7 @@ function Battle({ copy, highScore, onFinish }: Props) {
     shipX.current = clampShipX(((event.clientX - rect.left) / rect.width - 0.5) * 16);
   };
   const frameloop = usePlayFrameloop(true);
-  return <div className="relative h-full select-none overflow-hidden bg-[#02030a]" onPointerMove={(event) => { if (event.buttons) drag(event); }} onPointerDown={(event) => { audio.current.start(); drag(event); fire(); }}>
+  return <div className="relative h-full touch-none select-none overflow-hidden bg-[#02030a]" onPointerMove={(event) => { if (event.buttons) drag(event); }} onPointerDown={(event) => { audio.current.start(); drag(event); fire(); }}>
     <Canvas frameloop={frameloop} dpr={isCoarse() ? 1 : [1, 1.5]} camera={{ position: [0, 0, 18], fov: 46 }} gl={{ antialias: !isCoarse(), alpha: false }} onCreated={({ gl }) => { gl.setClearColor(new Color("#02030a")); }}>
       <ambientLight intensity={0.34} /><pointLight position={[-6, 5, 5]} color="#22d3ee" intensity={28} distance={18} /><pointLight position={[6, 2, 4]} color="#e879f9" intensity={24} distance={18} />
       <Nebula /><CameraRig clearing={clearing} /><FrameLoop tick={tick} />
@@ -293,10 +293,11 @@ function Battle({ copy, highScore, onFinish }: Props) {
     {captured && <div className="pointer-events-none absolute inset-x-0 top-24 text-center font-mono text-sm font-black tracking-[.35em] text-fuchsia-300 [text-shadow:0_0_18px_#d946ef]">{copy.captured}</div>}
     {clearing && <div className="pointer-events-none absolute inset-0 grid place-items-center bg-cyan-950/10"><div className="font-mono text-2xl font-black tracking-[.3em] text-cyan-100 [text-shadow:0_0_28px_#22d3ee] sm:text-4xl">{copy.clear}</div></div>}
     {paused && <div className="absolute inset-0 grid place-items-center bg-black/70 font-mono text-3xl font-black tracking-[.3em] text-white">{copy.pause}</div>}
-    <div className="absolute inset-x-0 bottom-3 flex justify-center gap-2 sm:hidden">
-      <button aria-label={copy.left} onPointerDown={(event) => { event.stopPropagation(); keys.current.add("a"); }} onPointerUp={() => keys.current.delete("a")} className="min-h-12 min-w-16 rounded-xl border border-white/20 bg-black/65 font-mono font-black text-white">◀</button>
+    {/* 2026-09-28 touch audit: hide only for wide screens with a mouse — a width breakpoint alone removed the controls on landscape phones and iPads. touch-none keeps a held button from turning into a page scroll (pointercancel). */}
+    <div className="absolute inset-x-0 bottom-3 flex touch-none justify-center gap-2 sm:pointer-fine:hidden">
+      <button aria-label={copy.left} onPointerDown={(event) => { event.stopPropagation(); keys.current.add("a"); }} onPointerUp={() => keys.current.delete("a")} onPointerCancel={() => keys.current.delete("a")} className="min-h-12 min-w-16 rounded-xl border border-white/20 bg-black/65 font-mono font-black text-white">◀</button>
       <button aria-label={copy.fire} onPointerDown={(event) => { event.stopPropagation(); fire(); }} className="min-h-12 min-w-24 rounded-xl bg-cyan-400 font-mono font-black text-slate-950">{copy.fire}</button>
-      <button aria-label={copy.right} onPointerDown={(event) => { event.stopPropagation(); keys.current.add("d"); }} onPointerUp={() => keys.current.delete("d")} className="min-h-12 min-w-16 rounded-xl border border-white/20 bg-black/65 font-mono font-black text-white">▶</button>
+      <button aria-label={copy.right} onPointerDown={(event) => { event.stopPropagation(); keys.current.add("d"); }} onPointerUp={() => keys.current.delete("d")} onPointerCancel={() => keys.current.delete("d")} className="min-h-12 min-w-16 rounded-xl border border-white/20 bg-black/65 font-mono font-black text-white">▶</button>
     </div>
   </div>;
 }

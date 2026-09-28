@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 const source = (relativePath: string) => readFileSync(new URL(relativePath, import.meta.url), 'utf8');
@@ -48,5 +48,25 @@ describe('mobile game interaction contracts', () => {
     expect(component).toMatch(/transition-opacity motion-reduce:transition-none/);
     expect(component).toMatch(/animate-in zoom-in-75 motion-reduce:transform-none motion-reduce:transition-none motion-reduce:animate-none/);
     expect(component).toMatch(/animate-in fade-in zoom-in-95 motion-reduce:animate-none/);
+  });
+
+  // 2026-09-28 touch audit: width-only breakpoints hid hold controls on landscape phones (844px) and iPads.
+  it('never hides hold-to-play touch controls by screen width alone', () => {
+    const dir = new URL('../../components/games/', import.meta.url);
+    const offenders: string[] = [];
+    for (const name of readdirSync(dir)) {
+      if (!/\.tsx$/.test(name)) continue;
+      const lines = source(`../../components/games/${name}`).split('\n');
+      lines.forEach((line, i) => {
+        if (!/className="[^"]*\b(?:sm|md|lg):hidden\b/.test(line)) return;
+        if (lines.slice(i, i + 6).some((next) => /onPointerDown|\{\.\.\.hold\(/.test(next))) offenders.push(`${name}:${i + 1}`);
+      });
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it.each(['Emberdeep.tsx', 'IronTempest.tsx', 'WindwardHorizonsScene.tsx', 'NeonFormationScene.tsx'])('%s keeps touch controls for coarse pointers and blocks scroll on hold', (file) => {
+    const component = source(`../../components/games/${file}`);
+    expect(component).toMatch(/touch-none[^"]*(?:sm|md):pointer-fine:hidden/);
   });
 });

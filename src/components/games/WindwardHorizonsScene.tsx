@@ -568,8 +568,9 @@ function MobileHelm({
   });
 
   const button = "grid size-12 place-items-center rounded-full border border-white/15 bg-[#061519]/78 text-white shadow-xl backdrop-blur-md active:bg-[#d6b778] active:text-[#102325]";
+  // 2026-09-28 touch audit: hide only for wide screens with a mouse — a width breakpoint alone removed the controls on landscape phones and iPads. touch-none keeps a held button from turning into a page scroll (pointercancel).
   return (
-    <div data-panel className="pointer-events-none absolute inset-x-0 bottom-3 z-30 flex items-end justify-between px-3 sm:hidden">
+    <div data-panel className="pointer-events-none absolute inset-x-0 bottom-3 z-30 flex touch-none select-none items-end justify-between px-3 sm:pointer-fine:hidden">
       <div className="pointer-events-auto flex gap-2">
         <button type="button" className={button} aria-label="Steer left" {...hold("rudder", -1)}>
           <ChevronLeft className="size-6" />

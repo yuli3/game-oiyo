@@ -293,10 +293,11 @@ function Dungeon({ hero, copy, onFinish }: { hero: HeroClass; copy: Copy; onFini
     <button type="button" onClick={toggleMuted} aria-pressed={muted} aria-label="Sound" className="absolute left-4 top-4 min-h-11 min-w-11 rounded border border-white/20 bg-black/70 text-sm text-white">
       <span aria-hidden="true">{muted ? "🔇" : "🔊"}</span>
     </button>
-    <div className="pointer-events-none absolute bottom-4 left-3 right-3 flex items-end justify-between gap-2 md:hidden">
+    {/* 2026-09-28 touch audit: hide only for wide screens with a mouse — a width breakpoint alone removed the controls on landscape phones and iPads. touch-none keeps a held button from turning into a page scroll (pointercancel). */}
+    <div className="pointer-events-none absolute bottom-4 left-3 right-3 flex touch-none select-none items-end justify-between gap-2 md:pointer-fine:hidden">
       <div className="pointer-events-auto grid grid-cols-3 gap-1">
-        <span /><button onPointerDown={() => press("y", -1)} onPointerUp={() => press("y", 0)} className="size-12 rounded bg-black/70 font-black text-white">▲</button><span />
-        <button onPointerDown={() => press("x", -1)} onPointerUp={() => press("x", 0)} className="size-12 rounded bg-black/70 font-black text-white">◀</button><button onPointerDown={() => press("y", 1)} onPointerUp={() => press("y", 0)} className="size-12 rounded bg-black/70 font-black text-white">▼</button><button onPointerDown={() => press("x", 1)} onPointerUp={() => press("x", 0)} className="size-12 rounded bg-black/70 font-black text-white">▶</button>
+        <span /><button onPointerDown={() => press("y", -1)} onPointerUp={() => press("y", 0)} onPointerCancel={() => press("y", 0)} className="size-12 rounded bg-black/70 font-black text-white">▲</button><span />
+        <button onPointerDown={() => press("x", -1)} onPointerUp={() => press("x", 0)} onPointerCancel={() => press("x", 0)} className="size-12 rounded bg-black/70 font-black text-white">◀</button><button onPointerDown={() => press("y", 1)} onPointerUp={() => press("y", 0)} onPointerCancel={() => press("y", 0)} className="size-12 rounded bg-black/70 font-black text-white">▼</button><button onPointerDown={() => press("x", 1)} onPointerUp={() => press("x", 0)} onPointerCancel={() => press("x", 0)} className="size-12 rounded bg-black/70 font-black text-white">▶</button>
       </div>
       <div className="pointer-events-auto grid grid-cols-2 gap-2 text-[10px] font-black">
         <button onPointerDown={() => press("jump", true)} className="h-12 rounded-full bg-stone-700 px-3 text-white">JUMP</button><button onPointerDown={() => press("dodge", true)} className="h-12 rounded-full bg-slate-600 px-3 text-white">DODGE</button>
