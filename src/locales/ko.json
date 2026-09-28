@@ -10,7 +10,7 @@
   },
   "courses": {
     "title": "강의 카탈로그",
-    "subtitle": "27개 분야에 걸친 체계적인 챕터별 학습 시리즈입니다.",
+    "subtitle": "27개 분야에 걸친 체계적인 챕터별 학습 시리즈예요.",
     "chapters": "챕터",
     "startCourse": "강의 시작",
     "continueReading": "이어서 읽기",
@@ -26,11 +26,11 @@
     "coursesCount": "강의",
     "moreChapters": "개 챕터 더",
     "totalSuffix": "전체",
-    "empty": "아직 등록된 강의가 없습니다."
+    "empty": "아직 등록된 강의가 없어요."
   },
   "magazine": {
     "title": "매거진",
-    "subtitle": "마음, 신화, 철학, 그리고 인간의 경험에 관한 심층 에세이 모음입니다.",
+    "subtitle": "마음, 신화, 철학, 그리고 인간의 경험에 관한 깊이 있는 에세이 모음이에요.",
     "featured": "추천",
     "readStory": "읽기",
     "latestIssue": "최신",
@@ -44,7 +44,7 @@
     "tags": "태그",
     "category": "카테고리",
     "searchPlaceholder": "글 검색...",
-    "noResults": "글을 찾을 수 없습니다",
+    "noResults": "글을 찾지 못했어요",
     "featuredPosts": "추천 글",
     "recentPosts": "최신 글",
     "allPosts": "모든 글",
@@ -57,7 +57,7 @@
   },
   "interactive": {
     "title": "인터랙티브",
-    "subtitle": "읽을거리와 도구, 게임, 시뮬레이터를 함께 엮은 콘텐츠 모음입니다.",
+    "subtitle": "읽을거리와 도구, 게임, 시뮬레이터를 함께 엮은 콘텐츠 모음이에요.",
     "featured": "추천 인터랙티브",
     "launch": "살펴보기",
     "latest": "최신 인터랙티브"
@@ -89,7 +89,7 @@
     "poweredBy": "Astro로 구동"
   },
   "page404": {
-    "description": "죄송합니다. 요청하신 페이지가 다른 차원으로 이동한 것 같습니다.",
+    "description": "죄송해요. 찾으시는 페이지가 다른 곳으로 옮겨졌거나 없어진 것 같아요.",
     "returnHome": "홈으로 돌아가기"
   },
   "home": {
@@ -97,8 +97,8 @@
   },
   "category": {
     "allInsights": "전체 인사이트",
-    "academySubtitle": "{category}에 대한 체계적인 학습 가이드와 강의 시리즈입니다.",
-    "magazineSubtitle": "{category}에 관한 심층 기술 인사이트를 담았습니다.",
+    "academySubtitle": "{category}에 대한 체계적인 학습 가이드와 강의 시리즈예요.",
+    "magazineSubtitle": "{category}에 관한 깊이 있는 인사이트를 담았어요.",
     "names": {
       "Accounting": "회계학",
       "Economics": "경제학",
