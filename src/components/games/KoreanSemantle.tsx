@@ -1,23 +1,30 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  dailyPuzzleId,
+  dailySecretIndex,
+  minutesUntilNextKstMidnight,
   koreanSemantleHints,
   orderGuesses,
   parseKoreanSemantle,
+  poolPuzzleId,
   scoreGuess,
+  SEMANTLE_VECTOR_DIM,
   serializeKoreanSemantle,
+  similarityTableFromVectors,
+  wordsFromVocabText,
   type Guess,
   type KoreanSemantleHint,
   type ProximityBand,
   type SimilarityTable,
 } from "../../lib/games/korean-semantle";
-import { minutesUntilNextDaily } from "../../lib/games/daily";
+
 import { getStreak, recordStreak, type StreakStats } from "../../lib/games/records";
 import { Spinner } from "../ui/spinner";
 
 type UILocale = "ko" | "en" | "ja" | "zh" | "fr" | "es";
 type Status = "loading" | "playing" | "won" | "revealed" | "error";
 
+// 2026-09-29: play loads one shared pool. Today's secret is an index into that
+// pool, not a separate similarity JSON per word.
 const DATA_BASE = "/data/korean-semantle";
 const GAME_ID = "korean-semantle";
 const SAVE_KEY = "oiyo:korean-semantle:v1";
@@ -82,7 +89,7 @@ const COPY: Record<UILocale, {
     loadFail: "퍼즐을 불러오지 못했습니다.",
     notHangul: "한글 단어만 입력하세요",
     duplicate: "이미 추측한 단어입니다",
-    unknown: "순위권 밖 (상위 목록에 없음)",
+    unknown: "이 단어는 목록에 없어요",
     guessCount: (n) => `${n}번째 추측`,
     closest: "가장 가까운 단어",
     rankLabel: "순위",
@@ -96,7 +103,7 @@ const COPY: Record<UILocale, {
     demoCredit: "수작업으로 만든 예시 유사도 표입니다. fastText 데이터가 아닙니다.",
     credit: "단어 벡터: fastText Korean (Facebook AI Research), CC BY-SA 3.0",
     stats: (s) => `🔥 연속 ${s.currentStreak} · 최고 ${s.maxStreak} · ${s.played}판`,
-    hint: "의미 유사도(코사인)를 기준으로 순위를 매겨요. 상위 목록 안에 든 단어만 순위가 표시돼요.",
+    hint: "약 2만 개 한글 단어 안에서 의미 유사도로 순위를 매겨요. 목록에 없는 단어는 점수가 없어요.",
     sound: "소리", restored: "오늘의 추측을 이어서 불러왔어요",
   },
   en: {
@@ -108,7 +115,7 @@ const COPY: Record<UILocale, {
     loadFail: "Failed to load the puzzle.",
     notHangul: "Enter a Korean word only",
     duplicate: "Already guessed",
-    unknown: "Outside the ranking (not in the top list)",
+    unknown: "Not in the word list",
     guessCount: (n) => `Guess #${n}`,
     closest: "Closest word",
     rankLabel: "Rank",
@@ -122,7 +129,7 @@ const COPY: Record<UILocale, {
     demoCredit: "Handcrafted sample similarity table; this demo does not use fastText data.",
     credit: "Word vectors: fastText Korean (Facebook AI Research), CC BY-SA 3.0",
     stats: (s) => `🔥 Streak ${s.currentStreak} · Best ${s.maxStreak} · ${s.played} played`,
-    hint: "Ranking is by semantic (cosine) similarity. Only words inside the served top list show a rank.",
+    hint: "Ranks are cosine similarity inside about 20,000 Korean words. A word outside that list gets no score.",
     sound: "Sound", restored: "Today's guesses were restored",
   },
   ja: {
@@ -134,7 +141,7 @@ const COPY: Record<UILocale, {
     loadFail: "パズルを読み込めませんでした。",
     notHangul: "ハングルの単語のみ入力してください",
     duplicate: "既に推測した単語です",
-    unknown: "順位圏外（上位リストにありません）",
+    unknown: "単語リストにありません",
     guessCount: (n) => `${n}回目の推測`,
     closest: "最も近い単語",
     rankLabel: "順位",
@@ -148,7 +155,7 @@ const COPY: Record<UILocale, {
     demoCredit: "手作業で作成した類似度のサンプルです。このデモはfastTextデータを使用していません。",
     credit: "単語ベクトル: fastText Korean (Facebook AI Research), CC BY-SA 3.0",
     stats: (s) => `🔥 連続 ${s.currentStreak} · 最高 ${s.maxStreak} · ${s.played}回`,
-    hint: "意味的類似度（コサイン）で順位を付けます。上位リスト内の単語のみ順位が表示されます。",
+    hint: "約2万語の韓国語の中でコサイン類似度の順位を付けます。リストにない単語は点数がありません。",
     sound: "サウンド", restored: "今日の推測を復元しました",
   },
   zh: {
@@ -160,7 +167,7 @@ const COPY: Record<UILocale, {
     loadFail: "加载谜题失败。",
     notHangul: "请仅输入韩文词语",
     duplicate: "已经猜过了",
-    unknown: "排名之外（不在榜单中）",
+    unknown: "不在词表中",
     guessCount: (n) => `第 ${n} 次猜测`,
     closest: "最接近的词",
     rankLabel: "排名",
@@ -174,7 +181,7 @@ const COPY: Record<UILocale, {
     demoCredit: "这是手工制作的相似度示例表；本演示不使用 fastText 数据。",
     credit: "词向量：fastText Korean (Facebook AI Research)，CC BY-SA 3.0",
     stats: (s) => `🔥 连胜 ${s.currentStreak} · 最高 ${s.maxStreak} · ${s.played} 局`,
-    hint: "按语义（余弦）相似度排名。只有榜单内的词才显示排名。",
+    hint: "在约2万个韩语词里按余弦相似度排名。不在列表中的词没有分数。",
     sound: "声音", restored: "已恢复今天的猜测",
   },
   fr: {
@@ -186,7 +193,7 @@ const COPY: Record<UILocale, {
     loadFail: "Échec du chargement du puzzle.",
     notHangul: "Entrez uniquement un mot coréen",
     duplicate: "Déjà proposé",
-    unknown: "Hors classement (absent du top)",
+    unknown: "Absent de la liste",
     guessCount: (n) => `Essai n°${n}`,
     closest: "Mot le plus proche",
     rankLabel: "Rang",
@@ -200,7 +207,7 @@ const COPY: Record<UILocale, {
     demoCredit: "Table de similarité d'exemple créée à la main ; cette démo n'utilise pas de données fastText.",
     credit: "Vecteurs : fastText Korean (Facebook AI Research), CC BY-SA 3.0",
     stats: (s) => `🔥 Série ${s.currentStreak} · Record ${s.maxStreak} · ${s.played} parties`,
-    hint: "Classement par similarité sémantique (cosinus). Seuls les mots du top affichent un rang.",
+    hint: "Le rang vient de la similarité cosinus dans un bassin d'environ 20 000 mots coréens. Un mot hors liste n'a pas de score.",
     sound: "Son", restored: "Les essais du jour ont été restaurés",
   },
   es: {
@@ -212,7 +219,7 @@ const COPY: Record<UILocale, {
     loadFail: "No se pudo cargar el puzle.",
     notHangul: "Introduce solo una palabra coreana",
     duplicate: "Ya la has propuesto",
-    unknown: "Fuera del ranking (no está en el top)",
+    unknown: "No está en la lista",
     guessCount: (n) => `Intento n.º ${n}`,
     closest: "Palabra más cercana",
     rankLabel: "Puesto",
@@ -226,18 +233,18 @@ const COPY: Record<UILocale, {
     demoCredit: "Tabla de similitud de ejemplo creada a mano; esta demo no usa datos de fastText.",
     credit: "Vectores: fastText Korean (Facebook AI Research), CC BY-SA 3.0",
     stats: (s) => `🔥 Racha ${s.currentStreak} · Mejor ${s.maxStreak} · ${s.played} jugadas`,
-    hint: "El ranking es por similitud semántica (coseno). Solo las palabras del top muestran un puesto.",
+    hint: "El puesto sale de la similitud coseno en un conjunto de unas 20 000 palabras coreanas. Una palabra fuera de la lista no tiene puntuación.",
     sound: "Sonido", restored: "Se restauraron los intentos de hoy",
   },
 };
 
 const HINT_COPY: Record<UILocale, { open: string; locked: (n: number) => string; next: (m: number) => string; format: (h: KoreanSemantleHint) => string }> = {
-  ko: { open: "공정 힌트 열기", locked: n => `${n}회 추측에서 다음 힌트`, next: m => `다음 퍼즐까지 ${Math.floor(m / 60)}시간 ${m % 60}분`, format: h => h.kind === "length" ? `정답은 ${h.value}글자입니다.` : h.kind === "initial" ? `첫 초성은 ${h.value}입니다.` : `고정된 중간 거리 단어: ${h.value} (순위 ${h.rank})` },
-  en: { open: "Open fair hint", locked: n => `Next hint at ${n} guesses`, next: m => `Next puzzle in ${Math.floor(m / 60)}h ${m % 60}m`, format: h => h.kind === "length" ? `The answer has ${h.value} syllables.` : h.kind === "initial" ? `The first Korean initial is ${h.value}.` : `Fixed mid-distance word: ${h.value} (rank ${h.rank})` },
-  ja: { open: "公平ヒントを開く", locked: n => `${n}回で次のヒント`, next: m => `次のパズルまで ${Math.floor(m / 60)}時間${m % 60}分`, format: h => h.kind === "length" ? `答えは${h.value}文字です。` : h.kind === "initial" ? `最初の初声は${h.value}です。` : `固定の中距離語: ${h.value}（順位${h.rank}）` },
-  zh: { open: "打开公平提示", locked: n => `猜到${n}次解锁下一提示`, next: m => `距下一题 ${Math.floor(m / 60)}小时${m % 60}分`, format: h => h.kind === "length" ? `答案有${h.value}个韩文音节。` : h.kind === "initial" ? `第一个韩文声母是${h.value}。` : `固定中距离词：${h.value}（排名${h.rank}）` },
-  fr: { open: "Ouvrir l’indice équitable", locked: n => `Prochain indice à ${n} essais`, next: m => `Prochain puzzle dans ${Math.floor(m / 60)} h ${m % 60} min`, format: h => h.kind === "length" ? `La réponse compte ${h.value} syllabes.` : h.kind === "initial" ? `L’initiale coréenne est ${h.value}.` : `Mot fixe à distance moyenne : ${h.value} (rang ${h.rank})` },
-  es: { open: "Abrir pista justa", locked: n => `Siguiente pista al intento ${n}`, next: m => `Próximo puzle en ${Math.floor(m / 60)} h ${m % 60} min`, format: h => h.kind === "length" ? `La respuesta tiene ${h.value} sílabas.` : h.kind === "initial" ? `La inicial coreana es ${h.value}.` : `Palabra fija de distancia media: ${h.value} (puesto ${h.rank})` },
+  ko: { open: "공정 힌트 열기", locked: n => `${n}회 추측에서 다음 힌트`, next: m => `다음 퍼즐까지 ${Math.floor(m / 60)}시간 ${m % 60}분 (한국 시간 자정)`, format: h => h.kind === "length" ? `정답은 ${h.value}글자입니다.` : h.kind === "initial" ? `첫 초성은 ${h.value}입니다.` : `고정된 중간 거리 단어: ${h.value} (순위 ${h.rank})` },
+  en: { open: "Open fair hint", locked: n => `Next hint at ${n} guesses`, next: m => `Next puzzle in ${Math.floor(m / 60)}h ${m % 60}m (midnight KST)`, format: h => h.kind === "length" ? `The answer has ${h.value} syllables.` : h.kind === "initial" ? `The first Korean initial is ${h.value}.` : `Fixed mid-distance word: ${h.value} (rank ${h.rank})` },
+  ja: { open: "公平ヒントを開く", locked: n => `${n}回で次のヒント`, next: m => `次のパズルまで ${Math.floor(m / 60)}時間${m % 60}分（韓国時間の0時）`, format: h => h.kind === "length" ? `答えは${h.value}文字です。` : h.kind === "initial" ? `最初の初声は${h.value}です。` : `固定の中距離語: ${h.value}（順位${h.rank}）` },
+  zh: { open: "打开公平提示", locked: n => `猜到${n}次解锁下一提示`, next: m => `距下一题 ${Math.floor(m / 60)}小时${m % 60}分（韩国时间零点）`, format: h => h.kind === "length" ? `答案有${h.value}个韩文音节。` : h.kind === "initial" ? `第一个韩文声母是${h.value}。` : `固定中距离词：${h.value}（排名${h.rank}）` },
+  fr: { open: "Ouvrir l’indice équitable", locked: n => `Prochain indice à ${n} essais`, next: m => `Prochain puzzle dans ${Math.floor(m / 60)} h ${m % 60} min (minuit, heure de Corée)`, format: h => h.kind === "length" ? `La réponse compte ${h.value} syllabes.` : h.kind === "initial" ? `L’initiale coréenne est ${h.value}.` : `Mot fixe à distance moyenne : ${h.value} (rang ${h.rank})` },
+  es: { open: "Abrir pista justa", locked: n => `Siguiente pista al intento ${n}`, next: m => `Próximo puzle en ${Math.floor(m / 60)} h ${m % 60} min (medianoche, hora de Corea)`, format: h => h.kind === "length" ? `La respuesta tiene ${h.value} sílabas.` : h.kind === "initial" ? `La inicial coreana es ${h.value}.` : `Palabra fija de distancia media: ${h.value} (puesto ${h.rank})` },
 };
 
 /** Progress width for a guess: closer rank → fuller bar (log-scaled). */
@@ -265,7 +272,7 @@ const KoreanSemantle: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
   const [sound, setSound] = useState(true);
   const [restored, setRestored] = useState(false);
   const [shownHints, setShownHints] = useState(0);
-  const [nextMinutes, setNextMinutes] = useState(() => minutesUntilNextDaily());
+  const [nextMinutes, setNextMinutes] = useState(() => minutesUntilNextKstMidnight());
   const recordedRef = useRef(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -278,12 +285,21 @@ const KoreanSemantle: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
   const loadPuzzle = useCallback(async () => {
     setStatus("loading");
     try {
-      const idxRes = await fetch(`${DATA_BASE}/index.json`);
-      const idx = (await idxRes.json()) as { puzzles: string[] };
-      const id = dailyPuzzleId(idx.puzzles);
-      const res = await fetch(`${DATA_BASE}/${id}.json`);
-      if (!res.ok) throw new Error("puzzle fetch failed");
-      const data = (await res.json()) as SimilarityTable;
+      const [vocabRes, vecRes] = await Promise.all([
+        fetch(`${DATA_BASE}/vocab.txt`),
+        fetch(`${DATA_BASE}/vectors.bin`),
+      ]);
+      if (!vocabRes.ok || !vecRes.ok) throw new Error("pool fetch failed");
+      const words = wordsFromVocabText(await vocabRes.text());
+      const matrix = new Float32Array(await vecRes.arrayBuffer());
+      const now = new Date();
+      const data = similarityTableFromVectors(
+        words,
+        matrix,
+        SEMANTLE_VECTOR_DIM,
+        dailySecretIndex(words.length, now),
+      );
+      const id = poolPuzzleId(now);
       const saved = parseKoreanSemantle(localStorage.getItem(SAVE_KEY), id, data);
       setTable(data);
       setPuzzleId(id);
@@ -306,7 +322,7 @@ const KoreanSemantle: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
   }, [loadPuzzle]);
 
   useEffect(() => {
-    const update = () => setNextMinutes(minutesUntilNextDaily());
+    const update = () => setNextMinutes(minutesUntilNextKstMidnight());
     update();
     const timer = window.setInterval(update, 60_000);
     return () => window.clearInterval(timer);

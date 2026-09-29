@@ -1,0 +1,12 @@
+{
+  "count": 20000,
+  "dim": 300,
+  "target": 20000,
+  "source": "fastText",
+  "license": "Derived from fastText Korean vectors (Facebook AI Research), CC BY-SA 3.0",
+  "order": "frequency",
+  "filter": "hangul-1-4",
+  "endian": "little",
+  "dtype": "float32",
+  "normalized": true
+}

@@ -1,14 +1,26 @@
 import { describe, expect, it } from "vitest";
 
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import {
   bandFor,
   dailyPuzzleId,
+  dailySecretIndex,
+  kstDayIndex,
+  minutesUntilNextKstMidnight,
   koreanSemantleHints,
   normalizeGuess,
   orderGuesses,
+  poolPuzzleId,
   scoreGuess,
+  SEMANTLE_POOL_TARGET,
+  SEMANTLE_VECTOR_DIM,
   parseKoreanSemantle,
   serializeKoreanSemantle,
+  similarityTableFromVectors,
+  wordsFromVocabText,
   type Guess,
   type SimilarityTable,
 } from "./korean-semantle";
@@ -136,16 +148,152 @@ describe("korean-semantle: fair hints", () => {
   });
 });
 
+/** UTC instant whose clock in Korea (UTC+9) is the given civil time. */
+function atKst(y: number, month: number, d: number, hh = 0, mm = 0): Date {
+  return new Date(Date.UTC(y, month - 1, d, hh, mm) - 9 * 60 * 60 * 1000);
+}
+
 describe("korean-semantle: dailyPuzzleId", () => {
-  it("rotates deterministically through available puzzles by calendar day", () => {
+  it("rotates at Korea midnight, not the device's local midnight", () => {
     const ids = ["a", "b", "c"];
-    // dayIndex(2024-01-01) === 0 → ids[0]; +1 day → ids[1]; wraps at length.
-    expect(dailyPuzzleId(ids, new Date(2024, 0, 1, 12))).toBe("a");
-    expect(dailyPuzzleId(ids, new Date(2024, 0, 2, 12))).toBe("b");
-    expect(dailyPuzzleId(ids, new Date(2024, 0, 4, 12))).toBe("a"); // wrap
+    expect(kstDayIndex(atKst(2024, 1, 1, 12))).toBe(0);
+    expect(dailyPuzzleId(ids, atKst(2024, 1, 1, 12))).toBe("a");
+    expect(dailyPuzzleId(ids, atKst(2024, 1, 1, 23, 59))).toBe("a");
+    expect(dailyPuzzleId(ids, atKst(2024, 1, 2, 0, 1))).toBe("b");
+    expect(dailyPuzzleId(ids, atKst(2024, 1, 4, 12))).toBe("a");
+    // 2024-01-01 15:00 UTC is already 2024-01-02 in Korea.
+    expect(dailyPuzzleId(ids, new Date("2024-01-01T14:59:00Z"))).toBe("a");
+    expect(dailyPuzzleId(ids, new Date("2024-01-01T15:00:00Z"))).toBe("b");
+  });
+
+  it("counts the wait until the next Korea midnight", () => {
+    expect(minutesUntilNextKstMidnight(atKst(2024, 1, 1, 23, 0))).toBe(60);
+    expect(minutesUntilNextKstMidnight(atKst(2024, 1, 1, 23, 59))).toBe(1);
+    expect(minutesUntilNextKstMidnight(atKst(2024, 1, 2, 0, 0))).toBe(24 * 60);
   });
 
   it("throws when no puzzles are available", () => {
     expect(() => dailyPuzzleId([])).toThrow();
+  });
+});
+
+describe("korean-semantle: shared pool", () => {
+  const words = ["바다", "호수", "연필"];
+  // Rows are already L2-normalized. 호수 is nearer 바다 than 연필 is.
+  const matrix = new Float32Array([
+    1, 0,
+    0.8, 0.6,
+    0, 1,
+  ]);
+
+  it("picks the same secret for one Korea date and the next word on the next date", () => {
+    expect(dailySecretIndex(words.length, atKst(2024, 1, 1, 12))).toBe(0);
+    expect(dailySecretIndex(words.length, atKst(2024, 1, 1, 23, 59))).toBe(0);
+    expect(dailySecretIndex(words.length, atKst(2024, 1, 2, 0, 1))).toBe(1);
+    expect(poolPuzzleId(atKst(2024, 1, 1, 8))).toBe(poolPuzzleId(atKst(2024, 1, 1, 23)));
+    expect(poolPuzzleId(atKst(2024, 1, 2, 0, 1))).not.toBe(poolPuzzleId(atKst(2024, 1, 1, 23)));
+    expect(() => dailySecretIndex(0)).toThrow();
+  });
+
+  it("scores every pool word and refuses a word outside the pool", () => {
+    const table = similarityTableFromVectors(words, matrix, 2, 0);
+    expect(table.meta.secret).toBe("바다");
+    expect(table.meta.source).toBe("fastText");
+    expect(table.meta.vocab).toBe(3);
+    expect(table.top.map(([word]) => word)).toEqual(["바다", "호수", "연필"]);
+    expect(table.top[0][1]).toBe(1);
+    expect(table.top[1][1]).toBe(0.8);
+    expect(table.percentile.p50).toBe(0.8);
+    expect(table.percentile.p99).toBe(1);
+
+    const near = scoreGuess(table, "호수");
+    expect(near.ok && near.guess.known && near.guess.rank).toBe(2);
+    const outside = scoreGuess(table, "우주선");
+    expect(outside.ok).toBe(true);
+    if (outside.ok) expect(outside.guess.known).toBe(false);
+    if (outside.ok) {
+      expect(outside.guess.similarity).toBeNull();
+      expect(outside.solved).toBe(false);
+    }
+
+    const otherDay = similarityTableFromVectors(words, matrix, 2, 1);
+    expect(otherDay.meta.secret).toBe("호수");
+    expect(otherDay.rank["호수"]).toBe(1);
+  });
+
+  it("reads vocab text without a blank trailing line becoming a word", () => {
+    expect(wordsFromVocabText("\uFEFF바다\n호수\n\n")).toEqual(["바다", "호수"]);
+  });
+
+  it("rejects a matrix that does not match the word list", () => {
+    expect(() => similarityTableFromVectors(words, new Float32Array(2), 2, 0)).toThrow();
+  });
+});
+
+describe("korean-semantle: shipped pool files", () => {
+  const poolDir = resolve(dirname(fileURLToPath(import.meta.url)), "../../../public/data/korean-semantle");
+
+  it("locks the frequency slice size and scores the whole list", () => {
+    const meta = JSON.parse(readFileSync(resolve(poolDir, "pool.json"), "utf8")) as {
+      count: number;
+      dim: number;
+      target: number;
+    };
+    const words = wordsFromVocabText(readFileSync(resolve(poolDir, "vocab.txt"), "utf8"));
+    const bytes = readFileSync(resolve(poolDir, "vectors.bin"));
+    const matrix = new Float32Array(bytes.buffer, bytes.byteOffset, bytes.byteLength / 4);
+
+    expect(meta.target).toBe(SEMANTLE_POOL_TARGET);
+    expect(meta.dim).toBe(SEMANTLE_VECTOR_DIM);
+    expect(meta.count).toBe(words.length);
+    expect(words.length).toBeGreaterThan(0);
+    expect(words.length).toBeLessThanOrEqual(SEMANTLE_POOL_TARGET);
+    expect(new Set(words).size).toBe(words.length);
+    expect(words.every((word) => /^[가-힣]{1,4}$/.test(word))).toBe(true);
+    expect(matrix.length).toBe(words.length * SEMANTLE_VECTOR_DIM);
+
+    let finite = true;
+    for (let i = 0; i < matrix.length; i++) {
+      if (!Number.isFinite(matrix[i])) {
+        finite = false;
+        break;
+      }
+    }
+    expect(finite).toBe(true);
+
+    const normOf = (row: number) => {
+      let sum = 0;
+      const off = row * SEMANTLE_VECTOR_DIM;
+      for (let d = 0; d < SEMANTLE_VECTOR_DIM; d++) sum += matrix[off + d] * matrix[off + d];
+      return Math.sqrt(sum);
+    };
+    expect(Math.abs(normOf(0) - 1)).toBeLessThan(1e-3);
+    expect(Math.abs(normOf(words.length - 1) - 1)).toBeLessThan(1e-3);
+
+    const day = atKst(2026, 9, 29, 12);
+    const secretIndex = dailySecretIndex(words.length, day);
+    expect(dailySecretIndex(words.length, atKst(2026, 9, 29, 23, 59))).toBe(secretIndex);
+    expect(dailySecretIndex(words.length, atKst(2026, 9, 30, 0, 1))).not.toBe(secretIndex);
+
+    const table = similarityTableFromVectors(words, matrix, SEMANTLE_VECTOR_DIM, secretIndex);
+    expect(table.meta.secret).toBe(words[secretIndex]);
+    expect(table.top).toHaveLength(words.length);
+    expect(table.top[0][0]).toBe(words[secretIndex]);
+    expect(table.top[0][1]).toBe(1);
+    expect(table.rank[words[secretIndex]]).toBe(1);
+    const outside = scoreGuess(table, "가나다라마바");
+    expect(outside.ok).toBe(true);
+    if (outside.ok) expect(outside.guess.known).toBe(false);
+    const inPool = scoreGuess(table, words[secretIndex === 0 ? 1 : 0]);
+    expect(inPool.ok && inPool.guess.known).toBe(true);
+    expect(table.top[1][1]).toBeGreaterThan(0.35);
+
+    const seaAt = words.indexOf("바다");
+    expect(seaAt).toBeGreaterThan(0);
+    const sea = similarityTableFromVectors(words, matrix, SEMANTLE_VECTOR_DIM, seaAt);
+    const seaNear = sea.top.slice(1, 9).map(([word]) => word);
+    expect(seaNear).toContain("바닷가");
+    expect(seaNear).toContain("동해");
+    expect(sea.top[1][1]).toBeGreaterThan(0.45);
   });
 });

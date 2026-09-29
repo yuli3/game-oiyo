@@ -46,3 +46,9 @@ reports/
 # 망가진다 — 테스트 러너가 그 안까지 수집하고, node_modules 중복이 쌓이고,
 # untracked 로 노출돼 git add -A 에 딸려 들어간다.
 .worktrees/
+
+# 2026-09-29: fastText 원본(약 1.2GB)과 추출 캐시, 로컬 venv.
+# 게임에 실리는 풀은 public/data/korean-semantle/ 이다.
+scripts/korean-wordgames/.cache/
+scripts/korean-wordgames/out/
+scripts/korean-wordgames/.venv/
