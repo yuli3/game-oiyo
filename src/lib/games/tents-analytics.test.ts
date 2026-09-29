@@ -7,6 +7,7 @@ describe('Tents & Trees analytics contract', () => {
       game_id: 'tents-and-trees',
       game_mode: 'daily',
       locale: 'en',
+      chaos: '0',
     });
   });
 
@@ -15,6 +16,16 @@ describe('Tents & Trees analytics contract', () => {
       game_id: 'tents-and-trees',
       game_mode: 'free',
       locale: 'ko',
+      chaos: '0',
+    });
+  });
+
+  it('flags chaos on the same payload shape', () => {
+    expect(tentsAnalyticsPayload({ mode: 'chaos', locale: 'ko' })).toEqual({
+      game_id: 'tents-and-trees',
+      game_mode: 'chaos',
+      locale: 'ko',
+      chaos: '1',
     });
   });
 });

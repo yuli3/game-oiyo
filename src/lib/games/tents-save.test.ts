@@ -13,6 +13,7 @@ import {
 } from "./tents-save";
 import { generateUniqueTents, validateTents } from "./tents";
 import { mulberry32 } from "./daily";
+import { CHAOS_SECONDS, chaosBoard, chaosEffects, type ChaosAugmentId } from "./tents-chaos";
 
 /** Mirrors dayIndexFromKey()'s formula (not exported) so the test can derive
  * the exact seed puzzleForTentsSave("daily", ...) uses internally. */
@@ -114,6 +115,59 @@ describe("tents & trees save v1 parser", () => {
     for (const [r, c] of solution) marks[r][c] = "tent";
     const save = { ...validDailySave(), marks };
     expect(parseTentsSave(serializeTentsSave(save), TODAY, NOW)).toBeNull();
+  });
+
+  it("round-trips a chaos save and rejects a tampered or expired one", () => {
+    const started = NOW - 1_000;
+    const chaos = {
+      mode: "chaos" as const,
+      dailyDate: TODAY,
+      seed: 0,
+      marks: emptyMarks(DAILY_BOARD.size),
+      savedAtEpochMs: started,
+      chaosAugment: "fog" as ChaosAugmentId,
+      chaosStartedAtEpochMs: started,
+    };
+    const parsed = parseTentsSave(serializeTentsSave(chaos), TODAY, NOW);
+    expect(parsed?.mode).toBe("chaos");
+    expect(parsed?.chaosAugment).toBe("fog");
+    expect(puzzleForTentsSave("chaos", TODAY, 0)).toEqual(chaosBoard(dayIndexFromKey(TODAY)).puzzle);
+
+    const effects = chaosEffects(dayIndexFromKey(TODAY));
+    const bannedMarks = emptyMarks(DAILY_BOARD.size);
+    const [br, bc] = effects.banned[0];
+    bannedMarks[br][bc] = "tent";
+    expect(
+      parseTentsSave(serializeTentsSave({ ...chaos, chaosAugment: "banned", marks: bannedMarks }), TODAY, NOW),
+    ).toBeNull();
+
+    const trail = parseTentsSave(serializeTentsSave({ ...chaos, chaosAugment: "trailhead" }), TODAY, NOW);
+    const [tr, tc] = effects.trailhead;
+    expect(trail?.marks[tr][tc]).toBe("tent");
+
+    const safe = parseTentsSave(serializeTentsSave({ ...chaos, chaosAugment: "safeGrass" }), TODAY, NOW);
+    const [sr, sc] = effects.safeGrass;
+    expect(safe?.marks[sr][sc]).toBe("grass");
+
+    const expiredStart = NOW - CHAOS_SECONDS * 1000 - 5;
+    expect(
+      parseTentsSave(
+        serializeTentsSave({
+          ...chaos,
+          chaosAugment: "hourglass",
+          chaosStartedAtEpochMs: expiredStart,
+          chaosDeadlineMs: expiredStart + CHAOS_SECONDS * 1000,
+          savedAtEpochMs: expiredStart,
+        }),
+        TODAY,
+        NOW,
+      ),
+    ).toBeNull();
+
+    expect(parseTentsSave(serializeTentsSave({ ...chaos, dailyDate: "2026-08-04" }), TODAY, NOW)).toBeNull();
+    expect(
+      parseTentsSave(JSON.stringify({ version: 1, ...chaos, chaosAugment: "ghost" }), TODAY, NOW),
+    ).toBeNull();
   });
 
   it("round-trips through storage and clears on demand", () => {
