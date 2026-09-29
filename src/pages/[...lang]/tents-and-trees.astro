@@ -40,11 +40,28 @@ const meta: Record<Locale, { title: string; description: string }> = {
 };
 
 const m = meta[locale] ?? meta.en;
+
+const related: Record<Locale, { title: string; label: string; desc: string }> = {
+  ko: { title: "관련 도구", label: "로스트아크 본1부3 분배", desc: "품앗이 파티의 딜러와 서포터를 나눠요." },
+  en: { title: "Related tool", label: "Lost Ark 1-main/3-alt split", desc: "Balance dealers and supporters for a help party." },
+  ja: { title: "関連ツール", label: "ロストアーク 本1副3 分配", desc: "プマシパーティのディーラーとサポーターを分けます。" },
+  zh: { title: "相关工具", label: "命运方舟 本1副3 分配", desc: "把互助队伍的输出和辅助分开。" },
+  fr: { title: "Outil lié", label: "Répartition 1 main / 3 alt", desc: "Répartit les DPS et les supports d'une équipe d'entraide." },
+  es: { title: "Herramienta relacionada", label: "Reparto 1 main / 3 alt", desc: "Reparte DPS y supports de una party de ayuda." },
+};
+const rel = related[locale] ?? related.en;
 ---
 
 <BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["tents-and-trees"]}>
   <div class="mx-auto max-w-2xl px-4 py-8">
     <TentsAndTreesComp client:only="react" locale={locale} />
     <GameGuide slug="tents-and-trees" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
+    <section class="mt-8">
+      <h2 class="text-lg font-black text-foreground">{rel.title}</h2>
+      <a class="mt-3 block rounded-lg border border-border bg-card p-4 transition-colors hover:border-primary" href={`/${locale}/lostark-raid-distribution/`}>
+        <span class="font-semibold text-foreground">{rel.label}</span>
+        <span class="mt-2 block text-sm leading-6 text-muted-foreground">{rel.desc}</span>
+      </a>
+    </section>
   </div>
 </BaseLayout>

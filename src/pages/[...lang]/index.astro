@@ -150,6 +150,8 @@ const GAMES: Game[] = [
 ];
 
 const byCat = (c: string) => GAMES.filter((g) => g.cat === c);
+const cardName = (g: Game) => g.name[locale] ?? g.name.en;
+const cardHasArt = (g: Game) => Boolean(gameArt[g.slug] && cardSource(gameArt[g.slug]));
 const featuredSlugs = locale === "ko"
   ? ["lostark-raid-distribution", "aim-trainer"]
   : locale === "en"
@@ -196,13 +198,13 @@ const cardJsonLd = {
         <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {featuredGames.map((g) => (
             <a href={`/${locale}/${g.slug}/`} data-game={g.slug} class="group relative flex min-h-36 flex-col justify-end overflow-hidden rounded-2xl border border-slate-100 bg-white text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md">
-              {gameArt[g.slug] && cardSource(gameArt[g.slug]) ? (
-                <Image src={cardSource(gameArt[g.slug])} alt="" width={640} widths={[320, 640]} sizes="(min-width: 1024px) 270px, (min-width: 640px) 33vw, 50vw" format="webp" loading="lazy" decoding="async" class="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
+              {cardHasArt(g) ? (
+                <Image src={cardSource(gameArt[g.slug])} alt={cardName(g)} width={640} widths={[320, 640]} sizes="(min-width: 1024px) 270px, (min-width: 640px) 33vw, 50vw" format="webp" loading="lazy" decoding="async" class="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
               ) : (
                 <span class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-lime-50 to-stone-100 text-4xl transition-transform group-hover:scale-110" aria-hidden="true">{g.emoji}</span>
               )}
               <span class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" aria-hidden="true"></span>
-              <span class="relative z-10 p-4 text-sm font-bold text-white drop-shadow-sm">{g.name[locale] ?? g.name.en}</span>
+              <span class="relative z-10 p-4 text-sm font-bold text-white drop-shadow-sm" aria-hidden={cardHasArt(g) ? "true" : undefined}>{cardName(g)}</span>
               <span data-winrate hidden class="absolute right-2 top-2 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-black text-primary"></span>
             </a>
           ))}
@@ -218,13 +220,13 @@ const cardJsonLd = {
         <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {byCat(cat).map((g) => (
             <a href={`/${locale}/${g.slug}/`} data-game={g.slug} class="group relative flex min-h-36 flex-col justify-end overflow-hidden rounded-2xl border border-slate-100 bg-white text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md">
-              {gameArt[g.slug] && cardSource(gameArt[g.slug]) ? (
-                <Image src={cardSource(gameArt[g.slug])} alt="" width={640} widths={[320, 640]} sizes="(min-width: 1024px) 270px, (min-width: 640px) 33vw, 50vw" format="webp" loading="lazy" decoding="async" class="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
+              {cardHasArt(g) ? (
+                <Image src={cardSource(gameArt[g.slug])} alt={cardName(g)} width={640} widths={[320, 640]} sizes="(min-width: 1024px) 270px, (min-width: 640px) 33vw, 50vw" format="webp" loading="lazy" decoding="async" class="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
               ) : (
                 <span class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-lime-50 to-stone-100 text-4xl transition-transform group-hover:scale-110" aria-hidden="true">{g.emoji}</span>
               )}
               <span class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" aria-hidden="true"></span>
-              <span class="relative z-10 p-4 text-sm font-bold text-white drop-shadow-sm">{g.name[locale] ?? g.name.en}</span>
+              <span class="relative z-10 p-4 text-sm font-bold text-white drop-shadow-sm" aria-hidden={cardHasArt(g) ? "true" : undefined}>{cardName(g)}</span>
               <span data-winrate hidden class="absolute right-2 top-2 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-black text-primary"></span>
             </a>
           ))}
