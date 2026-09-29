@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   dailyPuzzleId,
+  minutesUntilNextKstMidnight,
   koreanSemantleHints,
   orderGuesses,
   parseKoreanSemantle,
@@ -11,7 +12,7 @@ import {
   type ProximityBand,
   type SimilarityTable,
 } from "../../lib/games/korean-semantle";
-import { minutesUntilNextDaily } from "../../lib/games/daily";
+
 import { getStreak, recordStreak, type StreakStats } from "../../lib/games/records";
 import { Spinner } from "../ui/spinner";
 
@@ -232,12 +233,12 @@ const COPY: Record<UILocale, {
 };
 
 const HINT_COPY: Record<UILocale, { open: string; locked: (n: number) => string; next: (m: number) => string; format: (h: KoreanSemantleHint) => string }> = {
-  ko: { open: "공정 힌트 열기", locked: n => `${n}회 추측에서 다음 힌트`, next: m => `다음 퍼즐까지 ${Math.floor(m / 60)}시간 ${m % 60}분`, format: h => h.kind === "length" ? `정답은 ${h.value}글자입니다.` : h.kind === "initial" ? `첫 초성은 ${h.value}입니다.` : `고정된 중간 거리 단어: ${h.value} (순위 ${h.rank})` },
-  en: { open: "Open fair hint", locked: n => `Next hint at ${n} guesses`, next: m => `Next puzzle in ${Math.floor(m / 60)}h ${m % 60}m`, format: h => h.kind === "length" ? `The answer has ${h.value} syllables.` : h.kind === "initial" ? `The first Korean initial is ${h.value}.` : `Fixed mid-distance word: ${h.value} (rank ${h.rank})` },
-  ja: { open: "公平ヒントを開く", locked: n => `${n}回で次のヒント`, next: m => `次のパズルまで ${Math.floor(m / 60)}時間${m % 60}分`, format: h => h.kind === "length" ? `答えは${h.value}文字です。` : h.kind === "initial" ? `最初の初声は${h.value}です。` : `固定の中距離語: ${h.value}（順位${h.rank}）` },
-  zh: { open: "打开公平提示", locked: n => `猜到${n}次解锁下一提示`, next: m => `距下一题 ${Math.floor(m / 60)}小时${m % 60}分`, format: h => h.kind === "length" ? `答案有${h.value}个韩文音节。` : h.kind === "initial" ? `第一个韩文声母是${h.value}。` : `固定中距离词：${h.value}（排名${h.rank}）` },
-  fr: { open: "Ouvrir l’indice équitable", locked: n => `Prochain indice à ${n} essais`, next: m => `Prochain puzzle dans ${Math.floor(m / 60)} h ${m % 60} min`, format: h => h.kind === "length" ? `La réponse compte ${h.value} syllabes.` : h.kind === "initial" ? `L’initiale coréenne est ${h.value}.` : `Mot fixe à distance moyenne : ${h.value} (rang ${h.rank})` },
-  es: { open: "Abrir pista justa", locked: n => `Siguiente pista al intento ${n}`, next: m => `Próximo puzle en ${Math.floor(m / 60)} h ${m % 60} min`, format: h => h.kind === "length" ? `La respuesta tiene ${h.value} sílabas.` : h.kind === "initial" ? `La inicial coreana es ${h.value}.` : `Palabra fija de distancia media: ${h.value} (puesto ${h.rank})` },
+  ko: { open: "공정 힌트 열기", locked: n => `${n}회 추측에서 다음 힌트`, next: m => `다음 퍼즐까지 ${Math.floor(m / 60)}시간 ${m % 60}분 (한국 시간 자정)`, format: h => h.kind === "length" ? `정답은 ${h.value}글자입니다.` : h.kind === "initial" ? `첫 초성은 ${h.value}입니다.` : `고정된 중간 거리 단어: ${h.value} (순위 ${h.rank})` },
+  en: { open: "Open fair hint", locked: n => `Next hint at ${n} guesses`, next: m => `Next puzzle in ${Math.floor(m / 60)}h ${m % 60}m (midnight KST)`, format: h => h.kind === "length" ? `The answer has ${h.value} syllables.` : h.kind === "initial" ? `The first Korean initial is ${h.value}.` : `Fixed mid-distance word: ${h.value} (rank ${h.rank})` },
+  ja: { open: "公平ヒントを開く", locked: n => `${n}回で次のヒント`, next: m => `次のパズルまで ${Math.floor(m / 60)}時間${m % 60}分（韓国時間の0時）`, format: h => h.kind === "length" ? `答えは${h.value}文字です。` : h.kind === "initial" ? `最初の初声は${h.value}です。` : `固定の中距離語: ${h.value}（順位${h.rank}）` },
+  zh: { open: "打开公平提示", locked: n => `猜到${n}次解锁下一提示`, next: m => `距下一题 ${Math.floor(m / 60)}小时${m % 60}分（韩国时间零点）`, format: h => h.kind === "length" ? `答案有${h.value}个韩文音节。` : h.kind === "initial" ? `第一个韩文声母是${h.value}。` : `固定中距离词：${h.value}（排名${h.rank}）` },
+  fr: { open: "Ouvrir l’indice équitable", locked: n => `Prochain indice à ${n} essais`, next: m => `Prochain puzzle dans ${Math.floor(m / 60)} h ${m % 60} min (minuit, heure de Corée)`, format: h => h.kind === "length" ? `La réponse compte ${h.value} syllabes.` : h.kind === "initial" ? `L’initiale coréenne est ${h.value}.` : `Mot fixe à distance moyenne : ${h.value} (rang ${h.rank})` },
+  es: { open: "Abrir pista justa", locked: n => `Siguiente pista al intento ${n}`, next: m => `Próximo puzle en ${Math.floor(m / 60)} h ${m % 60} min (medianoche, hora de Corea)`, format: h => h.kind === "length" ? `La respuesta tiene ${h.value} sílabas.` : h.kind === "initial" ? `La inicial coreana es ${h.value}.` : `Palabra fija de distancia media: ${h.value} (puesto ${h.rank})` },
 };
 
 /** Progress width for a guess: closer rank → fuller bar (log-scaled). */
@@ -265,7 +266,7 @@ const KoreanSemantle: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
   const [sound, setSound] = useState(true);
   const [restored, setRestored] = useState(false);
   const [shownHints, setShownHints] = useState(0);
-  const [nextMinutes, setNextMinutes] = useState(() => minutesUntilNextDaily());
+  const [nextMinutes, setNextMinutes] = useState(() => minutesUntilNextKstMidnight());
   const recordedRef = useRef(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -306,7 +307,7 @@ const KoreanSemantle: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
   }, [loadPuzzle]);
 
   useEffect(() => {
-    const update = () => setNextMinutes(minutesUntilNextDaily());
+    const update = () => setNextMinutes(minutesUntilNextKstMidnight());
     update();
     const timer = window.setInterval(update, 60_000);
     return () => window.clearInterval(timer);

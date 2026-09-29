@@ -10,7 +10,33 @@
 // from this file, so it is reported as `known: false` rather than given a faked
 // similarity — we never invent a number we don't have.
 
-import { dayIndex } from "./daily";
+/** Korea Standard Time is a fixed UTC+9. No daylight saving since 1988. */
+const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
+
+/**
+ * Civil calendar date in Korea.
+ * 2026-09-29: 꼬맨틀의 하루는 기기 자정이 아니라 한국 자정에 바뀐다.
+ * 다른 일일 게임의 `dayIndex`는 기기 로컬 그대로 둔다.
+ */
+export function kstCivilDate(now: Date): { y: number; m: number; d: number } {
+  const shifted = new Date(now.getTime() + KST_OFFSET_MS);
+  return { y: shifted.getUTCFullYear(), m: shifted.getUTCMonth(), d: shifted.getUTCDate() };
+}
+
+/** Days since 2024-01-01 at Korea midnight. */
+export function kstDayIndex(now: Date = new Date()): number {
+  const { y, m, d } = kstCivilDate(now);
+  const epochOrdinal = Date.UTC(2024, 0, 1);
+  const todayOrdinal = Date.UTC(y, m, d);
+  return Math.floor((todayOrdinal - epochOrdinal) / 86_400_000);
+}
+
+/** Whole minutes until the next Korea midnight. At least 1, matching the local countdown. */
+export function minutesUntilNextKstMidnight(now: Date = new Date()): number {
+  const { y, m, d } = kstCivilDate(now);
+  const nextMidnightUtc = Date.UTC(y, m, d + 1) - KST_OFFSET_MS;
+  return Math.max(1, Math.ceil((nextMidnightUtc - now.getTime()) / 60_000));
+}
 
 export const KOREAN_SEMANTLE_SCHEMA = "oiyo.korean-semantle" as const;
 export const KOREAN_SEMANTLE_SCHEMA_VERSION = 1 as const;
@@ -178,12 +204,13 @@ export function koreanSemantleHints(table: SimilarityTable, guessCount: number):
 }
 
 /**
- * Which curated puzzle is "today's", rotating deterministically through the
- * available puzzle ids so everyone on the same calendar day gets the same one.
+ * Which puzzle is today's. The day rolls at Korea midnight (UTC+9), so two
+ * devices on the same KST date share a puzzle even when their local dates differ.
  */
 export function dailyPuzzleId(puzzleIds: readonly string[], now: Date = new Date()): string {
   if (puzzleIds.length === 0) throw new Error("no puzzles available");
-  const idx = ((dayIndex(now) % puzzleIds.length) + puzzleIds.length) % puzzleIds.length;
+  const index = kstDayIndex(now);
+  const idx = ((index % puzzleIds.length) + puzzleIds.length) % puzzleIds.length;
   return puzzleIds[idx];
 }
 

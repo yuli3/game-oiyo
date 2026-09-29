@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   bandFor,
   dailyPuzzleId,
+  kstDayIndex,
+  minutesUntilNextKstMidnight,
   koreanSemantleHints,
   normalizeGuess,
   orderGuesses,
@@ -136,13 +138,28 @@ describe("korean-semantle: fair hints", () => {
   });
 });
 
+/** UTC instant whose clock in Korea (UTC+9) is the given civil time. */
+function atKst(y: number, month: number, d: number, hh = 0, mm = 0): Date {
+  return new Date(Date.UTC(y, month - 1, d, hh, mm) - 9 * 60 * 60 * 1000);
+}
+
 describe("korean-semantle: dailyPuzzleId", () => {
-  it("rotates deterministically through available puzzles by calendar day", () => {
+  it("rotates at Korea midnight, not the device's local midnight", () => {
     const ids = ["a", "b", "c"];
-    // dayIndex(2024-01-01) === 0 → ids[0]; +1 day → ids[1]; wraps at length.
-    expect(dailyPuzzleId(ids, new Date(2024, 0, 1, 12))).toBe("a");
-    expect(dailyPuzzleId(ids, new Date(2024, 0, 2, 12))).toBe("b");
-    expect(dailyPuzzleId(ids, new Date(2024, 0, 4, 12))).toBe("a"); // wrap
+    expect(kstDayIndex(atKst(2024, 1, 1, 12))).toBe(0);
+    expect(dailyPuzzleId(ids, atKst(2024, 1, 1, 12))).toBe("a");
+    expect(dailyPuzzleId(ids, atKst(2024, 1, 1, 23, 59))).toBe("a");
+    expect(dailyPuzzleId(ids, atKst(2024, 1, 2, 0, 1))).toBe("b");
+    expect(dailyPuzzleId(ids, atKst(2024, 1, 4, 12))).toBe("a");
+    // 2024-01-01 15:00 UTC is already 2024-01-02 in Korea.
+    expect(dailyPuzzleId(ids, new Date("2024-01-01T14:59:00Z"))).toBe("a");
+    expect(dailyPuzzleId(ids, new Date("2024-01-01T15:00:00Z"))).toBe("b");
+  });
+
+  it("counts the wait until the next Korea midnight", () => {
+    expect(minutesUntilNextKstMidnight(atKst(2024, 1, 1, 23, 0))).toBe(60);
+    expect(minutesUntilNextKstMidnight(atKst(2024, 1, 1, 23, 59))).toBe(1);
+    expect(minutesUntilNextKstMidnight(atKst(2024, 1, 2, 0, 0))).toBe(24 * 60);
   });
 
   it("throws when no puzzles are available", () => {
