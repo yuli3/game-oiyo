@@ -2,6 +2,7 @@
 import SEO from "../components/SEO.astro";
 import { getLocaleFromPath, getTranslations } from "../lib/i18n";
 import { siteConfig } from "../config/site.config";
+import gameArtDocument from "../../config/game-art-v1.json";
 import "../styles/global.css";
 import "katex/dist/katex.min.css";
 import "@fontsource-variable/inter";
@@ -35,7 +36,12 @@ interface Props {
   noindex?: boolean;
 }
 
-const { title, description, image, type, pubDate, updatedDate, tags, category, author, availableLocales, canonicalUrl, heading, noindex } = Astro.props;
+const { title, description, image: imageProp, type, pubDate, updatedDate, tags, category, author, availableLocales, canonicalUrl, heading, noindex } = Astro.props;
+// 2026-09-29 2-15: 게임 아트 대장(config/game-art-v1.json)에는 78개 게임의 공유 그림이 있는데
+// 페이지가 image 를 넘기지 않으면 기본 og-image 로 떨어져 20여 장이 한 번도 쓰이지 않았다.
+// 넘긴 값이 없을 때 경로의 마지막 조각을 게임 id 로 보고 대장에서 찾는다.
+const pageSlug = Astro.url.pathname.split("/").filter(Boolean).at(-1) ?? "";
+const image = imageProp ?? (gameArtDocument.games as Record<string, string>)[pageSlug];
 const locale = getLocaleFromPath(Astro.url.pathname);
 const t = await getTranslations(locale);
 const nav = t.nav as Record<string, string>;
