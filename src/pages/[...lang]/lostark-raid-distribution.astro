@@ -114,6 +114,17 @@ const faqs = {
 };
 
 const { content: c, faqHeading, faqItems } = buildToolShell(content, faqs, locale);
+
+const tentsRelated: Record<Locale, { label: string; desc: string }> = {
+  ko: { label: "텐트와 나무", desc: "매일 바뀌는 텐트 배치 퍼즐을 풀어요." },
+  en: { label: "Tents & Trees", desc: "Play today's tent-placement puzzle." },
+  ja: { label: "テントと木", desc: "毎日変わるテント配置パズルを解きます。" },
+  zh: { label: "帐篷与树", desc: "玩每天更新的帐篷配置谜题。" },
+  fr: { label: "Tentes & arbres", desc: "Le puzzle du jour : une tente par arbre." },
+  es: { label: "Tiendas y árboles", desc: "El puzle de hoy: una tienda por árbol." },
+};
+const tents = tentsRelated[locale] ?? tentsRelated.en;
+c.related = [...c.related, { href: `/${locale}/tents-and-trees/`, label: tents.label, desc: tents.desc }];
 ---
 
 <BaseLayout title={m.title} description={m.description}>
