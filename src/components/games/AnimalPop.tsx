@@ -7,8 +7,10 @@ import {
   animalMatchTimeBonus,
   createAnimalBoard,
   parseAnimal,
+  scoreAnimalMatch,
   serializeAnimal,
   swapAnimals,
+  tickAnimalFever,
   type AnimalBoard,
   type AnimalFall,
 } from "../../lib/games/animal-pop";
@@ -147,6 +149,7 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
     [time, setTime] = useState(ANIMAL_TIME_LIMIT),
     [best, setBest] = useState(0),
     [combo, setCombo] = useState(0),
+    [feverSeconds, setFeverSeconds] = useState(0),
     [sound, setSound] = useState(true),
     [restored, setRestored] = useState(false),
     [resolving, setResolving] = useState(false),
@@ -162,6 +165,8 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
   const rafRef = useRef(0);
   const reducedMotionRef = useRef(reducedMotion);
   reducedMotionRef.current = reducedMotion;
+  const feverRef = useRef(feverSeconds);
+  feverRef.current = feverSeconds;
   const phaseRef = useRef(phase);
   phaseRef.current = phase;
   useEffect(() => () => { animationRun.current += 1; }, []);
@@ -280,6 +285,10 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
     },
     [sound],
   );
+  const scoreRef = useRef(score);
+  const toneRef = useRef(tone);
+  scoreRef.current = score;
+  toneRef.current = tone;
   useEffect(() => {
     const b = Number(localStorage.getItem(BEST));
     if (Number.isFinite(b)) setBest(b);
@@ -289,36 +298,41 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
       setSeed(s.seed);
       setScore(s.score);
       setTime(s.timeLeft);
+      setFeverSeconds(s.feverSeconds);
       setRestored(true);
       setPhase("paused");
     }
   }, []);
+  // 2026-09-27: scoring and sound toggles must not restart the second ticker;
+  // otherwise a ten-second Fever can be stretched by repeated matches.
   useEffect(() => {
     if (phase !== "playing") return;
     const id = setInterval(
-      () =>
+      () => {
+        setFeverSeconds(tickAnimalFever);
         setTime((v) => {
           if (v <= 1) {
             setPhase("over");
             localStorage.removeItem(SAVE);
-            tone(140);
+            toneRef.current(140);
             setBest((b) => {
-              const n = Math.max(b, score);
+              const n = Math.max(b, scoreRef.current);
               localStorage.setItem(BEST, String(n));
               return n;
             });
             return 0;
           }
           return v - 1;
-        }),
+        });
+      },
       1000,
     );
     return () => clearInterval(id);
-  }, [phase, score, tone]);
+  }, [phase]);
   useEffect(() => {
     if (phase === "playing")
-      localStorage.setItem(SAVE, serializeAnimal(seed, board, score, time));
-  }, [phase, seed, board, score, time]);
+      localStorage.setItem(SAVE, serializeAnimal(seed, board, score, time, feverSeconds));
+  }, [phase, seed, board, score, time, feverSeconds]);
   const start = () => {
     const a = new Uint32Array(1);
     crypto.getRandomValues(a);
@@ -328,6 +342,7 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
     setScore(0);
     setTime(ANIMAL_TIME_LIMIT);
     setCombo(0);
+    setFeverSeconds(0);
     setSelected(null);
     setResolving(false);
     setBursting([]);
@@ -374,7 +389,10 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
     setBoard(x.board);
     setSeed(x.seed);
     setCombo(x.waves);
-    setScore((v) => v + x.cleared * 10 * x.waves * (x.waves >= 5 ? 2 : 1));
+    const award = scoreAnimalMatch(x.cleared, x.waves, feverRef.current);
+    feverRef.current = award.feverSeconds;
+    setFeverSeconds(award.feverSeconds);
+    setScore((v) => v + award.points);
     setTime((v) => addAnimalTime(v, animalMatchTimeBonus(x.cleared, x.waves)));
     setWaveLabel(0);
     setResolving(false);
@@ -421,7 +439,7 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
           className="my-3 h-6 text-center text-sm font-black text-amber-600"
           aria-live="polite"
         >
-          {waveLabel > 0 ? `${t.combo} ×${waveLabel}` : combo >= 5 ? t.fever : combo > 1 ? `${t.combo} ×${combo}` : ""}
+          {waveLabel > 0 ? `${t.combo} ×${waveLabel}` : feverSeconds > 0 ? `${t.fever} · ${feverSeconds}s` : combo > 1 ? `${t.combo} ×${combo}` : ""}
         </div>
         <div
           ref={boardRef}

@@ -19,6 +19,18 @@ export function animalMatchTimeBonus(cleared: number, waves: number) {
 export function addAnimalTime(timeLeft: number, bonus: number) {
   return Math.min(ANIMAL_TIME_LIMIT, Math.max(0, timeLeft + bonus));
 }
+// 2026-09-27: the six-locale guide promises ten seconds of double score after
+// five cascade waves; keep that scoring rule independent of animation timing.
+export function scoreAnimalMatch(cleared: number, waves: number, feverSeconds: number) {
+  const nextFeverSeconds = waves >= 5 ? 10 : feverSeconds;
+  return {
+    points: cleared * 10 * waves * (nextFeverSeconds > 0 ? 2 : 1),
+    feverSeconds: nextFeverSeconds,
+  };
+}
+export function tickAnimalFever(feverSeconds: number) {
+  return Math.max(0, feverSeconds - 1);
+}
 export type AnimalBoard = string[][];
 export type AnimalSwap = { from: number; to: number };
 function next(seed: number) {
@@ -134,6 +146,7 @@ export function serializeAnimal(
   board: AnimalBoard,
   score: number,
   timeLeft: number,
+  feverSeconds = 0,
 ) {
   return JSON.stringify({
     v: 1,
@@ -141,6 +154,7 @@ export function serializeAnimal(
     board,
     score,
     timeLeft,
+    feverSeconds,
     savedAt: Date.now(),
   });
 }
@@ -163,6 +177,8 @@ export function parseAnimal(raw: string | null, now = Date.now()) {
       !Number.isInteger(x.timeLeft) ||
       x.timeLeft <= 0 ||
       x.timeLeft > ANIMAL_TIME_LIMIT ||
+      (x.feverSeconds !== undefined &&
+        (!Number.isInteger(x.feverSeconds) || x.feverSeconds < 0 || x.feverSeconds > 10)) ||
       !Number.isFinite(x.savedAt) ||
       now - x.savedAt > 24 * 3600000 ||
       x.savedAt > now + 60000
@@ -173,6 +189,9 @@ export function parseAnimal(raw: string | null, now = Date.now()) {
       board: x.board as AnimalBoard,
       score: x.score,
       timeLeft: x.timeLeft,
+      // 2026-09-27: pre-Fever v1 saves lack this additive field; keep their
+      // board/score and resume without Fever rather than rejecting the round.
+      feverSeconds: x.feverSeconds ?? 0,
     };
   } catch {
     return null;

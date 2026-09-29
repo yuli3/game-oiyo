@@ -76,6 +76,38 @@ for (const file of listHtmlFiles(dist)) {
   const rel = path.relative(dist, file);
   const html = fs.readFileSync(file, "utf8");
 
+  // 2026-09-24 owner decision: family links belong in the footer. Check the
+  // built landing pages because Astro shares this menu and schema across routes.
+  if (locales.some((locale) => rel === path.join(locale, "index.html"))) {
+    const mobileNav = html.match(/<nav aria-label="Mobile navigation"[^>]*>([\s\S]*?)<\/nav>/)?.[1];
+    if (!mobileNav) {
+      failures.push(`${rel}: mobile navigation is missing`);
+    } else {
+      for (const [, href] of mobileNav.matchAll(/<a href="([^"]+)"/g)) {
+        if (!href.startsWith("/")) failures.push(`${rel}: external mobile navigation link: ${href}`);
+      }
+    }
+
+    const navigationSchema = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)]
+      .map((match) => JSON.parse(match[1]))
+      .find((schema) => schema["@type"] === "SiteNavigationElement");
+    if (!navigationSchema) {
+      failures.push(`${rel}: SiteNavigationElement is missing`);
+    } else {
+      for (const part of navigationSchema.hasPart ?? []) {
+        let validLocalUrl = false;
+        try {
+          validLocalUrl = new URL(part.url).origin === siteUrl;
+        } catch {
+          // Invalid absolute URLs are also a navigation failure.
+        }
+        if (!validLocalUrl) {
+          failures.push(`${rel}: external navigation schema URL: ${part.url}`);
+        }
+      }
+    }
+  }
+
   // Bridge stubs are noindex and may canonicalize cross-domain to a family host.
   const isNoindex = /<meta name="robots" content="noindex/.test(html);
   const canonicalRe = isNoindex
