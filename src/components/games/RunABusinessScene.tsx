@@ -1,6 +1,7 @@
 import { OrbitControls, OrthographicCamera } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { usePlayFrameloop } from "../../lib/games/play-frameloop";
+import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import type { StallId, Weather } from "@/lib/games/run-a-business";
@@ -173,8 +174,10 @@ function Stall({ stall }: { stall: StallId }) {
 
 function Shopkeeper({ stall }: { stall: StallId }) {
   const group = useRef<THREE.Group>(null);
+  // 2026-09-30 G2: 동작 줄이기 설정이면 장식용 움직임을 멈춘다(게임 진행 움직임은 유지).
+  const reducedMotion = usePrefersReducedMotion();
   useFrame((state) => {
-    if (!group.current) return;
+    if (!group.current || reducedMotion) return;
     group.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.65) * 0.06;
     group.current.position.y = Math.sin(state.clock.elapsedTime * 1.3) * 0.018;
   });
@@ -213,10 +216,12 @@ function Fireflies({ count = 36 }: { count?: number }) {
     z: -3 + Math.random() * 8,
     phase: index * 0.73,
   })), [count]);
+  const reducedMotion = usePrefersReducedMotion();
   useFrame((state) => {
     if (!ref.current) return;
     points.forEach((point, index) => {
-      const t = state.clock.elapsedTime + point.phase;
+      // 2026-09-30 G2: 동작 줄이기면 반딧불을 제자리에 고정한다.
+      const t = (reducedMotion ? 0 : state.clock.elapsedTime) + point.phase;
       dummy.position.set(point.x + Math.sin(t * 0.35) * 0.18, point.y + Math.sin(t) * 0.12, point.z);
       dummy.scale.setScalar(0.7 + Math.sin(t * 1.7) * 0.25);
       dummy.updateMatrix();

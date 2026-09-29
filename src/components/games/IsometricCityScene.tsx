@@ -1,6 +1,7 @@
 import { OrbitControls, OrthographicCamera } from "@react-three/drei";
 import { Canvas, type ThreeEvent, useFrame, useThree } from "@react-three/fiber";
 import { usePlayFrameloop } from "../../lib/games/play-frameloop";
+import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import {
   Banknote,
   BriefcaseBusiness,
@@ -618,9 +619,11 @@ function RoadTile({ cell, city, night }: { cell: CityCell; city: CityState; nigh
 function CityBuilding({ cell, night }: { cell: CityCell; night: number }) {
   const group = useRef<THREE.Group>(null);
   const world = gridWorld(cell.x, cell.z);
+  const reducedMotion = usePrefersReducedMotion();
   useFrame((_, delta) => {
     if (!group.current) return;
-    const next = Math.min(1, group.current.scale.y + delta * 2.8);
+    // 2026-09-30 G2: 동작 줄이기면 솟아오르기 없이 바로 완성된 건물을 보인다.
+    const next = reducedMotion ? 1 : Math.min(1, group.current.scale.y + delta * 2.8);
     group.current.scale.y = next;
   });
   return (

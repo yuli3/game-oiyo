@@ -1,6 +1,7 @@
 import { Sparkles } from "@react-three/drei";
 import { Canvas, type ThreeEvent, useFrame, useThree } from "@react-three/fiber";
 import { usePlayFrameloop } from "../../lib/games/play-frameloop";
+import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import {
   Armchair,
   ArrowDown,
@@ -531,6 +532,7 @@ function MallowWorld({ save, tool, movement, cameraControls, actAt, coarse }: Wo
   const cameraPosition = useMemo(() => new THREE.Vector3(), []);
   const cameraTarget = useMemo(() => new THREE.Vector3(), []);
   const [hovered, setHovered] = useState<[number, number] | null>(null);
+  const reducedMotion = usePrefersReducedMotion();
 
   useEffect(() => {
     scene.background = new THREE.Color("#b8dfd8");
@@ -556,7 +558,8 @@ function MallowWorld({ save, tool, movement, cameraControls, actAt, coarse }: Wo
       player.current.position.set(pose.current.x, height + 0.08, pose.current.z);
       player.current.rotation.y = THREE.MathUtils.damp(player.current.rotation.y, pose.current.heading, 12, delta);
       const walking = Math.hypot(input.x, input.z) > 0.01;
-      player.current.position.y += walking ? Math.abs(Math.sin(state.clock.elapsedTime * 10)) * 0.06 : 0;
+      // 2026-09-30 G2: 동작 줄이기면 걷기 들썩임을 뺀다.
+      player.current.position.y += walking && !reducedMotion ? Math.abs(Math.sin(state.clock.elapsedTime * 10)) * 0.06 : 0;
     }
     cameraPosition.set(
       pose.current.x + Math.sin(controls.yaw) * controls.distance,

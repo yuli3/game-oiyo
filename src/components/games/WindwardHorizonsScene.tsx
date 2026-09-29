@@ -1,6 +1,7 @@
 import { Html, Line } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { usePlayFrameloop } from "../../lib/games/play-frameloop";
+import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import {
   Anchor,
   ChevronLeft,
@@ -813,11 +814,13 @@ function OceanSurface({
     fog: true,
   }), [environment]);
 
+  const reducedMotion = usePrefersReducedMotion();
   useFrame((state) => {
     if (!mesh.current) return;
     mesh.current.position.set(vessel.current.x, 0, vessel.current.z);
     material.uniforms.uCenter.value.set(vessel.current.x, vessel.current.z);
-    material.uniforms.uTime.value = state.clock.elapsedTime;
+    // 2026-09-30 G2: 동작 줄이기면 물결 애니메이션만 멈춘다. 낮밤 흐름(uDay)은 게임 시간이라 유지.
+    if (!reducedMotion) material.uniforms.uTime.value = state.clock.elapsedTime;
     material.uniforms.uDay.value = (0.18 + state.clock.elapsedTime / 250) % 1;
   });
 
