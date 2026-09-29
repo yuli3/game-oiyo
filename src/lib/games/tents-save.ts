@@ -1,5 +1,12 @@
 import { generateTents, generateUniqueTents, validateTents, type Pos, type TentsPuzzle } from "./tents";
 import { mulberry32 } from "./daily";
+import {
+  CHAOS_SECONDS,
+  chaosBoard,
+  chaosEffects,
+  isChaosAugmentId,
+  type ChaosAugmentId,
+} from "./tents-chaos";
 
 /**
  * Fail-closed active-puzzle save, mirroring the Sudoku save contract: the
@@ -11,7 +18,7 @@ import { mulberry32 } from "./daily";
 export const TENTS_SAVE_KEY = "oiyo:tents-and-trees-state:v1";
 
 export type CellMark = "empty" | "tent" | "grass";
-export type TentsMode = "daily" | "free";
+export type TentsMode = "daily" | "free" | "chaos";
 
 export const FREE_BOARD = { size: 5, pairs: 5 };
 export const DAILY_BOARD = { size: 6, pairs: 7 };
@@ -19,12 +26,17 @@ export const DAILY_BOARD = { size: 6, pairs: 7 };
 export interface TentsSaveV1 {
   version: 1;
   mode: TentsMode;
-  /** The civil date the save was made on. Only enforced for mode "daily". */
+  /** The civil date the save was made on. Enforced for "daily" and "chaos". */
   dailyDate: string;
-  /** Regenerates the exact board for mode "free"; ignored for "daily". */
+  /** Regenerates the exact board for mode "free"; ignored for "daily" and "chaos". */
   seed: number;
   marks: CellMark[][];
   savedAtEpochMs: number;
+  // Optional so a version-1 daily or free save from before chaos still loads. 2026-09-29
+  chaosAugment?: ChaosAugmentId;
+  chaosStartedAtEpochMs?: number;
+  chaosDeadlineMs?: number;
+  chaosFlashlightUsed?: boolean;
 }
 
 type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
@@ -63,6 +75,7 @@ export function puzzleForTentsSave(mode: TentsMode, dailyDate: string, seed: num
       mulberry32(0x74656e ^ Math.imul(dayIndex + 1, 2654435761)),
     ).puzzle;
   }
+  if (mode === "chaos") return chaosBoard(dayIndexFromKey(dailyDate)).puzzle;
   return generateTents(FREE_BOARD.size, FREE_BOARD.pairs, mulberry32(seed)).puzzle;
 }
 
@@ -88,16 +101,56 @@ export function parseTentsSave(raw: string | null, expectedDailyDate: string, no
   try {
     const value: unknown = JSON.parse(raw);
     if (!isRecord(value) || value.version !== 1) return null;
-    if (value.mode !== "daily" && value.mode !== "free") return null;
+    if (value.mode !== "daily" && value.mode !== "free" && value.mode !== "chaos") return null;
     const mode = value.mode as TentsMode;
     if (!validCivilDate(value.dailyDate)) return null;
-    if (mode === "daily" && value.dailyDate !== expectedDailyDate) return null;
+    if ((mode === "daily" || mode === "chaos") && value.dailyDate !== expectedDailyDate) return null;
     if (!Number.isInteger(value.seed) || (value.seed as number) < 0 || (value.seed as number) > 0xffffffff) return null;
     if (!Number.isInteger(value.savedAtEpochMs) || (value.savedAtEpochMs as number) < 0 || (value.savedAtEpochMs as number) > now + 300_000) return null;
 
+    let chaosAugment: ChaosAugmentId | undefined;
+    let chaosStartedAtEpochMs: number | undefined;
+    let chaosDeadlineMs: number | undefined;
+    let chaosFlashlightUsed = false;
+    if (mode === "chaos") {
+      if (!isChaosAugmentId(value.chaosAugment)) return null;
+      chaosAugment = value.chaosAugment;
+      if (!Number.isInteger(value.chaosStartedAtEpochMs) || (value.chaosStartedAtEpochMs as number) < 0 || (value.chaosStartedAtEpochMs as number) > now + 300_000) return null;
+      chaosStartedAtEpochMs = value.chaosStartedAtEpochMs as number;
+      if (chaosAugment === "hourglass") {
+        // There is no server clock. An expired hourglass is dropped so a refresh can try again,
+        // and a stored deadline that is not the 90s we showed is rejected. 2026-09-29
+        if (value.chaosDeadlineMs !== chaosStartedAtEpochMs + CHAOS_SECONDS * 1000) return null;
+        if ((value.chaosDeadlineMs as number) <= now) return null;
+        chaosDeadlineMs = value.chaosDeadlineMs as number;
+      }
+      if (value.chaosFlashlightUsed !== undefined) {
+        if (typeof value.chaosFlashlightUsed !== "boolean") return null;
+        chaosFlashlightUsed = value.chaosFlashlightUsed;
+      }
+    }
+
     const puzzle = puzzleForTentsSave(mode, value.dailyDate as string, value.seed as number);
     if (!isValidMarksGrid(value.marks, puzzle)) return null;
-    const marks = value.marks as CellMark[][];
+    const marks = (value.marks as CellMark[][]).map((row) => [...row]);
+    const effects = mode === "chaos" ? chaosEffects(dayIndexFromKey(value.dailyDate as string)) : null;
+
+    if (effects && chaosAugment) {
+      if (chaosAugment === "banned") {
+        for (const [r, c] of effects.banned) {
+          if (marks[r][c] !== "empty") return null;
+        }
+      }
+      // Trail and safe-grass cells are recomputed from the day, not trusted from storage. 2026-09-29
+      if (chaosAugment === "trailhead") {
+        const [r, c] = effects.trailhead;
+        marks[r][c] = "tent";
+      }
+      if (chaosAugment === "safeGrass") {
+        const [r, c] = effects.safeGrass;
+        marks[r][c] = "grass";
+      }
+    }
 
     const tents: Pos[] = [];
     for (let r = 0; r < puzzle.size; r += 1) {
@@ -105,7 +158,8 @@ export function parseTentsSave(raw: string | null, expectedDailyDate: string, no
         if (marks[r][c] === "tent") tents.push([r, c]);
       }
     }
-    if (validateTents(tents, puzzle).complete) return null; // a finished board isn't resumable
+    const rules = chaosAugment === "banned" && effects ? { banned: effects.banned } : undefined;
+    if (validateTents(tents, puzzle, rules).complete) return null; // a finished board isn't resumable
 
     return {
       version: 1,
@@ -114,6 +168,8 @@ export function parseTentsSave(raw: string | null, expectedDailyDate: string, no
       seed: value.seed as number,
       marks,
       savedAtEpochMs: value.savedAtEpochMs as number,
+      ...(chaosAugment ? { chaosAugment, chaosStartedAtEpochMs, chaosFlashlightUsed } : {}),
+      ...(chaosDeadlineMs !== undefined ? { chaosDeadlineMs } : {}),
     };
   } catch {
     return null;

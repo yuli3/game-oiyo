@@ -84,7 +84,11 @@ export function generateTents(
 export type TentsValidation = {
   ok: boolean;
   complete: boolean;
-  error: 'adjacent' | 'orphan' | 'count' | null;
+  error: 'adjacent' | 'orphan' | 'count' | 'banned' | null;
+};
+
+export type TentsRules = {
+  banned?: readonly Pos[];
 };
 
 /** True when tents↔trees admit a perfect 1:1 orthogonal-adjacency matching. */
@@ -111,8 +115,17 @@ function hasPerfectMatching(tents: Pos[], trees: Pos[]): boolean {
   return tents.every((_, i) => assign(i, Array(trees.length).fill(false)));
 }
 
-export function validateTents(tents: Pos[], puzzle: TentsPuzzle): TentsValidation {
+export function validateTents(tents: Pos[], puzzle: TentsPuzzle, rules?: TentsRules): TentsValidation {
   const { size, trees, rowHints, colHints } = puzzle;
+
+  // Chaos forbids a few non-solution cells. Solution counting omits `rules`,
+  // so a banned cell cannot change whether the published board is unique. 2026-09-29
+  if (rules?.banned && rules.banned.length > 0) {
+    const banned = new Set(rules.banned.map(([r, c]) => `${r}:${c}`));
+    for (const [r, c] of tents) {
+      if (banned.has(`${r}:${c}`)) return { ok: false, complete: false, error: 'banned' };
+    }
+  }
 
   // tents never touch, even diagonally
   for (let i = 0; i < tents.length; i++) {

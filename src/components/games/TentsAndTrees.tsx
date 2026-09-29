@@ -13,6 +13,20 @@ import {
     type CellMark,
     type TentsMode,
 } from '../../lib/games/tents-save';
+import {
+    CHAOS_SECONDS,
+    addChaosAugment,
+    chaosBoard,
+    chaosEffects,
+    chaosElapsedSec,
+    chaosNeighborVerdict,
+    chaosOffer,
+    chaosShareLine,
+    chaosShareUrl,
+    hintAriaCount,
+    visibleHint,
+    type ChaosAugmentId,
+} from '../../lib/games/tents-chaos';
 import { TENTS_SPRITES } from '../../lib/games/sprites';
 import { tentsAnalyticsPayload, type TentsAnalyticsEvent } from '../../lib/games/tents-analytics';
 
@@ -39,6 +53,14 @@ interface InitialGame {
     seed: number;
     dailyDate: string;
     resumed: boolean;
+    chaosAugment: ChaosAugmentId | null;
+    chaosStartedAt: number | null;
+    chaosDeadline: number | null;
+    chaosFlashlightUsed: boolean;
+}
+
+function blankChaos(): Pick<InitialGame, 'chaosAugment' | 'chaosStartedAt' | 'chaosDeadline' | 'chaosFlashlightUsed'> {
+    return { chaosAugment: null, chaosStartedAt: null, chaosDeadline: null, chaosFlashlightUsed: false };
 }
 
 /** Restores an in-progress save if one matches today, otherwise starts a fresh daily puzzle. */
@@ -47,19 +69,38 @@ function initialGame(): InitialGame {
     const saved = loadTentsSave(today);
     if (saved) {
         const puzzle = puzzleForTentsSave(saved.mode, saved.dailyDate, saved.seed);
-        return { mode: saved.mode, puzzle, marks: saved.marks, seed: saved.seed, dailyDate: saved.dailyDate, resumed: true };
+        return {
+            mode: saved.mode,
+            puzzle,
+            marks: saved.marks,
+            seed: saved.seed,
+            dailyDate: saved.dailyDate,
+            resumed: true,
+            chaosAugment: saved.chaosAugment ?? null,
+            chaosStartedAt: saved.chaosStartedAtEpochMs ?? null,
+            chaosDeadline: saved.chaosDeadlineMs ?? null,
+            chaosFlashlightUsed: saved.chaosFlashlightUsed ?? false,
+        };
     }
     const { puzzle } = generateDailyTents();
-    return { mode: 'daily', puzzle, marks: emptyMarksFor(puzzle.size), seed: 0, dailyDate: today, resumed: false };
+    return { mode: 'daily', puzzle, marks: emptyMarksFor(puzzle.size), seed: 0, dailyDate: today, resumed: false, ...blankChaos() };
+}
+
+function tentsOf(marks: CellMark[][]): Pos[] {
+    const tents: Pos[] = [];
+    for (let r = 0; r < marks.length; r += 1) {
+        for (let c = 0; c < marks[r].length; c += 1) if (marks[r][c] === 'tent') tents.push([r, c]);
+    }
+    return tents;
 }
 
 const COPY = {
-    ko: { title: '텐트와 나무', desc: '나무마다 텐트를 하나씩 설치하세요!', note: '텐트는 나무의 상하좌우에 놓이며, 텐트끼리는 대각선을 포함해 이웃할 수 없어요. 행·열 숫자는 그 줄의 텐트 수예요.', daily: '📅 오늘의 퍼즐', free: '자유 모드 5×5', win: '캠핑 준비 완료!', next: '다음 퍼즐', errAdjacent: '텐트끼리 붙어 있어요', errOrphan: '나무 옆이 아닌 텐트가 있어요', errCount: '행·열 숫자를 초과했어요', streak: '연속', best: '최고', doneToday: '오늘 완료 ✓', sound: '소리' },
-    en: { title: 'Tents & Trees', desc: 'Each tree needs exactly one tent!', note: 'Tents go orthogonally next to a tree and never touch another tent, even diagonally. Row/column numbers count the tents in that line.', daily: '📅 Daily Puzzle', free: 'Free play 5×5', win: 'Camping Ready!', next: 'Next puzzle', errAdjacent: 'Two tents are touching', errOrphan: 'A tent is not next to any tree', errCount: 'A row/column count is exceeded', streak: 'Streak', best: 'Best', doneToday: 'Done today ✓', sound: 'Sound' },
-    ja: { title: 'テントと木', desc: '木ごとにテントを1つずつ設置しましょう！', note: 'テントは木の上下左右に置き、テント同士は斜めも含め隣接できません。行・列の数字はその列のテント数です。', daily: '📅 今日のパズル', free: 'フリー 5×5', win: 'キャンプ準備完了！', next: '次のパズル', errAdjacent: 'テント同士が隣接しています', errOrphan: '木の隣にないテントがあります', errCount: '行・列の数字を超えています', streak: '連続', best: '最高', doneToday: '本日クリア ✓', sound: '音' },
-    zh: { title: '帐篷与树', desc: '每棵树旁放一顶帐篷！', note: '帐篷放在树的上下左右，帐篷之间（含对角）不能相邻。行列数字表示该行列的帐篷数。', daily: '📅 每日谜题', free: '自由模式 5×5', win: '露营准备就绪！', next: '下一题', errAdjacent: '有帐篷相邻了', errOrphan: '有帐篷不在树旁', errCount: '超过了行列数字', streak: '连续', best: '最佳', doneToday: '今日已完成 ✓', sound: '声音' },
-    fr: { title: 'Tentes et arbres', desc: "Chaque arbre a besoin d'une tente !", note: "Les tentes se placent à côté d'un arbre (jamais en diagonale d'une autre tente). Les nombres comptent les tentes de chaque ligne/colonne.", daily: '📅 Puzzle du jour', free: 'Libre 5×5', win: 'Prêt à camper !', next: 'Puzzle suivant', errAdjacent: 'Deux tentes se touchent', errOrphan: "Une tente n'est près d'aucun arbre", errCount: 'Un compteur de ligne/colonne est dépassé', streak: 'Série', best: 'Record', doneToday: "Fini aujourd'hui ✓", sound: 'Son' },
-    es: { title: 'Tiendas y árboles', desc: '¡Cada árbol necesita una tienda!', note: 'Las tiendas van junto a un árbol (arriba/abajo/izquierda/derecha) y nunca se tocan entre sí, ni en diagonal. Los números cuentan las tiendas de cada fila/columna.', daily: '📅 Puzle diario', free: 'Libre 5×5', win: '¡Listos para acampar!', next: 'Siguiente puzle', errAdjacent: 'Dos tiendas se tocan', errOrphan: 'Hay una tienda sin árbol al lado', errCount: 'Se superó un número de fila/columna', streak: 'Racha', best: 'Récord', doneToday: 'Hecho hoy ✓', sound: 'Sonido' },
+    ko: { title: '텐트와 나무', desc: '나무마다 텐트를 하나씩 설치하세요!', note: '텐트는 나무의 상하좌우에 놓이며, 텐트끼리는 대각선을 포함해 이웃할 수 없어요. 행·열 숫자는 그 줄의 텐트 수예요.', daily: '📅 오늘의 퍼즐', free: '자유 모드 5×5', chaos: '카오스', win: '캠핑 준비 완료!', next: '다음 퍼즐', errAdjacent: '텐트끼리 붙어 있어요', errOrphan: '나무 옆이 아닌 텐트가 있어요', errCount: '행·열 숫자를 초과했어요', streak: '연속', best: '최고', doneToday: '오늘 완료 ✓', sound: '소리' },
+    en: { title: 'Tents & Trees', desc: 'Each tree needs exactly one tent!', note: 'Tents go orthogonally next to a tree and never touch another tent, even diagonally. Row/column numbers count the tents in that line.', daily: '📅 Daily Puzzle', free: 'Free play 5×5', chaos: 'Chaos', win: 'Camping Ready!', next: 'Next puzzle', errAdjacent: 'Two tents are touching', errOrphan: 'A tent is not next to any tree', errCount: 'A row/column count is exceeded', streak: 'Streak', best: 'Best', doneToday: 'Done today ✓', sound: 'Sound' },
+    ja: { title: 'テントと木', desc: '木ごとにテントを1つずつ設置しましょう！', note: 'テントは木の上下左右に置き、テント同士は斜めも含め隣接できません。行・列の数字はその列のテント数です。', daily: '📅 今日のパズル', free: 'フリー 5×5', chaos: 'カオス', win: 'キャンプ準備完了！', next: '次のパズル', errAdjacent: 'テント同士が隣接しています', errOrphan: '木の隣にないテントがあります', errCount: '行・列の数字を超えています', streak: '連続', best: '最高', doneToday: '本日クリア ✓', sound: '音' },
+    zh: { title: '帐篷与树', desc: '每棵树旁放一顶帐篷！', note: '帐篷放在树的上下左右，帐篷之间（含对角）不能相邻。行列数字表示该行列的帐篷数。', daily: '📅 每日谜题', free: '自由模式 5×5', chaos: '混沌', win: '露营准备就绪！', next: '下一题', errAdjacent: '有帐篷相邻了', errOrphan: '有帐篷不在树旁', errCount: '超过了行列数字', streak: '连续', best: '最佳', doneToday: '今日已完成 ✓', sound: '声音' },
+    fr: { title: 'Tentes et arbres', desc: "Chaque arbre a besoin d'une tente !", note: "Les tentes se placent à côté d'un arbre (jamais en diagonale d'une autre tente). Les nombres comptent les tentes de chaque ligne/colonne.", daily: '📅 Puzzle du jour', free: 'Libre 5×5', chaos: 'Chaos', win: 'Prêt à camper !', next: 'Puzzle suivant', errAdjacent: 'Deux tentes se touchent', errOrphan: "Une tente n'est près d'aucun arbre", errCount: 'Un compteur de ligne/colonne est dépassé', streak: 'Série', best: 'Record', doneToday: "Fini aujourd'hui ✓", sound: 'Son' },
+    es: { title: 'Tiendas y árboles', desc: '¡Cada árbol necesita una tienda!', note: 'Las tiendas van junto a un árbol (arriba/abajo/izquierda/derecha) y nunca se tocan entre sí, ni en diagonal. Los números cuentan las tiendas de cada fila/columna.', daily: '📅 Puzle diario', free: 'Libre 5×5', chaos: 'Caos', win: '¡Listos para acampar!', next: 'Siguiente puzle', errAdjacent: 'Dos tiendas se tocan', errOrphan: 'Hay una tienda sin árbol al lado', errCount: 'Se superó un número de fila/columna', streak: 'Racha', best: 'Récord', doneToday: 'Hecho hoy ✓', sound: 'Sonido' },
 } as const;
 
 const NEXT_DAILY_COPY = {
@@ -90,8 +131,97 @@ const A11Y_COPY = {
     es: { subtitle: 'Puzle lógico de colocación', reset: 'Reiniciar', row: 'Fila', column: 'Columna', rowHint: 'Tiendas de la fila', columnHint: 'Tiendas de la columna', tree: 'Árbol', empty: 'Casilla vacía', tent: 'Tienda', grass: 'Marca de hierba' },
 } as const;
 
+const CHAOS_COPY = {
+    ko: {
+        draft: '오늘의 규칙', timeUp: '시간이 끝났어요', hidden: '숨김', bannedCell: '금지된 칸',
+        errBanned: '금지된 칸에 텐트가 있어요', copyShare: '기록 복사', copied: '복사했어요',
+        flashlight: '손전등 켜기', flashlightHint: '확인할 칸을 누르세요', shareLabel: '텐트 카오스',
+        legal: '놓을 수 있어요', illegal: '놓을 수 없어요', remain: (s: number) => `남은 시간 ${s}초`,
+        rules: {
+            fog: { name: '안개 캠프', effect: '행과 열 힌트의 절반이 숨겨져요.' },
+            hourglass: { name: '모래시계', effect: '고른 뒤 90초 안에 풀어야 해요.' },
+            flashlight: { name: '손전등', effect: '이웃 칸을 놓을 수 있는지 한 번 보여 줘요.' },
+            banned: { name: '금지구역', effect: '텐트를 놓을 수 없는 칸이 세 곳 있어요.' },
+            trailhead: { name: '이정표', effect: '정답 텐트 하나가 고정돼 있어요.' },
+            safeGrass: { name: '안전한 풀', effect: '텐트가 아닌 풀 한 칸이 고정돼 있어요.' },
+        },
+    },
+    en: {
+        draft: "Today's rule", timeUp: 'Time is up', hidden: 'hidden', bannedCell: 'Blocked cell',
+        errBanned: 'A tent is on a blocked cell', copyShare: 'Copy result', copied: 'Copied',
+        flashlight: 'Use flashlight', flashlightHint: 'Choose a cell to check', shareLabel: 'Tents Chaos',
+        legal: 'Can place a tent', illegal: 'Cannot place a tent', remain: (s: number) => `${s}s left`,
+        rules: {
+            fog: { name: 'Fog camp', effect: 'Half of the row and column hints are hidden.' },
+            hourglass: { name: 'Hourglass', effect: 'Solve within 90 seconds of picking.' },
+            flashlight: { name: 'Flashlight', effect: 'Show once whether the neighboring cells are legal.' },
+            banned: { name: 'No-camp zone', effect: 'Three cells cannot hold a tent.' },
+            trailhead: { name: 'Trail marker', effect: 'One solution tent is placed and locked.' },
+            safeGrass: { name: 'Safe grass', effect: 'One non-tent grass cell is locked.' },
+        },
+    },
+    ja: {
+        draft: '今日のルール', timeUp: '時間が終わりました', hidden: '非表示', bannedCell: '禁止マス',
+        errBanned: '禁止マスにテントがあります', copyShare: '記録をコピー', copied: 'コピーしました',
+        flashlight: 'ライトを使う', flashlightHint: '確認するマスを押してください', shareLabel: 'テントカオス',
+        legal: '置けます', illegal: '置けません', remain: (s: number) => `残り${s}秒`,
+        rules: {
+            fog: { name: '霧のキャンプ', effect: '行と列のヒントの半分が隠れます。' },
+            hourglass: { name: '砂時計', effect: '選んでから90秒以内に解きます。' },
+            flashlight: { name: '懐中電灯', effect: '隣のマスに置けるかを一度だけ示します。' },
+            banned: { name: '禁止区域', effect: 'テントを置けないマスが3つあります。' },
+            trailhead: { name: '道しるべ', effect: '正解のテントが1つ固定されています。' },
+            safeGrass: { name: '安全な草', effect: 'テントではない草マスが1つ固定されています。' },
+        },
+    },
+    zh: {
+        draft: '今日规则', timeUp: '时间到了', hidden: '已隐藏', bannedCell: '禁区',
+        errBanned: '帐篷放在了禁区上', copyShare: '复制成绩', copied: '已复制',
+        flashlight: '打开手电', flashlightHint: '请点要查看的格子', shareLabel: '帐篷混沌',
+        legal: '可以放置', illegal: '不能放置', remain: (s: number) => `剩余${s}秒`,
+        rules: {
+            fog: { name: '迷雾营地', effect: '一半的行列提示会隐藏。' },
+            hourglass: { name: '沙漏', effect: '选好后要在90秒内解开。' },
+            flashlight: { name: '手电筒', effect: '只显示一次周围格子能不能放。' },
+            banned: { name: '禁区', effect: '有三格不能放帐篷。' },
+            trailhead: { name: '路标', effect: '一顶正确答案的帐篷已固定。' },
+            safeGrass: { name: '安全草地', effect: '一格不是帐篷的草地已固定。' },
+        },
+    },
+    fr: {
+        draft: 'Règle du jour', timeUp: 'Le temps est écoulé', hidden: 'masqué', bannedCell: 'Case interdite',
+        errBanned: 'Une tente est sur une case interdite', copyShare: 'Copier le résultat', copied: 'Copié',
+        flashlight: 'Allumer la lampe', flashlightHint: 'Choisissez une case à vérifier', shareLabel: 'Chaos des tentes',
+        legal: 'Placement possible', illegal: 'Placement impossible', remain: (s: number) => `${s} s restantes`,
+        rules: {
+            fog: { name: 'Camp de brume', effect: 'La moitié des indices de ligne et de colonne est cachée.' },
+            hourglass: { name: 'Sablier', effect: 'Vous avez 90 secondes après le choix.' },
+            flashlight: { name: 'Lampe', effect: 'Montre une fois si les cases voisines sont jouables.' },
+            banned: { name: 'Zone interdite', effect: 'Trois cases refusent les tentes.' },
+            trailhead: { name: 'Balise', effect: 'Une tente de la solution est déjà posée et verrouillée.' },
+            safeGrass: { name: 'Herbe sûre', effect: 'Une case de gazon sans tente est verrouillée.' },
+        },
+    },
+    es: {
+        draft: 'Regla de hoy', timeUp: 'Se acabó el tiempo', hidden: 'oculto', bannedCell: 'Casilla prohibida',
+        errBanned: 'Hay una tienda en una casilla prohibida', copyShare: 'Copiar marca', copied: 'Copiado',
+        flashlight: 'Encender la linterna', flashlightHint: 'Elige una casilla para comprobar', shareLabel: 'Caos de tiendas',
+        legal: 'Se puede colocar', illegal: 'No se puede colocar', remain: (s: number) => `${s} s restantes`,
+        rules: {
+            fog: { name: 'Campamento de niebla', effect: 'Se oculta la mitad de las pistas de fila y columna.' },
+            hourglass: { name: 'Reloj de arena', effect: 'Hay que resolverlo en 90 segundos tras elegirlo.' },
+            flashlight: { name: 'Linterna', effect: 'Muestra una vez si las casillas vecinas valen.' },
+            banned: { name: 'Zona prohibida', effect: 'Hay tres casillas donde no puede haber tienda.' },
+            trailhead: { name: 'Hito', effect: 'Una tienda de la solución queda fija.' },
+            safeGrass: { name: 'Hierba segura', effect: 'Una casilla de hierba sin tienda queda fija.' },
+        },
+    },
+} as const;
+
 const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
-    const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
+    const localeKey = (locale in COPY ? locale : 'en') as keyof typeof COPY;
+    const t = COPY[localeKey];
+    const chaosCopy = CHAOS_COPY[localeKey];
     const a11y = A11Y_COPY[locale as keyof typeof A11Y_COPY] ?? A11Y_COPY.en;
     const nextDailyCopy = NEXT_DAILY_COPY[locale as keyof typeof NEXT_DAILY_COPY] ?? NEXT_DAILY_COPY.en;
 
@@ -105,8 +235,21 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [dailyDate, setDailyDate] = useState(initial.dailyDate);
     const [nextMinutes, setNextMinutes] = useState(() => minutesUntilNextDaily());
     const [activeCell, setActiveCell] = useState(0);
+    const [chaosDay, setChaosDay] = useState(() => dayIndex());
+    const [chaosAugment, setChaosAugment] = useState<ChaosAugmentId | null>(initial.chaosAugment);
+    const [chaosStartedAt, setChaosStartedAt] = useState<number | null>(initial.chaosStartedAt);
+    const [chaosDeadline, setChaosDeadline] = useState<number | null>(initial.chaosDeadline);
+    const [chaosFailed, setChaosFailed] = useState(false);
+    const [flashlightArmed, setFlashlightArmed] = useState(false);
+    const [flashlightUsed, setFlashlightUsed] = useState(initial.chaosFlashlightUsed);
+    const [flashlightMarks, setFlashlightMarks] = useState<Record<string, 'legal' | 'illegal'> | null>(null);
+    const [draftFocus, setDraftFocus] = useState(0);
+    const [clock, setClock] = useState(() => Date.now());
+    const [copied, setCopied] = useState(false);
     const cellRefs = useRef<Array<HTMLButtonElement | HTMLDivElement | null>>([]);
+    const draftRefs = useRef<Array<HTMLButtonElement | null>>([]);
     const startedRef = useRef(initial.resumed);
+    const chaosPack = mode === 'chaos' ? { offer: chaosOffer(chaosDay), effects: chaosEffects(chaosDay) } : null;
 
     const track = useCallback((event: TentsAnalyticsEvent, eventMode: TentsMode) => {
         const analytics = window as Window & { gtag?: (...args: unknown[]) => void };
@@ -146,12 +289,50 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         return () => window.clearInterval(timer);
     }, []);
 
+    useEffect(() => {
+        if (mode !== 'chaos' || chaosAugment !== 'hourglass' || chaosDeadline == null || validation.complete || chaosFailed) return;
+        const tick = () => {
+            const now = Date.now();
+            if (now >= chaosDeadline) {
+                setChaosFailed(true);
+                clearTentsSave();
+                return;
+            }
+            setClock(now);
+        };
+        tick();
+        const timer = window.setInterval(tick, 1000);
+        return () => window.clearInterval(timer);
+    }, [mode, chaosAugment, chaosDeadline, validation.complete, chaosFailed]);
+
     const newPuzzle = useCallback((nextMode: TentsMode) => {
         clearTentsSave();
+        const today = todayKey();
+        const day = dayIndex();
+        setChaosAugment(null);
+        setChaosStartedAt(null);
+        setChaosDeadline(null);
+        setChaosFailed(false);
+        setFlashlightArmed(false);
+        setFlashlightUsed(false);
+        setFlashlightMarks(null);
+        setCopied(false);
+        setDraftFocus(0);
+        setChaosDay(day);
+        setDailyDate(today);
+        setValidation({ ok: true, complete: false, error: null });
+        setHint(null);
+        setActiveCell(0);
+        startedRef.current = false;
         if (nextMode === 'daily') {
             const { puzzle: p } = generateDailyTents();
             setMode('daily');
-            setDailyDate(todayKey());
+            setSeed(0);
+            setPuzzle(p);
+            setMarks(emptyMarksFor(p.size));
+        } else if (nextMode === 'chaos') {
+            const { puzzle: p } = chaosBoard(day);
+            setMode('chaos');
             setSeed(0);
             setPuzzle(p);
             setMarks(emptyMarksFor(p.size));
@@ -159,26 +340,116 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             const freshSeed = Math.floor(Math.random() * 0xffffffff);
             const { puzzle: p } = generateTents(FREE_BOARD.size, FREE_BOARD.pairs, mulberry32(freshSeed));
             setMode('free');
-            setDailyDate(todayKey());
             setSeed(freshSeed);
             setPuzzle(p);
             setMarks(emptyMarksFor(p.size));
         }
-        setValidation({ ok: true, complete: false, error: null });
-        setHint(null);
-        setActiveCell(0);
-        startedRef.current = false;
     }, []);
 
     const isTree = (r: number, c: number) => puzzle.trees.some(([tr, tc]) => tr === r && tc === c);
+    const bannedNow = mode === 'chaos' && chaosAugment === 'banned' && chaosPack ? chaosPack.effects.banned : [];
+    const bannedKeys = new Set(bannedNow.map(([r, c]) => `${r}:${c}`));
+    const lockedKey = mode === 'chaos' && chaosPack && chaosAugment === 'trailhead'
+        ? chaosPack.effects.trailhead.join(':')
+        : mode === 'chaos' && chaosPack && chaosAugment === 'safeGrass'
+            ? chaosPack.effects.safeGrass.join(':')
+            : null;
+    const fogRows = mode === 'chaos' && chaosAugment === 'fog' && chaosPack ? chaosPack.effects.fogRows : [];
+    const fogCols = mode === 'chaos' && chaosAugment === 'fog' && chaosPack ? chaosPack.effects.fogCols : [];
+    const playLocked = validation.complete || chaosFailed || (mode === 'chaos' && !chaosAugment);
+    // The first paint can be a few milliseconds after the pick, and ceil() would show 91. The fail time stays 90s. 2026-09-29
+    const remainSec = chaosDeadline == null ? 0 : Math.max(0, Math.min(CHAOS_SECONDS, Math.ceil((chaosDeadline - Math.max(clock, Date.now())) / 1000)));
 
-    const handleCellClick = (r: number, c: number) => {
-        if (validation.complete || isTree(r, c)) return;
-        if (mode === 'daily' && dailyDate !== todayKey()) {
-            newPuzzle('daily');
+    const remember = (nextMarks: CellMark[][], flashlight = flashlightUsed) => {
+        if (mode === 'chaos' && chaosAugment && chaosStartedAt != null) {
+            storeTentsSave({
+                mode: 'chaos',
+                dailyDate,
+                seed: 0,
+                marks: nextMarks,
+                savedAtEpochMs: Date.now(),
+                chaosAugment,
+                chaosStartedAtEpochMs: chaosStartedAt,
+                ...(chaosDeadline != null ? { chaosDeadlineMs: chaosDeadline } : {}),
+                ...(flashlight ? { chaosFlashlightUsed: true } : {}),
+            });
             return;
         }
-        if (!startedRef.current) {
+        storeTentsSave({ mode, dailyDate, seed, marks: nextMarks, savedAtEpochMs: Date.now() });
+    };
+
+    const pickChaos = (id: ChaosAugmentId) => {
+        if (mode !== 'chaos' || chaosAugment || !chaosPack) return;
+        const added = addChaosAugment([], id);
+        if (!added.ok) return;
+        const picked = added.active[0];
+        const next = emptyMarksFor(puzzle.size);
+        if (picked === 'trailhead') {
+            const [r, c] = chaosPack.effects.trailhead;
+            next[r][c] = 'tent';
+        }
+        if (picked === 'safeGrass') {
+            const [r, c] = chaosPack.effects.safeGrass;
+            next[r][c] = 'grass';
+        }
+        const started = Date.now();
+        const deadline = picked === 'hourglass' ? started + CHAOS_SECONDS * 1000 : null;
+        setChaosAugment(picked);
+        setChaosStartedAt(started);
+        setChaosDeadline(deadline);
+        setChaosFailed(false);
+        setFlashlightArmed(false);
+        setFlashlightUsed(false);
+        setFlashlightMarks(null);
+        setCopied(false);
+        setMarks(next);
+        startedRef.current = true;
+        track('game_start', 'chaos');
+        const rules = picked === 'banned' ? { banned: chaosPack.effects.banned } : undefined;
+        setValidation(validateTents(tentsOf(next), puzzle, rules));
+        storeTentsSave({
+            mode: 'chaos',
+            dailyDate,
+            seed: 0,
+            marks: next,
+            savedAtEpochMs: started,
+            chaosAugment: picked,
+            chaosStartedAtEpochMs: started,
+            ...(deadline != null ? { chaosDeadlineMs: deadline } : {}),
+        });
+    };
+
+    const handleCellClick = (r: number, c: number) => {
+        if (playLocked || isTree(r, c)) return;
+        if ((mode === 'daily' || mode === 'chaos') && dailyDate !== todayKey()) {
+            newPuzzle(mode);
+            return;
+        }
+        if (bannedKeys.has(`${r}:${c}`) || lockedKey === `${r}:${c}`) return;
+        if (mode === 'chaos' && chaosAugment === 'hourglass' && chaosDeadline != null && Date.now() >= chaosDeadline) {
+            setChaosFailed(true);
+            clearTentsSave();
+            return;
+        }
+        if (flashlightArmed && !flashlightUsed && chaosPack) {
+            const placed = tentsOf(marks);
+            const nextMarks: Record<string, 'legal' | 'illegal'> = {};
+            for (let dr = -1; dr <= 1; dr += 1) {
+                for (let dc = -1; dc <= 1; dc += 1) {
+                    if (dr === 0 && dc === 0) continue;
+                    const nr = r + dr;
+                    const nc = c + dc;
+                    if (nr < 0 || nc < 0 || nr >= puzzle.size || nc >= puzzle.size) continue;
+                    nextMarks[`${nr}:${nc}`] = chaosNeighborVerdict([nr, nc], puzzle, placed, bannedNow);
+                }
+            }
+            setFlashlightMarks(nextMarks);
+            setFlashlightArmed(false);
+            setFlashlightUsed(true);
+            remember(marks, true);
+            return;
+        }
+        if (mode !== 'chaos' && !startedRef.current) {
             startedRef.current = true;
             track('game_start', mode);
         }
@@ -188,9 +459,8 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         setMarks(next);
         tone(420, 0.04);
 
-        const tents: Pos[] = [];
-        for (let rr = 0; rr < puzzle.size; rr++) for (let cc = 0; cc < puzzle.size; cc++) if (next[rr][cc] === 'tent') tents.push([rr, cc]);
-        const v = validateTents(tents, puzzle);
+        const rules = chaosAugment === 'banned' ? { banned: bannedNow } : undefined;
+        const v = validateTents(tentsOf(next), puzzle, rules);
         setValidation(v);
         if (v.complete) {
             track('game_complete', mode);
@@ -203,8 +473,50 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             }
         } else {
             if (v.error) tone(180, 0.08);
-            storeTentsSave({ mode, dailyDate, seed, marks: next, savedAtEpochMs: Date.now() });
+            remember(next);
         }
+    };
+
+    const copyShare = () => {
+        if (!chaosAugment || chaosStartedAt == null) return;
+        const line = chaosShareLine(
+            chaosCopy.shareLabel,
+            chaosCopy.rules[chaosAugment].name,
+            chaosElapsedSec(chaosStartedAt, Date.now()),
+            chaosShareUrl(localeKey),
+        );
+        const done = () => setCopied(true);
+        const fallback = () => {
+            const area = document.createElement('textarea');
+            area.value = line;
+            area.setAttribute('readonly', '');
+            area.style.position = 'fixed';
+            area.style.left = '-9999px';
+            document.body.appendChild(area);
+            area.select();
+            try {
+                if (document.execCommand('copy')) done();
+            } catch {
+                /* the browser blocked the clipboard */
+            }
+            area.remove();
+        };
+        if (navigator.clipboard?.writeText) navigator.clipboard.writeText(line).then(done, fallback);
+        else fallback();
+    };
+
+    const moveDraft = (event: React.KeyboardEvent, index: number) => {
+        if (!chaosPack) return;
+        const last = chaosPack.offer.length - 1;
+        let next = index;
+        if (event.key === 'ArrowRight' || event.key === 'ArrowDown') next = index === last ? 0 : index + 1;
+        else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') next = index === 0 ? last : index - 1;
+        else if (event.key === 'Home') next = 0;
+        else if (event.key === 'End') next = last;
+        else return;
+        event.preventDefault();
+        setDraftFocus(next);
+        draftRefs.current[next]?.focus();
     };
 
     const solvedToday = streak?.lastWinDate === todayKey();
@@ -233,7 +545,7 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 <p className="text-xs text-muted-foreground/80 mb-4 text-center max-w-xs leading-relaxed">{t.note}</p>
 
                 <div className="mb-4 inline-flex flex-wrap justify-center gap-1">
-                    {(['daily', 'free'] as const).map((m) => (
+                    {(['daily', 'free', 'chaos'] as const).map((m) => (
                         <button key={m} onClick={() => {
                             if (m !== mode) track('mode_change', m);
                             newPuzzle(m);
@@ -248,7 +560,7 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         const tents: Pos[] = [];
                         for (let rr = 0; rr < puzzle.size; rr++) for (let cc = 0; cc < puzzle.size; cc++) if (marks[rr][cc] === 'tent') tents.push([rr, cc]);
                         setHint(explainTentsHint(tents, puzzle));
-                    }} disabled={validation.complete} className="min-h-11 rounded-lg border border-border px-3 text-xs font-bold text-muted-foreground hover:bg-muted disabled:opacity-40">
+                    }} disabled={playLocked} className="min-h-11 rounded-lg border border-border px-3 text-xs font-bold text-muted-foreground hover:bg-muted disabled:opacity-40">
                         {HINT_LABEL[locale as keyof typeof HINT_LABEL] ?? HINT_LABEL.en}
                     </button>
                     <button
@@ -279,15 +591,18 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         style={{ gridTemplateColumns: `1.5rem repeat(${size}, minmax(2.75rem, 1fr))` }}>
                         <div role="row" aria-rowindex={1} className="contents">
                         <div role="columnheader" aria-rowindex={1} aria-colindex={1} aria-label={`${a11y.row} / ${a11y.column}`} />
-                            {puzzle.colHints.map((h, i) => (
-                                <div key={`ch-${i}`} role="columnheader" aria-colindex={i + 2} aria-label={`${a11y.column} ${i + 1}, ${a11y.columnHint} ${h}`}
-                                    className="flex items-center justify-center text-sm font-black text-primary">{h}</div>
-                            ))}
+                            {puzzle.colHints.map((h, i) => {
+                                const hidden = fogCols.includes(i);
+                                return (
+                                <div key={`ch-${i}`} role="columnheader" aria-colindex={i + 2} aria-label={`${a11y.column} ${i + 1}, ${a11y.columnHint} ${hintAriaCount(h, hidden, chaosCopy.hidden)}`}
+                                    className="flex items-center justify-center text-sm font-black text-primary">{visibleHint(h, hidden)}</div>
+                                );
+                            })}
                         </div>
                         {marks.map((row, r) => (
                             <div key={`r-${r}`} role="row" aria-rowindex={r + 2} className="contents">
-                                <div role="rowheader" aria-colindex={1} aria-label={`${a11y.row} ${r + 1}, ${a11y.rowHint} ${puzzle.rowHints[r]}`}
-                                    className="flex items-center justify-center text-sm font-black text-primary">{puzzle.rowHints[r]}</div>
+                                <div role="rowheader" aria-colindex={1} aria-label={`${a11y.row} ${r + 1}, ${a11y.rowHint} ${hintAriaCount(puzzle.rowHints[r], fogRows.includes(r), chaosCopy.hidden)}`}
+                                    className="flex items-center justify-center text-sm font-black text-primary">{visibleHint(puzzle.rowHints[r], fogRows.includes(r))}</div>
                                 {row.map((mark, c) => {
                                     const tree = isTree(r, c);
                                     const index = r * size + c;
@@ -304,18 +619,31 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                                             </div>
                                         );
                                     }
+                                    if (bannedKeys.has(`${r}:${c}`)) {
+                                        return (
+                                            <div key={`${r}-${c}`} ref={(node) => { cellRefs.current[index] = node; }} role="gridcell"
+                                                tabIndex={activeCell === index ? 0 : -1} aria-rowindex={r + 2} aria-colindex={c + 2}
+                                                aria-label={`${position}: ${chaosCopy.bannedCell}`} onFocus={() => setActiveCell(index)}
+                                                onKeyDown={(event) => handleGridKeyDown(event, index)}
+                                                className={`${common} bg-stone-300/80 text-stone-700 cursor-default`}>
+                                                <span aria-hidden="true">✕</span>
+                                            </div>
+                                        );
+                                    }
+                                    const verdict = flashlightMarks?.[`${r}:${c}`];
+                                    const verdictLabel = verdict === 'legal' ? `, ${chaosCopy.legal}` : verdict === 'illegal' ? `, ${chaosCopy.illegal}` : '';
                                     return (
                                         <button
                                             key={`${r}-${c}`}
                                             ref={(node) => { cellRefs.current[index] = node; }} type="button" role="gridcell"
-                                            onClick={() => { setActiveCell(index); handleCellClick(r, c); }} aria-disabled={validation.complete}
+                                            onClick={() => { setActiveCell(index); handleCellClick(r, c); }} aria-disabled={playLocked || lockedKey === `${r}:${c}`}
                                             tabIndex={activeCell === index ? 0 : -1} aria-rowindex={r + 2} aria-colindex={c + 2}
-                                            aria-label={`${position}: ${mark === 'tent' ? a11y.tent : mark === 'grass' ? a11y.grass : a11y.empty}`}
+                                            aria-label={`${position}: ${mark === 'tent' ? a11y.tent : mark === 'grass' ? a11y.grass : a11y.empty}${verdictLabel}`}
                                             onFocus={() => setActiveCell(index)} onKeyDown={(event) => handleGridKeyDown(event, index)}
                                             className={`${common} ${
                                                 mark === 'tent' ? 'bg-rose-100 text-rose-700 shadow-md -translate-y-0.5' :
                                                 mark === 'grass' ? 'bg-muted/50 text-muted-foreground/30' : 'bg-background hover:bg-muted/20 active:scale-95'
-                                            } ${hint?.cells.some(([hr, hc]) => hr === r && hc === c) ? 'ring-4 ring-amber-400' : ''}`}
+                                            } ${verdict === 'legal' ? 'ring-2 ring-emerald-600' : ''} ${verdict === 'illegal' ? 'ring-2 ring-stone-500' : ''} ${hint?.cells.some(([hr, hc]) => hr === r && hc === c) ? 'ring-4 ring-amber-400' : ''}`}
                                         >
                                             {mark === 'tent' && <img src={TENTS_SPRITES.tent} alt="" draggable={false} className="h-7 w-7 object-contain pointer-events-none" aria-hidden="true" />}
                                             {mark === 'grass' && <img src={TENTS_SPRITES.grass} alt="" draggable={false} className="h-6 w-6 object-contain pointer-events-none opacity-80" aria-hidden="true" />}
@@ -327,6 +655,45 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     </div>
                 </div>
 
+                {mode === 'chaos' && !chaosAugment && chaosPack && (
+                    <div role="group" aria-label={chaosCopy.draft} className="mt-4 flex w-full max-w-sm flex-col gap-2">
+                        {chaosPack.offer.map((id, index) => (
+                            <button
+                                key={id}
+                                type="button"
+                                ref={(node) => { draftRefs.current[index] = node; }}
+                                aria-pressed={false}
+                                tabIndex={draftFocus === index ? 0 : -1}
+                                onClick={() => pickChaos(id)}
+                                onKeyDown={(event) => moveDraft(event, index)}
+                                className="min-h-11 w-full rounded-xl border border-border bg-card px-3 py-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                            >
+                                <span className="block text-sm font-black text-foreground">{chaosCopy.rules[id].name}</span>
+                                <span className="block text-xs leading-relaxed text-muted-foreground">{chaosCopy.rules[id].effect}</span>
+                            </button>
+                        ))}
+                    </div>
+                )}
+                {mode === 'chaos' && chaosAugment && (
+                    <div className="mt-4 w-full max-w-sm rounded-xl border border-primary/40 bg-primary/10 px-3 py-2 text-center">
+                        <p className="text-sm font-black text-primary">{chaosCopy.rules[chaosAugment].name}</p>
+                        <p className="text-xs leading-relaxed text-muted-foreground">{chaosCopy.rules[chaosAugment].effect}</p>
+                        {chaosAugment === 'hourglass' && !validation.complete && !chaosFailed && chaosDeadline != null && (
+                            <p className="mt-1 text-xs font-bold text-foreground">{chaosCopy.remain(remainSec)}</p>
+                        )}
+                        {chaosAugment === 'flashlight' && !flashlightUsed && !validation.complete && !chaosFailed && (
+                            <button
+                                type="button"
+                                aria-pressed={flashlightArmed}
+                                onClick={() => setFlashlightArmed(true)}
+                                className="mt-2 min-h-11 rounded-lg border border-border bg-card px-3 text-xs font-bold text-foreground"
+                            >
+                                {flashlightArmed ? chaosCopy.flashlightHint : chaosCopy.flashlight}
+                            </button>
+                        )}
+                    </div>
+                )}
+
                 <div className="mt-4 min-h-[2rem] text-center" role="status" aria-live="polite">
                     {validation.complete ? (
                         <div className="animate-fade-up motion-reduce:animate-none">
@@ -336,10 +703,17 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                                     {t.next}
                                 </button>
                             )}
+                            {mode === 'chaos' && chaosAugment && (
+                                <button type="button" onClick={copyShare} className="px-8 py-2.5 bg-primary text-primary-foreground rounded-full font-bold shadow-lg">
+                                    {copied ? chaosCopy.copied : chaosCopy.copyShare}
+                                </button>
+                            )}
                         </div>
+                    ) : chaosFailed ? (
+                        <p className="text-xs font-bold text-destructive">{chaosCopy.timeUp}</p>
                     ) : validation.error ? (
                         <p className="text-xs font-bold text-destructive">
-                            {validation.error === 'adjacent' ? t.errAdjacent : validation.error === 'orphan' ? t.errOrphan : t.errCount}
+                            {validation.error === 'adjacent' ? t.errAdjacent : validation.error === 'orphan' ? t.errOrphan : validation.error === 'banned' ? chaosCopy.errBanned : t.errCount}
                         </p>
                     ) : hint ? (
                         <p className="text-xs font-bold text-primary">{(TENTS_HINT[locale as keyof typeof TENTS_HINT] ?? TENTS_HINT.en)[hint.reason]}</p>

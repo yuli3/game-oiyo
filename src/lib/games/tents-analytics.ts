@@ -18,5 +18,6 @@ export function tentsAnalyticsPayload(context: TentsAnalyticsContext): Record<st
     game_id: 'tents-and-trees',
     game_mode: context.mode,
     locale: context.locale,
+    chaos: context.mode === 'chaos' ? '1' : '0',
   };
 }
