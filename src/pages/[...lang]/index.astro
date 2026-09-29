@@ -53,6 +53,8 @@ const catLabel: Record<string, Record<Locale, string>> = {
   lostark: { ko: "로스트아크", en: "Lost Ark", ja: "ロストアーク", zh: "失落的方舟", fr: "Lost Ark", es: "Lost Ark" },
 };
 const catOrder = ["board", "card", "puzzle", "arcade", "luck", "quiz", "lostark"];
+const catIcon: Record<string, string> = { board: "♟️", card: "🃏", puzzle: "🧩", arcade: "🕹️", luck: "🎲", quiz: "⚖️", lostark: "⚔️" };
+const genreNavLabel: Record<Locale, string> = { ko: "장르 바로 가기", en: "Jump to genre", ja: "ジャンルへ移動", zh: "跳转到类别", fr: "Aller au genre", es: "Ir al género" };
 
 /**
  * `kind` keeps the public count honest: a dice roller and a raid-split
@@ -187,6 +189,19 @@ const cardJsonLd = {
   </section>
 
   <div class="mx-auto max-w-6xl px-4 pb-16">
+    <nav aria-label={genreNavLabel[locale] ?? genreNavLabel.en} class="-mx-4 mt-6 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <ul class="flex w-max gap-2 sm:w-auto sm:flex-wrap">
+        {catOrder.filter((cat) => byCat(cat).length > 0).map((cat) => (
+          <li>
+            <a href={`#genre-${cat}`} class="inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-full border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 shadow-sm transition-colors hover:border-primary/50 hover:text-primary">
+              <span aria-hidden="true">{catIcon[cat]}</span>
+              {catLabel[cat][locale] ?? catLabel[cat].en}
+              <span class="text-xs font-bold text-slate-400">{byCat(cat).length}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
     {featuredGames.length > 0 && (
       <section class="mt-10">
         <h2 class="mb-4 text-lg font-black text-slate-900">{translations.magazine.featured}</h2>
@@ -207,8 +222,9 @@ const cardJsonLd = {
       </section>
     )}
     {catOrder.map((cat) => (
-      <section class="mt-10">
+      <section id={`genre-${cat}`} class="mt-10 scroll-mt-20">
         <h2 class="mb-4 flex items-center gap-2 text-lg font-black text-slate-900">
+          <span aria-hidden="true">{catIcon[cat]}</span>
           {catLabel[cat][locale] ?? catLabel[cat].en}
           <span class="text-xs font-bold text-slate-400">{byCat(cat).length}</span>
         </h2>
