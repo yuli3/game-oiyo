@@ -481,7 +481,7 @@ function HealthBar({ hp, max, color }: { hp: number; max: number; color: string 
           style={{ width: `${pct}%`, background: color }}
         />
       </div>
-      <p className="mt-0.5 text-right text-[10px] font-bold tabular-nums text-slate-500">
+      <p className="mt-0.5 text-right text-[10px] font-bold tabular-nums text-muted-foreground">
         {hp} / {max}
       </p>
     </div>
@@ -1158,7 +1158,7 @@ export default function SpiritVale({ locale = "en" }: { locale?: Locale }) {
               <div
                 key={spirit.id}
                 className={`rounded-2xl border p-3 transition-colors ${
-                  seen ? "border-emerald-200 bg-white" : "border-dashed border-slate-200 bg-slate-50"
+                  seen ? "border-emerald-200 bg-white" : "border-dashed border-slate-200 bg-card"
                 }`}
               >
                 <div className="flex items-center gap-2">
@@ -1174,7 +1174,7 @@ export default function SpiritVale({ locale = "en" }: { locale?: Locale }) {
                     {seen ? spirit.name[locale] ?? spirit.name.en : "???"}
                   </p>
                 </div>
-                <p className="mt-1 text-[11px] font-semibold text-slate-500">
+                <p className="mt-1 text-[11px] font-semibold text-muted-foreground">
                   {ELEMENT_LABEL[spirit.element][locale]}
                   {seen && ` · ${t.stageTitle(stageOf(xp[spirit.id] ?? 0))}`}
                 </p>
@@ -1192,7 +1192,7 @@ export default function SpiritVale({ locale = "en" }: { locale?: Locale }) {
             );
           })}
         </div>
-        {met.length === 0 && <p className="mt-2 text-xs text-slate-500">{t.empty}</p>}
+        {met.length === 0 && <p className="mt-2 text-xs text-muted-foreground">{t.empty}</p>}
       </section>
 
       {/* The matchup table, stated rather than hidden — 오행 has two cycles, and

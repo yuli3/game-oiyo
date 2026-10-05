@@ -204,7 +204,7 @@ const cardJsonLd = {
     </nav>
     {featuredGames.length > 0 && (
       <section class="mt-10">
-        <h2 class="mb-4 text-lg font-black text-slate-900">{translations.magazine.featured}</h2>
+        <h2 class="mb-4 text-lg font-black text-foreground">{translations.magazine.featured}</h2>
         <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {featuredGames.map((g) => (
             <a href={`/${locale}/${g.slug}/`} data-game={g.slug} class="group relative flex min-h-36 flex-col justify-end overflow-hidden rounded-2xl border border-slate-100 bg-white text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md">
@@ -223,7 +223,7 @@ const cardJsonLd = {
     )}
     {catOrder.map((cat) => (
       <section id={`genre-${cat}`} class="mt-10 scroll-mt-20">
-        <h2 class="mb-4 flex items-center gap-2 text-lg font-black text-slate-900">
+        <h2 class="mb-4 flex items-center gap-2 text-lg font-black text-foreground">
           <span aria-hidden="true">{catIcon[cat]}</span>
           {catLabel[cat][locale] ?? catLabel[cat].en}
           <span class="text-xs font-bold text-slate-400">{byCat(cat).length}</span>

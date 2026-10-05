@@ -112,7 +112,7 @@ export default function SkywardAtlas({ locale }: { locale: Locale }) {
           <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_75%_12%,#fff_0,transparent_35%),linear-gradient(145deg,#d8e8e6,#f6f0e1_55%,#c8b68f)]" />
           <div className="mx-auto max-w-5xl">
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-slate-900/15 bg-white/70 px-4 py-2 text-xs font-bold tracking-[.18em]"><Plane size={16}/> ALPINE FLIGHT / ORIGINAL</div>
-            <h2 className="max-w-3xl text-5xl font-black tracking-[-.05em] text-slate-900 sm:text-7xl">{copy.title}</h2>
+            <h2 className="max-w-3xl text-5xl font-black tracking-[-.05em] text-foreground sm:text-7xl">{copy.title}</h2>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-700">{copy.subtitle}</p>
             {phase === "unavailable" && <div role="alert" className="mt-6 max-w-2xl rounded-2xl border border-amber-300 bg-amber-50 p-4 text-amber-950"><p className="font-black">{fallback.title}</p><p className="mt-1 text-sm leading-6">{fallback.body}</p></div>}
             <div className="mt-8 flex flex-wrap gap-3">
@@ -127,7 +127,7 @@ export default function SkywardAtlas({ locale }: { locale: Locale }) {
               <div><h2 className="flex items-center gap-2 font-bold"><Wind size={18}/>{copy.controls}</h2><p className="mt-2 text-sm text-slate-300">{copy.keys}</p><p className="mt-1 text-sm text-slate-400">{copy.touch}</p></div>
               <Headphones className="self-center text-slate-400"/>
             </div>
-            <p className="mt-5 text-xs text-slate-500">{copy.disclaimer}</p>
+            <p className="mt-5 text-xs text-muted-foreground">{copy.disclaimer}</p>
           </div>
         </div>
       )}

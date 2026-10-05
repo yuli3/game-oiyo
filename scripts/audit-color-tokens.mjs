@@ -56,7 +56,7 @@ const PALETTE_BUDGET = {
   oiyo: 6053,
   blog: 10764,
   wiki: 5370,
-  game: 7428,
+  game: 1253, // 2026-10-05: 회색 계열(글자 900·950 → foreground, 500 → muted-foreground, 바탕 50 → card)만 옮김. 밝기 차이 0.03 이하.
   news: 0, // news 는 처음부터 var(--*) 만 쓴다. 이 0 을 지킨다.
   ai: 0,
 };

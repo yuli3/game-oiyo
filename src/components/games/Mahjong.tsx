@@ -192,7 +192,7 @@ const Mahjong: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
     return (
       <GameContainer title={t.title}>
         <div className="flex flex-col items-center gap-4 py-8">
-          <p className="text-xs text-gray-500 max-w-md text-center">{t.rules}</p>
+          <p className="text-xs text-muted-foreground max-w-md text-center">{t.rules}</p>
           <div className="flex gap-2">
             {([1, 2, 3] as AiLevel[]).map((lv) => (
               <button type="button" key={lv} onClick={() => setLevel(lv)} aria-pressed={level === lv}
@@ -262,7 +262,7 @@ const Mahjong: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
                 : `${t.ai} ${s.winner}${t.aiWin} (${s.winType === "tsumo" ? t.byTsumo : t.byRon})`}
             </span>
           ) : s.turn !== 0 ? (
-            <span className="text-sm text-gray-500">{t.thinking}</span>
+            <span className="text-sm text-muted-foreground">{t.thinking}</span>
           ) : s.phase === "ron" ? (
             <span className="text-sm font-bold text-rose-600">{t.ron}?</span>
           ) : (

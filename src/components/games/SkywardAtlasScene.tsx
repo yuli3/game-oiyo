@@ -193,7 +193,7 @@ function HudPanel({copy,hud,view,setView,audioEnabled,toggleAudio,finish}: {copy
   <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
     <button onClick={()=>setView(view==="chase"?"cockpit":"chase")} className="flex min-h-11 items-center gap-2 rounded-full bg-slate-950/70 px-4 text-xs font-bold text-white backdrop-blur"><Camera size={16}/>{view==="chase"?copy.cockpit:copy.chase}</button>
     <button onClick={toggleAudio} aria-label={audioEnabled?copy.soundOn:copy.soundOff} className="grid size-11 place-items-center rounded-full bg-slate-950/70 text-white">{audioEnabled?<Volume2 size={17}/>:<VolumeX size={17}/>}</button>
-    <button onClick={finish} className="min-h-11 rounded-full bg-amber-100/90 px-4 text-xs font-black text-slate-900">{copy.end}</button>
+    <button onClick={finish} className="min-h-11 rounded-full bg-amber-100/90 px-4 text-xs font-black text-foreground">{copy.end}</button>
   </div></>;
 }
 function TouchControls({controls}:{controls:MutableRefObject<Controls>}){

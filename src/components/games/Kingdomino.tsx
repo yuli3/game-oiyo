@@ -301,7 +301,7 @@ const Kingdomino: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
     return (
       <GameContainer title={t.title}>
         <div className="flex flex-col items-center gap-4 py-8">
-          <p className="text-sm text-gray-500 max-w-md text-center">{t.claimHint}</p>
+          <p className="text-sm text-muted-foreground max-w-md text-center">{t.claimHint}</p>
           <div className="flex gap-2">
             {([1, 2, 3] as AiLevel[]).map((lv) => (
               <button key={lv} onClick={() => setLevel(lv)}
@@ -310,7 +310,7 @@ const Kingdomino: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
               </button>
             ))}
           </div>
-          <p className="text-xs font-medium text-gray-500">{aiInfo.difficulty}: {aiInfo.level[level]}</p>
+          <p className="text-xs font-medium text-muted-foreground">{aiInfo.difficulty}: {aiInfo.level[level]}</p>
           <button onClick={newGame} className="min-h-11 px-6 py-2.5 rounded-lg bg-emerald-600 text-white font-bold hover:bg-emerald-700">
             {t.start}
           </button>
@@ -339,9 +339,9 @@ const Kingdomino: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
             {muted ? "🔇" : "🔊"} {t.sound}
           </button>
         </div>
-        <p className="text-center text-[11px] font-medium text-gray-500">{aiInfo.difficulty}: {aiInfo.level[level]}</p>
+        <p className="text-center text-[11px] font-medium text-muted-foreground">{aiInfo.difficulty}: {aiInfo.level[level]}</p>
         {paused && !over && (
-          <div className="rounded-xl border border-gray-300 bg-gray-50 p-3 text-center text-xs font-bold text-gray-600" role="status">
+          <div className="rounded-xl border border-gray-300 bg-card p-3 text-center text-xs font-bold text-gray-600" role="status">
             {wasRestored ? `${t.restored} · ` : ""}{t.paused}
           </div>
         )}
@@ -352,7 +352,7 @@ const Kingdomino: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
               {res!.winner === "you" ? `🎉 ${t.youWin}` : res!.winner === "ai" ? t.aiWins : t.draw}
             </span>
           ) : owner === "ai" ? (
-            <span className="text-sm text-gray-500">{t.thinking}</span>
+            <span className="text-sm text-muted-foreground">{t.thinking}</span>
           ) : pending?.kind === "claim" ? (
             <span className="text-sm text-emerald-700 font-semibold">{t.claimHint}</span>
           ) : (
@@ -363,7 +363,7 @@ const Kingdomino: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
         {/* Held tile + rotate/discard controls (human place turn) */}
         {yourTurn && pending?.kind === "place" && heldTile && (
           <div className="flex items-center justify-center gap-3">
-            <span className="text-xs font-bold text-gray-500">{t.toPlace}</span>
+            <span className="text-xs font-bold text-muted-foreground">{t.toPlace}</span>
             <TileChip tile={heldTile} owner={null} youLabel="" aiLabel="" locale={locale} />
             {mustDiscard ? (
               <button onClick={doDiscard}

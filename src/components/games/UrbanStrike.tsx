@@ -320,7 +320,7 @@ export default function UrbanStrike({ locale }: { locale: Locale }) {
               type="button"
               onClick={begin}
               disabled={!available}
-              className="min-h-12 rounded-xl bg-lime-400 px-8 py-3 text-sm font-black uppercase tracking-widest text-slate-950 shadow-[0_0_28px_rgba(163,230,53,.2)] disabled:cursor-not-allowed disabled:opacity-40"
+              className="min-h-12 rounded-xl bg-lime-400 px-8 py-3 text-sm font-black uppercase tracking-widest text-foreground shadow-[0_0_28px_rgba(163,230,53,.2)] disabled:cursor-not-allowed disabled:opacity-40"
             >
               {phase === "result" ? t.again : t.start}
             </button>

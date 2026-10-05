@@ -556,7 +556,7 @@ export function LostArkRaidSplitter() {
         : "bg-indigo-50 text-indigo-600 border border-indigo-100";
     return isMain(char)
       ? "bg-rose-100 text-rose-700 border border-rose-200"
-      : "bg-slate-50 text-slate-600 border border-slate-200";
+      : "bg-card text-slate-600 border border-slate-200";
   };
 
   const games = getGameCount(raidType);
@@ -566,10 +566,10 @@ export function LostArkRaidSplitter() {
       <div className="space-y-5">
         <div className="flex items-start justify-between">
           <div>
-            <h3 className="text-lg font-black text-slate-900">
+            <h3 className="text-lg font-black text-foreground">
               로스트아크 공대 분배기 (Q1Q3)
             </h3>
-            <p className="text-sm text-slate-500 mt-0.5">
+            <p className="text-sm text-muted-foreground mt-0.5">
               레이드 파티 캐릭터 자동 배분 · 본1부1 / 본1부3
             </p>
           </div>
@@ -587,7 +587,7 @@ export function LostArkRaidSplitter() {
         </div>
 
         {showHelp && (
-          <div className="bg-slate-50 rounded-xl p-4 text-xs text-slate-600 space-y-1.5 border border-slate-200">
+          <div className="bg-card rounded-xl p-4 text-xs text-slate-600 space-y-1.5 border border-slate-200">
             <p className="font-bold text-slate-700">입력 방식</p>
             <p>• 한 줄에 한 명, 공백으로 캐릭터 구분</p>
             <p>
@@ -608,7 +608,7 @@ D(M) d d ㅍ`}</pre>
         {/* Controls */}
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
-            <label className="text-xs font-bold text-slate-500">
+            <label className="text-xs font-bold text-muted-foreground">
               레이드 방식
             </label>
             <div className="flex gap-2">
@@ -616,7 +616,7 @@ D(M) d d ㅍ`}</pre>
                 <button
                   key={t}
                   onClick={() => setRaidType(t)}
-                  className={`flex-1 py-2 rounded-xl text-sm font-bold border-2 transition-colors ${raidType === t ? "bg-amber-50 border-amber-400 text-amber-700" : "border-slate-200 text-slate-500 hover:border-slate-300"}`}
+                  className={`flex-1 py-2 rounded-xl text-sm font-bold border-2 transition-colors ${raidType === t ? "bg-amber-50 border-amber-400 text-amber-700" : "border-slate-200 text-muted-foreground hover:border-slate-300"}`}
                 >
                   본{t.replace("-", "부")}
                 </button>
@@ -624,7 +624,7 @@ D(M) d d ㅍ`}</pre>
             </div>
           </div>
           <div className="space-y-1">
-            <label className="text-xs font-bold text-slate-500">
+            <label className="text-xs font-bold text-muted-foreground">
               파티 크기
             </label>
             <div className="flex gap-2">
@@ -632,7 +632,7 @@ D(M) d d ㅍ`}</pre>
                 <button
                   key={s}
                   onClick={() => setPartySize(s)}
-                  className={`flex-1 py-2 rounded-xl text-sm font-bold border-2 transition-colors ${partySize === s ? "bg-amber-50 border-amber-400 text-amber-700" : "border-slate-200 text-slate-500 hover:border-slate-300"}`}
+                  className={`flex-1 py-2 rounded-xl text-sm font-bold border-2 transition-colors ${partySize === s ? "bg-amber-50 border-amber-400 text-amber-700" : "border-slate-200 text-muted-foreground hover:border-slate-300"}`}
                 >
                   {s}인
                 </button>
@@ -642,7 +642,7 @@ D(M) d d ㅍ`}</pre>
         </div>
 
         <div className="space-y-1">
-          <label className="text-xs font-bold text-slate-500">
+          <label className="text-xs font-bold text-muted-foreground">
             파티 데이터 입력 ({partySize}줄, 한 줄에 한 명)
           </label>
           <textarea

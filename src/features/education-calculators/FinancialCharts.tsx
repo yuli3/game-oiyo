@@ -31,7 +31,7 @@ export const CVPChart: React.FC<CVPChartProps> = ({
 
     return (
         <Card className="p-6 bg-white border-slate-200 mt-8">
-            <h4 className="text-lg font-bold text-slate-900 mb-4 text-center">CVP 분석 시각화: 매출과 총원가의 교차</h4>
+            <h4 className="text-lg font-bold text-foreground mb-4 text-center">CVP 분석 시각화: 매출과 총원가의 교차</h4>
             <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
@@ -61,7 +61,7 @@ export const CVPChart: React.FC<CVPChartProps> = ({
                     </LineChart>
                 </ResponsiveContainer>
             </div>
-            <p className="text-xs text-slate-500 mt-4 italic text-center">
+            <p className="text-xs text-muted-foreground mt-4 italic text-center">
                 * 파란색 선(매출)과 주황색 선(원가)이 만나는 지점이 손익분기점(BEP)입니다.
             </p>
         </Card>

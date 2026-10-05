@@ -351,7 +351,7 @@ export default function UrbanStrikeScene({ copy, onFinish, muted, onToggleMute }
           {hud.killfeed.map((entry) => (
             <div key={entry.id} className="truncate rounded bg-black/45 px-2 py-1 font-mono text-[9px] backdrop-blur-sm">
               <span className={entry.blue ? "text-sky-300" : "text-red-300"}>{entry.killer}</span>
-              <span className="mx-1 text-slate-500">{entry.headshot ? "◆" : "›"}</span>
+              <span className="mx-1 text-muted-foreground">{entry.headshot ? "◆" : "›"}</span>
               <span className="text-white">{entry.victim}</span>
             </div>
           ))}
@@ -399,7 +399,7 @@ export default function UrbanStrikeScene({ copy, onFinish, muted, onToggleMute }
             <p className="font-mono text-[9px] font-black tracking-[.16em] text-lime-300">{weaponLabel}</p>
           </div>
           <p className="font-mono text-3xl font-black leading-none text-white">
-            {hud.ammo}<span className="text-base text-slate-500"> / {hud.reserve}</span>
+            {hud.ammo}<span className="text-base text-muted-foreground"> / {hud.reserve}</span>
           </p>
           <p className="mt-1 font-mono text-[9px] text-slate-400">{copy.score} {hud.score.toLocaleString()}</p>
         </div>

@@ -27,7 +27,7 @@ const NEXT_COPY = {
   es: (m:number)=>`Próxima palabra en ${Math.floor(m/60)} h ${m%60} min`,
 };
 const markSymbol: Record<WordleMark,string> = { correct:'✓', present:'◆', absent:'×' };
-const markClass: Record<WordleMark,string> = { correct:'border-green-700 bg-green-700 text-white', present:'border-amber-500 bg-amber-400 text-slate-950', absent:'border-slate-500 bg-slate-500 text-white' };
+const markClass: Record<WordleMark,string> = { correct:'border-green-700 bg-green-700 text-white', present:'border-amber-500 bg-amber-400 text-foreground', absent:'border-slate-500 bg-slate-500 text-white' };
 
 export default function WordleGame({ locale='en' }: { locale?:string }) {
   const t = COPY[locale as keyof typeof COPY] ?? COPY.en; const nextCopy = NEXT_COPY[locale as keyof typeof NEXT_COPY] ?? NEXT_COPY.en; const reduced = usePrefersReducedMotion();

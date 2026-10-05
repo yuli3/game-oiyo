@@ -51,18 +51,18 @@ export default function InflationCalculator() {
 
   return (
     <div className="my-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-      <h3 className="mb-6 text-xl font-bold text-gray-900">인플레이션 구매력 계산기</h3>
+      <h3 className="mb-6 text-xl font-bold text-foreground">인플레이션 구매력 계산기</h3>
 
       <div className="mb-4 flex gap-3">
         <button
           onClick={() => setMode('future')}
-          className={`flex-1 rounded-lg py-2 text-sm font-medium transition ${mode === 'future' ? 'bg-red-600 text-white' : 'border border-gray-300 text-gray-600 hover:bg-gray-50'}`}
+          className={`flex-1 rounded-lg py-2 text-sm font-medium transition ${mode === 'future' ? 'bg-red-600 text-white' : 'border border-gray-300 text-gray-600 hover:bg-card'}`}
         >
           현재 돈의 미래 가치
         </button>
         <button
           onClick={() => setMode('today')}
-          className={`flex-1 rounded-lg py-2 text-sm font-medium transition ${mode === 'today' ? 'bg-red-600 text-white' : 'border border-gray-300 text-gray-600 hover:bg-gray-50'}`}
+          className={`flex-1 rounded-lg py-2 text-sm font-medium transition ${mode === 'today' ? 'bg-red-600 text-white' : 'border border-gray-300 text-gray-600 hover:bg-card'}`}
         >
           미래에 필요한 금액
         </button>
@@ -117,18 +117,18 @@ export default function InflationCalculator() {
       {result && (
         <div className="mt-6 space-y-4">
           <div className="grid grid-cols-2 gap-3 text-center sm:grid-cols-3">
-            <div className="rounded-xl bg-gray-50 p-4">
-              <p className="text-xs text-gray-500">현재 금액</p>
+            <div className="rounded-xl bg-card p-4">
+              <p className="text-xs text-muted-foreground">현재 금액</p>
               <p className="text-base font-bold text-gray-700">{formatKRW(parseFloat(amount.replace(/,/g, '')))}원</p>
             </div>
             <div className="rounded-xl bg-red-50 p-4">
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 {mode === 'future' ? `${years}년 후 구매력` : `${years}년 후 필요 금액`}
               </p>
               <p className="text-base font-bold text-red-600">{formatKRW(result.adjusted)}원</p>
             </div>
             <div className="rounded-xl bg-orange-50 p-4">
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 {mode === 'future' ? '구매력 손실' : '추가 필요 금액'}
               </p>
               <p className="text-base font-bold text-orange-600">
@@ -139,7 +139,7 @@ export default function InflationCalculator() {
 
           <div className="overflow-x-auto rounded-xl border border-gray-200">
             <table className="w-full text-xs">
-              <thead className="bg-gray-50">
+              <thead className="bg-card">
                 <tr>
                   <th className="px-3 py-2 text-left font-semibold text-gray-700">년도</th>
                   <th className="px-3 py-2 text-left font-semibold text-gray-700">
@@ -156,7 +156,7 @@ export default function InflationCalculator() {
                   return (
                     <tr key={row.year} className="border-t border-gray-100">
                       <td className="px-3 py-2 font-medium text-gray-700">{row.year}년 후</td>
-                      <td className="px-3 py-2 text-gray-900">{formatKRW(val)}원</td>
+                      <td className="px-3 py-2 text-foreground">{formatKRW(val)}원</td>
                       <td className={`px-3 py-2 ${pct < 0 ? 'text-red-500' : 'text-green-500'}`}>
                         {pct > 0 ? '+' : ''}{pct.toFixed(1)}%
                       </td>

@@ -285,7 +285,7 @@ function Battle({ copy, highScore, onFinish }: Props) {
     <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between p-3 font-mono text-[10px] font-black tracking-widest text-white sm:p-5 sm:text-xs">
       <div className="flex items-start gap-2">
         <button type="button" onClick={(event) => { event.stopPropagation(); setMuted((value) => !value); }} onPointerDown={(event) => event.stopPropagation()} aria-pressed={muted} aria-label="Sound" className="pointer-events-auto min-h-11 min-w-11 rounded border border-white/20 bg-black/55 text-white"><span aria-hidden="true">{muted ? "🔇" : "🔊"}</span></button>
-        <div className="rounded border border-cyan-300/25 bg-black/55 px-3 py-2"><span className="text-cyan-300">{copy.score}</span> {score.toString().padStart(7, "0")}<br/><span className="text-slate-500">{copy.high}</span> {Math.max(score, highScore).toString().padStart(7, "0")}</div>
+        <div className="rounded border border-cyan-300/25 bg-black/55 px-3 py-2"><span className="text-cyan-300">{copy.score}</span> {score.toString().padStart(7, "0")}<br/><span className="text-muted-foreground">{copy.high}</span> {Math.max(score, highScore).toString().padStart(7, "0")}</div>
       </div>
       <div className="rounded border border-white/10 bg-black/55 px-3 py-2 text-center">{copy.wave} {wave}<br/><span className="text-rose-300">{copy.lives} {"◆".repeat(lives)}</span></div>
       <div className="rounded border border-fuchsia-300/25 bg-black/55 px-3 py-2 text-right"><span className="text-fuchsia-300">{copy.chain}</span> ×{Math.max(1, chain)}<br/>{shots ? Math.round(hits / shots * 100) : 0}%</div>
@@ -296,7 +296,7 @@ function Battle({ copy, highScore, onFinish }: Props) {
     {/* 2026-09-28 touch audit: hide only for wide screens with a mouse — a width breakpoint alone removed the controls on landscape phones and iPads. touch-none keeps a held button from turning into a page scroll (pointercancel). */}
     <div className="absolute inset-x-0 bottom-3 flex touch-none justify-center gap-2 sm:pointer-fine:hidden">
       <button aria-label={copy.left} onPointerDown={(event) => { event.stopPropagation(); keys.current.add("a"); }} onPointerUp={() => keys.current.delete("a")} onPointerCancel={() => keys.current.delete("a")} className="min-h-12 min-w-16 rounded-xl border border-white/20 bg-black/65 font-mono font-black text-white">◀</button>
-      <button aria-label={copy.fire} onPointerDown={(event) => { event.stopPropagation(); fire(); }} className="min-h-12 min-w-24 rounded-xl bg-cyan-400 font-mono font-black text-slate-950">{copy.fire}</button>
+      <button aria-label={copy.fire} onPointerDown={(event) => { event.stopPropagation(); fire(); }} className="min-h-12 min-w-24 rounded-xl bg-cyan-400 font-mono font-black text-foreground">{copy.fire}</button>
       <button aria-label={copy.right} onPointerDown={(event) => { event.stopPropagation(); keys.current.add("d"); }} onPointerUp={() => keys.current.delete("d")} onPointerCancel={() => keys.current.delete("d")} className="min-h-12 min-w-16 rounded-xl border border-white/20 bg-black/65 font-mono font-black text-white">▶</button>
     </div>
   </div>;
