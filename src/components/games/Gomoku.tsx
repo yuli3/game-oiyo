@@ -336,7 +336,7 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                         >
                             {/* Hover Ghost */}
                             {stone === null && winner === null && !thinking && !paused && (
-                                <div className={`absolute w-[80%] h-[80%] rounded-full opacity-0 group-hover:opacity-30 transition-opacity motion-reduce:transition-none ${isBlackTurn ? 'bg-slate-900' : 'bg-white shadow-sm'}`} />
+                                <div className={`absolute w-[80%] h-[80%] rounded-full opacity-0 group-hover:opacity-30 transition-opacity motion-reduce:transition-none ${isBlackTurn ? 'bg-slate-900' : 'bg-card shadow-sm'}`} />
                             )}
                             {/* Real Stone */}
                             {stone !== null && (

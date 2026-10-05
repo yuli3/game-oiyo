@@ -467,7 +467,7 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
                   onClick={() => pick(i)}
                   disabled={phase !== "playing" || resolving}
                   style={fall ? ({ "--animal-fall": `${fallRows * 108}%`, animationDuration: reducedMotion ? "65ms" : `${Math.min(430,180+fallRows*34)}ms` } as CSSProperties) : undefined}
-                  className={`animal-tile relative flex aspect-square min-h-10 items-center justify-center rounded-xl bg-white shadow-sm focus-visible:ring-2 focus-visible:ring-primary ${selected === i ? "ring-2 ring-primary scale-105" : ""} ${isBursting ? "animal-burst z-10" : ""} ${fall ? "animal-fall" : ""}`}
+                  className={`animal-tile relative flex aspect-square min-h-10 items-center justify-center rounded-xl bg-card shadow-sm focus-visible:ring-2 focus-visible:ring-primary ${selected === i ? "ring-2 ring-primary scale-105" : ""} ${isBursting ? "animal-burst z-10" : ""} ${fall ? "animal-fall" : ""}`}
                 >
                   {ANIMAL_POP_SPRITES[animal] ? (
                     <img src={ANIMAL_POP_SPRITES[animal]} alt="" draggable={false} className="h-[78%] w-[78%] object-contain pointer-events-none select-none" />

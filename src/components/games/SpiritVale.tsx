@@ -1158,7 +1158,7 @@ export default function SpiritVale({ locale = "en" }: { locale?: Locale }) {
               <div
                 key={spirit.id}
                 className={`rounded-2xl border p-3 transition-colors ${
-                  seen ? "border-emerald-200 bg-white" : "border-dashed border-slate-200 bg-card"
+                  seen ? "border-emerald-200 bg-card" : "border-dashed border-border bg-card"
                 }`}
               >
                 <div className="flex items-center gap-2">
@@ -1208,7 +1208,7 @@ export default function SpiritVale({ locale = "en" }: { locale?: Locale }) {
               (other) => matchup(el, other) === "overcomeBy",
             );
             return (
-              <div key={el} className="rounded-xl bg-white p-3">
+              <div key={el} className="rounded-xl bg-card p-3">
                 <div className="flex items-center gap-2">
                   <span
                     className="h-2.5 w-2.5 rounded-full"

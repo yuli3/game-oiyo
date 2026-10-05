@@ -112,7 +112,7 @@ export default function InfernalVelocityScene({ copy, onFinish }: Props) {
       </Canvas>
 
       <div className={`pointer-events-none absolute inset-0 transition-opacity ${hud.health < 35 ? "opacity-70" : "opacity-0"} bg-[radial-gradient(circle,transparent_45%,rgba(160,0,0,.65))]`} />
-      <div className={`pointer-events-none absolute inset-0 bg-white transition-opacity ${hud.hit ? "opacity-15" : "opacity-0"}`} />
+      <div className={`pointer-events-none absolute inset-0 bg-card transition-opacity ${hud.hit ? "opacity-15" : "opacity-0"}`} />
       <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-3 p-4 font-mono text-xs sm:p-6">
         <div className="flex items-start gap-2">
           <button type="button" onClick={() => setMuted(value => !value)} aria-pressed={muted} aria-label="Sound"
@@ -146,8 +146,8 @@ export default function InfernalVelocityScene({ copy, onFinish }: Props) {
         </div>
       </div>
       <div className="pointer-events-none absolute left-1/2 top-1/2 size-7 -translate-x-1/2 -translate-y-1/2">
-        <i className="absolute left-0 top-1/2 h-px w-2 bg-white" /><i className="absolute right-0 top-1/2 h-px w-2 bg-white" />
-        <i className="absolute left-1/2 top-0 h-2 w-px bg-white" /><i className="absolute bottom-0 left-1/2 h-2 w-px bg-white" />
+        <i className="absolute left-0 top-1/2 h-px w-2 bg-card" /><i className="absolute right-0 top-1/2 h-px w-2 bg-card" />
+        <i className="absolute left-1/2 top-0 h-2 w-px bg-card" /><i className="absolute bottom-0 left-1/2 h-2 w-px bg-card" />
       </div>
       {!coarse && !locked && <button className="absolute inset-0 grid place-items-center bg-black/15 font-mono text-sm font-black tracking-widest" onClick={lock}>{copy.pointer}</button>}
       {coarse && (

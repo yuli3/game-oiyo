@@ -50,7 +50,7 @@ export default function InflationCalculator() {
   const displayRows = result ? result.rows.filter((_, i) => i % Math.max(1, Math.floor(result.rows.length / 10)) === 0 || i === result.rows.length - 1) : [];
 
   return (
-    <div className="my-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+    <div className="my-8 rounded-2xl border border-border bg-card p-6 shadow-sm">
       <h3 className="mb-6 text-xl font-bold text-foreground">인플레이션 구매력 계산기</h3>
 
       <div className="mb-4 flex gap-3">
@@ -137,7 +137,7 @@ export default function InflationCalculator() {
             </div>
           </div>
 
-          <div className="overflow-x-auto rounded-xl border border-gray-200">
+          <div className="overflow-x-auto rounded-xl border border-border">
             <table className="w-full text-xs">
               <thead className="bg-card">
                 <tr>

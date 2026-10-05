@@ -30,7 +30,7 @@ export const CVPChart: React.FC<CVPChartProps> = ({
     const bep = Math.ceil(fixedCost / (sellingPrice - variableCost));
 
     return (
-        <Card className="p-6 bg-white border-slate-200 mt-8">
+        <Card className="p-6 bg-card border-border mt-8">
             <h4 className="text-lg font-bold text-foreground mb-4 text-center">CVP 분석 시각화: 매출과 총원가의 교차</h4>
             <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">

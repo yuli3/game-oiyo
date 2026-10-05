@@ -435,7 +435,7 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
       {presenting ? <h2 className="text-center text-3xl font-black">{doc.title}</h2> : <label className="block">
         <span className="sr-only">{copy.titleLabel}</span>
         <input
-          className="min-h-11 w-full rounded-lg border border-stone-300 bg-white px-3 text-base font-bold"
+          className="min-h-11 w-full rounded-lg border border-stone-300 bg-card px-3 text-base font-bold"
           value={doc.title}
           onChange={(event) => setDoc((prev) => ({ ...prev, title: event.target.value.slice(0, 40) }))}
         />
@@ -478,7 +478,7 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
             >
               {tier.id.toUpperCase()}
             </button>
-            <div className="-mt-11 ml-20 flex min-h-11 flex-wrap gap-2 bg-white p-2">
+            <div className="-mt-11 ml-20 flex min-h-11 flex-wrap gap-2 bg-card p-2">
               {tier.items.length === 0 ? <span className="self-center text-xs text-stone-400">{copy.empty}</span> : null}
               {tier.items.filter((item) => !itemQuery.trim() || item.label.toLocaleLowerCase().includes(itemQuery.trim().toLocaleLowerCase())).map((item) => (
                 <Chip key={item.id} item={item} selected={selected === item.id} dimmed={ghost?.item.id === item.id} onSelect={() => setSelected(item.id)} onPointerStart={(event) => beginDrag(item, event.clientX, event.clientY)} onDragStart={(event) => { beginDrag(item, event.clientX, event.clientY); event.dataTransfer.setData("text/tier-item", item.id); event.dataTransfer.setData("text/plain", item.label); event.dataTransfer.effectAllowed = "move"; const blank = document.createElement("canvas"); blank.width = 1; blank.height = 1; event.dataTransfer.setDragImage(blank, 0, 0); }} />
@@ -587,7 +587,7 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
 
 function ChipFace({ item }: { item: TierItem }) {
   return (
-    <div className="flex w-20 flex-col items-center overflow-hidden rounded-lg border border-stone-200 bg-white text-[11px] shadow-sm">
+    <div className="flex w-20 flex-col items-center overflow-hidden rounded-lg border border-stone-200 bg-card text-[11px] shadow-sm">
       {item.imageUrl ? (
         <img src={item.imageUrl} alt="" width={72} height={72} className="size-[72px] object-cover" draggable={false} referrerPolicy="no-referrer" onError={(event) => { (event.currentTarget as HTMLImageElement).style.display = "none"; }} />
       ) : <span className="grid size-[72px] place-items-center bg-stone-100 text-2xl font-black text-stone-400">{item.label.slice(0, 1)}</span>}
@@ -604,7 +604,7 @@ function Chip({ item, selected, dimmed, onSelect, onPointerStart, onDragStart }:
       onDragStart={onDragStart}
       onPointerDown={onPointerStart}
       onClick={onSelect}
-      className={`flex w-20 touch-none flex-col items-center overflow-hidden rounded-lg border bg-white text-[11px] shadow-sm transition ${selected ? "border-lime-700 ring-2 ring-lime-300" : "border-stone-200"} ${dimmed ? "opacity-40" : ""}`}
+      className={`flex w-20 touch-none flex-col items-center overflow-hidden rounded-lg border bg-card text-[11px] shadow-sm transition ${selected ? "border-lime-700 ring-2 ring-lime-300" : "border-stone-200"} ${dimmed ? "opacity-40" : ""}`}
     >
       {item.imageUrl ? (
         <img src={item.imageUrl} alt="" width={72} height={72} className="size-[72px] object-cover" draggable={false} referrerPolicy="no-referrer" onError={(event) => { (event.currentTarget as HTMLImageElement).style.display = "none"; }} />

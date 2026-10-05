@@ -29,7 +29,7 @@ export function FinanceGuardrail({ locale, source, sourceUrl, asOf, tool = true 
   return (
     <aside
       role="note"
-      className="mt-3 flex flex-col gap-1 rounded-lg border border-slate-200 bg-card px-3 py-2 text-[11px] leading-relaxed text-muted-foreground"
+      className="mt-3 flex flex-col gap-1 rounded-lg border border-border bg-card px-3 py-2 text-[11px] leading-relaxed text-muted-foreground"
     >
       <span>
         <span aria-hidden="true">⚠ </span>

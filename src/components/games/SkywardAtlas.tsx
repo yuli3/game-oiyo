@@ -102,7 +102,7 @@ export default function SkywardAtlas({ locale }: { locale: Locale }) {
     setResult(next); setBest(Math.max(previous, next.score)); setPhase("result");
   }, []);
   return (
-    <section className="overflow-hidden rounded-[2rem] border border-slate-200 bg-[#f4f0e7] shadow-xl">
+    <section className="overflow-hidden rounded-[2rem] border border-border bg-[#f4f0e7] shadow-xl">
       {phase === "playing" ? (
         <Suspense fallback={<div className="grid min-h-[70vh] place-items-center">{copy.loading}</div>}>
           <Scene copy={copy.scene} audioEnabled={audio} onToggleAudio={() => setAudio(v => !v)} onFinish={finish} audioRef={audioRef} />

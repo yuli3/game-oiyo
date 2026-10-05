@@ -434,11 +434,11 @@ function Stepper({
     <div className="flex items-center justify-between gap-3 rounded-xl border border-[#d7c8a7] bg-[#fffaf0] px-3 py-2 shadow-sm">
       <span className="text-sm font-black text-[#3a3529]">{label}</span>
       <div className="flex items-center gap-2">
-        <button type="button" className="min-h-11 min-w-11 rounded-lg border border-[#c9b990] bg-white text-lg font-black text-[#26351f] shadow-sm active:translate-y-px" onClick={() => onChange(Math.max(0, value - step))}>
+        <button type="button" className="min-h-11 min-w-11 rounded-lg border border-[#c9b990] bg-card text-lg font-black text-[#26351f] shadow-sm active:translate-y-px" onClick={() => onChange(Math.max(0, value - step))}>
           −
         </button>
         <span className="w-14 text-center font-mono text-sm font-bold">{step >= 50 ? formatUsd(value) : value}</span>
-        <button type="button" className="min-h-11 min-w-11 rounded-lg border border-[#c9b990] bg-white text-lg font-black text-[#26351f] shadow-sm active:translate-y-px" onClick={() => onChange(value + step)}>
+        <button type="button" className="min-h-11 min-w-11 rounded-lg border border-[#c9b990] bg-card text-lg font-black text-[#26351f] shadow-sm active:translate-y-px" onClick={() => onChange(value + step)}>
           +
         </button>
       </div>
@@ -547,7 +547,7 @@ export default function RunABusiness({ locale }: { locale: Locale }) {
           <div className="grid gap-3 sm:grid-cols-[1fr_1.4fr]">
             <label className="block text-sm">
               <span className="font-black">{t.seed}</span>
-              <input value={seed} onChange={(e) => setSeed(e.target.value)} className="mt-2 h-12 w-full rounded-xl border border-[#cbbd9d] bg-white px-3 font-mono shadow-inner" />
+              <input value={seed} onChange={(e) => setSeed(e.target.value)} className="mt-2 h-12 w-full rounded-xl border border-[#cbbd9d] bg-card px-3 font-mono shadow-inner" />
             </label>
             <div>
               <p className="text-sm font-black">{t.horizon}</p>
@@ -557,7 +557,7 @@ export default function RunABusiness({ locale }: { locale: Locale }) {
                     key={id}
                     type="button"
                     onClick={() => setHorizon(id)}
-                    className={`min-h-12 rounded-xl px-2 text-xs font-black sm:text-sm ${horizon === id ? "bg-[#26351f] text-white shadow-md" : "border border-[#cbbd9d] bg-white text-[#514a39]"}`}
+                    className={`min-h-12 rounded-xl px-2 text-xs font-black sm:text-sm ${horizon === id ? "bg-[#26351f] text-white shadow-md" : "border border-[#cbbd9d] bg-card text-[#514a39]"}`}
                   >
                     {t.horizons[id]}
                   </button>

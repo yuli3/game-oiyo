@@ -556,13 +556,13 @@ export function LostArkRaidSplitter() {
         : "bg-indigo-50 text-indigo-600 border border-indigo-100";
     return isMain(char)
       ? "bg-rose-100 text-rose-700 border border-rose-200"
-      : "bg-card text-slate-600 border border-slate-200";
+      : "bg-card text-slate-600 border border-border";
   };
 
   const games = getGameCount(raidType);
 
   return (
-    <Card className="p-6 bg-white border-slate-200 shadow-xl mt-8">
+    <Card className="p-6 bg-card border-border shadow-xl mt-8">
       <div className="space-y-5">
         <div className="flex items-start justify-between">
           <div>
@@ -575,7 +575,7 @@ export function LostArkRaidSplitter() {
           </div>
           <button
             onClick={() => setShowHelp((h) => !h)}
-            className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 border border-slate-200 rounded-full px-2.5 py-1"
+            className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 border border-border rounded-full px-2.5 py-1"
           >
             {showHelp ? (
               <ChevronUp className="w-3 h-3" />
@@ -587,7 +587,7 @@ export function LostArkRaidSplitter() {
         </div>
 
         {showHelp && (
-          <div className="bg-card rounded-xl p-4 text-xs text-slate-600 space-y-1.5 border border-slate-200">
+          <div className="bg-card rounded-xl p-4 text-xs text-slate-600 space-y-1.5 border border-border">
             <p className="font-bold text-slate-700">입력 방식</p>
             <p>• 한 줄에 한 명, 공백으로 캐릭터 구분</p>
             <p>
@@ -598,7 +598,7 @@ export function LostArkRaidSplitter() {
               • 본캐릭터(M)는 뒤에 <strong>(M)</strong> 추가 → 예: D(M), ㅍ(M)
             </p>
             <p className="font-bold text-slate-700 mt-2">예시 (파티4 기준)</p>
-            <pre className="bg-white rounded p-2 text-xs border border-slate-200">{`D(M) D ㄷ ㅍ
+            <pre className="bg-card rounded p-2 text-xs border border-border">{`D(M) D ㄷ ㅍ
 D(M) d ㅍ(M) d
 ㅍ(M) D D d
 D(M) d d ㅍ`}</pre>
@@ -616,7 +616,7 @@ D(M) d d ㅍ`}</pre>
                 <button
                   key={t}
                   onClick={() => setRaidType(t)}
-                  className={`flex-1 py-2 rounded-xl text-sm font-bold border-2 transition-colors ${raidType === t ? "bg-amber-50 border-amber-400 text-amber-700" : "border-slate-200 text-muted-foreground hover:border-slate-300"}`}
+                  className={`flex-1 py-2 rounded-xl text-sm font-bold border-2 transition-colors ${raidType === t ? "bg-amber-50 border-amber-400 text-amber-700" : "border-border text-muted-foreground hover:border-slate-300"}`}
                 >
                   본{t.replace("-", "부")}
                 </button>
@@ -632,7 +632,7 @@ D(M) d d ㅍ`}</pre>
                 <button
                   key={s}
                   onClick={() => setPartySize(s)}
-                  className={`flex-1 py-2 rounded-xl text-sm font-bold border-2 transition-colors ${partySize === s ? "bg-amber-50 border-amber-400 text-amber-700" : "border-slate-200 text-muted-foreground hover:border-slate-300"}`}
+                  className={`flex-1 py-2 rounded-xl text-sm font-bold border-2 transition-colors ${partySize === s ? "bg-amber-50 border-amber-400 text-amber-700" : "border-border text-muted-foreground hover:border-slate-300"}`}
                 >
                   {s}인
                 </button>
@@ -650,7 +650,7 @@ D(M) d d ㅍ`}</pre>
             onChange={(e) => setInput(e.target.value)}
             rows={Math.min(partySize, 8)}
             placeholder={`D(M) D ㄷ ㅍ\nD(M) d ㅍ(M) d\n...`}
-            className="w-full border-2 border-slate-200 rounded-xl px-3 py-2.5 text-sm font-mono focus:border-amber-400 outline-none transition-colors resize-none"
+            className="w-full border-2 border-border rounded-xl px-3 py-2.5 text-sm font-mono focus:border-amber-400 outline-none transition-colors resize-none"
           />
         </div>
 
@@ -674,7 +674,7 @@ D(M) d d ㅍ`}</pre>
               setResult(null);
               setError("");
             }}
-            className="px-4 py-2.5 border-2 border-slate-200 hover:border-slate-300 rounded-xl text-slate-600 transition-colors"
+            className="px-4 py-2.5 border-2 border-border hover:border-slate-300 rounded-xl text-slate-600 transition-colors"
           >
             <RotateCcw className="w-4 h-4" />
           </button>
@@ -687,7 +687,7 @@ D(M) d d ㅍ`}</pre>
               <p className="font-bold text-slate-800">분배 결과</p>
               <button
                 onClick={copyAll}
-                className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border border-slate-200 hover:border-amber-300 hover:bg-amber-50 transition-colors"
+                className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border border-border hover:border-amber-300 hover:bg-amber-50 transition-colors"
               >
                 {copiedAll ? (
                   <Check className="w-3 h-3 text-emerald-500" />
