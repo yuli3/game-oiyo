@@ -11,6 +11,18 @@ const DEALER_CHARS = ["ㄷ", "D", "d"];
 const SUPPORTER_CHARS = ["ㅍ", "S", "s"];
 const MAIN_CHAR_SUFFIX = "(M)";
 
+// 2026-10-05: 28일 동안 분배 완료 130건에 입력 오류가 48건 났다. 디스코드·
+// 카카오톡에서 붙여 넣으면 줄 끝에 \r 이나 공백이 따라오고, "ㄷ ㄷ ㄷ ㅍ" 처럼
+// 띄어 쓰는 사람도 있는데, 그 한 글자 때문에 줄 전체가 잘못된 입력이 됐다.
+// 줄 안의 공백류는 뜻이 없으므로 버리고 센다.
+export function parsePlayerLines(playerInputs: string[]): string[] {
+  return playerInputs
+    .join("\n")
+    .split(/\r?\n/)
+    .map((line) => line.replace(/\s+/g, ""))
+    .filter((line) => line !== "");
+}
+
 export const getGameCount = (raidType: RaidType): number =>
   raidType === "1-1" ? 2 : 4;
 
@@ -56,7 +68,7 @@ export function calculateSupporterInfo(
   raidType: RaidType,
 ) {
   let supporterCount = 0;
-  const lines = playerInputs.join("\n").trim().split("\n").filter((l) => l.trim() !== "");
+  const lines = parsePlayerLines(playerInputs);
   lines.forEach((line) => {
     line.split("").forEach((char) => {
       if (SUPPORTER_CHARS.includes(char)) supporterCount++;
@@ -179,7 +191,7 @@ export function generateDistribution(
   partySize: PartySize,
 ): DistributionOutput {
   const games = getGameCount(raidType);
-  const lines = playerInputs.join("\n").trim().split("\n").filter((l) => l.trim() !== "");
+  const lines = parsePlayerLines(playerInputs);
   const expectedPlayers = parseInt(partySize, 10);
 
   if (lines.length !== expectedPlayers) {
