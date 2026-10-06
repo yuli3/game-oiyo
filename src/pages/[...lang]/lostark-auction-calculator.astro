@@ -15,7 +15,7 @@ const { locale } = Astro.props as { locale: Locale };
 const blogTool = (slug: string) => `https://blog.oiyo.net/${locale}/${slug}/`;
 
 const meta: Record<Locale, { title: string; description: string }> = {
-  ko: { title: "로스트아크 경매 계산기 — 군단장 레이드 적정 입찰가", description: "예상 판매가를 입력해 군단장 레이드 경매 아이템의 손익분기 입찰가를 계산합니다. 실시간 거래소 매물·시세 조회 도구는 아닙니다." },
+  ko: { title: "로아 경매 계산기 — 분배금·균등 분배(n빵) 입찰가", description: "예상 판매가를 넣으면 거래소 수수료 5%를 뺀 분배금과 손익분기 입찰가, 균등 분배(n빵) 입찰가를 계산해요. 군단장 레이드 경매용이며 실시간 시세 조회 도구는 아니에요." },
   en: { title: "Lost Ark Auction Calculator — Optimal Raid Bid", description: "Enter an expected sale price to calculate a Legion Raid auction break-even bid. This is not a live market-price or listing lookup." },
   ja: { title: "ロストアーク オークション計算機 — 適正入札額", description: "想定売却価格から軍団長レイドの損益分岐入札額を計算します。リアルタイムの取引所相場・出品検索ではありません。" },
   zh: { title: "命运方舟拍卖计算器 — 军团长副本合理出价", description: "输入预计售价，计算军团长副本拍卖物品的盈亏平衡出价。本工具不提供实时交易所价格或商品查询。" },
