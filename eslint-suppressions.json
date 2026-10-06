@@ -761,6 +761,14 @@
       "count": 71
     }
   },
+  "src/components/games/Village.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 3
+    },
+    "shadcn/no-raw-colors": {
+      "count": 6
+    }
+  },
   "src/components/games/WaterSort.tsx": {
     "shadcn/no-inline-styles": {
       "count": 3
