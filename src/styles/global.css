@@ -87,6 +87,18 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --font-heading: var(--font-serif);
+  /* Village map tiles. A board needs five grounds that read apart at a glance, which the
+     UI palette does not have, so they are named here once instead of being written as
+     hex values in the component (shadcn lint, 2026-10-06). */
+  --color-terrain-plain: oklch(0.925 0.028 95);
+  --color-terrain-fertile: oklch(0.905 0.085 115);
+  --color-terrain-forest: oklch(0.79 0.075 140);
+  --color-terrain-rock: oklch(0.78 0.014 90);
+  --color-terrain-water: oklch(0.83 0.06 225);
+  --color-terrain-fertile-mark: oklch(0.7 0.11 115);
+  --color-terrain-forest-mark: oklch(0.54 0.09 142);
+  --color-terrain-rock-mark: oklch(0.57 0.016 90);
+  --color-terrain-water-mark: oklch(0.61 0.09 232);
 }
 
 :root {

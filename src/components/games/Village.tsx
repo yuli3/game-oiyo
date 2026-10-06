@@ -58,11 +58,11 @@ function readBest(): number {
 }
 
 const TERRAIN_TONE: Record<Terrain, string> = {
-  plain: "bg-[#ece8d4]",
-  fertile: "bg-[#dfe7ae]",
-  forest: "bg-[#a9c79a]",
-  rock: "bg-[#bdb9ae]",
-  water: "bg-[#a6cfe4]",
+  plain: "bg-terrain-plain",
+  fertile: "bg-terrain-fertile",
+  forest: "bg-terrain-forest",
+  rock: "bg-terrain-rock",
+  water: "bg-terrain-water",
 };
 
 /** Drawn shapes, not emoji: the same on every phone, and they take the text colour. */
@@ -82,7 +82,7 @@ function BuildingIcon({ id }: { id: BuildingId }) {
     smithy: <><path d="M4 9h13c1.7 0 3 .8 3 2h-6c0 2-1 3-2.5 3.500V17h3v2.500h-9V17h3v-2.500C6 14 5 12 4 9z" /></>,
     hall: <><path d="M3 9l9-5 9 5z" /><path d="M5 9v9M9.5 9v9M14.5 9v9M19 9v9" /><path d="M3 19.500h18" /></>,
   };
-  return <svg viewBox="0 0 24 24" className="h-[62%] w-[62%]" aria-hidden="true" {...common}>{shapes[id]}</svg>;
+  return <svg viewBox="0 0 24 24" className="size-3/5" aria-hidden="true" {...common}>{shapes[id]}</svg>;
 }
 
 function TerrainMark({ terrain }: { terrain: Terrain }) {
@@ -93,8 +93,8 @@ function TerrainMark({ terrain }: { terrain: Terrain }) {
     rock: <path d="M4 18l3-8 4-3 5 2 4 9z" />,
     water: <><path d="M3 9c3-2.5 5 2.5 8 0s5-2.5 8 0" fill="none" stroke="currentColor" strokeWidth="1.8" /><path d="M5 15c3-2.5 5 2.5 8 0s5-2.5 8 0" fill="none" stroke="currentColor" strokeWidth="1.8" /></>,
   };
-  const tone: Record<Exclude<Terrain, "plain">, string> = { fertile: "text-[#9aa85a]", forest: "text-[#4f7d48]", rock: "text-[#7d786c]", water: "text-[#4a8fb3]" };
-  return <svg viewBox="0 0 24 24" className={`absolute inset-0 m-auto h-[70%] w-[70%] ${tone[terrain]}`} fill="currentColor" aria-hidden="true">{marks[terrain]}</svg>;
+  const tone: Record<Exclude<Terrain, "plain">, string> = { fertile: "text-terrain-fertile-mark", forest: "text-terrain-forest-mark", rock: "text-terrain-rock-mark", water: "text-terrain-water-mark" };
+  return <svg viewBox="0 0 24 24" className={`absolute inset-0 m-auto size-2/3 ${tone[terrain]}`} fill="currentColor" aria-hidden="true">{marks[terrain]}</svg>;
 }
 
 function lineText(t: VillageCopy, line: ReportLine): string {
@@ -204,7 +204,7 @@ export default function Village({ locale = "ko" }: { locale?: Locale }) {
   const stat = (label: string, value: string) => (
     <div className="rounded-xl border border-border bg-card px-1 py-1.5 text-center">
       <div className="text-sm font-black text-foreground sm:text-base">{value}</div>
-      <div className="text-[10px] font-semibold text-muted-foreground">{label}</div>
+      <div className="text-xs font-semibold text-muted-foreground">{label}</div>
     </div>
   );
 
@@ -260,7 +260,7 @@ export default function Village({ locale = "ko" }: { locale?: Locale }) {
                 aria-label={`${Math.floor(tile / 6) + 1},${(tile % 6) + 1} ${label}`}
                 aria-pressed={selected === tile}
                 onClick={() => tapTile(tile)}
-                className={`relative flex aspect-square items-center justify-center rounded-lg text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${TERRAIN_TONE[terrain]} ${selected === tile ? "ring-2 ring-primary" : ""} ${placing ? (valid ? "ring-2 ring-amber-400" : "opacity-45") : ""}`}
+                className={`relative flex aspect-square items-center justify-center rounded-lg text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${TERRAIN_TONE[terrain]} ${selected === tile ? "ring-2 ring-primary" : ""} ${placing ? (valid ? "ring-2 ring-warning" : "opacity-45") : ""}`}
               >
                 {!building && !isProject ? <TerrainMark terrain={terrain} /> : null}
                 {building ? <BuildingIcon id={building} /> : null}
@@ -316,10 +316,10 @@ export default function Village({ locale = "ko" }: { locale?: Locale }) {
         ) : null}
 
         {waiting && state.event ? (
-          <section className="mt-3 rounded-2xl border-2 border-amber-300 bg-amber-50 p-3" aria-label={t.eventTitle}>
-            <p className="text-[10px] font-black uppercase tracking-widest text-amber-800">{t.eventTitle}</p>
-            <p className="mt-0.5 text-base font-black text-amber-950">{t.events[state.event].title}</p>
-            <p className="mt-0.5 text-sm leading-relaxed text-amber-900">{t.events[state.event].text}</p>
+          <section className="mt-3 rounded-2xl border-2 border-warning bg-warning/10 p-3" aria-label={t.eventTitle}>
+            <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">{t.eventTitle}</p>
+            <p className="mt-0.5 text-base font-black text-foreground">{t.events[state.event].title}</p>
+            <p className="mt-0.5 text-sm leading-relaxed text-foreground">{t.events[state.event].text}</p>
             <div className="mt-2 grid gap-1.5">
               {Array.from({ length: eventChoiceCount(state.event) }, (_, choice) => {
                 const info = eventChoiceInfo(state, state.event!, choice);
@@ -328,7 +328,7 @@ export default function Village({ locale = "ko" }: { locale?: Locale }) {
                 const bad = info.bad ? `${t.outcome.otherwise}: ${effectText(info.bad)}` : "";
                 const detail = [rule, good, bad].filter(Boolean).join(" · ");
                 return (
-                  <button key={choice} type="button" disabled={!canChoose(state, choice)} onClick={() => setState(chooseEvent(state, choice))} className={`${btn} border-amber-300`}>
+                  <button key={choice} type="button" disabled={!canChoose(state, choice)} onClick={() => setState(chooseEvent(state, choice))} className={`${btn} border-warning`}>
                     <span className="block">{t.events[state.event!].choices[choice]}</span>
                     {detail ? <span className="block text-xs font-medium text-muted-foreground">{detail}</span> : null}
                   </button>
