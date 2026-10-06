@@ -38,6 +38,8 @@ import {
 import { documentFromTemplate, templatesForLocale } from "../../lib/tier-list/templates";
 
 // 2026-10-06: 줄 색을 고를 수 있게 되면서 색은 줄 id 가 아니라 TierColor 에 묶인다.
+// Tier swatches are content the player picks, and the PNG export paints the same colours on a
+// canvas, which needs literal hex values. They stay as written rather than as theme tokens. 2026-10-06
 const TONE: Record<TierColor, { chip: string; fill: string; ink: string }> = {
   red: { chip: "bg-red-500 text-white", fill: "#ef4444", ink: "#fff" },
   orange: { chip: "bg-orange-500 text-white", fill: "#f97316", ink: "#fff" },
@@ -595,7 +597,7 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
       {presenting ? <h2 className="text-center text-3xl font-black">{doc.title}</h2> : <label className="block">
         <span className="sr-only">{copy.titleLabel}</span>
         <input
-          className="min-h-11 w-full rounded-lg border border-stone-300 bg-card px-3 text-base font-bold"
+          className="min-h-11 w-full rounded-lg border border-border bg-card px-3 text-base font-bold"
           value={doc.title}
           onChange={(event) => setDoc((prev) => ({ ...prev, title: event.target.value.slice(0, 40) }))}
         />
@@ -608,15 +610,15 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
       </div>
 
       {!presenting && <><div className="flex flex-col gap-2 sm:flex-row">
-        <input value={templateQuery} onChange={(event) => setTemplateQuery(event.target.value)} placeholder={copy.templateSearch} className="min-h-11 flex-1 rounded-xl border border-stone-300 px-3" />
-        <button type="button" className="min-h-11 rounded-xl bg-stone-900 px-4 font-bold text-white" onClick={() => void studioRef.current?.requestFullscreen?.()}>{copy.fullscreen}</button>
+        <input value={templateQuery} onChange={(event) => setTemplateQuery(event.target.value)} placeholder={copy.templateSearch} className="min-h-11 flex-1 rounded-xl border border-border px-3" />
+        <button type="button" className="min-h-11 rounded-xl bg-foreground px-4 font-bold text-background" onClick={() => void studioRef.current?.requestFullscreen?.()}>{copy.fullscreen}</button>
       </div>
       <div className="flex gap-2 overflow-x-auto pb-2">
         {visibleTemplates.map((template) => (
           <button
             key={template.id}
             type="button"
-            className="min-h-11 shrink-0 rounded-full border border-stone-300 px-3 text-sm font-bold"
+            className="min-h-11 shrink-0 rounded-full border border-border px-3 text-sm font-bold"
             onClick={() => setDoc(documentFromTemplate(template, loc === "ko" || loc === "en" || loc === "ja" || loc === "zh" || loc === "fr" || loc === "es" ? loc : "en"))}
           >
             {template.title[loc]} · {template.items.length}
@@ -626,7 +628,7 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
 
       {!presenting && <div className="flex flex-col gap-2 sm:flex-row">
         <input value={itemQuery} onChange={(event) => setItemQuery(event.target.value)} placeholder={copy.itemSearch} className="min-h-11 flex-1 rounded-xl border px-3" />
-        <button type="button" disabled={!selected} onClick={() => { if (selected) { setDoc((prev) => removeTierItem(prev, selected)); setSelected(null); } }} className="min-h-11 rounded-xl border border-red-300 px-4 font-bold text-red-700 disabled:opacity-40">{copy.remove}</button>
+        <button type="button" disabled={!selected} onClick={() => { if (selected) { setDoc((prev) => removeTierItem(prev, selected)); setSelected(null); } }} className="min-h-11 rounded-xl border border-destructive px-4 font-bold text-destructive disabled:opacity-40">{copy.remove}</button>
       </div>}
 
       <div className="space-y-2">
@@ -634,12 +636,12 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
           const tierId = tier.id as RankedTierId;
           const tone = TONE[tierColor(tier)];
           return (
-          <div key={tier.id} data-tier-id={tier.id} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); const id = event.dataTransfer.getData("text/tier-item"); if (id) moveItem(id, tier.id); clearDrag(); }} className={`overflow-hidden rounded-xl border border-stone-200 ${hoverTier === tier.id ? "ring-2 ring-lime-400" : ""}`}>
+          <div key={tier.id} data-tier-id={tier.id} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); const id = event.dataTransfer.getData("text/tier-item"); if (id) moveItem(id, tier.id); clearDrag(); }} className={`overflow-hidden rounded-xl border border-border ${hoverTier === tier.id ? "ring-2 ring-primary" : ""}`}>
             {editingRows && !presenting ? (
-              <div className="flex flex-wrap items-center gap-2 border-b border-stone-200 bg-stone-50 p-2">
+              <div className="flex flex-wrap items-center gap-2 border-b border-border bg-muted p-2">
                 <label className="flex items-center gap-2 text-xs font-bold">
                   <input
-                    className="min-h-11 w-28 rounded-lg border border-stone-300 bg-card px-2 text-sm font-bold"
+                    className="min-h-11 w-28 rounded-lg border border-border bg-card px-2 text-sm font-bold"
                     value={tier.label ?? tier.id.toUpperCase()}
                     maxLength={TIER_LABEL_MAX}
                     aria-label={copy.rowName}
@@ -653,14 +655,14 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
                       type="button"
                       aria-label={`${copy.rowColor}: ${color}`}
                       aria-pressed={tierColor(tier) === color}
-                      className={`size-11 rounded-full border-2 ${tierColor(tier) === color ? "border-stone-900" : "border-transparent"}`}
+                      className={`size-11 rounded-full border-2 ${tierColor(tier) === color ? "border-foreground" : "border-transparent"}`}
                       onClick={() => setDoc((prev) => recolorTier(prev, tierId, color))}
                     >
                       <span className={`mx-auto block size-6 rounded-full ${TONE[color].chip}`} />
                     </button>
                   ))}
                 </div>
-                <button type="button" className="ml-auto min-h-11 rounded-lg border border-red-300 px-3 text-sm font-bold text-red-700 disabled:opacity-40" disabled={visibleRankedTiers(doc).length <= 1} onClick={() => setDoc((prev) => removeTier(prev, tierId))}>{copy.removeRow}</button>
+                <button type="button" className="ml-auto min-h-11 rounded-lg border border-destructive px-3 text-sm font-bold text-destructive disabled:opacity-40" disabled={visibleRankedTiers(doc).length <= 1} onClick={() => setDoc((prev) => removeTier(prev, tierId))}>{copy.removeRow}</button>
               </div>
             ) : null}
             <button
@@ -671,7 +673,7 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
               {tierLabel(tier)}
             </button>
             <div className="-mt-11 ml-20 flex min-h-11 flex-wrap gap-2 bg-card p-2">
-              {tier.items.length === 0 ? <span className="self-center text-xs text-stone-400">{copy.empty}</span> : null}
+              {tier.items.length === 0 ? <span className="self-center text-xs text-muted-foreground">{copy.empty}</span> : null}
               {tier.items.filter((item) => !itemQuery.trim() || item.label.toLocaleLowerCase().includes(itemQuery.trim().toLocaleLowerCase())).map((item) => (
                 <Chip key={item.id} item={item} selected={selected === item.id} dimmed={ghost?.item.id === item.id} onSelect={() => setSelected(item.id)} onPointerStart={(event) => beginDrag(item, event.clientX, event.clientY)} onDragStart={(event) => { beginDrag(item, event.clientX, event.clientY); event.dataTransfer.setData("text/tier-item", item.id); event.dataTransfer.setData("text/plain", item.label); event.dataTransfer.effectAllowed = "move"; const blank = document.createElement("canvas"); blank.width = 1; blank.height = 1; event.dataTransfer.setDragImage(blank, 0, 0); }} />
               ))}
@@ -680,10 +682,10 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
           );
         })}
         {editingRows && !presenting ? (
-          <button type="button" className="min-h-11 w-full rounded-xl border border-dashed border-stone-400 font-bold disabled:opacity-40" disabled={!doc.tiers.some((tier) => tier.id !== "unranked" && tier.hidden)} onClick={() => setDoc((prev) => addTier(prev))}>{copy.addRow}</button>
+          <button type="button" className="min-h-11 w-full rounded-xl border border-dashed border-border font-bold disabled:opacity-40" disabled={!doc.tiers.some((tier) => tier.id !== "unranked" && tier.hidden)} onClick={() => setDoc((prev) => addTier(prev))}>{copy.addRow}</button>
         ) : null}
-        <div data-tier-id="unranked" onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); const id = event.dataTransfer.getData("text/tier-item"); if (id) moveItem(id, "unranked"); clearDrag(); }} className={`rounded-xl border border-dashed border-stone-300 p-2 ${hoverTier === "unranked" ? "ring-2 ring-lime-400" : ""}`}>
-          <p className="mb-2 text-xs font-bold text-stone-500">{copy.unranked}</p>
+        <div data-tier-id="unranked" onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); const id = event.dataTransfer.getData("text/tier-item"); if (id) moveItem(id, "unranked"); clearDrag(); }} className={`rounded-xl border border-dashed border-border p-2 ${hoverTier === "unranked" ? "ring-2 ring-primary" : ""}`}>
+          <p className="mb-2 text-xs font-bold text-muted-foreground">{copy.unranked}</p>
           <div className="flex flex-wrap gap-2">
             {doc.tiers.find((tier) => tier.id === "unranked")?.items.filter((item) => !itemQuery.trim() || item.label.toLocaleLowerCase().includes(itemQuery.trim().toLocaleLowerCase())).map((item) => (
               <Chip key={item.id} item={item} selected={selected === item.id} dimmed={ghost?.item.id === item.id} onSelect={() => setSelected(item.id)} onPointerStart={(event) => beginDrag(item, event.clientX, event.clientY)} onDragStart={(event) => { beginDrag(item, event.clientX, event.clientY); event.dataTransfer.setData("text/tier-item", item.id); event.dataTransfer.setData("text/plain", item.label); event.dataTransfer.effectAllowed = "move"; const blank = document.createElement("canvas"); blank.width = 1; blank.height = 1; event.dataTransfer.setDragImage(blank, 0, 0); }} />
@@ -703,11 +705,11 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
         </p>
       ) : null}
 
-      <div className="space-y-2 rounded-xl bg-stone-50 p-3">
+      <div className="space-y-2 rounded-xl bg-muted p-3">
         <input className="min-h-11 w-full rounded-lg border px-3" value={label} placeholder={copy.addPh} onChange={(event) => setLabel(event.target.value)} />
         <input className="min-h-11 w-full rounded-lg border px-3 text-sm" value={imageUrl} placeholder={copy.imagePh} onChange={(event) => setImageUrl(event.target.value)} />
-        <p className="text-xs text-stone-500">{copy.imageHint}</p>
-        <button type="button" className="min-h-11 w-full rounded-lg bg-lime-700 font-bold text-white" onClick={addItem}>
+        <p className="text-xs text-muted-foreground">{copy.imageHint}</p>
+        <button type="button" className="min-h-11 w-full rounded-lg bg-primary font-bold text-primary-foreground" onClick={addItem}>
           {copy.add}
         </button>
         <input
@@ -723,10 +725,10 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
             event.target.value = "";
           }}
         />
-        <button type="button" className="min-h-11 w-full rounded-lg border border-lime-700 font-bold text-lime-800" onClick={() => fileRef.current?.click()}>
+        <button type="button" className="min-h-11 w-full rounded-lg border border-primary font-bold text-primary" onClick={() => fileRef.current?.click()}>
           {copy.pick}
         </button>
-        <p className="text-xs leading-relaxed text-stone-500">{copy.localNote}</p>
+        <p className="text-xs leading-relaxed text-muted-foreground">{copy.localNote}</p>
       </div>
 
       <div className="grid grid-cols-2 gap-2">
@@ -782,8 +784,8 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
         ))}
       </div>
 
-      <p className="text-xs leading-relaxed text-stone-500">{copy.privacy}</p>
-      {status ? <p className="break-all text-sm font-bold text-lime-800">{status}</p> : null}
+      <p className="text-xs leading-relaxed text-muted-foreground">{copy.privacy}</p>
+      {status ? <p className="break-all text-sm font-bold text-primary">{status}</p> : null}
       </div>
       {ghost ? (
         <div
@@ -800,10 +802,10 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
 
 function ChipFace({ item }: { item: TierItem }) {
   return (
-    <div className="flex w-20 flex-col items-center overflow-hidden rounded-lg border border-stone-200 bg-card text-[11px] shadow-sm">
+    <div className="flex w-20 flex-col items-center overflow-hidden rounded-lg border border-border bg-card text-xs shadow-sm">
       {item.imageData ?? item.imageUrl ? (
-        <img src={item.imageData ?? item.imageUrl} alt="" width={72} height={72} className="size-[72px] object-cover" draggable={false} referrerPolicy="no-referrer" onError={(event) => { (event.currentTarget as HTMLImageElement).style.display = "none"; }} />
-      ) : <span className="grid size-[72px] place-items-center bg-stone-100 text-2xl font-black text-stone-400">{item.label.slice(0, 1)}</span>}
+        <img src={item.imageData ?? item.imageUrl} alt="" width={72} height={72} className="size-18 object-cover" draggable={false} referrerPolicy="no-referrer" onError={(event) => { (event.currentTarget as HTMLImageElement).style.display = "none"; }} />
+      ) : <span className="grid size-18 place-items-center bg-muted text-2xl font-black text-muted-foreground">{item.label.slice(0, 1)}</span>}
       <span className="w-full truncate px-1 py-1.5 font-bold">{item.label}</span>
     </div>
   );
@@ -817,11 +819,11 @@ function Chip({ item, selected, dimmed, onSelect, onPointerStart, onDragStart }:
       onDragStart={onDragStart}
       onPointerDown={onPointerStart}
       onClick={onSelect}
-      className={`flex w-20 touch-none flex-col items-center overflow-hidden rounded-lg border bg-card text-[11px] shadow-sm transition ${selected ? "border-lime-700 ring-2 ring-lime-300" : "border-stone-200"} ${dimmed ? "opacity-40" : ""}`}
+      className={`flex w-20 touch-none flex-col items-center overflow-hidden rounded-lg border bg-card text-xs shadow-sm transition ${selected ? "border-primary ring-2 ring-primary" : "border-border"} ${dimmed ? "opacity-40" : ""}`}
     >
       {item.imageData ?? item.imageUrl ? (
-        <img src={item.imageData ?? item.imageUrl} alt="" width={72} height={72} className="size-[72px] object-cover" draggable={false} referrerPolicy="no-referrer" onError={(event) => { (event.currentTarget as HTMLImageElement).style.display = "none"; }} />
-      ) : <span className="grid size-[72px] place-items-center bg-stone-100 text-2xl font-black text-stone-400">{item.label.slice(0, 1)}</span>}
+        <img src={item.imageData ?? item.imageUrl} alt="" width={72} height={72} className="size-18 object-cover" draggable={false} referrerPolicy="no-referrer" onError={(event) => { (event.currentTarget as HTMLImageElement).style.display = "none"; }} />
+      ) : <span className="grid size-18 place-items-center bg-muted text-2xl font-black text-muted-foreground">{item.label.slice(0, 1)}</span>}
       <span className="w-full truncate px-1 py-1.5 font-bold">{item.label}</span>
     </button>
   );

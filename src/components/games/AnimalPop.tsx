@@ -16,6 +16,7 @@ import {
   type AnimalFall,
 } from "../../lib/games/animal-pop";
 import type { AugmentTier } from "../../lib/games/augment";
+import { AUGMENT_TIER_TONE } from "./augment-tone";
 import {
   ANIMAL_AUGMENTS,
   ANIMAL_AUGMENT_SAVE,
@@ -50,11 +51,7 @@ const animalHue = (animal: string): number => {
 const SAVE = "oiyo:animal-pop:v1",
   BEST = "oiyo-animal-pop-best";
 const TIER_OF = Object.fromEntries(ANIMAL_AUGMENTS.map((def) => [def.id, def.tier])) as Record<AnimalAugmentId, AugmentTier>;
-const TIER_TONE: Record<AugmentTier, string> = {
-  silver: "border-slate-300 bg-slate-50 text-slate-800",
-  gold: "border-amber-400 bg-amber-50 text-amber-900",
-  prismatic: "border-fuchsia-400 bg-[linear-gradient(135deg,#fdf2f8,#eef2ff_55%,#ecfeff)] text-indigo-900",
-};
+const TIER_TONE = AUGMENT_TIER_TONE;
 type Mode = "classic" | "augment";
 const wait = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms));
 const COPY = {
@@ -651,7 +648,7 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
               </button>
               <button
                 onClick={() => start("augment")}
-                className="min-h-12 w-full max-w-xs rounded-full border-2 border-fuchsia-300 bg-[linear-gradient(135deg,#fdf2f8,#eef2ff_55%,#ecfeff)] px-8 font-black text-indigo-900"
+                className="min-h-12 w-full max-w-xs rounded-full border-2 border-chart-4 bg-chart-4/10 px-8 font-black text-foreground"
               >
                 {t.augment}
               </button>
@@ -678,7 +675,7 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
           </p>
         )}
         <div
-          className="my-3 h-6 text-center text-sm font-black text-amber-600"
+          className="my-3 h-6 text-center text-sm font-black text-warning-foreground"
           aria-live="polite"
         >
           {notice === "second" ? t.secondChance : notice === "reshuffled" ? t.reshuffled : waveLabel > 0 ? `${t.combo} ×${waveLabel}` : feverSeconds > 0 ? `${t.fever} · ${feverSeconds}s` : combo > 1 ? `${t.combo} ×${combo}` : ""}
@@ -735,12 +732,12 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
                     onClick={() => take(id)}
                     className={`min-h-14 w-full rounded-2xl border-2 px-3 py-1.5 text-left shadow-sm active:translate-y-px focus-visible:ring-2 focus-visible:ring-primary ${TIER_TONE[tier]}`}
                   >
-                    <span className="flex items-center justify-between gap-2 text-[10px] font-black uppercase tracking-widest opacity-70">
+                    <span className="flex items-center justify-between gap-2 text-xs font-black uppercase tracking-widest opacity-70">
                       <span>{t.tiers[tier]}</span>
                       {stack > 0 ? <span>×{stack + 1}</span> : null}
                     </span>
                     <span className="block text-sm font-black">{t.augments[id].name}</span>
-                    <span className="block text-[11px] font-semibold leading-tight opacity-85">{t.augments[id].desc}</span>
+                    <span className="block text-xs font-semibold leading-tight opacity-85">{t.augments[id].desc}</span>
                   </button>
                 );
               })}
@@ -790,10 +787,10 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
         </div>
         {mode === "augment" && run && Object.keys(run.owned).length > 0 ? (
           <div className="mt-3">
-            <div className="mb-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{t.owned}</div>
+            <div className="mb-1 text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.owned}</div>
             <ul className="flex flex-wrap gap-1.5">
               {ANIMAL_AUGMENTS.filter((def) => run.owned[def.id]).map((def) => (
-                <li key={def.id} title={t.augments[def.id].desc} className={`rounded-full border px-2.5 py-1 text-[11px] font-black ${TIER_TONE[def.tier]}`}>
+                <li key={def.id} title={t.augments[def.id].desc} className={`rounded-full border px-2.5 py-1 text-xs font-black ${TIER_TONE[def.tier]}`}>
                   {t.augments[def.id].name}{(run.owned[def.id] ?? 0) > 1 ? ` ×${run.owned[def.id]}` : ""}
                 </li>
               ))}
@@ -830,7 +827,7 @@ function Stat({ l, v }: { l: string; v: string }) {
   return (
     <div className="rounded-2xl border bg-card p-2 text-center">
       <div className="text-lg font-black">{v}</div>
-      <div className="text-[10px] text-muted-foreground">{l}</div>
+      <div className="text-xs text-muted-foreground">{l}</div>
     </div>
   );
 }

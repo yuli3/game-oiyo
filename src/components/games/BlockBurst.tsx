@@ -29,6 +29,7 @@ import {
   type Cell,
 } from "../../lib/games/block-burst";
 import type { AugmentTier } from "../../lib/games/augment";
+import { AUGMENT_TIER_TONE } from "./augment-tone";
 import {
   BURST_AUGMENTS,
   BURST_AUGMENT_SAVE,
@@ -320,11 +321,7 @@ const GEMS: Record<BurstColor, { fill: string; glow: string; shine: string }> = 
 };
 
 const TIER_OF = Object.fromEntries(BURST_AUGMENTS.map((def) => [def.id, def.tier])) as Record<BurstAugmentId, AugmentTier>;
-const TIER_TONE: Record<AugmentTier, string> = {
-  silver: "border-slate-300 bg-slate-50 text-slate-800",
-  gold: "border-amber-400 bg-amber-50 text-amber-900",
-  prismatic: "border-fuchsia-400 bg-[linear-gradient(135deg,#fdf2f8,#eef2ff_55%,#ecfeff)] text-indigo-900",
-};
+const TIER_TONE = AUGMENT_TIER_TONE;
 type Mode = "classic" | "augment";
 
 type Particle = { x: number; y: number; vx: number; vy: number; life: number; color: string; size: number };
@@ -751,7 +748,7 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
         <button type="button" onClick={() => start("classic")} className={`${btn} w-full bg-primary text-primary-foreground`}>
           {t.classic}
         </button>
-        <button type="button" onClick={() => start("augment")} className={`${btn} mt-2 w-full border-fuchsia-300 bg-[linear-gradient(135deg,#fdf2f8,#eef2ff_55%,#ecfeff)] text-indigo-900`}>
+        <button type="button" onClick={() => start("augment")} className={`${btn} mt-2 w-full border-chart-4 bg-chart-4/10 text-foreground`}>
           {t.augment}
         </button>
         <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{t.augmentSub}</p>
@@ -762,7 +759,7 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
   return (
     <GameContainer title={t.title} subtitle={mode === "augment" ? t.modeAugment : t.sub} resetLabel={t.again} onReset={() => start()}>
       <div aria-live="polite" className="sr-only">{banner || (phase === "over" ? t.over : "")}</div>
-      <div className="mb-3 grid grid-cols-3 gap-2 text-center text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+      <div className="mb-3 grid grid-cols-3 gap-2 text-center text-xs font-bold uppercase tracking-wider text-muted-foreground">
         <div className="rounded-xl border border-border bg-card px-2 py-2"><div>{t.score}</div><div className="text-lg text-foreground">{game.score}</div></div>
         <div className="rounded-xl border border-border bg-card px-2 py-2"><div>{t.best}</div><div className="text-lg text-foreground">{Math.max(mode === "augment" ? augmentBest : best, game.score)}</div></div>
         <div className="rounded-xl border border-border bg-card px-2 py-2"><div>{t.level}</div><div className="text-lg text-foreground">{game.level}</div></div>
@@ -784,16 +781,16 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
                   onClick={() => pick(id)}
                   className={`min-h-14 w-full rounded-2xl border-2 px-3 py-1.5 text-left shadow-sm transition active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${TIER_TONE[tier]}`}
                 >
-                  <span className="flex items-center justify-between gap-2 text-[10px] font-black uppercase tracking-widest opacity-70">
+                  <span className="flex items-center justify-between gap-2 text-xs font-black uppercase tracking-widest opacity-70">
                     <span>{index + 1} · {t.tiers[tier]}</span>
                     {stack > 0 ? <span>×{stack + 1}</span> : null}
                   </span>
                   <span className="block text-sm font-black">{t.augments[id].name}</span>
-                  <span className="block text-[11px] font-semibold leading-tight opacity-85">{t.augments[id].desc}</span>
+                  <span className="block text-xs font-semibold leading-tight opacity-85">{t.augments[id].desc}</span>
                 </button>
               );
             })}
-            <p className="hidden text-center text-[11px] text-muted-foreground sm:block">{t.pickKeys}</p>
+            <p className="hidden text-center text-xs text-muted-foreground sm:block">{t.pickKeys}</p>
             </div>
           </div>
         ) : null}
@@ -810,7 +807,7 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
                 const key = `${r}:${c}`;
                 const flashing = flashRows.includes(r) || flashCols.includes(c);
                 return (
-                  <div key={key} className={`relative rounded-[22%] bg-[#efe6c8]/70 ${flashing ? "ring-2 ring-amber-300" : ""}`}>
+                  <div key={key} className={`relative rounded-[22%] bg-[#efe6c8]/70 ${flashing ? "ring-2 ring-warning" : ""}`}>
                     {cell ? <Gem color={cell} ghost={ghostSet.has(key) && !liveSet.has(key)} bursting={burstingSet.has(key)} bomb={Boolean(run?.bomb) && liveSet.has(key)} /> : null}
                   </div>
                 );
@@ -826,7 +823,7 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
             </div>
           ) : null}
           {gainPop > 0 ? (
-            <div className="pointer-events-none absolute right-3 top-3 text-sm font-black text-amber-700">+{gainPop}</div>
+            <div className="pointer-events-none absolute right-3 top-3 text-sm font-black text-warning-foreground">+{gainPop}</div>
           ) : null}
           {phase === "paused" || phase === "over" ? (
             <div className="absolute inset-0 grid place-items-center bg-[#f7f1dc]/80 backdrop-blur-[2px]">
@@ -840,7 +837,7 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
           ) : null}
         </div>
         <div className="flex w-[4.5rem] flex-col gap-2">
-          <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{t.next}</div>
+          <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.next}</div>
           {game.queue.map((piece, i) => (
             <div key={`${piece.shape}-${i}`} className="grid aspect-square grid-cols-4 gap-0.5 rounded-xl border border-border bg-card p-1">
               {Array.from({ length: 16 }, (_, n) => {
@@ -851,7 +848,7 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
               })}
             </div>
           ))}
-          {game.combo > 1 ? <div className="text-center text-[11px] font-black text-amber-700">{t.combo} {game.combo}</div> : null}
+          {game.combo > 1 ? <div className="text-center text-xs font-black text-warning-foreground">{t.combo} {game.combo}</div> : null}
         </div>
       </div>
       <div className="mt-4 grid grid-cols-4 gap-2">
@@ -865,10 +862,10 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
       </div>
       {mode === "augment" && run && Object.keys(run.owned).length > 0 ? (
         <div className="mt-3">
-          <div className="mb-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{t.owned}</div>
+          <div className="mb-1 text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.owned}</div>
           <ul className="flex flex-wrap gap-1.5">
             {BURST_AUGMENTS.filter((def) => run.owned[def.id]).map((def) => (
-              <li key={def.id} title={t.augments[def.id].desc} className={`rounded-full border px-2.5 py-1 text-[11px] font-black ${TIER_TONE[def.tier]}`}>
+              <li key={def.id} title={t.augments[def.id].desc} className={`rounded-full border px-2.5 py-1 text-xs font-black ${TIER_TONE[def.tier]}`}>
                 {t.augments[def.id].name}{(run.owned[def.id] ?? 0) > 1 ? ` ×${run.owned[def.id]}` : ""}
               </li>
             ))}

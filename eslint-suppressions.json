@@ -61,20 +61,6 @@
       "count": 2
     }
   },
-  "src/components/games/AnimalPop.tsx": {
-    "shadcn/no-arbitrary-values": {
-      "count": 9
-    },
-    "shadcn/no-inline-styles": {
-      "count": 2
-    },
-    "shadcn/no-raw-colors": {
-      "count": 3
-    },
-    "shadcn/no-unknown-classes": {
-      "count": 11
-    }
-  },
   "src/components/games/BalanceGame.tsx": {
     "shadcn/no-arbitrary-values": {
       "count": 3
@@ -95,20 +81,6 @@
     },
     "shadcn/no-restyle": {
       "count": 6
-    }
-  },
-  "src/components/games/BlockBurst.tsx": {
-    "shadcn/no-arbitrary-values": {
-      "count": 25
-    },
-    "shadcn/no-inline-styles": {
-      "count": 6
-    },
-    "shadcn/no-raw-colors": {
-      "count": 5
-    },
-    "shadcn/no-unknown-classes": {
-      "count": 2
     }
   },
   "src/components/games/BrickBreaker.tsx": {
@@ -721,17 +693,6 @@
     },
     "shadcn/no-inline-styles": {
       "count": 1
-    }
-  },
-  "src/components/games/TierListStudio.tsx": {
-    "shadcn/no-arbitrary-values": {
-      "count": 6
-    },
-    "shadcn/no-inline-styles": {
-      "count": 2
-    },
-    "shadcn/no-raw-colors": {
-      "count": 35
     }
   },
   "src/components/games/TimeLoopRescue.tsx": {
