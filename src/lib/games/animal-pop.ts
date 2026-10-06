@@ -124,6 +124,45 @@ function collapseWithMotion(board: AnimalBoard, m: boolean[][], seed: number, ty
 function collapse(board: AnimalBoard, m: boolean[][], seed: number) {
   const {board:nextBoard,seed:nextSeed}=collapseWithMotion(board,m,seed);return{board:nextBoard,seed:nextSeed};
 }
+/** Whether any swap of two neighbours would make a match. */
+export function hasAnimalMove(board: AnimalBoard) {
+  for (let i = 0; i < 49; i++) {
+    for (const j of [i + 1, i + 7]) {
+      if (j >= 49 || (j === i + 1 && i % 7 === 6)) continue;
+      const trial = board.map((row) => [...row]);
+      const a = trial[Math.floor(i / 7)][i % 7];
+      trial[Math.floor(i / 7)][i % 7] = trial[Math.floor(j / 7)][j % 7];
+      trial[Math.floor(j / 7)][j % 7] = a;
+      if (any(findAnimalMatches(trial))) return true;
+    }
+  }
+  return false;
+}
+/**
+ * A board with no possible match used to leave the player waiting for the clock
+ * (seen in play on 2026-10-06). The same animals are dealt again from the seed
+ * until the board has a move and no ready-made match, so the result is still
+ * reproducible from the save. Returns the board untouched when it has a move.
+ */
+export function reshuffleAnimalBoard(board: AnimalBoard, seed: number) {
+  if (hasAnimalMove(board)) return { board, seed, reshuffled: false };
+  let rng = seed >>> 0;
+  const tiles = board.flat();
+  for (let attempt = 0; attempt < 60; attempt++) {
+    for (let i = tiles.length - 1; i > 0; i--) {
+      const n = next(rng);
+      rng = n[0];
+      const j = Math.floor(n[1] * (i + 1));
+      [tiles[i], tiles[j]] = [tiles[j], tiles[i]];
+    }
+    const dealt = Array.from({ length: 7 }, (_, r) => tiles.slice(r * 7, r * 7 + 7));
+    if (!any(findAnimalMatches(dealt)) && hasAnimalMove(dealt)) return { board: dealt, seed: rng, reshuffled: true };
+  }
+  // The tiles on hand cannot make a playable board (far too few of each kind): deal a fresh one.
+  let fresh = createAnimalBoard(rng || 1);
+  for (let attempt = 0; attempt < 20 && !hasAnimalMove(fresh.board); attempt++) fresh = createAnimalBoard(fresh.seed + 1);
+  return { board: fresh.board, seed: fresh.seed, reshuffled: true };
+}
 export function createAnimalBoard(seed: number) {
   let rng = seed >>> 0,
     board: AnimalBoard = Array.from({ length: 7 }, () =>
@@ -156,7 +195,7 @@ export function swapAnimals(
       Math.abs((from % 7) - (to % 7)) !==
       1
   )
-    return { valid: false, board, seed, cleared: 0, waves: 0, steps: [] as AnimalCascadeStep[] };
+    return { valid: false, board, seed, cleared: 0, waves: 0, steps: [] as AnimalCascadeStep[], reshuffled: false };
   let current = board.map((r) => [...r]);
   [
     current[Math.floor(from / 7)][from % 7],
@@ -167,8 +206,8 @@ export function swapAnimals(
   ];
   if (!any(findAnimalMatches(current)))
     return mods.freeSwap
-      ? { valid: true, board: current, seed, cleared: 0, waves: 0, steps: [] as AnimalCascadeStep[] }
-      : { valid: false, board, seed, cleared: 0, waves: 0, steps: [] as AnimalCascadeStep[] };
+      ? { valid: true, board: current, seed, cleared: 0, waves: 0, steps: [] as AnimalCascadeStep[], reshuffled: false }
+      : { valid: false, board, seed, cleared: 0, waves: 0, steps: [] as AnimalCascadeStep[], reshuffled: false };
   const types = Math.min(ANIMAL_TYPES.length, Math.max(3, Math.floor(mods.types)));
   let cleared = 0,
     waves = 0,
@@ -186,7 +225,10 @@ export function swapAnimals(
     current = x.board;
     rng = x.seed;
   }
-  return { valid: true, board: current, seed: rng, cleared, waves, steps };
+  // With free swaps a board without a match is still playable, so it is left alone.
+  if (mods.freeSwap) return { valid: true, board: current, seed: rng, cleared, waves, steps, reshuffled: false };
+  const dealt = reshuffleAnimalBoard(current, rng);
+  return { valid: true, board: dealt.board, seed: dealt.seed, cleared, waves, steps, reshuffled: dealt.reshuffled };
 }
 export function serializeAnimal(
   seed: number,
