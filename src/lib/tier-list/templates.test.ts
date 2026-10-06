@@ -43,11 +43,34 @@ describe("tier list built-in templates", () => {
   });
 
   it("only exposes templates whose item labels are localized", () => {
-    expect(templatesForLocale("en").map((template) => template.id)).toEqual(["animals", "snacks", "weekdays"]);
-    expect(templatesForLocale("ja").map((template) => template.id)).toEqual(["animals", "snacks", "weekdays"]);
+    const koOnly = ["league-champions", "lostark-classes", "maplestory-jobs"];
+    const everywhere = BUILTIN_TEMPLATES.map((template) => template.id).filter((id) => !koOnly.includes(id));
+    expect(everywhere.length).toBeGreaterThanOrEqual(17);
+    expect(templatesForLocale("en").map((template) => template.id)).toEqual(everywhere);
+    expect(templatesForLocale("ja").map((template) => template.id)).toEqual(everywhere);
     expect(templatesForLocale("ko").map((template) => template.id)).toEqual(BUILTIN_TEMPLATES.map((template) => template.id));
     for (const template of templatesForLocale("en")) {
       for (const item of template.items) expect(item.labels?.en).toBeTruthy();
+    }
+  });
+
+  it("gives every shared template a distinct label in each locale it claims", () => {
+    for (const template of BUILTIN_TEMPLATES) {
+      const ids = template.items.map((item) => item.id);
+      expect(new Set(ids).size, template.id).toBe(ids.length);
+      for (const locale of template.availableLocales) {
+        expect(template.title[locale], `${template.id} title ${locale}`).toBeTruthy();
+        if (template.availableLocales.length === 1) continue;
+        for (const item of template.items) expect(item.labels?.[locale], `${item.id} ${locale}`).toBeTruthy();
+      }
+    }
+  });
+
+  it("does not leak Hangul into non-Korean labels of shared templates", () => {
+    for (const template of BUILTIN_TEMPLATES.filter((entry) => entry.availableLocales.length > 1)) {
+      for (const locale of ["en", "ja", "zh", "fr", "es"] as const) {
+        for (const item of template.items) expect(item.labels?.[locale] ?? "", `${item.id} ${locale}`).not.toMatch(/[가-힣]/);
+      }
     }
   });
 

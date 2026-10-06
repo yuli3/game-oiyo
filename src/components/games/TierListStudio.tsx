@@ -3,32 +3,87 @@ import type { Locale } from "../../lib/i18n";
 import {
   RECOMMENDED_IMAGE_PX,
   SOURCE_IMAGE_PX,
+  LOCAL_IMAGE_MAX_COUNT,
+  LOCAL_IMAGE_PX,
+  TIER_COLORS,
   TIER_IDS,
+  TIER_LABEL_MAX,
   TIER_LIST_SAVES_KEY,
   TIER_LIST_STORAGE_KEY,
   emptyDocument,
+  addTier,
   exportLayout,
   isHttpsImageUrl,
+  isLocalImageData,
+  localImageCount,
   moveTierItem,
+  recolorTier,
+  removeTier,
+  renameTier,
+  tierColor,
+  tierLabel,
+  visibleRankedTiers,
   parseDocument,
   removeTierItem,
   parseSaves,
   toSharePayload,
   fromSharePayload,
   type NamedSave,
+  type RankedTierId,
+  type TierColor,
   type TierId,
   type TierItem,
   type TierListDocument,
 } from "../../lib/tier-list/model";
 import { documentFromTemplate, templatesForLocale } from "../../lib/tier-list/templates";
 
-const TIER_TONE: Record<Exclude<TierId, "unranked">, string> = {
-  s: "bg-red-500 text-white",
-  a: "bg-orange-500 text-white",
-  b: "bg-amber-400 text-stone-900",
-  c: "bg-lime-600 text-white",
-  d: "bg-stone-500 text-white",
+// 2026-10-06: 줄 색을 고를 수 있게 되면서 색은 줄 id 가 아니라 TierColor 에 묶인다.
+const TONE: Record<TierColor, { chip: string; fill: string; ink: string }> = {
+  red: { chip: "bg-red-500 text-white", fill: "#ef4444", ink: "#fff" },
+  orange: { chip: "bg-orange-500 text-white", fill: "#f97316", ink: "#fff" },
+  amber: { chip: "bg-amber-400 text-stone-900", fill: "#fbbf24", ink: "#1c1917" },
+  lime: { chip: "bg-lime-600 text-white", fill: "#65a30d", ink: "#fff" },
+  teal: { chip: "bg-teal-600 text-white", fill: "#0d9488", ink: "#fff" },
+  sky: { chip: "bg-sky-500 text-white", fill: "#0ea5e9", ink: "#fff" },
+  violet: { chip: "bg-violet-500 text-white", fill: "#8b5cf6", ink: "#fff" },
+  pink: { chip: "bg-pink-500 text-white", fill: "#ec4899", ink: "#fff" },
+  stone: { chip: "bg-stone-500 text-white", fill: "#78716c", ink: "#fff" },
 };
+
+// 기기 이미지를 정사각으로 잘라 LOCAL_IMAGE_PX 로 줄인다. 원본은 어디에도 보내지 않는다.
+async function fileToLocalImage(file: Blob): Promise<string | null> {
+  if (!file.type.startsWith("image/")) return null;
+  const url = URL.createObjectURL(file);
+  try {
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const el = new Image();
+      el.onload = () => resolve(el);
+      el.onerror = () => reject(new Error("decode"));
+      el.src = url;
+    });
+    const side = Math.min(image.naturalWidth, image.naturalHeight);
+    if (!side) return null;
+    const canvas = document.createElement("canvas");
+    canvas.width = LOCAL_IMAGE_PX; canvas.height = LOCAL_IMAGE_PX;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, LOCAL_IMAGE_PX, LOCAL_IMAGE_PX);
+    ctx.drawImage(image, (image.naturalWidth - side) / 2, (image.naturalHeight - side) / 2, side, side, 0, 0, LOCAL_IMAGE_PX, LOCAL_IMAGE_PX);
+    for (const quality of [0.82, 0.6, 0.4]) {
+      const data = canvas.toDataURL("image/jpeg", quality);
+      if (isLocalImageData(data)) return data;
+    }
+    return null;
+  } catch {
+    return null;
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+function labelFromFileName(name: string): string {
+  return name.replace(/\.[a-z0-9]+$/i, "").replace(/[_-]+/g, " ").trim().slice(0, 40);
+}
 
 const COPY = {
   ko: {
@@ -64,6 +119,18 @@ const COPY = {
     titleLabel: "제목",
     compareCurrent: "지금",
     compareSaved: "저장",
+    pick: "내 이미지 고르기",
+    localNote: "기기에서 고른 이미지는 이 브라우저에만 저장돼요. PNG에는 들어가고, 공유 링크에는 들어가지 않아요.",
+    shareLocal: "공유 링크에는 기기 이미지가 빠져요. 이름만 전달돼요.",
+    imageFail: "이 이미지는 읽을 수 없어요.",
+    tooMany: "기기 이미지는 {n}장까지 넣을 수 있어요.",
+    rowsEdit: "줄 편집",
+    rowsDone: "줄 편집 끝내기",
+    addRow: "줄 추가",
+    removeRow: "줄 삭제",
+    rowName: "줄 이름",
+    rowColor: "줄 색",
+    unnamed: "이미지",
   },
   en: {
     add: "Add",
@@ -98,6 +165,18 @@ const COPY = {
     titleLabel: "Title",
     compareCurrent: "Now",
     compareSaved: "Saved",
+    pick: "Choose my images",
+    localNote: "Images from your device stay in this browser. They appear in the PNG, not in share links.",
+    shareLocal: "Share links leave out device images. Only names are sent.",
+    imageFail: "This image could not be read.",
+    tooMany: "You can add up to {n} device images.",
+    rowsEdit: "Edit rows",
+    rowsDone: "Done editing rows",
+    addRow: "Add row",
+    removeRow: "Delete row",
+    rowName: "Row name",
+    rowColor: "Row color",
+    unnamed: "Image",
   },
   ja: {
     add: "追加",
@@ -132,6 +211,18 @@ const COPY = {
     titleLabel: "タイトル",
     compareCurrent: "現在",
     compareSaved: "保存",
+    pick: "自分の画像を選ぶ",
+    localNote: "端末から選んだ画像は、このブラウザーにだけ保存されます。PNGには入りますが、共有リンクには入りません。",
+    shareLocal: "共有リンクには端末の画像が含まれません。名前だけが送られます。",
+    imageFail: "この画像は読み込めませんでした。",
+    tooMany: "端末の画像は{n}枚まで追加できます。",
+    rowsEdit: "行を編集",
+    rowsDone: "行の編集を終える",
+    addRow: "行を追加",
+    removeRow: "行を削除",
+    rowName: "行の名前",
+    rowColor: "行の色",
+    unnamed: "画像",
   },
   zh: {
     add: "添加",
@@ -166,6 +257,18 @@ const COPY = {
     titleLabel: "标题",
     compareCurrent: "当前",
     compareSaved: "已保存",
+    pick: "选择我的图片",
+    localNote: "从设备选择的图片只保存在这个浏览器里。会出现在PNG中，但不会进入分享链接。",
+    shareLocal: "分享链接不包含设备图片，只会发送名称。",
+    imageFail: "无法读取这张图片。",
+    tooMany: "最多可以添加{n}张设备图片。",
+    rowsEdit: "编辑行",
+    rowsDone: "结束编辑行",
+    addRow: "添加行",
+    removeRow: "删除行",
+    rowName: "行名称",
+    rowColor: "行颜色",
+    unnamed: "图片",
   },
   fr: {
     add: "Ajouter",
@@ -200,6 +303,18 @@ const COPY = {
     titleLabel: "Titre",
     compareCurrent: "Actuel",
     compareSaved: "Enregistré",
+    pick: "Choisir mes images",
+    localNote: "Les images de votre appareil restent dans ce navigateur. Elles figurent dans le PNG, pas dans les liens de partage.",
+    shareLocal: "Les liens de partage n'incluent pas les images de l'appareil. Seuls les noms sont envoyés.",
+    imageFail: "Impossible de lire cette image.",
+    tooMany: "Vous pouvez ajouter jusqu'à {n} images de l'appareil.",
+    rowsEdit: "Modifier les lignes",
+    rowsDone: "Terminer la modification",
+    addRow: "Ajouter une ligne",
+    removeRow: "Supprimer la ligne",
+    rowName: "Nom de la ligne",
+    rowColor: "Couleur de la ligne",
+    unnamed: "Image",
   },
   es: {
     add: "Añadir",
@@ -234,6 +349,18 @@ const COPY = {
     titleLabel: "Título",
     compareCurrent: "Ahora",
     compareSaved: "Guardado",
+    pick: "Elegir mis imágenes",
+    localNote: "Las imágenes de tu dispositivo se quedan en este navegador. Aparecen en el PNG, no en los enlaces para compartir.",
+    shareLocal: "Los enlaces para compartir no incluyen las imágenes del dispositivo. Solo se envían los nombres.",
+    imageFail: "No se pudo leer esta imagen.",
+    tooMany: "Puedes añadir hasta {n} imágenes del dispositivo.",
+    rowsEdit: "Editar filas",
+    rowsDone: "Terminar de editar",
+    addRow: "Añadir fila",
+    removeRow: "Eliminar fila",
+    rowName: "Nombre de la fila",
+    rowColor: "Color de la fila",
+    unnamed: "Imagen",
   },
 } as const;
 
@@ -259,6 +386,8 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
   const [templateQuery, setTemplateQuery] = useState("");
   const [itemQuery, setItemQuery] = useState("");
   const [presenting, setPresenting] = useState(false);
+  const [editingRows, setEditingRows] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
   const studioRef = useRef<HTMLElement>(null);
   const draggingRef = useRef<{ id: string; x: number; y: number } | null>(null);
   const [ghost, setGhost] = useState<{ item: TierItem; x: number; y: number } | null>(null);
@@ -323,6 +452,28 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
     setImageUrl("");
   }, [copy.imageHint, imageUrl, label]);
 
+  const addImages = useCallback(async (files: Blob[], names: string[] = []) => {
+    const room = LOCAL_IMAGE_MAX_COUNT - localImageCount(doc);
+    if (files.length > room) setStatus(copy.tooMany.replace("{n}", String(LOCAL_IMAGE_MAX_COUNT)));
+    const typed = label.trim();
+    const items: TierItem[] = [];
+    let failed = false;
+    for (const [index, file] of files.slice(0, Math.max(0, room)).entries()) {
+      const data = await fileToLocalImage(file);
+      if (!data) { failed = true; continue; }
+      const name = (files.length === 1 && typed) || labelFromFileName(names[index] ?? "") || `${copy.unnamed} ${index + 1}`;
+      items.push({ id: newId("i"), label: name.slice(0, 40), imageData: data });
+    }
+    if (failed) setStatus(copy.imageFail);
+    if (!items.length) return;
+    setDoc((prev) => ({
+      ...prev,
+      savedAt: new Date().toISOString(),
+      tiers: prev.tiers.map((tier) => (tier.id === "unranked" ? { ...tier, items: [...tier.items, ...items] } : tier)),
+    }));
+    if (files.length === 1) setLabel("");
+  }, [copy.imageFail, copy.tooMany, copy.unnamed, doc, label]);
+
   const persistSave = useCallback(() => {
     const entry: NamedSave = { id: newId("save"), title: doc.title, savedAt: new Date().toISOString(), document: doc };
     const next = [entry, ...saves].slice(0, 8);
@@ -343,13 +494,13 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
       if (!res.ok || !json.snapshotId) throw new Error("share");
       const url = `${window.location.origin}/${locale}/tier-list/?s=${json.snapshotId}`;
       await navigator.clipboard.writeText(url);
-      setStatus(url);
+      setStatus(localImageCount(doc) > 0 ? `${url} — ${copy.shareLocal}` : url);
     } catch {
       setStatus(copy.shareFail);
     } finally {
       setBusy(false);
     }
-  }, [copy.shareFail, doc, locale]);
+  }, [copy.shareFail, copy.shareLocal, doc, locale]);
 
   const vote = useCallback(async (templateId: string, side: "up" | "down") => {
     await fetch("/api/tier-vote", {
@@ -403,14 +554,19 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
     const ctx = canvas.getContext("2d"); if (!ctx) return;
     ctx.fillStyle = "#fafaf9"; ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = "#1c1917"; ctx.font = "bold 32px system-ui"; ctx.fillText(doc.title, 28, 52);
-    const colors: Record<TierId, string> = { s: "#ef4444", a: "#f97316", b: "#facc15", c: "#65a30d", d: "#78716c", unranked: "#d6d3d1" };
     const loadImage = (url: string) => new Promise<HTMLImageElement | null>((resolve) => { const image = new Image(); image.crossOrigin = "anonymous"; image.onload = () => resolve(image); image.onerror = () => resolve(null); image.src = url; });
     for (const row of layout.rows) {
-      ctx.fillStyle = colors[row.id]; ctx.fillRect(0, row.y, 96, row.height);
-      ctx.fillStyle = row.id === "b" || row.id === "unranked" ? "#1c1917" : "#fff"; ctx.font = "bold 28px system-ui"; ctx.textAlign = "center"; ctx.fillText(row.id === "unranked" ? "?" : row.id.toUpperCase(), 48, row.y + 48);
+      const tone = row.id === "unranked" ? { fill: "#d6d3d1", ink: "#1c1917" } : TONE[row.color];
+      ctx.fillStyle = tone.fill; ctx.fillRect(0, row.y, 96, row.height);
+      // 줄 이름이 길면 글자를 줄여 96px 칸 안에 넣는다.
+      ctx.fillStyle = tone.ink; ctx.textAlign = "center";
+      let size = 28; ctx.font = `bold ${size}px system-ui`;
+      while (size > 12 && ctx.measureText(row.label).width > 84) { size -= 2; ctx.font = `bold ${size}px system-ui`; }
+      ctx.fillText(row.label, 48, row.y + 48);
       for (const item of row.items) {
         ctx.fillStyle = "#fff"; ctx.fillRect(item.x, item.y, item.width, item.height);
-        const image = item.imageUrl ? await loadImage(item.imageUrl) : null;
+        const source = item.imageData ?? item.imageUrl;
+        const image = source ? await loadImage(source) : null;
         if (image) ctx.drawImage(image, item.x + 4, item.y + 4, 72, 72);
         else { ctx.fillStyle = "#e7e5e4"; ctx.fillRect(item.x + 4, item.y + 4, 72, 72); ctx.fillStyle = "#57534e"; ctx.font = "bold 24px system-ui"; ctx.textAlign = "center"; ctx.fillText(item.label.slice(0, 1), item.x + 40, item.y + 49); }
         ctx.fillStyle = "#1c1917"; ctx.font = "bold 10px system-ui"; ctx.textAlign = "center"; ctx.fillText(item.label.slice(0, 11), item.x + 40, item.y + 90);
@@ -430,6 +586,10 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
         followDrag(event.clientX, event.clientY);
       }}
       onDragEnd={clearDrag}
+      onPaste={(event) => {
+        const images = Array.from(event.clipboardData.files).filter((file) => file.type.startsWith("image/"));
+        if (images.length) { event.preventDefault(); void addImages(images, images.map((file) => file.name)); }
+      }}
       className="mx-auto max-w-6xl space-y-4 px-1"
     >
       {presenting ? <h2 className="text-center text-3xl font-black">{doc.title}</h2> : <label className="block">
@@ -443,6 +603,7 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
 
       <div className="flex flex-wrap justify-end gap-2">
         <button type="button" className="min-h-11 rounded-xl border px-4 font-bold" onClick={() => setPresenting((value) => !value)}>{presenting ? copy.edit : copy.present}</button>
+        {!presenting && <button type="button" aria-pressed={editingRows} className="min-h-11 rounded-xl border px-4 font-bold" onClick={() => setEditingRows((value) => !value)}>{editingRows ? copy.rowsDone : copy.rowsEdit}</button>}
         <button type="button" className="min-h-11 rounded-xl border px-4 font-bold" onClick={() => void exportPng()}>{copy.exportPng}</button>
       </div>
 
@@ -469,14 +630,45 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
       </div>}
 
       <div className="space-y-2">
-        {doc.tiers.filter((tier): tier is typeof tier & { id: Exclude<TierId, "unranked"> } => tier.id !== "unranked").map((tier) => (
+        {visibleRankedTiers(doc).map((tier) => {
+          const tierId = tier.id as RankedTierId;
+          const tone = TONE[tierColor(tier)];
+          return (
           <div key={tier.id} data-tier-id={tier.id} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); const id = event.dataTransfer.getData("text/tier-item"); if (id) moveItem(id, tier.id); clearDrag(); }} className={`overflow-hidden rounded-xl border border-stone-200 ${hoverTier === tier.id ? "ring-2 ring-lime-400" : ""}`}>
+            {editingRows && !presenting ? (
+              <div className="flex flex-wrap items-center gap-2 border-b border-stone-200 bg-stone-50 p-2">
+                <label className="flex items-center gap-2 text-xs font-bold">
+                  <input
+                    className="min-h-11 w-28 rounded-lg border border-stone-300 bg-card px-2 text-sm font-bold"
+                    value={tier.label ?? tier.id.toUpperCase()}
+                    maxLength={TIER_LABEL_MAX}
+                    aria-label={copy.rowName}
+                    onChange={(event) => setDoc((prev) => renameTier(prev, tierId, event.target.value))}
+                  />
+                </label>
+                <div role="group" aria-label={copy.rowColor} className="flex flex-wrap gap-1">
+                  {TIER_COLORS.map((color) => (
+                    <button
+                      key={color}
+                      type="button"
+                      aria-label={`${copy.rowColor}: ${color}`}
+                      aria-pressed={tierColor(tier) === color}
+                      className={`size-11 rounded-full border-2 ${tierColor(tier) === color ? "border-stone-900" : "border-transparent"}`}
+                      onClick={() => setDoc((prev) => recolorTier(prev, tierId, color))}
+                    >
+                      <span className={`mx-auto block size-6 rounded-full ${TONE[color].chip}`} />
+                    </button>
+                  ))}
+                </div>
+                <button type="button" className="ml-auto min-h-11 rounded-lg border border-red-300 px-3 text-sm font-bold text-red-700 disabled:opacity-40" disabled={visibleRankedTiers(doc).length <= 1} onClick={() => setDoc((prev) => removeTier(prev, tierId))}>{copy.removeRow}</button>
+              </div>
+            ) : null}
             <button
               type="button"
-              className={`flex min-h-11 w-20 items-center justify-center text-lg font-black ${TIER_TONE[tier.id]}`}
+              className={`flex min-h-11 w-20 items-center justify-center break-all px-1 text-center font-black leading-tight ${tierLabel(tier).length > 3 ? "text-xs" : "text-lg"} ${tone.chip}`}
               onClick={() => moveTo(tier.id)}
             >
-              {tier.id.toUpperCase()}
+              {tierLabel(tier)}
             </button>
             <div className="-mt-11 ml-20 flex min-h-11 flex-wrap gap-2 bg-card p-2">
               {tier.items.length === 0 ? <span className="self-center text-xs text-stone-400">{copy.empty}</span> : null}
@@ -485,7 +677,11 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
               ))}
             </div>
           </div>
-        ))}
+          );
+        })}
+        {editingRows && !presenting ? (
+          <button type="button" className="min-h-11 w-full rounded-xl border border-dashed border-stone-400 font-bold disabled:opacity-40" disabled={!doc.tiers.some((tier) => tier.id !== "unranked" && tier.hidden)} onClick={() => setDoc((prev) => addTier(prev))}>{copy.addRow}</button>
+        ) : null}
         <div data-tier-id="unranked" onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); const id = event.dataTransfer.getData("text/tier-item"); if (id) moveItem(id, "unranked"); clearDrag(); }} className={`rounded-xl border border-dashed border-stone-300 p-2 ${hoverTier === "unranked" ? "ring-2 ring-lime-400" : ""}`}>
           <p className="mb-2 text-xs font-bold text-stone-500">{copy.unranked}</p>
           <div className="flex flex-wrap gap-2">
@@ -499,9 +695,9 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
       <div className={presenting ? "hidden" : "contents"}>
       {selectedItem ? (
         <p className="text-sm">
-          {selectedItem.label} → {TIER_IDS.filter((id) => id !== "unranked").map((id) => (
-            <button key={id} type="button" className="ml-1 min-h-11 min-w-11 rounded-md border px-2 font-bold" onClick={() => moveTo(id)}>
-              {id.toUpperCase()}
+          {selectedItem.label} → {visibleRankedTiers(doc).map((tier) => (
+            <button key={tier.id} type="button" className="ml-1 min-h-11 min-w-11 rounded-md border px-2 font-bold" onClick={() => moveTo(tier.id)}>
+              {tierLabel(tier)}
             </button>
           ))}
         </p>
@@ -514,6 +710,23 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
         <button type="button" className="min-h-11 w-full rounded-lg bg-lime-700 font-bold text-white" onClick={addItem}>
           {copy.add}
         </button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          multiple
+          className="sr-only"
+          aria-label={copy.pick}
+          onChange={(event) => {
+            const files = Array.from(event.target.files ?? []);
+            if (files.length) void addImages(files, files.map((file) => file.name));
+            event.target.value = "";
+          }}
+        />
+        <button type="button" className="min-h-11 w-full rounded-lg border border-lime-700 font-bold text-lime-800" onClick={() => fileRef.current?.click()}>
+          {copy.pick}
+        </button>
+        <p className="text-xs leading-relaxed text-stone-500">{copy.localNote}</p>
       </div>
 
       <div className="grid grid-cols-2 gap-2">
@@ -547,10 +760,10 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
 
       {compareDoc ? (
         <div className="rounded-xl border p-3 text-sm">
-          {TIER_IDS.filter((id) => id !== "unranked").map((id) => (
-            <p key={id} className="mt-1">
-              <b>{id.toUpperCase()}</b> {copy.compareCurrent} {doc.tiers.find((tier) => tier.id === id)?.items.map((item) => item.label).join(", ") || "—"}
-              {" / "}{copy.compareSaved} {compareDoc.tiers.find((tier) => tier.id === id)?.items.map((item) => item.label).join(", ") || "—"}
+          {visibleRankedTiers(doc).map((tier) => (
+            <p key={tier.id} className="mt-1">
+              <b>{tierLabel(tier)}</b> {copy.compareCurrent} {tier.items.map((item) => item.label).join(", ") || "—"}
+              {" / "}{copy.compareSaved} {compareDoc.tiers.find((saved) => saved.id === tier.id)?.items.map((item) => item.label).join(", ") || "—"}
             </p>
           ))}
         </div>
@@ -588,8 +801,8 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
 function ChipFace({ item }: { item: TierItem }) {
   return (
     <div className="flex w-20 flex-col items-center overflow-hidden rounded-lg border border-stone-200 bg-card text-[11px] shadow-sm">
-      {item.imageUrl ? (
-        <img src={item.imageUrl} alt="" width={72} height={72} className="size-[72px] object-cover" draggable={false} referrerPolicy="no-referrer" onError={(event) => { (event.currentTarget as HTMLImageElement).style.display = "none"; }} />
+      {item.imageData ?? item.imageUrl ? (
+        <img src={item.imageData ?? item.imageUrl} alt="" width={72} height={72} className="size-[72px] object-cover" draggable={false} referrerPolicy="no-referrer" onError={(event) => { (event.currentTarget as HTMLImageElement).style.display = "none"; }} />
       ) : <span className="grid size-[72px] place-items-center bg-stone-100 text-2xl font-black text-stone-400">{item.label.slice(0, 1)}</span>}
       <span className="w-full truncate px-1 py-1.5 font-bold">{item.label}</span>
     </div>
@@ -606,8 +819,8 @@ function Chip({ item, selected, dimmed, onSelect, onPointerStart, onDragStart }:
       onClick={onSelect}
       className={`flex w-20 touch-none flex-col items-center overflow-hidden rounded-lg border bg-card text-[11px] shadow-sm transition ${selected ? "border-lime-700 ring-2 ring-lime-300" : "border-stone-200"} ${dimmed ? "opacity-40" : ""}`}
     >
-      {item.imageUrl ? (
-        <img src={item.imageUrl} alt="" width={72} height={72} className="size-[72px] object-cover" draggable={false} referrerPolicy="no-referrer" onError={(event) => { (event.currentTarget as HTMLImageElement).style.display = "none"; }} />
+      {item.imageData ?? item.imageUrl ? (
+        <img src={item.imageData ?? item.imageUrl} alt="" width={72} height={72} className="size-[72px] object-cover" draggable={false} referrerPolicy="no-referrer" onError={(event) => { (event.currentTarget as HTMLImageElement).style.display = "none"; }} />
       ) : <span className="grid size-[72px] place-items-center bg-stone-100 text-2xl font-black text-stone-400">{item.label.slice(0, 1)}</span>}
       <span className="w-full truncate px-1 py-1.5 font-bold">{item.label}</span>
     </button>

@@ -13,27 +13,27 @@ const { locale } = Astro.props as { locale: Locale };
 const meta: Record<Locale, { title: string; description: string }> = {
   ko: {
     title: "티어표 만들기 — 이미지·저장·공유",
-    description: "브라우저에서 S~D 티어표를 만들고 저장·비교·공유합니다. 이미지 주소, 템플릿, 추천/비추천을 지원합니다.",
+    description: "내 사진이나 템플릿으로 티어표를 만들어요. 줄 이름과 색을 바꾸고, PNG로 저장하거나 링크로 공유할 수 있어요. 가입 없이 브라우저에서 바로 써요.",
   },
   en: {
     title: "Make a tier list — save, compare, share",
-    description: "Build an S–D tier list in the browser. Save locally, compare versions, share via Cloudflare KV, and attach image URLs.",
+    description: "Make a tier list from your own photos or a template. Rename and recolor rows, save a PNG, or share a link. No sign-up, right in your browser.",
   },
   ja: {
     title: "ティア表メーカー — 保存・比較・共有",
-    description: "ブラウザでS〜Dのティア表を作り、保存・比較・共有します。画像URLとテンプレートに対応。",
+    description: "自分の写真やテンプレートでティア表を作れます。行の名前と色を変えて、PNGで保存したりリンクで共有したりできます。登録なしでブラウザーからすぐ使えます。",
   },
   zh: {
     title: "制作等级表 — 保存、比较、分享",
-    description: "在浏览器里制作 S–D 等级表。本地保存、比较、通过 KV 分享，并支持图片地址。",
+    description: "用自己的照片或模板制作等级表。可以修改行的名称和颜色，保存为PNG或用链接分享。无需注册，在浏览器里直接使用。",
   },
   fr: {
     title: "Créer une tier list — sauver, comparer, partager",
-    description: "Fabriquez une tier list S–D dans le navigateur. Sauvegarde locale, comparaison, partage KV, images par URL.",
+    description: "Créez une tier list avec vos propres photos ou un modèle. Renommez et recolorez les lignes, enregistrez un PNG ou partagez un lien. Sans inscription, directement dans le navigateur.",
   },
   es: {
     title: "Haz una lista de tiers — guarda, compara, comparte",
-    description: "Crea una lista S–D en el navegador. Guarda, compara, comparte con KV y usa URLs de imagen.",
+    description: "Crea una lista de tiers con tus propias fotos o una plantilla. Cambia el nombre y el color de las filas, guarda un PNG o comparte un enlace. Sin registro, directamente en el navegador.",
   },
 };
 const m = meta[locale] ?? meta.en;
