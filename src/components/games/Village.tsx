@@ -240,6 +240,9 @@ export default function Village({ locale = "ko" }: { locale?: Locale }) {
           {stat(t.res.ap, done ? "–" : `${state.ap}/${villageMaxAp(state)}`)}
         </div>
 
+        {!done && state.fatigue >= 50 ? (
+          <p className={`mt-2 rounded-lg border px-2 py-1 text-xs leading-relaxed ${state.fatigue > 70 ? "border-destructive text-destructive" : "border-warning text-foreground"}`}>{t.fatigueHint}</p>
+        ) : null}
         <p className="mt-2 min-h-5 text-center text-xs font-bold text-primary" role="status" aria-live="polite">
           {notice || (placing ? fill(t.placeHint, { name: t.building[placing].name }) : state.last.map((line) => lineText(t, line)).filter(Boolean).join(" · "))}
         </p>

@@ -3,6 +3,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import Village from "../../components/games/Village";
 import { locales } from "../../lib/i18n";
 import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
 
 export async function getStaticPaths() {
   return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
@@ -27,5 +28,6 @@ const m = meta[locale] ?? meta.en;
 <BaseLayout title={m.title} description={m.description} heading={m.title}>
   <div class="mx-auto max-w-5xl px-4 py-8">
     <Village client:load locale={locale} />
+    <GameGuide slug="village" locale={locale} name={m.title.split(" — ")[0]} />
   </div>
 </BaseLayout>

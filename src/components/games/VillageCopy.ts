@@ -13,6 +13,7 @@ export interface VillageCopy {
   villageTrait: Record<VillageTraitId, Named>;
   weather: Record<WeatherId, Named>;
   terrain: Record<Terrain, string>;
+  fatigueHint: string;
   commandsTitle: string;
   cmd: Record<CommandId, Named>;
   buildTitle: string;
@@ -76,6 +77,7 @@ export const VILLAGE_COPY: Record<Locale, VillageCopy> = {
       mild: { name: "포근한 겨울", hint: "장작이 들지 않고 사냥 +2" },
     },
     terrain: { plain: "빈 땅", fertile: "기름진 땅", forest: "숲", rock: "바위", water: "물" },
+    fatigueHint: "피로가 70을 넘으면 모든 일터의 생산이 30% 줄어요. 잔치를 열거나 행동을 남긴 채 달을 마치면 피로가 내려가요.",
     commandsTitle: "촌장 명령",
     cmd: {
       tend: { name: "밭일", hint: "이번 달 수확 +50%" },
@@ -203,6 +205,7 @@ export const VILLAGE_COPY: Record<Locale, VillageCopy> = {
       mild: { name: "Mild winter", hint: "No firewood needed, hunting +2" },
     },
     terrain: { plain: "Open ground", fertile: "Rich soil", forest: "Forest", rock: "Rock", water: "Water" },
+    fatigueHint: "Above 70 fatigue every workplace makes 30% less. A feast, or ending the month with actions unspent, brings it down.",
     commandsTitle: "Chief's orders",
     cmd: {
       tend: { name: "Tend fields", hint: "Harvest +50% this month" },
@@ -330,6 +333,7 @@ export const VILLAGE_COPY: Record<Locale, VillageCopy> = {
       mild: { name: "暖冬", hint: "薪がいらず、狩り +2" },
     },
     terrain: { plain: "空き地", fertile: "肥えた土", forest: "森", rock: "岩", water: "水" },
+    fatigueHint: "疲れが70を超えると、すべての仕事場の生産が30%減ります。宴を開くか、行動を残して月を終えると疲れが下がります。",
     commandsTitle: "村長の指示",
     cmd: {
       tend: { name: "畑仕事", hint: "今月の収穫 +50%" },
@@ -457,6 +461,7 @@ export const VILLAGE_COPY: Record<Locale, VillageCopy> = {
       mild: { name: "暖冬", hint: "不用烧柴，打猎 +2" },
     },
     terrain: { plain: "空地", fertile: "沃土", forest: "森林", rock: "岩石", water: "水" },
+    fatigueHint: "疲劳超过70时，所有工作场所的产量减少30%。办宴会，或者留着行动不用就结束本月，疲劳会下降。",
     commandsTitle: "村长指令",
     cmd: {
       tend: { name: "照料田地", hint: "本月收成 +50%" },
@@ -584,6 +589,7 @@ export const VILLAGE_COPY: Record<Locale, VillageCopy> = {
       mild: { name: "Hiver doux", hint: "Pas de bois de chauffage, chasse +2" },
     },
     terrain: { plain: "Terrain libre", fertile: "Terre grasse", forest: "Forêt", rock: "Rocher", water: "Eau" },
+    fatigueHint: "Au-delà de 70 de fatigue, tous les ateliers produisent 30 % de moins. Un banquet, ou finir le mois sans utiliser toutes ses actions, la fait baisser.",
     commandsTitle: "Ordres du chef",
     cmd: {
       tend: { name: "Soigner les champs", hint: "Récolte +50 % ce mois-ci" },
@@ -711,6 +717,7 @@ export const VILLAGE_COPY: Record<Locale, VillageCopy> = {
       mild: { name: "Invierno suave", hint: "No hace falta leña, caza +2" },
     },
     terrain: { plain: "Terreno libre", fertile: "Tierra fértil", forest: "Bosque", rock: "Roca", water: "Agua" },
+    fatigueHint: "Por encima de 70 de cansancio, todos los talleres producen un 30 % menos. Un banquete, o terminar el mes con acciones sin usar, lo reduce.",
     commandsTitle: "Órdenes del jefe",
     cmd: {
       tend: { name: "Cuidar los campos", hint: "Cosecha +50 % este mes" },
