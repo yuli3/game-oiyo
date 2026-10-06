@@ -15,3 +15,4 @@ alwaysApply: true
 - Check `/Users/seuncho/coding/blog-oiyo/data/catalog/content-inventory.master.csv` before expanding priority work.
 - Put uncertain work into revisit-later queues instead of forcing decisions.
 - Prefer `npm run build`, `npm run type-check`, `npm run validate:i18n`, and `npm run verify:harness` for validation.
+- Before finishing any UI/component/style change, run `npm run lint` (astro check + shadcn lint via `@shadcn/lint`). Do not push if it fails, and never grow `eslint-suppressions.json` to make it pass.

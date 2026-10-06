@@ -18,6 +18,7 @@
 
 ## 검증
 
+- **shadcn lint 필수(2026-10-06 세운 결정, Claude·Codex·Grok Build·Grok Bot·Cursor 공통)**: UI·컴포넌트·스타일(`src/**/*.{astro,tsx,ts,jsx,js}`)을 바꿨으면 끝내기 전에 `npm run lint`(`astro check` + `npm run lint:shadcn`)를 돌리고, 실패하면 push하지 않는다. `lint:shadcn`은 공식 [`@shadcn/lint`](https://github.com/shadcn-ui/lint) 규칙을 `eslint.config.mjs`로 실행하며 CI에서도 차단한다. 검사 대상: raw 팔레트 색(`bg-pink-500`), 임의값(`p-[13px]`), 인라인 style·`<style>` 요소, Tailwind가 만들지 못하는 클래스, `src/components/ui` 컴포넌트에 className으로 덧칠하기(레이아웃 클래스는 허용), 읽을 수 없는 동적 클래스. 도입 시점의 기존 위반은 `eslint-suppressions.json` 기준선이라 새 위반만 실패한다. 새 위반은 테마 토큰·컴포넌트 variant로 고치고, `--suppress-all`/`--suppress-rule`로 기준선을 늘려 통과시키지 않는다. 기존 위반을 고쳤으면 `npm run lint:shadcn:prune`으로 기준선을 줄인다.
 - 기본: `npm run type-check`, `npm run test -- --run`, `npm run validate:i18n`, `npm run build`, 이후 `npm run audit:localization`·`npm run audit:seo`.
 - 기록 변경은 records.test.ts의 저장·일자 중복·누락일·게임 격리 계약을 반드시 통과시킨다.
 - Vitest는 순수 게임 로직과 기록을 검증한다. 브라우저 상호작용 검증을 대신하지 않으므로 변경 화면을 별도로 확인한다.

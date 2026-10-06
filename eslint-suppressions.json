@@ -1,0 +1,979 @@
+{
+  "src/components/Button.astro": {
+    "shadcn/no-raw-colors": {
+      "count": 4
+    }
+  },
+  "src/components/CategoryCloud.astro": {
+    "shadcn/no-arbitrary-values": {
+      "count": 10
+    },
+    "shadcn/no-inline-styles": {
+      "count": 1
+    },
+    "shadcn/no-unknown-classes": {
+      "count": 6
+    }
+  },
+  "src/components/IntentBundles.astro": {
+    "shadcn/no-arbitrary-values": {
+      "count": 6
+    },
+    "shadcn/no-inline-styles": {
+      "count": 1
+    },
+    "shadcn/no-raw-colors": {
+      "count": 35
+    }
+  },
+  "src/components/StrategyGuide.astro": {
+    "shadcn/no-raw-colors": {
+      "count": 2
+    }
+  },
+  "src/components/games/Achievements.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 7
+    },
+    "shadcn/no-inline-styles": {
+      "count": 1
+    },
+    "shadcn/no-restyle": {
+      "count": 26
+    }
+  },
+  "src/components/games/AimTrainer.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 8
+    },
+    "shadcn/no-inline-styles": {
+      "count": 10
+    },
+    "shadcn/no-raw-colors": {
+      "count": 15
+    }
+  },
+  "src/components/games/AjaePattern.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 3
+    },
+    "shadcn/no-inline-styles": {
+      "count": 2
+    }
+  },
+  "src/components/games/AnimalPop.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 9
+    },
+    "shadcn/no-inline-styles": {
+      "count": 2
+    },
+    "shadcn/no-raw-colors": {
+      "count": 3
+    },
+    "shadcn/no-unknown-classes": {
+      "count": 11
+    }
+  },
+  "src/components/games/BalanceGame.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 3
+    },
+    "shadcn/no-inline-styles": {
+      "count": 2
+    }
+  },
+  "src/components/games/Blackjack.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 1
+    },
+    "shadcn/no-inline-styles": {
+      "count": 2
+    },
+    "shadcn/no-raw-colors": {
+      "count": 4
+    },
+    "shadcn/no-restyle": {
+      "count": 6
+    }
+  },
+  "src/components/games/BlockBurst.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 25
+    },
+    "shadcn/no-inline-styles": {
+      "count": 6
+    },
+    "shadcn/no-raw-colors": {
+      "count": 5
+    },
+    "shadcn/no-unknown-classes": {
+      "count": 2
+    }
+  },
+  "src/components/games/BrickBreaker.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 4
+    },
+    "shadcn/no-inline-styles": {
+      "count": 2
+    },
+    "shadcn/no-raw-colors": {
+      "count": 8
+    }
+  },
+  "src/components/games/CatFishing.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 4
+    },
+    "shadcn/no-inline-styles": {
+      "count": 5
+    },
+    "shadcn/no-raw-colors": {
+      "count": 2
+    }
+  },
+  "src/components/games/CaveDash.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 3
+    },
+    "shadcn/no-inline-styles": {
+      "count": 2
+    },
+    "shadcn/no-raw-colors": {
+      "count": 4
+    }
+  },
+  "src/components/games/Checkers.tsx": {
+    "react-hooks/exhaustive-deps": {
+      "count": 2
+    },
+    "shadcn/no-arbitrary-values": {
+      "count": 10
+    },
+    "shadcn/no-raw-colors": {
+      "count": 9
+    }
+  },
+  "src/components/games/ChessBoard.tsx": {
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    },
+    "shadcn/no-arbitrary-values": {
+      "count": 15
+    },
+    "shadcn/no-raw-colors": {
+      "count": 8
+    }
+  },
+  "src/components/games/ConnectFour.tsx": {
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    },
+    "shadcn/no-arbitrary-values": {
+      "count": 6
+    },
+    "shadcn/no-inline-styles": {
+      "count": 21
+    },
+    "shadcn/no-raw-colors": {
+      "count": 16
+    },
+    "shadcn/no-unknown-classes": {
+      "count": 1
+    }
+  },
+  "src/components/games/DiceRoller.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 3
+    }
+  },
+  "src/components/games/Dominoes.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 5
+    },
+    "shadcn/no-inline-styles": {
+      "count": 1
+    },
+    "shadcn/no-raw-colors": {
+      "count": 9
+    }
+  },
+  "src/components/games/DotJumpKing.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 3
+    }
+  },
+  "src/components/games/DotPet.tsx": {
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    },
+    "shadcn/no-arbitrary-values": {
+      "count": 5
+    },
+    "shadcn/no-inline-styles": {
+      "count": 1
+    },
+    "shadcn/no-raw-colors": {
+      "count": 1
+    }
+  },
+  "src/components/games/DotRunner.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 1
+    },
+    "shadcn/no-raw-colors": {
+      "count": 3
+    }
+  },
+  "src/components/games/Emberdeep.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 24
+    },
+    "shadcn/no-raw-colors": {
+      "count": 33
+    }
+  },
+  "src/components/games/FreeCell.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 4
+    },
+    "shadcn/no-inline-styles": {
+      "count": 1
+    },
+    "shadcn/no-restyle": {
+      "count": 7
+    }
+  },
+  "src/components/games/Game2048.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 8
+    },
+    "shadcn/no-inline-styles": {
+      "count": 5
+    },
+    "shadcn/no-raw-colors": {
+      "count": 4
+    }
+  },
+  "src/components/games/Gomoku.tsx": {
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    },
+    "shadcn/no-arbitrary-values": {
+      "count": 22
+    },
+    "shadcn/no-inline-styles": {
+      "count": 10
+    },
+    "shadcn/no-raw-colors": {
+      "count": 11
+    }
+  },
+  "src/components/games/GravityGarden.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 1
+    }
+  },
+  "src/components/games/HeartsGame.tsx": {
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    },
+    "shadcn/no-arbitrary-values": {
+      "count": 6
+    }
+  },
+  "src/components/games/Hitori.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 3
+    },
+    "shadcn/no-raw-colors": {
+      "count": 8
+    }
+  },
+  "src/components/games/InfernalVelocity.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 16
+    },
+    "shadcn/no-raw-colors": {
+      "count": 17
+    }
+  },
+  "src/components/games/InfernalVelocityScene.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 11
+    },
+    "shadcn/no-inline-styles": {
+      "count": 1
+    },
+    "shadcn/no-raw-colors": {
+      "count": 24
+    }
+  },
+  "src/components/games/IronTempest.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 29
+    },
+    "shadcn/no-inline-styles": {
+      "count": 1
+    },
+    "shadcn/no-raw-colors": {
+      "count": 2
+    }
+  },
+  "src/components/games/IsometricCity.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 34
+    },
+    "shadcn/no-raw-colors": {
+      "count": 2
+    }
+  },
+  "src/components/games/IsometricCityScene.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 53
+    },
+    "shadcn/no-raw-colors": {
+      "count": 28
+    }
+  },
+  "src/components/games/JanggiBoard.tsx": {
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    },
+    "shadcn/no-arbitrary-values": {
+      "count": 32
+    },
+    "shadcn/no-inline-styles": {
+      "count": 1
+    },
+    "shadcn/no-raw-colors": {
+      "count": 37
+    }
+  },
+  "src/components/games/Kingdomino.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 20
+    },
+    "shadcn/no-inline-styles": {
+      "count": 4
+    },
+    "shadcn/no-raw-colors": {
+      "count": 40
+    }
+  },
+  "src/components/games/KoreanSemantle.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 8
+    },
+    "shadcn/no-inline-styles": {
+      "count": 1
+    },
+    "shadcn/no-raw-colors": {
+      "count": 8
+    },
+    "shadcn/no-restyle": {
+      "count": 2
+    }
+  },
+  "src/components/games/Kurodoko.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 2
+    },
+    "shadcn/no-inline-styles": {
+      "count": 1
+    }
+  },
+  "src/components/games/LightUp.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 5
+    },
+    "shadcn/no-raw-colors": {
+      "count": 17
+    }
+  },
+  "src/components/games/LottoGenerator.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 1
+    },
+    "shadcn/no-inline-styles": {
+      "count": 1
+    }
+  },
+  "src/components/games/Mahjong.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 9
+    },
+    "shadcn/no-raw-colors": {
+      "count": 11
+    }
+  },
+  "src/components/games/MallowIsle.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 39
+    }
+  },
+  "src/components/games/MallowIsleScene.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 54
+    },
+    "shadcn/no-inline-styles": {
+      "count": 1
+    },
+    "shadcn/no-raw-colors": {
+      "count": 18
+    }
+  },
+  "src/components/games/MazeGame.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 4
+    },
+    "shadcn/no-inline-styles": {
+      "count": 1
+    }
+  },
+  "src/components/games/MemoryCardGame.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 4
+    },
+    "shadcn/no-inline-styles": {
+      "count": 2
+    },
+    "shadcn/no-raw-colors": {
+      "count": 8
+    }
+  },
+  "src/components/games/MemoryPalaceThieves.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 7
+    },
+    "shadcn/no-inline-styles": {
+      "count": 1
+    },
+    "shadcn/no-restyle": {
+      "count": 3
+    }
+  },
+  "src/components/games/MemoryPalaceThievesScene.tsx": {
+    "shadcn/no-raw-colors": {
+      "count": 6
+    }
+  },
+  "src/components/games/Minesweeper.tsx": {
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    },
+    "shadcn/no-arbitrary-values": {
+      "count": 10
+    },
+    "shadcn/no-inline-styles": {
+      "count": 5
+    }
+  },
+  "src/components/games/NeonFormation.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 19
+    },
+    "shadcn/no-raw-colors": {
+      "count": 15
+    }
+  },
+  "src/components/games/NeonFormationScene.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 7
+    },
+    "shadcn/no-raw-colors": {
+      "count": 22
+    }
+  },
+  "src/components/games/NumberGuessingGame.tsx": {
+    "shadcn/no-raw-colors": {
+      "count": 8
+    }
+  },
+  "src/components/games/Plinko.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 2
+    },
+    "shadcn/no-inline-styles": {
+      "count": 1
+    }
+  },
+  "src/components/games/PrototypeGameShell.astro": {
+    "shadcn/no-inline-styles": {
+      "count": 1
+    },
+    "shadcn/no-unknown-classes": {
+      "count": 5
+    }
+  },
+  "src/components/games/Puzzle15.tsx": {
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    },
+    "shadcn/no-arbitrary-values": {
+      "count": 5
+    },
+    "shadcn/no-inline-styles": {
+      "count": 1
+    },
+    "shadcn/no-raw-colors": {
+      "count": 1
+    }
+  },
+  "src/components/games/Reversi.tsx": {
+    "react-hooks/exhaustive-deps": {
+      "count": 2
+    },
+    "shadcn/no-arbitrary-values": {
+      "count": 7
+    },
+    "shadcn/no-raw-colors": {
+      "count": 6
+    }
+  },
+  "src/components/games/RhythmTap.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 4
+    },
+    "shadcn/no-inline-styles": {
+      "count": 2
+    },
+    "shadcn/no-raw-colors": {
+      "count": 4
+    }
+  },
+  "src/components/games/RivalsMind.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 4
+    }
+  },
+  "src/components/games/RunABusiness.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 56
+    },
+    "shadcn/no-raw-colors": {
+      "count": 9
+    }
+  },
+  "src/components/games/RunABusinessScene.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 4
+    },
+    "shadcn/no-raw-colors": {
+      "count": 24
+    }
+  },
+  "src/components/games/ShadowArchitect.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 8
+    },
+    "shadcn/no-inline-styles": {
+      "count": 1
+    },
+    "shadcn/no-restyle": {
+      "count": 3
+    }
+  },
+  "src/components/games/ShadowArchitectScene.tsx": {
+    "shadcn/no-inline-styles": {
+      "count": 6
+    },
+    "shadcn/no-raw-colors": {
+      "count": 1
+    }
+  },
+  "src/components/games/SkywardAtlas.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 8
+    },
+    "shadcn/no-raw-colors": {
+      "count": 15
+    }
+  },
+  "src/components/games/SkywardAtlasScene.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 5
+    },
+    "shadcn/no-raw-colors": {
+      "count": 31
+    }
+  },
+  "src/components/games/SnakeGame.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 2
+    },
+    "shadcn/no-inline-styles": {
+      "count": 3
+    },
+    "shadcn/no-unknown-classes": {
+      "count": 1
+    }
+  },
+  "src/components/games/Solitaire.tsx": {
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    },
+    "shadcn/no-arbitrary-values": {
+      "count": 5
+    },
+    "shadcn/no-inline-styles": {
+      "count": 2
+    },
+    "shadcn/no-restyle": {
+      "count": 7
+    }
+  },
+  "src/components/games/SpatialMemory.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 2
+    },
+    "shadcn/no-inline-styles": {
+      "count": 5
+    },
+    "shadcn/no-raw-colors": {
+      "count": 11
+    }
+  },
+  "src/components/games/SpatialMemoryScene.tsx": {
+    "shadcn/no-inline-styles": {
+      "count": 2
+    },
+    "shadcn/no-raw-colors": {
+      "count": 1
+    }
+  },
+  "src/components/games/SpiritVale.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 10
+    },
+    "shadcn/no-inline-styles": {
+      "count": 6
+    },
+    "shadcn/no-raw-colors": {
+      "count": 65
+    }
+  },
+  "src/components/games/StackTower.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 3
+    },
+    "shadcn/no-inline-styles": {
+      "count": 2
+    },
+    "shadcn/no-raw-colors": {
+      "count": 3
+    }
+  },
+  "src/components/games/StarBlaster.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 6
+    },
+    "shadcn/no-inline-styles": {
+      "count": 2
+    },
+    "shadcn/no-raw-colors": {
+      "count": 10
+    }
+  },
+  "src/components/games/Sudoku.tsx": {
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    },
+    "shadcn/no-arbitrary-values": {
+      "count": 3
+    },
+    "shadcn/no-inline-styles": {
+      "count": 1
+    },
+    "shadcn/no-raw-colors": {
+      "count": 8
+    }
+  },
+  "src/components/games/Tamagotchi.tsx": {
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    },
+    "shadcn/no-arbitrary-values": {
+      "count": 18
+    },
+    "shadcn/no-inline-styles": {
+      "count": 2
+    },
+    "shadcn/no-unknown-classes": {
+      "count": 28
+    }
+  },
+  "src/components/games/TentsAndTrees.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 1
+    },
+    "shadcn/no-inline-styles": {
+      "count": 1
+    },
+    "shadcn/no-raw-colors": {
+      "count": 9
+    }
+  },
+  "src/components/games/TexasHoldem.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 6
+    },
+    "shadcn/no-inline-styles": {
+      "count": 1
+    }
+  },
+  "src/components/games/TierListStudio.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 6
+    },
+    "shadcn/no-inline-styles": {
+      "count": 2
+    },
+    "shadcn/no-raw-colors": {
+      "count": 35
+    }
+  },
+  "src/components/games/TimeLoopRescue.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 5
+    },
+    "shadcn/no-raw-colors": {
+      "count": 20
+    }
+  },
+  "src/components/games/UrbanStrike.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 19
+    },
+    "shadcn/no-raw-colors": {
+      "count": 23
+    }
+  },
+  "src/components/games/UrbanStrikeScene.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 26
+    },
+    "shadcn/no-inline-styles": {
+      "count": 15
+    },
+    "shadcn/no-raw-colors": {
+      "count": 71
+    }
+  },
+  "src/components/games/WaterSort.tsx": {
+    "shadcn/no-inline-styles": {
+      "count": 3
+    }
+  },
+  "src/components/games/WhackAMole.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 3
+    },
+    "shadcn/no-raw-colors": {
+      "count": 4
+    }
+  },
+  "src/components/games/WheelSpinner.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 6
+    },
+    "shadcn/no-inline-styles": {
+      "count": 4
+    }
+  },
+  "src/components/games/WindwardHorizons.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 49
+    },
+    "shadcn/no-raw-colors": {
+      "count": 1
+    }
+  },
+  "src/components/games/WindwardHorizonsScene.tsx": {
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    },
+    "shadcn/no-arbitrary-values": {
+      "count": 81
+    },
+    "shadcn/no-inline-styles": {
+      "count": 8
+    },
+    "shadcn/no-raw-colors": {
+      "count": 23
+    }
+  },
+  "src/components/games/WordleGame.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 2
+    },
+    "shadcn/no-raw-colors": {
+      "count": 8
+    },
+    "shadcn/no-restyle": {
+      "count": 2
+    }
+  },
+  "src/components/games/Yahtzee.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 3
+    }
+  },
+  "src/components/games/tamagotchi/PetDisplay.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 2
+    },
+    "shadcn/no-inline-styles": {
+      "count": 4
+    },
+    "shadcn/no-unknown-classes": {
+      "count": 5
+    }
+  },
+  "src/components/mdx/BarChart.astro": {
+    "shadcn/no-arbitrary-values": {
+      "count": 3
+    },
+    "shadcn/no-inline-styles": {
+      "count": 2
+    }
+  },
+  "src/components/mdx/FormulaBox.astro": {
+    "shadcn/no-inline-styles": {
+      "count": 3
+    },
+    "shadcn/no-unknown-classes": {
+      "count": 4
+    }
+  },
+  "src/components/mdx/InflationCalculator.tsx": {
+    "shadcn/no-raw-colors": {
+      "count": 27
+    }
+  },
+  "src/components/mdx/LineChart.astro": {
+    "shadcn/no-inline-styles": {
+      "count": 3
+    },
+    "shadcn/no-raw-colors": {
+      "count": 9
+    },
+    "shadcn/no-unknown-classes": {
+      "count": 6
+    }
+  },
+  "src/components/mdx/PieChart.astro": {
+    "shadcn/no-arbitrary-values": {
+      "count": 2
+    },
+    "shadcn/no-inline-styles": {
+      "count": 2
+    }
+  },
+  "src/components/mdx/RadarChart.astro": {
+    "shadcn/no-inline-styles": {
+      "count": 3
+    },
+    "shadcn/no-raw-colors": {
+      "count": 5
+    },
+    "shadcn/no-unknown-classes": {
+      "count": 6
+    }
+  },
+  "src/components/tools/InflationCalculator.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 7
+    }
+  },
+  "src/components/tools/LostarkRaidDistribution.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 1
+    },
+    "shadcn/no-restyle": {
+      "count": 6
+    }
+  },
+  "src/components/ui/badge.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 1
+    }
+  },
+  "src/components/ui/button.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 5
+    }
+  },
+  "src/components/ui/card.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 2
+    }
+  },
+  "src/components/ui/game/GamePrimitives.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 6
+    },
+    "shadcn/no-inline-styles": {
+      "count": 4
+    },
+    "shadcn/no-raw-colors": {
+      "count": 2
+    }
+  },
+  "src/features/education-calculators/FinancialCharts.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 1
+    },
+    "shadcn/no-restyle": {
+      "count": 3
+    }
+  },
+  "src/features/finance/FinanceGuardrail.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 1
+    },
+    "shadcn/no-raw-colors": {
+      "count": 3
+    }
+  },
+  "src/features/games/LostArkTools.tsx": {
+    "shadcn/no-arbitrary-values": {
+      "count": 3
+    },
+    "shadcn/no-raw-colors": {
+      "count": 32
+    },
+    "shadcn/no-restyle": {
+      "count": 24
+    }
+  },
+  "src/layouts/BaseLayout.astro": {
+    "shadcn/no-arbitrary-values": {
+      "count": 9
+    }
+  },
+  "src/pages/404.astro": {
+    "shadcn/no-arbitrary-values": {
+      "count": 1
+    }
+  },
+  "src/pages/[...lang]/chess.astro": {
+    "shadcn/no-raw-colors": {
+      "count": 1
+    }
+  },
+  "src/pages/[...lang]/index.astro": {
+    "shadcn/no-arbitrary-values": {
+      "count": 5
+    },
+    "shadcn/no-raw-colors": {
+      "count": 12
+    }
+  },
+  "src/pages/[...lang]/tier-list.astro": {
+    "shadcn/no-raw-colors": {
+      "count": 1
+    }
+  }
+}

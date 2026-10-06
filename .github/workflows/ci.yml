@@ -36,6 +36,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # 2026-10-06: shadcn lint is mandatory. Runs the official @shadcn/lint rules
+      # (eslint.config.mjs). Findings that predate the gate live in
+      # eslint-suppressions.json, so this fails only on new violations.
+      - name: shadcn lint (blocking on new violations)
+        run: npm run lint:shadcn
+
       - name: Type check
         run: npm run type-check
 

@@ -12,6 +12,7 @@ Cursor should use [AGENTS.md](/Users/seuncho/coding/blog/AGENTS.md) as the canon
 ## Default Verification
 
 ```bash
+npm run lint        # astro check + shadcn lint — mandatory before finishing UI/component work
 npm run build
 npm run type-check
 npm run verify:harness
