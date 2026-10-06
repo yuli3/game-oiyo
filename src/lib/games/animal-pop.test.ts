@@ -10,6 +10,9 @@ import {
   serializeAnimal,
   swapAnimals,
   tickAnimalFever,
+  ANIMAL_TYPES,
+  hasAnimalMove,
+  reshuffleAnimalBoard,
 } from "./animal-pop";
 describe("animal pop engine", () => {
   it("creates deterministic settled boards", () => {
@@ -79,5 +82,43 @@ describe("animal pop engine", () => {
     expect(scoreAnimalMatch(3, 1, remaining).points).toBe(60);
     expect(tickAnimalFever(remaining)).toBe(0);
     expect(scoreAnimalMatch(3, 1, 0).points).toBe(30);
+  });
+
+  it("detects a board with no move and deals the same animals into a playable one", () => {
+    const kinds = [...ANIMAL_TYPES];
+    // Rows are a cycle shifted by three: no two equal neighbours share a line within reach of one swap.
+    const dead = Array.from({ length: 7 }, (_, r) => Array.from({ length: 7 }, (_, c) => kinds[(c + r * 3) % 7]));
+    expect(findAnimalMatches(dead).flat().some(Boolean)).toBe(false);
+    expect(hasAnimalMove(dead)).toBe(false);
+    const dealt = reshuffleAnimalBoard(dead, 9);
+    expect(dealt.reshuffled).toBe(true);
+    expect(hasAnimalMove(dealt.board)).toBe(true);
+    expect(findAnimalMatches(dealt.board).flat().some(Boolean)).toBe(false);
+    expect([...dealt.board.flat()].sort()).toEqual([...dead.flat()].sort());
+    expect(reshuffleAnimalBoard(dead, 9)).toEqual(dealt);
+    const live = createAnimalBoard(4);
+    expect(hasAnimalMove(live.board)).toBe(true);
+    expect(reshuffleAnimalBoard(live.board, live.seed)).toEqual({ board: live.board, seed: live.seed, reshuffled: false });
+  });
+
+  it("never hands back a dead board after a swap", () => {
+    let { board, seed } = createAnimalBoard(31);
+    let shuffles = 0;
+    for (let step = 0; step < 4000; step++) {
+      let moved = false;
+      for (let i = 0; i < 49 && !moved; i++) {
+        for (const j of [i + 1, i + 7]) {
+          if (j >= 49 || (j === i + 1 && i % 7 === 6)) continue;
+          const next = swapAnimals(board, i, j, seed);
+          if (!next.valid) continue;
+          board = next.board; seed = next.seed; moved = true;
+          if (next.reshuffled) shuffles++;
+          break;
+        }
+      }
+      expect(moved).toBe(true);
+    }
+    expect(hasAnimalMove(board)).toBe(true);
+    expect(shuffles).toBeGreaterThanOrEqual(0);
   });
 });

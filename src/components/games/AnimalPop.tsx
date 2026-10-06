@@ -7,6 +7,7 @@ import {
   animalMatchTimeBonus,
   createAnimalBoard,
   parseAnimal,
+  reshuffleAnimalBoard,
   scoreAnimalMatch,
   serializeAnimal,
   swapAnimals,
@@ -79,6 +80,7 @@ const COPY = {
     owned: "고른 증강",
     modeAugment: "증강 모드",
     secondChance: "한 번 더! +20초",
+    reshuffled: "맞출 곳이 없어서 판을 섞었어요",
     tiers: { silver: "실버", gold: "골드", prismatic: "프리즘" },
     augments: {
       score: { name: "점수 상인", desc: "얻는 점수가 25% 늘어요. 세 번까지 겹쳐요." },
@@ -116,6 +118,7 @@ const COPY = {
     owned: "Your augments",
     modeAugment: "Augment mode",
     secondChance: "One more! +20s",
+    reshuffled: "No moves left, so the board was shuffled",
     tiers: { silver: "Silver", gold: "Gold", prismatic: "Prismatic" },
     augments: {
       score: { name: "Score Broker", desc: "Earn 25% more points. Stacks three times." },
@@ -153,6 +156,7 @@ const COPY = {
     owned: "選んだオーグメント",
     modeAugment: "オーグメントモード",
     secondChance: "もう一回！+20秒",
+    reshuffled: "そろえられる場所がないので盤面を混ぜました",
     tiers: { silver: "シルバー", gold: "ゴールド", prismatic: "プリズム" },
     augments: {
       score: { name: "スコア商人", desc: "獲得スコアが25%増えます。3回まで重なります。" },
@@ -190,6 +194,7 @@ const COPY = {
     owned: "已选强化",
     modeAugment: "强化模式",
     secondChance: "再来一次！+20秒",
+    reshuffled: "没有可消除的位置，已重新洗牌",
     tiers: { silver: "白银", gold: "黄金", prismatic: "棱彩" },
     augments: {
       score: { name: "分数商人", desc: "获得的分数增加25%。最多叠加三次。" },
@@ -227,6 +232,7 @@ const COPY = {
     owned: "Vos augments",
     modeAugment: "Mode augments",
     secondChance: "Encore une ! +20 s",
+    reshuffled: "Plus aucun coup possible : le plateau a été mélangé",
     tiers: { silver: "Argent", gold: "Or", prismatic: "Prismatique" },
     augments: {
       score: { name: "Courtier en points", desc: "Vous gagnez 25 % de points en plus. Cumulable trois fois." },
@@ -264,6 +270,7 @@ const COPY = {
     owned: "Tus aumentos",
     modeAugment: "Modo aumentos",
     secondChance: "¡Otra más! +20 s",
+    reshuffled: "No quedaban jugadas, se barajó el tablero",
     tiers: { silver: "Plata", gold: "Oro", prismatic: "Prismático" },
     augments: {
       score: { name: "Agente de puntos", desc: "Ganas un 25 % más de puntos. Se acumula tres veces." },
@@ -531,7 +538,8 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
   const start = (nextMode: Mode = modeRef.current) => {
     const a = new Uint32Array(1);
     crypto.getRandomValues(a);
-    const x = createAnimalBoard(a[0]);
+    // A fresh deal can also come out with nothing to match.
+    const x = reshuffleAnimalBoard(createAnimalBoard(a[0]).board, createAnimalBoard(a[0]).seed);
     const nextRun = nextMode === "augment" ? createAnimalRun(a[0]) : null;
     setMode(nextMode);
     setRun(nextRun);
@@ -612,6 +620,7 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
     setTime((v) => addAnimalTime(v, bonus));
     setWaveLabel(0);
     setResolving(false);
+    if (x.reshuffled) setNotice("reshuffled");
     if (owned && runRef.current && phaseRef.current === "playing") {
       const offered = offerAnimalAugments(runRef.current, scoreRef.current + award.points);
       if (offered !== runRef.current) {
@@ -672,7 +681,7 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
           className="my-3 h-6 text-center text-sm font-black text-amber-600"
           aria-live="polite"
         >
-          {notice === "second" ? t.secondChance : waveLabel > 0 ? `${t.combo} ×${waveLabel}` : feverSeconds > 0 ? `${t.fever} · ${feverSeconds}s` : combo > 1 ? `${t.combo} ×${combo}` : ""}
+          {notice === "second" ? t.secondChance : notice === "reshuffled" ? t.reshuffled : waveLabel > 0 ? `${t.combo} ×${waveLabel}` : feverSeconds > 0 ? `${t.fever} · ${feverSeconds}s` : combo > 1 ? `${t.combo} ×${combo}` : ""}
         </div>
         <div
           ref={boardRef}
