@@ -11,16 +11,14 @@ export async function getStaticPaths() {
 
 const { locale } = Astro.props as { locale: Locale };
 
-// Stage 1 trial of prd-game-village-management-2026-10-06. The slug is in
-// noindex-slugs.json: playable by link, out of the sitemap and the index, and
-// not on the arcade home, until the stage gate decides whether it goes on.
+// Public since 2026-10-06 (세운: "공개합니다"). It was a noindex trial through stages 1 and 2.
 const meta: Record<Locale, { title: string; description: string }> = {
-  ko: { title: "작은 마을 열두 달 — 월 단위 마을 경영 (시험판)", description: "한 달에 행동 세 번으로 식량과 목재를 모으고 집을 지어 3년을 버티는 마을 경영 게임 시험판이에요. 가입 없이 브라우저에 저장돼요." },
-  en: { title: "Twelve Months, One Village — month-by-month sim (trial)", description: "A trial build of a village sim: three actions a month to gather food and wood, build houses and last three years. Saved in your browser, no sign-up." },
-  ja: { title: "小さな村の十二か月 — 月ごとの村づくり(試作版)", description: "1か月に3回の行動で食料と木材を集め、家を建てて3年を乗り切る村づくりゲームの試作版です。登録なしでブラウザーに保存されます。" },
-  zh: { title: "小村庄的十二个月 — 按月经营的村庄(试玩版)", description: "每月行动三次，收集粮食和木材、盖房子，撑过三年的村庄经营游戏试玩版。无需注册，保存在浏览器中。" },
-  fr: { title: "Douze mois, un village — gestion mois par mois (essai)", description: "Version d’essai d’un jeu de gestion de village : trois actions par mois pour récolter, construire et tenir trois ans. Enregistré dans votre navigateur, sans inscription." },
-  es: { title: "Doce meses, una aldea — gestión mes a mes (prueba)", description: "Versión de prueba de un juego de gestión de aldea: tres acciones al mes para reunir comida y madera, construir casas y aguantar tres años. Se guarda en tu navegador, sin registro." },
+  ko: { title: "작은 마을 열두 달 — 월 단위 마을 경영", description: "한 달에 행동 세 번으로 식량과 목재를 모으고 집을 지어 3년을 버티는 마을 경영 게임이에요. 지도와 주민, 날씨, 사건이 판마다 달라요. 가입 없이 브라우저에 저장돼요." },
+  en: { title: "Twelve Months, One Village — month-by-month sim", description: "A village sim where the map, the villagers, the weather and the news differ every run: three actions a month to gather food and wood, build houses and last three years. Saved in your browser, no sign-up." },
+  ja: { title: "小さな村の十二か月 — 月ごとの村づくり", description: "1か月に3回の行動で食料と木材を集め、家を建てて3年を乗り切る村づくりゲームです。地図・村人・天気・出来事が毎回変わります。登録なしでブラウザーに保存されます。" },
+  zh: { title: "小村庄的十二个月 — 按月经营的村庄", description: "每月行动三次，收集粮食和木材、盖房子，撑过三年的村庄经营游戏。地图、村民、天气和事件每局都不同。无需注册，保存在浏览器中。" },
+  fr: { title: "Douze mois, un village — gestion mois par mois", description: "Un jeu de gestion de village où la carte, les villageois, la météo et les nouvelles changent à chaque partie : trois actions par mois pour récolter, construire et tenir trois ans. Enregistré dans votre navigateur, sans inscription." },
+  es: { title: "Doce meses, una aldea — gestión mes a mes", description: "Un juego de gestión de aldea donde el mapa, los aldeanos, el tiempo y las noticias cambian en cada partida: tres acciones al mes para reunir comida y madera, construir casas y aguantar tres años. Se guarda en tu navegador, sin registro." },
 };
 const m = meta[locale] ?? meta.en;
 ---

@@ -216,7 +216,7 @@ export default function Village({ locale = "ko" }: { locale?: Locale }) {
   return (
     <GameContainer title={t.title} subtitle={t.sub} resetLabel={t.again} onReset={restart}>
       <div className="mx-auto max-w-md" data-village-ready={ready ? "1" : "0"}>
-        <p className="mb-3 rounded-xl bg-muted px-3 py-2 text-xs leading-relaxed text-muted-foreground">{t.trial}</p>
+        <p className="mb-3 rounded-xl bg-muted px-3 py-2 text-xs leading-relaxed text-muted-foreground">{t.intro}</p>
 
         <div className="mb-1 flex items-baseline justify-between gap-2">
           <p className="text-lg font-black text-foreground">

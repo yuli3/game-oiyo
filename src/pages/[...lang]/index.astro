@@ -15,22 +15,22 @@ const { locale } = Astro.props as { locale: Locale };
 const translations = await getTranslations(locale);
 
 const meta: Record<Locale, { title: string; description: string }> = {
-  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 62종", description: "체스·스도쿠·워들부터 OIYO 오리지널 게임까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 62종." },
-  en: { title: "OIYO Arcade — 62 free browser games, no install", description: "Chess, Sudoku, Wordle, and original OIYO games: 62 free games you can play instantly in your browser." },
-  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム62種", description: "チェス・数独・ワードルからOIYOオリジナル作品まで、ブラウザですぐ遊べる無料ゲーム62種。" },
-  zh: { title: "OIYO 街机 — 无需安装的62款免费游戏", description: "从国际象棋、数独、猜词到 OIYO 原创作品，62款游戏无需安装即可畅玩。" },
-  fr: { title: "OIYO Arcade — 62 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations originales OIYO : 62 jeux gratuits dans le navigateur." },
-  es: { title: "OIYO Arcade — 62 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y originales de OIYO: 62 juegos gratuitos en el navegador." },
+  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 63종", description: "체스·스도쿠·워들부터 OIYO 오리지널 게임까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 63종." },
+  en: { title: "OIYO Arcade — 63 free browser games, no install", description: "Chess, Sudoku, Wordle, and original OIYO games: 63 free games you can play instantly in your browser." },
+  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム63種", description: "チェス・数独・ワードルからOIYOオリジナル作品まで、ブラウザですぐ遊べる無料ゲーム63種。" },
+  zh: { title: "OIYO 街机 — 无需安装的63款免费游戏", description: "从国际象棋、数独、猜词到 OIYO 原创作品，63款游戏无需安装即可畅玩。" },
+  fr: { title: "OIYO Arcade — 63 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations originales OIYO : 63 jeux gratuits dans le navigateur." },
+  es: { title: "OIYO Arcade — 63 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y originales de OIYO: 63 juegos gratuitos en el navegador." },
 };
 const m = meta[locale] ?? meta.en;
 
 const hero: Record<Locale, { eyebrow: string; title: string; sub: string }> = {
-  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 62종", sub: "보드·카드·퍼즐·오리지널 아케이드 — 브라우저에서 바로 시작하세요." },
-  en: { eyebrow: "🎮 OIYO Arcade", title: "62 free games, right in your browser", sub: "Board, card, puzzle, and original arcade games — instant and free." },
-  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム62種", sub: "ボード・カード・パズル・オリジナル作品をブラウザですぐに。" },
-  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的62款免费游戏", sub: "棋类、纸牌、益智和原创街机游戏，浏览器直接开玩。" },
-  fr: { eyebrow: "🎮 OIYO Arcade", title: "62 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et créations originales, sans installation." },
-  es: { eyebrow: "🎮 OIYO Arcade", title: "62 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones originales, sin instalación." },
+  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 63종", sub: "보드·카드·퍼즐·오리지널 아케이드 — 브라우저에서 바로 시작하세요." },
+  en: { eyebrow: "🎮 OIYO Arcade", title: "63 free games, right in your browser", sub: "Board, card, puzzle, and original arcade games — instant and free." },
+  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム63種", sub: "ボード・カード・パズル・オリジナル作品をブラウザですぐに。" },
+  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的63款免费游戏", sub: "棋类、纸牌、益智和原创街机游戏，浏览器直接开玩。" },
+  fr: { eyebrow: "🎮 OIYO Arcade", title: "63 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et créations originales, sans installation." },
+  es: { eyebrow: "🎮 OIYO Arcade", title: "63 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones originales, sin instalación." },
 };
 const h = hero[locale] ?? hero.en;
 
@@ -96,6 +96,7 @@ const GAMES: Game[] = [
   { slug: "emberdeep", emoji: "⚔️", cat: "arcade", name: { ko: "잿불 던전", en: "Emberdeep", ja: "残り火の迷宮", zh: "余烬地牢", fr: "Braise profonde", es: "Ascua profunda" } },
   { slug: "isometric-city", emoji: "🏗️", cat: "arcade", name: { ko: "도시 건설", en: "Isometric City", ja: "都市建設", zh: "等距建城", fr: "Ville isométrique", es: "Ciudad isométrica" } },
   { slug: "run-a-business", emoji: "🍜", cat: "arcade", name: { ko: "하루 장사", en: "Run a Business", ja: "一日商売", zh: "一天生意", fr: "Une journée de commerce", es: "Un día de negocio" } },
+  { slug: "village", emoji: "🏡", cat: "arcade", name: { ko: "작은 마을 열두 달", en: "Twelve Months, One Village", ja: "小さな村の十二か月", zh: "小村庄的十二个月", fr: "Douze mois, un village", es: "Doce meses, una aldea" } },
   { slug: "mallow-isle", emoji: "🐇", cat: "arcade", name: { ko: "마시멜로 섬", en: "Mallow Isle", ja: "マロー島", zh: "棉花糖岛", fr: "Île Mallow", es: "Isla Mallow" } },
   { slug: "urban-strike", emoji: "🔫", cat: "arcade", name: { ko: "시가전", en: "Urban Strike", ja: "市街戦", zh: "巷战", fr: "Assaut urbain", es: "Asalto urbano" } },
   { slug: "iron-tempest", emoji: "💥", cat: "arcade", name: { ko: "강철 폭풍", en: "Iron Tempest", ja: "鉄の嵐", zh: "钢铁风暴", fr: "Tempête de fer", es: "Tempestad de hierro" } },

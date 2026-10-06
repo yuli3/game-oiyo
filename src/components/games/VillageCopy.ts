@@ -5,7 +5,7 @@ type Named = { name: string; hint: string };
 export interface VillageCopy {
   title: string;
   sub: string;
-  trial: string;
+  intro: string;
   date: string;
   seasons: [string, string, string, string];
   progress: string;
@@ -51,7 +51,7 @@ export const VILLAGE_COPY: Record<Locale, VillageCopy> = {
   ko: {
     title: "작은 마을 열두 달",
     sub: "월 단위 마을 경영",
-    trial: "시험판이에요. 지도, 마을 성격, 주민, 날씨, 사건이 판마다 달라요. 한 달에 행동 세 번으로 3년(36개월)을 키워 보세요.",
+    intro: "지도, 마을 성격, 주민, 날씨, 사건이 판마다 달라요. 한 달에 행동 세 번으로 3년(36개월)을 키워 보세요.",
     date: "{y}년째 {m}월",
     seasons: ["봄", "여름", "가을", "겨울"],
     progress: "36개월 중 {n}번째 달",
@@ -179,7 +179,7 @@ export const VILLAGE_COPY: Record<Locale, VillageCopy> = {
   en: {
     title: "Twelve Months, One Village",
     sub: "Month-by-month village sim",
-    trial: "Trial build. The map, the village's character, the villagers, the weather and the news differ every run. Three actions a month, three years (36 months).",
+    intro: "The map, the village's character, the villagers, the weather and the news differ every run. Three actions a month, three years (36 months).",
     date: "Year {y}, month {m}",
     seasons: ["Spring", "Summer", "Autumn", "Winter"],
     progress: "Month {n} of 36",
@@ -307,7 +307,7 @@ export const VILLAGE_COPY: Record<Locale, VillageCopy> = {
   ja: {
     title: "小さな村の十二か月",
     sub: "月ごとの村づくり",
-    trial: "試作版です。地図、村の性格、村人、天気、知らせが毎回変わります。1か月に3回の行動で、3年(36か月)村を育ててください。",
+    intro: "地図、村の性格、村人、天気、知らせが毎回変わります。1か月に3回の行動で、3年(36か月)村を育ててください。",
     date: "{y}年目 {m}月",
     seasons: ["春", "夏", "秋", "冬"],
     progress: "36か月中 {n}か月目",
@@ -435,7 +435,7 @@ export const VILLAGE_COPY: Record<Locale, VillageCopy> = {
   zh: {
     title: "小村庄的十二个月",
     sub: "按月经营的村庄",
-    trial: "这是试玩版。地图、村庄特点、村民、天气和消息每局都不同。每月行动三次，把村庄经营满三年(36个月)。",
+    intro: "地图、村庄特点、村民、天气和消息每局都不同。每月行动三次，把村庄经营满三年(36个月)。",
     date: "第{y}年 {m}月",
     seasons: ["春", "夏", "秋", "冬"],
     progress: "36个月中的第{n}个月",
@@ -563,7 +563,7 @@ export const VILLAGE_COPY: Record<Locale, VillageCopy> = {
   fr: {
     title: "Douze mois, un village",
     sub: "Gestion de village mois par mois",
-    trial: "Version d’essai. La carte, le caractère du village, les villageois, la météo et les nouvelles changent à chaque partie. Trois actions par mois, trois ans (36 mois).",
+    intro: "La carte, le caractère du village, les villageois, la météo et les nouvelles changent à chaque partie. Trois actions par mois, trois ans (36 mois).",
     date: "Année {y}, mois {m}",
     seasons: ["Printemps", "Été", "Automne", "Hiver"],
     progress: "Mois {n} sur 36",
@@ -691,7 +691,7 @@ export const VILLAGE_COPY: Record<Locale, VillageCopy> = {
   es: {
     title: "Doce meses, una aldea",
     sub: "Gestión de aldea mes a mes",
-    trial: "Versión de prueba. El mapa, el carácter de la aldea, los aldeanos, el tiempo y las noticias cambian en cada partida. Tres acciones al mes, tres años (36 meses).",
+    intro: "El mapa, el carácter de la aldea, los aldeanos, el tiempo y las noticias cambian en cada partida. Tres acciones al mes, tres años (36 meses).",
     date: "Año {y}, mes {m}",
     seasons: ["Primavera", "Verano", "Otoño", "Invierno"],
     progress: "Mes {n} de 36",
