@@ -32,6 +32,21 @@ export function tickAnimalFever(feverSeconds: number) {
   return Math.max(0, feverSeconds - 1);
 }
 export type AnimalBoard = string[][];
+/**
+ * Rule changes the augment mode switches on. The classic round always runs on
+ * ANIMAL_NO_MODS, so its scores stay comparable with earlier records. 2026-10-06
+ */
+export interface AnimalMods {
+  /** How many animal kinds can drop in. Fewer kinds means more cascades. */
+  types: number;
+  /** A straight run of four or more clears its whole row or column. */
+  lineBlast: boolean;
+  /** A straight run of five or more clears every animal of that kind. */
+  stampede: boolean;
+  /** A swap that matches nothing still goes through. */
+  freeSwap: boolean;
+}
+export const ANIMAL_NO_MODS: AnimalMods = { types: ANIMAL_TYPES.length, lineBlast: false, stampede: false, freeSwap: false };
 export type AnimalSwap = { from: number; to: number };
 function next(seed: number) {
   let x = seed >>> 0;
@@ -58,9 +73,37 @@ export function findAnimalMatches(board: AnimalBoard) {
   return m;
 }
 const any = (m: boolean[][]) => m.some((r) => r.some(Boolean));
+/** Matches plus whatever an active rule adds to them. Never marks anything when there is no match. */
+export function findAnimalClears(board: AnimalBoard, mods: AnimalMods = ANIMAL_NO_MODS) {
+  const m = findAnimalMatches(board);
+  if (!mods.lineBlast && !mods.stampede) return m;
+  const rows: number[] = [], cols: number[] = [], kinds = new Set<string>();
+  for (let r = 0; r < 7; r++)
+    for (let c = 0; c < 7; c++) {
+      if (c === 0 || board[r][c - 1] !== board[r][c]) {
+        let n = 1;
+        while (c + n < 7 && board[r][c + n] === board[r][c]) n++;
+        if (n >= 4) rows.push(r);
+        if (n >= 5) kinds.add(board[r][c]);
+      }
+      if (r === 0 || board[r - 1][c] !== board[r][c]) {
+        let n = 1;
+        while (r + n < 7 && board[r + n][c] === board[r][c]) n++;
+        if (n >= 4) cols.push(c);
+        if (n >= 5) kinds.add(board[r][c]);
+      }
+    }
+  if (mods.lineBlast) {
+    for (const r of rows) for (let c = 0; c < 7; c++) m[r][c] = true;
+    for (const c of cols) for (let r = 0; r < 7; r++) m[r][c] = true;
+  }
+  if (mods.stampede && kinds.size > 0)
+    for (let r = 0; r < 7; r++) for (let c = 0; c < 7; c++) if (kinds.has(board[r][c])) m[r][c] = true;
+  return m;
+}
 export type AnimalFall = { animal:string; fromRow:number; toRow:number; column:number; spawned:boolean };
 export type AnimalCascadeStep = { before:AnimalBoard; matched:number[]; collapsed:AnimalBoard; falls:AnimalFall[]; seed:number };
-function collapseWithMotion(board: AnimalBoard, m: boolean[][], seed: number) {
+function collapseWithMotion(board: AnimalBoard, m: boolean[][], seed: number, types: number = ANIMAL_TYPES.length) {
   const out = Array.from({ length: 7 }, () => Array<string>(7).fill(""));
   const falls:AnimalFall[]=[];
   let rng = seed;
@@ -71,7 +114,7 @@ function collapseWithMotion(board: AnimalBoard, m: boolean[][], seed: number) {
     for (let r = 6, i = 0; r >= 0; r--, i++) {
       if (i < keep.length) {out[r][c]=keep[i].animal;if(keep[i].row!==r)falls.push({animal:keep[i].animal,fromRow:keep[i].row,toRow:r,column:c,spawned:false});}
       else {
-        const n = next(rng); rng = n[0]; const animal=ANIMAL_TYPES[Math.floor(n[1] * ANIMAL_TYPES.length)];
+        const n = next(rng); rng = n[0]; const animal=ANIMAL_TYPES[Math.floor(n[1] * types)];
         out[r][c] = animal; falls.push({animal,fromRow:-1-spawnIndex++,toRow:r,column:c,spawned:true});
       }
     }
@@ -102,6 +145,7 @@ export function swapAnimals(
   from: number,
   to: number,
   seed: number,
+  mods: AnimalMods = ANIMAL_NO_MODS,
 ) {
   if (
     from < 0 ||
@@ -122,19 +166,22 @@ export function swapAnimals(
     current[Math.floor(from / 7)][from % 7],
   ];
   if (!any(findAnimalMatches(current)))
-    return { valid: false, board, seed, cleared: 0, waves: 0, steps: [] as AnimalCascadeStep[] };
+    return mods.freeSwap
+      ? { valid: true, board: current, seed, cleared: 0, waves: 0, steps: [] as AnimalCascadeStep[] }
+      : { valid: false, board, seed, cleared: 0, waves: 0, steps: [] as AnimalCascadeStep[] };
+  const types = Math.min(ANIMAL_TYPES.length, Math.max(3, Math.floor(mods.types)));
   let cleared = 0,
     waves = 0,
     rng = seed;
   const steps:AnimalCascadeStep[]=[];
   while (waves < 20) {
-    const m = findAnimalMatches(current);
+    const m = findAnimalClears(current, mods);
     if (!any(m)) break;
     waves++;
     const matched=m.flatMap((row,r)=>row.flatMap((value,c)=>value?[r*7+c]:[]));
     cleared += matched.length;
     const before=current.map(row=>[...row]);
-    const x = collapseWithMotion(current, m, rng);
+    const x = collapseWithMotion(current, m, rng, types);
     steps.push({before,matched,collapsed:x.board.map(row=>[...row]),falls:x.falls,seed:x.seed});
     current = x.board;
     rng = x.seed;

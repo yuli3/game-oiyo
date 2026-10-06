@@ -5,7 +5,8 @@ export const QUEUE_SIZE = 3;
 
 export type BurstColor = 1 | 2 | 3 | 4 | 5;
 export type BurstStatus = "playing" | "over";
-export type BurstShapeId = "I" | "O" | "T" | "S" | "Z" | "J" | "L" | "P";
+// "D" is a single gem. It is never in the bag: only the augment mode hands it out.
+export type BurstShapeId = "I" | "O" | "T" | "S" | "Z" | "J" | "L" | "P" | "D";
 export type Cell = { r: number; c: number };
 
 export interface BurstPiece {
@@ -21,6 +22,24 @@ export interface BurstClear {
   cols: number[];
   cells: Cell[];
 }
+
+/**
+ * Rule changes the augment mode switches on. The classic game always runs on
+ * NO_MODS, so its scores stay comparable with every earlier record. 2026-10-06
+ */
+export interface BurstMods {
+  scoreMult: number;
+  chainBonus: number;
+  crossMult: number;
+  /** A row or column that is one gem short also detonates. */
+  magnet: boolean;
+  /** A row clear takes the bottom row with it. */
+  undertow: boolean;
+  /** The most common colour in a clear detonates everywhere on the board. */
+  colorBurst: boolean;
+}
+
+export const NO_MODS: BurstMods = { scoreMult: 1, chainBonus: 0, crossMult: 2, magnet: false, undertow: false, colorBurst: false };
 
 export interface BurstState {
   board: (BurstColor | null)[][];
@@ -73,6 +92,7 @@ const SHAPES: Record<BurstShapeId, Cell[][]> = {
     [{ r: 0, c: 1 }, { r: 1, c: 0 }, { r: 1, c: 1 }, { r: 2, c: 0 }, { r: 2, c: 1 }],
     [{ r: 0, c: 0 }, { r: 0, c: 1 }, { r: 1, c: 0 }, { r: 1, c: 1 }, { r: 1, c: 2 }],
   ],
+  D: [[{ r: 0, c: 0 }]],
 };
 
 const SHAPE_BAG: BurstShapeId[] = ["I", "O", "T", "S", "Z", "J", "L", "P"];
@@ -212,21 +232,22 @@ export function createBlockBurst(seed: number): BurstState {
   });
 }
 
-export function findFullLines(board: (BurstColor | null)[][]): BurstClear {
+export function findFullLines(board: (BurstColor | null)[][], gapsAllowed = 0): BurstClear {
   const rows: number[] = [];
   const cols: number[] = [];
   for (let r = 0; r < ROWS; r++) {
-    if (board[r].every((cell) => cell !== null)) rows.push(r);
+    if (board[r].filter((cell) => cell !== null).length >= COLS - gapsAllowed) rows.push(r);
   }
   for (let c = 0; c < COLS; c++) {
-    if (board.every((row) => row[c] !== null)) cols.push(c);
+    if (board.filter((row) => row[c] !== null).length >= ROWS - gapsAllowed) cols.push(c);
   }
   const marked = Array.from({ length: ROWS }, () => Array(COLS).fill(false));
   for (const r of rows) for (let c = 0; c < COLS; c++) marked[r][c] = true;
   for (const c of cols) for (let r = 0; r < ROWS; r++) marked[r][c] = true;
   const cells: Cell[] = [];
   for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) if (marked[r][c]) cells.push({ r, c });
+    // With a gap allowed, the empty square of a line is not a cleared gem.
+    for (let c = 0; c < COLS; c++) if (marked[r][c] && board[r][c] !== null) cells.push({ r, c });
   }
   return { rows, cols, cells };
 }
@@ -250,15 +271,36 @@ export type BurstWave = {
   after: (BurstColor | null)[][];
 };
 
-export function resolveClears(board: (BurstColor | null)[][], comboStart = 0) {
+/** Gems an active rule adds to a clear that already happened. Never starts a clear by itself. */
+function widenClear(board: (BurstColor | null)[][], found: BurstClear, mods: BurstMods): BurstClear {
+  if (!mods.undertow && !mods.colorBurst) return found;
+  const marked = new Set(found.cells.map((cell) => cell.r * COLS + cell.c));
+  if (mods.undertow && found.rows.length > 0) {
+    for (let c = 0; c < COLS; c++) if (board[ROWS - 1][c] !== null) marked.add((ROWS - 1) * COLS + c);
+  }
+  if (mods.colorBurst) {
+    const tally = [0, 0, 0, 0, 0, 0];
+    for (const cell of found.cells) tally[board[cell.r][cell.c] ?? 0] += 1;
+    let top = 1;
+    for (let color = 2; color <= COLOR_COUNT; color++) if (tally[color] > tally[top]) top = color;
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) if (board[r][c] === top) marked.add(r * COLS + c);
+    }
+  }
+  const cells = [...marked].sort((a, b) => a - b).map((index) => ({ r: Math.floor(index / COLS), c: index % COLS }));
+  return { rows: found.rows, cols: found.cols, cells };
+}
+
+export function resolveClears(board: (BurstColor | null)[][], comboStart = 0, mods: BurstMods = NO_MODS) {
   let current = cloneBoard(board);
   let combo = comboStart;
   let cells = 0;
   let waves = 0;
   const wavesDetail: BurstWave[] = [];
   while (waves < 20) {
-    const found = findFullLines(current);
-    if (found.cells.length === 0) break;
+    const full = findFullLines(current, mods.magnet ? 1 : 0);
+    if (full.cells.length === 0) break;
+    const found = widenClear(current, full, mods);
     waves += 1;
     combo += 1;
     cells += found.cells.length;
@@ -268,7 +310,8 @@ export function resolveClears(board: (BurstColor | null)[][], comboStart = 0) {
     wavesDetail.push({ clear: found, before, after: cloneBoard(current) });
   }
   const both = wavesDetail.some((wave) => wave.clear.rows.length > 0 && wave.clear.cols.length > 0);
-  const score = cells * 10 * Math.max(1, combo) * (both ? 2 : 1);
+  const chain = cells > 0 ? Math.max(1, combo) + mods.chainBonus : 0;
+  const score = Math.round(cells * 10 * chain * (both ? mods.crossMult : 1) * mods.scoreMult);
   return { board: current, combo, cells, waves, score, wavesDetail };
 }
 
@@ -281,20 +324,43 @@ function mergeActive(state: BurstState) {
   return board;
 }
 
-export function settleLock(state: BurstState) {
+/** The 3×3 around every gem of the locked piece, as one wave before any line is checked. */
+function bombWave(state: BurstState, merged: (BurstColor | null)[][]): BurstWave | null {
+  if (!state.active) return null;
+  const marked = new Set<number>();
+  for (const cell of pieceCells(state.active)) {
+    for (let dr = -1; dr <= 1; dr++) {
+      for (let dc = -1; dc <= 1; dc++) {
+        const r = cell.r + dr;
+        const c = cell.c + dc;
+        if (r >= 0 && r < ROWS && c >= 0 && c < COLS && merged[r][c] !== null) marked.add(r * COLS + c);
+      }
+    }
+  }
+  if (marked.size === 0) return null;
+  const cells = [...marked].sort((a, b) => a - b).map((index) => ({ r: Math.floor(index / COLS), c: index % COLS }));
+  const cleared = cloneBoard(merged);
+  for (const cell of cells) cleared[cell.r][cell.c] = null;
+  return { clear: { rows: [], cols: [], cells }, before: cloneBoard(merged), after: applyGravity(cleared) };
+}
+
+export function settleLock(state: BurstState, mods: BurstMods = NO_MODS, bomb = false) {
   const merged = mergeActive(state);
-  const resolved = resolveClears(merged, 0);
-  const cleared = state.cleared + resolved.cells;
+  const blast = bomb ? bombWave(state, merged) : null;
+  const resolved = resolveClears(blast ? blast.after : merged, 0, mods);
+  const blastCells = blast ? blast.clear.cells.length : 0;
+  const gain = resolved.score + Math.round(blastCells * 10 * mods.scoreMult);
+  const cleared = state.cleared + resolved.cells + blastCells;
   const next: BurstState = {
     ...state,
     board: resolved.board,
     active: null,
-    score: state.score + resolved.score,
+    score: state.score + gain,
     combo: resolved.waves,
     cleared,
     level: Math.min(15, 1 + Math.floor(cleared / 40)),
   };
-  return { state: next, merged, wavesDetail: resolved.wavesDetail, gain: resolved.score };
+  return { state: next, merged, wavesDetail: blast ? [blast, ...resolved.wavesDetail] : resolved.wavesDetail, gain };
 }
 
 export function spawnBurstPiece(state: BurstState): BurstState {
@@ -389,7 +455,7 @@ function isColor(value: unknown): value is BurstColor {
 }
 
 function isShape(value: unknown): value is BurstShapeId {
-  return value === "I" || value === "O" || value === "T" || value === "S" || value === "Z" || value === "J" || value === "L" || value === "P";
+  return value === "I" || value === "O" || value === "T" || value === "S" || value === "Z" || value === "J" || value === "L" || value === "P" || value === "D";
 }
 
 function isPiece(value: unknown): value is BurstPiece {

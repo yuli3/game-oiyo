@@ -28,6 +28,23 @@ import {
   type BurstWave,
   type Cell,
 } from "../../lib/games/block-burst";
+import type { AugmentTier } from "../../lib/games/augment";
+import {
+  BURST_AUGMENTS,
+  BURST_AUGMENT_SAVE,
+  burstMods,
+  createBurstRun,
+  lockBurstAugmented,
+  offerBurstAugments,
+  parseBurstRun,
+  pickBurstAugment,
+  readBurstAugmentBest,
+  serializeBurstRun,
+  spawnBurstAugmented,
+  writeBurstAugmentBest,
+  type BurstAugmentId,
+  type BurstRun,
+} from "../../lib/games/block-burst-augments";
 
 const SAVE = "oiyo:block-burst-state:v1";
 const GAME = "block-burst";
@@ -37,7 +54,6 @@ const COPY = {
   ko: {
     title: "블록 버스트",
     sub: "라인 브레이커",
-    start: "낙하 시작",
     score: "점수",
     best: "최고",
     combo: "연쇄",
@@ -55,11 +71,32 @@ const COPY = {
     left: "왼쪽",
     right: "오른쪽",
     down: "내리기",
+    classic: "클래식 시작",
+    augment: "증강 모드 시작",
+    augmentSub: "시작할 때 한 장, 레벨이 오를 때마다 한 장. 셋 중 하나를 골라 규칙을 바꿔요. 기록은 클래식과 따로 남아요.",
+    pick: "증강을 하나 고르세요",
+    pickKeys: "숫자 키 1·2·3으로도 고를 수 있어요",
+    owned: "고른 증강",
+    modeAugment: "증강 모드",
+    tiers: { silver: "실버", gold: "골드", prismatic: "프리즘" },
+    augments: {
+      score: { name: "점수 상인", desc: "얻는 점수가 25% 늘어요. 세 번까지 겹쳐요." },
+      slow: { name: "느린 중력", desc: "블록이 15% 느리게 떨어져요. 세 번까지 겹쳐요." },
+      chain: { name: "연쇄 증폭", desc: "연쇄 배율이 1 올라가요. 세 번까지 겹쳐요." },
+      drop: { name: "내리꽂기", desc: "하드 드롭 점수가 3배, 겹치면 5배·7배가 돼요." },
+      dot: { name: "한 알", desc: "네 번째 조각마다 한 칸짜리 보석이 나와요." },
+      bomb: { name: "폭탄 조각", desc: "여섯 번째 조각마다 폭탄이 돼요. 놓이면 주변을 터뜨려요." },
+      cross: { name: "십자 폭발", desc: "가로와 세로를 같이 터뜨리면 2배가 아니라 4배예요." },
+      undertow: { name: "밑줄 쓸기", desc: "가로 줄을 터뜨리면 맨 아랫줄도 같이 터져요." },
+      magnet: { name: "거의 다 됐어", desc: "한 칸만 비어 있는 줄도 터져요." },
+      revive: { name: "한 번 더", desc: "보드가 가득 차면 위쪽 다섯 줄을 지우고 이어 해요. 한 번만요." },
+      rush: { name: "올인", desc: "점수가 2배가 돼요. 대신 블록이 25% 빨리 떨어져요." },
+      colorBurst: { name: "색 번짐", desc: "줄이 터질 때 그 줄에 가장 많은 색이 보드 전체에서 터져요." },
+    },
   },
   en: {
     title: "Block Burst",
     sub: "Line Breaker",
-    start: "Start drop",
     score: "Score",
     best: "Best",
     combo: "Chain",
@@ -77,11 +114,32 @@ const COPY = {
     left: "Left",
     right: "Right",
     down: "Soft drop",
+    classic: "Start classic",
+    augment: "Start augment mode",
+    augmentSub: "One card at the start and one at every level. Pick one of three to bend the rules. Scores are kept apart from classic.",
+    pick: "Pick one augment",
+    pickKeys: "Number keys 1, 2 and 3 work too",
+    owned: "Your augments",
+    modeAugment: "Augment mode",
+    tiers: { silver: "Silver", gold: "Gold", prismatic: "Prismatic" },
+    augments: {
+      score: { name: "Score Broker", desc: "Earn 25% more points. Stacks three times." },
+      slow: { name: "Low Gravity", desc: "Pieces fall 15% slower. Stacks three times." },
+      chain: { name: "Chain Amp", desc: "Chain multiplier goes up by 1. Stacks three times." },
+      drop: { name: "Slam", desc: "Hard-drop points are tripled, then ×5 and ×7 when stacked." },
+      dot: { name: "Single Gem", desc: "Every fourth piece is a one-square gem." },
+      bomb: { name: "Bomb Piece", desc: "Every sixth piece is a bomb. It blasts what it lands next to." },
+      cross: { name: "Crossfire", desc: "Clearing a row and a column together pays ×4 instead of ×2." },
+      undertow: { name: "Undertow", desc: "Clearing a row also clears the bottom row." },
+      magnet: { name: "Close Enough", desc: "A line with a single gap detonates too." },
+      revive: { name: "One More", desc: "When the board fills up, the top five rows vanish and you keep going. Once." },
+      rush: { name: "All In", desc: "Points are doubled, but pieces fall 25% faster." },
+      colorBurst: { name: "Colour Bleed", desc: "When a line bursts, its most common colour bursts across the whole board." },
+    },
   },
   ja: {
     title: "ブロックバースト",
     sub: "ラインブレイカー",
-    start: "落下スタート",
     score: "スコア",
     best: "ベスト",
     combo: "連鎖",
@@ -99,11 +157,32 @@ const COPY = {
     left: "左",
     right: "右",
     down: "ソフトドロップ",
+    classic: "クラシックで始める",
+    augment: "オーグメントモードで始める",
+    augmentSub: "開始時に1枚、レベルが上がるたびに1枚。3枚から1枚を選んでルールを変えます。記録はクラシックと別に残ります。",
+    pick: "オーグメントを1枚選んでください",
+    pickKeys: "数字キーの1・2・3でも選べます",
+    owned: "選んだオーグメント",
+    modeAugment: "オーグメントモード",
+    tiers: { silver: "シルバー", gold: "ゴールド", prismatic: "プリズム" },
+    augments: {
+      score: { name: "スコア商人", desc: "獲得スコアが25%増えます。3回まで重なります。" },
+      slow: { name: "ゆるい重力", desc: "ブロックの落下が15%遅くなります。3回まで重なります。" },
+      chain: { name: "連鎖ブースト", desc: "連鎖倍率が1上がります。3回まで重なります。" },
+      drop: { name: "たたきつけ", desc: "ハードドロップの得点が3倍、重ねると5倍・7倍になります。" },
+      dot: { name: "ひとつぶ", desc: "4個目ごとに1マスのジェムが出ます。" },
+      bomb: { name: "爆弾ピース", desc: "6個目ごとに爆弾になります。置くとまわりを吹き飛ばします。" },
+      cross: { name: "十字爆発", desc: "横と縦を同時に消すと2倍ではなく4倍になります。" },
+      undertow: { name: "底さらい", desc: "横一列を消すと一番下の列も一緒に消えます。" },
+      magnet: { name: "ほぼ完成", desc: "1マスだけ空いている列も爆発します。" },
+      revive: { name: "もう一回", desc: "盤面が埋まると上の5列を消して続けられます。1回だけです。" },
+      rush: { name: "オールイン", desc: "スコアが2倍になります。その代わり落下が25%速くなります。" },
+      colorBurst: { name: "色うつり", desc: "列が消えるとき、その列でいちばん多い色が盤面全体で消えます。" },
+    },
   },
   zh: {
     title: "方块爆裂",
     sub: "行列爆破",
-    start: "开始下落",
     score: "分数",
     best: "最高",
     combo: "连锁",
@@ -121,11 +200,32 @@ const COPY = {
     left: "左",
     right: "右",
     down: "软降",
+    classic: "开始经典模式",
+    augment: "开始强化模式",
+    augmentSub: "开局选一张，每升一级再选一张。三选一，改变规则。成绩与经典模式分开记录。",
+    pick: "请选择一张强化",
+    pickKeys: "也可以按数字键 1、2、3 选择",
+    owned: "已选强化",
+    modeAugment: "强化模式",
+    tiers: { silver: "白银", gold: "黄金", prismatic: "棱彩" },
+    augments: {
+      score: { name: "分数商人", desc: "获得的分数增加25%。最多叠加三次。" },
+      slow: { name: "低重力", desc: "方块下落慢15%。最多叠加三次。" },
+      chain: { name: "连锁增幅", desc: "连锁倍率加1。最多叠加三次。" },
+      drop: { name: "重砸", desc: "硬降得分变为3倍，叠加后为5倍、7倍。" },
+      dot: { name: "单颗宝石", desc: "每第四块是一格宝石。" },
+      bomb: { name: "炸弹方块", desc: "每第六块变成炸弹，落下后炸掉周围。" },
+      cross: { name: "十字爆破", desc: "同时消除横排和竖列时是4倍，而不是2倍。" },
+      undertow: { name: "扫底", desc: "消除横排时，最底下一排也一起消除。" },
+      magnet: { name: "差一点也行", desc: "只空一格的行列也会爆炸。" },
+      revive: { name: "再来一次", desc: "棋盘满了会清掉上面五排并继续。只有一次。" },
+      rush: { name: "全押", desc: "分数翻倍，但方块下落快25%。" },
+      colorBurst: { name: "颜色蔓延", desc: "行列爆炸时，其中最多的颜色会在整个棋盘上爆炸。" },
+    },
   },
   fr: {
     title: "Block Burst",
     sub: "Briseur de lignes",
-    start: "Lancer la chute",
     score: "Score",
     best: "Record",
     combo: "Chaîne",
@@ -143,11 +243,32 @@ const COPY = {
     left: "Gauche",
     right: "Droite",
     down: "Chute douce",
+    classic: "Lancer le mode classique",
+    augment: "Lancer le mode augments",
+    augmentSub: "Une carte au départ, puis une à chaque niveau. Choisissez-en une sur trois pour changer les règles. Les scores sont séparés du mode classique.",
+    pick: "Choisissez un augment",
+    pickKeys: "Les touches 1, 2 et 3 fonctionnent aussi",
+    owned: "Vos augments",
+    modeAugment: "Mode augments",
+    tiers: { silver: "Argent", gold: "Or", prismatic: "Prismatique" },
+    augments: {
+      score: { name: "Courtier en points", desc: "Vous gagnez 25 % de points en plus. Cumulable trois fois." },
+      slow: { name: "Faible gravité", desc: "Les pièces tombent 15 % moins vite. Cumulable trois fois." },
+      chain: { name: "Ampli de chaîne", desc: "Le multiplicateur de chaîne augmente de 1. Cumulable trois fois." },
+      drop: { name: "Coup sec", desc: "Les points de chute dure sont triplés, puis ×5 et ×7 en cumul." },
+      dot: { name: "Gemme seule", desc: "Une pièce sur quatre est une gemme d’une case." },
+      bomb: { name: "Pièce bombe", desc: "Une pièce sur six est une bombe. Elle fait sauter ce qui l’entoure." },
+      cross: { name: "Feu croisé", desc: "Une ligne et une colonne ensemble rapportent ×4 au lieu de ×2." },
+      undertow: { name: "Lame de fond", desc: "Effacer une ligne efface aussi la ligne du bas." },
+      magnet: { name: "Presque", desc: "Une ligne à laquelle il manque une seule case explose aussi." },
+      revive: { name: "Encore une", desc: "Quand le plateau est plein, les cinq lignes du haut disparaissent et vous continuez. Une seule fois." },
+      rush: { name: "Tapis", desc: "Les points sont doublés, mais les pièces tombent 25 % plus vite." },
+      colorBurst: { name: "Tache de couleur", desc: "Quand une ligne explose, sa couleur la plus fréquente explose sur tout le plateau." },
+    },
   },
   es: {
     title: "Block Burst",
     sub: "Rompelíneas",
-    start: "Empezar caída",
     score: "Puntos",
     best: "Récord",
     combo: "Cadena",
@@ -165,6 +286,28 @@ const COPY = {
     left: "Izquierda",
     right: "Derecha",
     down: "Caída suave",
+    classic: "Empezar modo clásico",
+    augment: "Empezar modo aumentos",
+    augmentSub: "Una carta al empezar y otra en cada nivel. Elige una de tres para cambiar las reglas. Los récords se guardan aparte del modo clásico.",
+    pick: "Elige un aumento",
+    pickKeys: "También puedes usar las teclas 1, 2 y 3",
+    owned: "Tus aumentos",
+    modeAugment: "Modo aumentos",
+    tiers: { silver: "Plata", gold: "Oro", prismatic: "Prismático" },
+    augments: {
+      score: { name: "Agente de puntos", desc: "Ganas un 25 % más de puntos. Se acumula tres veces." },
+      slow: { name: "Gravedad baja", desc: "Las piezas caen un 15 % más lento. Se acumula tres veces." },
+      chain: { name: "Amplificador", desc: "El multiplicador de cadena sube 1. Se acumula tres veces." },
+      drop: { name: "Golpe seco", desc: "Los puntos de caída dura se triplican, y son ×5 y ×7 al acumular." },
+      dot: { name: "Gema suelta", desc: "Una de cada cuatro piezas es una gema de una casilla." },
+      bomb: { name: "Pieza bomba", desc: "Una de cada seis piezas es una bomba. Revienta lo que tiene alrededor." },
+      cross: { name: "Fuego cruzado", desc: "Fila y columna a la vez valen ×4 en lugar de ×2." },
+      undertow: { name: "Resaca", desc: "Al limpiar una fila también se limpia la fila de abajo." },
+      magnet: { name: "Casi", desc: "Una línea a la que le falta una sola casilla también estalla." },
+      revive: { name: "Otra más", desc: "Cuando el tablero se llena, las cinco filas de arriba desaparecen y sigues. Solo una vez." },
+      rush: { name: "Todo o nada", desc: "Los puntos se duplican, pero las piezas caen un 25 % más rápido." },
+      colorBurst: { name: "Mancha de color", desc: "Cuando una línea estalla, su color más común estalla en todo el tablero." },
+    },
   },
 } as const;
 
@@ -176,9 +319,17 @@ const GEMS: Record<BurstColor, { fill: string; glow: string; shine: string }> = 
   5: { fill: "#c6a15b", glow: "rgba(250, 204, 21, 0.45)", shine: "#fef3c7" },
 };
 
+const TIER_OF = Object.fromEntries(BURST_AUGMENTS.map((def) => [def.id, def.tier])) as Record<BurstAugmentId, AugmentTier>;
+const TIER_TONE: Record<AugmentTier, string> = {
+  silver: "border-slate-300 bg-slate-50 text-slate-800",
+  gold: "border-amber-400 bg-amber-50 text-amber-900",
+  prismatic: "border-fuchsia-400 bg-[linear-gradient(135deg,#fdf2f8,#eef2ff_55%,#ecfeff)] text-indigo-900",
+};
+type Mode = "classic" | "augment";
+
 type Particle = { x: number; y: number; vx: number; vy: number; life: number; color: string; size: number };
 
-function Gem({ color, ghost, bursting }: { color: BurstColor; ghost?: boolean; bursting?: boolean }) {
+function Gem({ color, ghost, bursting, bomb }: { color: BurstColor; ghost?: boolean; bursting?: boolean; bomb?: boolean }) {
   const gem = GEMS[color];
   return (
     <div
@@ -191,6 +342,7 @@ function Gem({ color, ghost, bursting }: { color: BurstColor; ghost?: boolean; b
         draggable={false}
         className="pointer-events-none h-full w-full object-contain"
       />
+      {bomb ? <span className="bomb-mark" aria-hidden="true" /> : null}
       {bursting ? <span className="burst-sheet" aria-hidden="true" /> : null}
     </div>
   );
@@ -199,7 +351,10 @@ function Gem({ color, ghost, bursting }: { color: BurstColor; ghost?: boolean; b
 export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
   const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
   const reducedMotion = usePrefersReducedMotion();
-  const [phase, setPhase] = useState<"briefing" | "playing" | "paused" | "over">("briefing");
+  const [phase, setPhase] = useState<"briefing" | "playing" | "paused" | "picking" | "over">("briefing");
+  const [mode, setMode] = useState<Mode>("classic");
+  const [run, setRun] = useState<BurstRun | null>(null);
+  const [augmentBest, setAugmentBest] = useState(0);
   const [game, setGame] = useState<BurstState>(() => createBlockBurst(1));
   const [best, setBest] = useState(0);
   const [sound, setSound] = useState(true);
@@ -219,8 +374,13 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
   const resolvingRef = useRef(false);
   const runRef = useRef(0);
   const touchRef = useRef<{ x: number; y: number; t: number } | null>(null);
+  const runStateRef = useRef<BurstRun | null>(run);
+  const modeRef = useRef<Mode>(mode);
   phaseRef.current = phase;
   gameRef.current = game;
+  runStateRef.current = run;
+  modeRef.current = mode;
+  const mods = run ? burstMods(run.owned) : null;
   resolvingRef.current = resolving;
 
   const tone = useCallback((freq: number, dur = 0.12) => {
@@ -272,18 +432,36 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
   useEffect(() => {
     const existing = getBest(GAME);
     if (existing) setBest(existing.value);
+    setAugmentBest(readBurstAugmentBest());
     const saved = parseBurst(typeof localStorage === "undefined" ? null : localStorage.getItem(SAVE));
     if (saved && saved.status === "playing") {
       setGame(saved);
+      setRestored(true);
+      setPhase("paused");
+      return;
+    }
+    // The classic save keeps its place: an augment run is only resumed when no classic board is waiting.
+    const augmented = parseBurstRun(typeof localStorage === "undefined" ? null : localStorage.getItem(BURST_AUGMENT_SAVE));
+    if (augmented && augmented.state.status === "playing") {
+      setMode("augment");
+      setRun(offerBurstAugments(augmented.run, augmented.state.level));
+      setGame(augmented.state);
       setRestored(true);
       setPhase("paused");
     }
   }, []);
 
   useEffect(() => {
+    if (mode === "augment") {
+      if ((phase === "playing" || phase === "picking") && run) {
+        try { localStorage.setItem(BURST_AUGMENT_SAVE, serializeBurstRun(game, run)); } catch { /* storage is best-effort */ }
+      }
+      if (phase === "over") localStorage.removeItem(BURST_AUGMENT_SAVE);
+      return;
+    }
     if (phase === "playing") localStorage.setItem(SAVE, serializeBurst(game));
     if (phase === "over") localStorage.removeItem(SAVE);
-  }, [phase, game]);
+  }, [phase, game, mode, run]);
 
   useEffect(() => {
     const hide = () => { if (document.hidden && phaseRef.current === "playing") setPhase("paused"); };
@@ -319,11 +497,14 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
     return () => cancelAnimationFrame(frame);
   }, []);
 
-  const start = () => {
+  const start = (nextMode: Mode = modeRef.current) => {
     const seed = crypto.getRandomValues(new Uint32Array(1))[0];
     runRef.current += 1;
+    setMode(nextMode);
+    setRun(nextMode === "augment" ? createBurstRun(seed) : null);
     setGame(createBlockBurst(seed));
-    setPhase("playing");
+    // An augment run opens on its first draft; gravity waits for the pick.
+    setPhase(nextMode === "augment" ? "picking" : "playing");
     setRestored(false);
     setResolving(false);
     setBursting([]);
@@ -339,6 +520,12 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
     if (next.status !== "over") return;
     setPhase("over");
     recordAchievementEvent(GAME, "played");
+    if (modeRef.current === "augment") {
+      // Augment scores never touch the classic best: the rules are not the same game.
+      if (next.score > 0) setAugmentBest(writeBurstAugmentBest(next.score));
+      tone(140, 0.28);
+      return;
+    }
     if (next.score > 0) {
       // 개인 최고 갱신은 "played" 와 다른 사건이다. 둘을 한 이벤트로 묶으면
       // 업적 화면이 "몇 판 했나"와 "얼마나 늘었나"를 구분하지 못한다.
@@ -348,6 +535,35 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
       if (next.score > previousBest) recordAchievementEvent(GAME, "personal-best");
     }
     tone(140, 0.28);
+  }, [tone]);
+
+  /** Spawns the next piece. In augment mode this is also where dots, bombs, the revive and the next draft happen. */
+  const spawnNext = useCallback((base: BurstState) => {
+    const current = runStateRef.current;
+    if (modeRef.current !== "augment" || !current) {
+      finish(spawnBurstPiece(base));
+      return;
+    }
+    const spawned = spawnBurstAugmented(base, current);
+    const nextRun = spawned.state.status === "playing" ? offerBurstAugments(spawned.run, spawned.state.level) : spawned.run;
+    runStateRef.current = nextRun;
+    setRun(nextRun);
+    if (spawned.revivedNow) {
+      setBanner("REVIVE");
+      window.setTimeout(() => setBanner(""), 900);
+    }
+    finish(spawned.state);
+    if (nextRun.offer && spawned.state.status === "playing") setPhase("picking");
+  }, [finish]);
+
+  const pick = useCallback((id: BurstAugmentId) => {
+    const current = runStateRef.current;
+    if (phaseRef.current !== "picking" || !current) return;
+    const picked = offerBurstAugments(pickBurstAugment(current, id), gameRef.current.level);
+    runStateRef.current = picked;
+    setRun(picked);
+    tone(700, 0.12);
+    if (!picked.offer) setPhase("playing");
   }, [tone]);
 
   const playWaves = useCallback(async (base: BurstState, waves: BurstWave[], merged: (BurstColor | null)[][], gain: number) => {
@@ -365,7 +581,7 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
       setGame((g) => ({ ...g, board: wave.before, combo: i + 1 }));
       const colors = wave.clear.cells.map((cell) => wave.before[cell.r][cell.c] ?? 1);
       burstFx(wave.clear.cells, colors);
-      setBanner(i === 0 && wave.clear.rows.length && wave.clear.cols.length ? "CROSS" : i >= 2 ? `CHAIN x${i + 1}` : wave.clear.cols.length ? "COLUMN" : "LINE");
+      setBanner(!wave.clear.rows.length && !wave.clear.cols.length ? "BOOM" : i === 0 && wave.clear.rows.length && wave.clear.cols.length ? "CROSS" : i >= 2 ? `CHAIN x${i + 1}` : wave.clear.cols.length ? "COLUMN" : "LINE");
       tone(Math.min(980, 360 + i * 90), 0.14);
       await wait(burstMs);
       if (run !== runRef.current) return;
@@ -379,21 +595,29 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
     setBanner("");
     setGainPop(gain);
     window.setTimeout(() => setGainPop(0), 700);
-    const spawned = spawnBurstPiece(base);
     setResolving(false);
-    finish(spawned);
-  }, [burstFx, finish, reducedMotion, tone]);
+    spawnNext(base);
+  }, [burstFx, spawnNext, reducedMotion, tone]);
 
   const lockNow = useCallback(async (state: BurstState) => {
     if (resolvingRef.current || state.status !== "playing" || !state.active) return;
-    const settled = settleLock(state);
+    const current = runStateRef.current;
+    let settled: ReturnType<typeof settleLock>;
+    if (modeRef.current === "augment" && current) {
+      const locked = lockBurstAugmented(state, current);
+      runStateRef.current = locked.run;
+      setRun(locked.run);
+      settled = locked;
+    } else {
+      settled = settleLock(state);
+    }
     if (settled.wavesDetail.length === 0) {
-      finish(spawnBurstPiece(settled.state));
+      spawnNext(settled.state);
       tone(240);
       return;
     }
     await playWaves(settled.state, settled.wavesDetail, settled.merged, settled.gain);
-  }, [finish, playWaves, tone]);
+  }, [spawnNext, playWaves, tone]);
 
   const apply = useCallback((next: BurstState) => {
     if (next === gameRef.current) return false;
@@ -424,16 +648,18 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
     if (phaseRef.current !== "playing" || resolvingRef.current) return;
     let current = gameRef.current;
     if (!current.active) return;
+    const dropMult = runStateRef.current ? burstMods(runStateRef.current.owned).dropMult : 1;
     while (true) {
       const next = tryMove(current, 1, 0);
       if (next === current) break;
-      current = { ...next, score: next.score + 2 };
+      current = { ...next, score: next.score + 2 * dropMult };
     }
     setGame(current);
     void lockNow(current);
     tone(640, 0.1);
   }, [lockNow, tone]);
 
+  const fallMult = mods?.fallMult ?? 1;
   useEffect(() => {
     if (phase !== "playing" || resolving) return;
     const id = window.setInterval(() => {
@@ -444,15 +670,20 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
         return;
       }
       void lockNow(current);
-    }, gravityMs(game.level));
+    }, gravityMs(game.level) * fallMult);
     return () => window.clearInterval(id);
-  }, [phase, resolving, game.level, lockNow]);
+  }, [phase, resolving, game.level, lockNow, fallMult]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (phaseRef.current === "briefing" && (e.key === "Enter" || e.key === " ")) {
         e.preventDefault();
         start();
+        return;
+      }
+      if (phaseRef.current === "picking") {
+        const offered = runStateRef.current?.offer?.[Number(e.key) - 1];
+        if (offered) { e.preventDefault(); pick(offered); }
         return;
       }
       if (phaseRef.current !== "playing") return;
@@ -462,7 +693,7 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
       if (e.key === "ArrowDown") dropSoft();
       if (e.key === "ArrowUp" || e.key === "x" || e.key === "X") rotate();
       if (e.key === " " || e.key === "Enter") dropHard();
-      if (e.key === "p" || e.key === "P") setPhase((p) => (p === "playing" ? "paused" : "playing"));
+      if (e.key === "p" || e.key === "P") setPhase("paused");
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -517,23 +748,55 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
           ))}
         </div>
         <p className="mb-6 text-sm leading-relaxed text-muted-foreground">{t.hint}</p>
-        <button type="button" onClick={start} className={`${btn} w-full bg-primary text-primary-foreground`}>
-          {t.start}
+        <button type="button" onClick={() => start("classic")} className={`${btn} w-full bg-primary text-primary-foreground`}>
+          {t.classic}
         </button>
+        <button type="button" onClick={() => start("augment")} className={`${btn} mt-2 w-full border-fuchsia-300 bg-[linear-gradient(135deg,#fdf2f8,#eef2ff_55%,#ecfeff)] text-indigo-900`}>
+          {t.augment}
+        </button>
+        <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{t.augmentSub}</p>
       </GameContainer>
     );
   }
 
   return (
-    <GameContainer title={t.title} subtitle={t.sub} resetLabel={t.again} onReset={start}>
+    <GameContainer title={t.title} subtitle={mode === "augment" ? t.modeAugment : t.sub} resetLabel={t.again} onReset={() => start()}>
       <div aria-live="polite" className="sr-only">{banner || (phase === "over" ? t.over : "")}</div>
       <div className="mb-3 grid grid-cols-3 gap-2 text-center text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
         <div className="rounded-xl border border-border bg-card px-2 py-2"><div>{t.score}</div><div className="text-lg text-foreground">{game.score}</div></div>
-        <div className="rounded-xl border border-border bg-card px-2 py-2"><div>{t.best}</div><div className="text-lg text-foreground">{Math.max(best, game.score)}</div></div>
+        <div className="rounded-xl border border-border bg-card px-2 py-2"><div>{t.best}</div><div className="text-lg text-foreground">{Math.max(mode === "augment" ? augmentBest : best, game.score)}</div></div>
         <div className="rounded-xl border border-border bg-card px-2 py-2"><div>{t.level}</div><div className="text-lg text-foreground">{game.level}</div></div>
       </div>
       {restored && phase === "paused" ? <p className="mb-2 text-xs font-semibold text-primary">{t.restored}</p> : null}
-      <div className="flex items-start gap-3">
+      <div className="relative flex items-start gap-3">
+        {phase === "picking" && run?.offer ? (
+          <div className="absolute inset-x-0 top-0 z-20 flex min-h-full rounded-[1.4rem] border border-[#cfc6a8] bg-[#f7f1dc]/95 p-2 shadow-lg backdrop-blur-[2px]" role="dialog" aria-label={t.pick}>
+            {/* The draft covers the board and the queue, and grows over the buttons on a narrow phone instead of scrolling. */}
+            <div className="m-auto flex w-full flex-col gap-1.5">
+            <p className="text-center text-sm font-black text-foreground">{t.pick}</p>
+            {run.offer.map((id, index) => {
+              const tier = TIER_OF[id];
+              const stack = run.owned[id] ?? 0;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => pick(id)}
+                  className={`min-h-14 w-full rounded-2xl border-2 px-3 py-1.5 text-left shadow-sm transition active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${TIER_TONE[tier]}`}
+                >
+                  <span className="flex items-center justify-between gap-2 text-[10px] font-black uppercase tracking-widest opacity-70">
+                    <span>{index + 1} · {t.tiers[tier]}</span>
+                    {stack > 0 ? <span>×{stack + 1}</span> : null}
+                  </span>
+                  <span className="block text-sm font-black">{t.augments[id].name}</span>
+                  <span className="block text-[11px] font-semibold leading-tight opacity-85">{t.augments[id].desc}</span>
+                </button>
+              );
+            })}
+            <p className="hidden text-center text-[11px] text-muted-foreground sm:block">{t.pickKeys}</p>
+            </div>
+          </div>
+        ) : null}
         <div
           ref={boardRef}
           className="relative flex-1 touch-none overflow-hidden rounded-[1.4rem] border border-[#cfc6a8] bg-[radial-gradient(circle_at_top,#f7f1dc,rgba(232,223,186,0.95)_58%,#d7ccab)] p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_18px_40px_rgba(80,70,30,0.16)]"
@@ -548,7 +811,7 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
                 const flashing = flashRows.includes(r) || flashCols.includes(c);
                 return (
                   <div key={key} className={`relative rounded-[22%] bg-[#efe6c8]/70 ${flashing ? "ring-2 ring-amber-300" : ""}`}>
-                    {cell ? <Gem color={cell} ghost={ghostSet.has(key) && !liveSet.has(key)} bursting={burstingSet.has(key)} /> : null}
+                    {cell ? <Gem color={cell} ghost={ghostSet.has(key) && !liveSet.has(key)} bursting={burstingSet.has(key)} bomb={Boolean(run?.bomb) && liveSet.has(key)} /> : null}
                   </div>
                 );
               }),
@@ -569,7 +832,7 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
             <div className="absolute inset-0 grid place-items-center bg-[#f7f1dc]/80 backdrop-blur-[2px]">
               <div className="text-center">
                 <p className="mb-3 text-lg font-black text-foreground">{phase === "over" ? t.over : t.pause}</p>
-                <button type="button" className={`${btn} bg-primary text-primary-foreground`} onClick={() => (phase === "over" ? start() : setPhase("playing"))}>
+                <button type="button" className={`${btn} bg-primary text-primary-foreground`} onClick={() => (phase === "over" ? start() : setPhase(run?.offer ? "picking" : "playing"))}>
                   {phase === "over" ? t.again : t.resume}
                 </button>
               </div>
@@ -597,11 +860,24 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
         <button type="button" className={btn} onClick={() => move(0, 1)} aria-label={t.right}>→</button>
         <button type="button" className={btn} onClick={dropHard} aria-label={t.drop}>⬇</button>
         <button type="button" className={`${btn} col-span-2`} onClick={dropSoft}>{t.down}</button>
-        <button type="button" className={btn} onClick={() => setPhase((p) => (p === "paused" ? "playing" : "paused"))}>{phase === "paused" ? t.resume : t.pause}</button>
+        <button type="button" className={btn} onClick={() => setPhase((p) => (p === "paused" ? (runStateRef.current?.offer ? "picking" : "playing") : p === "playing" ? "paused" : p))}>{phase === "paused" ? t.resume : t.pause}</button>
         <button type="button" className={btn} onClick={() => setSound((v) => !v)} aria-pressed={sound}>{t.sound}</button>
       </div>
+      {mode === "augment" && run && Object.keys(run.owned).length > 0 ? (
+        <div className="mt-3">
+          <div className="mb-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{t.owned}</div>
+          <ul className="flex flex-wrap gap-1.5">
+            {BURST_AUGMENTS.filter((def) => run.owned[def.id]).map((def) => (
+              <li key={def.id} title={t.augments[def.id].desc} className={`rounded-full border px-2.5 py-1 text-[11px] font-black ${TIER_TONE[def.tier]}`}>
+                {t.augments[def.id].name}{(run.owned[def.id] ?? 0) > 1 ? ` ×${run.owned[def.id]}` : ""}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
       <p className="mt-3 text-xs leading-relaxed text-muted-foreground">{t.hint}</p>
       <style>{`
+        .bomb-mark{position:absolute;inset:24%;border-radius:9999px;background:radial-gradient(circle at 35% 30%,#6b7280,#111827 70%);box-shadow:0 0 0 2px #fde68a,0 0 10px rgba(239,68,68,.8);pointer-events:none}
         .burst-sheet{position:absolute;inset:-22%;background:url(${BLOCK_BURST_FX.burstSheet}) 0 0 / 800% 100% no-repeat;animation:burstSheet 220ms steps(7) both;pointer-events:none}
         @keyframes burstSheet { from { background-position: 0 0; } to { background-position: 100% 0; } }
         @media (prefers-reduced-motion: reduce) { .burst-sheet { animation: none; background-position: 0 0; } }
