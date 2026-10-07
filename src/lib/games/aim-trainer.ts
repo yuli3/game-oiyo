@@ -1,4 +1,4 @@
-export type AimMode = "gridshot" | "flick" | "tracking" | "precision" | "recovery";
+export type AimMode = "gridshot" | "flick" | "tracking" | "precision" | "recovery" | "flash";
 export type AimDifficulty = "easy" | "normal" | "hard" | "expert";
 
 export const AIM_RANKS = ["Bronze", "Silver", "Gold", "Platinum", "Diamond", "Master"] as const;
@@ -10,6 +10,8 @@ const NORMAL_RANK_BANDS: Record<AimMode, number[]> = {
   precision: [12, 20, 28, 36, 46],
   tracking: [40, 55, 68, 80, 90],
   recovery: [12, 20, 28, 36, 46],
+  // A flash round takes about two and a half seconds, so thirty seconds fit a dozen at most.
+  flash: [3, 5, 7, 9, 11],
 };
 
 const DIFFICULTY_RANK_FACTOR: Record<AimDifficulty, number> = {

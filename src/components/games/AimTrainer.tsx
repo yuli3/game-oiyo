@@ -14,6 +14,7 @@ import {
   type AimRank,
   type TrackingTargetState,
 } from "../../lib/games/aim-trainer";
+import AimFlashField, { type AimFlashCopy } from "./AimFlashField";
 
 /* ────────────────────────────────────────────────────────────────────────────
  * Pro Aim Trainer — 5 modes × 4 difficulties, mouse + touch, FPS-grade metrics,
@@ -25,7 +26,7 @@ type Mode = AimMode;
 type Diff = AimDifficulty;
 type Phase = "menu" | "playing" | "result";
 
-const MODES: Mode[] = ["gridshot", "flick", "tracking", "precision", "recovery"];
+const MODES: Mode[] = ["gridshot", "flick", "tracking", "precision", "recovery", "flash"];
 const DIFFS: Diff[] = ["easy", "normal", "hard", "expert"];
 const DURATION = 30; // seconds, all modes
 
@@ -43,6 +44,8 @@ const MODE_CFG: Record<Mode, { emoji: string; base: number; grid: number; ttl: n
   precision: { emoji: "🔬", base: 34, grid: 1, ttl: 1100, speed: 0 },
   tracking: { emoji: "🛰️", base: 74, grid: 1, ttl: 0, speed: 150 },
   recovery: { emoji: "👁️", base: 54, grid: 1, ttl: 0, speed: 0 },
+  // Flash dodge draws its own view (AimFlashField); the numbers here only satisfy the shared shape.
+  flash: { emoji: "💥", base: 54, grid: 1, ttl: 0, speed: 0 },
 };
 
 const DIFF_CFG: Record<Diff, { size: number; speed: number; grid: number; ttl: number }> = {
@@ -91,6 +94,8 @@ interface I18n {
   target: string;
   sound: string;
   obscured: string;
+  flashWarning: string;
+  flash: AimFlashCopy;
 }
 
 const T: Record<Locale, I18n> = {
@@ -100,13 +105,14 @@ const T: Record<Locale, I18n> = {
     chooseMode: "훈련 모드",
     chooseDiff: "난이도",
     start: "훈련 시작",
-    modeName: { gridshot: "그리드샷", flick: "플릭샷", tracking: "트래킹", precision: "정밀샷", recovery: "회복 훈련" },
+    modeName: { gridshot: "그리드샷", flick: "플릭샷", tracking: "트래킹", precision: "정밀샷", recovery: "회복 훈련", flash: "삥 피하기" },
     modeDesc: {
       gridshot: "동시에 뜬 여러 타깃을 빠르게 제거 — 전체 속도와 처리량",
       flick: "한 번에 하나, 순간적으로 조준해 클릭 — 플릭 반응속도",
       tracking: "움직이는 타깃 위에 커서를 유지 — 추적 정확도",
       precision: "작은 타깃이 사라지기 전에 명중 — 정밀 정확도",
       recovery: "시야가 가려진 뒤 새 타깃을 빠르게 재획득 — 시각 회복 속도",
+      flash: "섬광이 터지기 전에 시선을 돌렸다가 돌아와 사격 — 발로란트식 섬광(삥) 피하기 손풀기",
     },
     diffName: { easy: "쉬움", normal: "보통", hard: "어려움", expert: "전문가" },
     timeLeft: "시간",
@@ -128,6 +134,8 @@ const T: Record<Locale, I18n> = {
     target: "타깃",
     sound: "소리",
     obscured: "시야 차단 — 곧 나타날 타깃을 준비하세요",
+    flashWarning: "화면 전체가 하얗게 번쩍여요. 빛에 민감하면 이 모드는 피하세요. 기기의 동작 줄이기를 켜면 어두운 막으로 바뀌어요.",
+    flash: { field: "섬광 피하기 훈련 화면", lock: "화면을 클릭하면 마우스가 잠겨요 · Esc로 해제", mouse: "마우스로 시선을 돌리고 클릭으로 쏘세요. 문 쪽을 보고 있으면 섬광이 날아와요.", touch: "드래그로 시선을 돌리고 짧게 탭해서 쏘세요. 문 쪽을 보고 있으면 섬광이 날아와요.", sens: "감도", dodged: "피했어요", blinded: "눈이 멀었어요", faceDoor: "문 쪽을 보세요" },
   },
   en: {
     title: "Aim Trainer PRO",
@@ -135,13 +143,14 @@ const T: Record<Locale, I18n> = {
     chooseMode: "Training mode",
     chooseDiff: "Difficulty",
     start: "Start training",
-    modeName: { gridshot: "Gridshot", flick: "Flick", tracking: "Tracking", precision: "Precision", recovery: "Recovery" },
+    modeName: { gridshot: "Gridshot", flick: "Flick", tracking: "Tracking", precision: "Precision", recovery: "Recovery", flash: "Flash Dodge" },
     modeDesc: {
       gridshot: "Clear many targets on screen at once — raw speed & throughput",
       flick: "One at a time, snap and click — flick reaction speed",
       tracking: "Keep your cursor on a moving target — tracking accuracy",
       precision: "Hit small targets before they vanish — micro accuracy",
       recovery: "Reacquire a new target after a visual obstruction — recovery speed",
+      flash: "Turn away before the flash pops, then turn back and shoot — the flash-dodge habit from tactical shooters",
     },
     diffName: { easy: "Easy", normal: "Normal", hard: "Hard", expert: "Expert" },
     timeLeft: "Time",
@@ -163,6 +172,8 @@ const T: Record<Locale, I18n> = {
     target: "Target",
     sound: "Sound",
     obscured: "Vision blocked — prepare to reacquire",
+    flashWarning: "The whole view flashes white. Skip this mode if you are sensitive to flashing light. With Reduce Motion on, the flash becomes a dark veil.",
+    flash: { field: "Flash dodge training view", lock: "Click the view to capture the mouse · Esc to release", mouse: "Turn with the mouse and click to shoot. The flash is thrown while you face the doorway.", touch: "Drag to turn and tap to shoot. The flash is thrown while you face the doorway.", sens: "Sensitivity", dodged: "Dodged", blinded: "Blinded", faceDoor: "Face the doorway" },
   },
   ja: {
     title: "エイムトレーナー PRO",
@@ -170,13 +181,14 @@ const T: Record<Locale, I18n> = {
     chooseMode: "練習モード",
     chooseDiff: "難易度",
     start: "練習開始",
-    modeName: { gridshot: "グリッドショット", flick: "フリック", tracking: "トラッキング", precision: "精密", recovery: "リカバリー" },
+    modeName: { gridshot: "グリッドショット", flick: "フリック", tracking: "トラッキング", precision: "精密", recovery: "リカバリー", flash: "フラッシュ回避" },
     modeDesc: {
       gridshot: "同時に出る複数のターゲットを素早く撃破 — 速度と処理量",
       flick: "一度に一つ、瞬時に狙ってクリック — フリック反応",
       tracking: "動くターゲットにカーソルを維持 — 追跡精度",
       precision: "消える前に小さなターゲットを命中 — 精密精度",
       recovery: "視界が遮られた後に新しいターゲットを再捕捉 — 回復速度",
+      flash: "フラッシュが弾ける前に視点をそらし、戻して撃つ — タクティカルFPSのフラッシュ回避練習",
     },
     diffName: { easy: "やさしい", normal: "普通", hard: "難しい", expert: "エキスパート" },
     timeLeft: "時間",
@@ -198,6 +210,8 @@ const T: Record<Locale, I18n> = {
     target: "ターゲット",
     sound: "音",
     obscured: "視界遮断 — 次のターゲットに備えてください",
+    flashWarning: "画面全体が白く光ります。光に敏感な方はこのモードを避けてください。端末の「視差効果を減らす」をオンにすると暗い幕に変わります。",
+    flash: { field: "フラッシュ回避の練習画面", lock: "画面をクリックするとマウスが固定されます · Escで解除", mouse: "マウスで視点を回し、クリックで撃ちます。ドアの方を向いているとフラッシュが飛んできます。", touch: "ドラッグで視点を回し、短くタップして撃ちます。ドアの方を向いているとフラッシュが飛んできます。", sens: "感度", dodged: "回避しました", blinded: "目がくらみました", faceDoor: "ドアの方を向いてください" },
   },
   fr: {
     title: "Aim Trainer PRO",
@@ -205,13 +219,14 @@ const T: Record<Locale, I18n> = {
     chooseMode: "Mode d'entraînement",
     chooseDiff: "Difficulté",
     start: "Commencer",
-    modeName: { gridshot: "Gridshot", flick: "Flick", tracking: "Tracking", precision: "Précision", recovery: "Récupération" },
+    modeName: { gridshot: "Gridshot", flick: "Flick", tracking: "Tracking", precision: "Précision", recovery: "Récupération", flash: "Esquive de flash" },
     modeDesc: {
       gridshot: "Éliminez plusieurs cibles à la fois — vitesse et débit",
       flick: "Une à la fois, visez et cliquez — vitesse de flick",
       tracking: "Gardez le curseur sur une cible mobile — précision de suivi",
       precision: "Touchez de petites cibles avant qu'elles disparaissent — précision fine",
       recovery: "Retrouvez une nouvelle cible après une obstruction visuelle — vitesse de récupération",
+      flash: "Détournez le regard avant l'éclat du flash, puis revenez et tirez — le réflexe d'esquive des FPS tactiques",
     },
     diffName: { easy: "Facile", normal: "Normal", hard: "Difficile", expert: "Expert" },
     timeLeft: "Temps",
@@ -233,6 +248,8 @@ const T: Record<Locale, I18n> = {
     target: "Cible",
     sound: "Son",
     obscured: "Vision masquée — préparez-vous à retrouver la cible",
+    flashWarning: "Toute la vue devient blanche d'un coup. Évitez ce mode si vous êtes sensible aux flashs lumineux. Avec « Réduire les animations », le flash devient un voile sombre.",
+    flash: { field: "Vue d'entraînement à l'esquive de flash", lock: "Cliquez sur la vue pour capturer la souris · Échap pour la libérer", mouse: "Tournez avec la souris et cliquez pour tirer. Le flash est lancé quand vous regardez la porte.", touch: "Glissez pour tourner et touchez brièvement pour tirer. Le flash est lancé quand vous regardez la porte.", sens: "Sensibilité", dodged: "Esquivé", blinded: "Aveuglé", faceDoor: "Regardez la porte" },
   },
   es: {
     title: "Aim Trainer PRO",
@@ -240,13 +257,14 @@ const T: Record<Locale, I18n> = {
     chooseMode: "Modo de entrenamiento",
     chooseDiff: "Dificultad",
     start: "Empezar",
-    modeName: { gridshot: "Gridshot", flick: "Flick", tracking: "Tracking", precision: "Precisión", recovery: "Recuperación" },
+    modeName: { gridshot: "Gridshot", flick: "Flick", tracking: "Tracking", precision: "Precisión", recovery: "Recuperación", flash: "Esquivar flash" },
     modeDesc: {
       gridshot: "Elimina varios objetivos a la vez — velocidad y volumen",
       flick: "Uno a la vez, apunta y haz clic — velocidad de flick",
       tracking: "Mantén el cursor sobre un objetivo en movimiento — precisión de seguimiento",
       precision: "Acierta objetivos pequeños antes de que desaparezcan — precisión fina",
       recovery: "Recupera un objetivo nuevo tras una obstrucción visual — velocidad de recuperación",
+      flash: "Aparta la vista antes de que estalle el flash, vuelve y dispara — el hábito de esquivar flashes de los shooters tácticos",
     },
     diffName: { easy: "Fácil", normal: "Normal", hard: "Difícil", expert: "Experto" },
     timeLeft: "Tiempo",
@@ -268,6 +286,8 @@ const T: Record<Locale, I18n> = {
     target: "Objetivo",
     sound: "Sonido",
     obscured: "Visión bloqueada — prepárate para recuperar el objetivo",
+    flashWarning: "Toda la vista destella en blanco. Evita este modo si eres sensible a las luces intermitentes. Con «Reducir movimiento» activado, el flash pasa a ser un velo oscuro.",
+    flash: { field: "Vista de entrenamiento para esquivar flashes", lock: "Haz clic en la vista para capturar el ratón · Esc para soltarlo", mouse: "Gira con el ratón y haz clic para disparar. El flash se lanza mientras miras la puerta.", touch: "Arrastra para girar y toca brevemente para disparar. El flash se lanza mientras miras la puerta.", sens: "Sensibilidad", dodged: "Esquivado", blinded: "Cegado", faceDoor: "Mira hacia la puerta" },
   },
   zh: {
     title: "瞄准训练器 PRO",
@@ -275,13 +295,14 @@ const T: Record<Locale, I18n> = {
     chooseMode: "训练模式",
     chooseDiff: "难度",
     start: "开始训练",
-    modeName: { gridshot: "网格射击", flick: "急甩", tracking: "跟踪", precision: "精准", recovery: "恢复训练" },
+    modeName: { gridshot: "网格射击", flick: "急甩", tracking: "跟踪", precision: "精准", recovery: "恢复训练", flash: "闪光躲避" },
     modeDesc: {
       gridshot: "同时清除多个目标 — 速度与处理量",
       flick: "一次一个，瞬间瞄准点击 — 急甩反应",
       tracking: "让光标保持在移动目标上 — 跟踪精度",
       precision: "在小目标消失前命中 — 微操精度",
       recovery: "视野受阻后快速重新捕捉新目标 — 恢复速度",
+      flash: "在闪光炸开前转开视线，再转回来射击 — 战术射击游戏的躲闪光练习",
     },
     diffName: { easy: "简单", normal: "普通", hard: "困难", expert: "专家" },
     timeLeft: "时间",
@@ -303,6 +324,8 @@ const T: Record<Locale, I18n> = {
     target: "目标",
     sound: "声音",
     obscured: "视野受阻 — 准备重新捕捉目标",
+    flashWarning: "整个画面会突然变白。对闪光敏感的人请避开这个模式。打开设备的“减弱动态效果”后，闪光会变成暗色遮罩。",
+    flash: { field: "闪光躲避训练画面", lock: "点击画面锁定鼠标 · 按 Esc 解除", mouse: "用鼠标转动视角，点击射击。面向门口时闪光会飞来。", touch: "拖动转动视角，轻点射击。面向门口时闪光会飞来。", sens: "灵敏度", dodged: "躲开了", blinded: "被闪到了", faceDoor: "请面向门口" },
   },
 };
 
@@ -480,6 +503,8 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
       setTargets([{ id: idRef.current++, x: 50, y: 50, size: targetSize, born: performance.now() }]);
     } else if (mode === "recovery") {
       scheduleRecoveryTarget();
+    } else if (mode === "flash") {
+      setTargets([]);
     } else {
       const initial = spawnMany(gridCount, targetSize);
       setTargets(initial);
@@ -499,6 +524,16 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
   useEffect(() => {
     targetsRef.current = targets;
   }, [targets]);
+
+  // The menu is taller than the play field, and Start sits at its bottom. On a phone the field
+  // that replaces it would otherwise open above the visible area, with the clock already running.
+  useEffect(() => {
+    if (phase !== "playing") return;
+    const shell = shellRef.current;
+    if (!shell) return;
+    const rect = shell.getBoundingClientRect();
+    if (rect.top < 0 || rect.top > window.innerHeight * 0.5) shell.scrollIntoView({ block: "start" });
+  }, [phase]);
 
   useEffect(() => {
     if (phase !== "playing") return;
@@ -617,6 +652,12 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
     missField();
   }, [onPointerMove, missField]);
 
+  const flashHit = useCallback((reactionMs: number) => {
+    reactionsRef.current.push(reactionMs);
+    setHits((h) => h + 1);
+  }, []);
+  const flashMiss = useCallback(() => setMisses((m) => m + 1), []);
+
   // ── derived stats ──
   const totalClicks = hits + misses;
   const accuracy = totalClicks > 0 ? Math.round((hits / totalClicks) * 100) : 0;
@@ -700,6 +741,9 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
               ))}
             </div>
           </div>
+          {mode === "flash" && (
+            <p role="note" className="rounded-xl border border-border bg-muted/40 p-3 text-xs leading-relaxed text-muted-foreground">{t.flashWarning}</p>
+          )}
           {best !== null && (
             <div className="text-center text-xs text-muted-foreground">
               {t.best}: <b className="text-primary">{best}{mode === "tracking" ? "%" : ""}</b>
@@ -717,7 +761,10 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
       )}
 
       {/* ── PLAYING ── */}
-      {phase === "playing" && (
+      {phase === "playing" && mode === "flash" && (
+        <AimFlashField diff={diff} copy={t.flash} tone={tone} onHit={flashHit} onMiss={flashMiss} />
+      )}
+      {phase === "playing" && mode !== "flash" && (
         <div
           ref={fieldRef}
           onPointerDown={onFieldPointerDown}

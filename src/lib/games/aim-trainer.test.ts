@@ -24,6 +24,9 @@ describe("aim trainer fairness helpers", () => {
     expect(computeAimRank("gridshot", "normal", 20)).toBe("Silver");
     expect(computeAimRank("gridshot", "expert", 20)).toBe("Silver");
     expect(computeAimRank("recovery", "normal", 20)).toBe("Gold");
+    expect(computeAimRank("flash", "normal", 2)).toBe("Bronze");
+    expect(computeAimRank("flash", "normal", 7)).toBe("Platinum");
+    expect(computeAimRank("flash", "expert", 8)).toBe("Master");
   });
 
   it("keeps the full target inside the play field", () => {
