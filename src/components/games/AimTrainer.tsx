@@ -15,6 +15,7 @@ import {
   type TrackingTargetState,
 } from "../../lib/games/aim-trainer";
 import AimFlashField, { type AimFlashCopy } from "./AimFlashField";
+import UsageClip from "./UsageClip";
 
 /* ────────────────────────────────────────────────────────────────────────────
  * Pro Aim Trainer — 5 modes × 4 difficulties, mouse + touch, FPS-grade metrics,
@@ -95,6 +96,8 @@ interface I18n {
   sound: string;
   obscured: string;
   flashWarning: string;
+  flashClip: string;
+  replay: string;
   flash: AimFlashCopy;
 }
 
@@ -135,6 +138,8 @@ const T: Record<Locale, I18n> = {
     sound: "소리",
     obscured: "시야 차단 — 곧 나타날 타깃을 준비하세요",
     flashWarning: "화면 전체가 하얗게 번쩍여요. 빛에 민감하면 이 모드는 피하세요. 기기의 동작 줄이기를 켜면 어두운 막으로 바뀌어요.",
+    flashClip: "삥 피하기 모드 사용법 영상",
+    replay: "다시 보기",
     flash: { field: "섬광 피하기 훈련 화면", lock: "화면을 클릭하면 마우스가 잠겨요 · Esc로 해제", mouse: "마우스로 시선을 돌리고 클릭으로 쏘세요. 문 쪽을 보고 있으면 섬광이 날아와요.", touch: "드래그로 시선을 돌리고 짧게 탭해서 쏘세요. 문 쪽을 보고 있으면 섬광이 날아와요.", sens: "감도", dodged: "피했어요", blinded: "눈이 멀었어요", faceDoor: "문 쪽을 보세요" },
   },
   en: {
@@ -173,6 +178,8 @@ const T: Record<Locale, I18n> = {
     sound: "Sound",
     obscured: "Vision blocked — prepare to reacquire",
     flashWarning: "The whole view flashes white. Skip this mode if you are sensitive to flashing light. With Reduce Motion on, the flash becomes a dark veil.",
+    flashClip: "How the flash dodge mode plays",
+    replay: "Replay",
     flash: { field: "Flash dodge training view", lock: "Click the view to capture the mouse · Esc to release", mouse: "Turn with the mouse and click to shoot. The flash is thrown while you face the doorway.", touch: "Drag to turn and tap to shoot. The flash is thrown while you face the doorway.", sens: "Sensitivity", dodged: "Dodged", blinded: "Blinded", faceDoor: "Face the doorway" },
   },
   ja: {
@@ -211,6 +218,8 @@ const T: Record<Locale, I18n> = {
     sound: "音",
     obscured: "視界遮断 — 次のターゲットに備えてください",
     flashWarning: "画面全体が白く光ります。光に敏感な方はこのモードを避けてください。端末の「視差効果を減らす」をオンにすると暗い幕に変わります。",
+    flashClip: "フラッシュ回避モードの遊び方動画",
+    replay: "もう一度見る",
     flash: { field: "フラッシュ回避の練習画面", lock: "画面をクリックするとマウスが固定されます · Escで解除", mouse: "マウスで視点を回し、クリックで撃ちます。ドアの方を向いているとフラッシュが飛んできます。", touch: "ドラッグで視点を回し、短くタップして撃ちます。ドアの方を向いているとフラッシュが飛んできます。", sens: "感度", dodged: "回避しました", blinded: "目がくらみました", faceDoor: "ドアの方を向いてください" },
   },
   fr: {
@@ -249,6 +258,8 @@ const T: Record<Locale, I18n> = {
     sound: "Son",
     obscured: "Vision masquée — préparez-vous à retrouver la cible",
     flashWarning: "Toute la vue devient blanche d'un coup. Évitez ce mode si vous êtes sensible aux flashs lumineux. Avec « Réduire les animations », le flash devient un voile sombre.",
+    flashClip: "Vidéo : le mode esquive de flash",
+    replay: "Revoir",
     flash: { field: "Vue d'entraînement à l'esquive de flash", lock: "Cliquez sur la vue pour capturer la souris · Échap pour la libérer", mouse: "Tournez avec la souris et cliquez pour tirer. Le flash est lancé quand vous regardez la porte.", touch: "Glissez pour tourner et touchez brièvement pour tirer. Le flash est lancé quand vous regardez la porte.", sens: "Sensibilité", dodged: "Esquivé", blinded: "Aveuglé", faceDoor: "Regardez la porte" },
   },
   es: {
@@ -287,6 +298,8 @@ const T: Record<Locale, I18n> = {
     sound: "Sonido",
     obscured: "Visión bloqueada — prepárate para recuperar el objetivo",
     flashWarning: "Toda la vista destella en blanco. Evita este modo si eres sensible a las luces intermitentes. Con «Reducir movimiento» activado, el flash pasa a ser un velo oscuro.",
+    flashClip: "Vídeo: cómo se juega el modo esquivar flash",
+    replay: "Ver de nuevo",
     flash: { field: "Vista de entrenamiento para esquivar flashes", lock: "Haz clic en la vista para capturar el ratón · Esc para soltarlo", mouse: "Gira con el ratón y haz clic para disparar. El flash se lanza mientras miras la puerta.", touch: "Arrastra para girar y toca brevemente para disparar. El flash se lanza mientras miras la puerta.", sens: "Sensibilidad", dodged: "Esquivado", blinded: "Cegado", faceDoor: "Mira hacia la puerta" },
   },
   zh: {
@@ -325,6 +338,8 @@ const T: Record<Locale, I18n> = {
     sound: "声音",
     obscured: "视野受阻 — 准备重新捕捉目标",
     flashWarning: "整个画面会突然变白。对闪光敏感的人请避开这个模式。打开设备的“减弱动态效果”后，闪光会变成暗色遮罩。",
+    flashClip: "闪光躲避模式玩法视频",
+    replay: "重新播放",
     flash: { field: "闪光躲避训练画面", lock: "点击画面锁定鼠标 · 按 Esc 解除", mouse: "用鼠标转动视角，点击射击。面向门口时闪光会飞来。", touch: "拖动转动视角，轻点射击。面向门口时闪光会飞来。", sens: "灵敏度", dodged: "躲开了", blinded: "被闪到了", faceDoor: "请面向门口" },
   },
 };
@@ -674,7 +689,7 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
 
   /* ───────────────────────────── render ───────────────────────────── */
   return (
-    <div ref={shellRef} className="not-prose my-10 rounded-3xl border border-border bg-card p-5 text-card-foreground shadow-sm select-none max-w-xl mx-auto">
+    <div ref={shellRef} className="not-prose my-10 scroll-mt-20 rounded-3xl border border-border bg-card p-5 text-card-foreground shadow-sm select-none max-w-xl mx-auto">
       {/* header */}
       <div className="mb-4 flex items-center justify-between gap-2">
         <div>
@@ -742,7 +757,18 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
             </div>
           </div>
           {mode === "flash" && (
-            <p role="note" className="rounded-xl border border-border bg-muted/40 p-3 text-xs leading-relaxed text-muted-foreground">{t.flashWarning}</p>
+            <>
+              <p role="note" className="rounded-xl border border-border bg-muted/40 p-3 text-xs leading-relaxed text-muted-foreground">{t.flashWarning}</p>
+              {/* 2026-10-07 사용법 클립. aim_training_complete(mode=flash) 전후 28일 비교의 기준일이다. */}
+              <UsageClip
+                src={`/motion/flash-dodge-${locale}.mp4`}
+                poster={`/motion/flash-dodge-${locale}.jpg`}
+                width={640}
+                height={800}
+                label={t.flashClip}
+                replay={t.replay}
+              />
+            </>
           )}
           {best !== null && (
             <div className="text-center text-xs text-muted-foreground">
