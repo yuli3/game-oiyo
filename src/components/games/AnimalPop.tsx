@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
+import { createTonePlayer, type TonePlayer } from "../../lib/games/tone";
 import { GameContainer } from "../ui/game/GamePrimitives";
 import {
   ANIMAL_TIME_LIMIT,
@@ -316,6 +317,7 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
   const debrisRef = useRef<DebrisWorld | null>(null);
   const debrisLoadingRef = useRef(false);
   const rafRef = useRef(0);
+  const player = useRef<TonePlayer | null>(null);
   const reducedMotionRef = useRef(reducedMotion);
   reducedMotionRef.current = reducedMotion;
   const feverRef = useRef(feverSeconds);
@@ -428,20 +430,12 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
   const tone = useCallback(
     (f: number) => {
       if (!sound) return;
-      const A = window.AudioContext || window.webkitAudioContext;
-      if (!A) return;
-      const a = new A(),
-        o = a.createOscillator(),
-        g = a.createGain();
-      o.frequency.value = f;
-      g.gain.setValueAtTime(0.03, a.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.001, a.currentTime + 0.12);
-      o.connect(g).connect(a.destination);
-      o.start();
-      o.stop(a.currentTime + 0.12);
+      player.current ??= createTonePlayer();
+      player.current.play(f, 0.12, 0.03);
     },
     [sound],
   );
+  useEffect(() => () => player.current?.close(), []);
   const scoreRef = useRef(score);
   const toneRef = useRef(tone);
   scoreRef.current = score;
@@ -761,26 +755,27 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
               <p className="mt-2 text-3xl font-black text-primary">{score}</p>
               <button
                 onClick={() => start()}
-                className="mt-4 min-h-12 rounded-full bg-primary px-8 font-black text-primary-foreground"
+                className="mt-4 min-h-12! rounded-full bg-primary px-8 font-black text-primary-foreground"
               >
                 {t.again}
               </button>
             </div>
           )}
         </div>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="mt-3 grid grid-cols-2 gap-2">
           <button
             onClick={() =>
               !resolving && setPhase((p) => (p === "playing" ? "paused" : p === "paused" ? (runRef.current?.offer ? "picking" : "playing") : p))
             }
             disabled={resolving || phase === "picking" || phase === "over"}
-            className="min-h-11 rounded-xl border bg-card font-bold"
+            className="min-h-11! rounded-xl border bg-card font-bold"
           >
             {phase === "paused" ? t.resume : t.pause}
           </button>
           <button
             onClick={() => setSound((v) => !v)}
-            className="min-h-11 rounded-xl border bg-card font-bold"
+            aria-pressed={sound}
+            className="min-h-11! rounded-xl border bg-card font-bold"
           >
             {t.sound} {sound ? "ON" : "OFF"}
           </button>
@@ -830,9 +825,4 @@ function Stat({ l, v }: { l: string; v: string }) {
       <div className="text-xs text-muted-foreground">{l}</div>
     </div>
   );
-}
-declare global {
-  interface Window {
-    webkitAudioContext?: typeof AudioContext;
-  }
 }

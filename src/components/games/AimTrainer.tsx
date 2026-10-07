@@ -345,6 +345,7 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
 
   // refs that must not trigger re-render
   const fieldRef = useRef<HTMLDivElement | null>(null);
+  const shellRef = useRef<HTMLDivElement | null>(null);
   const startRef = useRef(0);
   const idRef = useRef(0);
   const reactionsRef = useRef<number[]>([]);
@@ -377,9 +378,18 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
   }, []);
 
   const spawn = useCallback((size: number, occupied: Target[] = []): Target => {
+    // The field mounts only once play starts, so the first targets are placed before it exists.
+    // Its width is the shell's content width and its height follows the 5:4 ratio; measuring the
+    // shell keeps those first targets inside a narrow phone field instead of clipped at its edge.
     const rect = fieldRef.current?.getBoundingClientRect();
-    const width = rect?.width ?? 600;
-    const height = rect?.height ?? 480;
+    const shell = shellRef.current;
+    let shellWidth = 0;
+    if (!rect && shell) {
+      const style = window.getComputedStyle(shell);
+      shellWidth = shell.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+    }
+    const width = rect?.width || shellWidth || 600;
+    const height = rect?.height || (shellWidth ? (shellWidth * 4) / 5 : 480);
     const placed = placeTarget(size, occupied, width, height);
     return { id: idRef.current++, x: placed.x, y: placed.y, size, born: performance.now() };
   }, []);
@@ -503,10 +513,13 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
           setRecoveryObscured(true);
         }
       } else if (!document.hidden && pausedAtRef.current !== null) {
-        hiddenMsRef.current += now - pausedAtRef.current;
+        const away = now - pausedAtRef.current;
+        hiddenMsRef.current += away;
         pausedAtRef.current = null;
         lastFrameRef.current = null;
         if (mode === "recovery") scheduleRecoveryTarget();
+        // Time spent on another tab is not reaction time and must not expire a precision target.
+        else if (mode !== "tracking") setTargets((prev) => prev.map((target) => ({ ...target, born: target.born + away })));
       }
     };
     document.addEventListener("visibilitychange", handleVisibility);
@@ -567,10 +580,17 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
     pointer.current = { x: e.clientX - rect.left, y: e.clientY - rect.top, inside: true };
   }, []);
   const onPointerLeave = useCallback(() => { pointer.current.inside = false; }, []);
+  // A finger that lifts is no longer on the target. Touch keeps its pointer captured on the element
+  // it went down on, so pointerleave never reaches the field and the last position would keep scoring.
+  const onPointerEnd = useCallback((e: React.PointerEvent) => {
+    if (e.pointerType !== "mouse") pointer.current.inside = false;
+  }, []);
 
   const hitTarget = useCallback(
     (id: number, born: number, e: React.PointerEvent) => {
       e.stopPropagation();
+      // In tracking a finger lands on the target itself, so this is where its position is first known.
+      onPointerMove(e);
       if (phase !== "playing" || mode === "tracking") return;
       reactionsRef.current.push(performance.now() - born);
       setHits((h) => h + 1);
@@ -584,7 +604,7 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
         return [...rest, spawn(targetSize, rest)];
       });
     },
-    [phase, mode, targetSize, spawn, tone, scheduleRecoveryTarget]
+    [phase, mode, targetSize, spawn, tone, scheduleRecoveryTarget, onPointerMove]
   );
 
   const missField = useCallback(() => {
@@ -592,6 +612,10 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
     setMisses((m) => m + 1);
     tone(180, 0.06);
   }, [phase, mode, recoveryObscured, tone]);
+  const onFieldPointerDown = useCallback((e: React.PointerEvent) => {
+    onPointerMove(e);
+    missField();
+  }, [onPointerMove, missField]);
 
   // ── derived stats ──
   const totalClicks = hits + misses;
@@ -609,7 +633,7 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
 
   /* ───────────────────────────── render ───────────────────────────── */
   return (
-    <div className="not-prose my-10 rounded-3xl border border-border bg-card p-5 text-card-foreground shadow-sm select-none max-w-xl mx-auto">
+    <div ref={shellRef} className="not-prose my-10 rounded-3xl border border-border bg-card p-5 text-card-foreground shadow-sm select-none max-w-xl mx-auto">
       {/* header */}
       <div className="mb-4 flex items-center justify-between gap-2">
         <div>
@@ -642,6 +666,7 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
                 <button
                   key={m}
                   onClick={() => setMode(m)}
+                  aria-pressed={mode === m}
                   className={`rounded-2xl border p-3 text-left transition-colors ${mode === m ? "border-violet-500 bg-violet-500/10" : "border-border hover:border-violet-300"}`}
                 >
                   <div className="flex items-center gap-2 font-bold">
@@ -667,7 +692,8 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
                 <button
                   key={d}
                   onClick={() => setDiff(d)}
-                  className={`rounded-xl border py-2 text-xs font-bold transition-colors ${diff === d ? "border-violet-500 bg-violet-500/10 text-primary" : "border-border text-muted-foreground hover:border-violet-300"}`}
+                  aria-pressed={diff === d}
+                  className={`min-h-11! rounded-xl border py-2 text-xs font-bold transition-colors ${diff === d ? "border-violet-500 bg-violet-500/10 text-primary" : "border-border text-muted-foreground hover:border-violet-300"}`}
                 >
                   {t.diffName[d]}
                 </button>
@@ -694,9 +720,11 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
       {phase === "playing" && (
         <div
           ref={fieldRef}
-          onPointerDown={missField}
+          onPointerDown={onFieldPointerDown}
           onPointerMove={onPointerMove}
           onPointerLeave={onPointerLeave}
+          onPointerUp={onPointerEnd}
+          onPointerCancel={onPointerEnd}
           className="relative mx-auto overflow-hidden rounded-2xl border border-border bg-muted/40 touch-none [cursor:crosshair]"
           style={{ width: "100%", aspectRatio: "5 / 4" }}
         >

@@ -41,6 +41,7 @@ import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
 import { HorizontalTiltShiftShader } from "three/addons/shaders/HorizontalTiltShiftShader.js";
 import { VerticalTiltShiftShader } from "three/addons/shaders/VerticalTiltShiftShader.js";
+import { createTonePlayer, type TonePlayer } from "../../lib/games/tone";
 import {
   BUILD_COST,
   CITY_SAVE_KEY,
@@ -200,11 +201,13 @@ export default function IsometricCityScene({ copy }: Props) {
   }, [notice]);
 
   const summary = useMemo(() => citySummary(city), [city]);
+  const player = useRef<TonePlayer | null>(null);
   const tone = useCallback((frequency: number) => {
-    if (!sound) return; const AudioCtor = window.AudioContext || window.webkitAudioContext; if (!AudioCtor) return;
-    const audio = new AudioCtor(), oscillator = audio.createOscillator(), gain = audio.createGain(); oscillator.frequency.value = frequency;
-    gain.gain.setValueAtTime(0.025, audio.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.14); oscillator.connect(gain).connect(audio.destination); oscillator.start(); oscillator.stop(audio.currentTime + 0.14);
+    if (!sound) return;
+    player.current ??= createTonePlayer();
+    player.current.play(frequency, 0.14, 0.025);
   }, [sound]);
+  useEffect(() => () => player.current?.close(), []);
   const clock = formatClock(city);
   const selectedCell = selected ? getCell(city, selected.x, selected.z) : undefined;
   const weatherLabel = city.weather === "rain" ? copy.rain : city.weather === "fog" ? copy.fog : copy.clear;
@@ -366,6 +369,23 @@ export default function IsometricCityScene({ copy }: Props) {
             {notice}
           </div>
         )}
+        {/* The inspector panel is desktop only. Without this bar a phone could never upgrade a building. */}
+        {selectedCell && isBuilding(selectedCell.kind) && (
+          <div className="pointer-events-auto mx-auto mb-2 flex max-w-3xl items-center justify-between gap-2 rounded-2xl border border-border bg-card/95 px-3 py-1.5 shadow-lg backdrop-blur-xl sm:hidden">
+            <p className="min-w-0 truncate text-xs font-black text-foreground">
+              {copy.tools[selectedCell.kind]} · {copy.level} {selectedCell.level}
+            </p>
+            <button
+              type="button"
+              disabled={selectedCell.level >= 3 || city.funds < upgradeCost(selectedCell)}
+              onClick={handleUpgrade}
+              className="flex min-h-11! shrink-0 items-center gap-2 rounded-xl bg-primary px-3 text-xs font-black text-primary-foreground disabled:opacity-50"
+            >
+              <span>{selectedCell.level >= 3 ? copy.maxLevel : copy.upgrade}</span>
+              {selectedCell.level < 3 && <span>${formatMoney(upgradeCost(selectedCell))}</span>}
+            </button>
+          </div>
+        )}
         <div className="pointer-events-auto mx-auto flex max-w-3xl items-end gap-1 overflow-x-auto rounded-2xl border border-white/65 bg-white/92 p-1.5 shadow-2xl shadow-black/10 backdrop-blur-xl [scrollbar-width:none]">
           {BUILD_TOOLS.map((item) => {
             const Icon = TOOL_ICONS[item];
@@ -378,7 +398,7 @@ export default function IsometricCityScene({ copy }: Props) {
                 onClick={() => setTool(item)}
                 aria-pressed={selectedTool}
                 title={copy.descriptions[item]}
-                className={`flex min-h-14 min-w-[64px] flex-1 flex-col items-center justify-center rounded-xl px-2 transition ${
+                className={`flex min-h-14! min-w-10 flex-1 flex-col items-center justify-center rounded-xl px-0.5 transition sm:min-w-16 sm:px-2 ${
                   selectedTool ? "bg-[#3f5639] text-white shadow-md" : "text-[#566451] hover:bg-[#eef2ea]"
                 }`}
               >
@@ -401,7 +421,7 @@ export default function IsometricCityScene({ copy }: Props) {
                 {copy.tiltShift}
               </button>
             )}
-            <button type="button" onClick={reset} className="flex min-h-8 items-center gap-1 rounded-full bg-black/45 px-3">
+            <button type="button" onClick={reset} className="flex min-h-11! items-center gap-1 rounded-full bg-black/45 px-3 sm:min-h-8!">
               <RotateCcw size={12} /> {copy.reset}
             </button>
           </div>

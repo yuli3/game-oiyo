@@ -588,7 +588,7 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
                 <div className="bg-muted/30 p-1 sm:p-3 rounded-2xl sm:rounded-3xl border border-border shadow-inner w-full max-w-sm overflow-x-auto">
                     <div className="grid gap-0.5 sm:gap-1" role="grid" aria-label={t.title} aria-rowcount={size + 1} aria-colcount={size + 1}
-                        style={{ gridTemplateColumns: `1.5rem repeat(${size}, minmax(2.75rem, 1fr))` }}>
+                        style={{ gridTemplateColumns: `1.5rem repeat(${size}, minmax(2rem, 1fr))` }}>
                         <div role="row" aria-rowindex={1} className="contents">
                         <div role="columnheader" aria-rowindex={1} aria-colindex={1} aria-label={`${a11y.row} / ${a11y.column}`} />
                             {puzzle.colHints.map((h, i) => {
@@ -607,7 +607,8 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                                     const tree = isTree(r, c);
                                     const index = r * size + c;
                                     const position = `${a11y.row} ${r + 1}, ${a11y.column} ${c + 1}`;
-                                    const common = 'min-h-11 min-w-11 aspect-square rounded-lg flex items-center justify-center transition-all motion-reduce:transition-none motion-reduce:transform-none border border-border/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset';
+                                    // 2rem floor: the 6×6 daily board has to fit a 320–360px phone without scrolling its hints away.
+                                    const common = 'min-h-8 min-w-8 aspect-square rounded-lg flex items-center justify-center transition-all motion-reduce:transition-none motion-reduce:transform-none border border-border/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset';
                                     if (tree) {
                                         return (
                                             <div key={`${r}-${c}`} ref={(node) => { cellRefs.current[index] = node; }} role="gridcell"

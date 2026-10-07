@@ -9,6 +9,7 @@ import {
   type MazeDifficulty,
 } from "../../lib/games/maze";
 import { MAZE_SPRITES } from "../../lib/games/sprites";
+import { createTonePlayer, type TonePlayer } from "../../lib/games/tone";
 const SAVE = "oiyo:maze:v1",
   BEST = "oiyo-maze-best";
 const C = {
@@ -28,6 +29,10 @@ const C = {
     again: "새 미로",
     hint: "방향키·화면 버튼·스와이프로 출구까지 이동하세요.",
     restored: "저장된 탐험을 이어서 불러왔어요",
+    up: "위",
+    down: "아래",
+    left: "왼쪽",
+    right: "오른쪽",
   },
   en: {
     title: "Maze Escape",
@@ -45,6 +50,10 @@ const C = {
     again: "New maze",
     hint: "Use arrows, screen controls or swipe to reach the exit.",
     restored: "Your saved exploration was restored",
+    up: "Up",
+    down: "Down",
+    left: "Left",
+    right: "Right",
   },
   ja: {
     title: "迷路脱出",
@@ -62,6 +71,10 @@ const C = {
     again: "新しい迷路",
     hint: "矢印・画面ボタン・スワイプで出口を目指します。",
     restored: "保存した探索を復元しました",
+    up: "上",
+    down: "下",
+    left: "左",
+    right: "右",
   },
   zh: {
     title: "走出迷宫",
@@ -79,6 +92,10 @@ const C = {
     again: "新迷宫",
     hint: "使用方向键、屏幕按钮或滑动到达出口。",
     restored: "已恢复保存的探索",
+    up: "上",
+    down: "下",
+    left: "左",
+    right: "右",
   },
   fr: {
     title: "Évasion du labyrinthe",
@@ -96,6 +113,10 @@ const C = {
     again: "Nouveau labyrinthe",
     hint: "Utilisez les flèches, boutons ou glissements pour sortir.",
     restored: "Votre exploration a été restaurée",
+    up: "Haut",
+    down: "Bas",
+    left: "Gauche",
+    right: "Droite",
   },
   es: {
     title: "Escape del laberinto",
@@ -113,6 +134,10 @@ const C = {
     again: "Nuevo laberinto",
     hint: "Usa flechas, botones o desliza para llegar a la salida.",
     restored: "Se restauró tu exploración",
+    up: "Arriba",
+    down: "Abajo",
+    left: "Izquierda",
+    right: "Derecha",
   },
 } as const;
 export default function MazeGame({ locale = "ko" }: { locale?: string }) {
@@ -129,23 +154,16 @@ export default function MazeGame({ locale = "ko" }: { locale?: string }) {
     [sound, setSound] = useState(true),
     [restored, setRestored] = useState(false);
   const touch = useRef<{ x: number; y: number } | null>(null);
+  const player = useRef<TonePlayer | null>(null);
   const tone = useCallback(
     (f: number) => {
       if (!sound) return;
-      const A = window.AudioContext || window.webkitAudioContext;
-      if (!A) return;
-      const a = new A(),
-        o = a.createOscillator(),
-        g = a.createGain();
-      o.frequency.value = f;
-      g.gain.setValueAtTime(0.025, a.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.001, a.currentTime + 0.1);
-      o.connect(g).connect(a.destination);
-      o.start();
-      o.stop(a.currentTime + 0.1);
+      player.current ??= createTonePlayer();
+      player.current.play(f, 0.1, 0.025);
     },
     [sound],
   );
+  useEffect(() => () => player.current?.close(), []);
   useEffect(() => {
     try {
       setBest(JSON.parse(localStorage.getItem(BEST) || "{}"));
@@ -217,7 +235,8 @@ export default function MazeGame({ locale = "ko" }: { locale?: string }) {
         ArrowLeft: [0, -1],
         ArrowRight: [0, 1],
       };
-      if (map[e.key]) {
+      // Outside a run the arrow keys keep scrolling the page.
+      if (map[e.key] && phase === "playing") {
         e.preventDefault();
         go(...map[e.key]);
       }
@@ -228,7 +247,7 @@ export default function MazeGame({ locale = "ko" }: { locale?: string }) {
     };
     window.addEventListener("keydown", k);
     return () => window.removeEventListener("keydown", k);
-  }, [go]);
+  }, [go, phase]);
   if (phase === "briefing")
     return (
       <GameContainer title={t.title} subtitle={t.sub} onReset={() => start()}>
@@ -242,7 +261,7 @@ export default function MazeGame({ locale = "ko" }: { locale?: string }) {
             <p className="text-sm text-muted-foreground">{t.hint}</p>
             <button
               onClick={() => start()}
-              className="mt-4 min-h-12 rounded-full bg-primary px-8 font-black text-primary-foreground"
+              className="mt-4 min-h-12! rounded-full bg-primary px-8 font-black text-primary-foreground"
             >
               {t.start}
             </button>
@@ -278,7 +297,7 @@ export default function MazeGame({ locale = "ko" }: { locale?: string }) {
             {t.time} {seconds}s
           </span>
           <span>
-            {t.best} {best[difficulty] ?? "—"}
+            {t.best} {best[difficulty] === undefined ? "—" : `${best[difficulty]}s`}
           </span>
         </div>
         <div
@@ -341,7 +360,7 @@ export default function MazeGame({ locale = "ko" }: { locale?: string }) {
               <p className="mt-2">{seconds}s</p>
               <button
                 onClick={() => start()}
-                className="mt-4 min-h-12 rounded-full bg-primary px-8 font-black text-primary-foreground"
+                className="mt-4 min-h-12! rounded-full bg-primary px-8 font-black text-primary-foreground"
               >
                 {t.again}
               </button>
@@ -351,39 +370,48 @@ export default function MazeGame({ locale = "ko" }: { locale?: string }) {
         <div className="mt-3 grid grid-cols-3 gap-2">
           <button
             onClick={() => go(0, -1)}
-            className="min-h-11 rounded-xl border"
+            aria-label={t.left}
+            className="min-h-11! rounded-xl border"
           >
             ←
           </button>
           <button
             onClick={() => go(-1, 0)}
-            className="min-h-11 rounded-xl border"
+            aria-label={t.up}
+            className="min-h-11! rounded-xl border"
           >
             ↑
           </button>
           <button
             onClick={() => go(0, 1)}
-            className="min-h-11 rounded-xl border"
+            aria-label={t.right}
+            className="min-h-11! rounded-xl border"
           >
             →
           </button>
           <button
             onClick={() => go(1, 0)}
-            className="min-h-11 rounded-xl border"
+            aria-label={t.down}
+            className="min-h-11! rounded-xl border"
           >
             ↓
           </button>
           <button
             onClick={() =>
-              setPhase((p) => (p === "playing" ? "paused" : "playing"))
+              // A finished maze stays finished: only a running or paused one toggles.
+              setPhase((p) =>
+                p === "playing" ? "paused" : p === "paused" ? "playing" : p,
+              )
             }
-            className="min-h-11 rounded-xl border font-bold"
+            disabled={phase === "won"}
+            className="min-h-11! rounded-xl border font-bold disabled:opacity-40"
           >
             {phase === "paused" ? t.resume : t.pause}
           </button>
           <button
             onClick={() => setSound((v) => !v)}
-            className="min-h-11 rounded-xl border text-xs font-bold"
+            aria-pressed={sound}
+            className="min-h-11! rounded-xl border text-xs font-bold"
           >
             {t.sound} {sound ? "ON" : "OFF"}
           </button>
@@ -394,9 +422,4 @@ export default function MazeGame({ locale = "ko" }: { locale?: string }) {
       </div>
     </GameContainer>
   );
-}
-declare global {
-  interface Window {
-    webkitAudioContext?: typeof AudioContext;
-  }
 }
