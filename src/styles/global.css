@@ -247,9 +247,21 @@
    더블탭 줌 지연 제거 + 게임 보드 상의 스크롤 오작동 방지 + 최소 탭 타깃 */
 button, [role="button"] { touch-action: manipulation; }
 main .grid button { -webkit-tap-highlight-color: transparent; }
+/* 2026-10-07: 아래 최소 높이 규칙은 base 레이어에 둔다. 레이어 밖에 있을 때는 Tailwind
+   유틸리티를 이겨서, 버튼에 직접 단 min-h-* 가 전부 무시됐다. 그 결과 폰에서 grid 안의
+   조작 버튼(방향키·일시정지·시작)이 18~30px 로 줄었고, 하루 장사의 업종 카드(min-h-52,
+   자식이 모두 absolute)는 높이 0 이 되어 보이지 않았다. base 에 두면 min-h-* 를 단 버튼은
+   그 값을 따르고, 달지 않은 버튼만 아래 기본값을 받는다. */
+@layer base {
+  @media (pointer: coarse) {
+    main button { min-height: 40px; }
+    main .grid > button, main .grid > div > button { min-height: unset; } /* 보드 셀은 비율 유지 */
+  }
+}
+/* 보드 칸은 min-h-* 를 달았더라도 비율이 먼저다. 8칸 보드에서 44px 를 강제하면 판이 찌그러진다.
+   유틸리티를 이겨야 하므로 이 한 줄만 레이어 밖에 둔다. */
 @media (pointer: coarse) {
-  main button { min-height: 40px; }
-  main .grid > button, main .grid > div > button { min-height: unset; } /* 보드 셀은 비율 유지 */
+  main button[role="gridcell"] { min-height: unset; }
 }
 
 /* ── 플레이 표면 예외 (2026-07-29) ──
@@ -264,8 +276,10 @@ main .grid button { -webkit-tap-highlight-color: transparent; }
    2) min-height — precision+expert 타깃은 지름 19px 인데 40px 이 강제돼
       2:1 타원이 됐다. 히트 영역과 보이는 원이 어긋난다. */
 .touch-none button, .touch-none [role="button"] { touch-action: none; }
-@media (pointer: coarse) {
-  main .touch-none button { min-height: unset; }
+@layer base {
+  @media (pointer: coarse) {
+    main .touch-none button { min-height: unset; }
+  }
 }
 
 /* ── 모바일 가로 넘침 방지 (사용자 요청 2026-07-04) ──
