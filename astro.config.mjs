@@ -6,6 +6,7 @@ import { defineConfig } from "astro/config";
 import react from "@astrojs/react";
 import sitemap from "@astrojs/sitemap";
 import mdx from "@astrojs/mdx";
+import { unified } from "@astrojs/markdown-remark";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
@@ -36,6 +37,8 @@ const DEINDEXED_LOCALES = new Set(
 export default defineConfig({
   site: "https://game.oiyo.net",
   output: "static",
+  // 2026-10-10: retain Astro5's lossless whitespace during the security migration.
+  compressHTML: true,
   integrations: [
     react(),
     mdx(),
@@ -117,15 +120,17 @@ export default defineConfig({
     },
   },
   markdown: {
+    shikiConfig: {
+      theme: "github-dark",
+      wrap: true,
+    },
+    // 2026-10-10: Astro7's default processor differs; preserve the existing GFM/math/KaTeX pipeline.
+    processor: unified({
     // Disable built-in GFM so we can re-apply it with singleTilde: false.
     // Korean content uses ~ as a range character (e.g. "1~2번 12일~13일"),
     // which MDX would otherwise parse as strikethrough.
     // Intentional strikethrough should use <del>text</del> instead.
     gfm: false,
-    shikiConfig: {
-      theme: "github-dark",
-      wrap: true,
-    },
     remarkPlugins: [
       [remarkGfm, { singleTilde: false }],
       remarkMath,
@@ -133,5 +138,6 @@ export default defineConfig({
     rehypePlugins: [
       [rehypeKatex, { strict: "ignore" }],
     ],
+    }),
   },
 });
