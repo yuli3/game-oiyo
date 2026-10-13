@@ -15,12 +15,57 @@ const MAIN_CHAR_SUFFIX = "(M)";
 // 카카오톡에서 붙여 넣으면 줄 끝에 \r 이나 공백이 따라오고, "ㄷ ㄷ ㄷ ㅍ" 처럼
 // 띄어 쓰는 사람도 있는데, 그 한 글자 때문에 줄 전체가 잘못된 입력이 됐다.
 // 줄 안의 공백류는 뜻이 없으므로 버리고 센다.
+//
+// 2026-10-13: 그 뒤에도 28일 동안 오류가 28건 남았다. 남은 입력 실수는 두
+// 갈래로 본다. (1) "1. ㄷ,ㄷ,ㄷ,ㅍ"·"ㄷ/ㄷ/ㄷ/ㅍ" 처럼 번호·구분 기호를 붙이거나
+// 전각 Ｄ·조합형 자모(ᄃ)가 섞여 들어오는 경우 — 이것도 뜻이 없으므로 지운다.
+// (2) 기본값(본1부3·16명)을 그대로 둔 채 8명이나 본1부1 조합을 넣는 경우 —
+// 아래 inferDistributionSettings 가 입력에 맞는 설정을 찾는다.
+const IGNORED_CHARS = /[\s\d,.\/\\|\-_·•:;()[\]{}+~*#>]/g;
+const CHAR_ALIASES: Record<string, string> = {
+  "\u1103": "ㄷ", // 조합형 초성 ᄃ
+  "\u1111": "ㅍ", // 조합형 초성 ᄑ
+  "Ｄ": "D", "ｄ": "d", "Ｓ": "S", "ｓ": "s",
+};
+
+function normalizeLine(line: string): string {
+  return Array.from(line.replace(IGNORED_CHARS, ""))
+    .map((char) => CHAR_ALIASES[char] ?? char)
+    .join("");
+}
+
 export function parsePlayerLines(playerInputs: string[]): string[] {
   return playerInputs
     .join("\n")
     .split(/\r?\n/)
-    .map((line) => line.replace(/\s+/g, ""))
+    .map(normalizeLine)
     .filter((line) => line !== "");
+}
+
+const PARTY_SIZES: PartySize[] = ["4", "8", "16"];
+const isRoleChar = (char: string) => DEALER_CHARS.includes(char) || SUPPORTER_CHARS.includes(char);
+
+/**
+ * When the input does not fit the chosen settings, return the settings it does fit:
+ * every line the same length (2 → 본1부1, 4 → 본1부3) made only of role letters, and
+ * a player count that is itself a valid party size. Returns null when nothing changes
+ * or the input is ambiguous, so the caller shows the original error instead.
+ */
+export function inferDistributionSettings(
+  playerInputs: string[],
+  raidType: RaidType,
+  partySize: PartySize,
+): { raidType: RaidType; partySize: PartySize } | null {
+  const lines = parsePlayerLines(playerInputs);
+  if (lines.length === 0) return null;
+  const length = Array.from(lines[0]).length;
+  const uniform = lines.every((line) => Array.from(line).length === length && Array.from(line).every(isRoleChar));
+  if (!uniform || (length !== 2 && length !== 4)) return null;
+  const nextRaidType: RaidType = length === 2 ? "1-1" : "1-3";
+  const nextPartySize = PARTY_SIZES.find((size) => parseInt(size, 10) === lines.length);
+  if (!nextPartySize) return null;
+  if (nextRaidType === raidType && nextPartySize === partySize) return null;
+  return { raidType: nextRaidType, partySize: nextPartySize };
 }
 
 export const getGameCount = (raidType: RaidType): number =>

@@ -5,6 +5,8 @@ import { formatDistributionShare } from "../../lib/lostark/distribution-share";
 import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from "../ui/item";
 import {
   generateDistribution,
+  inferDistributionSettings,
+  parsePlayerLines,
   calculateSupporterInfo,
   cleanChar,
   isMainChar,
@@ -44,6 +46,7 @@ interface UiLabels {
   auctionToolDescription: string;
   shareHeader: string;
   shareRoom: string;
+  adjusted: string;
 }
 
 const L: Record<string, UiLabels> = {
@@ -56,6 +59,7 @@ const L: Record<string, UiLabels> = {
     nextTitle: "Continue with a Lost Ark tool", busTool: "Raid bus fee calculator", busToolDescription: "Calculate the optimal auction and trade price.",
     auctionTool: "Lost Ark auction calculator", auctionToolDescription: "Compare party auction break-even prices.",
     shareHeader: "Lost Ark {method} split · {games} games", shareRoom: "Room {room} · Password {pw}",
+    adjusted: "Your input fits {method} · {size} players, so the settings were switched to match.",
   },
   ko: {
     raidSettings: "레이드 설정", method13: "본1부3", method11: "본1부1", partySize: "파티 인원",
@@ -66,6 +70,7 @@ const L: Record<string, UiLabels> = {
     nextTitle: "로스트아크 도구 이어서 사용하기", busTool: "레이드 버스비 계산기", busToolDescription: "경매·거래 최적 가격을 계산합니다.",
     auctionTool: "로스트아크 경매 계산기", auctionToolDescription: "파티 경매 손익분기 가격을 비교합니다.",
     shareHeader: "로스트아크 {method} 품앗이 분배 · {games}판", shareRoom: "방제 {room} · 비번 {pw}",
+    adjusted: "입력한 조합에 맞춰 설정을 {method} · {size}명으로 바꿨어요.",
   },
   ja: {
     raidSettings: "レイド設定", method13: "本1副3", method11: "本1副1", partySize: "パーティ人数",
@@ -76,6 +81,7 @@ const L: Record<string, UiLabels> = {
     nextTitle: "Lost Arkツールを続けて使う", busTool: "レイドバス料金計算機", busToolDescription: "オークション・取引の最適価格を計算します。",
     auctionTool: "Lost Arkオークション計算機", auctionToolDescription: "パーティオークションの損益分岐価格を比較します。",
     shareHeader: "ロストアーク {method} 分配 · {games}ゲーム", shareRoom: "部屋名 {room} · パスワード {pw}",
+    adjusted: "入力に合わせて設定を{method}・{size}人に切り替えました。",
   },
   zh: {
     raidSettings: "团本设置", method13: "本1副3", method11: "本1副1", partySize: "队伍人数",
@@ -86,6 +92,7 @@ const L: Record<string, UiLabels> = {
     nextTitle: "继续使用命运方舟工具", busTool: "团本巴士费用计算器", busToolDescription: "计算拍卖与交易的最佳价格。",
     auctionTool: "命运方舟拍卖计算器", auctionToolDescription: "比较队伍拍卖的保本价格。",
     shareHeader: "命运方舟 {method} 互助分配 · 共{games}场", shareRoom: "房名 {room} · 密码 {pw}",
+    adjusted: "已按输入内容将设置切换为 {method} · {size} 人。",
   },
   fr: {
     raidSettings: "Réglages du raid", method13: "1 main / 3 alt", method11: "1 main / 1 alt", partySize: "Taille du groupe",
@@ -96,6 +103,7 @@ const L: Record<string, UiLabels> = {
     nextTitle: "Continuer avec un outil Lost Ark", busTool: "Calculateur de frais de bus", busToolDescription: "Calcule le meilleur prix d'enchère et d'échange.",
     auctionTool: "Calculateur d'enchères Lost Ark", auctionToolDescription: "Compare les prix d'équilibre des enchères de groupe.",
     shareHeader: "Lost Ark · répartition {method} · {games} parties", shareRoom: "Salon {room} · Mot de passe {pw}",
+    adjusted: "Votre saisie correspond à {method} · {size} joueurs : les réglages ont été ajustés.",
   },
   es: {
     raidSettings: "Ajustes de la raid", method13: "1 main / 3 alt", method11: "1 main / 1 alt", partySize: "Tamaño del grupo",
@@ -106,6 +114,7 @@ const L: Record<string, UiLabels> = {
     nextTitle: "Sigue con otra herramienta de Lost Ark", busTool: "Calculadora de tarifa de bus", busToolDescription: "Calcula el mejor precio de subasta e intercambio.",
     auctionTool: "Calculadora de subastas de Lost Ark", auctionToolDescription: "Compara los precios de equilibrio de las subastas de grupo.",
     shareHeader: "Lost Ark · reparto {method} · {games} partidas", shareRoom: "Sala {room} · Contraseña {pw}",
+    adjusted: "Tu entrada encaja con {method} · {size} jugadores, así que ajustamos los ajustes.",
   },
 };
 
@@ -126,6 +135,7 @@ export default function LostarkRaidDistribution({ locale }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [room, setRoom] = useState<{ roomCode: string; password: string } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const games = getGameCount(raidType);
   const partyCount = parseInt(partySize, 10) / 4;
@@ -133,9 +143,13 @@ export default function LostarkRaidDistribution({ locale }: Props) {
 
   const sup = calculateSupporterInfo(inputs, partySize, raidType);
 
-  const track = (event: DistributionAnalyticsEvent, details: { playerCount?: number; errorType?: "count" | "invalid" } = {}) => {
+  const track = (
+    event: DistributionAnalyticsEvent,
+    details: { playerCount?: number; errorType?: "count" | "invalid"; raidType?: RaidType; partySize?: PartySize; adjusted?: boolean } = {},
+  ) => {
     const analytics = window as Window & { gtag?: (...args: unknown[]) => void };
-    analytics.gtag?.("event", event, distributionAnalyticsPayload({ raidType, partySize, gameCount: games, ...details }));
+    const eventRaidType = details.raidType ?? raidType;
+    analytics.gtag?.("event", event, distributionAnalyticsPayload({ raidType: eventRaidType, partySize, gameCount: getGameCount(eventRaidType), ...details }));
   };
 
   const setInput = (i: number, v: string) => {
@@ -150,7 +164,27 @@ export default function LostarkRaidDistribution({ locale }: Props) {
 
   const analyze = () => {
     setRoom(null);
-    const out = generateDistribution(inputs.slice(0, partyCount), raidType, partySize);
+    setNotice(null);
+    let out = generateDistribution(inputs.slice(0, partyCount), raidType, partySize);
+    if (out.error) {
+      // 2026-10-13: the default 본1부3·16 setting stays on while people paste an 8-player
+      // or 본1부1 lineup. Switch to the settings the input fits, as long as every line
+      // still sits in a party box that stays visible after the switch.
+      const next = inferDistributionSettings(inputs.slice(0, partyCount), raidType, partySize);
+      const nextPartyCount = next ? parseInt(next.partySize, 10) / 4 : 0;
+      if (next && parsePlayerLines(inputs.slice(nextPartyCount, partyCount)).length === 0) {
+        out = generateDistribution(inputs.slice(0, nextPartyCount), next.raidType, next.partySize);
+        if (!out.error) {
+          setRaidType(next.raidType);
+          setPartySize(next.partySize);
+          setNotice(t.adjusted.replace("{method}", next.raidType === "1-3" ? t.method13 : t.method11).replace("{size}", next.partySize));
+          track("distribution_complete", { playerCount: out.result?.length, raidType: next.raidType, partySize: next.partySize, adjusted: true });
+          setError(null);
+          setResult(out.result);
+          return;
+        }
+      }
+    }
     if (out.error === "count") {
       track("distribution_error", { errorType: "count" });
       setError(t.errCount.replace("{expected}", String(out.errorDetail?.expected)).replace("{actual}", String(out.errorDetail?.actual)));
@@ -232,6 +266,10 @@ export default function LostarkRaidDistribution({ locale }: Props) {
       </div>
 
       <button type="button" onClick={analyze} className="mt-4 w-full rounded-md bg-primary px-4 py-2.5 font-semibold text-primary-foreground transition-opacity hover:opacity-90">{t.analyze}</button>
+
+      {notice && (
+        <div className="mt-4 rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-sm text-foreground" role="status">{notice}</div>
+      )}
 
       {error && (
         <div className="mt-4 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-foreground">{error}</div>

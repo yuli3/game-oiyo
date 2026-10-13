@@ -12,6 +12,8 @@ interface DistributionAnalyticsContext {
   gameCount: number;
   playerCount?: number;
   errorType?: 'count' | 'invalid';
+  /** True when the tool switched raid type or party size to fit the input. */
+  adjusted?: boolean;
 }
 
 export function distributionAnalyticsPayload(context: DistributionAnalyticsContext): Record<string, string | number> {
@@ -23,5 +25,6 @@ export function distributionAnalyticsPayload(context: DistributionAnalyticsConte
   };
   if (context.playerCount !== undefined) payload.player_count = context.playerCount;
   if (context.errorType !== undefined) payload.error_type = context.errorType;
+  if (context.adjusted) payload.settings_adjusted = 1;
   return payload;
 }

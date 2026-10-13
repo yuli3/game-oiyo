@@ -21,4 +21,11 @@ describe('Lost Ark distribution analytics contract', () => {
       error_type: 'invalid',
     });
   });
+
+  it('marks a result reached after the tool switched settings', () => {
+    expect(distributionAnalyticsPayload({ raidType: '1-3', partySize: '8', gameCount: 4, playerCount: 8, adjusted: true })).toMatchObject({
+      party_size: 8,
+      settings_adjusted: 1,
+    });
+  });
 });
