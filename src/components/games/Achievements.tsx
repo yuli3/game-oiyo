@@ -265,7 +265,8 @@ const Achievements: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
   return (
     <div className="not-prose flex flex-col gap-6 py-6 px-4 max-w-2xl mx-auto">
       <div className="text-center">
-        <h1 className="text-2xl font-black">{t.title}</h1>
+        {/* The route layout owns the page H1; this client dashboard is a subsection (2026-10-13). */}
+        <h2 className="text-2xl font-black">{t.title}</h2>
         <p className="mt-1 text-xs font-bold text-muted-foreground">{t.subtitle}</p>
         <p className="mt-3 text-3xl font-black text-primary">{unlockedCount}<span className="text-base text-muted-foreground"> / {evaluated.length} {t.unlocked}</span></p>
       </div>

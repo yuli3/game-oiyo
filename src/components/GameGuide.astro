@@ -54,7 +54,9 @@ const jsonLd = g ? [
 ] : null;
 ---
 
-<GamePlayBeacon client:load slug={slug} />
+{/* 2026-10-13: this null-rendering beacon only records browser interactions;
+    keep the guide's static HTML while avoiding unnecessary React SSR. */}
+<GamePlayBeacon client:only="react" slug={slug} />
 {g && (
   <>
     {jsonLd!.map((o) => <script type="application/ld+json" is:inline set:html={JSON.stringify(o)} />)}

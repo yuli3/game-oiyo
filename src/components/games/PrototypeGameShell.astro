@@ -28,7 +28,9 @@ const jsonLd = {
 ---
 
 <script type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd)} />
-<GamePlayBeacon client:load slug={game.slug} prototype />
+{/* 2026-10-13: play tracking attaches to the browser iframe and emits no UI;
+    client-only hydration leaves the static game shell and guide intact. */}
+<GamePlayBeacon client:only="react" slug={game.slug} prototype />
 <section class="release" data-release-shell={game.slug} data-locale={locale}>
   <div class="release__bar">
     <p>{game.controls[locale] ?? game.controls.en}</p>

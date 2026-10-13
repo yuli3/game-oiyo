@@ -642,8 +642,8 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                                             aria-label={`${position}: ${mark === 'tent' ? a11y.tent : mark === 'grass' ? a11y.grass : a11y.empty}${verdictLabel}`}
                                             onFocus={() => setActiveCell(index)} onKeyDown={(event) => handleGridKeyDown(event, index)}
                                             className={`${common} ${
-                                                mark === 'tent' ? 'bg-rose-100 text-rose-700 shadow-md -translate-y-0.5' :
-                                                mark === 'grass' ? 'bg-muted/50 text-muted-foreground/30' : 'bg-background hover:bg-muted/20 active:scale-95'
+                                                mark === 'tent' ? 'bg-rose-100 text-rose-700 shadow-md motion-safe:-translate-y-0.5' :
+                                                mark === 'grass' ? 'bg-muted/50 text-muted-foreground/30' : 'bg-background hover:bg-muted/20 motion-safe:active:scale-95'
                                             } ${verdict === 'legal' ? 'ring-2 ring-emerald-600' : ''} ${verdict === 'illegal' ? 'ring-2 ring-stone-500' : ''} ${hint?.cells.some(([hr, hc]) => hr === r && hc === c) ? 'ring-4 ring-amber-400' : ''}`}
                                         >
                                             {mark === 'tent' && <img src={TENTS_SPRITES.tent} alt="" draggable={false} className="h-7 w-7 object-contain pointer-events-none" aria-hidden="true" />}

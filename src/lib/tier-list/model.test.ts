@@ -34,6 +34,23 @@ describe("tier list model", () => {
     expect(reordered.tiers[0].items.map((item) => item.id)).toEqual(["a", "b"]);
   });
 
+  it("preserves cards when the destination row is missing or hidden", () => {
+    const doc = emptyDocument("보존");
+    doc.tiers[5].items.push({ id: "a", label: "A" });
+    const missing = { ...doc, tiers: doc.tiers.filter((tier) => tier.id !== "s") };
+    expect(moveTierItem(missing, "a", "s", 0)).toBe(missing);
+    expect(moveTierItem(doc, "a", "e", 0)).toBe(doc);
+    expect(doc.tiers[5].items.map((item) => item.id)).toEqual(["a"]);
+  });
+
+  it("rejects non-finite insertion positions without changing the document", () => {
+    const doc = emptyDocument("보존");
+    doc.tiers[5].items.push({ id: "a", label: "A" });
+    for (const index of [NaN, Infinity, -Infinity]) {
+      expect(moveTierItem(doc, "a", "s", index)).toBe(doc);
+    }
+  });
+
   it("removes one item without touching the rest", () => {
     const doc = emptyDocument("테스트");
     doc.tiers[5].items.push({ id: "a", label: "A" }, { id: "b", label: "B" });

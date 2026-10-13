@@ -157,6 +157,10 @@ export function localImageCount(doc: TierListDocument): number {
 }
 
 export function moveTierItem(doc: TierListDocument, itemId: string, targetTierId: TierId, targetIndex: number): TierListDocument {
+  // 2026-10-10: Validate before removing the source card; a stale/hidden target
+  // must not silently discard a card or put it outside the visible board.
+  const destination = doc.tiers.find((tier) => tier.id === targetTierId);
+  if (!destination || destination.hidden || !Number.isFinite(targetIndex)) return doc;
   let moving: TierItem | undefined;
   const tiers = doc.tiers.map((tier) => {
     const found = tier.items.find((item) => item.id === itemId);

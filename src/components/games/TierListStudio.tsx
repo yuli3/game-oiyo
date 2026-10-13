@@ -36,6 +36,7 @@ import {
   type TierListDocument,
 } from "../../lib/tier-list/model";
 import { documentFromTemplate, templatesForLocale } from "../../lib/tier-list/templates";
+import { readTierStorage, writeTierStorage } from "../../lib/tier-list/storage";
 
 // 2026-10-06: 줄 색을 고를 수 있게 되면서 색은 줄 id 가 아니라 TierColor 에 묶인다.
 // Tier swatches are content the player picks, and the PNG export paints the same colours on a
@@ -97,9 +98,10 @@ const COPY = {
     reset: "비우기",
     save: "내 목록에 저장",
     saved: "저장됨",
+    storageFail: "브라우저에 저장하지 못했어요. 화면을 닫기 전에 PNG로 저장해 주세요.",
     share: "공유 링크",
     sharing: "올리는 중…",
-    shareFail: "지금은 공유 서버를 쓸 수 없습니다. 로컬 저장은 됩니다.",
+    shareFail: "지금은 공유 서버를 쓸 수 없어요. PNG로 저장해 주세요.",
     load: "불러오기",
     compare: "비교",
     hideCompare: "비교 닫기",
@@ -143,9 +145,10 @@ const COPY = {
     reset: "Clear",
     save: "Save to My Lists",
     saved: "Saved",
+    storageFail: "Browser storage failed. Save a PNG before closing this page.",
     share: "Share Link",
     sharing: "Uploading…",
-    shareFail: "The share server isn't available right now. Local saving still works.",
+    shareFail: "The share server is unavailable. Please save a PNG instead.",
     load: "Load",
     compare: "Compare",
     hideCompare: "Close Compare",
@@ -189,9 +192,10 @@ const COPY = {
     reset: "空にする",
     save: "マイリストに保存",
     saved: "保存済み",
+    storageFail: "ブラウザーに保存できませんでした。画面を閉じる前にPNGで保存してください。",
     share: "共有リンク",
     sharing: "アップロード中…",
-    shareFail: "現在、共有サーバーを利用できません。ローカル保存は可能です。",
+    shareFail: "現在、共有サーバーを利用できません。PNGで保存してください。",
     load: "読み込み",
     compare: "比較",
     hideCompare: "比較を閉じる",
@@ -235,9 +239,10 @@ const COPY = {
     reset: "清空",
     save: "保存到我的列表",
     saved: "已保存",
+    storageFail: "无法保存到浏览器。关闭页面前，请保存为PNG图片。",
     share: "分享链接",
     sharing: "上传中…",
-    shareFail: "目前无法使用分享服务器，仍可本地保存。",
+    shareFail: "目前无法使用分享服务器，请保存为PNG图片。",
     load: "加载",
     compare: "对比",
     hideCompare: "关闭对比",
@@ -281,9 +286,10 @@ const COPY = {
     reset: "Vider",
     save: "Enregistrer dans mes listes",
     saved: "Enregistré",
+    storageFail: "L’enregistrement dans le navigateur a échoué. Enregistrez un PNG avant de fermer cette page.",
     share: "Lien de partage",
     sharing: "Envoi en cours…",
-    shareFail: "Le serveur de partage est indisponible pour le moment. L'enregistrement local fonctionne toujours.",
+    shareFail: "Le serveur de partage est indisponible. Enregistrez un PNG à la place.",
     load: "Charger",
     compare: "Comparer",
     hideCompare: "Fermer la comparaison",
@@ -327,9 +333,10 @@ const COPY = {
     reset: "Vaciar",
     save: "Guardar en mis listas",
     saved: "Guardado",
+    storageFail: "No se pudo guardar en el navegador. Guarda un PNG antes de cerrar esta página.",
     share: "Enlace para compartir",
     sharing: "Subiendo…",
-    shareFail: "El servidor para compartir no está disponible ahora. El guardado local sigue funcionando.",
+    shareFail: "El servidor para compartir no está disponible. Guarda un PNG como alternativa.",
     load: "Cargar",
     compare: "Comparar",
     hideCompare: "Cerrar comparación",
@@ -394,11 +401,36 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
   const draggingRef = useRef<{ id: string; x: number; y: number } | null>(null);
   const [ghost, setGhost] = useState<{ item: TierItem; x: number; y: number } | null>(null);
   const [hoverTier, setHoverTier] = useState<TierId | null>(null);
+  const [storageReady, setStorageReady] = useState(false);
+  const [storageFailed, setStorageFailed] = useState(false);
+  const [boardProtected, setBoardProtected] = useState(true);
+  const [savesProtected, setSavesProtected] = useState(true);
+  const boardRevision = useRef<string | null>(null);
+  const savesRevision = useRef<string | null>(null);
 
   useEffect(() => {
-    const stored = parseDocument(window.localStorage.getItem(TIER_LIST_STORAGE_KEY));
+    const boardRead = readTierStorage(() => window.localStorage, TIER_LIST_STORAGE_KEY);
+    const savesRead = readTierStorage(() => window.localStorage, TIER_LIST_SAVES_KEY);
+    const stored = parseDocument(boardRead.ok ? boardRead.value : null);
     if (stored) setDoc(stored);
-    setSaves(parseSaves(window.localStorage.getItem(TIER_LIST_SAVES_KEY)));
+    const loadedSaves = parseSaves(savesRead.ok ? savesRead.value : null);
+    setSaves(loadedSaves);
+    const boardSafe = boardRead.ok && (boardRead.value === null || stored !== null);
+    let savesSafe = false;
+    if (savesRead.ok) {
+      try {
+        const raw = savesRead.value === null ? [] : JSON.parse(savesRead.value);
+        savesSafe = Array.isArray(raw) && raw.length === loadedSaves.length;
+      } catch { /* Unreadable records remain untouched; PNG export stays available. */ }
+    }
+    // 2026-10-13: A parser's fallback is a view, not permission to destroy an
+    // unreadable/future record. Protect each key independently for this session.
+    setBoardProtected(!boardSafe);
+    setSavesProtected(!savesSafe);
+    if (boardRead.ok) boardRevision.current = boardRead.value;
+    if (savesRead.ok) savesRevision.current = savesRead.value;
+    setStorageFailed(!boardSafe || !savesSafe);
+    setStorageReady(true);
     const shareId = new URLSearchParams(window.location.search).get("s");
     if (shareId) {
       void fetch(`/api/tier-share/${shareId}`)
@@ -412,12 +444,12 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
   }, []);
 
   useEffect(() => {
-    try {
-      window.localStorage.setItem(TIER_LIST_STORAGE_KEY, JSON.stringify(doc));
-    } catch {
-      /* private mode */
-    }
-  }, [doc]);
+    // 2026-10-10: Do not overwrite a saved board with the initial empty SSR state.
+    if (!storageReady || boardProtected) return;
+    const saved = writeTierStorage(() => window.localStorage, TIER_LIST_STORAGE_KEY, doc, boardRevision.current);
+    if (saved) boardRevision.current = JSON.stringify(doc);
+    setStorageFailed(!saved || savesProtected);
+  }, [doc, storageReady, boardProtected, savesProtected]);
 
   const selectedItem = useMemo(() => {
     for (const tier of doc.tiers) {
@@ -477,12 +509,20 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
   }, [copy.imageFail, copy.tooMany, copy.unnamed, doc, label]);
 
   const persistSave = useCallback(() => {
+    if (!storageReady || savesProtected) {
+      setStatus(copy.storageFail);
+      return;
+    }
     const entry: NamedSave = { id: newId("save"), title: doc.title, savedAt: new Date().toISOString(), document: doc };
     const next = [entry, ...saves].slice(0, 8);
+    if (!writeTierStorage(() => window.localStorage, TIER_LIST_SAVES_KEY, next, savesRevision.current)) {
+      setStatus(copy.storageFail);
+      return;
+    }
     setSaves(next);
-    window.localStorage.setItem(TIER_LIST_SAVES_KEY, JSON.stringify(next));
+    savesRevision.current = JSON.stringify(next);
     setStatus(copy.saved);
-  }, [copy.saved, doc, saves]);
+  }, [copy.saved, copy.storageFail, doc, saves, storageReady, savesProtected]);
 
   const share = useCallback(async () => {
     setBusy(true);
@@ -785,7 +825,10 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
       </div>
 
       <p className="text-xs leading-relaxed text-muted-foreground">{copy.privacy}</p>
-      {status ? <p className="break-all text-sm font-bold text-primary">{status}</p> : null}
+      {/* 2026-10-13: persistent protection and a failed save can report the same
+          message; announce it once, including failures without a persistent flag. */}
+      {storageFailed || status === copy.storageFail ? <p role="status" className="text-sm font-bold text-destructive">{copy.storageFail}</p> : null}
+      {status && status !== copy.storageFail ? <p role="status" className="break-all text-sm font-bold text-primary">{status}</p> : null}
       </div>
       {ghost ? (
         <div
