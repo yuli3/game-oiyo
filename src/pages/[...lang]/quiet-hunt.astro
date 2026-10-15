@@ -1,0 +1,36 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import QuietHunt from "../../components/games/QuietHunt";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: { title: "포식자 없는 사냥 — 읽으면 바람이 동쪽으로 걷고 찍으면 그 칸의 먹이만 걷힌다", description: "읽으면 가장 서쪽의 발자국이 먹이가 되고 바람은 한 칸 동쪽으로 걷습니다. 찍으면 바람 아래의 먹이만 걷힙니다. 같은 시드는 같은 자리입니다." },
+  en: { title: "Quiet Hunt — reading walks the wind one plot east", description: "Reading turns only the westernmost footprint into feed, and the wind walks one plot east. Shooting clears only the feed under the wind. The same seed is the same field." },
+  ja: { title: "捕食者のいない狩り — 読むと風が東へ歩く", description: "読むと最も西の足跡だけが餌跡になり、風は一区画東へ歩きます。撮ると風の下の餌だけが消えます。同じシードは同じ場所です。" },
+  zh: { title: "无捕猎的追踪 — 阅读会让风往东走一格", description: "阅读只把最西边的足迹变成食物，风往东走一格。拍摄只清掉风下面的食物。相同种子是同一块地。" },
+  fr: { title: "Piste sans prise — lire fait avancer le vent vers l'est", description: "Lire ne change que l'empreinte la plus à l'ouest en nourriture, et le vent avance d'une parcelle. Photographier n'efface que la nourriture sous le vent. La même graine, le même terrain." },
+  es: { title: "Rastro sin captura — leer hace caminar el viento al este", description: "Leer solo vuelve comida la huella más al oeste, y el viento camina una parcela al este. Fotografiar solo quita la comida bajo el viento. La misma semilla es el mismo terreno." },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["quiet-hunt"]}>
+  <div class="mx-auto max-w-3xl px-4 py-8">
+    {/*
+      client:visible — the three.js chunk stays out of the first paint until
+      the page is actually on screen.
+    */}
+    <QuietHunt client:visible locale={locale} />
+    <GameGuide slug="quiet-hunt" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>

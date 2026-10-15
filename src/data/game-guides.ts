@@ -13,6 +13,44 @@ export interface GameGuide {
 }
 
 export const GAME_GUIDES: Record<string, GameGuide> = {
+  "quiet-hunt": {
+    origin: {
+      ko: "포식자 없는 사냥은 생물을 잡지 않고, 발자국을 읽으면 바람이 한 칸 동쪽으로 걷는 OIYO 오리지널 퍼즐입니다. 네 자리는 손으로 맞춘 뒤 시드가 그중 하나를 고르며, 외부 게임의 맵이나 음원을 쓰지 않습니다.",
+      en: "Quiet Hunt is an original OIYO puzzle: nothing is caught. Reading a footprint walks the wind one plot east. Four fields were checked by hand; a seed picks one. It uses no map or audio from another game.",
+      ja: "捕食者のいない狩りは、生き物を捕らえず、足跡を読むと風が一区画東へ歩くOIYOオリジナルパズルです。四つの場所は手で確かめ、シードがその一つを選びます。外部ゲームのマップや音源は使いません。",
+      zh: "无捕猎的追踪是 OIYO 原创谜题：不捕捉生物，阅读足迹时风会往东走一格。四块地经手工核验，种子从中选一块。不使用其他游戏的地图或音频。",
+      fr: "Piste sans prise est un puzzle original d'OIYO : on ne capture rien. Lire une empreinte fait avancer le vent d'une parcelle vers l'est. Quatre terrains ont été vérifiés à la main ; une graine en choisit un. Aucune carte ni aucun son d'un autre jeu.",
+      es: "Rastro sin captura es un puzle original de OIYO: no se atrapa nada. Leer una huella hace caminar el viento una parcela al este. Cuatro terrenos se comprobaron a mano; una semilla elige uno. No usa mapas ni audio de otro juego.",
+    },
+    how: {
+      ko: "화면 왼쪽이 서쪽이고 칸 번호는 1부터입니다. 화면 위쪽 줄이 표식이고 아래 줄이 자리입니다. 읽기는 가장 서쪽의 발자국만 먹이로 바꾸고 바람은 한 칸 동쪽으로 걷습니다. 찍기는 바람이 있는 칸의 먹이만 빈 칸으로 걷어 냅니다. 맞는 흔적이 없는 행동은 걸음이 아닙니다. 자리와 바람이 표식과 같아지면 이기고, 행동 8 안에 못 맞추면 집니다. 보기 버튼은 흔적을 옮기지 않습니다. 이 자리는 화면에만 남고 기기에는 저장되지 않습니다.",
+      en: "The left of the screen is west, and plot numbers start at 1. The upper row is the mark and the lower row is the field. Reading turns only the westernmost footprint into feed, and the wind walks one plot east. Shooting clears only the feed on the wind's plot. An act with no fitting trace is not a step. Matching the field and the wind to the mark wins. Missing it within 8 acts loses. The view button does not move a trace. This field stays on the screen and is not saved on the device.",
+      ja: "画面の左が西で、番号は1からです。上の列が表示、下の列が場所です。読みは最も西の足跡だけを餌にし、風は一区画東へ歩きます。撮りは風がある区画の餌だけを空にします。当てはまる痕跡のない手は歩数になりません。場所と風が表示と揃えば勝ち、8手で揃わなければ負けです。視点ボタンは痕跡を動かしません。この場所は画面の上だけに残り、端末には保存されません。",
+      zh: "画面左侧是西，格子从 1 开始。上面一行是标记，下面一行是场地。阅读只把最西边的足迹变成食物，风往东走一格。拍摄只清掉风所在格子的食物。没有相符痕迹的行动不算一步。场地和风与标记一致就赢。第8步还没对上就输。视角按钮不移动痕迹。这块地只留在画面上，不会写进设备。",
+      fr: "La gauche de l'écran est l'ouest, et les parcelles se comptent à partir de 1. La rangée du haut est la marque, celle du bas le terrain. Lire ne change que l'empreinte la plus à l'ouest en nourriture, et le vent avance d'une parcelle vers l'est. Photographier n'efface que la nourriture de la parcelle du vent. Un geste sans trace convenable ne compte pas. Égaler le terrain et le vent à la marque fait gagner. Les manquer en 8 gestes fait perdre. Le bouton de vue ne déplace pas une trace. Ce terrain reste à l'écran et n'est pas écrit sur l'appareil.",
+      es: "La izquierda de la pantalla es el oeste, y las parcelas se numeran desde 1. La fila de arriba es la marca y la de abajo el terreno. Leer solo vuelve comida la huella más al oeste, y el viento camina una parcela al este. Fotografiar solo quita la comida de la parcela del viento. Un gesto sin un rastro que encaje no cuenta. Igualar el terreno y el viento con la marca gana. No llegar en 8 gestos pierde. El botón de vista no mueve un rastro. Este terreno se queda en la pantalla y no se escribe en el aparato.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "같은 시드는 항상 같은 자리인가요?",
+          en: "Does the same seed always build the same field?",
+          ja: "同じシードはいつも同じ場所ですか？",
+          zh: "相同种子总会生成同一块地吗？",
+          fr: "La même graine donne-t-elle toujours le même terrain ?",
+          es: "¿La misma semilla construye siempre el mismo terreno?",
+        },
+        a: {
+          ko: "네. 시드는 미리 맞춘 네 자리 중 하나를 고릅니다. 흔적이 매 프레임 새로 움직이지 않으므로 주소를 공유하면 같은 자리를 둡니다.",
+          en: "Yes. The seed picks one of four fields that were checked ahead of time. The traces are not moved again every frame, so a shared address is the same field.",
+          ja: "はい。シードは事前に確かめた四つの場所から一つを選びます。痕跡を毎フレーム動かし直さないので、アドレスを共有すれば同じ場所です。",
+          zh: "是的。种子从事先核验的四块地中选一块。痕迹不会每帧重新移动，因此分享地址就是同一块地。",
+          fr: "Oui. La graine choisit l'un des quatre terrains vérifiés à l'avance. Les traces ne sont pas relancées à chaque image, donc une adresse partagée est le même terrain.",
+          es: "Sí. La semilla elige uno de cuatro terrenos comprobados de antemano. Los rastros no vuelven a moverse en cada fotograma, así que una dirección compartida es el mismo terreno.",
+        },
+      },
+    ],
+  },
   "subway-conductor": {
     origin: {
       ko: "지하철 지휘자는 노선을 새로 그리지 않고, 한 열차의 간격이 바로 동쪽 승강장으로 번지는 OIYO 오리지널 퍼즐입니다. 네 시각표는 손으로 맞춘 뒤 시드가 그중 하나를 고르며, 외부 게임의 맵이나 음원을 쓰지 않습니다.",
