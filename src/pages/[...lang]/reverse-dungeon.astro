@@ -1,0 +1,36 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ReverseDungeon from "../../components/games/ReverseDungeon";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: { title: "리버스 던전 — 던전을 돌려 모험가를 살리는 퍼즐", description: "당신은 걷지 않습니다. 층을 90도씩 돌려 길이 하나일 때만 모험가가 한 걸음 나가게 하고, 출구까지 보내는 무료 3D 퍼즐." },
+  en: { title: "Reverse Dungeon — Turn the dungeon, save the adventurer", description: "You do not walk. Rotate floors by quarter turns so the adventurer steps only when one door is open, and send them to the exit. A free 3D puzzle." },
+  ja: { title: "リバースダンジョン — 迷宮を回して冒険者を助ける", description: "あなたは歩きません。階を90度ずつ回し、扉が一つだけのときだけ冒険者を一歩進め、出口まで送ります。無料の3Dパズル。" },
+  zh: { title: "反向地牢 — 转动地牢，救出冒险者", description: "你不走路。每次把一层转90度，只在一扇门开着时让冒险者迈出一步，并送到出口。免费3D谜题。" },
+  fr: { title: "Donjon inversé — tournez le donjon, sauvez l'aventurier", description: "Vous ne marchez pas. Tournez les étages de 90 degrés pour que l'aventurier n'avance qu'à une seule porte ouverte, jusqu'à la sortie. Un puzzle 3D gratuit." },
+  es: { title: "Mazmorra inversa — gira la mazmorra y salva al aventurero", description: "Tú no caminas. Gira los pisos 90 grados para que el aventurero avance solo con una puerta abierta y llegue a la salida. Un puzle 3D gratuito." },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["reverse-dungeon"]}>
+  <div class="mx-auto max-w-3xl px-4 py-8">
+    {/*
+      client:visible — the three.js chunk stays out of the first paint until
+      the dungeon is actually on screen.
+    */}
+    <ReverseDungeon client:visible locale={locale} />
+    <GameGuide slug="reverse-dungeon" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>

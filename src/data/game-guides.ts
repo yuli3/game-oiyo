@@ -13,6 +13,44 @@ export interface GameGuide {
 }
 
 export const GAME_GUIDES: Record<string, GameGuide> = {
+  "reverse-dungeon": {
+    origin: {
+      ko: "리버스 던전은 모험가를 움직이지 않고 건축을 90도씩 돌려 출구까지 보내는 OIYO 오리지널 퍼즐입니다. 네 판은 손으로 맞춘 뒤 시드가 그중 하나를 고르며, 외부 게임의 맵이나 음원을 쓰지 않습니다.",
+      en: "Reverse Dungeon is an original OIYO puzzle where you leave the adventurer still and turn the architecture by quarter turns until they reach the exit. Four boards were checked by hand; a seed picks one. It uses no map or audio from another game.",
+      ja: "リバースダンジョンは、冒険者を動かさず建築を90度ずつ回して出口へ送るOIYOオリジナルパズルです。四つの盤面は手で確かめ、シードがその一つを選びます。外部ゲームのマップや音源は使いません。",
+      zh: "反向地牢是 OIYO 原创谜题：冒险者留在原地，你把建筑每次转90度，直到其走到出口。四张棋盘经手工核验，种子从中选一张。不使用其他游戏的地图或音频。",
+      fr: "Donjon inversé est un puzzle original d'OIYO : l'aventurier reste en place et vous tournez l'architecture par quarts de tour jusqu'à la sortie. Quatre plateaux ont été vérifiés à la main ; une graine en choisit un. Aucune carte ni aucun son d'un autre jeu.",
+      es: "Mazmorra inversa es un puzle original de OIYO: el aventurero no se mueve y tú giras la arquitectura en cuartos de vuelta hasta la salida. Cuatro tableros se comprobaron a mano; una semilla elige uno. No usa mapas ni audio de otro juego.",
+    },
+    how: {
+      ko: "아래·위·서·동·남·북 중 한 층을 고르고 왼쪽 또는 오른쪽으로 돌리세요. 열린 문이 하나일 때만 한 걸음이 전진합니다. 출구 칸으로 걸어 들어가면 이기고, 출구가 발밑으로 돌아와도 이긴 것이 아닙니다. 구덩이로 걷거나 구덩이가 발밑으로 오면 지고, 걸음 24도 집니다. 자동 걸음은 꺼져 있으며 보기 버튼은 판을 바꾸지 않습니다.",
+      en: "Choose a lower, upper, west, east, south, or north slice and turn it left or right. One step advances only when a single door is open. Walking into the exit wins; an exit that rotates underfoot does not. Walking into a pit, or a pit sliding underfoot, loses, as does step 24. Auto step starts off, and the view button does not change the board.",
+      ja: "下・上・西・東・南・北から層を選び、左か右へ回します。開いた扉が一つのときだけ一歩が進みます。出口の部屋へ歩き入ると勝ちで、出口が足元へ回ってきても勝ちではありません。落とし穴へ歩くか、落とし穴が足元へ来るか、24歩で負けです。自動歩行はオフで、視点ボタンは盤面を変えません。",
+      zh: "从下、上、西、东、南、北中选一层，向左或向右转。只有一扇门开着时，一步才会前进。走进出口才算赢；出口转到脚下不算赢。走进坑、坑滑到脚下，或走到第24步，都会输。自动迈步默认关闭，视角按钮不改变棋盘。",
+      fr: "Choisissez un étage bas, haut, ouest, est, sud ou nord et tournez-le à gauche ou à droite. Un pas n'avance que si une seule porte est ouverte. Entrer dans la sortie gagne ; une sortie qui tourne sous les pieds ne gagne pas. Entrer dans une fosse, ou la voir glisser dessous, perd, tout comme le 24e pas. Le pas automatique est éteint et le bouton de vue ne change pas le plateau.",
+      es: "Elige un piso inferior, superior, oeste, este, sur o norte y gíralo a la izquierda o a la derecha. Un paso solo avanza cuando hay una sola puerta abierta. Entrar en la salida gana; una salida que gira bajo los pies no gana. Entrar en un foso, o que el foso se deslice debajo, pierde, igual que el paso 24. El paso automático empieza apagado y el botón de vista no cambia el tablero.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "같은 시드는 항상 같은 던전인가요?",
+          en: "Does the same seed always build the same dungeon?",
+          ja: "同じシードはいつも同じ迷宮ですか？",
+          zh: "相同种子总会生成同一座地牢吗？",
+          fr: "La même graine donne-t-elle toujours le même donjon ?",
+          es: "¿La misma semilla construye siempre la misma mazmorra?",
+        },
+        a: {
+          ko: "네. 시드는 미리 맞춘 네 판 중 하나를 고릅니다. 판이 매 프레임 새로 섞이지 않으므로 주소를 공유하면 같은 퍼즐을 둡니다.",
+          en: "Yes. The seed picks one of four boards that were checked ahead of time. The board is not reshuffled every frame, so a shared address is the same puzzle.",
+          ja: "はい。シードは事前に確かめた四つの盤面から一つを選びます。毎フレーム混ぜ直さないので、アドレスを共有すれば同じパズルです。",
+          zh: "是的。种子从事先核验的四张棋盘中选一张。棋盘不会每帧重排，因此分享地址就是同一道谜题。",
+          fr: "Oui. La graine choisit l'un des quatre plateaux vérifiés à l'avance. Le plateau n'est pas remélangé à chaque image, donc une adresse partagée est le même puzzle.",
+          es: "Sí. La semilla elige uno de cuatro tableros comprobados de antemano. El tablero no se rebaraja en cada fotograma, así que una dirección compartida es el mismo puzle.",
+        },
+      },
+    ],
+  },
   "shadow-architect": {
     origin:{ko:"그림자 건축가는 입체 구조와 평면 투영의 차이를 놀이로 만든 OIYO 오리지널 3D 공간 퍼즐입니다. 정답 실루엣은 하나지만 깊이가 다른 여러 구조가 답이 될 수 있습니다.",en:"Shadow Architect is an original OIYO 3D spatial puzzle about the difference between a solid structure and its flat projection. One silhouette can have multiple valid structures at different depths.",ja:"影の建築家は、立体構造と平面投影の違いを遊びにしたOIYOオリジナル3D空間パズルです。一つの影に対し、奥行きの異なる複数の構造が正解になります。",zh:"影子建筑师是 OIYO 原创3D空间谜题，以立体结构与平面投影的差异为玩法。同一个剪影可以对应多个深度不同的正确结构。",fr:"Architecte des ombres est un puzzle spatial 3D original d'OIYO sur l'écart entre une structure solide et sa projection plane. Une silhouette accepte plusieurs structures de profondeurs différentes.",es:"Arquitecto de sombras es un puzle espacial 3D original de OIYO sobre la diferencia entre una estructura sólida y su proyección plana. Una silueta admite varias estructuras con distinta profundidad."},
     how:{ko:"다섯 블록 중 하나를 고르고 좌우·상하·앞뒤 이동과 90도 회전을 사용하세요. 금빛 목표 격자와 초록 현재 그림자가 정확히 겹치면 완성됩니다. 카메라를 돌려 가려진 적층을 확인할 수 있습니다.",en:"Choose one of five blocks and move it left, right, up, down, forward or back, or rotate it by 90 degrees. You finish when the green current shadow exactly covers the gold target grid. Orbit the camera to inspect hidden depth.",ja:"5つのブロックから一つを選び、左右・上下・前後移動と90度回転を使います。緑の現在影が金色の目標格子と完全に重なれば完成です。カメラを回して隠れた奥行きを確認できます。",zh:"选择五个方块之一，左右、上下、前后移动或旋转90度。绿色当前影子与金色目标网格完全重合即可完成。旋转镜头可查看被遮挡的深度。",fr:"Choisissez l'un des cinq blocs, déplacez-le dans les six directions ou tournez-le de 90°. La construction est terminée quand l'ombre verte recouvre exactement la grille dorée. Tournez la caméra pour examiner la profondeur cachée.",es:"Elige uno de cinco bloques, muévelo en seis direcciones o gíralo 90°. Terminas cuando la sombra verde cubre exactamente la cuadrícula dorada. Orbita la cámara para revisar la profundidad oculta."},
