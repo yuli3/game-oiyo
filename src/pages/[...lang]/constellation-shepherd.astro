@@ -1,0 +1,36 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ConstellationShepherd from "../../components/games/ConstellationShepherd";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: { title: "별자리 목동 — 가벼운 별은 오고, 무거운 별은 끌어당긴다", description: "빈 하늘로는 걷고, 끈이 가운데서 엇갈리면 당기지 못하는 무료 3D 퍼즐. 같은 시드는 같은 하늘입니다." },
+  en: { title: "Constellation Shepherd — light stars come, heavy stars drag", description: "Walk the empty sky. A rope that crosses another does not pull. A free 3D puzzle where the same seed is the same sky." },
+  ja: { title: "星座の羊飼い — 軽い星は寄り、重い星は引く", description: "空のマスを歩き、紐が交差すると引けない無料の3Dパズル。同じシードは同じ空です。" },
+  zh: { title: "星座牧人 — 轻星靠近，重星拖拽", description: "在空的天上走。绳子交叉就拉不动。免费3D谜题，相同种子是同一片天空。" },
+  fr: { title: "Berger des constellations — l'étoile légère vient, la lourde tire", description: "Marchez dans le ciel vide. Une corde qui en croise une autre ne tire pas. Un puzzle 3D gratuit : la même graine, le même ciel." },
+  es: { title: "Pastor de constelaciones — la ligera viene, la pesada arrastra", description: "Camina por el cielo vacío. Una cuerda que cruza otra no tira. Un puzle 3D gratuito: la misma semilla es el mismo cielo." },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["constellation-shepherd"]}>
+  <div class="mx-auto max-w-3xl px-4 py-8">
+    {/*
+      client:visible — the three.js chunk stays out of the first paint until
+      the sky is actually on screen.
+    */}
+    <ConstellationShepherd client:visible locale={locale} />
+    <GameGuide slug="constellation-shepherd" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>

@@ -13,6 +13,44 @@ export interface GameGuide {
 }
 
 export const GAME_GUIDES: Record<string, GameGuide> = {
+  "constellation-shepherd": {
+    origin: {
+      ko: "별자리 목동은 빈 하늘을 걷고, 줄이 별에 닿을 때만 가벼운 쪽이 움직이는 OIYO 오리지널 퍼즐입니다. 네 하늘은 손으로 맞춘 뒤 시드가 그중 하나를 고르며, 외부 게임의 맵이나 음원을 쓰지 않습니다.",
+      en: "Constellation Shepherd is an original OIYO puzzle: you walk empty sky, and only the lighter end moves when a rope finds a star. Four skies were checked by hand; a seed picks one. It uses no map or audio from another game.",
+      ja: "星座の羊飼いは、空のマスを歩き、紐が星に届いたときだけ軽いほうが動くOIYOオリジナルパズルです。四つの空は手で確かめ、シードがその一つを選びます。外部ゲームのマップや音源は使いません。",
+      zh: "星座牧人是 OIYO 原创谜题：你在空的天上走，绳子碰到星时只有较轻的一端会动。四片天空经手工核验，种子从中选一片。不使用其他游戏的地图或音频。",
+      fr: "Berger des constellations est un puzzle original d'OIYO : on marche dans le ciel vide, et seul le côté léger bouge quand la corde trouve une étoile. Quatre ciels ont été vérifiés à la main ; une graine en choisit un. Aucune carte ni aucun son d'un autre jeu.",
+      es: "Pastor de constelaciones es un puzle original de OIYO: caminas por el cielo vacío y solo se mueve el extremo ligero cuando la cuerda encuentra una estrella. Cuatro cielos se comprobaron a mano; una semilla elige uno. No usa mapas ni audio de otro juego.",
+    },
+    how: {
+      ko: "위·아래·왼쪽·오른쪽은 카메라가 아니라 하늘의 칸입니다. 그 줄에 별이 없으면 한 칸 걷습니다. 가벼운 별은 목동 쪽으로 한 칸 오고, 이미 손에 있으면 목동이 한 칸 물러나며 별이 그 칸으로 들어옵니다. 무거운 별은 목동을 한 칸 끌어당기고, 붙어 있으면 별이 한 칸 더 밀리며 목동이 그 자리로 들어갑니다. 이미 깔린 끈과 가운데서 엇갈리면 그 당김은 없습니다. 별이 제 자리로 들어와야 이기고, 걸음 8에 못 끝내면 집니다. 보기 버튼은 판을 바꾸지 않습니다.",
+      en: "Up, down, left, and right are pegs on the sky, not the camera. With no star on that line you walk one peg. A light star comes one peg toward you, and if it is already in hand you step back and it takes your peg. A heavy star drags you one peg closer, and if you are against it the star shifts one peg onward and you take its peg. A pull that crosses a rope already laid, through the middle, does not happen. A star stepping onto its seat wins. Step 8 without that loses. The view button does not change the board.",
+      ja: "上下左右はカメラではなく空のマスです。その線に星がなければ一マス歩きます。軽い星は一マスこちらへ来て、すでに手もとにいるときは羊飼いが一マス下がり、星がそのマスへ入ります。重い星は羊飼いを一マス引き寄せ、接しているときは星がさらに一マス動いて羊飼いがその場所へ入ります。すでに敷いた紐と真ん中で交差する引きは起きません。星が席へ入ると勝ちで、8歩で届かなければ負けです。視点ボタンは盤面を変えません。",
+      zh: "上下左右是天上的格子，不是摄像机。那条线上没有星就走一格。轻星向你靠近一格；已经在手里时，牧人后退一格，星进入那一格。重星把你拉近一格；已经贴住时，星再移一格，牧人进入它的位置。与已经放下的绳子在中间交叉的拉扯不会发生。星走进位子才算赢。第8步还没完成就输。视角按钮不改变棋盘。",
+      fr: "Haut, bas, gauche et droite sont les piquets du ciel, pas la caméra. Sans étoile sur la ligne, on avance d'un piquet. Une étoile légère vient d'un piquet ; si elle est déjà en main, le berger recule et elle prend sa place. Une étoile lourde tire le berger d'un piquet ; s'il est contre elle, l'étoile avance encore et il prend sa place. Une traction qui croise une corde déjà posée, par le milieu, n'a pas lieu. Une étoile qui entre sur son siège gagne. Le 8e pas sans cela perd. Le bouton de vue ne change pas le plateau.",
+      es: "Arriba, abajo, izquierda y derecha son postes del cielo, no la cámara. Si no hay estrella en esa línea, caminas un poste. Una estrella ligera se acerca un poste; si ya está en la mano, el pastor retrocede y ella ocupa su poste. Una estrella pesada arrastra al pastor un poste; si está pegado a ella, la estrella avanza otro poste y él ocupa su sitio. Un tirón que cruza una cuerda ya tendida, por el medio, no ocurre. Una estrella que entra en su sitio gana. El paso 8 sin eso pierde. El botón de vista no cambia el tablero.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "같은 시드는 항상 같은 하늘인가요?",
+          en: "Does the same seed always build the same sky?",
+          ja: "同じシードはいつも同じ空ですか？",
+          zh: "相同种子总会生成同一片天空吗？",
+          fr: "La même graine donne-t-elle toujours le même ciel ?",
+          es: "¿La misma semilla construye siempre el mismo cielo?",
+        },
+        a: {
+          ko: "네. 시드는 미리 맞춘 네 하늘 중 하나를 고릅니다. 하늘이 매 프레임 새로 섞이지 않으므로 주소를 공유하면 같은 퍼즐을 둡니다.",
+          en: "Yes. The seed picks one of four skies that were checked ahead of time. The sky is not reshuffled every frame, so a shared address is the same puzzle.",
+          ja: "はい。シードは事前に確かめた四つの空から一つを選びます。毎フレーム混ぜ直さないので、アドレスを共有すれば同じパズルです。",
+          zh: "是的。种子从事先核验的四片天空中选一片。天空不会每帧重排，因此分享地址就是同一道谜题。",
+          fr: "Oui. La graine choisit l'un des quatre ciels vérifiés à l'avance. Le ciel n'est pas remélangé à chaque image, donc une adresse partagée est le même puzzle.",
+          es: "Sí. La semilla elige uno de cuatro cielos comprobados de antemano. El cielo no se rebaraja en cada fotograma, así que una dirección compartida es el mismo puzle.",
+        },
+      },
+    ],
+  },
   "glass-planet": {
     origin: {
       ko: "유리 행성은 구의 맞은편에 선 두 사람을 한 번의 입력으로 움직이는 OIYO 오리지널 퍼즐입니다. 네 판은 손으로 맞춘 뒤 시드가 그중 하나를 고르며, 외부 게임의 맵이나 음원을 쓰지 않습니다.",
