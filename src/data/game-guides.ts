@@ -13,6 +13,44 @@ export interface GameGuide {
 }
 
 export const GAME_GUIDES: Record<string, GameGuide> = {
+  "blind-pilot": {
+    origin: {
+      ko: "블라인드 파일럿은 창을 닫고 계기와 외측 마커 호출만으로 착륙하는 OIYO 오리지널 퍼즐입니다. 네 접근은 손으로 맞춘 뒤 시드가 그중 하나를 고르며, 외부 게임의 맵이나 음원을 쓰지 않습니다.",
+      en: "Blind Pilot is an original OIYO puzzle: the window stays shut and you land from the gauges plus one outer-marker call. Four approaches were checked by hand; a seed picks one. It uses no map or audio from another game.",
+      ja: "計器飛行は、窓を閉じたまま計器とアウターマーカーの通報だけで着陸するOIYOオリジナルパズルです。四つの進入は手で確かめ、シードがその一つを選びます。外部ゲームのマップや音源は使いません。",
+      zh: "盲飞是 OIYO 原创谜题：窗户关着，只靠仪表和外指点标的一句通报着陆。四次进近经手工核验，种子从中选一次。不使用其他游戏的地图或音频。",
+      fr: "Pilote sans visibilité est un puzzle original d'OIYO : la vitre reste close et l'on se pose avec les instruments plus un appel de radioborne. Quatre approches ont été vérifiées à la main ; une graine en choisit une. Aucune carte ni aucun son d'un autre jeu.",
+      es: "Piloto sin visibilidad es un puzle original de OIYO: la ventanilla sigue cerrada y se aterriza con los instrumentos y un aviso de radiobaliza. Cuatro aproximaciones se comprobaron a mano; una semilla elige una. No usa mapas ni audio de otro juego.",
+    },
+    how: {
+      ko: "계기 하나의 바늘은 처음부터 끝까지 같은 눈금에 멈춰 있습니다. 외측 마커 호출은 시작 순간의 기수·날개·출력이며, 그 뒤의 조작으로 바뀌지 않습니다. 날개가 기울어 있는 동안에는 기수와 출력을 움직일 수 없습니다. 출력을 올리면 기수도 한 칸 들리고, 출력을 내려도 기수는 내려가지 않습니다. 기수·날개·출력이 모두 가운데일 때 착륙하면 이기고, 아니면 어긋난 축을 말합니다. 걸음 8에 못 끝내면 집니다. 보기 버튼은 기체를 바꾸지 않으며, 기본 보기만 계기판이 정면입니다.",
+      en: "One needle stays on the same mark for the whole approach. The outer-marker call is the nose, wings, and thrust at the start, and later controls do not rewrite it. While a wing is down, the nose and thrust cannot move. Adding thrust also raises the nose one notch. Cutting thrust does not lower the nose. Landing with nose, wings, and thrust all centered wins. Any other landing names the axes that were off. Step 8 without a landing loses. The view button does not change the airplane, and only the first view faces the panel.",
+      ja: "一つの針は進入のあいだ同じ目盛りで止まります。アウターマーカーの通報は開始時の機首・翼・出力で、その後の操作では書き換わりません。翼が傾いているあいだ、機首と出力は動かせません。出力を上げると機首も一段階上がり、出力を下げても機首は下がりません。機首・翼・出力がすべて中央で着陸すれば勝ちで、そうでなければずれた軸を告げます。8歩で着陸できなければ負けです。視点ボタンは機体を変えず、最初の視点だけ計器板が正面です。",
+      zh: "一块指针在整个进近里停在同一刻度。外指点标的通报是开始时机头、机翼和油门的样子，后来的操作不会改写它。机翼还倾着时，机头和油门不能动。加油门会把机头也抬一格。收油门不会压机头。机头、机翼、油门都在正中时着陆才算赢，否则会指出偏了的轴。第8步还没着陆就输。视角按钮不改变飞机，只有默认视角正对仪表板。",
+      fr: "Une aiguille reste sur le même repère pendant toute l'approche. L'appel du radioborne est le nez, les ailes et la poussée du début, et les commandes suivantes ne le réécrivent pas. Tant qu'une aile est basse, le nez et la poussée ne bougent pas. Ajouter de la poussée lève aussi le nez d'un cran. Réduire la poussée ne baisse pas le nez. Se poser avec les trois axes au centre gagne. Toute autre pose nomme les axes qui étaient écartés. Le 8e pas sans pose fait perdre. Le bouton de vue ne change pas l'avion, et seule la première vue fait face au tableau.",
+      es: "Una aguja se queda en la misma marca durante toda la aproximación. El aviso de la radiobaliza es el morro, las alas y el motor del inicio, y los mandos posteriores no lo reescriben. Mientras un ala está baja, el morro y el motor no se mueven. Añadir motor también levanta el morro un punto. Quitar motor no baja el morro. Aterrizar con los tres ejes al centro gana. Cualquier otra toma nombra los ejes que estaban fuera. El paso 8 sin aterrizar pierde. El botón de vista no cambia el avión, y solo la primera vista mira al panel.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "같은 시드는 항상 같은 접근인가요?",
+          en: "Does the same seed always build the same approach?",
+          ja: "同じシードはいつも同じ進入ですか？",
+          zh: "相同种子总会生成同一次进近吗？",
+          fr: "La même graine donne-t-elle toujours la même approche ?",
+          es: "¿La misma semilla construye siempre la misma aproximación?",
+        },
+        a: {
+          ko: "네. 시드는 미리 맞춘 네 접근 중 하나를 고릅니다. 기체가 매 프레임 새로 흔들리지 않으므로 주소를 공유하면 같은 퍼즐을 둡니다.",
+          en: "Yes. The seed picks one of four approaches that were checked ahead of time. The airplane is not shaken again every frame, so a shared address is the same puzzle.",
+          ja: "はい。シードは事前に確かめた四つの進入から一つを選びます。毎フレーム機体を揺らし直さないので、アドレスを共有すれば同じパズルです。",
+          zh: "是的。种子从事先核验的四次进近中选一次。飞机不会每帧重新摇晃，因此分享地址就是同一道谜题。",
+          fr: "Oui. La graine choisit l'une des quatre approches vérifiées à l'avance. L'avion n'est pas secoué de nouveau à chaque image, donc une adresse partagée est le même puzzle.",
+          es: "Sí. La semilla elige una de cuatro aproximaciones comprobadas de antemano. El avión no se sacude otra vez en cada fotograma, así que una dirección compartida es el mismo puzle.",
+        },
+      },
+    ],
+  },
   "dream-elevator": {
     origin: {
       ko: "꿈의 엘리베이터는 손에 든 물건으로 다음 층의 꿈을 쓰는 OIYO 오리지널 퍼즐입니다. 네 층계는 손으로 맞춘 뒤 시드가 그중 하나를 고르며, 외부 게임의 맵이나 음원을 쓰지 않습니다.",

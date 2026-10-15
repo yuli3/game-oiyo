@@ -1,0 +1,36 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import BlindPilot from "../../components/games/BlindPilot";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: { title: "블라인드 파일럿 — 멈춘 바늘과 외측 마커로 착륙한다", description: "계기 하나의 바늘은 움직이지 않습니다. 외측 마커 호출과 나머지 계기로 맞추는 무료 3D 퍼즐. 같은 시드는 같은 접근입니다." },
+  en: { title: "Blind Pilot — land from a frozen needle and the outer marker", description: "One needle does not move. A free 3D puzzle flown from the outer-marker call and the gauges that still live. The same seed is the same approach." },
+  ja: { title: "計器飛行 — 止まった針とアウターマーカーで着陸する", description: "一つの針は動きません。アウターマーカーの通報と、まだ動く計器で合わせる無料の3Dパズル。同じシードは同じ進入です。" },
+  zh: { title: "盲飞 — 用停住的指针和外指点标着陆", description: "一块指针不再移动。凭外指点标的通报和仍在动的仪表对准姿态。免费3D谜题，相同种子是同一次进近。" },
+  fr: { title: "Pilote sans visibilité — se poser avec une aiguille figée", description: "Une aiguille ne bouge plus. Un puzzle 3D gratuit réglé sur l'appel du radioborne et les instruments encore vivants. La même graine, la même approche." },
+  es: { title: "Piloto sin visibilidad — aterrizar con una aguja quieta", description: "Una aguja ya no se mueve. Un puzle 3D gratuito que se vuela con el aviso de la radiobaliza y los instrumentos que siguen vivos. La misma semilla es la misma aproximación." },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["blind-pilot"]}>
+  <div class="mx-auto max-w-3xl px-4 py-8">
+    {/*
+      client:visible — the three.js chunk stays out of the first paint until
+      the cockpit is actually on screen.
+    */}
+    <BlindPilot client:visible locale={locale} />
+    <GameGuide slug="blind-pilot" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>
