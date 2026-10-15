@@ -13,6 +13,44 @@ export interface GameGuide {
 }
 
 export const GAME_GUIDES: Record<string, GameGuide> = {
+  "ink-ecology": {
+    origin: {
+      ko: "잉크 생태계는 선을 생물로 바꾸는 OIYO 오리지널 퍼즐입니다. 네 계절은 손으로 맞춘 뒤 시드가 그중 하나를 고르며, 외부 게임의 맵이나 음원을 쓰지 않습니다.",
+      en: "Ink Ecology is an original OIYO puzzle in which a stroke becomes a creature. Four seasons were checked by hand; a seed picks one. It uses no map or audio from another game.",
+      ja: "インクの生態系は、線が生物になるOIYOオリジナルパズルです。四つの季節は手で確かめ、シードがその一つを選びます。外部ゲームのマップや音源は使いません。",
+      zh: "墨水生态是 OIYO 原创谜题：一笔会变成生物。四个季节经手工核验，种子从中选一个。不使用其他游戏的地图或音频。",
+      fr: "Écologie d'encre est un puzzle original d'OIYO : un trait devient une créature. Quatre saisons ont été vérifiées à la main ; une graine en choisit une. Aucune carte ni aucun son d'un autre jeu.",
+      es: "Ecología de tinta es un puzle original de OIYO: un trazo se vuelve una criatura. Cuatro estaciones se comprobaron a mano; una semilla elige una. No usa mapas ni audio de otro juego.",
+    },
+    how: {
+      ko: "화면 왼쪽이 서쪽, 화면 오른쪽이 동쪽입니다. 원은 서쪽 빈 연못에 포자를 낳고, 직선은 동쪽 빈 연못에 다리를 세웁니다. 다리가 서는 칸의 바로 서쪽에 포자가 있으면 그 포자는 먹힙니다. 바람은 가장 동쪽 포자만 한 칸 동쪽으로 밀고, 그 칸이 다리이거나 연못 밖이면 포자는 사라집니다. 다리는 한 번 서면 남지 않습니다. 연못이 표식과 같아지면 이기고, 획 8 안에 못 맞추면 집니다. 보기 버튼은 생물을 옮기지 않습니다. 이 계절은 화면에만 남고 기기에는 저장되지 않습니다.",
+      en: "The left of the screen is west and the right is east. A circle births a spore on the western empty pond, and a straight stroke stands legs on the eastern empty pond. A spore immediately west of those legs is eaten. Wind pushes only the easternmost spore one pond east, and that spore vanishes if the next pond is legs or past the shore. Legs, once stood, do not leave. Matching the mark wins. Missing it within 8 strokes loses. The view button does not move the life. This season stays on the screen and is not saved on the device.",
+      ja: "画面の左が西、右が東です。円は西の空いた池に胞子を生み、直線は東の空いた池に脚を立てます。そのすぐ西の胞子は食べられます。風は最も東の胞子だけを一池東へ押し、次の池が脚か外なら胞子は消えます。脚は一度立つと残りません。標識と揃えば勝ち、8筆で揃わなければ負けです。視点ボタンは生物を動かしません。この季節は画面の上だけに残り、端末には保存されません。",
+      zh: "画面左侧是西，右侧是东。圆圈在西边的空池里生出孢子，直线在东边的空池里立起腿。腿紧西边的孢子会被吃掉。风只把最东边的孢子向东推一池，下一池是腿或池外时孢子消失。腿一旦站下就不会离开。和标记一致就赢。第8笔还没对上就输。视角按钮不移动生物。这个季节只留在画面上，不会写进设备。",
+      fr: "La gauche de l'écran est l'ouest, la droite l'est. Un cercle fait naître une spore sur l'étang vide de l'ouest, et un trait droit dresse des pattes sur l'étang vide de l'est. La spore juste à l'ouest de ces pattes est mangée. Le vent ne pousse que la spore la plus à l'est, d'un étang, et elle disparaît si l'étang suivant est des pattes ou hors du bord. Les pattes, une fois debout, ne partent pas. Égaler la marque fait gagner. La manquer en 8 traits fait perdre. Le bouton de vue ne déplace pas la vie. Cette saison reste à l'écran et n'est pas écrite sur l'appareil.",
+      es: "La izquierda de la pantalla es el oeste y la derecha el este. Un círculo hace nacer una espora en el estanque vacío del oeste, y un trazo recto pone patas en el estanque vacío del este. La espora justo al oeste de esas patas se come. El viento empuja solo la espora más al este, un estanque, y desaparece si el siguiente son patas o queda fuera de la orilla. Las patas, una vez puestas, no se van. Igualar la marca gana. No llegar en 8 trazos pierde. El botón de vista no mueve la vida. Esta estación se queda en la pantalla y no se escribe en el aparato.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "같은 시드는 항상 같은 계절인가요?",
+          en: "Does the same seed always build the same season?",
+          ja: "同じシードはいつも同じ季節ですか？",
+          zh: "相同种子总会生成同一个季节吗？",
+          fr: "La même graine donne-t-elle toujours la même saison ?",
+          es: "¿La misma semilla construye siempre la misma estación?",
+        },
+        a: {
+          ko: "네. 시드는 미리 맞춘 네 계절 중 하나를 고릅니다. 생물이 매 프레임 새로 움직이지 않으므로 주소를 공유하면 같은 연못을 둡니다.",
+          en: "Yes. The seed picks one of four seasons that were checked ahead of time. The life is not moved again every frame, so a shared address is the same pond.",
+          ja: "はい。シードは事前に確かめた四つの季節から一つを選びます。生物を毎フレーム動かし直さないので、アドレスを共有すれば同じ池です。",
+          zh: "是的。种子从事先核验的四个季节中选一个。生物不会每帧重新移动，因此分享地址就是同一片池。",
+          fr: "Oui. La graine choisit l'une des quatre saisons vérifiées à l'avance. La vie n'est pas redéplacée à chaque image, donc une adresse partagée est le même étang.",
+          es: "Sí. La semilla elige una de cuatro estaciones comprobadas de antemano. La vida no vuelve a moverse en cada fotograma, así que una dirección compartida es el mismo estanque.",
+        },
+      },
+    ],
+  },
   "museum-night": {
     origin: {
       ko: "박물관의 밤은 플레이어가 사람이 아니라 전시품인 OIYO 오리지널 잠입 퍼즐입니다. 네 밤은 손으로 맞춘 뒤 시드가 그중 하나를 고르며, 외부 게임의 맵이나 음원을 쓰지 않습니다.",

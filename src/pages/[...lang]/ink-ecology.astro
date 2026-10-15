@@ -1,0 +1,36 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import InkEcology from "../../components/games/InkEcology";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: { title: "잉크 생태계 — 원은 포자, 직선은 다리, 바람은 동쪽 끝 포자만 민다", description: "빈 연못의 서쪽에는 포자, 동쪽에는 다리가 섭니다. 바로 서쪽의 포자는 먹히고, 바람은 가장 동쪽 포자만 한 칸 밉니다. 같은 시드는 같은 계절입니다." },
+  en: { title: "Ink Ecology — a circle is a spore, a line is legs, wind moves only the eastern spore", description: "A spore sits on the western empty pond and legs stand on the eastern one. The spore just west is eaten, and wind pushes only the easternmost spore one pond. The same seed is the same season." },
+  ja: { title: "インクの生態系 — 円は胞子、直線は脚、風は東端の胞子だけを押す", description: "空いた池の西には胞子、東には脚が立ちます。すぐ西の胞子は食べられ、風は最も東の胞子だけを一池押します。同じシードは同じ季節です。" },
+  zh: { title: "墨水生态 — 圆圈是孢子，直线是腿，风只推最东边的孢子", description: "空池的西边落下孢子，东边立起腿。紧西边的孢子会被吃掉，风只把最东边的孢子推一池。相同种子是同一个季节。" },
+  fr: { title: "Écologie d'encre — un cercle est une spore, un trait des pattes, le vent ne pousse que la spore de l'est", description: "Une spore naît sur l'étang vide de l'ouest et des pattes se dressent à l'est. La spore juste à l'ouest est mangée, et le vent ne pousse que la spore la plus à l'est. La même graine, la même saison." },
+  es: { title: "Ecología de tinta — un círculo es una espora, un trazo son patas, el viento solo empuja la espora del este", description: "Una espora nace en el estanque vacío del oeste y unas patas se paran al este. La espora justo al oeste se come, y el viento solo empuja la espora más al este. La misma semilla es la misma estación." },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["ink-ecology"]}>
+  <div class="mx-auto max-w-3xl px-4 py-8">
+    {/*
+      client:visible — the three.js chunk stays out of the first paint until
+      the pond is actually on screen.
+    */}
+    <InkEcology client:visible locale={locale} />
+    <GameGuide slug="ink-ecology" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>
