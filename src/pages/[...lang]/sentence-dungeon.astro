@@ -1,0 +1,36 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SentenceDungeon from "../../components/games/SentenceDungeon";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: { title: "문장 던전 — 문장 순서가 복도의 법칙이 된다", description: "한 문장은 가장 서쪽의 맞는 짝에만 읽힙니다. 불은 동쪽 얼음을 물로 만들고, 물은 동쪽 불을 끄며, 불은 동쪽 물을 말립니다. 같은 시드는 같은 방입니다." },
+  en: { title: "Sentence Dungeon — sentence order is the law of the corridor", description: "One sentence is read only on the westernmost pair it fits. Fire turns the ice to its east into water, water puts out the fire to its east, and fire dries the water to its east. The same seed is the same room." },
+  ja: { title: "文の迷宮 — 文の順序が廊下の法則になる", description: "一つの文は、当てはまる最も西の組にだけ読まれます。火は東の氷を水にし、水は東の火を消し、火は東の水を乾かします。同じシードは同じ部屋です。" },
+  zh: { title: "句子地牢 — 句子的顺序就是走廊的法则", description: "一句话只作用在最西边那对相符的格子上。火把东边的冰变成水，水熄灭东边的火，火烤干东边的水。相同种子是同一间房间。" },
+  fr: { title: "Donjon des phrases — l'ordre des phrases devient la loi du couloir", description: "Une phrase ne se lit que sur la paire la plus à l'ouest qu'elle concerne. Le feu change la glace à l'est en eau, l'eau éteint le feu à l'est, et le feu sèche l'eau à l'est. La même graine, la même salle." },
+  es: { title: "Mazmorra de frases — el orden de las frases es la ley del pasillo", description: "Una frase solo se lee en el par más al oeste que le corresponde. El fuego vuelve agua el hielo del este, el agua apaga el fuego del este, y el fuego seca el agua del este. La misma semilla es la misma sala." },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["sentence-dungeon"]}>
+  <div class="mx-auto max-w-3xl px-4 py-8">
+    {/*
+      client:visible — the three.js chunk stays out of the first paint until
+      the page is actually on screen.
+    */}
+    <SentenceDungeon client:visible locale={locale} />
+    <GameGuide slug="sentence-dungeon" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>

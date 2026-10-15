@@ -13,6 +13,44 @@ export interface GameGuide {
 }
 
 export const GAME_GUIDES: Record<string, GameGuide> = {
+  "sentence-dungeon": {
+    origin: {
+      ko: "문장 던전은 단어가 무기가 아니라 문장의 순서가 복도의 법칙이 되는 OIYO 오리지널 퍼즐입니다. 네 방은 손으로 맞춘 뒤 시드가 그중 하나를 고르며, 외부 게임의 맵이나 음원을 쓰지 않습니다.",
+      en: "Sentence Dungeon is an original OIYO puzzle in which the order of sentences, not the words as weapons, becomes the law of the corridor. Four rooms were checked by hand; a seed picks one. It uses no map or audio from another game.",
+      ja: "文の迷宮は、言葉を武器にするのではなく、文の順序が廊下の法則になるOIYOオリジナルパズルです。四つの部屋は手で確かめ、シードがその一つを選びます。外部ゲームのマップや音源は使いません。",
+      zh: "句子地牢是 OIYO 原创谜题：不是把词当武器，而是句子的顺序变成走廊的法则。四间房间经手工核验，种子从中选一间。不使用其他游戏的地图或音频。",
+      fr: "Donjon des phrases est un puzzle original d'OIYO : ce n'est pas le mot qui sert d'arme, c'est l'ordre des phrases qui devient la loi du couloir. Quatre salles ont été vérifiées à la main ; une graine en choisit une. Aucune carte ni aucun son d'un autre jeu.",
+      es: "Mazmorra de frases es un puzle original de OIYO: la frase no es un arma, el orden de las frases se vuelve la ley del pasillo. Cuatro salas se comprobaron a mano; una semilla elige una. No usa mapas ni audio de otro juego.",
+    },
+    how: {
+      ko: "화면 왼쪽이 서쪽이고 칸 번호는 1부터입니다. 화면 위쪽 줄이 표식이고 아래 줄이 복도입니다. 녹이기는 불 바로 동쪽의 가장 서쪽 얼음만 물로 만들고, 끄기는 물 바로 동쪽의 가장 서쪽 불만 지우며, 말리기는 불 바로 동쪽의 가장 서쪽 물만 지웁니다. 맞는 짝이 없는 문장은 걸음이 아닙니다. 복도가 표식과 같아지면 이기고, 문장 8 안에 못 맞추면 집니다. 보기 버튼은 복도를 바꾸지 않습니다. 이 방은 화면에만 남고 기기에는 저장되지 않습니다.",
+      en: "The left of the screen is west, and alcove numbers start at 1. The upper row is the mark and the lower row is the corridor. Melt turns only the westernmost ice just east of a fire into water, quench removes only the westernmost fire just east of water, and dry removes only the westernmost water just east of a fire. A sentence with no fitting pair is not a step. Matching the mark wins. Missing it within 8 sentences loses. The view button does not change the corridor. This room stays on the screen and is not saved on the device.",
+      ja: "画面の左が西で、番号は1からです。上の列が表示、下の列が廊下です。溶かすは火のすぐ東で最も西の氷だけを水にし、消すは水のすぐ東で最も西の火だけを消し、乾かすは火のすぐ東で最も西の水だけを消します。当てはまる組のない文は歩数になりません。表示と揃えば勝ち、8文で揃わなければ負けです。視点ボタンは廊下を変えません。この部屋は画面の上だけに残り、端末には保存されません。",
+      zh: "画面左侧是西，格子从 1 开始。上面一行是标记，下面一行是走廊。融化只把火正东边最西的冰变成水，熄灭只去掉水正东边最西的火，烤干只去掉火正东边最西的水。没有相符一对的句子不算一步。和标记一致就赢。第8句还没对上就输。视角按钮不改变走廊。这个房间只留在画面上，不会写进设备。",
+      fr: "La gauche de l'écran est l'ouest, et les alcôves se comptent à partir de 1. La rangée du haut est la marque, celle du bas le couloir. Fondre ne change que la glace la plus à l'ouest juste à l'est d'un feu, éteindre n'enlève que le feu le plus à l'ouest juste à l'est de l'eau, et sécher n'enlève que l'eau la plus à l'ouest juste à l'est d'un feu. Une phrase sans paire convenable ne compte pas. Égaler la marque fait gagner. La manquer en 8 phrases fait perdre. Le bouton de vue ne change pas le couloir. Cette salle reste à l'écran et n'est pas écrite sur l'appareil.",
+      es: "La izquierda de la pantalla es el oeste, y los huecos se numeran desde 1. La fila de arriba es la marca y la de abajo el pasillo. Derretir solo vuelve agua el hielo más al oeste justo al este de un fuego, apagar solo quita el fuego más al oeste justo al este del agua, y secar solo quita el agua más al oeste justo al este de un fuego. Una frase sin un par que encaje no cuenta. Igualar la marca gana. No llegar en 8 frases pierde. El botón de vista no cambia el pasillo. Esta sala se queda en la pantalla y no se escribe en el aparato.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "같은 시드는 항상 같은 방인가요?",
+          en: "Does the same seed always build the same room?",
+          ja: "同じシードはいつも同じ部屋ですか？",
+          zh: "相同种子总会生成同一间房间吗？",
+          fr: "La même graine donne-t-elle toujours la même salle ?",
+          es: "¿La misma semilla construye siempre la misma sala?",
+        },
+        a: {
+          ko: "네. 시드는 미리 맞춘 네 방 중 하나를 고릅니다. 문장이 매 프레임 새로 읽히지 않으므로 주소를 공유하면 같은 복도를 둡니다.",
+          en: "Yes. The seed picks one of four rooms that were checked ahead of time. The sentences are not read again every frame, so a shared address is the same corridor.",
+          ja: "はい。シードは事前に確かめた四つの部屋から一つを選びます。文を毎フレーム読み直さないので、アドレスを共有すれば同じ廊下です。",
+          zh: "是的。种子从事先核验的四间房间中选一间。句子不会每帧重读，因此分享地址就是同一条走廊。",
+          fr: "Oui. La graine choisit l'une des quatre salles vérifiées à l'avance. Les phrases ne sont pas relues à chaque image, donc une adresse partagée est le même couloir.",
+          es: "Sí. La semilla elige una de cuatro salas comprobadas de antemano. Las frases no se vuelven a leer en cada fotograma, así que una dirección compartida es el mismo pasillo.",
+        },
+      },
+    ],
+  },
   "doodle-line": {
     origin: {
       ko: "낙서 방어선은 적을 쏘지 않고 이어진 한 획으로 막을 줄을 정하는 OIYO 오리지널 퍼즐입니다. 네 장은 손으로 맞춘 뒤 시드가 그중 하나를 고르며, 외부 게임의 맵이나 음원을 쓰지 않습니다.",
