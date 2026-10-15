@@ -13,6 +13,44 @@ export interface GameGuide {
 }
 
 export const GAME_GUIDES: Record<string, GameGuide> = {
+  "doodle-line": {
+    origin: {
+      ko: "낙서 방어선은 적을 쏘지 않고 이어진 한 획으로 막을 줄을 정하는 OIYO 오리지널 퍼즐입니다. 네 장은 손으로 맞춘 뒤 시드가 그중 하나를 고르며, 외부 게임의 맵이나 음원을 쓰지 않습니다.",
+      en: "Doodle Line is an original OIYO puzzle: you do not shoot the enemies, you choose which columns one connected stroke will seal. Four pages were checked by hand; a seed picks one. It uses no map or audio from another game.",
+      ja: "らくがき防衛線は、敵を撃たずに、つながった一筆で塞ぐ列を決めるOIYOオリジナルパズルです。四枚は手で確かめ、シードがその一つを選びます。外部ゲームのマップや音源は使いません。",
+      zh: "涂鸦防线是 OIYO 原创谜题：不射击敌人，只用一条相连的笔画决定挡住哪些列。四页经手工核验，种子从中选一页。不使用其他游戏的地图或音频。",
+      fr: "Ligne gribouillée est un puzzle original d'OIYO : on ne tire pas sur les ennemis, on choisit quelles colonnes un seul trait continu va fermer. Quatre pages ont été vérifiées à la main ; une graine en choisit une. Aucune carte ni aucun son d'un autre jeu.",
+      es: "Línea de garabatos es un puzle original de OIYO: no disparas a los enemigos, eliges qué columnas cierra un solo trazo seguido. Cuatro hojas se comprobaron a mano; una semilla elige una. No usa mapas ni audio de otro juego.",
+    },
+    how: {
+      ko: "화면 위가 북쪽이고 화면 아래가 기지입니다. 화면 왼쪽이 서쪽이며 열 번호는 1부터입니다. 펜은 시작 칸에 이미 내려져 있고, 상하좌우로 한 칸씩만 이어 그립니다. 판 밖, 돌, 이미 그린 칸은 걸음이 아닙니다. 손을 떼기 전에는 이기지 않습니다. 손을 떼면 위협 줄의 적이 북쪽에서 걸어와 그 줄의 가장 북쪽 잉크에서 멈추고, 잉크가 없는 줄은 기지를 뚫습니다. 획 8 안에 손을 떼지 못하면 집니다. 보기 버튼은 획을 바꾸지 않습니다. 이 장은 화면에만 남고 기기에는 저장되지 않습니다.",
+      en: "The top of the screen is north and the bottom is the base. The left is west, and column numbers start at 1. The pen is already down on the first cell and continues one cell at a time. Off the page, a stone, or ink already drawn is not a step. You do not win before letting go. Letting go walks each threatened enemy from the north until the northernmost ink in that column, and an empty column breaches the base. Failing to let go within 8 strokes loses. The view button does not change the stroke. This page stays on the screen and is not saved on the device.",
+      ja: "画面の上が北、下が基地です。左が西で、列番号は1からです。ペンは最初のマスにすでに降りていて、上下左右へ一マスずつしか続きません。紙の外、石、すでに描いたマスは歩数になりません。手を離す前には勝てません。手を離すと、脅威の列の敵が北から歩き、その列で最も北のインクで止まり、インクのない列は基地を破ります。8筆で手を離さなければ負けです。視点ボタンは線を変えません。この紙は画面の上だけに残り、端末には保存されません。",
+      zh: "画面上方是北，下方是基地。左侧是西，列号从 1 开始。笔已经落在起始格上，每次只能向上下左右续一格。纸外、石头、已经画过的格子都不算一步。松手之前不会赢。松手后，有威胁的列上的敌人从北边走来，停在该列最北边的墨上，没有墨的列会突破基地。第8笔还没松手就输。视角按钮不改变笔画。这一页只留在画面上，不会写进设备。",
+      fr: "Le haut de l'écran est le nord et le bas est la base. La gauche est l'ouest, et les colonnes se comptent à partir de 1. Le stylo est déjà posé sur la première case et n'avance que d'une case. Hors de la page, une pierre ou de l'encre déjà posée ne comptent pas comme un pas. On ne gagne pas avant de lâcher. Lâcher fait marcher chaque ennemi menacé depuis le nord jusqu'à l'encre la plus au nord de sa colonne, et une colonne vide perce la base. Ne pas lâcher en 8 traits fait perdre. Le bouton de vue ne change pas le trait. Cette page reste à l'écran et n'est pas écrite sur l'appareil.",
+      es: "Arriba en la pantalla es el norte y abajo está la base. La izquierda es el oeste, y las columnas se numeran desde 1. El lápiz ya está puesto en el primer puesto y solo avanza un puesto. Fuera de la hoja, una piedra o tinta ya puesta no cuentan como paso. No se gana antes de soltar. Soltar hace caminar a cada enemigo amenazado desde el norte hasta la tinta más al norte de su columna, y una columna vacía abre la base. No soltar en 8 trazos pierde. El botón de vista no cambia el trazo. Esta hoja se queda en la pantalla y no se escribe en el aparato.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "같은 시드는 항상 같은 장인가요?",
+          en: "Does the same seed always build the same page?",
+          ja: "同じシードはいつも同じ紙ですか？",
+          zh: "相同种子总会生成同一页吗？",
+          fr: "La même graine donne-t-elle toujours la même page ?",
+          es: "¿La misma semilla construye siempre la misma hoja?",
+        },
+        a: {
+          ko: "네. 시드는 미리 맞춘 네 장 중 하나를 고릅니다. 적이 매 프레임 새로 걷지 않으므로 주소를 공유하면 같은 종이를 둡니다.",
+          en: "Yes. The seed picks one of four pages that were checked ahead of time. The enemies are not walked again every frame, so a shared address is the same page.",
+          ja: "はい。シードは事前に確かめた四枚から一つを選びます。敵を毎フレーム歩かせ直さないので、アドレスを共有すれば同じ紙です。",
+          zh: "是的。种子从事先核验的四页中选一页。敌人不会每帧重新走动，因此分享地址就是同一页纸。",
+          fr: "Oui. La graine choisit l'une des quatre pages vérifiées à l'avance. Les ennemis ne sont pas relancés à chaque image, donc une adresse partagée est la même page.",
+          es: "Sí. La semilla elige una de cuatro hojas comprobadas de antemano. Los enemigos no vuelven a caminar en cada fotograma, así que una dirección compartida es la misma hoja.",
+        },
+      },
+    ],
+  },
   "ink-ecology": {
     origin: {
       ko: "잉크 생태계는 선을 생물로 바꾸는 OIYO 오리지널 퍼즐입니다. 네 계절은 손으로 맞춘 뒤 시드가 그중 하나를 고르며, 외부 게임의 맵이나 음원을 쓰지 않습니다.",

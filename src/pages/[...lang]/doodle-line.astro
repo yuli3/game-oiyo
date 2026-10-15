@@ -1,0 +1,36 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import DoodleLine from "../../components/games/DoodleLine";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: { title: "낙서 방어선 — 한 획으로 막고, 손을 떼면 적이 걷는다", description: "펜은 이어진 한 획만 그립니다. 손을 떼면 적이 북에서 남으로 오고, 잉크가 있는 줄은 막히고 빈 줄은 기지가 뚫립니다. 같은 시드는 같은 장입니다." },
+  en: { title: "Doodle Line — one stroke seals the page, then the hand lets go", description: "The pen draws one connected stroke. Letting go walks enemies from north to south. Ink stops a column, and an empty column breaches the base. The same seed is the same page." },
+  ja: { title: "らくがき防衛線 — 一筆で塞ぎ、手を離すと敵が歩く", description: "ペンはつながった一筆だけを引きます。手を離すと敵は北から南へ歩き、インクのある列は止まり、空いた列は基地を破ります。同じシードは同じ紙です。" },
+  zh: { title: "涂鸦防线 — 一笔封住，松手后敌人走动", description: "笔只画一条相连的线。松手后敌人从北向南走。有墨的列会挡住，空列会突破基地。相同种子是同一页。" },
+  fr: { title: "Ligne gribouillée — un trait ferme la page, puis la main lâche", description: "Le stylo ne trace qu'un trait continu. Lâcher fait descendre les ennemis du nord au sud. L'encre arrête une colonne, et une colonne vide perce la base. La même graine, la même page." },
+  es: { title: "Línea de garabatos — un trazo cierra la hoja, y luego la mano suelta", description: "El lápiz traza un solo trazo seguido. Soltar hace bajar a los enemigos de norte a sur. La tinta para una columna, y una columna vacía abre la base. La misma semilla es la misma hoja." },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["doodle-line"]}>
+  <div class="mx-auto max-w-3xl px-4 py-8">
+    {/*
+      client:visible — the three.js chunk stays out of the first paint until
+      the page is actually on screen.
+    */}
+    <DoodleLine client:visible locale={locale} />
+    <GameGuide slug="doodle-line" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>
