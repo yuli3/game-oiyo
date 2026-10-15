@@ -1,0 +1,36 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import MuseumNight from "../../components/games/MuseumNight";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: { title: "박물관의 밤 — 보이지 않을 때만 전시품이 자리를 바꾼다", description: "당신은 전시품입니다. 서 있는 좌대나 옆 좌대가 보이면 들키고, 그대로 서 있으면 시선만 한 박자 돌아갑니다. 같은 시드는 같은 밤입니다." },
+  en: { title: "Museum Night — an exhibit moves only while the plinths are dark", description: "You are an exhibit. A step is seen when your plinth or the next one is watched, and standing still only turns the gaze one beat. The same seed is the same night." },
+  ja: { title: "博物館の夜 — 見られていないときだけ展示品が席を替える", description: "あなたは展示品です。今の台座か隣の台座が見えていると気づかれ、その場に立てば視線だけが一拍進みます。同じシードは同じ夜です。" },
+  zh: { title: "博物馆之夜 — 只有没被看见时，展品才换位置", description: "你是一件展品。你所在的台座或旁边的台座被看见时，这一步会被发现。站着不动只让视线转一拍。相同种子是同一个夜晚。" },
+  fr: { title: "Nuit au musée — une pièce ne bouge que lorsque les socles sont dans le noir", description: "Vous êtes une pièce. Un pas est vu si votre socle ou le suivant est regardé, et rester debout ne fait tourner que le regard d'un temps. La même graine, la même nuit." },
+  es: { title: "Noche en el museo — una pieza se mueve solo cuando los pedestales están a oscuras", description: "Eres una pieza. Un paso se ve si tu pedestal o el de al lado está mirado, y quedarte quieto solo gira la mirada un tiempo. La misma semilla es la misma noche." },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["museum-night"]}>
+  <div class="mx-auto max-w-3xl px-4 py-8">
+    {/*
+      client:visible — the three.js chunk stays out of the first paint until
+      the hall is actually on screen.
+    */}
+    <MuseumNight client:visible locale={locale} />
+    <GameGuide slug="museum-night" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>

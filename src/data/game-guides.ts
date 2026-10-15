@@ -13,6 +13,44 @@ export interface GameGuide {
 }
 
 export const GAME_GUIDES: Record<string, GameGuide> = {
+  "museum-night": {
+    origin: {
+      ko: "박물관의 밤은 플레이어가 사람이 아니라 전시품인 OIYO 오리지널 잠입 퍼즐입니다. 네 밤은 손으로 맞춘 뒤 시드가 그중 하나를 고르며, 외부 게임의 맵이나 음원을 쓰지 않습니다.",
+      en: "Museum Night is an original OIYO stealth puzzle in which you are an exhibit, not a person. Four nights were checked by hand; a seed picks one. It uses no map or audio from another game.",
+      ja: "博物館の夜は、プレイヤーが人ではなく展示品であるOIYOオリジナルの潜入パズルです。四つの夜は手で確かめ、シードがその一つを選びます。外部ゲームのマップや音源は使いません。",
+      zh: "博物馆之夜是 OIYO 原创潜入谜题：玩家不是人，而是一件展品。四个夜晚经手工核验，种子从中选一个。不使用其他游戏的地图或音频。",
+      fr: "Nuit au musée est un puzzle d'infiltration original d'OIYO : vous êtes une pièce, pas une personne. Quatre nuits ont été vérifiées à la main ; une graine en choisit une. Aucune carte ni aucun son d'un autre jeu.",
+      es: "Noche en el museo es un puzle de sigilo original de OIYO: eres una pieza, no una persona. Cuatro noches se comprobaron a mano; una semilla elige una. No usa mapas ni audio de otro juego.",
+    },
+    how: {
+      ko: "화면 왼쪽이 서쪽, 화면 오른쪽이 동쪽입니다. 빨간 카메라는 이번 밤 내내 한 좌대만 보고, 노란 관람 시선은 걸음마다 다음 박자로 바뀝니다. 서 있는 좌대나 들어가려는 좌대가 보이면 그 걸음은 들킵니다. 그대로 서 있으면 안전하고 시선만 돌아갑니다. 양쪽이 모두 어두울 때만 옆 전시품과 자리를 바꿉니다. 야간 표식에 서면 이기고, 들키거나 걸음 8 안에 못 서면 집니다. 보기 버튼은 전시품을 옮기지 않습니다. 이 밤은 화면에만 남고 기기에는 저장되지 않습니다.",
+      en: "The left of the screen is west and the right is east. The red camera watches one plinth all night, and the amber visitor cones move to the next beat after every step. A step is seen when the plinth you stand on or the one you enter is watched. Standing still is safe and only turns the gaze. You trade places with the next exhibit only when both plinths are dark. Standing on the night mark wins. Being seen, or missing the mark within 8 steps, loses. The view button does not move the exhibits. This night stays on the screen and is not saved on the device.",
+      ja: "画面の左が西、右が東です。赤いカメラは今夜ずっと一つの台座を見て、琥珀色の観覧の視線は一歩ごとに次の拍へ移ります。今の台座か入る台座が見えているとその一歩は気づかれます。その場に立てば安全で、視線だけが進みます。両方の台座が暗いときだけ隣の展示品と席を替えます。夜間の標識に立てば勝ち、気づかれるか8歩で立てなければ負けです。視点ボタンは展示品を動かしません。この夜は画面の上だけに残り、端末には保存されません。",
+      zh: "画面左侧是西，右侧是东。红色摄像机整晚只看一个台座，琥珀色的观众视线在每一步之后转到下一拍。你站着的台座或正要进入的台座被看见时，这一步会被发现。站着不动是安全的，只让视线转动。两个台座都暗着时，才能和旁边的展品换位置。站上夜间标记就赢。被发现，或第8步还没站上，就输。视角按钮不移动展品。这个夜晚只留在画面上，不会写进设备。",
+      fr: "La gauche de l'écran est l'ouest, la droite l'est. La caméra rouge regarde un seul socle toute la nuit, et les cônes ambrés des visiteurs passent au temps suivant après chaque pas. Un pas est vu si le socle où vous êtes, ou celui où vous entrez, est regardé. Rester debout est sûr et ne fait tourner que le regard. Vous échangez avec la pièce voisine seulement si les deux socles sont dans le noir. Être sur la marque de nuit fait gagner. Être vu, ou manquer la marque en 8 pas, fait perdre. Le bouton de vue ne déplace pas les pièces. Cette nuit reste à l'écran et n'est pas écrite sur l'appareil.",
+      es: "La izquierda de la pantalla es el oeste y la derecha el este. La cámara roja mira un solo pedestal toda la noche, y los conos ámbar de los visitantes pasan al tiempo siguiente después de cada paso. Un paso se ve si el pedestal donde estás, o el pedestal al que entras, está mirado. Quedarte quieto es seguro y solo gira la mirada. Cambias de sitio con la pieza de al lado solo cuando los dos pedestales están a oscuras. Pisar la marca de la noche gana. Ser visto, o no llegar a la marca en 8 pasos, pierde. El botón de vista no mueve las piezas. Esta noche se queda en la pantalla y no se escribe en el aparato.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "같은 시드는 항상 같은 밤인가요?",
+          en: "Does the same seed always build the same night?",
+          ja: "同じシードはいつも同じ夜ですか？",
+          zh: "相同种子总会生成同一个夜晚吗？",
+          fr: "La même graine donne-t-elle toujours la même nuit ?",
+          es: "¿La misma semilla construye siempre la misma noche?",
+        },
+        a: {
+          ko: "네. 시드는 미리 맞춘 네 밤 중 하나를 고릅니다. 시선이 매 프레임 새로 돌지 않으므로 주소를 공유하면 같은 전시실을 둡니다.",
+          en: "Yes. The seed picks one of four nights that were checked ahead of time. The gaze is not spun again every frame, so a shared address is the same hall.",
+          ja: "はい。シードは事前に確かめた四つの夜から一つを選びます。視線を毎フレーム回し直さないので、アドレスを共有すれば同じ展示室です。",
+          zh: "是的。种子从事先核验的四个夜晚中选一个。视线不会每帧重新转动，因此分享地址就是同一间展厅。",
+          fr: "Oui. La graine choisit l'une des quatre nuits vérifiées à l'avance. Le regard n'est pas relancé à chaque image, donc une adresse partagée est la même salle.",
+          es: "Sí. La semilla elige una de cuatro noches comprobadas de antemano. La mirada no vuelve a girar en cada fotograma, así que una dirección compartida es la misma sala.",
+        },
+      },
+    ],
+  },
   "cloud-sculptor": {
     origin: {
       ko: "구름 조각사는 바람을 깎아 구름을 목표 형태로 줄이는 OIYO 오리지널 퍼즐입니다. 네 하늘은 손으로 맞춘 뒤 시드가 그중 하나를 고르며, 외부 게임의 맵이나 음원을 쓰지 않습니다.",
