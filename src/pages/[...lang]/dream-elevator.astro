@@ -1,0 +1,36 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import DreamElevator from "../../components/games/DreamElevator";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: { title: "꿈의 엘리베이터 — 실은 물건이 다음 층의 꿈이 된다", description: "돌은 중력, 티끌은 작아짐, 시계는 멈춤. 봉인과 같을 때만 올라가는 무료 3D 퍼즐. 같은 시드는 같은 꿈입니다." },
+  en: { title: "Dream Elevator — the object you carry writes the next floor", description: "Stone is gravity, a mote shrinks, a clock holds still. A free 3D puzzle: climb only when the dream matches the seal. The same seed is the same dream." },
+  ja: { title: "夢のエレベーター — 持った物が次の階の夢になる", description: "石は重力、塵は縮小、時計は停止。封印と一致したときだけ上がる無料の3Dパズル。同じシードは同じ夢です。" },
+  zh: { title: "梦之电梯 — 带上的东西写成下一层的梦", description: "石是重力，尘是缩小，钟是静止。只有梦和封印一致才能上行。免费3D谜题，相同种子是同一场梦。" },
+  fr: { title: "Ascenseur des rêves — l'objet porté écrit l'étage suivant", description: "La pierre est la gravité, le grain rétrécit, l'horloge immobilise. On monte seulement si le rêve est le sceau. Un puzzle 3D gratuit : la même graine, le même rêve." },
+  es: { title: "Ascensor de los sueños — lo que llevas escribe el piso siguiente", description: "La piedra es gravedad, la mota encoge, el reloj detiene. Subes solo si el sueño es el sello. Un puzle 3D gratuito: la misma semilla es el mismo sueño." },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["dream-elevator"]}>
+  <div class="mx-auto max-w-3xl px-4 py-8">
+    {/*
+      client:visible — the three.js chunk stays out of the first paint until
+      the shaft is actually on screen.
+    */}
+    <DreamElevator client:visible locale={locale} />
+    <GameGuide slug="dream-elevator" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>

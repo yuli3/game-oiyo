@@ -13,6 +13,44 @@ export interface GameGuide {
 }
 
 export const GAME_GUIDES: Record<string, GameGuide> = {
+  "dream-elevator": {
+    origin: {
+      ko: "꿈의 엘리베이터는 손에 든 물건으로 다음 층의 꿈을 쓰는 OIYO 오리지널 퍼즐입니다. 네 층계는 손으로 맞춘 뒤 시드가 그중 하나를 고르며, 외부 게임의 맵이나 음원을 쓰지 않습니다.",
+      en: "Dream Elevator is an original OIYO puzzle: the object in your hand writes the next floor's dream. Four shafts were checked by hand; a seed picks one. It uses no map or audio from another game.",
+      ja: "夢のエレベーターは、手に持った物で次の階の夢を書くOIYOオリジナルパズルです。四つの階段は手で確かめ、シードがその一つを選びます。外部ゲームのマップや音源は使いません。",
+      zh: "梦之电梯是 OIYO 原创谜题：手里的东西写下下一层的梦。四座竖井经手工核验，种子从中选一座。不使用其他游戏的地图或音频。",
+      fr: "Ascenseur des rêves est un puzzle original d'OIYO : l'objet en main inscrit le rêve de l'étage suivant. Quatre cages ont été vérifiées à la main ; une graine en choisit une. Aucune carte ni aucun son d'un autre jeu.",
+      es: "Ascensor de los sueños es un puzle original de OIYO: el objeto en la mano escribe el sueño del piso siguiente. Cuatro cajas se comprobaron a mano; una semilla elige una. No usa mapas ni audio de otro juego.",
+    },
+    how: {
+      ko: "올라가면 손에 든 돌·티끌·시계가 그 층의 꿈이 됩니다. 돌은 중력, 티끌은 작아짐, 시계는 멈춤입니다. 빈손으로는 문이 열리지 않습니다. 그 층의 꿈이 봉인과 같을 때만 더 올라갑니다. 내려가도 이미 쓴 꿈은 바뀌지 않습니다. 손과 그 층의 물건을 바꿀 수 있습니다. 꼭대기 층에 들어설 때 손에 든 물건이 그 봉인과 같으면 이기고, 걸음 12에 못 끝내면 집니다. 보기 버튼은 층과 물건을 바꾸지 않습니다.",
+      en: "Riding up writes the stone, mote, or clock in your hand as that floor's dream: gravity, shrinking, or stillness. Empty hands do not open the door. You climb onward only when the dream matches the seal. Riding down does not rewrite a dream already written. You may swap your hand with the relic on that floor. Stepping onto the top floor while the relic in hand matches its seal wins. Step 12 without that loses. The view button does not change the floors or the relics.",
+      ja: "上へ進むと、手の石・塵・時計がその階の夢になります。石は重力、塵は縮小、時計は停止です。素手では扉が開きません。その階の夢が封印と一致したときだけ、さらに上がれます。下へ降りても、すでに書いた夢は変わりません。手とその階の物を入れ替えられます。最上階に入るとき手の物が封印と一致すれば勝ちで、12歩で届かなければ負けです。視点ボタンは階も物も変えません。",
+      zh: "上行时，手里的石、尘或钟会写成那一层的梦：重力、缩小或静止。空手打不开门。只有梦和封印一致才能继续上行。下行不会改写已经写下的梦。可以把手里的东西和这一层的东西交换。踏入顶层时，手里的东西和封印一致才算赢。第12步还没完成就输。视角按钮不改变楼层和物品。",
+      fr: "Monter inscrit la pierre, le grain ou l'horloge tenus en main comme le rêve de l'étage : gravité, rétrécissement ou immobilité. Les mains vides n'ouvrent pas la porte. On ne continue vers le haut que si le rêve est le sceau. Descendre ne réécrit pas un rêve déjà inscrit. On peut échanger la main avec l'objet du palier. Entrer au dernier étage avec l'objet qui est son sceau fait gagner. Le 12e pas sans cela fait perdre. Le bouton de vue ne change ni les étages ni les objets.",
+      es: "Subir escribe la piedra, la mota o el reloj de la mano como el sueño de ese piso: gravedad, encogimiento o quietud. Con las manos vacías la puerta no se abre. Solo sigues hacia arriba cuando el sueño es el sello. Bajar no reescribe un sueño ya escrito. Puedes cambiar lo de la mano con el objeto del rellano. Entrar en el último piso con el objeto que es su sello gana. El paso 12 sin eso pierde. El botón de vista no cambia ni los pisos ni los objetos.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "같은 시드는 항상 같은 꿈인가요?",
+          en: "Does the same seed always build the same dream?",
+          ja: "同じシードはいつも同じ夢ですか？",
+          zh: "相同种子总会生成同一场梦吗？",
+          fr: "La même graine donne-t-elle toujours le même rêve ?",
+          es: "¿La misma semilla construye siempre el mismo sueño?",
+        },
+        a: {
+          ko: "네. 시드는 미리 맞춘 네 층계 중 하나를 고릅니다. 층이 매 프레임 새로 섞이지 않으므로 주소를 공유하면 같은 퍼즐을 둡니다.",
+          en: "Yes. The seed picks one of four shafts that were checked ahead of time. The shaft is not reshuffled every frame, so a shared address is the same puzzle.",
+          ja: "はい。シードは事前に確かめた四つの階段から一つを選びます。毎フレーム混ぜ直さないので、アドレスを共有すれば同じパズルです。",
+          zh: "是的。种子从事先核验的四座竖井中选一座。竖井不会每帧重排，因此分享地址就是同一道谜题。",
+          fr: "Oui. La graine choisit l'une des quatre cages vérifiées à l'avance. La cage n'est pas remélangée à chaque image, donc une adresse partagée est le même puzzle.",
+          es: "Sí. La semilla elige una de cuatro cajas comprobadas de antemano. La caja no se rebaraja en cada fotograma, así que una dirección compartida es el mismo puzle.",
+        },
+      },
+    ],
+  },
   "constellation-shepherd": {
     origin: {
       ko: "별자리 목동은 빈 하늘을 걷고, 줄이 별에 닿을 때만 가벼운 쪽이 움직이는 OIYO 오리지널 퍼즐입니다. 네 하늘은 손으로 맞춘 뒤 시드가 그중 하나를 고르며, 외부 게임의 맵이나 음원을 쓰지 않습니다.",
