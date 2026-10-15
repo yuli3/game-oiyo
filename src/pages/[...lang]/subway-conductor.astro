@@ -1,0 +1,36 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SubwayConductor from "../../components/games/SubwayConductor";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: { title: "지하철 지휘자 — 붙잡으면 동쪽 승강장이 한산해진다", description: "붙잡으면 가장 서쪽의 지연이 한 박자 줄고 바로 동쪽은 한 단계 한산해집니다. 보내면 가장 서쪽의 정시가 떠나고 바로 동쪽은 한 단계 밀립니다. 같은 시드는 같은 노선입니다." },
+  en: { title: "Subway Conductor — holding eases the platform to the east", description: "Holding eases only the westernmost late train, and the east gets one step quieter. Sending clears only the westernmost due train, and the east takes one step of the bunch. The same seed is the same line." },
+  ja: { title: "地下鉄の指揮者 — 引き止めると東のホームが空く", description: "引き止めると最も西の遅延だけが一拍ゆるみ、すぐ東は一段階空きます。送り出すと最も西の定時だけが発ち、すぐ東は一段階混みます。同じシードは同じ路線です。" },
+  zh: { title: "地铁调度员 — 挽留会让东边的站台变空", description: "挽留只会让最西边的晚点松一拍，东边会空一档。发出只会让最西边的准点列车离开，东边会挤一档。相同种子是同一条线路。" },
+  fr: { title: "Chef de rame — retenir vide le quai à l'est", description: "Retenir ne relâche que le retard le plus à l'ouest, et l'est se vide d'un cran. Envoyer ne fait partir que la rame à l'heure la plus à l'ouest, et l'est se charge d'un cran. La même graine, la même ligne." },
+  es: { title: "Jefe de andén — retener vacía el andén del este", description: "Retener solo afloja el retraso más al oeste, y el este se vacía un grado. Enviar solo hace salir el tren en hora más al oeste, y el este se carga un grado. La misma semilla es la misma línea." },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["subway-conductor"]}>
+  <div class="mx-auto max-w-3xl px-4 py-8">
+    {/*
+      client:visible — the three.js chunk stays out of the first paint until
+      the page is actually on screen.
+    */}
+    <SubwayConductor client:visible locale={locale} />
+    <GameGuide slug="subway-conductor" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>

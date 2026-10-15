@@ -13,6 +13,44 @@ export interface GameGuide {
 }
 
 export const GAME_GUIDES: Record<string, GameGuide> = {
+  "subway-conductor": {
+    origin: {
+      ko: "지하철 지휘자는 노선을 새로 그리지 않고, 한 열차의 간격이 바로 동쪽 승강장으로 번지는 OIYO 오리지널 퍼즐입니다. 네 시각표는 손으로 맞춘 뒤 시드가 그중 하나를 고르며, 외부 게임의 맵이나 음원을 쓰지 않습니다.",
+      en: "Subway Conductor is an original OIYO puzzle: you do not draw the route. One train's gap spills onto the platform just east. Four timetables were checked by hand; a seed picks one. It uses no map or audio from another game.",
+      ja: "地下鉄の指揮者は、路線を描き足すのではなく、一本の間隔がすぐ東のホームへ広がるOIYOオリジナルパズルです。四つの時刻表は手で確かめ、シードがその一つを選びます。外部ゲームのマップや音源は使いません。",
+      zh: "地铁调度员是 OIYO 原创谜题：不新画线路，一班车的间隔会蔓延到紧东边的站台。四张时刻表经手工核验，种子从中选一张。不使用其他游戏的地图或音频。",
+      fr: "Chef de rame est un puzzle original d'OIYO : on ne trace pas la ligne. L'intervalle d'une rame se reporte sur le quai juste à l'est. Quatre horaires ont été vérifiés à la main ; une graine en choisit un. Aucune carte ni aucun son d'un autre jeu.",
+      es: "Jefe de andén es un puzle original de OIYO: no dibujas la línea. El intervalo de un tren pasa al andén justo al este. Cuatro horarios se comprobaron a mano; una semilla elige uno. No usa mapas ni audio de otro juego.",
+    },
+    how: {
+      ko: "화면 왼쪽이 서쪽이고 칸 번호는 1부터입니다. 화면 위쪽 줄이 표식이고 아래 줄이 노선입니다. 붙잡기는 가장 서쪽의 지연만 정시로 한 박자 줄이고, 바로 동쪽은 지연에서 정시로, 정시에서 한산으로 한 단계 한산해집니다. 보내기는 가장 서쪽의 정시만 한산으로 떠나보내고, 바로 동쪽은 한산에서 정시로, 정시에서 지연으로 한 단계 밀립니다. 맞는 승강장이 없는 행동은 걸음이 아닙니다. 노선이 표식과 같아지면 이기고, 행동 8 안에 못 맞추면 집니다. 보기 버튼은 열차를 움직이지 않습니다. 이 노선은 화면에만 남고 기기에는 저장되지 않습니다.",
+      en: "The left of the screen is west, and platform numbers start at 1. The upper row is the mark and the lower row is the line. Holding eases only the westernmost late train back to due, and the platform just east gets one step quieter, from late to due or from due to quiet. Sending clears only the westernmost due train, and the platform just east takes one step of the bunch, from quiet to due or from due to late. An act with no fitting platform is not a step. Matching the mark wins. Missing it within 8 acts loses. The view button does not move a train. This line stays on the screen and is not saved on the device.",
+      ja: "画面の左が西で、番号は1からです。上の列が表示、下の列が路線です。引き止めは最も西の遅延だけを定時へ一拍ゆるめ、すぐ東は遅延から定時へ、定時から空きへと一段階空きます。送り出しは最も西の定時だけを空きにして発たせ、すぐ東は空きから定時へ、定時から遅延へと一段階混みます。当てはまるホームのない手は歩数になりません。表示と揃えば勝ち、8手で揃わなければ負けです。視点ボタンは列車を動かしません。この路線は画面の上だけに残り、端末には保存されません。",
+      zh: "画面左侧是西，站台从 1 开始。上面一行是标记，下面一行是线路。挽留只把最西边的晚点松回准点，紧东边会空一档，从晚点到准点，或从准点到空闲。发出只让最西边的准点列车离开变成空闲，紧东边会挤一档，从空闲到准点，或从准点到晚点。没有相符站台的行动不算一步。和标记一致就赢。第8步还没对上就输。视角按钮不移动列车。这条线路只留在画面上，不会写进设备。",
+      fr: "La gauche de l'écran est l'ouest, et les quais se comptent à partir de 1. La rangée du haut est la marque, celle du bas la ligne. Retenir ne ramène à l'heure que le retard le plus à l'ouest, et le quai juste à l'est se vide d'un cran, du retard à l'heure ou de l'heure au calme. Envoyer ne fait partir que la rame à l'heure la plus à l'ouest, et le quai juste à l'est se charge d'un cran, du calme à l'heure ou de l'heure au retard. Un geste sans quai convenable ne compte pas. Égaler la marque fait gagner. La manquer en 8 gestes fait perdre. Le bouton de vue ne déplace pas une rame. Cette ligne reste à l'écran et n'est pas écrite sur l'appareil.",
+      es: "La izquierda de la pantalla es el oeste, y los andenes se numeran desde 1. La fila de arriba es la marca y la de abajo la línea. Retener solo devuelve a hora el retraso más al oeste, y el andén justo al este se vacía un grado, de retraso a en hora o de en hora a quieto. Enviar solo hace salir el tren en hora más al oeste, y el andén justo al este se carga un grado, de quieto a en hora o de en hora a retraso. Un gesto sin un andén que encaje no cuenta. Igualar la marca gana. No llegar en 8 gestos pierde. El botón de vista no mueve un tren. Esta línea se queda en la pantalla y no se escribe en el aparato.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "같은 시드는 항상 같은 노선인가요?",
+          en: "Does the same seed always build the same line?",
+          ja: "同じシードはいつも同じ路線ですか？",
+          zh: "相同种子总会生成同一条线路吗？",
+          fr: "La même graine donne-t-elle toujours la même ligne ?",
+          es: "¿La misma semilla construye siempre la misma línea?",
+        },
+        a: {
+          ko: "네. 시드는 미리 맞춘 네 시각표 중 하나를 고릅니다. 열차가 매 프레임 새로 움직이지 않으므로 주소를 공유하면 같은 노선을 둡니다.",
+          en: "Yes. The seed picks one of four timetables that were checked ahead of time. The trains are not moved again every frame, so a shared address is the same line.",
+          ja: "はい。シードは事前に確かめた四つの時刻表から一つを選びます。列車を毎フレーム動かし直さないので、アドレスを共有すれば同じ路線です。",
+          zh: "是的。种子从事先核验的四张时刻表中选一张。列车不会每帧重新移动，因此分享地址就是同一条线路。",
+          fr: "Oui. La graine choisit l'un des quatre horaires vérifiés à l'avance. Les rames ne sont pas relancées à chaque image, donc une adresse partagée est la même ligne.",
+          es: "Sí. La semilla elige uno de cuatro horarios comprobados de antemano. Los trenes no vuelven a moverse en cada fotograma, así que una dirección compartida es la misma línea.",
+        },
+      },
+    ],
+  },
   "emotion-weather": {
     origin: {
       ko: "감정 기상청은 좋은 감정을 최대로 모으는 게임이 아니라, 기쁨과 비가 이웃의 날씨를 한 단계 밀어 내는 OIYO 오리지널 퍼즐입니다. 네 마을은 손으로 맞춘 뒤 시드가 그중 하나를 고르며, 외부 게임의 맵이나 음원을 쓰지 않습니다.",
