@@ -13,6 +13,44 @@ export interface GameGuide {
 }
 
 export const GAME_GUIDES: Record<string, GameGuide> = {
+  "glass-planet": {
+    origin: {
+      ko: "유리 행성은 구의 맞은편에 선 두 사람을 한 번의 입력으로 움직이는 OIYO 오리지널 퍼즐입니다. 네 판은 손으로 맞춘 뒤 시드가 그중 하나를 고르며, 외부 게임의 맵이나 음원을 쓰지 않습니다.",
+      en: "Glass Planet is an original OIYO puzzle that moves two people on opposite sides of a sphere with one input. Four boards were checked by hand; a seed picks one. It uses no map or audio from another game.",
+      ja: "ガラス惑星は、球の反対側に立つ二人を一度の入力で動かすOIYOオリジナルパズルです。四つの盤面は手で確かめ、シードがその一つを選びます。外部ゲームのマップや音源は使いません。",
+      zh: "玻璃行星是 OIYO 原创谜题：一次输入同时移动站在球体相反两侧的两个人。四张棋盘经手工核验，种子从中选一张。不使用其他游戏的地图或音频。",
+      fr: "Planète de verre est un puzzle original d'OIYO : une seule commande déplace deux personnes sur des faces opposées d'une sphère. Quatre plateaux ont été vérifiés à la main ; une graine en choisit un. Aucune carte ni aucun son d'un autre jeu.",
+      es: "Planeta de cristal es un puzle original de OIYO: una sola orden mueve a dos personas en caras opuestas de una esfera. Cuatro tableros se comprobaron a mano; una semilla elige uno. No usa mapas ni audio de otro juego.",
+    },
+    how: {
+      ko: "가로·세로·깊이 중 양쪽 유리가 열린 축만 누를 수 있습니다. 그 한 걸음이 겉과 안을 함께 옮깁니다. 출구 칸으로 걸어 들어가면 이기고, 시작 칸이 출구여도 이미 이긴 것은 아닙니다. 금이 간 칸이나 안의 빈칸으로 들어가면 지고, 걸음 8도 집니다. 보기 버튼은 판을 바꾸지 않습니다.",
+      en: "You can press across, upright, or depth only when that seam is open on both shells. That one step moves the outside and the inside together. Walking onto the exit cells wins; starting on an exit would not. A cracked cell or an inner void loses, as does step 8. The view button does not change the board.",
+      ja: "横・縦・奥行きは、その継ぎ目が両側で開いているときだけ押せます。その一歩が外側と内側を一緒に動かします。出口のマスへ歩き入ると勝ちで、開始地点が出구でも最初から勝ちではありません。ひびのマスか内側の空洞へ入るか、8歩で負けです。視点ボタンは盤面を変えません。",
+      zh: "只有两侧玻璃都开着的横向、纵向或纵深才能按。这一步会同时移动外侧和内侧。走进出口才算赢；即使起点是出口也不算已经获胜。走进裂痕或内侧空洞，或走到第8步，都会输。视角按钮不改变棋盘。",
+      fr: "Largeur, hauteur ou profondeur ne se pressent que si le joint est ouvert des deux côtés. Ce pas déplace l'extérieur et l'intérieur ensemble. Entrer sur les sorties gagne ; commencer dessus ne gagne pas. Une case fêlée ou un vide intérieur perd, tout comme le 8e pas. Le bouton de vue ne change pas le plateau.",
+      es: "Ancho, alto o profundidad solo se pulsan si esa junta está abierta en las dos caras. Ese paso mueve el exterior y el interior juntos. Entrar en las salidas gana; empezar sobre una salida no gana. Una casilla rajada o un vacío interior pierde, igual que el paso 8. El botón de vista no cambia el tablero.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "같은 시드는 항상 같은 행성인가요?",
+          en: "Does the same seed always build the same planet?",
+          ja: "同じシードはいつも同じ惑星ですか？",
+          zh: "相同种子总会生成同一颗行星吗？",
+          fr: "La même graine donne-t-elle toujours la même planète ?",
+          es: "¿La misma semilla construye siempre el mismo planeta?",
+        },
+        a: {
+          ko: "네. 시드는 미리 맞춘 네 판 중 하나를 고릅니다. 판이 매 프레임 새로 섞이지 않으므로 주소를 공유하면 같은 퍼즐을 둡니다.",
+          en: "Yes. The seed picks one of four boards that were checked ahead of time. The board is not reshuffled every frame, so a shared address is the same puzzle.",
+          ja: "はい。シードは事前に確かめた四つの盤面から一つを選びます。毎フレーム混ぜ直さないので、アドレスを共有すれば同じパズルです。",
+          zh: "是的。种子从事先核验的四张棋盘中选一张。棋盘不会每帧重排，因此分享地址就是同一道谜题。",
+          fr: "Oui. La graine choisit l'un des quatre plateaux vérifiés à l'avance. Le plateau n'est pas remélangé à chaque image, donc une adresse partagée est le même puzzle.",
+          es: "Sí. La semilla elige uno de cuatro tableros comprobados de antemano. El tablero no se rebaraja en cada fotograma, así que una dirección compartida es el mismo puzle.",
+        },
+      },
+    ],
+  },
   "reverse-dungeon": {
     origin: {
       ko: "리버스 던전은 모험가를 움직이지 않고 건축을 90도씩 돌려 출구까지 보내는 OIYO 오리지널 퍼즐입니다. 네 판은 손으로 맞춘 뒤 시드가 그중 하나를 고르며, 외부 게임의 맵이나 음원을 쓰지 않습니다.",

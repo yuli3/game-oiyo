@@ -1,0 +1,36 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import GlassPlanet from "../../components/games/GlassPlanet";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: { title: "유리 행성 — 겉과 안을 함께 걷는 퍼즐", description: "정반대 칸에 묶인 두 탐사자를, 양쪽 유리가 열릴 때만 한 칸씩 옮겨 출구로 보내는 무료 3D 퍼즐." },
+  en: { title: "Glass Planet — walk the outside and the inside together", description: "Two explorers tied to opposite cells move one step only when both shells of glass are open. A free 3D puzzle." },
+  ja: { title: "ガラス惑星 — 外側と内側を一緒に歩く", description: "正反対のマスに結ばれた二人を、両側のガラスが開いたときだけ一マス動かし、出口へ送る無料の3Dパズル。" },
+  zh: { title: "玻璃行星 — 外侧与内侧一起走", description: "被绑在相反格子上的两人，只有两侧玻璃都打开时才移动一格，直到出口。免费3D谜题。" },
+  fr: { title: "Planète de verre — marcher dehors et dedans ensemble", description: "Deux explorateurs sur des cases opposées n'avancent que si le verre est ouvert des deux côtés. Un puzzle 3D gratuit." },
+  es: { title: "Planeta de cristal — camina fuera y dentro a la vez", description: "Dos exploradores en casillas opuestas avanzan solo cuando el cristal está abierto en las dos caras. Un puzle 3D gratuito." },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["glass-planet"]}>
+  <div class="mx-auto max-w-3xl px-4 py-8">
+    {/*
+      client:visible — the three.js chunk stays out of the first paint until
+      the planet is actually on screen.
+    */}
+    <GlassPlanet client:visible locale={locale} />
+    <GameGuide slug="glass-planet" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>
