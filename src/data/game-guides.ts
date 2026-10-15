@@ -13,6 +13,44 @@ export interface GameGuide {
 }
 
 export const GAME_GUIDES: Record<string, GameGuide> = {
+  "cloud-sculptor": {
+    origin: {
+      ko: "구름 조각사는 바람을 깎아 구름을 목표 형태로 줄이는 OIYO 오리지널 퍼즐입니다. 네 하늘은 손으로 맞춘 뒤 시드가 그중 하나를 고르며, 외부 게임의 맵이나 음원을 쓰지 않습니다.",
+      en: "Cloud Sculptor is an original OIYO puzzle: you carve the wind and thin the cloud down to a marked shape. Four skies were checked by hand; a seed picks one. It uses no map or audio from another game.",
+      ja: "雲の彫刻家は、風を削って雲を目標の形まで減らすOIYOオリジナルパズルです。四つの空は手で確かめ、シードがその一つを選びます。外部ゲームのマップや音源は使いません。",
+      zh: "云雕塑家是 OIYO 原创谜题：削风，把云收成标记的形状。四片天空经手工核验，种子从中选一片。不使用其他游戏的地图或音频。",
+      fr: "Sculpteur de nuages est un puzzle original d'OIYO : on taille le vent et l'on réduit le nuage à la forme marquée. Quatre ciels ont été vérifiés à la main ; une graine en choisit un. Aucune carte ni aucun son d'un autre jeu.",
+      es: "Escultor de nubes es un puzle original de OIYO: tallas el viento y adelgazas la nube hasta la forma marcada. Cuatro cielos se comprobaron a mano; una semilla elige uno. No usa mapas ni audio de otro juego.",
+    },
+    how: {
+      ko: "위·아래·왼쪽·오른쪽은 카메라가 아니라 하늘의 축입니다. 바람을 그쪽으로 깎으면 모든 덩이가 한 칸 밀립니다. 가운데 돌에 닿거나 3×3 하늘 밖으로 나간 덩이는 흩어집니다. 구름을 더할 수는 없고, 처음 구름은 목표보다 큽니다. 남은 덩이가 목표 칸과 정확히 같으면 이기고, 전부 흩어지거나 걸음 8 안에 못 맞추면 집니다. 이 카드는 화면 위에만 남고 기기에는 저장되지 않습니다. 보기 버튼은 구름을 바꾸지 않습니다.",
+      en: "Up, down, left, and right are the sky's axes, not the camera. Carving the wind that way pushes every puff one cell. A puff that meets the center stone or leaves the 3×3 sky disperses. You cannot add cloud, and the cloud you start with is larger than the mark. The remaining puffs matching the marked cells exactly wins. Losing the whole cloud, or reaching step 8 without a match, loses. This card stays on the screen and is not saved on the device. The view button does not change the cloud.",
+      ja: "上下左右はカメラではなく空の軸です。その方向に風を削ると、すべての塊が一マス押されます。中央の石に触れた塊と、3×3の空の外へ出た塊は散ります。雲は足せず、最初の雲は目標より大きいです。残った塊が目標のマスとぴったり一致すれば勝ちで、全部散るか8歩で揃わなければ負けです。このカードは画面の上だけに残り、端末には保存されません。視点ボタンは雲を変えません。",
+      zh: "上下左右是天空的轴，不是摄像机。把风削向那边，每一团云都推一格。碰到正中石头，或离开 3×3 天空的云团会散掉。不能加云，开局的云比标记大。剩下的云团和标记格子完全一致才算赢。云全部散掉，或第8步还没对上，就输。这张卡片只留在画面上，不会写进设备。视角按钮不改变云。",
+      fr: "Haut, bas, gauche et droite sont les axes du ciel, pas ceux de la caméra. Tailler le vent dans ce sens pousse chaque flocon d'une case. Un flocon qui touche la pierre du centre ou quitte le ciel 3×3 se disperse. On ne peut pas ajouter de nuage, et le nuage du début est plus grand que la marque. Les flocons restants égaux aux cases marquées font gagner. Tout perdre, ou arriver au 8e pas sans égalité, fait perdre. Cette carte reste à l'écran et n'est pas écrite sur l'appareil. Le bouton de vue ne change pas le nuage.",
+      es: "Arriba, abajo, izquierda y derecha son los ejes del cielo, no los de la cámara. Tallar el viento hacia allá empuja cada copo un puesto. El copo que toca la piedra del centro o sale del cielo de 3×3 se dispersa. No se puede añadir nube, y la nube inicial es más grande que la marca. Los copos que quedan, iguales a las casillas marcadas, ganan. Perderla entera, o llegar al paso 8 sin igualarla, pierde. Esta tarjeta se queda en la pantalla y no se escribe en el aparato. El botón de vista no cambia la nube.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "같은 시드는 항상 같은 하늘인가요?",
+          en: "Does the same seed always build the same sky?",
+          ja: "同じシードはいつも同じ空ですか？",
+          zh: "相同种子总会生成同一片天空吗？",
+          fr: "La même graine donne-t-elle toujours le même ciel ?",
+          es: "¿La misma semilla construye siempre el mismo cielo?",
+        },
+        a: {
+          ko: "네. 시드는 미리 맞춘 네 하늘 중 하나를 고릅니다. 구름이 매 프레임 새로 흩어지지 않으므로 주소를 공유하면 같은 퍼즐을 둡니다.",
+          en: "Yes. The seed picks one of four skies that were checked ahead of time. The cloud is not scattered again every frame, so a shared address is the same puzzle.",
+          ja: "はい。シードは事前に確かめた四つの空から一つを選びます。毎フレーム雲を散らし直さないので、アドレスを共有すれば同じパズルです。",
+          zh: "是的。种子从事先核验的四片天空中选一片。云不会每帧重新散开，因此分享地址就是同一道谜题。",
+          fr: "Oui. La graine choisit l'un des quatre ciels vérifiés à l'avance. Le nuage n'est pas dispersé de nouveau à chaque image, donc une adresse partagée est le même puzzle.",
+          es: "Sí. La semilla elige uno de cuatro cielos comprobados de antemano. La nube no se dispersa otra vez en cada fotograma, así que una dirección compartida es el mismo puzle.",
+        },
+      },
+    ],
+  },
   "deep-photographer": {
     origin: {
       ko: "심해 사진가는 공격 없이, 빛과 생물의 도주와 포식자의 접근만으로 한 장면을 남기는 OIYO 오리지널 퍼즐입니다. 네 장면은 손으로 맞춘 뒤 시드가 그중 하나를 고르며, 외부 게임의 맵이나 음원을 쓰지 않습니다.",

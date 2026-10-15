@@ -1,0 +1,36 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import CloudSculptor from "../../components/games/CloudSculptor";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: { title: "구름 조각사 — 바람을 깎아 목표보다 작은 구름만 남긴다", description: "가운데 돌은 바람을 막습니다. 돌에 닿거나 판 밖으로 나간 덩이는 흩어지고, 남은 구름이 목표와 같을 때만 카드가 남습니다. 같은 시드는 같은 하늘입니다." },
+  en: { title: "Cloud Sculptor — carve the wind until only the mark remains", description: "The center stone stops the wind. Puffs that hit it or leave the sky disperse, and the card stays only when the remaining cloud is the mark. The same seed is the same sky." },
+  ja: { title: "雲の彫刻家 — 風を削って目標より小さい雲だけを残す", description: "中央の石は風を止めます。石に触れた塊と空の外へ出た塊は散り、残った雲が目標と一致したときだけカードが残ります。同じシードは同じ空です。" },
+  zh: { title: "云雕塑家 — 削风，直到只留下比目标更小的云", description: "正中的石头挡住风。碰到石头或离开天空的云团会散掉，剩下的云和标记一致时卡片才留下。相同种子是同一片天。" },
+  fr: { title: "Sculpteur de nuages — tailler le vent jusqu'à ne garder que la marque", description: "La pierre du centre arrête le vent. Un flocon qui la touche ou quitte le ciel se disperse, et la carte ne reste que si le nuage restant est la marque. La même graine, le même ciel." },
+  es: { title: "Escultor de nubes — tallar el viento hasta dejar solo la marca", description: "La piedra del centro corta el viento. El copo que la toca o sale del cielo se dispersa, y la tarjeta se queda solo cuando la nube restante es la marca. La misma semilla es el mismo cielo." },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["cloud-sculptor"]}>
+  <div class="mx-auto max-w-3xl px-4 py-8">
+    {/*
+      client:visible — the three.js chunk stays out of the first paint until
+      the sky is actually on screen.
+    */}
+    <CloudSculptor client:visible locale={locale} />
+    <GameGuide slug="cloud-sculptor" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>
