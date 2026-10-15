@@ -13,6 +13,44 @@ export interface GameGuide {
 }
 
 export const GAME_GUIDES: Record<string, GameGuide> = {
+  "deep-photographer": {
+    origin: {
+      ko: "심해 사진가는 공격 없이, 빛과 생물의 도주와 포식자의 접근만으로 한 장면을 남기는 OIYO 오리지널 퍼즐입니다. 네 장면은 손으로 맞춘 뒤 시드가 그중 하나를 고르며, 외부 게임의 맵이나 음원을 쓰지 않습니다.",
+      en: "Deep Photographer is an original OIYO puzzle: there is no attack, and one scene is kept from the lamp, the creature's flight, and the predator's approach. Four scenes were checked by hand; a seed picks one. It uses no map or audio from another game.",
+      ja: "深海の写真家は、攻撃なしで、光と生物の逃避と捕食者の接近だけで一場面を残すOIYOオリジナルパズルです。四つの場面は手で確かめ、シードがその一つを選びます。外部ゲームのマップや音源は使いません。",
+      zh: "深海摄影师是 OIYO 原创谜题：没有攻击，只靠光、生物的躲避和捕食者的靠近留下一幕。四幕经手工核验，种子从中选一幕。不使用其他游戏的地图或音频。",
+      fr: "Photographe des abysses est un puzzle original d'OIYO : pas d'attaque, et une seule scène se garde par la lampe, la fuite de la créature et l'approche du prédateur. Quatre scènes ont été vérifiées à la main ; une graine en choisit une. Aucune carte ni aucun son d'un autre jeu.",
+      es: "Fotógrafo del abismo es un puzle original de OIYO: no hay ataque, y una sola escena se guarda con la luz, la huida del animal y el avance del depredador. Cuatro escenas se comprobaron a mano; una semilla elige una. No usa mapas ni audio de otro juego.",
+    },
+    how: {
+      ko: "빛을 올리면 새 빔 안의 생물은 화면 오른쪽, 곧 어두운 쪽으로 한 칸 피하고, 포식자는 램프 쪽으로 한 칸 다가옵니다. 빛을 내리면 생물은 그 칸에 남고 포식자만 어둠으로 한 칸 물러납니다. 생물이 표식 위에 있고, 밝기가 그 장면에 필요한 밝기와 같고, 포식자가 빔 밖에 있을 때 셔터를 누르면 그 한 장면이 남습니다. 밝기만 다르거나, 생물이 표식을 비켰거나, 포식자가 빔 안에 있으면 셔터는 놓칩니다. 포식자가 생물과 스치거나 같은 칸에 서면 장면을 잃습니다. 걸음 8 안에 남기지 못하면 집니다. 보기 버튼은 생물과 밝기를 바꾸지 않습니다. 화면 오른쪽이 해구의 어두운 끝입니다.",
+      en: "Raising the lamp makes a creature inside the new beam flee one station toward the dark, on the right of the screen, and the predator steps one station toward the lamp. Lowering the lamp leaves the creature on its station and only the predator steps back into the dark. The shutter keeps that one scene when the creature is on the mark, the lamp equals the brightness that scene needs, and the predator is outside the beam. A shutter with the wrong lamp, a creature off the mark, or a predator inside the beam misses. If the predator crosses the creature or shares its station, the scene is lost. Step 8 without keeping it loses. The view button does not change the creature or the lamp. Screen-right is the dark end of the trench.",
+      ja: "光を上げると、新しいビームの中の生物は画面右の暗い方へ一マス避け、捕食者はランプへ一マス近づきます。光を下げると生物はそのマスに残り、捕食者だけが闇へ一マス下がります。生物が標識の上にいて、明るさがその場面の必要な明るさと等しく、捕食者がビームの外にいるときシャッターを押すと、その一場面が残ります。明るさだけが違う、生物が標識を外している、捕食者がビームの中にいる、のいずれかならシャッターは外れます。捕食者が生物とすれ違うか同じマスに立つと場面を失います。8歩で残せなければ負けです。視点ボタンは生物も明るさも変えません。画面の右が海溝の暗い端です。",
+      zh: "把光调亮时，进入新光束的生物会向画面右侧的暗处躲一格，捕食者向灯靠近一格。把光调暗时，生物留在那一格，只有捕食者向暗处退一格。生物站在标记上、亮度等于这一幕需要的亮度、捕食者在光束之外时按下快门，这一幕才会留下。亮度不对、生物不在标记上、或捕食者在光束里，快门都算错过。捕食者与生物交错或站在同一格，这一幕就丢了。第8步还没留下就输。视角按钮不改变生物和亮度。画面右侧是海沟的暗端。",
+      fr: "Monter la lampe fait fuir d'une station, vers le noir à droite de l'écran, la créature entrée dans le nouveau faisceau, et le prédateur avance d'une station vers la lampe. Baisser la lampe laisse la créature sur sa station et seul le prédateur recule d'une station dans le noir. Le déclencheur garde cette scène unique quand la créature est sur le repère, la lampe égale la clarté que la scène demande, et le prédateur est hors du faisceau. Un déclencheur avec la mauvaise lampe, une créature hors du repère, ou un prédateur dans le faisceau rate. Si le prédateur croise la créature ou partage sa station, la scène est perdue. Le 8e pas sans la garder fait perdre. Le bouton de vue ne change ni la créature ni la lampe. La droite de l'écran est le bout sombre de la fosse.",
+      es: "Subir la luz hace que el animal dentro del haz nuevo huya un puesto hacia la oscuridad, a la derecha de la pantalla, y el depredador avance un puesto hacia la lámpara. Bajar la luz deja al animal en su puesto y solo el depredador retrocede un puesto hacia lo oscuro. El obturador guarda esa única escena cuando el animal está sobre la marca, la luz es la claridad que esa escena pide y el depredador está fuera del haz. Un obturador con la luz equivocada, el animal fuera de la marca o el depredador dentro del haz falla. Si el depredador cruza al animal o comparte su puesto, la escena se pierde. El paso 8 sin guardarla pierde. El botón de vista no cambia ni al animal ni a la luz. La derecha de la pantalla es el extremo oscuro de la fosa.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "같은 시드는 항상 같은 장면인가요?",
+          en: "Does the same seed always build the same scene?",
+          ja: "同じシードはいつも同じ場面ですか？",
+          zh: "相同种子总会生成同一幕吗？",
+          fr: "La même graine donne-t-elle toujours la même scène ?",
+          es: "¿La misma semilla construye siempre la misma escena?",
+        },
+        a: {
+          ko: "네. 시드는 미리 맞춘 네 장면 중 하나를 고릅니다. 생물이 매 프레임 새로 옮겨지지 않으므로 주소를 공유하면 같은 퍼즐을 둡니다.",
+          en: "Yes. The seed picks one of four scenes that were checked ahead of time. The creature is not moved again every frame, so a shared address is the same puzzle.",
+          ja: "はい。シードは事前に確かめた四つの場面から一つを選びます。毎フレーム生物を動かし直さないので、アドレスを共有すれば同じパズルです。",
+          zh: "是的。种子从事先核验的四幕中选一幕。生物不会每帧重新挪动，因此分享地址就是同一道谜题。",
+          fr: "Oui. La graine choisit l'une des quatre scènes vérifiées à l'avance. La créature n'est pas déplacée de nouveau à chaque image, donc une adresse partagée est le même puzzle.",
+          es: "Sí. La semilla elige una de cuatro escenas comprobadas de antemano. El animal no se mueve otra vez en cada fotograma, así que una dirección compartida es el mismo puzle.",
+        },
+      },
+    ],
+  },
   "blind-pilot": {
     origin: {
       ko: "블라인드 파일럿은 창을 닫고 계기와 외측 마커 호출만으로 착륙하는 OIYO 오리지널 퍼즐입니다. 네 접근은 손으로 맞춘 뒤 시드가 그중 하나를 고르며, 외부 게임의 맵이나 음원을 쓰지 않습니다.",

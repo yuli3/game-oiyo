@@ -1,0 +1,36 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import DeepPhotographer from "../../components/games/DeepPhotographer";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: { title: "심해 사진가 — 빛과 도주와 포식자 사이에서 한 장면을 남긴다", description: "빛을 올리면 생물은 어두운 쪽으로 피하고 포식자는 다가옵니다. 공격 없이 표식과 밝기가 맞을 때만 셔터가 남는 무료 3D 퍼즐. 같은 시드는 같은 장면입니다." },
+  en: { title: "Deep Photographer — keep one scene between the lamp, the flight, and the predator", description: "Raising the lamp makes the creature flee toward the dark and draws the predator closer. A free 3D puzzle with no attack: the shutter keeps the scene only when the mark and the lamp agree. The same seed is the same scene." },
+  ja: { title: "深海の写真家 — 光と逃避と捕食者のあいだで一場面を残す", description: "光を上げると生物は暗い方へ避け、捕食者が近づきます。攻撃のない無料の3Dパズル。標識と明るさが揃ったときだけシャッターが残ります。同じシードは同じ場面です。" },
+  zh: { title: "深海摄影师 — 在光、躲避和捕食者之间留下一幕", description: "把光调亮，生物会向暗处躲，捕食者会靠近。没有攻击的免费3D谜题。只有标记和亮度都对上，快门才留下这一幕。相同种子是同一幕。" },
+  fr: { title: "Photographe des abysses — garder une scène entre la lampe, la fuite et le prédateur", description: "Monter la lampe fait fuir la créature vers le noir et rapproche le prédateur. Un puzzle 3D gratuit sans attaque : le déclencheur ne garde la scène que si le repère et la lampe s'accordent. La même graine, la même scène." },
+  es: { title: "Fotógrafo del abismo — guardar una escena entre la luz, la huida y el depredador", description: "Subir la luz hace huir al animal hacia lo oscuro y acerca al depredador. Un puzle 3D gratuito sin ataque: el obturador guarda la escena solo cuando la marca y la luz coinciden. La misma semilla es la misma escena." },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["deep-photographer"]}>
+  <div class="mx-auto max-w-3xl px-4 py-8">
+    {/*
+      client:visible — the three.js chunk stays out of the first paint until
+      the trench is actually on screen.
+    */}
+    <DeepPhotographer client:visible locale={locale} />
+    <GameGuide slug="deep-photographer" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>
