@@ -3,6 +3,8 @@
  * 고장난 계기는 멈춘 눈금만 말하고, 그 축의 지금 값은 적지 않는다.
  * 외측 마커 호출은 시작 순간의 기록이라 조작 뒤에 고치지 않는다.
  * 끌어서 카메라를 돌리면 퍼즐이 아니라 시점이 이기므로 보기는 버튼만 쓴다.
+ * 관제 음성은 첫 제스처 뒤에만, 저장된 외측 마커 호출과 끝난 뒤의 설명을 읽는다.
+ * 음소거·멈춤·시드 변경은 그 음성을 끊는다. 고장난 축의 지금 값은 읽지 않는다.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Locale } from "../../lib/i18n";
@@ -13,6 +15,8 @@ import {
   needle,
   nextSeed,
   openActions,
+  radioOpen,
+  radioScript,
   resign,
   stepPilot,
   type Action,
@@ -90,7 +94,7 @@ const COPY: Record<Locale, Copy> = {
   ko: {
     title: "블라인드 파일럿",
     lead: "고장난 계기 하나는 바늘이 멈춰 있고, 외측 마커 호출과 나머지 계기로 기수를 맞춰 착륙합니다.",
-    keys: "위·W는 기수 들기, 아래·S는 기수 내리기, 왼쪽·A는 왼쪽 날개 내리기, 오른쪽·D는 오른쪽 날개 내리기입니다. Q는 출력을 내리고 E는 올립니다. L은 착륙, V는 보기, Esc는 멈춤. 방향은 카메라가 아니라 기체의 축입니다. 보기를 돌려도 버튼은 그대로이고, 기본 보기만 계기판이 정면입니다.",
+    keys: "위·W는 기수 들기, 아래·S는 기수 내리기, 왼쪽·A는 왼쪽 날개 내리기, 오른쪽·D는 오른쪽 날개 내리기입니다. Q는 출력을 내리고 E는 올립니다. L은 착륙, V는 보기, Esc는 멈춤. 방향은 카메라가 아니라 기체의 축입니다. 보기를 돌려도 버튼은 그대로입니다. 기본 보기는 계기판 정면이고, 다른 보기는 같은 계기판을 비스듬히 봅니다.",
     steps: "걸음",
     seed: "시드",
     apply: "이 시드",
@@ -151,7 +155,7 @@ const COPY: Record<Locale, Copy> = {
   en: {
     title: "Blind Pilot",
     lead: "One gauge is frozen. Match the landing with the outer-marker call and the needles that still move.",
-    keys: "Up or W raises the nose. Down or S lowers it. Left or A drops the left wing. Right or D drops the right wing. Q cuts thrust and E adds it. L lands, V changes the view, Esc pauses. Those directions are the airplane, not the camera. Turning the view leaves the buttons as they are, and only the first view faces the panel.",
+    keys: "Up or W raises the nose. Down or S lowers it. Left or A drops the left wing. Right or D drops the right wing. Q cuts thrust and E adds it. L lands, V changes the view, Esc pauses. Those directions are the airplane, not the camera. Turning the view leaves the buttons as they are. The first view faces the panel, and the other views look at the same panel from an angle.",
     steps: "Steps",
     seed: "Seed",
     apply: "Use seed",
@@ -212,7 +216,7 @@ const COPY: Record<Locale, Copy> = {
   ja: {
     title: "計器飛行",
     lead: "故障した計器は針が止まったままです。アウターマーカーの通報と、まだ動く針で姿勢を合わせて着陸します。",
-    keys: "上・Wは機首上げ、下・Sは機首下げ、左・Aは左翼下げ、右・Dは右翼下げです。Qで出力を下げ、Eで上げます。Lは着陸、Vは視点、Escは一時停止。方向はカメラではなく機体の軸です。視点を回してもボタンはそのままで、最初の視点だけ計器板が正面です。",
+    keys: "上・Wは機首上げ、下・Sは機首下げ、左・Aは左翼下げ、右・Dは右翼下げです。Qで出力を下げ、Eで上げます。Lは着陸、Vは視点、Escは一時停止。方向はカメラではなく機体の軸です。視点を回してもボタンはそのままです。最初の視点は計器板の正面で、ほかの視点は同じ計器板を斜めから見ます。",
     steps: "歩数",
     seed: "シード",
     apply: "このシード",
@@ -273,7 +277,7 @@ const COPY: Record<Locale, Copy> = {
   zh: {
     title: "盲飞",
     lead: "有一块仪表的指针停住了。用外指点标的通报，加上还在动的指针，把姿态对准再着陆。",
-    keys: "上或 W 抬机头，下或 S 压机头，左或 A 压左翼，右或 D 压右翼。Q 收油门，E 加油门。L 着陆，V 换视角，Esc 暂停。这些方向是飞机的轴，不是摄像机。转动视角不会改按钮，只有默认视角正对仪表板。",
+    keys: "上或 W 抬机头，下或 S 压机头，左或 A 压左翼，右或 D 压右翼。Q 收油门，E 加油门。L 着陆，V 换视角，Esc 暂停。这些方向是飞机的轴，不是摄像机。转动视角不会改按钮。默认视角正对仪表板，其余视角从斜侧看同一块仪表板。",
     steps: "步数",
     seed: "种子",
     apply: "使用种子",
@@ -334,7 +338,7 @@ const COPY: Record<Locale, Copy> = {
   fr: {
     title: "Pilote sans visibilité",
     lead: "Un instrument reste figé. Posez l'avion avec l'appel du radioborne extérieur et les aiguilles qui bougent encore.",
-    keys: "Haut ou W lève le nez. Bas ou S le baisse. Gauche ou A baisse l'aile gauche. Droite ou D baisse l'aile droite. Q réduit la poussée, E l'augmente. L pose, V change la vue, Esc met en pause. Ces directions sont celles de l'avion, pas de la caméra. Tourner la vue laisse les boutons en place, et seule la première vue fait face au tableau.",
+    keys: "Haut ou W lève le nez. Bas ou S le baisse. Gauche ou A baisse l'aile gauche. Droite ou D baisse l'aile droite. Q réduit la poussée, E l'augmente. L pose, V change la vue, Esc met en pause. Ces directions sont celles de l'avion, pas de la caméra. Tourner la vue laisse les boutons en place. La première vue est face au tableau, et les autres regardent le même tableau de biais.",
     steps: "Pas",
     seed: "Graine",
     apply: "Cette graine",
@@ -395,7 +399,7 @@ const COPY: Record<Locale, Copy> = {
   es: {
     title: "Piloto sin visibilidad",
     lead: "Un instrumento se quedó quieto. Alinea el aterrizaje con el aviso de la radiobaliza exterior y con las agujas que siguen vivas.",
-    keys: "Arriba o W levanta el morro. Abajo o S lo baja. Izquierda o A baja el ala izquierda. Derecha o D baja el ala derecha. Q quita motor y E lo añade. L aterriza, V cambia la vista, Esc pausa. Esas direcciones son del avión, no de la cámara. Girar la vista deja los botones igual, y solo la primera vista mira al panel.",
+    keys: "Arriba o W levanta el morro. Abajo o S lo baja. Izquierda o A baja el ala izquierda. Derecha o D baja el ala derecha. Q quita motor y E lo añade. L aterriza, V cambia la vista, Esc pausa. Esas direcciones son del avión, no de la cámara. Girar la vista deja los botones igual. La primera vista queda de frente al panel, y las otras miran el mismo panel en oblicuo.",
     steps: "Pasos",
     seed: "Semilla",
     apply: "Esta semilla",
@@ -550,6 +554,95 @@ function createPilotAudio(): PilotAudio {
   };
 }
 
+const VOICE_LANG: Record<Locale, string> = {
+  ko: "ko-KR",
+  en: "en-US",
+  ja: "ja-JP",
+  zh: "zh-CN",
+  fr: "fr-FR",
+  es: "es-ES",
+};
+
+interface TowerVoice {
+  arm: () => void;
+  say: (text: string) => void;
+  /** Drops whatever is talking, then speaks. Chrome ignores speak() in the same turn as cancel(). */
+  replace: (text: string) => void;
+  cancel: () => void;
+  close: () => void;
+}
+
+function createTowerVoice(lang: string): TowerVoice {
+  let armed = false;
+  let last = "";
+  let ticket = 0;
+
+  const synth = () => {
+    if (typeof window === "undefined" || !window.speechSynthesis) return null;
+    return window.speechSynthesis;
+  };
+
+  const speakNow = (line: string) => {
+    const speech = synth();
+    // The same line is not restarted. A new line queues behind whatever is still talking.
+    if (!armed || !speech || line.length === 0 || line === last) return;
+    const utter = new SpeechSynthesisUtterance(line);
+    utter.lang = lang;
+    utter.rate = 0.96;
+    utter.pitch = 0.84;
+    try {
+      speech.speak(utter);
+      last = line;
+    } catch {
+      // A missing voice pack leaves the on-screen call in place. 2026-10-15
+    }
+  };
+
+  return {
+    arm() {
+      armed = true;
+    },
+    say(text) {
+      speakNow(text.trim());
+    },
+    replace(text) {
+      ticket += 1;
+      const mine = ticket;
+      const line = text.trim();
+      last = "";
+      try {
+        synth()?.cancel();
+      } catch {
+        // cancel can throw once the engine is already gone.
+      }
+      // Chrome drops speak() in the same turn as cancel(), so the next call waits one task. 2026-10-15
+      window.setTimeout(() => {
+        if (mine !== ticket) return;
+        speakNow(line);
+      }, 0);
+    },
+    cancel() {
+      ticket += 1;
+      last = "";
+      try {
+        synth()?.cancel();
+      } catch {
+        // cancel can throw once the engine is already gone.
+      }
+    },
+    close() {
+      ticket += 1;
+      armed = false;
+      last = "";
+      try {
+        synth()?.cancel();
+      } catch {
+        // The page is leaving. A failed cancel still drops the utterance.
+      }
+    },
+  };
+}
+
 function readSeed(): number {
   if (typeof window === "undefined") return 0;
   const raw = new URLSearchParams(window.location.search).get("seed");
@@ -588,6 +681,10 @@ function word(axis: Axis, value: Trim, copy: Copy): string {
   if (axis === "pitch") return value > 0 ? copy.noseHigh : value < 0 ? copy.noseLow : copy.noseLevel;
   if (axis === "bank") return value > 0 ? copy.rightWing : value < 0 ? copy.leftWing : copy.wingsLevel;
   return value > 0 ? copy.thrustHigh : value < 0 ? copy.thrustLow : copy.thrustSet;
+}
+
+function towerSentence(call: { pitch: Trim; bank: Trim; power: Trim }, copy: Copy): string {
+  return `${copy.tower}. ${word("pitch", call.pitch, copy)}, ${word("bank", call.bank, copy)}, ${word("power", call.power, copy)}.`;
 }
 
 function axisName(axis: Axis, copy: Copy): string {
@@ -676,13 +773,17 @@ export default function BlindPilot({ locale = "en" }: { locale?: Locale }) {
   const [hidden, setHidden] = useState(false);
   const [muted, setMuted] = useState(false);
   const [view, setView] = useState(0);
+  const [voiced, setVoiced] = useState(false);
   const stateRef = useRef(state);
   const pausedRef = useRef(paused);
   const mutedRef = useRef(muted);
   const busyRef = useRef(busy);
   const glideSerial = useRef(0);
+  const flightSpoken = useRef<number | null>(null);
   const audio = useRef<PilotAudio | null>(null);
+  const voice = useRef<TowerVoice | null>(null);
   if (!audio.current) audio.current = createPilotAudio();
+  if (!voice.current) voice.current = createTowerVoice(VOICE_LANG[locale] ?? "en-US");
   stateRef.current = state;
   pausedRef.current = paused;
   mutedRef.current = muted;
@@ -690,7 +791,11 @@ export default function BlindPilot({ locale = "en" }: { locale?: Locale }) {
 
   useEffect(() => {
     const player = audio.current;
-    return () => player?.close();
+    const radio = voice.current;
+    return () => {
+      player?.close();
+      radio?.close();
+    };
   }, []);
 
   useEffect(() => {
@@ -702,6 +807,8 @@ export default function BlindPilot({ locale = "en" }: { locale?: Locale }) {
     setState(next);
     setShown(next);
     setCall(attitudeOf(next));
+    // The address is not a gesture. The call stays on screen until the player touches the page.
+    voice.current?.cancel();
   }, []);
 
   useEffect(() => {
@@ -719,6 +826,8 @@ export default function BlindPilot({ locale = "en" }: { locale?: Locale }) {
     if (!player) return;
     player.arm();
     player.setBed(!mutedRef.current && !pausedRef.current && !document.hidden);
+    voice.current?.arm();
+    setVoiced(true);
   }, []);
 
   const note = useCallback((kind: Tick) => {
@@ -819,6 +928,24 @@ export default function BlindPilot({ locale = "en" }: { locale?: Locale }) {
     : state.loseReason === "cap"
       ? copy.cap
       : copy.resigned;
+  const debrief = state.status === "win" ? copy.win : state.status === "lose" ? outcome : "";
+  const spoken = radioScript(state.status, towerSentence(call, copy), debrief);
+
+  useEffect(() => {
+    const radio = voice.current;
+    if (!radio) return;
+    if (!radioOpen(voiced, muted, paused, hidden)) {
+      radio.cancel();
+      return;
+    }
+    if (flightSpoken.current !== seed) {
+      flightSpoken.current = seed;
+      radio.replace(spoken);
+      return;
+    }
+    radio.say(spoken);
+  }, [voiced, muted, paused, hidden, spoken, seed]);
+
   const live = paused
     ? copy.paused
     : state.status === "win"

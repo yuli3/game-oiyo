@@ -28,6 +28,11 @@ const DEAD: [number, number, number] = [0.62, 0.24, 0.18];
 const SHUTTER: [number, number, number] = [0.2, 0.21, 0.24];
 const YOKE: [number, number, number] = [0.16, 0.17, 0.19];
 const HUB: [number, number, number] = [0.55, 0.48, 0.32];
+const SCREW: [number, number, number] = [0.28, 0.27, 0.25];
+const INDEX: [number, number, number] = [0.9, 0.86, 0.74];
+const GLASS: [number, number, number] = [0.72, 0.8, 0.84];
+/** Dial-plane fasteners. These angles are not a heading: local +x/+y stay on the panel. */
+const SCREW_AT = [Math.PI / 4, (3 * Math.PI) / 4, (5 * Math.PI) / 4, (7 * Math.PI) / 4] as const;
 
 const GAUGE_X: Record<Axis, number> = { pitch: -0.78, bank: 0, power: 0.78 };
 const AXES: readonly Axis[] = ["pitch", "bank", "power"];
@@ -54,12 +59,28 @@ function Gauge({ axis, reading, dead }: { axis: Axis; reading: number; dead: boo
         <torusGeometry args={[0.24, 0.03, 10, 28]} />
         <meshStandardMaterial color={BEZEL} metalness={0.58} roughness={0.32} />
       </mesh>
-      <mesh position={[0, 0, -0.012]}>
-        <circleGeometry args={[0.2, 28]} />
+      {/* CylinderGeometry's axis is +Y. A quarter-turn on X lays that axis along Z so the well faces the +z camera. 2026-10-15 */}
+      <mesh position={[0, 0, -0.03]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.19, 0.19, 0.03, 28]} />
+        <meshStandardMaterial color={FACE} roughness={0.92} />
+      </mesh>
+      <mesh position={[0, 0, -0.01]}>
+        <circleGeometry args={[0.19, 28]} />
         <meshStandardMaterial color={FACE} roughness={0.86} side={DoubleSide} />
+      </mesh>
+      {SCREW_AT.map((turn) => (
+        <mesh key={`${axis}-screw-${turn}`} position={[Math.cos(turn) * 0.31, Math.sin(turn) * 0.31, 0.02]} castShadow>
+          <sphereGeometry args={[0.016, 10, 10]} />
+          <meshStandardMaterial color={SCREW} metalness={0.62} roughness={0.34} />
+        </mesh>
+      ))}
+      <mesh position={[0, 0.3, 0.02]}>
+        <coneGeometry args={[0.02, 0.046, 3]} />
+        <meshStandardMaterial color={INDEX} roughness={0.4} />
       </mesh>
       {MARKS.map((mark) => {
         const [x, y] = needleTip(mark);
+        if (mark === 0) return null;
         return (
           <mesh key={`${axis}-${mark}`} position={[x * 0.15, y * 0.15, 0.01]} rotation={[0, 0, needleAngle(mark)]}>
             <boxGeometry args={[0.012, 0.032, 0.008]} />
@@ -83,6 +104,11 @@ function Gauge({ axis, reading, dead }: { axis: Axis; reading: number; dead: boo
           <meshStandardMaterial color={DEAD} roughness={0.42} />
         </mesh>
       ) : null}
+      {/* Standard material only. Transmission on this canvas goes black, so the cover stays a faint disc. 2026-10-15 */}
+      <mesh position={[0, 0, 0.055]} renderOrder={2}>
+        <circleGeometry args={[0.21, 28]} />
+        <meshStandardMaterial color={GLASS} transparent opacity={0.18} depthWrite={false} roughness={0.06} metalness={0.04} side={DoubleSide} />
+      </mesh>
     </group>
   );
 }

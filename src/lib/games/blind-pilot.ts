@@ -5,7 +5,8 @@
  * 착륙은 기수·날개·출력이 모두 가운데일 때만 성공하고, 아니면 어긋난 축을 그대로 말한다.
  * 네 접근은 손으로 맞추고 시드가 그중 하나를 고른다. 매 프레임 난수로 기체를 흔들지 않는다.
  *
- * 카메라 0 은 월드 +z 에서 패널을 본다. 양수 눈금의 바늘 끝은 화면 오른쪽(월드 +x)으로 기운다.
+ * 카메라 0 은 월드 +z 에서 패널을 정면으로 본다. 나머지 보기도 +z 반구에 두어 같은 계기판을 비스듬히 본다.
+ * 양수 눈금의 바늘 끝은 정면 화면의 오른쪽(월드 +x)으로 기운다.
  */
 
 export const STEP_CAP = 8;
@@ -14,14 +15,16 @@ export const STEP_CAP = 8;
 export const KEY_LIGHT: readonly [number, number, number] = normalize(0.55, 0.72, 0.42);
 
 /**
- * Fixed cameras. View 0 sits on world +z and looks at the panel, so screen-right is world +x
- * and screen-up is world +y. The view button only changes which of these is used.
+ * Fixed cameras. Every pose stays in the +z hemisphere and looks at the origin,
+ * so the panel face stays in view. Pose 0 is square-on: screen-right is world +x
+ * and screen-up is world +y. The other three are fixed oblique views of that same
+ * panel. The view button only swaps among these poses.
  */
 export const CAMERA_POSES: readonly (readonly [number, number, number])[] = [
   [0, 0.35, 4.8],
-  [4.8, 0.35, 0],
-  [0, 0.35, -4.8],
-  [-4.8, 0.35, 0],
+  [1.2, 0.9, 4.2],
+  [0, -0.35, 3.6],
+  [-1.2, 0.7, 4.2],
 ];
 
 export const ACTIONS = ["pitch+", "pitch-", "bank+", "bank-", "power+", "power-", "land"] as const;
@@ -212,4 +215,18 @@ export function makePilot(input: {
 export function resign(state: PilotState): PilotState {
   if (state.status !== "play") return state;
   return { ...state, status: "lose", loseReason: "resign" };
+}
+
+/**
+ * Play repeats the outer-marker call. A finished flight says the debrief.
+ * Callers pass that stored call or the debrief, never the dead needle's live value.
+ */
+export function radioScript(status: PilotState["status"], tower: string, debrief: string): string {
+  if (status === "play") return tower;
+  return debrief;
+}
+
+/** The radio stays quiet until the first gesture, and while mute, pause, or a hidden page is on. */
+export function radioOpen(armed: boolean, muted: boolean, paused: boolean, hidden: boolean): boolean {
+  return armed && !muted && !paused && !hidden;
 }

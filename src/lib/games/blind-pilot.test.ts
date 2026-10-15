@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { Object3D, Vector3 } from "three";
+import { Object3D, PerspectiveCamera, Vector3 } from "three";
 import { describe, expect, it } from "vitest";
 import {
   ACTIONS,
@@ -13,6 +13,8 @@ import {
   needleTip,
   nextSeed,
   openActions,
+  radioOpen,
+  radioScript,
   resign,
   stepPilot,
   type Action,
@@ -75,9 +77,24 @@ function shortest(start: PilotState): Action[][] {
 
 describe("blind pilot", () => {
   it("tips a positive needle toward world +x from the +z camera", () => {
+    expect(CAMERA_POSES[0]).toEqual([0, 0.35, 4.8]);
     expect(CAMERA_POSES[0][0]).toBe(0);
     expect(CAMERA_POSES[0][2]).toBeGreaterThan(0);
     expect(CAMERA_POSES).toHaveLength(4);
+    const panel = new Vector3(0, 0.08, 0.18);
+    for (const pose of CAMERA_POSES) {
+      expect(pose[2]).toBeGreaterThan(2);
+      expect(Math.hypot(pose[0], pose[1])).toBeLessThan(pose[2]);
+      const camera = new PerspectiveCamera(36, 1, 0.1, 40);
+      camera.position.set(pose[0], pose[1], pose[2]);
+      camera.lookAt(0, 0, 0);
+      camera.updateMatrixWorld();
+      const dir = new Vector3();
+      camera.getWorldDirection(dir);
+      expect(dir.z).toBeLessThan(-0.7);
+      const toPanel = panel.clone().sub(camera.position).normalize();
+      expect(dir.dot(toPanel)).toBeGreaterThan(0.9);
+    }
     expect(needleAngle(0)).toBe(0);
     expect(needleTip(1)[0]).toBeGreaterThan(0);
     expect(needleTip(-1)[0]).toBeLessThan(0);
@@ -187,6 +204,19 @@ describe("blind pilot", () => {
     expect(nextSeed(0)).not.toBe(0);
   });
 
+  it("speaks the stored call during play and the debrief only after the flight ends", () => {
+    expect(radioOpen(false, false, false, false)).toBe(false);
+    expect(radioOpen(true, false, false, false)).toBe(true);
+    expect(radioOpen(true, true, false, false)).toBe(false);
+    expect(radioOpen(true, false, true, false)).toBe(false);
+    expect(radioOpen(true, false, false, true)).toBe(false);
+    const start = createPilot(seedFor("wing-low"));
+    expect(needle(start, "bank")).not.toBe(start.bank);
+    expect(radioScript(start.status, "outer-marker", "the wing was still down")).toBe("outer-marker");
+    expect(radioScript("win", "outer-marker", "centered")).toBe("centered");
+    expect(radioScript("lose", "outer-marker", "the wing was still down")).toBe("the wing was still down");
+  });
+
   it("keeps solutions out of the runtime module and the screen", () => {
     const logic = readFileSync(new URL("./blind-pilot.ts", import.meta.url), "utf8");
     const screen = readFileSync(new URL("../../components/games/BlindPilot.tsx", import.meta.url), "utf8");
@@ -197,5 +227,9 @@ describe("blind pilot", () => {
     expect(screen.includes("localStorage")).toBe(false);
     expect(scene.includes("localStorage")).toBe(false);
     expect(logic.includes("outer-marker: [")).toBe(false);
+    expect(screen.includes("speechSynthesis")).toBe(true);
+    expect(screen.includes("radioOpen")).toBe(true);
+    expect(scene.includes("transmission")).toBe(false);
+    expect(scene.includes("depthWrite={false}")).toBe(true);
   });
 });
