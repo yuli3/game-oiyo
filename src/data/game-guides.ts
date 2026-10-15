@@ -13,6 +13,44 @@ export interface GameGuide {
 }
 
 export const GAME_GUIDES: Record<string, GameGuide> = {
+  "emotion-weather": {
+    origin: {
+      ko: "감정 기상청은 좋은 감정을 최대로 모으는 게임이 아니라, 기쁨과 비가 이웃의 날씨를 한 단계 밀어 내는 OIYO 오리지널 퍼즐입니다. 네 마을은 손으로 맞춘 뒤 시드가 그중 하나를 고르며, 외부 게임의 맵이나 음원을 쓰지 않습니다.",
+      en: "Emotion Weather is an original OIYO puzzle about balance, not about collecting as much joy as possible. Cheering and rain each push the neighbor's weather one step. Four towns were checked by hand; a seed picks one. It uses no map or audio from another game.",
+      ja: "感情気象台は、良い感情を最大にするゲームではなく、喜びと雨が隣の天気を一段階押し出すOIYOオリジナルパズルです。四つの町は手で確かめ、シードがその一つを選びます。外部ゲームのマップや音源は使いません。",
+      zh: "情绪气象台是 OIYO 原创谜题：不是把好心情收到最多，而是高兴和雨水各自把邻居的天气推一档。四座村子经手工核验，种子从中选一座。不使用其他游戏的地图或音频。",
+      fr: "Météo des humeurs est un puzzle original d'OIYO : il ne s'agit pas d'accumuler la joie, mais de laisser la joie et la pluie pousser d'un cran le temps du voisin. Quatre villages ont été vérifiés à la main ; une graine en choisit un. Aucune carte ni aucun son d'un autre jeu.",
+      es: "Tiempo de los ánimos es un puzle original de OIYO: no se trata de juntar la mayor alegría, sino de que la alegría y la lluvia empujen un grado el tiempo del vecino. Cuatro pueblos se comprobaron a mano; una semilla elige uno. No usa mapas ni audio de otro juego.",
+    },
+    how: {
+      ko: "화면 왼쪽이 서쪽이고 칸 번호는 1부터입니다. 화면 위쪽 줄이 표식이고 아래 줄이 마을입니다. 기쁘게 하면 가장 서쪽의 비만 맑아지고, 바로 동쪽은 비에서 맑음으로, 맑음에서 가뭄으로 한 단계 마릅니다. 비를 부르면 가장 서쪽의 가뭄만 맑아지고, 바로 동쪽은 가뭄에서 맑음으로, 맑음에서 비로 한 단계 젖습니다. 맞는 칸이 없는 행동은 걸음이 아닙니다. 마을이 표식과 같아지면 이기고, 행동 8 안에 못 맞추면 집니다. 보기 버튼은 마을을 바꾸지 않습니다. 이 마을은 화면에만 남고 기기에는 저장되지 않습니다.",
+      en: "The left of the screen is west, and district numbers start at 1. The upper row is the mark and the lower row is the town. Cheering turns only the westernmost rain mild, and the district just east dries one step, from rain to mild or from mild to drought. Calling rain turns only the westernmost drought mild, and the district just east gets wetter one step, from drought to mild or from mild to rain. An act with no fitting district is not a step. Matching the mark wins. Missing it within 8 acts loses. The view button does not change the town. This town stays on the screen and is not saved on the device.",
+      ja: "画面の左が西で、番号は1からです。上の列が表示、下の列が町です。喜ばせると最も西の雨だけが穏やかになり、すぐ東は雨から穏やかへ、穏やかから日照りへと一段階乾きます。雨を呼ぶと最も西の日照りだけが穏やかになり、すぐ東は日照りから穏やかへ、穏やかから雨へと一段階濡れます。当てはまる区のない手は歩数になりません。表示と揃えば勝ち、8手で揃わなければ負けです。視点ボタンは町を変えません。この町は画面の上だけに残り、端末には保存されません。",
+      zh: "画面左侧是西，格子从 1 开始。上面一行是标记，下面一行是村子。让人高兴只把最西边的雨变成和煦，紧东边会干一档，从雨到和煦，或从和煦到干旱。呼唤雨水只把最西边的干旱变成和煦，紧东边会湿一档，从干旱到和煦，或从和煦到雨。没有相符格子的行动不算一步。和标记一致就赢。第8步还没对上就输。视角按钮不改变村子。这座村子只留在画面上，不会写进设备。",
+      fr: "La gauche de l'écran est l'ouest, et les quartiers se comptent à partir de 1. La rangée du haut est la marque, celle du bas le village. Réjouir ne rend douce que la pluie la plus à l'ouest, et le quartier juste à l'est s'assèche d'un cran, de la pluie à la douceur ou de la douceur à la sécheresse. Appeler la pluie ne rend douce que la sécheresse la plus à l'ouest, et le quartier juste à l'est se mouille d'un cran, de la sécheresse à la douceur ou de la douceur à la pluie. Un geste sans quartier convenable ne compte pas. Égaler la marque fait gagner. La manquer en 8 gestes fait perdre. Le bouton de vue ne change pas le village. Ce village reste à l'écran et n'est pas écrit sur l'appareil.",
+      es: "La izquierda de la pantalla es el oeste, y los barrios se numeran desde 1. La fila de arriba es la marca y la de abajo el pueblo. Alegrar solo vuelve bonanza la lluvia más al oeste, y el barrio justo al este se seca un grado, de lluvia a bonanza o de bonanza a sequía. Llamar la lluvia solo vuelve bonanza la sequía más al oeste, y el barrio justo al este se moja un grado, de sequía a bonanza o de bonanza a lluvia. Un gesto sin un barrio que encaje no cuenta. Igualar la marca gana. No llegar en 8 gestos pierde. El botón de vista no cambia el pueblo. Este pueblo se queda en la pantalla y no se escribe en el aparato.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "같은 시드는 항상 같은 마을인가요?",
+          en: "Does the same seed always build the same town?",
+          ja: "同じシードはいつも同じ町ですか？",
+          zh: "相同种子总会生成同一座村子吗？",
+          fr: "La même graine donne-t-elle toujours le même village ?",
+          es: "¿La misma semilla construye siempre el mismo pueblo?",
+        },
+        a: {
+          ko: "네. 시드는 미리 맞춘 네 마을 중 하나를 고릅니다. 날씨가 매 프레임 새로 바뀌지 않으므로 주소를 공유하면 같은 마을을 둡니다.",
+          en: "Yes. The seed picks one of four towns that were checked ahead of time. The weather is not rolled again every frame, so a shared address is the same town.",
+          ja: "はい。シードは事前に確かめた四つの町から一つを選びます。天気を毎フレーム引き直さないので、アドレスを共有すれば同じ町です。",
+          zh: "是的。种子从事先核验的四座村子中选一座。天气不会每帧重掷，因此分享地址就是同一座村子。",
+          fr: "Oui. La graine choisit l'un des quatre villages vérifiés à l'avance. Le temps n'est pas relancé à chaque image, donc une adresse partagée est le même village.",
+          es: "Sí. La semilla elige uno de cuatro pueblos comprobados de antemano. El tiempo no se vuelve a sortear en cada fotograma, así que una dirección compartida es el mismo pueblo.",
+        },
+      },
+    ],
+  },
   "sentence-dungeon": {
     origin: {
       ko: "문장 던전은 단어가 무기가 아니라 문장의 순서가 복도의 법칙이 되는 OIYO 오리지널 퍼즐입니다. 네 방은 손으로 맞춘 뒤 시드가 그중 하나를 고르며, 외부 게임의 맵이나 음원을 쓰지 않습니다.",

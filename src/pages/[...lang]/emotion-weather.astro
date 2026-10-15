@@ -1,0 +1,36 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import EmotionWeather from "../../components/games/EmotionWeather";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: { title: "감정 기상청 — 기쁨이 서쪽의 비를 걷고 동쪽을 말린다", description: "기쁘게 하면 가장 서쪽의 비가 걷히고 바로 동쪽은 한 단계 마릅니다. 비를 부르면 가장 서쪽의 가뭄이 풀리고 바로 동쪽은 한 단계 젖습니다. 같은 시드는 같은 마을입니다." },
+  en: { title: "Emotion Weather — cheering the west dries the east", description: "Cheering clears only the westernmost rain, and the east dries one step. Calling rain lifts only the westernmost drought, and the east gets one step wetter. The same seed is the same town." },
+  ja: { title: "感情気象台 — 西を喜ばせると東が乾く", description: "喜ばせると最も西の雨だけがやみ、すぐ東は一段階乾きます。雨を呼ぶと最も西の日照りだけが解け、すぐ東は一段階濡れます。同じシードは同じ町です。" },
+  zh: { title: "情绪气象台 — 让西边高兴会让东边变干", description: "让人高兴只会放晴最西边的雨，东边会干一档。呼唤雨水只会解除最西边的干旱，东边会湿一档。相同种子是同一座村子。" },
+  fr: { title: "Météo des humeurs — réjouir l'ouest assèche l'est", description: "Réjouir ne dissipe que la pluie la plus à l'ouest, et l'est s'assèche d'un cran. Appeler la pluie ne lève que la sécheresse la plus à l'ouest, et l'est se mouille d'un cran. La même graine, le même village." },
+  es: { title: "Tiempo de los ánimos — alegrar el oeste seca el este", description: "Alegrar solo despeja la lluvia más al oeste, y el este se seca un grado. Llamar la lluvia solo levanta la sequía más al oeste, y el este se moja un grado. La misma semilla es el mismo pueblo." },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["emotion-weather"]}>
+  <div class="mx-auto max-w-3xl px-4 py-8">
+    {/*
+      client:visible — the three.js chunk stays out of the first paint until
+      the page is actually on screen.
+    */}
+    <EmotionWeather client:visible locale={locale} />
+    <GameGuide slug="emotion-weather" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>
