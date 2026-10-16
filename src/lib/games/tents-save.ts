@@ -19,13 +19,22 @@ export const TENTS_SAVE_KEY = "oiyo:tents-and-trees-state:v1";
 
 export type CellMark = "empty" | "tent" | "grass";
 export type TentsMode = "daily" | "free" | "chaos";
+export type TentsDifficulty = "easy" | "medium" | "hard";
 
-export const FREE_BOARD = { size: 5, pairs: 5 };
+export const TENTS_DIFFICULTIES: Record<TentsDifficulty, { size: number; pairs: number }> = {
+  easy: { size: 5, pairs: 5 },
+  medium: { size: 6, pairs: 7 },
+  hard: { size: 7, pairs: 9 },
+};
+
+export const FREE_BOARD = TENTS_DIFFICULTIES.easy;
 export const DAILY_BOARD = { size: 6, pairs: 7 };
 
 export interface TentsSaveV1 {
   version: 1;
   mode: TentsMode;
+  /** Optional difficulty tier for mode "free". Defaults to "easy". */
+  difficulty?: TentsDifficulty;
   /** The civil date the save was made on. Enforced for "daily" and "chaos". */
   dailyDate: string;
   /** Regenerates the exact board for mode "free"; ignored for "daily" and "chaos". */
@@ -66,7 +75,12 @@ function dayIndexFromKey(key: string): number {
 }
 
 /** Regenerates the canonical board a save claims to belong to. */
-export function puzzleForTentsSave(mode: TentsMode, dailyDate: string, seed: number): TentsPuzzle {
+export function puzzleForTentsSave(
+  mode: TentsMode,
+  dailyDate: string,
+  seed: number,
+  difficulty: TentsDifficulty = "easy",
+): TentsPuzzle {
   if (mode === "daily") {
     const dayIndex = dayIndexFromKey(dailyDate);
     return generateUniqueTents(
@@ -76,7 +90,8 @@ export function puzzleForTentsSave(mode: TentsMode, dailyDate: string, seed: num
     ).puzzle;
   }
   if (mode === "chaos") return chaosBoard(dayIndexFromKey(dailyDate)).puzzle;
-  return generateTents(FREE_BOARD.size, FREE_BOARD.pairs, mulberry32(seed)).puzzle;
+  const cfg = TENTS_DIFFICULTIES[difficulty] ?? FREE_BOARD;
+  return generateTents(cfg.size, cfg.pairs, mulberry32(seed)).puzzle;
 }
 
 function isValidMarksGrid(value: unknown, puzzle: TentsPuzzle): value is CellMark[][] {
@@ -108,6 +123,12 @@ export function parseTentsSave(raw: string | null, expectedDailyDate: string, no
     if (!Number.isInteger(value.seed) || (value.seed as number) < 0 || (value.seed as number) > 0xffffffff) return null;
     if (!Number.isInteger(value.savedAtEpochMs) || (value.savedAtEpochMs as number) < 0 || (value.savedAtEpochMs as number) > now + 300_000) return null;
 
+    let difficulty: TentsDifficulty | undefined;
+    if (value.difficulty !== undefined) {
+      if (value.difficulty !== "easy" && value.difficulty !== "medium" && value.difficulty !== "hard") return null;
+      difficulty = value.difficulty as TentsDifficulty;
+    }
+
     let chaosAugment: ChaosAugmentId | undefined;
     let chaosStartedAtEpochMs: number | undefined;
     let chaosDeadlineMs: number | undefined;
@@ -130,7 +151,7 @@ export function parseTentsSave(raw: string | null, expectedDailyDate: string, no
       }
     }
 
-    const puzzle = puzzleForTentsSave(mode, value.dailyDate as string, value.seed as number);
+    const puzzle = puzzleForTentsSave(mode, value.dailyDate as string, value.seed as number, difficulty ?? "easy");
     if (!isValidMarksGrid(value.marks, puzzle)) return null;
     const marks = (value.marks as CellMark[][]).map((row) => [...row]);
     const effects = mode === "chaos" ? chaosEffects(dayIndexFromKey(value.dailyDate as string)) : null;
@@ -168,6 +189,7 @@ export function parseTentsSave(raw: string | null, expectedDailyDate: string, no
       seed: value.seed as number,
       marks,
       savedAtEpochMs: value.savedAtEpochMs as number,
+      ...(difficulty ? { difficulty } : {}),
       ...(chaosAugment ? { chaosAugment, chaosStartedAtEpochMs, chaosFlashlightUsed } : {}),
       ...(chaosDeadlineMs !== undefined ? { chaosDeadlineMs } : {}),
     };

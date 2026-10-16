@@ -6,11 +6,13 @@ import { explainTentsHint, generateTents, generateUniqueTents, validateTents, ty
 import {
     DAILY_BOARD,
     FREE_BOARD,
+    TENTS_DIFFICULTIES,
     clearTentsSave,
     loadTentsSave,
     puzzleForTentsSave,
     storeTentsSave,
     type CellMark,
+    type TentsDifficulty,
     type TentsMode,
 } from '../../lib/games/tents-save';
 import {
@@ -48,6 +50,7 @@ function emptyMarksFor(size: number): CellMark[][] {
 
 interface InitialGame {
     mode: TentsMode;
+    difficulty: TentsDifficulty;
     puzzle: TentsPuzzle;
     marks: CellMark[][];
     seed: number;
@@ -68,9 +71,11 @@ function initialGame(): InitialGame {
     const today = todayKey();
     const saved = loadTentsSave(today);
     if (saved) {
-        const puzzle = puzzleForTentsSave(saved.mode, saved.dailyDate, saved.seed);
+        const difficulty = saved.difficulty ?? 'easy';
+        const puzzle = puzzleForTentsSave(saved.mode, saved.dailyDate, saved.seed, difficulty);
         return {
             mode: saved.mode,
+            difficulty,
             puzzle,
             marks: saved.marks,
             seed: saved.seed,
@@ -83,7 +88,7 @@ function initialGame(): InitialGame {
         };
     }
     const { puzzle } = generateDailyTents();
-    return { mode: 'daily', puzzle, marks: emptyMarksFor(puzzle.size), seed: 0, dailyDate: today, resumed: false, ...blankChaos() };
+    return { mode: 'daily', difficulty: 'easy', puzzle, marks: emptyMarksFor(puzzle.size), seed: 0, dailyDate: today, resumed: false, ...blankChaos() };
 }
 
 function tentsOf(marks: CellMark[][]): Pos[] {
@@ -95,12 +100,60 @@ function tentsOf(marks: CellMark[][]): Pos[] {
 }
 
 const COPY = {
-    ko: { title: '텐트와 나무', desc: '나무마다 텐트를 하나씩 설치하세요!', note: '텐트는 나무의 상하좌우에 놓이며, 텐트끼리는 대각선을 포함해 이웃할 수 없어요. 행·열 숫자는 그 줄의 텐트 수예요.', daily: '📅 오늘의 퍼즐', free: '자유 모드 5×5', chaos: '카오스', win: '캠핑 준비 완료!', next: '다음 퍼즐', errAdjacent: '텐트끼리 붙어 있어요', errOrphan: '나무 옆이 아닌 텐트가 있어요', errCount: '행·열 숫자를 초과했어요', streak: '연속', best: '최고', doneToday: '오늘 완료 ✓', sound: '소리' },
-    en: { title: 'Tents & Trees', desc: 'Each tree needs exactly one tent!', note: 'Tents go orthogonally next to a tree and never touch another tent, even diagonally. Row/column numbers count the tents in that line.', daily: '📅 Daily Puzzle', free: 'Free play 5×5', chaos: 'Chaos', win: 'Camping Ready!', next: 'Next puzzle', errAdjacent: 'Two tents are touching', errOrphan: 'A tent is not next to any tree', errCount: 'A row/column count is exceeded', streak: 'Streak', best: 'Best', doneToday: 'Done today ✓', sound: 'Sound' },
-    ja: { title: 'テントと木', desc: '木ごとにテントを1つずつ設置しましょう！', note: 'テントは木の上下左右に置き、テント同士は斜めも含め隣接できません。行・列の数字はその列のテント数です。', daily: '📅 今日のパズル', free: 'フリー 5×5', chaos: 'カオス', win: 'キャンプ準備完了！', next: '次のパズル', errAdjacent: 'テント同士が隣接しています', errOrphan: '木の隣にないテントがあります', errCount: '行・列の数字を超えています', streak: '連続', best: '最高', doneToday: '本日クリア ✓', sound: '音' },
-    zh: { title: '帐篷与树', desc: '每棵树旁放一顶帐篷！', note: '帐篷放在树的上下左右，帐篷之间（含对角）不能相邻。行列数字表示该行列的帐篷数。', daily: '📅 每日谜题', free: '自由模式 5×5', chaos: '混沌', win: '露营准备就绪！', next: '下一题', errAdjacent: '有帐篷相邻了', errOrphan: '有帐篷不在树旁', errCount: '超过了行列数字', streak: '连续', best: '最佳', doneToday: '今日已完成 ✓', sound: '声音' },
-    fr: { title: 'Tentes et arbres', desc: "Chaque arbre a besoin d'une tente !", note: "Les tentes se placent à côté d'un arbre (jamais en diagonale d'une autre tente). Les nombres comptent les tentes de chaque ligne/colonne.", daily: '📅 Puzzle du jour', free: 'Libre 5×5', chaos: 'Chaos', win: 'Prêt à camper !', next: 'Puzzle suivant', errAdjacent: 'Deux tentes se touchent', errOrphan: "Une tente n'est près d'aucun arbre", errCount: 'Un compteur de ligne/colonne est dépassé', streak: 'Série', best: 'Record', doneToday: "Fini aujourd'hui ✓", sound: 'Son' },
-    es: { title: 'Tiendas y árboles', desc: '¡Cada árbol necesita una tienda!', note: 'Las tiendas van junto a un árbol (arriba/abajo/izquierda/derecha) y nunca se tocan entre sí, ni en diagonal. Los números cuentan las tiendas de cada fila/columna.', daily: '📅 Puzle diario', free: 'Libre 5×5', chaos: 'Caos', win: '¡Listos para acampar!', next: 'Siguiente puzle', errAdjacent: 'Dos tiendas se tocan', errOrphan: 'Hay una tienda sin árbol al lado', errCount: 'Se superó un número de fila/columna', streak: 'Racha', best: 'Récord', doneToday: 'Hecho hoy ✓', sound: 'Sonido' },
+    ko: {
+        title: '텐트와 나무', desc: '나무마다 텐트를 하나씩 설치하세요!', note: '텐트는 나무의 상하좌우에 놓이며, 텐트끼리는 대각선을 포함해 이웃할 수 없어요. 행·열 숫자는 그 줄의 텐트 수예요.',
+        daily: '📅 오늘의 퍼즐', free: '자유 모드', chaos: '카오스',
+        easy: '5×5 쉬움', medium: '6×6 보통', hard: '7×7 어려움', newSeed: '새 퍼즐',
+        win: '캠핑 준비 완료!', next: '다음 퍼즐', errAdjacent: '텐트끼리 붙어 있어요', errOrphan: '나무 옆이 아닌 텐트가 있어요', errCount: '행·열 숫자를 초과했어요',
+        streak: '연속', best: '최고', doneToday: '오늘 완료 ✓', sound: '소리',
+        dailyBadge: (d: string) => `오늘의 퍼즐 · ${d}`,
+        seedBadge: (s: string | number) => `시드 #${s}`,
+    },
+    en: {
+        title: 'Tents & Trees', desc: 'Each tree needs exactly one tent!', note: 'Tents go orthogonally next to a tree and never touch another tent, even diagonally. Row/column numbers count the tents in that line.',
+        daily: '📅 Daily Puzzle', free: 'Free Play', chaos: 'Chaos',
+        easy: '5×5 Easy', medium: '6×6 Medium', hard: '7×7 Hard', newSeed: 'New Board',
+        win: 'Camping Ready!', next: 'Next puzzle', errAdjacent: 'Two tents are touching', errOrphan: 'A tent is not next to any tree', errCount: 'A row/column count is exceeded',
+        streak: 'Streak', best: 'Best', doneToday: 'Done today ✓', sound: 'Sound',
+        dailyBadge: (d: string) => `Daily Puzzle · ${d}`,
+        seedBadge: (s: string | number) => `Seed #${s}`,
+    },
+    ja: {
+        title: 'テントと木', desc: '木ごとにテントを1つずつ設置しましょう！', note: 'テントは木の上下左右に置き、テント同士は斜めも含め隣接できません。行・列の数字はその列のテント数です。',
+        daily: '📅 今日のパズル', free: 'フリー', chaos: 'カオス',
+        easy: '5×5 かんたん', medium: '6×6 ふつう', hard: '7×7 むずかしい', newSeed: '新しいパズル',
+        win: 'キャンプ準備完了！', next: '次のパズル', errAdjacent: 'テント同士が隣接しています', errOrphan: '木の隣にないテントがあります', errCount: '行・列の数字を超えています',
+        streak: '連続', best: '最高', doneToday: '本日クリア ✓', sound: '音',
+        dailyBadge: (d: string) => `今日のパズル · ${d}`,
+        seedBadge: (s: string | number) => `シード #${s}`,
+    },
+    zh: {
+        title: '帐篷与树', desc: '每棵树旁放一顶帐篷！', note: '帐篷放在树的上下左右，帐篷之间（含对角）不能相邻。行列数字表示该行列的帐篷数。',
+        daily: '📅 每日谜题', free: '自由模式', chaos: '混沌',
+        easy: '5×5 简单', medium: '6×6 普通', hard: '7×7 困难', newSeed: '新谜题',
+        win: '露营准备就绪！', next: '下一题', errAdjacent: '有帐篷相邻了', errOrphan: '有帐篷不在树旁', errCount: '超过了行列数字',
+        streak: '连续', best: '最佳', doneToday: '今日已完成 ✓', sound: '声音',
+        dailyBadge: (d: string) => `每日谜题 · ${d}`,
+        seedBadge: (s: string | number) => `种子 #${s}`,
+    },
+    fr: {
+        title: 'Tentes et arbres', desc: "Chaque arbre a besoin d'une tente !", note: "Les tentes se placent à côté d'un arbre (jamais en diagonale d'une autre tente). Les nombres comptent les tentes de chaque ligne/colonne.",
+        daily: '📅 Puzzle du jour', free: 'Mode libre', chaos: 'Chaos',
+        easy: '5×5 Facile', medium: '6×6 Moyen', hard: '7×7 Difficile', newSeed: 'Nouveau puzzle',
+        win: 'Prêt à camper !', next: 'Puzzle suivant', errAdjacent: 'Deux tentes se touchent', errOrphan: "Une tente n'est près d'aucun arbre", errCount: 'Un compteur de ligne/colonne est dépassé',
+        streak: 'Série', best: 'Record', doneToday: "Fini aujourd'hui ✓", sound: 'Son',
+        dailyBadge: (d: string) => `Puzzle du jour · ${d}`,
+        seedBadge: (s: string | number) => `Graine #${s}`,
+    },
+    es: {
+        title: 'Tiendas y árboles', desc: '¡Cada árbol necesita una tienda!', note: 'Las tiendas van junto a un árbol (arriba/abajo/izquierda/derecha) y nunca se tocan entre sí, ni en diagonal. Los números cuentan las tiendas de cada fila/columna.',
+        daily: '📅 Puzle diario', free: 'Modo libre', chaos: 'Caos',
+        easy: '5×5 Fácil', medium: '6×6 Normal', hard: '7×7 Difícil', newSeed: 'Nuevo puzle',
+        win: '¡Listos para acampar!', next: 'Siguiente puzle', errAdjacent: 'Dos tiendas se tocan', errOrphan: 'Hay una tienda sin árbol al lado', errCount: 'Se superó un número de fila/columna',
+        streak: 'Racha', best: 'Récord', doneToday: 'Hecho hoy ✓', sound: 'Sonido',
+        dailyBadge: (d: string) => `Puzle diario · ${d}`,
+        seedBadge: (s: string | number) => `Semilla #${s}`,
+    },
 } as const;
 
 const NEXT_DAILY_COPY = {
@@ -123,12 +176,12 @@ const TENTS_HINT: Record<keyof typeof COPY, Record<TentsHint['reason'], string>>
 const HINT_LABEL: Record<keyof typeof COPY, string> = { ko: '힌트', en: 'Hint', ja: 'ヒント', zh: '提示', fr: 'Indice', es: 'Pista' };
 
 const A11Y_COPY = {
-    ko: { subtitle: '텐트 배치 논리 퍼즐', reset: '다시 시작', row: '행', column: '열', rowHint: '행 텐트 수', columnHint: '열 텐트 수', tree: '나무', empty: '빈 칸', tent: '텐트', grass: '잔디 표시' },
-    en: { subtitle: 'Tent placement logic puzzle', reset: 'Reset', row: 'Row', column: 'Column', rowHint: 'Row tent count', columnHint: 'Column tent count', tree: 'Tree', empty: 'Empty cell', tent: 'Tent', grass: 'Grass mark' },
-    ja: { subtitle: 'テント配置論理パズル', reset: 'やり直す', row: '行', column: '列', rowHint: '行のテント数', columnHint: '列のテント数', tree: '木', empty: '空きマス', tent: 'テント', grass: '草印' },
-    zh: { subtitle: '帐篷配置逻辑谜题', reset: '重新开始', row: '行', column: '列', rowHint: '行帐篷数', columnHint: '列帐篷数', tree: '树', empty: '空格', tent: '帐篷', grass: '草地标记' },
-    fr: { subtitle: 'Puzzle logique de placement', reset: 'Recommencer', row: 'Ligne', column: 'Colonne', rowHint: 'Tentes de la ligne', columnHint: 'Tentes de la colonne', tree: 'Arbre', empty: 'Case vide', tent: 'Tente', grass: 'Marque herbe' },
-    es: { subtitle: 'Puzle lógico de colocación', reset: 'Reiniciar', row: 'Fila', column: 'Columna', rowHint: 'Tiendas de la fila', columnHint: 'Tiendas de la columna', tree: 'Árbol', empty: 'Casilla vacía', tent: 'Tienda', grass: 'Marca de hierba' },
+    ko: { subtitle: '텐트 배치 논리 퍼즐', reset: '다시 시작', row: '행', column: '열', rowHint: '행 텐트 수', columnHint: '열 텐트 수', tree: '나무', empty: '빈 칸', tent: '텐트', grass: '잔디 표시', difficulty: '난이도 선택' },
+    en: { subtitle: 'Tent placement logic puzzle', reset: 'Reset', row: 'Row', column: 'Column', rowHint: 'Row tent count', columnHint: 'Column tent count', tree: 'Tree', empty: 'Empty cell', tent: 'Tent', grass: 'Grass mark', difficulty: 'Difficulty' },
+    ja: { subtitle: 'テント配置論理パズル', reset: 'やり直す', row: '行', column: '列', rowHint: '行のテント数', columnHint: '列のテント数', tree: '木', empty: '空きマス', tent: 'テント', grass: '草印', difficulty: '難易度' },
+    zh: { subtitle: '帐篷配置逻辑谜题', reset: '重新开始', row: '行', column: '列', rowHint: '行帐篷数', columnHint: '列帐篷数', tree: '树', empty: '空格', tent: '帐篷', grass: '草地标记', difficulty: '难度' },
+    fr: { subtitle: 'Puzzle logique de placement', reset: 'Recommencer', row: 'Ligne', column: 'Colonne', rowHint: 'Tentes de la ligne', columnHint: 'Tentes de la colonne', tree: 'Arbre', empty: 'Case vide', tent: 'Tente', grass: 'Marque herbe', difficulty: 'Difficulté' },
+    es: { subtitle: 'Puzle lógico de colocación', reset: 'Reiniciar', row: 'Fila', column: 'Columna', rowHint: 'Tiendas de la fila', columnHint: 'Tiendas de la columna', tree: 'Árbol', empty: 'Casilla vacía', tent: 'Tienda', grass: 'Marca de hierba', difficulty: 'Dificultad' },
 } as const;
 
 const CHAOS_COPY = {
@@ -227,6 +280,7 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
     const [initial] = useState(initialGame);
     const [mode, setMode] = useState<TentsMode>(initial.mode);
+    const [difficulty, setDifficulty] = useState<TentsDifficulty>(initial.difficulty);
     const [puzzle, setPuzzle] = useState<TentsPuzzle>(initial.puzzle);
     const [marks, setMarks] = useState<CellMark[][]>(initial.marks);
     const [seed, setSeed] = useState(initial.seed);
@@ -305,7 +359,7 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         return () => window.clearInterval(timer);
     }, [mode, chaosAugment, chaosDeadline, validation.complete, chaosFailed]);
 
-    const newPuzzle = useCallback((nextMode: TentsMode) => {
+    const newPuzzle = useCallback((nextMode: TentsMode, nextDifficulty: TentsDifficulty = difficulty) => {
         clearTentsSave();
         const today = todayKey();
         const day = dayIndex();
@@ -338,13 +392,15 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             setMarks(emptyMarksFor(p.size));
         } else {
             const freshSeed = Math.floor(Math.random() * 0xffffffff);
-            const { puzzle: p } = generateTents(FREE_BOARD.size, FREE_BOARD.pairs, mulberry32(freshSeed));
+            const cfg = TENTS_DIFFICULTIES[nextDifficulty] ?? FREE_BOARD;
+            const { puzzle: p } = generateTents(cfg.size, cfg.pairs, mulberry32(freshSeed));
             setMode('free');
+            setDifficulty(nextDifficulty);
             setSeed(freshSeed);
             setPuzzle(p);
             setMarks(emptyMarksFor(p.size));
         }
-    }, []);
+    }, [difficulty]);
 
     const isTree = (r: number, c: number) => puzzle.trees.some(([tr, tc]) => tr === r && tc === c);
     const bannedNow = mode === 'chaos' && chaosAugment === 'banned' && chaosPack ? chaosPack.effects.banned : [];
@@ -375,7 +431,14 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             });
             return;
         }
-        storeTentsSave({ mode, dailyDate, seed, marks: nextMarks, savedAtEpochMs: Date.now() });
+        storeTentsSave({
+            mode,
+            dailyDate,
+            seed,
+            marks: nextMarks,
+            savedAtEpochMs: Date.now(),
+            ...(mode === 'free' ? { difficulty } : {}),
+        });
     };
 
     const pickChaos = (id: ChaosAugmentId) => {
@@ -539,12 +602,12 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     };
 
     return (
-        <GameContainer title={t.title} subtitle={a11y.subtitle} resetLabel={a11y.reset} onReset={() => newPuzzle(mode)}>
+        <GameContainer title={t.title} subtitle={a11y.subtitle} resetLabel={a11y.reset} onReset={() => newPuzzle(mode, difficulty)}>
             <div className="flex flex-col items-center">
                 <p className="text-sm font-medium text-muted-foreground mb-2 text-center leading-relaxed">{t.desc}</p>
                 <p className="text-xs text-muted-foreground/80 mb-4 text-center max-w-xs leading-relaxed">{t.note}</p>
 
-                <div className="mb-4 inline-flex flex-wrap justify-center gap-1">
+                <div className="mb-3 inline-flex flex-wrap justify-center gap-1">
                     {(['daily', 'free', 'chaos'] as const).map((m) => (
                         <button key={m} onClick={() => {
                             if (m !== mode) track('mode_change', m);
@@ -573,6 +636,49 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         <span className="sr-only">{t.sound}</span>
                     </button>
                 </div>
+
+                {mode === 'free' && (
+                    <div className="mb-3 inline-flex flex-wrap items-center justify-center gap-1.5" role="toolbar" aria-label={a11y.difficulty}>
+                        {(['easy', 'medium', 'hard'] as const).map((d) => (
+                            <button
+                                key={d}
+                                type="button"
+                                onClick={() => newPuzzle('free', d)}
+                                aria-pressed={difficulty === d}
+                                className={`min-h-9 px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                                    difficulty === d
+                                        ? 'border-primary text-primary bg-primary/10'
+                                        : 'border-border text-muted-foreground hover:bg-muted'
+                                }`}
+                            >
+                                {t[d]}
+                            </button>
+                        ))}
+                        <button
+                            type="button"
+                            onClick={() => newPuzzle('free', difficulty)}
+                            className="min-h-9 px-3 py-1.5 rounded-lg text-xs font-bold border border-border text-foreground hover:bg-muted transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                        >
+                            🎲 {t.newSeed}
+                        </button>
+                    </div>
+                )}
+
+                {mode === 'daily' && (
+                    <div className="mb-2 flex items-center justify-center gap-2">
+                        <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                            {t.dailyBadge(dailyDate)}
+                        </span>
+                    </div>
+                )}
+
+                {mode === 'free' && (
+                    <div className="mb-2 flex items-center justify-center gap-2">
+                        <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                            {t.seedBadge(seed.toString(16).toUpperCase())}
+                        </span>
+                    </div>
+                )}
 
                 {mode === 'daily' && streak && (streak.played > 0 || solvedToday) && (
                     <p className="mb-3 text-center text-xs font-bold text-muted-foreground">
@@ -700,7 +806,7 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         <div className="animate-fade-up motion-reduce:animate-none">
                             <p className="text-xl font-black text-success mb-3">🎉 {t.win}</p>
                             {mode === 'free' && (
-                                <button onClick={() => { track('play_again', 'free'); newPuzzle('free'); }} className="px-8 py-2.5 bg-primary text-primary-foreground rounded-full font-bold shadow-lg">
+                                <button onClick={() => { track('play_again', 'free'); newPuzzle('free', difficulty); }} className="px-8 py-2.5 bg-primary text-primary-foreground rounded-full font-bold shadow-lg">
                                     {t.next}
                                 </button>
                             )}

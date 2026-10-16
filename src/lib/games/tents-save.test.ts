@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   DAILY_BOARD,
   FREE_BOARD,
+  TENTS_DIFFICULTIES,
   TENTS_SAVE_KEY,
   clearTentsSave,
   loadTentsSave,
@@ -182,5 +183,23 @@ describe("tents & trees save v1 parser", () => {
     expect(calls[TENTS_SAVE_KEY]).toBeDefined();
     clearTentsSave(storage);
     expect(loadTentsSave(TODAY, NOW, storage)).toBeNull();
+  });
+
+  it("round-trips a valid in-progress free board with difficulty (easy, medium, hard)", () => {
+    for (const diff of ["easy", "medium", "hard"] as const) {
+      const cfg = TENTS_DIFFICULTIES[diff];
+      const save = {
+        mode: "free" as const,
+        difficulty: diff,
+        dailyDate: TODAY,
+        seed: 42,
+        marks: emptyMarks(cfg.size),
+        savedAtEpochMs: NOW - 1_000,
+      };
+      const parsed = parseTentsSave(serializeTentsSave(save), TODAY, NOW);
+      expect(parsed).not.toBeNull();
+      expect(parsed?.difficulty).toBe(diff);
+      expect(parsed?.marks).toHaveLength(cfg.size);
+    }
   });
 });
