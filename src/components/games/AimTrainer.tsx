@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import confetti from "canvas-confetti";
+import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { getBest, recordBest } from "../../lib/games/records";
 import {
   computeAimRank,
@@ -364,6 +366,7 @@ interface Props {
 
 const AimTrainer: React.FC<Props> = ({ locale }) => {
   const t = T[locale] ?? T.en;
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale });
 
   const [phase, setPhase] = useState<Phase>("menu");
   const [mode, setMode] = useState<Mode>("gridshot");
@@ -376,7 +379,40 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
   const [best, setBest] = useState<number | null>(null);
   const [isNewBest, setIsNewBest] = useState(false);
   const [finalScore, setFinalScore] = useState(0);
-  const [muted, setMuted] = useState(false);
+  const [muted, setMuted] = useState<boolean>(() => {
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        return window.localStorage.getItem("aim_trainer_sound_muted") === "true";
+      }
+    } catch {
+      // ignore
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        window.localStorage.setItem("aim_trainer_sound_muted", String(muted));
+      }
+    } catch {}
+  }, [muted]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === "f" || e.key === "F") {
+        e.preventDefault();
+        togglePortal();
+      } else if (e.key === "m" || e.key === "M") {
+        e.preventDefault();
+        setMuted((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [togglePortal]);
+
   const [recoveryObscured, setRecoveryObscured] = useState(false);
   const audioRef = useRef<AudioContext | null>(null);
 
@@ -861,9 +897,22 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
     setBest(b ? b.value : null);
   }, [key]);
 
+  const setContainerRef = useCallback((node: HTMLDivElement | null) => {
+    containerRef.current = node;
+    shellRef.current = node;
+  }, [containerRef]);
+
   /* ───────────────────────────── render ───────────────────────────── */
   return (
-    <div ref={shellRef} className="not-prose my-10 scroll-mt-20 rounded-3xl border border-border bg-card p-5 text-card-foreground shadow-sm select-none max-w-xl mx-auto">
+    <div
+      ref={setContainerRef}
+      data-game-surface
+      className={`select-none transition-all duration-200 ${
+        isImmersive
+          ? "fixed inset-0 z-50 flex flex-col justify-between bg-background p-3 sm:p-5 h-dvh w-screen overflow-hidden m-0"
+          : "not-prose my-10 scroll-mt-20 rounded-3xl border border-border bg-card p-5 text-card-foreground shadow-sm max-w-xl mx-auto"
+      }`}
+    >
       {/* header */}
       <div className="mb-4 flex items-center justify-between gap-2">
         <div>
@@ -876,19 +925,35 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
             {mode !== "tracking" && <span className="text-green-500">{hits}</span>}
           </div>
         )}
-        <button
-          type="button"
-          onClick={() => setMuted((value) => !value)}
-          aria-pressed={muted}
-          className="min-h-11 shrink-0 rounded-xl border border-border px-3 text-xs font-bold text-muted-foreground"
-        >
-          {muted ? "🔇" : "🔊"} {t.sound}
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setMuted((value) => !value)}
+            aria-pressed={muted}
+            aria-label={muted ? "Unmute" : "Mute"}
+            className="min-h-11 shrink-0 rounded-xl border border-border px-3 text-xs font-bold text-muted-foreground hover:bg-muted/60 transition-colors flex items-center gap-1.5"
+            title="Mute / Unmute (M)"
+          >
+            {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+            <span className="hidden sm:inline">{t.sound}</span>
+          </button>
+          <button
+            type="button"
+            onClick={togglePortal}
+            aria-pressed={isImmersive}
+            aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+            className="min-h-11 shrink-0 rounded-xl border border-border px-3 text-xs font-bold text-muted-foreground hover:bg-muted/60 transition-colors flex items-center gap-1.5"
+            title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+          >
+            {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+            <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+          </button>
+        </div>
       </div>
 
       {/* ── MENU ── */}
       {phase === "menu" && (
-        <div className="space-y-5 py-2">
+        <div className={`space-y-5 py-2 ${isImmersive ? "my-auto w-full max-w-md mx-auto overflow-y-auto max-h-full" : ""}`}>
           <div>
             <div className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">{t.chooseMode}</div>
             <div className="grid grid-cols-2 gap-2">
@@ -972,13 +1037,15 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
           onPointerLeave={onPointerLeave}
           onPointerUp={onPointerEnd}
           onPointerCancel={onPointerEnd}
-          className="relative mx-auto overflow-hidden rounded-2xl border border-border bg-[#080b12] touch-none cursor-crosshair w-full aspect-5/4 select-none block shadow-xl"
+          className={`relative mx-auto overflow-hidden rounded-2xl border border-border bg-[#080b12] touch-none cursor-crosshair w-full aspect-5/4 select-none block shadow-xl ${
+            isImmersive ? "flex-1 min-h-0 max-h-full" : ""
+          }`}
         />
       )}
 
       {/* ── RESULT ── */}
       {phase === "result" && (
-        <div className="flex flex-col items-center gap-4 py-6">
+        <div className={`flex flex-col items-center gap-4 py-6 ${isImmersive ? "my-auto w-full max-w-md mx-auto" : ""}`}>
           {isNewBest && <div className="text-sm font-black text-violet-500">{t.newBest}</div>}
           <div className="flex flex-col items-center">
             <div className={`text-6xl font-black ${RANK_COLOR[rank]}`}>{rank}</div>

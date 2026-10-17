@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import confetti from 'canvas-confetti';
+import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
 import { GameContainer, PlayingCard } from '../ui/game/GamePrimitives';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { getRecord, recordResult, getBestForConditions, recordBestForConditions, getDailyStreak, recordDailyWin, type BestConditions, type DailyStreak, type GameRecord } from '../../lib/games/records';
 import { dayIndex, todayKey, previousDayKey } from '../../lib/games/daily';
 import {
@@ -130,6 +132,7 @@ function createGenerationSeed(): number {
 const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
   const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
   const moveReason=MOVE_REASON[locale as keyof typeof COPY]??MOVE_REASON.en;
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'en' });
   const [mode, setMode] = useState<SolitaireMode>('daily');
   const [dailyDate, setDailyDate] = useState(() => todayKey());
   const [game, setGame] = useState<SolitaireState>(() => createSeededSolitaireDeal(solitaireDailySeed()));
@@ -145,14 +148,30 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
   const [isNewBest, setIsNewBest] = useState(false);
   const [legacyMigrated, setLegacyMigrated] = useState(false);
   const [hydrated, setHydrated] = useState(false);
-  const [muted, setMuted] = useState(false);
+  const [muted, setMuted] = useState<boolean>(() => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        return window.localStorage.getItem('solitaire_sound_muted') === 'true';
+      }
+    } catch {
+      // ignore
+    }
+    return false;
+  });
   const seedRef = useRef(0);
   const startedAt = useRef<number | null>(null);
   const moveMadeRef = useRef(false);
   const wonRef = useRef(false);
   const audioRef = useRef<ReturnType<typeof createSolitaireAudio> | null>(null);
   const mutedRef = useRef(muted);
-  mutedRef.current = muted;
+  useEffect(() => {
+    mutedRef.current = muted;
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem('solitaire_sound_muted', String(muted));
+      }
+    } catch {}
+  }, [muted]);
 
   useEffect(() => {
     audioRef.current = createSolitaireAudio();
@@ -293,6 +312,24 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     });
   }, [conditionsFor, dailyDate, mode, t.undone]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        togglePortal();
+      } else if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        setMuted((prev) => !prev);
+      } else if ((e.key === 'z' || e.key === 'Z') && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [togglePortal, undo]);
+
   const chooseTableau = (column: number, cardIndex?: number) => {
     const pile = game.tableau[column];
     if (cardIndex === undefined) {
@@ -382,28 +419,47 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
   )));
 
   return (
-    <GameContainer title={t.title} subtitle={t.subtitle} resetLabel={t.reset} onReset={() => initGame(mode)}>
-      <div className="relative">
-        <div className="space-y-5">
-        <div className="flex flex-wrap items-center gap-1.5">
-          <button type="button" onClick={() => initGame('daily')} aria-pressed={mode === 'daily'}
-            className={`min-h-11 rounded-lg border px-3 py-2 text-xs font-bold transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${mode === 'daily' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:bg-muted'}`}>
-            {t.daily}{solvedToday ? ' ✓' : ''}
-          </button>
-          <button type="button" onClick={() => initGame('free')} aria-pressed={mode === 'free'}
-            className={`min-h-11 rounded-lg border px-3 py-2 text-xs font-bold transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${mode === 'free' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:bg-muted'}`}>
-            {t.free}
-          </button>
-          <button type="button" onClick={undo} disabled={undoStack.length === 0 || won}
-            className="min-h-11 rounded-lg border border-border px-3 py-2 text-xs font-bold text-muted-foreground transition-colors hover:bg-muted disabled:opacity-40 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
-            ↩︎ {t.undo}
-          </button>
-          <button type="button" onClick={() => setMuted((m) => !m)} aria-pressed={muted}
-            className="min-h-11 rounded-lg border border-border px-3 py-2 text-xs font-bold text-muted-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-            aria-label={muted ? '소리 켜기' : '소리 끄기'}>
-            {muted ? '🔇' : '🔊'}
-          </button>
-        </div>
+    <div
+      ref={containerRef}
+      data-game-surface
+      className={
+        isImmersive
+          ? "fixed inset-0 z-50 w-screen h-dvh bg-background p-3 sm:p-5 overflow-y-auto flex flex-col items-center justify-between m-0 select-none"
+          : "relative"
+      }
+    >
+      <GameContainer title={t.title} subtitle={t.subtitle} resetLabel={t.reset} onReset={() => initGame(mode)}>
+        <div className="relative">
+          <div className="space-y-5">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <button type="button" onClick={() => initGame('daily')} aria-pressed={mode === 'daily'}
+              className={`min-h-11 rounded-lg border px-3 py-2 text-xs font-bold transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${mode === 'daily' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:bg-muted'}`}>
+              {t.daily}{solvedToday ? ' ✓' : ''}
+            </button>
+            <button type="button" onClick={() => initGame('free')} aria-pressed={mode === 'free'}
+              className={`min-h-11 rounded-lg border px-3 py-2 text-xs font-bold transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${mode === 'free' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:bg-muted'}`}>
+              {t.free}
+            </button>
+            <button type="button" onClick={undo} disabled={undoStack.length === 0 || won}
+              className="min-h-11 rounded-lg border border-border px-3 py-2 text-xs font-bold text-muted-foreground transition-colors hover:bg-muted disabled:opacity-40 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              title="Undo (Z)">
+              ↩︎ {t.undo}
+            </button>
+            <button type="button" onClick={() => setMuted((m) => !m)} aria-pressed={muted}
+              className="min-h-11 rounded-lg border border-border px-3 py-2 text-xs font-bold text-muted-foreground transition-colors hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              aria-label={muted ? '소리 켜기' : '소리 끄기'}
+              title="Mute / Unmute (M)">
+              {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+              <span className="hidden sm:inline">{muted ? '소리 켜기' : '소리 끄기'}</span>
+            </button>
+            <button type="button" onClick={togglePortal} aria-pressed={isImmersive}
+              className="min-h-11 rounded-lg border border-border px-3 py-2 text-xs font-bold text-muted-foreground transition-colors hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+              title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}>
+              {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+              <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+            </button>
+          </div>
 
         {mode === 'daily' && streak && streak.played > 0 && (
           <p className="text-[11px] font-bold text-muted-foreground">🔥 {t.streak} {streak.currentStreak} · {t.best} {streak.maxStreak}</p>
@@ -487,6 +543,7 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         )}
       </div>
     </GameContainer>
+  </div>
   );
 };
 

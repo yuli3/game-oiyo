@@ -30,6 +30,8 @@ import {
 import { MINESWEEPER_SPRITES } from '../../lib/games/sprites';
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 import confetti from 'canvas-confetti';
+import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
 
 const LEGACY_BEST_KEY = 'oiyo-minesweeper-best'; // pre-unification key, read once for migration
 
@@ -113,6 +115,7 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const ht = HINT_COPY[(locale as keyof typeof HINT_COPY)] ?? HINT_COPY.en;
     const m3 = M3_COPY[(locale as keyof typeof M3_COPY)] ?? M3_COPY.en;
     const ob = ONBOARD_COPY[(locale as keyof typeof ONBOARD_COPY)] ?? ONBOARD_COPY.en;
+    const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'en' });
 
     const [mode, setMode] = useState<Mode>('daily');
     const difficultyId: MinesweeperDifficultyId = mode === 'daily' ? DAILY_DIFFICULTY_ID : mode;
@@ -147,9 +150,41 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const longPressTimerRef = useRef<number | null>(null);
     const longPressTriggeredRef = useRef(false);
 
-    const [muted, setMuted] = useState(false);
-    const mutedRef = useRef(false);
-    useEffect(() => { mutedRef.current = muted; }, [muted]);
+    const [muted, setMuted] = useState<boolean>(() => {
+        try {
+            if (typeof window !== 'undefined' && window.localStorage) {
+                return window.localStorage.getItem('minesweeper_sound_muted') === 'true';
+            }
+        } catch {
+            // ignore
+        }
+        return false;
+    });
+    const mutedRef = useRef(muted);
+    useEffect(() => {
+        mutedRef.current = muted;
+        try {
+            if (typeof window !== 'undefined' && window.localStorage) {
+                window.localStorage.setItem('minesweeper_sound_muted', String(muted));
+            }
+        } catch {}
+    }, [muted]);
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+            if (e.key === 'f' || e.key === 'F') {
+                e.preventDefault();
+                togglePortal();
+            } else if (e.key === 'm' || e.key === 'M') {
+                e.preventDefault();
+                setMuted((prev) => !prev);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [togglePortal]);
+
     const audioCtxRef = useRef<AudioContext | null>(null);
 
     const getAudioContext = useCallback(() => {
@@ -643,71 +678,93 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const resultSummary = status === 'playing' ? null : summarizeMinesweeperResult(board);
 
     return (
-        <GameContainer title={t.title} subtitle={t.subtitle} resetLabel={t.reset} onReset={() => initBoard(mode)}>
-            <div className="mb-4 flex flex-wrap items-center gap-1.5">
-                <button onClick={() => initBoard('daily')} aria-pressed={mode === 'daily'}
-                    className={`min-h-11 px-3 py-2 rounded-lg text-xs font-bold border transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${mode === 'daily' ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
-                    {t.daily}{solvedToday ? ' ✓' : ''}
-                </button>
-                {(['beginner', 'intermediate', 'expert'] as const).map((id) => (
-                    <button key={id} onClick={() => initBoard(id)} aria-pressed={mode === id}
-                        className={`min-h-11 px-3 py-2 rounded-lg text-xs font-bold border transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${mode === id ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
-                        {t[id]}
+        <div
+            ref={containerRef}
+            data-game-surface
+            className={
+                isImmersive
+                    ? "fixed inset-0 z-50 w-screen h-dvh bg-background p-3 sm:p-5 overflow-y-auto flex flex-col items-center justify-between m-0 select-none"
+                    : "relative"
+            }
+        >
+            <GameContainer title={t.title} subtitle={t.subtitle} resetLabel={t.reset} onReset={() => initBoard(mode)}>
+                <div className="mb-4 flex flex-wrap items-center gap-1.5">
+                    <button onClick={() => initBoard('daily')} aria-pressed={mode === 'daily'}
+                        className={`min-h-11 px-3 py-2 rounded-lg text-xs font-bold border transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${mode === 'daily' ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
+                        {t.daily}{solvedToday ? ' ✓' : ''}
                     </button>
-                ))}
-            </div>
+                    {(['beginner', 'intermediate', 'expert'] as const).map((id) => (
+                        <button key={id} onClick={() => initBoard(id)} aria-pressed={mode === id}
+                            className={`min-h-11 px-3 py-2 rounded-lg text-xs font-bold border transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${mode === id ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
+                            {t[id]}
+                        </button>
+                    ))}
+                </div>
 
-            {mode === 'daily' && streak && streak.played > 0 && (
-                <p className="mb-3 text-center text-[11px] font-bold text-muted-foreground">🔥 {t.streak} {streak.currentStreak} · {t.best} {streak.maxStreak}</p>
-            )}
+                {mode === 'daily' && streak && streak.played > 0 && (
+                    <p className="mb-3 text-center text-[11px] font-bold text-muted-foreground">🔥 {t.streak} {streak.currentStreak} · {t.best} {streak.maxStreak}</p>
+                )}
 
-            {difficultyId === 'expert' && (
-                <div className="mb-3 flex flex-col items-center gap-2">
-                    <button type="button" onClick={() => setOverviewOpen((open) => !open)} aria-expanded={overviewOpen} aria-controls="minesweeper-overview"
-                        className="min-h-11 rounded-xl border border-border bg-background px-4 py-2 text-xs font-black hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
-                        {overviewOpen ? m3.closeOverview : m3.overview}
-                    </button>
-                    {overviewOpen && (
-                        <div id="minesweeper-overview" className="w-full max-w-sm rounded-xl border border-border bg-muted/30 p-3">
-                            <p className="mb-2 text-center text-[10px] font-medium text-muted-foreground">{m3.overviewHelp}</p>
-                            <div className="grid gap-px overflow-hidden rounded-md bg-border" style={{ gridTemplateColumns: `repeat(${width}, minmax(0, 1fr))` }} aria-hidden="true">
-                                {board.flat().map((cell) => <span key={`overview-${cell.x}-${cell.y}`} className={`aspect-square ${cell.isRevealed ? 'bg-background' : cell.isFlagged ? 'bg-chart-2' : 'bg-primary/35'}`} />)}
+                {difficultyId === 'expert' && (
+                    <div className="mb-3 flex flex-col items-center gap-2">
+                        <button type="button" onClick={() => setOverviewOpen((open) => !open)} aria-expanded={overviewOpen} aria-controls="minesweeper-overview"
+                            className="min-h-11 rounded-xl border border-border bg-background px-4 py-2 text-xs font-black hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
+                            {overviewOpen ? m3.closeOverview : m3.overview}
+                        </button>
+                        {overviewOpen && (
+                            <div id="minesweeper-overview" className="w-full max-w-sm rounded-xl border border-border bg-muted/30 p-3">
+                                <p className="mb-2 text-center text-[10px] font-medium text-muted-foreground">{m3.overviewHelp}</p>
+                                <div className="grid gap-px overflow-hidden rounded-md bg-border" style={{ gridTemplateColumns: `repeat(${width}, minmax(0, 1fr))` }} aria-hidden="true">
+                                    {board.flat().map((cell) => <span key={`overview-${cell.x}-${cell.y}`} className={`aspect-square ${cell.isRevealed ? 'bg-background' : cell.isFlagged ? 'bg-chart-2' : 'bg-primary/35'}`} />)}
+                                </div>
                             </div>
-                        </div>
-                    )}
-                </div>
-            )}
+                        )}
+                    </div>
+                )}
 
-            <div className="flex justify-between items-center mb-4 gap-2">
-                <div className="flex items-center gap-1 px-3 py-1.5 bg-muted rounded-lg text-xs font-black text-muted-foreground" aria-label={t.mines}>
-                    <img src={MINESWEEPER_SPRITES.flag} alt="" draggable={false} className="h-4 w-4 object-contain" />
-                    {mineCount - flaggedCount}
+                <div className="flex justify-between items-center mb-4 gap-2">
+                    <div className="flex items-center gap-1 px-3 py-1.5 bg-muted rounded-lg text-xs font-black text-muted-foreground" aria-label={t.mines}>
+                        <img src={MINESWEEPER_SPRITES.flag} alt="" draggable={false} className="h-4 w-4 object-contain" />
+                        {mineCount - flaggedCount}
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setFlagMode((f) => !f)}
+                            aria-pressed={flagMode}
+                            aria-label={flagMode ? t.flag : t.dig}
+                            className={`min-h-11 px-4 py-2 rounded-full text-xs font-black border transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+                                flagMode
+                                    ? 'bg-chart-2/15 text-chart-2 border-chart-2/40'
+                                    : 'bg-muted text-muted-foreground border-border'
+                            }`}
+                        >
+                            {flagMode ? <span className="inline-flex items-center gap-1"><img src={MINESWEEPER_SPRITES.flag} alt="" draggable={false} className="h-4 w-4 object-contain" />{t.flag}</span> : `⛏️ ${t.dig}`}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setMuted((m) => !m)}
+                            aria-pressed={muted}
+                            aria-label={muted ? t.soundOn : t.soundOff}
+                            title={`${muted ? t.soundOn : t.soundOff} (M)`}
+                            className="min-h-11 px-3 py-2 rounded-full text-xs font-black border border-border bg-muted hover:bg-muted/80 text-foreground transition-colors flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                        >
+                            {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+                            <span className="hidden sm:inline">{muted ? t.soundOn : t.soundOff}</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={togglePortal}
+                            aria-pressed={isImmersive}
+                            aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+                            title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+                            className="min-h-11 px-3 py-2 rounded-full text-xs font-black border border-border bg-muted hover:bg-muted/80 text-foreground transition-colors flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                        >
+                            {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+                            <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+                        </button>
+                    </div>
+                    <div className="px-3 py-1.5 bg-muted rounded-lg text-xs font-black text-muted-foreground" aria-label={t.time}>⏱️ {timer}s</div>
                 </div>
-                <div className="flex items-center gap-2">
-                    <button
-                        onClick={() => setFlagMode((f) => !f)}
-                        aria-pressed={flagMode}
-                        aria-label={flagMode ? t.flag : t.dig}
-                        className={`min-h-11 px-4 py-2 rounded-full text-xs font-black border transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
-                            flagMode
-                                ? 'bg-chart-2/15 text-chart-2 border-chart-2/40'
-                                : 'bg-muted text-muted-foreground border-border'
-                        }`}
-                    >
-                        {flagMode ? <span className="inline-flex items-center gap-1"><img src={MINESWEEPER_SPRITES.flag} alt="" draggable={false} className="h-4 w-4 object-contain" />{t.flag}</span> : `⛏️ ${t.dig}`}
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setMuted((m) => !m)}
-                        aria-pressed={muted}
-                        aria-label={muted ? t.soundOn : t.soundOff}
-                        className="min-h-11 px-3 py-2 rounded-full text-xs font-black border border-border bg-muted hover:bg-muted/80 text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-                    >
-                        {muted ? '🔇' : '🔊'}
-                    </button>
-                </div>
-                <div className="px-3 py-1.5 bg-muted rounded-lg text-xs font-black text-muted-foreground" aria-label={t.time}>⏱️ {timer}s</div>
-            </div>
 
             <p className="mb-3 text-center text-[11px] font-medium text-muted-foreground" role="status" aria-live="polite">
                 {generationStrategy === 'pending' ? t.pending : generationStrategy === 'verified' ? t.verified : t.fallback}
@@ -830,6 +887,7 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 <p className="mt-4 text-center text-[10px] text-muted-foreground font-medium">{t.hint} · {m3.longPress}</p>
             )}
         </GameContainer>
+    </div>
     );
 };
 
