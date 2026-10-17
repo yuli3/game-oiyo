@@ -16,6 +16,20 @@ import {
 } from "../../lib/games/aim-trainer";
 import AimFlashField, { type AimFlashCopy } from "./AimFlashField";
 import UsageClip from "./UsageClip";
+import {
+  type HitSpark,
+  type RippleRing,
+  type FloatingLabel,
+  MODE_COLORS,
+  isTargetHit,
+  createHitSparks,
+  updateSparks,
+  createRipple,
+  updateRipples,
+  createFloatingLabel,
+  updateFloatingLabels,
+  renderAimField,
+} from "../../lib/games/aim-trainer-canvas";
 
 /* ────────────────────────────────────────────────────────────────────────────
  * Pro Aim Trainer — 5 modes × 4 difficulties, mouse + touch, FPS-grade metrics,
@@ -381,8 +395,68 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
   }, [muted]);
   useEffect(() => () => { void audioRef.current?.close(); }, []);
 
+  const getAudioContext = useCallback(() => {
+    if (muted || typeof window === "undefined") return null;
+    try {
+      const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!Ctx) return null;
+      if (!audioRef.current) audioRef.current = new Ctx();
+      if (audioRef.current.state === "suspended") audioRef.current.resume();
+      return audioRef.current;
+    } catch {
+      return null;
+    }
+  }, [muted]);
+
+  const playHitSound = useCallback((streak: number) => {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    const scale = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50];
+    const freq = scale[Math.min(streak, scale.length - 1)];
+
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(freq, now);
+    osc.frequency.exponentialRampToValueAtTime(freq * 1.25, now + 0.05);
+
+    gain.gain.setValueAtTime(0.09, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.06);
+  }, [getAudioContext]);
+
+  const playMissSound = useCallback(() => {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(130, now);
+    osc.frequency.exponentialRampToValueAtTime(45, now + 0.07);
+
+    gain.gain.setValueAtTime(0.06, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.07);
+  }, [getAudioContext]);
+
+  const vibrate = useCallback((pattern: number | number[]) => {
+    if (typeof window !== "undefined" && "vibrate" in navigator) {
+      try { navigator.vibrate(pattern); } catch {}
+    }
+  }, []);
+
   // refs that must not trigger re-render
-  const fieldRef = useRef<HTMLDivElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const shellRef = useRef<HTMLDivElement | null>(null);
   const startRef = useRef(0);
   const idRef = useRef(0);
@@ -396,6 +470,11 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
   const lastFrameRef = useRef<number | null>(null);
   const lastTargetRenderRef = useRef(0);
   const targetsRef = useRef<Target[]>([]);
+  const sparksRef = useRef<HitSpark[]>([]);
+  const ripplesRef = useRef<RippleRing[]>([]);
+  const floatingLabelsRef = useRef<FloatingLabel[]>([]);
+  const recoilShakeRef = useRef(0);
+  const streakRef = useRef(0);
   // tracking-mode state kept in refs (per-frame)
   const trkTarget = useRef<TrackingTargetState>({ x: 50, y: 50, vx: 1, vy: 1, size: 74 });
   const trkOnMs = useRef(0);
@@ -416,10 +495,7 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
   }, []);
 
   const spawn = useCallback((size: number, occupied: Target[] = []): Target => {
-    // The field mounts only once play starts, so the first targets are placed before it exists.
-    // Its width is the shell's content width and its height follows the 5:4 ratio; measuring the
-    // shell keeps those first targets inside a narrow phone field instead of clipped at its edge.
-    const rect = fieldRef.current?.getBoundingClientRect();
+    const rect = canvasRef.current?.getBoundingClientRect();
     const shell = shellRef.current;
     let shellWidth = 0;
     if (!rect && shell) {
@@ -508,6 +584,11 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
     pausedAtRef.current = null;
     lastFrameRef.current = null;
     lastTargetRenderRef.current = 0;
+    sparksRef.current = [];
+    ripplesRef.current = [];
+    floatingLabelsRef.current = [];
+    recoilShakeRef.current = 0;
+    streakRef.current = 0;
     setIsNewBest(false);
     setTimeLeft(DURATION);
     startRef.current = performance.now();
@@ -576,10 +657,9 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
     return () => document.removeEventListener("visibilitychange", handleVisibility);
   }, [phase, mode, scheduleRecoveryTarget]);
 
-  // Tracking + precision-TTL animation loop
+  // 120fps High-DPI Canvas animation loop
   useEffect(() => {
-    if (phase !== "playing") return;
-    if (mode !== "tracking" && ttl === 0) return;
+    if (phase !== "playing" || mode === "flash") return;
 
     const loop = (frameNow: number) => {
       if (pausedAtRef.current !== null) {
@@ -587,85 +667,179 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
         rafRef.current = requestAnimationFrame(loop);
         return;
       }
-      const deltaMs = lastFrameRef.current === null ? 1000 / 60 : Math.max(0, frameNow - lastFrameRef.current);
+      const deltaMs = lastFrameRef.current === null ? 1000 / 60 : Math.max(0, Math.min(50, frameNow - lastFrameRef.current));
+      const dt = deltaMs / 1000;
       lastFrameRef.current = frameNow;
-      const field = fieldRef.current;
-      if (field) {
+
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const rect = canvas.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        const displayW = Math.round(rect.width);
+        const displayH = Math.round(rect.height);
+
+        if (canvas.width !== displayW * dpr || canvas.height !== displayH * dpr) {
+          canvas.width = displayW * dpr;
+          canvas.height = displayH * dpr;
+        }
+
+        // 1. Advance mode physics
+        let isTrackingLocked = false;
         if (mode === "tracking") {
-          const rect = field.getBoundingClientRect();
           const spd = cfg.speed * dc.speed * 0.03 * frameScale(deltaMs);
           trkTarget.current = stepTrackingTarget(trkTarget.current, spd, rect.width, rect.height);
           const tk = trkTarget.current;
-          const on = isPointerOnTrackingTarget(pointer.current.x, pointer.current.y, pointer.current.inside, tk, rect.width, rect.height);
-          if (on) trkOnMs.current += Math.min(deltaMs, 50);
-          if (frameNow - lastTargetRenderRef.current >= 1000 / 60) {
-            lastTargetRenderRef.current = frameNow;
-            setTargets([{ id: 0, x: tk.x, y: tk.y, size: tk.size, born: 0 }]);
-          }
+          isTrackingLocked = isPointerOnTrackingTarget(pointer.current.x, pointer.current.y, pointer.current.inside, tk, rect.width, rect.height);
+          if (isTrackingLocked) trkOnMs.current += Math.min(deltaMs, 50);
         } else if (ttl > 0) {
-          // precision: expire overdue targets as misses
+          // Precision mode: check expired targets
           const now = performance.now();
           const alive = targetsRef.current.filter((target) => now - target.born <= ttl);
           const expired = targetsRef.current.length - alive.length;
           if (expired > 0) {
-            setMisses((missCount) => missCount + expired);
+            setMisses((m) => m + expired);
+            streakRef.current = 0;
+            playMissSound();
+            vibrate(25);
+            recoilShakeRef.current = 6;
+            // Spawn replacements
             const replacements = [...alive];
-            for (let index = 0; index < expired; index++) replacements.push(spawn(targetSize, replacements));
+            for (let idx = 0; idx < expired; idx++) replacements.push(spawn(targetSize, replacements));
             setTargets(replacements);
           }
         }
+
+        // 2. Update VFX
+        sparksRef.current = updateSparks(sparksRef.current, dt);
+        ripplesRef.current = updateRipples(ripplesRef.current, dt);
+        floatingLabelsRef.current = updateFloatingLabels(floatingLabelsRef.current, dt);
+        recoilShakeRef.current *= Math.pow(0.08, dt);
+
+        const shakeAngle = Math.random() * Math.PI * 2;
+        const shakeMag = recoilShakeRef.current;
+        const shakeOffset = {
+          x: Math.cos(shakeAngle) * shakeMag,
+          y: Math.sin(shakeAngle) * shakeMag,
+        };
+
+        // 3. Render 100% Canvas GPU Frame
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.save();
+          ctx.scale(dpr, dpr);
+          renderAimField(
+            ctx,
+            displayW,
+            displayH,
+            frameNow,
+            mode,
+            ttl,
+            timeLeft / DURATION,
+            targetsRef.current,
+            mode === "tracking" ? trkTarget.current : null,
+            isTrackingLocked,
+            recoveryObscured,
+            sparksRef.current,
+            ripplesRef.current,
+            floatingLabelsRef.current,
+            shakeOffset
+          );
+          ctx.restore();
+        }
       }
+
       rafRef.current = requestAnimationFrame(loop);
     };
+
     rafRef.current = requestAnimationFrame(loop);
-    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
-  }, [phase, mode, ttl, cfg.speed, dc.speed, targetSize, spawn]);
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, [phase, mode, ttl, cfg.speed, dc.speed, targetSize, spawn, timeLeft, recoveryObscured, playMissSound, vibrate]);
 
   useEffect(() => () => stop(), [stop]);
 
   const onPointerMove = useCallback((e: React.PointerEvent) => {
-    const field = fieldRef.current;
-    if (!field) return;
-    const rect = field.getBoundingClientRect();
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
     pointer.current = { x: e.clientX - rect.left, y: e.clientY - rect.top, inside: true };
   }, []);
   const onPointerLeave = useCallback(() => { pointer.current.inside = false; }, []);
-  // A finger that lifts is no longer on the target. Touch keeps its pointer captured on the element
-  // it went down on, so pointerleave never reaches the field and the last position would keep scoring.
   const onPointerEnd = useCallback((e: React.PointerEvent) => {
     if (e.pointerType !== "mouse") pointer.current.inside = false;
   }, []);
 
-  const hitTarget = useCallback(
-    (id: number, born: number, e: React.PointerEvent) => {
-      e.stopPropagation();
-      // In tracking a finger lands on the target itself, so this is where its position is first known.
-      onPointerMove(e);
-      if (phase !== "playing" || mode === "tracking") return;
-      reactionsRef.current.push(performance.now() - born);
+  const handleCanvasPointerDown = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    if (phase !== "playing" || mode === "flash") return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
+    const isTouch = e.pointerType !== "mouse";
+
+    pointer.current = { x: clickX, y: clickY, inside: true };
+
+    if (mode === "tracking") {
+      return;
+    }
+    if (mode === "recovery" && recoveryObscured) {
+      return;
+    }
+
+    const currentTargets = targetsRef.current;
+    let hitIndex = -1;
+
+    for (let i = 0; i < currentTargets.length; i++) {
+      const tg = currentTargets[i];
+      const targetPxX = (tg.x / 100) * rect.width;
+      const targetPxY = (tg.y / 100) * rect.height;
+      const radius = tg.size / 2;
+
+      if (isTargetHit(clickX, clickY, targetPxX, targetPxY, radius, isTouch)) {
+        hitIndex = i;
+        break;
+      }
+    }
+
+    if (hitIndex !== -1) {
+      const hitTg = currentTargets[hitIndex];
+      const reactionTime = Math.round(performance.now() - hitTg.born);
+      reactionsRef.current.push(reactionTime);
       setHits((h) => h + 1);
-      tone(700, 0.05);
+      streakRef.current += 1;
+
+      playHitSound(streakRef.current);
+      vibrate(10);
+      recoilShakeRef.current = 4;
+
+      const hitColor = MODE_COLORS[mode]?.primary ?? "#38bdf8";
+      const hitPxX = (hitTg.x / 100) * rect.width;
+      const hitPxY = (hitTg.y / 100) * rect.height;
+      sparksRef.current.push(...createHitSparks(hitPxX, hitPxY, hitColor, 12));
+      ripplesRef.current.push(createRipple(hitPxX, hitPxY, hitColor, 40));
+      floatingLabelsRef.current.push(createFloatingLabel(`${reactionTime}ms`, hitPxX, hitPxY - 12, hitColor));
+
       if (mode === "recovery") {
         scheduleRecoveryTarget();
         return;
       }
+
       setTargets((prev) => {
-        const rest = prev.filter((tg) => tg.id !== id);
+        const rest = prev.filter((tg) => tg.id !== hitTg.id);
         return [...rest, spawn(targetSize, rest)];
       });
-    },
-    [phase, mode, targetSize, spawn, tone, scheduleRecoveryTarget, onPointerMove]
-  );
-
-  const missField = useCallback(() => {
-    if (phase !== "playing" || mode === "tracking" || recoveryObscured) return;
-    setMisses((m) => m + 1);
-    tone(180, 0.06);
-  }, [phase, mode, recoveryObscured, tone]);
-  const onFieldPointerDown = useCallback((e: React.PointerEvent) => {
-    onPointerMove(e);
-    missField();
-  }, [onPointerMove, missField]);
+    } else {
+      setMisses((m) => m + 1);
+      streakRef.current = 0;
+      playMissSound();
+      vibrate(25);
+      recoilShakeRef.current = 6;
+      ripplesRef.current.push(createRipple(clickX, clickY, "rgba(239, 68, 68, 0.7)", 26));
+    }
+  }, [phase, mode, recoveryObscured, playHitSound, playMissSound, vibrate, scheduleRecoveryTarget, spawn, targetSize]);
 
   const flashHit = useCallback((reactionMs: number) => {
     reactionsRef.current.push(reactionMs);
@@ -791,62 +965,15 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
         <AimFlashField diff={diff} copy={t.flash} tone={tone} onHit={flashHit} onMiss={flashMiss} />
       )}
       {phase === "playing" && mode !== "flash" && (
-        <div
-          ref={fieldRef}
-          onPointerDown={onFieldPointerDown}
+        <canvas
+          ref={canvasRef}
+          onPointerDown={handleCanvasPointerDown}
           onPointerMove={onPointerMove}
           onPointerLeave={onPointerLeave}
           onPointerUp={onPointerEnd}
           onPointerCancel={onPointerEnd}
-          className="relative mx-auto overflow-hidden rounded-2xl border border-border bg-muted/40 touch-none [cursor:crosshair]"
-          style={{ width: "100%", aspectRatio: "5 / 4" }}
-        >
-          <div className="absolute left-0 top-0 z-10 h-1 w-full bg-muted/60">
-            <div className="h-full bg-violet-500 transition-[width] duration-100" style={{ width: `${(timeLeft / DURATION) * 100}%` }} />
-          </div>
-          {mode === "recovery" && recoveryObscured && (
-            <div className="absolute inset-0 z-20 flex items-center justify-center bg-slate-950 text-center text-sm font-bold text-white" role="status" aria-live="polite">
-              <span className="max-w-56 px-4">{t.obscured}</span>
-            </div>
-          )}
-          {targets.map((tg) => {
-            // Precision/expert targets can render well under 44px — the whole
-            // point of Precision mode is a tiny visual target. Rather than
-            // enlarging the target itself (which would erase the challenge),
-            // the tap-hitbox is widened independently so the game stays
-            // playable by touch; Tracking's hit-test is pointer-position based
-            // and doesn't go through this button, so it keeps its true size.
-            const hitboxSize = mode === "tracking" ? tg.size : Math.max(tg.size, 44);
-            return (
-              <button
-                key={tg.id}
-                onPointerDown={(e) => hitTarget(tg.id, tg.born, e)}
-                className="absolute flex items-center justify-center focus:outline-none"
-                style={{
-                  width: `${hitboxSize}px`,
-                  height: `${hitboxSize}px`,
-                  left: `${tg.x}%`,
-                  top: `${tg.y}%`,
-                  transform: "translate(-50%, -50%)",
-                }}
-                type="button"
-                aria-label={t.target}
-              >
-                <img
-                  src="/assets/sprites/aim-trainer/target-128.png"
-                  srcSet="/assets/sprites/aim-trainer/target-64.png 64w, /assets/sprites/aim-trainer/target-128.png 128w, /assets/sprites/aim-trainer/target-256.png 256w"
-                  sizes={`${Math.ceil(tg.size)}px`}
-                  width={Math.ceil(tg.size)}
-                  height={Math.ceil(tg.size)}
-                  alt=""
-                  draggable={false}
-                  className={`block select-none rounded-full ${mode === "tracking" ? "drop-shadow-[0_0_12px_rgba(34,211,238,.65)]" : "drop-shadow-[0_0_8px_rgba(168,85,247,.55)] hover:brightness-125"}`}
-                  style={{ width: `${tg.size}px`, height: `${tg.size}px` }}
-                />
-              </button>
-            );
-          })}
-        </div>
+          className="relative mx-auto overflow-hidden rounded-2xl border border-border bg-[#080b12] touch-none cursor-crosshair w-full aspect-5/4 select-none block shadow-xl"
+        />
       )}
 
       {/* ── RESULT ── */}
@@ -890,7 +1017,7 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
 const Stat: React.FC<{ label: string; value: string }> = ({ label, value }) => (
   <div className="rounded-2xl bg-muted/40 p-3">
     <div className="text-xl font-black text-primary">{value}</div>
-    <div className="mt-0.5 text-[10px] text-muted-foreground">{label}</div>
+    <div className="mt-0.5 text-xs text-muted-foreground">{label}</div>
   </div>
 );
 
