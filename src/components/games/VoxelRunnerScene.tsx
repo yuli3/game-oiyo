@@ -200,7 +200,7 @@ export default function VoxelRunnerScene({
   speed,
 }: SceneProps) {
   return (
-    <div className="relative w-full h-130 rounded-2xl overflow-hidden bg-background select-none touch-none">
+    <div className="relative w-full h-full min-h-100 rounded-2xl overflow-hidden bg-background select-none touch-none">
       <Canvas
         camera={{ position: [0, 4, 6], fov: 60 }}
         gl={{ antialias: true, alpha: false }}

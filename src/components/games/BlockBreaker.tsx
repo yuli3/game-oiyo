@@ -11,7 +11,21 @@ import {
   PLAY_WIDTH,
 } from '../../lib/games/block-breaker';
 import type { Locale } from '../../lib/i18n';
-import { Play, RotateCcw, Trophy, Heart, ArrowLeft, ArrowRight, Zap, Target } from 'lucide-react';
+import {
+  Play,
+  RotateCcw,
+  Trophy,
+  Heart,
+  ArrowLeft,
+  ArrowRight,
+  Zap,
+  Target,
+  Maximize2,
+  Minimize2,
+  Volume2,
+  VolumeX,
+} from 'lucide-react';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
 
 interface Props {
   locale: Locale;
@@ -134,18 +148,128 @@ const UI_TEXT: Record<Locale, {
 export default function BlockBreaker({ locale }: Props) {
   const t = UI_TEXT[locale] ?? UI_TEXT.en;
   const [gameState, setGameState] = useState<BlockBreakerState>(() => createInitialBlockBreakerState());
+  const [muted, setMuted] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('block_breaker_muted') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
   const inputRef = useRef({ moveX: 0 });
   const viewportRef = useRef<HTMLDivElement>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale });
+
+  // Web Audio procedural sound synthesizer
+  const playSound = useCallback((type: 'bounce' | 'brick' | 'laser' | 'die' | 'clear') => {
+    if (muted) return;
+    try {
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!audioCtxRef.current && AudioCtx) {
+        audioCtxRef.current = new AudioCtx();
+      }
+      const ctx = audioCtxRef.current;
+      if (!ctx) return;
+      if (ctx.state === 'suspended') void ctx.resume();
+
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      if (type === 'bounce') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.exponentialRampToValueAtTime(554.37, now + 0.08);
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+        osc.start(now);
+        osc.stop(now + 0.08);
+      } else if (type === 'brick') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(659.25, now);
+        osc.frequency.exponentialRampToValueAtTime(880, now + 0.09);
+        gain.gain.setValueAtTime(0.18, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+        osc.start(now);
+        osc.stop(now + 0.09);
+      } else if (type === 'laser') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(880, now);
+        osc.frequency.exponentialRampToValueAtTime(220, now + 0.1);
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+        osc.start(now);
+        osc.stop(now + 0.1);
+      } else if (type === 'die') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(180, now);
+        osc.frequency.exponentialRampToValueAtTime(55, now + 0.3);
+        gain.gain.setValueAtTime(0.22, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+        osc.start(now);
+        osc.stop(now + 0.3);
+      } else if (type === 'clear') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(523.25, now);
+        osc.frequency.setValueAtTime(659.25, now + 0.08);
+        osc.frequency.setValueAtTime(783.99, now + 0.16);
+        gain.gain.setValueAtTime(0.18, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+        osc.start(now);
+        osc.stop(now + 0.28);
+      }
+    } catch {
+      // AudioContext unavailable
+    }
+  }, [muted]);
+
+  const toggleMute = useCallback(() => {
+    setMuted((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('block_breaker_muted', String(next));
+      } catch {}
+      return next;
+    });
+  }, []);
 
   // Keyboard controls
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === 'Space') {
+      if (e.code === 'KeyM') {
         e.preventDefault();
-        setGameState((prev) => (prev.status === 'ready' ? launchBall(prev) : fireLasers(prev)));
+        toggleMute();
+      } else if (e.code === 'Space') {
+        e.preventDefault();
+        setGameState((prev) => {
+          if (prev.status === 'ready') {
+            playSound('bounce');
+            return launchBall(prev);
+          }
+          if (prev.laserAmmo > 0) {
+            playSound('laser');
+            return fireLasers(prev);
+          }
+          return prev;
+        });
       } else if (e.code === 'KeyF') {
         e.preventDefault();
-        setGameState((prev) => fireLasers(prev));
+        if (gameState.laserAmmo > 0) {
+          playSound('laser');
+          setGameState((prev) => fireLasers(prev));
+        } else {
+          togglePortal();
+        }
+      } else if (e.code === 'KeyZ') {
+        e.preventDefault();
+        if (gameState.laserAmmo > 0) {
+          playSound('laser');
+          setGameState((prev) => fireLasers(prev));
+        }
       } else if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
         inputRef.current.moveX = -1;
       } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
@@ -168,7 +292,7 @@ export default function BlockBreaker({ locale }: Props) {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, []);
+  }, [gameState.laserAmmo, playSound, toggleMute, togglePortal]);
 
   // Pointer drag on viewport
   const handlePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
@@ -194,7 +318,29 @@ export default function BlockBreaker({ locale }: Props) {
           const speed = 12.0;
           current = movePaddle(current, current.paddleX + inputRef.current.moveX * speed * dt);
         }
-        return updateBlockBreaker(current, dt);
+        const updated = updateBlockBreaker(current, dt);
+
+        if (updated.score > prev.score) {
+          playSound('brick');
+        }
+        if (updated.lives < prev.lives) {
+          playSound('die');
+        }
+        if (prev.status !== 'cleared' && updated.status === 'cleared') {
+          playSound('clear');
+        }
+        if (prev.balls.length > 0 && updated.balls.length > 0) {
+          for (let i = 0; i < updated.balls.length; i++) {
+            const bPrev = prev.balls[i];
+            const bNext = updated.balls[i];
+            if (bPrev && bNext && bPrev.vy < 0 && bNext.vy > 0 && Math.abs(bNext.y - 0.7) < 0.35) {
+              playSound('bounce');
+              break;
+            }
+          }
+        }
+
+        return updated;
       });
 
       animId = requestAnimationFrame(loop);
@@ -202,10 +348,17 @@ export default function BlockBreaker({ locale }: Props) {
 
     animId = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(animId);
-  }, []);
+  }, [playSound]);
 
   return (
-    <div className="mx-auto max-w-4xl space-y-4">
+    <div
+      ref={containerRef}
+      className={`mx-auto w-full transition-all duration-200 ${
+        isImmersive
+          ? 'fixed inset-0 z-50 flex flex-col justify-between bg-background p-3 sm:p-5 h-dvh w-screen overflow-hidden'
+          : 'max-w-4xl space-y-4'
+      }`}
+    >
       {/* Header HUD */}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
         <div>
@@ -213,7 +366,7 @@ export default function BlockBreaker({ locale }: Props) {
           <p className="text-xs text-muted-foreground">{t.subtitle}</p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5 rounded-xl border border-border bg-muted/40 px-3 py-1.5 text-xs font-bold text-foreground">
             <Trophy className="w-4 h-4 text-warning" />
             <span className="font-mono">{gameState.score.toLocaleString()}</span>
@@ -235,6 +388,26 @@ export default function BlockBreaker({ locale }: Props) {
               <span>x{gameState.laserAmmo}</span>
             </div>
           )}
+
+          <button
+            type="button"
+            onClick={toggleMute}
+            aria-label={muted ? 'Unmute' : 'Mute'}
+            className="p-2 rounded-lg bg-muted text-foreground hover:bg-muted/80 transition-colors"
+            title="Mute / Unmute (M)"
+          >
+            {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+          </button>
+
+          <button
+            type="button"
+            onClick={togglePortal}
+            aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+            className="p-2 rounded-lg bg-muted text-foreground hover:bg-muted/80 transition-colors"
+            title={isImmersive ? portalLabels.exit : portalLabels.enter}
+          >
+            {isImmersive ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </button>
         </div>
       </div>
 
@@ -242,7 +415,9 @@ export default function BlockBreaker({ locale }: Props) {
       <div
         ref={viewportRef}
         onPointerMove={handlePointerMove}
-        className="relative aspect-video w-full rounded-2xl overflow-hidden border border-border bg-background shadow-md cursor-ew-resize"
+        className={`relative w-full rounded-2xl overflow-hidden border border-border bg-background shadow-md cursor-ew-resize ${
+          isImmersive ? 'flex-1 min-h-0' : 'aspect-video max-h-160'
+        }`}
       >
         <BlockBreakerScene state={gameState} />
 
@@ -251,7 +426,10 @@ export default function BlockBreaker({ locale }: Props) {
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/50 backdrop-blur-xs p-4 text-center pointer-events-auto">
             <button
               type="button"
-              onClick={() => setGameState((prev) => launchBall(prev))}
+              onClick={() => {
+                playSound('bounce');
+                setGameState((prev) => launchBall(prev));
+              }}
               className="inline-flex items-center gap-2 rounded-2xl bg-primary px-8 py-4 text-lg font-black text-primary-foreground shadow-xl hover:bg-primary/90 transition-transform active:scale-95"
             >
               <Play className="w-6 h-6 fill-current" />
@@ -313,7 +491,17 @@ export default function BlockBreaker({ locale }: Props) {
         <button
           type="button"
           onClick={() => {
-            setGameState((prev) => (prev.status === 'ready' ? launchBall(prev) : fireLasers(prev)));
+            setGameState((prev) => {
+              if (prev.status === 'ready') {
+                playSound('bounce');
+                return launchBall(prev);
+              }
+              if (prev.laserAmmo > 0) {
+                playSound('laser');
+                return fireLasers(prev);
+              }
+              return prev;
+            });
           }}
           className="p-4 rounded-xl bg-primary text-primary-foreground font-bold flex justify-center items-center active:opacity-90"
         >

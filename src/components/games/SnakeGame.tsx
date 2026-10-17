@@ -9,6 +9,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { getBest, recordAchievementEvent, recordBest } from '../../lib/games/records';
+import type { Locale } from '../../lib/i18n';
+import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
 import {
     bufferSnakeDirection,
     createSnakeGame,
@@ -59,14 +62,31 @@ const DETAILS = {
 const PENTATONIC = [261.63, 293.66, 329.63, 392.0, 440.0, 523.25, 587.33, 659.25, 783.99, 880.0];
 
 const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
+    const loc = (locale as Locale) || 'ko';
     const t = COPY[(locale as keyof typeof COPY)] ?? COPY.en;
     const d = DETAILS[(locale as keyof typeof DETAILS)] ?? DETAILS.en;
 
     const [game, setGame] = useState<SnakeState | null>(null);
     const [hydrated, setHydrated] = useState(false);
     const [best, setBest] = useState(0);
-    const [muted, setMuted] = useState(false);
+    const [muted, setMuted] = useState<boolean>(() => {
+        try {
+            return localStorage.getItem('snake_game_muted') === 'true';
+        } catch {
+            return false;
+        }
+    });
     const [deathCause, setDeathCause] = useState<SnakeDeathCause | null>(null);
+
+    const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: loc });
+
+    const toggleMute = useCallback(() => {
+        setMuted((prev) => {
+            const next = !prev;
+            try { localStorage.setItem('snake_game_muted', String(next)); } catch {}
+            return next;
+        });
+    }, []);
 
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const gameRef = useRef<SnakeState | null>(null);
@@ -175,6 +195,27 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     // Keyboard controls
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'f' || e.key === 'F') {
+                e.preventDefault();
+                togglePortal();
+                return;
+            }
+            if (e.key === 'm' || e.key === 'M') {
+                e.preventDefault();
+                toggleMute();
+                return;
+            }
+            if (e.key === 'p' || e.key === 'P') {
+                e.preventDefault();
+                setGame((current) => {
+                    if (!current) return current;
+                    if (current.status === 'playing') return pauseSnake(current);
+                    if (current.status === 'paused') return resumeSnake(current);
+                    return current;
+                });
+                return;
+            }
+
             if (status !== 'ready' && status !== 'playing' && status !== 'paused') return;
             switch (e.key) {
                 case 'ArrowUp':
@@ -205,7 +246,7 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [changeDir, status]);
+    }, [changeDir, status, toggleMute, togglePortal]);
 
     // 120fps continuous RAF loop with sub-grid interpolation
     useEffect(() => {
@@ -473,10 +514,11 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         touchStart.current = null;
     };
 
-    return (
-        <GameContainer title={t.title} subtitle={t.subtitle} onReset={status === 'idle' ? undefined : initGame}>
-            <div className="mb-6 flex items-center justify-between gap-3">
-                <div className="flex gap-2">
+    const content = (
+        <div className={`flex flex-col justify-between ${isImmersive ? 'h-full w-full max-w-lg mx-auto' : ''}`}>
+            {/* Top Bar HUD */}
+            <div className="mb-4 flex items-center justify-between gap-3 shrink-0">
+                <div className="flex items-center gap-2">
                     {status === 'playing' && (
                         <button
                             type="button"
@@ -486,16 +528,36 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                             {d.pause}
                         </button>
                     )}
+                    {status === 'paused' && (
+                        <button
+                            type="button"
+                            onClick={() => setGame((current) => current ? resumeSnake(current) : current)}
+                            className="min-h-11 rounded-xl border border-border bg-primary text-primary-foreground px-4 text-xs font-bold"
+                        >
+                            {d.resume}
+                        </button>
+                    )}
                     <button
                         type="button"
-                        onClick={() => setMuted((value) => !value)}
+                        onClick={toggleMute}
                         aria-pressed={muted}
-                        className="min-h-11 rounded-xl border border-border bg-muted px-4 text-xs font-bold"
+                        aria-label={muted ? 'Unmute' : 'Mute'}
+                        className="p-2.5 rounded-xl border border-border bg-muted text-foreground hover:bg-muted/80 transition-colors"
+                        title="Mute / Unmute (M)"
                     >
-                        {muted ? d.soundOff : d.soundOn}
+                        {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={togglePortal}
+                        aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+                        className="p-2.5 rounded-xl border border-border bg-muted text-foreground hover:bg-muted/80 transition-colors"
+                        title={isImmersive ? portalLabels.exit : portalLabels.enter}
+                    >
+                        {isImmersive ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
                     </button>
                 </div>
-                <div>
+                <div className="text-right">
                     <span className="text-xs font-black text-muted-foreground uppercase">{t.score}</span>
                     <div className="text-2xl font-black text-primary leading-none">{score}</div>
                 </div>
@@ -504,7 +566,9 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             {/* 100% Canvas GPU Game Arena */}
             <div
                 data-game-surface
-                className="relative aspect-square w-full max-w-sm mx-auto rounded-2xl border border-border overflow-hidden touch-none select-none bg-[#03060c] shadow-xl"
+                className={`relative aspect-square w-full rounded-2xl border border-border overflow-hidden touch-none select-none bg-[#03060c] shadow-xl ${
+                    isImmersive ? 'flex-1 min-h-0 max-h-full mx-auto' : 'max-w-sm mx-auto'
+                }`}
             >
                 <canvas
                     ref={canvasRef}
@@ -569,7 +633,7 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             </div>
 
             {/* Mobile Virtual Direction Pad */}
-            <div className="mt-4 flex flex-col items-center gap-2 sm:pointer-fine:hidden touch-none" aria-label="터치 방향키">
+            <div className="mt-3 flex flex-col items-center gap-1.5 sm:pointer-fine:hidden touch-none shrink-0" aria-label="터치 방향키">
                 <button
                     type="button"
                     data-game-control
@@ -610,12 +674,31 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 </div>
             </div>
 
-            <div className="mt-6 flex justify-between text-xs font-bold text-muted-foreground/60 uppercase tracking-widest">
+            <div className="mt-4 flex justify-between text-xs font-bold text-muted-foreground/60 uppercase tracking-widest shrink-0 max-w-sm w-full mx-auto">
                 <span>{t.hint}</span>
                 <span>{t.best}: {best}</span>
             </div>
             <p className="sr-only" aria-live="polite">{d.summary(score, length)}. {status}.</p>
-        </GameContainer>
+        </div>
+    );
+
+    return (
+        <div
+            ref={containerRef}
+            className={`transition-all duration-200 ${
+                isImmersive
+                    ? 'fixed inset-0 z-50 flex flex-col justify-between bg-[#03060c] p-3 sm:p-5 h-dvh w-screen overflow-hidden'
+                    : ''
+            }`}
+        >
+            {isImmersive ? (
+                content
+            ) : (
+                <GameContainer title={t.title} subtitle={t.subtitle} onReset={status === 'idle' ? undefined : initGame}>
+                    {content}
+                </GameContainer>
+            )}
+        </div>
     );
 };
 

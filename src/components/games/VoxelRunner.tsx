@@ -23,17 +23,40 @@ import {
   ArrowRight,
   ArrowUp,
   ArrowDown,
+  Maximize2,
+  Minimize2,
 } from 'lucide-react';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
+import type { Locale } from '../../lib/i18n';
 
 const STORAGE_KEY = 'oiyo_voxel_runner_high_score';
 
 export default function VoxelRunner({ locale = 'ko' }: { locale?: string }) {
+  const loc = (locale as Locale) || 'ko';
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: loc });
+
   const [status, setStatus] = useState<'idle' | 'playing' | 'gameover'>('idle');
   const [score, setScore] = useState(0);
   const [crystals, setCrystals] = useState(0);
   const [distance, setDistance] = useState(0);
   const [highScore, setHighScore] = useState(0);
-  const [audioEnabled, setAudioEnabled] = useState(true);
+  const [audioEnabled, setAudioEnabled] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('voxel_runner_audio') !== 'false';
+    } catch {
+      return true;
+    }
+  });
+
+  const toggleAudio = useCallback(() => {
+    setAudioEnabled((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('voxel_runner_audio', String(next));
+      } catch {}
+      return next;
+    });
+  }, []);
 
   const [player, setPlayer] = useState<PlayerState>(createInitialPlayer());
   const [obstacles, setObstacles] = useState<Obstacle[]>([]);
@@ -227,6 +250,17 @@ export default function VoxelRunner({ locale = 'ko' }: { locale?: string }) {
   // Keyboard controls
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'KeyF') {
+        e.preventDefault();
+        togglePortal();
+        return;
+      }
+      if (e.code === 'KeyM') {
+        e.preventDefault();
+        toggleAudio();
+        return;
+      }
+
       if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
         handleAction('left');
       } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
@@ -242,14 +276,21 @@ export default function VoxelRunner({ locale = 'ko' }: { locale?: string }) {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [status, handleAction, startGame]);
+  }, [status, handleAction, startGame, toggleAudio, togglePortal]);
 
   const isKo = locale === 'ko';
 
   return (
-    <div className="max-w-2xl mx-auto p-4 sm:p-6 space-y-4">
+    <div
+      ref={containerRef}
+      className={`mx-auto w-full transition-all duration-200 ${
+        isImmersive
+          ? 'fixed inset-0 z-50 flex flex-col justify-between bg-background p-3 sm:p-5 h-dvh w-screen overflow-hidden'
+          : 'max-w-2xl mx-auto p-4 sm:p-6 space-y-4'
+      }`}
+    >
       {/* Header bar */}
-      <div className="flex items-center justify-between bg-card border border-border p-4 rounded-xl shadow-xs">
+      <div className="flex items-center justify-between bg-card border border-border p-4 rounded-xl shadow-xs shrink-0">
         <div>
           <h1 className="text-xl sm:text-2xl font-black tracking-tight text-foreground flex items-center gap-2">
             <span>3D Voxel Runner</span>
@@ -266,17 +307,28 @@ export default function VoxelRunner({ locale = 'ko' }: { locale?: string }) {
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setAudioEnabled(!audioEnabled)}
-            className="p-2 rounded-lg border border-border hover:bg-muted text-muted-foreground"
+            onClick={toggleAudio}
+            className="p-2 rounded-lg border border-border hover:bg-muted text-muted-foreground transition-colors"
             aria-label="Toggle Audio"
+            title="Mute / Unmute (M)"
           >
             {audioEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+          </button>
+          <button
+            onClick={togglePortal}
+            aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+            className="p-2 rounded-lg border border-border hover:bg-muted text-muted-foreground transition-colors"
+            title={isImmersive ? portalLabels.exit : portalLabels.enter}
+          >
+            {isImmersive ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
           </button>
         </div>
       </div>
 
       {/* Main 3D Canvas Box */}
-      <div className="relative rounded-2xl overflow-hidden shadow-lg border border-border">
+      <div className={`relative rounded-2xl overflow-hidden shadow-lg border border-border ${
+        isImmersive ? 'flex-1 min-h-0' : 'h-130'
+      }`}>
         <VoxelRunnerScene
           player={player}
           obstacles={obstacles}
@@ -345,7 +397,7 @@ export default function VoxelRunner({ locale = 'ko' }: { locale?: string }) {
       </div>
 
       {/* Mobile-friendly on-screen Touch Controls */}
-      <div className="grid grid-cols-4 gap-2 bg-card p-3 rounded-xl border border-border">
+      <div className="grid grid-cols-4 gap-2 bg-card p-3 rounded-xl border border-border shrink-0 select-none touch-none">
         <button
           onClick={() => handleAction('left')}
           className="p-3 rounded-lg border border-border bg-background hover:bg-muted font-bold flex flex-col items-center justify-center gap-1 active:scale-95"
