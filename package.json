@@ -2,6 +2,8 @@
   "name": "game-oiyo",
   "type": "module",
   "version": "0.0.1",
+  "private": true,
+  "license": "UNLICENSED",
   "scripts": {
     "dev": "astro dev",
     "build": "NODE_OPTIONS='--max-old-space-size=8192' astro build --concurrency 1",

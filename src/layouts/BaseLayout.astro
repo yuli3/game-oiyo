@@ -99,13 +99,13 @@ const allLangItems = [
 const langItems = availableLocales && availableLocales.length
   ? allLangItems.filter((li) => availableLocales.includes(li.code) || li.code === locale)
   : allLangItems;
-const copy: Record<string, { arcade: string; info: string; family: string; sitemap: string; support: string; home: string }> = {
-  en: { arcade: "Arcade", info: "Information", family: "OIYO family", sitemap: "Sitemap", support: "Support OIYO", home: "Arcade" },
-  ko: { arcade: "아케이드", info: "안내", family: "OIYO 패밀리", sitemap: "사이트맵", support: "OIYO 후원", home: "아케이드" },
-  ja: { arcade: "アーケード", info: "ご案内", family: "OIYOファミリー", sitemap: "サイトマップ", support: "OIYOを支援", home: "アーケード" },
-  zh: { arcade: "街机", info: "信息", family: "OIYO 系列", sitemap: "网站地图", support: "支持 OIYO", home: "街机" },
-  fr: { arcade: "Arcade", info: "Informations", family: "Famille OIYO", sitemap: "Plan du site", support: "Soutenir OIYO", home: "Arcade" },
-  es: { arcade: "Arcade", info: "Información", family: "Familia OIYO", sitemap: "Mapa del sitio", support: "Apoyar OIYO", home: "Arcade" },
+const copy: Record<string, { arcade: string; info: string; family: string; sitemap: string; support: string; home: string; license: string }> = {
+  en: { arcade: "Arcade", info: "Information", family: "OIYO family", sitemap: "Sitemap", support: "Support OIYO", home: "Arcade", license: "License" },
+  ko: { arcade: "아케이드", info: "안내", family: "OIYO 패밀리", sitemap: "사이트맵", support: "OIYO 후원", home: "아케이드", license: "라이선스" },
+  ja: { arcade: "アーケード", info: "ご案内", family: "OIYOファミリー", sitemap: "サイトマップ", support: "OIYOを支援", home: "アーケード", license: "ライセンス" },
+  zh: { arcade: "街机", info: "信息", family: "OIYO 系列", sitemap: "网站地图", support: "支持 OIYO", home: "街机", license: "许可协议" },
+  fr: { arcade: "Arcade", info: "Informations", family: "Famille OIYO", sitemap: "Plan du site", support: "Soutenir OIYO", home: "Arcade", license: "Licence" },
+  es: { arcade: "Arcade", info: "Información", family: "Familia OIYO", sitemap: "Mapa del sitio", support: "Apoyar OIYO", home: "Arcade", license: "Licencia" },
 };
 const labels = copy[locale] ?? copy.en;
 const currentLangItem = langItems.find((li) => li.code === locale) ?? langItems[0];
@@ -398,10 +398,10 @@ const currentLangItem = langItems.find((li) => li.code === locale) ?? langItems[
     <footer class="border-t border-border bg-muted/25 py-10 text-left">
       <div class="container grid gap-8 px-4 sm:grid-cols-2 lg:grid-cols-[0.8fr_1fr_2fr]">
         <section><p class="mb-3 text-sm font-black">OIYO <span class="font-semibold lowercase text-primary">game</span></p><nav aria-label={labels.arcade} class="grid gap-2 text-sm text-muted-foreground"><a href={`/${locale}/`} class="hover:text-primary">{labels.arcade}</a><a href={`/${locale}/achievements/`} class="hover:text-primary">{navItems[1].label}</a><a href={`/${locale}/chess/`} class="hover:text-primary">Chess</a><a href={`/${locale}/sudoku/`} class="hover:text-primary">Sudoku</a></nav></section>
-        <section><p class="mb-3 text-xs font-bold uppercase tracking-widest">{labels.info}</p><nav aria-label={labels.info} class="grid gap-2 text-sm text-muted-foreground"><a href="/sitemap-index.xml" class="hover:text-primary">{labels.sitemap}</a><a href={`https://blog.oiyo.net/${locale}/privacy/`} class="hover:text-primary">{t.legal.privacy.title}</a><a href={`https://blog.oiyo.net/${locale}/terms/`} class="hover:text-primary">{t.legal.terms.title}</a><a href="https://paypal.me/chosean" class="hover:text-primary">{labels.support}</a><a href="https://ko-fi.com/tqqq3" target="_blank" rel="noopener noreferrer" class="hover:text-primary">Ko-fi</a></nav></section>
+        <section><p class="mb-3 text-xs font-bold uppercase tracking-widest">{labels.info}</p><nav aria-label={labels.info} class="grid gap-2 text-sm text-muted-foreground"><a href="/sitemap-index.xml" class="hover:text-primary">{labels.sitemap}</a><a href={`https://blog.oiyo.net/${locale}/privacy/`} class="hover:text-primary">{t.legal.privacy.title}</a><a href={`https://blog.oiyo.net/${locale}/terms/`} class="hover:text-primary">{t.legal.terms.title}</a><a href={`https://blog.oiyo.net/${locale}/license/`} class="hover:text-primary">{labels.license}</a><a href="https://paypal.me/chosean" class="hover:text-primary">{labels.support}</a><a href="https://ko-fi.com/tqqq3" target="_blank" rel="noopener noreferrer" class="hover:text-primary">Ko-fi</a></nav></section>
         <section><p class="mb-3 text-xs font-bold uppercase tracking-widest">{labels.family}</p><nav aria-label={labels.family} class="grid grid-cols-2 gap-x-5 gap-y-3 sm:grid-cols-3">{FAMILY.map((f) => (<a href={familyHref(f, "footer")} class="group text-sm font-semibold hover:text-primary">{f.name}<span class="block text-xs font-normal text-muted-foreground">{f.tag[locale as keyof typeof f.tag] ?? f.tag.en}</span></a>))}</nav></section>
       </div>
-      <div class="container mt-8 flex justify-between border-t border-border px-4 pt-5 text-xs text-muted-foreground"><span>© {new Date().getFullYear()} Oiyo Tech</span><a href="mailto:support@oiyo.net">support@oiyo.net</a></div>
+      <div class="container mt-8 flex justify-between border-t border-border px-4 pt-5 text-xs text-muted-foreground"><span>© {new Date().getFullYear()} Oiyo Tech · <a href={`https://blog.oiyo.net/${locale}/license/`} class="hover:text-primary">{labels.license}</a></span><a href="mailto:support@oiyo.net">support@oiyo.net</a></div>
     </footer>
   </body>
 </html>
