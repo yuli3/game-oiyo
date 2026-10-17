@@ -1802,4 +1802,78 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "neon-survivor": {
+    origin: {
+      ko: "네온 서바이버는 고전 아케이드 트윈스틱 슈터와 뱀파이어 서바이벌 류 호드 서바이벌에서 영감을 얻은 OIYO 오리지널 캔버스 액션 게임입니다. 100% Canvas GPU 렌더링 파이프라인과 순수 수치 시뮬레이션으로 수백 개의 개체를 120fps 부드러움으로 구현했습니다.",
+      en: "Neon Survivor is an original OIYO canvas action roguelite inspired by classic arcade twin-stick shooters and horde survival games. It delivers a 100% Canvas GPU rendering pipeline and deterministic physics simulating hundreds of entities at silky-smooth 120fps.",
+      ja: "ネオン・サバイバーは、古典的なツインスティック・シューターと大群サバイバルに着想を得たOIYOオリジナルのキャンバスアクションゲームです。100% Canvas GPU描画と決定論的物理演算により、多数の敵群を120fpsで滑らかにシミュレートします。",
+      zh: "霓虹幸存者是一款受经典双摇杆街机射击与大群幸存者肉鸽启发的 OIYO 原创 Canvas 动作游戏。采用 100% Canvas GPU 渲染管线与纯数值模拟，流畅呈现百级实体的割草对抗。",
+      fr: "Neon Survivor est un jeu d'action roguelite original d'OIYO inspiré des twin-stick shooters d'arcade et des jeux de survie de horde. Il utilise un rendu 100% Canvas GPU avec physique déterministe pour afficher des centaines d'entités avec fluidité.",
+      es: "Neon Survivor es un roguelite de acción original de OIYO inspirado en los clásicos arcade twin-stick y los juegos de supervivencia de hordas. Cuenta con un motor 100% Canvas GPU que simula cientos de entidades a 120 fps.",
+    },
+    how: {
+      ko: "모바일에서는 화면 아무 곳이나 터치해 드래그하면 가상 아날로그 조이스틱이 나타나 기체를 조종합니다. PC에서는 WASD나 방향키로 이동합니다. 무기는 가장 가까운 적을 향해 자동으로 조준·발사되며, 적을 격추하고 드롭된 경험치 젬을 모아 레벨업 시 새로운 무기나 강화 특성을 선택할 수 있습니다.",
+      en: "On mobile, touch and drag anywhere on the screen to deploy a virtual analog joystick. On desktop, use WASD or arrow keys. Weapons aim and fire automatically at the nearest targets. Destroy cybernetic enemies, collect dropped EXP gems, and pick overclock upgrades upon leveling up.",
+      ja: "モバイルでは画面のどこかをタッチしてドラッグすると仮想アナログジョイスティックが出現して機体を操作できます。PCではWASDまたは矢印キーで移動します。武器は最寄りの敵へ自動照準・発射され、EXPジェムを集めてレベルアップし兵装を強化します。",
+      zh: "手机端可在屏幕任意位置触控拖拽唤出虚拟全向摇杆操纵战机；电脑端使用 WASD 或方向键移动。武器会自动瞄准并射击最近的敌人。消灭机械敌人，收集掉落的经验宝石，在升级时挑选强力超频芯片。",
+      fr: "Sur mobile, touchez et glissez n'importe où pour activer un joystick analogique virtuel. Sur PC, utilisez ZQSD/WASD ou les flèches. Vos armes tirent automatiquement sur les cibles proches. Éliminez les ennemis, récoltez les gemmes d'EXP et choisissez vos améliorations d'overclocking à chaque niveau.",
+      es: "En móviles, toca y arrastra en cualquier lugar para activar un joystick analógico virtual. En PC, usa WASD o las flechas de dirección. Las armas apuntan y disparan automáticamente al enemigo más cercano. Destruye enemigos, recoge gemas de EXP y elige mejoras al subir de nivel.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "모바일에서 조이스틱 위치가 고정되어 있나요?",
+          en: "Is the joystick anchored in a fixed position on mobile?",
+          ja: "モバイルでジョイスティックの位置は固定されていますか？",
+          zh: "移动端摇杆位置是固定的吗？",
+          fr: "La position du joystick est-elle fixe sur mobile ?",
+          es: "¿La posición del joystick es fija en móviles?",
+        },
+        a: {
+          ko: "아니요. 손가락이 닿는 첫 터치 지점에 즉시 가상 조이스틱 기준점이 생성되는 동적 플로팅 방식을 채택하여 화면 크기나 파지법에 관계없이 직관적으로 조작할 수 있습니다.",
+          en: "No. It uses a dynamic floating joystick that spawns exactly where your thumb touches the screen, ensuring ergonomic control on any screen size or grip.",
+          ja: "いいえ。親指が触れた位置に即座に仮想ジョイスティックが生成される動的フローティング方式を採用しており、画面サイズや持ち方を問わず直感的に操作できます。",
+          zh: "不是。采用动态浮动摇杆机制，在手指触控屏幕的瞬间以该点为中心生成摇杆基点，无论屏幕尺寸和握持姿势如何都能自然操控。",
+          fr: "Non. Le jeu utilise un joystick flottant dynamique qui apparaît exactement là où votre pouce touche l'écran, garantissant une ergonomie parfaite sur toutes les tailles d'écran.",
+          es: "No. Emplea un joystick flotante dinámico que aparece exactamente donde tu pulgar toca la pantalla, asegurando un control ergonómico sin importar el tamaño de la pantalla.",
+        },
+      },
+      {
+        q: {
+          ko: "오버클럭 업그레이드는 중첩되나요?",
+          en: "Do overclock upgrades stack?",
+          ja: "オーバクロックのアップグレードは重複適用されますか？",
+          zh: "超频强化效果可以叠加吗？",
+          fr: "Les améliorations d'overclocking se cumulent-elles ?",
+          es: "¿Las mejoras de overclocking son acumulables?",
+        },
+        a: {
+          ko: "네. 연사 속도, 탄환 수, 이동 속도, 블레이드 개수 및 자석 흡수 범위 등 모든 업그레이드는 획득할 때마다 누적되어 기체의 공격력과 생존력이 비약적으로 상승합니다.",
+          en: "Yes. All upgrades—including fire rate, projectile count, speed, orbital blades, and magnet range—stack multiplicatively or additively to exponentially scale your combat power.",
+          ja: "はい。連射速度、弾丸数、移動速度、オービタルブレード数、磁石の回収範囲など、すべてのアップグレードは取得するごとに累積強化されます。",
+          zh: "可以。射速提升、弹道增加、移动速度、环绕利刃数量以及吸铁石吸附范围等所有升级项均会累计叠加，大幅增强战机的火力与清怪能力。",
+          fr: "Oui. Toutes les améliorations (cadence de tir, projectiles supplémentaires, vitesse, lames orbitales et portée d'aimant) se cumulent pour décupler votre puissance.",
+          es: "Sí. Todas las mejoras (cadencia de disparo, proyectiles extra, velocidad, cuchillas orbitales y alcance magnético) se acumulan para potenciar drásticamente tu nave.",
+        },
+      },
+      {
+        q: {
+          ko: "게임 진행 및 최고 점수가 서버에 저장되나요?",
+          en: "Is game progress or high score sent to a server?",
+          ja: "進行状況やハイスコアはサーバーに送信されますか？",
+          zh: "游戏进度和最高分会上传到服务器吗？",
+          fr: "La progression ou le meilleur score sont-ils envoyés à un serveur ?",
+          es: "¿El progreso o la puntuación récord se envían a un servidor?",
+        },
+        a: {
+          ko: "아니요. 모든 물리 연산, 사운드 합성, 점수 기록은 브라우저 내부에서 100% 로컬로 처리되며 외부 서버로 개인정보나 플레이 데이터를 전송하지 않습니다.",
+          en: "No. All physics, procedural synth audio, and high scores are processed 100% client-side inside your browser without transmitting any personal data or telemetry to remote servers.",
+          ja: "いいえ。すべての物理演算、シンセ音響合成、スコア記録はブラウザ内部で100%ローカル処理され、外部サーバーに個人情報やプレイデータが送信されることはありません。",
+          zh: "不会。所有的物理演算、合成器音效和得分记录均在浏览器本地 100% 完成，绝不会向远程服务器传输任何个人数据或游玩记录。",
+          fr: "Non. Tous les calculs physiques, la synthèse sonore et les scores sont traités à 100% en local dans votre navigateur, sans aucun envoi de données vers des serveurs tiers.",
+          es: "No. Todas las físicas, la síntesis de audio procedural y las puntuaciones se procesan al 100% de forma local en tu navegador sin enviar datos a servidores externos.",
+        },
+      },
+    ],
+  },
 };

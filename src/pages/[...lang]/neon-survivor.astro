@@ -1,0 +1,54 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import NeonSurvivor from "../../components/games/NeonSurvivor";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "네온 서바이버 — 100% 캔버스 로그라이크 서바이벌 게임",
+    description: "끝없이 몰려오는 사이버네틱 무리를 격추하고 경험치 젬을 모아 무기를 진화시키세요. 100% Canvas GPU 렌더링과 아날로그 터치 조이스틱을 탑재한 네온 호드 서바이벌 roguelite.",
+  },
+  en: {
+    title: "Neon Survivor — 100% Canvas Horde Survival Roguelite",
+    description: "Evade cybernetic swarms, gather EXP gems, and evolve your arsenal. A high-performance 100% Canvas GPU roguelite featuring virtual analog touch controls and procedural synthwave audio.",
+  },
+  ja: {
+    title: "ネオン・サバイバー — 100%キャンバスホードサバイバル・ローグライト",
+    description: "迫り来るサイバーネティックの大群を殲滅し、EXPジェムで兵装を進化。100% Canvas GPU描画とアナログ仮想ジョイスティックを備えたネオン調サバイバルローグライト。",
+  },
+  zh: {
+    title: "霓虹幸存者 — 100% Canvas 幸存者肉鸽割草游戏",
+    description: "消灭不断涌来的机械蜂群，收集经验宝石进化武器。基于 100% Canvas GPU 渲染与全向触控虚拟摇杆的霓虹风群怪幸存者肉鸽游戏。",
+  },
+  fr: {
+    title: "Neon Survivor — Roguelite de Survie Horde 100% Canvas",
+    description: "Échappez aux essaims cybernétiques, collectez des gemmes d'EXP et faites évoluer vos armes. Un roguelite 100% Canvas fluide avec joystick tactile virtuel et synthwave procédurale.",
+  },
+  es: {
+    title: "Neon Survivor — Roguelite de Supervivencia de Hordas 100% Canvas",
+    description: "Esquiva enjambres cibernéticos, recolecta gemas de EXP y evoluciona tu arsenal. Un roguelite 100% Canvas de alto rendimiento con joystick táctil virtual y sintetizador procedural.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+const gameArt = gameArtDocument.games as Record<string, string>;
+const coverArt = gameArt["neon-survivor"] ?? gameArt["neon-formation"] ?? "/games/neon-formation-social.png";
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={coverArt}>
+  <div class="mx-auto max-w-4xl px-2 py-4 sm:px-4 sm:py-6">
+    <NeonSurvivor client:load locale={locale} />
+    <div class="mx-auto max-w-3xl px-2">
+      <GameGuide slug="neon-survivor" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
+    </div>
+  </div>
+</BaseLayout>
