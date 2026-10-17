@@ -172,9 +172,18 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     useEffect(() => {
         if (score > previousScoreRef.current) {
             playTone(620, 0.12);
+            if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+                try { navigator.vibrate(15); } catch {}
+            }
             setEatBurst({ x: lastFoodRef.current.x, y: lastFoodRef.current.y, at: Date.now() });
         }
-        if (status === 'over' && previousStatusRef.current !== 'over') { playTone(150, 0.3); recordAchievementEvent('snake-game', 'played'); }
+        if (status === 'over' && previousStatusRef.current !== 'over') {
+            playTone(150, 0.3);
+            if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+                try { navigator.vibrate([40, 40, 80]); } catch {}
+            }
+            recordAchievementEvent('snake-game', 'played');
+        }
         previousScoreRef.current = score;
         previousStatusRef.current = status;
         if (game?.food) lastFoodRef.current = game.food;
@@ -226,6 +235,7 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             </div>
 
             <div
+                data-game-surface
                 className="relative aspect-square w-full max-w-sm mx-auto bg-muted/30 rounded-2xl border border-border overflow-hidden touch-none"
                 onTouchStart={onTouchStart}
                 onTouchEnd={onTouchEnd}
@@ -322,6 +332,47 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         )}
                     </div>
                 )}
+            </div>
+            {/* Mobile Touch D-Pad */}
+            <div className="mt-4 flex flex-col items-center gap-2 sm:hidden touch-none" aria-label="터치 방향키">
+                <button
+                    type="button"
+                    data-game-control
+                    aria-label="위로 이동"
+                    onPointerDown={(e) => { e.preventDefault(); changeDir(0, -1); }}
+                    className="w-14 h-14 rounded-2xl bg-muted/80 border border-border flex items-center justify-center text-xl font-black text-foreground shadow-xs active:scale-95 transition-transform"
+                >
+                    ▲
+                </button>
+                <div className="flex gap-4">
+                    <button
+                        type="button"
+                        data-game-control
+                        aria-label="왼쪽 이동"
+                        onPointerDown={(e) => { e.preventDefault(); changeDir(-1, 0); }}
+                        className="w-14 h-14 rounded-2xl bg-muted/80 border border-border flex items-center justify-center text-xl font-black text-foreground shadow-xs active:scale-95 transition-transform"
+                    >
+                        ◀
+                    </button>
+                    <button
+                        type="button"
+                        data-game-control
+                        aria-label="아래로 이동"
+                        onPointerDown={(e) => { e.preventDefault(); changeDir(0, 1); }}
+                        className="w-14 h-14 rounded-2xl bg-muted/80 border border-border flex items-center justify-center text-xl font-black text-foreground shadow-xs active:scale-95 transition-transform"
+                    >
+                        ▼
+                    </button>
+                    <button
+                        type="button"
+                        data-game-control
+                        aria-label="오른쪽 이동"
+                        onPointerDown={(e) => { e.preventDefault(); changeDir(1, 0); }}
+                        className="w-14 h-14 rounded-2xl bg-muted/80 border border-border flex items-center justify-center text-xl font-black text-foreground shadow-xs active:scale-95 transition-transform"
+                    >
+                        ▶
+                    </button>
+                </div>
             </div>
 
             <div className="mt-6 flex justify-between text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest">
