@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
+import { Stars, Sparkles } from '@react-three/drei';
 import * as THREE from 'three';
 import type { VoxelMazeState } from '../../lib/games/voxel-maze';
 
@@ -44,10 +45,33 @@ export default function VoxelMaze3DScene({ state }: VoxelMaze3DSceneProps) {
 
   return (
     <>
-      <color attach="background" args={["#0f172a"]} />
-      <ambientLight intensity={0.6} />
-      <directionalLight position={[20, 40, 20]} intensity={1.4} color="#f8fafc" />
-      <pointLight position={[state.player.x, 3, state.player.z]} intensity={1.5} color="#38bdf8" distance={15} />
+      <color attach="background" args={["#090d16"]} />
+      <ambientLight intensity={0.5} />
+      <directionalLight position={[20, 40, 20]} intensity={1.5} color="#f8fafc" />
+      <pointLight position={[state.player.x, 3, state.player.z]} intensity={2.0} color="#38bdf8" distance={16} />
+
+      {/* Cyber Labyrinth Deep Atmosphere */}
+      <Stars radius={50} depth={25} count={1200} factor={3} saturation={0} fade speed={0.8} />
+      <Sparkles
+        count={45}
+        scale={[state.gridSize, 5, state.gridSize]}
+        position={[state.gridSize / 2, 2, state.gridSize / 2]}
+        size={2.5}
+        color="#38bdf8"
+        speed={0.4}
+        opacity={0.65}
+      />
+      {state.isGateOpen && (
+        <Sparkles
+          count={35}
+          scale={[state.gridSize, 6, state.gridSize]}
+          position={[state.gridSize / 2, 2.5, state.gridSize / 2]}
+          size={4}
+          color="#10b981"
+          speed={1.0}
+          opacity={0.8}
+        />
+      )}
 
       {/* Floor Grid */}
       <mesh position={[state.gridSize / 2 - 0.5, -0.1, state.gridSize / 2 - 0.5]} rotation={[-Math.PI / 2, 0, 0]}>

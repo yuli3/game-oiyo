@@ -29,6 +29,7 @@ import {
 } from '../../lib/games/minesweeper';
 import { MINESWEEPER_SPRITES } from '../../lib/games/sprites';
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
+import confetti from 'canvas-confetti';
 
 const LEGACY_BEST_KEY = 'oiyo-minesweeper-best'; // pre-unification key, read once for migration
 
@@ -58,12 +59,12 @@ function generateDailyBoard() {
 }
 
 const COPY = {
-    ko: { title: "지뢰찾기", subtitle: "Logic Sweep", mines: "남은 지뢰", time: "시간", over: "폭발! 게임 종료", win: "모든 안전 칸을 열었어요!", reset: "새 게임", dig: "파기", flag: "깃발", best: "최단 기록", hint: "숫자를 다시 누르면 주변 깃발 수가 맞을 때 한꺼번에 엽니다 · 모바일: 깃발 모드 · PC: 우클릭", pending: "첫 클릭은 항상 안전하며, 클릭 위치에 맞춰 판을 만듭니다.", verified: "이 판은 표준 논리 추론만으로 풀 수 있음을 검증했습니다.", fallback: "첫 클릭은 안전하지만 제한된 생성 횟수 안에 무추측 검증을 마치지 못한 판입니다.", row: "행", column: "열", hidden: "닫힌 칸", flagged: "깃발 표시", mine: "지뢰", empty: "빈 칸", number: "주변 지뢰", daily: "📅 오늘의 도전", free: "자유 플레이", beginner: "초급 10×10", intermediate: "중급 16×16", expert: "고급 30×16", streak: "연속", doneToday: "오늘 완료 ✓" },
-    en: { title: "Minesweeper", subtitle: "Logic Sweep", mines: "Mines", time: "Time", over: "BOOM! Game Over", win: "All safe cells cleared!", reset: "New Game", dig: "Dig", flag: "Flag", best: "Best Time", hint: "Press an open number again to clear around matching flags · Mobile: flag mode · PC: right-click", pending: "The first click is always safe; the board is generated around it.", verified: "This board was verified solvable using standard logical deductions only.", fallback: "The first click is safe, but no-guess verification did not finish within the generation limit.", row: "row", column: "column", hidden: "hidden cell", flagged: "flagged", mine: "mine", empty: "empty", number: "adjacent mines", daily: "📅 Daily Challenge", free: "Free Play", beginner: "Beginner 10×10", intermediate: "Intermediate 16×16", expert: "Expert 30×16", streak: "Streak", doneToday: "Done today ✓" },
-    ja: { title: "マインスイーパー", subtitle: "Logic Sweep", mines: "残り地雷", time: "時間", over: "ドカン！ゲーム終了", win: "安全なマスをすべて開きました！", reset: "新しいゲーム", dig: "掘る", flag: "旗", best: "最短記録", hint: "開いた数字を再度押すと、旗の数が合う場合に周囲を一括で開きます · モバイル: 旗モード · PC: 右クリック", pending: "最初のクリックは必ず安全で、その位置に合わせて盤面を生成します。", verified: "この盤面は標準的な論理推論だけで解けることを検証済みです。", fallback: "最初のクリックは安全ですが、生成上限内に推測不要の検証を完了できませんでした。", row: "行", column: "列", hidden: "閉じたマス", flagged: "旗付き", mine: "地雷", empty: "空白", number: "周囲の地雷", daily: "📅 デイリー挑戦", free: "フリープレイ", beginner: "初級 10×10", intermediate: "中級 16×16", expert: "上級 30×16", streak: "連続", doneToday: "本日クリア ✓" },
-    zh: { title: "扫雷", subtitle: "Logic Sweep", mines: "剩余地雷", time: "时间", over: "爆炸！游戏结束", win: "已打开所有安全格！", reset: "新游戏", dig: "挖开", flag: "插旗", best: "最快记录", hint: "再次按已打开的数字，旗帜数匹配时可一次打开周围 · 手机: 插旗模式 · 电脑: 右键", pending: "首次点击始终安全，棋盘会围绕该位置生成。", verified: "此棋盘已验证可仅用标准逻辑推理完成。", fallback: "首次点击安全，但在生成次数上限内未完成无猜测验证。", row: "行", column: "列", hidden: "未打开", flagged: "已插旗", mine: "地雷", empty: "空格", number: "相邻地雷", daily: "📅 每日挑战", free: "自由模式", beginner: "初级 10×10", intermediate: "中级 16×16", expert: "高级 30×16", streak: "连续", doneToday: "今日已完成 ✓" },
-    fr: { title: "Démineur", subtitle: "Logic Sweep", mines: "Mines", time: "Temps", over: "BOUM ! Partie terminée", win: "Toutes les cases sûres sont ouvertes !", reset: "Nouvelle partie", dig: "Creuser", flag: "Drapeau", best: "Meilleur temps", hint: "Réactivez un nombre ouvert pour dégager autour des drapeaux correspondants · Mobile : drapeau · PC : clic droit", pending: "Le premier clic est toujours sûr ; la grille est générée autour de lui.", verified: "Cette grille a été vérifiée comme résoluble uniquement par déductions logiques standard.", fallback: "Le premier clic est sûr, mais la vérification sans conjecture n'a pas abouti dans la limite de génération.", row: "ligne", column: "colonne", hidden: "case fermée", flagged: "drapeau", mine: "mine", empty: "vide", number: "mines voisines", daily: "📅 Défi du jour", free: "Partie libre", beginner: "Débutant 10×10", intermediate: "Intermédiaire 16×16", expert: "Expert 30×16", streak: "Série", doneToday: "Fini aujourd'hui ✓" },
-    es: { title: "Buscaminas", subtitle: "Logic Sweep", mines: "Minas", time: "Tiempo", over: "¡BUM! Fin del juego", win: "¡Abriste todas las casillas seguras!", reset: "Nueva partida", dig: "Cavar", flag: "Bandera", best: "Mejor tiempo", hint: "Pulsa de nuevo un número abierto para despejar alrededor de las banderas coincidentes · Móvil: bandera · PC: clic derecho", pending: "El primer clic siempre es seguro; el tablero se genera a su alrededor.", verified: "Se verificó que este tablero puede resolverse solo con deducciones lógicas estándar.", fallback: "El primer clic es seguro, pero la verificación sin adivinar no terminó dentro del límite de generación.", row: "fila", column: "columna", hidden: "casilla cerrada", flagged: "con bandera", mine: "mina", empty: "vacía", number: "minas adyacentes", daily: "📅 Reto diario", free: "Juego libre", beginner: "Principiante 10×10", intermediate: "Intermedio 16×16", expert: "Experto 30×16", streak: "Racha", doneToday: "Hecho hoy ✓" },
+    ko: { title: "지뢰찾기", subtitle: "Logic Sweep", mines: "남은 지뢰", time: "시간", over: "폭발! 게임 종료", win: "모든 안전 칸을 열었어요!", reset: "새 게임", dig: "파기", flag: "깃발", best: "최단 기록", hint: "숫자를 다시 누르면 주변 깃발 수가 맞을 때 한꺼번에 엽니다 · 모바일: 깃발 모드 · PC: 우클릭", pending: "첫 클릭은 항상 안전하며, 클릭 위치에 맞춰 판을 만듭니다.", verified: "이 판은 표준 논리 추론만으로 풀 수 있음을 검증했습니다.", fallback: "첫 클릭은 안전하지만 제한된 생성 횟수 안에 무추측 검증을 마치지 못한 판입니다.", row: "행", column: "열", hidden: "닫힌 칸", flagged: "깃발 표시", mine: "지뢰", empty: "빈 칸", number: "주변 지뢰", daily: "📅 오늘의 도전", free: "자유 플레이", beginner: "초급 10×10", intermediate: "중급 16×16", expert: "고급 30×16", streak: "연속", doneToday: "오늘 완료 ✓", sound: "소리", soundOn: "소리 켜기", soundOff: "소리 끄기" },
+    en: { title: "Minesweeper", subtitle: "Logic Sweep", mines: "Mines", time: "Time", over: "BOOM! Game Over", win: "All safe cells cleared!", reset: "New Game", dig: "Dig", flag: "Flag", best: "Best Time", hint: "Press an open number again to clear around matching flags · Mobile: flag mode · PC: right-click", pending: "The first click is always safe; the board is generated around it.", verified: "This board was verified solvable using standard logical deductions only.", fallback: "The first click is safe, but no-guess verification did not finish within the generation limit.", row: "row", column: "column", hidden: "hidden cell", flagged: "flagged", mine: "mine", empty: "empty", number: "adjacent mines", daily: "📅 Daily Challenge", free: "Free Play", beginner: "Beginner 10×10", intermediate: "Intermediate 16×16", expert: "Expert 30×16", streak: "Streak", doneToday: "Done today ✓", sound: "Sound", soundOn: "Unmute", soundOff: "Mute" },
+    ja: { title: "マインスイーパー", subtitle: "Logic Sweep", mines: "残り地雷", time: "時間", over: "ドカン！ゲーム終了", win: "安全なマスをすべて開きました！", reset: "新しいゲーム", dig: "掘る", flag: "旗", best: "最短記録", hint: "開いた数字を再度押すと、旗の数が合う場合に周囲を一括で開きます · モバイル: 旗モード · PC: 右クリック", pending: "最初のクリックは必ず安全で、その位置に合わせて盤面を生成します。", verified: "この盤面は標準的な論理推論だけで解けることを検証済みです。", fallback: "最初のクリックは安全ですが、生成上限内に推測不要の検証を完了できませんでした。", row: "行", column: "列", hidden: "閉じたマス", flagged: "旗付き", mine: "地雷", empty: "空白", number: "周囲の地雷", daily: "📅 デイリー挑戦", free: "フリープレイ", beginner: "初級 10×10", intermediate: "中級 16×16", expert: "上級 30×16", streak: "連続", doneToday: "本日クリア ✓", sound: "サウンド", soundOn: "消音解除", soundOff: "消音" },
+    zh: { title: "扫雷", subtitle: "Logic Sweep", mines: "剩余地雷", time: "时间", over: "爆炸！游戏结束", win: "已打开所有安全格！", reset: "新游戏", dig: "挖开", flag: "插旗", best: "最快记录", hint: "再次按已打开的数字，旗帜数匹配时可一次打开周围 · 手机: 插旗模式 · 电脑: 右键", pending: "首次点击始终安全，棋盘会围绕该位置生成。", verified: "此棋盘已验证可仅用标准逻辑推理完成。", fallback: "首次点击安全，但在生成次数上限内未完成无猜测验证。", row: "行", column: "列", hidden: "未打开", flagged: "已插旗", mine: "地雷", empty: "空格", number: "相邻地雷", daily: "📅 每日挑战", free: "自由模式", beginner: "初级 10×10", intermediate: "中级 16×16", expert: "高级 30×16", streak: "连续", doneToday: "今日已完成 ✓", sound: "声音", soundOn: "开启声音", soundOff: "静音" },
+    fr: { title: "Démineur", subtitle: "Logic Sweep", mines: "Mines", time: "Temps", over: "BOUM ! Partie terminée", win: "Toutes les cases sûres sont ouvertes !", reset: "Nouvelle partie", dig: "Creuser", flag: "Drapeau", best: "Meilleur temps", hint: "Réactivez un nombre ouvert pour dégager autour des drapeaux correspondants · Mobile : drapeau · PC : clic droit", pending: "Le premier clic est toujours sûr ; la grille est générée autour de lui.", verified: "Cette grille a été vérifiée comme résoluble uniquement par déductions logiques standard.", fallback: "Le premier clic est sûr, mais la vérification sans conjecture n'a pas abouti dans la limite de génération.", row: "ligne", column: "colonne", hidden: "case fermée", flagged: "drapeau", mine: "mine", empty: "vide", number: "mines voisines", daily: "📅 Défi du jour", free: "Partie libre", beginner: "Débutant 10×10", intermediate: "Intermédiaire 16×16", expert: "Expert 30×16", streak: "Série", doneToday: "Fini aujourd'hui ✓", sound: "Son", soundOn: "Activer le son", soundOff: "Couper le son" },
+    es: { title: "Buscaminas", subtitle: "Logic Sweep", mines: "Minas", time: "Tiempo", over: "¡BUM! Fin del juego", win: "¡Abriste todas las casillas seguras!", reset: "Nueva partida", dig: "Cavar", flag: "Bandera", best: "Mejor tiempo", hint: "Pulsa de nuevo un número abierto para despejar alrededor de las banderas coincidentes · Móvil: bandera · PC: clic derecho", pending: "El primer clic siempre es seguro; el tablero se genera a su alrededor.", verified: "Se verificó que este tablero puede resolverse solo con deducciones lógicas estándar.", fallback: "El primer clic es seguro, pero la verificación sin adivinar no terminó dentro del límite de generación.", row: "fila", column: "columna", hidden: "casilla cerrada", flagged: "con bandera", mine: "mina", empty: "vacía", number: "minas adyacentes", daily: "📅 Reto diario", free: "Juego libre", beginner: "Principiante 10×10", intermediate: "Intermedio 16×16", expert: "Experto 30×16", streak: "Racha", doneToday: "Hecho hoy ✓", sound: "Sonido", soundOn: "Activar sonido", soundOff: "Silenciar" },
 } as const;
 
 const HINT_COPY = {
@@ -145,6 +146,158 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const startedAtRef = useRef<number | null>(null);
     const longPressTimerRef = useRef<number | null>(null);
     const longPressTriggeredRef = useRef(false);
+
+    const [muted, setMuted] = useState(false);
+    const mutedRef = useRef(false);
+    useEffect(() => { mutedRef.current = muted; }, [muted]);
+    const audioCtxRef = useRef<AudioContext | null>(null);
+
+    const getAudioContext = useCallback(() => {
+        if (typeof window === 'undefined') return null;
+        if (!audioCtxRef.current) {
+            const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+            if (AudioCtx) audioCtxRef.current = new AudioCtx();
+        }
+        if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
+            void audioCtxRef.current.resume();
+        }
+        return audioCtxRef.current;
+    }, []);
+
+    const vibrate = useCallback((pattern: number | number[]) => {
+        if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+            try {
+                navigator.vibrate(pattern);
+            } catch {
+                // ignore
+            }
+        }
+    }, []);
+
+    const playDigSound = useCallback(() => {
+        if (mutedRef.current) return;
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.exponentialRampToValueAtTime(140, now + 0.05);
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.05);
+    }, [getAudioContext]);
+
+    const playFlagSound = useCallback((isFlagging: boolean) => {
+        if (mutedRef.current) return;
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        if (isFlagging) {
+            osc.frequency.setValueAtTime(360, now);
+            osc.frequency.exponentialRampToValueAtTime(620, now + 0.06);
+        } else {
+            osc.frequency.setValueAtTime(520, now);
+            osc.frequency.exponentialRampToValueAtTime(260, now + 0.06);
+        }
+        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.06);
+    }, [getAudioContext]);
+
+    const playChordSound = useCallback(() => {
+        if (mutedRef.current) return;
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        [523.25, 659.25, 783.99].forEach((freq, idx) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            const start = now + idx * 0.03;
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, start);
+            gain.gain.setValueAtTime(0.06, start);
+            gain.gain.exponentialRampToValueAtTime(0.001, start + 0.12);
+            osc.connect(gain).connect(ctx.destination);
+            osc.start(start);
+            osc.stop(start + 0.12);
+        });
+    }, [getAudioContext]);
+
+    const playExplosionSound = useCallback(() => {
+        if (mutedRef.current) return;
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(130, now);
+        osc.frequency.exponentialRampToValueAtTime(30, now + 0.35);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.35);
+
+        try {
+            const bufferSize = Math.floor(ctx.sampleRate * 0.25);
+            const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.08));
+            }
+            const noise = ctx.createBufferSource();
+            noise.buffer = buffer;
+            const noiseGain = ctx.createGain();
+            noiseGain.gain.setValueAtTime(0.2, now);
+            noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+            noise.connect(noiseGain).connect(ctx.destination);
+            noise.start(now);
+        } catch {
+            // fallback
+        }
+    }, [getAudioContext]);
+
+    const playWinFanfare = useCallback(() => {
+        if (mutedRef.current) return;
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        const notes = [523.25, 659.25, 783.99, 1046.50];
+        notes.forEach((freq, idx) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            const start = now + idx * 0.1;
+            const dur = idx === notes.length - 1 ? 0.6 : 0.25;
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, start);
+            gain.gain.setValueAtTime(0.12, start);
+            gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
+            osc.connect(gain).connect(ctx.destination);
+            osc.start(start);
+            osc.stop(start + dur);
+        });
+    }, [getAudioContext]);
+
+    const [shake, setShake] = useState(0);
+    const triggerShake = useCallback(() => {
+        let current = 12;
+        setShake(current);
+        const interval = setInterval(() => {
+            current = Math.max(0, current - 2);
+            setShake(current);
+            if (current <= 0) clearInterval(interval);
+        }, 30);
+    }, []);
 
     const recordConditions = useCallback((): BestConditions => ({
         seed: mode === 'daily' ? `daily-${dailyDate}` : `free-${generationSeed.current}`,
@@ -304,7 +457,30 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             recordedRef.current = true;
             recordAchievementEvent('minesweeper', 'played');
         }
+        if (result.status === 'lost') {
+            triggerShake();
+            playExplosionSound();
+            vibrate([80, 40, 120]);
+        }
         if (result.status === 'won' && firstTerminal) {
+            playWinFanfare();
+            vibrate([40, 40, 40, 40, 100]);
+            try {
+                confetti({
+                    particleCount: 50,
+                    spread: 60,
+                    origin: { x: 0.25, y: 0.6 },
+                    disableForReducedMotion: true,
+                });
+                confetti({
+                    particleCount: 50,
+                    spread: 60,
+                    origin: { x: 0.75, y: 0.6 },
+                    disableForReducedMotion: true,
+                });
+            } catch {
+                // ignore
+            }
             const elapsed = recordedGameSeconds(startedAtRef.current, performance.now());
             setTimer(elapsed);
             const previousBest = bestTime;
@@ -340,7 +516,18 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         }
         const wasRevealed = base[y][x].isRevealed;
         const result = wasRevealed ? chordMinesweeperCell(base, x, y) : revealMinesweeperCell(base, x, y);
-        if (result.changed) advanceOnboarding(wasRevealed ? 'chorded' : 'revealed');
+        if (result.changed) {
+            advanceOnboarding(wasRevealed ? 'chorded' : 'revealed');
+            if (result.status === 'playing') {
+                if (wasRevealed) {
+                    playChordSound();
+                    vibrate([10, 30, 15]);
+                } else {
+                    playDigSound();
+                    vibrate(8);
+                }
+            }
+        }
         applyReveal(result, { x, y });
     };
 
@@ -352,7 +539,13 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         if (!board[y][x].isFlagged && next[y]?.[x]?.isFlagged) {
             advanceOnboarding('flagged');
             setFreshFlag(`${x}:${y}`);
-        } else setFreshFlag(null);
+            playFlagSound(true);
+            vibrate(18);
+        } else {
+            setFreshFlag(null);
+            playFlagSound(false);
+            vibrate(10);
+        }
         setBoard(next);
     };
 
@@ -490,18 +683,29 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     <img src={MINESWEEPER_SPRITES.flag} alt="" draggable={false} className="h-4 w-4 object-contain" />
                     {mineCount - flaggedCount}
                 </div>
-                <button
-                    onClick={() => setFlagMode((f) => !f)}
-                    aria-pressed={flagMode}
-                    aria-label={flagMode ? t.flag : t.dig}
-                    className={`min-h-11 px-4 py-2 rounded-full text-xs font-black border transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
-                        flagMode
-                            ? 'bg-chart-2/15 text-chart-2 border-chart-2/40'
-                            : 'bg-muted text-muted-foreground border-border'
-                    }`}
-                >
-                    {flagMode ? <span className="inline-flex items-center gap-1"><img src={MINESWEEPER_SPRITES.flag} alt="" draggable={false} className="h-4 w-4 object-contain" />{t.flag}</span> : `⛏️ ${t.dig}`}
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setFlagMode((f) => !f)}
+                        aria-pressed={flagMode}
+                        aria-label={flagMode ? t.flag : t.dig}
+                        className={`min-h-11 px-4 py-2 rounded-full text-xs font-black border transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+                            flagMode
+                                ? 'bg-chart-2/15 text-chart-2 border-chart-2/40'
+                                : 'bg-muted text-muted-foreground border-border'
+                        }`}
+                    >
+                        {flagMode ? <span className="inline-flex items-center gap-1"><img src={MINESWEEPER_SPRITES.flag} alt="" draggable={false} className="h-4 w-4 object-contain" />{t.flag}</span> : `⛏️ ${t.dig}`}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setMuted((m) => !m)}
+                        aria-pressed={muted}
+                        aria-label={muted ? t.soundOn : t.soundOff}
+                        className="min-h-11 px-3 py-2 rounded-full text-xs font-black border border-border bg-muted hover:bg-muted/80 text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                    >
+                        {muted ? '🔇' : '🔊'}
+                    </button>
+                </div>
                 <div className="px-3 py-1.5 bg-muted rounded-lg text-xs font-black text-muted-foreground" aria-label={t.time}>⏱️ {timer}s</div>
             </div>
 
@@ -525,8 +729,17 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 )}
             </div>
 
-            <div className="overflow-x-auto pb-1">
-                <div className="grid gap-1 bg-muted/30 p-2 rounded-xl border border-border w-max mx-auto" style={{ gridTemplateColumns: `repeat(${width}, ${cellSize})` }} role="grid" aria-label={t.title} aria-rowcount={height} aria-colcount={width}>
+            <div className="overflow-x-auto pb-1 touch-none">
+                <div
+                    className={`grid gap-1 bg-muted/30 p-2 rounded-xl border border-border w-max mx-auto transition-transform ${
+                        shake && !reducedMotion ? (shake % 2 ? '-translate-x-2' : 'translate-x-2') : ''
+                    }`}
+                    style={{ gridTemplateColumns: `repeat(${width}, ${cellSize})` }}
+                    role="grid"
+                    aria-label={t.title}
+                    aria-rowcount={height}
+                    aria-colcount={width}
+                >
                     {board.map((row, y) => (
                         <div key={`row-${y}`} role="row" className="contents">
                             {row.map((cell, x) => {

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
+import confetti from 'canvas-confetti';
 import VoxelMaze3DScene from './VoxelMaze3DScene';
 import {
   type VoxelMazeState,
@@ -12,6 +13,183 @@ export default function VoxelMaze3D() {
   const [gameState, setGameState] = useState<VoxelMazeState>(createInitialVoxelMazeState);
   const stateRef = useRef<VoxelMazeState>(gameState);
   stateRef.current = gameState;
+
+  const [muted, setMuted] = useState(false);
+  const mutedRef = useRef(false);
+  useEffect(() => { mutedRef.current = muted; }, [muted]);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+
+  const getAudioContext = useCallback(() => {
+    if (typeof window === 'undefined') return null;
+    if (!audioCtxRef.current) {
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (AudioCtx) audioCtxRef.current = new AudioCtx();
+    }
+    if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
+      void audioCtxRef.current.resume();
+    }
+    return audioCtxRef.current;
+  }, []);
+
+  const vibrate = useCallback((pattern: number | number[]) => {
+    if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate(pattern);
+      } catch {
+        // ignore
+      }
+    }
+  }, []);
+
+  const playStepSound = useCallback(() => {
+    if (mutedRef.current) return;
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(110, now);
+    osc.frequency.exponentialRampToValueAtTime(50, now + 0.04);
+    gain.gain.setValueAtTime(0.06, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.04);
+  }, [getAudioContext]);
+
+  const playKeySound = useCallback(() => {
+    if (mutedRef.current) return;
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    [1046.50, 1318.51].forEach((freq, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const start = now + idx * 0.06;
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, start);
+      gain.gain.setValueAtTime(0.12, start);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.18);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + 0.18);
+    });
+  }, [getAudioContext]);
+
+  const playGemSound = useCallback(() => {
+    if (mutedRef.current) return;
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(1760, now);
+    gain.gain.setValueAtTime(0.09, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.12);
+  }, [getAudioContext]);
+
+  const playClearSound = useCallback(() => {
+    if (mutedRef.current) return;
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const notes = [523.25, 659.25, 783.99, 1046.50];
+    notes.forEach((freq, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const start = now + idx * 0.08;
+      const dur = idx === notes.length - 1 ? 0.5 : 0.2;
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, start);
+      gain.gain.setValueAtTime(0.15, start);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + dur);
+    });
+  }, [getAudioContext]);
+
+  const playFailSound = useCallback(() => {
+    if (mutedRef.current) return;
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(180, now);
+    osc.frequency.exponentialRampToValueAtTime(55, now + 0.3);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.3);
+  }, [getAudioContext]);
+
+  const doMove = useCallback((dir: 'up' | 'down' | 'left' | 'right') => {
+    setGameState((s) => {
+      if (s.gameOver || s.levelCleared || s.paused) return s;
+      const next = movePlayer(s, dir);
+      if (next.player.x !== s.player.x || next.player.z !== s.player.z) {
+        playStepSound();
+        vibrate(8);
+      }
+      return next;
+    });
+  }, [playStepSound, vibrate]);
+
+  // Reactive sound & haptics for items and outcomes
+  const prevKeysRef = useRef(gameState.keysCollected);
+  const prevGemsRef = useRef(gameState.gemsCollected);
+  const prevClearRef = useRef(gameState.levelCleared);
+  const prevOverRef = useRef(gameState.gameOver);
+
+  useEffect(() => {
+    if (gameState.keysCollected > prevKeysRef.current) {
+      playKeySound();
+      vibrate([20, 30, 20]);
+    }
+    prevKeysRef.current = gameState.keysCollected;
+
+    if (gameState.gemsCollected > prevGemsRef.current) {
+      playGemSound();
+      vibrate(15);
+    }
+    prevGemsRef.current = gameState.gemsCollected;
+
+    if (gameState.levelCleared && !prevClearRef.current) {
+      playClearSound();
+      vibrate([40, 40, 40, 40, 100]);
+      try {
+        confetti({
+          particleCount: 50,
+          spread: 70,
+          origin: { x: 0.25, y: 0.6 },
+          disableForReducedMotion: true,
+        });
+        confetti({
+          particleCount: 50,
+          spread: 70,
+          origin: { x: 0.75, y: 0.6 },
+          disableForReducedMotion: true,
+        });
+      } catch {
+        // ignore
+      }
+    }
+    prevClearRef.current = gameState.levelCleared;
+
+    if (gameState.gameOver && !prevOverRef.current) {
+      playFailSound();
+      vibrate([80, 40, 120]);
+    }
+    prevOverRef.current = gameState.gameOver;
+  }, [gameState.keysCollected, gameState.gemsCollected, gameState.levelCleared, gameState.gameOver, playClearSound, playFailSound, playGemSound, playKeySound, vibrate]);
 
   // Game loop
   useEffect(() => {
@@ -38,22 +216,22 @@ export default function VoxelMaze3D() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (['ArrowUp', 'w', 'W'].includes(e.key)) {
         e.preventDefault();
-        setGameState((s) => movePlayer(s, 'up'));
+        doMove('up');
       } else if (['ArrowDown', 's', 'S'].includes(e.key)) {
         e.preventDefault();
-        setGameState((s) => movePlayer(s, 'down'));
+        doMove('down');
       } else if (['ArrowLeft', 'a', 'A'].includes(e.key)) {
         e.preventDefault();
-        setGameState((s) => movePlayer(s, 'left'));
+        doMove('left');
       } else if (['ArrowRight', 'd', 'D'].includes(e.key)) {
         e.preventDefault();
-        setGameState((s) => movePlayer(s, 'right'));
+        doMove('right');
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [doMove]);
 
   const handleRestart = useCallback(() => {
     setGameState(createInitialVoxelMazeState(1));
@@ -89,31 +267,42 @@ export default function VoxelMaze3D() {
           </div>
         </div>
 
-        {/* Time & Score */}
-        <div className="flex items-center gap-3 rounded-xl border border-border bg-background/85 backdrop-blur-md px-4 py-2 shadow-xs">
-          <div className="text-right">
-            <div className="text-xs text-muted-foreground">남은 시간</div>
-            <div className={`text-base font-black font-mono ${gameState.timeLeft <= 15 ? 'text-destructive animate-pulse' : 'text-foreground'}`}>
-              {Math.ceil(gameState.timeLeft)}초
+        {/* Time, Score & Sound */}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3 rounded-xl border border-border bg-background/85 backdrop-blur-md px-4 py-2 shadow-xs">
+            <div className="text-right">
+              <div className="text-xs text-muted-foreground">남은 시간</div>
+              <div className={`text-base font-black font-mono ${gameState.timeLeft <= 15 ? 'text-destructive animate-pulse' : 'text-foreground'}`}>
+                {Math.ceil(gameState.timeLeft)}초
+              </div>
+            </div>
+            <div className="border-l border-border pl-3 text-right">
+              <div className="text-xs text-muted-foreground">점수</div>
+              <div className="text-base font-black text-primary font-mono">
+                {gameState.score.toLocaleString()}
+              </div>
             </div>
           </div>
-          <div className="border-l border-border pl-3 text-right">
-            <div className="text-xs text-muted-foreground">점수</div>
-            <div className="text-base font-black text-primary font-mono">
-              {gameState.score.toLocaleString()}
-            </div>
-          </div>
+          <button
+            type="button"
+            onClick={() => setMuted((m) => !m)}
+            aria-pressed={muted}
+            aria-label={muted ? '소리 켜기' : '소리 끄기'}
+            className="pointer-events-auto min-h-11 px-3 py-2 rounded-xl border border-border bg-background/85 backdrop-blur-md shadow-xs text-xs font-black text-foreground hover:bg-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          >
+            {muted ? '🔇' : '🔊'}
+          </button>
         </div>
       </div>
 
-      {/* Mobile Touch D-Pad (Min 48px touch targets) */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 pointer-events-auto touch-none">
+      {/* Mobile Touch D-Pad (Min 48px touch targets, hidden on mice) */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 pointer-events-auto touch-none sm:pointer-fine:hidden">
         <div className="grid grid-cols-3 gap-2">
           <div />
           <button
             type="button"
             data-game-control
-            onPointerDown={(e) => { e.preventDefault(); setGameState((s) => movePlayer(s, 'up')); }}
+            onPointerDown={(e) => { e.preventDefault(); doMove('up'); }}
             className="w-14 h-14 rounded-2xl bg-background/90 backdrop-blur-md border border-border flex items-center justify-center text-xl font-black text-foreground shadow-md active:scale-95 transition-transform"
             aria-label="위로 이동"
           >
@@ -123,7 +312,7 @@ export default function VoxelMaze3D() {
           <button
             type="button"
             data-game-control
-            onPointerDown={(e) => { e.preventDefault(); setGameState((s) => movePlayer(s, 'left')); }}
+            onPointerDown={(e) => { e.preventDefault(); doMove('left'); }}
             className="w-14 h-14 rounded-2xl bg-background/90 backdrop-blur-md border border-border flex items-center justify-center text-xl font-black text-foreground shadow-md active:scale-95 transition-transform"
             aria-label="왼쪽 이동"
           >
@@ -132,7 +321,7 @@ export default function VoxelMaze3D() {
           <button
             type="button"
             data-game-control
-            onPointerDown={(e) => { e.preventDefault(); setGameState((s) => movePlayer(s, 'down')); }}
+            onPointerDown={(e) => { e.preventDefault(); doMove('down'); }}
             className="w-14 h-14 rounded-2xl bg-background/90 backdrop-blur-md border border-border flex items-center justify-center text-xl font-black text-foreground shadow-md active:scale-95 transition-transform"
             aria-label="아래로 이동"
           >
@@ -141,7 +330,7 @@ export default function VoxelMaze3D() {
           <button
             type="button"
             data-game-control
-            onPointerDown={(e) => { e.preventDefault(); setGameState((s) => movePlayer(s, 'right')); }}
+            onPointerDown={(e) => { e.preventDefault(); doMove('right'); }}
             className="w-14 h-14 rounded-2xl bg-background/90 backdrop-blur-md border border-border flex items-center justify-center text-xl font-black text-foreground shadow-md active:scale-95 transition-transform"
             aria-label="오른쪽 이동"
           >
