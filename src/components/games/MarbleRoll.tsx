@@ -332,7 +332,7 @@ export default function MarbleRoll({ locale = 'ko' }: Props) {
       </div>
 
       {/* Mobile Touch Controls */}
-      <div className="grid grid-cols-3 gap-2 sm:hidden p-2 bg-card rounded-xl border border-border">
+      <div className="grid grid-cols-3 gap-2 touch-none select-none sm:pointer-fine:hidden p-2 bg-card rounded-xl border border-border">
         <button
           onPointerDown={() => { inputRef.current.steerX = -1; }}
           onPointerUp={() => { inputRef.current.steerX = 0; }}
