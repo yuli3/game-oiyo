@@ -85,4 +85,17 @@ export default defineConfig([
     files: ["src/components/games/TierListStudio.tsx"],
     rules: { "shadcn/no-inline-styles": "off" },
   },
+  {
+    // 2026-10-17 — 3D Three.js / React Three Fiber Canvas scenes.
+    // Why: Three.js material props (<meshStandardMaterial color="#..." />, <color attach="background" />,
+    // light colors) take direct hex strings for WebGL shaders, not DOM CSS classes or theme variables.
+    // HTML wrapper and DOM HUD follow every shadcn rule and theme token.
+    files: [
+      "src/components/games/MarbleMazeScene.tsx",
+      "src/components/games/CosmicFlightScene.tsx",
+    ],
+    rules: {
+      "shadcn/no-raw-colors": "off",
+    },
+  },
 ])

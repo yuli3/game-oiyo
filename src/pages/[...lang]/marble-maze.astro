@@ -1,0 +1,50 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+import GameGuide from "../../components/GameGuide.astro";
+import MarbleMaze from "../../components/games/MarbleMaze";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "Marble Maze 3D — 무료 3D 롤링 볼 미로 탈출 게임",
+    description: "Three.js와 R3F 기반의 감각적인 3D 물리 틸트 게임. 판을 입체적으로 기울여 구슬을 굴리고, 함정을 피해 보석을 모으며 골인 지점으로 탈출하세요.",
+  },
+  en: {
+    title: "Marble Maze 3D — Free 3D Rolling Ball Maze Game",
+    description: "A sensory 3D physics tilt game built on Three.js & R3F. Tilt the 3D board to roll your marble, dodge traps, collect glittering gems, and escape to victory.",
+  },
+  ja: {
+    title: "Marble Maze 3D — 無料3Dローリングボール迷路脱出ゲーム",
+    description: "Three.jsとR3Fによる3D物理ティルト迷路ゲーム。盤面を傾けてボールを転がし、罠を避けて宝石を集めながらゴールを目指そう。",
+  },
+  zh: {
+    title: "Marble Maze 3D — 免费3D滚球迷宫逃脱游戏",
+    description: "基于Three.js与R3F的3D物理倾斜迷宫游戏。倾斜盘面控制滚球，避开陷阱并收集宝石，冲向终点！",
+  },
+  fr: {
+    title: "Marble Maze 3D — Jeu de labyrinthe 3D gratuit avec bille",
+    description: "Jeu de bascule 3D basé sur Three.js & R3F. Inclinez le plateau pour faire rouler la bille, évitez les pièges et ramassez les gemmes.",
+  },
+  es: {
+    title: "Marble Maze 3D — Juego gratuito de laberinto 3D con canica",
+    description: "Juego de física 3D con Three.js y R3F. Inclina el tablero para rodar la canica, esquiva trampas y recoge gemas hasta la meta.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={(gameArtDocument.games as Record<string, string>)["marble-maze-3d"] ?? "/games/maze-social.png"}>
+  <div class="mx-auto max-w-7xl px-2 py-6 sm:px-4 sm:py-8">
+    <MarbleMaze client:visible locale={locale} />
+    <div class="mx-auto max-w-3xl px-2"><GameGuide slug="marble-maze" locale={locale} name="Marble Maze 3D" /></div>
+  </div>
+</BaseLayout>

@@ -1,0 +1,50 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+import GameGuide from "../../components/GameGuide.astro";
+import CosmicFlight from "../../components/games/CosmicFlight";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "Cosmic Ring Rider 3D — 무료 3D 우주선 비행 타임어택 게임",
+    description: "Three.js와 R3F 기반의 고속 우주선 비행 게임. 소행성을 회피하고 연속 가속 링을 통과하며 하이퍼 부스트로 코스를 완주하세요.",
+  },
+  en: {
+    title: "Cosmic Ring Rider 3D — Free 3D Sci-Fi Spaceship Flight Game",
+    description: "A fast-paced 3D space flight time-attack game on Three.js & R3F. Dodge asteroids, chain glowing rings, and trigger hyper boost to set high score records.",
+  },
+  ja: {
+    title: "Cosmic Ring Rider 3D — 無料3D宇宙船フライトゲーム",
+    description: "Three.jsとR3Fによるハイスピード3D宇宙飛行ゲーム。小惑星をかわし、連続リングを通過してハイパーブーストで最速クリアを目指そう。",
+  },
+  zh: {
+    title: "Cosmic Ring Rider 3D — 免费3D太空飞船飞行挑战游戏",
+    description: "基于Three.js与R3F的超光速太空飞行游戏。躲避小行星，连续穿越能量光环，启动超光速助推挑战最佳成绩！",
+  },
+  fr: {
+    title: "Cosmic Ring Rider 3D — Jeu de vol spatial 3D gratuit",
+    description: "Jeu de course et de vol spatial 3D avec Three.js & R3F. Slalomez entre les astéroïdes et traversez les anneaux cosmiques à vitesse maximale.",
+  },
+  es: {
+    title: "Cosmic Ring Rider 3D — Juego de vuelo espacial 3D gratuito",
+    description: "Juego de carreras y vuelo espacial en 3D con Three.js y R3F. Esquiva asteroides, cruza anillos cósmicos y activa el hiperimpulso.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={(gameArtDocument.games as Record<string, string>)["cosmic-flight-3d"] ?? "/games/star-blaster-social.png"}>
+  <div class="mx-auto max-w-7xl px-2 py-6 sm:px-4 sm:py-8">
+    <CosmicFlight client:visible locale={locale} />
+    <div class="mx-auto max-w-3xl px-2"><GameGuide slug="cosmic-flight" locale={locale} name="Cosmic Ring Rider 3D" /></div>
+  </div>
+</BaseLayout>
