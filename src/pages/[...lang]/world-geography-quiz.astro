@@ -1,0 +1,50 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import WorldGeographyQuizComp from "../../components/games/WorldGeographyQuiz";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({
+    params: { lang },
+    props: { locale: lang },
+  }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "세계 지리 퀴즈 — 지형·기후·인구·국가 상식 테스트",
+    description: "세계 최대 강, 사막, 산맥, 인구, 면적 등 15가지 지리 상식 문제 중 무작위 10문제. 지형, 기후, 정치지리, 인구 전 영역 출제.",
+  },
+  en: {
+    title: "World Geography Quiz — Landforms, Climate, Population & Countries",
+    description: "Test your world geography knowledge with 10 random questions from 15 covering rivers, deserts, mountains, population, and political geography.",
+  },
+  ja: {
+    title: "世界地理クイズ — 地形・気候・人口・国家",
+    description: "川・砂漠・山脈・人口・地政学など15問からランダムに10問。世界地理の総合知識をテスト。",
+  },
+  fr: {
+    title: "Quiz de Géographie Mondiale — Reliefs, Climat, Population et Pays",
+    description: "Testez vos connaissances en géographie mondiale avec 10 questions aléatoires parmi 15 couvrant les fleuves, déserts, montagnes, population et géopolitique.",
+  },
+  es: {
+    title: "Quiz de Geografía Mundial — Relieves, Clima, Población y Países",
+    description: "Pon a prueba tus conocimientos de geografía mundial con 10 preguntas aleatorias de 15 sobre ríos, desiertos, montañas, población y geopolítica.",
+  },
+  zh: {
+    title: "世界地理测验 — 地形、气候、人口和国家",
+    description: "用15道涵盖河流、沙漠、山脉、人口和政治地理的题目中随机抽取10题测试您的世界地理知识。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} heading={m.title} description={m.description}>
+  <div class="mx-auto max-w-xl px-4 py-5 sm:py-8">
+    <WorldGeographyQuizComp client:load locale={locale} />
+  </div>
+</BaseLayout>

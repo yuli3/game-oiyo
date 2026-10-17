@@ -1,0 +1,50 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import HanjaQuizComp from "../../components/games/HanjaQuiz";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({
+    params: { lang },
+    props: { locale: lang },
+  }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "사자성어 퀴즈 — 뜻 보고 사자성어 맞히기",
+    description: "15개의 대표 사자성어 중 무작위 10문제를 풀어보세요. 뜻을 보고 알맞은 사자성어를 고르는 재미있는 퀴즈입니다.",
+  },
+  en: {
+    title: "Korean Four-Character Idiom Quiz — Test Your Knowledge",
+    description: "Test your knowledge of Korean four-character idioms (Saja-seongeo). Choose the correct idiom based on its meaning from 10 random questions.",
+  },
+  ja: {
+    title: "韓国語四字熟語クイズ — 意味から熟語を当てよう",
+    description: "韓国語の四字熟語（사자성어）を15問からランダムに10問出題。意味を読んで正しい四字熟語を選んでください。",
+  },
+  fr: {
+    title: "Quiz d'Idiomes Coréens en 4 Caractères",
+    description: "Testez vos connaissances des idiomes coréens en 4 caractères avec 10 questions aléatoires.",
+  },
+  es: {
+    title: "Quiz de Modismos Coreanos de 4 Caracteres",
+    description: "Pon a prueba tu conocimiento de los modismos coreanos de 4 caracteres con 10 preguntas aleatorias.",
+  },
+  zh: {
+    title: "韩语四字成语测验 — 看意思猜成语",
+    description: "从15个代表性韩语四字成语中随机抽取10题，根据意思选择正确的四字成语。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} heading={m.title} description={m.description}>
+  <div class="mx-auto max-w-xl px-4 py-5 sm:py-8">
+    <HanjaQuizComp client:load locale={locale} />
+  </div>
+</BaseLayout>

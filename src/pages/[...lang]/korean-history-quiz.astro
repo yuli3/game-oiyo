@@ -1,0 +1,50 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import KoreanHistoryQuizComp from "../../components/games/KoreanHistoryQuiz";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({
+    params: { lang },
+    props: { locale: lang },
+  }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "한국사 퀴즈 — 선사시대부터 현대까지 역사 테스트",
+    description: "고조선부터 현대까지 한국 역사를 15문제 중 무작위 10문제로 테스트합니다. 삼국시대, 고려, 조선, 일제강점기, 현대 전 영역 출제.",
+  },
+  en: {
+    title: "Korean History Quiz — From Ancient Korea to Modern Times",
+    description: "Test your knowledge of Korean history from Gojoseon to modern Korea with 10 random questions from 15 covering all major periods.",
+  },
+  ja: {
+    title: "韓国史クイズ — 古代から現代まで",
+    description: "古朝鮮から現代まで、韓国の歴史を15問からランダムに10問でテスト。三国時代、高麗、朝鮮、日本統治時代、現代を網羅。",
+  },
+  fr: {
+    title: "Quiz d'Histoire Coréenne — De l'Antiquité à nos Jours",
+    description: "Testez vos connaissances sur l'histoire coréenne, de Gojoseon à la Corée moderne, avec 10 questions aléatoires parmi 15.",
+  },
+  es: {
+    title: "Quiz de Historia Coreana — Desde la Antigüedad hasta los Tiempos Modernos",
+    description: "Pon a prueba tus conocimientos sobre la historia coreana, desde Gojoseon hasta la Corea moderna, con 10 preguntas aleatorias de 15.",
+  },
+  zh: {
+    title: "韩国历史测验 — 从古代到现代",
+    description: "测试您对韩国历史的了解，从古朝鲜到现代韩国，从15道题目中随机抽取10题。",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} heading={m.title} description={m.description}>
+  <div class="mx-auto max-w-xl px-4 py-5 sm:py-8">
+    <KoreanHistoryQuizComp client:load locale={locale} />
+  </div>
+</BaseLayout>
