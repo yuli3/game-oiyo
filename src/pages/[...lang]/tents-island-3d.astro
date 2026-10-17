@@ -1,0 +1,50 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+import GameGuide from "../../components/GameGuide.astro";
+import { TentsIsland3D } from "../../components/games/TentsIsland3D";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "Tents Island 3D — 무료 3D 텐트 퍼즐 아일랜드 게임",
+    description: "아름다운 3D 저폴리곤 숲속 섬에서 즐기는 나무와 텐트 로직 퍼즐. Three.js 입체 그래픽, 직관적인 3D 타일 인터랙션, 실시간 규칙 검증을 무료로 즐겨보세요.",
+  },
+  en: {
+    title: "Tents Island 3D — Free 3D Tents and Trees Island Puzzle Game",
+    description: "Classic Tents and Trees logic puzzle on a peaceful 3D low-poly island powered by Three.js. Enjoy 3D tile interactions, multiple difficulties, and real-time validation.",
+  },
+  ja: {
+    title: "Tents Island 3D — 無料3Dテントパズルアイランドゲーム",
+    description: "Three.jsによる美しい3Dローポリゴン島で楽しむ木とテントの論理パズル。直感的な3Dタイル操作、難易度選択、リアルタイム検証を完全無料でお楽しみください。",
+  },
+  zh: {
+    title: "Tents Island 3D — 免费3D帐篷拼图海岛益智游戏",
+    description: "在基于Three.js打造的唯美3D低多边形海岛上体验经典的树木与帐篷逻辑数理拼图。支持直观的3D交互、多种难度与实时解密验证。",
+  },
+  fr: {
+    title: "Tents Island 3D — Jeu de puzzle 3D tentes et arbres gratuit",
+    description: "Le puzzle logique classique Tentes et Arbres sur une île 3D low-poly avec Three.js. Profitez d'interactions 3D fluides et de plusieurs niveaux de difficulté.",
+  },
+  es: {
+    title: "Tents Island 3D — Rompecabezas 3D de Tiendas y Árboles Gratis",
+    description: "El clásico acertijo de lógica de tiendas y árboles en una relajante isla 3D con Three.js. Disfruta de interacción 3D, varios niveles y validación en tiempo real.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={(gameArtDocument.games as Record<string, string>)["tents-island-3d"] ?? "/games/maze-social.png"}>
+  <div class="mx-auto max-w-7xl px-2 py-6 sm:px-4 sm:py-8">
+    <TentsIsland3D client:visible lang={locale} />
+    <div class="mx-auto max-w-3xl px-2"><GameGuide slug="tents-island-3d" locale={locale} name="Tents Island 3D" /></div>
+  </div>
+</BaseLayout>

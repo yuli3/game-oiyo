@@ -1,0 +1,50 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+import GameGuide from "../../components/GameGuide.astro";
+import { CardTable3D } from "../../components/games/CardTable3D";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "Card Table 3D — 무료 3D 클래식 솔리테어 카드 게임",
+    description: "Three.js로 구현된 3D 우드 펠트 포커 테이블 위의 클래식 클론다이크 솔리테어. 실감 나는 3D 카드 애니메이션과 자동 완성, 언두 기능을 즐겨보세요.",
+  },
+  en: {
+    title: "Card Table 3D — Free 3D Classic Solitaire Card Game",
+    description: "Classic Klondike Solitaire on a rich 3D wood and felt poker table powered by Three.js. Enjoy realistic 3D card physics, auto-collect, and undo features.",
+  },
+  ja: {
+    title: "Card Table 3D — 無料3Dクラシックソリティアカードゲーム",
+    description: "Three.jsによるリアルな3Dウッドフェルトテーブルで楽しむクロンダイクソリティア。3Dカードアニメーション、自動回収、元に戻す機能を完全無料でお楽しみいただけます。",
+  },
+  zh: {
+    title: "Card Table 3D — 免费3D经典纸牌接龙游戏",
+    description: "基于Three.js打造的3D豪华木质毛毡牌桌经典克朗代克纸牌。享受逼真的3D立体卡牌翻转、自动收牌与无限制撤销功能。",
+  },
+  fr: {
+    title: "Card Table 3D — Jeu de Solitaire Classique 3D Gratuit",
+    description: "Solitaire Klondike classique sur une table de poker 3D en bois et feutre propulsée par Three.js. Profitez d'animations 3D réalistes et de l'auto-collecte.",
+  },
+  es: {
+    title: "Card Table 3D — Juego de Solitario Clásico 3D Gratis",
+    description: "Solitario Klondike clásico sobre una elegante mesa de póquer 3D de madera y fieltro con Three.js. Disfruta de físicas 3D realistas, auto recoger y deshacer.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={(gameArtDocument.games as Record<string, string>)["card-table-3d"] ?? "/games/maze-social.png"}>
+  <div class="mx-auto max-w-7xl px-2 py-6 sm:px-4 sm:py-8">
+    <CardTable3D client:visible lang={locale} />
+    <div class="mx-auto max-w-3xl px-2"><GameGuide slug="card-table-3d" locale={locale} name="Card Table 3D" /></div>
+  </div>
+</BaseLayout>

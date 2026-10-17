@@ -101,6 +101,8 @@ export default defineConfig([
       "src/components/games/MiniGolfScene.tsx",
       "src/components/games/BlockBreakerScene.tsx",
       "src/components/games/MazeRunnerScene.tsx",
+      "src/components/games/CardTable3DScene.tsx",
+      "src/components/games/TentsIsland3DScene.tsx",
     ],
     rules: {
       "shadcn/no-raw-colors": "off",
