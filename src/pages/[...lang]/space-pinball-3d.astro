@@ -1,0 +1,50 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+import GameGuide from "../../components/GameGuide.astro";
+import SpacePinball from "../../components/games/SpacePinball";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "Space Pinball 3D — 무료 3D 네온 우주 핀볼 아케이드 게임",
+    description: "Three.js 물리 엔진으로 구현된 실감 나는 3D 우주 핀볼 머신. 네온 플리퍼와 발광 범퍼를 타격하며 콤보 점수를 쌓고 최고 기록에 도전하세요.",
+  },
+  en: {
+    title: "Space Pinball 3D — Free 3D Neon Space Arcade Pinball Game",
+    description: "A thrilling 3D cosmic pinball arcade powered by Three.js physics. Trigger neon flippers, bounce off glowing bumpers, chain multipliers, and aim for the high score.",
+  },
+  ja: {
+    title: "Space Pinball 3D — 無料3Dネオン宇宙ピンボールアーケード",
+    description: "Three.js物理演算による本格3D宇宙ピンボールマシン。ネオンフリッパーと光るバンパーでコンボを繋ぎ、ハイスコアを叩き出そう。",
+  },
+  zh: {
+    title: "Space Pinball 3D — 免费3D霓虹太空弹球街机游戏",
+    description: "基于Three.js物理引擎打造的逼真3D太空弹球机。操作霓虹挡板击打发光缓冲器，连击加倍得分，冲击全网最高纪录！",
+  },
+  fr: {
+    title: "Space Pinball 3D — Flipper arcade spatial 3D gratuit",
+    description: "Un flipper spatial 3D captivant avec physique Three.js. Actionnez les batteurs fluo, visez les bumpers lumineux et battez tous les records.",
+  },
+  es: {
+    title: "Space Pinball 3D — Juego de pinball espacial 3D arcade gratis",
+    description: "Una máquina de pinball cósmica en 3D con físicas Three.js. Acciona las paletas de neón, golpea los parachoques luminosos y alcanza la máxima puntuación.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={(gameArtDocument.games as Record<string, string>)["space-pinball-3d"] ?? "/games/maze-social.png"}>
+  <div class="mx-auto max-w-7xl px-2 py-6 sm:px-4 sm:py-8">
+    <SpacePinball client:visible locale={locale} />
+    <div class="mx-auto max-w-3xl px-2"><GameGuide slug="space-pinball-3d" locale={locale} name="Space Pinball 3D" /></div>
+  </div>
+</BaseLayout>

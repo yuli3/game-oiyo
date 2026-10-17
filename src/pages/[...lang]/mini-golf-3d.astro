@@ -1,0 +1,50 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+import GameGuide from "../../components/GameGuide.astro";
+import MiniGolf from "../../components/games/MiniGolf";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "Mini Golf 3D — 무료 3D 복셀 미니 골프 퍼팅 게임",
+    description: "Three.js 물리 엔진으로 구현된 3D 복셀 미니 골프. 샌드 벙커와 워터 해저드를 피해 정교한 각도와 파워로 퍼팅하여 홀인원을 달성하세요.",
+  },
+  en: {
+    title: "Mini Golf 3D — Free 3D Voxel Mini Golf Putting Game",
+    description: "Experience 3D voxel mini golf powered by Three.js physics. Navigate sand bunkers and water hazards with precise aim and power to sink every putt.",
+  },
+  ja: {
+    title: "Mini Golf 3D — 無料3Dボクセルミニゴルフパッティングゲーム",
+    description: "Three.js物理演算による3Dボクセルミニゴルフ。バンカーやウォーターハザードを回避し、正確な狙いと力加減でホールインワンを目指そう。",
+  },
+  zh: {
+    title: "Mini Golf 3D — 免费3D体素迷你高尔夫推杆游戏",
+    description: "基于Three.js物理引擎打造的3D体素迷你高尔夫。避开沙坑与水障，凭借精准的角度与力度挑战一杆进洞！",
+  },
+  fr: {
+    title: "Mini Golf 3D — Jeu de mini-golf voxel 3D gratuit",
+    description: "Un parcours de mini-golf voxel 3D avec physique Three.js. Évitez les bunkers de sable et les obstacles d'eau pour réussir vos putts.",
+  },
+  es: {
+    title: "Mini Golf 3D — Juego de minigolf vóxel en 3D gratis",
+    description: "Campo de minigolf en 3D con físicas Three.js. Esquiva los búnkeres de arena y el agua con puntería precisa para embocar en pocos golpes.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={(gameArtDocument.games as Record<string, string>)["mini-golf-3d"] ?? "/games/maze-social.png"}>
+  <div class="mx-auto max-w-7xl px-2 py-6 sm:px-4 sm:py-8">
+    <MiniGolf client:visible locale={locale} />
+    <div class="mx-auto max-w-3xl px-2"><GameGuide slug="mini-golf-3d" locale={locale} name="Mini Golf 3D" /></div>
+  </div>
+</BaseLayout>

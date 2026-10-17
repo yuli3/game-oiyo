@@ -97,6 +97,8 @@ export default defineConfig([
       "src/components/games/VoxelRunnerScene.tsx",
       "src/components/games/MarbleRollScene.tsx",
       "src/components/games/RetroHighwayScene.tsx",
+      "src/components/games/SpacePinballScene.tsx",
+      "src/components/games/MiniGolfScene.tsx",
     ],
     rules: {
       "shadcn/no-raw-colors": "off",
