@@ -13,6 +13,44 @@ export interface GameGuide {
 }
 
 export const GAME_GUIDES: Record<string, GameGuide> = {
+  "screen-kingdom": {
+    origin: {
+      ko: "한 화면 왕국은 영토를 넓히지 않고, 한 칸을 키우면 바로 동쪽 칸이 한 층 낮아지는 OIYO 오리지널 퍼즐입니다. 네 왕국은 손으로 맞춘 뒤 시드가 그중 하나를 고르며, 외부 게임의 맵이나 음원을 쓰지 않습니다.",
+      en: "One-Screen Kingdom is an original OIYO puzzle: the realm does not grow. Raising one plot lowers the plot to its east by one story. Four kingdoms were checked by hand; a seed picks one. It uses no map or audio from another game.",
+      ja: "一画面の王国は、領土を広げず、一区画を育てるとすぐ東の区画が一階下がるOIYOオリジナルパズルです。四つの王国は手で確かめ、シードがその一つを選びます。外部ゲームのマップや音源は使いません。",
+      zh: "一屏王国是 OIYO 原创谜题：王国不会变大。加高一格会让正东邻格降低一层。四个王国经手工核验，种子从中选一个。不使用其他游戏的地图或音频。",
+      fr: "Royaume d'un écran est un puzzle original d'OIYO : le royaume ne s'agrandit pas. Grandir une parcelle abaisse d'un étage la parcelle à l'est. Quatre royaumes ont été vérifiés à la main ; une graine en choisit un. Aucune carte ni aucun son d'un autre jeu.",
+      es: "Reino de una pantalla es un puzle original de OIYO: el reino no crece. Crecer una parcela baja un piso la parcela del este. Cuatro reinos se comprobaron a mano; una semilla elige uno. No usa mapas ni audio de otro juego.",
+    },
+    how: {
+      ko: "화면 왼쪽이 서쪽이고 칸 번호는 1부터입니다. 화면 위쪽 줄이 표식이고 아래 줄이 왕국입니다. 키우기는 표식이 선 칸만 바로 동쪽의 층을 받고, 그 동쪽 칸은 한 층 낮아집니다. 걷기는 표식만 한 칸 동쪽으로 옮기고, 동쪽 끝이면 서쪽 끝으로 돌아옵니다. 받을 층이 없는 키우기는 걸음이 아닙니다. 높이와 표식의 자리가 위쪽 줄과 같아지면 이기고, 행동 8 안에 못 맞추면 집니다. 보기 버튼은 층을 옮기지 않습니다. 이 왕국은 화면에만 남고 기기에는 저장되지 않습니다.",
+      en: "The left of the screen is west, and plot numbers start at 1. The upper row is the mark and the lower row is the kingdom. Raising lets only the marked plot take one story from the plot to its east, and that east plot drops by one. Walking moves only the mark one plot east, and the east end returns to the west end. A raise with no story to take is not a step. Matching the heights and the mark to the upper row wins. Missing it within 8 acts loses. The view button does not move a story. This kingdom stays on the screen and is not saved on the device.",
+      ja: "画面の左が西で、番号は1からです。上の列が印、下の列が王国です。育ては印の区画だけがすぐ東の階層を受け取り、その東の区画は一階下がります。歩きは印だけを一区画東へ移し、東の端では西の端へ戻ります。受け取れる階層のない育ては手数になりません。高さと印の位置が上の列と揃えば勝ち、8手で揃わなければ負けです。視点ボタンは階層を動かしません。この王国は画面の上だけに残り、端末には保存されません。",
+      zh: "画面左侧是西，格子从 1 开始。上面一行是标记，下面一行是王国。加高只让标记所在的格子从正东邻格取走一层，东边那格降低一层。行走只让标记往东走一格，走到东端就回到西端。没有可取层数的加高不算一步。高度和标记与上面一行一致就赢。第8步还没对上就输。视角按钮不移动层数。这个王国只留在画面上，不会写进设备。",
+      fr: "La gauche de l'écran est l'ouest, et les parcelles se comptent à partir de 1. La rangée du haut est la marque, celle du bas le royaume. Grandir ne fait prendre un étage qu'à la parcelle marquée, depuis l'est, et cette parcelle de l'est descend d'un étage. Marcher ne déplace que la marque d'une parcelle vers l'est, et le bout est revient à l'ouest. Un grandissement sans étage à prendre ne compte pas. Égaler les hauteurs et la marque à la rangée du haut fait gagner. Les manquer en 8 gestes fait perdre. Le bouton de vue ne déplace pas un étage. Ce royaume reste à l'écran et n'est pas écrit sur l'appareil.",
+      es: "La izquierda de la pantalla es el oeste, y las parcelas se numeran desde 1. La fila de arriba es la marca y la de abajo el reino. Crecer solo deja que la parcela marcada tome un piso de la parcela del este, y esa parcela baja un piso. Caminar solo mueve la marca una parcela al este, y el extremo este vuelve al oeste. Un crecimiento sin piso que tomar no cuenta. Igualar las alturas y la marca con la fila de arriba gana. No llegar en 8 gestos pierde. El botón de vista no mueve un piso. Este reino se queda en la pantalla y no se escribe en el aparato.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "같은 시드는 항상 같은 왕국인가요?",
+          en: "Does the same seed always build the same kingdom?",
+          ja: "同じシードはいつも同じ王国ですか？",
+          zh: "相同种子总会生成同一个王国吗？",
+          fr: "La même graine donne-t-elle toujours le même royaume ?",
+          es: "¿La misma semilla construye siempre el mismo reino?",
+        },
+        a: {
+          ko: "네. 시드는 미리 맞춘 네 왕국 중 하나를 고릅니다. 층이 매 프레임 새로 움직이지 않으므로 주소를 공유하면 같은 왕국을 둡니다.",
+          en: "Yes. The seed picks one of four kingdoms that were checked ahead of time. The stories are not moved again every frame, so a shared address is the same kingdom.",
+          ja: "はい。シードは事前に確かめた四つの王国から一つを選びます。階層を毎フレーム動かし直さないので、アドレスを共有すれば同じ王国です。",
+          zh: "是的。种子从事先核验的四个王国中选一个。层数不会每帧重新移动，因此分享地址就是同一个王国。",
+          fr: "Oui. La graine choisit l'un des quatre royaumes vérifiés à l'avance. Les étages ne sont pas relancés à chaque image, donc une adresse partagée est le même royaume.",
+          es: "Sí. La semilla elige uno de cuatro reinos comprobados de antemano. Los pisos no vuelven a moverse en cada fotograma, así que una dirección compartida es el mismo reino.",
+        },
+      },
+    ],
+  },
   "quiet-hunt": {
     origin: {
       ko: "포식자 없는 사냥은 생물을 잡지 않고, 발자국을 읽으면 바람이 한 칸 동쪽으로 걷는 OIYO 오리지널 퍼즐입니다. 네 자리는 손으로 맞춘 뒤 시드가 그중 하나를 고르며, 외부 게임의 맵이나 음원을 쓰지 않습니다.",

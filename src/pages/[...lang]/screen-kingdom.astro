@@ -1,0 +1,36 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ScreenKingdom from "../../components/games/ScreenKingdom";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: { title: "한 화면 왕국 — 키우면 동쪽 이웃이 한 층 낮아진다", description: "키우면 표식이 선 칸이 바로 동쪽의 층을 받고 그 칸은 낮아집니다. 걸으면 표식만 동쪽으로 옮고, 끝이면 서쪽으로 돌아옵니다. 같은 시드는 같은 왕국입니다." },
+  en: { title: "One-Screen Kingdom — raising lowers the east neighbor one story", description: "Raising lets the marked plot take one story from the plot to its east. Walking moves only the mark one plot east, and the east end returns west. The same seed is the same kingdom." },
+  ja: { title: "一画面の王国 — 育てると東の隣が一階下がる", description: "育てると印の区画がすぐ東の階層を受け取り、その区画は下がります。歩くと印だけが東へ移り、端では西へ戻ります。同じシードは同じ王国です。" },
+  zh: { title: "一屏王国 — 加高会让东边邻格降低一层", description: "加高时，标记所在的格子从正东邻格取走一层。行走只让标记往东走一格，走到东端就回到西端。相同种子是同一个王国。" },
+  fr: { title: "Royaume d'un écran — grandir abaisse le voisin est d'un étage", description: "Grandir fait prendre un étage à la parcelle marquée depuis l'est. Marcher ne déplace que la marque vers l'est, et le bout est revient à l'ouest. La même graine, le même royaume." },
+  es: { title: "Reino de una pantalla — crecer baja un piso al vecino del este", description: "Crecer hace que la parcela marcada tome un piso de la parcela del este. Caminar solo mueve la marca al este, y el extremo este vuelve al oeste. La misma semilla es el mismo reino." },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["screen-kingdom"]}>
+  <div class="mx-auto max-w-3xl px-4 py-8">
+    {/*
+      client:visible — the three.js chunk stays out of the first paint until
+      the page is actually on screen.
+    */}
+    <ScreenKingdom client:visible locale={locale} />
+    <GameGuide slug="screen-kingdom" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>
