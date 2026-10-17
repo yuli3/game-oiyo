@@ -127,6 +127,7 @@ export default function SpacePinball({ locale }: Props) {
 
   const stateRef = useRef(gameState);
   stateRef.current = gameState;
+  const audioCtxRef = useRef<AudioContext | null>(null);
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale });
 
   const t = UI_TEXT[locale] ?? UI_TEXT.en;
