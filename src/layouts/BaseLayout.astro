@@ -1,5 +1,6 @@
 ---
 import SEO from "../components/SEO.astro";
+import ManualAds from "../components/ads/ManualAds.astro";
 import { getLocaleFromPath, getTranslations } from "../lib/i18n";
 import { siteConfig } from "../config/site.config";
 import gameArtDocument from "../../config/game-art-v1.json";
@@ -382,6 +383,7 @@ const currentLangItem = langItems.find((li) => li.code === locale) ?? langItems[
         </div>
       )}
       <slot />
+      <ManualAds locale={locale} noindex={noindex} />
     </main>
 
     <!-- Back to top button -->

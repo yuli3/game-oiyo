@@ -1,0 +1,102 @@
+---
+/**
+ * Hand-placed AdSense units for OIYO Arcade, alongside Auto ads (세운 결정 2026-10-17: "애드센스는 하이브리드로 넘어감").
+ *
+ * Places a clean, responsive display unit strictly AFTER the game surface and BEFORE GameGuide.
+ * Ensures:
+ * 1) At least 150px distance from game surface/controls to eliminate accidental clicks.
+ * 2) Height reservation (min-h-72) to prevent Cumulative Layout Shift (CLS).
+ * 3) IntersectionObserver lazy loading (loads only within 300px of viewport to protect viewability).
+ * 4) MutationObserver auto-hiding when AdSense returns 'unfilled'.
+ * 5) Localized '광고 / Advertisement' disclaimer.
+ */
+import { siteConfig } from "../../config/site.config";
+import type { Locale } from "../../lib/i18n";
+
+interface Props {
+  locale: Locale;
+  noindex?: boolean;
+}
+
+const { locale, noindex = false } = Astro.props as Props;
+
+const config = siteConfig.manualAds;
+const client = siteConfig.analytics.googleAdsenseId;
+
+const LABEL: Record<Locale, string> = {
+  ko: "광고",
+  en: "Advertisement",
+  ja: "広告",
+  zh: "广告",
+  fr: "Publicité",
+  es: "Publicidad",
+};
+
+const payload = JSON.stringify({
+  client,
+  slots: config.slots,
+  label: LABEL[locale] ?? LABEL.en,
+});
+
+const active = config.enabled && Boolean(client) && !noindex;
+---
+
+{active && (
+  <script is:inline set:html={`(function(){
+  var cfg=${payload};
+  var host=location.hostname;
+  var preview=false;try{preview=localStorage.getItem("oiyo:ads-preview")==="1"}catch(e){}
+  if(!/(^|\\.)oiyo\\.net$/.test(host)&&!preview)return;
+  var units=[];
+  function box(name,slot){
+    if(!slot&&!preview)return null;
+    var wrap=document.createElement("aside");
+    wrap.className="not-prose my-10 min-h-72 rounded-2xl border border-border bg-card/60 p-3 shadow-xs max-w-2xl mx-auto";
+    wrap.setAttribute("data-manual-ad",name);
+    wrap.setAttribute("aria-label",cfg.label);
+    var tag=document.createElement("p");
+    tag.className="mb-1 text-center text-xs text-muted-foreground";
+    tag.textContent=cfg.label;
+    var ins=document.createElement("ins");
+    ins.className="adsbygoogle block";
+    ins.setAttribute("data-ad-client",cfg.client);
+    if(slot)ins.setAttribute("data-ad-slot",slot);
+    ins.setAttribute("data-ad-format","auto");
+    ins.setAttribute("data-full-width-responsive","true");
+    wrap.appendChild(tag);wrap.appendChild(ins);units.push(wrap);
+    if("MutationObserver" in window){
+      new MutationObserver(function(){
+        if(ins.getAttribute("data-ad-status")==="unfilled")wrap.hidden=true;
+      }).observe(ins,{attributes:true,attributeFilter:["data-ad-status"]});
+    }
+    return wrap;
+  }
+  var main=document.getElementById("main-content");
+  if(!main)return;
+  var guide=main.querySelector("[data-game-guide]");
+  var target=box("game-below",cfg.slots.gameBelow);
+  if(target){
+    if(guide){
+      guide.parentNode.insertBefore(target,guide);
+    }else{
+      var island=main.querySelector("astro-island,[data-game-surface]");
+      if(island){
+        island.parentNode.insertBefore(target,island.nextSibling);
+      }
+    }
+  }
+  if(!units.length)return;
+  function fill(el){try{(window.adsbygoogle=window.adsbygoogle||[]).push({})}catch(e){}el.setAttribute("data-manual-ad-requested","1")}
+  if(!("IntersectionObserver" in window)){units.forEach(fill);return}
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(!e.isIntersecting)return;
+      var el=e.target;
+      if(el.getAttribute("data-manual-ad-requested"))return;
+      fill(el);
+      io.unobserve(el);
+    });
+  },{rootMargin:"300px 0px"});
+  units.forEach(function(u){io.observe(u)});
+})()`} />
+)}

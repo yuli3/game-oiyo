@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { VoxelMazeState } from '../../lib/games/voxel-maze';
+import type { VoxelMazeState } from '../../lib/games/voxel-maze';
 
 interface VoxelMaze3DSceneProps {
   state: VoxelMazeState;

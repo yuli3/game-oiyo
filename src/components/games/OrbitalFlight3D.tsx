@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
 import OrbitalFlight3DScene from './OrbitalFlight3DScene';
 import {
-  OrbitalFlightState,
+  type OrbitalFlightState,
   createInitialOrbitalState,
   updateOrbitalFlight,
 } from '../../lib/games/orbital-flight';
@@ -110,7 +110,7 @@ export default function OrbitalFlight3D() {
   }, []);
 
   return (
-    <div className="relative w-full aspect-16/10 min-h-120 max-h-180 rounded-2xl overflow-hidden border border-border bg-card shadow-lg select-none">
+    <div data-game-surface className="relative w-full aspect-16/10 min-h-120 max-h-180 rounded-2xl overflow-hidden border border-border bg-card shadow-lg select-none touch-none">
       {/* 3D WebGL Canvas */}
       <Canvas
         camera={{ position: [50, 6, -12], fov: 60 }}
@@ -167,13 +167,14 @@ export default function OrbitalFlight3D() {
       </div>
 
       {/* Mobile Touch Controls (Impeccable min 48px touch targets) */}
-      <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between pointer-events-auto">
+      <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between pointer-events-auto touch-none">
         {/* Pitch & Yaw D-pad */}
         <div className="grid grid-cols-3 gap-1.5">
           <div />
           <button
             type="button"
-            onPointerDown={() => { keysRef.current.pitch = 1; }}
+            data-game-control
+            onPointerDown={(e) => { e.preventDefault(); keysRef.current.pitch = 1; }}
             onPointerUp={() => { keysRef.current.pitch = 0; }}
             onPointerLeave={() => { keysRef.current.pitch = 0; }}
             className="w-12 h-12 rounded-xl bg-background/90 backdrop-blur-md border border-border flex items-center justify-center text-lg font-bold text-foreground shadow-sm active:scale-95 transition-transform"
@@ -184,7 +185,8 @@ export default function OrbitalFlight3D() {
           <div />
           <button
             type="button"
-            onPointerDown={() => { keysRef.current.yaw = -1; }}
+            data-game-control
+            onPointerDown={(e) => { e.preventDefault(); keysRef.current.yaw = -1; }}
             onPointerUp={() => { keysRef.current.yaw = 0; }}
             onPointerLeave={() => { keysRef.current.yaw = 0; }}
             className="w-12 h-12 rounded-xl bg-background/90 backdrop-blur-md border border-border flex items-center justify-center text-lg font-bold text-foreground shadow-sm active:scale-95 transition-transform"
@@ -194,7 +196,8 @@ export default function OrbitalFlight3D() {
           </button>
           <button
             type="button"
-            onPointerDown={() => { keysRef.current.pitch = -1; }}
+            data-game-control
+            onPointerDown={(e) => { e.preventDefault(); keysRef.current.pitch = -1; }}
             onPointerUp={() => { keysRef.current.pitch = 0; }}
             onPointerLeave={() => { keysRef.current.pitch = 0; }}
             className="w-12 h-12 rounded-xl bg-background/90 backdrop-blur-md border border-border flex items-center justify-center text-lg font-bold text-foreground shadow-sm active:scale-95 transition-transform"
@@ -204,7 +207,8 @@ export default function OrbitalFlight3D() {
           </button>
           <button
             type="button"
-            onPointerDown={() => { keysRef.current.yaw = 1; }}
+            data-game-control
+            onPointerDown={(e) => { e.preventDefault(); keysRef.current.yaw = 1; }}
             onPointerUp={() => { keysRef.current.yaw = 0; }}
             onPointerLeave={() => { keysRef.current.yaw = 0; }}
             className="w-12 h-12 rounded-xl bg-background/90 backdrop-blur-md border border-border flex items-center justify-center text-lg font-bold text-foreground shadow-sm active:scale-95 transition-transform"
@@ -218,7 +222,8 @@ export default function OrbitalFlight3D() {
         <div className="flex gap-2">
           <button
             type="button"
-            onPointerDown={() => { keysRef.current.thrust = -0.8; }}
+            data-game-control
+            onPointerDown={(e) => { e.preventDefault(); keysRef.current.thrust = -0.8; }}
             onPointerUp={() => { keysRef.current.thrust = 0.2; }}
             onPointerLeave={() => { keysRef.current.thrust = 0.2; }}
             className="w-14 h-14 rounded-2xl bg-background/90 backdrop-blur-md border border-border font-bold text-xs text-foreground shadow-sm active:scale-95 transition-transform flex items-center justify-center"
@@ -228,7 +233,8 @@ export default function OrbitalFlight3D() {
           </button>
           <button
             type="button"
-            onPointerDown={() => { keysRef.current.boost = true; }}
+            data-game-control
+            onPointerDown={(e) => { e.preventDefault(); keysRef.current.boost = true; }}
             onPointerUp={() => { keysRef.current.boost = false; }}
             onPointerLeave={() => { keysRef.current.boost = false; }}
             className="px-5 h-14 rounded-2xl bg-primary text-primary-foreground font-bold text-xs shadow-sm active:scale-95 transition-transform flex items-center justify-center gap-1"

@@ -1,7 +1,7 @@
 import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { CyberHighwayState, ROAD_WIDTH, TOTAL_LANES, LANE_WIDTH } from '../../lib/games/cyber-highway';
+import { type CyberHighwayState, ROAD_WIDTH, TOTAL_LANES, LANE_WIDTH } from '../../lib/games/cyber-highway';
 
 interface CyberHighway3DSceneProps {
   state: CyberHighwayState;

@@ -264,21 +264,27 @@ main .grid button { -webkit-tap-highlight-color: transparent; }
   main button[role="gridcell"] { min-height: unset; }
 }
 
-/* ── 플레이 표면 예외 (2026-07-29) ──
-   위 두 규칙은 UI 버튼용인데 게임 플레이 표면까지 침범하고 있었다.
-   `.touch-none`(Tailwind touch-action:none)은 "여기는 제스처로 조작하는
-   플레이 표면"이라는 표시이므로, 그 안의 버튼은 두 규칙에서 빼야 한다.
+/* ── 플레이 표면 예외 (2026-07-29, 2026-10-17 모바일 터치·상하 스크롤 튕김 방지 강화) ──
+   모바일 Safari/Chrome에서 캔버스나 가상 패드 터치 시 페이지가 위아래로 스크롤되거나
+   제스처 취소(pointercancel)로 인해 터치가 씹히는 현상을 원천 차단한다.
+   1) canvas 및 플레이 표면은 touch-action: none 과 overscroll-behavior: none 을 강제한다.
+   2) 가상 패드, 터치 버튼, 조작 UI는 상하 드래그가 브라우저 스크롤로 전파되지 않도록 격리한다. */
+canvas, [data-game-surface], .game-canvas, .game-viewport {
+  touch-action: none !important;
+  overscroll-behavior: none !important;
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
 
-   1) touch-action — touch-action 은 상속되지 않아 필드에 touch-none 을 줘도
-      자식 <button> 은 위의 `manipulation` 을 그대로 받는다. 그러면 브라우저가
-      탭을 팬 제스처 시작으로 보고 취소할 수 있어 **모바일에서 타격이 씹힌다**
-      (에임 트레이너 등 12개 게임 해당).
-   2) min-height — precision+expert 타깃은 지름 19px 인데 40px 이 강제돼
-      2:1 타원이 됐다. 히트 영역과 보이는 원이 어긋난다. */
-.touch-none button, .touch-none [role="button"] { touch-action: none; }
+.touch-none button, .touch-none [role="button"], [data-game-control], .game-control-btn {
+  touch-action: none !important;
+  -webkit-touch-callout: none !important;
+  user-select: none !important;
+}
 @layer base {
   @media (pointer: coarse) {
-    main .touch-none button { min-height: unset; }
+    main .touch-none button, main [data-game-control] { min-height: unset; }
   }
 }
 

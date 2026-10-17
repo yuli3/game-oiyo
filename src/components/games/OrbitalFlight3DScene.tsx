@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { OrbitalFlightState } from '../../lib/games/orbital-flight';
+import type { OrbitalFlightState } from '../../lib/games/orbital-flight';
 
 interface OrbitalFlight3DSceneProps {
   state: OrbitalFlightState;

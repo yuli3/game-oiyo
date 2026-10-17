@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
 import CyberHighway3DScene from './CyberHighway3DScene';
 import {
-  CyberHighwayState,
+  type CyberHighwayState,
   createInitialCyberHighwayState,
   steerPlayer,
   activateNitro,
@@ -85,7 +85,7 @@ export default function CyberHighway3D() {
   const speedKmh = Math.round(gameState.speed * 3.6);
 
   return (
-    <div className="relative w-full aspect-16/10 min-h-120 max-h-180 rounded-2xl overflow-hidden border border-border bg-card shadow-lg select-none">
+    <div data-game-surface className="relative w-full aspect-16/10 min-h-120 max-h-180 rounded-2xl overflow-hidden border border-border bg-card shadow-lg select-none touch-none">
       {/* 3D Canvas */}
       <Canvas
         camera={{ position: [0, 4.2, -6.5], fov: 60, rotation: [0.15, Math.PI, 0] }}
@@ -151,12 +151,13 @@ export default function CyberHighway3D() {
       </div>
 
       {/* Mobile Touch Controls (Impeccable minimum 48px touch targets) */}
-      <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between pointer-events-auto">
+      <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between pointer-events-auto touch-none">
         {/* Left / Right Steering Buttons */}
         <div className="flex gap-3">
           <button
             type="button"
-            onClick={() => setGameState((s) => steerPlayer(s, -1))}
+            data-game-control
+            onPointerDown={(e) => { e.preventDefault(); setGameState((s) => steerPlayer(s, -1)); }}
             className="w-16 h-16 rounded-2xl bg-background/90 backdrop-blur-md border border-border flex items-center justify-center text-xl font-black text-foreground shadow-lg active:scale-95 transition-transform"
             aria-label="좌측 차선 이동"
           >
@@ -164,7 +165,8 @@ export default function CyberHighway3D() {
           </button>
           <button
             type="button"
-            onClick={() => setGameState((s) => steerPlayer(s, 1))}
+            data-game-control
+            onPointerDown={(e) => { e.preventDefault(); setGameState((s) => steerPlayer(s, 1)); }}
             className="w-16 h-16 rounded-2xl bg-background/90 backdrop-blur-md border border-border flex items-center justify-center text-xl font-black text-foreground shadow-lg active:scale-95 transition-transform"
             aria-label="우측 차선 이동"
           >
@@ -176,7 +178,8 @@ export default function CyberHighway3D() {
         <div>
           <button
             type="button"
-            onPointerDown={() => setGameState((s) => activateNitro(s))}
+            data-game-control
+            onPointerDown={(e) => { e.preventDefault(); setGameState((s) => activateNitro(s)); }}
             onPointerUp={() => setGameState((s) => deactivateNitro(s))}
             onPointerLeave={() => setGameState((s) => deactivateNitro(s))}
             className={`px-6 h-16 rounded-2xl border font-black text-sm shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 ${

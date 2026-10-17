@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
 import VoxelMaze3DScene from './VoxelMaze3DScene';
 import {
-  VoxelMazeState,
+  type VoxelMazeState,
   createInitialVoxelMazeState,
   movePlayer,
   updateVoxelMaze,
@@ -64,7 +64,7 @@ export default function VoxelMaze3D() {
   }, []);
 
   return (
-    <div className="relative w-full aspect-16/10 min-h-120 max-h-180 rounded-2xl overflow-hidden border border-border bg-card shadow-lg select-none">
+    <div data-game-surface className="relative w-full aspect-16/10 min-h-120 max-h-180 rounded-2xl overflow-hidden border border-border bg-card shadow-lg select-none touch-none">
       {/* 3D WebGL Canvas */}
       <Canvas
         camera={{ position: [7, 16, 20], fov: 50 }}
@@ -107,12 +107,13 @@ export default function VoxelMaze3D() {
       </div>
 
       {/* Mobile Touch D-Pad (Min 48px touch targets) */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 pointer-events-auto">
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 pointer-events-auto touch-none">
         <div className="grid grid-cols-3 gap-2">
           <div />
           <button
             type="button"
-            onClick={() => setGameState((s) => movePlayer(s, 'up'))}
+            data-game-control
+            onPointerDown={(e) => { e.preventDefault(); setGameState((s) => movePlayer(s, 'up')); }}
             className="w-14 h-14 rounded-2xl bg-background/90 backdrop-blur-md border border-border flex items-center justify-center text-xl font-black text-foreground shadow-md active:scale-95 transition-transform"
             aria-label="위로 이동"
           >
@@ -121,7 +122,8 @@ export default function VoxelMaze3D() {
           <div />
           <button
             type="button"
-            onClick={() => setGameState((s) => movePlayer(s, 'left'))}
+            data-game-control
+            onPointerDown={(e) => { e.preventDefault(); setGameState((s) => movePlayer(s, 'left')); }}
             className="w-14 h-14 rounded-2xl bg-background/90 backdrop-blur-md border border-border flex items-center justify-center text-xl font-black text-foreground shadow-md active:scale-95 transition-transform"
             aria-label="왼쪽 이동"
           >
@@ -129,7 +131,8 @@ export default function VoxelMaze3D() {
           </button>
           <button
             type="button"
-            onClick={() => setGameState((s) => movePlayer(s, 'down'))}
+            data-game-control
+            onPointerDown={(e) => { e.preventDefault(); setGameState((s) => movePlayer(s, 'down')); }}
             className="w-14 h-14 rounded-2xl bg-background/90 backdrop-blur-md border border-border flex items-center justify-center text-xl font-black text-foreground shadow-md active:scale-95 transition-transform"
             aria-label="아래로 이동"
           >
@@ -137,7 +140,8 @@ export default function VoxelMaze3D() {
           </button>
           <button
             type="button"
-            onClick={() => setGameState((s) => movePlayer(s, 'right'))}
+            data-game-control
+            onPointerDown={(e) => { e.preventDefault(); setGameState((s) => movePlayer(s, 'right')); }}
             className="w-14 h-14 rounded-2xl bg-background/90 backdrop-blur-md border border-border flex items-center justify-center text-xl font-black text-foreground shadow-md active:scale-95 transition-transform"
             aria-label="오른쪽 이동"
           >

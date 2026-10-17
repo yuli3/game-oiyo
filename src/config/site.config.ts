@@ -40,6 +40,14 @@ export const siteConfig = {
     googleAnalyticsId: "G-915L6V38X6",
     googleAdsenseId: "ca-pub-9541920090543312",
   },
+  // Hand-placed AdSense units alongside Auto ads (세운 결정 2026-10-17: 하이브리드 전환).
+  // enabled: false disables all manual units. An empty slot id skips that unit.
+  manualAds: {
+    enabled: true,
+    slots: {
+      gameBelow: "2768903568", // Responsive display unit placed below game surface and above guide
+    },
+  },
   newsletter: {
     // Set to your Buttondown account slug to enable API subscription, or null to use mailto fallback
     buttondownUsername: null as string | null,

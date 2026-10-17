@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
 import DungeonCrawler3DScene from './DungeonCrawler3DScene';
 import {
-  DungeonCrawlerState,
+  type DungeonCrawlerState,
   createDungeonFloor,
   moveDungeonPlayer,
   useDungeonPotion,
@@ -70,7 +70,7 @@ export default function DungeonCrawler3D() {
   const hpRatio = (gameState.hp / gameState.maxHp) * 100;
 
   return (
-    <div className="relative w-full aspect-16/10 min-h-125 max-h-180 rounded-2xl overflow-hidden border border-border bg-card shadow-lg select-none">
+    <div data-game-surface className="relative w-full aspect-16/10 min-h-125 max-h-180 rounded-2xl overflow-hidden border border-border bg-card shadow-lg select-none touch-none">
       {/* 3D Canvas with isometric action camera following player */}
       <Canvas
         camera={{
@@ -140,10 +140,11 @@ export default function DungeonCrawler3D() {
       </div>
 
       {/* Mobile D-Pad (Minimum 48px touch targets) */}
-      <div className="absolute bottom-4 left-4 pointer-events-auto flex flex-col items-center gap-1.5">
+      <div className="absolute bottom-4 left-4 pointer-events-auto flex flex-col items-center gap-1.5 touch-none">
         <button
           type="button"
-          onClick={() => setGameState((s) => moveDungeonPlayer(s, 0, -1))}
+          data-game-control
+          onPointerDown={(e) => { e.preventDefault(); setGameState((s) => moveDungeonPlayer(s, 0, -1)); }}
           className="w-14 h-14 rounded-2xl bg-background/90 backdrop-blur-md border border-border flex items-center justify-center text-lg font-bold text-foreground shadow-lg active:scale-95 transition-transform"
           aria-label="북쪽 이동"
         >
@@ -152,7 +153,8 @@ export default function DungeonCrawler3D() {
         <div className="flex gap-2">
           <button
             type="button"
-            onClick={() => setGameState((s) => moveDungeonPlayer(s, -1, 0))}
+            data-game-control
+            onPointerDown={(e) => { e.preventDefault(); setGameState((s) => moveDungeonPlayer(s, -1, 0)); }}
             className="w-14 h-14 rounded-2xl bg-background/90 backdrop-blur-md border border-border flex items-center justify-center text-lg font-bold text-foreground shadow-lg active:scale-95 transition-transform"
             aria-label="서쪽 이동"
           >
@@ -160,7 +162,8 @@ export default function DungeonCrawler3D() {
           </button>
           <button
             type="button"
-            onClick={() => setGameState((s) => moveDungeonPlayer(s, 0, 1))}
+            data-game-control
+            onPointerDown={(e) => { e.preventDefault(); setGameState((s) => moveDungeonPlayer(s, 0, 1)); }}
             className="w-14 h-14 rounded-2xl bg-background/90 backdrop-blur-md border border-border flex items-center justify-center text-lg font-bold text-foreground shadow-lg active:scale-95 transition-transform"
             aria-label="남쪽 이동"
           >
@@ -168,7 +171,8 @@ export default function DungeonCrawler3D() {
           </button>
           <button
             type="button"
-            onClick={() => setGameState((s) => moveDungeonPlayer(s, 1, 0))}
+            data-game-control
+            onPointerDown={(e) => { e.preventDefault(); setGameState((s) => moveDungeonPlayer(s, 1, 0)); }}
             className="w-14 h-14 rounded-2xl bg-background/90 backdrop-blur-md border border-border flex items-center justify-center text-lg font-bold text-foreground shadow-lg active:scale-95 transition-transform"
             aria-label="동쪽 이동"
           >

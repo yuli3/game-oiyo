@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { DungeonCrawlerState } from '../../lib/games/dungeon-crawler';
+import type { DungeonCrawlerState } from '../../lib/games/dungeon-crawler';
 
 interface DungeonCrawler3DSceneProps {
   state: DungeonCrawlerState;

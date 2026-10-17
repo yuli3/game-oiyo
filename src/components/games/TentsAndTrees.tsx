@@ -692,7 +692,7 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     </p>
                 )}
 
-                <div className="bg-muted/30 p-1 sm:p-3 rounded-2xl sm:rounded-3xl border border-border shadow-inner w-full max-w-sm overflow-x-auto">
+                <div className="bg-muted/30 p-1 sm:p-3 rounded-2xl sm:rounded-3xl border border-border shadow-inner w-full max-w-sm overflow-x-auto touch-manipulation">
                     <div className="grid gap-0.5 sm:gap-1" role="grid" aria-label={t.title} aria-rowcount={size + 1} aria-colcount={size + 1}
                         style={{ gridTemplateColumns: `1.5rem repeat(${size}, minmax(2rem, 1fr))` }}>
                         <div role="row" aria-rowindex={1} className="contents">
@@ -743,7 +743,15 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                                         <button
                                             key={`${r}-${c}`}
                                             ref={(node) => { cellRefs.current[index] = node; }} type="button" role="gridcell"
-                                            onClick={() => { setActiveCell(index); handleCellClick(r, c); }} aria-disabled={playLocked || lockedKey === `${r}:${c}`}
+                                            onClick={() => { setActiveCell(index); handleCellClick(r, c); }}
+                                            onPointerDown={(e) => {
+                                                if (e.pointerType === 'touch') {
+                                                    e.preventDefault();
+                                                    setActiveCell(index);
+                                                    handleCellClick(r, c);
+                                                }
+                                            }}
+                                            aria-disabled={playLocked || lockedKey === `${r}:${c}`}
                                             tabIndex={activeCell === index ? 0 : -1} aria-rowindex={r + 2} aria-colindex={c + 2}
                                             aria-label={`${position}: ${mark === 'tent' ? a11y.tent : mark === 'grass' ? a11y.grass : a11y.empty}${verdictLabel}`}
                                             onFocus={() => setActiveCell(index)} onKeyDown={(event) => handleGridKeyDown(event, index)}
@@ -801,7 +809,7 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     </div>
                 )}
 
-                <div className="mt-4 min-h-[2rem] text-center" role="status" aria-live="polite">
+                <div className="mt-4 min-h-8 text-center" role="status" aria-live="polite">
                     {validation.complete ? (
                         <div className="animate-fade-up motion-reduce:animate-none">
                             <p className="text-xl font-black text-success mb-3">🎉 {t.win}</p>

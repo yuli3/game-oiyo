@@ -60,7 +60,7 @@ const jsonLd = g ? [
 {g && (
   <>
     {jsonLd!.map((o) => <script type="application/ld+json" is:inline set:html={JSON.stringify(o)} />)}
-    <section class="mx-auto mt-12 max-w-lg space-y-6 border-t border-border pt-8 px-1">
+    <section data-game-guide class="mx-auto mt-12 max-w-lg space-y-6 border-t border-border pt-8 px-1">
       <div>
         <h2 class="text-lg font-black">{H.how[locale]}</h2>
         <p class="mt-2 text-sm leading-7 text-muted-foreground">{g.how[locale] ?? g.how.en}</p>
