@@ -15,6 +15,7 @@ import {
   type SpellId,
 } from "../../lib/games/emberdeep";
 import { EMBERDEEP_ENEMY_DRAW_H, EMBERDEEP_ENEMY_SPRITES, EMBERDEEP_HERO_DRAW_H, EMBERDEEP_SPRITES } from "../../lib/games/sprites";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
 
 type Phase = "briefing" | "playing" | "result";
 type EnemyKind = "raider" | "hound" | "knight";
@@ -158,7 +159,8 @@ function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy) {
   ctx.restore();
 }
 
-function Dungeon({ hero, copy, onFinish }: { hero: HeroClass; copy: Copy; onFinish: (r: Result) => void }) {
+function Dungeon({ hero, copy, locale = 'en', onFinish }: { hero: HeroClass; copy: Copy; locale?: Locale; onFinish: (r: Result) => void }) {
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale });
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const keys = useRef(new Set<string>());
   const input = useRef({ x: 0, y: 0, attack: false, spell: false, dodge: false, jump: false });
@@ -288,11 +290,33 @@ function Dungeon({ hero, copy, onFinish }: { hero: HeroClass; copy: Copy; onFini
 
   const press = (key: keyof typeof input.current, value: number | boolean) => { (input.current as unknown as Record<string, number | boolean>)[key] = value; };
   const toggleMuted = () => setMuted(value => { const next = !value; audioRef.current?.setMuted(next); return next; });
-  return <div className="relative h-full min-h-[620px] bg-black">
-    <canvas ref={canvasRef} className="h-full min-h-[620px] w-full touch-none [image-rendering:pixelated]" aria-label="Emberdeep game canvas" />
-    <button type="button" onClick={toggleMuted} aria-pressed={muted} aria-label="Sound" className="absolute left-4 top-4 min-h-11 min-w-11 rounded border border-white/20 bg-black/70 text-sm text-white">
-      <span aria-hidden="true">{muted ? "🔇" : "🔊"}</span>
-    </button>
+  return (
+    <div
+      ref={containerRef}
+      data-game-surface
+      className={
+        isImmersive
+          ? "fixed inset-0 z-50 w-screen h-dvh bg-black select-none touch-none overflow-hidden m-0 p-0 flex flex-col justify-center"
+          : "relative h-full min-h-[620px] bg-black"
+      }
+    >
+      <canvas ref={canvasRef} className="h-full min-h-[620px] w-full touch-none [image-rendering:pixelated]" aria-label="Emberdeep game canvas" />
+      <div className="absolute left-4 top-4 flex items-center gap-2 z-10 pointer-events-auto">
+        <button type="button" onClick={toggleMuted} aria-pressed={muted} aria-label="Sound" className="min-h-11 min-w-11 rounded border border-white/20 bg-black/70 text-sm text-white flex items-center justify-center">
+          <span aria-hidden="true">{muted ? "🔇" : "🔊"}</span>
+        </button>
+        <button
+          type="button"
+          onClick={togglePortal}
+          aria-pressed={isImmersive}
+          aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+          title={isImmersive ? portalLabels.exit : portalLabels.enter}
+          className="min-h-11 px-3 py-1.5 rounded border border-white/20 bg-black/70 text-xs font-black text-white hover:bg-black/90 transition-colors flex items-center gap-1"
+        >
+          <span className="text-sm">{isImmersive ? '✕' : '⛶'}</span>
+          <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+        </button>
+      </div>
     {/* 2026-09-28 touch audit: hide only for wide screens with a mouse — a width breakpoint alone removed the controls on landscape phones and iPads. touch-none keeps a held button from turning into a page scroll (pointercancel). */}
     <div className="pointer-events-none absolute bottom-4 left-3 right-3 flex touch-none select-none items-end justify-between gap-2 md:pointer-fine:hidden">
       <div className="pointer-events-auto grid grid-cols-3 gap-1">
@@ -307,7 +331,8 @@ function Dungeon({ hero, copy, onFinish }: { hero: HeroClass; copy: Copy; onFini
     <div className="absolute right-4 top-4 flex gap-1">{(["ember", "frost", "storm"] as SpellId[]).map((id, i) => <button key={id} onClick={() => setSpell(id)} className={`min-h-11 border px-3 font-mono text-xs font-black ${spell === id ? "border-amber-300 bg-amber-400 text-black" : "border-white/20 bg-black/70 text-white"}`}>{i + 1} {id.toUpperCase()}</button>)}</div>
     {castNotice && <p role="status" className="absolute right-4 top-16 bg-black/80 px-3 py-2 font-mono text-xs font-black text-cyan-200">{castNotice}</p>}
     {pathChoice && <div className="absolute inset-0 grid place-items-center bg-black/80 p-6"><div className="w-full max-w-2xl text-center"><h3 className="text-xl font-black tracking-[.18em] text-amber-200">{copy.hud.choosePath}</h3><div className="mt-6 grid gap-3 sm:grid-cols-2"><button onClick={() => pathChoice("crypt")} className="min-h-28 border border-cyan-800 bg-[#07151b] p-5 text-lg font-black text-cyan-100">{copy.hud.crypt}<span className="mt-2 block text-xs font-normal text-cyan-300/70">Frost shades · mana wells</span></button><button onClick={() => pathChoice("foundry")} className="min-h-28 border border-orange-800 bg-[#1b0b06] p-5 text-lg font-black text-orange-100">{copy.hud.foundry}<span className="mt-2 block text-xs font-normal text-orange-300/70">Armored raiders · flame vents</span></button></div></div></div>}
-  </div>;
+    </div>
+  );
 }
 
 export default function Emberdeep({ locale }: { locale: Locale }) {
@@ -320,7 +345,7 @@ export default function Emberdeep({ locale }: { locale: Locale }) {
   const finish = useCallback((next: Result) => {
     setResult(next); setBest(old => { const value = Math.max(old, next.score); localStorage.setItem(EMBERDEEP_SAVE_KEY, JSON.stringify({ version: 1, bestScore: value, deepestRoom: next.room, preferredHero: hero })); return value; }); setPhase("result");
   }, [hero]);
-  if (phase === "playing") return <section className="not-prose relative left-1/2 my-5 w-[min(100vw-1rem,1440px)] -translate-x-1/2 overflow-hidden rounded-xl border border-amber-950 bg-black shadow-[0_0_80px_rgba(120,54,13,.25)]"><Dungeon hero={hero} copy={t} onFinish={finish} /></section>;
+  if (phase === "playing") return <section className="not-prose relative left-1/2 my-5 w-[min(100vw-1rem,1440px)] -translate-x-1/2 overflow-hidden rounded-xl border border-amber-950 bg-black shadow-[0_0_80px_rgba(120,54,13,.25)]"><Dungeon hero={hero} copy={t} locale={locale} onFinish={finish} /></section>;
   return <section className="not-prose relative left-1/2 my-8 w-[min(100vw-1rem,1200px)] -translate-x-1/2 overflow-hidden rounded-3xl border border-stone-800 bg-[#0a0d0b] text-white shadow-2xl">
     <img src="/games/emberdeep-social.png" alt="" className="absolute inset-0 h-full w-full object-cover opacity-35" />
     <div className="absolute inset-0 bg-gradient-to-r from-[#080b09] via-[#080b09]/90 to-[#080b09]/35" />

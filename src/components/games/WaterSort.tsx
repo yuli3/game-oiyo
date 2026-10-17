@@ -4,6 +4,8 @@ import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 import { getBestForConditions, recordBestForConditions, type BestConditions, type ConditionalBestRecord } from '../../lib/games/records';
 import { createWaterSort, generateWaterSortPuzzle, isWaterSortDeadEnd, moveWaterSort, pouredLayerCount, waterSortHint, type WaterSortDifficulty, type WaterSortMove, type WaterSortState } from '../../lib/games/water-sort';
 import { clearWaterSortSave, loadWaterSortSave, storeWaterSortSave, type WaterSortAssist } from '../../lib/games/water-sort-save';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
+import type { Locale } from '../../lib/i18n';
 
 const COLORS = ['#ef4444', '#2563eb', '#059669', '#d97706', '#7c3aed'];
 const PATTERNS = [
@@ -23,6 +25,10 @@ const COPY = {
 } as const;
 
 const WaterSort: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
+    const loc = locale as Locale;
+    const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({
+        locale: loc,
+    });
     const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
     const reducedMotion = usePrefersReducedMotion();
     const [game, setGame] = useState<WaterSortState | null>(null);
@@ -126,36 +132,57 @@ const WaterSort: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const displayedBest = best ?? existingBest;
 
     return (
-        <GameContainer title={t.title} subtitle={t.subtitle} onReset={() => startGame(difficulty)}>
-            <div className="flex flex-col items-center">
-                <p className="mb-5 text-center text-sm font-medium text-muted-foreground">{t.desc}</p>
-                <div className="mb-4 flex flex-wrap justify-center gap-2" aria-label="Difficulty">
-                    {(['easy', 'medium', 'hard'] as const).map((level) => <button key={level} type="button" aria-pressed={difficulty === level} onClick={() => startGame(level)} className={`min-h-11 rounded-full border px-4 text-xs font-black ${difficulty === level ? 'border-primary bg-primary text-primary-foreground' : 'border-border'}`}>{t[level]}</button>)}
-                    <button type="button" aria-pressed={!muted} onClick={() => setMuted((value) => !value)} className="min-h-11 rounded-full border border-border px-4 text-xs font-bold">{muted ? t.soundOff : t.soundOn}</button>
+        <div
+            ref={containerRef}
+            data-game-surface
+            className={
+                isImmersive
+                    ? "fixed inset-0 z-50 w-screen h-dvh bg-background p-4 sm:p-6 overflow-y-auto flex flex-col items-center justify-center m-0 select-none"
+                    : "relative"
+            }
+        >
+            <GameContainer title={t.title} subtitle={t.subtitle} onReset={() => startGame(difficulty)}>
+                <div className="flex flex-col items-center">
+                    <p className="mb-5 text-center text-sm font-medium text-muted-foreground">{t.desc}</p>
+                    <div className="mb-4 flex flex-wrap justify-center gap-2 items-center" aria-label="Difficulty">
+                        {(['easy', 'medium', 'hard'] as const).map((level) => <button key={level} type="button" aria-pressed={difficulty === level} onClick={() => startGame(level)} className={`min-h-11 rounded-full border px-4 text-xs font-black ${difficulty === level ? 'border-primary bg-primary text-primary-foreground' : 'border-border'}`}>{t[level]}</button>)}
+                        <button type="button" aria-pressed={!muted} onClick={() => setMuted((value) => !value)} className="min-h-11 rounded-full border border-border px-4 text-xs font-bold">{muted ? t.soundOff : t.soundOn}</button>
+                        <button
+                            type="button"
+                            onClick={togglePortal}
+                            aria-pressed={isImmersive}
+                            aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+                            title={isImmersive ? portalLabels.exit : portalLabels.enter}
+                            className="min-h-11 px-3 py-2 rounded-full border border-border bg-background shadow-xs text-xs font-bold text-foreground hover:bg-muted transition-colors flex items-center gap-1"
+                        >
+                            <span>{isImmersive ? '✕' : '⛶'}</span>
+                            <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+                        </button>
+                    </div>
+                    {game && <div className="mb-4 flex gap-5 text-xs font-black text-muted-foreground"><span>{t.moves}: {game.moves}</span><span>{t.time}: {elapsedSeconds} {t.seconds}</span></div>}
+                    <div className="mb-6 flex gap-2">
+                        <button type="button" onClick={undoMove} disabled={undo.length === 0} className="min-h-11 rounded-lg border border-border px-4 text-xs font-bold disabled:opacity-40">{t.undo}</button>
+                        <button type="button" onClick={showHint} disabled={!game || isWon || deadEnd} className="min-h-11 rounded-lg border border-border px-4 text-xs font-bold disabled:opacity-40">{t.hint}</button>
+                    </div>
+                    {hint && <p className="mb-5 text-xs font-bold text-primary" role="status">{t.hintMove(hint.from + 1, hint.to + 1)}</p>}
+                    {deadEnd && <p className="mb-5 max-w-sm text-center text-xs font-bold text-destructive" role="alert">{t.deadEnd}</p>}
+                    <div className="mb-8 grid grid-cols-4 gap-3 sm:grid-cols-7 sm:gap-4" role="group" aria-label={t.title}>
+                        {tubes.map((tube, i) => <button type="button" key={i} ref={(element) => { tubeRefs.current[i] = element; }} tabIndex={focusedTube === i ? 0 : -1} onFocus={() => setFocusedTube(i)} onKeyDown={(event) => { if (event.key === 'ArrowRight' || event.key === 'ArrowDown') { event.preventDefault(); focusTube(i + 1); } if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') { event.preventDefault(); focusTube(i - 1); } if (event.key === 'Home') { event.preventDefault(); focusTube(0); } if (event.key === 'End') { event.preventDefault(); focusTube(tubes.length - 1); } }} onClick={() => handleTubeClick(i)} aria-pressed={selectedTube === i} aria-label={`${t.tube(i + 1, tube.length, tube.map((color) => String(color + 1)).join('-'))}${selectedTube === i ? `, ${t.selected}` : ''}`} className={`relative h-32 w-12 cursor-pointer overflow-hidden rounded-b-3xl border-4 border-muted sm:h-40 sm:w-14 ${!reducedMotion ? 'transition-all' : ''} focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary focus-visible:ring-offset-4 ${selectedTube === i ? `ring-4 ring-primary ring-offset-4 ${!reducedMotion ? '-translate-y-3' : ''}` : (!reducedMotion ? 'hover:-translate-y-1' : '')}`}>
+                            <span className="absolute inset-0 flex flex-col-reverse">{tube.map((color, idx) => {
+                                const poured = Boolean(lastPour && lastPour.to === i && lastPour.count > 0 && idx >= tube.length - lastPour.count);
+                                return <span key={idx} style={{ backgroundColor: COLORS[color], backgroundImage: PATTERNS[color], backgroundSize: color === 1 ? '12px 12px' : undefined }} className={`h-1/4 w-full ${poured && !reducedMotion ? 'oiyo-pour' : ''}`} />;
+                            })}</span>
+                        </button>)}
+                    </div>
+                    {isWon && game && <div className={`w-full max-w-md rounded-3xl border border-primary/30 bg-primary/5 p-6 text-center ${!reducedMotion ? 'animate-in zoom-in-95' : ''}`} role="status">
+                        <h4 className="mb-4 text-2xl font-black text-primary">{t.win}</h4>
+                        <div className="mb-5 grid grid-cols-2 gap-3 text-sm"><p><strong>{t.moves}</strong><br />{game.moves}</p><p><strong>{t.time}</strong><br />{elapsedSeconds} {t.seconds}</p><p><strong>{t.efficiency}</strong><br />{efficiency}%</p><p><strong>{t.best}</strong><br />{displayedBest?.value ?? elapsedSeconds} {t.seconds}</p></div>
+                        <p className="mb-5 text-xs font-bold text-muted-foreground">{t.next}: {Math.max(0, (displayedBest?.value ?? elapsedSeconds) - 1)} {t.seconds}</p>
+                        <button type="button" onClick={() => startGame(difficulty)} className="min-h-12 rounded-full bg-primary px-10 font-bold text-primary-foreground shadow-lg">{t.playAgain}</button>
+                    </div>}
                 </div>
-                {game && <div className="mb-4 flex gap-5 text-xs font-black text-muted-foreground"><span>{t.moves}: {game.moves}</span><span>{t.time}: {elapsedSeconds} {t.seconds}</span></div>}
-                <div className="mb-6 flex gap-2">
-                    <button type="button" onClick={undoMove} disabled={undo.length === 0} className="min-h-11 rounded-lg border border-border px-4 text-xs font-bold disabled:opacity-40">{t.undo}</button>
-                    <button type="button" onClick={showHint} disabled={!game || isWon || deadEnd} className="min-h-11 rounded-lg border border-border px-4 text-xs font-bold disabled:opacity-40">{t.hint}</button>
-                </div>
-                {hint && <p className="mb-5 text-xs font-bold text-primary" role="status">{t.hintMove(hint.from + 1, hint.to + 1)}</p>}
-                {deadEnd && <p className="mb-5 max-w-sm text-center text-xs font-bold text-destructive" role="alert">{t.deadEnd}</p>}
-                <div className="mb-8 grid grid-cols-4 gap-3 sm:grid-cols-7 sm:gap-4" role="group" aria-label={t.title}>
-                    {tubes.map((tube, i) => <button type="button" key={i} ref={(element) => { tubeRefs.current[i] = element; }} tabIndex={focusedTube === i ? 0 : -1} onFocus={() => setFocusedTube(i)} onKeyDown={(event) => { if (event.key === 'ArrowRight' || event.key === 'ArrowDown') { event.preventDefault(); focusTube(i + 1); } if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') { event.preventDefault(); focusTube(i - 1); } if (event.key === 'Home') { event.preventDefault(); focusTube(0); } if (event.key === 'End') { event.preventDefault(); focusTube(tubes.length - 1); } }} onClick={() => handleTubeClick(i)} aria-pressed={selectedTube === i} aria-label={`${t.tube(i + 1, tube.length, tube.map((color) => String(color + 1)).join('-'))}${selectedTube === i ? `, ${t.selected}` : ''}`} className={`relative h-32 w-12 cursor-pointer overflow-hidden rounded-b-3xl border-4 border-muted sm:h-40 sm:w-14 ${!reducedMotion ? 'transition-all' : ''} focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary focus-visible:ring-offset-4 ${selectedTube === i ? `ring-4 ring-primary ring-offset-4 ${!reducedMotion ? '-translate-y-3' : ''}` : (!reducedMotion ? 'hover:-translate-y-1' : '')}`}>
-                        <span className="absolute inset-0 flex flex-col-reverse">{tube.map((color, idx) => {
-                            const poured = Boolean(lastPour && lastPour.to === i && lastPour.count > 0 && idx >= tube.length - lastPour.count);
-                            return <span key={idx} style={{ backgroundColor: COLORS[color], backgroundImage: PATTERNS[color], backgroundSize: color === 1 ? '12px 12px' : undefined }} className={`h-1/4 w-full ${poured && !reducedMotion ? 'oiyo-pour' : ''}`} />;
-                        })}</span>
-                    </button>)}
-                </div>
-                {isWon && game && <div className={`w-full max-w-md rounded-3xl border border-primary/30 bg-primary/5 p-6 text-center ${!reducedMotion ? 'animate-in zoom-in-95' : ''}`} role="status">
-                    <h4 className="mb-4 text-2xl font-black text-primary">{t.win}</h4>
-                    <div className="mb-5 grid grid-cols-2 gap-3 text-sm"><p><strong>{t.moves}</strong><br />{game.moves}</p><p><strong>{t.time}</strong><br />{elapsedSeconds} {t.seconds}</p><p><strong>{t.efficiency}</strong><br />{efficiency}%</p><p><strong>{t.best}</strong><br />{displayedBest?.value ?? elapsedSeconds} {t.seconds}</p></div>
-                    <p className="mb-5 text-xs font-bold text-muted-foreground">{t.next}: {Math.max(0, (displayedBest?.value ?? elapsedSeconds) - 1)} {t.seconds}</p>
-                    <button type="button" onClick={() => startGame(difficulty)} className="min-h-12 rounded-full bg-primary px-10 font-bold text-primary-foreground shadow-lg">{t.playAgain}</button>
-                </div>}
-            </div>
-        </GameContainer>
+            </GameContainer>
+        </div>
     );
 };
 

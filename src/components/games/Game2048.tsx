@@ -7,6 +7,8 @@ import { clearGame2048Save, loadGame2048Save, storeGame2048Save } from '../../li
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 import { createGame2048, game2048Analysis, moveGame2048, restoreGame2048, type Game2048Direction, type Game2048State } from '../../lib/games/game-2048';
 import Game2048PixiCanvas from './Game2048PixiCanvas';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
+import type { Locale } from '../../lib/i18n';
 
 const COPY = {
     ko: { title: "2048 게임", subtitle: "Growth Logic", score: "점수", best: "최고 점수", over: "게임 종료", win: "2048 달성!", reset: "다시 시작", hint: "방향키 또는 스와이프로 이동" },
@@ -23,6 +25,8 @@ const EXTRA={ko:{pause:"일시정지",resume:"계속",restored:"게임을 복원
 const REPLAY={ko:{same:"같은 보드 재도전",fresh:"새 보드",ghost:"PB 고스트 보드"},en:{same:"Retry same board",fresh:"New board",ghost:"PB ghost board"},ja:{same:"同じ盤面で再挑戦",fresh:"新しい盤面",ghost:"PBゴースト盤面"},zh:{same:"重试同一棋盘",fresh:"新棋盘",ghost:"PB幽灵棋盘"},fr:{same:"Rejouer la même grille",fresh:"Nouvelle grille",ghost:"Grille fantôme PB"},es:{same:"Reintentar tablero",fresh:"Nuevo tablero",ghost:"Tablero fantasma PB"}} as const;
 
 const Game2048: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
+    const loc = locale as Locale;
+    const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: loc });
     const t = COPY[(locale as keyof typeof COPY)] ?? COPY.en;
     const x=EXTRA[(locale as keyof typeof EXTRA)]??EXTRA.en;
     const replayCopy=REPLAY[(locale as keyof typeof REPLAY)]??REPLAY.en;
@@ -89,18 +93,39 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const analysis=game2048Analysis(game);const ghostBoard=ghostBoardsRef.current[game.moves];
 
     return (
-        <GameContainer title={t.title} subtitle={t.subtitle} onReset={initGame}>
-            <div className="flex justify-end gap-2 mb-6">
-                <button type="button" onClick={()=>{setPaused(v=>!v);setRestored(false)}} className="min-h-11 px-3 rounded-xl border border-border font-bold text-xs">{paused?`▶ ${x.resume}`:`Ⅱ ${x.pause}`}</button><button type="button" onClick={()=>setMuted(v=>!v)} aria-pressed={muted} className="min-h-11 px-3 rounded-xl border border-border font-bold text-xs">{muted?'🔇':'🔊'} {x.sound}</button>
-                <div className="px-3 py-1.5 bg-muted rounded-xl text-center min-w-18">
-                    <div className="text-[10px] font-black text-muted-foreground uppercase leading-none">{t.score}</div>
-                    <div className="text-lg font-black text-primary leading-tight">{game.score.toLocaleString()}</div>
+        <div
+            ref={containerRef}
+            data-game-surface
+            className={
+                isImmersive
+                    ? "fixed inset-0 z-50 w-screen h-dvh bg-background p-4 sm:p-6 overflow-y-auto flex flex-col items-center justify-center m-0 select-none"
+                    : "relative"
+            }
+        >
+            <GameContainer title={t.title} subtitle={t.subtitle} onReset={initGame}>
+                <div className="flex justify-end gap-2 mb-6 flex-wrap items-center">
+                    <button
+                        type="button"
+                        onClick={togglePortal}
+                        aria-pressed={isImmersive}
+                        aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+                        title={isImmersive ? portalLabels.exit : portalLabels.enter}
+                        className="min-h-11 px-3 rounded-xl border border-border font-bold text-xs flex items-center gap-1"
+                    >
+                        <span>{isImmersive ? '✕' : '⛶'}</span>
+                        <span>{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+                    </button>
+                    <button type="button" onClick={()=>{setPaused(v=>!v);setRestored(false)}} className="min-h-11 px-3 rounded-xl border border-border font-bold text-xs">{paused?`▶ ${x.resume}`:`Ⅱ ${x.pause}`}</button>
+                    <button type="button" onClick={()=>setMuted(v=>!v)} aria-pressed={muted} className="min-h-11 px-3 rounded-xl border border-border font-bold text-xs">{muted?'🔇':'🔊'} {x.sound}</button>
+                    <div className="px-3 py-1.5 bg-muted rounded-xl text-center min-w-18">
+                        <div className="text-[10px] font-black text-muted-foreground uppercase leading-none">{t.score}</div>
+                        <div className="text-lg font-black text-primary leading-tight">{game.score.toLocaleString()}</div>
+                    </div>
+                    <div className="px-3 py-1.5 bg-muted rounded-xl text-center min-w-18">
+                        <div className="text-[10px] font-black text-muted-foreground uppercase leading-none">{t.best}</div>
+                        <div className="text-lg font-black text-chart-2 leading-tight">{best.toLocaleString()}</div>
+                    </div>
                 </div>
-                <div className="px-3 py-1.5 bg-muted rounded-xl text-center min-w-18">
-                    <div className="text-[10px] font-black text-muted-foreground uppercase leading-none">{t.best}</div>
-                    <div className="text-lg font-black text-chart-2 leading-tight">{best.toLocaleString()}</div>
-                </div>
-            </div>
             {(paused||restored)&&<p className="mb-3 text-center text-xs font-bold text-muted-foreground" role="status">{x.restored} · {x.pause}</p>}
 
             <div className="relative aspect-square w-full max-w-sm mx-auto">
@@ -167,6 +192,7 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 {t.hint}
             </div>
         </GameContainer>
+        </div>
     );
 };
 

@@ -23,6 +23,7 @@ import { getPrefersReducedMotion, subscribeToReducedMotion } from "../../lib/gam
 import { blitSheetFrame } from "../../lib/games/sprite-sheet";
 import { BRICK_BREAKER_SPRITES, FX_SPARK_SHEET, FX_SPRITES } from "../../lib/games/sprites";
 import { createDebrisWorld, type DebrisMatterLike, type DebrisWorld } from "../../lib/games/debris-world";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
 
 type BrickArt = Record<keyof typeof BRICK_BREAKER_SPRITES, HTMLImageElement> & { sparkSheet: HTMLImageElement };
 function loadBrickArt(): BrickArt | null {
@@ -116,6 +117,7 @@ interface Props { locale: Locale }
 const BrickBreaker: React.FC<Props> = ({ locale }) => {
   const t = T[locale] ?? T.en;
   const bb2 = BB2_T[locale] ?? BB2_T.en;
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale });
   const [phase, setPhase] = useState<Phase>("menu");
   const [score, setScore] = useState(0);
   const [level, setLevel] = useState(1);
@@ -493,15 +495,36 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
       : t.tiedBest;
 
   return (
-    <div className="not-prose my-10 mx-auto max-w-md rounded-3xl border border-border bg-card p-4 text-card-foreground shadow-sm select-none">
-      <div className="mb-3 flex items-center justify-between">
+    <div
+      ref={containerRef}
+      data-game-surface
+      className={
+        isImmersive
+          ? "fixed inset-0 z-50 w-screen h-dvh bg-black p-2 sm:p-4 rounded-none border-none select-none flex flex-col items-center justify-center overflow-hidden m-0"
+          : "not-prose my-10 mx-auto max-w-md rounded-3xl border border-border bg-card p-4 text-card-foreground shadow-sm select-none"
+      }
+    >
+      <div className="mb-3 flex items-center justify-between w-full max-w-md">
         <div>
           <div className="text-sm font-black uppercase tracking-widest text-primary">{t.title}</div>
           <div className="text-[11px] text-muted-foreground">{t.subtitle}</div>
         </div>
-        <div className="text-right text-xs font-bold">
-          <div>{t.score}: <b className="text-primary">{score}</b></div>
-          <div className="text-muted-foreground">{t.best}: {best} · {t.bestLevel}: {bestLevel}</div>
+        <div className="flex items-center gap-2">
+          <div className="text-right text-xs font-bold">
+            <div>{t.score}: <b className="text-primary">{score}</b></div>
+            <div className="text-muted-foreground">{t.best}: {best} · {t.bestLevel}: {bestLevel}</div>
+          </div>
+          <button
+            type="button"
+            onClick={togglePortal}
+            aria-pressed={isImmersive}
+            aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+            title={isImmersive ? portalLabels.exit : portalLabels.enter}
+            className="min-h-11 px-3 py-1.5 rounded-xl border border-border bg-background/80 backdrop-blur-md shadow-xs text-xs font-black text-foreground hover:bg-background transition-colors flex items-center gap-1"
+          >
+            <span className="text-sm">{isImmersive ? '✕' : '⛶'}</span>
+            <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+          </button>
         </div>
       </div>
 
@@ -573,7 +596,7 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
       </div>
 
       {phase === "playing" && (
-        <div className="mt-3 grid grid-cols-3 gap-2">
+        <div className="mt-3 grid grid-cols-3 gap-2 w-full max-w-md">
           <button type="button" onClick={launch} disabled={paused || Boolean(gsRef.current?.launched)} className="min-h-11 rounded-xl bg-primary px-2 text-xs font-bold text-primary-foreground disabled:opacity-45">
             {bb2.launch}
           </button>
