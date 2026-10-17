@@ -1,0 +1,50 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+import GameGuide from "../../components/GameGuide.astro";
+import CyberHighway3D from "../../components/games/CyberHighway3D";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "Cyber Highway 3D — 레트로 사이버 하이웨이 레이싱 게임",
+    description: "신스웨이브 네온 고속도로를 질주하며 교통 차량을 추월하고 니트로 부스트로 한계 속도를 돌파하세요. Three.js 3D 실시간 레이싱.",
+  },
+  en: {
+    title: "Cyber Highway 3D — Retro Synthwave Highway Racing Game",
+    description: "Speed through a neon synthwave highway, weave past high-speed traffic, and unleash nitro boosts in real-time 3D.",
+  },
+  ja: {
+    title: "Cyber Highway 3D — レトロサイバーハイウェイ レーシングゲーム",
+    description: "シンセウェーブのネオン高速道路を疾走し、車列を巧みに追い抜いてニトロブーストで限界突破する3Dリアルタイムレーシング。",
+  },
+  zh: {
+    title: "Cyber Highway 3D — 复古赛博高速公路飞车",
+    description: "在霓虹合成波高速公路上飞驰，穿梭于车流之中，开启氮气加速突破速度极限。基于Three.js的3D实时飞车游戏。",
+  },
+  fr: {
+    title: "Cyber Highway 3D — Jeu de Course Rétro Cyber Highway 3D",
+    description: "Foncez sur une autoroute synthwave néon, dépassez le trafic à grande vitesse et déclenchez des boosts nitro en 3D temps réel.",
+  },
+  es: {
+    title: "Cyber Highway 3D — Juego de Carreras de Autopista Retro 3D",
+    description: "Acelera por una autopista synthwave de neón, esquiva el tráfico denso y activa el nitro boost en 3D en tiempo real.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={(gameArtDocument.games as Record<string, string>)["cyber-highway-3d"] ?? "/games/maze-social.png"}>
+  <div class="mx-auto max-w-7xl px-2 py-6 sm:px-4 sm:py-8">
+    <CyberHighway3D client:visible />
+    <div class="mx-auto max-w-3xl px-2"><GameGuide slug="cyber-highway-3d" locale={locale} name="Cyber Highway 3D" /></div>
+  </div>
+</BaseLayout>

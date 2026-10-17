@@ -1,0 +1,50 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+import GameGuide from "../../components/GameGuide.astro";
+import DungeonCrawler3D from "../../components/games/DungeonCrawler3D";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "Dungeon Crawler 3D — 복셀 던전 크롤러 탈출 액션 게임",
+    description: "미궁 속 몬스터를 격퇴하고 보물상자를 획득하며 더 깊은 지하층으로 탈출하세요. Three.js 3D 복셀 던전 RPG 액션.",
+  },
+  en: {
+    title: "Dungeon Crawler 3D — Voxel Roguelike Dungeon Adventure",
+    description: "Fight dungeon monsters, loot golden chests, and delve into deeper underground floors. Real-time 3D voxel dungeon crawler.",
+  },
+  ja: {
+    title: "Dungeon Crawler 3D — ボクセル ダンジョン クローラー脱出ゲーム",
+    description: "ダンジョンのモンスターを討伐し、宝箱を開けてより深い地下階層へと脱出するThree.js 3DボクセルRPGアクション。",
+  },
+  zh: {
+    title: "Dungeon Crawler 3D — 体素地牢爬行者冒险游戏",
+    description: "击溃迷宫怪物，搜寻神秘宝箱，寻找通往更深地下层的出路。基于Three.js打造的实时3D体素地牢冒险动作游戏。",
+  },
+  fr: {
+    title: "Dungeon Crawler 3D — Jeu d'Aventure et Donjon Voxel 3D",
+    description: "Affrontez des monstres de donjon, pillez des coffres au trésor et descendez dans les étages souterrains profonds en 3D.",
+  },
+  es: {
+    title: "Dungeon Crawler 3D — Juego de Mazmorras y Aventura Voxel 3D",
+    description: "Lucha contra monstruos, abre cofres dorados y desciende a pisos subterráneos más profundos en 3D en tiempo real.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={(gameArtDocument.games as Record<string, string>)["dungeon-crawler-3d"] ?? "/games/maze-social.png"}>
+  <div class="mx-auto max-w-7xl px-2 py-6 sm:px-4 sm:py-8">
+    <DungeonCrawler3D client:visible />
+    <div class="mx-auto max-w-3xl px-2"><GameGuide slug="dungeon-crawler-3d" locale={locale} name="Dungeon Crawler 3D" /></div>
+  </div>
+</BaseLayout>

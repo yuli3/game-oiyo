@@ -105,6 +105,8 @@ export default defineConfig([
       "src/components/games/TentsIsland3DScene.tsx",
       "src/components/games/OrbitalDefense3DScene.tsx",
       "src/components/games/GravityRoller3DScene.tsx",
+      "src/components/games/CyberHighway3DScene.tsx",
+      "src/components/games/DungeonCrawler3DScene.tsx",
     ],
     rules: {
       "shadcn/no-raw-colors": "off",
