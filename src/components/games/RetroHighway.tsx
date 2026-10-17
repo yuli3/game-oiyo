@@ -7,7 +7,8 @@ import {
   updateHighway,
 } from '../../lib/games/retro-highway';
 import type { Locale } from '../../lib/i18n';
-import { Play, RotateCcw, Trophy, Zap, Flame, ShieldAlert, ArrowLeft, ArrowRight, Gauge } from 'lucide-react';
+import { Play, RotateCcw, Trophy, Zap, Flame, ShieldAlert, ArrowLeft, ArrowRight, Gauge, Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
 
 interface Props {
   locale: Locale;
@@ -124,10 +125,77 @@ export default function RetroHighway({ locale = 'ko' }: Props) {
   const t = UI_TEXT[locale] ?? UI_TEXT.ko;
   const [state, setState] = useState<HighwayState>(createInitialHighwayState);
   const [bestDist, setBestDist] = useState<number>(0);
+  const [muted, setMuted] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('retro_highway_muted') === 'true';
+    } catch {
+      return false;
+    }
+  });
 
   const inputRef = useRef<HighwayInput>({ steer: 0, boost: false, brake: false });
   const animRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number>(0);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale });
+
+  const playSound = useCallback((type: 'crash' | 'pickup' | 'boost') => {
+    if (muted) return;
+    try {
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!audioCtxRef.current && AudioCtx) {
+        audioCtxRef.current = new AudioCtx();
+      }
+      const ctx = audioCtxRef.current;
+      if (!ctx) return;
+      if (ctx.state === 'suspended') void ctx.resume();
+
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      if (type === 'crash') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(140, now);
+        osc.frequency.exponentialRampToValueAtTime(30, now + 0.35);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        osc.start(now);
+        osc.stop(now + 0.35);
+      } else if (type === 'pickup') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(587.33, now); // D5
+        osc.frequency.exponentialRampToValueAtTime(880, now + 0.15); // A5
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+        osc.start(now);
+        osc.stop(now + 0.15);
+      } else if (type === 'boost') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(220, now);
+        osc.frequency.exponentialRampToValueAtTime(440, now + 0.2);
+        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+        osc.start(now);
+        osc.stop(now + 0.2);
+      }
+    } catch {
+      // AudioContext unavailable
+    }
+  }, [muted]);
+
+  const toggleMute = useCallback(() => {
+    setMuted((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('retro_highway_muted', String(next));
+      } catch {}
+      return next;
+    });
+  }, []);
 
   // Load best distance
   useEffect(() => {
@@ -170,6 +238,12 @@ export default function RetroHighway({ locale = 'ko' }: Props) {
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'm' || e.key === 'M') {
+        toggleMute();
+      }
+      if (e.key === 'f' || e.key === 'F') {
+        togglePortal();
+      }
       const code = e.code.toLowerCase();
       if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'space', 'keyw', 'keya', 'keys', 'keyd', 'shiftleft'].includes(code)) {
         e.preventDefault();
@@ -193,7 +267,7 @@ export default function RetroHighway({ locale = 'ko' }: Props) {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, []);
+  }, [toggleMute, togglePortal]);
 
   // Game loop
   useEffect(() => {
@@ -211,6 +285,7 @@ export default function RetroHighway({ locale = 'ko' }: Props) {
         const next = updateHighway(prev, inputRef.current, dt);
 
         if (next.player.status === 'gameover') {
+          playSound('crash');
           const distKm = next.player.distance / 1000;
           setBestDist((cur) => {
             if (distKm > cur) {
@@ -238,15 +313,22 @@ export default function RetroHighway({ locale = 'ko' }: Props) {
         cancelAnimationFrame(animRef.current);
       }
     };
-  }, []);
+  }, [playSound]);
 
   const distanceKm = (state.player.distance / 1000).toFixed(2);
   const speedDisplay = Math.round(state.player.speed);
 
   return (
-    <div className="w-full max-w-5xl mx-auto space-y-4">
+    <div
+      ref={containerRef}
+      className={`relative flex flex-col items-center select-none ${
+        isImmersive
+          ? 'fixed inset-0 z-50 bg-background w-screen h-dvh overflow-hidden p-2 sm:p-4 justify-between'
+          : 'w-full max-w-5xl mx-auto space-y-4'
+      }`}
+    >
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-card p-4 rounded-xl border border-border">
+      <div className="w-full flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-card p-3 sm:p-4 rounded-xl border border-border">
         <div>
           <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
             <Flame className="w-5 h-5 text-primary" />
@@ -255,13 +337,29 @@ export default function RetroHighway({ locale = 'ko' }: Props) {
           <p className="text-xs text-muted-foreground">{t.subtitle}</p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {bestDist > 0 && (
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted text-xs font-medium text-foreground">
               <Trophy className="w-4 h-4 text-warning" />
               <span>{t.bestDist}: {bestDist.toFixed(2)} km</span>
             </div>
           )}
+          <button
+            onClick={toggleMute}
+            aria-label={muted ? 'Unmute' : 'Mute'}
+            className="p-2 rounded-lg bg-muted text-foreground hover:bg-muted/80 transition-colors"
+            title="Mute / Unmute (M)"
+          >
+            {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+          </button>
+          <button
+            onClick={togglePortal}
+            aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+            className="p-2 rounded-lg bg-muted text-foreground hover:bg-muted/80 transition-colors"
+            title={isImmersive ? portalLabels.exit : portalLabels.enter}
+          >
+            {isImmersive ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </button>
           <button
             onClick={handleRestart}
             className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90 transition-opacity"
@@ -273,7 +371,9 @@ export default function RetroHighway({ locale = 'ko' }: Props) {
       </div>
 
       {/* Main 3D Canvas Viewport */}
-      <div className="relative">
+      <div className={`relative w-full overflow-hidden rounded-xl border border-border bg-card shadow-lg ${
+        isImmersive ? 'flex-1 min-h-0' : 'aspect-video max-h-160'
+      }`}>
         <RetroHighwayScene state={state} />
 
         {/* HUD Overlay */}
@@ -347,7 +447,9 @@ export default function RetroHighway({ locale = 'ko' }: Props) {
       </div>
 
       {/* Mobile Touch Controls */}
-      <div className="grid grid-cols-4 gap-2 sm:hidden p-2 bg-card rounded-xl border border-border">
+      <div className={`grid grid-cols-4 gap-2 sm:hidden p-2 bg-card/90 backdrop-blur-md rounded-xl border border-border ${
+        isImmersive ? 'w-full max-w-lg shrink-0 mt-2' : 'w-full'
+      }`}>
         <button
           onClick={() => {
             setState((prev) => {

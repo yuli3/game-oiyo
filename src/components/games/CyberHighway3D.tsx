@@ -9,6 +9,7 @@ import {
   deactivateNitro,
   updateCyberHighway,
 } from '../../lib/games/cyber-highway';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
 
 function getPercentageWidthClass(pct: number): string {
   if (pct >= 95) return 'w-full';
@@ -97,13 +98,30 @@ function createCyberAudio() {
 
 export default function CyberHighway3D() {
   const [gameState, setGameState] = useState<CyberHighwayState>(createInitialCyberHighwayState);
-  const [muted, setMuted] = useState(false);
+  const [muted, setMuted] = useState(() => {
+    try {
+      return localStorage.getItem('cyber_highway_muted') === 'true';
+    } catch {
+      return false;
+    }
+  });
   const stateRef = useRef<CyberHighwayState>(gameState);
   stateRef.current = gameState;
   const mutedRef = useRef(muted);
   mutedRef.current = muted;
 
   const audioRef = useRef<ReturnType<typeof createCyberAudio> | null>(null);
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal();
+
+  const toggleMute = useCallback(() => {
+    setMuted((m) => {
+      const next = !m;
+      try {
+        localStorage.setItem('cyber_highway_muted', String(next));
+      } catch {}
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     audioRef.current = createCyberAudio();
@@ -161,7 +179,11 @@ export default function CyberHighway3D() {
   // Keyboard controls
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+      if (e.key === 'm' || e.key === 'M') {
+        toggleMute();
+      } else if (e.key === 'f' || e.key === 'F') {
+        togglePortal();
+      } else if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
         setGameState((s) => steerPlayer(s, -1));
       } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
         setGameState((s) => steerPlayer(s, 1));
@@ -182,7 +204,7 @@ export default function CyberHighway3D() {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, []);
+  }, [toggleMute, togglePortal]);
 
   const handleRestart = useCallback(() => {
     setGameState(createInitialCyberHighwayState());
@@ -191,7 +213,15 @@ export default function CyberHighway3D() {
   const speedKmh = Math.round(gameState.speed * 3.6);
 
   return (
-    <div data-game-surface className="relative w-full aspect-16/10 min-h-120 max-h-180 rounded-2xl overflow-hidden border border-border bg-card shadow-lg select-none touch-none">
+    <div
+      ref={containerRef}
+      data-game-surface
+      className={`relative select-none touch-none overflow-hidden ${
+        isImmersive
+          ? 'fixed inset-0 z-50 w-screen h-dvh bg-card'
+          : 'w-full aspect-16/10 min-h-120 max-h-180 rounded-2xl border border-border bg-card shadow-lg'
+      }`}
+    >
       {/* 3D Canvas */}
       <Canvas
         camera={{ position: [0, 4.2, -6.5], fov: 60, rotation: [0.15, Math.PI, 0] }}
@@ -202,7 +232,7 @@ export default function CyberHighway3D() {
 
       {/* Top HUD: Speedometer, Shield, Nitro, Score, Sound */}
       <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none gap-2">
-        {/* Speed & Sound Toggle */}
+        {/* Speed & Controls Toggle */}
         <div className="flex items-center gap-2">
           <div className="rounded-xl border border-border bg-background/85 backdrop-blur-md px-4 py-2.5 shadow-sm">
             <div className="text-xs text-muted-foreground font-medium">속도 (SPEED)</div>
@@ -215,12 +245,22 @@ export default function CyberHighway3D() {
           </div>
           <button
             type="button"
-            onClick={() => setMuted((m) => !m)}
+            onClick={toggleMute}
             aria-pressed={muted}
             aria-label={muted ? '소리 켜기' : '소리 끄기'}
             className="pointer-events-auto min-h-11 px-3 rounded-xl border border-border bg-background/85 backdrop-blur-md text-xs font-bold text-foreground shadow-sm hover:bg-muted active:scale-95 transition-transform"
+            title="Mute / Unmute (M)"
           >
             {muted ? '🔇' : '🔊'}
+          </button>
+          <button
+            type="button"
+            onClick={togglePortal}
+            aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+            className="pointer-events-auto min-h-11 px-3 rounded-xl border border-border bg-background/85 backdrop-blur-md text-xs font-bold text-foreground shadow-sm hover:bg-muted active:scale-95 transition-transform"
+            title={isImmersive ? portalLabels.exit : portalLabels.enter}
+          >
+            {isImmersive ? '🗗' : '⛶'}
           </button>
         </div>
 

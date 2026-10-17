@@ -8,7 +8,8 @@ import {
   updatePinballPhysics,
 } from '../../lib/games/space-pinball';
 import type { Locale } from '../../lib/i18n';
-import { Play, RotateCcw, Trophy, CircleDot, Zap } from 'lucide-react';
+import { Play, RotateCcw, Trophy, CircleDot, Zap, Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
 
 interface Props {
   locale: Locale;
@@ -116,25 +117,102 @@ const UI_TEXT: Record<Locale, {
 
 export default function SpacePinball({ locale }: Props) {
   const [gameState, setGameState] = useState<PinballGameState>(() => createInitialPinballState());
+  const [muted, setMuted] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('space_pinball_muted') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
   const stateRef = useRef(gameState);
   stateRef.current = gameState;
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale });
 
   const t = UI_TEXT[locale] ?? UI_TEXT.en;
 
+  const playSound = useCallback((type: 'flipper' | 'bumper' | 'launch' | 'gameover') => {
+    if (muted) return;
+    try {
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!audioCtxRef.current && AudioCtx) {
+        audioCtxRef.current = new AudioCtx();
+      }
+      const ctx = audioCtxRef.current;
+      if (!ctx) return;
+      if (ctx.state === 'suspended') void ctx.resume();
+
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      if (type === 'flipper') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(320, now);
+        osc.frequency.exponentialRampToValueAtTime(120, now + 0.08);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+        osc.start(now);
+        osc.stop(now + 0.08);
+      } else if (type === 'bumper') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(659.25, now); // E5
+        osc.frequency.exponentialRampToValueAtTime(880, now + 0.12);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+        osc.start(now);
+        osc.stop(now + 0.12);
+      } else if (type === 'launch') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(150, now);
+        osc.frequency.exponentialRampToValueAtTime(500, now + 0.25);
+        gain.gain.setValueAtTime(0.18, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+        osc.start(now);
+        osc.stop(now + 0.25);
+      } else if (type === 'gameover') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(260, now);
+        osc.frequency.exponentialRampToValueAtTime(50, now + 0.45);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+        osc.start(now);
+        osc.stop(now + 0.45);
+      }
+    } catch {
+      // AudioContext unavailable
+    }
+  }, [muted]);
+
+  const toggleMute = useCallback(() => {
+    setMuted((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('space_pinball_muted', String(next));
+      } catch {}
+      return next;
+    });
+  }, []);
+
   // Handle launch
   const handleLaunch = useCallback(() => {
+    playSound('launch');
     setGameState((prev) => launchBall(prev, 1));
-  }, []);
+  }, [playSound]);
 
   // Handle flipper action
   const handleFlipper = useCallback((side: "left" | "right", isPressed: boolean) => {
+    if (isPressed) playSound('flipper');
     setGameState((prev) => setFlipperState(prev, side, isPressed));
-  }, []);
+  }, [playSound]);
 
   // Handle restart
   const handleRestart = useCallback(() => {
+    playSound('launch');
     setGameState((prev) => createInitialPinballState(prev.highScore));
-  }, []);
+  }, [playSound]);
 
   // Game update loop
   useEffect(() => {
@@ -147,17 +225,32 @@ export default function SpacePinball({ locale }: Props) {
       lastTime = now;
 
       if (stateRef.current.status === "playing" && stateRef.current.ball.active) {
-        setGameState((prev) => updatePinballPhysics(prev, dt));
+        setGameState((prev) => {
+          const next = updatePinballPhysics(prev, dt);
+          if (next.score > prev.score) {
+            playSound('bumper');
+          }
+          if (next.status === "gameover" && prev.status !== "gameover") {
+            playSound('gameover');
+          }
+          return next;
+        });
       }
     };
 
     animId = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(animId);
-  }, []);
+  }, [playSound]);
 
   // Keyboard controls
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'm' || e.key === 'M') {
+        toggleMute();
+      }
+      if (e.key === 'f' || e.key === 'F') {
+        togglePortal();
+      }
       if (e.code === "Space" || e.code === "Enter") {
         e.preventDefault();
         if (stateRef.current.status === "idle") {
@@ -188,46 +281,78 @@ export default function SpacePinball({ locale }: Props) {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [handleLaunch, handleFlipper, handleRestart]);
+  }, [handleLaunch, handleFlipper, handleRestart, toggleMute, togglePortal]);
 
   return (
-    <div className="w-full max-w-4xl mx-auto flex flex-col items-center select-none">
+    <div
+      ref={containerRef}
+      className={`relative flex flex-col items-center select-none ${
+        isImmersive
+          ? 'fixed inset-0 z-50 bg-background w-screen h-dvh overflow-hidden p-2 sm:p-4 justify-between'
+          : 'w-full max-w-4xl mx-auto'
+      }`}
+    >
       {/* Header HUD */}
-      <div className="w-full grid grid-cols-3 gap-2 sm:gap-4 mb-4">
-        <div className="bg-card border border-border rounded-xl p-3 flex flex-col items-center justify-center">
-          <span className="text-xs text-muted-foreground">{t.score}</span>
-          <span className="text-xl sm:text-2xl font-black text-primary font-mono">
-            {gameState.score.toLocaleString()}
-          </span>
-        </div>
+      <div className="w-full flex items-center justify-between gap-2 sm:gap-4 mb-3">
+        <div className="flex-1 grid grid-cols-3 gap-2 sm:gap-4">
+          <div className="bg-card border border-border rounded-xl p-2.5 sm:p-3 flex flex-col items-center justify-center">
+            <span className="text-xs text-muted-foreground">{t.score}</span>
+            <span className="text-lg sm:text-2xl font-black text-primary font-mono">
+              {gameState.score.toLocaleString()}
+            </span>
+          </div>
 
-        <div className="bg-card border border-border rounded-xl p-3 flex flex-col items-center justify-center">
-          <span className="text-xs text-muted-foreground">{t.balls}</span>
-          <div className="flex gap-1.5 mt-1">
-            {[1, 2, 3].map((b) => (
-              <CircleDot
-                key={b}
-                className={`w-5 h-5 ${
-                  b <= gameState.ballsLeft ? "text-primary" : "text-muted-foreground/30"
-                }`}
-              />
-            ))}
+          <div className="bg-card border border-border rounded-xl p-2.5 sm:p-3 flex flex-col items-center justify-center">
+            <span className="text-xs text-muted-foreground">{t.balls}</span>
+            <div className="flex gap-1.5 mt-1">
+              {[1, 2, 3].map((b) => (
+                <CircleDot
+                  key={b}
+                  className={`w-4 h-4 sm:w-5 sm:h-5 ${
+                    b <= gameState.ballsLeft ? "text-primary" : "text-muted-foreground/30"
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-card border border-border rounded-xl p-2.5 sm:p-3 flex flex-col items-center justify-center">
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Trophy className="w-3.5 h-3.5 text-warning" />
+              <span>{t.highScore}</span>
+            </div>
+            <span className="text-lg sm:text-2xl font-black text-warning font-mono">
+              {gameState.highScore.toLocaleString()}
+            </span>
           </div>
         </div>
 
-        <div className="bg-card border border-border rounded-xl p-3 flex flex-col items-center justify-center">
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Trophy className="w-3.5 h-3.5 text-warning" />
-            <span>{t.highScore}</span>
-          </div>
-          <span className="text-xl sm:text-2xl font-black text-warning font-mono">
-            {gameState.highScore.toLocaleString()}
-          </span>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            type="button"
+            onClick={toggleMute}
+            aria-label={muted ? 'Unmute' : 'Mute'}
+            className="p-2 sm:p-2.5 rounded-xl bg-card border border-border text-foreground hover:bg-muted transition-colors shadow-sm"
+            title="Mute / Unmute (M)"
+          >
+            {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+          </button>
+          <button
+            type="button"
+            onClick={togglePortal}
+            aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+            className="p-2 sm:p-2.5 rounded-xl bg-card border border-border text-foreground hover:bg-muted transition-colors shadow-sm"
+            title={isImmersive ? portalLabels.exit : portalLabels.enter}
+          >
+            {isImmersive ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </button>
         </div>
       </div>
 
       {/* 3D Viewport */}
-      <div className="relative w-full aspect-video rounded-2xl overflow-hidden border border-border bg-background shadow-2xl">
+      <div className={`relative w-full rounded-2xl overflow-hidden border border-border bg-background shadow-2xl ${
+        isImmersive ? 'flex-1 min-h-0' : 'aspect-video'
+      }`}>
         <SpacePinballScene gameState={gameState} />
 
         {/* Overlay for Idle / Game Over */}
