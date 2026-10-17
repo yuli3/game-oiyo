@@ -1,0 +1,50 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+import GameGuide from "../../components/GameGuide.astro";
+import OrbitalFlight3D from "../../components/games/OrbitalFlight3D";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "Orbital Flight 3D — 3D 스페이스 오비탈 궤도 비행 시뮬레이터",
+    description: "행성 중력권을 선회하며 궤도 링 게이트를 통과하고 우주 데브리를 회피하는 3D 실시간 우주선 궤도 비행 게임.",
+  },
+  en: {
+    title: "Orbital Flight 3D — 3D Spacecraft Orbital Flight Simulator",
+    description: "Orbit around planetary gravity wells, pass through orbital ring gates, and dodge hazardous space debris in real-time 3D.",
+  },
+  ja: {
+    title: "Orbital Flight 3D — 3D宇宙船オービタル飛行シミュレーター",
+    description: "惑星重力圏を周回しながらオービタルリングゲートをくぐり抜け、宇宙デブリを回避する3Dリアルタイム宇宙飛行ゲーム。",
+  },
+  zh: {
+    title: "Orbital Flight 3D — 3D航天器轨道飞行模拟器",
+    description: "在行星引力场中绕轨飞行，穿过轨道环门并躲避危险的太空碎片。基于Three.js的3D实时轨道飞行游戏。",
+  },
+  fr: {
+    title: "Orbital Flight 3D — Simulateur de Vol Orbital Spatial 3D",
+    description: "Orbite autour des puits de gravité planétaires, franchis les anneaux orbitaux et esquive les débris spatiaux en 3D temps réel.",
+  },
+  es: {
+    title: "Orbital Flight 3D — Simulador de Vuelo Orbital Espacial 3D",
+    description: "Orbita alrededor de campos gravitatorios planetarios, atraviesa anillos orbitales y esquiva escombros espaciales en 3D en tiempo real.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={(gameArtDocument.games as Record<string, string>)["orbital-flight-3d"] ?? "/games/maze-social.png"}>
+  <div class="mx-auto max-w-7xl px-2 py-6 sm:px-4 sm:py-8">
+    <OrbitalFlight3D client:visible />
+    <div class="mx-auto max-w-3xl px-2"><GameGuide slug="orbital-flight-3d" locale={locale} name="Orbital Flight 3D" /></div>
+  </div>
+</BaseLayout>

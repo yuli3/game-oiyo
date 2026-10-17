@@ -107,6 +107,8 @@ export default defineConfig([
       "src/components/games/GravityRoller3DScene.tsx",
       "src/components/games/CyberHighway3DScene.tsx",
       "src/components/games/DungeonCrawler3DScene.tsx",
+      "src/components/games/OrbitalFlight3DScene.tsx",
+      "src/components/games/VoxelMaze3DScene.tsx",
     ],
     rules: {
       "shadcn/no-raw-colors": "off",

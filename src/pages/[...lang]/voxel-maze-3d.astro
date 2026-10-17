@@ -1,0 +1,50 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+import GameGuide from "../../components/GameGuide.astro";
+import VoxelMaze3D from "../../components/games/VoxelMaze3D";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "Voxel Maze 3D — 3D 복셀 미로 탈출 퍼즐 게임",
+    description: "3D 복셀 미로를 탐험하며 숨겨진 열쇠와 보석을 찾고, 감시 드론을 피해 탈출 포탈에 도달하는 실시간 3D 미로 탈출 퍼즐.",
+  },
+  en: {
+    title: "Voxel Maze 3D — 3D Voxel Labyrinth Escape Puzzle Game",
+    description: "Explore procedural 3D voxel labyrinths, gather hidden keys and gems, evade sentinel drones, and reach the extraction portal.",
+  },
+  ja: {
+    title: "Voxel Maze 3D — 3Dボクセル迷路脱出パズルゲーム",
+    description: "3Dボクセル迷路を探索して隠された鍵と宝石を集め、巡回ドローンを回避して脱出ポータルを目指すリアルタイム3Dパズル。",
+  },
+  zh: {
+    title: "Voxel Maze 3D — 3D体素迷宫逃脱解谜游戏",
+    description: "探索3D体素迷宫，搜集隐藏的钥匙与宝石，躲避巡逻无人机并前往传送门成功撤离。基于Three.js的3D迷宫解谜。",
+  },
+  fr: {
+    title: "Voxel Maze 3D — Jeu de Puzzle d'Évasion de Labyrinthe Voxel 3D",
+    description: "Explorez un labyrinthe en voxels 3D, trouvez les clés cachées et gemmes, évitez les drones sentinelles et atteignez le portail d'extraction.",
+  },
+  es: {
+    title: "Voxel Maze 3D — Juego de Rompecabezas de Escape de Laberinto Voxel 3D",
+    description: "Explora laberintos en vóxeles 3D, recolecta llaves y gemas ocultas, esquiva drones centinela y alcanza el portal de extracción.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={(gameArtDocument.games as Record<string, string>)["voxel-maze-3d"] ?? "/games/maze-social.png"}>
+  <div class="mx-auto max-w-7xl px-2 py-6 sm:px-4 sm:py-8">
+    <VoxelMaze3D client:visible />
+    <div class="mx-auto max-w-3xl px-2"><GameGuide slug="voxel-maze-3d" locale={locale} name="Voxel Maze 3D" /></div>
+  </div>
+</BaseLayout>
