@@ -8,6 +8,7 @@ import {
   selectUpgrade,
 } from '../../lib/games/neon-survivor';
 import type { Locale } from '../../lib/i18n';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
 
 interface Props {
   locale?: Locale;
@@ -139,6 +140,13 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
     }
     return audioCtxRef.current;
   }, []);
+
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({
+    locale,
+    onEnter: () => {
+      void getAudioContext();
+    },
+  });
 
   const vibrate = useCallback((pattern: number | number[]) => {
     if (typeof window !== 'undefined' && 'vibrate' in navigator) {
@@ -724,8 +732,13 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
 
   return (
     <div
+      ref={containerRef}
       data-game-surface
-      className="relative w-full aspect-16/10 min-h-120 max-h-180 rounded-2xl overflow-hidden border border-border bg-card shadow-2xl select-none touch-none"
+      className={
+        isImmersive
+          ? "fixed inset-0 z-50 w-screen h-dvh bg-black m-0 p-0 rounded-none border-none select-none touch-none flex items-center justify-center overflow-hidden"
+          : "relative w-full aspect-16/10 min-h-120 max-h-180 rounded-2xl overflow-hidden border border-border bg-card shadow-2xl select-none touch-none"
+      }
     >
       {/* 100% Canvas Surface */}
       <canvas
@@ -737,8 +750,20 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
         className="w-full h-full block cursor-crosshair touch-none"
       />
 
-      {/* Top Controls: Sound Mute Toggle */}
-      <div className="absolute top-4 right-4 z-10 pointer-events-auto">
+      {/* Top Controls: Immersion Portal & Sound Mute Toggle */}
+      <div className="absolute top-4 right-4 z-10 pointer-events-auto flex items-center gap-2">
+        <button
+          type="button"
+          onClick={togglePortal}
+          aria-pressed={isImmersive}
+          aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+          title={isImmersive ? portalLabels.exit : portalLabels.enter}
+          className="min-h-11 px-3 py-2 rounded-xl border border-border bg-background/80 backdrop-blur-md shadow-xs text-xs font-black text-foreground hover:bg-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 flex items-center gap-1.5"
+        >
+          <span className="text-sm">{isImmersive ? '✕' : '⛶'}</span>
+          <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+        </button>
+
         <button
           type="button"
           onClick={() => setMuted((m) => !m)}

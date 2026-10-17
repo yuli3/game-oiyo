@@ -9,6 +9,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import confetti from "canvas-confetti";
 import type { Locale } from "../../lib/i18n";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { getBest, recordBest } from "../../lib/games/records";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import {
@@ -115,6 +116,13 @@ const WhackAMole = ({ locale }: { locale: Locale }) => {
       audio.current.resume().catch(() => {});
     }
   }, [muted]);
+
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({
+    locale,
+    onEnter: () => {
+      initAudio();
+    },
+  });
 
   const tone = useCallback(
     (kind: "mole" | "bomb" | "end", combo = 1) => {
@@ -476,13 +484,35 @@ const WhackAMole = ({ locale }: { locale: Locale }) => {
       )}
 
       {/* 100% Canvas GPU 120fps Whack Arena */}
-      <div className="relative aspect-square w-full rounded-2xl border border-border overflow-hidden touch-none select-none bg-[#040711] shadow-xl">
+      <div
+        ref={containerRef}
+        className={
+          isImmersive
+            ? "fixed inset-0 z-50 w-screen h-dvh bg-black m-0 p-0 rounded-none border-none select-none touch-none flex flex-col items-center justify-center overflow-hidden"
+            : "relative aspect-square w-full rounded-2xl border border-border overflow-hidden touch-none select-none bg-[#040711] shadow-xl"
+        }
+      >
         <canvas
           ref={canvasRef}
           onPointerDown={handlePointerDown}
-          className="w-full h-full block cursor-crosshair touch-none"
+          className={isImmersive ? "max-w-[100dvh] max-h-screen aspect-square w-full h-full block cursor-crosshair touch-none" : "w-full h-full block cursor-crosshair touch-none"}
           aria-label={t.title}
         />
+
+        {/* Top Controls: Immersion Portal Toggle */}
+        <div className="absolute top-3 right-3 z-10 pointer-events-auto flex items-center gap-2">
+          <button
+            type="button"
+            onClick={togglePortal}
+            aria-pressed={isImmersive}
+            aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+            title={isImmersive ? portalLabels.exit : portalLabels.enter}
+            className="min-h-11 px-3 py-2 rounded-xl border border-border bg-background/80 backdrop-blur-md shadow-xs text-xs font-black text-foreground hover:bg-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 flex items-center gap-1.5"
+          >
+            <span className="text-sm">{isImmersive ? "✕" : "⛶"}</span>
+            <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+          </button>
+        </div>
 
         {(!game || game.status === "over") && (
           <div
