@@ -1,0 +1,50 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+import GameGuide from "../../components/GameGuide.astro";
+import RetroHighway from "../../components/games/RetroHighway";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "Retro Highway 3D — 무료 3D 신스웨이브 고속도로 레이싱 게임",
+    description: "Three.js와 R3F로 제작된 80년대 신스웨이브 감성의 3D 고속도로 질주 게임. 3차선 트래픽을 피하고 아슬아슬 추월 보너스와 니트로 부스터로 최고 주행거리를 달성하세요.",
+  },
+  en: {
+    title: "Retro Highway 3D — Free 3D Synthwave Highway Traffic Racer",
+    description: "An 80s synthwave retro 3D highway racing game powered by Three.js & R3F. Dodge heavy traffic across 3 lanes, pull off near-miss bonuses, and engage nitro boost for the ultimate high score.",
+  },
+  ja: {
+    title: "Retro Highway 3D — 無料3Dシンセウェーブ高速道路レースゲーム",
+    description: "Three.jsとR3Fによるレトロシンセウェーブ3Dレーシング。3車線の車流をかいくぐり、ギリギリ追い越しとニトロブーストで最高距離を更新しよう。",
+  },
+  zh: {
+    title: "Retro Highway 3D — 免费3D赛博霓虹高速公路竞速游戏",
+    description: "基于Three.js与R3F打造的80年代复古霓虹3D公路狂飙。穿梭于密集车流之间，完成惊险极限超车，开启氮气加速刷新最长驾驶里程！",
+  },
+  fr: {
+    title: "Retro Highway 3D — Jeu de course d'autoroute 3D gratuit",
+    description: "Course d'autoroute rétro synthwave propulsée par Three.js & R3F. Évitez le trafic sur 3 voies, réalisez des dépassements audacieux et activez le turbo nitro.",
+  },
+  es: {
+    title: "Retro Highway 3D — Juego gratuito de carreras en autopista 3D",
+    description: "Juego de carreras synthwave 3D con Three.js y R3F. Esquiva el tráfico en 3 carriles, consigue bonificaciones por adelantamientos al límite y activa el turbo.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={(gameArtDocument.games as Record<string, string>)["retro-highway-3d"] ?? "/games/maze-social.png"}>
+  <div class="mx-auto max-w-7xl px-2 py-6 sm:px-4 sm:py-8">
+    <RetroHighway client:visible locale={locale} />
+    <div class="mx-auto max-w-3xl px-2"><GameGuide slug="retro-highway-3d" locale={locale} name="Retro Highway 3D" /></div>
+  </div>
+</BaseLayout>

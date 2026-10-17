@@ -95,6 +95,8 @@ export default defineConfig([
       "src/components/games/CosmicFlightScene.tsx",
       "src/components/games/StackTowerScene.tsx",
       "src/components/games/VoxelRunnerScene.tsx",
+      "src/components/games/MarbleRollScene.tsx",
+      "src/components/games/RetroHighwayScene.tsx",
     ],
     rules: {
       "shadcn/no-raw-colors": "off",

@@ -1,0 +1,50 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+import GameGuide from "../../components/GameGuide.astro";
+import MarbleRoll from "../../components/games/MarbleRoll";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "Marble Roll 3D — 무료 3D 구슬 레이싱 장애물 탈출 게임",
+    description: "Three.js와 R3F로 제작된 역동적인 3D 구슬 롤링 레이싱 코스. 가속 부스터와 점프대를 돌파하고 별을 수집하며 가장 빠른 기록으로 결승선을 통과하세요.",
+  },
+  en: {
+    title: "Marble Roll 3D — Free 3D Marble Racing Obstacle Course",
+    description: "An exhilarating 3D marble rolling race powered by Three.js & R3F. Blast through speed boosters, launch off jump pads, collect stars, and race for the best time.",
+  },
+  ja: {
+    title: "Marble Roll 3D — 無料3Dボールレーシング障害物コース",
+    description: "Three.jsとR3Fによる爽快な3Dボールローリングレース。ブースターやジャンプ台を駆け抜け、星を集めて最速タイムでゴールを目指そう。",
+  },
+  zh: {
+    title: "Marble Roll 3D — 免费3D滚球竞速障碍越野游戏",
+    description: "基于Three.js与R3F打造的3D滚球竞速跑道。冲刺加速带、飞跃跳跃台、收集金色星星，挑战最快通关纪录！",
+  },
+  fr: {
+    title: "Marble Roll 3D — Course d'obstacles 3D gratuite avec bille",
+    description: "Une course de billes 3D exaltante propulsée par Three.js & R3F. Foncez sur les accélérateurs, sautez les rampes et franchissez la ligne d'arrivée.",
+  },
+  es: {
+    title: "Marble Roll 3D — Carrera de obstáculos 3D con canicas",
+    description: "Una emocionante carrera 3D con Three.js y R3F. Pasa por los turbos, salta por las rampas, recoge estrellas y cruza la meta a toda velocidad.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={(gameArtDocument.games as Record<string, string>)["marble-roll-3d"] ?? "/games/maze-social.png"}>
+  <div class="mx-auto max-w-7xl px-2 py-6 sm:px-4 sm:py-8">
+    <MarbleRoll client:visible locale={locale} />
+    <div class="mx-auto max-w-3xl px-2"><GameGuide slug="marble-roll-3d" locale={locale} name="Marble Roll 3D" /></div>
+  </div>
+</BaseLayout>
