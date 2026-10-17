@@ -47,6 +47,7 @@ export const GAME_DISPLAY_NAMES: Record<string, LocalizedName> = {
   "disaster-control": name("재난 관제실", "Disaster Control", "災害管制室", "灾害控制室", "Centre de crise", "Control de desastres"),
   "whale-city": name("고래 위의 도시", "City on a Whale", "クジラの上の街", "鲸背之城", "La ville sur la baleine", "La ciudad sobre la ballena"),
   "cosmic-merge": name("코스믹 머지", "Cosmic Merge", "コズミック・マージ", "宇宙合成", "Cosmic Merge", "Cosmic Merge"),
+  "mini-golf-3d": name("미니 골프 3D", "Mini Golf 3D", "ミニゴルフ 3D", "迷你高尔夫 3D", "Mini-Golf 3D", "Mini Golf 3D"),
 };
 
 const DIFFICULTY: Record<string, LocalizedName> = {

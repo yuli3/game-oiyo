@@ -7,12 +7,15 @@ import { COURSES } from "../../lib/games/mini-golf";
 
 interface Props {
   gameState: MiniGolfState;
+  onAimDelta?: (deltaAngle: number) => void;
 }
 
-export default function MiniGolfScene({ gameState }: Props) {
+export default function MiniGolfScene({ gameState, onAimDelta }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const stateRef = useRef(gameState);
   stateRef.current = gameState;
+  const onAimDeltaRef = useRef(onAimDelta);
+  onAimDeltaRef.current = onAimDelta;
 
   useEffect(() => {
     const container = containerRef.current;
@@ -25,7 +28,7 @@ export default function MiniGolfScene({ gameState }: Props) {
 
     const camera = new THREE.PerspectiveCamera(
       45,
-      container.clientWidth / container.clientHeight,
+      container.clientWidth / (container.clientHeight || 1),
       0.1,
       100
     );
@@ -198,14 +201,59 @@ export default function MiniGolfScene({ gameState }: Props) {
     trajectoryLine.computeLineDistances();
     scene.add(trajectoryLine);
 
-    // Resize handler
+    // Resize handler with ResizeObserver
     const handleResize = () => {
       if (!container) return;
-      camera.aspect = container.clientWidth / container.clientHeight;
+      const width = container.clientWidth;
+      const height = container.clientHeight || 1;
+      camera.aspect = width / height;
       camera.updateProjectionMatrix();
-      renderer.setSize(container.clientWidth, container.clientHeight);
+      renderer.setSize(width, height);
     };
+
+    const resizeObserver = new ResizeObserver(() => {
+      handleResize();
+    });
+    resizeObserver.observe(container);
     window.addEventListener("resize", handleResize);
+
+    // Pointer drag controls for smooth mouse & touch aiming
+    let isDragging = false;
+    let lastPointerX = 0;
+
+    const onPointerDown = (e: PointerEvent) => {
+      if (stateRef.current.status !== "aiming") return;
+      isDragging = true;
+      lastPointerX = e.clientX;
+      try {
+        (e.target as HTMLElement)?.setPointerCapture?.(e.pointerId);
+      } catch {
+        // ignore
+      }
+    };
+
+    const onPointerMove = (e: PointerEvent) => {
+      if (!isDragging || stateRef.current.status !== "aiming") return;
+      const dx = e.clientX - lastPointerX;
+      lastPointerX = e.clientX;
+      if (onAimDeltaRef.current && Math.abs(dx) > 0.3) {
+        onAimDeltaRef.current(dx * 0.006);
+      }
+    };
+
+    const onPointerUp = (e: PointerEvent) => {
+      isDragging = false;
+      try {
+        (e.target as HTMLElement)?.releasePointerCapture?.(e.pointerId);
+      } catch {
+        // ignore
+      }
+    };
+
+    container.addEventListener("pointerdown", onPointerDown);
+    container.addEventListener("pointermove", onPointerMove);
+    container.addEventListener("pointerup", onPointerUp);
+    container.addEventListener("pointercancel", onPointerUp);
 
     // Animation Loop
     let animId: number;
@@ -219,8 +267,12 @@ export default function MiniGolfScene({ gameState }: Props) {
         currentRenderedHole = cur.currentHoleIndex;
       }
 
-      // Update ball position
+      // Update ball position and spin
       ballMesh.position.set(cur.ball.x, cur.ball.y, cur.ball.z);
+      if (cur.status === "rolling") {
+        ballMesh.rotation.z -= cur.ball.vx * 0.4;
+        ballMesh.rotation.x += cur.ball.vz * 0.4;
+      }
 
       // Update aim trajectory
       if (cur.status === "aiming") {
@@ -253,7 +305,12 @@ export default function MiniGolfScene({ gameState }: Props) {
 
     return () => {
       cancelAnimationFrame(animId);
+      resizeObserver.disconnect();
       window.removeEventListener("resize", handleResize);
+      container.removeEventListener("pointerdown", onPointerDown);
+      container.removeEventListener("pointermove", onPointerMove);
+      container.removeEventListener("pointerup", onPointerUp);
+      container.removeEventListener("pointercancel", onPointerUp);
       renderer.dispose();
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
@@ -261,5 +318,5 @@ export default function MiniGolfScene({ gameState }: Props) {
     };
   }, []);
 
-  return <div ref={containerRef} className="w-full h-full" />;
+  return <div ref={containerRef} className="w-full h-full touch-none cursor-grab active:cursor-grabbing" />;
 }

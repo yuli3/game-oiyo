@@ -79,4 +79,33 @@ describe("mini-golf logic", () => {
     expect(state.status).toBe("aiming");
     expect(state.ball.z).toBe(COURSES[1].startPos.z);
   });
+
+  it("bounces off boundary wall and sets wall_hit event", () => {
+    let state = createInitialGolfState(0);
+    state = executePutt(state);
+    // Position ball near left boundary moving left
+    state.ball.x = COURSES[0].bounds.minX + 0.1;
+    state.ball.vx = -5;
+
+    state = updateGolfPhysics(state, 0.03);
+    expect(state.ball.vx).toBeGreaterThan(0); // bounced to the right
+    expect(state.lastEvent).toBe("wall_hit");
+  });
+
+  it("handles water hazard by penalizing 1 stroke and resetting to tee", () => {
+    let state = createInitialGolfState(2); // Hole 3 has water tiles at (-2, 0)
+    state = executePutt(state);
+    const initialStrokes = state.strokesThisHole;
+
+    // Place ball inside water tile
+    state.ball.x = -2;
+    state.ball.z = 0;
+
+    state = updateGolfPhysics(state, 0.016);
+    expect(state.status).toBe("aiming");
+    expect(state.strokesThisHole).toBe(initialStrokes + 1);
+    expect(state.ball.x).toBe(COURSES[2].startPos.x);
+    expect(state.ball.z).toBe(COURSES[2].startPos.z);
+    expect(state.lastEvent).toBe("water_hazard");
+  });
 });

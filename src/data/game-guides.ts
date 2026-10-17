@@ -1950,4 +1950,60 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "mini-golf-3d": {
+    origin: {
+      ko: "복셀 미니 골프 3D는 Three.js 물리 엔진을 기반으로 구현된 정통 입체 퍼팅 게임입니다. 샌드 벙커, 워터 해저드, 나무 벽 등의 지형 장애물을 정밀한 물리 시뮬레이션으로 극복하며 홀인원을 노리는 OIYO 오리지널 3D 게임입니다.",
+      en: "Voxel Mini Golf 3D is an authentic 3D putting game powered by Three.js physics. Master precise aim and stroke strength to conquer sand bunkers, water hazards, and wooden barriers in an original OIYO voxel arena.",
+      ja: "ボクセル ミニゴルフ 3Dは、Three.js物理演算エンジンにより構築された本格3Dパッティングゲームです。サンドバンカーやウォーターハザード、壁の跳ね返りを計算し、正確な力加減でカップインを目指すOIYOオリジナル3D作品です。",
+      zh: "体素迷你高尔夫 3D 是一款基于 Three.js 物理引擎构建的立体推杆游戏。凭借精准的角度调节与力度控制，攻克沙坑、水障与木墙反弹障碍，挑战一杆进洞。",
+      fr: "Mini-Golf Voxel 3D est un jeu de putting en trois dimensions propulsé par le moteur physique Three.js. Domptez les bunkers de sable, les obstacles d'eau et les rebonds sur bois avec un dosage parfait.",
+      es: "Mini Golf Vóxel 3D es un juego de putting tridimensional impulsado por las físicas de Three.js. Supera los búnkeres de arena, obstáculos de agua y rebotes en madera con precisión milimétrica.",
+    },
+    how: {
+      ko: "화면을 좌우로 드래그하거나 A/D(방향키)로 퍼팅 각도를 맞추고, 파워 슬라이더로 힘을 조절한 뒤 스페이스바나 퍼팅 버튼을 누르면 공이 굴러갑니다. 워터 해저드에 빠지면 1벌타와 함께 티샷 위치로 돌아가니 주의하세요.",
+      en: "Drag the screen or use A/D (arrow keys) to adjust aim angle, tune putting power with the slider, and press Space or the Putt button. Beware of water hazards, which incur a 1-stroke penalty and reset the ball.",
+      ja: "画面を左右にドラッグするかA/Dキー（矢印キー）で狙いを調整し、パワースライダーで強さを決めてスペースキーまたはパットボタンを押します。池ポチャは1打罰となりスタート地点に戻るため注意が必要です。",
+      zh: "左右拖拽屏幕或使用 A/D 键（方向键）微调击球角度，通过力度滑块设定推杆力量，敲击空格键或推杆按钮击出高尔夫球。落水将受到 1 杆罚杆并重回发球台。",
+      fr: "Glissez sur l'écran ou utilisez les touches A/D pour orienter le tir, ajustez la puissance avec le curseur et appuyez sur Espace. Attention aux obstacles d'eau qui infligent une pénalité d'un coup.",
+      es: "Arrastra la pantalla o usa las teclas A/D para apuntar, gradúa la potencia con el deslizador y pulsa Espacio para golpear. Cuidado con el agua, que acarrea 1 golpe de penalización.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "모바일 스마트폰에서도 터치로 플레이할 수 있나요?",
+          en: "Can I play with touch controls on smartphones?",
+          ja: "スマートフォンのタッチ操作でも遊べますか？",
+          zh: "智能手机支持触摸操作游玩吗？",
+          fr: "Peut-on jouer sur smartphone avec les commandes tactiles ?",
+          es: "¿Se puede jugar con controles táctiles en el móvil?",
+        },
+        a: {
+          ko: "네, 3D 뷰포트를 손가락으로 가볍게 스와이프하여 퍼팅 각도를 360도 자유롭게 돌릴 수 있으며, 슬라이더와 원터치 퍼팅 버튼으로 스마트폰에서도 쾌적하게 즐길 수 있습니다.",
+          en: "Yes. Simply swipe on the 3D viewport to swivel the camera and putting angle 360 degrees, and use the slider and putt button for seamless mobile play.",
+          ja: "はい。3Dビューを指でスワイプするだけでパット角度を自由に変更でき、スライダーとワンタップボタンでスマートフォンでも快適にプレイできます。",
+          zh: "支持。手指在 3D 视图中滑动即可 360 度顺畅旋转推杆角度，搭配力度滑块与点击推杆按钮，移动端体验极其流畅。",
+          fr: "Oui. Glissez simplement votre doigt sur la vue 3D pour orienter votre putt à 360 degrés, puis utilisez le curseur et le bouton pour jouer sur mobile en toute fluidité.",
+          es: "Sí. Basta con deslizar el dedo sobre la vista 3D para rotar el ángulo a 360 grados, y pulsar los botones táctiles para jugar cómodamente en el móvil.",
+        },
+      },
+      {
+        q: {
+          ko: "전체화면 몰입 모드(Arcade Portal)는 어떻게 사용하나요?",
+          en: "How do I activate the full-screen immersion mode?",
+          ja: "全画面没入モード（アーケードポータル）の使い方は？",
+          zh: "如何开启全屏沉浸模式？",
+          fr: "Comment activer le mode plein écran immersif ?",
+          es: "¿Cómo se activa el modo inmersión a pantalla completa?",
+        },
+        a: {
+          ko: "상단 우측의 최대화(⛶) 아이콘을 누르면 100dvh 전체화면 전용 포털이 실행되며, 화면 꺼짐 방지와 스크롤 잠금이 활성화되어 콘솔 게임을 플레이하듯 집중할 수 있습니다.",
+          en: "Tap the maximize (⛶) icon in the top right to open the 100dvh fullscreen arcade portal, engaging screen wake lock and scroll locking for console-style immersion.",
+          ja: "右上の拡大（⛶）アイコンを押すと100dvh全画面アーケードポータルが起動し、画面スリープ防止とスクロール固定により据え置き機のように集中して楽しめます。",
+          zh: "点击右上角全屏（⛶）图标即可进入 100dvh 沉浸式视口，自动开启屏幕常亮与滚动防误触，享受掌机般纯粹的高尔夫体验。",
+          fr: "Appuyez sur l'icône d'agrandissement (⛶) en haut à droite pour activer le portail 100dvh plein écran avec écran actif et verrouillage du défilement.",
+          es: "Pulsa el icono de maximizar (⛶) arriba a la derecha para abrir el portal a pantalla completa en 100dvh, con bloqueo de suspensión de pantalla para una inmersión total.",
+        },
+      },
+    ],
+  },
 };
