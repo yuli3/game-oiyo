@@ -1,0 +1,50 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+import GameGuide from "../../components/GameGuide.astro";
+import VoxelRunner from "../../components/games/VoxelRunner";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "Voxel Runner 3D — 무료 3D 사이버 복셀 서바이벌 러너 게임",
+    description: "Three.js와 R3F로 펼쳐지는 입체 3D 서바이벌 러너. 3개 레인을 질주하며 점프와 슬라이딩으로 레이저 장애물을 피하고 에너지 크리스탈을 수집하세요.",
+  },
+  en: {
+    title: "Voxel Runner 3D — Free 3D Cyber Voxel Survival Runner",
+    description: "A fast-paced 3D survival runner built with Three.js & R3F. Dash along 3 cyber lanes, jump & slide under obstacles, and collect energy crystals.",
+  },
+  ja: {
+    title: "Voxel Runner 3D — 無料3Dサイバーボクセルサバイバルランナー",
+    description: "Three.jsとR3Fによるスリリングな3Dエンドレスランナー。3つのレーンを駆け抜け、ジャンプとスライディングで障害物を回避してクリスタルを集めよう。",
+  },
+  zh: {
+    title: "Voxel Runner 3D — 免费3D赛博体素跑酷生存游戏",
+    description: "基于Three.js与R3F打造的3D极速跑酷游戏。在三条赛博轨道上飞驰，跳跃滑铲躲避致命激光，收集能量水晶冲击最高分！",
+  },
+  fr: {
+    title: "Voxel Runner 3D — Jeu de course voxel 3D gratuit et survie",
+    description: "Course d'obstacles 3D effrénée propulsée par Three.js. Changez de voie, sautez et glissez sous les barrières laser pour collecter des cristaux.",
+  },
+  es: {
+    title: "Voxel Runner 3D — Juego de carrera y supervivencia vóxel 3D gratuito",
+    description: "Frenético runner 3D en Three.js. Corre por 3 carriles cibernéticos, salta, deslízate bajo láseres y recoge cristales de energía.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={(gameArtDocument.games as Record<string, string>)["voxel-runner-3d"] ?? "/games/maze-social.png"}>
+  <div class="mx-auto max-w-7xl px-2 py-6 sm:px-4 sm:py-8">
+    <VoxelRunner client:visible locale={locale} />
+    <div class="mx-auto max-w-3xl px-2"><GameGuide slug="voxel-runner-3d" locale={locale} name="Voxel Runner 3D" /></div>
+  </div>
+</BaseLayout>

@@ -1,127 +1,153 @@
-/**
- * Stack Tower's deterministic block-drop rules.
- *
- * A block slides back and forth; dropping it keeps only the part that
- * overlaps the block below (a dead-centre "perfect" keeps the width and
- * builds a combo instead of shaving it). Movement is authored in `frameScale`
- * units so it stays speed-consistent across refresh rates — the caller
- * supplies `deltaScale`, this module has no notion of real time at all.
- */
-
-export interface Block {
+export interface TowerBlock {
   x: number;
-  w: number;
-  hue: number;
+  y: number;
+  z: number;
+  width: number;
+  depth: number;
+  color: string;
 }
 
-export const BLOCK_HEIGHT = 26;
-export const BASE_WIDTH = 150;
-export const PERFECT_EPSILON = 4;
-export const PERFECT_REWARD = 6;
-export const MAX_SPEED = 7.5;
-export const SPEED_STEP = 0.09;
-export const START_SPEED = 2.6;
-export const START_HUE = 210;
-export const FIRST_MOVING_HUE = 234;
-export const HUE_STEP = 24;
+export interface CutPiece {
+  x: number;
+  y: number;
+  z: number;
+  width: number;
+  depth: number;
+  color: string;
+}
 
-export interface TowerState {
-  stack: Block[];
-  cur: Block;
-  dir: number;
+export interface MovingBlock {
+  axis: 'x' | 'z';
+  position: number;
+  direction: 1 | -1;
   speed: number;
-  combo: number;
+  width: number;
+  depth: number;
+  color: string;
 }
 
-export function createTowerState(fieldWidth: number): TowerState {
-  return {
-    stack: [{ x: (fieldWidth - BASE_WIDTH) / 2, w: BASE_WIDTH, hue: START_HUE }],
-    cur: { x: 0, w: BASE_WIDTH, hue: FIRST_MOVING_HUE },
-    dir: 1,
-    speed: START_SPEED,
-    combo: 0,
-  };
+export interface SliceResult {
+  success: boolean;
+  isPerfect: boolean;
+  placedBlock?: TowerBlock;
+  cutPiece?: CutPiece;
 }
 
-/** One movement step for the sliding block; bounces off both field edges. */
-export function stepBlock(
-  cur: Block,
-  dir: number,
-  speed: number,
-  deltaScale: number,
-  fieldWidth: number,
-): { block: Block; dir: number } {
-  let x = cur.x + dir * speed * deltaScale;
-  let nextDir = dir;
-  if (x <= 0) {
-    x = 0;
-    nextDir = 1;
-  }
-  if (x + cur.w >= fieldWidth) {
-    x = fieldWidth - cur.w;
-    nextDir = -1;
-  }
-  return { block: { ...cur, x }, dir: nextDir };
+export const PERFECT_TOLERANCE = 0.2;
+export const BLOCK_HEIGHT = 0.8;
+export const INITIAL_SIZE = 4.0;
+export const MOVE_RANGE = 5.0;
+
+export function getBlockColor(index: number): string {
+  const hue = (index * 14) % 360;
+  return `hsl(${hue}, 80%, 60%)`;
 }
 
-export type DropOutcome =
-  | { kind: "miss" }
-  | { kind: "landed"; block: Block; perfect: boolean; combo: number };
+export function sliceBlock(
+  moving: MovingBlock,
+  top: TowerBlock,
+  index: number
+): SliceResult {
+  const isX = moving.axis === 'x';
+  const pos = moving.position;
+  const topPos = isX ? top.x : top.z;
+  const size = isX ? moving.width : moving.depth;
+  const otherSize = isX ? moving.depth : moving.width;
+  const diff = pos - topPos;
 
-/**
- * Resolves a drop against the block it lands on. A non-perfect landing keeps
- * only the geometric overlap; a perfect one (within `PERFECT_EPSILON` of
- * dead-centre) keeps the moving block's own width, regrown toward
- * `BASE_WIDTH` by `PERFECT_REWARD`, and extends the combo.
- */
-export type TowerMissSide = "left" | "right";
-export function explainTowerMiss(cur: Block, prev: Block): TowerMissSide | null {
-  if (cur.x + cur.w <= prev.x) return "left";
-  if (cur.x >= prev.x + prev.w) return "right";
-  return null;
-}
-
-export function dropOnto(cur: Block, prev: Block, comboBefore: number): DropOutcome {
-  const left = Math.max(cur.x, prev.x);
-  const right = Math.min(cur.x + cur.w, prev.x + prev.w);
-  const overlap = right - left;
-  if (overlap <= 0) return { kind: "miss" };
-
-  const perfect = Math.abs(cur.x - prev.x) <= PERFECT_EPSILON;
-  if (perfect) {
+  // Perfect placement check
+  if (Math.abs(diff) <= PERFECT_TOLERANCE) {
+    const placed: TowerBlock = {
+      x: isX ? top.x : moving.position,
+      y: (index + 1) * BLOCK_HEIGHT,
+      z: isX ? moving.position : top.z,
+      width: top.width,
+      depth: top.depth,
+      color: moving.color,
+    };
     return {
-      kind: "landed",
-      block: { x: prev.x, w: Math.min(BASE_WIDTH, prev.w + PERFECT_REWARD), hue: cur.hue },
-      perfect: true,
-      combo: comboBefore + 1,
+      success: true,
+      isPerfect: true,
+      placedBlock: placed,
     };
   }
-  return { kind: "landed", block: { x: left, w: overlap, hue: cur.hue }, perfect: false, combo: 0 };
-}
 
-/**
- * Builds the next moving block after a landing: it enters from whichever
- * side the tower is currently sliding away from, and the field speeds up a
- * notch (capped at `MAX_SPEED`) so later towers demand tighter timing.
- */
-export function spawnNextBlock(
-  landedWidth: number,
-  landedHue: number,
-  dir: number,
-  speed: number,
-  fieldWidth: number,
-): { block: Block; dir: number; speed: number } {
-  const nextHue = (landedHue + HUE_STEP) % 360;
-  const fromLeft = dir < 0;
+  const currentMin = pos - size / 2;
+  const currentMax = pos + size / 2;
+  const topMin = topPos - size / 2;
+  const topMax = topPos + size / 2;
+
+  const overlapMin = Math.max(currentMin, topMin);
+  const overlapMax = Math.min(currentMax, topMax);
+  const overlap = overlapMax - overlapMin;
+
+  if (overlap <= 0) {
+    return { success: false, isPerfect: false };
+  }
+
+  const newPos = (overlapMin + overlapMax) / 2;
+  const cutSize = size - overlap;
+  const cutPos = diff > 0
+    ? overlapMax + cutSize / 2
+    : overlapMin - cutSize / 2;
+
+  const placedBlock: TowerBlock = {
+    x: isX ? newPos : top.x,
+    y: (index + 1) * BLOCK_HEIGHT,
+    z: isX ? top.z : newPos,
+    width: isX ? overlap : otherSize,
+    depth: isX ? otherSize : overlap,
+    color: moving.color,
+  };
+
+  const cutPiece: CutPiece = {
+    x: isX ? cutPos : top.x,
+    y: (index + 1) * BLOCK_HEIGHT,
+    z: isX ? top.z : cutPos,
+    width: isX ? cutSize : otherSize,
+    depth: isX ? otherSize : cutSize,
+    color: moving.color,
+  };
+
   return {
-    block: { x: fromLeft ? 0 : fieldWidth - landedWidth, w: landedWidth, hue: nextHue },
-    dir: fromLeft ? 1 : -1,
-    speed: Math.min(MAX_SPEED, speed + SPEED_STEP),
+    success: true,
+    isPerfect: false,
+    placedBlock,
+    cutPiece,
   };
 }
 
-/** Camera stays put until the tower passes the halfway mark, then follows it up. */
-export function cameraOffset(stackLength: number, viewportHeight: number): number {
-  const towerTop = stackLength * BLOCK_HEIGHT;
-  return Math.max(0, towerTop - (viewportHeight - 160));
+export function updateMovingBlock(
+  block: MovingBlock,
+  delta: number
+): MovingBlock {
+  let nextPos = block.position + block.direction * block.speed * delta;
+  let nextDir = block.direction;
+
+  if (nextPos > MOVE_RANGE) {
+    nextPos = MOVE_RANGE;
+    nextDir = -1;
+  } else if (nextPos < -MOVE_RANGE) {
+    nextPos = -MOVE_RANGE;
+    nextDir = 1;
+  }
+
+  return {
+    ...block,
+    position: nextPos,
+    direction: nextDir,
+  };
+}
+
+export function createInitialMovingBlock(top: TowerBlock, index: number): MovingBlock {
+  const axis: 'x' | 'z' = index % 2 === 0 ? 'x' : 'z';
+  return {
+    axis,
+    position: -MOVE_RANGE,
+    direction: 1,
+    speed: Math.min(4.5 + index * 0.1, 9.0),
+    width: top.width,
+    depth: top.depth,
+    color: getBlockColor(index + 1),
+  };
 }

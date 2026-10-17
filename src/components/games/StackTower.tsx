@@ -1,360 +1,343 @@
-import { useState, useRef, useEffect, useCallback } from "react";
-import confetti from "canvas-confetti";
-import type { Locale } from "../../lib/i18n";
-import { getBest, recordBest } from "../../lib/games/records";
-import { frameScale } from "../../lib/games/time-contracts";
-import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
+import { useState, useEffect, useRef, useCallback } from 'react';
+import StackTowerScene from './StackTowerScene';
 import {
-  BLOCK_HEIGHT,
-  cameraOffset,
-  createTowerState,
-  dropOnto,
-  explainTowerMiss,
-  spawnNextBlock,
-  stepBlock,
-  type TowerState,
-} from "../../lib/games/stack-tower";
-import {
-  createDebrisWorld,
-  type DebrisMatterLike,
-  type DebrisWorld,
-} from "../../lib/games/debris-world";
+  type TowerBlock,
+  type MovingBlock,
+  type CutPiece,
+  INITIAL_SIZE,
+  sliceBlock,
+  updateMovingBlock,
+  createInitialMovingBlock,
+} from '../../lib/games/stack-tower';
+import { Trophy, RotateCcw, Volume2, VolumeX, Sparkles } from 'lucide-react';
 
-/* ────────────────────────────────────────────────────────────────────────────
- * Stack Tower — a one-tap timing game. A block slides back and forth; tap to drop
- * it. Only the part that overlaps the block below survives — the rest is shaved
- * off, so the tower narrows unless you land it dead-centre (a "perfect", which
- * keeps the width and builds a combo). Miss completely and it's over. Chase
- * height. Self-contained (one component per game, 6 locales inline, PB via
- * records.ts, rAF loop). Mobile-first canvas.
- * ────────────────────────────────────────────────────────────────────────── */
-
-const W = 360;
-const H = 480;
-const GAME_KEY = "stack-tower";
-
-type Phase = "menu" | "playing" | "over";
-interface FallingPiece { x: number; w: number; y: number; vy: number; hue: number; alpha: number }
-interface GS {
-  tower: TowerState;
-  camY: number;             // camera offset (world scrolls down as tower grows)
-  flash: number;            // perfect-flash frames
-  score: number;
-  falling: FallingPiece[];  // shaved-off slices tumbling away after a non-perfect drop
+interface FallingPiece extends CutPiece {
+  vy: number;
+  rotX: number;
+  rotZ: number;
 }
 
-type I18n = {
-  title: string; subtitle: string; tapStart: string; controls: string;
-  score: string; best: string; gameOver: string; restart: string; newBest: string; combo: string; playArea: string; sound: string;
-};
+const STORAGE_KEY = 'oiyo_stack_tower_high_score';
 
-const T: Record<Locale, I18n> = {
-  ko: { title: "스택 타워", subtitle: "탭 타이밍으로 블록을 쌓아 올려라", tapStart: "탭하여 시작", controls: "움직이는 블록을 탭(또는 클릭·스페이스)해서 아래 블록 위에 맞춰 떨어뜨리세요. 겹친 부분만 남고 나머지는 잘립니다. 정중앙에 맞추면 '퍼펙트'로 폭이 유지되고 콤보가 쌓입니다.", score: "높이", best: "최고", gameOver: "게임 오버", restart: "다시 하기", newBest: "🎉 신기록!", combo: "콤보", playArea: "스택 타워 게임 영역", sound: "소리" },
-  en: { title: "Stack Tower", subtitle: "Time your taps, stack it high", tapStart: "Tap to start", controls: "Tap (or click / Space) to drop the sliding block onto the one below. Only the overlap survives; the rest is shaved off. Land it dead-centre for a 'perfect' — the width holds and your combo grows.", score: "Height", best: "Best", gameOver: "Game Over", restart: "Play again", newBest: "🎉 New best!", combo: "Combo", playArea: "Stack Tower game area", sound: "Sound" },
-  ja: { title: "スタックタワー", subtitle: "タップのタイミングで積み上げろ", tapStart: "タップで開始", controls: "動くブロックをタップ(またはクリック・スペース)して下のブロックに合わせて落とします。重なった部分だけ残り、残りは削られます。ど真ん中に合わせると『パーフェクト』で幅が保たれ、コンボが増えます。", score: "高さ", best: "ベスト", gameOver: "ゲームオーバー", restart: "もう一度", newBest: "🎉 新記録！", combo: "コンボ", playArea: "スタックタワーのゲームエリア", sound: "音" },
-  fr: { title: "Stack Tower", subtitle: "Empilez au bon moment", tapStart: "Touchez pour commencer", controls: "Touchez (ou clic / Espace) pour poser le bloc qui glisse sur celui du dessous. Seul le chevauchement reste ; le reste est rogné. Visez le centre pour un « parfait » : la largeur est conservée et le combo grimpe.", score: "Hauteur", best: "Record", gameOver: "Game Over", restart: "Rejouer", newBest: "🎉 Nouveau record !", combo: "Combo", playArea: "Zone de jeu Stack Tower", sound: "Son" },
-  es: { title: "Stack Tower", subtitle: "Apila con buen ritmo", tapStart: "Toca para empezar", controls: "Toca (o clic / Espacio) para soltar el bloque que se desliza sobre el de abajo. Solo queda la parte que se solapa; el resto se recorta. Céntralo para un «perfecto»: se mantiene el ancho y sube el combo.", score: "Altura", best: "Récord", gameOver: "Fin del juego", restart: "Jugar de nuevo", newBest: "🎉 ¡Nuevo récord!", combo: "Combo", playArea: "Área de juego de Stack Tower", sound: "Sonido" },
-  zh: { title: "叠塔", subtitle: "把握节奏，越叠越高", tapStart: "点击开始", controls: "点击(或点击鼠标/空格)让滑动的方块落到下方方块上。只有重叠部分会保留，其余被削掉。正中对齐即为『完美』，宽度保持并累积连击。", score: "高度", best: "最佳", gameOver: "游戏结束", restart: "再玩一次", newBest: "🎉 新纪录！", combo: "连击", playArea: "叠塔游戏区域", sound: "声音" },
-};
-
-interface Props { locale: Locale }
-
-const MISS: Record<Locale, Record<"left" | "right", string>> = {
-  ko: { left: "블록이 왼쪽으로 완전히 빗나갔습니다.", right: "블록이 오른쪽으로 완전히 빗나갔습니다." },
-  en: { left: "The block missed completely to the left.", right: "The block missed completely to the right." },
-  ja: { left: "ブロックが左へ完全に外れました。", right: "ブロックが右へ完全に外れました。" },
-  zh: { left: "方块完全偏到了左侧。", right: "方块完全偏到了右侧。" },
-  fr: { left: "Le bloc a complètement manqué à gauche.", right: "Le bloc a complètement manqué à droite." },
-  es: { left: "El bloque falló por completo a la izquierda.", right: "El bloque falló por completo a la derecha." },
-};
-
-const StackTower: React.FC<Props> = ({ locale }) => {
-  const t = T[locale] ?? T.en;
-  const [phase, setPhase] = useState<Phase>("menu");
+export default function StackTower({ locale = 'ko' }: { locale?: string }) {
+  const [status, setStatus] = useState<'idle' | 'playing' | 'gameover'>('idle');
   const [score, setScore] = useState(0);
-  const [best, setBest] = useState(0);
   const [combo, setCombo] = useState(0);
-  const [missSide, setMissSide] = useState<"left" | "right" | null>(null);
-  const [isNewBest, setIsNewBest] = useState(false);
-  const [muted, setMuted] = useState(false);
-  const mutedRef = useRef(false);
-  useEffect(() => { mutedRef.current = muted; }, [muted]);
-  const audioRef = useRef<AudioContext | null>(null);
-  const tone = useCallback((frequency: number, duration = 0.08) => {
-    if (mutedRef.current || typeof window === "undefined") return;
-    const context = audioRef.current ?? new AudioContext();
-    audioRef.current = context;
-    const oscillator = context.createOscillator();
-    const gain = context.createGain();
-    oscillator.frequency.value = frequency;
-    gain.gain.setValueAtTime(0.05, context.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + duration);
-    oscillator.connect(gain).connect(context.destination);
-    oscillator.start();
-    oscillator.stop(context.currentTime + duration);
-  }, []);
-  useEffect(() => () => { void audioRef.current?.close(); }, []);
+  const [highScore, setHighScore] = useState(0);
+  const [audioEnabled, setAudioEnabled] = useState(true);
+  const [perfectFlash, setPerfectFlash] = useState(false);
 
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const gsRef = useRef<GS | null>(null);
-  const rafRef = useRef<number | undefined>(undefined);
-  const lastFrame = useRef<number | null>(null);
-  const phaseRef = useRef<Phase>("menu");
-  const prefersReducedMotion = usePrefersReducedMotion();
-  phaseRef.current = phase;
+  const baseBlock: TowerBlock = {
+    x: 0,
+    y: 0,
+    z: 0,
+    width: INITIAL_SIZE,
+    depth: INITIAL_SIZE,
+    color: 'hsl(200, 80%, 55%)',
+  };
 
-  // matter.js "juice" — cosmetic shards off the shear line on a non-perfect
-  // drop. Lazy-loaded on Start, skipped under reduced motion. See debris-world.ts.
-  const debrisRef = useRef<DebrisWorld | null>(null);
-  const debrisLoadingRef = useRef(false);
-  const pmRef = useRef(prefersReducedMotion);
+  const [blocks, setBlocks] = useState<TowerBlock[]>([baseBlock]);
+  const [movingBlock, setMovingBlock] = useState<MovingBlock | null>(null);
+  const [fallingPieces, setFallingPieces] = useState<FallingPiece[]>([]);
+
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const animFrameRef = useRef<number | null>(null);
+  const lastTimeRef = useRef<number>(0);
+
+  // Load high score
   useEffect(() => {
-    pmRef.current = prefersReducedMotion;
-    if (prefersReducedMotion) debrisRef.current?.clear();
-  }, [prefersReducedMotion]);
-
-  const ensureDebris = useCallback(() => {
-    if (debrisRef.current || debrisLoadingRef.current || pmRef.current || typeof window === "undefined") return;
-    debrisLoadingRef.current = true;
-    void import("matter-js")
-      .then((mod) => {
-        if (pmRef.current || debrisRef.current) return;
-        debrisRef.current = createDebrisWorld(mod.default as unknown as DebrisMatterLike, { width: W, height: H, cap: 56 });
-      })
-      .catch(() => {})
-      .finally(() => { debrisLoadingRef.current = false; });
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) setHighScore(parseInt(saved, 10) || 0);
+    } catch {
+      // storage unavailable
+    }
   }, []);
 
-  const teardownDebris = useCallback(() => {
-    debrisRef.current?.destroy();
-    debrisRef.current = null;
-  }, []);
-
-  useEffect(() => { const b = getBest(GAME_KEY); setBest(b ? b.value : 0); }, []);
-
-  const endGame = useCallback((finalScore: number) => {
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    const prev = getBest(GAME_KEY);
-    const beat = !prev || finalScore > prev.value;
-    const saved = recordBest(GAME_KEY, finalScore, "score");
-    setBest(saved.value);
-    setIsNewBest(beat && finalScore > 0);
-    tone(180, 0.18);
-    if (beat && finalScore > 0 && !prefersReducedMotion) confetti({ particleCount: 90, spread: 72, origin: { y: 0.6 } });
-    setPhase("over");
-  }, [prefersReducedMotion, tone]);
-
-  // world y (0 at bottom of the first block) -> screen y
-  const screenY = (worldBottom: number, camY: number) => H - worldBottom + camY;
-
-  const loop = useCallback((now?: number) => {
-    const gs = gsRef.current; const canvas = canvasRef.current;
-    if (!gs || !canvas) return;
-    const ctx = canvas.getContext("2d"); if (!ctx) return;
-
-    const frameNow = now ?? performance.now();
-    const deltaMs = lastFrame.current === null ? 16 : frameNow - lastFrame.current;
-    const scale = frameScale(lastFrame.current, frameNow);
-    lastFrame.current = frameNow;
-    if (debrisRef.current) {
-      if (pmRef.current) debrisRef.current.clear();
-      else debrisRef.current.update(deltaMs, frameNow);
-    }
-    // move current block
-    const stepped = stepBlock(gs.tower.cur, gs.tower.dir, gs.tower.speed, scale, W);
-    gs.tower.cur = stepped.block;
-    gs.tower.dir = stepped.dir;
-    if (gs.flash > 0) gs.flash -= scale;
-
-    // draw
-    ctx.fillStyle = "#0e1424"; ctx.fillRect(0, 0, W, H);
-    const camY = gs.camY;
-    // landed blocks
-    for (let i = 0; i < gs.tower.stack.length; i++) {
-      const b = gs.tower.stack[i];
-      const yb = screenY((i + 1) * BLOCK_HEIGHT, camY);
-      if (yb > H + BLOCK_HEIGHT || yb < -BLOCK_HEIGHT) continue;
-      ctx.fillStyle = `hsl(${b.hue} 70% 58%)`;
-      ctx.fillRect(b.x, yb, b.w, BLOCK_HEIGHT - 2);
-      ctx.fillStyle = `hsl(${b.hue} 70% 68%)`;
-      ctx.fillRect(b.x, yb, b.w, 3);
-    }
-    // current block sits one level above the top of the stack
-    const curY = screenY((gs.tower.stack.length + 1) * BLOCK_HEIGHT, camY);
-    ctx.fillStyle = gs.flash > 0 ? "#fef08a" : `hsl(${gs.tower.cur.hue} 72% 60%)`;
-    ctx.fillRect(gs.tower.cur.x, curY, gs.tower.cur.w, BLOCK_HEIGHT - 2);
-
-    // shaved-off slices tumbling away
-    if (gs.falling.length > 0) {
-      for (const piece of gs.falling) {
-        piece.vy += 0.9 * scale;
-        piece.y += piece.vy * scale;
-        piece.alpha -= 0.02 * scale;
-        ctx.globalAlpha = Math.max(0, piece.alpha);
-        ctx.fillStyle = `hsl(${piece.hue} 70% 58%)`;
-        ctx.fillRect(piece.x, piece.y, piece.w, BLOCK_HEIGHT - 2);
+  // Web Audio chime
+  const playSound = useCallback((type: 'drop' | 'perfect' | 'gameover', comboLevel = 0) => {
+    if (!audioEnabled) return;
+    try {
+      if (!audioCtxRef.current) {
+        audioCtxRef.current = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
       }
-      ctx.globalAlpha = 1;
-      gs.falling = gs.falling.filter((piece) => piece.alpha > 0 && piece.y < H + BLOCK_HEIGHT);
-    }
+      const ctx = audioCtxRef.current;
+      if (ctx.state === 'suspended') ctx.resume();
 
-    const shardViews = debrisRef.current?.shards();
-    if (shardViews && shardViews.length) {
-      for (const shard of shardViews) {
-        ctx.save();
-        ctx.globalAlpha = shard.alpha * 0.9;
-        ctx.translate(shard.x, shard.y);
-        ctx.rotate(shard.angle);
-        ctx.fillStyle = `hsl(${shard.hue} 68% 60%)`;
-        ctx.fillRect(-shard.size / 2, -shard.size / 2, shard.size, shard.size);
-        ctx.restore();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      const now = ctx.currentTime;
+      if (type === 'perfect') {
+        const baseFreq = 440 * Math.pow(2, (comboLevel % 12) / 12);
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(baseFreq, now);
+        osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.5, now + 0.18);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+        osc.start(now);
+        osc.stop(now + 0.25);
+      } else if (type === 'drop') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(320, now);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+        osc.start(now);
+        osc.stop(now + 0.12);
+      } else if (type === 'gameover') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(220, now);
+        osc.frequency.exponentialRampToValueAtTime(90, now + 0.4);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+        osc.start(now);
+        osc.stop(now + 0.45);
       }
-      ctx.globalAlpha = 1;
+    } catch {
+      // audio disabled/failed
+    }
+  }, [audioEnabled]);
+
+  // Start game
+  const startGame = useCallback(() => {
+    const initBlocks = [baseBlock];
+    setBlocks(initBlocks);
+    setScore(0);
+    setCombo(0);
+    setFallingPieces([]);
+    setMovingBlock(createInitialMovingBlock(initBlocks[0], 0));
+    setStatus('playing');
+    lastTimeRef.current = performance.now();
+  }, [baseBlock]);
+
+  // Place block on tap / click
+  const placeBlock = useCallback(() => {
+    if (status !== 'playing' || !movingBlock) return;
+
+    const top = blocks[blocks.length - 1];
+    const res = sliceBlock(movingBlock, top, blocks.length - 1);
+
+    if (!res.success) {
+      // Missed tower completely
+      setStatus('gameover');
+      setMovingBlock(null);
+      playSound('gameover');
+      if (score > highScore) {
+        setHighScore(score);
+        try { localStorage.setItem(STORAGE_KEY, String(score)); } catch { /* ignore */ }
+      }
+      return;
     }
 
-    rafRef.current = requestAnimationFrame(loop);
-  }, []);
+    const nextScore = score + 1;
+    setScore(nextScore);
 
-  const drop = useCallback(() => {
-    const gs = gsRef.current;
-    if (!gs || phaseRef.current !== "playing") return;
-    const prev = gs.tower.stack[gs.tower.stack.length - 1];
-    const cur = gs.tower.cur;
-    const outcome = dropOnto(cur, prev, gs.tower.combo);
-    if (outcome.kind === "miss") { setMissSide(explainTowerMiss(cur, prev)); endGame(gs.tower.stack.length - 1); return; }
-
-    gs.tower.combo = outcome.combo;
-    setCombo(outcome.combo);
-    if (outcome.perfect) {
-      gs.flash = 8;
-      tone(880, 0.08);
+    if (res.isPerfect) {
+      const nextCombo = combo + 1;
+      setCombo(nextCombo);
+      playSound('perfect', nextCombo);
+      setPerfectFlash(true);
+      setTimeout(() => setPerfectFlash(false), 300);
     } else {
-      tone(320, 0.05);
-      // The shaved-off slice(s) of the moving block tumble away — the classic
-      // stack-game tell that a drop wasn't perfect, skipped under reduced motion.
-      if (!pmRef.current) {
-        const dropY = screenY((gs.tower.stack.length + 1) * BLOCK_HEIGHT, gs.camY);
-        const survivedLeft = outcome.block.x;
-        const survivedRight = outcome.block.x + outcome.block.w;
-        if (survivedLeft > cur.x) {
-          gs.falling.push({ x: cur.x, w: survivedLeft - cur.x, y: dropY, vy: 0, hue: cur.hue, alpha: 1 });
-          // shards spray from the left shear line
-          debrisRef.current?.spawn(survivedLeft, dropY + BLOCK_HEIGHT / 2, cur.hue, 5);
-        }
-        if (cur.x + cur.w > survivedRight) {
-          gs.falling.push({ x: survivedRight, w: cur.x + cur.w - survivedRight, y: dropY, vy: 0, hue: cur.hue, alpha: 1 });
-          debrisRef.current?.spawn(survivedRight, dropY + BLOCK_HEIGHT / 2, cur.hue, 5);
-        }
-      }
+      setCombo(0);
+      playSound('drop');
     }
 
-    gs.tower.stack.push(outcome.block);
-    gs.score = gs.tower.stack.length - 1;
-    setScore(gs.score);
+    const nextBlocks = [...blocks, res.placedBlock!];
+    setBlocks(nextBlocks);
 
-    // camera follows once the tower passes the halfway mark
-    gs.camY = cameraOffset(gs.tower.stack.length, H);
+    if (res.cutPiece) {
+      setFallingPieces((prev) => [
+        ...prev.slice(-6),
+        {
+          ...res.cutPiece!,
+          vy: 0,
+          rotX: (Math.random() - 0.5) * 0.2,
+          rotZ: (Math.random() - 0.5) * 0.2,
+        },
+      ]);
+    }
 
-    // next block: enter from the opposite side, a touch faster
-    const spawned = spawnNextBlock(outcome.block.w, outcome.block.hue, gs.tower.dir, gs.tower.speed, W);
-    gs.tower.cur = spawned.block;
-    gs.tower.dir = spawned.dir;
-    gs.tower.speed = spawned.speed;
-  }, [endGame, tone]);
+    // Spawn next moving block
+    setMovingBlock(createInitialMovingBlock(res.placedBlock!, nextBlocks.length - 1));
+  }, [status, movingBlock, blocks, score, combo, highScore, playSound]);
 
-  const begin = useCallback(() => {
-    gsRef.current = { tower: createTowerState(W), camY: 0, flash: 0, score: 0, falling: [] };
-    setScore(0); setCombo(0); setMissSide(null); setIsNewBest(false);
-    setPhase("playing");
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    debrisRef.current?.clear();
-    ensureDebris();
-    rafRef.current = requestAnimationFrame(loop);
-  }, [ensureDebris, loop]);
-
-  useEffect(() => () => {
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    teardownDebris();
-  }, [teardownDebris]);
-
-  // keyboard (space) support
+  // Main game loop (moving block animation & falling debris)
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.code === "Space" || e.key === " ") {
+    if (status !== 'playing') return;
+
+    let active = true;
+    const loop = (time: number) => {
+      if (!active) return;
+      const delta = Math.min((time - lastTimeRef.current) / 1000, 0.05);
+      lastTimeRef.current = time;
+
+      setMovingBlock((prev) => (prev ? updateMovingBlock(prev, delta) : null));
+
+      setFallingPieces((prev) =>
+        prev
+          .map((p) => ({
+            ...p,
+            y: p.y + p.vy * delta,
+            vy: p.vy - 18 * delta,
+            rotX: p.rotX + 2 * delta,
+            rotZ: p.rotZ + 2 * delta,
+          }))
+          .filter((p) => p.y > -15)
+      );
+
+      animFrameRef.current = requestAnimationFrame(loop);
+    };
+
+    lastTimeRef.current = performance.now();
+    animFrameRef.current = requestAnimationFrame(loop);
+
+    return () => {
+      active = false;
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    };
+  }, [status]);
+
+  // Keyboard control (Spacebar)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
         e.preventDefault();
-        if (phaseRef.current === "playing") drop();
-        else begin();
+        if (status === 'playing') {
+          placeBlock();
+        } else if (status === 'idle' || status === 'gameover') {
+          startGame();
+        }
       }
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [drop, begin]);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [status, placeBlock, startGame]);
+
+  const isKo = locale === 'ko';
 
   return (
-    <div className="not-prose my-10 mx-auto max-w-md rounded-3xl border border-border bg-card p-4 text-card-foreground shadow-sm select-none">
-      <div className="mb-3 flex items-center justify-between gap-2">
+    <div className="max-w-2xl mx-auto p-4 sm:p-6 space-y-4">
+      {/* Header bar */}
+      <div className="flex items-center justify-between bg-card border border-border p-4 rounded-xl shadow-xs">
         <div>
-          <div className="text-sm font-black uppercase tracking-widest text-primary">{t.title}</div>
-          <div className="text-[11px] text-muted-foreground">{t.subtitle}</div>
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-foreground flex items-center gap-2">
+            <span>3D Stack Tower</span>
+            {combo > 1 && (
+              <span className="text-xs bg-warning/10 text-warning border border-warning/30 px-2 py-0.5 rounded-full font-bold flex items-center gap-1 animate-pulse">
+                <Sparkles className="w-3 h-3" />
+                {combo} COMBO!
+              </span>
+            )}
+          </h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {isKo
+              ? '화면을 탭하거나 스페이스바를 눌러 블록을 정확히 쌓으세요'
+              : 'Tap screen or press Spacebar to stack blocks perfectly'}
+          </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setMuted((value) => !value)}
-          aria-pressed={muted}
-          className="min-h-11 min-w-11 rounded-lg border border-border text-sm text-muted-foreground hover:bg-muted"
-        >
-          <span aria-hidden="true">{muted ? "🔇" : "🔊"}</span>
-          <span className="sr-only">{t.sound}</span>
-        </button>
-        <div className="text-right text-xs font-bold">
-          <div>{t.score}: <b className="text-primary">{score}</b></div>
-          <div className="text-muted-foreground">{t.best}: {best}</div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setAudioEnabled(!audioEnabled)}
+            className="p-2 rounded-lg border border-border hover:bg-muted text-muted-foreground"
+            aria-label="Toggle Audio"
+          >
+            {audioEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+          </button>
         </div>
       </div>
 
-      <div className="relative mx-auto" style={{ maxWidth: `${W}px` }}>
-        <canvas
-          ref={canvasRef}
-          width={W}
-          height={H}
-          className="w-full rounded-2xl border border-border touch-none bg-[#0e1424] [cursor:pointer]"
-          style={{ aspectRatio: `${W} / ${H}` }}
-          role="img"
-          aria-label={t.playArea}
-          onPointerDown={(e) => { e.preventDefault(); if (phaseRef.current === "playing") drop(); }}
+      {/* Main 3D Canvas Area */}
+      <div
+        className="relative cursor-pointer rounded-2xl overflow-hidden shadow-lg border border-border group"
+        onClick={() => {
+          if (status === 'playing') placeBlock();
+          else if (status === 'idle' || status === 'gameover') startGame();
+        }}
+      >
+        <StackTowerScene
+          blocks={blocks}
+          movingBlock={movingBlock}
+          fallingPieces={fallingPieces}
+          status={status}
         />
 
-        {phase === "playing" && (
-          <div className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 text-center">
-            <div className="text-2xl font-black text-white/90">{score}</div>
-            {combo >= 2 && <div className="text-xs font-black text-amber-300">{t.combo} ×{combo}</div>}
+        {/* Live Score Overlay */}
+        <div className="absolute top-4 left-4 pointer-events-none">
+          <div className="text-4xl sm:text-5xl font-black text-white/90 drop-shadow-md">
+            {score}
+          </div>
+          <div className="text-xs font-semibold text-white/60 tracking-wider uppercase mt-1 flex items-center gap-1">
+            <Trophy className="w-3 h-3 text-warning" />
+            BEST: {highScore}
+          </div>
+        </div>
+
+        {/* Perfect Placement Pulse Effect */}
+        {perfectFlash && (
+          <div className="absolute inset-0 bg-white/20 pointer-events-none animate-out fade-out duration-300" />
+        )}
+
+        {/* Start / Gameover Overlays */}
+        {status === 'idle' && (
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center text-white">
+            <div className="text-3xl font-black mb-2">3D STACK TOWER</div>
+            <p className="text-sm text-white/80 max-w-xs mb-6">
+              {isKo
+                ? '움직이는 블록을 아래 타워에 오차 없이 맞추세요. 연속 퍼펙트 시 콤보 보너스!'
+                : 'Stack the sliding blocks without missing. Consecutive perfect drops unleash combo bonuses!'}
+            </p>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                startGame();
+              }}
+              className="px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold shadow-lg hover:scale-105 transition-transform"
+            >
+              {isKo ? '게임 시작 (스페이스 / 탭)' : 'START GAME (Space / Tap)'}
+            </button>
           </div>
         )}
 
-        {phase !== "playing" && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 rounded-2xl bg-black/55 px-6 text-center backdrop-blur-sm">
-            {phase === "over" && (
-              <div role="status" aria-live="polite">
-                {isNewBest && <div className="text-sm font-black text-amber-300">{t.newBest}</div>}
-                <div className="text-xl font-black text-white">{t.gameOver}</div>
-                <div className="text-sm text-white/80">{t.score}: <b>{score}</b> · {t.best}: {best}</div>
-                {missSide && <div className="mt-2 text-xs font-bold text-amber-300">{MISS[locale][missSide]}</div>}
-              </div>
-            )}
-            {phase === "menu" && (
-              <>
-                <div className="text-4xl">🧱</div>
-                <p className="max-w-xs text-xs leading-relaxed text-white/80">{t.controls}</p>
-              </>
-            )}
-            <button type="button" onClick={begin} className="rounded-full bg-primary px-8 py-2.5 font-bold text-primary-foreground transition-opacity hover:opacity-90">
-              {phase === "over" ? t.restart : t.tapStart}
+        {status === 'gameover' && (
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center text-white animate-in fade-in duration-200">
+            <div className="text-destructive text-xs font-bold tracking-widest uppercase mb-1">
+              GAME OVER
+            </div>
+            <div className="text-4xl font-black mb-2">{score} FLOORS</div>
+            <p className="text-xs text-white/70 mb-6">
+              {score >= highScore && score > 0
+                ? (isKo ? '🎉 최고 기록 갱신!' : '🎉 New High Score!')
+                : (isKo ? `최고 기록: ${highScore}층` : `Personal Best: ${highScore}`)}
+            </p>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                startGame();
+              }}
+              className="px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold shadow-lg hover:scale-105 transition-transform flex items-center gap-2"
+            >
+              <RotateCcw className="w-4 h-4" />
+              {isKo ? '다시 도전하기' : 'PLAY AGAIN'}
             </button>
           </div>
         )}
       </div>
+
+      {/* Instructions footer */}
+      <div className="grid grid-cols-3 gap-2 text-center text-xs text-muted-foreground bg-card p-3 rounded-xl border border-border">
+        <div>
+          <span className="font-semibold text-foreground">Tap / Space</span>: 블록 배치
+        </div>
+        <div>
+          <span className="font-semibold text-foreground">Perfect</span>: 콤보 가산점
+        </div>
+        <div>
+          <span className="font-semibold text-foreground">Slice</span>: 빗나간 부분 절단
+        </div>
+      </div>
     </div>
   );
-};
-
-export default StackTower;
+}

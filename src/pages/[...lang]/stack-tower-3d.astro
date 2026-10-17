@@ -1,0 +1,50 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+import GameGuide from "../../components/GameGuide.astro";
+import StackTower from "../../components/games/StackTower";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "Stack Tower 3D — 무료 3D 블록 쌓기 아케이드 게임",
+    description: "Three.js 기반의 중독성 높은 3D 블록 스택 게임. 타이밍에 맞춰 블록을 정확히 올리고, 콤보를 달성하여 우주까지 높이 타워를 건설하세요.",
+  },
+  en: {
+    title: "Stack Tower 3D — Free 3D Block Stacking Arcade Game",
+    description: "An addictive 3D block stacking game powered by Three.js. Tap in sync with sliding blocks, hit perfect combos, and reach for the stratosphere.",
+  },
+  ja: {
+    title: "Stack Tower 3D — 無料3Dブロック積み上げアーケードゲーム",
+    description: "Three.jsによる爽快な3Dブロックスタックゲーム。スライドするブロックをタイミングよく止めて、パーフェクトコンボで天高くタワーを築こう。",
+  },
+  zh: {
+    title: "Stack Tower 3D — 免费3D叠方块街机游戏",
+    description: "基于Three.js打造的令人着迷的3D高塔堆叠游戏。精准对齐滑动的方块，触发完美连击，挑战直入云霄的最高楼层！",
+  },
+  fr: {
+    title: "Stack Tower 3D — Jeu d'arcade 3D gratuit d'empilement de blocs",
+    description: "Un jeu d'empilement 3D captivant avec Three.js. Arrêtez les blocs au bon moment, enchaînez les combos et construisez la plus haute tour.",
+  },
+  es: {
+    title: "Stack Tower 3D — Juego arcade 3D gratuito de apilar bloques",
+    description: "Adictivo juego de apilar bloques en 3D con Three.js. Sincroniza tus toques, logra combos perfectos y construye la torre más alta.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={(gameArtDocument.games as Record<string, string>)["stack-tower-3d"] ?? "/games/maze-social.png"}>
+  <div class="mx-auto max-w-7xl px-2 py-6 sm:px-4 sm:py-8">
+    <StackTower client:visible locale={locale} />
+    <div class="mx-auto max-w-3xl px-2"><GameGuide slug="stack-tower-3d" locale={locale} name="Stack Tower 3D" /></div>
+  </div>
+</BaseLayout>
