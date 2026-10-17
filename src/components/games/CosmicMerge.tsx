@@ -85,6 +85,13 @@ const COPY = {
     soundOff: "소리 끄기",
     controlsHint: "터치/마우스로 조준 후 놓아서 드롭 · 같은 천체를 합쳐 태양을 만드세요!",
     newBest: "신기록 달성!",
+    codex: "천체 도감",
+    codexSubtitle: "태양계 11단계 진화 계보",
+    share: "점수 공유",
+    copied: "복사 완료!",
+    close: "닫기",
+    unlocked: "발견 완료",
+    locked: "미지의 천체",
   },
   en: {
     title: "Cosmic Merge Drop",
@@ -98,6 +105,13 @@ const COPY = {
     soundOff: "Mute",
     controlsHint: "Aim and release to drop · Merge matching bodies to create the Sun!",
     newBest: "New High Score!",
+    codex: "Cosmic Codex",
+    codexSubtitle: "11-tier solar evolution hierarchy",
+    share: "Share Score",
+    copied: "Copied!",
+    close: "Close",
+    unlocked: "Discovered",
+    locked: "Undiscovered",
   },
   ja: {
     title: "コズミック・マージ・ドロップ",
@@ -111,6 +125,13 @@ const COPY = {
     soundOff: "音声オフ",
     controlsHint: "ドラッグで狙って離してドロップ · 同じ星を合体させて太陽を作ろう！",
     newBest: "新記録達成！",
+    codex: "天体図鑑",
+    codexSubtitle: "太陽系11段階進化の系譜",
+    share: "スコア共有",
+    copied: "コピー完了！",
+    close: "閉じる",
+    unlocked: "発見済み",
+    locked: "未発見の天体",
   },
   zh: {
     title: "宇宙合成消除",
@@ -124,6 +145,13 @@ const COPY = {
     soundOff: "静音",
     controlsHint: "拖动瞄准，松手掉落 · 合成相同天体，打造辉煌太阳！",
     newBest: "新纪录！",
+    codex: "天体图鉴",
+    codexSubtitle: "太阳系天体11级演化阶梯",
+    share: "分享成绩",
+    copied: "已复制！",
+    close: "关闭",
+    unlocked: "已发现",
+    locked: "未知天体",
   },
   fr: {
     title: "Cosmic Merge Drop",
@@ -137,6 +165,13 @@ const COPY = {
     soundOff: "Couper le son",
     controlsHint: "Visez et relâchez pour lâcher · Fusionnez les astres identiques jusqu'au Soleil !",
     newBest: "Nouveau record !",
+    codex: "Codex Cosmique",
+    codexSubtitle: "Hiérarchie d'évolution en 11 niveaux",
+    share: "Partager",
+    copied: "Copié !",
+    close: "Fermer",
+    unlocked: "Découvert",
+    locked: "Inconnu",
   },
   es: {
     title: "Cosmic Merge Drop",
@@ -150,6 +185,13 @@ const COPY = {
     soundOff: "Silenciar",
     controlsHint: "Apunta y suelta para soltar · ¡Fusiona astros iguales hasta crear el Sol!",
     newBest: "¡Nuevo récord!",
+    codex: "Códice Cósmico",
+    codexSubtitle: "Jerarquía de evolución en 11 niveles",
+    share: "Compartir",
+    copied: "¡Copiado!",
+    close: "Cerrar",
+    unlocked: "Descubierto",
+    locked: "Desconocido",
   },
 };
 
@@ -164,6 +206,9 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
   const [isGameOver, setIsGameOver] = useState(false);
   const [isDanger, setIsDanger] = useState(false);
   const [muted, setMuted] = useState(false);
+  const [showCodex, setShowCodex] = useState(false);
+  const [highestTierUnlocked, setHighestTierUnlocked] = useState(0);
+  const [shareCopied, setShareCopied] = useState(false);
 
   // References for physics and animation loop
   const engineRef = useRef<Matter.Engine | null>(null);
@@ -179,6 +224,30 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
 
   const scoreRef = useRef(0);
   scoreRef.current = score;
+
+  // Restore saved muted and highest discovered tier settings
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedMute = localStorage.getItem("cosmic-merge-muted");
+      if (savedMute !== null) {
+        setMuted(savedMute === "true");
+      }
+      const savedHighest = localStorage.getItem("cosmic-merge-highest-tier");
+      if (savedHighest !== null) {
+        setHighestTierUnlocked(parseInt(savedHighest, 10));
+      }
+    }
+  }, []);
+
+  const toggleMute = useCallback(() => {
+    setMuted((prev) => {
+      const next = !prev;
+      if (typeof window !== "undefined") {
+        localStorage.setItem("cosmic-merge-muted", String(next));
+      }
+      return next;
+    });
+  }, []);
 
   // Initialize and resume AudioContext on user action
   const getAudioContext = useCallback(() => {
@@ -429,7 +498,15 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
               playMergeSound(mergeResult.nextTier);
               vibrate(mergeResult.nextTier >= 7 ? [15, 20, 30] : 18);
 
-              // Score update
+              // Score & highest tier update
+              setHighestTierUnlocked((prev) => {
+                const next = Math.max(prev, mergeResult.nextTier);
+                if (next > prev && typeof window !== "undefined") {
+                  localStorage.setItem("cosmic-merge-highest-tier", String(next));
+                }
+                return next;
+              });
+
               setScore((prev) => {
                 const updated = prev + mergeResult.addedScore;
                 if (typeof window !== "undefined") {
@@ -445,8 +522,8 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
               // Celebration when reaching Sun (Tier 10)
               if (mergeResult.nextTier === MAX_TIER_INDEX) {
                 confetti({
-                  particleCount: 80,
-                  spread: 70,
+                  particleCount: 120,
+                  spread: 85,
                   origin: { y: 0.6 },
                 });
               }
@@ -510,6 +587,70 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
     updateDropperPosition(e.clientX);
     dropCurrentBody();
   };
+
+  const handleShareScore = useCallback(async () => {
+    const highestName =
+      COSMIC_TIERS[highestTierUnlocked]?.name[locale] ?? COSMIC_TIERS[highestTierUnlocked]?.name.en ?? "Asteroid";
+    const shareText = `🌌 Cosmic Merge Drop\nScore: ${score.toLocaleString()} | Highest: ${highestName}\nhttps://game.oiyo.net/${locale}/cosmic-merge`;
+
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({
+          title: "Cosmic Merge Drop",
+          text: shareText,
+          url: `https://game.oiyo.net/${locale}/cosmic-merge`,
+        });
+        return;
+      } catch {
+        // Fallback to clipboard
+      }
+    }
+
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      try {
+        await navigator.clipboard.writeText(shareText);
+        setShareCopied(true);
+        setTimeout(() => setShareCopied(false), 2000);
+      } catch {
+        // Clipboard failed
+      }
+    }
+  }, [highestTierUnlocked, locale, score]);
+
+  // Keyboard navigation & shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === "Space" || e.code === "Enter") {
+        e.preventDefault();
+        if (isGameOver) {
+          initGame();
+        } else {
+          dropCurrentBody();
+        }
+      } else if (e.code === "ArrowLeft" || e.code === "KeyA") {
+        e.preventDefault();
+        dropperXRef.current = clampDropperX(dropperXRef.current - 24, COSMIC_TIERS[currentTier].radius);
+      } else if (e.code === "ArrowRight" || e.code === "KeyD") {
+        e.preventDefault();
+        dropperXRef.current = clampDropperX(dropperXRef.current + 24, COSMIC_TIERS[currentTier].radius);
+      } else if (e.code === "KeyF") {
+        e.preventDefault();
+        void togglePortal();
+      } else if (e.code === "KeyM") {
+        e.preventDefault();
+        toggleMute();
+      } else if (e.code === "KeyC") {
+        e.preventDefault();
+        setShowCodex((s) => !s);
+      } else if (e.code === "KeyR") {
+        e.preventDefault();
+        initGame();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [currentTier, dropCurrentBody, initGame, isGameOver, toggleMute, togglePortal]);
 
   // Main 120fps continuous animation & physics tick loop
   useEffect(() => {
@@ -785,8 +926,20 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
           </div>
         </div>
 
-        {/* Right Buttons: Portal Fullscreen & Mute */}
+        {/* Right Buttons: Codex, Portal Fullscreen & Mute */}
         <div className="flex items-center gap-1.5 pointer-events-auto">
+          <button
+            type="button"
+            onClick={() => setShowCodex((s) => !s)}
+            aria-pressed={showCodex}
+            aria-label={t.codex}
+            title={t.codex}
+            className="min-h-11 px-3 py-2 rounded-xl border border-border bg-background/85 backdrop-blur-md shadow-xs text-xs font-black text-foreground hover:bg-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary flex items-center gap-1"
+          >
+            <span className="text-sm">📖</span>
+            <span className="hidden sm:inline">{t.codex}</span>
+          </button>
+
           <button
             type="button"
             onClick={togglePortal}
@@ -801,7 +954,7 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
 
           <button
             type="button"
-            onClick={() => setMuted((m) => !m)}
+            onClick={toggleMute}
             aria-pressed={muted}
             aria-label={muted ? t.soundOn : t.soundOff}
             className="min-h-11 px-3 py-2 rounded-xl border border-border bg-background/85 backdrop-blur-md shadow-xs text-xs font-black text-foreground hover:bg-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
@@ -829,7 +982,7 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
 
       {/* Game Over Modal */}
       {isGameOver && (
-        <div className="absolute inset-0 bg-background/85 backdrop-blur-md flex items-center justify-center p-6 z-20 animate-in fade-in zoom-in-95 duration-200">
+        <div className="absolute inset-0 bg-background/85 backdrop-blur-md flex items-center justify-center p-6 z-20 animate-in fade-in zoom-in-95 duration-200 pointer-events-auto">
           <div className="max-w-xs w-full rounded-2xl border border-border bg-card p-6 shadow-2xl text-center space-y-4">
             <div className="w-14 h-14 bg-destructive/15 rounded-2xl flex items-center justify-center mx-auto text-2xl border border-destructive/20">
               💥
@@ -852,13 +1005,131 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
               <p className="text-xs font-black text-primary animate-bounce">{t.newBest}</p>
             )}
 
-            <button
-              type="button"
-              onClick={initGame}
-              className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-md hover:bg-primary/90 transition-opacity active:scale-98"
-            >
-              {t.restart}
-            </button>
+            <div className="flex gap-2 pt-1">
+              <button
+                type="button"
+                onClick={handleShareScore}
+                className="flex-1 py-3 rounded-xl border border-border bg-muted/40 hover:bg-muted text-foreground font-bold text-xs transition-colors flex items-center justify-center gap-1.5 active:scale-98"
+              >
+                <span>📤</span>
+                <span>{shareCopied ? t.copied : t.share}</span>
+              </button>
+              <button
+                type="button"
+                onClick={initGame}
+                className="flex-1 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-xs shadow-md hover:bg-primary/90 transition-opacity active:scale-98"
+              >
+                {t.restart}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cosmic Codex Modal */}
+      {showCodex && (
+        <div className="absolute inset-0 bg-background/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 z-30 animate-in fade-in duration-200 pointer-events-auto">
+          <div className="max-w-md w-full max-h-full rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-2xl flex flex-col">
+            {/* Codex Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-border/60">
+              <div>
+                <h3 className="text-base font-black text-foreground flex items-center gap-1.5">
+                  <span>📖</span>
+                  <span>{t.codex}</span>
+                </h3>
+                <p className="text-xs text-muted-foreground">{t.codexSubtitle}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCodex(false)}
+                className="p-1.5 rounded-lg border border-border bg-muted/40 hover:bg-muted text-foreground transition-colors text-xs font-bold"
+                aria-label={t.close}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Tier list */}
+            <div className="flex-1 overflow-y-auto py-3 space-y-2 pr-1">
+              {COSMIC_TIERS.map((tier) => {
+                const isUnlocked = highestTierUnlocked >= tier.id;
+                const tierName = tier.name[locale] ?? tier.name.en;
+                const tierFact = tier.fact[locale] ?? tier.fact.en;
+
+                return (
+                  <div
+                    key={tier.id}
+                    className={
+                      isUnlocked
+                        ? "rounded-xl border border-border/80 bg-background/60 p-2.5 transition-all flex items-start gap-3"
+                        : "rounded-xl border border-border/30 bg-muted/20 p-2.5 transition-all flex items-start gap-3 opacity-60"
+                    }
+                  >
+                    {/* Planet Sphere Badge */}
+                    <div className="w-10 h-10 shrink-0 flex items-center justify-center mt-0.5 relative">
+                      <svg className="w-10 h-10 shrink-0 drop-shadow-xs" viewBox="0 0 36 36" aria-hidden="true">
+                        <circle
+                          cx="18"
+                          cy="18"
+                          r="14"
+                          fill={isUnlocked ? tier.color : "#475569"}
+                          stroke="currentColor"
+                          className="text-border"
+                          strokeWidth="1"
+                        />
+                        {isUnlocked && (
+                          <circle cx="14" cy="14" r="5" fill="currentColor" className="text-white/35" />
+                        )}
+                        {tier.hasRing && isUnlocked && (
+                          <ellipse
+                            cx="18"
+                            cy="18"
+                            rx="17"
+                            ry="4.5"
+                            transform="rotate(-25 18 18)"
+                            stroke="currentColor"
+                            className="text-warning"
+                            strokeWidth="1.5"
+                            fill="none"
+                          />
+                        )}
+                      </svg>
+                      {!isUnlocked && (
+                        <span className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground">
+                          🔒
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Planet Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-1 mb-0.5">
+                        <span className="text-xs font-bold text-foreground truncate">
+                          {tier.id + 1}. {isUnlocked ? tierName : t.locked}
+                        </span>
+                        <span className="text-xs font-mono font-bold text-primary shrink-0">
+                          +{tier.score}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
+                        {isUnlocked ? tierFact : "???"}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Codex Footer */}
+            <div className="pt-3 border-t border-border/60 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowCodex(false)}
+                className="px-4 py-2 rounded-xl bg-primary text-primary-foreground font-bold text-xs shadow-xs hover:opacity-90 active:scale-95 transition-all"
+              >
+                {t.close}
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -17,6 +17,7 @@ export interface CosmicTier {
   coreColor: string;
   score: number;
   name: Record<Locale, string>;
+  fact: Record<Locale, string>;
   hasRing?: boolean;
   isStar?: boolean;
 }
@@ -43,6 +44,14 @@ export const COSMIC_TIERS: readonly CosmicTier[] = [
       fr: "Astéroïde",
       es: "Asteroide",
     },
+    fact: {
+      ko: "태양계 형성 초기의 원시 암석 파편입니다.",
+      en: "Primitive rocky building block from solar nebula.",
+      ja: "太陽系形成初期の原始的な岩石のかけらです。",
+      zh: "太阳系形成早期的原始岩石碎块。",
+      fr: "Vestige rocheux primitif du système solaire.",
+      es: "Fragmento rocoso primitivo de la nebulosa solar.",
+    },
   },
   {
     id: 1,
@@ -58,6 +67,14 @@ export const COSMIC_TIERS: readonly CosmicTier[] = [
       zh: "月球",
       fr: "Lune",
       es: "Luna",
+    },
+    fact: {
+      ko: "지구의 자전축을 안정시키는 유일한 자연위성입니다.",
+      en: "Earth's only natural satellite stabilizing axial tilt.",
+      ja: "地球の自転軸を安定させる唯一の自然衛星です。",
+      zh: "稳定地球自转轴的唯一天然卫星。",
+      fr: "Unique satellite naturel de la Terre stabilisant son axe.",
+      es: "Único satélite natural de la Tierra que estabiliza su eje.",
     },
   },
   {
@@ -75,6 +92,14 @@ export const COSMIC_TIERS: readonly CosmicTier[] = [
       fr: "Mercure",
       es: "Mercurio",
     },
+    fact: {
+      ko: "태양과 가장 가깝고 일교차가 600도에 달하는 암석 행성입니다.",
+      en: "Closest terrestrial planet to the Sun with 600°C temperature swing.",
+      ja: "太陽に最も近く、昼夜の寒暖差が600度に達する岩石惑星です。",
+      zh: "距离太阳最近且昼夜温差达600度的岩石行星。",
+      fr: "Planète la plus proche du Soleil avec des écarts de 600 °C.",
+      es: "Planeta más cercano al Sol con oscilaciones de 600 °C.",
+    },
   },
   {
     id: 3,
@@ -90,6 +115,14 @@ export const COSMIC_TIERS: readonly CosmicTier[] = [
       zh: "火星",
       fr: "Mars",
       es: "Marte",
+    },
+    fact: {
+      ko: "산화철 먼지로 뒤덮인 붉은 행성이며 태양계 최고봉 올림푸스산이 있습니다.",
+      en: "The Red Planet coated in iron oxide, hosting Mount Olympus.",
+      ja: "酸化鉄に覆われた赤い惑星で、太陽系最大のオリンポス山が存在します。",
+      zh: "覆盖着氧化铁红壤的红色行星，拥有太阳系最高峰奥林匹斯山。",
+      fr: "La planète rouge riche en oxyde de fer, abritant le mont Olympe.",
+      es: "El planeta rojo de óxido de hierro, hogar del Monte Olimpo.",
     },
   },
   {
@@ -107,6 +140,14 @@ export const COSMIC_TIERS: readonly CosmicTier[] = [
       fr: "Vénus",
       es: "Venus",
     },
+    fact: {
+      ko: "농밀한 이산화탄소 대기로 인해 표면 온도가 470도에 달합니다.",
+      en: "Hottest planet in the solar system trapped in dense CO2 greenhouse.",
+      ja: "濃密な二酸化炭素の大気により地表温度が470度に達する灼熱の惑星です。",
+      zh: "浓密二氧化碳引发剧烈温室效应，地表温度高达470度。",
+      fr: "Planète la plus chaude avec un effet de serre à 470 °C.",
+      es: "Planeta más cálido con efecto invernadero que alcanza 470 °C.",
+    },
   },
   {
     id: 5,
@@ -122,6 +163,14 @@ export const COSMIC_TIERS: readonly CosmicTier[] = [
       zh: "地球",
       fr: "Terre",
       es: "Tierra",
+    },
+    fact: {
+      ko: "액체 상태의 물과 생명체가 번영하는 기적의 푸른 행성입니다.",
+      en: "The blue marble harboring liquid oceans and diverse life forms.",
+      ja: "液体の水と多様な生命が息づく奇跡の青いオアシスです。",
+      zh: "拥有液态水与蓬勃生机的蔚蓝生命摇篮。",
+      fr: "La bille bleue abritant des océans liquides et la vie.",
+      es: "La canica azul que alberga océanos líquidos y vida abundante.",
     },
   },
   {
@@ -139,6 +188,14 @@ export const COSMIC_TIERS: readonly CosmicTier[] = [
       fr: "Neptune",
       es: "Neptuno",
     },
+    fact: {
+      ko: "시속 2,100km의 초음속 폭풍이 몰아치는 푸른 얼음 거인입니다.",
+      en: "Ice giant featuring supersonic storms raging up to 2,100 km/h.",
+      ja: "時速2,100kmの超音速暴風が吹き荒れる紺碧の氷巨星です。",
+      zh: "狂风时速达2,100公里的超音速蔚蓝冰巨行星。",
+      fr: "Géante de glace balayée par des vents supersoniques de 2 100 km/h.",
+      es: "Gigante helado azotado por vientos supersónicos de 2.100 km/h.",
+    },
   },
   {
     id: 7,
@@ -154,6 +211,14 @@ export const COSMIC_TIERS: readonly CosmicTier[] = [
       zh: "天王星",
       fr: "Uranus",
       es: "Urano",
+    },
+    fact: {
+      ko: "자전축이 98도 기울어져 옆으로 구르듯 공전하는 행성입니다.",
+      en: "Tilted at 98 degrees, rolling on its side around the Sun.",
+      ja: "自転軸が98度傾き、横倒しになって公転する特異な天体です。",
+      zh: "自转轴倾斜达98度、仿佛躺在轨道上滚动的冰巨星。",
+      fr: "Inclinée à 98 degrés, elle tourne sur son flanc autour du Soleil.",
+      es: "Inclinada a 98 grados, viaja de lado a lo largo de su órbita.",
     },
   },
   {
@@ -172,6 +237,14 @@ export const COSMIC_TIERS: readonly CosmicTier[] = [
       fr: "Saturne",
       es: "Saturno",
     },
+    fact: {
+      ko: "얼음과 암석으로 이루어진 경이로운 고리계를 지닌 가스 거인입니다.",
+      en: "The ringed jewel composed of dazzling ice particles and dust.",
+      ja: "氷と岩石の粒子からなる壮麗な環を持つ太陽系の宝石です。",
+      zh: "拥有由亿万冰晶碎砾构成的绚丽光环系统的气态巨星。",
+      fr: "Le joyau annelé du système solaire composé de glace et de roche.",
+      es: "La joya anillada del sistema solar formada por hielo y polvo.",
+    },
   },
   {
     id: 9,
@@ -187,6 +260,14 @@ export const COSMIC_TIERS: readonly CosmicTier[] = [
       zh: "木星",
       fr: "Jupiter",
       es: "Júpiter",
+    },
+    fact: {
+      ko: "지구 1,300개가 들어갈 만큼 거대한 태양계 행성의 제왕입니다.",
+      en: "King of planets with massive gravity capable of holding 1,300 Earths.",
+      ja: "地球1,300個が収まる質量を誇る太陽系最大の惑星の王者です。",
+      zh: "体积足以容纳1,300个地球的太阳系气态巨行星之王。",
+      fr: "Le roi des planètes pouvant contenir 1 300 fois la Terre.",
+      es: "El rey de los planetas, con volumen para albergar 1.300 Tierras.",
     },
   },
   {
@@ -204,6 +285,14 @@ export const COSMIC_TIERS: readonly CosmicTier[] = [
       zh: "太阳",
       fr: "Soleil",
       es: "Sol",
+    },
+    fact: {
+      ko: "태양계 총 질량의 99.86%를 차지하며 빛과 열을 뿜는 항성입니다.",
+      en: "The G-type stellar engine holding 99.86% of the solar system's mass.",
+      ja: "太陽系全質量の99.86%を占め、光と熱を放ち続ける偉大な恒星です。",
+      zh: "占据太阳系总质量99.86%的伟大恒星，万物生命的光热源泉。",
+      fr: "Moteur stellaire concentrant 99,86 % de la masse du système.",
+      es: "La estrella que concentra el 99,86 % de la masa del sistema solar.",
     },
   },
 ] as const;

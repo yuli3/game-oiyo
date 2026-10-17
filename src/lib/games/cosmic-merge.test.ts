@@ -34,6 +34,15 @@ describe("cosmic-merge core contracts", () => {
     }
   });
 
+  it("provides localized scientific facts across all 6 supported languages for every tier", () => {
+    for (const tier of COSMIC_TIERS) {
+      for (const loc of locales) {
+        expect(tier.fact[loc], `Missing fact for tier ${tier.id} in ${loc}`).toBeDefined();
+        expect(tier.fact[loc].length).toBeGreaterThan(0);
+      }
+    }
+  });
+
   it("validates mergeability between matching tiers", () => {
     expect(canMergeTiers(0, 0)).toBe(true);
     expect(canMergeTiers(3, 3)).toBe(true);
