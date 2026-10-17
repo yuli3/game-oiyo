@@ -27,10 +27,90 @@ function getPercentageWidthClass(pct: number): string {
   return 'w-0';
 }
 
+function createCyberAudio() {
+  let ctx: AudioContext | null = null;
+  const getCtx = () => {
+    if (typeof window === 'undefined') return null;
+    if (!ctx) {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioCtx) ctx = new AudioCtx();
+    }
+    if (ctx && ctx.state === 'suspended') void ctx.resume();
+    return ctx;
+  };
+
+  return {
+    playCrash() {
+      const c = getCtx();
+      if (!c) return;
+      try {
+        const osc = c.createOscillator();
+        const gain = c.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(160, c.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(30, c.currentTime + 0.35);
+        gain.gain.setValueAtTime(0.2, c.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.35);
+        osc.connect(gain).connect(c.destination);
+        osc.start();
+        osc.stop(c.currentTime + 0.35);
+      } catch {}
+    },
+    playCoin() {
+      const c = getCtx();
+      if (!c) return;
+      try {
+        const osc = c.createOscillator();
+        const gain = c.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, c.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1320, c.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.08, c.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.15);
+        osc.connect(gain).connect(c.destination);
+        osc.start();
+        osc.stop(c.currentTime + 0.15);
+      } catch {}
+    },
+    playNitro() {
+      const c = getCtx();
+      if (!c) return;
+      try {
+        const osc = c.createOscillator();
+        const gain = c.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(320, c.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(780, c.currentTime + 0.25);
+        gain.gain.setValueAtTime(0.1, c.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.25);
+        osc.connect(gain).connect(c.destination);
+        osc.start();
+        osc.stop(c.currentTime + 0.25);
+      } catch {}
+    },
+    close() {
+      if (ctx && ctx.state !== 'closed') void ctx.close().catch(() => {});
+      ctx = null;
+    },
+  };
+}
+
 export default function CyberHighway3D() {
   const [gameState, setGameState] = useState<CyberHighwayState>(createInitialCyberHighwayState);
+  const [muted, setMuted] = useState(false);
   const stateRef = useRef<CyberHighwayState>(gameState);
   stateRef.current = gameState;
+  const mutedRef = useRef(muted);
+  mutedRef.current = muted;
+
+  const audioRef = useRef<ReturnType<typeof createCyberAudio> | null>(null);
+
+  useEffect(() => {
+    audioRef.current = createCyberAudio();
+    return () => {
+      audioRef.current?.close();
+    };
+  }, []);
 
   // Main game loop
   useEffect(() => {
@@ -42,7 +122,33 @@ export default function CyberHighway3D() {
       lastTime = time;
 
       if (!stateRef.current.gameOver && !stateRef.current.paused) {
-        const next = updateCyberHighway(stateRef.current, dt);
+        const current = stateRef.current;
+        const next = updateCyberHighway(current, dt);
+
+        // Sound triggers
+        if (!mutedRef.current) {
+          if (next.hp < current.hp) {
+            audioRef.current?.playCrash();
+          } else if (next.credits > current.credits) {
+            audioRef.current?.playCoin();
+          } else if (next.isBoosting && !current.isBoosting) {
+            audioRef.current?.playNitro();
+          }
+        }
+
+        // Haptic feedback
+        if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+          try {
+            if (next.hp < current.hp) {
+              navigator.vibrate(next.gameOver ? [50, 50, 100] : [30, 30, 60]);
+            } else if (next.credits > current.credits) {
+              navigator.vibrate(15);
+            } else if (next.isBoosting && !current.isBoosting) {
+              navigator.vibrate(25);
+            }
+          } catch {}
+        }
+
         setGameState(next);
       }
       animId = requestAnimationFrame(loop);
@@ -94,17 +200,28 @@ export default function CyberHighway3D() {
         <CyberHighway3DScene state={gameState} />
       </Canvas>
 
-      {/* Top HUD: Speedometer, Shield, Nitro, Score */}
+      {/* Top HUD: Speedometer, Shield, Nitro, Score, Sound */}
       <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none gap-2">
-        {/* Speed & Distance */}
-        <div className="rounded-xl border border-border bg-background/85 backdrop-blur-md px-4 py-2.5 shadow-sm">
-          <div className="text-xs text-muted-foreground font-medium">속도 (SPEED)</div>
-          <div className="text-2xl font-black tracking-tight text-foreground">
-            {speedKmh} <span className="text-xs font-semibold text-primary">KM/H</span>
+        {/* Speed & Sound Toggle */}
+        <div className="flex items-center gap-2">
+          <div className="rounded-xl border border-border bg-background/85 backdrop-blur-md px-4 py-2.5 shadow-sm">
+            <div className="text-xs text-muted-foreground font-medium">속도 (SPEED)</div>
+            <div className="text-2xl font-black tracking-tight text-foreground">
+              {speedKmh} <span className="text-xs font-semibold text-primary">KM/H</span>
+            </div>
+            <div className="text-xs text-muted-foreground mt-0.5">
+              거리: <span className="font-bold text-foreground">{Math.round(gameState.distance)} m</span>
+            </div>
           </div>
-          <div className="text-xs text-muted-foreground mt-0.5">
-            거리: <span className="font-bold text-foreground">{Math.round(gameState.distance)} m</span>
-          </div>
+          <button
+            type="button"
+            onClick={() => setMuted((m) => !m)}
+            aria-pressed={muted}
+            aria-label={muted ? '소리 켜기' : '소리 끄기'}
+            className="pointer-events-auto min-h-11 px-3 rounded-xl border border-border bg-background/85 backdrop-blur-md text-xs font-bold text-foreground shadow-sm hover:bg-muted active:scale-95 transition-transform"
+          >
+            {muted ? '🔇' : '🔊'}
+          </button>
         </div>
 
         {/* Shield (HP) & Nitro Bars */}

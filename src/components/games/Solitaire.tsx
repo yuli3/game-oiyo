@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import confetti from 'canvas-confetti';
 import { GameContainer, PlayingCard } from '../ui/game/GamePrimitives';
 import { getRecord, recordResult, getBestForConditions, recordBestForConditions, getDailyStreak, recordDailyWin, type BestConditions, type DailyStreak, type GameRecord } from '../../lib/games/records';
 import { dayIndex, todayKey, previousDayKey } from '../../lib/games/daily';
@@ -22,6 +23,77 @@ import {
   storeSolitaireSaveV2,
   type SolitaireMode,
 } from '../../lib/games/solitaire-save';
+
+function createSolitaireAudio() {
+  let ctx: AudioContext | null = null;
+  const getCtx = () => {
+    if (typeof window === 'undefined') return null;
+    if (!ctx) {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioCtx) ctx = new AudioCtx();
+    }
+    if (ctx && ctx.state === 'suspended') void ctx.resume();
+    return ctx;
+  };
+
+  return {
+    playCardSlide() {
+      const c = getCtx();
+      if (!c) return;
+      try {
+        const osc = c.createOscillator();
+        const gain = c.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(420, c.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(260, c.currentTime + 0.05);
+        gain.gain.setValueAtTime(0.06, c.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.05);
+        osc.connect(gain).connect(c.destination);
+        osc.start();
+        osc.stop(c.currentTime + 0.05);
+      } catch {}
+    },
+    playFoundationSnap() {
+      const c = getCtx();
+      if (!c) return;
+      try {
+        const osc = c.createOscillator();
+        const gain = c.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(587.33, c.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(880, c.currentTime + 0.09);
+        gain.gain.setValueAtTime(0.08, c.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.09);
+        osc.connect(gain).connect(c.destination);
+        osc.start();
+        osc.stop(c.currentTime + 0.09);
+      } catch {}
+    },
+    playWinFanfare() {
+      const c = getCtx();
+      if (!c) return;
+      try {
+        const notes = [523.25, 659.25, 783.99, 1046.5];
+        notes.forEach((freq, i) => {
+          const osc = c.createOscillator();
+          const gain = c.createGain();
+          const start = c.currentTime + i * 0.1;
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, start);
+          gain.gain.setValueAtTime(0.1, start);
+          gain.gain.exponentialRampToValueAtTime(0.001, start + 0.25);
+          osc.connect(gain).connect(c.destination);
+          osc.start(start);
+          osc.stop(start + 0.25);
+        });
+      } catch {}
+    },
+    close() {
+      if (ctx && ctx.state !== 'closed') void ctx.close().catch(() => {});
+      ctx = null;
+    },
+  };
+}
 
 type Selection =
   | { type: 'tableau'; column: number; cardIndex: number }
@@ -73,10 +145,21 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
   const [isNewBest, setIsNewBest] = useState(false);
   const [legacyMigrated, setLegacyMigrated] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [muted, setMuted] = useState(false);
   const seedRef = useRef(0);
   const startedAt = useRef<number | null>(null);
   const moveMadeRef = useRef(false);
   const wonRef = useRef(false);
+  const audioRef = useRef<ReturnType<typeof createSolitaireAudio> | null>(null);
+  const mutedRef = useRef(muted);
+  mutedRef.current = muted;
+
+  useEffect(() => {
+    audioRef.current = createSolitaireAudio();
+    return () => {
+      audioRef.current?.close();
+    };
+  }, []);
 
   const conditionsFor = useCallback((nextMode: SolitaireMode, seed: number, date: string, assist: 'none' | 'undo'): BestConditions => ({
     seed: nextMode === 'daily' ? `daily-${date}` : `free-${seed}`,
@@ -175,6 +258,21 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     setGame(next);
     setSelection(null);
     setAnnouncement(t.moved);
+
+    // Audio & Haptic feedback
+    if (!mutedRef.current) {
+      if (move.type.includes('foundation')) {
+        audioRef.current?.playFoundationSnap();
+      } else {
+        audioRef.current?.playCardSlide();
+      }
+    }
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate(move.type.includes('foundation') ? 20 : 10);
+      } catch {}
+    }
+
     return true;
   }, [game, moveReason, t.illegal, t.moved]);
 
@@ -248,6 +346,20 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
       wonRef.current = true;
       clearSolitaireSaveV2();
       setRecord(recordResult('solitaire', 'w'));
+
+      // Celebratory Confetti & Win Fanfare
+      try {
+        confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } });
+      } catch {}
+      if (!mutedRef.current) {
+        audioRef.current?.playWinFanfare();
+      }
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+        try {
+          navigator.vibrate([40, 40, 80, 40, 120]);
+        } catch {}
+      }
+
       if (mode === 'daily') {
         const today = todayKey();
         setStreak(recordDailyWin(DAILY_GAME_ID, today, previousDayKey(today)));
@@ -285,6 +397,11 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
           <button type="button" onClick={undo} disabled={undoStack.length === 0 || won}
             className="min-h-11 rounded-lg border border-border px-3 py-2 text-xs font-bold text-muted-foreground transition-colors hover:bg-muted disabled:opacity-40 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
             ↩︎ {t.undo}
+          </button>
+          <button type="button" onClick={() => setMuted((m) => !m)} aria-pressed={muted}
+            className="min-h-11 rounded-lg border border-border px-3 py-2 text-xs font-bold text-muted-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            aria-label={muted ? '소리 켜기' : '소리 끄기'}>
+            {muted ? '🔇' : '🔊'}
           </button>
         </div>
 

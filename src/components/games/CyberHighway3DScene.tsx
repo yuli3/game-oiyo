@@ -1,5 +1,6 @@
 import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
+import { Stars, Sparkles } from '@react-three/drei';
 import * as THREE from 'three';
 import { type CyberHighwayState, ROAD_WIDTH, TOTAL_LANES, LANE_WIDTH } from '../../lib/games/cyber-highway';
 
@@ -11,6 +12,8 @@ export default function CyberHighway3DScene({ state }: CyberHighway3DSceneProps)
   const playerCarRef = useRef<THREE.Group>(null);
   const roadGridRef = useRef<THREE.Group>(null);
   const roadOffsetRef = useRef<number>(0);
+  const prevHpRef = useRef<number>(state.hp);
+  const shakeRef = useRef<number>(0);
 
   // Generate lane dashed markers
   const laneLines = useMemo(() => {
@@ -22,7 +25,31 @@ export default function CyberHighway3DScene({ state }: CyberHighway3DSceneProps)
     return lines;
   }, []);
 
-  useFrame((_, delta) => {
+  useFrame((stateThree, delta) => {
+    // Detect collision impact to trigger camera trauma
+    if (state.hp < prevHpRef.current) {
+      shakeRef.current = 1.0;
+    }
+    prevHpRef.current = state.hp;
+
+    // Dynamic FOV speed warp
+    if (stateThree.camera instanceof THREE.PerspectiveCamera) {
+      const targetFov = state.isBoosting ? 72 : 60;
+      stateThree.camera.fov = THREE.MathUtils.lerp(stateThree.camera.fov, targetFov, delta * 6);
+      stateThree.camera.updateProjectionMatrix();
+    }
+
+    // Camera trauma shake
+    if (shakeRef.current > 0) {
+      shakeRef.current = Math.max(0, shakeRef.current - delta * 3.5);
+      const trauma = shakeRef.current * shakeRef.current;
+      stateThree.camera.position.x = (Math.random() - 0.5) * trauma * 0.6;
+      stateThree.camera.position.y = 4.2 + (Math.random() - 0.5) * trauma * 0.4;
+    } else {
+      stateThree.camera.position.x = THREE.MathUtils.lerp(stateThree.camera.position.x, 0, delta * 8);
+      stateThree.camera.position.y = 4.2;
+    }
+
     // Scroll road texture based on current speed
     roadOffsetRef.current = (roadOffsetRef.current + state.speed * delta) % 10;
     if (roadGridRef.current) {
@@ -43,6 +70,19 @@ export default function CyberHighway3DScene({ state }: CyberHighway3DSceneProps)
       <color attach="background" args={["#09090f"]} />
       <ambientLight intensity={0.4} />
       <directionalLight position={[0, 20, 10]} intensity={1.2} />
+
+      {/* Deep Cyber Highway Starfield */}
+      <Stars radius={160} depth={50} count={1400} factor={4} saturation={1} fade speed={1.5} />
+
+      {/* High-speed Neon Cyber Dust Particles rushing along the highway */}
+      <Sparkles
+        count={state.isBoosting ? 90 : 35}
+        scale={[ROAD_WIDTH + 8, 8, 90]}
+        position={[0, 3, 50]}
+        size={state.isBoosting ? 4 : 2}
+        speed={state.speed * 0.08}
+        color={state.isBoosting ? "#38bdf8" : "#f43f5e"}
+      />
 
       {/* Cyberpunk Synthwave Sun on the Horizon */}
       <mesh position={[0, 12, 180]}>
@@ -114,10 +154,13 @@ export default function CyberHighway3DScene({ state }: CyberHighway3DSceneProps)
         </mesh>
         {/* Nitro Thruster Flame (if boosting) */}
         {state.isBoosting && (
-          <mesh position={[0, 0.12, -2.1]} rotation={[Math.PI / 2, 0, 0]}>
-            <coneGeometry args={[0.3, 1.1, 16]} />
-            <meshBasicMaterial color="#38bdf8" />
-          </mesh>
+          <group position={[0, 0.12, -2.1]}>
+            <mesh rotation={[Math.PI / 2, 0, 0]}>
+              <coneGeometry args={[0.3, 1.1, 16]} />
+              <meshBasicMaterial color="#38bdf8" />
+            </mesh>
+            <Sparkles count={35} scale={[0.8, 0.8, 2.5]} position={[0, 0, -1.2]} size={4} speed={6} color="#38bdf8" />
+          </group>
         )}
       </group>
 

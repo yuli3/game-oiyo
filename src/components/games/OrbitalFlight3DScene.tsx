@@ -1,18 +1,27 @@
 import React, { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
+import { Stars, Sparkles } from '@react-three/drei';
 import * as THREE from 'three';
 import type { OrbitalFlightState } from '../../lib/games/orbital-flight';
 
 interface OrbitalFlight3DSceneProps {
   state: OrbitalFlightState;
+  boosting?: boolean;
 }
 
-export default function OrbitalFlight3DScene({ state }: OrbitalFlight3DSceneProps) {
+export default function OrbitalFlight3DScene({ state, boosting = false }: OrbitalFlight3DSceneProps) {
   const shipRef = useRef<THREE.Group>(null);
   const planetRef = useRef<THREE.Mesh>(null);
   const atmosphereRef = useRef<THREE.Mesh>(null);
 
   useFrame((stateThree, delta) => {
+    // Dynamic FOV when boosting
+    if (stateThree.camera instanceof THREE.PerspectiveCamera) {
+      const targetFov = boosting ? 68 : 60;
+      stateThree.camera.fov = THREE.MathUtils.lerp(stateThree.camera.fov, targetFov, delta * 5);
+      stateThree.camera.updateProjectionMatrix();
+    }
+
     // Rotate central planet
     if (planetRef.current) {
       planetRef.current.rotation.y += delta * 0.08;
@@ -50,6 +59,12 @@ export default function OrbitalFlight3DScene({ state }: OrbitalFlight3DSceneProp
       <ambientLight intensity={0.4} />
       <directionalLight position={[100, 50, 50]} intensity={1.8} color="#ffffff" />
       <pointLight position={[0, 0, 0]} intensity={1.0} color="#38bdf8" distance={150} />
+
+      {/* Deep Space Starfield */}
+      <Stars radius={250} depth={80} count={3000} factor={4} saturation={0} fade speed={1.2} />
+
+      {/* Planetary Orbit Cosmic Dust Sparkles */}
+      <Sparkles count={90} scale={[140, 90, 140]} size={2.5} speed={0.5} color="#38bdf8" />
 
       {/* Central Planet */}
       <mesh ref={planetRef} position={[0, 0, 0]}>
@@ -91,11 +106,21 @@ export default function OrbitalFlight3DScene({ state }: OrbitalFlight3DSceneProp
           <boxGeometry args={[3.2, 0.1, 1.4]} />
           <meshStandardMaterial color="#0284c7" roughness={0.3} metalness={0.6} />
         </mesh>
-        {/* Thruster Engine Glow */}
-        <mesh position={[0, 0, -1.8]}>
-          <sphereGeometry args={[0.4, 16, 16]} />
-          <meshBasicMaterial color="#38bdf8" />
-        </mesh>
+        {/* Thruster Engine Glow & Particle Flame */}
+        <group position={[0, 0, -1.8]}>
+          <mesh>
+            <sphereGeometry args={[boosting ? 0.6 : 0.4, 16, 16]} />
+            <meshBasicMaterial color={boosting ? "#38bdf8" : "#0284c7"} />
+          </mesh>
+          <Sparkles
+            count={boosting ? 35 : 12}
+            scale={[0.8, 0.8, 2.5]}
+            position={[0, 0, -1]}
+            size={boosting ? 4 : 2}
+            speed={4}
+            color="#38bdf8"
+          />
+        </group>
       </group>
 
       {/* Orbital Gates */}

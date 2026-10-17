@@ -24,10 +24,90 @@ function getPercentageWidthClass(pct: number): string {
   return 'w-0';
 }
 
+function createOrbitalAudio() {
+  let ctx: AudioContext | null = null;
+  const getCtx = () => {
+    if (typeof window === 'undefined') return null;
+    if (!ctx) {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioCtx) ctx = new AudioCtx();
+    }
+    if (ctx && ctx.state === 'suspended') void ctx.resume();
+    return ctx;
+  };
+
+  return {
+    playGatePass() {
+      const c = getCtx();
+      if (!c) return;
+      try {
+        const osc = c.createOscillator();
+        const gain = c.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(523.25, c.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1046.5, c.currentTime + 0.2);
+        gain.gain.setValueAtTime(0.08, c.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.2);
+        osc.connect(gain).connect(c.destination);
+        osc.start();
+        osc.stop(c.currentTime + 0.2);
+      } catch {}
+    },
+    playCollision() {
+      const c = getCtx();
+      if (!c) return;
+      try {
+        const osc = c.createOscillator();
+        const gain = c.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(120, c.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(25, c.currentTime + 0.35);
+        gain.gain.setValueAtTime(0.18, c.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.35);
+        osc.connect(gain).connect(c.destination);
+        osc.start();
+        osc.stop(c.currentTime + 0.35);
+      } catch {}
+    },
+    playBoost() {
+      const c = getCtx();
+      if (!c) return;
+      try {
+        const osc = c.createOscillator();
+        const gain = c.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(220, c.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(587.33, c.currentTime + 0.3);
+        gain.gain.setValueAtTime(0.08, c.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.3);
+        osc.connect(gain).connect(c.destination);
+        osc.start();
+        osc.stop(c.currentTime + 0.3);
+      } catch {}
+    },
+    close() {
+      if (ctx && ctx.state !== 'closed') void ctx.close().catch(() => {});
+      ctx = null;
+    },
+  };
+}
+
 export default function OrbitalFlight3D() {
   const [gameState, setGameState] = useState<OrbitalFlightState>(createInitialOrbitalState);
+  const [muted, setMuted] = useState(false);
   const stateRef = useRef<OrbitalFlightState>(gameState);
   stateRef.current = gameState;
+  const mutedRef = useRef(muted);
+  mutedRef.current = muted;
+
+  const audioRef = useRef<ReturnType<typeof createOrbitalAudio> | null>(null);
+
+  useEffect(() => {
+    audioRef.current = createOrbitalAudio();
+    return () => {
+      audioRef.current?.close();
+    };
+  }, []);
 
   // Key state tracking
   const keysRef = useRef<{
@@ -54,7 +134,35 @@ export default function OrbitalFlight3D() {
       lastTime = time;
 
       if (!stateRef.current.gameOver && !stateRef.current.paused) {
-        const next = updateOrbitalFlight(stateRef.current, keysRef.current, dt);
+        const current = stateRef.current;
+        const next = updateOrbitalFlight(current, keysRef.current, dt);
+
+        // Sound triggers
+        const isBoosting = keysRef.current.boost && next.energy > 5;
+        const wasBoosting = keysRef.current.boost && current.energy > 5;
+        if (!mutedRef.current) {
+          if (next.gatesPassed > current.gatesPassed) {
+            audioRef.current?.playGatePass();
+          } else if (next.shield < current.shield || next.hull < current.hull) {
+            audioRef.current?.playCollision();
+          } else if (isBoosting && !wasBoosting) {
+            audioRef.current?.playBoost();
+          }
+        }
+
+        // Haptic feedback
+        if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+          try {
+            if (next.gatesPassed > current.gatesPassed) {
+              navigator.vibrate([20, 20, 40]);
+            } else if (next.shield < current.shield || next.hull < current.hull) {
+              navigator.vibrate(next.gameOver ? [60, 60, 120] : [30, 30, 60]);
+            } else if (isBoosting && !wasBoosting) {
+              navigator.vibrate(20);
+            }
+          } catch {}
+        }
+
         setGameState(next);
       }
       animId = requestAnimationFrame(loop);
@@ -116,7 +224,10 @@ export default function OrbitalFlight3D() {
         camera={{ position: [50, 6, -12], fov: 60 }}
         gl={{ antialias: true }}
       >
-        <OrbitalFlight3DScene state={gameState} />
+        <OrbitalFlight3DScene
+          state={gameState}
+          boosting={keysRef.current.boost && gameState.energy > 5}
+        />
       </Canvas>
 
       {/* Flight HUD Overlay */}
@@ -153,15 +264,26 @@ export default function OrbitalFlight3D() {
           </div>
         </div>
 
-        {/* Right: Score & Multiplier */}
-        <div className="rounded-xl border border-border bg-background/85 backdrop-blur-md px-4 py-2.5 shadow-xs text-right">
-          <div className="text-xs text-muted-foreground font-medium">비행 점수</div>
-          <div className="text-2xl font-black tracking-tight text-foreground font-mono">
-            {gameState.score.toLocaleString()}
-          </div>
-          <div className="text-xs text-muted-foreground mt-0.5">
-            게이트: <span className="font-bold text-foreground">{gameState.gatesPassed}개</span>
-            <span className="ml-2 font-bold text-primary font-mono">x{gameState.multiplier.toFixed(1)}</span>
+        {/* Right: Score & Multiplier & Sound Toggle */}
+        <div className="flex items-start gap-2">
+          <button
+            type="button"
+            onClick={() => setMuted((m) => !m)}
+            aria-pressed={muted}
+            aria-label={muted ? '소리 켜기' : '소리 끄기'}
+            className="pointer-events-auto min-h-11 px-3 py-2 rounded-xl border border-border bg-background/85 backdrop-blur-md text-xs font-bold text-foreground shadow-xs hover:bg-muted active:scale-95 transition-transform"
+          >
+            {muted ? '🔇' : '🔊'}
+          </button>
+          <div className="rounded-xl border border-border bg-background/85 backdrop-blur-md px-4 py-2.5 shadow-xs text-right">
+            <div className="text-xs text-muted-foreground font-medium">비행 점수</div>
+            <div className="text-2xl font-black tracking-tight text-foreground font-mono">
+              {gameState.score.toLocaleString()}
+            </div>
+            <div className="text-xs text-muted-foreground mt-0.5">
+              게이트: <span className="font-bold text-foreground">{gameState.gatesPassed}개</span>
+              <span className="ml-2 font-bold text-primary font-mono">x{gameState.multiplier.toFixed(1)}</span>
+            </div>
           </div>
         </div>
       </div>
