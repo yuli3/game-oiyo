@@ -1,0 +1,50 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+import GameGuide from "../../components/GameGuide.astro";
+import MazeRunner from "../../components/games/MazeRunner";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "Voxel Maze Runner 3D — 무료 3D 절차적 복셀 미로 탈출 게임",
+    description: "Three.js 3D 그래픽으로 구현된 무한 절차적 미로 탐험 게임. 횃불 조명을 밝히며 미로 속 숨겨진 보석을 모으고 시간 내에 탈출 포털에 도달하세요.",
+  },
+  en: {
+    title: "Voxel Maze Runner 3D — Free 3D Procedural Voxel Maze Escape Game",
+    description: "An immersive 3D voxel maze exploration game powered by Three.js. Light your torch, collect hidden glowing gems, and escape through the beacon portal before time runs out.",
+  },
+  ja: {
+    title: "Voxel Maze Runner 3D — 無料3D自動生成ボクセル迷路脱出ゲーム",
+    description: "Three.jsによる没入感ある3Dボクセル迷路脱出ゲーム。たいまつを掲げて暗闇を照らし、散りばめられた宝石を集めて制限時間内に脱出ポータルを目指そう。",
+  },
+  zh: {
+    title: "Voxel Maze Runner 3D — 免费3D程序化体素迷宫逃生游戏",
+    description: "基于Three.js打造的沉浸式3D体素迷宫探险游戏。点亮火把穿过漆黑的回廊，收集璀璨宝石，在时间耗尽前抵达绿色逃生传送门！",
+  },
+  fr: {
+    title: "Voxel Maze Runner 3D — Jeu d'évasion de labyrinthe voxel 3D gratuit",
+    description: "Un jeu d'évasion de labyrinthe en voxel 3D propulsé par Three.js. Éclairez les couloirs à la torche, ramassez les gemmes cachées et trouvez la sortie à temps.",
+  },
+  es: {
+    title: "Voxel Maze Runner 3D — Juego de escape de laberinto voxel 3D gratis",
+    description: "Un juego inmersivo de escape de laberinto voxel 3D con Three.js. Alumbra el camino con tu antorcha, recoge gemas y escapa por el portal antes de que se agote el tiempo.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={(gameArtDocument.games as Record<string, string>)["maze-runner-3d"] ?? "/games/maze-social.png"}>
+  <div class="mx-auto max-w-7xl px-2 py-6 sm:px-4 sm:py-8">
+    <MazeRunner client:visible locale={locale} />
+    <div class="mx-auto max-w-3xl px-2"><GameGuide slug="maze-runner-3d" locale={locale} name="Voxel Maze Runner 3D" /></div>
+  </div>
+</BaseLayout>

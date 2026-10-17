@@ -99,6 +99,8 @@ export default defineConfig([
       "src/components/games/RetroHighwayScene.tsx",
       "src/components/games/SpacePinballScene.tsx",
       "src/components/games/MiniGolfScene.tsx",
+      "src/components/games/BlockBreakerScene.tsx",
+      "src/components/games/MazeRunnerScene.tsx",
     ],
     rules: {
       "shadcn/no-raw-colors": "off",

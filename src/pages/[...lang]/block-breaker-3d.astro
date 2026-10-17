@@ -1,0 +1,50 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+import GameGuide from "../../components/GameGuide.astro";
+import BlockBreaker from "../../components/games/BlockBreaker";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "Block Breaker 3D — 무료 3D 복셀 벽돌깨기 아케이드 게임",
+    description: "Three.js 물리 엔진으로 구현된 3D 복셀 벽돌깨기 아케이드 게임. 정밀한 패들 반사 각도 제어, 멀티볼 및 레이저 파워업을 획득하고 모든 블록을 파괴하세요.",
+  },
+  en: {
+    title: "Block Breaker 3D — Free 3D Voxel Brick Breaker Arcade Game",
+    description: "A thrilling 3D voxel brick breaker game powered by Three.js physics. Master paddle bounce angles, catch multiball and laser powerups, and smash every voxel block.",
+  },
+  ja: {
+    title: "Block Breaker 3D — 無料3Dボクセルブロック崩しアーケードゲーム",
+    description: "Three.js物理演算による本格3Dボクセルブロック崩し。パドルの角度反射を操り、マルチボールやレーザーパワーアップで全ブロックを爽快に破壊しよう。",
+  },
+  zh: {
+    title: "Block Breaker 3D — 免费3D体素弹球打砖块街机游戏",
+    description: "基于Three.js物理引擎打造的3D立体打砖块街机游戏。操控挡板反弹角度，捕获多重弹球与强力激光道具，粉碎所有体素砖块！",
+  },
+  fr: {
+    title: "Block Breaker 3D — Jeu de casse-briques voxel 3D gratuit",
+    description: "Un jeu de casse-briques en 3D voxel dynamique propulsé par Three.js. Contrôlez l'angle de rebond, attrapez des bonus multiballes et détruisez toutes les briques.",
+  },
+  es: {
+    title: "Block Breaker 3D — Juego de romper ladrillos voxel 3D gratis",
+    description: "Un arcade de romper ladrillos en 3D voxel con físicas Three.js. Domina los ángulos de rebote, recoge mejoras multibola y láser, y destruye todos los bloques.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={(gameArtDocument.games as Record<string, string>)["block-breaker-3d"] ?? "/games/maze-social.png"}>
+  <div class="mx-auto max-w-7xl px-2 py-6 sm:px-4 sm:py-8">
+    <BlockBreaker client:visible locale={locale} />
+    <div class="mx-auto max-w-3xl px-2"><GameGuide slug="block-breaker-3d" locale={locale} name="Block Breaker 3D" /></div>
+  </div>
+</BaseLayout>
