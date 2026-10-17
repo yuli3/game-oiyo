@@ -103,6 +103,8 @@ export default defineConfig([
       "src/components/games/MazeRunnerScene.tsx",
       "src/components/games/CardTable3DScene.tsx",
       "src/components/games/TentsIsland3DScene.tsx",
+      "src/components/games/OrbitalDefense3DScene.tsx",
+      "src/components/games/GravityRoller3DScene.tsx",
     ],
     rules: {
       "shadcn/no-raw-colors": "off",

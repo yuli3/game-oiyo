@@ -1,0 +1,50 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+import GameGuide from "../../components/GameGuide.astro";
+import OrbitalDefense3D from "../../components/games/OrbitalDefense3D";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "Orbital Defense 3D — 3D 궤도 타워 디펜스 게임",
+    description: "행성 궤도에 레이저·플라즈마·미사일 방어 위성을 구축하고 다가오는 외계 침공 편대를 격퇴하세요. Three.js 3D 실시간 전략 디펜스.",
+  },
+  en: {
+    title: "Orbital Defense 3D — Planetary Tower Defense Game",
+    description: "Deploy laser, plasma, and missile satellites along concentric planetary orbits to repel hostile alien fleets in real-time 3D.",
+  },
+  ja: {
+    title: "Orbital Defense 3D — 3D軌道タワーディフェンスゲーム",
+    description: "惑星の軌道上にレーザー・プラズマ・ミサイル衛星を配備し、迫り来る敵艦隊を迎撃する3Dリアルタイム戦略タワーディフェンス。",
+  },
+  zh: {
+    title: "Orbital Defense 3D — 3D行星轨道塔防游戏",
+    description: "在同心圆行星轨道上部署激光、等离子与导弹防御卫星，抵御逼近的外星舰队。基于Three.js打造的实时3D策略塔防。",
+  },
+  fr: {
+    title: "Orbital Defense 3D — Jeu de Tower Defense Orbital 3D",
+    description: "Déployez des satellites laser, plasma et missiles sur les orbites planétaires pour repousser les vagues d'invasion extraterrestre en 3D.",
+  },
+  es: {
+    title: "Orbital Defense 3D — Juego de Defensa de Torres Orbital 3D",
+    description: "Despliega satélites láser, de plasma y de misiles en las órbitas planetarias para repeler las flotas alienígenas invasoras en 3D en tiempo real.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={(gameArtDocument.games as Record<string, string>)["orbital-defense-3d"] ?? "/games/maze-social.png"}>
+  <div class="mx-auto max-w-7xl px-2 py-6 sm:px-4 sm:py-8">
+    <OrbitalDefense3D client:visible locale={locale} />
+    <div class="mx-auto max-w-3xl px-2"><GameGuide slug="orbital-defense-3d" locale={locale} name="Orbital Defense 3D" /></div>
+  </div>
+</BaseLayout>

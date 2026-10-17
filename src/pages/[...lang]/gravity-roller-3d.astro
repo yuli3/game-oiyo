@@ -1,0 +1,50 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+import GameGuide from "../../components/GameGuide.astro";
+import GravityRoller3D from "../../components/games/GravityRoller3D";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "Gravity Roller 3D — 3D 중력 미로 롤러 볼 게임",
+    description: "Three.js 물리 엔진으로 구현된 3D 틸트 미로 판을 기울여 메탈 구슬을 굴리고 보석을 모아 탈출 포털에 도달하세요.",
+  },
+  en: {
+    title: "Gravity Roller 3D — 3D Physics Labyrinth Marble Game",
+    description: "Tilt the 3D labyrinth board using physical gravity simulation, collect emerald gems, and reach the escape portal.",
+  },
+  ja: {
+    title: "Gravity Roller 3D — 3D重力ラビリンスマーブルゲーム",
+    description: "Three.js物理エンジンによる3D迷路台を傾けて金属球を転がし、宝石を集めて脱出ポータルを目指すゲーム。",
+  },
+  zh: {
+    title: "Gravity Roller 3D — 3D物理重力迷宫滚球游戏",
+    description: "倾斜基于Three.js物理引擎打造的3D立体迷宫托盘，引导金属小球收集宝石并穿越重重陷阱抵达逃生传送门。",
+  },
+  fr: {
+    title: "Gravity Roller 3D — Jeu de Bille et Labyrinthe Gravitationnel 3D",
+    description: "Inclinez le plateau du labyrinthe 3D réaliste pour guider la bille métallique, ramasser des gemmes et atteindre le portail.",
+  },
+  es: {
+    title: "Gravity Roller 3D — Juego de Laberinto y Bola de Gravedad 3D",
+    description: "Inclina el tablero laberíntico 3D con simulación física para guiar la esfera metálica, esquivar agujeros y llegar al portal.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={(gameArtDocument.games as Record<string, string>)["gravity-roller-3d"] ?? "/games/maze-social.png"}>
+  <div class="mx-auto max-w-7xl px-2 py-6 sm:px-4 sm:py-8">
+    <GravityRoller3D client:visible locale={locale} />
+    <div class="mx-auto max-w-3xl px-2"><GameGuide slug="gravity-roller-3d" locale={locale} name="Gravity Roller 3D" /></div>
+  </div>
+</BaseLayout>
