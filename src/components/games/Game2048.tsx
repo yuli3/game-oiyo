@@ -6,7 +6,7 @@ import { createGame2048Replay, game2048GhostBoards, replayGame2048, type Game204
 import { clearGame2048Save, loadGame2048Save, storeGame2048Save } from '../../lib/games/active-game-save';
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 import { createGame2048, game2048Analysis, moveGame2048, restoreGame2048, type Game2048Direction, type Game2048State } from '../../lib/games/game-2048';
-import { advance2048Tiles, tilesFromBoard, type Visual2048Tile } from '../../lib/games/game-2048-tiles';
+import Game2048PixiCanvas from './Game2048PixiCanvas';
 
 const COPY = {
     ko: { title: "2048 게임", subtitle: "Growth Logic", score: "점수", best: "최고 점수", over: "게임 종료", win: "2048 달성!", reset: "다시 시작", hint: "방향키 또는 스와이프로 이동" },
@@ -32,16 +32,6 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [best, setBest] = useState(0);
     const [paused,setPaused]=useState(false);const[restored,setRestored]=useState(false);const[muted,setMuted]=useState(false);const[hasGhost,setHasGhost]=useState(false);const audio=useRef<AudioContext|null>(null);
     const seedRef=useRef<number|null>(null);const replayInputsRef=useRef<ReplayInput<Game2048ReplayAction>[]>([]);const ghostBoardsRef=useRef<(number|null)[][]>([]);const terminalRef=useRef(false);
-    const touchStart = useRef<{ x: number; y: number } | null>(null);
-    const visualRef = useRef(tilesFromBoard(Array(16).fill(null)));
-    const [tiles, setTiles] = useState<Visual2048Tile[]>([]);
-    const adoptTiles = useCallback((board: readonly (number | null)[], direction?: Game2048Direction) => {
-        const next = direction
-            ? advance2048Tiles(visualRef.current.tiles, board, direction, visualRef.current.nextId)
-            : tilesFromBoard(board);
-        visualRef.current = next;
-        setTiles(next.tiles);
-    }, []);
 
     const startRun = useCallback((seedOverride?:number) => {
         clearGame2048Save();
@@ -49,8 +39,8 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         seedRef.current=seed>>>0;replayInputsRef.current=[];ghostBoardsRef.current=[];terminalRef.current=false;
         const prior=loadReplayEnvelope<Game2048ReplayAction>('game-2048');
         if(prior?.seed===seedRef.current){try{if(verifyReplayEnvelope(prior,replayGame2048))ghostBoardsRef.current=game2048GhostBoards(prior)}catch{ghostBoardsRef.current=[]}}
-        setHasGhost(ghostBoardsRef.current.length>0);const opening=createGame2048(seedRef.current);adoptTiles(opening.board);setGame(opening);setPaused(false);setRestored(false);
-    }, [adoptTiles]);
+        setHasGhost(ghostBoardsRef.current.length>0);const opening=createGame2048(seedRef.current);setGame(opening);setPaused(false);setRestored(false);
+    }, []);
     const initGame=useCallback(()=>startRun(),[startRun]);
     const retrySame=useCallback(()=>startRun(seedRef.current??undefined),[startRun]);
 
@@ -58,7 +48,7 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         const saved = loadGame2048Save();
         if (saved) {
             seedRef.current=null;replayInputsRef.current=[];ghostBoardsRef.current=[];setHasGhost(false);
-            const restoredState=restoreGame2048(saved.board,saved.score);if(restoredState){adoptTiles(restoredState.board);setGame(restoredState);setPaused(true);setRestored(true)}else initGame();
+            const restoredState=restoreGame2048(saved.board,saved.score);if(restoredState){setGame(restoredState);setPaused(true);setRestored(true)}else initGame();
         } else {
             initGame();
         }
@@ -69,7 +59,7 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             const legacy = Number(localStorage.getItem(LEGACY_BEST_KEY));
             if (Number.isFinite(legacy) && legacy > 0) setBest(recordBest('game-2048', legacy, 'score', undefined, { trackPlay: false }).value);
         } catch { /* ignore */ }
-    }, [initGame, adoptTiles]);
+    }, [initGame]);
     useEffect(()=>{const hidden=()=>{if(document.hidden)setPaused(true)};document.addEventListener("visibilitychange",hidden);return()=>{document.removeEventListener("visibilitychange",hidden);void audio.current?.close()}},[]);
 
     // Persist the active board after every applied move; terminal states are not resumable.
@@ -82,7 +72,7 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         if(!terminalRef.current){terminalRef.current=true;recordAchievementEvent('game-2048','played')}
     },[game.status]);
 
-    const move = useCallback((direction: Game2048Direction) => { if(paused)return;const next=moveGame2048(game,direction);if(next===game)return;const nextInputs=[...replayInputsRef.current,{tick:game.moves,input:{type:'move' as const,direction}}];replayInputsRef.current=nextInputs;adoptTiles(next.board,direction);setGame(next);if(!muted){const context=audio.current??new AudioContext();audio.current=context;const o=context.createOscillator(),g=context.createGain();o.frequency.value=next.lastGain?440:220;g.gain.setValueAtTime(.04,context.currentTime);g.gain.exponentialRampToValueAtTime(.001,context.currentTime+.07);o.connect(g).connect(context.destination);o.start();o.stop(context.currentTime+.07)}if(next.score>best){if(seedRef.current!==null){try{const replay=createGame2048Replay(seedRef.current,next,nextInputs);if(verifyReplayEnvelope(replay,replayGame2048))saveReplayEnvelope(replay)}catch{/* drifted replay is discarded */}}recordAchievementEvent('game-2048','personal-best');setBest(recordBest('game-2048',next.score,'score',undefined,{trackPlay:false}).value);} }, [game,best,paused,muted,adoptTiles]);
+    const move = useCallback((direction: Game2048Direction) => { if(paused)return;const next=moveGame2048(game,direction);if(next===game)return;const nextInputs=[...replayInputsRef.current,{tick:game.moves,input:{type:'move' as const,direction}}];replayInputsRef.current=nextInputs;setGame(next);if(!muted){const context=audio.current??new AudioContext();audio.current=context;const o=context.createOscillator(),g=context.createGain();o.frequency.value=next.lastGain?440:220;g.gain.setValueAtTime(.04,context.currentTime);g.gain.exponentialRampToValueAtTime(.001,context.currentTime+.07);o.connect(g).connect(context.destination);o.start();o.stop(context.currentTime+.07)}if(next.score>best){if(seedRef.current!==null){try{const replay=createGame2048Replay(seedRef.current,next,nextInputs);if(verifyReplayEnvelope(replay,replayGame2048))saveReplayEnvelope(replay)}catch{/* drifted replay is discarded */}}recordAchievementEvent('game-2048','personal-best');setBest(recordBest('game-2048',next.score,'score',undefined,{trackPlay:false}).value);} }, [game,best,paused,muted]);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -96,87 +86,30 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [move, game.status]);
 
-    const onTouchStart = (e: React.TouchEvent) => {
-        const tch = e.touches[0];
-        touchStart.current = { x: tch.clientX, y: tch.clientY };
-    };
-    const onTouchEnd = (e: React.TouchEvent) => {
-        if (!touchStart.current) return;
-        const tch = e.changedTouches[0];
-        const dx = tch.clientX - touchStart.current.x;
-        const dy = tch.clientY - touchStart.current.y;
-        touchStart.current = null;
-        const absX = Math.abs(dx), absY = Math.abs(dy);
-        if (Math.max(absX, absY) < 24) return; // ignore taps
-        if (absX > absY) move(dx > 0 ? 'right' : 'left');
-        else move(dy > 0 ? 'down' : 'up');
-    };
-
-    const getTileColor = (val: number) => {
-        const colors: Record<number, string> = {
-            2: 'bg-muted text-muted-foreground',
-            4: 'bg-accent/50 text-accent-foreground',
-            8: 'bg-primary/20 text-primary',
-            16: 'bg-primary/40 text-primary-foreground',
-            32: 'bg-primary/60 text-primary-foreground',
-            64: 'bg-primary/80 text-primary-foreground',
-            128: 'bg-primary text-primary-foreground shadow-md',
-            256: 'bg-chart-1 text-foreground shadow-md',
-            512: 'bg-chart-2 text-foreground shadow-md',
-            1024: 'bg-chart-3 text-foreground shadow-lg',
-            2048: `bg-chart-4 text-foreground shadow-xl ${reducedMotion ? '' : 'animate-pulse'}`,
-        };
-        return colors[val] || 'bg-slate-900 text-white';
-    };
     const analysis=game2048Analysis(game);const ghostBoard=ghostBoardsRef.current[game.moves];
 
     return (
         <GameContainer title={t.title} subtitle={t.subtitle} onReset={initGame}>
             <div className="flex justify-end gap-2 mb-6">
                 <button type="button" onClick={()=>{setPaused(v=>!v);setRestored(false)}} className="min-h-11 px-3 rounded-xl border border-border font-bold text-xs">{paused?`▶ ${x.resume}`:`Ⅱ ${x.pause}`}</button><button type="button" onClick={()=>setMuted(v=>!v)} aria-pressed={muted} className="min-h-11 px-3 rounded-xl border border-border font-bold text-xs">{muted?'🔇':'🔊'} {x.sound}</button>
-                <div className="px-3 py-1.5 bg-muted rounded-xl text-center min-w-[72px]">
+                <div className="px-3 py-1.5 bg-muted rounded-xl text-center min-w-18">
                     <div className="text-[10px] font-black text-muted-foreground uppercase leading-none">{t.score}</div>
                     <div className="text-lg font-black text-primary leading-tight">{game.score.toLocaleString()}</div>
                 </div>
-                <div className="px-3 py-1.5 bg-muted rounded-xl text-center min-w-[72px]">
+                <div className="px-3 py-1.5 bg-muted rounded-xl text-center min-w-18">
                     <div className="text-[10px] font-black text-muted-foreground uppercase leading-none">{t.best}</div>
                     <div className="text-lg font-black text-chart-2 leading-tight">{best.toLocaleString()}</div>
                 </div>
             </div>
             {(paused||restored)&&<p className="mb-3 text-center text-xs font-bold text-muted-foreground" role="status">{x.restored} · {x.pause}</p>}
 
-            <div
-                className="relative aspect-square w-full max-w-sm mx-auto bg-muted/50 rounded-2xl p-2 grid grid-cols-4 grid-rows-4 gap-2 border border-border touch-none"
-                onTouchStart={onTouchStart}
-                onTouchEnd={onTouchEnd}
-                role="grid"
-                aria-label={t.title}
-            >
-                {/* Background Grid */}
-                {Array.from({ length: 16 }).map((_, i) => (
-                    <div key={i} className="bg-muted/80 rounded-lg" />
-                ))}
-
-                {/* Real Tiles */}
-                <div className="absolute inset-0 p-2 pointer-events-none">
-                    {tiles.map((tile) => (
-                        <div
-                            key={tile.id}
-                            style={{
-                                left: `${(tile.index % 4) * 25}%`,
-                                top: `${Math.floor(tile.index / 4) * 25}%`,
-                                width: '25%',
-                                height: '25%',
-                                padding: '4px',
-                            }}
-                            className={`absolute ease-out ${reducedMotion ? 'duration-50' : 'duration-200'} transition-[left,top]`}
-                        >
-                            <div className={`flex h-full w-full items-center justify-center rounded-lg text-lg font-black sm:text-2xl ${getTileColor(tile.value)} ${!reducedMotion && tile.spawned ? 'oiyo-2048-spawn' : ''} ${!reducedMotion && tile.merged ? 'oiyo-2048-merge' : ''}`}>
-                                {tile.value}
-                            </div>
-                        </div>
-                    ))}
-                </div>
+            <div className="relative aspect-square w-full max-w-sm mx-auto">
+                <Game2048PixiCanvas
+                    board={game.board}
+                    onDirection={move}
+                    muted={muted}
+                    reducedMotion={reducedMotion}
+                />
 
                 {game.status !== 'playing' && (
                     <div className={`absolute inset-0 z-10 bg-background/80 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center space-y-4 animate-in fade-in ${reducedMotion ? 'duration-75' : 'zoom-in-95'}`} role="status" aria-live="polite">
@@ -188,6 +121,44 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         </div>
                     </div>
                 )}
+            </div>
+
+            {/* Mobile Touch D-Pad */}
+            <div className="mt-4 flex flex-col items-center sm:pointer-fine:hidden select-none touch-none" aria-label="Touch Controls">
+                <button
+                    type="button"
+                    onPointerDown={(e) => { e.preventDefault(); move('up'); }}
+                    className="w-14 h-14 rounded-2xl bg-muted/80 active:bg-primary active:text-primary-foreground text-xl font-bold flex items-center justify-center border border-border shadow-sm touch-none"
+                    aria-label="Up"
+                >
+                    ▲
+                </button>
+                <div className="flex gap-4 my-1">
+                    <button
+                        type="button"
+                        onPointerDown={(e) => { e.preventDefault(); move('left'); }}
+                        className="w-14 h-14 rounded-2xl bg-muted/80 active:bg-primary active:text-primary-foreground text-xl font-bold flex items-center justify-center border border-border shadow-sm touch-none"
+                        aria-label="Left"
+                    >
+                        ◀
+                    </button>
+                    <button
+                        type="button"
+                        onPointerDown={(e) => { e.preventDefault(); move('down'); }}
+                        className="w-14 h-14 rounded-2xl bg-muted/80 active:bg-primary active:text-primary-foreground text-xl font-bold flex items-center justify-center border border-border shadow-sm touch-none"
+                        aria-label="Down"
+                    >
+                        ▼
+                    </button>
+                    <button
+                        type="button"
+                        onPointerDown={(e) => { e.preventDefault(); move('right'); }}
+                        className="w-14 h-14 rounded-2xl bg-muted/80 active:bg-primary active:text-primary-foreground text-xl font-bold flex items-center justify-center border border-border shadow-sm touch-none"
+                        aria-label="Right"
+                    >
+                        ▶
+                    </button>
+                </div>
             </div>
 
             {hasGhost && ghostBoard && game.status==='playing' && <section className="mx-auto mt-4 w-full max-w-sm rounded-2xl border border-amber-300/60 bg-amber-50 p-3" aria-label={replayCopy.ghost}><p className="mb-2 text-[10px] font-black uppercase tracking-wider text-amber-800">◇ {replayCopy.ghost} · {game.moves}</p><div className="grid grid-cols-4 gap-1">{ghostBoard.map((value,index)=><div key={index} className="grid aspect-square place-items-center rounded bg-white/70 text-[10px] font-black text-amber-900">{value??''}</div>)}</div></section>}

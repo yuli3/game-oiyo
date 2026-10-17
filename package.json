@@ -52,6 +52,7 @@
     "lucide-react": "^0.563.0",
     "matter-js": "^0.20.0",
     "motion": "^12.42.2",
+    "pixi.js": "^8.22.0",
     "radix-ui": "^1.4.3",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",

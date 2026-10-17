@@ -334,7 +334,7 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 )}
             </div>
             {/* Mobile Touch D-Pad */}
-            <div className="mt-4 flex flex-col items-center gap-2 sm:hidden touch-none" aria-label="터치 방향키">
+            <div className="mt-4 flex flex-col items-center gap-2 sm:pointer-fine:hidden touch-none" aria-label="터치 방향키">
                 <button
                     type="button"
                     data-game-control
