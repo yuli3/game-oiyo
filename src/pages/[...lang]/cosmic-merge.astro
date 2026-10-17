@@ -1,0 +1,54 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import CosmicMerge from "../../components/games/CosmicMerge";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+import gameArtDocument from "../../../config/game-art-v1.json";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "코스믹 머지 드롭 — 2D 물리 합성 수박게임 류 퍼즐",
+    description: "Matter.js 2D 물리 엔진 기반 우주 천체 머지 게임. 소행성부터 거대한 태양까지 동일한 천체를 충돌시켜 진화시키세요. 100% Canvas GPU 120fps 및 전체화면 몰입 모드 지원.",
+  },
+  en: {
+    title: "Cosmic Merge Drop — 2D Physics Celestial Merge Puzzle",
+    description: "Drop and merge cosmic bodies from asteroids to the blazing Sun with Matter.js 2D physics. High-DPI 120fps GPU canvas with full-screen immersion mode.",
+  },
+  ja: {
+    title: "コズミック・マージ・ドロップ — 2D物理スイカゲーム風パズル",
+    description: "Matter.js 2D物理エンジン搭載の天体マージゲーム。小惑星から輝く太陽まで、同じ星を合体させて進化させよう。120fpsキャンバス＆全画面没入モード対応。",
+  },
+  zh: {
+    title: "宇宙合成消除 — 2D 物理天体合成西瓜消除游戏",
+    description: "基于 Matter.js 2D 物理引擎的天体合成游戏。从小行星一步步合成壮丽太阳，体验丝滑弹性碰撞与 120fps 全屏沉浸模式。",
+  },
+  fr: {
+    title: "Cosmic Merge Drop — Casse-tête de fusion physique 2D",
+    description: "Lâchez et fusionnez des corps célestes avec le moteur physique 2D Matter.js. D'un astéroïde au Soleil flamboyant, profitez du mode immersion plein écran 120 fps.",
+  },
+  es: {
+    title: "Cosmic Merge Drop — Rompecabezas de fusión física 2D",
+    description: "Suelta y fusiona cuerpos cósmicos desde asteroides hasta el radiante Sol con físicas Matter.js 2D. Gráficos fluidos a 120 fps y modo inmersión total.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+const gameArt = gameArtDocument.games as Record<string, string>;
+const coverArt = gameArt["cosmic-merge"] ?? "/games/cosmic-flight-social.png";
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title} image={coverArt}>
+  <div class="mx-auto max-w-4xl px-2 py-4 sm:px-4 sm:py-6">
+    <CosmicMerge client:load locale={locale} />
+    <div class="mx-auto max-w-3xl px-2">
+      <GameGuide slug="cosmic-merge" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
+    </div>
+  </div>
+</BaseLayout>

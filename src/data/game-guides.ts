@@ -1876,4 +1876,78 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "cosmic-merge": {
+    origin: {
+      ko: "코스믹 머지 드롭은 고전 물리 드롭 퍼즐과 수박게임 류의 결합 메카닉을 우주 천체 테마로 재해석한 OIYO 오리지널 물리 머지 게임입니다. Matter.js 2D 강체 물리 엔진과 100% Canvas GPU 렌더링, Web Audio 절차적 펜타토닉 신스를 결합해 손가락 끝의 찰진 탄성을 구현했습니다.",
+      en: "Cosmic Merge Drop is an original OIYO physics merge puzzle reimagining the classic Suika-style mechanics with a cosmic celestial theme. Combining Matter.js 2D rigid-body dynamics, a 100% Canvas GPU pipeline, and procedural pentatonic synthwave audio, it delivers tactile tactile satisfaction on touchscreens.",
+      ja: "コズミック・マージ・ドロップは、物理ドロップパズルとスイカゲーム風のマージメカニクスを天体テーマで再解釈したOIYOオリジナルの物理ゲームです。Matter.js 2D物理演算と100% Canvas描画、プロシージャル・シンセ音響を融合し、指先で味わう心地よい弾性を実現しました。",
+      zh: "宇宙合成消除是一款将经典西瓜消除玩法与宇宙天体演化主题融合的 OIYO 原创 2D 物理合成游戏。结合 Matter.js 刚体动力学引擎、100% Canvas GPU 渲染管线与五度音程程序化合成器，打造极具弹性的触屏打击手感。",
+      fr: "Cosmic Merge Drop est un jeu de fusion physique original d'OIYO revisitant les mécaniques de type Suika sous un thème cosmique. Alliant la physique 2D Matter.js, un canevas 100% GPU et une synthèse audio procédurale, il offre un retour tactile immédiat sur mobile.",
+      es: "Cosmic Merge Drop es un juego de puzle y física original de OIYO que reinterpreta las mecánicas tipo Suika con temática astronómica. Integra el motor 2D Matter.js, renderizado 100% en Canvas y sintetizador procedural para ofrecer una elasticidad táctil inigualable.",
+    },
+    how: {
+      ko: "터치하거나 마우스를 움직여 상단 발사대의 좌우 위치를 조준하고, 손을 떼거나 클릭하여 천체를 드롭합니다. 동일한 천체가 충돌하면 찰진 탄성과 함께 상위 천체로 진화하며 점수를 획득합니다. 상단 붉은 위험선에 천체가 3초 이상 넘치면 게임이 종료되므로 크기와 무게중심을 전략적으로 고려하세요.",
+      en: "Touch or move your mouse to aim the dropper horizontally, then release to drop celestial bodies. When two matching bodies collide, they fuse with spring elasticity into a larger celestial body, granting points. Avoid letting bodies stack past the red deadline for more than 3 seconds.",
+      ja: "画面をタッチまたはマウスを移動してドロッパーの位置を合わせ、離して天体を落とします。同じ天体同士が衝突すると弾性を持って合体し、より大きな天体へと進化してスコアを獲得します。上部の赤い危険線を3秒以上超え続けるとゲームオーバーです。",
+      zh: "通过触控拖拽或移动鼠标调整上方发射口水平位置，松手即可投放天体。相同天体碰撞时会带有弹性地融合成更高阶天体并获得积分。切勿让天体积存超过上方红色警戒线达3秒以上。",
+      fr: "Touchez ou déplacez la souris pour viser avec le compte-gouttes, puis relâchez pour lâcher un astre. Deux astres identiques fusionnent avec rebond pour former le suivant et rapporter des points. Veillez à ne pas dépasser la ligne rouge de danger plus de 3 secondes.",
+      es: "Toca o mueve el ratón para apuntar horizontalmente y suelta para dejar caer el cuerpo celeste. Al chocar dos astros idénticos se fusionan con rebote elástico en el siguiente nivel, sumando puntos. Evita que los astros sobrepasen la línea roja de peligro durante más de 3 segundos.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "물리 연산이 모바일 기기 배터리를 많이 소모하나요?",
+          en: "Does 2D physics drain mobile battery heavily?",
+          ja: "2D物理演算はモバイル端末のバッテリーを過度に消費しますか？",
+          zh: "2D 物理演算会导致移动设备严重发热耗电吗？",
+          fr: "La physique 2D consomme-t-elle beaucoup de batterie sur mobile ?",
+          es: "¿Las físicas 2D consumen mucha batería en móviles?",
+        },
+        a: {
+          ko: "아니요. 80KB의 초경량 Matter.js 강체 엔진을 사용하여 20~30개의 천체만 효율적으로 계산하므로 저사양 스마트폰에서도 발열이나 배터리 낭비 없이 120fps 부드러움을 유지합니다.",
+          en: "No. The game employs lightweight Matter.js physics focused strictly on 20-30 active bodies, maintaining silky 120fps performance without thermal throttling or excessive battery drain.",
+          ja: "いいえ。軽量なMatter.js物理エンジンにより画面内の20〜30個の天体のみを効率的に計算するため、低消費電力で120fpsの滑らかさを保ちます。",
+          zh: "不会。游戏采用仅 80KB 的轻量 Matter.js 刚体引擎，严格限制场内天体运算负载，在各类设备上均能以超低功耗维持 120fps 满帧运行。",
+          fr: "Non. Le moteur physique Matter.js est ultra-léger et calcule uniquement les corps célestes en jeu, assurant 120 fps constants sans surchauffe ni drainage de batterie.",
+          es: "No. El motor Matter.js es sumamente ligero y calcula de forma eficiente los cuerpos en pantalla, manteniendo 120 fps estables sin sobrecalentar el dispositivo.",
+        },
+      },
+      {
+        q: {
+          ko: "전체화면 몰입 모드에서 브라우저 주소창이나 광고가 방해되지 않나요?",
+          en: "Do browser bars or advertisements interfere in Immersion Mode?",
+          ja: "全画面没入モードでブラウザのツールバーや広告は邪魔になりませんか？",
+          zh: "全屏沉浸模式下浏览器地址栏或广告会遮挡干扰吗？",
+          fr: "Les barres de navigation ou les publicités gênent-elles en mode immersion ?",
+          es: "¿Las barras del navegador o los anuncios interfieren en el modo inmersión?",
+        },
+        a: {
+          ko: "방해되지 않습니다. 우측 상단의 ⛶ 버튼을 탭하면 100dvh 전용 아케이드 포털이 활성화되어 모든 웹 헤더, 푸터, 광고가 100% 가려지며, 화면 꺼짐 방지(WakeLock)가 작동해 게임에만 완벽히 몰입할 수 있습니다.",
+          en: "Not at all. Tapping the ⛶ button launches an in-page 100dvh Arcade Portal that conceals all web chrome, footers, and ads while activating screen wake lock for pure gameplay immersion.",
+          ja: "邪魔になりません。右上の⛶ボタンを押すと100dvh専用アーケードポータルが起動し、ヘッダー・フッター・広告がすべて遮蔽され、スリープ防止が作動してプレイに没入できます。",
+          zh: "完全不会。点击右上角⛶按钮即可进入 100dvh 专属街机视口，彻底遮蔽网页导航、页脚与广告，并自动开启屏幕常亮锁定，带来纯粹街机体验。",
+          fr: "Pas du tout. Appuyer sur le bouton ⛶ active le portail d'arcade 100dvh qui masque tout le contenu environnant et maintient l'écran allumé pour une immersion totale.",
+          es: "Para nada. Al pulsar el botón ⛶ se activa el portal de arcade a 100dvh que oculta la cabecera, el pie y los anuncios, manteniendo la pantalla activa para una inmersión completa.",
+        },
+      },
+      {
+        q: {
+          ko: "최고 점수는 어디에 저장되나요?",
+          en: "Where is my high score saved?",
+          ja: "ハイスコアはどこに保存されますか？",
+          zh: "最高得分保存在哪里？",
+          fr: "Où le meilleur score est-il enregistré ?",
+          es: "¿Dónde se guarda la mejor puntuación?",
+        },
+        a: {
+          ko: "브라우저 로컬 스토리지에 안전하게 영구 저장됩니다. 로그인이나 회원가입 없이 언제든 다시 접속해 자신의 신기록을 경신할 수 있습니다.",
+          en: "It is saved locally and securely in your browser's localStorage. You can return anytime to beat your record without needing an account or login.",
+          ja: "ブラウザ의 localStorage에 안전하게 영구 저장됩니다. 로그인이나 회원가입 없이 언제든 다시 접속해 자신의 신기록을 경신할 수 있습니다.",
+          zh: "数据安全永久地保存在浏览器本地 localStorage 中，无需注册登录即可随时重返游戏挑战个人历史最佳成绩。",
+          fr: "Il est stocké en toute sécurité dans le stockage local de votre navigateur. Vous pouvez revenir à tout moment battre votre record sans compte ni connexion.",
+          es: "Se guarda de forma local y segura en el almacenamiento de tu navegador, permitiéndote volver en cualquier momento a superar tu récord sin necesidad de registro.",
+        },
+      },
+    ],
+  },
 };
