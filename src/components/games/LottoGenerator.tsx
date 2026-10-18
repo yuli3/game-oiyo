@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { Volume2, VolumeX, Maximize2, Minimize2 } from 'lucide-react';
 import { GameContainer } from '../ui/game/GamePrimitives';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 
 const LottoGenerator: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
@@ -13,9 +15,49 @@ const LottoGenerator: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     };
     const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
     const reducedMotion = usePrefersReducedMotion();
+    const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'ko' });
 
     const [numbers, setNumbers] = useState<number[][]>([]);
     const [isGenerating, setIsGenerating] = useState(false);
+
+    const [muted, setMuted] = useState(() => {
+        if (typeof window === 'undefined') return false;
+        try {
+            return localStorage.getItem('lotto_generator_sound_muted') === 'true';
+        } catch {
+            return false;
+        }
+    });
+
+    useEffect(() => {
+        try {
+            localStorage.setItem('lotto_generator_sound_muted', String(muted));
+        } catch {
+            // SSR-safe fallback
+        }
+    }, [muted]);
+
+    const audioRef = useRef<AudioContext | null>(null);
+    const playTone = useCallback((freq: number, duration = 0.08) => {
+        if (muted || typeof window === 'undefined') return;
+        try {
+            const ctx = audioRef.current ?? new AudioContext();
+            audioRef.current = ctx;
+            if (ctx.state === 'suspended') void ctx.resume();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, ctx.currentTime);
+            gain.gain.setValueAtTime(0.04, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+            osc.connect(gain).connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + duration);
+        } catch {
+            // ignore
+        }
+    }, [muted]);
+    useEffect(() => () => { void audioRef.current?.close(); }, []);
 
     const generateSet = () => {
         const set = new Set<number>();
@@ -25,18 +67,42 @@ const LottoGenerator: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         return Array.from(set).sort((a, b) => a - b);
     };
 
-    const generateAll = () => {
+    const generateAll = useCallback(() => {
         setIsGenerating(true);
         setNumbers([]);
-        
+        playTone(440, 0.08);
+
         const reveal = () => {
             const newSets = Array.from({ length: 5 }).map(() => generateSet());
             setNumbers(newSets);
             setIsGenerating(false);
+            playTone(880, 0.15);
         };
         if (reducedMotion) reveal();
-        else setTimeout(reveal, 1200);
-    };
+        else {
+            setTimeout(() => playTone(554, 0.08), 300);
+            setTimeout(() => playTone(659, 0.08), 600);
+            setTimeout(reveal, 1000);
+        }
+    }, [reducedMotion, playTone]);
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+            if (e.key === 'f' || e.key === 'F') {
+                e.preventDefault();
+                void togglePortal();
+            } else if (e.key === 'm' || e.key === 'M') {
+                e.preventDefault();
+                setMuted((v) => !v);
+            } else if (e.code === 'Space' || e.key === 'Enter') {
+                e.preventDefault();
+                if (!isGenerating) generateAll();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [togglePortal, isGenerating, generateAll]);
 
     const getBallColor = (n: number) => {
         if (n <= 10) return 'bg-amber-400 border-amber-500 text-white';
@@ -47,7 +113,36 @@ const LottoGenerator: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     };
 
     return (
-        <GameContainer title={t.title} subtitle={t.subtitle} onReset={() => setNumbers([])}>
+        <div
+            ref={containerRef}
+            className={`relative w-full transition-all duration-300 ${
+                isImmersive ? 'fixed inset-0 z-50 flex flex-col items-center justify-center bg-background overflow-y-auto p-4' : ''
+            }`}
+        >
+            <div className="w-full max-w-xl mx-auto mb-2 flex items-center justify-end gap-2 px-1">
+                <button
+                    type="button"
+                    onClick={() => setMuted((v) => !v)}
+                    className="flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-bold text-foreground shadow-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+                    title={muted ? portalLabels.unmute : portalLabels.mute}
+                >
+                    {muted ? <VolumeX className="h-4 w-4 text-muted-foreground" /> : <Volume2 className="h-4 w-4 text-primary" />}
+                    <span className="sr-only">{muted ? portalLabels.unmute : portalLabels.mute}</span>
+                </button>
+                <button
+                    type="button"
+                    onClick={togglePortal}
+                    className="flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-bold text-foreground shadow-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+                    title={isImmersive ? portalLabels.exit : portalLabels.enter}
+                >
+                    {isImmersive ? <Minimize2 className="h-4 w-4 text-primary" /> : <Maximize2 className="h-4 w-4" />}
+                    <span className="sr-only">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+                </button>
+            </div>
+
+            <GameContainer title={t.title} subtitle={t.subtitle} onReset={() => setNumbers([])}>
             <div className="space-y-8">
                 <div className="text-center">
                     <p className="text-sm font-medium text-muted-foreground mb-6 leading-relaxed">{t.desc}</p>
@@ -95,6 +190,7 @@ const LottoGenerator: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 </div>
             </div>
         </GameContainer>
+        </div>
     );
 };
 

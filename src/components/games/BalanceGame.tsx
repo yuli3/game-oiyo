@@ -1,9 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Volume2, VolumeX, Maximize2, Minimize2 } from 'lucide-react';
 import {
   PENDING_STORAGE_KEY, addVote, parsePending, removeFlushed, shouldFlush, toDeltas,
   withLocalPending, type PendingVotes,
 } from '../../lib/games/vote-batch';
 import { GameContainer } from '../ui/game/GamePrimitives';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { BALANCE_GAME_PROMPTS } from '../../data/balance-game-prompts';
 
 const STORAGE_KEY = 'oiyo:balance-game:v1';
@@ -85,10 +87,50 @@ const BalanceGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
   };
   const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
   const total = BALANCE_GAME_PROMPTS.length;
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'ko' });
 
   const [stored, setStored] = useState<Stored>(() => loadStored());
   const [order, setOrder] = useState<number[]>(() => shuffledOrder(total));
   const [cursor, setCursor] = useState(0);
+
+  const [muted, setMuted] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return localStorage.getItem('balance_game_sound_muted') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('balance_game_sound_muted', String(muted));
+    } catch {
+      // SSR-safe fallback
+    }
+  }, [muted]);
+
+  const audioRef = useRef<AudioContext | null>(null);
+  const playPop = useCallback((frequency: number, duration = 0.06) => {
+    if (muted || typeof window === 'undefined') return;
+    try {
+      const ctx = audioRef.current ?? new AudioContext();
+      audioRef.current = ctx;
+      if (ctx.state === 'suspended') void ctx.resume();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(frequency, ctx.currentTime);
+      gain.gain.setValueAtTime(0.04, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + duration);
+    } catch {
+      // ignore
+    }
+  }, [muted]);
+  useEffect(() => () => { void audioRef.current?.close(); }, []);
 
   // Server-side splits, and the votes we have not shipped yet. Votes are batched
   // because the endpoint refuses one KV write per vote — see lib/games/vote-batch.ts.
@@ -162,6 +204,7 @@ const BalanceGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
   const pick = useCallback((choice: 'a' | 'b') => {
     if (!currentPrompt) return;
+    playPop(choice === 'a' ? 520 : 660, 0.07);
     setStored((prev) => {
       const next: Stored = { answered: prev.answered + (prev.picks[currentPrompt.id] ? 0 : 1), picks: { ...prev.picks, [currentPrompt.id]: choice } };
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch { /* storage best-effort */ }
@@ -172,19 +215,72 @@ const BalanceGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     persistPending();
     if (shouldFlush(pendingRef.current)) void flush();
     setCursor((c) => c + 1);
-  }, [currentPrompt, persistPending, flush]);
+  }, [currentPrompt, persistPending, flush, playPop]);
 
   const restart = useCallback(() => {
+    playPop(440, 0.06);
     setOrder(shuffledOrder(total));
     setCursor(0);
-  }, [total]);
+  }, [total, playPop]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        void togglePortal();
+      } else if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        setMuted((v) => !v);
+      } else if (!finished && currentPrompt) {
+        if (e.key === '1' || e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+          e.preventDefault();
+          pick('a');
+        } else if (e.key === '2' || e.key === 'ArrowRight' || e.key === 'b' || e.key === 'B') {
+          e.preventDefault();
+          pick('b');
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [togglePortal, finished, currentPrompt, pick]);
 
   const answeredCount = Object.keys(stored.picks).length;
   const pickTotal = tally.a + tally.b;
   const aPct = pickTotal > 0 ? Math.round((tally.a / pickTotal) * 100) : 0;
 
   return (
-    <GameContainer title={t.title} subtitle={t.subtitle} resetLabel={t.restart} onReset={restart}>
+    <div
+      ref={containerRef}
+      className={`relative w-full transition-all duration-300 ${
+        isImmersive ? 'fixed inset-0 z-50 flex flex-col items-center justify-center bg-background overflow-y-auto p-4' : ''
+      }`}
+    >
+      <div className="w-full max-w-xl mx-auto mb-2 flex items-center justify-end gap-2 px-1">
+        <button
+          type="button"
+          onClick={() => setMuted((v) => !v)}
+          className="flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-bold text-foreground shadow-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+          title={muted ? portalLabels.unmute : portalLabels.mute}
+        >
+          {muted ? <VolumeX className="h-4 w-4 text-muted-foreground" /> : <Volume2 className="h-4 w-4 text-primary" />}
+          <span className="sr-only">{muted ? portalLabels.unmute : portalLabels.mute}</span>
+        </button>
+        <button
+          type="button"
+          onClick={togglePortal}
+          className="flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-bold text-foreground shadow-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+          title={isImmersive ? portalLabels.exit : portalLabels.enter}
+        >
+          {isImmersive ? <Minimize2 className="h-4 w-4 text-primary" /> : <Maximize2 className="h-4 w-4" />}
+          <span className="sr-only">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+        </button>
+      </div>
+
+      <GameContainer title={t.title} subtitle={t.subtitle} resetLabel={t.restart} onReset={restart}>
       <div className="flex flex-col items-center gap-5">
         <p className="text-xs font-medium text-muted-foreground">{t.note}</p>
         <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
@@ -254,6 +350,7 @@ const BalanceGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         )}
       </div>
     </GameContainer>
+    </div>
   );
 };
 

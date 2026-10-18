@@ -1,5 +1,7 @@
-import React, { useState, useCallback, useReducer, useRef } from 'react';
+import React, { useState, useCallback, useReducer, useRef, useEffect } from 'react';
+import { Volume2, VolumeX, Maximize2, Minimize2 } from 'lucide-react';
 import { GameContainer, Die, type DieType } from '@/components/ui/game/GamePrimitives';
+import { useArcadePortal } from '@/lib/games/arcade-portal';
 import { usePrefersReducedMotion } from '@/lib/games/reduced-motion';
 
 interface RollRecord {
@@ -81,20 +83,62 @@ const COPY = {
 const DiceRoller: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
   const t = COPY[(locale as keyof typeof COPY)] ?? COPY.en;
   const reducedMotion = usePrefersReducedMotion();
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'ko' });
 
   const [state, dispatch] = useReducer(reducer, initialState);
   const [throttled, setThrottled] = useState(false);
   const [preview, setPreview] = useState<number[]>([]);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const [muted, setMuted] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return localStorage.getItem('dice_roller_sound_muted') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('dice_roller_sound_muted', String(muted));
+    } catch {
+      // SSR-safe fallback
+    }
+  }, [muted]);
+
+  const audioRef = useRef<AudioContext | null>(null);
+  const playClack = useCallback((freq = 320, duration = 0.04) => {
+    if (muted || typeof window === 'undefined') return;
+    try {
+      const ctx = audioRef.current ?? new AudioContext();
+      audioRef.current = ctx;
+      if (ctx.state === 'suspended') void ctx.resume();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+      gain.gain.setValueAtTime(0.04, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + duration);
+    } catch {
+      // ignore
+    }
+  }, [muted]);
+  useEffect(() => () => { void audioRef.current?.close(); }, []);
+
   const rollDice = useCallback(() => {
     if (throttled || state.rolling || state.selectedDice.length === 0) return;
     setThrottled(true);
     dispatch({ type: 'ROLL_START' });
+    playClack(280, 0.05);
 
     if (reducedMotion) {
       const results = state.selectedDice.map((die) => Math.floor(Math.random() * DICE_SIDES[die]) + 1);
       dispatch({ type: 'ROLL_END', results });
+      playClack(520, 0.09);
       setThrottled(false);
       return;
     }
@@ -103,6 +147,7 @@ const DiceRoller: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     if (tickRef.current) clearInterval(tickRef.current);
     tickRef.current = setInterval(() => {
       setPreview(state.selectedDice.map((die) => Math.floor(Math.random() * DICE_SIDES[die]) + 1));
+      playClack(260 + Math.random() * 120, 0.03);
     }, 70);
 
     setTimeout(() => {
@@ -110,18 +155,66 @@ const DiceRoller: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
       setPreview([]);
       const results = state.selectedDice.map((die) => Math.floor(Math.random() * DICE_SIDES[die]) + 1);
       dispatch({ type: 'ROLL_END', results });
+      playClack(520, 0.09);
       setTimeout(() => setThrottled(false), 400);
     }, 700);
-  }, [reducedMotion, state.selectedDice, state.rolling, throttled]);
+  }, [reducedMotion, state.selectedDice, state.rolling, throttled, playClack]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        void togglePortal();
+      } else if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        setMuted((v) => !v);
+      } else if (e.code === 'Space' || e.key === 'Enter') {
+        e.preventDefault();
+        rollDice();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [togglePortal, rollDice]);
 
   const sum = state.lastResults.reduce((a, b) => a + b, 0);
 
   return (
-    <GameContainer
-      title={t.title}
-      subtitle={t.subtitle}
-      onReset={() => dispatch({ type: 'CLEAR_DICE' })}
+    <div
+      ref={containerRef}
+      className={`relative w-full transition-all duration-300 ${
+        isImmersive ? 'fixed inset-0 z-50 flex flex-col items-center justify-center bg-background overflow-y-auto p-4' : ''
+      }`}
     >
+      <div className="w-full max-w-xl mx-auto mb-2 flex items-center justify-end gap-2 px-1">
+        <button
+          type="button"
+          onClick={() => setMuted((v) => !v)}
+          className="flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-bold text-foreground shadow-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+          title={muted ? portalLabels.unmute : portalLabels.mute}
+        >
+          {muted ? <VolumeX className="h-4 w-4 text-muted-foreground" /> : <Volume2 className="h-4 w-4 text-primary" />}
+          <span className="sr-only">{muted ? portalLabels.unmute : portalLabels.mute}</span>
+        </button>
+        <button
+          type="button"
+          onClick={togglePortal}
+          className="flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-bold text-foreground shadow-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+          title={isImmersive ? portalLabels.exit : portalLabels.enter}
+        >
+          {isImmersive ? <Minimize2 className="h-4 w-4 text-primary" /> : <Maximize2 className="h-4 w-4" />}
+          <span className="sr-only">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+        </button>
+      </div>
+
+      <GameContainer
+        title={t.title}
+        subtitle={t.subtitle}
+        onReset={() => dispatch({ type: 'CLEAR_DICE' })}
+      >
       {/* Die selector */}
       <div className="mb-6">
         <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">{t.addDie}</p>
@@ -204,6 +297,7 @@ const DiceRoller: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         </div>
       )}
     </GameContainer>
+    </div>
   );
 };
 

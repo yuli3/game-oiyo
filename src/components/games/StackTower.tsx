@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import StackTowerScene from './StackTowerScene';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
 import {
   type TowerBlock,
   type MovingBlock,
@@ -9,7 +10,7 @@ import {
   updateMovingBlock,
   createInitialMovingBlock,
 } from '../../lib/games/stack-tower';
-import { Trophy, RotateCcw, Volume2, VolumeX, Sparkles } from 'lucide-react';
+import { Trophy, RotateCcw, Volume2, VolumeX, Sparkles, Maximize2, Minimize2 } from 'lucide-react';
 
 interface FallingPiece extends CutPiece {
   vy: number;
@@ -20,11 +21,29 @@ interface FallingPiece extends CutPiece {
 const STORAGE_KEY = 'oiyo_stack_tower_high_score';
 
 export default function StackTower({ locale = 'ko' }: { locale?: string }) {
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'ko' });
   const [status, setStatus] = useState<'idle' | 'playing' | 'gameover'>('idle');
   const [score, setScore] = useState(0);
   const [combo, setCombo] = useState(0);
   const [highScore, setHighScore] = useState(0);
-  const [audioEnabled, setAudioEnabled] = useState(true);
+  const [audioEnabled, setAudioEnabled] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    try {
+      const saved = localStorage.getItem('stack_tower_sound_enabled');
+      return saved !== null ? saved === 'true' : true;
+    } catch {
+      return true;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('stack_tower_sound_enabled', String(audioEnabled));
+    } catch {
+      // SSR-safe fallback
+    }
+  }, [audioEnabled]);
+
   const [perfectFlash, setPerfectFlash] = useState(false);
 
   const baseBlock: TowerBlock = {
@@ -200,9 +219,10 @@ export default function StackTower({ locale = 'ko' }: { locale?: string }) {
     };
   }, [status]);
 
-  // Keyboard control (Spacebar)
+  // Keyboard control (Spacebar, F portal, M audio)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
       if (e.code === 'Space') {
         e.preventDefault();
         if (status === 'playing') {
@@ -210,16 +230,27 @@ export default function StackTower({ locale = 'ko' }: { locale?: string }) {
         } else if (status === 'idle' || status === 'gameover') {
           startGame();
         }
+      } else if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        void togglePortal();
+      } else if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        setAudioEnabled((v) => !v);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [status, placeBlock, startGame]);
+  }, [status, placeBlock, startGame, togglePortal]);
 
   const isKo = locale === 'ko';
 
   return (
-    <div className="max-w-2xl mx-auto p-4 sm:p-6 space-y-4">
+    <div
+      ref={containerRef}
+      className={`max-w-2xl mx-auto p-4 sm:p-6 space-y-4 transition-all duration-300 ${
+        isImmersive ? 'fixed inset-0 z-50 flex flex-col items-center justify-center bg-background overflow-y-auto p-4 max-w-none' : ''
+      }`}
+    >
       {/* Header bar */}
       <div className="flex items-center justify-between bg-card border border-border p-4 rounded-xl shadow-xs">
         <div>
@@ -240,11 +271,24 @@ export default function StackTower({ locale = 'ko' }: { locale?: string }) {
         </div>
         <div className="flex items-center gap-2">
           <button
+            type="button"
             onClick={() => setAudioEnabled(!audioEnabled)}
-            className="p-2 rounded-lg border border-border hover:bg-muted text-muted-foreground"
-            aria-label="Toggle Audio"
+            className="flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-bold text-foreground shadow-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            aria-label={!audioEnabled ? portalLabels.unmute : portalLabels.mute}
+            title={!audioEnabled ? portalLabels.unmute : portalLabels.mute}
           >
-            {audioEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            {!audioEnabled ? <VolumeX className="w-4 h-4 text-muted-foreground" /> : <Volume2 className="w-4 h-4 text-primary" />}
+            <span className="sr-only">{!audioEnabled ? portalLabels.unmute : portalLabels.mute}</span>
+          </button>
+          <button
+            type="button"
+            onClick={togglePortal}
+            className="flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-bold text-foreground shadow-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+            title={isImmersive ? portalLabels.exit : portalLabels.enter}
+          >
+            {isImmersive ? <Minimize2 className="w-4 h-4 text-primary" /> : <Maximize2 className="w-4 h-4" />}
+            <span className="sr-only">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
           </button>
         </div>
       </div>

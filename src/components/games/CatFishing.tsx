@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Volume2, VolumeX, Maximize2, Minimize2 } from 'lucide-react';
 import { GameContainer } from '../ui/game/GamePrimitives';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { createDeltaLoop, elapsedSeconds } from '../../lib/games/time-contracts';
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 import { mulberry32 } from '../../lib/games/daily';
@@ -33,6 +35,7 @@ const COPY = {
 const CatFishing: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const t = COPY[(locale as keyof typeof COPY)] ?? COPY.en;
     const prefersReducedMotion = usePrefersReducedMotion();
+    const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'ko' });
 
     const [difficulty, setDifficulty] = useState<Difficulty>('normal');
     // Starts empty rather than calling createFish() (which uses Math.random())
@@ -42,7 +45,22 @@ const CatFishing: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [fish, setFish] = useState<FishState[]>([]);
     const [seconds, setSeconds] = useState(0);
     const [best, setBest] = useState<Record<string, number>>({});
-    const [muted, setMuted] = useState(false);
+    const [muted, setMuted] = useState(() => {
+        if (typeof window === 'undefined') return false;
+        try {
+            return localStorage.getItem('cat_fishing_sound_muted') === 'true';
+        } catch {
+            return false;
+        }
+    });
+
+    useEffect(() => {
+        try {
+            localStorage.setItem('cat_fishing_sound_muted', String(muted));
+        } catch {
+            // SSR-safe fallback
+        }
+    }, [muted]);
     const mutedRef = useRef(false);
     useEffect(() => { mutedRef.current = muted; }, [muted]);
     const audioRef = useRef<AudioContext | null>(null);
@@ -161,91 +179,127 @@ const CatFishing: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         startedAt.current = null;
     }, [difficulty]);
 
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+            if (e.key === 'f' || e.key === 'F') {
+                e.preventDefault();
+                void togglePortal();
+            } else if (e.key === 'm' || e.key === 'M') {
+                e.preventDefault();
+                setMuted((v) => !v);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [togglePortal]);
+
     const hint = difficulty === 'normal' ? t.hintNormal : difficulty === 'hard' ? t.hintHard : t.hintHell;
 
     return (
-        <GameContainer title={t.title} subtitle={t.subtitle} onReset={() => restart()}>
-            <div className="mb-4 flex flex-wrap items-center gap-2">
-                <div className="inline-flex gap-1">
-                    {(['normal', 'hard', 'hell'] as Difficulty[]).map((d) => (
-                        <button key={d} onClick={() => restart(d)}
-                            aria-pressed={difficulty === d}
-                            className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-colors ${difficulty === d ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
-                            {t[d]}
-                        </button>
-                    ))}
-                </div>
+        <div
+            ref={containerRef}
+            className={`relative w-full transition-all duration-300 ${
+                isImmersive ? 'fixed inset-0 z-50 flex flex-col items-center justify-center bg-background overflow-y-auto p-4' : ''
+            }`}
+        >
+            <div className="w-full max-w-xl mx-auto mb-2 flex items-center justify-end gap-2 px-1">
                 <button
                     type="button"
-                    onClick={() => setMuted((value) => !value)}
-                    aria-pressed={muted}
-                    className="min-h-11 min-w-11 rounded-lg border border-border text-sm text-muted-foreground hover:bg-muted"
+                    onClick={() => setMuted((v) => !v)}
+                    className="flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-bold text-foreground shadow-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+                    title={muted ? portalLabels.unmute : portalLabels.mute}
                 >
-                    <span aria-hidden="true">{muted ? '🔇' : '🔊'}</span>
-                    <span className="sr-only">{t.sound}</span>
+                    {muted ? <VolumeX className="h-4 w-4 text-muted-foreground" /> : <Volume2 className="h-4 w-4 text-primary" />}
+                    <span className="sr-only">{muted ? portalLabels.unmute : portalLabels.mute}</span>
                 </button>
-                <div className="ml-auto flex gap-3 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                    <span>🐟 {CONFIGS[difficulty].fishCount - remaining}/{CONFIGS[difficulty].fishCount}</span>
-                    <span>{t.time} {formatElapsed(seconds)}</span>
-                    {best[difficulty] !== undefined && <span>{t.best} {formatElapsed(best[difficulty])}</span>}
-                </div>
+                <button
+                    type="button"
+                    onClick={togglePortal}
+                    className="flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-bold text-foreground shadow-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+                    title={isImmersive ? portalLabels.exit : portalLabels.enter}
+                >
+                    {isImmersive ? <Minimize2 className="h-4 w-4 text-primary" /> : <Maximize2 className="h-4 w-4" />}
+                    <span className="sr-only">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+                </button>
             </div>
 
-            <div
-                ref={areaRef}
-                onMouseMove={(e) => trackPointer(e.clientX, e.clientY)}
-                onTouchMove={(e) => trackPointer(e.touches[0].clientX, e.touches[0].clientY)}
-                className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden border border-border bg-gradient-to-b from-sky-100 to-blue-200 cursor-crosshair touch-none select-none"
-                aria-label={t.title}
-            >
-                {fish.map((f) => !f.caught && (
-                    <button
-                        key={f.id}
-                        ref={(node) => {
-                            if (node) fishNodes.current.set(f.id, node);
-                            else fishNodes.current.delete(f.id);
-                        }}
-                        onPointerDown={() => catchFish(f.id)}
-                        aria-label="fish"
-                        className="absolute flex min-h-11 min-w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center"
-                        style={{ left: `${f.x}%`, top: `${f.y}%`, transform: `translate(-50%,-50%) scaleX(${f.vx < 0 ? 1 : -1})` }}
-                    >
-                        {/* Hitbox above is 44px regardless of difficulty; only this inner
-                            glyph shrinks/grows, so the tap target never shrinks with it. */}
-                        <img src={CAT_FISHING_KOI[f.id % CAT_FISHING_KOI.length]} alt="" draggable={false} className="h-10 w-10 object-contain transition-transform hover:scale-110 sm:h-12 sm:w-12 pointer-events-none" />
-                    </button>
-                ))}
-
-                {pops.map((p) => (
-                    <span
-                        key={p.id}
-                        aria-hidden="true"
-                        className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 text-lg font-black text-primary animate-cat-fishing-pop"
-                        style={{ left: `${p.x}%`, top: `${p.y}%` }}
-                    >
-                        +1
-                    </span>
-                ))}
-
-                {won && (
-                    <div className={`absolute inset-0 z-10 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center gap-2 ${prefersReducedMotion ? '' : 'animate-in fade-in zoom-in-95'}`} role="status" aria-live="polite">
-                        <p className="text-2xl font-black text-primary">{t.win}</p>
-                        <p className="text-sm text-muted-foreground">{t.winSub}</p>
-                        <p className="text-sm font-bold text-muted-foreground">{t.time} {formatElapsed(seconds)}</p>
-                        <div className="mt-3 flex flex-wrap justify-center gap-2">
-                        <button type="button" onClick={() => restart()} className="px-8 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity">
-                            {t.again}
-                        </button>
-                        <button type="button" onClick={() => restart(difficulty, seedRef.current)} className="px-6 py-3 rounded-full border font-bold">
-                            {t.same}
-                        </button>
-                        </div>
+            <GameContainer title={t.title} subtitle={t.subtitle} onReset={() => restart()}>
+                <div className="mb-4 flex flex-wrap items-center gap-2">
+                    <div className="inline-flex gap-1">
+                        {(['normal', 'hard', 'hell'] as Difficulty[]).map((d) => (
+                            <button key={d} onClick={() => restart(d)}
+                                aria-pressed={difficulty === d}
+                                className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-colors ${difficulty === d ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
+                                {t[d]}
+                            </button>
+                        ))}
                     </div>
-                )}
-            </div>
+                    <div className="ml-auto flex gap-3 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                        <span>🐟 {CONFIGS[difficulty].fishCount - remaining}/{CONFIGS[difficulty].fishCount}</span>
+                        <span>{t.time} {formatElapsed(seconds)}</span>
+                        {best[difficulty] !== undefined && <span>{t.best} {formatElapsed(best[difficulty])}</span>}
+                    </div>
+                </div>
 
-            <p className="mt-4 text-center text-[10px] text-muted-foreground font-medium">{hint}</p>
-        </GameContainer>
+                <div
+                    ref={areaRef}
+                    onMouseMove={(e) => trackPointer(e.clientX, e.clientY)}
+                    onTouchMove={(e) => trackPointer(e.touches[0].clientX, e.touches[0].clientY)}
+                    className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden border border-border bg-gradient-to-b from-sky-100 to-blue-200 cursor-crosshair touch-none select-none"
+                    aria-label={t.title}
+                >
+                    {fish.map((f) => !f.caught && (
+                        <button
+                            key={f.id}
+                            ref={(node) => {
+                                if (node) fishNodes.current.set(f.id, node);
+                                else fishNodes.current.delete(f.id);
+                            }}
+                            onPointerDown={() => catchFish(f.id)}
+                            aria-label="fish"
+                            className="absolute flex min-h-11 min-w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center"
+                            style={{ left: `${f.x}%`, top: `${f.y}%`, transform: `translate(-50%,-50%) scaleX(${f.vx < 0 ? 1 : -1})` }}
+                        >
+                            {/* Hitbox above is 44px regardless of difficulty; only this inner
+                                glyph shrinks/grows, so the tap target never shrinks with it. */}
+                            <img src={CAT_FISHING_KOI[f.id % CAT_FISHING_KOI.length]} alt="" draggable={false} className="h-10 w-10 object-contain transition-transform hover:scale-110 sm:h-12 sm:w-12 pointer-events-none" />
+                        </button>
+                    ))}
+
+                    {pops.map((p) => (
+                        <span
+                            key={p.id}
+                            aria-hidden="true"
+                            className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 text-lg font-black text-primary animate-cat-fishing-pop"
+                            style={{ left: `${p.x}%`, top: `${p.y}%` }}
+                        >
+                            +1
+                        </span>
+                    ))}
+
+                    {won && (
+                        <div className={`absolute inset-0 z-10 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center gap-2 ${prefersReducedMotion ? '' : 'animate-in fade-in zoom-in-95'}`} role="status" aria-live="polite">
+                            <p className="text-2xl font-black text-primary">{t.win}</p>
+                            <p className="text-sm text-muted-foreground">{t.winSub}</p>
+                            <p className="text-sm font-bold text-muted-foreground">{t.time} {formatElapsed(seconds)}</p>
+                            <div className="mt-3 flex flex-wrap justify-center gap-2">
+                            <button type="button" onClick={() => restart()} className="px-8 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity">
+                                {t.again}
+                            </button>
+                            <button type="button" onClick={() => restart(difficulty, seedRef.current)} className="px-6 py-3 rounded-full border font-bold">
+                                {t.same}
+                            </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                <p className="mt-4 text-center text-[10px] text-muted-foreground font-medium">{hint}</p>
+            </GameContainer>
+        </div>
     );
 };
 

@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { Volume2, VolumeX, Maximize2, Minimize2 } from 'lucide-react';
 import { GameContainer } from '@/components/ui/game/GamePrimitives';
+import { useArcadePortal } from '@/lib/games/arcade-portal';
 import { createNumberGuessingGame, guessNumber, suggestedGuess, type NumberGuessingDifficulty, type NumberGuessingState } from '@/lib/games/number-guessing';
 import { clearNumberGuessingSave, loadNumberGuessingSave, storeNumberGuessingSave } from '@/lib/games/number-guessing-save';
 
@@ -17,8 +19,27 @@ const COPY = {
 
 const NumberGuessingGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
   const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'ko' });
   const [state, setState] = useState<NumberGuessingState | null>(null);
-  const [input, setInput] = useState(''); const [elapsedMs, setElapsedMs] = useState(0); const [paused, setPaused] = useState(false); const [restored, setRestored] = useState(false); const [assisted, setAssisted] = useState(false); const [muted, setMuted] = useState(false); const [error, setError] = useState(''); const [best, setBest] = useState<Best | null>(null);
+  const [input, setInput] = useState(''); const [elapsedMs, setElapsedMs] = useState(0); const [paused, setPaused] = useState(false); const [restored, setRestored] = useState(false); const [assisted, setAssisted] = useState(false);
+  const [muted, setMuted] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return localStorage.getItem('number_guessing_sound_muted') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('number_guessing_sound_muted', String(muted));
+    } catch {
+      // SSR-safe fallback
+    }
+  }, [muted]);
+
+  const [error, setError] = useState(''); const [best, setBest] = useState<Best | null>(null);
   const elapsedBase = useRef(0); const startedAt = useRef<number | null>(null); const audio = useRef<AudioContext | null>(null);
   const tone = (frequency: number, duration = .08) => { if (muted || typeof window === 'undefined') return; const context = audio.current ?? new AudioContext(); audio.current = context; const oscillator = context.createOscillator(); const gain = context.createGain(); oscillator.frequency.value = frequency; gain.gain.setValueAtTime(.035, context.currentTime); gain.gain.exponentialRampToValueAtTime(.001, context.currentTime + duration); oscillator.connect(gain).connect(context.destination); oscillator.start(); oscillator.stop(context.currentTime + duration); };
   const loadBest = (difficulty: NumberGuessingDifficulty) => { try { setBest(JSON.parse(localStorage.getItem(`oiyo:number-guessing-best:${difficulty}`) ?? 'null')); } catch { setBest(null); } };
@@ -35,15 +56,62 @@ const NumberGuessingGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) =>
   const triesLeft = state?.maxTries === null ? null : state ? state.maxTries! - state.attempts.length : null;
   const ideal = state ? Math.ceil(Math.log2(state.max)) : 0; const efficiency = state?.attempts.length ? Math.round(ideal / state.attempts.length * 100) : 100;
 
-  return <GameContainer title={t.title} subtitle={t.subtitle} onReset={state ? () => startGame(state.difficulty) : undefined}>
-    {!state ? <div><p className="mb-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.choose}</p><div className="flex flex-col gap-3">{(['easy', 'normal', 'hard'] as NumberGuessingDifficulty[]).map((difficulty) => <button key={difficulty} type="button" onClick={() => startGame(difficulty)} className="min-h-11 w-full rounded-2xl border-2 bg-muted px-4 py-3 text-left text-sm font-bold hover:border-primary hover:bg-accent">{t[difficulty]}</button>)}</div></div> : <>
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2"><div role="status" aria-live="polite"><p className="text-xs font-bold text-muted-foreground">{restored ? t.restored : t[state.difficulty]}</p><p className="text-lg font-black text-primary">{t.range}: {state.lowerBound}–{state.upperBound}</p></div><div className="flex gap-2"><button type="button" onClick={pause} className="min-h-11 rounded-xl border px-3 text-sm font-bold" aria-pressed={paused}>{paused ? '▶' : 'Ⅱ'} <span className="sr-only">{paused ? t.resume : t.pause}</span></button><button type="button" onClick={() => setMuted((value) => !value)} className="min-h-11 rounded-xl border px-3" aria-pressed={muted}>{muted ? '🔇' : '🔊'} <span className="sr-only">{t.sound}</span></button></div></div>
-      <div className="mb-4 flex justify-between text-sm font-bold text-muted-foreground"><span>{triesLeft === null ? t.unlimited : t.tries(triesLeft)}</span><span>{t.time} {formatTime(elapsedMs)}</span></div>
-      {state.status === 'playing' && <><form className="mb-3 flex flex-col gap-2 sm:flex-row" onSubmit={(event) => { event.preventDefault(); submit(); }}><input inputMode="numeric" pattern="[0-9]*" min={1} max={state.max} value={input} onChange={(event) => setInput(event.target.value)} disabled={paused} aria-describedby="number-error" placeholder={t.placeholder(state.max)} aria-label={t.placeholder(state.max)} className="min-h-11 min-w-0 flex-1 rounded-2xl border-2 bg-background px-4 font-bold focus:border-primary focus:outline-none"/><button type="submit" disabled={paused || !input} className="min-h-11 rounded-2xl bg-primary px-6 font-black text-primary-foreground disabled:opacity-50">{t.guess}</button></form><div className="mb-5 flex flex-wrap items-center gap-2"><button type="button" onClick={showHelper} disabled={paused} className="min-h-11 rounded-xl border px-4 text-sm font-bold">{t.helper}</button>{assisted && <span className="text-xs font-bold text-amber-700">{t.helperUsed}</span>}<span id="number-error" role="alert" className="text-xs font-bold text-red-700">{error}</span></div></>}
-      {state.status !== 'playing' && <div className={`mb-5 rounded-2xl border-2 p-5 text-center ${state.status === 'won' ? 'border-green-400 bg-green-50 text-green-800' : 'border-red-300 bg-red-50 text-red-800'}`} role="status" aria-live="assertive"><p className="text-xl font-black">{state.status === 'won' ? t.won : t.lost(state.secret)}</p><p className="mt-2 text-sm font-bold">{t.attempts} {state.attempts.length} · {t.time} {formatTime(elapsedMs)} · {t.efficiency} {efficiency}%</p>{assisted && <p className="mt-1 text-xs font-bold">{t.helperUsed}</p>}{best && <p className="mt-1 text-xs">{t.best} · {best.attempts} · {formatTime(best.elapsedMs)}</p>}<p className="mt-1 text-xs font-bold">{t.next(Math.max(1, state.attempts.length - 1))}</p><div className="mt-4 flex flex-wrap justify-center gap-2"><button type="button" onClick={() => startGame(state.difficulty)} className="min-h-11 rounded-xl bg-primary px-4 text-sm font-black text-primary-foreground">{t.again}</button><button type="button" onClick={() => setState(null)} className="min-h-11 rounded-xl border px-4 text-sm font-bold">{t.level}</button><button type="button" onClick={share} className="min-h-11 rounded-xl border px-4 text-sm font-bold">{t.share}</button></div></div>}
-      {state.attempts.length > 0 && <div><p className="mb-2 text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.history}</p><ol className="max-h-64 space-y-2 overflow-y-auto" aria-label={t.history}>{[...state.attempts].reverse().map((attempt, index) => <li key={attempt.guess} className="flex min-h-11 items-center justify-between rounded-xl border bg-muted/50 px-4 text-sm font-bold"><span>#{state.attempts.length - index} · {attempt.guess}</span><span>{attempt.direction === 'higher' ? '↑ ' + t.higher : attempt.direction === 'lower' ? '↓ ' + t.lower : '✓ ' + t.won} · {attempt.temperature === 'exact' ? '' : t[attempt.temperature]}</span></li>)}</ol></div>}
-    </>}
-  </GameContainer>;
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        void togglePortal();
+      } else if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        setMuted((v) => !v);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [togglePortal]);
+
+  return (
+    <div
+      ref={containerRef}
+      className={`relative w-full transition-all duration-300 ${
+        isImmersive ? 'fixed inset-0 z-50 flex flex-col items-center justify-center bg-background overflow-y-auto p-4' : ''
+      }`}
+    >
+      <div className="w-full max-w-lg mx-auto mb-2 flex items-center justify-end gap-2 px-1">
+        <button
+          type="button"
+          onClick={() => setMuted((v) => !v)}
+          className="flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-bold text-foreground shadow-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+          title={muted ? portalLabels.unmute : portalLabels.mute}
+        >
+          {muted ? <VolumeX className="h-4 w-4 text-muted-foreground" /> : <Volume2 className="h-4 w-4 text-primary" />}
+          <span className="sr-only">{muted ? portalLabels.unmute : portalLabels.mute}</span>
+        </button>
+        <button
+          type="button"
+          onClick={togglePortal}
+          className="flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-bold text-foreground shadow-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+          title={isImmersive ? portalLabels.exit : portalLabels.enter}
+        >
+          {isImmersive ? <Minimize2 className="h-4 w-4 text-primary" /> : <Maximize2 className="h-4 w-4" />}
+          <span className="sr-only">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+        </button>
+      </div>
+
+      <GameContainer title={t.title} subtitle={t.subtitle} onReset={state ? () => startGame(state.difficulty) : undefined}>
+        {!state ? <div><p className="mb-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.choose}</p><div className="flex flex-col gap-3">{(['easy', 'normal', 'hard'] as NumberGuessingDifficulty[]).map((difficulty) => <button key={difficulty} type="button" onClick={() => startGame(difficulty)} className="min-h-11 w-full rounded-2xl border-2 bg-muted px-4 py-3 text-left text-sm font-bold hover:border-primary hover:bg-accent">{t[difficulty]}</button>)}</div></div> : <>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2"><div role="status" aria-live="polite"><p className="text-xs font-bold text-muted-foreground">{restored ? t.restored : t[state.difficulty]}</p><p className="text-lg font-black text-primary">{t.range}: {state.lowerBound}–{state.upperBound}</p></div><div className="flex gap-2"><button type="button" onClick={pause} className="min-h-11 rounded-xl border px-3 text-sm font-bold" aria-pressed={paused}>{paused ? '▶' : 'Ⅱ'} <span className="sr-only">{paused ? t.resume : t.pause}</span></button><button type="button" onClick={() => setMuted((value) => !value)} className="min-h-11 rounded-xl border px-3" aria-pressed={muted}>{muted ? '🔇' : '🔊'} <span className="sr-only">{t.sound}</span></button></div></div>
+          <div className="mb-4 flex justify-between text-sm font-bold text-muted-foreground"><span>{triesLeft === null ? t.unlimited : t.tries(triesLeft)}</span><span>{t.time} {formatTime(elapsedMs)}</span></div>
+          {state.status === 'playing' && <><form className="mb-3 flex flex-col gap-2 sm:flex-row" onSubmit={(event) => { event.preventDefault(); submit(); }}><input inputMode="numeric" pattern="[0-9]*" min={1} max={state.max} value={input} onChange={(event) => setInput(event.target.value)} disabled={paused} aria-describedby="number-error" placeholder={t.placeholder(state.max)} aria-label={t.placeholder(state.max)} className="min-h-11 min-w-0 flex-1 rounded-2xl border-2 bg-background px-4 font-bold focus:border-primary focus:outline-none"/><button type="submit" disabled={paused || !input} className="min-h-11 rounded-2xl bg-primary px-6 font-black text-primary-foreground disabled:opacity-50">{t.guess}</button></form><div className="mb-5 flex flex-wrap items-center gap-2"><button type="button" onClick={showHelper} disabled={paused} className="min-h-11 rounded-xl border px-4 text-sm font-bold">{t.helper}</button>{assisted && <span className="text-xs font-bold text-amber-700">{t.helperUsed}</span>}<span id="number-error" role="alert" className="text-xs font-bold text-red-700">{error}</span></div></>}
+          {state.status !== 'playing' && <div className={`mb-5 rounded-2xl border-2 p-5 text-center ${state.status === 'won' ? 'border-green-400 bg-green-50 text-green-800' : 'border-red-300 bg-red-50 text-red-800'}`} role="status" aria-live="assertive"><p className="text-xl font-black">{state.status === 'won' ? t.won : t.lost(state.secret)}</p><p className="mt-2 text-sm font-bold">{t.attempts} {state.attempts.length} · {t.time} {formatTime(elapsedMs)} · {t.efficiency} {efficiency}%</p>{assisted && <p className="mt-1 text-xs font-bold">{t.helperUsed}</p>}{best && <p className="mt-1 text-xs">{t.best} · {best.attempts} · {formatTime(best.elapsedMs)}</p>}<p className="mt-1 text-xs font-bold">{t.next(Math.max(1, state.attempts.length - 1))}</p><div className="mt-4 flex flex-wrap justify-center gap-2"><button type="button" onClick={() => startGame(state.difficulty)} className="min-h-11 rounded-xl bg-primary px-4 text-sm font-black text-primary-foreground">{t.again}</button><button type="button" onClick={() => setState(null)} className="min-h-11 rounded-xl border px-4 text-sm font-bold">{t.level}</button><button type="button" onClick={share} className="min-h-11 rounded-xl border px-4 text-sm font-bold">{t.share}</button></div></div>}
+          {state.attempts.length > 0 && <div><p className="mb-2 text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.history}</p><ol className="max-h-64 space-y-2 overflow-y-auto" aria-label={t.history}>{[...state.attempts].reverse().map((attempt, index) => <li key={attempt.guess} className="flex min-h-11 items-center justify-between rounded-xl border bg-muted/50 px-4 text-sm font-bold"><span>#{state.attempts.length - index} · {attempt.guess}</span><span>{attempt.direction === 'higher' ? '↑ ' + t.higher : attempt.direction === 'lower' ? '↓ ' + t.lower : '✓ ' + t.won} · {attempt.temperature === 'exact' ? '' : t[attempt.temperature]}</span></li>)}</ol></div>}
+        </>}
+      </GameContainer>
+    </div>
+  );
 };
 
 export default NumberGuessingGame;
