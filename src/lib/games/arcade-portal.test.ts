@@ -15,6 +15,8 @@ describe("arcade-portal", () => {
       expect(label.enter.length).toBeGreaterThan(0);
       expect(label.exit.length).toBeGreaterThan(0);
       expect(label.hint.length).toBeGreaterThan(0);
+      expect(label.mute.length).toBeGreaterThan(0);
+      expect(label.unmute.length).toBeGreaterThan(0);
     }
   });
 

@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
 import { GameContainer } from '../ui/game/GamePrimitives';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { getBestForConditions, recordBestForConditions, getDailyStreak, recordDailyWin, type BestConditions, type DailyStreak } from '../../lib/games/records';
 import { dayIndex, todayKey, previousDayKey } from '../../lib/games/daily';
 import { isSudokuSolved, type SudokuValue } from '../../lib/games/logic-puzzles';
@@ -53,9 +55,41 @@ const Sudoku: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const seedRef = useRef(0);
     const startedAt = useRef<number | null>(null);
 
-    const [muted, setMuted] = useState(false);
-    const mutedRef = useRef(false);
-    useEffect(() => { mutedRef.current = muted; }, [muted]);
+    const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'ko' });
+
+    const [muted, setMuted] = useState<boolean>(() => {
+        try {
+            if (typeof window !== 'undefined' && window.localStorage) {
+                return window.localStorage.getItem('sudoku_sound_muted') === 'true';
+            }
+        } catch {}
+        return false;
+    });
+    const mutedRef = useRef(muted);
+    useEffect(() => {
+        mutedRef.current = muted;
+        try {
+            if (typeof window !== 'undefined' && window.localStorage) {
+                window.localStorage.setItem('sudoku_sound_muted', String(muted));
+            }
+        } catch {}
+    }, [muted]);
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+            if (e.key === 'f' || e.key === 'F') {
+                e.preventDefault();
+                togglePortal();
+            } else if (e.key === 'm' || e.key === 'M') {
+                e.preventDefault();
+                setMuted((prev) => !prev);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [togglePortal]);
+
     const audioRef = useRef<AudioContext | null>(null);
     const tone = useCallback((frequency: number, duration = 0.05) => {
         if (mutedRef.current || typeof window === 'undefined') return;
@@ -191,106 +225,130 @@ const Sudoku: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const clueCount = givens.flat().filter((v) => v !== null).length;
 
     return (
-        <GameContainer title={t.title} subtitle="Pure Deduction" resetLabel={t.reset} onReset={() => initGame(mode)}>
-            <div className="flex flex-col items-center">
-                <div className="mb-4 flex flex-wrap items-center justify-center gap-1.5">
-                    <button onClick={() => initGame('daily')} aria-pressed={mode === 'daily'}
-                        className={`min-h-11 px-3 py-2 rounded-lg text-xs font-bold border transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${mode === 'daily' ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
-                        {t.daily}{solvedToday ? ' ✓' : ''}
-                    </button>
-                    {(['easy', 'medium', 'hard'] as SudokuDifficultyId[]).map((id) => (
-                        <button key={id} onClick={() => initGame(id)} aria-pressed={mode === id}
-                            className={`min-h-11 px-3 py-2 rounded-lg text-xs font-bold border transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${mode === id ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
-                            {t[id]}
+        <div
+            ref={containerRef}
+            data-game-surface
+            className={
+                isImmersive
+                    ? "fixed inset-0 z-50 w-screen h-dvh bg-background p-3 sm:p-5 overflow-y-auto flex flex-col items-center justify-between m-0 select-none"
+                    : "relative"
+            }
+        >
+            <GameContainer title={t.title} subtitle="Pure Deduction" resetLabel={t.reset} onReset={() => initGame(mode)}>
+                <div className="flex flex-col items-center">
+                    <div className="mb-4 flex flex-wrap items-center justify-center gap-1.5">
+                        <button onClick={() => initGame('daily')} aria-pressed={mode === 'daily'}
+                            className={`min-h-11 px-3 py-2 rounded-lg text-xs font-bold border transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${mode === 'daily' ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
+                            {t.daily}{solvedToday ? ' ✓' : ''}
                         </button>
-                    ))}
-                    <button
-                        onClick={() => setMuted((value) => !value)}
-                        aria-pressed={muted}
-                        aria-label={t.sound}
-                        className="min-h-11 min-w-11 rounded-lg border border-border text-sm text-muted-foreground hover:bg-muted"
-                    >
-                        <span aria-hidden="true">{muted ? '🔇' : '🔊'}</span>
-                    </button>
-                </div>
-
-                {mode === 'daily' && streak && streak.played > 0 && (
-                    <p className="mb-2 text-center text-[11px] font-bold text-muted-foreground">🔥 {t.streak} {streak.currentStreak} · {t.best} {streak.maxStreak}</p>
-                )}
-
-                <p className="text-sm font-medium text-muted-foreground mb-2 text-center">{t.desc}</p>
-                <div className="mb-6 flex gap-3 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                    <span>{t.time} {fmt(seconds)}</span>
-                    <span>{t.clues} {clueCount}</span>
-                    {bestTime !== null && <span>{t.best} {fmt(bestTime)}</span>}
-                </div>
-
-                <div className="max-w-full overflow-x-auto pb-1">
-                <div className="bg-stone-800 p-1 rounded-sm shadow-2xl grid w-max border-4 border-stone-800" style={{ gridTemplateColumns: 'repeat(9, 2.75rem)' }} role="grid" aria-label={t.title} aria-rowcount={9} aria-colcount={9}>
-                    {grid.map((row, r) => row.map((val, c) => {
-                        const isSelected = selected?.[0] === r && selected?.[1] === c;
-                        const isInit = givens[r]?.[c] !== null;
-                        const inConflict = Boolean(conflicts[r]?.[c]);
-                        const borderR = (c + 1) % 3 === 0 && c < 8 ? 'border-r-4 border-stone-800' : 'border-r border-stone-100/10';
-                        const borderB = (r + 1) % 3 === 0 && r < 8 ? 'border-b-4 border-stone-800' : 'border-b border-stone-100/10';
-
-                        return (
-                            <button
-                                key={`${r}-${c}`}
-                                ref={(node) => { cellRefs.current[r * 9 + c] = node; }}
-                                type="button"
-                                role="gridcell"
-                                onClick={() => { setSelected([r, c]); setFocusIndex(r * 9 + c); }}
-                                onFocus={() => setFocusIndex(r * 9 + c)}
-                                onKeyDown={(event) => moveFocus(event, r * 9 + c)}
-                                tabIndex={focusIndex === r * 9 + c ? 0 : -1}
-                                aria-selected={isSelected}
-                                aria-rowindex={r + 1}
-                                aria-colindex={c + 1}
-                                aria-label={`${t.row} ${r + 1}, ${t.column} ${c + 1}: ${val === null ? t.empty : `${val}, ${isInit ? t.given : t.entered}`}${inConflict ? `, ${t.conflict}` : ''}${isSelected ? `, ${t.selectedLabel}` : ''}`}
-                                className={`relative overflow-hidden h-11 w-11 flex items-center justify-center text-lg sm:text-2xl font-bold transition-all motion-reduce:transition-none focus-visible:z-20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset ${borderR} ${borderB} ${
-                                    isSelected ? 'z-10 ring-2 ring-inset ring-primary' : ''
-                                } ${isInit ? 'text-stone-800' : isSelected ? 'bg-primary text-primary-foreground' : 'bg-stone-50 text-primary'} ${inConflict && !isSelected ? 'text-destructive underline decoration-2 underline-offset-4' : ''}`}
-                            >
-                                {isInit && <img src={PUZZLE15_SPRITES.tile} alt="" draggable={false} className="pointer-events-none absolute inset-0 h-full w-full object-cover" />}
-                                <span key={val ?? 'empty'} className={`relative z-[1] ${!isInit && freshEntry === `${r}-${c}` && val !== null && !reducedMotion ? 'oiyo-tile-land' : ''}`}>{val}</span>
+                        {(['easy', 'medium', 'hard'] as SudokuDifficultyId[]).map((id) => (
+                            <button key={id} onClick={() => initGame(id)} aria-pressed={mode === id}
+                                className={`min-h-11 px-3 py-2 rounded-lg text-xs font-bold border transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${mode === id ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
+                                {t[id]}
                             </button>
-                        );
-                    }))}
-                </div>
-                </div>
-
-                {/* Number Pad */}
-                <div className="mt-8 grid grid-cols-9 gap-1 sm:gap-2 w-full max-w-md">
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => (
+                        ))}
                         <button
-                            key={n}
-                            onClick={() => setNumber(n)}
-                            aria-label={String(n)}
-                            className="min-h-11 min-w-11 aspect-square bg-muted hover:bg-primary hover:text-white rounded-lg flex items-center justify-center font-black text-sm sm:text-lg border border-border transition-all motion-reduce:transition-none shadow-sm"
+                            type="button"
+                            onClick={() => setMuted((value) => !value)}
+                            aria-pressed={muted}
+                            aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+                            title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`}
+                            className="min-h-11 px-3 py-2 rounded-lg border border-border text-xs font-bold text-muted-foreground hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                         >
-                            {n}
+                            {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+                            <span className="hidden sm:inline">{muted ? portalLabels.unmute : portalLabels.mute}</span>
                         </button>
-                    ))}
-                </div>
-
-                {isWon && (
-                    <div className="mt-8 text-center animate-in zoom-in-95 motion-reduce:animate-none" role="status" aria-live="polite">
-                        <h4 className="text-2xl font-black text-primary">{t.win}</h4>
-                        <p className="mt-2 text-xs text-muted-foreground">
-                            {t.time} {fmt(Math.max(1, seconds))}
-                            {bestTime !== null && <> · {isNewBest ? t.newBest : `${t.best} ${fmt(bestTime)}`} · {t.nextGoal}: {fmt(Math.max(1, bestTime - 1))}</>}
-                        </p>
                         <button
-                            onClick={() => initGame(mode)}
-                            className="mt-4 min-h-11 px-8 py-2 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity"
+                            type="button"
+                            onClick={togglePortal}
+                            aria-pressed={isImmersive}
+                            aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+                            title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+                            className="min-h-11 px-3 py-2 rounded-lg border border-border text-xs font-bold text-muted-foreground hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                         >
-                            {t.reset}
+                            {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+                            <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
                         </button>
                     </div>
-                )}
-            </div>
-        </GameContainer>
+
+                    {mode === 'daily' && streak && streak.played > 0 && (
+                        <p className="mb-2 text-center text-[11px] font-bold text-muted-foreground">🔥 {t.streak} {streak.currentStreak} · {t.best} {streak.maxStreak}</p>
+                    )}
+
+                    <p className="text-sm font-medium text-muted-foreground mb-2 text-center">{t.desc}</p>
+                    <div className="mb-6 flex gap-3 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                        <span>{t.time} {fmt(seconds)}</span>
+                        <span>{t.clues} {clueCount}</span>
+                        {bestTime !== null && <span>{t.best} {fmt(bestTime)}</span>}
+                    </div>
+
+                    <div className="max-w-full overflow-x-auto pb-1">
+                    <div className="bg-stone-800 p-1 rounded-sm shadow-2xl grid w-max border-4 border-stone-800" style={{ gridTemplateColumns: 'repeat(9, 2.75rem)' }} role="grid" aria-label={t.title} aria-rowcount={9} aria-colcount={9}>
+                        {grid.map((row, r) => row.map((val, c) => {
+                            const isSelected = selected?.[0] === r && selected?.[1] === c;
+                            const isInit = givens[r]?.[c] !== null;
+                            const inConflict = Boolean(conflicts[r]?.[c]);
+                            const borderR = (c + 1) % 3 === 0 && c < 8 ? 'border-r-4 border-stone-800' : 'border-r border-stone-100/10';
+                            const borderB = (r + 1) % 3 === 0 && r < 8 ? 'border-b-4 border-stone-800' : 'border-b border-stone-100/10';
+
+                            return (
+                                <button
+                                    key={`${r}-${c}`}
+                                    ref={(node) => { cellRefs.current[r * 9 + c] = node; }}
+                                    type="button"
+                                    role="gridcell"
+                                    onClick={() => { setSelected([r, c]); setFocusIndex(r * 9 + c); }}
+                                    onFocus={() => setFocusIndex(r * 9 + c)}
+                                    onKeyDown={(event) => moveFocus(event, r * 9 + c)}
+                                    tabIndex={focusIndex === r * 9 + c ? 0 : -1}
+                                    aria-selected={isSelected}
+                                    aria-rowindex={r + 1}
+                                    aria-colindex={c + 1}
+                                    aria-label={`${t.row} ${r + 1}, ${t.column} ${c + 1}: ${val === null ? t.empty : `${val}, ${isInit ? t.given : t.entered}`}${inConflict ? `, ${t.conflict}` : ''}${isSelected ? `, ${t.selectedLabel}` : ''}`}
+                                    className={`relative overflow-hidden h-11 w-11 flex items-center justify-center text-lg sm:text-2xl font-bold transition-all motion-reduce:transition-none focus-visible:z-20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset ${borderR} ${borderB} ${
+                                        isSelected ? 'z-10 ring-2 ring-inset ring-primary' : ''
+                                    } ${isInit ? 'text-stone-800' : isSelected ? 'bg-primary text-primary-foreground' : 'bg-stone-50 text-primary'} ${inConflict && !isSelected ? 'text-destructive underline decoration-2 underline-offset-4' : ''}`}
+                                >
+                                    {isInit && <img src={PUZZLE15_SPRITES.tile} alt="" draggable={false} className="pointer-events-none absolute inset-0 h-full w-full object-cover" />}
+                                    <span key={val ?? 'empty'} className={`relative z-[1] ${!isInit && freshEntry === `${r}-${c}` && val !== null && !reducedMotion ? 'oiyo-tile-land' : ''}`}>{val}</span>
+                                </button>
+                            );
+                        }))}
+                    </div>
+                    </div>
+
+                    {/* Number Pad */}
+                    <div className="mt-8 grid grid-cols-9 gap-1 sm:gap-2 w-full max-w-md">
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => (
+                            <button
+                                key={n}
+                                onClick={() => setNumber(n)}
+                                aria-label={String(n)}
+                                className="min-h-11 min-w-11 aspect-square bg-muted hover:bg-primary hover:text-white rounded-lg flex items-center justify-center font-black text-sm sm:text-lg border border-border transition-all motion-reduce:transition-none shadow-sm"
+                            >
+                                {n}
+                            </button>
+                        ))}
+                    </div>
+
+                    {isWon && (
+                        <div className="mt-8 text-center animate-in zoom-in-95 motion-reduce:animate-none" role="status" aria-live="polite">
+                            <h4 className="text-2xl font-black text-primary">{t.win}</h4>
+                            <p className="mt-2 text-xs text-muted-foreground">
+                                {t.time} {fmt(Math.max(1, seconds))}
+                                {bestTime !== null && <> · {isNewBest ? t.newBest : `${t.best} ${fmt(bestTime)}`} · {t.nextGoal}: {fmt(Math.max(1, bestTime - 1))}</>}
+                            </p>
+                            <button
+                                onClick={() => initGame(mode)}
+                                className="mt-4 min-h-11 px-8 py-2 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity"
+                            >
+                                {t.reset}
+                            </button>
+                        </div>
+                    )}
+                </div>
+            </GameContainer>
+        </div>
     );
 };
 

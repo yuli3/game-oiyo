@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
 import { GameContainer, PlayingCard } from "../ui/game/GamePrimitives";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { blackjackAdvice, blackjackResultReason, createBlackjackGame, evaluateBlackjackHand, hitBlackjack, standBlackjack, type BlackjackAdviceReason, type BlackjackOutcome, type BlackjackResultReason, type BlackjackState } from "../../lib/games/blackjack";
 import { clearBlackjackSave, loadBlackjackSave, storeBlackjackSave } from "../../lib/games/blackjack-save";
@@ -28,18 +30,38 @@ const Blackjack = ({ locale = "ko" }: { locale?: string }) => {
   const strategy = STRATEGY_COPY[locale] ?? STRATEGY_COPY.en;
   const reducedMotion = usePrefersReducedMotion();
   const [game, setGame] = useState<BlackjackState>(() => createBlackjackGame(1));
-  const [paused, setPaused] = useState(false), [restored, setRestored] = useState(false), [muted, setMuted] = useState(false);
+  const [paused, setPaused] = useState(false), [restored, setRestored] = useState(false);
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || "ko" });
+
+  const [muted, setMuted] = useState<boolean>(() => {
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        return window.localStorage.getItem("blackjack_sound_muted") === "true";
+      }
+    } catch {}
+    return false;
+  });
+  const mutedRef = useRef(muted);
+  useEffect(() => {
+    mutedRef.current = muted;
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        window.localStorage.setItem("blackjack_sound_muted", String(muted));
+      }
+    } catch {}
+  }, [muted]);
+
   const [record, setRecord] = useState<GameRecord | null>(null);
   const audio = useRef<AudioContext | null>(null), endedSeed = useRef<number | null>(null);
 
   const tone = useCallback((kind: "card" | BlackjackOutcome) => {
-    if (muted || typeof AudioContext === "undefined") return;
+    if (mutedRef.current || typeof AudioContext === "undefined") return;
     const context = audio.current ?? new AudioContext(); audio.current = context;
     const oscillator = context.createOscillator(), gain = context.createGain();
     oscillator.frequency.value = kind === "card" ? 320 : kind === "win" ? 620 : kind === "push" ? 420 : 150;
     oscillator.type = kind === "lost" ? "sawtooth" : "sine"; gain.gain.setValueAtTime(.045, context.currentTime); gain.gain.exponentialRampToValueAtTime(.001, context.currentTime + .11);
     oscillator.connect(gain).connect(context.destination); oscillator.start(); oscillator.stop(context.currentTime + .11);
-  }, [muted]);
+  }, []);
   const start = useCallback(() => {
     clearBlackjackSave(); const seed = typeof crypto !== "undefined" ? crypto.getRandomValues(new Uint32Array(1))[0] : Date.now() >>> 0;
     setGame(createBlackjackGame(seed)); setPaused(false); setRestored(false); endedSeed.current = null;
@@ -57,18 +79,72 @@ const Blackjack = ({ locale = "ko" }: { locale?: string }) => {
   }, [game, tone]);
   const hit = useCallback(() => { if (paused || game.status !== "playing") return; const next = hitBlackjack(game); if (next !== game) { tone("card"); setGame(next); } }, [game, paused, tone]);
   const stand = useCallback(() => { if (paused || game.status !== "playing") return; setGame(standBlackjack(game)); }, [game, paused]);
-  useEffect(() => { const keys = (event: KeyboardEvent) => { if (event.key.toLowerCase() === "h") { event.preventDefault(); hit(); } else if (event.key.toLowerCase() === "s") { event.preventDefault(); stand(); } }; window.addEventListener("keydown", keys); return () => window.removeEventListener("keydown", keys); }, [hit, stand]);
+  useEffect(() => {
+    const keys = (event: KeyboardEvent) => {
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return;
+      const key = event.key.toLowerCase();
+      if (key === "f") {
+        event.preventDefault();
+        togglePortal();
+      } else if (key === "m") {
+        event.preventDefault();
+        setMuted((prev) => !prev);
+      } else if (key === "h") {
+        event.preventDefault();
+        hit();
+      } else if (key === "s") {
+        event.preventDefault();
+        stand();
+      }
+    };
+    window.addEventListener("keydown", keys);
+    return () => window.removeEventListener("keydown", keys);
+  }, [hit, stand, togglePortal]);
 
   const playerScore = evaluateBlackjackHand(game.player), dealerScore = evaluateBlackjackHand(game.dealer), reveal = game.status === "result";
   const advice = game.status === "playing" ? blackjackAdvice(game.player, game.dealer[0]) : null;
   const resultReason = blackjackResultReason(game);
   const actionTrail = game.actions.map(action => action === "hit" ? strategy.hit : strategy.stand).join(" → ");
   const totalGames = record ? record.w + record.l + record.d : 0;
-  return <GameContainer title={t.title} subtitle={t.subtitle} onReset={start}>
-    <div className="mb-4 flex flex-wrap items-center justify-between gap-2 text-xs font-bold">
-      <span>{t.record} {record ? `${record.w}–${record.l}–${record.d}` : "0–0–0"}</span>
-      <div className="flex gap-2"><button type="button" onClick={() => { setPaused(value => !value); setRestored(false); }} disabled={game.status !== "playing"} className="min-h-11 rounded-xl border px-3">{paused ? `▶ ${t.resume}` : `Ⅱ ${t.pause}`}</button><button type="button" onClick={() => setMuted(value => !value)} aria-pressed={muted} className="min-h-11 rounded-xl border px-3">{muted ? "🔇" : "🔊"} {t.sound}</button></div>
-    </div>
+  return (
+    <div
+      ref={containerRef}
+      data-game-surface
+      className={
+        isImmersive
+          ? "fixed inset-0 z-50 w-screen h-dvh bg-background p-3 sm:p-5 overflow-y-auto flex flex-col justify-between m-0 select-none"
+          : "relative"
+      }
+    >
+      <GameContainer title={t.title} subtitle={t.subtitle} onReset={start}>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2 text-xs font-bold">
+          <span>{t.record} {record ? `${record.w}–${record.l}–${record.d}` : "0–0–0"}</span>
+          <div className="flex gap-2">
+            <button type="button" onClick={() => { setPaused(value => !value); setRestored(false); }} disabled={game.status !== "playing"} className="min-h-11 rounded-xl border border-border px-3 text-xs font-bold text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50">{paused ? `▶ ${t.resume}` : `Ⅱ ${t.pause}`}</button>
+            <button
+              type="button"
+              onClick={() => setMuted((value) => !value)}
+              aria-pressed={muted}
+              aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+              title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`}
+              className="min-h-11 px-3 py-2 rounded-xl border border-border text-xs font-bold text-muted-foreground hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            >
+              {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+              <span className="hidden sm:inline">{muted ? portalLabels.unmute : portalLabels.mute}</span>
+            </button>
+            <button
+              type="button"
+              onClick={togglePortal}
+              aria-pressed={isImmersive}
+              aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+              title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+              className="min-h-11 px-3 py-2 rounded-xl border border-border text-xs font-bold text-muted-foreground hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            >
+              {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+              <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+            </button>
+          </div>
+        </div>
     {(paused || restored) && game.status === "playing" && <p role="status" className="mb-4 text-center text-xs font-bold text-muted-foreground">{restored ? t.restored : t.pause}</p>}
     <div className="space-y-7 sm:space-y-10">
       <section className="text-center" aria-label={t.dealer}><p className="mb-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">{t.dealer} {reveal ? `· ${dealerScore.total} ${dealerScore.soft ? t.soft : t.hard}` : ""}</p><div className="flex min-h-28 justify-center -space-x-9">{game.dealer.map((card, index) => <span key={`${card.suit}-${card.value}-${index}`} className={!reducedMotion ? "oiyo-card-deal" : undefined} style={!reducedMotion ? { animationDelay: `${index * 70}ms` } : undefined}><PlayingCard suit={card.suit} value={card.value} isFaceUp={index === 0 || reveal} className="border-2 border-primary/20 shadow-md" /></span>)}</div></section>
@@ -91,6 +167,8 @@ const Blackjack = ({ locale = "ko" }: { locale?: string }) => {
       </section>
     </div>
     <p className="mt-6 rounded-xl border bg-muted/40 p-3 text-xs leading-relaxed text-muted-foreground">{t.rules}{totalGames > 0 ? ` · ${t.record} ${Math.round((record?.w ?? 0) / totalGames * 100)}%` : ""}</p>
-  </GameContainer>;
+  </GameContainer>
+  </div>
+  );
 };
 export default Blackjack;

@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, type CSSProperties } from 'react';
+import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
 import { GameContainer } from '../ui/game/GamePrimitives';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
 import type { Locale } from '../../lib/i18n';
 import { checkersApply, checkersApplyTurn, checkersBestMove, checkersMoves, checkersTurnReview, type CheckersPiece, type CheckersMove, type CheckersTurnReview } from '../../lib/games/checkers';
 import type { AiLevel, GameMode } from '../../lib/games/ai/types';
@@ -71,20 +73,54 @@ const Checkers: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     const slideKey = useRef(0);
     const [paused, setPaused] = useState(false);
     const [restored, setRestored] = useState(false);
-    const [muted, setMuted] = useState(false);
+    const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'ko' });
+
+    const [muted, setMuted] = useState<boolean>(() => {
+        try {
+            if (typeof window !== 'undefined' && window.localStorage) {
+                return window.localStorage.getItem('checkers_sound_muted') === 'true';
+            }
+        } catch {}
+        return false;
+    });
+    const mutedRef = useRef(muted);
+    useEffect(() => {
+        mutedRef.current = muted;
+        try {
+            if (typeof window !== 'undefined' && window.localStorage) {
+                window.localStorage.setItem('checkers_sound_muted', String(muted));
+            }
+        } catch {}
+    }, [muted]);
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+            if (e.key === 'f' || e.key === 'F') {
+                e.preventDefault();
+                togglePortal();
+            } else if (e.key === 'm' || e.key === 'M') {
+                e.preventDefault();
+                setMuted((prev) => !prev);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [togglePortal]);
+
     const [lastAiReview, setLastAiReview] = useState<CheckersTurnReview | null>(null);
     const aiTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const squareRefs = useRef<(HTMLButtonElement | null)[]>([]);
     const audio = useRef<AudioContext | null>(null);
 
     const tone = useCallback((kind: 'move' | 'capture' | 'win') => {
-        if (muted || typeof AudioContext === 'undefined') return;
+        if (mutedRef.current || typeof AudioContext === 'undefined') return;
         const context = audio.current ?? new AudioContext(); audio.current = context;
         const oscillator = context.createOscillator(), gain = context.createGain();
         oscillator.frequency.value = kind === 'capture' ? 180 : kind === 'win' ? 620 : 360;
         gain.gain.setValueAtTime(.045, context.currentTime); gain.gain.exponentialRampToValueAtTime(.001, context.currentTime + .1);
         oscillator.connect(gain).connect(context.destination); oscillator.start(); oscillator.stop(context.currentTime + .1);
-    }, [muted]);
+    }, []);
 
     const initGame = useCallback(() => {
         clearCheckersSave();
@@ -239,11 +275,41 @@ const Checkers: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     const squareName = (index: number) => `${String.fromCharCode(65 + index % SIZE)}${8 - Math.floor(index / SIZE)}`;
 
     return (
-        <GameContainer title={t.title} subtitle={t.subtitle} onReset={initGame}>
-            <div className="mb-3 flex flex-wrap justify-end gap-2">
-                <button type="button" onClick={() => { setPaused(value => !value); setRestored(false); }} className="min-h-11 rounded-xl border border-border px-3 text-xs font-bold">{paused ? `▶ ${x.resume}` : `Ⅱ ${x.pause}`}</button>
-                <button type="button" onClick={() => setMuted(value => !value)} aria-pressed={muted} className="min-h-11 rounded-xl border border-border px-3 text-xs font-bold">{muted ? '🔇' : '🔊'} {x.sound}</button>
-            </div>
+        <div
+            ref={containerRef}
+            data-game-surface
+            className={
+                isImmersive
+                    ? "fixed inset-0 z-50 w-screen h-dvh bg-background p-3 sm:p-5 overflow-y-auto flex flex-col justify-between m-0 select-none"
+                    : "relative"
+            }
+        >
+            <GameContainer title={t.title} subtitle={t.subtitle} onReset={initGame}>
+                <div className="mb-3 flex flex-wrap justify-end gap-2">
+                    <button type="button" onClick={() => { setPaused(value => !value); setRestored(false); }} className="min-h-11 rounded-xl border border-border px-3 text-xs font-bold text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">{paused ? `▶ ${x.resume}` : `Ⅱ ${x.pause}`}</button>
+                    <button
+                        type="button"
+                        onClick={() => setMuted((value) => !value)}
+                        aria-pressed={muted}
+                        aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+                        title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`}
+                        className="min-h-11 px-3 py-2 rounded-xl border border-border text-xs font-bold text-muted-foreground hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                    >
+                        {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+                        <span className="hidden sm:inline">{muted ? portalLabels.unmute : portalLabels.mute}</span>
+                    </button>
+                    <button
+                        type="button"
+                        onClick={togglePortal}
+                        aria-pressed={isImmersive}
+                        aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+                        title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+                        className="min-h-11 px-3 py-2 rounded-xl border border-border text-xs font-bold text-muted-foreground hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                    >
+                        {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+                        <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+                    </button>
+                </div>
             {(paused || restored) && winner === null && <p role="status" className="mb-3 text-center text-xs font-bold text-muted-foreground">{restored ? x.restored : x.pause}</p>}
             {/* Mode + difficulty */}
             <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -354,6 +420,7 @@ const Checkers: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                 </div>
             )}
         </GameContainer>
+        </div>
     );
 };
 

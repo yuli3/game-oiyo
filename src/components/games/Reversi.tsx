@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
 import { GameContainer } from '../ui/game/GamePrimitives';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
 import type { Locale } from '../../lib/i18n';
 import { createReversi, playReversi, restoreReversi, reversiAnalysis, reversiBestMove, reversiMoveReview, reversiMoves, type ReversiMoveReview, type ReversiState } from '../../lib/games/reversi';
 import type { AiLevel, GameMode } from '../../lib/games/ai/types';
@@ -24,7 +26,6 @@ const i18n: Record<Locale, {
     fr: { title: "Reversi", turn: "Tour", black: "Noir", white: "Blanc", win: "gagne !", over: "Partie terminée", reset: "Nouvelle partie", score: "Score", modeLocal: "2 joueurs", modeAi: "contre l'IA", level1: "Apprenti", level2: "Adepte", level3: "Maître", thinking: "Votre adversaire lit le plateau…", youWin: "Vous gagnez !", aiWins: "L'IA gagne", draw: "Match nul", record: "Bilan", board: "Plateau de Reversi", pause: "Pause", resume: "Reprendre", restored: "Partie restaurée", passed: s => `${s} ne peut pas jouer et passe`, moves: "Coups", mobility: "Coups légaux", corners: "Coins", share: "Copier le résultat", next: "Prochain objectif : prenez un coin", square: (r, c, s) => `Ligne ${r}, colonne ${c}, ${s}` },
     es: { title: "Reversi", turn: "Turno", black: "Negras", white: "Blancas", win: "¡gana!", over: "Fin de la partida", reset: "Nueva partida", score: "Puntos", modeLocal: "2 jugadores", modeAi: "contra la IA", level1: "Aprendiz", level2: "Experto", level3: "Maestro", thinking: "Tu rival está leyendo el tablero…", youWin: "¡Has ganado!", aiWins: "Gana la IA", draw: "Tablas", record: "Historial", board: "Tablero de Reversi", pause: "Pausa", resume: "Continuar", restored: "Partida restaurada", passed: s => `${s} no tiene jugada y pasa`, moves: "Jugadas", mobility: "Jugadas legales", corners: "Esquinas", share: "Copiar resultado", next: "Siguiente meta: asegura una esquina", square: (r, c, s) => `Fila ${r}, columna ${c}, ${s}` },
 };
-const soundLabel: Record<Locale, string> = { ko: "소리", en: "Sound", ja: "サウンド", zh: "声音", fr: "Son", es: "Sonido" };
 
 const AI_INFO: Record<Locale,{difficulty:string;level:Record<AiLevel,string>;review:string;corner:string;edge:string;flips:string;mobility:string}>={
  ko:{difficulty:'AI 탐색',level:{1:'상위 4개 · 뒤집기 우선',2:'2수 · 위치와 이동성',3:'4수 · 위치와 이동성'},review:'패배 복기',corner:'모서리 확보',edge:'변 확보',flips:'개 뒤집기',mobility:'내 다음 수'},
@@ -45,10 +46,58 @@ const Reversi: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     const [level, setLevel] = useState<AiLevel>(2);
     const [thinking, setThinking] = useState(false);
     const [record, setRecord] = useState<GameRecord | null>(null);
-    const [paused, setPaused] = useState(false); const [restored, setRestored] = useState(false); const [muted, setMuted] = useState(false); const [lastAiReview,setLastAiReview]=useState<ReversiMoveReview|null>(null);
+    const [paused, setPaused] = useState(false);
+    const [restored, setRestored] = useState(false);
+    const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'ko' });
+
+    const [muted, setMuted] = useState<boolean>(() => {
+        try {
+            if (typeof window !== 'undefined' && window.localStorage) {
+                return window.localStorage.getItem('reversi_sound_muted') === 'true';
+            }
+        } catch {}
+        return false;
+    });
+    const mutedRef = useRef(muted);
+    useEffect(() => {
+        mutedRef.current = muted;
+        try {
+            if (typeof window !== 'undefined' && window.localStorage) {
+                window.localStorage.setItem('reversi_sound_muted', String(muted));
+            }
+        } catch {}
+    }, [muted]);
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+            if (e.key === 'f' || e.key === 'F') {
+                e.preventDefault();
+                togglePortal();
+            } else if (e.key === 'm' || e.key === 'M') {
+                e.preventDefault();
+                setMuted((prev) => !prev);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [togglePortal]);
+
+    const [lastAiReview, setLastAiReview] = useState<ReversiMoveReview | null>(null);
     const aiTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const audio = useRef<AudioContext | null>(null);
-    const tone = (frequency: number, duration = .08) => { if (muted || typeof window === 'undefined') return; const context = audio.current ?? new AudioContext(); audio.current = context; const oscillator = context.createOscillator(), gain = context.createGain(); oscillator.frequency.value = frequency; gain.gain.setValueAtTime(.035, context.currentTime); gain.gain.exponentialRampToValueAtTime(.001, context.currentTime + duration); oscillator.connect(gain).connect(context.destination); oscillator.start(); oscillator.stop(context.currentTime + duration); };
+    const tone = useCallback((frequency: number, duration = .08) => {
+        if (mutedRef.current || typeof window === 'undefined') return;
+        const context = audio.current ?? new AudioContext();
+        audio.current = context;
+        const oscillator = context.createOscillator(), gain = context.createGain();
+        oscillator.frequency.value = frequency;
+        gain.gain.setValueAtTime(.035, context.currentTime);
+        gain.gain.exponentialRampToValueAtTime(.001, context.currentTime + duration);
+        oscillator.connect(gain).connect(context.destination);
+        oscillator.start();
+        oscillator.stop(context.currentTime + duration);
+    }, []);
 
     const initGame = useCallback(() => {
         clearReversiSave();
@@ -122,58 +171,88 @@ const Reversi: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     const share = async () => { try { await navigator.clipboard.writeText(`OIYO Reversi · ${bCount}-${wCount} · ${game.moves} moves · ${winLabel}`); } catch { /* best effort */ } };
 
     return (
-        <GameContainer title={t.title} subtitle="Reversal Strategy" onReset={initGame}>
-            {/* Mode + difficulty */}
-            <div className="mb-4 flex flex-wrap items-center gap-2">
-                <div className="inline-flex rounded-xl border border-border overflow-hidden" role="group" aria-label={`${t.modeLocal} / ${t.modeAi}`}>
-                    {(['local', 'ai'] as GameMode[]).map((m) => (
-                        <button key={m} onClick={() => switchMode(m)}
-                            aria-pressed={mode === m}
-                            className={`px-3 py-1.5 text-xs font-bold transition-colors ${mode === m ? 'bg-primary text-primary-foreground' : 'bg-muted/50 text-muted-foreground hover:bg-muted'}`}>
-                            {m === 'local' ? t.modeLocal : t.modeAi}
-                        </button>
-                    ))}
-                </div>
-                {mode === 'ai' && (
-                    <div className="inline-flex gap-1">
-                        {([1, 2, 3] as AiLevel[]).map((lv) => (
-                            <button key={lv} onClick={() => { setLevel(lv); initGame(); }}
-                                aria-pressed={level === lv}
-                                className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-colors ${level === lv ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
-                                {lv === 1 ? t.level1 : lv === 2 ? t.level2 : t.level3}
+        <div
+            ref={containerRef}
+            data-game-surface
+            className={
+                isImmersive
+                    ? "fixed inset-0 z-50 w-screen h-dvh bg-background p-3 sm:p-5 overflow-y-auto flex flex-col justify-between m-0 select-none"
+                    : "relative"
+            }
+        >
+            <GameContainer title={t.title} subtitle="Reversal Strategy" onReset={initGame}>
+                {/* Mode + difficulty */}
+                <div className="mb-4 flex flex-wrap items-center gap-2">
+                    <div className="inline-flex rounded-xl border border-border overflow-hidden" role="group" aria-label={`${t.modeLocal} / ${t.modeAi}`}>
+                        {(['local', 'ai'] as GameMode[]).map((m) => (
+                            <button key={m} onClick={() => switchMode(m)}
+                                aria-pressed={mode === m}
+                                className={`px-3 py-1.5 text-xs font-bold transition-colors ${mode === m ? 'bg-primary text-primary-foreground' : 'bg-muted/50 text-muted-foreground hover:bg-muted'}`}>
+                                {m === 'local' ? t.modeLocal : t.modeAi}
                             </button>
                         ))}
                     </div>
-                )}
-                {mode === 'ai' && <p className="basis-full text-[11px] font-medium text-muted-foreground">{aiInfo.difficulty}: {aiInfo.level[level]}</p>}
-                {mode === 'ai' && record && (record.w + record.l + record.d > 0) && (
-                    <span className="ml-auto text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                        {t.record} {record.w}–{record.l}{record.d ? `–${record.d}` : ''}
-                    </span>
-                )}
-            </div>
+                    {mode === 'ai' && (
+                        <div className="inline-flex gap-1">
+                            {([1, 2, 3] as AiLevel[]).map((lv) => (
+                                <button key={lv} onClick={() => { setLevel(lv); initGame(); }}
+                                    aria-pressed={level === lv}
+                                    className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-colors ${level === lv ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
+                                    {lv === 1 ? t.level1 : lv === 2 ? t.level2 : t.level3}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                    {mode === 'ai' && <p className="basis-full text-[11px] font-medium text-muted-foreground">{aiInfo.difficulty}: {aiInfo.level[level]}</p>}
+                    {mode === 'ai' && record && (record.w + record.l + record.d > 0) && (
+                        <span className="ml-auto text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                            {t.record} {record.w}–{record.l}{record.d ? `–${record.d}` : ''}
+                        </span>
+                    )}
+                </div>
 
-            <div className="flex justify-between items-center mb-6">
-                <div className="flex gap-4">
-                    <div className={`flex items-center gap-2 p-3 rounded-2xl border ${!reducedMotion ? 'transition-all' : ''} ${game.current === 1 ? 'bg-primary/10 border-primary' : 'bg-muted border-transparent opacity-50'}`}>
-                        <img src={REVERSI_SPRITES.black} alt="" draggable={false} className="h-4 w-4 object-contain" />
-                        <span className="text-xs font-black">{t.black}: {bCount}</span>
+                <div className="flex justify-between items-center mb-6">
+                    <div className="flex gap-4">
+                        <div className={`flex items-center gap-2 p-3 rounded-2xl border ${!reducedMotion ? 'transition-all' : ''} ${game.current === 1 ? 'bg-primary/10 border-primary' : 'bg-muted border-transparent opacity-50'}`}>
+                            <img src={REVERSI_SPRITES.black} alt="" draggable={false} className="h-4 w-4 object-contain" />
+                            <span className="text-xs font-black">{t.black}: {bCount}</span>
+                        </div>
+                        <div className={`flex items-center gap-2 p-3 rounded-2xl border ${!reducedMotion ? 'transition-all' : ''} ${game.current === 2 ? 'bg-primary/10 border-primary' : 'bg-muted border-transparent opacity-50'}`}>
+                            <img src={REVERSI_SPRITES.white} alt="" draggable={false} className="h-4 w-4 object-contain" />
+                            <span className="text-xs font-black">{t.white}: {wCount}</span>
+                        </div>
                     </div>
-                    <div className={`flex items-center gap-2 p-3 rounded-2xl border ${!reducedMotion ? 'transition-all' : ''} ${game.current === 2 ? 'bg-primary/10 border-primary' : 'bg-muted border-transparent opacity-50'}`}>
-                        <img src={REVERSI_SPRITES.white} alt="" draggable={false} className="h-4 w-4 object-contain" />
-                        <span className="text-xs font-black">{t.white}: {wCount}</span>
+                    {thinking && <span className={`text-xs font-semibold text-muted-foreground ${!reducedMotion ? 'animate-pulse' : ''}`} aria-live="polite">{t.thinking}</span>}
+                </div>
+
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs font-bold" role="status" aria-live="polite">
+                    <span>{restored ? t.restored : game.passed ? t.passed(game.passed === 1 ? t.black : t.white) : `${t.turn}: ${game.current === 1 ? t.black : t.white} · ${t.moves} ${game.moves}`}</span>
+                    <div className="flex gap-2">
+                        <button type="button" onClick={() => setPaused(value => !value)} className="min-h-11 rounded-xl border border-border px-3 text-xs font-bold text-muted-foreground hover:bg-muted" aria-pressed={paused}>{paused ? '▶' : 'Ⅱ'}<span className="sr-only">{paused ? t.resume : t.pause}</span></button>
+                        <button
+                            type="button"
+                            onClick={() => setMuted((value) => !value)}
+                            aria-pressed={muted}
+                            aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+                            title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`}
+                            className="min-h-11 px-3 py-2 rounded-xl border border-border text-xs font-bold text-muted-foreground hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                        >
+                            {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+                            <span className="hidden sm:inline">{muted ? portalLabels.unmute : portalLabels.mute}</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={togglePortal}
+                            aria-pressed={isImmersive}
+                            aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+                            title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+                            className="min-h-11 px-3 py-2 rounded-xl border border-border text-xs font-bold text-muted-foreground hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                        >
+                            {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+                            <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+                        </button>
                     </div>
                 </div>
-                {thinking && <span className={`text-xs font-semibold text-muted-foreground ${!reducedMotion ? 'animate-pulse' : ''}`} aria-live="polite">{t.thinking}</span>}
-            </div>
-
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs font-bold" role="status" aria-live="polite">
-                <span>{restored ? t.restored : game.passed ? t.passed(game.passed === 1 ? t.black : t.white) : `${t.turn}: ${game.current === 1 ? t.black : t.white} · ${t.moves} ${game.moves}`}</span>
-                <div className="flex gap-2">
-                    <button type="button" onClick={() => setPaused(value => !value)} className="min-h-11 rounded-xl border px-3" aria-pressed={paused}>{paused ? '▶' : 'Ⅱ'}<span className="sr-only">{paused ? t.resume : t.pause}</span></button>
-                    <button type="button" onClick={() => setMuted(value => !value)} className="min-h-11 rounded-xl border px-3" aria-pressed={muted}>{muted ? '🔇' : '🔊'}<span className="sr-only">{soundLabel[locale]}</span></button>
-                </div>
-            </div>
 
             <div className="relative mx-auto grid aspect-square w-full max-w-[352px] grid-cols-8 grid-rows-8 overflow-hidden rounded-xl border-2 border-primary bg-primary/70 shadow-inner" role="grid" aria-label={t.board}>
                 {game.board.map((cell, i) => (
@@ -223,6 +302,7 @@ const Reversi: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                 )}
             </div>
         </GameContainer>
+        </div>
     );
 };
 

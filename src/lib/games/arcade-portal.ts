@@ -19,6 +19,8 @@ export interface ArcadePortalLabels {
   enter: string;
   exit: string;
   hint: string;
+  mute: string;
+  unmute: string;
 }
 
 export const ARCADE_PORTAL_LABELS: Record<Locale, ArcadePortalLabels> = {
@@ -26,31 +28,43 @@ export const ARCADE_PORTAL_LABELS: Record<Locale, ArcadePortalLabels> = {
     enter: "전체화면 몰입 모드",
     exit: "창모드로 복귀 (ESC)",
     hint: "화면 꺼짐 방지 및 100% 캔버스 전용 뷰포트 활성화",
+    mute: "소리 끄기",
+    unmute: "소리 켜기",
   },
   en: {
     enter: "Enter Immersion Mode",
     exit: "Exit Immersion (ESC)",
     hint: "Screen wake lock & 100% canvas viewport active",
+    mute: "Mute sound",
+    unmute: "Unmute sound",
   },
   ja: {
     enter: "全画面没入モード",
     exit: "通常表示に戻る (ESC)",
     hint: "スリープ防止＆全画面キャンバス表示が有効",
+    mute: "消音",
+    unmute: "音声をオン",
   },
   zh: {
     enter: "全屏沉浸模式",
     exit: "退出全屏 (ESC)",
     hint: "已启用屏幕常亮与全屏画布",
+    mute: "静音",
+    unmute: "开启声音",
   },
   fr: {
     enter: "Immersion plein écran",
     exit: "Quitter le plein écran (Échap)",
     hint: "Maintien de l'écran allumé et canevas 100% plein écran",
+    mute: "Couper le son",
+    unmute: "Activer le son",
   },
   es: {
     enter: "Modo inmersión total",
     exit: "Salir de pantalla completa (ESC)",
     hint: "Bloqueo de suspensión de pantalla y lienzo 100% activo",
+    mute: "Silenciar",
+    unmute: "Activar sonido",
   },
 };
 

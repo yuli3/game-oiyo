@@ -1,4 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
 import type { Locale } from '../../lib/i18n';
 import { gomokuBestMove, gomokuThreatAt, type GomokuThreat } from '../../lib/games/ai/gomoku';
 import type { AiLevel, GameMode } from '../../lib/games/ai/types';
@@ -68,7 +70,41 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     const [thinking, setThinking] = useState(false);
     const [paused, setPaused] = useState(false);
     const [restored, setRestored] = useState(false);
-    const [muted, setMuted] = useState(false);
+    const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'ko' });
+
+    const [muted, setMuted] = useState<boolean>(() => {
+        try {
+            if (typeof window !== 'undefined' && window.localStorage) {
+                return window.localStorage.getItem('gomoku_sound_muted') === 'true';
+            }
+        } catch {}
+        return false;
+    });
+    const mutedRef = useRef(muted);
+    useEffect(() => {
+        mutedRef.current = muted;
+        try {
+            if (typeof window !== 'undefined' && window.localStorage) {
+                window.localStorage.setItem('gomoku_sound_muted', String(muted));
+            }
+        } catch {}
+    }, [muted]);
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+            if (e.key === 'f' || e.key === 'F') {
+                e.preventDefault();
+                togglePortal();
+            } else if (e.key === 'm' || e.key === 'M') {
+                e.preventDefault();
+                setMuted((prev) => !prev);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [togglePortal]);
+
     const [record, setRecord] = useState<GameRecord | null>(null);
     const [focusIndex, setFocusIndex] = useState(112);
     const [lastMove, setLastMove] = useState<number | null>(null);
@@ -80,8 +116,8 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     const startedAtRef = useRef<number>(Date.now());
     const audio = useRef<AudioContext | null>(null);
 
-    const tone = (frequency: number, duration = 0.05) => {
-        if (muted || typeof window === 'undefined') return;
+    const tone = useCallback((frequency: number, duration = 0.05) => {
+        if (mutedRef.current || typeof window === 'undefined') return;
         const context = audio.current ?? new AudioContext();
         audio.current = context;
         const oscillator = context.createOscillator();
@@ -92,7 +128,7 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         oscillator.connect(gain).connect(context.destination);
         oscillator.start();
         oscillator.stop(context.currentTime + duration);
-    };
+    }, []);
 
     useEffect(() => {
         setRecord(getRecord('gomoku'));
@@ -231,53 +267,81 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     const coordinate = (index:number) => `${String.fromCharCode(65 + index % SIZE)}${Math.floor(index / SIZE) + 1}`;
 
     return (
-        <div className="not-prose my-12 p-4 sm:p-8 bg-card border border-border rounded-4xl shadow-sm max-w-lg mx-auto">
-            <div className="flex justify-between items-center mb-4">
-                <div>
-                    <h3 className="text-xl font-black text-foreground">{t.title}</h3>
-                    <div className="flex items-center gap-2 mt-1" aria-live="polite">
-                        <div className={`w-3 h-3 rounded-full ${isBlackTurn ? 'bg-slate-900' : 'bg-slate-200 border border-slate-400'}`} />
-                        <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                            {thinking ? t.thinking : `${isBlackTurn ? t.black : t.white} ${t.turn}`}
-                        </span>
+        <div
+            ref={containerRef}
+            data-game-surface
+            className={
+                isImmersive
+                    ? "fixed inset-0 z-50 w-screen h-dvh bg-background p-3 sm:p-5 overflow-y-auto flex flex-col items-center justify-between m-0 select-none"
+                    : "relative"
+            }
+        >
+            <div className={`not-prose ${isImmersive ? 'my-0 w-full max-w-2xl' : 'my-12 max-w-lg'} p-4 sm:p-8 bg-card border border-border rounded-4xl shadow-sm mx-auto`}>
+                <div className="flex justify-between items-center mb-4">
+                    <div>
+                        <h3 className="text-xl font-black text-foreground">{t.title}</h3>
+                        <div className="flex items-center gap-2 mt-1" aria-live="polite">
+                            <div className={`w-3 h-3 rounded-full ${isBlackTurn ? 'bg-slate-900' : 'bg-slate-200 border border-slate-400'}`} />
+                            <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                                {thinking ? t.thinking : `${isBlackTurn ? t.black : t.white} ${t.turn}`}
+                            </span>
+                        </div>
                     </div>
+                    <button type="button" onClick={reset} className="min-h-11 px-4 py-2 bg-muted hover:bg-muted/80 text-muted-foreground rounded-xl text-xs font-bold transition-colors motion-reduce:transition-none border border-border">
+                        {t.reset}
+                    </button>
                 </div>
-                <button type="button" onClick={reset} className="min-h-11 px-4 py-2 bg-muted hover:bg-muted/80 text-muted-foreground rounded-xl text-xs font-bold transition-colors motion-reduce:transition-none border border-border">
-                    {t.reset}
-                </button>
-            </div>
 
-            {/* Mode + difficulty */}
-            <div className="mb-4 flex flex-wrap items-center gap-2">
-                <div className="inline-flex rounded-xl border border-border overflow-hidden" role="group" aria-label={`${t.modeLocal} / ${t.modeAi}`}>
-                    {(['local', 'ai'] as GameMode[]).map((m) => (
-                        <button type="button" key={m} onClick={() => switchMode(m)}
-                            aria-pressed={mode === m}
-                            className={`min-h-11 px-3 py-1.5 text-xs font-bold transition-colors motion-reduce:transition-none ${mode === m ? 'bg-primary text-primary-foreground' : 'bg-muted/50 text-muted-foreground hover:bg-muted'}`}>
-                            {m === 'local' ? t.modeLocal : t.modeAi}
-                        </button>
-                    ))}
-                </div>
-                {mode === 'ai' && (
-                    <div className="inline-flex gap-1">
-                        {([1, 2, 3] as AiLevel[]).map((lv) => (
-                            <button type="button" key={lv} onClick={() => { setLevel(lv); reset(); }}
-                                aria-pressed={level === lv}
-                                className={`min-h-11 px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-colors motion-reduce:transition-none ${level === lv ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
-                                {lv === 1 ? t.level1 : lv === 2 ? t.level2 : t.level3}
+                {/* Mode + difficulty */}
+                <div className="mb-4 flex flex-wrap items-center gap-2">
+                    <div className="inline-flex rounded-xl border border-border overflow-hidden" role="group" aria-label={`${t.modeLocal} / ${t.modeAi}`}>
+                        {(['local', 'ai'] as GameMode[]).map((m) => (
+                            <button type="button" key={m} onClick={() => switchMode(m)}
+                                aria-pressed={mode === m}
+                                className={`min-h-11 px-3 py-1.5 text-xs font-bold transition-colors motion-reduce:transition-none ${mode === m ? 'bg-primary text-primary-foreground' : 'bg-muted/50 text-muted-foreground hover:bg-muted'}`}>
+                                {m === 'local' ? t.modeLocal : t.modeAi}
                             </button>
                         ))}
                     </div>
-                )}
-                {mode === 'ai' && <p className="basis-full text-[11px] font-medium text-muted-foreground">{aiInfo.difficulty}: {aiInfo.level[level]}</p>}
-                {moveCount > 0 && winner === null && (
-                    <button type="button" onClick={() => setPaused((value) => { if (value) setRestored(false); return !value; })} className="min-h-11 px-3 rounded-lg border border-border text-xs font-bold text-muted-foreground">
-                        {paused ? `▶ ${x.resume}` : `Ⅱ ${x.pause}`}
+                    {mode === 'ai' && (
+                        <div className="inline-flex gap-1">
+                            {([1, 2, 3] as AiLevel[]).map((lv) => (
+                                <button type="button" key={lv} onClick={() => { setLevel(lv); reset(); }}
+                                    aria-pressed={level === lv}
+                                    className={`min-h-11 px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-colors motion-reduce:transition-none ${level === lv ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
+                                    {lv === 1 ? t.level1 : lv === 2 ? t.level2 : t.level3}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                    {mode === 'ai' && <p className="basis-full text-[11px] font-medium text-muted-foreground">{aiInfo.difficulty}: {aiInfo.level[level]}</p>}
+                    {moveCount > 0 && winner === null && (
+                        <button type="button" onClick={() => setPaused((value) => { if (value) setRestored(false); return !value; })} className="min-h-11 px-3 rounded-lg border border-border text-xs font-bold text-muted-foreground hover:bg-muted">
+                            {paused ? `▶ ${x.resume}` : `Ⅱ ${x.pause}`}
+                        </button>
+                    )}
+                    <button
+                        type="button"
+                        onClick={() => setMuted((value) => !value)}
+                        aria-pressed={muted}
+                        aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+                        title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`}
+                        className="min-h-11 px-3 py-1.5 rounded-lg border border-border text-xs font-bold text-muted-foreground hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                    >
+                        {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+                        <span className="hidden sm:inline">{muted ? portalLabels.unmute : portalLabels.mute}</span>
                     </button>
-                )}
-                <button type="button" onClick={() => setMuted((value) => !value)} aria-pressed={muted} className="min-h-11 px-3 rounded-lg border border-border text-xs font-bold text-muted-foreground">
-                    {muted ? '🔇' : '🔊'} {x.sound}
-                </button>
+                    <button
+                        type="button"
+                        onClick={togglePortal}
+                        aria-pressed={isImmersive}
+                        aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+                        title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+                        className="min-h-11 px-3 py-1.5 rounded-lg border border-border text-xs font-bold text-muted-foreground hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                    >
+                        {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+                        <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+                    </button>
                 {mode === 'ai' && record && (record.w + record.l + record.d > 0) && (
                     <span className="ml-auto text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                         {t.record} {record.w}–{record.l}{record.d ? `–${record.d}` : ''}
@@ -369,6 +433,7 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
             <div className="mt-6 flex justify-center gap-6 text-[10px] text-muted-foreground font-medium uppercase tracking-widest opacity-50">
                 <div className="flex items-center gap-1"><span>⚫</span> {t.black}</div>
                 <div className="flex items-center gap-1"><span>⚪</span> {t.white}</div>
+            </div>
             </div>
         </div>
     );

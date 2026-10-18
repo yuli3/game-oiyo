@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
 import { GameContainer, PlayingCard } from '../ui/game/GamePrimitives';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { getRecord, recordResult, type GameRecord } from '../../lib/games/records';
 import {
   FREECELL_SUITS,
@@ -80,7 +82,41 @@ const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
   const [moves, setMoves] = useState(restored?.moves ?? 0);
   const [seconds, setSeconds] = useState(restored?.elapsedSeconds ?? 0);
   const [legacyMigrated, setLegacyMigrated] = useState(restored?.legacyMigrated ?? false);
-  const [muted, setMuted] = useState(false);
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'ko' });
+
+  const [muted, setMuted] = useState<boolean>(() => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        return window.localStorage.getItem('freecell_sound_muted') === 'true';
+      }
+    } catch {}
+    return false;
+  });
+  const mutedRef = useRef(muted);
+  useEffect(() => {
+    mutedRef.current = muted;
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem('freecell_sound_muted', String(muted));
+      }
+    } catch {}
+  }, [muted]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        togglePortal();
+      } else if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        setMuted((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [togglePortal]);
+
   const seedRef=useRef<number|null>(initialSeed);
   const moveMadeRef = useRef(Boolean(restored));
   const wonRef = useRef(false);
@@ -90,7 +126,7 @@ const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
   const audioRef = useRef<AudioContext | null>(null);
 
   const tone = useCallback((frequency: number, duration = 0.05) => {
-    if (muted || typeof window === 'undefined') return;
+    if (mutedRef.current || typeof window === 'undefined') return;
     const context = audioRef.current ?? new AudioContext();
     audioRef.current = context;
     const oscillator = context.createOscillator();
@@ -101,7 +137,7 @@ const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     oscillator.connect(gain).connect(context.destination);
     oscillator.start();
     oscillator.stop(context.currentTime + duration);
-  }, [muted]);
+  }, []);
   useEffect(() => () => { void audioRef.current?.close(); }, []);
 
   useEffect(() => { setStatus(t.instructions); }, [t]);
@@ -199,15 +235,43 @@ const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
   };
 
   return (
-    <GameContainer title={t.title} subtitle={t.desc} resetLabel={t.reset} onReset={() => initGame()}>
-      <div className="space-y-5" onFocusCapture={(event) => { lastFocusedRef.current = event.target instanceof HTMLElement ? event.target : null; }}>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">{t.instructions}</p>
-          <div className="flex items-center gap-2">
-            <button type="button" onClick={() => setMuted((value) => !value)} aria-pressed={muted} className="min-h-11 rounded-lg border border-border px-3 text-xs font-bold text-muted-foreground">
-              {muted ? '🔇' : '🔊'} {t.sound}
-            </button>
-            {record && record.w + record.l > 0 && (
+    <div
+      ref={containerRef}
+      data-game-surface
+      className={
+        isImmersive
+          ? "fixed inset-0 z-50 w-screen h-dvh bg-background p-3 sm:p-5 overflow-y-auto flex flex-col justify-between m-0 select-none"
+          : "relative"
+      }
+    >
+      <GameContainer title={t.title} subtitle={t.desc} resetLabel={t.reset} onReset={() => initGame()}>
+        <div className="space-y-5" onFocusCapture={(event) => { lastFocusedRef.current = event.target instanceof HTMLElement ? event.target : null; }}>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">{t.instructions}</p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setMuted((value) => !value)}
+                aria-pressed={muted}
+                aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+                title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`}
+                className="min-h-11 px-3 py-2 rounded-lg border border-border text-xs font-bold text-muted-foreground hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              >
+                {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+                <span className="hidden sm:inline">{muted ? portalLabels.unmute : portalLabels.mute}</span>
+              </button>
+              <button
+                type="button"
+                onClick={togglePortal}
+                aria-pressed={isImmersive}
+                aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+                title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+                className="min-h-11 px-3 py-2 rounded-lg border border-border text-xs font-bold text-muted-foreground hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              >
+                {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+                <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+              </button>
+              {record && record.w + record.l > 0 && (
               <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.record} {record.w}–{record.l}</p>
             )}
           </div>
@@ -291,6 +355,7 @@ const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         </div>
       )}
     </GameContainer>
+    </div>
   );
 };
 
