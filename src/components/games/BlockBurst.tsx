@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
 import { GameContainer } from "../ui/game/GamePrimitives";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { getBest, recordAchievementEvent, recordBest } from "../../lib/games/records";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { BLOCK_BURST_FX, BLOCK_BURST_SPRITES } from "../../lib/games/sprites";
@@ -354,7 +356,22 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
   const [augmentBest, setAugmentBest] = useState(0);
   const [game, setGame] = useState<BurstState>(() => createBlockBurst(1));
   const [best, setBest] = useState(0);
-  const [sound, setSound] = useState(true);
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || "en" });
+  const [sound, setSound] = useState<boolean>(() => {
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        return window.localStorage.getItem("blockburst_sound_enabled") !== "false";
+      }
+    } catch {}
+    return true;
+  });
+  useEffect(() => {
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        window.localStorage.setItem("blockburst_sound_enabled", String(sound));
+      }
+    } catch {}
+  }, [sound]);
   const [restored, setRestored] = useState(false);
   const [resolving, setResolving] = useState(false);
   const [bursting, setBursting] = useState<Cell[]>([]);
@@ -673,6 +690,17 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === "f" || e.key === "F") {
+        e.preventDefault();
+        togglePortal();
+        return;
+      }
+      if (e.key === "m" || e.key === "M") {
+        e.preventDefault();
+        setSound((v) => !v);
+        return;
+      }
       if (phaseRef.current === "briefing" && (e.key === "Enter" || e.key === " ")) {
         e.preventDefault();
         start();
@@ -736,149 +764,218 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
 
   if (phase === "briefing") {
     return (
-      <GameContainer title={t.title} subtitle={t.sub}>
-        <div className="mb-5 flex justify-center gap-2">
-          {([1, 2, 3, 4, 5] as BurstColor[]).map((color) => (
-            <div key={color} className="h-12 w-12">
-              <Gem color={color} />
-            </div>
-          ))}
-        </div>
-        <p className="mb-6 text-sm leading-relaxed text-muted-foreground">{t.hint}</p>
-        <button type="button" onClick={() => start("classic")} className={`${btn} w-full bg-primary text-primary-foreground`}>
-          {t.classic}
-        </button>
-        <button type="button" onClick={() => start("augment")} className={`${btn} mt-2 w-full border-chart-4 bg-chart-4/10 text-foreground`}>
-          {t.augment}
-        </button>
-        <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{t.augmentSub}</p>
-      </GameContainer>
+      <div
+        ref={containerRef}
+        data-game-surface
+        className={
+          isImmersive
+            ? "fixed inset-0 z-50 w-screen h-dvh bg-background p-3 sm:p-5 overflow-y-auto flex flex-col justify-between m-0 select-none"
+            : "relative"
+        }
+      >
+        <GameContainer title={t.title} subtitle={t.sub}>
+          <div className="mb-3 flex justify-end gap-2 items-center">
+            <button
+              type="button"
+              onClick={() => setSound((v) => !v)}
+              aria-pressed={sound}
+              aria-label={sound ? portalLabels.mute : portalLabels.unmute}
+              title={`${sound ? portalLabels.mute : portalLabels.unmute} (M)`}
+              className="min-h-11 px-3 py-2 rounded-xl border border-border text-xs font-bold text-muted-foreground hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            >
+              {sound ? <Volume2 className="size-4" /> : <VolumeX className="size-4" />}
+              <span className="hidden sm:inline">{sound ? portalLabels.mute : portalLabels.unmute}</span>
+            </button>
+            <button
+              type="button"
+              onClick={togglePortal}
+              aria-pressed={isImmersive}
+              aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+              title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+              className="min-h-11 px-3 py-2 rounded-xl border border-border text-xs font-bold text-muted-foreground hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            >
+              {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+              <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+            </button>
+          </div>
+          <div className="mb-5 flex justify-center gap-2">
+            {([1, 2, 3, 4, 5] as BurstColor[]).map((color) => (
+              <div key={color} className="h-12 w-12">
+                <Gem color={color} />
+              </div>
+            ))}
+          </div>
+          <p className="mb-6 text-sm leading-relaxed text-muted-foreground">{t.hint}</p>
+          <button type="button" onClick={() => start("classic")} className={`${btn} w-full bg-primary text-primary-foreground`}>
+            {t.classic}
+          </button>
+          <button type="button" onClick={() => start("augment")} className={`${btn} mt-2 w-full border-chart-4 bg-chart-4/10 text-foreground`}>
+            {t.augment}
+          </button>
+          <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{t.augmentSub}</p>
+        </GameContainer>
+      </div>
     );
   }
 
   return (
-    <GameContainer title={t.title} subtitle={mode === "augment" ? t.modeAugment : t.sub} resetLabel={t.again} onReset={() => start()}>
-      <div aria-live="polite" className="sr-only">{banner || (phase === "over" ? t.over : "")}</div>
-      <div className="mb-3 grid grid-cols-3 gap-2 text-center text-xs font-bold uppercase tracking-wider text-muted-foreground">
-        <div className="rounded-xl border border-border bg-card px-2 py-2"><div>{t.score}</div><div className="text-lg text-foreground">{game.score}</div></div>
-        <div className="rounded-xl border border-border bg-card px-2 py-2"><div>{t.best}</div><div className="text-lg text-foreground">{Math.max(mode === "augment" ? augmentBest : best, game.score)}</div></div>
-        <div className="rounded-xl border border-border bg-card px-2 py-2"><div>{t.level}</div><div className="text-lg text-foreground">{game.level}</div></div>
-      </div>
-      {restored && phase === "paused" ? <p className="mb-2 text-xs font-semibold text-primary">{t.restored}</p> : null}
-      <div className="relative flex items-start gap-3">
-        {phase === "picking" && run?.offer ? (
-          <div className="absolute inset-x-0 top-0 z-20 flex min-h-full rounded-[1.4rem] border border-[#cfc6a8] bg-[#f7f1dc]/95 p-2 shadow-lg backdrop-blur-[2px]" role="dialog" aria-label={t.pick}>
-            {/* The draft covers the board and the queue, and grows over the buttons on a narrow phone instead of scrolling. */}
-            <div className="m-auto flex w-full flex-col gap-1.5">
-            <p className="text-center text-sm font-black text-foreground">{t.pick}</p>
-            {run.offer.map((id, index) => {
-              const tier = TIER_OF[id];
-              const stack = run.owned[id] ?? 0;
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => pick(id)}
-                  className={`min-h-14 w-full rounded-2xl border-2 px-3 py-1.5 text-left shadow-sm transition active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${TIER_TONE[tier]}`}
-                >
-                  <span className="flex items-center justify-between gap-2 text-xs font-black uppercase tracking-widest opacity-70">
-                    <span>{index + 1} · {t.tiers[tier]}</span>
-                    {stack > 0 ? <span>×{stack + 1}</span> : null}
-                  </span>
-                  <span className="block text-sm font-black">{t.augments[id].name}</span>
-                  <span className="block text-xs font-semibold leading-tight opacity-85">{t.augments[id].desc}</span>
-                </button>
-              );
-            })}
-            <p className="hidden text-center text-xs text-muted-foreground sm:block">{t.pickKeys}</p>
-            </div>
+    <div
+      ref={containerRef}
+      data-game-surface
+      className={
+        isImmersive
+          ? "fixed inset-0 z-50 w-screen h-dvh bg-background p-3 sm:p-5 overflow-y-auto flex flex-col justify-between m-0 select-none"
+          : "relative"
+      }
+    >
+      <GameContainer title={t.title} subtitle={mode === "augment" ? t.modeAugment : t.sub} resetLabel={t.again} onReset={() => start()}>
+        <div aria-live="polite" className="sr-only">{banner || (phase === "over" ? t.over : "")}</div>
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <div className="grid grid-cols-3 gap-2 text-center text-xs font-bold uppercase tracking-wider text-muted-foreground flex-1">
+            <div className="rounded-xl border border-border bg-card px-2 py-2"><div>{t.score}</div><div className="text-lg text-foreground">{game.score}</div></div>
+            <div className="rounded-xl border border-border bg-card px-2 py-2"><div>{t.best}</div><div className="text-lg text-foreground">{Math.max(mode === "augment" ? augmentBest : best, game.score)}</div></div>
+            <div className="rounded-xl border border-border bg-card px-2 py-2"><div>{t.level}</div><div className="text-lg text-foreground">{game.level}</div></div>
           </div>
-        ) : null}
-        <div
-          ref={boardRef}
-          className="relative flex-1 touch-none overflow-hidden rounded-[1.4rem] border border-[#cfc6a8] bg-[radial-gradient(circle_at_top,#f7f1dc,rgba(232,223,186,0.95)_58%,#d7ccab)] p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_18px_40px_rgba(80,70,30,0.16)]"
-          style={{ transform: shake ? `translate(${shake % 2 ? -6 : 6}px, ${shake > 7 ? 4 : 0}px)` : undefined }}
-          onPointerDown={onPointerDown}
-          onPointerUp={onPointerUp}
-        >
-          <div className="grid aspect-[8/10] w-full gap-[3px]" style={{ gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${ROWS}, minmax(0, 1fr))` }}>
-            {display.flatMap((row, r) =>
-              row.map((cell, c) => {
-                const key = `${r}:${c}`;
-                const flashing = flashRows.includes(r) || flashCols.includes(c);
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setSound((v) => !v)}
+              aria-pressed={sound}
+              aria-label={sound ? portalLabels.mute : portalLabels.unmute}
+              title={`${sound ? portalLabels.mute : portalLabels.unmute} (M)`}
+              className="min-h-11 px-3 py-2 rounded-xl border border-border text-xs font-bold text-muted-foreground hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            >
+              {sound ? <Volume2 className="size-4" /> : <VolumeX className="size-4" />}
+              <span className="hidden sm:inline">{sound ? portalLabels.mute : portalLabels.unmute}</span>
+            </button>
+            <button
+              type="button"
+              onClick={togglePortal}
+              aria-pressed={isImmersive}
+              aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+              title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+              className="min-h-11 px-3 py-2 rounded-xl border border-border text-xs font-bold text-muted-foreground hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            >
+              {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+              <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+            </button>
+          </div>
+        </div>
+        {restored && phase === "paused" ? <p className="mb-2 text-xs font-semibold text-primary">{t.restored}</p> : null}
+        <div className="relative flex items-start gap-3">
+          {phase === "picking" && run?.offer ? (
+            <div className="absolute inset-x-0 top-0 z-20 flex min-h-full rounded-[1.4rem] border border-[#cfc6a8] bg-[#f7f1dc]/95 p-2 shadow-lg backdrop-blur-[2px]" role="dialog" aria-label={t.pick}>
+              {/* The draft covers the board and the queue, and grows over the buttons on a narrow phone instead of scrolling. */}
+              <div className="m-auto flex w-full flex-col gap-1.5">
+              <p className="text-center text-sm font-black text-foreground">{t.pick}</p>
+              {run.offer.map((id, index) => {
+                const tier = TIER_OF[id];
+                const stack = run.owned[id] ?? 0;
                 return (
-                  <div key={key} className={`relative rounded-[22%] bg-[#efe6c8]/70 ${flashing ? "ring-2 ring-warning" : ""}`}>
-                    {cell ? <Gem color={cell} ghost={ghostSet.has(key) && !liveSet.has(key)} bursting={burstingSet.has(key)} bomb={Boolean(run?.bomb) && liveSet.has(key)} /> : null}
-                  </div>
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => pick(id)}
+                    className={`min-h-14 w-full rounded-2xl border-2 px-3 py-1.5 text-left shadow-sm transition active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${TIER_TONE[tier]}`}
+                  >
+                    <span className="flex items-center justify-between gap-2 text-xs font-black uppercase tracking-widest opacity-70">
+                      <span>{index + 1} · {t.tiers[tier]}</span>
+                      {stack > 0 ? <span>×{stack + 1}</span> : null}
+                    </span>
+                    <span className="block text-sm font-black">{t.augments[id].name}</span>
+                    <span className="block text-xs font-semibold leading-tight opacity-85">{t.augments[id].desc}</span>
+                  </button>
                 );
-              }),
-            )}
-          </div>
-          <canvas ref={canvasRef} className="pointer-events-none absolute inset-0 h-full w-full" />
-          {banner ? (
-            <div className="pointer-events-none absolute inset-0 grid place-items-center">
-              <span className="rounded-full bg-foreground/85 px-4 py-1.5 text-sm font-black tracking-[0.2em] text-primary-foreground shadow-lg">
-                {banner}
-              </span>
-            </div>
-          ) : null}
-          {gainPop > 0 ? (
-            <div className="pointer-events-none absolute right-3 top-3 text-sm font-black text-warning-foreground">+{gainPop}</div>
-          ) : null}
-          {phase === "paused" || phase === "over" ? (
-            <div className="absolute inset-0 grid place-items-center bg-[#f7f1dc]/80 backdrop-blur-[2px]">
-              <div className="text-center">
-                <p className="mb-3 text-lg font-black text-foreground">{phase === "over" ? t.over : t.pause}</p>
-                <button type="button" className={`${btn} bg-primary text-primary-foreground`} onClick={() => (phase === "over" ? start() : setPhase(run?.offer ? "picking" : "playing"))}>
-                  {phase === "over" ? t.again : t.resume}
-                </button>
+              })}
+              <p className="hidden text-center text-xs text-muted-foreground sm:block">{t.pickKeys}</p>
               </div>
             </div>
           ) : null}
-        </div>
-        <div className="flex w-[4.5rem] flex-col gap-2">
-          <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.next}</div>
-          {game.queue.map((piece, i) => (
-            <div key={`${piece.shape}-${i}`} className="grid aspect-square grid-cols-4 gap-0.5 rounded-xl border border-border bg-card p-1">
-              {Array.from({ length: 16 }, (_, n) => {
-                const r = Math.floor(n / 4);
-                const c = n % 4;
-                const on = pieceCells({ ...piece, x: 0, y: 0 }).some((cell) => cell.r === r && cell.c === c);
-                return <div key={n}>{on ? <Gem color={piece.color} /> : <div className="h-full w-full" />}</div>;
-              })}
+          <div
+            ref={boardRef}
+            className="relative flex-1 touch-none overflow-hidden rounded-[1.4rem] border border-[#cfc6a8] bg-[radial-gradient(circle_at_top,#f7f1dc,rgba(232,223,186,0.95)_58%,#d7ccab)] p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_18px_40px_rgba(80,70,30,0.16)]"
+            style={{ transform: shake ? `translate(${shake % 2 ? -6 : 6}px, ${shake > 7 ? 4 : 0}px)` : undefined }}
+            onPointerDown={onPointerDown}
+            onPointerUp={onPointerUp}
+          >
+            <div className="grid aspect-[8/10] w-full gap-[3px]" style={{ gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${ROWS}, minmax(0, 1fr))` }}>
+              {display.flatMap((row, r) =>
+                row.map((cell, c) => {
+                  const key = `${r}:${c}`;
+                  const flashing = flashRows.includes(r) || flashCols.includes(c);
+                  return (
+                    <div key={key} className={`relative rounded-[22%] bg-[#efe6c8]/70 ${flashing ? "ring-2 ring-warning" : ""}`}>
+                      {cell ? <Gem color={cell} ghost={ghostSet.has(key) && !liveSet.has(key)} bursting={burstingSet.has(key)} bomb={Boolean(run?.bomb) && liveSet.has(key)} /> : null}
+                    </div>
+                  );
+                }),
+              )}
             </div>
-          ))}
-          {game.combo > 1 ? <div className="text-center text-xs font-black text-warning-foreground">{t.combo} {game.combo}</div> : null}
-        </div>
-      </div>
-      <div className="mt-4 grid grid-cols-4 gap-2">
-        <button type="button" className={btn} onClick={() => move(0, -1)} aria-label={t.left}>←</button>
-        <button type="button" className={btn} onClick={rotate} aria-label={t.rotate}>⟳</button>
-        <button type="button" className={btn} onClick={() => move(0, 1)} aria-label={t.right}>→</button>
-        <button type="button" className={btn} onClick={dropHard} aria-label={t.drop}>⬇</button>
-        <button type="button" className={`${btn} col-span-2`} onClick={dropSoft}>{t.down}</button>
-        <button type="button" className={btn} onClick={() => setPhase((p) => (p === "paused" ? (runStateRef.current?.offer ? "picking" : "playing") : p === "playing" ? "paused" : p))}>{phase === "paused" ? t.resume : t.pause}</button>
-        <button type="button" className={btn} onClick={() => setSound((v) => !v)} aria-pressed={sound}>{t.sound}</button>
-      </div>
-      {mode === "augment" && run && Object.keys(run.owned).length > 0 ? (
-        <div className="mt-3">
-          <div className="mb-1 text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.owned}</div>
-          <ul className="flex flex-wrap gap-1.5">
-            {BURST_AUGMENTS.filter((def) => run.owned[def.id]).map((def) => (
-              <li key={def.id} title={t.augments[def.id].desc} className={`rounded-full border px-2.5 py-1 text-xs font-black ${TIER_TONE[def.tier]}`}>
-                {t.augments[def.id].name}{(run.owned[def.id] ?? 0) > 1 ? ` ×${run.owned[def.id]}` : ""}
-              </li>
+            <canvas ref={canvasRef} className="pointer-events-none absolute inset-0 h-full w-full" />
+            {banner ? (
+              <div className="pointer-events-none absolute inset-0 grid place-items-center">
+                <span className="rounded-full bg-foreground/85 px-4 py-1.5 text-sm font-black tracking-[0.2em] text-primary-foreground shadow-lg">
+                  {banner}
+                </span>
+              </div>
+            ) : null}
+            {gainPop > 0 ? (
+              <div className="pointer-events-none absolute right-3 top-3 text-sm font-black text-warning-foreground">+{gainPop}</div>
+            ) : null}
+            {phase === "paused" || phase === "over" ? (
+              <div className="absolute inset-0 grid place-items-center bg-[#f7f1dc]/80 backdrop-blur-[2px]">
+                <div className="text-center">
+                  <p className="mb-3 text-lg font-black text-foreground">{phase === "over" ? t.over : t.pause}</p>
+                  <button type="button" className={`${btn} bg-primary text-primary-foreground`} onClick={() => (phase === "over" ? start() : setPhase(run?.offer ? "picking" : "playing"))}>
+                    {phase === "over" ? t.again : t.resume}
+                  </button>
+                </div>
+              </div>
+            ) : null}
+          </div>
+          <div className="flex w-[4.5rem] flex-col gap-2">
+            <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.next}</div>
+            {game.queue.map((piece, i) => (
+              <div key={`${piece.shape}-${i}`} className="grid aspect-square grid-cols-4 gap-0.5 rounded-xl border border-border bg-card p-1">
+                {Array.from({ length: 16 }, (_, n) => {
+                  const r = Math.floor(n / 4);
+                  const c = n % 4;
+                  const on = pieceCells({ ...piece, x: 0, y: 0 }).some((cell) => cell.r === r && cell.c === c);
+                  return <div key={n}>{on ? <Gem color={piece.color} /> : <div className="h-full w-full" />}</div>;
+                })}
+              </div>
             ))}
-          </ul>
+            {game.combo > 1 ? <div className="text-center text-xs font-black text-warning-foreground">{t.combo} {game.combo}</div> : null}
+          </div>
         </div>
-      ) : null}
-      <p className="mt-3 text-xs leading-relaxed text-muted-foreground">{t.hint}</p>
-      <style>{`
-        .bomb-mark{position:absolute;inset:24%;border-radius:9999px;background:radial-gradient(circle at 35% 30%,#6b7280,#111827 70%);box-shadow:0 0 0 2px #fde68a,0 0 10px rgba(239,68,68,.8);pointer-events:none}
-        .burst-sheet{position:absolute;inset:-22%;background:url(${BLOCK_BURST_FX.burstSheet}) 0 0 / 800% 100% no-repeat;animation:burstSheet 220ms steps(7) both;pointer-events:none}
-        @keyframes burstSheet { from { background-position: 0 0; } to { background-position: 100% 0; } }
-        @media (prefers-reduced-motion: reduce) { .burst-sheet { animation: none; background-position: 0 0; } }
-      `}</style>
-    </GameContainer>
+        <div className="mt-4 grid grid-cols-4 gap-2">
+          <button type="button" className={btn} onClick={() => move(0, -1)} aria-label={t.left}>←</button>
+          <button type="button" className={btn} onClick={rotate} aria-label={t.rotate}>⟳</button>
+          <button type="button" className={btn} onClick={() => move(0, 1)} aria-label={t.right}>→</button>
+          <button type="button" className={btn} onClick={dropHard} aria-label={t.drop}>⬇</button>
+          <button type="button" className={`${btn} col-span-2`} onClick={dropSoft}>{t.down}</button>
+          <button type="button" className={`${btn} col-span-2`} onClick={() => setPhase((p) => (p === "paused" ? (runStateRef.current?.offer ? "picking" : "playing") : p === "playing" ? "paused" : p))}>{phase === "paused" ? t.resume : t.pause}</button>
+        </div>
+        {mode === "augment" && run && Object.keys(run.owned).length > 0 ? (
+          <div className="mt-3">
+            <div className="mb-1 text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.owned}</div>
+            <ul className="flex flex-wrap gap-1.5">
+              {BURST_AUGMENTS.filter((def) => run.owned[def.id]).map((def) => (
+                <li key={def.id} title={t.augments[def.id].desc} className={`rounded-full border px-2.5 py-1 text-xs font-black ${TIER_TONE[def.tier]}`}>
+                  {t.augments[def.id].name}{(run.owned[def.id] ?? 0) > 1 ? ` ×${run.owned[def.id]}` : ""}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+        <p className="mt-3 text-xs leading-relaxed text-muted-foreground">{t.hint}</p>
+        <style>{`
+          .bomb-mark{position:absolute;inset:24%;border-radius:9999px;background:radial-gradient(circle at 35% 30%,#6b7280,#111827 70%);box-shadow:0 0 0 2px #fde68a,0 0 10px rgba(239,68,68,.8);pointer-events:none}
+          .burst-sheet{position:absolute;inset:-22%;background:url(${BLOCK_BURST_FX.burstSheet}) 0 0 / 800% 100% no-repeat;animation:burstSheet 220ms steps(7) both;pointer-events:none}
+          @keyframes burstSheet { from { background-position: 0 0; } to { background-position: 100% 0; } }
+          @media (prefers-reduced-motion: reduce) { .burst-sheet { animation: none; background-position: 0 0; } }
+        `}</style>
+      </GameContainer>
+    </div>
   );
 }

@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
 import confetti from "canvas-confetti";
 import type { Locale } from "../../lib/i18n";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { getBest, recordBest } from "../../lib/games/records";
 import { frameDeltaSeconds } from "../../lib/games/time-contracts";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
@@ -107,7 +109,22 @@ const RhythmTap: React.FC<Props> = ({ locale }) => {
   const [miss, setMiss] = useState(0);
   const [best, setBest] = useState(0);
   const [isNewBest, setIsNewBest] = useState(false);
-  const [muted, setMuted] = useState(false);
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || "en" });
+  const [muted, setMuted] = useState<boolean>(() => {
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        return window.localStorage.getItem("rhythmtap_sound_muted") === "true";
+      }
+    } catch {}
+    return false;
+  });
+  useEffect(() => {
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        window.localStorage.setItem("rhythmtap_sound_muted", String(muted));
+      }
+    } catch {}
+  }, [muted]);
   const mutedRef = useRef(false);
   useEffect(() => { mutedRef.current = muted; }, [muted]);
   const prefersReducedMotion = usePrefersReducedMotion();
@@ -257,12 +274,23 @@ const RhythmTap: React.FC<Props> = ({ locale }) => {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (phaseRef.current !== "playing" && (e.key === "f" || e.key === "F")) {
+        e.preventDefault();
+        togglePortal();
+        return;
+      }
+      if (e.key === "m" || e.key === "M") {
+        e.preventDefault();
+        setMuted((prev) => !prev);
+        return;
+      }
       const i = LANE_KEYS.indexOf(e.key.toLowerCase());
       if (i >= 0 && phaseRef.current === "playing") { e.preventDefault(); hitLane(i); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [hitLane]);
+  }, [hitLane, togglePortal]);
 
   const onTap = useCallback((clientX: number) => {
     const canvas = canvasRef.current; if (!canvas) return;
@@ -272,66 +300,91 @@ const RhythmTap: React.FC<Props> = ({ locale }) => {
   }, [hitLane]);
 
   return (
-    <div className="not-prose my-10 mx-auto max-w-md rounded-3xl border border-border bg-card p-4 text-card-foreground shadow-sm select-none">
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <div>
-          <div className="text-sm font-black uppercase tracking-widest text-primary">{t.title}</div>
-          <div className="text-[11px] text-muted-foreground">{t.subtitle}</div>
-        </div>
-        <button
-          type="button"
-          onClick={() => setMuted((value) => !value)}
-          aria-pressed={muted}
-          className="min-h-11 min-w-11 rounded-lg border border-border text-sm text-muted-foreground hover:bg-muted"
-        >
-          <span aria-hidden="true">{muted ? "🔇" : "🔊"}</span>
-          <span className="sr-only">{t.sound}</span>
-        </button>
-        <div className="text-right text-xs font-bold">
-          <div>{t.score}: <b className="text-primary">{score}</b></div>
-          <div className="text-muted-foreground">{t.best}: {best}</div>
-        </div>
-      </div>
-
-      <div className="relative mx-auto" style={{ maxWidth: `${W}px` }}>
-        <canvas
-          ref={canvasRef}
-          width={W}
-          height={H}
-          aria-label={t.title}
-          className="w-full rounded-2xl border border-border touch-none bg-[#0b1020] [cursor:pointer]"
-          style={{ aspectRatio: `${W} / ${H}` }}
-          onPointerDown={(e) => { e.preventDefault(); if (phaseRef.current === "playing") onTap(e.clientX); }}
-        />
-
-        {phase === "playing" && (
-          <div className="pointer-events-none absolute left-2 top-2 flex gap-3 text-[11px] font-bold text-white/90">
-            <span>{t.combo} {combo}</span>
-            <span className="text-red-300">{t.miss} {miss}/{MAX_MISS}</span>
+    <div
+      ref={containerRef}
+      data-game-surface
+      className={
+        isImmersive
+          ? "fixed inset-0 z-50 w-screen h-dvh bg-background p-3 sm:p-5 overflow-y-auto flex flex-col items-center justify-between m-0 select-none"
+          : "relative"
+      }
+    >
+      <div className={`not-prose ${isImmersive ? "my-0 w-full max-w-md" : "my-10 mx-auto max-w-md"} rounded-3xl border border-border bg-card p-4 text-card-foreground shadow-sm select-none`}>
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <div>
+            <div className="text-sm font-black uppercase tracking-widest text-primary">{t.title}</div>
+            <div className="text-[11px] text-muted-foreground">{t.subtitle}</div>
           </div>
-        )}
-
-        {phase !== "playing" && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 rounded-2xl bg-black/55 px-6 text-center backdrop-blur-sm"
-            onPointerDown={(e) => { e.preventDefault(); begin(); }}>
-            {phase === "over" && (
-              <div role="status" aria-live="polite">
-                {isNewBest && <div className="text-sm font-black text-violet-300">{t.newBest}</div>}
-                <div className="text-xl font-black text-white">{t.gameOver}</div>
-                <div className="text-sm text-white/80">{t.score}: <b>{score}</b> · {t.best}: {best}</div>
-              </div>
-            )}
-            {phase === "menu" && (
-              <>
-                <div className="text-4xl">🎵</div>
-                <p className="max-w-xs text-xs leading-relaxed text-white/80">{t.controls}</p>
-              </>
-            )}
-            <button className="rounded-full bg-violet-500 px-8 py-2.5 font-bold text-white transition-colors hover:bg-violet-600">
-              {phase === "over" ? t.restart : t.tapStart}
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setMuted((value) => !value)}
+              aria-pressed={muted}
+              aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+              title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`}
+              className="min-h-11 px-3 py-2 rounded-xl border border-border text-xs font-bold text-muted-foreground hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            >
+              {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+              <span className="hidden sm:inline">{muted ? portalLabels.unmute : portalLabels.mute}</span>
+            </button>
+            <button
+              type="button"
+              onClick={togglePortal}
+              aria-pressed={isImmersive}
+              aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+              title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+              className="min-h-11 px-3 py-2 rounded-xl border border-border text-xs font-bold text-muted-foreground hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            >
+              {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+              <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
             </button>
           </div>
-        )}
+          <div className="text-right text-xs font-bold">
+            <div>{t.score}: <b className="text-primary">{score}</b></div>
+            <div className="text-muted-foreground">{t.best}: {best}</div>
+          </div>
+        </div>
+
+        <div className="relative mx-auto" style={{ maxWidth: `${W}px` }}>
+          <canvas
+            ref={canvasRef}
+            width={W}
+            height={H}
+            aria-label={t.title}
+            className="w-full rounded-2xl border border-border touch-none bg-[#0b1020] [cursor:pointer]"
+            style={{ aspectRatio: `${W} / ${H}` }}
+            onPointerDown={(e) => { e.preventDefault(); if (phaseRef.current === "playing") onTap(e.clientX); }}
+          />
+
+          {phase === "playing" && (
+            <div className="pointer-events-none absolute left-2 top-2 flex gap-3 text-[11px] font-bold text-white/90">
+              <span>{t.combo} {combo}</span>
+              <span className="text-red-300">{t.miss} {miss}/{MAX_MISS}</span>
+            </div>
+          )}
+
+          {phase !== "playing" && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 rounded-2xl bg-black/55 px-6 text-center backdrop-blur-sm"
+              onPointerDown={(e) => { e.preventDefault(); begin(); }}>
+              {phase === "over" && (
+                <div role="status" aria-live="polite">
+                  {isNewBest && <div className="text-sm font-black text-violet-300">{t.newBest}</div>}
+                  <div className="text-xl font-black text-white">{t.gameOver}</div>
+                  <div className="text-sm text-white/80">{t.score}: <b>{score}</b> · {t.best}: {best}</div>
+                </div>
+              )}
+              {phase === "menu" && (
+                <>
+                  <div className="text-4xl">🎵</div>
+                  <p className="max-w-xs text-xs leading-relaxed text-white/80">{t.controls}</p>
+                </>
+              )}
+              <button className="rounded-full bg-violet-500 px-8 py-2.5 font-bold text-white transition-colors hover:bg-violet-600">
+                {phase === "over" ? t.restart : t.tapStart}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

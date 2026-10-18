@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
 import { GameContainer } from "../ui/game/GamePrimitives";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { frameScale } from "../../lib/games/time-contracts";
 import {
   chargeJump,
@@ -152,8 +154,23 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
     [height, setHeight] = useState(0),
     [best, setBest] = useState(0),
     [charge, setCharge] = useState(0),
-    [sound, setSound] = useState(true),
     [restored, setRestored] = useState(false);
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || "en" });
+  const [sound, setSound] = useState<boolean>(() => {
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        return window.localStorage.getItem("dotjumpking_sound_enabled") !== "false";
+      }
+    } catch {}
+    return true;
+  });
+  useEffect(() => {
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        window.localStorage.setItem("dotjumpking_sound_enabled", String(sound));
+      }
+    } catch {}
+  }, [sound]);
   const phaseRef = useRef(phase);
   phaseRef.current = phase;
   const tone = useCallback(
@@ -215,6 +232,14 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
   };
   useEffect(() => {
     const keyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === "f" || e.key === "F") {
+        e.preventDefault();
+        togglePortal();
+      } else if (e.key === "m" || e.key === "M") {
+        e.preventDefault();
+        setSound((v) => !v);
+      }
       if (e.code === "Space") {
         e.preventDefault();
         if (phaseRef.current === "playing")
@@ -290,109 +315,173 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
   }, [best, tone, phase]);
   if (phase === "briefing")
     return (
-      <GameContainer title={t.title} subtitle={t.sub} onReset={start}>
-        <div className="overflow-hidden rounded-3xl border bg-card">
-          <img
-            src="/games/dot-jumpking-social-play.png"
-            alt=""
-            className="h-64 w-full object-cover sm:h-80"
-          />
-          <div className="p-5 text-center">
-            <p className="text-sm text-muted-foreground">{t.hint}</p>
+      <div
+        ref={containerRef}
+        data-game-surface
+        className={
+          isImmersive
+            ? "fixed inset-0 z-50 w-screen h-dvh bg-background p-3 sm:p-5 overflow-y-auto flex flex-col justify-between m-0 select-none"
+            : "relative"
+        }
+      >
+        <GameContainer title={t.title} subtitle={t.sub} onReset={start}>
+          <div className="mb-3 flex justify-end gap-2 items-center">
             <button
-              onClick={() => start()}
-              className="mt-5 min-h-12 rounded-full bg-primary px-8 font-black text-primary-foreground"
+              type="button"
+              onClick={() => setSound((v) => !v)}
+              aria-pressed={sound}
+              aria-label={sound ? portalLabels.mute : portalLabels.unmute}
+              title={`${sound ? portalLabels.mute : portalLabels.unmute} (M)`}
+              className="min-h-11 px-3 py-2 rounded-xl border border-border text-xs font-bold text-muted-foreground hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             >
-              {t.start}
+              {sound ? <Volume2 className="size-4" /> : <VolumeX className="size-4" />}
+              <span className="hidden sm:inline">{sound ? portalLabels.mute : portalLabels.unmute}</span>
+            </button>
+            <button
+              type="button"
+              onClick={togglePortal}
+              aria-pressed={isImmersive}
+              aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+              title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+              className="min-h-11 px-3 py-2 rounded-xl border border-border text-xs font-bold text-muted-foreground hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            >
+              {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+              <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
             </button>
           </div>
-        </div>
-      </GameContainer>
-    );
-  return (
-    <GameContainer title={t.title} subtitle={t.sub} onReset={start}>
-      <div className="mx-auto max-w-[400px]">
-        <div className="mb-3 grid grid-cols-3 gap-2">
-          <Stat label={t.height} value={`${height}m`} />
-          <Stat label={t.best} value={`${best}m`} />
-          <Stat label={t.charge} value={`${charge}%`} />
-        </div>
-        {restored && (
-          <p
-            role="status"
-            className="mb-3 rounded-xl bg-primary/10 p-3 text-center text-xs font-bold text-primary"
-          >
-            {t.restored}
-          </p>
-        )}
-        <div className="relative overflow-hidden rounded-3xl border bg-[#eef3df] touch-none">
-          <canvas
-            ref={canvas}
-            width={JUMP_W}
-            height={JUMP_H}
-            tabIndex={0}
-            className="block h-auto w-full focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary"
-            aria-label={t.title}
-            onPointerDown={(e) => {
-              e.preventDefault();
-              down(e.clientX);
-            }}
-            onPointerMove={(e) => aim(e.clientX)}
-          />
-          {phase === "paused" && (
-            <button
-              onClick={() => setPhase("playing")}
-              className="absolute inset-0 bg-white/90 text-xl font-black"
-            >
-              {t.resume}
-            </button>
-          )}
-          {phase === "over" && (
-            <div
-              className="absolute inset-0 flex flex-col items-center justify-center bg-white/90 p-6 text-center"
-              role="status"
-            >
-              <h3 className="text-xl font-black">{t.over}</h3>
-              <p className="mt-2">
-                {t.result}: {height}m
-              </p>
+          <div className="overflow-hidden rounded-3xl border bg-card">
+            <img
+              src="/games/dot-jumpking-social-play.png"
+              alt=""
+              className="h-64 w-full object-cover sm:h-80"
+            />
+            <div className="p-5 text-center">
+              <p className="text-sm text-muted-foreground">{t.hint}</p>
               <button
                 onClick={() => start()}
                 className="mt-5 min-h-12 rounded-full bg-primary px-8 font-black text-primary-foreground"
               >
-                {t.again}
+                {t.start}
+              </button>
+            </div>
+          </div>
+        </GameContainer>
+      </div>
+    );
+  return (
+    <div
+      ref={containerRef}
+      data-game-surface
+      className={
+        isImmersive
+          ? "fixed inset-0 z-50 w-screen h-dvh bg-background p-3 sm:p-5 overflow-y-auto flex flex-col justify-between m-0 select-none"
+          : "relative"
+      }
+    >
+      <GameContainer title={t.title} subtitle={t.sub} onReset={start}>
+        <div className="mx-auto max-w-[400px]">
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <div className="grid grid-cols-3 gap-2 flex-1">
+              <Stat label={t.height} value={`${height}m`} />
+              <Stat label={t.best} value={`${best}m`} />
+              <Stat label={t.charge} value={`${charge}%`} />
+            </div>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setSound((v) => !v)}
+                aria-pressed={sound}
+                aria-label={sound ? portalLabels.mute : portalLabels.unmute}
+                title={`${sound ? portalLabels.mute : portalLabels.unmute} (M)`}
+                className="min-h-11 px-3 py-2 rounded-xl border border-border text-xs font-bold text-muted-foreground hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              >
+                {sound ? <Volume2 className="size-4" /> : <VolumeX className="size-4" />}
+                <span className="hidden sm:inline">{sound ? portalLabels.mute : portalLabels.unmute}</span>
               </button>
               <button
                 type="button"
-                onClick={() => start(state.current.seed)}
-                className="mt-2 min-h-11 rounded-full border px-6 text-sm font-bold"
+                onClick={togglePortal}
+                aria-pressed={isImmersive}
+                aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+                title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+                className="min-h-11 px-3 py-2 rounded-xl border border-border text-xs font-bold text-muted-foreground hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
-                {locale === "ko" ? "같은 탑" : locale === "ja" ? "同じ塔" : locale === "zh" ? "同一塔" : locale === "fr" ? "Même tour" : locale === "es" ? "Misma torre" : "Same tower"}
+                {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+                <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
               </button>
             </div>
+          </div>
+          {restored && (
+            <p
+              role="status"
+              className="mb-3 rounded-xl bg-primary/10 p-3 text-center text-xs font-bold text-primary"
+            >
+              {t.restored}
+            </p>
           )}
+          <div className="relative overflow-hidden rounded-3xl border bg-[#eef3df] touch-none">
+            <canvas
+              ref={canvas}
+              width={JUMP_W}
+              height={JUMP_H}
+              tabIndex={0}
+              className="block h-auto w-full focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary"
+              aria-label={t.title}
+              onPointerDown={(e) => {
+                e.preventDefault();
+                down(e.clientX);
+              }}
+              onPointerMove={(e) => aim(e.clientX)}
+            />
+            {phase === "paused" && (
+              <button
+                onClick={() => setPhase("playing")}
+                className="absolute inset-0 bg-white/90 text-xl font-black"
+              >
+                {t.resume}
+              </button>
+            )}
+            {phase === "over" && (
+              <div
+                className="absolute inset-0 flex flex-col items-center justify-center bg-white/90 p-6 text-center"
+                role="status"
+              >
+                <h3 className="text-xl font-black">{t.over}</h3>
+                <p className="mt-2">
+                  {t.result}: {height}m
+                </p>
+                <button
+                  onClick={() => start()}
+                  className="mt-5 min-h-12 rounded-full bg-primary px-8 font-black text-primary-foreground"
+                >
+                  {t.again}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => start(state.current.seed)}
+                  className="mt-2 min-h-11 rounded-full border px-6 text-sm font-bold"
+                >
+                  {locale === "ko" ? "같은 탑" : locale === "ja" ? "同じ塔" : locale === "zh" ? "同一塔" : locale === "fr" ? "Même tour" : locale === "es" ? "Misma torre" : "Same tower"}
+                </button>
+              </div>
+            )}
+          </div>
+          <div className="mt-3">
+            <button
+              onClick={() =>
+                setPhase((p) => (p === "playing" ? "paused" : "playing"))
+              }
+              className="w-full min-h-11 rounded-xl border bg-card font-bold hover:bg-muted"
+            >
+              {phase === "paused" ? t.resume : t.pause}
+            </button>
+          </div>
+          <p className="mt-3 text-center text-xs text-muted-foreground">
+            {t.hint}
+          </p>
         </div>
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          <button
-            onClick={() =>
-              setPhase((p) => (p === "playing" ? "paused" : "playing"))
-            }
-            className="min-h-11 rounded-xl border bg-card font-bold"
-          >
-            {phase === "paused" ? t.resume : t.pause}
-          </button>
-          <button
-            onClick={() => setSound((v) => !v)}
-            className="min-h-11 rounded-xl border bg-card font-bold"
-          >
-            {t.sound} {sound ? "ON" : "OFF"}
-          </button>
-        </div>
-        <p className="mt-3 text-center text-xs text-muted-foreground">
-          {t.hint}
-        </p>
-      </div>
-    </GameContainer>
+      </GameContainer>
+    </div>
   );
 }
 function Stat({ label, value }: { label: string; value: string }) {

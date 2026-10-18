@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
 import confetti from "canvas-confetti";
 import type { Locale } from "../../lib/i18n";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { getBest, recordAchievementEvent, recordBest } from "../../lib/games/records";
 import { loadReplayEnvelope, saveReplayEnvelope, verifyReplayEnvelope, type ReplayInput } from "../../lib/games/replay";
 import { frameDeltaSeconds } from "../../lib/games/time-contracts";
@@ -275,9 +277,40 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
   const [lives, setLives] = useState(3);
   const [best, setBest] = useState(0);
   const [isNewBest, setIsNewBest] = useState(false);
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || "en" });
   const [upgradeOptions, setUpgradeOptions] = useState<StarBlasterUpgradeId[]>([]);
   const [weapon, setWeapon] = useState("pulse");
-  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [soundEnabled, setSoundEnabled] = useState<boolean>(() => {
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        return window.localStorage.getItem("star_blaster_sound_enabled") !== "false";
+      }
+    } catch {}
+    return true;
+  });
+  useEffect(() => {
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        window.localStorage.setItem("star_blaster_sound_enabled", String(soundEnabled));
+      }
+    } catch {}
+  }, [soundEnabled]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === "f" || e.key === "F") {
+        e.preventDefault();
+        togglePortal();
+      } else if (e.key === "m" || e.key === "M") {
+        e.preventDefault();
+        setSoundEnabled((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [togglePortal]);
+
   const [debrief, setDebrief] = useState<Debrief>({ kills: 0, damageTaken: 0, weaponBest: 0, lastHit: null });
   const [bindings, setBindings] = useState<KeyBindings>(DEFAULT_BINDINGS);
   const [controlsOpen, setControlsOpen] = useState(false);
@@ -637,26 +670,50 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
   }, [begin, chooseUpgrade, steerByKeyboard, togglePause, upgradeOptions]);
 
   return (
-    <div className="not-prose my-10 mx-auto max-w-md rounded-3xl border border-border bg-card p-4 text-card-foreground shadow-sm select-none">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <div>
-          <div className="text-sm font-black uppercase tracking-widest text-primary">{t.title}</div>
-          <div className="text-[11px] text-muted-foreground">{t.subtitle}</div>
+    <div
+      ref={containerRef}
+      data-game-surface
+      className={
+        isImmersive
+          ? "fixed inset-0 z-50 w-screen h-dvh bg-background p-3 sm:p-5 overflow-y-auto flex flex-col items-center justify-between m-0 select-none"
+          : "relative"
+      }
+    >
+      <div className={`not-prose ${isImmersive ? "my-0 w-full max-w-md" : "my-10 mx-auto max-w-md"} rounded-3xl border border-border bg-card p-4 text-card-foreground shadow-sm select-none`}>
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div>
+            <div className="text-sm font-black uppercase tracking-widest text-primary">{t.title}</div>
+            <div className="text-[11px] text-muted-foreground">{t.subtitle}</div>
+          </div>
+          <div className="text-right text-xs font-bold">
+            <div>{t.score}: <b className="text-primary">{score}</b></div>
+            <div className="text-muted-foreground">{t.best}: {best}</div>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setSoundEnabled((current) => !current)}
+              className="min-h-11 px-3 py-2 rounded-xl border border-border text-xs font-bold text-muted-foreground hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              aria-label={soundEnabled ? portalLabels.mute : portalLabels.unmute}
+              title={`${soundEnabled ? portalLabels.mute : portalLabels.unmute} (M)`}
+              aria-pressed={soundEnabled}
+            >
+              {soundEnabled ? <Volume2 className="size-4" /> : <VolumeX className="size-4" />}
+              <span className="hidden sm:inline">{soundEnabled ? portalLabels.mute : portalLabels.unmute}</span>
+            </button>
+            <button
+              type="button"
+              onClick={togglePortal}
+              className="min-h-11 px-3 py-2 rounded-xl border border-border text-xs font-bold text-muted-foreground hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+              title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+              aria-pressed={isImmersive}
+            >
+              {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+              <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+            </button>
+          </div>
         </div>
-        <div className="text-right text-xs font-bold">
-          <div>{t.score}: <b className="text-primary">{score}</b></div>
-          <div className="text-muted-foreground">{t.best}: {best}</div>
-        </div>
-        <button
-          type="button"
-          onClick={() => setSoundEnabled((current) => !current)}
-          className="min-h-11 min-w-11 rounded-full border border-border text-base"
-          aria-label={soundEnabled ? resultT.soundOn : resultT.soundOff}
-          aria-pressed={soundEnabled}
-        >
-          {soundEnabled ? "🔊" : "🔇"}
-        </button>
-      </div>
 
       <div className="relative mx-auto" style={{ maxWidth: `${W}px` }}>
         <canvas
@@ -823,6 +880,7 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
       <div className="sr-only" aria-live="polite">
         {phase === "playing" ? `${t.wave} ${wave}. ${t.score} ${score}. ${t.lives} ${lives}.` : ""}
       </div>
+    </div>
     </div>
   );
 };

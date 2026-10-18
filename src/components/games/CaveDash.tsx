@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
 import confetti from "canvas-confetti";
 import type { Locale } from "../../lib/i18n";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { getBest, recordBest } from "../../lib/games/records";
 import { frameScale } from "../../lib/games/time-contracts";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
@@ -112,7 +114,38 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
   const [score, setScore] = useState(0);
   const [best, setBest] = useState(0);
   const [isNewBest, setIsNewBest] = useState(false);
-  const [muted, setMuted] = useState(false);
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || "en" });
+  const [muted, setMuted] = useState<boolean>(() => {
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        return window.localStorage.getItem("cavedash_sound_muted") === "true";
+      }
+    } catch {}
+    return false;
+  });
+  useEffect(() => {
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        window.localStorage.setItem("cavedash_sound_muted", String(muted));
+      }
+    } catch {}
+  }, [muted]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === "f" || e.key === "F") {
+        e.preventDefault();
+        togglePortal();
+      } else if (e.key === "m" || e.key === "M") {
+        e.preventDefault();
+        setMuted((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [togglePortal]);
+
   const [finalFrames, setFinalFrames] = useState(0);
   const [death, setDeath] = useState<CaveDashDeath | null>(null);
   const seedRef = useRef<number | null>(null);
@@ -386,70 +419,109 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
   }, [flap, begin, resume]);
 
   return (
-    <div className="not-prose my-10 mx-auto max-w-md rounded-3xl border border-border bg-card p-4 text-card-foreground shadow-sm select-none">
-      <div className="mb-3 flex items-center justify-between">
-        <div>
-          <div className="text-sm font-black uppercase tracking-widest text-primary">{t.title}</div>
-          <div className="text-[11px] text-muted-foreground">{t.subtitle}</div>
-        </div>
-        <div className="text-right text-xs font-bold">
-          <div>{t.score}: <b className="text-primary">{score}</b></div>
-          <div className="text-muted-foreground">{t.best}: {best}</div>
-        </div>
-      </div>
-
-      <div className="mb-3 flex justify-end gap-2">
-        {phase === "playing" && <button type="button" onClick={pause} className="min-h-11 rounded-lg border border-border px-3 text-xs font-bold text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">{t.pause}</button>}
-        <button type="button" onClick={() => setMuted((value) => !value)} aria-label={muted ? t.soundOn : t.soundOff} aria-pressed={!muted} className="grid min-h-11 min-w-11 place-items-center rounded-lg border border-border text-base text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">{muted ? "🔇" : "🔊"}</button>
-      </div>
-
-      <div className="relative mx-auto" style={{ maxWidth: `${CAVE_WIDTH}px` }}>
-        <canvas
-          ref={canvasRef}
-          width={CAVE_WIDTH}
-          height={CAVE_HEIGHT}
-          className="w-full rounded-2xl border border-border touch-none bg-[#0b1020] [cursor:pointer]"
-          style={{ aspectRatio: `${CAVE_WIDTH} / ${CAVE_HEIGHT}` }}
-          role="img"
-          aria-label={t.playArea}
-          onPointerDown={(e) => { e.preventDefault(); if (phaseRef.current === "playing") flap(); }}
-        />
-
-        {phase === "playing" && (
-          <div className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 text-2xl font-black text-white/90">{score}</div>
-        )}
-
-        {phase !== "playing" && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 rounded-2xl bg-black/55 px-6 text-center backdrop-blur-sm">
-            {phase === "over" && (
-              <>
-                {isNewBest && <div className="text-sm font-black text-violet-300">{t.newBest}</div>}
-                <div className="text-xl font-black text-white">{t.gameOver}</div>
-                {death && <div className="text-sm font-bold text-amber-200">{t.death[death]}</div>}
-                <div className="text-sm text-white/80">{t.score}: <b>{score}</b> · {t.best}: {best}</div>
-                <div className="grid w-full max-w-xs grid-cols-2 gap-2 text-left text-xs text-white/80">
-                  <div className="rounded-xl bg-white/10 p-3"><span className="block text-white/60">{t.flightTime}</span><b>{Math.max(1, Math.round(finalFrames / 60))} {t.seconds}</b></div>
-                  <div className="rounded-xl bg-white/10 p-3"><span className="block text-white/60">{t.nextTarget}</span><b>{Math.max(best, score) + 1}</b></div>
-                </div>
-              </>
-            )}
-            {phase === "paused" && <div className="text-xl font-black text-white">{t.paused}</div>}
-            {phase === "menu" && (
-              <>
-                <div className="text-4xl">🚀</div>
-                <p className="max-w-xs text-xs leading-relaxed text-white/80">{t.controls}</p>
-              </>
-            )}
-            <div className="flex flex-wrap justify-center gap-2">
-              {phase === "over" && <button type="button" onClick={() => seedRef.current !== null ? begin(seedRef.current) : begin()} disabled={seedRef.current === null} className="min-h-11 rounded-full border border-white/40 px-6 py-2.5 font-bold text-white disabled:opacity-40">{t.retrySame}</button>}
-              <button type="button" onClick={phase === "paused" ? resume : () => begin()} className="min-h-11 rounded-full bg-violet-500 px-8 py-2.5 font-bold text-white transition-colors hover:bg-violet-600">
-                {phase === "paused" ? t.resume : phase === "over" ? t.retryNew : t.tapStart}
-              </button>
-            </div>
+    <div
+      ref={containerRef}
+      data-game-surface
+      className={
+        isImmersive
+          ? "fixed inset-0 z-50 w-screen h-dvh bg-background p-3 sm:p-5 overflow-y-auto flex flex-col items-center justify-between m-0 select-none"
+          : "relative"
+      }
+    >
+      <div className={`not-prose ${isImmersive ? "my-0 w-full max-w-md" : "my-10 mx-auto max-w-md"} rounded-3xl border border-border bg-card p-4 text-card-foreground shadow-sm select-none`}>
+        <div className="mb-3 flex items-center justify-between">
+          <div>
+            <div className="text-sm font-black uppercase tracking-widest text-primary">{t.title}</div>
+            <div className="text-[11px] text-muted-foreground">{t.subtitle}</div>
           </div>
-        )}
+          <div className="text-right text-xs font-bold">
+            <div>{t.score}: <b className="text-primary">{score}</b></div>
+            <div className="text-muted-foreground">{t.best}: {best}</div>
+          </div>
+        </div>
+
+        <div className="mb-3 flex items-center justify-end gap-2">
+          {phase === "playing" && (
+            <button
+              type="button"
+              onClick={pause}
+              className="min-h-11 rounded-xl border border-border px-3 text-xs font-bold text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              {t.pause}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => setMuted((prev) => !prev)}
+            className="min-h-11 px-3 py-2 rounded-xl border border-border text-xs font-bold text-muted-foreground hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+            title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`}
+            aria-pressed={muted}
+          >
+            {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+            <span className="hidden sm:inline">{muted ? portalLabels.unmute : portalLabels.mute}</span>
+          </button>
+          <button
+            type="button"
+            onClick={togglePortal}
+            className="min-h-11 px-3 py-2 rounded-xl border border-border text-xs font-bold text-muted-foreground hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+            title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+            aria-pressed={isImmersive}
+          >
+            {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+            <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+          </button>
+        </div>
+
+        <div className="relative mx-auto" style={{ maxWidth: `${CAVE_WIDTH}px` }}>
+          <canvas
+            ref={canvasRef}
+            width={CAVE_WIDTH}
+            height={CAVE_HEIGHT}
+            className="w-full rounded-2xl border border-border touch-none bg-[#0b1020] [cursor:pointer]"
+            style={{ aspectRatio: `${CAVE_WIDTH} / ${CAVE_HEIGHT}` }}
+            role="img"
+            aria-label={t.playArea}
+            onPointerDown={(e) => { e.preventDefault(); if (phaseRef.current === "playing") flap(); }}
+          />
+
+          {phase === "playing" && (
+            <div className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 text-2xl font-black text-white/90">{score}</div>
+          )}
+
+          {phase !== "playing" && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 rounded-2xl bg-black/55 px-6 text-center backdrop-blur-sm">
+              {phase === "over" && (
+                <>
+                  {isNewBest && <div className="text-sm font-black text-violet-300">{t.newBest}</div>}
+                  <div className="text-xl font-black text-white">{t.gameOver}</div>
+                  {death && <div className="text-sm font-bold text-amber-200">{t.death[death]}</div>}
+                  <div className="text-sm text-white/80">{t.score}: <b>{score}</b> · {t.best}: {best}</div>
+                  <div className="grid w-full max-w-xs grid-cols-2 gap-2 text-left text-xs text-white/80">
+                    <div className="rounded-xl bg-white/10 p-3"><span className="block text-white/60">{t.flightTime}</span><b>{Math.max(1, Math.round(finalFrames / 60))} {t.seconds}</b></div>
+                    <div className="rounded-xl bg-white/10 p-3"><span className="block text-white/60">{t.nextTarget}</span><b>{Math.max(best, score) + 1}</b></div>
+                  </div>
+                </>
+              )}
+              {phase === "paused" && <div className="text-xl font-black text-white">{t.paused}</div>}
+              {phase === "menu" && (
+                <>
+                  <div className="text-4xl">🚀</div>
+                  <p className="max-w-xs text-xs leading-relaxed text-white/80">{t.controls}</p>
+                </>
+              )}
+              <div className="flex flex-wrap justify-center gap-2">
+                {phase === "over" && <button type="button" onClick={() => seedRef.current !== null ? begin(seedRef.current) : begin()} disabled={seedRef.current === null} className="min-h-11 rounded-full border border-white/40 px-6 py-2.5 font-bold text-white disabled:opacity-40">{t.retrySame}</button>}
+                <button type="button" onClick={phase === "paused" ? resume : () => begin()} className="min-h-11 rounded-full bg-violet-500 px-8 py-2.5 font-bold text-white transition-colors hover:bg-violet-600">
+                  {phase === "paused" ? t.resume : phase === "over" ? t.retryNew : t.tapStart}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+        <p className="sr-only" role="status" aria-live="polite">{phase === "playing" ? `${t.livePlaying}. ${t.score} ${score}` : phase === "paused" ? t.paused : phase === "over" ? `${t.gameOver}. ${t.score} ${score}` : ""}</p>
       </div>
-      <p className="sr-only" role="status" aria-live="polite">{phase === "playing" ? `${t.livePlaying}. ${t.score} ${score}` : phase === "paused" ? t.paused : phase === "over" ? `${t.gameOver}. ${t.score} ${score}` : ""}</p>
     </div>
   );
 };

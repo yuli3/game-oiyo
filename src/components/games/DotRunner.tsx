@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { GameContainer } from '../ui/game/GamePrimitives';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { frameScale } from '../../lib/games/time-contracts';
 import { loadReplayEnvelope, saveReplayEnvelope, verifyReplayEnvelope, type ReplayInput } from '../../lib/games/replay';
 import { createDotRunnerReplay, dotRunnerGhostTrack, replayDotRunner, type DotRunnerReplayAction } from '../../lib/games/dot-runner-replay';
@@ -72,7 +74,22 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [coins, setCoins] = useState(0);
     const [paceLevel, setPaceLevel] = useState(1);
     const paceMultiplier = (1 + (paceLevel - 1) * 0.08).toFixed(2);
-    const [muted, setMuted] = useState(false);
+    const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || "en" });
+    const [muted, setMuted] = useState<boolean>(() => {
+        try {
+            if (typeof window !== 'undefined' && window.localStorage) {
+                return window.localStorage.getItem('dotrunner_sound_muted') === 'true';
+            }
+        } catch {}
+        return false;
+    });
+    useEffect(() => {
+        try {
+            if (typeof window !== 'undefined' && window.localStorage) {
+                window.localStorage.setItem('dotrunner_sound_muted', String(muted));
+            }
+        } catch {}
+    }, [muted]);
     const [isNewBest, setIsNewBest] = useState(false);
     const [finalFrames, setFinalFrames] = useState(0);
     const [hasGhost, setHasGhost] = useState(false);
@@ -310,86 +327,119 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     // keyboard
     useEffect(() => {
         const onKey = (e: KeyboardEvent) => {
-            if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); jump(); }
+            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+            if (e.key === 'f' || e.key === 'F') { e.preventDefault(); togglePortal(); }
+            else if (e.key === 'm' || e.key === 'M') { e.preventDefault(); setMuted(prev => !prev); }
+            else if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); jump(); }
             else if (e.code === 'KeyP' && (statusRef.current === 'playing' || statusRef.current === 'paused')) {
                 togglePause();
             } else if (e.code === 'KeyR') reset();
         };
         window.addEventListener('keydown', onKey);
         return () => window.removeEventListener('keydown', onKey);
-    }, [jump, reset, togglePause]);
+    }, [jump, reset, togglePause, togglePortal]);
 
     return (
-        <GameContainer title={t.title} subtitle={t.subtitle} onReset={reset}>
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-muted-foreground">
-                <span>{t.score}: <span className="text-primary text-base font-black">{score}</span></span>
-                <div className="flex flex-wrap items-center justify-end gap-3">
-                    <span>{t.coins}: <span className="text-amber-500 font-black">{coins}</span></span>
-                    <span>{t.pace}: <span className="text-primary font-black">×{paceMultiplier}</span></span>
-                    <span>{t.best}: <span className="text-chart-2 font-black">{best}</span></span>
-                    {hasGhost && <span className="text-amber-600">◇ {replayCopy.ghost}</span>}
-                    {(status === 'playing' || status === 'paused') && (
-                        <button
-                            onClick={togglePause}
-                            className="min-h-11 px-3 rounded-lg border border-border bg-muted hover:bg-accent transition-colors"
-                        >
-                            {status === 'playing' ? t.pause : t.resume}
-                        </button>
-                    )}
-                    <button type="button" onClick={() => setMuted((value) => !value)} aria-label={muted ? t.soundOn : t.soundOff} aria-pressed={!muted} className="grid min-h-11 min-w-11 place-items-center rounded-lg border border-border hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-                        {muted ? '🔇' : '🔊'}
-                    </button>
-                </div>
-            </div>
-
-            <div className="relative w-full rounded-2xl overflow-hidden border border-border touch-none select-none">
-                <canvas
-                    ref={canvasRef}
-                    width={DOT_RUNNER_WIDTH}
-                    height={DOT_RUNNER_HEIGHT}
-                    className="w-full h-auto block cursor-pointer"
-                    onPointerDown={(e) => { e.preventDefault(); jump(); }}
-                    role="img"
-                    aria-label={t.area}
-                />
-
-                {status !== 'playing' && (
-                    <div className="absolute inset-0 bg-background/70 backdrop-blur-sm flex flex-col items-center justify-center gap-3" role="status" aria-live="polite">
-                        {status === 'over' && (
-                            <>
-                                {isNewBest && <p className="text-sm font-black text-amber-500">{t.newBest}</p>}
-                                <p className="text-2xl font-black text-destructive">{t.over}</p>
-                                <p className="text-lg font-bold text-foreground">{t.score}: {score}</p>
-                                <div className="grid w-full max-w-xs grid-cols-2 gap-2 text-xs text-foreground">
-                                    <div className="rounded-xl bg-muted/80 p-2"><span className="block text-muted-foreground">{t.coins}</span><b>{coins}</b></div>
-                                    <div className="rounded-xl bg-muted/80 p-2"><span className="block text-muted-foreground">{t.time}</span><b>{Math.max(1, Math.round(finalFrames / 60))} {t.seconds}</b></div>
-                                    <div className="rounded-xl bg-muted/80 p-2"><span className="block text-muted-foreground">{t.pace}</span><b>×{paceMultiplier}</b></div>
-                                    <div className="rounded-xl bg-primary/10 p-2"><span className="block text-muted-foreground">{t.next}</span><b>{nextDotRunnerGoal(best, score)}</b></div>
-                                </div>
-                            </>
-                        )}
-                        {status === 'paused' ? (
-                            <><p className="text-2xl font-black text-foreground">⏸</p><p className="font-bold text-foreground">{t.paused}</p><button type="button" onClick={togglePause} className="min-h-11 rounded-full bg-primary px-8 py-2 font-bold text-primary-foreground">{t.resume}</button></>
-                        ) : status === 'over' ? (
-                            <div className="flex flex-wrap justify-center gap-2">
-                                <button type="button" onClick={retrySame} disabled={seedRef.current === null} className="min-h-11 rounded-full bg-primary px-6 py-2 font-bold text-primary-foreground disabled:opacity-50">{replayCopy.same}</button>
-                                <button type="button" onClick={reset} className="min-h-11 rounded-full border bg-muted px-6 py-2 font-bold">{replayCopy.fresh}</button>
-                            </div>
-                        ) : (
+        <div
+            ref={containerRef}
+            data-game-surface
+            className={
+                isImmersive
+                    ? "fixed inset-0 z-50 w-screen h-dvh bg-background p-3 sm:p-5 overflow-y-auto flex flex-col justify-between m-0 select-none"
+                    : "relative"
+            }
+        >
+            <GameContainer title={t.title} subtitle={t.subtitle} onReset={reset}>
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-muted-foreground">
+                    <span>{t.score}: <span className="text-primary text-base font-black">{score}</span></span>
+                    <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
+                        <span>{t.coins}: <span className="text-amber-500 font-black">{coins}</span></span>
+                        <span>{t.pace}: <span className="text-primary font-black">×{paceMultiplier}</span></span>
+                        <span>{t.best}: <span className="text-chart-2 font-black">{best}</span></span>
+                        {hasGhost && <span className="text-amber-600">◇ {replayCopy.ghost}</span>}
+                        {(status === 'playing' || status === 'paused') && (
                             <button
-                                onClick={reset}
-                                className="px-8 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity"
+                                type="button"
+                                onClick={togglePause}
+                                className="min-h-11 px-3 rounded-xl border border-border bg-muted hover:bg-accent text-xs font-bold transition-colors"
                             >
-                                {t.start}
+                                {status === 'playing' ? t.pause : t.resume}
                             </button>
                         )}
+                        <button
+                            type="button"
+                            onClick={() => setMuted((prev) => !prev)}
+                            aria-pressed={muted}
+                            aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+                            title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`}
+                            className="min-h-11 px-3 py-2 rounded-xl border border-border text-xs font-bold text-muted-foreground hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                        >
+                            {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+                            <span className="hidden sm:inline">{muted ? portalLabels.unmute : portalLabels.mute}</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={togglePortal}
+                            aria-pressed={isImmersive}
+                            aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+                            title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+                            className="min-h-11 px-3 py-2 rounded-xl border border-border text-xs font-bold text-muted-foreground hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                        >
+                            {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+                            <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+                        </button>
                     </div>
-                )}
-            </div>
+                </div>
 
-            <p className="mt-4 text-center text-[10px] text-muted-foreground font-medium">{t.hint}</p>
-            <p className="sr-only" role="status" aria-live="polite">{status === 'playing' ? `${t.playing}. ${t.score} ${score}. ${t.coins} ${coins}. ${t.pace} ${paceMultiplier}` : status === 'paused' ? t.paused : status === 'over' ? `${t.over} ${t.score} ${score}` : ''}</p>
-        </GameContainer>
+                <div className="relative w-full rounded-2xl overflow-hidden border border-border touch-none select-none">
+                    <canvas
+                        ref={canvasRef}
+                        width={DOT_RUNNER_WIDTH}
+                        height={DOT_RUNNER_HEIGHT}
+                        className="w-full h-auto block cursor-pointer"
+                        onPointerDown={(e) => { e.preventDefault(); jump(); }}
+                        role="img"
+                        aria-label={t.area}
+                    />
+
+                    {status !== 'playing' && (
+                        <div className="absolute inset-0 bg-background/70 backdrop-blur-sm flex flex-col items-center justify-center gap-3" role="status" aria-live="polite">
+                            {status === 'over' && (
+                                <>
+                                    {isNewBest && <p className="text-sm font-black text-amber-500">{t.newBest}</p>}
+                                    <p className="text-2xl font-black text-destructive">{t.over}</p>
+                                    <p className="text-lg font-bold text-foreground">{t.score}: {score}</p>
+                                    <div className="grid w-full max-w-xs grid-cols-2 gap-2 text-xs text-foreground">
+                                        <div className="rounded-xl bg-muted/80 p-2"><span className="block text-muted-foreground">{t.coins}</span><b>{coins}</b></div>
+                                        <div className="rounded-xl bg-muted/80 p-2"><span className="block text-muted-foreground">{t.time}</span><b>{Math.max(1, Math.round(finalFrames / 60))} {t.seconds}</b></div>
+                                        <div className="rounded-xl bg-muted/80 p-2"><span className="block text-muted-foreground">{t.pace}</span><b>×{paceMultiplier}</b></div>
+                                        <div className="rounded-xl bg-primary/10 p-2"><span className="block text-muted-foreground">{t.next}</span><b>{nextDotRunnerGoal(best, score)}</b></div>
+                                    </div>
+                                </>
+                            )}
+                            {status === 'paused' ? (
+                                <><p className="text-2xl font-black text-foreground">⏸</p><p className="font-bold text-foreground">{t.paused}</p><button type="button" onClick={togglePause} className="min-h-11 rounded-full bg-primary px-8 py-2 font-bold text-primary-foreground">{t.resume}</button></>
+                            ) : status === 'over' ? (
+                                <div className="flex flex-wrap justify-center gap-2">
+                                    <button type="button" onClick={retrySame} disabled={seedRef.current === null} className="min-h-11 rounded-full bg-primary px-6 py-2 font-bold text-primary-foreground disabled:opacity-50">{replayCopy.same}</button>
+                                    <button type="button" onClick={reset} className="min-h-11 rounded-full border bg-muted px-6 py-2 font-bold">{replayCopy.fresh}</button>
+                                </div>
+                            ) : (
+                                <button
+                                    onClick={reset}
+                                    className="px-8 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity"
+                                >
+                                    {t.start}
+                                </button>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                <p className="mt-4 text-center text-[10px] text-muted-foreground font-medium">{t.hint}</p>
+                <p className="sr-only" role="status" aria-live="polite">{status === 'playing' ? `${t.playing}. ${t.score} ${score}. ${t.coins} ${coins}. ${t.pace} ${paceMultiplier}` : status === 'paused' ? t.paused : status === 'over' ? `${t.over} ${t.score} ${score}` : ''}</p>
+            </GameContainer>
+        </div>
     );
 };
 
