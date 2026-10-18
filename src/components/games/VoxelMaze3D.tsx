@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
 import confetti from 'canvas-confetti';
+import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
 import VoxelMaze3DScene from './VoxelMaze3DScene';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
 import {
   type VoxelMazeState,
   createInitialVoxelMazeState,
@@ -10,13 +12,32 @@ import {
 } from '../../lib/games/voxel-maze';
 
 export default function VoxelMaze3D() {
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal();
   const [gameState, setGameState] = useState<VoxelMazeState>(createInitialVoxelMazeState);
   const stateRef = useRef<VoxelMazeState>(gameState);
   stateRef.current = gameState;
 
-  const [muted, setMuted] = useState(false);
-  const mutedRef = useRef(false);
-  useEffect(() => { mutedRef.current = muted; }, [muted]);
+  const [muted, setMuted] = useState(() => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        return window.localStorage.getItem('voxel_maze_muted') === 'true';
+      }
+    } catch {}
+    return false;
+  });
+  const mutedRef = useRef(muted);
+  useEffect(() => {
+    mutedRef.current = muted;
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem('voxel_maze_muted', String(muted));
+      }
+    } catch {}
+  }, [muted]);
+
+  const toggleMute = useCallback(() => {
+    setMuted((m) => !m);
+  }, []);
   const audioCtxRef = useRef<AudioContext | null>(null);
 
   const getAudioContext = useCallback(() => {
@@ -214,6 +235,22 @@ export default function VoxelMaze3D() {
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return;
+      }
+
+      if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        togglePortal();
+        return;
+      }
+      if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        toggleMute();
+        return;
+      }
+
       if (['ArrowUp', 'w', 'W'].includes(e.key)) {
         e.preventDefault();
         doMove('up');
@@ -231,7 +268,7 @@ export default function VoxelMaze3D() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [doMove]);
+  }, [doMove, togglePortal, toggleMute]);
 
   const handleRestart = useCallback(() => {
     setGameState(createInitialVoxelMazeState(1));
@@ -242,7 +279,15 @@ export default function VoxelMaze3D() {
   }, []);
 
   return (
-    <div data-game-surface className="relative w-full aspect-16/10 min-h-120 max-h-180 rounded-2xl overflow-hidden border border-border bg-card shadow-lg select-none touch-none">
+    <div
+      ref={containerRef}
+      data-game-surface
+      className={`relative select-none touch-none overflow-hidden ${
+        isImmersive
+          ? 'fixed inset-0 z-50 w-screen h-dvh bg-card'
+          : 'w-full aspect-16/10 min-h-120 max-h-180 rounded-2xl border border-border bg-card shadow-lg'
+      }`}
+    >
       {/* 3D WebGL Canvas */}
       <Canvas
         camera={{ position: [7, 16, 20], fov: 50 }}
@@ -285,12 +330,25 @@ export default function VoxelMaze3D() {
           </div>
           <button
             type="button"
-            onClick={() => setMuted((m) => !m)}
+            onClick={toggleMute}
             aria-pressed={muted}
-            aria-label={muted ? '소리 켜기' : '소리 끄기'}
-            className="pointer-events-auto min-h-11 px-3 py-2 rounded-xl border border-border bg-background/85 backdrop-blur-md shadow-xs text-xs font-black text-foreground hover:bg-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+            title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`}
+            className="pointer-events-auto min-h-11 px-3 py-2 rounded-xl border border-border bg-background/85 backdrop-blur-md shadow-xs text-xs font-bold text-foreground hover:bg-muted active:scale-95 transition-transform flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
-            {muted ? '🔇' : '🔊'}
+            {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+            <span className="hidden sm:inline">{muted ? portalLabels.unmute : portalLabels.mute}</span>
+          </button>
+          <button
+            type="button"
+            onClick={togglePortal}
+            aria-pressed={isImmersive}
+            aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+            title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+            className="pointer-events-auto min-h-11 px-3 py-2 rounded-xl border border-border bg-background/85 backdrop-blur-md shadow-xs text-xs font-bold text-foreground hover:bg-muted active:scale-95 transition-transform flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+            <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
           </button>
         </div>
       </div>

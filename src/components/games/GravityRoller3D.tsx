@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
 import type { GravityRollerState } from '../../lib/games/gravity-roller';
 import {
   createInitialState,
@@ -9,6 +10,7 @@ import {
   LEVELS,
 } from '../../lib/games/gravity-roller';
 import { GravityRoller3DScene } from './GravityRoller3DScene';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
 
 interface Props {
   locale?: string;
@@ -51,7 +53,29 @@ const TEXT: Record<string, Record<string, string>> = {
 
 export default function GravityRoller3D({ locale = 'ko' }: Props) {
   const t = TEXT[locale] ?? TEXT.ko;
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal();
   const [gameState, setGameState] = useState<GravityRollerState>(() => createInitialState(0));
+  const [muted, setMuted] = useState(() => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        return window.localStorage.getItem('gravity_roller_muted') === 'true';
+      }
+    } catch {}
+    return false;
+  });
+
+  const toggleMute = useCallback(() => {
+    setMuted((m) => {
+      const next = !m;
+      try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          window.localStorage.setItem('gravity_roller_muted', String(next));
+        }
+      } catch {}
+      return next;
+    });
+  }, []);
+
   const keysPressed = useRef<Record<string, boolean>>({});
 
   const stateRef = useRef(gameState);
@@ -60,6 +84,22 @@ export default function GravityRoller3D({ locale = 'ko' }: Props) {
   // Key listeners
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return;
+      }
+
+      if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        togglePortal();
+        return;
+      }
+      if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        toggleMute();
+        return;
+      }
+
       keysPressed.current[e.key.toLowerCase()] = true;
       if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd'].includes(e.key.toLowerCase())) {
         e.preventDefault();
@@ -76,7 +116,7 @@ export default function GravityRoller3D({ locale = 'ko' }: Props) {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, []);
+  }, [togglePortal, toggleMute]);
 
   // Main game tick loop
   useEffect(() => {
@@ -154,38 +194,78 @@ export default function GravityRoller3D({ locale = 'ko' }: Props) {
   const totalGemsCount = gameState.gems.length;
 
   return (
-    <div className="mx-auto max-w-4xl space-y-4">
+    <div
+      ref={containerRef}
+      data-game-surface
+      className={
+        isImmersive
+          ? 'fixed inset-0 z-50 w-screen h-dvh bg-background p-3 sm:p-4 flex flex-col justify-between overflow-y-auto select-none touch-none'
+          : 'mx-auto max-w-4xl space-y-4 select-none touch-none'
+      }
+    >
       {/* HUD Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card p-3 sm:p-4 shadow-sm">
         <div>
-          <h2 className="text-xl font-bold text-foreground">{t.title}</h2>
+          <h2 className="text-lg sm:text-xl font-bold text-foreground">{t.title}</h2>
           <p className="text-xs text-muted-foreground">{t.subtitle}</p>
         </div>
 
-        <div className="flex items-center gap-4 text-xs font-semibold">
-          <div className="flex items-center gap-1.5 rounded-lg bg-muted/40 px-3 py-1.5">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs font-semibold">
+          <div className="flex items-center gap-1.5 rounded-lg bg-muted/40 px-2.5 sm:px-3 py-1.5">
             <span className="text-chart-1">⏱</span>
             <span className="text-muted-foreground">{t.time}:</span>
             <span className="font-bold text-foreground">{Math.ceil(gameState.timeRemaining)}s</span>
           </div>
-          <div className="flex items-center gap-1.5 rounded-lg bg-muted/40 px-3 py-1.5">
+          <div className="flex items-center gap-1.5 rounded-lg bg-muted/40 px-2.5 sm:px-3 py-1.5">
             <span className="text-chart-1">💎</span>
             <span className="text-muted-foreground">{t.gems}:</span>
             <span className="font-bold text-foreground">{collectedGemsCount}/{totalGemsCount}</span>
           </div>
-          <div className="flex items-center gap-1.5 rounded-lg bg-muted/40 px-3 py-1.5">
+          <div className="flex items-center gap-1.5 rounded-lg bg-muted/40 px-2.5 sm:px-3 py-1.5">
             <span className="text-primary">★</span>
             <span className="text-muted-foreground">{t.score}:</span>
             <span className="font-bold text-foreground">{gameState.score}</span>
           </div>
-          <div className="flex items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-1.5 text-primary">
+          <div className="flex items-center gap-1.5 rounded-lg bg-primary/10 px-2.5 sm:px-3 py-1.5 text-primary">
             <span>{t.stage} {gameState.currentLevelIndex + 1}</span>
+          </div>
+
+          <div className="flex items-center gap-1.5 border-l border-border pl-2">
+            <button
+              type="button"
+              onClick={toggleMute}
+              aria-pressed={muted}
+              aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+              title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`}
+              className="min-h-10 px-2.5 py-1.5 rounded-xl border border-border bg-background/85 text-xs font-bold text-foreground shadow-xs hover:bg-muted active:scale-95 transition-transform flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+              <span className="hidden md:inline">{muted ? portalLabels.unmute : portalLabels.mute}</span>
+            </button>
+            <button
+              type="button"
+              onClick={togglePortal}
+              aria-pressed={isImmersive}
+              aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+              title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+              className="min-h-10 px-2.5 py-1.5 rounded-xl border border-border bg-background/85 text-xs font-bold text-foreground shadow-xs hover:bg-muted active:scale-95 transition-transform flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+              <span className="hidden md:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+            </button>
           </div>
         </div>
       </div>
 
       {/* 3D Scene Viewport */}
-      <GravityRoller3DScene state={gameState} />
+      <GravityRoller3DScene
+        state={gameState}
+        className={
+          isImmersive
+            ? 'relative flex-1 w-full min-h-75 overflow-hidden rounded-2xl border border-border bg-card shadow-inner'
+            : undefined
+        }
+      />
 
       {/* Interactive Controls & Modals */}
       <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">

@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
+import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
 import DungeonCrawler3DScene from './DungeonCrawler3DScene';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
 import {
   type DungeonCrawlerState,
   createDungeonFloor,
@@ -26,11 +28,48 @@ function getPercentageWidthClass(pct: number): string {
 }
 
 export default function DungeonCrawler3D() {
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal();
   const [gameState, setGameState] = useState<DungeonCrawlerState>(() => createDungeonFloor(1));
+  const [muted, setMuted] = useState(() => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        return window.localStorage.getItem('dungeon_crawler_muted') === 'true';
+      }
+    } catch {}
+    return false;
+  });
+
+  const toggleMute = useCallback(() => {
+    setMuted((m) => {
+      const next = !m;
+      try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          window.localStorage.setItem('dungeon_crawler_muted', String(next));
+        }
+      } catch {}
+      return next;
+    });
+  }, []);
 
   // Keyboard controls
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return;
+      }
+
+      if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        togglePortal();
+        return;
+      }
+      if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        toggleMute();
+        return;
+      }
+
       if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
         setGameState((s) => moveDungeonPlayer(s, 0, -1));
       } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
@@ -46,7 +85,7 @@ export default function DungeonCrawler3D() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [togglePortal, toggleMute]);
 
   const handleNextFloor = useCallback(() => {
     setGameState((s) => {
@@ -70,7 +109,15 @@ export default function DungeonCrawler3D() {
   const hpRatio = (gameState.hp / gameState.maxHp) * 100;
 
   return (
-    <div data-game-surface className="relative w-full aspect-16/10 min-h-125 max-h-180 rounded-2xl overflow-hidden border border-border bg-card shadow-lg select-none touch-none">
+    <div
+      ref={containerRef}
+      data-game-surface
+      className={`relative select-none touch-none overflow-hidden ${
+        isImmersive
+          ? 'fixed inset-0 z-50 w-screen h-dvh bg-card'
+          : 'w-full aspect-16/10 min-h-125 max-h-180 rounded-2xl border border-border bg-card shadow-lg'
+      }`}
+    >
       {/* 3D Canvas with isometric action camera following player */}
       <Canvas
         camera={{
@@ -85,9 +132,9 @@ export default function DungeonCrawler3D() {
       {/* Top HUD: Status Bar */}
       <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none gap-2">
         {/* Floor and Stats */}
-        <div className="rounded-xl border border-border bg-background/85 backdrop-blur-md px-4 py-2.5 shadow-sm">
+        <div className="rounded-xl border border-border bg-background/85 backdrop-blur-md px-3 sm:px-4 py-2 sm:py-2.5 shadow-sm">
           <div className="text-xs text-muted-foreground font-medium">던전 위치</div>
-          <div className="text-xl font-black text-foreground">
+          <div className="text-base sm:text-xl font-black text-foreground">
             B{gameState.floor}F <span className="text-xs font-semibold text-primary">지하 {gameState.floor}층</span>
           </div>
           <div className="text-xs text-muted-foreground mt-0.5">
@@ -96,38 +143,61 @@ export default function DungeonCrawler3D() {
         </div>
 
         {/* HP Bar & Inventory */}
-        <div className="flex-1 max-w-sm mx-2 rounded-xl border border-border bg-background/85 backdrop-blur-md px-4 py-2.5 shadow-sm space-y-1.5">
+        <div className="flex-1 max-w-sm mx-1 sm:mx-2 rounded-xl border border-border bg-background/85 backdrop-blur-md px-3 sm:px-4 py-2 shadow-sm space-y-1">
           <div className="flex justify-between text-xs">
-            <span className="font-bold text-foreground">생명력 (HP)</span>
+            <span className="font-bold text-foreground">HP</span>
             <span className="font-bold text-primary">{gameState.hp} / {gameState.maxHp}</span>
           </div>
-          <div className="w-full h-2.5 rounded-full bg-muted overflow-hidden">
+          <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
             <div
               className={`h-full transition-all duration-200 ${getPercentageWidthClass(hpRatio)} ${
                 gameState.hp > 50 ? 'bg-primary' : gameState.hp > 25 ? 'bg-warning' : 'bg-destructive'
               }`}
             />
           </div>
-          <div className="flex justify-between text-xs pt-1 border-t border-border/50">
+          <div className="flex justify-between text-xs pt-0.5 border-t border-border/50">
             <span className="text-muted-foreground">공격력: <strong className="text-foreground">{gameState.attackPower}</strong></span>
             <span className="text-muted-foreground">방어력: <strong className="text-foreground">{gameState.defense}</strong></span>
             <span className="text-warning font-bold">🪙 {gameState.gold}</span>
           </div>
         </div>
 
-        {/* Potion Quick Use Button */}
-        <div className="pointer-events-auto">
+        {/* Right HUD: Controls & Portal */}
+        <div className="pointer-events-auto flex items-center gap-1.5 sm:gap-2">
+          {/* Potion Quick Use Button */}
           <button
             type="button"
             onClick={() => setGameState((s) => useDungeonPotion(s))}
             disabled={gameState.potions <= 0 || gameState.hp >= gameState.maxHp}
-            className="rounded-xl border border-border bg-background/90 backdrop-blur-md px-4 py-2.5 shadow-sm hover:bg-muted active:scale-95 transition-all text-center disabled:opacity-50"
+            className="rounded-xl border border-border bg-background/90 backdrop-blur-md px-2.5 sm:px-3 py-2 shadow-xs hover:bg-muted active:scale-95 transition-all text-center disabled:opacity-50"
             aria-label="체력 물약 사용"
           >
             <div className="text-xs text-muted-foreground font-medium">물약 (P)</div>
-            <div className="text-lg font-black text-success">
+            <div className="text-xs sm:text-sm font-black text-success">
               🧪 {gameState.potions}개
             </div>
+          </button>
+          <button
+            type="button"
+            onClick={toggleMute}
+            aria-pressed={muted}
+            aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+            title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`}
+            className="min-h-10 sm:min-h-11 px-2.5 sm:px-3 py-2 rounded-xl border border-border bg-background/85 backdrop-blur-md text-xs font-bold text-foreground shadow-xs hover:bg-muted active:scale-95 transition-transform flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+            <span className="hidden md:inline">{muted ? portalLabels.unmute : portalLabels.mute}</span>
+          </button>
+          <button
+            type="button"
+            onClick={togglePortal}
+            aria-pressed={isImmersive}
+            aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+            title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+            className="min-h-10 sm:min-h-11 px-2.5 sm:px-3 py-2 rounded-xl border border-border bg-background/85 backdrop-blur-md text-xs font-bold text-foreground shadow-xs hover:bg-muted active:scale-95 transition-transform flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+            <span className="hidden md:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
           </button>
         </div>
       </div>

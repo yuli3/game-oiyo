@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import MazeRunnerScene from './MazeRunnerScene';
 import {
   type MazeRunnerState,
@@ -7,7 +7,8 @@ import {
   updateMazeRunner,
 } from '../../lib/games/maze-runner';
 import type { Locale } from '../../lib/i18n';
-import { Play, RotateCcw, Trophy, Timer, Diamond, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Compass } from 'lucide-react';
+import { Play, RotateCcw, Trophy, Timer, Diamond, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Compass, Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
 
 interface Props {
   locale: Locale;
@@ -129,12 +130,50 @@ const UI_TEXT: Record<Locale, {
 
 export default function MazeRunner({ locale }: Props) {
   const t = UI_TEXT[locale] ?? UI_TEXT.en;
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal();
   const [gameState, setGameState] = useState<MazeRunnerState>(() => createInitialMazeRunnerState(1));
+  const [muted, setMuted] = useState(() => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        return window.localStorage.getItem('maze_runner_3d_muted') === 'true';
+      }
+    } catch {}
+    return false;
+  });
+
+  const toggleMute = useCallback(() => {
+    setMuted((m) => {
+      const next = !m;
+      try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          window.localStorage.setItem('maze_runner_3d_muted', String(next));
+        }
+      } catch {}
+      return next;
+    });
+  }, []);
+
   const moveQueueRef = useRef<{ dx: number; dz: number } | null>(null);
 
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return;
+      }
+
+      if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        togglePortal();
+        return;
+      }
+      if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        toggleMute();
+        return;
+      }
+
       let dx = 0;
       let dz = 0;
       if (e.code === 'ArrowUp' || e.code === 'KeyW') dz = -1;
@@ -150,7 +189,7 @@ export default function MazeRunner({ locale }: Props) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [togglePortal, toggleMute]);
 
   // Game loop
   useEffect(() => {
@@ -182,7 +221,15 @@ export default function MazeRunner({ locale }: Props) {
   };
 
   return (
-    <div className="mx-auto max-w-4xl space-y-4">
+    <div
+      ref={containerRef}
+      data-game-surface
+      className={
+        isImmersive
+          ? 'fixed inset-0 z-50 w-screen h-dvh bg-background p-3 sm:p-4 flex flex-col justify-between overflow-y-auto select-none touch-none'
+          : 'mx-auto max-w-4xl space-y-4 select-none touch-none'
+      }
+    >
       {/* Header HUD */}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
         <div>
@@ -190,7 +237,7 @@ export default function MazeRunner({ locale }: Props) {
           <p className="text-xs text-muted-foreground">{t.subtitle}</p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <div className="flex items-center gap-1.5 rounded-xl border border-border bg-muted/40 px-3 py-1.5 text-xs font-bold text-foreground">
             <Trophy className="w-4 h-4 text-warning" />
             <span className="font-mono">{gameState.score.toLocaleString()}</span>
@@ -210,11 +257,42 @@ export default function MazeRunner({ locale }: Props) {
             <Diamond className="w-4 h-4 text-primary fill-primary/30" />
             <span>{gameState.gemsCollected}/{gameState.totalGems}</span>
           </div>
+
+          <div className="flex items-center gap-1.5 border-l border-border pl-2">
+            <button
+              type="button"
+              onClick={toggleMute}
+              aria-pressed={muted}
+              aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+              title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`}
+              className="min-h-10 px-2.5 py-1.5 rounded-xl border border-border bg-background/85 text-xs font-bold text-foreground shadow-xs hover:bg-muted active:scale-95 transition-transform flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+              <span className="hidden md:inline">{muted ? portalLabels.unmute : portalLabels.mute}</span>
+            </button>
+            <button
+              type="button"
+              onClick={togglePortal}
+              aria-pressed={isImmersive}
+              aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+              title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+              className="min-h-10 px-2.5 py-1.5 rounded-xl border border-border bg-background/85 text-xs font-bold text-foreground shadow-xs hover:bg-muted active:scale-95 transition-transform flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+              <span className="hidden md:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+            </button>
+          </div>
         </div>
       </div>
 
       {/* 3D Viewport */}
-      <div className="relative aspect-video w-full rounded-2xl overflow-hidden border border-border bg-background shadow-md">
+      <div
+        className={
+          isImmersive
+            ? 'relative flex-1 w-full min-h-75 rounded-2xl overflow-hidden border border-border bg-background shadow-md'
+            : 'relative aspect-video w-full rounded-2xl overflow-hidden border border-border bg-background shadow-md'
+        }
+      >
         <MazeRunnerScene state={gameState} />
 
         {/* Mini-map Overlay (Top Right) */}

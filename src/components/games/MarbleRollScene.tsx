@@ -161,9 +161,9 @@ function Track() {
   );
 }
 
-export default function MarbleRollScene({ marble }: SceneProps) {
+export default function MarbleRollScene({ marble, className }: SceneProps & { className?: string }) {
   return (
-    <div className="relative w-full h-130 rounded-2xl overflow-hidden bg-slate-950 shadow-2xl">
+    <div className={className ?? "relative w-full h-130 rounded-2xl overflow-hidden bg-slate-950 shadow-2xl"}>
       <Canvas
         camera={{ position: [0, 5, -8], fov: 60 }}
         shadows

@@ -8,7 +8,8 @@ import {
   COURSE_TILES,
 } from '../../lib/games/marble-roll';
 import type { Locale } from '../../lib/i18n';
-import { Play, RotateCcw, Trophy, Zap, Star, Flag, ArrowUp, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Play, RotateCcw, Trophy, Zap, Star, Flag, ArrowUp, ArrowLeft, ArrowRight, Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
 
 interface Props {
   locale: Locale;
@@ -125,8 +126,29 @@ const TOTAL_STARS = COURSE_TILES.filter((t) => t.hasStar).length;
 
 export default function MarbleRoll({ locale = 'ko' }: Props) {
   const t = UI_TEXT[locale] ?? UI_TEXT.ko;
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal();
   const [marble, setMarble] = useState<MarbleState>(createInitialMarbleState);
   const [bestTime, setBestTime] = useState<number | null>(null);
+  const [muted, setMuted] = useState(() => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        return window.localStorage.getItem('marble_roll_3d_muted') === 'true';
+      }
+    } catch {}
+    return false;
+  });
+
+  const toggleMute = useCallback(() => {
+    setMuted((m) => {
+      const next = !m;
+      try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          window.localStorage.setItem('marble_roll_3d_muted', String(next));
+        }
+      } catch {}
+      return next;
+    });
+  }, []);
 
   const inputRef = useRef<MarbleInput>({ steerX: 0, throttleZ: 0, jump: false });
   const animRef = useRef<number | null>(null);
@@ -169,6 +191,22 @@ export default function MarbleRoll({ locale = 'ko' }: Props) {
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return;
+      }
+
+      if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        togglePortal();
+        return;
+      }
+      if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        toggleMute();
+        return;
+      }
+
       const code = e.code.toLowerCase();
       if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'space', 'keyw', 'keya', 'keys', 'keyd'].includes(code)) {
         e.preventDefault();
@@ -192,7 +230,7 @@ export default function MarbleRoll({ locale = 'ko' }: Props) {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, []);
+  }, [togglePortal, toggleMute]);
 
   // Game loop
   useEffect(() => {
@@ -243,7 +281,15 @@ export default function MarbleRoll({ locale = 'ko' }: Props) {
   const speedKmh = Math.round(Math.hypot(marble.vx, marble.vz) * 3.6);
 
   return (
-    <div className="w-full max-w-5xl mx-auto space-y-4">
+    <div
+      ref={containerRef}
+      data-game-surface
+      className={
+        isImmersive
+          ? 'fixed inset-0 z-50 w-screen h-dvh bg-background p-3 sm:p-4 flex flex-col justify-between overflow-y-auto select-none touch-none'
+          : 'w-full max-w-5xl mx-auto space-y-4 select-none touch-none'
+      }
+    >
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-card p-4 rounded-xl border border-border">
         <div>
@@ -254,7 +300,7 @@ export default function MarbleRoll({ locale = 'ko' }: Props) {
           <p className="text-xs text-muted-foreground">{t.subtitle}</p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           {bestTime !== null && (
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted text-xs font-medium text-foreground">
               <Trophy className="w-4 h-4 text-warning" />
@@ -268,12 +314,43 @@ export default function MarbleRoll({ locale = 'ko' }: Props) {
             <RotateCcw className="w-3.5 h-3.5" />
             {t.restart}
           </button>
+          <div className="flex items-center gap-1.5 border-l border-border pl-2">
+            <button
+              type="button"
+              onClick={toggleMute}
+              aria-pressed={muted}
+              aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+              title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`}
+              className="min-h-10 px-2.5 py-1.5 rounded-lg border border-border bg-background/85 text-xs font-bold text-foreground shadow-xs hover:bg-muted active:scale-95 transition-transform flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+              <span className="hidden md:inline">{muted ? portalLabels.unmute : portalLabels.mute}</span>
+            </button>
+            <button
+              type="button"
+              onClick={togglePortal}
+              aria-pressed={isImmersive}
+              aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+              title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+              className="min-h-10 px-2.5 py-1.5 rounded-lg border border-border bg-background/85 text-xs font-bold text-foreground shadow-xs hover:bg-muted active:scale-95 transition-transform flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+              <span className="hidden md:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Main 3D Canvas Viewport */}
-      <div className="relative">
-        <MarbleRollScene marble={marble} />
+      <div className={`relative ${isImmersive ? 'flex-1 w-full min-h-75 flex flex-col' : ''}`}>
+        <MarbleRollScene
+          marble={marble}
+          className={
+            isImmersive
+              ? 'relative flex-1 w-full min-h-75 rounded-2xl overflow-hidden bg-card shadow-2xl'
+              : undefined
+          }
+        />
 
         {/* HUD Overlay */}
         <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none">

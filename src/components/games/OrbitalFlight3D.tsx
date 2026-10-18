@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
 import { Canvas } from '@react-three/fiber';
 import OrbitalFlight3DScene from './OrbitalFlight3DScene';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
 import {
   type OrbitalFlightState,
   createInitialOrbitalState,
@@ -94,11 +96,32 @@ function createOrbitalAudio() {
 
 export default function OrbitalFlight3D() {
   const [gameState, setGameState] = useState<OrbitalFlightState>(createInitialOrbitalState);
-  const [muted, setMuted] = useState(false);
+  const [muted, setMuted] = useState(() => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        return window.localStorage.getItem('orbital_flight_muted') === 'true';
+      }
+    } catch {}
+    return false;
+  });
   const stateRef = useRef<OrbitalFlightState>(gameState);
   stateRef.current = gameState;
   const mutedRef = useRef(muted);
   mutedRef.current = muted;
+
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal();
+
+  const toggleMute = useCallback(() => {
+    setMuted((m) => {
+      const next = !m;
+      try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          window.localStorage.setItem('orbital_flight_muted', String(next));
+        }
+      } catch {}
+      return next;
+    });
+  }, []);
 
   const audioRef = useRef<ReturnType<typeof createOrbitalAudio> | null>(null);
 
@@ -175,6 +198,17 @@ export default function OrbitalFlight3D() {
   // Keyboard controls
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        toggleMute();
+        return;
+      }
+      if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        togglePortal();
+        return;
+      }
       if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
         keysRef.current.pitch = 1;
       } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
@@ -211,14 +245,22 @@ export default function OrbitalFlight3D() {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, []);
+  }, [toggleMute, togglePortal]);
 
   const handleRestart = useCallback(() => {
     setGameState(createInitialOrbitalState());
   }, []);
 
   return (
-    <div data-game-surface className="relative w-full aspect-16/10 min-h-120 max-h-180 rounded-2xl overflow-hidden border border-border bg-card shadow-lg select-none touch-none">
+    <div
+      ref={containerRef}
+      data-game-surface
+      className={`relative select-none touch-none overflow-hidden ${
+        isImmersive
+          ? 'fixed inset-0 z-50 w-screen h-dvh bg-card'
+          : 'w-full aspect-16/10 min-h-120 max-h-180 rounded-2xl border border-border bg-card shadow-lg'
+      }`}
+    >
       {/* 3D WebGL Canvas */}
       <Canvas
         camera={{ position: [50, 6, -12], fov: 60 }}
@@ -264,16 +306,29 @@ export default function OrbitalFlight3D() {
           </div>
         </div>
 
-        {/* Right: Score & Multiplier & Sound Toggle */}
+        {/* Right: Score & Multiplier & Sound / Fullscreen Toggle */}
         <div className="flex items-start gap-2">
           <button
             type="button"
-            onClick={() => setMuted((m) => !m)}
+            onClick={toggleMute}
             aria-pressed={muted}
-            aria-label={muted ? '소리 켜기' : '소리 끄기'}
-            className="pointer-events-auto min-h-11 px-3 py-2 rounded-xl border border-border bg-background/85 backdrop-blur-md text-xs font-bold text-foreground shadow-xs hover:bg-muted active:scale-95 transition-transform"
+            aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+            title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`}
+            className="pointer-events-auto min-h-11 px-3 py-2 rounded-xl border border-border bg-background/85 backdrop-blur-md text-xs font-bold text-foreground shadow-xs hover:bg-muted active:scale-95 transition-transform flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
-            {muted ? '🔇' : '🔊'}
+            {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+            <span className="hidden sm:inline">{muted ? portalLabels.unmute : portalLabels.mute}</span>
+          </button>
+          <button
+            type="button"
+            onClick={togglePortal}
+            aria-pressed={isImmersive}
+            aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+            title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+            className="pointer-events-auto min-h-11 px-3 py-2 rounded-xl border border-border bg-background/85 backdrop-blur-md text-xs font-bold text-foreground shadow-xs hover:bg-muted active:scale-95 transition-transform flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+            <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
           </button>
           <div className="rounded-xl border border-border bg-background/85 backdrop-blur-md px-4 py-2.5 shadow-xs text-right">
             <div className="text-xs text-muted-foreground font-medium">비행 점수</div>
