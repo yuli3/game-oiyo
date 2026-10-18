@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
+import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
 import { GameContainer } from '../ui/game/GamePrimitives';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { createSolvedPuzzle15Board, movePuzzle15Tile, shufflePuzzle15 } from '../../lib/games/puzzle15';
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 import { getBestForConditions, recordBestForConditions, type BestConditions } from '../../lib/games/records';
@@ -34,6 +36,8 @@ const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '
 const Puzzle15: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const t = COPY[(locale as keyof typeof COPY)] ?? COPY.en;
     const reducedMotion = usePrefersReducedMotion();
+    const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'ko' });
+
     const hydrationBoard = createSolvedPuzzle15Board(4);
     const [size, setSize] = useState<Size>(4);
     const [board, setBoard] = useState<Board>(hydrationBoard);
@@ -42,7 +46,24 @@ const Puzzle15: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [seconds, setSeconds] = useState(0);
     const [won, setWon] = useState(false);
     const [best, setBest] = useState<Record<string, { moves: number; seconds: number }>>({});
-    const [muted, setMuted] = useState(false);
+
+    const [muted, setMuted] = useState(() => {
+        if (typeof window === 'undefined') return false;
+        try {
+            return localStorage.getItem('puzzle15_sound_muted') === 'true';
+        } catch {
+            return false;
+        }
+    });
+
+    useEffect(() => {
+        try {
+            localStorage.setItem('puzzle15_sound_muted', String(muted));
+        } catch {
+            // SSR-safe fallback
+        }
+    }, [muted]);
+
     const [lastSlide, setLastSlide] = useState<{ from: number; to: number; key: number } | null>(null);
     const slideKey = useRef(0);
     const started = useRef(false);
@@ -136,6 +157,17 @@ const Puzzle15: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     // arrow keys move the tile INTO the gap (arrow = direction the tile slides)
     useEffect(() => {
         const onKey = (e: KeyboardEvent) => {
+            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+            if (e.key === 'f' || e.key === 'F') {
+                e.preventDefault();
+                togglePortal();
+                return;
+            }
+            if (e.key === 'm' || e.key === 'M') {
+                e.preventDefault();
+                setMuted((v) => !v);
+                return;
+            }
             if (won) return;
             const empty = board.indexOf(0);
             const r = Math.floor(empty / size), c = empty % size;
@@ -148,72 +180,99 @@ const Puzzle15: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         };
         window.addEventListener('keydown', onKey);
         return () => window.removeEventListener('keydown', onKey);
-    }, [board, size, won, slide]);
+    }, [board, size, won, slide, togglePortal]);
 
     const b = best[size];
 
     return (
-        <GameContainer title={t.title} subtitle={t.subtitle} onReset={() => restart()}>
-            <div className="mb-4 flex flex-wrap items-center gap-2">
-                <div className="inline-flex gap-1">
-                    {([3, 4, 5] as Size[]).map((sz) => (
-                        <button key={sz} onClick={() => restart(sz)}
-                            aria-pressed={size === sz}
-                            className={`min-h-11 px-3 py-1.5 rounded-lg text-[11px] font-bold border transition-colors ${size === sz ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
-                            {t.sizes[sz]}
+        <div
+            ref={containerRef}
+            className={`relative w-full transition-all duration-300 ${
+                isImmersive ? 'fixed inset-0 z-50 flex flex-col items-center justify-center bg-background overflow-y-auto p-4' : ''
+            }`}
+        >
+            <div className="w-full max-w-sm mx-auto mb-2 flex items-center justify-end gap-2 px-1">
+                <button
+                    type="button"
+                    onClick={() => setMuted((v) => !v)}
+                    className="flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-bold text-foreground shadow-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+                    title={muted ? portalLabels.unmute : portalLabels.mute}
+                >
+                    {muted ? <VolumeX className="h-4 w-4 text-muted-foreground" /> : <Volume2 className="h-4 w-4 text-primary" />}
+                    <span className="sr-only">{muted ? portalLabels.unmute : portalLabels.mute}</span>
+                </button>
+                <button
+                    type="button"
+                    onClick={togglePortal}
+                    className="flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-bold text-foreground shadow-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+                    title={isImmersive ? portalLabels.exit : portalLabels.enter}
+                >
+                    {isImmersive ? <Minimize2 className="h-4 w-4 text-primary" /> : <Maximize2 className="h-4 w-4" />}
+                    <span className="sr-only">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+                </button>
+            </div>
+
+            <GameContainer title={t.title} subtitle={t.subtitle} onReset={() => restart()}>
+                <div className="mb-4 flex flex-wrap items-center gap-2">
+                    <div className="inline-flex gap-1">
+                        {([3, 4, 5] as Size[]).map((sz) => (
+                            <button key={sz} onClick={() => restart(sz)}
+                                aria-pressed={size === sz}
+                                className={`min-h-11 px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${size === sz ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
+                                {t.sizes[sz]}
+                            </button>
+                        ))}
+                    </div>
+                    <div className="ml-auto flex gap-3 text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                        <span>{t.moves} {moves}</span>
+                        <span>{t.time} {fmt(seconds)}</span>
+                    </div>
+                </div>
+
+                <div
+                    className="relative grid gap-1.5 p-2 bg-muted/40 rounded-2xl border border-border mx-auto max-w-sm aspect-square"
+                    style={{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` }}
+                    role="grid" aria-label={t.title}
+                >
+                    {board.map((v, i) => v === 0 ? (
+                        <div key="empty" className="rounded-xl bg-muted/40" />
+                    ) : (
+                        <button
+                            key={lastSlide?.to === i ? `${v}-${lastSlide.key}` : v}
+                            onClick={() => slide(i)}
+                            aria-label={String(v)}
+                            className={`relative min-h-11 min-w-11 overflow-hidden rounded-xl font-black ${!reducedMotion && lastSlide?.to === i ? 'oiyo-piece-slide' : ''} ${!reducedMotion ? 'active:scale-95' : ''} ${
+                                size === 3 ? 'text-2xl' : size === 4 ? 'text-xl' : 'text-base'
+                            } ${v === (i + 1) % (size * size) ? 'ring-2 ring-primary' : ''}`}
+                            style={lastSlide?.to === i && !reducedMotion ? {
+                                '--dx': indexToRowCol(lastSlide.from, size).col - indexToRowCol(lastSlide.to, size).col,
+                                '--dy': indexToRowCol(lastSlide.from, size).row - indexToRowCol(lastSlide.to, size).row,
+                            } as CSSProperties : undefined}
+                        >
+                            <img src={PUZZLE15_SPRITES.tile} alt="" draggable={false} className="pointer-events-none absolute inset-0 h-full w-full object-cover" />
+                            <span className={`relative z-[1] flex h-full w-full items-center justify-center ${v === (i + 1) % (size * size) ? 'text-primary' : 'text-stone-900'}`}>{v}</span>
                         </button>
                     ))}
+
+                    {won && (
+                        <div className={`absolute inset-0 z-10 bg-background/80 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center gap-3 ${!reducedMotion ? 'animate-in fade-in zoom-in-95' : ''}`} role="status" aria-live="polite">
+                            <p className="text-2xl font-black text-success">🎉 {t.win}</p>
+                            <p className="text-sm font-bold text-muted-foreground">{t.moves} {moves} · {t.time} {fmt(seconds)}</p>
+                            <button onClick={() => restart()} className="mt-2 min-h-11 px-8 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity">
+                                ↺
+                            </button>
+                        </div>
+                    )}
                 </div>
-                <button type="button" onClick={() => setMuted((value) => !value)} aria-pressed={muted} className="min-h-11 px-3 rounded-lg border border-border text-[11px] font-bold text-muted-foreground">
-                    {muted ? '🔇' : '🔊'} {t.sound}
-                </button>
-                <div className="ml-auto flex gap-3 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                    <span>{t.moves} {moves}</span>
-                    <span>{t.time} {fmt(seconds)}</span>
+
+                <div className="mt-4 flex justify-between text-xs text-muted-foreground font-medium">
+                    <span>{t.hint}</span>
+                    {b && <span className="font-bold">{t.best}: {b.moves} / {fmt(b.seconds)}</span>}
                 </div>
-            </div>
-
-            <div
-                className="relative grid gap-1.5 p-2 bg-muted/40 rounded-2xl border border-border mx-auto max-w-sm aspect-square"
-                style={{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` }}
-                role="grid" aria-label={t.title}
-            >
-                {board.map((v, i) => v === 0 ? (
-                    <div key="empty" className="rounded-xl bg-muted/40" />
-                ) : (
-                    <button
-                        key={lastSlide?.to === i ? `${v}-${lastSlide.key}` : v}
-                        onClick={() => slide(i)}
-                        aria-label={String(v)}
-                        className={`relative min-h-11 min-w-11 overflow-hidden rounded-xl font-black ${!reducedMotion && lastSlide?.to === i ? 'oiyo-piece-slide' : ''} ${!reducedMotion ? 'active:scale-95' : ''} ${
-                            size === 3 ? 'text-2xl' : size === 4 ? 'text-xl' : 'text-base'
-                        } ${v === (i + 1) % (size * size) ? 'ring-2 ring-primary' : ''}`}
-                        style={lastSlide?.to === i && !reducedMotion ? {
-                            '--dx': indexToRowCol(lastSlide.from, size).col - indexToRowCol(lastSlide.to, size).col,
-                            '--dy': indexToRowCol(lastSlide.from, size).row - indexToRowCol(lastSlide.to, size).row,
-                        } as CSSProperties : undefined}
-                    >
-                        <img src={PUZZLE15_SPRITES.tile} alt="" draggable={false} className="pointer-events-none absolute inset-0 h-full w-full object-cover" />
-                        <span className={`relative z-[1] flex h-full w-full items-center justify-center ${v === (i + 1) % (size * size) ? 'text-primary' : 'text-stone-900'}`}>{v}</span>
-                    </button>
-                ))}
-
-                {won && (
-                    <div className={`absolute inset-0 z-10 bg-background/80 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center gap-3 ${!reducedMotion ? 'animate-in fade-in zoom-in-95' : ''}`} role="status" aria-live="polite">
-                        <p className="text-2xl font-black text-success">🎉 {t.win}</p>
-                        <p className="text-sm font-bold text-muted-foreground">{t.moves} {moves} · {t.time} {fmt(seconds)}</p>
-                        <button onClick={() => restart()} className="mt-2 min-h-11 px-8 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity">
-                            ↺
-                        </button>
-                    </div>
-                )}
-            </div>
-
-            <div className="mt-4 flex justify-between text-[10px] text-muted-foreground font-medium">
-                <span>{t.hint}</span>
-                {b && <span className="font-bold">{t.best}: {b.moves} / {fmt(b.seconds)}</span>}
-            </div>
-        </GameContainer>
+            </GameContainer>
+        </div>
     );
 };
 

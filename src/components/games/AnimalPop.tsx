@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
+import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { createTonePlayer, type TonePlayer } from "../../lib/games/tone";
 import { GameContainer } from "../ui/game/GamePrimitives";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
 import {
   ANIMAL_TIME_LIMIT,
   addAnimalTime,
@@ -287,6 +289,8 @@ const COPY = {
 } as const;
 export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
   const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'ko' });
+
   const [board, setBoard] = useState<AnimalBoard>(
       () => createAnimalBoard(1).board,
     ),
@@ -304,12 +308,28 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
     [best, setBest] = useState(0),
     [combo, setCombo] = useState(0),
     [feverSeconds, setFeverSeconds] = useState(0),
-    [sound, setSound] = useState(true),
+    [sound, setSound] = useState(() => {
+      if (typeof window === "undefined") return true;
+      try {
+        const saved = localStorage.getItem("animalpop_sound_enabled");
+        return saved !== null ? saved === "true" : true;
+      } catch {
+        return true;
+      }
+    }),
     [restored, setRestored] = useState(false),
     [resolving, setResolving] = useState(false),
     [bursting, setBursting] = useState<number[]>([]),
     [falls, setFalls] = useState<AnimalFall[]>([]),
     [waveLabel, setWaveLabel] = useState(0);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("animalpop_sound_enabled", String(sound));
+    } catch {
+      // SSR-safe fallback
+    }
+  }, [sound]);
   const reducedMotion = usePrefersReducedMotion();
   const animationRun = useRef(0);
   const boardRef = useRef<HTMLDivElement>(null);
@@ -621,39 +641,99 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
       }
     }
   };
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        togglePortal();
+      } else if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        setSound((v) => !v);
+      } else if (e.key === 'p' || e.key === 'P') {
+        if (!resolving && phase !== "picking" && phase !== "over") {
+          e.preventDefault();
+          setPhase((p) => (p === "playing" ? "paused" : p === "paused" ? (runRef.current?.offer ? "picking" : "playing") : p));
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [togglePortal, resolving, phase]);
+
+  const hudControls = (
+    <div className="w-full max-w-md mx-auto mb-2 flex items-center justify-end gap-2 px-1">
+      <button
+        type="button"
+        onClick={() => setSound((v) => !v)}
+        className="flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-bold text-foreground shadow-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        aria-label={!sound ? portalLabels.unmute : portalLabels.mute}
+        title={!sound ? portalLabels.unmute : portalLabels.mute}
+      >
+        {!sound ? <VolumeX className="h-4 w-4 text-muted-foreground" /> : <Volume2 className="h-4 w-4 text-primary" />}
+        <span className="sr-only">{!sound ? portalLabels.unmute : portalLabels.mute}</span>
+      </button>
+      <button
+        type="button"
+        onClick={togglePortal}
+        className="flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-bold text-foreground shadow-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+        title={isImmersive ? portalLabels.exit : portalLabels.enter}
+      >
+        {isImmersive ? <Minimize2 className="h-4 w-4 text-primary" /> : <Maximize2 className="h-4 w-4" />}
+        <span className="sr-only">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+      </button>
+    </div>
+  );
+
   const fallAt = (row:number,column:number) => falls.find((fall) => fall.toRow === row && fall.column === column);
   if (phase === "briefing")
     return (
-      <GameContainer title={t.title} subtitle={t.sub} onReset={() => start()}>
-        <div className="overflow-hidden rounded-3xl border">
-          <img
-            src="/games/animal-pop-social-play.png"
-            alt=""
-            className="h-64 w-full object-cover sm:h-80"
-          />
-          <div className="p-5 text-center">
-            <p className="text-sm text-muted-foreground">{t.hint}</p>
-            <div className="mt-4 flex flex-col items-center gap-2">
-              <button
-                onClick={() => start("classic")}
-                className="min-h-12 w-full max-w-xs rounded-full bg-primary px-8 font-black text-primary-foreground"
-              >
-                {t.classic}
-              </button>
-              <button
-                onClick={() => start("augment")}
-                className="min-h-12 w-full max-w-xs rounded-full border-2 border-chart-4 bg-chart-4/10 px-8 font-black text-foreground"
-              >
-                {t.augment}
-              </button>
+      <div
+        ref={containerRef}
+        className={`relative w-full transition-all duration-300 ${
+          isImmersive ? 'fixed inset-0 z-50 flex flex-col items-center justify-center bg-background overflow-y-auto p-4' : ''
+        }`}
+      >
+        {hudControls}
+        <GameContainer title={t.title} subtitle={t.sub} onReset={() => start()}>
+          <div className="overflow-hidden rounded-3xl border border-border">
+            <img
+              src="/games/animal-pop-social-play.png"
+              alt=""
+              className="h-64 w-full object-cover sm:h-80"
+            />
+            <div className="p-5 text-center">
+              <p className="text-sm text-muted-foreground">{t.hint}</p>
+              <div className="mt-4 flex flex-col items-center gap-2">
+                <button
+                  onClick={() => start("classic")}
+                  className="min-h-12 w-full max-w-xs rounded-full bg-primary px-8 font-black text-primary-foreground"
+                >
+                  {t.classic}
+                </button>
+                <button
+                  onClick={() => start("augment")}
+                  className="min-h-12 w-full max-w-xs rounded-full border-2 border-chart-4 bg-chart-4/10 px-8 font-black text-foreground"
+                >
+                  {t.augment}
+                </button>
+              </div>
+              <p className="mt-3 text-xs leading-relaxed text-muted-foreground">{t.augmentSub}</p>
             </div>
-            <p className="mt-3 text-xs leading-relaxed text-muted-foreground">{t.augmentSub}</p>
           </div>
-        </div>
-      </GameContainer>
+        </GameContainer>
+      </div>
     );
   return (
-    <GameContainer title={t.title} subtitle={mode === "augment" ? t.modeAugment : t.sub} onReset={() => start()}>
+    <div
+      ref={containerRef}
+      className={`relative w-full transition-all duration-300 ${
+        isImmersive ? 'fixed inset-0 z-50 flex flex-col items-center justify-center bg-background overflow-y-auto p-4' : ''
+      }`}
+    >
+      {hudControls}
+      <GameContainer title={t.title} subtitle={mode === "augment" ? t.modeAugment : t.sub} onReset={() => start()}>
       <div className="mx-auto max-w-md">
         <div className="grid grid-cols-3 gap-2">
           <Stat l={t.time} v={`${time}s`} />
@@ -762,22 +842,15 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
             </div>
           )}
         </div>
-        <div className="mt-3 grid grid-cols-2 gap-2">
+        <div className="mt-3 flex justify-center">
           <button
             onClick={() =>
               !resolving && setPhase((p) => (p === "playing" ? "paused" : p === "paused" ? (runRef.current?.offer ? "picking" : "playing") : p))
             }
             disabled={resolving || phase === "picking" || phase === "over"}
-            className="min-h-11! rounded-xl border bg-card font-bold"
+            className="min-h-11 w-full max-w-xs rounded-xl border border-border bg-card font-bold hover:bg-muted"
           >
             {phase === "paused" ? t.resume : t.pause}
-          </button>
-          <button
-            onClick={() => setSound((v) => !v)}
-            aria-pressed={sound}
-            className="min-h-11! rounded-xl border bg-card font-bold"
-          >
-            {t.sound} {sound ? "ON" : "OFF"}
           </button>
         </div>
         {mode === "augment" && run && Object.keys(run.owned).length > 0 ? (
@@ -816,6 +889,7 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
         </p>
       </div>
     </GameContainer>
+    </div>
   );
 }
 function Stat({ l, v }: { l: string; v: string }) {

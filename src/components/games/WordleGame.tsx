@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { getStreak, recordStreak, type StreakStats } from '../../lib/games/records';
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 import { createWordle, evaluateWordleGuess, explainWordleSubmit, inputWordle, submitWordle, wordleDateSeed, type WordleMark, type WordleMode, type WordleState } from '../../lib/games/wordle';
@@ -31,7 +33,27 @@ const markClass: Record<WordleMark,string> = { correct:'border-green-700 bg-gree
 
 export default function WordleGame({ locale='en' }: { locale?:string }) {
   const t = COPY[locale as keyof typeof COPY] ?? COPY.en; const nextCopy = NEXT_COPY[locale as keyof typeof NEXT_COPY] ?? NEXT_COPY.en; const reduced = usePrefersReducedMotion();
-  const [targets,setTargets]=useState<string[]>([]); const [valid,setValid]=useState<Set<string>>(new Set()); const [game,setGame]=useState<WordleState|null>(null); const [loading,setLoading]=useState(true); const [error,setError]=useState(''); const [paused,setPaused]=useState(false); const [restored,setRestored]=useState(false); const [muted,setMuted]=useState(false); const [hard,setHard]=useState(false); const [elapsed,setElapsed]=useState(0); const [stats,setStats]=useState<StreakStats|null>(null); const [nextMinutes,setNextMinutes]=useState(()=>minutesUntilNextDaily());
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'en' });
+
+  const [targets,setTargets]=useState<string[]>([]); const [valid,setValid]=useState<Set<string>>(new Set()); const [game,setGame]=useState<WordleState|null>(null); const [loading,setLoading]=useState(true); const [error,setError]=useState(''); const [paused,setPaused]=useState(false); const [restored,setRestored]=useState(false); const [hard,setHard]=useState(false); const [elapsed,setElapsed]=useState(0); const [stats,setStats]=useState<StreakStats|null>(null); const [nextMinutes,setNextMinutes]=useState(()=>minutesUntilNextDaily());
+
+  const [muted, setMuted] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return localStorage.getItem('wordle_sound_muted') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('wordle_sound_muted', String(muted));
+    } catch {
+      // SSR-safe fallback
+    }
+  }, [muted]);
+
   const elapsedBase=useRef(0); const startedAt=useRef<number|null>(null); const audio=useRef<AudioContext|null>(null); const recorded=useRef(false); const analyticsStarted=useRef(false); const analyticsCompleted=useRef(false);
   const guessCount=useRef(0); const [revealedCols,setRevealedCols]=useState(5);
   const target=game && targets[game.targetIndex] ? targets[game.targetIndex].toUpperCase() : '';
@@ -53,13 +75,51 @@ export default function WordleGame({ locale='en' }: { locale?:string }) {
   if(loading)return <div className="flex min-h-64 flex-col items-center justify-center gap-3"><Spinner className="size-8 text-primary motion-reduce:animate-none"/><p>{t.loading}</p></div>;
   if(!game)return <p role="alert" className="p-6 text-center font-bold text-red-700">{error||t.fail}</p>;
   const display=[...game.guesses,game.current,...Array(Math.max(0,6-game.guesses.length-1)).fill('')].slice(0,6);
-  return <div className="not-prose mx-auto flex max-w-lg select-none flex-col items-center gap-4 px-1 py-5">
-    <div className="w-full text-center"><h2 className="text-3xl font-black tracking-widest">WORDLE</h2><p className="text-xs font-bold text-muted-foreground">{t.subtitle}</p>{stats&&stats.played>0&&<p className="mt-1 text-xs">{t.streak(stats)}</p>}</div>
-    <div className="flex w-full flex-wrap justify-center gap-2"><button type="button" onClick={()=>start('daily')} aria-pressed={game.mode==='daily'} className={`min-h-11 rounded-xl border px-4 text-sm font-bold ${game.mode==='daily'?'bg-primary text-primary-foreground':''}`}>{t.daily}</button><button type="button" onClick={()=>start('random')} aria-pressed={game.mode==='random'} className={`min-h-11 rounded-xl border px-4 text-sm font-bold ${game.mode==='random'?'bg-primary text-primary-foreground':''}`}>{t.random}</button><button type="button" onClick={()=>setHard(v=>!v)} aria-pressed={hard} className={`min-h-11 rounded-xl border px-4 text-sm font-bold ${hard?'bg-primary text-primary-foreground':''}`}>{t.hard}</button><button type="button" onClick={pause} className="min-h-11 rounded-xl border px-3" aria-pressed={paused}>{paused?'▶':'Ⅱ'}<span className="sr-only">{paused?t.resume:t.pause}</span></button><button type="button" onClick={()=>setMuted(v=>!v)} className="min-h-11 rounded-xl border px-3" aria-pressed={muted}>{muted?'🔇':'🔊'}<span className="sr-only">{t.sound}</span></button></div>
-    <p className="min-h-5 text-xs font-bold" role="status" aria-live="polite">{restored?t.restored:`${game.mode==='daily'?t.daily:t.random} · ${t.time} ${formatTime(elapsed)}`}</p>
-    <div className="grid gap-1.5" role="grid" aria-label="Wordle">{display.map((word,row)=>{const submitted=row<game.guesses.length;const marks=submitted?evaluateWordleGuess(word,target):[];const isLatest=submitted&&row===game.guesses.length-1;return <div key={row} className="flex gap-1.5" role="row">{Array.from({length:5},(_,column)=>{const mark=marks[column];const letter=word[column]??'';const shown=submitted&&(!isLatest||column<revealedCols);return <div key={column} role="gridcell" aria-label={`${letter||'empty'}${shown&&mark?` ${t[mark]}`:''}`} className={`flex h-12 w-12 items-center justify-center rounded-lg border-2 text-xl font-black ${shown&&mark?markClass[mark]:letter?'border-slate-600':'border-slate-300'} ${shown&&isLatest&&column===revealedCols-1&&!reduced?'oiyo-wordle-flip':''}`}>{letter}{shown&&mark&&<span className="ml-0.5 text-[9px]" aria-hidden="true">{markSymbol[mark]}</span>}</div>;})}</div>;})}</div>
-    {game.status!=='playing'&&revealedCols>=5&&<div className={`w-full rounded-2xl border-2 p-4 text-center ${game.status==='won'?'border-green-400 bg-green-50':'border-red-300 bg-red-50'}`} role="status" aria-live="assertive"><p className="text-xl font-black">{game.status==='won'?t.won:t.lost(target)}</p><p className="mt-1 text-sm font-bold">{t.attempts} {game.guesses.length}/6 · {t.time} {formatTime(elapsed)}</p>{game.mode==='daily'&&<p className="mt-1 text-xs font-bold text-muted-foreground">{nextCopy(nextMinutes)}</p>}<div className="mt-3 flex justify-center gap-2"><button type="button" onClick={()=>{track('play_again',game.mode,{result:game.status,attempts:game.guesses.length});start(game.mode);}} className="min-h-11 rounded-xl bg-primary px-4 font-bold text-primary-foreground">{t.again}</button><button type="button" onClick={share} className="min-h-11 rounded-xl border px-4 font-bold">{t.share}</button></div></div>}
-    <p id="wordle-error" className="min-h-5 text-sm font-bold text-red-700" role="alert">{error}</p>
-    <div className="flex w-full max-w-md flex-col gap-1" aria-label="Keyboard">{ROWS.map((row,i)=><div key={i} className="flex w-full gap-1">{row.map(k=>{const mark=evidence[k];return <button key={k} type="button" onClick={()=>key(k)} disabled={paused||game.status!=='playing'} aria-label={k==='⌫'?'Backspace':k} className={`h-12 min-w-0 rounded-md border text-xs font-black ${k.length>1?'flex-[1.5]':'flex-1'} ${mark?markClass[mark]:'bg-muted/40'} disabled:opacity-50`}>{k}{mark&&<span className="ml-0.5" aria-hidden="true">{markSymbol[mark]}</span>}</button>;})}</div>)}</div><p className="text-center text-xs text-muted-foreground">{t.hint}</p>
-  </div>;
+
+  return (
+    <div
+      ref={containerRef}
+      className={`relative w-full transition-all duration-300 ${
+        isImmersive ? 'fixed inset-0 z-50 flex flex-col items-center justify-center bg-background overflow-y-auto p-4' : ''
+      }`}
+    >
+      <div className="w-full max-w-lg mx-auto mb-2 flex items-center justify-end gap-2 px-1">
+        <button
+          type="button"
+          onClick={() => setMuted((v) => !v)}
+          className="flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-bold text-foreground shadow-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+          title={muted ? portalLabels.unmute : portalLabels.mute}
+        >
+          {muted ? <VolumeX className="h-4 w-4 text-muted-foreground" /> : <Volume2 className="h-4 w-4 text-primary" />}
+          <span className="sr-only">{muted ? portalLabels.unmute : portalLabels.mute}</span>
+        </button>
+        <button
+          type="button"
+          onClick={togglePortal}
+          className="flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-bold text-foreground shadow-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+          title={isImmersive ? portalLabels.exit : portalLabels.enter}
+        >
+          {isImmersive ? <Minimize2 className="h-4 w-4 text-primary" /> : <Maximize2 className="h-4 w-4" />}
+          <span className="sr-only">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+        </button>
+      </div>
+
+      <div className="not-prose mx-auto flex max-w-lg select-none flex-col items-center gap-4 px-1 py-3">
+        <div className="w-full text-center"><h2 className="text-3xl font-black tracking-widest">WORDLE</h2><p className="text-xs font-bold text-muted-foreground">{t.subtitle}</p>{stats&&stats.played>0&&<p className="mt-1 text-xs">{t.streak(stats)}</p>}</div>
+        <div className="flex w-full flex-wrap justify-center gap-2">
+          <button type="button" onClick={()=>start('daily')} aria-pressed={game.mode==='daily'} className={`min-h-11 rounded-xl border border-border px-4 text-sm font-bold ${game.mode==='daily'?'bg-primary text-primary-foreground':''}`}>{t.daily}</button>
+          <button type="button" onClick={()=>start('random')} aria-pressed={game.mode==='random'} className={`min-h-11 rounded-xl border border-border px-4 text-sm font-bold ${game.mode==='random'?'bg-primary text-primary-foreground':''}`}>{t.random}</button>
+          <button type="button" onClick={()=>setHard(v=>!v)} aria-pressed={hard} className={`min-h-11 rounded-xl border border-border px-4 text-sm font-bold ${hard?'bg-primary text-primary-foreground':''}`}>{t.hard}</button>
+          <button type="button" onClick={pause} className="min-h-11 rounded-xl border border-border px-3 font-bold hover:bg-muted" aria-pressed={paused}>{paused?'▶':'Ⅱ'}<span className="sr-only">{paused?t.resume:t.pause}</span></button>
+        </div>
+        <p className="min-h-5 text-xs font-bold" role="status" aria-live="polite">{restored?t.restored:`${game.mode==='daily'?t.daily:t.random} · ${t.time} ${formatTime(elapsed)}`}</p>
+        <div className="grid gap-1.5" role="grid" aria-label="Wordle">{display.map((word,row)=>{const submitted=row<game.guesses.length;const marks=submitted?evaluateWordleGuess(word,target):[];const isLatest=submitted&&row===game.guesses.length-1;return <div key={row} className="flex gap-1.5" role="row">{Array.from({length:5},(_,column)=>{const mark=marks[column];const letter=word[column]??'';const shown=submitted&&(!isLatest||column<revealedCols);return <div key={column} role="gridcell" aria-label={`${letter||'empty'}${shown&&mark?` ${t[mark]}`:''}`} className={`flex h-12 w-12 items-center justify-center rounded-lg border-2 text-xl font-black ${shown&&mark?markClass[mark]:letter?'border-slate-600':'border-slate-300'} ${shown&&isLatest&&column===revealedCols-1&&!reduced?'oiyo-wordle-flip':''}`}>{letter}{shown&&mark&&<span className="ml-0.5 text-[9px]" aria-hidden="true">{markSymbol[mark]}</span>}</div>;})}</div>;})}</div>
+        {game.status!=='playing'&&revealedCols>=5&&<div className={`w-full rounded-2xl border-2 p-4 text-center ${game.status==='won'?'border-green-400 bg-green-50':'border-red-300 bg-red-50'}`} role="status" aria-live="assertive"><p className="text-xl font-black">{game.status==='won'?t.won:t.lost(target)}</p><p className="mt-1 text-sm font-bold">{t.attempts} {game.guesses.length}/6 · {t.time} {formatTime(elapsed)}</p>{game.mode==='daily'&&<p className="mt-1 text-xs font-bold text-muted-foreground">{nextCopy(nextMinutes)}</p>}<div className="mt-3 flex justify-center gap-2"><button type="button" onClick={()=>{track('play_again',game.mode,{result:game.status,attempts:game.guesses.length});start(game.mode);}} className="min-h-11 rounded-xl bg-primary px-4 font-bold text-primary-foreground">{t.again}</button><button type="button" onClick={share} className="min-h-11 rounded-xl border border-border px-4 font-bold">{t.share}</button></div></div>}
+        <p id="wordle-error" className="min-h-5 text-sm font-bold text-red-700" role="alert">{error}</p>
+        <div className="flex w-full max-w-md flex-col gap-1" aria-label="Keyboard">{ROWS.map((row,i)=><div key={i} className="flex w-full gap-1">{row.map(k=>{const mark=evidence[k];return <button key={k} type="button" onClick={()=>key(k)} disabled={paused||game.status!=='playing'} aria-label={k==='⌫'?'Backspace':k} className={`h-12 min-w-0 rounded-md border text-xs font-black ${k.length>1?'flex-[1.5]':'flex-1'} ${mark?markClass[mark]:'bg-muted/40'} disabled:opacity-50`}>{k}{mark&&<span className="ml-0.5" aria-hidden="true">{markSymbol[mark]}</span>}</button>;})}</div>)}</div><p className="text-center text-xs text-muted-foreground">{t.hint}</p>
+      </div>
+    </div>
+  );
 }

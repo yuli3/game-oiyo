@@ -1,7 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Matter from 'matter-js';
 import { AnimatePresence, motion } from 'motion/react';
+import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
 import { GameContainer } from '../ui/game/GamePrimitives';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { collisionWith, createPhysicsWorld } from '../../lib/games/physics-world';
 import { getBest, recordBest } from '../../lib/games/records';
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
@@ -58,6 +60,7 @@ interface DropResult { slot: number; multiplier: number; score: number }
 const Plinko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
     const prefersReducedMotion = usePrefersReducedMotion();
+    const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'ko' });
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const engineRef = useRef<Matter.Engine | null>(null);
@@ -65,6 +68,50 @@ const Plinko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const ballRef = useRef<Matter.Body | null>(null);
     const betRef = useRef(50);
     const settledRef = useRef(true);
+    const audioRef = useRef<AudioContext | null>(null);
+
+    const [muted, setMuted] = useState(() => {
+        if (typeof window === 'undefined') return false;
+        try {
+            return localStorage.getItem('plinko_sound_muted') === 'true';
+        } catch {
+            return false;
+        }
+    });
+
+    useEffect(() => {
+        try {
+            localStorage.setItem('plinko_sound_muted', String(muted));
+        } catch {
+            // SSR-safe fallback
+        }
+    }, [muted]);
+
+    const playTone = useCallback((freq: number, duration = 0.05, type: OscillatorType = 'sine') => {
+        if (muted || typeof window === 'undefined') return;
+        try {
+            const ctx = audioRef.current ?? new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+            audioRef.current = ctx;
+            if (ctx.state === 'suspended') {
+                void ctx.resume();
+            }
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = type;
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0.04, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + duration);
+        } catch {
+            // Ignore Web Audio unsupported errors
+        }
+    }, [muted]);
+
+    const playToneRef = useRef(playTone);
+    playToneRef.current = playTone;
 
     const [balance, setBalance] = useState(STARTING_BALANCE);
     const [bet, setBet] = useState(50);
@@ -110,6 +157,9 @@ const Plinko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             onCollisionStart: (pairs) => {
                 const ball = ballRef.current;
                 if (!ball || settledRef.current) return;
+                if (collisionWith(pairs, ball, 'peg')) {
+                    playToneRef.current(500 + Math.random() * 250, 0.035, 'triangle');
+                }
                 if (!collisionWith(pairs, ball, 'floor')) return;
                 settledRef.current = true;
                 const xNorm = ball.position.x / BOARD_W;
@@ -121,6 +171,7 @@ const Plinko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 setBalance((b) => b + score);
                 const saved = recordBest(RECORD_KEY, score, 'score');
                 setBest(saved.value);
+                playToneRef.current(multiplier >= 2 ? 880 : 520, 0.15, 'sine');
                 setTimeout(() => {
                     if (ballRef.current === ball) {
                         Matter.Composite.remove(world, ball);
@@ -178,12 +229,13 @@ const Plinko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         };
     }, []);
 
-    const drop = () => {
+    const drop = useCallback(() => {
         const engine = engineRef.current;
         if (!engine || isDropping) return;
         const amount = clampBet(bet);
         if (amount > balance) return;
 
+        playTone(330, 0.05, 'sine');
         betRef.current = amount;
         settledRef.current = false;
         setBalance((b) => b - amount);
@@ -200,97 +252,145 @@ const Plinko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         Matter.Composite.add(engine.world, ball);
         ballRef.current = ball;
         paintLoop.current?.();
-    };
+    }, [isDropping, bet, balance, playTone]);
 
     const adjustBet = (delta: number) => setBet((b) => clampBet(b + delta));
     const canDrop = !isDropping && bet <= balance;
 
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+            if (e.key === 'f' || e.key === 'F') {
+                e.preventDefault();
+                togglePortal();
+            } else if (e.key === 'm' || e.key === 'M') {
+                e.preventDefault();
+                setMuted((v) => !v);
+            } else if (e.code === 'Space' && !e.repeat) {
+                e.preventDefault();
+                drop();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [togglePortal, drop]);
+
     return (
-        <GameContainer
-            title={t.title}
-            subtitle={t.subtitle}
-            onReset={() => {
-                setBalance(STARTING_BALANCE);
-                setLastResult(null);
-            }}
+        <div
+            ref={containerRef}
+            className={`relative w-full transition-all duration-300 ${
+                isImmersive ? 'fixed inset-0 z-50 flex flex-col items-center justify-center bg-background overflow-y-auto p-4' : ''
+            }`}
         >
-            <div className="flex flex-col items-center gap-4">
-                <div className="flex w-full max-w-md items-center justify-between text-xs font-bold text-muted-foreground">
-                    <span>{t.balance}: <span className="text-primary text-base font-black">{balance}</span></span>
-                    {best !== null && <span>{t.best}: <span className="text-chart-2 font-black">{best}</span></span>}
-                </div>
-
-                <div className="relative w-full max-w-md rounded-2xl border border-border bg-muted/20 overflow-hidden">
-                    <canvas ref={canvasRef} width={BOARD_W} height={BOARD_H} className="w-full h-auto block" aria-label={t.title} />
-                </div>
-
-                {/* slot payout row — aligned to the same width/grid as the board above */}
-                <div className="grid w-full max-w-md gap-1" style={{ gridTemplateColumns: `repeat(${SLOT_COUNT}, minmax(0, 1fr))` }}>
-                    {MULTIPLIERS.map((m, i) => (
-                        <div key={i} className="relative rounded-lg bg-muted/40 py-1.5 text-center text-[10px] font-black text-muted-foreground overflow-hidden">
-                            <AnimatePresence>
-                                {lastResult?.slot === i && (
-                                    <motion.span
-                                        key={dropId}
-                                        className="absolute inset-0 rounded-lg bg-primary/30"
-                                        initial={{ opacity: 0, scale: prefersReducedMotion ? 1 : 0.6 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        exit={{ opacity: 0 }}
-                                        transition={prefersReducedMotion ? { duration: 0 } : { type: 'spring', stiffness: 400, damping: 14 }}
-                                    />
-                                )}
-                            </AnimatePresence>
-                            <span className="relative">{m}×</span>
-                        </div>
-                    ))}
-                </div>
-
-                <div className="flex w-full max-w-md items-center gap-3">
-                    <span className="text-xs font-bold text-muted-foreground">{t.bet}</span>
-                    <button
-                        onClick={() => adjustBet(-BET_STEP)}
-                        disabled={isDropping || bet <= MIN_BET}
-                        className="px-3 py-1.5 rounded-lg border border-border bg-muted hover:bg-accent disabled:opacity-40 font-black text-sm"
-                    >
-                        −
-                    </button>
-                    <span className="min-w-12 text-center font-black text-sm">{bet}</span>
-                    <button
-                        onClick={() => adjustBet(BET_STEP)}
-                        disabled={isDropping || bet >= MAX_BET}
-                        className="px-3 py-1.5 rounded-lg border border-border bg-muted hover:bg-accent disabled:opacity-40 font-black text-sm"
-                    >
-                        +
-                    </button>
-
-                    <button
-                        onClick={drop}
-                        disabled={!canDrop}
-                        className="flex-1 py-3 bg-primary text-primary-foreground rounded-2xl font-black text-sm shadow-lg hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
-                    >
-                        {isDropping ? t.dropping : t.drop}
-                    </button>
-                </div>
-
-                {bet > balance && <p className="text-xs font-bold text-destructive">{t.notEnough}</p>}
-
-                <AnimatePresence>
-                    {lastResult && (
-                        <motion.div
-                            key={dropId}
-                            initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 8 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0 }}
-                            transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.25 }}
-                            className="text-center"
-                        >
-                            <p className="text-[10px] font-black text-muted-foreground uppercase">{t.won}</p>
-                            <p className="text-2xl font-black text-primary">{lastResult.multiplier}× · +{lastResult.score}</p>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
+            <div className="w-full max-w-md mx-auto mb-2 flex items-center justify-end gap-2 px-1">
+                <button
+                    type="button"
+                    onClick={() => setMuted((v) => !v)}
+                    className="flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-bold text-foreground shadow-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+                    title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`}
+                >
+                    {muted ? <VolumeX className="h-4 w-4 text-muted-foreground" /> : <Volume2 className="h-4 w-4 text-primary" />}
+                    <span className="sr-only">{muted ? portalLabels.unmute : portalLabels.mute}</span>
+                </button>
+                <button
+                    type="button"
+                    onClick={togglePortal}
+                    className="flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-bold text-foreground shadow-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+                    title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+                >
+                    {isImmersive ? <Minimize2 className="h-4 w-4 text-primary" /> : <Maximize2 className="h-4 w-4" />}
+                    <span className="sr-only">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+                </button>
             </div>
-        </GameContainer>
+
+            <GameContainer
+                title={t.title}
+                subtitle={t.subtitle}
+                onReset={() => {
+                    setBalance(STARTING_BALANCE);
+                    setLastResult(null);
+                }}
+            >
+                <div className="flex flex-col items-center gap-4">
+                    <div className="flex w-full max-w-md items-center justify-between text-xs font-bold text-muted-foreground">
+                        <span>{t.balance}: <span className="text-primary text-base font-black">{balance}</span></span>
+                        {best !== null && <span>{t.best}: <span className="text-chart-2 font-black">{best}</span></span>}
+                    </div>
+
+                    <div className="relative w-full max-w-md rounded-2xl border border-border bg-muted/20 overflow-hidden">
+                        <canvas ref={canvasRef} width={BOARD_W} height={BOARD_H} className="w-full h-auto block" aria-label={t.title} />
+                    </div>
+
+                    {/* slot payout row — aligned to the same width/grid as the board above */}
+                    <div className="grid w-full max-w-md gap-1" style={{ gridTemplateColumns: `repeat(${SLOT_COUNT}, minmax(0, 1fr))` }}>
+                        {MULTIPLIERS.map((m, i) => (
+                            <div key={i} className="relative rounded-lg bg-muted/40 py-1.5 text-center text-xs font-black text-muted-foreground overflow-hidden">
+                                <AnimatePresence>
+                                    {lastResult?.slot === i && (
+                                        <motion.span
+                                            key={dropId}
+                                            className="absolute inset-0 rounded-lg bg-primary/30"
+                                            initial={{ opacity: 0, scale: prefersReducedMotion ? 1 : 0.6 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            exit={{ opacity: 0 }}
+                                            transition={prefersReducedMotion ? { duration: 0 } : { type: 'spring', stiffness: 400, damping: 14 }}
+                                        />
+                                    )}
+                                </AnimatePresence>
+                                <span className="relative">{m}×</span>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="flex w-full max-w-md items-center gap-3">
+                        <span className="text-xs font-bold text-muted-foreground">{t.bet}</span>
+                        <button
+                            onClick={() => adjustBet(-BET_STEP)}
+                            disabled={isDropping || bet <= MIN_BET}
+                            className="px-3 py-1.5 rounded-lg border border-border bg-muted hover:bg-accent disabled:opacity-40 font-black text-sm"
+                        >
+                            −
+                        </button>
+                        <span className="min-w-12 text-center font-black text-sm">{bet}</span>
+                        <button
+                            onClick={() => adjustBet(BET_STEP)}
+                            disabled={isDropping || bet >= MAX_BET}
+                            className="px-3 py-1.5 rounded-lg border border-border bg-muted hover:bg-accent disabled:opacity-40 font-black text-sm"
+                        >
+                            +
+                        </button>
+
+                        <button
+                            onClick={drop}
+                            disabled={!canDrop}
+                            className="flex-1 py-3 bg-primary text-primary-foreground rounded-2xl font-black text-sm shadow-lg hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
+                        >
+                            {isDropping ? t.dropping : t.drop}
+                        </button>
+                    </div>
+
+                    {bet > balance && <p className="text-xs font-bold text-destructive">{t.notEnough}</p>}
+
+                    <AnimatePresence>
+                        {lastResult && (
+                            <motion.div
+                                key={dropId}
+                                initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 8 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0 }}
+                                transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.25 }}
+                                className="text-center"
+                            >
+                                <p className="text-xs font-black text-muted-foreground uppercase">{t.won}</p>
+                                <p className="text-2xl font-black text-primary">{lastResult.multiplier}× · +{lastResult.score}</p>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
+            </GameContainer>
+        </div>
     );
 };
 

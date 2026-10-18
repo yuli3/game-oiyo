@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
 import { GameContainer } from '@/components/ui/game/GamePrimitives';
+import { useArcadePortal } from '@/lib/games/arcade-portal';
 import { usePrefersReducedMotion } from '@/lib/games/reduced-motion';
 import { createMemoryGame, flipMemoryCard, MEMORY_GRID_CONFIG, memoryPairCount, resolveMemoryPair, type MemoryGridSize, type MemoryState } from '@/lib/games/memory-card-game';
 import { clearMemoryCardSave, loadMemoryCardSave, storeMemoryCardSave } from '@/lib/games/memory-card-game-save';
@@ -112,16 +114,33 @@ const MemoryCardGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     },
   };
   const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'ko' });
 
   const [state, setState] = useState<MemoryState | null>(null);
   const [elapsedMs, setElapsedMs] = useState(0);
   const [startTime, setStartTime] = useState<number | null>(null);
   const [restored, setRestored] = useState(false);
-  const [muted, setMuted] = useState(false);
   const [paused, setPaused] = useState(false);
   const [best, setBest] = useState<{ timeMs: number; flips: number } | null>(null);
   const elapsedBase = useRef(0);
   const audio = useRef<AudioContext | null>(null);
+
+  const [muted, setMuted] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return localStorage.getItem('memory_card_sound_muted') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('memory_card_sound_muted', String(muted));
+    } catch {
+      // SSR-safe fallback
+    }
+  }, [muted]);
 
   const tone = (frequency: number, duration = 0.08) => {
     if (muted || typeof window === 'undefined') return;
@@ -184,41 +203,92 @@ const MemoryCardGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     document.querySelector<HTMLButtonElement>(`[data-memory-card="${next}"]`)?.focus();
   };
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        togglePortal();
+      } else if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        setMuted((v) => !v);
+      } else if ((e.key === 'p' || e.key === 'P') && state?.status === 'playing') {
+        e.preventDefault();
+        togglePause();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [togglePortal, togglePause, state?.status]);
+
   const { cols } = state ? MEMORY_GRID_CONFIG[state.gridSize] : MEMORY_GRID_CONFIG['4x4'];
   const totalPairs = state ? memoryPairCount(state) : 0;
 
   return (
-    <GameContainer
-      title={t.title}
-      subtitle={t.subtitle}
-      onReset={state ? () => startGame(state.gridSize) : undefined}
+    <div
+      ref={containerRef}
+      className={`relative w-full transition-all duration-300 ${
+        isImmersive ? 'fixed inset-0 z-50 flex flex-col items-center justify-center bg-background overflow-y-auto p-4' : ''
+      }`}
     >
-      {/* Difficulty selection */}
-      {!state && (
-        <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">{t.chooseLevel}</p>
-          <div className="flex flex-col gap-3">
-            {(['4x4', '6x4', '6x6'] as MemoryGridSize[]).map((size, i) => (
-              <button
-                key={size}
-                onClick={() => startGame(size)}
-                aria-label={[t.easy, t.medium, t.hard][i]}
-                className="w-full py-3 px-4 rounded-2xl border-2 border-border bg-muted hover:bg-accent hover:border-primary font-bold text-sm transition-all text-left"
-              >
-                {[t.easy, t.medium, t.hard][i]}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+      <div className="w-full max-w-xl mx-auto mb-2 flex items-center justify-end gap-2 px-1">
+        <button
+          type="button"
+          onClick={() => setMuted((v) => !v)}
+          className="flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-bold text-foreground shadow-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+          title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`}
+        >
+          {muted ? <VolumeX className="h-4 w-4 text-muted-foreground" /> : <Volume2 className="h-4 w-4 text-primary" />}
+          <span className="sr-only">{muted ? portalLabels.unmute : portalLabels.mute}</span>
+        </button>
+        <button
+          type="button"
+          onClick={togglePortal}
+          className="flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-bold text-foreground shadow-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+          title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+        >
+          {isImmersive ? <Minimize2 className="h-4 w-4 text-primary" /> : <Maximize2 className="h-4 w-4" />}
+          <span className="sr-only">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+        </button>
+      </div>
 
-      {/* Game board */}
-      {state && (
-        <>
-          <div className="mb-3 flex items-center justify-between gap-2">
-            <span className="text-xs font-bold text-muted-foreground" role="status" aria-live="polite">{restored ? (locale === 'ko' ? '이전 게임을 복원했습니다' : 'Game restored') : `${state.gridSize} · ${state.cards.length} cards`}</span>
-            <div className="flex gap-2"><button type="button" onClick={togglePause} className="min-h-11 rounded-xl border px-3 text-sm font-bold" aria-pressed={paused}>{paused ? '▶' : 'Ⅱ'} <span className="sr-only">Pause</span></button><button type="button" onClick={() => setMuted((value) => !value)} className="min-h-11 rounded-xl border px-3 text-sm font-bold" aria-pressed={muted}>{muted ? '🔇' : '🔊'} <span className="sr-only">Sound</span></button></div>
+      <GameContainer
+        title={t.title}
+        subtitle={t.subtitle}
+        onReset={state ? () => startGame(state.gridSize) : undefined}
+      >
+        {/* Difficulty selection */}
+        {!state && (
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">{t.chooseLevel}</p>
+            <div className="flex flex-col gap-3">
+              {(['4x4', '6x4', '6x6'] as MemoryGridSize[]).map((size, i) => (
+                <button
+                  key={size}
+                  onClick={() => startGame(size)}
+                  aria-label={[t.easy, t.medium, t.hard][i]}
+                  className="w-full py-3 px-4 rounded-2xl border-2 border-border bg-muted hover:bg-accent hover:border-primary font-bold text-sm transition-all text-left"
+                >
+                  {[t.easy, t.medium, t.hard][i]}
+                </button>
+              ))}
+            </div>
           </div>
+        )}
+
+        {/* Game board */}
+        {state && (
+          <>
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <span className="text-xs font-bold text-muted-foreground" role="status" aria-live="polite">{restored ? (locale === 'ko' ? '이전 게임을 복원했습니다' : 'Game restored') : `${state.gridSize} · ${state.cards.length} cards`}</span>
+              <div className="flex gap-2">
+                <button type="button" onClick={togglePause} className="min-h-11 rounded-xl border border-border px-3 text-sm font-bold hover:bg-muted" aria-pressed={paused}>
+                  {paused ? '▶' : 'Ⅱ'} <span className="sr-only">Pause</span>
+                </button>
+              </div>
+            </div>
           {/* Stats bar */}
           <div className="flex items-center justify-between mb-4 text-sm font-bold text-muted-foreground">
             <span>{t.flips}: <span className="text-foreground">{state.flips}</span></span>
@@ -285,6 +355,7 @@ const MemoryCardGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         </>
       )}
     </GameContainer>
+    </div>
   );
 };
 

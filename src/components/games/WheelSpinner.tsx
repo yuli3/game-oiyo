@@ -1,6 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Matter from 'matter-js';
+import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
 import { GameContainer } from '../ui/game/GamePrimitives';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { normalizeWheelItems, parseStoredWheelItems, WHEEL_ITEM_LIMIT } from '../../lib/games/wheel-spinner';
 
 // ─── Physics: the wheel is a single circular body pinned at its own center
@@ -25,6 +27,7 @@ const WheelSpinner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         es: { title: "Ruleta de la suerte", subtitle: "Tus opciones quedan guardadas para la próxima vez", spin: "Girar", reset: "Restablecer", add: "Añadir", result: "¡Resultado!", placeholder: "Escribe una opción", wheel: "Ruleta de opciones", remove: (item: string) => `Quitar ${item}`, spinning: "Girando…" }
     };
     const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
+    const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'ko' });
 
     const [items, setItems] = useState<string[]>(DEFAULT_ITEMS);
     const [itemsLoaded, setItemsLoaded] = useState(false);
@@ -33,6 +36,49 @@ const WheelSpinner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [isSpinning, setIsSpinning] = useState(false);
     const [winner, setWinner] = useState<string | null>(null);
     const [reducedMotion, setReducedMotion] = useState(false);
+
+    const [muted, setMuted] = useState(() => {
+        if (typeof window === 'undefined') return false;
+        try {
+            return localStorage.getItem('wheel_spinner_sound_muted') === 'true';
+        } catch {
+            return false;
+        }
+    });
+
+    useEffect(() => {
+        try {
+            localStorage.setItem('wheel_spinner_sound_muted', String(muted));
+        } catch {
+            // SSR-safe fallback
+        }
+    }, [muted]);
+
+    const audioRef = useRef<AudioContext | null>(null);
+    const playTone = useCallback((freq: number, duration = 0.04, type: OscillatorType = 'sine') => {
+        if (muted || typeof window === 'undefined') return;
+        try {
+            const ctx = audioRef.current ?? new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+            audioRef.current = ctx;
+            if (ctx.state === 'suspended') void ctx.resume();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = type;
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0.04, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + duration);
+        } catch {
+            // AudioContext fallback
+        }
+    }, [muted]);
+
+    const playToneRef = useRef(playTone);
+    playToneRef.current = playTone;
+    const lastTickSliceRef = useRef<number>(-1);
 
     // Physics rig lives for the component's lifetime; only one body ever exists
     // (the wheel itself, pinned at its own center — see constants above).
@@ -82,16 +128,29 @@ const WheelSpinner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             Matter.Body.setAngularVelocity(body, body.angularVelocity + wobble);
             setRotation((body.angle * 180) / Math.PI);
 
+            const currentItems = itemsRef.current;
+            if (currentItems.length > 0) {
+                const degrees = (body.angle * 180) / Math.PI;
+                const actualRotation = ((degrees % 360) + 360) % 360;
+                const sliceSize = 360 / currentItems.length;
+                const currentSlice = Math.floor(actualRotation / sliceSize);
+                if (currentSlice !== lastTickSliceRef.current && Math.abs(body.angularVelocity) > STOP_THRESHOLD * 2) {
+                    lastTickSliceRef.current = currentSlice;
+                    playToneRef.current(650, 0.02, 'triangle');
+                }
+            }
+
             if (Math.abs(body.angularVelocity) < STOP_THRESHOLD) {
                 Matter.Runner.stop(runner);
                 setIsSpinning(false);
-                const currentItems = itemsRef.current;
                 if (currentItems.length > 0) {
                     const degrees = (body.angle * 180) / Math.PI;
                     const actualRotation = ((degrees % 360) + 360) % 360; // normalize (angle can go negative)
                     const sliceSize = 360 / currentItems.length;
                     const winningIndex = Math.floor((360 - actualRotation) / sliceSize) % currentItems.length;
-                    setWinner(currentItems[(winningIndex + currentItems.length) % currentItems.length]);
+                    const resultWinner = currentItems[(winningIndex + currentItems.length) % currentItems.length];
+                    setWinner(resultWinner);
+                    playToneRef.current(880, 0.25, 'sine');
                 }
             }
         };
@@ -105,18 +164,20 @@ const WheelSpinner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         };
     }, []);
 
-    const spin = () => {
+    const spin = useCallback(() => {
         const body = wheelBodyRef.current;
         const engine = engineRef.current;
         if (!body || !engine || isSpinning || items.length === 0) return;
         setIsSpinning(true);
         setWinner(null);
+        playTone(440, 0.08, 'sine');
 
         if (reducedMotion) {
             const winningIndex = Math.floor(Math.random() * items.length);
             setRotation(-(winningIndex * (360 / items.length)));
             setWinner(items[winningIndex]);
             setIsSpinning(false);
+            playTone(880, 0.2, 'sine');
             return;
         }
 
@@ -127,7 +188,7 @@ const WheelSpinner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         const runner = Matter.Runner.create();
         runnerRef.current = runner;
         Matter.Runner.run(runner, engine);
-    };
+    }, [isSpinning, items, reducedMotion, playTone]);
 
     const addItem = () => {
         if (newItem.trim() && items.length < WHEEL_ITEM_LIMIT) {
@@ -144,92 +205,140 @@ const WheelSpinner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         try { localStorage.removeItem(STORAGE_KEY); } catch { /* non-blocking */ }
     };
 
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+            if (e.key === 'f' || e.key === 'F') {
+                e.preventDefault();
+                togglePortal();
+            } else if (e.key === 'm' || e.key === 'M') {
+                e.preventDefault();
+                setMuted((v) => !v);
+            } else if (e.code === 'Space' && !e.repeat) {
+                e.preventDefault();
+                spin();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [togglePortal, spin]);
+
     return (
-        <GameContainer title={t.title} subtitle={t.subtitle} onReset={reset}>
-            <div className="flex flex-col md:flex-row gap-12 items-center">
-                {/* Wheel UI */}
-                <div className="relative">
-                    {/* Fixed Pointer */}
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-4 z-10 w-8 h-8 bg-destructive rounded-full flex items-center justify-center shadow-lg border-2 border-background">
-                        <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[12px] border-t-background translate-y-4" />
-                    </div>
-                    
-                    <div role="img" aria-label={winner ? `${t.wheel}: ${winner}` : t.wheel}
-                        // rotation now comes from the matter.js body's angle every physics
-                        // tick (see the `afterUpdate` handler above), so no CSS transition —
-                        // the frame-by-frame updates already produce a smooth, decelerating spin.
-                        style={{ transform: `rotate(${rotation}deg)` }}
-                        className="w-64 h-64 sm:w-80 sm:h-80 rounded-full border-8 border-muted shadow-2xl relative overflow-hidden"
-                    >
-                        {items.map((_, i) => {
-                            const angle = 360 / items.length;
-                            return (
-                                <div
-                                    key={i}
-                                    style={{
-                                        transform: `rotate(${i * angle}deg) skewY(${90 - angle}deg)`,
-                                        backgroundColor: `oklch(0.8 0.1 ${150 + i * (30 / items.length)})`
-                                    }}
-                                    className="absolute top-0 right-0 w-1/2 h-1/2 origin-bottom-left border border-background/20"
-                                />
-                            );
-                        })}
-                        {items.map((item, i) => {
-                            const angle = 360 / items.length;
-                            return (
-                                <div 
-                                    key={`label-${i}`}
-                                    style={{ transform: `rotate(${i * angle + angle/2}deg)` }}
-                                    className="absolute inset-0 flex items-start justify-center pt-8 text-[10px] font-black text-foreground/80 uppercase tracking-tighter"
-                                >
-                                    <span className="rotate-90 origin-center">{item}</span>
-                                </div>
-                            );
-                        })}
-                        <div className="absolute inset-0 m-auto w-12 h-12 bg-background rounded-full shadow-inner border-4 border-muted flex items-center justify-center font-black text-xs text-primary">OIYO</div>
-                    </div>
-                </div>
-
-                {/* Controls Area */}
-                <div className="flex-1 space-y-6 w-full">
-                    <div className="flex gap-2">
-                        <input 
-                            type="text" 
-                            value={newItem} 
-                            onChange={(e) => setNewItem(e.target.value)}
-                            placeholder={t.placeholder}
-                            className="flex-1 bg-muted/50 border border-border rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-primary outline-none transition-all"
-                        />
-                        <button type="button" onClick={addItem} className="px-4 py-2 bg-primary text-primary-foreground rounded-xl font-bold text-xs">{t.add}</button>
-                    </div>
-
-                    <div className="max-h-32 overflow-y-auto flex flex-wrap gap-2 p-4 bg-muted/20 rounded-2xl border border-dashed border-border">
-                        {items.map((item, i) => (
-                            <span key={i} className="px-3 py-1 bg-card border border-border rounded-full text-[10px] font-bold text-muted-foreground flex items-center gap-2">
-                                {item}
-                                <button type="button" onClick={() => setItems(items.filter((_, idx) => idx !== i))} aria-label={t.remove(item)} className="text-destructive hover:scale-125">×</button>
-                            </span>
-                        ))}
-                    </div>
-
-                    <button 
-                        type="button"
-                        onClick={spin}
-                        disabled={isSpinning}
-                        className="w-full py-4 bg-primary text-primary-foreground rounded-2xl font-black text-xl shadow-lg hover:opacity-90 active:scale-95 transition-all"
-                    >
-                        {isSpinning ? t.spinning : t.spin}
-                    </button>
-
-                    {winner && (
-                        <div className="text-center animate-bounce motion-reduce:animate-none" role="status" aria-live="assertive">
-                            <p className="text-[10px] font-black text-muted-foreground uppercase mb-1">{t.result}</p>
-                            <h4 className="text-3xl font-black text-primary uppercase">{winner}</h4>
-                        </div>
-                    )}
-                </div>
+        <div
+            ref={containerRef}
+            className={`relative w-full transition-all duration-300 ${
+                isImmersive ? 'fixed inset-0 z-50 flex flex-col items-center justify-center bg-background overflow-y-auto p-4' : ''
+            }`}
+        >
+            <div className="w-full max-w-xl mx-auto mb-2 flex items-center justify-end gap-2 px-1">
+                <button
+                    type="button"
+                    onClick={() => setMuted((v) => !v)}
+                    className="flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-bold text-foreground shadow-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+                    title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`}
+                >
+                    {muted ? <VolumeX className="h-4 w-4 text-muted-foreground" /> : <Volume2 className="h-4 w-4 text-primary" />}
+                    <span className="sr-only">{muted ? portalLabels.unmute : portalLabels.mute}</span>
+                </button>
+                <button
+                    type="button"
+                    onClick={togglePortal}
+                    className="flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-bold text-foreground shadow-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+                    title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+                >
+                    {isImmersive ? <Minimize2 className="h-4 w-4 text-primary" /> : <Maximize2 className="h-4 w-4" />}
+                    <span className="sr-only">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+                </button>
             </div>
-        </GameContainer>
+
+            <GameContainer title={t.title} subtitle={t.subtitle} onReset={reset}>
+                <div className="flex flex-col md:flex-row gap-12 items-center">
+                    {/* Wheel UI */}
+                    <div className="relative">
+                        {/* Fixed Pointer */}
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-4 z-10 w-8 h-8 bg-destructive rounded-full flex items-center justify-center shadow-lg border-2 border-background">
+                            <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[12px] border-t-background translate-y-4" />
+                        </div>
+                        
+                        <div role="img" aria-label={winner ? `${t.wheel}: ${winner}` : t.wheel}
+                            // rotation now comes from the matter.js body's angle every physics
+                            // tick (see the `afterUpdate` handler above), so no CSS transition —
+                            // the frame-by-frame updates already produce a smooth, decelerating spin.
+                            style={{ transform: `rotate(${rotation}deg)` }}
+                            className="w-64 h-64 sm:w-80 sm:h-80 rounded-full border-8 border-muted shadow-2xl relative overflow-hidden"
+                        >
+                            {items.map((_, i) => {
+                                const angle = 360 / items.length;
+                                return (
+                                    <div
+                                        key={i}
+                                        style={{
+                                            transform: `rotate(${i * angle}deg) skewY(${90 - angle}deg)`,
+                                            backgroundColor: `oklch(0.8 0.1 ${150 + i * (30 / items.length)})`
+                                        }}
+                                        className="absolute top-0 right-0 w-1/2 h-1/2 origin-bottom-left border border-background/20"
+                                    />
+                                );
+                            })}
+                            {items.map((item, i) => {
+                                const angle = 360 / items.length;
+                                return (
+                                    <div 
+                                        key={`label-${i}`}
+                                        style={{ transform: `rotate(${i * angle + angle/2}deg)` }}
+                                        className="absolute inset-0 flex items-start justify-center pt-8 text-xs font-black text-foreground/80 uppercase tracking-tighter"
+                                    >
+                                        <span className="rotate-90 origin-center">{item}</span>
+                                    </div>
+                                );
+                            })}
+                            <div className="absolute inset-0 m-auto w-12 h-12 bg-background rounded-full shadow-inner border-4 border-muted flex items-center justify-center font-black text-xs text-primary">OIYO</div>
+                        </div>
+                    </div>
+
+                    {/* Controls Area */}
+                    <div className="flex-1 space-y-6 w-full">
+                        <div className="flex gap-2">
+                            <input 
+                                type="text" 
+                                value={newItem} 
+                                onChange={(e) => setNewItem(e.target.value)}
+                                placeholder={t.placeholder}
+                                className="flex-1 bg-muted/50 border border-border rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-primary outline-none transition-all"
+                            />
+                            <button type="button" onClick={addItem} className="px-4 py-2 bg-primary text-primary-foreground rounded-xl font-bold text-xs">{t.add}</button>
+                        </div>
+
+                        <div className="max-h-32 overflow-y-auto flex flex-wrap gap-2 p-4 bg-muted/20 rounded-2xl border border-dashed border-border">
+                            {items.map((item, i) => (
+                                <span key={i} className="px-3 py-1 bg-card border border-border rounded-full text-xs font-bold text-muted-foreground flex items-center gap-2">
+                                    {item}
+                                    <button type="button" onClick={() => setItems(items.filter((_, idx) => idx !== i))} aria-label={t.remove(item)} className="text-destructive hover:scale-125">×</button>
+                                </span>
+                            ))}
+                        </div>
+
+                        <button 
+                            type="button"
+                            onClick={spin}
+                            disabled={isSpinning}
+                            className="w-full py-4 bg-primary text-primary-foreground rounded-2xl font-black text-xl shadow-lg hover:opacity-90 active:scale-95 transition-all"
+                        >
+                            {isSpinning ? t.spinning : t.spin}
+                        </button>
+
+                        {winner && (
+                            <div className="text-center animate-bounce motion-reduce:animate-none" role="status" aria-live="assertive">
+                                <p className="text-xs font-black text-muted-foreground uppercase mb-1">{t.result}</p>
+                                <h4 className="text-3xl font-black text-primary uppercase">{winner}</h4>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </GameContainer>
+        </div>
     );
 };
 
