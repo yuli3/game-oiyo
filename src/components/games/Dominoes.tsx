@@ -9,6 +9,8 @@ import {
 import { clearDominoesSave, loadDominoesSave, storeDominoesSave } from "../../lib/games/dominoes-save";
 import { cpuDominoes, createDominoes, dominoCpuReview, dominoEnds, dominoHasMove, dominoesAnalysis, drawDominoes, passDominoes, playDominoes, type DominoCpuReview, type DominoesState } from "../../lib/games/dominoes";
 import { getRecord, recordResult, type GameRecord } from "../../lib/games/records";
+import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
 
 const AI_DELAY = 800;
 const extra: Record<Locale,{pause:string;resume:string;restored:string;paused:string;played:string;drawn:string;pips:string;sound:string}>={
@@ -49,11 +51,61 @@ const Dominoes: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
   const x=extra[locale]??extra.en;
   const aiInfo=AI_INFO[locale]??AI_INFO.en;
   const reducedMotion = usePrefersReducedMotion();
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'ko' });
   const [level, setLevel] = useState<AiLevel>(2);
   const [game, setGame] = useState<DominoesState | null>(null);
   const [paused, setPaused] = useState(false);
   const [restored, setRestored] = useState(false);
-  const[muted,setMuted]=useState(false);const audio=useRef<AudioContext|null>(null);const tone=(hz:number)=>{if(muted)return;const c=audio.current??new AudioContext();audio.current=c;const o=c.createOscillator(),g=c.createGain();o.frequency.value=hz;g.gain.setValueAtTime(.04,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+.07);o.connect(g).connect(c.destination);o.start();o.stop(c.currentTime+.07)};
+  const [muted, setMuted] = useState<boolean>(() => {
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        return window.localStorage.getItem("dominoes_sound_muted") === "true";
+      }
+    } catch {}
+    return false;
+  });
+  const toggleMute = useCallback(() => {
+    setMuted((m) => {
+      const next = !m;
+      try {
+        if (typeof window !== "undefined" && window.localStorage) {
+          window.localStorage.setItem("dominoes_sound_muted", String(next));
+        }
+      } catch {}
+      return next;
+    });
+  }, []);
+
+  const audio = useRef<AudioContext|null>(null);
+  const tone = (hz: number) => {
+    if (muted) return;
+    const c = audio.current ?? new AudioContext();
+    audio.current = c;
+    const o = c.createOscillator(), g = c.createGain();
+    o.frequency.value = hz;
+    g.gain.setValueAtTime(.04, c.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001, c.currentTime + .07);
+    o.connect(g).connect(c.destination);
+    o.start();
+    o.stop(c.currentTime + .07);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
+      if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        togglePortal();
+      } else if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        toggleMute();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [togglePortal, toggleMute]);
+
   const [pendingTile, setPendingTile] = useState<Tile | null>(null); // fits both ends → ask
   const [record, setRecord] = useState<GameRecord>({ w: 0, l: 0, d: 0 });
   const [lastCpuReview,setLastCpuReview]=useState<DominoCpuReview|null>(null);
@@ -118,100 +170,165 @@ const Dominoes: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
 
   if (!game) {
     return (
-      <GameContainer title={t.title}>
-        <div className="flex flex-col items-center gap-4 py-8">
-          <div className="flex gap-2">
-            {([1, 2, 3] as AiLevel[]).map((lv) => (
-              <button type="button" key={lv} onClick={() => setLevel(lv)} aria-pressed={level === lv}
-                className={`px-3 py-1.5 rounded-md text-sm font-bold border ${level === lv ? "bg-primary text-primary-foreground border-primary" : "border-gray-300 text-gray-600"}`}>
-                {lv === 1 ? t.level1 : lv === 2 ? t.level2 : t.level3}
+      <div
+        ref={containerRef}
+        data-game-surface
+        className={
+          isImmersive
+            ? "fixed inset-0 z-50 w-screen h-dvh bg-background p-3 sm:p-5 overflow-y-auto flex flex-col items-center justify-center m-0 select-none"
+            : "relative"
+        }
+      >
+        <GameContainer title={t.title}>
+          <div className="flex flex-col items-center gap-4 py-8">
+            <div className="flex gap-2">
+              {([1, 2, 3] as AiLevel[]).map((lv) => (
+                <button type="button" key={lv} onClick={() => setLevel(lv)} aria-pressed={level === lv}
+                  className={`px-3 py-1.5 rounded-md text-sm font-bold border ${level === lv ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:bg-muted"}`}>
+                  {lv === 1 ? t.level1 : lv === 2 ? t.level2 : t.level3}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">{aiInfo.policy}: {aiInfo.level[level]}</p>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <button type="button" onClick={newGame} className="px-6 py-2.5 rounded-lg bg-primary text-primary-foreground font-bold">{t.start}</button>
+              <button
+                type="button"
+                onClick={toggleMute}
+                aria-pressed={!muted}
+                aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+                title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`}
+                className="grid min-h-11 min-w-11 place-items-center rounded-lg border border-border text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
               </button>
-            ))}
+              <button
+                type="button"
+                onClick={togglePortal}
+                aria-pressed={isImmersive}
+                aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+                title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+                className="grid min-h-11 min-w-11 place-items-center rounded-lg border border-border text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground">{t.record}: {record.w}W {record.l}L {record.d}D</p>
           </div>
-          <p className="text-xs text-muted-foreground">{aiInfo.policy}: {aiInfo.level[level]}</p>
-          <button type="button" onClick={newGame} className="px-6 py-2.5 rounded-lg bg-primary text-primary-foreground font-bold">{t.start}</button>
-          <p className="text-xs text-gray-400">{t.record}: {record.w}W {record.l}L {record.d}D</p>
-        </div>
-      </GameContainer>
+        </GameContainer>
+      </div>
     );
   }
   const analysis=dominoesAnalysis(game);
 
   return (
-    <GameContainer title={t.title} subtitle={`${t.cpu}: ${game.cpu.length} · ${t.boneyard}: ${game.bone.length}`} onReset={newGame}>
-      {/* Turn / status */}
-      <div className="flex justify-between items-center mb-4">
-        <div className={`px-4 py-2 rounded-2xl border ${game.turn === "you" && game.status === "playing" ? "bg-primary/10 border-primary" : "bg-muted border-transparent opacity-50"}`}>
-          <span className="text-xs font-black uppercase tracking-widest">
-            {game.winner ? "—" : game.turn === "you" ? `${t.you} ${t.turn}` : t.thinking}
-          </span>
-        </div>
-        <div className="text-[10px] font-bold text-muted-foreground uppercase">{t.record}: {record.w}/{record.l}/{record.d}</div>
-      </div>
-      <p className="mb-3 text-center text-[11px] font-medium text-muted-foreground">{aiInfo.policy}: {aiInfo.level[level]}</p>
-      {game.history.length>0&&game.status==="playing"&&<div className="mb-3 flex justify-center"><button type="button" onClick={()=>{setPaused(v=>!v);setRestored(false)}} className="min-h-11 px-4 rounded-xl border border-border font-bold text-sm">{paused?"▶":"Ⅱ"} {paused?x.resume:x.pause}</button></div>}
-      <div className="mb-3 flex justify-center"><button type="button" onClick={()=>setMuted(v=>!v)} aria-pressed={muted} className="min-h-11 px-4 rounded-xl border border-border font-bold text-sm">{muted?'🔇':'🔊'} {x.sound}</button></div>
-      {(paused||restored)&&<p className="mb-3 text-center text-xs font-bold text-muted-foreground" role="status">{restored?`${x.restored} · `:""}{x.paused}</p>}
-
-      {/* Board */}
-      <div className="h-40 bg-muted/40 rounded-3xl border border-border flex items-center p-4 overflow-x-auto gap-1 shadow-inner mb-6">
-        {game.board.map((d) => (
-          <div key={d.id} className={`flex flex-shrink-0 bg-card border border-border rounded-md shadow-sm divide-x divide-border ${d.id === freshId && !reducedMotion ? "oiyo-tile-land" : ""}`}>
-            <div className="p-1"><Pips n={d.a} /></div>
-            <div className="p-1"><Pips n={d.b} /></div>
+    <div
+      ref={containerRef}
+      data-game-surface
+      className={
+        isImmersive
+          ? "fixed inset-0 z-50 w-screen h-dvh bg-background p-3 sm:p-5 overflow-y-auto flex flex-col items-center justify-between m-0 select-none"
+          : "relative"
+      }
+    >
+      <GameContainer title={t.title} subtitle={`${t.cpu}: ${game.cpu.length} · ${t.boneyard}: ${game.bone.length}`} onReset={newGame}>
+        {/* Turn / status */}
+        <div className="flex justify-between items-center mb-4">
+          <div className={`px-4 py-2 rounded-2xl border ${game.turn === "you" && game.status === "playing" ? "bg-primary/10 border-primary" : "bg-muted border-transparent opacity-50"}`}>
+            <span className="text-xs font-black uppercase tracking-widest">
+              {game.winner ? "—" : game.turn === "you" ? `${t.you} ${t.turn}` : t.thinking}
+            </span>
           </div>
-        ))}
-      </div>
-
-      {/* Pending end-choice */}
-      {pendingTile && (
-        <div className="flex items-center justify-center gap-3 mb-4">
-          <span className="text-xs font-bold text-muted-foreground">{t.pickEnd}</span>
-          <button type="button" onClick={() => humanPlay(pendingTile, "left")} className="px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-sm font-bold">{t.left}</button>
-          <button type="button" onClick={() => humanPlay(pendingTile, "right")} className="px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-sm font-bold">{t.right}</button>
+          <div className="text-xs font-bold text-muted-foreground uppercase">{t.record}: {record.w}/{record.l}/{record.d}</div>
         </div>
-      )}
-
-      {/* Hand */}
-      <div className="space-y-3">
-        <p className="text-[10px] font-black text-muted-foreground uppercase text-center tracking-widest">{t.yourTiles}</p>
-        <div className="flex flex-wrap justify-center gap-2">
-          {game.player.map((d) => {
-            const playable = game.turn === "you" && game.status === "playing" && (tileFits(d, ends.left) || tileFits(d, ends.right));
-            return (
-              <button type="button" key={d.id} data-domino-tile={d.id} onPointerUp={() => clickHandTile(d)} onKeyDown={(event)=>{if(!["ArrowLeft","ArrowRight","Home","End"].includes(event.key))return;event.preventDefault();const playableTiles=game.player.filter(tile=>tileFits(tile,ends.left)||tileFits(tile,ends.right));const index=playableTiles.findIndex(tile=>tile.id===d.id);const target=event.key==="Home"?0:event.key==="End"?playableTiles.length-1:event.key==="ArrowLeft"?Math.max(0,index-1):Math.min(playableTiles.length-1,index+1);document.querySelector<HTMLElement>(`[data-domino-tile="${playableTiles[target]?.id}"]`)?.focus()}} style={{touchAction:"manipulation"}} disabled={!playable} aria-disabled={!playable} aria-pressed={pendingTile?.id === d.id} aria-label={`${t.tile}: ${d.a}-${d.b}`}
-                className={`min-w-11 min-h-11 bg-card border-2 rounded-lg shadow-sm flex flex-col divide-y divide-border ${!reducedMotion ? "transition-all" : ""} ${
-                  playable ? `border-primary ${!reducedMotion ? "hover:-translate-y-1 active:scale-95" : ""}` : "border-border opacity-60"
-                } ${pendingTile?.id === d.id ? "ring-2 ring-primary" : ""}`}>
-                <div className="p-2 sm:p-3"><Pips n={d.a} /></div>
-                <div className="p-2 sm:p-3"><Pips n={d.b} /></div>
-              </button>
-            );
-          })}
+        <p className="mb-3 text-center text-xs font-medium text-muted-foreground">{aiInfo.policy}: {aiInfo.level[level]}</p>
+        <div className="mb-3 flex flex-wrap justify-center items-center gap-2">
+          {game.history.length>0&&game.status==="playing"&&<button type="button" onClick={()=>{setPaused(v=>!v);setRestored(false)}} className="min-h-11 px-4 rounded-xl border border-border font-bold text-sm hover:bg-muted transition-colors">{paused?"▶":"Ⅱ"} {paused?x.resume:x.pause}</button>}
+          <button
+            type="button"
+            onClick={toggleMute}
+            aria-pressed={!muted}
+            aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+            title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`}
+            className="flex min-h-11 items-center gap-1.5 px-4 rounded-xl border border-border font-bold text-sm hover:bg-muted transition-colors"
+          >
+            {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+            <span>{x.sound}</span>
+          </button>
+          <button
+            type="button"
+            onClick={togglePortal}
+            aria-pressed={isImmersive}
+            aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+            title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+            className="flex min-h-11 items-center gap-1.5 px-4 rounded-xl border border-border font-bold text-sm hover:bg-muted transition-colors"
+          >
+            {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+            <span>{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+          </button>
         </div>
-        {/* Draw / pass */}
-        {game.turn === "you" && game.status === "playing" && !humanHasMove && (
-          <div className="flex flex-col items-center gap-1">
-            <button type="button" onClick={humanDrawOrPass} className="px-5 py-2 rounded-lg bg-amber-500 text-white font-bold">
-              {game.bone.length > 0 ? `${t.draw} (${game.bone.length})` : t.pass}
-            </button>
-            <span className="text-[10px] text-muted-foreground">{t.noMove}</span>
+        {(paused||restored)&&<p className="mb-3 text-center text-xs font-bold text-muted-foreground" role="status">{restored?`${x.restored} · `:""}{x.paused}</p>}
+
+        {/* Board */}
+        <div className="h-40 bg-muted/40 rounded-3xl border border-border flex items-center p-4 overflow-x-auto gap-1 shadow-inner mb-6">
+          {game.board.map((d) => (
+            <div key={d.id} className={`flex flex-shrink-0 bg-card border border-border rounded-md shadow-sm divide-x divide-border ${d.id === freshId && !reducedMotion ? "oiyo-tile-land" : ""}`}>
+              <div className="p-1"><Pips n={d.a} /></div>
+              <div className="p-1"><Pips n={d.b} /></div>
+            </div>
+          ))}
+        </div>
+
+        {/* Pending end-choice */}
+        {pendingTile && (
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <span className="text-xs font-bold text-muted-foreground">{t.pickEnd}</span>
+            <button type="button" onClick={() => humanPlay(pendingTile, "left")} className="px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-sm font-bold">{t.left}</button>
+            <button type="button" onClick={() => humanPlay(pendingTile, "right")} className="px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-sm font-bold">{t.right}</button>
           </div>
         )}
-      </div>
 
-      {game.winner && (
-        <div className={`absolute inset-0 z-20 bg-background/80 backdrop-blur-md rounded-4xl flex flex-col items-center justify-center ${!reducedMotion ? "animate-in fade-in zoom-in-95" : ""}`}>
-          <h4 className="text-3xl font-black text-primary mb-2">
-            {game.winner === "you" ? `🎉 ${t.youWin}` : game.winner === "cpu" ? t.cpuWins : t.blockDraw}
-          </h4>
-          <p className="text-xs text-muted-foreground mb-4">{t.record}: {record.w}W {record.l}L {record.d}D</p>
-          <p className="text-xs text-muted-foreground mb-4">{analysis.plays} {x.played} · {analysis.draws} {x.drawn} · {analysis.yourPips}–{analysis.cpuPips} {x.pips}</p>
-          {game.winner==='cpu'&&lastCpuReview&&<div className="mb-4 max-w-xs rounded-2xl border border-amber-300/60 bg-amber-50 p-3 text-left text-xs text-stone-800"><p className="font-black text-amber-900">{aiInfo.review} · {lastCpuReview.tile.a}-{lastCpuReview.tile.b} · {lastCpuReview.end==='left'?t.left:t.right}</p><p className="mt-1">{lastCpuReview.draws>0?`${lastCpuReview.draws} ${aiInfo.draws} · `:''}{aiInfo.reason[lastCpuReview.reason]}</p><p className="mt-1 text-[10px] text-stone-500">{aiInfo.policy}: {aiInfo.level[level]}</p></div>}
-          <button type="button" onClick={newGame} className="px-10 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg">{t.reset}</button>
+        {/* Hand */}
+        <div className="space-y-3">
+          <p className="text-xs font-black text-muted-foreground uppercase text-center tracking-widest">{t.yourTiles}</p>
+          <div className="flex flex-wrap justify-center gap-2">
+            {game.player.map((d) => {
+              const playable = game.turn === "you" && game.status === "playing" && (tileFits(d, ends.left) || tileFits(d, ends.right));
+              return (
+                <button type="button" key={d.id} data-domino-tile={d.id} onPointerUp={() => clickHandTile(d)} onKeyDown={(event)=>{if(!["ArrowLeft","ArrowRight","Home","End"].includes(event.key))return;event.preventDefault();const playableTiles=game.player.filter(tile=>tileFits(tile,ends.left)||tileFits(tile,ends.right));const index=playableTiles.findIndex(tile=>tile.id===d.id);const target=event.key==="Home"?0:event.key==="End"?playableTiles.length-1:event.key==="ArrowLeft"?Math.max(0,index-1):Math.min(playableTiles.length-1,index+1);document.querySelector<HTMLElement>(`[data-domino-tile="${playableTiles[target]?.id}"]`)?.focus()}} style={{touchAction:"manipulation"}} disabled={!playable} aria-disabled={!playable} aria-pressed={pendingTile?.id === d.id} aria-label={`${t.tile}: ${d.a}-${d.b}`}
+                  className={`min-w-11 min-h-11 bg-card border-2 rounded-lg shadow-sm flex flex-col divide-y divide-border ${!reducedMotion ? "transition-all" : ""} ${
+                    playable ? `border-primary ${!reducedMotion ? "hover:-translate-y-1 active:scale-95" : ""}` : "border-border opacity-60"
+                  } ${pendingTile?.id === d.id ? "ring-2 ring-primary" : ""}`}>
+                  <div className="p-2 sm:p-3"><Pips n={d.a} /></div>
+                  <div className="p-2 sm:p-3"><Pips n={d.b} /></div>
+                </button>
+              );
+            })}
+          </div>
+          {/* Draw / pass */}
+          {game.turn === "you" && game.status === "playing" && !humanHasMove && (
+            <div className="flex flex-col items-center gap-1">
+              <button type="button" onClick={humanDrawOrPass} className="px-5 py-2 rounded-lg bg-amber-500 text-white font-bold">
+                {game.bone.length > 0 ? `${t.draw} (${game.bone.length})` : t.pass}
+              </button>
+              <span className="text-xs text-muted-foreground">{t.noMove}</span>
+            </div>
+          )}
         </div>
-      )}
-    </GameContainer>
+
+        {game.winner && (
+          <div className={`absolute inset-0 z-20 bg-background/80 backdrop-blur-md rounded-4xl flex flex-col items-center justify-center ${!reducedMotion ? "animate-in fade-in zoom-in-95" : ""}`}>
+            <h4 className="text-3xl font-black text-primary mb-2">
+              {game.winner === "you" ? `🎉 ${t.youWin}` : game.winner === "cpu" ? t.cpuWins : t.blockDraw}
+            </h4>
+            <p className="text-xs text-muted-foreground mb-4">{t.record}: {record.w}W {record.l}L {record.d}D</p>
+            <p className="text-xs text-muted-foreground mb-4">{analysis.plays} {x.played} · {analysis.draws} {x.drawn} · {analysis.yourPips}–{analysis.cpuPips} {x.pips}</p>
+            {game.winner==='cpu'&&lastCpuReview&&<div className="mb-4 max-w-xs rounded-2xl border border-amber-300/60 bg-amber-50 p-3 text-left text-xs text-stone-800"><p className="font-black text-amber-900">{aiInfo.review} · {lastCpuReview.tile.a}-{lastCpuReview.tile.b} · {lastCpuReview.end==='left'?t.left:t.right}</p><p className="mt-1">{lastCpuReview.draws>0?`${lastCpuReview.draws} ${aiInfo.draws} · `:''}{aiInfo.reason[lastCpuReview.reason]}</p><p className="mt-1 text-xs text-stone-500">{aiInfo.policy}: {aiInfo.level[level]}</p></div>}
+            <button type="button" onClick={newGame} className="px-10 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg">{t.reset}</button>
+          </div>
+        )}
+      </GameContainer>
+    </div>
   );
 };
 

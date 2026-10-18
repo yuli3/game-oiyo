@@ -31,6 +31,8 @@ import {
 } from '../../lib/games/tents-chaos';
 import { TENTS_SPRITES } from '../../lib/games/sprites';
 import { tentsAnalyticsPayload, type TentsAnalyticsEvent } from '../../lib/games/tents-analytics';
+import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
 
 // ─── Tents & Trees — logic puzzle with generated boards ─────────────────────
 // Every tree pairs with one tent on an orthogonally adjacent cell; tents never
@@ -277,6 +279,7 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const chaosCopy = CHAOS_COPY[localeKey];
     const a11y = A11Y_COPY[locale as keyof typeof A11Y_COPY] ?? A11Y_COPY.en;
     const nextDailyCopy = NEXT_DAILY_COPY[locale as keyof typeof NEXT_DAILY_COPY] ?? NEXT_DAILY_COPY.en;
+    const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'ko' });
 
     const [initial] = useState(initialGame);
     const [mode, setMode] = useState<TentsMode>(initial.mode);
@@ -310,7 +313,42 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         analytics.gtag?.('event', event, tentsAnalyticsPayload({ mode: eventMode, locale }));
     }, [locale]);
 
-    const [muted, setMuted] = useState(false);
+    const [muted, setMuted] = useState<boolean>(() => {
+        try {
+            if (typeof window !== 'undefined' && window.localStorage) {
+                return window.localStorage.getItem('tents_sound_muted') === 'true';
+            }
+        } catch {}
+        return false;
+    });
+    const toggleMute = useCallback(() => {
+        setMuted((m) => {
+            const next = !m;
+            try {
+                if (typeof window !== 'undefined' && window.localStorage) {
+                    window.localStorage.setItem('tents_sound_muted', String(next));
+                }
+            } catch {}
+            return next;
+        });
+    }, []);
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            const target = e.target as HTMLElement | null;
+            if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
+            if (e.key === 'f' || e.key === 'F') {
+                e.preventDefault();
+                togglePortal();
+            } else if (e.key === 'm' || e.key === 'M') {
+                e.preventDefault();
+                toggleMute();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [togglePortal, toggleMute]);
+
     const [hint, setHint] = useState<TentsHint | null>(null);
     const mutedRef = useRef(false);
     useEffect(() => { mutedRef.current = muted; }, [muted]);
@@ -602,40 +640,60 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     };
 
     return (
-        <GameContainer title={t.title} subtitle={a11y.subtitle} resetLabel={a11y.reset} onReset={() => newPuzzle(mode, difficulty)}>
-            <div className="flex flex-col items-center">
-                <p className="text-sm font-medium text-muted-foreground mb-2 text-center leading-relaxed">{t.desc}</p>
-                <p className="text-xs text-muted-foreground/80 mb-4 text-center max-w-xs leading-relaxed">{t.note}</p>
+        <div
+            ref={containerRef}
+            data-game-surface
+            className={
+                isImmersive
+                    ? "fixed inset-0 z-50 w-screen h-dvh bg-background p-3 sm:p-5 overflow-y-auto flex flex-col items-center justify-between m-0 select-none"
+                    : "relative"
+            }
+        >
+            <GameContainer title={t.title} subtitle={a11y.subtitle} resetLabel={a11y.reset} onReset={() => newPuzzle(mode, difficulty)}>
+                <div className="flex flex-col items-center">
+                    <p className="text-sm font-medium text-muted-foreground mb-2 text-center leading-relaxed">{t.desc}</p>
+                    <p className="text-xs text-muted-foreground/80 mb-4 text-center max-w-xs leading-relaxed">{t.note}</p>
 
-                <div className="mb-3 inline-flex flex-wrap justify-center gap-1">
-                    {(['daily', 'free', 'chaos'] as const).map((m) => (
-                        <button key={m} onClick={() => {
-                            if (m !== mode) track('mode_change', m);
-                            newPuzzle(m);
-                        }}
-                            aria-pressed={mode === m}
-                            className={`min-h-11 px-3 py-2 rounded-lg text-xs font-bold border transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${mode === m ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
-                            {t[m]}
+                    <div className="mb-3 inline-flex flex-wrap justify-center gap-1">
+                        {(['daily', 'free', 'chaos'] as const).map((m) => (
+                            <button key={m} onClick={() => {
+                                if (m !== mode) track('mode_change', m);
+                                newPuzzle(m);
+                            }}
+                                aria-pressed={mode === m}
+                                className={`min-h-11 px-3 py-2 rounded-lg text-xs font-bold border transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${mode === m ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
+                                {t[m]}
+                            </button>
+                        ))}
+                        <button type="button" onClick={() => {
+                            track('hint_used', mode);
+                            const tents: Pos[] = [];
+                            for (let rr = 0; rr < puzzle.size; rr++) for (let cc = 0; cc < puzzle.size; cc++) if (marks[rr][cc] === 'tent') tents.push([rr, cc]);
+                            setHint(explainTentsHint(tents, puzzle));
+                        }} disabled={playLocked} className="min-h-11 rounded-lg border border-border px-3 text-xs font-bold text-muted-foreground hover:bg-muted disabled:opacity-40">
+                            {HINT_LABEL[locale as keyof typeof HINT_LABEL] ?? HINT_LABEL.en}
                         </button>
-                    ))}
-                    <button type="button" onClick={() => {
-                        track('hint_used', mode);
-                        const tents: Pos[] = [];
-                        for (let rr = 0; rr < puzzle.size; rr++) for (let cc = 0; cc < puzzle.size; cc++) if (marks[rr][cc] === 'tent') tents.push([rr, cc]);
-                        setHint(explainTentsHint(tents, puzzle));
-                    }} disabled={playLocked} className="min-h-11 rounded-lg border border-border px-3 text-xs font-bold text-muted-foreground hover:bg-muted disabled:opacity-40">
-                        {HINT_LABEL[locale as keyof typeof HINT_LABEL] ?? HINT_LABEL.en}
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setMuted((value) => !value)}
-                        aria-pressed={muted}
-                        className="min-h-11 min-w-11 rounded-lg border border-border text-sm text-muted-foreground hover:bg-muted"
-                    >
-                        <span aria-hidden="true">{muted ? '🔇' : '🔊'}</span>
-                        <span className="sr-only">{t.sound}</span>
-                    </button>
-                </div>
+                        <button
+                            type="button"
+                            onClick={toggleMute}
+                            aria-pressed={!muted}
+                            aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+                            title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`}
+                            className="grid min-h-11 min-w-11 place-items-center rounded-lg border border-border text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                        >
+                            {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={togglePortal}
+                            aria-pressed={isImmersive}
+                            aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+                            title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+                            className="grid min-h-11 min-w-11 place-items-center rounded-lg border border-border text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                        >
+                            {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+                        </button>
+                    </div>
 
                 {mode === 'free' && (
                     <div className="mb-3 inline-flex flex-wrap items-center justify-center gap-1.5" role="toolbar" aria-label={a11y.difficulty}>
@@ -836,6 +894,7 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 </div>
             </div>
         </GameContainer>
+    </div>
     );
 };
 

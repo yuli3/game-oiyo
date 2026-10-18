@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
 import { GameContainer } from '../ui/game/GamePrimitives';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { dayIndex, mulberry32, previousDayKey, todayKey } from '../../lib/games/daily';
 import { getDailyStreak, recordDailyWin, type DailyStreak } from '../../lib/games/records';
 import {
@@ -98,7 +100,46 @@ const Kurodoko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [streak, setStreak] = useState<DailyStreak | null>(null);
     const [dailyDate, setDailyDate] = useState(() => todayKey());
     const [activeCell, setActiveCell] = useState(0);
-    const [muted, setMuted] = useState(false);
+    const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'ko' });
+    const [muted, setMuted] = useState<boolean>(() => {
+        try {
+            if (typeof window !== 'undefined' && window.localStorage) {
+                return window.localStorage.getItem('kurodoko_sound_muted') === 'true';
+            }
+        } catch {}
+        return false;
+    });
+
+    const toggleMute = useCallback(() => {
+        setMuted((m) => {
+            const next = !m;
+            try {
+                if (typeof window !== 'undefined' && window.localStorage) {
+                    window.localStorage.setItem('kurodoko_sound_muted', String(next));
+                }
+            } catch {}
+            return next;
+        });
+    }, []);
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            const target = e.target as HTMLElement | null;
+            if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+                return;
+            }
+            if (e.key === 'f' || e.key === 'F') {
+                e.preventDefault();
+                togglePortal();
+            } else if (e.key === 'm' || e.key === 'M') {
+                e.preventDefault();
+                toggleMute();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [togglePortal, toggleMute]);
+
     const [hydrated, setHydrated] = useState(false);
     const cellRefs = useRef<Array<HTMLButtonElement | HTMLDivElement | null>>([]);
 
@@ -204,39 +245,55 @@ const Kurodoko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     };
 
     return (
-        <GameContainer title={t.title} subtitle={a11y.subtitle} resetLabel={a11y.reset} onReset={() => newPuzzle(mode === 'daily' ? 'daily' : difficulty)}>
-            <p className="text-xs text-muted-foreground mb-4 leading-relaxed">{t.desc}</p>
+        <div
+            ref={containerRef}
+            data-game-surface
+            className={
+                isImmersive
+                    ? "fixed inset-0 z-50 w-screen h-dvh bg-background p-3 sm:p-5 overflow-y-auto flex flex-col items-center justify-between m-0 select-none"
+                    : "relative"
+            }
+        >
+            <GameContainer title={t.title} subtitle={a11y.subtitle} resetLabel={a11y.reset} onReset={() => newPuzzle(mode === 'daily' ? 'daily' : difficulty)}>
+                <p className="text-xs text-muted-foreground mb-4 leading-relaxed">{t.desc}</p>
 
-            <div className="mb-4 flex flex-wrap items-center gap-2">
-                <div className="inline-flex flex-wrap gap-1">
-                    <button onClick={() => newPuzzle('daily')}
-                        aria-pressed={mode === 'daily'}
-                        className={`min-h-11 px-3 py-2 rounded-lg text-xs font-bold border transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${mode === 'daily' ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
-                        {t.daily}
-                    </button>
-                    {(['easy', 'medium', 'hard'] as Difficulty[]).map((d) => (
-                        <button key={d} onClick={() => newPuzzle(d)}
-                            aria-pressed={mode === 'free' && difficulty === d}
-                            className={`min-h-11 px-3 py-2 rounded-lg text-xs font-bold border transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${mode === 'free' && difficulty === d ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
-                            {t[d]}
+                <div className="mb-4 flex flex-wrap items-center gap-2">
+                    <div className="inline-flex flex-wrap gap-1">
+                        <button onClick={() => newPuzzle('daily')}
+                            aria-pressed={mode === 'daily'}
+                            className={`min-h-11 px-3 py-2 rounded-lg text-xs font-bold border transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${mode === 'daily' ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
+                            {t.daily}
                         </button>
-                    ))}
+                        {(['easy', 'medium', 'hard'] as Difficulty[]).map((d) => (
+                            <button key={d} onClick={() => newPuzzle(d)}
+                                aria-pressed={mode === 'free' && difficulty === d}
+                                className={`min-h-11 px-3 py-2 rounded-lg text-xs font-bold border transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${mode === 'free' && difficulty === d ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
+                                {t[d]}
+                            </button>
+                        ))}
+                    </div>
+                    <div className="ml-auto flex items-center gap-1.5">
+                        <button type="button" onClick={undo} disabled={history.length === 0 || validation.complete}
+                            className="min-h-11 rounded-lg border border-border px-3 text-xs font-bold text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                            ↶ {a11y.undo}
+                        </button>
+                        <button type="button" onClick={toggleMute}
+                            aria-label={muted ? portalLabels.unmute : portalLabels.mute} aria-pressed={!muted}
+                            title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`}
+                            className="grid min-h-11 min-w-11 place-items-center rounded-lg border border-border text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                            {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+                        </button>
+                        <button type="button" onClick={togglePortal}
+                            aria-label={isImmersive ? portalLabels.exit : portalLabels.enter} aria-pressed={isImmersive}
+                            title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+                            className="grid min-h-11 min-w-11 place-items-center rounded-lg border border-border text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                            {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+                        </button>
+                        <span className="pl-2 text-xs font-bold text-muted-foreground uppercase tracking-widest">{t.moves} {moves} · {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')}</span>
+                    </div>
                 </div>
-                <div className="ml-auto flex items-center gap-1">
-                    <button type="button" onClick={undo} disabled={history.length === 0 || validation.complete}
-                        className="min-h-11 rounded-lg border border-border px-3 text-xs font-bold text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-                        ↶ {a11y.undo}
-                    </button>
-                    <button type="button" onClick={() => setMuted((value) => !value)}
-                        aria-label={muted ? a11y.soundOn : a11y.soundOff} aria-pressed={!muted}
-                        className="grid min-h-11 min-w-11 place-items-center rounded-lg border border-border text-base text-muted-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-                        {muted ? '🔇' : '🔊'}
-                    </button>
-                    <span className="pl-2 text-xs font-bold text-muted-foreground uppercase tracking-widest">{t.moves} {moves} · {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')}</span>
-                </div>
-            </div>
 
-            <p className="mb-3 text-center text-[11px] font-medium text-muted-foreground">{a11y.hint}</p>
+                <p className="mb-3 text-center text-xs font-medium text-muted-foreground">{a11y.hint}</p>
 
             {mode === 'daily' && streak && (streak.played > 0 || solvedToday) && (
                 <p className="mb-3 text-center text-xs font-bold text-muted-foreground">
@@ -298,7 +355,8 @@ const Kurodoko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 ) : null}
             </div>
         </GameContainer>
-    );
+    </div>
+);
 };
 
 export default Kurodoko;

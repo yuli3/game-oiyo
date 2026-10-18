@@ -7,6 +7,8 @@ import {
 } from '../../lib/games/yahtzee';
 import { clearYahtzeeSave, loadYahtzeeSave, restoredYahtzeeSeconds, storeYahtzeeSave } from '../../lib/games/yahtzee-save';
 import { getBest, recordBest } from '../../lib/games/records';
+import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
 
 const BEST_KEY = 'oiyo-yahtzee-best';
 const ROLL_MS = 500;
@@ -94,6 +96,7 @@ const CHOICE_COPY:Record<keyof typeof COPY,{last:string;cost:string;matched:stri
 const Yahtzee: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const t = COPY[(locale as keyof typeof COPY)] ?? COPY.en;
     const choiceCopy=CHOICE_COPY[locale as keyof typeof COPY]??CHOICE_COPY.en;
+    const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'ko' });
 
     const rngState = useRef(0x5eed_cafe);
     const nextRandom = useCallback(() => {
@@ -107,7 +110,42 @@ const Yahtzee: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [hydrated, setHydrated] = useState(false);
     const [rolling, setRolling] = useState(false);
     const [showRules, setShowRules] = useState(false);
-    const [muted, setMuted] = useState(false);
+    const [muted, setMuted] = useState<boolean>(() => {
+        try {
+            if (typeof window !== 'undefined' && window.localStorage) {
+                return window.localStorage.getItem('yahtzee_sound_muted') === 'true';
+            }
+        } catch {}
+        return false;
+    });
+    const toggleMute = useCallback(() => {
+        setMuted((m) => {
+            const next = !m;
+            try {
+                if (typeof window !== 'undefined' && window.localStorage) {
+                    window.localStorage.setItem('yahtzee_sound_muted', String(next));
+                }
+            } catch {}
+            return next;
+        });
+    }, []);
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            const target = e.target as HTMLElement | null;
+            if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
+            if (e.key === 'f' || e.key === 'F') {
+                e.preventDefault();
+                togglePortal();
+            } else if (e.key === 'm' || e.key === 'M') {
+                e.preventDefault();
+                toggleMute();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [togglePortal, toggleMute]);
+
     const [lastChoice,setLastChoice]=useState<YahtzeeChoiceReview|null>(null);
     const rollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const audioContext = useRef<AudioContext | null>(null);
@@ -260,121 +298,152 @@ const Yahtzee: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     };
 
     return (
-        <GameContainer title={t.title} subtitle={t.subtitle} onReset={restart}>
-            {/* Status */}
-            <div className="flex justify-between items-center mb-4 text-xs font-bold text-muted-foreground">
-                <div>
-                    <div>{t.round(Math.min(state.round, 13))}</div>
-                    <div>{t.rollsLeft(state.rollsLeft)}</div>
-                    <div>{t.time}: {formatSeconds(seconds)}</div>
-                </div>
-                <div className="text-right">
-                    <div>{t.total}: <span className="text-primary text-lg font-black">{state.scorecard.totalScore}</span></div>
-                    <div>{t.best}: <span className="text-chart-2 font-black">{best}</span></div>
-                    <button onClick={() => setMuted((value) => !value)} aria-pressed={muted} className="min-h-11 px-2 text-xs underline decoration-dotted">{muted ? '🔇' : '🔊'} {t.sound}</button>
-                </div>
-            </div>
-
-            {state.isGameOver ? (
-                <div className="py-10 text-center space-y-4 animate-fade-up motion-reduce:animate-none" role="status" aria-live="polite">
-                    <h4 className="text-2xl font-black text-foreground">{t.gameOver}</h4>
-                    <p className="text-4xl font-black text-primary">{state.scorecard.totalScore}</p>
-                    <div className="mx-auto max-w-sm rounded-2xl border border-border bg-muted/30 p-4 text-left text-sm">
-                        <h5 className="mb-2 font-black">{t.breakdown}</h5>
-                        <dl className="grid grid-cols-2 gap-2">
-                            <dt>{t.upper}</dt><dd className="text-right font-bold">{upperScore + state.scorecard.upperBonus}</dd>
-                            <dt>{t.yahtzeeBonus}</dt><dd className="text-right font-bold">{state.scorecard.yahtzeeBonusCount * 100}</dd>
-                            <dt>{t.zeroes}</dt><dd className="text-right font-bold">{zeroCount}</dd>
-                            <dt>{t.time}</dt><dd className="text-right font-bold">{formatSeconds(seconds)}</dd>
-                        </dl>
-                        <p className="mt-3 border-t border-border pt-3 font-bold">{t.nextGoal}: {nextTarget} {t.points}</p>
+        <div
+            ref={containerRef}
+            data-game-surface
+            className={
+                isImmersive
+                    ? "fixed inset-0 z-50 w-screen h-dvh bg-background p-3 sm:p-5 overflow-y-auto flex flex-col items-center justify-between m-0 select-none"
+                    : "relative"
+            }
+        >
+            <GameContainer title={t.title} subtitle={t.subtitle} onReset={restart}>
+                {/* Status */}
+                <div className="flex justify-between items-center mb-4 text-xs font-bold text-muted-foreground">
+                    <div>
+                        <div>{t.round(Math.min(state.round, 13))}</div>
+                        <div>{t.rollsLeft(state.rollsLeft)}</div>
+                        <div>{t.time}: {formatSeconds(seconds)}</div>
                     </div>
-                    <button onClick={restart} className="px-10 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity">
-                        {t.playAgain}
-                    </button>
-                </div>
-            ) : (
-                <>
-                    {/* Dice tray */}
-                    <div className="flex justify-center gap-2 sm:gap-3 my-4">
-                        {state.diceValues.map((value, i) => (
+                    <div className="text-right flex flex-col items-end gap-1">
+                        <div>{t.total}: <span className="text-primary text-lg font-black">{state.scorecard.totalScore}</span></div>
+                        <div>{t.best}: <span className="text-chart-2 font-black">{best}</span></div>
+                        <div className="flex items-center gap-1.5 pt-1">
                             <button
-                                key={i}
-                                onClick={() => { playTone(state.heldDice[i] ? 260 : 330); setState((s) => toggleHoldDie(s, i)); }}
-                                disabled={state.rollsLeft === 3 || state.rollsLeft === 0 || rolling}
-                                aria-pressed={state.heldDice[i]}
-                                aria-label={`Die ${i + 1}: ${value}${state.heldDice[i] ? ' (held)' : ''}`}
-                                className={`min-h-11 min-w-11 rounded-2xl p-1 transition-all ${
-                                    state.heldDice[i] ? 'ring-2 ring-primary bg-primary/10 -translate-y-1' : ''
-                                } disabled:cursor-default`}
+                                type="button"
+                                onClick={toggleMute}
+                                aria-pressed={!muted}
+                                aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+                                title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`}
+                                className="grid min-h-11 min-w-11 place-items-center rounded-lg border border-border text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                             >
-                                <Die type="D6" value={value} rolling={rolling && !state.heldDice[i]} size={52} />
+                                {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
                             </button>
-                        ))}
+                            <button
+                                type="button"
+                                onClick={togglePortal}
+                                aria-pressed={isImmersive}
+                                aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+                                title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+                                className="grid min-h-11 min-w-11 place-items-center rounded-lg border border-border text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                            >
+                                {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+                            </button>
+                        </div>
                     </div>
-                    <p className="text-center text-[10px] text-muted-foreground mb-3">
-                        {state.rollsLeft === 3 ? t.rollFirst : t.holdHint}
-                    </p>
-                    {forcedJoker && <p className="mb-3 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-center text-xs font-bold text-primary" role="status">🎯 {t.joker}</p>}
-                    {recommendation && <p className="mb-3 text-center text-xs text-muted-foreground" role="status" aria-live="polite">💡 {t.recommendation}: <strong>{t.cats[recommendation.category]} · {recommendation.score}</strong> — {recommendationReason}</p>}
-                    {lastChoice && <div className="mb-3 rounded-xl border border-border bg-muted/30 px-3 py-2 text-center text-xs text-muted-foreground"><strong>{choiceCopy.last}: {t.cats[lastChoice.chosen]} · {lastChoice.chosenScore}</strong>{lastChoice.opportunityCost>0?` · ${choiceCopy.cost} ${lastChoice.opportunityCost} (${t.cats[lastChoice.recommended]} ${lastChoice.recommendedScore})`:` · ${choiceCopy.matched}`}</div>}
+                </div>
 
-                    <button
-                        onClick={handleRoll}
-                        disabled={state.rollsLeft === 0 || rolling}
-                        className="min-h-11 w-full py-3 bg-primary text-primary-foreground rounded-2xl font-black shadow-md hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                    >
-                        {t.roll}
-                    </button>
+                {state.isGameOver ? (
+                    <div className="py-10 text-center space-y-4 animate-fade-up motion-reduce:animate-none" role="status" aria-live="polite">
+                        <h4 className="text-2xl font-black text-foreground">{t.gameOver}</h4>
+                        <p className="text-4xl font-black text-primary">{state.scorecard.totalScore}</p>
+                        <div className="mx-auto max-w-sm rounded-2xl border border-border bg-muted/30 p-4 text-left text-sm">
+                            <h5 className="mb-2 font-black">{t.breakdown}</h5>
+                            <dl className="grid grid-cols-2 gap-2">
+                                <dt>{t.upper}</dt><dd className="text-right font-bold">{upperScore + state.scorecard.upperBonus}</dd>
+                                <dt>{t.yahtzeeBonus}</dt><dd className="text-right font-bold">{state.scorecard.yahtzeeBonusCount * 100}</dd>
+                                <dt>{t.zeroes}</dt><dd className="text-right font-bold">{zeroCount}</dd>
+                                <dt>{t.time}</dt><dd className="text-right font-bold">{formatSeconds(seconds)}</dd>
+                            </dl>
+                            <p className="mt-3 border-t border-border pt-3 font-bold">{t.nextGoal}: {nextTarget} {t.points}</p>
+                        </div>
+                        <button onClick={restart} className="px-10 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity">
+                            {t.playAgain}
+                        </button>
+                    </div>
+                ) : (
+                    <>
+                        {/* Dice tray */}
+                        <div className="flex justify-center gap-2 sm:gap-3 my-4">
+                            {state.diceValues.map((value, i) => (
+                                <button
+                                    key={i}
+                                    onClick={() => { playTone(state.heldDice[i] ? 260 : 330); setState((s) => toggleHoldDie(s, i)); }}
+                                    disabled={state.rollsLeft === 3 || state.rollsLeft === 0 || rolling}
+                                    aria-pressed={state.heldDice[i]}
+                                    aria-label={`Die ${i + 1}: ${value}${state.heldDice[i] ? ' (held)' : ''}`}
+                                    className={`min-h-11 min-w-11 rounded-2xl p-1 transition-all ${
+                                        state.heldDice[i] ? 'ring-2 ring-primary bg-primary/10 -translate-y-1' : ''
+                                    } disabled:cursor-default`}
+                                >
+                                    <Die type="D6" value={value} rolling={rolling && !state.heldDice[i]} size={52} />
+                                </button>
+                            ))}
+                        </div>
+                        <p className="text-center text-xs text-muted-foreground mb-3">
+                            {state.rollsLeft === 3 ? t.rollFirst : t.holdHint}
+                        </p>
+                        {forcedJoker && <p className="mb-3 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-center text-xs font-bold text-primary" role="status">🎯 {t.joker}</p>}
+                        {recommendation && <p className="mb-3 text-center text-xs text-muted-foreground" role="status" aria-live="polite">💡 {t.recommendation}: <strong>{t.cats[recommendation.category]} · {recommendation.score}</strong> — {recommendationReason}</p>}
+                        {lastChoice && <div className="mb-3 rounded-xl border border-border bg-muted/30 px-3 py-2 text-center text-xs text-muted-foreground"><strong>{choiceCopy.last}: {t.cats[lastChoice.chosen]} · {lastChoice.chosenScore}</strong>{lastChoice.opportunityCost>0?` · ${choiceCopy.cost} ${lastChoice.opportunityCost} (${t.cats[lastChoice.recommended]} ${lastChoice.recommendedScore})`:` · ${choiceCopy.matched}`}</div>}
 
-                    {/* Scorecard */}
-                    <div className="mt-6 grid sm:grid-cols-2 gap-4">
-                        <table className="w-full border-collapse">
-                            <thead>
-                                <tr><th colSpan={2} className="text-left py-2 px-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground border-b border-border">{t.upper}</th></tr>
-                            </thead>
-                            <tbody>
-                                {UPPER_CATEGORIES.map((c) => <ScoreRow key={c} category={c} section="upper" />)}
-                                <tr>
-                                    <td className="py-1.5 px-3 text-xs font-bold text-muted-foreground">{t.bonus}</td>
-                                    <td className="py-1.5 px-3 text-center text-sm font-black">{state.scorecard.upperBonus}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <table className="w-full border-collapse">
-                            <thead>
-                                <tr><th colSpan={2} className="text-left py-2 px-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground border-b border-border">{t.lower}</th></tr>
-                            </thead>
-                            <tbody>
-                                {LOWER_CATEGORIES.map((c) => <ScoreRow key={c} category={c} section="lower" />)}
-                                {state.scorecard.yahtzeeBonusCount > 0 && (
+                        <button
+                            onClick={handleRoll}
+                            disabled={state.rollsLeft === 0 || rolling}
+                            className="min-h-11 w-full py-3 bg-primary text-primary-foreground rounded-2xl font-black shadow-md hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                        >
+                            {t.roll}
+                        </button>
+
+                        {/* Scorecard */}
+                        <div className="mt-6 grid sm:grid-cols-2 gap-4">
+                            <table className="w-full border-collapse">
+                                <thead>
+                                    <tr><th colSpan={2} className="text-left py-2 px-3 text-xs font-black uppercase tracking-widest text-muted-foreground border-b border-border">{t.upper}</th></tr>
+                                </thead>
+                                <tbody>
+                                    {UPPER_CATEGORIES.map((c) => <ScoreRow key={c} category={c} section="upper" />)}
                                     <tr>
-                                        <td className="py-1.5 px-3 text-xs font-bold text-chart-2">{t.yahtzeeBonus}</td>
-                                        <td className="py-1.5 px-3 text-center text-sm font-black text-chart-2">+{state.scorecard.yahtzeeBonusCount * 100}</td>
+                                        <td className="py-1.5 px-3 text-xs font-bold text-muted-foreground">{t.bonus}</td>
+                                        <td className="py-1.5 px-3 text-center text-sm font-black">{state.scorecard.upperBonus}</td>
                                     </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                </>
-            )}
-
-            {/* Rules */}
-            <div className="mt-6">
-                <button
-                    onClick={() => setShowRules((v) => !v)}
-                    aria-expanded={showRules}
-                    className="text-xs font-bold text-muted-foreground hover:text-foreground transition-colors"
-                >
-                    {showRules ? '▾' : '▸'} {t.rules}
-                </button>
-                {showRules && (
-                    <ul className="mt-2 space-y-1 text-xs text-muted-foreground list-disc pl-5">
-                        {t.rulesBody.map((line, i) => <li key={i}>{line}</li>)}
-                    </ul>
+                                </tbody>
+                            </table>
+                            <table className="w-full border-collapse">
+                                <thead>
+                                    <tr><th colSpan={2} className="text-left py-2 px-3 text-xs font-black uppercase tracking-widest text-muted-foreground border-b border-border">{t.lower}</th></tr>
+                                </thead>
+                                <tbody>
+                                    {LOWER_CATEGORIES.map((c) => <ScoreRow key={c} category={c} section="lower" />)}
+                                    {state.scorecard.yahtzeeBonusCount > 0 && (
+                                        <tr>
+                                            <td className="py-1.5 px-3 text-xs font-bold text-chart-2">{t.yahtzeeBonus}</td>
+                                            <td className="py-1.5 px-3 text-center text-sm font-black text-chart-2">+{state.scorecard.yahtzeeBonusCount * 100}</td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </>
                 )}
-            </div>
-        </GameContainer>
+
+                {/* Rules */}
+                <div className="mt-6">
+                    <button
+                        onClick={() => setShowRules((v) => !v)}
+                        aria-expanded={showRules}
+                        className="text-xs font-bold text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                        {showRules ? '▾' : '▸'} {t.rules}
+                    </button>
+                    {showRules && (
+                        <ul className="mt-2 space-y-1 text-xs text-muted-foreground list-disc pl-5">
+                            {t.rulesBody.map((line, i) => <li key={i}>{line}</li>)}
+                        </ul>
+                    )}
+                </div>
+            </GameContainer>
+        </div>
     );
 };
 

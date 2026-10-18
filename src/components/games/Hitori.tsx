@@ -3,6 +3,8 @@ import {GameContainer} from '../ui/game/GamePrimitives';
 import {createHitori,explainHitoriHint,hintHitori,parseHitori,serializeHitori,toggleHitori,undoHitori,type HitoriHint,type HitoriState} from '../../lib/games/hitori';
 import {validateHitori} from '../../lib/games/logic-puzzles';
 import { LOGIC_CELL_SPRITES } from '../../lib/games/sprites';
+import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
 
 const SAVE='oiyo:hitori:v1';
 const COPY={
@@ -15,7 +17,46 @@ const COPY={
 };
 const HINT_COPY:Record<keyof typeof COPY,Record<HitoriHint['reason'],string>>={ko:{duplicate:'같은 행·열의 중복 숫자 두 칸을 비교하세요.',adjacent:'붙어 있는 검은 칸을 다시 확인하세요.',connected:'흰 칸이 하나의 길로 이어지는지 확인하세요.'},en:{duplicate:'Compare the two duplicate numbers in this row or column.',adjacent:'Recheck the touching black cells.',connected:'Check whether every white cell still shares one path.'},ja:{duplicate:'同じ行・列の重複する2マスを比べましょう。',adjacent:'隣り合う黒マスを見直しましょう。',connected:'白マスが1本の道でつながるか確認しましょう。'},zh:{duplicate:'比较同一行或列中的两个重复数字。',adjacent:'重新检查相邻的黑格。',connected:'检查所有白格是否仍连成一片。'},fr:{duplicate:'Comparez les deux nombres répétés de cette ligne ou colonne.',adjacent:'Revérifiez les cases noires voisines.',connected:'Vérifiez que toutes les blanches restent reliées.'},es:{duplicate:'Compara los dos números repetidos de esta fila o columna.',adjacent:'Revisa las casillas negras contiguas.',connected:'Comprueba que todas las blancas sigan conectadas.'}};
 export default function Hitori({locale='ko'}:{locale?:string}){
- const t=COPY[locale as keyof typeof COPY]??COPY.en; const hintCopy=HINT_COPY[locale as keyof typeof COPY]??HINT_COPY.en; const [state,setState]=useState<HitoriState>(()=>createHitori()); const [paused,setPaused]=useState(false);const [sound,setSound]=useState(true);const [restored,setRestored]=useState(false);const [active,setActive]=useState(0);const [hint,setHint]=useState<HitoriHint|null>(null);const refs=useRef<Array<HTMLButtonElement|null>>([]);
+ const t=COPY[locale as keyof typeof COPY]??COPY.en; const hintCopy=HINT_COPY[locale as keyof typeof COPY]??HINT_COPY.en;
+ const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'ko' });
+ const [state,setState]=useState<HitoriState>(()=>createHitori()); const [paused,setPaused]=useState(false);
+ const [sound,setSound]=useState<boolean>(() => {
+   try {
+     if (typeof window !== 'undefined' && window.localStorage) {
+       return window.localStorage.getItem('hitori_sound_muted') !== 'true';
+     }
+   } catch {}
+   return true;
+ });
+ const toggleSound = useCallback(() => {
+   setSound((s) => {
+     const next = !s;
+     try {
+       if (typeof window !== 'undefined' && window.localStorage) {
+         window.localStorage.setItem('hitori_sound_muted', String(!next));
+       }
+     } catch {}
+     return next;
+   });
+ }, []);
+
+ useEffect(() => {
+   const handleKeyDown = (e: KeyboardEvent) => {
+     const target = e.target as HTMLElement | null;
+     if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
+     if (e.key === 'f' || e.key === 'F') {
+       e.preventDefault();
+       togglePortal();
+     } else if (e.key === 'm' || e.key === 'M') {
+       e.preventDefault();
+       toggleSound();
+     }
+   };
+   window.addEventListener('keydown', handleKeyDown);
+   return () => window.removeEventListener('keydown', handleKeyDown);
+ }, [togglePortal, toggleSound]);
+
+ const [restored,setRestored]=useState(false);const [active,setActive]=useState(0);const [hint,setHint]=useState<HitoriHint|null>(null);const refs=useRef<Array<HTMLButtonElement|null>>([]);
  useEffect(()=>{const saved=parseHitori(localStorage.getItem(SAVE));if(saved){setState(saved);setRestored(true);setPaused(true);}},[]);
  useEffect(()=>{localStorage.setItem(SAVE,serializeHitori(state));},[state]);
  const tone=useCallback((win=false)=>{if(!sound)return;const A=window.AudioContext||window.webkitAudioContext;if(!A)return;const a=new A(),o=a.createOscillator(),g=a.createGain();o.frequency.value=win?720:330;g.gain.setValueAtTime(.035,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+.12);o.connect(g).connect(a.destination);o.start();o.stop(a.currentTime+.12);},[sound]);
@@ -23,19 +64,58 @@ export default function Hitori({locale='ko'}:{locale?:string}){
  const fresh=()=>{setState(createHitori(state.seed+1));setPaused(false);setRestored(false);setHint(null);};
  const v=validateHitori(state.values,state.dark); const shaded=state.dark.flat().filter(Boolean).length;
  const move=(e:React.KeyboardEvent,index:number)=>{const r=Math.floor(index/5),c=index%5;let n=index;if(e.key==='ArrowUp')n=Math.max(0,r-1)*5+c;else if(e.key==='ArrowDown')n=Math.min(4,r+1)*5+c;else if(e.key==='ArrowLeft')n=r*5+Math.max(0,c-1);else if(e.key==='ArrowRight')n=r*5+Math.min(4,c+1);else return;e.preventDefault();setActive(n);refs.current[n]?.focus();};
- return <GameContainer title={t.title} subtitle={t.sub} resetLabel={t.newGame} onReset={fresh}>
-  <div className="mx-auto max-w-md space-y-5"><p className="text-center text-sm text-muted-foreground">{t.desc}</p>
-   <div className="grid grid-cols-3 gap-2" aria-label="game stats"><Stat label={t.moves} value={state.moves}/><Stat label={t.shaded} value={shaded}/><Stat label="Seed" value={state.seed+1}/></div>
-   {restored&&<p className="rounded-xl bg-primary/10 p-3 text-center text-xs font-bold text-primary" role="status">{t.restored}</p>}
-   <div className="relative rounded-3xl border bg-muted/30 p-3 shadow-inner"><div className="grid grid-cols-5 gap-1" role="grid" aria-label={t.title}>{state.values.flatMap((row,r)=>row.map((value,c)=>{const i=r*5+c;return <button key={i} ref={n=>{refs.current[i]=n;}} role="gridcell" aria-pressed={state.dark[r][c]} aria-label={`${r+1}, ${c+1}: ${value}`} tabIndex={active===i?0:-1} disabled={paused||state.won} onFocus={()=>setActive(i)} onKeyDown={e=>move(e,i)} onClick={()=>act(s=>toggleHitori(s,i))} className={`relative overflow-hidden aspect-square min-h-12 rounded-xl border text-lg font-black transition focus-visible:ring-2 focus-visible:ring-primary ${state.dark[r][c]?'text-white':'bg-card hover:bg-primary/10'} ${hint?.cells.includes(i)?'ring-4 ring-amber-400':''}`}>{state.dark[r][c]?<img src={LOGIC_CELL_SPRITES.black} alt="" draggable={false} className="pointer-events-none absolute inset-0 h-full w-full object-cover"/>:null}<span className="relative z-[1]">{value}</span></button>}))}</div>
-    {paused&&<button onClick={()=>setPaused(false)} className="absolute inset-3 rounded-2xl bg-background/95 text-lg font-black backdrop-blur">{t.resume}</button>}</div>
-   <div className="grid grid-cols-3 gap-2 text-center text-[11px]"><Rule ok={v.duplicateFree} text={t.duplicate}/><Rule ok={v.noAdjacentBlack} text={t.adjacent}/><Rule ok={v.whiteConnected} text={t.connected}/></div>
-   {hint&&<p className="rounded-xl border border-amber-300/60 bg-amber-50 p-3 text-center text-xs font-bold text-amber-900" role="status">{hintCopy[hint.reason]}{hint.cells.length?` · ${hint.cells.map(i=>`${Math.floor(i/5)+1},${i%5+1}`).join(' / ')}`:''}</p>}
-   <div className="grid grid-cols-2 gap-2 sm:grid-cols-4"><Control text={t.undo} onClick={()=>act(undoHitori)} disabled={!state.history.length||state.won}/><Control text={t.hint} onClick={()=>{const next=explainHitoriHint(state);setHint(next);act(hintHitori);}} disabled={state.won}/><Control text={`${t.sound} ${sound?'ON':'OFF'}`} onClick={()=>setSound(x=>!x)}/><Control text={paused?t.resume:t.pause} onClick={()=>setPaused(x=>!x)}/></div>
-   {state.won&&<div className="rounded-3xl border border-primary/30 bg-primary/10 p-6 text-center" role="status" aria-live="polite"><div className="text-3xl">🌿</div><h3 className="mt-2 text-xl font-black">{t.win}</h3><p className="mt-1 text-sm">{state.moves} {t.moves} · {state.hints} {t.hint}</p><button onClick={fresh} className="mt-4 min-h-11 rounded-full bg-primary px-8 font-bold text-primary-foreground">{t.next}</button></div>}
-  </div></GameContainer>;
+ return (
+  <div
+   ref={containerRef}
+   data-game-surface
+   className={
+    isImmersive
+     ? "fixed inset-0 z-50 w-screen h-dvh bg-background p-3 sm:p-5 overflow-y-auto flex flex-col items-center justify-between m-0 select-none"
+     : "relative"
+   }
+  >
+   <GameContainer title={t.title} subtitle={t.sub} resetLabel={t.newGame} onReset={fresh}>
+    <div className="mx-auto max-w-md space-y-5"><p className="text-center text-sm text-muted-foreground">{t.desc}</p>
+     <div className="grid grid-cols-3 gap-2" aria-label="game stats"><Stat label={t.moves} value={state.moves}/><Stat label={t.shaded} value={shaded}/><Stat label="Seed" value={state.seed+1}/></div>
+     {restored&&<p className="rounded-xl bg-primary/10 p-3 text-center text-xs font-bold text-primary" role="status">{t.restored}</p>}
+     <div className="relative rounded-3xl border bg-muted/30 p-3 shadow-inner"><div className="grid grid-cols-5 gap-1" role="grid" aria-label={t.title}>{state.values.flatMap((row,r)=>row.map((value,c)=>{const i=r*5+c;return <button key={i} ref={n=>{refs.current[i]=n;}} role="gridcell" aria-pressed={state.dark[r][c]} aria-label={`${r+1}, ${c+1}: ${value}`} tabIndex={active===i?0:-1} disabled={paused||state.won} onFocus={()=>setActive(i)} onKeyDown={e=>move(e,i)} onClick={()=>act(s=>toggleHitori(s,i))} className={`relative overflow-hidden aspect-square min-h-12 rounded-xl border text-lg font-black transition focus-visible:ring-2 focus-visible:ring-primary ${state.dark[r][c]?'text-white':'bg-card hover:bg-primary/10'} ${hint?.cells.includes(i)?'ring-4 ring-amber-400':''}`}>{state.dark[r][c]?<img src={LOGIC_CELL_SPRITES.black} alt="" draggable={false} className="pointer-events-none absolute inset-0 h-full w-full object-cover"/>:null}<span className="relative z-[1]">{value}</span></button>}))}</div>
+      {paused&&<button onClick={()=>setPaused(false)} className="absolute inset-3 rounded-2xl bg-background/95 text-lg font-black backdrop-blur">{t.resume}</button>}</div>
+     <div className="grid grid-cols-3 gap-2 text-center text-xs"><Rule ok={v.duplicateFree} text={t.duplicate}/><Rule ok={v.noAdjacentBlack} text={t.adjacent}/><Rule ok={v.whiteConnected} text={t.connected}/></div>
+     {hint&&<p className="rounded-xl border border-amber-300/60 bg-amber-50 p-3 text-center text-xs font-bold text-amber-900" role="status">{hintCopy[hint.reason]}{hint.cells.length?` · ${hint.cells.map(i=>`${Math.floor(i/5)+1},${i%5+1}`).join(' / ')}`:''}</p>}
+     <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+      <Control text={t.undo} onClick={()=>act(undoHitori)} disabled={!state.history.length||state.won}/>
+      <Control text={t.hint} onClick={()=>{const next=explainHitoriHint(state);setHint(next);act(hintHitori);}} disabled={state.won}/>
+      <button
+       type="button"
+       onClick={toggleSound}
+       aria-pressed={sound}
+       aria-label={sound ? portalLabels.mute : portalLabels.unmute}
+       title={`${sound ? portalLabels.mute : portalLabels.unmute} (M)`}
+       className="flex min-h-11 items-center justify-center gap-1.5 rounded-xl border bg-card px-2 text-xs font-bold text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      >
+       {sound ? <Volume2 className="size-4" /> : <VolumeX className="size-4" />}
+       <span>{t.sound}</span>
+      </button>
+      <button
+       type="button"
+       onClick={togglePortal}
+       aria-pressed={isImmersive}
+       aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+       title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+       className="flex min-h-11 items-center justify-center gap-1.5 rounded-xl border bg-card px-2 text-xs font-bold text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      >
+       {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+       <span>{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+      </button>
+      <Control text={paused?t.resume:t.pause} onClick={()=>setPaused(x=>!x)}/>
+     </div>
+     {state.won&&<div className="rounded-3xl border border-primary/30 bg-primary/10 p-6 text-center" role="status" aria-live="polite"><div className="text-3xl">🌿</div><h3 className="mt-2 text-xl font-black">{t.win}</h3><p className="mt-1 text-sm">{state.moves} {t.moves} · {state.hints} {t.hint}</p><button onClick={fresh} className="mt-4 min-h-11 rounded-full bg-primary px-8 font-bold text-primary-foreground">{t.next}</button></div>}
+    </div>
+   </GameContainer>
+  </div>
+ );
 }
-function Stat({label,value}:{label:string;value:number}){return <div className="rounded-2xl border bg-card p-2 text-center"><div className="text-xl font-black">{value}</div><div className="text-[10px] uppercase text-muted-foreground">{label}</div></div>}
+function Stat({label,value}:{label:string;value:number}){return <div className="rounded-2xl border bg-card p-2 text-center"><div className="text-xl font-black">{value}</div><div className="text-xs uppercase text-muted-foreground">{label}</div></div>}
 function Rule({ok,text}:{ok:boolean;text:string}){return <div className={`rounded-xl p-2 font-bold ${ok?'bg-emerald-500/10 text-emerald-700':'bg-amber-500/10 text-amber-700'}`}>{ok?'✓':'•'} {text}</div>}
 function Control({text,onClick,disabled=false}:{text:string;onClick:()=>void;disabled?:boolean}){return <button type="button" onClick={onClick} disabled={disabled} className="min-h-11 rounded-xl border bg-card px-2 text-xs font-bold disabled:opacity-40">{text}</button>}
 
