@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
 import {
   dailySecretIndex,
   minutesUntilNextKstMidnight,
@@ -29,6 +31,7 @@ const DATA_BASE = "/data/korean-semantle";
 const GAME_ID = "korean-semantle";
 const SAVE_KEY = "oiyo:korean-semantle:v1";
 const HINT_KEY_PREFIX = "oiyo:korean-semantle:hints:v1:";
+const SOUND_STORAGE_KEY = "korean_semantle_sound_muted";
 
 // ─── Band presentation ─────────────────────────────────────────────────────────
 // Temperature palette — games keep their own vivid surface (not the olive tool
@@ -259,6 +262,7 @@ const KoreanSemantle: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
   const t = COPY[locale] ?? COPY.en;
   const bandLabel = BAND_LABEL[locale] ?? BAND_LABEL.en;
   const hintCopy = HINT_COPY[locale] ?? HINT_COPY.en;
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal();
 
   const [status, setStatus] = useState<Status>("loading");
   const [table, setTable] = useState<SimilarityTable | null>(null);
@@ -269,12 +273,45 @@ const KoreanSemantle: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
   const [stats, setStats] = useState<StreakStats | null>(null);
   const [copied, setCopied] = useState(false);
   const [puzzleId, setPuzzleId] = useState("");
-  const [sound, setSound] = useState(true);
+  const [sound, setSound] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return localStorage.getItem(SOUND_STORAGE_KEY) !== "true";
+  });
   const [restored, setRestored] = useState(false);
   const [shownHints, setShownHints] = useState(0);
   const [nextMinutes, setNextMinutes] = useState(() => minutesUntilNextKstMidnight());
   const recordedRef = useRef(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const toggleSound = useCallback(() => {
+    setSound((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(SOUND_STORAGE_KEY, String(!next));
+      } catch {
+        /* storage disabled */
+      }
+      return next;
+    });
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === "f" || e.key === "F") {
+        e.preventDefault();
+        togglePortal();
+        return;
+      }
+      if (e.key === "m" || e.key === "M") {
+        e.preventDefault();
+        toggleSound();
+        return;
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [togglePortal, toggleSound]);
 
   const flashToast = useCallback((msg: string) => {
     setToast(msg);
@@ -420,104 +457,137 @@ const KoreanSemantle: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
 
   const over = status === "won" || status === "revealed";
 
+  const renderHud = () => (
+    <div className="w-full flex items-center justify-end gap-2 pb-1">
+      <button
+        type="button"
+        onClick={toggleSound}
+        className="flex h-9 w-9 items-center justify-center rounded-xl border border-border/60 bg-card text-foreground shadow-sm transition hover:bg-muted"
+        title={sound ? portalLabels.mute : portalLabels.unmute}
+        aria-label={sound ? portalLabels.mute : portalLabels.unmute}
+      >
+        {sound ? <Volume2 className="h-4 w-4 text-foreground" /> : <VolumeX className="h-4 w-4 text-muted-foreground" />}
+      </button>
+      <button
+        type="button"
+        onClick={togglePortal}
+        className="flex h-9 w-9 items-center justify-center rounded-xl border border-border/60 bg-card text-foreground shadow-sm transition hover:bg-muted"
+        title={isImmersive ? portalLabels.exit : portalLabels.enter}
+        aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+      >
+        {isImmersive ? <Minimize2 className="h-4 w-4 text-foreground" /> : <Maximize2 className="h-4 w-4 text-foreground" />}
+      </button>
+    </div>
+  );
+
   return (
-    <div className="not-prose flex flex-col items-center gap-5 py-6 px-4 max-w-lg mx-auto">
-      {/* Header */}
-      <img src="/games/korean-semantle-social.png" alt="" className="h-36 w-full rounded-3xl object-cover shadow-sm sm:h-44" />
-      <div className="w-full text-center border-b border-border pb-4">
-        <div className="flex items-center justify-center gap-2">
-          <h1 className="text-2xl font-black tracking-tight">{t.title}</h1>
-          {isDemo && (
-            <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400">
-              {t.demoBadge}
-            </span>
-          )}
-        </div>
-        <p className="text-xs font-bold text-muted-foreground mt-1">{t.subtitle}</p>
-        {stats && stats.played > 0 && (
-          <p className="text-[10px] font-bold text-muted-foreground mt-2">{t.stats(stats)}</p>
-        )}
-        <p className="mt-1 text-[10px] font-bold text-primary">{hintCopy.next(nextMinutes)}</p>
-        <button type="button" onClick={() => setSound((value) => !value)} className="mt-2 min-h-10 rounded-full border px-4 text-[11px] font-black">{t.sound} {sound ? "ON" : "OFF"}</button>
-      </div>
-      {restored && <p role="status" className="w-full rounded-xl bg-primary/10 p-3 text-center text-xs font-bold text-primary">{t.restored}</p>}
-
-      {/* Toast */}
-      <div className={`fixed top-20 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 ${toast ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2 pointer-events-none"}`}>
-        <div className="bg-foreground text-background px-5 py-2.5 rounded-xl font-black text-sm shadow-xl whitespace-nowrap">{toast}</div>
-      </div>
-
-      {/* Input */}
-      {!over && (
-        <form
-          className="flex w-full gap-2"
-          onSubmit={(e) => { e.preventDefault(); submit(); }}
-        >
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder={t.placeholder}
-            aria-label={t.placeholder}
-            autoComplete="off"
-            autoCapitalize="off"
-            inputMode="text"
-            className="flex-1 h-12 rounded-xl border border-border bg-background px-4 text-base font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          />
-          <button type="submit" className="h-12 px-5 rounded-xl bg-primary text-primary-foreground font-black shrink-0">
-            {t.submit}
-          </button>
-        </form>
-      )}
-
-      {/* Guess count */}
-      <p className="text-[11px] font-bold text-muted-foreground self-start">{t.guessCount(guesses.length)}</p>
-
-      {!over && (availableHints.length > 0 || nextHintAt) && <section className="w-full rounded-2xl border border-amber-300/60 bg-amber-50 p-3 text-xs text-stone-800" aria-label={hintCopy.open}>
-        {availableHints.slice(0, shownHints).map(hint => <p key={hint.kind} className="mb-1 font-bold">{hintCopy.format(hint)}</p>)}
-        {shownHints < availableHints.length ? <button type="button" onClick={openNextHint} className="mt-1 min-h-10 rounded-full bg-amber-700 px-4 font-black text-white">{hintCopy.open}</button> : nextHintAt ? <p className="text-stone-600">{hintCopy.locked(nextHintAt)}</p> : null}
-      </section>}
-
-      {/* Latest guess highlight */}
-      {lastWord && (() => {
-        const g = guesses.find((x) => x.word === lastWord);
-        if (!g) return null;
-        return <GuessRow g={g} highlight bandLabel={bandLabel} rankLabel={t.rankLabel} />;
-      })()}
-
-      {/* Ordered guess list (closest first) */}
-      <div className="w-full flex flex-col gap-1.5">
-        {ordered.map((g) => (
-          <GuessRow key={g.word} g={g} bandLabel={bandLabel} rankLabel={t.rankLabel} />
-        ))}
-      </div>
-
-      {/* End state */}
-      {over && (
-        <div className="flex flex-col items-center gap-3 pt-2">
-          <p className="text-base font-black text-foreground">
-            {status === "won" ? t.won(guesses.length) : t.revealed(table?.meta.secret ?? "")}
-          </p>
-          <div className="flex gap-2">
-            <button onClick={share} className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-black">
-              {copied ? t.copied : t.share}
-            </button>
+    <div
+      ref={containerRef}
+      className={`not-prose relative select-none ${
+        isImmersive
+          ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col items-center overflow-y-auto bg-background p-4 sm:p-6"
+          : "flex flex-col items-center gap-5 py-6 px-4 max-w-lg mx-auto"
+      }`}
+    >
+      <div className="w-full max-w-lg mx-auto flex flex-col items-center gap-5">
+        {renderHud()}
+        {/* Header */}
+        <img src="/games/korean-semantle-social.png" alt="" className="h-36 w-full rounded-3xl object-cover shadow-sm sm:h-44" />
+        <div className="w-full text-center border-b border-border pb-4">
+          <div className="flex items-center justify-center gap-2">
+            <h1 className="text-2xl font-black tracking-tight">{t.title}</h1>
+            {isDemo && (
+              <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400">
+                {t.demoBadge}
+              </span>
+            )}
           </div>
+          <p className="text-xs font-bold text-muted-foreground mt-1">{t.subtitle}</p>
+          {stats && stats.played > 0 && (
+            <p className="text-[10px] font-bold text-muted-foreground mt-2">{t.stats(stats)}</p>
+          )}
+          <p className="mt-1 text-[10px] font-bold text-primary">{hintCopy.next(nextMinutes)}</p>
+          <button type="button" onClick={toggleSound} className="mt-2 min-h-10 rounded-full border px-4 text-[11px] font-black">{t.sound} {sound ? "ON" : "OFF"}</button>
         </div>
-      )}
+        {restored && <p role="status" className="w-full rounded-xl bg-primary/10 p-3 text-center text-xs font-bold text-primary">{t.restored}</p>}
 
-      {/* Give up */}
-      {!over && guesses.length > 0 && (
-        <button onClick={reveal} className="text-xs font-bold text-muted-foreground underline underline-offset-2 hover:text-foreground">
-          {t.reveal}
-        </button>
-      )}
+        {/* Toast */}
+        <div className={`fixed top-20 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 ${toast ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2 pointer-events-none"}`}>
+          <div className="bg-foreground text-background px-5 py-2.5 rounded-xl font-black text-sm shadow-xl whitespace-nowrap">{toast}</div>
+        </div>
 
-      {/* Info */}
-      <p className="text-[10px] text-muted-foreground text-center leading-relaxed max-w-md">
-        {t.hint}
-        <br />
-        <span className="opacity-70">{isDemo ? t.demoCredit : t.credit}</span>
-      </p>
+        {/* Input */}
+        {!over && (
+          <form
+            className="flex w-full gap-2"
+            onSubmit={(e) => { e.preventDefault(); submit(); }}
+          >
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder={t.placeholder}
+              aria-label={t.placeholder}
+              autoComplete="off"
+              autoCapitalize="off"
+              inputMode="text"
+              className="flex-1 h-12 rounded-xl border border-border bg-background px-4 text-base font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            />
+            <button type="submit" className="h-12 px-5 rounded-xl bg-primary text-primary-foreground font-black shrink-0">
+              {t.submit}
+            </button>
+          </form>
+        )}
+
+        {/* Guess count */}
+        <p className="text-[11px] font-bold text-muted-foreground self-start">{t.guessCount(guesses.length)}</p>
+
+        {!over && (availableHints.length > 0 || nextHintAt) && <section className="w-full rounded-2xl border border-amber-300/60 bg-amber-50 p-3 text-xs text-stone-800" aria-label={hintCopy.open}>
+          {availableHints.slice(0, shownHints).map(hint => <p key={hint.kind} className="mb-1 font-bold">{hintCopy.format(hint)}</p>)}
+          {shownHints < availableHints.length ? <button type="button" onClick={openNextHint} className="mt-1 min-h-10 rounded-full bg-amber-700 px-4 font-black text-white">{hintCopy.open}</button> : nextHintAt ? <p className="text-stone-600">{hintCopy.locked(nextHintAt)}</p> : null}
+        </section>}
+
+        {/* Latest guess highlight */}
+        {lastWord && (() => {
+          const g = guesses.find((x) => x.word === lastWord);
+          if (!g) return null;
+          return <GuessRow g={g} highlight bandLabel={bandLabel} rankLabel={t.rankLabel} />;
+        })()}
+
+        {/* Ordered guess list (closest first) */}
+        <div className="w-full flex flex-col gap-1.5">
+          {ordered.map((g) => (
+            <GuessRow key={g.word} g={g} bandLabel={bandLabel} rankLabel={t.rankLabel} />
+          ))}
+        </div>
+
+        {/* End state */}
+        {over && (
+          <div className="flex flex-col items-center gap-3 pt-2">
+            <p className="text-base font-black text-foreground">
+              {status === "won" ? t.won(guesses.length) : t.revealed(table?.meta.secret ?? "")}
+            </p>
+            <div className="flex gap-2">
+              <button onClick={share} className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-black">
+                {copied ? t.copied : t.share}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Give up */}
+        {!over && guesses.length > 0 && (
+          <button onClick={reveal} className="text-xs font-bold text-muted-foreground underline underline-offset-2 hover:text-foreground">
+            {t.reveal}
+          </button>
+        )}
+
+        {/* Info */}
+        <p className="text-[10px] text-muted-foreground text-center leading-relaxed max-w-md">
+          {t.hint}
+          <br />
+          <span className="opacity-70">{isDemo ? t.demoCredit : t.credit}</span>
+        </p>
+      </div>
     </div>
   );
 };

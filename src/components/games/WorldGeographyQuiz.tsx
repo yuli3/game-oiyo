@@ -1,4 +1,66 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react'
+import { useArcadePortal } from '../../lib/games/arcade-portal'
+
+const SOUND_STORAGE_KEY = 'world_geography_quiz_sound_muted'
+
+function playQuizSound(type: 'select' | 'correct' | 'wrong' | 'finish', muted: boolean) {
+  if (muted || typeof window === 'undefined') return
+  const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+  if (!AudioCtx) return
+  const ctx = new AudioCtx()
+  const now = ctx.currentTime
+
+  if (type === 'select') {
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(440, now)
+    osc.frequency.exponentialRampToValueAtTime(520, now + 0.08)
+    gain.gain.setValueAtTime(0.04, now)
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08)
+    osc.connect(gain).connect(ctx.destination)
+    osc.start(now)
+    osc.stop(now + 0.08)
+  } else if (type === 'correct') {
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.type = 'triangle'
+    osc.frequency.setValueAtTime(587.33, now) // D5
+    osc.frequency.setValueAtTime(880, now + 0.1) // A5
+    gain.gain.setValueAtTime(0.06, now)
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28)
+    osc.connect(gain).connect(ctx.destination)
+    osc.start(now)
+    osc.stop(now + 0.28)
+  } else if (type === 'wrong') {
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.type = 'sawtooth'
+    osc.frequency.setValueAtTime(220, now)
+    osc.frequency.linearRampToValueAtTime(140, now + 0.22)
+    gain.gain.setValueAtTime(0.06, now)
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22)
+    osc.connect(gain).connect(ctx.destination)
+    osc.start(now)
+    osc.stop(now + 0.22)
+  } else if (type === 'finish') {
+    const freqs = [523.25, 659.25, 783.99, 1046.5] // C5, E5, G5, C6
+    freqs.forEach((freq, idx) => {
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      const start = now + idx * 0.09
+      osc.type = 'triangle'
+      osc.frequency.setValueAtTime(freq, start)
+      gain.gain.setValueAtTime(0.05, start)
+      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.3)
+      osc.connect(gain).connect(ctx.destination)
+      osc.start(start)
+      osc.stop(start + 0.3)
+    })
+  }
+}
+
 
 type Locale = 'ko' | 'en' | 'ja' | 'fr' | 'es' | 'zh'
 
@@ -76,6 +138,7 @@ interface Props { locale: Locale }
 
 export default function WorldGeographyQuiz({ locale }: Props) {
   const l = LABELS[locale] ?? LABELS.en
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal()
   const [questions, setQuestions] = useState<GeoQuestion[]>([])
   const [started, setStarted] = useState(false)
   const [current, setCurrent] = useState(0)
@@ -83,31 +146,146 @@ export default function WorldGeographyQuiz({ locale }: Props) {
   const [score, setScore] = useState(0)
   const [finished, setFinished] = useState(false)
   const [history, setHistory] = useState<boolean[]>([])
+  const [muted, setMuted] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return localStorage.getItem(SOUND_STORAGE_KEY) === 'true'
+  })
+
+  const mutedRef = useRef(muted)
+  mutedRef.current = muted
+
+  const toggleSound = useCallback(() => {
+    setMuted(prev => {
+      const next = !prev
+      try {
+        localStorage.setItem(SOUND_STORAGE_KEY, String(next))
+      } catch {
+        /* storage disabled */
+      }
+      return next
+    })
+  }, [])
 
   useEffect(() => { setQuestions(pickQuestions()) }, [])
 
-  const start = () => { setQuestions(pickQuestions()); setStarted(true); setCurrent(0); setSelected(null); setScore(0); setFinished(false); setHistory([]) }
+  const start = useCallback(() => {
+    playQuizSound('select', mutedRef.current)
+    setQuestions(pickQuestions())
+    setStarted(true)
+    setCurrent(0)
+    setSelected(null)
+    setScore(0)
+    setFinished(false)
+    setHistory([])
+  }, [])
 
-  const choose = (opt: string) => {
-    if (selected !== null) return
+  const restart = useCallback(() => { start() }, [start])
+
+  const choose = useCallback((opt: string) => {
+    if (selected !== null || !questions[current]) return
     setSelected(opt)
     const correct = opt === questions[current].answer
+    playQuizSound(correct ? 'correct' : 'wrong', mutedRef.current)
     const newScore = correct ? score + 1 : score
     setScore(newScore)
-    setHistory([...history, correct])
-    if (current + 1 >= questions.length) setTimeout(() => setFinished(true), 900)
-  }
+    setHistory(prev => [...prev, correct])
+    if (current + 1 >= questions.length) {
+      setTimeout(() => {
+        playQuizSound('finish', mutedRef.current)
+        setFinished(true)
+      }, 900)
+    }
+  }, [current, questions, score, selected])
 
-  const next = () => { setCurrent(c => c + 1); setSelected(null) }
+  const next = useCallback(() => {
+    playQuizSound('select', mutedRef.current)
+    setCurrent(c => c + 1)
+    setSelected(null)
+  }, [])
+
+  // Keyboard shortcuts support
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+      if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault()
+        togglePortal()
+        return
+      }
+      if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault()
+        toggleSound()
+        return
+      }
+      if (!started || finished) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          if (!started) start()
+          else if (finished) restart()
+        }
+        return
+      }
+      if (selected !== null) {
+        if ((e.key === 'Enter' || e.key === ' ') && current + 1 < questions.length) {
+          e.preventDefault()
+          next()
+        }
+        return
+      }
+      if (['1', '2', '3', '4'].includes(e.key)) {
+        const idx = Number(e.key) - 1
+        const curQ = questions[current]
+        if (curQ && curQ.options[idx]) {
+          e.preventDefault()
+          choose(curQ.options[idx])
+        }
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [choose, current, finished, next, questions, restart, selected, start, started, togglePortal, toggleSound])
+
+  const renderHud = () => (
+    <div className="flex items-center justify-end gap-2 pb-2">
+      <button
+        type="button"
+        onClick={toggleSound}
+        className="flex h-9 w-9 items-center justify-center rounded-xl border border-border/60 bg-card text-foreground shadow-sm transition hover:bg-muted"
+        title={muted ? portalLabels.unmute : portalLabels.mute}
+        aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+      >
+        {muted ? <VolumeX className="h-4 w-4 text-muted-foreground" /> : <Volume2 className="h-4 w-4 text-foreground" />}
+      </button>
+      <button
+        type="button"
+        onClick={togglePortal}
+        className="flex h-9 w-9 items-center justify-center rounded-xl border border-border/60 bg-card text-foreground shadow-sm transition hover:bg-muted"
+        title={isImmersive ? portalLabels.exit : portalLabels.enter}
+        aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+      >
+        {isImmersive ? <Minimize2 className="h-4 w-4 text-foreground" /> : <Maximize2 className="h-4 w-4 text-foreground" />}
+      </button>
+    </div>
+  )
 
   if (!started || questions.length === 0) {
     return (
-      <div className="text-center space-y-6 py-5 sm:py-8">
-        <div className="text-5xl">🌍</div>
-        <h2 className="text-2xl font-bold">{l.title}</h2>
-        <p className="text-muted-foreground">{l.subtitle}</p>
-        <p className="text-sm text-muted-foreground">10문제 · 무작위 출제</p>
-        <button onClick={start} className="px-4 sm:px-8 py-3 bg-primary text-primary-foreground rounded-full font-semibold hover:bg-primary/90 transition-colors">{l.start}</button>
+      <div
+        ref={containerRef}
+        className={`relative select-none ${
+          isImmersive
+            ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col items-center justify-center overflow-y-auto bg-background p-4 sm:p-6"
+            : "space-y-6 py-5 sm:py-8"
+        }`}
+      >
+        <div className="w-full max-w-lg mx-auto text-center space-y-6">
+          {renderHud()}
+          <div className="text-5xl">🌍</div>
+          <h2 className="text-2xl font-bold">{l.title}</h2>
+          <p className="text-muted-foreground">{l.subtitle}</p>
+          <p className="text-sm text-muted-foreground">10문제 · 무작위 출제</p>
+          <button onClick={start} className="px-4 sm:px-8 py-3 bg-primary text-primary-foreground rounded-full font-semibold hover:bg-primary/90 transition-colors">{l.start}</button>
+        </div>
       </div>
     )
   }
@@ -115,17 +293,27 @@ export default function WorldGeographyQuiz({ locale }: Props) {
   if (finished) {
     const rk = getResultKey(score)
     return (
-      <div className="space-y-6 py-4 text-center">
-        <div className="text-5xl">{score === 10 ? '🏆' : score >= 8 ? '🌟' : score >= 5 ? '📚' : '💪'}</div>
-        <div>
-          <p className="text-sm text-muted-foreground mb-1">{l.score}</p>
-          <p className="text-4xl font-black">{score} <span className="text-base font-normal text-muted-foreground">{l.outOf}</span></p>
+      <div
+        ref={containerRef}
+        className={`relative select-none ${
+          isImmersive
+            ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col items-center justify-center overflow-y-auto bg-background p-4 sm:p-6"
+            : "space-y-6 py-4 text-center"
+        }`}
+      >
+        <div className="w-full max-w-lg mx-auto space-y-6 text-center">
+          {renderHud()}
+          <div className="text-5xl">{score === 10 ? '🏆' : score >= 8 ? '🌟' : score >= 5 ? '📚' : '💪'}</div>
+          <div>
+            <p className="text-sm text-muted-foreground mb-1">{l.score}</p>
+            <p className="text-4xl font-black">{score} <span className="text-base font-normal text-muted-foreground">{l.outOf}</span></p>
+          </div>
+          <p className="font-semibold text-lg">{l.results[rk]}</p>
+          <div className="flex gap-1.5 justify-center flex-wrap">
+            {history.map((h, i) => <span key={i} className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${h ? 'bg-primary/15 text-primary' : 'bg-destructive/15 text-destructive'}`}>{i + 1}</span>)}
+          </div>
+          <button onClick={restart} className="px-4 sm:px-8 py-3 border rounded-full text-sm font-medium hover:bg-accent transition-colors">{l.restart}</button>
         </div>
-        <p className="font-semibold text-lg">{l.results[rk]}</p>
-        <div className="flex gap-1.5 justify-center flex-wrap">
-          {history.map((h, i) => <span key={i} className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${h ? 'bg-primary/15 text-primary' : 'bg-destructive/15 text-destructive'}`}>{i + 1}</span>)}
-        </div>
-        <button onClick={start} className="px-4 sm:px-8 py-3 border rounded-full text-sm font-medium hover:bg-accent transition-colors">{l.restart}</button>
       </div>
     )
   }
@@ -133,35 +321,50 @@ export default function WorldGeographyQuiz({ locale }: Props) {
   const q = questions[current]
   const isCorrect = selected === q.answer
   return (
-    <div className="space-y-5 py-4">
-      <div className="flex items-center justify-between">
-        <span className="text-sm text-muted-foreground">{l.progress(current + 1, questions.length)}</span>
-        <span className="text-xs bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full border border-border">{q.category}</span>
-      </div>
-      <div className="rounded-2xl bg-muted p-5 text-center">
-        <p className="text-base font-semibold">{q.question}</p>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        {q.options.map(opt => {
-          let cls = 'border rounded-xl p-4 text-center font-medium text-sm transition-all'
-          if (selected === null) cls += ' hover:bg-accent hover:border-primary cursor-pointer'
-          else if (opt === q.answer) cls += ' bg-primary/10 border-primary/50 text-primary font-bold'
-          else if (opt === selected) cls += ' bg-destructive/10 border-destructive/50 text-destructive line-through'
-          else cls += ' opacity-50'
-          return <button key={opt} onClick={() => choose(opt)} className={cls}>{opt}</button>
-        })}
-      </div>
-      {selected && (
-        <div className={`rounded-xl p-4 text-sm ${isCorrect ? 'bg-primary/10 border border-primary/30' : 'bg-destructive/10 border border-destructive/30'}`}>
-          <p className={`font-semibold mb-1 ${isCorrect ? 'text-primary' : 'text-destructive'}`}>
-            {isCorrect ? l.correct : `${l.wrong} ${l.correctIs} ${q.answer}`}
-          </p>
-          <p className="text-muted-foreground">{q.explanation}</p>
+    <div
+      ref={containerRef}
+      className={`relative select-none ${
+        isImmersive
+          ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col items-center justify-center overflow-y-auto bg-background p-4 sm:p-6"
+          : "space-y-5 py-4"
+      }`}
+    >
+      <div className="w-full max-w-lg mx-auto space-y-5">
+        {renderHud()}
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-muted-foreground">{l.progress(current + 1, questions.length)}</span>
+          <span className="text-xs bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full border border-border">{q.category}</span>
         </div>
-      )}
-      {selected && current + 1 < questions.length && (
-        <button onClick={next} className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-medium hover:bg-primary/90 transition-colors">{l.next} →</button>
-      )}
+        <div className="rounded-2xl bg-muted p-5 text-center">
+          <p className="text-base font-semibold">{q.question}</p>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {q.options.map((opt, idx) => {
+            let cls = 'relative border rounded-xl p-4 text-center font-medium text-sm transition-all'
+            if (selected === null) cls += ' hover:bg-accent hover:border-primary cursor-pointer'
+            else if (opt === q.answer) cls += ' bg-primary/10 border-primary/50 text-primary font-bold'
+            else if (opt === selected) cls += ' bg-destructive/10 border-destructive/50 text-destructive line-through'
+            else cls += ' opacity-50'
+            return (
+              <button key={opt} onClick={() => choose(opt)} className={cls}>
+                <span className="absolute top-1.5 left-2 text-xs font-mono text-muted-foreground/60">{idx + 1}</span>
+                {opt}
+              </button>
+            )
+          })}
+        </div>
+        {selected && (
+          <div className={`rounded-xl p-4 text-sm ${isCorrect ? 'bg-primary/10 border border-primary/30' : 'bg-destructive/10 border border-destructive/30'}`}>
+            <p className={`font-semibold mb-1 ${isCorrect ? 'text-primary' : 'text-destructive'}`}>
+              {isCorrect ? l.correct : `${l.wrong} ${l.correctIs} ${q.answer}`}
+            </p>
+            <p className="text-muted-foreground">{q.explanation}</p>
+          </div>
+        )}
+        {selected && current + 1 < questions.length && (
+          <button onClick={next} className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-medium hover:bg-primary/90 transition-colors">{l.next} →</button>
+        )}
+      </div>
     </div>
   )
 }

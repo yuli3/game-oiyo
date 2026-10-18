@@ -5,7 +5,9 @@
  * 화면 왼쪽이 서쪽이고 화면 위가 북쪽이다. 이 방의 기록은 화면에만 남긴다.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
 import {
   ACTS,
   FIRE,
@@ -461,6 +463,7 @@ function codeAction(code: string): Act | null {
 
 export default function SentenceDungeon({ locale = "en" }: { locale?: Locale }) {
   const copy = COPY[locale] ?? COPY.en;
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal();
   const reduce = usePrefersReducedMotion();
   const opening = useRef(createRoom(0));
   const [seed, setSeed] = useState(0);
@@ -601,6 +604,11 @@ export default function SentenceDungeon({ locale = "en" }: { locale?: Locale }) 
         setView((value) => (value + 1) % 4);
         return;
       }
+      if (event.code === "KeyF") {
+        event.preventDefault();
+        togglePortal();
+        return;
+      }
       const act = codeAction(event.code);
       if (!act) return;
       event.preventDefault();
@@ -608,7 +616,7 @@ export default function SentenceDungeon({ locale = "en" }: { locale?: Locale }) 
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [move]);
+  }, [move, togglePortal]);
 
   const locked = paused || busy || state.status !== "play";
   const named = ACTS.filter((act) => {
@@ -627,142 +635,176 @@ export default function SentenceDungeon({ locale = "en" }: { locale?: Locale }) 
           ? copy.stuck
           : `${copy.playing} ${named.join(" · ")}`;
 
-  return (
-    <div className="space-y-4" onPointerDown={arm}>
-      <header className="space-y-2">
-        <h2 className="text-2xl font-semibold text-foreground">{copy.title}</h2>
-        <p className="text-sm leading-6 text-muted-foreground">{copy.lead}</p>
-        <p className="text-xs leading-5 text-muted-foreground">{copy.keys}</p>
-      </header>
-      <div className="grid grid-cols-2 gap-2 text-center text-sm">
-        <div className="rounded-xl bg-muted p-2">
-          <b>{copy.steps}</b>
-          <br />
-          <span className="tabular-nums">{state.steps}/{STEP_CAP}</span>
-        </div>
-        <div className="rounded-xl bg-muted p-2">
-          <b>{copy.seed}</b>
-          <br />
-          <span className="tabular-nums">{seed}</span>
-        </div>
-      </div>
-      <div className="space-y-2">
-        <p className="text-sm font-semibold text-foreground">{copy.mark}</p>
-        <ol aria-label={copy.mark} className="grid grid-cols-5 gap-2 text-center">
-          {state.goal.map((kind, index) => (
-            <li key={`mark-${index}`} className={gaugeClass(true)}>
-              <b className="tabular-nums">{index + 1}</b>
-              <span className="block text-xs">{cellWord(kind, copy)}</span>
-            </li>
-          ))}
-        </ol>
-        <p className="text-sm font-semibold text-foreground">{copy.room}</p>
-        <ol aria-label={copy.room} className="grid grid-cols-5 gap-2 text-center">
-          {state.cells.map((kind, index) => (
-            <li key={`room-${index}`} className={gaugeClass(kind === state.goal[index])}>
-              <b className="tabular-nums">{index + 1}</b>
-              <span className="block text-xs">{cellWord(kind, copy)}</span>
-            </li>
-          ))}
-        </ol>
-      </div>
-      <p className="text-sm text-muted-foreground">
-        <b>{copy.readLabel}</b>
-        {" "}
-        {spoken}
-      </p>
-      <p role="status" aria-live="polite" className="text-sm text-foreground">{live}</p>
-      <div className="relative overflow-hidden rounded-2xl border border-border bg-card">
-        <div className="h-96" aria-hidden="true">
-          <SentenceDungeonScene
-            state={state}
-            shown={shown}
-            glide={glide}
-            reduce={reduce}
-            paused={paused || hidden}
-            view={view}
-            onSettled={onSettled}
-          />
-        </div>
-        {paused ? (
-          <div className="absolute inset-0 flex items-center justify-center bg-background/80">
-            <button type="button" className={controlClass("primary")} onClick={() => setPaused(false)}>
-              {copy.resume}
-            </button>
-          </div>
-        ) : null}
-      </div>
-      <div className="space-y-2">
-        <p id="sentence-dungeon-acts" className="text-sm font-semibold text-foreground">{copy.acts}</p>
-        <div role="group" aria-labelledby="sentence-dungeon-acts" className="grid grid-cols-1 gap-2">
-          {ACTS.map((act) => {
-            const next = stepRoom(state, act);
-            const noop = next === state;
-            const doomed = next.loseReason === "cap";
-            const tone = locked || noop ? "quiet" : doomed ? "danger" : "live";
-            const detail = detailFor(state, act, copy);
-            return (
-              <button
-                key={act}
-                type="button"
-                className={actClass(tone)}
-                aria-keyshortcuts={shortcut(act)}
-                aria-label={`${label(act, copy)}. ${detail}`}
-                disabled={locked || noop}
-                onClick={() => move(act)}
-              >
-                {label(act, copy)}
-                <span className="block text-xs font-normal">{detail}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        <button type="button" className={paused ? controlClass("primary") : controlClass("quiet")} aria-pressed={paused} onClick={() => setPaused((value) => !value)}>
-          {paused ? copy.resume : copy.pause}
-        </button>
-        <button type="button" className={controlClass("quiet")} onClick={() => setView((value) => (value + 1) % 4)}>
-          {copy.view}
-        </button>
-        <button type="button" className={muted ? controlClass("primary") : controlClass("quiet")} aria-pressed={muted} onClick={() => { arm(); setMuted((value) => !value); }}>
-          {muted ? copy.sound : copy.mute}
-        </button>
-        <button type="button" className={controlClass("danger")} disabled={state.status !== "play"} onClick={giveUp}>
-          {copy.giveUp}
-        </button>
-      </div>
-      <form
-        className="flex flex-wrap items-end gap-2"
-        onSubmit={(event) => {
-          event.preventDefault();
-          const value = Number(draft);
-          if (!Number.isFinite(value)) return;
-          arm();
-          load(Math.trunc(value));
-        }}
+  const renderHud = () => (
+    <div className="flex items-center justify-end gap-2 pb-2">
+      <button
+        type="button"
+        onClick={() => { arm(); setMuted((value) => !value); }}
+        className="flex h-9 w-9 items-center justify-center rounded-xl border border-border/60 bg-card text-foreground shadow-sm transition hover:bg-muted"
+        title={muted ? portalLabels.unmute : portalLabels.mute}
+        aria-label={muted ? portalLabels.unmute : portalLabels.mute}
       >
-        <label className="space-y-1 text-sm text-foreground">
-          <span className="block">{copy.seed}</span>
-          <input
-            value={draft}
-            inputMode="numeric"
-            onChange={(event) => setDraft(event.target.value)}
-            className="min-h-11 w-28 rounded-xl border border-border bg-card px-3 text-foreground"
-          />
-        </label>
-        <button type="submit" className={controlClass("quiet")}>{copy.apply}</button>
-        <button
-          type="button"
-          className={controlClass("quiet")}
-          onClick={() => {
+        {muted ? <VolumeX className="h-4 w-4 text-muted-foreground" /> : <Volume2 className="h-4 w-4 text-foreground" />}
+      </button>
+      <button
+        type="button"
+        onClick={togglePortal}
+        className="flex h-9 w-9 items-center justify-center rounded-xl border border-border/60 bg-card text-foreground shadow-sm transition hover:bg-muted"
+        title={isImmersive ? portalLabels.exit : portalLabels.enter}
+        aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+      >
+        {isImmersive ? <Minimize2 className="h-4 w-4 text-foreground" /> : <Maximize2 className="h-4 w-4 text-foreground" />}
+      </button>
+    </div>
+  );
+
+  return (
+    <div
+      ref={containerRef}
+      className={`relative select-none ${
+        isImmersive
+          ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col items-center overflow-y-auto bg-background p-4 sm:p-6"
+          : "space-y-4"
+      }`}
+      onPointerDown={arm}
+    >
+      <div className="w-full max-w-2xl mx-auto space-y-4">
+        {renderHud()}
+        <header className="space-y-2">
+          <h2 className="text-2xl font-semibold text-foreground">{copy.title}</h2>
+          <p className="text-sm leading-6 text-muted-foreground">{copy.lead}</p>
+          <p className="text-xs leading-5 text-muted-foreground">{copy.keys}</p>
+        </header>
+        <div className="grid grid-cols-2 gap-2 text-center text-sm">
+          <div className="rounded-xl bg-muted p-2">
+            <b>{copy.steps}</b>
+            <br />
+            <span className="tabular-nums">{state.steps}/{STEP_CAP}</span>
+          </div>
+          <div className="rounded-xl bg-muted p-2">
+            <b>{copy.seed}</b>
+            <br />
+            <span className="tabular-nums">{seed}</span>
+          </div>
+        </div>
+        <div className="space-y-2">
+          <p className="text-sm font-semibold text-foreground">{copy.mark}</p>
+          <ol aria-label={copy.mark} className="grid grid-cols-5 gap-2 text-center">
+            {state.goal.map((kind, index) => (
+              <li key={`mark-${index}`} className={gaugeClass(true)}>
+                <b className="tabular-nums">{index + 1}</b>
+                <span className="block text-xs">{cellWord(kind, copy)}</span>
+              </li>
+            ))}
+          </ol>
+          <p className="text-sm font-semibold text-foreground">{copy.room}</p>
+          <ol aria-label={copy.room} className="grid grid-cols-5 gap-2 text-center">
+            {state.cells.map((kind, index) => (
+              <li key={`room-${index}`} className={gaugeClass(kind === state.goal[index])}>
+                <b className="tabular-nums">{index + 1}</b>
+                <span className="block text-xs">{cellWord(kind, copy)}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          <b>{copy.readLabel}</b>
+          {" "}
+          {spoken}
+        </p>
+        <p role="status" aria-live="polite" className="text-sm text-foreground">{live}</p>
+        <div className="relative overflow-hidden rounded-2xl border border-border bg-card">
+          <div className="h-96" aria-hidden="true">
+            <SentenceDungeonScene
+              state={state}
+              shown={shown}
+              glide={glide}
+              reduce={reduce}
+              paused={paused || hidden}
+              view={view}
+              onSettled={onSettled}
+            />
+          </div>
+          {paused ? (
+            <div className="absolute inset-0 flex items-center justify-center bg-background/80">
+              <button type="button" className={controlClass("primary")} onClick={() => setPaused(false)}>
+                {copy.resume}
+              </button>
+            </div>
+          ) : null}
+        </div>
+        <div className="space-y-2">
+          <p id="sentence-dungeon-acts" className="text-sm font-semibold text-foreground">{copy.acts}</p>
+          <div role="group" aria-labelledby="sentence-dungeon-acts" className="grid grid-cols-1 gap-2">
+            {ACTS.map((act) => {
+              const next = stepRoom(state, act);
+              const noop = next === state;
+              const doomed = next.loseReason === "cap";
+              const tone = locked || noop ? "quiet" : doomed ? "danger" : "live";
+              const detail = detailFor(state, act, copy);
+              return (
+                <button
+                  key={act}
+                  type="button"
+                  className={actClass(tone)}
+                  aria-keyshortcuts={shortcut(act)}
+                  aria-label={`${label(act, copy)}. ${detail}`}
+                  disabled={locked || noop}
+                  onClick={() => move(act)}
+                >
+                  {label(act, copy)}
+                  <span className="block text-xs font-normal">{detail}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" className={paused ? controlClass("primary") : controlClass("quiet")} aria-pressed={paused} onClick={() => setPaused((value) => !value)}>
+            {paused ? copy.resume : copy.pause}
+          </button>
+          <button type="button" className={controlClass("quiet")} onClick={() => setView((value) => (value + 1) % 4)}>
+            {copy.view}
+          </button>
+          <button type="button" className={muted ? controlClass("primary") : controlClass("quiet")} aria-pressed={muted} onClick={() => { arm(); setMuted((value) => !value); }}>
+            {muted ? copy.sound : copy.mute}
+          </button>
+          <button type="button" className={controlClass("danger")} disabled={state.status !== "play"} onClick={giveUp}>
+            {copy.giveUp}
+          </button>
+        </div>
+        <form
+          className="flex flex-wrap items-end gap-2"
+          onSubmit={(event) => {
+            event.preventDefault();
+            const value = Number(draft);
+            if (!Number.isFinite(value)) return;
             arm();
-            load(nextSeed(seed));
+            load(Math.trunc(value));
           }}
         >
-          {copy.next}
-        </button>
-      </form>
+          <label className="space-y-1 text-sm text-foreground">
+            <span className="block">{copy.seed}</span>
+            <input
+              value={draft}
+              inputMode="numeric"
+              onChange={(event) => setDraft(event.target.value)}
+              className="min-h-11 w-28 rounded-xl border border-border bg-card px-3 text-foreground"
+            />
+          </label>
+          <button type="submit" className={controlClass("quiet")}>{copy.apply}</button>
+          <button
+            type="button"
+            className={controlClass("quiet")}
+            onClick={() => {
+              arm();
+              load(nextSeed(seed));
+            }}
+          >
+            {copy.next}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

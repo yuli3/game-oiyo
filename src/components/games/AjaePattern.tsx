@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
 import { getBest, recordBest } from "../../lib/games/records";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
 import {
   AJAE_KEYS,
   AJAE_MIN_LEN,
@@ -22,6 +24,61 @@ import {
 const KEYS = AJAE_KEYS;
 const GAME_ID = "lostark-ajae-pattern";
 const STATS_KEY = "oiyo:ajae-pattern-stats:v1";
+const SOUND_STORAGE_KEY = "ajae_pattern_sound_muted";
+
+function playAjaeSound(type: 'tap' | 'clear' | 'wrong' | 'timeout', muted: boolean) {
+  if (muted || typeof window === 'undefined') return;
+  const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+  if (!AudioCtx) return;
+  const ctx = new AudioCtx();
+  const now = ctx.currentTime;
+
+  if (type === 'tap') {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(660, now);
+    gain.gain.setValueAtTime(0.05, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.06);
+  } else if (type === 'clear') {
+    const freqs = [523.25, 659.25, 783.99]; // C5, E5, G5
+    freqs.forEach((freq, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const start = now + idx * 0.08;
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, start);
+      gain.gain.setValueAtTime(0.06, start);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.2);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + 0.2);
+    });
+  } else if (type === 'wrong') {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(160, now);
+    gain.gain.setValueAtTime(0.06, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.15);
+  } else if (type === 'timeout') {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(130, now);
+    gain.gain.setValueAtTime(0.07, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.2);
+  }
+}
 
 type Stats = { plays: number; wins: number; streak: number; maxStreak: number; totalMs: number };
 const emptyStats = (): Stats => ({ plays: 0, wins: 0, streak: 0, maxStreak: 0, totalMs: 0 });
@@ -240,6 +297,7 @@ type Tone = "" | "good" | "bad";
 
 const AjaePattern: React.FC<{ locale: Locale }> = ({ locale }) => {
   const t = T[locale] ?? T.en;
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal();
 
   const [pattern, setPattern] = useState<string[]>([]);
   const [cursor, setCursor] = useState(0);
@@ -250,6 +308,25 @@ const AjaePattern: React.FC<{ locale: Locale }> = ({ locale }) => {
   const [remaining, setRemaining] = useState(1);
   const [stats, setStats] = useState<Stats>(emptyStats);
   const [bestMs, setBestMs] = useState<number | null>(null);
+  const [muted, setMuted] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem(SOUND_STORAGE_KEY) === "true";
+  });
+
+  const mutedRef = useRef(muted);
+  mutedRef.current = muted;
+
+  const toggleSound = useCallback(() => {
+    setMuted((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(SOUND_STORAGE_KEY, String(next));
+      } catch {
+        /* storage disabled */
+      }
+      return next;
+    });
+  }, []);
 
   const startedAt = useRef(0);
   const deadline = useRef(0);
@@ -300,6 +377,7 @@ const AjaePattern: React.FC<{ locale: Locale }> = ({ locale }) => {
       const left = Math.max(0, deadline.current - now);
       setRemaining(left / total);
       if (left <= 0) {
+        playAjaeSound('timeout', mutedRef.current);
         setActive(false);
         setMessage(t.timeout);
         setTone("bad");
@@ -326,6 +404,7 @@ const AjaePattern: React.FC<{ locale: Locale }> = ({ locale }) => {
     (key: string) => {
       if (!active) return;
       if (key !== pattern[cursor]) {
+        playAjaeSound('wrong', mutedRef.current);
         clearTimers();
         setActive(false);
         setMessage(t.wrong(pattern[cursor]));
@@ -337,7 +416,10 @@ const AjaePattern: React.FC<{ locale: Locale }> = ({ locale }) => {
       }
       const next = cursor + 1;
       setCursor(next);
-      if (next < pattern.length) return;
+      if (next < pattern.length) {
+        playAjaeSound('tap', mutedRef.current);
+        return;
+      }
 
       clearTimers();
       setActive(false);
@@ -347,6 +429,7 @@ const AjaePattern: React.FC<{ locale: Locale }> = ({ locale }) => {
       // be frozen while the clock kept running. Judge the round on elapsed time
       // rather than on whether the timer got a chance to fire.
       if (!isAjaeClear(elapsed, patternLen.current)) {
+        playAjaeSound('timeout', mutedRef.current);
         const cur = loadStats();
         persist({ ...cur, plays: cur.plays + 1, streak: 0 });
         setMessage(t.timeout);
@@ -355,6 +438,7 @@ const AjaePattern: React.FC<{ locale: Locale }> = ({ locale }) => {
         return;
       }
 
+      playAjaeSound('clear', mutedRef.current);
       const cur = loadStats();
       const streak = cur.streak + 1;
       persist({
@@ -375,14 +459,34 @@ const AjaePattern: React.FC<{ locale: Locale }> = ({ locale }) => {
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return;
       const key = event.key.toUpperCase();
-      if (!isAjaeKey(key)) return;
-      event.preventDefault();
-      press(key);
+      if (active) {
+        if (!isAjaeKey(key)) return;
+        event.preventDefault();
+        press(key);
+        return;
+      }
+      // Not active: allow F for portal, M for sound, Space/Enter to start
+      if (event.key === "f" || event.key === "F") {
+        event.preventDefault();
+        togglePortal();
+        return;
+      }
+      if (event.key === "m" || event.key === "M") {
+        event.preventDefault();
+        toggleSound();
+        return;
+      }
+      if (event.key === " " || event.key === "Enter") {
+        event.preventDefault();
+        beginRound();
+        return;
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [press]);
+  }, [active, beginRound, press, togglePortal, toggleSound]);
 
   useEffect(() => clearTimers, [clearTimers]);
 
@@ -400,110 +504,141 @@ const AjaePattern: React.FC<{ locale: Locale }> = ({ locale }) => {
   const average = stats.wins ? `${Math.round(stats.totalMs / stats.wins)}ms` : "—";
 
   return (
-    <div className="not-prose flex flex-col gap-6">
-      <div>
-        <p className="mb-2 text-xs font-extrabold uppercase tracking-widest text-primary">{t.eyebrow}</p>
-        <p className="text-muted-foreground leading-relaxed">{t.lead}</p>
-      </div>
-
-      <div className="overflow-hidden rounded-2xl border bg-card">
-        <div className="flex items-center justify-between gap-4 border-b px-5 py-4">
-          <strong aria-live="polite" data-tone={tone} className={tone === "good" ? "text-success" : tone === "bad" ? "text-destructive" : ""}>
-            {message}
-          </strong>
-          <span className="text-sm text-muted-foreground">{levelLabel}</span>
-        </div>
-
-        <div
-          ref={arena}
-          tabIndex={-1}
-          className="grid content-center gap-6 px-5 py-9 text-center outline-none"
-          style={{ minHeight: "22rem" }}
-        >
-          <div className="flex min-h-[4.5rem] flex-wrap justify-center gap-2 sm:gap-3">
-            {pattern.map((key, index) => (
-              <span
-                key={`${index}-${key}`}
-                aria-label={t.keyAria(index + 1, key, index < cursor)}
-                className={`grid h-14 w-12 place-items-center rounded-xl border border-b-4 text-2xl font-black sm:h-[4.5rem] sm:w-16 ${
-                  index < cursor
-                    ? "translate-y-[3px] border-b-2 border-success bg-success/15 text-success"
-                    : "bg-muted"
-                }`}
-              >
-                {key}
-              </span>
-            ))}
+    <div
+      ref={containerRef}
+      className={`not-prose relative select-none ${
+        isImmersive
+          ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col items-center justify-center overflow-y-auto bg-background p-4 sm:p-6"
+          : "flex flex-col gap-6"
+      }`}
+    >
+      <div className="w-full max-w-2xl mx-auto flex flex-col gap-6">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="mb-2 text-xs font-extrabold uppercase tracking-widest text-primary">{t.eyebrow}</p>
+            <p className="text-muted-foreground leading-relaxed">{t.lead}</p>
           </div>
-
-          <div className="mx-auto h-2 w-full max-w-xl overflow-hidden rounded-full bg-muted">
-            <span
-              className="block h-full origin-left bg-primary transition-none"
-              style={{ transform: `scaleX(${active ? remaining : 0})` }}
-            />
-          </div>
-
-          <div className="flex flex-wrap justify-center gap-2">
-            {!active && (
-              <button type="button" onClick={beginRound} className="min-h-11 rounded-full bg-primary px-6 font-black text-primary-foreground">
-                {pattern.length ? t.again : t.start}
-              </button>
-            )}
-            {active && (
-              <button type="button" onClick={stop} className="min-h-11 rounded-full border px-6 font-black">
-                {t.stop}
-              </button>
-            )}
-          </div>
-
-          <div className="flex flex-wrap justify-center gap-2">
-            {KEYS.map((key) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => press(key)}
-                aria-label={key}
-                className="h-12 w-12 rounded-lg border font-black"
-              >
-                {key}
-              </button>
-            ))}
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={toggleSound}
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-border/60 bg-card text-foreground shadow-sm transition hover:bg-muted"
+              title={muted ? portalLabels.unmute : portalLabels.mute}
+              aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+            >
+              {muted ? <VolumeX className="h-4 w-4 text-muted-foreground" /> : <Volume2 className="h-4 w-4 text-foreground" />}
+            </button>
+            <button
+              type="button"
+              onClick={togglePortal}
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-border/60 bg-card text-foreground shadow-sm transition hover:bg-muted"
+              title={isImmersive ? portalLabels.exit : portalLabels.enter}
+              aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+            >
+              {isImmersive ? <Minimize2 className="h-4 w-4 text-foreground" /> : <Maximize2 className="h-4 w-4 text-foreground" />}
+            </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-px border-t bg-border sm:grid-cols-4">
-          {[
-            { label: t.accuracy, value: accuracy },
-            { label: t.streak, value: `${stats.streak} / ${stats.maxStreak}` },
-            { label: t.average, value: average },
-            { label: t.best, value: bestMs ? `${bestMs}ms` : "—" },
-          ].map((cell) => (
-            <div key={cell.label} className="bg-card px-3 py-4 text-center">
-              <span className="text-xs text-muted-foreground">{cell.label}</span>
-              <strong className="mt-1 block text-xl">{cell.value}</strong>
+        <div className="overflow-hidden rounded-2xl border bg-card">
+          <div className="flex items-center justify-between gap-4 border-b px-5 py-4">
+            <strong aria-live="polite" data-tone={tone} className={tone === "good" ? "text-success" : tone === "bad" ? "text-destructive" : ""}>
+              {message}
+            </strong>
+            <span className="text-sm text-muted-foreground">{levelLabel}</span>
+          </div>
+
+          <div
+            ref={arena}
+            tabIndex={-1}
+            className="grid content-center gap-6 px-5 py-9 text-center outline-none"
+            style={{ minHeight: "22rem" }}
+          >
+            <div className="flex min-h-[4.5rem] flex-wrap justify-center gap-2 sm:gap-3">
+              {pattern.map((key, index) => (
+                <span
+                  key={`${index}-${key}`}
+                  aria-label={t.keyAria(index + 1, key, index < cursor)}
+                  className={`grid h-14 w-12 place-items-center rounded-xl border border-b-4 text-2xl font-black sm:h-[4.5rem] sm:w-16 ${
+                    index < cursor
+                      ? "translate-y-[3px] border-b-2 border-success bg-success/15 text-success"
+                      : "bg-muted"
+                  }`}
+                >
+                  {key}
+                </span>
+              ))}
             </div>
-          ))}
-        </div>
-      </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <section className="rounded-xl border p-5">
-          <h2 className="mb-3 text-lg font-bold">{t.howTitle}</h2>
-          <ol className="list-decimal space-y-1 pl-5 text-muted-foreground">
-            {t.how.map((line) => (
-              <li key={line}>{line}</li>
+            <div className="mx-auto h-2 w-full max-w-xl overflow-hidden rounded-full bg-muted">
+              <span
+                className="block h-full origin-left bg-primary transition-none"
+                style={{ transform: `scaleX(${active ? remaining : 0})` }}
+              />
+            </div>
+
+            <div className="flex flex-wrap justify-center gap-2">
+              {!active && (
+                <button type="button" onClick={beginRound} className="min-h-11 rounded-full bg-primary px-6 font-black text-primary-foreground">
+                  {pattern.length ? t.again : t.start}
+                </button>
+              )}
+              {active && (
+                <button type="button" onClick={stop} className="min-h-11 rounded-full border px-6 font-black">
+                  {t.stop}
+                </button>
+              )}
+            </div>
+
+            <div className="flex flex-wrap justify-center gap-2">
+              {KEYS.map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => press(key)}
+                  aria-label={key}
+                  className="h-12 w-12 rounded-lg border font-black"
+                >
+                  {key}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-px border-t bg-border sm:grid-cols-4">
+            {[
+              { label: t.accuracy, value: accuracy },
+              { label: t.streak, value: `${stats.streak} / ${stats.maxStreak}` },
+              { label: t.average, value: average },
+              { label: t.best, value: bestMs ? `${bestMs}ms` : "—" },
+            ].map((cell) => (
+              <div key={cell.label} className="bg-card px-3 py-4 text-center">
+                <span className="text-xs text-muted-foreground">{cell.label}</span>
+                <strong className="mt-1 block text-xl">{cell.value}</strong>
+              </div>
             ))}
-          </ol>
-        </section>
-        <section className="rounded-xl border p-5">
-          <h2 className="mb-3 text-lg font-bold">{t.whyTitle}</h2>
-          <p className="leading-relaxed text-muted-foreground">{t.why}</p>
-        </section>
-      </div>
+          </div>
+        </div>
 
-      <button type="button" onClick={reset} className="self-start text-sm text-muted-foreground underline">
-        {t.reset}
-      </button>
+        <div className="grid gap-4 md:grid-cols-2">
+          <section className="rounded-xl border p-5">
+            <h2 className="mb-3 text-lg font-bold">{t.howTitle}</h2>
+            <ol className="list-decimal space-y-1 pl-5 text-muted-foreground">
+              {t.how.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ol>
+          </section>
+          <section className="rounded-xl border p-5">
+            <h2 className="mb-3 text-lg font-bold">{t.whyTitle}</h2>
+            <p className="leading-relaxed text-muted-foreground">{t.why}</p>
+          </section>
+        </div>
+
+        <button type="button" onClick={reset} className="self-start text-sm text-muted-foreground underline">
+          {t.reset}
+        </button>
+      </div>
     </div>
   );
 };
