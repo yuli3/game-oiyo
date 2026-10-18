@@ -1,9 +1,10 @@
-import { lazy, Suspense, useState, useEffect } from 'react';
-import { Rocket, Trophy, RefreshCw, Volume2, VolumeX, Flame, Zap, Play, AlertCircle } from 'lucide-react';
+import { lazy, Suspense, useState, useEffect, useCallback } from 'react';
+import { Rocket, Trophy, RefreshCw, Volume2, VolumeX, Flame, Zap, Play, AlertCircle, Maximize2, Minimize2 } from 'lucide-react';
 import type { Locale } from '../../lib/i18n';
 import { getBest, recordBest } from '../../lib/games/records';
 import { hasWebGL } from '../../lib/games/webgl';
 import { generateFlightCourse, type FlightCourse } from '../../lib/games/cosmic-flight';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
 
 const CosmicFlightScene = lazy(() => import('./CosmicFlightScene'));
 
@@ -133,14 +134,53 @@ export default function CosmicFlight({ locale = 'ko' }: { locale?: Locale }) {
   const [maxCombo, setMaxCombo] = useState(0);
   const [finalScore, setFinalScore] = useState(0);
   const [bestScore, setBestScore] = useState(0);
-  const [audioEnabled, setAudioEnabled] = useState(true);
+  const [audioEnabled, setAudioEnabled] = useState(() => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        return window.localStorage.getItem('cosmic_flight_muted') !== 'true';
+      }
+    } catch {}
+    return true;
+  });
   const [webglSupported, setWebglSupported] = useState(true);
+
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({
+    locale: (locale as any) || 'ko',
+  });
+
+  const toggleAudio = useCallback(() => {
+    setAudioEnabled((prev) => {
+      const next = !prev;
+      try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          window.localStorage.setItem('cosmic_flight_muted', String(!next));
+        }
+      } catch {}
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     setWebglSupported(hasWebGL());
     const saved = getBest(GAME_KEY);
     if (saved) setBestScore(saved.value);
   }, []);
+
+  // Keyboard shortcut: F for portal, M for sound
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        togglePortal();
+      } else if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        toggleAudio();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [togglePortal, toggleAudio]);
 
   const startNewFlight = () => {
     setCourse(generateFlightCourse(Date.now(), 22));
@@ -178,7 +218,15 @@ export default function CosmicFlight({ locale = 'ko' }: { locale?: Locale }) {
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div
+      ref={containerRef}
+      data-game-surface
+      className={`select-none ${
+        isImmersive
+          ? 'fixed inset-0 z-50 flex h-dvh w-screen flex-col justify-center overflow-y-auto bg-background p-4 sm:p-6'
+          : 'mx-auto max-w-4xl space-y-6'
+      }`}
+    >
       {/* Header Info Banner */}
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-card p-5">
         <div>
@@ -189,17 +237,32 @@ export default function CosmicFlight({ locale = 'ko' }: { locale?: Locale }) {
           <p className="mt-1 text-sm text-muted-foreground">{t.subtitle}</p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <div className="flex items-center gap-1.5 rounded-xl border border-warning/30 bg-warning/10 px-3.5 py-1.5 text-warning font-mono text-sm">
             <Trophy className="h-4 w-4" />
             <span>{t.best}: {bestScore}</span>
           </div>
           <button
-            onClick={() => setAudioEnabled(!audioEnabled)}
-            className="rounded-xl border border-border bg-secondary p-2 text-secondary-foreground transition hover:bg-accent"
-            aria-label="Toggle Audio"
+            type="button"
+            onClick={toggleAudio}
+            aria-pressed={!audioEnabled}
+            aria-label={audioEnabled ? portalLabels.mute : portalLabels.unmute}
+            title={`${audioEnabled ? portalLabels.mute : portalLabels.unmute} (M)`}
+            className="flex min-h-11 items-center gap-1.5 rounded-xl border border-border bg-secondary px-3 py-2 text-xs font-bold text-secondary-foreground transition hover:bg-accent active:scale-95"
           >
             {audioEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+            <span className="hidden sm:inline">{audioEnabled ? portalLabels.mute : portalLabels.unmute}</span>
+          </button>
+          <button
+            type="button"
+            onClick={togglePortal}
+            aria-pressed={isImmersive}
+            aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+            title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+            className="flex min-h-11 items-center gap-1.5 rounded-xl border border-border bg-secondary px-3 py-2 text-xs font-bold text-secondary-foreground transition hover:bg-accent active:scale-95"
+          >
+            {isImmersive ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
           </button>
         </div>
       </div>

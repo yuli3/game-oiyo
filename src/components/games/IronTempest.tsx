@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Bomb, Crosshair, Gamepad2, Headphones, Shield } from "lucide-react";
+import { Bomb, Crosshair, Gamepad2, Headphones, Maximize2, Minimize2, Shield, Volume2, VolumeX } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
 import { getBest, recordBest } from "../../lib/games/records";
 import { reviewTempestMission } from "../../lib/games/iron-tempest";
 import { ENEMY_HEALTH, WEAPONS, applyTempestDamage, blastDamage, missionScore, structureStage, weaponDrop, type TempestEnemy, type TempestWeapon } from "../../lib/games/iron-tempest";
 import { IRON_TEMPEST_SPRITES } from "../../lib/games/sprites";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
 
 const GAME_KEY = "iron-tempest";
 type Phase = "briefing" | "playing" | "result";
@@ -37,24 +38,115 @@ export default function IronTempest({ locale }: { locale: Locale }) {
   const [phase, setPhase] = useState<Phase>("briefing");
   const [best, setBest] = useState(0);
   const [result, setResult] = useState({ score: 0, kills: 0, seconds: 0 });
+  const [muted, setMuted] = useState(() => {
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        return window.localStorage.getItem("iron_tempest_muted") === "true";
+      }
+    } catch {}
+    return false;
+  });
+
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({
+    locale: (locale as any) || "ko",
+  });
+
+  const toggleMute = useCallback(() => {
+    setMuted((prev) => {
+      const next = !prev;
+      try {
+        if (typeof window !== "undefined" && window.localStorage) {
+          window.localStorage.setItem("iron_tempest_muted", String(next));
+        }
+      } catch {}
+      return next;
+    });
+  }, []);
+
   useEffect(() => setBest(getBest(GAME_KEY)?.value ?? 0), []);
   const finish = useCallback((r: typeof result) => { setResult(r); setBest(recordBest(GAME_KEY, r.score, "score", JSON.stringify(r)).value); setPhase("result"); }, []);
-  if (phase === "playing") return <TempestGame copy={t.hud} onFinish={finish} />;
-  return <section className="not-prose relative left-1/2 my-7 w-[min(100vw-1rem,1200px)] -translate-x-1/2 overflow-hidden rounded-2xl border-4 border-[#17110b] bg-[#17110b] text-[#fff6d8] shadow-2xl">
-    <div className="relative min-h-[520px] bg-cover bg-center p-5 sm:p-10 lg:p-14" style={{ backgroundImage: "linear-gradient(90deg,rgba(6,8,8,.96),rgba(6,8,8,.72) 48%,rgba(6,8,8,.08)),url('/games/iron-tempest-social.png')" }}>
-      <div className="max-w-xl"><p className="font-mono text-[10px] font-black tracking-[.28em] text-[#ffbe3f]">{t.eyebrow}</p><h2 className="mt-4 font-mono text-5xl font-black leading-[.82] tracking-[-.08em] text-white [text-shadow:4px_4px_0_#7a1f0b] sm:text-7xl">{t.title}</h2><p className="mt-6 max-w-lg text-sm font-semibold leading-7 text-[#eadfc8] sm:text-base">{t.subtitle}</p>
-        <div className="mt-5 flex h-20 max-w-lg items-end gap-1 overflow-hidden border-y border-white/15 bg-black/45 px-3" aria-hidden="true">
-          <img src="/assets/sprites/weapons/assault-rifle.webp" alt="" className="h-16 min-w-0 flex-1 object-contain"/>
-          <img src="/assets/sprites/weapons/heavy-machine-gun.webp" alt="" className="h-16 min-w-0 flex-1 object-contain"/>
-          <img src="/assets/sprites/weapons/rocket-launcher.webp" alt="" className="h-16 min-w-0 flex-1 object-contain"/>
-        </div>
-        <div className="mt-7 flex flex-wrap items-center gap-3"><button onClick={() => setPhase("playing")} className="min-h-12 border-b-4 border-[#8b290f] bg-[#ffb11b] px-9 py-3 font-mono text-sm font-black text-[#1d1204] active:translate-y-1 active:border-b-0">{phase === "result" ? t.again : t.start}</button><span className="bg-black/75 px-4 py-3 font-mono text-xs">{t.best} <b className="text-[#ffcf4f]">{best.toLocaleString()}</b></span></div>
-        {phase === "result" && <><dl role="status" aria-live="polite" className="mt-5 grid grid-cols-3 border-2 border-white/15 bg-black/75 p-3 text-center font-mono">{[[t.score, result.score], [t.kills, result.kills], [t.time, `${result.seconds}s`]].map(([a,b])=><div key={a}><dt className="text-[9px] text-[#c7bca8]">{a}</dt><dd className="text-xl font-black">{b}</dd></div>)}</dl><p className="mt-2 text-center font-mono text-xs font-black text-[#ffcf4f]">→ {reviewTempestMission(result) === "kills" ? t.kills : reviewTempestMission(result) === "speed" ? t.time : t.score}</p></>}
-      </div>
+
+  // Keyboard shortcut for portal and mute (M for mute, F only when not playing to avoid hijacking J/F fire)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (phase !== "playing" && (e.key === "f" || e.key === "F")) {
+        e.preventDefault();
+        togglePortal();
+      } else if (e.key === "m" || e.key === "M") {
+        e.preventDefault();
+        toggleMute();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [phase, togglePortal, toggleMute]);
+
+  return (
+    <div
+      ref={containerRef}
+      data-game-surface
+      className={`relative select-none ${
+        isImmersive
+          ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col items-center justify-center overflow-y-auto bg-background p-2"
+          : "w-full"
+      }`}
+    >
+      {phase === "playing" ? (
+        <TempestGame
+          copy={t.hud}
+          onFinish={finish}
+          muted={muted}
+          onToggleMute={toggleMute}
+          isImmersive={isImmersive}
+          onTogglePortal={togglePortal}
+          portalLabels={portalLabels}
+        />
+      ) : (
+        <section className="not-prose relative left-1/2 my-7 w-[min(100vw-1rem,1200px)] -translate-x-1/2 overflow-hidden rounded-2xl border-4 border-[#17110b] bg-[#17110b] text-[#fff6d8] shadow-2xl">
+          {/* Top portal controls in briefing / result */}
+          <div className="absolute right-4 top-4 z-20 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={toggleMute}
+              aria-pressed={muted}
+              aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+              title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`}
+              className="flex min-h-11 items-center gap-1.5 rounded-xl border border-border bg-card/85 px-3 py-2 text-xs font-bold text-foreground shadow-xs backdrop-blur-md transition-transform hover:bg-muted active:scale-95"
+            >
+              {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+              <span className="hidden sm:inline">{muted ? portalLabels.unmute : portalLabels.mute}</span>
+            </button>
+            <button
+              type="button"
+              onClick={togglePortal}
+              aria-pressed={isImmersive}
+              aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+              title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+              className="flex min-h-11 items-center gap-1.5 rounded-xl border border-border bg-card/85 px-3 py-2 text-xs font-bold text-foreground shadow-xs backdrop-blur-md transition-transform hover:bg-muted active:scale-95"
+            >
+              {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+              <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+            </button>
+          </div>
+
+          <div className="relative min-h-[520px] bg-cover bg-center p-5 sm:p-10 lg:p-14" style={{ backgroundImage: "linear-gradient(90deg,rgba(6,8,8,.96),rgba(6,8,8,.72) 48%,rgba(6,8,8,.08)),url('/games/iron-tempest-social.png')" }}>
+            <div className="max-w-xl"><p className="font-mono text-[10px] font-black tracking-[.28em] text-[#ffbe3f]">{t.eyebrow}</p><h2 className="mt-4 font-mono text-5xl font-black leading-[.82] tracking-[-.08em] text-white [text-shadow:4px_4px_0_#7a1f0b] sm:text-7xl">{t.title}</h2><p className="mt-6 max-w-lg text-sm font-semibold leading-7 text-[#eadfc8] sm:text-base">{t.subtitle}</p>
+              <div className="mt-5 flex h-20 max-w-lg items-end gap-1 overflow-hidden border-y border-white/15 bg-black/45 px-3" aria-hidden="true">
+                <img src="/assets/sprites/weapons/assault-rifle.webp" alt="" className="h-16 min-w-0 flex-1 object-contain"/>
+                <img src="/assets/sprites/weapons/heavy-machine-gun.webp" alt="" className="h-16 min-w-0 flex-1 object-contain"/>
+                <img src="/assets/sprites/weapons/rocket-launcher.webp" alt="" className="h-16 min-w-0 flex-1 object-contain"/>
+              </div>
+              <div className="mt-7 flex flex-wrap items-center gap-3"><button onClick={() => setPhase("playing")} className="min-h-12 border-b-4 border-[#8b290f] bg-[#ffb11b] px-9 py-3 font-mono text-sm font-black text-[#1d1204] active:translate-y-1 active:border-b-0">{phase === "result" ? t.again : t.start}</button><span className="bg-black/75 px-4 py-3 font-mono text-xs">{t.best} <b className="text-[#ffcf4f]">{best.toLocaleString()}</b></span></div>
+              {phase === "result" && <><dl role="status" aria-live="polite" className="mt-5 grid grid-cols-3 border-2 border-white/15 bg-black/75 p-3 text-center font-mono">{[[t.score, result.score], [t.kills, result.kills], [t.time, `${result.seconds}s`]].map(([a,b])=><div key={a}><dt className="text-[9px] text-[#c7bca8]">{a}</dt><dd className="text-xl font-black">{b}</dd></div>)}</dl><p className="mt-2 text-center font-mono text-xs font-black text-[#ffcf4f]">→ {reviewTempestMission(result) === "kills" ? t.kills : reviewTempestMission(result) === "speed" ? t.time : t.score}</p></>}
+            </div>
+          </div>
+          <div className="grid gap-px bg-[#3c3327] md:grid-cols-3">{t.features.map(([a,b],i)=>{const Icon=[Crosshair,Bomb,Shield][i];return <div key={a} className="flex gap-3 bg-[#211b14] p-5"><Icon className="size-5 shrink-0 text-[#ffad1a]"/><div><h3 className="font-mono text-xs font-black">{a}</h3><p className="mt-1 text-xs leading-5 text-[#bdb09b]">{b}</p></div></div>})}</div>
+          <div className="grid gap-4 bg-[#f4e7c7] p-5 text-xs text-[#2d281f] sm:grid-cols-2"><p className="flex gap-2"><Gamepad2 className="size-5 shrink-0"/><span><b>{t.controls}</b><br/>{t.mobile}</span></p><p className="flex gap-2"><Headphones className="size-5 shrink-0"/><span><b>{t.local}</b><br/>{t.localBody}</span></p></div>
+        </section>
+      )}
     </div>
-    <div className="grid gap-px bg-[#3c3327] md:grid-cols-3">{t.features.map(([a,b],i)=>{const Icon=[Crosshair,Bomb,Shield][i];return <div key={a} className="flex gap-3 bg-[#211b14] p-5"><Icon className="size-5 shrink-0 text-[#ffad1a]"/><div><h3 className="font-mono text-xs font-black">{a}</h3><p className="mt-1 text-xs leading-5 text-[#bdb09b]">{b}</p></div></div>})}</div>
-    <div className="grid gap-4 bg-[#f4e7c7] p-5 text-xs text-[#2d281f] sm:grid-cols-2"><p className="flex gap-2"><Gamepad2 className="size-5 shrink-0"/><span><b>{t.controls}</b><br/>{t.mobile}</span></p><p className="flex gap-2"><Headphones className="size-5 shrink-0"/><span><b>{t.local}</b><br/>{t.localBody}</span></p></div>
-  </section>;
+  );
 }
 
 type HudCopy = Copy["hud"];
@@ -65,11 +157,31 @@ type Structure = { x:number;y:number;w:number;h:number;hp:number;max:number };
 type Pickup = { x:number;y:number;kind:TempestWeapon;life:number };
 const W=960,H=540,GROUND=430;
 
-function TempestGame({copy,onFinish}:{copy:HudCopy;onFinish:(r:{score:number;kills:number;seconds:number})=>void}) {
+function TempestGame({
+  copy,
+  onFinish,
+  muted,
+  onToggleMute,
+  isImmersive,
+  onTogglePortal,
+  portalLabels,
+}: {
+  copy: HudCopy;
+  onFinish: (r: { score: number; kills: number; seconds: number }) => void;
+  muted: boolean;
+  onToggleMute: () => void;
+  isImmersive: boolean;
+  onTogglePortal: () => void;
+  portalLabels: { enter: string; exit: string; mute: string; unmute: string; hint: string };
+}) {
   const canvas=useRef<HTMLCanvasElement>(null), keys=useRef(new Set<string>()), touch=useRef(new Set<string>());
   const finishRef=useRef(onFinish); finishRef.current=onFinish;
-  const [muted,setMuted]=useState(false);
   const audioRef=useRef<ReturnType<typeof createAudio>|null>(null);
+
+  useEffect(() => {
+    audioRef.current?.setMuted(muted);
+  }, [muted]);
+
   useEffect(()=>{const down=(e:KeyboardEvent)=>{keys.current.add(e.code);if(["ArrowLeft","ArrowRight","Space"].includes(e.code))e.preventDefault()},up=(e:KeyboardEvent)=>keys.current.delete(e.code);addEventListener("keydown",down);addEventListener("keyup",up);return()=>{removeEventListener("keydown",down);removeEventListener("keyup",up)}},[]);
   useEffect(()=>{const el=canvas.current;if(!el)return;const ctx=el.getContext("2d");if(!ctx)return;ctx.imageSmoothingEnabled=false;let raf=0,last=performance.now(),ended=false;
     const weaponImages:Record<TempestWeapon,HTMLImageElement>={rifle:new Image(),heavy:new Image(),rocket:new Image()};
@@ -81,6 +193,7 @@ function TempestGame({copy,onFinish}:{copy:HudCopy;onFinish:(r:{score:number;kil
     const enemies:Enemy[]=[],shots:Shot[]=[],particles:Particle[]=[],pickups:Pickup[]=[];
     const structures:Structure[]=[{x:650,y:GROUND-130,w:100,h:130,hp:180,max:180},{x:1220,y:GROUND-90,w:150,h:90,hp:240,max:240},{x:1810,y:GROUND-160,w:120,h:160,hp:220,max:220}];
     const audio=createAudio();audioRef.current=audio;
+    audio.setMuted(muted);
     const burst=(x:number,y:number,color="#ff9d16",n=18)=>{for(let i=0;i<n;i++)particles.push({x,y,vx:(Math.random()-.5)*280,vy:-Math.random()*260,life:.35+Math.random()*.55,color,size:2+Math.random()*7});audio.boom();shake=Math.max(shake,10)};
     const spawn=(x:number,kind:TempestEnemy)=>enemies.push({id:id++,x,y:GROUND-(kind==="boss"?150:42),vx:0,hp:ENEMY_HEALTH[kind],max:ENEMY_HEALTH[kind],kind,dead:0,fire:Math.random()});
     const shoot=()=>{if(player.ammo<=0){player.weapon="rifle";player.ammo=Infinity}const w=WEAPONS[player.weapon];if(player.shot>0)return;player.shot=w.cooldown;if(Number.isFinite(player.ammo))player.ammo--;shots.push({x:player.x+34,y:player.y+(player.duck?31:18),vx:w.speed,vy:(Math.random()-.5)*(player.weapon==="heavy"?18:8),enemy:false,rocket:player.weapon==="rocket",life:2});audio.shot(player.weapon);shake=Math.max(shake,player.weapon==="rocket"?8:2)};
@@ -104,10 +217,37 @@ function TempestGame({copy,onFinish}:{copy:HudCopy;onFinish:(r:{score:number;kil
     const onVisibility=()=>{if(document.hidden){cancelAnimationFrame(raf);raf=0;return;}if(ended&&messageT<=0)return;if(!raf){last=performance.now();raf=requestAnimationFrame(frame)}};
     document.addEventListener("visibilitychange",onVisibility);
     audio.start();raf=requestAnimationFrame(frame);return()=>{cancelAnimationFrame(raf);document.removeEventListener("visibilitychange",onVisibility);audio.stop()}
-  },[copy]);
+  },[copy,muted]);
   const press=(k:string,v:boolean)=>{v?touch.current.add(k):touch.current.delete(k)};
-  return <div className="not-prose relative left-1/2 my-4 w-[min(100vw,1440px)] -translate-x-1/2 overflow-hidden bg-black"><canvas ref={canvas} width={W} height={H} className="block aspect-video max-h-[86vh] w-full [image-rendering:pixelated]" aria-label="Iron Tempest game canvas"/>
-    <button type="button" onClick={()=>setMuted(v=>{const next=!v;audioRef.current?.setMuted(next);return next})} aria-pressed={muted} aria-label="Sound" className="absolute right-3 top-3 min-h-11 min-w-11 rounded border border-white/30 bg-black/70 text-sm text-white"><span aria-hidden="true">{muted?"🔇":"🔊"}</span></button>
+  return <div className={`not-prose relative overflow-hidden bg-black ${isImmersive ? "w-full h-full flex flex-col justify-center items-center" : "left-1/2 my-4 w-[min(100vw,1440px)] -translate-x-1/2"}`}>
+    <canvas ref={canvas} width={W} height={H} className={`block aspect-video [image-rendering:pixelated] ${isImmersive ? "h-full max-h-screen max-w-full" : "w-full max-h-[86vh]"}`} aria-label="Iron Tempest game canvas"/>
+    
+    {/* HUD Controls */}
+    <div className="absolute right-3 top-3 z-30 flex items-center gap-2">
+      <button
+        type="button"
+        onClick={onToggleMute}
+        aria-pressed={muted}
+        aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+        title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`}
+        className="flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-xl border border-border bg-background/85 px-3 py-2 text-xs font-bold text-foreground shadow-xs backdrop-blur-md transition-transform hover:bg-muted active:scale-95"
+      >
+        {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+        <span className="hidden sm:inline">{muted ? portalLabels.unmute : portalLabels.mute}</span>
+      </button>
+      <button
+        type="button"
+        onClick={onTogglePortal}
+        aria-pressed={isImmersive}
+        aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+        title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+        className="flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-xl border border-border bg-background/85 px-3 py-2 text-xs font-bold text-foreground shadow-xs backdrop-blur-md transition-transform hover:bg-muted active:scale-95"
+      >
+        {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+        <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+      </button>
+    </div>
+
     {/* 2026-09-28 touch audit: hide only for wide screens with a mouse — a width breakpoint alone removed the controls on landscape phones and iPads. touch-none keeps a held button from turning into a page scroll (pointercancel). */}
     <div className="absolute bottom-3 left-3 grid touch-none select-none grid-cols-3 gap-1 md:pointer-fine:hidden"><i/><Touch k="jump" label="▲" press={press}/><i/><Touch k="left" label="◀" press={press}/><Touch k="right" label="▶" press={press}/><Touch k="vehicle" label="E" press={press}/></div>
     <div className="absolute bottom-3 right-3 grid touch-none select-none grid-cols-2 gap-2 md:pointer-fine:hidden"><Touch k="bomb" label="BOMB" press={press}/><Touch k="fire" label="FIRE" hot press={press}/></div>

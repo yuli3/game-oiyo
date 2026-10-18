@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
 import type {
   OrbitalDefenseState,
   TurretType,
@@ -14,6 +15,7 @@ import {
   TURRET_SPECS,
 } from '../../lib/games/orbital-defense';
 import { OrbitalDefense3DScene } from './OrbitalDefense3DScene';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
 
 interface Props {
   locale?: string;
@@ -69,6 +71,46 @@ export default function OrbitalDefense3D({ locale = 'ko' }: Props) {
   const [gameState, setGameState] = useState<OrbitalDefenseState>(createInitialState);
   const [selectedSlot, setSelectedSlot] = useState<{ orbitIndex: number; slotIndex: number } | null>(null);
   const [selectedTurretId, setSelectedTurretId] = useState<string | null>(null);
+  const [muted, setMuted] = useState(() => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        return window.localStorage.getItem('orbital_defense_muted') === 'true';
+      }
+    } catch {}
+    return false;
+  });
+
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({
+    locale: (locale as any) || 'ko',
+  });
+
+  const toggleMute = useCallback(() => {
+    setMuted((prev) => {
+      const next = !prev;
+      try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          window.localStorage.setItem('orbital_defense_muted', String(next));
+        }
+      } catch {}
+      return next;
+    });
+  }, []);
+
+  // Keyboard shortcut: F for portal, M for sound
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        togglePortal();
+      } else if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        toggleMute();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [togglePortal, toggleMute]);
 
   const stateRef = useRef(gameState);
   stateRef.current = gameState;
@@ -147,7 +189,15 @@ export default function OrbitalDefense3D({ locale = 'ko' }: Props) {
     : null;
 
   return (
-    <div className="mx-auto max-w-4xl space-y-4">
+    <div
+      ref={containerRef}
+      data-game-surface
+      className={`select-none ${
+        isImmersive
+          ? 'fixed inset-0 z-50 flex h-dvh w-screen flex-col justify-center overflow-y-auto bg-background p-4 sm:p-6'
+          : 'mx-auto max-w-4xl space-y-4'
+      }`}
+    >
       {/* HUD Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
         <div>
@@ -155,7 +205,7 @@ export default function OrbitalDefense3D({ locale = 'ko' }: Props) {
           <p className="text-xs text-muted-foreground">{t.subtitle}</p>
         </div>
 
-        <div className="flex items-center gap-4 text-xs font-semibold">
+        <div className="flex items-center gap-2 sm:gap-4 text-xs font-semibold">
           <div className="flex items-center gap-1.5 rounded-lg bg-muted/40 px-3 py-1.5">
             <span className="text-chart-1">♥</span>
             <span className="text-muted-foreground">{t.planetHealth}:</span>
@@ -173,6 +223,29 @@ export default function OrbitalDefense3D({ locale = 'ko' }: Props) {
           </div>
           <div className="flex items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-1.5 text-primary">
             <span>{t.wave} {gameState.wave}</span>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={toggleMute}
+              aria-pressed={muted}
+              aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+              title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`}
+              className="flex min-h-11 items-center gap-1.5 rounded-xl border border-border bg-muted/30 px-3 py-2 text-xs font-bold text-foreground transition hover:bg-muted active:scale-95"
+            >
+              {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+            </button>
+            <button
+              type="button"
+              onClick={togglePortal}
+              aria-pressed={isImmersive}
+              aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+              title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+              className="flex min-h-11 items-center gap-1.5 rounded-xl border border-border bg-muted/30 px-3 py-2 text-xs font-bold text-foreground transition hover:bg-muted active:scale-95"
+            >
+              {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+            </button>
           </div>
         </div>
       </div>

@@ -1,9 +1,10 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from "react";
-import { Crosshair, Headphones, Radio, Shield, Smartphone, Target } from "lucide-react";
+import { Crosshair, Headphones, Maximize2, Minimize2, Radio, Shield, Smartphone, Target, Volume2, VolumeX } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
 import { getBest, recordBest } from "../../lib/games/records";
 import { reviewUrbanStrikeResult } from "../../lib/games/urban-strike";
 import type { MatchResult, UrbanStrikeSceneCopy } from "./UrbanStrikeScene";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
 
 const Scene = lazy(() => import("./UrbanStrikeScene"));
 const GAME_KEY = "urban-strike";
@@ -264,12 +265,51 @@ export default function UrbanStrike({ locale }: { locale: Locale }) {
   const [best, setBest] = useState(0);
   const [available, setAvailable] = useState(true);
   const [result, setResult] = useState<MatchResult | null>(null);
-  const [muted, setMuted] = useState(false);
+  const [muted, setMuted] = useState(() => {
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        return window.localStorage.getItem("urban_strike_muted") === "true";
+      }
+    } catch {}
+    return false;
+  });
+
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({
+    locale: (locale as any) || "ko",
+  });
+
+  const toggleMute = useCallback(() => {
+    setMuted((prev) => {
+      const next = !prev;
+      try {
+        if (typeof window !== "undefined" && window.localStorage) {
+          window.localStorage.setItem("urban_strike_muted", String(next));
+        }
+      } catch {}
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     setAvailable(supportsWebgl());
     setBest(getBest(GAME_KEY)?.value ?? 0);
   }, []);
+
+  // Keyboard shortcut: F for portal only when not playing to avoid hijacking KeyF (fire)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (phase !== "playing" && (e.key === "f" || e.key === "F")) {
+        e.preventDefault();
+        togglePortal();
+      } else if (e.key === "m" || e.key === "M") {
+        e.preventDefault();
+        toggleMute();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [phase, togglePortal, toggleMute]);
 
   const begin = useCallback(() => {
     if (!available) return;
@@ -292,11 +332,45 @@ export default function UrbanStrike({ locale }: { locale: Locale }) {
 
   if (phase === "playing" || phase === "loading") {
     return (
-      <div className="not-prose relative left-1/2 my-6 w-[min(100vw-1rem,1440px)] -translate-x-1/2 overflow-hidden rounded-2xl border border-slate-800 bg-[#07090c] shadow-2xl">
-        <div className="aspect-[16/10] min-h-[560px] max-h-[82vh] w-full">
+      <div
+        ref={containerRef}
+        data-game-surface
+        className={`not-prose relative select-none overflow-hidden bg-[#07090c] ${
+          isImmersive
+            ? "fixed inset-0 z-50 h-dvh w-screen"
+            : "left-1/2 my-6 w-[min(100vw-1rem,1440px)] -translate-x-1/2 rounded-2xl border border-slate-800 shadow-2xl"
+        }`}
+      >
+        {/* Floating Portal Toggle button */}
+        <div className="absolute right-3 top-3 z-30 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={toggleMute}
+            aria-pressed={muted}
+            aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+            title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`}
+            className="flex min-h-11 items-center gap-1.5 rounded-xl border border-border bg-card/85 px-3 py-2 text-xs font-bold text-foreground shadow-xs backdrop-blur-md transition-transform hover:bg-muted active:scale-95"
+          >
+            {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+            <span className="hidden sm:inline">{muted ? portalLabels.unmute : portalLabels.mute}</span>
+          </button>
+          <button
+            type="button"
+            onClick={togglePortal}
+            aria-pressed={isImmersive}
+            aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+            title={isImmersive ? portalLabels.exit : portalLabels.enter}
+            className="flex min-h-11 items-center gap-1.5 rounded-xl border border-border bg-card/85 px-3 py-2 text-xs font-bold text-foreground shadow-xs backdrop-blur-md transition-transform hover:bg-muted active:scale-95"
+          >
+            {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+            <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+          </button>
+        </div>
+
+        <div className={`w-full ${isImmersive ? "h-full" : "aspect-[16/10] min-h-[560px] max-h-[82vh]"}`}>
           <Suspense fallback={<Loading label={t.loading} />}>
             {phase === "playing" ? (
-              <Scene copy={t.scene} onFinish={finish} muted={muted} onToggleMute={() => setMuted((value) => !value)} />
+              <Scene copy={t.scene} onFinish={finish} muted={muted} onToggleMute={toggleMute} />
             ) : (
               <Loading label={t.loading} />
             )}
@@ -320,9 +394,20 @@ export default function UrbanStrike({ locale }: { locale: Locale }) {
               type="button"
               onClick={begin}
               disabled={!available}
-              className="min-h-12 rounded-xl bg-lime-400 px-8 py-3 text-sm font-black uppercase tracking-widest text-foreground shadow-[0_0_28px_rgba(163,230,53,.2)] disabled:cursor-not-allowed disabled:opacity-40"
+              className="min-h-12 rounded-xl bg-lime-400 px-8 py-3 text-sm font-black uppercase tracking-widest text-foreground shadow-[0_0_28px_rgba(163,230,53,.2)] transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40"
             >
               {phase === "result" ? t.again : t.start}
+            </button>
+            <button
+              type="button"
+              onClick={togglePortal}
+              aria-pressed={isImmersive}
+              aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+              title={isImmersive ? portalLabels.exit : portalLabels.enter}
+              className="flex min-h-12 items-center gap-1.5 rounded-xl border border-border bg-card/60 px-4 py-3 text-xs font-bold text-foreground transition-transform hover:bg-muted active:scale-95"
+            >
+              {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+              <span>{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
             </button>
             <span className="rounded-lg border border-white/10 bg-white/5 px-4 py-3 font-mono text-xs text-slate-300">
               {t.best}: <strong className="text-white">{best.toLocaleString()}</strong>

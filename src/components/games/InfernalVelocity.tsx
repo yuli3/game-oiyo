@@ -1,9 +1,10 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from "react";
-import { Crosshair, Flame, Gauge, Headphones, Skull, Zap } from "lucide-react";
+import { Crosshair, Flame, Gauge, Headphones, Maximize2, Minimize2, Skull, Zap } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
 import { getBest, recordBest } from "../../lib/games/records";
 import { reviewInfernalRun } from "../../lib/games/infernal-velocity";
 import type { InfernalResult, InfernalSceneCopy } from "./InfernalVelocityScene";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
 
 const Scene = lazy(() => import("./InfernalVelocityScene"));
 const GAME_KEY = "infernal-velocity";
@@ -52,26 +53,150 @@ export default function InfernalVelocity({ locale }: { locale: Locale }) {
   const [best, setBest] = useState(0);
   const [available, setAvailable] = useState(true);
   const [result, setResult] = useState<InfernalResult | null>(null);
+
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({
+    locale: (locale as any) || "ko",
+  });
+
   useEffect(() => { setAvailable(supportsWebgl()); setBest(getBest(GAME_KEY)?.value ?? 0); }, []);
+
+  // Keyboard shortcut: F for portal only when not playing to avoid hijacking KeyF (fire)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (phase !== "playing" && (e.key === "f" || e.key === "F")) {
+        e.preventDefault();
+        togglePortal();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [phase, togglePortal]);
+
   const finish = useCallback((next: InfernalResult) => {
     const saved = recordBest(GAME_KEY, next.score, "score", JSON.stringify(next));
     setBest(saved.value); setResult(next); setPhase("result");
   }, []);
 
-  if (phase === "playing") return <div className="not-prose relative left-1/2 my-6 w-[min(100vw-1rem,1440px)] -translate-x-1/2 overflow-hidden rounded-xl border border-red-950 bg-black shadow-[0_0_80px_rgba(160,20,0,.22)]"><div className="aspect-[16/10] min-h-[560px] max-h-[84vh]"><Suspense fallback={<div className="grid h-full place-items-center bg-black font-mono text-orange-400">{t.loading}</div>}><Scene copy={t.scene} onFinish={finish} /></Suspense></div></div>;
+  if (phase === "playing") {
+    return (
+      <div
+        ref={containerRef}
+        data-game-surface
+        className={`not-prose relative select-none overflow-hidden ${
+          isImmersive
+            ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col items-center justify-center bg-black"
+            : "left-1/2 my-6 w-[min(100vw-1rem,1440px)] -translate-x-1/2 rounded-xl border border-red-950 bg-black shadow-[0_0_80px_rgba(160,20,0,.22)]"
+        }`}
+      >
+        {/* Top-Right Portal Toggle in Playing */}
+        <div className="absolute right-4 top-4 z-30 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={togglePortal}
+            aria-pressed={isImmersive}
+            aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+            title={isImmersive ? portalLabels.exit : portalLabels.enter}
+            className="flex min-h-11 items-center gap-1.5 rounded-xl border border-border bg-card/80 px-3 py-2 text-xs font-bold text-foreground shadow-xs backdrop-blur-md transition-transform hover:bg-muted active:scale-95"
+          >
+            {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+            <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+          </button>
+        </div>
 
-  return <section className="not-prose relative left-1/2 my-8 w-[min(100vw-1rem,1180px)] -translate-x-1/2 overflow-hidden rounded-3xl border border-red-950 bg-[#080102] text-white shadow-2xl">
-    <div className="absolute inset-0 opacity-80 [background:radial-gradient(circle_at_75%_18%,rgba(255,70,0,.2),transparent_28%),repeating-linear-gradient(125deg,transparent_0_36px,rgba(255,50,0,.025)_37px_38px)]" />
-    <div className="relative grid gap-9 p-6 sm:p-10 lg:grid-cols-[1.12fr_.88fr] lg:p-14">
-      <div><p className="font-mono text-[11px] font-black tracking-[.28em] text-orange-500">{t.eyebrow}</p><h2 className="mt-4 text-5xl font-black uppercase leading-[.86] tracking-[-.055em] sm:text-7xl">{t.title}</h2><p className="mt-6 max-w-2xl text-sm leading-7 text-zinc-300 sm:text-base">{t.subtitle}</p>
-        <div className="mt-7 flex flex-wrap gap-3"><button disabled={!available} onClick={() => { setResult(null); setPhase("playing"); }} className="min-h-12 skew-x-[-5deg] bg-orange-500 px-8 py-3 text-sm font-black uppercase tracking-widest text-black shadow-[0_0_30px_rgba(249,115,22,.25)] disabled:opacity-40">{phase === "result" ? t.again : t.start}</button><span className="border border-white/10 bg-white/5 px-4 py-3 font-mono text-xs">{t.best}: <strong>{best.toLocaleString()}</strong></span></div>
-        {!available && <p role="alert" className="mt-4 text-sm font-bold text-orange-300">{t.unavailable}</p>}
-        {result && <><dl role="status" aria-live="polite" className="mt-7 grid grid-cols-4 gap-2 border border-white/10 bg-black/40 p-4 text-center">{[[t.score, result.score], [t.kills, result.kills], [t.wave, result.wave], [t.accuracy, `${result.accuracy}%`]].map(([label, value]) => <div key={label}><dt className="text-[9px] font-bold uppercase text-zinc-500">{label}</dt><dd className="mt-1 font-mono text-lg font-black">{value}</dd></div>)}</dl><p className="mt-2 text-center text-xs font-black text-orange-300">→ {reviewInfernalRun(result) === "accuracy" ? t.accuracy : reviewInfernalRun(result) === "kills" ? t.kills : t.wave}</p></>}
+        <div className={`w-full ${isImmersive ? "h-full" : "aspect-[16/10] min-h-[560px] max-h-[84vh]"}`}>
+          <Suspense fallback={<div className="grid h-full place-items-center bg-black font-mono text-orange-400">{t.loading}</div>}>
+            <Scene copy={t.scene} onFinish={finish} />
+          </Suspense>
+        </div>
       </div>
-      <div className="grid content-center gap-3">{t.features.map((feature, index) => { const Icon = [Gauge, Crosshair, Flame][index]; return <div key={feature.title} className="flex gap-4 border-l-2 border-orange-600 bg-white/[.04] p-4"><Icon className="size-5 shrink-0 text-orange-500" /><div><h3 className="text-sm font-black uppercase">{feature.title}</h3><p className="mt-1 text-xs leading-5 text-zinc-400">{feature.body}</p></div></div>; })}
-        <div className="mt-2 border border-white/10 bg-black/40 p-4"><div className="flex items-center gap-2 text-xs font-black uppercase"><Skull className="size-4 text-red-500" />{t.local}</div><p className="mt-2 text-xs leading-5 text-zinc-500">{t.localBody}</p></div>
+    );
+  }
+
+  return (
+    <section className="not-prose relative left-1/2 my-8 w-[min(100vw-1rem,1180px)] -translate-x-1/2 overflow-hidden rounded-3xl border border-red-950 bg-[#080102] text-white shadow-2xl">
+      <div className="absolute inset-0 opacity-80 [background:radial-gradient(circle_at_75%_18%,rgba(255,70,0,.2),transparent_28%),repeating-linear-gradient(125deg,transparent_0_36px,rgba(255,50,0,.025)_37px_38px)]" />
+      <div className="relative grid gap-9 p-6 sm:p-10 lg:grid-cols-[1.12fr_.88fr] lg:p-14">
+        <div>
+          <p className="font-mono text-[11px] font-black tracking-[.28em] text-orange-500">{t.eyebrow}</p>
+          <h2 className="mt-4 text-5xl font-black uppercase leading-[.86] tracking-[-.055em] sm:text-7xl">{t.title}</h2>
+          <p className="mt-6 max-w-2xl text-sm leading-7 text-zinc-300 sm:text-base">{t.subtitle}</p>
+          <div className="mt-7 flex flex-wrap items-center gap-3">
+            <button
+              disabled={!available}
+              onClick={() => { setResult(null); setPhase("playing"); }}
+              className="min-h-12 skew-x-[-5deg] bg-orange-500 px-8 py-3 text-sm font-black uppercase tracking-widest text-black shadow-[0_0_30px_rgba(249,115,22,.25)] transition-transform hover:-translate-y-0.5 disabled:opacity-40"
+            >
+              {phase === "result" ? t.again : t.start}
+            </button>
+            <button
+              type="button"
+              onClick={togglePortal}
+              aria-pressed={isImmersive}
+              aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+              title={isImmersive ? portalLabels.exit : portalLabels.enter}
+              className="flex min-h-12 items-center gap-1.5 rounded-xl border border-border bg-card/60 px-4 py-3 text-xs font-bold text-foreground transition-transform hover:bg-muted active:scale-95"
+            >
+              {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+              <span>{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+            </button>
+            <span className="border border-white/10 bg-white/5 px-4 py-3 font-mono text-xs">{t.best}: <strong>{best.toLocaleString()}</strong></span>
+          </div>
+          {!available && <p role="alert" className="mt-4 text-sm font-bold text-orange-300">{t.unavailable}</p>}
+          {result && (
+            <>
+              <dl role="status" aria-live="polite" className="mt-7 grid grid-cols-4 gap-2 border border-white/10 bg-black/40 p-4 text-center">
+                {[[t.score, result.score], [t.kills, result.kills], [t.wave, result.wave], [t.accuracy, `${result.accuracy}%`]].map(([label, value]) => (
+                  <div key={label}>
+                    <dt className="text-[9px] font-bold uppercase text-zinc-500">{label}</dt>
+                    <dd className="mt-1 font-mono text-lg font-black">{value}</dd>
+                  </div>
+                ))}
+              </dl>
+              <p className="mt-2 text-center text-xs font-black text-orange-300">
+                → {reviewInfernalRun(result) === "accuracy" ? t.accuracy : reviewInfernalRun(result) === "kills" ? t.kills : t.wave}
+              </p>
+            </>
+          )}
+        </div>
+        <div className="grid content-center gap-3">
+          {t.features.map((feature, index) => {
+            const Icon = [Gauge, Crosshair, Flame][index];
+            return (
+              <div key={feature.title} className="flex gap-4 border-l-2 border-orange-600 bg-white/[.04] p-4">
+                <Icon className="size-5 shrink-0 text-orange-500" />
+                <div>
+                  <h3 className="text-sm font-black uppercase">{feature.title}</h3>
+                  <p className="mt-1 text-xs leading-5 text-zinc-400">{feature.body}</p>
+                </div>
+              </div>
+            );
+          })}
+          <div className="mt-2 border border-white/10 bg-black/40 p-4">
+            <div className="flex items-center gap-2 text-xs font-black uppercase">
+              <Skull className="size-4 text-red-500" />
+              {t.local}
+            </div>
+            <p className="mt-2 text-xs leading-5 text-zinc-500">{t.localBody}</p>
+          </div>
+        </div>
       </div>
-    </div>
-    <div className="relative grid gap-3 border-t border-white/10 bg-black/35 p-5 text-xs text-zinc-400 sm:grid-cols-2 sm:p-7"><div><strong className="mb-1 flex items-center gap-2 text-white"><Headphones className="size-4 text-orange-500" />{t.controls}</strong>{t.desktop}</div><div><strong className="mb-1 flex items-center gap-2 text-white"><Zap className="size-4 text-orange-500" />MOBILE</strong>{t.mobile}</div></div>
-  </section>;
+      <div className="relative grid gap-3 border-t border-white/10 bg-black/35 p-5 text-xs text-zinc-400 sm:grid-cols-2 sm:p-7">
+        <div>
+          <strong className="mb-1 flex items-center gap-2 text-white">
+            <Headphones className="size-4 text-orange-500" />
+            {t.controls}
+          </strong>
+          {t.desktop}
+        </div>
+        <div>
+          <strong className="mb-1 flex items-center gap-2 text-white">
+            <Zap className="size-4 text-orange-500" />
+            MOBILE
+          </strong>
+          {t.mobile}
+        </div>
+      </div>
+    </section>
+  );
 }

@@ -1,11 +1,12 @@
 import { Suspense, lazy, useCallback, useEffect, useRef, useState } from "react";
-import { Compass, Map, Music2, PackageOpen, Waves, Wind } from "lucide-react";
+import { Compass, Map, Maximize2, Minimize2, Music2, PackageOpen, Waves, Wind } from "lucide-react";
 import { useThrottle } from "../../hooks/_oiyo-shared/useThrottle";
 import type { Locale } from "../../lib/i18n";
 import { getBest, recordBest } from "../../lib/games/records";
 import { WindwardScore } from "../../lib/games/windward-score";
 import { loadWindwardSave, type WindwardSaveV1 } from "../../lib/games/windward-save";
 import type { VoyageResult, WindwardSceneCopy } from "./WindwardHorizonsScene";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
 
 const Scene = lazy(() => import("./WindwardHorizonsScene"));
 const GAME_KEY = "windward-horizons";
@@ -286,6 +287,10 @@ export default function WindwardHorizons({ locale }: { locale: Locale }) {
   // in-memory save from earlier in the session.
   const restoreRef = useRef<WindwardSaveV1 | null>(null);
 
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({
+    locale: (locale as any) || "ko",
+  });
+
   useEffect(() => {
     setAvailable(supportsWebgl());
     setBest(getBest(GAME_KEY)?.value ?? 0);
@@ -317,6 +322,22 @@ export default function WindwardHorizons({ locale }: { locale: Locale }) {
     }
   }, []);
 
+  // Keyboard shortcut: M for audio, F for portal only when not playing to protect the F dock command
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (phase !== "playing" && (e.key === "f" || e.key === "F")) {
+        e.preventDefault();
+        togglePortal();
+      } else if (e.key === "m" || e.key === "M") {
+        e.preventDefault();
+        void toggleAudio();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [phase, togglePortal, toggleAudio]);
+
   const finish = useCallback((next: VoyageResult) => {
     void scoreRef.current?.stop();
     setAudioEnabled(false);
@@ -335,8 +356,30 @@ export default function WindwardHorizons({ locale }: { locale: Locale }) {
 
   if (phase === "playing" || phase === "loading") {
     return (
-      <div className="not-prose relative left-1/2 my-5 w-[min(100vw-.5rem,1500px)] -translate-x-1/2 overflow-hidden rounded-2xl border border-[#8ba6aa]/35 bg-[#061014] shadow-[0_28px_90px_rgba(5,24,31,.38)]">
-        <div className="h-[min(84vh,880px)] min-h-[680px] w-full">
+      <div
+        ref={containerRef}
+        data-game-surface
+        className={`not-prose relative select-none overflow-hidden bg-[#061014] ${
+          isImmersive
+            ? "fixed inset-0 z-50 h-dvh w-screen"
+            : "left-1/2 my-5 w-[min(100vw-.5rem,1500px)] -translate-x-1/2 rounded-2xl border border-[#8ba6aa]/35 shadow-[0_28px_90px_rgba(5,24,31,.38)]"
+        }`}
+      >
+        {/* Top-Right Portal Fullscreen Toggle */}
+        <div className="absolute right-3 top-3 z-30 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={togglePortal}
+            aria-pressed={isImmersive}
+            aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+            title={isImmersive ? portalLabels.exit : portalLabels.enter}
+            className="grid size-11 place-items-center rounded-xl border border-border bg-card/80 text-foreground backdrop-blur-md transition-transform hover:bg-muted active:scale-95"
+          >
+            {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+          </button>
+        </div>
+
+        <div className={`w-full ${isImmersive ? "h-full" : "h-[min(84vh,880px)] min-h-[680px]"}`}>
           <Suspense fallback={<Loading label={t.loading} />}>
             {phase === "playing" ? (
               <Scene
@@ -373,6 +416,17 @@ export default function WindwardHorizons({ locale }: { locale: Locale }) {
               className="min-h-12 rounded-xl bg-[#e3bd72] px-8 py-3 text-sm font-black uppercase tracking-[.13em] text-[#102325] shadow-[0_0_32px_rgba(227,189,114,.2)] transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40"
             >
               {phase === "result" ? t.again : hasSave ? t.resume : t.start}
+            </button>
+            <button
+              type="button"
+              onClick={togglePortal}
+              aria-pressed={isImmersive}
+              aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+              title={isImmersive ? portalLabels.exit : portalLabels.enter}
+              className="flex min-h-12 items-center gap-1.5 rounded-xl border border-border bg-card/60 px-4 py-3 text-xs font-bold text-foreground transition-transform hover:bg-muted active:scale-95"
+            >
+              {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+              <span>{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
             </button>
             <span className="rounded-lg border border-white/10 bg-white/5 px-4 py-3 font-mono text-xs text-[#c8d5d2]">
               {t.best}: <strong className="text-white">{best.toLocaleString()}</strong>
