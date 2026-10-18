@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
 import { GameContainer, PlayingCard } from "../ui/game/GamePrimitives";
 import {
   chooseHeartsCpuCard,
@@ -16,6 +17,7 @@ import {
   type HeartsPassDirection,
   type HeartsState,
 } from "../../lib/games/hearts";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
 
 type Locale = "ko" | "en" | "ja" | "zh" | "fr" | "es";
 
@@ -37,7 +39,42 @@ const HeartsGame: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
   const [persistenceReady, setPersistenceReady] = useState(false);
   const [level, setLevel] = useState<HeartsAiLevel>(3);
   const [paused, setPaused] = useState(false);
-  const [muted, setMuted] = useState(false);
+  const [muted, setMuted] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return localStorage.getItem("hearts_sound_muted") === "true";
+    } catch {
+      return false;
+    }
+  });
+  const toggleSound = useCallback(() => {
+    setMuted((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("hearts_sound_muted", String(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  }, []);
+  const { isImmersive, containerRef, togglePortal } = useArcadePortal({ locale: (locale in COPY ? locale : "en") as Locale });
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === "f" || e.key === "F") {
+        e.preventDefault();
+        togglePortal();
+      } else if (e.key === "m" || e.key === "M") {
+        e.preventDefault();
+        toggleSound();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [togglePortal, toggleSound]);
+
   const audioRef = useRef<AudioContext | null>(null);
 
   const tone = useCallback((frequency: number, duration = 0.05) => {
@@ -130,15 +167,16 @@ const HeartsGame: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
   const nextRound = () => { setGame((current) => startNextHeartsRound(current)); setPassSelection([]); };
 
   return (
+    <div ref={containerRef} className="w-full flex flex-col items-center justify-center">
     <GameContainer title={t.title} subtitle={t.subtitle} resetLabel={t.reset} onReset={reset}>
       <p className="mb-5 text-sm font-medium leading-6 text-muted-foreground">{t.desc}</p>
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">{t.difficulty}</span>
+        <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.difficulty}</span>
         <div className="inline-flex gap-1">
           {([1, 2, 3] as HeartsAiLevel[]).map((lv) => (
             <button key={lv} onClick={() => setLevel(lv)}
               aria-pressed={level === lv}
-              className={`min-h-11 px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-colors ${level === lv ? "border-primary text-primary bg-primary/10" : "border-border text-muted-foreground hover:bg-muted"}`}>
+              className={`min-h-11 px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-colors ${level === lv ? "border-primary text-primary bg-primary/10" : "border-border text-muted-foreground hover:bg-muted"}`}>
               {lv === 1 ? t.level1 : lv === 2 ? t.level2 : t.level3}
             </button>
           ))}
@@ -148,8 +186,11 @@ const HeartsGame: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
             {paused ? `▶ ${t.resume}` : `Ⅱ ${t.pause}`}
           </button>
         )}
-        <button type="button" onClick={() => setMuted((value) => !value)} aria-pressed={muted} className="min-h-11 px-3 rounded-lg border border-border text-xs font-bold text-muted-foreground">
-          {muted ? "🔇" : "🔊"} {t.sound}
+        <button type="button" onClick={toggleSound} aria-pressed={muted} className="min-h-11 px-3 rounded-lg border border-border text-xs font-bold text-muted-foreground inline-flex items-center gap-1.5">
+          {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />} {t.sound}
+        </button>
+        <button type="button" onClick={togglePortal} aria-label={isImmersive ? 'Exit Immersion' : 'Immersion'} className="min-h-11 px-3 rounded-lg border border-border text-xs font-bold text-muted-foreground inline-flex items-center gap-1.5">
+          {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
         </button>
       </div>
       <p className="mb-4 text-center text-xs text-muted-foreground">{t.localSave}</p>
@@ -166,7 +207,7 @@ const HeartsGame: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
           <div key={player} className={`rounded-xl border px-3 py-2 text-center ${game.currentPlayer === player && game.phase === "playing" ? "border-primary bg-primary/10" : "border-border bg-muted/40"}`}>
             <span className="block text-xs font-bold text-muted-foreground">{playerName(player, t)}</span>
             <span className="text-lg font-black">{score}</span>
-            <span className="block text-[10px] text-muted-foreground">{t.roundScore}: {game.finalScores?.[player] ?? game.capturedPoints[player]}</span>
+            <span className="block text-xs text-muted-foreground">{t.roundScore}: {game.finalScores?.[player] ?? game.capturedPoints[player]}</span>
           </div>
         ))}
       </div>
@@ -175,9 +216,9 @@ const HeartsGame: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
 
       {game.phase === "playing" && (
         <section className="mb-6 min-h-52 rounded-3xl border border-dashed border-chart-1/30 bg-chart-1/10 p-4" aria-label={showingPrevious ? t.previous : t.table}>
-          <p className="mb-3 text-center text-[11px] font-black uppercase tracking-widest text-muted-foreground">{showingPrevious ? t.previous : t.table}</p>
+          <p className="mb-3 text-center text-xs font-black uppercase tracking-widest text-muted-foreground">{showingPrevious ? t.previous : t.table}</p>
           {shownTrick.length > 0 ? <div className="flex flex-wrap items-center justify-center gap-2">{shownTrick.map(({ player, card }) => (
-            <div key={`${player}-${card.id}`} className="oiyo-card-deal motion-reduce:transition-none"><span className="mb-1 block text-center text-[10px] font-bold text-muted-foreground">{playerName(player, t)}</span><PlayingCard suit={card.suit} value={card.value} className="pointer-events-none scale-75 cursor-default sm:scale-90" /></div>
+            <div key={`${player}-${card.id}`} className="oiyo-card-deal motion-reduce:transition-none"><span className="mb-1 block text-center text-xs font-bold text-muted-foreground">{playerName(player, t)}</span><PlayingCard suit={card.suit} value={card.value} className="pointer-events-none scale-75 cursor-default sm:scale-90" /></div>
           ))}</div> : <p className="py-14 text-center text-sm text-muted-foreground">{t.empty}</p>}
         </section>
       )}
@@ -187,7 +228,7 @@ const HeartsGame: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
 
       {(game.phase === "passing" || game.phase === "playing") && (
         <section aria-label={`${t.cardsLeft}: ${game.hands[0].length}`}>
-          <p className="mb-3 text-center text-[11px] font-black uppercase tracking-widest text-muted-foreground">{t.cardsLeft} ({game.hands[0].length})</p>
+          <p className="mb-3 text-center text-xs font-black uppercase tracking-widest text-muted-foreground">{t.cardsLeft} ({game.hands[0].length})</p>
           <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2">{game.hands[0].map((card) => {
             const legal = legalIds.has(card.id);
             const selected = passSelection.includes(card.id);
@@ -206,6 +247,7 @@ const HeartsGame: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
         </div>
       )}
     </GameContainer>
+    </div>
   );
 };
 

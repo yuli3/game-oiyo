@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
 import type { Locale } from '../../lib/i18n';
 import {
     createJanggi, janggiAnalysis, janggiBestMove, janggiMoveReview, janggiTargets, isChoPiece, playJanggi,
@@ -8,6 +9,7 @@ import { clearJanggiSave, loadJanggiSave, storeJanggiSave } from '../../lib/game
 import type { AiLevel, GameMode } from '../../lib/games/ai/types';
 import { getRecord, recordResult, type GameRecord } from '../../lib/games/records';
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
 
 // ─── Janggi (Korean chess) with real movement rules ──────────────────────────
 // Cho (초, blue, lowercase) opens from the top; Han (한, red, uppercase) from
@@ -66,7 +68,42 @@ const JanggiBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     const [thinking, setThinking] = useState(false);
     const [paused, setPaused] = useState(false);
     const [restored, setRestored] = useState(false);
-    const [muted, setMuted] = useState(false);
+    const [muted, setMuted] = useState(() => {
+        if (typeof window === 'undefined') return false;
+        try {
+            return localStorage.getItem('janggi_sound_muted') === 'true';
+        } catch {
+            return false;
+        }
+    });
+    const toggleSound = () => {
+        setMuted((prev) => {
+            const next = !prev;
+            try {
+                localStorage.setItem('janggi_sound_muted', String(next));
+            } catch {
+                // ignore
+            }
+            return next;
+        });
+    };
+    const { isImmersive, containerRef, togglePortal } = useArcadePortal({ locale: locale as Locale });
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+            if (e.key === 'f' || e.key === 'F') {
+                e.preventDefault();
+                togglePortal();
+            } else if (e.key === 'm' || e.key === 'M') {
+                e.preventDefault();
+                toggleSound();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [togglePortal]);
+
     const [record, setRecord] = useState<GameRecord | null>(null);
     const [lastAiReview,setLastAiReview]=useState<JanggiMoveReview|null>(null);
     const [lastMove, setLastMove] = useState<JanggiMove | null>(null);
@@ -149,50 +186,69 @@ const JanggiBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     const analysis = janggiAnalysis(game, 'cho');
 
     return (
-        <div className="not-prose my-12 p-4 sm:p-8 bg-[#e8dcc4] border-8 border-[#c4a484] rounded-xl shadow-xl max-w-lg mx-auto overflow-hidden">
-            <div className="flex justify-between items-center mb-4">
-                <div>
-                    <h3 className="text-xl font-black text-stone-800">{t.title}</h3>
-                    <p className={`text-xs font-bold uppercase tracking-widest mt-1 ${isChoTurn ? 'text-blue-600' : 'text-red-600'}`} aria-live="polite">
-                        {thinking ? t.thinking : `${isChoTurn ? t.cho : t.han} ${t.turn}`}
-                    </p>
-                </div>
-                <button onClick={reset} className="min-h-11 px-4 py-2 bg-stone-800 text-[#e8dcc4] rounded-lg font-bold text-xs uppercase hover:opacity-90 transition-opacity">
-                    {t.reset}
-                </button>
-            </div>
-
-            {/* Mode + difficulty */}
-            <div className="mb-4 flex flex-wrap items-center gap-2">
-                <div className="inline-flex rounded-xl border border-stone-800/30 overflow-hidden" role="group" aria-label={`${t.modeLocal} / ${t.modeAi}`}>
-                    {(['local', 'ai'] as GameMode[]).map((m) => (
-                        <button key={m} onClick={() => switchMode(m)}
-                            aria-pressed={mode === m}
-                            className={`min-h-11 px-3 py-1.5 text-xs font-bold transition-colors ${mode === m ? 'bg-stone-800 text-[#e8dcc4]' : 'bg-[#f4ebd0] text-stone-600 hover:bg-[#e8dcc4]'}`}>
-                            {m === 'local' ? t.modeLocal : t.modeAi}
+        <div ref={containerRef} className="w-full flex flex-col items-center justify-center">
+            <div className="not-prose my-12 p-4 sm:p-8 bg-[#e8dcc4] border-8 border-[#c4a484] rounded-xl shadow-xl max-w-lg mx-auto overflow-hidden">
+                <div className="flex justify-between items-center mb-4">
+                    <div>
+                        <h3 className="text-xl font-black text-stone-800">{t.title}</h3>
+                        <p className={`text-xs font-bold uppercase tracking-widest mt-1 ${isChoTurn ? 'text-blue-600' : 'text-red-600'}`} aria-live="polite">
+                            {thinking ? t.thinking : `${isChoTurn ? t.cho : t.han} ${t.turn}`}
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={toggleSound}
+                            aria-label={muted ? 'Unmute' : 'Mute'}
+                            className="min-h-11 px-3 py-2 bg-foreground text-background rounded-lg font-bold text-xs uppercase hover:opacity-90 transition-opacity inline-flex items-center gap-1.5"
+                        >
+                            {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
                         </button>
-                    ))}
+                        <button
+                            type="button"
+                            onClick={togglePortal}
+                            aria-label={isImmersive ? 'Exit Immersion' : 'Immersion'}
+                            className="min-h-11 px-3 py-2 bg-foreground text-background rounded-lg font-bold text-xs uppercase hover:opacity-90 transition-opacity inline-flex items-center gap-1.5"
+                        >
+                            {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+                        </button>
+                        <button onClick={reset} className="min-h-11 px-4 py-2 bg-stone-800 text-[#e8dcc4] rounded-lg font-bold text-xs uppercase hover:opacity-90 transition-opacity">
+                            {t.reset}
+                        </button>
+                    </div>
                 </div>
-                {mode === 'ai' && (
-                    <div className="inline-flex gap-1">
-                        {([1, 2, 3] as AiLevel[]).map((lv) => (
-                            <button key={lv} onClick={() => { setLevel(lv); reset(); }}
-                                aria-pressed={level === lv}
-                                className={`min-h-11 px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-colors ${level === lv ? 'border-stone-800 text-stone-800 bg-stone-800/10' : 'border-stone-800/30 text-stone-500 hover:bg-[#f4ebd0]'}`}>
-                                {lv === 1 ? t.level1 : lv === 2 ? t.level2 : t.level3}
+
+                {/* Mode + difficulty */}
+                <div className="mb-4 flex flex-wrap items-center gap-2">
+                    <div className="inline-flex rounded-xl border border-stone-800/30 overflow-hidden" role="group" aria-label={`${t.modeLocal} / ${t.modeAi}`}>
+                        {(['local', 'ai'] as GameMode[]).map((m) => (
+                            <button key={m} onClick={() => switchMode(m)}
+                                aria-pressed={mode === m}
+                                className={`min-h-11 px-3 py-1.5 text-xs font-bold transition-colors ${mode === m ? 'bg-stone-800 text-[#e8dcc4]' : 'bg-[#f4ebd0] text-stone-600 hover:bg-[#e8dcc4]'}`}>
+                                {m === 'local' ? t.modeLocal : t.modeAi}
                             </button>
                         ))}
                     </div>
-                )}
-                {mode === 'ai' && <p className="basis-full text-[11px] font-medium text-stone-600">{aiInfo.difficulty}: {aiInfo.level[level]} · {aiInfo.scope}</p>}
-                {mode === 'ai' && record && (record.w + record.l + record.d > 0) && (
-                    <span className="ml-auto text-[10px] font-bold text-stone-600 uppercase tracking-widest">
-                        {t.record} {record.w}–{record.l}{record.d ? `–${record.d}` : ''}
-                    </span>
-                )}
-                {game.moves > 0 && game.status === 'playing' && <button type="button" onClick={() => { setPaused((value) => !value); setRestored(false); }} className="min-h-11 px-3 rounded-lg border border-stone-800/40 text-xs font-bold text-stone-700">{paused ? `▶ ${x.resume}` : `Ⅱ ${x.pause}`}</button>}
-                <button type="button" onClick={() => setMuted((value) => !value)} aria-pressed={muted} className="min-h-11 px-3 rounded-lg border border-stone-800/40 text-xs font-bold text-stone-700">{muted ? '🔇' : '🔊'} {x.sound}</button>
-            </div>
+                    {mode === 'ai' && (
+                        <div className="inline-flex gap-1">
+                            {([1, 2, 3] as AiLevel[]).map((lv) => (
+                                <button key={lv} onClick={() => { setLevel(lv); reset(); }}
+                                    aria-pressed={level === lv}
+                                    className={`min-h-11 px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-colors ${level === lv ? 'border-stone-800 text-stone-800 bg-stone-800/10' : 'border-stone-800/30 text-stone-500 hover:bg-[#f4ebd0]'}`}>
+                                    {lv === 1 ? t.level1 : lv === 2 ? t.level2 : t.level3}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                    {mode === 'ai' && <p className="basis-full text-xs font-medium text-stone-600">{aiInfo.difficulty}: {aiInfo.level[level]} · {aiInfo.scope}</p>}
+                    {mode === 'ai' && record && (record.w + record.l + record.d > 0) && (
+                        <span className="ml-auto text-xs font-bold text-stone-600 uppercase tracking-widest">
+                            {t.record} {record.w}–{record.l}{record.d ? `–${record.d}` : ''}
+                        </span>
+                    )}
+                    {game.moves > 0 && game.status === 'playing' && <button type="button" onClick={() => { setPaused((value) => !value); setRestored(false); }} className="min-h-11 px-3 rounded-lg border border-stone-800/40 text-xs font-bold text-stone-700">{paused ? `▶ ${x.resume}` : `Ⅱ ${x.pause}`}</button>}
+                    <button type="button" onClick={toggleSound} aria-pressed={muted} className="min-h-11 px-3 rounded-lg border border-stone-800/40 text-xs font-bold text-stone-700 inline-flex items-center gap-1.5">{muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />} {x.sound}</button>
+                </div>
 
             {(paused || restored) && <div className="mb-3 rounded-xl border border-stone-800/20 bg-white/50 p-3 text-center text-xs font-bold text-stone-700" role="status">{restored ? `${x.restored} · ` : ''}{x.paused}</div>}
 
@@ -257,7 +313,7 @@ const JanggiBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                             <h4 className="text-3xl font-black text-foreground mb-2">{winLabel}</h4>
                             <p className="text-muted-foreground mb-6 uppercase tracking-widest font-bold text-xs">{t.over}</p>
                             <p className="text-sm text-muted-foreground mb-4">{game.moves} {x.moves} · {analysis.captures} {x.captures} · {analysis.mobility} {x.mobility}</p>
-                            {mode==='ai'&&winner&&((winner==='cho')===AI_IS_CHO)&&lastAiReview&&<div className="mb-5 max-w-xs rounded-2xl border border-amber-300/60 bg-amber-50 p-3 text-left text-xs text-amber-950"><p className="font-black text-amber-950">{aiInfo.review} · {String.fromCharCode(65+lastAiReview.from[1])}{10-lastAiReview.from[0]}→{String.fromCharCode(65+lastAiReview.to[1])}{10-lastAiReview.to[0]}</p><p className="mt-1">{lastAiReview.captured?`${aiInfo.capture}: ${PIECE_ICONS[lastAiReview.captured]} · ${lastAiReview.capturedValue} ${x.material}`:aiInfo.quiet}</p><p className="mt-1 text-[10px] text-amber-800">{aiInfo.difficulty}: {aiInfo.level[level]} · {aiInfo.scope}</p></div>}
+                            {mode==='ai'&&winner&&((winner==='cho')===AI_IS_CHO)&&lastAiReview&&<div className="mb-5 max-w-xs rounded-2xl border border-amber-300/60 bg-amber-50 p-3 text-left text-xs text-amber-950"><p className="font-black text-amber-950">{aiInfo.review} · {String.fromCharCode(65+lastAiReview.from[1])}{10-lastAiReview.from[0]}→{String.fromCharCode(65+lastAiReview.to[1])}{10-lastAiReview.to[0]}</p><p className="mt-1">{lastAiReview.captured?`${aiInfo.capture}: ${PIECE_ICONS[lastAiReview.captured]} · ${lastAiReview.capturedValue} ${x.material}`:aiInfo.quiet}</p><p className="mt-1 text-xs text-amber-800">{aiInfo.difficulty}: {aiInfo.level[level]} · {aiInfo.scope}</p></div>}
                             <button onClick={reset} className="px-10 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity">
                                 {t.reset}
                             </button>
@@ -267,13 +323,14 @@ const JanggiBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
             </div>
 
             <div className="mt-6 flex flex-col items-center gap-2">
-                <div className="flex justify-center gap-8 text-[10px] font-black text-stone-600 uppercase tracking-widest">
+                <div className="flex justify-center gap-8 text-xs font-black text-stone-600 uppercase tracking-widest">
                     <div className="flex items-center gap-2"><img src="/assets/sprites/janggi/piece-blue.webp" alt="" width="32" height="32" className="size-8 object-contain"/><span className="text-blue-700">{t.cho}</span></div>
                     <div className="flex items-center gap-2"><img src="/assets/sprites/janggi/piece-red.webp" alt="" width="32" height="32" className="size-8 object-contain"/><span className="text-red-700">{t.han}</span></div>
                 </div>
-                <p className="text-[10px] text-stone-500 font-medium">{t.goal}</p>
-                <p className="text-[10px] text-stone-500">{game.moves} {x.moves} · {t.cho} {analysis.material} {x.material} · {analysis.mobility} {x.mobility}</p>
+                <p className="text-xs text-stone-500 font-medium">{t.goal}</p>
+                <p className="text-xs text-stone-500">{game.moves} {x.moves} · {t.cho} {analysis.material} {x.material} · {analysis.mobility} {x.mobility}</p>
             </div>
+        </div>
         </div>
     );
 };

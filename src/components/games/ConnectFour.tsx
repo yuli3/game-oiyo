@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
 import { connectFourBestMove, connectFourMoveReview, type ConnectFourMoveKind } from "../../lib/games/ai/connectfour";
 import type { AiLevel, GameMode } from "../../lib/games/ai/types";
@@ -13,6 +14,7 @@ import { createConnectFourBoard, dropDisc, findDropRow, type ConnectFourBoard } 
 import { opponentBlurb, opponentName, pickOpponent } from '../../lib/games/opponents';
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { CONNECT_FOUR_SPRITES } from "../../lib/games/sprites";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
 
 function connectFourSrc(player: 1 | 2) {
   return player === 1 ? CONNECT_FOUR_SPRITES.red : CONNECT_FOUR_SPRITES.yellow;
@@ -175,7 +177,42 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
   const [activeCol, setActiveCol] = useState(0);
   const [paused, setPaused] = useState(false);
   const [restored, setRestored] = useState(false);
-  const [muted, setMuted] = useState(false);
+  const [muted, setMuted] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return localStorage.getItem("connect_four_sound_muted") === "true";
+    } catch {
+      return false;
+    }
+  });
+  const toggleSound = useCallback(() => {
+    setMuted((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("connect_four_sound_muted", String(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  }, []);
+  const { isImmersive, containerRef, togglePortal } = useArcadePortal({ locale: locale as Locale });
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === "f" || e.key === "F") {
+        e.preventDefault();
+        togglePortal();
+      } else if (e.key === "m" || e.key === "M") {
+        e.preventDefault();
+        toggleSound();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [togglePortal, toggleSound]);
+
   const [lastMove, setLastMove] = useState<ConnectFourLastMove | null>(null);
   const [moveCount, setMoveCount] = useState(0);
   const [lastAiReview,setLastAiReview]=useState<{row:number;col:number;kind:ConnectFourMoveKind}|null>(null);
@@ -370,58 +407,77 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
   const cellGap = 6;
 
   return (
-    <div className="not-prose my-12 p-4 sm:p-6 bg-card text-card-foreground rounded-3xl border border-border shadow-sm max-w-xl mx-auto select-none">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <span className="text-sm font-bold text-muted-foreground uppercase tracking-widest">
-          {t.title}
-        </span>
-        <button
-          type="button"
-          onClick={resetGame}
-          className="min-h-11 text-xs px-3 py-2 rounded-full border border-border hover:bg-muted transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-        >
-          {t.restart}
-        </button>
-      </div>
-
-      {/* Mode + difficulty */}
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <div className="inline-flex rounded-xl border border-border overflow-hidden" role="group" aria-label={`${t.modeLocal} / ${t.modeAi}`}>
-          {(["local", "ai"] as GameMode[]).map((m) => (
-            <button type="button" key={m} onClick={() => switchMode(m)}
-              aria-pressed={mode === m}
-              className={`min-h-11 px-3 py-1.5 text-xs font-bold transition-colors motion-reduce:transition-none ${mode === m ? "bg-blue-600 text-white" : "bg-muted/50 text-muted-foreground hover:bg-muted"}`}>
-              {m === "local" ? t.modeLocal : t.modeAi}
+    <div ref={containerRef} className="w-full flex flex-col items-center justify-center">
+      <div className="not-prose my-12 p-4 sm:p-6 bg-card text-card-foreground rounded-3xl border border-border shadow-sm max-w-xl mx-auto select-none">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-sm font-bold text-muted-foreground uppercase tracking-widest">
+            {t.title}
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={toggleSound}
+              aria-label={muted ? 'Unmute' : 'Mute'}
+              className="min-h-11 px-3 py-2 rounded-full border border-border hover:bg-muted transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary inline-flex items-center gap-1.5 text-xs font-bold"
+            >
+              {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
             </button>
-          ))}
+            <button
+              type="button"
+              onClick={togglePortal}
+              aria-label={isImmersive ? 'Exit Immersion' : 'Immersion'}
+              className="min-h-11 px-3 py-2 rounded-full border border-border hover:bg-muted transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary inline-flex items-center gap-1.5 text-xs font-bold"
+            >
+              {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+            </button>
+            <button
+              type="button"
+              onClick={resetGame}
+              className="min-h-11 text-xs px-3 py-2 rounded-full border border-border hover:bg-muted transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            >
+              {t.restart}
+            </button>
+          </div>
         </div>
-        {mode === "ai" && (
-          <div className="inline-flex gap-1">
-            {([1, 2, 3] as AiLevel[]).map((lv) => (
-              <button type="button" key={lv} onClick={() => { setLevel(lv); resetGame(); }}
-                aria-pressed={level === lv}
-                className={`min-h-11 px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-colors motion-reduce:transition-none ${level === lv ? "border-blue-600 text-blue-600 bg-blue-600/10" : "border-border text-muted-foreground hover:bg-muted"}`}>
-                {lv === 1 ? t.level1 : lv === 2 ? t.level2 : t.level3}
+
+        {/* Mode + difficulty */}
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <div className="inline-flex rounded-xl border border-border overflow-hidden" role="group" aria-label={`${t.modeLocal} / ${t.modeAi}`}>
+            {(["local", "ai"] as GameMode[]).map((m) => (
+              <button type="button" key={m} onClick={() => switchMode(m)}
+                aria-pressed={mode === m}
+                className={`min-h-11 px-3 py-1.5 text-xs font-bold transition-colors motion-reduce:transition-none ${mode === m ? "bg-blue-600 text-white" : "bg-muted/50 text-muted-foreground hover:bg-muted"}`}>
+                {m === "local" ? t.modeLocal : t.modeAi}
               </button>
             ))}
           </div>
-        )}
-        {mode==='ai'&&<p className="basis-full text-[11px] font-medium text-muted-foreground">{aiInfo.difficulty}: {aiInfo.level[level]}</p>}
-        {moveCount > 0 && status === "playing" && (
-          <button type="button" onClick={() => setPaused((value) => { if (value) setRestored(false); return !value; })} className="min-h-11 px-3 rounded-lg border border-border text-xs font-bold text-muted-foreground">
-            {paused ? `▶ ${x.resume}` : `Ⅱ ${x.pause}`}
+          {mode === "ai" && (
+            <div className="inline-flex gap-1">
+              {([1, 2, 3] as AiLevel[]).map((lv) => (
+                <button type="button" key={lv} onClick={() => { setLevel(lv); resetGame(); }}
+                  aria-pressed={level === lv}
+                  className={`min-h-11 px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-colors motion-reduce:transition-none ${level === lv ? "border-blue-600 text-blue-600 bg-blue-600/10" : "border-border text-muted-foreground hover:bg-muted"}`}>
+                  {lv === 1 ? t.level1 : lv === 2 ? t.level2 : t.level3}
+                </button>
+              ))}
+            </div>
+          )}
+          {mode==='ai'&&<p className="basis-full text-xs font-medium text-muted-foreground">{aiInfo.difficulty}: {aiInfo.level[level]}</p>}
+          {moveCount > 0 && status === "playing" && (
+            <button type="button" onClick={() => setPaused((value) => { if (value) setRestored(false); return !value; })} className="min-h-11 px-3 rounded-lg border border-border text-xs font-bold text-muted-foreground">
+              {paused ? `▶ ${x.resume}` : `Ⅱ ${x.pause}`}
+            </button>
+          )}
+          <button type="button" onClick={toggleSound} aria-pressed={muted} className="min-h-11 px-3 rounded-lg border border-border text-xs font-bold text-muted-foreground inline-flex items-center gap-1.5">
+            {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />} {x.sound}
           </button>
-        )}
-        <button type="button" onClick={() => setMuted((value) => !value)} aria-pressed={muted} className="min-h-11 px-3 rounded-lg border border-border text-xs font-bold text-muted-foreground">
-          {muted ? "🔇" : "🔊"} {x.sound}
-        </button>
-        {mode === "ai" && record && record.w + record.l + record.d > 0 && (
-          <span className="ml-auto text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-            {t.record} {record.w}–{record.l}{record.d ? `–${record.d}` : ""}
-          </span>
-        )}
-      </div>
+          {mode === "ai" && record && record.w + record.l + record.d > 0 && (
+            <span className="ml-auto text-xs font-bold text-muted-foreground uppercase tracking-widest">
+              {t.record} {record.w}–{record.l}{record.d ? `–${record.d}` : ""}
+            </span>
+          )}
+        </div>
 
       {/* Who you are actually playing. Seeded by slug+tier so the name is stable
           across re-renders and across visits, not reshuffled mid-match. */}
@@ -596,8 +652,8 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
       {status !== "playing" && (
         <div className="mt-4 flex flex-col items-center gap-2">
           <p className="text-xs text-muted-foreground">{moveCount} {x.moves}</p>
-          {status === "won" && <p className="text-[11px] text-muted-foreground max-w-xs text-center">{x.nextGoal}</p>}
-          {status==='won'&&currentPlayer===AI_PLAYER&&lastAiReview&&<div className="max-w-xs rounded-2xl border border-amber-300/60 bg-amber-50 p-3 text-left text-xs text-stone-800"><p className="font-black text-amber-900">{aiInfo.review} · {t.column} {lastAiReview.col+1}</p><p className="mt-1">{aiInfo.kind[lastAiReview.kind]}</p><p className="mt-1 text-[10px] text-stone-500">{aiInfo.difficulty}: {aiInfo.level[level]}</p></div>}
+          {status === "won" && <p className="text-xs text-muted-foreground max-w-xs text-center">{x.nextGoal}</p>}
+          {status==='won'&&currentPlayer===AI_PLAYER&&lastAiReview&&<div className="max-w-xs rounded-2xl border border-amber-300/60 bg-amber-50 p-3 text-left text-xs text-stone-800"><p className="font-black text-amber-900">{aiInfo.review} · {t.column} {lastAiReview.col+1}</p><p className="mt-1">{aiInfo.kind[lastAiReview.kind]}</p><p className="mt-1 text-xs text-stone-500">{aiInfo.difficulty}: {aiInfo.level[level]}</p></div>}
           <button
             type="button"
             onClick={resetGame}
@@ -624,6 +680,7 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
           }
         }
       `}</style>
+    </div>
     </div>
   );
 };

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
 import { PlayingCard, GameContainer } from "../ui/game/GamePrimitives";
 import { getRecord, recordResult } from "../../lib/games/records";
 import {
@@ -15,6 +16,7 @@ import {
   type HoldemAction,
   type HoldemStage,
 } from "../../lib/games/texas-holdem";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
 
 type UILocale = "ko" | "en" | "ja" | "zh" | "fr" | "es";
 type Stage = "idle" | "preflop" | "flop" | "turn" | "river" | "showdown";
@@ -377,7 +379,42 @@ const TexasHoldem: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
   const [showRanks, setShowRanks] = useState(false);
   const [seed, setSeed] = useState(0);
   const [actions, setActions] = useState<HoldemAction[]>([]);
-  const [sound, setSound] = useState(true);
+  const [sound, setSound] = useState(() => {
+    if (typeof window === "undefined") return true;
+    try {
+      return localStorage.getItem("texas_holdem_sound_muted") !== "true";
+    } catch {
+      return true;
+    }
+  });
+  const toggleSound = useCallback(() => {
+    setSound((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("texas_holdem_sound_muted", String(!next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  }, []);
+  const { isImmersive, containerRef, togglePortal } = useArcadePortal({ locale: locale as UILocale as any });
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === "f" || e.key === "F") {
+        e.preventDefault();
+        togglePortal();
+      } else if (e.key === "m" || e.key === "M") {
+        e.preventDefault();
+        toggleSound();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [togglePortal, toggleSound]);
+
   const [restored, setRestored] = useState(false);
 
   const tone = useCallback(
@@ -512,6 +549,7 @@ const TexasHoldem: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
   const over = stage === "showdown";
 
   return (
+    <div ref={containerRef} className="w-full flex flex-col items-center justify-center">
     <GameContainer
       title={t.title}
       subtitle={t.subtitle}
@@ -520,6 +558,25 @@ const TexasHoldem: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
     >
       {stage === "idle" ? (
         <div className="flex flex-col items-center gap-6 py-10">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              aria-label={t.sound}
+              aria-pressed={sound}
+              onClick={toggleSound}
+              className="min-h-11 px-3 py-2 rounded-lg border border-border hover:bg-muted inline-flex items-center gap-1.5 text-xs font-bold"
+            >
+              {sound ? <Volume2 className="size-4" /> : <VolumeX className="size-4" />}
+            </button>
+            <button
+              type="button"
+              aria-label={isImmersive ? 'Exit Immersion' : 'Immersion'}
+              onClick={togglePortal}
+              className="min-h-11 px-3 py-2 rounded-lg border border-border hover:bg-muted inline-flex items-center gap-1.5 text-xs font-bold"
+            >
+              {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+            </button>
+          </div>
           <img
             src="/games/texas-holdem-social.png"
             alt=""
@@ -543,19 +600,29 @@ const TexasHoldem: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
         <div className="flex flex-col gap-5">
           <div className="flex min-h-11 items-center justify-between gap-3 rounded-xl bg-muted/50 px-3 text-xs font-bold">
             <span aria-live="polite">{restored ? t.restored : ""}</span>
-            <button
-              type="button"
-              aria-label={t.sound}
-              aria-pressed={sound}
-              onClick={() => setSound((value) => !value)}
-              className="min-h-11 px-3"
-            >
-              {sound ? "🔊" : "🔇"}
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                aria-label={t.sound}
+                aria-pressed={sound}
+                onClick={toggleSound}
+                className="min-h-11 px-3 inline-flex items-center gap-1.5"
+              >
+                {sound ? <Volume2 className="size-4" /> : <VolumeX className="size-4" />}
+              </button>
+              <button
+                type="button"
+                aria-label={isImmersive ? 'Exit Immersion' : 'Immersion'}
+                onClick={togglePortal}
+                className="min-h-11 px-3 inline-flex items-center gap-1.5"
+              >
+                {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+              </button>
+            </div>
           </div>
           {/* Opponent */}
           <div className="flex flex-col items-center gap-1.5">
-            <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+            <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
               {t.opponent}
             </span>
             <Hand
@@ -576,7 +643,7 @@ const TexasHoldem: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
 
           {/* Community */}
           <div className="flex flex-col items-center gap-1.5 border-y border-border py-4">
-            <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+            <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
               {t.community}
             </span>
             <div className="flex gap-1.5 sm:gap-2 min-h-[128px] items-center">
@@ -592,7 +659,7 @@ const TexasHoldem: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
 
           {/* Player */}
           <div className="flex flex-col items-center gap-1.5">
-            <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+            <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
               {t.you}
             </span>
             <Hand cards={player} highlight={highlight} />
@@ -675,7 +742,7 @@ const TexasHoldem: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
           )}
 
           {/* Stats */}
-          <p className="text-center text-[11px] font-bold text-muted-foreground">
+          <p className="text-center text-xs font-bold text-muted-foreground">
             {t.stats(rec.w, rec.l, rec.d)}
           </p>
 
@@ -685,7 +752,7 @@ const TexasHoldem: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
               onClick={() => setShowRanks((v) => !v)}
               aria-label={t.ranksLabel(showRanks)}
               aria-pressed={showRanks}
-              className="min-h-11 w-full flex items-center justify-between text-[11px] font-bold uppercase tracking-widest text-muted-foreground"
+              className="min-h-11 w-full flex items-center justify-between text-xs font-bold uppercase tracking-widest text-muted-foreground"
             >
               <span>{t.ranks}</span>
               <span>{showRanks ? "▾" : "▸"}</span>
@@ -709,6 +776,7 @@ const TexasHoldem: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
         </div>
       )}
     </GameContainer>
+    </div>
   );
 };
 

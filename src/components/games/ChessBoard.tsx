@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, type CSSProperties } from 'react';
+import React, { useState, useEffect, useRef, useCallback, type CSSProperties } from 'react';
 import type { Locale } from '../../lib/i18n';
 import {
   chessApplyState, chessBestStateMoveIterative, chessDrawReason, chessInCheck, chessLegalStateMoves,
@@ -15,6 +15,8 @@ import {
 } from '../../lib/games/chess-worker-protocol';
 import { CHESS_SPRITES } from '../../lib/games/sprites';
 import { castleRookDelta, visualSquare } from '../../lib/games/piece-tween';
+import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
 
 function ChessPiece({ piece, className }: { piece: string; className?: string }) {
   const src = CHESS_SPRITES[piece];
@@ -84,6 +86,7 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
   const c2 = C2_COPY[locale] ?? C2_COPY.en;
   const c3 = C3_COPY[locale] ?? C3_COPY.en;
   const reviewCopy = REVIEW_COPY[locale] ?? REVIEW_COPY.en;
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'ko' });
 
   const [position, setPosition] = useState(createInitialChessState);
   const board = position.board;
@@ -101,6 +104,61 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
   const [orientation, setOrientation] = useState<'white' | 'black'>('white');
   const [moveHistory, setMoveHistory] = useState<ChessMoveRecord[]>([]);
   const [lastMove, setLastMove] = useState<ChessMove | null>(null);
+  const [muted, setMuted] = useState<boolean>(() => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        return window.localStorage.getItem('chess_sound_muted') === 'true';
+      }
+    } catch {}
+    return false;
+  });
+  const toggleMute = useCallback(() => {
+    setMuted((m) => {
+      const next = !m;
+      try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          window.localStorage.setItem('chess_sound_muted', String(next));
+        }
+      } catch {}
+      return next;
+    });
+  }, []);
+
+  const audioContext = useRef<AudioContext | null>(null);
+  const playTone = useCallback((frequency: number, duration = 0.08) => {
+    if (muted || typeof window === 'undefined') return;
+    try {
+      const AudioContextClass = window.AudioContext ?? (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      if (!AudioContextClass) return;
+      const context = audioContext.current ?? new AudioContextClass();
+      audioContext.current = context;
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      oscillator.frequency.value = frequency;
+      gain.gain.setValueAtTime(0.04, context.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + duration);
+      oscillator.connect(gain).connect(context.destination);
+      oscillator.start();
+      oscillator.stop(context.currentTime + duration);
+    } catch {}
+  }, [muted]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
+      if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        togglePortal();
+      } else if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        toggleMute();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [togglePortal, toggleMute]);
+
   const aiTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const aiWorker = useRef<Worker | null>(null);
   const aiRequestId = useRef(0);
@@ -124,6 +182,7 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
   useEffect(() => () => {
     if (aiTimer.current) clearTimeout(aiTimer.current);
     aiWorker.current?.terminate();
+    void audioContext.current?.close();
   }, []);
   useEffect(() => {
     if (pendingPromotion) promotionDialogRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
@@ -170,6 +229,7 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     setSelected(null);
     setPendingPromotion(null);
     setRestored(false);
+    playTone(captured ? 560 : chessInCheck(next.board, !moverIsWhite) ? 880 : 380, captured || chessInCheck(next.board, !moverIsWhite) ? 0.12 : 0.06);
     // opponent's position after the move: mate / stalemate / continue
     if (chessLegalStateMoves(next).length === 0) {
       if (chessInCheck(next.board, !moverIsWhite)) finish({ result: moverIsWhite ? 'white' : 'black', reason: 'checkmate' });
@@ -316,202 +376,234 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
   };
 
   return (
-    <div className="not-prose my-12 p-4 sm:p-8 bg-card border border-border rounded-4xl shadow-sm max-w-lg mx-auto">
-      <div className="flex justify-between items-center mb-4">
-        <div>
-          <h3 className="text-xl font-black text-foreground">{t.title}</h3>
-          <p className="text-xs font-bold text-primary uppercase tracking-widest mt-1" aria-live="polite">
-            {turnSummary}
-          </p>
-        </div>
-        <button type="button" onClick={reset} className="px-4 py-2 bg-muted text-muted-foreground rounded-xl text-xs font-bold border border-border">
-          {t.reset}
-        </button>
-      </div>
-
-      {/* Mode + difficulty */}
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <div className="inline-flex rounded-xl border border-border overflow-hidden" role="group" aria-label={`${t.modeLocal} / ${t.modeAi}`}>
-          {(['local', 'ai'] as GameMode[]).map((m) => (
-            <button type="button" key={m} onClick={() => switchMode(m)}
-              aria-pressed={mode === m}
-              className={`px-3 py-1.5 text-xs font-bold transition-colors ${mode === m ? 'bg-primary text-primary-foreground' : 'bg-muted/50 text-muted-foreground hover:bg-muted'}`}>
-              {m === 'local' ? t.modeLocal : t.modeAi}
+    <div
+      ref={containerRef}
+      data-game-surface
+      className={
+        isImmersive
+          ? "fixed inset-0 z-50 w-screen h-dvh bg-background p-3 sm:p-5 overflow-y-auto flex flex-col items-center justify-between m-0 select-none"
+          : "relative"
+      }
+    >
+      <div className="not-prose my-12 p-4 sm:p-8 bg-card border border-border rounded-4xl shadow-sm max-w-lg mx-auto w-full">
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <h3 className="text-xl font-black text-foreground">{t.title}</h3>
+            <p className="text-xs font-bold text-primary uppercase tracking-widest mt-1" aria-live="polite">
+              {turnSummary}
+            </p>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={toggleMute}
+              aria-pressed={!muted}
+              aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+              title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`}
+              className="grid min-h-11 min-w-11 place-items-center rounded-xl border border-border text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
             </button>
-          ))}
+            <button
+              type="button"
+              onClick={togglePortal}
+              aria-pressed={isImmersive}
+              aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+              title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+              className="grid min-h-11 min-w-11 place-items-center rounded-xl border border-border text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+            </button>
+            <button type="button" onClick={reset} className="px-4 py-2 bg-muted text-muted-foreground rounded-xl text-xs font-bold border border-border hover:bg-muted/80">
+              {t.reset}
+            </button>
+          </div>
         </div>
-        {mode === 'ai' && (
-          <div className="inline-flex gap-1">
-            {([1, 2, 3] as AiLevel[]).map((lv) => (
-              <button type="button" key={lv} onClick={() => { setLevel(lv); reset(); }}
-                aria-pressed={level === lv}
-                className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-colors ${level === lv ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
-                {lv === 1 ? t.level1 : lv === 2 ? t.level2 : t.level3}
+
+        {/* Mode + difficulty */}
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <div className="inline-flex rounded-xl border border-border overflow-hidden" role="group" aria-label={`${t.modeLocal} / ${t.modeAi}`}>
+            {(['local', 'ai'] as GameMode[]).map((m) => (
+              <button type="button" key={m} onClick={() => switchMode(m)}
+                aria-pressed={mode === m}
+                className={`px-3 py-1.5 text-xs font-bold transition-colors ${mode === m ? 'bg-primary text-primary-foreground' : 'bg-muted/50 text-muted-foreground hover:bg-muted'}`}>
+                {m === 'local' ? t.modeLocal : t.modeAi}
               </button>
             ))}
           </div>
-        )}
-        {mode === 'ai' && (
-          <p className="basis-full text-[11px] font-medium text-muted-foreground">
-            {reviewCopy.difficulty}: {level === 1 ? t.level1 : level === 2 ? t.level2 : t.level3} · {aiDescription}
-          </p>
-        )}
-        {mode === 'ai' && record && (record.w + record.l + record.d > 0) && (
-          <span className="ml-auto text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-            {t.record} {record.w}–{record.l}{record.d ? `–${record.d}` : ''}
+          {mode === 'ai' && (
+            <div className="inline-flex gap-1">
+              {([1, 2, 3] as AiLevel[]).map((lv) => (
+                <button type="button" key={lv} onClick={() => { setLevel(lv); reset(); }}
+                  aria-pressed={level === lv}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-colors ${level === lv ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
+                  {lv === 1 ? t.level1 : lv === 2 ? t.level2 : t.level3}
+                </button>
+              ))}
+            </div>
+          )}
+          {mode === 'ai' && (
+            <p className="basis-full text-xs font-medium text-muted-foreground">
+              {reviewCopy.difficulty}: {level === 1 ? t.level1 : level === 2 ? t.level2 : t.level3} · {aiDescription}
+            </p>
+          )}
+          {mode === 'ai' && record && (record.w + record.l + record.d > 0) && (
+            <span className="ml-auto text-xs font-bold text-muted-foreground uppercase tracking-widest">
+              {t.record} {record.w}–{record.l}{record.d ? `–${record.d}` : ''}
+            </span>
+          )}
+        </div>
+        <p className="mb-3 text-xs text-muted-foreground" aria-live="polite">
+          {restored ? t.restored : t.localSave}
+        </p>
+
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <span className="text-xs font-bold text-muted-foreground" aria-live="polite">
+            {c2.lastMove}: {moveHistory.at(-1)?.notation ?? c2.noMoves}
           </span>
-        )}
-      </div>
-      <p className="mb-3 text-[11px] text-muted-foreground" aria-live="polite">
-        {restored ? t.restored : t.localSave}
-      </p>
-
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <span className="text-[11px] font-bold text-muted-foreground" aria-live="polite">
-          {c2.lastMove}: {moveHistory.at(-1)?.notation ?? c2.noMoves}
-        </span>
-        <button type="button" onClick={flipBoard}
-          className="min-h-11 rounded-xl border border-border bg-muted px-3 text-xs font-bold" aria-pressed={orientation === 'black'}>
-          ↕ {c2.flip}
-        </button>
-      </div>
-
-      <div className="relative pb-2">
-        <div className="grid grid-cols-8 grid-rows-8 border-4 border-stone-800 shadow-2xl aspect-square w-full" role="grid" aria-label={t.board}>
-          {displaySquares.map(({ displayIndex, r, c }) => {
-            const piece = board[r][c];
-            const isDark = (r + c) % 2 === 1;
-            const isSelected = selected && selected[0] === r && selected[1] === c;
-            const isTarget = legalTargets.some((m) => m.to[0] === r && m.to[1] === c);
-            const isLastMove = lastMove && ((lastMove.from[0] === r && lastMove.from[1] === c) || (lastMove.to[0] === r && lastMove.to[1] === c));
-            return (
-              <button
-                key={`${r}-${c}`}
-                ref={(node) => { squareRefs.current[displayIndex] = node; }}
-                onClick={() => handleSquareClick(r, c)}
-                onFocus={() => setFocusIndex(displayIndex)}
-                onKeyDown={(event) => moveBoardFocus(event, displayIndex)}
-                tabIndex={focusIndex === displayIndex ? 0 : -1}
-                role="gridcell"
-                aria-selected={Boolean(isSelected)}
-                aria-label={`${String.fromCharCode(65 + c)}${8 - r}, ${piece ? `${isWhitePiece(piece) ? t.white : t.black} ${t[{ p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king' }[piece.toLowerCase()] as 'pawn' | 'knight' | 'bishop' | 'rook' | 'queen' | 'king']}` : t.empty}${isSelected ? `, ${t.selectedLabel}` : ''}${isTarget ? `, ${t.legalLabel}` : ''}${isLastMove ? `, ${c2.lastMove}` : ''}`}
-                className={`relative flex min-h-0 min-w-0 items-center justify-center text-[clamp(1.45rem,8vw,2.25rem)] cursor-pointer transition-colors motion-reduce:transition-none focus-visible:z-20 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-[-4px] focus-visible:outline-sky-500 ${
-                  isDark ? 'bg-[#b58863]' : 'bg-[#f0d9b5]'
-                } ${isSelected ? 'ring-4 ring-primary inset-0 z-10' : ''} ${isLastMove ? 'after:absolute after:inset-1 after:border-2 after:border-amber-400 after:pointer-events-none' : ''}`}
-              >
-                {isTarget && (
-                  piece
-                    ? <div className="absolute inset-0 ring-4 ring-inset ring-primary/60 z-10 pointer-events-none" />
-                    : <div className="absolute w-1/4 h-1/4 rounded-full bg-primary/40 z-10 pointer-events-none" />
-                )}
-                {piece ? (
-                  lastMove && lastMove.to[0] === r && lastMove.to[1] === c ? (
-                    <span
-                      key={`slide-${moveHistory.length}`}
-                      className="oiyo-piece-slide absolute inset-0 z-20 flex items-center justify-center"
-                      style={{
-                        '--dx': visualSquare(lastMove.from[0], lastMove.from[1], flipped).col - visualSquare(r, c, flipped).col,
-                        '--dy': visualSquare(lastMove.from[0], lastMove.from[1], flipped).row - visualSquare(r, c, flipped).row,
-                      } as CSSProperties}
-                    >
-                      <ChessPiece piece={piece} />
-                    </span>
-                  ) : rookSlide && rookSlide.toRow === r && rookSlide.toCol === c ? (
-                    <span
-                      key={`rook-${moveHistory.length}`}
-                      className="oiyo-piece-slide absolute inset-0 z-20 flex items-center justify-center"
-                      style={{
-                        '--dx': visualSquare(rookSlide.fromRow, rookSlide.fromCol, flipped).col - visualSquare(r, c, flipped).col,
-                        '--dy': visualSquare(rookSlide.fromRow, rookSlide.fromCol, flipped).row - visualSquare(r, c, flipped).row,
-                      } as CSSProperties}
-                    >
-                      <ChessPiece piece={piece} />
-                    </span>
-                  ) : (
-                    <ChessPiece piece={piece} />
-                  )
-                ) : null}
-              </button>
-            );
-          })}
+          <button type="button" onClick={flipBoard}
+            className="min-h-11 rounded-xl border border-border bg-muted px-3 text-xs font-bold" aria-pressed={orientation === 'black'}>
+            ↕ {c2.flip}
+          </button>
         </div>
 
-        {pendingPromotion && (
-          <div ref={promotionDialogRef} onKeyDown={trapPromotionFocus} className="absolute inset-0 z-20 bg-background/70 backdrop-blur-sm flex items-center justify-center" role="dialog" aria-modal="true" aria-label={t.promote}>
-            <div className="bg-card p-5 rounded-2xl border border-border shadow-xl text-center">
-              <p className="font-bold mb-3">{t.promote}</p>
-              <div className="flex gap-2">
-                {(['q', 'r', 'b', 'n'] as PromotionPiece[]).map((promotion) => {
-                  const move = pendingPromotion.find((candidate) => candidate.promotion === promotion)!;
-                  const key = promotion as 'queen' | 'rook' | 'bishop' | 'knight';
-                  return <button type="button" key={promotion} onClick={() => applyMove(position, move, isWhiteTurn)} aria-label={t[key]} className="flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-border bg-muted focus-visible:outline focus-visible:outline-4 focus-visible:outline-primary"><ChessPiece piece={isWhiteTurn ? promotion.toUpperCase() : promotion} className="h-8 w-8" /></button>;
-                })}
+        <div className="relative pb-2">
+          <div className="grid grid-cols-8 grid-rows-8 border-4 border-stone-800 shadow-2xl aspect-square w-full" role="grid" aria-label={t.board}>
+            {displaySquares.map(({ displayIndex, r, c }) => {
+              const piece = board[r][c];
+              const isDark = (r + c) % 2 === 1;
+              const isSelected = selected && selected[0] === r && selected[1] === c;
+              const isTarget = legalTargets.some((m) => m.to[0] === r && m.to[1] === c);
+              const isLastMove = lastMove && ((lastMove.from[0] === r && lastMove.from[1] === c) || (lastMove.to[0] === r && lastMove.to[1] === c));
+              return (
+                <button
+                  key={`${r}-${c}`}
+                  ref={(node) => { squareRefs.current[displayIndex] = node; }}
+                  onClick={() => handleSquareClick(r, c)}
+                  onFocus={() => setFocusIndex(displayIndex)}
+                  onKeyDown={(event) => moveBoardFocus(event, displayIndex)}
+                  tabIndex={focusIndex === displayIndex ? 0 : -1}
+                  role="gridcell"
+                  aria-selected={Boolean(isSelected)}
+                  aria-label={`${String.fromCharCode(65 + c)}${8 - r}, ${piece ? `${isWhitePiece(piece) ? t.white : t.black} ${t[{ p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king' }[piece.toLowerCase()] as 'pawn' | 'knight' | 'bishop' | 'rook' | 'queen' | 'king']}` : t.empty}${isSelected ? `, ${t.selectedLabel}` : ''}${isTarget ? `, ${t.legalLabel}` : ''}${isLastMove ? `, ${c2.lastMove}` : ''}`}
+                  className={`relative flex min-h-0 min-w-0 items-center justify-center text-[clamp(1.45rem,8vw,2.25rem)] cursor-pointer transition-colors motion-reduce:transition-none focus-visible:z-20 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-[-4px] focus-visible:outline-sky-500 ${
+                    isDark ? 'bg-[#b58863]' : 'bg-[#f0d9b5]'
+                  } ${isSelected ? 'ring-4 ring-primary inset-0 z-10' : ''} ${isLastMove ? 'after:absolute after:inset-1 after:border-2 after:border-amber-400 after:pointer-events-none' : ''}`}
+                >
+                  {isTarget && (
+                    piece
+                      ? <div className="absolute inset-0 ring-4 ring-inset ring-primary/60 z-10 pointer-events-none" />
+                      : <div className="absolute w-1/4 h-1/4 rounded-full bg-primary/40 z-10 pointer-events-none" />
+                  )}
+                  {piece ? (
+                    lastMove && lastMove.to[0] === r && lastMove.to[1] === c ? (
+                      <span
+                        key={`slide-${moveHistory.length}`}
+                        className="oiyo-piece-slide absolute inset-0 z-20 flex items-center justify-center"
+                        style={{
+                          '--dx': visualSquare(lastMove.from[0], lastMove.from[1], flipped).col - visualSquare(r, c, flipped).col,
+                          '--dy': visualSquare(lastMove.from[0], lastMove.from[1], flipped).row - visualSquare(r, c, flipped).row,
+                        } as CSSProperties}
+                      >
+                        <ChessPiece piece={piece} />
+                      </span>
+                    ) : rookSlide && rookSlide.toRow === r && rookSlide.toCol === c ? (
+                      <span
+                        key={`rook-${moveHistory.length}`}
+                        className="oiyo-piece-slide absolute inset-0 z-20 flex items-center justify-center"
+                        style={{
+                          '--dx': visualSquare(rookSlide.fromRow, rookSlide.fromCol, flipped).col - visualSquare(r, c, flipped).col,
+                          '--dy': visualSquare(rookSlide.fromRow, rookSlide.fromCol, flipped).row - visualSquare(r, c, flipped).row,
+                        } as CSSProperties}
+                      >
+                        <ChessPiece piece={piece} />
+                      </span>
+                    ) : (
+                      <ChessPiece piece={piece} />
+                    )
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+
+          {pendingPromotion && (
+            <div ref={promotionDialogRef} onKeyDown={trapPromotionFocus} className="absolute inset-0 z-20 bg-background/70 backdrop-blur-sm flex items-center justify-center" role="dialog" aria-modal="true" aria-label={t.promote}>
+              <div className="bg-card p-5 rounded-2xl border border-border shadow-xl text-center">
+                <p className="font-bold mb-3">{t.promote}</p>
+                <div className="flex gap-2">
+                  {(['q', 'r', 'b', 'n'] as PromotionPiece[]).map((promotion) => {
+                    const move = pendingPromotion.find((candidate) => candidate.promotion === promotion)!;
+                    const key = promotion as 'queen' | 'rook' | 'bishop' | 'knight';
+                    return <button type="button" key={promotion} onClick={() => applyMove(position, move, isWhiteTurn)} aria-label={t[key]} className="flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-border bg-muted focus-visible:outline focus-visible:outline-4 focus-visible:outline-primary"><ChessPiece piece={isWhiteTurn ? promotion.toUpperCase() : promotion} className="h-8 w-8" /></button>;
+                  })}
+                </div>
               </div>
             </div>
-          </div>
-        )}
-
-        {gameEnd && (
-          <div className="absolute inset-0 z-20 bg-background/70 backdrop-blur-sm flex flex-col items-center justify-center animate-in fade-in zoom-in-95 motion-reduce:animate-none" role="dialog" aria-modal="true" aria-labelledby="chess-result-title">
-            <div className="mx-3 max-w-sm bg-card p-5 sm:p-8 rounded-3xl shadow-xl border border-border text-center">
-              <p className="mb-1 text-[10px] font-black uppercase tracking-widest text-muted-foreground">{c3.summary}</p>
-              <h4 id="chess-result-title" className="text-2xl sm:text-3xl font-black text-foreground mb-2">{endLabel}</h4>
-              <p className="text-muted-foreground mb-6 uppercase tracking-widest font-bold text-xs">
-                {gameEnd.reason === 'checkmate' ? t.checkmate : drawLabel}
-              </p>
-              <dl className="mb-5 grid grid-cols-2 gap-2 text-left text-xs">
-                <div className="rounded-xl bg-muted p-2"><dt className="text-muted-foreground">{c3.movesPlayed}</dt><dd className="font-black">{moveHistory.length}</dd></div>
-                <div className="rounded-xl bg-muted p-2"><dt className="text-muted-foreground">{c3.finalMaterial}</dt><dd className="font-black">{material > 0 ? `+${material}` : material}</dd></div>
-                <div className="col-span-2 rounded-xl bg-muted p-2"><dt className="text-muted-foreground">{c3.keyMoment}</dt><dd className="font-black">{keyMoment?.notation ?? c3.noKeyMoment}</dd></div>
-              </dl>
-              {humanLost && reviewMoment && (
-                <div className="mb-5 rounded-2xl border border-amber-300/60 bg-amber-50 p-3 text-left text-xs text-stone-800">
-                  <p className="font-black text-amber-900">{reviewCopy.title} · {reviewMoment.moveNumber}{reviewCopy.move} · {reviewMoment.notation}</p>
-                  <p className="mt-1 leading-5">{reviewTip}</p>
-                  <p className="mt-2 text-[10px] font-bold text-stone-500">{reviewCopy.difficulty}: {level === 1 ? t.level1 : level === 2 ? t.level2 : t.level3} · {aiDescription}</p>
-                </div>
-              )}
-              <button type="button" onClick={reset} autoFocus className="min-h-11 px-10 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg">
-                {c3.playAgain}
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        <section className="rounded-2xl border border-border bg-muted/35 p-3" aria-label={c2.moves}>
-          <h4 className="mb-2 text-xs font-black uppercase tracking-wider">{c2.moves}</h4>
-          {moveHistory.length === 0 ? <p className="text-xs text-muted-foreground">{c2.noMoves}</p> : (
-            <ol className="max-h-28 overflow-y-auto text-xs font-mono" aria-live="polite">
-              {Array.from({ length: Math.ceil(moveHistory.length / 2) }, (_, index) => (
-                <li key={index} className="grid grid-cols-[2rem_1fr_1fr] gap-1 py-0.5">
-                  <span className="text-muted-foreground">{index + 1}.</span>
-                  <span>{moveHistory[index * 2]?.notation}</span>
-                  <span>{moveHistory[index * 2 + 1]?.notation ?? ''}</span>
-                </li>
-              ))}
-            </ol>
           )}
-        </section>
-        <section className="rounded-2xl border border-border bg-muted/35 p-3" aria-label={c2.captured}>
-          <div className="mb-2 flex items-center justify-between">
-            <h4 className="text-xs font-black uppercase tracking-wider">{c2.captured}</h4>
-            <span className="text-xs font-black">{c2.material}: {material > 0 ? `+${material}` : material}</span>
-          </div>
-          <div className="min-h-7 text-xl" aria-live="polite">
-            {capturedPieces.length ? capturedPieces.map((piece, index) => <ChessPiece key={`${piece}-${index}`} piece={piece} className="inline-block h-6 w-6" />) : <span className="text-xs text-muted-foreground">—</span>}
-          </div>
-        </section>
-      </div>
 
-      <div className="mt-8 grid grid-cols-3 gap-2">
-        {([['p', t.pawn], ['n', t.knight], ['b', t.bishop], ['r', t.rook], ['q', t.queen], ['k', t.king]] as const).map(([key, label]) => (
-          <div key={key} className="flex items-center gap-2 p-2 bg-muted rounded-xl">
-            <ChessPiece piece={key.toUpperCase()} className="h-7 w-7" />
-            <span className="text-[10px] font-black text-muted-foreground uppercase">{label}</span>
-          </div>
-        ))}
+          {gameEnd && (
+            <div className="absolute inset-0 z-20 bg-background/70 backdrop-blur-sm flex flex-col items-center justify-center animate-in fade-in zoom-in-95 motion-reduce:animate-none" role="dialog" aria-modal="true" aria-labelledby="chess-result-title">
+              <div className="mx-3 max-w-sm bg-card p-5 sm:p-8 rounded-3xl shadow-xl border border-border text-center">
+                <p className="mb-1 text-xs font-black uppercase tracking-widest text-muted-foreground">{c3.summary}</p>
+                <h4 id="chess-result-title" className="text-2xl sm:text-3xl font-black text-foreground mb-2">{endLabel}</h4>
+                <p className="text-muted-foreground mb-6 uppercase tracking-widest font-bold text-xs">
+                  {gameEnd.reason === 'checkmate' ? t.checkmate : drawLabel}
+                </p>
+                <dl className="mb-5 grid grid-cols-2 gap-2 text-left text-xs">
+                  <div className="rounded-xl bg-muted p-2"><dt className="text-muted-foreground">{c3.movesPlayed}</dt><dd className="font-black">{moveHistory.length}</dd></div>
+                  <div className="rounded-xl bg-muted p-2"><dt className="text-muted-foreground">{c3.finalMaterial}</dt><dd className="font-black">{material > 0 ? `+${material}` : material}</dd></div>
+                  <div className="col-span-2 rounded-xl bg-muted p-2"><dt className="text-muted-foreground">{c3.keyMoment}</dt><dd className="font-black">{keyMoment?.notation ?? c3.noKeyMoment}</dd></div>
+                </dl>
+                {humanLost && reviewMoment && (
+                  <div className="mb-5 rounded-2xl border border-amber-300/60 bg-amber-50 p-3 text-left text-xs text-stone-800">
+                    <p className="font-black text-amber-900">{reviewCopy.title} · {reviewMoment.moveNumber}{reviewCopy.move} · {reviewMoment.notation}</p>
+                    <p className="mt-1 leading-5">{reviewTip}</p>
+                    <p className="mt-2 text-xs font-bold text-stone-500">{reviewCopy.difficulty}: {level === 1 ? t.level1 : level === 2 ? t.level2 : t.level3} · {aiDescription}</p>
+                  </div>
+                )}
+                <button type="button" onClick={reset} autoFocus className="min-h-11 px-10 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg">
+                  {c3.playAgain}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <section className="rounded-2xl border border-border bg-muted/35 p-3" aria-label={c2.moves}>
+            <h4 className="mb-2 text-xs font-black uppercase tracking-wider">{c2.moves}</h4>
+            {moveHistory.length === 0 ? <p className="text-xs text-muted-foreground">{c2.noMoves}</p> : (
+              <ol className="max-h-28 overflow-y-auto text-xs font-mono" aria-live="polite">
+                {Array.from({ length: Math.ceil(moveHistory.length / 2) }, (_, index) => (
+                  <li key={index} className="grid grid-cols-[2rem_1fr_1fr] gap-1 py-0.5">
+                    <span className="text-muted-foreground">{index + 1}.</span>
+                    <span>{moveHistory[index * 2]?.notation}</span>
+                    <span>{moveHistory[index * 2 + 1]?.notation ?? ''}</span>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </section>
+          <section className="rounded-2xl border border-border bg-muted/35 p-3" aria-label={c2.captured}>
+            <div className="mb-2 flex items-center justify-between">
+              <h4 className="text-xs font-black uppercase tracking-wider">{c2.captured}</h4>
+              <span className="text-xs font-black">{c2.material}: {material > 0 ? `+${material}` : material}</span>
+            </div>
+            <div className="min-h-7 text-xl" aria-live="polite">
+              {capturedPieces.length ? capturedPieces.map((piece, index) => <ChessPiece key={`${piece}-${index}`} piece={piece} className="inline-block h-6 w-6" />) : <span className="text-xs text-muted-foreground">—</span>}
+            </div>
+          </section>
+        </div>
+
+        <div className="mt-8 grid grid-cols-3 gap-2">
+          {([['p', t.pawn], ['n', t.knight], ['b', t.bishop], ['r', t.rook], ['q', t.queen], ['k', t.king]] as const).map(([key, label]) => (
+            <div key={key} className="flex items-center gap-2 p-2 bg-muted rounded-xl">
+              <ChessPiece piece={key.toUpperCase()} className="h-7 w-7" />
+              <span className="text-xs font-black text-muted-foreground uppercase">{label}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

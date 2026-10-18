@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
 import { GameContainer } from "../ui/game/GamePrimitives";
 import type { Locale } from "../../lib/i18n";
 import {
@@ -21,6 +22,7 @@ import { clearMahjongSave, loadMahjongSave, storeMahjongSave } from "../../lib/g
 import { getRecord, recordResult, type GameRecord } from "../../lib/games/records";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { MAHJONG_SPRITES, mahjongTileSrc } from "../../lib/games/sprites";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
 
 const AI_DELAY = 700;
 
@@ -107,7 +109,42 @@ const Mahjong: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
   const [game, setGame] = useState<MahjongState | null>(null);
   const [paused, setPaused] = useState(false);
   const [selectedTile, setSelectedTile] = useState(0);
-  const [muted, setMuted] = useState(false);
+  const [muted, setMuted] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return localStorage.getItem("mahjong_sound_muted") === "true";
+    } catch {
+      return false;
+    }
+  });
+  const toggleSound = useCallback(() => {
+    setMuted((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("mahjong_sound_muted", String(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  }, []);
+  const { isImmersive, containerRef, togglePortal } = useArcadePortal({ locale: locale as Locale });
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === "f" || e.key === "F") {
+        e.preventDefault();
+        togglePortal();
+      } else if (e.key === "m" || e.key === "M") {
+        e.preventDefault();
+        toggleSound();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [togglePortal, toggleSound]);
+
   const tileRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const audioContext = useRef<AudioContext | null>(null);
   const mutedRef = useRef(false);
@@ -190,21 +227,41 @@ const Mahjong: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
 
   if (!game) {
     return (
-      <GameContainer title={t.title}>
-        <div className="flex flex-col items-center gap-4 py-8">
-          <p className="text-xs text-muted-foreground max-w-md text-center">{t.rules}</p>
-          <div className="flex gap-2">
-            {([1, 2, 3] as AiLevel[]).map((lv) => (
-              <button type="button" key={lv} onClick={() => setLevel(lv)} aria-pressed={level === lv}
-                className={`px-3 py-1.5 rounded-md text-sm font-bold border ${level === lv ? "bg-primary text-primary-foreground border-primary" : "border-gray-300 text-gray-600"}`}>
-                {lv === 1 ? t.level1 : lv === 2 ? t.level2 : t.level3}
+      <div ref={containerRef} className="w-full flex flex-col items-center justify-center">
+        <GameContainer title={t.title}>
+          <div className="flex flex-col items-center gap-4 py-8">
+            <div className="flex items-center gap-2 mb-2">
+              <button
+                type="button"
+                onClick={toggleSound}
+                aria-label={muted ? x.soundOn : x.soundOff}
+                className="min-h-11 px-3 py-2 rounded-lg border border-border hover:bg-muted inline-flex items-center gap-1.5 text-xs font-bold"
+              >
+                {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
               </button>
-            ))}
+              <button
+                type="button"
+                onClick={togglePortal}
+                aria-label={isImmersive ? 'Exit Immersion' : 'Immersion'}
+                className="min-h-11 px-3 py-2 rounded-lg border border-border hover:bg-muted inline-flex items-center gap-1.5 text-xs font-bold"
+              >
+                {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground max-w-md text-center">{t.rules}</p>
+            <div className="flex gap-2">
+              {([1, 2, 3] as AiLevel[]).map((lv) => (
+                <button type="button" key={lv} onClick={() => setLevel(lv)} aria-pressed={level === lv}
+                  className={`px-3 py-1.5 rounded-md text-sm font-bold border ${level === lv ? "bg-primary text-primary-foreground border-primary" : "border-gray-300 text-gray-600"}`}>
+                  {lv === 1 ? t.level1 : lv === 2 ? t.level2 : t.level3}
+                </button>
+              ))}
+            </div>
+            <button type="button" onClick={newGame} className="px-6 py-2.5 rounded-lg bg-primary text-primary-foreground font-bold">{t.start}</button>
+            <p className="text-xs text-gray-400">{t.record}: {record.w}W {record.l}L {record.d}D</p>
           </div>
-          <button type="button" onClick={newGame} className="px-6 py-2.5 rounded-lg bg-primary text-primary-foreground font-bold">{t.start}</button>
-          <p className="text-xs text-gray-400">{t.record}: {record.w}W {record.l}L {record.d}D</p>
-        </div>
-      </GameContainer>
+        </GameContainer>
+      </div>
     );
   }
 
@@ -233,17 +290,23 @@ const Mahjong: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
   };
 
   return (
-    <GameContainer title={t.title} subtitle={`${t.wall}: ${drawsLeft} ${t.draws}`} onReset={newGame}>
-      <div className="relative flex flex-col gap-3">
-        <div className="flex justify-end gap-2">
-          <button type="button" onClick={() => { if (!paused) storeMahjongSave(s, level); setPaused((value) => !value); }} className="min-h-11 rounded-lg border border-border px-4 text-xs font-bold hover:bg-muted">{paused ? t.resume : t.pause}</button>
-          <button type="button" onClick={() => setMuted((value) => !value)} aria-label={muted ? x.soundOn : x.soundOff} aria-pressed={!muted} className="grid min-h-11 min-w-11 place-items-center rounded-lg border border-border">{muted ? "🔇" : "🔊"}</button>
-        </div>
+    <div ref={containerRef} className="w-full flex flex-col items-center justify-center">
+      <GameContainer title={t.title} subtitle={`${t.wall}: ${drawsLeft} ${t.draws}`} onReset={newGame}>
+        <div className="relative flex flex-col gap-3">
+          <div className="flex justify-end gap-2">
+            <button type="button" onClick={() => { if (!paused) storeMahjongSave(s, level); setPaused((value) => !value); }} className="min-h-11 rounded-lg border border-border px-4 text-xs font-bold hover:bg-muted">{paused ? t.resume : t.pause}</button>
+            <button type="button" onClick={toggleSound} aria-label={muted ? x.soundOn : x.soundOff} aria-pressed={!muted} className="grid min-h-11 min-w-11 place-items-center rounded-lg border border-border text-muted-foreground hover:bg-muted">
+              {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+            </button>
+            <button type="button" onClick={togglePortal} aria-label={isImmersive ? 'Exit Immersion' : 'Immersion'} className="grid min-h-11 min-w-11 place-items-center rounded-lg border border-border text-muted-foreground hover:bg-muted">
+              {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+            </button>
+          </div>
         {/* AI seats */}
         <div className="grid grid-cols-3 gap-2">
           {[1, 2, 3].map((pl) => (
             <div key={pl} className={`rounded-lg border p-2 ${s.turn === pl && !over ? "border-primary bg-primary/5" : "border-border"}`}>
-              <div className="text-[10px] font-bold text-muted-foreground mb-1">{t.ai} {pl}</div>
+              <div className="text-xs font-bold text-muted-foreground mb-1">{t.ai} {pl}</div>
               <div className="flex flex-wrap gap-[2px] mb-1">
                 {s.hands[pl].map((_, i) => <TileBack key={i} small />)}
               </div>
@@ -288,7 +351,7 @@ const Mahjong: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
 
         {/* Your hand */}
         <div>
-          <p className="text-[10px] font-black text-muted-foreground uppercase text-center tracking-widest mb-1">{t.yourHand}</p>
+          <p className="text-xs font-black text-muted-foreground uppercase text-center tracking-widest mb-1">{t.yourHand}</p>
           {yourTurn && recommendedShanten !== null && <p className="mb-2 text-center text-xs text-amber-700">{x.recommendation}: {tileLabel(s.hands[0][recommendedIndex]).text} · {x.shanten} {recommendedShanten}</p>}
           <div className="mx-auto grid w-full max-w-sm grid-cols-7 gap-1" role="group" aria-label={t.yourHand}>
             {s.hands[0].map((k, i) => (
@@ -308,13 +371,14 @@ const Mahjong: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
 
         {over && <div className="grid grid-cols-3 gap-2 text-center text-xs"><div className="rounded-xl bg-muted p-3"><span className="block text-muted-foreground">{x.turns}</span><b>{s.turns}</b></div><div className="rounded-xl bg-muted p-3"><span className="block text-muted-foreground">{x.remaining}</span><b>{drawsLeft}</b></div><div className="rounded-xl bg-muted p-3"><span className="block text-muted-foreground">{x.next}</span><b>{s.winner === 0 ? x.shanten : x.recommendation}</b></div></div>}
         {over && lastCpu && s.winner !== 0 && s.winner !== -1 && <p className="text-center text-xs text-muted-foreground">{x.last}: {tileLabel(lastCpu.tile).text} · {x.reason[lastCpu.reason]} · {x.shanten} {lastCpu.shantenAfter}</p>}
-        <p className="text-center text-[11px] text-muted-foreground">{x.policy}: {level === 1 ? t.level1 : level === 2 ? t.level2 : t.level3}</p>
+        <p className="text-center text-xs text-muted-foreground">{x.policy}: {level === 1 ? t.level1 : level === 2 ? t.level2 : t.level3}</p>
 
         <p className="text-center text-xs text-gray-400">{t.record}: {record.w}W {record.l}L {record.d}D</p>
         {paused && <div className="absolute inset-0 z-10 grid place-items-center rounded-2xl bg-background/80 backdrop-blur-sm"><div className="text-center"><p className="mb-3 font-black">{t.paused}</p><button type="button" onClick={() => setPaused(false)} className="min-h-11 rounded-full bg-primary px-8 font-bold text-primary-foreground">{t.resume}</button></div></div>}
         <p className="sr-only" role="status" aria-live="polite">{paused ? t.paused : over ? (s.winner === 0 ? t.youWin : s.winner === -1 ? t.exhaust : `${t.ai} ${s.winner}${t.aiWin}`) : yourTurn ? `${x.liveTurn}. ${x.remaining} ${drawsLeft}` : t.thinking}</p>
       </div>
     </GameContainer>
+    </div>
   );
 };
 
