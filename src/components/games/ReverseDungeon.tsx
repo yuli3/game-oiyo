@@ -5,6 +5,7 @@
  * 끌어서 카메라를 돌리면 퍼즐이 아니라 시점이 이기므로 보기는 버튼만 쓴다.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
 import {
   STEP_CAP,
@@ -19,6 +20,7 @@ import {
   type Turn,
 } from "../../lib/games/reverse-dungeon";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
 import ReverseDungeonScene, { type DungeonSpin } from "./ReverseDungeonScene";
 
 const AUTO_MS = 1200;
@@ -360,6 +362,8 @@ const LAYERS: readonly { axis: Axis; layer: 0 | 1; key: keyof Copy }[] = [
   { axis: "y", layer: 1, key: "north" },
 ];
 
+const SOUND_KEY = "reverse_dungeon_sound_muted";
+
 export default function ReverseDungeon({ locale = "en" }: { locale?: Locale }) {
   const copy = COPY[locale] ?? COPY.en;
   const reduce = usePrefersReducedMotion();
@@ -373,9 +377,19 @@ export default function ReverseDungeon({ locale = "en" }: { locale?: Locale }) {
   const [busy, setBusy] = useState(false);
   const [paused, setPaused] = useState(false);
   const [auto, setAuto] = useState(false);
-  const [muted, setMuted] = useState(false);
+  const [muted, setMuted] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return localStorage.getItem(SOUND_KEY) === "true";
+    } catch {
+      return false;
+    }
+  });
   const [hidden, setHidden] = useState(false);
   const [view, setView] = useState(0);
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({
+    locale: (locale as any) || "ko",
+  });
   const audio = useRef<DungeonAudio | null>(null);
   const spinSerial = useRef(0);
   const stateRef = useRef(state);
@@ -503,6 +517,17 @@ export default function ReverseDungeon({ locale = "en" }: { locale?: Locale }) {
     setBusy(false);
   }, [arm]);
 
+  const toggleMute = useCallback(() => {
+    arm();
+    setMuted((value) => {
+      const next = !value;
+      try {
+        localStorage.setItem(SOUND_KEY, String(next));
+      } catch {}
+      return next;
+    });
+  }, [arm]);
+
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       const target = event.target;
@@ -510,6 +535,16 @@ export default function ReverseDungeon({ locale = "en" }: { locale?: Locale }) {
       if (event.code === "Escape") {
         event.preventDefault();
         setPaused((value) => !value);
+        return;
+      }
+      if (event.code === "KeyF") {
+        event.preventDefault();
+        togglePortal();
+        return;
+      }
+      if (event.code === "KeyM") {
+        event.preventDefault();
+        toggleMute();
         return;
       }
       if (event.code === "KeyV") {
@@ -530,7 +565,7 @@ export default function ReverseDungeon({ locale = "en" }: { locale?: Locale }) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [step, turn]);
+  }, [step, toggleMute, togglePortal, turn]);
 
   useEffect(() => {
     if (!auto || paused || busy || hidden || state.status !== "play") return;
@@ -562,11 +597,40 @@ export default function ReverseDungeon({ locale = "en" }: { locale?: Locale }) {
   const layerLabel = layerName ? copy[layerName.key] : copy.lower;
 
   return (
-    <div className="space-y-4" onPointerDown={arm}>
-      <header className="space-y-2">
-        <h2 className="text-2xl font-semibold text-foreground">{copy.title}</h2>
-        <p className="text-sm leading-6 text-muted-foreground">{copy.lead}</p>
-        <p className="text-xs text-muted-foreground">{copy.keys}</p>
+    <div
+      ref={containerRef}
+      data-game-surface
+      className={`space-y-4 select-none ${
+        isImmersive
+          ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col items-center justify-start overflow-y-auto bg-background p-4"
+          : "w-full"
+      }`}
+      onPointerDown={arm}
+    >
+      <header className="flex items-start justify-between gap-4">
+        <div className="space-y-2">
+          <h2 className="text-2xl font-semibold text-foreground">{copy.title}</h2>
+          <p className="text-sm leading-6 text-muted-foreground">{copy.lead}</p>
+          <p className="text-xs text-muted-foreground">{copy.keys}</p>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <button
+            type="button"
+            onClick={toggleMute}
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card/85 text-foreground shadow-sm backdrop-blur transition hover:bg-muted"
+            aria-label={muted ? copy.sound : copy.mute}
+          >
+            {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+          </button>
+          <button
+            type="button"
+            onClick={togglePortal}
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card/85 text-foreground shadow-sm backdrop-blur transition hover:bg-muted"
+            aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+          >
+            {isImmersive ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+          </button>
+        </div>
       </header>
       <div className="grid grid-cols-3 gap-2 text-center text-sm">
         <div className="rounded-xl bg-muted p-2">
@@ -642,7 +706,7 @@ export default function ReverseDungeon({ locale = "en" }: { locale?: Locale }) {
         <button type="button" className={controlClass("quiet")} onClick={() => setView((value) => (value + 1) % 4)}>
           {copy.view}
         </button>
-        <button type="button" className={muted ? controlClass("primary") : controlClass("quiet")} aria-pressed={muted} onClick={() => { arm(); setMuted((value) => !value); }}>
+        <button type="button" className={muted ? controlClass("primary") : controlClass("quiet")} aria-pressed={muted} onClick={toggleMute}>
           {muted ? copy.sound : copy.mute}
         </button>
         <button type="button" className={controlClass("danger")} disabled={state.status !== "play"} onClick={giveUp}>

@@ -5,6 +5,7 @@
  * 화면 왼쪽이 서쪽이고 화면 위가 북쪽이다. 이 노선의 기록은 화면에만 남긴다.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
 import {
   ACTS,
@@ -19,6 +20,7 @@ import {
   type LineState,
 } from "../../lib/games/subway-conductor";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
 import SubwayConductorScene, { type LineGlide } from "./SubwayConductorScene";
 
 interface Copy {
@@ -446,6 +448,9 @@ export default function SubwayConductor({ locale = "en" }: { locale?: Locale }) 
   const [hidden, setHidden] = useState(false);
   const [muted, setMuted] = useState(false);
   const [view, setView] = useState(0);
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({
+    locale: (locale as any) || "ko",
+  });
   const stateRef = useRef(state);
   const pausedRef = useRef(paused);
   const mutedRef = useRef(muted);
@@ -560,6 +565,11 @@ export default function SubwayConductor({ locale = "en" }: { locale?: Locale }) 
     begin(resign(current));
   }, [begin]);
 
+  const toggleMute = useCallback(() => {
+    arm();
+    setMuted((value) => !value);
+  }, [arm]);
+
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       const target = event.target;
@@ -567,6 +577,16 @@ export default function SubwayConductor({ locale = "en" }: { locale?: Locale }) 
       if (event.code === "Escape") {
         event.preventDefault();
         setPaused((value) => !value);
+        return;
+      }
+      if (event.code === "KeyF") {
+        event.preventDefault();
+        togglePortal();
+        return;
+      }
+      if (event.code === "KeyM") {
+        event.preventDefault();
+        toggleMute();
         return;
       }
       if (event.code === "KeyV") {
@@ -581,7 +601,7 @@ export default function SubwayConductor({ locale = "en" }: { locale?: Locale }) 
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [move]);
+  }, [move, toggleMute, togglePortal]);
 
   const locked = paused || busy || state.status !== "play";
   const named = ACTS.filter((act) => {
@@ -601,11 +621,40 @@ export default function SubwayConductor({ locale = "en" }: { locale?: Locale }) 
           : `${copy.playing} ${named.join(" · ")}`;
 
   return (
-    <div className="space-y-4" onPointerDown={arm}>
-      <header className="space-y-2">
-        <h2 className="text-2xl font-semibold text-foreground">{copy.title}</h2>
-        <p className="text-sm leading-6 text-muted-foreground">{copy.lead}</p>
-        <p className="text-xs leading-5 text-muted-foreground">{copy.keys}</p>
+    <div
+      ref={containerRef}
+      data-game-surface
+      className={`space-y-4 select-none ${
+        isImmersive
+          ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col items-center justify-start overflow-y-auto bg-background p-4"
+          : "w-full"
+      }`}
+      onPointerDown={arm}
+    >
+      <header className="flex items-start justify-between gap-4">
+        <div className="space-y-2">
+          <h2 className="text-2xl font-semibold text-foreground">{copy.title}</h2>
+          <p className="text-sm leading-6 text-muted-foreground">{copy.lead}</p>
+          <p className="text-xs leading-5 text-muted-foreground">{copy.keys}</p>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <button
+            type="button"
+            onClick={toggleMute}
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card/85 text-foreground shadow-sm backdrop-blur transition hover:bg-muted"
+            aria-label={muted ? copy.sound : copy.mute}
+          >
+            {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+          </button>
+          <button
+            type="button"
+            onClick={togglePortal}
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card/85 text-foreground shadow-sm backdrop-blur transition hover:bg-muted"
+            aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+          >
+            {isImmersive ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+          </button>
+        </div>
       </header>
       <div className="grid grid-cols-2 gap-2 text-center text-sm">
         <div className="rounded-xl bg-muted p-2">
@@ -698,7 +747,7 @@ export default function SubwayConductor({ locale = "en" }: { locale?: Locale }) 
         <button type="button" className={controlClass("quiet")} onClick={() => setView((value) => (value + 1) % 4)}>
           {copy.view}
         </button>
-        <button type="button" className={muted ? controlClass("primary") : controlClass("quiet")} aria-pressed={muted} onClick={() => { arm(); setMuted((value) => !value); }}>
+        <button type="button" className={muted ? controlClass("primary") : controlClass("quiet")} aria-pressed={muted} onClick={toggleMute}>
           {muted ? copy.sound : copy.mute}
         </button>
         <button type="button" className={controlClass("danger")} disabled={state.status !== "play"} onClick={giveUp}>

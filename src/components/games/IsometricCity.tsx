@@ -1,8 +1,9 @@
-import { Suspense, lazy, useCallback, useState } from "react";
-import { Building2, CloudSun, Route, Sparkles, Users } from "lucide-react";
+import { Suspense, lazy, useCallback, useEffect, useState } from "react";
+import { Building2, CloudSun, Maximize2, Minimize2, Route, Sparkles, Users } from "lucide-react";
 import { useThrottle } from "../../hooks/_oiyo-shared/useThrottle";
 import { hasWebGL } from "../../lib/games/webgl";
 import type { Locale } from "../../lib/i18n";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
 import type { IsometricCitySceneCopy } from "./IsometricCityScene";
 
 const Scene = lazy(() => import("./IsometricCityScene"));
@@ -198,6 +199,21 @@ export default function IsometricCity({ locale }: { locale: Locale }) {
   const copy = COPY[locale] ?? COPY.en;
   const [phase, setPhase] = useState<"briefing" | "loading" | "playing">("briefing");
   const [unsupported, setUnsupported] = useState(false);
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({
+    locale: (locale as any) || "ko",
+  });
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === "f" || e.key === "F") {
+        e.preventDefault();
+        togglePortal();
+      }
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [togglePortal]);
 
   const begin = useCallback(() => {
     if (!hasWebGL()) {
@@ -210,46 +226,63 @@ export default function IsometricCity({ locale }: { locale: Locale }) {
   }, []);
   const [beginCity, isStarting] = useThrottle(begin, 650);
 
-  if (phase === "playing") {
-    return (
-      <Suspense fallback={<LoadingState label={copy.loading} />}>
-        <Scene copy={copy.scene} />
-      </Suspense>
-    );
-  }
-
   return (
-    <section className="overflow-hidden rounded-[2rem] border border-[#dbe5d3] bg-[#f7f7f1] shadow-[0_24px_80px_rgba(62,79,49,.12)]">
-      <div className="grid gap-8 p-5 sm:p-8 lg:grid-cols-[1.02fr_.98fr] lg:items-center lg:p-10">
-        <div className="order-2 lg:order-1">
-          <p className="text-[10px] font-black tracking-[.24em] text-[#718263]">{copy.eyebrow}</p>
-          <h2 className="mt-3 text-4xl font-black tracking-[-.04em] text-[#263127] sm:text-6xl">{copy.title}</h2>
-          <p className="mt-4 max-w-xl text-sm leading-7 text-[#64705f] sm:text-base">{copy.subtitle}</p>
-          <div className="mt-7 grid gap-3 sm:grid-cols-3">
-            {[Building2, Route, CloudSun].map((Icon, index) => (
-              <div key={copy.features[index].title} className="rounded-2xl border border-[#e0e7da] bg-white/75 p-4">
-                <Icon size={18} className="text-[#6b7f5d]" aria-hidden="true" />
-                <h3 className="mt-3 text-xs font-black text-[#344033]">{copy.features[index].title}</h3>
-                <p className="mt-1 text-[11px] leading-5 text-[#74806f]">{copy.features[index].body}</p>
-              </div>
-            ))}
-          </div>
-          <button
-            type="button"
-            disabled={phase === "loading" || isStarting}
-            onClick={() => beginCity()}
-            className="mt-7 inline-flex min-h-12 items-center gap-2 rounded-full bg-[#33472e] px-6 text-sm font-black text-white shadow-lg shadow-[#33472e]/15 transition hover:-translate-y-0.5 hover:bg-[#263b25] disabled:cursor-wait disabled:opacity-60"
-          >
-            <Sparkles size={17} aria-hidden="true" />
-            {phase === "loading" ? copy.loading : copy.start}
-          </button>
-          <p className="mt-3 flex items-center gap-2 text-[11px] font-semibold text-[#7a8775]">
-            <Users size={14} aria-hidden="true" /> {copy.localOnly}
-          </p>
-          {unsupported && <p role="alert" className="mt-3 text-sm font-bold text-red-700">{copy.unavailable}</p>}
-        </div>
-        <div className="order-1 lg:order-2"><PreviewCity /></div>
+    <section
+      ref={containerRef}
+      data-game-surface
+      className={`relative select-none ${
+        isImmersive
+          ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-y-auto bg-background p-2"
+          : "overflow-hidden rounded-[2rem] border border-[#dbe5d3] bg-[#f7f7f1] shadow-[0_24px_80px_rgba(62,79,49,.12)]"
+      }`}
+    >
+      <div className="absolute right-4 top-4 z-40 flex items-center gap-2">
+        <button
+          type="button"
+          onClick={togglePortal}
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card/85 text-foreground shadow-sm backdrop-blur transition hover:bg-muted"
+          aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+        >
+          {isImmersive ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+        </button>
       </div>
+
+      {phase === "playing" ? (
+        <Suspense fallback={<LoadingState label={copy.loading} />}>
+          <Scene copy={copy.scene} />
+        </Suspense>
+      ) : (
+        <div className="grid gap-8 p-5 sm:p-8 lg:grid-cols-[1.02fr_.98fr] lg:items-center lg:p-10">
+          <div className="order-2 lg:order-1">
+            <p className="text-[10px] font-black tracking-[.24em] text-[#718263]">{copy.eyebrow}</p>
+            <h2 className="mt-3 text-4xl font-black tracking-[-.04em] text-[#263127] sm:text-6xl">{copy.title}</h2>
+            <p className="mt-4 max-w-xl text-sm leading-7 text-[#64705f] sm:text-base">{copy.subtitle}</p>
+            <div className="mt-7 grid gap-3 sm:grid-cols-3">
+              {[Building2, Route, CloudSun].map((Icon, index) => (
+                <div key={copy.features[index].title} className="rounded-2xl border border-[#e0e7da] bg-white/75 p-4">
+                  <Icon size={18} className="text-[#6b7f5d]" aria-hidden="true" />
+                  <h3 className="mt-3 text-xs font-black text-[#344033]">{copy.features[index].title}</h3>
+                  <p className="mt-1 text-[11px] leading-5 text-[#74806f]">{copy.features[index].body}</p>
+                </div>
+              ))}
+            </div>
+            <button
+              type="button"
+              disabled={phase === "loading" || isStarting}
+              onClick={() => beginCity()}
+              className="mt-7 inline-flex min-h-12 items-center gap-2 rounded-full bg-[#33472e] px-6 text-sm font-black text-white shadow-lg shadow-[#33472e]/15 transition hover:-translate-y-0.5 hover:bg-[#263b25] disabled:cursor-wait disabled:opacity-60"
+            >
+              <Sparkles size={17} aria-hidden="true" />
+              {phase === "loading" ? copy.loading : copy.start}
+            </button>
+            <p className="mt-3 flex items-center gap-2 text-[11px] font-semibold text-[#7a8775]">
+              <Users size={14} aria-hidden="true" /> {copy.localOnly}
+            </p>
+            {unsupported && <p role="alert" className="mt-3 text-sm font-bold text-red-700">{copy.unavailable}</p>}
+          </div>
+          <div className="order-1 lg:order-2"><PreviewCity /></div>
+        </div>
+      )}
     </section>
   );
 }

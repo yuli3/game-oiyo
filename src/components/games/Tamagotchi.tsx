@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
 import {
     type Pet, type MealTime, type ActionName,
     createPet, tick, feed, giveWater, play, clean, heal, petPet, careForEgg,
@@ -8,6 +9,51 @@ import {
 } from '../../lib/games/tamagotchi';
 import { PetDisplay } from './tamagotchi/PetDisplay';
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
+
+const SOUND_KEY = 'tamagotchi_sound_muted';
+
+class TamagotchiSound {
+    private ctx: AudioContext | null = null;
+    private init() {
+        if (typeof window === 'undefined') return;
+        if (!this.ctx) {
+            const scope = window as unknown as { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext };
+            const Ctor = scope.AudioContext ?? scope.webkitAudioContext;
+            if (Ctor) this.ctx = new Ctor();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') void this.ctx.resume();
+    }
+    beep(freq: number, duration = 0.08, type: OscillatorType = 'square') {
+        try {
+            this.init();
+            if (!this.ctx) return;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+            gain.gain.setValueAtTime(0.06, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start();
+            osc.stop(this.ctx.currentTime + duration);
+        } catch { /* ignore */ }
+    }
+    action() {
+        this.beep(880, 0.06);
+        setTimeout(() => this.beep(1320, 0.08), 70);
+    }
+    care() {
+        this.beep(660, 0.05);
+        setTimeout(() => this.beep(990, 0.06), 60);
+        setTimeout(() => this.beep(1320, 0.08), 120);
+    }
+    warn() {
+        this.beep(220, 0.15, 'sawtooth');
+    }
+}
+const tamaSound = new TamagotchiSound();
 
 // ─── Tamagotchi — retro virtual pet, ported from ahoxy-legacy ────────────────
 // Pixel-sprite pet in an LCD handheld shell. Egg hatches into dog/cat/bird
@@ -117,8 +163,44 @@ const Tamagotchi: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [message, setMessage] = useState<string | null>(null);
     const [showGuide, setShowGuide] = useState(false);
     const [confirmReset, setConfirmReset] = useState(false);
+    const [muted, setMuted] = useState(() => {
+        if (typeof window === 'undefined') return false;
+        try {
+            return localStorage.getItem(SOUND_KEY) === 'true';
+        } catch {
+            return false;
+        }
+    });
     const msgTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const actionTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({
+        locale: (locale as any) || 'ko',
+    });
+
+    const toggleMute = useCallback(() => {
+        setMuted((prev) => {
+            const next = !prev;
+            try {
+                localStorage.setItem(SOUND_KEY, String(next));
+            } catch { /* ignore */ }
+            return next;
+        });
+    }, []);
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+            if (e.key === 'f' || e.key === 'F') {
+                e.preventDefault();
+                togglePortal();
+            } else if (e.key === 'm' || e.key === 'M') {
+                e.preventDefault();
+                toggleMute();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [toggleMute, togglePortal]);
 
     const showMsg = useCallback((key: string | null) => {
         if (!key) return;
@@ -170,6 +252,10 @@ const Tamagotchi: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             if (!p) return p;
             const { pet: next, message: m, ok } = fn(p);
             showMsg(m);
+            if (!muted) {
+                if (ok) tamaSound.action();
+                else tamaSound.warn();
+            }
             if (ok && next.state !== p.state) {
                 if (actionTimer.current) clearTimeout(actionTimer.current);
                 actionTimer.current = setTimeout(() => {
@@ -180,12 +266,13 @@ const Tamagotchi: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             }
             return next;
         });
-    }, [showMsg]);
+    }, [muted, showMsg]);
 
     const startPet = () => {
         const name = nameInput.trim();
         if (!name) return;
         const fresh = createPet(name);
+        if (!muted) tamaSound.care();
         setPet(fresh);
         setNameInput('');
         showMsg('egg_cared');
@@ -193,26 +280,58 @@ const Tamagotchi: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
     if (!loaded) return null;
 
+    const hudButtons = (
+        <div className="absolute right-2 top-2 z-40 flex items-center gap-1.5 sm:right-4 sm:top-4">
+            <button
+                type="button"
+                onClick={toggleMute}
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card/85 text-foreground shadow-sm backdrop-blur transition hover:bg-muted"
+                aria-label={muted ? '소리 켜기' : '음소거'}
+            >
+                {muted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+            </button>
+            <button
+                type="button"
+                onClick={togglePortal}
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card/85 text-foreground shadow-sm backdrop-blur transition hover:bg-muted"
+                aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+            >
+                {isImmersive ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+            </button>
+        </div>
+    );
+
     // ── naming screen ──
     if (!pet) {
         return (
-            <div className="not-prose my-12 mx-auto max-w-md">
-                <TamaShell title={t.title}>
-                    <div className="flex flex-col items-center justify-center gap-4 py-12">
-                        <div className="text-5xl tama-egg-wobble">🥚</div>
-                        <p className="tama-pixel-text text-sm text-foreground">{t.namePrompt}</p>
-                        <input
-                            value={nameInput}
-                            onChange={(e) => setNameInput(e.target.value.slice(0, 12))}
-                            onKeyDown={(e) => e.key === 'Enter' && startPet()}
-                            aria-label={t.nameLabel}
-                            className="px-4 py-2 border-2 border-border bg-background tama-pixel-text text-center text-foreground focus:outline-none focus:border-primary"
-                        />
-                        <button onClick={startPet} disabled={!nameInput.trim()} className="tama-button px-6 py-2 text-xs disabled:opacity-40">
-                            {t.start}
-                        </button>
-                    </div>
-                </TamaShell>
+            <div
+                ref={containerRef}
+                data-game-surface
+                className={`not-prose relative select-none ${
+                    isImmersive
+                        ? 'fixed inset-0 z-50 flex h-dvh w-screen flex-col items-center justify-center overflow-y-auto bg-background p-2'
+                        : 'my-12 mx-auto max-w-md'
+                }`}
+            >
+                {hudButtons}
+                <div className="w-full max-w-md">
+                    <TamaShell title={t.title}>
+                        <div className="flex flex-col items-center justify-center gap-4 py-12">
+                            <div className="text-5xl tama-egg-wobble">🥚</div>
+                            <p className="tama-pixel-text text-sm text-foreground">{t.namePrompt}</p>
+                            <input
+                                value={nameInput}
+                                onChange={(e) => setNameInput(e.target.value.slice(0, 12))}
+                                onKeyDown={(e) => e.key === 'Enter' && startPet()}
+                                aria-label={t.nameLabel}
+                                className="px-4 py-2 border-2 border-border bg-background tama-pixel-text text-center text-foreground focus:outline-none focus:border-primary"
+                            />
+                            <button onClick={startPet} disabled={!nameInput.trim()} className="tama-button px-6 py-2 text-xs disabled:opacity-40">
+                                {t.start}
+                            </button>
+                        </div>
+                    </TamaShell>
+                </div>
             </div>
         );
     }
@@ -240,8 +359,18 @@ const Tamagotchi: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         };
 
     return (
-        <div className="not-prose my-12 mx-auto max-w-md">
-            <TamaShell
+        <div
+            ref={containerRef}
+            data-game-surface
+            className={`not-prose relative select-none ${
+                isImmersive
+                    ? 'fixed inset-0 z-50 flex h-dvh w-screen flex-col items-center justify-center overflow-y-auto bg-background p-2'
+                    : 'my-12 mx-auto max-w-md'
+            }`}
+        >
+            {hudButtons}
+            <div className="w-full max-w-md">
+                <TamaShell
                 title={t.title}
                 headerLeft={`${t.age}: ${pet.age} ${t.days}`}
                 headerRight={pet.name}
@@ -383,6 +512,7 @@ const Tamagotchi: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 .tama-sleep-z:nth-child(2) { animation-delay: 0.5s; }
                 .tama-sleep-z:nth-child(3) { animation-delay: 1s; }
             `}</style>
+            </div>
         </div>
     );
 };

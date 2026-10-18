@@ -1,9 +1,10 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
-import { CloudSun, Gauge, Headphones, Mountain, Plane, Wind } from "lucide-react";
+import { CloudSun, Gauge, Headphones, Maximize2, Minimize2, Mountain, Plane, Volume2, VolumeX, Wind } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
 import { getBest, recordAchievementEvent, recordBest } from "../../lib/games/records";
 import { hasWebGL } from "../../lib/games/webgl";
 import { reviewSkywardFlight } from "../../lib/games/skyward-atlas";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
 import type { FlightResult, SkywardSceneCopy } from "./SkywardAtlasScene";
 
 const REVIEW: Record<Locale, Record<"gates" | "distance" | "complete", string>> = {
@@ -79,15 +80,56 @@ const FALLBACK_COPY: Record<Locale, { title: string; body: string; retry: string
   es: { title: "No se puede iniciar el vuelo 3D", body: "No se detectó WebGL; la escena 3D no se descargó. Activa la aceleración gráfica y vuelve a intentarlo.", retry: "Comprobar de nuevo" },
 };
 
+const SOUND_KEY = "skyward_atlas_sound_muted";
+
 export default function SkywardAtlas({ locale }: { locale: Locale }) {
   const copy = COPY[locale] ?? COPY.en;
   const fallback = FALLBACK_COPY[locale] ?? FALLBACK_COPY.en;
   const [phase, setPhase] = useState<Phase>("briefing");
   const [best, setBest] = useState(0);
   const [result, setResult] = useState<FlightResult | null>(null);
-  const [audio, setAudio] = useState(true);
+  const [audio, setAudio] = useState(() => {
+    if (typeof window === "undefined") return true;
+    try {
+      return localStorage.getItem(SOUND_KEY) !== "true";
+    } catch {
+      return true;
+    }
+  });
   const audioRef = useRef<AudioContext | null>(null);
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({
+    locale: (locale as any) || "ko",
+  });
+
+  const toggleAudio = useCallback(() => {
+    setAudio((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(SOUND_KEY, String(!next));
+      } catch {
+        // storage unavailable in hardened contexts
+      }
+      return next;
+    });
+  }, []);
+
   useEffect(() => { setBest(getBest(GAME_KEY)?.value ?? 0); }, []);
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === "f" || e.key === "F") {
+        e.preventDefault();
+        togglePortal();
+      } else if (e.key === "m" || e.key === "M") {
+        e.preventDefault();
+        toggleAudio();
+      }
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [togglePortal, toggleAudio]);
+
   const start = useCallback(() => {
     if (!hasWebGL()) { setPhase("unavailable"); return; }
     setPhase("loading");
@@ -102,10 +144,37 @@ export default function SkywardAtlas({ locale }: { locale: Locale }) {
     setResult(next); setBest(Math.max(previous, next.score)); setPhase("result");
   }, []);
   return (
-    <section className="overflow-hidden rounded-[2rem] border border-border bg-[#f4f0e7] shadow-xl">
+    <section
+      ref={containerRef}
+      data-game-surface
+      className={`relative overflow-hidden select-none ${
+        isImmersive
+          ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col items-center justify-center overflow-y-auto bg-background p-2"
+          : "rounded-[2rem] border border-border bg-[#f4f0e7] shadow-xl"
+      }`}
+    >
+      <div className="absolute right-4 top-4 z-40 flex items-center gap-2">
+        <button
+          type="button"
+          onClick={toggleAudio}
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card/85 text-foreground shadow-sm backdrop-blur transition hover:bg-muted"
+          aria-label={audio ? copy.scene.soundOn : copy.scene.soundOff}
+        >
+          {audio ? <Volume2 size={16} /> : <VolumeX size={16} />}
+        </button>
+        <button
+          type="button"
+          onClick={togglePortal}
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card/85 text-foreground shadow-sm backdrop-blur transition hover:bg-muted"
+          aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+        >
+          {isImmersive ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+        </button>
+      </div>
+
       {phase === "playing" ? (
         <Suspense fallback={<div className="grid min-h-[70vh] place-items-center">{copy.loading}</div>}>
-          <Scene copy={copy.scene} audioEnabled={audio} onToggleAudio={() => setAudio(v => !v)} onFinish={finish} audioRef={audioRef} />
+          <Scene copy={copy.scene} audioEnabled={audio} onToggleAudio={toggleAudio} onFinish={finish} audioRef={audioRef} />
         </Suspense>
       ) : (
         <div className="relative isolate min-h-[680px] overflow-hidden p-6 sm:p-12">

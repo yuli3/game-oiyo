@@ -1,7 +1,9 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { Maximize2, Minimize2 } from "lucide-react";
 import type { Locale } from "@/lib/i18n";
 import { hasWebGL } from "@/lib/games/webgl";
 import { recordAchievementEvent, recordResult } from "@/lib/games/records";
+import { useArcadePortal } from "@/lib/games/arcade-portal";
 import {
   BEST_KEY,
   HORIZON_DAYS,
@@ -466,6 +468,21 @@ export default function RunABusiness({ locale }: { locale: Locale }) {
   const pack = STALLS[run.stall];
   const stallCopy = t.stalls[run.stall];
   const books = run.period ?? run.result;
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({
+    locale: (locale as any) || "ko",
+  });
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === "f" || e.key === "F") {
+        e.preventDefault();
+        togglePortal();
+      }
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [togglePortal]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -531,65 +548,81 @@ export default function RunABusiness({ locale }: { locale: Locale }) {
 
   const weather = t.weather[card.weather as Weather];
   const event = t.event[card.eventId as EventId];
+  return (
+    <div
+      ref={containerRef}
+      data-game-surface
+      className={`relative select-none ${
+        isImmersive
+          ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-y-auto bg-background p-2"
+          : "mx-auto max-w-5xl"
+      }`}
+    >
+      <div className="absolute right-4 top-4 z-40 flex items-center gap-2">
+        <button
+          type="button"
+          onClick={togglePortal}
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card/85 text-foreground shadow-sm backdrop-blur transition hover:bg-muted"
+          aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+        >
+          {isImmersive ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+        </button>
+      </div>
 
-  if (phase === "pick") {
-    return (
-      <div className="mx-auto max-w-5xl overflow-hidden rounded-2xl bg-[#1d2419] text-white shadow-[0_30px_90px_rgba(30,28,18,.24)]">
-        <div className="relative overflow-hidden px-5 pb-5 pt-7 sm:px-8 sm:pb-7 sm:pt-10">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(198,153,75,.24),transparent_45%),linear-gradient(135deg,#273322,#171b16)]" />
-          <div className="relative max-w-2xl">
-            <p className="text-xs font-black uppercase tracking-[0.22em] text-[#d9bd7a]">{t.stall}</p>
-            <h2 className="mt-2 text-3xl font-black tracking-tight sm:text-5xl">{t.title}</h2>
-            <p className="mt-3 text-sm leading-6 text-white/70 sm:text-base">{t.choose}</p>
-          </div>
-        </div>
-        <div className="space-y-5 bg-[#f5efe2] p-4 text-[#211f18] sm:p-7">
-          <div className="grid gap-3 sm:grid-cols-[1fr_1.4fr]">
-            <label className="block text-sm">
-              <span className="font-black">{t.seed}</span>
-              <input value={seed} onChange={(e) => setSeed(e.target.value)} className="mt-2 h-12 w-full rounded-xl border border-[#cbbd9d] bg-card px-3 font-mono shadow-inner" />
-            </label>
-            <div>
-              <p className="text-sm font-black">{t.horizon}</p>
-              <div className="mt-2 grid grid-cols-4 gap-1.5">
-                {(Object.keys(HORIZON_DAYS) as HorizonId[]).map((id) => (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => setHorizon(id)}
-                    className={`min-h-12 rounded-xl px-2 text-xs font-black sm:text-sm ${horizon === id ? "bg-[#26351f] text-white shadow-md" : "border border-[#cbbd9d] bg-card text-[#514a39]"}`}
-                  >
-                    {t.horizons[id]}
-                  </button>
-                ))}
-              </div>
+      {phase === "pick" ? (
+        <div className="overflow-hidden rounded-2xl bg-[#1d2419] text-white shadow-[0_30px_90px_rgba(30,28,18,.24)]">
+          <div className="relative overflow-hidden px-5 pb-5 pt-7 sm:px-8 sm:pb-7 sm:pt-10">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(198,153,75,.24),transparent_45%),linear-gradient(135deg,#273322,#171b16)]" />
+            <div className="relative max-w-2xl">
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-[#d9bd7a]">{t.stall}</p>
+              <h2 className="mt-2 text-3xl font-black tracking-tight sm:text-5xl">{t.title}</h2>
+              <p className="mt-3 text-sm leading-6 text-white/70 sm:text-base">{t.choose}</p>
             </div>
           </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {(Object.keys(STALLS) as StallId[]).map((id, index) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => pickStall(id)}
-                className={`group relative min-h-52 overflow-hidden rounded-2xl text-left shadow-[0_12px_34px_rgba(40,32,18,.16)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#9fb67d] ${index === 0 ? "sm:col-span-2 sm:min-h-72" : ""}`}
-              >
-                <img src={STALL_ART[id]} alt="" width="960" height="640" loading={index === 0 ? "eager" : "lazy"} className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.035] motion-reduce:transition-none" />
-                <span className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
-                <span className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
-                  <span className="block text-xl font-black text-white sm:text-2xl">{t.stalls[id].name}</span>
-                  <span className="mt-1 block text-xs font-bold text-white/70">{t.start} · {t.horizons[horizon]}</span>
-                </span>
-              </button>
-            ))}
+          <div className="space-y-5 bg-[#f5efe2] p-4 text-[#211f18] sm:p-7">
+            <div className="grid gap-3 sm:grid-cols-[1fr_1.4fr]">
+              <label className="block text-sm">
+                <span className="font-black">{t.seed}</span>
+                <input value={seed} onChange={(e) => setSeed(e.target.value)} className="mt-2 h-12 w-full rounded-xl border border-[#cbbd9d] bg-card px-3 font-mono shadow-inner" />
+              </label>
+              <div>
+                <p className="text-sm font-black">{t.horizon}</p>
+                <div className="mt-2 grid grid-cols-4 gap-1.5">
+                  {(Object.keys(HORIZON_DAYS) as HorizonId[]).map((id) => (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => setHorizon(id)}
+                      className={`min-h-12 rounded-xl px-2 text-xs font-black sm:text-sm ${horizon === id ? "bg-[#26351f] text-white shadow-md" : "border border-[#cbbd9d] bg-card text-[#514a39]"}`}
+                    >
+                      {t.horizons[id]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {(Object.keys(STALLS) as StallId[]).map((id, index) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => pickStall(id)}
+                  className={`group relative min-h-52 overflow-hidden rounded-2xl text-left shadow-[0_12px_34px_rgba(40,32,18,.16)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#9fb67d] ${index === 0 ? "sm:col-span-2 sm:min-h-72" : ""}`}
+                >
+                  <img src={STALL_ART[id]} alt="" width="960" height="640" loading={index === 0 ? "eager" : "lazy"} className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.035] motion-reduce:transition-none" />
+                  <span className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
+                  <span className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
+                    <span className="block text-xl font-black text-white sm:text-2xl">{t.stalls[id].name}</span>
+                    <span className="mt-1 block text-xs font-bold text-white/70">{t.start} · {t.horizons[horizon]}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-[#706752]">{t.hint}</p>
           </div>
-          <p className="text-xs text-[#706752]">{t.hint}</p>
         </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="mx-auto max-w-5xl space-y-4">
+      ) : (
+        <div className="space-y-4">
       <div className="overflow-hidden rounded-2xl bg-[#172016] text-white shadow-[0_28px_90px_rgba(30,28,18,.22)]">
         <div className="flex flex-wrap items-end justify-between gap-3 border-b border-white/10 px-4 py-4 sm:px-6">
           <div>
@@ -744,6 +777,8 @@ export default function RunABusiness({ locale }: { locale: Locale }) {
       <p className="text-sm">
         <a className="font-bold underline" href={`https://oiyo.net/${locale}/income-statement-game/`}>{t.oiyo}</a>
       </p>
+        </div>
+      )}
     </div>
   );
 }
