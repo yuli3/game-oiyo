@@ -1,0 +1,123 @@
+---
+// "오늘의 게임" — the come-back-tomorrow hook on the portal home.
+// The pick is a pure function of the KST date and the catalog (lib/games/todays-game.ts),
+// so the static build renders that day's pick and the client script re-picks for the
+// visitor's actual KST day. The visit streak reuses the DailyStreak contract in its
+// own store (records.ts `recordDailyVisit`), so it never inflates daily-puzzle records.
+import { getImage } from "astro:assets";
+import type { ImageMetadata } from "astro";
+import type { Locale } from "../lib/i18n";
+import { kstDateKey, pickTodaysGame } from "../lib/games/todays-game";
+
+export type TodaysGameCandidate = { slug: string; name: string; emoji: string; cat: string; art?: ImageMetadata };
+
+interface Props {
+  locale: Locale;
+  candidates: TodaysGameCandidate[];
+}
+
+const { locale, candidates } = Astro.props;
+
+const COPY: Record<Locale, { label: string; refresh: string; play: string; streak: string; best: string; tomorrow: string }> = {
+  ko: { label: "오늘의 게임", refresh: "매일 자정(KST) 새 게임으로 바뀌어요", play: "지금 플레이", streak: "{n}일 연속 방문", best: "최고 {n}일", tomorrow: "내일 다시 오면 연속 기록이 이어져요" },
+  en: { label: "Today's game", refresh: "A new pick every day at midnight KST", play: "Play now", streak: "{n}-day visit streak", best: "Best {n}", tomorrow: "Come back tomorrow to keep it going" },
+  ja: { label: "今日のゲーム", refresh: "毎日0時（KST）に新しいゲームに変わります", play: "今すぐプレイ", streak: "{n}日連続訪問", best: "最高 {n}日", tomorrow: "明日も来ると連続記録が続きます" },
+  zh: { label: "今日游戏", refresh: "每天零点（韩国时间）更换新游戏", play: "立即开玩", streak: "连续访问 {n} 天", best: "最佳 {n} 天", tomorrow: "明天再来，保持连续记录" },
+  fr: { label: "Jeu du jour", refresh: "Un nouveau choix chaque jour à minuit (heure de Séoul)", play: "Jouer", streak: "Série de visites : {n} j", best: "Record {n} j", tomorrow: "Revenez demain pour prolonger la série" },
+  es: { label: "Juego del día", refresh: "Una nueva elección cada día a medianoche (hora de Seúl)", play: "Jugar ahora", streak: "Racha de visitas: {n} días", best: "Récord {n} días", tomorrow: "Vuelve mañana para mantener la racha" },
+};
+const copy = COPY[locale] ?? COPY.en;
+
+const entries = await Promise.all(
+  candidates.map(async (c) => ({
+    slug: c.slug,
+    name: c.name,
+    emoji: c.emoji,
+    cat: c.cat,
+    href: `/${locale}/${c.slug}/`,
+    art: c.art ? (await getImage({ src: c.art, width: 320, format: "webp" })).src : "",
+  })),
+);
+const buildPick = entries.find((e) => e.slug === pickTodaysGame(entries.map((e) => e.slug), kstDateKey())) ?? entries[0];
+const data = JSON.stringify({ locale, copy, entries }).replace(/</g, "\\u003c");
+---
+{buildPick && (
+  <section class="mt-6" aria-labelledby="todays-game-label">
+    <a
+      href={buildPick.href}
+      data-todays-game
+      data-game-slug={buildPick.slug}
+      class="group flex min-h-28 items-stretch gap-4 overflow-hidden rounded-2xl border border-primary/30 bg-card p-3 text-left transition-colors hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      <span class="relative flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-muted text-4xl" aria-hidden="true">
+        <img data-todays-art src={buildPick.art || undefined} hidden={!buildPick.art} alt="" width="96" height="96" decoding="async" class="absolute inset-0 size-full object-cover" />
+        <span data-todays-emoji hidden={Boolean(buildPick.art)}>{buildPick.emoji}</span>
+      </span>
+      <span class="flex min-w-0 flex-1 flex-col justify-center gap-1">
+        <span id="todays-game-label" class="text-xs font-black text-primary">📅 {copy.label}</span>
+        <span data-todays-name class="truncate text-lg font-black text-foreground">{buildPick.name}</span>
+        <span class="text-xs text-muted-foreground">{copy.refresh}</span>
+        <span data-todays-streak hidden class="flex flex-wrap items-center gap-x-2 text-xs font-bold text-foreground">
+          <span data-todays-current></span>
+          <span data-todays-best class="text-muted-foreground"></span>
+        </span>
+        <span data-todays-tomorrow hidden class="text-xs text-muted-foreground">{copy.tomorrow}</span>
+      </span>
+      <span class="hidden min-h-11 shrink-0 items-center self-center rounded-full bg-primary px-4 text-sm font-bold text-primary-foreground sm:inline-flex">{copy.play}</span>
+    </a>
+  </section>
+)}
+<script type="application/json" id="todays-game-data" set:html={data} />
+
+<script>
+  import { recordDailyVisit } from "../lib/games/records";
+  import { kstDateKey, kstPreviousDateKey, pickTodaysGame } from "../lib/games/todays-game";
+
+  type Entry = { slug: string; name: string; emoji: string; cat: string; href: string; art: string };
+  type Payload = { locale: string; copy: Record<string, string>; entries: Entry[] };
+
+  const card = document.querySelector<HTMLAnchorElement>("[data-todays-game]");
+  const raw = document.getElementById("todays-game-data")?.textContent;
+  if (card && raw) {
+    const { locale, copy, entries } = JSON.parse(raw) as Payload;
+    const today = kstDateKey();
+    const slug = pickTodaysGame(entries.map((e) => e.slug), today);
+    const pick = entries.find((e) => e.slug === slug);
+    if (pick && pick.slug !== card.dataset.gameSlug) {
+      card.href = pick.href;
+      card.dataset.gameSlug = pick.slug;
+      const name = card.querySelector("[data-todays-name]");
+      if (name) name.textContent = pick.name;
+      const art = card.querySelector<HTMLImageElement>("[data-todays-art]");
+      const emoji = card.querySelector<HTMLElement>("[data-todays-emoji]");
+      if (art) {
+        if (pick.art) art.src = pick.art;
+        art.hidden = !pick.art;
+      }
+      if (emoji) {
+        emoji.textContent = pick.emoji;
+        emoji.hidden = Boolean(pick.art);
+      }
+    }
+
+    const streak = recordDailyVisit(today, kstPreviousDateKey(today));
+    const fill = (template: string, n: number) => template.replace("{n}", String(n));
+    const current = card.querySelector("[data-todays-current]");
+    const best = card.querySelector("[data-todays-best]");
+    if (current) current.textContent = `🔥 ${fill(copy.streak, streak.currentStreak)}`;
+    if (best) best.textContent = fill(copy.best, streak.maxStreak);
+    card.querySelector<HTMLElement>("[data-todays-streak]")?.removeAttribute("hidden");
+    card.querySelector<HTMLElement>("[data-todays-tomorrow]")?.removeAttribute("hidden");
+
+    card.addEventListener("click", () => {
+      const analytics = window as Window & { gtag?: (...args: unknown[]) => void };
+      analytics.gtag?.("event", "todays_game_click", {
+        game_id: card.dataset.gameSlug,
+        date_key: today,
+        visit_streak: streak.currentStreak,
+        best_visit_streak: streak.maxStreak,
+        locale,
+      });
+    });
+  }
+</script>

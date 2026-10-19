@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { getAchievementEvents, getAllAchievementEvents, getAllBestAchievedAt, getAllBests, getAllConditionalBests, getAllDailyStreaks, getAllLastPlayed, getAllRecords, getAllStreaks, getBest, getBestForConditions, getDailyStreak, getRecentRecords, getRecord, getStreak, recordAchievementEvent, recordBest, recordBestForConditions, recordDailyWin, recordResult, recordStreak } from "./records";
+import { getAchievementEvents, getAllAchievementEvents, getAllBestAchievedAt, getAllBests, getAllConditionalBests, getAllDailyStreaks, getAllLastPlayed, getAllRecords, getAllStreaks, getBest, getBestForConditions, getDailyStreak, getRecentRecords, getRecord, getStreak, getVisitStreak, recordAchievementEvent, recordBest, recordBestForConditions, recordDailyVisit, recordDailyWin, recordResult, recordStreak } from "./records";
 
 // records.ts is localStorage-backed; provide a minimal in-memory Storage
 // polyfill so persistence across calls can actually be exercised in node.
@@ -245,6 +245,27 @@ describe("records: DailyStreak (calendar-day solves)", () => {
   it("keeps each daily game independent", () => {
     recordDailyWin("kurodoko", "2026-07-16", "2026-07-15");
     expect(getDailyStreak("tents-and-trees").played).toBe(0);
+  });
+});
+
+describe("records: portal visit streak (DailyStreak contract, separate store)", () => {
+  it("counts consecutive KST days, ignores same-day repeats and keeps best after a gap", () => {
+    expect(recordDailyVisit("2026-10-17", "2026-10-16")).toEqual({ played: 1, currentStreak: 1, maxStreak: 1, lastWinDate: "2026-10-17" });
+    recordDailyVisit("2026-10-17", "2026-10-16");
+    expect(recordDailyVisit("2026-10-18", "2026-10-17").currentStreak).toBe(2);
+    expect(getVisitStreak("2026-10-20", "2026-10-19")).toEqual({ played: 2, currentStreak: 0, maxStreak: 2, lastWinDate: "2026-10-18" });
+    expect(recordDailyVisit("2026-10-20", "2026-10-19")).toEqual({ played: 3, currentStreak: 1, maxStreak: 2, lastWinDate: "2026-10-20" });
+  });
+
+  it("does not touch daily-puzzle streaks, recent results or last-played", () => {
+    recordDailyWin("kurodoko", "2026-10-18", "2026-10-17");
+    const dailiesBefore = localStorage.getItem("oiyo:game-daily-streaks:v1");
+    const recentBefore = getRecentRecords(50).length;
+    recordDailyVisit("2026-10-19", "2026-10-18");
+    expect(localStorage.getItem("oiyo:game-daily-streaks:v1")).toBe(dailiesBefore);
+    expect(Object.keys(getAllDailyStreaks())).toEqual(["kurodoko"]);
+    expect(getRecentRecords(50).length).toBe(recentBefore);
+    expect(Object.keys(getAllLastPlayed())).toEqual(["kurodoko"]);
   });
 });
 
