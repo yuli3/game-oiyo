@@ -368,16 +368,7 @@ function readAllDailies(): Record<string, DailyStreak> {
 }
 
 export function getDailyStreak(game: string, dateKey?: string, previousDateKey?: string): DailyStreak {
-  const stored = readAllDailies()[game] ?? { played: 0, currentStreak: 0, maxStreak: 0, lastWinDate: null };
-  if (
-    dateKey &&
-    previousDateKey &&
-    stored.lastWinDate !== dateKey &&
-    stored.lastWinDate !== previousDateKey
-  ) {
-    return { ...stored, currentStreak: 0 };
-  }
-  return stored;
+  return viewDailyStreak(readAllDailies()[game] ?? EMPTY_DAILY_STREAK, dateKey, previousDateKey);
 }
 
 /** Every game's daily-puzzle streak, keyed by game id — read-only aggregate for cross-game views. */
@@ -385,17 +376,37 @@ export function getAllDailyStreaks(): Record<string, DailyStreak> {
   return readAllDailies();
 }
 
-export function recordDailyWin(game: string, dateKey: string, previousDateKey: string): DailyStreak {
-  const all = readAllDailies();
-  const cur = all[game] ?? { played: 0, currentStreak: 0, maxStreak: 0, lastWinDate: null };
+const EMPTY_DAILY_STREAK: DailyStreak = { played: 0, currentStreak: 0, maxStreak: 0, lastWinDate: null };
+
+/**
+ * The calendar-day rule shared by every DailyStreak store: the same day twice is a
+ * no-op, the next day extends the run, and any gap restarts `currentStreak` at 1
+ * while `maxStreak` is preserved. Pure — callers own persistence.
+ */
+export function advanceDailyStreak(cur: DailyStreak, dateKey: string, previousDateKey: string): DailyStreak {
   if (cur.lastWinDate === dateKey) return cur; // already counted today
   const nextStreak = cur.lastWinDate === previousDateKey ? cur.currentStreak + 1 : 1;
-  const next: DailyStreak = {
+  return {
     played: cur.played + 1,
     currentStreak: nextStreak,
     maxStreak: Math.max(cur.maxStreak, nextStreak),
     lastWinDate: dateKey,
   };
+}
+
+/** Read-side view of a DailyStreak: a missed day shows current 0 without rewriting storage. */
+function viewDailyStreak(stored: DailyStreak, dateKey?: string, previousDateKey?: string): DailyStreak {
+  if (dateKey && previousDateKey && stored.lastWinDate !== dateKey && stored.lastWinDate !== previousDateKey) {
+    return { ...stored, currentStreak: 0 };
+  }
+  return stored;
+}
+
+export function recordDailyWin(game: string, dateKey: string, previousDateKey: string): DailyStreak {
+  const all = readAllDailies();
+  const cur = all[game] ?? EMPTY_DAILY_STREAK;
+  if (cur.lastWinDate === dateKey) return cur; // already counted today
+  const next = advanceDailyStreak(cur, dateKey, previousDateKey);
   all[game] = next;
   try {
     localStorage.setItem(DAILY_KEY, JSON.stringify(all));
@@ -403,7 +414,34 @@ export function recordDailyWin(game: string, dateKey: string, previousDateKey: s
     /* quota/private mode — records are best-effort */
   }
   stampLastPlayed(game);
-  appendRecentRecord({ game, kind: "daily", value: nextStreak, extra: dateKey });
+  appendRecentRecord({ game, kind: "daily", value: next.currentStreak, extra: dateKey });
+  return next;
+}
+
+// ─── Portal visit streak — same DailyStreak contract, its own store ─────────────────────
+// Counts consecutive calendar days the visitor opened the portal home. It lives
+// apart from DAILY_KEY on purpose: a visit is not a daily-puzzle solve, so it must
+// not feed daily-challenge achievements, recent results or last-played stamps.
+// `dateKey` is the KST "YYYY-MM-DD" the home "today's game" card uses.
+const VISIT_KEY = "oiyo:game-visit-streak:v1";
+const VISIT_SURFACE = "portal";
+
+export function getVisitStreak(dateKey?: string, previousDateKey?: string): DailyStreak {
+  const stored = readValidatedStore(VISIT_KEY, isDailyStreak)[VISIT_SURFACE] ?? EMPTY_DAILY_STREAK;
+  return viewDailyStreak(stored, dateKey, previousDateKey);
+}
+
+export function recordDailyVisit(dateKey: string, previousDateKey: string): DailyStreak {
+  const all = readValidatedStore(VISIT_KEY, isDailyStreak);
+  const cur = all[VISIT_SURFACE] ?? EMPTY_DAILY_STREAK;
+  if (cur.lastWinDate === dateKey) return cur;
+  const next = advanceDailyStreak(cur, dateKey, previousDateKey);
+  all[VISIT_SURFACE] = next;
+  try {
+    localStorage.setItem(VISIT_KEY, JSON.stringify(all));
+  } catch {
+    /* quota/private mode — best-effort */
+  }
   return next;
 }
 

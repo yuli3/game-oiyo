@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import TodaysGameCard from "../../components/TodaysGameCard.astro";
 import { getTranslations, locales } from "../../lib/i18n";
 import type { Locale } from "../../lib/i18n";
 import gameArtDocument from "../../../config/game-art-v1.json";
@@ -180,6 +181,14 @@ const featuredGames = featuredSlugs
 /** Entries without an explicit `kind` are games; only the exceptions are tagged. */
 const isGame = (g: Game) => (g.kind ?? "game") === "game";
 const gameCount = GAMES.filter(isGame).length;
+/** Today's-game pool: real games only, never tools or calculators. */
+const todaysGameCandidates = GAMES.filter(isGame).map((g) => ({
+  slug: g.slug,
+  name: cardName(g),
+  emoji: g.emoji,
+  cat: g.cat,
+  art: cardHasArt(g) ? cardSource(gameArt[g.slug]) : undefined,
+}));
 /** Tools and calculators are software, not games — say so in the markup too. */
 const schemaType = (g: Game) => (isGame(g) ? "Game" : "WebApplication");
 const cardJsonLd = {
@@ -221,6 +230,7 @@ const cardJsonLd = {
         ))}
       </ul>
     </nav>
+    <TodaysGameCard locale={locale} candidates={todaysGameCandidates} />
     {featuredGames.length > 0 && (
       <section class="mt-10">
         <h2 class="mb-4 text-lg font-black text-foreground">{translations.magazine.featured}</h2>
