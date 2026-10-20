@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import TileRummy from "../../components/games/TileRummy";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "숫자 타일 — 타일 러미 무료",
+    description: "숫자 타일 게임을 브라우저에서 무료로 두세요. 러미 게임 온라인으로 같은 숫자 그룹과 같은 색 런을 만들고, 첫 등록은 30점입니다.",
+  },
+  en: {
+    title: "Number Tiles — free tile rummy",
+    description: "Play a free number-tile game in the browser. Group one number in different colors or run one color in order. The first meld needs 30 points.",
+  },
+  ja: {
+    title: "数字タイル — 無料のタイルラミー",
+    description: "ブラウザで数字タイルを無料で遊べます。同じ数字を色違いで揃え、同じ色を順番につなぎます。最初の公開は30点です。",
+  },
+  zh: {
+    title: "数字牌 — 免费牌组游戏",
+    description: "在浏览器里免费玩数字牌。相同点数要用不同颜色，相同颜色要连成顺子。第一次放入至少30分。",
+  },
+  fr: {
+    title: "Tuiles chiffrées — rami de tuiles gratuit",
+    description: "Jouez gratuitement aux tuiles chiffrées dans le navigateur. Un groupe réunit un nombre, une suite poursuit une couleur. La première pose exige 30 points.",
+  },
+  es: {
+    title: "Fichas numéricas — rummy de fichas gratis",
+    description: "Juega gratis a las fichas numéricas en el navegador. Un grupo reúne un número y una escalera sigue un color. La primera bajada necesita 30 puntos.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-3xl px-4 py-8">
+    <TileRummy client:load locale={locale} />
+    <GameGuide slug="tile-rummy" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>
