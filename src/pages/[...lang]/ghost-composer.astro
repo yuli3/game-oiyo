@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import GhostComposer from "../../components/games/GhostComposer";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "유령 작곡가 — 무료 리듬 퍼즐",
+    description: "짧은 음을 이어 치면, 방금의 습관이 다음 음을 예상합니다. 그 예상을 벗어나면 점수가 납니다. 유령은 다른 사람이 아니라 직전 음입니다. 한국 표준시로 하루 한 판입니다.",
+  },
+  en: {
+    title: "Ghost Composer — free rhythm puzzle",
+    description: "Play a short line and the habit of those notes expects the next one. A point lands when you step off that expectation. The ghost is the previous notes, not another player. One line a day, dated in Korea Standard Time.",
+  },
+  ja: {
+    title: "幽霊の作曲家 — 無料のリズムパズル",
+    description: "短い音を続けると、直前の癖が次の音を予想します。その予想から外れると点になります。幽霊は他の人ではなく、直前の音です。日付は韓国標準時で、一日一曲です。",
+  },
+  zh: {
+    title: "幽灵作曲家 — 免费节奏谜题",
+    description: "把短音连下去，刚才的习惯会预期下一个音。偏离那个预期才得分。幽灵不是别人，而是刚才的音。日期用韩国标准时间，一天一曲。",
+  },
+  fr: {
+    title: "Compositeur fantôme — puzzle gratuit",
+    description: "Enchaînez une courte ligne et l'habitude de ces notes attend la suivante. Un point tombe quand vous quittez cette attente. Le fantôme est les notes d'avant, pas un autre joueur. Une ligne par jour, à l'heure de Séoul.",
+  },
+  es: {
+    title: "Compositor fantasma — puzzle gratis",
+    description: "Encadena una línea corta y el hábito de esas notas espera la siguiente. Un punto cae cuando te sales de esa espera. El fantasma son las notas de antes, no otro jugador. Una línea al día, en hora de Seúl.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-3xl px-4 py-8">
+    <GhostComposer client:load locale={locale} />
+    <GameGuide slug="ghost-composer" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>
