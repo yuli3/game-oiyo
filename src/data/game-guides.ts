@@ -13,6 +13,106 @@ export interface GameGuide {
 }
 
 export const GAME_GUIDES: Record<string, GameGuide> = {
+  "tile-rummy": {
+    origin: {
+      ko: "숫자 타일은 같은 숫자를 모으거나 한 색을 이어 내려놓는 타일 러미입니다. 네 색의 이름과 별표 와일드는 OIYO가 정한 것이고, 다른 제품의 타일 그림이나 이름을 쓰지 않습니다.",
+      en: "Number Tiles is a tile rummy: collect one number, or continue one color. The four color names and the star wild tile are OIYO's. It does not use another product's tile art or name.",
+      ja: "数字タイルは、同じ数字を集めるか一色をつないで出すタイルラミーです。四色の名前と星のワイルドはOIYOが決めたもので、他製品の牌画や名前は使いません。",
+      zh: "数字牌是一种牌组拉米：凑同一点数，或接同一颜色。四种颜色的名字和星标万能牌由 OIYO 设定，不使用其他产品的牌面或名称。",
+      fr: "Tuiles chiffrées est un rami de tuiles : regrouper un nombre, ou poursuivre une couleur. Les quatre noms de couleur et la tuile étoile sont ceux d'OIYO. Aucun dessin ni nom d'un autre produit.",
+      es: "Fichas numéricas es un rummy de fichas: junta un número o sigue un color. Los cuatro nombres de color y la ficha estrella son de OIYO. No usa el dibujo ni el nombre de otro producto.",
+    },
+    how: {
+      ko: "타일을 골라 그룹이나 런으로 내려놓습니다. 첫 등록은 손에서 나간 타일만으로 30점이고, 그 전에는 판을 재배치하지 않습니다. 연 뒤에는 줄을 나누어 다시 맞출 수 있습니다. 뽑기는 다른 선택입니다.",
+      en: "Select tiles and lay a group or a run. The first meld needs 30 points from tiles that leave your hand, and you cannot rearrange the table before that. After you open, you may split a line and build again. Drawing is the other choice.",
+      ja: "牌を選んでグループかランとして出します。最初の公開は手札から出た牌だけで30点必要で、それまでは場を組み替えられません。公開後は列を分けて組み直せます。もう一つの選択は山から引くことです。",
+      zh: "选牌后组成一组或一条顺子放下。第一次放入只计算离开手牌的点数，至少30点，在此之前不能重排桌面。亮出之后可以拆开一列再组。另一种选择是抽牌。",
+      fr: "Choisissez des tuiles et posez un groupe ou une suite. La première pose exige 30 points avec les tuiles qui quittent la main, et le plateau ne se réarrange pas avant. Ensuite, une ligne peut être séparée puis reconstruite. L'autre choix est de piocher.",
+      es: "Elige fichas y baja un grupo o una escalera. La primera bajada necesita 30 puntos de las fichas que salen de la mano, y antes no se reordena la mesa. Después puedes separar una línea y rehacerla. La otra opción es robar.",
+    },
+    rules: {
+      ko: [
+        "타일은 106장입니다. 네 색이 1부터 13까지 두 벌이고, 별표 와일드가 두 장입니다. 각 자리는 14장으로 시작합니다.",
+        "그룹은 같은 숫자 3장 또는 4장이고 색이 달라야 합니다. 런은 같은 색 3장 이상이며 숫자가 이어집니다. 13 다음의 1로는 이어지지 않습니다.",
+        "별표는 빈 색이나 빈 숫자를 채웁니다. 한 자연수와 별표만으로 그룹과 런이 모두 되면, 따로 런이라고 정하기 전에는 인쇄된 숫자로 계산합니다.",
+        "첫 등록은 손에서 나간 타일의 역할 점수만 더해 30점 이상이어야 하고, 이미 판에 있는 타일은 옮기지 못합니다. 연 뒤에는 재배치할 수 있지만, 판의 타일을 빼지 않고 모든 줄이 규칙에 맞아야 하며 손의 타일을 한 장 이상 씁니다.",
+        "손을 비우면 이깁니다. 더미가 비었을 때 뽑기는 통과입니다. 모든 자리가 통과하면 손 점수가 가장 낮은 자리가 이기고, 별표는 30점, 숫자는 액면입니다. 같으면 무승부입니다.",
+      ],
+      en: [
+        "There are 106 tiles: four colors, 1 through 13, two copies each, plus two star wild tiles. Each seat starts with 14.",
+        "A group is three or four tiles of the same number in different colors. A run is three or more of one color in order. 13 does not continue with 1.",
+        "A star fills a missing color or number. If one printed number plus stars can be read both ways, it scores as the printed number unless you mark the line as a run.",
+        "The first meld counts only tiles that leave your hand and needs 30 points. Tiles already on the table stay put. After you open, you may rearrange, but every table tile remains, every line stays legal, and you add at least one tile from your hand.",
+        "Emptying your hand wins. With an empty pool, a draw is a pass. When every seat has passed, the lowest hand total wins. A star in hand counts 30 and a number counts its face. An equal total is a draw.",
+      ],
+      ja: [
+        "牌は106枚です。四色の1から13が二組と、星のワイルドが二枚です。各席は14枚で始めます。",
+        "グループは同じ数字の3枚か4枚で、色はすべて違います。ランは同じ色が3枚以上で数字が続きます。13の次を1にはしません。",
+        "星は空いた色か空いた数字を埋めます。数字牌一枚と星だけでグループにもランにもなるときは、ランと指定しない限り印刷された数字で数えます。",
+        "最初の公開は手札から出た牌の役割点だけを足して30点以上必要で、場の牌は動かせません。公開後は組み替えできますが、場の牌を残し、すべての列を合法にし、手札を一枚以上使います。",
+        "手札をなくすと勝ちです。山が空のときの引きはパスです。全席がパスすると手札点の最も低い席が勝ちます。星は30点、数字は書かれた点です。同点は引き分けです。",
+      ],
+      zh: [
+        "共106张牌。四种颜色的1到13各两套，另有两张星标万能牌。每个座位从14张开始。",
+        "一组是相同点数的3张或4张，颜色必须不同。一条顺子是同色至少3张且点数相连。13不能接到1。",
+        "星标补上缺少的颜色或点数。一张数字牌加星标既能当一组也能当顺子时，除非标明为顺子，否则按印出的点数计分。",
+        "第一次放入只累加离开手牌的角色分，至少30点，桌上已有的牌不能移动。亮出之后可以重排，但桌上的牌都要留下，每一列都要合法，并且至少用掉一张手牌。",
+        "出手牌即获胜。牌堆空时，抽牌等于跳过。所有座位都跳过后，手牌分最低者获胜。星标按30分，数字按面值。分数相同则平局。",
+      ],
+      fr: [
+        "Il y a 106 tuiles : quatre couleurs, de 1 à 13, en deux exemplaires, plus deux étoiles. Chaque place commence avec 14 tuiles.",
+        "Un groupe compte trois ou quatre tuiles du même nombre et de couleurs différentes. Une suite compte au moins trois tuiles d'une couleur, dans l'ordre. Le 13 ne se poursuit pas par le 1.",
+        "L'étoile remplace une couleur ou un nombre manquant. Si un seul nombre imprimé et des étoiles se lisent des deux façons, le nombre imprimé compte, sauf si la ligne est marquée comme une suite.",
+        "La première pose ne compte que les tuiles qui quittent la main et exige 30 points. Les tuiles déjà sur le plateau ne bougent pas. Ensuite, le réarrangement garde chaque tuile du plateau, chaque ligne légale, et au moins une tuile de la main.",
+        "Vider sa main fait gagner. Si la pioche est vide, piocher est une passe. Quand chaque place a passé, le total de main le plus bas gagne. Une étoile en main vaut 30, un nombre vaut sa face. À égalité, la partie est nulle.",
+      ],
+      es: [
+        "Hay 106 fichas: cuatro colores, del 1 al 13, en dos copias, más dos estrellas. Cada puesto empieza con 14.",
+        "Un grupo son tres o cuatro fichas del mismo número y distinto color. Una escalera son tres o más de un color, en orden. El 13 no sigue con el 1.",
+        "La estrella cubre un color o un número que falta. Si un solo número impreso y estrellas se leen de las dos formas, cuenta el número impreso, salvo que marques la línea como escalera.",
+        "La primera bajada solo suma las fichas que salen de la mano y necesita 30 puntos. Las fichas que ya están en la mesa no se mueven. Después puedes reordenar, pero cada ficha de la mesa se queda, cada línea sigue siendo legal y añades al menos una ficha de la mano.",
+        "Vaciar la mano gana. Si el mazo está vacío, robar es un pase. Cuando todos han pasado, gana el total de mano más bajo. Una estrella en la mano vale 30 y un número vale su cara. Si empatan, hay tablas.",
+      ],
+    },
+    faqs: [
+      {
+        q: {
+          ko: "같은 한국 날짜는 같은 판인가요?",
+          en: "Does the same Korean date deal the same table?",
+          ja: "同じ韓国の日付は同じ配牌ですか？",
+          zh: "同一个韩国日期会发同一副牌吗？",
+          fr: "La même date coréenne donne-t-elle la même donne ?",
+          es: "¿La misma fecha de Corea reparte la misma mesa?",
+        },
+        a: {
+          ko: "오늘의 판은 한국 표준시 날짜를 시드로 씁니다. 상대는 한 명이고 난이도는 숙련으로 고정이며, 힌트와 무르기는 없습니다. 대국은 새 시드입니다.",
+          en: "The daily table uses the Korea Standard Time date as its seed. It has one opponent, the adept search, and no hint or undo. A match uses a new seed.",
+          ja: "今日の卓は韓国標準時の日付をシードにします。相手は一人、探索は熟練で固定、ヒントも待ったもありません。対局は新しいシードです。",
+          zh: "今日的一局用韩国标准时间的日期做种子。对手只有一位，搜索固定为熟手，没有提示也不能悔棋。对局使用新的种子。",
+          fr: "La table du jour prend la date en heure normale de Corée comme graine. Un seul adversaire, la recherche confirmée, sans indice ni annulation. Une partie libre prend une graine nouvelle.",
+          es: "La mesa del día usa la fecha de la hora estándar de Corea como semilla. Hay un rival, la búsqueda es la de nivel diestro y no hay pista ni deshacer. Una partida usa una semilla nueva.",
+        },
+      },
+      {
+        q: {
+          ko: "30점 전에 판을 고쳐도 되나요?",
+          en: "Can the table be rearranged before 30 points?",
+          ja: "30点の前に場を組み替えてよいですか？",
+          zh: "30分之前可以重排桌面吗？",
+          fr: "Peut-on réarranger le plateau avant 30 points ?",
+          es: "¿Se puede reordenar la mesa antes de 30 puntos?",
+        },
+        a: {
+          ko: "안 됩니다. 첫 등록은 손에 있던 타일만 새 줄로 내려놓습니다. 연 뒤에만 판의 끝을 떼거나 줄 전체를 들어 다시 맞춥니다.",
+          en: "No. The first meld only lays new lines from your hand. Only after you open can you detach an end or lift a whole line and build again.",
+          ja: "できません。最初の公開は手札だけを新しい列として出します。公開したあとで、端を外すか列ごと持ち上げて組み直せます。",
+          zh: "不能。第一次放入只能用手牌摆新的一列。亮出之后，才能拆下一端或拿起整列再组。",
+          fr: "Non. La première pose ne fait que de nouvelles lignes avec la main. Ce n'est qu'après l'ouverture qu'une extrémité ou une ligne entière peut être reprise.",
+          es: "No. La primera bajada solo crea líneas nuevas con la mano. Solo después de abrir puedes separar un extremo o levantar una línea entera.",
+        },
+      },
+    ],
+  },
   "screen-kingdom": {
     origin: {
       ko: "한 화면 왕국은 영토를 넓히지 않고, 한 칸을 키우면 바로 동쪽 칸이 한 층 낮아지는 OIYO 오리지널 퍼즐입니다. 네 왕국은 손으로 맞춘 뒤 시드가 그중 하나를 고르며, 외부 게임의 맵이나 음원을 쓰지 않습니다.",
