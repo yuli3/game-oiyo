@@ -13,6 +13,106 @@ export interface GameGuide {
 }
 
 export const GAME_GUIDES: Record<string, GameGuide> = {
+  "word-groups": {
+    origin: {
+      ko: "네 묶음은 열여섯 단어를 주제 네 개로 나누는 오늘의 퍼즐입니다. 단어와 주제는 OIYO가 만든 목록이고, 다른 단어 게임의 문제나 이름을 쓰지 않습니다.",
+      en: "Four Groups is a daily puzzle that sorts sixteen words into four themes. The words and themes are OIYO's own lists, not another word game's puzzles or name.",
+      ja: "四つの組は、十六語を四つの題に分ける今日のパズルです。語と題はOIYOの一覧で、他の言葉ゲームの問題や名前は使いません。",
+      zh: "四组词是把十六个词分成四个主题的今日谜题。词和主题是 OIYO 自己的列表，不用其他词语游戏的题目或名称。",
+      fr: "Quatre groupes est une grille du jour qui range seize mots en quatre thèmes. Les mots et les thèmes sont ceux d'OIYO, pas ceux d'un autre jeu de mots.",
+      es: "Cuatro grupos es un tablero diario que ordena dieciséis palabras en cuatro temas. Las palabras y los temas son de OIYO, no de otro juego de palabras.",
+    },
+    how: {
+      ko: "단어 넷을 골라 묶습니다. 맞으면 그 주제가 열리고, 틀리면 실수가 늘어납니다. 실수 네 번이면 남은 묶음이 열립니다. 날짜는 한국 표준시입니다.",
+      en: "Choose four words and group them. A match opens that theme. A miss counts. Four misses open the remaining groups. The date is Korea Standard Time.",
+      ja: "四語を選んでそろえます。当たればその題が開き、外せばまちがいが増えます。四回はずすと残りの組が開きます。日付は韓国標準時です。",
+      zh: "选四个词组成一组。对了就打开那个主题，错了就记一次。错四次后，剩下的组会打开。日期用韩国标准时间。",
+      fr: "Choisissez quatre mots et groupez-les. Une bonne réponse ouvre le thème. Une erreur compte. Quatre erreurs ouvrent le reste. La date est en heure normale de Corée.",
+      es: "Elige cuatro palabras y agrúpalas. Si aciertas, se abre el tema. Si fallas, cuenta. Cuatro fallos abren el resto. La fecha es la hora estándar de Corea.",
+    },
+    rules: {
+      ko: [
+        "한 판은 단어 열여섯 개입니다. 정답은 주제 네 개이고, 각 주제는 단어 넷입니다.",
+        "난이도는 네 단계이며 색은 쉬운 묶음부터 어려운 묶음까지 다릅니다.",
+        "다른 주제에 끌리는 단어가 하나 이상 있지만, 그 단어로 만든 네 개는 정답이 아닙니다. 정답 묶음은 하나만 있습니다.",
+        "실수는 네 번까지입니다. 네 묶음을 모두 찾으면 이깁니다.",
+        "오늘의 판은 한국 표준시 날짜로 정해지고, 같은 날에는 같은 단어가 같은 순서로 나옵니다. 힌트와 무르기는 없습니다.",
+      ],
+      en: [
+        "A board has sixteen words. The answer is four themes, four words each.",
+        "There are four difficulties, and each color marks one step from the plain theme to the harder one.",
+        "At least one word tempts another theme, but that tempting set of four is not an answer. Only one grouping is correct.",
+        "You may miss four times. Finding all four themes wins.",
+        "Today's board comes from the Korea Standard Time date. The same day deals the same words in the same order. There is no hint and no undo.",
+      ],
+      ja: [
+        "一盤は十六語です。答えは四つの題で、各題は四語です。",
+        "難易度は四段で、色は易しい組から難しい組まで分かれます。",
+        "別の題に引かれる語が一つ以上ありますが、その四語は答えではありません。正しい組は一つです。",
+        "まちがいは四回までです。四つの組を見つけると勝ちです。",
+        "今日の盤は韓国標準時の日付で決まり、同じ日は同じ語が同じ順に出ます。ヒントも取り消しもありません。",
+      ],
+      zh: [
+        "一局有十六个词。答案是四个主题，每个主题四个词。",
+        "难度有四级，颜色从容易的一组排到更难的一组。",
+        "至少有一个词会让人想到另一个主题，但那四个词不是答案。正确的分法只有一种。",
+        "最多错四次。找齐四组就赢。",
+        "今日的题由韩国标准时间的日期决定。同一天的词和顺序相同。没有提示，也不能撤回。",
+      ],
+      fr: [
+        "Une grille a seize mots. La réponse est quatre thèmes, quatre mots chacun.",
+        "Il y a quatre difficultés, et chaque couleur marque un cran, du thème simple au plus difficile.",
+        "Au moins un mot attire vers un autre thème, mais ces quatre mots ne sont pas une réponse. Un seul regroupement est juste.",
+        "Quatre erreurs sont permises. Trouver les quatre thèmes gagne.",
+        "La grille du jour vient de la date en heure normale de Corée. Le même jour donne les mêmes mots dans le même ordre. Pas d'indice, pas d'annulation.",
+      ],
+      es: [
+        "Un tablero tiene dieciséis palabras. La respuesta son cuatro temas, cuatro palabras cada uno.",
+        "Hay cuatro dificultades, y cada color marca un paso, del tema fácil al más difícil.",
+        "Al menos una palabra tienta hacia otro tema, pero esas cuatro no son una respuesta. Solo hay una agrupación correcta.",
+        "Se permiten cuatro errores. Encontrar los cuatro temas gana.",
+        "El tablero de hoy sale de la fecha en hora estándar de Corea. El mismo día reparte las mismas palabras en el mismo orden. No hay pista ni deshacer.",
+      ],
+    },
+    faqs: [
+      {
+        q: {
+          ko: "오늘 판은 언제 바뀌나요?",
+          en: "When does today's board change?",
+          ja: "今日の盤はいつ変わりますか?",
+          zh: "今天的题什么时候换?",
+          fr: "Quand la grille du jour change-t-elle?",
+          es: "¿Cuándo cambia el tablero de hoy?",
+        },
+        a: {
+          ko: "한국 표준시 자정에 바뀝니다. 같은 날짜의 방문자는 같은 판을 풉니다.",
+          en: "It changes at midnight Korea Standard Time. Visitors on the same date get the same board.",
+          ja: "韓国標準時の真夜中に変わります。同じ日付の人は同じ盤です。",
+          zh: "在韩国标准时午夜更换。同一日期的访客拿到同一题。",
+          fr: "Elle change à minuit, heure normale de Corée. La même date donne la même grille.",
+          es: "Cambia a medianoche, hora estándar de Corea. La misma fecha da el mismo tablero.",
+        },
+      },
+      {
+        q: {
+          ko: "점수는 어떻게 남나요?",
+          en: "How is the score kept?",
+          ja: "点数はどう残りますか?",
+          zh: "分数怎么记?",
+          fr: "Comment le score est-il gardé?",
+          es: "¿Cómo se guarda la puntuación?",
+        },
+        a: {
+          ko: "이기면 남은 실수 횟수가 높은 점수입니다. 그 날짜의 판에서만 비교하고, 힌트를 쓴 기록은 없습니다.",
+          en: "A win scores the mistakes you had left. It is compared only on that date's board, and there is no hinted record.",
+          ja: "勝つと残ったまちがいの回数が高い点数です。その日付の盤だけで比べ、ヒントを使った記録はありません。",
+          zh: "赢了以后，剩下的容错次数是更高的分数。只和同一天的题比较，没有用过提示的记录。",
+          fr: "Une victoire compte les erreurs encore disponibles. On la compare seulement sur la grille de cette date, sans partie aidée.",
+          es: "Una victoria cuenta los errores que aún quedaban. Solo se compara en el tablero de esa fecha, y no hay marca con pista.",
+        },
+      },
+    ],
+  },
   "tile-rummy": {
     origin: {
       ko: "숫자 타일은 같은 숫자를 모으거나 한 색을 이어 내려놓는 타일 러미입니다. 네 색의 이름과 별표 와일드는 OIYO가 정한 것이고, 다른 제품의 타일 그림이나 이름을 쓰지 않습니다.",

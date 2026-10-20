@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import WordGroups from "../../components/games/WordGroups";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "네 묶음 — 오늘의 단어 퍼즐",
+    description: "단어 묶기 퍼즐을 브라우저에서 무료로 푸세요. 4개씩 묶기 게임으로 오늘의 단어 퍼즐에서 같은 주제 네 개를 찾습니다. 실수는 네 번까지입니다.",
+  },
+  en: {
+    title: "Four Groups — daily word grouping puzzle",
+    description: "A free daily word grouping puzzle in the browser. Find four words that share one theme. Four mistakes end the board.",
+  },
+  ja: {
+    title: "四つの組 — 今日の言葉パズル",
+    description: "ブラウザで無料の言葉グループパズルです。同じ題の四語を見つけます。まちがいは四回までです。",
+  },
+  zh: {
+    title: "四组词 — 今日词语谜题",
+    description: "在浏览器里免费玩词语分组谜题。找出同一主题的四个词。错误四次就结束。",
+  },
+  fr: {
+    title: "Quatre groupes — puzzle de mots du jour",
+    description: "Un puzzle gratuit pour regrouper des mots dans le navigateur. Trouvez quatre mots d'un même thème. Quatre erreurs ferment la grille.",
+  },
+  es: {
+    title: "Cuatro grupos — puzzle de palabras de hoy",
+    description: "Un puzzle gratis para agrupar palabras en el navegador. Encuentra cuatro palabras de un tema. Cuatro errores cierran el tablero.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-3xl px-4 py-8">
+    <WordGroups client:load locale={locale} />
+    <GameGuide slug="word-groups" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>
