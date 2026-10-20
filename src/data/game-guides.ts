@@ -904,6 +904,44 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "word-groups": {
+    origin: {
+      ko: "네 묶음은 16개 단어를 숨은 주제 네 개로 나누는 단어 분류 퍼즐입니다. 4×4 판에서 묶음을 찾는 형식은 여러 매체에서 쓰여 온 흔한 장르이고, 이 게임의 주제와 단어 목록은 OIYO가 언어마다 따로 만들었습니다.",
+      en: "Four Groups is a word-sorting puzzle that splits 16 words into four hidden themes. Finding groups on a 4×4 board is a common puzzle format; every theme and word list here was written by OIYO for each language.",
+      ja: "四つのグループは、16個の言葉を隠れた四つのテーマに分ける言葉分けパズルです。4×4の盤でグループを探す形式はよくあるパズルの型で、テーマと単語はOIYOが言語ごとに作りました。",
+      zh: "四组词是一款把16个词分进四个隐藏主题的分类谜题。在4×4棋盘上找分组是常见的谜题形式，这里的主题和词表都由 OIYO 按语言单独编写。",
+      fr: "Quatre groupes est un puzzle qui répartit 16 mots entre quatre thèmes cachés. Chercher des groupes sur une grille 4×4 est un format de puzzle courant ; chaque thème et chaque liste de mots ont été écrits par OIYO pour chaque langue.",
+      es: "Cuatro grupos es un puzle que reparte 16 palabras entre cuatro temas ocultos. Buscar grupos en un tablero de 4×4 es un formato de puzle habitual; cada tema y cada lista de palabras los escribió OIYO para cada idioma.",
+    },
+    how: {
+      ko: "같은 주제라고 생각하는 단어 4개를 고르고 제출하세요. 맞으면 그 묶음이 색과 함께 위로 올라갑니다. 3개만 맞으면 '하나만 바꾸면 돼요'라고 알려 줍니다. 실수 4번 안에 네 묶음을 모두 찾으면 성공입니다. 노랑이 가장 쉽고 보라가 가장 까다롭습니다.",
+      en: "Pick four words you think share a theme and submit. A correct group rises to the top in its color. If three of the four belong together you'll see \"One away\". Find all four groups before your fourth mistake. Yellow is the easiest and purple the trickiest.",
+      ja: "同じテーマだと思う言葉を4つ選んで決定します。正解ならそのグループが色付きで上に並びます。4つのうち3つが合っていれば「あと一つ」と表示されます。ミス4回までに四つ全部見つければクリアです。黄色がいちばんやさしく、紫がいちばん難しいグループです。",
+      zh: "选出你认为主题相同的4个词并提交。答对的分组会带着颜色移到上方。如果4个里有3个属于同一组，会提示“只差一个”。在第4次失误前找出全部四组即成功。黄色最简单，紫色最难。",
+      fr: "Choisissez quatre mots qui partagent selon vous un thème, puis validez. Un groupe correct monte en haut avec sa couleur. Si trois mots sur quatre vont ensemble, le jeu vous dit « Presque ». Trouvez les quatre groupes avant votre quatrième erreur. Le jaune est le plus facile, le violet le plus retors.",
+      es: "Elige cuatro palabras que creas que comparten tema y envía. Un grupo correcto sube arriba con su color. Si tres de las cuatro van juntas verás «¡Te falta una!». Encuentra los cuatro grupos antes del cuarto fallo. El amarillo es el más fácil y el morado el más difícil.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "매일 같은 퍼즐이 나오나요?",
+          en: "Does everyone get the same puzzle each day?",
+          ja: "毎日みんな同じパズルですか？",
+          zh: "每天大家的谜题都一样吗？",
+          fr: "Tout le monde a-t-il le même puzzle chaque jour ?",
+          es: "¿Todos reciben el mismo puzle cada día?",
+        },
+        a: {
+          ko: "네. 같은 언어라면 같은 날짜에 같은 퍼즐이 나옵니다. 오늘의 퍼즐 기록은 연속 기록에 남고, 연습 퍼즐은 기록에 남지 않습니다. 진행 상황은 이 기기에만 저장됩니다.",
+          en: "Yes. In the same language, the same date gives the same puzzle. The daily puzzle counts toward your streak; practice puzzles do not. Progress is saved on this device only.",
+          ja: "はい。同じ言語なら同じ日付に同じパズルが出ます。今日のパズルは連続記録に残り、練習パズルは残りません。進行状況はこの端末にだけ保存されます。",
+          zh: "是的。同一种语言在同一天会出现同一道谜题。今日谜题计入连续记录，练习谜题不计入。进度只保存在本设备上。",
+          fr: "Oui. Dans une même langue, une même date donne le même puzzle. Le puzzle du jour compte pour votre série, pas les puzzles d'entraînement. La progression n'est enregistrée que sur cet appareil.",
+          es: "Sí. En el mismo idioma, la misma fecha da el mismo puzle. El puzle del día cuenta para tu racha; los de práctica no. El progreso solo se guarda en este dispositivo.",
+        },
+      },
+    ],
+  },
   "korean-semantle": {
     origin: {
       ko: "꼬맨틀은 단어 임베딩(의미 벡터) 기반의 의미 유사도 추측 게임으로, 영어 Semantle과 그 한국어 판에서 이어진 형식입니다. 정답 단어와 의미가 가까운 단어일수록 높은 순위를 받습니다.",

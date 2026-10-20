@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import WordGroups from "../../components/games/WordGroups";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "네 묶음 — 오늘의 단어 묶기 퍼즐",
+    description: "16개 단어를 같은 주제끼리 4개씩 묶는 무료 데일리 단어 퍼즐. 실수는 4번까지, 결과는 이모지로 공유하세요.",
+  },
+  en: {
+    title: "Four Groups — Daily Word Grouping Puzzle",
+    description: "A free daily word puzzle: sort 16 words into four groups of four that share a theme. Four mistakes allowed, share your result as emoji.",
+  },
+  ja: {
+    title: "四つのグループ — 毎日の言葉分けパズル",
+    description: "16個の言葉を同じテーマの4つずつに分ける無料の毎日パズル。ミスは4回まで、結果は絵文字で共有できます。",
+  },
+  zh: {
+    title: "四组词 — 每日词语分组谜题",
+    description: "免费每日词语谜题：把16个词按相同主题分成四组，每组4个。最多失误4次，可用表情分享结果。",
+  },
+  fr: {
+    title: "Quatre groupes — Puzzle de mots quotidien",
+    description: "Un puzzle de mots gratuit chaque jour : classez 16 mots en quatre groupes de quatre. Quatre erreurs permises, partagez votre résultat en émojis.",
+  },
+  es: {
+    title: "Cuatro grupos — Puzle diario de agrupar palabras",
+    description: "Un puzle de palabras gratis cada día: ordena 16 palabras en cuatro grupos de cuatro. Cuatro fallos permitidos, comparte tu resultado con emojis.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-lg px-4 py-4">
+    <WordGroups client:load locale={locale} />
+    <GameGuide slug="word-groups" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>

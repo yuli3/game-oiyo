@@ -1,0 +1,457 @@
+{
+ "schema": "oiyo.word-groups",
+ "v": 1,
+ "locale": "en",
+ "puzzles": [
+  {
+   "id": "en-001",
+   "groups": [
+    {
+     "theme": "Fruits",
+     "level": 0,
+     "words": [
+      "apple",
+      "banana",
+      "cherry",
+      "grape"
+     ]
+    },
+    {
+     "theme": "Weather",
+     "level": 1,
+     "words": [
+      "rain",
+      "snow",
+      "fog",
+      "hail"
+     ]
+    },
+    {
+     "theme": "Card games",
+     "level": 2,
+     "words": [
+      "poker",
+      "bridge",
+      "rummy",
+      "snap"
+     ]
+    },
+    {
+     "theme": "___board",
+     "level": 3,
+     "words": [
+      "key",
+      "card",
+      "skate",
+      "dash"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "en-002",
+   "groups": [
+    {
+     "theme": "Planets",
+     "level": 0,
+     "words": [
+      "Mars",
+      "Venus",
+      "Saturn",
+      "Mercury"
+     ]
+    },
+    {
+     "theme": "Metals",
+     "level": 1,
+     "words": [
+      "gold",
+      "silver",
+      "iron",
+      "copper"
+     ]
+    },
+    {
+     "theme": "Dog breeds",
+     "level": 2,
+     "words": [
+      "boxer",
+      "poodle",
+      "beagle",
+      "pug"
+     ]
+    },
+    {
+     "theme": "___ship",
+     "level": 3,
+     "words": [
+      "friend",
+      "relation",
+      "leader",
+      "champion"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "en-003",
+   "groups": [
+    {
+     "theme": "Kitchen tools",
+     "level": 0,
+     "words": [
+      "whisk",
+      "ladle",
+      "spatula",
+      "tongs"
+     ]
+    },
+    {
+     "theme": "Dances",
+     "level": 1,
+     "words": [
+      "tango",
+      "salsa",
+      "waltz",
+      "polka"
+     ]
+    },
+    {
+     "theme": "NATO alphabet",
+     "level": 2,
+     "words": [
+      "alpha",
+      "bravo",
+      "delta",
+      "echo"
+     ]
+    },
+    {
+     "theme": "Hidden body parts",
+     "level": 3,
+     "words": [
+      "machine",
+      "heart",
+      "charm",
+      "ship"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "en-004",
+   "groups": [
+    {
+     "theme": "Birds",
+     "level": 0,
+     "words": [
+      "robin",
+      "eagle",
+      "owl",
+      "swan"
+     ]
+    },
+    {
+     "theme": "Toolbox",
+     "level": 1,
+     "words": [
+      "hammer",
+      "wrench",
+      "pliers",
+      "drill"
+     ]
+    },
+    {
+     "theme": "Shades of blue",
+     "level": 2,
+     "words": [
+      "navy",
+      "teal",
+      "cobalt",
+      "azure"
+     ]
+    },
+    {
+     "theme": "___bar",
+     "level": 3,
+     "words": [
+      "crow",
+      "sand",
+      "side",
+      "space"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "en-005",
+   "groups": [
+    {
+     "theme": "Breakfast",
+     "level": 0,
+     "words": [
+      "toast",
+      "cereal",
+      "pancake",
+      "omelette"
+     ]
+    },
+    {
+     "theme": "Instruments",
+     "level": 1,
+     "words": [
+      "flute",
+      "cello",
+      "harp",
+      "oboe"
+     ]
+    },
+    {
+     "theme": "Keyboard keys",
+     "level": 2,
+     "words": [
+      "shift",
+      "enter",
+      "escape",
+      "tab"
+     ]
+    },
+    {
+     "theme": "___ball",
+     "level": 3,
+     "words": [
+      "snow",
+      "foot",
+      "eye",
+      "meat"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "en-006",
+   "groups": [
+    {
+     "theme": "Units of time",
+     "level": 0,
+     "words": [
+      "second",
+      "minute",
+      "hour",
+      "decade"
+     ]
+    },
+    {
+     "theme": "Chess pieces",
+     "level": 1,
+     "words": [
+      "king",
+      "queen",
+      "rook",
+      "bishop"
+     ]
+    },
+    {
+     "theme": "Card suits",
+     "level": 2,
+     "words": [
+      "hearts",
+      "spades",
+      "clubs",
+      "diamonds"
+     ]
+    },
+    {
+     "theme": "Anagrams of LEAST",
+     "level": 3,
+     "words": [
+      "steal",
+      "slate",
+      "tales",
+      "stale"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "en-007",
+   "groups": [
+    {
+     "theme": "Shapes",
+     "level": 0,
+     "words": [
+      "circle",
+      "square",
+      "triangle",
+      "oval"
+     ]
+    },
+    {
+     "theme": "Sports",
+     "level": 1,
+     "words": [
+      "golf",
+      "tennis",
+      "rugby",
+      "cricket"
+     ]
+    },
+    {
+     "theme": "Insects",
+     "level": 2,
+     "words": [
+      "ant",
+      "bee",
+      "wasp",
+      "moth"
+     ]
+    },
+    {
+     "theme": "Palindromes",
+     "level": 3,
+     "words": [
+      "level",
+      "radar",
+      "kayak",
+      "civic"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "en-008",
+   "groups": [
+    {
+     "theme": "Vegetables",
+     "level": 0,
+     "words": [
+      "carrot",
+      "leek",
+      "onion",
+      "celery"
+     ]
+    },
+    {
+     "theme": "Currencies",
+     "level": 1,
+     "words": [
+      "euro",
+      "yen",
+      "peso",
+      "rupee"
+     ]
+    },
+    {
+     "theme": "Greek letters",
+     "level": 2,
+     "words": [
+      "alpha",
+      "beta",
+      "gamma",
+      "omega"
+     ]
+    },
+    {
+     "theme": "___fly",
+     "level": 3,
+     "words": [
+      "butter",
+      "dragon",
+      "fire",
+      "house"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "en-009",
+   "groups": [
+    {
+     "theme": "Sea animals",
+     "level": 0,
+     "words": [
+      "whale",
+      "shark",
+      "octopus",
+      "squid"
+     ]
+    },
+    {
+     "theme": "Board games",
+     "level": 1,
+     "words": [
+      "chess",
+      "checkers",
+      "go",
+      "backgammon"
+     ]
+    },
+    {
+     "theme": "Things you can break",
+     "level": 2,
+     "words": [
+      "record",
+      "promise",
+      "silence",
+      "news"
+     ]
+    },
+    {
+     "theme": "Hidden numbers",
+     "level": 3,
+     "words": [
+      "often",
+      "alone",
+      "weight",
+      "canine"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "en-010",
+   "groups": [
+    {
+     "theme": "Gemstones",
+     "level": 0,
+     "words": [
+      "ruby",
+      "pearl",
+      "opal",
+      "jade"
+     ]
+    },
+    {
+     "theme": "Snakes",
+     "level": 1,
+     "words": [
+      "cobra",
+      "viper",
+      "python",
+      "mamba"
+     ]
+    },
+    {
+     "theme": "Programming languages",
+     "level": 2,
+     "words": [
+      "java",
+      "swift",
+      "rust",
+      "perl"
+     ]
+    },
+    {
+     "theme": "Tempo markings",
+     "level": 3,
+     "words": [
+      "largo",
+      "presto",
+      "allegro",
+      "adagio"
+     ]
+    }
+   ]
+  }
+ ]
+}

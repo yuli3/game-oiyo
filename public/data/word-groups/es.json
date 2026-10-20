@@ -1,0 +1,322 @@
+{
+ "schema": "oiyo.word-groups",
+ "v": 1,
+ "locale": "es",
+ "puzzles": [
+  {
+   "id": "es-001",
+   "groups": [
+    {
+     "theme": "Frutas",
+     "level": 0,
+     "words": [
+      "manzana",
+      "pera",
+      "uva",
+      "sandía"
+     ]
+    },
+    {
+     "theme": "Tiempo",
+     "level": 1,
+     "words": [
+      "lluvia",
+      "nieve",
+      "niebla",
+      "granizo"
+     ]
+    },
+    {
+     "theme": "Instrumentos",
+     "level": 2,
+     "words": [
+      "piano",
+      "guitarra",
+      "violín",
+      "flauta"
+     ]
+    },
+    {
+     "theme": "Palíndromos",
+     "level": 3,
+     "words": [
+      "oso",
+      "radar",
+      "reconocer",
+      "ojo"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "es-002",
+   "groups": [
+    {
+     "theme": "Animales de granja",
+     "level": 0,
+     "words": [
+      "vaca",
+      "cerdo",
+      "oveja",
+      "gallina"
+     ]
+    },
+    {
+     "theme": "Colores",
+     "level": 1,
+     "words": [
+      "rojo",
+      "azul",
+      "verde",
+      "amarillo"
+     ]
+    },
+    {
+     "theme": "Estaciones",
+     "level": 2,
+     "words": [
+      "primavera",
+      "verano",
+      "otoño",
+      "invierno"
+     ]
+    },
+    {
+     "theme": "Días",
+     "level": 3,
+     "words": [
+      "lunes",
+      "martes",
+      "miércoles",
+      "jueves"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "es-003",
+   "groups": [
+    {
+     "theme": "Útiles escolares",
+     "level": 0,
+     "words": [
+      "lápiz",
+      "goma",
+      "regla",
+      "tijeras"
+     ]
+    },
+    {
+     "theme": "Transporte",
+     "level": 1,
+     "words": [
+      "tren",
+      "autobús",
+      "bicicleta",
+      "avión"
+     ]
+    },
+    {
+     "theme": "Platos",
+     "level": 2,
+     "words": [
+      "paella",
+      "tortilla",
+      "gazpacho",
+      "churros"
+     ]
+    },
+    {
+     "theme": "Ajedrez",
+     "level": 3,
+     "words": [
+      "rey",
+      "reina",
+      "torre",
+      "alfil"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "es-004",
+   "groups": [
+    {
+     "theme": "Cuerpo",
+     "level": 0,
+     "words": [
+      "cabeza",
+      "hombro",
+      "rodilla",
+      "pie"
+     ]
+    },
+    {
+     "theme": "Muebles",
+     "level": 1,
+     "words": [
+      "silla",
+      "mesa",
+      "armario",
+      "cama"
+     ]
+    },
+    {
+     "theme": "Bebidas",
+     "level": 2,
+     "words": [
+      "té",
+      "café",
+      "leche",
+      "zumo"
+     ]
+    },
+    {
+     "theme": "Palos de la baraja española",
+     "level": 3,
+     "words": [
+      "oros",
+      "copas",
+      "espadas",
+      "bastos"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "es-005",
+   "groups": [
+    {
+     "theme": "Flores",
+     "level": 0,
+     "words": [
+      "rosa",
+      "tulipán",
+      "girasol",
+      "margarita"
+     ]
+    },
+    {
+     "theme": "Oficios",
+     "level": 1,
+     "words": [
+      "médico",
+      "panadero",
+      "bombero",
+      "cartero"
+     ]
+    },
+    {
+     "theme": "Deportes",
+     "level": 2,
+     "words": [
+      "fútbol",
+      "tenis",
+      "baloncesto",
+      "golf"
+     ]
+    },
+    {
+     "theme": "Metales",
+     "level": 3,
+     "words": [
+      "oro",
+      "plata",
+      "hierro",
+      "cobre"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "es-006",
+   "groups": [
+    {
+     "theme": "Planetas",
+     "level": 0,
+     "words": [
+      "Marte",
+      "Venus",
+      "Saturno",
+      "Mercurio"
+     ]
+    },
+    {
+     "theme": "Meses",
+     "level": 1,
+     "words": [
+      "enero",
+      "abril",
+      "mayo",
+      "junio"
+     ]
+    },
+    {
+     "theme": "Notas musicales",
+     "level": 2,
+     "words": [
+      "do",
+      "re",
+      "mi",
+      "sol"
+     ]
+    },
+    {
+     "theme": "Puntos cardinales",
+     "level": 3,
+     "words": [
+      "norte",
+      "sur",
+      "este",
+      "oeste"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "es-007",
+   "groups": [
+    {
+     "theme": "Cocina",
+     "level": 0,
+     "words": [
+      "olla",
+      "cucharón",
+      "sartén",
+      "batidor"
+     ]
+    },
+    {
+     "theme": "Mar",
+     "level": 1,
+     "words": [
+      "ola",
+      "arena",
+      "faro",
+      "gaviota"
+     ]
+    },
+    {
+     "theme": "Emociones",
+     "level": 2,
+     "words": [
+      "alegría",
+      "tristeza",
+      "ira",
+      "miedo"
+     ]
+    },
+    {
+     "theme": "Palabras que empiezan por «sol»",
+     "level": 3,
+     "words": [
+      "soldado",
+      "soledad",
+      "solución",
+      "soltero"
+     ]
+    }
+   ]
+  }
+ ]
+}

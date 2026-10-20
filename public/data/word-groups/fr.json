@@ -1,0 +1,322 @@
+{
+ "schema": "oiyo.word-groups",
+ "v": 1,
+ "locale": "fr",
+ "puzzles": [
+  {
+   "id": "fr-001",
+   "groups": [
+    {
+     "theme": "Fruits",
+     "level": 0,
+     "words": [
+      "pomme",
+      "poire",
+      "cerise",
+      "prune"
+     ]
+    },
+    {
+     "theme": "Météo",
+     "level": 1,
+     "words": [
+      "pluie",
+      "neige",
+      "brouillard",
+      "grêle"
+     ]
+    },
+    {
+     "theme": "Instruments",
+     "level": 2,
+     "words": [
+      "piano",
+      "guitare",
+      "violon",
+      "flûte"
+     ]
+    },
+    {
+     "theme": "Palindromes",
+     "level": 3,
+     "words": [
+      "radar",
+      "kayak",
+      "été",
+      "ressasser"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "fr-002",
+   "groups": [
+    {
+     "theme": "Animaux de la ferme",
+     "level": 0,
+     "words": [
+      "vache",
+      "cochon",
+      "mouton",
+      "poule"
+     ]
+    },
+    {
+     "theme": "Couleurs",
+     "level": 1,
+     "words": [
+      "rouge",
+      "bleu",
+      "vert",
+      "jaune"
+     ]
+    },
+    {
+     "theme": "Saisons",
+     "level": 2,
+     "words": [
+      "printemps",
+      "hiver",
+      "automne",
+      "été"
+     ]
+    },
+    {
+     "theme": "___ de terre",
+     "level": 3,
+     "words": [
+      "pomme",
+      "ver",
+      "tremblement",
+      "motte"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "fr-003",
+   "groups": [
+    {
+     "theme": "Fournitures scolaires",
+     "level": 0,
+     "words": [
+      "crayon",
+      "gomme",
+      "règle",
+      "ciseaux"
+     ]
+    },
+    {
+     "theme": "Transports",
+     "level": 1,
+     "words": [
+      "train",
+      "bus",
+      "vélo",
+      "avion"
+     ]
+    },
+    {
+     "theme": "Plats",
+     "level": 2,
+     "words": [
+      "ratatouille",
+      "crêpe",
+      "quiche",
+      "cassoulet"
+     ]
+    },
+    {
+     "theme": "Pièces d'échecs",
+     "level": 3,
+     "words": [
+      "roi",
+      "reine",
+      "tour",
+      "fou"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "fr-004",
+   "groups": [
+    {
+     "theme": "Corps",
+     "level": 0,
+     "words": [
+      "tête",
+      "épaule",
+      "genou",
+      "pied"
+     ]
+    },
+    {
+     "theme": "Meubles",
+     "level": 1,
+     "words": [
+      "chaise",
+      "table",
+      "armoire",
+      "lit"
+     ]
+    },
+    {
+     "theme": "Boissons",
+     "level": 2,
+     "words": [
+      "thé",
+      "café",
+      "lait",
+      "jus"
+     ]
+    },
+    {
+     "theme": "Couleurs des cartes",
+     "level": 3,
+     "words": [
+      "cœur",
+      "pique",
+      "trèfle",
+      "carreau"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "fr-005",
+   "groups": [
+    {
+     "theme": "Fleurs",
+     "level": 0,
+     "words": [
+      "rose",
+      "tulipe",
+      "lys",
+      "marguerite"
+     ]
+    },
+    {
+     "theme": "Métiers",
+     "level": 1,
+     "words": [
+      "médecin",
+      "boulanger",
+      "pompier",
+      "facteur"
+     ]
+    },
+    {
+     "theme": "Sports",
+     "level": 2,
+     "words": [
+      "football",
+      "tennis",
+      "rugby",
+      "judo"
+     ]
+    },
+    {
+     "theme": "Métaux",
+     "level": 3,
+     "words": [
+      "or",
+      "argent",
+      "fer",
+      "cuivre"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "fr-006",
+   "groups": [
+    {
+     "theme": "Planètes",
+     "level": 0,
+     "words": [
+      "Vénus",
+      "Saturne",
+      "Mercure",
+      "Mars"
+     ]
+    },
+    {
+     "theme": "Mois",
+     "level": 1,
+     "words": [
+      "janvier",
+      "avril",
+      "mai",
+      "juin"
+     ]
+    },
+    {
+     "theme": "Notes de musique",
+     "level": 2,
+     "words": [
+      "do",
+      "ré",
+      "mi",
+      "sol"
+     ]
+    },
+    {
+     "theme": "Jours",
+     "level": 3,
+     "words": [
+      "lundi",
+      "mardi",
+      "jeudi",
+      "samedi"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "fr-007",
+   "groups": [
+    {
+     "theme": "Cuisine",
+     "level": 0,
+     "words": [
+      "casserole",
+      "louche",
+      "poêle",
+      "fouet"
+     ]
+    },
+    {
+     "theme": "Bord de mer",
+     "level": 1,
+     "words": [
+      "vague",
+      "sable",
+      "phare",
+      "mouette"
+     ]
+    },
+    {
+     "theme": "Émotions",
+     "level": 2,
+     "words": [
+      "joie",
+      "tristesse",
+      "colère",
+      "peur"
+     ]
+    },
+    {
+     "theme": "Mots en « -ard »",
+     "level": 3,
+     "words": [
+      "canard",
+      "renard",
+      "bavard",
+      "billard"
+     ]
+    }
+   ]
+  }
+ ]
+}
