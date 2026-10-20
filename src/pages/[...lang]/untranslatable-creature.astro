@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import UntranslatableCreature from "../../components/games/UntranslatableCreature";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "번역 불가능한 생물 — 무료 리듬 돌봄",
+    description: "생물이 말 대신 리듬으로 요구를 보여주는 무료 돌봄 퍼즐입니다. 여섯 언어가 같은 판을 씁니다. 한국 표준시로 하루 한 판입니다.",
+  },
+  en: {
+    title: "Untranslatable Creature — free rhythm care",
+    description: "A free care puzzle. The creature asks with a rhythm instead of a sentence. All six languages share the lesson. One lesson a day, dated in Korea Standard Time.",
+  },
+  ja: {
+    title: "翻訳できない生き物 — 無料のリズム世話",
+    description: "生き物が言葉の代わりにリズムで要求を見せる無料の世話パズルです。六つの言語が同じ盤を使います。日付は韓国標準時で、一日一盤です。",
+  },
+  zh: {
+    title: "无法翻译的生物 — 免费节奏照料",
+    description: "生物不用句子，而用节奏提出要求的免费照料谜题。六种语言用同一盘。日期用韩国标准时间，一天一盘。",
+  },
+  fr: {
+    title: "Créature intraduisible — soin gratuit",
+    description: "Un puzzle de soin gratuit. La créature demande par un rythme, pas par une phrase. Les six langues partagent la leçon. Une leçon par jour, à l'heure de Séoul.",
+  },
+  es: {
+    title: "Criatura intraducible — cuidado gratis",
+    description: "Un puzzle de cuidado gratis. La criatura pide con un ritmo, no con una frase. Los seis idiomas comparten la lección. Una lección al día, en hora de Seúl.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-3xl px-4 py-8">
+    <UntranslatableCreature client:load locale={locale} />
+    <GameGuide slug="untranslatable-creature" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>
