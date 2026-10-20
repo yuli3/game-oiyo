@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import FireflyChoir from "../../components/games/FireflyChoir";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "반딧불 합창단 — 무료 리듬 퍼즐",
+    description: "반딧불이는 서로 다른 주기로 깜박입니다. 같은 깜박임을 묶으면 소리가 납니다. 악보는 나오지 않고, 확인하려고 기다리면 늦습니다. 한국 표준시로 하루 한 판입니다.",
+  },
+  en: {
+    title: "Firefly Choir — free rhythm puzzle",
+    description: "Fireflies blink on different periods. Group the ones that blink alike and a sound appears. The written line is never shown, and waiting to confirm is already late. One night a day, dated in Korea Standard Time.",
+  },
+  ja: {
+    title: "ホタルの合唱団 — 無料のリズムパズル",
+    description: "ホタルはそれぞれ違う周期で光ります。同じ光り方を組むと音が生まれます。楽譜は出ず、確かめようと待つと遅れます。日付は韓国標準時で、一日一回です。",
+  },
+  zh: {
+    title: "萤火虫合唱团 — 免费节奏谜题",
+    description: "萤火虫各自按不同的周期闪烁。把闪法相同的放在一起就会有声音。没有乐谱，等着再确认一次就已经晚了。日期用韩国标准时间，一天一局。",
+  },
+  fr: {
+    title: "Chœur de lucioles — puzzle gratuit",
+    description: "Les lucioles clignotent sur des cycles différents. Groupez celles qui clignotent pareil et un son naît. Aucune partition, et attendre pour confirmer est déjà trop tard. Une nuit par jour, à l'heure de Séoul.",
+  },
+  es: {
+    title: "Coro de luciérnagas — puzzle gratis",
+    description: "Las luciérnagas parpadean con ciclos distintos. Agrupa las que parpadean igual y aparece un sonido. No hay partitura, y esperar para confirmar ya es tarde. Una noche al día, en hora de Seúl.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-3xl px-4 py-8">
+    <FireflyChoir client:load locale={locale} />
+    <GameGuide slug="firefly-choir" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>
