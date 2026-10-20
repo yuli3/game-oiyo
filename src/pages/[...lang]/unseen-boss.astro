@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import UnseenBoss from "../../components/games/UnseenBoss";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "보이지 않는 보스 — 무료 관찰 퍼즐",
+    description: "보스의 모습 없이 칸의 흔들림만 보고 규칙을 고르는 무료 관찰 퍼즐입니다. 다섯 번째 흔들림이 가설을 확인하거나, 앞의 흔들림이 규칙을 반박합니다. 한국 표준시로 하루 한 판입니다.",
+  },
+  en: {
+    title: "Unseen Boss — free observation puzzle",
+    description: "A free observation puzzle. There is no body, only shaking lanes. The fifth shake confirms the rule, or an earlier shake disproves it. One room a day, dated in Korea Standard Time.",
+  },
+  ja: {
+    title: "見えないボス — 無料の観察パズル",
+    description: "ボスの姿はなく、マスの揺れだけを見て規則を選ぶ無料の観察パズルです。五回目が仮説を確かめ、前の揺れが規則を反証します。日付は韓国標準時で、一日一盤です。",
+  },
+  zh: {
+    title: "看不见的首领 — 免费观察谜题",
+    description: "没有首领的样子，只看格子晃动来选规则的免费观察谜题。第五次晃动确认假设，更早的晃动反驳规则。日期用韩国标准时间，一天一盘。",
+  },
+  fr: {
+    title: "Boss invisible — puzzle gratuit",
+    description: "Un puzzle d'observation gratuit. Pas de corps, seulement des cases qui tremblent. La cinquième secousse confirme la règle, ou une secousse précédente la réfute. Une salle par jour, à l'heure de Séoul.",
+  },
+  es: {
+    title: "Jefe invisible — puzzle gratis",
+    description: "Un puzzle de observación gratis. No hay cuerpo, solo casillas que tiemblan. La quinta sacudida confirma la regla, o una anterior la rebate. Una sala al día, en hora de Seúl.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-3xl px-4 py-8">
+    <UnseenBoss client:load locale={locale} />
+    <GameGuide slug="unseen-boss" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>
