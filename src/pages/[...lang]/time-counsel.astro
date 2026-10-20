@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import TimeCounsel from "../../components/games/TimeCounsel";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "변호사 vs 시간 — 무료 근거 퍼즐",
+    description: "세 개의 사실이 카드로 이어지는 무료 근거 퍼즐입니다. 판정은 그 연결을 그대로 말합니다. 한국 표준시로 하루 한 판입니다.",
+  },
+  en: {
+    title: "Counsel Against Time — free evidence puzzle",
+    description: "A free evidence puzzle. Three facts point at cards, and the judgment names those edges. One brief a day, dated in Korea Standard Time.",
+  },
+  ja: {
+    title: "弁護士対時間 — 無料の根拠パズル",
+    description: "三つの事実がカードへつながる無料の根拠パズルです。判定はその接続をそのまま言います。日付は韓国標準時で、一日一盤です。",
+  },
+  zh: {
+    title: "律师对时间 — 免费证据谜题",
+    description: "三条事实指向卡牌的免费证据谜题。判决会直接说出这些连接。日期用韩国标准时间，一天一盘。",
+  },
+  fr: {
+    title: "Avocat contre le temps — puzzle gratuit",
+    description: "Un puzzle de preuves gratuit. Trois faits visent des cartes, et le jugement nomme ces liens. Un dossier par jour, à l'heure de Séoul.",
+  },
+  es: {
+    title: "Abogado contra el tiempo — puzzle gratis",
+    description: "Un puzzle de pruebas gratis. Tres hechos señalan cartas, y el fallo nombra esos enlaces. Un escrito al día, en hora de Seúl.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-3xl px-4 py-8">
+    <TimeCounsel client:load locale={locale} />
+    <GameGuide slug="time-counsel" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>
