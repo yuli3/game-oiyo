@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import LetterSwap from "../../components/games/LetterSwap";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "글자 맞바꾸기 — 오늘의 글자 퍼즐",
+    description: "글자 바꾸기 퍼즐과 단어 스왑 퍼즐을 브라우저에서 무료로 하세요. 칸의 글자를 맞바꾸어 가로와 세로 단어를 완성합니다. 오늘의 판은 한국 표준시이고, 바꿀 수 있는 횟수는 15회입니다.",
+  },
+  en: {
+    title: "Letter Swap — daily letter puzzle",
+    description: "A free letter-swap puzzle in the browser. Exchange letters until the across and down words are done. Today's board uses Korea Standard Time, with 15 swaps.",
+  },
+  ja: {
+    title: "文字入れ替え — 今日の文字パズル",
+    description: "ブラウザで無料の文字入れ替えパズルです。文字を入れ替えて横と縦の語を完成させます。今日の盤は韓国標準時で、入れ替えは15回です。",
+  },
+  zh: {
+    title: "字母对调 — 今日字母谜题",
+    description: "在浏览器里免费玩字母对调。对调格子里的字，完成横排和竖排的词。今日棋盘用韩国标准时间，对调限15次。",
+  },
+  fr: {
+    title: "Échange de lettres — puzzle du jour",
+    description: "Un puzzle gratuit d'échange de lettres dans le navigateur. Échangez les lettres jusqu'aux mots horizontaux et verticaux. La date suit l'heure de Séoul, avec 15 échanges.",
+  },
+  es: {
+    title: "Cambio de letras — puzzle de hoy",
+    description: "Un puzzle gratis de cambio de letras en el navegador. Cambia letras hasta completar las palabras horizontales y verticales. La fecha es la hora de Seúl, con 15 cambios.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-3xl px-4 py-8">
+    <LetterSwap client:load locale={locale} />
+    <GameGuide slug="letter-swap" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>
