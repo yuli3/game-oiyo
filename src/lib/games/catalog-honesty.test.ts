@@ -52,10 +52,10 @@ describe("game catalog honesty", () => {
     // The headline copy is hand-written per locale, so it is the piece most
     // likely to go stale — assert it rather than trusting it.
     const header = page.slice(0, page.indexOf("const catLabel"));
-    // Two digits stopped matching once the public count reached 100. The
-    // trailing % keeps the "100%" browser line out of the headline check
-    // (2026-10-21).
-    const numbers = [...header.matchAll(/\b(\d{2,3})\b(?!%)/g)].map((m) => Number(m[1]));
+    // Two digits stopped matching once the public count reached 100. French
+    // and Spanish write the browser line as "100 %", so a space may sit
+    // before the percent (2026-10-21).
+    const numbers = [...header.matchAll(/\b(\d{2,3})\b(?!\s*%)/g)].map((m) => Number(m[1]));
     expect(numbers.length).toBeGreaterThan(0);
     for (const n of numbers) expect(n).toBe(gameCount);
   });
