@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import OmissionDetective from "../../components/games/OmissionDetective";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "거짓말 탐정 — 무료 순서 추리",
+    description: "말한 순서와 빠진 장소로 길을 맞추는 무료 추리 퍼즐입니다. 세 사람의 말은 사실인 부분만 담고, 확인은 세 번입니다. 한국 표준시로 하루 한 사건입니다.",
+  },
+  en: {
+    title: "Omission Detective — free order puzzle",
+    description: "A free order puzzle. Three people tell the truth and leave places out. Rebuild the only route their lines allow. Three checks, one case a day in Korea Standard Time.",
+  },
+  ja: {
+    title: "省略の探偵 — 無料の順序推理",
+    description: "話した順序と抜けた場所から道を復元する無料の推理パズルです。三人の話は本当の一部だけで、確認は三回です。日付は韓国標準時で、一日一件です。",
+  },
+  zh: {
+    title: "省略侦探 — 免费顺序推理",
+    description: "根据说出的顺序和漏掉的地点还原路线的免费推理谜题。三个人只说真实的一段，只有三次核对。日期用韩国标准时间，一天一个案件。",
+  },
+  fr: {
+    title: "Détective des oublis — puzzle gratuit",
+    description: "Un puzzle gratuit. Trois personnes disent vrai et omettent des lieux. Reconstruisez le seul trajet que leurs phrases permettent. Trois essais, une affaire par jour à l'heure de Séoul.",
+  },
+  es: {
+    title: "Detective de omisiones — puzzle gratis",
+    description: "Un puzzle gratis. Tres personas dicen la verdad y omiten lugares. Reconstruye la única ruta que permiten sus frases. Tres intentos, un caso al día en hora de Seúl.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-3xl px-4 py-8">
+    <OmissionDetective client:load locale={locale} />
+    <GameGuide slug="omission-detective" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>
