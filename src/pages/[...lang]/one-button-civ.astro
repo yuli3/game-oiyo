@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import OneButtonCiv from "../../components/games/OneButtonCiv";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "버튼 하나짜리 문명 — 무료 한 버튼 퍼즐",
+    description: "버튼은 하나입니다. 짧게 누르거나, 길게 누르거나, 계절이 끝날 때까지 참으면 다음 칸의 땅이 바뀝니다. 버튼은 그 대응을 말하지 않습니다. 한국 표준시로 하루 한 판입니다.",
+  },
+  en: {
+    title: "One-Button Realm — free one-button puzzle",
+    description: "There is one button. A short press, a long press, or waiting out the season changes the next plot. The button never names which is which. One row a day, dated in Korea Standard Time.",
+  },
+  ja: {
+    title: "ボタン一つの文明 — 無料の一ボタンパズル",
+    description: "ボタンは一つです。短く押す、長く押す、季節が終わるまで待つ、のどれかで次のマスの土地が変わります。ボタンはその対応を言いません。日付は韓国標準時で、一日一盤です。",
+  },
+  zh: {
+    title: "一个按钮的文明 — 免费单按钮谜题",
+    description: "只有一个按钮。短按、长按，或等到这一季结束，都会改变下一格的土地。按钮不会说出哪一个对应哪一种。日期用韩国标准时间，一天一盘。",
+  },
+  fr: {
+    title: "Civilisation à un bouton — puzzle gratuit",
+    description: "Il n'y a qu'un bouton. Un appui court, un appui long, ou attendre la fin de la saison change la parcelle suivante. Le bouton ne dit pas lequel fait quoi. Une rangée par jour, à l'heure de Séoul.",
+  },
+  es: {
+    title: "Civilización de un botón — puzzle gratis",
+    description: "Hay un solo botón. Una pulsación corta, una larga, o esperar el fin de la estación cambia la parcela siguiente. El botón no dice cuál hace qué. Una fila al día, en hora de Seúl.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-3xl px-4 py-8">
+    <OneButtonCiv client:load locale={locale} />
+    <GameGuide slug="one-button-civ" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>
