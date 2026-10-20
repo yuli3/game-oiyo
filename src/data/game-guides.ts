@@ -13,6 +13,106 @@ export interface GameGuide {
 }
 
 export const GAME_GUIDES: Record<string, GameGuide> = {
+  "domino-logic": {
+    origin: {
+      ko: "도미노 칸 맞추기는 받은 도미노를 칸에 모두 놓아 영역 조건을 맞추는 오늘의 논리 퍼즐입니다. 눈은 0부터 6까지인 OIYO 도미노 세트를 쓰고, 판과 조건은 날짜마다 새로 만듭니다.",
+      en: "Domino Cells is a daily logic puzzle: place every domino so each region meets its rule. The pips are OIYO's double-six set, and the board is built fresh for the date.",
+      ja: "ドミノのマスは、配られたドミノを全部置いて領域の条件を満たす今日の論理パズルです。目は0から6のOIYOのセットで、盤と条件はその日ごとに作ります。",
+      zh: "多米诺填格是把发到的多米诺全部放下、让区域满足条件的今日逻辑谜题。点数用 OIYO 的零到六双六套，棋盘和条件按日期新生成。",
+      fr: "Cases de dominos est un puzzle du jour : posez chaque domino pour que la zone respecte sa règle. Les points sont le jeu double-six d'OIYO, et la grille change avec la date.",
+      es: "Casillas de dominó es un puzzle diario: coloca cada dominó para que la zona cumpla su regla. Los puntos son el juego doble seis de OIYO, y el tablero cambia con la fecha.",
+    },
+    how: {
+      ko: "도미노를 빈 칸으로 끌어 놓거나, 칸을 두 번 눌러 방향을 정합니다. 회전은 타일을 다시 누르거나 회전 버튼입니다. 하루는 쉬움·보통·어려움 세 판이고, 날짜는 한국 표준시입니다.",
+      en: "Drag a domino onto an empty cell, or tap two cells to choose the direction. Tap the tile again or use Rotate to turn it. A day has easy, normal, and hard boards, dated in Korea Standard Time.",
+      ja: "ドミノを空きマスへ引きずるか、マスを二回押して向きを決めます。回転は牌をもう一度押すか回転ボタンです。一日は易しい・普通・難しいの三盤で、日付は韓国標準時です。",
+      zh: "把多米诺拖到空格，或连点两格来定方向。再点牌或按旋转来转向。一天有简单、普通、困难三盘，日期用韩国标准时间。",
+      fr: "Glissez un domino sur une case vide, ou touchez deux cases pour la direction. Un second toucher ou Tourner le pivote. La journée a trois grilles, datées à l'heure de Séoul.",
+      es: "Arrastra un dominó a una casilla vacía, o toca dos casillas para la dirección. Otro toque o Girar lo voltea. El día tiene tres tableros, con fecha en hora de Seúl.",
+    },
+    rules: {
+      ko: [
+        "도미노 하나는 맞닿은 칸 둘을 덮습니다. 받은 도미노를 모두 써야 합니다.",
+        "영역의 조건은 합, 모두 같은 눈, 모두 다른 눈, 어떤 수보다 작음 중 하나입니다.",
+        "그 조건을 만족하는 눈의 배치는 판마다 하나뿐입니다.",
+        "오늘의 세 판은 한국 표준시 날짜로 정해지고, 같은 날에는 같은 판이 나옵니다.",
+        "무르기를 쓰면 그 판의 최단 기록은 무르기 없는 기록과 따로 남습니다.",
+      ],
+      en: [
+        "One domino covers two touching cells. Every dealt domino must be used.",
+        "A region asks for a sum, all equal pips, all different pips, or pips under a number.",
+        "Only one arrangement of pips satisfies the board.",
+        "The three daily boards are fixed by the Korea Standard Time date.",
+        "Using undo stores that board's best time apart from a clean run.",
+      ],
+      ja: [
+        "ドミノ一つは隣り合うマス二つを覆います。配られたドミノは全部使います。",
+        "領域の条件は、合計、全部同じ目、全部ちがう目、ある数未満のいずれかです。",
+        "条件を満たす目の並びは、盤ごとに一つだけです。",
+        "今日の三盤は韓国標準時の日付で決まり、同じ日は同じ盤です。",
+        "戻すを使うと、その盤の最短記録は戻さない記録とは別に残ります。",
+      ],
+      zh: [
+        "一张多米诺盖住相邻的两格。发到的牌必须全部用上。",
+        "区域条件是合计、全部相同、全部不同，或小于某个数。",
+        "满足条件的点数排列每盘只有一种。",
+        "今日三盘由韩国标准时间的日期决定，同一天是同一盘。",
+        "使用撤销时，这一盘的最快成绩与不撤销的成绩分开保存。",
+      ],
+      fr: [
+        "Un domino couvre deux cases qui se touchent. Tous les dominos reçus doivent être posés.",
+        "Une zone demande une somme, des points égaux, des points tous différents, ou des points sous un nombre.",
+        "Une seule disposition des points satisfait la grille.",
+        "Les trois grilles du jour dépendent de la date en heure de Séoul.",
+        "Annuler range le meilleur temps de cette grille à part d'une partie sans retour.",
+      ],
+      es: [
+        "Un dominó cubre dos casillas que se tocan. Hay que usar todos los dominós recibidos.",
+        "Una zona pide una suma, puntos iguales, puntos todos distintos, o puntos por debajo de un número.",
+        "Solo una disposición de puntos cumple el tablero.",
+        "Los tres tableros del día dependen de la fecha en hora de Seúl.",
+        "Deshacer guarda el mejor tiempo de ese tablero aparte de una partida limpia.",
+      ],
+    },
+    faqs: [
+      {
+        q: {
+          ko: "하루의 판은 언제 바뀌나요?",
+          en: "When does the daily board change?",
+          ja: "一日の盤はいつ変わりますか?",
+          zh: "每天的棋盘何时更换?",
+          fr: "Quand la grille du jour change-t-elle ?",
+          es: "¿Cuándo cambia el tablero del día?",
+        },
+        a: {
+          ko: "한국 표준시 자정에 쉬움·보통·어려움 세 판이 함께 바뀝니다.",
+          en: "At midnight Korea Standard Time, the easy, normal, and hard boards change together.",
+          ja: "韓国標準時の正子に、易しい・普通・難しいの三盤が一緒に変わります。",
+          zh: "韩国标准时间零点，简单、普通、困难三盘一起更换。",
+          fr: "À minuit, heure de Séoul, les trois grilles changent ensemble.",
+          es: "A medianoche, hora de Seúl, los tres tableros cambian juntos.",
+        },
+      },
+      {
+        q: {
+          ko: "조건이 맞는 배치가 둘일 수 있나요?",
+          en: "Can two layouts both be right?",
+          ja: "条件を満たす置き方が二つあることはありますか?",
+          zh: "会有两种都正确的摆法吗?",
+          fr: "Deux dispositions peuvent-elles être justes ?",
+          es: "¿Puede haber dos colocaciones correctas?",
+        },
+        a: {
+          ko: "없습니다. 만든 뒤 솔버로 확인해, 조건을 만족하는 눈의 배치는 하나만 남깁니다.",
+          en: "No. After the board is built, a solver checks that only one pip layout meets the rules.",
+          ja: "ありません。作ったあとソルバーで確かめ、条件を満たす目の並びは一つだけ残します。",
+          zh: "不会。生成后用求解器确认，满足条件的点数排列只留一种。",
+          fr: "Non. Après la construction, un solveur vérifie qu'une seule disposition convient.",
+          es: "No. Tras construir el tablero, un solver comprueba que solo una disposición cumple las reglas.",
+        },
+      },
+    ],
+  },
   "tile-rummy": {
     origin: {
       ko: "숫자 타일은 같은 숫자를 모으거나 한 색을 이어 내려놓는 타일 러미입니다. 네 색의 이름과 별표 와일드는 OIYO가 정한 것이고, 다른 제품의 타일 그림이나 이름을 쓰지 않습니다.",

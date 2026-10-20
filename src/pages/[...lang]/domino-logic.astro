@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import DominoLogic from "../../components/games/DominoLogic";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "도미노 칸 맞추기 — 오늘의 도미노 퍼즐",
+    description: "도미노 퍼즐과 도미노 논리 퍼즐을 브라우저에서 무료로 푸세요. 받은 도미노를 칸에 놓아 합, 같은 눈, 다른 눈 조건을 맞춥니다. 오늘의 판은 한국 표준시입니다.",
+  },
+  en: {
+    title: "Domino Cells — daily domino logic puzzle",
+    description: "A free domino logic puzzle in the browser. Place every domino so each region meets its sum, match, or difference rule. Today's board uses Korea Standard Time.",
+  },
+  ja: {
+    title: "ドミノのマス — 今日のドミノ論理パズル",
+    description: "ブラウザで無料のドミノ論理パズルです。配られたドミノを置き、合計・同じ目・違う目の条件を満たします。今日の盤は韓国標準時です。",
+  },
+  zh: {
+    title: "多米诺填格 — 今日多米诺逻辑谜题",
+    description: "在浏览器里免费玩多米诺逻辑谜题。放下所有多米诺，让每个区域满足合计、相同或不同的条件。今日棋盘用韩国标准时间。",
+  },
+  fr: {
+    title: "Cases de dominos — puzzle logique du jour",
+    description: "Un puzzle de dominos gratuit dans le navigateur. Posez chaque domino pour que la zone respecte sa somme, son égalité ou sa différence. La date suit l'heure de Séoul.",
+  },
+  es: {
+    title: "Casillas de dominó — puzzle lógico de hoy",
+    description: "Un puzzle de dominó gratis en el navegador. Coloca cada dominó para que la zona cumpla su suma, igualdad o diferencia. La fecha es la hora de Seúl.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-3xl px-4 py-8">
+    <DominoLogic client:load locale={locale} />
+    <GameGuide slug="domino-logic" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>

@@ -16,22 +16,22 @@ const { locale } = Astro.props as { locale: Locale };
 const translations = await getTranslations(locale);
 
 const meta: Record<Locale, { title: string; description: string }> = {
-  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 82종", description: "체스·스도쿠·워들부터 OIYO 오리지널 게임까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 82종." },
-  en: { title: "OIYO Arcade — 82 free browser games, no install", description: "Chess, Sudoku, Wordle, and original OIYO games: 82 free games you can play instantly in your browser." },
-  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム82種", description: "チェス・数独・ワードルからOIYOオリジナル作品まで、ブラウザですぐ遊べる無料ゲーム82種。" },
-  zh: { title: "OIYO 街机 — 无需安装的82款免费游戏", description: "从国际象棋、数独、猜词到 OIYO 原创作品，82款游戏无需安装即可畅玩。" },
-  fr: { title: "OIYO Arcade — 82 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations originales OIYO : 82 jeux gratuits dans le navigateur." },
-  es: { title: "OIYO Arcade — 82 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y originales de OIYO: 82 juegos gratuitos en el navegador." },
+  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 83종", description: "체스·스도쿠·워들부터 OIYO 오리지널 게임까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 83종." },
+  en: { title: "OIYO Arcade — 83 free browser games, no install", description: "Chess, Sudoku, Wordle, and original OIYO games: 83 free games you can play instantly in your browser." },
+  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム83種", description: "チェス・数独・ワードルからOIYOオリジナル作品まで、ブラウザですぐ遊べる無料ゲーム83種。" },
+  zh: { title: "OIYO 街机 — 无需安装的83款免费游戏", description: "从国际象棋、数独、猜词到 OIYO 原创作品，83款游戏无需安装即可畅玩。" },
+  fr: { title: "OIYO Arcade — 83 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations originales OIYO : 83 jeux gratuits dans le navigateur." },
+  es: { title: "OIYO Arcade — 83 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y originales de OIYO: 83 juegos gratuitos en el navegador." },
 };
 const m = meta[locale] ?? meta.en;
 
 const hero: Record<Locale, { eyebrow: string; title: string; sub: string }> = {
-  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 82종", sub: "보드·카드·퍼즐·오리지널 아케이드 — 브라우저에서 바로 시작하세요." },
-  en: { eyebrow: "🎮 OIYO Arcade", title: "82 free games, right in your browser", sub: "Board, card, puzzle, and original arcade games — instant and free." },
-  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム82種", sub: "ボード・カード・パズル・オリジナル作品をブラウザですぐに。" },
-  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的82款免费游戏", sub: "棋类、纸牌、益智和原创街机游戏，浏览器直接开玩。" },
-  fr: { eyebrow: "🎮 OIYO Arcade", title: "82 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et créations originales, sans installation." },
-  es: { eyebrow: "🎮 OIYO Arcade", title: "82 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones originales, sin instalación." },
+  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 83종", sub: "보드·카드·퍼즐·오리지널 아케이드 — 브라우저에서 바로 시작하세요." },
+  en: { eyebrow: "🎮 OIYO Arcade", title: "83 free games, right in your browser", sub: "Board, card, puzzle, and original arcade games — instant and free." },
+  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム83種", sub: "ボード・カード・パズル・オリジナル作品をブラウザですぐに。" },
+  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的83款免费游戏", sub: "棋类、纸牌、益智和原创街机游戏，浏览器直接开玩。" },
+  fr: { eyebrow: "🎮 OIYO Arcade", title: "83 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et créations originales, sans installation." },
+  es: { eyebrow: "🎮 OIYO Arcade", title: "83 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones originales, sin instalación." },
 };
 const h = hero[locale] ?? hero.en;
 
@@ -83,6 +83,7 @@ const GAMES: Game[] = [
   { slug: "hearts-game", emoji: "♥️", cat: "card", name: { ko: "하트", en: "Hearts", ja: "ハート", zh: "红心大战", fr: "Hearts", es: "Corazones" } },
   { slug: "tile-rummy", emoji: "🟥", cat: "card", name: { ko: "숫자 타일", en: "Number Tiles", ja: "数字タイル", zh: "数字牌", fr: "Tuiles chiffrées", es: "Fichas numéricas" } },
 
+  { slug: "domino-logic", emoji: "🁣", cat: "puzzle", name: { ko: "도미노 칸 맞추기", en: "Domino Cells", ja: "ドミノのマス", zh: "多米诺填格", fr: "Cases de dominos", es: "Casillas de dominó" } },
   { slug: "sudoku", emoji: "🔢", cat: "puzzle", name: { ko: "스도쿠", en: "Sudoku", ja: "数独", zh: "数独", fr: "Sudoku", es: "Sudoku" } },
   { slug: "minesweeper", emoji: "💣", cat: "puzzle", name: { ko: "지뢰찾기", en: "Minesweeper", ja: "マインスイーパ", zh: "扫雷", fr: "Démineur", es: "Buscaminas" } },
   { slug: "water-sort", emoji: "🧪", cat: "puzzle", name: { ko: "물 정렬", en: "Water Sort", ja: "水ソート", zh: "水排序", fr: "Tri d'eau", es: "Ordenar agua" } },
