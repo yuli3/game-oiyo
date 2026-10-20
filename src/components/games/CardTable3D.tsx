@@ -1,7 +1,10 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { Maximize2, Minimize2 } from 'lucide-react';
 import { CardTable3DScene } from './CardTable3DScene';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
+import type { Locale } from '../../lib/i18n';
 import {
   createInitialSolitaireState,
   drawFromStock,
@@ -120,8 +123,18 @@ const I18N: Record<string, LangCopy> = {
   },
 };
 
+const PORTAL_LOCALES = ['ko', 'en', 'ja', 'zh', 'fr', 'es'] as const;
+
+function portalLocale(lang?: string): Locale {
+  if (lang && (PORTAL_LOCALES as readonly string[]).includes(lang)) return lang as Locale;
+  return 'ko';
+}
+
 export function CardTable3D({ lang = 'ko' }: Props) {
   const t = I18N[lang] || I18N.ko;
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({
+    locale: portalLocale(lang),
+  });
   const [state, setState] = useState<SolitaireState>(createInitialSolitaireState);
   const [selectedCard, setSelectedCard] = useState<{
     card: Card;
@@ -328,8 +341,23 @@ export function CardTable3D({ lang = 'ko' }: Props) {
     return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
   };
 
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      const target = event.target;
+      if (target instanceof HTMLElement && target.closest('input, textarea')) return;
+      if (event.code !== 'KeyF') return;
+      event.preventDefault();
+      togglePortal();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [togglePortal]);
+
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-4">
+    <div
+      ref={containerRef}
+      className={isImmersive ? 'arcade-shell fixed inset-0 z-50 flex h-dvh w-screen flex-col gap-4 overflow-y-auto overscroll-none bg-background' : 'mx-auto w-full max-w-5xl space-y-4'}
+    >
       {/* Header bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
         <div>
@@ -369,6 +397,14 @@ export function CardTable3D({ lang = 'ko' }: Props) {
             className="rounded-xl bg-primary px-3 py-1.5 text-xs font-black text-primary-foreground shadow transition hover:opacity-90 active:scale-95"
           >
             {t.newGame}
+          </button>
+          <button
+            type="button"
+            onClick={togglePortal}
+            className="flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-border bg-card text-foreground"
+            aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+          >
+            {isImmersive ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
           </button>
         </div>
       </div>
