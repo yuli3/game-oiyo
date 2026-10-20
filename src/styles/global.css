@@ -277,6 +277,27 @@ canvas, [data-game-surface], .game-canvas, .game-viewport {
   user-select: none !important;
 }
 
+/* 의도 (2026-10-20 세운): 몰입 모드는 글 카드가 아니라 폰 화면을 채우는 판이다.
+   iOS Safari에는 Fullscreen API가 없어서 게임은 fixed 100dvh로 대신한다.
+   그때 제목과 전체화면 버튼이 노치·홈 막대에 깔리면 조작이 아니다.
+   env가 0인 데스크톱은 1rem, 넓은 화면은 1.5rem이라 예전 p-4 sm:p-6과 같다.
+   Tailwind 임의값 pt-[env(...)]는 shadcn lint가 막아서 이 클래스에만 둔다.
+   플레이 캔버스의 touch-action:none 은 여기 붙이지 않는다. 붙이면 설명과 버튼이 있는 판을 손가락으로 스크롤할 수 없다. */
+.arcade-shell {
+  padding-top: max(1rem, env(safe-area-inset-top, 0px));
+  padding-right: max(1rem, env(safe-area-inset-right, 0px));
+  padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+  padding-left: max(1rem, env(safe-area-inset-left, 0px));
+}
+@media (min-width: 640px) {
+  .arcade-shell {
+    padding-top: max(1.5rem, env(safe-area-inset-top, 0px));
+    padding-right: max(1.5rem, env(safe-area-inset-right, 0px));
+    padding-bottom: max(1.5rem, env(safe-area-inset-bottom, 0px));
+    padding-left: max(1.5rem, env(safe-area-inset-left, 0px));
+  }
+}
+
 .touch-none button, .touch-none [role="button"], [data-game-control], .game-control-btn {
   touch-action: none !important;
   -webkit-touch-callout: none !important;

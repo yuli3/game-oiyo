@@ -20,7 +20,10 @@ const shadcnRules = {
   "shadcn/no-inline-styles": "error",
   // not-prose is a marker class that @tailwindcss/typography (loaded via @plugin in
   // src/styles/global.css) reads in its selectors; it generates no CSS of its own.
-  "shadcn/no-unknown-classes": ["error", { allow: ["not-prose"] }],
+  // arcade-shell (2026-10-20): notch and home-indicator padding uses env(), which
+  // only fits an arbitrary Tailwind value. The lint forbids those, so the padding
+  // lives in global.css under one class name.
+  "shadcn/no-unknown-classes": ["error", { allow: ["not-prose", "arcade-shell"] }],
   "shadcn/require-static-classes": "error",
 }
 

@@ -4,6 +4,8 @@
  * 화면 위가 북쪽이고 화면 오른쪽이 동쪽이다. 이 장의 기록은 화면에만 남긴다.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Maximize2, Minimize2 } from "lucide-react";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
 import type { Locale } from "../../lib/i18n";
 import {
   ACTS,
@@ -537,6 +539,7 @@ const SLOTS: readonly (Act | null)[] = [null, "N", null, "W", "H", "E", null, "S
 
 export default function DoodleLine({ locale = "en" }: { locale?: Locale }) {
   const copy = COPY[locale] ?? COPY.en;
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale });
   const reduce = usePrefersReducedMotion();
   const opening = useRef(createLine(0));
   const [seed, setSeed] = useState(0);
@@ -667,6 +670,11 @@ export default function DoodleLine({ locale = "en" }: { locale?: Locale }) {
         setPaused((value) => !value);
         return;
       }
+      if (event.code === "KeyF") {
+        event.preventDefault();
+        togglePortal();
+        return;
+      }
       if (event.code === "KeyV") {
         event.preventDefault();
         setView((value) => (value + 1) % 4);
@@ -679,7 +687,7 @@ export default function DoodleLine({ locale = "en" }: { locale?: Locale }) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [move]);
+  }, [move, togglePortal]);
 
   const locked = paused || busy || state.status !== "play";
   const named = ACTS.filter((act) => {
@@ -702,8 +710,21 @@ export default function DoodleLine({ locale = "en" }: { locale?: Locale }) {
           : `${copy.playing} ${named.join(" · ")}`;
 
   return (
-    <div className="space-y-4" onPointerDown={arm}>
-      <header className="space-y-2">
+    <div
+      ref={containerRef}
+      className={isImmersive ? "arcade-shell fixed inset-0 z-50 flex h-dvh w-screen flex-col gap-4 overflow-y-auto overscroll-none bg-background" : "space-y-4"}
+      onPointerDown={arm}
+    >
+      <header className="relative shrink-0 space-y-2 pr-12">
+        <button
+          type="button"
+          onClick={togglePortal}
+          className="absolute right-0 top-0 flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-border/60 bg-card text-foreground shadow-sm transition hover:bg-muted"
+          title={isImmersive ? portalLabels.exit : portalLabels.enter}
+          aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+        >
+          {isImmersive ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+        </button>
         <h2 className="text-2xl font-semibold text-foreground">{copy.title}</h2>
         <p className="text-sm leading-6 text-muted-foreground">{copy.lead}</p>
         <p className="text-xs leading-5 text-muted-foreground">{copy.keys}</p>
@@ -732,8 +753,8 @@ export default function DoodleLine({ locale = "en" }: { locale?: Locale }) {
         ))}
       </ol>
       <p role="status" aria-live="polite" className="text-sm text-foreground">{live}</p>
-      <div className="relative overflow-hidden rounded-2xl border border-border bg-card">
-        <div className="h-96" aria-hidden="true">
+      <div className={isImmersive ? "relative flex min-h-64 w-full flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-card" : "relative overflow-hidden rounded-2xl border border-border bg-card"}>
+        <div className={isImmersive ? "h-full min-h-64 w-full flex-1" : "h-96"} aria-hidden="true">
           <DoodleLineScene
             state={state}
             shown={shown}
