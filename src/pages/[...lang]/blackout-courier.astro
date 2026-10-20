@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import BlackoutCourier from "../../components/games/BlackoutCourier";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "정전 배달부 — 무료 기억 미로",
+    description: "정전 배달 게임입니다. 불이 켜진 동안 지도를 외우고, 5초의 정전 동안만 움직여 세 곳을 순서대로 배달합니다. 한국 표준시로 하루 한 지도입니다.",
+  },
+  en: {
+    title: "Blackout Courier — free memory maze",
+    description: "A free blackout courier game. Memorize the map while the lights are on, then move only during a five-second blackout. One map a day, dated in Korea Standard Time.",
+  },
+  ja: {
+    title: "停電の配達人 — 無料の記憶迷路",
+    description: "停電の配達ゲームです。明かりがあるうちに地図を覚え、5秒の停電のあいだだけ動いて三か所へ順番に届けます。日付は韓国標準時で、一日一枚です。",
+  },
+  zh: {
+    title: "停电快递员 — 免费记忆迷宫",
+    description: "一款停电送货游戏。灯亮时记住地图，只在停电的5秒里移动，按顺序送到三处。日期用韩国标准时间，一天一张地图。",
+  },
+  fr: {
+    title: "Coursier dans le noir — labyrinthe gratuit",
+    description: "Un jeu de coursier gratuit. Mémorisez la carte pendant que la lumière est allumée, puis marchez seulement pendant cinq secondes d'obscurité. Une carte par jour, à l'heure de Séoul.",
+  },
+  es: {
+    title: "Mensajero a oscuras — laberinto gratis",
+    description: "Un juego de mensajero gratis. Memoriza el mapa con la luz encendida y camina solo durante cinco segundos de apagón. Un mapa al día, con fecha en hora de Seúl.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-3xl px-4 py-8">
+    <BlackoutCourier client:load locale={locale} />
+    <GameGuide slug="blackout-courier" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>
