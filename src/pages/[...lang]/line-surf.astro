@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import LineSurf from "../../components/games/LineSurf";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "파도 서퍼 — 무료 아케이드",
+    description: "한 획이 트랙입니다. 굽히면 속도가 줄고, 끊으면 속도가 빕니다. 벽은 막고, 물마루는 속도가 있어야 넘습니다. 한국 표준시로 하루 한 판입니다.",
+  },
+  en: {
+    title: "Line Surf — free arcade",
+    description: "One stroke is the track. A curve spends speed and a cut empties it. A wall stops you, and a lip needs speed. One wave a day, dated in Korea Standard Time.",
+  },
+  ja: {
+    title: "ラインサーフ — 無料アーケード",
+    description: "一画がトラックです。曲げると速度が減り、切ると速度が空になります。壁は止め、波頭は速度がないと越えられません。日付は韓国標準時で、一日一回です。",
+  },
+  zh: {
+    title: "划线冲浪 — 免费街机",
+    description: "一笔就是轨道。转弯会掉速度，断开会把速度清掉。墙会挡住，浪头需要速度。日期用韩国标准时间，一天一局。",
+  },
+  fr: {
+    title: "Surf de ligne — jeu gratuit",
+    description: "Un trait est la piste. Une courbe dépense la vitesse et une coupe la vide. Un mur arrête, une crête demande de la vitesse. Une vague par jour, à l'heure de Séoul.",
+  },
+  es: {
+    title: "Surf de un trazo — arcade gratis",
+    description: "Un trazo es la pista. Una curva gasta velocidad y un corte la vacía. Un muro para y una cresta pide velocidad. Una ola al día, en hora de Seúl.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-3xl px-4 py-8">
+    <LineSurf client:load locale={locale} />
+    <GameGuide slug="line-surf" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>
