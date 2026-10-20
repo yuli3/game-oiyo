@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import LatePress from "../../components/games/LatePress";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "기다림 경주 — 무료 타이밍 퍼즐",
+    description: "상대가 움직인 뒤에 누르되, 숨은 제한보다 이르면 안 됩니다. 이른 움직임은 속임수일 수 있고, 제한 시각은 보이지 않습니다. 한국 표준시로 하루 한 판입니다.",
+  },
+  en: {
+    title: "Late Press — free timing puzzle",
+    description: "Press after the opponent moves, and before a hidden limit. An early movement may be a feint, and the limit is not shown. One match a day, dated in Korea Standard Time.",
+  },
+  ja: {
+    title: "待ちの勝負 — 無料のタイミングパズル",
+    description: "相手が動いたあと、隠れた制限より前に押します。早い動きはフェイントかもしれず、制限の時刻は見えません。日付は韓国標準時で、一日一回です。",
+  },
+  zh: {
+    title: "等待比赛 — 免费时机谜题",
+    description: "在对方动过之后、隐藏的限制之前按下。较早的动作可能是假动作，限制时刻不会显示。日期用韩国标准时间，一天一局。",
+  },
+  fr: {
+    title: "Course d'attente — puzzle gratuit",
+    description: "Appuyez après le mouvement de l'autre, et avant une limite cachée. Un mouvement tôt peut être une feinte, et la limite n'est pas affichée. Une manche par jour, à l'heure de Séoul.",
+  },
+  es: {
+    title: "Carrera de espera — puzzle gratis",
+    description: "Pulsa después de que el otro se mueva, y antes de un límite oculto. Un movimiento temprano puede ser una finta, y el límite no se muestra. Una manga al día, en hora de Seúl.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-3xl px-4 py-8">
+    <LatePress client:load locale={locale} />
+    <GameGuide slug="late-press" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>
