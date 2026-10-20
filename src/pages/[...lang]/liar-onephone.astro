@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import LiarOnePhone from "../../components/games/LiarOnePhone";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "라이어 한 폰 — 무료 라이어 게임",
+    description: "라이어 게임 제시어를 폰 한 대로 확인하는 무료 파티 게임입니다. 3명에서 10명이 카드를 가려 넘기고, 토론 뒤 투표합니다. 서버도 이름 저장도 없습니다.",
+  },
+  en: {
+    title: "One-Phone Liar — free word game",
+    description: "A free liar word game for one phone. Three to ten people hide the screen, talk, then vote. There is no server and no saved names.",
+  },
+  ja: {
+    title: "一台ライアー — 無料のワードゲーム",
+    description: "一台の電話で提示語を確認する無料のパーティーゲームです。3人から10人が画面を隠して渡し、相談して投票します。サーバーも名前の保存もありません。",
+  },
+  zh: {
+    title: "一机说谎者 — 免费词语游戏",
+    description: "用一部手机确认提示词的免费聚会游戏。3到10人遮住屏幕传递，讨论后投票。没有服务器，也不保存名字。",
+  },
+  fr: {
+    title: "Menteur, un téléphone — jeu de mots gratuit",
+    description: "Un jeu de mots gratuit pour un seul téléphone. De trois à dix personnes cachent l'écran, parlent, puis votent. Pas de serveur, pas de nom enregistré.",
+  },
+  es: {
+    title: "Mentiroso de un móvil — juego de palabras gratis",
+    description: "Un juego de palabras gratis para un solo móvil. De tres a diez personas tapan la pantalla, hablan y votan. No hay servidor ni nombres guardados.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-3xl px-4 py-8">
+    <LiarOnePhone client:load locale={locale} />
+    <GameGuide slug="liar-onephone" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>
