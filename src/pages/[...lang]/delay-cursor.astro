@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import DelayCursor from "../../components/games/DelayCursor";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "10초 후의 커서 — 무료 타이밍 퍼즐",
+    description: "10초 전의 자리와 지금의 자리가 동시에 발판을 밟는 무료 타이밍 퍼즐입니다. 유령은 자신의 기록입니다. 한국 표준시로 하루 한 판입니다.",
+  },
+  en: {
+    title: "Ten-Second Cursor — free timing puzzle",
+    description: "A free timing puzzle. Your cell from ten seconds ago and your cell now must stand on the two plates in the same second. One floor a day, dated in Korea Standard Time.",
+  },
+  ja: {
+    title: "10秒後のカーソル — 無料のタイミングパズル",
+    description: "10秒前の位置と今の位置が同じ秒に踏板を踏む無料のタイミングパズルです。幽霊は自分の記録です。日付は韓国標準時で、一日一盤です。",
+  },
+  zh: {
+    title: "十秒后的光标 — 免费时机谜题",
+    description: "十秒前的位置和现在的位置要在同一秒踩中踏板的免费时机谜题。影子是你自己的记录。日期用韩国标准时间，一天一盘。",
+  },
+  fr: {
+    title: "Curseur à dix secondes — puzzle gratuit",
+    description: "Un puzzle de timing gratuit. Votre place d'il y a dix secondes et votre place actuelle doivent toucher les deux dalles à la même seconde. Un sol par jour, à l'heure de Séoul.",
+  },
+  es: {
+    title: "Cursor de diez segundos — puzzle gratis",
+    description: "Un puzzle de tiempo gratis. Tu sitio de hace diez segundos y tu sitio actual deben pisar las dos placas en el mismo segundo. Un suelo al día, en hora de Seúl.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-3xl px-4 py-8">
+    <DelayCursor client:load locale={locale} />
+    <GameGuide slug="delay-cursor" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>
