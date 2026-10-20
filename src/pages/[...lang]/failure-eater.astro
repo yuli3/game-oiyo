@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import FailureEater from "../../components/games/FailureEater";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "실패를 먹는 괴물 — 무료 반응 러닝",
+    description: "실패한 뛰기와 놓친 장애물이 다음 통과의 괴물이 되는 무료 반응 러닝입니다. 한국 표준시로 하루 한 판입니다.",
+  },
+  en: {
+    title: "Failure Eater — free reaction run",
+    description: "A free reaction run. A wrong jump and a missed hurdle become the next pass's creatures. One track a day, dated in Korea Standard Time.",
+  },
+  ja: {
+    title: "失敗を食べる怪物 — 無料の反応ランニング",
+    description: "跳んだ失敗と見逃した障害が、次の通過の怪物になる無料の反応ランニングです。日付は韓国標準時で、一日一盤です。",
+  },
+  zh: {
+    title: "吃掉失败的怪物 — 免费反应跑",
+    description: "跳错的一步和漏过的障碍会变成下一次通过时的怪物。日期用韩国标准时间，一天一盘。",
+  },
+  fr: {
+    title: "Monstre des ratés — course gratuite",
+    description: "Une course gratuite. Un mauvais saut et un obstacle raté deviennent les créatures du passage suivant. Une piste par jour, à l'heure de Séoul.",
+  },
+  es: {
+    title: "Monstruo de los fallos — carrera gratis",
+    description: "Una carrera gratis. Un salto mal hecho y un obstáculo fallado se vuelven las criaturas del siguiente paso. Una pista al día, en hora de Seúl.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-3xl px-4 py-8">
+    <FailureEater client:load locale={locale} />
+    <GameGuide slug="failure-eater" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>
