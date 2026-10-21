@@ -8,6 +8,8 @@
 - 컴포넌트 COPY의 ko/en/ja/zh/fr/es를 함께 유지한다. zh는 간체이며 다른 언어에 KO/EN이 새지 않게 한다.
 - AI 로직은 `src/lib/games/ai/`, 개인 기록 계약은 `src/lib/games/records.ts`와 해당 테스트가 정본이다. 현행 Workers 등 별도 기능의 존재를 확인하지 않고 “백엔드 없음”으로 가정하지 않는다.
 
+- **새 게임·리빌드 품질 기준(2026-10-21 세운 결정)**: 게임을 만들거나 고치기 전에 company-brain `projects/game/grok-quality/README.md`와 해당 게임 문서(`projects/game/grok-quality/<slug>.md`)를 먼저 읽고 지킨다. 입장 화면, 캔버스 렌더링, 그림 에셋, 이펙트, 터치 조작, 증강·무한 모드가 출시 기준이다. main에 직접 push하지 않고 브랜치와 draft PR로만 올린다.
+
 ## 개인 기록 보호
 
 - 기존 localStorage 키·객체 모양을 재사용하거나 덮어써 기록을 버리지 않는다.
