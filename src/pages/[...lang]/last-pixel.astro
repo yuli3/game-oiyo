@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import LastPixel from "../../components/games/LastPixel";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "마지막 픽셀 — 무료 아케이드",
+    description: "화면의 칸이 몸과 배경입니다. 발판을 놓으면 배경이 꺼지고, 시야를 열면 몸이 줄어듭니다. 한국 표준시로 하루 한 판입니다.",
+  },
+  en: {
+    title: "Last Pixel — free arcade",
+    description: "The cells are the body and the background. A foothold turns the background off, and opening vision shrinks the body. One strip a day, dated in Korea Standard Time.",
+  },
+  ja: {
+    title: "最後のピクセル — 無料アーケード",
+    description: "マスが体と背景です。足場を置くと背景が消え、視界を開くと体が減ります。日付は韓国標準時で、一日一回です。",
+  },
+  zh: {
+    title: "最后的像素 — 免费街机",
+    description: "格子就是身体和背景。放踏板会关掉背景，打开视野会缩小身体。日期用韩国标准时间，一天一局。",
+  },
+  fr: {
+    title: "Dernier pixel — jeu gratuit",
+    description: "Les cases sont le corps et le fond. Un appui éteint le fond, et ouvrir la vue réduit le corps. Une bande par jour, à l'heure de Séoul.",
+  },
+  es: {
+    title: "Último píxel — arcade gratis",
+    description: "Las casillas son el cuerpo y el fondo. Un apoyo apaga el fondo, y abrir la vista encoge el cuerpo. Una franja al día, en hora de Seúl.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-3xl px-4 py-8">
+    <LastPixel client:load locale={locale} />
+    <GameGuide slug="last-pixel" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>

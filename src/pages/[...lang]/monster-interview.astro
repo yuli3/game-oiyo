@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import MonsterInterview from "../../components/games/MonsterInterview";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "몬스터 면접관 — 무료 아케이드",
+    description: "채용, 보류, 거절만 고릅니다. 채용은 기준을 뒤집고, 거절은 지원자만큼 기준을 밉니다. 한국 표준시로 하루 한 판입니다.",
+  },
+  en: {
+    title: "Monster Interview — free arcade",
+    description: "The only answers are hire, hold, and reject. Hire flips the standard, and reject slides it by the candidate. One interview a day, dated in Korea Standard Time.",
+  },
+  ja: {
+    title: "モンスター面接官 — 無料アーケード",
+    description: "選べる答えは採用、保留、不採用だけです。採用は基準を反転し、不採用は応募者の分だけ基準をずらします。日付は韓国標準時で、一日一回です。",
+  },
+  zh: {
+    title: "怪物面试官 — 免费街机",
+    description: "答案只有录用、保留和拒绝。录用会翻转标准，拒绝会按应聘者推动标准。日期用韩国标准时间，一天一局。",
+  },
+  fr: {
+    title: "Entretien avec un monstre — jeu gratuit",
+    description: "Les seules réponses sont embaucher, attendre et refuser. Embaucher retourne le critère, et refuser le pousse selon le candidat. Un entretien par jour, à l'heure de Séoul.",
+  },
+  es: {
+    title: "Entrevista con un monstruo — arcade gratis",
+    description: "Las únicas respuestas son contratar, esperar y rechazar. Contratar voltea el criterio, y rechazar lo empuja según el candidato. Una entrevista al día, en hora de Seúl.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-3xl px-4 py-8">
+    <MonsterInterview client:load locale={locale} />
+    <GameGuide slug="monster-interview" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>

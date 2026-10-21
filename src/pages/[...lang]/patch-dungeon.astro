@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PatchDungeon from "../../components/games/PatchDungeon";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "패치노트 던전 — 무료 퍼즐",
+    description: "방마다 동사 하나가 바뀝니다. 안내 한 줄만 있고, 버튼의 글자는 첫 방 그대로입니다. 옛 조작을 그대로 누르면 그 방에서 집니다. 한국 표준시로 하루 한 판입니다.",
+  },
+  en: {
+    title: "Patch Dungeon — free puzzle",
+    description: "One verb changes each room. There is one line of notice, and the words on the buttons stay as they were. Pressing the old control loses the room. One dungeon a day, dated in Korea Standard Time.",
+  },
+  ja: {
+    title: "パッチの迷宮 — 無料パズル",
+    description: "部屋ごとに動詞が一つ変わります。案内は一行だけで、ボタンの文字は最初のままです。古い操作のまま押すとその部屋で負けます。日付は韓国標準時で、一日一回です。",
+  },
+  zh: {
+    title: "补丁地牢 — 免费谜题",
+    description: "每个房间改一个动词。只有一行说明，按钮上的字保持原样。还按旧操作就在这间输掉。日期用韩国标准时间，一天一局。",
+  },
+  fr: {
+    title: "Donjon des correctifs — puzzle gratuit",
+    description: "Un verbe change à chaque salle. Une seule ligne prévient, et les mots des boutons restent ceux du début. L'ancien geste perd la salle. Un donjon par jour, à l'heure de Séoul.",
+  },
+  es: {
+    title: "Mazmorra de parches — puzzle gratis",
+    description: "Cada sala cambia un verbo. Hay una sola línea, y las palabras de los botones siguen igual. El control viejo pierde la sala. Una mazmorra al día, en hora de Seúl.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-3xl px-4 py-8">
+    <PatchDungeon client:load locale={locale} />
+    <GameGuide slug="patch-dungeon" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>

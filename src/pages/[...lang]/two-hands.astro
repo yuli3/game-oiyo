@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import TwoHands from "../../components/games/TwoHands";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "두 손의 협상 — 무료 아케이드",
+    description: "왼손과 오른손이 각자 길을 갑니다. 한 손의 발판이 다른 손의 같은 자리를 뒤집습니다. 한국 표준시로 하루 한 판입니다.",
+  },
+  en: {
+    title: "Two-Hand Deal — free arcade",
+    description: "Each hand keeps its own path. A plank flips the paired cell on the other hand. One deal a day, dated in Korea Standard Time.",
+  },
+  ja: {
+    title: "両手の交渉 — 無料アーケード",
+    description: "左手と右手が別の道を進みます。片方の足場が、もう片方の同じ位置を反転します。日付は韓国標準時で、一日一回です。",
+  },
+  zh: {
+    title: "双手的谈判 — 免费街机",
+    description: "左手和右手各走一条路。一只手的踏板会翻转另一只手的同一格。日期用韩国标准时间，一天一局。",
+  },
+  fr: {
+    title: "Négociation à deux mains — jeu gratuit",
+    description: "Chaque main suit son chemin. Un appui retourne la case jumelle de l'autre main. Une négociation par jour, à l'heure de Séoul.",
+  },
+  es: {
+    title: "Trato a dos manos — arcade gratis",
+    description: "Cada mano sigue su camino. Un apoyo voltea la casilla pareja de la otra mano. Un trato al día, en hora de Seúl.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-3xl px-4 py-8">
+    <TwoHands client:load locale={locale} />
+    <GameGuide slug="two-hands" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>

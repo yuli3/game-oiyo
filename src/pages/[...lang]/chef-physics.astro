@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ChefPhysics from "../../components/games/ChefPhysics";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "셰프의 물리학 — 무료 아케이드",
+    description: "자르고 던져 스무 초 안에 식감을 맞춥니다. 열, 수분, 속도의 칸이 바삭·촉촉·건조를 가릅니다. 한국 표준시로 하루 한 판입니다.",
+  },
+  en: {
+    title: "Chef Physics — free arcade",
+    description: "Cut and toss to hit a texture in twenty seconds. Heat, moisture, and speed decide crisp, moist, or dry. One service a day, dated in Korea Standard Time.",
+  },
+  ja: {
+    title: "シェフの物理 — 無料アーケード",
+    description: "切って投げ、二十秒で食感を合わせます。熱・水分・速さのマスが、かりかり・しっとり・乾燥を決めます。日付は韓国標準時で、一日一回です。",
+  },
+  zh: {
+    title: "厨师的物理 — 免费街机",
+    description: "切开并扔进锅里，在二十秒内做出口感。热、水分和速度的格子决定酥、润或干。日期用韩国标准时间，一天一局。",
+  },
+  fr: {
+    title: "Physique du chef — jeu gratuit",
+    description: "Couper et lancer pour viser un toucher en vingt secondes. Chaleur, eau et vitesse décident du croustillant, du moelleux ou du sec. Un service par jour, à l'heure de Séoul.",
+  },
+  es: {
+    title: "Física del chef — arcade gratis",
+    description: "Corta y lanza para acertar el bocado en veinte segundos. Calor, agua y velocidad deciden crujiente, jugoso o seco. Un servicio al día, en hora de Seúl.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-3xl px-4 py-8">
+    <ChefPhysics client:load locale={locale} />
+    <GameGuide slug="chef-physics" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>
