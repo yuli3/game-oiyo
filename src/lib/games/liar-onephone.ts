@@ -13,6 +13,7 @@ export const MAX_PLAYERS = 10;
 export type Phase = "cover" | "peek" | "discuss" | "voteCover" | "vote" | "guess" | "result";
 export type Winner = "group" | "liar";
 export type Card = "hidden" | "word" | "category" | "choices" | "result";
+export type LiarMode = "classic" | "pair" | "decoy" | "silent";
 
 interface Category {
   id: string;
@@ -29,6 +30,9 @@ export interface Round {
   word: string;
   choices: string[];
   liar: number;
+  liars: number[];
+  mode: LiarMode;
+  decoy: string | null;
 }
 
 export interface Session {
@@ -100,7 +104,7 @@ export function categoriesFor(locale: Locale): readonly Category[] {
   return BANKS[locale];
 }
 
-export function createRound(seed: number, playerCount: number, locale: Locale): Round {
+export function createRound(seed: number, playerCount: number, locale: Locale, mode: LiarMode = "classic"): Round {
   if (!Number.isInteger(playerCount) || playerCount < MIN_PLAYERS || playerCount > MAX_PLAYERS) {
     throw new Error("liar player count");
   }
@@ -110,7 +114,17 @@ export function createRound(seed: number, playerCount: number, locale: Locale): 
   const word = category.words[Math.floor(rng() * category.words.length)];
   const choices = shuffle(category.words, rng);
   const liar = Math.floor(rng() * playerCount);
-  return { locale, seed, playerCount, categoryId: category.id, category: category.label, word, choices, liar };
+  const liars = [liar];
+  let decoy: string | null = null;
+  if (mode === "pair") {
+    const other = Math.floor(rng() * (playerCount - 1));
+    liars.push(other >= liar ? other + 1 : other);
+    liars.sort((left, right) => left - right);
+  } else if (mode === "decoy") {
+    const others = category.words.filter((entry) => entry !== word);
+    decoy = others[Math.floor(rng() * others.length)] ?? null;
+  }
+  return { locale, seed, playerCount, categoryId: category.id, category: category.label, word, choices, liar, liars, mode, decoy };
 }
 
 export function startSession(round: Round): Session {
@@ -126,14 +140,21 @@ export function startSession(round: Round): Session {
 
 /** What the screen may show. A cover never returns the secret word. */
 export function visibleCard(session: Session): Card {
-  if (session.phase === "peek") return session.cursor === session.round.liar ? "category" : "word";
+  if (session.phase === "peek") {
+    if (session.round.mode === "decoy") return "word";
+    return session.round.liars.includes(session.cursor) ? "category" : "word";
+  }
   if (session.phase === "guess") return "choices";
   if (session.phase === "result") return "result";
   return "hidden";
 }
 
 export function revealedWord(session: Session): string | null {
-  if (session.phase === "peek" && session.cursor !== session.round.liar) return session.round.word;
+  if (session.phase === "peek") {
+    if (session.round.mode === "decoy") return session.round.liars.includes(session.cursor) ? session.round.decoy : session.round.word;
+    if (session.round.liars.includes(session.cursor)) return null;
+    return session.round.word;
+  }
   if (session.phase === "result") return session.round.word;
   return null;
 }
@@ -147,7 +168,11 @@ export function ready(session: Session): Session {
 export function hide(session: Session): Session {
   if (session.phase !== "peek") return session;
   const next = session.cursor + 1;
-  if (next >= session.round.playerCount) return { ...session, phase: "discuss", cursor: 0 };
+  if (next >= session.round.playerCount) {
+    // Silent rounds skip the talk and open the covered vote (2026-10-21).
+    const phase = session.round.mode === "silent" ? "voteCover" : "discuss";
+    return { ...session, phase, cursor: 0 };
+  }
   return { ...session, phase: "cover", cursor: next };
 }
 
@@ -169,7 +194,7 @@ function resolveVotes(session: Session): Session {
       leaders.splice(0, leaders.length, index);
     } else if (count === top) leaders.push(index);
   });
-  if (leaders.length === 1 && leaders[0] === session.round.liar) return { ...session, phase: "guess" };
+  if (leaders.length === 1 && session.round.liars.includes(leaders[0])) return { ...session, phase: "guess" };
   return { ...session, phase: "result", winner: "liar" };
 }
 

@@ -223,12 +223,12 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       es: "Mentiroso de un móvil es un juego de grupo: se pasa un móvil, se lee una palabra y se busca al mentiroso. Las palabras y las categorías son de OIYO, escritas por idioma. No se guarda ningún nombre ni cuenta.",
     },
     how: {
-      ko: "3명에서 10명이 번호를 정합니다. 가린 화면에서 자기 차례에만 카드를 봅니다. 라이어는 분류만 보고, 나머지는 제시어를 봅니다. 토론 뒤 한 명씩 투표하고, 라이어가 지목되면 제시어를 고칩니다.",
-      en: "Three to ten people take seat numbers. Each person looks only on their turn, behind a cover. The liar sees the category. Everyone else sees the word. After the talk, each seat votes. If the liar is chosen, they pick the word.",
-      ja: "3人から10人が番号を持ちます。隠した画面で、自分の番だけカードを見ます。ライアーは分類だけ、ほかの人は提示語を見ます。相談のあと一人ずつ投票し、ライアーが指名されたら提示語を選びます。",
-      zh: "3到10人拿号码。遮住的屏幕上，只在自己的回合看卡。说谎者只看分类，其他人看提示词。讨论后逐个投票，如果指认了说谎者，对方要选出提示词。",
-      fr: "De trois à dix personnes prennent un numéro. Chacun regarde seulement à son tour, derrière un cache. Le menteur voit la catégorie. Les autres voient le mot. Après la discussion, chaque place vote. Si le menteur est choisi, il tente le mot.",
-      es: "De tres a diez personas toman un número. Cada una mira solo en su turno, detrás de una tapa. El mentiroso ve la categoría. Los demás ven la palabra. Tras hablar, cada puesto vota. Si eligen al mentiroso, este intenta la palabra.",
+      ko: "3명에서 10명이 번호를 정합니다. 가린 화면에서 자기 차례에만 카드를 봅니다. 라이어는 분류만 보고, 나머지는 제시어를 봅니다. 토론 뒤 한 명씩 투표하고, 라이어가 지목되면 제시어를 고칩니다. 인원을 고른 뒤 입장합니다. 라이어 2명, 라이어도 다른 제시어를 받는 판, 침묵 라운드를 고를 수 있습니다.",
+      en: "Three to ten people take seat numbers. Each person looks only on their turn, behind a cover. The liar sees the category. Everyone else sees the word. After the talk, each seat votes. If the liar is chosen, they pick the word. After the seats are chosen, enter. A round can be two liars, a liar who receives another word, or a silent round.",
+      ja: "3人から10人が番号を持ちます。隠した画面で、自分の番だけカードを見ます。ライアーは分類だけ、ほかの人は提示語を見ます。相談のあと一人ずつ投票し、ライアーが指名されたら提示語を選びます。人数を選んだあと入ります。ライアー2人、ライアーも別の提示語を受け取る盤、沈黙のラウンドを選べます。",
+      zh: "3到10人拿号码。遮住的屏幕上，只在自己的回合看卡。说谎者只看分类，其他人看提示词。讨论后逐个投票，如果指认了说谎者，对方要选出提示词。选定人数后进入。可以选择两个说谎者、说谎者也拿到另一个提示词、或沉默一轮。",
+      fr: "De trois à dix personnes prennent un numéro. Chacun regarde seulement à son tour, derrière un cache. Le menteur voit la catégorie. Les autres voient le mot. Après la discussion, chaque place vote. Si le menteur est choisi, il tente le mot. Après le choix des places, on entre. Une manche peut avoir deux menteurs, un menteur qui reçoit un autre mot, ou un tour silencieux.",
+      es: "De tres a diez personas toman un número. Cada una mira solo en su turno, detrás de una tapa. El mentiroso ve la categoría. Los demás ven la palabra. Tras hablar, cada puesto vota. Si eligen al mentiroso, este intenta la palabra. Tras elegir los puestos, se entra. Una ronda puede ser dos mentirosos, un mentiroso que recibe otra palabra, o una ronda en silencio.",
     },
     rules: {
       ko: [

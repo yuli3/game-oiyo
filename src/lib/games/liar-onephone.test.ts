@@ -26,9 +26,15 @@ function passLooks(session: Session): Session {
     expect(revealedWord(current)).toBeNull();
     current = ready(current);
     expect(current.phase).toBe("peek");
-    if (seat === current.round.liar) {
-      expect(visibleCard(current)).toBe("category");
-      expect(revealedWord(current)).toBeNull();
+    if (current.round.liars.includes(seat)) {
+      if (current.round.mode === "decoy") {
+        expect(visibleCard(current)).toBe("word");
+        expect(revealedWord(current)).toBe(current.round.decoy);
+        expect(revealedWord(current)).not.toBe(current.round.word);
+      } else {
+        expect(visibleCard(current)).toBe("category");
+        expect(revealedWord(current)).toBeNull();
+      }
     } else {
       expect(visibleCard(current)).toBe("word");
       expect(revealedWord(current)).toBe(current.round.word);
@@ -89,6 +95,39 @@ describe("one-phone liar", () => {
     expect(revealedWord(missed)).toBe(round.word);
     const escaped = guessWord(caught, round.word);
     expect(escaped.winner).toBe("liar");
+  });
+
+  it("deals two liars, a second word, or a silent vote", () => {
+    const pair = createRound(4, 5, "ko", "pair");
+    expect(pair.mode).toBe("pair");
+    expect(pair.liars).toHaveLength(2);
+    expect(new Set(pair.liars).size).toBe(2);
+    expect(pair.liars).toContain(pair.liar);
+    expect(passLooks(startSession(pair)).phase).toBe("discuss");
+    const caught = pair.liars[1];
+    let session = beginVote(passLooks(startSession(pair)));
+    for (let seat = 0; seat < pair.playerCount; seat++) {
+      session = ready(session);
+      session = castVote(session, caught);
+    }
+    expect(session.phase).toBe("guess");
+    expect(revealedWord(session)).toBeNull();
+
+    const decoy = createRound(4, 5, "ko", "decoy");
+    expect(decoy.decoy).toBeTruthy();
+    expect(decoy.decoy).not.toBe(decoy.word);
+    expect(decoy.choices).toContain(decoy.decoy);
+    expect(decoy.liars).toEqual([decoy.liar]);
+    const seen = passLooks(startSession(decoy));
+    expect(seen.phase).toBe("discuss");
+    expect(revealedWord(seen)).toBeNull();
+
+    const silent = passLooks(startSession(createRound(4, 5, "ko", "silent")));
+    expect(silent.phase).toBe("voteCover");
+    expect(visibleCard(silent)).toBe("hidden");
+    expect(revealedWord(silent)).toBeNull();
+    expect(createRound(4, 5, "ko").mode).toBe("classic");
+    expect(createRound(4, 5, "ko").decoy).toBeNull();
   });
 
   it("registers the catalog slug", () => {
