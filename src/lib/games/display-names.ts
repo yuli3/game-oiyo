@@ -20,6 +20,7 @@ export const GAME_DISPLAY_NAMES: Record<string, LocalizedName> = {
   solitaire: name("솔리테어", "Solitaire", "ソリティア", "纸牌接龙", "Solitaire", "Solitario"),
   "texas-holdem": name("텍사스 홀덤", "Texas Hold'em", "テキサスホールデム", "德州扑克", "Texas Hold'em", "Texas Hold'em"),
   wordle: name("워들", "Wordle", "ワードル", "猜词游戏", "Wordle", "Wordle"),
+  "word-groups": name("네 묶음", "Four Groups", "四つのグループ", "四组词", "Quatre groupes", "Cuatro grupos"),
   "korean-semantle": name("꼬맨틀", "Kkomantle", "꼬맨틀", "韩语语义猜词", "Kkomantle", "Kkomantle"),
   kurodoko: name("쿠로도코", "Kurodoko", "黒どこ", "黑格谜题", "Kurodoko", "Kurodoko"),
   "tents-and-trees": name("나무와 텐트", "Tents and Trees", "テントと木", "帐篷与树", "Tentes et arbres", "Tiendas y árboles"),
