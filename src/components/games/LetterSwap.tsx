@@ -21,13 +21,18 @@ import {
   SWAP_LIMIT,
   applySwap,
   cellMarks,
+  completeLineIds,
   dailyBestConditions,
   isSolved,
+  lineCells,
+  practicePuzzle,
   puzzleForDate,
   shareGrid,
+  starsForRemaining,
   type LetterPuzzle,
   type Mark,
 } from "../../lib/games/letter-swap";
+import LetterSwapCanvas from "./LetterSwapCanvas";
 
 const CONTROL = "min-h-11 min-w-11 rounded-xl border px-3 py-2 text-sm font-bold motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
 const MARK_CLASS: Record<Exclude<Mark, "hole">, string> = {
@@ -55,6 +60,12 @@ interface Copy {
   legendPresent: string;
   legendAbsent: string;
   limit: string;
+  enter: string;
+  practice: string;
+  practiceNote: string;
+  today: string;
+  stars: (n: number) => string;
+  gathering: string;
 }
 
 const COPY: Record<Locale, Copy> = {
@@ -77,6 +88,12 @@ const COPY: Record<Locale, Copy> = {
     legendPresent: "노랑 · 그 단어에 있음",
     legendAbsent: "회색 · 없음",
     limit: "하루 한 판이고, 날짜는 한국 표준시입니다. 15번째에 맞춰도 이깁니다.",
+    enter: "입장하기",
+    practice: "연습 판",
+    practiceNote: "오늘의 판이 아닌 새 판입니다. 기록에는 남지 않습니다.",
+    today: "오늘의 판",
+    stars: (n) => `별 ${n}`,
+    gathering: "글자가 모이고 있습니다.",
   },
   en: {
     title: "Letter Swap",
@@ -97,6 +114,12 @@ const COPY: Record<Locale, Copy> = {
     legendPresent: "Yellow · in that word",
     legendAbsent: "Gray · absent",
     limit: "One board a day, dated in Korea Standard Time. Solving on the 15th swap still wins.",
+    enter: "Enter",
+    practice: "Practice board",
+    practiceNote: "A new board, not today's. It is not recorded.",
+    today: "Today's board",
+    stars: (n) => `${n} stars`,
+    gathering: "The letters are gathering.",
   },
   ja: {
     title: "文字入れ替え",
@@ -117,6 +140,12 @@ const COPY: Record<Locale, Copy> = {
     legendPresent: "黄 · その語にある",
     legendAbsent: "灰 · ない",
     limit: "一日一盤で、日付は韓国標準時です。15回目で揃えても勝ちです。",
+    enter: "入る",
+    practice: "練習盤",
+    practiceNote: "今日の盤ではない新しい盤です。記録には残りません。",
+    today: "今日の盤",
+    stars: (n) => `星 ${n}`,
+    gathering: "文字が集まっています。",
   },
   zh: {
     title: "字母对调",
@@ -137,6 +166,12 @@ const COPY: Record<Locale, Copy> = {
     legendPresent: "黄 · 这个词里有",
     legendAbsent: "灰 · 没有",
     limit: "每天一盘，日期用韩国标准时间。第15次对调时完成也算赢。",
+    enter: "进入",
+    practice: "练习盘",
+    practiceNote: "这是新的盘，不是今天的。不会记入记录。",
+    today: "今日的盘",
+    stars: (n) => `星 ${n}`,
+    gathering: "字母正在聚拢。",
   },
   fr: {
     title: "Échange de lettres",
@@ -157,6 +192,12 @@ const COPY: Record<Locale, Copy> = {
     legendPresent: "Jaune · dans ce mot",
     legendAbsent: "Gris · absent",
     limit: "Une grille par jour, datée à l'heure de Séoul. Réussir au 15e échange compte encore.",
+    enter: "Entrer",
+    practice: "Grille d'essai",
+    practiceNote: "Une grille nouvelle, pas celle du jour. Elle n'est pas enregistrée.",
+    today: "Grille du jour",
+    stars: (n) => `${n} étoiles`,
+    gathering: "Les lettres se rassemblent.",
   },
   es: {
     title: "Cambio de letras",
@@ -177,6 +218,12 @@ const COPY: Record<Locale, Copy> = {
     legendPresent: "Amarillo · está en esa palabra",
     legendAbsent: "Gris · no está",
     limit: "Un tablero al día, con fecha en hora de Seúl. Acertar en el cambio 15 también gana.",
+    enter: "Entrar",
+    practice: "Tablero de práctica",
+    practiceNote: "Un tablero nuevo, no el de hoy. No queda registrado.",
+    today: "Tablero de hoy",
+    stars: (n) => `${n} estrellas`,
+    gathering: "Las letras se están juntando.",
   },
 };
 
@@ -195,6 +242,7 @@ interface DayBoard {
   dateKey: string;
   puzzle: LetterPuzzle;
   play: Play;
+  practice: boolean;
 }
 
 function emptyPlay(start: (string | null)[]): Play {
@@ -211,15 +259,20 @@ export default function LetterSwap({ locale }: { locale: Locale }) {
   const [best, setBest] = useState<ConditionalBestRecord | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [muted, setMuted] = useState(false);
+  const [phase, setPhase] = useState<"title" | "gather" | "play">("title");
+  const [gatherKey, setGatherKey] = useState(0);
+  const [animating, setAnimating] = useState(false);
+  const [swapFx, setSwapFx] = useState<{ seq: number; a: number; b: number } | null>(null);
+  const [flipFx, setFlipFx] = useState<{ seq: number; cells: number[] } | null>(null);
   const audio = useRef<AudioContext | null>(null);
   const noted = useRef(new Set<string>());
-  const drag = useRef<{ index: number; x: number; y: number; moved: boolean } | null>(null);
-  const suppressClick = useRef(false);
+  const dailySnapshot = useRef<DayBoard | null>(null);
+  const fxSeq = useRef(0);
 
   useEffect(() => {
     const dateKey = kstDateKey();
     const puzzle = puzzleForDate(dateKey, loc);
-    setBoard({ dateKey, puzzle, play: emptyPlay(puzzle.start) });
+    setBoard({ dateKey, puzzle, play: emptyPlay(puzzle.start), practice: false });
     try {
       setRecord(getRecord(GAME_ID));
       setBest(getBestForConditions(GAME_ID, dailyBestConditions(dateKey, loc, "none")));
@@ -243,7 +296,7 @@ export default function LetterSwap({ locale }: { locale: Locale }) {
   }, [containerRef, togglePortal]);
 
   useEffect(() => {
-    if (!board) return;
+    if (!board || board.practice) return;
     const { play, dateKey } = board;
     if (play.won && !noted.current.has(`${dateKey}:w`)) {
       noted.current.add(`${dateKey}:w`);
@@ -277,7 +330,39 @@ export default function LetterSwap({ locale }: { locale: Locale }) {
     osc.stop(ctx.currentTime + 0.08);
   };
 
-  const commit = (nextCells: (string | null)[], counted: boolean) => {
+  const openGather = () => {
+    fxSeq.current += 1;
+    setGatherKey(fxSeq.current);
+    setSwapFx(null);
+    setFlipFx(null);
+    setAnimating(false);
+    setPhase("gather");
+  };
+
+  const enter = () => {
+    if (!isImmersive) togglePortal();
+    openGather();
+  };
+
+  const beginPractice = () => {
+    if (!board || board.practice) return;
+    dailySnapshot.current = board;
+    const salt = typeof crypto !== "undefined" && crypto.getRandomValues ? (crypto.getRandomValues(new Uint32Array(1))[0] ?? 1) : Date.now();
+    const puzzle = practicePuzzle(salt, board.dateKey, loc);
+    setBoard({ dateKey: board.dateKey, puzzle, play: emptyPlay(puzzle.start), practice: true });
+    setNotice(null);
+    openGather();
+  };
+
+  const resumeDaily = () => {
+    const saved = dailySnapshot.current;
+    if (!saved) return;
+    setBoard(saved);
+    setNotice(null);
+    openGather();
+  };
+
+  const commit = (nextCells: (string | null)[], counted: boolean, from: number, to: number) => {
     if (!board || board.play.won || board.play.lost) return;
     const play = board.play;
     const swaps = play.swaps + (counted ? 1 : 0);
@@ -297,11 +382,19 @@ export default function LetterSwap({ locale }: { locale: Locale }) {
       },
     });
     setNotice(null);
-    if (counted) beep(solved || !lost);
+    if (!counted) return;
+    const before = new Set(completeLineIds(play.cells, board.puzzle.solution, board.puzzle.size));
+    const fresh = completeLineIds(nextCells, board.puzzle.solution, board.puzzle.size).filter((id) => !before.has(id));
+    const flipping = [...new Set(lineCells(board.puzzle.size).filter((line) => fresh.includes(line.id)).flatMap((line) => line.cells))];
+    const swapSeq = ++fxSeq.current;
+    setSwapFx({ seq: swapSeq, a: from, b: to });
+    if (flipping.length > 0) setFlipFx({ seq: ++fxSeq.current, cells: flipping });
+    setAnimating(true);
+    beep(solved || !lost);
   };
 
   const onTap = (index: number) => {
-    if (!board || board.play.won || board.play.lost) return;
+    if (!board || board.play.won || board.play.lost || phase !== "play" || animating) return;
     const play = board.play;
     if (play.cells[index] == null) return;
     if (play.selected === null) {
@@ -313,7 +406,14 @@ export default function LetterSwap({ locale }: { locale: Locale }) {
       return;
     }
     const next = applySwap(play.cells, play.selected, index);
-    commit(next.board, next.counted);
+    commit(next.board, next.counted, play.selected, index);
+  };
+
+  const onDrop = (from: number, to: number) => {
+    if (!board || board.play.won || board.play.lost || phase !== "play" || animating) return;
+    if (board.play.cells[to] == null) return;
+    const next = applySwap(board.play.cells, from, to);
+    commit(next.board, next.counted, from, to);
   };
 
   const undo = () => {
@@ -336,6 +436,7 @@ export default function LetterSwap({ locale }: { locale: Locale }) {
     if (!board) return;
     setBoard({ ...board, play: emptyPlay(board.puzzle.start) });
     setNotice(null);
+    openGather();
   };
 
   const share = async () => {
@@ -355,7 +456,8 @@ export default function LetterSwap({ locale }: { locale: Locale }) {
   const marks = play && puzzle ? cellMarks(play.cells, puzzle.solution, puzzle.size) : [];
   const locked = Boolean(play?.won || play?.lost);
   const message = notice ?? (play?.won ? t.win : play?.lost ? t.loss : null);
-  const gridClass = puzzle?.size === 3 ? "grid-cols-3" : "grid-cols-5";
+  const stars = starsForRemaining(SWAP_LIMIT - (play?.swaps ?? 0));
+  const letters = play ? play.cells.map((cell) => cell ?? ".").join("") : "";
 
   return (
     <div
@@ -375,64 +477,52 @@ export default function LetterSwap({ locale }: { locale: Locale }) {
         {!board || !play || !puzzle ? <p className="text-sm text-muted-foreground">{t.preparing}</p> : (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">{t.subtitle}</p>
-            <p className="text-sm font-bold text-foreground" aria-live="polite">{t.swaps(play.swaps)}</p>
+            {phase === "title" ? (
+              <button type="button" onClick={enter} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.enter}</button>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                <button type="button" onClick={board.practice ? resumeDaily : beginPractice} className={`${CONTROL} border-border bg-card text-foreground`}>
+                  {board.practice ? t.today : t.practice}
+                </button>
+              </div>
+            )}
+            {board.practice ? <p className="text-sm font-bold text-foreground">{t.practiceNote}</p> : null}
+            {phase === "gather" ? <p className="text-sm text-muted-foreground" aria-live="polite">{t.gathering}</p> : null}
+            {phase !== "title" ? (
+              <>
+                <p className="text-sm font-bold text-foreground" aria-live="polite">{t.swaps(play.swaps)}</p>
+                <p className="text-sm font-bold text-foreground" data-stars={stars} aria-live="polite">{t.stars(stars)} {"★".repeat(stars)}{"☆".repeat(5 - stars)}</p>
+              </>
+            ) : null}
             <div className="flex flex-wrap gap-2">
               <span className={`inline-flex min-h-11 items-center rounded-xl border px-3 text-sm font-bold ${MARK_CLASS.correct}`}>{t.legendCorrect}</span>
               <span className={`inline-flex min-h-11 items-center rounded-xl border px-3 text-sm font-bold ${MARK_CLASS.present}`}>{t.legendPresent}</span>
               <span className={`inline-flex min-h-11 items-center rounded-xl border px-3 text-sm font-bold ${MARK_CLASS.absent}`}>{t.legendAbsent}</span>
             </div>
-            <div className={`grid ${gridClass} mx-auto w-fit gap-1`}>
-              {puzzle.solution.map((cell, index) => {
-                if (cell === null) return <span key={index} className="size-11" aria-hidden="true" />;
-                const mark = marks[index] === "hole" ? "absent" : marks[index];
-                const letter = play.cells[index] ?? "";
-                return (
-                  <button
-                    key={index}
-                    type="button"
-                    data-cell={index}
-                    disabled={locked}
-                    aria-pressed={play.selected === index}
-                    aria-label={`${letter} ${mark}`}
-                    onClick={() => {
-                      if (suppressClick.current) {
-                        suppressClick.current = false;
-                        return;
-                      }
-                      onTap(index);
-                    }}
-                    onPointerDown={(event) => {
-                      if (locked) return;
-                      event.currentTarget.setPointerCapture(event.pointerId);
-                      drag.current = { index, x: event.clientX, y: event.clientY, moved: false };
-                    }}
-                    onPointerMove={(event) => {
-                      const current = drag.current;
-                      if (!current || current.index !== index) return;
-                      if (Math.hypot(event.clientX - current.x, event.clientY - current.y) > 8) current.moved = true;
-                    }}
-                    onPointerUp={(event) => {
-                      const current = drag.current;
-                      drag.current = null;
-                      if (!current || current.index !== index || !current.moved) return;
-                      suppressClick.current = true;
-                      const target = document.elementFromPoint(event.clientX, event.clientY)?.closest("[data-cell]");
-                      const nextIndex = target ? Number(target.getAttribute("data-cell")) : Number.NaN;
-                      if (!Number.isInteger(nextIndex) || nextIndex === index) return;
-                      const next = applySwap(play.cells, index, nextIndex);
-                      commit(next.board, next.counted);
-                    }}
-                    className={`flex size-11 touch-none items-center justify-center rounded-lg border-2 text-base font-bold ${MARK_CLASS[mark]} ${play.selected === index ? "ring-2 ring-primary ring-offset-2" : ""} motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-80`}
-                  >
-                    {letter}
-                  </button>
-                );
-              })}
+            <div data-letter-board data-phase={phase} data-letters={letters} className="mx-auto w-fit">
+              {phase === "title" ? null : (
+                <LetterSwapCanvas
+                  size={puzzle.size}
+                  cells={play.cells}
+                  marks={marks}
+                  selected={play.selected}
+                  interactive={phase === "play" && !animating && !locked}
+                  reducedMotion={reducedMotion}
+                  gatherKey={gatherKey}
+                  swap={swapFx}
+                  flip={flipFx}
+                  onTap={onTap}
+                  onDrop={onDrop}
+                  onGatherDone={() => setPhase("play")}
+                  onMotionDone={() => setAnimating(false)}
+                />
+              )}
+              <p className="sr-only">{letters}</p>
             </div>
             <p className="text-sm text-muted-foreground">{t.hint}</p>
             <p className="text-sm text-muted-foreground">{t.limit}</p>
             <div className="flex flex-wrap gap-2">
-              <button type="button" onClick={undo} disabled={locked || play.past.length === 0} className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-foreground disabled:opacity-50`}>
+              <button type="button" onClick={undo} disabled={locked || animating || play.past.length === 0} className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-foreground disabled:opacity-50`}>
                 <Undo2 className="size-4" />
                 {t.undo}
               </button>
