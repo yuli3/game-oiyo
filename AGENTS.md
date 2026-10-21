@@ -8,6 +8,11 @@
 - 컴포넌트 COPY의 ko/en/ja/zh/fr/es를 함께 유지한다. zh는 간체이며 다른 언어에 KO/EN이 새지 않게 한다.
 - AI 로직은 `src/lib/games/ai/`, 개인 기록 계약은 `src/lib/games/records.ts`와 해당 테스트가 정본이다. 현행 Workers 등 별도 기능의 존재를 확인하지 않고 “백엔드 없음”으로 가정하지 않는다.
 
+## 게임 품질 기준 (세운 2026-10-21)
+
+- 게임을 만들거나 고치기 전에 `/Users/seuncho/coding/company-brain/projects/game/grok-quality/README.md`(출시 체크리스트)와 그 게임의 `<slug>.md`를 읽는다. 그림 에셋·canvas/WebGL 렌더·이펙트·입장 흐름·랜덤 모드·재미 시스템·터치 드래그가 빠지면 완료가 아니다.
+- `main`에 직접 push하지 않는다. 브랜치 + draft PR로 올리고, merge·deploy는 Claude 검수 후 세운 결재다.
+
 ## 개인 기록 보호
 
 - 기존 localStorage 키·객체 모양을 재사용하거나 덮어써 기록을 버리지 않는다.
