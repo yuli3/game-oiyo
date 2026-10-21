@@ -156,38 +156,102 @@ export function ruleAllows(rule: Rule, known: readonly number[], complete: boole
 }
 
 function searchSolutions(puzzle: LogicPuzzle, limit: number, budget: number): { grids: string[]; proven: boolean } {
+  const cellCount = puzzle.cells.length;
+  const tileCount = puzzle.tiles.length;
   const points = puzzle.cells.map((cell) => [cell.x, cell.y] as const);
-  const adj = adjacency(puzzle.cells.length, points);
-  const region = puzzle.cells.map((cell) => cell.region);
-  const regionSize = new Map<number, number>();
-  for (const id of region) regionSize.set(id, (regionSize.get(id) ?? 0) + 1);
-  const ruleByRegion = new Map(puzzle.rules.map((entry) => [entry.region, entry.rule]));
-  const value = new Int8Array(puzzle.cells.length).fill(-1);
-  const used = new Uint8Array(puzzle.tiles.length);
+  const adj = adjacency(cellCount, points);
+  const regionOf = new Uint8Array(cellCount);
+  let regionMax = 0;
+  for (let i = 0; i < cellCount; i++) {
+    regionOf[i] = puzzle.cells[i].region;
+    if (puzzle.cells[i].region > regionMax) regionMax = puzzle.cells[i].region;
+  }
+  const regions = regionMax + 1;
+  const regionSize = new Uint8Array(regions);
+  for (let i = 0; i < cellCount; i++) regionSize[regionOf[i]]++;
+  // 1 sum, 2 same, 3 all different, 4 less-than. Checked as each pip lands so the
+  // daily proof does not rebuild a map at every node (2026-10-21).
+  const kind = new Uint8Array(regions);
+  const ruleN = new Int16Array(regions);
+  for (const entry of puzzle.rules) {
+    if (entry.rule.kind === "sum") {
+      kind[entry.region] = 1;
+      ruleN[entry.region] = entry.rule.n;
+    } else if (entry.rule.kind === "same") kind[entry.region] = 2;
+    else if (entry.rule.kind === "diff") kind[entry.region] = 3;
+    else {
+      kind[entry.region] = 4;
+      ruleN[entry.region] = entry.rule.n;
+    }
+  }
+  const sums = new Int16Array(regions);
+  const counts = new Uint8Array(regions);
+  const pipCount = new Uint8Array(regions * 8);
+  const first = new Int8Array(regions);
+  const value = new Int8Array(cellCount).fill(-1);
+  const used = new Uint8Array(tileCount);
+  const tileA = new Int8Array(tileCount);
+  const tileB = new Int8Array(tileCount);
+  for (let t = 0; t < tileCount; t++) {
+    tileA[t] = puzzle.tiles[t].a;
+    tileB[t] = puzzle.tiles[t].b;
+  }
+
+  const add = (cell: number, pip: number): boolean => {
+    const id = regionOf[cell];
+    const rule = kind[id];
+    const prevCount = counts[id];
+    const nextSum = sums[id] + pip;
+    const bit = id * 8 + pip;
+    if (rule === 1) {
+      if (nextSum > ruleN[id]) return false;
+      if (prevCount + 1 === regionSize[id] && nextSum !== ruleN[id]) return false;
+    } else if (rule === 2) {
+      if (prevCount > 0 && pip !== first[id]) return false;
+    } else if (rule === 3) {
+      if (pipCount[bit] > 0) return false;
+    } else if (rule === 4 && pip >= ruleN[id]) return false;
+    sums[id] = nextSum;
+    counts[id] = prevCount + 1;
+    pipCount[bit]++;
+    if (prevCount === 0) first[id] = pip;
+    return true;
+  };
+  const remove = (cell: number, pip: number) => {
+    const id = regionOf[cell];
+    sums[id] -= pip;
+    counts[id]--;
+    pipCount[id * 8 + pip]--;
+  };
+
   const given = puzzle.given ?? [];
   for (const place of given) {
     value[place.cellA] = place.a;
     value[place.cellB] = place.b;
     const tileIndex = puzzle.tiles.findIndex((tile) => tile.id === place.tileId);
     if (tileIndex >= 0) used[tileIndex] = 1;
+    if (!add(place.cellA, place.a) || !add(place.cellB, place.b)) return { grids: [], proven: true };
   }
+
   const grids = new Set<string>();
   let nodes = 0;
   let proven = true;
 
-  const ok = (): boolean => {
-    const known = new Map<number, number[]>();
-    for (let i = 0; i < value.length; i++) {
-      if (value[i] < 0) continue;
-      const list = known.get(region[i]) ?? [];
-      list.push(value[i]);
-      known.set(region[i], list);
+  const pick = (): number => {
+    let best = -1;
+    let bestOpen = 99;
+    for (let i = 0; i < cellCount; i++) {
+      if (value[i] >= 0) continue;
+      let open = 0;
+      const neighbors = adj[i];
+      for (let n = 0; n < neighbors.length; n++) if (value[neighbors[n]] < 0) open++;
+      if (open < bestOpen) {
+        bestOpen = open;
+        best = i;
+        if (open === 0) break;
+      }
     }
-    for (const [id, rule] of ruleByRegion) {
-      const list = known.get(id) ?? [];
-      if (!ruleAllows(rule, list, list.length === regionSize.get(id))) return false;
-    }
-    return true;
+    return best;
   };
 
   const walk = (placed: number) => {
@@ -197,27 +261,39 @@ function searchSolutions(puzzle: LogicPuzzle, limit: number, budget: number): { 
       return;
     }
     nodes += 1;
-    if (placed === puzzle.tiles.length) {
+    if (placed === tileCount) {
       grids.add(value.join(","));
       return;
     }
-    let cell = -1;
-    for (let i = 0; i < value.length; i++) if (value[i] < 0) { cell = i; break; }
+    const cell = pick();
     if (cell < 0) return;
-    for (let t = 0; t < puzzle.tiles.length; t++) {
+    const neighbors = adj[cell];
+    for (let t = 0; t < tileCount; t++) {
       if (used[t]) continue;
-      const tile = puzzle.tiles[t];
-      const orients: Array<readonly [number, number]> = tile.a === tile.b ? [[tile.a, tile.b]] : [[tile.a, tile.b], [tile.b, tile.a]];
-      for (const other of adj[cell]) {
+      const a = tileA[t];
+      const b = tileB[t];
+      for (let n = 0; n < neighbors.length; n++) {
+        const other = neighbors[n];
         if (value[other] >= 0) continue;
-        for (const [a, b] of orients) {
-          value[cell] = a;
-          value[other] = b;
+        const orients = a === b ? 1 : 2;
+        for (let flip = 0; flip < orients; flip++) {
+          const left = flip === 0 ? a : b;
+          const right = flip === 0 ? b : a;
+          if (!add(cell, left)) continue;
+          value[cell] = left;
+          if (!add(other, right)) {
+            remove(cell, left);
+            value[cell] = -1;
+            continue;
+          }
+          value[other] = right;
           used[t] = 1;
-          if (ok()) walk(placed + 1);
+          walk(placed + 1);
+          used[t] = 0;
           value[cell] = -1;
           value[other] = -1;
-          used[t] = 0;
+          remove(other, right);
+          remove(cell, left);
           if (!proven || grids.size >= limit) return;
         }
       }
