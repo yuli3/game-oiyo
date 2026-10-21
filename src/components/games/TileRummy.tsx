@@ -1,9 +1,12 @@
-// Number-tile table. The immersive shell stays scrollable on purpose: a full
-// hand plus the table is taller than a phone, and data-game-surface would set
-// touch-action:none on that whole column (2026-10-20).
+// Number-tile table, rebuilt 2026-10-21 as the quality pilot for the game
+// contract (company-brain projects/game/grok-quality/tile-rummy.md): title
+// screen, augment pick, Pixi table with drag and juice, results with stars.
+// The DOM tile buttons stay as a keyboard and screen-reader panel that shows
+// itself when focused. The immersive shell scrolls on purpose: a full hand
+// plus the table is taller than a phone.
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { HelpCircle, Lock, Maximize2, Minimize2, Pause, Play, Volume2, VolumeX } from "lucide-react";
 import { GameContainer } from "../ui/game/GamePrimitives";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import type { Locale } from "../../lib/i18n";
@@ -19,6 +22,7 @@ import {
 import type { AiLevel } from "../../lib/games/ai/types";
 import { chooseRummyAction } from "../../lib/games/ai/rummy";
 import { kstDateKey } from "../../lib/games/todays-game";
+import { createTonePlayer, type TonePlayer } from "../../lib/games/tone";
 import {
   COLOR_MARK,
   applyRummy,
@@ -26,8 +30,10 @@ import {
   checkPlay,
   createTileRummy,
   dailyBestConditions,
+  firstMeldOf,
   handPenalty,
   humanOutcome,
+  meldOptions,
   seedFromDateKey,
   shareGrid,
   validateMeld,
@@ -39,17 +45,36 @@ import {
   type Tile,
   type TileColor,
 } from "../../lib/games/tile-rummy";
+import {
+  THEME_UNLOCK,
+  TITLE_STEPS,
+  resultStars,
+  rollAugments,
+  rollChaos,
+  shiftedLevel,
+  tableVariant,
+  titleTier,
+  type AugmentId,
+  type ChaosId,
+  type TableTheme,
+} from "../../lib/games/tile-rummy-augments";
+import type { DropTarget, TileSpot } from "../../lib/games/tile-rummy-layout";
+import { dropDraft, extendMeld, isNewMeld, meldKey, pullTile, unusedHand, type Draft } from "../../lib/games/tile-rummy-draft";
+import TileRummyCanvas, { type TableFx } from "./TileRummyCanvas";
+import { MORE } from "./tile-rummy-copy";
 
 const GAME_ID = "tile-rummy";
 /** dailyBestConditions is one cohort: one opponent, adept search, no hint or undo. */
 const DAILY_LEVEL: AiLevel = 2;
+/** Viewer preferences only; the game record keeps its own keys in records.ts. */
+const THEME_KEY = "tile-rummy:theme";
+const MUTE_KEY = "tile-rummy:muted";
 
 type Notice = PlayReject | "loose" | "dirty" | "not-a-meld" | "copied" | "copyFailed";
 type Setup = { mode: "match" | "daily"; opponents: OpponentCount; level: AiLevel };
-interface Draft {
-  table: Meld[];
-  loose: Tile[];
-}
+type Phase = "title" | "augment" | "countdown" | "play";
+type FxInput = { kind: "lay"; ids: number[]; combo: number } | { kind: "error" } | { kind: "win" };
+type Sfx = "tap" | "place" | "meld" | "error" | "draw" | "win" | "lose";
 
 interface Copy {
   title: string;
@@ -91,7 +116,7 @@ interface Copy {
   record: string;
   best: (n: number) => string;
   dailyNote: (date: string) => string;
-  firstNeed: (n: number) => string;
+  firstNeed: (n: number, need?: number) => string;
   laid: (n: number) => string;
   colors: Record<TileColor | "joker", string>;
   tileLabel: (color: string, value: string) => string;
@@ -146,7 +171,7 @@ const COPY: Record<Locale, Copy> = {
     record: "전적",
     best: (n) => `오늘 최고 ${n}`,
     dailyNote: (date) => `${date} 한국 표준시 · 상대 1 · 숙련 · 힌트와 무르기 없음`,
-    firstNeed: (n) => `첫 등록 ${n}/30`,
+    firstNeed: (n, need = 30) => `첫 등록 ${n}/${need}`,
     laid: (n) => `이번에 손에 둔 점수 ${n}`,
     colors: { crimson: "진홍", amber: "호박", teal: "청록", violet: "보라", joker: "별" },
     tileLabel: (color, value) => `${color} ${value}`,
@@ -212,7 +237,7 @@ const COPY: Record<Locale, Copy> = {
     record: "Record",
     best: (n) => `Today's best ${n}`,
     dailyNote: (date) => `${date} Korea Standard Time · 1 rival · adept · no hint or undo`,
-    firstNeed: (n) => `First meld ${n}/30`,
+    firstNeed: (n, need = 30) => `First meld ${n}/${need}`,
     laid: (n) => `Points leaving your hand ${n}`,
     colors: { crimson: "Crimson", amber: "Amber", teal: "Teal", violet: "Violet", joker: "Star" },
     tileLabel: (color, value) => `${color} ${value}`,
@@ -278,7 +303,7 @@ const COPY: Record<Locale, Copy> = {
     record: "成績",
     best: (n) => `今日のベスト ${n}`,
     dailyNote: (date) => `${date} 韓国標準時 · 相手1 · 熟練 · ヒントも待ったもなし`,
-    firstNeed: (n) => `最初の公開 ${n}/30`,
+    firstNeed: (n, need = 30) => `最初の公開 ${n}/${need}`,
     laid: (n) => `手札から出た点 ${n}`,
     colors: { crimson: "深紅", amber: "琥珀", teal: "青緑", violet: "紫", joker: "星" },
     tileLabel: (color, value) => `${color} ${value}`,
@@ -344,7 +369,7 @@ const COPY: Record<Locale, Copy> = {
     record: "战绩",
     best: (n) => `今日最佳 ${n}`,
     dailyNote: (date) => `${date} 韩国标准时间 · 一位对手 · 熟手 · 无提示、不能悔棋`,
-    firstNeed: (n) => `首次放入 ${n}/30`,
+    firstNeed: (n, need = 30) => `首次放入 ${n}/${need}`,
     laid: (n) => `这次离开手牌的分数 ${n}`,
     colors: { crimson: "深红", amber: "琥珀", teal: "青绿", violet: "紫", joker: "星" },
     tileLabel: (color, value) => `${color} ${value}`,
@@ -410,7 +435,7 @@ const COPY: Record<Locale, Copy> = {
     record: "Bilan",
     best: (n) => `Meilleur du jour ${n}`,
     dailyNote: (date) => `${date} heure normale de Corée · 1 adversaire · confirmé · sans indice ni annulation`,
-    firstNeed: (n) => `Première pose ${n}/30`,
+    firstNeed: (n, need = 30) => `Première pose ${n}/${need}`,
     laid: (n) => `Points quittant la main ${n}`,
     colors: { crimson: "Cramoisi", amber: "Ambre", teal: "Sarcelle", violet: "Violet", joker: "Étoile" },
     tileLabel: (color, value) => `${color} ${value}`,
@@ -476,7 +501,7 @@ const COPY: Record<Locale, Copy> = {
     record: "Marcador",
     best: (n) => `Mejor de hoy ${n}`,
     dailyNote: (date) => `${date} hora estándar de Corea · 1 rival · diestro · sin pista ni deshacer`,
-    firstNeed: (n) => `Primera bajada ${n}/30`,
+    firstNeed: (n, need = 30) => `Primera bajada ${n}/${need}`,
     laid: (n) => `Puntos que salen de la mano ${n}`,
     colors: { crimson: "Carmesí", amber: "Ámbar", teal: "Verde azulado", violet: "Violeta", joker: "Estrella" },
     tileLabel: (color, value) => `${color} ${value}`,
@@ -506,18 +531,15 @@ const COPY: Record<Locale, Copy> = {
 
 const COLOR_INDEX: Record<TileColor, number> = { crimson: 0, amber: 1, teal: 2, violet: 3 };
 const CONTROL = "min-h-11 rounded-xl border px-3 text-xs font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50";
+const PRIMARY = "min-h-11 rounded-xl bg-primary px-4 text-sm font-bold text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50";
+const OVERLAY = "absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 overflow-y-auto rounded-2xl bg-background/80 p-4 text-center backdrop-blur-sm";
+/** The title panel sits in flow over the dealt table, so its button is never cut off. */
+const TITLE_PANEL = "relative z-10 flex flex-col items-center justify-center gap-4 rounded-2xl bg-background/80 px-4 py-8 text-center backdrop-blur-sm";
+const THEMES: TableTheme[] = ["felt", "walnut", "midnight"];
 
 function matchSeed(): number {
   if (typeof crypto !== "undefined" && crypto.getRandomValues) return crypto.getRandomValues(new Uint32Array(1))[0] ?? 1;
   return Date.now() >>> 0;
-}
-
-function deal(setup: Setup): RummyState {
-  if (setup.mode === "daily") {
-    const dateKey = kstDateKey();
-    return createTileRummy({ seed: seedFromDateKey(dateKey), opponents: 1, mode: "daily", dateKey });
-  }
-  return createTileRummy({ seed: matchSeed(), opponents: setup.opponents, mode: "match" });
 }
 
 function freshDraft(state: RummyState): Draft {
@@ -539,14 +561,6 @@ function sortTiles(tiles: readonly Tile[]): Tile[] {
   });
 }
 
-function unusedHand(state: RummyState, draft: Draft): Tile[] {
-  const used = new Set([
-    ...draft.table.flatMap((meld) => meld.tiles.map((tile) => tile.id)),
-    ...draft.loose.map((tile) => tile.id),
-  ]);
-  return state.hands[0].filter((tile) => !used.has(tile.id));
-}
-
 function addedPoints(state: RummyState, table: Meld[]): number {
   const tableIds = new Set(state.table.flatMap((meld) => meld.tiles.map((tile) => tile.id)));
   let points = 0;
@@ -566,11 +580,6 @@ function meldPoints(meld: Meld | null): number | null {
   return check.ok ? check.points : null;
 }
 
-function isNewMeld(state: RummyState, meld: Meld): boolean {
-  const tableIds = new Set(state.table.flatMap((item) => item.tiles.map((tile) => tile.id)));
-  return meld.tiles.every((tile) => !tableIds.has(tile.id));
-}
-
 function sameLayout(left: Meld[], right: Meld[]): boolean {
   if (left.length !== right.length) return false;
   return left.every((meld, index) => {
@@ -579,25 +588,6 @@ function sameLayout(left: Meld[], right: Meld[]): boolean {
       && meld.tiles.length === other.tiles.length
       && meld.tiles.every((tile, tileIndex) => tile.id === other.tiles[tileIndex].id);
   });
-}
-
-function pullTile(draft: Draft, meldIndex: number, tileId: number): Draft {
-  const meld = draft.table[meldIndex];
-  if (!meld) return draft;
-  const index = meld.tiles.findIndex((tile) => tile.id === tileId);
-  if (index < 0) return draft;
-  const restTiles = meld.tiles.filter((tile) => tile.id !== tileId);
-  const rest: Meld = { tiles: restTiles, ...(meld.shape ? { shape: meld.shape } : {}) };
-  if (restTiles.length >= 3 && validateMeld(rest).ok) {
-    return {
-      table: draft.table.map((current, currentIndex) => (currentIndex === meldIndex ? rest : current)),
-      loose: draft.loose.concat(meld.tiles[index]),
-    };
-  }
-  return {
-    table: draft.table.filter((_, currentIndex) => currentIndex !== meldIndex),
-    loose: draft.loose.concat(meld.tiles),
-  };
 }
 
 function TileFace({
@@ -631,100 +621,230 @@ function TileFace({
   );
 }
 
+function readPref(key: string): string | null {
+  try { return window.localStorage.getItem(key); } catch { return null; }
+}
+
+function writePref(key: string, value: string) {
+  try { window.localStorage.setItem(key, value); } catch { /* private mode */ }
+}
+
+function vibrate(pattern: number | number[]) {
+  try { if (typeof navigator !== "undefined" && "vibrate" in navigator) navigator.vibrate(pattern); } catch { /* optional */ }
+}
+
 export default function TileRummy({ locale = "ko" }: { locale?: string }) {
   const loc: Locale = locale in COPY ? (locale as Locale) : "en";
   const t = COPY[loc];
+  const m = MORE[loc];
   const reducedMotion = usePrefersReducedMotion();
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: loc });
   const [setup, setSetup] = useState<Setup>({ mode: "match", opponents: 1, level: 1 });
+  const [phase, setPhase] = useState<Phase>("title");
   const [game, setGame] = useState<RummyState | null>(null);
   const [draft, setDraft] = useState<Draft>({ table: [], loose: [] });
   const [selected, setSelected] = useState<number[]>([]);
   const [notice, setNotice] = useState<Notice | null>(null);
   const [paused, setPaused] = useState(false);
   const [muted, setMuted] = useState(false);
+  const [theme, setTheme] = useState<TableTheme>("felt");
   const [record, setRecord] = useState<GameRecord | null>(null);
   const [best, setBest] = useState<ConditionalBestRecord | null>(null);
+  const [newBest, setNewBest] = useState(false);
   const [dealId, setDealId] = useState(0);
+  const [offers, setOffers] = useState<AugmentId[]>([]);
+  const [augment, setAugment] = useState<AugmentId | null>(null);
+  const [chaos, setChaos] = useState<ChaosId | null>(null);
+  const [chaosFlash, setChaosFlash] = useState(false);
+  const [count, setCount] = useState<number | null>(null);
+  const [actorSeat, setActorSeat] = useState<number | null>(null);
+  const [fx, setFx] = useState<TableFx | null>(null);
+  const [combo, setCombo] = useState(0);
+  const [mulliganUsed, setMulliganUsed] = useState(false);
   const recordedDeal = useRef<number | null>(null);
-  const matchSettings = useRef<{ opponents: OpponentCount; level: AiLevel }>({ opponents: 1, level: 1 });
-  const audioRef = useRef<AudioContext | null>(null);
+  const pendingSeed = useRef<number>(1);
+  const fxSeq = useRef(0);
+  const toneRef = useRef<TonePlayer | null>(null);
+  const timers = useRef<number[]>([]);
 
-  const tone = useCallback((frequency: number) => {
-    if (muted || typeof window === "undefined") return;
-    try {
-      const AudioContextClass = window.AudioContext ?? (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-      if (!AudioContextClass) return;
-      const context = audioRef.current ?? new AudioContextClass();
-      audioRef.current = context;
-      const oscillator = context.createOscillator();
-      const gain = context.createGain();
-      oscillator.frequency.value = frequency;
-      gain.gain.setValueAtTime(0.04, context.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.08);
-      oscillator.connect(gain);
-      gain.connect(context.destination);
-      oscillator.start();
-      oscillator.stop(context.currentTime + 0.08);
-    } catch {
-      /* sound is optional */
+  const later = useCallback((fn: () => void, ms: number) => {
+    timers.current.push(window.setTimeout(fn, ms));
+  }, []);
+
+  const sfx = useCallback((kind: Sfx, step = 1) => {
+    if (muted) return;
+    const player = toneRef.current ?? createTonePlayer();
+    toneRef.current = player;
+    const lift = 2 ** (Math.min(step - 1, 6) / 6);
+    const notes: Record<Sfx, [number, number, number, number][]> = {
+      tap: [[0, 720, 0.04, 0.02]],
+      place: [[0, 1250, 0.03, 0.03], [30, 820, 0.05, 0.03]],
+      meld: [[0, 523 * lift, 0.09, 0.03], [60, 659 * lift, 0.09, 0.03], [120, 784 * lift, 0.14, 0.03]],
+      error: [[0, 170, 0.12, 0.04], [90, 120, 0.16, 0.04]],
+      draw: [[0, 330, 0.06, 0.025], [40, 392, 0.06, 0.02]],
+      win: [[0, 523, 0.16, 0.035], [110, 659, 0.16, 0.035], [220, 784, 0.16, 0.035], [330, 1047, 0.3, 0.035]],
+      lose: [[0, 392, 0.18, 0.03], [160, 330, 0.18, 0.03], [320, 262, 0.3, 0.03]],
+    };
+    for (const [delay, frequency, duration, volume] of notes[kind]) {
+      if (delay === 0) player.play(frequency, duration, volume);
+      else later(() => player.play(frequency, duration, volume), delay);
     }
-  }, [muted]);
+  }, [later, muted]);
 
-  const begin = useCallback((next: Setup) => {
-    const state = deal(next);
-    const frozen: Setup = next.mode === "daily"
-      ? { mode: "daily", opponents: 1, level: DAILY_LEVEL }
-      : next;
-    if (frozen.mode === "match") matchSettings.current = { opponents: frozen.opponents, level: frozen.level };
+  const pushFx = useCallback((next: FxInput) => {
+    fxSeq.current += 1;
+    setFx({ ...next, seq: fxSeq.current });
+  }, []);
+
+  const fail = useCallback((reason: Notice) => {
+    setNotice(reason);
+    sfx("error");
+    vibrate([30, 40, 30]);
+    pushFx({ kind: "error" });
+  }, [pushFx, sfx]);
+
+  const deal = useCallback((next: Setup, seed: number, pick: AugmentId | null) => {
+    let state: RummyState;
+    let bent: ChaosId | null = null;
+    if (next.mode === "daily") {
+      const dateKey = kstDateKey();
+      state = createTileRummy({ seed: seedFromDateKey(dateKey), opponents: 1, mode: "daily", dateKey });
+    } else {
+      bent = rollChaos(seed);
+      state = createTileRummy({ seed, opponents: next.opponents, mode: "match", variant: tableVariant(pick, bent) });
+    }
     recordedDeal.current = null;
-    setSetup(frozen);
     setGame(state);
     setDraft(freshDraft(state));
     setSelected([]);
     setNotice(null);
     setPaused(false);
+    setNewBest(false);
+    setActorSeat(null);
+    setCombo(0);
+    setAugment(next.mode === "daily" ? null : pick);
+    setChaos(bent);
     setDealId((id) => id + 1);
     if (state.mode === "daily" && state.dateKey) setBest(getBestForConditions(GAME_ID, dailyBestConditions(state.dateKey)));
     else setBest(null);
   }, []);
 
+  const countdown = useCallback((onDone: () => void) => {
+    const step = reducedMotion ? 350 : 650;
+    setPhase("countdown");
+    setCount(3);
+    later(() => { setCount(2); sfx("tap"); }, step);
+    later(() => { setCount(1); sfx("tap"); }, step * 2);
+    later(() => { setCount(0); sfx("meld"); }, step * 3);
+    later(() => { setCount(null); setPhase("play"); onDone(); }, step * 4);
+    sfx("tap");
+  }, [later, reducedMotion, sfx]);
+
+  // Title screen: a dealt table sits behind it as the game's own art.
   useEffect(() => {
-    begin({ mode: "match", opponents: 1, level: 1 });
+    const preview = createTileRummy({ seed: 20261021, opponents: 1 });
+    setGame(preview);
+    setDraft(freshDraft(preview));
     try { setRecord(getRecord(GAME_ID)); } catch { /* private mode */ }
-    return () => { void audioRef.current?.close(); };
-  }, [begin]);
+    const savedTheme = readPref(THEME_KEY);
+    if (savedTheme === "felt" || savedTheme === "walnut" || savedTheme === "midnight") setTheme(savedTheme);
+    setMuted(readPref(MUTE_KEY) === "1");
+    const pending = timers.current;
+    return () => {
+      pending.forEach((id) => window.clearTimeout(id));
+      toneRef.current?.close();
+    };
+  }, []);
+
+  const wins = record?.w ?? 0;
+  const tier = titleTier(wins);
+  const nextStep = TITLE_STEPS[tier + 1];
+
+  const enter = () => {
+    if (!isImmersive) togglePortal();
+    if (setup.mode === "daily") {
+      deal({ mode: "daily", opponents: 1, level: DAILY_LEVEL }, 0, null);
+      countdown(() => undefined);
+      return;
+    }
+    const seed = matchSeed();
+    pendingSeed.current = seed;
+    setOffers(rollAugments(seed));
+    setPhase("augment");
+    sfx("draw");
+  };
+
+  const pickAugment = (pick: AugmentId) => {
+    deal(setup, pendingSeed.current, pick);
+    setMulliganUsed(false);
+    sfx("place");
+    countdown(() => {
+      if (rollChaos(pendingSeed.current)) {
+        setChaosFlash(true);
+        vibrate([20, 30, 20]);
+        later(() => setChaosFlash(false), 2400);
+      }
+    });
+  };
+
+  const mulligan = () => {
+    if (!game || augment !== "mulligan" || mulliganUsed || game.turnCount !== 0) return;
+    pendingSeed.current = (pendingSeed.current + 0x6d2b79f5) >>> 0;
+    deal(setup, pendingSeed.current, augment);
+    setMulliganUsed(true);
+    sfx("draw");
+  };
+
+  const toTitle = () => {
+    setPhase("title");
+    setPaused(false);
+    try { setRecord(getRecord(GAME_ID)); } catch { /* private mode */ }
+  };
 
   useEffect(() => {
     if (!game || game.turn !== 0 || game.status !== "playing") return;
     setDraft(freshDraft(game));
     setSelected([]);
+    setCombo(0);
   }, [game]);
 
-  useEffect(() => {
-    if (!game || game.status !== "playing" || game.turn === 0 || paused) return;
-    const level: AiLevel = game.mode === "daily" ? DAILY_LEVEL : setup.level;
-    const timer = window.setTimeout(() => {
-      setGame((current) => {
-        if (!current || current.status !== "playing" || current.turn === 0) return current;
-        const action = chooseRummyAction(current, current.mode === "daily" ? DAILY_LEVEL : level);
-        return applyRummy(current, action) ?? current;
-      });
-    }, reducedMotion ? 0 : 400);
-    return () => window.clearTimeout(timer);
-  }, [game, paused, reducedMotion, setup.level]);
+  const aiLevel: AiLevel = game?.mode === "daily" ? DAILY_LEVEL : shiftedLevel(setup.level, augment);
 
   useEffect(() => {
-    if (!game || game.status !== "over" || recordedDeal.current === dealId) return;
+    if (phase !== "play" || !game || game.status !== "playing" || game.turn === 0 || paused) return;
+    const timer = window.setTimeout(() => {
+      const action = chooseRummyAction(game, aiLevel);
+      const next = applyRummy(game, action);
+      if (!next) return;
+      setActorSeat(game.turn);
+      if (action.type === "play") sfx("place");
+      setGame(next);
+    }, reducedMotion ? 150 : 650);
+    return () => window.clearTimeout(timer);
+  }, [aiLevel, game, paused, phase, reducedMotion, sfx]);
+
+  useEffect(() => {
+    if (phase !== "play" || !game || game.status !== "over" || recordedDeal.current === dealId) return;
     recordedDeal.current = dealId;
     const outcome = humanOutcome(game);
     if (!outcome) return;
     try { setRecord(recordResult(GAME_ID, outcome)); } catch { /* best-effort */ }
+    if (outcome === "w") {
+      sfx("win");
+      vibrate([20, 40, 20, 40, 60]);
+      pushFx({ kind: "win" });
+      if (!reducedMotion) void import("canvas-confetti").then(({ default: confetti }) => confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } })).catch(() => undefined);
+    } else sfx("lose");
     if (game.mode === "daily" && game.dateKey && outcome === "w") {
       const margin = game.hands.slice(1).reduce((sum, hand) => sum + handPenalty(hand), 0);
-      try { setBest(recordBestForConditions(GAME_ID, margin, "score", dailyBestConditions(game.dateKey))); } catch { /* best-effort */ }
+      try {
+        const previous = getBestForConditions(GAME_ID, dailyBestConditions(game.dateKey));
+        const saved = recordBestForConditions(GAME_ID, margin, "score", dailyBestConditions(game.dateKey));
+        setBest(saved);
+        setNewBest(!previous || saved.value !== previous.value);
+      } catch { /* best-effort */ }
     }
-  }, [dealId, game]);
+  }, [dealId, game, phase, pushFx, reducedMotion, sfx]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -735,7 +855,10 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
         togglePortal();
       } else if (event.key === "m" || event.key === "M") {
         event.preventDefault();
-        setMuted((value) => !value);
+        setMuted((value) => { writePref(MUTE_KEY, value ? "0" : "1"); return !value; });
+      } else if (event.key === "p" || event.key === "P") {
+        event.preventDefault();
+        setPaused((value) => !value);
       }
     };
     window.addEventListener("keydown", onKey);
@@ -748,11 +871,12 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
     tile.kind === "joker" ? t.colors.joker : String(tile.value),
   );
 
-  const ourTurn = Boolean(game && game.status === "playing" && game.turn === 0);
+  const playing = phase === "play";
+  const ourTurn = Boolean(playing && game && game.status === "playing" && game.turn === 0);
   const canAct = ourTurn && !paused;
-  const hand = game && ourTurn ? sortTiles(unusedHand(game, draft)) : [];
+  const hand = useMemo(() => (game ? sortTiles(ourTurn || !playing ? unusedHand(game, draft) : game.hands[0]) : []), [draft, game, ourTurn, playing]);
   const loose = ourTurn ? sortTiles(draft.loose) : [];
-  const shownTable = game ? (ourTurn ? draft.table : game.table) : [];
+  const shownTable = game ? (ourTurn || !playing ? draft.table : game.table) : [];
   const pool = [...hand, ...loose];
   const selectedTiles = selected.flatMap((id) => {
     const tile = pool.find((candidate) => candidate.id === id);
@@ -761,26 +885,44 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
   const groupMeld = selectedTiles.length >= 3 ? arrangeMeld(selectedTiles, "group") : null;
   const runMeld = selectedTiles.length >= 3 ? arrangeMeld(selectedTiles, "run") : null;
   const openingPoints = game ? addedPoints(game, ourTurn ? draft.table : game.table) : 0;
+  const hinted = useMemo(() => {
+    if (augment !== "glowHint" || !ourTurn) return new Set<number>();
+    return new Set(meldOptions(hand).flatMap((meld) => meld.tiles.map((tile) => tile.id)));
+  }, [augment, hand, ourTurn]);
+
+  const commit = (next: Draft, laid: number[]) => {
+    setDraft(next);
+    setSelected([]);
+    setNotice(null);
+    if (laid.length >= 3 || (laid.length > 0 && next.table.length > draft.table.length)) {
+      const nextCombo = combo + 1;
+      setCombo(nextCombo);
+      sfx("meld", nextCombo);
+      vibrate(15);
+      pushFx({ kind: "lay", ids: laid, combo: nextCombo });
+    } else {
+      sfx("place");
+      vibrate(10);
+      if (laid.length > 0) pushFx({ kind: "lay", ids: laid, combo: 0 });
+    }
+  };
 
   const toggle = (id: number) => {
     if (!canAct) return;
     setSelected((current) => (current.includes(id) ? current.filter((item) => item !== id) : current.concat(id)));
     setNotice(null);
+    sfx("tap");
   };
 
   const lay = (shape: MeldShape) => {
     if (!game || !canAct) return;
     const meld = shape === "group" ? groupMeld : runMeld;
     if (!meld) {
-      setNotice("not-a-meld");
-      tone(140);
+      fail("not-a-meld");
       return;
     }
     const used = new Set(meld.tiles.map((tile) => tile.id));
-    setDraft({ table: draft.table.concat(meld), loose: draft.loose.filter((tile) => !used.has(tile.id)) });
-    setSelected([]);
-    setNotice(null);
-    tone(360);
+    commit({ table: draft.table.concat(meld), loose: draft.loose.filter((tile) => !used.has(tile.id)) }, [...used]);
   };
 
   const extend = (meldIndex: number, side: "start" | "end") => {
@@ -788,72 +930,91 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
     const tile = selectedTiles[0];
     const meld = draft.table[meldIndex];
     if (!tile || !meld) return;
-    const tiles = side === "start" ? [tile, ...meld.tiles] : [...meld.tiles, tile];
-    let next: Meld | null = null;
-    for (const shape of [meld.shape, "group", "run"] as const) {
-      if (!shape) continue;
-      const candidate: Meld = { tiles, shape };
-      if (validateMeld(candidate).ok) {
-        next = candidate;
-        break;
-      }
-    }
+    const next = extendMeld(meld, tile, side);
     if (!next) {
-      setNotice("not-a-meld");
-      tone(140);
+      fail("not-a-meld");
       return;
     }
-    setDraft({
+    commit({
       table: draft.table.map((current, index) => (index === meldIndex ? next : current)),
       loose: draft.loose.filter((item) => item.id !== tile.id),
-    });
-    setSelected([]);
-    setNotice(null);
-    tone(360);
+    }, [tile.id]);
   };
 
   const lift = (meldIndex: number, tileId: number) => {
-    if (!canAct || !game?.opened[0]) return;
+    if (!canAct) return;
+    if (!game?.opened[0]) {
+      fail("initial-locked");
+      return;
+    }
     setDraft(pullTile(draft, meldIndex, tileId));
     setSelected((current) => current.filter((id) => id !== tileId));
     setNotice(null);
+    sfx("tap");
   };
 
   const play = () => {
     if (!game || !canAct) return;
     if (draft.loose.length > 0) {
-      setNotice("loose");
-      tone(140);
+      fail("loose");
       return;
     }
     const check = checkPlay(game, 0, draft.table);
     if (!check.ok) {
-      setNotice(check.reason ?? "invalid-meld");
-      tone(140);
+      fail(check.reason ?? "invalid-meld");
       return;
     }
     const next = applyRummy(game, { type: "play", table: draft.table });
     if (!next) {
-      setNotice("invalid-meld");
+      fail("invalid-meld");
       return;
     }
+    setActorSeat(0);
     setGame(next);
     setNotice(null);
-    tone(480);
+    sfx("meld", combo + 1);
+    vibrate(20);
   };
 
   const draw = () => {
     if (!game || !canAct) return;
     if (draft.loose.length > 0 || !sameLayout(draft.table, game.table)) {
-      setNotice("dirty");
-      tone(140);
+      fail("dirty");
       return;
     }
     const next = applyRummy(game, { type: "draw" });
     if (!next) return;
+    setActorSeat(0);
     setGame(next);
     setNotice(null);
-    tone(240);
+    sfx("draw");
+    vibrate(8);
+  };
+
+  const canDrop = (tileId: number, from: TileSpot, target: DropTarget) => {
+    if (!game || !canAct) return false;
+    return dropDraft(game, draft, { ...from, id: tileId }, target, selected) !== null;
+  };
+
+  const onDrop = (tileId: number, from: TileSpot, target: DropTarget) => {
+    if (!game || !canAct) return false;
+    const result = dropDraft(game, draft, { ...from, id: tileId }, target, selected);
+    if (!result) {
+      if (target.type !== "hand") fail(from.zone === "table" && !game.opened[0] ? "initial-locked" : "not-a-meld");
+      return false;
+    }
+    commit(result.draft, result.laid);
+    if (from.zone === "table") setSelected((current) => current.filter((id) => id !== tileId));
+    return true;
+  };
+
+  const onTap = (spot: TileSpot) => {
+    if (!canAct) return;
+    if (spot.zone === "table") {
+      if (spot.meld !== null) lift(spot.meld, spot.id);
+      return;
+    }
+    toggle(spot.id);
   };
 
   const share = async () => {
@@ -863,24 +1024,35 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
     try {
       await navigator.clipboard.writeText(shareGrid(game, t.title, label));
       setNotice("copied");
-      tone(520);
+      sfx("tap");
     } catch {
       setNotice("copyFailed");
     }
   };
 
+  const toggleMute = () => setMuted((value) => { writePref(MUTE_KEY, value ? "0" : "1"); return !value; });
+  const chooseTheme = (next: TableTheme) => {
+    if (wins < THEME_UNLOCK[next]) return;
+    setTheme(next);
+    writePref(THEME_KEY, next);
+    sfx("tap");
+  };
+
   const message = notice === "copied" ? t.copied : notice === "copyFailed" ? t.copyFailed : notice ? t.reasons[notice] : null;
   const outcome = game ? humanOutcome(game) : null;
-  const shareText = game && game.status === "over"
-    ? shareGrid(game, t.title, outcome === "w" ? t.win : outcome === "l" ? t.loss : t.drawGame)
-    : "";
+  const over = playing && game?.status === "over";
+  const shareText = game && over ? shareGrid(game, t.title, outcome === "w" ? t.win : outcome === "l" ? t.loss : t.drawGame) : "";
+  const stars = game && over ? resultStars(outcome, Math.ceil(game.turnCount / game.seats)) : 0;
+  const peekTile = augment === "peek" && game && game.pool.length > 0 ? game.pool[0] : null;
+  const firstNeed = game ? firstMeldOf(game) : 30;
+  const rivalsView = game ? game.hands.slice(1).map((seat, index) => ({ tiles: seat.length, opened: game.opened[index + 1] })) : [];
 
   return (
     <div
       ref={containerRef}
       className={
         isImmersive
-          ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-y-auto bg-background p-3 sm:p-5"
+          ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-y-auto bg-background p-2 sm:p-4"
           : "relative"
       }
     >
@@ -888,136 +1060,252 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
         title={t.title}
         subtitle={t.subtitle}
         resetLabel={setup.mode === "daily" ? t.replay : t.newMatch}
-        onReset={() => begin(setup)}
+        onReset={toTitle}
       >
-        <div className="mb-4 flex flex-wrap items-center gap-2">
-          <button type="button" onClick={() => begin({ mode: "match", ...matchSettings.current })} aria-pressed={setup.mode === "match"} className={`${CONTROL} ${setup.mode === "match" ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground"}`}>{t.match}</button>
-          <button type="button" onClick={() => begin({ mode: "daily", opponents: 1, level: DAILY_LEVEL })} aria-pressed={setup.mode === "daily"} className={`${CONTROL} ${setup.mode === "daily" ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground"}`}>{t.daily}</button>
-          {setup.mode === "match" && (
-            <>
-              <div className="inline-flex gap-1" role="group" aria-label={t.opponents}>
-                {([1, 2, 3] as OpponentCount[]).map((count) => (
-                  <button key={count} type="button" onClick={() => begin({ mode: "match", opponents: count, level: setup.level })} aria-pressed={setup.opponents === count} className={`${CONTROL} ${setup.opponents === count ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground"}`}>{count}</button>
-                ))}
+        {playing && (
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm font-bold text-foreground" role="status" aria-live="polite">
+              {!game && t.preparing}
+              {game && game.status === "over" && (outcome === "w" ? t.win : outcome === "l" ? t.loss : t.drawGame)}
+              {game && game.status === "playing" && game.turn === 0 && t.yourTurn}
+              {game && game.status === "playing" && game.turn !== 0 && (paused ? t.pause : `${t.rivalTurn(seatName(game.turn))} · ${t.thinking}`)}
+            </p>
+            <div className="flex gap-2">
+              <button type="button" onClick={() => setPaused((value) => !value)} aria-pressed={paused} aria-label={paused ? t.resume : t.pause} className={`${CONTROL} inline-flex min-w-11 items-center justify-center border-border bg-card text-muted-foreground`}>
+                {paused ? <Play className="size-4" /> : <Pause className="size-4" />}
+              </button>
+              <button type="button" onClick={toggleMute} aria-pressed={muted} aria-label={muted ? portalLabels.unmute : portalLabels.mute} title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`} className={`${CONTROL} inline-flex min-w-11 items-center justify-center border-border bg-card text-muted-foreground`}>
+                {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+              </button>
+              <button type="button" onClick={togglePortal} aria-pressed={isImmersive} aria-label={isImmersive ? portalLabels.exit : portalLabels.enter} title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`} className={`${CONTROL} inline-flex min-w-11 items-center justify-center border-border bg-card text-muted-foreground`}>
+                {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {playing && (
+          <div className="mb-2 flex flex-wrap items-center gap-2 text-xs font-bold text-muted-foreground">
+            {game?.mode === "daily" && game.dateKey && <span>{t.dailyNote(game.dateKey)}</span>}
+            {record && <span>{t.record} {record.w}–{record.l}–{record.d}</span>}
+            {best && <span>{t.best(best.value)}</span>}
+            {game && !game.opened[0] && game.status === "playing" && <span>{t.firstNeed(openingPoints, firstNeed)}</span>}
+            {game && game.opened[0] && ourTurn && <span>{t.laid(openingPoints)}</span>}
+            {augment && <span className="rounded-full border border-primary px-2 py-0.5 text-primary">{m.augments[augment].name}</span>}
+            {chaos && <span className="rounded-full border border-destructive px-2 py-0.5 text-destructive">{m.chaos[chaos].name}</span>}
+            {peekTile && <span>{m.peek(labelFor(peekTile))}</span>}
+          </div>
+        )}
+
+        <div className="relative">
+          {game && (
+            <div className={phase === "title" ? "absolute inset-0 overflow-hidden rounded-2xl" : undefined}>
+              <TileRummyCanvas
+                table={shownTable}
+                loose={loose}
+                hand={hand}
+                selected={selected}
+                hinted={hinted}
+                rivals={rivalsView}
+                turn={game.turn}
+                playing={playing && game.status === "playing" && !paused}
+                poolCount={game.pool.length}
+                peek={peekTile}
+                theme={theme}
+                reducedMotion={reducedMotion}
+                interactive={canAct}
+                tableLocked={!game.opened[0]}
+                actorSeat={actorSeat}
+                fx={fx}
+                labels={{ table: t.table, hand: t.hand, loose: t.loose, newLine: m.newLine, pool: t.pool(game.pool.length), rival: (n) => t.rival(n) }}
+                canDrop={canDrop}
+                onTap={onTap}
+                onDrop={onDrop}
+                onPile={draw}
+              />
+            </div>
+          )}
+
+          {phase === "title" && (
+            <div className={TITLE_PANEL}>
+              <p className="text-xs font-bold uppercase tracking-widest text-primary">{m.titleLabel} · {m.titles[tier]}</p>
+              <h2 className="text-3xl font-black text-foreground">{t.title}</h2>
+              <p className="max-w-xs text-sm text-muted-foreground">{m.tagline}</p>
+              {record && <p className="text-xs font-bold text-muted-foreground">{t.record} {record.w}–{record.l}–{record.d}{nextStep !== undefined ? ` · ${m.nextTitle(nextStep - wins)}` : ""}</p>}
+              <div className="flex flex-wrap justify-center gap-2" role="group" aria-label={t.match}>
+                <button type="button" onClick={() => setSetup((current) => ({ ...current, mode: "match" }))} aria-pressed={setup.mode === "match"} className={`${CONTROL} ${setup.mode === "match" ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground"}`}>{t.match}</button>
+                <button type="button" onClick={() => setSetup((current) => ({ ...current, mode: "daily" }))} aria-pressed={setup.mode === "daily"} className={`${CONTROL} ${setup.mode === "daily" ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground"}`}>{t.daily}</button>
               </div>
-              <div className="inline-flex gap-1" role="group" aria-label={t.level}>
-                {([1, 2, 3] as AiLevel[]).map((level) => (
-                  <button key={level} type="button" onClick={() => begin({ mode: "match", opponents: setup.opponents, level })} aria-pressed={setup.level === level} className={`${CONTROL} ${setup.level === level ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground"}`}>
-                    {level === 1 ? t.level1 : level === 2 ? t.level2 : t.level3}
+              {setup.mode === "match" ? (
+                <div className="flex flex-wrap justify-center gap-2">
+                  <div className="inline-flex gap-1" role="group" aria-label={t.opponents}>
+                    {([1, 2, 3] as OpponentCount[]).map((n) => (
+                      <button key={n} type="button" onClick={() => setSetup((current) => ({ ...current, opponents: n }))} aria-pressed={setup.opponents === n} aria-label={`${t.opponents} ${n}`} className={`${CONTROL} min-w-11 ${setup.opponents === n ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground"}`}>{n}</button>
+                    ))}
+                  </div>
+                  <div className="inline-flex gap-1" role="group" aria-label={t.level}>
+                    {([1, 2, 3] as AiLevel[]).map((level) => (
+                      <button key={level} type="button" onClick={() => setSetup((current) => ({ ...current, level }))} aria-pressed={setup.level === level} className={`${CONTROL} ${setup.level === level ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground"}`}>
+                        {level === 1 ? t.level1 : level === 2 ? t.level2 : t.level3}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <p className="max-w-xs text-xs text-muted-foreground">{t.dailyNote(kstDateKey())}</p>
+              )}
+              <div className="flex flex-wrap justify-center gap-1" role="group" aria-label={m.theme}>
+                {THEMES.map((option) => {
+                  const locked = wins < THEME_UNLOCK[option];
+                  return (
+                    <button key={option} type="button" onClick={() => chooseTheme(option)} disabled={locked} aria-pressed={theme === option} title={locked ? m.themeLocked(THEME_UNLOCK[option]) : undefined} className={`${CONTROL} inline-flex items-center gap-1 ${theme === option ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground"}`}>
+                      {locked && <Lock className="size-3" aria-hidden="true" />}
+                      {m.themes[option]}
+                      {locked && <span className="sr-only">{m.themeLocked(THEME_UNLOCK[option])}</span>}
+                    </button>
+                  );
+                })}
+              </div>
+              <button type="button" onClick={enter} className="min-h-14 rounded-2xl bg-primary px-10 text-lg font-black text-primary-foreground shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">{m.enter}</button>
+            </div>
+          )}
+
+          {phase === "augment" && (
+            <div className={OVERLAY}>
+              <p className="text-base font-black text-foreground">{m.pickAugment}</p>
+              <div className="grid w-full max-w-md gap-2">
+                {offers.map((id) => (
+                  <button key={id} type="button" onClick={() => pickAugment(id)} className="min-h-14 rounded-2xl border-2 border-primary bg-card px-4 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
+                    <span className="block text-sm font-black text-foreground">{m.augments[id].name}</span>
+                    <span className="block text-xs text-muted-foreground">{m.augments[id].desc}</span>
                   </button>
                 ))}
               </div>
-            </>
+            </div>
+          )}
+
+          {phase === "countdown" && count !== null && (
+            <div className={OVERLAY} aria-live="assertive">
+              <p className="text-7xl font-black text-primary">{count > 0 ? count : m.go}</p>
+            </div>
+          )}
+
+          {playing && chaosFlash && chaos && (
+            <div className="pointer-events-none absolute inset-x-0 top-1/4 z-10 mx-auto w-fit rounded-2xl border-2 border-destructive bg-card px-6 py-4 text-center shadow-xl" role="status">
+              <p className="text-2xl font-black text-destructive">{m.chaosBanner}</p>
+              <p className="text-sm font-bold text-foreground">{m.chaos[chaos].name}</p>
+              <p className="text-xs text-muted-foreground">{m.chaos[chaos].desc}</p>
+            </div>
+          )}
+
+          {playing && paused && !over && (
+            <div className={OVERLAY}>
+              <p className="text-2xl font-black text-foreground">{t.pause}</p>
+              <div className="flex flex-wrap justify-center gap-2">
+                <button type="button" onClick={() => setPaused(false)} className={PRIMARY}>{t.resume}</button>
+                <button type="button" onClick={() => { setPaused(false); setPhase("title"); later(enter, 0); }} className={`${CONTROL} border-border bg-card text-foreground`}>{m.restart}</button>
+                <button type="button" onClick={toTitle} className={`${CONTROL} border-border bg-card text-foreground`}>{m.exit}</button>
+                <button type="button" onClick={toggleMute} aria-pressed={muted} className={`${CONTROL} border-border bg-card text-foreground`}>{muted ? portalLabels.unmute : portalLabels.mute}</button>
+              </div>
+            </div>
+          )}
+
+          {over && game && (
+            <div className={OVERLAY}>
+              <p className="text-4xl font-black text-foreground">{outcome === "w" ? t.win : outcome === "l" ? t.loss : t.drawGame}</p>
+              <p className="text-3xl tracking-widest text-primary" aria-label={m.stars(stars)}>{"★".repeat(stars)}{"☆".repeat(3 - stars)}</p>
+              {newBest && <p className="text-sm font-black text-primary">{m.newBest}</p>}
+              <ul className="text-xs text-muted-foreground">
+                {game.hands.map((seat, index) => (
+                  <li key={index}>{seatName(index)} · {t.penalty(handPenalty(seat))}</li>
+                ))}
+              </ul>
+              <div className="flex flex-wrap justify-center gap-2">
+                <button type="button" onClick={() => { setPhase("title"); later(enter, 0); }} className={PRIMARY}>{m.restart}</button>
+                <button type="button" onClick={() => void share()} className={`${CONTROL} border-border bg-card text-foreground`}>{t.share}</button>
+                <button type="button" onClick={toTitle} className={`${CONTROL} border-border bg-card text-foreground`}>{m.exit}</button>
+              </div>
+              {message && <p className="text-xs font-medium text-foreground" role="status">{message}</p>}
+              {notice === "copyFailed" && shareText && <pre className="whitespace-pre-wrap text-left text-xs text-foreground">{shareText}</pre>}
+            </div>
           )}
         </div>
 
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <p className="text-sm font-bold text-foreground" role="status" aria-live="polite">
-            {!game && t.preparing}
-            {game && game.status === "over" && (outcome === "w" ? t.win : outcome === "l" ? t.loss : t.drawGame)}
-            {game && game.status === "playing" && game.turn === 0 && t.yourTurn}
-            {game && game.status === "playing" && game.turn !== 0 && (paused ? t.pause : `${t.rivalTurn(seatName(game.turn))} · ${t.thinking}`)}
-          </p>
-          <div className="flex gap-2">
-            <button type="button" onClick={() => setPaused((value) => !value)} aria-pressed={paused} className={`${CONTROL} border-border bg-card text-muted-foreground`}>{paused ? t.resume : t.pause}</button>
-            <button type="button" onClick={() => setMuted((value) => !value)} aria-pressed={muted} aria-label={muted ? portalLabels.unmute : portalLabels.mute} title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`} className={`${CONTROL} inline-flex min-w-11 items-center gap-1 border-border bg-card text-muted-foreground`}>
-              {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
-              <span className="hidden sm:inline">{muted ? portalLabels.unmute : portalLabels.mute}</span>
-            </button>
-            <button type="button" onClick={togglePortal} aria-pressed={isImmersive} aria-label={isImmersive ? portalLabels.exit : portalLabels.enter} title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`} className={`${CONTROL} inline-flex min-w-11 items-center gap-1 border-border bg-card text-muted-foreground`}>
-              {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
-              <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
-            </button>
-          </div>
-        </div>
-
-        {game?.mode === "daily" && game.dateKey && <p className="mb-3 text-xs font-medium text-muted-foreground">{t.dailyNote(game.dateKey)}</p>}
-        <div className="mb-4 flex flex-wrap items-center gap-3 text-xs font-bold text-muted-foreground">
-          {game && <span>{game.pool.length === 0 ? t.pass : t.pool(game.pool.length)}</span>}
-          {record && <span>{t.record} {record.w}–{record.l}–{record.d}</span>}
-          {best && <span>{t.best(best.value)}</span>}
-          {game && !game.opened[0] && game.status === "playing" && <span>{t.firstNeed(openingPoints)}</span>}
-          {game && game.opened[0] && ourTurn && <span>{t.laid(openingPoints)}</span>}
-        </div>
-
-        {game && (
-          <ul className="mb-4 flex flex-wrap gap-2 text-xs text-muted-foreground">
-            {game.hands.map((seat, index) => (
-              <li key={index} className={game.turn === index && game.status === "playing" ? "font-bold text-primary" : undefined}>
-                {seatName(index)} · {t.tiles(index === 0 && ourTurn ? hand.length : seat.length)} · {game.opened[index] ? t.opened : t.closed}
-                {game.status === "over" ? ` · ${t.penalty(handPenalty(seat))}` : ""}
-              </li>
-            ))}
-          </ul>
+        {playing && !over && (
+          <>
+            {message && <p className="mt-2 text-sm font-medium text-foreground" role="status">{message}</p>}
+            <div className="mt-2 flex flex-wrap gap-2">
+              <button type="button" onClick={() => lay("group")} disabled={!canAct || !groupMeld} className={`${CONTROL} border-border bg-card text-foreground`}>{t.group}{meldPoints(groupMeld) !== null ? ` · ${t.points(meldPoints(groupMeld) ?? 0)}` : ""}</button>
+              <button type="button" onClick={() => lay("run")} disabled={!canAct || !runMeld} className={`${CONTROL} border-border bg-card text-foreground`}>{t.run}{meldPoints(runMeld) !== null ? ` · ${t.points(meldPoints(runMeld) ?? 0)}` : ""}</button>
+              <button type="button" onClick={() => { if (game) { setDraft(freshDraft(game)); setSelected([]); setNotice(null); setCombo(0); sfx("tap"); } }} disabled={!canAct} className={`${CONTROL} border-border bg-card text-foreground`}>{t.clear}</button>
+              <button type="button" onClick={draw} disabled={!canAct} className={`${CONTROL} border-border bg-card text-foreground`}>{game?.pool.length === 0 ? t.pass : t.drawTile}</button>
+              <button type="button" onClick={play} disabled={!canAct} className={PRIMARY}>{t.play}</button>
+              {augment === "mulligan" && !mulliganUsed && game?.turnCount === 0 && (
+                <button type="button" onClick={mulligan} disabled={!canAct} className={`${CONTROL} border-primary bg-primary/10 text-primary`}>{m.mulligan}</button>
+              )}
+            </div>
+          </>
         )}
 
-        <section aria-label={t.table} className="mb-4 space-y-3">
-          {shownTable.length === 0 && <p className="text-sm text-muted-foreground">{t.table}</p>}
-          {shownTable.map((meld, meldIndex) => {
-            const check = validateMeld(meld);
-            return (
-              <div key={meld.tiles.map((tile) => tile.id).join("-")} className="rounded-xl border border-border bg-muted/40 p-2">
-                <p className="mb-2 text-xs font-bold text-muted-foreground">
-                  {check.ok ? (check.shape === "group" ? t.group : t.run) : t.table}
-                  {check.ok ? ` · ${t.points(check.points)}` : ""}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {meld.tiles.map((tile) => (
-                    <TileFace
-                      key={tile.id}
-                      tile={tile}
-                      label={labelFor(tile)}
-                      pressed={false}
-                      disabled={!canAct || !game?.opened[0]}
-                      onClick={() => lift(meldIndex, tile.id)}
-                    />
-                  ))}
-                </div>
-                {canAct && game && selected.length === 1 && (game.opened[0] || isNewMeld(game, meld)) && (
-                  <div className="mt-2 flex gap-2">
-                    <button type="button" onClick={() => extend(meldIndex, "start")} className={`${CONTROL} border-border bg-card text-foreground`}>{t.front}</button>
-                    <button type="button" onClick={() => extend(meldIndex, "end")} className={`${CONTROL} border-border bg-card text-foreground`}>{t.back}</button>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </section>
+        {playing && (
+          <details className="mt-3 text-xs text-muted-foreground">
+            <summary className="inline-flex min-h-11 cursor-pointer items-center gap-1 font-bold text-foreground">
+              <HelpCircle className="size-4" aria-hidden="true" />
+              {m.rules}
+            </summary>
+            <p className="leading-5">{m.dragHint}</p>
+            <p className="mt-1 leading-5">{t.hint}</p>
+          </details>
+        )}
 
-        {ourTurn && loose.length > 0 && (
-          <section aria-label={t.loose} className="mb-4">
-            <p className="mb-2 text-sm font-bold text-foreground">{t.loose}</p>
-            <div className="flex flex-wrap gap-2">
-              {loose.map((tile) => (
+        {playing && game && (
+          <div className="sr-only focus-within:not-sr-only focus-within:mt-4 focus-within:block">
+            <p className="mb-2 text-sm font-bold text-foreground">{m.controls}</p>
+            <ul className="mb-4 flex flex-wrap gap-2 text-xs text-muted-foreground">
+              {game.hands.map((seat, index) => (
+                <li key={index}>
+                  {seatName(index)} · {t.tiles(index === 0 && ourTurn ? hand.length : seat.length)} · {game.opened[index] ? t.opened : t.closed}
+                </li>
+              ))}
+            </ul>
+            <section aria-label={t.table} className="mb-4 space-y-3">
+              {shownTable.map((meld, meldIndex) => {
+                const check = validateMeld(meld);
+                return (
+                  <div key={meldKey(meld)} className="rounded-xl border border-border bg-muted/40 p-2">
+                    <p className="mb-2 text-xs font-bold text-muted-foreground">
+                      {check.ok ? (check.shape === "group" ? t.group : t.run) : t.table}
+                      {check.ok ? ` · ${t.points(check.points)}` : ""}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {meld.tiles.map((tile) => (
+                        <TileFace key={tile.id} tile={tile} label={labelFor(tile)} pressed={false} disabled={!canAct || !game.opened[0]} onClick={() => lift(meldIndex, tile.id)} />
+                      ))}
+                    </div>
+                    {canAct && selected.length === 1 && (game.opened[0] || isNewMeld(game, meld)) && (
+                      <div className="mt-2 flex gap-2">
+                        <button type="button" onClick={() => extend(meldIndex, "start")} className={`${CONTROL} border-border bg-card text-foreground`}>{t.front}</button>
+                        <button type="button" onClick={() => extend(meldIndex, "end")} className={`${CONTROL} border-border bg-card text-foreground`}>{t.back}</button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </section>
+            {ourTurn && loose.length > 0 && (
+              <section aria-label={t.loose} className="mb-4 flex flex-wrap gap-2">
+                {loose.map((tile) => (
+                  <TileFace key={tile.id} tile={tile} label={labelFor(tile)} pressed={selected.includes(tile.id)} disabled={!canAct} onClick={() => toggle(tile.id)} />
+                ))}
+              </section>
+            )}
+            <section aria-label={t.hand} className="mb-4 flex flex-wrap gap-2">
+              {hand.map((tile) => (
                 <TileFace key={tile.id} tile={tile} label={labelFor(tile)} pressed={selected.includes(tile.id)} disabled={!canAct} onClick={() => toggle(tile.id)} />
               ))}
-            </div>
-          </section>
-        )}
-
-        <section aria-label={t.hand} className="mb-4">
-          <p className="mb-2 text-sm font-bold text-foreground">{t.hand}</p>
-          <div className="flex flex-wrap gap-2">
-            {(ourTurn ? hand : sortTiles(game?.hands[0] ?? [])).map((tile) => (
-              <TileFace key={tile.id} tile={tile} label={labelFor(tile)} pressed={selected.includes(tile.id)} disabled={!canAct} onClick={() => toggle(tile.id)} />
-            ))}
+            </section>
           </div>
-        </section>
-
-        <p className="mb-3 text-xs leading-5 text-muted-foreground">{t.hint}</p>
-        {message && <p className="mb-3 text-sm font-medium text-foreground" role="status">{message}</p>}
-
-        <div className="flex flex-wrap gap-2">
-          <button type="button" onClick={() => lay("group")} disabled={!canAct || !groupMeld} className={`${CONTROL} border-border bg-card text-foreground`}>{t.group}{meldPoints(groupMeld) !== null ? ` · ${t.points(meldPoints(groupMeld) ?? 0)}` : ""}</button>
-          <button type="button" onClick={() => lay("run")} disabled={!canAct || !runMeld} className={`${CONTROL} border-border bg-card text-foreground`}>{t.run}{meldPoints(runMeld) !== null ? ` · ${t.points(meldPoints(runMeld) ?? 0)}` : ""}</button>
-          <button type="button" onClick={() => { if (game) { setDraft(freshDraft(game)); setSelected([]); setNotice(null); } }} disabled={!canAct} className={`${CONTROL} border-border bg-card text-foreground`}>{t.clear}</button>
-          <button type="button" onClick={draw} disabled={!canAct} className={`${CONTROL} border-border bg-card text-foreground`}>{game?.pool.length === 0 ? t.pass : t.drawTile}</button>
-          <button type="button" onClick={play} disabled={!canAct} className="min-h-11 rounded-xl bg-primary px-4 text-sm font-bold text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50">{t.play}</button>
-          {game?.status === "over" && (
-            <button type="button" onClick={() => void share()} className={`${CONTROL} border-border bg-card text-foreground`}>{t.share}</button>
-          )}
-        </div>
-        {shareText && <pre className="mt-4 whitespace-pre-wrap text-sm text-foreground">{shareText}</pre>}
+        )}
       </GameContainer>
     </div>
   );
