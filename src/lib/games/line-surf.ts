@@ -65,6 +65,14 @@ export function createRun(puzzle: Puzzle): Run {
   return { puzzle, phase: "ready", step: 0, lane: 1, speed: 2 };
 }
 
+// The result button used to rebuild today's seed. A practice wave has to be a
+// different board, or "again" is the same daily course (2026-10-21).
+export function freshSeed(salt: number, dailySeed: number): number {
+  const next = salt >>> 0;
+  const daily = dailySeed >>> 0;
+  return next === daily ? (next + 1) >>> 0 : next;
+}
+
 export function begin(run: Run): Run {
   if (run.phase !== "ready") return run;
   return { ...run, phase: "play" };

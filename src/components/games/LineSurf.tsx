@@ -21,6 +21,7 @@ import {
   createPuzzle,
   createRun,
   expire,
+  freshSeed,
   ride,
   type Act,
   type Run,
@@ -28,7 +29,7 @@ import {
 
 const FUSE_MS = 2800;
 const CONTROL = "min-h-11 min-w-11 rounded-xl border px-3 py-2 text-sm font-bold motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
-const BUTTON = "min-h-16 rounded-xl border border-border bg-card text-sm font-bold text-foreground motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60";
+const BUTTON = "min-h-16 rounded-xl border border-border bg-card text-sm font-bold text-foreground transition-transform motion-reduce:transition-none active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60";
 
 interface Copy {
   title: string;
@@ -41,7 +42,13 @@ interface Copy {
   speed: (n: number) => string;
   won: string;
   lost: string;
-  again: string;
+  enter: string;
+  practice: string;
+  practiceNote: string;
+  pause: string;
+  resume: string;
+  leave: string;
+  help: string;
   best: (n: number) => string;
   record: (wins: number, losses: number) => string;
   date: (key: string) => string;
@@ -63,7 +70,13 @@ const COPY: Record<Locale, Copy> = {
     speed: (n) => `속도 ${n}`,
     won: "물마루까지 속도가 남았습니다.",
     lost: "속도가 모자라거나, 획이 벽을 만났습니다.",
-    again: "같은 파도 다시",
+    enter: "입장하기",
+    practice: "연습 파도",
+    practiceNote: "오늘의 판이 아닌 새 파도입니다.",
+    pause: "멈추기",
+    resume: "계속",
+    leave: "나가기",
+    help: "설명",
     best: (n) => `가장 빠른 마침 ${n}`,
     record: (wins, losses) => `맞춤 ${wins} · 놓침 ${losses}`,
     date: (key) => `${key} · 한국 표준시`,
@@ -83,7 +96,13 @@ const COPY: Record<Locale, Copy> = {
     speed: (n) => `Speed ${n}`,
     won: "Speed was left at the end of the line.",
     lost: "Not enough speed, or the stroke met a wall.",
-    again: "Same wave again",
+    enter: "Enter",
+    practice: "Practice wave",
+    practiceNote: "A new wave, not today's board.",
+    pause: "Pause",
+    resume: "Continue",
+    leave: "Leave",
+    help: "Help",
     best: (n) => `Best finish ${n}`,
     record: (wins, losses) => `Ridden ${wins} · Missed ${losses}`,
     date: (key) => `${key} · Korea Standard Time`,
@@ -103,7 +122,13 @@ const COPY: Record<Locale, Copy> = {
     speed: (n) => `速度 ${n}`,
     won: "線の終わりに速度が残っていました。",
     lost: "速度が足りないか、画が壁に当たりました。",
-    again: "同じ波でもう一度",
+    enter: "入る",
+    practice: "練習の波",
+    practiceNote: "今日の盤面ではない、新しい波です。",
+    pause: "止める",
+    resume: "続ける",
+    leave: "出る",
+    help: "説明",
     best: (n) => `いちばん速い終わり ${n}`,
     record: (wins, losses) => `乗った ${wins} · 落ちた ${losses}`,
     date: (key) => `${key} · 韓国標準時`,
@@ -123,7 +148,13 @@ const COPY: Record<Locale, Copy> = {
     speed: (n) => `速度 ${n}`,
     won: "线的尽头还留着速度。",
     lost: "速度不够，或者这一笔碰到了墙。",
-    again: "同一道浪再来",
+    enter: "进入",
+    practice: "练习浪",
+    practiceNote: "这是新的浪，不是今天的局。",
+    pause: "暂停",
+    resume: "继续",
+    leave: "离开",
+    help: "说明",
     best: (n) => `最快的结束 ${n}`,
     record: (wins, losses) => `冲过 ${wins} · 落下 ${losses}`,
     date: (key) => `${key} · 韩国标准时间`,
@@ -143,7 +174,13 @@ const COPY: Record<Locale, Copy> = {
     speed: (n) => `Vitesse ${n}`,
     won: "Il restait de la vitesse au bout du trait.",
     lost: "Pas assez de vitesse, ou le trait a touché un mur.",
-    again: "La même vague",
+    enter: "Entrer",
+    practice: "Vague d'essai",
+    practiceNote: "Une vague nouvelle, pas la manche du jour.",
+    pause: "Pause",
+    resume: "Continuer",
+    leave: "Sortir",
+    help: "Aide",
     best: (n) => `Meilleure fin ${n}`,
     record: (wins, losses) => `Réussis ${wins} · Ratés ${losses}`,
     date: (key) => `${key} · heure de Séoul`,
@@ -163,7 +200,13 @@ const COPY: Record<Locale, Copy> = {
     speed: (n) => `Velocidad ${n}`,
     won: "Quedó velocidad al final del trazo.",
     lost: "Faltó velocidad, o el trazo tocó un muro.",
-    again: "La misma ola",
+    enter: "Entrar",
+    practice: "Ola de práctica",
+    practiceNote: "Una ola nueva, no la del día.",
+    pause: "Pausa",
+    resume: "Seguir",
+    leave: "Salir",
+    help: "Ayuda",
     best: (n) => `Mejor final ${n}`,
     record: (wins, losses) => `Logrados ${wins} · Fallos ${losses}`,
     date: (key) => `${key} · hora de Seúl`,
@@ -204,10 +247,17 @@ export default function LineSurf({ locale }: { locale: Locale }) {
   const [best, setBest] = useState<BestRecord | null>(null);
   const [muted, setMuted] = useState(false);
   const [remain, setRemain] = useState(Math.ceil(FUSE_MS / 1000));
+  const [gate, setGate] = useState<"title" | "count" | "board">("title");
+  const [count, setCount] = useState(3);
+  const [practice, setPractice] = useState(false);
+  const [paused, setPaused] = useState(false);
   const audio = useRef<AudioContext | null>(null);
   const noted = useRef(new Set<string>());
   const phase = useRef<Run["phase"] | null>(null);
   const runRef = useRef<Run | null>(null);
+  const practiceRef = useRef(false);
+  const pausedRef = useRef(false);
+  const fuseLeft = useRef(FUSE_MS);
   runRef.current = run;
 
   useEffect(() => {
@@ -222,12 +272,13 @@ export default function LineSurf({ locale }: { locale: Locale }) {
   }, []);
 
   useEffect(() => {
-    if (run?.phase !== "play") return undefined;
+    if (run?.phase !== "play" || paused) return undefined;
     const step = run.step;
-    const started = performance.now();
-    setRemain(Math.ceil(FUSE_MS / 1000));
+    const budget = fuseLeft.current;
+    const anchor = performance.now();
+    setRemain(Math.max(0, Math.ceil(budget / 1000)));
     const id = window.setInterval(() => {
-      const leftMs = FUSE_MS - (performance.now() - started);
+      const leftMs = budget - (performance.now() - anchor);
       setRemain(Math.max(0, Math.ceil(leftMs / 1000)));
       if (leftMs > 0) return;
       setRun((current) => {
@@ -235,8 +286,29 @@ export default function LineSurf({ locale }: { locale: Locale }) {
         return expire(current);
       });
     }, 200);
+    return () => {
+      // Resume must not refill a beat that already ran (2026-10-21).
+      fuseLeft.current = pausedRef.current ? Math.max(0, budget - (performance.now() - anchor)) : FUSE_MS;
+      window.clearInterval(id);
+    };
+  }, [run?.phase, run?.step, paused]);
+
+  useEffect(() => {
+    if (gate !== "count") return undefined;
+    let left = 3;
+    setCount(3);
+    const id = window.setInterval(() => {
+      left -= 1;
+      if (left > 0) {
+        setCount(left);
+        return;
+      }
+      window.clearInterval(id);
+      setRun((current) => (current && current.phase === "ready" ? begin(current) : current));
+      setGate("board");
+    }, 1000);
     return () => window.clearInterval(id);
-  }, [run?.phase, run?.step]);
+  }, [gate]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -253,7 +325,7 @@ export default function LineSurf({ locale }: { locale: Locale }) {
         return;
       }
       const act = KEYS[event.key];
-      if (!act || event.repeat || runRef.current?.phase !== "play") return;
+      if (!act || event.repeat || runRef.current?.phase !== "play" || pausedRef.current) return;
       event.preventDefault();
       setRun((current) => (current ? ride(current, act) : current));
     };
@@ -267,12 +339,15 @@ export default function LineSurf({ locale }: { locale: Locale }) {
     phase.current = run.phase;
     if (previous === run.phase || (run.phase !== "won" && run.phase !== "lost")) return;
     const key = `${dateKey}:${attempt}`;
-    if (!noted.current.has(key)) {
+    if (!practiceRef.current && !noted.current.has(key)) {
       noted.current.add(key);
       try {
         setRecord(recordResult(GAME_ID, run.phase === "won" ? "w" : "l"));
         setBest(recordBest(GAME_ID, run.speed, "score"));
       } catch { /* best-effort */ }
+    }
+    if (!reducedMotion && typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
+      navigator.vibrate(run.phase === "won" ? 15 : [30, 40, 30]);
     }
     if (muted || reducedMotion) return;
     const Context = window.AudioContext;
@@ -283,17 +358,54 @@ export default function LineSurf({ locale }: { locale: Locale }) {
     playTone(ctx, run.phase === "won" ? 620 : 180);
   }, [run, dateKey, attempt, muted, reducedMotion]);
 
-  const again = () => {
+  const dailySeed = () => (dateKey ? (dateKeyIndex(dateKey) * 0x9e3779b1) >>> 0 : 0);
+
+  const enter = () => {
+    if (!isImmersive) togglePortal();
+    fuseLeft.current = FUSE_MS;
+    pausedRef.current = false;
+    setPaused(false);
+    setGate("count");
+  };
+
+  const practiceWave = () => {
     if (!dateKey) return;
-    const seed = (dateKeyIndex(dateKey) * 0x9e3779b1) >>> 0;
+    const salt = typeof crypto !== "undefined" && crypto.getRandomValues ? (crypto.getRandomValues(new Uint32Array(1))[0] ?? 1) : Date.now();
+    practiceRef.current = true;
+    setPractice(true);
     setAttempt((value) => value + 1);
+    fuseLeft.current = FUSE_MS;
+    pausedRef.current = false;
+    setPaused(false);
     setRemain(Math.ceil(FUSE_MS / 1000));
-    setRun(createRun(createPuzzle(seed)));
+    setRun(createRun(createPuzzle(freshSeed(salt, dailySeed()))));
+    setGate("count");
+  };
+
+  const pause = () => {
+    pausedRef.current = true;
+    setPaused(true);
+  };
+
+  const resume = () => {
+    pausedRef.current = false;
+    setPaused(false);
+  };
+
+  const leave = () => {
+    if (isImmersive) togglePortal();
+    practiceRef.current = false;
+    setPractice(false);
+    pausedRef.current = false;
+    setPaused(false);
+    fuseLeft.current = FUSE_MS;
+    if (dateKey) setRun(createRun(createPuzzle(dailySeed())));
+    setGate("title");
   };
 
   return (
     <div ref={containerRef} className={isImmersive ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-y-auto bg-background p-3 sm:p-5" : "relative"}>
-      <GameContainer title={t.title} subtitle={run ? t.subtitle : t.preparing}>
+      <GameContainer title={t.title} subtitle={isImmersive ? undefined : (run ? t.subtitle : t.preparing)}>
         <div className="mb-4 flex flex-wrap gap-2">
           <button type="button" onClick={() => setMuted((value) => !value)} aria-pressed={muted} aria-label={muted ? portalLabels.unmute : portalLabels.mute} title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`} className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-muted-foreground`}>
             {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
@@ -306,8 +418,14 @@ export default function LineSurf({ locale }: { locale: Locale }) {
         {!run || !dateKey ? <p className="text-sm text-muted-foreground">{t.preparing}</p> : (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">{t.date(dateKey)}</p>
-            <p className="text-sm font-bold tabular-nums text-foreground" aria-live="polite">{t.speed(run.speed)} · {Math.min(run.step + 1, STEPS)} / {STEPS}{run.phase === "play" ? ` · ${t.left(remain)}` : ""}</p>
-            <p className="text-sm text-foreground">{run.phase === "won" ? t.won : run.phase === "lost" ? t.lost : run.phase === "play" ? t.play : t.ready}</p>
+            {practice ? <p className="text-sm font-bold text-foreground">{t.practiceNote}</p> : null}
+            {gate === "count" ? <p className="text-center text-5xl font-bold tabular-nums text-foreground" aria-live="polite">{count}</p> : null}
+            {gate === "board" ? (
+              <>
+                <p className="text-sm font-bold tabular-nums text-foreground" aria-live="polite">{t.speed(run.speed)} · {Math.min(run.step + 1, STEPS)} / {STEPS}{run.phase === "play" && !paused ? ` · ${t.left(remain)}` : ""}</p>
+                <p className="text-sm text-foreground">{paused ? t.pause : run.phase === "won" ? t.won : run.phase === "lost" ? t.lost : run.phase === "play" ? t.play : t.ready}</p>
+              </>
+            ) : null}
             {/* Eight size-8 columns measured 389px on a 375px phone (2026-10-21). */}
             <div className="flex w-full min-w-0 gap-1" aria-hidden="true">
               {run.puzzle.columns.map((column, step) => (
@@ -321,19 +439,39 @@ export default function LineSurf({ locale }: { locale: Locale }) {
                 </div>
               ))}
             </div>
-            <p className="text-sm text-muted-foreground">▮ {t.wall} · △ {t.lip} {LIP_SPEED}+ · {t.open}</p>
-            {run.phase === "play" ? (
-              <div className="grid grid-cols-2 gap-2">
-                {ACTS.map((act) => (
-                  <button key={act} type="button" onClick={() => setRun((current) => (current ? ride(current, act) : current))} className={BUTTON}>{t.act[act]}</button>
-                ))}
+            {gate === "title" ? <p className="text-sm text-muted-foreground">{t.ready}</p> : (
+              <details className="text-sm text-muted-foreground">
+                <summary className={`${CONTROL} inline-flex cursor-pointer items-center border-border bg-card text-foreground`}>{`? ${t.help}`}</summary>
+                <p className="mt-2">{t.ready}</p>
+                <p className="mt-2">▮ {t.wall} · △ {t.lip} {LIP_SPEED}+ · {t.open}</p>
+              </details>
+            )}
+            {gate === "title" ? (
+              <button type="button" onClick={enter} className={`${BUTTON} border-primary bg-primary text-primary-foreground`}>{t.enter}</button>
+            ) : null}
+            {gate === "board" && paused ? (
+              <div className="flex flex-wrap gap-2">
+                <button type="button" onClick={resume} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.resume}</button>
+                <button type="button" onClick={practiceWave} className={`${CONTROL} border-border bg-card text-foreground`}>{t.practice}</button>
+                <button type="button" onClick={leave} className={`${CONTROL} border-border bg-card text-foreground`}>{t.leave}</button>
+                <button type="button" onClick={() => setMuted((value) => !value)} className={`${CONTROL} border-border bg-card text-foreground`}>{muted ? portalLabels.unmute : portalLabels.mute}</button>
               </div>
             ) : null}
-            {run.phase === "ready" ? (
+            {gate === "board" && !paused && run.phase === "play" ? (
+              <>
+                <div className="grid grid-cols-2 gap-2">
+                  {ACTS.map((act) => (
+                    <button key={act} type="button" onClick={() => setRun((current) => (current ? ride(current, act) : current))} className={BUTTON}>{t.act[act]}</button>
+                  ))}
+                </div>
+                <button type="button" onClick={pause} className={`${CONTROL} border-border bg-card text-foreground`}>{t.pause}</button>
+              </>
+            ) : null}
+            {gate === "board" && !paused && run.phase === "ready" ? (
               <button type="button" onClick={() => setRun((current) => (current ? begin(current) : current))} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.start}</button>
             ) : null}
-            {run.phase === "won" || run.phase === "lost" ? (
-              <button type="button" onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</button>
+            {gate === "board" && !paused && (run.phase === "won" || run.phase === "lost") ? (
+              <button type="button" onClick={practiceWave} className={`${BUTTON} border-primary bg-primary text-primary-foreground`}>{t.practice}</button>
             ) : null}
             <p className="text-sm text-muted-foreground">{t.record(record?.w ?? 0, record?.l ?? 0)}{best?.unit === "score" ? ` · ${t.best(best.value)}` : ""}</p>
           </div>
