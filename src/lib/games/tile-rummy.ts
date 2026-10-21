@@ -47,6 +47,8 @@ export interface RummyState {
   turnCount: number;
   mode: "match" | "daily";
   dateKey: string | null;
+  /** Points the first meld needs. Absent on states saved before 2026-10-21, which means 30. */
+  firstMeld?: number;
 }
 
 export type RummyAction = { type: "draw" } | { type: "play"; table: Meld[] };
@@ -121,21 +123,65 @@ function shuffle<T>(items: readonly T[], rng: () => number): T[] {
   return next;
 }
 
+/**
+ * Table rules a match can bend (augments and chaos tables, 2026-10-21).
+ * The daily table never passes these, so its cohort keeps one ruleset.
+ */
+export interface RummyVariant {
+  firstMeld?: number;
+  handSize?: number;
+  rivalHandSize?: number;
+  /** Seat 0 starts holding a wild tile, swapped in from the pool. */
+  startJoker?: boolean;
+  /** The pool is cut to this many tiles after the deal. */
+  poolLimit?: number;
+  /** Wild tiles still in the pool move into its top ten. */
+  jokersNearTop?: boolean;
+}
+
 export function createTileRummy(options: {
   seed: number;
   opponents: OpponentCount;
   mode?: "match" | "daily";
   dateKey?: string | null;
+  variant?: RummyVariant;
 }): RummyState {
   const seats = options.opponents + 1;
-  const deck = shuffle(makeDeck(), mulberry32(options.seed >>> 0));
+  const variant = options.variant ?? {};
+  const rng = mulberry32(options.seed >>> 0);
+  const deck = shuffle(makeDeck(), rng);
   const hands: Tile[][] = [];
-  for (let seat = 0; seat < seats; seat++) hands.push(deck.slice(seat * HAND_SIZE, (seat + 1) * HAND_SIZE));
+  let cursor = 0;
+  for (let seat = 0; seat < seats; seat++) {
+    const size = seat === 0 ? variant.handSize ?? HAND_SIZE : variant.rivalHandSize ?? HAND_SIZE;
+    hands.push(deck.slice(cursor, cursor + size));
+    cursor += size;
+  }
+  let pool = deck.slice(cursor);
+  if (variant.startJoker && hands[0].length > 0 && !hands[0].some((tile) => tile.kind === "joker")) {
+    // Take the wild tile from the pool, or from a rival when both were dealt out.
+    const holders = [pool, ...hands.slice(1)];
+    const holder = holders.find((tiles) => tiles.some((tile) => tile.kind === "joker"));
+    if (holder) {
+      const at = holder.findIndex((tile) => tile.kind === "joker");
+      const swapIndex = Math.floor(rng() * hands[0].length);
+      const outgoing = hands[0][swapIndex];
+      hands[0] = hands[0].map((tile, index) => (index === swapIndex ? holder[at] : tile));
+      holder[at] = outgoing;
+    }
+  }
+  if (variant.jokersNearTop) {
+    const jokers = pool.filter((tile) => tile.kind === "joker");
+    const rest = pool.filter((tile) => tile.kind !== "joker");
+    for (const joker of jokers) rest.splice(Math.floor(rng() * Math.min(10, rest.length + 1)), 0, joker);
+    pool = rest;
+  }
+  if (variant.poolLimit !== undefined) pool = pool.slice(0, Math.max(0, variant.poolLimit));
   return {
     seed: options.seed >>> 0,
     seats,
     hands,
-    pool: deck.slice(seats * HAND_SIZE),
+    pool,
     table: [],
     opened: Array.from({ length: seats }, () => false),
     turn: 0,
@@ -145,7 +191,12 @@ export function createTileRummy(options: {
     turnCount: 0,
     mode: options.mode ?? "match",
     dateKey: options.dateKey ?? null,
+    ...(variant.firstMeld !== undefined ? { firstMeld: variant.firstMeld } : {}),
   };
+}
+
+export function firstMeldOf(state: RummyState): number {
+  return state.firstMeld ?? FIRST_MELD;
 }
 
 function asGroup(tiles: Tile[]): MeldCheck {
@@ -371,7 +422,7 @@ export function checkPlay(state: RummyState, seat: number, table: Meld[]): PlayC
       if (!tableIds.has(tile.id)) addedPoints += check.roles[index].value;
     });
   }
-  if (!state.opened[seat] && addedPoints < FIRST_MELD) return { ok: false, reason: "under-thirty" };
+  if (!state.opened[seat] && addedPoints < firstMeldOf(state)) return { ok: false, reason: "under-thirty" };
   return { ok: true, added: addedIds.length, addedPoints, goesOut: addedIds.length === state.hands[seat].length };
 }
 
