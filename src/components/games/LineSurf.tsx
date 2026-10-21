@@ -308,14 +308,15 @@ export default function LineSurf({ locale }: { locale: Locale }) {
             <p className="text-sm text-muted-foreground">{t.date(dateKey)}</p>
             <p className="text-sm font-bold tabular-nums text-foreground" aria-live="polite">{t.speed(run.speed)} · {Math.min(run.step + 1, STEPS)} / {STEPS}{run.phase === "play" ? ` · ${t.left(remain)}` : ""}</p>
             <p className="text-sm text-foreground">{run.phase === "won" ? t.won : run.phase === "lost" ? t.lost : run.phase === "play" ? t.play : t.ready}</p>
-            <div className="flex gap-1" aria-hidden="true">
+            {/* Eight size-8 columns measured 389px on a 375px phone (2026-10-21). */}
+            <div className="flex w-full min-w-0 gap-1" aria-hidden="true">
               {run.puzzle.columns.map((column, step) => (
-                <div key={step} className={`flex flex-col gap-1 rounded-md p-1 ${step === run.step && run.phase === "play" ? "bg-primary/10" : ""}`}>
+                <div key={step} className={`flex min-w-0 flex-1 flex-col gap-0.5 rounded-md p-0.5 ${step === run.step && run.phase === "play" ? "bg-primary/10" : ""}`}>
                   {Array.from({ length: LANES }, (_, lane) => {
                     const tile = column[lane] ?? "open";
                     const here = step === run.step && lane === run.lane && run.phase === "play";
                     const tone = tile === "wall" ? "bg-foreground/15" : tile === "lip" ? "bg-chart-1" : "bg-muted";
-                    return <span key={lane} className={`flex size-8 items-center justify-center rounded-md text-xs ${tone}`}>{here ? "●" : tile === "wall" ? "▮" : tile === "lip" ? "△" : ""}</span>;
+                    return <span key={lane} className={`flex aspect-square w-full items-center justify-center rounded-sm text-xs ${tone}`}>{here ? "●" : tile === "wall" ? "▮" : tile === "lip" ? "△" : ""}</span>;
                   })}
                 </div>
               ))}
