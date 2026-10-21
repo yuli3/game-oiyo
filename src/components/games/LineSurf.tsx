@@ -23,8 +23,13 @@ import {
   expire,
   freshSeed,
   ride,
+  sprayCell,
+  surfCue,
+  surfOffer,
   type Act,
   type Run,
+  type SurfAugmentId,
+  type SurfCue,
 } from "../../lib/games/line-surf";
 
 const FUSE_MS = 2800;
@@ -56,6 +61,8 @@ interface Copy {
   wall: string;
   lip: string;
   open: string;
+  pick: string;
+  augment: Record<SurfAugmentId, { name: string; body: string }>;
 }
 
 const COPY: Record<Locale, Copy> = {
@@ -84,6 +91,17 @@ const COPY: Record<Locale, Copy> = {
     wall: "벽",
     lip: "물마루",
     open: "빈 칸",
+    pick: "증강 하나를 고르세요.",
+    augment: {
+      glide: { name: "미끄러짐", body: "굽혀도 속도가 줄지 않습니다." },
+      softCut: { name: "얕은 끊기", body: "끊어도 속도 1이 남습니다." },
+      tailwind: { name: "뒷바람", body: "곧게 가면 속도가 둘 오릅니다." },
+      floor: { name: "잔물", body: "속도 1에서는 굽혀도 더 줄지 않습니다." },
+      lowLip: { name: "낮은 물마루", body: "속도 1로도 물마루를 넘습니다." },
+      skim: { name: "스침", body: "벽 하나를 빈 칸처럼 지나갑니다." },
+      pocket: { name: "주머니", body: "판 밖으로 나가는 굽힘을 한 번 막아 그 칸에 남습니다." },
+      headStart: { name: "앞당김", body: "속도 3으로 시작합니다." },
+    },
   },
   en: {
     title: "Line Surf",
@@ -110,6 +128,17 @@ const COPY: Record<Locale, Copy> = {
     wall: "wall",
     lip: "lip",
     open: "open",
+    pick: "Pick one augment.",
+    augment: {
+      glide: { name: "Glide", body: "A curve keeps your speed." },
+      softCut: { name: "Soft cut", body: "A cut leaves speed 1." },
+      tailwind: { name: "Tailwind", body: "A straight line adds two speed." },
+      floor: { name: "Low water", body: "At speed 1, a curve does not drop you." },
+      lowLip: { name: "Low lip", body: "Speed 1 clears a lip." },
+      skim: { name: "Skim", body: "The first wall you meet is open." },
+      pocket: { name: "Pocket", body: "The first curve off the side stays in the lane." },
+      headStart: { name: "Head start", body: "You begin at speed 3." },
+    },
   },
   ja: {
     title: "ラインサーフ",
@@ -136,6 +165,17 @@ const COPY: Record<Locale, Copy> = {
     wall: "壁",
     lip: "波頭",
     open: "空き",
+    pick: "オーグメントを一つ選んでください。",
+    augment: {
+      glide: { name: "滑走", body: "曲げても速度は減りません。" },
+      softCut: { name: "浅い切り", body: "切っても速度1が残ります。" },
+      tailwind: { name: "追い風", body: "まっすぐで速度が2上がります。" },
+      floor: { name: "残波", body: "速度1では曲げてもそれ以上減りません。" },
+      lowLip: { name: "低い波頭", body: "速度1でも波頭を越えます。" },
+      skim: { name: "かすめ", body: "壁を一つ、空きとして通ります。" },
+      pocket: { name: "ポケット", body: "外へ出る曲げを一度だけ止め、そのマスに残ります。" },
+      headStart: { name: "先行", body: "速度3で始まります。" },
+    },
   },
   zh: {
     title: "划线冲浪",
@@ -162,6 +202,17 @@ const COPY: Record<Locale, Copy> = {
     wall: "墙",
     lip: "浪头",
     open: "空",
+    pick: "选一个强化。",
+    augment: {
+      glide: { name: "滑行", body: "转弯也不掉速度。" },
+      softCut: { name: "浅断开", body: "断开后还留速度1。" },
+      tailwind: { name: "顺风", body: "直行速度加二。" },
+      floor: { name: "余波", body: "速度为1时，转弯不再降低。" },
+      lowLip: { name: "低浪头", body: "速度1也能过浪头。" },
+      skim: { name: "掠过", body: "遇到的第一面墙当作空格。" },
+      pocket: { name: "兜住", body: "第一次要滑出界的转弯留在原格。" },
+      headStart: { name: "抢先", body: "以速度3开始。" },
+    },
   },
   fr: {
     title: "Surf de ligne",
@@ -188,6 +239,17 @@ const COPY: Record<Locale, Copy> = {
     wall: "mur",
     lip: "crête",
     open: "vide",
+    pick: "Choisissez un modificateur.",
+    augment: {
+      glide: { name: "Glisse", body: "Une courbe garde la vitesse." },
+      softCut: { name: "Coupe douce", body: "Une coupe laisse la vitesse 1." },
+      tailwind: { name: "Vent arrière", body: "Une ligne droite ajoute deux de vitesse." },
+      floor: { name: "Eau basse", body: "À la vitesse 1, une courbe ne descend plus." },
+      lowLip: { name: "Crête basse", body: "La vitesse 1 passe une crête." },
+      skim: { name: "Rase", body: "Le premier mur rencontré est vide." },
+      pocket: { name: "Poche", body: "La première courbe hors piste reste dans la voie." },
+      headStart: { name: "Avance", body: "Vous partez à la vitesse 3." },
+    },
   },
   es: {
     title: "Surf de un trazo",
@@ -214,7 +276,27 @@ const COPY: Record<Locale, Copy> = {
     wall: "muro",
     lip: "cresta",
     open: "libre",
+    pick: "Elige un aumento.",
+    augment: {
+      glide: { name: "Deslizar", body: "Una curva conserva la velocidad." },
+      softCut: { name: "Corte suave", body: "Un corte deja velocidad 1." },
+      tailwind: { name: "Viento de cola", body: "Una recta suma dos de velocidad." },
+      floor: { name: "Agua baja", body: "A velocidad 1, una curva no baja más." },
+      lowLip: { name: "Cresta baja", body: "La velocidad 1 pasa una cresta." },
+      skim: { name: "Rozar", body: "El primer muro que encuentras queda libre." },
+      pocket: { name: "Bolsillo", body: "La primera curva fuera de la pista se queda en el carril." },
+      headStart: { name: "Salida", body: "Empiezas a velocidad 3." },
+    },
   },
+};
+
+const CUE_HZ: Record<SurfCue, number> = {
+  straight: 520,
+  turn: 390,
+  cut: 150,
+  lip: 760,
+  win: 620,
+  lose: 180,
 };
 
 function playTone(ctx: AudioContext, frequency: number) {
@@ -247,12 +329,16 @@ export default function LineSurf({ locale }: { locale: Locale }) {
   const [best, setBest] = useState<BestRecord | null>(null);
   const [muted, setMuted] = useState(false);
   const [remain, setRemain] = useState(Math.ceil(FUSE_MS / 1000));
-  const [gate, setGate] = useState<"title" | "count" | "board">("title");
+  const [gate, setGate] = useState<"title" | "offer" | "count" | "board">("title");
+  const [offer, setOffer] = useState<SurfAugmentId[] | null>(null);
+  const [cue, setCue] = useState<SurfCue | null>(null);
+  const [spray, setSpray] = useState<{ seq: number; step: number; lane: number } | null>(null);
   const [count, setCount] = useState(3);
   const [practice, setPractice] = useState(false);
   const [paused, setPaused] = useState(false);
   const audio = useRef<AudioContext | null>(null);
   const noted = useRef(new Set<string>());
+  const heard = useRef<Run | null>(null);
   const phase = useRef<Run["phase"] | null>(null);
   const runRef = useRef<Run | null>(null);
   const practiceRef = useRef(false);
@@ -335,27 +421,35 @@ export default function LineSurf({ locale }: { locale: Locale }) {
 
   useEffect(() => {
     if (!run || !dateKey) return;
+    const heardRun = heard.current;
+    heard.current = run;
+    const nextCue = heardRun ? surfCue(heardRun, run) : null;
+    const nextSpray = heardRun ? sprayCell(heardRun, run) : null;
+    if (nextSpray) setSpray((current) => ({ seq: (current?.seq ?? 0) + 1, step: nextSpray.step, lane: nextSpray.lane }));
+    else if (nextCue === "lose" || (heardRun && run.puzzle !== heardRun.puzzle)) setSpray(null);
+    if (nextCue) setCue(nextCue);
     const previous = phase.current;
     phase.current = run.phase;
-    if (previous === run.phase || (run.phase !== "won" && run.phase !== "lost")) return;
-    const key = `${dateKey}:${attempt}`;
-    if (!practiceRef.current && !noted.current.has(key)) {
-      noted.current.add(key);
-      try {
-        setRecord(recordResult(GAME_ID, run.phase === "won" ? "w" : "l"));
-        setBest(recordBest(GAME_ID, run.speed, "score"));
-      } catch { /* best-effort */ }
+    if (previous !== run.phase && (run.phase === "won" || run.phase === "lost")) {
+      const key = `${dateKey}:${attempt}`;
+      if (!practiceRef.current && !noted.current.has(key)) {
+        noted.current.add(key);
+        try {
+          setRecord(recordResult(GAME_ID, run.phase === "won" ? "w" : "l"));
+          setBest(recordBest(GAME_ID, run.speed, "score"));
+        } catch { /* best-effort */ }
+      }
+      if (!reducedMotion && typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
+        navigator.vibrate(run.phase === "won" ? 15 : [30, 40, 30]);
+      }
     }
-    if (!reducedMotion && typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
-      navigator.vibrate(run.phase === "won" ? 15 : [30, 40, 30]);
-    }
-    if (muted || reducedMotion) return;
+    if (!nextCue || muted || reducedMotion) return;
     const Context = window.AudioContext;
     if (!Context) return;
     if (!audio.current) audio.current = new Context();
     const ctx = audio.current;
     void ctx.resume();
-    playTone(ctx, run.phase === "won" ? 620 : 180);
+    playTone(ctx, CUE_HZ[nextCue]);
   }, [run, dateKey, attempt, muted, reducedMotion]);
 
   const dailySeed = () => (dateKey ? (dateKeyIndex(dateKey) * 0x9e3779b1) >>> 0 : 0);
@@ -378,7 +472,15 @@ export default function LineSurf({ locale }: { locale: Locale }) {
     pausedRef.current = false;
     setPaused(false);
     setRemain(Math.ceil(FUSE_MS / 1000));
+    setOffer(surfOffer(salt));
     setRun(createRun(createPuzzle(freshSeed(salt, dailySeed()))));
+    setGate("offer");
+  };
+
+  const pickAugment = (id: SurfAugmentId) => {
+    setRun((current) => (current ? createRun(current.puzzle, id) : current));
+    setOffer(null);
+    fuseLeft.current = FUSE_MS;
     setGate("count");
   };
 
@@ -399,6 +501,8 @@ export default function LineSurf({ locale }: { locale: Locale }) {
     pausedRef.current = false;
     setPaused(false);
     fuseLeft.current = FUSE_MS;
+    setOffer(null);
+    setSpray(null);
     if (dateKey) setRun(createRun(createPuzzle(dailySeed())));
     setGate("title");
   };
@@ -416,7 +520,7 @@ export default function LineSurf({ locale }: { locale: Locale }) {
           </button>
         </div>
         {!run || !dateKey ? <p className="text-sm text-muted-foreground">{t.preparing}</p> : (
-          <div className="space-y-4">
+          <div className="space-y-4" data-surf-cue={cue ?? ""} data-augment={run.augment ?? ""}>
             <p className="text-sm text-muted-foreground">{t.date(dateKey)}</p>
             {practice ? <p className="text-sm font-bold text-foreground">{t.practiceNote}</p> : null}
             {gate === "count" ? <p className="text-center text-5xl font-bold tabular-nums text-foreground" aria-live="polite">{count}</p> : null}
@@ -434,7 +538,19 @@ export default function LineSurf({ locale }: { locale: Locale }) {
                     const tile = column[lane] ?? "open";
                     const here = step === run.step && lane === run.lane && run.phase === "play";
                     const tone = tile === "wall" ? "bg-foreground/15" : tile === "lip" ? "bg-chart-1" : "bg-muted";
-                    return <span key={lane} className={`flex aspect-square w-full items-center justify-center rounded-sm text-xs ${tone}`}>{here ? "●" : tile === "wall" ? "▮" : tile === "lip" ? "△" : ""}</span>;
+                    const bursting = spray?.step === step && spray.lane === lane;
+                    return (
+                      <span key={lane} className={`relative flex aspect-square w-full items-center justify-center rounded-sm text-xs ${tone}`}>
+                        {here ? "●" : tile === "wall" ? "▮" : tile === "lip" ? "△" : ""}
+                        {bursting ? (
+                          <span data-spray={`${spray.step}:${spray.lane}`} className="pointer-events-none absolute inset-0 motion-reduce:hidden" aria-hidden="true">
+                            <span className="absolute left-1/2 top-0 size-1.5 -translate-x-1/2 rounded-full bg-chart-1 motion-safe:animate-ping" />
+                            <span className="absolute bottom-0 left-1/4 size-1.5 rounded-full bg-chart-1 motion-safe:animate-ping" />
+                            <span className="absolute bottom-0 right-1/4 size-1.5 rounded-full bg-chart-1 motion-safe:animate-ping" />
+                          </span>
+                        ) : null}
+                      </span>
+                    );
                   })}
                 </div>
               ))}
@@ -448,6 +564,18 @@ export default function LineSurf({ locale }: { locale: Locale }) {
             )}
             {gate === "title" ? (
               <button type="button" onClick={enter} className={`${BUTTON} border-primary bg-primary text-primary-foreground`}>{t.enter}</button>
+            ) : null}
+            {gate === "offer" && offer ? (
+              <div className="space-y-2" data-augment-offer={offer.join(" ")}>
+                <p className="text-sm font-bold text-foreground">{t.pick}</p>
+                {offer.map((id) => (
+                  <button key={id} type="button" onClick={() => pickAugment(id)} className={`${BUTTON} block w-full text-left`}>
+                    <span className="block">{t.augment[id].name}</span>
+                    <span className="mt-1 block text-sm font-normal text-muted-foreground">{t.augment[id].body}</span>
+                  </button>
+                ))}
+                <button type="button" onClick={leave} className={`${CONTROL} border-border bg-card text-foreground`}>{t.leave}</button>
+              </div>
             ) : null}
             {gate === "board" && paused ? (
               <div className="flex flex-wrap gap-2">
