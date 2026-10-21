@@ -9,6 +9,7 @@ import {
   createPuzzle,
   createRun,
   expire,
+  freshSeed,
   ride,
   type Puzzle,
   type Run,
@@ -88,5 +89,13 @@ describe("line surf", () => {
     expect(page).toContain('slug="line-surf"');
     expect(catalog).toContain('slug: "line-surf"');
     expect(GAME_ID).toBe("line-surf");
+  });
+
+  it("deals a practice wave that is not today's board", () => {
+    expect(freshSeed(4, 4)).toBe(5);
+    expect(freshSeed(4, 9)).toBe(4);
+    const boards = new Set<string>();
+    for (let seed = 0; seed < 1000; seed += 1) boards.add(JSON.stringify(createPuzzle(seed).columns));
+    expect(boards.size).toBeGreaterThanOrEqual(950);
   });
 });
