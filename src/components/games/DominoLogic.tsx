@@ -21,10 +21,13 @@ import {
   GAME_ID,
   dailyBestConditions,
   isSolved,
+  nearestDominoPair,
   placeTile,
+  practicePuzzles,
   puzzlesForDate,
   regionMarks,
   shareGrid,
+  type SnapCell,
   type Difficulty,
   type LogicPuzzle,
   type Placement,
@@ -37,6 +40,7 @@ const COLS: Record<number, string> = {
   3: "grid-cols-3",
   4: "grid-cols-4",
   5: "grid-cols-5",
+  6: "grid-cols-6",
 };
 const REGION = [
   "border-chart-1 bg-chart-1/15",
@@ -79,7 +83,17 @@ interface Copy {
   record: (wins: number, losses: number) => string;
   best: (seconds: number) => string;
   tray: string;
-  hint: string;
+  dragHint: string;
+  stepTile: string;
+  stepCell: string;
+  stepDir: string;
+  stepTileHint: string;
+  stepCellHint: string;
+  stepDirHint: string;
+  practice: string;
+  practiceNote: string;
+  today: string;
+  givenNote: string;
   needTile: string;
 }
 
@@ -108,7 +122,17 @@ const COPY: Record<Locale, Copy> = {
     record: (wins, losses) => `승 ${wins} · 패 ${losses}`,
     best: (seconds) => `오늘 최고 ${seconds}초`,
     tray: "받은 도미노",
-    hint: "도미노를 빈 칸으로 끌어 놓으세요. 칸을 두 번 눌러도 방향이 정해집니다.",
+    dragHint: "끌어 놓으면 가장 가까운 두 칸에 붙습니다.",
+    stepTile: "도미노",
+    stepCell: "첫 칸",
+    stepDir: "방향 칸",
+    stepTileHint: "아래 도미노를 누르세요.",
+    stepCellHint: "놓을 첫 칸을 누르세요.",
+    stepDirHint: "도미노가 향할 칸을 누르세요.",
+    practice: "연습 판",
+    practiceNote: "오늘의 판이 아닌 새 판입니다. 기록에는 남지 않습니다.",
+    today: "오늘의 판",
+    givenNote: "이미 놓인 도미노는 고정입니다.",
     needTile: "먼저 아래 도미노를 고르세요.",
   },
   en: {
@@ -135,7 +159,17 @@ const COPY: Record<Locale, Copy> = {
     record: (wins, losses) => `${wins} won · ${losses} lost`,
     best: (seconds) => `Today's best ${seconds}s`,
     tray: "Your dominoes",
-    hint: "Drag a domino onto an empty cell. Two taps also choose the direction.",
+    dragHint: "A drag snaps to the nearest two cells.",
+    stepTile: "Domino",
+    stepCell: "First cell",
+    stepDir: "Direction",
+    stepTileHint: "Tap a domino below.",
+    stepCellHint: "Tap the first cell.",
+    stepDirHint: "Tap the cell it points to.",
+    practice: "Practice board",
+    practiceNote: "A new board, not today's. It is not recorded.",
+    today: "Today's board",
+    givenNote: "Dominoes already on the board stay put.",
     needTile: "Choose a domino below first.",
   },
   ja: {
@@ -162,7 +196,17 @@ const COPY: Record<Locale, Copy> = {
     record: (wins, losses) => `勝 ${wins} · 負 ${losses}`,
     best: (seconds) => `今日の最短 ${seconds}秒`,
     tray: "配られたドミノ",
-    hint: "ドミノを空きマスへ引きずって置きます。マスを二回押しても向きが決まります。",
+    dragHint: "引きずって離すと、いちばん近い二マスに付きます。",
+    stepTile: "ドミノ",
+    stepCell: "最初のマス",
+    stepDir: "向きのマス",
+    stepTileHint: "下のドミノを押してください。",
+    stepCellHint: "置く最初のマスを押してください。",
+    stepDirHint: "向けるマスを押してください。",
+    practice: "練習盤",
+    practiceNote: "今日の盤面ではない新しい盤です。記録には残りません。",
+    today: "今日の盤",
+    givenNote: "最初から置いてあるドミノは固定です。",
     needTile: "先に下のドミノを選んでください。",
   },
   zh: {
@@ -189,7 +233,17 @@ const COPY: Record<Locale, Copy> = {
     record: (wins, losses) => `胜 ${wins} · 负 ${losses}`,
     best: (seconds) => `今日最快 ${seconds}秒`,
     tray: "手里的牌",
-    hint: "把多米诺拖到空格上。连续点两格也能定方向。",
+    dragHint: "拖开后会吸到最近的两格。",
+    stepTile: "多米诺",
+    stepCell: "第一格",
+    stepDir: "方向格",
+    stepTileHint: "先点下面的多米诺。",
+    stepCellHint: "再点要放的第一格。",
+    stepDirHint: "然后点它朝向的格子。",
+    practice: "练习盘",
+    practiceNote: "这是新盘，不是今天的局，也不记入成绩。",
+    today: "今日的盘",
+    givenNote: "已经放好的多米诺是固定的。",
     needTile: "请先选下面的多米诺。",
   },
   fr: {
@@ -216,7 +270,17 @@ const COPY: Record<Locale, Copy> = {
     record: (wins, losses) => `${wins} gagnées · ${losses} perdues`,
     best: (seconds) => `Meilleur temps du jour ${seconds} s`,
     tray: "Dominos reçus",
-    hint: "Glissez un domino sur une case vide. Deux touches choisissent aussi la direction.",
+    dragHint: "Un glisser se pose sur les deux cases les plus proches.",
+    stepTile: "Domino",
+    stepCell: "Première case",
+    stepDir: "Direction",
+    stepTileHint: "Touchez un domino en bas.",
+    stepCellHint: "Touchez la première case.",
+    stepDirHint: "Touchez la case vers laquelle il pointe.",
+    practice: "Grille d'essai",
+    practiceNote: "Une grille nouvelle, pas celle du jour. Elle n'est pas enregistrée.",
+    today: "Grille du jour",
+    givenNote: "Les dominos déjà posés restent en place.",
     needTile: "Choisissez d'abord un domino en bas.",
   },
   es: {
@@ -243,7 +307,17 @@ const COPY: Record<Locale, Copy> = {
     record: (wins, losses) => `${wins} ganadas · ${losses} perdidas`,
     best: (seconds) => `Mejor de hoy ${seconds} s`,
     tray: "Dominós recibidos",
-    hint: "Arrastra un dominó a una casilla vacía. Dos toques también eligen la dirección.",
+    dragHint: "Al soltar, se pega a las dos casillas más cercanas.",
+    stepTile: "Dominó",
+    stepCell: "Primera casilla",
+    stepDir: "Dirección",
+    stepTileHint: "Toca un dominó de abajo.",
+    stepCellHint: "Toca la primera casilla.",
+    stepDirHint: "Toca la casilla hacia la que apunta.",
+    practice: "Tablero de práctica",
+    practiceNote: "Un tablero nuevo, no el de hoy. No queda registrado.",
+    today: "Tablero de hoy",
+    givenNote: "Los dominós ya colocados se quedan fijos.",
     needTile: "Primero elige un dominó de abajo.",
   },
 };
@@ -265,10 +339,11 @@ interface DayBoard {
   puzzles: LogicPuzzle[];
   active: number;
   plays: Play[];
+  practice: boolean;
 }
 
-const emptyPlay = (): Play => ({
-  placements: [],
+const emptyPlay = (puzzle?: LogicPuzzle): Play => ({
+  placements: puzzle?.given ? [...puzzle.given] : [],
   past: [],
   selected: null,
   flipped: false,
@@ -305,29 +380,18 @@ function coveredValue(placements: readonly Placement[], cellId: number): number 
   return null;
 }
 
-function neighborToward(puzzle: LogicPuzzle, placements: readonly Placement[], cellId: number, dx: number, dy: number): number | null {
-  const cell = puzzle.cells.find((item) => item.id === cellId);
-  if (!cell) return null;
-  const taken = new Set<number>();
-  for (const place of placements) {
-    taken.add(place.cellA);
-    taken.add(place.cellB);
-  }
-  if (taken.has(cellId)) return null;
-  const options = puzzle.cells.filter((other) => !taken.has(other.id) && Math.abs(other.x - cell.x) + Math.abs(other.y - cell.y) === 1);
-  if (options.length === 0) return null;
-  if (Math.hypot(dx, dy) < 12) return options.length === 1 ? options[0].id : null;
-  let best = options[0];
-  let score = -Infinity;
-  const length = Math.hypot(dx, dy) || 1;
-  for (const option of options) {
-    const dot = ((option.x - cell.x) * dx + (option.y - cell.y) * dy) / length;
-    if (dot > score) {
-      score = dot;
-      best = option;
-    }
-  }
-  return score > 0.15 ? best.id : null;
+function readCells(root: HTMLElement | null): SnapCell[] {
+  if (!root) return [];
+  return [...root.querySelectorAll<HTMLElement>("[data-cell]")].map((el) => {
+    const rect = el.getBoundingClientRect();
+    return {
+      id: Number(el.dataset.cell),
+      x: Number(el.dataset.x),
+      y: Number(el.dataset.y),
+      cx: rect.left + rect.width / 2,
+      cy: rect.top + rect.height / 2,
+    };
+  });
 }
 
 export default function DominoLogic({ locale }: { locale: Locale }) {
@@ -340,17 +404,25 @@ export default function DominoLogic({ locale }: { locale: Locale }) {
   const [record, setRecord] = useState<GameRecord | null>(null);
   const [bests, setBests] = useState<Partial<Record<Difficulty, ConditionalBestRecord | null>>>({});
   const [notice, setNotice] = useState<string | null>(null);
-  const [hover, setHover] = useState<number | null>(null);
+  const [preview, setPreview] = useState<{ cellA: number; cellB: number } | null>(null);
+  const [dragTile, setDragTile] = useState<number | null>(null);
+  const [ghostOn, setGhostOn] = useState(false);
+  const [reject, setReject] = useState(0);
   const [muted, setMuted] = useState(false);
   const audio = useRef<AudioContext | null>(null);
   const recorded = useRef<string | null>(null);
   const bestNoted = useRef(new Set<string>());
   const drag = useRef<{ id: number; x: number; y: number; moved: boolean } | null>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const ghostRef = useRef<HTMLDivElement>(null);
+  const previewRef = useRef<{ cellA: number; cellB: number } | null>(null);
+  const ghostOnRef = useRef(false);
+  const dailySnapshot = useRef<DayBoard | null>(null);
 
   useEffect(() => {
     const dateKey = kstDateKey();
     const puzzles = puzzlesForDate(dateKey);
-    setBoard({ dateKey, puzzles, active: 0, plays: puzzles.map(() => emptyPlay()) });
+    setBoard({ dateKey, puzzles, active: 0, plays: puzzles.map((puzzle) => emptyPlay(puzzle)), practice: false });
     try {
       setRecord(getRecord(GAME_ID));
       const next: Partial<Record<Difficulty, ConditionalBestRecord | null>> = {};
@@ -401,7 +473,7 @@ export default function DominoLogic({ locale }: { locale: Locale }) {
     const seconds = play.started === null ? 0 : Math.max(0, Math.round((Date.now() - play.started) / 1000));
     const assist = play.usedUndo ? "undo" : "none";
     const key = `${dateKey}:${puzzle.difficulty}:${assist}`;
-    if (!bestNoted.current.has(key)) {
+    if (!board?.practice && !bestNoted.current.has(key)) {
       bestNoted.current.add(key);
       try {
         const best = recordBestForConditions(GAME_ID, seconds, "seconds", dailyBestConditions(dateKey, puzzle.difficulty, assist));
@@ -413,7 +485,7 @@ export default function DominoLogic({ locale }: { locale: Locale }) {
   };
 
   useEffect(() => {
-    if (!board || !board.plays.every((play) => play.won)) return;
+    if (!board || board.practice || !board.plays.every((play) => play.won)) return;
     if (recorded.current === board.dateKey) return;
     recorded.current = board.dateKey;
     try { setRecord(recordResult(GAME_ID, "w")); } catch { /* best-effort */ }
@@ -422,19 +494,27 @@ export default function DominoLogic({ locale }: { locale: Locale }) {
   const puzzle = board?.puzzles[board.active];
   const play = board?.plays[board.active];
 
-  const dropOn = (tileId: number, cellId: number, dx: number, dy: number, flipped: boolean) => {
-    if (!board || !puzzle || !play || play.won) {
-      setNotice(t.needTile);
-      return;
-    }
-    const other = neighborToward(puzzle, play.placements, cellId, dx, dy);
-    if (other === null) {
-      updatePlay(board.active, { ...play, selected: tileId, flipped, anchor: cellId, started: play.started ?? Date.now() });
-      return;
-    }
-    const nextPlacements = placeTile(puzzle, play.placements, tileId, cellId, other, flipped);
+  const showPair = (pair: { cellA: number; cellB: number } | null) => {
+    const previous = previewRef.current;
+    if (previous?.cellA === pair?.cellA && previous?.cellB === pair?.cellB) return;
+    previewRef.current = pair;
+    setPreview(pair);
+  };
+
+  const endDrag = () => {
+    drag.current = null;
+    ghostOnRef.current = false;
+    setGhostOn(false);
+    setDragTile(null);
+    showPair(null);
+  };
+
+  const placePair = (tileId: number, cellA: number, cellB: number, flipped: boolean) => {
+    if (!board || !puzzle || !play || play.won) return;
+    const nextPlacements = placeTile(puzzle, play.placements, tileId, cellA, cellB, flipped);
     if (!nextPlacements) {
       beep(false);
+      setReject((value) => value + 1);
       return;
     }
     const next = finishIfNeeded(board.dateKey, puzzle, {
@@ -451,9 +531,16 @@ export default function DominoLogic({ locale }: { locale: Locale }) {
     if (!next.won) beep(true);
   };
 
+  const snapAt = (clientX: number, clientY: number) => {
+    if (!puzzle || !play) return null;
+    const occupied = play.placements.flatMap((place) => [place.cellA, place.cellB]);
+    return nearestDominoPair(readCells(gridRef.current), occupied, { x: clientX, y: clientY });
+  };
+
   const onCell = (cellId: number) => {
     if (!board || !puzzle || !play || play.won) return;
     const occupied = play.placements.find((place) => place.cellA === cellId || place.cellB === cellId);
+    if (occupied && (puzzle.given ?? []).some((place) => place.tileId === occupied.tileId)) return;
     if (occupied) {
       updatePlay(board.active, {
         ...play,
@@ -497,7 +584,22 @@ export default function DominoLogic({ locale }: { locale: Locale }) {
 
   const replay = () => {
     if (!board) return;
-    updatePlay(board.active, emptyPlay());
+    updatePlay(board.active, emptyPlay(puzzle));
+    setNotice(null);
+  };
+
+  const beginPractice = () => {
+    if (!board || board.practice) return;
+    dailySnapshot.current = board;
+    const puzzles = practicePuzzles(Date.now(), board.dateKey);
+    setBoard({ dateKey: board.dateKey, puzzles, active: 0, plays: puzzles.map((item) => emptyPlay(item)), practice: true });
+    setNotice(null);
+  };
+
+  const resumeDaily = () => {
+    const saved = dailySnapshot.current;
+    if (!saved) return;
+    setBoard(saved);
     setNotice(null);
   };
 
@@ -515,6 +617,12 @@ export default function DominoLogic({ locale }: { locale: Locale }) {
   const marks = puzzle && play ? regionMarks(puzzle, play.placements) : [];
   const broken = new Set(marks.filter((mark) => mark.full && !mark.ok).map((mark) => mark.region));
   const message = notice ?? (play?.won ? (board?.plays.every((item) => item.won) ? t.dayWin : t.win) : null);
+  const step = !play || play.selected === null ? 1 : play.anchor === null ? 2 : 3;
+  const stepHint = step === 1 ? t.stepTileHint : step === 2 ? t.stepCellHint : t.stepDirHint;
+  const ghostTile = puzzle && dragTile !== null ? puzzle.tiles.find((tile) => tile.id === dragTile) ?? null : null;
+  const ghostFlipped = Boolean(ghostTile && play && play.flipped && play.selected === ghostTile.id);
+  const ghostLeft = ghostTile ? (ghostFlipped ? ghostTile.b : ghostTile.a) : 0;
+  const ghostRight = ghostTile ? (ghostFlipped ? ghostTile.a : ghostTile.b) : 0;
 
   return (
     <div
@@ -540,7 +648,12 @@ export default function DominoLogic({ locale }: { locale: Locale }) {
                   {names[difficulty]}{board.plays[index].won ? ` · ${t.done}` : ""}
                 </button>
               ))}
+              <button type="button" onClick={board.practice ? resumeDaily : beginPractice} className={`${CONTROL} border-border bg-card text-foreground`}>
+                {board.practice ? t.today : t.practice}
+              </button>
             </div>
+            {board.practice ? <p className="text-sm font-bold text-foreground">{t.practiceNote}</p> : null}
+            {(puzzle.given?.length ?? 0) > 0 ? <p className="text-sm text-muted-foreground">{t.givenNote}</p> : null}
             <div className="flex flex-wrap gap-2">
               {puzzle.rules.map(({ region, rule }) => (
                 <span key={region} className={`inline-flex min-h-11 items-center rounded-xl border px-3 text-sm font-bold text-foreground ${REGION[region % REGION.length]}`}>
@@ -549,19 +662,33 @@ export default function DominoLogic({ locale }: { locale: Locale }) {
               ))}
             </div>
             <p className="text-sm font-bold text-foreground" aria-live="polite">{t.placed(play.placements.length, puzzle.tiles.length)}</p>
-            <div className={`grid ${COLS[puzzle.width] ?? "grid-cols-3"} mx-auto w-fit gap-1`}>
+            <ol data-place-step={step} className="flex flex-wrap gap-2">
+              {[t.stepTile, t.stepCell, t.stepDir].map((label, index) => {
+                const current = step === index + 1;
+                return (
+                  <li key={label} aria-current={current ? "step" : undefined} className={`inline-flex min-h-11 items-center rounded-xl border px-3 text-sm font-bold ${current ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground"}`}>
+                    {index + 1}. {label}
+                  </li>
+                );
+              })}
+            </ol>
+            <p className="text-sm text-muted-foreground" aria-live="polite">{stepHint} {t.dragHint}</p>
+            <div ref={gridRef} key={reject} className={`grid ${COLS[puzzle.width] ?? "grid-cols-3"} ${puzzle.width >= 6 ? "-mx-6 w-fit" : "mx-auto w-fit"} gap-1 ${reject > 0 ? "domino-reject" : ""}`}>
               {Array.from({ length: puzzle.height * puzzle.width }, (_, index) => {
                 const x = index % puzzle.width;
                 const y = Math.floor(index / puzzle.width);
                 const cell = puzzle.cells.find((item) => item.x === x && item.y === y);
                 if (!cell) return <span key={`${x}-${y}`} className="size-11" aria-hidden="true" />;
                 const pip = coveredValue(play.placements, cell.id);
-                const aimed = hover === cell.id || play.anchor === cell.id;
+                const aimed = preview?.cellA === cell.id || preview?.cellB === cell.id || play.anchor === cell.id;
                 return (
                   <button
                     key={cell.id}
                     type="button"
                     data-cell={cell.id}
+                    data-x={x}
+                    data-y={y}
+                    data-given={(puzzle.given ?? []).some((place) => place.cellA === cell.id || place.cellB === cell.id) ? "true" : undefined}
                     onClick={() => onCell(cell.id)}
                     className={`flex size-11 items-center justify-center rounded-lg border-2 ${REGION[cell.region % REGION.length]} ${broken.has(cell.region) ? "border-destructive" : ""} ${aimed ? "ring-2 ring-primary ring-offset-2" : ""} motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary`}
                     aria-label={pip === null ? `${x},${y}` : String(pip)}
@@ -571,7 +698,6 @@ export default function DominoLogic({ locale }: { locale: Locale }) {
                 );
               })}
             </div>
-            <p className="text-sm text-muted-foreground">{t.hint}</p>
             <div className="flex flex-wrap gap-2">
               <button type="button" onClick={() => play.selected !== null && updatePlay(board.active, { ...play, flipped: !play.flipped })} disabled={play.selected === null || play.won} className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-foreground disabled:opacity-50`}>
                 <RotateCw className="size-4" />
@@ -597,34 +723,49 @@ export default function DominoLogic({ locale }: { locale: Locale }) {
                     type="button"
                     aria-pressed={play.selected === tile.id}
                     aria-label={`${left}-${right}`}
-                    className={`inline-flex min-h-11 shrink-0 touch-none items-stretch overflow-hidden rounded-xl border-2 bg-card ${play.selected === tile.id ? "border-primary" : "border-foreground"}`}
+                    className={`inline-flex min-h-11 shrink-0 touch-none items-stretch overflow-hidden rounded-xl border-2 bg-card ${play.selected === tile.id ? "border-primary" : "border-foreground"} ${dragTile === tile.id && ghostOn ? "opacity-40" : ""}`}
                     onPointerDown={(event) => {
                       if (play.won) return;
                       event.currentTarget.setPointerCapture(event.pointerId);
                       drag.current = { id: tile.id, x: event.clientX, y: event.clientY, moved: false };
-                      updatePlay(board.active, { ...play, selected: tile.id });
+                      const same = play.selected === tile.id;
+                      updatePlay(board.active, { ...play, selected: tile.id, flipped: same ? play.flipped : false, anchor: null, started: play.started ?? Date.now() });
+                      setDragTile(tile.id);
                     }}
                     onPointerMove={(event) => {
                       const current = drag.current;
                       if (!current || current.id !== tile.id) return;
                       if (Math.hypot(event.clientX - current.x, event.clientY - current.y) > 8) current.moved = true;
-                      const target = document.elementFromPoint(event.clientX, event.clientY)?.closest("[data-cell]");
-                      setHover(target ? Number(target.getAttribute("data-cell")) : null);
+                      if (!current.moved) return;
+                      const pair = snapAt(event.clientX, event.clientY);
+                      showPair(pair);
+                      const ghost = ghostRef.current;
+                      if (!ghost) return;
+                      if (!ghostOnRef.current) {
+                        ghostOnRef.current = true;
+                        setGhostOn(true);
+                      }
+                      const first = pair ? puzzle.cells.find((cell) => cell.id === pair.cellA) : null;
+                      const second = pair ? puzzle.cells.find((cell) => cell.id === pair.cellB) : null;
+                      const vertical = Boolean(first && second && first.y !== second.y);
+                      // Finger x/y is a live coordinate, so it cannot be a utility class (2026-10-21).
+                      ghost.style.transform = `translate(${event.clientX}px, ${event.clientY}px) translate(-50%, -50%)${vertical ? " rotate(90deg)" : ""}`;
                     }}
                     onPointerUp={(event) => {
                       const current = drag.current;
-                      drag.current = null;
-                      setHover(null);
-                      if (!current || current.id !== tile.id) return;
-                      if (!current.moved) {
-                        if (play.selected === tile.id) updatePlay(board.active, { ...play, selected: tile.id, flipped: !play.flipped });
+                      const moved = Boolean(current?.moved && current.id === tile.id);
+                      const pair = moved ? snapAt(event.clientX, event.clientY) : null;
+                      const flipped = play.selected === tile.id && play.flipped;
+                      endDrag();
+                      if (!moved) return;
+                      if (!pair) {
+                        beep(false);
+                        setReject((value) => value + 1);
                         return;
                       }
-                      const target = document.elementFromPoint(event.clientX, event.clientY)?.closest("[data-cell]");
-                      const cellId = target ? Number(target.getAttribute("data-cell")) : Number.NaN;
-                      if (!Number.isInteger(cellId)) return;
-                      dropOn(tile.id, cellId, event.clientX - current.x, event.clientY - current.y, play.selected === tile.id && play.flipped);
+                      placePair(tile.id, pair.cellA, pair.cellB, flipped);
                     }}
+                    onPointerCancel={() => endDrag()}
                   >
                     <span className="flex min-h-11 min-w-11 items-center justify-center p-1"><Pips n={left} /></span>
                     <span className="w-px bg-foreground" />
@@ -641,6 +782,16 @@ export default function DominoLogic({ locale }: { locale: Locale }) {
           </div>
         )}
       </GameContainer>
+      <div
+        ref={ghostRef}
+        data-ghost={ghostOn ? "on" : "off"}
+        aria-hidden="true"
+        className={`pointer-events-none fixed left-0 top-0 z-50 flex items-stretch overflow-hidden rounded-xl border-2 border-primary bg-card shadow-lg ${ghostOn ? "" : "invisible"}`}
+      >
+        <span className="flex min-h-11 min-w-11 items-center justify-center p-1"><Pips n={ghostLeft} /></span>
+        <span className="w-px bg-foreground" />
+        <span className="flex min-h-11 min-w-11 items-center justify-center p-1"><Pips n={ghostRight} /></span>
+      </div>
     </div>
   );
 }

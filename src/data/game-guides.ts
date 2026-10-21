@@ -23,12 +23,12 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       es: "Casillas de dominó es un puzzle diario: coloca cada dominó para que la zona cumpla su regla. Los puntos son el juego doble seis de OIYO, y el tablero cambia con la fecha.",
     },
     how: {
-      ko: "도미노를 빈 칸으로 끌어 놓거나, 칸을 두 번 눌러 방향을 정합니다. 회전은 타일을 다시 누르거나 회전 버튼입니다. 하루는 쉬움·보통·어려움 세 판이고, 날짜는 한국 표준시입니다.",
-      en: "Drag a domino onto an empty cell, or tap two cells to choose the direction. Tap the tile again or use Rotate to turn it. A day has easy, normal, and hard boards, dated in Korea Standard Time.",
-      ja: "ドミノを空きマスへ引きずるか、マスを二回押して向きを決めます。回転は牌をもう一度押すか回転ボタンです。一日は易しい・普通・難しいの三盤で、日付は韓国標準時です。",
-      zh: "把多米诺拖到空格，或连点两格来定方向。再点牌或按旋转来转向。一天有简单、普通、困难三盘，日期用韩国标准时间。",
-      fr: "Glissez un domino sur une case vide, ou touchez deux cases pour la direction. Un second toucher ou Tourner le pivote. La journée a trois grilles, datées à l'heure de Séoul.",
-      es: "Arrastra un dominó a una casilla vacía, o toca dos casillas para la dirección. Otro toque o Girar lo voltea. El día tiene tres tableros, con fecha en hora de Seúl.",
+      ko: "도미노를 고른 뒤 첫 칸과 방향 칸을 차례로 누르거나, 끌어 놓아 가장 가까운 두 칸에 붙입니다. 회전은 회전 버튼입니다. 하루는 쉬움·보통·어려움 세 판이고, 날짜는 한국 표준시입니다.",
+      en: "Choose a domino, then tap the first cell and the direction cell, or drag and release to snap onto the nearest two cells. Rotate uses the Rotate button. A day has easy, normal, and hard boards, dated in Korea Standard Time.",
+      ja: "ドミノを選び、最初のマスと向きのマスを順に押すか、引きずっていちばん近い二マスに付けます。回転は回転ボタンです。一日は易しい・普通・難しいの三盤で、日付は韓国標準時です。",
+      zh: "先选多米诺，再依次点第一格和方向格，或拖开后吸到最近的两格。转向用旋转按钮。一天有简单、普通、困难三盘，日期用韩国标准时间。",
+      fr: "Choisissez un domino, puis touchez la première case et la case de direction, ou glissez pour le poser sur les deux cases les plus proches. Tourner pivote. La journée a trois grilles, datées à l'heure de Séoul.",
+      es: "Elige un dominó, luego toca la primera casilla y la de dirección, o arrastra para pegarlo a las dos casillas más cercanas. Girar lo voltea. El día tiene tres tableros, con fecha en hora de Seúl.",
     },
     rules: {
       ko: [

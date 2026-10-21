@@ -38,6 +38,8 @@ export interface LogicPuzzle {
   cells: LogicCell[];
   tiles: LogicTile[];
   rules: { region: number; rule: Rule }[];
+  /** Dominoes already on the board. A solid 6×6 cannot be proved unique in the daily time budget, so hard locks some of the laid tiles (2026-10-21). */
+  given?: Placement[];
 }
 
 export interface Placement {
@@ -50,23 +52,28 @@ export interface Placement {
 
 type Pt = readonly [number, number];
 
+function rectangle(width: number, height: number, holes: readonly Pt[] = []): Pt[] {
+  const skip = new Set(holes.map(([x, y]) => `${x},${y}`));
+  const points: Pt[] = [];
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (!skip.has(`${x},${y}`)) points.push([x, y]);
+    }
+  }
+  return points;
+}
+
+// A 5×5 rectangle has 25 cells, so a domino tiling leaves the center empty (2026-10-21).
 const SHAPES: Record<Difficulty, Pt[][]> = {
-  easy: [
-    [[0, 0], [1, 0], [2, 0], [0, 1], [1, 1], [2, 1]],
-    [[0, 0], [1, 0], [0, 1], [1, 1], [0, 2], [1, 2]],
-  ],
-  normal: [
-    [[0, 0], [1, 0], [2, 0], [3, 0], [0, 1], [1, 1], [2, 1], [3, 1]],
-    [[0, 0], [1, 0], [2, 0], [0, 1], [1, 1], [2, 1], [1, 2], [1, 3]],
-  ],
-  hard: [
-    [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [0, 1], [1, 1], [2, 1], [3, 1], [4, 1]],
-    [[1, 0], [2, 0], [0, 1], [1, 1], [2, 1], [3, 1], [1, 2], [2, 2], [1, 3], [2, 3]],
-  ],
+  easy: [rectangle(4, 4)],
+  normal: [rectangle(5, 5, [[2, 2]])],
+  hard: [rectangle(6, 6)],
 };
 
-const REGION_COUNT: Record<Difficulty, number> = { easy: 3, normal: 3, hard: 3 };
 const MAX_PINS: Record<Difficulty, number> = { easy: 3, normal: 4, hard: 5 };
+const LOCKED_TILES: Record<Difficulty, number> = { easy: 0, normal: 0, hard: 8 };
+// Uniqueness search stops here. An unproven board is discarded, not shipped (2026-10-21).
+const SEARCH_BUDGET = 40_000;
 
 function adjacency(count: number, points: Pt[]): number[][] {
   const adj = Array.from({ length: count }, () => [] as number[]);
@@ -148,7 +155,7 @@ export function ruleAllows(rule: Rule, known: readonly number[], complete: boole
   return complete ? sum === rule.n : true;
 }
 
-export function sampleSolutions(puzzle: LogicPuzzle, limit = 2): string[] {
+function searchSolutions(puzzle: LogicPuzzle, limit: number, budget: number): { grids: string[]; proven: boolean } {
   const points = puzzle.cells.map((cell) => [cell.x, cell.y] as const);
   const adj = adjacency(puzzle.cells.length, points);
   const region = puzzle.cells.map((cell) => cell.region);
@@ -157,7 +164,16 @@ export function sampleSolutions(puzzle: LogicPuzzle, limit = 2): string[] {
   const ruleByRegion = new Map(puzzle.rules.map((entry) => [entry.region, entry.rule]));
   const value = new Int8Array(puzzle.cells.length).fill(-1);
   const used = new Uint8Array(puzzle.tiles.length);
+  const given = puzzle.given ?? [];
+  for (const place of given) {
+    value[place.cellA] = place.a;
+    value[place.cellB] = place.b;
+    const tileIndex = puzzle.tiles.findIndex((tile) => tile.id === place.tileId);
+    if (tileIndex >= 0) used[tileIndex] = 1;
+  }
   const grids = new Set<string>();
+  let nodes = 0;
+  let proven = true;
 
   const ok = (): boolean => {
     const known = new Map<number, number[]>();
@@ -175,7 +191,12 @@ export function sampleSolutions(puzzle: LogicPuzzle, limit = 2): string[] {
   };
 
   const walk = (placed: number) => {
-    if (grids.size >= limit) return;
+    if (!proven || grids.size >= limit) return;
+    if (nodes >= budget) {
+      proven = false;
+      return;
+    }
+    nodes += 1;
     if (placed === puzzle.tiles.length) {
       grids.add(value.join(","));
       return;
@@ -197,13 +218,17 @@ export function sampleSolutions(puzzle: LogicPuzzle, limit = 2): string[] {
           value[cell] = -1;
           value[other] = -1;
           used[t] = 0;
-          if (grids.size >= limit) return;
+          if (!proven || grids.size >= limit) return;
         }
       }
     }
   };
-  walk(0);
-  return [...grids];
+  walk(given.length);
+  return { grids: [...grids], proven };
+}
+
+export function sampleSolutions(puzzle: LogicPuzzle, limit = 2): string[] {
+  return searchSolutions(puzzle, limit, Number.POSITIVE_INFINITY).grids;
 }
 
 export function countSolutions(puzzle: LogicPuzzle, limit = 2): number {
@@ -231,7 +256,8 @@ function withVariety(puzzle: LogicPuzzle, value: readonly number[], rng: () => n
       const rule = pick(index, pip);
       if (!rule) continue;
       const next = { ...puzzle, rules: swap(index, rule) };
-      if (countSolutions(next, 2) === 1) return next;
+      const found = searchSolutions(next, 2, SEARCH_BUDGET);
+      if (found.proven && found.grids.length === 1) return next;
     }
   }
   return puzzle;
@@ -251,7 +277,7 @@ function attempt(rng: () => number, difficulty: Difficulty): LogicPuzzle | null 
   const shape = SHAPES[difficulty][Math.floor(rng() * SHAPES[difficulty].length)];
   const adj = adjacency(shape.length, shape);
   const tiling = findTiling(adj, rng);
-  const regions = tiling ? regionsFromTiling(adj, tiling, Math.min(REGION_COUNT[difficulty], shape.length), rng) : null;
+  const regions = tiling ? regionsFromTiling(adj, tiling, Math.max(3, Math.floor(shape.length / 2)), rng) : null;
   if (!tiling || !regions) return null;
   const chosen = shuffle(makeSet(), rng).slice(0, tiling.length);
   const value = new Array<number>(shape.length).fill(0);
@@ -268,14 +294,15 @@ function attempt(rng: () => number, difficulty: Difficulty): LogicPuzzle | null 
   const tiles = shuffle(chosen.map((tile) => ({ id: tile.id, a: tile.a, b: tile.b })), rng);
   const width = Math.max(...shape.map((point) => point[0])) + 1;
   const height = Math.max(...shape.map((point) => point[1])) + 1;
+  const given = shuffle(source, rng).slice(0, LOCKED_TILES[difficulty]);
   let nextRegion = Math.max(...regions) + 1;
   for (let pin = 0; pin <= MAX_PINS[difficulty]; pin++) {
-    const puzzle: LogicPuzzle = { difficulty, width, height, cells, tiles, rules: rulesFor(cells, value) };
+    const puzzle: LogicPuzzle = { difficulty, width, height, cells, tiles, rules: rulesFor(cells, value), given };
     if (!isSolved(puzzle, source)) return null;
-    const grids = sampleSolutions(puzzle, 2);
-    if (grids.length === 1) return withVariety(puzzle, value, rng);
-    if (pin === MAX_PINS[difficulty]) return null;
-    const other = grids.find((grid) => grid !== value.join(","));
+    const found = searchSolutions(puzzle, 2, SEARCH_BUDGET);
+    if (found.proven && found.grids.length === 1) return withVariety(puzzle, value, rng);
+    if (!found.proven || pin === MAX_PINS[difficulty]) return null;
+    const other = found.grids.find((grid) => grid !== value.join(","));
     if (!other) return null;
     const index = other.split(",").map(Number).findIndex((pip, cell) => pip !== value[cell]);
     if (index < 0) return null;
@@ -297,6 +324,20 @@ export function generatePuzzle(seed: number, difficulty: Difficulty): LogicPuzzl
 export function puzzlesForDate(dateKey: string): LogicPuzzle[] {
   const day = dateKeyIndex(dateKey);
   return DIFFICULTIES.map((difficulty, index) => generatePuzzle((day + 1) * 16 + index + 1, difficulty));
+}
+
+export function practiceSeed(salt: number, dailySeed: number): number {
+  const next = salt >>> 0;
+  const daily = dailySeed >>> 0;
+  return next === daily ? (next + 1) >>> 0 : next;
+}
+
+export function practicePuzzles(salt: number, dateKey: string): LogicPuzzle[] {
+  const day = dateKeyIndex(dateKey);
+  return DIFFICULTIES.map((difficulty, index) => {
+    const daily = (day + 1) * 16 + index + 1;
+    return generatePuzzle(practiceSeed((salt + index * 97) >>> 0, daily), difficulty);
+  });
 }
 
 export function isSolved(puzzle: LogicPuzzle, placements: readonly Placement[]): boolean {
@@ -323,6 +364,56 @@ export function isSolved(puzzle: LogicPuzzle, placements: readonly Placement[]):
     const known = puzzle.cells.filter((cell) => cell.region === region).map((cell) => value.get(cell.id) ?? -1);
     return ruleAllows(rule, known, true);
   });
+}
+
+export interface SnapCell {
+  id: number;
+  x: number;
+  y: number;
+  cx: number;
+  cy: number;
+}
+
+// The finger can rest on the outer edge of a cell, about one cell-pitch from
+// the pair's midpoint. 1.2 covers that edge plus a little slop, and still
+// loses to a nearer pair (2026-10-21).
+const SNAP_RADIUS_FACTOR = 1.2;
+
+/** Nearest adjacent empty pair in screen space. cellA is west or north, matching the ghost's first pip. */
+export function nearestDominoPair(
+  cells: readonly SnapCell[],
+  occupied: readonly number[],
+  point: { x: number; y: number },
+  radiusFactor = SNAP_RADIUS_FACTOR,
+): { cellA: number; cellB: number } | null {
+  const taken = new Set(occupied);
+  const open = cells.filter((cell) => !taken.has(cell.id) && Number.isFinite(cell.cx) && Number.isFinite(cell.cy));
+  let pitch = 0;
+  for (let i = 0; i < open.length && pitch === 0; i++) {
+    for (let j = i + 1; j < open.length; j++) {
+      if (Math.abs(open[i].x - open[j].x) + Math.abs(open[i].y - open[j].y) !== 1) continue;
+      pitch = Math.hypot(open[i].cx - open[j].cx, open[i].cy - open[j].cy);
+      break;
+    }
+  }
+  if (!(pitch > 0)) return null;
+  const radius = pitch * radiusFactor;
+  let best: { cellA: number; cellB: number; score: number } | null = null;
+  for (let i = 0; i < open.length; i++) {
+    for (let j = i + 1; j < open.length; j++) {
+      const left = open[i];
+      const right = open[j];
+      if (Math.abs(left.x - right.x) + Math.abs(left.y - right.y) !== 1) continue;
+      const score = Math.hypot(point.x - (left.cx + right.cx) / 2, point.y - (left.cy + right.cy) / 2);
+      if (score > radius || (best !== null && score >= best.score)) continue;
+      const horizontal = left.y === right.y;
+      const [first, second] = horizontal
+        ? (left.x <= right.x ? [left, right] : [right, left])
+        : (left.y <= right.y ? [left, right] : [right, left]);
+      best = { cellA: first.id, cellB: second.id, score };
+    }
+  }
+  return best ? { cellA: best.cellA, cellB: best.cellB } : null;
 }
 
 export function placeTile(
