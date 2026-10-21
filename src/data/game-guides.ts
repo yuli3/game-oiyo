@@ -3068,12 +3068,12 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       es: "Cuatro grupos es un puzle que reparte 16 palabras entre cuatro temas ocultos. Buscar grupos en un tablero de 4×4 es un formato de puzle habitual; cada tema y cada lista de palabras los escribió OIYO para cada idioma.",
     },
     how: {
-      ko: "같은 주제라고 생각하는 단어 4개를 고르고 제출하세요. 맞으면 그 묶음이 색과 함께 위로 올라갑니다. 3개만 맞으면 '하나만 바꾸면 돼요'라고 알려 줍니다. 실수 4번 안에 네 묶음을 모두 찾으면 성공입니다. 노랑이 가장 쉽고 보라가 가장 까다롭습니다.",
-      en: "Pick four words you think share a theme and submit. A correct group rises to the top in its color. If three of the four belong together you'll see \"One away\". Find all four groups before your fourth mistake. Yellow is the easiest and purple the trickiest.",
-      ja: "同じテーマだと思う言葉を4つ選んで決定します。正解ならそのグループが色付きで上に並びます。4つのうち3つが合っていれば「あと一つ」と表示されます。ミス4回までに四つ全部見つければクリアです。黄色がいちばんやさしく、紫がいちばん難しいグループです。",
-      zh: "选出你认为主题相同的4个词并提交。答对的分组会带着颜色移到上方。如果4个里有3个属于同一组，会提示“只差一个”。在第4次失误前找出全部四组即成功。黄色最简单，紫色最难。",
-      fr: "Choisissez quatre mots qui partagent selon vous un thème, puis validez. Un groupe correct monte en haut avec sa couleur. Si trois mots sur quatre vont ensemble, le jeu vous dit « Presque ». Trouvez les quatre groupes avant votre quatrième erreur. Le jaune est le plus facile, le violet le plus retors.",
-      es: "Elige cuatro palabras que creas que comparten tema y envía. Un grupo correcto sube arriba con su color. Si tres de las cuatro van juntas verás «¡Te falta una!». Encuentra los cuatro grupos antes del cuarto fallo. El amarillo es el más fácil y el morado el más difícil.",
+      ko: "같은 주제라고 생각하는 단어 4개를 고르고 제출하세요. 맞으면 그 묶음이 색과 함께 위로 올라갑니다. 3개만 맞으면 '하나만 바꾸면 돼요'라고 알려 줍니다. 실수 4번 안에 네 묶음을 모두 찾으면 성공입니다. 노랑이 가장 쉽고 보라가 가장 까다롭습니다. 타이틀에서 입장하면 16장이 모여 시작합니다. 고른 칸은 들리고, 맞은 네 장은 한 줄로 모이며, 틀린 네 장은 흔들립니다.",
+      en: "Pick four words you think share a theme and submit. A correct group rises to the top in its color. If three of the four belong together you'll see \"One away\". Find all four groups before your fourth mistake. Yellow is the easiest and purple the trickiest. Enter from the title and the 16 tiles gather. Chosen tiles lift, a correct four draws into a row, and a wrong four shakes.",
+      ja: "同じテーマだと思う言葉を4つ選んで決定します。正解ならそのグループが色付きで上に並びます。4つのうち3つが合っていれば「あと一つ」と表示されます。ミス4回までに四つ全部見つければクリアです。黄色がいちばんやさしく、紫がいちばん難しいグループです。タイトルから入ると16枚が集まって始まります。選んだマスは持ち上がり、正解の4枚は一列に集まり、外れの4枚は揺れます。",
+      zh: "选出你认为主题相同的4个词并提交。答对的分组会带着颜色移到上方。如果4个里有3个属于同一组，会提示“只差一个”。在第4次失误前找出全部四组即成功。黄色最简单，紫色最难。从标题进入后，16张牌聚到一起再开始。选中的牌会抬起，正确的四张收成一行，错误的四张会晃动。",
+      fr: "Choisissez quatre mots qui partagent selon vous un thème, puis validez. Un groupe correct monte en haut avec sa couleur. Si trois mots sur quatre vont ensemble, le jeu vous dit « Presque ». Trouvez les quatre groupes avant votre quatrième erreur. Le jaune est le plus facile, le violet le plus retors. Depuis le titre, on entre et les 16 tuiles se rassemblent. Les tuiles choisies se soulèvent, quatre bonnes se rangent en ligne, et quatre mauvaises tremblent.",
+      es: "Elige cuatro palabras que creas que comparten tema y envía. Un grupo correcto sube arriba con su color. Si tres de las cuatro van juntas verás «¡Te falta una!». Encuentra los cuatro grupos antes del cuarto fallo. El amarillo es el más fácil y el morado el más difícil. Desde el título se entra y las 16 fichas se reúnen. Las elegidas se levantan, cuatro correctas forman una fila y cuatro incorrectas tiemblan.",
     },
     faqs: [
       {
