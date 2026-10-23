@@ -7,6 +7,10 @@ import { GameContainer } from "../ui/game/GamePrimitives";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import type { Locale } from "../../lib/i18n";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
+import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from "../../lib/games/game-audio";
+import { createHaptics } from "../../lib/games/haptics";
+import { celebrate } from "../../lib/games/celebration";
+import { DOMINO_SPRITES, dominoPipSprite } from "../../lib/games/sprites";
 import {
   getBestForConditions,
   getRecord,
@@ -362,12 +366,14 @@ function ruleLabel(copy: Copy, rule: Rule): string {
 }
 
 function Pips({ n }: { n: number }) {
-  const on = new Set(PIP_ON[n] ?? []);
+  const sprite = dominoPipSprite(n);
   return (
-    <span className="grid grid-cols-3 gap-0.5" aria-hidden="true">
-      {Array.from({ length: 9 }, (_, index) => (
-        <span key={index} className={`size-1.5 rounded-full ${on.has(index) ? "bg-foreground" : "bg-transparent"}`} />
-      ))}
+    <span className="flex size-7 items-center justify-center p-0.5" aria-hidden="true">
+      {sprite ? (
+        <img src={sprite} alt="" className="size-full object-contain pointer-events-none select-none" />
+      ) : (
+        <span className="font-bold">{n}</span>
+      )}
     </span>
   );
 }
@@ -409,6 +415,8 @@ export default function DominoLogic({ locale }: { locale: Locale }) {
   const [ghostOn, setGhostOn] = useState(false);
   const [reject, setReject] = useState(0);
   const [muted, setMuted] = useState(false);
+  const cuesRef = useRef<CuePlayer<CoreCue> | null>(null);
+  const hapticsRef = useRef<ReturnType<typeof createHaptics> | null>(null);
   const audio = useRef<AudioContext | null>(null);
   const recorded = useRef<string | null>(null);
   const bestNoted = useRef(new Set<string>());
@@ -447,21 +455,19 @@ export default function DominoLogic({ locale }: { locale: Locale }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [containerRef, togglePortal]);
 
+  const cue = (kind: CoreCue) => {
+    if (!muted) {
+      cuesRef.current ??= createCuePlayer({ cues: CORE_CUES });
+      cuesRef.current.play(kind);
+    }
+    hapticsRef.current ??= createHaptics();
+    if (kind === "place") hapticsRef.current.fire("place");
+    else if (kind === "fail") hapticsRef.current.fire("fail");
+    else if (kind === "win") hapticsRef.current.fire("win");
+  };
+
   const beep = (ok: boolean) => {
-    if (muted || reducedMotion) return;
-    const Context = window.AudioContext;
-    if (!Context) return;
-    if (!audio.current) audio.current = new Context();
-    const ctx = audio.current;
-    void ctx.resume();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.frequency.value = ok ? 620 : 180;
-    gain.gain.value = 0.04;
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.08);
+    cue(ok ? "place" : "fail");
   };
 
   const updatePlay = (index: number, play: Play) => {
@@ -480,7 +486,8 @@ export default function DominoLogic({ locale }: { locale: Locale }) {
         if (assist === "none") setBests((current) => ({ ...current, [puzzle.difficulty]: best }));
       } catch { /* best-effort */ }
     }
-    beep(true);
+    cue("win");
+    celebrate(containerRef.current, { preset: "tiles", colors: ["#38bdf8", "#fbbf24"], label: t.done });
     return { ...play, won: true, seconds, selected: null, anchor: null };
   };
 
@@ -630,6 +637,11 @@ export default function DominoLogic({ locale }: { locale: Locale }) {
       className={isImmersive ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-y-auto bg-background p-3 sm:p-5" : "relative"}
     >
       <GameContainer title={t.title} subtitle={board ? board.dateKey : t.preparing}>
+        {!isImmersive && (
+          <div className="mb-4 overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+            <img src={DOMINO_SPRITES.keyart} alt={t.title} className="h-32 w-full object-cover sm:h-44" />
+          </div>
+        )}
         <div className="mb-4 flex flex-wrap gap-2">
           <button type="button" onClick={() => setMuted((value) => !value)} aria-pressed={muted} aria-label={muted ? portalLabels.unmute : portalLabels.mute} title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`} className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-muted-foreground`}>
             {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}

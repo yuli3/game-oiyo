@@ -328,7 +328,21 @@ export const PIP_SPRITES = {
 
 export const DOMINO_SPRITES = {
   blank: "/assets/sprites/domino/blank.png",
+  keyart: "/assets/sprites/domino-logic/keyart.webp",
+  pip0: "/assets/sprites/pips/0.webp",
+  pip1: "/assets/sprites/pips/1.webp",
+  pip2: "/assets/sprites/pips/2.webp",
+  pip3: "/assets/sprites/pips/3.webp",
+  pip4: "/assets/sprites/pips/4.webp",
+  pip5: "/assets/sprites/pips/5.webp",
+  pip6: "/assets/sprites/pips/6.webp",
 } as const;
+
+export function dominoPipSprite(n: number): string {
+  const clamped = Math.min(6, Math.max(0, Math.trunc(Number.isFinite(n) ? n : 0))) as 0 | 1 | 2 | 3 | 4 | 5 | 6;
+  const key = `pip${clamped}` as const;
+  return DOMINO_SPRITES[key];
+}
 
 export function pipSprite(n: number): string {
   const clamped = Math.min(6, Math.max(0, Math.trunc(Number.isFinite(n) ? n : 0))) as 0 | 1 | 2 | 3 | 4 | 5 | 6;
@@ -432,4 +446,6 @@ export const TILE_RUMMY_BURST_SHEET = {
   fps: 16,
   loop: false,
 } as const;
+
+
 
