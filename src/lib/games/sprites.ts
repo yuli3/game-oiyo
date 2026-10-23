@@ -390,3 +390,46 @@ export function dotPetSprite(type: string, stage: "baby" | "child" | "teen" | "a
   const set = DOT_PET_SPRITES[type] ?? DOT_PET_SPRITES.normal;
   return stage === "teen" || stage === "adult" ? set.adult : set.baby;
 }
+
+export const TILE_RUMMY_SPRITES = {
+  felt: "/assets/sprites/tile-rummy/felt-table.webp",
+  keyart: "/assets/sprites/tile-rummy/keyart.webp",
+  burstSheet: "/assets/sprites/tile-rummy/burst-sheet.webp",
+  tiles: {
+    normal: "/assets/sprites/tile-rummy/tile-normal.webp",
+    selected: "/assets/sprites/tile-rummy/tile-selected.webp",
+    valid: "/assets/sprites/tile-rummy/tile-valid.webp",
+    invalid: "/assets/sprites/tile-rummy/tile-invalid.webp",
+  },
+  avatars: {
+    1: {
+      idle: "/assets/sprites/tile-rummy/avatar-1-idle.webp",
+      think: "/assets/sprites/tile-rummy/avatar-1-think.webp",
+      win: "/assets/sprites/tile-rummy/avatar-1-win.webp",
+    },
+    2: {
+      idle: "/assets/sprites/tile-rummy/avatar-2-idle.webp",
+      think: "/assets/sprites/tile-rummy/avatar-2-think.webp",
+      win: "/assets/sprites/tile-rummy/avatar-2-win.webp",
+    },
+    3: {
+      idle: "/assets/sprites/tile-rummy/avatar-3-idle.webp",
+      think: "/assets/sprites/tile-rummy/avatar-3-think.webp",
+      win: "/assets/sprites/tile-rummy/avatar-3-win.webp",
+    },
+  },
+  frames: {
+    silver: "/assets/sprites/tile-rummy/augment-silver.webp",
+    gold: "/assets/sprites/tile-rummy/augment-gold.webp",
+    prism: "/assets/sprites/tile-rummy/augment-prism.webp",
+  },
+} as const;
+
+export const TILE_RUMMY_BURST_SHEET = {
+  cols: 8,
+  rows: 1,
+  frameCount: 8,
+  fps: 16,
+  loop: false,
+} as const;
+

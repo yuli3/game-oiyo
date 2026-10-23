@@ -64,6 +64,7 @@ import type { DropTarget, TileSpot } from "../../lib/games/tile-rummy-layout";
 import { dropDraft, extendMeld, isNewMeld, meldKey, pullTile, unusedHand, type Draft } from "../../lib/games/tile-rummy-draft";
 import TileRummyCanvas, { type TableFx } from "./TileRummyCanvas";
 import { MORE } from "./tile-rummy-copy";
+import { TILE_RUMMY_SPRITES } from "../../lib/games/sprites";
 
 const GAME_ID = "tile-rummy";
 /** dailyBestConditions is one cohort: one opponent, adept search, no hint or undo. */
@@ -542,7 +543,7 @@ const COPY: Record<Locale, Copy> = {
 };
 
 const COLOR_INDEX: Record<TileColor, number> = { crimson: 0, amber: 1, teal: 2, violet: 3 };
-const CONTROL = "min-h-11 rounded-xl border px-3 text-xs font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50";
+const CONTROL = "min-h-11 min-w-11 rounded-xl border px-3 text-xs font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50";
 const PRIMARY = "min-h-11 rounded-xl bg-primary px-4 text-sm font-bold text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50";
 const OVERLAY = "absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 overflow-y-auto rounded-2xl bg-background/80 p-4 text-center backdrop-blur-sm";
 /** The title panel sits in flow over the dealt table, so its button is never cut off. */
@@ -1123,9 +1124,21 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
 
           {phase === "title" && (
             <div className={TITLE_PANEL}>
+              <img
+                src={TILE_RUMMY_SPRITES.keyart}
+                alt={t.title}
+                className="w-full max-w-sm rounded-2xl shadow-xl border border-border/40"
+              />
               <p className="text-xs font-bold uppercase tracking-widest text-primary">{m.titleLabel} · {m.titles[tier]}</p>
               <h2 className="text-3xl font-black text-foreground">{t.title}</h2>
               <p className="max-w-xs text-sm text-muted-foreground">{m.tagline}</p>
+              <button
+                type="button"
+                onClick={enter}
+                className="min-h-14 w-full max-w-xs rounded-2xl bg-primary px-8 text-lg font-black text-primary-foreground shadow-lg hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-transform active:scale-95"
+              >
+                {m.enter}
+              </button>
               {record && <p className="text-xs font-bold text-muted-foreground">{t.record} {record.w}–{record.l}–{record.d}{nextStep !== undefined ? ` · ${m.nextTitle(nextStep - wins)}` : ""}</p>}
               <div className="flex flex-wrap justify-center gap-2" role="group" aria-label={t.match}>
                 <button type="button" onClick={() => setSetup((current) => ({ ...current, mode: "match" }))} aria-pressed={setup.mode === "match"} className={`${CONTROL} ${setup.mode === "match" ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground"}`}>{t.match}</button>
@@ -1161,20 +1174,30 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
                   );
                 })}
               </div>
-              <button type="button" onClick={enter} className="min-h-14 rounded-2xl bg-primary px-10 text-lg font-black text-primary-foreground shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">{m.enter}</button>
             </div>
           )}
 
           {phase === "augment" && (
             <div className={OVERLAY}>
               <p className="text-base font-black text-foreground">{m.pickAugment}</p>
-              <div className="grid w-full max-w-md gap-2">
-                {offers.map((id) => (
-                  <button key={id} type="button" onClick={() => pickAugment(id)} className="min-h-14 rounded-2xl border-2 border-primary bg-card px-4 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
-                    <span className="block text-sm font-black text-foreground">{m.augments[id].name}</span>
-                    <span className="block text-xs text-muted-foreground">{m.augments[id].desc}</span>
-                  </button>
-                ))}
+              <div className="grid w-full max-w-md gap-3">
+                {offers.map((id, idx) => {
+                  const frame = idx === 0 ? TILE_RUMMY_SPRITES.frames.silver : idx === 1 ? TILE_RUMMY_SPRITES.frames.gold : TILE_RUMMY_SPRITES.frames.prism;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => pickAugment(id)}
+                      className="relative min-h-16 rounded-2xl border-2 border-primary/60 bg-card p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 overflow-hidden flex items-center gap-3 transition-transform hover:scale-105 active:scale-95"
+                    >
+                      <img src={frame} alt="" className="h-12 w-9 rounded-lg object-contain" />
+                      <div className="flex-1">
+                        <span className="block text-sm font-black text-foreground">{m.augments[id].name}</span>
+                        <span className="block text-xs text-muted-foreground">{m.augments[id].desc}</span>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
