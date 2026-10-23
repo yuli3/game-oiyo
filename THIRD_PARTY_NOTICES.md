@@ -37,14 +37,12 @@ are covered by their own license files and `package-lock.json`.
 | `@react-three/drei` | 10.7.7 | MIT | runtime |
 | `@react-three/fiber` | 9.6.1 | MIT | runtime |
 | `@tailwindcss/vite` | 4.3.0 | MIT | runtime |
-| `@types/canvas-confetti` | 1.9.0 | MIT | runtime |
 | `@types/dompurify` | 3.0.5 | MIT | runtime |
 | `@types/matter-js` | 0.20.2 | MIT | runtime |
 | `@types/react` | 19.2.14 | MIT | runtime |
 | `@types/react-dom` | 19.2.3 | MIT | runtime |
 | `astro` | 5.18.1 | MIT | runtime |
 | `astro-robots-txt` | 1.0.0 | MIT | runtime |
-| `canvas-confetti` | 1.9.4 | ISC | runtime |
 | `class-variance-authority` | 0.7.1 | Apache-2.0 | runtime |
 | `clsx` | 2.1.1 | MIT | runtime |
 | `date-fns` | 4.1.0 | MIT | runtime |

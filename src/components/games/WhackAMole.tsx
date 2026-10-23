@@ -7,7 +7,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import confetti from "canvas-confetti";
+import { celebrate } from "../../lib/games/celebration";
 import type { Locale } from "../../lib/i18n";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { getBest, recordBest } from "../../lib/games/records";
@@ -314,7 +314,7 @@ const WhackAMole = ({ locale }: { locale: Locale }) => {
       const saved = recordBest(GAME_KEY, game.score, "score");
       setBest(saved.value);
       if (beat && game.score > 0 && !reducedMotion) {
-        confetti({ particleCount: 90, spread: 72, origin: { y: 0.6 } });
+        celebrate(canvasRef.current, { preset: "stardust", colors: ["#fbbf24", "#fb923c", "#fef3c7"], origin: { x: 0.5, y: 0.55 } });
       }
     }
   }, [game, paused, reducedMotion, tone]);

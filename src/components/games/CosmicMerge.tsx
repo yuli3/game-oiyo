@@ -10,7 +10,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import Matter from "matter-js";
-import confetti from "canvas-confetti";
+import { celebrate } from "../../lib/games/celebration";
 import type { Locale } from "../../lib/i18n";
 import {
   ARENA_HEIGHT,
@@ -521,11 +521,7 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
 
               // Celebration when reaching Sun (Tier 10)
               if (mergeResult.nextTier === MAX_TIER_INDEX) {
-                confetti({
-                  particleCount: 120,
-                  spread: 85,
-                  origin: { y: 0.6 },
-                });
+                celebrate(canvasRef.current, { preset: "stardust", colors: ["#fbbf24", "#f97316", "#fff7ed"], origin: { x: 0.5, y: 0.45 }, scale: 1.2 });
               }
             }
           }
