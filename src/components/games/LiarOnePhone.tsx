@@ -10,6 +10,10 @@ import type { Locale } from "../../lib/i18n";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { getRecord, recordResult, type GameRecord } from "../../lib/games/records";
 import { dateKeyIndex, kstDateKey } from "../../lib/games/todays-game";
+import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from "../../lib/games/game-audio";
+import { createHaptics } from "../../lib/games/haptics";
+import { celebrate } from "../../lib/games/celebration";
+import { LIAR_ONEPHONE_SPRITES } from "../../lib/games/sprites";
 import {
   GAME_ID,
   MAX_PLAYERS,
@@ -265,8 +269,23 @@ export default function LiarOnePhone({ locale }: { locale: Locale }) {
   const [left, setLeft] = useState(180);
   const [record, setRecord] = useState<GameRecord | null>(null);
   const [muted, setMuted] = useState(false);
+  const cuesRef = useRef<CuePlayer<CoreCue> | null>(null);
+  const hapticsRef = useRef<ReturnType<typeof createHaptics> | null>(null);
   const audio = useRef<AudioContext | null>(null);
   const noted = useRef(new Set<string>());
+
+  const cue = (kind: CoreCue) => {
+    if (!muted) {
+      cuesRef.current ??= createCuePlayer({ cues: CORE_CUES });
+      cuesRef.current.play(kind);
+    }
+    hapticsRef.current ??= createHaptics();
+    if (kind === "tap") hapticsRef.current.fire("tap");
+    else if (kind === "place") hapticsRef.current.fire("place");
+    else if (kind === "combo") hapticsRef.current.fire("combo");
+    else if (kind === "fail") hapticsRef.current.fire("fail");
+    else if (kind === "win") hapticsRef.current.fire("win");
+  };
 
   useEffect(() => {
     const dateKey = kstDateKey();
@@ -302,20 +321,13 @@ export default function LiarOnePhone({ locale }: { locale: Locale }) {
     if (noted.current.has(key)) return;
     noted.current.add(key);
     try { setRecord(recordResult(GAME_ID, session.winner === "group" ? "w" : "l")); } catch { /* best-effort */ }
-    if (muted || reducedMotion) return;
-    const Context = window.AudioContext;
-    if (!Context) return;
-    if (!audio.current) audio.current = new Context();
-    const ctx = audio.current;
-    void ctx.resume();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.frequency.value = session.winner === "group" ? 620 : 180;
-    gain.gain.value = 0.04;
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.08);
+    cue("win");
+    const isGroup = session.winner === "group";
+    celebrate(containerRef.current, {
+      preset: isGroup ? "stardust" : "sparks",
+      colors: isGroup ? ["#38bdf8", "#fbbf24", "#34d399"] : ["#ef4444", "#f97316", "#fbbf24"],
+      label: isGroup ? t.groupWin : t.liarWin,
+    });
   }, [session, loc, muted, reducedMotion]);
 
   const begin = () => {
@@ -344,6 +356,11 @@ export default function LiarOnePhone({ locale }: { locale: Locale }) {
       className={isImmersive ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-y-auto bg-background p-3 sm:p-5" : "relative"}
     >
       <GameContainer title={t.title} subtitle={seedBase === null ? t.preparing : t.subtitle}>
+        {!isImmersive && (
+          <div className="mb-4 overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+            <img src={LIAR_ONEPHONE_SPRITES.keyart} alt={t.title} className="h-32 w-full object-cover sm:h-44" />
+          </div>
+        )}
         <div className="mb-4 flex flex-wrap gap-2">
           <button type="button" onClick={() => setMuted((value) => !value)} aria-pressed={muted} aria-label={muted ? portalLabels.unmute : portalLabels.mute} title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`} className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-muted-foreground`}>
             {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
@@ -383,7 +400,7 @@ export default function LiarOnePhone({ locale }: { locale: Locale }) {
               <div className="space-y-4 rounded-2xl border border-border bg-card p-4">
                 <p className="text-lg font-bold text-foreground">{seat}</p>
                 <p className="text-sm text-muted-foreground">{session.phase === "cover" ? t.cover : t.voteCover}</p>
-                <button type="button" onClick={() => setSession(ready(session))} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.look}</button>
+                <button type="button" onClick={() => { cue("tap"); setSession(ready(session)); }} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.look}</button>
               </div>
             )}
             {session.phase === "peek" && card === "word" && (
@@ -391,14 +408,14 @@ export default function LiarOnePhone({ locale }: { locale: Locale }) {
                 <p className="text-sm font-bold text-foreground">{seat} · {t.word}</p>
                 <p className="text-2xl font-bold text-foreground">{revealedWord(session)}</p>
                 <p className="text-sm text-muted-foreground">{t.category}: {session.round.category}</p>
-                <button type="button" onClick={() => setSession(hide(session))} className={`${CONTROL} border-border bg-card text-foreground`}>{t.hide}</button>
+                <button type="button" onClick={() => { cue("place"); setSession(hide(session)); }} className={`${CONTROL} border-border bg-card text-foreground`}>{t.hide}</button>
               </div>
             )}
             {session.phase === "peek" && card === "category" && (
               <div className="space-y-4 rounded-2xl border border-warning bg-warning/15 p-4">
                 <p className="text-sm font-bold text-foreground">{seat} · {t.category}</p>
                 <p className="text-2xl font-bold text-foreground">{session.round.category}</p>
-                <button type="button" onClick={() => setSession(hide(session))} className={`${CONTROL} border-border bg-card text-foreground`}>{t.hide}</button>
+                <button type="button" onClick={() => { cue("place"); setSession(hide(session)); }} className={`${CONTROL} border-border bg-card text-foreground`}>{t.hide}</button>
               </div>
             )}
             {session.phase === "discuss" && (
@@ -406,7 +423,7 @@ export default function LiarOnePhone({ locale }: { locale: Locale }) {
                 <p className="text-sm text-muted-foreground">{t.discuss}</p>
                 <p className="text-2xl font-bold text-foreground tabular-nums" aria-live="polite">{clock(left)}</p>
                 {left === 0 ? <p className="text-sm font-bold text-foreground">{t.timeUp}</p> : null}
-                <button type="button" onClick={() => setSession(beginVote(session))} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.voteStart}</button>
+                <button type="button" onClick={() => { cue("tap"); setSession(beginVote(session)); }} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.voteStart}</button>
               </div>
             )}
             {session.phase === "vote" && (
@@ -415,7 +432,7 @@ export default function LiarOnePhone({ locale }: { locale: Locale }) {
                 <p className="text-sm text-muted-foreground">{t.voteHint}</p>
                 <div className="flex flex-wrap gap-2">
                   {session.votes.map((_, index) => (
-                    <button key={index} type="button" onClick={() => setSession(castVote(session, index))} className={`${CONTROL} border-border bg-card text-foreground`}>{t.seat(index + 1)}</button>
+                    <button key={index} type="button" onClick={() => { cue("place"); setSession(castVote(session, index)); }} className={`${CONTROL} border-border bg-card text-foreground`}>{t.seat(index + 1)}</button>
                   ))}
                 </div>
               </div>
@@ -426,7 +443,7 @@ export default function LiarOnePhone({ locale }: { locale: Locale }) {
                 <p className="text-sm font-bold text-foreground">{t.category}: {session.round.category}</p>
                 <div className="flex flex-wrap gap-2">
                   {session.round.choices.map((word) => (
-                    <button key={word} type="button" onClick={() => setSession(guessWord(session, word))} className={`${CONTROL} border-border bg-card text-foreground`}>{word}</button>
+                    <button key={word} type="button" onClick={() => { cue("place"); setSession(guessWord(session, word)); }} className={`${CONTROL} border-border bg-card text-foreground`}>{word}</button>
                   ))}
                 </div>
               </div>
