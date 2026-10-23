@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
-import confetti from 'canvas-confetti';
+import { celebrate } from "../../lib/games/celebration";
 import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
 import VoxelMaze3DScene from './VoxelMaze3DScene';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
@@ -186,22 +186,7 @@ export default function VoxelMaze3D() {
     if (gameState.levelCleared && !prevClearRef.current) {
       playClearSound();
       vibrate([40, 40, 40, 40, 100]);
-      try {
-        confetti({
-          particleCount: 50,
-          spread: 70,
-          origin: { x: 0.25, y: 0.6 },
-          disableForReducedMotion: true,
-        });
-        confetti({
-          particleCount: 50,
-          spread: 70,
-          origin: { x: 0.75, y: 0.6 },
-          disableForReducedMotion: true,
-        });
-      } catch {
-        // ignore
-      }
+      celebrate(containerRef.current, { preset: "tiles", colors: ["#34d399", "#60a5fa", "#fde68a"], origin: { x: 0.25, y: 0.6 }, extraOrigins: [{ x: 0.75, y: 0.6 }] });
     }
     prevClearRef.current = gameState.levelCleared;
 

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import confetti from 'canvas-confetti';
+import { celebrate } from "../../lib/games/celebration";
 import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
 import { GameContainer, PlayingCard } from '../ui/game/GamePrimitives';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
@@ -384,9 +384,9 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
       clearSolitaireSaveV2();
       setRecord(recordResult('solitaire', 'w'));
 
-      // Celebratory Confetti & Win Fanfare
+      // Card burst over the table and win fanfare
       try {
-        confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } });
+        celebrate(containerRef.current, { preset: "cards", colors: ["#f8fafc", "#dc2626", "#1e293b"], origin: { x: 0.5, y: 0.45 } });
       } catch {}
       if (!mutedRef.current) {
         audioRef.current?.playWinFanfare();

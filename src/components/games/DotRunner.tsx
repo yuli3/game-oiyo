@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
-import confetti from 'canvas-confetti';
+import { celebrate } from "../../lib/games/celebration";
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { frameScale } from '../../lib/games/time-contracts';
@@ -240,7 +240,7 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         setFinalFrames(next.elapsedFrames);
                         setIsNewBest(beat && next.score > 0);
                         playTone('crash');
-                        if (beat && next.score > 0 && !prefersReducedMotion) confetti({ particleCount: 80, spread: 68, origin: { y: 0.62 } });
+                        if (beat && next.score > 0 && !prefersReducedMotion) celebrate(canvasRef.current, { preset: "tiles", colors: ["#a3e635", "#facc15", "#ffffff"], origin: { x: 0.5, y: 0.6 }, scale: 0.7 });
                         if (beat) {
                             const savedBest = recordBest('dot-runner', next.score, 'score', undefined, { trackPlay: false });
                             setBest(savedBest.value);
