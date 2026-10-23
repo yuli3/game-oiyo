@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
 import { GameContainer } from "../ui/game/GamePrimitives";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
+import { celebrate } from "../../lib/games/celebration";
+import { createHaptics } from "../../lib/games/haptics";
+import { TIME_LOOP_RESCUE_SPRITES } from "../../lib/games/sprites";
+import type { Locale } from "../../lib/i18n";
 import {
   TIME_LOOP_MAX_LOOPS,
   TIME_LOOP_ROOM,
@@ -57,10 +63,14 @@ function traceFacing(trace: readonly TimeLoopPoint[], tick=trace.length): Direct
 
 const SCALE = 1_000;
 const px = (value: number) => value / SCALE;
+const CONTROL = "min-h-11 min-w-11 rounded-xl border px-3 py-2 text-sm font-bold motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
 
-export default function TimeLoopRescue({ locale = "ko" }: { locale?: string }) {
-  const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
-  const boardText = BOARD_COPY[locale as keyof typeof BOARD_COPY] ?? BOARD_COPY.en;
+export default function TimeLoopRescue({ locale = "ko" }: { locale?: Locale | string }) {
+  const loc = (COPY[locale as keyof typeof COPY] ? locale : "en") as Locale;
+  const t = COPY[loc] ?? COPY.en;
+  const boardText = BOARD_COPY[loc as keyof typeof BOARD_COPY] ?? BOARD_COPY.en;
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: loc });
+  const hapticsRef = useRef(createHaptics());
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const missionRef = useRef<TimeLoopMission>(createTimeLoopMission());
   const inputRef = useRef<Record<Direction, boolean>>({ up:false, down:false, left:false, right:false });
@@ -157,9 +167,23 @@ export default function TimeLoopRescue({ locale = "ko" }: { locale?: string }) {
           const next = advanceTimeLoop(before, { type:"tick", input });
           missionRef.current = next;
           const doorOpen = isTimeLoopPlateHeld(next);
-          if (doorOpen && !lastDoorRef.current) tone("door");
-          if (next.carrying && !before.carrying) tone("rescue");
-          if (next.phase === "rescued" && before.phase !== "rescued") tone("win");
+          if (doorOpen && !lastDoorRef.current) {
+            tone("door");
+            hapticsRef.current.fire("place");
+          }
+          if (next.carrying && !before.carrying) {
+            tone("rescue");
+            hapticsRef.current.fire("place");
+          }
+          if (next.phase === "rescued" && before.phase !== "rescued") {
+            tone("win");
+            hapticsRef.current.fire("win");
+            if (canvasRef.current) {
+              celebrate(canvasRef.current, { preset: "stardust" });
+            }
+          } else if (next.phase === "failed" && before.phase !== "failed") {
+            hapticsRef.current.fire("fail");
+          }
           lastDoorRef.current = doorOpen;
           setMission(next);
           accumulator -= TIME_LOOP_STEP_SECONDS;
@@ -230,41 +254,82 @@ export default function TimeLoopRescue({ locale = "ko" }: { locale?: string }) {
       if(event.repeat)return;
       if(event.key.toLowerCase()==="r"){event.preventDefault();commit();}
       if(event.key.toLowerCase()==="p"){event.preventDefault();togglePause();}
+      if(event.key.toLowerCase()==="f"){event.preventDefault();togglePortal();}
+      if(event.key.toLowerCase()==="m"){event.preventDefault();mutedRef.current=!mutedRef.current;setMuted(mutedRef.current);}
     };
     const up=(event:KeyboardEvent)=>{const direction=map[event.key];if(direction)inputRef.current[direction]=false;};
     window.addEventListener("keydown",down);window.addEventListener("keyup",up);return()=>{window.removeEventListener("keydown",down);window.removeEventListener("keyup",up);};
-  }, [commit,togglePause]);
+  }, [commit,togglePause,togglePortal]);
 
-  const setDirection = (direction: Direction, pressed: boolean) => { inputRef.current[direction] = pressed && statusRef.current === "playing" && missionRef.current.phase === "playing"; };
+  const setDirection = (direction: Direction, pressed: boolean) => {
+    if (pressed) hapticsRef.current.fire("place");
+    inputRef.current[direction] = pressed && statusRef.current === "playing" && missionRef.current.phase === "playing";
+  };
   const remaining = Math.max(0, (TIME_LOOP_TICKS - mission.tick) * TIME_LOOP_STEP_SECONDS);
   const label = mission.phase === "rescued" ? t.won : mission.phase === "failed" ? t.failed : mission.carrying ? t.carry : status === "idle" ? t.idle : t.search;
   const message = mission.phase === "rescued" ? t.success : mission.phase === "failed" ? t.retry : mission.carrying ? t.extract : mission.recordings.length ? t.echo : t.first;
 
-  return <GameContainer title={t.title} subtitle={t.subtitle}>
-    <div className="space-y-4 selection:bg-teal-300 selection:text-teal-950">
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" aria-label={t.mission}>
-        {[[t.loop,`${mission.loop} / ${TIME_LOOP_MAX_LOOPS}`],[t.time,`${remaining.toFixed(1)}s`],[t.echoes,String(mission.recordings.length)],[t.mission,label]].map(([name,value])=><div key={name} className="rounded-xl bg-slate-950 px-3 py-2 text-center shadow-[0_8px_24px_rgba(2,8,23,.24)]"><strong className="block tabular-nums text-lg text-white">{value}</strong><span className="text-[11px] font-bold text-slate-300">{name}</span></div>)}
-      </div>
-      <div className="relative overflow-hidden rounded-2xl bg-slate-950 shadow-[0_18px_50px_rgba(2,8,23,.32)]">
-        <canvas ref={canvasRef} width={960} height={540} tabIndex={0} onBlur={clearInput} aria-label={t.area} className="block aspect-video w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-teal-300" />
-        {status === "paused" && mission.phase === "playing" && <button type="button" onClick={togglePause} className="absolute inset-0 grid place-items-center bg-slate-950/70 text-lg font-bold text-white">{t.resume}</button>}
-        {mission.phase !== "playing" && <div role="status" className="absolute inset-x-0 bottom-0 bg-slate-950/90 px-4 py-3 text-center font-bold text-white">{mission.phase === "rescued" ? t.won : t.failed}</div>}
-        {status === "idle" && <button type="button" onClick={start} className="absolute inset-0 m-auto h-14 w-fit rounded-xl bg-teal-300 px-8 font-black text-teal-950 shadow-[0_12px_32px_rgba(45,212,191,.28)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">{t.start}</button>}
-      </div>
-      <p className="min-h-12 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-100" aria-live="polite">{message}</p>
-      <div className="flex flex-wrap gap-2">
-        <button type="button" onClick={commit} disabled={status!=="playing"||mission.currentRecording.length===0||mission.phase!=="playing"} className="min-h-11 flex-1 rounded-xl bg-teal-300 px-4 font-black text-teal-950 disabled:cursor-not-allowed disabled:opacity-40">{t.record}</button>
-        <button type="button" onClick={togglePause} disabled={status==="idle"||mission.phase!=="playing"} className="min-h-11 rounded-xl bg-slate-800 px-4 font-bold text-white disabled:opacity-40">{status==="paused"?t.resume:t.pause}</button>
-        <button type="button" onClick={()=>{mutedRef.current=!mutedRef.current;setMuted(mutedRef.current);}} className="min-h-11 rounded-xl bg-slate-800 px-4 font-bold text-white">{muted?t.unmute:t.mute}</button>
-        <button type="button" onClick={reset} className="min-h-11 rounded-xl bg-slate-800 px-4 font-bold text-white">{t.reset}</button>
-      </div>
-      <div className="mx-auto grid w-fit grid-cols-3 gap-2" aria-label={t.hint}>
-        <span/><DirectionButton label="▲" direction="up" accessibleLabel={boardText.up} setDirection={setDirection}/><span/>
-        <DirectionButton label="◀" direction="left" accessibleLabel={boardText.left} setDirection={setDirection}/><DirectionButton label="▼" direction="down" accessibleLabel={boardText.down} setDirection={setDirection}/><DirectionButton label="▶" direction="right" accessibleLabel={boardText.right} setDirection={setDirection}/>
-      </div>
-      <p className="text-center text-xs font-medium text-muted-foreground">{t.hint}</p>
+  return (
+    <div ref={containerRef} className={isImmersive ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-y-auto bg-background p-3 sm:p-5" : "relative"}>
+      <GameContainer title={t.title} subtitle={isImmersive ? undefined : t.subtitle}>
+        <div className="mb-3 overflow-hidden rounded-xl border border-border bg-muted">
+          <img
+            src={TIME_LOOP_RESCUE_SPRITES.keyart}
+            alt={t.title}
+            className="h-32 w-full object-cover sm:h-44"
+          />
+        </div>
+        <div className="mb-4 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              mutedRef.current = !mutedRef.current;
+              setMuted(mutedRef.current);
+            }}
+            aria-pressed={muted}
+            aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+            title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`}
+            className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-muted-foreground`}
+          >
+            {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+          </button>
+          <button
+            type="button"
+            onClick={togglePortal}
+            aria-pressed={isImmersive}
+            aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+            title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+            className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-muted-foreground`}
+          >
+            {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+            <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+          </button>
+        </div>
+        <div className="space-y-4 selection:bg-teal-300 selection:text-teal-950">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" aria-label={t.mission}>
+            {[[t.loop,`${mission.loop} / ${TIME_LOOP_MAX_LOOPS}`],[t.time,`${remaining.toFixed(1)}s`],[t.echoes,String(mission.recordings.length)],[t.mission,label]].map(([name,value])=><div key={name} className="rounded-xl bg-slate-950 px-3 py-2 text-center shadow-[0_8px_24px_rgba(2,8,23,.24)]"><strong className="block tabular-nums text-lg text-white">{value}</strong><span className="text-[11px] font-bold text-slate-300">{name}</span></div>)}
+          </div>
+          <div className="relative overflow-hidden rounded-2xl bg-slate-950 shadow-[0_18px_50px_rgba(2,8,23,.32)]">
+            <canvas ref={canvasRef} width={960} height={540} tabIndex={0} onBlur={clearInput} aria-label={t.area} className="block aspect-video w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-teal-300" />
+            {status === "paused" && mission.phase === "playing" && <button type="button" onClick={togglePause} className="absolute inset-0 grid place-items-center bg-slate-950/70 text-lg font-bold text-white">{t.resume}</button>}
+            {mission.phase !== "playing" && <div role="status" className="absolute inset-x-0 bottom-0 bg-slate-950/90 px-4 py-3 text-center font-bold text-white">{mission.phase === "rescued" ? t.won : t.failed}</div>}
+            {status === "idle" && <button type="button" onClick={start} className="absolute inset-0 m-auto h-14 w-fit rounded-xl bg-teal-300 px-8 font-black text-teal-950 shadow-[0_12px_32px_rgba(45,212,191,.28)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">{t.start}</button>}
+          </div>
+          <p className="min-h-12 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-100" aria-live="polite">{message}</p>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={commit} disabled={status!=="playing"||mission.currentRecording.length===0||mission.phase!=="playing"} className="min-h-11 flex-1 rounded-xl bg-teal-300 px-4 font-black text-teal-950 disabled:cursor-not-allowed disabled:opacity-40">{t.record}</button>
+            <button type="button" onClick={togglePause} disabled={status==="idle"||mission.phase!=="playing"} className="min-h-11 rounded-xl bg-slate-800 px-4 font-bold text-white disabled:opacity-40">{status==="paused"?t.resume:t.pause}</button>
+            <button type="button" onClick={reset} className="min-h-11 rounded-xl bg-slate-800 px-4 font-bold text-white">{t.reset}</button>
+          </div>
+          <div className="mx-auto grid w-fit grid-cols-3 gap-2" aria-label={t.hint}>
+            <span/><DirectionButton label="▲" direction="up" accessibleLabel={boardText.up} setDirection={setDirection}/><span/>
+            <DirectionButton label="◀" direction="left" accessibleLabel={boardText.left} setDirection={setDirection}/><DirectionButton label="▼" direction="down" accessibleLabel={boardText.down} setDirection={setDirection}/><DirectionButton label="▶" direction="right" accessibleLabel={boardText.right} setDirection={setDirection}/>
+          </div>
+          <p className="text-center text-xs font-medium text-muted-foreground">{t.hint}</p>
+        </div>
+      </GameContainer>
     </div>
-  </GameContainer>;
+  );
 }
 
 function DirectionButton({ label, accessibleLabel, direction, setDirection }: { label:string; accessibleLabel:string; direction:Direction; setDirection:(direction:Direction,pressed:boolean)=>void }) {

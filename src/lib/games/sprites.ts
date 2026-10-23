@@ -383,6 +383,10 @@ export const ONE_BUTTON_CIV_SPRITES = {
   keyart: "/assets/sprites/one-button-civ/keyart.webp",
 } as const;
 
+export const TIME_LOOP_RESCUE_SPRITES = {
+  keyart: "/assets/sprites/time-loop-rescue/keyart.webp",
+} as const;
+
 export const CHESS_SPRITES: Record<string, string> = {
   P: "/assets/sprites/chess/white-pawn.png",
   N: "/assets/sprites/chess/white-knight.png",
