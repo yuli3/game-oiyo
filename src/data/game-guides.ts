@@ -1571,12 +1571,12 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       es: "Surf de un trazo es una bajada diaria donde un trazo es la pista. La recta suma velocidad, la curva la gasta y el corte la vacía. No hay dibujo libre.",
     },
     how: {
-      ko: "▮는 벽이고, △는 물마루입니다. 물마루는 속도 2가 있어야 넘습니다. 가장자리에서 더 굽히면 떨어집니다. 박 안에 잇지 않으면 낙오합니다.",
-      en: "▮ is a wall and △ is a lip. A lip needs speed 2. Curving past the edge drops you. Missing the beat drops you too.",
-      ja: "▮は壁、△は波頭です。波頭は速度2がないと越えられません。端でさらに曲げると落ちます。拍の中で継がないと脱落します。",
-      zh: "▮是墙，△是浪头。浪头需要速度2。在边上再弯就会落下。这一拍里不接上，也会落下。",
-      fr: "▮ est un mur et △ une crête. La crête demande la vitesse 2. Courber au-delà du bord fait tomber. Rater le temps aussi.",
-      es: "▮ es un muro y △ una cresta. La cresta pide velocidad 2. Curvar más allá del borde te tira. Perder el pulso también.",
+      ko: "▮는 벽이고, △는 물마루입니다. 물마루는 속도 2가 있어야 넘습니다. 가장자리에서 더 굽히면 떨어집니다. 박 안에 잇지 않으면 낙오합니다. 연습 파도는 증강 여덟 장 중 하나를 고릅니다. 칸을 지나면 물보라가 튀고, 곧게·굽힘·끊기·물마루·마침·낙오는 소리가 다릅니다.",
+      en: "▮ is a wall and △ is a lip. A lip needs speed 2. Curving past the edge drops you. Missing the beat drops you too. A practice wave picks one of eight augments. Passing a cell throws spray, and straight, curve, cut, lip, finish, and fall each have their own sound.",
+      ja: "▮は壁、△は波頭です。波頭は速度2がないと越えられません。端でさらに曲げると落ちます。拍の中で継がないと脱落します。練習の波では八つのオーグメントから一つを選びます。マスを過ぎると水しぶきが上がり、まっすぐ・曲げ・切り・波頭・終わり・脱落は音が違います。",
+      zh: "▮是墙，△是浪头。浪头需要速度2。在边上再弯就会落下。这一拍里不接上，也会落下。练习浪从八个强化里选一个。经过一格会溅起水花，直行、转弯、断开、浪头、抵达和落下各有不同的声音。",
+      fr: "▮ est un mur et △ une crête. La crête demande la vitesse 2. Courber au-delà du bord fait tomber. Rater le temps aussi. Une vague d'essai choisit un modificateur parmi huit. Passer une case jette des embruns, et le droit, la courbe, la coupe, la crête, l'arrivée et la chute ont chacun leur son.",
+      es: "▮ es un muro y △ una cresta. La cresta pide velocidad 2. Curvar más allá del borde te tira. Perder el pulso también. Una ola de práctica elige uno de ocho aumentos. Al pasar una casilla salta espuma, y la recta, la curva, el corte, la cresta, la llegada y la caída tienen cada una su sonido.",
     },
     rules: {
       ko: [
