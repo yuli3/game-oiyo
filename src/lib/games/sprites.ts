@@ -375,6 +375,10 @@ export const CHEF_PHYSICS_SPRITES = {
   keyart: "/assets/sprites/chef-physics/keyart.webp",
 } as const;
 
+export const LINE_SURF_SPRITES = {
+  keyart: "/assets/sprites/line-surf/keyart.webp",
+} as const;
+
 export const CHESS_SPRITES: Record<string, string> = {
   P: "/assets/sprites/chess/white-pawn.png",
   N: "/assets/sprites/chess/white-knight.png",

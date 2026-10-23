@@ -11,6 +11,9 @@ import type { Locale } from "../../lib/i18n";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { getBest, getRecord, recordBest, recordResult, type BestRecord, type GameRecord } from "../../lib/games/records";
 import { dateKeyIndex, kstDateKey } from "../../lib/games/todays-game";
+import { celebrate } from "../../lib/games/celebration";
+import { createHaptics } from "../../lib/games/haptics";
+import { LINE_SURF_SPRITES } from "../../lib/games/sprites";
 import {
   ACTS,
   GAME_ID,
@@ -337,6 +340,7 @@ export default function LineSurf({ locale }: { locale: Locale }) {
   const [practice, setPractice] = useState(false);
   const [paused, setPaused] = useState(false);
   const audio = useRef<AudioContext | null>(null);
+  const hapticsRef = useRef(createHaptics());
   const noted = useRef(new Set<string>());
   const heard = useRef<Run | null>(null);
   const phase = useRef<Run["phase"] | null>(null);
@@ -413,6 +417,7 @@ export default function LineSurf({ locale }: { locale: Locale }) {
       const act = KEYS[event.key];
       if (!act || event.repeat || runRef.current?.phase !== "play" || pausedRef.current) return;
       event.preventDefault();
+      hapticsRef.current.fire("place");
       setRun((current) => (current ? ride(current, act) : current));
     };
     window.addEventListener("keydown", onKey);
@@ -439,8 +444,13 @@ export default function LineSurf({ locale }: { locale: Locale }) {
           setBest(recordBest(GAME_ID, run.speed, "score"));
         } catch { /* best-effort */ }
       }
-      if (!reducedMotion && typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
-        navigator.vibrate(run.phase === "won" ? 15 : [30, 40, 30]);
+      if (run.phase === "won") {
+        hapticsRef.current.fire("win");
+        if (containerRef.current) {
+          celebrate(containerRef.current, { preset: "shards" });
+        }
+      } else {
+        hapticsRef.current.fire("fail");
       }
     }
     if (!nextCue || muted || reducedMotion) return;
@@ -510,6 +520,13 @@ export default function LineSurf({ locale }: { locale: Locale }) {
   return (
     <div ref={containerRef} className={isImmersive ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-y-auto bg-background p-3 sm:p-5" : "relative"}>
       <GameContainer title={t.title} subtitle={isImmersive ? undefined : (run ? t.subtitle : t.preparing)}>
+        <div className="mb-3 overflow-hidden rounded-xl border border-border bg-muted">
+          <img
+            src={LINE_SURF_SPRITES.keyart}
+            alt={t.title}
+            className="h-32 w-full object-cover sm:h-44"
+          />
+        </div>
         <div className="mb-4 flex flex-wrap gap-2">
           <button type="button" onClick={() => setMuted((value) => !value)} aria-pressed={muted} aria-label={muted ? portalLabels.unmute : portalLabels.mute} title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`} className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-muted-foreground`}>
             {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
@@ -589,7 +606,17 @@ export default function LineSurf({ locale }: { locale: Locale }) {
               <>
                 <div className="grid grid-cols-2 gap-2">
                   {ACTS.map((act) => (
-                    <button key={act} type="button" onClick={() => setRun((current) => (current ? ride(current, act) : current))} className={BUTTON}>{t.act[act]}</button>
+                    <button
+                      key={act}
+                      type="button"
+                      onClick={() => {
+                        hapticsRef.current.fire("place");
+                        setRun((current) => (current ? ride(current, act) : current));
+                      }}
+                      className={BUTTON}
+                    >
+                      {t.act[act]}
+                    </button>
                   ))}
                 </div>
                 <button type="button" onClick={pause} className={`${CONTROL} border-border bg-card text-foreground`}>{t.pause}</button>
