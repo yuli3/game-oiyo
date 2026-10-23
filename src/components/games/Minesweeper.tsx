@@ -29,7 +29,7 @@ import {
 } from '../../lib/games/minesweeper';
 import { MINESWEEPER_SPRITES } from '../../lib/games/sprites';
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
-import confetti from 'canvas-confetti';
+import { celebrate } from "../../lib/games/celebration";
 import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 
@@ -500,22 +500,7 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         if (result.status === 'won' && firstTerminal) {
             playWinFanfare();
             vibrate([40, 40, 40, 40, 100]);
-            try {
-                confetti({
-                    particleCount: 50,
-                    spread: 60,
-                    origin: { x: 0.25, y: 0.6 },
-                    disableForReducedMotion: true,
-                });
-                confetti({
-                    particleCount: 50,
-                    spread: 60,
-                    origin: { x: 0.75, y: 0.6 },
-                    disableForReducedMotion: true,
-                });
-            } catch {
-                // ignore
-            }
+            celebrate(containerRef.current, { preset: "tiles", colors: ["#94a3b8", "#38bdf8", "#f8fafc"], origin: { x: 0.25, y: 0.6 }, extraOrigins: [{ x: 0.75, y: 0.6 }] });
             const elapsed = recordedGameSeconds(startedAtRef.current, performance.now());
             setTimer(elapsed);
             const previousBest = bestTime;

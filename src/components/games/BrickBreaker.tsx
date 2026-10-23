@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import confetti from "canvas-confetti";
+import { celebrate } from "../../lib/games/celebration";
 import type { Locale } from "../../lib/i18n";
 import { getBest, recordBest } from "../../lib/games/records";
 import {
@@ -233,7 +233,7 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
       nextGoal: brickBreakerNextGoal(finalScore, saved.value),
     });
     setIsNewBest(beat && finalScore > 0);
-    if (beat && finalScore > 0 && !reducedMotionRef.current) confetti({ particleCount: 70, spread: 68, origin: { y: 0.6 } });
+    if (beat && finalScore > 0 && !reducedMotionRef.current) celebrate(canvasRef.current, { preset: "shards", colors: ["#a78bfa", "#f472b6", "#fde68a"], origin: { x: 0.5, y: 0.55 } });
     setPhase("over");
   }, []);
 

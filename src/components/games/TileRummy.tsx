@@ -6,6 +6,7 @@
 // plus the table is taller than a phone.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { celebrate } from "../../lib/games/celebration";
 import { HelpCircle, Lock, Maximize2, Minimize2, Pause, Play, Volume2, VolumeX } from "lucide-react";
 import { GameContainer } from "../ui/game/GamePrimitives";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
@@ -22,7 +23,8 @@ import {
 import type { AiLevel } from "../../lib/games/ai/types";
 import { chooseRummyAction } from "../../lib/games/ai/rummy";
 import { kstDateKey } from "../../lib/games/todays-game";
-import { createTonePlayer, type TonePlayer } from "../../lib/games/tone";
+import { createCuePlayer, type CuePlayer, type CueTable } from "../../lib/games/game-audio";
+import { createHaptics } from "../../lib/games/haptics";
 import {
   COLOR_MARK,
   applyRummy,
@@ -75,6 +77,16 @@ type Setup = { mode: "match" | "daily"; opponents: OpponentCount; level: AiLevel
 type Phase = "title" | "augment" | "countdown" | "play";
 type FxInput = { kind: "lay"; ids: number[]; combo: number } | { kind: "error" } | { kind: "win" };
 type Sfx = "tap" | "place" | "meld" | "error" | "draw" | "win" | "lose";
+
+const RUMMY_CUES: CueTable<Sfx> = {
+  tap: [[0, 720, 0.04, 0.02]],
+  place: [[0, 1250, 0.03, 0.03], [30, 820, 0.05, 0.03]],
+  meld: [[0, 523, 0.09, 0.03], [60, 659, 0.09, 0.03], [120, 784, 0.14, 0.03]],
+  error: [[0, 170, 0.12, 0.04], [90, 120, 0.16, 0.04]],
+  draw: [[0, 330, 0.06, 0.025], [40, 392, 0.06, 0.02]],
+  win: [[0, 523, 0.16, 0.035], [110, 659, 0.16, 0.035], [220, 784, 0.16, 0.035], [330, 1047, 0.3, 0.035]],
+  lose: [[0, 392, 0.18, 0.03], [160, 330, 0.18, 0.03], [320, 262, 0.3, 0.03]],
+};
 
 interface Copy {
   title: string;
@@ -629,10 +641,6 @@ function writePref(key: string, value: string) {
   try { window.localStorage.setItem(key, value); } catch { /* private mode */ }
 }
 
-function vibrate(pattern: number | number[]) {
-  try { if (typeof navigator !== "undefined" && "vibrate" in navigator) navigator.vibrate(pattern); } catch { /* optional */ }
-}
-
 export default function TileRummy({ locale = "ko" }: { locale?: string }) {
   const loc: Locale = locale in COPY ? (locale as Locale) : "en";
   const t = COPY[loc];
@@ -664,7 +672,8 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
   const recordedDeal = useRef<number | null>(null);
   const pendingSeed = useRef<number>(1);
   const fxSeq = useRef(0);
-  const toneRef = useRef<TonePlayer | null>(null);
+  const cuesRef = useRef<CuePlayer<Sfx> | null>(null);
+  const haptics = useMemo(() => createHaptics(), []);
   const timers = useRef<number[]>([]);
 
   const later = useCallback((fn: () => void, ms: number) => {
@@ -673,23 +682,9 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
 
   const sfx = useCallback((kind: Sfx, step = 1) => {
     if (muted) return;
-    const player = toneRef.current ?? createTonePlayer();
-    toneRef.current = player;
-    const lift = 2 ** (Math.min(step - 1, 6) / 6);
-    const notes: Record<Sfx, [number, number, number, number][]> = {
-      tap: [[0, 720, 0.04, 0.02]],
-      place: [[0, 1250, 0.03, 0.03], [30, 820, 0.05, 0.03]],
-      meld: [[0, 523 * lift, 0.09, 0.03], [60, 659 * lift, 0.09, 0.03], [120, 784 * lift, 0.14, 0.03]],
-      error: [[0, 170, 0.12, 0.04], [90, 120, 0.16, 0.04]],
-      draw: [[0, 330, 0.06, 0.025], [40, 392, 0.06, 0.02]],
-      win: [[0, 523, 0.16, 0.035], [110, 659, 0.16, 0.035], [220, 784, 0.16, 0.035], [330, 1047, 0.3, 0.035]],
-      lose: [[0, 392, 0.18, 0.03], [160, 330, 0.18, 0.03], [320, 262, 0.3, 0.03]],
-    };
-    for (const [delay, frequency, duration, volume] of notes[kind]) {
-      if (delay === 0) player.play(frequency, duration, volume);
-      else later(() => player.play(frequency, duration, volume), delay);
-    }
-  }, [later, muted]);
+    cuesRef.current ??= createCuePlayer({ cues: RUMMY_CUES });
+    cuesRef.current.play(kind, { step });
+  }, [muted]);
 
   const pushFx = useCallback((next: FxInput) => {
     fxSeq.current += 1;
@@ -699,9 +694,9 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
   const fail = useCallback((reason: Notice) => {
     setNotice(reason);
     sfx("error");
-    vibrate([30, 40, 30]);
+    haptics.fire("fail");
     pushFx({ kind: "error" });
-  }, [pushFx, sfx]);
+  }, [haptics, pushFx, sfx]);
 
   const deal = useCallback((next: Setup, seed: number, pick: AugmentId | null) => {
     let state: RummyState;
@@ -752,7 +747,7 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
     const pending = timers.current;
     return () => {
       pending.forEach((id) => window.clearTimeout(id));
-      toneRef.current?.close();
+      cuesRef.current?.close();
     };
   }, []);
 
@@ -781,7 +776,7 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
     countdown(() => {
       if (rollChaos(pendingSeed.current)) {
         setChaosFlash(true);
-        vibrate([20, 30, 20]);
+        haptics.fire("combo");
         later(() => setChaosFlash(false), 2400);
       }
     });
@@ -831,9 +826,9 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
     try { setRecord(recordResult(GAME_ID, outcome)); } catch { /* best-effort */ }
     if (outcome === "w") {
       sfx("win");
-      vibrate([20, 40, 20, 40, 60]);
+      haptics.fire("win");
       pushFx({ kind: "win" });
-      if (!reducedMotion) void import("canvas-confetti").then(({ default: confetti }) => confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } })).catch(() => undefined);
+      if (!reducedMotion) celebrate(containerRef.current, { preset: "tiles", colors: ["#ef4444", "#3b82f6", "#f59e0b", "#111827"], origin: { x: 0.5, y: 0.55 } });
     } else sfx("lose");
     if (game.mode === "daily" && game.dateKey && outcome === "w") {
       const margin = game.hands.slice(1).reduce((sum, hand) => sum + handPenalty(hand), 0);
@@ -844,7 +839,7 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
         setNewBest(!previous || saved.value !== previous.value);
       } catch { /* best-effort */ }
     }
-  }, [dealId, game, phase, pushFx, reducedMotion, sfx]);
+  }, [dealId, game, haptics, phase, pushFx, reducedMotion, sfx]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -898,11 +893,11 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
       const nextCombo = combo + 1;
       setCombo(nextCombo);
       sfx("meld", nextCombo);
-      vibrate(15);
+      haptics.fire("success");
       pushFx({ kind: "lay", ids: laid, combo: nextCombo });
     } else {
       sfx("place");
-      vibrate(10);
+      haptics.fire("place");
       if (laid.length > 0) pushFx({ kind: "lay", ids: laid, combo: 0 });
     }
   };
@@ -973,7 +968,7 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
     setGame(next);
     setNotice(null);
     sfx("meld", combo + 1);
-    vibrate(20);
+    haptics.fire("success");
   };
 
   const draw = () => {
@@ -988,7 +983,7 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
     setGame(next);
     setNotice(null);
     sfx("draw");
-    vibrate(8);
+    haptics.fire("tap");
   };
 
   const canDrop = (tileId: number, from: TileSpot, target: DropTarget) => {
