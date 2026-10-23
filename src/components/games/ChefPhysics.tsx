@@ -12,6 +12,10 @@ import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { getRecord, recordResult, type GameRecord } from "../../lib/games/records";
 import { dateKeyIndex, kstDateKey } from "../../lib/games/todays-game";
 import { createDebrisWorld, type DebrisMatterLike, type DebrisWorld } from "../../lib/games/debris-world";
+import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from "../../lib/games/game-audio";
+import { createHaptics } from "../../lib/games/haptics";
+import { celebrate } from "../../lib/games/celebration";
+import { CHEF_PHYSICS_SPRITES } from "../../lib/games/sprites";
 import {
   CLOCK_MS,
   GAME_ID,
@@ -193,17 +197,6 @@ const COPY: Record<Locale, Copy> = {
   },
 };
 
-function playTone(ctx: AudioContext, frequency: number) {
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.frequency.value = frequency;
-  gain.gain.value = 0.04;
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  osc.start();
-  osc.stop(ctx.currentTime + 0.08);
-}
-
 const KEYS: Record<string, Act> = {
   Digit1: "W",
   Digit2: "L",
@@ -241,7 +234,8 @@ export default function ChefPhysics({ locale }: { locale: Locale }) {
   const [record, setRecord] = useState<GameRecord | null>(null);
   const [muted, setMuted] = useState(false);
   const [remain, setRemain] = useState(Math.ceil(CLOCK_MS / 1000));
-  const audio = useRef<AudioContext | null>(null);
+  const cuesRef = useRef<CuePlayer<CoreCue> | null>(null);
+  const hapticsRef = useRef(createHaptics());
   const noted = useRef(new Set<string>());
   const phase = useRef<Run["phase"] | null>(null);
   const runRef = useRef<Run | null>(null);
@@ -251,6 +245,19 @@ export default function ChefPhysics({ locale }: { locale: Locale }) {
   const panRef = useRef<HTMLDivElement | null>(null);
   const rafRef = useRef(0);
   runRef.current = run;
+
+  const cue = useCallback(
+    (kind: CoreCue) => {
+      if (muted || reducedMotion) return;
+      try {
+        cuesRef.current ??= createCuePlayer({ cues: CORE_CUES });
+        void cuesRef.current.play(kind);
+      } catch {
+        /* audio blocked */
+      }
+    },
+    [muted, reducedMotion],
+  );
 
   const pumpDebris = useCallback(() => {
     cancelAnimationFrame(rafRef.current);
@@ -341,12 +348,14 @@ export default function ChefPhysics({ locale }: { locale: Locale }) {
     const current = runRef.current;
     if (!current || current.phase !== "play") return;
     if (choice === "C" && current.cut) return;
+    hapticsRef.current.fire("place");
+    cue("place");
     if (choice === "C" || choice === "T") {
       ensureDebris();
       burst(choice === "C" ? 6 : 10);
     }
     setRun(act(current, choice));
-  }, [burst, ensureDebris]);
+  }, [burst, cue, ensureDebris]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -381,14 +390,17 @@ export default function ChefPhysics({ locale }: { locale: Locale }) {
       noted.current.add(key);
       try { setRecord(recordResult(GAME_ID, run.phase === "won" ? "w" : "l")); } catch { /* best-effort */ }
     }
-    if (muted || reducedMotion) return;
-    const Context = window.AudioContext;
-    if (!Context) return;
-    if (!audio.current) audio.current = new Context();
-    const ctx = audio.current;
-    void ctx.resume();
-    playTone(ctx, run.phase === "won" ? 620 : 180);
-  }, [run, dateKey, attempt, muted, reducedMotion]);
+    if (run.phase === "won") {
+      cue("win");
+      hapticsRef.current.fire("win");
+      if (containerRef.current) {
+        celebrate(containerRef.current, { preset: "sparks" });
+      }
+    } else if (run.phase === "lost") {
+      cue("fail");
+      hapticsRef.current.fire("fail");
+    }
+  }, [run, dateKey, attempt, cue, containerRef]);
 
   const again = () => {
     if (!dateKey) return;
@@ -403,6 +415,13 @@ export default function ChefPhysics({ locale }: { locale: Locale }) {
   return (
     <div ref={containerRef} className={isImmersive ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-y-auto bg-background p-3 sm:p-5" : "relative"}>
       <GameContainer title={t.title} subtitle={run ? t.subtitle : t.preparing}>
+        <div className="mb-3 overflow-hidden rounded-xl border border-border bg-muted">
+          <img
+            src={CHEF_PHYSICS_SPRITES.keyart}
+            alt={t.title}
+            className="h-32 w-full object-cover sm:h-44"
+          />
+        </div>
         <div className="mb-4 flex flex-wrap gap-2">
           <button type="button" onClick={() => setMuted((value) => !value)} aria-pressed={muted} aria-label={muted ? portalLabels.unmute : portalLabels.mute} title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`} className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-muted-foreground`}>
             {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}

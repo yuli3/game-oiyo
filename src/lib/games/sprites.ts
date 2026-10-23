@@ -371,6 +371,10 @@ export const LIAR_ONEPHONE_SPRITES = {
   keyart: "/assets/sprites/liar-onephone/keyart.webp",
 } as const;
 
+export const CHEF_PHYSICS_SPRITES = {
+  keyart: "/assets/sprites/chef-physics/keyart.webp",
+} as const;
+
 export const CHESS_SPRITES: Record<string, string> = {
   P: "/assets/sprites/chess/white-pawn.png",
   N: "/assets/sprites/chess/white-knight.png",
