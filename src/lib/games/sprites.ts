@@ -328,7 +328,21 @@ export const PIP_SPRITES = {
 
 export const DOMINO_SPRITES = {
   blank: "/assets/sprites/domino/blank.png",
+  keyart: "/assets/sprites/domino-logic/keyart.webp",
+  pip0: "/assets/sprites/pips/0.webp",
+  pip1: "/assets/sprites/pips/1.webp",
+  pip2: "/assets/sprites/pips/2.webp",
+  pip3: "/assets/sprites/pips/3.webp",
+  pip4: "/assets/sprites/pips/4.webp",
+  pip5: "/assets/sprites/pips/5.webp",
+  pip6: "/assets/sprites/pips/6.webp",
 } as const;
+
+export function dominoPipSprite(n: number): string {
+  const clamped = Math.min(6, Math.max(0, Math.trunc(Number.isFinite(n) ? n : 0))) as 0 | 1 | 2 | 3 | 4 | 5 | 6;
+  const key = `pip${clamped}` as const;
+  return DOMINO_SPRITES[key];
+}
 
 export function pipSprite(n: number): string {
   const clamped = Math.min(6, Math.max(0, Math.trunc(Number.isFinite(n) ? n : 0))) as 0 | 1 | 2 | 3 | 4 | 5 | 6;
@@ -390,3 +404,48 @@ export function dotPetSprite(type: string, stage: "baby" | "child" | "teen" | "a
   const set = DOT_PET_SPRITES[type] ?? DOT_PET_SPRITES.normal;
   return stage === "teen" || stage === "adult" ? set.adult : set.baby;
 }
+
+export const TILE_RUMMY_SPRITES = {
+  felt: "/assets/sprites/tile-rummy/felt-table.webp",
+  keyart: "/assets/sprites/tile-rummy/keyart.webp",
+  burstSheet: "/assets/sprites/tile-rummy/burst-sheet.webp",
+  tiles: {
+    normal: "/assets/sprites/tile-rummy/tile-normal.webp",
+    selected: "/assets/sprites/tile-rummy/tile-selected.webp",
+    valid: "/assets/sprites/tile-rummy/tile-valid.webp",
+    invalid: "/assets/sprites/tile-rummy/tile-invalid.webp",
+  },
+  avatars: {
+    1: {
+      idle: "/assets/sprites/tile-rummy/avatar-1-idle.webp",
+      think: "/assets/sprites/tile-rummy/avatar-1-think.webp",
+      win: "/assets/sprites/tile-rummy/avatar-1-win.webp",
+    },
+    2: {
+      idle: "/assets/sprites/tile-rummy/avatar-2-idle.webp",
+      think: "/assets/sprites/tile-rummy/avatar-2-think.webp",
+      win: "/assets/sprites/tile-rummy/avatar-2-win.webp",
+    },
+    3: {
+      idle: "/assets/sprites/tile-rummy/avatar-3-idle.webp",
+      think: "/assets/sprites/tile-rummy/avatar-3-think.webp",
+      win: "/assets/sprites/tile-rummy/avatar-3-win.webp",
+    },
+  },
+  frames: {
+    silver: "/assets/sprites/tile-rummy/augment-silver.webp",
+    gold: "/assets/sprites/tile-rummy/augment-gold.webp",
+    prism: "/assets/sprites/tile-rummy/augment-prism.webp",
+  },
+} as const;
+
+export const TILE_RUMMY_BURST_SHEET = {
+  cols: 8,
+  rows: 1,
+  frameCount: 8,
+  fps: 16,
+  loop: false,
+} as const;
+
+
+

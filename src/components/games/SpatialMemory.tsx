@@ -1,5 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import confetti from "canvas-confetti";
+import { useCelebration } from "../../lib/games/celebration";
 import type { Locale } from "../../lib/i18n";
 import { getBest, recordBest } from "../../lib/games/records";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
@@ -136,6 +136,7 @@ export default function SpatialMemory({ locale }: { locale: Locale }) {
   const t = COPY[locale] ?? COPY.en;
   const reducedMotion = usePrefersReducedMotion();
 
+  const { ref: stageRef, celebrate: celebrateStage } = useCelebration();
   const [phase, setPhase] = useState<Phase>("menu");
   const [level, setLevel] = useState(1);
   const [score, setScore] = useState(0);
@@ -258,9 +259,9 @@ export default function SpatialMemory({ locale }: { locale: Locale }) {
     setIsNewBest(beat && finalScore > 0);
     tone(beat && finalScore > 0 ? 880 : 220, beat && finalScore > 0 ? 0.22 : 0.15);
     if (beat && finalScore > 0 && !reducedMotion) {
-      confetti({ particleCount: 90, spread: 72, origin: { y: 0.6 } });
+      celebrateStage({ preset: "stardust", colors: ["#5eead4", "#a78bfa", "#fef3c7"], origin: { x: 0.5, y: 0.5 } });
     }
-  }, [clearTimers, reducedMotion, tone]);
+  }, [celebrateStage, clearTimers, reducedMotion, tone]);
 
   const select = useCallback((index: number) => {
     if (phase !== "input" || paused) return;
@@ -345,7 +346,7 @@ export default function SpatialMemory({ locale }: { locale: Locale }) {
         {status}
       </p>
 
-      <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-[#070b16]">
+      <div ref={stageRef} className="relative aspect-square w-full overflow-hidden rounded-2xl bg-[#070b16]">
         {playing && webgl && (
           <Suspense fallback={<StaticField {...sceneProps} loading={t.loading} />}>
             <Scene {...sceneProps} />

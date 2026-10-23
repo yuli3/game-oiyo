@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import confetti from "canvas-confetti";
+import { celebrate } from "../../lib/games/celebration";
 import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
@@ -598,7 +598,7 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
     setIsNewBest(beat && score > 0);
     tone(beat && score > 0 ? 880 : 440, beat && score > 0 ? 0.22 : 0.15);
     if (beat && score > 0 && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } });
+      celebrate(shellRef.current, { preset: "sparks", colors: ["#f87171", "#fde68a", "#ffffff"], origin: { x: 0.5, y: 0.5 } });
     }
     setPhase("result");
   }, [stop, mode, hits, misses, key, diff, t.diffName, tone, track]);
