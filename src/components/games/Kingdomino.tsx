@@ -1,5 +1,9 @@
 import React, { useCallback, useEffect, useReducer, useRef, useState } from "react";
+import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
 import { GameContainer } from "../ui/game/GamePrimitives";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
+import { celebrate } from "../../lib/games/celebration";
+import { createHaptics } from "../../lib/games/haptics";
 import type { Locale } from "../../lib/i18n";
 import {
   startGame, place, claim, aiPlace, aiClaim, finalResult, kingdominoAiReview,
@@ -151,9 +155,13 @@ function TileChip({ tile, owner, dim, onClick, youLabel, aiLabel, locale }: {
   );
 }
 
+const CONTROL = "min-h-11 min-w-11 rounded-xl border px-3 py-2 text-sm font-bold motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
+
 const Kingdomino: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
   const t = i18n[locale] ?? i18n.en;
   const aiInfo=AI_INFO[locale]??AI_INFO.en;
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale });
+  const hapticsRef = useRef(createHaptics());
   const restored = useRef(loadKingdominoSave()).current;
   const [level, setLevel] = useState<AiLevel>(restored?.level ?? 2);
   const [started, setStarted] = useState(Boolean(restored));
@@ -228,6 +236,14 @@ const Kingdomino: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
         const r = res.winner === "draw" ? "d" : res.winner === "you" ? "w" : "l";
         setRecord(recordResult("kingdomino", r as "w" | "l" | "d"));
         tone(res.winner === "you" ? 660 : res.winner === "ai" ? 220 : 440, 0.18);
+        if (res.winner === "you") {
+          hapticsRef.current.fire("win");
+          if (containerRef.current) {
+            celebrate(containerRef.current, { preset: "cards" });
+          }
+        } else if (res.winner === "ai") {
+          hapticsRef.current.fire("fail");
+        }
       }
       return;
     }
@@ -274,6 +290,7 @@ const Kingdomino: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
     const [dr, dc] = DIRS[orient];
     const pl: Placement = { a: { r, c }, b: { r: r + dr, c: c + dc } };
     if (!isLegal(s.you.board, pending.tile, pl)) return;
+    hapticsRef.current.fire("place");
     place(s, pl);
     setFreshLand({ owner: "you", cells: new Set([`${pl.a.r},${pl.a.c}`, `${pl.b.r},${pl.b.c}`]) });
     setOrient(0);
@@ -283,6 +300,7 @@ const Kingdomino: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
 
   const doClaim = (slotIdx: number) => {
     if (!s || pending?.kind !== "claim" || paused) return;
+    hapticsRef.current.fire("place");
     claim(s, slotIdx);
     tone(300, 0.05);
     force();
@@ -290,6 +308,7 @@ const Kingdomino: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
 
   const doDiscard = () => {
     if (!s || pending?.kind !== "place" || paused) return;
+    hapticsRef.current.fire("place");
     place(s, null);
     setFreshLand(null);
     setOrient(0);
@@ -297,26 +316,77 @@ const Kingdomino: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
     force();
   };
 
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const root = containerRef.current;
+      if (!root || !(e.target instanceof Node) || !root.contains(e.target)) return;
+      if (e.key === "f" || e.key === "F") {
+        e.preventDefault();
+        togglePortal();
+        return;
+      }
+      if (e.key === "m" || e.key === "M") {
+        e.preventDefault();
+        setMuted((v) => !v);
+        return;
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [containerRef, togglePortal]);
+
   if (!started || !s) {
     return (
-      <GameContainer title={t.title}>
-        <div className="flex flex-col items-center gap-4 py-8">
-          <p className="text-sm text-muted-foreground max-w-md text-center">{t.claimHint}</p>
-          <div className="flex gap-2">
-            {([1, 2, 3] as AiLevel[]).map((lv) => (
-              <button key={lv} onClick={() => setLevel(lv)}
-                className={`min-h-11 px-3 py-1.5 rounded-md text-sm font-bold border ${level === lv ? "bg-emerald-600 text-white border-emerald-600" : "border-gray-300 text-gray-600"}`}>
-                {lv === 1 ? t.level1 : lv === 2 ? t.level2 : t.level3}
-              </button>
-            ))}
+      <div ref={containerRef} className={isImmersive ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-y-auto bg-background p-3 sm:p-5" : "relative"}>
+        <GameContainer title={t.title}>
+          <div className="mb-3 overflow-hidden rounded-xl border border-border bg-muted">
+            <img
+              src={KINGDOMINO_SPRITES.keyart}
+              alt={t.title}
+              className="h-32 w-full object-cover sm:h-44"
+            />
           </div>
-          <p className="text-xs font-medium text-muted-foreground">{aiInfo.difficulty}: {aiInfo.level[level]}</p>
-          <button onClick={newGame} className="min-h-11 px-6 py-2.5 rounded-lg bg-emerald-600 text-white font-bold hover:bg-emerald-700">
-            {t.start}
-          </button>
-          <p className="text-xs text-gray-400">{t.record}: {record.w}W {record.l}L {record.d}D</p>
-        </div>
-      </GameContainer>
+          <div className="mb-4 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setMuted((value) => !value)}
+              aria-pressed={muted}
+              aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+              title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`}
+              className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-muted-foreground`}
+            >
+              {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+            </button>
+            <button
+              type="button"
+              onClick={togglePortal}
+              aria-pressed={isImmersive}
+              aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+              title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+              className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-muted-foreground`}
+            >
+              {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+              <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+            </button>
+          </div>
+          <div className="flex flex-col items-center gap-4 py-8">
+            <p className="text-sm text-muted-foreground max-w-md text-center">{t.claimHint}</p>
+            <div className="flex gap-2">
+              {([1, 2, 3] as AiLevel[]).map((lv) => (
+                <button key={lv} onClick={() => setLevel(lv)}
+                  className={`min-h-11 px-3 py-1.5 rounded-md text-sm font-bold border ${level === lv ? "bg-emerald-600 text-white border-emerald-600" : "border-gray-300 text-gray-600"}`}>
+                  {lv === 1 ? t.level1 : lv === 2 ? t.level2 : t.level3}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs font-medium text-muted-foreground">{aiInfo.difficulty}: {aiInfo.level[level]}</p>
+            <button onClick={newGame} className="min-h-11 px-6 py-2.5 rounded-lg bg-emerald-600 text-white font-bold hover:bg-emerald-700">
+              {t.start}
+            </button>
+            <p className="text-xs text-gray-400">{t.record}: {record.w}W {record.l}L {record.d}D</p>
+          </div>
+        </GameContainer>
+      </div>
     );
   }
 
@@ -327,18 +397,46 @@ const Kingdomino: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
   const heldTile = pending?.kind === "place" ? pending.tile : null;
 
   return (
-    <GameContainer title={t.title} subtitle={`${t.round} ${s.round}`} onReset={newGame}>
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-end gap-2">
-          {!over && (
-            <button type="button" onClick={() => setPaused((value) => { if (value) setWasRestored(false); return !value; })} className="min-h-11 px-3 rounded-md border border-gray-300 text-xs font-bold text-gray-600">
-              {paused ? `▶ ${t.resume}` : `Ⅱ ${t.pause}`}
-            </button>
-          )}
-          <button type="button" onClick={() => setMuted((value) => !value)} aria-pressed={muted} className="min-h-11 px-3 rounded-md border border-gray-300 text-xs font-bold text-gray-600">
-            {muted ? "🔇" : "🔊"} {t.sound}
-          </button>
-        </div>
+    <div ref={containerRef} className={isImmersive ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-y-auto bg-background p-3 sm:p-5" : "relative"}>
+      <GameContainer title={t.title} subtitle={isImmersive ? undefined : `${t.round} ${s.round}`} onReset={newGame}>
+        <div className="flex flex-col gap-4">
+          <div className="mb-3 overflow-hidden rounded-xl border border-border bg-muted">
+            <img
+              src={KINGDOMINO_SPRITES.keyart}
+              alt={t.title}
+              className="h-32 w-full object-cover sm:h-44"
+            />
+          </div>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setMuted((value) => !value)}
+                aria-pressed={muted}
+                aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+                title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`}
+                className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-muted-foreground`}
+              >
+                {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+              </button>
+              <button
+                type="button"
+                onClick={togglePortal}
+                aria-pressed={isImmersive}
+                aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+                title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+                className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-muted-foreground`}
+              >
+                {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+                <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+              </button>
+            </div>
+            {!over && (
+              <button type="button" onClick={() => setPaused((value) => { if (value) setWasRestored(false); return !value; })} className="min-h-11 px-3 rounded-md border border-gray-300 text-xs font-bold text-gray-600">
+                {paused ? `▶ ${t.resume}` : `Ⅱ ${t.pause}`}
+              </button>
+            )}
+          </div>
         <p className="text-center text-[11px] font-medium text-muted-foreground">{aiInfo.difficulty}: {aiInfo.level[level]}</p>
         {paused && !over && (
           <div className="rounded-xl border border-gray-300 bg-card p-3 text-center text-xs font-bold text-gray-600" role="status">
@@ -445,7 +543,8 @@ const Kingdomino: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
         </p>
       </div>
     </GameContainer>
-  );
+  </div>
+);
 };
 
 export default Kingdomino;

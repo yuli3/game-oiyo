@@ -350,6 +350,7 @@ export function pipSprite(n: number): string {
 }
 
 export const KINGDOMINO_SPRITES = {
+  keyart: "/assets/sprites/kingdomino/keyart.webp",
   wheat: "/assets/sprites/kingdomino/wheat.png",
   forest: "/assets/sprites/kingdomino/forest.png",
   water: "/assets/sprites/kingdomino/water.png",
