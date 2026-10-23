@@ -11,6 +11,10 @@ import type { Locale } from "../../lib/i18n";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { getBest, getRecord, recordBest, recordResult, type BestRecord, type GameRecord } from "../../lib/games/records";
 import { dateKeyIndex, kstDateKey } from "../../lib/games/todays-game";
+import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from "../../lib/games/game-audio";
+import { createHaptics } from "../../lib/games/haptics";
+import { celebrate } from "../../lib/games/celebration";
+import { ONE_BUTTON_CIV_SPRITES } from "../../lib/games/sprites";
 import {
   GAME_ID,
   PLOTS,
@@ -176,17 +180,6 @@ const COPY: Record<Locale, Copy> = {
   },
 };
 
-function playTone(ctx: AudioContext, frequency: number) {
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.frequency.value = frequency;
-  gain.gain.value = 0.04;
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  osc.start();
-  osc.stop(ctx.currentTime + 0.08);
-}
-
 export default function OneButtonCiv({ locale }: { locale: Locale }) {
   const loc = COPY[locale] ? locale : "en";
   const t = COPY[loc];
@@ -200,7 +193,8 @@ export default function OneButtonCiv({ locale }: { locale: Locale }) {
   const [muted, setMuted] = useState(false);
   const [quarter, setQuarter] = useState(0);
   const [visible, setVisible] = useState(0);
-  const audio = useRef<AudioContext | null>(null);
+  const cuesRef = useRef<CuePlayer<CoreCue> | null>(null);
+  const hapticsRef = useRef(createHaptics());
   const noted = useRef(new Set<string>());
   const phase = useRef<Run["phase"] | null>(null);
   const runRef = useRef<Run | null>(null);
@@ -208,6 +202,16 @@ export default function OneButtonCiv({ locale }: { locale: Locale }) {
   const downAt = useRef<number | null>(null);
   const locked = useRef(-1);
   runRef.current = run;
+
+  const cue = (kind: CoreCue) => {
+    if (muted || reducedMotion) return;
+    try {
+      cuesRef.current ??= createCuePlayer({ cues: CORE_CUES });
+      void cuesRef.current.play(kind);
+    } catch {
+      /* audio blocked */
+    }
+  };
 
   useEffect(() => {
     const key = kstDateKey();
@@ -300,13 +304,16 @@ export default function OneButtonCiv({ locale }: { locale: Locale }) {
         setBest(recordBest(GAME_ID, matched(run), "score"));
       } catch { /* best-effort */ }
     }
-    if (muted || reducedMotion) return;
-    const Context = window.AudioContext;
-    if (!Context) return;
-    if (!audio.current) audio.current = new Context();
-    const ctx = audio.current;
-    void ctx.resume();
-    playTone(ctx, run.phase === "won" ? 620 : 180);
+    if (run.phase === "won") {
+      cue("win");
+      hapticsRef.current.fire("win");
+      if (containerRef.current) {
+        celebrate(containerRef.current, { preset: "leaves" });
+      }
+    } else if (run.phase === "lost") {
+      cue("fail");
+      hapticsRef.current.fire("fail");
+    }
   }, [run, dateKey, attempt, muted, reducedMotion]);
 
   function apply(gesture: Gesture) {
@@ -315,6 +322,8 @@ export default function OneButtonCiv({ locale }: { locale: Locale }) {
     if (locked.current === current.cursor) return;
     locked.current = current.cursor;
     downAt.current = null;
+    hapticsRef.current.fire("place");
+    cue("place");
     setRun(commit(current, gesture));
   }
 
@@ -342,6 +351,13 @@ export default function OneButtonCiv({ locale }: { locale: Locale }) {
   return (
     <div ref={containerRef} className={isImmersive ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-y-auto bg-background p-3 sm:p-5" : "relative"}>
       <GameContainer title={t.title} subtitle={run ? t.subtitle : t.preparing}>
+        <div className="mb-3 overflow-hidden rounded-xl border border-border bg-muted">
+          <img
+            src={ONE_BUTTON_CIV_SPRITES.keyart}
+            alt={t.title}
+            className="h-32 w-full object-cover sm:h-44"
+          />
+        </div>
         <div className="mb-4 flex flex-wrap gap-2">
           <button type="button" onClick={() => setMuted((value) => !value)} aria-pressed={muted} aria-label={muted ? portalLabels.unmute : portalLabels.mute} title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`} className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-muted-foreground`}>
             {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
