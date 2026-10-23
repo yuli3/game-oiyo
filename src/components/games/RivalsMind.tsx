@@ -1,5 +1,5 @@
 import {useEffect,useMemo,useRef,useState} from "react";
-import confetti from "canvas-confetti";
+import{useCelebration}from"../../lib/games/celebration";
 import {GameContainer} from "../ui/game/GamePrimitives";
 import {recordAchievementEvent,recordBestForConditions} from "../../lib/games/records";
 import {RIVALS_MIND_RULESET,createRivalsMind,playRivalsMindRound,readRivalHabit,type DuelAction,type DuelRead} from "../../lib/games/rivals-mind";
@@ -15,17 +15,17 @@ const COPY={
  es:{title:"La mente del rival",sub:"No memorizas al jefe: el jefe te memoriza",start:"Iniciar tanteo",again:"Nuevo rival",round:"Ronda",you:"Tú",rival:"Rival",mind:"Lectura del rival",actions:{strike:"Atacar",guard:"Parar","evade-left":"Esquivar izquierda","evade-right":"Esquivar derecha"},reads:{opening:"Sin lectura",aggressive:"Ataques precipitados",defensive:"Espera el contraataque","left-biased":"Repite evasión izquierda","right-biased":"Repite evasión derecha",balanced:"Patrón oculto"},won:"Convertiste tu hábito en un arma",lost:"El rival leyó tu hábito",draw:"Nadie reveló el patrón",explain:"La lectura usa solo tus acciones de las cinco rondas de esta partida en este dispositivo."}
 } as const;
 
-export default function RivalsMind({locale="ko"}:{locale?:string}){
+export default function RivalsMind({locale="ko"}:{locale?:string}){const{ref:stageRef,celebrate:celebrateStage}=useCelebration();
  const t=COPY[locale as keyof typeof COPY]??COPY.en; const seed=useMemo(()=>Date.now()%1_000_003,[]);const [state,setState]=useState(()=>createRivalsMind(seed));const [started,setStarted]=useState(false);const [impact,setImpact]=useState<"player"|"rival"|null>(null);
  const read=readRivalHabit(state.history); const last=state.history.at(-1);
  const impactTimer=useRef<number|undefined>(undefined);
  useEffect(()=>()=>window.clearTimeout(impactTimer.current),[]);
  const play=(action:DuelAction)=>{if(!started||state.phase!=="playing"||impactTimer.current!==undefined)return;const next=playRivalsMindRound(state,action),round=next.history.at(-1);setState(next);setImpact(round?.playerDamage?"player":round?.rivalDamage?"rival":null);impactTimer.current=window.setTimeout(()=>{setImpact(null);impactTimer.current=undefined;},220);};
  useEffect(()=>{recordAchievementEvent("rivals-mind","opened");},[]);
- useEffect(()=>{if(state.phase==="playing")return;const score=state.phase==="won"?state.playerHealth*100+state.rivalHealth*-10:0;recordBestForConditions("rivals-mind",score,"score",{seed:String(state.seed),difficulty:RIVALS_MIND_RULESET,assist:"none"},`${state.round} rounds`);recordAchievementEvent("rivals-mind",state.phase==="won"?"cleared":"played");if(state.phase==="won")void confetti({particleCount:80,spread:64,origin:{y:.7},disableForReducedMotion:true,colors:["#657344","#d0ad55","#802f2f"]});},[state.phase,state.playerHealth,state.rivalHealth,state.round,state.seed]);
+ useEffect(()=>{if(state.phase==="playing")return;const score=state.phase==="won"?state.playerHealth*100+state.rivalHealth*-10:0;recordBestForConditions("rivals-mind",score,"score",{seed:String(state.seed),difficulty:RIVALS_MIND_RULESET,assist:"none"},`${state.round} rounds`);recordAchievementEvent("rivals-mind",state.phase==="won"?"cleared":"played");if(state.phase==="won")celebrateStage({preset:"sparks",colors:["#657344","#d0ad55","#802f2f"],origin:{x:.5,y:.6}});},[state.phase,state.playerHealth,state.rivalHealth,state.round,state.seed]);
  const reset=()=>{window.clearTimeout(impactTimer.current);impactTimer.current=undefined;setImpact(null);setState(createRivalsMind((state.seed+state.round+1)%1_000_003));setStarted(true);recordAchievementEvent("rivals-mind","played");};
  const result=state.phase==="won"?t.won:state.phase==="lost"?t.lost:t.draw;
- return <GameContainer title={t.title} subtitle={t.sub}><div className="space-y-4">{!started&&<img src="/games/rivals-mind-keyart.webp" alt="" width={1730} height={909} decoding="async" className="aspect-[1.9/1] w-full rounded-2xl object-cover"/>}
+ return <GameContainer title={t.title} subtitle={t.sub}><div ref={stageRef} className="space-y-4">{!started&&<img src="/games/rivals-mind-keyart.webp" alt="" width={1730} height={909} decoding="async" className="aspect-[1.9/1] w-full rounded-2xl object-cover"/>}
   <div className="relative overflow-hidden rounded-2xl border bg-[linear-gradient(180deg,#eee8d5,#c9c2a3)] p-5">
    <div className="mb-5 flex justify-between text-xs font-bold uppercase tracking-widest"><span>{t.you} · {"♥".repeat(state.playerHealth)}</span><span>{t.round} {state.round}/5</span><span>{"♥".repeat(state.rivalHealth)} · {t.rival}</span></div>
    <div className="relative grid h-44 grid-cols-2 sm:h-64 items-end border-b-4 border-[#68704d]">

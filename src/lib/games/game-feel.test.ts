@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { CORE_CUES, createCuePlayer, cueLift } from "./game-audio";
 import { countdownSchedule, nextPhase, type FlowEvent, type FlowPhase } from "./game-flow";
 import { HAPTIC_PATTERNS, createHaptics } from "./haptics";
-import { JUICE, comboTier, createHitstop, createPool, createShake } from "./juice";
+import { BURST_PRESETS, JUICE, comboTier, createBurstField, createHitstop, createPool, createShake } from "./juice";
 import type { TonePlayer } from "./tone";
 
 function fakeTone() {
@@ -183,5 +183,58 @@ describe("game flow", () => {
     const full = countdownSchedule();
     expect(full.steps.map((step) => step.value)).toEqual([3, 2, 1, 0]);
     expect(countdownSchedule({ reducedMotion: true }).total).toBeLessThan(full.total);
+  });
+});
+
+describe("burst field", () => {
+  const seeded = () => {
+    let x = 0.137;
+    return () => {
+      x = (x * 9301 + 0.49297) % 1;
+      return x;
+    };
+  };
+
+  it("emits the preset count plus its shockwave rings", () => {
+    const field = createBurstField(200, seeded());
+    const emitted = field.emit("shards", 100, 100, ["#f00"]);
+    expect(emitted).toBe(BURST_PRESETS.shards.count + BURST_PRESETS.shards.rings);
+    expect(field.live).toBe(emitted);
+  });
+
+  it("drops particles that do not fit instead of allocating", () => {
+    const field = createBurstField(10, seeded());
+    expect(field.emit("stardust", 0, 0, ["#fff"])).toBe(10);
+    expect(field.emit("stardust", 0, 0, ["#fff"])).toBe(0);
+  });
+
+  it("retires every particle once its life ends and reuses the slots", () => {
+    const field = createBurstField(80, seeded());
+    field.emit("sparks", 0, 0, ["#fff"]);
+    for (let t = 0; t < 2000; t += 16) field.step(16);
+    expect(field.live).toBe(0);
+    expect(field.emit("sparks", 0, 0, ["#fff"])).toBeGreaterThan(0);
+  });
+
+  it("pulls falling presets down and lets floating presets rise", () => {
+    const falling = createBurstField(200, seeded());
+    falling.emit("tiles", 0, 0, ["#fff"], { count: 20 });
+    for (let t = 0; t < 600; t += 16) falling.step(16);
+    let fallingY = 0;
+    falling.forEach((p) => { if (p.shape !== "ring") fallingY += p.y; });
+    expect(fallingY).toBeGreaterThan(0);
+
+    const rising = createBurstField(200, seeded());
+    rising.emit("notes", 0, 0, ["#fff"], { count: 20 });
+    for (let t = 0; t < 600; t += 16) rising.step(16);
+    let risingY = 0;
+    rising.forEach((p) => { if (p.shape !== "ring") risingY += p.y; });
+    expect(risingY).toBeLessThan(0);
+  });
+
+  it("only uses colors from the given palette", () => {
+    const field = createBurstField(200, seeded());
+    field.emit("coins", 0, 0, ["#d4a017", "#fff4c2"]);
+    field.forEach((p) => expect(["#d4a017", "#fff4c2"]).toContain(p.color));
   });
 });

@@ -118,3 +118,139 @@ export function createPool<T>(size: number, create: () => T, reset: (item: T) =>
     },
   };
 }
+
+// Celebration bursts drawn inside the game's own stage, replacing page-wide paper confetti
+// (decided 2026-10-23: generic confetti reads as a web page, not a game). Each preset uses
+// shapes from the game's world: shards for bricks, stars for space, tiles for tile games.
+
+export type BurstShape = "shard" | "star" | "tile" | "coin" | "leaf" | "note" | "spark" | "ring" | "card";
+
+export interface BurstPreset {
+  shapes: readonly BurstShape[];
+  count: number;
+  /** Launch speed range in px/s. */
+  speed: readonly [number, number];
+  /** Downward acceleration in px/s². Negative floats upward. */
+  gravity: number;
+  /** Fraction of velocity kept per second. */
+  drag: number;
+  lifeMs: readonly [number, number];
+  size: readonly [number, number];
+  /** Max spin in rad/s. */
+  spin: number;
+  /** Launch direction in radians (0 = right, -π/2 = up) and spread around it. */
+  angle: number;
+  spread: number;
+  /** Expanding shockwave rings emitted at the origin. */
+  rings: number;
+}
+
+const UP = -Math.PI / 2;
+
+export const BURST_PRESETS = {
+  shards: { shapes: ["shard"], count: 46, speed: [260, 620], gravity: 900, drag: 0.35, lifeMs: [700, 1200], size: [5, 11], spin: 12, angle: UP, spread: Math.PI * 1.1, rings: 1 },
+  stardust: { shapes: ["star", "spark"], count: 54, speed: [160, 520], gravity: 120, drag: 0.25, lifeMs: [800, 1400], size: [4, 10], spin: 6, angle: UP, spread: Math.PI * 2, rings: 1 },
+  tiles: { shapes: ["tile"], count: 30, speed: [240, 560], gravity: 1100, drag: 0.4, lifeMs: [900, 1400], size: [9, 15], spin: 9, angle: UP, spread: Math.PI * 0.9, rings: 0 },
+  cards: { shapes: ["card"], count: 22, speed: [260, 560], gravity: 1000, drag: 0.4, lifeMs: [1000, 1500], size: [12, 18], spin: 7, angle: UP, spread: Math.PI * 0.8, rings: 0 },
+  coins: { shapes: ["coin"], count: 34, speed: [280, 600], gravity: 1200, drag: 0.3, lifeMs: [900, 1300], size: [6, 10], spin: 14, angle: UP, spread: Math.PI * 0.7, rings: 1 },
+  leaves: { shapes: ["leaf"], count: 36, speed: [120, 360], gravity: 160, drag: 0.6, lifeMs: [1200, 1900], size: [6, 11], spin: 4, angle: UP, spread: Math.PI * 1.4, rings: 0 },
+  notes: { shapes: ["note", "spark"], count: 28, speed: [120, 320], gravity: -140, drag: 0.5, lifeMs: [1000, 1600], size: [8, 13], spin: 2, angle: UP, spread: Math.PI * 0.9, rings: 2 },
+  sparks: { shapes: ["spark"], count: 40, speed: [320, 700], gravity: 400, drag: 0.5, lifeMs: [400, 800], size: [6, 12], spin: 0, angle: UP, spread: Math.PI * 2, rings: 1 },
+} as const satisfies Record<string, BurstPreset>;
+
+export type BurstPresetName = keyof typeof BURST_PRESETS;
+
+export interface Particle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  rot: number;
+  vr: number;
+  size: number;
+  ageMs: number;
+  lifeMs: number;
+  shape: BurstShape;
+  color: string;
+  gravity: number;
+  drag: number;
+}
+
+export interface BurstField {
+  /** Emits a preset at (x, y). Returns how many particles fit in the pool. */
+  emit(preset: BurstPresetName | BurstPreset, x: number, y: number, colors: readonly string[], options?: { count?: number; scale?: number }): number;
+  /** Advances every live particle by dtMs and retires the ones past their life. */
+  step(dtMs: number): void;
+  forEach(fn: (particle: Particle, progress: number) => void): void;
+  readonly live: number;
+}
+
+const between = (random: Random, [min, max]: readonly [number, number]) => min + random() * (max - min);
+
+export function createBurstField(capacity = 180, random: Random = Math.random): BurstField {
+  const blank = (): Particle => ({ x: 0, y: 0, vx: 0, vy: 0, rot: 0, vr: 0, size: 0, ageMs: 0, lifeMs: 1, shape: "spark", color: "#fff", gravity: 0, drag: 0 });
+  const pool = createPool<Particle>(capacity, blank, (p) => Object.assign(p, blank()));
+  const live: Particle[] = [];
+  return {
+    emit(name, x, y, colors, options = {}) {
+      const preset: BurstPreset = typeof name === "string" ? BURST_PRESETS[name] : name;
+      const palette = colors.length > 0 ? colors : ["#ffffff"];
+      const scale = options.scale ?? 1;
+      const count = Math.max(0, Math.round(options.count ?? preset.count));
+      let emitted = 0;
+      const spawn = (fill: (p: Particle) => void) => {
+        const p = pool.acquire();
+        if (!p) return;
+        fill(p);
+        live.push(p);
+        emitted += 1;
+      };
+      for (let i = 0; i < preset.rings; i += 1) {
+        spawn((p) => Object.assign(p, { x, y, size: 6 * scale, lifeMs: 420 + i * 160, shape: "ring", color: palette[i % palette.length] }));
+      }
+      for (let i = 0; i < count; i += 1) {
+        const angle = preset.angle + (random() - 0.5) * preset.spread;
+        const speed = between(random, preset.speed) * scale;
+        spawn((p) => Object.assign(p, {
+          x,
+          y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          rot: random() * Math.PI * 2,
+          vr: (random() * 2 - 1) * preset.spin,
+          size: between(random, preset.size) * scale,
+          lifeMs: between(random, preset.lifeMs),
+          shape: preset.shapes[Math.floor(random() * preset.shapes.length)] ?? "spark",
+          color: palette[Math.floor(random() * palette.length)] ?? palette[0],
+          gravity: preset.gravity * scale,
+          drag: preset.drag,
+        }));
+      }
+      return emitted;
+    },
+    step(dtMs) {
+      const dt = Math.max(0, dtMs) / 1000;
+      for (let i = live.length - 1; i >= 0; i -= 1) {
+        const p = live[i];
+        p.ageMs += dtMs;
+        if (p.ageMs >= p.lifeMs) {
+          live.splice(i, 1);
+          pool.release(p);
+          continue;
+        }
+        const keep = Math.pow(p.drag, dt);
+        p.vx *= keep;
+        p.vy = p.vy * keep + p.gravity * dt;
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.rot += p.vr * dt;
+      }
+    },
+    forEach(fn) {
+      for (const p of live) fn(p, Math.min(1, p.ageMs / p.lifeMs));
+    },
+    get live() {
+      return live.length;
+    },
+  };
+}

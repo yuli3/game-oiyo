@@ -6,6 +6,7 @@
 // plus the table is taller than a phone.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { celebrate } from "../../lib/games/celebration";
 import { HelpCircle, Lock, Maximize2, Minimize2, Pause, Play, Volume2, VolumeX } from "lucide-react";
 import { GameContainer } from "../ui/game/GamePrimitives";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
@@ -827,7 +828,7 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
       sfx("win");
       haptics.fire("win");
       pushFx({ kind: "win" });
-      if (!reducedMotion) void import("canvas-confetti").then(({ default: confetti }) => confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } })).catch(() => undefined);
+      if (!reducedMotion) celebrate(containerRef.current, { preset: "tiles", colors: ["#ef4444", "#3b82f6", "#f59e0b", "#111827"], origin: { x: 0.5, y: 0.55 } });
     } else sfx("lose");
     if (game.mode === "daily" && game.dateKey && outcome === "w") {
       const margin = game.hands.slice(1).reduce((sum, hand) => sum + handPenalty(hand), 0);

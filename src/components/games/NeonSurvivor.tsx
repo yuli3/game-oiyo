@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import confetti from 'canvas-confetti';
+import { celebrate } from "../../lib/games/celebration";
 import {
   type NeonSurvivorState,
   type UpgradeCard,
@@ -317,12 +317,7 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
 
         if (next.levelUpPending && !prevLevelUp) {
           playLevelUpSound();
-          confetti({
-            particleCount: 40,
-            spread: 60,
-            origin: { y: 0.6 },
-            colors: ['#38bdf8', '#10b981', '#f43f5e', '#fbbf24'],
-          });
+          celebrate(canvasRef.current, { preset: "sparks", colors: ['#38bdf8', '#10b981', '#f43f5e', '#fbbf24'], origin: { x: 0.5, y: 0.5 }, scale: 0.8 });
         }
 
         if (next.gameOver && !prevGameOver) {

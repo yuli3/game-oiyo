@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
-import confetti from "canvas-confetti";
+import { celebrate } from "../../lib/games/celebration";
 import type { Locale } from "../../lib/i18n";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { getBest, recordBest } from "../../lib/games/records";
@@ -236,7 +236,7 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
     setFinalFrames(gsRef.current?.elapsedFrames ?? 0);
     setDeath(gsRef.current ? explainCaveDashDeath(gsRef.current) : null);
     setIsNewBest(beat && finalScore > 0);
-    if (beat && finalScore > 0 && !prefersReducedMotion) confetti({ particleCount: 90, spread: 72, origin: { y: 0.6 } });
+    if (beat && finalScore > 0 && !prefersReducedMotion) celebrate(canvasRef.current, { preset: "shards", colors: ["#67e8f9", "#c4b5fd", "#fef08a"], origin: { x: 0.5, y: 0.5 } });
     phaseRef.current = "over";
     setPhase("over");
   }, [prefersReducedMotion]);
