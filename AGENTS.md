@@ -8,7 +8,14 @@
 - 컴포넌트 COPY의 ko/en/ja/zh/fr/es를 함께 유지한다. zh는 간체이며 다른 언어에 KO/EN이 새지 않게 한다.
 - AI 로직은 `src/lib/games/ai/`, 개인 기록 계약은 `src/lib/games/records.ts`와 해당 테스트가 정본이다. 현행 Workers 등 별도 기능의 존재를 확인하지 않고 “백엔드 없음”으로 가정하지 않는다.
 
-- **새 게임·리빌드 품질 기준(2026-10-21 세운 결정)**: 게임을 만들거나 고치기 전에 company-brain `projects/game/grok-quality/README.md`와 해당 게임 문서(`projects/game/grok-quality/<slug>.md`)를 먼저 읽고 지킨다. 입장 화면, 캔버스 렌더링, 그림 에셋, 이펙트, 터치 조작, 증강·무한 모드가 출시 기준이다. main에 직접 push하지 않고 브랜치와 draft PR로만 올린다.
+- **OIYO 게임 스튜디오 기준 (2026-10-24 세운 공식 가동 결정, 전 작업자·에이전트 공통)**:
+  - **모든 작업자 참여 개방**: 누구든(Claude, Codex, Grok Build, Gemini/Antigravity, Cursor, opencode 등) 게임 제작에 자유롭게 참여할 수 있다. 단, 모든 작업자는 동일한 스튜디오 워크플로우와 품질 게이트를 준수한다.
+  - **상위 정본**: 모든 게임 개발·리빌드는 `company-brain/projects/game/studio-standard/` (G0~G4 게이트, 01 품질 기준, 03 작업지시서, 04 점수표)를 정본으로 따른다 (구 grok-quality는 01 기준으로 흡수).
+  - **G0 (작업지시서)**: 작업지시서(`03-work-order-template.md`) 기반으로 착수하며, 승인 없는 임의 스펙 변경 금지.
+  - **G1 (로직·브랜치)**: `main` 직접 push 금지. 작업자별 `<agent>/<slug>` 브랜치 및 Draft PR을 통해 검수·승인 후 병합. 순수 로직 Vitest 통과.
+  - **G2 (렌더링·에셋)**: 단순 HTML DOM 버튼 격자 판 금지. 2D 보드/퍼즐은 `pixi.js` 8 캔버스, 2D 물리는 `matter-js`, 3D는 `three` 렌더링 필수. 유니코드 기호(●▮) 대신 `public/assets/sprites/<slug>/` 규격 WebP 에셋 등록 필수.
+  - **G3 (게임 필)**: 공용 `src/lib/games/` 키트 필수 연동 (`game-audio.ts` 절차적 6종 사운드, `haptics.ts` 모바일 진동, `juice.ts` 튕김/흔들림, `arcade-portal.ts` 100dvh 전체화면 몰입).
+  - **G4 (실기기 검증)**: 375px/320px 모바일 터치/드래그(`touch-action: none`, 44px 이상) 검증 및 30점 만점 채점(G1 10점, G2 18점, G3 24점, G4 28점) 통과 필수.
 
 ## 개인 기록 보호
 
