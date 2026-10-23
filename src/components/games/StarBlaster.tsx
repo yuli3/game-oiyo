@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
-import confetti from "canvas-confetti";
+import { celebrate } from "../../lib/games/celebration";
 import type { Locale } from "../../lib/i18n";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { getBest, recordAchievementEvent, recordBest } from "../../lib/games/records";
@@ -393,7 +393,7 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
     const weaponRecord = recordBest(weaponKey, finalScore, "score", undefined, { trackPlay: false });
     setDebrief({ kills: finalState.stats.kills, damageTaken: finalState.stats.damageTaken, weaponBest: weaponRecord.value, lastHit: lastHitRef.current });
     if (beat && finalScore > 0 && !reducedMotionRef.current) {
-      confetti({ particleCount: 100, spread: 75, origin: { y: 0.6 } });
+      celebrate(canvasRef.current, { preset: "stardust", colors: ["#7dd3fc", "#fde68a", "#f0abfc"], origin: { x: 0.5, y: 0.5 } });
     }
     if (won) {
       playTone(523, 0.18, "triangle", 0.055);

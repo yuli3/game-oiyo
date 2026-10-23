@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
-import confetti from "canvas-confetti";
+import { celebrate } from "../../lib/games/celebration";
 import type { Locale } from "../../lib/i18n";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { getBest, recordBest } from "../../lib/games/records";
@@ -151,7 +151,7 @@ const RhythmTap: React.FC<Props> = ({ locale }) => {
     const saved = recordBest(GAME_KEY, finalScore, "score", rhythmRecordExtra(nextLevel, gs?.maxCombo ?? 0));
     setBest(saved.value);
     setIsNewBest(beat && finalScore > 0);
-    if (beat && finalScore > 0 && !prefersReducedMotion) confetti({ particleCount: 90, spread: 72, origin: { y: 0.6 } });
+    if (beat && finalScore > 0 && !prefersReducedMotion) celebrate(canvasRef.current, { preset: "notes", colors: ["#f0abfc", "#67e8f9", "#fde68a"], origin: { x: 0.5, y: 0.75 } });
     setPhase("over");
   }, [prefersReducedMotion]);
 

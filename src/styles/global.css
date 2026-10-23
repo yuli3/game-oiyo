@@ -243,6 +243,14 @@
   30%, 70% { transform: translateX(4px); }
 }
 
+/* Domino snap-back. The keyframes above had no caller until the drop missed (2026-10-21). */
+.domino-reject {
+  animation: shake 0.35s ease-in-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .domino-reject { animation: none; }
+}
+
 /* ── 모바일 터치 배려 (game.oiyo.net) ──
    더블탭 줌 지연 제거 + 게임 보드 상의 스크롤 오작동 방지 + 최소 탭 타깃 */
 button, [role="button"] { touch-action: manipulation; }

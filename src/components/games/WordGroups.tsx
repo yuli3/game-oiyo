@@ -3,9 +3,15 @@
  * The daily puzzle is the same for everyone on a device-local calendar day.
  * Pure rules live in src/lib/games/word-groups.ts; this file owns UI and storage.
  */
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Maximize2, Minimize2 } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
+import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
+import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from "../../lib/games/game-audio";
+import { createHaptics } from "../../lib/games/haptics";
+import { celebrate } from "../../lib/games/celebration";
+import { WORD_GROUPS_SPRITES } from "../../lib/games/sprites";
+import WordGroupsCanvas from "./WordGroupsCanvas";
 import { minutesUntilNextDaily, todayKey } from "../../lib/games/daily";
 import { getStreak, recordStreak, type StreakStats } from "../../lib/games/records";
 import {
@@ -32,7 +38,7 @@ import { Spinner } from "../ui/spinner";
 
 const COPY = {
   ko: {
-    title: "네 묶음", lead: "16개 단어를 같은 주제끼리 4개씩 묶어 보세요. 실수는 4번까지예요.",
+    title: "네 묶음", enter: "입장하기", lead: "16개 단어를 같은 주제끼리 4개씩 묶어 보세요. 실수는 4번까지예요.",
     loading: "오늘의 퍼즐을 불러오는 중…", fail: "퍼즐을 불러오지 못했어요.", daily: "오늘의 퍼즐", practice: "연습 퍼즐",
     shuffle: "섞기", clear: "선택 해제", submit: "제출", mistakes: "남은 실수",
     oneAway: "하나만 바꾸면 돼요!", miss: "같은 묶음이 아니에요.", repeat: "이미 낸 조합이에요.", solved: "정답!",
@@ -43,7 +49,7 @@ const COPY = {
     shareHead: (label: string) => `OIYO 네 묶음 ${label}`,
   },
   en: {
-    title: "Four Groups", lead: "Sort 16 words into four groups of four that share a theme. You can make 4 mistakes.",
+    title: "Four Groups", enter: "Enter", lead: "Sort 16 words into four groups of four that share a theme. You can make 4 mistakes.",
     loading: "Loading today's puzzle…", fail: "Could not load the puzzle.", daily: "Daily puzzle", practice: "Practice puzzle",
     shuffle: "Shuffle", clear: "Deselect", submit: "Submit", mistakes: "Mistakes left",
     oneAway: "One away!", miss: "Not a group.", repeat: "You already tried that.", solved: "Correct!",
@@ -54,7 +60,7 @@ const COPY = {
     shareHead: (label: string) => `OIYO Four Groups ${label}`,
   },
   ja: {
-    title: "四つのグループ", lead: "16個の言葉を、同じテーマの4つずつに分けましょう。ミスは4回までです。",
+    title: "四つのグループ", enter: "入る", lead: "16個の言葉を、同じテーマの4つずつに分けましょう。ミスは4回までです。",
     loading: "今日のパズルを読み込み中…", fail: "パズルを読み込めませんでした。", daily: "今日のパズル", practice: "練習パズル",
     shuffle: "シャッフル", clear: "選択解除", submit: "決定", mistakes: "残りミス",
     oneAway: "あと一つ！", miss: "同じグループではありません。", repeat: "その組み合わせは試しました。", solved: "正解！",
@@ -65,7 +71,7 @@ const COPY = {
     shareHead: (label: string) => `OIYO 四つのグループ ${label}`,
   },
   zh: {
-    title: "四组词", lead: "把16个词按相同主题分成四组，每组4个。最多可以失误4次。",
+    title: "四组词", enter: "进入", lead: "把16个词按相同主题分成四组，每组4个。最多可以失误4次。",
     loading: "正在加载今日谜题…", fail: "无法加载谜题。", daily: "今日谜题", practice: "练习谜题",
     shuffle: "打乱", clear: "取消选择", submit: "提交", mistakes: "剩余失误",
     oneAway: "只差一个！", miss: "不是同一组。", repeat: "这个组合已经试过了。", solved: "正确！",
@@ -76,7 +82,7 @@ const COPY = {
     shareHead: (label: string) => `OIYO 四组词 ${label}`,
   },
   fr: {
-    title: "Quatre groupes", lead: "Classez 16 mots en quatre groupes de quatre qui partagent un thème. Vous avez droit à 4 erreurs.",
+    title: "Quatre groupes", enter: "Entrer", lead: "Classez 16 mots en quatre groupes de quatre qui partagent un thème. Vous avez droit à 4 erreurs.",
     loading: "Chargement du puzzle du jour…", fail: "Impossible de charger le puzzle.", daily: "Puzzle du jour", practice: "Puzzle d'entraînement",
     shuffle: "Mélanger", clear: "Désélectionner", submit: "Valider", mistakes: "Erreurs restantes",
     oneAway: "Presque, un seul mot de trop !", miss: "Ce n'est pas un groupe.", repeat: "Combinaison déjà essayée.", solved: "Bravo !",
@@ -87,7 +93,7 @@ const COPY = {
     shareHead: (label: string) => `OIYO Quatre groupes ${label}`,
   },
   es: {
-    title: "Cuatro grupos", lead: "Ordena 16 palabras en cuatro grupos de cuatro con un tema en común. Puedes fallar 4 veces.",
+    title: "Cuatro grupos", enter: "Entrar", lead: "Ordena 16 palabras en cuatro grupos de cuatro con un tema en común. Puedes fallar 4 veces.",
     loading: "Cargando el puzle del día…", fail: "No se pudo cargar el puzle.", daily: "Puzle del día", practice: "Puzle de práctica",
     shuffle: "Mezclar", clear: "Quitar selección", submit: "Enviar", mistakes: "Fallos restantes",
     oneAway: "¡Te falta una!", miss: "No es un grupo.", repeat: "Ya probaste esa combinación.", solved: "¡Correcto!",
@@ -133,6 +139,7 @@ function writeDailySave(dateKey: string, state: WordGroupsState, recorded: boole
 
 export default function WordGroups({ locale = "ko" }: { locale?: Locale }) {
   const t = COPY[locale] ?? COPY.en;
+  const reducedMotion = usePrefersReducedMotion();
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale });
 
   const [pack, setPack] = useState<WordGroupsPack | null>(null);
@@ -143,12 +150,35 @@ export default function WordGroups({ locale = "ko" }: { locale?: Locale }) {
   const [game, setGame] = useState<WordGroupsState | null>(null);
   const [order, setOrder] = useState<string[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
+  const [phase, setPhase] = useState<"title" | "gather" | "play">("title");
+  const [gatherKey, setGatherKey] = useState(0);
+  const [animating, setAnimating] = useState(false);
+  const [shakeFx, setShakeFx] = useState<{ seq: number; words: string[] } | null>(null);
+  const [rowFx, setRowFx] = useState<{ seq: number; words: string[] } | null>(null);
   const [feedback, setFeedback] = useState<Feedback>(null);
+  const pendingSolve = useRef<WordGroupsState | null>(null);
+  const fxSeq = useRef(0);
   const [recorded, setRecorded] = useState(false);
   const [restored, setRestored] = useState(false);
   const [copied, setCopied] = useState(false);
   const [stats, setStats] = useState<StreakStats | null>(null);
   const [nextMinutes, setNextMinutes] = useState(() => minutesUntilNextDaily());
+  const [muted, setMuted] = useState(false);
+  const cuesRef = useRef<CuePlayer<CoreCue> | null>(null);
+  const hapticsRef = useRef<ReturnType<typeof createHaptics> | null>(null);
+
+  const cue = (kind: CoreCue) => {
+    if (!muted) {
+      cuesRef.current ??= createCuePlayer({ cues: CORE_CUES });
+      cuesRef.current.play(kind);
+    }
+    hapticsRef.current ??= createHaptics();
+    if (kind === "tap") hapticsRef.current.fire("tap");
+    else if (kind === "place") hapticsRef.current.fire("place");
+    else if (kind === "combo") hapticsRef.current.fire("combo");
+    else if (kind === "fail") hapticsRef.current.fire("fail");
+    else if (kind === "win") hapticsRef.current.fire("win");
+  };
 
   const puzzle = pack?.puzzles[puzzleIndex] ?? null;
 
@@ -211,6 +241,9 @@ export default function WordGroups({ locale = "ko" }: { locale?: Locale }) {
       if (event.code === "KeyF") {
         event.preventDefault();
         togglePortal();
+      } else if (event.code === "KeyM" || event.key === "m" || event.key === "M") {
+        event.preventDefault();
+        setMuted((v) => !v);
       }
     };
     window.addEventListener("keydown", onKey);
@@ -219,20 +252,64 @@ export default function WordGroups({ locale = "ko" }: { locale?: Locale }) {
 
   const board = useMemo(() => (puzzle && game ? remainingWords(puzzle, game, order) : []), [puzzle, game, order]);
 
+  const openGather = () => {
+    fxSeq.current += 1;
+    setGatherKey(fxSeq.current);
+    setShakeFx(null);
+    setRowFx(null);
+    pendingSolve.current = null;
+    setAnimating(false);
+    setPhase("gather");
+  };
+
+  const enter = () => {
+    if (!isImmersive) togglePortal();
+    openGather();
+  };
+
   const toggle = (word: string) => {
-    if (!game || game.status !== "playing") return;
+    if (!game || game.status !== "playing" || phase !== "play" || animating) return;
     setFeedback(null);
     setRestored(false);
+    cue("tap");
     setSelected((cur) => (cur.includes(word) ? cur.filter((w) => w !== word) : cur.length < WORD_GROUPS_SIZE ? [...cur, word] : cur));
   };
 
   const submit = () => {
-    if (!puzzle || !game) return;
+    if (!puzzle || !game || phase !== "play" || animating) return;
     const next = submitWordGroupsGuess(puzzle, game, selected);
     if (next.result === "invalid") return;
     setFeedback(next.result);
+    if (next.result === "solved") {
+      pendingSolve.current = next.state;
+      setRowFx({ seq: ++fxSeq.current, words: [...selected] });
+      setAnimating(true);
+      if (next.state.status === "won") {
+        cue("win");
+        celebrate(containerRef.current, { preset: "stardust", colors: ["#f59e0b", "#22c55e", "#3b82f6", "#a855f7"], label: t.won });
+      } else {
+        cue("combo");
+      }
+      return;
+    }
     setGame(next.state);
-    if (next.result === "solved") setSelected([]);
+    if (next.result === "miss" || next.result === "one-away") {
+      setShakeFx({ seq: ++fxSeq.current, words: [...selected] });
+      setAnimating(true);
+      cue("fail");
+    } else if (next.state.status === "lost") {
+      cue("fail");
+    }
+  };
+
+  const finishMotion = () => {
+    if (pendingSolve.current) {
+      setGame(pendingSolve.current);
+      pendingSolve.current = null;
+      setSelected([]);
+      setRowFx(null);
+    }
+    setAnimating(false);
   };
 
   const shuffleBoard = () => {
@@ -250,6 +327,7 @@ export default function WordGroups({ locale = "ko" }: { locale?: Locale }) {
     startPuzzle(daily, saved?.state ?? createWordGroups(daily));
     setRecorded(saved?.recorded ?? false);
     setRestored(false);
+    if (phase !== "title") openGather();
   };
 
   const playPractice = () => {
@@ -262,6 +340,7 @@ export default function WordGroups({ locale = "ko" }: { locale?: Locale }) {
     setPuzzleIndex(index);
     startPuzzle(pack.puzzles[index], createWordGroups(pack.puzzles[index]));
     setRestored(false);
+    if (phase !== "title") openGather();
   };
 
   const share = async () => {
@@ -304,17 +383,34 @@ export default function WordGroups({ locale = "ko" }: { locale?: Locale }) {
       className={isImmersive ? "arcade-shell fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-y-auto overscroll-none bg-background" : "w-full"}
     >
       <div className="not-prose mx-auto flex w-full max-w-lg flex-col gap-4 py-3">
-        <header className="relative space-y-1 pr-12">
-          <button
-            type="button"
-            onClick={togglePortal}
-            className="absolute right-0 top-0 flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-border bg-card text-foreground shadow-sm transition hover:bg-muted"
-            title={isImmersive ? portalLabels.exit : portalLabels.enter}
-            aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
-            aria-pressed={isImmersive}
-          >
-            {isImmersive ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-          </button>
+        {!isImmersive && (
+          <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+            <img src={WORD_GROUPS_SPRITES.keyart} alt={t.title} className="h-32 w-full object-cover sm:h-44" />
+          </div>
+        )}
+        <header className="relative space-y-1 pr-24">
+          <div className="absolute right-0 top-0 flex gap-2">
+            <button
+              type="button"
+              onClick={() => setMuted((v) => !v)}
+              className="flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-border bg-card text-foreground shadow-sm transition hover:bg-muted"
+              title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`}
+              aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+              aria-pressed={muted}
+            >
+              {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+            </button>
+            <button
+              type="button"
+              onClick={togglePortal}
+              className="flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-border bg-card text-foreground shadow-sm transition hover:bg-muted"
+              title={isImmersive ? portalLabels.exit : portalLabels.enter}
+              aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+              aria-pressed={isImmersive}
+            >
+              {isImmersive ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            </button>
+          </div>
           <h2 className="text-2xl font-black text-foreground">{t.title}</h2>
           <p className="text-sm text-muted-foreground">{t.lead}</p>
           {stats && stats.played > 0 && <p className="text-xs font-bold text-foreground">{t.streak(stats)}</p>}
@@ -335,29 +431,32 @@ export default function WordGroups({ locale = "ko" }: { locale?: Locale }) {
               <p className="text-sm">{group.words.join(" · ")}</p>
             </div>
           ))}
-          {game.status === "playing" && (
-            <div className="grid grid-cols-4 gap-2" role="group" aria-label={t.title}>
-              {board.map((word) => {
-                const on = selected.includes(word);
-                return (
-                  <button
-                    key={word}
-                    type="button"
-                    onClick={() => toggle(word)}
-                    aria-pressed={on}
-                    className={`flex min-h-16 items-center justify-center break-keep rounded-xl border px-1 text-center text-sm font-bold leading-tight transition ${on ? "border-foreground bg-foreground text-background" : "border-border bg-muted text-foreground hover:bg-accent"}`}
-                  >
-                    {word}
-                  </button>
-                );
-              })}
+          {game.status === "playing" && phase === "title" ? (
+            <button type="button" onClick={enter} className="min-h-11 rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground">{t.enter}</button>
+          ) : null}
+          {game.status === "playing" && phase !== "title" ? (
+            <div data-groups-phase={phase} data-groups-words={board.join("\n")}>
+              <WordGroupsCanvas
+                words={board}
+                selected={selected}
+                reducedMotion={reducedMotion}
+                interactive={phase === "play" && !animating}
+                gatherKey={gatherKey}
+                shake={shakeFx}
+                row={rowFx}
+                label={t.title}
+                onTap={toggle}
+                onGatherDone={() => setPhase("play")}
+                onMotionDone={finishMotion}
+              />
+              <p className="sr-only">{board.join(", ")}</p>
             </div>
-          )}
+          ) : null}
         </div>
 
         <p role="status" aria-live="polite" className="min-h-5 text-center text-sm font-bold text-foreground">{message}</p>
 
-        {game.status === "playing" ? (
+        {game.status === "playing" && phase === "play" ? (
           <>
             <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
               <span>{t.mistakes}</span>

@@ -7,6 +7,7 @@ import { useEffect, useRef } from "react";
 import type { Application, Container, Graphics, Text } from "pixi.js";
 import type { Meld, Tile, TileColor } from "../../lib/games/tile-rummy";
 import type { TableTheme } from "../../lib/games/tile-rummy-augments";
+import { TILE_RUMMY_SPRITES } from "../../lib/games/sprites";
 import {
   hitDrop,
   hitTile,
@@ -59,7 +60,6 @@ const THEMES: Record<TableTheme, { base: number; dark: number; line: number; gra
   walnut: { base: 0x684327, dark: 0x472d19, line: 0xa1703f, grain: 0x7a5232 },
   midnight: { base: 0x1a2747, dark: 0x101931, line: 0x4a62a8, grain: 0x24365f },
 };
-const SEAT_TINT = [0xf2b84b, 0x7cc4e8, 0xe58fb5, 0x9bd17a];
 
 interface TileSprite {
   root: Container;
@@ -279,15 +279,14 @@ export default function TileRummyCanvas(props: TileRummyCanvasProps) {
           const seat = index + 1;
           const body = new PIXI.Container();
           body.position.set(box.x + box.w / 2, box.y + 22);
-          const ring = new PIXI.Graphics().circle(0, 0, 21).stroke({ color: 0xffd34d, width: 3 });
-          const face = new PIXI.Graphics()
-            .circle(0, 0, 18)
-            .fill({ color: SEAT_TINT[seat % SEAT_TINT.length] })
-            .circle(-6, -3, 2.6)
-            .circle(6, -3, 2.6)
-            .fill({ color: 0x1b1b1b })
-            .roundRect(-6, 6, 12, 2.5, 1.2)
-            .fill({ color: 0x1b1b1b, alpha: 0.75 });
+          const ring = new PIXI.Graphics().circle(0, 0, 22).stroke({ color: 0xffd34d, width: 3 });
+          const mood = p.playing && p.turn === seat ? "think" : "idle";
+          const avatarNum = Math.min(3, Math.max(1, seat)) as 1 | 2 | 3;
+          const spriteUrl = TILE_RUMMY_SPRITES.avatars[avatarNum][mood];
+          const avatarSprite = PIXI.Sprite.from(spriteUrl);
+          avatarSprite.anchor.set(0.5);
+          avatarSprite.width = 38;
+          avatarSprite.height = 38;
           const dots = new PIXI.Graphics();
           const info = new PIXI.Text({
             text: `${p.labels.rival(seat)} · ${p.rivals[index]?.tiles ?? 0}${p.rivals[index]?.opened ? " ✓" : ""}`,
@@ -295,7 +294,7 @@ export default function TileRummyCanvas(props: TileRummyCanvasProps) {
           });
           info.anchor.set(0.5, 0);
           info.position.set(0, 23);
-          body.addChild(ring, face, dots, info);
+          body.addChild(ring, avatarSprite, dots, info);
           scene.addChild(body);
           avatars.push({ body, ring, dots, seat });
         });

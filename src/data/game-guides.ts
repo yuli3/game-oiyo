@@ -23,12 +23,12 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       es: "Casillas de dominó es un puzzle diario: coloca cada dominó para que la zona cumpla su regla. Los puntos son el juego doble seis de OIYO, y el tablero cambia con la fecha.",
     },
     how: {
-      ko: "도미노를 빈 칸으로 끌어 놓거나, 칸을 두 번 눌러 방향을 정합니다. 회전은 타일을 다시 누르거나 회전 버튼입니다. 하루는 쉬움·보통·어려움 세 판이고, 날짜는 한국 표준시입니다.",
-      en: "Drag a domino onto an empty cell, or tap two cells to choose the direction. Tap the tile again or use Rotate to turn it. A day has easy, normal, and hard boards, dated in Korea Standard Time.",
-      ja: "ドミノを空きマスへ引きずるか、マスを二回押して向きを決めます。回転は牌をもう一度押すか回転ボタンです。一日は易しい・普通・難しいの三盤で、日付は韓国標準時です。",
-      zh: "把多米诺拖到空格，或连点两格来定方向。再点牌或按旋转来转向。一天有简单、普通、困难三盘，日期用韩国标准时间。",
-      fr: "Glissez un domino sur une case vide, ou touchez deux cases pour la direction. Un second toucher ou Tourner le pivote. La journée a trois grilles, datées à l'heure de Séoul.",
-      es: "Arrastra un dominó a una casilla vacía, o toca dos casillas para la dirección. Otro toque o Girar lo voltea. El día tiene tres tableros, con fecha en hora de Seúl.",
+      ko: "도미노를 고른 뒤 첫 칸과 방향 칸을 차례로 누르거나, 끌어 놓아 가장 가까운 두 칸에 붙입니다. 회전은 회전 버튼입니다. 하루는 쉬움·보통·어려움 세 판이고, 날짜는 한국 표준시입니다.",
+      en: "Choose a domino, then tap the first cell and the direction cell, or drag and release to snap onto the nearest two cells. Rotate uses the Rotate button. A day has easy, normal, and hard boards, dated in Korea Standard Time.",
+      ja: "ドミノを選び、最初のマスと向きのマスを順に押すか、引きずっていちばん近い二マスに付けます。回転は回転ボタンです。一日は易しい・普通・難しいの三盤で、日付は韓国標準時です。",
+      zh: "先选多米诺，再依次点第一格和方向格，或拖开后吸到最近的两格。转向用旋转按钮。一天有简单、普通、困难三盘，日期用韩国标准时间。",
+      fr: "Choisissez un domino, puis touchez la première case et la case de direction, ou glissez pour le poser sur les deux cases les plus proches. Tourner pivote. La journée a trois grilles, datées à l'heure de Séoul.",
+      es: "Elige un dominó, luego toca la primera casilla y la de dirección, o arrastra para pegarlo a las dos casillas más cercanas. Girar lo voltea. El día tiene tres tableros, con fecha en hora de Seúl.",
     },
     rules: {
       ko: [
@@ -123,12 +123,12 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       es: "Cambio de letras es un puzzle diario: tres palabras horizontales y tres verticales comparten un tablero, y se completan cambiando letras. El coreano usa palabras de tres sílabas. Los otros idiomas usan palabras de cinco letras.",
     },
     how: {
-      ko: "칸을 두 번 누르거나 한 칸을 다른 칸으로 끌어 글자를 바꿉니다. 초록은 제자리, 노랑은 그 단어에 있음, 회색은 없음입니다. 같은 글자를 바꾸면 횟수에 넣지 않고, 15번 안에 맞춥니다. 날짜는 한국 표준시입니다.",
-      en: "Tap two cells, or drag one onto another, to exchange letters. Green is the right cell, yellow is in that word, and gray is absent. Swapping the same letter does not count, and you have 15 swaps. The date is Korea Standard Time.",
-      ja: "マスを二回押すか、一つのマスを別のマスへ引きずって文字を入れ替えます。緑は正しいマス、黄はその語にある、灰はない、です。同じ文字は回数に入らず、15回以内に揃えます。日付は韓国標準時です。",
-      zh: "点两格，或把一格拖到另一格来对调。绿是位置正确，黄是这个词里有，灰是没有。对调相同的字不计次数，限15次。日期用韩国标准时间。",
-      fr: "Touchez deux cases, ou glissez-en une sur l'autre. Le vert est la bonne case, le jaune est dans ce mot, le gris est absent. Échanger la même lettre ne compte pas, et il y a 15 échanges. La date suit l'heure de Séoul.",
-      es: "Toca dos casillas, o arrastra una sobre otra. El verde es la casilla correcta, el amarillo está en esa palabra, el gris no está. Cambiar la misma letra no cuenta, y hay 15 cambios. La fecha es la hora de Seúl.",
+      ko: "칸을 두 번 누르거나 한 칸을 다른 칸으로 끌어 글자를 바꿉니다. 초록은 제자리, 노랑은 그 단어에 있음, 회색은 없음입니다. 같은 글자를 바꾸면 횟수에 넣지 않고, 15번 안에 맞춥니다. 날짜는 한국 표준시입니다. 연습 판은 기록에 남지 않고, 남은 바꿈 수에 따라 별이 한 개에서 다섯 개까지입니다.",
+      en: "Tap two cells, or drag one onto another, to exchange letters. Green is the right cell, yellow is in that word, and gray is absent. Swapping the same letter does not count, and you have 15 swaps. The date is Korea Standard Time. A practice board is not recorded, and the stars run from one to five by the swaps you have left.",
+      ja: "マスを二回押すか、一つのマスを別のマスへ引きずって文字を入れ替えます。緑は正しいマス、黄はその語にある、灰はない、です。同じ文字は回数に入らず、15回以内に揃えます。日付は韓国標準時です。練習盤は記録に残らず、残った回数に応じて星は一つから五つです。",
+      zh: "点两格，或把一格拖到另一格来对调。绿是位置正确，黄是这个词里有，灰是没有。对调相同的字不计次数，限15次。日期用韩国标准时间。练习盘不记入记录，剩下的次数决定一到五颗星。",
+      fr: "Touchez deux cases, ou glissez-en une sur l'autre. Le vert est la bonne case, le jaune est dans ce mot, le gris est absent. Échanger la même lettre ne compte pas, et il y a 15 échanges. La date suit l'heure de Séoul. La grille d'essai n'est pas enregistrée, et les étoiles vont de une à cinq selon les échanges restants.",
+      es: "Toca dos casillas, o arrastra una sobre otra. El verde es la casilla correcta, el amarillo está en esa palabra, el gris no está. Cambiar la misma letra no cuenta, y hay 15 cambios. La fecha es la hora de Seúl. El tablero de práctica no se registra, y las estrellas van de una a cinco según los cambios que quedan.",
     },
     rules: {
       ko: [
@@ -3068,12 +3068,12 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       es: "Cuatro grupos es un puzle que reparte 16 palabras entre cuatro temas ocultos. Buscar grupos en un tablero de 4×4 es un formato de puzle habitual; cada tema y cada lista de palabras los escribió OIYO para cada idioma.",
     },
     how: {
-      ko: "같은 주제라고 생각하는 단어 4개를 고르고 제출하세요. 맞으면 그 묶음이 색과 함께 위로 올라갑니다. 3개만 맞으면 '하나만 바꾸면 돼요'라고 알려 줍니다. 실수 4번 안에 네 묶음을 모두 찾으면 성공입니다. 노랑이 가장 쉽고 보라가 가장 까다롭습니다.",
-      en: "Pick four words you think share a theme and submit. A correct group rises to the top in its color. If three of the four belong together you'll see \"One away\". Find all four groups before your fourth mistake. Yellow is the easiest and purple the trickiest.",
-      ja: "同じテーマだと思う言葉を4つ選んで決定します。正解ならそのグループが色付きで上に並びます。4つのうち3つが合っていれば「あと一つ」と表示されます。ミス4回までに四つ全部見つければクリアです。黄色がいちばんやさしく、紫がいちばん難しいグループです。",
-      zh: "选出你认为主题相同的4个词并提交。答对的分组会带着颜色移到上方。如果4个里有3个属于同一组，会提示“只差一个”。在第4次失误前找出全部四组即成功。黄色最简单，紫色最难。",
-      fr: "Choisissez quatre mots qui partagent selon vous un thème, puis validez. Un groupe correct monte en haut avec sa couleur. Si trois mots sur quatre vont ensemble, le jeu vous dit « Presque ». Trouvez les quatre groupes avant votre quatrième erreur. Le jaune est le plus facile, le violet le plus retors.",
-      es: "Elige cuatro palabras que creas que comparten tema y envía. Un grupo correcto sube arriba con su color. Si tres de las cuatro van juntas verás «¡Te falta una!». Encuentra los cuatro grupos antes del cuarto fallo. El amarillo es el más fácil y el morado el más difícil.",
+      ko: "같은 주제라고 생각하는 단어 4개를 고르고 제출하세요. 맞으면 그 묶음이 색과 함께 위로 올라갑니다. 3개만 맞으면 '하나만 바꾸면 돼요'라고 알려 줍니다. 실수 4번 안에 네 묶음을 모두 찾으면 성공입니다. 노랑이 가장 쉽고 보라가 가장 까다롭습니다. 타이틀에서 입장하면 16장이 모여 시작합니다. 고른 칸은 들리고, 맞은 네 장은 한 줄로 모이며, 틀린 네 장은 흔들립니다.",
+      en: "Pick four words you think share a theme and submit. A correct group rises to the top in its color. If three of the four belong together you'll see \"One away\". Find all four groups before your fourth mistake. Yellow is the easiest and purple the trickiest. Enter from the title and the 16 tiles gather. Chosen tiles lift, a correct four draws into a row, and a wrong four shakes.",
+      ja: "同じテーマだと思う言葉を4つ選んで決定します。正解ならそのグループが色付きで上に並びます。4つのうち3つが合っていれば「あと一つ」と表示されます。ミス4回までに四つ全部見つければクリアです。黄色がいちばんやさしく、紫がいちばん難しいグループです。タイトルから入ると16枚が集まって始まります。選んだマスは持ち上がり、正解の4枚は一列に集まり、外れの4枚は揺れます。",
+      zh: "选出你认为主题相同的4个词并提交。答对的分组会带着颜色移到上方。如果4个里有3个属于同一组，会提示“只差一个”。在第4次失误前找出全部四组即成功。黄色最简单，紫色最难。从标题进入后，16张牌聚到一起再开始。选中的牌会抬起，正确的四张收成一行，错误的四张会晃动。",
+      fr: "Choisissez quatre mots qui partagent selon vous un thème, puis validez. Un groupe correct monte en haut avec sa couleur. Si trois mots sur quatre vont ensemble, le jeu vous dit « Presque ». Trouvez les quatre groupes avant votre quatrième erreur. Le jaune est le plus facile, le violet le plus retors. Depuis le titre, on entre et les 16 tuiles se rassemblent. Les tuiles choisies se soulèvent, quatre bonnes se rangent en ligne, et quatre mauvaises tremblent.",
+      es: "Elige cuatro palabras que creas que comparten tema y envía. Un grupo correcto sube arriba con su color. Si tres de las cuatro van juntas verás «¡Te falta una!». Encuentra los cuatro grupos antes del cuarto fallo. El amarillo es el más fácil y el morado el más difícil. Desde el título se entra y las 16 fichas se reúnen. Las elegidas se levantan, cuatro correctas forman una fila y cuatro incorrectas tiemblan.",
     },
     faqs: [
       {
