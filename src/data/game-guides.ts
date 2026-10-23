@@ -23,12 +23,12 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       es: "Casillas de dominó es un puzzle diario: coloca cada dominó para que la zona cumpla su regla. Los puntos son el juego doble seis de OIYO, y el tablero cambia con la fecha.",
     },
     how: {
-      ko: "도미노를 빈 칸으로 끌어 놓거나, 칸을 두 번 눌러 방향을 정합니다. 회전은 타일을 다시 누르거나 회전 버튼입니다. 하루는 쉬움·보통·어려움 세 판이고, 날짜는 한국 표준시입니다.",
-      en: "Drag a domino onto an empty cell, or tap two cells to choose the direction. Tap the tile again or use Rotate to turn it. A day has easy, normal, and hard boards, dated in Korea Standard Time.",
-      ja: "ドミノを空きマスへ引きずるか、マスを二回押して向きを決めます。回転は牌をもう一度押すか回転ボタンです。一日は易しい・普通・難しいの三盤で、日付は韓国標準時です。",
-      zh: "把多米诺拖到空格，或连点两格来定方向。再点牌或按旋转来转向。一天有简单、普通、困难三盘，日期用韩国标准时间。",
-      fr: "Glissez un domino sur une case vide, ou touchez deux cases pour la direction. Un second toucher ou Tourner le pivote. La journée a trois grilles, datées à l'heure de Séoul.",
-      es: "Arrastra un dominó a una casilla vacía, o toca dos casillas para la dirección. Otro toque o Girar lo voltea. El día tiene tres tableros, con fecha en hora de Seúl.",
+      ko: "도미노를 고른 뒤 첫 칸과 방향 칸을 차례로 누르거나, 끌어 놓아 가장 가까운 두 칸에 붙입니다. 회전은 회전 버튼입니다. 하루는 쉬움·보통·어려움 세 판이고, 날짜는 한국 표준시입니다.",
+      en: "Choose a domino, then tap the first cell and the direction cell, or drag and release to snap onto the nearest two cells. Rotate uses the Rotate button. A day has easy, normal, and hard boards, dated in Korea Standard Time.",
+      ja: "ドミノを選び、最初のマスと向きのマスを順に押すか、引きずっていちばん近い二マスに付けます。回転は回転ボタンです。一日は易しい・普通・難しいの三盤で、日付は韓国標準時です。",
+      zh: "先选多米诺，再依次点第一格和方向格，或拖开后吸到最近的两格。转向用旋转按钮。一天有简单、普通、困难三盘，日期用韩国标准时间。",
+      fr: "Choisissez un domino, puis touchez la première case et la case de direction, ou glissez pour le poser sur les deux cases les plus proches. Tourner pivote. La journée a trois grilles, datées à l'heure de Séoul.",
+      es: "Elige un dominó, luego toca la primera casilla y la de dirección, o arrastra para pegarlo a las dos casillas más cercanas. Girar lo voltea. El día tiene tres tableros, con fecha en hora de Seúl.",
     },
     rules: {
       ko: [
@@ -123,12 +123,12 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       es: "Cambio de letras es un puzzle diario: tres palabras horizontales y tres verticales comparten un tablero, y se completan cambiando letras. El coreano usa palabras de tres sílabas. Los otros idiomas usan palabras de cinco letras.",
     },
     how: {
-      ko: "칸을 두 번 누르거나 한 칸을 다른 칸으로 끌어 글자를 바꿉니다. 초록은 제자리, 노랑은 그 단어에 있음, 회색은 없음입니다. 같은 글자를 바꾸면 횟수에 넣지 않고, 15번 안에 맞춥니다. 날짜는 한국 표준시입니다.",
-      en: "Tap two cells, or drag one onto another, to exchange letters. Green is the right cell, yellow is in that word, and gray is absent. Swapping the same letter does not count, and you have 15 swaps. The date is Korea Standard Time.",
-      ja: "マスを二回押すか、一つのマスを別のマスへ引きずって文字を入れ替えます。緑は正しいマス、黄はその語にある、灰はない、です。同じ文字は回数に入らず、15回以内に揃えます。日付は韓国標準時です。",
-      zh: "点两格，或把一格拖到另一格来对调。绿是位置正确，黄是这个词里有，灰是没有。对调相同的字不计次数，限15次。日期用韩国标准时间。",
-      fr: "Touchez deux cases, ou glissez-en une sur l'autre. Le vert est la bonne case, le jaune est dans ce mot, le gris est absent. Échanger la même lettre ne compte pas, et il y a 15 échanges. La date suit l'heure de Séoul.",
-      es: "Toca dos casillas, o arrastra una sobre otra. El verde es la casilla correcta, el amarillo está en esa palabra, el gris no está. Cambiar la misma letra no cuenta, y hay 15 cambios. La fecha es la hora de Seúl.",
+      ko: "칸을 두 번 누르거나 한 칸을 다른 칸으로 끌어 글자를 바꿉니다. 초록은 제자리, 노랑은 그 단어에 있음, 회색은 없음입니다. 같은 글자를 바꾸면 횟수에 넣지 않고, 15번 안에 맞춥니다. 날짜는 한국 표준시입니다. 연습 판은 기록에 남지 않고, 남은 바꿈 수에 따라 별이 한 개에서 다섯 개까지입니다.",
+      en: "Tap two cells, or drag one onto another, to exchange letters. Green is the right cell, yellow is in that word, and gray is absent. Swapping the same letter does not count, and you have 15 swaps. The date is Korea Standard Time. A practice board is not recorded, and the stars run from one to five by the swaps you have left.",
+      ja: "マスを二回押すか、一つのマスを別のマスへ引きずって文字を入れ替えます。緑は正しいマス、黄はその語にある、灰はない、です。同じ文字は回数に入らず、15回以内に揃えます。日付は韓国標準時です。練習盤は記録に残らず、残った回数に応じて星は一つから五つです。",
+      zh: "点两格，或把一格拖到另一格来对调。绿是位置正确，黄是这个词里有，灰是没有。对调相同的字不计次数，限15次。日期用韩国标准时间。练习盘不记入记录，剩下的次数决定一到五颗星。",
+      fr: "Touchez deux cases, ou glissez-en une sur l'autre. Le vert est la bonne case, le jaune est dans ce mot, le gris est absent. Échanger la même lettre ne compte pas, et il y a 15 échanges. La date suit l'heure de Séoul. La grille d'essai n'est pas enregistrée, et les étoiles vont de une à cinq selon les échanges restants.",
+      es: "Toca dos casillas, o arrastra una sobre otra. El verde es la casilla correcta, el amarillo está en esa palabra, el gris no está. Cambiar la misma letra no cuenta, y hay 15 cambios. La fecha es la hora de Seúl. El tablero de práctica no se registra, y las estrellas van de una a cinco según los cambios que quedan.",
     },
     rules: {
       ko: [

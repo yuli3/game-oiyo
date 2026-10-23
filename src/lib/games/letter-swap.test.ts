@@ -11,10 +11,14 @@ import {
   dailyBestConditions,
   isSolved,
   lettersOf,
+  completeLineIds,
   minSwaps,
+  practicePuzzle,
   puzzleForDate,
   searchCost,
   shareGrid,
+  starsForRemaining,
+  tileAt,
   wordsOf,
 } from "./letter-swap";
 
@@ -86,6 +90,27 @@ describe("letter swap", () => {
     expect(shareGrid("Letter Swap", "2026-10-20", 7, ["correct", "present", "absent", "hole"], 2)).toBe(
       `Letter Swap 2026-10-20 7/${SWAP_LIMIT}\n🟩🟨\n⬜⬛`,
     );
+  });
+
+  it("grades the swaps that are left and deals a different practice board", () => {
+    expect(starsForRemaining(15)).toBe(5);
+    expect(starsForRemaining(12)).toBe(5);
+    expect(starsForRemaining(11)).toBe(4);
+    expect(starsForRemaining(9)).toBe(4);
+    expect(starsForRemaining(6)).toBe(3);
+    expect(starsForRemaining(3)).toBe(2);
+    expect(starsForRemaining(2)).toBe(1);
+    expect(starsForRemaining(0)).toBe(1);
+    const daily = puzzleForDate("2026-10-21", "ko");
+    const practice = practicePuzzle(1, "2026-10-21", "ko");
+    expect(practice.across.join("")).not.toBe(daily.across.join(""));
+    const distance = minSwaps(lettersOf(practice.start), lettersOf(practice.solution));
+    expect(distance).toBeGreaterThanOrEqual(4);
+    expect(distance).toBeLessThanOrEqual(12);
+    expect(completeLineIds(practice.solution, practice.solution, practice.size)).toEqual(["a0", "a1", "a2", "d0", "d1", "d2"]);
+    const english = puzzleForDate("2026-10-21", "en");
+    expect(tileAt(22, 22, english.size, english.start)).toBe(0);
+    expect(tileAt(70, 70, english.size, english.start)).toBeNull();
   });
 
   it("registers the catalog slug and the daily best cohort", () => {

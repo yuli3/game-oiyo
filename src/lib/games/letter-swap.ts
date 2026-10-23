@@ -366,6 +366,94 @@ export function puzzleForDate(dateKey: string, locale: Locale): LetterPuzzle {
   };
 }
 
+/** Remaining swaps fall into five bands. Twelve or more left is five stars (2026-10-21). */
+export function starsForRemaining(remaining: number): 1 | 2 | 3 | 4 | 5 {
+  const left = Math.max(0, Math.min(SWAP_LIMIT, Math.floor(remaining)));
+  if (left >= 12) return 5;
+  if (left >= 9) return 4;
+  if (left >= 6) return 3;
+  if (left >= 3) return 2;
+  return 1;
+}
+
+export const TILE_PX = 44;
+export const TILE_GAP = 4;
+
+export function boardPixels(size: number): { width: number; height: number } {
+  const span = size * TILE_PX + Math.max(0, size - 1) * TILE_GAP;
+  return { width: span, height: span };
+}
+
+export function tileOrigin(index: number, size: number): { x: number; y: number } {
+  const col = index % size;
+  const row = Math.floor(index / size);
+  const pitch = TILE_PX + TILE_GAP;
+  return { x: col * pitch, y: row * pitch };
+}
+
+export function tileAt(x: number, y: number, size: number, cells: readonly (string | null)[]): number | null {
+  if (x < 0 || y < 0) return null;
+  const pitch = TILE_PX + TILE_GAP;
+  const col = Math.floor(x / pitch);
+  const row = Math.floor(y / pitch);
+  if (col < 0 || row < 0 || col >= size || row >= size) return null;
+  if (x - col * pitch >= TILE_PX || y - row * pitch >= TILE_PX) return null;
+  const index = row * size + col;
+  return cells[index] == null ? null : index;
+}
+
+export function lineCells(size: GridSize): { id: string; cells: number[] }[] {
+  const step = stepFor(size);
+  const across = [0, 1, 2].map((i) => {
+    const row = i * step;
+    return { id: `a${i}`, cells: Array.from({ length: size }, (_, col) => row * size + col) };
+  });
+  const down = [0, 1, 2].map((j) => {
+    const col = j * step;
+    return { id: `d${j}`, cells: Array.from({ length: size }, (_, row) => row * size + col) };
+  });
+  return [...across, ...down];
+}
+
+export function completeLineIds(
+  cells: readonly (string | null)[],
+  solution: readonly (string | null)[],
+  size: GridSize,
+): string[] {
+  return lineCells(size)
+    .filter((line) => line.cells.every((index) => cells[index] !== null && cells[index] === solution[index]))
+    .map((line) => line.id);
+}
+
+/** A practice board uses another word set when one exists, and never today's scramble seed (2026-10-21). */
+export function practicePuzzle(salt: number, dateKey: string, locale: Locale): LetterPuzzle {
+  const entries = BANKS[locale];
+  const size = sizeFor(locale);
+  const today = dateKeyIndex(dateKey) % entries.length;
+  const dailySeed = (dateKeyIndex(dateKey) * 0x9e3779b1 + LOCALE_SALT[locale] * 0x85ebca6b) >>> 0;
+  let seed = (salt >>> 0) || 1;
+  for (let attempt = 0; attempt < 8; attempt++) {
+    if (seed === dailySeed) seed = (seed + 1) >>> 0;
+    let index = seed % entries.length;
+    if (entries.length > 1 && index === today) index = (index + 1) % entries.length;
+    try {
+      const solution = placeBank(entries[index], size, locale);
+      return {
+        locale,
+        dateKey,
+        size,
+        solution: solution.cells,
+        start: scrambleBoard(solution.cells, mulberry32(seed)),
+        across: solution.across,
+        down: solution.down,
+      };
+    } catch {
+      seed = (seed + 97) >>> 0;
+    }
+  }
+  throw new Error("letter-swap practice missed the swap window");
+}
+
 const GLYPH: Record<Mark, string> = { correct: "🟩", present: "🟨", absent: "⬜", hole: "⬛" };
 
 export function shareGrid(title: string, dateKey: string, swaps: number, marks: readonly Mark[], size: number): string {
