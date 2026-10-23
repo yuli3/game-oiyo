@@ -27,10 +27,30 @@ interface Stage {
   labels: { text: string; x: number; y: number; ageMs: number }[];
   frame: number;
   last: number;
+  observer?: MutationObserver;
 }
 
 const LABEL_MS = 1100;
 const stages = new WeakMap<HTMLElement, Stage>();
+
+function mountStage(target: HTMLElement, canvas: HTMLCanvasElement) {
+  // Native fullscreen excludes body siblings, regardless of z-index (PR19 review, 2026-10-23).
+  const fullscreen = document.fullscreenElement;
+  const host = fullscreen?.contains(target) ? fullscreen : document.body;
+  if (canvas.parentElement !== host) host.appendChild(canvas);
+}
+
+/** Releases an active effect when its owning game/ref is replaced or unmounted. */
+export function disposeCelebration(target: HTMLElement | null | undefined): void {
+  if (!target) return;
+  const stage = stages.get(target);
+  if (!stage) return;
+  cancelAnimationFrame(stage.frame);
+  stage.frame = 0;
+  stage.observer?.disconnect();
+  stage.canvas.remove();
+  stages.delete(target);
+}
 
 function prefersReducedMotion() {
   return typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
@@ -130,9 +150,15 @@ function ensureStage(target: HTMLElement): Stage | null {
   const canvas = document.createElement("canvas");
   canvas.setAttribute("aria-hidden", "true");
   Object.assign(canvas.style, { position: "fixed", pointerEvents: "none", zIndex: "60", left: "0", top: "0" });
-  document.body.appendChild(canvas);
+  mountStage(target, canvas);
   const stage: Stage = { canvas, field: createBurstField(), labels: [], frame: 0, last: 0 };
   stages.set(target, stage);
+  // Direct celebrate(canvasRef.current) callers do not use our callback ref. Observe
+  // removal too, so a background tab's paused rAF cannot retain a departed game.
+  stage.observer = new MutationObserver(() => {
+    if (!target.isConnected) disposeCelebration(target);
+  });
+  stage.observer.observe(document.documentElement, { childList: true, subtree: true });
   return stage;
 }
 
@@ -140,16 +166,22 @@ function run(target: HTMLElement, stage: Stage) {
   if (stage.frame) return;
   stage.last = performance.now();
   const tick = (now: number) => {
+    if (!target.isConnected) { disposeCelebration(target); return; }
     const dt = Math.min(50, now - stage.last);
     stage.last = now;
     const rect = target.getBoundingClientRect();
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     const { canvas } = stage;
+    mountStage(target, canvas);
     const w = Math.max(1, Math.round(rect.width));
     const h = Math.max(1, Math.round(rect.height));
-    if (canvas.width !== w * dpr || canvas.height !== h * dpr) {
-      canvas.width = w * dpr;
-      canvas.height = h * dpr;
+    // Canvas stores integer dimensions; compare the same rounded units to avoid
+    // reallocating its drawing buffer on every frame at e.g. DPR 1.25.
+    const pixelWidth = Math.round(w * dpr);
+    const pixelHeight = Math.round(h * dpr);
+    if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
+      canvas.width = pixelWidth;
+      canvas.height = pixelHeight;
       canvas.style.width = `${w}px`;
       canvas.style.height = `${h}px`;
     }
@@ -189,9 +221,7 @@ function run(target: HTMLElement, stage: Stage) {
       ctx.globalAlpha = 1;
     }
     if (stage.field.live === 0 && stage.labels.length === 0) {
-      stage.frame = 0;
-      canvas.remove();
-      stages.delete(target);
+      disposeCelebration(target);
       return;
     }
     stage.frame = requestAnimationFrame(tick);
@@ -201,7 +231,7 @@ function run(target: HTMLElement, stage: Stage) {
 
 /** Celebrates on top of `target`. Safe to call during SSR or with a null target: it does nothing. */
 export function celebrate(target: HTMLElement | null | undefined, options: CelebrateOptions): void {
-  if (!target || typeof window === "undefined" || typeof document === "undefined") return;
+  if (!target || typeof window === "undefined" || typeof document === "undefined" || !target.isConnected) return;
   const reduced = prefersReducedMotion();
   if (reduced && !options.label) return;
   const rect = target.getBoundingClientRect();
@@ -224,6 +254,7 @@ export function celebrate(target: HTMLElement | null | undefined, options: Celeb
 export function useCelebration<T extends HTMLElement = HTMLDivElement>() {
   const ref = useRef<T | null>(null);
   const setRef = useCallback((node: T | null) => {
+    if (ref.current !== node) disposeCelebration(ref.current);
     ref.current = node;
   }, []);
   const fire = useCallback((options: CelebrateOptions) => celebrate(ref.current, options), []);
