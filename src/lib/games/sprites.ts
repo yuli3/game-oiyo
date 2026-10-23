@@ -363,6 +363,10 @@ export const LETTER_SWAP_SPRITES = {
   keyart: "/assets/sprites/letter-swap/keyart.webp",
 } as const;
 
+export const WORD_GROUPS_SPRITES = {
+  keyart: "/assets/sprites/word-groups/keyart.webp",
+} as const;
+
 export const CHESS_SPRITES: Record<string, string> = {
   P: "/assets/sprites/chess/white-pawn.png",
   N: "/assets/sprites/chess/white-knight.png",

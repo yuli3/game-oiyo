@@ -4,9 +4,13 @@
  * Pure rules live in src/lib/games/word-groups.ts; this file owns UI and storage.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Maximize2, Minimize2 } from "lucide-react";
+import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
+import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from "../../lib/games/game-audio";
+import { createHaptics } from "../../lib/games/haptics";
+import { celebrate } from "../../lib/games/celebration";
+import { WORD_GROUPS_SPRITES } from "../../lib/games/sprites";
 import WordGroupsCanvas from "./WordGroupsCanvas";
 import { minutesUntilNextDaily, todayKey } from "../../lib/games/daily";
 import { getStreak, recordStreak, type StreakStats } from "../../lib/games/records";
@@ -159,6 +163,22 @@ export default function WordGroups({ locale = "ko" }: { locale?: Locale }) {
   const [copied, setCopied] = useState(false);
   const [stats, setStats] = useState<StreakStats | null>(null);
   const [nextMinutes, setNextMinutes] = useState(() => minutesUntilNextDaily());
+  const [muted, setMuted] = useState(false);
+  const cuesRef = useRef<CuePlayer<CoreCue> | null>(null);
+  const hapticsRef = useRef<ReturnType<typeof createHaptics> | null>(null);
+
+  const cue = (kind: CoreCue) => {
+    if (!muted) {
+      cuesRef.current ??= createCuePlayer({ cues: CORE_CUES });
+      cuesRef.current.play(kind);
+    }
+    hapticsRef.current ??= createHaptics();
+    if (kind === "tap") hapticsRef.current.fire("tap");
+    else if (kind === "place") hapticsRef.current.fire("place");
+    else if (kind === "combo") hapticsRef.current.fire("combo");
+    else if (kind === "fail") hapticsRef.current.fire("fail");
+    else if (kind === "win") hapticsRef.current.fire("win");
+  };
 
   const puzzle = pack?.puzzles[puzzleIndex] ?? null;
 
@@ -221,6 +241,9 @@ export default function WordGroups({ locale = "ko" }: { locale?: Locale }) {
       if (event.code === "KeyF") {
         event.preventDefault();
         togglePortal();
+      } else if (event.code === "KeyM" || event.key === "m" || event.key === "M") {
+        event.preventDefault();
+        setMuted((v) => !v);
       }
     };
     window.addEventListener("keydown", onKey);
@@ -248,6 +271,7 @@ export default function WordGroups({ locale = "ko" }: { locale?: Locale }) {
     if (!game || game.status !== "playing" || phase !== "play" || animating) return;
     setFeedback(null);
     setRestored(false);
+    cue("tap");
     setSelected((cur) => (cur.includes(word) ? cur.filter((w) => w !== word) : cur.length < WORD_GROUPS_SIZE ? [...cur, word] : cur));
   };
 
@@ -260,12 +284,21 @@ export default function WordGroups({ locale = "ko" }: { locale?: Locale }) {
       pendingSolve.current = next.state;
       setRowFx({ seq: ++fxSeq.current, words: [...selected] });
       setAnimating(true);
+      if (next.state.status === "won") {
+        cue("win");
+        celebrate(containerRef.current, { preset: "stardust", colors: ["#f59e0b", "#22c55e", "#3b82f6", "#a855f7"], label: t.won });
+      } else {
+        cue("combo");
+      }
       return;
     }
     setGame(next.state);
     if (next.result === "miss" || next.result === "one-away") {
       setShakeFx({ seq: ++fxSeq.current, words: [...selected] });
       setAnimating(true);
+      cue("fail");
+    } else if (next.state.status === "lost") {
+      cue("fail");
     }
   };
 
@@ -350,17 +383,34 @@ export default function WordGroups({ locale = "ko" }: { locale?: Locale }) {
       className={isImmersive ? "arcade-shell fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-y-auto overscroll-none bg-background" : "w-full"}
     >
       <div className="not-prose mx-auto flex w-full max-w-lg flex-col gap-4 py-3">
-        <header className="relative space-y-1 pr-12">
-          <button
-            type="button"
-            onClick={togglePortal}
-            className="absolute right-0 top-0 flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-border bg-card text-foreground shadow-sm transition hover:bg-muted"
-            title={isImmersive ? portalLabels.exit : portalLabels.enter}
-            aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
-            aria-pressed={isImmersive}
-          >
-            {isImmersive ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-          </button>
+        {!isImmersive && (
+          <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+            <img src={WORD_GROUPS_SPRITES.keyart} alt={t.title} className="h-32 w-full object-cover sm:h-44" />
+          </div>
+        )}
+        <header className="relative space-y-1 pr-24">
+          <div className="absolute right-0 top-0 flex gap-2">
+            <button
+              type="button"
+              onClick={() => setMuted((v) => !v)}
+              className="flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-border bg-card text-foreground shadow-sm transition hover:bg-muted"
+              title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`}
+              aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+              aria-pressed={muted}
+            >
+              {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+            </button>
+            <button
+              type="button"
+              onClick={togglePortal}
+              className="flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-border bg-card text-foreground shadow-sm transition hover:bg-muted"
+              title={isImmersive ? portalLabels.exit : portalLabels.enter}
+              aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+              aria-pressed={isImmersive}
+            >
+              {isImmersive ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            </button>
+          </div>
           <h2 className="text-2xl font-black text-foreground">{t.title}</h2>
           <p className="text-sm text-muted-foreground">{t.lead}</p>
           {stats && stats.played > 0 && <p className="text-xs font-bold text-foreground">{t.streak(stats)}</p>}
