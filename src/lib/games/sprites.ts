@@ -359,6 +359,10 @@ export const KINGDOMINO_SPRITES = {
   castle: "/assets/sprites/kingdomino/castle.png",
 } as const;
 
+export const LETTER_SWAP_SPRITES = {
+  keyart: "/assets/sprites/letter-swap/keyart.webp",
+} as const;
+
 export const CHESS_SPRITES: Record<string, string> = {
   P: "/assets/sprites/chess/white-pawn.png",
   N: "/assets/sprites/chess/white-knight.png",

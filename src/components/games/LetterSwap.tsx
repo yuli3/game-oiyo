@@ -32,6 +32,10 @@ import {
   type LetterPuzzle,
   type Mark,
 } from "../../lib/games/letter-swap";
+import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from "../../lib/games/game-audio";
+import { createHaptics } from "../../lib/games/haptics";
+import { celebrate } from "../../lib/games/celebration";
+import { LETTER_SWAP_SPRITES } from "../../lib/games/sprites";
 import LetterSwapCanvas from "./LetterSwapCanvas";
 
 const CONTROL = "min-h-11 min-w-11 rounded-xl border px-3 py-2 text-sm font-bold motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
@@ -264,6 +268,8 @@ export default function LetterSwap({ locale }: { locale: Locale }) {
   const [animating, setAnimating] = useState(false);
   const [swapFx, setSwapFx] = useState<{ seq: number; a: number; b: number } | null>(null);
   const [flipFx, setFlipFx] = useState<{ seq: number; cells: number[] } | null>(null);
+  const cuesRef = useRef<CuePlayer<CoreCue> | null>(null);
+  const hapticsRef = useRef<ReturnType<typeof createHaptics> | null>(null);
   const audio = useRef<AudioContext | null>(null);
   const noted = useRef(new Set<string>());
   const dailySnapshot = useRef<DayBoard | null>(null);
@@ -313,21 +319,20 @@ export default function LetterSwap({ locale }: { locale: Locale }) {
     }
   }, [board, loc]);
 
+  const cue = (kind: CoreCue) => {
+    if (!muted) {
+      cuesRef.current ??= createCuePlayer({ cues: CORE_CUES });
+      cuesRef.current.play(kind);
+    }
+    hapticsRef.current ??= createHaptics();
+    if (kind === "place") hapticsRef.current.fire("place");
+    else if (kind === "combo") hapticsRef.current.fire("combo");
+    else if (kind === "fail") hapticsRef.current.fire("fail");
+    else if (kind === "win") hapticsRef.current.fire("win");
+  };
+
   const beep = (ok: boolean) => {
-    if (muted || reducedMotion) return;
-    const Context = window.AudioContext;
-    if (!Context) return;
-    if (!audio.current) audio.current = new Context();
-    const ctx = audio.current;
-    void ctx.resume();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.frequency.value = ok ? 620 : 180;
-    gain.gain.value = 0.04;
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.08);
+    cue(ok ? "place" : "fail");
   };
 
   const openGather = () => {
@@ -388,9 +393,19 @@ export default function LetterSwap({ locale }: { locale: Locale }) {
     const flipping = [...new Set(lineCells(board.puzzle.size).filter((line) => fresh.includes(line.id)).flatMap((line) => line.cells))];
     const swapSeq = ++fxSeq.current;
     setSwapFx({ seq: swapSeq, a: from, b: to });
-    if (flipping.length > 0) setFlipFx({ seq: ++fxSeq.current, cells: flipping });
+    if (flipping.length > 0) {
+      setFlipFx({ seq: ++fxSeq.current, cells: flipping });
+      cue("combo");
+    }
     setAnimating(true);
-    beep(solved || !lost);
+    if (solved) {
+      cue("win");
+      celebrate(containerRef.current, { preset: "cards", colors: ["#10b981", "#38bdf8", "#f59e0b"], label: "SOLVED!" });
+    } else if (lost) {
+      cue("fail");
+    } else {
+      cue("place");
+    }
   };
 
   const onTap = (index: number) => {
@@ -465,6 +480,11 @@ export default function LetterSwap({ locale }: { locale: Locale }) {
       className={isImmersive ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-y-auto bg-background p-3 sm:p-5" : "relative"}
     >
       <GameContainer title={t.title} subtitle={board ? board.dateKey : t.preparing}>
+        {!isImmersive && (
+          <div className="mb-4 overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+            <img src={LETTER_SWAP_SPRITES.keyart} alt={t.title} className="h-32 w-full object-cover sm:h-44" />
+          </div>
+        )}
         <div className="mb-4 flex flex-wrap gap-2">
           <button type="button" onClick={() => setMuted((value) => !value)} aria-pressed={muted} aria-label={muted ? portalLabels.unmute : portalLabels.mute} title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`} className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-muted-foreground`}>
             {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
