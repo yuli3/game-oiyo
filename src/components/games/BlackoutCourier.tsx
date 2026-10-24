@@ -10,6 +10,10 @@ import type { Locale } from "../../lib/i18n";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { getRecord, recordResult, type GameRecord } from "../../lib/games/records";
 import { dateKeyIndex, kstDateKey } from "../../lib/games/todays-game";
+import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from "../../lib/games/game-audio";
+import { createHaptics } from "../../lib/games/haptics";
+import { celebrate } from "../../lib/games/celebration";
+import { BLACKOUT_COURIER_SPRITES } from "../../lib/games/sprites";
 import {
   DARK_SECONDS,
   GAME_ID,
@@ -169,17 +173,6 @@ const COPY: Record<Locale, Copy> = {
   },
 };
 
-function beep(audio: AudioContext, frequency: number) {
-  const osc = audio.createOscillator();
-  const gain = audio.createGain();
-  osc.frequency.value = frequency;
-  gain.gain.value = 0.04;
-  osc.connect(gain);
-  gain.connect(audio.destination);
-  osc.start();
-  osc.stop(audio.currentTime + 0.08);
-}
-
 export default function BlackoutCourier({ locale }: { locale: Locale }) {
   const loc = COPY[locale] ? locale : "en";
   const t = COPY[loc];
@@ -191,10 +184,21 @@ export default function BlackoutCourier({ locale }: { locale: Locale }) {
   const [darkLeft, setDarkLeft] = useState(DARK_SECONDS);
   const [record, setRecord] = useState<GameRecord | null>(null);
   const [muted, setMuted] = useState(false);
-  const audio = useRef<AudioContext | null>(null);
+  const cuesRef = useRef<CuePlayer<CoreCue> | null>(null);
+  const hapticsRef = useRef(createHaptics());
   const noted = useRef(new Set<string>());
   const phase = useRef<Run["phase"] | null>(null);
   const point = useRef<{ x: number; y: number } | null>(null);
+
+  const cue = (kind: CoreCue) => {
+    if (muted || reducedMotion) return;
+    try {
+      cuesRef.current ??= createCuePlayer({ cues: CORE_CUES });
+      void cuesRef.current.play(kind);
+    } catch {
+      /* audio blocked */
+    }
+  };
 
   useEffect(() => {
     const key = kstDateKey();
@@ -212,7 +216,7 @@ export default function BlackoutCourier({ locale }: { locale: Locale }) {
       const next = dir[event.key];
       if (next) {
         event.preventDefault();
-        setRun((current) => (current ? step(current, next) : current));
+        move(next);
         return;
       }
       if (event.key === "f" || event.key === "F") {
@@ -251,14 +255,16 @@ export default function BlackoutCourier({ locale }: { locale: Locale }) {
         try { setRecord(recordResult(GAME_ID, run.phase === "won" ? "w" : "l")); } catch { /* best-effort */ }
       }
     }
-    if (muted || reducedMotion) return;
-    if (run.phase !== "dark" && run.phase !== "won" && run.phase !== "lost") return;
-    const Context = window.AudioContext;
-    if (!Context) return;
-    if (!audio.current) audio.current = new Context();
-    const ctx = audio.current;
-    void ctx.resume();
-    beep(ctx, run.phase === "won" ? 620 : 180);
+    if (run.phase === "won") {
+      cue("win");
+      hapticsRef.current.fire("win");
+      if (containerRef.current) celebrate(containerRef.current, { preset: "sparks" });
+    } else if (run.phase === "lost") {
+      cue("fail");
+      hapticsRef.current.fire("fail");
+    } else if (run.phase === "dark") {
+      cue("tick");
+    }
   }, [run, dateKey, attempt, muted, reducedMotion]);
 
   const again = () => {
@@ -268,7 +274,11 @@ export default function BlackoutCourier({ locale }: { locale: Locale }) {
     setRun(createRun(createPuzzle(seed)));
   };
 
-  const move = (dir: Dir) => setRun((current) => (current ? step(current, dir) : current));
+  const move = (dir: Dir) => {
+    cue("place");
+    hapticsRef.current.fire("place");
+    setRun((current) => (current ? step(current, dir) : current));
+  };
 
   const onSwipe = (dx: number, dy: number) => {
     if (Math.hypot(dx, dy) < 28) return;
@@ -284,6 +294,9 @@ export default function BlackoutCourier({ locale }: { locale: Locale }) {
       className={isImmersive ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-y-auto bg-background p-3 sm:p-5" : "relative"}
     >
       <GameContainer title={t.title} subtitle={run ? t.subtitle : t.preparing}>
+        <div className="mb-3 overflow-hidden rounded-xl border border-border bg-muted">
+          <img src={BLACKOUT_COURIER_SPRITES.keyart} alt={t.title} className="h-32 w-full object-cover sm:h-44" />
+        </div>
         <div className="mb-4 flex flex-wrap gap-2">
           <button type="button" onClick={() => setMuted((value) => !value)} aria-pressed={muted} aria-label={muted ? portalLabels.unmute : portalLabels.mute} title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`} className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-muted-foreground`}>
             {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
@@ -330,7 +343,17 @@ export default function BlackoutCourier({ locale }: { locale: Locale }) {
               })}
             </div>
             {run.phase === "plan" ? (
-              <button type="button" onClick={() => setRun(extinguish(run))} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.go}</button>
+              <button
+                type="button"
+                onClick={() => {
+                  cue("tick");
+                  hapticsRef.current.fire("select");
+                  setRun(extinguish(run));
+                }}
+                className={`${CONTROL} border-primary bg-primary text-primary-foreground`}
+              >
+                {t.go}
+              </button>
             ) : null}
             {run.phase === "won" || run.phase === "lost" ? (
               <button type="button" onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</button>

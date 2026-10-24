@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import {
   BLOCK_BURST_FX,
   BLOCK_BURST_SPRITES,
+  BLACKOUT_COURIER_SPRITES,
   FX_SPRITES,
   CAVE_DASH_SPRITES,
   CHECKERS_SPRITES,
@@ -76,6 +77,7 @@ describe("in-game sprite maps", () => {
       ...Object.values(LINE_SURF_SPRITES),
       ...Object.values(ONE_BUTTON_CIV_SPRITES),
       ...Object.values(TIME_LOOP_RESCUE_SPRITES),
+      ...Object.values(BLACKOUT_COURIER_SPRITES),
       ...Object.values(PLAYING_CARD_SPRITES),
       ...Object.values(PIP_SPRITES),
       ...Object.values(DOMINO_SPRITES),
