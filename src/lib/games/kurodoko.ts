@@ -92,6 +92,68 @@ export function validateKurodokoBoard(board: KurodokoCell[][], puzzle: KurodokoP
   return { ok: true, complete: numbersExact, error: null };
 }
 
+export type KurodokoConflicts = {
+  adjacentBlacks: Set<string>;
+  brokenClues: Set<string>;
+  satisfiedClues: Set<string>;
+};
+
+export function getKurodokoConflicts(board: KurodokoCell[][], puzzle: KurodokoPuzzle): KurodokoConflicts {
+  const size = board.length;
+  const adjacentBlacks = new Set<string>();
+  const brokenClues = new Set<string>();
+  const satisfiedClues = new Set<string>();
+
+  for (let r = 0; r < size; r += 1) {
+    for (let c = 0; c < size; c += 1) {
+      if (board[r][c] === 1) {
+        for (const [dr, dc] of ORTHOGONAL) {
+          const nr = r + dr;
+          const nc = c + dc;
+          if (nr >= 0 && nr < size && nc >= 0 && nc < size && board[nr][nc] === 1) {
+            adjacentBlacks.add(`${r}-${c}`);
+            adjacentBlacks.add(`${nr}-${nc}`);
+          }
+        }
+      }
+      const clue = puzzle[r]?.[c];
+      if (clue !== null && clue !== undefined) {
+        const visible = kurodokoVisibleWhites(board, r, c);
+        if (visible < clue) {
+          brokenClues.add(`${r}-${c}`);
+        } else if (visible === clue) {
+          satisfiedClues.add(`${r}-${c}`);
+        }
+      }
+    }
+  }
+
+  return { adjacentBlacks, brokenClues, satisfiedClues };
+}
+
+export function autoMarkAdjacentWhites<T extends number>(marks: T[][]): { nextMarks: T[][]; changedCount: number } {
+  const size = marks.length;
+  const next = marks.map((row) => [...row]);
+  let changedCount = 0;
+
+  for (let r = 0; r < size; r += 1) {
+    for (let c = 0; c < size; c += 1) {
+      if (next[r][c] === 1) {
+        for (const [dr, dc] of ORTHOGONAL) {
+          const nr = r + dr;
+          const nc = c + dc;
+          if (nr >= 0 && nr < size && nc >= 0 && nc < size && (next[nr][nc] as number) === -1) {
+            (next[nr][nc] as number) = 0;
+            changedCount += 1;
+          }
+        }
+      }
+    }
+  }
+
+  return { nextMarks: next, changedCount };
+}
+
 type Assignment = -1 | KurodokoCell;
 
 function clueCanStillMatch(assignment: Assignment[], puzzle: KurodokoPuzzle, row: number, column: number): boolean {

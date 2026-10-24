@@ -110,3 +110,14 @@ export function updateCameraShake(
     },
   };
 }
+
+// ── Backward-compatible & Engine alias exports ──
+export type ScreenShakeEngine = ScreenTraumaState;
+export const createScreenShakeEngine = createCameraShake;
+export const addScreenShakeTrauma = addTrauma;
+export function stepScreenShake(engine: ScreenTraumaState, dtSeconds: number): ScreenTraumaState {
+  return updateCameraShake(engine, dtSeconds).state;
+}
+export function sampleScreenShakeOffset(engine: ScreenTraumaState, _timeSeconds?: number): CameraShakeOffset {
+  return updateCameraShake(engine, 0).offset;
+}

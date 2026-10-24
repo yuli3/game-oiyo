@@ -5,6 +5,11 @@ import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { getBest, recordAchievementEvent, recordBest } from "../../lib/games/records";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { BLOCK_BURST_FX, BLOCK_BURST_SPRITES } from "../../lib/games/sprites";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
 
 declare global {
   interface Window {
@@ -382,6 +387,7 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
   const [shake, setShake] = useState(0);
   const [banner, setBanner] = useState("");
   const [gainPop, setGainPop] = useState(0);
+  const [shareCardCopied, setShareCardCopied] = useState(false);
   const boardRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particles = useRef<Particle[]>([]);
@@ -642,6 +648,34 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
     }
     await playWaves(settled.state, settled.wavesDetail, settled.merged, settled.gain);
   }, [spawnNext, playWaves, tone]);
+
+  const handleShareCard = useCallback(async () => {
+    try {
+      const canvas = createShareCardCanvas({
+        title: t.title,
+        subtitle: mode === "augment" ? "AUGMENT RUN" : "CLASSIC BURST",
+        score: game.score,
+        bestScore: best,
+        slug: "block-burst",
+        customStats: [
+          { label: "LINES", value: game.cleared },
+          { label: "LEVEL", value: game.level },
+          { label: "COMBO", value: game.combo },
+        ],
+      });
+      const copied = await copyShareCardToClipboard(canvas);
+      if (copied) {
+        setShareCardCopied(true);
+        setTimeout(() => setShareCardCopied(false), 2500);
+      } else {
+        downloadShareCard(canvas, `block-burst-${game.score}pts.png`);
+        setShareCardCopied(true);
+        setTimeout(() => setShareCardCopied(false), 2500);
+      }
+    } catch {
+      // fallback
+    }
+  }, [t.title, mode, game.score, best, game.cleared, game.level, game.combo]);
 
   const apply = useCallback((next: BurstState) => {
     if (next === gameRef.current) return false;
@@ -939,6 +973,16 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
                   <button type="button" className={`${btn} bg-primary text-primary-foreground`} onClick={() => (phase === "over" ? start() : setPhase(run?.offer ? "picking" : "playing"))}>
                     {phase === "over" ? t.again : t.resume}
                   </button>
+                  {phase === "over" && (
+                    <button
+                      type="button"
+                      onClick={handleShareCard}
+                      className="mt-2 min-h-11 w-full rounded-full border border-primary/40 bg-primary/10 px-4 py-2 font-black text-primary hover:bg-primary/20 text-xs flex items-center justify-center gap-1.5 transition-colors"
+                    >
+                      <span>📸</span>
+                      <span>{shareCardCopied ? "✓ 카드 복사됨" : "결과 카드 복사"}</span>
+                    </button>
+                  )}
                 </div>
               </div>
             ) : null}

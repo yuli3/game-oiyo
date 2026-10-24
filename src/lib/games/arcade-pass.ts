@@ -120,6 +120,48 @@ export const MISSION_CATALOG: Array<{
     goal: 50,
     xpReward: 50,
   },
+  {
+    id: "blockburst-score-500",
+    gameSlug: "block-burst",
+    title: {
+      ko: "블록 버스트에서 500점 이상 달성",
+      en: "Score 500+ points in Block Burst",
+      ja: "ブロックバーストで500点以上を獲得",
+      zh: "在方块消除中取得500分以上",
+      fr: "Marquer 500+ points dans Block Burst",
+      es: "Consigue 500+ puntos en Block Burst",
+    },
+    goal: 500,
+    xpReward: 50,
+  },
+  {
+    id: "brickbreaker-score-300",
+    gameSlug: "brick-breaker",
+    title: {
+      ko: "벽돌깨기에서 300점 이상 달성",
+      en: "Score 300+ points in Brick Breaker",
+      ja: "ブロック崩しで300点以上を獲得",
+      zh: "在打砖块中取得300分以上",
+      fr: "Marquer 300+ points dans Brick Breaker",
+      es: "Consigue 300+ puntos en Brick Breaker",
+    },
+    goal: 300,
+    xpReward: 50,
+  },
+  {
+    id: "watersort-solve",
+    gameSlug: "water-sort",
+    title: {
+      ko: "워터 소트 퍼즐 1회 정제 완료",
+      en: "Complete 1 Water Sort puzzle",
+      ja: "ウォーターソートパズルを1問クリア",
+      zh: "完成1局倒水排序",
+      fr: "Compléter 1 puzzle Water Sort",
+      es: "Completa 1 puzle de Water Sort",
+    },
+    goal: 1,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {

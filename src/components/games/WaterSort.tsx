@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Check, QrCode, Share2 } from 'lucide-react';
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 import { getBestForConditions, recordBestForConditions, type BestConditions, type ConditionalBestRecord } from '../../lib/games/records';
@@ -10,6 +11,8 @@ import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from '../../
 import { createHaptics } from '../../lib/games/haptics';
 import { celebrate } from '../../lib/games/celebration';
 import { WATER_SORT_SPRITES } from '../../lib/games/sprites';
+import { buildChallengeUrl } from '../../lib/games/seed-challenge';
+import { generateChallengeQrSvg } from '../../lib/games/challenge-qr';
 
 const COLORS = ['#ef4444', '#2563eb', '#059669', '#d97706', '#7c3aed'];
 const PATTERNS = [
@@ -46,6 +49,8 @@ const WaterSort: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [muted, setMuted] = useState(false);
     const [best, setBest] = useState<ConditionalBestRecord | null>(null);
     const [lastPour, setLastPour] = useState<{ to: number; count: number } | null>(null);
+    const [showQrModal, setShowQrModal] = useState(false);
+    const [copied, setCopied] = useState(false);
     const cuesRef = useRef<CuePlayer<CoreCue> | null>(null);
     const hapticsRef = useRef(createHaptics());
     const recordedSeedRef = useRef<number | null>(null);
@@ -166,6 +171,23 @@ const WaterSort: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const existingBest = game ? getBestForConditions('water-sort', { seed: String(game.seed), difficulty: game.difficulty, assist }) : null;
     const displayedBest = best ?? existingBest;
 
+    const challengeUrl = game ? buildChallengeUrl({
+        baseUrl: typeof window !== "undefined" ? window.location.origin : "https://game.oiyo.net",
+        locale,
+        slug: "water-sort",
+        seed: game.seed,
+        score: game.moves,
+    }) : '';
+
+    const handleCopyChallenge = async () => {
+        if (!challengeUrl) return;
+        try {
+            await navigator.clipboard.writeText(challengeUrl);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch {}
+    };
+
     return (
         <div
             ref={containerRef}
@@ -217,10 +239,55 @@ const WaterSort: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         <h4 className="mb-4 text-2xl font-black text-primary">{t.win}</h4>
                         <div className="mb-5 grid grid-cols-2 gap-3 text-sm"><p><strong>{t.moves}</strong><br />{game.moves}</p><p><strong>{t.time}</strong><br />{elapsedSeconds} {t.seconds}</p><p><strong>{t.efficiency}</strong><br />{efficiency}%</p><p><strong>{t.best}</strong><br />{displayedBest?.value ?? elapsedSeconds} {t.seconds}</p></div>
                         <p className="mb-5 text-xs font-bold text-muted-foreground">{t.next}: {Math.max(0, (displayedBest?.value ?? elapsedSeconds) - 1)} {t.seconds}</p>
+                        <div className="mb-5 flex flex-wrap justify-center gap-2">
+                            <button
+                                type="button"
+                                onClick={handleCopyChallenge}
+                                className="min-h-11 px-4 py-2 rounded-xl border border-border bg-background shadow-xs text-xs font-bold text-foreground hover:bg-muted transition-colors flex items-center gap-1.5"
+                            >
+                                {copied ? <Check className="size-4 text-success" /> : <Share2 className="size-4" />}
+                                <span>{copied ? '링크 복사됨!' : '챌린지 공유'}</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setShowQrModal(true)}
+                                className="min-h-11 px-4 py-2 rounded-xl border border-border bg-background shadow-xs text-xs font-bold text-foreground hover:bg-muted transition-colors flex items-center gap-1.5"
+                            >
+                                <QrCode className="size-4" />
+                                <span>QR 코드</span>
+                            </button>
+                        </div>
                         <button type="button" onClick={() => startGame(difficulty)} className="min-h-12 rounded-full bg-primary px-10 font-bold text-primary-foreground shadow-lg">{t.playAgain}</button>
                     </div>}
                 </div>
             </GameContainer>
+            {showQrModal && challengeUrl && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4"
+                    onClick={() => setShowQrModal(false)}
+                >
+                    <div
+                        className="w-full max-w-xs rounded-2xl border border-border bg-card p-5 text-center shadow-2xl space-y-4"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <h3 className="text-base font-bold text-foreground">모바일로 챌린지 열기</h3>
+                        <p className="text-xs text-muted-foreground">스마트폰 카메라로 QR 코드를 스캔하세요.</p>
+                        <div
+                            className="mx-auto flex size-52 items-center justify-center rounded-xl bg-white p-2 shadow-inner"
+                            dangerouslySetInnerHTML={{
+                                __html: generateChallengeQrSvg(challengeUrl, { size: 200 }),
+                            }}
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowQrModal(false)}
+                            className="w-full min-h-11 rounded-xl bg-primary text-xs font-bold text-primary-foreground shadow-md hover:bg-primary/90"
+                        >
+                            닫기
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -2,11 +2,13 @@ import { describe, expect, it } from 'vitest';
 import {
   SOLITAIRE_SUITS,
   applySolitaireMove,
+  autoCollectToFoundations,
   canPlaceOnFoundation,
   canPlaceOnTableau,
   createSolitaireDeck,
   dealSolitaire,
   explainSolitaireMove,
+  findSolitaireHint,
   isSolitaireWon,
   isValidTableauRun,
   listSolitaireMoves,
@@ -136,5 +138,22 @@ describe('Klondike solitaire engine', () => {
       state.foundations[suit] = Array.from({ length: 13 }, (_, index) => card(suit, index + 1));
     });
     expect(isSolitaireWon(state)).toBe(true);
+  });
+
+  it('suggests prioritized smart hints and auto-collects cards to foundations', () => {
+    const state = emptyState();
+    state.tableau[0] = [card('spades', 1)]; // Ace of spades on tableau
+    state.tableau[1] = [card('hearts', 1)]; // Ace of hearts on tableau
+
+    const hint = findSolitaireHint(state);
+    expect(hint).not.toBeNull();
+    expect(hint?.move.type).toBe('tableau-to-foundation');
+
+    const { nextState, count } = autoCollectToFoundations(state);
+    expect(count).toBe(2);
+    expect(nextState.foundations.spades).toHaveLength(1);
+    expect(nextState.foundations.hearts).toHaveLength(1);
+    expect(nextState.tableau[0]).toHaveLength(0);
+    expect(nextState.tableau[1]).toHaveLength(0);
   });
 });

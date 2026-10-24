@@ -149,6 +149,7 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
   const lastHudUpdateRef = useRef(0);
   const destroyedRef = useRef(0);
   const maxComboRef = useRef(0);
+  const targetPadXRef = useRef<number | null>(null);
   const restartRef = useRef<HTMLButtonElement | null>(null);
   const lastSaveAtRef = useRef(0);
   const restoredRef = useRef(false);
@@ -245,6 +246,17 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
     const padY = BRICK_BREAKER_BOARD.paddleY;
     const frameNow = now ?? performance.now();
     const deltaMs = lastFrame.current === null ? 0 : frameNow - lastFrame.current;
+
+    // Apply Touch/Mouse Lerp Damper for arcade smoothness
+    if (targetPadXRef.current !== null && !pausedRef.current) {
+      const diff = targetPadXRef.current - gs.padX;
+      if (Math.abs(diff) > 0.4) {
+        moveBrickBreakerPaddle(gs, gs.padX + diff * 0.35);
+      } else {
+        moveBrickBreakerPaddle(gs, targetPadXRef.current);
+      }
+    }
+
     const scale = pausedRef.current ? 0 : Math.min(Math.max(0, deltaMs), BRICK_BREAKER_TIME.maxDeltaMs) / BRICK_BREAKER_TIME.fixedStepMs;
     lastFrame.current = frameNow;
     const events = pausedRef.current ? [] : stepBrickBreaker(gs, deltaMs);
@@ -416,6 +428,7 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
       particles: [],
     };
     gsRef.current = gs;
+    targetPadXRef.current = gs.padX;
     scoreRef.current = 0; levelRef.current = 1;
     destroyedRef.current = 0; maxComboRef.current = 0; lastHudUpdateRef.current = 0;
     lastSaveAtRef.current = 0;
@@ -452,16 +465,17 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
   }, [teardownDebris]);
 
   const steer = useCallback((clientX: number) => {
-    const canvas = canvasRef.current; const gs = gsRef.current;
-    if (!canvas || !gs) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
-    moveBrickBreakerPaddle(gs, ((clientX - rect.left) / rect.width) * W);
+    targetPadXRef.current = ((clientX - rect.left) / rect.width) * W;
   }, []);
 
   const steerByKeyboard = useCallback((direction: -1 | 1) => {
     const gs = gsRef.current;
     if (!gs || phaseRef.current !== "playing") return;
-    moveBrickBreakerPaddle(gs, gs.padX + direction * 24);
+    targetPadXRef.current = gs.padX + direction * 24;
+    moveBrickBreakerPaddle(gs, targetPadXRef.current);
   }, []);
 
   const launch = useCallback(() => {
@@ -539,7 +553,12 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
           role="application"
           aria-label={`${t.title}. ${t.controls}`}
           onPointerMove={(e) => phaseRef.current === "playing" && steer(e.clientX)}
-          onPointerDown={(e) => { if (phaseRef.current === "playing") steer(e.clientX); }}
+          onPointerDown={(e) => {
+            if (phaseRef.current === "playing") {
+              steer(e.clientX);
+              if (gsRef.current && !gsRef.current.launched) launch();
+            }
+          }}
           onKeyDown={(event) => {
             if (event.key === "ArrowLeft" || event.key === "ArrowRight" || event.key === " " || event.key === "p" || event.key === "P" || event.key === "Escape") event.preventDefault();
             if (event.key === "ArrowLeft") steerByKeyboard(-1);
@@ -556,7 +575,7 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
         )}
 
         {phase === "playing" && (
-          <div className="pointer-events-none absolute left-2 top-2 flex gap-2 text-[11px] font-bold text-white/90" aria-hidden="true">
+          <div className="pointer-events-none absolute left-2 top-2 flex gap-2 text-xs font-bold text-white/90" aria-hidden="true">
             <span>{t.level} {level}</span>
             <span>{"❤️".repeat(Math.max(0, lives))}</span>
             {combo > 1 && <span className="rounded bg-white/15 px-1.5 text-amber-200">{combo}× {t.combo}</span>}

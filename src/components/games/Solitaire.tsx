@@ -8,8 +8,10 @@ import { dayIndex, todayKey, previousDayKey } from '../../lib/games/daily';
 import {
   SOLITAIRE_SUITS,
   applySolitaireMove,
+  autoCollectToFoundations,
   createSeededSolitaireDeal,
   explainSolitaireMove,
+  findSolitaireHint,
   isSolitaireWon,
   isValidTableauRun,
   type SolitaireMove,
@@ -148,6 +150,7 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
   const [isNewBest, setIsNewBest] = useState(false);
   const [legacyMigrated, setLegacyMigrated] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [hintMessage, setHintMessage] = useState<string | null>(null);
   const [muted, setMuted] = useState<boolean>(() => {
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
@@ -206,6 +209,7 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     setLegacyMigrated(false);
     startedAt.current = null;
     setAnnouncement(t.instructions);
+    setHintMessage(null);
     setBestTime(getBestForConditions('solitaire', conditionsFor(nextMode, seed, today, 'none'))?.value ?? null);
   }, [conditionsFor, t.instructions]);
 
@@ -312,6 +316,46 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     });
   }, [conditionsFor, dailyDate, mode, t.undone]);
 
+  const requestHint = useCallback(() => {
+    if (won) return;
+    const hint = findSolitaireHint(game);
+    if (!hint) {
+      setAnnouncement('더 이상 둘 수 있는 수가 없습니다.');
+      setHintMessage('더 이상 이동 가능한 수가 없습니다.');
+      return;
+    }
+    setHintMessage(hint.description);
+    setAnnouncement(`힌트: ${hint.description}`);
+    if (hint.sourceColumn !== undefined) {
+      const col = game.tableau[hint.sourceColumn];
+      if (col?.length) {
+        setSelection({ type: 'tableau', column: hint.sourceColumn, cardIndex: col.length - 1 });
+      }
+    }
+    if (!mutedRef.current) {
+      audioRef.current?.playCardSlide();
+    }
+  }, [game, won]);
+
+  const autoFinish = useCallback(() => {
+    if (won) return;
+    const { nextState, count } = autoCollectToFoundations(game);
+    if (count === 0) {
+      setAnnouncement('현재 파운데이션으로 바로 올릴 수 있는 카드가 없습니다.');
+      return;
+    }
+    setUndoStack((stack) => [...stack, game]);
+    moveMadeRef.current = true;
+    if (startedAt.current === null) startedAt.current = performance.now();
+    setMoves((m) => m + count);
+    setGame(nextState);
+    setHintMessage(null);
+    setAnnouncement(`${count}장의 카드를 파운데이션으로 자동 수납했습니다.`);
+    if (!mutedRef.current) {
+      audioRef.current?.playFoundationSnap();
+    }
+  }, [game, won]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
@@ -324,11 +368,14 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
       } else if ((e.key === 'z' || e.key === 'Z') && !e.shiftKey) {
         e.preventDefault();
         undo();
+      } else if (e.key === 'h' || e.key === 'H') {
+        e.preventDefault();
+        requestHint();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [togglePortal, undo]);
+  }, [requestHint, togglePortal, undo]);
 
   const chooseTableau = (column: number, cardIndex?: number) => {
     const pile = game.tableau[column];
@@ -445,6 +492,16 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
               title="Undo (Z)">
               ↩︎ {t.undo}
             </button>
+            <button type="button" onClick={requestHint} disabled={won}
+              className="min-h-11 rounded-lg border border-border px-3 py-2 text-xs font-bold text-muted-foreground transition-colors hover:bg-muted disabled:opacity-40 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              title="힌트 (H)">
+              💡 힌트
+            </button>
+            <button type="button" onClick={autoFinish} disabled={won}
+              className="min-h-11 rounded-lg border border-primary/40 bg-primary/5 px-3 py-2 text-xs font-bold text-primary transition-colors hover:bg-primary/10 disabled:opacity-40 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              title="파운데이션 자동 수납">
+              ⚡ 자동 수납
+            </button>
             <button type="button" onClick={() => setMuted((m) => !m)} aria-pressed={muted}
               className="min-h-11 rounded-lg border border-border px-3 py-2 text-xs font-bold text-muted-foreground transition-colors hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               aria-label={muted ? '소리 켜기' : '소리 끄기'}
@@ -461,8 +518,15 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             </button>
           </div>
 
+        {hintMessage && (
+          <div className="flex items-center justify-between rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary">
+            <span>💡 <strong>힌트:</strong> {hintMessage}</span>
+            <button type="button" onClick={() => setHintMessage(null)} className="ml-2 font-bold opacity-60 hover:opacity-100" aria-label="닫기">✕</button>
+          </div>
+        )}
+
         {mode === 'daily' && streak && streak.played > 0 && (
-          <p className="text-[11px] font-bold text-muted-foreground">🔥 {t.streak} {streak.currentStreak} · {t.best} {streak.maxStreak}</p>
+          <p className="text-xs font-bold text-muted-foreground">🔥 {t.streak} {streak.currentStreak} · {t.best} {streak.maxStreak}</p>
         )}
 
         <div className="flex flex-wrap items-start justify-between gap-3">

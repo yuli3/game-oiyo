@@ -36,6 +36,10 @@ describe("share-card module", () => {
       expect(resolveRankTier("minesweeper", 50)).toBe("SAPPER");
       expect(resolveRankTier("minesweeper", 100)).toBe("EXPERT");
       expect(resolveRankTier("minesweeper", 150)).toBe("SWEEPER");
+      expect(resolveRankTier("block-burst", 5200)).toBe("GRANDMASTER");
+      expect(resolveRankTier("block-burst", 3500)).toBe("ARCHITECT");
+      expect(resolveRankTier("block-burst", 1200)).toBe("STACKER");
+      expect(resolveRankTier("block-burst", 400)).toBe("APPRENTICE");
     });
   });
 

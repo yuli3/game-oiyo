@@ -153,3 +153,61 @@ export function writeMutedPref(key: string, muted: boolean, storage?: AudioStora
     store?.setItem(key, muted ? "1" : "0");
   } catch { /* private mode */ }
 }
+
+export type FanfareStyle = "triumph" | "celestial" | "retro-arcade" | "defeat";
+
+export interface FanfareChord {
+  delayMs: number;
+  frequencies: readonly number[];
+  durationS: number;
+  volume: number;
+}
+
+export const POLYPHONIC_FANFARES: Record<FanfareStyle, readonly FanfareChord[]> = {
+  triumph: [
+    { delayMs: 0, frequencies: [523.25, 659.25], durationS: 0.12, volume: 0.04 },
+    { delayMs: 110, frequencies: [659.25, 783.99], durationS: 0.14, volume: 0.04 },
+    { delayMs: 220, frequencies: [783.99, 1046.5], durationS: 0.18, volume: 0.045 },
+    { delayMs: 360, frequencies: [523.25, 659.25, 783.99, 1046.5], durationS: 0.45, volume: 0.05 },
+  ],
+  celestial: [
+    { delayMs: 0, frequencies: [587.33, 880.0], durationS: 0.15, volume: 0.035 },
+    { delayMs: 120, frequencies: [659.25, 1046.5], durationS: 0.18, volume: 0.04 },
+    { delayMs: 260, frequencies: [783.99, 1174.66], durationS: 0.22, volume: 0.045 },
+    { delayMs: 420, frequencies: [587.33, 783.99, 1174.66, 1567.98], durationS: 0.55, volume: 0.05 },
+  ],
+  "retro-arcade": [
+    { delayMs: 0, frequencies: [440, 554.37], durationS: 0.08, volume: 0.04 },
+    { delayMs: 70, frequencies: [554.37, 659.25], durationS: 0.08, volume: 0.04 },
+    { delayMs: 140, frequencies: [659.25, 880.0], durationS: 0.1, volume: 0.045 },
+    { delayMs: 220, frequencies: [880.0, 1108.73], durationS: 0.12, volume: 0.05 },
+    { delayMs: 310, frequencies: [440, 659.25, 880.0, 1318.51], durationS: 0.35, volume: 0.055 },
+  ],
+  defeat: [
+    { delayMs: 0, frequencies: [440, 523.25], durationS: 0.18, volume: 0.04 },
+    { delayMs: 160, frequencies: [415.3, 493.88], durationS: 0.18, volume: 0.04 },
+    { delayMs: 320, frequencies: [392, 466.16], durationS: 0.22, volume: 0.045 },
+    { delayMs: 500, frequencies: [329.63, 392], durationS: 0.45, volume: 0.05 },
+  ],
+};
+
+export function playFanfare(
+  player: TonePlayer | null | undefined,
+  style: FanfareStyle = "triumph",
+  options?: { muted?: boolean; volumeScale?: number }
+): void {
+  if (!player || options?.muted) return;
+  const chords = POLYPHONIC_FANFARES[style] ?? POLYPHONIC_FANFARES.triumph;
+  const scale = options?.volumeScale ?? 1;
+  for (const chord of chords) {
+    for (const freq of chord.frequencies) {
+      setTimeout(() => {
+        try {
+          player.play(freq, chord.durationS, chord.volume * scale);
+        } catch {
+          // audio blocked
+        }
+      }, chord.delayMs);
+    }
+  }
+}

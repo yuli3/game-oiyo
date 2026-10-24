@@ -5,6 +5,8 @@ import {
   ZEN_MUSICBOX_CUES,
   CYBER_SYNTH_CUES,
   SOUND_PRESETS,
+  POLYPHONIC_FANFARES,
+  playFanfare,
   createCuePlayer,
   cueLift,
   readMutedPref,
@@ -12,6 +14,7 @@ import {
   type CoreCue,
   type CueNote,
   type CueTable,
+  type FanfareStyle,
 } from "./game-audio";
 import type { TonePlayer } from "./tone";
 
@@ -145,5 +148,35 @@ describe("createCuePlayer lifecycle", () => {
     expect(readMutedPref(key, storage)).toBe(true);
     writeMutedPref(key, false, storage);
     expect(readMutedPref(key, storage)).toBe(false);
+  });
+
+  describe("polyphonic fanfare engine", () => {
+    it("defines valid multi-oscillator chords for all 4 styles", () => {
+      const styles: FanfareStyle[] = ["triumph", "celestial", "retro-arcade", "defeat"];
+      for (const style of styles) {
+        const chords = POLYPHONIC_FANFARES[style];
+        expect(chords.length).toBeGreaterThanOrEqual(3);
+        for (const chord of chords) {
+          expect(chord.frequencies.length).toBeGreaterThanOrEqual(2);
+          for (const freq of chord.frequencies) {
+            expect(freq).toBeGreaterThan(50);
+            expect(freq).toBeLessThan(4000);
+          }
+          expect(chord.durationS).toBeGreaterThan(0.05);
+          expect(chord.volume).toBeGreaterThan(0);
+        }
+      }
+    });
+
+    it("safely invokes tone player frequencies without throwing", () => {
+      const played: number[] = [];
+      const mockPlayer: TonePlayer = {
+        play: (freq) => { played.push(freq); },
+        close: () => {},
+      };
+      playFanfare(mockPlayer, "triumph");
+      // Muted skips execution
+      playFanfare(mockPlayer, "triumph", { muted: true });
+    });
   });
 });

@@ -15,11 +15,19 @@ import {
   QrCode,
   X,
   Award,
+  Trophy,
 } from "lucide-react";
 import type { FlowPhase } from "../../../lib/games/game-flow";
 import type { SoundPresetName } from "../../../lib/games/game-audio";
 import { generateChallengeQrSvg } from "../../../lib/games/challenge-qr";
 import { ArcadePassModal } from "./ArcadePassModal";
+import { ArcadeTrophyModal } from "./ArcadeTrophyModal";
+import {
+  loadArcadePassProgress,
+  reportMissionProgress,
+  saveArcadePassProgress,
+} from "../../../lib/games/arcade-pass";
+import { todayKey } from "../../../lib/games/daily";
 
 export interface GameShellProps {
   title: string;
@@ -33,6 +41,7 @@ export interface GameShellProps {
   soundTheme?: SoundPresetName;
   onSelectSoundTheme?: (theme: SoundPresetName) => void;
   showArcadePassButton?: boolean;
+  gameSlug?: string;
   locale?: string;
   isImmersive: boolean;
   onTogglePortal: () => void;
@@ -105,6 +114,7 @@ export const GameShell: React.FC<GameShellProps> = ({
   challengeInfo,
   controlsHint,
   showArcadePassButton = true,
+  gameSlug,
   locale = "ko",
   extraHeaderActions,
   children,
@@ -115,6 +125,48 @@ export const GameShell: React.FC<GameShellProps> = ({
   const [showSoundMenu, setShowSoundMenu] = useState(false);
   const [showQrModal, setShowQrModal] = useState(false);
   const [showArcadePass, setShowArcadePass] = useState(false);
+  const [showTrophyModal, setShowTrophyModal] = useState(false);
+  const [missionToast, setMissionToast] = useState<{ title: string; xp: number } | null>(null);
+
+  // Auto-progress Arcade Pass Daily Missions on result phase
+  useEffect(() => {
+    if (phase !== "result") return;
+    const targetSlug = gameSlug || challengeUrl?.match(/\/games\/([^?]+)/)?.[1];
+    if (!targetSlug) return;
+
+    const numScore =
+      typeof score === "number"
+        ? score
+        : typeof score === "string"
+        ? parseInt(score.replace(/,/g, ""), 10)
+        : 1;
+
+    const today = todayKey();
+    const currentProgress = loadArcadePassProgress(today);
+    const pendingBefore = currentProgress.missions.filter(
+      (m) => m.gameSlug === targetSlug && !m.completed
+    );
+    if (pendingBefore.length === 0) return;
+
+    const nextProgress = reportMissionProgress(
+      currentProgress,
+      targetSlug,
+      Number.isFinite(numScore) && numScore > 0 ? numScore : 1
+    );
+    saveArcadePassProgress(nextProgress);
+
+    const newlyCompleted = nextProgress.missions.find(
+      (m) => m.gameSlug === targetSlug && m.completed && pendingBefore.some((p) => p.id === m.id)
+    );
+
+    if (newlyCompleted) {
+      const loc = locale in newlyCompleted.title ? locale : "ko";
+      setMissionToast({
+        title: newlyCompleted.title[loc] ?? newlyCompleted.title.ko ?? "데일리 미션",
+        xp: newlyCompleted.xpReward,
+      });
+    }
+  }, [phase, gameSlug, challengeUrl, score, locale]);
 
   // Keyboard navigation for Pause/Mute/Fullscreen
   useEffect(() => {
@@ -267,6 +319,17 @@ export const GameShell: React.FC<GameShellProps> = ({
 
           <button
             type="button"
+            onClick={() => setShowTrophyModal(true)}
+            aria-label="명예의 전당 (Trophies)"
+            title="명예의 전당 (Trophies)"
+            className="flex min-h-11 items-center gap-1 rounded-xl border border-warning/40 bg-warning/10 px-2.5 py-2 text-xs font-black text-warning hover:bg-warning/20 focus-visible:ring-2 focus-visible:ring-warning"
+          >
+            <Trophy className="size-4" />
+            <span className="hidden sm:inline font-mono text-xs">TROPHY</span>
+          </button>
+
+          <button
+            type="button"
             onClick={onToggleMute}
             aria-pressed={muted}
             aria-label={muted ? portalLabels.unmute : portalLabels.mute}
@@ -370,6 +433,12 @@ export const GameShell: React.FC<GameShellProps> = ({
               <h4 className="text-2xl font-black text-foreground">{resultTitle ?? "ROUND COMPLETE"}</h4>
               {resultSubtitle && <p className="text-xs text-muted-foreground">{resultSubtitle}</p>}
 
+              {missionToast && (
+                <div className="rounded-xl border border-primary/40 bg-primary/10 p-2.5 text-center text-xs font-bold text-primary animate-in fade-in slide-in-from-top-2 duration-300">
+                  🎯 데일리 미션 달성! <strong>{missionToast.title}</strong> (+{missionToast.xp} XP)
+                </div>
+              )}
+
               {/* Rival Challenge Outcome Banner */}
               {challengeInfo && challengeInfo.outcome !== "solo" && (
                 <div
@@ -470,6 +539,13 @@ export const GameShell: React.FC<GameShellProps> = ({
       <ArcadePassModal
         isOpen={showArcadePass}
         onClose={() => setShowArcadePass(false)}
+        locale={locale}
+      />
+
+      {/* ── Studio Trophy Cabinet Modal ── */}
+      <ArcadeTrophyModal
+        isOpen={showTrophyModal}
+        onClose={() => setShowTrophyModal(false)}
         locale={locale}
       />
 

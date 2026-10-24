@@ -1,11 +1,13 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { dayIndex, mulberry32, previousDayKey, todayKey } from '../../lib/games/daily';
 import { getDailyStreak, recordDailyWin, type DailyStreak } from '../../lib/games/records';
 import {
+    autoMarkAdjacentWhites,
     generateKurodokoPuzzle,
+    getKurodokoConflicts,
     kurodokoDailySeed,
     validateKurodokoBoard,
     type KurodokoCell as Cell,
@@ -223,6 +225,20 @@ const Kurodoko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         playTone('move', muted);
     };
 
+    const conflicts = useMemo(() => getKurodokoConflicts(playableBoard(board), puzzle), [board, puzzle]);
+
+    const handleAutoMark = () => {
+        if (validation.complete) return;
+        const { nextMarks, changedCount } = autoMarkAdjacentWhites(board);
+        if (changedCount === 0) return;
+        setHistory((items) => [...items.slice(-49), board.map((row) => [...row])]);
+        setBoard(nextMarks);
+        setMoves((m) => m + 1);
+        const v = validateKurodokoBoard(playableBoard(nextMarks), puzzle);
+        setValidation(v);
+        playTone(v.complete ? 'win' : 'move', muted);
+    };
+
     const size = puzzle.length;
     const cellCls = size <= 5 ? 'text-xl' : size <= 6 ? 'text-lg' : 'text-base';
 
@@ -273,6 +289,11 @@ const Kurodoko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         ))}
                     </div>
                     <div className="ml-auto flex items-center gap-1.5">
+                        <button type="button" onClick={handleAutoMark} disabled={validation.complete}
+                            title="검은 칸 주변을 흰색으로 자동 마킹"
+                            className="min-h-11 rounded-lg border border-primary/30 bg-primary/5 px-2.5 text-xs font-bold text-primary transition-colors hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                            ⚡ 자동 마킹
+                        </button>
                         <button type="button" onClick={undo} disabled={history.length === 0 || validation.complete}
                             className="min-h-11 rounded-lg border border-border px-3 text-xs font-bold text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                             ↶ {a11y.undo}
@@ -303,8 +324,7 @@ const Kurodoko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             )}
 
             <div
-                className={`grid gap-0.5 sm:gap-1 p-1 sm:p-2 bg-muted/30 rounded-xl border border-border mx-auto max-w-sm overflow-x-auto ${validation.complete ? 'ring-2 ring-success' : ''}`}
-                style={{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` }}
+                className={`grid gap-0.5 sm:gap-1 p-1 sm:p-2 bg-muted/30 rounded-xl border border-border mx-auto max-w-sm overflow-x-auto ${validation.complete ? 'ring-2 ring-success' : ''} ${size === 5 ? 'grid-cols-5' : size === 6 ? 'grid-cols-6' : 'grid-cols-7'}`}
                 role="grid" aria-label={t.title} aria-rowcount={size} aria-colcount={size}
             >
                 {board.map((row, r) => (
@@ -315,24 +335,34 @@ const Kurodoko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                             const position = `${a11y.row} ${r + 1}, ${a11y.column} ${c + 1}`;
                             const common = `min-h-11 min-w-11 aspect-square flex items-center justify-center rounded-md font-black ${cellCls} border transition-all motion-reduce:transition-none motion-reduce:transform-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset`;
                             if (n !== null) {
+                                const key = `${r}-${c}`;
+                                const isSatisfied = conflicts.satisfiedClues.has(key);
+                                const isBroken = conflicts.brokenClues.has(key);
+                                const clueToneCls = isBroken
+                                    ? 'border-destructive bg-destructive/10 text-destructive ring-1 ring-destructive'
+                                    : isSatisfied
+                                        ? 'border-success/80 bg-success/10 text-success'
+                                        : 'bg-card border-2 border-foreground/60 text-foreground';
                                 return (
                                     <div key={`${r}-${c}`} ref={(node) => { cellRefs.current[index] = node; }} role="gridcell"
                                         tabIndex={activeCell === index ? 0 : -1} aria-rowindex={r + 1} aria-colindex={c + 1}
-                                        aria-label={`${position}: ${a11y.clue} ${n}`} onFocus={() => setActiveCell(index)}
+                                        aria-label={`${position}: ${a11y.clue} ${n}${isSatisfied ? ' (충족)' : isBroken ? ' (시야 부족)' : ''}`} onFocus={() => setActiveCell(index)}
                                         onKeyDown={(event) => handleGridKeyDown(event, index)}
-                                        className={`${common} bg-card border-2 border-foreground/60 text-foreground cursor-default`}>
+                                        className={`${common} ${clueToneCls} cursor-default`}>
                                         {n}
                                     </div>
                                 );
                             }
+                            const isAdjacentConflict = cell === 1 && conflicts.adjacentBlacks.has(`${r}-${c}`);
+                            const conflictBorderCls = isAdjacentConflict ? 'border-destructive ring-2 ring-destructive animate-pulse' : '';
                             return (
                                 <button key={`${r}-${c}`} ref={(node) => { cellRefs.current[index] = node; }} type="button" role="gridcell"
                                     onClick={() => { setActiveCell(index); toggle(r, c); }}
                                     onContextMenu={(event) => { event.preventDefault(); setActiveCell(index); toggle(r, c, true); }} aria-disabled={validation.complete}
                                     tabIndex={activeCell === index ? 0 : -1} aria-rowindex={r + 1} aria-colindex={c + 1}
-                                    aria-label={`${position}: ${cell === 1 ? a11y.black : cell === 0 ? a11y.white : a11y.unknown}`}
+                                    aria-label={`${position}: ${cell === 1 ? a11y.black : cell === 0 ? a11y.white : a11y.unknown}${isAdjacentConflict ? ' (인접 검은 칸 충돌)' : ''}`}
                                     onFocus={() => setActiveCell(index)} onKeyDown={(event) => handleGridKeyDown(event, index)}
-                                    className={`${common} relative overflow-hidden ${cell === 1 ? 'border-foreground shadow-inner' : cell === 0 ? 'bg-primary/10 border-primary/40 text-primary' : 'bg-background border-border hover:bg-muted motion-safe:active:scale-95'}`}>
+                                    className={`${common} ${conflictBorderCls} relative overflow-hidden ${cell === 1 ? 'border-foreground shadow-inner' : cell === 0 ? 'bg-primary/10 border-primary/40 text-primary' : 'bg-background border-border hover:bg-muted motion-safe:active:scale-95'}`}>
                                     {cell === 1 && <img src={LOGIC_CELL_SPRITES.black} alt="" draggable={false} className="pointer-events-none absolute inset-0 h-full w-full object-cover" />}
                                     {cell === 0 && <span aria-hidden="true" className="block size-2 rounded-full bg-primary/70" />}
                                 </button>

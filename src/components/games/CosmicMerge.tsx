@@ -30,6 +30,7 @@ import {
 } from "../../lib/games/cosmic-merge";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { GameShell } from "../ui/game/GameShell";
+import { buildChallengeUrl } from "../../lib/games/seed-challenge";
 import type { FlowPhase } from "../../lib/games/game-flow";
 import { getGlobalBgmController } from "../../lib/games/bgm";
 import {
@@ -37,6 +38,13 @@ import {
   copyShareCardToClipboard,
   downloadShareCard,
 } from "../../lib/games/share-card";
+import {
+  createScreenShakeEngine,
+  addScreenShakeTrauma,
+  stepScreenShake,
+  sampleScreenShakeOffset,
+  type ScreenShakeEngine,
+} from "../../lib/games/screen-shake";
 
 interface Props {
   locale?: Locale;
@@ -60,6 +68,15 @@ interface FloatingScore {
   color: string;
   life: number;
   maxLife: number;
+}
+
+interface ShockwaveRing {
+  x: number;
+  y: number;
+  radius: number;
+  maxRadius: number;
+  color: string;
+  alpha: number;
 }
 
 interface CelestialUserData {
@@ -261,7 +278,11 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
   const lastDropTimeRef = useRef<number>(0);
   const dangerTimerRef = useRef<number | null>(null);
   const particlesRef = useRef<StardustParticle[]>([]);
+  const shockwavesRef = useRef<ShockwaveRing[]>([]);
   const floatingScoresRef = useRef<FloatingScore[]>([]);
+  const shakeEngineRef = useRef<ScreenShakeEngine>(
+    createScreenShakeEngine({ maxOffsetPx: 14, maxAngleDeg: 2.5, decayRate: 1.6 })
+  );
   const shakeRef = useRef<number>(0);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const mutedRef = useRef(false);
@@ -439,9 +460,19 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
     },
   });
 
-  // Spawn visual particle explosion
+  // Spawn visual particle explosion and shockwave ring
   const spawnMergeParticles = (x: number, y: number, color: string, tier: number) => {
-    const count = 10 + tier * 2;
+    const nextTierRadius = COSMIC_TIERS[tier]?.radius ?? 30;
+    shockwavesRef.current.push({
+      x,
+      y,
+      radius: nextTierRadius * 0.4,
+      maxRadius: nextTierRadius * 2.2,
+      color,
+      alpha: 0.85,
+    });
+
+    const count = 12 + tier * 3;
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2;
       const speed = 1.5 + Math.random() * (2.5 + tier * 0.4);
@@ -590,7 +621,8 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
               // Effects
               spawnMergeParticles(midX, midY, nextTierData.color, mergeResult.nextTier);
               addFloatingScore(midX, midY, mergeResult.addedScore, nextTierData.color);
-              shakeRef.current = Math.min(shakeRef.current + 3 + mergeResult.nextTier * 0.5, 12);
+              const trauma = Math.min(0.85, 0.2 + (mergeResult.nextTier / MAX_TIER_INDEX) * 0.65);
+              shakeEngineRef.current = addScreenShakeTrauma(shakeEngineRef.current, trauma);
               playMergeSound(mergeResult.nextTier);
               vibrate(mergeResult.nextTier >= 7 ? [15, 20, 30] : 18);
 
@@ -904,12 +936,11 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
           ctx.save();
           ctx.scale((displayW * dpr) / ARENA_WIDTH, (displayH * dpr) / ARENA_HEIGHT);
 
-          // Apply screen shake
-          if (shakeRef.current > 0) {
-            const mag = shakeRef.current;
-            ctx.translate((Math.random() - 0.5) * mag, (Math.random() - 0.5) * mag);
-            shakeRef.current = Math.max(0, shakeRef.current - 0.4);
-          }
+          // Apply Unity-style Trauma screen shake
+          shakeEngineRef.current = stepScreenShake(shakeEngineRef.current, dt);
+          const shakeOffset = sampleScreenShakeOffset(shakeEngineRef.current, currentTime / 1000);
+          ctx.translate(shakeOffset.offsetX, shakeOffset.offsetY);
+          ctx.rotate((shakeOffset.rotationDeg * Math.PI) / 180);
 
           // Background deep space
           ctx.fillStyle = "#040711";
@@ -1069,6 +1100,27 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
             }
           }
 
+          // Draw expanding shockwave rings
+          for (let i = shockwavesRef.current.length - 1; i >= 0; i--) {
+            const sw = shockwavesRef.current[i];
+            sw.radius += (sw.maxRadius - sw.radius) * 0.18 + 0.6;
+            sw.alpha -= 0.045;
+            if (sw.alpha <= 0 || sw.radius >= sw.maxRadius) {
+              shockwavesRef.current.splice(i, 1);
+              continue;
+            }
+            ctx.save();
+            ctx.strokeStyle = sw.color;
+            ctx.globalAlpha = Math.max(0, sw.alpha);
+            ctx.lineWidth = 3;
+            ctx.shadowColor = sw.color;
+            ctx.shadowBlur = 10;
+            ctx.beginPath();
+            ctx.arc(sw.x, sw.y, sw.radius, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+          }
+
           // Update & draw particles
           for (let i = particlesRef.current.length - 1; i >= 0; i--) {
             const p = particlesRef.current[i];
@@ -1149,6 +1201,13 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
       shareCopied={shareCopied}
       onShareCard={handleShareCard}
       shareCardCopied={shareCardCopied}
+      challengeUrl={buildChallengeUrl({
+        baseUrl: typeof window !== "undefined" ? window.location.origin : "https://game.oiyo.net",
+        locale,
+        slug: "cosmic-merge",
+        seed: 1,
+        score,
+      })}
       controlsHint={t.controlsHint}
       extraHeaderActions={
         <div className="flex items-center gap-1.5 pointer-events-auto">

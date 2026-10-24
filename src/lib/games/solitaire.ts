@@ -202,6 +202,163 @@ export function isSolitaireWon(state: SolitaireState): boolean {
   return SOLITAIRE_SUITS.every((suit) => state.foundations[suit].length === 13);
 }
 
+export type SolitaireHint = {
+  move: SolitaireMove;
+  description: string;
+  sourceColumn?: number;
+  targetColumn?: number;
+  suit?: SolitaireSuit;
+};
+
+export function findSolitaireHint(state: SolitaireState): SolitaireHint | null {
+  // 1. Foundation move from tableau
+  for (let from = 0; from < state.tableau.length; from += 1) {
+    const pile = state.tableau[from];
+    const top = pile[pile.length - 1];
+    if (top && top.isFaceUp && canPlaceOnFoundation(top, state.foundations[top.suit])) {
+      return {
+        move: { type: 'tableau-to-foundation', from },
+        description: `${top.value} ${top.suit} 카드를 파운데이션으로 올릴 수 있습니다.`,
+        sourceColumn: from,
+        suit: top.suit,
+      };
+    }
+  }
+
+  // 2. Foundation move from waste
+  const wasteCard = state.waste[state.waste.length - 1];
+  if (wasteCard && canPlaceOnFoundation(wasteCard, state.foundations[wasteCard.suit])) {
+    return {
+      move: { type: 'waste-to-foundation' },
+      description: `덱에서 뽑은 ${wasteCard.value} ${wasteCard.suit} 카드를 파운데이션으로 올립니다.`,
+      suit: wasteCard.suit,
+    };
+  }
+
+  // 3. Flip face-down card
+  for (let col = 0; col < state.tableau.length; col += 1) {
+    const pile = state.tableau[col];
+    const top = pile[pile.length - 1];
+    if (top && !top.isFaceUp) {
+      return {
+        move: { type: 'flip', column: col },
+        description: `${col + 1}번 열의 뒷면 카드를 뒤집을 수 있습니다.`,
+        sourceColumn: col,
+      };
+    }
+  }
+
+  // 4. Tableau to tableau that uncovers face-down card
+  for (let from = 0; from < state.tableau.length; from += 1) {
+    const pile = state.tableau[from];
+    if (!pile.some((c) => !c.isFaceUp)) continue;
+
+    for (let cardIndex = 0; cardIndex < pile.length; cardIndex += 1) {
+      if (!pile[cardIndex].isFaceUp || cardIndex === 0) continue;
+      const run = pile.slice(cardIndex);
+      if (!isValidTableauRun(run)) continue;
+      for (let to = 0; to < state.tableau.length; to += 1) {
+        if (to === from) continue;
+        if (canPlaceOnTableau(run[0], state.tableau[to])) {
+          return {
+            move: { type: 'tableau-to-tableau', from, cardIndex, to },
+            description: `${pile[cardIndex].value} 카드를 ${to + 1}번 열로 옮겨 뒷면 카드를 엽니다.`,
+            sourceColumn: from,
+            targetColumn: to,
+          };
+        }
+      }
+    }
+  }
+
+  // 5. Waste to tableau
+  if (wasteCard) {
+    for (let to = 0; to < state.tableau.length; to += 1) {
+      if (canPlaceOnTableau(wasteCard, state.tableau[to])) {
+        return {
+          move: { type: 'waste-to-tableau', to },
+          description: `덱의 ${wasteCard.value} ${wasteCard.suit} 카드를 ${to + 1}번 열로 배치합니다.`,
+          targetColumn: to,
+        };
+      }
+    }
+  }
+
+  // 6. Tableau to tableau reorganizing
+  for (let from = 0; from < state.tableau.length; from += 1) {
+    const pile = state.tableau[from];
+    for (let cardIndex = 0; cardIndex < pile.length; cardIndex += 1) {
+      if (!pile[cardIndex].isFaceUp) continue;
+      if (cardIndex === 0 && pile[cardIndex].power === 13) continue;
+      const run = pile.slice(cardIndex);
+      if (!isValidTableauRun(run)) continue;
+      for (let to = 0; to < state.tableau.length; to += 1) {
+        if (to === from) continue;
+        if (canPlaceOnTableau(run[0], state.tableau[to])) {
+          return {
+            move: { type: 'tableau-to-tableau', from, cardIndex, to },
+            description: `${pile[cardIndex].value} 카드를 ${to + 1}번 열로 연결합니다.`,
+            sourceColumn: from,
+            targetColumn: to,
+          };
+        }
+      }
+    }
+  }
+
+  // 7. Stock draw or recycle
+  if (state.stock.length > 0) {
+    return {
+      move: { type: 'draw' },
+      description: '덱에서 새 카드를 뽑습니다.',
+    };
+  }
+  if (state.waste.length > 0) {
+    return {
+      move: { type: 'recycle' },
+      description: '카드를 다시 뒤집어 덱을 순환합니다.',
+    };
+  }
+
+  return null;
+}
+
+export function autoCollectToFoundations(state: SolitaireState): { nextState: SolitaireState; count: number } {
+  let current = state;
+  let count = 0;
+  let movedInLoop = true;
+
+  while (movedInLoop) {
+    movedInLoop = false;
+    const waste = current.waste[current.waste.length - 1];
+    if (waste && canPlaceOnFoundation(waste, current.foundations[waste.suit])) {
+      const next = applySolitaireMove(current, { type: 'waste-to-foundation' });
+      if (next) {
+        current = next;
+        count += 1;
+        movedInLoop = true;
+        continue;
+      }
+    }
+
+    for (let col = 0; col < current.tableau.length; col += 1) {
+      const pile = current.tableau[col];
+      const top = pile[pile.length - 1];
+      if (top && top.isFaceUp && canPlaceOnFoundation(top, current.foundations[top.suit])) {
+        const next = applySolitaireMove(current, { type: 'tableau-to-foundation', from: col });
+        if (next) {
+          current = next;
+          count += 1;
+          movedInLoop = true;
+          break;
+        }
+      }
+    }
+  }
+
+  return { nextState: current, count };
+}
+
 // Deterministic deal for the shared daily board and replayable free games.
 // Local mulberry32 keeps this chunk independent of other game engines.
 export function createSeededSolitaireDeal(seed: number): SolitaireState {
