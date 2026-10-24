@@ -13,6 +13,7 @@ import {
   ANIMAL_TYPES,
   hasAnimalMove,
   reshuffleAnimalBoard,
+  detectSpecialMatches,
 } from "./animal-pop";
 describe("animal pop engine", () => {
   it("creates deterministic settled boards", () => {
@@ -120,5 +121,15 @@ describe("animal pop engine", () => {
     }
     expect(hasAnimalMove(board)).toBe(true);
     expect(shuffles).toBeGreaterThanOrEqual(0);
+  });
+
+  it("detects 4-match line blasts and 5-match rainbow stampedes", () => {
+    const board: string[][] = Array.from({ length: 7 }, () => Array(7).fill("🐱"));
+    board[0] = ["🐵", "🐵", "🐵", "🐵", "🐶", "🐶", "🐶"]; // row 0: 4-match of 🐵
+    board[2] = ["🐰", "🐰", "🐰", "🐰", "🐰", "🐤", "🐤"]; // row 2: 5-match of 🐰
+
+    const specials = detectSpecialMatches(board);
+    expect(specials.lineBlasts.some((b) => b.row === 0)).toBe(true);
+    expect(specials.rainbowKinds).toContain("🐰");
   });
 });

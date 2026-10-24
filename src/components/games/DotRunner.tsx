@@ -25,6 +25,20 @@ import {
     type DotRunnerState,
 } from '../../lib/games/dot-runner';
 
+import {
+    createGhostEnvelope,
+    loadGhostPB,
+    recordGhostPB,
+    sampleGhostPose,
+    type GhostEnvelope,
+    type GhostFrame,
+} from '../../lib/games/ghost-replay';
+
+export interface RunnerGhostPose {
+    y: number;
+    jumping: boolean;
+}
+
 type RunnerArt = Record<keyof typeof DOT_RUNNER_SPRITES, HTMLImageElement>;
 function loadRunnerArt(): RunnerArt | null {
     if (typeof Image === 'undefined') return null;
@@ -108,6 +122,8 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const seedRef = useRef<number | null>(null);
     const replayInputsRef = useRef<ReplayInput<DotRunnerReplayAction>[]>([]);
     const ghostTrackRef = useRef<number[]>([]);
+    const ghostPBRef = useRef<GhostEnvelope<RunnerGhostPose> | null>(null);
+    const recordedFramesRef = useRef<GhostFrame<RunnerGhostPose>[]>([]);
 
     const playTone = useCallback((kind: 'jump' | 'coin' | 'crash') => {
         if (mutedRef.current || typeof window === 'undefined') return;
@@ -161,7 +177,10 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         if (prior?.seed === seedRef.current) {
             try { if (verifyReplayEnvelope(prior, replayDotRunner)) ghostTrackRef.current = dotRunnerGhostTrack(prior); } catch { ghostTrackRef.current = []; }
         }
-        setHasGhost(ghostTrackRef.current.length > 0);
+        const ghostPB = loadGhostPB<RunnerGhostPose>('dot-runner');
+        ghostPBRef.current = ghostPB;
+        recordedFramesRef.current = [{ tick: 0, pose: { y: DOT_RUNNER_HEIGHT - DOT_RUNNER_GROUND - DOT_RUNNER_PLAYER_SIZE, jumping: false } }];
+        setHasGhost(Boolean((ghostPB && ghostPB.frames.length > 0) || ghostTrackRef.current.length > 0));
         game.current = createDotRunner(seedRef.current);
         setScore(0);
         setCoins(0);
@@ -220,6 +239,12 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     game.current = next;
                     accumulator -= 1;
                     steps += 1;
+                    if (Math.floor(next.elapsedFrames) % 4 === 0) {
+                        recordedFramesRef.current.push({
+                            tick: Math.floor(next.elapsedFrames),
+                            pose: { y: next.playerY, jumping: next.jumping },
+                        });
+                    }
                     setScore((previous) => previous === next.score ? previous : next.score);
                     const nextPace = getDotRunnerPace(next.elapsedFrames).level;
                     setPaceLevel((previous) => previous === nextPace ? previous : nextPace);
@@ -234,6 +259,22 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                                 const replay = createDotRunnerReplay(seedRef.current, next, replayInputsRef.current);
                                 if (verifyReplayEnvelope(replay, replayDotRunner)) saveReplayEnvelope(replay);
                             } catch { /* drifting runs never replace the PB replay */ }
+                        }
+                        if (next.score > 0) {
+                            try {
+                                const ghostCandidate = createGhostEnvelope<RunnerGhostPose>({
+                                    game: 'dot-runner',
+                                    score: next.score,
+                                    seed: seedRef.current ?? undefined,
+                                    durationMs: Math.round((next.elapsedFrames / 60) * 1000),
+                                    sampleIntervalTicks: 4,
+                                    frames: recordedFramesRef.current,
+                                });
+                                const res = recordGhostPB(ghostCandidate);
+                                if (res.isNewPB) {
+                                    ghostPBRef.current = res.pb;
+                                }
+                            } catch { /* storage fallback */ }
                         }
                         recordAchievementEvent('dot-runner', 'played');
                         if (beat && next.score > 0) recordAchievementEvent('dot-runner', 'personal-best');
@@ -262,8 +303,8 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             const art = artRef.current;
             const vis = 36;
             const playerY = current?.playerY ?? DOT_RUNNER_HEIGHT - DOT_RUNNER_GROUND - DOT_RUNNER_PLAYER_SIZE;
-            const drawRunner = (y: number, alpha = 1) => {
-                const frame = current?.jumping
+            const drawRunner = (y: number, alpha = 1, isGhost = false, isJumping = false) => {
+                const frame = isJumping
                     ? DOT_RUNNER_JUMP_FRAME
                     : sheetFrameIndex(DOT_RUNNER_RUN_SHEET, ((current?.elapsedFrames ?? 0) / 60) * 1000, prefersReducedMotion);
                 const dx = DOT_RUNNER_PLAYER_X + DOT_RUNNER_PLAYER_SIZE / 2 - vis / 2;
@@ -271,14 +312,37 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 ctx.save();
                 ctx.globalAlpha = alpha;
                 if (!art?.runnerSheet || !blitSheetFrame(ctx, art.runnerSheet, { ...DOT_RUNNER_RUN_SHEET, frameCount: 3 }, frame, dx, dy, vis, vis)) {
-                    ctx.fillStyle = alpha < 1 ? '#f59e0b' : '#3b82f6';
+                    ctx.fillStyle = isGhost ? '#a855f7' : (alpha < 1 ? '#f59e0b' : '#3b82f6');
                     ctx.fillRect(DOT_RUNNER_PLAYER_X, y, DOT_RUNNER_PLAYER_SIZE, DOT_RUNNER_PLAYER_SIZE);
+                } else if (isGhost) {
+                    ctx.fillStyle = '#a855f7';
+                    ctx.font = 'bold 9px sans-serif';
+                    ctx.fillText('PB', dx + 10, dy - 4);
                 }
                 ctx.restore();
             };
-            const ghostY = current ? ghostTrackRef.current[Math.floor(current.elapsedFrames)] : undefined;
-            if (Number.isFinite(ghostY)) drawRunner(ghostY!, 0.42);
-            drawRunner(playerY);
+
+            let ghostY: number | undefined;
+            let ghostJumping = false;
+            if (ghostPBRef.current && ghostPBRef.current.frames.length > 0 && current) {
+                const sampled = sampleGhostPose(
+                    ghostPBRef.current.frames,
+                    Math.floor(current.elapsedFrames),
+                    (a, b, t) => ({
+                        y: a.y + (b.y - a.y) * t,
+                        jumping: t > 0.5 ? b.jumping : a.jumping,
+                    })
+                );
+                if (sampled) {
+                    ghostY = sampled.y;
+                    ghostJumping = sampled.jumping;
+                }
+            } else if (current && Number.isFinite(ghostTrackRef.current[Math.floor(current.elapsedFrames)])) {
+                ghostY = ghostTrackRef.current[Math.floor(current.elapsedFrames)];
+            }
+
+            if (Number.isFinite(ghostY)) drawRunner(ghostY!, 0.38, true, ghostJumping);
+            drawRunner(playerY, 1, false, current?.jumping);
 
             for (const o of current?.obstacles ?? []) {
                 if (!art?.cactus || !art.cactus.complete || art.cactus.naturalWidth === 0) {
@@ -436,7 +500,7 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     )}
                 </div>
 
-                <p className="mt-4 text-center text-[10px] text-muted-foreground font-medium">{t.hint}</p>
+                <p className="mt-4 text-center text-xs text-muted-foreground font-medium">{t.hint}</p>
                 <p className="sr-only" role="status" aria-live="polite">{status === 'playing' ? `${t.playing}. ${t.score} ${score}. ${t.coins} ${coins}. ${t.pace} ${paceMultiplier}` : status === 'paused' ? t.paused : status === 'over' ? `${t.over} ${t.score} ${score}` : ''}</p>
             </GameContainer>
         </div>

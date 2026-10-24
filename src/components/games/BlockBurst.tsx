@@ -19,6 +19,7 @@ import {
   gravityMs,
   parseBurst,
   pieceCells,
+  rerollQueue,
   serializeBurst,
   settleLock,
   softDrop,
@@ -375,6 +376,7 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
   const [restored, setRestored] = useState(false);
   const [resolving, setResolving] = useState(false);
   const [bursting, setBursting] = useState<Cell[]>([]);
+  const [hasRerolled, setHasRerolled] = useState(false);
   const [flashRows, setFlashRows] = useState<number[]>([]);
   const [flashCols, setFlashCols] = useState<number[]>([]);
   const [shake, setShake] = useState(0);
@@ -517,6 +519,7 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
     setMode(nextMode);
     setRun(nextMode === "augment" ? createBurstRun(seed) : null);
     setGame(createBlockBurst(seed));
+    setHasRerolled(false);
     // An augment run opens on its first draft; gravity waits for the pick.
     setPhase(nextMode === "augment" ? "picking" : "playing");
     setRestored(false);
@@ -527,6 +530,13 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
     setBanner("");
     setGainPop(0);
     tone(520, 0.16);
+  };
+
+  const handleReroll = () => {
+    if (hasRerolled || game.status !== "playing" || resolving) return;
+    setGame((g) => rerollQueue(g));
+    setHasRerolled(true);
+    tone(600);
   };
 
   const finish = useCallback((next: BurstState) => {
@@ -935,6 +945,16 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
           </div>
           <div className="flex w-[4.5rem] flex-col gap-2">
             <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.next}</div>
+            {!hasRerolled && game.status === "playing" && phase === "playing" && (
+              <button
+                type="button"
+                onClick={handleReroll}
+                className="rounded-lg border border-primary/40 bg-primary/10 px-1 py-0.5 text-xs font-black text-primary hover:bg-primary/20 transition-colors"
+                title="Reroll Queue (1x)"
+              >
+                🎲 Reroll
+              </button>
+            )}
             {game.queue.map((piece, i) => (
               <div key={`${piece.shape}-${i}`} className="grid aspect-square grid-cols-4 gap-0.5 rounded-xl border border-border bg-card p-1">
                 {Array.from({ length: 16 }, (_, n) => {

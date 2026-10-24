@@ -28,10 +28,11 @@ import {
   game2048Analysis,
   moveGame2048,
   restoreGame2048,
+  undoGame2048,
   type Game2048Direction,
   type Game2048State,
 } from "../../lib/games/game-2048";
-import Game2048PixiCanvas from "./Game2048PixiCanvas";
+import Game2048PixiCanvas, { type Game2048Theme } from "./Game2048PixiCanvas";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import type { Locale } from "../../lib/i18n";
 import {
@@ -71,6 +72,7 @@ const COPY = {
     challengeWon: "도전 성공!",
     challengeLost: "도전 실패",
     rival: "상대",
+    undo: "실행 취소",
   },
   en: {
     title: "2048 Game",
@@ -84,6 +86,7 @@ const COPY = {
     challengeWon: "Challenge Won!",
     challengeLost: "Challenge Lost",
     rival: "Rival",
+    undo: "Undo",
   },
   ja: {
     title: "2048ゲーム",
@@ -97,6 +100,7 @@ const COPY = {
     challengeWon: "挑戦成功！",
     challengeLost: "挑戦失敗",
     rival: "ライバル",
+    undo: "元に戻す",
   },
   zh: {
     title: "2048游戏",
@@ -110,6 +114,7 @@ const COPY = {
     challengeWon: "挑战成功！",
     challengeLost: "挑战失败",
     rival: "对手",
+    undo: "撤销",
   },
   fr: {
     title: "Jeu 2048",
@@ -123,6 +128,7 @@ const COPY = {
     challengeWon: "Défi réussi !",
     challengeLost: "Défi perdu",
     rival: "Adversaire",
+    undo: "Annuler",
   },
   es: {
     title: "Juego 2048",
@@ -136,6 +142,7 @@ const COPY = {
     challengeWon: "¡Desafío superado!",
     challengeLost: "Desafío no superado",
     rival: "Rival",
+    undo: "Deshacer",
   },
 } as const;
 
@@ -207,6 +214,7 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
   const [hasGhost, setHasGhost] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   const [shareCardCopied, setShareCardCopied] = useState(false);
+  const [theme, setTheme] = useState<Game2048Theme>("neon");
 
   // Challenge Rival State
   const [challengerScore, setChallengerScore] = useState<number | undefined>();
@@ -431,6 +439,15 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
   const ghostBoard = ghostBoardsRef.current[game.moves];
   const challengeEval = evaluateChallengeResult(game.score, challengerScore);
 
+  const canUndo = (game.history?.length ?? 0) > 0 && phase === "play" && game.status === "playing";
+
+  const handleUndo = useCallback(() => {
+    if (!canUndo) return;
+    setGame((prev) => undoGame2048(prev));
+    cue("tap");
+    hapticsRef.current.fire("tap");
+  }, [canUndo, cue]);
+
   // Social Challenge Link Sharing
   const handleShareChallenge = useCallback(() => {
     const currentSeed = seedRef.current ?? 1;
@@ -522,6 +539,16 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
       shareCopied={shareCopied}
       onShareCard={handleShareCard}
       shareCardCopied={shareCardCopied}
+      challengeUrl={buildChallengeUrl({
+        baseUrl:
+          typeof window !== "undefined"
+            ? window.location.origin
+            : "https://game.oiyo.net",
+        locale,
+        slug: "game-2048",
+        seed: seedRef.current ?? 1,
+        score: game.score,
+      })}
       challengeInfo={
         challengerScore !== undefined
           ? {
@@ -545,12 +572,49 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
         ) : null
       }
     >
+      {/* Undo & Visual Theme Controls */}
+      <div className="mx-auto mb-3 flex w-full max-w-sm items-center justify-between gap-2 px-1">
+        <button
+          type="button"
+          onClick={handleUndo}
+          disabled={!canUndo}
+          className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card/60 px-3 py-1.5 text-xs font-bold text-foreground transition-all hover:bg-muted active:scale-95 disabled:pointer-events-none disabled:opacity-40"
+          aria-label={t.undo}
+        >
+          <span aria-hidden="true">⤺</span>
+          <span>{t.undo}</span>
+          {(game.history?.length ?? 0) > 0 && (
+            <span className="rounded-full bg-primary/20 px-1.5 text-primary text-xs font-black">
+              {game.history?.length}
+            </span>
+          )}
+        </button>
+
+        <div className="flex items-center gap-1 rounded-xl border border-border bg-card/60 p-1">
+          {(["classic", "neon", "pastel"] as const).map((th) => (
+            <button
+              key={th}
+              type="button"
+              onClick={() => setTheme(th)}
+              className={`rounded-lg px-2 py-1 text-xs font-black capitalize transition-all ${
+                theme === th
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {th}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="relative aspect-square w-full max-w-sm mx-auto">
         <Game2048PixiCanvas
           board={game.board}
           onDirection={move}
           muted={muted}
           reducedMotion={reducedMotion}
+          theme={theme}
         />
       </div>
 

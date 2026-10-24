@@ -607,7 +607,11 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
       setWaveLabel(wave + 1);
       setBursting(step.matched);
       burstShards(step.matched, step.before);
-      tone(Math.min(920, 430 + wave * 85));
+      if (step.matched.length >= 7) {
+        tone(1200);
+      } else {
+        tone(Math.min(1050, 440 + wave * 95));
+      }
       await wait(burstMs);
       if (run !== animationRun.current) return;
       setBursting([]);

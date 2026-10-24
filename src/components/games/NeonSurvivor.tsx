@@ -9,6 +9,7 @@ import {
 } from '../../lib/games/neon-survivor';
 import type { Locale } from '../../lib/i18n';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { VirtualJoystick, type JoystickVector } from '../ui/game/VirtualJoystick';
 
 interface Props {
   locale?: Locale;
@@ -230,8 +231,7 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
 
   // Input state
   const inputVectorRef = useRef({ x: 0, y: 0 });
-  const touchOriginRef = useRef<{ x: number; y: number } | null>(null);
-  const touchCurrentRef = useRef<{ x: number; y: number } | null>(null);
+  const joystickVectorRef = useRef<JoystickVector>({ x: 0, y: 0, magnitude: 0, angle: 0, knobDistance: 0 });
   const shakeRef = useRef(0);
   const keysDownRef = useRef<Record<string, boolean>>({});
 
@@ -282,15 +282,9 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
       // Combine with touch joystick
       let activeX = kx;
       let activeY = ky;
-      if (touchOriginRef.current && touchCurrentRef.current) {
-        const dx = touchCurrentRef.current.x - touchOriginRef.current.x;
-        const dy = touchCurrentRef.current.y - touchOriginRef.current.y;
-        const dist = Math.hypot(dx, dy);
-        const maxDist = 55;
-        if (dist > 5) {
-          activeX = dx / Math.max(dist, maxDist);
-          activeY = dy / Math.max(dist, maxDist);
-        }
+      if (joystickVectorRef.current.magnitude > 0) {
+        activeX = joystickVectorRef.current.x;
+        activeY = joystickVectorRef.current.y;
       }
 
       inputVectorRef.current = { x: activeX, y: activeY };
@@ -585,35 +579,6 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
       ctx.restore();
     }
 
-    // Draw Touch Virtual Joystick (if active)
-    if (touchOriginRef.current && touchCurrentRef.current) {
-      const ox = touchOriginRef.current.x;
-      const oy = touchOriginRef.current.y;
-      const cx = touchCurrentRef.current.x;
-      const cy = touchCurrentRef.current.y;
-
-      ctx.save();
-      // Outer ring
-      ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(ox, oy, 55, 0, Math.PI * 2);
-      ctx.stroke();
-
-      // Inner stick
-      const dx = cx - ox;
-      const dy = cy - oy;
-      const d = Math.hypot(dx, dy);
-      const kx = ox + (dx / Math.max(d, 55)) * Math.min(d, 55);
-      const ky = oy + (dy / Math.max(d, 55)) * Math.min(d, 55);
-
-      ctx.fillStyle = 'rgba(56, 189, 248, 0.7)';
-      ctx.beginPath();
-      ctx.arc(kx, ky, 22, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
-
     // In-Canvas Cyberpunk HUD
     ctx.save();
     // 1. Top EXP Bar
@@ -686,29 +651,6 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
     ctx.restore();
   };
 
-  // Pointer event handlers for Virtual Touch Joystick
-  const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    e.preventDefault();
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    touchOriginRef.current = { x, y };
-    touchCurrentRef.current = { x, y };
-  };
-
-  const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    if (!touchOriginRef.current) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    touchCurrentRef.current = { x, y };
-  };
-
-  const handlePointerUp = () => {
-    touchOriginRef.current = null;
-    touchCurrentRef.current = null;
-  };
-
   const handleRestart = useCallback(() => {
     setGameState(createInitialNeonSurvivorState());
   }, []);
@@ -738,12 +680,20 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
       {/* 100% Canvas Surface */}
       <canvas
         ref={canvasRef}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerUp}
         className="w-full h-full block cursor-crosshair touch-none"
       />
+
+      {/* Mobile Floating Virtual Joystick */}
+      {!gameState.levelUpPending && !gameState.gameOver && (
+        <VirtualJoystick
+          onMove={(vector) => {
+            joystickVectorRef.current = vector;
+          }}
+          onRelease={() => {
+            joystickVectorRef.current = { x: 0, y: 0, magnitude: 0, angle: 0, knobDistance: 0 };
+          }}
+        />
+      )}
 
       {/* Top Controls: Immersion Portal & Sound Mute Toggle */}
       <div className="absolute top-4 right-4 z-10 pointer-events-auto flex items-center gap-2">

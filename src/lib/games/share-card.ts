@@ -61,6 +61,12 @@ export function resolveRankTier(slug: string, score: number): string {
     if (score <= 600) return "EXPERT";
     return "LOGICIAN";
   }
+  if (slug === "minesweeper") {
+    if (score <= 20) return "DEMOLITIONIST";
+    if (score <= 60) return "SAPPER";
+    if (score <= 120) return "EXPERT";
+    return "SWEEPER";
+  }
   if (score >= 1000) return "CHAMPION";
   if (score >= 500) return "VETERAN";
   return "PLAYER";

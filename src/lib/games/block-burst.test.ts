@@ -10,6 +10,7 @@ import {
   parseBurst,
   pieceCells,
   resolveClears,
+  rerollQueue,
   serializeBurst,
   tickGravity,
   tryMove,
@@ -101,5 +102,14 @@ describe("block burst engine", () => {
     expect(restored?.queue).toHaveLength(3);
     expect(parseBurst('{"v":1}')).toBeNull();
     expect(parseBurst(null)).toBeNull();
+  });
+
+  it("rerolls queue with 3 new pieces when rerollQueue is called", () => {
+    const game = createBlockBurst(10);
+    const initialQueue = game.queue.map((p) => ({ ...p }));
+    const rerolled = rerollQueue(game);
+    expect(rerolled.queue).toHaveLength(3);
+    expect(rerolled.status).toBe("playing");
+    expect(rerolled.rng).not.toBe(game.rng);
   });
 });

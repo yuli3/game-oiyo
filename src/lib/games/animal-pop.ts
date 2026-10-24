@@ -55,6 +55,28 @@ function next(seed: number) {
   x ^= x << 5;
   return [x >>> 0, (x >>> 0) / 4294967296] as const;
 }
+export function detectSpecialMatches(board: AnimalBoard): { lineBlasts: { row?: number; col?: number }[]; rainbowKinds: string[] } {
+  const lineBlasts: { row?: number; col?: number }[] = [];
+  const rainbowKinds: string[] = [];
+  for (let r = 0; r < 7; r++) {
+    for (let c = 0; c < 7; c++) {
+      if (c === 0 || board[r][c - 1] !== board[r][c]) {
+        let n = 1;
+        while (c + n < 7 && board[r][c + n] === board[r][c]) n++;
+        if (n >= 5) rainbowKinds.push(board[r][c]);
+        else if (n === 4) lineBlasts.push({ row: r });
+      }
+      if (r === 0 || board[r - 1][c] !== board[r][c]) {
+        let n = 1;
+        while (r + n < 7 && board[r + n][c] === board[r][c]) n++;
+        if (n >= 5) rainbowKinds.push(board[r][c]);
+        else if (n === 4) lineBlasts.push({ col: c });
+      }
+    }
+  }
+  return { lineBlasts, rainbowKinds };
+}
+
 export function findAnimalMatches(board: AnimalBoard) {
   const m = board.map((r) => r.map(() => false));
   for (let r = 0; r < 7; r++)

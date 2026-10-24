@@ -3,26 +3,57 @@ import { Application, Container, Graphics, Text, TextStyle } from 'pixi.js';
 import type { Game2048Direction } from '../../lib/games/game-2048';
 import { createTonePlayer, type TonePlayer } from '../../lib/games/tone';
 
+export type Game2048Theme = "classic" | "neon" | "pastel";
+
 interface Game2048PixiCanvasProps {
   board: readonly (number | null)[];
   onDirection: (dir: Game2048Direction) => void;
   muted: boolean;
   reducedMotion: boolean;
+  theme?: Game2048Theme;
 }
 
 // Tile color scheme (Hex numbers for PixiJS Graphics)
-const TILE_COLORS: Record<number, { bg: number; text: string; glow?: number }> = {
-  2: { bg: 0x27272a, text: '#f4f4f5' },
-  4: { bg: 0x3f3f46, text: '#f4f4f5' },
-  8: { bg: 0x0284c7, text: '#ffffff', glow: 0x38bdf8 },
-  16: { bg: 0x0369a1, text: '#ffffff', glow: 0x0ea5e9 },
-  32: { bg: 0x16a34a, text: '#ffffff', glow: 0x4ade80 },
-  64: { bg: 0x15803d, text: '#ffffff', glow: 0x22c55e },
-  128: { bg: 0xeab308, text: '#000000', glow: 0xfef08a },
-  256: { bg: 0xf59e0b, text: '#000000', glow: 0xfde047 },
-  512: { bg: 0xf97316, text: '#ffffff', glow: 0xfb923c },
-  1024: { bg: 0xef4444, text: '#ffffff', glow: 0xf87171 },
-  2048: { bg: 0xa855f7, text: '#ffffff', glow: 0xc084fc },
+export const THEME_PALETTES: Record<Game2048Theme, Record<number, { bg: number; text: string; glow?: number }>> = {
+  classic: {
+    2: { bg: 0xeee4da, text: '#776e65' },
+    4: { bg: 0xede0c8, text: '#776e65' },
+    8: { bg: 0xf2b179, text: '#f9f6f2', glow: 0xf39c12 },
+    16: { bg: 0xf59563, text: '#f9f6f2', glow: 0xe67e22 },
+    32: { bg: 0xf67c5f, text: '#f9f6f2', glow: 0xd35400 },
+    64: { bg: 0xf65e3b, text: '#f9f6f2', glow: 0xc0392b },
+    128: { bg: 0xedcf72, text: '#f9f6f2', glow: 0xf1c40f },
+    256: { bg: 0xedcc61, text: '#f9f6f2', glow: 0xf39c12 },
+    512: { bg: 0xedc850, text: '#f9f6f2', glow: 0xe67e22 },
+    1024: { bg: 0xedc53f, text: '#f9f6f2', glow: 0xf39c12 },
+    2048: { bg: 0xedc22e, text: '#f9f6f2', glow: 0xf1c40f },
+  },
+  neon: {
+    2: { bg: 0x27272a, text: '#f4f4f5' },
+    4: { bg: 0x3f3f46, text: '#f4f4f5' },
+    8: { bg: 0x0284c7, text: '#ffffff', glow: 0x38bdf8 },
+    16: { bg: 0x0369a1, text: '#ffffff', glow: 0x0ea5e9 },
+    32: { bg: 0x16a34a, text: '#ffffff', glow: 0x4ade80 },
+    64: { bg: 0x15803d, text: '#ffffff', glow: 0x22c55e },
+    128: { bg: 0xeab308, text: '#000000', glow: 0xfef08a },
+    256: { bg: 0xf59e0b, text: '#000000', glow: 0xfde047 },
+    512: { bg: 0xf97316, text: '#ffffff', glow: 0xfb923c },
+    1024: { bg: 0xef4444, text: '#ffffff', glow: 0xf87171 },
+    2048: { bg: 0xa855f7, text: '#ffffff', glow: 0xc084fc },
+  },
+  pastel: {
+    2: { bg: 0xe2e8f0, text: '#334155' },
+    4: { bg: 0xfbcfe8, text: '#831843' },
+    8: { bg: 0xfecdd3, text: '#881337', glow: 0xf43f5e },
+    16: { bg: 0xfde68a, text: '#78350f', glow: 0xf59e0b },
+    32: { bg: 0xbbf7d0, text: '#14532d', glow: 0x22c55e },
+    64: { bg: 0xa7f3d0, text: '#064e3b', glow: 0x10b981 },
+    128: { bg: 0xbfdbfe, text: '#1e3a8a', glow: 0x3b82f6 },
+    256: { bg: 0xc7d2fe, text: '#312e81', glow: 0x6366f1 },
+    512: { bg: 0xddd6fe, text: '#4c1d95', glow: 0x8b5cf6 },
+    1024: { bg: 0xf5d0fe, text: '#701a75', glow: 0xd946ef },
+    2048: { bg: 0xfecdd3, text: '#881337', glow: 0xf43f5e },
+  },
 };
 
 // Harmonic chords for tile values
@@ -56,6 +87,7 @@ export default function Game2048PixiCanvas({
   onDirection,
   muted,
   reducedMotion,
+  theme = "neon",
 }: Game2048PixiCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const appRef = useRef<Application | null>(null);
@@ -68,6 +100,9 @@ export default function Game2048PixiCanvas({
 
   const mutedRef = useRef(muted);
   mutedRef.current = muted;
+
+  const themeRef = useRef(theme);
+  themeRef.current = theme;
 
   const particlesRef = useRef<Particle[]>([]);
   const shakeRef = useRef<number>(0);
@@ -163,7 +198,8 @@ export default function Game2048PixiCanvas({
           tileContainer.y = y + TILE_SIZE / 2;
 
           const tileGfx = new Graphics();
-          const cfg = TILE_COLORS[val] || { bg: 0x581c87, text: '#ffffff', glow: 0x7e22ce };
+          const palette = THEME_PALETTES[themeRef.current] || THEME_PALETTES.neon;
+          const cfg = palette[val] || { bg: 0x581c87, text: '#ffffff', glow: 0x7e22ce };
 
           // Glow outline on higher tier tiles
           if (cfg.glow && val >= 64) {
@@ -331,13 +367,13 @@ export default function Game2048PixiCanvas({
     };
   }, []);
 
-  // Update tiles when board prop changes
+  // Update tiles when board or theme prop changes
   useEffect(() => {
     const wrap = containerRef.current as any;
     if (wrap?.__update2048Board) {
       wrap.__update2048Board(board);
     }
-  }, [board]);
+  }, [board, theme]);
 
   return (
     <div

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Maximize2,
   Minimize2,
@@ -11,8 +11,15 @@ import {
   ArrowLeft,
   Camera,
   Swords,
+  Music,
+  QrCode,
+  X,
+  Award,
 } from "lucide-react";
 import type { FlowPhase } from "../../../lib/games/game-flow";
+import type { SoundPresetName } from "../../../lib/games/game-audio";
+import { generateChallengeQrSvg } from "../../../lib/games/challenge-qr";
+import { ArcadePassModal } from "./ArcadePassModal";
 
 export interface GameShellProps {
   title: string;
@@ -23,6 +30,10 @@ export interface GameShellProps {
   best?: number | string;
   muted: boolean;
   onToggleMute: () => void;
+  soundTheme?: SoundPresetName;
+  onSelectSoundTheme?: (theme: SoundPresetName) => void;
+  showArcadePassButton?: boolean;
+  locale?: string;
   isImmersive: boolean;
   onTogglePortal: () => void;
   containerRef?: React.RefObject<HTMLDivElement | null>;
@@ -45,6 +56,7 @@ export interface GameShellProps {
   shareCopied?: boolean;
   onShareCard?: () => void;
   shareCardCopied?: boolean;
+  challengeUrl?: string;
   challengeInfo?: {
     challengerScore: number;
     outcome: "win" | "lose" | "tie" | "solo";
@@ -65,6 +77,8 @@ export const GameShell: React.FC<GameShellProps> = ({
   best,
   muted,
   onToggleMute,
+  soundTheme = "core",
+  onSelectSoundTheme,
   isImmersive,
   onTogglePortal,
   containerRef,
@@ -87,14 +101,20 @@ export const GameShell: React.FC<GameShellProps> = ({
   shareCopied = false,
   onShareCard,
   shareCardCopied = false,
+  challengeUrl,
   challengeInfo,
   controlsHint,
+  showArcadePassButton = true,
+  locale = "ko",
   extraHeaderActions,
   children,
   className = "",
 }) => {
   const innerRef = useRef<HTMLDivElement>(null);
   const targetRef = containerRef ?? innerRef;
+  const [showSoundMenu, setShowSoundMenu] = useState(false);
+  const [showQrModal, setShowQrModal] = useState(false);
+  const [showArcadePass, setShowArcadePass] = useState(false);
 
   // Keyboard navigation for Pause/Mute/Fullscreen
   useEffect(() => {
@@ -192,6 +212,56 @@ export const GameShell: React.FC<GameShellProps> = ({
               title="일시정지 (P)"
             >
               <Pause className="size-4" />
+            </button>
+          )}
+
+          {onSelectSoundTheme && (
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowSoundMenu((v) => !v)}
+                aria-label="사운드 테마 변경"
+                title="사운드 테마 변경"
+                className="flex min-h-11 items-center gap-1 rounded-xl border border-border bg-muted px-2.5 py-2 text-xs font-bold text-muted-foreground hover:bg-muted/80 focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <Music className="size-4" />
+                <span className="hidden uppercase sm:inline font-mono text-xs">{soundTheme}</span>
+              </button>
+              {showSoundMenu && (
+                <div className="absolute right-0 top-12 z-50 flex min-w-32 flex-col gap-1 rounded-xl border border-border bg-popover p-1.5 shadow-lg backdrop-blur-md animate-in fade-in zoom-in-95">
+                  {(["core", "retro", "zen", "cyber"] as const).map((theme) => (
+                    <button
+                      key={theme}
+                      type="button"
+                      onClick={() => {
+                        onSelectSoundTheme(theme);
+                        setShowSoundMenu(false);
+                      }}
+                      className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs font-bold transition-colors ${
+                        soundTheme === theme
+                          ? "bg-primary text-primary-foreground shadow-xs"
+                          : "hover:bg-muted text-foreground"
+                      }`}
+                    >
+                      <span className="uppercase">{theme}</span>
+                      {soundTheme === theme && <span>✓</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {showArcadePassButton && (
+            <button
+              type="button"
+              onClick={() => setShowArcadePass(true)}
+              aria-label="아케이드 패스 (Arcade Pass)"
+              title="아케이드 패스 (Arcade Pass)"
+              className="flex min-h-11 items-center gap-1 rounded-xl border border-primary/40 bg-primary/10 px-2.5 py-2 text-xs font-black text-primary hover:bg-primary/20 focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              <Award className="size-4" />
+              <span className="hidden sm:inline font-mono text-xs">PASS</span>
             </button>
           )}
 
@@ -361,6 +431,18 @@ export const GameShell: React.FC<GameShellProps> = ({
                     {shareCopied ? "복사됨!" : "도전장 링크"}
                   </button>
                 )}
+                {challengeUrl && (
+                  <button
+                    type="button"
+                    onClick={() => setShowQrModal(true)}
+                    className="flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-border bg-muted/60 px-3 text-xs font-bold text-foreground hover:bg-muted"
+                    aria-label="QR 코드 모바일 대결"
+                    title="QR 코드 모바일 대결"
+                  >
+                    <QrCode className="size-4" />
+                    <span className="hidden sm:inline">QR</span>
+                  </button>
+                )}
                 {onRetry && (
                   <button
                     type="button"
@@ -381,6 +463,62 @@ export const GameShell: React.FC<GameShellProps> = ({
       {controlsHint && (
         <div className="mt-2 text-center shrink-0">
           <p className="text-xs font-medium text-muted-foreground">{controlsHint}</p>
+        </div>
+      )}
+
+      {/* ── Arcade Pass Modal ── */}
+      <ArcadePassModal
+        isOpen={showArcadePass}
+        onClose={() => setShowArcadePass(false)}
+        locale={locale}
+      />
+
+      {/* ── Mobile Challenge QR Modal ── */}
+      {showQrModal && challengeUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setShowQrModal(false)}
+        >
+          <div
+            className="relative w-full max-w-xs rounded-3xl border border-border bg-card p-6 shadow-2xl text-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setShowQrModal(false)}
+              className="absolute right-4 top-4 rounded-full p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+              aria-label="닫기"
+            >
+              <X className="size-5" />
+            </button>
+
+            <h4 className="text-base font-black text-foreground">모바일 즉시 대결</h4>
+            <p className="mt-1 text-xs font-medium text-muted-foreground">
+              스마트폰 카메라로 QR을 스캔해 동일한 시드로 대결하세요
+            </p>
+
+            <div
+              className="my-4 mx-auto grid place-items-center rounded-2xl bg-white p-3 shadow-inner"
+              dangerouslySetInnerHTML={{
+                __html: generateChallengeQrSvg(challengeUrl, { size: 192, color: "#09090b" }),
+              }}
+            />
+
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof navigator !== "undefined" && navigator.clipboard) {
+                  navigator.clipboard.writeText(challengeUrl);
+                }
+                setShowQrModal(false);
+              }}
+              className="w-full rounded-xl bg-primary px-4 py-2.5 text-xs font-black text-primary-foreground hover:opacity-90 transition-opacity"
+            >
+              도전장 링크 복사
+            </button>
+          </div>
         </div>
       )}
     </div>

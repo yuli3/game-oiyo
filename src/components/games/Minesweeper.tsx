@@ -32,6 +32,7 @@ import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 import { celebrate } from "../../lib/games/celebration";
 import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from '../../lib/games/share-card';
 
 const LEGACY_BEST_KEY = 'oiyo-minesweeper-best'; // pre-unification key, read once for migration
 
@@ -143,6 +144,7 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [isNewBest, setIsNewBest] = useState(false);
     const [onboarding, setOnboarding] = useState<MinesweeperOnboarding>(() => freshMinesweeperOnboarding());
     const [coarsePointer, setCoarsePointer] = useState(false);
+    const [shareCardCopied, setShareCardCopied] = useState(false);
     const generationSeed = useRef(createGenerationSeed());
     const cellRefs = useRef<Array<HTMLButtonElement | null>>([]);
     const recordedRef = useRef(false);
@@ -662,6 +664,35 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const visibleHidden = board.flat().filter((cell) => !cell.isRevealed && !cell.isFlagged).length;
     const resultSummary = status === 'playing' ? null : summarizeMinesweeperResult(board);
 
+    const handleShareCard = useCallback(async () => {
+        try {
+            const summary = summarizeMinesweeperResult(board);
+            const canvas = createShareCardCanvas({
+                title: t.title,
+                subtitle: `${mode.toUpperCase()} · ${timer}s`,
+                score: `${timer}s`,
+                bestScore: bestTime ? `${bestTime}s` : undefined,
+                slug: "minesweeper",
+                durationSeconds: timer,
+                locale,
+                customStats: [
+                    { label: m3.safeProgress, value: `${summary.safeRevealed}/${summary.safeTotal}` },
+                    { label: m3.correctFlags, value: `${summary.correctFlags}/${summary.flags}` },
+                    { label: "DIFFICULTY", value: difficultyId.toUpperCase() },
+                ],
+            });
+            const success = await copyShareCardToClipboard(canvas);
+            if (success) {
+                setShareCardCopied(true);
+                setTimeout(() => setShareCardCopied(false), 2500);
+            } else {
+                downloadShareCard(canvas, `minesweeper-${timer}s.png`);
+            }
+        } catch {
+            /* best effort */
+        }
+    }, [board, t.title, mode, timer, bestTime, locale, m3.safeProgress, m3.correctFlags, difficultyId]);
+
     return (
         <div
             ref={containerRef}
@@ -687,7 +718,7 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 </div>
 
                 {mode === 'daily' && streak && streak.played > 0 && (
-                    <p className="mb-3 text-center text-[11px] font-bold text-muted-foreground">🔥 {t.streak} {streak.currentStreak} · {t.best} {streak.maxStreak}</p>
+                    <p className="mb-3 text-center text-xs font-bold text-muted-foreground">🔥 {t.streak} {streak.currentStreak} · {t.best} {streak.maxStreak}</p>
                 )}
 
                 {difficultyId === 'expert' && (
@@ -698,7 +729,7 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         </button>
                         {overviewOpen && (
                             <div id="minesweeper-overview" className="w-full max-w-sm rounded-xl border border-border bg-muted/30 p-3">
-                                <p className="mb-2 text-center text-[10px] font-medium text-muted-foreground">{m3.overviewHelp}</p>
+                                <p className="mb-2 text-center text-xs font-medium text-muted-foreground">{m3.overviewHelp}</p>
                                 <div className="grid gap-px overflow-hidden rounded-md bg-border" style={{ gridTemplateColumns: `repeat(${width}, minmax(0, 1fr))` }} aria-hidden="true">
                                     {board.flat().map((cell) => <span key={`overview-${cell.x}-${cell.y}`} className={`aspect-square ${cell.isRevealed ? 'bg-background' : cell.isFlagged ? 'bg-chart-2' : 'bg-primary/35'}`} />)}
                                 </div>
@@ -856,7 +887,19 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     {status === 'won' && bestTime !== null && (
                         <p className="text-xs text-muted-foreground mt-2">{isNewBest ? m3.newBest : `${t.best}: ${bestTime}s`} · {m3.nextGoal}: {Math.max(1, bestTime - 1)}s</p>
                     )}
-                    {assist === 'hint' && <p className="mt-1 text-[10px] font-bold text-muted-foreground">{m3.assistedResult}</p>}
+                    {status === 'won' && (
+                        <div className="mt-3 flex justify-center">
+                            <button
+                                type="button"
+                                onClick={handleShareCard}
+                                className="min-h-11 inline-flex items-center gap-1.5 px-5 py-2 rounded-full border border-primary/40 bg-primary/10 text-primary font-bold text-xs hover:bg-primary/20 transition-colors"
+                            >
+                                <span>📸</span>
+                                <span>{shareCardCopied ? "✓ 카드 복사됨" : "결과 카드 복사"}</span>
+                            </button>
+                        </div>
+                    )}
+                    {assist === 'hint' && <p className="mt-1 text-xs font-bold text-muted-foreground">{m3.assistedResult}</p>}
                     <button
                         onClick={() => initBoard(mode)}
                         className="mt-4 min-h-11 px-8 py-2 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity"
@@ -869,7 +912,7 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     🎓 {ob.progress} {onboardingIndex}/3 · {onboardingText}
                 </p>
             ) : (
-                <p className="mt-4 text-center text-[10px] text-muted-foreground font-medium">{t.hint} · {m3.longPress}</p>
+                <p className="mt-4 text-center text-xs text-muted-foreground font-medium">{t.hint} · {m3.longPress}</p>
             )}
         </GameContainer>
     </div>

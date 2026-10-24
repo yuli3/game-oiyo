@@ -232,6 +232,17 @@ export function createBlockBurst(seed: number): BurstState {
   });
 }
 
+export function rerollQueue(state: BurstState): BurstState {
+  if (state.status !== "playing") return state;
+  const filled = fillQueue(state.rng, state.bag, []);
+  return {
+    ...state,
+    queue: filled.queue,
+    bag: filled.bag,
+    rng: filled.rng,
+  };
+}
+
 export function findFullLines(board: (BurstColor | null)[][], gapsAllowed = 0): BurstClear {
   const rows: number[] = [];
   const cols: number[] = [];
