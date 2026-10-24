@@ -428,6 +428,46 @@ export const FAILURE_EATER_SPRITES = {
   keyart: "/assets/sprites/failure-eater/keyart.webp",
 } as const;
 
+export const OMISSION_DETECTIVE_SPRITES = {
+  keyart: "/assets/sprites/omission-detective/keyart.webp",
+} as const;
+
+export const TIME_COUNSEL_SPRITES = {
+  keyart: "/assets/sprites/time-counsel/keyart.webp",
+} as const;
+
+export const TWO_HANDS_SPRITES = {
+  keyart: "/assets/sprites/two-hands/keyart.webp",
+} as const;
+
+export const UNTRANSLATABLE_CREATURE_SPRITES = {
+  keyart: "/assets/sprites/untranslatable-creature/keyart.webp",
+} as const;
+
+export const GAME_2048_SPRITES = {
+  keyart: "/assets/sprites/game-2048/keyart.webp",
+} as const;
+
+export const SUDOKU_SPRITES = {
+  keyart: "/assets/sprites/sudoku/keyart.webp",
+} as const;
+
+export const WATER_SORT_SPRITES = {
+  keyart: "/assets/sprites/water-sort/keyart.webp",
+} as const;
+
+export const WORDLE_SPRITES = {
+  keyart: "/assets/sprites/wordle/keyart.webp",
+} as const;
+
+export const COSMIC_MERGE_SPRITES = {
+  keyart: "/assets/sprites/cosmic-merge/keyart.webp",
+} as const;
+
+export const SNAKE_GAME_SPRITES = {
+  keyart: "/assets/sprites/snake-game/keyart.webp",
+} as const;
+
 export const CHESS_SPRITES: Record<string, string> = {
   P: "/assets/sprites/chess/white-pawn.png",
   N: "/assets/sprites/chess/white-knight.png",

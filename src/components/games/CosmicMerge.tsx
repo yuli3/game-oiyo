@@ -11,6 +11,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import Matter from "matter-js";
 import { celebrate } from "../../lib/games/celebration";
+import { COSMIC_MERGE_SPRITES } from "../../lib/games/sprites";
 import type { Locale } from "../../lib/i18n";
 import {
   ARENA_HEIGHT,
@@ -980,6 +981,9 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
       {isGameOver && (
         <div className="absolute inset-0 bg-background/85 backdrop-blur-md flex items-center justify-center p-6 z-20 animate-in fade-in zoom-in-95 duration-200 pointer-events-auto">
           <div className="max-w-xs w-full rounded-2xl border border-border bg-card p-6 shadow-2xl text-center space-y-4">
+            <div className="overflow-hidden rounded-xl border border-border bg-muted mb-2">
+              <img src={COSMIC_MERGE_SPRITES.keyart} alt={t.title} className="h-24 w-full object-cover" />
+            </div>
             <div className="w-14 h-14 bg-destructive/15 rounded-2xl flex items-center justify-center mx-auto text-2xl border border-destructive/20">
               💥
             </div>
@@ -1027,6 +1031,9 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
         <div className="absolute inset-0 bg-background/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 z-30 animate-in fade-in duration-200 pointer-events-auto">
           <div className="max-w-md w-full max-h-full rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-2xl flex flex-col">
             {/* Codex Header */}
+            <div className="mb-3 overflow-hidden rounded-xl border border-border bg-muted">
+              <img src={COSMIC_MERGE_SPRITES.keyart} alt={t.title} className="h-28 w-full object-cover" />
+            </div>
             <div className="flex items-center justify-between pb-3 border-b border-border/60">
               <div>
                 <h3 className="text-base font-black text-foreground flex items-center gap-1.5">

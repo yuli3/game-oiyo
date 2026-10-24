@@ -12,6 +12,8 @@ import { getBest, recordAchievementEvent, recordBest } from '../../lib/games/rec
 import type { Locale } from '../../lib/i18n';
 import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { celebrate } from '../../lib/games/celebration';
+import { SNAKE_GAME_SPRITES } from '../../lib/games/sprites';
 import {
     bufferSnakeDirection,
     createSnakeGame,
@@ -405,8 +407,11 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         if (score > best) {
             recordAchievementEvent('snake-game', 'personal-best');
             setBest(recordBest('snake-game', score, 'score', undefined, { trackPlay: false }).value);
+            if (score > 10 && containerRef.current) {
+                celebrate(containerRef.current, { preset: 'sparks' });
+            }
         }
-    }, [score, best]);
+    }, [score, best, containerRef]);
 
     // Score & Over sound / VFX triggers
     useEffect(() => {
@@ -516,6 +521,11 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
     const content = (
         <div className={`flex flex-col justify-between ${isImmersive ? 'h-full w-full max-w-lg mx-auto' : ''}`}>
+            {!isImmersive && (
+                <div className="mb-3 overflow-hidden rounded-xl border border-border bg-muted">
+                    <img src={SNAKE_GAME_SPRITES.keyart} alt={t.title} className="h-32 w-full object-cover sm:h-44" />
+                </div>
+            )}
             {/* Top Bar HUD */}
             <div className="mb-4 flex items-center justify-between gap-3 shrink-0">
                 <div className="flex items-center gap-2">

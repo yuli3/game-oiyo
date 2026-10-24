@@ -10,6 +10,10 @@ import type { Locale } from "../../lib/i18n";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { getBest, getRecord, recordBest, recordResult, type BestRecord, type GameRecord } from "../../lib/games/records";
 import { dateKeyIndex, kstDateKey } from "../../lib/games/todays-game";
+import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from "../../lib/games/game-audio";
+import { createHaptics } from "../../lib/games/haptics";
+import { celebrate } from "../../lib/games/celebration";
+import { TWO_HANDS_SPRITES } from "../../lib/games/sprites";
 import {
   GAME_ID,
   begin,
@@ -178,17 +182,6 @@ const COPY: Record<Locale, Copy> = {
   },
 };
 
-function playTone(ctx: AudioContext, frequency: number) {
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.frequency.value = frequency;
-  gain.gain.value = 0.04;
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  osc.start();
-  osc.stop(ctx.currentTime + 0.08);
-}
-
 const KEYS: Record<string, Act> = {
   ArrowLeft: "L",
   ArrowRight: "R",
@@ -216,11 +209,22 @@ export default function TwoHands({ locale }: { locale: Locale }) {
   const [best, setBest] = useState<BestRecord | null>(null);
   const [muted, setMuted] = useState(false);
   const [remain, setRemain] = useState(Math.ceil(FUSE_MS / 1000));
-  const audio = useRef<AudioContext | null>(null);
+  const cuesRef = useRef<CuePlayer<CoreCue> | null>(null);
+  const hapticsRef = useRef(createHaptics());
   const noted = useRef(new Set<string>());
   const phase = useRef<Run["phase"] | null>(null);
   const runRef = useRef<Run | null>(null);
   runRef.current = run;
+
+  const cue = (kind: CoreCue) => {
+    if (muted || reducedMotion) return;
+    try {
+      cuesRef.current ??= createCuePlayer({ cues: CORE_CUES });
+      void cuesRef.current.play(kind);
+    } catch {
+      /* audio blocked */
+    }
+  };
 
   useEffect(() => {
     const key = kstDateKey();
@@ -267,7 +271,7 @@ export default function TwoHands({ locale }: { locale: Locale }) {
       const act = KEYS[event.key];
       if (!act || event.repeat || runRef.current?.phase !== "play") return;
       event.preventDefault();
-      setRun((current) => (current ? applyAct(current, act) : current));
+      onAct(act);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -286,16 +290,25 @@ export default function TwoHands({ locale }: { locale: Locale }) {
         if (run.phase === "won") setBest(recordBest(GAME_ID, run.kept, "score"));
       } catch { /* best-effort */ }
     }
-    if (muted || reducedMotion) return;
-    const Context = window.AudioContext;
-    if (!Context) return;
-    if (!audio.current) audio.current = new Context();
-    const ctx = audio.current;
-    void ctx.resume();
-    playTone(ctx, run.phase === "won" ? 620 : 180);
+    if (run.phase === "won") {
+      cue("win");
+      hapticsRef.current.fire("win");
+      if (containerRef.current) celebrate(containerRef.current, { preset: "notes" });
+    } else if (run.phase === "lost") {
+      cue("fail");
+      hapticsRef.current.fire("fail");
+    }
   }, [run, dateKey, attempt, muted, reducedMotion]);
 
+  const onAct = (act: Act) => {
+    cue("place");
+    hapticsRef.current.fire("place");
+    setRun((current) => (current ? applyAct(current, act) : current));
+  };
+
   const again = () => {
+    cue("tap");
+    hapticsRef.current.fire("tap");
     if (!dateKey) return;
     const seed = (dateKeyIndex(dateKey) * 0x9e3779b1) >>> 0;
     setAttempt((value) => value + 1);
@@ -310,6 +323,9 @@ export default function TwoHands({ locale }: { locale: Locale }) {
   return (
     <div ref={containerRef} className={isImmersive ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-y-auto bg-background p-3 sm:p-5" : "relative"}>
       <GameContainer title={t.title} subtitle={run ? t.subtitle : t.preparing}>
+        <div className="mb-3 overflow-hidden rounded-xl border border-border bg-muted">
+          <img src={TWO_HANDS_SPRITES.keyart} alt={t.title} className="h-32 w-full object-cover sm:h-44" />
+        </div>
         <div className="mb-4 flex flex-wrap gap-2">
           <button type="button" onClick={() => setMuted((value) => !value)} aria-pressed={muted} aria-label={muted ? portalLabels.unmute : portalLabels.mute} title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`} className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-muted-foreground`}>
             {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
@@ -345,13 +361,13 @@ export default function TwoHands({ locale }: { locale: Locale }) {
             <p className="text-sm text-muted-foreground">● {t.face.body} · ○ {t.face.sky} · ■ {t.face.H} · · {t.face.F}</p>
             {run.phase === "play" ? (
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                <button type="button" disabled={run.sky <= 0 || !run.top.includes("H")} onClick={() => setRun((current) => (current ? help(current, "L") : current))} className={`${BUTTON} touch-none`}>{t.act.L}</button>
-                <button type="button" disabled={run.sky <= 0 || !run.bottom.includes("H")} onClick={() => setRun((current) => (current ? help(current, "R") : current))} className={`${BUTTON} touch-none`}>{t.act.R}</button>
-                <button type="button" onClick={() => setRun((current) => (current ? cross(current) : current))} className={`${BUTTON} touch-none`}>{t.act.E}</button>
+                <button type="button" disabled={run.sky <= 0 || !run.top.includes("H")} onClick={() => onAct("L")} className={`${BUTTON} touch-none`}>{t.act.L}</button>
+                <button type="button" disabled={run.sky <= 0 || !run.bottom.includes("H")} onClick={() => onAct("R")} className={`${BUTTON} touch-none`}>{t.act.R}</button>
+                <button type="button" onClick={() => onAct("E")} className={`${BUTTON} touch-none`}>{t.act.E}</button>
               </div>
             ) : null}
             {run.phase === "ready" ? (
-              <button type="button" onClick={() => setRun((current) => (current ? begin(current) : current))} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{run.round === 0 ? t.start : t.next}</button>
+              <button type="button" onClick={() => { cue("tap"); hapticsRef.current.fire("tap"); setRun((current) => (current ? begin(current) : current)); }} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{run.round === 0 ? t.start : t.next}</button>
             ) : null}
             {run.phase === "won" || run.phase === "lost" ? (
               <button type="button" onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</button>

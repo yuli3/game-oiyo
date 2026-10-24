@@ -6,6 +6,10 @@ import { createWaterSort, generateWaterSortPuzzle, isWaterSortDeadEnd, moveWater
 import { clearWaterSortSave, loadWaterSortSave, storeWaterSortSave, type WaterSortAssist } from '../../lib/games/water-sort-save';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import type { Locale } from '../../lib/i18n';
+import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from '../../lib/games/game-audio';
+import { createHaptics } from '../../lib/games/haptics';
+import { celebrate } from '../../lib/games/celebration';
+import { WATER_SORT_SPRITES } from '../../lib/games/sprites';
 
 const COLORS = ['#ef4444', '#2563eb', '#059669', '#d97706', '#7c3aed'];
 const PATTERNS = [
@@ -42,21 +46,20 @@ const WaterSort: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [muted, setMuted] = useState(false);
     const [best, setBest] = useState<ConditionalBestRecord | null>(null);
     const [lastPour, setLastPour] = useState<{ to: number; count: number } | null>(null);
-    const audioRef = useRef<AudioContext | null>(null);
+    const cuesRef = useRef<CuePlayer<CoreCue> | null>(null);
+    const hapticsRef = useRef(createHaptics());
     const recordedSeedRef = useRef<number | null>(null);
     const tubeRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
-    const playTone = useCallback((frequency: number, duration = 0.08) => {
-        if (muted || typeof window === 'undefined') return;
+    const cue = useCallback((kind: CoreCue) => {
+        if (muted || reducedMotion) return;
         try {
-            const AudioContextClass = window.AudioContext ?? (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-            if (!AudioContextClass) return;
-            const context = audioRef.current ?? new AudioContextClass(); audioRef.current = context;
-            const oscillator = context.createOscillator(); const gain = context.createGain();
-            oscillator.frequency.value = frequency; gain.gain.setValueAtTime(0.045, context.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + duration);
-            oscillator.connect(gain); gain.connect(context.destination); oscillator.start(); oscillator.stop(context.currentTime + duration);
-        } catch { /* optional feedback */ }
-    }, [muted]);
+            cuesRef.current ??= createCuePlayer({ cues: CORE_CUES });
+            void cuesRef.current.play(kind);
+        } catch {
+            /* optional feedback */
+        }
+    }, [muted, reducedMotion]);
 
     const startGame = useCallback((nextDifficulty: WaterSortDifficulty) => {
         clearWaterSortSave();
@@ -69,7 +72,6 @@ const WaterSort: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         const saved = loadWaterSortSave();
         if (saved) { setGame(saved.state); setDifficulty(saved.state.difficulty); setUndo(saved.undo); setElapsedSeconds(saved.elapsedSeconds); setAssist(saved.assist); }
         else startGame('medium');
-        return () => { void audioRef.current?.close(); };
     }, [startGame]);
 
     useEffect(() => {
@@ -89,35 +91,56 @@ const WaterSort: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         recordedSeedRef.current = game.seed;
         const conditions: BestConditions = { seed: String(game.seed), difficulty: game.difficulty, assist };
         setBest(recordBestForConditions('water-sort', elapsedSeconds, 'seconds', conditions, `${game.moves} moves`));
-        playTone(784, 0.3);
-    }, [game, elapsedSeconds, assist, playTone]);
+        cue('win');
+        hapticsRef.current.fire('win');
+        if (containerRef.current) celebrate(containerRef.current, { preset: 'shards' });
+    }, [game, elapsedSeconds, assist, cue, containerRef]);
 
     const handleTubeClick = (index: number) => {
         if (!game || game.status === 'solved') return;
         if (selectedTube === null) {
-            if (game.tubes[index].length > 0) { setSelectedTube(index); playTone(440); }
-            else playTone(180);
+            if (game.tubes[index].length > 0) {
+                setSelectedTube(index);
+                cue('tap');
+                hapticsRef.current.fire('tap');
+            } else {
+                cue('fail');
+                hapticsRef.current.fire('fail');
+            }
             return;
         }
-        if (selectedTube === index) { setSelectedTube(null); playTone(330); return; }
+        if (selectedTube === index) {
+            setSelectedTube(null);
+            cue('tap');
+            hapticsRef.current.fire('tap');
+            return;
+        }
         const next = moveWaterSort(game, { from: selectedTube, to: index });
         if (next !== game) {
             setUndo((history) => [...history.slice(-49), game]);
             setLastPour({ to: index, count: pouredLayerCount(game.tubes, next.tubes, index) });
-            setGame(next); playTone(620, 0.12);
+            setGame(next);
+            cue('combo');
+            hapticsRef.current.fire('combo');
+        } else {
+            cue('fail');
+            hapticsRef.current.fire('fail');
         }
-        else playTone(160, 0.12);
         setHint(null); setSelectedTube(null);
     };
 
     const undoMove = () => {
         const previous = undo[undo.length - 1]; if (!previous) return;
         setGame(previous); setUndo((history) => history.slice(0, -1)); setSelectedTube(null); setHint(null); setLastPour(null);
-        setAssist((value) => value === 'hint' ? value : 'undo'); playTone(300);
+        setAssist((value) => value === 'hint' ? value : 'undo');
+        cue('tap');
+        hapticsRef.current.fire('tap');
     };
     const showHint = () => {
         if (!game) return;
-        const nextHint = waterSortHint(game.tubes); setHint(nextHint); setSelectedTube(nextHint?.from ?? null); setAssist('hint'); playTone(520);
+        const nextHint = waterSortHint(game.tubes); setHint(nextHint); setSelectedTube(nextHint?.from ?? null); setAssist('hint');
+        cue('tap');
+        hapticsRef.current.fire('tap');
     };
     const focusTube = (next: number) => {
         const normalized = Math.max(0, Math.min((game?.tubes.length ?? 1) - 1, next)); setFocusedTube(normalized); tubeRefs.current[normalized]?.focus();
@@ -142,6 +165,9 @@ const WaterSort: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             }
         >
             <GameContainer title={t.title} subtitle={t.subtitle} onReset={() => startGame(difficulty)}>
+                <div className="mb-3 overflow-hidden rounded-xl border border-border bg-muted">
+                    <img src={WATER_SORT_SPRITES.keyart} alt={t.title} className="h-32 w-full object-cover sm:h-44" />
+                </div>
                 <div className="flex flex-col items-center">
                     <p className="mb-5 text-center text-sm font-medium text-muted-foreground">{t.desc}</p>
                     <div className="mb-4 flex flex-wrap justify-center gap-2 items-center" aria-label="Difficulty">

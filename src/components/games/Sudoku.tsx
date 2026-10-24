@@ -16,8 +16,11 @@ import {
     type SudokuMode,
 } from '../../lib/games/sudoku-save';
 import { elapsedSeconds } from '../../lib/games/time-contracts';
-import { PUZZLE15_SPRITES } from '../../lib/games/sprites';
+import { PUZZLE15_SPRITES, SUDOKU_SPRITES } from '../../lib/games/sprites';
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
+import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from '../../lib/games/game-audio';
+import { createHaptics } from '../../lib/games/haptics';
+import { celebrate } from '../../lib/games/celebration';
 
 const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 const DAILY_GAME_ID = 'sudoku-daily';
@@ -90,21 +93,17 @@ const Sudoku: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [togglePortal]);
 
-    const audioRef = useRef<AudioContext | null>(null);
-    const tone = useCallback((frequency: number, duration = 0.05) => {
-        if (mutedRef.current || typeof window === 'undefined') return;
-        const context = audioRef.current ?? new AudioContext();
-        audioRef.current = context;
-        const oscillator = context.createOscillator();
-        const gain = context.createGain();
-        oscillator.frequency.value = frequency;
-        gain.gain.setValueAtTime(0.05, context.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + duration);
-        oscillator.connect(gain).connect(context.destination);
-        oscillator.start();
-        oscillator.stop(context.currentTime + duration);
-    }, []);
-    useEffect(() => () => { void audioRef.current?.close(); }, []);
+    const cuesRef = useRef<CuePlayer<CoreCue> | null>(null);
+    const hapticsRef = useRef(createHaptics());
+    const cue = useCallback((kind: CoreCue) => {
+        if (mutedRef.current || reducedMotion) return;
+        try {
+            cuesRef.current ??= createCuePlayer({ cues: CORE_CUES });
+            void cuesRef.current.play(kind);
+        } catch {
+            /* audio blocked */
+        }
+    }, [reducedMotion]);
 
     const conditionsFor = useCallback((nextMode: SudokuMode, seed: number, date: string): BestConditions => ({
         seed: nextMode === 'daily' ? `daily-${date}` : `free-${seed}`,
@@ -178,8 +177,16 @@ const Sudoku: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         newGrid[r][c] = n === grid[r][c] ? null : n;
         setFreshEntry(newGrid[r][c] !== null ? `${r}-${c}` : null);
         setGrid(newGrid);
-        if (newGrid[r][c] !== null && findSudokuConflicts(newGrid)[r][c]) tone(180, 0.08);
-        else if (newGrid[r][c] !== null) tone(420, 0.04);
+        if (newGrid[r][c] !== null && findSudokuConflicts(newGrid)[r][c]) {
+            cue('fail');
+            hapticsRef.current.fire('fail');
+        } else if (newGrid[r][c] !== null) {
+            cue('place');
+            hapticsRef.current.fire('place');
+        } else {
+            cue('tap');
+            hapticsRef.current.fire('tap');
+        }
     };
 
     useEffect(() => {
@@ -191,8 +198,9 @@ const Sudoku: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     useEffect(() => {
         if (isWon && !recorded) {
             setRecorded(true);
-            tone(880, 0.1);
-            window.setTimeout(() => tone(1100, 0.16), 90);
+            cue('win');
+            hapticsRef.current.fire('win');
+            if (containerRef.current) celebrate(containerRef.current, { preset: 'sparks' });
             const finalSeconds = Math.max(1, seconds);
             const previousBest = bestTime;
             const next = recordBestForConditions('sudoku', finalSeconds, 'seconds', conditionsFor(mode, seedRef.current, dailyDate)).value;
@@ -203,7 +211,7 @@ const Sudoku: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 setStreak(recordDailyWin(DAILY_GAME_ID, today, previousDayKey(today)));
             }
         }
-    }, [isWon, recorded, seconds, bestTime, conditionsFor, dailyDate, mode, tone]);
+    }, [isWon, recorded, seconds, bestTime, conditionsFor, dailyDate, mode, cue, containerRef]);
 
     const moveFocus = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
         const row = Math.floor(index / 9), column = index % 9;
@@ -235,6 +243,9 @@ const Sudoku: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             }
         >
             <GameContainer title={t.title} subtitle="Pure Deduction" resetLabel={t.reset} onReset={() => initGame(mode)}>
+                <div className="mb-3 overflow-hidden rounded-xl border border-border bg-muted">
+                    <img src={SUDOKU_SPRITES.keyart} alt={t.title} className="h-32 w-full object-cover sm:h-44" />
+                </div>
                 <div className="flex flex-col items-center">
                     <div className="mb-4 flex flex-wrap items-center justify-center gap-1.5">
                         <button onClick={() => initGame('daily')} aria-pressed={mode === 'daily'}

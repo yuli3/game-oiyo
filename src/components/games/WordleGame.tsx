@@ -8,6 +8,10 @@ import { clearWordleSave, loadWordleSave, storeWordleSave } from '../../lib/game
 import { wordleAnalyticsPayload, type WordleAnalyticsEvent } from '../../lib/games/wordle-analytics';
 import { minutesUntilNextDaily } from '../../lib/games/daily';
 import { Spinner } from '../ui/spinner';
+import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from '../../lib/games/game-audio';
+import { createHaptics } from '../../lib/games/haptics';
+import { celebrate } from '../../lib/games/celebration';
+import { WORDLE_SPRITES } from '../../lib/games/sprites';
 
 const DATA_BASE = '/data/wordle'; const ROWS = [['Q','W','E','R','T','Y','U','I','O','P'], ['A','S','D','F','G','H','J','K','L'], ['ENTER','Z','X','C','V','B','N','M','⌫']];
 const localDateKey = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
@@ -54,21 +58,73 @@ export default function WordleGame({ locale='en' }: { locale?:string }) {
     }
   }, [muted]);
 
-  const elapsedBase=useRef(0); const startedAt=useRef<number|null>(null); const audio=useRef<AudioContext|null>(null); const recorded=useRef(false); const analyticsStarted=useRef(false); const analyticsCompleted=useRef(false);
+  const elapsedBase=useRef(0); const startedAt=useRef<number|null>(null);
+  const cuesRef = useRef<CuePlayer<CoreCue> | null>(null);
+  const hapticsRef = useRef(createHaptics());
+  const recorded=useRef(false); const analyticsStarted=useRef(false); const analyticsCompleted=useRef(false);
   const guessCount=useRef(0); const [revealedCols,setRevealedCols]=useState(5);
   const target=game && targets[game.targetIndex] ? targets[game.targetIndex].toUpperCase() : '';
-  const tone=(frequency:number,duration=.07)=>{if(muted||typeof window==='undefined')return; const c=audio.current??new AudioContext();audio.current=c;const o=c.createOscillator(),g=c.createGain();o.frequency.value=frequency;g.gain.setValueAtTime(.03,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+duration);o.connect(g).connect(c.destination);o.start();o.stop(c.currentTime+duration);};
+
+  const cue = useCallback((kind: CoreCue) => {
+    if (muted || reduced) return;
+    try {
+      cuesRef.current ??= createCuePlayer({ cues: CORE_CUES });
+      void cuesRef.current.play(kind);
+    } catch {
+      /* audio blocked */
+    }
+  }, [muted, reduced]);
+
   const track=useCallback((event:WordleAnalyticsEvent,mode:WordleMode,details:Record<string,string|number>={})=>{const analytics=window as Window&{gtag?:(...args:unknown[])=>void};analytics.gtag?.('event',event,{...wordleAnalyticsPayload({mode,hardMode:hard}),...details});},[hard]);
   const start=(mode:WordleMode)=>{if(!targets.length)return;const date=mode==='daily'?localDateKey():null;const seed=mode==='daily'?wordleDateSeed(date!):(crypto.getRandomValues?.(new Uint32Array(1))[0]??Date.now())>>>0;clearWordleSave();setGame(createWordle(seed,targets.length,mode,date));setPaused(false);setRestored(false);setElapsed(0);elapsedBase.current=0;startedAt.current=Date.now();recorded.current=false;analyticsStarted.current=false;analyticsCompleted.current=false;guessCount.current=0;setRevealedCols(5);setError('');};
-  useEffect(()=>{Promise.all([fetch(`${DATA_BASE}/target-words-5.json`).then(r=>{if(!r.ok)throw Error();return r.json() as Promise<string[]>;}),fetch(`${DATA_BASE}/valid-words-5.json`).then(r=>{if(!r.ok)throw Error();return r.json() as Promise<string[]>;})]).then(([targetWords,validWords])=>{setTargets(targetWords);setValid(new Set(validWords.map(w=>w.toUpperCase())));const saved=loadWordleSave();if(saved&&saved.state.targetCount===targetWords.length&&!(saved.state.mode==='daily'&&saved.state.dateKey!==localDateKey())){setGame(saved.state);guessCount.current=saved.state.guesses.length;setRevealedCols(5);setElapsed(saved.elapsedMs);elapsedBase.current=saved.elapsedMs;setPaused(true);setRestored(true);}else{clearWordleSave();const date=localDateKey();setGame(createWordle(wordleDateSeed(date),targetWords.length,'daily',date));guessCount.current=0;startedAt.current=Date.now();}setLoading(false);}).catch(()=>{setError(t.fail);setLoading(false);});setStats(getStreak('wordle'));return()=>{void audio.current?.close();};},[]);
+  useEffect(()=>{Promise.all([fetch(`${DATA_BASE}/target-words-5.json`).then(r=>{if(!r.ok)throw Error();return r.json() as Promise<string[]>;}),fetch(`${DATA_BASE}/valid-words-5.json`).then(r=>{if(!r.ok)throw Error();return r.json() as Promise<string[]>;})]).then(([targetWords,validWords])=>{setTargets(targetWords);setValid(new Set(validWords.map(w=>w.toUpperCase())));const saved=loadWordleSave();if(saved&&saved.state.targetCount===targetWords.length&&!(saved.state.mode==='daily'&&saved.state.dateKey!==localDateKey())){setGame(saved.state);guessCount.current=saved.state.guesses.length;setRevealedCols(5);setElapsed(saved.elapsedMs);elapsedBase.current=saved.elapsedMs;setPaused(true);setRestored(true);}else{clearWordleSave();const date=localDateKey();setGame(createWordle(wordleDateSeed(date),targetWords.length,'daily',date));guessCount.current=0;startedAt.current=Date.now();}setLoading(false);}).catch(()=>{setError(t.fail);setLoading(false);});setStats(getStreak('wordle'));},[]);
   useEffect(()=>{if(!game||game.status!=='playing'||paused||startedAt.current===null)return;const id=setInterval(()=>setElapsed(elapsedBase.current+Date.now()-(startedAt.current??Date.now())),250);return()=>clearInterval(id);},[game?.status,paused]);
   useEffect(()=>{const update=()=>setNextMinutes(minutesUntilNextDaily());update();const id=window.setInterval(update,60_000);return()=>window.clearInterval(id);},[]);
   useEffect(()=>{if(!game)return;if(game.status==='playing')storeWordleSave(game,elapsed);else{clearWordleSave();if(!analyticsCompleted.current){analyticsCompleted.current=true;track('game_complete',game.mode,{attempts:game.guesses.length,result:game.status});}if(!recorded.current&&game.mode==='daily'){recorded.current=true;setStats(recordStreak('wordle',game.status==='won'));}}},[game,elapsed,track]);
   useEffect(()=>{if(!game)return;if(game.guesses.length===guessCount.current)return;const grew=game.guesses.length>guessCount.current;guessCount.current=game.guesses.length;if(!grew){setRevealedCols(5);return;}if(reduced){setRevealedCols(5);return;}setRevealedCols(0);let col=0;const id=window.setInterval(()=>{col+=1;setRevealedCols(col);if(col>=5)window.clearInterval(id);},90);return()=>window.clearInterval(id);},[game?.guesses.length,reduced]);
   const pause=useCallback(()=>{if(!game||game.status!=='playing')return;if(paused){if(restored)track('game_resume',game.mode);startedAt.current=Date.now();setPaused(false);setRestored(false);}else{elapsedBase.current=elapsed;startedAt.current=null;setPaused(true);storeWordleSave(game,elapsed);}},[game,paused,restored,elapsed,track]);
   useEffect(()=>{const hidden=()=>{if(document.hidden&&!paused)pause();};document.addEventListener('visibilitychange',hidden);return()=>document.removeEventListener('visibilitychange',hidden);},[pause,paused]);
-  const submit=useCallback(()=>{if(!game||paused||!target)return;const reason=explainWordleSubmit(game,target,valid.has(game.current),hard);if(reason){setError(reason==='too-short'?t.short:reason==='invalid'?t.invalid:t.hardFail);tone(160);return;}if(!analyticsStarted.current){analyticsStarted.current=true;track('game_start',game.mode);}const next=submitWordle(game,target,true,hard);setError('');setRestored(false);setGame(next);tone(next.status==='won'?880:next.status==='lost'?180:520,next.status==='playing'?.08:.22);},[game,paused,target,valid,hard,t,track]);
-  const key=useCallback((value:string)=>{if(!game||paused||game.status!=='playing')return;if(value==='ENTER'){submit();return;}const normalized=value==='⌫'?'BACKSPACE':value;const next=inputWordle(game,normalized);if(next!==game){setGame(next);setError('');tone(normalized==='BACKSPACE'?240:360,.035);}},[game,paused,submit]);
+  const submit=useCallback(()=>{
+    if(!game||paused||!target)return;
+    const reason=explainWordleSubmit(game,target,valid.has(game.current),hard);
+    if(reason){
+      setError(reason==='too-short'?t.short:reason==='invalid'?t.invalid:t.hardFail);
+      cue('fail');
+      hapticsRef.current.fire('fail');
+      return;
+    }
+    if(!analyticsStarted.current){
+      analyticsStarted.current=true;
+      track('game_start',game.mode);
+    }
+    const next=submitWordle(game,target,true,hard);
+    setError('');
+    setRestored(false);
+    setGame(next);
+    if(next.status==='won'){
+      cue('win');
+      hapticsRef.current.fire('win');
+      if (containerRef.current) celebrate(containerRef.current, { preset: 'cards' });
+    } else if(next.status==='lost'){
+      cue('fail');
+      hapticsRef.current.fire('fail');
+    } else {
+      cue('place');
+      hapticsRef.current.fire('place');
+    }
+  },[game,paused,target,valid,hard,t,track,cue,containerRef]);
+  const key=useCallback((value:string)=>{
+    if(!game||paused||game.status!=='playing')return;
+    if(value==='ENTER'){submit();return;}
+    const normalized=value==='⌫'?'BACKSPACE':value;
+    const next=inputWordle(game,normalized);
+    if(next!==game){
+      setGame(next);
+      setError('');
+      cue('tap');
+      hapticsRef.current.fire('tap');
+    }
+  },[game,paused,submit,cue]);
   useEffect(()=>{const handler=(event:KeyboardEvent)=>{if(event.ctrlKey||event.altKey||event.metaKey)return;const value=event.key==='Enter'?'ENTER':event.key==='Backspace'?'BACKSPACE':event.key.toUpperCase();if(value==='ENTER'||value==='BACKSPACE'||/^[A-Z]$/.test(value)){event.preventDefault();key(value);}};window.addEventListener('keydown',handler);return()=>window.removeEventListener('keydown',handler);},[key]);
   const evidence=useMemo(()=>{const order={absent:1,present:2,correct:3};const map:Record<string,WordleMark>={};if(!target)return map;for(const guess of game?.guesses??[])evaluateWordleGuess(guess,target).forEach((mark,i)=>{if(!map[guess[i]]||order[mark]>order[map[guess[i]]])map[guess[i]]=mark;});return map;},[game?.guesses,target]);
   const share=async()=>{if(!game||!target)return;track('share_click',game.mode,{result:game.status,attempts:game.guesses.length});const grid=game.guesses.map(g=>evaluateWordleGuess(g,target).map(m=>m==='correct'?'🟩':m==='present'?'🟨':'⬜').join('')).join('\n');try{await navigator.clipboard.writeText(`OIYO Wordle ${game.mode} ${game.status==='won'?game.guesses.length:'X'}/6\n${grid}`);}catch{/* best effort */}};
@@ -107,6 +163,9 @@ export default function WordleGame({ locale='en' }: { locale?:string }) {
       </div>
 
       <div className="not-prose mx-auto flex max-w-lg select-none flex-col items-center gap-4 px-1 py-3">
+        <div className="mb-2 w-full overflow-hidden rounded-xl border border-border bg-muted">
+          <img src={WORDLE_SPRITES.keyart} alt="WORDLE" className="h-32 w-full object-cover sm:h-44" />
+        </div>
         <div className="w-full text-center"><h2 className="text-3xl font-black tracking-widest">WORDLE</h2><p className="text-xs font-bold text-muted-foreground">{t.subtitle}</p>{stats&&stats.played>0&&<p className="mt-1 text-xs">{t.streak(stats)}</p>}</div>
         <div className="flex w-full flex-wrap justify-center gap-2">
           <button type="button" onClick={()=>start('daily')} aria-pressed={game.mode==='daily'} className={`min-h-11 rounded-xl border border-border px-4 text-sm font-bold ${game.mode==='daily'?'bg-primary text-primary-foreground':''}`}>{t.daily}</button>

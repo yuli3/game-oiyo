@@ -9,6 +9,10 @@ import { createGame2048, game2048Analysis, moveGame2048, restoreGame2048, type G
 import Game2048PixiCanvas from './Game2048PixiCanvas';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import type { Locale } from '../../lib/i18n';
+import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from '../../lib/games/game-audio';
+import { createHaptics } from '../../lib/games/haptics';
+import { celebrate } from '../../lib/games/celebration';
+import { GAME_2048_SPRITES } from '../../lib/games/sprites';
 
 const COPY = {
     ko: { title: "2048 게임", subtitle: "Growth Logic", score: "점수", best: "최고 점수", over: "게임 종료", win: "2048 달성!", reset: "다시 시작", hint: "방향키 또는 스와이프로 이동" },
@@ -34,8 +38,20 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
     const [game, setGame] = useState<Game2048State>(()=>createGame2048(1));
     const [best, setBest] = useState(0);
-    const [paused,setPaused]=useState(false);const[restored,setRestored]=useState(false);const[muted,setMuted]=useState(false);const[hasGhost,setHasGhost]=useState(false);const audio=useRef<AudioContext|null>(null);
+    const [paused,setPaused]=useState(false);const[restored,setRestored]=useState(false);const[muted,setMuted]=useState(false);const[hasGhost,setHasGhost]=useState(false);
+    const cuesRef = useRef<CuePlayer<CoreCue> | null>(null);
+    const hapticsRef = useRef(createHaptics());
     const seedRef=useRef<number|null>(null);const replayInputsRef=useRef<ReplayInput<Game2048ReplayAction>[]>([]);const ghostBoardsRef=useRef<(number|null)[][]>([]);const terminalRef=useRef(false);
+
+    const cue = useCallback((kind: CoreCue) => {
+        if (muted || reducedMotion) return;
+        try {
+            cuesRef.current ??= createCuePlayer({ cues: CORE_CUES });
+            void cuesRef.current.play(kind);
+        } catch {
+            /* audio blocked */
+        }
+    }, [muted, reducedMotion]);
 
     const startRun = useCallback((seedOverride?:number) => {
         clearGame2048Save();
@@ -64,7 +80,7 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             if (Number.isFinite(legacy) && legacy > 0) setBest(recordBest('game-2048', legacy, 'score', undefined, { trackPlay: false }).value);
         } catch { /* ignore */ }
     }, [initGame]);
-    useEffect(()=>{const hidden=()=>{if(document.hidden)setPaused(true)};document.addEventListener("visibilitychange",hidden);return()=>{document.removeEventListener("visibilitychange",hidden);void audio.current?.close()}},[]);
+    useEffect(()=>{const hidden=()=>{if(document.hidden)setPaused(true)};document.addEventListener("visibilitychange",hidden);return()=>{document.removeEventListener("visibilitychange",hidden);}},[]);
 
     // Persist the active board after every applied move; terminal states are not resumable.
     useEffect(() => {
@@ -73,10 +89,45 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
     useEffect(() => {
         if(game.status==='playing'){terminalRef.current=false;return}
-        if(!terminalRef.current){terminalRef.current=true;recordAchievementEvent('game-2048','played')}
-    },[game.status]);
+        if(!terminalRef.current){
+            terminalRef.current=true;
+            recordAchievementEvent('game-2048','played');
+            if (game.status === 'won') {
+                cue('win');
+                hapticsRef.current.fire('win');
+                if (containerRef.current) celebrate(containerRef.current, { preset: 'tiles' });
+            } else if (game.status === 'over') {
+                cue('fail');
+                hapticsRef.current.fire('fail');
+            }
+        }
+    },[game.status, cue, containerRef]);
 
-    const move = useCallback((direction: Game2048Direction) => { if(paused)return;const next=moveGame2048(game,direction);if(next===game)return;const nextInputs=[...replayInputsRef.current,{tick:game.moves,input:{type:'move' as const,direction}}];replayInputsRef.current=nextInputs;setGame(next);if(!muted){const context=audio.current??new AudioContext();audio.current=context;const o=context.createOscillator(),g=context.createGain();o.frequency.value=next.lastGain?440:220;g.gain.setValueAtTime(.04,context.currentTime);g.gain.exponentialRampToValueAtTime(.001,context.currentTime+.07);o.connect(g).connect(context.destination);o.start();o.stop(context.currentTime+.07)}if(next.score>best){if(seedRef.current!==null){try{const replay=createGame2048Replay(seedRef.current,next,nextInputs);if(verifyReplayEnvelope(replay,replayGame2048))saveReplayEnvelope(replay)}catch{/* drifted replay is discarded */}}recordAchievementEvent('game-2048','personal-best');setBest(recordBest('game-2048',next.score,'score',undefined,{trackPlay:false}).value);} }, [game,best,paused,muted]);
+    const move = useCallback((direction: Game2048Direction) => {
+        if(paused)return;
+        const next=moveGame2048(game,direction);
+        if(next===game)return;
+        const nextInputs=[...replayInputsRef.current,{tick:game.moves,input:{type:'move' as const,direction}}];
+        replayInputsRef.current=nextInputs;
+        setGame(next);
+        if (next.lastGain > 0) {
+            cue('combo');
+            hapticsRef.current.fire('combo');
+        } else {
+            cue('place');
+            hapticsRef.current.fire('place');
+        }
+        if(next.score>best){
+            if(seedRef.current!==null){
+                try{
+                    const replay=createGame2048Replay(seedRef.current,next,nextInputs);
+                    if(verifyReplayEnvelope(replay,replayGame2048))saveReplayEnvelope(replay);
+                }catch{/* drifted replay is discarded */}
+            }
+            recordAchievementEvent('game-2048','personal-best');
+            setBest(recordBest('game-2048',next.score,'score',undefined,{trackPlay:false}).value);
+        }
+    }, [game,best,paused,cue]);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -103,6 +154,9 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             }
         >
             <GameContainer title={t.title} subtitle={t.subtitle} onReset={initGame}>
+                <div className="mb-3 overflow-hidden rounded-xl border border-border bg-muted">
+                    <img src={GAME_2048_SPRITES.keyart} alt={t.title} className="h-32 w-full object-cover sm:h-44" />
+                </div>
                 <div className="flex justify-end gap-2 mb-6 flex-wrap items-center">
                     <button
                         type="button"
