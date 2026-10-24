@@ -32,6 +32,11 @@ import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { GameShell } from "../ui/game/GameShell";
 import type { FlowPhase } from "../../lib/games/game-flow";
 import { getGlobalBgmController } from "../../lib/games/bgm";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
 
 interface Props {
   locale?: Locale;
@@ -740,6 +745,42 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
     }
   }, [highestTierUnlocked, locale, score]);
 
+  const [shareCardCopied, setShareCardCopied] = useState(false);
+
+  const handleShareCard = useCallback(async () => {
+    try {
+      const highestName =
+        COSMIC_TIERS[highestTierUnlocked]?.name[locale] ??
+        COSMIC_TIERS[highestTierUnlocked]?.name.en ??
+        "Asteroid";
+
+      const canvas = createShareCardCanvas({
+        title: t.title,
+        subtitle: "COSMIC MERGE",
+        score,
+        bestScore,
+        slug: "cosmic-merge",
+        seedCode: "COSMIC",
+        customStats: [
+          { label: "HIGHEST", value: highestName },
+          { label: "VORTEX", value: `${vortexEnergy}%` },
+        ],
+      });
+
+      const copied = await copyShareCardToClipboard(canvas);
+      if (copied) {
+        setShareCardCopied(true);
+        setTimeout(() => setShareCardCopied(false), 2500);
+      } else {
+        downloadShareCard(canvas, `oiyo-cosmic-merge-${score}pts.png`);
+        setShareCardCopied(true);
+        setTimeout(() => setShareCardCopied(false), 2500);
+      }
+    } catch {
+      // fallback
+    }
+  }, [t.title, score, bestScore, highestTierUnlocked, locale, vortexEnergy]);
+
   // Keyboard navigation & shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -1106,6 +1147,8 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
       ]}
       onShare={handleShareScore}
       shareCopied={shareCopied}
+      onShareCard={handleShareCard}
+      shareCardCopied={shareCardCopied}
       controlsHint={t.controlsHint}
       extraHeaderActions={
         <div className="flex items-center gap-1.5 pointer-events-auto">

@@ -1,5 +1,17 @@
 import React, { useEffect, useRef } from "react";
-import { Maximize2, Minimize2, Volume2, VolumeX, Pause, Play, RotateCcw, Share2, ArrowLeft } from "lucide-react";
+import {
+  Maximize2,
+  Minimize2,
+  Volume2,
+  VolumeX,
+  Pause,
+  Play,
+  RotateCcw,
+  Share2,
+  ArrowLeft,
+  Camera,
+  Swords,
+} from "lucide-react";
 import type { FlowPhase } from "../../../lib/games/game-flow";
 
 export interface GameShellProps {
@@ -31,6 +43,13 @@ export interface GameShellProps {
   resultStats?: Array<{ label: string; value: string | number }>;
   onShare?: () => void;
   shareCopied?: boolean;
+  onShareCard?: () => void;
+  shareCardCopied?: boolean;
+  challengeInfo?: {
+    challengerScore: number;
+    outcome: "win" | "lose" | "tie" | "solo";
+    diff?: number;
+  };
   controlsHint?: string;
   extraHeaderActions?: React.ReactNode;
   children: React.ReactNode;
@@ -66,6 +85,9 @@ export const GameShell: React.FC<GameShellProps> = ({
   resultStats,
   onShare,
   shareCopied = false,
+  onShareCard,
+  shareCardCopied = false,
+  challengeInfo,
   controlsHint,
   extraHeaderActions,
   children,
@@ -278,6 +300,35 @@ export const GameShell: React.FC<GameShellProps> = ({
               <h4 className="text-2xl font-black text-foreground">{resultTitle ?? "ROUND COMPLETE"}</h4>
               {resultSubtitle && <p className="text-xs text-muted-foreground">{resultSubtitle}</p>}
 
+              {/* Rival Challenge Outcome Banner */}
+              {challengeInfo && challengeInfo.outcome !== "solo" && (
+                <div
+                  className={`rounded-xl border p-2.5 text-center ${
+                    challengeInfo.outcome === "win"
+                      ? "border-chart-2/40 bg-chart-2/10 text-chart-2"
+                      : challengeInfo.outcome === "lose"
+                      ? "border-destructive/40 bg-destructive/10 text-destructive"
+                      : "border-border bg-muted/40 text-foreground"
+                  }`}
+                >
+                  <div className="flex items-center justify-center gap-1.5 text-xs font-black uppercase tracking-wider">
+                    <Swords className="size-3.5" />
+                    <span>
+                      {challengeInfo.outcome === "win"
+                        ? "CHALLENGE WON!"
+                        : challengeInfo.outcome === "lose"
+                        ? "CHALLENGE LOST"
+                        : "TIED RUN"}
+                    </span>
+                  </div>
+                  <p className="mt-0.5 text-xs font-semibold">
+                    Rival: {challengeInfo.challengerScore.toLocaleString()} pts{" "}
+                    {challengeInfo.diff !== undefined &&
+                      `(${challengeInfo.diff > 0 ? `+${challengeInfo.diff}` : challengeInfo.diff})`}
+                  </p>
+                </div>
+              )}
+
               {resultStats && resultStats.length > 0 && (
                 <div className="grid grid-cols-2 gap-2 py-2">
                   {resultStats.map((st, i) => (
@@ -289,7 +340,17 @@ export const GameShell: React.FC<GameShellProps> = ({
                 </div>
               )}
 
-              <div className="flex gap-2 pt-2">
+              <div className="flex flex-wrap gap-2 pt-2">
+                {onShareCard && (
+                  <button
+                    type="button"
+                    onClick={onShareCard}
+                    className="flex flex-1 min-h-11 items-center justify-center gap-1.5 rounded-xl border border-primary/40 bg-primary/10 text-xs font-black text-primary hover:bg-primary/20"
+                  >
+                    <Camera className="size-4" />
+                    {shareCardCopied ? "카드 복사됨!" : "스냅샷 카드"}
+                  </button>
+                )}
                 {onShare && (
                   <button
                     type="button"
@@ -297,7 +358,7 @@ export const GameShell: React.FC<GameShellProps> = ({
                     className="flex flex-1 min-h-11 items-center justify-center gap-1.5 rounded-xl border border-border bg-muted/60 text-xs font-bold text-foreground hover:bg-muted"
                   >
                     <Share2 className="size-4" />
-                    {shareCopied ? "복사됨!" : "결과 공유"}
+                    {shareCopied ? "복사됨!" : "도전장 링크"}
                   </button>
                 )}
                 {onRetry && (

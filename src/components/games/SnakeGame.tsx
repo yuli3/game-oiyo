@@ -11,6 +11,15 @@ import { GameShell } from '../ui/game/GameShell';
 import type { FlowPhase } from '../../lib/games/game-flow';
 import { getGlobalBgmController } from '../../lib/games/bgm';
 import {
+    createShareCardCanvas,
+    copyShareCardToClipboard,
+    downloadShareCard,
+} from '../../lib/games/share-card';
+import {
+    buildChallengeUrl,
+    generateChallengeCopy,
+} from '../../lib/games/seed-challenge';
+import {
     AUGMENTS_CATALOG,
     calculateAugmentedTickInterval,
     isAugmentMilestone,
@@ -638,6 +647,59 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         touchStart.current = null;
     };
 
+    const [shareCopied, setShareCopied] = useState(false);
+    const [shareCardCopied, setShareCardCopied] = useState(false);
+
+    const handleShareScore = useCallback(() => {
+        const origin = typeof window !== 'undefined' ? window.location.origin : 'https://game.oiyo.net';
+        const challengeUrl = buildChallengeUrl({
+            baseUrl: origin,
+            locale: loc,
+            slug: 'snake-game',
+            seed: Date.now() >>> 0,
+            score,
+        });
+        const shareText = generateChallengeCopy({
+            locale: loc,
+            gameTitle: t.title,
+            score,
+            url: challengeUrl,
+        });
+        if (typeof navigator !== 'undefined' && navigator.clipboard) {
+            navigator.clipboard.writeText(shareText).then(() => {
+                setShareCopied(true);
+                setTimeout(() => setShareCopied(false), 2500);
+            });
+        }
+    }, [loc, score, t.title]);
+
+    const handleShareCard = useCallback(async () => {
+        try {
+            const canvas = createShareCardCanvas({
+                title: t.title,
+                subtitle: 'SNAKE ARCADE',
+                score,
+                bestScore: best,
+                slug: 'snake-game',
+                customStats: [
+                    { label: 'LENGTH', value: length },
+                    { label: 'AUGMENTS', value: activeAugments.length },
+                ],
+            });
+            const copied = await copyShareCardToClipboard(canvas);
+            if (copied) {
+                setShareCardCopied(true);
+                setTimeout(() => setShareCardCopied(false), 2500);
+            } else {
+                downloadShareCard(canvas, `oiyo-snake-${score}pts.png`);
+                setShareCardCopied(true);
+                setTimeout(() => setShareCardCopied(false), 2500);
+            }
+        } catch {
+            // fallback
+        }
+    }, [t.title, score, best, length, activeAugments.length]);
+
     return (
         <GameShell
             title={t.title}
@@ -663,6 +725,10 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 { label: d.length, value: length },
                 { label: t.best, value: best },
             ]}
+            onShare={handleShareScore}
+            shareCopied={shareCopied}
+            onShareCard={handleShareCard}
+            shareCardCopied={shareCardCopied}
             controlsHint={t.hint}
             extraHeaderActions={
                 activeAugments.length > 0 ? (
