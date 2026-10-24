@@ -42,6 +42,18 @@ export function resolveRankTier(slug: string, score: number): string {
     if (score >= 1000) return "STACKER";
     return "APPRENTICE";
   }
+  if (slug === "gomoku") {
+    if (score <= 15) return "GRANDMASTER";
+    if (score <= 25) return "MASTER";
+    if (score <= 40) return "ADEPT";
+    return "TACTICIAN";
+  }
+  if (slug === "solitaire") {
+    if (score <= 90) return "SPEED DEMON";
+    if (score <= 180) return "CARD SHARP";
+    if (score <= 300) return "SOLVER";
+    return "PATIENT";
+  }
   if (slug === "cosmic-merge") {
     if (score >= 10000) return "GODLIKE";
     if (score >= 5000) return "SUPERNOVA";

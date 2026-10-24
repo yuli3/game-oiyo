@@ -1,9 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { Check, Maximize2, Minimize2, QrCode, Share2, Volume2, VolumeX } from 'lucide-react';
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { dayIndex, mulberry32, previousDayKey, todayKey } from '../../lib/games/daily';
 import { getDailyStreak, recordDailyWin, type DailyStreak } from '../../lib/games/records';
+import { generateChallengeQrSvg } from '../../lib/games/challenge-qr';
+import { buildChallengeUrl, generateChallengeCopy } from '../../lib/games/seed-challenge';
 import {
     autoMarkAdjacentWhites,
     generateKurodokoPuzzle,
@@ -102,6 +104,34 @@ const Kurodoko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [streak, setStreak] = useState<DailyStreak | null>(null);
     const [dailyDate, setDailyDate] = useState(() => todayKey());
     const [activeCell, setActiveCell] = useState(0);
+    const [showQrModal, setShowQrModal] = useState(false);
+    const [copied, setCopied] = useState(false);
+
+    const challengeUrl = typeof window !== 'undefined'
+        ? buildChallengeUrl({
+            baseUrl: window.location.origin,
+            locale: locale as any,
+            slug: 'kurodoko',
+            seed,
+            score: Math.max(1, seconds),
+        })
+        : '';
+
+    const handleCopyChallenge = () => {
+        if (!challengeUrl) return;
+        const copyText = generateChallengeCopy({
+            locale: locale as any,
+            gameTitle: t.title,
+            score: Math.max(1, seconds),
+            url: challengeUrl,
+        });
+        if (navigator.clipboard?.writeText) {
+            navigator.clipboard.writeText(copyText).then(() => {
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2500);
+            });
+        }
+    };
     const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'ko' });
     const [muted, setMuted] = useState<boolean>(() => {
         try {
@@ -377,6 +407,24 @@ const Kurodoko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     <div className="animate-fade-up rounded-xl border border-success/30 bg-success/10 px-4 py-3 motion-reduce:animate-none">
                         <p className="text-lg font-black text-success">🎉 {t.win}</p>
                         <p className="mt-1 text-xs font-bold text-muted-foreground">{t.moves} {moves} · {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')} · {mode === 'daily' ? t.daily : t[difficulty]}</p>
+                        <div className="mt-3 flex flex-wrap justify-center gap-2">
+                            <button
+                                type="button"
+                                onClick={handleCopyChallenge}
+                                className="min-h-11 px-4 py-2 rounded-xl border border-border bg-background shadow-xs text-xs font-bold text-foreground hover:bg-muted transition-colors flex items-center gap-1.5"
+                            >
+                                {copied ? <Check className="size-4 text-success" /> : <Share2 className="size-4" />}
+                                <span>{copied ? '링크 복사됨!' : '챌린지 공유'}</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setShowQrModal(true)}
+                                className="min-h-11 px-4 py-2 rounded-xl border border-border bg-background shadow-xs text-xs font-bold text-foreground hover:bg-muted transition-colors flex items-center gap-1.5"
+                            >
+                                <QrCode className="size-4" />
+                                <span>QR 코드</span>
+                            </button>
+                        </div>
                     </div>
                 ) : validation.error ? (
                     <p className="text-xs font-bold text-destructive">
@@ -385,6 +433,33 @@ const Kurodoko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 ) : null}
             </div>
         </GameContainer>
+        {showQrModal && challengeUrl && (
+            <div
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4"
+                onClick={() => setShowQrModal(false)}
+            >
+                <div
+                    className="w-full max-w-xs rounded-2xl border border-border bg-card p-5 text-center shadow-2xl space-y-4"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <h3 className="text-base font-bold text-foreground">모바일로 챌린지 열기</h3>
+                    <p className="text-xs text-muted-foreground">스마트폰 카메라로 QR 코드를 스캔하세요.</p>
+                    <div
+                        className="mx-auto flex size-52 items-center justify-center rounded-xl bg-white p-2 shadow-inner"
+                        dangerouslySetInnerHTML={{
+                            __html: generateChallengeQrSvg(challengeUrl, { size: 200 }),
+                        }}
+                    />
+                    <button
+                        type="button"
+                        onClick={() => setShowQrModal(false)}
+                        className="w-full min-h-11 rounded-xl bg-primary text-xs font-bold text-primary-foreground shadow-md hover:bg-primary/90"
+                    >
+                        닫기
+                    </button>
+                </div>
+            </div>
+        )}
     </div>
 );
 };

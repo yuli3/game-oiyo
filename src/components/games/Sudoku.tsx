@@ -582,12 +582,23 @@ const Sudoku: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
     }
   }, [seconds, t.title, mode, bestTime, seedCode, clueCount]);
 
+  const challengeUrl = typeof window !== "undefined"
+    ? buildChallengeUrl({
+        baseUrl: window.location.origin,
+        locale,
+        slug: "sudoku",
+        seed: seedRef.current,
+        score: Math.max(1, seconds),
+      })
+    : "";
+
   return (
     <GameShell
       title={t.title}
       subtitle={t.subtitle}
       keyart={SUDOKU_SPRITES.keyart}
       phase={phase}
+      challengeUrl={challengeUrl}
       score={fmt(seconds)}
       best={bestTime !== null ? fmt(bestTime) : undefined}
       muted={muted}

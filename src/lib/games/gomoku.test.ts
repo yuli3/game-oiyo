@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createGomokuBoard, getGomokuResult, GOMOKU_CELL_COUNT, placeGomokuStone } from "./gomoku";
+import { createGomokuBoard, getGomokuResult, getGomokuWinningIndices, GOMOKU_CELL_COUNT, placeGomokuStone } from "./gomoku";
 
 describe("gomoku engine", () => {
   it("creates an empty 15 by 15 board", () => {
@@ -38,5 +38,14 @@ describe("gomoku engine", () => {
     const board = createGomokuBoard();
     for (const index of [13, 14, 15, 16, 17]) board[index] = 2;
     expect(getGomokuResult(board, 15)).toBeNull();
+  });
+
+  it("extracts all indices belonging to the winning 5-in-a-row line", () => {
+    const board = createGomokuBoard();
+    const winningFive = [10, 11, 12, 13, 14];
+    for (const idx of winningFive) board[idx] = 1;
+    const line = getGomokuWinningIndices(board, 14);
+    expect(line).toHaveLength(5);
+    expect(line).toEqual(expect.arrayContaining(winningFive));
   });
 });

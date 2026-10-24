@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { Camera, Check, Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import type { Locale } from '../../lib/i18n';
 import { gomokuBestMove, gomokuThreatAt, type GomokuThreat } from '../../lib/games/ai/gomoku';
@@ -10,8 +10,10 @@ import {
     loadGomokuSaveV2,
     storeGomokuSaveV2,
 } from '../../lib/games/gomoku-save';
-import { createGomokuBoard, GOMOKU_SIZE, placeGomokuStone, type GomokuCell, type GomokuPlayer } from '../../lib/games/gomoku';
+import { createGomokuBoard, getGomokuWinningIndices, GOMOKU_SIZE, placeGomokuStone, type GomokuCell, type GomokuPlayer } from '../../lib/games/gomoku';
 import { GOMOKU_SPRITES } from '../../lib/games/sprites';
+import { playFanfare, type TonePlayer } from '../../lib/games/game-audio';
+import { copyShareCardToClipboard, createShareCardCanvas, downloadShareCard } from '../../lib/games/share-card';
 
 const SIZE = GOMOKU_SIZE;
 
@@ -109,12 +111,47 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     const [focusIndex, setFocusIndex] = useState(112);
     const [lastMove, setLastMove] = useState<number | null>(null);
     const [freshMove, setFreshMove] = useState<number | null>(null);
+    const [winningLine, setWinningLine] = useState<number[] | null>(null);
+    const [shareCardCopied, setShareCardCopied] = useState(false);
     const [moveCount, setMoveCount] = useState(0);
     const [lastAiForcing, setLastAiForcing] = useState<{ index:number; threat:GomokuThreat } | null>(null);
     const aiTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const cellRefs = useRef<(HTMLButtonElement | null)[]>([]);
     const startedAtRef = useRef<number>(Date.now());
     const audio = useRef<AudioContext | null>(null);
+
+    const playStoneSnap = useCallback(() => {
+        if (mutedRef.current || typeof window === 'undefined') return;
+        try {
+            const context = audio.current ?? new AudioContext();
+            audio.current = context;
+            const now = context.currentTime;
+
+            // Crisp impact click
+            const osc = context.createOscillator();
+            const gain = context.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(1100, now);
+            osc.frequency.exponentialRampToValueAtTime(320, now + 0.02);
+            gain.gain.setValueAtTime(0.12, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.02);
+            osc.connect(gain).connect(context.destination);
+            osc.start(now);
+            osc.stop(now + 0.02);
+
+            // Wood table resonance body
+            const thud = context.createOscillator();
+            const thudGain = context.createGain();
+            thud.type = 'triangle';
+            thud.frequency.setValueAtTime(180, now);
+            thud.frequency.exponentialRampToValueAtTime(80, now + 0.05);
+            thudGain.gain.setValueAtTime(0.08, now);
+            thudGain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+            thud.connect(thudGain).connect(context.destination);
+            thud.start(now);
+            thud.stop(now + 0.05);
+        } catch {}
+    }, []);
 
     const tone = useCallback((frequency: number, duration = 0.05) => {
         if (mutedRef.current || typeof window === 'undefined') return;
@@ -176,7 +213,17 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     const finish = (result: number) => {
         clearGomokuSaveV2();
         setWinner(result);
-        tone(result === 0 ? 220 : 660, result === 0 ? 0.08 : 0.18);
+        if (result !== 0 && !mutedRef.current) {
+            const tonePlayer: TonePlayer = {
+                play: (frequency: number, duration?: number) => {
+                    tone(frequency, duration ?? 0.05);
+                },
+                close: () => {},
+            };
+            playFanfare(tonePlayer, result === 1 || mode === 'local' ? 'triumph' : 'defeat');
+        } else {
+            tone(220, 0.08);
+        }
         if (mode === 'ai') {
             const outcome = result === 0 ? 'd' : result === AI_PLAYER ? 'l' : 'w';
             setRecord(recordResult('gomoku', outcome));
@@ -196,9 +243,43 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
             const threat = gomokuThreatAt(move.board, index, player);
             if (threat !== 'none') setLastAiForcing(current => threat === 'five' && current ? current : { index, threat });
         }
-        tone(move.result !== null && move.result !== 0 ? 660 : 300, 0.05);
-        if (move.result !== null) finish(move.result);
-        else setIsBlackTurn(move.nextPlayer === 1);
+        playStoneSnap();
+        if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+            try { navigator.vibrate(12); } catch {}
+        }
+        if (move.result !== null) {
+            if (move.result !== 0) {
+                const line = getGomokuWinningIndices(move.board, index);
+                setWinningLine(line);
+            }
+            finish(move.result);
+        } else {
+            setIsBlackTurn(move.nextPlayer === 1);
+        }
+    };
+
+    const handleShareCard = async () => {
+        try {
+            const canvas = createShareCardCanvas({
+                title: t.title,
+                subtitle: mode === 'ai' ? `vs AI (${aiInfo.level[level]})` : '2 Players',
+                score: moveCount,
+                slug: 'gomoku',
+                customStats: [
+                    { label: 'MOVES', value: moveCount },
+                    { label: 'WINNER', value: winner === 1 ? t.black : winner === 2 ? t.white : t.draw },
+                ],
+            });
+            const copied = await copyShareCardToClipboard(canvas);
+            if (copied) {
+                setShareCardCopied(true);
+                setTimeout(() => setShareCardCopied(false), 2500);
+            } else {
+                downloadShareCard(canvas, `gomoku-${moveCount}moves.png`);
+                setShareCardCopied(true);
+                setTimeout(() => setShareCardCopied(false), 2500);
+            }
+        } catch {}
     };
 
     const handleClick = (index: number) => {
@@ -231,6 +312,8 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         setFocusIndex(112);
         setLastMove(null);
         setFreshMove(null);
+        setWinningLine(null);
+        setShareCardCopied(false);
         setMoveCount(0);
         setLastAiForcing(null);
         startedAtRef.current = Date.now();
@@ -308,13 +391,13 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                             {([1, 2, 3] as AiLevel[]).map((lv) => (
                                 <button type="button" key={lv} onClick={() => { setLevel(lv); reset(); }}
                                     aria-pressed={level === lv}
-                                    className={`min-h-11 px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-colors motion-reduce:transition-none ${level === lv ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
+                                    className={`min-h-11 px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-colors motion-reduce:transition-none ${level === lv ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
                                     {lv === 1 ? t.level1 : lv === 2 ? t.level2 : t.level3}
                                 </button>
                             ))}
                         </div>
                     )}
-                    {mode === 'ai' && <p className="basis-full text-[11px] font-medium text-muted-foreground">{aiInfo.difficulty}: {aiInfo.level[level]}</p>}
+                    {mode === 'ai' && <p className="basis-full text-xs font-medium text-muted-foreground">{aiInfo.difficulty}: {aiInfo.level[level]}</p>}
                     {moveCount > 0 && winner === null && (
                         <button type="button" onClick={() => setPaused((value) => { if (value) setRestored(false); return !value; })} className="min-h-11 px-3 rounded-lg border border-border text-xs font-bold text-muted-foreground hover:bg-muted">
                             {paused ? `▶ ${x.resume}` : `Ⅱ ${x.pause}`}
@@ -343,7 +426,7 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                         <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
                     </button>
                 {mode === 'ai' && record && (record.w + record.l + record.d > 0) && (
-                    <span className="ml-auto text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                    <span className="ml-auto text-xs font-bold text-muted-foreground uppercase tracking-widest">
                         {t.record} {record.w}–{record.l}{record.d ? `–${record.d}` : ''}
                     </span>
                 )}
@@ -368,7 +451,7 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                     ))}
                 </div>
             </div>
-            <p className="mb-3 text-center text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{x.overview}</p>
+            <p className="mb-3 text-center text-xs font-bold text-muted-foreground uppercase tracking-widest">{x.overview}</p>
 
             <div className="overflow-x-auto pb-2">
             <div className="relative bg-[#f3e5ab] rounded-sm shadow-inner border-[6px] border-[#d4c38d]" style={{ width: BOARD_PX + 16, height: BOARD_PX + 16, padding: 8 }}>
@@ -407,6 +490,9 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                                 <div className={`relative flex h-[85%] w-[85%] items-center justify-center ${i === freshMove ? 'animate-in zoom-in-75 motion-reduce:transform-none motion-reduce:transition-none motion-reduce:animate-none' : ''}`}>
                                     <img src={stone === 1 ? GOMOKU_SPRITES.black : GOMOKU_SPRITES.white} alt="" draggable={false} className="pointer-events-none h-full w-full object-contain drop-shadow-md" />
                                     {i === lastMove && <div className="absolute inset-[-3px] rounded-full ring-2 ring-primary" />}
+                                    {winningLine && winningLine.includes(i) && (
+                                        <div className="absolute inset-[-4px] rounded-full ring-4 ring-warning animate-pulse shadow-md z-10" />
+                                    )}
                                 </div>
                             )}
                         </button>
@@ -415,22 +501,32 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
 
                 {winner !== null && (
                     <div className="absolute inset-0 z-10 bg-background/60 backdrop-blur-sm flex flex-col items-center justify-center animate-in fade-in zoom-in-95 motion-reduce:animate-none" role="status" aria-live="assertive">
-                        <div className="bg-card p-8 rounded-3xl shadow-xl border border-border text-center">
+                        <div className="bg-card p-6 sm:p-8 rounded-3xl shadow-xl border border-border text-center max-w-sm w-full mx-4">
                             <h4 className="text-3xl font-black text-foreground mb-2">{winLabel}</h4>
                             <p className="text-muted-foreground mb-2 uppercase tracking-widest font-bold text-xs">{t.over}</p>
                             <p className="text-sm text-muted-foreground mb-1">{moveCount} {x.moves}</p>
-                            {winner !== 0 && <p className="text-[11px] text-muted-foreground mb-4 max-w-xs">{x.nextGoal}</p>}
-                            {aiReview && <div className="mb-5 max-w-xs rounded-2xl border border-amber-300/60 bg-amber-50 p-3 text-left text-xs text-stone-800"><p className="font-black text-amber-900">{aiInfo.review} · {coordinate(aiReview.index)}</p><p className="mt-1">{aiInfo.threats[aiReview.threat]}</p><p className="mt-1 text-[10px] text-stone-500">{aiInfo.difficulty}: {aiInfo.level[level]}</p></div>}
-                            <button type="button" onClick={reset} className="min-h-11 px-10 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
-                                {t.reset}
-                            </button>
+                            {winner !== 0 && <p className="text-xs text-muted-foreground mb-4 max-w-xs mx-auto">{x.nextGoal}</p>}
+                            {aiReview && <div className="mb-5 max-w-xs mx-auto rounded-2xl border border-warning/40 bg-warning/10 p-3 text-left text-xs text-foreground"><p className="font-black text-warning">{aiInfo.review} · {coordinate(aiReview.index)}</p><p className="mt-1">{aiInfo.threats[aiReview.threat]}</p><p className="mt-1 text-xs text-muted-foreground">{aiInfo.difficulty}: {aiInfo.level[level]}</p></div>}
+                            <div className="flex flex-wrap justify-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={handleShareCard}
+                                    className="min-h-11 px-4 py-2 rounded-xl border border-primary/40 bg-primary/10 text-xs font-bold text-primary hover:bg-primary/20 transition-colors flex items-center gap-1.5"
+                                >
+                                    {shareCardCopied ? <Check className="size-4" /> : <Camera className="size-4" />}
+                                    <span>{shareCardCopied ? '카드 복사됨!' : '스냅샷 카드'}</span>
+                                </button>
+                                <button type="button" onClick={reset} className="min-h-11 px-6 py-2 bg-primary text-primary-foreground rounded-xl font-bold text-xs shadow-md hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
+                                    {t.reset}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}
             </div>
             </div>
 
-            <div className="mt-6 flex justify-center gap-6 text-[10px] text-muted-foreground font-medium uppercase tracking-widest opacity-50">
+            <div className="mt-6 flex justify-center gap-6 text-xs text-muted-foreground font-medium uppercase tracking-widest opacity-50">
                 <div className="flex items-center gap-1"><span>⚫</span> {t.black}</div>
                 <div className="flex items-center gap-1"><span>⚪</span> {t.white}</div>
             </div>

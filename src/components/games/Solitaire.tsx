@@ -1,8 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { celebrate } from "../../lib/games/celebration";
-import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { Camera, Check, Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
 import { GameContainer, PlayingCard } from '../ui/game/GamePrimitives';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
+import {
+  copyShareCardToClipboard,
+  createShareCardCanvas,
+  downloadShareCard,
+} from '../../lib/games/share-card';
 import { getRecord, recordResult, getBestForConditions, recordBestForConditions, getDailyStreak, recordDailyWin, type BestConditions, type DailyStreak, type GameRecord } from '../../lib/games/records';
 import { dayIndex, todayKey, previousDayKey } from '../../lib/games/daily';
 import {
@@ -151,6 +156,7 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
   const [legacyMigrated, setLegacyMigrated] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const [hintMessage, setHintMessage] = useState<string | null>(null);
+  const [shareCardCopied, setShareCardCopied] = useState(false);
   const [muted, setMuted] = useState<boolean>(() => {
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
@@ -355,6 +361,31 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
       audioRef.current?.playFoundationSnap();
     }
   }, [game, won]);
+
+  const handleShareCard = useCallback(async () => {
+    try {
+      const canvas = createShareCardCanvas({
+        title: t.title,
+        subtitle: mode === 'daily' ? `DAILY ${dailyDate}` : 'KLONDIKE FREE',
+        score: Math.max(1, seconds),
+        slug: 'solitaire',
+        customStats: [
+          { label: 'TIME', value: fmt(Math.max(1, seconds)) },
+          { label: 'MOVES', value: moves },
+          { label: 'UNDOS', value: undoCount },
+        ],
+      });
+      const copied = await copyShareCardToClipboard(canvas);
+      if (copied) {
+        setShareCardCopied(true);
+        setTimeout(() => setShareCardCopied(false), 2500);
+      } else {
+        downloadShareCard(canvas, `solitaire-${moves}moves.png`);
+        setShareCardCopied(true);
+        setTimeout(() => setShareCardCopied(false), 2500);
+      }
+    } catch {}
+  }, [dailyDate, mode, moves, seconds, t.title, undoCount]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -602,7 +633,17 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
               <p className="mb-1 text-xs font-bold text-muted-foreground">{isNewBest ? t.newBest : `${t.best} ${fmt(bestTime)}`} · {t.nextGoal}: {fmt(Math.max(1, bestTime - 1))}{undoCount > 0 ? ` · ${t.assisted}` : ''}</p>
             )}
             {mode === 'daily' && streak && <p className="mb-4 text-xs font-bold text-muted-foreground">🔥 {t.streak} {streak.currentStreak}</p>}
-            <button type="button" onClick={() => initGame(mode)} className="min-h-11 rounded-full bg-primary px-10 py-3 font-black text-primary-foreground shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">{t.reset}</button>
+            <div className="flex flex-wrap justify-center gap-2 mt-2">
+              <button
+                type="button"
+                onClick={handleShareCard}
+                className="min-h-11 px-4 py-2 rounded-xl border border-primary/40 bg-primary/10 text-xs font-bold text-primary hover:bg-primary/20 transition-colors flex items-center gap-1.5"
+              >
+                {shareCardCopied ? <Check className="size-4" /> : <Camera className="size-4" />}
+                <span>{shareCardCopied ? '카드 복사됨!' : '스냅샷 카드'}</span>
+              </button>
+              <button type="button" onClick={() => initGame(mode)} className="min-h-11 rounded-xl bg-primary px-8 py-2.5 font-black text-xs text-primary-foreground shadow-lg hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">{t.reset}</button>
+            </div>
           </div>
         )}
       </div>

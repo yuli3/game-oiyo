@@ -28,6 +28,7 @@ import {
   saveArcadePassProgress,
 } from "../../../lib/games/arcade-pass";
 import { todayKey } from "../../../lib/games/daily";
+import { getGlobalBgmController, type BgmTrack, BGM_TRACK_STORAGE_KEY, BGM_VOLUME_STORAGE_KEY } from "../../../lib/games/bgm";
 
 export interface GameShellProps {
   title: string;
@@ -127,6 +128,44 @@ export const GameShell: React.FC<GameShellProps> = ({
   const [showArcadePass, setShowArcadePass] = useState(false);
   const [showTrophyModal, setShowTrophyModal] = useState(false);
   const [missionToast, setMissionToast] = useState<{ title: string; xp: number } | null>(null);
+
+  const [bgmTrack, setBgmTrack] = useState<BgmTrack>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem(BGM_TRACK_STORAGE_KEY) as BgmTrack | null;
+        if (saved && (saved === "zen" || saved === "arcade" || saved === "cosmic")) return saved;
+      } catch {}
+    }
+    return "zen";
+  });
+
+  const [bgmVolume, setBgmVolume] = useState<number>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem(BGM_VOLUME_STORAGE_KEY);
+        if (saved !== null) {
+          const parsed = parseFloat(saved);
+          if (!isNaN(parsed) && parsed >= 0 && parsed <= 1) return Math.round(parsed * 100);
+        }
+      } catch {}
+    }
+    return 35;
+  });
+
+  const handleBgmVolumeChange = (newPercent: number) => {
+    setBgmVolume(newPercent);
+    const controller = getGlobalBgmController();
+    controller.setVolume(newPercent / 100);
+  };
+
+  const handleBgmTrackChange = (track: BgmTrack) => {
+    setBgmTrack(track);
+    const controller = getGlobalBgmController();
+    controller.setTrack(track);
+    if (!muted && !controller.isPlaying) {
+      controller.start(track);
+    }
+  };
 
   // Auto-progress Arcade Pass Daily Missions on result phase
   useEffect(() => {
@@ -267,42 +306,87 @@ export const GameShell: React.FC<GameShellProps> = ({
             </button>
           )}
 
-          {onSelectSoundTheme && (
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setShowSoundMenu((v) => !v)}
-                aria-label="사운드 테마 변경"
-                title="사운드 테마 변경"
-                className="flex min-h-11 items-center gap-1 rounded-xl border border-border bg-muted px-2.5 py-2 text-xs font-bold text-muted-foreground hover:bg-muted/80 focus-visible:ring-2 focus-visible:ring-primary"
-              >
-                <Music className="size-4" />
-                <span className="hidden uppercase sm:inline font-mono text-xs">{soundTheme}</span>
-              </button>
-              {showSoundMenu && (
-                <div className="absolute right-0 top-12 z-50 flex min-w-32 flex-col gap-1 rounded-xl border border-border bg-popover p-1.5 shadow-lg backdrop-blur-md animate-in fade-in zoom-in-95">
-                  {(["core", "retro", "zen", "cyber"] as const).map((theme) => (
-                    <button
-                      key={theme}
-                      type="button"
-                      onClick={() => {
-                        onSelectSoundTheme(theme);
-                        setShowSoundMenu(false);
-                      }}
-                      className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs font-bold transition-colors ${
-                        soundTheme === theme
-                          ? "bg-primary text-primary-foreground shadow-xs"
-                          : "hover:bg-muted text-foreground"
-                      }`}
-                    >
-                      <span className="uppercase">{theme}</span>
-                      {soundTheme === theme && <span>✓</span>}
-                    </button>
-                  ))}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowSoundMenu((v) => !v)}
+              aria-expanded={showSoundMenu}
+              aria-label="아케이드 주크박스 & 오디오"
+              title="주크박스 (BGM/볼륨)"
+              className="flex min-h-11 items-center gap-1 rounded-xl border border-border bg-muted px-2.5 py-2 text-xs font-bold text-muted-foreground hover:bg-muted/80 focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              <Music className="size-4" />
+              <span className="hidden uppercase sm:inline font-mono text-xs">{bgmTrack}</span>
+            </button>
+            {showSoundMenu && (
+              <div className="absolute right-0 top-12 z-50 flex w-56 flex-col gap-2.5 rounded-xl border border-border bg-popover p-3 shadow-xl backdrop-blur-md animate-in fade-in zoom-in-95 text-foreground">
+                <div className="flex items-center justify-between border-b border-border pb-1.5">
+                  <span className="font-black text-xs">🎵 JUKEBOX</span>
+                  <span className="text-xs text-muted-foreground uppercase font-mono font-bold">{bgmTrack}</span>
                 </div>
-              )}
-            </div>
-          )}
+
+                <div className="space-y-1">
+                  <span className="text-xs text-muted-foreground block font-semibold">BGM 테마</span>
+                  <div className="grid grid-cols-3 gap-1">
+                    {(["zen", "arcade", "cosmic"] as const).map((track) => (
+                      <button
+                        key={track}
+                        type="button"
+                        onClick={() => handleBgmTrackChange(track)}
+                        className={`py-1.5 px-1 rounded-lg text-xs font-bold capitalize transition-colors text-center ${
+                          bgmTrack === track
+                            ? "bg-primary text-primary-foreground shadow-xs"
+                            : "bg-muted/50 hover:bg-muted text-foreground"
+                        }`}
+                      >
+                        {track}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground font-semibold">BGM 볼륨</span>
+                    <span className="font-mono font-bold text-primary">{bgmVolume}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={bgmVolume}
+                    onChange={(e) => handleBgmVolumeChange(Number(e.target.value))}
+                    className="w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+                    aria-label="BGM 볼륨 조절"
+                  />
+                </div>
+
+                {onSelectSoundTheme && (
+                  <div className="space-y-1 pt-1 border-t border-border">
+                    <span className="text-xs text-muted-foreground block font-semibold">SFX 효과음</span>
+                    <div className="grid grid-cols-2 gap-1">
+                      {(["core", "retro", "zen", "cyber"] as const).map((theme) => (
+                        <button
+                          key={theme}
+                          type="button"
+                          onClick={() => {
+                            onSelectSoundTheme(theme);
+                          }}
+                          className={`py-1 px-1.5 rounded-lg text-xs font-bold uppercase transition-colors text-center ${
+                            soundTheme === theme
+                              ? "bg-primary/20 text-primary border border-primary/40"
+                              : "hover:bg-muted text-foreground"
+                          }`}
+                        >
+                          {theme}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           {showArcadePassButton && (
             <button

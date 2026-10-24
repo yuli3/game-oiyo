@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { getWaitingTiles } from "./ai/mahjong";
 import {
   claimHumanRon,
   claimHumanTsumo,
@@ -82,5 +83,10 @@ describe("mahjong match engine", () => {
     const drawn = drawMahjong(state);
     expect(discardMahjong(drawn, -1)).toBe(drawn);
     expect(discardMahjong(drawn, 99)).toBe(drawn);
+  });
+
+  it("getWaitingTiles identifies winning tiles for tenpai hand", () => {
+    // waiting hand needs tile 5 to complete pair
+    expect(getWaitingTiles(waiting)).toEqual([5]);
   });
 });

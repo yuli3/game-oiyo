@@ -41,6 +41,30 @@ export function getGomokuResult(board: readonly GomokuCell[], lastIndex: number)
   return board.every((cell) => cell !== null) ? 0 : null;
 }
 
+export function getGomokuWinningIndices(board: readonly GomokuCell[], lastIndex: number): number[] | null {
+  if (board.length !== GOMOKU_CELL_COUNT || !Number.isInteger(lastIndex) || lastIndex < 0 || lastIndex >= board.length) return null;
+  const player = board[lastIndex];
+  if (player === null) return null;
+
+  const x = lastIndex % GOMOKU_SIZE;
+  const y = Math.floor(lastIndex / GOMOKU_SIZE);
+  for (const [dx, dy] of DIRECTIONS) {
+    const indices: number[] = [lastIndex];
+    for (const sign of [-1, 1] as const) {
+      for (let distance = 1; distance < 5; distance++) {
+        const nextX = x + dx * distance * sign;
+        const nextY = y + dy * distance * sign;
+        if (nextX < 0 || nextX >= GOMOKU_SIZE || nextY < 0 || nextY >= GOMOKU_SIZE) break;
+        const nextIndex = nextY * GOMOKU_SIZE + nextX;
+        if (board[nextIndex] !== player) break;
+        indices.push(nextIndex);
+      }
+    }
+    if (indices.length >= 5) return indices;
+  }
+  return null;
+}
+
 export function placeGomokuStone(board: readonly GomokuCell[], index: number, player: GomokuPlayer): GomokuMove | null {
   if (board.length !== GOMOKU_CELL_COUNT || !Number.isInteger(index) || index < 0 || index >= board.length || board[index] !== null) return null;
   const nextBoard = [...board];

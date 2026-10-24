@@ -2,10 +2,13 @@ import React, { useEffect, useState } from "react";
 import { X, Award, CheckCircle2, Sparkles } from "lucide-react";
 import {
   calculateArcadeTier,
+  checkInDailyStreak,
   loadArcadePassProgress,
+  STREAK_REWARDS,
   type ArcadePassProgress,
   type ArcadeRankTier,
 } from "../../../lib/games/arcade-pass";
+import { todayKey, previousDayKey } from "../../../lib/games/daily";
 
 interface ArcadePassModalProps {
   isOpen: boolean;
@@ -15,12 +18,12 @@ interface ArcadePassModalProps {
 
 const TIER_STYLES: Record<ArcadeRankTier, { border: string; badge: string }> = {
   LEGEND: {
-    border: "border-amber-500/50",
-    badge: "bg-amber-500/10 text-amber-500 border-amber-500/40",
+    border: "border-warning/50",
+    badge: "bg-warning/10 text-warning border-warning/40",
   },
   ELITE: {
-    border: "border-purple-500/50",
-    badge: "bg-purple-500/10 text-purple-500 border-purple-500/40",
+    border: "border-chart-4/50",
+    badge: "bg-chart-4/10 text-chart-4 border-chart-4/40",
   },
   VETERAN: {
     border: "border-primary/50",
@@ -50,11 +53,22 @@ export const ArcadePassModal: React.FC<ArcadePassModalProps> = ({
   locale = "ko",
 }) => {
   const [progress, setProgress] = useState<ArcadePassProgress | null>(null);
+  const [streakToast, setStreakToast] = useState<number | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
-    const today = new Date().toISOString().slice(0, 10);
-    setProgress(loadArcadePassProgress(today));
+    const today = todayKey();
+    const prevDay = previousDayKey(today);
+    const loaded = loadArcadePassProgress(today);
+    const { updatedProgress, bonusXp, alreadyCheckedIn } = checkInDailyStreak(
+      loaded,
+      today,
+      prevDay
+    );
+    setProgress(updatedProgress);
+    if (!alreadyCheckedIn && bonusXp > 0) {
+      setStreakToast(bonusXp);
+    }
   }, [isOpen]);
 
   if (!isOpen || !progress) return null;
@@ -132,6 +146,58 @@ export const ArcadePassModal: React.FC<ArcadePassModalProps> = ({
               style={{ "--pct": `${pct}%` } as React.CSSProperties}
             />
           </div>
+        </div>
+
+        {/* 7-Day Attendance Streak Calendar Grid */}
+        <div className="rounded-2xl border border-border bg-card/60 p-4 mb-5">
+          <div className="flex items-center justify-between mb-2.5">
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm">🔥</span>
+              <h4 className="text-xs font-black uppercase tracking-wider text-foreground">
+                7일 연속 출석 스탬프
+              </h4>
+            </div>
+            <span className="text-xs font-black px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+              {progress.streakCount ?? 1}일차 출석
+            </span>
+          </div>
+
+          <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
+            {STREAK_REWARDS.map((reward) => {
+              const isClaimed = (progress.claimedStreakDays ?? []).includes(reward.day);
+              const isCurrentDay = (progress.streakCount ?? 1) === reward.day;
+
+              return (
+                <div
+                  key={reward.day}
+                  className={`flex flex-col items-center justify-between p-1.5 rounded-xl border text-center transition-all ${
+                    isClaimed
+                      ? "border-primary/50 bg-primary/10 text-primary"
+                      : isCurrentDay
+                      ? "border-warning/80 bg-warning/15 text-warning ring-2 ring-warning/50 animate-pulse"
+                      : "border-border bg-muted/30 text-muted-foreground"
+                  }`}
+                >
+                  <span className="text-xs font-bold opacity-80">D{reward.day}</span>
+                  <span className="text-xs font-black my-1">
+                    {reward.isMilestone ? (reward.day === 7 ? "👑" : "⭐") : "🪙"}
+                  </span>
+                  <span className="text-xs font-black tracking-tight">
+                    +{reward.xp}
+                  </span>
+                  {isClaimed && (
+                    <span className="text-xs font-black text-primary mt-0.5">✓</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {streakToast !== null && (
+            <div className="mt-2.5 rounded-xl border border-warning/40 bg-warning/10 p-2 text-center text-xs font-black text-warning animate-in fade-in">
+              🎉 오늘 출석 보너스 +{streakToast} XP 획득!
+            </div>
+          )}
         </div>
 
         {/* Daily Missions */}

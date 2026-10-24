@@ -149,6 +149,7 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const cellRefs = useRef<Array<HTMLButtonElement | null>>([]);
     const recordedRef = useRef(false);
     const startedAtRef = useRef<number | null>(null);
+    const touchStartPosRef = useRef<{ x: number; y: number } | null>(null);
     const longPressTimerRef = useRef<number | null>(null);
     const longPressTriggeredRef = useRef(false);
 
@@ -607,18 +608,30 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const clearLongPress = () => {
         if (longPressTimerRef.current !== null) window.clearTimeout(longPressTimerRef.current);
         longPressTimerRef.current = null;
+        touchStartPosRef.current = null;
     };
 
     const startLongPress = (event: React.PointerEvent, x: number, y: number) => {
-        if (event.pointerType !== 'touch' && event.pointerType !== 'pen' || status !== 'playing') return;
+        if ((event.pointerType !== 'touch' && event.pointerType !== 'pen') || status !== 'playing') return;
         clearLongPress();
         longPressTriggeredRef.current = false;
+        touchStartPosRef.current = { x: event.clientX, y: event.clientY };
         longPressTimerRef.current = window.setTimeout(() => {
             longPressTriggeredRef.current = true;
             setActiveCell(y * width + x);
             toggleFlag(x, y);
+            vibrate([25, 30]);
             longPressTimerRef.current = null;
-        }, 450);
+        }, 320);
+    };
+
+    const handlePointerMove = (event: React.PointerEvent) => {
+        if (!touchStartPosRef.current || !longPressTimerRef.current) return;
+        const dx = event.clientX - touchStartPosRef.current.x;
+        const dy = event.clientY - touchStartPosRef.current.y;
+        if (dx * dx + dy * dy > 100) {
+            clearLongPress();
+        }
     };
 
     useEffect(() => () => clearLongPress(), []);
@@ -782,7 +795,7 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     <div className="px-3 py-1.5 bg-muted rounded-lg text-xs font-black text-muted-foreground" aria-label={t.time}>⏱️ {timer}s</div>
                 </div>
 
-            <p className="mb-3 text-center text-[11px] font-medium text-muted-foreground" role="status" aria-live="polite">
+            <p className="mb-3 text-center text-xs font-medium text-muted-foreground" role="status" aria-live="polite">
                 {generationStrategy === 'pending' ? t.pending : generationStrategy === 'verified' ? t.verified : t.fallback}
             </p>
             <p className="sr-only" role="status" aria-live="polite">
@@ -794,7 +807,7 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     className="min-h-11 rounded-xl border border-border bg-background px-4 py-2 text-xs font-black text-foreground hover:bg-muted disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
                     💡 {ht.action}
                 </button>
-                {assist === 'hint' && <span className="text-[10px] font-bold text-muted-foreground">{ht.assisted}</span>}
+                {assist === 'hint' && <span className="text-xs font-bold text-muted-foreground">{ht.assisted}</span>}
                 {hintMessage && (
                     <p id="minesweeper-hint" className="max-w-xl rounded-xl border border-primary/30 bg-primary/5 px-3 py-2 text-center text-xs font-semibold text-foreground" role="status" aria-live="polite">
                         {hintMessage}{currentHint ? ` · ${ht.candidates}: ${currentHint.targets.length}` : ''}
@@ -828,6 +841,7 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                                         role="gridcell"
                                         onClick={() => { setActiveCell(index); handleCellClick(cell.x, cell.y); }}
                                         onPointerDown={(event) => startLongPress(event, cell.x, cell.y)}
+                                        onPointerMove={handlePointerMove}
                                         onPointerUp={clearLongPress}
                                         onPointerCancel={clearLongPress}
                                         onPointerLeave={clearLongPress}
@@ -841,9 +855,11 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                                         aria-label={`${t.row} ${y + 1}, ${t.column} ${x + 1}: ${state}`}
                                         aria-describedby={hintTargets.has(`${x}:${y}`) || hintClues.has(`${x}:${y}`) ? 'minesweeper-hint' : undefined}
                                         style={{ height: cellSize, width: cellSize }}
-                                        className={`rounded-md flex items-center justify-center font-black text-sm transition-colors motion-reduce:transition-none motion-reduce:transform-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset ${
+                                        className={`rounded-md flex items-center justify-center font-black text-sm transition-all duration-150 motion-reduce:transition-none motion-reduce:transform-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset ${
                                             cell.isRevealed
-                                                ? cell.isMine ? 'bg-destructive text-destructive-foreground' : 'bg-background border border-border'
+                                                ? cell.isMine
+                                                    ? 'bg-destructive text-destructive-foreground'
+                                                    : `bg-background border border-border ${freshReveal.has(`${x}:${y}`) && !reducedMotion ? 'animate-in fade-in zoom-in-75' : ''}`
                                                 : 'bg-primary/20 hover:bg-primary/30 active:scale-95 border-b-2 border-primary/40'
                                         } ${hintTargets.has(`${x}:${y}`) ? 'ring-4 ring-chart-2 ring-offset-1' : ''} ${hintClues.has(`${x}:${y}`) ? 'ring-4 ring-primary ring-offset-1' : ''}`}
                                     >

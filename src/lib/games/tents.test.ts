@@ -1,6 +1,15 @@
 import { describe, expect, it } from "vitest";
 
-import { countTentsSolutions, explainTentsHint, generateTents, generateUniqueTents, validateTents, type TentsPuzzle } from "./tents";
+import {
+  autoMarkGrass,
+  countTentsSolutions,
+  explainTentsHint,
+  generateTents,
+  generateUniqueTents,
+  getLineHintStatuses,
+  validateTents,
+  type TentsPuzzle,
+} from "./tents";
 import { mulberry32 } from "./daily";
 
 // Hand-built 4×4 board with a known unique solution:
@@ -111,5 +120,36 @@ describe("unique Tents & Trees generation", () => {
       expect(countTentsSolutions(a.puzzle, 2)).toBe(1);
       expect(validateTents(a.solution, a.puzzle).complete).toBe(true);
     }
+  });
+});
+
+describe("getLineHintStatuses and autoMarkGrass", () => {
+  it("correctly identifies pending, satisfied, and exceeded lines", () => {
+    const statuses = getLineHintStatuses(4, [1, 0, 1, 0], [0, 1, 0, 1], [[0, 1], [0, 2]]);
+    expect(statuses.rowStatuses[0]).toBe("exceeded"); // row 0 has 2 tents, hint is 1
+    expect(statuses.rowStatuses[1]).toBe("satisfied"); // row 1 has 0 tents, hint is 0
+    expect(statuses.rowStatuses[2]).toBe("pending"); // row 2 has 0 tents, hint is 1
+    expect(statuses.colStatuses[1]).toBe("satisfied"); // col 1 has 1 tent, hint is 1
+    expect(statuses.colStatuses[2]).toBe("exceeded"); // col 2 has 1 tent, hint is 0
+  });
+
+  it("autoMarkGrass fills empty cells in satisfied lines and around placed tents", () => {
+    const initialMarks: ("empty" | "tent" | "grass")[][] = [
+      ["empty", "tent", "empty", "empty"],
+      ["empty", "empty", "empty", "empty"],
+      ["empty", "empty", "empty", "empty"],
+      ["empty", "empty", "empty", "empty"],
+    ];
+    const { nextMarks, addedCount } = autoMarkGrass(PUZZLE, initialMarks);
+    expect(addedCount).toBeGreaterThan(0);
+    // row 0 hint is 1, tent is placed -> remaining row 0 cells (except tree at [0,0]) should become grass
+    expect(nextMarks[0][2]).toBe("grass");
+    expect(nextMarks[0][3]).toBe("grass");
+    // row 1 hint is 0 -> empty cells become grass
+    expect(nextMarks[1][0]).toBe("grass");
+    expect(nextMarks[1][1]).toBe("grass");
+    expect(nextMarks[1][2]).toBe("grass");
+    // cell [0,0] is a tree, not marked
+    expect(nextMarks[0][0]).toBe("empty");
   });
 });

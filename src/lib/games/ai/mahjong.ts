@@ -155,6 +155,19 @@ export function isTenpai(tiles13: number[]): boolean {
   return false;
 }
 
+export function getWaitingTiles(tiles13: number[]): number[] {
+  if (tiles13.length !== 13) return [];
+  const waits: number[] = [];
+  const counts = toCounts(tiles13);
+  for (let k = 0; k < KINDS; k++) {
+    if (counts[k] >= 4) continue;
+    if (isWinningHand([...tiles13, k])) {
+      waits.push(k);
+    }
+  }
+  return waits;
+}
+
 // ── AI ────────────────────────────────────────────────────────────────────
 export type AiLevel = 1 | 2 | 3;
 

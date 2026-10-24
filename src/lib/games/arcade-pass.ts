@@ -27,6 +27,75 @@ export interface ArcadePassProgress {
   completedMissionIds: string[];
   missions: DailyMission[];
   lastActiveDate: string;
+  streakCount?: number;
+  lastCheckInDate?: string;
+  claimedStreakDays?: number[];
+}
+
+export interface DailyStreakReward {
+  day: number;
+  xp: number;
+  isMilestone?: boolean;
+}
+
+export const STREAK_REWARDS: DailyStreakReward[] = [
+  { day: 1, xp: 20 },
+  { day: 2, xp: 30 },
+  { day: 3, xp: 50, isMilestone: true },
+  { day: 4, xp: 20 },
+  { day: 5, xp: 30 },
+  { day: 6, xp: 40 },
+  { day: 7, xp: 100, isMilestone: true },
+];
+
+export function checkInDailyStreak(
+  progress: ArcadePassProgress,
+  today: string,
+  previousDay: string
+): {
+  updatedProgress: ArcadePassProgress;
+  bonusXp: number;
+  currentStreak: number;
+  alreadyCheckedIn: boolean;
+} {
+  const lastCheckIn = progress.lastCheckInDate;
+  if (lastCheckIn === today) {
+    return {
+      updatedProgress: progress,
+      bonusXp: 0,
+      currentStreak: progress.streakCount ?? 1,
+      alreadyCheckedIn: true,
+    };
+  }
+
+  const isConsecutive = lastCheckIn === previousDay;
+  const currentStreak = isConsecutive
+    ? Math.min(7, ((progress.streakCount ?? 0) % 7) + 1)
+    : 1;
+
+  const claimedDays = isConsecutive && currentStreak > 1
+    ? [...(progress.claimedStreakDays ?? []), currentStreak]
+    : [currentStreak];
+
+  const reward = STREAK_REWARDS.find((r) => r.day === currentStreak);
+  const bonusXp = reward ? reward.xp : 20;
+
+  const updatedProgress: ArcadePassProgress = {
+    ...progress,
+    xp: progress.xp + bonusXp,
+    streakCount: currentStreak,
+    lastCheckInDate: today,
+    claimedStreakDays: claimedDays,
+  };
+
+  saveArcadePassProgress(updatedProgress);
+
+  return {
+    updatedProgress,
+    bonusXp,
+    currentStreak,
+    alreadyCheckedIn: false,
+  };
 }
 
 export const MISSION_CATALOG: Array<{
@@ -270,6 +339,9 @@ export function loadArcadePassProgress(dateKey: string): ArcadePassProgress {
         completedMissionIds: parsed.completedMissionIds ?? [],
         missions: generateDailyMissions(dateKey),
         lastActiveDate: dateKey,
+        streakCount: parsed.streakCount ?? 0,
+        lastCheckInDate: parsed.lastCheckInDate,
+        claimedStreakDays: parsed.claimedStreakDays ?? [],
       };
       saveArcadePassProgress(next);
       return next;

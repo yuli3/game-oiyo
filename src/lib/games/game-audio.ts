@@ -4,6 +4,7 @@
 // A game may replace any cue or add its own; the player only owns timing, pitch
 // lift for combos, small pitch variation, and mute. 2026-10-23
 import { createTonePlayer, type TonePlayer } from "./tone";
+export type { TonePlayer };
 
 /** [delay ms, frequency Hz, duration s, volume 0..1] */
 export type CueNote = readonly [number, number, number, number];

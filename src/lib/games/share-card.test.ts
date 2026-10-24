@@ -40,6 +40,10 @@ describe("share-card module", () => {
       expect(resolveRankTier("block-burst", 3500)).toBe("ARCHITECT");
       expect(resolveRankTier("block-burst", 1200)).toBe("STACKER");
       expect(resolveRankTier("block-burst", 400)).toBe("APPRENTICE");
+      expect(resolveRankTier("gomoku", 12)).toBe("GRANDMASTER");
+      expect(resolveRankTier("gomoku", 30)).toBe("ADEPT");
+      expect(resolveRankTier("solitaire", 75)).toBe("SPEED DEMON");
+      expect(resolveRankTier("solitaire", 200)).toBe("SOLVER");
     });
   });
 

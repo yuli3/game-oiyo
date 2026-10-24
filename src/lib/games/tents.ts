@@ -254,3 +254,99 @@ export function generateUniqueTents(
   }
   throw new Error(`Unable to generate a unique ${size}x${size} Tents & Trees puzzle after ${maxAttempts} attempts`);
 }
+
+export type LineHintStatus = 'pending' | 'satisfied' | 'exceeded';
+
+export function getLineHintStatuses(
+  size: number,
+  rowHints: number[],
+  colHints: number[],
+  tents: Pos[],
+): {
+  rowStatuses: LineHintStatus[];
+  colStatuses: LineHintStatus[];
+} {
+  const rowCounts = Array(size).fill(0);
+  const colCounts = Array(size).fill(0);
+  for (const [r, c] of tents) {
+    if (r >= 0 && r < size) rowCounts[r]++;
+    if (c >= 0 && c < size) colCounts[c]++;
+  }
+
+  const rowStatuses: LineHintStatus[] = rowHints.map((hint, r) => {
+    const count = rowCounts[r];
+    if (count === hint) return 'satisfied';
+    if (count > hint) return 'exceeded';
+    return 'pending';
+  });
+
+  const colStatuses: LineHintStatus[] = colHints.map((hint, c) => {
+    const count = colCounts[c];
+    if (count === hint) return 'satisfied';
+    if (count > hint) return 'exceeded';
+    return 'pending';
+  });
+
+  return { rowStatuses, colStatuses };
+}
+
+export function autoMarkGrass(
+  puzzle: TentsPuzzle,
+  marks: ('empty' | 'tent' | 'grass')[][],
+): { nextMarks: ('empty' | 'tent' | 'grass')[][]; addedCount: number } {
+  const { size, trees, rowHints, colHints } = puzzle;
+  const treeSet = new Set(trees.map(([r, c]) => `${r}:${c}`));
+  const nextMarks: ('empty' | 'tent' | 'grass')[][] = marks.map((row) => [...row]);
+
+  const tents: Pos[] = [];
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      if (nextMarks[r][c] === 'tent') tents.push([r, c]);
+    }
+  }
+
+  const { rowStatuses, colStatuses } = getLineHintStatuses(size, rowHints, colHints, tents);
+  let addedCount = 0;
+
+  // 1. In satisfied rows or cols, any empty non-tree cell becomes grass
+  for (let r = 0; r < size; r++) {
+    if (rowStatuses[r] === 'satisfied' || rowHints[r] === 0) {
+      for (let c = 0; c < size; c++) {
+        if (!treeSet.has(`${r}:${c}`) && nextMarks[r][c] === 'empty') {
+          nextMarks[r][c] = 'grass';
+          addedCount++;
+        }
+      }
+    }
+  }
+
+  for (let c = 0; c < size; c++) {
+    if (colStatuses[c] === 'satisfied' || colHints[c] === 0) {
+      for (let r = 0; r < size; r++) {
+        if (!treeSet.has(`${r}:${c}`) && nextMarks[r][c] === 'empty') {
+          nextMarks[r][c] = 'grass';
+          addedCount++;
+        }
+      }
+    }
+  }
+
+  // 2. Around each placed tent, all 8 neighboring empty non-tree cells become grass
+  for (const [tr, tc] of tents) {
+    for (let dr = -1; dr <= 1; dr++) {
+      for (let dc = -1; dc <= 1; dc++) {
+        if (dr === 0 && dc === 0) continue;
+        const nr = tr + dr;
+        const nc = tc + dc;
+        if (nr >= 0 && nr < size && nc >= 0 && nc < size) {
+          if (!treeSet.has(`${nr}:${nc}`) && nextMarks[nr][nc] === 'empty') {
+            nextMarks[nr][nc] = 'grass';
+            addedCount++;
+          }
+        }
+      }
+    }
+  }
+
+  return { nextMarks, addedCount };
+}

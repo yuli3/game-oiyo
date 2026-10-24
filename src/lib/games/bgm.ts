@@ -4,6 +4,34 @@
 
 export type BgmTrack = "zen" | "arcade" | "cosmic";
 
+export const BGM_VOLUME_STORAGE_KEY = "oiyo_bgm_volume";
+export const BGM_TRACK_STORAGE_KEY = "oiyo_bgm_track";
+
+function getStoredVolume(): number | undefined {
+  if (typeof window === "undefined") return undefined;
+  try {
+    const val = localStorage.getItem(BGM_VOLUME_STORAGE_KEY);
+    if (val !== null) {
+      const parsed = parseFloat(val);
+      if (!isNaN(parsed) && parsed >= 0 && parsed <= 1) return parsed;
+    }
+  } catch {
+    /* ignore */
+  }
+  return undefined;
+}
+
+function getStoredTrack(): BgmTrack | undefined {
+  if (typeof window === "undefined") return undefined;
+  try {
+    const val = localStorage.getItem(BGM_TRACK_STORAGE_KEY);
+    if (val === "zen" || val === "arcade" || val === "cosmic") return val;
+  } catch {
+    /* ignore */
+  }
+  return undefined;
+}
+
 export interface BgmOptions {
   muted?: boolean;
   volume?: number;
@@ -70,8 +98,8 @@ function defaultAudioContextResolver(): AudioContext | null {
 
 export function createBgmController(options: BgmOptions = {}): BgmController {
   let muted = options.muted ?? false;
-  let volume = Math.max(0, Math.min(1, options.volume ?? 0.035));
-  let currentTrack: BgmTrack = options.track ?? "zen";
+  let volume = Math.max(0, Math.min(1, options.volume ?? getStoredVolume() ?? 0.035));
+  let currentTrack: BgmTrack = options.track ?? getStoredTrack() ?? "zen";
   let isPlaying = false;
   let timerId: ReturnType<typeof setInterval> | null = null;
   let duckTimerId: ReturnType<typeof setTimeout> | null = null;
@@ -202,6 +230,13 @@ export function createBgmController(options: BgmOptions = {}): BgmController {
     setTrack(track: BgmTrack) {
       if (currentTrack === track) return;
       currentTrack = track;
+      try {
+        if (typeof window !== "undefined") {
+          localStorage.setItem(BGM_TRACK_STORAGE_KEY, currentTrack);
+        }
+      } catch {
+        /* ignore */
+      }
       if (isPlaying) startLoop();
     },
     setMuted(nextMuted: boolean) {
@@ -217,6 +252,13 @@ export function createBgmController(options: BgmOptions = {}): BgmController {
     },
     setVolume(nextVol: number) {
       volume = Math.max(0, Math.min(1, nextVol));
+      try {
+        if (typeof window !== "undefined") {
+          localStorage.setItem(BGM_VOLUME_STORAGE_KEY, String(volume));
+        }
+      } catch {
+        /* ignore */
+      }
       if (masterGain && ctx && !muted) {
         try {
           masterGain.gain.setValueAtTime(volume, ctx.currentTime);

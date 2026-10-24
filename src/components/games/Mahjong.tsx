@@ -3,7 +3,7 @@ import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
 import { GameContainer } from "../ui/game/GamePrimitives";
 import type { Locale } from "../../lib/i18n";
 import {
-  isWinningHand, rankOf, suitOf, isHonor, shanten,
+  isWinningHand, rankOf, suitOf, isHonor, shanten, getWaitingTiles,
   type AiLevel,
 } from "../../lib/games/ai/mahjong";
 import {
@@ -51,13 +51,23 @@ const SUIT_COLOR = ["#b91c1c", "#1d4ed8", "#15803d", "#4b5563"];
 const HONOR_LABEL = ["東", "南", "西", "北", "白", "發", "中"];
 
 const extra = {
-  ko: { soundOn: "소리 켜기", soundOff: "소리 끄기", recommended: "추천", recommendation: "추천 버림패", shanten: "샹텐", turns: "순 진행", remaining: "남은 패", next: "다음 목표", liveTurn: "내 차례", policy: "AI 정책", last: "마지막 버림", reason: { variation: "합법 수 변주", tenpai: "텐파이 유지", shanten: "샹텐 줄이기", disposable: "고립패 정리" } },
-  en: { soundOn: "Turn sound on", soundOff: "Turn sound off", recommended: "Recommended", recommendation: "Suggested discard", shanten: "Shanten", turns: "Turns", remaining: "Tiles left", next: "Next goal", liveTurn: "Your turn", policy: "AI policy", last: "Last discard", reason: { variation: "legal variation", tenpai: "keep tenpai", shanten: "cut shanten", disposable: "isolated tile" } },
-  ja: { soundOn: "音をオン", soundOff: "音をオフ", recommended: "おすすめ", recommendation: "おすすめの捨て牌", shanten: "シャンテン", turns: "巡目", remaining: "残り牌", next: "次の目標", liveTurn: "あなたの番", policy: "AI方針", last: "最後の捨て牌", reason: { variation: "合法手の変奏", tenpai: "テンパイ維持", shanten: "シャンテン短縮", disposable: "孤立牌整理" } },
-  zh: { soundOn: "开启声音", soundOff: "关闭声音", recommended: "推荐", recommendation: "推荐弃牌", shanten: "向听", turns: "巡数", remaining: "剩余牌", next: "下一目标", liveTurn: "你的回合", policy: "AI 策略", last: "最后弃牌", reason: { variation: "合法变奏", tenpai: "维持听牌", shanten: "降低向听", disposable: "整理孤张" } },
-  fr: { soundOn: "Activer le son", soundOff: "Couper le son", recommended: "Conseillée", recommendation: "Défausse conseillée", shanten: "Shanten", turns: "Tours", remaining: "Tuiles restantes", next: "Prochain objectif", liveTurn: "À vous", policy: "Politique IA", last: "Dernière défausse", reason: { variation: "variation légale", tenpai: "garder tenpai", shanten: "baisser shanten", disposable: "tuile isolée" } },
-  es: { soundOn: "Activar sonido", soundOff: "Silenciar", recommended: "Recomendada", recommendation: "Descarte sugerido", shanten: "Shanten", turns: "Turnos", remaining: "Fichas restantes", next: "Próximo objetivo", liveTurn: "Tu turno", policy: "Política IA", last: "Último descarte", reason: { variation: "variación legal", tenpai: "mantener tenpai", shanten: "bajar shanten", disposable: "ficha aislada" } },
+  ko: { soundOn: "소리 켜기", soundOff: "소리 끄기", recommended: "추천", recommendation: "추천 버림패", shanten: "샹텐", turns: "순 진행", remaining: "남은 패", next: "다음 목표", liveTurn: "내 차례", policy: "AI 정책", last: "마지막 버림", yakuGuide: "1판 역 가이드", tenpai: "텐파이", waits: "대기패", close: "닫기", reason: { variation: "합법 수 변주", tenpai: "텐파이 유지", shanten: "샹텐 줄이기", disposable: "고립패 정리" } },
+  en: { soundOn: "Turn sound on", soundOff: "Turn sound off", recommended: "Recommended", recommendation: "Suggested discard", shanten: "Shanten", turns: "Turns", remaining: "Tiles left", next: "Next goal", liveTurn: "Your turn", policy: "AI policy", last: "Last discard", yakuGuide: "1-Han Yaku Guide", tenpai: "Tenpai", waits: "Waiting Tiles", close: "Close", reason: { variation: "legal variation", tenpai: "keep tenpai", shanten: "cut shanten", disposable: "isolated tile" } },
+  ja: { soundOn: "音をオン", soundOff: "音をオフ", recommended: "おすすめ", recommendation: "おすすめの捨て牌", shanten: "シャンテン", turns: "巡目", remaining: "残り牌", next: "次の目標", liveTurn: "あなたの番", policy: "AI方針", last: "最後の捨て牌", yakuGuide: "役一覧ガイド", tenpai: "テンパイ", waits: "待ち牌", close: "閉じる", reason: { variation: "合法手の変奏", tenpai: "テンパイ維持", shanten: "シャンテン短縮", disposable: "孤立牌整理" } },
+  zh: { soundOn: "开启声音", soundOff: "关闭声音", recommended: "推荐", recommendation: "推荐弃牌", shanten: "向听", turns: "巡数", remaining: "剩余牌", next: "下一目标", liveTurn: "你的回合", policy: "AI 策略", last: "最后弃牌", yakuGuide: "番型指南", tenpai: "听牌", waits: "所听之牌", close: "关闭", reason: { variation: "合法变奏", tenpai: "维持听牌", shanten: "降低向听", disposable: "整理孤张" } },
+  fr: { soundOn: "Activer le son", soundOff: "Couper le son", recommended: "Conseillée", recommendation: "Défausse conseillée", shanten: "Shanten", turns: "Tours", remaining: "Tuiles restantes", next: "Prochain objectif", liveTurn: "À vous", policy: "Politique IA", last: "Dernière défausse", yakuGuide: "Guide des Yakus", tenpai: "Tenpai", waits: "Tuiles d'attente", close: "Fermer", reason: { variation: "variation légale", tenpai: "garder tenpai", shanten: "baisser shanten", disposable: "tuile isolée" } },
+  es: { soundOn: "Activar sonido", soundOff: "Silenciar", recommended: "Recomendada", recommendation: "Descarte sugerido", shanten: "Shanten", turns: "Turnos", remaining: "Fichas restantes", next: "Próximo objetivo", liveTurn: "Tu turno", policy: "Política IA", last: "Último descarte", yakuGuide: "Guía de Yakus", tenpai: "Tenpai", waits: "Fichas en espera", close: "Cerrar", reason: { variation: "variación legal", tenpai: "mantener tenpai", shanten: "bajar shanten", disposable: "ficha aislada" } },
 } as const;
+
+const YAKU_LIST = [
+  { name: { ko: "멘젠 츠모 (門前清自摸和)", en: "Menzen Tsumo (Self-Draw)", ja: "門前清自摸和", zh: "门前清自摸和", fr: "Menzen Tsumo", es: "Menzen Tsumo" }, han: "1판", desc: { ko: "울지 않고 순수 쯔모로 손패 완성", en: "Win by self-draw with a fully closed hand", ja: "鳴かずにツモで和了", zh: "门清状态下自摸和牌", fr: "Victoire par pioche en main fermée", es: "Victoria por robo con mano cerrada" } },
+  { name: { ko: "리치 (立直)", en: "Riichi (Ready Hand)", ja: "立直", zh: "立直", fr: "Riichi", es: "Riichi" }, han: "1판", desc: { ko: "멘젠 텐파이 상태에서 선언 (1천 점 공탁)", en: "Declared when in closed tenpai", ja: "門前テンパイ時に宣言", zh: "门清听牌时宣告", fr: "Déclaré en main prête fermée", es: "Declarado en mano lista cerrada" } },
+  { name: { ko: "탕야오 (断么九)", en: "Tanyao (All Simples)", ja: "断么九", zh: "断么九", fr: "Tanyao", es: "Tanyao" }, han: "1판", desc: { ko: "1, 9, 자패 없이 2~8 수패만으로 구성", en: "Tiles 2–8 only without 1, 9, winds or dragons", ja: "1・9・字牌を使わず2〜8の数牌のみ", zh: "无一九与字牌，仅使用2至8数牌", fr: "Tuiles 2 à 8 sans honneurs", es: "Fichas del 2 al 8 sin honores" } },
+  { name: { ko: "핑후 (平和)", en: "Pinfu (All Sequences)", ja: "平和", zh: "平和", fr: "Pinfu", es: "Pinfu" }, han: "1판", desc: { ko: "4개 슌츠(연속 숫자) + 무역패 머리 + 양면 대기", en: "4 sequences + non-value pair + two-sided wait", ja: "4面子すべて順子＋役無しの雀頭＋両面待ち", zh: "四个顺子+无役雀头+两面听牌", fr: "4 suites + paire neutre + attente bilatérale", es: "4 secuencias + pareja neutra + espera bilateral" } },
+  { name: { ko: "역패 (役牌)", en: "Yakuhai (Value Honor)", ja: "役牌", zh: "役牌", fr: "Yakuhai", es: "Yakuhai" }, han: "1판", desc: { ko: "삼원패(백/발/중) 또는 자풍/장풍패 3장 완성", en: "Triplet of Dragons or round/seat wind", ja: "三元牌（白・發・中）または場風・自風の刻子", zh: "三元牌（白发中）或圈风/门风刻子", fr: "Brelan de dragons ou de vent", es: "Trío de dragones o de viento" } },
+  { name: { ko: "이페코 (一盃口)", en: "Iipeiko (Double Run)", ja: "一盃口", zh: "一盃口", fr: "Iipeiko", es: "Iipeiko" }, han: "1판", desc: { ko: "동일한 색상과 숫자의 슌츠 2쌍 (예: 234만 + 234만)", en: "Two identical sequences in the same suit", ja: "同色同数の順子が2組（例：234萬×2）", zh: "同门同数字的两组顺子（例：234万×2）", fr: "Deux suites identiques de même couleur", es: "Dos secuencias idénticas del mismo palo" } },
+  { name: { ko: "치또이츠 (七対子)", en: "Chiitoitsu (Seven Pairs)", ja: "七対子", zh: "七对子", fr: "Chiitoitsu", es: "Chiitoitsu" }, han: "2판", desc: { ko: "서로 다른 7종류의 또이츠(2장 쌍)로 완성", en: "Seven distinct pairs", ja: "相異なる7つの対子で構成", zh: "七组不同的对子", fr: "Sept paires distinctes", es: "Siete parejas distintas" } },
+];
 
 function tileLabel(k: number): { text: string; color: string } {
   if (isHonor(k)) return { text: HONOR_LABEL[k - 27], color: k >= 31 ? "#111827" : "#4b5563" };
@@ -79,7 +89,7 @@ function Tile({ k, onClick, dim, small, ariaLabel, reducedMotion, selected, reco
   const { text } = tileLabel(k);
   const className = `inline-flex items-center justify-center overflow-hidden rounded-md ${!reducedMotion ? "transition-transform" : ""} ${
     small ? "h-8 w-6" : "min-h-12 w-full min-w-0"
-  } ${onClick ? `${!reducedMotion ? "hover:-translate-y-1" : ""} cursor-pointer` : ""} ${selected ? "ring-2 ring-primary ring-offset-1" : ""} ${recommended ? "ring-2 ring-amber-500" : ""} ${dim ? "opacity-40" : ""} ${fresh && !reducedMotion ? "oiyo-tile-land" : ""}`;
+  } ${onClick ? `${!reducedMotion ? "hover:-translate-y-1" : ""} cursor-pointer` : ""} ${selected ? "ring-2 ring-primary ring-offset-1" : ""} ${recommended ? "ring-2 ring-warning" : ""} ${dim ? "opacity-40" : ""} ${fresh && !reducedMotion ? "oiyo-tile-land" : ""}`;
   if (!onClick) {
     return <span aria-label={ariaLabel ?? text} className={className}><TileFace k={k} small={small} /></span>;
   }
@@ -109,6 +119,7 @@ const Mahjong: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
   const [game, setGame] = useState<MahjongState | null>(null);
   const [paused, setPaused] = useState(false);
   const [selectedTile, setSelectedTile] = useState(0);
+  const [showYakuGuide, setShowYakuGuide] = useState(false);
   const [muted, setMuted] = useState(() => {
     if (typeof window === "undefined") return false;
     try {
@@ -252,13 +263,19 @@ const Mahjong: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
             <div className="flex gap-2">
               {([1, 2, 3] as AiLevel[]).map((lv) => (
                 <button type="button" key={lv} onClick={() => setLevel(lv)} aria-pressed={level === lv}
-                  className={`px-3 py-1.5 rounded-md text-sm font-bold border ${level === lv ? "bg-primary text-primary-foreground border-primary" : "border-gray-300 text-gray-600"}`}>
+                  className={`px-3 py-1.5 rounded-md text-sm font-bold border ${level === lv ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground"}`}>
                   {lv === 1 ? t.level1 : lv === 2 ? t.level2 : t.level3}
                 </button>
               ))}
             </div>
-            <button type="button" onClick={newGame} className="px-6 py-2.5 rounded-lg bg-primary text-primary-foreground font-bold">{t.start}</button>
-            <p className="text-xs text-gray-400">{t.record}: {record.w}W {record.l}L {record.d}D</p>
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={newGame} className="px-6 py-2.5 rounded-lg bg-primary text-primary-foreground font-bold">{t.start}</button>
+              <button type="button" onClick={() => setShowYakuGuide(true)} className="px-4 py-2.5 rounded-lg border border-border bg-card text-foreground font-bold text-sm hover:bg-muted transition-colors flex items-center gap-1.5">
+                <span>📖</span>
+                <span>{x.yakuGuide}</span>
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground">{t.record}: {record.w}W {record.l}L {record.d}D</p>
           </div>
         </GameContainer>
       </div>
@@ -277,6 +294,9 @@ const Mahjong: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
   }, 0) : -1;
   const recommendedShanten = recommendedIndex >= 0 ? shanten(s.hands[0].filter((_tile, index) => index !== recommendedIndex)) : null;
 
+  const currentHand13 = s.hands[0].length === 13 ? s.hands[0] : s.hands[0].filter((_, idx) => idx === (selectedTile >= 0 && selectedTile < s.hands[0].length ? selectedTile : recommendedIndex));
+  const waitingTiles = getWaitingTiles(currentHand13);
+
   const handleTileKey = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
     let next = index;
     if (event.key === "ArrowRight") next = Math.min(s.hands[0].length - 1, index + 1);
@@ -294,6 +314,10 @@ const Mahjong: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
       <GameContainer title={t.title} subtitle={`${t.wall}: ${drawsLeft} ${t.draws}`} onReset={newGame}>
         <div className="relative flex flex-col gap-3">
           <div className="flex justify-end gap-2">
+            <button type="button" onClick={() => setShowYakuGuide(true)} className="min-h-11 rounded-lg border border-border px-3 text-xs font-bold hover:bg-muted transition-colors flex items-center gap-1.5">
+              <span>📖</span>
+              <span className="hidden sm:inline">{x.yakuGuide}</span>
+            </button>
             <button type="button" onClick={() => { if (!paused) storeMahjongSave(s, level); setPaused((value) => !value); }} className="min-h-11 rounded-lg border border-border px-4 text-xs font-bold hover:bg-muted">{paused ? t.resume : t.pause}</button>
             <button type="button" onClick={toggleSound} aria-label={muted ? x.soundOn : x.soundOff} aria-pressed={!muted} className="grid min-h-11 min-w-11 place-items-center rounded-lg border border-border text-muted-foreground hover:bg-muted">
               {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
@@ -327,19 +351,19 @@ const Mahjong: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
           ) : s.turn !== 0 ? (
             <span className="text-sm text-muted-foreground">{t.thinking}</span>
           ) : s.phase === "ron" ? (
-            <span className="text-sm font-bold text-rose-600">{t.ron}?</span>
+            <span className="text-sm font-bold text-destructive">{t.ron}?</span>
           ) : (
-            <span className="text-sm text-emerald-700 font-semibold">{t.yourHand}</span>
+            <span className="text-sm text-primary font-semibold">{t.yourHand}</span>
           )}
         </div>
 
         {/* Action buttons */}
         <div className="flex justify-center gap-2 min-h-11">
-          {canTsumo && <button type="button" onClick={humanTsumo} className="min-h-11 px-4 rounded-md bg-amber-500 text-white font-bold">{t.tsumo}</button>}
+          {canTsumo && <button type="button" onClick={humanTsumo} className="min-h-11 px-4 rounded-md bg-warning text-warning-foreground font-bold">{t.tsumo}</button>}
           {s.phase === "ron" && (
             <>
-              <button type="button" onClick={humanRon} className="min-h-11 px-4 rounded-md bg-rose-600 text-white font-bold">{t.ron}</button>
-              <button type="button" onClick={humanPassRon} className="min-h-11 px-4 rounded-md border border-gray-300 font-bold">{t.pass}</button>
+              <button type="button" onClick={humanRon} className="min-h-11 px-4 rounded-md bg-destructive text-destructive-foreground font-bold">{t.ron}</button>
+              <button type="button" onClick={humanPassRon} className="min-h-11 px-4 rounded-md border border-border font-bold hover:bg-muted">{t.pass}</button>
             </>
           )}
         </div>
@@ -349,10 +373,27 @@ const Mahjong: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
           {s.discards[0].map((k, i) => <Tile key={i} k={k} small dim fresh={i === s.discards[0].length - 1} reducedMotion={reducedMotion} ariaLabel={`${t.discard}: ${tileLabel(k).text}`} />)}
         </div>
 
+        {/* Real-time Tenpai / Waiting Tiles Assist */}
+        {waitingTiles.length > 0 && (
+          <div className="mx-auto w-full max-w-sm rounded-xl border border-warning/40 bg-warning/10 p-2 text-center flex items-center justify-center gap-2 flex-wrap">
+            <span className="text-xs font-black text-warning">
+              🀄 {x.tenpai} ({x.waits} {waitingTiles.length}):
+            </span>
+            <div className="flex items-center gap-1">
+              {waitingTiles.map((wt) => (
+                <span key={wt} className="inline-flex items-center gap-0.5 rounded-md border border-border bg-card px-1.5 py-0.5 text-xs font-bold text-foreground">
+                  <TileFace k={wt} small />
+                  <span>{tileLabel(wt).text}</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Your hand */}
         <div>
           <p className="text-xs font-black text-muted-foreground uppercase text-center tracking-widest mb-1">{t.yourHand}</p>
-          {yourTurn && recommendedShanten !== null && <p className="mb-2 text-center text-xs text-amber-700">{x.recommendation}: {tileLabel(s.hands[0][recommendedIndex]).text} · {x.shanten} {recommendedShanten}</p>}
+          {yourTurn && recommendedShanten !== null && <p className="mb-2 text-center text-xs text-warning font-black">{x.recommendation}: {tileLabel(s.hands[0][recommendedIndex]).text} · {x.shanten} {recommendedShanten}</p>}
           <div className="mx-auto grid w-full max-w-sm grid-cols-7 gap-1" role="group" aria-label={t.yourHand}>
             {s.hands[0].map((k, i) => (
               <Tile key={`${k}-${i}`} k={k}
@@ -373,11 +414,64 @@ const Mahjong: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
         {over && lastCpu && s.winner !== 0 && s.winner !== -1 && <p className="text-center text-xs text-muted-foreground">{x.last}: {tileLabel(lastCpu.tile).text} · {x.reason[lastCpu.reason]} · {x.shanten} {lastCpu.shantenAfter}</p>}
         <p className="text-center text-xs text-muted-foreground">{x.policy}: {level === 1 ? t.level1 : level === 2 ? t.level2 : t.level3}</p>
 
-        <p className="text-center text-xs text-gray-400">{t.record}: {record.w}W {record.l}L {record.d}D</p>
+        <p className="text-center text-xs text-muted-foreground">{t.record}: {record.w}W {record.l}L {record.d}D</p>
         {paused && <div className="absolute inset-0 z-10 grid place-items-center rounded-2xl bg-background/80 backdrop-blur-sm"><div className="text-center"><p className="mb-3 font-black">{t.paused}</p><button type="button" onClick={() => setPaused(false)} className="min-h-11 rounded-full bg-primary px-8 font-bold text-primary-foreground">{t.resume}</button></div></div>}
         <p className="sr-only" role="status" aria-live="polite">{paused ? t.paused : over ? (s.winner === 0 ? t.youWin : s.winner === -1 ? t.exhaust : `${t.ai} ${s.winner}${t.aiWin}`) : yourTurn ? `${x.liveTurn}. ${x.remaining} ${drawsLeft}` : t.thinking}</p>
       </div>
     </GameContainer>
+
+    {/* Yaku Guide Modal */}
+    {showYakuGuide && (
+      <div className="fixed inset-0 z-50 bg-background/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in zoom-in-95 duration-150">
+        <div className="max-w-md w-full max-h-full overflow-y-auto rounded-2xl border border-border bg-card p-5 shadow-2xl space-y-4">
+          <div className="flex items-center justify-between border-b border-border pb-3">
+            <div>
+              <div className="text-lg font-black text-foreground flex items-center gap-2">
+                <span>📖</span>
+                <span>{x.yakuGuide}</span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {locale === "ko" ? "마작의 기초 필수 화료 조건 (초보자 1·2판 역)" : "Basic Winning Conditions in Mahjong"}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowYakuGuide(false)}
+              className="min-h-11 min-w-11 rounded-xl border border-border bg-muted/60 hover:bg-muted text-foreground flex items-center justify-center text-sm font-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              aria-label={x.close}
+            >
+              ✕
+            </button>
+          </div>
+
+          <div className="grid gap-2.5">
+            {YAKU_LIST.map((yaku, idx) => (
+              <div key={idx} className="p-3 rounded-xl border border-border bg-muted/30 text-left space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="font-black text-sm text-foreground">
+                    {yaku.name[locale] ?? yaku.name.en}
+                  </span>
+                  <span className="text-xs px-2 py-0.5 rounded-full font-black bg-primary/10 text-primary border border-primary/20">
+                    {yaku.han}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {yaku.desc[locale] ?? yaku.desc.en}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowYakuGuide(false)}
+            className="w-full py-2.5 rounded-xl border border-border bg-muted/60 hover:bg-muted font-black text-xs text-foreground transition-colors"
+          >
+            {x.close}
+          </button>
+        </div>
+      </div>
+    )}
     </div>
   );
 };

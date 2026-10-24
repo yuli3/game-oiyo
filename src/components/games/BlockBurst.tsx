@@ -55,6 +55,13 @@ import {
   type BurstRun,
 } from "../../lib/games/block-burst-augments";
 
+import {
+  createCameraShake,
+  addTrauma,
+  updateCameraShake,
+  type ScreenTraumaState,
+} from "../../lib/games/screen-shake";
+
 const SAVE = "oiyo:block-burst-state:v1";
 const GAME = "block-burst";
 const wait = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms));
@@ -385,6 +392,8 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
   const [flashRows, setFlashRows] = useState<number[]>([]);
   const [flashCols, setFlashCols] = useState<number[]>([]);
   const [shake, setShake] = useState(0);
+  const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0 });
+  const shakeEngineRef = useRef<ScreenTraumaState>(createCameraShake({ maxOffsetPx: 14, decayRate: 3.5, maxAngleDeg: 1.5 }));
   const [banner, setBanner] = useState("");
   const [gainPop, setGainPop] = useState(0);
   const [shareCardCopied, setShareCardCopied] = useState(false);
@@ -420,6 +429,28 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
     osc.start();
     osc.stop(ctx.currentTime + dur);
   }, [sound]);
+
+  const triggerCameraShake = useCallback((amount: number) => {
+    if (reducedMotion) return;
+    shakeEngineRef.current = addTrauma(shakeEngineRef.current, amount);
+    let lastTime = performance.now();
+    const tick = (now: number) => {
+      const dt = (now - lastTime) / 1000;
+      lastTime = now;
+      const res = updateCameraShake(shakeEngineRef.current, dt);
+      shakeEngineRef.current = res.state;
+      setShakeOffset({
+        x: Math.round(res.offset.offsetX * 10) / 10,
+        y: Math.round(res.offset.offsetY * 10) / 10,
+      });
+      if (res.offset.isShaking) {
+        requestAnimationFrame(tick);
+      } else {
+        setShakeOffset({ x: 0, y: 0 });
+      }
+    };
+    requestAnimationFrame(tick);
+  }, [reducedMotion]);
 
   const burstFx = useCallback((cells: Cell[], colors: BurstColor[]) => {
     const canvas = canvasRef.current;
@@ -611,6 +642,10 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
       setGame((g) => ({ ...g, board: wave.before, combo: i + 1 }));
       const colors = wave.clear.cells.map((cell) => wave.before[cell.r][cell.c] ?? 1);
       burstFx(wave.clear.cells, colors);
+      const clearedCount = wave.clear.rows.length + wave.clear.cols.length;
+      if (clearedCount >= 2 || i >= 1) {
+        triggerCameraShake(clearedCount >= 3 ? 0.75 : clearedCount >= 2 ? 0.5 : 0.35);
+      }
       setBanner(!wave.clear.rows.length && !wave.clear.cols.length ? "BOOM" : i === 0 && wave.clear.rows.length && wave.clear.cols.length ? "CROSS" : i >= 2 ? `CHAIN x${i + 1}` : wave.clear.cols.length ? "COLUMN" : "LINE");
       tone(Math.min(980, 360 + i * 90), 0.14);
       await wait(burstMs);
@@ -627,7 +662,7 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
     window.setTimeout(() => setGainPop(0), 700);
     setResolving(false);
     spawnNext(base);
-  }, [burstFx, spawnNext, reducedMotion, tone]);
+  }, [burstFx, spawnNext, reducedMotion, tone, triggerCameraShake]);
 
   const lockNow = useCallback(async (state: BurstState) => {
     if (resolvingRef.current || state.status !== "playing" || !state.active) return;
@@ -937,8 +972,11 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
           ) : null}
           <div
             ref={boardRef}
-            className="relative flex-1 touch-none overflow-hidden rounded-[1.4rem] border border-[#cfc6a8] bg-[radial-gradient(circle_at_top,#f7f1dc,rgba(232,223,186,0.95)_58%,#d7ccab)] p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_18px_40px_rgba(80,70,30,0.16)]"
-            style={{ transform: shake ? `translate(${shake % 2 ? -6 : 6}px, ${shake > 7 ? 4 : 0}px)` : undefined }}
+            className="relative flex-1 touch-none overflow-hidden rounded-[1.4rem] border border-[#cfc6a8] bg-[radial-gradient(circle_at_top,#f7f1dc,rgba(232,223,186,0.95)_58%,#d7ccab)] p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_18px_40px_rgba(80,70,30,0.16)] translate-x-(--shake-x) translate-y-(--shake-y)"
+            style={{
+              "--shake-x": `${shakeOffset.x}px`,
+              "--shake-y": `${shakeOffset.y}px`,
+            } as React.CSSProperties}
             onPointerDown={onPointerDown}
             onPointerUp={onPointerUp}
           >

@@ -3,6 +3,8 @@ import { celebrate } from "../../lib/games/celebration";
 import {
   type NeonSurvivorState,
   type UpgradeCard,
+  EVOLUTION_RECIPES,
+  UPGRADE_CATALOG,
   createInitialNeonSurvivorState,
   updateNeonSurvivor,
   selectUpgrade,
@@ -44,6 +46,11 @@ const COPY = {
     soundOn: '소리 켜기',
     soundOff: '소리 끄기',
     controlsHint: '모바일: 터치 드래그 가상 조이스틱 · PC: WASD / 방향키 이동 (자동 사격)',
+    evoGuide: '진화 도감',
+    evoGuideDesc: '기본 무기 5레벨 + 보조 장비 1레벨 달성 시 초진화 해금',
+    close: '닫기',
+    ready: '진화 가능!',
+    evolved: '진화 완료',
   },
   en: {
     title: 'Neon Survivor',
@@ -58,6 +65,11 @@ const COPY = {
     soundOn: 'Unmute',
     soundOff: 'Mute',
     controlsHint: 'Mobile: Touch-drag virtual joystick · PC: WASD / Arrow keys (Auto-attack)',
+    evoGuide: 'Evo Guide',
+    evoGuideDesc: 'Reach Base Weapon Lv.5 + Support Gear Lv.1 to unlock',
+    close: 'Close',
+    ready: 'Ready!',
+    evolved: 'Evolved',
   },
   ja: {
     title: 'ネオン・サバイバー',
@@ -72,6 +84,11 @@ const COPY = {
     soundOn: '消音解除',
     soundOff: '消音',
     controlsHint: 'モバイル: タッチドラッグ仮想ジョイスティック · PC: WASD / 矢印キー移動 (自動射撃)',
+    evoGuide: '進化図鑑',
+    evoGuideDesc: '基本武器Lv.5＋補助装備Lv.1で超進化解放',
+    close: '閉じる',
+    ready: '進化可能！',
+    evolved: '進化完了',
   },
   zh: {
     title: '霓虹幸存者',
@@ -86,6 +103,11 @@ const COPY = {
     soundOn: '开启声音',
     soundOff: '静音',
     controlsHint: '手机: 触摸拖动虚拟摇杆 · 电脑: WASD / 方向键移动 (自动攻击)',
+    evoGuide: '进化图鉴',
+    evoGuideDesc: '基础武器Lv.5 + 辅助装备Lv.1 解锁终极进化',
+    close: '关闭',
+    ready: '可进化！',
+    evolved: '已进化',
   },
   fr: {
     title: 'Neon Survivor',
@@ -100,6 +122,11 @@ const COPY = {
     soundOn: 'Activer le son',
     soundOff: 'Couper le son',
     controlsHint: 'Mobile : Joystick virtuel tactile · PC : WASD / Flèches (Tir automatique)',
+    evoGuide: 'Guide Évo',
+    evoGuideDesc: 'Arme Niv.5 + Équipement Niv.1 pour débloquer',
+    close: 'Fermer',
+    ready: 'Prêt !',
+    evolved: 'Évolué',
   },
   es: {
     title: 'Neon Survivor',
@@ -114,6 +141,11 @@ const COPY = {
     soundOn: 'Activar sonido',
     soundOff: 'Silenciar',
     controlsHint: 'Móvil: Joystick virtual táctil · PC: WASD / Flechas (Disparo automático)',
+    evoGuide: 'Guía Évo',
+    evoGuideDesc: 'Arma Nivel 5 + Equipo Nivel 1 para desbloquear',
+    close: 'Cerrar',
+    ready: '¡Listo!',
+    evolved: 'Evolucionado',
   },
 };
 
@@ -123,6 +155,13 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
   const [gameState, setGameState] = useState<NeonSurvivorState>(createInitialNeonSurvivorState);
   const stateRef = useRef<NeonSurvivorState>(gameState);
   stateRef.current = gameState;
+
+  // Evolution Guide Modal State
+  const [showEvoGuide, setShowEvoGuide] = useState(false);
+  const showEvoGuideRef = useRef(false);
+  useEffect(() => {
+    showEvoGuideRef.current = showEvoGuide;
+  }, [showEvoGuide]);
 
   // Sound Synthesizer
   const [muted, setMuted] = useState(false);
@@ -290,7 +329,7 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
       inputVectorRef.current = { x: activeX, y: activeY };
 
       // 2. Step game state if not paused
-      if (!stateRef.current.gameOver && !stateRef.current.levelUpPending) {
+      if (!stateRef.current.gameOver && !stateRef.current.levelUpPending && !showEvoGuideRef.current) {
         const prevHp = stateRef.current.player.hp;
         const prevProjCount = stateRef.current.projectiles.length;
         const prevExp = stateRef.current.player.exp;
@@ -716,6 +755,18 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
 
         <button
           type="button"
+          onClick={() => setShowEvoGuide((v) => !v)}
+          aria-expanded={showEvoGuide}
+          aria-label={t.evoGuide}
+          title={t.evoGuide}
+          className="min-h-11 px-3 py-2 rounded-xl border border-border bg-background/80 backdrop-blur-md shadow-xs text-xs font-black text-foreground hover:bg-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 flex items-center gap-1.5"
+        >
+          <span>📖</span>
+          <span className="hidden sm:inline">{t.evoGuide}</span>
+        </button>
+
+        <button
+          type="button"
           onClick={togglePortal}
           aria-pressed={isImmersive}
           aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
@@ -748,8 +799,18 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
       {gameState.levelUpPending && (
         <div className="absolute inset-0 bg-background/85 backdrop-blur-md flex items-center justify-center p-4 z-20 animate-in fade-in zoom-in-95 duration-150">
           <div className="max-w-md w-full space-y-4 text-center">
-            <div className="text-xl sm:text-2xl font-black text-primary tracking-tight">
-              {t.levelup}
+            <div className="flex items-center justify-between">
+              <div className="text-xl sm:text-2xl font-black text-primary tracking-tight">
+                {t.levelup}
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowEvoGuide(true)}
+                className="px-2.5 py-1.5 rounded-xl border border-border bg-muted/60 hover:bg-muted text-xs font-black text-foreground flex items-center gap-1 transition-colors"
+              >
+                <span>📖</span>
+                <span>{t.evoGuide}</span>
+              </button>
             </div>
 
             <div className="grid gap-2.5">
@@ -822,6 +883,111 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
               className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-md hover:bg-primary/90 transition-colors"
             >
               {t.restart}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Evolution Guide Modal */}
+      {showEvoGuide && (
+        <div className="absolute inset-0 bg-background/90 backdrop-blur-md flex items-center justify-center p-4 z-30 animate-in fade-in zoom-in-95 duration-150">
+          <div className="max-w-md w-full max-h-full overflow-y-auto rounded-2xl border border-border bg-card p-5 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div className="text-left">
+                <div className="text-lg font-black text-foreground flex items-center gap-2">
+                  <span>📖</span>
+                  <span>{t.evoGuide}</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {t.evoGuideDesc}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowEvoGuide(false)}
+                className="min-h-11 min-w-11 rounded-xl border border-border bg-muted/60 hover:bg-muted text-foreground flex items-center justify-center text-sm font-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                aria-label={t.close}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="grid gap-3">
+              {EVOLUTION_RECIPES.map((recipe) => {
+                const baseCard = UPGRADE_CATALOG.find((c) => c.id === recipe.baseWeapon);
+                const catCard = UPGRADE_CATALOG.find((c) => c.id === recipe.catalyst);
+                const isEvolved = gameState.evolutions[recipe.id];
+                const baseLv = gameState.weapons[recipe.baseWeapon] ?? 0;
+                const catLv = gameState.weapons[recipe.catalyst] ?? 0;
+                const isReady = !isEvolved && baseLv >= recipe.requiredBaseLevel && catLv >= 1;
+
+                return (
+                  <div
+                    key={recipe.id}
+                    className={`p-3.5 rounded-xl border text-left space-y-2.5 transition-all ${
+                      isEvolved
+                        ? 'border-chart-4/80 bg-chart-4/10'
+                        : isReady
+                        ? 'border-primary/80 bg-primary/10 ring-1 ring-primary/40'
+                        : 'border-border bg-muted/30'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-xl shrink-0">{recipe.icon}</span>
+                        <span className="font-black text-sm text-foreground truncate">
+                          {recipe.title[locale] ?? recipe.title.en}
+                        </span>
+                      </div>
+                      <span
+                        className={`text-xs px-2 py-0.5 rounded-full font-black shrink-0 ${
+                          isEvolved
+                            ? 'bg-chart-4/20 text-chart-4 border border-chart-4/40'
+                            : isReady
+                            ? 'bg-primary/20 text-primary border border-primary/40 animate-pulse'
+                            : 'bg-muted text-muted-foreground border border-border'
+                        }`}
+                      >
+                        {isEvolved ? t.evolved : isReady ? t.ready : `${baseLv}/${recipe.requiredBaseLevel}`}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 text-xs font-semibold">
+                      <div className="flex-1 p-2 rounded-lg bg-background/80 border border-border flex items-center justify-between min-w-0">
+                        <span className="truncate flex items-center gap-1">
+                          <span>{baseCard?.icon ?? '⚡'}</span>
+                          <span className="truncate">{baseCard?.title[locale] ?? baseCard?.title.en}</span>
+                        </span>
+                        <span className={`font-mono text-xs font-black shrink-0 ml-1 ${baseLv >= recipe.requiredBaseLevel ? 'text-primary' : 'text-muted-foreground'}`}>
+                          LV.{baseLv}/{recipe.requiredBaseLevel}
+                        </span>
+                      </div>
+                      <span className="text-muted-foreground font-black">+</span>
+                      <div className="flex-1 p-2 rounded-lg bg-background/80 border border-border flex items-center justify-between min-w-0">
+                        <span className="truncate flex items-center gap-1">
+                          <span>{catCard?.icon ?? '🛡️'}</span>
+                          <span className="truncate">{catCard?.title[locale] ?? catCard?.title.en}</span>
+                        </span>
+                        <span className={`font-mono text-xs font-black shrink-0 ml-1 ${catLv >= 1 ? 'text-primary' : 'text-muted-foreground'}`}>
+                          LV.{catLv}/1
+                        </span>
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      {recipe.desc[locale] ?? recipe.desc.en}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowEvoGuide(false)}
+              className="w-full py-2.5 rounded-xl border border-border bg-muted/60 hover:bg-muted font-black text-xs text-foreground transition-colors"
+            >
+              {t.close}
             </button>
           </div>
         </div>

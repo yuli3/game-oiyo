@@ -2,7 +2,18 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { dayIndex, minutesUntilNextDaily, mulberry32, previousDayKey, todayKey } from '../../lib/games/daily';
 import { getDailyStreak, recordDailyWin, type DailyStreak } from '../../lib/games/records';
-import { explainTentsHint, generateTents, generateUniqueTents, validateTents, type Pos, type TentsHint, type TentsPuzzle, type TentsValidation } from '../../lib/games/tents';
+import {
+    autoMarkGrass,
+    explainTentsHint,
+    generateTents,
+    generateUniqueTents,
+    getLineHintStatuses,
+    validateTents,
+    type Pos,
+    type TentsHint,
+    type TentsPuzzle,
+    type TentsValidation,
+} from '../../lib/games/tents';
 import {
     DAILY_BOARD,
     FREE_BOARD,
@@ -110,6 +121,7 @@ const COPY = {
         streak: '연속', best: '최고', doneToday: '오늘 완료 ✓', sound: '소리',
         dailyBadge: (d: string) => `오늘의 퍼즐 · ${d}`,
         seedBadge: (s: string | number) => `시드 #${s}`,
+        autoGrass: '잔디 자동 마킹',
     },
     en: {
         title: 'Tents & Trees', desc: 'Each tree needs exactly one tent!', note: 'Tents go orthogonally next to a tree and never touch another tent, even diagonally. Row/column numbers count the tents in that line.',
@@ -119,6 +131,7 @@ const COPY = {
         streak: 'Streak', best: 'Best', doneToday: 'Done today ✓', sound: 'Sound',
         dailyBadge: (d: string) => `Daily Puzzle · ${d}`,
         seedBadge: (s: string | number) => `Seed #${s}`,
+        autoGrass: 'Auto Grass',
     },
     ja: {
         title: 'テントと木', desc: '木ごとにテントを1つずつ設置しましょう！', note: 'テントは木の上下左右に置き、テント同士は斜めも含め隣接できません。行・列の数字はその列のテント数です。',
@@ -128,6 +141,7 @@ const COPY = {
         streak: '連続', best: '最高', doneToday: '本日クリア ✓', sound: '音',
         dailyBadge: (d: string) => `今日のパズル · ${d}`,
         seedBadge: (s: string | number) => `シード #${s}`,
+        autoGrass: '草を自動配置',
     },
     zh: {
         title: '帐篷与树', desc: '每棵树旁放一顶帐篷！', note: '帐篷放在树的上下左右，帐篷之间（含对角）不能相邻。行列数字表示该行列的帐篷数。',
@@ -137,6 +151,7 @@ const COPY = {
         streak: '连续', best: '最佳', doneToday: '今日已完成 ✓', sound: '声音',
         dailyBadge: (d: string) => `每日谜题 · ${d}`,
         seedBadge: (s: string | number) => `种子 #${s}`,
+        autoGrass: '自动草地',
     },
     fr: {
         title: 'Tentes et arbres', desc: "Chaque arbre a besoin d'une tente !", note: "Les tentes se placent à côté d'un arbre (jamais en diagonale d'une autre tente). Les nombres comptent les tentes de chaque ligne/colonne.",
@@ -146,6 +161,7 @@ const COPY = {
         streak: 'Série', best: 'Record', doneToday: "Fini aujourd'hui ✓", sound: 'Son',
         dailyBadge: (d: string) => `Puzzle du jour · ${d}`,
         seedBadge: (s: string | number) => `Graine #${s}`,
+        autoGrass: 'Herbe auto',
     },
     es: {
         title: 'Tiendas y árboles', desc: '¡Cada árbol necesita una tienda!', note: 'Las tiendas van junto a un árbol (arriba/abajo/izquierda/derecha) y nunca se tocan entre sí, ni en diagonal. Los números cuentan las tiendas de cada fila/columna.',
@@ -155,6 +171,7 @@ const COPY = {
         streak: 'Racha', best: 'Récord', doneToday: 'Hecho hoy ✓', sound: 'Sonido',
         dailyBadge: (d: string) => `Puzle diario · ${d}`,
         seedBadge: (s: string | number) => `Semilla #${s}`,
+        autoGrass: 'Hierba auto',
     },
 } as const;
 
@@ -622,6 +639,18 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
     const solvedToday = streak?.lastWinDate === todayKey();
     const { size } = puzzle;
+    const currentTents = tentsOf(marks);
+    const { rowStatuses, colStatuses } = getLineHintStatuses(size, puzzle.rowHints, puzzle.colHints, currentTents);
+
+    const handleAutoGrass = () => {
+        if (playLocked) return;
+        const { nextMarks, addedCount } = autoMarkGrass(puzzle, marks);
+        if (addedCount > 0) {
+            setMarks(nextMarks);
+            remember(nextMarks);
+            tone(480, 0.05);
+        }
+    };
 
     const handleGridKeyDown = (event: React.KeyboardEvent, index: number) => {
         const row = Math.floor(index / size);
@@ -672,6 +701,14 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                             setHint(explainTentsHint(tents, puzzle));
                         }} disabled={playLocked} className="min-h-11 rounded-lg border border-border px-3 text-xs font-bold text-muted-foreground hover:bg-muted disabled:opacity-40">
                             {HINT_LABEL[locale as keyof typeof HINT_LABEL] ?? HINT_LABEL.en}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleAutoGrass}
+                            disabled={playLocked}
+                            className="min-h-11 rounded-lg border border-border px-3 text-xs font-bold text-muted-foreground hover:bg-muted disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                        >
+                            🌱 {t.autoGrass}
                         </button>
                         <button
                             type="button"
@@ -757,16 +794,38 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         <div role="columnheader" aria-rowindex={1} aria-colindex={1} aria-label={`${a11y.row} / ${a11y.column}`} />
                             {puzzle.colHints.map((h, i) => {
                                 const hidden = fogCols.includes(i);
+                                const status = colStatuses[i];
+                                const statusClass = hidden
+                                    ? 'text-primary'
+                                    : status === 'satisfied'
+                                    ? 'text-success font-black'
+                                    : status === 'exceeded'
+                                    ? 'text-destructive font-black animate-pulse'
+                                    : 'text-primary';
                                 return (
                                 <div key={`ch-${i}`} role="columnheader" aria-colindex={i + 2} aria-label={`${a11y.column} ${i + 1}, ${a11y.columnHint} ${hintAriaCount(h, hidden, chaosCopy.hidden)}`}
-                                    className="flex items-center justify-center text-sm font-black text-primary">{visibleHint(h, hidden)}</div>
+                                    className={`flex items-center justify-center text-sm font-black transition-colors ${statusClass}`}>
+                                    {visibleHint(h, hidden)}
+                                </div>
                                 );
                             })}
                         </div>
-                        {marks.map((row, r) => (
+                        {marks.map((row, r) => {
+                            const rowStatus = rowStatuses[r];
+                            const rowHidden = fogRows.includes(r);
+                            const rowStatusClass = rowHidden
+                                ? 'text-primary'
+                                : rowStatus === 'satisfied'
+                                ? 'text-success font-black'
+                                : rowStatus === 'exceeded'
+                                ? 'text-destructive font-black animate-pulse'
+                                : 'text-primary';
+                            return (
                             <div key={`r-${r}`} role="row" aria-rowindex={r + 2} className="contents">
-                                <div role="rowheader" aria-colindex={1} aria-label={`${a11y.row} ${r + 1}, ${a11y.rowHint} ${hintAriaCount(puzzle.rowHints[r], fogRows.includes(r), chaosCopy.hidden)}`}
-                                    className="flex items-center justify-center text-sm font-black text-primary">{visibleHint(puzzle.rowHints[r], fogRows.includes(r))}</div>
+                                <div role="rowheader" aria-colindex={1} aria-label={`${a11y.row} ${r + 1}, ${a11y.rowHint} ${hintAriaCount(puzzle.rowHints[r], rowHidden, chaosCopy.hidden)}`}
+                                    className={`flex items-center justify-center text-sm font-black transition-colors ${rowStatusClass}`}>
+                                    {visibleHint(puzzle.rowHints[r], rowHidden)}
+                                </div>
                                 {row.map((mark, c) => {
                                     const tree = isTree(r, c);
                                     const index = r * size + c;
@@ -824,7 +883,7 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                                     );
                                 })}
                             </div>
-                        ))}
+                        ); })}
                     </div>
                 </div>
 
