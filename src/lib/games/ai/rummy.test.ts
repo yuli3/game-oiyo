@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { chooseRummyAction } from "./rummy";
+import type { AiLevel } from "./types";
 import {
   applyRummy,
   createTileRummy,
@@ -90,4 +91,50 @@ describe("rummy AI", () => {
     }
     expect(game.status).toBe("over");
   });
+
+  it(
+    "lets the higher difficulty win more often when the seats are swapped",
+    () => {
+      // Seat 0 is dealt first and moves first. The same seed is played with
+      // the levels exchanged so the opening seat is not the difficulty (2026-10-21).
+      const seeds = Array.from({ length: 16 }, (_, index) => index + 1);
+      const pairings = [
+        [3, 1],
+        [2, 1],
+        [3, 2],
+      ] as const;
+
+      const play = (seed: number, levels: readonly [AiLevel, AiLevel]) => {
+        let game = createTileRummy({ seed, opponents: 1 });
+        for (let turn = 0; turn < 240 && game.status === "playing"; turn++) {
+          const level = levels[game.turn === 0 ? 0 : 1];
+          const next = applyRummy(game, chooseRummyAction(game, level));
+          expect(next).not.toBeNull();
+          game = next!;
+        }
+        const ids = [...game.hands.flat(), ...game.pool, ...game.table.flatMap((meld) => meld.tiles)].map((tile) => tile.id);
+        expect(new Set(ids).size).toBe(106);
+        expect(game.table.every((meld) => validateMeld(meld).ok)).toBe(true);
+        expect(game.status).toBe("over");
+        return game.winner;
+      };
+
+      for (const [strong, weak] of pairings) {
+        let strongWins = 0;
+        let weakWins = 0;
+        for (const seed of seeds) {
+          for (const levels of [
+            [strong, weak],
+            [weak, strong],
+          ] as const) {
+            const winner = play(seed, levels);
+            if (winner === levels.indexOf(strong)) strongWins += 1;
+            else if (winner === levels.indexOf(weak)) weakWins += 1;
+          }
+        }
+        expect(strongWins).toBeGreaterThan(weakWins);
+      }
+    },
+    60_000,
+  );
 });
