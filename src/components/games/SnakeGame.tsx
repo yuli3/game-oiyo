@@ -7,10 +7,19 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { GameContainer } from '../ui/game/GamePrimitives';
+import { GameShell } from '../ui/game/GameShell';
+import type { FlowPhase } from '../../lib/games/game-flow';
+import { getGlobalBgmController } from '../../lib/games/bgm';
+import {
+    AUGMENTS_CATALOG,
+    calculateAugmentedTickInterval,
+    isAugmentMilestone,
+    rollAugmentChoices,
+    type AugmentId,
+    type AugmentInfo,
+} from '../../lib/games/snake-augments';
 import { getBest, recordAchievementEvent, recordBest } from '../../lib/games/records';
 import type { Locale } from '../../lib/i18n';
-import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { celebrate } from '../../lib/games/celebration';
 import { SNAKE_GAME_SPRITES } from '../../lib/games/sprites';
@@ -20,7 +29,6 @@ import {
     pauseSnake,
     resumeSnake,
     SNAKE_GRID_SIZE,
-    snakeTickMilliseconds,
     steerSnake,
     tickSnakeWithCause,
     type SnakeDeathCause,
@@ -53,12 +61,12 @@ const COPY = {
 } as const;
 
 const DETAILS = {
-    ko: { pause: "일시정지", resume: "계속하기", soundOn: "소리 켜짐", soundOff: "소리 꺼짐", length: "길이", next: "다음 목표", points: "점", wall: "벽과 충돌했습니다", self: "몸통과 충돌했습니다", summary: (score: number, length: number) => `점수 ${score}, 길이 ${length}` },
-    en: { pause: "Pause", resume: "Resume", soundOn: "Sound on", soundOff: "Sound off", length: "Length", next: "Next target", points: "pts", wall: "You hit the wall", self: "You crossed your own body", summary: (score: number, length: number) => `Score ${score}, length ${length}` },
-    ja: { pause: "一時停止", resume: "続ける", soundOn: "サウンドオン", soundOff: "サウンドオフ", length: "長さ", next: "次の目標", points: "点", wall: "壁に衝突しました", self: "自分の体に衝突しました", summary: (score: number, length: number) => `スコア ${score}、長さ ${length}` },
-    zh: { pause: "暂停", resume: "继续", soundOn: "声音开启", soundOff: "声音关闭", length: "长度", next: "下一个目标", points: "分", wall: "撞到了墙", self: "撞到了自己的身体", summary: (score: number, length: number) => `得分 ${score}，长度 ${length}` },
-    fr: { pause: "Pause", resume: "Continuer", soundOn: "Son activé", soundOff: "Son coupé", length: "Longueur", next: "Prochain objectif", points: "pts", wall: "Vous avez heurté le mur", self: "Vous avez croisé votre propre corps", summary: (score: number, length: number) => `Score ${score}, longueur ${length}` },
-    es: { pause: "Pausa", resume: "Continuar", soundOn: "Sonido activado", soundOff: "Sonido desactivado", length: "Longitud", next: "Próximo objetivo", points: "pts", wall: "Chocaste contra la pared", self: "Chocaste contra tu propio cuerpo", summary: (score: number, length: number) => `Puntuación ${score}, longitud ${length}` },
+    ko: { pause: "일시정지", resume: "계속하기", soundOn: "소리 켜짐", soundOff: "소리 꺼짐", length: "길이", next: "다음 목표", points: "점", wall: "벽과 충돌했습니다", self: "몸통과 충돌했습니다", summary: (score: number, length: number) => `점수 ${score}, 길이 ${length}`, draftTitle: "스킬 증강 선택 (50점 돌파)", draftHint: "[1], [2], [3] 키 또는 카드를 터치하여 선택", activeAugments: "보유 증강" },
+    en: { pause: "Pause", resume: "Resume", soundOn: "Sound on", soundOff: "Sound off", length: "Length", next: "Next target", points: "pts", wall: "You hit the wall", self: "You crossed your own body", summary: (score: number, length: number) => `Score ${score}, length ${length}`, draftTitle: "Augment Draft (50pt Milestone)", draftHint: "Press [1], [2], [3] or tap a card to choose", activeAugments: "Augments" },
+    ja: { pause: "一時停止", resume: "続ける", soundOn: "サウンドオン", soundOff: "サウンドオフ", length: "長さ", next: "次の目標", points: "点", wall: "壁に衝突しました", self: "自分の体に衝突しました", summary: (score: number, length: number) => `スコア ${score}、長さ ${length}`, draftTitle: "スキル増強選択 (50点達成)", draftHint: "[1], [2], [3]キーまたはタップして選択", activeAugments: "保有スキル" },
+    zh: { pause: "暂停", resume: "继续", soundOn: "声音开启", soundOff: "声音关闭", length: "长度", next: "下一个目标", points: "分", wall: "撞到了墙", self: "撞到了自己的身体", summary: (score: number, length: number) => `得分 ${score}，长度 ${length}`, draftTitle: "技能增益选择 (50分里程碑)", draftHint: "按 [1], [2], [3] 或点击卡片选择", activeAugments: "拥有增益" },
+    fr: { pause: "Pause", resume: "Continuer", soundOn: "Son activé", soundOff: "Son coupé", length: "Longueur", next: "Prochain objectif", points: "pts", wall: "Vous avez heurté le mur", self: "Vous avez croisé votre propre corps", summary: (score: number, length: number) => `Score ${score}, longueur ${length}`, draftTitle: "Choix d'amélioration (50 pts)", draftHint: "Appuyez sur [1], [2], [3] ou touchez une carte", activeAugments: "Améliorations" },
+    es: { pause: "Pausa", resume: "Continuar", soundOn: "Sonido activado", soundOff: "Sonido desactivado", length: "Longitud", next: "Próximo objetivo", points: "pts", wall: "Chocaste contra la pared", self: "Chocaste contra tu propio cuerpo", summary: (score: number, length: number) => `Puntuación ${score}, longitud ${length}`, draftTitle: "Selección de aumento (50 pts)", draftHint: "Pulsa [1], [2], [3] o toca una carta", activeAugments: "Aumentos" },
 } as const;
 
 const PENTATONIC = [261.63, 293.66, 329.63, 392.0, 440.0, 523.25, 587.33, 659.25, 783.99, 880.0];
@@ -69,6 +77,20 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const d = DETAILS[(locale as keyof typeof DETAILS)] ?? DETAILS.en;
 
     const [game, setGame] = useState<SnakeState | null>(null);
+    const [phase, setPhase] = useState<FlowPhase>('title');
+    const [activeAugments, setActiveAugments] = useState<AugmentId[]>([]);
+    const activeAugmentsRef = useRef<AugmentId[]>([]);
+    activeAugmentsRef.current = activeAugments;
+
+    const [ghostCharges, setGhostCharges] = useState(0);
+    const ghostChargesRef = useRef(0);
+    ghostChargesRef.current = ghostCharges;
+
+    const [draftChoices, setDraftChoices] = useState<AugmentInfo[] | null>(null);
+    const draftChoicesRef = useRef<AugmentInfo[] | null>(null);
+    draftChoicesRef.current = draftChoices;
+
+    const lastMilestoneRef = useRef<number>(0);
     const [hydrated, setHydrated] = useState(false);
     const [best, setBest] = useState(0);
     const [muted, setMuted] = useState<boolean>(() => {
@@ -86,6 +108,7 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         setMuted((prev) => {
             const next = !prev;
             try { localStorage.setItem('snake_game_muted', String(next)); } catch {}
+            getGlobalBgmController("arcade").setMuted(next);
             return next;
         });
     }, []);
@@ -165,6 +188,21 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         }
     }, []);
 
+    const selectAugment = useCallback((choice: AugmentInfo) => {
+        activeAugmentsRef.current.push(choice.id);
+        setActiveAugments([...activeAugmentsRef.current]);
+        if (choice.id === 'ghost') {
+            ghostChargesRef.current += 1;
+            setGhostCharges(ghostChargesRef.current);
+        }
+        setDraftChoices(null);
+        draftChoicesRef.current = null;
+        vibrate([15, 20, 25]);
+        playEatSound(streakRef.current + 3);
+        getGlobalBgmController('arcade').duck(10, 1.0);
+        setGame((current) => current ? resumeSnake(current) : current);
+    }, [playEatSound, vibrate]);
+
     const initGame = useCallback(() => {
         initAudio();
         queuedDirectionRef.current = null;
@@ -172,11 +210,22 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         ripplesRef.current = [];
         recoilShakeRef.current = 0;
         streakRef.current = 0;
+        lastMilestoneRef.current = 0;
+        setActiveAugments([]);
+        activeAugmentsRef.current = [];
+        setGhostCharges(0);
+        ghostChargesRef.current = 0;
+        setDraftChoices(null);
+        draftChoicesRef.current = null;
         setDeathCause(null);
         const newGame = createSnakeGame(Date.now());
         prevSnakeRef.current = newGame.snake.map((pt) => ({ ...pt }));
         setGame(newGame);
-    }, [initAudio]);
+        setPhase('play');
+        const bgm = getGlobalBgmController('arcade');
+        bgm.start('arcade');
+        bgm.setMuted(muted);
+    }, [initAudio, muted]);
 
     const changeDir = useCallback((nx: number, ny: number) => {
         initAudio();
@@ -197,6 +246,25 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     // Keyboard controls
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
+            // When drafting augments, 1, 2, 3 selects the option
+            if (draftChoicesRef.current) {
+                if (e.key === '1' && draftChoicesRef.current[0]) {
+                    e.preventDefault();
+                    selectAugment(draftChoicesRef.current[0]);
+                    return;
+                }
+                if (e.key === '2' && draftChoicesRef.current[1]) {
+                    e.preventDefault();
+                    selectAugment(draftChoicesRef.current[1]);
+                    return;
+                }
+                if (e.key === '3' && draftChoicesRef.current[2]) {
+                    e.preventDefault();
+                    selectAugment(draftChoicesRef.current[2]);
+                    return;
+                }
+            }
+
             if (e.key === 'f' || e.key === 'F') {
                 e.preventDefault();
                 togglePortal();
@@ -276,11 +344,13 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             let current = gameRef.current;
             let changed = false;
 
-            if (current?.status === 'playing') {
+            if (current?.status === 'playing' && !draftChoicesRef.current) {
                 accumulator += delta;
                 let steps = 0;
-                while (current?.status === 'playing' && accumulator >= snakeTickMilliseconds(current.score) && steps < 4) {
-                    const interval = snakeTickMilliseconds(current.score);
+                const hasSlow = activeAugmentsRef.current.includes('slow');
+                const interval = calculateAugmentedTickInterval(current.score, hasSlow);
+
+                while (current?.status === 'playing' && accumulator >= interval && steps < 4) {
                     prevSnakeRef.current = current.snake.map((pt) => ({ ...pt }));
 
                     const queued = queuedDirectionRef.current;
@@ -289,7 +359,41 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         queuedDirectionRef.current = null;
                     }
 
-                    const result = tickSnakeWithCause(current);
+                    // Food magnet pulling effect
+                    if (activeAugmentsRef.current.includes('magnet')) {
+                        const head = current.snake[0];
+                        const dist = Math.abs(head.x - current.food.x) + Math.abs(head.y - current.food.y);
+                        if (dist <= 3 && dist > 1) {
+                            const dx = Math.sign(head.x - current.food.x);
+                            const dy = Math.sign(head.y - current.food.y);
+                            current = {
+                                ...current,
+                                food: {
+                                    x: dx !== 0 ? current.food.x + dx : current.food.x,
+                                    y: dx === 0 && dy !== 0 ? current.food.y + dy : current.food.y,
+                                },
+                            };
+                        }
+                    }
+
+                    // Golden apple bonus
+                    let goldenBonus = 0;
+                    if (activeAugmentsRef.current.includes('golden') && Math.random() < 0.3) {
+                        goldenBonus = 20; // +20 extra for 30 total
+                    }
+
+                    const result = tickSnakeWithCause(current, {
+                        wrap: activeAugmentsRef.current.includes('wrap'),
+                        ghostActive: ghostChargesRef.current > 0,
+                        onGhostUsed: () => {
+                            ghostChargesRef.current = Math.max(0, ghostChargesRef.current - 1);
+                            setGhostCharges(ghostChargesRef.current);
+                            vibrate([20, 30, 20]);
+                            recoilShakeRef.current = 6;
+                        },
+                        goldenScoreBonus: goldenBonus,
+                    });
+
                     current = result.state;
                     if (result.deathCause) setDeathCause(result.deathCause);
 
@@ -298,7 +402,7 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     changed = true;
                 }
                 if (steps === 4 && current) {
-                    accumulator = Math.min(accumulator, snakeTickMilliseconds(current.score));
+                    accumulator = Math.min(accumulator, interval);
                 }
                 if (changed && current) {
                     gameRef.current = current;
@@ -323,7 +427,9 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             recoilShakeRef.current *= 0.9;
 
             // Calculate interpolation progress (0.0 to 1.0)
-            const tickInterval = current ? snakeTickMilliseconds(current.score) : 150;
+            const tickInterval = current
+                ? calculateAugmentedTickInterval(current.score, activeAugmentsRef.current.includes('slow'))
+                : 150;
             const progress = current?.status === 'playing' ? Math.min(1, Math.max(0, accumulator / tickInterval)) : 1;
 
             ctx.save();
@@ -425,6 +531,17 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             playEatSound(streakRef.current);
             vibrate(12);
             recoilShakeRef.current = 4;
+            getGlobalBgmController('arcade').duck(180, 0.5);
+
+            // Check Augment Draft Milestone (every 50 points)
+            if (isAugmentMilestone(score, lastMilestoneRef.current)) {
+                lastMilestoneRef.current = score;
+                const choices = rollAugmentChoices(activeAugmentsRef.current);
+                setDraftChoices(choices);
+                draftChoicesRef.current = choices;
+                setGame((curr) => curr ? pauseSnake(curr) : curr);
+                getGlobalBgmController('arcade').duck(999999, 0.3);
+            }
 
             if (rect && game?.snake[0]) {
                 const head = game.snake[0];
@@ -435,10 +552,12 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             }
         }
         if (status === 'over' && previousStatusRef.current !== 'over') {
+            setPhase('result');
             streakRef.current = 0;
             playDeathSound();
             vibrate([40, 40, 80]);
             recoilShakeRef.current = 10;
+            getGlobalBgmController('arcade').duck(2000, 0.2);
             recordAchievementEvent('snake-game', 'played');
 
             if (rect && game?.snake[0]) {
@@ -519,196 +638,172 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         touchStart.current = null;
     };
 
-    const content = (
-        <div className={`flex flex-col justify-between ${isImmersive ? 'h-full w-full max-w-lg mx-auto' : ''}`}>
-            {!isImmersive && (
-                <div className="mb-3 overflow-hidden rounded-xl border border-border bg-muted">
-                    <img src={SNAKE_GAME_SPRITES.keyart} alt={t.title} className="h-32 w-full object-cover sm:h-44" />
-                </div>
-            )}
-            {/* Top Bar HUD */}
-            <div className="mb-4 flex items-center justify-between gap-3 shrink-0">
-                <div className="flex items-center gap-2">
-                    {status === 'playing' && (
-                        <button
-                            type="button"
-                            onClick={() => setGame((current) => current ? pauseSnake(current) : current)}
-                            className="min-h-11 rounded-xl border border-border bg-muted px-4 text-xs font-bold"
-                        >
-                            {d.pause}
-                        </button>
-                    )}
-                    {status === 'paused' && (
-                        <button
-                            type="button"
-                            onClick={() => setGame((current) => current ? resumeSnake(current) : current)}
-                            className="min-h-11 rounded-xl border border-border bg-primary text-primary-foreground px-4 text-xs font-bold"
-                        >
-                            {d.resume}
-                        </button>
-                    )}
-                    <button
-                        type="button"
-                        onClick={toggleMute}
-                        aria-pressed={muted}
-                        aria-label={muted ? 'Unmute' : 'Mute'}
-                        className="p-2.5 rounded-xl border border-border bg-muted text-foreground hover:bg-muted/80 transition-colors"
-                        title="Mute / Unmute (M)"
-                    >
-                        {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                    </button>
-                    <button
-                        type="button"
-                        onClick={togglePortal}
-                        aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
-                        className="p-2.5 rounded-xl border border-border bg-muted text-foreground hover:bg-muted/80 transition-colors"
-                        title={isImmersive ? portalLabels.exit : portalLabels.enter}
-                    >
-                        {isImmersive ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-                    </button>
-                </div>
-                <div className="text-right">
-                    <span className="text-xs font-black text-muted-foreground uppercase">{t.score}</span>
-                    <div className="text-2xl font-black text-primary leading-none">{score}</div>
-                </div>
-            </div>
-
-            {/* 100% Canvas GPU Game Arena */}
-            <div
-                data-game-surface
-                className={`relative aspect-square w-full rounded-2xl border border-border overflow-hidden touch-none select-none bg-[#03060c] shadow-xl ${
-                    isImmersive ? 'flex-1 min-h-0 max-h-full mx-auto' : 'max-w-sm mx-auto'
-                }`}
-            >
-                <canvas
-                    ref={canvasRef}
-                    onPointerDown={handlePointerDown}
-                    onPointerMove={handlePointerMove}
-                    onPointerUp={handlePointerUp}
-                    onPointerCancel={handlePointerUp}
-                    className="w-full h-full block cursor-pointer touch-none"
-                    aria-label={t.title}
-                />
-
-                {status !== 'playing' && (
-                    <div
-                        className={`absolute inset-0 bg-background/70 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center animate-in fade-in zoom-in-95 ${status === 'ready' ? 'pointer-events-none' : ''}`}
-                        role="status"
-                        aria-live="polite"
-                    >
-                        {status === 'idle' ? (
-                            <div className="space-y-4">
-                                <div className="w-16 h-16 bg-primary/10 rounded-3xl flex items-center justify-center mx-auto mb-4 border border-primary/20">
-                                    <span className="text-3xl">🚀</span>
-                                </div>
-                                <button
-                                    onClick={initGame}
-                                    className="px-8 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity"
+    return (
+        <GameShell
+            title={t.title}
+            subtitle={t.subtitle}
+            keyart={SNAKE_GAME_SPRITES.keyart}
+            phase={phase}
+            score={score}
+            best={best}
+            muted={muted}
+            onToggleMute={toggleMute}
+            isImmersive={isImmersive}
+            onTogglePortal={togglePortal}
+            portalLabels={portalLabels}
+            containerRef={containerRef}
+            onStart={initGame}
+            onPause={() => setGame((current) => current ? pauseSnake(current) : current)}
+            onResume={() => setGame((current) => current ? resumeSnake(current) : current)}
+            onRetry={initGame}
+            resultTitle={t.over}
+            resultSubtitle={deathCause === 'wall' ? d.wall : d.self}
+            resultStats={[
+                { label: t.score, value: score },
+                { label: d.length, value: length },
+                { label: t.best, value: best },
+            ]}
+            controlsHint={t.hint}
+            extraHeaderActions={
+                activeAugments.length > 0 ? (
+                    <div className="flex items-center gap-1 overflow-x-auto max-w-44 sm:max-w-xs py-1">
+                        {activeAugments.map((augId, i) => {
+                            const item = AUGMENTS_CATALOG.find((a) => a.id === augId);
+                            if (!item) return null;
+                            return (
+                                <span
+                                    key={`${augId}-${i}`}
+                                    title={item.name[loc] ?? item.name.en}
+                                    className="px-2 py-1 rounded-lg border border-border bg-muted/60 text-xs font-bold flex items-center gap-1 shrink-0"
                                 >
-                                    {t.start}
-                                </button>
-                            </div>
-                        ) : status === 'ready' ? (
+                                    <span>{item.icon}</span>
+                                    <span className="hidden sm:inline">{item.name[loc] ?? item.name.en}</span>
+                                    {augId === 'ghost' && ghostCharges > 0 && (
+                                        <span className="font-mono text-primary font-black">x{ghostCharges}</span>
+                                    )}
+                                </span>
+                            );
+                        })}
+                    </div>
+                ) : null
+            }
+        >
+            <div className="relative w-full h-full flex flex-col items-center justify-center bg-background overflow-hidden p-2 sm:p-4">
+                {/* 100% Canvas GPU Game Arena */}
+                <div
+                    data-game-surface
+                    className="relative aspect-square w-full max-w-md mx-auto rounded-2xl border border-border overflow-hidden touch-none select-none bg-background shadow-xl flex items-center justify-center"
+                >
+                    <canvas
+                        ref={canvasRef}
+                        onPointerDown={handlePointerDown}
+                        onPointerMove={handlePointerMove}
+                        onPointerUp={handlePointerUp}
+                        onPointerCancel={handlePointerUp}
+                        className="w-full h-full block cursor-pointer touch-none"
+                        aria-label={t.title}
+                    />
+
+                    {/* Ready state overlay */}
+                    {status === 'ready' && !draftChoices && (
+                        <div className="absolute inset-0 bg-background/70 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center pointer-events-none animate-in fade-in">
                             <p className="max-w-64 rounded-2xl bg-background/90 px-5 py-4 text-sm font-bold text-foreground shadow-sm border border-border">
                                 {t.ready}
                             </p>
-                        ) : status === 'paused' ? (
-                            <button
-                                type="button"
-                                onClick={() => setGame((current) => current ? resumeSnake(current) : current)}
-                                className="pointer-events-auto min-h-11 rounded-full bg-primary px-8 font-bold text-primary-foreground shadow-lg"
-                            >
-                                {d.resume}
-                            </button>
-                        ) : (
-                            <div className="space-y-4">
-                                <h4 className="text-2xl font-black text-destructive">{t.over}</h4>
-                                {deathCause && <p className="rounded-xl bg-destructive/10 px-4 py-2 text-sm font-black text-destructive">{d[deathCause]}</p>}
-                                <p className="text-sm font-medium text-muted-foreground">{t.rank(Math.floor(score / 10))}</p>
-                                <div className="grid grid-cols-2 gap-2 text-sm">
-                                    <div className="rounded-xl bg-background/80 p-3 border border-border"><strong>{score}</strong><br />{d.points}</div>
-                                    <div className="rounded-xl bg-background/80 p-3 border border-border"><strong>{length}</strong><br />{d.length}</div>
-                                </div>
-                                <p className="text-xs font-bold text-muted-foreground">{d.next}: {Math.max(best, score) + 10} {d.points}</p>
-                                <button
-                                    onClick={initGame}
-                                    className="px-8 py-3 bg-destructive text-destructive-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity"
-                                >
-                                    {t.reset}
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                )}
-            </div>
+                        </div>
+                    )}
 
-            {/* Mobile Virtual Direction Pad */}
-            <div className="mt-3 flex flex-col items-center gap-1.5 sm:pointer-fine:hidden touch-none shrink-0" aria-label="터치 방향키">
-                <button
-                    type="button"
-                    data-game-control
-                    aria-label="위로 이동"
-                    onPointerDown={(e) => { e.preventDefault(); changeDir(0, -1); }}
-                    className="w-12 h-12 rounded-xl bg-muted/60 border border-border flex items-center justify-center text-lg font-black text-foreground shadow-xs active:bg-primary/20 active:border-primary active:scale-95 transition-all"
-                >
-                    ▲
-                </button>
-                <div className="flex gap-4">
+                    {/* Augment Draft Modal (Milestone Roguelite Choices) */}
+                    {draftChoices && (
+                        <div className="absolute inset-0 z-40 bg-background/90 backdrop-blur-md flex flex-col items-center justify-center p-4 text-center animate-in fade-in duration-200 pointer-events-auto">
+                            <div className="max-w-md w-full space-y-3">
+                                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/40 bg-primary/10 text-primary text-xs font-black">
+                                    <span>⚡</span>
+                                    <span>{d.draftTitle}</span>
+                                </div>
+                                <h3 className="text-xl font-black text-foreground tracking-tight">
+                                    {d.draftTitle}
+                                </h3>
+                                <p className="text-xs text-muted-foreground">{d.draftHint}</p>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2">
+                                    {draftChoices.map((choice, idx) => (
+                                        <button
+                                            key={choice.id}
+                                            type="button"
+                                            onClick={() => selectAugment(choice)}
+                                            className="group relative rounded-2xl border border-border bg-card p-4 text-left shadow-sm hover:border-primary hover:bg-card/80 transition-all active:scale-95 flex flex-col justify-between"
+                                        >
+                                            <div>
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <span className="text-2xl">{choice.icon}</span>
+                                                    <span className="text-xs font-mono font-bold text-muted-foreground px-1.5 py-0.5 rounded-md border border-border bg-muted/60">
+                                                        [{idx + 1}]
+                                                    </span>
+                                                </div>
+                                                <div className="font-black text-sm text-foreground group-hover:text-primary transition-colors">
+                                                    {choice.name[loc] ?? choice.name.en}
+                                                </div>
+                                                <p className="text-xs text-muted-foreground mt-1 line-clamp-3 leading-relaxed">
+                                                    {choice.desc[loc] ?? choice.desc.en}
+                                                </p>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Mobile Virtual Direction Pad */}
+                <div className="mt-3 flex flex-col items-center gap-1.5 sm:pointer-fine:hidden touch-none shrink-0" aria-label="터치 방향키">
                     <button
                         type="button"
                         data-game-control
-                        aria-label="왼쪽 이동"
-                        onPointerDown={(e) => { e.preventDefault(); changeDir(-1, 0); }}
+                        aria-label="위로 이동"
+                        onPointerDown={(e) => { e.preventDefault(); changeDir(0, -1); }}
                         className="w-12 h-12 rounded-xl bg-muted/60 border border-border flex items-center justify-center text-lg font-black text-foreground shadow-xs active:bg-primary/20 active:border-primary active:scale-95 transition-all"
                     >
-                        ◀
+                        ▲
                     </button>
-                    <button
-                        type="button"
-                        data-game-control
-                        aria-label="아래로 이동"
-                        onPointerDown={(e) => { e.preventDefault(); changeDir(0, 1); }}
-                        className="w-12 h-12 rounded-xl bg-muted/60 border border-border flex items-center justify-center text-lg font-black text-foreground shadow-xs active:bg-primary/20 active:border-primary active:scale-95 transition-all"
-                    >
-                        ▼
-                    </button>
-                    <button
-                        type="button"
-                        data-game-control
-                        aria-label="오른쪽 이동"
-                        onPointerDown={(e) => { e.preventDefault(); changeDir(1, 0); }}
-                        className="w-12 h-12 rounded-xl bg-muted/60 border border-border flex items-center justify-center text-lg font-black text-foreground shadow-xs active:bg-primary/20 active:border-primary active:scale-95 transition-all"
-                    >
-                        ▶
-                    </button>
+                    <div className="flex gap-4">
+                        <button
+                            type="button"
+                            data-game-control
+                            aria-label="왼쪽 이동"
+                            onPointerDown={(e) => { e.preventDefault(); changeDir(-1, 0); }}
+                            className="w-12 h-12 rounded-xl bg-muted/60 border border-border flex items-center justify-center text-lg font-black text-foreground shadow-xs active:bg-primary/20 active:border-primary active:scale-95 transition-all"
+                        >
+                            ◀
+                        </button>
+                        <button
+                            type="button"
+                            data-game-control
+                            aria-label="아래로 이동"
+                            onPointerDown={(e) => { e.preventDefault(); changeDir(0, 1); }}
+                            className="w-12 h-12 rounded-xl bg-muted/60 border border-border flex items-center justify-center text-lg font-black text-foreground shadow-xs active:bg-primary/20 active:border-primary active:scale-95 transition-all"
+                        >
+                            ▼
+                        </button>
+                        <button
+                            type="button"
+                            data-game-control
+                            aria-label="오른쪽 이동"
+                            onPointerDown={(e) => { e.preventDefault(); changeDir(1, 0); }}
+                            className="w-12 h-12 rounded-xl bg-muted/60 border border-border flex items-center justify-center text-lg font-black text-foreground shadow-xs active:bg-primary/20 active:border-primary active:scale-95 transition-all"
+                        >
+                            ▶
+                        </button>
+                    </div>
+                </div>
+
+                <div className="mt-3 flex justify-between text-xs font-bold text-muted-foreground/60 uppercase tracking-widest shrink-0 max-w-sm w-full mx-auto">
+                    <span>{t.hint}</span>
+                    <span>{t.best}: {best}</span>
                 </div>
             </div>
-
-            <div className="mt-4 flex justify-between text-xs font-bold text-muted-foreground/60 uppercase tracking-widest shrink-0 max-w-sm w-full mx-auto">
-                <span>{t.hint}</span>
-                <span>{t.best}: {best}</span>
-            </div>
-            <p className="sr-only" aria-live="polite">{d.summary(score, length)}. {status}.</p>
-        </div>
-    );
-
-    return (
-        <div
-            ref={containerRef}
-            className={`transition-all duration-200 ${
-                isImmersive
-                    ? 'fixed inset-0 z-50 flex flex-col justify-between bg-[#03060c] p-3 sm:p-5 h-dvh w-screen overflow-hidden'
-                    : ''
-            }`}
-        >
-            {isImmersive ? (
-                content
-            ) : (
-                <GameContainer title={t.title} subtitle={t.subtitle} onReset={status === 'idle' ? undefined : initGame}>
-                    {content}
-                </GameContainer>
-            )}
-        </div>
+        </GameShell>
     );
 };
 

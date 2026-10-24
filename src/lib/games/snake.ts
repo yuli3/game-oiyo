@@ -1,5 +1,3 @@
-import { moveSnake } from "./react-state-transitions";
-
 export type SnakePoint = { x: number; y: number };
 export type SnakeDirection = SnakePoint;
 export type SnakeStatus = "ready" | "playing" | "paused" | "over";
@@ -80,6 +78,13 @@ export function isValidSnakeState(value: unknown, allowTerminal = false): value 
 export type SnakeDeathCause = "wall" | "self";
 export type SnakeTickResult = { state: SnakeState; deathCause: SnakeDeathCause | null };
 
+export interface SnakeAugmentModifiers {
+  wrap?: boolean;
+  ghostActive?: boolean;
+  onGhostUsed?: () => void;
+  goldenScoreBonus?: number;
+}
+
 export function snakeTickMilliseconds(score: number): number {
   return Math.max(50, 150 - Math.max(0, Number.isFinite(score) ? score : 0) / 5);
 }
@@ -92,21 +97,54 @@ export function bufferSnakeDirection(current: SnakeDirection | null, queued: Sna
   return { ...requested };
 }
 
-export function tickSnakeWithCause(state: SnakeState): SnakeTickResult {
+export function tickSnakeWithCause(state: SnakeState, modifiers?: SnakeAugmentModifiers): SnakeTickResult {
   if (state.status !== "playing" || !state.direction) return { state, deathCause: null };
   const head = state.snake[0];
-  const nextHead = { x: head.x + state.direction.x, y: head.y + state.direction.y };
-  const wall = nextHead.x < 0 || nextHead.x >= SNAKE_GRID_SIZE || nextHead.y < 0 || nextHead.y >= SNAKE_GRID_SIZE;
-  const self = !wall && state.snake.some(segment => segment.x === nextHead.x && segment.y === nextHead.y);
-  const transition = moveSnake(state.snake, state.direction, state.food, SNAKE_GRID_SIZE);
-  if (transition.outcome === "collision") return { state: { ...state, status: "over" }, deathCause: wall ? "wall" : self ? "self" : "self" };
-  if (transition.outcome === "ate") {
-    const placed = placeFood(transition.snake, state.rngState);
-    return { state: { ...state, snake: transition.snake, food: placed.food, score: state.score + 10, rngState: placed.rngState }, deathCause: null };
+  let nextX = head.x + state.direction.x;
+  let nextY = head.y + state.direction.y;
+
+  if (modifiers?.wrap) {
+    nextX = (nextX + SNAKE_GRID_SIZE) % SNAKE_GRID_SIZE;
+    nextY = (nextY + SNAKE_GRID_SIZE) % SNAKE_GRID_SIZE;
   }
-  return { state: { ...state, snake: transition.snake }, deathCause: null };
+
+  const wall = !modifiers?.wrap && (nextX < 0 || nextX >= SNAKE_GRID_SIZE || nextY < 0 || nextY >= SNAKE_GRID_SIZE);
+  if (wall) {
+    return { state: { ...state, status: "over" }, deathCause: "wall" };
+  }
+
+  const nextHead = { x: nextX, y: nextY };
+  const self = state.snake.some((segment) => segment.x === nextHead.x && segment.y === nextHead.y);
+
+  if (self) {
+    if (modifiers?.ghostActive) {
+      modifiers.onGhostUsed?.();
+    } else {
+      return { state: { ...state, status: "over" }, deathCause: "self" };
+    }
+  }
+
+  const isEating = nextHead.x === state.food.x && nextHead.y === state.food.y;
+  if (isEating) {
+    const nextSnake = [nextHead, ...state.snake];
+    const placed = placeFood(nextSnake, state.rngState);
+    const addedScore = 10 + (modifiers?.goldenScoreBonus ?? 0);
+    return {
+      state: {
+        ...state,
+        snake: nextSnake,
+        food: placed.food,
+        score: state.score + addedScore,
+        rngState: placed.rngState,
+      },
+      deathCause: null,
+    };
+  }
+
+  const nextSnake = [nextHead, ...state.snake.slice(0, -1)];
+  return { state: { ...state, snake: nextSnake }, deathCause: null };
 }
 
-export function tickSnake(state: SnakeState): SnakeState {
-  return tickSnakeWithCause(state).state;
+export function tickSnake(state: SnakeState, modifiers?: SnakeAugmentModifiers): SnakeState {
+  return tickSnakeWithCause(state, modifiers).state;
 }
