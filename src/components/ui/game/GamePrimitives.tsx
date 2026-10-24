@@ -114,3 +114,6 @@ export const GameContainer: React.FC<{ title: string; subtitle?: string; resetLa
         </div>
     );
 };
+
+export { GameShell, type GameShellProps } from './GameShell';
+
