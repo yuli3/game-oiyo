@@ -21,6 +21,45 @@ export const CORE_CUES: CueTable<CoreCue> = {
   lose: [[0, 392, 0.18, 0.03], [160, 330, 0.18, 0.03], [320, 262, 0.3, 0.03]],
 };
 
+export const RETRO_8BIT_CUES: CueTable<CoreCue> = {
+  tap: [[0, 987, 0.03, 0.03]],
+  place: [[0, 659, 0.04, 0.03], [25, 987, 0.04, 0.03]],
+  success: [[0, 659, 0.06, 0.03], [50, 784, 0.06, 0.03], [100, 1047, 0.12, 0.035]],
+  fail: [[0, 220, 0.08, 0.04], [60, 165, 0.12, 0.04]],
+  combo: [[0, 880, 0.05, 0.03], [40, 1109, 0.05, 0.03], [80, 1318, 0.09, 0.035]],
+  win: [[0, 523, 0.08, 0.035], [70, 659, 0.08, 0.035], [140, 784, 0.08, 0.035], [210, 1047, 0.08, 0.035], [280, 1318, 0.22, 0.04]],
+  lose: [[0, 440, 0.1, 0.035], [80, 370, 0.1, 0.035], [160, 311, 0.12, 0.035], [240, 220, 0.25, 0.04]],
+};
+
+export const ZEN_MUSICBOX_CUES: CueTable<CoreCue> = {
+  tap: [[0, 1046, 0.08, 0.02]],
+  place: [[0, 880, 0.1, 0.025], [40, 1318, 0.12, 0.02]],
+  success: [[0, 784, 0.14, 0.025], [80, 1046, 0.16, 0.025], [160, 1318, 0.22, 0.025]],
+  fail: [[0, 330, 0.18, 0.025], [100, 294, 0.22, 0.025]],
+  combo: [[0, 988, 0.1, 0.025], [60, 1318, 0.12, 0.025], [120, 1568, 0.2, 0.025]],
+  win: [[0, 659, 0.2, 0.025], [120, 784, 0.2, 0.025], [240, 1046, 0.24, 0.025], [360, 1318, 0.35, 0.03]],
+  lose: [[0, 494, 0.2, 0.025], [150, 440, 0.2, 0.025], [300, 392, 0.3, 0.025]],
+};
+
+export const CYBER_SYNTH_CUES: CueTable<CoreCue> = {
+  tap: [[0, 1500, 0.03, 0.025]],
+  place: [[0, 440, 0.04, 0.03], [20, 1760, 0.05, 0.03]],
+  success: [[0, 440, 0.07, 0.03], [50, 880, 0.07, 0.03], [100, 1760, 0.14, 0.035]],
+  fail: [[0, 180, 0.1, 0.04], [60, 90, 0.18, 0.05]],
+  combo: [[0, 587, 0.06, 0.03], [40, 880, 0.06, 0.03], [80, 1760, 0.12, 0.035]],
+  win: [[0, 440, 0.1, 0.035], [90, 880, 0.1, 0.035], [180, 1320, 0.12, 0.035], [270, 2093, 0.28, 0.04]],
+  lose: [[0, 554, 0.12, 0.035], [100, 370, 0.14, 0.035], [200, 277, 0.16, 0.035], [300, 138, 0.3, 0.04]],
+};
+
+export type SoundPresetName = "core" | "retro" | "zen" | "cyber";
+
+export const SOUND_PRESETS: Record<SoundPresetName, CueTable<CoreCue>> = {
+  core: CORE_CUES,
+  retro: RETRO_8BIT_CUES,
+  zen: ZEN_MUSICBOX_CUES,
+  cyber: CYBER_SYNTH_CUES,
+};
+
 /** Highest combo step that still raises the pitch: six steps make one octave. */
 export const CUE_MAX_LIFT_STEP = 7;
 /** Same cue played again sounds less mechanical with a little detune. */
@@ -99,10 +138,18 @@ export function createCuePlayer<Name extends string>(options: CuePlayerOptions<N
   };
 }
 
-export function readMutedPref(key: string): boolean {
-  try { return window.localStorage.getItem(key) === "1"; } catch { return false; }
+export type AudioStorageLike = Pick<Storage, "getItem" | "setItem">;
+
+export function readMutedPref(key: string, storage?: AudioStorageLike): boolean {
+  try {
+    const store = storage ?? (typeof window !== "undefined" ? window.localStorage : typeof localStorage !== "undefined" ? localStorage : undefined);
+    return store?.getItem(key) === "1";
+  } catch { return false; }
 }
 
-export function writeMutedPref(key: string, muted: boolean): void {
-  try { window.localStorage.setItem(key, muted ? "1" : "0"); } catch { /* private mode */ }
+export function writeMutedPref(key: string, muted: boolean, storage?: AudioStorageLike): void {
+  try {
+    const store = storage ?? (typeof window !== "undefined" ? window.localStorage : typeof localStorage !== "undefined" ? localStorage : undefined);
+    store?.setItem(key, muted ? "1" : "0");
+  } catch { /* private mode */ }
 }

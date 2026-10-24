@@ -74,11 +74,113 @@ export interface WeaponLevels {
   hull: number;
 }
 
+export interface WeaponEvolutions {
+  hyperBlaster: boolean;
+  aegisShield: boolean;
+  supernovaVortex: boolean;
+}
+
 export interface UpgradeCard {
-  id: keyof WeaponLevels;
+  id: keyof WeaponLevels | keyof WeaponEvolutions;
   title: Record<string, string>;
   desc: Record<string, string>;
   icon: string;
+  isEvolution?: boolean;
+}
+
+export interface EvolutionRecipe {
+  id: keyof WeaponEvolutions;
+  baseWeapon: keyof WeaponLevels;
+  catalyst: keyof WeaponLevels;
+  requiredBaseLevel: number;
+  title: Record<string, string>;
+  desc: Record<string, string>;
+  icon: string;
+}
+
+export const EVOLUTION_RECIPES: EvolutionRecipe[] = [
+  {
+    id: 'hyperBlaster',
+    baseWeapon: 'blaster',
+    catalyst: 'speed',
+    requiredBaseLevel: 5,
+    title: {
+      ko: '★초진화★ 하이퍼 블래스터',
+      en: '★EVOLVED★ Hyper Blaster',
+      ja: '★超進化★ ハイパーブラスター',
+      zh: '★终极进化★ 终极爆能枪',
+      fr: '★ÉVOLUTION★ Hyper Blaster',
+      es: '★EVOLUCIÓN★ Híper Bláster',
+    },
+    desc: {
+      ko: '플라즈마 탄환이 전방위로 분열하며 모든 적을 4회 관통하고 치명타를 입힙니다.',
+      en: 'Splits plasma bolts in omnidirectional salvos, piercing 4 targets with massive crits.',
+      ja: 'プラズマ弾が全方位に分裂し、敵を4回貫通する致命的一撃を与えます。',
+      zh: '等离子弹全方位分裂发射，强力穿透4名敌人并造成致命暴击。',
+      fr: 'Divise les tirs en salves multidirectionnelles perforant 4 cibles.',
+      es: 'Divide proyectiles de plasma en salvas multidireccionales con 4 perforaciones.',
+    },
+    icon: '⚡👑',
+  },
+  {
+    id: 'aegisShield',
+    baseWeapon: 'orbit',
+    catalyst: 'hull',
+    requiredBaseLevel: 5,
+    title: {
+      ko: '★초진화★ 이지스 플라즈마 필드',
+      en: '★EVOLVED★ Aegis Plasma Field',
+      ja: '★超進化★ イージス・プラズマフィールド',
+      zh: '★终极进化★ 宙斯盾离子立场',
+      fr: '★ÉVOLUTION★ Champ Plasma Aegis',
+      es: '★EVOLUCIÓN★ Campo de Plasma Égida',
+    },
+    desc: {
+      ko: '8개의 고출력 플라즈마 블레이드가 광속 회전하여 주변의 모든 적을 분쇄합니다.',
+      en: '8 high-output plasma blades revolve at light speed, obliterating nearby hordes.',
+      ja: '8枚の高出力プラズマブレードが超高速回転し、周囲の敵を粉砕します。',
+      zh: '8枚高能等离子光刃以极速旋转，瞬间粉碎周围的一切蜂群。',
+      fr: '8 lames de plasma tourbillonnent à haute vitesse pour broyer la horde.',
+      es: '8 cuchillas de plasma giran a la velocidad de la luz pulverizando hordas.',
+    },
+    icon: '🛡️👑',
+  },
+  {
+    id: 'supernovaVortex',
+    baseWeapon: 'nova',
+    catalyst: 'magnet',
+    requiredBaseLevel: 5,
+    title: {
+      ko: '★초진화★ 초신성 중력 특이점',
+      en: '★EVOLVED★ Supernova Vortex',
+      ja: '★超進化★ 超新星重力特異点',
+      zh: '★终极进化★ 超新星引力奇点',
+      fr: '★ÉVOLUTION★ Vortex Supernova',
+      es: '★EVOLUCIÓN★ Vórtice Supernova',
+    },
+    desc: {
+      ko: '광역 폭발과 함께 전장의 모든 경험치 젬을 즉시 흡수하고 강력한 충격파를 방출합니다.',
+      en: 'Massive cosmic detonation that vacuums all battlefield EXP gems instantly.',
+      ja: '超広範囲爆発と共に戦場全てのEXPジェムを即座に吸引します。',
+      zh: '超大规模宇宙核爆，瞬间吸附全战场所有经验宝石并造成毁灭伤害。',
+      fr: 'Détonation cosmique massive aspirant instantanément toutes les gemmes d’EXP.',
+      es: 'Detonación cósmica masiva que absorbe al instante todas las gemas de EXP.',
+    },
+    icon: '💥👑',
+  },
+];
+
+export function getAvailableEvolutions(
+  weapons: WeaponLevels,
+  evolutions: WeaponEvolutions
+): EvolutionRecipe[] {
+  return EVOLUTION_RECIPES.filter((recipe) => {
+    if (evolutions[recipe.id]) return false;
+    return (
+      weapons[recipe.baseWeapon] >= recipe.requiredBaseLevel &&
+      weapons[recipe.catalyst] >= 1
+    );
+  });
 }
 
 export interface NeonSurvivorState {
@@ -86,6 +188,7 @@ export interface NeonSurvivorState {
   arenaHeight: number;
   player: Player;
   weapons: WeaponLevels;
+  evolutions: WeaponEvolutions;
   blasterTimer: number;
   novaTimer: number;
   orbitAngle: number;
@@ -261,6 +364,11 @@ export function createInitialNeonSurvivorState(): NeonSurvivorState {
       magnet: 0,
       hull: 0,
     },
+    evolutions: {
+      hyperBlaster: false,
+      aegisShield: false,
+      supernovaVortex: false,
+    },
     blasterTimer: 0,
     novaTimer: 0,
     orbitAngle: 0,
@@ -280,31 +388,58 @@ export function createInitialNeonSurvivorState(): NeonSurvivorState {
   };
 }
 
-export function pickRandomUpgrades(weapons: WeaponLevels): UpgradeCard[] {
+export function pickRandomUpgrades(
+  weapons: WeaponLevels,
+  evolutions: WeaponEvolutions = {
+    hyperBlaster: false,
+    aegisShield: false,
+    supernovaVortex: false,
+  }
+): UpgradeCard[] {
+  const evos = getAvailableEvolutions(weapons, evolutions);
+  const evoCards: UpgradeCard[] = evos.map((e) => ({
+    id: e.id,
+    title: e.title,
+    desc: e.desc,
+    icon: e.icon,
+    isEvolution: true,
+  }));
+
   // Filter eligible cards (max level 5 for weapons, max 4 for utility)
   const eligible = UPGRADE_CATALOG.filter((card) => {
-    const lvl = weapons[card.id];
+    const lvl = weapons[card.id as keyof WeaponLevels];
     if (card.id === 'hull') return true; // repeatable heal/hp
     return lvl < 5;
   });
 
   const shuffled = [...eligible].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, 3);
+  // Guarantee evolution cards appear first if available
+  return [...evoCards, ...shuffled].slice(0, 3);
 }
 
-export function selectUpgrade(state: NeonSurvivorState, upgradeId: keyof WeaponLevels): NeonSurvivorState {
+export function selectUpgrade(
+  state: NeonSurvivorState,
+  upgradeId: keyof WeaponLevels | keyof WeaponEvolutions
+): NeonSurvivorState {
   if (!state.levelUpPending) return state;
 
-  const nextWeapons = { ...state.weapons, [upgradeId]: state.weapons[upgradeId] + 1 };
+  const nextWeapons = { ...state.weapons };
+  const nextEvolutions = { ...state.evolutions };
   const nextPlayer = { ...state.player };
 
-  if (upgradeId === 'speed') {
-    nextPlayer.speed = 240 * (1 + nextWeapons.speed * 0.18);
-  } else if (upgradeId === 'magnet') {
-    nextPlayer.magnetRadius = 130 * (1 + nextWeapons.magnet * 0.45);
-  } else if (upgradeId === 'hull') {
-    nextPlayer.maxHp += 30;
-    nextPlayer.hp = Math.min(nextPlayer.maxHp, nextPlayer.hp + nextPlayer.maxHp * 0.5);
+  if (upgradeId === 'hyperBlaster' || upgradeId === 'aegisShield' || upgradeId === 'supernovaVortex') {
+    nextEvolutions[upgradeId] = true;
+  } else {
+    nextWeapons[upgradeId] = nextWeapons[upgradeId] + 1;
+
+    if (upgradeId === 'speed') {
+      nextPlayer.speed = 240 * (1 + nextWeapons.speed * 0.18);
+    } else if (upgradeId === 'magnet') {
+      nextPlayer.magnetRadius = 130 * (1 + nextWeapons.magnet * 0.45);
+    } else if (upgradeId === 'hull') {
+      nextPlayer.maxHp += 30;
+      nextPlayer.hp = Math.min(nextPlayer.maxHp, nextPlayer.hp + nextPlayer.maxHp * 0.5);
+    }
   }
 
   // Check if player still has enough EXP for another level
@@ -324,12 +459,13 @@ export function selectUpgrade(state: NeonSurvivorState, upgradeId: keyof WeaponL
   nextPlayer.exp = currentExp;
   nextPlayer.nextExp = nextExp;
 
-  const nextChoices = hasMoreLevels ? pickRandomUpgrades(nextWeapons) : [];
+  const nextChoices = hasMoreLevels ? pickRandomUpgrades(nextWeapons, nextEvolutions) : [];
 
   return {
     ...state,
     player: nextPlayer,
     weapons: nextWeapons,
+    evolutions: nextEvolutions,
     levelUpPending: hasMoreLevels,
     upgradeChoices: nextChoices,
   };
@@ -372,12 +508,15 @@ export function updateNeonSurvivor(
   const projectiles = [...state.projectiles];
   let blasterTimer = state.blasterTimer + boundedDt;
   let novaTimer = state.novaTimer + boundedDt;
-  const orbitAngle = (state.orbitAngle + boundedDt * 3.5) % (Math.PI * 2);
+  const isAegis = state.evolutions.aegisShield;
+  const orbitSpeed = isAegis ? 6.5 : 3.5;
+  const orbitAngle = (state.orbitAngle + boundedDt * orbitSpeed) % (Math.PI * 2);
   const floatingTexts: FloatingText[] = [];
 
-  // Blaster firing (Level 1+)
+  // Blaster firing (Level 1+ or Hyper Blaster Evolution)
   const blasterLevel = state.weapons.blaster;
-  const blasterCooldown = Math.max(0.18, 0.45 - blasterLevel * 0.05);
+  const isHyper = state.evolutions.hyperBlaster;
+  const blasterCooldown = isHyper ? 0.14 : Math.max(0.18, 0.45 - blasterLevel * 0.05);
 
   if (blasterLevel > 0 && blasterTimer >= blasterCooldown && state.enemies.length > 0) {
     blasterTimer = 0;
@@ -395,38 +534,58 @@ export function updateNeonSurvivor(
 
     if (nearest) {
       const angle = Math.atan2(nearest.y - player.y, nearest.x - player.x);
-      const bulletCount = Math.min(4, blasterLevel);
-      const spread = 0.15;
-      const baseDamage = 28 + blasterLevel * 8;
-      const bulletSpeed = 650;
+      const bulletSpeed = isHyper ? 850 : 650;
+      const baseDamage = (28 + blasterLevel * 8) * (isHyper ? 2.2 : 1.0);
 
-      for (let i = 0; i < bulletCount; i++) {
-        const offset = (i - (bulletCount - 1) / 2) * spread;
-        const bAngle = angle + offset;
-        projectiles.push({
-          id: nextEntityId++,
-          x: player.x,
-          y: player.y,
-          vx: Math.cos(bAngle) * bulletSpeed,
-          vy: Math.sin(bAngle) * bulletSpeed,
-          damage: baseDamage,
-          pierce: blasterLevel >= 3 ? 2 : 1,
-          radius: 5,
-          color: '#38bdf8',
-          life: 1.2,
-        });
+      if (isHyper) {
+        // 8-way omnidirectional hyper salvo
+        for (let i = 0; i < 8; i++) {
+          const bAngle = angle + (i * Math.PI * 2) / 8;
+          projectiles.push({
+            id: nextEntityId++,
+            x: player.x,
+            y: player.y,
+            vx: Math.cos(bAngle) * bulletSpeed,
+            vy: Math.sin(bAngle) * bulletSpeed,
+            damage: Math.round(baseDamage),
+            pierce: 4,
+            radius: 7,
+            color: '#fbbf24',
+            life: 1.5,
+          });
+        }
+      } else {
+        const bulletCount = Math.min(4, blasterLevel);
+        const spread = 0.15;
+        for (let i = 0; i < bulletCount; i++) {
+          const offset = (i - (bulletCount - 1) / 2) * spread;
+          const bAngle = angle + offset;
+          projectiles.push({
+            id: nextEntityId++,
+            x: player.x,
+            y: player.y,
+            vx: Math.cos(bAngle) * bulletSpeed,
+            vy: Math.sin(bAngle) * bulletSpeed,
+            damage: baseDamage,
+            pierce: blasterLevel >= 3 ? 2 : 1,
+            radius: 5,
+            color: '#38bdf8',
+            life: 1.2,
+          });
+        }
       }
     }
   }
 
-  // Nova shockwave (Level 1+)
+  // Nova shockwave (Level 1+ or Supernova Evolution)
   const novaLevel = state.weapons.nova;
-  const novaCooldown = Math.max(2.0, 4.0 - novaLevel * 0.5);
+  const isSupernova = state.evolutions.supernovaVortex;
+  const novaCooldown = isSupernova ? 2.5 : Math.max(2.0, 4.0 - novaLevel * 0.5);
 
   if (novaLevel > 0 && novaTimer >= novaCooldown) {
     novaTimer = 0;
-    const novaRadius = 130 + novaLevel * 30;
-    const novaDamage = 45 + novaLevel * 15;
+    const novaRadius = isSupernova ? 380 : 130 + novaLevel * 30;
+    const novaDamage = isSupernova ? 160 : 45 + novaLevel * 15;
 
     // Apply radial hit to all enemies in blast radius
     for (const e of state.enemies) {
@@ -439,24 +598,32 @@ export function updateNeonSurvivor(
           x: e.x,
           y: e.y - 15,
           life: 0.6,
-          color: '#f43f5e',
+          color: isSupernova ? '#fbbf24' : '#f43f5e',
         });
+      }
+    }
+
+    // Supernova Vortex pulls all gems on map towards player
+    if (isSupernova) {
+      for (const g of state.gems) {
+        g.x += (player.x - g.x) * 0.85;
+        g.y += (player.y - g.y) * 0.85;
       }
     }
   }
 
-  // Orbit blades collision
+  // Orbit blades collision (Level 1+ or Aegis Plasma Field Evolution)
   const orbitLevel = state.weapons.orbit;
   if (orbitLevel > 0) {
-    const bladeCount = orbitLevel + 1;
-    const orbitRadius = 75;
-    const bladeDamage = 18 + orbitLevel * 8;
+    const bladeCount = isAegis ? 8 : orbitLevel + 1;
+    const orbitRadius = isAegis ? 120 : 75;
+    const bladeDamage = (18 + orbitLevel * 8) * (isAegis ? 2.5 : 1.0);
 
     for (let i = 0; i < bladeCount; i++) {
       const bAngle = orbitAngle + (i * Math.PI * 2) / bladeCount;
       const bx = player.x + Math.cos(bAngle) * orbitRadius;
       const by = player.y + Math.sin(bAngle) * orbitRadius;
-      const bRad = 12;
+      const bRad = isAegis ? 16 : 12;
 
       for (const e of state.enemies) {
         const dist = Math.hypot(e.x - bx, e.y - by);
@@ -572,7 +739,7 @@ export function updateNeonSurvivor(
     player.level += 1;
     player.nextExp = expThresholdForLevel(player.level);
     levelUpPending = true;
-    upgradeChoices = pickRandomUpgrades(state.weapons);
+    upgradeChoices = pickRandomUpgrades(state.weapons, state.evolutions);
   }
 
   // 6. Spawning Logic
@@ -660,6 +827,7 @@ export function updateNeonSurvivor(
     ...state,
     player,
     weapons: state.weapons,
+    evolutions: state.evolutions,
     blasterTimer,
     novaTimer,
     orbitAngle,

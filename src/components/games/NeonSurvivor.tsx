@@ -747,6 +747,23 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
 
       {/* Top Controls: Immersion Portal & Sound Mute Toggle */}
       <div className="absolute top-4 right-4 z-10 pointer-events-auto flex items-center gap-2">
+        {/* Active Evolutions Strip */}
+        {gameState.evolutions.hyperBlaster && (
+          <span className="px-2 py-1 rounded-lg border border-chart-4/60 bg-chart-4/20 text-chart-4 font-black text-xs animate-pulse">
+            ⚡ HYPER
+          </span>
+        )}
+        {gameState.evolutions.aegisShield && (
+          <span className="px-2 py-1 rounded-lg border border-primary/60 bg-primary/20 text-primary font-black text-xs animate-pulse">
+            🛡️ AEGIS
+          </span>
+        )}
+        {gameState.evolutions.supernovaVortex && (
+          <span className="px-2 py-1 rounded-lg border border-destructive/60 bg-destructive/20 text-destructive font-black text-xs animate-pulse">
+            💥 VORTEX
+          </span>
+        )}
+
         <button
           type="button"
           onClick={togglePortal}
@@ -791,14 +808,22 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
                   key={card.id}
                   type="button"
                   onClick={() => handleCardClick(card.id)}
-                  className="w-full p-4 rounded-2xl border border-border bg-card/95 hover:border-primary hover:bg-primary/5 transition-all text-left flex items-center gap-3.5 shadow-md active:scale-98"
+                  className={`w-full p-4 rounded-2xl border transition-all text-left flex items-center gap-3.5 shadow-md active:scale-98 ${
+                    card.isEvolution
+                      ? "border-chart-4/90 bg-chart-4/15 hover:bg-chart-4/25 ring-2 ring-chart-4/50 animate-pulse"
+                      : "border-border bg-card/95 hover:border-primary hover:bg-primary/5"
+                  }`}
                 >
-                  <span className="text-3xl shrink-0 p-2 rounded-xl bg-muted/60">{card.icon}</span>
+                  <span className={`text-3xl shrink-0 p-2 rounded-xl ${card.isEvolution ? "bg-chart-4/20" : "bg-muted/60"}`}>
+                    {card.icon}
+                  </span>
                   <div className="flex-1 min-w-0">
                     <div className="font-black text-sm text-foreground flex justify-between items-center">
-                      <span>{card.title[locale] ?? card.title.en}</span>
-                      <span className="text-xs text-primary font-mono">
-                        LV.{gameState.weapons[card.id] + 1}
+                      <span className={card.isEvolution ? "text-chart-4 font-black" : ""}>
+                        {card.title[locale] ?? card.title.en}
+                      </span>
+                      <span className={`text-xs font-mono font-black ${card.isEvolution ? "text-chart-4 uppercase" : "text-primary"}`}>
+                        {card.isEvolution ? "★EVOLVE★" : `LV.${(gameState.weapons[card.id as keyof typeof gameState.weapons] ?? 0) + 1}`}
                       </span>
                     </div>
                     <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">

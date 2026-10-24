@@ -18,7 +18,7 @@ const integer = (value: unknown, min: number, max: number): value is number => N
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 
 function parseState(value: unknown): WaterSortState | null {
-  if (!record(value) || !Array.isArray(value.tubes) || value.tubes.length !== WATER_SORT_TUBE_COUNT ||
+  if (!record(value) || !Array.isArray(value.tubes) || value.tubes.length < WATER_SORT_TUBE_COUNT || value.tubes.length > WATER_SORT_TUBE_COUNT + 1 ||
     !integer(value.seed, 0, 0xffff_ffff) || !["easy", "medium", "hard"].includes(value.difficulty as string) ||
     !integer(value.rngState, 0, 0xffff_ffff) || !integer(value.moves, 0, 10_000) || value.status !== "playing") return null;
   const tubes: number[][] = [];
@@ -32,12 +32,27 @@ function parseState(value: unknown): WaterSortState | null {
   if (!counts.every((count) => count === WATER_SORT_CAPACITY)) return null;
   const initial = createWaterSort(value.seed as number, value.difficulty as WaterSortDifficulty);
   if (initial.rngState !== value.rngState) return null;
-  return { tubes, seed: value.seed as number, difficulty: value.difficulty as WaterSortDifficulty, rngState: value.rngState as number, moves: value.moves as number, status: "playing" };
+  const history = Array.isArray(value.history)
+    ? (value.history as unknown[]).filter((h): h is number[][] => Array.isArray(h)).map((h) => h.map((t) => (Array.isArray(t) ? t.slice() : [])))
+    : [];
+  return {
+    tubes,
+    seed: value.seed as number,
+    difficulty: value.difficulty as WaterSortDifficulty,
+    rngState: value.rngState as number,
+    moves: value.moves as number,
+    status: "playing",
+    history,
+    hasBonusTube: Boolean(value.hasBonusTube || tubes.length > WATER_SORT_TUBE_COUNT),
+  };
 }
 
 function isSingleTransition(from: WaterSortState, to: WaterSortState): boolean {
   if (from.seed !== to.seed || from.difficulty !== to.difficulty || from.rngState !== to.rngState || to.moves !== from.moves + 1) return false;
-  return legalWaterSortMoves(from.tubes).some((move) => same(moveWaterSort(from, move), to));
+  return legalWaterSortMoves(from.tubes).some((move) => {
+    const next = moveWaterSort(from, move);
+    return same(next.tubes, to.tubes);
+  });
 }
 
 export function parseWaterSortSave(raw: string | null, nowEpochMs = Date.now()): WaterSortSaveV1 | null {

@@ -157,4 +157,61 @@ describe('NeonSurvivor Engine', () => {
     expect(next.player.hp).toBe(0);
     expect(next.gameOver).toBe(true);
   });
+
+  describe('Weapon Evolution System', () => {
+    it('detects available evolution when base weapon reaches Lv 5 with catalyst', () => {
+      let state = createInitialNeonSurvivorState();
+      state.weapons.blaster = 5;
+      state.weapons.speed = 1;
+
+      // Should offer hyperBlaster evolution
+      const choices = selectUpgrade(
+        { ...state, levelUpPending: true, weapons: { ...state.weapons, blaster: 5, speed: 1 } },
+        'speed'
+      );
+      expect(choices.evolutions.hyperBlaster).toBe(false);
+    });
+
+    it('successfully unlocks Hyper Blaster evolution and fires 8-way golden salvo', () => {
+      let state = createInitialNeonSurvivorState();
+      state.weapons.blaster = 5;
+      state.weapons.speed = 1;
+      state.levelUpPending = true;
+
+      const evolved = selectUpgrade(state, 'hyperBlaster');
+      expect(evolved.evolutions.hyperBlaster).toBe(true);
+      expect(evolved.levelUpPending).toBe(false);
+
+      // Add dummy enemy to trigger firing
+      evolved.enemies.push({
+        id: 999,
+        kind: 'scout',
+        x: evolved.player.x + 100,
+        y: evolved.player.y,
+        hp: 500,
+        maxHp: 500,
+        speed: 0,
+        damage: 0,
+        radius: 10,
+        color: '#ff0000',
+      });
+      evolved.blasterTimer = 1.0; // Ready to shoot
+
+      const fired = updateNeonSurvivor(evolved, 0.05, { x: 0, y: 0 });
+      expect(fired.projectiles.length).toBe(8);
+      expect(fired.projectiles[0].color).toBe('#fbbf24');
+      expect(fired.projectiles[0].pierce).toBe(4);
+    });
+
+    it('unlocks Aegis Shield and Supernova Vortex correctly', () => {
+      let state = createInitialNeonSurvivorState();
+      state.levelUpPending = true;
+
+      const aegis = selectUpgrade(state, 'aegisShield');
+      expect(aegis.evolutions.aegisShield).toBe(true);
+
+      const nova = selectUpgrade(state, 'supernovaVortex');
+      expect(nova.evolutions.supernovaVortex).toBe(true);
+    });
+  });
 });

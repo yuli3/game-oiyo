@@ -11,6 +11,8 @@ export interface WaterSortState {
   rngState: number;
   moves: number;
   status: "playing" | "solved";
+  history?: number[][][];
+  hasBonusTube?: boolean;
 }
 
 // Each accepted step is an inverse-safe structural split, not a cosmetic swap.
@@ -61,7 +63,7 @@ export function pourWater(tubes: number[][], from: number, to: number): number[]
 }
 
 export function isWaterSortSolved(tubes: number[][]): boolean {
-  return tubes.length === WATER_SORT_TUBE_COUNT && tubes.every((tube) => tube.length === 0 || tube.length === WATER_SORT_CAPACITY && tube.every((color) => color === tube[0]));
+  return tubes.length >= WATER_SORT_TUBE_COUNT && tubes.every((tube) => tube.length === 0 || (tube.length === WATER_SORT_CAPACITY && tube.every((color) => color === tube[0])));
 }
 
 export function generateWaterSortPuzzle(seed: number, difficulty: WaterSortDifficulty): { tubes: number[][]; solution: WaterSortMove[]; rngState: number } {
@@ -97,14 +99,57 @@ export function generateWaterSortPuzzle(seed: number, difficulty: WaterSortDiffi
 
 export function createWaterSort(seed: number, difficulty: WaterSortDifficulty = "medium"): WaterSortState {
   const generated = generateWaterSortPuzzle(seed, difficulty);
-  return { tubes: generated.tubes, seed: seed >>> 0, difficulty, rngState: generated.rngState, moves: 0, status: isWaterSortSolved(generated.tubes) ? "solved" : "playing" };
+  return {
+    tubes: generated.tubes,
+    seed: seed >>> 0,
+    difficulty,
+    rngState: generated.rngState,
+    moves: 0,
+    status: isWaterSortSolved(generated.tubes) ? "solved" : "playing",
+    history: [],
+    hasBonusTube: false,
+  };
 }
 
 export function moveWaterSort(state: WaterSortState, move: WaterSortMove): WaterSortState {
   if (state.status === "solved") return state;
   const tubes = pourWater(state.tubes, move.from, move.to);
   if (!tubes) return state;
-  return { ...state, tubes, moves: state.moves + 1, status: isWaterSortSolved(tubes) ? "solved" : "playing" };
+  const history = [...(state.history ?? []).slice(-49), cloneTubes(state.tubes)];
+  return {
+    ...state,
+    tubes,
+    moves: state.moves + 1,
+    status: isWaterSortSolved(tubes) ? "solved" : "playing",
+    history,
+  };
+}
+
+export function undoWaterSort(state: WaterSortState): WaterSortState {
+  if (state.status === "solved") return state;
+  const history = state.history ?? [];
+  if (history.length === 0) return state;
+  const previousTubes = history[history.length - 1];
+  const nextHistory = history.slice(0, -1);
+  return {
+    ...state,
+    tubes: cloneTubes(previousTubes),
+    moves: Math.max(0, state.moves - 1),
+    history: nextHistory,
+    status: isWaterSortSolved(previousTubes) ? "solved" : "playing",
+  };
+}
+
+export function addBonusTube(state: WaterSortState): WaterSortState {
+  if (state.status === "solved" || state.hasBonusTube) return state;
+  const tubes = [...cloneTubes(state.tubes), []];
+  const history = (state.history ?? []).map((snapshot) => [...cloneTubes(snapshot), []]);
+  return {
+    ...state,
+    tubes,
+    hasBonusTube: true,
+    history,
+  };
 }
 
 export function legalWaterSortMoves(tubes: number[][]): WaterSortMove[] {

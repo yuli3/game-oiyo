@@ -200,6 +200,31 @@ const featuredGames = featuredSlugs
   .map((slug) => GAMES.find((game) => game.slug === slug))
   .filter((game): game is Game => Boolean(game));
 
+const studioFlagshipLabel: Record<Locale, { sectionTitle: string; badge: string; subtitle: string }> = {
+  ko: { sectionTitle: "✨ OIYO 스튜디오 대표작", badge: "엄선작", subtitle: "깊이 있는 시스템과 실시간 도전이 담긴 플래그십 아케이드" },
+  en: { sectionTitle: "✨ OIYO Studio Flagships", badge: "Featured", subtitle: "Flagship arcade titles with deep progression and dynamic challenges" },
+  ja: { sectionTitle: "✨ OIYOスタジオ代表作", badge: "厳選", subtitle: "奥深いシステムとリアルタイム挑戦が楽しめる旗艦タイトル" },
+  zh: { sectionTitle: "✨ OIYO 工作室精选代表作", badge: "精选", subtitle: "具备深度养成与实时挑战的旗舰街机作品" },
+  fr: { sectionTitle: "✨ Titres phares du studio OIYO", badge: "Sélection", subtitle: "Jeux d'arcade phares dotés d'une profondeur et de défis dynamiques" },
+  es: { sectionTitle: "✨ Títulos insignia de OIYO Studio", badge: "Destacado", subtitle: "Títulos arcade insignia con progresión profunda y desafíos dinámicos" },
+};
+const studioLabels = studioFlagshipLabel[locale] ?? studioFlagshipLabel.en;
+
+const STUDIO_FLAGSHIP_CONFIG: Array<{ slug: string; tag: Record<Locale, string> }> = [
+  { slug: "neon-survivor", tag: { ko: "무기 진화 액션", en: "Evolution Roguelite", ja: "武器進化アクション", zh: "武器进化肉鸽", fr: "Roguelite d'action", es: "Roguelite de acción" } },
+  { slug: "brick-breaker", tag: { ko: "피버 & 파워업", en: "Fever & Powerups", ja: "フィーバー＆強化", zh: "狂热与增强", fr: "Fever & Bonus", es: "Fiebre & Poderes" } },
+  { slug: "wordle", tag: { ko: "1:1 라이벌 챌린지", en: "1v1 Rival Battle", ja: "1v1 対戦モード", zh: "1v1 对战挑战", fr: "Duel 1v1", es: "Duelo 1v1" } },
+  { slug: "sudoku", tag: { ko: "타임어택 챌린지", en: "Time Attack", ja: "タイムアタック", zh: "竞速挑战", fr: "Course contre la montre", es: "Contrarreloj" } },
+  { slug: "water-sort", tag: { ko: "퍼즐 & 시험관 추가", en: "Puzzle & Bonus Tube", ja: "パズル＆追加試験管", zh: "益智与额外试管", fr: "Casse-tête & Tube", es: "Lógica y tubo extra" } },
+];
+
+const studioFlagshipGames = STUDIO_FLAGSHIP_CONFIG
+  .map((config) => {
+    const game = GAMES.find((g) => g.slug === config.slug);
+    return game ? { game, tag: config.tag } : null;
+  })
+  .filter((item): item is { game: Game; tag: Record<Locale, string> } => Boolean(item));
+
 /** Entries without an explicit `kind` are games; only the exceptions are tagged. */
 const isGame = (g: Game) => (g.kind ?? "game") === "game";
 const gameCount = GAMES.filter(isGame).length;
@@ -253,6 +278,54 @@ const cardJsonLd = {
       </ul>
     </nav>
     <TodaysGameCard locale={locale} candidates={todaysGameCandidates} />
+    <section class="mt-10">
+      <div class="mb-4">
+        <h2 class="text-xl font-black text-foreground">{studioLabels.sectionTitle}</h2>
+        <p class="mt-0.5 text-xs font-medium text-muted-foreground">{studioLabels.subtitle}</p>
+      </div>
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        {studioFlagshipGames.map(({ game: g, tag }) => (
+          <a
+            href={`/${locale}/${g.slug}/`}
+            data-game={g.slug}
+            class="group relative flex min-h-44 flex-col justify-end overflow-hidden rounded-2xl border-2 border-primary/20 bg-card text-left shadow-sm transition-all hover:-translate-y-1 hover:border-primary hover:shadow-lg ring-1 ring-primary/10"
+          >
+            {cardHasArt(g) ? (
+              <Image
+                src={cardSource(gameArt[g.slug])}
+                alt={cardName(g)}
+                width={640}
+                widths={[320, 640]}
+                sizes="(min-width: 1024px) 220px, (min-width: 640px) 33vw, 50vw"
+                format="webp"
+                loading="lazy"
+                decoding="async"
+                class="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+            ) : (
+              <span class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/10 to-muted text-5xl transition-transform duration-300 group-hover:scale-110" aria-hidden="true">
+                {g.emoji}
+              </span>
+            )}
+            <span class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" aria-hidden="true" />
+            <div class="absolute top-2.5 left-2.5 z-10">
+              <span class="inline-flex items-center rounded-full bg-primary/90 px-2 py-0.5 text-xs font-black tracking-wide text-primary-foreground backdrop-blur-xs shadow-xs">
+                {studioLabels.badge}
+              </span>
+            </div>
+            <div class="relative z-10 p-3.5 text-white">
+              <span class="block text-sm font-black drop-shadow-sm leading-tight group-hover:text-primary-foreground">
+                {cardName(g)}
+              </span>
+              <span class="mt-1 inline-block text-xs font-semibold text-white/80 line-clamp-1">
+                {tag[locale] ?? tag.en}
+              </span>
+            </div>
+            <span data-winrate hidden class="absolute right-2 top-2 rounded-full bg-background/90 px-2 py-0.5 text-xs font-black text-primary backdrop-blur-xs"></span>
+          </a>
+        ))}
+      </div>
+    </section>
     {featuredGames.length > 0 && (
       <section class="mt-10">
         <h2 class="mb-4 text-lg font-black text-foreground">{translations.magazine.featured}</h2>

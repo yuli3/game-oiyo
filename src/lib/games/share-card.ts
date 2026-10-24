@@ -48,6 +48,19 @@ export function resolveRankTier(slug: string, score: number): string {
     if (score >= 512) return "APPRENTICE";
     return "NOVICE";
   }
+  if (slug === "wordle") {
+    if (score === 1) return "LUCKY GENIUS";
+    if (score <= 3) return "GENIUS";
+    if (score <= 4) return "MASTER";
+    if (score <= 5) return "SHARP";
+    return "SOLVER";
+  }
+  if (slug === "sudoku") {
+    if (score <= 180) return "GRANDMASTER";
+    if (score <= 300) return "MASTER";
+    if (score <= 600) return "EXPERT";
+    return "LOGICIAN";
+  }
   if (score >= 1000) return "CHAMPION";
   if (score >= 500) return "VETERAN";
   return "PLAYER";

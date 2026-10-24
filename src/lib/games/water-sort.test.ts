@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   WATER_SORT_CAPACITY,
+  WATER_SORT_TUBE_COUNT,
   createWaterSort,
   generateWaterSortPuzzle,
   isWaterSortSolved,
@@ -11,6 +12,8 @@ import {
   legalWaterSortMoves,
   waterSortHint,
   isWaterSortDeadEnd,
+  undoWaterSort,
+  addBonusTube,
   type WaterSortDifficulty,
 } from "./water-sort";
 
@@ -92,5 +95,61 @@ describe("water sort engine", () => {
     expect(legalWaterSortMoves(dead.tubes)).toHaveLength(0);
     expect(isWaterSortDeadEnd(dead)).toBe(true);
     expect(isWaterSortDeadEnd(createWaterSort(2))).toBe(false);
+  });
+
+  it("supports undo stack to step back moves safely", () => {
+    const initial = createWaterSort(42, "easy");
+    const legalMoves = legalWaterSortMoves(initial.tubes);
+    expect(legalMoves.length).toBeGreaterThan(0);
+
+    const step1 = moveWaterSort(initial, legalMoves[0]);
+    expect(step1.moves).toBe(1);
+    expect(step1.history?.length).toBe(1);
+    expect(step1.tubes).not.toEqual(initial.tubes);
+
+    const reverted = undoWaterSort(step1);
+    expect(reverted.moves).toBe(0);
+    expect(reverted.tubes).toEqual(initial.tubes);
+    expect(reverted.history?.length).toBe(0);
+
+    // Repeated undo on empty history returns same state
+    expect(undoWaterSort(reverted)).toBe(reverted);
+  });
+
+  it("adds an empty bonus tube once per game and allows pouring into it", () => {
+    const initial = createWaterSort(100, "medium");
+    expect(initial.tubes.length).toBe(WATER_SORT_TUBE_COUNT);
+    expect(initial.hasBonusTube).toBe(false);
+
+    const withBonus = addBonusTube(initial);
+    expect(withBonus.tubes.length).toBe(WATER_SORT_TUBE_COUNT + 1);
+    expect(withBonus.tubes[WATER_SORT_TUBE_COUNT]).toEqual([]);
+    expect(withBonus.hasBonusTube).toBe(true);
+
+    // Second call is no-op
+    const noOpBonus = addBonusTube(withBonus);
+    expect(noOpBonus).toBe(withBonus);
+
+    // Pouring into the bonus tube works
+    const sourceTubeIdx = withBonus.tubes.findIndex((t) => t.length > 0);
+    const moved = moveWaterSort(withBonus, { from: sourceTubeIdx, to: WATER_SORT_TUBE_COUNT });
+    expect(moved.tubes[WATER_SORT_TUBE_COUNT].length).toBeGreaterThan(0);
+
+    // Solved state with 8 tubes is valid
+    const solved8 = {
+      ...withBonus,
+      tubes: [
+        [0, 0, 0, 0],
+        [1, 1, 1, 1],
+        [2, 2, 2, 2],
+        [3, 3, 3, 3],
+        [4, 4, 4, 4],
+        [],
+        [],
+        [],
+      ],
+      status: "playing" as const,
+    };
+    expect(isWaterSortSolved(solved8.tubes)).toBe(true);
   });
 });

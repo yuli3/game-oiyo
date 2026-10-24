@@ -1,4 +1,4 @@
-export type WordleMode = "daily" | "random";
+export type WordleMode = "daily" | "random" | "challenge";
 export type WordleStatus = "playing" | "won" | "lost";
 export type WordleMark = "correct" | "present" | "absent";
 export interface WordleState { seed: number; targetIndex: number; targetCount: number; mode: WordleMode; dateKey: string | null; current: string; guesses: string[]; status: WordleStatus }

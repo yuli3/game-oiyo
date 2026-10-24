@@ -32,6 +32,24 @@ export type BrickBreakerBrick = {
   flashUntil: number;
 };
 
+export type PowerupKind = "multiball" | "expand" | "slow";
+
+export type BrickBreakerPowerup = {
+  id: number;
+  x: number;
+  y: number;
+  kind: PowerupKind;
+  vy: number;
+};
+
+export type BrickBreakerBall = {
+  id: number;
+  bx: number;
+  by: number;
+  vx: number;
+  vy: number;
+};
+
 export type BrickBreakerState = {
   padX: number;
   padW: number;
@@ -49,6 +67,12 @@ export type BrickBreakerState = {
   paddleFlashUntil: number;
   elapsedMs: number;
   gameOver: boolean;
+  feverCharge: number;
+  feverTimerMs: number;
+  isFever: boolean;
+  powerups: BrickBreakerPowerup[];
+  extraBalls: BrickBreakerBall[];
+  nextEntityId: number;
 };
 
 export type BrickBreakerEvent =
@@ -56,7 +80,10 @@ export type BrickBreakerEvent =
   | { type: "brick-hit"; destroyed: boolean; x: number; y: number; hue: number }
   | { type: "level-clear"; level: number }
   | { type: "life-lost"; lives: number }
-  | { type: "game-over"; score: number; level: number };
+  | { type: "game-over"; score: number; level: number }
+  | { type: "fever-start" }
+  | { type: "fever-end" }
+  | { type: "powerup-collect"; kind: PowerupKind };
 
 /**
  * Brick Breaker's single tuning surface. Challenge rises on two readable axes:
@@ -145,6 +172,12 @@ export function createBrickBreakerState(): BrickBreakerState {
     paddleFlashUntil: 0,
     elapsedMs: 0,
     gameOver: false,
+    feverCharge: 0,
+    feverTimerMs: 0,
+    isFever: false,
+    powerups: [],
+    extraBalls: [],
+    nextEntityId: 1,
   };
   resetBrickBreakerBall(state);
   return state;
@@ -168,18 +201,30 @@ function simulateBrickBreakerSubstep(
   const scale = deltaMs / BRICK_BREAKER_TIME.fixedStepMs;
   const { width, height, ballRadius, paddleY, brickHeight } = BRICK_BREAKER_BOARD;
 
+  // Fever Timer Update
+  if (state.isFever) {
+    state.feverTimerMs -= deltaMs;
+    if (state.feverTimerMs <= 0) {
+      state.isFever = false;
+      state.feverCharge = 0;
+      events.push({ type: "fever-end" });
+    }
+  }
+
   state.bx += state.vx * scale;
   state.by += state.vy * scale;
   if (state.bx < ballRadius) { state.bx = ballRadius; state.vx = Math.abs(state.vx); }
   if (state.bx > width - ballRadius) { state.bx = width - ballRadius; state.vx = -Math.abs(state.vx); }
   if (state.by < ballRadius) { state.by = ballRadius; state.vy = Math.abs(state.vy); }
 
+  // Paddle Collision (Fever extends paddle collision area)
+  const effectivePadW = state.isFever ? state.padW * 1.3 : state.padW;
   if (
     state.by + ballRadius >= paddleY
     && state.by < paddleY + 12
-    && Math.abs(state.bx - state.padX) < state.padW / 2 + ballRadius
+    && Math.abs(state.bx - state.padX) < effectivePadW / 2 + ballRadius
   ) {
-    const offset = (state.bx - state.padX) / (state.padW / 2);
+    const offset = (state.bx - state.padX) / (effectivePadW / 2);
     const speed = Math.hypot(state.vx, state.vy);
     const angle = offset * 1.05;
     state.vx = speed * Math.sin(angle);
@@ -189,6 +234,7 @@ function simulateBrickBreakerSubstep(
     events.push({ type: "paddle-hit" });
   }
 
+  // Brick Collisions
   for (const brick of state.bricks) {
     if (brick.hits <= 0) continue;
     if (
@@ -197,12 +243,39 @@ function simulateBrickBreakerSubstep(
       && state.by + ballRadius > brick.y
       && state.by - ballRadius < brick.y + brickHeight
     ) {
-      brick.hits -= 1;
+      brick.hits -= state.isFever ? 2 : 1;
+      if (brick.hits < 0) brick.hits = 0;
       brick.flashUntil = state.elapsedMs + 130;
       state.combo = comboAfterHit(state.combo, state.lastHitAt, state.elapsedMs);
       state.lastHitAt = state.elapsedMs;
+
+      // Charge Fever
+      if (!state.isFever) {
+        state.feverCharge = Math.min(100, state.feverCharge + 15);
+        if (state.feverCharge >= 100) {
+          state.isFever = true;
+          state.feverTimerMs = 5000;
+          events.push({ type: "fever-start" });
+        }
+      }
+
       const destroyed = brick.hits === 0;
-      state.score += destroyed ? 10 + Math.min(20, Math.max(0, state.combo - 1) * 2) : 3;
+      const baseGain = destroyed ? 10 + Math.min(20, Math.max(0, state.combo - 1) * 2) : 3;
+      state.score += baseGain * (state.isFever ? 3 : 1);
+
+      // Powerup Drop (25% chance on destroy)
+      if (destroyed && Math.random() < 0.25) {
+        const kinds: PowerupKind[] = ["multiball", "expand", "slow"];
+        const kind = kinds[Math.floor(Math.random() * kinds.length)];
+        state.powerups.push({
+          id: state.nextEntityId++,
+          x: brick.x + brick.w / 2,
+          y: brick.y + brickHeight / 2,
+          kind,
+          vy: 2.2,
+        });
+      }
+
       events.push({
         type: "brick-hit",
         destroyed,
@@ -210,19 +283,54 @@ function simulateBrickBreakerSubstep(
         y: brick.y + brickHeight / 2,
         hue: brick.hue,
       });
-      const overlapX = Math.min(
-        state.bx + ballRadius - brick.x,
-        brick.x + brick.w - (state.bx - ballRadius),
-      );
-      const overlapY = Math.min(
-        state.by + ballRadius - brick.y,
-        brick.y + brickHeight - (state.by - ballRadius),
-      );
-      if (overlapX < overlapY) state.vx = -state.vx;
-      else state.vy = -state.vy;
+
+      // Piercing during Fever Mode
+      if (!state.isFever) {
+        const overlapX = Math.min(
+          state.bx + ballRadius - brick.x,
+          brick.x + brick.w - (state.bx - ballRadius),
+        );
+        const overlapY = Math.min(
+          state.by + ballRadius - brick.y,
+          brick.y + brickHeight - (state.by - ballRadius),
+        );
+        if (overlapX < overlapY) state.vx = -state.vx;
+        else state.vy = -state.vy;
+      }
       break;
     }
   }
+
+  // Update Powerup Capsules
+  const survivingPowerups: BrickBreakerPowerup[] = [];
+  for (const p of state.powerups) {
+    p.y += p.vy * scale;
+    // Catch powerup with paddle
+    if (
+      p.y >= paddleY - 8
+      && p.y <= paddleY + 14
+      && Math.abs(p.x - state.padX) < effectivePadW / 2 + 10
+    ) {
+      events.push({ type: "powerup-collect", kind: p.kind });
+      if (p.kind === "expand") {
+        state.padW = Math.min(110, state.padW + 16);
+      } else if (p.kind === "slow") {
+        state.vx *= 0.8;
+        state.vy *= 0.8;
+      } else if (p.kind === "multiball") {
+        state.extraBalls.push({
+          id: state.nextEntityId++,
+          bx: state.bx,
+          by: state.by,
+          vx: -state.vx * 0.9,
+          vy: state.vy * 0.9,
+        });
+      }
+    } else if (p.y <= height + 20) {
+      survivingPowerups.push(p);
+    }
+  }
+  state.powerups = survivingPowerups;
 
   if (!state.bricks.some((brick) => brick.hits > 0)) {
     state.level += 1;

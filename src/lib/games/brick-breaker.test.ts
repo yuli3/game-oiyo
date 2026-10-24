@@ -151,4 +151,52 @@ describe("Brick Breaker deterministic simulation", () => {
     moveBrickBreakerPaddle(state, 1_000);
     expect(state.padX).toBe(BRICK_BREAKER_BOARD.width - state.padW / 2);
   });
+
+  describe("Fever Mode & Powerup Capsules", () => {
+    it("accumulates fever charge on hits and triggers fever-start at 100", () => {
+      const state = createBrickBreakerState();
+      state.launched = true;
+      state.feverCharge = 90;
+      state.bricks = [{
+        x: 100,
+        y: 100,
+        w: 50,
+        hits: 1,
+        maxHits: 1,
+        hue: 200,
+        flashUntil: 0,
+      }];
+      state.bx = 120;
+      state.by = 105;
+      state.vy = -3;
+
+      const events = stepBrickBreaker(state, BRICK_BREAKER_TIME.fixedStepMs);
+      expect(events).toContainEqual(expect.objectContaining({ type: "fever-start" }));
+      expect(state.isFever).toBe(true);
+      expect(state.feverTimerMs).toBe(5000);
+    });
+
+    it("triples score gain during active fever mode", () => {
+      const state = createBrickBreakerState();
+      state.launched = true;
+      state.isFever = true;
+      state.feverTimerMs = 3000;
+      state.bricks = [{
+        x: 100,
+        y: 100,
+        w: 50,
+        hits: 1,
+        maxHits: 1,
+        hue: 200,
+        flashUntil: 0,
+      }];
+      state.bx = 120;
+      state.by = 105;
+      state.vy = -3;
+
+      stepBrickBreaker(state, BRICK_BREAKER_TIME.fixedStepMs);
+      // Destroy base score is 10, fever triples to 30
+      expect(state.score).toBe(30);
+    });
+  });
 });

@@ -70,6 +70,12 @@ function parseState(value: unknown): BrickBreakerState | null {
     paddleFlashUntil: value.paddleFlashUntil as number,
     elapsedMs: value.elapsedMs as number,
     gameOver: false,
+    feverCharge: typeof value.feverCharge === "number" ? value.feverCharge : 0,
+    feverTimerMs: typeof value.feverTimerMs === "number" ? value.feverTimerMs : 0,
+    isFever: Boolean(value.isFever),
+    powerups: Array.isArray(value.powerups) ? value.powerups : [],
+    extraBalls: Array.isArray(value.extraBalls) ? value.extraBalls : [],
+    nextEntityId: typeof value.nextEntityId === "number" ? value.nextEntityId : 1,
   };
 }
 
@@ -115,6 +121,12 @@ export function serializeBrickBreakerSave(save: Omit<BrickBreakerSave, "version"
     paddleFlashUntil: save.state.paddleFlashUntil,
     elapsedMs: save.state.elapsedMs,
     gameOver: save.state.gameOver,
+    feverCharge: save.state.feverCharge ?? 0,
+    feverTimerMs: save.state.feverTimerMs ?? 0,
+    isFever: Boolean(save.state.isFever),
+    powerups: (save.state.powerups ?? []).map((p) => ({ ...p })),
+    extraBalls: (save.state.extraBalls ?? []).map((b) => ({ ...b })),
+    nextEntityId: save.state.nextEntityId ?? 1,
   };
   return JSON.stringify({ version: 1, ...save, state });
 }

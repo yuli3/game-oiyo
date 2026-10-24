@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 import { getBestForConditions, recordBestForConditions, type BestConditions, type ConditionalBestRecord } from '../../lib/games/records';
-import { createWaterSort, generateWaterSortPuzzle, isWaterSortDeadEnd, moveWaterSort, pouredLayerCount, waterSortHint, type WaterSortDifficulty, type WaterSortMove, type WaterSortState } from '../../lib/games/water-sort';
+import { addBonusTube, createWaterSort, generateWaterSortPuzzle, isWaterSortDeadEnd, moveWaterSort, pouredLayerCount, undoWaterSort, waterSortHint, type WaterSortDifficulty, type WaterSortMove, type WaterSortState } from '../../lib/games/water-sort';
 import { clearWaterSortSave, loadWaterSortSave, storeWaterSortSave, type WaterSortAssist } from '../../lib/games/water-sort-save';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import type { Locale } from '../../lib/i18n';
@@ -20,12 +20,12 @@ const PATTERNS = [
     'linear-gradient(45deg, transparent 35%, rgba(255,255,255,.3) 35% 50%, transparent 50% 85%, rgba(255,255,255,.3) 85%)',
 ];
 const COPY = {
-    ko: { title: '워터 소트', subtitle: '색을 읽고, 흐름을 설계하세요', desc: '같은 색의 물을 한 시험관에 정렬하세요.', reset: '새 판', win: '정제 완료!', tube: (i: number, n: number, layers: string) => `시험관 ${i}, 물 ${n}칸, 색상 ${layers || '없음'}`, selected: '선택됨', playAgain: '새 판 시작', undo: '되돌리기', hint: '힌트', hintMove: (a: number, b: number) => `${a}번 → ${b}번 시험관`, deadEnd: '가능한 이동이 없어요. 되돌리거나 새 판을 시작하세요.', moves: '이동', time: '시간', best: '동일 조건 최고', efficiency: '기준 효율', next: '다음 목표', soundOn: '소리 켜짐', soundOff: '소리 꺼짐', easy: '쉬움', medium: '보통', hard: '어려움', seconds: '초' },
-    en: { title: 'Water Sort', subtitle: 'Read the colors. Engineer the flow.', desc: 'Unify each color in its own tube.', reset: 'New board', win: 'Purification complete!', tube: (i: number, n: number, layers: string) => `Tube ${i}, ${n} water layers, colors ${layers || 'empty'}`, selected: 'selected', playAgain: 'New board', undo: 'Undo', hint: 'Hint', hintMove: (a: number, b: number) => `Tube ${a} → ${b}`, deadEnd: 'No legal moves remain. Undo or start a new board.', moves: 'Moves', time: 'Time', best: 'Same-condition best', efficiency: 'Baseline efficiency', next: 'Next target', soundOn: 'Sound on', soundOff: 'Sound off', easy: 'Easy', medium: 'Medium', hard: 'Hard', seconds: 'sec' },
-    ja: { title: 'ウォーターソート', subtitle: '色を読み、流れを設計しよう', desc: '同じ色の水を一つの試験管にまとめましょう。', reset: '新しい盤面', win: '精製完了！', tube: (i: number, n: number, layers: string) => `試験管 ${i}、水 ${n} 層、色 ${layers || 'なし'}`, selected: '選択中', playAgain: '新しい盤面', undo: '元に戻す', hint: 'ヒント', hintMove: (a: number, b: number) => `試験管 ${a} → ${b}`, deadEnd: '動かせる手がありません。元に戻すか新しい盤面を始めてください。', moves: '手数', time: '時間', best: '同条件ベスト', efficiency: '基準効率', next: '次の目標', soundOn: 'サウンドオン', soundOff: 'サウンドオフ', easy: '初級', medium: '中級', hard: '上級', seconds: '秒' },
-    zh: { title: '倒水排序', subtitle: '辨认颜色，设计流向', desc: '把每种颜色的水集中到一支试管中。', reset: '新棋盘', win: '提纯完成！', tube: (i: number, n: number, layers: string) => `试管 ${i}，${n} 层水，颜色 ${layers || '空'}`, selected: '已选择', playAgain: '新棋盘', undo: '撤销', hint: '提示', hintMove: (a: number, b: number) => `试管 ${a} → ${b}`, deadEnd: '没有可行移动。请撤销或开始新棋盘。', moves: '步数', time: '时间', best: '同条件最佳', efficiency: '基准效率', next: '下一目标', soundOn: '声音开启', soundOff: '声音关闭', easy: '简单', medium: '普通', hard: '困难', seconds: '秒' },
-    fr: { title: 'Water Sort', subtitle: 'Lisez les couleurs. Maîtrisez le flux.', desc: 'Réunissez chaque couleur dans son propre tube.', reset: 'Nouveau plateau', win: 'Purification terminée !', tube: (i: number, n: number, layers: string) => `Tube ${i}, ${n} couches, couleurs ${layers || 'vide'}`, selected: 'sélectionné', playAgain: 'Nouveau plateau', undo: 'Annuler', hint: 'Indice', hintMove: (a: number, b: number) => `Tube ${a} → ${b}`, deadEnd: 'Aucun coup légal. Annulez ou lancez un nouveau plateau.', moves: 'Coups', time: 'Temps', best: 'Meilleur à conditions égales', efficiency: 'Efficacité de référence', next: 'Prochain objectif', soundOn: 'Son activé', soundOff: 'Son coupé', easy: 'Facile', medium: 'Moyen', hard: 'Difficile', seconds: 's' },
-    es: { title: 'Water Sort', subtitle: 'Lee los colores. Diseña el flujo.', desc: 'Reúne cada color en su propio tubo.', reset: 'Nuevo tablero', win: '¡Purificación completa!', tube: (i: number, n: number, layers: string) => `Tubo ${i}, ${n} capas, colores ${layers || 'vacío'}`, selected: 'seleccionado', playAgain: 'Nuevo tablero', undo: 'Deshacer', hint: 'Pista', hintMove: (a: number, b: number) => `Tubo ${a} → ${b}`, deadEnd: 'No quedan movimientos legales. Deshaz o inicia un tablero nuevo.', moves: 'Movimientos', time: 'Tiempo', best: 'Mejor en iguales condiciones', efficiency: 'Eficiencia de referencia', next: 'Próximo objetivo', soundOn: 'Sonido activado', soundOff: 'Sonido desactivado', easy: 'Fácil', medium: 'Medio', hard: 'Difícil', seconds: 's' },
+    ko: { title: '워터 소트', subtitle: '색을 읽고, 흐름을 설계하세요', desc: '같은 색의 물을 한 시험관에 정렬하세요.', reset: '새 판', win: '정제 완료!', tube: (i: number, n: number, layers: string) => `시험관 ${i}, 물 ${n}칸, 색상 ${layers || '없음'}`, selected: '선택됨', playAgain: '새 판 시작', undo: '되돌리기', hint: '힌트', bonusTube: '+1 시험관', hintMove: (a: number, b: number) => `${a}번 → ${b}번 시험관`, deadEnd: '가능한 이동이 없어요. 되돌리거나 새 판을 시작하세요.', moves: '이동', time: '시간', best: '동일 조건 최고', efficiency: '기준 효율', next: '다음 목표', soundOn: '소리 켜짐', soundOff: '소리 꺼짐', easy: '쉬움', medium: '보통', hard: '어려움', seconds: '초' },
+    en: { title: 'Water Sort', subtitle: 'Read the colors. Engineer the flow.', desc: 'Unify each color in its own tube.', reset: 'New board', win: 'Purification complete!', tube: (i: number, n: number, layers: string) => `Tube ${i}, ${n} water layers, colors ${layers || 'empty'}`, selected: 'selected', playAgain: 'New board', undo: 'Undo', hint: 'Hint', bonusTube: '+1 Tube', hintMove: (a: number, b: number) => `Tube ${a} → ${b}`, deadEnd: 'No legal moves remain. Undo or start a new board.', moves: 'Moves', time: 'Time', best: 'Same-condition best', efficiency: 'Baseline efficiency', next: 'Next target', soundOn: 'Sound on', soundOff: 'Sound off', easy: 'Easy', medium: 'Medium', hard: 'Hard', seconds: 'sec' },
+    ja: { title: 'ウォーターソート', subtitle: '色を読み、流れを設計しよう', desc: '同じ色の水を一つの試験管にまとめましょう。', reset: '新しい盤面', win: '精製完了！', tube: (i: number, n: number, layers: string) => `試験管 ${i}、水 ${n} 層、色 ${layers || 'なし'}`, selected: '選択中', playAgain: '新しい盤面', undo: '元に戻す', hint: 'ヒント', bonusTube: '+1 試験管', hintMove: (a: number, b: number) => `試験管 ${a} → ${b}`, deadEnd: '動かせる手がありません。元に戻すか新しい盤面を始めてください。', moves: '手数', time: '時間', best: '同条件ベスト', efficiency: '基準効率', next: '次の目標', soundOn: 'サウンドオン', soundOff: 'サウンドオフ', easy: '初級', medium: '中級', hard: '上級', seconds: '秒' },
+    zh: { title: '倒水排序', subtitle: '辨认颜色，设计流向', desc: '把每种颜色的水集中到一支试管中。', reset: '新棋盘', win: '提纯完成！', tube: (i: number, n: number, layers: string) => `试管 ${i}，${n} 层水，颜色 ${layers || '空'}`, selected: '已选择', playAgain: '新棋盘', undo: '撤销', hint: '提示', bonusTube: '+1 试管', hintMove: (a: number, b: number) => `试管 ${a} → ${b}`, deadEnd: '没有可行移动。请撤销或开始新棋盘。', moves: '步数', time: '时间', best: '同条件最佳', efficiency: '基准效率', next: '下一目标', soundOn: '声音开启', soundOff: '声音关闭', easy: '简单', medium: '普通', hard: '困难', seconds: '秒' },
+    fr: { title: 'Water Sort', subtitle: 'Lisez les couleurs. Maîtrisez le flux.', desc: 'Réunissez chaque couleur dans son propre tube.', reset: 'Nouveau plateau', win: 'Purification terminée !', tube: (i: number, n: number, layers: string) => `Tube ${i}, ${n} couches, couleurs ${layers || 'vide'}`, selected: 'sélectionné', playAgain: 'Nouveau plateau', undo: 'Annuler', hint: 'Indice', bonusTube: '+1 Tube', hintMove: (a: number, b: number) => `Tube ${a} → ${b}`, deadEnd: 'Aucun coup légal. Annulez ou lancez un nouveau plateau.', moves: 'Coups', time: 'Temps', best: 'Meilleur à conditions égales', efficiency: 'Efficacité de référence', next: 'Prochain objectif', soundOn: 'Son activé', soundOff: 'Son coupé', easy: 'Facile', medium: 'Moyen', hard: 'Difficile', seconds: 's' },
+    es: { title: 'Water Sort', subtitle: 'Lee los colores. Diseña el flujo.', desc: 'Reúne cada color en su propio tubo.', reset: 'Nuevo tablero', win: '¡Purificación completa!', tube: (i: number, n: number, layers: string) => `Tubo ${i}, ${n} capas, colores ${layers || 'vacío'}`, selected: 'seleccionado', playAgain: 'Nuevo tablero', undo: 'Deshacer', hint: 'Pista', bonusTube: '+1 Tubo', hintMove: (a: number, b: number) => `Tubo ${a} → ${b}`, deadEnd: 'No quedan movimientos legales. Deshaz o inicia un tablero nuevo.', moves: 'Movimientos', time: 'Tiempo', best: 'Mejor en iguales condiciones', efficiency: 'Eficiencia de referencia', next: 'Próximo objetivo', soundOn: 'Sonido activado', soundOff: 'Sonido desactivado', easy: 'Fácil', medium: 'Medio', hard: 'Difícil', seconds: 's' },
 } as const;
 
 const WaterSort: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
@@ -130,17 +130,29 @@ const WaterSort: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     };
 
     const undoMove = () => {
-        const previous = undo[undo.length - 1]; if (!previous) return;
-        setGame(previous); setUndo((history) => history.slice(0, -1)); setSelectedTube(null); setHint(null); setLastPour(null);
-        setAssist((value) => value === 'hint' ? value : 'undo');
-        cue('tap');
-        hapticsRef.current.fire('tap');
+        if (!game) return;
+        const next = undoWaterSort(game);
+        if (next !== game) {
+            setGame(next);
+            setUndo((history) => history.slice(0, -1));
+            setSelectedTube(null); setHint(null); setLastPour(null);
+            setAssist((value) => value === 'hint' ? value : 'undo');
+            cue('tap');
+            hapticsRef.current.fire('tap');
+        }
     };
     const showHint = () => {
         if (!game) return;
         const nextHint = waterSortHint(game.tubes); setHint(nextHint); setSelectedTube(nextHint?.from ?? null); setAssist('hint');
         cue('tap');
         hapticsRef.current.fire('tap');
+    };
+    const handleAddBonusTube = () => {
+        if (!game || game.status === 'solved' || game.hasBonusTube) return;
+        setGame((current) => current ? addBonusTube(current) : null);
+        setAssist('hint');
+        cue('combo');
+        hapticsRef.current.fire('combo');
     };
     const focusTube = (next: number) => {
         const normalized = Math.max(0, Math.min((game?.tubes.length ?? 1) - 1, next)); setFocusedTube(normalized); tubeRefs.current[normalized]?.focus();
@@ -186,13 +198,14 @@ const WaterSort: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         </button>
                     </div>
                     {game && <div className="mb-4 flex gap-5 text-xs font-black text-muted-foreground"><span>{t.moves}: {game.moves}</span><span>{t.time}: {elapsedSeconds} {t.seconds}</span></div>}
-                    <div className="mb-6 flex gap-2">
+                    <div className="mb-6 flex flex-wrap justify-center gap-2">
                         <button type="button" onClick={undoMove} disabled={undo.length === 0} className="min-h-11 rounded-lg border border-border px-4 text-xs font-bold disabled:opacity-40">{t.undo}</button>
                         <button type="button" onClick={showHint} disabled={!game || isWon || deadEnd} className="min-h-11 rounded-lg border border-border px-4 text-xs font-bold disabled:opacity-40">{t.hint}</button>
+                        <button type="button" onClick={handleAddBonusTube} disabled={!game || isWon || Boolean(game?.hasBonusTube)} className="min-h-11 rounded-lg border border-border px-4 text-xs font-bold disabled:opacity-40">{t.bonusTube}</button>
                     </div>
                     {hint && <p className="mb-5 text-xs font-bold text-primary" role="status">{t.hintMove(hint.from + 1, hint.to + 1)}</p>}
                     {deadEnd && <p className="mb-5 max-w-sm text-center text-xs font-bold text-destructive" role="alert">{t.deadEnd}</p>}
-                    <div className="mb-8 grid grid-cols-4 gap-3 sm:grid-cols-7 sm:gap-4" role="group" aria-label={t.title}>
+                    <div className="mb-8 grid grid-cols-4 gap-3 sm:grid-cols-8 sm:gap-4 justify-items-center" role="group" aria-label={t.title}>
                         {tubes.map((tube, i) => <button type="button" key={i} ref={(element) => { tubeRefs.current[i] = element; }} tabIndex={focusedTube === i ? 0 : -1} onFocus={() => setFocusedTube(i)} onKeyDown={(event) => { if (event.key === 'ArrowRight' || event.key === 'ArrowDown') { event.preventDefault(); focusTube(i + 1); } if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') { event.preventDefault(); focusTube(i - 1); } if (event.key === 'Home') { event.preventDefault(); focusTube(0); } if (event.key === 'End') { event.preventDefault(); focusTube(tubes.length - 1); } }} onClick={() => handleTubeClick(i)} aria-pressed={selectedTube === i} aria-label={`${t.tube(i + 1, tube.length, tube.map((color) => String(color + 1)).join('-'))}${selectedTube === i ? `, ${t.selected}` : ''}`} className={`relative h-32 w-12 cursor-pointer overflow-hidden rounded-b-3xl border-4 border-muted sm:h-40 sm:w-14 ${!reducedMotion ? 'transition-all' : ''} focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary focus-visible:ring-offset-4 ${selectedTube === i ? `ring-4 ring-primary ring-offset-4 ${!reducedMotion ? '-translate-y-3' : ''}` : (!reducedMotion ? 'hover:-translate-y-1' : '')}`}>
                             <span className="absolute inset-0 flex flex-col-reverse">{tube.map((color, idx) => {
                                 const poured = Boolean(lastPour && lastPour.to === i && lastPour.count > 0 && idx >= tube.length - lastPour.count);
