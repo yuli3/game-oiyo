@@ -11,6 +11,10 @@ import type { Locale } from "../../lib/i18n";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { getBest, getRecord, recordBest, recordResult, type BestRecord, type GameRecord } from "../../lib/games/records";
 import { dateKeyIndex, kstDateKey } from "../../lib/games/todays-game";
+import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from "../../lib/games/game-audio";
+import { createHaptics } from "../../lib/games/haptics";
+import { celebrate } from "../../lib/games/celebration";
+import { PATCH_DUNGEON_SPRITES } from "../../lib/games/sprites";
 import {
   GAME_ID,
   ROOMS,
@@ -172,17 +176,6 @@ const COPY: Record<Locale, Copy> = {
   },
 };
 
-function playTone(ctx: AudioContext, frequency: number) {
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.frequency.value = frequency;
-  gain.gain.value = 0.04;
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  osc.start();
-  osc.stop(ctx.currentTime + 0.08);
-}
-
 export default function PatchDungeon({ locale }: { locale: Locale }) {
   const loc = COPY[locale] ? locale : "en";
   const t = COPY[loc];
@@ -195,11 +188,22 @@ export default function PatchDungeon({ locale }: { locale: Locale }) {
   const [best, setBest] = useState<BestRecord | null>(null);
   const [muted, setMuted] = useState(false);
   const [remain, setRemain] = useState(Math.ceil(FUSE_MS / 1000));
-  const audio = useRef<AudioContext | null>(null);
+  const cuesRef = useRef<CuePlayer<CoreCue> | null>(null);
+  const hapticsRef = useRef(createHaptics());
   const noted = useRef(new Set<string>());
   const phase = useRef<Run["phase"] | null>(null);
   const runRef = useRef<Run | null>(null);
   runRef.current = run;
+
+  const cue = (kind: CoreCue) => {
+    if (muted || reducedMotion) return;
+    try {
+      cuesRef.current ??= createCuePlayer({ cues: CORE_CUES });
+      void cuesRef.current.play(kind);
+    } catch {
+      /* audio blocked */
+    }
+  };
 
   useEffect(() => {
     const key = kstDateKey();
@@ -229,6 +233,12 @@ export default function PatchDungeon({ locale }: { locale: Locale }) {
     return () => window.clearInterval(id);
   }, [run?.phase, run?.index]);
 
+  const onPress = (index: number) => {
+    cue("place");
+    hapticsRef.current.fire("place");
+    setRun((current) => (current ? press(current, index) : current));
+  };
+
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       const root = containerRef.current;
@@ -247,7 +257,7 @@ export default function PatchDungeon({ locale }: { locale: Locale }) {
       const index = ["1", "2", "3"].indexOf(event.key);
       if (index < 0) return;
       event.preventDefault();
-      setRun((current) => (current ? press(current, index) : current));
+      onPress(index);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -266,13 +276,14 @@ export default function PatchDungeon({ locale }: { locale: Locale }) {
         setBest(recordBest(GAME_ID, run.index, "score"));
       } catch { /* best-effort */ }
     }
-    if (muted || reducedMotion) return;
-    const Context = window.AudioContext;
-    if (!Context) return;
-    if (!audio.current) audio.current = new Context();
-    const ctx = audio.current;
-    void ctx.resume();
-    playTone(ctx, run.phase === "won" ? 620 : 180);
+    if (run.phase === "won") {
+      cue("win");
+      hapticsRef.current.fire("win");
+      if (containerRef.current) celebrate(containerRef.current, { preset: "shards" });
+    } else if (run.phase === "lost") {
+      cue("fail");
+      hapticsRef.current.fire("fail");
+    }
   }, [run, dateKey, attempt, muted, reducedMotion]);
 
   const again = () => {
@@ -290,6 +301,9 @@ export default function PatchDungeon({ locale }: { locale: Locale }) {
   return (
     <div ref={containerRef} className={isImmersive ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-y-auto bg-background p-3 sm:p-5" : "relative"}>
       <GameContainer title={t.title} subtitle={run ? t.subtitle : t.preparing}>
+        <div className="mb-3 overflow-hidden rounded-xl border border-border bg-muted">
+          <img src={PATCH_DUNGEON_SPRITES.keyart} alt={t.title} className="h-32 w-full object-cover sm:h-44" />
+        </div>
         <div className="mb-4 flex flex-wrap gap-2">
           <button type="button" onClick={() => setMuted((value) => !value)} aria-pressed={muted} aria-label={muted ? portalLabels.unmute : portalLabels.mute} title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`} className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-muted-foreground`}>
             {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
@@ -311,7 +325,7 @@ export default function PatchDungeon({ locale }: { locale: Locale }) {
                   key={verb}
                   type="button"
                   disabled={run.phase !== "play"}
-                  onClick={() => setRun((current) => (current ? press(current, index) : current))}
+                  onClick={() => onPress(index)}
                   className="min-h-16 rounded-xl border border-border bg-card text-sm font-bold text-foreground motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60"
                 >
                   {t.verb[verb]}
@@ -319,7 +333,17 @@ export default function PatchDungeon({ locale }: { locale: Locale }) {
               ))}
             </div>
             {run.phase === "ready" ? (
-              <button type="button" onClick={() => setRun((current) => (current ? begin(current) : current))} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.start}</button>
+              <button
+                type="button"
+                onClick={() => {
+                  cue("tap");
+                  hapticsRef.current.fire("tap");
+                  setRun((current) => (current ? begin(current) : current));
+                }}
+                className={`${CONTROL} border-primary bg-primary text-primary-foreground`}
+              >
+                {t.start}
+              </button>
             ) : null}
             {run.phase === "won" || run.phase === "lost" ? (
               <button type="button" onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</button>

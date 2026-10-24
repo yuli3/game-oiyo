@@ -263,7 +263,7 @@ export default function BlackoutCourier({ locale }: { locale: Locale }) {
       cue("fail");
       hapticsRef.current.fire("fail");
     } else if (run.phase === "dark") {
-      cue("tick");
+      cue("tap");
     }
   }, [run, dateKey, attempt, muted, reducedMotion]);
 
@@ -346,8 +346,8 @@ export default function BlackoutCourier({ locale }: { locale: Locale }) {
               <button
                 type="button"
                 onClick={() => {
-                  cue("tick");
-                  hapticsRef.current.fire("select");
+                  cue("tap");
+                  hapticsRef.current.fire("tap");
                   setRun(extinguish(run));
                 }}
                 className={`${CONTROL} border-primary bg-primary text-primary-foreground`}

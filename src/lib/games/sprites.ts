@@ -392,6 +392,42 @@ export const BLACKOUT_COURIER_SPRITES = {
   keyart: "/assets/sprites/blackout-courier/keyart.webp",
 } as const;
 
+export const DELAY_CURSOR_SPRITES = {
+  keyart: "/assets/sprites/delay-cursor/keyart.webp",
+} as const;
+
+export const FIREFLY_CHOIR_SPRITES = {
+  keyart: "/assets/sprites/firefly-choir/keyart.webp",
+} as const;
+
+export const PATCH_DUNGEON_SPRITES = {
+  keyart: "/assets/sprites/patch-dungeon/keyart.webp",
+} as const;
+
+export const GHOST_COMPOSER_SPRITES = {
+  keyart: "/assets/sprites/ghost-composer/keyart.webp",
+} as const;
+
+export const UNSEEN_BOSS_SPRITES = {
+  keyart: "/assets/sprites/unseen-boss/keyart.webp",
+} as const;
+
+export const LAST_PIXEL_SPRITES = {
+  keyart: "/assets/sprites/last-pixel/keyart.webp",
+} as const;
+
+export const LATE_PRESS_SPRITES = {
+  keyart: "/assets/sprites/late-press/keyart.webp",
+} as const;
+
+export const MONSTER_INTERVIEW_SPRITES = {
+  keyart: "/assets/sprites/monster-interview/keyart.webp",
+} as const;
+
+export const FAILURE_EATER_SPRITES = {
+  keyart: "/assets/sprites/failure-eater/keyart.webp",
+} as const;
+
 export const CHESS_SPRITES: Record<string, string> = {
   P: "/assets/sprites/chess/white-pawn.png",
   N: "/assets/sprites/chess/white-knight.png",

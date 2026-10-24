@@ -10,6 +10,10 @@ import type { Locale } from "../../lib/i18n";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { getBest, getRecord, recordBest, recordResult, type BestRecord, type GameRecord } from "../../lib/games/records";
 import { dateKeyIndex, kstDateKey } from "../../lib/games/todays-game";
+import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from "../../lib/games/game-audio";
+import { createHaptics } from "../../lib/games/haptics";
+import { celebrate } from "../../lib/games/celebration";
+import { UNSEEN_BOSS_SPRITES } from "../../lib/games/sprites";
 import {
   GAME_ID,
   MISSES,
@@ -30,7 +34,6 @@ import {
 
 const REVEAL_MS = 700;
 const GLYPH = ["◀", "●", "▶"] as const;
-const TONE = [280, 420, 560] as const;
 const CONTROL = "min-h-11 min-w-11 rounded-xl border px-3 py-2 text-sm font-bold motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
 
 interface RuleCopy {
@@ -206,17 +209,6 @@ const COPY: Record<Locale, Copy> = {
   },
 };
 
-function playTone(ctx: AudioContext, frequency: number) {
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.frequency.value = frequency;
-  gain.gain.value = 0.04;
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  osc.start();
-  osc.stop(ctx.currentTime + 0.08);
-}
-
 export default function UnseenBoss({ locale }: { locale: Locale }) {
   const loc = COPY[locale] ? locale : "en";
   const t = COPY[loc];
@@ -228,10 +220,21 @@ export default function UnseenBoss({ locale }: { locale: Locale }) {
   const [record, setRecord] = useState<GameRecord | null>(null);
   const [best, setBest] = useState<BestRecord | null>(null);
   const [muted, setMuted] = useState(false);
-  const audio = useRef<AudioContext | null>(null);
+  const cuesRef = useRef<CuePlayer<CoreCue> | null>(null);
+  const hapticsRef = useRef(createHaptics());
   const noted = useRef(new Set<string>());
   const phase = useRef<Run["phase"] | null>(null);
   const heard = useRef(0);
+
+  const cue = (kind: CoreCue) => {
+    if (muted || reducedMotion) return;
+    try {
+      cuesRef.current ??= createCuePlayer({ cues: CORE_CUES });
+      void cuesRef.current.play(kind);
+    } catch {
+      /* audio blocked */
+    }
+  };
 
   useEffect(() => {
     const key = kstDateKey();
@@ -285,13 +288,8 @@ export default function UnseenBoss({ locale }: { locale: Locale }) {
   useEffect(() => {
     if (!run || muted || reducedMotion || run.seen === 0 || run.seen === heard.current) return;
     heard.current = run.seen;
-    const lane = run.puzzle.beats[run.seen - 1];
-    const Context = window.AudioContext;
-    if (!Context) return;
-    if (!audio.current) audio.current = new Context();
-    const ctx = audio.current;
-    void ctx.resume();
-    playTone(ctx, TONE[lane]);
+    cue("tap");
+    hapticsRef.current.fire("place");
   }, [run, muted, reducedMotion]);
 
   useEffect(() => {
@@ -308,14 +306,21 @@ export default function UnseenBoss({ locale }: { locale: Locale }) {
         if (run.phase === "won") setBest(recordBest(GAME_ID, MISSES - run.misses, "score"));
       } catch { /* best-effort */ }
     }
-    if (muted || reducedMotion) return;
-    const Context = window.AudioContext;
-    if (!Context) return;
-    if (!audio.current) audio.current = new Context();
-    const ctx = audio.current;
-    void ctx.resume();
-    playTone(ctx, run.phase === "won" ? 620 : 180);
+    if (run.phase === "won") {
+      cue("win");
+      hapticsRef.current.fire("win");
+      if (containerRef.current) celebrate(containerRef.current, { preset: "shards" });
+    } else if (run.phase === "lost") {
+      cue("fail");
+      hapticsRef.current.fire("fail");
+    }
   }, [run, dateKey, attempt, muted, reducedMotion]);
+
+  const onGuess = (rule: Rule) => {
+    cue("place");
+    hapticsRef.current.fire("tap");
+    setRun((current) => (current ? guess(current, rule) : current));
+  };
 
   const again = () => {
     if (!dateKey) return;
@@ -334,6 +339,9 @@ export default function UnseenBoss({ locale }: { locale: Locale }) {
   return (
     <div ref={containerRef} className={isImmersive ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-y-auto bg-background p-3 sm:p-5" : "relative"}>
       <GameContainer title={t.title} subtitle={run ? t.subtitle : t.preparing}>
+        <div className="mb-3 overflow-hidden rounded-xl border border-border bg-muted">
+          <img src={UNSEEN_BOSS_SPRITES.keyart} alt={t.title} className="h-32 w-full object-cover sm:h-44" />
+        </div>
         <div className="mb-4 flex flex-wrap gap-2">
           <button type="button" onClick={() => setMuted((value) => !value)} aria-pressed={muted} aria-label={muted ? portalLabels.unmute : portalLabels.mute} title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`} className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-muted-foreground`}>
             {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
@@ -362,14 +370,24 @@ export default function UnseenBoss({ locale }: { locale: Locale }) {
               })}
             </div>
             {run.phase === "ready" ? (
-              <button type="button" onClick={() => setRun((current) => (current ? begin(current) : current))} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.start}</button>
+              <button
+                type="button"
+                onClick={() => {
+                  cue("tap");
+                  hapticsRef.current.fire("tap");
+                  setRun((current) => (current ? begin(current) : current));
+                }}
+                className={`${CONTROL} border-primary bg-primary text-primary-foreground`}
+              >
+                {t.start}
+              </button>
             ) : null}
             {run.phase === "ask" || run.lastGuess ? (
               <div className="space-y-2">
                 {RULES.map((rule) => {
                   const selected = run.lastGuess === rule;
                   return (
-                    <button key={rule} type="button" disabled={!asking} onClick={() => setRun((current) => (current ? guess(current, rule) : current))} aria-pressed={selected} className={`${CONTROL} w-full text-left disabled:opacity-40 ${selected ? "ring-2 ring-primary" : ""} border-border bg-card text-foreground`}>
+                    <button key={rule} type="button" disabled={!asking} onClick={() => onGuess(rule)} aria-pressed={selected} className={`${CONTROL} w-full text-left disabled:opacity-40 ${selected ? "ring-2 ring-primary" : ""} border-border bg-card text-foreground`}>
                       <span className="block">{t.rules[rule].name}</span>
                       <span className="block font-normal text-muted-foreground">{t.rules[rule].hint}</span>
                     </button>
