@@ -262,3 +262,17 @@ export function createBgmController(options: BgmOptions = {}): BgmController {
     },
   };
 }
+
+let globalBgmInstance: BgmController | null = null;
+
+/**
+ * Returns a shared global BGM controller instance for web game components.
+ */
+export function getGlobalBgmController(defaultTrack: BgmTrack = "zen"): BgmController {
+  if (!globalBgmInstance) {
+    globalBgmInstance = createBgmController({ track: defaultTrack });
+  } else if (defaultTrack && globalBgmInstance.currentTrack !== defaultTrack) {
+    globalBgmInstance.setTrack(defaultTrack);
+  }
+  return globalBgmInstance;
+}

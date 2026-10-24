@@ -7,6 +7,8 @@ import {
   computeMergeResult,
   clampDropperX,
   ARENA_WIDTH,
+  calculateVortexEnergyGain,
+  calculateVortexPull,
 } from "./cosmic-merge";
 import type { Locale } from "../i18n";
 
@@ -87,5 +89,37 @@ describe("cosmic-merge core contracts", () => {
     expect(clampDropperX(minExpected - 10, radius)).toBe(minExpected);
     expect(clampDropperX(ARENA_WIDTH / 2, radius)).toBe(ARENA_WIDTH / 2);
     expect(clampDropperX(ARENA_WIDTH + 50, radius)).toBe(maxExpected);
+  });
+
+  describe("vortex chaos modifier calculations", () => {
+    it("rewards scaling energy for higher tier merges up to cap", () => {
+      expect(calculateVortexEnergyGain(0)).toBe(10);
+      expect(calculateVortexEnergyGain(3)).toBe(16);
+      expect(calculateVortexEnergyGain(7)).toBe(24);
+      expect(calculateVortexEnergyGain(10)).toBe(25); // capped at 25
+    });
+
+    it("calculates inward gravitational pull toward singularity center", () => {
+      const vortexCenter = { x: 220, y: 400 };
+      const leftBody = { x: 120, y: 400 };
+      const pull = calculateVortexPull(leftBody, vortexCenter, 0.003, 0);
+
+      // Force should pull to the right (+x) towards center (220)
+      expect(pull.fx).toBeGreaterThan(0);
+      expect(pull.fy).toBeCloseTo(0, 5);
+      expect(pull.distance).toBe(100);
+
+      // Higher tier body has more inertia and experiences less acceleration
+      const heavyPull = calculateVortexPull(leftBody, vortexCenter, 0.003, 5);
+      expect(heavyPull.fx).toBeLessThan(pull.fx);
+    });
+
+    it("safely handles bodies located directly at vortex center", () => {
+      const center = { x: 220, y: 400 };
+      const pull = calculateVortexPull(center, center);
+      expect(pull.fx).toBe(0);
+      expect(pull.fy).toBe(0);
+      expect(pull.distance).toBe(0);
+    });
   });
 });

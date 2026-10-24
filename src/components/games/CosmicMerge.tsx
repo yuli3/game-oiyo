@@ -23,8 +23,15 @@ import {
   DROP_COOLDOWN_MS,
   getNextDropTier,
   MAX_TIER_INDEX,
+  calculateVortexEnergyGain,
+  calculateVortexPull,
+  VORTEX_DURATION_MS,
+  VORTEX_MAX_ENERGY,
 } from "../../lib/games/cosmic-merge";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
+import { GameShell } from "../ui/game/GameShell";
+import type { FlowPhase } from "../../lib/games/game-flow";
+import { getGlobalBgmController } from "../../lib/games/bgm";
 
 interface Props {
   locale?: Locale;
@@ -93,6 +100,9 @@ const COPY = {
     close: "닫기",
     unlocked: "발견 완료",
     locked: "미지의 천체",
+    vortex: "중력 볼텍스",
+    vortexReady: "볼텍스 [V]",
+    vortexActive: "볼텍스 가동 중",
   },
   en: {
     title: "Cosmic Merge Drop",
@@ -113,6 +123,9 @@ const COPY = {
     close: "Close",
     unlocked: "Discovered",
     locked: "Undiscovered",
+    vortex: "Gravity Vortex",
+    vortexReady: "Vortex [V]",
+    vortexActive: "Vortex Active",
   },
   ja: {
     title: "コズミック・マージ・ドロップ",
@@ -133,6 +146,9 @@ const COPY = {
     close: "閉じる",
     unlocked: "発見済み",
     locked: "未発見の天体",
+    vortex: "重力ボルテックス",
+    vortexReady: "ボルテックス [V]",
+    vortexActive: "ボルテックス発動中",
   },
   zh: {
     title: "宇宙合成消除",
@@ -153,6 +169,9 @@ const COPY = {
     close: "关闭",
     unlocked: "已发现",
     locked: "未知天体",
+    vortex: "引力漩涡",
+    vortexReady: "漩涡就绪 [V]",
+    vortexActive: "漩涡爆发中",
   },
   fr: {
     title: "Cosmic Merge Drop",
@@ -173,6 +192,9 @@ const COPY = {
     close: "Fermer",
     unlocked: "Découvert",
     locked: "Inconnu",
+    vortex: "Vortex gravitationnel",
+    vortexReady: "Vortex [V]",
+    vortexActive: "Vortex actif",
   },
   es: {
     title: "Cosmic Merge Drop",
@@ -193,6 +215,9 @@ const COPY = {
     close: "Cerrar",
     unlocked: "Descubierto",
     locked: "Desconocido",
+    vortex: "Vórtice gravitatorio",
+    vortexReady: "Vórtice [V]",
+    vortexActive: "Vórtice activo",
   },
 };
 
@@ -200,6 +225,7 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
   const t = COPY[locale] ?? COPY.en;
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [phase, setPhase] = useState<FlowPhase>("title");
   const [score, setScore] = useState(0);
   const [bestScore, setBestScore] = useState(0);
   const [currentTier, setCurrentTier] = useState<number>(0);
@@ -211,7 +237,20 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
   const [highestTierUnlocked, setHighestTierUnlocked] = useState(0);
   const [shareCopied, setShareCopied] = useState(false);
 
+  // Pillar 2: Chaos Modifier - Gravitational Singularity Vortex
+  const [vortexEnergy, setVortexEnergy] = useState<number>(0);
+  const [isVortexActive, setIsVortexActive] = useState<boolean>(false);
+  const vortexActiveRef = useRef(false);
+  const vortexEndTimeRef = useRef(0);
+  const vortexEnergyRef = useRef(0);
+  vortexEnergyRef.current = vortexEnergy;
+
   // References for physics and animation loop
+  const phaseRef = useRef<FlowPhase>("title");
+  phaseRef.current = phase;
+  const isGameOverRef = useRef(false);
+  isGameOverRef.current = isGameOver;
+
   const engineRef = useRef<Matter.Engine | null>(null);
   const dropperXRef = useRef<number>(ARENA_WIDTH / 2);
   const lastDropTimeRef = useRef<number>(0);
@@ -246,6 +285,7 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
       if (typeof window !== "undefined") {
         localStorage.setItem("cosmic-merge-muted", String(next));
       }
+      getGlobalBgmController("cosmic").setMuted(next);
       return next;
     });
   }, []);
@@ -340,6 +380,52 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
     }
   }, []);
 
+  // Web Audio Synthesizer: deep resonant vortex sweep
+  const playVortexSound = useCallback(() => {
+    if (mutedRef.current) return;
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    try {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(160, ctx.currentTime);
+      filter.frequency.exponentialRampToValueAtTime(750, ctx.currentTime + 1.2);
+      filter.frequency.exponentialRampToValueAtTime(110, ctx.currentTime + 2.4);
+
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(65, ctx.currentTime);
+      osc.frequency.linearRampToValueAtTime(130, ctx.currentTime + 1.2);
+      osc.frequency.linearRampToValueAtTime(55, ctx.currentTime + 2.4);
+
+      gain.gain.setValueAtTime(0.12, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.18, ctx.currentTime + 1.2);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 2.4);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 2.4);
+    } catch {
+      // Audio optional
+    }
+  }, [getAudioContext]);
+
+  // Activate Gravitational Singularity Vortex (Chaos Modifier)
+  const activateVortex = useCallback(() => {
+    if (vortexEnergyRef.current < VORTEX_MAX_ENERGY || vortexActiveRef.current) return;
+    vortexActiveRef.current = true;
+    vortexEndTimeRef.current = performance.now() + VORTEX_DURATION_MS;
+    setIsVortexActive(true);
+    setVortexEnergy(0);
+    vibrate([30, 40, 50, 40, 30]);
+    playVortexSound();
+    getGlobalBgmController("cosmic").duck(VORTEX_DURATION_MS, 0.2);
+  }, [playVortexSound, vibrate]);
+
   // Hook for Arcade Immersion Portal
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({
     locale,
@@ -409,6 +495,10 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
     setScore(0);
     setIsGameOver(false);
     setIsDanger(false);
+    setVortexEnergy(0);
+    setIsVortexActive(false);
+    vortexActiveRef.current = false;
+    vortexEndTimeRef.current = 0;
     particlesRef.current = [];
     floatingScoresRef.current = [];
     shakeRef.current = 0;
@@ -499,6 +589,13 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
               playMergeSound(mergeResult.nextTier);
               vibrate(mergeResult.nextTier >= 7 ? [15, 20, 30] : 18);
 
+              // Sound ducking on merge
+              getGlobalBgmController("cosmic").duck(220, 0.45);
+
+              // Pillar 2 Chaos Depth: Vortex Energy Gain
+              const energyGain = calculateVortexEnergyGain(mergeResult.nextTier);
+              setVortexEnergy((prev) => Math.min(VORTEX_MAX_ENERGY, prev + energyGain));
+
               // Score & highest tier update
               setHighestTierUnlocked((prev) => {
                 const next = Math.max(prev, mergeResult.nextTier);
@@ -539,7 +636,7 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
 
   // Handle Dropping celestial bodies
   const dropCurrentBody = useCallback(() => {
-    if (isGameOver || !engineRef.current) return;
+    if (phaseRef.current !== "play" || isGameOverRef.current || !engineRef.current) return;
     const now = performance.now();
     if (now - lastDropTimeRef.current < DROP_COOLDOWN_MS) return;
 
@@ -556,7 +653,7 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
     // Roll next tiers
     setCurrentTier(nextTier);
     setNextTier(getNextDropTier());
-  }, [currentTier, isGameOver, nextTier, playDropSound, vibrate]);
+  }, [currentTier, nextTier, playDropSound, vibrate]);
 
   // Pointer event handlers for touch/mouse targeting
   const updateDropperPosition = (clientX: number) => {
@@ -569,21 +666,50 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
   };
 
   const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (phaseRef.current !== "play") return;
     e.preventDefault();
     void getAudioContext();
     updateDropperPosition(e.clientX);
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (phaseRef.current !== "play") return;
     e.preventDefault();
     updateDropperPosition(e.clientX);
   };
 
   const handlePointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (phaseRef.current !== "play") return;
     e.preventDefault();
     updateDropperPosition(e.clientX);
     dropCurrentBody();
   };
+
+  const handleStartGame = useCallback(() => {
+    initGame();
+    setPhase("play");
+    const bgm = getGlobalBgmController("cosmic");
+    bgm.start("cosmic");
+    bgm.setMuted(mutedRef.current);
+  }, [initGame]);
+
+  const handlePause = useCallback(() => {
+    setPhase("paused");
+    getGlobalBgmController("cosmic").duck(999999, 0.3);
+  }, []);
+
+  const handleResume = useCallback(() => {
+    setPhase("play");
+    getGlobalBgmController("cosmic").duck(10, 1.0);
+  }, []);
+
+  const handleRetry = useCallback(() => {
+    initGame();
+    setPhase("play");
+    const bgm = getGlobalBgmController("cosmic");
+    bgm.start("cosmic");
+    bgm.setMuted(mutedRef.current);
+  }, [initGame]);
 
   const handleShareScore = useCallback(async () => {
     const highestName =
@@ -630,6 +756,9 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
       } else if (e.code === "ArrowRight" || e.code === "KeyD") {
         e.preventDefault();
         dropperXRef.current = clampDropperX(dropperXRef.current + 24, COSMIC_TIERS[currentTier].radius);
+      } else if (e.code === "KeyV") {
+        e.preventDefault();
+        activateVortex();
       } else if (e.code === "KeyF") {
         e.preventDefault();
         void togglePortal();
@@ -647,7 +776,7 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [currentTier, dropCurrentBody, initGame, isGameOver, toggleMute, togglePortal]);
+  }, [activateVortex, currentTier, dropCurrentBody, initGame, isGameOver, toggleMute, togglePortal]);
 
   // Main 120fps continuous animation & physics tick loop
   useEffect(() => {
@@ -662,38 +791,61 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
       const canvas = canvasRef.current;
 
       if (engine && canvas) {
-        // Step physics engine
-        Matter.Engine.update(engine, dt * 1000);
-
-        // Check deadline violation
         const bodies = Matter.Composite.allBodies(engine.world);
         let crossingDeadline = false;
 
-        for (const b of bodies) {
-          const user = (b as unknown as { userData?: CelestialUserData }).userData;
-          if (b.label === "celestial" && user && !user.isDead) {
-            // Relax squash animation
-            if (user.squash > 1.0) {
-              user.squash = Math.max(1.0, user.squash - dt * 2.5);
-            }
+        if (phaseRef.current === "play") {
+          // Step physics engine
+          Matter.Engine.update(engine, dt * 1000);
 
-            // Check if settled above deadline
-            if (b.position.y - COSMIC_TIERS[user.tier].radius < DEADLINE_Y && currentTime - user.createdAt > 1500) {
-              crossingDeadline = true;
+          // Update Gravitational Singularity Vortex (Chaos Modifier)
+          if (vortexActiveRef.current) {
+            const now = performance.now();
+            if (now > vortexEndTimeRef.current) {
+              vortexActiveRef.current = false;
+              setIsVortexActive(false);
+            } else {
+              const vortexCenter = { x: ARENA_WIDTH / 2, y: ARENA_HEIGHT * 0.62 };
+              for (const b of bodies) {
+                const user = (b as unknown as { userData?: CelestialUserData }).userData;
+                if (b.label === "celestial" && user && !user.isDead) {
+                  const pull = calculateVortexPull(b.position, vortexCenter, 0.0035, user.tier);
+                  Matter.Body.applyForce(b, b.position, { x: pull.fx, y: pull.fy });
+                }
+              }
+              shakeRef.current = Math.max(shakeRef.current, 1.8);
             }
           }
-        }
 
-        if (crossingDeadline && !isGameOver) {
-          setIsDanger(true);
-          if (dangerTimerRef.current === null) {
-            dangerTimerRef.current = currentTime;
-          } else if (currentTime - dangerTimerRef.current > 2200) {
-            setIsGameOver(true);
+          // Check deadline violation
+          for (const b of bodies) {
+            const user = (b as unknown as { userData?: CelestialUserData }).userData;
+            if (b.label === "celestial" && user && !user.isDead) {
+              // Relax squash animation
+              if (user.squash > 1.0) {
+                user.squash = Math.max(1.0, user.squash - dt * 2.5);
+              }
+
+              // Check if settled above deadline
+              if (b.position.y - COSMIC_TIERS[user.tier].radius < DEADLINE_Y && currentTime - user.createdAt > 1500) {
+                crossingDeadline = true;
+              }
+            }
           }
-        } else {
-          setIsDanger(false);
-          dangerTimerRef.current = null;
+
+          if (crossingDeadline && !isGameOverRef.current) {
+            setIsDanger(true);
+            if (dangerTimerRef.current === null) {
+              dangerTimerRef.current = currentTime;
+            } else if (currentTime - dangerTimerRef.current > 2200) {
+              setIsGameOver(true);
+              setPhase("result");
+              getGlobalBgmController("cosmic").duck(3000, 0.2);
+            }
+          } else {
+            setIsDanger(false);
+            dangerTimerRef.current = null;
+          }
         }
 
         // Render Canvas
@@ -778,6 +930,53 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
           ctx.fill();
           ctx.shadowBlur = 0;
           ctx.restore();
+
+          // Draw Gravitational Singularity Vortex FX (Chaos Modifier)
+          if (vortexActiveRef.current) {
+            const vx = ARENA_WIDTH / 2;
+            const vy = ARENA_HEIGHT * 0.62;
+            const rot = currentTime * 0.005;
+
+            ctx.save();
+            ctx.translate(vx, vy);
+
+            // Gravitational distortion ripples
+            ctx.beginPath();
+            ctx.arc(0, 0, 75 + Math.sin(currentTime * 0.01) * 8, 0, Math.PI * 2);
+            ctx.strokeStyle = "rgba(192, 132, 252, 0.45)";
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // Swirling accretion spiral arms
+            for (let arm = 0; arm < 3; arm++) {
+              const baseAngle = rot + (arm * Math.PI * 2) / 3;
+              ctx.beginPath();
+              for (let r = 10; r < 75; r += 5) {
+                const a = baseAngle + r * 0.08;
+                const x = Math.cos(a) * r;
+                const y = Math.sin(a) * r;
+                if (r === 10) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+              }
+              ctx.strokeStyle = arm === 0 ? "rgba(251, 191, 36, 0.75)" : "rgba(56, 189, 248, 0.75)";
+              ctx.lineWidth = 2.5;
+              ctx.stroke();
+            }
+
+            // Event horizon singularity core
+            ctx.beginPath();
+            ctx.arc(0, 0, 16, 0, Math.PI * 2);
+            ctx.fillStyle = "#020617";
+            ctx.shadowColor = "#c084fc";
+            ctx.shadowBlur = 18;
+            ctx.fill();
+            ctx.strokeStyle = "#c084fc";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+
+            ctx.restore();
+          }
 
           // Draw all Matter.js celestial bodies
           for (const body of bodies) {
@@ -884,259 +1083,213 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
   const nextTierData = COSMIC_TIERS[nextTier];
 
   return (
-    <div
-      ref={containerRef}
-      data-game-surface
-      className={
-        isImmersive
-          ? "fixed inset-0 z-50 w-screen h-dvh bg-black m-0 p-0 rounded-none border-none select-none touch-none flex flex-col items-center justify-center overflow-hidden"
-          : "relative w-full max-w-md mx-auto aspect-11/16 rounded-2xl overflow-hidden border border-border bg-card shadow-2xl select-none touch-none"
-      }
-    >
-      {/* 100% Canvas GPU Surface */}
-      <canvas
-        ref={canvasRef}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerUp}
-        className="w-full h-full block cursor-crosshair touch-none"
-      />
-
-      {/* Top Floating HUD: Score, Next Preview, Portal & Sound Toggles */}
-      <div className="absolute top-3 left-3 right-3 z-10 pointer-events-none flex items-center justify-between">
-        {/* Score & Next Pill */}
-        <div className="flex items-center gap-2 pointer-events-auto">
-          <div className="px-3 py-1.5 rounded-xl border border-border/80 bg-background/85 backdrop-blur-md shadow-xs">
-            <span className="text-xs uppercase tracking-wider text-muted-foreground block">{t.score}</span>
-            <span className="text-sm font-black font-mono text-primary">{score.toLocaleString()}</span>
-          </div>
-
-          <div className="px-3 py-1.5 rounded-xl border border-border/80 bg-background/85 backdrop-blur-md shadow-xs flex items-center gap-1.5">
+    <GameShell
+      title={t.title}
+      subtitle={t.controlsHint}
+      keyart={COSMIC_MERGE_SPRITES.keyart}
+      phase={phase}
+      score={score.toLocaleString()}
+      best={bestScore.toLocaleString()}
+      muted={muted}
+      onToggleMute={toggleMute}
+      isImmersive={isImmersive}
+      onTogglePortal={togglePortal}
+      containerRef={containerRef}
+      onStart={handleStartGame}
+      onPause={handlePause}
+      onResume={handleResume}
+      onRetry={handleRetry}
+      resultTitle={t.gameover}
+      resultStats={[
+        { label: t.score, value: score.toLocaleString() },
+        { label: t.best, value: bestScore.toLocaleString() },
+      ]}
+      onShare={handleShareScore}
+      shareCopied={shareCopied}
+      controlsHint={t.controlsHint}
+      extraHeaderActions={
+        <div className="flex items-center gap-1.5 pointer-events-auto">
+          {/* Next Planet Pill */}
+          <div className="px-2.5 py-1.5 rounded-xl border border-border/80 bg-background/85 backdrop-blur-md shadow-xs flex items-center gap-1.5">
             <div>
               <span className="text-xs uppercase tracking-wider text-muted-foreground block">{t.next}</span>
-              <span className="text-xs font-bold text-foreground">{nextTierData.name[locale] ?? nextTierData.name.en}</span>
+              <span className="text-xs font-bold text-foreground truncate max-w-24 block">
+                {nextTierData.name[locale] ?? nextTierData.name.en}
+              </span>
             </div>
-            <svg className="w-5 h-5 shrink-0 drop-shadow-xs" viewBox="0 0 20 20" aria-hidden="true">
+            <svg className="w-4 h-4 shrink-0 drop-shadow-xs" viewBox="0 0 20 20" aria-hidden="true">
               <circle cx="10" cy="10" r="8.5" fill={nextTierData.color} stroke="currentColor" className="text-border" strokeWidth="1" />
             </svg>
           </div>
-        </div>
 
-        {/* Right Buttons: Codex, Portal Fullscreen & Mute */}
-        <div className="flex items-center gap-1.5 pointer-events-auto">
+          {/* Vortex Gauge / Trigger Button (Pillar 2 Chaos Modifier) */}
+          {isVortexActive ? (
+            <div className="animate-bounce px-2.5 py-1.5 rounded-xl border border-chart-2 bg-chart-2/20 text-chart-2 font-black text-xs">
+              🌀 {t.vortexActive}
+            </div>
+          ) : vortexEnergy >= VORTEX_MAX_ENERGY ? (
+            <button
+              type="button"
+              onClick={activateVortex}
+              className="animate-pulse min-h-11 px-3 py-2 rounded-xl border border-primary bg-primary text-primary-foreground font-black text-xs shadow-md hover:bg-primary/90 transition-transform active:scale-95 flex items-center gap-1"
+            >
+              <span>🌀</span>
+              <span>{t.vortexReady}</span>
+            </button>
+          ) : (
+            <div className="px-2.5 py-1.5 rounded-xl border border-border bg-background/85 backdrop-blur-md text-xs font-mono font-bold text-muted-foreground flex items-center gap-1">
+              <span>🌀</span>
+              <span>{vortexEnergy}%</span>
+            </div>
+          )}
+
+          {/* Codex Button */}
           <button
             type="button"
             onClick={() => setShowCodex((s) => !s)}
             aria-pressed={showCodex}
             aria-label={t.codex}
             title={t.codex}
-            className="min-h-11 px-3 py-2 rounded-xl border border-border bg-background/85 backdrop-blur-md shadow-xs text-xs font-black text-foreground hover:bg-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary flex items-center gap-1"
+            className="min-h-11 px-3 py-2 rounded-xl border border-border bg-muted/60 hover:bg-muted text-foreground text-xs font-bold flex items-center gap-1 transition-colors"
           >
-            <span className="text-sm">📖</span>
+            <span>📖</span>
             <span className="hidden sm:inline">{t.codex}</span>
           </button>
-
-          <button
-            type="button"
-            onClick={togglePortal}
-            aria-pressed={isImmersive}
-            aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
-            title={isImmersive ? portalLabels.exit : portalLabels.enter}
-            className="min-h-11 px-3 py-2 rounded-xl border border-border bg-background/85 backdrop-blur-md shadow-xs text-xs font-black text-foreground hover:bg-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary flex items-center gap-1"
-          >
-            <span className="text-sm">{isImmersive ? "✕" : "⛶"}</span>
-            <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={toggleMute}
-            aria-pressed={muted}
-            aria-label={muted ? t.soundOn : t.soundOff}
-            className="min-h-11 px-3 py-2 rounded-xl border border-border bg-background/85 backdrop-blur-md shadow-xs text-xs font-black text-foreground hover:bg-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-          >
-            {muted ? "🔇" : "🔊"}
-          </button>
         </div>
-      </div>
+      }
+    >
+      <div className="relative w-full h-full flex items-center justify-center bg-background overflow-hidden">
+        {/* 100% Canvas GPU Surface */}
+        <canvas
+          ref={canvasRef}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
+          className="h-full max-h-full max-w-full aspect-11/16 block cursor-crosshair touch-none select-none"
+        />
 
-      {/* Danger Warning Banner */}
-      {isDanger && !isGameOver && (
-        <div className="absolute top-16 left-1/2 -translate-x-1/2 z-10 pointer-events-none animate-pulse">
-          <span className="px-3 py-1 rounded-full border border-destructive/60 bg-destructive/90 text-destructive-foreground text-xs font-black tracking-wide shadow-md">
-            ⚠️ {t.deadline}
-          </span>
-        </div>
-      )}
-
-      {/* Bottom Hint */}
-      <div className="absolute bottom-2 left-4 right-4 pointer-events-none text-center hidden sm:block">
-        <span className="text-xs font-semibold text-muted-foreground/80 bg-background/70 backdrop-blur-xs px-3 py-1 rounded-full border border-border/50">
-          {t.controlsHint}
-        </span>
-      </div>
-
-      {/* Game Over Modal */}
-      {isGameOver && (
-        <div className="absolute inset-0 bg-background/85 backdrop-blur-md flex items-center justify-center p-6 z-20 animate-in fade-in zoom-in-95 duration-200 pointer-events-auto">
-          <div className="max-w-xs w-full rounded-2xl border border-border bg-card p-6 shadow-2xl text-center space-y-4">
-            <div className="overflow-hidden rounded-xl border border-border bg-muted mb-2">
-              <img src={COSMIC_MERGE_SPRITES.keyart} alt={t.title} className="h-24 w-full object-cover" />
-            </div>
-            <div className="w-14 h-14 bg-destructive/15 rounded-2xl flex items-center justify-center mx-auto text-2xl border border-destructive/20">
-              💥
-            </div>
-
-            <div className="text-xl font-black tracking-tight text-destructive">{t.gameover}</div>
-
-            <div className="grid grid-cols-2 gap-2 py-1">
-              <div className="rounded-xl border border-border bg-muted/40 p-2.5">
-                <span className="text-xs text-muted-foreground block mb-0.5">{t.score}</span>
-                <span className="text-lg font-black text-foreground font-mono">{score.toLocaleString()}</span>
-              </div>
-              <div className="rounded-xl border border-border bg-muted/40 p-2.5">
-                <span className="text-xs text-muted-foreground block mb-0.5">{t.best}</span>
-                <span className="text-lg font-black text-primary font-mono">{bestScore.toLocaleString()}</span>
-              </div>
-            </div>
-
-            {score >= bestScore && score > 0 && (
-              <p className="text-xs font-black text-primary animate-bounce">{t.newBest}</p>
-            )}
-
-            <div className="flex gap-2 pt-1">
-              <button
-                type="button"
-                onClick={handleShareScore}
-                className="flex-1 py-3 rounded-xl border border-border bg-muted/40 hover:bg-muted text-foreground font-bold text-xs transition-colors flex items-center justify-center gap-1.5 active:scale-98"
-              >
-                <span>📤</span>
-                <span>{shareCopied ? t.copied : t.share}</span>
-              </button>
-              <button
-                type="button"
-                onClick={initGame}
-                className="flex-1 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-xs shadow-md hover:bg-primary/90 transition-opacity active:scale-98"
-              >
-                {t.restart}
-              </button>
-            </div>
+        {/* Danger Warning Banner */}
+        {isDanger && phase === "play" && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 pointer-events-none animate-pulse">
+            <span className="px-3 py-1 rounded-full border border-destructive/60 bg-destructive/90 text-destructive-foreground text-xs font-black tracking-wide shadow-md">
+              ⚠️ {t.deadline}
+            </span>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Cosmic Codex Modal */}
-      {showCodex && (
-        <div className="absolute inset-0 bg-background/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 z-30 animate-in fade-in duration-200 pointer-events-auto">
-          <div className="max-w-md w-full max-h-full rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-2xl flex flex-col">
-            {/* Codex Header */}
-            <div className="mb-3 overflow-hidden rounded-xl border border-border bg-muted">
-              <img src={COSMIC_MERGE_SPRITES.keyart} alt={t.title} className="h-28 w-full object-cover" />
-            </div>
-            <div className="flex items-center justify-between pb-3 border-b border-border/60">
-              <div>
-                <h3 className="text-base font-black text-foreground flex items-center gap-1.5">
-                  <span>📖</span>
-                  <span>{t.codex}</span>
-                </h3>
-                <p className="text-xs text-muted-foreground">{t.codexSubtitle}</p>
+        {/* Cosmic Codex Modal */}
+        {showCodex && (
+          <div className="absolute inset-0 bg-background/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 z-30 animate-in fade-in duration-200 pointer-events-auto">
+            <div className="max-w-md w-full max-h-full rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-2xl flex flex-col">
+              {/* Codex Header */}
+              <div className="mb-3 overflow-hidden rounded-xl border border-border bg-muted">
+                <img src={COSMIC_MERGE_SPRITES.keyart} alt={t.title} className="h-28 w-full object-cover" />
               </div>
-              <button
-                type="button"
-                onClick={() => setShowCodex(false)}
-                className="p-1.5 rounded-lg border border-border bg-muted/40 hover:bg-muted text-foreground transition-colors text-xs font-bold"
-                aria-label={t.close}
-              >
-                ✕
-              </button>
-            </div>
+              <div className="flex items-center justify-between pb-3 border-b border-border/60">
+                <div>
+                  <h3 className="text-base font-black text-foreground flex items-center gap-1.5">
+                    <span>📖</span>
+                    <span>{t.codex}</span>
+                  </h3>
+                  <p className="text-xs text-muted-foreground">{t.codexSubtitle}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowCodex(false)}
+                  className="p-1.5 rounded-lg border border-border bg-muted/40 hover:bg-muted text-foreground transition-colors text-xs font-bold"
+                  aria-label={t.close}
+                >
+                  ✕
+                </button>
+              </div>
 
-            {/* Tier list */}
-            <div className="flex-1 overflow-y-auto py-3 space-y-2 pr-1">
-              {COSMIC_TIERS.map((tier) => {
-                const isUnlocked = highestTierUnlocked >= tier.id;
-                const tierName = tier.name[locale] ?? tier.name.en;
-                const tierFact = tier.fact[locale] ?? tier.fact.en;
+              {/* Tier list */}
+              <div className="flex-1 overflow-y-auto py-3 space-y-2 pr-1">
+                {COSMIC_TIERS.map((tier) => {
+                  const isUnlocked = highestTierUnlocked >= tier.id;
+                  const tierName = tier.name[locale] ?? tier.name.en;
+                  const tierFact = tier.fact[locale] ?? tier.fact.en;
 
-                return (
-                  <div
-                    key={tier.id}
-                    className={
-                      isUnlocked
-                        ? "rounded-xl border border-border/80 bg-background/60 p-2.5 transition-all flex items-start gap-3"
-                        : "rounded-xl border border-border/30 bg-muted/20 p-2.5 transition-all flex items-start gap-3 opacity-60"
-                    }
-                  >
-                    {/* Planet Sphere Badge */}
-                    <div className="w-10 h-10 shrink-0 flex items-center justify-center mt-0.5 relative">
-                      <svg className="w-10 h-10 shrink-0 drop-shadow-xs" viewBox="0 0 36 36" aria-hidden="true">
-                        <circle
-                          cx="18"
-                          cy="18"
-                          r="14"
-                          fill={isUnlocked ? tier.color : "#475569"}
-                          stroke="currentColor"
-                          className="text-border"
-                          strokeWidth="1"
-                        />
-                        {isUnlocked && (
-                          <circle cx="14" cy="14" r="5" fill="currentColor" className="text-white/35" />
-                        )}
-                        {tier.hasRing && isUnlocked && (
-                          <ellipse
+                  return (
+                    <div
+                      key={tier.id}
+                      className={
+                        isUnlocked
+                          ? "rounded-xl border border-border/80 bg-background/60 p-2.5 transition-all flex items-start gap-3"
+                          : "rounded-xl border border-border/30 bg-muted/20 p-2.5 transition-all flex items-start gap-3 opacity-60"
+                      }
+                    >
+                      {/* Planet Sphere Badge */}
+                      <div className="w-10 h-10 shrink-0 flex items-center justify-center mt-0.5 relative">
+                        <svg className="w-10 h-10 shrink-0 drop-shadow-xs" viewBox="0 0 36 36" aria-hidden="true">
+                          <circle
                             cx="18"
                             cy="18"
-                            rx="17"
-                            ry="4.5"
-                            transform="rotate(-25 18 18)"
+                            r="14"
+                            fill={isUnlocked ? tier.color : "#475569"}
                             stroke="currentColor"
-                            className="text-warning"
-                            strokeWidth="1.5"
-                            fill="none"
+                            className="text-border"
+                            strokeWidth="1"
                           />
+                          {isUnlocked && (
+                            <circle cx="14" cy="14" r="5" fill="currentColor" className="text-white/35" />
+                          )}
+                          {tier.hasRing && isUnlocked && (
+                            <ellipse
+                              cx="18"
+                              cy="18"
+                              rx="17"
+                              ry="4.5"
+                              transform="rotate(-25 18 18)"
+                              stroke="currentColor"
+                              className="text-warning"
+                              strokeWidth="1.5"
+                              fill="none"
+                            />
+                          )}
+                        </svg>
+                        {!isUnlocked && (
+                          <span className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground">
+                            🔒
+                          </span>
                         )}
-                      </svg>
-                      {!isUnlocked && (
-                        <span className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground">
-                          🔒
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Planet Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-1 mb-0.5">
-                        <span className="text-xs font-bold text-foreground truncate">
-                          {tier.id + 1}. {isUnlocked ? tierName : t.locked}
-                        </span>
-                        <span className="text-xs font-mono font-bold text-primary shrink-0">
-                          +{tier.score}
-                        </span>
                       </div>
-                      <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
-                        {isUnlocked ? tierFact : "???"}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
 
-            {/* Codex Footer */}
-            <div className="pt-3 border-t border-border/60 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setShowCodex(false)}
-                className="px-4 py-2 rounded-xl bg-primary text-primary-foreground font-bold text-xs shadow-xs hover:opacity-90 active:scale-95 transition-all"
-              >
-                {t.close}
-              </button>
+                      {/* Planet Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-1 mb-0.5">
+                          <span className="text-xs font-bold text-foreground truncate">
+                            {tier.id + 1}. {isUnlocked ? tierName : t.locked}
+                          </span>
+                          <span className="text-xs font-mono font-bold text-primary shrink-0">
+                            +{tier.score}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
+                          {isUnlocked ? tierFact : "???"}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Codex Footer */}
+              <div className="pt-3 border-t border-border/60 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowCodex(false)}
+                  className="px-4 py-2 rounded-xl bg-primary text-primary-foreground font-bold text-xs shadow-xs hover:opacity-90 active:scale-95 transition-all"
+                >
+                  {t.close}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </GameShell>
   );
 };
 

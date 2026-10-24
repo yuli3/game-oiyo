@@ -13,6 +13,7 @@ export interface GameShellProps {
   onToggleMute: () => void;
   isImmersive: boolean;
   onTogglePortal: () => void;
+  containerRef?: React.RefObject<HTMLDivElement | null>;
   portalLabels?: {
     enter: string;
     exit: string;
@@ -47,6 +48,7 @@ export const GameShell: React.FC<GameShellProps> = ({
   onToggleMute,
   isImmersive,
   onTogglePortal,
+  containerRef,
   portalLabels = {
     enter: "전체화면",
     exit: "나가기",
@@ -69,7 +71,8 @@ export const GameShell: React.FC<GameShellProps> = ({
   children,
   className = "",
 }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const targetRef = containerRef ?? innerRef;
 
   // Keyboard navigation for Pause/Mute/Fullscreen
   useEffect(() => {
@@ -107,7 +110,7 @@ export const GameShell: React.FC<GameShellProps> = ({
 
   return (
     <div
-      ref={containerRef}
+      ref={targetRef}
       data-game-surface
       className={
         isImmersive

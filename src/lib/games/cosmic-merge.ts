@@ -337,3 +337,59 @@ export function clampDropperX(x: number, radius: number): number {
   const maxX = ARENA_WIDTH - 20 - radius;
   return Math.max(minX, Math.min(maxX, x));
 }
+
+// ---------------------------------------------------------------------------
+// Pillar 2 Core Depth: Chaos Modifier (Gravitational Singularity Vortex)
+// ---------------------------------------------------------------------------
+
+export const VORTEX_MAX_ENERGY = 100;
+export const VORTEX_DURATION_MS = 2400;
+
+/**
+ * Calculates vortex energy gained from merging celestial bodies of a given tier.
+ * Higher tiers contribute slightly more energy to reward strategic play.
+ */
+export function calculateVortexEnergyGain(tier: number): number {
+  return Math.min(25, 10 + tier * 2);
+}
+
+export interface VortexPullResult {
+  fx: number;
+  fy: number;
+  distance: number;
+}
+
+/**
+ * Computes inward gravitational pull towards the vortex singularity center.
+ * Features an inverse-distance falloff with softening radius to avoid infinite acceleration.
+ */
+export function calculateVortexPull(
+  bodyPos: { x: number; y: number },
+  vortexPos: { x: number; y: number },
+  baseStrength = 0.003,
+  tier = 0
+): VortexPullResult {
+  const dx = vortexPos.x - bodyPos.x;
+  const dy = vortexPos.y - bodyPos.y;
+  const distSq = dx * dx + dy * dy;
+  const distance = Math.sqrt(distSq);
+
+  if (distance < 1) {
+    return { fx: 0, fy: 0, distance: 0 };
+  }
+
+  // Softening parameter to prevent division by zero or extreme velocity spikes
+  const softening = 900;
+  // Lighter bodies (lower tier) get pulled more aggressively towards the core
+  const tierMassFactor = 1 / (1 + tier * 0.45);
+  const forceMagnitude = (baseStrength * 1000 * tierMassFactor) / (distSq + softening);
+
+  const nx = dx / distance;
+  const ny = dy / distance;
+
+  return {
+    fx: nx * forceMagnitude,
+    fy: ny * forceMagnitude,
+    distance,
+  };
+}
