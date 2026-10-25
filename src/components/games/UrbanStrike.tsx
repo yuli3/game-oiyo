@@ -1,10 +1,16 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from "react";
-import { Crosshair, Headphones, Maximize2, Minimize2, Radio, Shield, Smartphone, Target, Volume2, VolumeX } from "lucide-react";
+import { Crosshair, Headphones, Maximize2, Minimize2, Radio, Shield, Smartphone, Target, Volume2, VolumeX, Share2, Check } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
 import { getBest, recordBest } from "../../lib/games/records";
 import { reviewUrbanStrikeResult } from "../../lib/games/urban-strike";
 import type { MatchResult, UrbanStrikeSceneCopy } from "./UrbanStrikeScene";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
+import { celebrate } from "../../lib/games/celebration";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
 
 const Scene = lazy(() => import("./UrbanStrikeScene"));
 const GAME_KEY = "urban-strike";
@@ -265,6 +271,7 @@ export default function UrbanStrike({ locale }: { locale: Locale }) {
   const [best, setBest] = useState(0);
   const [available, setAvailable] = useState(true);
   const [result, setResult] = useState<MatchResult | null>(null);
+  const [shareCardCopied, setShareCardCopied] = useState(false);
   const [muted, setMuted] = useState(() => {
     try {
       if (typeof window !== "undefined" && window.localStorage) {
@@ -277,6 +284,29 @@ export default function UrbanStrike({ locale }: { locale: Locale }) {
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({
     locale: (locale as any) || "ko",
   });
+
+  const handleShareCard = useCallback(async () => {
+    if (!result) return;
+    const canvas = createShareCardCanvas({
+      title: "Urban Strike",
+      subtitle: result.blueScore > result.redScore ? "전술 구역 승리 (VICTORY)" : "전술 작전 기록",
+      score: `${result.score.toLocaleString()} PTS`,
+      slug: "urban-strike",
+      customStats: [
+        { label: "K/D", value: `${result.kills}K / ${result.deaths}D` },
+        { label: "MATCH", value: `${result.blueScore} - ${result.redScore}` },
+        { label: "ACCURACY", value: `${result.accuracy}%` },
+        { label: "BEST", value: `${best.toLocaleString()}` },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `urban-strike-${result.score}pts.png`);
+    }
+  }, [result, best]);
 
   const toggleMute = useCallback(() => {
     setMuted((prev) => {
@@ -328,7 +358,12 @@ export default function UrbanStrike({ locale }: { locale: Locale }) {
     setBest(saved.value);
     setResult(next);
     setPhase("result");
-  }, []);
+    if (containerRef.current) {
+      celebrate(containerRef.current, {
+        preset: next.blueScore > next.redScore ? "sparks" : "shards",
+      });
+    }
+  }, [containerRef]);
 
   if (phase === "playing" || phase === "loading") {
     return (
@@ -438,6 +473,16 @@ export default function UrbanStrike({ locale }: { locale: Locale }) {
               <p className="mt-3 text-center text-xs font-black uppercase tracking-widest text-amber-300">
                 → {reviewUrbanStrikeResult(result) === "aim" ? t.accuracy : reviewUrbanStrikeResult(result) === "survival" ? t.deaths : t.scene.objective}
               </p>
+              <div className="mt-4 flex justify-center">
+                <button
+                  type="button"
+                  onClick={handleShareCard}
+                  className="flex min-h-11 items-center gap-1.5 rounded-xl border border-border bg-card/80 hover:bg-muted px-5 py-2.5 text-xs font-bold text-foreground transition-colors shadow-xs"
+                >
+                  {shareCardCopied ? <Check className="size-4 text-primary" /> : <Share2 className="size-4" />}
+                  <span>{shareCardCopied ? "복사 완료!" : "전투 결과 카드 공유"}</span>
+                </button>
+              </div>
             </div>
           )}
         </div>

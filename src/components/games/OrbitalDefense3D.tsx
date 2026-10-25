@@ -1,7 +1,13 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { Maximize2, Minimize2, Volume2, VolumeX, Share2, Check } from 'lucide-react';
+import { celebrate } from '../../lib/games/celebration';
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from '../../lib/games/share-card';
 import type {
   OrbitalDefenseState,
   TurretType,
@@ -71,6 +77,28 @@ export default function OrbitalDefense3D({ locale = 'ko' }: Props) {
   const [gameState, setGameState] = useState<OrbitalDefenseState>(createInitialState);
   const [selectedSlot, setSelectedSlot] = useState<{ orbitIndex: number; slotIndex: number } | null>(null);
   const [selectedTurretId, setSelectedTurretId] = useState<string | null>(null);
+  const [shareCardCopied, setShareCardCopied] = useState(false);
+
+  const handleShareCard = useCallback(async () => {
+    const canvas = createShareCardCanvas({
+      title: "3D Orbital Defense",
+      subtitle: gameState.isGameOver ? "행성 궤도 방어전 종결" : "행성 궤도 수호 기록",
+      score: `${gameState.score.toLocaleString()} PTS`,
+      slug: "orbital-defense-3d",
+      customStats: [
+        { label: "WAVE", value: `${gameState.wave}` },
+        { label: "CORE HEALTH", value: `${Math.max(0, Math.round(gameState.planetHealth))}%` },
+        { label: "GOLD", value: `${gameState.gold}G` },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `orbital-defense-${gameState.score}pts.png`);
+    }
+  }, [gameState.score, gameState.isGameOver, gameState.wave, gameState.planetHealth, gameState.gold]);
   const [muted, setMuted] = useState(() => {
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
@@ -114,6 +142,16 @@ export default function OrbitalDefense3D({ locale = 'ko' }: Props) {
 
   const stateRef = useRef(gameState);
   stateRef.current = gameState;
+
+  const prevOverRef = useRef(false);
+  useEffect(() => {
+    if (gameState.isGameOver && !prevOverRef.current) {
+      if (containerRef.current) {
+        celebrate(containerRef.current, { preset: "stardust" });
+      }
+    }
+    prevOverRef.current = gameState.isGameOver;
+  }, [gameState.isGameOver, containerRef]);
 
   // Main game tick loop
   useEffect(() => {
@@ -264,14 +302,24 @@ export default function OrbitalDefense3D({ locale = 'ko' }: Props) {
         {gameState.isGameOver ? (
           <div className="flex flex-col items-center justify-center gap-3 py-4 text-center">
             <p className="text-lg font-bold text-destructive">{t.gameOver}</p>
-            <p className="text-sm text-muted-foreground">최종 점수: {gameState.score}점 (웨이브 {gameState.wave})</p>
-            <button
-              type="button"
-              onClick={handleRestart}
-              className="rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-90"
-            >
-              {t.restart}
-            </button>
+            <p className="text-sm text-muted-foreground">최종 점수: {gameState.score.toLocaleString()}점 (웨이브 {gameState.wave})</p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleShareCard}
+                className="flex items-center gap-1.5 rounded-xl border border-border bg-card hover:bg-muted px-4 py-2.5 text-sm font-bold text-foreground transition-colors shadow-xs"
+              >
+                {shareCardCopied ? <Check className="w-4 h-4 text-primary" /> : <Share2 className="w-4 h-4" />}
+                {shareCardCopied ? "복사됨!" : "결과 카드 공유"}
+              </button>
+              <button
+                type="button"
+                onClick={handleRestart}
+                className="rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-90"
+              >
+                {t.restart}
+              </button>
+            </div>
           </div>
         ) : selectedSlot ? (
           <div className="space-y-3">

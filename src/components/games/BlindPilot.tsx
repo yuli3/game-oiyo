@@ -7,9 +7,15 @@
  * 음소거·멈춤·시드 변경은 그 음성을 끊는다. 고장난 축의 지금 값은 읽지 않는다.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Maximize2, Minimize2 } from "lucide-react";
+import { Maximize2, Minimize2, Share2, Check } from "lucide-react";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import type { Locale } from "../../lib/i18n";
+import { celebrate } from "../../lib/games/celebration";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
 import {
   ACTIONS,
   STEP_CAP,
@@ -777,6 +783,7 @@ export default function BlindPilot({ locale = "en" }: { locale?: Locale }) {
   const [muted, setMuted] = useState(false);
   const [view, setView] = useState(0);
   const [voiced, setVoiced] = useState(false);
+  const [shareCardCopied, setShareCardCopied] = useState(false);
   const stateRef = useRef(state);
   const pausedRef = useRef(paused);
   const mutedRef = useRef(muted);
@@ -791,6 +798,28 @@ export default function BlindPilot({ locale = "en" }: { locale?: Locale }) {
   pausedRef.current = paused;
   mutedRef.current = muted;
   busyRef.current = busy;
+
+  const handleShareCard = useCallback(async () => {
+    const s = stateRef.current;
+    const canvas = createShareCardCanvas({
+      title: "Blind Pilot",
+      subtitle: s.status === "win" ? "계기 의존 정밀 착륙 성공" : "계기 비행 기록",
+      score: `${s.steps}/${STEP_CAP} STEPS`,
+      slug: "blind-pilot",
+      customStats: [
+        { label: "SEED", value: `${seed}` },
+        { label: "OUTCOME", value: s.status === "win" ? "LANDED" : s.status === "lose" ? "MISSED" : "APPROACH" },
+        { label: "DAMAGED", value: s.dead.toUpperCase() },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `blind-pilot-seed${seed}.png`);
+    }
+  }, [seed]);
 
   useEffect(() => {
     const player = audio.current;
@@ -860,12 +889,15 @@ export default function BlindPilot({ locale = "en" }: { locale?: Locale }) {
   const begin = useCallback((next: PilotState, kind: Tick) => {
     arm();
     note(kind);
+    if (next.status === "win" && containerRef.current) {
+      celebrate(containerRef.current, { preset: "stardust" });
+    }
     glideSerial.current += 1;
     setShown(stateRef.current);
     setState(next);
     setGlide({ id: glideSerial.current });
     setBusy(true);
-  }, [arm, note]);
+  }, [arm, note, containerRef]);
 
   const move = useCallback((action: Action) => {
     const current = stateRef.current;
@@ -1007,6 +1039,28 @@ export default function BlindPilot({ locale = "en" }: { locale?: Locale }) {
         ))}
       </ol>
       <p role="status" aria-live="polite" className="text-sm text-foreground">{live}</p>
+      {(state.status === "win" || state.status === "lose") && (
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={handleShareCard}
+            className="flex-1 py-3 px-4 rounded-xl border border-border bg-card hover:bg-muted font-bold text-sm text-foreground transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+          >
+            {shareCardCopied ? <Check className="w-4 h-4 text-primary" /> : <Share2 className="w-4 h-4" />}
+            {shareCardCopied ? "결과 복사 완료!" : "결과 카드 공유"}
+          </button>
+          <button
+            type="button"
+            className="flex-1 py-3 px-4 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-sm hover:bg-primary/90 transition-colors"
+            onClick={() => {
+              arm();
+              load(nextSeed(seed));
+            }}
+          >
+            {copy.next}
+          </button>
+        </div>
+      )}
       <div className={isImmersive ? "relative flex min-h-64 w-full flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-card" : "relative overflow-hidden rounded-2xl border border-border bg-card"}>
         <div className={isImmersive ? "h-full min-h-64 w-full flex-1" : "h-96"} aria-hidden="true">
           <BlindPilotScene

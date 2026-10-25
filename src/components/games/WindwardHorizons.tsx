@@ -1,5 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useRef, useState } from "react";
-import { Compass, Map, Maximize2, Minimize2, Music2, PackageOpen, Waves, Wind } from "lucide-react";
+import { Compass, Map, Maximize2, Minimize2, Music2, PackageOpen, Waves, Wind, Share2, Check } from "lucide-react";
 import { useThrottle } from "../../hooks/_oiyo-shared/useThrottle";
 import type { Locale } from "../../lib/i18n";
 import { getBest, recordBest } from "../../lib/games/records";
@@ -7,6 +7,12 @@ import { WindwardScore } from "../../lib/games/windward-score";
 import { loadWindwardSave, type WindwardSaveV1 } from "../../lib/games/windward-save";
 import type { VoyageResult, WindwardSceneCopy } from "./WindwardHorizonsScene";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
+import { celebrate } from "../../lib/games/celebration";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
 
 const Scene = lazy(() => import("./WindwardHorizonsScene"));
 const GAME_KEY = "windward-horizons";
@@ -280,6 +286,7 @@ export default function WindwardHorizons({ locale }: { locale: Locale }) {
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [best, setBest] = useState(0);
   const [result, setResult] = useState<VoyageResult | null>(null);
+  const [shareCardCopied, setShareCardCopied] = useState(false);
   const [hasSave, setHasSave] = useState(false);
   const scoreRef = useRef<WindwardScore | null>(null);
   // Captured fresh at click time (not on mount) so a "New voyage" after a
@@ -290,6 +297,29 @@ export default function WindwardHorizons({ locale }: { locale: Locale }) {
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({
     locale: (locale as any) || "ko",
   });
+
+  const handleShareCard = useCallback(async () => {
+    if (!result) return;
+    const canvas = createShareCardCanvas({
+      title: "Windward Horizons",
+      subtitle: "바람과 지평선 항해 기록",
+      score: `${result.score.toLocaleString()} PTS`,
+      slug: "windward-horizons",
+      customStats: [
+        { label: "GOLD", value: `${result.gold.toLocaleString()} G` },
+        { label: "PROFIT", value: `${result.tradeProfit >= 0 ? "+" : ""}${result.tradeProfit.toLocaleString()}` },
+        { label: "PORTS", value: `${result.ports}/5` },
+        { label: "DISCOVERIES", value: `${result.discoveries}/3` },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `windward-horizons-${result.score}pts.png`);
+    }
+  }, [result]);
 
   useEffect(() => {
     setAvailable(supportsWebgl());
@@ -352,7 +382,10 @@ export default function WindwardHorizons({ locale }: { locale: Locale }) {
     setBest(saved.value);
     setResult(next);
     setPhase("result");
-  }, []);
+    if (containerRef.current) {
+      celebrate(containerRef.current, { preset: "coins" });
+    }
+  }, [containerRef]);
 
   if (phase === "playing" || phase === "loading") {
     return (
@@ -452,6 +485,16 @@ export default function WindwardHorizons({ locale }: { locale: Locale }) {
                   </div>
                 ))}
               </dl>
+              <div className="mt-4 flex justify-center">
+                <button
+                  type="button"
+                  onClick={handleShareCard}
+                  className="flex min-h-11 items-center gap-1.5 rounded-xl border border-border bg-card/80 hover:bg-muted px-5 py-2.5 text-xs font-bold text-foreground transition-colors shadow-xs"
+                >
+                  {shareCardCopied ? <Check className="size-4 text-primary" /> : <Share2 className="size-4" />}
+                  <span>{shareCardCopied ? "복사 완료!" : "항해 결과 카드 공유"}</span>
+                </button>
+              </div>
             </div>
           )}
 

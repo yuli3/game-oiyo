@@ -1,11 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Bomb, Crosshair, Gamepad2, Headphones, Maximize2, Minimize2, Shield, Volume2, VolumeX } from "lucide-react";
+import { Bomb, Crosshair, Gamepad2, Headphones, Maximize2, Minimize2, Shield, Volume2, VolumeX, Share2, Check } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
 import { getBest, recordBest } from "../../lib/games/records";
 import { reviewTempestMission } from "../../lib/games/iron-tempest";
 import { ENEMY_HEALTH, WEAPONS, applyTempestDamage, blastDamage, missionScore, structureStage, weaponDrop, type TempestEnemy, type TempestWeapon } from "../../lib/games/iron-tempest";
 import { IRON_TEMPEST_SPRITES } from "../../lib/games/sprites";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
+import { celebrate } from "../../lib/games/celebration";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
 
 const GAME_KEY = "iron-tempest";
 type Phase = "briefing" | "playing" | "result";
@@ -38,6 +44,7 @@ export default function IronTempest({ locale }: { locale: Locale }) {
   const [phase, setPhase] = useState<Phase>("briefing");
   const [best, setBest] = useState(0);
   const [result, setResult] = useState({ score: 0, kills: 0, seconds: 0 });
+  const [shareCardCopied, setShareCardCopied] = useState(false);
   const [muted, setMuted] = useState(() => {
     try {
       if (typeof window !== "undefined" && window.localStorage) {
@@ -50,6 +57,27 @@ export default function IronTempest({ locale }: { locale: Locale }) {
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({
     locale: (locale as any) || "ko",
   });
+
+  const handleShareCard = useCallback(async () => {
+    const canvas = createShareCardCanvas({
+      title: "Iron Tempest",
+      subtitle: "애셴 전선 작전 기록",
+      score: `${result.score.toLocaleString()} PTS`,
+      slug: "iron-tempest",
+      customStats: [
+        { label: "KILLS", value: `${result.kills}` },
+        { label: "TIME", value: `${result.seconds}s` },
+        { label: "BEST", value: `${best.toLocaleString()}` },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `iron-tempest-${result.score}pts.png`);
+    }
+  }, [result, best]);
 
   const toggleMute = useCallback(() => {
     setMuted((prev) => {
@@ -64,7 +92,14 @@ export default function IronTempest({ locale }: { locale: Locale }) {
   }, []);
 
   useEffect(() => setBest(getBest(GAME_KEY)?.value ?? 0), []);
-  const finish = useCallback((r: typeof result) => { setResult(r); setBest(recordBest(GAME_KEY, r.score, "score", JSON.stringify(r)).value); setPhase("result"); }, []);
+  const finish = useCallback((r: typeof result) => {
+    setResult(r);
+    setBest(recordBest(GAME_KEY, r.score, "score", JSON.stringify(r)).value);
+    setPhase("result");
+    if (containerRef.current) {
+      celebrate(containerRef.current, { preset: "sparks" });
+    }
+  }, [containerRef]);
 
   // Keyboard shortcut for portal and mute (M for mute, F only when not playing to avoid hijacking J/F fire)
   useEffect(() => {
@@ -138,7 +173,28 @@ export default function IronTempest({ locale }: { locale: Locale }) {
                 <img src="/assets/sprites/weapons/rocket-launcher.webp" alt="" className="h-16 min-w-0 flex-1 object-contain"/>
               </div>
               <div className="mt-7 flex flex-wrap items-center gap-3"><button onClick={() => setPhase("playing")} className="min-h-12 border-b-4 border-[#8b290f] bg-[#ffb11b] px-9 py-3 font-mono text-sm font-black text-[#1d1204] active:translate-y-1 active:border-b-0">{phase === "result" ? t.again : t.start}</button><span className="bg-black/75 px-4 py-3 font-mono text-xs">{t.best} <b className="text-[#ffcf4f]">{best.toLocaleString()}</b></span></div>
-              {phase === "result" && <><dl role="status" aria-live="polite" className="mt-5 grid grid-cols-3 border-2 border-white/15 bg-black/75 p-3 text-center font-mono">{[[t.score, result.score], [t.kills, result.kills], [t.time, `${result.seconds}s`]].map(([a,b])=><div key={a}><dt className="text-[9px] text-[#c7bca8]">{a}</dt><dd className="text-xl font-black">{b}</dd></div>)}</dl><p className="mt-2 text-center font-mono text-xs font-black text-[#ffcf4f]">→ {reviewTempestMission(result) === "kills" ? t.kills : reviewTempestMission(result) === "speed" ? t.time : t.score}</p></>}
+              {phase === "result" && (
+                <>
+                  <dl role="status" aria-live="polite" className="mt-5 grid grid-cols-3 border-2 border-white/15 bg-black/75 p-3 text-center font-mono">
+                    {[[t.score, result.score], [t.kills, result.kills], [t.time, `${result.seconds}s`]].map(([a,b])=>(
+                      <div key={a}><dt className="text-[9px] text-[#c7bca8]">{a}</dt><dd className="text-xl font-black">{b}</dd></div>
+                    ))}
+                  </dl>
+                  <p className="mt-2 text-center font-mono text-xs font-black text-[#ffcf4f]">
+                    → {reviewTempestMission(result) === "kills" ? t.kills : reviewTempestMission(result) === "speed" ? t.time : t.score}
+                  </p>
+                  <div className="mt-4 flex justify-center">
+                    <button
+                      type="button"
+                      onClick={handleShareCard}
+                      className="flex min-h-11 items-center gap-1.5 rounded-xl border border-border bg-card/85 hover:bg-muted px-5 py-2.5 text-xs font-bold text-foreground transition-colors shadow-xs"
+                    >
+                      {shareCardCopied ? <Check className="size-4 text-primary" /> : <Share2 className="size-4" />}
+                      <span>{shareCardCopied ? "복사 완료!" : "작전 결과 카드 공유"}</span>
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
           <div className="grid gap-px bg-[#3c3327] md:grid-cols-3">{t.features.map(([a,b],i)=>{const Icon=[Crosshair,Bomb,Shield][i];return <div key={a} className="flex gap-3 bg-[#211b14] p-5"><Icon className="size-5 shrink-0 text-[#ffad1a]"/><div><h3 className="font-mono text-xs font-black">{a}</h3><p className="mt-1 text-xs leading-5 text-[#bdb09b]">{b}</p></div></div>})}</div>

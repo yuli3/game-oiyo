@@ -1,10 +1,16 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from "react";
-import { Crosshair, Flame, Gauge, Headphones, Maximize2, Minimize2, Skull, Zap } from "lucide-react";
+import { Crosshair, Flame, Gauge, Headphones, Maximize2, Minimize2, Skull, Zap, Share2, Check } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
 import { getBest, recordBest } from "../../lib/games/records";
 import { reviewInfernalRun } from "../../lib/games/infernal-velocity";
 import type { InfernalResult, InfernalSceneCopy } from "./InfernalVelocityScene";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
+import { celebrate } from "../../lib/games/celebration";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
 
 const Scene = lazy(() => import("./InfernalVelocityScene"));
 const GAME_KEY = "infernal-velocity";
@@ -53,10 +59,34 @@ export default function InfernalVelocity({ locale }: { locale: Locale }) {
   const [best, setBest] = useState(0);
   const [available, setAvailable] = useState(true);
   const [result, setResult] = useState<InfernalResult | null>(null);
+  const [shareCardCopied, setShareCardCopied] = useState(false);
 
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({
     locale: (locale as any) || "ko",
   });
+
+  const handleShareCard = useCallback(async () => {
+    if (!result) return;
+    const canvas = createShareCardCanvas({
+      title: "Infernal Velocity",
+      subtitle: "지옥 회로 전투 기록",
+      score: `${result.score.toLocaleString()} PTS`,
+      slug: "infernal-velocity",
+      customStats: [
+        { label: "KILLS", value: `${result.kills}` },
+        { label: "WAVE", value: `${result.wave}` },
+        { label: "ACCURACY", value: `${result.accuracy}%` },
+        { label: "BEST", value: `${best.toLocaleString()}` },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `infernal-velocity-${result.score}pts.png`);
+    }
+  }, [result, best]);
 
   useEffect(() => { setAvailable(supportsWebgl()); setBest(getBest(GAME_KEY)?.value ?? 0); }, []);
 
@@ -75,8 +105,13 @@ export default function InfernalVelocity({ locale }: { locale: Locale }) {
 
   const finish = useCallback((next: InfernalResult) => {
     const saved = recordBest(GAME_KEY, next.score, "score", JSON.stringify(next));
-    setBest(saved.value); setResult(next); setPhase("result");
-  }, []);
+    setBest(saved.value);
+    setResult(next);
+    setPhase("result");
+    if (containerRef.current) {
+      celebrate(containerRef.current, { preset: "sparks" });
+    }
+  }, [containerRef]);
 
   if (phase === "playing") {
     return (
@@ -156,6 +191,16 @@ export default function InfernalVelocity({ locale }: { locale: Locale }) {
               <p className="mt-2 text-center text-xs font-black text-orange-300">
                 → {reviewInfernalRun(result) === "accuracy" ? t.accuracy : reviewInfernalRun(result) === "kills" ? t.kills : t.wave}
               </p>
+              <div className="mt-4 flex justify-center">
+                <button
+                  type="button"
+                  onClick={handleShareCard}
+                  className="flex min-h-11 items-center gap-1.5 rounded-xl border border-border bg-card/80 hover:bg-muted px-5 py-2.5 text-xs font-bold text-foreground transition-colors shadow-xs"
+                >
+                  {shareCardCopied ? <Check className="size-4 text-primary" /> : <Share2 className="size-4" />}
+                  <span>{shareCardCopied ? "복사 완료!" : "전투 결과 카드 공유"}</span>
+                </button>
+              </div>
             </>
           )}
         </div>

@@ -1,7 +1,13 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { Maximize2, Minimize2, Volume2, VolumeX, Share2, Check } from 'lucide-react';
+import { celebrate } from '../../lib/games/celebration';
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from '../../lib/games/share-card';
 import type { GravityRollerState } from '../../lib/games/gravity-roller';
 import {
   createInitialState,
@@ -55,6 +61,41 @@ export default function GravityRoller3D({ locale = 'ko' }: Props) {
   const t = TEXT[locale] ?? TEXT.ko;
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal();
   const [gameState, setGameState] = useState<GravityRollerState>(() => createInitialState(0));
+  const [shareCardCopied, setShareCardCopied] = useState(false);
+
+  const handleShareCard = useCallback(async () => {
+    const gemsCount = gameState.gems.filter((g) => g.collected).length;
+    const canvas = createShareCardCanvas({
+      title: "3D Gravity Roller",
+      subtitle: gameState.status === 'cleared' ? "미로 탈출 성공" : "중력 롤러 미션 기록",
+      score: `${gameState.score.toLocaleString()} PTS`,
+      slug: "gravity-roller-3d",
+      customStats: [
+        { label: "STAGE", value: `STAGE ${gameState.currentLevelIndex + 1}` },
+        { label: "GEMS", value: `${gemsCount}개` },
+        { label: "TIME LEFT", value: `${Math.max(0, Math.round(gameState.timeRemaining))}s` },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `gravity-roller-stage${gameState.currentLevelIndex + 1}.png`);
+    }
+  }, [gameState.score, gameState.status, gameState.currentLevelIndex, gameState.gems, gameState.timeRemaining]);
+
+  const prevStatusRef = useRef(gameState.status);
+  useEffect(() => {
+    if (gameState.status !== prevStatusRef.current && containerRef.current) {
+      if (gameState.status === 'cleared') {
+        celebrate(containerRef.current, { preset: "coins" });
+      } else if (gameState.status === 'failed') {
+        celebrate(containerRef.current, { preset: "shards" });
+      }
+    }
+    prevStatusRef.current = gameState.status;
+  }, [gameState.status, containerRef]);
   const [muted, setMuted] = useState(() => {
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
@@ -289,6 +330,14 @@ export default function GravityRoller3D({ locale = 'ko' }: Props) {
             <div className="flex gap-2">
               <button
                 type="button"
+                onClick={handleShareCard}
+                className="flex items-center gap-1.5 rounded-xl border border-border bg-card hover:bg-muted px-4 py-2 text-xs font-bold text-foreground transition-colors shadow-xs"
+              >
+                {shareCardCopied ? <Check className="w-4 h-4 text-primary" /> : <Share2 className="w-4 h-4" />}
+                {shareCardCopied ? "복사됨!" : "결과 카드 공유"}
+              </button>
+              <button
+                type="button"
                 onClick={handleRetry}
                 className="rounded-xl border border-border px-4 py-2 text-xs font-semibold text-foreground hover:bg-muted"
               >
@@ -307,13 +356,23 @@ export default function GravityRoller3D({ locale = 'ko' }: Props) {
           <div className="flex flex-col items-center justify-center gap-3 py-3 text-center">
             <p className="text-base font-bold text-destructive">{t.failed}</p>
             <p className="text-xs text-muted-foreground">{t.trapMessage}</p>
-            <button
-              type="button"
-              onClick={handleRetry}
-              className="rounded-xl bg-primary px-6 py-2 text-xs font-bold text-primary-foreground shadow-sm hover:opacity-90"
-            >
-              {t.restart}
-            </button>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleShareCard}
+                className="flex items-center gap-1.5 rounded-xl border border-border bg-card hover:bg-muted px-4 py-2 text-xs font-bold text-foreground transition-colors shadow-xs"
+              >
+                {shareCardCopied ? <Check className="w-4 h-4 text-primary" /> : <Share2 className="w-4 h-4" />}
+                {shareCardCopied ? "복사됨!" : "결과 카드 공유"}
+              </button>
+              <button
+                type="button"
+                onClick={handleRetry}
+                className="rounded-xl bg-primary px-6 py-2 text-xs font-bold text-primary-foreground shadow-sm hover:opacity-90"
+              >
+                {t.restart}
+              </button>
+            </div>
           </div>
         ) : (
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">

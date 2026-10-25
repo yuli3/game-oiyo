@@ -7,9 +7,15 @@
  * 관제 음성은 두지 않는다. 끝난 뒤의 설명은 글만 남긴다.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Maximize2, Minimize2 } from "lucide-react";
+import { Maximize2, Minimize2, Share2, Check } from "lucide-react";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import type { Locale } from "../../lib/i18n";
+import { celebrate } from "../../lib/games/celebration";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
 import {
   ACTIONS,
   STEP_CAP,
@@ -511,6 +517,7 @@ export default function DeepPhotographer({ locale = "en" }: { locale?: Locale })
   const [hidden, setHidden] = useState(false);
   const [muted, setMuted] = useState(false);
   const [view, setView] = useState(0);
+  const [shareCardCopied, setShareCardCopied] = useState(false);
   const stateRef = useRef(state);
   const pausedRef = useRef(paused);
   const mutedRef = useRef(muted);
@@ -522,6 +529,28 @@ export default function DeepPhotographer({ locale = "en" }: { locale?: Locale })
   pausedRef.current = paused;
   mutedRef.current = muted;
   busyRef.current = busy;
+
+  const handleShareCard = useCallback(async () => {
+    const s = stateRef.current;
+    const canvas = createShareCardCanvas({
+      title: "Deep Photographer",
+      subtitle: s.status === "win" ? "심해 생태 사진 포착 성공" : "심해 탐사 기록",
+      score: `${s.steps}/${STEP_CAP} STEPS`,
+      slug: "deep-photographer",
+      customStats: [
+        { label: "SEED", value: `${seed}` },
+        { label: "OUTCOME", value: s.status === "win" ? "CAPTURED" : s.status === "lose" ? "MISSED" : "OBSERVING" },
+        { label: "LAMP/NEED", value: `${s.lamp}/${s.need}` },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `deep-photographer-seed${seed}.png`);
+    }
+  }, [seed]);
 
   useEffect(() => {
     const player = audio.current;
@@ -584,12 +613,15 @@ export default function DeepPhotographer({ locale = "en" }: { locale?: Locale })
   const begin = useCallback((next: ShotState, kind: Tick) => {
     arm();
     note(kind);
+    if (next.status === "win" && containerRef.current) {
+      celebrate(containerRef.current, { preset: "shards" });
+    }
     glideSerial.current += 1;
     setShown(stateRef.current);
     setState(next);
     setGlide({ id: glideSerial.current });
     setBusy(true);
-  }, [arm, note]);
+  }, [arm, note, containerRef]);
 
   const move = useCallback((action: Action) => {
     const current = stateRef.current;
@@ -718,6 +750,28 @@ export default function DeepPhotographer({ locale = "en" }: { locale?: Locale })
         </li>
       </ol>
       <p role="status" aria-live="polite" className="text-sm text-foreground">{live}</p>
+      {(state.status === "win" || state.status === "lose") && (
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={handleShareCard}
+            className="flex-1 py-3 px-4 rounded-xl border border-border bg-card hover:bg-muted font-bold text-sm text-foreground transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+          >
+            {shareCardCopied ? <Check className="w-4 h-4 text-primary" /> : <Share2 className="w-4 h-4" />}
+            {shareCardCopied ? "결과 복사 완료!" : "결과 카드 공유"}
+          </button>
+          <button
+            type="button"
+            className="flex-1 py-3 px-4 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-sm hover:bg-primary/90 transition-colors"
+            onClick={() => {
+              arm();
+              load(nextSeed(seed));
+            }}
+          >
+            {copy.next}
+          </button>
+        </div>
+      )}
       <div className={isImmersive ? "relative flex min-h-64 w-full flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-card" : "relative overflow-hidden rounded-2xl border border-border bg-card"}>
         <div className={isImmersive ? "h-full min-h-64 w-full flex-1" : "h-96"} aria-hidden="true">
           <DeepPhotographerScene

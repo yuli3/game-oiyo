@@ -1,12 +1,20 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { Share2, Check } from 'lucide-react';
 import { TentsIsland3DScene, type CellMark } from './TentsIsland3DScene';
 import {
   generateUniqueTents,
   validateTents,
   type Pos,
 } from '../../lib/games/tents';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { celebrate } from '../../lib/games/celebration';
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from '../../lib/games/share-card';
 
 interface Props {
   lang?: string;
@@ -142,6 +150,38 @@ export function TentsIsland3D({ lang = 'ko' }: Props) {
 
   const [seconds, setSeconds] = useState(0);
   const [timerActive, setTimerActive] = useState(true);
+  const [shareCardCopied, setShareCardCopied] = useState(false);
+
+  const formatTime = (sec: number) => {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  };
+
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({
+    locale: (lang as any) || 'ko',
+  });
+
+  const handleShareCard = useCallback(async () => {
+    const canvas = createShareCardCanvas({
+      title: "3D Tents Island",
+      subtitle: "저폴리곤 숲속 텐트 퍼즐",
+      score: `${formatTime(seconds)} 완료`,
+      slug: "tents-island-3d",
+      customStats: [
+        { label: "DIFFICULTY", value: difficulty.toUpperCase() },
+        { label: "BOARD", value: `${puzzle.size}×${puzzle.size}` },
+        { label: "TREES", value: `${puzzle.trees.length}그루` },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `tents-island-${difficulty}.png`);
+    }
+  }, [difficulty, puzzle.size, puzzle.trees.length, seconds]);
 
   // Extract tent positions from marks
   const placedTents: Pos[] = useMemo(() => {
@@ -169,6 +209,14 @@ export function TentsIsland3D({ lang = 'ko' }: Props) {
     return () => clearInterval(interval);
   }, [timerActive, isComplete]);
 
+  const prevCompleteRef = useRef(false);
+  useEffect(() => {
+    if (isComplete && !prevCompleteRef.current && containerRef.current) {
+      celebrate(containerRef.current, { preset: "leaves" });
+    }
+    prevCompleteRef.current = isComplete;
+  }, [isComplete, containerRef]);
+
   const handleCellClick = (r: number, c: number) => {
     if (isComplete) return;
     setMarks((prev) => {
@@ -195,16 +243,10 @@ export function TentsIsland3D({ lang = 'ko' }: Props) {
     setMarks(Array.from({ length: puzzle.size }, () => Array(puzzle.size).fill('empty')));
   };
 
-  const formatTime = (sec: number) => {
-    const m = Math.floor(sec / 60);
-    const s = sec % 60;
-    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-  };
-
   const remainingTents = puzzle.trees.length - placedTents.length;
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-4">
+    <div ref={containerRef} className="mx-auto w-full max-w-4xl space-y-4">
       {/* Top HUD */}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
         <div>
@@ -284,13 +326,23 @@ export function TentsIsland3D({ lang = 'ko' }: Props) {
             <div className="rounded-2xl bg-secondary p-3 text-xs font-bold text-secondary-foreground">
               {t.time}: {formatTime(seconds)} · {t[difficulty]}
             </div>
-            <button
-              type="button"
-              onClick={() => handleNewPuzzle(difficulty)}
-              className="w-full rounded-2xl bg-primary py-3 text-sm font-black text-primary-foreground shadow transition hover:opacity-90 active:scale-95"
-            >
-              {t.playAgain}
-            </button>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleShareCard}
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl border border-border bg-card py-3 text-sm font-black text-foreground shadow-sm transition-colors hover:bg-muted"
+              >
+                {shareCardCopied ? <Check className="h-4 w-4 text-primary" /> : <Share2 className="h-4 w-4" />}
+                <span>{shareCardCopied ? "복사 완료!" : "결과 카드 공유"}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleNewPuzzle(difficulty)}
+                className="flex-1 rounded-2xl bg-primary py-3 text-sm font-black text-primary-foreground shadow transition hover:opacity-90 active:scale-95"
+              >
+                {t.playAgain}
+              </button>
+            </div>
           </div>
         </div>
       )}
