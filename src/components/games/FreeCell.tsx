@@ -1,10 +1,17 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { Check, Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
 import { GameContainer, PlayingCard } from '../ui/game/GamePrimitives';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { getRecord, recordResult, type GameRecord } from '../../lib/games/records';
+import { celebrate } from '../../lib/games/celebration';
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from '../../lib/games/share-card';
 import {
   FREECELL_SUITS,
+  autoCollectSafeFoundationMoves,
   createSeededFreeCellGame,
   getSourceCards,
   isDescendingAlternatingRun,
@@ -177,11 +184,52 @@ const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
       clearFreeCellSaveV2();
       setRecord(recordResult('freecell', 'w'));
       tone(660, 0.18);
+      if (containerRef.current) celebrate(containerRef.current, { preset: "shards" });
     }
-  }, [isWon, tone]);
+  }, [isWon, tone, containerRef]);
   useEffect(() => {
     if (isWon) winDialogRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
   }, [isWon]);
+
+  const [shareCardCopied, setShareCardCopied] = useState(false);
+  const handleShareCard = useCallback(async () => {
+    try {
+      const canvas = createShareCardCanvas({
+        title: t.title,
+        subtitle: 'FREECELL SOLITAIRE',
+        score: `${moves} MOVES`,
+        durationSeconds: seconds,
+        slug: 'freecell',
+        qrUrl: typeof window !== 'undefined' ? window.location.href : undefined,
+        customStats: [
+          { label: 'TIME', value: fmt(seconds) },
+          { label: 'TURNS', value: moves },
+        ],
+      });
+      const copied = await copyShareCardToClipboard(canvas);
+      if (copied) {
+        setShareCardCopied(true);
+        setTimeout(() => setShareCardCopied(false), 2500);
+      } else {
+        downloadShareCard(canvas, `oiyo-freecell-${moves}moves.png`);
+        setShareCardCopied(true);
+        setTimeout(() => setShareCardCopied(false), 2500);
+      }
+    } catch {}
+  }, [moves, seconds, t.title]);
+
+  const handleAutoMove = () => {
+    const collected = autoCollectSafeFoundationMoves(game);
+    if (collected.movesCount > 0) {
+      if (!moveMadeRef.current) startedAt.current = performance.now();
+      moveMadeRef.current = true;
+      setGame(collected.state);
+      setSelected(null);
+      setMoves((count) => count + collected.movesCount);
+      setStatus(`${collected.movesCount}장 자동 수납 완료`);
+      tone(520, 0.1);
+    }
+  };
 
   const chooseSource = (source: FreeCellSource) => {
     const cards = getSourceCards(game, source);
@@ -251,6 +299,15 @@ const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             <div className="flex items-center gap-2">
               <button
                 type="button"
+                onClick={handleAutoMove}
+                title="기초 더미로 안전한 카드 자동 이동"
+                className="min-h-11 px-3 py-2 rounded-lg border border-primary/40 bg-primary/10 text-xs font-bold text-primary hover:bg-primary/20 transition-colors flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              >
+                <span>⚡</span>
+                <span className="hidden sm:inline">자동 수납</span>
+              </button>
+              <button
+                type="button"
                 onClick={() => setMuted((value) => !value)}
                 aria-pressed={muted}
                 aria-label={muted ? portalLabels.unmute : portalLabels.mute}
@@ -276,7 +333,7 @@ const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             )}
           </div>
         </div>
-        {legacyMigrated && <p className="text-[11px] font-medium text-muted-foreground">{t.untimed}</p>}
+        {legacyMigrated && <p className="text-xs font-medium text-muted-foreground">{t.untimed}</p>}
         <p className="min-h-6 text-sm font-semibold text-primary" aria-live="polite">{status}</p>
 
         <div className="overflow-x-auto pb-2">
@@ -351,7 +408,18 @@ const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
           <p className="mb-6 text-sm font-bold text-muted-foreground">
             {legacyMigrated ? `${t.moves} ${moves}` : `${t.time} ${fmt(seconds)} · ${t.moves} ${moves}`}
           </p>
-          <div className="flex flex-wrap justify-center gap-2"><button type="button" onClick={() => closeWin(true)} disabled={seedRef.current===null} className="min-h-11 rounded-full border border-primary px-6 py-3 font-black text-primary disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">{retryCopy.same}</button><button type="button" onClick={() => closeWin(false)} className="min-h-11 rounded-full bg-primary px-8 py-3 font-black text-primary-foreground shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">{retryCopy.fresh}</button></div>
+          <div className="flex flex-wrap justify-center gap-2">
+            <button
+              type="button"
+              onClick={handleShareCard}
+              className="min-h-11 px-6 py-3 rounded-full border border-primary/40 bg-primary/10 font-black text-primary hover:bg-primary/20 transition-colors flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              {shareCardCopied ? <Check className="size-4 text-success" /> : <span>🖼️</span>}
+              <span>{shareCardCopied ? '카드 복사됨!' : '카드 공유 2.0'}</span>
+            </button>
+            <button type="button" onClick={() => closeWin(true)} disabled={seedRef.current===null} className="min-h-11 rounded-full border border-primary px-6 py-3 font-black text-primary disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">{retryCopy.same}</button>
+            <button type="button" onClick={() => closeWin(false)} className="min-h-11 rounded-full bg-primary px-8 py-3 font-black text-primary-foreground shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">{retryCopy.fresh}</button>
+          </div>
         </div>
       )}
     </GameContainer>

@@ -141,3 +141,53 @@ export function moveFreeCellCards(state: FreeCellState, source: FreeCellSource, 
 export function isFreeCellWon(state: FreeCellState): boolean {
   return state.foundation.every((pile) => pile.length === 13);
 }
+
+export function isSafeToMoveToFoundation(state: FreeCellState, card: FreeCellCard): boolean {
+  if (card.power <= 2) return true;
+  const oppSuits: FreeCellSuit[] = card.isRed ? ['clubs', 'spades'] : ['hearts', 'diamonds'];
+  return oppSuits.every((s) => {
+    const pile = state.foundation[FREECELL_SUITS.indexOf(s)];
+    return pile && pile.length >= card.power - 1;
+  });
+}
+
+export function findSafeFoundationMove(state: FreeCellState): { source: FreeCellSource; destination: FreeCellDestination } | null {
+  for (let i = 0; i < state.freeCells.length; i++) {
+    const card = state.freeCells[i];
+    if (card) {
+      const suitIdx = FREECELL_SUITS.indexOf(card.suit);
+      const targetLen = state.foundation[suitIdx].length;
+      if (card.power === targetLen + 1 && isSafeToMoveToFoundation(state, card)) {
+        return { source: { type: 'free', index: i }, destination: { type: 'foundation', index: suitIdx } };
+      }
+    }
+  }
+
+  for (let i = 0; i < state.tableau.length; i++) {
+    const pile = state.tableau[i];
+    if (pile.length > 0) {
+      const card = pile[pile.length - 1];
+      const suitIdx = FREECELL_SUITS.indexOf(card.suit);
+      const targetLen = state.foundation[suitIdx].length;
+      if (card.power === targetLen + 1 && isSafeToMoveToFoundation(state, card)) {
+        return { source: { type: 'tableau', index: i, cardIndex: pile.length - 1 }, destination: { type: 'foundation', index: suitIdx } };
+      }
+    }
+  }
+
+  return null;
+}
+
+export function autoCollectSafeFoundationMoves(state: FreeCellState): { state: FreeCellState; movesCount: number } {
+  let current = state;
+  let movesCount = 0;
+  while (true) {
+    const nextMove = findSafeFoundationMove(current);
+    if (!nextMove) break;
+    const res = moveFreeCellCards(current, nextMove.source, nextMove.destination);
+    if (!res.ok) break;
+    current = res.state;
+    movesCount++;
+  }
+  return { state: current, movesCount };
+}

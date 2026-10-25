@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
-import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
+import { Maximize2, Minimize2, Share2, Volume2, VolumeX } from "lucide-react";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
+import { celebrate } from "../../lib/games/celebration";
+import { copyShareCardToClipboard, createShareCardCanvas, downloadShareCard } from "../../lib/games/share-card";
 import { createTonePlayer, type TonePlayer } from "../../lib/games/tone";
 import { GameContainer } from "../ui/game/GamePrimitives";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
@@ -321,7 +323,8 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
     [resolving, setResolving] = useState(false),
     [bursting, setBursting] = useState<number[]>([]),
     [falls, setFalls] = useState<AnimalFall[]>([]),
-    [waveLabel, setWaveLabel] = useState(0);
+    [waveLabel, setWaveLabel] = useState(0),
+    [shareCardCopied, setShareCardCopied] = useState(false);
 
   useEffect(() => {
     try {
@@ -691,6 +694,34 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
   );
 
   const fallAt = (row:number,column:number) => falls.find((fall) => fall.toRow === row && fall.column === column);
+  const handleShareCard = useCallback(async () => {
+    try {
+      const bestScore = mode === "classic" ? best : augmentBest;
+      const canvas = createShareCardCanvas({
+        title: t.title,
+        subtitle: `${mode === "classic" ? "Classic" : "Augment"} · Fever Mode`,
+        score: `${score.toLocaleString()} PTS`,
+        bestScore: bestScore ? `${bestScore.toLocaleString()} PTS` : undefined,
+        slug: "animal-pop",
+        locale,
+        customStats: [
+          { label: t.score, value: `${score.toLocaleString()}` },
+          { label: t.best, value: `${bestScore.toLocaleString()}` },
+          { label: "MODE", value: mode.toUpperCase() },
+        ],
+      });
+      const success = await copyShareCardToClipboard(canvas);
+      if (success) {
+        setShareCardCopied(true);
+        setTimeout(() => setShareCardCopied(false), 2500);
+      } else {
+        downloadShareCard(canvas, `animal-pop-${score}pts.png`);
+      }
+    } catch {
+      /* best effort */
+    }
+  }, [augmentBest, best, locale, mode, score, t.best, t.score, t.title]);
+
   if (phase === "briefing")
     return (
       <div
@@ -760,7 +791,7 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
         </div>
         <div
           ref={boardRef}
-          className={`relative grid grid-cols-7 gap-1 overflow-hidden rounded-3xl border bg-[#edf1df] p-2 ${bursting.length ? "animal-board-hit" : ""}`}
+          className={`relative grid grid-cols-7 gap-1 overflow-hidden rounded-3xl border bg-[#edf1df] p-2 transition-all duration-300 ${bursting.length ? "animal-board-hit" : ""} ${feverSeconds > 0 ? "ring-4 ring-chart-3 shadow-lg shadow-chart-3/30" : ""}`}
           role="grid"
           aria-label={t.title}
         >
@@ -832,17 +863,28 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
           )}
           {phase === "over" && (
             <div
-              className="absolute inset-2 flex flex-col items-center justify-center rounded-2xl bg-white/95"
+              className="absolute inset-2 flex flex-col items-center justify-center rounded-2xl bg-card/95 text-card-foreground p-4 text-center shadow-lg backdrop-blur-sm"
               role="status"
             >
               <h3 className="text-xl font-black">{t.over}</h3>
-              <p className="mt-2 text-3xl font-black text-primary">{score}</p>
-              <button
-                onClick={() => start()}
-                className="mt-4 min-h-12! rounded-full bg-primary px-8 font-black text-primary-foreground"
-              >
-                {t.again}
-              </button>
+              <p className="mt-2 text-3xl font-black text-primary">{score.toLocaleString()}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{t.best}: {(mode === "classic" ? best : augmentBest).toLocaleString()}</p>
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                <button
+                  onClick={() => start()}
+                  className="min-h-12 rounded-full bg-primary px-6 font-black text-primary-foreground shadow-md hover:opacity-90"
+                >
+                  {t.again}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleShareCard}
+                  className="inline-flex min-h-12 items-center gap-2 rounded-full border border-border bg-card px-5 font-bold text-xs hover:bg-muted"
+                >
+                  <Share2 className="size-4" />
+                  <span>{shareCardCopied ? (locale === 'ko' ? "✓ 카드 복사됨" : "✓ Copied") : (locale === 'ko' ? "결과 카드 복사" : "Share Result Card")}</span>
+                </button>
+              </div>
             </div>
           )}
         </div>

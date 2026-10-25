@@ -75,6 +75,17 @@ describe("blackjack rules", () => {
     expect(createBlackjackGame(77)).toEqual(createBlackjackGame(77));
   });
 
+  it("handles double down by taking exactly one card then resolving", () => {
+    const initial = createBlackjackGame(42);
+    if (initial.status === "playing") {
+      const doubled = replayBlackjack(42, ["double"]);
+      expect(doubled).not.toBeNull();
+      expect(doubled?.status).toBe("result");
+      expect(doubled?.player.length).toBe(3);
+      expect(doubled?.actions).toEqual(["double"]);
+    }
+  });
+
   it("freezes terminal rounds and resolves the dealer with S17", () => {
     const initial = createBlackjackGame(19);
     if (initial.status !== "playing") return;

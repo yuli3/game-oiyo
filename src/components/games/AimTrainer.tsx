@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { celebrate } from "../../lib/games/celebration";
-import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
+import { Maximize2, Minimize2, Share2, Volume2, VolumeX } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { getBest, recordBest } from "../../lib/games/records";
+import { copyShareCardToClipboard, createShareCardCanvas, downloadShareCard } from "../../lib/games/share-card";
 import {
   computeAimRank,
   computeConsistency,
@@ -414,6 +415,7 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
   }, [togglePortal]);
 
   const [recoveryObscured, setRecoveryObscured] = useState(false);
+  const [shareCardCopied, setShareCardCopied] = useState(false);
   const audioRef = useRef<AudioContext | null>(null);
 
   const tone = useCallback((frequency: number, duration = 0.05) => {
@@ -892,6 +894,34 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
   const consistency = computeConsistency(reactions);
   const rank = computeAimRank(mode, diff, finalScore);
 
+  const handleShareCard = useCallback(async () => {
+    try {
+      const canvas = createShareCardCanvas({
+        title: t.title,
+        subtitle: `${t.modeName[mode]} · ${t.diffName[diff]} · Tier ${rank}`,
+        score: `${finalScore}${mode === "tracking" ? "%" : " PTS"}`,
+        bestScore: best ? `${best}` : undefined,
+        slug: "aim-trainer",
+        durationSeconds: DURATION,
+        locale,
+        customStats: [
+          { label: mode === "tracking" ? t.onTarget : t.accuracy, value: `${mode === "tracking" ? finalScore : accuracy}%` },
+          { label: t.reaction, value: `${avgReaction}ms` },
+          { label: t.rank, value: rank },
+        ],
+      });
+      const success = await copyShareCardToClipboard(canvas);
+      if (success) {
+        setShareCardCopied(true);
+        setTimeout(() => setShareCardCopied(false), 2500);
+      } else {
+        downloadShareCard(canvas, `aim-trainer-${rank}-${finalScore}.png`);
+      }
+    } catch {
+      /* best effort */
+    }
+  }, [accuracy, avgReaction, best, diff, finalScore, locale, mode, rank, t.accuracy, t.diffName, t.modeName, t.onTarget, t.rank, t.reaction, t.title]);
+
   useEffect(() => {
     const b = getBest(key);
     setBest(b ? b.value : null);
@@ -1067,12 +1097,20 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
             {mode !== "tracking" && <Stat label={t.consistency} value={`${consistency}%`} />}
             {mode !== "tracking" && <Stat label={t.best} value={`${best ?? 0}`} />}
           </div>
-          <div className="flex gap-3">
-            <button onClick={() => setPhase("menu")} className="rounded-full bg-muted px-6 py-2 text-sm font-bold text-muted-foreground hover:bg-muted/70">
+          <div className="flex flex-wrap justify-center gap-3">
+            <button onClick={() => setPhase("menu")} className="rounded-full bg-muted px-5 py-2 text-sm font-bold text-muted-foreground hover:bg-muted/70">
               {t.changeMode}
             </button>
-            <button onClick={begin} className="rounded-full bg-violet-500 px-6 py-2 text-sm font-bold text-white hover:bg-violet-600">
+            <button onClick={begin} className="rounded-full bg-primary px-6 py-2 text-sm font-bold text-primary-foreground hover:bg-primary/90">
               {t.restart}
+            </button>
+            <button
+              type="button"
+              onClick={handleShareCard}
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-5 py-2 text-sm font-bold hover:bg-muted"
+            >
+              <Share2 className="size-4" />
+              <span>{shareCardCopied ? (locale === "ko" ? "✓ 카드 복사됨" : "✓ Copied") : (locale === "ko" ? "결과 카드 복사" : "Share Card")}</span>
             </button>
           </div>
         </div>

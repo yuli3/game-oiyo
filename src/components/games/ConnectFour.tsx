@@ -1,6 +1,12 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
+import { Check, Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
+import { celebrate } from "../../lib/games/celebration";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
 import { connectFourBestMove, connectFourMoveReview, type ConnectFourMoveKind } from "../../lib/games/ai/connectfour";
 import type { AiLevel, GameMode } from "../../lib/games/ai/types";
 import { getRecord, recordResult, type GameRecord } from "../../lib/games/records";
@@ -236,6 +242,37 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
     oscillator.stop(context.currentTime + duration);
   }, [muted]);
 
+  const playBounceSound = useCallback((row: number) => {
+    if (muted || typeof window === "undefined") return;
+    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtx) return;
+    const context = audioRef.current ?? new AudioCtx();
+    audioRef.current = context;
+    const now = context.currentTime;
+    const baseFreq = 260 + (ROWS - 1 - row) * 28;
+    const osc1 = context.createOscillator();
+    const gain1 = context.createGain();
+    osc1.type = "sine";
+    osc1.frequency.setValueAtTime(baseFreq, now);
+    osc1.frequency.exponentialRampToValueAtTime(140, now + 0.05);
+    gain1.gain.setValueAtTime(0.08, now);
+    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+    osc1.connect(gain1).connect(context.destination);
+    osc1.start(now);
+    osc1.stop(now + 0.05);
+
+    const osc2 = context.createOscillator();
+    const gain2 = context.createGain();
+    osc2.type = "triangle";
+    osc2.frequency.setValueAtTime(baseFreq * 1.25, now + 0.04);
+    osc2.frequency.exponentialRampToValueAtTime(120, now + 0.08);
+    gain2.gain.setValueAtTime(0.04, now + 0.04);
+    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+    osc2.connect(gain2).connect(context.destination);
+    osc2.start(now + 0.04);
+    osc2.stop(now + 0.08);
+  }, [muted]);
+
   useEffect(() => {
     setRecord(getRecord("connectfour"));
     const restoredSave = loadConnectFourSaveV2();
@@ -325,6 +362,7 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
         setLastMove({ row: dropRow, col });
         setMoveCount((count) => count + 1);
 
+        playBounceSound(dropRow);
         if (move.result !== null) {
           clearConnectFourSaveV2();
           if (move.result === 0) {
@@ -335,17 +373,44 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
             setWinCells(move.winCells);
             setStatus("won");
             tone(660, 0.18);
+            if (containerRef.current) celebrate(containerRef.current, { preset: "shards" });
             if (mode === "ai") setRecord(recordResult("connectfour", currentPlayer === AI_PLAYER ? "l" : "w"));
           }
         } else {
-          tone(300, 0.05);
           setCurrentPlayer(currentPlayer === 1 ? 2 : 1);
         }
         setAnimating(false);
       }, reducedMotion ? 60 : 320);
     },
-    [board, currentPlayer, status, animating, paused, mode, reducedMotion, tone]
+    [board, currentPlayer, status, animating, paused, mode, reducedMotion, tone, playBounceSound, containerRef]
   );
+
+  const [shareCardCopied, setShareCardCopied] = useState(false);
+  const handleShareCard = useCallback(async () => {
+    const winResultText = status === "draw" ? t.draw : mode === "ai" ? (currentPlayer === AI_PLAYER ? t.aiWins : t.youWin) : `${t.player} ${currentPlayer} ${t.wins}`;
+    try {
+      const canvas = createShareCardCanvas({
+        title: t.title,
+        subtitle: mode === "ai" ? `VS AI (${aiInfo.level[level]})` : "2 PLAYERS",
+        score: `${moveCount} MOVES`,
+        slug: "connect-four",
+        qrUrl: typeof window !== "undefined" ? window.location.href : undefined,
+        customStats: [
+          { label: "RESULT", value: winResultText },
+          { label: "TURNS", value: moveCount },
+        ],
+      });
+      const copied = await copyShareCardToClipboard(canvas);
+      if (copied) {
+        setShareCardCopied(true);
+        setTimeout(() => setShareCardCopied(false), 2500);
+      } else {
+        downloadShareCard(canvas, `oiyo-connectfour-${moveCount}moves.png`);
+        setShareCardCopied(true);
+        setTimeout(() => setShareCardCopied(false), 2500);
+      }
+    } catch {}
+  }, [aiInfo.level, currentPlayer, level, mode, moveCount, status, t.aiWins, t.draw, t.player, t.title, t.wins, t.youWin]);
 
   const handleColClick = useCallback(
     (col: number) => {
@@ -591,7 +656,7 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
                       draggable={false}
                       className={`absolute inset-[5px] object-contain ${reducedMotion ? "transition-opacity" : "transition-all"} ${
                         isFalling && !reducedMotion ? "animate-fall" : ""
-                      } ${winHighlight ? `ring-4 ring-white ring-offset-1 ring-offset-blue-700 ${reducedMotion ? "" : "scale-110"} z-10` : isLastMove ? "ring-2 ring-white/80 ring-offset-1 ring-offset-blue-700 z-10" : ""}`}
+                      } ${winHighlight ? `ring-4 ring-yellow-400 drop-shadow-[0_0_14px_rgba(250,204,21,0.9)] ${reducedMotion ? "" : "scale-110 animate-pulse"} z-20` : isLastMove ? "ring-2 ring-white/80 ring-offset-1 ring-offset-blue-700 z-10" : ""}`}
                       style={{
                         ...(isFalling && !reducedMotion
                           ? {
@@ -654,13 +719,23 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
           <p className="text-xs text-muted-foreground">{moveCount} {x.moves}</p>
           {status === "won" && <p className="text-xs text-muted-foreground max-w-xs text-center">{x.nextGoal}</p>}
           {status==='won'&&currentPlayer===AI_PLAYER&&lastAiReview&&<div className="max-w-xs rounded-2xl border border-amber-300/60 bg-amber-50 p-3 text-left text-xs text-stone-800"><p className="font-black text-amber-900">{aiInfo.review} · {t.column} {lastAiReview.col+1}</p><p className="mt-1">{aiInfo.kind[lastAiReview.kind]}</p><p className="mt-1 text-xs text-stone-500">{aiInfo.difficulty}: {aiInfo.level[level]}</p></div>}
-          <button
-            type="button"
-            onClick={resetGame}
-            className="min-h-11 px-10 py-3 bg-blue-600 text-white rounded-full font-bold hover:bg-blue-700 transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-          >
-            {t.restart}
-          </button>
+          <div className="flex flex-wrap justify-center gap-2">
+            <button
+              type="button"
+              onClick={handleShareCard}
+              className="min-h-11 px-4 py-2 rounded-xl border border-primary/40 bg-primary/10 shadow-xs text-xs font-bold text-primary hover:bg-primary/20 transition-colors flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              {shareCardCopied ? <Check className="size-4 text-success" /> : <span>🖼️</span>}
+              <span>{shareCardCopied ? '카드 복사됨!' : '카드 공유 2.0'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={resetGame}
+              className="min-h-11 px-8 py-2.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+            >
+              {t.restart}
+            </button>
+          </div>
         </div>
       )}
 

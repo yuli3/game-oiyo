@@ -7,7 +7,9 @@ import {
 } from '../../lib/games/yahtzee';
 import { clearYahtzeeSave, loadYahtzeeSave, restoredYahtzeeSeconds, storeYahtzeeSave } from '../../lib/games/yahtzee-save';
 import { getBest, recordBest } from '../../lib/games/records';
-import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { celebrate } from '../../lib/games/celebration';
+import { copyShareCardToClipboard, createShareCardCanvas, downloadShareCard } from '../../lib/games/share-card';
+import { Maximize2, Minimize2, Share2, Volume2, VolumeX } from 'lucide-react';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 
 const BEST_KEY = 'oiyo-yahtzee-best';
@@ -147,6 +149,7 @@ const Yahtzee: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     }, [togglePortal, toggleMute]);
 
     const [lastChoice,setLastChoice]=useState<YahtzeeChoiceReview|null>(null);
+    const [shareCardCopied, setShareCardCopied] = useState(false);
     const rollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const audioContext = useRef<AudioContext | null>(null);
     const scoreButtonRefs = useRef(new Map<Category, HTMLButtonElement>());
@@ -167,6 +170,28 @@ const Yahtzee: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             oscillator.start();
             oscillator.stop(context.currentTime + duration);
         } catch { /* audio is progressive enhancement */ }
+    }, [muted]);
+
+    const playDiceShakeSound = useCallback(() => {
+        if (muted || typeof window === 'undefined') return;
+        try {
+            const AudioContextClass = window.AudioContext ?? (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+            if (!AudioContextClass) return;
+            const context = audioContext.current ?? new AudioContextClass();
+            audioContext.current = context;
+            const now = context.currentTime;
+            for (let i = 0; i < 5; i++) {
+                const osc = context.createOscillator();
+                const gain = context.createGain();
+                osc.type = i % 2 === 0 ? "triangle" : "sine";
+                osc.frequency.setValueAtTime(450 + Math.random() * 550, now + i * 0.035);
+                gain.gain.setValueAtTime(0.04, now + i * 0.035);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.035 + 0.03);
+                osc.connect(gain).connect(context.destination);
+                osc.start(now + i * 0.035);
+                osc.stop(now + i * 0.035 + 0.035);
+            }
+        } catch {}
     }, [muted]);
 
     useEffect(() => {
@@ -213,7 +238,10 @@ const Yahtzee: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
     const handleRoll = () => {
         if (rolling || state.rollsLeft <= 0 || state.isGameOver) return;
-        playTone(180, 0.12);
+        playDiceShakeSound();
+        if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+            try { navigator.vibrate([25, 35, 25]); } catch {}
+        }
         setRolling(true);
         rollTimer.current = setTimeout(() => {
             setRolling(false);
@@ -226,7 +254,16 @@ const Yahtzee: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         setLastChoice(reviewYahtzeeChoice(state,category));
         setState((s) => {
             const next = scoreCategory(s, category);
-            playTone(hasYahtzeeBonus(s) ? 880 : 440, hasYahtzeeBonus(s) ? 0.25 : 0.1);
+            const isYahtzeeHit = category === 'yahtzee' && (next.scorecard.lower.yahtzee.score ?? 0) === 50;
+            const isExtraYahtzee = next.scorecard.yahtzeeBonusCount > s.scorecard.yahtzeeBonusCount;
+            if (isYahtzeeHit && containerRef.current) {
+                celebrate(containerRef.current, { preset: "sparks", label: "YAHTZEE!" });
+            } else if (isExtraYahtzee && containerRef.current) {
+                celebrate(containerRef.current, { preset: "stardust", label: "+100 YAHTZEE!" });
+            } else if (s.scorecard.upperBonus === 0 && next.scorecard.upperBonus > 0 && containerRef.current) {
+                celebrate(containerRef.current, { preset: "tiles", label: "+35 BONUS!" });
+            }
+            playTone(isYahtzeeHit || isExtraYahtzee ? 880 : hasYahtzeeBonus(s) ? 660 : 440, isYahtzeeHit || isExtraYahtzee ? 0.3 : 0.1);
             if (next.isGameOver && next.scorecard.totalScore > best) {
                 setBest(next.scorecard.totalScore);
                 try { localStorage.setItem(BEST_KEY, String(next.scorecard.totalScore)); } catch { /* ignore */ }
@@ -269,13 +306,45 @@ const Yahtzee: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         scoreButtonRefs.current.get(next)?.focus();
     };
 
+    const handleShareCard = useCallback(async () => {
+        try {
+            const canvas = createShareCardCanvas({
+                title: t.title,
+                subtitle: `Score: ${state.scorecard.totalScore} · Upper: ${upperScore + state.scorecard.upperBonus}`,
+                score: `${state.scorecard.totalScore} PTS`,
+                bestScore: best ? `${best} PTS` : undefined,
+                slug: "yahtzee",
+                durationSeconds: seconds,
+                locale,
+                customStats: [
+                    { label: t.upper, value: `${upperScore + state.scorecard.upperBonus}` },
+                    { label: t.yahtzeeBonus, value: `${state.scorecard.yahtzeeBonusCount * 100}` },
+                    { label: t.zeroes, value: `${zeroCount}` },
+                ],
+            });
+            const success = await copyShareCardToClipboard(canvas);
+            if (success) {
+                setShareCardCopied(true);
+                setTimeout(() => setShareCardCopied(false), 2500);
+            } else {
+                downloadShareCard(canvas, `yahtzee-${state.scorecard.totalScore}pts.png`);
+            }
+        } catch { /* best effort */ }
+    }, [best, locale, seconds, state.scorecard.totalScore, state.scorecard.upperBonus, state.scorecard.yahtzeeBonusCount, t.title, t.upper, t.yahtzeeBonus, t.zeroes, upperScore, zeroCount]);
+
     const ScoreRow: React.FC<{ category: Category; section: 'upper' | 'lower' }> = ({ category, section }) => {
         const cell = section === 'upper'
             ? state.scorecard.upper[category as keyof typeof state.scorecard.upper]
             : state.scorecard.lower[category as keyof typeof state.scorecard.lower];
+        const isRec = recommendation?.category === category && canPick && legal.has(category);
         return (
-            <tr className="border-b border-border/50">
-                <td className="py-1.5 px-3 text-sm font-medium text-foreground">{t.cats[category]}</td>
+            <tr className={`border-b border-border/50 transition-colors ${isRec ? 'bg-primary/5' : ''}`}>
+                <td className="py-1.5 px-3 text-sm font-medium text-foreground">
+                    <div className="flex items-center justify-between gap-1">
+                        <span>{t.cats[category]}</span>
+                        {isRec && <span className="text-xs font-black text-primary animate-pulse">✨ {t.recommendation}</span>}
+                    </div>
+                </td>
                 <td className={`p-0 text-center text-sm w-20 ${cell.used ? 'bg-muted/60 font-black text-foreground' : 'text-muted-foreground/40'}`}>
                     {cell.used ? <span className="inline-flex min-h-11 items-center">{cell.score}</span> : (
                         <button
@@ -286,8 +355,14 @@ const Yahtzee: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                                 if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') { event.preventDefault(); moveScoreFocus(category, -1); }
                             }}
                             disabled={!canPick || !legal.has(category)}
-                            aria-label={`${t.cats[category]}: ${cell.possibleScore ?? 0}`}
-                            className={`min-h-11 w-full px-3 transition-colors ${canPick && legal.has(category) ? 'hover:bg-primary/10 text-muted-foreground focus-visible:outline-2 focus-visible:outline-primary' : 'cursor-not-allowed opacity-40'}`}
+                            aria-label={`${t.cats[category]}: ${cell.possibleScore ?? 0}${isRec ? ` (${t.recommendation})` : ''}`}
+                            className={`min-h-11 w-full px-3 transition-colors ${
+                                isRec
+                                    ? 'bg-primary/20 font-black text-primary ring-2 ring-primary/60'
+                                    : canPick && legal.has(category)
+                                    ? 'hover:bg-primary/10 text-muted-foreground focus-visible:outline-2 focus-visible:outline-primary'
+                                    : 'cursor-not-allowed opacity-40'
+                            }`}
                         >
                             {canPick ? cell.possibleScore ?? 0 : ''}
                         </button>
@@ -357,9 +432,19 @@ const Yahtzee: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                             </dl>
                             <p className="mt-3 border-t border-border pt-3 font-bold">{t.nextGoal}: {nextTarget} {t.points}</p>
                         </div>
-                        <button onClick={restart} className="px-10 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity">
-                            {t.playAgain}
-                        </button>
+                        <div className="flex flex-wrap justify-center gap-3">
+                            <button onClick={restart} className="px-8 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity">
+                                {t.playAgain}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleShareCard}
+                                className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-6 py-3 font-bold text-sm hover:bg-muted"
+                            >
+                                <Share2 className="size-4" />
+                                <span>{shareCardCopied ? (locale === 'ko' ? "✓ 카드 복사됨" : "✓ Copied") : (locale === 'ko' ? "결과 카드 복사" : "Share Result Card")}</span>
+                            </button>
+                        </div>
                     </div>
                 ) : (
                     <>

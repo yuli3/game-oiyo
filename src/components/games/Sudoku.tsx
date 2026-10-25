@@ -88,6 +88,8 @@ const COPY = {
     nextGoal: "다음 목표",
     clues: "단서",
     sound: "소리",
+    memo: "메모",
+    erase: "지우기",
   },
   en: {
     title: "Sudoku",
@@ -113,6 +115,8 @@ const COPY = {
     nextGoal: "Next goal",
     clues: "clues",
     sound: "Sound",
+    memo: "Notes",
+    erase: "Erase",
   },
   ja: {
     title: "数独",
@@ -138,6 +142,8 @@ const COPY = {
     nextGoal: "次の目標",
     clues: "ヒント数",
     sound: "サウンド",
+    memo: "メモ",
+    erase: "消去",
   },
   zh: {
     title: "数独",
@@ -163,6 +169,8 @@ const COPY = {
     nextGoal: "下一目标",
     clues: "线索",
     sound: "声音",
+    memo: "笔记",
+    erase: "擦除",
   },
   fr: {
     title: "Sudoku",
@@ -188,6 +196,8 @@ const COPY = {
     nextGoal: "Prochain objectif",
     clues: "indices",
     sound: "Son",
+    memo: "Notes",
+    erase: "Effacer",
   },
   es: {
     title: "Sudoku",
@@ -213,6 +223,8 @@ const COPY = {
     nextGoal: "Siguiente objetivo",
     clues: "pistas",
     sound: "Sonido",
+    memo: "Notas",
+    erase: "Borrar",
   },
 } as const;
 
@@ -225,6 +237,10 @@ const Sudoku: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
   const [dailyDate, setDailyDate] = useState(() => todayKey());
   const [givens, setGivens] = useState<SudokuValue[][]>([]);
   const [grid, setGrid] = useState<SudokuValue[][]>([]);
+  const [pencilMode, setPencilMode] = useState(false);
+  const [pencilMarks, setPencilMarks] = useState<Set<number>[][]>(() =>
+    Array.from({ length: 9 }, () => Array.from({ length: 9 }, () => new Set<number>()))
+  );
   const [selected, setSelected] = useState<[number, number] | null>(null);
   const [seconds, setSeconds] = useState(0);
   const [bestTime, setBestTime] = useState<number | null>(null);
@@ -331,6 +347,7 @@ const Sudoku: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
       );
       setSelected(null);
       setFreshEntry(null);
+      setPencilMarks(Array.from({ length: 9 }, () => Array.from({ length: 9 }, () => new Set<number>())));
       setFocusIndex(0);
       setRecorded(false);
       setIsNewBest(false);
@@ -419,29 +436,101 @@ const Sudoku: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
     }
   }, [dailyDate, givens, grid, hydrated, isWon, mode, seconds, phase]);
 
-  const setNumber = (n: number) => {
+  const eraseCell = useCallback(() => {
+    if (!selected || isWon || phase !== "play") return;
+    const [r, c] = selected;
+    if (givens[r]?.[c] !== null) return;
+    const newGrid = grid.map((row) => [...row]);
+    newGrid[r][c] = null;
+    setGrid(newGrid);
+    setPencilMarks((prev) => {
+      const next = prev.map((row) => row.map((s) => new Set(s)));
+      next[r][c].clear();
+      return next;
+    });
+    cue("tap");
+    hapticsRef.current.fire("tap");
+  }, [cue, givens, grid, isWon, phase, selected]);
+
+  const setNumber = useCallback((n: number) => {
     if (!selected || isWon || phase !== "play") return;
     const [r, c] = selected;
     if (givens[r]?.[c] !== null) return;
     if (startedAt.current === null) startedAt.current = performance.now();
+
+    if (pencilMode) {
+      setPencilMarks((prev) => {
+        const next = prev.map((row) => row.map((s) => new Set(s)));
+        if (next[r][c].has(n)) {
+          next[r][c].delete(n);
+        } else {
+          next[r][c].add(n);
+        }
+        return next;
+      });
+      cue("tap");
+      hapticsRef.current.fire("tap");
+      return;
+    }
+
     const newGrid = grid.map((row) => [...row]);
-    newGrid[r][c] = n === grid[r][c] ? null : n;
-    setFreshEntry(newGrid[r][c] !== null ? `${r}-${c}` : null);
+    const nextVal = n === grid[r][c] ? null : n;
+    newGrid[r][c] = nextVal;
+    setFreshEntry(nextVal !== null ? `${r}-${c}` : null);
     setGrid(newGrid);
 
-    if (newGrid[r][c] !== null && findSudokuConflicts(newGrid)[r][c]) {
-      cue("fail");
-      hapticsRef.current.fire("fail");
-      getGlobalBgmController().duck(0.3, 300);
-    } else if (newGrid[r][c] !== null) {
-      cue("place");
-      hapticsRef.current.fire("place");
-      getGlobalBgmController().duck(0.4, 200);
+    if (nextVal !== null) {
+      // Auto-erase placed number from pencil marks in same row, column, and 3x3 box
+      setPencilMarks((prev) => {
+        const next = prev.map((row) => row.map((s) => new Set(s)));
+        next[r][c].clear();
+        for (let i = 0; i < 9; i++) {
+          next[r][i].delete(nextVal);
+          next[i][c].delete(nextVal);
+        }
+        const boxR = Math.floor(r / 3) * 3;
+        const boxC = Math.floor(c / 3) * 3;
+        for (let br = 0; br < 3; br++) {
+          for (let bc = 0; bc < 3; bc++) {
+            next[boxR + br][boxC + bc].delete(nextVal);
+          }
+        }
+        return next;
+      });
+
+      if (findSudokuConflicts(newGrid)[r][c]) {
+        cue("fail");
+        hapticsRef.current.fire("fail");
+        getGlobalBgmController().duck(0.3, 300);
+      } else {
+        cue("place");
+        hapticsRef.current.fire("place");
+        getGlobalBgmController().duck(0.4, 200);
+      }
     } else {
       cue("tap");
       hapticsRef.current.fire("tap");
     }
-  };
+  }, [cue, givens, grid, isWon, pencilMode, phase, selected]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) return;
+      if (e.key >= "1" && e.key <= "9") {
+        e.preventDefault();
+        setNumber(parseInt(e.key, 10));
+      } else if (e.key === "Backspace" || e.key === "Delete" || e.key === "0") {
+        e.preventDefault();
+        eraseCell();
+      } else if (e.key === "n" || e.key === "N") {
+        e.preventDefault();
+        setPencilMode((p) => !p);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [eraseCell, setNumber]);
 
   useEffect(() => {
     if (isWon || phase !== "play") return;
@@ -771,19 +860,33 @@ const Sudoku: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
                         className="pointer-events-none absolute inset-0 size-full object-cover opacity-80"
                       />
                     )}
-                    <span
-                      key={val ?? "empty"}
-                      className={`relative z-1 ${
-                        !isInit &&
-                        freshEntry === `${r}-${c}` &&
-                        val !== null &&
-                        !reducedMotion
-                          ? "oiyo-tile-land"
-                          : ""
-                      }`}
-                    >
-                      {val}
-                    </span>
+                    {val !== null ? (
+                      <span
+                        key={val}
+                        className={`relative z-1 ${
+                          !isInit &&
+                          freshEntry === `${r}-${c}` &&
+                          !reducedMotion
+                            ? "oiyo-tile-land"
+                            : ""
+                        }`}
+                      >
+                        {val}
+                      </span>
+                    ) : (
+                      (pencilMarks[r]?.[c]?.size ?? 0) > 0 && (
+                        <div className="grid grid-cols-3 grid-rows-3 size-full p-0.5 pointer-events-none">
+                          {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((k) => (
+                            <span
+                              key={k}
+                              className="flex items-center justify-center text-xs leading-none text-muted-foreground font-semibold scale-75 origin-center"
+                            >
+                              {pencilMarks[r]?.[c]?.has(k) ? k : ""}
+                            </span>
+                          ))}
+                        </div>
+                      )
+                    )}
                   </button>
                 );
               })
@@ -791,8 +894,34 @@ const Sudoku: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
           </div>
         </div>
 
+        {/* Memo & Action Controls */}
+        <div className="mt-3 flex items-center justify-center gap-2 w-full max-w-md">
+          <button
+            type="button"
+            onClick={() => setPencilMode((prev) => !prev)}
+            aria-pressed={pencilMode}
+            className={`min-h-11 px-4 py-2 rounded-xl text-xs font-bold border transition-colors flex items-center gap-1.5 shadow-xs ${
+              pencilMode
+                ? "border-primary bg-primary text-primary-foreground font-black ring-2 ring-primary/40"
+                : "border-border bg-muted/50 text-muted-foreground hover:bg-muted"
+            }`}
+          >
+            <span>✏️</span>
+            <span>{t.memo}</span>
+          </button>
+          <button
+            type="button"
+            onClick={eraseCell}
+            disabled={!selected || isWon || phase !== "play"}
+            className="min-h-11 px-4 py-2 rounded-xl text-xs font-bold border border-border bg-muted/50 text-muted-foreground hover:bg-muted disabled:opacity-40 transition-colors flex items-center gap-1.5 shadow-xs"
+          >
+            <span>⌫</span>
+            <span>{t.erase}</span>
+          </button>
+        </div>
+
         {/* Number Pad (1-9) */}
-        <div className="mt-4 grid grid-cols-9 gap-1 sm:gap-2 w-full max-w-md">
+        <div className="mt-2 grid grid-cols-9 gap-1 sm:gap-2 w-full max-w-md">
           {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
             <button
               key={n}

@@ -680,10 +680,11 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const handleShareCard = useCallback(async () => {
         try {
             const summary = summarizeMinesweeperResult(board);
+            const isWon = status === 'won';
             const canvas = createShareCardCanvas({
                 title: t.title,
-                subtitle: `${mode.toUpperCase()} · ${timer}s`,
-                score: `${timer}s`,
+                subtitle: `${difficultyId.toUpperCase()} · ${isWon ? (locale === 'ko' ? '승리 클리어' : 'Clear') : (locale === 'ko' ? '지뢰 격발' : 'Detonated')}`,
+                score: isWon ? `${timer}s` : `${summary.safeRevealed}/${summary.safeTotal} SAFE`,
                 bestScore: bestTime ? `${bestTime}s` : undefined,
                 slug: "minesweeper",
                 durationSeconds: timer,
@@ -704,7 +705,7 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         } catch {
             /* best effort */
         }
-    }, [board, t.title, mode, timer, bestTime, locale, m3.safeProgress, m3.correctFlags, difficultyId]);
+    }, [board, status, t.title, difficultyId, locale, timer, bestTime, m3.safeProgress, m3.correctFlags]);
 
     return (
         <div
@@ -903,18 +904,16 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     {status === 'won' && bestTime !== null && (
                         <p className="text-xs text-muted-foreground mt-2">{isNewBest ? m3.newBest : `${t.best}: ${bestTime}s`} · {m3.nextGoal}: {Math.max(1, bestTime - 1)}s</p>
                     )}
-                    {status === 'won' && (
-                        <div className="mt-3 flex justify-center">
-                            <button
-                                type="button"
-                                onClick={handleShareCard}
-                                className="min-h-11 inline-flex items-center gap-1.5 px-5 py-2 rounded-full border border-primary/40 bg-primary/10 text-primary font-bold text-xs hover:bg-primary/20 transition-colors"
-                            >
-                                <span>📸</span>
-                                <span>{shareCardCopied ? "✓ 카드 복사됨" : "결과 카드 복사"}</span>
-                            </button>
-                        </div>
-                    )}
+                    <div className="mt-3 flex justify-center">
+                        <button
+                            type="button"
+                            onClick={handleShareCard}
+                            className="min-h-11 inline-flex items-center gap-1.5 px-5 py-2 rounded-full border border-primary/40 bg-primary/10 text-primary font-bold text-xs hover:bg-primary/20 transition-colors"
+                        >
+                            <span>📸</span>
+                            <span>{shareCardCopied ? (locale === 'ko' ? "✓ 카드 복사됨" : "✓ Copied") : (locale === 'ko' ? "결과 카드 복사" : "Share Result Card")}</span>
+                        </button>
+                    </div>
                     {assist === 'hint' && <p className="mt-1 text-xs font-bold text-muted-foreground">{m3.assistedResult}</p>}
                     <button
                         onClick={() => initBoard(mode)}

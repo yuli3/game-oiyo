@@ -1,14 +1,19 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { Check, Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import type { Locale } from '../../lib/i18n';
-import { createReversi, playReversi, restoreReversi, reversiAnalysis, reversiBestMove, reversiMoveReview, reversiMoves, type ReversiMoveReview, type ReversiState } from '../../lib/games/reversi';
+import { createReversi, playReversi, restoreReversi, reversiAnalysis, reversiBestMove, reversiFlips, reversiMoveReview, reversiMoves, type ReversiMoveReview, type ReversiState } from '../../lib/games/reversi';
 import type { AiLevel, GameMode } from '../../lib/games/ai/types';
 import { getRecord, recordResult, type GameRecord } from '../../lib/games/records';
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 import { clearReversiSave, loadReversiSave, storeReversiSave } from '../../lib/games/active-game-save';
 import { REVERSI_SPRITES } from '../../lib/games/sprites';
+import {
+    createShareCardCanvas,
+    copyShareCardToClipboard,
+    downloadShareCard,
+} from '../../lib/games/share-card';
 
 const SIZE = 8;
 const AI_PLAYER = 2; // AI plays white; human opens as black
@@ -99,6 +104,29 @@ const Reversi: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         oscillator.stop(context.currentTime + duration);
     }, []);
 
+    const playDiskFlip = useCallback((flipsCount: number) => {
+        if (mutedRef.current || typeof window === 'undefined') return;
+        const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+        if (!AudioCtx) return;
+        const context = audio.current ?? new AudioCtx();
+        audio.current = context;
+        const now = context.currentTime;
+        const count = Math.min(6, Math.max(1, flipsCount));
+        for (let i = 0; i < count; i++) {
+            const start = now + i * 0.035;
+            const osc = context.createOscillator();
+            const gain = context.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(540 + i * 40, start);
+            osc.frequency.exponentialRampToValueAtTime(180, start + 0.05);
+            gain.gain.setValueAtTime(0.045, start);
+            gain.gain.exponentialRampToValueAtTime(0.001, start + 0.05);
+            osc.connect(gain).connect(context.destination);
+            osc.start(start);
+            osc.stop(start + 0.05);
+        }
+    }, []);
+
     const initGame = useCallback(() => {
         clearReversiSave();
         if (aiTimer.current) clearTimeout(aiTimer.current);
@@ -129,8 +157,34 @@ const Reversi: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     }, [game, mode, level]);
 
     const [lastPlace, setLastPlace] = useState<{ index: number; flips: number[]; key: number } | null>(null);
+    const [hoveredCell, setHoveredCell] = useState<number | null>(null);
+    const [shareCardCopied, setShareCardCopied] = useState(false);
     const flipKey = useRef(0);
-    const applyMove = (index: number) => { const review=game.current===AI_PLAYER?reversiMoveReview(game.board,index,AI_PLAYER):null;const prevBoard=game.board;const next = playReversi(game, index); if (next === game) { tone(150); return false; } if(review)setLastAiReview(review);const flips=prevBoard.flatMap((cell, i) => cell !== null && next.board[i] !== cell && i !== index ? [i] : []);flipKey.current+=1;setLastPlace({ index, flips, key: flipKey.current });setGame(next); setRestored(false); tone(next.status === 'over' ? 880 : next.passed ? 260 : 520, next.status === 'over' ? .24 : .08); if (next.status === 'over' && mode === 'ai') setRecord(recordResult('reversi', next.winner === 0 ? 'd' : next.winner === AI_PLAYER ? 'l' : 'w')); return true; };
+    const applyMove = (index: number) => {
+        const review = game.current === AI_PLAYER ? reversiMoveReview(game.board, index, AI_PLAYER) : null;
+        const prevBoard = game.board;
+        const next = playReversi(game, index);
+        if (next === game) {
+            tone(150);
+            return false;
+        }
+        if (review) setLastAiReview(review);
+        const flips = prevBoard.flatMap((cell, i) => cell !== null && next.board[i] !== cell && i !== index ? [i] : []);
+        flipKey.current += 1;
+        setLastPlace({ index, flips, key: flipKey.current });
+        setGame(next);
+        setRestored(false);
+        setHoveredCell(null);
+        if (flips.length > 0) {
+            playDiskFlip(flips.length);
+        } else {
+            tone(next.status === 'over' ? 880 : next.passed ? 260 : 520, next.status === 'over' ? .24 : .08);
+        }
+        if (next.status === 'over' && mode === 'ai') {
+            setRecord(recordResult('reversi', next.winner === 0 ? 'd' : next.winner === AI_PLAYER ? 'l' : 'w'));
+        }
+        return true;
+    };
 
     const handleClick = (index: number) => {
         if (game.status === 'over' || thinking || paused) return;
@@ -167,6 +221,36 @@ const Reversi: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         : mode === 'ai' ? (game.winner === AI_PLAYER ? t.aiWins : t.youWin)
         : `${game.winner === 1 ? t.black : t.white} ${t.win}`;
     const analysis = reversiAnalysis(game, 1);
+    const previewFlips = hoveredCell !== null && validMoves.includes(hoveredCell)
+        ? reversiFlips(game.board, hoveredCell, game.current)
+        : [];
+
+    const handleShareCard = useCallback(async () => {
+        try {
+            const canvas = createShareCardCanvas({
+                title: t.title,
+                subtitle: mode === 'ai' ? `VS AI (LEVEL ${level})` : '2 PLAYERS',
+                score: `${bCount}-${wCount}`,
+                slug: 'reversi',
+                qrUrl: typeof window !== 'undefined' ? window.location.href : undefined,
+                customStats: [
+                    { label: 'WINNER', value: winLabel },
+                    { label: 'TURNS', value: game.moves },
+                    { label: 'CORNERS', value: analysis.corners },
+                ],
+            });
+            const copied = await copyShareCardToClipboard(canvas);
+            if (copied) {
+                setShareCardCopied(true);
+                setTimeout(() => setShareCardCopied(false), 2500);
+            } else {
+                downloadShareCard(canvas, `oiyo-reversi-${bCount}v${wCount}.png`);
+                setShareCardCopied(true);
+                setTimeout(() => setShareCardCopied(false), 2500);
+            }
+        } catch {}
+    }, [analysis.corners, bCount, game.moves, level, mode, t.title, wCount, winLabel]);
+
     const handleKey = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => { if (!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(event.key)) return; event.preventDefault(); let next=index; if(event.key==='ArrowLeft')next=Math.max(0,index-1);if(event.key==='ArrowRight')next=Math.min(63,index+1);if(event.key==='ArrowUp')next=Math.max(0,index-8);if(event.key==='ArrowDown')next=Math.min(63,index+8);if(event.key==='Home')next=0;if(event.key==='End')next=63;document.querySelector<HTMLButtonElement>(`[data-reversi-cell="${next}"]`)?.focus(); };
     const share = async () => { try { await navigator.clipboard.writeText(`OIYO Reversi · ${bCount}-${wCount} · ${game.moves} moves · ${winLabel}`); } catch { /* best effort */ } };
 
@@ -197,15 +281,15 @@ const Reversi: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                             {([1, 2, 3] as AiLevel[]).map((lv) => (
                                 <button key={lv} onClick={() => { setLevel(lv); initGame(); }}
                                     aria-pressed={level === lv}
-                                    className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-colors ${level === lv ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
+                                    className={`px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-colors ${level === lv ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
                                     {lv === 1 ? t.level1 : lv === 2 ? t.level2 : t.level3}
                                 </button>
                             ))}
                         </div>
                     )}
-                    {mode === 'ai' && <p className="basis-full text-[11px] font-medium text-muted-foreground">{aiInfo.difficulty}: {aiInfo.level[level]}</p>}
+                    {mode === 'ai' && <p className="basis-full text-xs font-medium text-muted-foreground">{aiInfo.difficulty}: {aiInfo.level[level]}</p>}
                     {mode === 'ai' && record && (record.w + record.l + record.d > 0) && (
-                        <span className="ml-auto text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                        <span className="ml-auto text-xs font-bold text-muted-foreground uppercase tracking-widest">
                             {t.record} {record.w}–{record.l}{record.d ? `–${record.d}` : ''}
                         </span>
                     )}
@@ -260,6 +344,10 @@ const Reversi: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                         key={i}
                         onClick={() => handleClick(i)}
                         onKeyDown={(event) => handleKey(event, i)}
+                        onMouseEnter={() => setHoveredCell(i)}
+                        onMouseLeave={() => setHoveredCell(null)}
+                        onFocus={() => setHoveredCell(i)}
+                        onBlur={() => setHoveredCell(null)}
                         data-reversi-cell={i}
                         type="button"
                         role="gridcell"
@@ -267,9 +355,17 @@ const Reversi: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                         aria-disabled={game.status === 'over' || paused || thinking || (mode === 'ai' && game.current === 2)}
                         className={`relative flex min-h-10 min-w-10 items-center justify-center border border-primary-foreground/25 ${!reducedMotion ? 'transition-colors' : ''} ${
                             validMoves.includes(i) ? 'bg-primary/60 hover:bg-primary/40 cursor-pointer' : 'bg-primary/80'
-                        }`}
+                        } ${previewFlips.includes(i) ? 'ring-2 ring-chart-4/90' : ''}`}
                     >
-                        {validMoves.includes(i) && <div className="h-2.5 w-2.5 rounded-full border-2 border-white bg-slate-900/70" />}
+                        {validMoves.includes(i) && (
+                            hoveredCell === i && previewFlips.length > 0 ? (
+                                <span className="text-xs font-black text-chart-4 bg-background/90 px-1 py-0.5 rounded shadow-xs scale-90 pointer-events-none z-10">
+                                    +{previewFlips.length}
+                                </span>
+                            ) : (
+                                <div className="h-2.5 w-2.5 rounded-full border-2 border-white bg-slate-900/70" />
+                            )
+                        )}
                         {cell !== null && (
                             <img
                                 key={lastPlace?.flips.includes(i) ? `flip-${lastPlace.key}-${i}` : lastPlace?.index === i ? `place-${lastPlace.key}` : `disc-${i}`}
@@ -293,10 +389,21 @@ const Reversi: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                         <div className="m-3 rounded-3xl border-4 border-primary/20 bg-card p-5 text-center shadow-xl">
                             <h4 className="text-2xl font-black text-foreground mb-2">{winLabel}</h4>
                             <p className="text-sm font-bold text-muted-foreground">{bCount}–{wCount} · {t.moves} {game.moves}</p><p className="text-xs font-bold text-muted-foreground">{t.mobility} {analysis.mobility} · {t.corners} {analysis.corners}</p><p className="mt-1 text-xs font-bold text-primary">{t.next}</p>
-                            {mode === 'ai' && game.winner === AI_PLAYER && lastAiReview && <div className="mx-auto mt-3 max-w-xs rounded-2xl border border-amber-300/60 bg-amber-50 p-3 text-left text-xs text-stone-800"><p className="font-black text-amber-900">{aiInfo.review} · {String.fromCharCode(65+lastAiReview.index%8)}{8-Math.floor(lastAiReview.index/8)}</p><p className="mt-1">{lastAiReview.corner?aiInfo.corner:lastAiReview.edge?aiInfo.edge:`${lastAiReview.flips} ${aiInfo.flips}`} · {aiInfo.mobility} ${lastAiReview.opponentMobility}</p><p className="mt-1 text-[10px] text-stone-500">{aiInfo.difficulty}: {aiInfo.level[level]}</p></div>}
-                            <div className="mt-4 flex justify-center gap-2"><button type="button" onClick={initGame} className={`min-h-11 rounded-xl bg-primary px-5 font-black text-primary-foreground ${!reducedMotion ? 'hover:scale-105 transition-transform' : ''}`}>
-                                {t.reset}
-                            </button><button type="button" onClick={share} className="min-h-11 rounded-xl border px-4 text-sm font-bold">{t.share}</button></div>
+                            {mode === 'ai' && game.winner === AI_PLAYER && lastAiReview && <div className="mx-auto mt-3 max-w-xs rounded-2xl border border-amber-300/60 bg-amber-50 p-3 text-left text-xs text-stone-800"><p className="font-black text-amber-900">{aiInfo.review} · {String.fromCharCode(65+lastAiReview.index%8)}{8-Math.floor(lastAiReview.index/8)}</p><p className="mt-1">{lastAiReview.corner?aiInfo.corner:lastAiReview.edge?aiInfo.edge:`${lastAiReview.flips} ${aiInfo.flips}`} · {aiInfo.mobility} ${lastAiReview.opponentMobility}</p><p className="mt-1 text-xs text-stone-500">{aiInfo.difficulty}: {aiInfo.level[level]}</p></div>}
+                            <div className="mt-4 flex flex-wrap justify-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={handleShareCard}
+                                    className="min-h-11 px-4 py-2 rounded-xl border border-primary/40 bg-primary/10 shadow-xs text-xs font-bold text-primary hover:bg-primary/20 transition-colors flex items-center gap-1.5"
+                                >
+                                    {shareCardCopied ? <Check className="size-4 text-success" /> : <span>🖼️</span>}
+                                    <span>{shareCardCopied ? '카드 복사됨!' : '카드 공유 2.0'}</span>
+                                </button>
+                                <button type="button" onClick={initGame} className={`min-h-11 rounded-xl bg-primary px-5 font-black text-primary-foreground ${!reducedMotion ? 'hover:scale-105 transition-transform' : ''}`}>
+                                    {t.reset}
+                                </button>
+                                <button type="button" onClick={share} className="min-h-11 rounded-xl border px-4 text-sm font-bold">{t.share}</button>
+                            </div>
                         </div>
                     </div>
                 )}

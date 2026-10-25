@@ -7,7 +7,7 @@ export function parseBlackjackSave(raw: string | null, now = Date.now()): Blackj
   if (!raw || !Number.isFinite(now)) return null;
   try {
     const value: unknown = JSON.parse(raw); if (!object(value) || value.version !== 1 || !object(value.state) || !Number.isInteger(value.savedAtEpochMs) || (value.savedAtEpochMs as number) > now + 300_000 || now - (value.savedAtEpochMs as number) > 7 * 86_400_000) return null;
-    if (!Number.isInteger(value.state.seed) || !Array.isArray(value.state.actions) || value.state.actions.length > 48 || value.state.actions.some(action => action !== "hit" && action !== "stand")) return null;
+    if (!Number.isInteger(value.state.seed) || !Array.isArray(value.state.actions) || value.state.actions.length > 48 || value.state.actions.some(action => action !== "hit" && action !== "stand" && action !== "double")) return null;
     const state = replayBlackjack(value.state.seed as number, value.state.actions as BlackjackAction[]);
     if (!state || state.status !== "playing" || JSON.stringify(state) !== JSON.stringify(value.state)) return null;
     return { version: 1, state, savedAtEpochMs: value.savedAtEpochMs as number };

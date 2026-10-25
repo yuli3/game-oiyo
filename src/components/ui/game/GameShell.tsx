@@ -17,6 +17,7 @@ import {
   Award,
   Trophy,
   Eye,
+  HelpCircle,
 } from "lucide-react";
 import {
   getColorblindMode,
@@ -131,6 +132,19 @@ export const GameShell: React.FC<GameShellProps> = ({
   const innerRef = useRef<HTMLDivElement>(null);
   const targetRef = containerRef ?? innerRef;
   const [showSoundMenu, setShowSoundMenu] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
+  const [masterVolume, setMasterVolume] = useState<number>(() => {
+    try {
+      if (typeof window !== "undefined") {
+        const val = localStorage.getItem("oiyo_master_volume");
+        if (val !== null) {
+          const parsed = parseInt(val, 10);
+          if (!isNaN(parsed) && parsed >= 0 && parsed <= 100) return parsed;
+        }
+      }
+    } catch {}
+    return 100;
+  });
   const [showQrModal, setShowQrModal] = useState(false);
   const [showArcadePass, setShowArcadePass] = useState(false);
   const [showTrophyModal, setShowTrophyModal] = useState(false);
@@ -231,13 +245,34 @@ export const GameShell: React.FC<GameShellProps> = ({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
-      if (e.key === "f" || e.key === "F") {
+      if (e.key === "?" || (e.shiftKey && e.key === "/")) {
+        e.preventDefault();
+        setShowShortcuts((prev) => !prev);
+      } else if (e.key === "Escape") {
+        if (showShortcuts) {
+          e.preventDefault();
+          setShowShortcuts(false);
+          return;
+        }
+        if (showSoundMenu) {
+          e.preventDefault();
+          setShowSoundMenu(false);
+          return;
+        }
+        if (phase === "play" && onPause) {
+          e.preventDefault();
+          onPause();
+        } else if (phase === "paused" && onResume) {
+          e.preventDefault();
+          onResume();
+        }
+      } else if (e.key === "f" || e.key === "F") {
         e.preventDefault();
         onTogglePortal();
       } else if (e.key === "m" || e.key === "M") {
         e.preventDefault();
         onToggleMute();
-      } else if (e.key === "p" || e.key === "P" || e.key === "Escape") {
+      } else if (e.key === "p" || e.key === "P") {
         if (phase === "play" && onPause) {
           e.preventDefault();
           onPause();
@@ -325,6 +360,16 @@ export const GameShell: React.FC<GameShellProps> = ({
             </button>
           )}
 
+          <button
+            type="button"
+            onClick={() => setShowShortcuts((v) => !v)}
+            aria-label="단축키 안내 (?)"
+            title="단축키 안내 (?)"
+            className="flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-border bg-muted p-2 text-xs font-bold text-muted-foreground hover:bg-muted/80 focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            <HelpCircle className="size-4" />
+          </button>
+
           <div className="relative">
             <button
               type="button"
@@ -342,6 +387,28 @@ export const GameShell: React.FC<GameShellProps> = ({
                 <div className="flex items-center justify-between border-b border-border pb-1.5">
                   <span className="font-black text-xs">🎵 JUKEBOX</span>
                   <span className="text-xs text-muted-foreground uppercase font-mono font-bold">{bgmTrack}</span>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground font-semibold">마스터 볼륨</span>
+                    <span className="font-mono font-bold text-primary">{masterVolume}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={masterVolume}
+                    onChange={(e) => {
+                      const v = Number(e.target.value);
+                      setMasterVolume(v);
+                      try {
+                        localStorage.setItem("oiyo_master_volume", String(v));
+                      } catch {}
+                    }}
+                    className="w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+                    aria-label="마스터 볼륨 조절"
+                  />
                 </div>
 
                 <div className="space-y-1">
@@ -746,6 +813,63 @@ export const GameShell: React.FC<GameShellProps> = ({
             >
               도전장 링크 복사
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Global Keyboard Shortcuts HUD Modal ── */}
+      {showShortcuts && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="키보드 단축키 안내"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-in fade-in"
+          onClick={() => setShowShortcuts(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl border border-border bg-card p-5 shadow-2xl text-card-foreground"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-black">⌨️ 키보드 단축키 안내</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowShortcuts(false)}
+                className="rounded-lg p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                aria-label="닫기"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-2 text-xs">
+              {[
+                { key: "F", desc: "전체화면 / 몰입 모드 전환" },
+                { key: "M", desc: "오디오 음소거 / 해제" },
+                { key: "P / Esc", desc: "게임 일시정지 / 계속하기" },
+                { key: "Space / Enter", desc: "시작 / 결과 화면 재도전" },
+                { key: "?", desc: "단축키 HUD 창 토글" },
+              ].map(({ key, desc }) => (
+                <div key={key} className="flex items-center justify-between gap-2 py-1.5 border-b border-border/40">
+                  <span className="text-muted-foreground font-medium">{desc}</span>
+                  <kbd className="rounded-md border border-border bg-muted px-2 py-1 font-mono text-xs font-black text-foreground shadow-xs">
+                    {key}
+                  </kbd>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-5 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowShortcuts(false)}
+                className="rounded-xl bg-primary px-5 py-2 text-xs font-bold text-primary-foreground shadow-xs hover:bg-primary/90"
+              >
+                확인
+              </button>
+            </div>
           </div>
         </div>
       )}

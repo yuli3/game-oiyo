@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   FREECELL_SUITS,
+  autoCollectSafeFoundationMoves,
   createFreeCellGame,
   createSeededFreeCellGame,
   isDescendingAlternatingRun,
@@ -96,5 +97,18 @@ describe('FreeCell engine', () => {
     expect(isFreeCellWon(won)).toBe(true);
     won.foundation[0].pop();
     expect(isFreeCellWon(won)).toBe(false);
+  });
+
+  it('safely auto-moves available Aces and 2s to foundations', () => {
+    const game = state({
+      freeCells: [card('hearts', 1), card('diamonds', 2), null, null],
+      tableau: [[card('spades', 1)], [card('clubs', 1)], [], [], [], [], [], []],
+    });
+
+    const collected = autoCollectSafeFoundationMoves(game);
+    expect(collected.movesCount).toBeGreaterThanOrEqual(3);
+    expect(collected.state.foundation[0].length).toBe(1); // hearts A
+    expect(collected.state.foundation[2].length).toBe(1); // clubs A
+    expect(collected.state.foundation[3].length).toBe(1); // spades A
   });
 });
