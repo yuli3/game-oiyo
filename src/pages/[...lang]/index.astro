@@ -6,7 +6,7 @@ import type { Locale } from "../../lib/i18n";
 import gameArtDocument from "../../../config/game-art-v1.json";
 import { Image } from "astro:assets";
 import type { ImageMetadata } from "astro";
-const cardSources = import.meta.glob<ImageMetadata>(["../../../public/games/*.png", "../../../public/games/*-keyart.webp", "../../../public/prototypes/*.webp"], { eager: true, import: "default" });
+const cardSources = import.meta.glob<ImageMetadata>(["../../../public/games/*.png", "../../../public/games/*-keyart.webp", "../../../public/prototypes/*.webp", "../../../public/assets/sprites/**/keyart.webp"], { eager: true, import: "default" });
 const cardSource = (url: string) => cardSources[`../../../public${url}`];
 
 export async function getStaticPaths() {
@@ -210,6 +210,62 @@ const studioFlagshipLabel: Record<Locale, { sectionTitle: string; badge: string;
 };
 const studioLabels = studioFlagshipLabel[locale] ?? studioFlagshipLabel.en;
 
+const newReleasesLabel: Record<Locale, { sectionTitle: string; badge: string; subtitle: string; playNow: string }> = {
+  ko: { sectionTitle: "🚀 2026 신작 라인업", badge: "NEW", subtitle: "매일 새로운 생각거리와 모임의 즐거움을 주는 최신 오리지널 게임", playNow: "지금 플레이" },
+  en: { sectionTitle: "🚀 New Releases 2026", badge: "NEW", subtitle: "Fresh daily thinking challenges and party excitement", playNow: "Play Now" },
+  ja: { sectionTitle: "🚀 2026 新作ラインナップ", badge: "NEW", subtitle: "毎日の知的な挑戦とオフラインで盛り上がる最新オリジナルゲーム", playNow: "今すぐプレイ" },
+  zh: { sectionTitle: "🚀 2026 全新力作", badge: "NEW", subtitle: "每日全新思考挑战与聚会同乐的最新原创游戏", playNow: "立即开玩" },
+  fr: { sectionTitle: "🚀 Nouveautés 2026", badge: "NEW", subtitle: "De nouveaux défis quotidiens et des jeux de soirée originaux", playNow: "Jouer" },
+  es: { sectionTitle: "🚀 Novedades 2026", badge: "NEW", subtitle: "Nuevos desafíos diarios de deducción y diversión en grupo", playNow: "Jugar ahora" },
+};
+const newReleaseLabels = newReleasesLabel[locale] ?? newReleasesLabel.en;
+
+const NEW_RELEASES_CONFIG: Array<{ slug: string; tag: Record<Locale, string>; desc: Record<Locale, string> }> = [
+  {
+    slug: "word-groups",
+    tag: { ko: "4x4 데일리 연상 퍼즐", en: "4x4 Daily Association", ja: "4x4 連想パズル", zh: "4x4 联想猜词", fr: "Association 4x4", es: "Asociación 4x4" },
+    desc: {
+      ko: "16개의 단어 속에 숨겨진 4개의 비밀 연결고리를 밝혀내세요.",
+      en: "Find 4 hidden connections among 16 words. Fresh daily puzzle!",
+      ja: "16の単語に隠された4つの共通点を見つけ出そう。毎日更新！",
+      zh: "找出16个词语中隐藏的4组关联。每日全新谜题！",
+      fr: "Trouvez 4 liens cachés parmi 16 mots. Un défi quotidien !",
+      es: "Descubre 4 conexiones ocultas entre 16 palabras. ¡Reto diario!",
+    },
+  },
+  {
+    slug: "domino-logic",
+    tag: { ko: "수리 연역 논리 퍼즐", en: "Deductive Math Puzzle", ja: "数理演繹パズル", zh: "数理演绎益智", fr: "Logique mathématique", es: "Lógica matemática" },
+    desc: {
+      ko: "행과 열의 합과 제약 조건을 만족하도록 도미노를 채우는 100% 연역 퍼즐.",
+      en: "Place dominos to satisfy row and column sums with pure deduction.",
+      ja: "行と列の合計と制約を満たすようドミノを埋める純粋論理パズル。",
+      zh: "通过纯粹逻辑推理放置多米诺，满足行列点数与边界约束。",
+      fr: "Placez les dominos pour satisfaire toutes les contraintes par déduction.",
+      es: "Coloca fichas de dominó para satisfacer las sumas con deducción pura.",
+    },
+  },
+  {
+    slug: "liar-onephone",
+    tag: { ko: "오프라인 파티 블러핑", en: "Offline Party Bluffing", ja: "対面パーティー人狼", zh: "线下聚会伪装", fr: "Bluff en soirée", es: "Farol en grupo" },
+    desc: {
+      ko: "스마트폰 하나로 여럿이 둘러앉아 즐기는 심리 추리 & 거짓말 탐지 게임.",
+      en: "Gather around a single phone for hilarious bluffing detective fun.",
+      ja: "スマホ1台を囲んでみんなで遊ぶ心理戦＆ライアー推理パーティーゲーム。",
+      zh: "围着一部手机即可畅玩的聚会心理博弈与谎言侦探游戏。",
+      fr: "Autour d'un seul téléphone, démasquez le menteur entre amis.",
+      es: "Alrededor de un solo móvil, descubre al mentiroso con amigos.",
+    },
+  },
+];
+
+const newReleaseGames = NEW_RELEASES_CONFIG
+  .map((config) => {
+    const game = GAMES.find((g) => g.slug === config.slug);
+    return game ? { game, tag: config.tag, desc: config.desc } : null;
+  })
+  .filter((item): item is { game: Game; tag: Record<Locale, string>; desc: Record<Locale, string> } => Boolean(item));
+
 const STUDIO_FLAGSHIP_CONFIG: Array<{ slug: string; tag: Record<Locale, string> }> = [
   { slug: "neon-survivor", tag: { ko: "무기 진화 액션", en: "Evolution Roguelite", ja: "武器進化アクション", zh: "武器进化肉鸽", fr: "Roguelite d'action", es: "Roguelite de acción" } },
   { slug: "brick-breaker", tag: { ko: "피버 & 파워업", en: "Fever & Powerups", ja: "フィーバー＆強化", zh: "狂热与增强", fr: "Fever & Bonus", es: "Fiebre & Poderes" } },
@@ -278,6 +334,66 @@ const cardJsonLd = {
       </ul>
     </nav>
     <TodaysGameCard locale={locale} candidates={todaysGameCandidates} />
+    <section class="mt-10">
+      <div class="mb-4">
+        <h2 class="text-xl font-black text-foreground">{newReleaseLabels.sectionTitle}</h2>
+        <p class="mt-0.5 text-xs font-medium text-muted-foreground">{newReleaseLabels.subtitle}</p>
+      </div>
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {newReleaseGames.map(({ game: g, tag, desc }) => (
+          <a
+            href={`/${locale}/${g.slug}/`}
+            data-game={g.slug}
+            class="group relative flex min-h-56 flex-col justify-between overflow-hidden rounded-2xl border-2 border-primary/30 bg-card p-5 text-left shadow-sm transition-all hover:-translate-y-1 hover:border-primary hover:shadow-lg ring-1 ring-primary/20"
+          >
+            {cardHasArt(g) ? (
+              <Image
+                src={cardSource(gameArt[g.slug])}
+                alt={cardName(g)}
+                width={720}
+                widths={[360, 720]}
+                sizes="(min-width: 1024px) 360px, (min-width: 640px) 50vw, 100vw"
+                format="webp"
+                loading="lazy"
+                decoding="async"
+                class="absolute inset-0 h-full w-full object-cover opacity-35 transition-transform duration-500 group-hover:scale-105 group-hover:opacity-40"
+              />
+            ) : (
+              <span class="absolute right-4 bottom-4 text-7xl opacity-20 transition-transform duration-300 group-hover:scale-110" aria-hidden="true">
+                {g.emoji}
+              </span>
+            )}
+            <span class="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/30" aria-hidden="true" />
+            
+            <div class="relative z-10 flex items-center justify-between">
+              <span class="inline-flex items-center gap-1.5 rounded-full bg-primary px-2.5 py-0.5 text-xs font-black tracking-wide text-primary-foreground shadow-xs">
+                <span>✦</span>
+                <span>{newReleaseLabels.badge}</span>
+              </span>
+              <span class="text-xs font-bold text-muted-foreground">
+                {tag[locale] ?? tag.en}
+              </span>
+            </div>
+
+            <div class="relative z-10 mt-6">
+              <div class="flex items-center gap-2">
+                <span class="text-2xl" aria-hidden="true">{g.emoji}</span>
+                <span class="text-lg font-black tracking-tight text-foreground group-hover:text-primary transition-colors">
+                  {cardName(g)}
+                </span>
+              </div>
+              <p class="mt-2 text-xs font-medium leading-relaxed text-muted-foreground line-clamp-2">
+                {desc[locale] ?? desc.en}
+              </p>
+              <div class="mt-3 flex items-center gap-1 text-xs font-bold text-primary group-hover:underline">
+                <span>{newReleaseLabels.playNow}</span>
+                <span aria-hidden="true">→</span>
+              </div>
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
     <section class="mt-10">
       <div class="mb-4">
         <h2 class="text-xl font-black text-foreground">{studioLabels.sectionTitle}</h2>

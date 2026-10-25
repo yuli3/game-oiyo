@@ -370,6 +370,48 @@ export const MISSION_CATALOG: Array<{
     goal: 1,
     xpReward: 50,
   },
+  {
+    id: "wordgroups-solve",
+    gameSlug: "word-groups",
+    title: {
+      ko: "네 묶음 단어 퍼즐 1회 클리어",
+      en: "Solve 1 Word Groups puzzle",
+      ja: "四つのグループ単語パズルを1問クリア",
+      zh: "完成1局四组词猜谜",
+      fr: "Résoudre 1 puzzle de Quatre groupes",
+      es: "Resuelve 1 puzle de Cuatro grupos",
+    },
+    goal: 1,
+    xpReward: 50,
+  },
+  {
+    id: "dominologic-solve",
+    gameSlug: "domino-logic",
+    title: {
+      ko: "도미노 칸 맞추기 퍼즐 1회 완료",
+      en: "Complete 1 Domino Logic puzzle",
+      ja: "ドミノのマス推理パズルを1問クリア",
+      zh: "完成1局多米诺填格",
+      fr: "Compléter 1 puzzle de Cases de dominos",
+      es: "Completa 1 puzle de Casillas de dominó",
+    },
+    goal: 1,
+    xpReward: 50,
+  },
+  {
+    id: "liaronephone-play",
+    gameSlug: "liar-onephone",
+    title: {
+      ko: "라이어 한 폰 파티 게임 1회 플레이",
+      en: "Play 1 round of One-Phone Liar",
+      ja: "一台ライアーゲームを1回プレイ",
+      zh: "游玩1局一机说谎者",
+      fr: "Jouer 1 manche de Menteur un téléphone",
+      es: "Juega 1 ronda de Mentiroso de un móvil",
+    },
+    goal: 1,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {
