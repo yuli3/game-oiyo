@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PeglinRogue from "../../components/games/PeglinRogue";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "페글린 로그 — 파칭코 구슬 드롭 덱빌더 로그라이크",
+    description: "구슬을 발사하여 펙을 연쇄 타격하고, 축적된 대미지로 던전 몬스터를 격파하는 파칭코 물리 덱빌더 로그라이크 게임.",
+  },
+  en: {
+    title: "Peglin Rogue — Pachinko Ball-Drop Deckbuilder Roguelike",
+    description: "Drop orbs into pegboards to bounce, trigger bombs, and multiply damage to defeat fantasy dungeon monsters in this pachinko roguelike.",
+  },
+  ja: {
+    title: "ペグリン ローグ — パチンコ球落としデッキ構築ローグライク",
+    description: "オーブを発射してピンを連続ヒットさせ、蓄積されたダメージでダンジョンのモンスターを撃破するパチンコ物理ローグライク。",
+  },
+  zh: {
+    title: "弹珠地牢 肉鸽 — 弹珠台弹跳卡牌构建肉鸽",
+    description: "发射弹珠撞击钉子累加连击倍率，引爆炸弹与暴击，将毁灭性伤害倾泻在地下城怪物身上的弹珠台RPG游戏。",
+  },
+  fr: {
+    title: "Peglin Rogue — Roguelike de deckbuilding pachinko",
+    description: "Lancez des orbes sur des chevilles pour faire rebondir, déclencher des bombes et terrasser les monstres du donjon.",
+  },
+  es: {
+    title: "Peglin Rogue — Roguelike de construcción de mazos pachinko",
+    description: "Lanza orbes contra clavijas para rebotar, detonar bombas y derrotar a los monstruos de la mazmorra con daño acumulado.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-4xl px-4 py-8">
+    <PeglinRogue client:load locale={locale} />
+    <GameGuide slug="peglin-rogue" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>

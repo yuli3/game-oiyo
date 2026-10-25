@@ -510,6 +510,20 @@ export const MISSION_CATALOG: Array<{
     goal: 20,
     xpReward: 50,
   },
+  {
+    id: "peglin-damage-200",
+    gameSlug: "peglin-rogue",
+    title: {
+      ko: "페글린 로그에서 단일 턴 200 이상 대미지 달성",
+      en: "Deal 200+ turn damage in Peglin Rogue",
+      ja: "ペグリンローグで1ターン200以上のダメージを達成",
+      zh: "在弹珠地牢中单回合打出200点以上伤害",
+      fr: "Infliger 200+ dégâts en un tour dans Peglin Rogue",
+      es: "Inflige 200+ de daño en un turno en Peglin Rogue",
+    },
+    goal: 200,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {

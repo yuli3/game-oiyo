@@ -4628,4 +4628,60 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "peglin-rogue": {
+    origin: {
+      ko: "페글린 로그(Peglin Roguelike)는 글로벌 인디 게임 명작 Peglin과 클래식 파칭코 Peggle에서 영감을 받은 물리 기반 덱빌더 로그라이크입니다. 구슬을 발사해 핀을 타격하고 연쇄 반응을 일으켜 몬스터를 쓰러뜨리는 독창적인 전투 방식을 웹 환경에 완벽히 이식했습니다.",
+      en: "Peglin Rogue is a physics-based deckbuilder roguelike inspired by indie gems Peglin and Peggle. Fire orbs onto pegboards to trigger satisfying chain reactions, detonating bombs and critical strikes to defeat RPG dungeon bosses.",
+      ja: "ペグリン ローグ（Peglin Roguelike）は、世界的ヒット作『Peglin』やパチンコ名作『Peggle』に着想を得た物理演算デッキ構築ローグライクです。オーブを落としてピンを弾き、連鎖ダメージを蓄積してダンジョンの敵を討伐します。",
+      zh: "弹珠地牢（Peglin Rogue）是一款受独立名作《Peglin》与经典弹珠台游戏启发的物理卡牌构筑肉鸽游戏。发射弹珠在钉板上弹跳触发连锁爆破，将收集的伤害化为重炮痛击怪物。",
+      fr: "Peglin Rogue est un deckbuilder roguelike physique inspiré de Peglin et Peggle. Lancez des orbes sur des grilles de picots pour provoquer des réactions en chaîne explosives et terrasser les monstres.",
+      es: "Peglin Rogue es un roguelike de construcción de mazos basado en físicas inspirado en Peglin y Peggle. Dispara orbes sobre tableros de clavijas para desencadenar explosiones en cadena y vencer a los jefes.",
+    },
+    how: {
+      ko: "화면을 터치하거나 마우스를 움직여 상단 대포의 발사 각도를 조절한 뒤 구슬을 발사합니다. 구슬이 떨어지며 일반 펙(6점), 폭탄(30점), 크리티컬(1.6배), 리프레시(펙 재생)를 타격하여 턴 대미지를 모읍니다. 구슬이 하단으로 빠져나가면 모인 대미지로 적을 공격하며, 살아남은 적의 반격으로부터 HP를 지켜내야 합니다.",
+      en: "Drag or move your pointer to adjust the cannon's firing angle, then release or tap Fire. Your orb bounces off normal pegs (+6 dmg), bombs (+30 dmg), crits (1.6x multiplier), and refresh pegs. When the orb exits the bottom, all accumulated damage strikes the enemy.",
+      ja: "画面をタップ・スワイプして上部大砲の照準を合わせ、オーブを発射します。通常のピン（6点）、爆弾（30点）、クリティカル（1.6倍）、リフレッシュ（ピン復活）に当ててダメージを蓄積。球が下から落ちるとモンスターへ一斉攻撃が発動します。",
+      zh: "触控或移动光标微调顶部炮台的射击仰角后发射弹珠。弹珠在下落过程中弹击普通钉（+6分）、炸弹（+30分）、暴击（1.6倍）与刷新钉累积回合伤害。当弹珠落入底部漏斗时便会对怪物造成等量重击。",
+      fr: "Ajustez l'angle du canon avec la souris ou au doigt puis tirez. L'orbe rebondit sur les picots ordinaires, bombes, critiques et recharges. En sortant par le bas, les dégâts totaux sont infligés à l'ennemi.",
+      es: "Apunta el cañón deslizando y dispara el orbe. Rebota en clavijas normales, bombas, críticos y recargas. Al salir por la parte inferior, el daño acumulado se descarga sobre el enemigo.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "적에게 한 번에 큰 대미지를 주려면 어떻게 조준해야 하나요?",
+          en: "How should I aim to deal massive burst damage in a single shot?",
+          ja: "一撃で大ダメージを与えるにはどのように狙えばいいですか？",
+          zh: "如何瞄准才能单发打出成吨的爆发伤害？",
+          fr: "Comment viser pour infliger de lourds dégâts en un seul tir ?",
+          es: "¿Cómo debo apuntar para infligir un daño masivo en un solo disparo?",
+        },
+        a: {
+          ko: "폭탄(Bomb) 펙이나 크리티컬(Crit) 펙이 위치한 상단 밀집 구역으로 구슬이 비스듬히 들어가도록 각도를 잡으세요. 벽면 반사를 활용하여 펙 사이에 구슬이 끼어 연속으로 튕기게 만들면 수백 점의 대미지를 손쉽게 모을 수 있습니다.",
+          en: "Aim slightly obliquely into dense clusters containing Bomb and Crit pegs. Using wall banks to trap the orb between dense peg layers causes rapid consecutive bounces, stacking hundreds of damage points quickly.",
+          ja: "爆弾やクリティカルピンが密集しているエリアへ斜めに進入するように角度を決めましょう。壁の反射を利用してピンの間にオーブを挟み込み、小刻みにバウンドさせ続けることで大ダメージを叩き出せます。",
+          zh: "尽量以倾斜角度将弹珠送入包含炸弹与暴击钉的密集区域。利用侧壁反弹使弹珠在上层钉群之间反复反弹，是单回合轻松积攒几百点爆发伤害的绝佳战术。",
+          fr: "Visez en biais vers les grappes de picots contenant bombes et critiques. Utilisez les rebonds contre les parois pour coincer l'orbe et multiplier les collisions.",
+          es: "Apunta en diagonal hacia las zonas densas con bombas y críticos. Rebota en las paredes laterales para atrapar el orbe entre las clavijas y multiplicar los impactos.",
+        },
+      },
+      {
+        q: {
+          ko: "리프레시(Refresh) 펙의 역할은 무엇인가요?",
+          en: "What is the function of the Refresh peg?",
+          ja: "リフレッシュ（Refresh）ピンの役割は何ですか？",
+          zh: "刷新钉（Refresh Peg）的具体作用是什么？",
+          fr: "À quoi sert le picot de recharge (Refresh) ?",
+          es: "¿Para qué sirve la clavija de recarga (Refresh)?",
+        },
+        a: {
+          ko: "구슬이 리프레시 펙에 닿으면 이미 타격되어 비활성화된 보드 위의 모든 펙들이 즉시 다시 활성화됩니다. 구슬이 아직 보드 상단에 머물 때 리프레시를 터뜨리면 같은 펙들을 두 번 이상 타격할 수 있어 턴 딜량이 2배 이상 폭증합니다.",
+          en: "Hitting a Refresh peg instantly reactivates all previously hit pegs across the board during the current shot. Triggering a refresh while the orb is still high on the board allows you to double-dip on damage from the same pegs.",
+          ja: "リフレッシュピンにヒットすると、それまでに叩かれて消灯していたピンがすべてその場で復活します。オーブがまだ盤面の上部にいるうちにリフレッシュを引ければ、同じピンを2度以上叩いてダメージを倍増させられます。",
+          zh: "弹珠触碰刷新钉会立即重置并点亮当前回合中所有已被击碎变灰的钉子。若在弹珠仍处于盘面上半部分时触发刷新，便能对全图钉子完成二次收割，伤害直接翻倍。",
+          fr: "Toucher un picot Refresh réactive instantanément tous les picots déjà frappés. Le déclencher en haut du plateau permet de frapper à nouveau les mêmes cibles.",
+          es: "Golpear una clavija de recarga reactiva al instante todas las clavijas ya impactadas. Si se activa arriba, permite golpear los mismos puntos dos veces y duplicar el daño.",
+        },
+      },
+    ],
+  },
 };
