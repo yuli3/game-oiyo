@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SubwayRunner from "../../components/games/SubwayRunner";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "러너 빌더 3D — 3레인 스와이프 지하철 파쿠르 무한 러너",
+    description: "3개 레인을 좌우로 질주하며 점프와 슬라이딩으로 장애물을 돌파하고 코인을 모으는 3D 무한 질주 파쿠르 액션 게임.",
+  },
+  en: {
+    title: "Subway Mini-Parkour 3D — 3-Lane Swipe Infinite Subway Runner",
+    description: "Sprint across 3 lanes, jump over barriers, slide under obstacles, and collect coins in this fast-paced 3D subway runner.",
+  },
+  ja: {
+    title: "ランナービルダー 3D — 3レーンスワイプ地下鉄無限ランナー",
+    description: "3つのレーンを左右に駆け抜け、ジャンプとスライディングで障害物を回避しながらコインを集める3D無限ランゲーム。",
+  },
+  zh: {
+    title: "跑酷大师 3D — 3轨道滑动地铁跑酷无尽奔跑",
+    description: "在3条地铁轨道间敏捷变道，以高空跳跃与贴地滑行越过障碍物，疯狂收集金币的3D极速跑酷游戏。",
+  },
+  fr: {
+    title: "Subway Mini-Parkour 3D — Course infinie sur 3 voies dans le métro",
+    description: "Foncez sur 3 voies, sautez par-dessus les barrières, glissez sous les obstacles et amassez des pièces dans ce runner 3D.",
+  },
+  es: {
+    title: "Subway Mini-Parkour 3D — Carrera infinita de 3 carriles en el metro",
+    description: "Esprinta por 3 carriles, salta vallas, deslízate bajo obstáculos y recoge monedas en este dinámico runner 3D.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-4xl px-4 py-8">
+    <SubwayRunner client:load locale={locale} />
+    <GameGuide slug="subway-runner" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>

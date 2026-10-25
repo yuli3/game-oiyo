@@ -4684,4 +4684,60 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "subway-runner": {
+    origin: {
+      ko: "러너 빌더 3D(Subway Mini-Parkour)는 전 세계 누적 30억 다운로드를 기록한 글로벌 메가히트 Subway Surfers에서 영감을 받은 3레인 원근 3D 무한 러너 액션입니다. 속도감 넘치는 지하철 선로 위를 3개의 차선으로 누비며 도심 장애물을 돌파하는 짜릿한 반응 속도 게임입니다.",
+      en: "Subway Mini-Parkour 3D is a 3-lane perspective endless runner inspired by global megahit Subway Surfers. Dart across train tracks, jump high hurdles, slide under gantries, and dodge oncoming trains in a thrilling reflex challenge.",
+      ja: "ランナービルダー 3D（Subway Mini-Parkour）は、世界的大ヒットとなった『Subway Surfers』に着想を得た3レーン遠近3D無限ランナーゲームです。スピード感溢れる地下鉄線路を左右に駆け抜け、障害物を跳び越え潜り抜けます。",
+      zh: "跑酷大师 3D（Subway Mini-Parkour）是一款受全球现象级跑酷游戏《Subway Surfers》启发的3轨道透视极速无尽跑酷。穿梭在繁忙的地铁轨道间，凭借精准敏捷的反应跳跃障碍、滑行钻桥，冲击高分纪录。",
+      fr: "Subway Mini-Parkour 3D est un runner sans fin sur 3 voies inspiré du succès mondial Subway Surfers. Foncez sur les rails, sautez par-dessus les barrières et esquivez les wagons à toute allure.",
+      es: "Subway Mini-Parkour 3D es un runner infinito de 3 carriles inspirado en el superventas Subway Surfers. Corre por las vías del tren, salta vallas, deslízate bajo pórticos y esquiva trenes a toda velocidad.",
+    },
+    how: {
+      ko: "좌우 방향키(또는 화면 좌우 스와이프)로 3개 레인 사이를 순식간에 변경합니다. 위 방향키나 점프 버튼으로 허들 배리어를 뛰어넘고, 아래 방향키나 슬라이딩 버튼으로 고가 장애물 아래로 미끄러져 통과하세요. 정면에 나타나는 거대한 열차는 반드시 좌우로 피해가야 하며, 황금 코인을 모아 최고 점수를 갱신하세요.",
+      en: "Use Left/Right arrows (or swipe left/right) to switch lanes. Press Up to jump over hurdles, and Down to slide under overhead gantries. Oncoming train cars cannot be jumped and must be dodged by switching lanes. Collect golden stars to boost your score.",
+      ja: "左右キー（または画面の左右スワイプ）で瞬時に3レーン間を移動します。上キーでハードルを飛び越え、下キーで高架バーの下をスライ딩で潜り抜けます。迫りくる列車は左右に回避し、ゴールドコインを集めてハイスコアを目指しましょう。",
+      zh: "通过左右按键（或屏幕左右滑动）在3条轨道间变道。上键或跳跃按钮飞跃跨栏，下键或滑行按钮俯身穿过高架障碍。迎面而来的火车无法跃过，必须变道躲避。沿途收集金币刷新最高纪录。",
+      fr: "Utilisez les flèches gauche/droite pour changer de voie. Appuyez sur Haut pour sauter les haies et sur Bas pour glisser sous les portiques. Évitez les trains de face en changeant de voie et amassez des pièces d'or.",
+      es: "Usa las flechas izquierda/derecha para cambiar de carril. Pulsa Arriba para saltar vallas y Abajo para deslizarte bajo obstáculos altos. Esquiva los trenes cambiando de carril y recoge monedas de oro.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "속도가 빨라질 때 장애물을 피하는 요령이 있나요?",
+          en: "What is the best strategy for dodging obstacles as the speed increases?",
+          ja: "スピードが上がってきたとき、障害物を避けるコツはありますか？",
+          zh: "随着奔跑速度越来越快，有什么躲避障碍的秘诀吗？",
+          fr: "Quelle est la meilleure astuce quand la vitesse devient très élevée ?",
+          es: "¿Cuál es el mejor truco cuando la velocidad es muy alta?",
+        },
+        a: {
+          ko: "시선을 캐릭터 바로 앞이 아니라 원근감의 소실점(화면 중앙 상단 지평선)에 두는 것이 중요합니다. 100m 앞의 장애물 유형(점프/슬라이딩/열차)을 미리 확인하고 가운데 레인을 기본 홈 포지션으로 삼으면 좌우 어느 쪽으로든 1회 조작만으로 신속히 피할 수 있습니다.",
+          en: "Keep your eyes focused near the horizon vanishing point rather than directly on your character. Anticipating obstacle patterns 80-100 meters ahead gives you ample reaction time. Keeping the center lane as your default home base allows 1-step dodges in either direction.",
+          ja: "視線をキャラクターの直前ではなく、画面奥の消失点（地平線付近）に置くのが最大のコツです。100m先の障害物（ジャンプ・スライド・列車）を先読みし、普段は中央レーンをキープしておくと左右どちらにも即座に退避できます。",
+          zh: "切记不要紧盯角色自身，而要将目光聚焦在远方的地平线透视点。提前预判80至100米开外的障碍类型。平时将中间轨道作为基准常驻位，遇到险情只需单次变道即可迅速化险为夷。",
+          fr: "Regardez l'horizon au loin plutôt que les pieds de votre personnage. Anticiper les obstacles à l'avance et rester sur la voie centrale par défaut permet de réagir d'un coup dans les deux directions.",
+          es: "Fija la mirada en el horizonte y no solo en tu personaje. Anticipar los obstáculos a distancia y permanecer en el carril central te permite esquivar con un solo toque hacia cualquier lado.",
+        },
+      },
+      {
+        q: {
+          ko: "공중에서 슬라이딩 키를 누르면 어떻게 되나요?",
+          en: "What happens if I press the slide key while in mid-air?",
+          ja: "空中でスライディングキーを押すとどうなりますか？",
+          zh: "在空中按下俯冲滑行键会发生什么？",
+          fr: "Que se passe-t-il si j'appuie sur Glisser en plein vol ?",
+          es: "¿Qué ocurre si pulso Deslizar en pleno salto?",
+        },
+        a: {
+          ko: "점프 중 슬라이딩 키(아래 방향키 또는 아래 스와이프)를 누르면 낙하 속도가 급격히 빨라지는 '패스트 드롭(Fast Drop)'이 발동하여 즉시 바닥으로 착지합니다. 허들을 넘은 직후 바로 앞에 고가 배리어나 열차가 연속으로 이어질 때 체공 시간을 끊고 안전하게 착지하는 필수 테크닉입니다.",
+          en: "Pressing the slide key while airborne triggers a Fast Drop, instantly accelerating your descent back to the track floor. This is an essential high-score technique when a jump barrier is immediately followed by a slide barrier or train.",
+          ja: "ジャンプ中に下キーを押すと、瞬時に地面へ急降下する『ファストドロップ』が発動します。ジャンプ直後に低い高架や列車が連続して迫ってくる際、滞空時間をキャンセルして安全に着地するための必須テクニックです。",
+          zh: "滞空跳跃期间按下下滑键会触发“极速坠地（Fast Drop）”，瞬间切断浮空时间重返轨道。当跳跃跨栏后紧接着出现需要俯身钻过的障碍时，这是必不可少的高手进阶技巧。",
+          fr: "Appuyer sur Glisser en l'air déclenche une descente rapide (Fast Drop) pour toucher le sol immédiatement. Idéal pour enchaîner un saut puis une glissade rapprochée.",
+          es: "Pulsar Deslizar en el aire activa la caída rápida (Fast Drop), llevándote al suelo al instante. Es vital cuando un obstáculo alto sigue inmediatamente a un salto.",
+        },
+      },
+    ],
+  },
 };

@@ -524,6 +524,20 @@ export const MISSION_CATALOG: Array<{
     goal: 200,
     xpReward: 50,
   },
+  {
+    id: "subwayrunner-distance-500",
+    gameSlug: "subway-runner",
+    title: {
+      ko: "러너 빌더에서 500m 이상 질주 달성",
+      en: "Sprint 500+ meters in Subway Mini-Parkour",
+      ja: "ランナービルダーで500m以上の疾走を達成",
+      zh: "在跑酷大师中奔跑达到500米以上",
+      fr: "Courir 500+ mètres dans Subway Mini-Parkour",
+      es: "Corre 500+ metros en Subway Mini-Parkour",
+    },
+    goal: 500,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {
