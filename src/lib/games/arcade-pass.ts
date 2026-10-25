@@ -538,6 +538,20 @@ export const MISSION_CATALOG: Array<{
     goal: 500,
     xpReward: 50,
   },
+  {
+    id: "shotgunchess-floor-2",
+    gameSlug: "shotgun-chess",
+    title: {
+      ko: "샷건 체스에서 2층 이상 돌파 달성",
+      en: "Reach Floor 2 or higher in Shotgun Chess",
+      ja: "ショットガン チェスでフロア2以上へ到達",
+      zh: "在散弹枪象棋中突破到达第2层以上",
+      fr: "Atteindre l'étage 2 ou plus dans Shotgun Chess",
+      es: "Alcanza el piso 2 o superior en Shotgun Chess",
+    },
+    goal: 2,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {

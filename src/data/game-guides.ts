@@ -4740,4 +4740,60 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "shotgun-chess": {
+    origin: {
+      ko: "샷건 체스(Shotgun Chess)는 2022년 출시되어 선풍적인 인기를 끈 인디 로그라이크 명작 'Shotgun King: The First Scramble'에서 영감을 받은 턴제 택티컬 체스 슈터입니다. 모든 아군을 잃고 홀로 남은 흑색 킹이 산탄총 한 자루를 들고 백색 체스 군단에 맞서는 파격적인 설정과 체스 룰의 결합이 특징입니다.",
+      en: "Shotgun Chess is a tactical turn-based roguelike shooter inspired by the critically acclaimed indie hit 'Shotgun King: The First Scramble'. As the solitary Black King stripped of his court, you take up a shotgun to battle against the full might of the White Army.",
+      ja: "ショットガン チェス（Shotgun Chess）は、世界的に話題を呼んだインディーローグライク『Shotgun King: The First Scramble』に着想を得たターン制タクティカルシューターです。軍勢を失い孤立した黒のキングが散弾銃を手に、白のチェス軍団へと挑みます。",
+      zh: "散弹枪象棋（Shotgun Chess）受现象级独立战棋肉鸽《Shotgun King: The First Scramble》启发。失去所有随从的孤独黑王，凭借一把重威力霰弹枪对抗整支白棋大军，将严密的国际象棋棋理与射击打击感完美融合。",
+      fr: "Shotgun Chess est un jeu de stratégie tactique au tour par tour inspiré du succès indépendant 'Shotgun King'. Abandonné par sa cour, le roi noir prend un fusil de chasse pour défier toute l'armée blanche.",
+      es: "Shotgun Chess es un roguelike táctico por turnos inspirado en el aclamado juego indie 'Shotgun King'. Sin cortesanos ni peones, el rey negro empuña una escopeta para enfrentarse al ejército blanco en solitario.",
+    },
+    how: {
+      ko: "플레이어는 자신의 턴에 '이동' 또는 '사격' 중 하나를 선택합니다. 이동 시 인접 1칸을 이동하며 탄약 1발을 재장전합니다(적 기물이 있으면 체스처럼 밟아 포획합니다). 사격 시 8개 방향 중 하나를 지정하여 산탄을 발사하며, 탄환 궤적과 넉백 물리로 적 기물을 파괴합니다. 적 백색 킹을 사살하면 층을 클리어하고 업그레이드 카드를 획득합니다.",
+      en: "On each turn, choose between Move or Shoot. Moving 1 square in any direction reloads 1 shell (and captures enemy pieces stepped on). Shooting blasts pellets in one of 8 directions with knockback physics and shotgun recoil. Eliminating the White King clears the wave and unlocks upgrade cards.",
+      ja: "毎ターン『移動』または『射撃』を選択します。移動すると周囲1マスに進み弾薬が1発リロードされます（敵の駒を踏めば捕獲可能）。射撃すると8方向のいずれかに散弾を放ち、拡散弾とノックバックで敵駒を粉砕します。敵の白キングを討ち取ればウェーブクリアとなり強化カードを獲得できます。",
+      zh: "每回合在“移动”与“射击”之间二选一。移动1格会装填1发霰弹（若落子处有敌方棋子则直接踏碎捕获）。射击时朝8个指定方向之一开火，借助散弹范围伤害与击退击杀敌军。击毙白方国王即可通关并挑选增强卡牌。",
+      fr: "À chaque tour, choisissez entre Déplacement ou Tir. Vous déplacer d'une case recharge 1 cartouche (et capture les pièces). Tirer projette des plombs dans l'une des 8 directions avec recul. Éliminez le roi blanc pour franchir l'étage.",
+      es: "En cada turno, elige entre Moverte o Disparar. Moverte 1 casilla recarga 1 cartucho (y captura piezas enemigas). Disparar lanza perdigones en 8 direcciones con retroceso. Elimina al rey blanco para superar el nivel y elegir cartas de mejora.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "반동(Recoil) 넉백을 회피나 포지셔닝에 활용할 수 있나요?",
+          en: "Can shotgun recoil knockback be used for movement and dodging?",
+          ja: "散弾銃の反動（リコイル）による後退を回避や位置取りに利用できますか？",
+          zh: "霰弹枪射击产生的后坐力击退能否用于躲避和位移？",
+          fr: "Peut-on utiliser le recul du fusil pour esquiver ou se repositionner ?",
+          es: "¿Se puede usar el retroceso de la escopeta para esquivar o reposicionarse?",
+        },
+        a: {
+          ko: "네, 산탄총을 전방으로 발사하면 플레이어 킹은 반대 방향으로 1칸 물리적으로 밀려납니다. 적 폰이나 나이트의 공격 범위 안에 갇혔을 때 적을 공격하는 동시에 안전한 뒤쪽 칸으로 즉시 탈출하는 고급 전술로 유용합니다.",
+          en: "Yes! Firing your shotgun pushes your King backward 1 square in the opposite direction (if empty). This allows you to eliminate an approaching threat while simultaneously escaping attack range.",
+          ja: "はい！前方に射撃すると、キングは反動で反対方向へ1マス後退します。敵ポーンやナイトの攻撃射程に入ってしまった際、攻撃と同時に安全圏へ脱出する強力なテクニックとなります。",
+          zh: "完全可以！朝前方开火时，后坐力会将国王向后推移1格（若后方为空）。当被白兵或马匹包夹时，这招能同时兼顾击杀威胁与逃离危险射程。",
+          fr: "Oui ! Tirer propulse votre roi d'une case en arrière. C'est parfait pour neutraliser un ennemi tout en sortant immédiatement de sa zone d'attaque.",
+          es: "¡Sí! Disparar empuja a tu rey 1 casilla hacia atrás. Es ideal para abatir una amenaza y salir simultáneamente de su rango de ataque.",
+        },
+      },
+      {
+        q: {
+          ko: "탄약이 고갈되었을 때 어떻게 대처해야 하나요?",
+          en: "How should I handle running out of ammo during combat?",
+          ja: "弾薬が切れてしまったときはどう対処すべきですか？",
+          zh: "弹药耗尽时该如何应对危机？",
+          fr: "Comment réagir lorsque les munitions sont épuisées ?",
+          es: "¿Cómo actuar cuando te quedas sin munición?",
+        },
+        a: {
+          ko: "이동을 1회 수행할 때마다 탄약이 1발 자동으로 채워집니다. 탄약이 0이 되면 사격 모드가 잠기므로, 주변의 빈 안전 칸으로 이동하거나 방어력이 약한 단독 폰을 직접 밟아 제거하면서 탄약을 충전하세요.",
+          en: "Every move action reloads 1 shell. If you run out of shells, move into an empty safe square or directly crush an isolated pawn to reload while keeping enemies at bay.",
+          ja: "1回移動するごとに弾薬が1発自動装填されます。残弾0になると射撃できないため、安全な空きマスへ移動するか、孤立したポーンを直接踏んで捕獲しながら弾を込めましょう。",
+          zh: "每次进行位移操作都会自动装填1枚弹药。弹药归零时射击按钮锁定，应优先移动至安全地带，或利用国际象棋步法直接踩杀落单的白兵完成上膛。",
+          fr: "Chaque déplacement recharge 1 cartouche. En cas de panne sèche, déplacez-vous sur une case sûre ou écrasez directement un pion isolé pour recharger.",
+          es: "Cada movimiento recarga 1 cartucho. Si te quedas a cero, muévete a una casilla segura o captura un peón directamente para rearmarte.",
+        },
+      },
+    ],
+  },
 };

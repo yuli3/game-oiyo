@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { ShotgunChess } from "../../components/games/ShotgunChess";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "샷건 체스 — 산탄총을 든 킹의 턴제 택티컬 로그라이크",
+    description: "고독한 흑색 킹이 되어 강력한 산탄총의 탄환과 넉백 물리로 백색 체스 기물들을 파괴하고 왕위를 찬탈하는 턴제 전략 슈터 게임.",
+  },
+  en: {
+    title: "Shotgun Chess — Turn-Based Tactical Shotgun King Roguelike",
+    description: "Play as the lone black king wielding a shotgun. Blast white pieces with pellet spreads, knockback recoil, and roguelike card upgrades.",
+  },
+  ja: {
+    title: "ショットガン チェス — 散弾銃を持ったキングのターン制ローグライク",
+    description: "孤独な黒のキングとなり、散弾銃の拡散弾とノックバック物理で白の駒を撃破し王位を奪還するターン制タクティカルシューター。",
+  },
+  zh: {
+    title: "散弹枪象棋 — 手持霰弹枪孤王的战棋肉鸽",
+    description: "化身手持散弹枪的黑色孤王，利用散弹弹道与击退后坐力轰碎白方棋子大军，夺回失落王位的战棋肉鸽游戏。",
+  },
+  fr: {
+    title: "Shotgun Chess — Roguelike tactique au tour par tour",
+    description: "Incarnez le roi solitaire armé d'un fusil à pompe. Pulvérisez les pièces blanches avec recul et cartes d'amélioration.",
+  },
+  es: {
+    title: "Shotgun Chess — Roguelike táctico por turnos del rey con escopeta",
+    description: "Controla al rey solitario armado con una escopeta. Destruye las piezas blancas con dispersión de perdigones y mejoras de cartas.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-4xl px-4 py-8">
+    <ShotgunChess client:load locale={locale} />
+    <GameGuide slug="shotgun-chess" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>
