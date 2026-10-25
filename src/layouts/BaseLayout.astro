@@ -118,6 +118,13 @@ const currentLangItem = langItems.find((li) => li.code === locale) ?? langItems[
   <head>
     <SEO {title} {description} {image} {type} {pubDate} {updatedDate} {tags} {category} {author} {availableLocales} canonicalURL={canonicalUrl} {noindex} />
 
+    <!-- PWA Web App Manifest & Mobile Meta -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#020617" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="OIYO Arcade" />
+
     <!-- Mermaid diagram rendering (only executes if mermaid code blocks are present) -->
     <script type="module" is:inline>
       if (document.querySelector("code.language-mermaid")) {
@@ -403,5 +410,14 @@ const currentLangItem = langItems.find((li) => li.code === locale) ?? langItems[
       </div>
       <div class="container mt-8 flex justify-between border-t border-border px-4 pt-5 text-xs text-muted-foreground"><span>© {new Date().getFullYear()} Oiyo Tech · <a href={`https://blog.oiyo.net/${locale}/license/`} class="hover:text-primary">{labels.license}</a></span><a href="mailto:support@oiyo.net">support@oiyo.net</a></div>
     </footer>
+
+    <!-- PWA Offline Service Worker Registration -->
+    <script is:inline>
+      if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(() => {});
+        });
+      }
+    </script>
   </body>
 </html>

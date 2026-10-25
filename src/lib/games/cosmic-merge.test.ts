@@ -9,6 +9,7 @@ import {
   ARENA_WIDTH,
   calculateVortexEnergyGain,
   calculateVortexPull,
+  selectBlackHoleTargets,
 } from "./cosmic-merge";
 import type { Locale } from "../i18n";
 
@@ -120,6 +121,23 @@ describe("cosmic-merge core contracts", () => {
       expect(pull.fx).toBe(0);
       expect(pull.fy).toBe(0);
       expect(pull.distance).toBe(0);
+    });
+
+    it("selects dangerous bodies near deadline for black hole evacuation", () => {
+      const bodies = [
+        { id: 1, tier: 1, y: 130 }, // Very close to DEADLINE (120)
+        { id: 2, tier: 2, y: 150 }, // Close
+        { id: 3, tier: 6, y: 140 }, // High tier (Sun/Jupiter), excluded
+        { id: 4, tier: 0, y: 180 }, // Danger zone
+        { id: 5, tier: 0, y: 450 }, // Safe at bottom
+      ];
+      // import selectBlackHoleTargets directly
+      const targets = selectBlackHoleTargets(bodies);
+      expect(targets).toContain(1);
+      expect(targets).toContain(2);
+      expect(targets).toContain(4);
+      expect(targets).not.toContain(3);
+      expect(targets).not.toContain(5);
     });
   });
 });

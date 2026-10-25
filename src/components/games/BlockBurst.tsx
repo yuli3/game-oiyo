@@ -10,6 +10,11 @@ import {
   copyShareCardToClipboard,
   downloadShareCard,
 } from "../../lib/games/share-card";
+import {
+  getColorblindMode,
+  getColorblindSymbol,
+  type ColorblindMode,
+} from "../../lib/games/accessibility";
 
 declare global {
   interface Window {
@@ -341,7 +346,7 @@ type Mode = "classic" | "augment";
 
 type Particle = { x: number; y: number; vx: number; vy: number; life: number; color: string; size: number };
 
-function Gem({ color, ghost, bursting, bomb }: { color: BurstColor; ghost?: boolean; bursting?: boolean; bomb?: boolean }) {
+function Gem({ color, ghost, bursting, bomb, colorblind }: { color: BurstColor; ghost?: boolean; bursting?: boolean; bomb?: boolean; colorblind?: ColorblindMode }) {
   const gem = GEMS[color];
   return (
     <div
@@ -354,6 +359,11 @@ function Gem({ color, ghost, bursting, bomb }: { color: BurstColor; ghost?: bool
         draggable={false}
         className="pointer-events-none h-full w-full object-contain"
       />
+      {colorblind && colorblind !== "none" && !ghost && (
+        <span className="absolute inset-0 flex items-center justify-center text-[10px] font-black text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] select-none">
+          {getColorblindSymbol(color)}
+        </span>
+      )}
       {bomb ? <span className="bomb-mark" aria-hidden="true" /> : null}
       {bursting ? <span className="burst-sheet" aria-hidden="true" /> : null}
     </div>
@@ -369,6 +379,15 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
   const [augmentBest, setAugmentBest] = useState(0);
   const [game, setGame] = useState<BurstState>(() => createBlockBurst(1));
   const [best, setBest] = useState(0);
+  const [colorblind, setColorblind] = useState<ColorblindMode>(getColorblindMode);
+
+  useEffect(() => {
+    const onCb = (e: Event) => {
+      setColorblind((e as CustomEvent<ColorblindMode>).detail ?? getColorblindMode());
+    };
+    window.addEventListener("oiyo:colorblind-changed", onCb);
+    return () => window.removeEventListener("oiyo:colorblind-changed", onCb);
+  }, []);
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || "en" });
   const [sound, setSound] = useState<boolean>(() => {
     try {
@@ -987,7 +1006,7 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
                   const flashing = flashRows.includes(r) || flashCols.includes(c);
                   return (
                     <div key={key} className={`relative rounded-[22%] bg-[#efe6c8]/70 ${flashing ? "ring-2 ring-warning" : ""}`}>
-                      {cell ? <Gem color={cell} ghost={ghostSet.has(key) && !liveSet.has(key)} bursting={burstingSet.has(key)} bomb={Boolean(run?.bomb) && liveSet.has(key)} /> : null}
+                      {cell ? <Gem color={cell} ghost={ghostSet.has(key) && !liveSet.has(key)} bursting={burstingSet.has(key)} bomb={Boolean(run?.bomb) && liveSet.has(key)} colorblind={colorblind} /> : null}
                     </div>
                   );
                 }),

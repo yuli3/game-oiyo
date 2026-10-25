@@ -27,6 +27,9 @@ import {
   calculateVortexPull,
   VORTEX_DURATION_MS,
   VORTEX_MAX_ENERGY,
+  TIME_ATTACK_DURATION_SEC,
+  selectBlackHoleTargets,
+  type CosmicMergeMode,
 } from "../../lib/games/cosmic-merge";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { GameShell } from "../ui/game/GameShell";
@@ -125,6 +128,11 @@ const COPY = {
     vortex: "중력 볼텍스",
     vortexReady: "볼텍스 [V]",
     vortexActive: "볼텍스 가동 중",
+    classic: "클래식",
+    timeAttack: "3분 타임어택",
+    blackHole: "블랙홀 정화",
+    blackHoleUsed: "블랙홀 소진",
+    timeLeftText: "남은 시간",
   },
   en: {
     title: "Cosmic Merge Drop",
@@ -148,6 +156,11 @@ const COPY = {
     vortex: "Gravity Vortex",
     vortexReady: "Vortex [V]",
     vortexActive: "Vortex Active",
+    classic: "Classic",
+    timeAttack: "3-Min Blitz",
+    blackHole: "Black Hole Cleanse",
+    blackHoleUsed: "Black Hole Expended",
+    timeLeftText: "Time Left",
   },
   ja: {
     title: "コズミック・マージ・ドロップ",
@@ -171,6 +184,11 @@ const COPY = {
     vortex: "重力ボルテックス",
     vortexReady: "ボルテックス [V]",
     vortexActive: "ボルテックス発動中",
+    classic: "クラシック",
+    timeAttack: "3分タイムアタック",
+    blackHole: "ブラックホール浄化",
+    blackHoleUsed: "ブラックホール使用済",
+    timeLeftText: "残り時間",
   },
   zh: {
     title: "宇宙合成消除",
@@ -194,6 +212,11 @@ const COPY = {
     vortex: "引力漩涡",
     vortexReady: "漩涡就绪 [V]",
     vortexActive: "漩涡爆发中",
+    classic: "经典",
+    timeAttack: "3分钟限时",
+    blackHole: "黑洞净化",
+    blackHoleUsed: "黑洞已用",
+    timeLeftText: "剩余时间",
   },
   fr: {
     title: "Cosmic Merge Drop",
@@ -217,6 +240,11 @@ const COPY = {
     vortex: "Vortex gravitationnel",
     vortexReady: "Vortex [V]",
     vortexActive: "Vortex actif",
+    classic: "Classique",
+    timeAttack: "Blitz 3 Min",
+    blackHole: "Trou Noir Purificateur",
+    blackHoleUsed: "Trou Noir Utilisé",
+    timeLeftText: "Temps restant",
   },
   es: {
     title: "Cosmic Merge Drop",
@@ -240,6 +268,11 @@ const COPY = {
     vortex: "Vórtice gravitatorio",
     vortexReady: "Vórtice [V]",
     vortexActive: "Vórtice activo",
+    classic: "Clásico",
+    timeAttack: "Contrarreloj 3 Min",
+    blackHole: "Agujero Negro Purificador",
+    blackHoleUsed: "Agujero Negro Agotado",
+    timeLeftText: "Tiempo restante",
   },
 };
 
@@ -248,6 +281,9 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [phase, setPhase] = useState<FlowPhase>("title");
+  const [gameMode, setGameMode] = useState<CosmicMergeMode>("classic");
+  const [timeLeft, setTimeLeft] = useState<number>(TIME_ATTACK_DURATION_SEC);
+  const [blackHoleUsed, setBlackHoleUsed] = useState<boolean>(false);
   const [score, setScore] = useState(0);
   const [bestScore, setBestScore] = useState(0);
   const [currentTier, setCurrentTier] = useState<number>(0);
@@ -290,6 +326,24 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
 
   const scoreRef = useRef(0);
   scoreRef.current = score;
+
+  // Countdown timer for 3-minute Time Attack mode
+  useEffect(() => {
+    if (phase !== "play" || isGameOver || gameMode !== "time-attack") return;
+
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setIsGameOver(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [phase, isGameOver, gameMode]);
 
   // Restore saved muted and highest discovered tier settings
   useEffect(() => {
@@ -452,6 +506,49 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
     getGlobalBgmController("cosmic").duck(VORTEX_DURATION_MS, 0.2);
   }, [playVortexSound, vibrate]);
 
+  // Black Hole Cleanse: Emergency hazard release (removes up to 3 highest bodies near danger line)
+  const handleBlackHoleCleanse = useCallback(() => {
+    if (blackHoleUsed || isGameOver || !engineRef.current) return;
+    const allBodies = Matter.Composite.allBodies(engineRef.current.world);
+    const candidates = allBodies
+      .filter((b) => b.label === "celestial" && !b.isStatic)
+      .map((b) => ({
+        id: b.id,
+        tier: (b as unknown as { userData?: CelestialUserData }).userData?.tier ?? 0,
+        y: b.position.y,
+      }));
+    const targetIds = new Set(selectBlackHoleTargets(candidates));
+    if (targetIds.size === 0) return;
+
+    setBlackHoleUsed(true);
+    vibrate([40, 60, 80]);
+    shakeEngineRef.current = addScreenShakeTrauma(shakeEngineRef.current, 0.7);
+
+    allBodies.forEach((body) => {
+      if (targetIds.has(body.id)) {
+        const pos = body.position;
+        // Implosion stardust particle effect
+        for (let i = 0; i < 24; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = 2 + Math.random() * 4;
+          particlesRef.current.push({
+            x: pos.x,
+            y: pos.y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            color: "#c084fc", // Purple black hole accretion
+            radius: 3 + Math.random() * 3,
+            life: 1,
+            maxLife: 30,
+          });
+        }
+        Matter.Composite.remove(engineRef.current!.world, body);
+      }
+    });
+
+    setIsDanger(false);
+  }, [blackHoleUsed, isGameOver, vibrate]);
+
   // Hook for Arcade Immersion Portal
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({
     locale,
@@ -531,6 +628,8 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
     setScore(0);
     setIsGameOver(false);
     setIsDanger(false);
+    setTimeLeft(TIME_ATTACK_DURATION_SEC);
+    setBlackHoleUsed(false);
     setVortexEnergy(0);
     setIsVortexActive(false);
     vortexActiveRef.current = false;
@@ -1211,6 +1310,71 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
       controlsHint={t.controlsHint}
       extraHeaderActions={
         <div className="flex items-center gap-1.5 pointer-events-auto">
+          {/* Mode Switcher */}
+          <div className="inline-flex rounded-xl border border-border bg-muted/60 p-0.5">
+            <button
+              type="button"
+              onClick={() => {
+                setGameMode("classic");
+                initGame();
+              }}
+              className={`min-h-9 px-2 py-1 text-xs font-bold rounded-lg transition-colors ${
+                gameMode === "classic"
+                  ? "bg-background text-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {t.classic}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setGameMode("time-attack");
+                initGame();
+              }}
+              className={`min-h-9 px-2 py-1 text-xs font-bold rounded-lg transition-colors ${
+                gameMode === "time-attack"
+                  ? "bg-primary text-primary-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              ⏱️ {t.timeAttack}
+            </button>
+          </div>
+
+          {/* Time Attack Countdown Pill */}
+          {gameMode === "time-attack" && (
+            <div className={`px-2.5 py-1.5 rounded-xl border font-mono text-xs font-bold flex items-center gap-1 ${
+              timeLeft <= 30
+                ? "border-destructive/80 bg-destructive/15 text-destructive animate-pulse"
+                : "border-border bg-background/85 text-foreground"
+            }`}>
+              <span>⏱️</span>
+              <span>
+                {Math.floor(timeLeft / 60).toString().padStart(2, "0")}:
+                {(timeLeft % 60).toString().padStart(2, "0")}
+              </span>
+            </div>
+          )}
+
+          {/* Emergency Black Hole Cleanse Button */}
+          <button
+            type="button"
+            disabled={blackHoleUsed || phase !== "play" || isGameOver}
+            onClick={handleBlackHoleCleanse}
+            title={blackHoleUsed ? t.blackHoleUsed : t.blackHole}
+            className={`min-h-11 px-2.5 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1 transition-all active:scale-95 ${
+              blackHoleUsed
+                ? "border-border/40 bg-muted/30 text-muted-foreground/60 cursor-not-allowed"
+                : isDanger
+                  ? "border-primary bg-primary text-primary-foreground animate-bounce shadow-md"
+                  : "border-border bg-background/85 hover:bg-muted text-foreground"
+            }`}
+          >
+            <span>🕳️</span>
+            <span className="hidden sm:inline">{blackHoleUsed ? t.blackHoleUsed : t.blackHole}</span>
+          </button>
+
           {/* Next Planet Pill */}
           <div className="px-2.5 py-1.5 rounded-xl border border-border/80 bg-background/85 backdrop-blur-md shadow-xs flex items-center gap-1.5">
             <div>

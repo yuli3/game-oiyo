@@ -42,8 +42,10 @@ import {
 } from '../../lib/games/tents-chaos';
 import { TENTS_SPRITES } from '../../lib/games/sprites';
 import { tentsAnalyticsPayload, type TentsAnalyticsEvent } from '../../lib/games/tents-analytics';
-import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { Maximize2, Minimize2, Volume2, VolumeX, Calendar } from 'lucide-react';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { DailyPuzzleCalendarModal } from '../ui/game/DailyPuzzleCalendarModal';
+import { recordDailyPuzzleClear } from '../../lib/games/daily-calendar';
 
 // ─── Tents & Trees — logic puzzle with generated boards ─────────────────────
 // Every tree pairs with one tent on an orthogonally adjacent cell; tents never
@@ -320,6 +322,7 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [draftFocus, setDraftFocus] = useState(0);
     const [clock, setClock] = useState(() => Date.now());
     const [copied, setCopied] = useState(false);
+    const [isCalendarOpen, setIsCalendarOpen] = useState(false);
     const cellRefs = useRef<Array<HTMLButtonElement | HTMLDivElement | null>>([]);
     const draftRefs = useRef<Array<HTMLButtonElement | null>>([]);
     const startedRef = useRef(initial.resumed);
@@ -588,6 +591,7 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             if (mode === 'daily') {
                 const today = todayKey();
                 setStreak(recordDailyWin(DAILY_GAME_ID, today, previousDayKey(today)));
+                recordDailyPuzzleClear('tents', dailyDate);
             }
         } else {
             if (v.error) tone(180, 0.08);
@@ -709,6 +713,15 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                             className="min-h-11 rounded-lg border border-border px-3 text-xs font-bold text-muted-foreground hover:bg-muted disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                         >
                             🌱 {t.autoGrass}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setIsCalendarOpen(true)}
+                            className="min-h-11 rounded-lg border border-border px-3 text-xs font-bold text-muted-foreground hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                            aria-label="달력"
+                        >
+                            <Calendar className="size-3.5" />
+                            <span>달력</span>
                         </button>
                         <button
                             type="button"
@@ -953,6 +966,28 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 </div>
             </div>
         </GameContainer>
+
+        <DailyPuzzleCalendarModal
+            isOpen={isCalendarOpen}
+            onClose={() => setIsCalendarOpen(false)}
+            gameSlug="tents"
+            gameTitle="텐트와 나무"
+            onSelectDate={(selectedDate) => {
+                const parts = selectedDate.split("-").map((p) => parseInt(p, 10));
+                const y = parts[0] || 2026;
+                const m = parts[1] || 1;
+                const d = parts[2] || 1;
+                const dateSeed = (y * 10000 + m * 100 + d) * 31;
+                const { puzzle: p } = generateTents(DAILY_BOARD.size, DAILY_BOARD.pairs, mulberry32(dateSeed));
+                setMode('daily');
+                setDailyDate(selectedDate);
+                setSeed(dateSeed);
+                setPuzzle(p);
+                setMarks(emptyMarksFor(p.size));
+                setValidation({ ok: true, complete: false, error: null });
+                setHint(null);
+            }}
+        />
     </div>
     );
 };

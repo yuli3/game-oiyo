@@ -156,7 +156,8 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
   const qualityRef = useRef<"high" | "balanced">("high");
   const artRef = useRef<BrickArt | null>(null);
   if (artRef.current === null) artRef.current = loadBrickArt();
-  const trailRef = useRef<{ x: number; y: number }[]>([]);
+  const trailRef = useRef<{ x: number; y: number; isFireball?: boolean }[]>([]);
+  const prevBallVelRef = useRef<{ vx: number; vy: number }>({ vx: 0, vy: 0 });
   // matter.js "juice" layer — cosmetic brick shards only, never touches score /
   // lives / save. Loaded lazily so the 84KB engine stays out of the route chunk
   // until the first Start tap, and skipped entirely under reduced motion.
@@ -297,6 +298,33 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
         return;
       }
     }
+
+    // Wall collision impact sparks
+    if (!pausedRef.current && !reducedMotionRef.current && (gs.vx !== 0 || gs.vy !== 0)) {
+      const prevVx = prevBallVelRef.current.vx;
+      const prevVy = prevBallVelRef.current.vy;
+      const xReversed = prevVx !== 0 && Math.sign(gs.vx) !== Math.sign(prevVx);
+      const yReversed = prevVy !== 0 && Math.sign(gs.vy) !== Math.sign(prevVy);
+
+      if (xReversed || yReversed) {
+        // Spawn radial collision sparks
+        const count = qualityRef.current === "balanced" ? 4 : 8;
+        for (let i = 0; i < count; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = 1.2 + Math.random() * 2.5;
+          gs.particles.push({
+            x: gs.bx,
+            y: gs.by,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            life: 1,
+            hue: 35 + Math.random() * 25, // Golden impact spark
+          });
+        }
+        playTone(xReversed ? 440 : 380, 0.03, "sine", 0.012);
+      }
+    }
+    prevBallVelRef.current = { vx: gs.vx, vy: gs.vy };
     if (debrisRef.current) {
       if (reducedMotionRef.current) debrisRef.current.clear();
       else if (!pausedRef.current) debrisRef.current.update(deltaMs, frameNow);
@@ -340,14 +368,31 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
       }
     }
     if (!reducedMotionRef.current) {
+      const isFireball = gs.combo >= 2;
       const trail = trailRef.current;
-      trail.unshift({ x: gs.bx, y: gs.by });
-      if (trail.length > 6) trail.length = 6;
+      trail.unshift({ x: gs.bx, y: gs.by, isFireball });
+      const maxTrailLen = isFireball ? 10 : 6;
+      if (trail.length > maxTrailLen) trail.length = maxTrailLen;
+
+      // Spawn ambient fire embers when fireball is active
+      if (isFireball && !pausedRef.current && (gs.vx !== 0 || gs.vy !== 0) && Math.random() < 0.6) {
+        gs.particles.push({
+          x: gs.bx + (Math.random() - 0.5) * 6,
+          y: gs.by + (Math.random() - 0.5) * 6,
+          vx: -gs.vx * 0.15 + (Math.random() - 0.5) * 0.8,
+          vy: -gs.vy * 0.15 + (Math.random() - 0.5) * 0.8,
+          life: 0.8,
+          hue: 15 + Math.random() * 30, // Fire red/orange
+        });
+      }
+
       trail.forEach((point, index) => {
-        ctx.globalAlpha = 0.28 * (1 - index / trail.length);
+        ctx.globalAlpha = (isFireball ? 0.45 : 0.28) * (1 - index / trail.length);
         ctx.beginPath();
-        ctx.fillStyle = "#fbbf24";
-        ctx.arc(point.x, point.y, Math.max(1.5, BRICK_BREAKER_BOARD.ballRadius * (1 - index * 0.12)), 0, Math.PI * 2);
+        ctx.fillStyle = isFireball
+          ? index < 3 ? "#f97316" : "#ef4444"
+          : "#fbbf24";
+        ctx.arc(point.x, point.y, Math.max(1.5, BRICK_BREAKER_BOARD.ballRadius * (1 - index * 0.09)), 0, Math.PI * 2);
         ctx.fill();
       });
       ctx.globalAlpha = 1;
@@ -390,9 +435,17 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
       ctx.fillStyle = gs.paddleFlashUntil > gs.elapsedMs ? "#ffffff" : "#8b5cf6";
       ctx.fillRect(gs.padX - gs.padW / 2, padY - paddleLift, gs.padW, 10 + paddleLift);
     }
+    const isFireball = !reducedMotionRef.current && gs.combo >= 2;
+    if (isFireball) {
+      ctx.shadowColor = "#f97316";
+      ctx.shadowBlur = 10;
+    }
     if (!paintCentered(ctx, art?.ball, gs.bx, gs.by, BRICK_BREAKER_BOARD.ballRadius * 2.4, BRICK_BREAKER_BOARD.ballRadius * 2.4)) {
-      ctx.beginPath(); ctx.fillStyle = "#c4b5fd";
+      ctx.beginPath(); ctx.fillStyle = isFireball ? "#f97316" : "#c4b5fd";
       ctx.arc(gs.bx, gs.by, BRICK_BREAKER_BOARD.ballRadius, 0, Math.PI * 2); ctx.fill();
+    }
+    if (isFireball) {
+      ctx.shadowBlur = 0;
     }
 
     rafRef.current = requestAnimationFrame(loop);

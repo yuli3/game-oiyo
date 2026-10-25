@@ -44,11 +44,15 @@ describe("share-card module", () => {
       expect(resolveRankTier("gomoku", 30)).toBe("ADEPT");
       expect(resolveRankTier("solitaire", 75)).toBe("SPEED DEMON");
       expect(resolveRankTier("solitaire", 200)).toBe("SOLVER");
+      expect(resolveRankTier("chess", 15)).toBe("GRANDMASTER");
+      expect(resolveRankTier("chess", 35)).toBe("MASTER");
+      expect(resolveRankTier("janggi", 20)).toBe("명인 (GRANDMASTER)");
+      expect(resolveRankTier("janggi", 40)).toBe("국수 (MASTER)");
     });
   });
 
   describe("renderShareCardToContext", () => {
-    it("calls canvas rendering APIs with expected properties", () => {
+    it("calls canvas rendering APIs with expected properties including QR and Title", () => {
       const mockCtx = {
         canvas: { width: 600, height: 600 },
         createLinearGradient: vi.fn(() => ({
@@ -86,13 +90,15 @@ describe("share-card module", () => {
         slug: "game-2048",
         seedCode: "XYZ88",
         locale: "ko",
+        qrUrl: "https://game.oiyo.net/ko/game-2048/?seed=XYZ88",
+        playerTitle: "퍼즐 마스터",
       };
 
       renderShareCardToContext(mockCtx, options);
 
       // Verify canvas filled background
       expect(mockCtx.fillRect).toHaveBeenCalledWith(0, 0, 600, 600);
-      // Verify fillText called for title and score
+      // Verify fillText called for title, score, and player title
       expect(mockCtx.fillText).toHaveBeenCalled();
     });
   });

@@ -38,6 +38,9 @@ import { createHaptics } from "../../lib/games/haptics";
 import { celebrate } from "../../lib/games/celebration";
 import { GameShell } from "../ui/game/GameShell";
 import type { FlowPhase } from "../../lib/games/game-flow";
+import { Calendar } from "lucide-react";
+import { DailyPuzzleCalendarModal } from "../ui/game/DailyPuzzleCalendarModal";
+import { recordDailyPuzzleClear } from "../../lib/games/daily-calendar";
 import { getGlobalBgmController } from "../../lib/games/bgm";
 import {
   buildChallengeUrl,
@@ -243,6 +246,7 @@ const Sudoku: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
   >();
   const [shareCopied, setShareCopied] = useState(false);
   const [shareCardCopied, setShareCardCopied] = useState(false);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } =
     useArcadePortal({ locale: loc });
@@ -471,6 +475,7 @@ const Sudoku: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
       if (mode === "daily") {
         const today = todayKey();
         setStreak(recordDailyWin(DAILY_GAME_ID, today, previousDayKey(today)));
+        recordDailyPuzzleClear("sudoku", dailyDate);
       }
     }
   }, [
@@ -664,6 +669,15 @@ const Sudoku: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
             {t.daily}
             {solvedToday ? " ✓" : ""}
           </button>
+          <button
+            type="button"
+            onClick={() => setIsCalendarOpen(true)}
+            aria-label="데일리 퍼즐 캘린더"
+            className="min-h-11 px-3 py-2 rounded-xl text-xs font-bold border border-border text-muted-foreground bg-muted/40 hover:bg-muted flex items-center gap-1.5 transition-colors"
+          >
+            <Calendar className="size-3.5" />
+            <span>달력</span>
+          </button>
           {(["easy", "medium", "hard"] as SudokuDifficultyId[]).map((id) => (
             <button
               key={id}
@@ -792,6 +806,22 @@ const Sudoku: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
           ))}
         </div>
       </div>
+
+      <DailyPuzzleCalendarModal
+        isOpen={isCalendarOpen}
+        onClose={() => setIsCalendarOpen(false)}
+        gameSlug="sudoku"
+        gameTitle="스도쿠"
+        onSelectDate={(selectedDate) => {
+          const parts = selectedDate.split("-").map((p) => parseInt(p, 10));
+          const y = parts[0] || 2026;
+          const m = parts[1] || 1;
+          const d = parts[2] || 1;
+          const dateSeed = (y * 10000 + m * 100 + d) * 31;
+          clearSudokuSaveV2();
+          applyPuzzle("daily", dateSeed, selectedDate);
+        }}
+      />
     </GameShell>
   );
 };

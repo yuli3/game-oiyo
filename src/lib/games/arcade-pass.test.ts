@@ -4,6 +4,10 @@ import {
   reportMissionProgress,
   calculateArcadeTier,
   checkInDailyStreak,
+  getUnlockedTitles,
+  equipArcadeTitle,
+  getEquippedTitleData,
+  ARCADE_TITLES,
   type ArcadePassProgress,
 } from "./arcade-pass";
 
@@ -80,5 +84,35 @@ describe("ArcadePass Engine (M4 Meta-Progression)", () => {
     expect(res3.currentStreak).toBe(3);
     expect(res3.bonusXp).toBe(50);
     expect(res3.updatedProgress.xp).toBe(100);
+  });
+
+  it("unlocks and equips player titles based on XP milestones", () => {
+    // 0 XP: only novice
+    const titles0 = getUnlockedTitles(0);
+    expect(titles0.map((t) => t.id)).toEqual(["novice"]);
+
+    // 350 XP: novice, puzzler, combomaster
+    const titles350 = getUnlockedTitles(350);
+    expect(titles350.map((t) => t.id)).toEqual(["novice", "puzzler", "combomaster"]);
+
+    // Equip title when unlocked
+    const progress: ArcadePassProgress = {
+      xp: 350,
+      completedMissionIds: [],
+      missions: [],
+      lastActiveDate: "2026-10-25",
+    };
+
+    const equipped = equipArcadeTitle(progress, "combomaster");
+    expect(equipped.equippedTitleId).toBe("combomaster");
+
+    const titleData = getEquippedTitleData(equipped, "ko");
+    expect(titleData.id).toBe("combomaster");
+    expect(titleData.badge).toBe("🔥");
+    expect(titleData.name).toBe("콤보 장인");
+
+    // Cannot equip title requiring higher XP
+    const rejected = equipArcadeTitle(progress, "legend");
+    expect(rejected.equippedTitleId).toBeUndefined();
   });
 });

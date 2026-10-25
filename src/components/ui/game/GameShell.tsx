@@ -16,7 +16,13 @@ import {
   X,
   Award,
   Trophy,
+  Eye,
 } from "lucide-react";
+import {
+  getColorblindMode,
+  setColorblindMode,
+  type ColorblindMode,
+} from "../../../lib/games/accessibility";
 import type { FlowPhase } from "../../../lib/games/game-flow";
 import type { SoundPresetName } from "../../../lib/games/game-audio";
 import { generateChallengeQrSvg } from "../../../lib/games/challenge-qr";
@@ -26,6 +32,7 @@ import {
   loadArcadePassProgress,
   reportMissionProgress,
   saveArcadePassProgress,
+  getEquippedTitleData,
 } from "../../../lib/games/arcade-pass";
 import { todayKey } from "../../../lib/games/daily";
 import { getGlobalBgmController, type BgmTrack, BGM_TRACK_STORAGE_KEY, BGM_VOLUME_STORAGE_KEY } from "../../../lib/games/bgm";
@@ -128,6 +135,18 @@ export const GameShell: React.FC<GameShellProps> = ({
   const [showArcadePass, setShowArcadePass] = useState(false);
   const [showTrophyModal, setShowTrophyModal] = useState(false);
   const [missionToast, setMissionToast] = useState<{ title: string; xp: number } | null>(null);
+  const [colorblind, setColorblind] = useState<ColorblindMode>(getColorblindMode);
+  const [playerTitle, setPlayerTitle] = useState(() =>
+    getEquippedTitleData(loadArcadePassProgress(todayKey()), locale)
+  );
+
+  useEffect(() => {
+    const handleTitleChange = () => {
+      setPlayerTitle(getEquippedTitleData(loadArcadePassProgress(todayKey()), locale));
+    };
+    window.addEventListener("oiyo:title-changed", handleTitleChange);
+    return () => window.removeEventListener("oiyo:title-changed", handleTitleChange);
+  }, [locale]);
 
   const [bgmTrack, setBgmTrack] = useState<BgmTrack>(() => {
     if (typeof window !== "undefined") {
@@ -384,9 +403,50 @@ export const GameShell: React.FC<GameShellProps> = ({
                     </div>
                   </div>
                 )}
+
+                <div className="space-y-1 pt-1.5 border-t border-border">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground block font-semibold">접근성 (색약 모드)</span>
+                    <Eye className="size-3 text-muted-foreground" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-1">
+                    {(["none", "deuteranopia", "tritanopia", "high-contrast"] as const).map((mode) => (
+                      <button
+                        key={mode}
+                        type="button"
+                        onClick={() => {
+                          setColorblindMode(mode);
+                          setColorblind(mode);
+                          if (typeof window !== "undefined") {
+                            window.dispatchEvent(new CustomEvent("oiyo:colorblind-changed", { detail: mode }));
+                          }
+                        }}
+                        className={`py-1 px-1 rounded-lg text-xs font-bold uppercase transition-colors text-center ${
+                          colorblind === mode
+                            ? "bg-primary/20 text-primary border border-primary/40"
+                            : "hover:bg-muted text-foreground"
+                        }`}
+                      >
+                        {mode === "none" ? "일반" : mode === "deuteranopia" ? "적록색약" : mode === "tritanopia" ? "청황색약" : "고대비"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
           </div>
+
+          {/* Player Title Badge (Clicking opens Arcade Pass) */}
+          <button
+            type="button"
+            onClick={() => setShowArcadePass(true)}
+            aria-label={`칭호: ${playerTitle.name}`}
+            title={`장착된 칭호: ${playerTitle.name} (아케이드 패스 열기)`}
+            className="hidden md:inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-border bg-card/60 hover:bg-muted/60 px-2.5 py-1.5 text-xs font-bold text-foreground transition-all active:scale-95 shadow-xs"
+          >
+            <span className="text-sm">{playerTitle.badge}</span>
+            <span className="truncate max-w-28">{playerTitle.name}</span>
+          </button>
 
           {showArcadePassButton && (
             <button
@@ -516,6 +576,14 @@ export const GameShell: React.FC<GameShellProps> = ({
 
               <h4 className="text-2xl font-black text-foreground">{resultTitle ?? "ROUND COMPLETE"}</h4>
               {resultSubtitle && <p className="text-xs text-muted-foreground">{resultSubtitle}</p>}
+
+              {/* Equipped Title Badge on Result Card */}
+              <div className="flex items-center justify-center gap-1.5 py-0.5">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-primary/30 bg-primary/10 text-xs font-bold text-primary shadow-xs">
+                  <span>{playerTitle.badge}</span>
+                  <span>{playerTitle.name}</span>
+                </span>
+              </div>
 
               {missionToast && (
                 <div className="rounded-xl border border-primary/40 bg-primary/10 p-2.5 text-center text-xs font-bold text-primary animate-in fade-in slide-in-from-top-2 duration-300">

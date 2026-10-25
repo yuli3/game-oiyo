@@ -5,6 +5,8 @@ import {
   checkInDailyStreak,
   loadArcadePassProgress,
   STREAK_REWARDS,
+  ARCADE_TITLES,
+  equipArcadeTitle,
   type ArcadePassProgress,
   type ArcadeRankTier,
 } from "../../../lib/games/arcade-pass";
@@ -47,6 +49,15 @@ const NEXT_TIER_GOAL: Record<ArcadeRankTier, number> = {
   LEGEND: 1000,
 };
 
+const TITLE_COPY: Record<string, { title: string; subtitle: string; equipped: string; locked: string }> = {
+  ko: { title: "명예의 전당 칭호", subtitle: "XP 마일스톤을 달성해 칭호를 수집하고 장착하세요", equipped: "장착 중", locked: "잠김" },
+  en: { title: "Hall of Fame Titles", subtitle: "Earn XP milestones to unlock and equip titles", equipped: "Equipped", locked: "Locked" },
+  ja: { title: "殿堂の称号", subtitle: "XPマイルストーンを達成して称号を装備しよう", equipped: "装備中", locked: "未解禁" },
+  zh: { title: "名人堂头衔", subtitle: "达成XP里程碑以解锁并佩戴专属头衔", equipped: "佩戴中", locked: "未解锁" },
+  fr: { title: "Titres du Hall of Fame", subtitle: "Atteignez les paliers d'XP pour équiper vos titres", equipped: "Équipé", locked: "Verrouillé" },
+  es: { title: "Títulos del Salón de la Fama", subtitle: "Alcanza hitos de XP para desbloquear y equipar títulos", equipped: "Equipado", locked: "Bloqueado" },
+};
+
 export const ArcadePassModal: React.FC<ArcadePassModalProps> = ({
   isOpen,
   onClose,
@@ -81,6 +92,14 @@ export const ArcadePassModal: React.FC<ArcadePassModalProps> = ({
       ? 100
       : Math.min(100, Math.round((progress.xp / nextGoal) * 100));
 
+  const titleCopy = TITLE_COPY[locale] ?? TITLE_COPY.en;
+  const equippedId = progress.equippedTitleId ?? "novice";
+
+  const handleEquipTitle = (titleId: string) => {
+    const updated = equipArcadeTitle(progress, titleId);
+    setProgress({ ...updated });
+  };
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm"
@@ -89,7 +108,7 @@ export const ArcadePassModal: React.FC<ArcadePassModalProps> = ({
       onClick={onClose}
     >
       <div
-        className={`relative w-full max-w-md rounded-3xl border ${tierStyle.border} bg-card p-5 sm:p-6 shadow-2xl transition-all`}
+        className={`relative w-full max-w-md max-h-full overflow-y-auto rounded-3xl border ${tierStyle.border} bg-card p-5 sm:p-6 shadow-2xl transition-all`}
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -261,6 +280,62 @@ export const ArcadePassModal: React.FC<ArcadePassModalProps> = ({
                     />
                   </div>
                 </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Arcade Hall of Fame Titles */}
+        <div className="mt-5 border-t border-border/80 pt-4">
+          <div className="mb-2">
+            <h4 className="text-xs font-black uppercase tracking-wider text-foreground">
+              🏆 {titleCopy.title}
+            </h4>
+            <p className="text-xs text-muted-foreground">{titleCopy.subtitle}</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 mt-3">
+            {ARCADE_TITLES.map((title) => {
+              const isUnlocked = progress.xp >= title.requiredXp;
+              const isEquipped = equippedId === title.id;
+              const titleName = title.name[locale] ?? title.name.en ?? title.name.ko;
+
+              return (
+                <button
+                  key={title.id}
+                  type="button"
+                  disabled={!isUnlocked}
+                  onClick={() => handleEquipTitle(title.id)}
+                  className={`text-left p-2.5 rounded-2xl border transition-all min-h-12 flex flex-col justify-between ${
+                    isEquipped
+                      ? "border-primary bg-primary/10 shadow-xs"
+                      : isUnlocked
+                        ? "border-border bg-card/60 hover:bg-muted/60 cursor-pointer active:scale-95"
+                        : "border-border/40 bg-muted/20 opacity-50 cursor-not-allowed"
+                  }`}
+                >
+                  <div className="flex items-center justify-between w-full">
+                    <span className="text-sm">{title.badge}</span>
+                    {isEquipped ? (
+                      <span className="text-xs font-black text-primary px-1.5 py-0.5 rounded-full bg-primary/20">
+                        {titleCopy.equipped}
+                      </span>
+                    ) : isUnlocked ? (
+                      <span className="text-xs text-muted-foreground font-semibold">
+                        해금됨
+                      </span>
+                    ) : (
+                      <span className="text-xs font-mono font-bold text-muted-foreground">
+                        🔒 {title.requiredXp} XP
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-1">
+                    <span className="text-xs font-bold text-foreground block truncate">
+                      {titleName}
+                    </span>
+                  </div>
+                </button>
               );
             })}
           </div>

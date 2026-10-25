@@ -15,8 +15,9 @@ import {
 } from '../../lib/games/chess-worker-protocol';
 import { CHESS_SPRITES } from '../../lib/games/sprites';
 import { castleRookDelta, visualSquare } from '../../lib/games/piece-tween';
-import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { Maximize2, Minimize2, Volume2, VolumeX, Share2 } from 'lucide-react';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { createShareCardCanvas, copyShareCardToClipboard } from '../../lib/games/share-card';
 
 function ChessPiece({ piece, className }: { piece: string; className?: string }) {
   const src = CHESS_SPRITES[piece];
@@ -104,6 +105,7 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
   const [orientation, setOrientation] = useState<'white' | 'black'>('white');
   const [moveHistory, setMoveHistory] = useState<ChessMoveRecord[]>([]);
   const [lastMove, setLastMove] = useState<ChessMove | null>(null);
+  const [shareCopied, setShareCopied] = useState(false);
   const [muted, setMuted] = useState<boolean>(() => {
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
@@ -375,6 +377,27 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     storeChessSave({ state: position, positionHistory: positionHistory.current, mode, level, moveHistory, orientation: nextOrientation });
   };
 
+  const handleShareCard = async () => {
+    try {
+      const canvas = createShareCardCanvas({
+        title: t.title,
+        subtitle: mode === 'ai' ? `vs AI (${level === 1 ? t.level1 : level === 2 ? t.level2 : t.level3})` : '2 Players Chess',
+        score: moveHistory.length,
+        slug: 'chess',
+        qrUrl: typeof window !== 'undefined' ? window.location.href : undefined,
+        customStats: [
+          { label: 'MOVES', value: moveHistory.length },
+          { label: 'RESULT', value: endLabel ?? 'In Progress' },
+        ],
+      });
+      const copied = await copyShareCardToClipboard(canvas);
+      if (copied) {
+        setShareCopied(true);
+        setTimeout(() => setShareCopied(false), 2500);
+      }
+    } catch {}
+  };
+
   return (
     <div
       ref={containerRef}
@@ -562,9 +585,15 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                     <p className="mt-2 text-xs font-bold text-stone-500">{reviewCopy.difficulty}: {level === 1 ? t.level1 : level === 2 ? t.level2 : t.level3} · {aiDescription}</p>
                   </div>
                 )}
-                <button type="button" onClick={reset} autoFocus className="min-h-11 px-10 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg">
-                  {c3.playAgain}
-                </button>
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  <button type="button" onClick={handleShareCard} className="min-h-11 px-5 py-3 bg-secondary text-secondary-foreground rounded-full font-bold shadow-md hover:bg-secondary/80 flex items-center gap-1.5 text-xs">
+                    <Share2 className="h-4 w-4" />
+                    {shareCopied ? '복사 완료!' : '결과 카드 공유'}
+                  </button>
+                  <button type="button" onClick={reset} autoFocus className="min-h-11 px-8 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg">
+                    {c3.playAgain}
+                  </button>
+                </div>
               </div>
             </div>
           )}

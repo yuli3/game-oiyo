@@ -30,6 +30,145 @@ export interface ArcadePassProgress {
   streakCount?: number;
   lastCheckInDate?: string;
   claimedStreakDays?: number[];
+  equippedTitleId?: string;
+}
+
+export interface ArcadeTitle {
+  id: string;
+  badge: string;
+  requiredXp: number;
+  name: Record<string, string>;
+  description: Record<string, string>;
+}
+
+export const ARCADE_TITLES: ArcadeTitle[] = [
+  {
+    id: "novice",
+    badge: "🔰",
+    requiredXp: 0,
+    name: { ko: "초심자", en: "Novice", ja: "初心者", zh: "初学者", fr: "Novice", es: "Novato" },
+    description: {
+      ko: "아케이드의 세계에 첫 발을 내딛은 도전자",
+      en: "First step into the arcade universe",
+      ja: "アーケードの世界に足を踏み入れた挑戦者",
+      zh: "迈入街机宇宙的新人",
+      fr: "Premier pas dans l'univers arcade",
+      es: "Primer paso en el universo arcade",
+    },
+  },
+  {
+    id: "puzzler",
+    badge: "🧩",
+    requiredXp: 100,
+    name: { ko: "퍼즐 탐험가", en: "Puzzle Master", ja: "パズル達人", zh: "解谜大师", fr: "Maître du Puzzle", es: "Maestro del Puzle" },
+    description: {
+      ko: "스도쿠·워들과 같은 논리 퍼즐의 패턴을 꿰뚫어본 자",
+      en: "A keen mind that deciphers daily logic puzzles",
+      ja: "数独やワードルの論理パターンを見抜く者",
+      zh: "洞悉每日逻辑谜题规律的智者",
+      fr: "Un esprit vif qui déchiffre les puzzles quotidiens",
+      es: "Una mente aguda que descifra puzles diarios",
+    },
+  },
+  {
+    id: "combomaster",
+    badge: "🔥",
+    requiredXp: 300,
+    name: { ko: "콤보 장인", en: "Combo Master", ja: "コンボ職人", zh: "连击宗师", fr: "Maître du Combo", es: "Maestro del Combo" },
+    description: {
+      ko: "블록 버스트와 벽돌깨기에서 멈추지 않는 연쇄를 일으키는 자",
+      en: "Unleashes endless chain reactions in arcade games",
+      ja: "止まらない連鎖を引き起こす職人",
+      zh: "在打砖块与消除中掀起连环风暴",
+      fr: "Déclenche des réactions en chaîne sans fin",
+      es: "Desata reacciones en cadena infinitas",
+    },
+  },
+  {
+    id: "strategist",
+    badge: "♟️",
+    requiredXp: 600,
+    name: { ko: "신의 한 수", en: "Grand Strategist", ja: "神の一手", zh: "神之一手", fr: "Grand Stratège", es: "Gran Estratega" },
+    description: {
+      ko: "오목·체스·장기 판에서 한 수 앞선 승리를 이끄는 지략가",
+      en: "Calculates every movement in board classics",
+      ja: "五目並べやチェスで常に先を読む知略家",
+      zh: "在棋盘上运筹帷幄的战术家",
+      fr: "Calcule chaque mouvement dans les classiques",
+      es: "Calcula cada movimiento en clásicos del tablero",
+    },
+  },
+  {
+    id: "survivor",
+    badge: "🛡️",
+    requiredXp: 1000,
+    name: { ko: "불굴의 생존자", en: "Undying Survivor", ja: "不屈の生存者", zh: "不屈幸存者", fr: "Survivant Indomptable", es: "Superviviente Indomable" },
+    description: {
+      ko: "스웜 무리의 탄막 속에서도 끝까지 살아남는 전설",
+      en: "Endures the bullet swarm until ultimate victory",
+      ja: "弾幕の嵐の中でも生き残る伝説",
+      zh: "在弹幕狂潮中浴火重生的传奇",
+      fr: "Endure les vagues d'ennemis jusqu'à la victoire",
+      es: "Soporta el enjambre de balas hasta la victoria",
+    },
+  },
+  {
+    id: "legend",
+    badge: "👑",
+    requiredXp: 2000,
+    name: { ko: "아케이드 레전드", en: "Arcade Legend", ja: "アーケード伝説", zh: "街机传奇", fr: "Légende Arcade", es: "Leyenda Arcade" },
+    description: {
+      ko: "OIYO 아케이드 명예의 전당 정점에 오른 전설의 플레이어",
+      en: "Reached the pinnacle of the OIYO Arcade Hall of Fame",
+      ja: "OIYOアーケード殿堂の頂点に立った伝説",
+      zh: "登顶OIYO街机名人堂顶峰的传说",
+      fr: "Atteint le sommet du Hall of Fame Arcade",
+      es: "Alcanzó la cúspide del Salón de la Fama Arcade",
+    },
+  },
+];
+
+export function getUnlockedTitles(xp: number): ArcadeTitle[] {
+  return ARCADE_TITLES.filter((t) => xp >= t.requiredXp);
+}
+
+export function equipArcadeTitle(
+  progress: ArcadePassProgress,
+  titleId: string
+): ArcadePassProgress {
+  const title = ARCADE_TITLES.find((t) => t.id === titleId);
+  if (!title || progress.xp < title.requiredXp) {
+    return progress;
+  }
+
+  const updated: ArcadePassProgress = {
+    ...progress,
+    equippedTitleId: titleId,
+  };
+
+  saveArcadePassProgress(updated);
+
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(
+      new CustomEvent("oiyo:title-changed", { detail: { titleId } })
+    );
+  }
+
+  return updated;
+}
+
+export function getEquippedTitleData(
+  progress: ArcadePassProgress | null,
+  locale: string = "ko"
+): { id: string; badge: string; name: string } {
+  const titleId = progress?.equippedTitleId ?? "novice";
+  const title = ARCADE_TITLES.find((t) => t.id === titleId) ?? ARCADE_TITLES[0];
+  const name = title.name[locale] ?? title.name.en ?? title.name.ko;
+  return {
+    id: title.id,
+    badge: title.badge,
+    name,
+  };
 }
 
 export interface DailyStreakReward {
@@ -342,6 +481,7 @@ export function loadArcadePassProgress(dateKey: string): ArcadePassProgress {
         streakCount: parsed.streakCount ?? 0,
         lastCheckInDate: parsed.lastCheckInDate,
         claimedStreakDays: parsed.claimedStreakDays ?? [],
+        equippedTitleId: parsed.equippedTitleId,
       };
       saveArcadePassProgress(next);
       return next;

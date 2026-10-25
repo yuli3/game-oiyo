@@ -14,6 +14,8 @@ import { createGomokuBoard, getGomokuWinningIndices, GOMOKU_SIZE, placeGomokuSto
 import { GOMOKU_SPRITES } from '../../lib/games/sprites';
 import { playFanfare, type TonePlayer } from '../../lib/games/game-audio';
 import { copyShareCardToClipboard, createShareCardCanvas, downloadShareCard } from '../../lib/games/share-card';
+import { getDailyTsumego, evaluateTsumegoMove, type TsumegoPuzzle } from '../../lib/games/gomoku-tsumego';
+import { recordDailyPuzzleClear } from '../../lib/games/daily-calendar';
 
 const SIZE = GOMOKU_SIZE;
 
@@ -67,8 +69,11 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     const [board, setBoard] = useState<GomokuCell[]>(createGomokuBoard);
     const [isBlackTurn, setIsBlackTurn] = useState(true);
     const [winner, setWinner] = useState<number | null>(null); // 1|2 winner, 0 = draw
-    const [mode, setMode] = useState<GameMode>('local');
+    const [mode, setMode] = useState<GameMode | 'tsumego'>('local');
     const [level, setLevel] = useState<AiLevel>(2);
+    const [tsumegoPuzzle, setTsumegoPuzzle] = useState<TsumegoPuzzle | null>(null);
+    const [tsumegoStep, setTsumegoStep] = useState(0);
+    const [tsumegoFeedback, setTsumegoFeedback] = useState<string | null>(null);
     const [thinking, setThinking] = useState(false);
     const [paused, setPaused] = useState(false);
     const [restored, setRestored] = useState(false);
@@ -183,11 +188,11 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         }
     }, []);
     useEffect(() => {
-        if (board.some((cell) => cell !== null) && winner === null) {
+        if (mode !== "tsumego" && board.some((cell) => cell !== null) && winner === null) {
             storeGomokuSaveV2({
                 board: board as (1 | 2 | null)[],
                 isBlackTurn,
-                mode,
+                mode: mode as GameMode,
                 level,
                 lastMove,
                 startedAtEpochMs: startedAtRef.current,
@@ -284,6 +289,41 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
 
     const handleClick = (index: number) => {
         if (paused || board[index] !== null || winner !== null || thinking) return;
+        if (mode === 'tsumego' && tsumegoPuzzle) {
+            const evalRes = evaluateTsumegoMove(tsumegoPuzzle, tsumegoStep, index);
+            if (evalRes.isCorrect) {
+                const move = placeGomokuStone(board, index, 1);
+                if (!move) return;
+                setBoard(move.board);
+                setLastMove(index);
+                setFreshMove(index);
+                playStoneSnap();
+                if (evalRes.isComplete) {
+                    setWinner(1);
+                    setTsumegoFeedback("정답입니다! 묘수를 완성했습니다.");
+                    recordDailyPuzzleClear("gomoku");
+                    finish(1);
+                } else if (evalRes.aiCounterMove !== undefined) {
+                    setTsumegoStep((s) => s + 1);
+                    setThinking(true);
+                    setTimeout(() => {
+                        const aiMove = placeGomokuStone(move.board, evalRes.aiCounterMove!, 2);
+                        if (aiMove) {
+                            setBoard(aiMove.board);
+                            setLastMove(evalRes.aiCounterMove!);
+                            setFreshMove(evalRes.aiCounterMove!);
+                            playStoneSnap();
+                        }
+                        setThinking(false);
+                    }, 350);
+                }
+            } else {
+                tone(180, 0.12);
+                setTsumegoFeedback("오답입니다. 다른 급소를 찾아보세요!");
+                setTimeout(() => setTsumegoFeedback(null), 2200);
+            }
+            return;
+        }
         if (mode === 'ai' && !isBlackTurn) return; // AI's turn — human input locked
         place(index, isBlackTurn ? 1 : 2);
     };
@@ -335,10 +375,30 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         cellRefs.current[next]?.focus();
     };
 
-    const switchMode = (m: GameMode) => {
+    const switchMode = (m: GameMode | 'tsumego') => {
         if (m === mode) return;
         setMode(m);
-        reset();
+        if (m === 'tsumego') {
+            const p = getDailyTsumego();
+            setTsumegoPuzzle(p);
+            setTsumegoStep(0);
+            setTsumegoFeedback(null);
+            const initialBoard = createGomokuBoard();
+            for (const s of p.initialStones) {
+                initialBoard[s.index] = s.player;
+            }
+            setBoard(initialBoard);
+            setIsBlackTurn(true);
+            setWinner(null);
+            setWinningLine(null);
+            setLastMove(null);
+            setFreshMove(null);
+            setMoveCount(0);
+        } else {
+            setTsumegoPuzzle(null);
+            setTsumegoFeedback(null);
+            reset();
+        }
     };
 
     const winLabel = winner === 0 ? t.draw
@@ -377,12 +437,12 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
 
                 {/* Mode + difficulty */}
                 <div className="mb-4 flex flex-wrap items-center gap-2">
-                    <div className="inline-flex rounded-xl border border-border overflow-hidden" role="group" aria-label={`${t.modeLocal} / ${t.modeAi}`}>
-                        {(['local', 'ai'] as GameMode[]).map((m) => (
+                    <div className="inline-flex rounded-xl border border-border overflow-hidden" role="group" aria-label="Game Mode">
+                        {(['local', 'ai', 'tsumego'] as const).map((m) => (
                             <button type="button" key={m} onClick={() => switchMode(m)}
                                 aria-pressed={mode === m}
                                 className={`min-h-11 px-3 py-1.5 text-xs font-bold transition-colors motion-reduce:transition-none ${mode === m ? 'bg-primary text-primary-foreground' : 'bg-muted/50 text-muted-foreground hover:bg-muted'}`}>
-                                {m === 'local' ? t.modeLocal : t.modeAi}
+                                {m === 'local' ? t.modeLocal : m === 'ai' ? t.modeAi : '묘수풀이'}
                             </button>
                         ))}
                     </div>
@@ -398,6 +458,21 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                         </div>
                     )}
                     {mode === 'ai' && <p className="basis-full text-xs font-medium text-muted-foreground">{aiInfo.difficulty}: {aiInfo.level[level]}</p>}
+                    {mode === 'tsumego' && tsumegoPuzzle && (
+                        <div className="basis-full rounded-2xl border border-primary/30 bg-primary/10 p-3 text-left text-xs my-1">
+                            <div className="flex items-center justify-between">
+                                <span className="font-black text-primary">🧩 {tsumegoPuzzle.title}</span>
+                                <span className="text-[11px] font-bold text-muted-foreground">흑선 (Black to move)</span>
+                            </div>
+                            <p className="mt-1 text-muted-foreground">{tsumegoPuzzle.description}</p>
+                            <p className="mt-1 font-bold text-primary/80">💡 힌트: {tsumegoPuzzle.hint}</p>
+                            {tsumegoFeedback && (
+                                <p className={`mt-2 font-black ${tsumegoFeedback.includes('정답') ? 'text-emerald-500' : 'text-destructive'}`}>
+                                    {tsumegoFeedback}
+                                </p>
+                            )}
+                        </div>
+                    )}
                     {moveCount > 0 && winner === null && (
                         <button type="button" onClick={() => setPaused((value) => { if (value) setRestored(false); return !value; })} className="min-h-11 px-3 rounded-lg border border-border text-xs font-bold text-muted-foreground hover:bg-muted">
                             {paused ? `▶ ${x.resume}` : `Ⅱ ${x.pause}`}

@@ -5,6 +5,8 @@
  * with studio badges, neon score typography, seed challenge hash, and tier ratings.
  */
 
+import { generateQrMatrix } from "./challenge-qr";
+
 export interface ShareCardOptions {
   title: string;
   subtitle?: string;
@@ -15,6 +17,8 @@ export interface ShareCardOptions {
   durationSeconds?: number;
   locale?: string;
   customStats?: Array<{ label: string; value: string | number }>;
+  qrUrl?: string;
+  playerTitle?: string;
 }
 
 /**
@@ -85,6 +89,18 @@ export function resolveRankTier(slug: string, score: number): string {
     if (score <= 120) return "EXPERT";
     return "SWEEPER";
   }
+  if (slug === "chess") {
+    if (score <= 20) return "GRANDMASTER";
+    if (score <= 40) return "MASTER";
+    if (score <= 60) return "KNIGHT";
+    return "NOVICE";
+  }
+  if (slug === "janggi") {
+    if (score <= 25) return "명인 (GRANDMASTER)";
+    if (score <= 50) return "국수 (MASTER)";
+    if (score <= 80) return "기사 (KNIGHT)";
+    return "초심자 (NOVICE)";
+  }
   if (score >= 1000) return "CHAMPION";
   if (score >= 500) return "VETERAN";
   return "PLAYER";
@@ -106,6 +122,8 @@ export function renderShareCardToContext(
     seedCode,
     durationSeconds,
     customStats = [],
+    qrUrl,
+    playerTitle,
   } = options;
 
   const width = 600;
@@ -163,9 +181,15 @@ export function renderShareCardToContext(
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
+  if (playerTitle) {
+    ctx.font = "bold 11px system-ui, -apple-system, sans-serif";
+    ctx.fillStyle = "#34d399";
+    ctx.fillText(`★ ${playerTitle.toUpperCase()} ★`, width / 2, 36);
+  }
+
   ctx.font = "bold 13px system-ui, -apple-system, sans-serif";
   ctx.fillStyle = "#38bdf8";
-  ctx.fillText("✦ OIYO ARCADE STUDIOS ✦", width / 2, 54);
+  ctx.fillText("✦ OIYO ARCADE STUDIOS ✦", width / 2, playerTitle ? 56 : 54);
 
   // 5. Game Title & Subtitle
   ctx.font = "900 28px system-ui, -apple-system, sans-serif";
@@ -249,20 +273,74 @@ export function renderShareCardToContext(
     ctx.fillText(statsList[i].val, cx, statY + 24);
   }
 
-  // 8. Challenge Callout Box
-  const calloutY = 440;
-  ctx.fillStyle = "rgba(30, 41, 59, 0.6)";
-  ctx.fillRect(60, calloutY, 480, 58);
-  ctx.strokeStyle = "rgba(56, 189, 248, 0.2)";
-  ctx.strokeRect(60, calloutY, 480, 58);
+  // 8. Challenge Callout Box & QR Code
+  const calloutY = 432;
+  const calloutH = 74;
 
-  ctx.font = "bold 14px system-ui, -apple-system, sans-serif";
-  ctx.fillStyle = "#f1f5f9";
-  ctx.fillText("⚡ CAN YOU BEAT MY SCORE? ⚡", width / 2, calloutY + 24);
+  if (qrUrl) {
+    const boxW = 380;
+    ctx.fillStyle = "rgba(30, 41, 59, 0.75)";
+    ctx.fillRect(60, calloutY, boxW, calloutH);
+    ctx.strokeStyle = "rgba(56, 189, 248, 0.3)";
+    ctx.strokeRect(60, calloutY, boxW, calloutH);
 
-  ctx.font = "600 11px system-ui, -apple-system, sans-serif";
-  ctx.fillStyle = "#38bdf8";
-  ctx.fillText("Challenge me on the exact same puzzle seed!", width / 2, calloutY + 44);
+    ctx.textAlign = "left";
+    ctx.font = "bold 13px system-ui, -apple-system, sans-serif";
+    ctx.fillStyle = "#f1f5f9";
+    ctx.fillText("⚡ SCAN QR TO CHALLENGE ⚡", 76, calloutY + 28);
+
+    ctx.font = "600 11px system-ui, -apple-system, sans-serif";
+    ctx.fillStyle = "#38bdf8";
+    ctx.fillText("Scan with phone to duel on this seed!", 76, calloutY + 50);
+
+    // QR Code Box on the right
+    const qrSize = 74;
+    const qrX = 466;
+    const qrY = calloutY;
+
+    // White Card Background
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(qrX, qrY, qrSize, qrSize);
+    ctx.strokeStyle = "rgba(56, 189, 248, 0.6)";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(qrX, qrY, qrSize, qrSize);
+
+    try {
+      const matrix = generateQrMatrix(qrUrl);
+      const modCount = matrix.length;
+      const quiet = 2;
+      const totalMods = modCount + quiet * 2;
+      const modPx = qrSize / totalMods;
+
+      ctx.fillStyle = "#000000";
+      for (let r = 0; r < modCount; r++) {
+        for (let c = 0; c < modCount; c++) {
+          if (matrix[r][c]) {
+            ctx.fillRect(
+              qrX + (c + quiet) * modPx,
+              qrY + (r + quiet) * modPx,
+              Math.ceil(modPx),
+              Math.ceil(modPx)
+            );
+          }
+        }
+      }
+    } catch {}
+    ctx.textAlign = "center";
+  } else {
+    ctx.fillStyle = "rgba(30, 41, 59, 0.6)";
+    ctx.fillRect(60, calloutY + 8, 480, 58);
+    ctx.strokeStyle = "rgba(56, 189, 248, 0.2)";
+    ctx.strokeRect(60, calloutY + 8, 480, 58);
+
+    ctx.font = "bold 14px system-ui, -apple-system, sans-serif";
+    ctx.fillStyle = "#f1f5f9";
+    ctx.fillText("⚡ CAN YOU BEAT MY SCORE? ⚡", width / 2, calloutY + 32);
+
+    ctx.font = "600 11px system-ui, -apple-system, sans-serif";
+    ctx.fillStyle = "#38bdf8";
+    ctx.fillText("Challenge me on the exact same puzzle seed!", width / 2, calloutY + 52);
+  }
 
   // 9. Footer Watermark
   ctx.font = "bold 12px system-ui, -apple-system, sans-serif";

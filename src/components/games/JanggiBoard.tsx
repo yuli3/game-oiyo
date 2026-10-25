@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, type CSSProperties } from 'react';
-import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { Maximize2, Minimize2, Volume2, VolumeX, Share2 } from 'lucide-react';
 import type { Locale } from '../../lib/i18n';
+import { createShareCardCanvas, copyShareCardToClipboard } from '../../lib/games/share-card';
 import {
     createJanggi, janggiAnalysis, janggiBestMove, janggiMoveReview, janggiTargets, isChoPiece, playJanggi,
     type JanggiMove, type JanggiMoveReview, type JanggiState,
@@ -68,6 +69,7 @@ const JanggiBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     const [thinking, setThinking] = useState(false);
     const [paused, setPaused] = useState(false);
     const [restored, setRestored] = useState(false);
+    const [shareCopied, setShareCopied] = useState(false);
     const [muted, setMuted] = useState(() => {
         if (typeof window === 'undefined') return false;
         try {
@@ -184,6 +186,28 @@ const JanggiBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
             : `${winner === 'cho' ? t.cho : t.han} ${t.win}`
         : null;
     const analysis = janggiAnalysis(game, 'cho');
+
+    const handleShareCard = async () => {
+        if (!winLabel) return;
+        try {
+            const canvas = createShareCardCanvas({
+                title: t.title,
+                subtitle: mode === 'ai' ? `vs AI Janggi` : '2 Players Janggi',
+                score: game.moves,
+                slug: 'janggi',
+                qrUrl: typeof window !== 'undefined' ? window.location.href : undefined,
+                customStats: [
+                    { label: 'MOVES', value: game.moves },
+                    { label: 'RESULT', value: winLabel },
+                ],
+            });
+            const copied = await copyShareCardToClipboard(canvas);
+            if (copied) {
+                setShareCopied(true);
+                setTimeout(() => setShareCopied(false), 2500);
+            }
+        } catch {}
+    };
 
     return (
         <div ref={containerRef} className="w-full flex flex-col items-center justify-center">
@@ -314,9 +338,15 @@ const JanggiBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                             <p className="text-muted-foreground mb-6 uppercase tracking-widest font-bold text-xs">{t.over}</p>
                             <p className="text-sm text-muted-foreground mb-4">{game.moves} {x.moves} · {analysis.captures} {x.captures} · {analysis.mobility} {x.mobility}</p>
                             {mode==='ai'&&winner&&((winner==='cho')===AI_IS_CHO)&&lastAiReview&&<div className="mb-5 max-w-xs rounded-2xl border border-amber-300/60 bg-amber-50 p-3 text-left text-xs text-amber-950"><p className="font-black text-amber-950">{aiInfo.review} · {String.fromCharCode(65+lastAiReview.from[1])}{10-lastAiReview.from[0]}→{String.fromCharCode(65+lastAiReview.to[1])}{10-lastAiReview.to[0]}</p><p className="mt-1">{lastAiReview.captured?`${aiInfo.capture}: ${PIECE_ICONS[lastAiReview.captured]} · ${lastAiReview.capturedValue} ${x.material}`:aiInfo.quiet}</p><p className="mt-1 text-xs text-amber-800">{aiInfo.difficulty}: {aiInfo.level[level]} · {aiInfo.scope}</p></div>}
-                            <button onClick={reset} className="px-10 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity">
-                                {t.reset}
-                            </button>
+                            <div className="flex flex-wrap items-center justify-center gap-2">
+                                <button type="button" onClick={handleShareCard} className="min-h-11 px-5 py-3 bg-secondary text-secondary-foreground rounded-full font-bold shadow-md hover:bg-secondary/80 flex items-center gap-1.5 text-xs">
+                                    <Share2 className="h-4 w-4" />
+                                    {shareCopied ? '복사 완료!' : '결과 카드 공유'}
+                                </button>
+                                <button type="button" onClick={reset} className="min-h-11 px-8 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity">
+                                    {t.reset}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}

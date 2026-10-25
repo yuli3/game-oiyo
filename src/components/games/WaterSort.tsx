@@ -13,6 +13,7 @@ import { celebrate } from '../../lib/games/celebration';
 import { WATER_SORT_SPRITES } from '../../lib/games/sprites';
 import { buildChallengeUrl } from '../../lib/games/seed-challenge';
 import { generateChallengeQrSvg } from '../../lib/games/challenge-qr';
+import { getColorblindMode, getColorblindSymbol, type ColorblindMode } from '../../lib/games/accessibility';
 
 const COLORS = ['#ef4444', '#2563eb', '#059669', '#d97706', '#7c3aed'];
 const PATTERNS = [
@@ -51,6 +52,34 @@ const WaterSort: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [lastPour, setLastPour] = useState<{ to: number; count: number } | null>(null);
     const [showQrModal, setShowQrModal] = useState(false);
     const [copied, setCopied] = useState(false);
+    const [colorblind, setColorblind] = useState<ColorblindMode>(getColorblindMode);
+
+    useEffect(() => {
+        const onCb = (e: Event) => {
+            setColorblind((e as CustomEvent<ColorblindMode>).detail ?? getColorblindMode());
+        };
+        window.addEventListener('oiyo:colorblind-changed', onCb);
+        return () => window.removeEventListener('oiyo:colorblind-changed', onCb);
+    }, []);
+
+    const playPourTone = useCallback((fillLevel: number) => {
+        if (muted) return;
+        try {
+            const AudioContextClass = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+            if (!AudioContextClass) return;
+            const ctx = new AudioContextClass();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            const freq = 380 + fillLevel * 90;
+            osc.frequency.setValueAtTime(freq, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(freq + 30, ctx.currentTime + 0.12);
+            gain.gain.setValueAtTime(0.06, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+            osc.connect(gain).connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.12);
+        } catch {}
+    }, [muted]);
     const cuesRef = useRef<CuePlayer<CoreCue> | null>(null);
     const hapticsRef = useRef(createHaptics());
     const recordedSeedRef = useRef<number | null>(null);
@@ -126,6 +155,7 @@ const WaterSort: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             setLastPour({ to: index, count: pouredLayerCount(game.tubes, next.tubes, index) });
             setGame(next);
             cue('combo');
+            playPourTone(next.tubes[index].length);
             hapticsRef.current.fire('combo');
         } else {
             cue('fail');
@@ -231,7 +261,19 @@ const WaterSort: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         {tubes.map((tube, i) => <button type="button" key={i} ref={(element) => { tubeRefs.current[i] = element; }} tabIndex={focusedTube === i ? 0 : -1} onFocus={() => setFocusedTube(i)} onKeyDown={(event) => { if (event.key === 'ArrowRight' || event.key === 'ArrowDown') { event.preventDefault(); focusTube(i + 1); } if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') { event.preventDefault(); focusTube(i - 1); } if (event.key === 'Home') { event.preventDefault(); focusTube(0); } if (event.key === 'End') { event.preventDefault(); focusTube(tubes.length - 1); } }} onClick={() => handleTubeClick(i)} aria-pressed={selectedTube === i} aria-label={`${t.tube(i + 1, tube.length, tube.map((color) => String(color + 1)).join('-'))}${selectedTube === i ? `, ${t.selected}` : ''}`} className={`relative h-32 w-12 cursor-pointer overflow-hidden rounded-b-3xl border-4 border-muted sm:h-40 sm:w-14 ${!reducedMotion ? 'transition-all' : ''} focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary focus-visible:ring-offset-4 ${selectedTube === i ? `ring-4 ring-primary ring-offset-4 ${!reducedMotion ? '-translate-y-3' : ''}` : (!reducedMotion ? 'hover:-translate-y-1' : '')}`}>
                             <span className="absolute inset-0 flex flex-col-reverse">{tube.map((color, idx) => {
                                 const poured = Boolean(lastPour && lastPour.to === i && lastPour.count > 0 && idx >= tube.length - lastPour.count);
-                                return <span key={idx} style={{ backgroundColor: COLORS[color], backgroundImage: PATTERNS[color], backgroundSize: color === 1 ? '12px 12px' : undefined }} className={`h-1/4 w-full ${poured && !reducedMotion ? 'oiyo-pour' : ''}`} />;
+                                return (
+                                    <span
+                                        key={idx}
+                                        style={{ backgroundColor: COLORS[color], backgroundImage: PATTERNS[color], backgroundSize: color === 1 ? '12px 12px' : undefined }}
+                                        className={`h-1/4 w-full relative flex items-center justify-center border-t border-white/25 ${poured && !reducedMotion ? 'oiyo-pour' : ''}`}
+                                    >
+                                        {colorblind !== 'none' && (
+                                            <span className="text-xs font-black text-white drop-shadow-xs select-none">
+                                                {getColorblindSymbol(color)}
+                                            </span>
+                                        )}
+                                    </span>
+                                );
                             })}</span>
                         </button>)}
                     </div>

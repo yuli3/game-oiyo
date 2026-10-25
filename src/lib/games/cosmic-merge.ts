@@ -344,6 +344,25 @@ export function clampDropperX(x: number, radius: number): number {
 
 export const VORTEX_MAX_ENERGY = 100;
 export const VORTEX_DURATION_MS = 2400;
+export const TIME_ATTACK_DURATION_SEC = 180; // 3-minute blitz mode
+
+export type CosmicMergeMode = "classic" | "endless" | "time-attack";
+
+/**
+ * Black Hole Crisis Evacuation:
+ * Targets up to 3 dangerous celestial bodies closest to the overflow deadline (highest on screen)
+ * with priority on smaller/medium bodies (tier <= 4) to rescue player from sudden gameover.
+ */
+export function selectBlackHoleTargets(
+  bodies: Array<{ id: number; tier: number; y: number }>
+): number[] {
+  // Filter candidates near the danger deadline (y <= DEADLINE_Y + 150)
+  const dangerCandidates = bodies
+    .filter((b) => b.y <= DEADLINE_Y + 160 && b.tier <= 4)
+    .sort((a, b) => a.y - b.y); // Closest to deadline first
+
+  return dangerCandidates.slice(0, 3).map((b) => b.id);
+}
 
 /**
  * Calculates vortex energy gained from merging celestial bodies of a given tier.
