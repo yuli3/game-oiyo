@@ -5,6 +5,11 @@ import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 import { getBestForConditions, recordBestForConditions, type BestConditions, type ConditionalBestRecord } from '../../lib/games/records';
 import { addBonusTube, createWaterSort, generateWaterSortPuzzle, isWaterSortDeadEnd, moveWaterSort, pouredLayerCount, undoWaterSort, waterSortHint, type WaterSortDifficulty, type WaterSortMove, type WaterSortState } from '../../lib/games/water-sort';
 import { clearWaterSortSave, loadWaterSortSave, storeWaterSortSave, type WaterSortAssist } from '../../lib/games/water-sort-save';
+import {
+    createShareCardCanvas,
+    copyShareCardToClipboard,
+    downloadShareCard,
+} from '../../lib/games/share-card';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import type { Locale } from '../../lib/i18n';
 import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from '../../lib/games/game-audio';
@@ -52,6 +57,7 @@ const WaterSort: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [lastPour, setLastPour] = useState<{ to: number; count: number } | null>(null);
     const [showQrModal, setShowQrModal] = useState(false);
     const [copied, setCopied] = useState(false);
+    const [shareCardCopied, setShareCardCopied] = useState(false);
     const [colorblind, setColorblind] = useState<ColorblindMode>(getColorblindMode);
 
     useEffect(() => {
@@ -218,6 +224,35 @@ const WaterSort: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         } catch {}
     };
 
+    const handleShareCard = useCallback(async () => {
+        if (!game) return;
+        try {
+            const canvas = createShareCardCanvas({
+                title: t.title,
+                subtitle: 'WATER SORT PUZZLE',
+                score: Math.round(efficiency * 10),
+                durationSeconds: elapsedSeconds,
+                slug: 'water-sort',
+                qrUrl: typeof window !== 'undefined' ? window.location.href : undefined,
+                customStats: [
+                    { label: 'MOVES', value: game.moves },
+                    { label: 'EFFICIENCY', value: `${efficiency}%` },
+                ],
+            });
+            const success = await copyShareCardToClipboard(canvas);
+            if (success) {
+                setShareCardCopied(true);
+                setTimeout(() => setShareCardCopied(false), 2500);
+            } else {
+                downloadShareCard(canvas, `oiyo-watersort-${elapsedSeconds}s.png`);
+                setShareCardCopied(true);
+                setTimeout(() => setShareCardCopied(false), 2500);
+            }
+        } catch {
+            // fallback
+        }
+    }, [elapsedSeconds, efficiency, game, t.title]);
+
     return (
         <div
             ref={containerRef}
@@ -282,6 +317,14 @@ const WaterSort: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         <div className="mb-5 grid grid-cols-2 gap-3 text-sm"><p><strong>{t.moves}</strong><br />{game.moves}</p><p><strong>{t.time}</strong><br />{elapsedSeconds} {t.seconds}</p><p><strong>{t.efficiency}</strong><br />{efficiency}%</p><p><strong>{t.best}</strong><br />{displayedBest?.value ?? elapsedSeconds} {t.seconds}</p></div>
                         <p className="mb-5 text-xs font-bold text-muted-foreground">{t.next}: {Math.max(0, (displayedBest?.value ?? elapsedSeconds) - 1)} {t.seconds}</p>
                         <div className="mb-5 flex flex-wrap justify-center gap-2">
+                            <button
+                                type="button"
+                                onClick={handleShareCard}
+                                className="min-h-11 px-4 py-2 rounded-xl border border-primary/40 bg-primary/10 shadow-xs text-xs font-bold text-primary hover:bg-primary/20 transition-colors flex items-center gap-1.5"
+                            >
+                                {shareCardCopied ? <Check className="size-4 text-success" /> : <span>🖼️</span>}
+                                <span>{shareCardCopied ? '카드 복사됨!' : '카드 공유 2.0'}</span>
+                            </button>
                             <button
                                 type="button"
                                 onClick={handleCopyChallenge}

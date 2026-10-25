@@ -40,6 +40,12 @@ export interface BurstMods {
 }
 
 export const NO_MODS: BurstMods = { scoreMult: 1, chainBonus: 0, crossMult: 2, magnet: false, undertow: false, colorBurst: false };
+export const PERFECT_CLEAR_BONUS = 1000;
+
+export function isBoardClear(board: readonly (readonly (BurstColor | null)[])[]): boolean {
+  if (!board || board.length === 0) return false;
+  return board.every((row) => row.every((cell) => cell === null));
+}
 
 export interface BurstState {
   board: (BurstColor | null)[][];

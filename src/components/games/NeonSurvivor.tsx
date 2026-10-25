@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Check } from 'lucide-react';
 import { celebrate } from "../../lib/games/celebration";
 import {
   type NeonSurvivorState,
@@ -12,6 +13,11 @@ import {
 import type { Locale } from '../../lib/i18n';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { VirtualJoystick, type JoystickVector } from '../ui/game/VirtualJoystick';
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from '../../lib/games/share-card';
 
 interface Props {
   locale?: Locale;
@@ -159,6 +165,7 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
   // Evolution Guide Modal State
   const [showEvoGuide, setShowEvoGuide] = useState(false);
   const showEvoGuideRef = useRef(false);
+  const [shareCardCopied, setShareCardCopied] = useState(false);
   useEffect(() => {
     showEvoGuideRef.current = showEvoGuide;
   }, [showEvoGuide]);
@@ -268,6 +275,24 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
     osc.stop(now + 0.15);
   }, [getAudioContext]);
 
+  const playBossSirenSound = useCallback(() => {
+    if (mutedRef.current) return;
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(360, now);
+    osc.frequency.linearRampToValueAtTime(720, now + 0.2);
+    osc.frequency.linearRampToValueAtTime(360, now + 0.4);
+    gain.gain.setValueAtTime(0.12, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.45);
+  }, [getAudioContext]);
+
   // Input state
   const inputVectorRef = useRef({ x: 0, y: 0 });
   const joystickVectorRef = useRef<JoystickVector>({ x: 0, y: 0, magnitude: 0, angle: 0, knobDistance: 0 });
@@ -355,6 +380,11 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
 
         if (next.gameOver && !prevGameOver) {
           vibrate([100, 50, 100]);
+        }
+
+        if ((next.bossWarningTimer ?? 0) > 0 && (stateRef.current.bossWarningTimer ?? 0) <= 0) {
+          playBossSirenSound();
+          vibrate([100, 50, 100, 50, 100]);
         }
 
         bulletSoundCooldown += dt;
@@ -540,11 +570,19 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
         ctx.closePath();
         ctx.fill();
       } else if (e.kind === 'boss') {
-        // Golden Dreadnought Star
+        if (e.isElite) {
+          ctx.beginPath();
+          ctx.arc(0, 0, e.radius * 1.35 + Math.sin(state.survivalTime * 8) * 4, 0, Math.PI * 2);
+          ctx.strokeStyle = e.color;
+          ctx.lineWidth = 3;
+          ctx.stroke();
+        }
+
         ctx.beginPath();
-        for (let i = 0; i < 8; i++) {
+        const points = e.isElite ? 10 : 8;
+        for (let i = 0; i < points; i++) {
           const r = i % 2 === 0 ? e.radius : e.radius * 0.6;
-          const a = (i * Math.PI) / 4 + state.survivalTime;
+          const a = (i * Math.PI * 2) / points + state.survivalTime * (e.isElite ? 1.5 : 1);
           const sx = Math.cos(a) * r;
           const sy = Math.sin(a) * r;
           if (i === 0) ctx.moveTo(sx, sy);
@@ -552,6 +590,25 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
         }
         ctx.closePath();
         ctx.fill();
+
+        // Boss Floating HP Bar
+        const barW = e.radius * 2;
+        const barH = 5;
+        const barX = -e.radius;
+        const barY = -e.radius - 14;
+        ctx.fillStyle = 'rgba(2, 6, 23, 0.85)';
+        ctx.fillRect(barX, barY, barW, barH);
+        const ratio = Math.max(0, e.hp / e.maxHp);
+        ctx.fillStyle = e.isElite ? '#c084fc' : '#eab308';
+        ctx.fillRect(barX, barY, barW * ratio, barH);
+
+        if (e.bossTitle) {
+          ctx.font = 'bold 9px ui-monospace, monospace';
+          ctx.fillStyle = '#ffffff';
+          ctx.textAlign = 'center';
+          ctx.fillText(e.bossTitle, 0, barY - 4);
+          ctx.textAlign = 'left';
+        }
       }
 
       ctx.restore();
@@ -687,6 +744,22 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
     }
     ctx.restore();
 
+    // 4. Elite Boss Warning Siren Overlay & HUD
+    if (state.bossWarningTimer && state.bossWarningTimer > 0) {
+      const flash = Math.sin(state.survivalTime * 24) > 0;
+      if (flash) {
+        ctx.fillStyle = 'rgba(239, 68, 68, 0.15)';
+        ctx.fillRect(0, 0, displayW, displayH);
+      }
+      ctx.fillStyle = 'rgba(239, 68, 68, 0.9)';
+      ctx.fillRect(0, 56, displayW, 32);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 13px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`⚠️ WARNING: ELITE RAID - ${state.activeBossName ?? 'BOSS'} INCOMING ⚠️`, displayW / 2, 77);
+      ctx.textAlign = 'left';
+    }
+
     ctx.restore();
   };
 
@@ -700,11 +773,40 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
   };
 
   // Format survival time MM:SS
-  const formatTime = (seconds: number) => {
+  const formatTime = useCallback((seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-  };
+  }, []);
+
+  const handleShareCard = useCallback(async () => {
+    try {
+      const canvas = createShareCardCanvas({
+        title: t.title,
+        subtitle: 'ARCADE RAID SURVIVOR',
+        score: gameState.score,
+        durationSeconds: Math.floor(gameState.survivalTime),
+        slug: 'neon-survivor',
+        qrUrl: typeof window !== 'undefined' ? window.location.href : undefined,
+        customStats: [
+          { label: 'KILLS', value: gameState.kills },
+          { label: 'LEVEL', value: gameState.player.level },
+          { label: 'SURVIVED', value: formatTime(gameState.survivalTime) },
+        ],
+      });
+      const success = await copyShareCardToClipboard(canvas);
+      if (success) {
+        setShareCardCopied(true);
+        setTimeout(() => setShareCardCopied(false), 2500);
+      } else {
+        downloadShareCard(canvas, `oiyo-survivor-${gameState.score}pts.png`);
+        setShareCardCopied(true);
+        setTimeout(() => setShareCardCopied(false), 2500);
+      }
+    } catch {
+      // fallback
+    }
+  }, [formatTime, gameState.kills, gameState.player.level, gameState.score, gameState.survivalTime, t.title]);
 
   return (
     <div
@@ -877,13 +979,24 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={handleRestart}
-              className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-md hover:bg-primary/90 transition-colors"
-            >
-              {t.restart}
-            </button>
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={handleShareCard}
+                className="w-full min-h-11 rounded-xl border border-primary/40 bg-primary/10 shadow-xs text-xs font-black text-primary hover:bg-primary/20 transition-colors flex items-center justify-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                {shareCardCopied ? <Check className="size-4 text-success" /> : <span>🖼️</span>}
+                <span>{shareCardCopied ? '카드 복사됨!' : '카드 공유 2.0'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleRestart}
+                className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-md hover:bg-primary/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                {t.restart}
+              </button>
+            </div>
           </div>
         </div>
       )}

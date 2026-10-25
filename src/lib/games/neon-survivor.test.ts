@@ -213,5 +213,30 @@ describe('NeonSurvivor Engine', () => {
       const nova = selectUpgrade(state, 'supernovaVortex');
       expect(nova.evolutions.supernovaVortex).toBe(true);
     });
+
+    it('spawns Dreadnought at 60s and Void Titan elite boss at 180s with warning', () => {
+      let state = createInitialNeonSurvivorState();
+      state.survivalTime = 60.0;
+
+      const at60 = updateNeonSurvivor(state, 0.05, { x: 0, y: 0 });
+      expect(at60.bossSpawned).toBe(true);
+      expect(at60.bossWarningTimer).toBeGreaterThan(0);
+      expect(at60.activeBossName).toBe('DREADNOUGHT');
+      const dreadnought = at60.enemies.find((e) => e.kind === 'boss' && e.bossTitle === 'DREADNOUGHT');
+      expect(dreadnought).toBeDefined();
+
+      at60.survivalTime = 180.0;
+      const at180 = updateNeonSurvivor(at60, 0.05, { x: 0, y: 0 });
+      expect(at180.activeBossName).toBe('VOID TITAN');
+      const voidTitan = at180.enemies.find((e) => e.isElite && e.bossTitle === 'VOID TITAN');
+      expect(voidTitan).toBeDefined();
+      expect(voidTitan?.hp).toBe(3500);
+
+      // Defeating Elite boss drops 5 mega gems
+      voidTitan!.hp = 0;
+      const afterKill = updateNeonSurvivor(at180, 0.05, { x: 0, y: 0 });
+      const megaGems = afterKill.gems.filter((g) => g.value === 60);
+      expect(megaGems.length).toBe(5);
+    });
   });
 });

@@ -125,6 +125,9 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const gameRef = useRef<SnakeState | null>(null);
     const prevSnakeRef = useRef<SnakePoint[]>([]);
+    const currentRunHistoryRef = useRef<Array<Array<{ x: number; y: number }>>>([]);
+    const pbGhostHistoryRef = useRef<Array<Array<{ x: number; y: number }>>>([]);
+    const currentTickCountRef = useRef(0);
     const audioRef = useRef<AudioContext | null>(null);
     const previousScoreRef = useRef(0);
     const previousStatusRef = useRef<string>('idle');
@@ -227,6 +230,8 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         setDraftChoices(null);
         draftChoicesRef.current = null;
         setDeathCause(null);
+        currentTickCountRef.current = 0;
+        currentRunHistoryRef.current = [];
         const newGame = createSnakeGame(Date.now());
         prevSnakeRef.current = newGame.snake.map((pt) => ({ ...pt }));
         setGame(newGame);
@@ -409,6 +414,8 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     accumulator -= interval;
                     steps += 1;
                     changed = true;
+                    currentTickCountRef.current += 1;
+                    currentRunHistoryRef.current.push(current.snake.map((pt) => ({ x: pt.x, y: pt.y })));
                 }
                 if (steps === 4 && current) {
                     accumulator = Math.min(accumulator, interval);
@@ -461,6 +468,21 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 gridSize: SNAKE_GRID_SIZE,
                 activeTouchDir: activeTouchDirRef.current,
             });
+
+            // Goal #4: Ghost PB Snake overlay
+            const ghostFrame = pbGhostHistoryRef.current[currentTickCountRef.current];
+            if (ghostFrame && ghostFrame.length > 0 && current?.status === 'playing') {
+                const cellSize = rect.width / SNAKE_GRID_SIZE;
+                ctx.save();
+                ctx.globalAlpha = 0.3;
+                ctx.fillStyle = "#c084fc";
+                ghostFrame.forEach((pt) => {
+                    ctx.beginPath();
+                    ctx.roundRect(pt.x * cellSize + 2, pt.y * cellSize + 2, cellSize - 4, cellSize - 4, 4);
+                    ctx.fill();
+                });
+                ctx.restore();
+            }
 
             ctx.restore();
 
@@ -563,6 +585,9 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         if (status === 'over' && previousStatusRef.current !== 'over') {
             setPhase('result');
             streakRef.current = 0;
+            if (score > best) {
+                pbGhostHistoryRef.current = [...currentRunHistoryRef.current];
+            }
             playDeathSound();
             vibrate([40, 40, 80]);
             recoilShakeRef.current = 10;
@@ -681,6 +706,7 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 score,
                 bestScore: best,
                 slug: 'snake-game',
+                qrUrl: typeof window !== 'undefined' ? window.location.href : undefined,
                 customStats: [
                     { label: 'LENGTH', value: length },
                     { label: 'AUGMENTS', value: activeAugments.length },

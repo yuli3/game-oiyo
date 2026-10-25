@@ -10,6 +10,10 @@ import {
   type ArcadePassProgress,
   type ArcadeRankTier,
 } from "../../../lib/games/arcade-pass";
+import {
+  getWeeklyLeagueKey,
+  weeklySeedFromKey,
+} from "../../../lib/games/weekly-league";
 import { todayKey, previousDayKey } from "../../../lib/games/daily";
 
 interface ArcadePassModalProps {
@@ -94,6 +98,8 @@ export const ArcadePassModal: React.FC<ArcadePassModalProps> = ({
 
   const titleCopy = TITLE_COPY[locale] ?? TITLE_COPY.en;
   const equippedId = progress.equippedTitleId ?? "novice";
+  const weekKey = getWeeklyLeagueKey();
+  const weeklySeed = weeklySeedFromKey(weekKey);
 
   const handleEquipTitle = (titleId: string) => {
     const updated = equipArcadeTitle(progress, titleId);
@@ -217,6 +223,22 @@ export const ArcadePassModal: React.FC<ArcadePassModalProps> = ({
               🎉 오늘 출석 보너스 +{streakToast} XP 획득!
             </div>
           )}
+        </div>
+
+        {/* Weekly Seed Championship Card */}
+        <div className="rounded-2xl border border-primary/30 bg-primary/5 p-3.5 mb-5">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs font-black uppercase tracking-wider text-primary flex items-center gap-1.5">
+              <span>🏆</span>
+              <span>주간 챔피언십 ({weekKey})</span>
+            </span>
+            <span className="text-xs font-mono font-bold text-muted-foreground px-2 py-0.5 rounded-md bg-muted/60">
+              시드 #{weeklySeed}
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            전 세계 플레이어가 매주 동일한 공식 시드로 실시간 점수를 겨룹니다.
+          </p>
         </div>
 
         {/* Daily Missions */}

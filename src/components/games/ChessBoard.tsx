@@ -18,6 +18,7 @@ import { castleRookDelta, visualSquare } from '../../lib/games/piece-tween';
 import { Maximize2, Minimize2, Volume2, VolumeX, Share2 } from 'lucide-react';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { createShareCardCanvas, copyShareCardToClipboard } from '../../lib/games/share-card';
+import { identifyChessOpening } from '../../lib/games/chess-opening';
 
 function ChessPiece({ piece, className }: { piece: string; className?: string }) {
   const src = CHESS_SPRITES[piece];
@@ -368,6 +369,7 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
   const humanLost = Boolean(gameEnd && mode === 'ai' && gameEnd.result === (AI_IS_WHITE ? 'white' : 'black'));
   const reviewMoment = humanLost ? chessReviewMoment(moveHistory, !AI_IS_WHITE) : null;
   const reviewTip = reviewMoment?.kind === 'capture' ? reviewCopy.capture : reviewMoment?.kind === 'check' ? reviewCopy.check : reviewCopy.last;
+  const detectedOpening = identifyChessOpening(moveHistory.map((m) => m.notation));
   const turnSummary = thinking ? t.thinking : `${isWhiteTurn ? t.white : t.black} ${t.turn}${inCheck ? ` · ${t.check}` : ''}${moveHistory.length ? ` · ${c2.lastMove}: ${moveHistory.at(-1)?.notation}` : ''}`;
 
   const flipBoard = () => {
@@ -388,6 +390,7 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         customStats: [
           { label: 'MOVES', value: moveHistory.length },
           { label: 'RESULT', value: endLabel ?? 'In Progress' },
+          ...(detectedOpening ? [{ label: 'OPENING', value: detectedOpening.name[locale] ?? detectedOpening.name.en }] : []),
         ],
       });
       const copied = await copyShareCardToClipboard(canvas);
@@ -479,6 +482,28 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         <p className="mb-3 text-xs text-muted-foreground" aria-live="polite">
           {restored ? t.restored : t.localSave}
         </p>
+
+        {/* Real-time Opening Coach HUD */}
+        {detectedOpening && (
+          <div className="mb-3 rounded-2xl border border-primary/40 bg-primary/10 p-2.5 flex items-center justify-between gap-2 animate-in fade-in">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-xs font-mono font-black text-primary px-2 py-0.5 rounded-md bg-primary/20 shrink-0">
+                {detectedOpening.code}
+              </span>
+              <div className="min-w-0">
+                <span className="text-xs font-black text-foreground block truncate">
+                  {detectedOpening.name[locale] ?? detectedOpening.name.en}
+                </span>
+                <span className="text-xs text-muted-foreground block line-clamp-1">
+                  {detectedOpening.description[locale] ?? detectedOpening.description.en}
+                </span>
+              </div>
+            </div>
+            <span className="text-xs font-mono text-primary/80 shrink-0 hidden sm:inline">
+              📖 오프닝 북
+            </span>
+          </div>
+        )}
 
         <div className="mb-3 flex items-center justify-between gap-2">
           <span className="text-xs font-bold text-muted-foreground" aria-live="polite">

@@ -5,6 +5,7 @@ import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { getBest, recordAchievementEvent, recordBest } from "../../lib/games/records";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { BLOCK_BURST_FX, BLOCK_BURST_SPRITES } from "../../lib/games/sprites";
+import { celebrate } from "../../lib/games/celebration";
 import {
   createShareCardCanvas,
   copyShareCardToClipboard,
@@ -36,6 +37,8 @@ import {
   spawnBurstPiece,
   tryMove,
   tryRotate,
+  isBoardClear,
+  PERFECT_CLEAR_BONUS,
   type BurstColor,
   type BurstState,
   type BurstWave,
@@ -360,7 +363,7 @@ function Gem({ color, ghost, bursting, bomb, colorblind }: { color: BurstColor; 
         className="pointer-events-none h-full w-full object-contain"
       />
       {colorblind && colorblind !== "none" && !ghost && (
-        <span className="absolute inset-0 flex items-center justify-center text-[10px] font-black text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] select-none">
+        <span className="absolute inset-0 flex items-center justify-center text-xs font-black text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] select-none">
           {getColorblindSymbol(color)}
         </span>
       )}
@@ -676,12 +679,24 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
     if (run !== runRef.current) return;
     setFlashCols([]);
     setFlashRows([]);
-    setBanner("");
     setGainPop(gain);
     window.setTimeout(() => setGainPop(0), 700);
     setResolving(false);
-    spawnNext(base);
-  }, [burstFx, spawnNext, reducedMotion, tone, triggerCameraShake]);
+
+    // Goal #3: Perfect Board Clear detection
+    let finalBase = base;
+    if (isBoardClear(base.board)) {
+      finalBase = { ...base, score: base.score + PERFECT_CLEAR_BONUS };
+      setBanner("PERFECT CLEAR! +1000");
+      celebrate(containerRef?.current, { preset: "shards", scale: 1.4 });
+      tone(1046.5, 0.25);
+      window.setTimeout(() => setBanner(""), 1400);
+    } else {
+      setBanner("");
+    }
+
+    spawnNext(finalBase);
+  }, [burstFx, spawnNext, reducedMotion, tone, triggerCameraShake, containerRef]);
 
   const lockNow = useCallback(async (state: BurstState) => {
     if (resolvingRef.current || state.status !== "playing" || !state.active) return;

@@ -24,6 +24,7 @@ import { blitSheetFrame } from "../../lib/games/sprite-sheet";
 import { BRICK_BREAKER_SPRITES, FX_SPARK_SHEET, FX_SPRITES } from "../../lib/games/sprites";
 import { createDebrisWorld, type DebrisMatterLike, type DebrisWorld } from "../../lib/games/debris-world";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
+import { playSpatialTone } from "../../lib/games/spatial-audio";
 
 type BrickArt = Record<keyof typeof BRICK_BREAKER_SPRITES, HTMLImageElement> & { sparkSheet: HTMLImageElement };
 function loadBrickArt(): BrickArt | null {
@@ -207,18 +208,16 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
     if (phase === "over") restartRef.current?.focus();
   }, [phase]);
 
-  const playTone = useCallback((frequency: number, duration = 0.06, type: OscillatorType = "sine", volume = 0.03) => {
+  const playTone = useCallback((frequency: number, duration = 0.06, type: OscillatorType = "sine", volume = 0.03, x?: number) => {
     const audio = audioRef.current;
     if (!audio || !soundEnabledRef.current) return;
-    const oscillator = audio.createOscillator();
-    const gain = audio.createGain();
-    oscillator.type = type;
-    oscillator.frequency.setValueAtTime(frequency, audio.currentTime);
-    gain.gain.setValueAtTime(volume, audio.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + duration);
-    oscillator.connect(gain).connect(audio.destination);
-    oscillator.start();
-    oscillator.stop(audio.currentTime + duration);
+    playSpatialTone(audio, frequency, {
+      duration,
+      type,
+      volume,
+      x: x ?? (gsRef.current ? gsRef.current.bx : W / 2),
+      arenaWidth: W,
+    });
   }, []);
 
   const endGame = useCallback((finalScore: number) => {
@@ -266,7 +265,7 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
         scoreRef.current = gs.score;
         maxComboRef.current = Math.max(maxComboRef.current, gs.combo);
         if (event.destroyed) destroyedRef.current += 1;
-        playTone(event.destroyed ? 330 + Math.min(gs.combo, 8) * 24 : 180, 0.045, event.destroyed ? "square" : "triangle", 0.018);
+        playTone(event.destroyed ? 330 + Math.min(gs.combo, 8) * 24 : 180, 0.045, event.destroyed ? "square" : "triangle", 0.018, event.x);
         if (event.destroyed && !reducedMotionRef.current) {
           debrisRef.current?.spawn(event.x, event.y, event.hue, qualityRef.current === "balanced" ? 4 : 7);
           const particleCount = qualityRef.current === "balanced" ? 3 : 5;
@@ -321,7 +320,7 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
             hue: 35 + Math.random() * 25, // Golden impact spark
           });
         }
-        playTone(xReversed ? 440 : 380, 0.03, "sine", 0.012);
+        playTone(xReversed ? 440 : 380, 0.03, "sine", 0.012, gs.bx);
       }
     }
     prevBallVelRef.current = { vx: gs.vx, vy: gs.vy };

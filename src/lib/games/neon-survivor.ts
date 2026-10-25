@@ -27,6 +27,8 @@ export interface Enemy {
   damage: number;
   radius: number;
   color: string;
+  isElite?: boolean;
+  bossTitle?: string;
 }
 
 export interface Projectile {
@@ -204,6 +206,9 @@ export interface NeonSurvivorState {
   upgradeChoices: UpgradeCard[];
   spawnTimer: number;
   bossSpawned: boolean;
+  bossWavesSpawned?: number[];
+  bossWarningTimer?: number;
+  activeBossName?: string | null;
   nextEntityId: number;
 }
 
@@ -384,6 +389,9 @@ export function createInitialNeonSurvivorState(): NeonSurvivorState {
     upgradeChoices: [],
     spawnTimer: 0,
     bossSpawned: false,
+    bossWavesSpawned: [],
+    bossWarningTimer: 0,
+    activeBossName: null,
     nextEntityId: 1,
   };
 }
@@ -674,14 +682,27 @@ export function updateNeonSurvivor(
   for (const e of state.enemies) {
     if (e.hp <= 0) {
       kills++;
-      score += e.kind === 'boss' ? 500 : e.kind === 'brute' ? 60 : 20;
-      gems.push({
-        id: nextEntityId++,
-        x: e.x,
-        y: e.y,
-        value: e.kind === 'boss' ? 120 : e.kind === 'brute' ? 30 : 10,
-        color: e.kind === 'boss' ? '#fbbf24' : e.kind === 'brute' ? '#06b6d4' : '#10b981',
-      });
+      score += e.isElite ? 2500 : e.kind === 'boss' ? 500 : e.kind === 'brute' ? 60 : 20;
+      if (e.isElite) {
+        for (let i = 0; i < 5; i++) {
+          const a = (i * Math.PI * 2) / 5;
+          gems.push({
+            id: nextEntityId++,
+            x: e.x + Math.cos(a) * 28,
+            y: e.y + Math.sin(a) * 28,
+            value: 60,
+            color: '#f59e0b',
+          });
+        }
+      } else {
+        gems.push({
+          id: nextEntityId++,
+          x: e.x,
+          y: e.y,
+          value: e.kind === 'boss' ? 120 : e.kind === 'brute' ? 30 : 10,
+          color: e.kind === 'boss' ? '#fbbf24' : e.kind === 'brute' ? '#06b6d4' : '#10b981',
+        });
+      }
       continue;
     }
 
@@ -794,9 +815,16 @@ export function updateNeonSurvivor(
     });
   }
 
-  // Boss Spawn at 60s
-  if (survivalTime >= 60 && !bossSpawned) {
+  // Boss Spawn Waves (60s Standard, 180s Void Titan, 300s Omega Colossus)
+  const bossWavesSpawned = [...(state.bossWavesSpawned ?? (state.bossSpawned ? [60] : []))];
+  let bossWarningTimer = Math.max(0, (state.bossWarningTimer ?? 0) - boundedDt);
+  let activeBossName = state.activeBossName ?? null;
+
+  if (survivalTime >= 60 && !bossWavesSpawned.includes(60)) {
+    bossWavesSpawned.push(60);
     bossSpawned = true;
+    bossWarningTimer = 3.0;
+    activeBossName = 'DREADNOUGHT';
     const sx = player.x + 500;
     const sy = player.y;
     survivingEnemies.push({
@@ -810,6 +838,51 @@ export function updateNeonSurvivor(
       damage: 28,
       radius: 36,
       color: '#eab308',
+      bossTitle: 'DREADNOUGHT',
+    });
+  }
+
+  if (survivalTime >= 180 && !bossWavesSpawned.includes(180)) {
+    bossWavesSpawned.push(180);
+    bossWarningTimer = 3.5;
+    activeBossName = 'VOID TITAN';
+    const sx = player.x + 520;
+    const sy = player.y;
+    survivingEnemies.push({
+      id: nextEntityId++,
+      kind: 'boss',
+      isElite: true,
+      x: sx,
+      y: sy,
+      hp: 3500,
+      maxHp: 3500,
+      speed: 42,
+      damage: 38,
+      radius: 48,
+      color: '#a855f7',
+      bossTitle: 'VOID TITAN',
+    });
+  }
+
+  if (survivalTime >= 300 && !bossWavesSpawned.includes(300)) {
+    bossWavesSpawned.push(300);
+    bossWarningTimer = 4.0;
+    activeBossName = 'OMEGA COLOSSUS';
+    const sx = player.x + 550;
+    const sy = player.y;
+    survivingEnemies.push({
+      id: nextEntityId++,
+      kind: 'boss',
+      isElite: true,
+      x: sx,
+      y: sy,
+      hp: 7500,
+      maxHp: 7500,
+      speed: 40,
+      damage: 50,
+      radius: 60,
+      color: '#ef4444',
+      bossTitle: 'OMEGA COLOSSUS',
     });
   }
 
@@ -843,6 +916,9 @@ export function updateNeonSurvivor(
     upgradeChoices,
     spawnTimer,
     bossSpawned,
+    bossWavesSpawned,
+    bossWarningTimer,
+    activeBossName,
     nextEntityId,
   };
 }

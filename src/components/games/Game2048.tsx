@@ -29,6 +29,9 @@ import {
   moveGame2048,
   restoreGame2048,
   undoGame2048,
+  calculateBlitzTimeBonus,
+  BLITZ_DURATION_SEC,
+  type Game2048Mode,
   type Game2048Direction,
   type Game2048State,
 } from "../../lib/games/game-2048";
@@ -215,6 +218,26 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
   const [shareCopied, setShareCopied] = useState(false);
   const [shareCardCopied, setShareCardCopied] = useState(false);
   const [theme, setTheme] = useState<Game2048Theme>("neon");
+  const [gameMode, setGameMode] = useState<Game2048Mode>("classic");
+  const [blitzTimeLeft, setBlitzTimeLeft] = useState<number>(BLITZ_DURATION_SEC);
+
+  // Blitz mode countdown timer
+  useEffect(() => {
+    if (phase !== "play" || game.status !== "playing" || gameMode !== "blitz") return;
+
+    const timer = setInterval(() => {
+      setBlitzTimeLeft((t) => {
+        if (t <= 1) {
+          clearInterval(timer);
+          setPhase("result");
+          return 0;
+        }
+        return t - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [phase, game.status, gameMode]);
 
   // Challenge Rival State
   const [challengerScore, setChallengerScore] = useState<number | undefined>();
@@ -393,6 +416,11 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
         cue("combo");
         hapticsRef.current.fire("combo");
         getGlobalBgmController().duck(0.2, 400);
+        if (gameMode === "blitz") {
+          setBlitzTimeLeft((t) =>
+            Math.min(BLITZ_DURATION_SEC, t + calculateBlitzTimeBonus(next.lastGain))
+          );
+        }
       } else {
         cue("place");
         hapticsRef.current.fire("place");
@@ -489,6 +517,7 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
         bestScore: best,
         slug: "game-2048",
         seedCode: seedCode || encodeSeed(currentSeed),
+        qrUrl: typeof window !== "undefined" ? window.location.href : undefined,
         customStats: [
           { label: "MAX TILE", value: analysis.max },
           { label: "MOVES", value: game.moves },
@@ -572,6 +601,55 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
         ) : null
       }
     >
+      {/* Mode Switcher & Blitz Timer */}
+      <div className="mx-auto mb-2 flex w-full max-w-sm items-center justify-between gap-2 px-1">
+        <div className="inline-flex rounded-xl border border-border bg-card/60 p-1">
+          <button
+            type="button"
+            onClick={() => {
+              setGameMode("classic");
+              initGame();
+            }}
+            className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all ${
+              gameMode === "classic"
+                ? "bg-primary text-primary-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            클래식
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setGameMode("blitz");
+              setBlitzTimeLeft(BLITZ_DURATION_SEC);
+              initGame();
+            }}
+            className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all flex items-center gap-1 ${
+              gameMode === "blitz"
+                ? "bg-warning text-warning-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <span>⚡</span>
+            <span>60초 블리츠</span>
+          </button>
+        </div>
+
+        {gameMode === "blitz" && (
+          <div
+            className={`px-3 py-1 rounded-xl border font-mono text-xs font-black flex items-center gap-1 ${
+              blitzTimeLeft <= 15
+                ? "border-destructive/80 bg-destructive/15 text-destructive animate-pulse"
+                : "border-border bg-card/80 text-foreground"
+            }`}
+          >
+            <span>⏱️</span>
+            <span>{blitzTimeLeft}s</span>
+          </div>
+        )}
+      </div>
+
       {/* Undo & Visual Theme Controls */}
       <div className="mx-auto mb-3 flex w-full max-w-sm items-center justify-between gap-2 px-1">
         <button

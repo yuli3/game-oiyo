@@ -35,7 +35,6 @@ export const DailyPuzzleCalendarModal: React.FC<DailyPuzzleCalendarModalProps> =
 
   if (!isOpen) return null;
 
-  const todayStr = getTodayDateStr();
   const completedThisMonth = days.filter((d) => d.isCompleted).length;
 
   const handlePrevMonth = () => {

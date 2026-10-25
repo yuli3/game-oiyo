@@ -1,11 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Check, Maximize2, Minimize2, QrCode, Share2, Volume2, VolumeX } from 'lucide-react';
+import { Calendar, Check, Maximize2, Minimize2, QrCode, Share2, Volume2, VolumeX } from 'lucide-react';
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { dayIndex, mulberry32, previousDayKey, todayKey } from '../../lib/games/daily';
 import { getDailyStreak, recordDailyWin, type DailyStreak } from '../../lib/games/records';
 import { generateChallengeQrSvg } from '../../lib/games/challenge-qr';
 import { buildChallengeUrl, generateChallengeCopy } from '../../lib/games/seed-challenge';
+import { DailyPuzzleCalendarModal } from '../ui/game/DailyPuzzleCalendarModal';
+import { recordDailyPuzzleClear } from '../../lib/games/daily-calendar';
 import {
     autoMarkAdjacentWhites,
     generateKurodokoPuzzle,
@@ -106,6 +108,7 @@ const Kurodoko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [activeCell, setActiveCell] = useState(0);
     const [showQrModal, setShowQrModal] = useState(false);
     const [copied, setCopied] = useState(false);
+    const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
     const challengeUrl = typeof window !== 'undefined'
         ? buildChallengeUrl({
@@ -242,6 +245,7 @@ const Kurodoko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         if (v.complete && mode === 'daily') {
             const today = todayKey();
             setStreak(recordDailyWin(DAILY_GAME_ID, today, previousDayKey(today)));
+            recordDailyPuzzleClear('kurodoko', dailyDate);
         }
     };
 
@@ -309,6 +313,15 @@ const Kurodoko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                             aria-pressed={mode === 'daily'}
                             className={`min-h-11 px-3 py-2 rounded-lg text-xs font-bold border transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${mode === 'daily' ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
                             {t.daily}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setIsCalendarOpen(true)}
+                            title="과거 데일리 퍼즐 아카이브 달력"
+                            className="min-h-11 px-2.5 py-2 rounded-lg text-xs font-bold border border-border text-muted-foreground hover:bg-muted transition-colors flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                        >
+                            <Calendar className="size-3.5" />
+                            <span className="hidden sm:inline">아카이브</span>
                         </button>
                         {(['easy', 'medium', 'hard'] as Difficulty[]).map((d) => (
                             <button key={d} onClick={() => newPuzzle(d)}
@@ -460,6 +473,31 @@ const Kurodoko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 </div>
             </div>
         )}
+        <DailyPuzzleCalendarModal
+            isOpen={isCalendarOpen}
+            onClose={() => setIsCalendarOpen(false)}
+            gameSlug="kurodoko"
+            gameTitle={t.title}
+            onSelectDate={(selectedDate) => {
+                const parts = selectedDate.split('-').map(Number);
+                const targetDate = new Date(parts[0], parts[1] - 1, parts[2]);
+                const nextSeed = kurodokoDailySeed(dayIndex(targetDate));
+                const p = generateKurodokoPuzzle(DAILY_DIFFICULTY, mulberry32(nextSeed)).puzzle;
+                setMode('daily');
+                setDifficulty(DAILY_DIFFICULTY);
+                setDailyDate(selectedDate);
+                setSeed(nextSeed);
+                setPuzzle(p);
+                setBoard(initialMarks(p));
+                setHistory([]);
+                setMoves(0);
+                setSeconds(0);
+                setValidation({ ok: true, complete: false, error: null });
+                setActiveCell(0);
+                clearKurodokoSaveV1();
+                setIsCalendarOpen(false);
+            }}
+        />
     </div>
 );
 };

@@ -27,6 +27,9 @@ import {
   type WordleAnalyticsEvent,
 } from "../../lib/games/wordle-analytics";
 import { minutesUntilNextDaily } from "../../lib/games/daily";
+import { DailyPuzzleCalendarModal } from "../ui/game/DailyPuzzleCalendarModal";
+import { recordDailyPuzzleClear, getTodayDateStr } from "../../lib/games/daily-calendar";
+import { Calendar } from "lucide-react";
 import { Spinner } from "../ui/spinner";
 import {
   CORE_CUES,
@@ -293,6 +296,17 @@ export default function WordleGame({ locale = "en" }: { locale?: string }) {
   const [challengerTries, setChallengerTries] = useState<number | undefined>();
   const [shareCopied, setShareCopied] = useState(false);
   const [shareCardCopied, setShareCardCopied] = useState(false);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [dailyDate, setDailyDate] = useState(() => getTodayDateStr());
+  const [guessDist, setGuessDist] = useState<Record<number, number>>(() => {
+    if (typeof window === "undefined") return { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+    try {
+      const raw = localStorage.getItem("oiyo_wordle_dist");
+      return raw ? JSON.parse(raw) : { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+    } catch {
+      return { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+    }
+  });
 
   const [muted, setMuted] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -505,6 +519,17 @@ export default function WordleGame({ locale = "en" }: { locale?: string }) {
       if (!recorded.current && game.mode === "daily") {
         recorded.current = true;
         setStats(recordStreak("wordle", game.status === "won"));
+        if (game.status === "won") {
+          recordDailyPuzzleClear("wordle", dailyDate);
+          setGuessDist((prev) => {
+            const count = game.guesses.length;
+            const next = { ...prev, [count]: (prev[count] ?? 0) + 1 };
+            try {
+              localStorage.setItem("oiyo_wordle_dist", JSON.stringify(next));
+            } catch {}
+            return next;
+          });
+        }
       }
     }
   }, [game, elapsed, track]);
@@ -683,6 +708,7 @@ export default function WordleGame({ locale = "en" }: { locale?: string }) {
         bestScore: stats?.maxStreak ?? 1,
         slug: "wordle",
         seedCode: seedCode || encodeSeed(game.seed),
+        qrUrl: typeof window !== "undefined" ? window.location.href : undefined,
         durationSeconds: Math.floor(elapsed / 1000),
         customStats: [
           { label: "RESULT", value: triesText },
@@ -792,6 +818,15 @@ export default function WordleGame({ locale = "en" }: { locale?: string }) {
               </span>
             </div>
           )}
+          <button
+            type="button"
+            onClick={() => setIsCalendarOpen(true)}
+            aria-label="과거 퍼즐 캘린더 아카이브"
+            className="flex min-h-11 items-center gap-1.5 rounded-xl border border-border bg-card/60 px-3 text-xs font-bold text-foreground hover:bg-muted"
+          >
+            <Calendar className="size-4" />
+            <span className="hidden sm:inline">아카이브</span>
+          </button>
           <button
             type="button"
             onClick={() => setHard((v) => !v)}
@@ -922,6 +957,22 @@ export default function WordleGame({ locale = "en" }: { locale?: string }) {
           ))}
         </div>
       </div>
+
+      {/* Daily Puzzle Archive Calendar Modal */}
+      <DailyPuzzleCalendarModal
+        isOpen={isCalendarOpen}
+        onClose={() => setIsCalendarOpen(false)}
+        gameSlug="wordle"
+        gameTitle={t.title}
+        onSelectDate={(selectedDate) => {
+          setDailyDate(selectedDate);
+          const seed = wordleDateSeed(selectedDate);
+          setGame(createWordle(seed, targets.length, "daily", selectedDate));
+          guessCount.current = 0;
+          startedAt.current = Date.now();
+          setPhase("play");
+        }}
+      />
     </GameShell>
   );
 }

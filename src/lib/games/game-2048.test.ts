@@ -1,4 +1,4 @@
-import{describe,expect,it}from"vitest";import{canMove2048,createGame2048,moveGame2048,restoreGame2048,undoGame2048,type Game2048State}from"./game-2048";const state=(board:(number|null)[]):Game2048State=>({board,score:0,status:"playing",rng:1,moves:0,lastGain:0,history:[]});
+import{describe,expect,it}from"vitest";import{canMove2048,createGame2048,moveGame2048,restoreGame2048,undoGame2048,calculateBlitzTimeBonus,BLITZ_DURATION_SEC,type Game2048State}from"./game-2048";const state=(board:(number|null)[]):Game2048State=>({board,score:0,status:"playing",rng:1,moves:0,lastGain:0,history:[]});
 describe("2048 engine",()=>{
   it("creates deterministic two-tile openings",()=>{expect(createGame2048(42)).toEqual(createGame2048(42));expect(createGame2048(42).board.filter(Boolean)).toHaveLength(2)});
   it("merges each tile once and scores",()=>{const s=state([2,2,2,2,...Array(12).fill(null)]);const n=moveGame2048(s,"left");expect(n.board.slice(0,2)).toEqual([4,4]);expect(n.score).toBe(8);expect(s.score).toBe(0)});
@@ -17,5 +17,13 @@ describe("2048 engine",()=>{
     expect(undone.history?.length).toBe(0);
     // Undo on empty history is no-op
     expect(undoGame2048(undone)).toBe(undone);
+  });
+
+  it("calculates scaling time bonus for speed blitz mode", () => {
+    expect(BLITZ_DURATION_SEC).toBe(60);
+    expect(calculateBlitzTimeBonus(4)).toBe(0.5);
+    expect(calculateBlitzTimeBonus(8)).toBe(1);
+    expect(calculateBlitzTimeBonus(64)).toBe(2);
+    expect(calculateBlitzTimeBonus(256)).toBe(3);
   });
 });

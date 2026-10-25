@@ -1,5 +1,15 @@
 export type Game2048Direction="up"|"down"|"left"|"right";
 export type Game2048Status="playing"|"won"|"over";
+export type Game2048Mode="classic"|"blitz";
+export const BLITZ_DURATION_SEC = 60;
+
+export function calculateBlitzTimeBonus(gain: number): number {
+  if (gain >= 128) return 3;
+  if (gain >= 32) return 2;
+  if (gain >= 8) return 1;
+  return 0.5;
+}
+
 export interface Game2048Snapshot { board: (number | null)[]; score: number; rng: number }
 export interface Game2048State {
   board: (number | null)[];

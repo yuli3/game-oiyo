@@ -62,5 +62,6 @@ describe("daily-calendar module", () => {
 
     const day28 = days.find((d) => d.dayNumber === 28);
     expect(day28?.isFuture).toBe(true);
+    expect(getTodayDateStr()).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 });

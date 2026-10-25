@@ -15,6 +15,8 @@ import {
   tickGravity,
   tryMove,
   tryRotate,
+  isBoardClear,
+  PERFECT_CLEAR_BONUS,
   type BurstColor,
   type BurstState,
 } from "./block-burst";
@@ -109,7 +111,17 @@ describe("block burst engine", () => {
     const initialQueue = game.queue.map((p) => ({ ...p }));
     const rerolled = rerollQueue(game);
     expect(rerolled.queue).toHaveLength(3);
+    expect(rerolled.queue).not.toEqual(initialQueue);
     expect(rerolled.status).toBe("playing");
     expect(rerolled.rng).not.toBe(game.rng);
+  });
+
+  it("detects completely cleared board for perfect clear reward", () => {
+    const emptyBoard = Array.from({ length: ROWS }, () => Array<BurstColor | null>(COLS).fill(null));
+    expect(isBoardClear(emptyBoard)).toBe(true);
+
+    const nonEmpty = paint([[ROWS - 1, 0]], 1);
+    expect(isBoardClear(nonEmpty)).toBe(false);
+    expect(PERFECT_CLEAR_BONUS).toBe(1000);
   });
 });
