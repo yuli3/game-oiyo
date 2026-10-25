@@ -454,6 +454,20 @@ export const MISSION_CATALOG: Array<{
     goal: 1,
     xpReward: 50,
   },
+  {
+    id: "blockblast-combo",
+    gameSlug: "block-blast",
+    title: {
+      ko: "블록 블래스트 인피니트에서 2연쇄 콤보 이상 달성",
+      en: "Achieve a 2+ combo chain in Block Blast Infinite",
+      ja: "ブロックブラスト インフィニティで2連鎖以上を達成",
+      zh: "在方块爆破 无限中达成2连击以上Combo",
+      fr: "Réussir un combo de 2+ dans Block Blast Infinite",
+      es: "Consigue un combo de 2 o más en Block Blast Infinite",
+    },
+    goal: 2,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {

@@ -4404,4 +4404,60 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "block-blast": {
+    origin: {
+      ko: "블록 블래스트 인피니트(Block Blast Infinite)는 전 세계 모바일 스토어 장기 1위를 차지한 블록버스터 캐주얼 퍼즐의 핵심 손맛과 콤보 체인을 웹 표준으로 재해석한 게임입니다. 8×8 그리드 위에서 가로와 세로 동시 라인 클리어, 콤보 연쇄 배율, 위기 탈출 부활 폭탄 시스템을 무설치 브라우저로 즐길 수 있습니다.",
+      en: "Block Blast Infinite captures the addictive 8x8 combo-chain mechanics of the world-leading mobile casual hit. Place polyomino blocks, trigger simultaneous horizontal and vertical line clears, build escalating combo multipliers, and deploy a game-saving revive bomb instantly in your browser.",
+      ja: "ブロックブラスト インフィニティ（Block Blast Infinite）は、世界のアプリストアで大ヒットしたパズルの連鎖感と爽快感をブラウザ上で再現した作品です。8×8盤面での縦横同時消去、コンボ倍率の爆発、そしてピンチを救う復活ボムをインストール不要で体験できます。",
+      zh: "方块爆破 无限（Block Blast Infinite）将风靡全球移动应用榜首的消除拼图精髓搬上网页端。在8×8棋盘上放置不同形态方块，体验横竖多线同时消除的爽快打击感、连击连环倍率与单局专属重生炸弹系统。",
+      fr: "Block Blast Infinite adapte la formule addictive du puzzle de blocs 8x8 pour le navigateur. Disposez les pièces polyominos, déclenchez des éliminations simultanées de lignes et de colonnes, et enchaînez les multiplicateurs de combo sans installation.",
+      es: "Block Blast Infinite traslada al navegador la adictiva mecánica de puzles en cuadrícula 8x8. Coloca piezas poliominó, elimina filas y columnas al unísono, acumula multiplicadores de combo y aprovecha la bomba de resurrección.",
+    },
+    how: {
+      ko: "하단 덱에 주어진 3개의 블록 중 하나를 터치하거나 드래그하여 8×8 그리드의 빈 공간에 배치합니다. 가로 또는 세로 8칸이 가득 차면 라인이 폭발하며 지워집니다. 매 수마다 라인을 연속해서 지우면 콤보 배율이 올라가며, 공간이 부족할 땐 런당 1회 제공되는 3×3 부활 폭탄으로 위기를 넘기세요.",
+      en: "Select one of the 3 polyomino shapes from the bottom dock and place it on an empty spot on the 8x8 grid. Filling an entire row or column of 8 cells triggers an explosion. Clearing lines on consecutive placements increases your combo multiplier. Use your one-time 3x3 revive bomb when out of moves.",
+      ja: "下部に表示された3つのブロックから1つを選び、8×8グリッドの空きマスに配置します。縦または横の8マスが揃うとラインが爆発消去されます。手番ごとに連続して消去するとコンボ倍率が上昇し、置き場所がなくなったときは1回限りの3×3復活ボムで突破できます。",
+      zh: "从底部备选区选出一块方块放入8×8棋盘空白处。单行或单列集满8格即可消除得分。连续出子均有消除可累积高额Combo倍数，当陷入绝境时可使用当局专享的3×3重生炸弹开辟生机。",
+      fr: "Sélectionnez l'une des 3 pièces en bas et posez-la sur la grille 8x8. Compléter 8 cases d'une ligne ou colonne déclenche une explosion. Enchaînez les éliminations à chaque coup pour gonfler vos combos, et utilisez la bombe de sauvetage 3x3 si vous manquez d'espace.",
+      es: "Elige una de las 3 piezas inferiores y colócala en una casilla libre de la cuadrícula 8x8. Completar las 8 casillas de una fila o columna activa una explosión. Despeja líneas consecutivas para elevar tu combo y usa la bomba 3x3 si te quedas sin movimientos.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "콤보 체인은 어떻게 누적되나요?",
+          en: "How do combo multipliers accumulate?",
+          ja: "コンボ倍率はどのように加算されますか？",
+          zh: "连击连环倍数是如何计算的？",
+          fr: "Comment se cumulent les multiplicateurs de combo ?",
+          es: "¿Cómo se acumulan los multiplicadores de combo?",
+        },
+        a: {
+          ko: "블록을 배치할 때마다 최소 1줄 이상의 라인을 연속으로 제거하면 COMBO 카운트가 1씩 증가하며 배율이 기하급수적으로 폭발합니다. 라인을 지우지 못하는 배치가 한 번이라도 발생하면 콤보는 0으로 리셋되므로, 연쇄를 이어갈 수 있도록 미리 설계하는 것이 고득점의 핵심입니다.",
+          en: "Every placement that clears at least one line increments your COMBO multiplier, multiplying line scores exponentially. If a placement does not clear any line, your combo resets to zero. Planning ahead to string together back-to-back clears is key to reaching massive high scores.",
+          ja: "ブロックを置くたびに最低1列以上のラインを連続して消すと、COMBO数が1ずつ増加し、スコア倍率が跳ね上がります。1度でもラインが消えない配置をするとコンボは0に戻るため、常に次の手を意識した布石が高得点の鍵です。",
+          zh: "每一次落子只要至少消除1行或1列，COMBO计数器就会累加1，消除得分呈指数级飙升。一旦有一次落子未触发消除，连击将重置归零。因此提前规划留好引爆点是冲击高分的核心技巧。",
+          fr: "Chaque pose qui élimine au moins une ligne augmente le combo de 1, multipliant vos points. Une pose sans élimination remet le combo à zéro. Planifier vos coups à l'avance est la clé des scores légendaires.",
+          es: "Cada colocación que despeja al menos una línea suma 1 al multiplicador de COMBO. Si una jugada no despeja nada, el combo vuelve a cero. Planificar con antelación para encadenar jugadas es la clave de las mejores marcas.",
+        },
+      },
+      {
+        q: {
+          ko: "3×3 부활 폭탄은 어떻게 작동하나요?",
+          en: "How does the 3x3 Revive Bomb work?",
+          ja: "3×3復活ボムはどのように機能しますか？",
+          zh: "3×3重生炸弹是如何运作的？",
+          fr: "Comment fonctionne la bombe de réanimation 3x3 ?",
+          es: "¿Cómo funciona la bomba de resurrección 3x3?",
+        },
+        a: {
+          ko: "보드에 남은 블록들을 더 이상 놓을 자리가 없을 때 게임 오버 화면에서 런당 1회 '3x3 부활 폭탄'을 누를 수 있습니다. 보드 정중앙 4×4 영역의 블록을 시원하게 소거하여 숨통을 틔워주고 고득점 도전을 계속 이어갈 수 있습니다.",
+          en: "When no legal moves remain, you can activate the one-time '3x3 Revive Bomb' from the game over screen. It detonates and clears a 4x4 central area on the board, giving you immediate breathing room to continue pushing your personal best score.",
+          ja: "盤面にブロックを置けなくなったゲームオーバー画面で、1ゲームに1回だけ「3x3復活ボム」を使用できます。中央の4×4領域にあるブロックが一掃され、空いたスペースで自己最高記録への挑戦を継続できます。",
+          zh: "当棋盘无法容纳任何备选方块触发终局时，结算画面会提供每局一次的“3×3重生炸弹”。点击即可炸毁清空棋盘中心4×4区域的所有阻碍方块，瞬间盘活死局，助你继续刷新纪录。",
+          fr: "Quand aucun coup n'est possible, vous pouvez activer la 'Bombe 3x3' une fois par partie depuis l'écran de fin. Elle détruit une zone centrale de 4x4 cases pour vous donner un second souffle et battre votre record.",
+          es: "Cuando no haya movimientos válidos, puedes activar la 'Bomba de resurrección 3x3' una vez por partida. Destruirá un área central de 4x4 casillas para que sigas superando tu marca.",
+        },
+      },
+    ],
+  },
 };

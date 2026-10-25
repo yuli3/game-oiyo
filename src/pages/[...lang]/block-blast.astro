@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import BlockBlast from "../../components/games/BlockBlast";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "블록 블래스트 인피니트 — 8x8 콤보 체인 캐주얼 블록 퍼즐",
+    description: "8x8 보드 위에 다채로운 블록을 배치하고 가로/세로 동시 클리어로 폭발적인 콤보 체인을 만드는 무설치 브라우저 퍼즐 게임.",
+  },
+  en: {
+    title: "Block Blast Infinite — 8x8 Combo Chain Casual Block Puzzle",
+    description: "Place polyomino blocks onto an 8x8 grid to clear full rows and columns simultaneously, unleashing massive combo multipliers.",
+  },
+  ja: {
+    title: "ブロックブラスト インフィニティ — 8x8 連鎖コンボパズル",
+    description: "8x8グリッド上にブロックを配置し、縦横同時のライン消去で爆発的なコンボチェインをつなげる無料ブラウザパズル。",
+  },
+  zh: {
+    title: "方块爆破 无限 — 8x8 连击消除休闲拼图",
+    description: "在8x8方格棋盘上放置不同形状的方块，同时消除整行与整列，引爆爽快连环Combo与高分冲击。",
+  },
+  fr: {
+    title: "Block Blast Infinite — Puzzle de blocs 8x8 à combos infinis",
+    description: "Placez des blocs sur une grille 8x8 pour éliminer lignes et colonnes simultanément et déclencher d'immenses combos.",
+  },
+  es: {
+    title: "Block Blast Infinite — Puzle casual de bloques 8x8 y combos",
+    description: "Coloca bloques en una cuadrícula 8x8 para despejar filas y columnas simultáneamente, desatando multiplicadores de combo.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-4xl px-4 py-8">
+    <BlockBlast client:load locale={locale} />
+    <GameGuide slug="block-blast" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>
