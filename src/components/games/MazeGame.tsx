@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { GameContainer } from "../ui/game/GamePrimitives";
+import { Share2, Check } from "lucide-react";
 import {
   generateSeededMaze,
   MAZE_SIZES,
@@ -10,6 +11,12 @@ import {
 } from "../../lib/games/maze";
 import { MAZE_SPRITES } from "../../lib/games/sprites";
 import { createTonePlayer, type TonePlayer } from "../../lib/games/tone";
+import { celebrate } from "../../lib/games/celebration";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
 const SAVE = "oiyo:maze:v1",
   BEST = "oiyo-maze-best";
 const C = {
@@ -152,9 +159,32 @@ export default function MazeGame({ locale = "ko" }: { locale?: string }) {
     ),
     [best, setBest] = useState<Record<string, number>>({}),
     [sound, setSound] = useState(true),
-    [restored, setRestored] = useState(false);
+    [restored, setRestored] = useState(false),
+    [shareCardCopied, setShareCardCopied] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   const touch = useRef<{ x: number; y: number } | null>(null);
   const player = useRef<TonePlayer | null>(null);
+
+  const handleShareCard = useCallback(async () => {
+    const canvas = createShareCardCanvas({
+      title: "Maze Escape",
+      subtitle: "The Living Garden",
+      score: `${seconds}초 탈출`,
+      slug: "maze",
+      customStats: [
+        { label: "DIFFICULTY", value: difficulty.toUpperCase() },
+        { label: "BEST", value: best[difficulty] !== undefined ? `${best[difficulty]}s` : "—" },
+        { label: "GRID", value: `${maze.length}x${maze.length}` },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `maze-escape-${seconds}s.png`);
+    }
+  }, [seconds, difficulty, best, maze.length]);
   const tone = useCallback(
     (f: number) => {
       if (!sound) return;
@@ -213,6 +243,9 @@ export default function MazeGame({ locale = "ko" }: { locale?: string }) {
         setPhase("won");
         localStorage.removeItem(SAVE);
         tone(760);
+        if (containerRef.current) {
+          celebrate(containerRef.current, { preset: "leaves" });
+        }
         setBest((b) => {
           const old = b[difficulty],
             n = {
@@ -271,7 +304,7 @@ export default function MazeGame({ locale = "ko" }: { locale?: string }) {
     );
   return (
     <GameContainer title={t.title} subtitle={t.sub} onReset={() => start()}>
-      <div className="mx-auto max-w-md">
+      <div ref={containerRef} className="mx-auto max-w-md">
         <div className="mb-3 flex gap-1">
           {(["easy", "medium", "hard"] as MazeDifficulty[]).map((d) => (
             <button
@@ -353,17 +386,27 @@ export default function MazeGame({ locale = "ko" }: { locale?: string }) {
           )}
           {phase === "won" && (
             <div
-              className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl bg-white/95"
+              className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl bg-white/95 p-4"
               role="status"
             >
               <h3 className="px-5 text-center text-xl font-black">{t.win}</h3>
-              <p className="mt-2">{seconds}s</p>
-              <button
-                onClick={() => start()}
-                className="mt-4 min-h-12! rounded-full bg-primary px-8 font-black text-primary-foreground"
-              >
-                {t.again}
-              </button>
+              <p className="mt-2 font-mono font-bold">{seconds}s</p>
+              <div className="mt-4 flex gap-2">
+                <button
+                  type="button"
+                  onClick={handleShareCard}
+                  className="min-h-12! rounded-full border border-border bg-card hover:bg-muted px-6 font-bold text-foreground flex items-center gap-1.5 transition-colors shadow-sm"
+                >
+                  {shareCardCopied ? <Check className="w-4 h-4 text-primary" /> : <Share2 className="w-4 h-4" />}
+                  {shareCardCopied ? "복사됨!" : "결과 공유"}
+                </button>
+                <button
+                  onClick={() => start()}
+                  className="min-h-12! rounded-full bg-primary px-8 font-black text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors"
+                >
+                  {t.again}
+                </button>
+              </div>
             </div>
           )}
         </div>

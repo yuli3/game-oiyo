@@ -25,14 +25,23 @@ import {
   ArrowDown,
   Maximize2,
   Minimize2,
+  Share2,
+  Check,
 } from 'lucide-react';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import type { Locale } from '../../lib/i18n';
+import { celebrate } from '../../lib/games/celebration';
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from '../../lib/games/share-card';
 
 const STORAGE_KEY = 'oiyo_voxel_runner_high_score';
 
 export default function VoxelRunner({ locale = 'ko' }: { locale?: string }) {
   const loc = (locale as Locale) || 'ko';
+  const isKo = loc === 'ko';
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: loc });
 
   const [status, setStatus] = useState<'idle' | 'playing' | 'gameover'>('idle');
@@ -40,6 +49,28 @@ export default function VoxelRunner({ locale = 'ko' }: { locale?: string }) {
   const [crystals, setCrystals] = useState(0);
   const [distance, setDistance] = useState(0);
   const [highScore, setHighScore] = useState(0);
+  const [shareCardCopied, setShareCardCopied] = useState(false);
+
+  const handleShareCard = useCallback(async () => {
+    const canvas = createShareCardCanvas({
+      title: "3D Voxel Runner",
+      subtitle: isKo ? "사이버 하이웨이 질주 기록" : "Cyber Highway Sprint",
+      score: `${score.toLocaleString()} PTS`,
+      slug: "voxel-runner",
+      customStats: [
+        { label: "DISTANCE", value: `${Math.round(distance)}m` },
+        { label: "CRYSTALS", value: `${crystals}` },
+        { label: "BEST", value: `${highScore.toLocaleString()} PTS` },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `voxel-runner-${score}pts.png`);
+    }
+  }, [score, distance, crystals, highScore, isKo]);
   const [audioEnabled, setAudioEnabled] = useState<boolean>(() => {
     try {
       return localStorage.getItem('voxel_runner_audio') !== 'false';
@@ -223,6 +254,9 @@ export default function VoxelRunner({ locale = 'ko' }: { locale?: string }) {
         if (hit) {
           setStatus('gameover');
           playSound('gameover');
+          if (containerRef.current) {
+            celebrate(containerRef.current, { preset: "sparks" });
+          }
           setScore((finalScore) => {
             if (finalScore > highScore) {
               setHighScore(finalScore);
@@ -277,8 +311,6 @@ export default function VoxelRunner({ locale = 'ko' }: { locale?: string }) {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [status, handleAction, startGame, toggleAudio, togglePortal]);
-
-  const isKo = locale === 'ko';
 
   return (
     <div
@@ -385,13 +417,24 @@ export default function VoxelRunner({ locale = 'ko' }: { locale?: string }) {
                 ? (isKo ? '🎉 최고 점수 갱신!' : '🎉 New High Score!')
                 : (isKo ? `최고 기록: ${highScore}점 | 거리: ${Math.round(distance)}m` : `Best: ${highScore} | Dist: ${Math.round(distance)}m`)}
             </p>
-            <button
-              onClick={startGame}
-              className="px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold shadow-lg hover:scale-105 transition-transform flex items-center gap-2"
-            >
-              <RotateCcw className="w-4 h-4" />
-              {isKo ? '다시 도전' : 'RETRY'}
-            </button>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleShareCard}
+                className="px-4 py-3 rounded-xl border border-border bg-card hover:bg-muted font-bold text-sm text-foreground transition-colors flex items-center gap-1.5"
+              >
+                {shareCardCopied ? <Check className="w-4 h-4 text-primary" /> : <Share2 className="w-4 h-4" />}
+                {shareCardCopied ? (isKo ? '복사됨!' : 'Copied!') : (isKo ? '카드 공유' : 'Share Card')}
+              </button>
+              <button
+                type="button"
+                onClick={startGame}
+                className="px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold shadow-lg hover:scale-105 transition-transform flex items-center gap-2"
+              >
+                <RotateCcw className="w-4 h-4" />
+                {isKo ? '다시 도전' : 'RETRY'}
+              </button>
+            </div>
           </div>
         )}
       </div>

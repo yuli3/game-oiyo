@@ -3,8 +3,8 @@
 // Curvature and a cut change speed. The fuse is play time, so reduced motion
 // does not skip it.
 
-import { useEffect, useRef, useState } from "react";
-import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { Maximize2, Minimize2, Volume2, VolumeX, Share2, Check } from "lucide-react";
 import { GameContainer } from "../ui/game/GamePrimitives";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import type { Locale } from "../../lib/i18n";
@@ -12,6 +12,11 @@ import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { getBest, getRecord, recordBest, recordResult, type BestRecord, type GameRecord } from "../../lib/games/records";
 import { dateKeyIndex, kstDateKey } from "../../lib/games/todays-game";
 import { celebrate } from "../../lib/games/celebration";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
 import { createHaptics } from "../../lib/games/haptics";
 import { LINE_SURF_SPRITES } from "../../lib/games/sprites";
 import {
@@ -339,6 +344,7 @@ export default function LineSurf({ locale }: { locale: Locale }) {
   const [count, setCount] = useState(3);
   const [practice, setPractice] = useState(false);
   const [paused, setPaused] = useState(false);
+  const [shareCardCopied, setShareCardCopied] = useState(false);
   const audio = useRef<AudioContext | null>(null);
   const hapticsRef = useRef(createHaptics());
   const noted = useRef(new Set<string>());
@@ -349,6 +355,28 @@ export default function LineSurf({ locale }: { locale: Locale }) {
   const pausedRef = useRef(false);
   const fuseLeft = useRef(FUSE_MS);
   runRef.current = run;
+
+  const handleShareCard = useCallback(async () => {
+    if (!run) return;
+    const canvas = createShareCardCanvas({
+      title: "Line Surf",
+      subtitle: run.phase === "won" ? "파도 완주 성공" : "라인 서핑 기록",
+      score: `${run.speed} SPD`,
+      slug: "line-surf",
+      customStats: [
+        { label: "STEP", value: `${Math.min(run.step + 1, STEPS)} / ${STEPS}` },
+        { label: "RECORD", value: `${record?.w ?? 0}W ${record?.l ?? 0}L` },
+        { label: "BEST", value: `${best?.value ?? 0}` },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `line-surf-${run.speed}spd.png`);
+    }
+  }, [run, record, best]);
 
   useEffect(() => {
     const key = kstDateKey();
@@ -447,7 +475,7 @@ export default function LineSurf({ locale }: { locale: Locale }) {
       if (run.phase === "won") {
         hapticsRef.current.fire("win");
         if (containerRef.current) {
-          celebrate(containerRef.current, { preset: "shards" });
+          celebrate(containerRef.current, { preset: "coins" });
         }
       } else {
         hapticsRef.current.fire("fail");
@@ -626,7 +654,23 @@ export default function LineSurf({ locale }: { locale: Locale }) {
               <button type="button" onClick={() => setRun((current) => (current ? begin(current) : current))} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.start}</button>
             ) : null}
             {gate === "board" && !paused && (run.phase === "won" || run.phase === "lost") ? (
-              <button type="button" onClick={practiceWave} className={`${BUTTON} border-primary bg-primary text-primary-foreground`}>{t.practice}</button>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={handleShareCard}
+                  className={`${BUTTON} flex-1 flex items-center justify-center gap-1.5`}
+                >
+                  {shareCardCopied ? <Check className="size-4 text-primary" /> : <Share2 className="size-4" />}
+                  {shareCardCopied ? "복사됨!" : "결과 카드 공유"}
+                </button>
+                <button
+                  type="button"
+                  onClick={practiceWave}
+                  className={`${BUTTON} flex-1 border-primary bg-primary text-primary-foreground`}
+                >
+                  {t.practice}
+                </button>
+              </div>
             ) : null}
             <p className="text-sm text-muted-foreground">{t.record(record?.w ?? 0, record?.l ?? 0)}{best?.unit === "score" ? ` · ${t.best(best.value)}` : ""}</p>
           </div>

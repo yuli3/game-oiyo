@@ -5,8 +5,14 @@
  * 끌어서 카메라를 돌리면 퍼즐이 아니라 시점이 이기므로 보기는 버튼만 쓴다.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
+import { Maximize2, Minimize2, Volume2, VolumeX, Share2, Check } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
+import { celebrate } from "../../lib/games/celebration";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
 import {
   STEP_CAP,
   createReverseDungeon,
@@ -387,6 +393,7 @@ export default function ReverseDungeon({ locale = "en" }: { locale?: Locale }) {
   });
   const [hidden, setHidden] = useState(false);
   const [view, setView] = useState(0);
+  const [shareCardCopied, setShareCardCopied] = useState(false);
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({
     locale: (locale as any) || "ko",
   });
@@ -402,6 +409,30 @@ export default function ReverseDungeon({ locale = "en" }: { locale?: Locale }) {
   busyRef.current = busy;
   mutedRef.current = muted;
   selectedRef.current = selected;
+
+  const handleShareCard = useCallback(async () => {
+    const s = stateRef.current;
+    const layerName = LAYERS.find((item) => item.axis === selected.axis && item.layer === selected.layer);
+    const layerLabel = layerName ? copy[layerName.key] : copy.lower;
+    const canvas = createShareCardCanvas({
+      title: "Reverse Dungeon",
+      subtitle: s.status === "win" ? "모험가 함정 유인 성공" : "던전 회전 퍼즐",
+      score: `${s.steps}/${STEP_CAP} STEPS`,
+      slug: "reverse-dungeon",
+      customStats: [
+        { label: "SEED", value: `${seed}` },
+        { label: "STATUS", value: s.status === "win" ? "TRAPPED" : s.status === "lose" ? "FAILED" : "PLAYING" },
+        { label: "LAYER", value: layerLabel },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `reverse-dungeon-seed${seed}.png`);
+    }
+  }, [copy, seed, selected.axis, selected.layer]);
 
   useEffect(() => {
     const player = createDungeonAudio();
@@ -443,9 +474,14 @@ export default function ReverseDungeon({ locale = "en" }: { locale?: Locale }) {
     const player = audio.current;
     if (!player || mutedRef.current || pausedRef.current) return;
     player.tick(kind);
-    if (next.status === "win") player.tick("win");
+    if (next.status === "win") {
+      player.tick("win");
+      if (containerRef.current) {
+        celebrate(containerRef.current, { preset: "tiles" });
+      }
+    }
     if (next.status === "lose") player.tick("lose");
-  }, []);
+  }, [containerRef]);
 
   const onSettled = useCallback((id: number) => {
     if (id !== spinSerial.current) return;
@@ -650,6 +686,28 @@ export default function ReverseDungeon({ locale = "en" }: { locale?: Locale }) {
         </div>
       </div>
       <p role="status" aria-live="polite" className="text-sm text-foreground">{live}</p>
+      {(state.status === "win" || state.status === "lose") && (
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={handleShareCard}
+            className="flex-1 py-3 px-4 rounded-xl border border-border bg-card hover:bg-muted font-bold text-sm text-foreground transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+          >
+            {shareCardCopied ? <Check className="w-4 h-4 text-primary" /> : <Share2 className="w-4 h-4" />}
+            {shareCardCopied ? "결과 복사 완료!" : "결과 카드 공유"}
+          </button>
+          <button
+            type="button"
+            className="flex-1 py-3 px-4 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-sm hover:bg-primary/90 transition-colors"
+            onClick={() => {
+              arm();
+              load(nextSeed(seed));
+            }}
+          >
+            {copy.next}
+          </button>
+        </div>
+      )}
       <div className="relative overflow-hidden rounded-2xl border border-border bg-card">
         <div className="h-80 sm:h-96">
           <ReverseDungeonScene

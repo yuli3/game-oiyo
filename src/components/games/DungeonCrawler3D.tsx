@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { Maximize2, Minimize2, Volume2, VolumeX, Share2, Check } from 'lucide-react';
 import DungeonCrawler3DScene from './DungeonCrawler3DScene';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { celebrate } from '../../lib/games/celebration';
+import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from '../../lib/games/share-card';
 import {
   type DungeonCrawlerState,
   createDungeonFloor,
@@ -105,6 +107,38 @@ export default function DungeonCrawler3D() {
   const handleRestart = useCallback(() => {
     setGameState(createDungeonFloor(1));
   }, []);
+
+  const [shareCardCopied, setShareCardCopied] = useState(false);
+
+  useEffect(() => {
+    if (gameState.floorCleared && containerRef.current) {
+      celebrate(containerRef.current, { preset: "coins" });
+    } else if (gameState.gameOver && containerRef.current) {
+      celebrate(containerRef.current, { preset: "shards" });
+    }
+  }, [gameState.floorCleared, gameState.gameOver, containerRef]);
+
+  const handleShareCard = useCallback(async () => {
+    const canvas = createShareCardCanvas({
+      title: "Dungeon Crawler 3D",
+      subtitle: gameState.floorCleared ? `Floor B${gameState.floor}F Cleared` : `Floor B${gameState.floor}F Descent`,
+      score: `B${gameState.floor}F (${gameState.gold} Gold)`,
+      slug: "dungeon-crawler-3d",
+      customStats: [
+        { label: "Floor Reached", value: `B${gameState.floor}F` },
+        { label: "Monsters Slain", value: `${gameState.kills}` },
+        { label: "Gold Looted", value: `${gameState.gold} Gold` },
+        { label: "Potions Left", value: `${gameState.potions}` },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `dungeon-crawler-b${gameState.floor}f.png`);
+    }
+  }, [gameState.floor, gameState.gold, gameState.kills, gameState.potions, gameState.floorCleared]);
 
   const hpRatio = (gameState.hp / gameState.maxHp) * 100;
 
@@ -273,13 +307,24 @@ export default function DungeonCrawler3D() {
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={handleNextFloor}
-              className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-md hover:bg-primary/90 transition-colors"
-            >
-              지하 {gameState.floor + 1}층으로 내려가기 (NEXT FLOOR)
-            </button>
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={handleNextFloor}
+                className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-md hover:bg-primary/90 transition-colors"
+              >
+                지하 {gameState.floor + 1}층으로 내려가기 (NEXT FLOOR)
+              </button>
+              <button
+                type="button"
+                onClick={handleShareCard}
+                className="w-full py-2.5 rounded-xl border border-primary/50 bg-primary/20 text-primary font-bold text-xs shadow-xs hover:bg-primary/30 transition-colors flex items-center justify-center gap-1.5"
+                title={shareCardCopied ? "복사됨!" : "결과 카드 공유"}
+              >
+                {shareCardCopied ? <Check className="size-3.5" /> : <Share2 className="size-3.5" />}
+                <span>{shareCardCopied ? "복사 완료" : "탐험 결과 카드 공유"}</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -310,13 +355,24 @@ export default function DungeonCrawler3D() {
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={handleRestart}
-              className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-md hover:bg-primary/90 transition-colors"
-            >
-              처음부터 다시 도전하기 (RETRY)
-            </button>
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={handleRestart}
+                className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-md hover:bg-primary/90 transition-colors"
+              >
+                처음부터 다시 도전하기 (RETRY)
+              </button>
+              <button
+                type="button"
+                onClick={handleShareCard}
+                className="w-full py-2.5 rounded-xl border border-primary/50 bg-primary/20 text-primary font-bold text-xs shadow-xs hover:bg-primary/30 transition-colors flex items-center justify-center gap-1.5"
+                title={shareCardCopied ? "복사됨!" : "결과 카드 공유"}
+              >
+                {shareCardCopied ? <Check className="size-3.5" /> : <Share2 className="size-3.5" />}
+                <span>{shareCardCopied ? "복사 완료" : "탐험 기록 카드 공유"}</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

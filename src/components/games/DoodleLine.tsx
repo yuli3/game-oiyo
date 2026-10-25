@@ -4,9 +4,15 @@
  * 화면 위가 북쪽이고 화면 오른쪽이 동쪽이다. 이 장의 기록은 화면에만 남긴다.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Maximize2, Minimize2 } from "lucide-react";
+import { Maximize2, Minimize2, Share2, Check } from "lucide-react";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import type { Locale } from "../../lib/i18n";
+import { celebrate } from "../../lib/games/celebration";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
 import {
   ACTS,
   INK,
@@ -552,6 +558,7 @@ export default function DoodleLine({ locale = "en" }: { locale?: Locale }) {
   const [hidden, setHidden] = useState(false);
   const [muted, setMuted] = useState(false);
   const [view, setView] = useState(0);
+  const [shareCardCopied, setShareCardCopied] = useState(false);
   const stateRef = useRef(state);
   const pausedRef = useRef(paused);
   const mutedRef = useRef(muted);
@@ -563,6 +570,28 @@ export default function DoodleLine({ locale = "en" }: { locale?: Locale }) {
   pausedRef.current = paused;
   mutedRef.current = muted;
   busyRef.current = busy;
+
+  const handleShareCard = useCallback(async () => {
+    const s = stateRef.current;
+    const canvas = createShareCardCanvas({
+      title: "Doodle Line",
+      subtitle: s.status === "win" ? "방어선 구축 성공" : "선 그리기 기록",
+      score: `${s.steps}/${STEP_CAP} STEPS`,
+      slug: "doodle-line",
+      customStats: [
+        { label: "SEED", value: `${seed}` },
+        { label: "STATUS", value: s.status === "win" ? "CLEARED" : "FAILED" },
+        { label: "THREATS", value: `${s.threats.length}개 방어` },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `doodle-line-seed${seed}.png`);
+    }
+  }, [seed]);
 
   useEffect(() => {
     const player = audio.current;
@@ -626,12 +655,15 @@ export default function DoodleLine({ locale = "en" }: { locale?: Locale }) {
     arm();
     if (next.lastAction === "H") note("release");
     note(kind);
+    if (next.status === "win" && containerRef.current) {
+      celebrate(containerRef.current, { preset: "leaves" });
+    }
     glideSerial.current += 1;
     setShown(stateRef.current);
     setState(next);
     setGlide({ id: glideSerial.current });
     setBusy(true);
-  }, [arm, note]);
+  }, [arm, note, containerRef]);
 
   const move = useCallback((act: Act) => {
     const current = stateRef.current;
@@ -753,6 +785,28 @@ export default function DoodleLine({ locale = "en" }: { locale?: Locale }) {
         ))}
       </ol>
       <p role="status" aria-live="polite" className="text-sm text-foreground">{live}</p>
+      {(state.status === "win" || state.status === "lose") && (
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={handleShareCard}
+            className="flex-1 py-3 px-4 rounded-xl border border-border bg-card hover:bg-muted font-bold text-sm text-foreground transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+          >
+            {shareCardCopied ? <Check className="w-4 h-4 text-primary" /> : <Share2 className="w-4 h-4" />}
+            {shareCardCopied ? "결과 복사 완료!" : "결과 카드 공유"}
+          </button>
+          <button
+            type="button"
+            className="flex-1 py-3 px-4 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-sm hover:bg-primary/90 transition-colors"
+            onClick={() => {
+              arm();
+              load(nextSeed(seed));
+            }}
+          >
+            {copy.next}
+          </button>
+        </div>
+      )}
       <div className={isImmersive ? "relative flex min-h-64 w-full flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-card" : "relative overflow-hidden rounded-2xl border border-border bg-card"}>
         <div className={isImmersive ? "h-full min-h-64 w-full flex-1" : "h-96"} aria-hidden="true">
           <DoodleLineScene

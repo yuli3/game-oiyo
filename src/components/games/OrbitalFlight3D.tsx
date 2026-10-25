@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { Maximize2, Minimize2, Volume2, VolumeX, Share2, Check } from 'lucide-react';
 import { Canvas } from '@react-three/fiber';
 import OrbitalFlight3DScene from './OrbitalFlight3DScene';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { celebrate } from '../../lib/games/celebration';
+import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from '../../lib/games/share-card';
 import {
   type OrbitalFlightState,
   createInitialOrbitalState,
@@ -110,6 +112,7 @@ export default function OrbitalFlight3D() {
   mutedRef.current = muted;
 
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal();
+  const [shareCardCopied, setShareCardCopied] = useState(false);
 
   const toggleMute = useCallback(() => {
     setMuted((m) => {
@@ -122,6 +125,28 @@ export default function OrbitalFlight3D() {
       return next;
     });
   }, []);
+
+  const handleShareCard = useCallback(async () => {
+    const canvas = createShareCardCanvas({
+      title: "Orbital Flight 3D",
+      subtitle: "Planetary Gravity Orbit Simulation",
+      score: `${gameState.score.toLocaleString()} PTS`,
+      slug: "orbital-flight-3d",
+      customStats: [
+        { label: "Flight Time", value: `${Math.round(gameState.timeAlive)}s` },
+        { label: "Gates Cleared", value: `${gameState.gatesPassed}` },
+        { label: "Altitude", value: `${Math.round(gameState.altitude)} km` },
+        { label: "Speed", value: `${Math.round(gameState.ship.speed)} km/s` },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `orbital-flight-${gameState.score}pts.png`);
+    }
+  }, [gameState.score, gameState.timeAlive, gameState.gatesPassed, gameState.altitude, gameState.ship.speed]);
 
   const audioRef = useRef<ReturnType<typeof createOrbitalAudio> | null>(null);
 
@@ -184,6 +209,10 @@ export default function OrbitalFlight3D() {
               navigator.vibrate(20);
             }
           } catch {}
+        }
+
+        if (next.gameOver && !current.gameOver && containerRef.current) {
+          celebrate(containerRef.current, { preset: "stardust" });
         }
 
         setGameState(next);
@@ -456,13 +485,22 @@ export default function OrbitalFlight3D() {
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={handleRestart}
-              className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-md hover:bg-primary/90 transition-colors"
-            >
-              새로운 궤도 재진입 (RETRY)
-            </button>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleShareCard}
+                className="flex-1 py-3.5 rounded-xl border border-border bg-card hover:bg-muted font-bold text-sm text-foreground transition-colors flex items-center justify-center gap-1.5"
+              >
+                {shareCardCopied ? "✓ 복사 완료!" : "결과 카드 공유"}
+              </button>
+              <button
+                type="button"
+                onClick={handleRestart}
+                className="flex-1 py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-md hover:bg-primary/90 transition-colors"
+              >
+                새로운 궤도 재진입 (RETRY)
+              </button>
+            </div>
           </div>
         </div>
       )}

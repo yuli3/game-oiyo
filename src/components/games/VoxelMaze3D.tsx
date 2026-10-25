@@ -1,9 +1,14 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { celebrate } from "../../lib/games/celebration";
-import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { Maximize2, Minimize2, Volume2, VolumeX, Share2, Check } from 'lucide-react';
 import VoxelMaze3DScene from './VoxelMaze3DScene';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from '../../lib/games/share-card';
 import {
   type VoxelMazeState,
   createInitialVoxelMazeState,
@@ -14,8 +19,31 @@ import {
 export default function VoxelMaze3D() {
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal();
   const [gameState, setGameState] = useState<VoxelMazeState>(createInitialVoxelMazeState);
+  const [shareCardCopied, setShareCardCopied] = useState(false);
   const stateRef = useRef<VoxelMazeState>(gameState);
   stateRef.current = gameState;
+
+  const handleShareCard = useCallback(async () => {
+    const s = stateRef.current;
+    const canvas = createShareCardCanvas({
+      title: "3D Voxel Maze",
+      subtitle: s.levelCleared ? "미로 탈출 성공" : "미로 탐사 기록",
+      score: `${s.score.toLocaleString()} PTS`,
+      slug: "voxel-maze-3d",
+      customStats: [
+        { label: "GEMS", value: `${s.gemsCollected}개` },
+        { label: "KEYS", value: `${s.keysCollected}/${s.keysRequired}개` },
+        { label: "TIME LEFT", value: `${Math.round(s.timeLeft)}s` },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `voxel-maze-${s.score}pts.png`);
+    }
+  }, []);
 
   const [muted, setMuted] = useState(() => {
     try {
@@ -186,7 +214,7 @@ export default function VoxelMaze3D() {
     if (gameState.levelCleared && !prevClearRef.current) {
       playClearSound();
       vibrate([40, 40, 40, 40, 100]);
-      celebrate(containerRef.current, { preset: "tiles", colors: ["#34d399", "#60a5fa", "#fde68a"], origin: { x: 0.25, y: 0.6 }, extraOrigins: [{ x: 0.75, y: 0.6 }] });
+      celebrate(containerRef.current, { preset: "shards", colors: ["#34d399", "#60a5fa", "#fde68a"], origin: { x: 0.25, y: 0.6 }, extraOrigins: [{ x: 0.75, y: 0.6 }] });
     }
     prevClearRef.current = gameState.levelCleared;
 
@@ -404,13 +432,23 @@ export default function VoxelMaze3D() {
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={handleNextLevel}
-              className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-md hover:bg-primary/90 transition-colors"
-            >
-              다음 스테이지 도전 (NEXT LEVEL)
-            </button>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleShareCard}
+                className="flex-1 py-3.5 rounded-xl border border-border bg-card hover:bg-muted font-bold text-sm text-foreground transition-colors flex items-center justify-center gap-1.5"
+              >
+                {shareCardCopied ? <Check className="w-4 h-4 text-primary" /> : <Share2 className="w-4 h-4" />}
+                {shareCardCopied ? "복사됨!" : "결과 공유"}
+              </button>
+              <button
+                type="button"
+                onClick={handleNextLevel}
+                className="flex-1 py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-md hover:bg-primary/90 transition-colors"
+              >
+                다음 스테이지 (NEXT LEVEL)
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -433,13 +471,23 @@ export default function VoxelMaze3D() {
               <span className="text-xl font-black text-foreground font-mono">{gameState.score.toLocaleString()}</span>
             </div>
 
-            <button
-              type="button"
-              onClick={handleRestart}
-              className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-md hover:bg-primary/90 transition-colors"
-            >
-              처음부터 다시 시도 (RETRY)
-            </button>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleShareCard}
+                className="flex-1 py-3.5 rounded-xl border border-border bg-card hover:bg-muted font-bold text-sm text-foreground transition-colors flex items-center justify-center gap-1.5"
+              >
+                {shareCardCopied ? <Check className="w-4 h-4 text-primary" /> : <Share2 className="w-4 h-4" />}
+                {shareCardCopied ? "복사됨!" : "결과 공유"}
+              </button>
+              <button
+                type="button"
+                onClick={handleRestart}
+                className="flex-1 py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-md hover:bg-primary/90 transition-colors"
+              >
+                다시 시도 (RETRY)
+              </button>
+            </div>
           </div>
         </div>
       )}

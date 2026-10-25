@@ -1,10 +1,12 @@
 import { lazy, Suspense, useState, useEffect, useCallback } from 'react';
-import { Rocket, Trophy, RefreshCw, Volume2, VolumeX, Flame, Zap, Play, AlertCircle, Maximize2, Minimize2 } from 'lucide-react';
+import { Rocket, Trophy, RefreshCw, Volume2, VolumeX, Flame, Zap, Play, AlertCircle, Maximize2, Minimize2, Share2, Check } from 'lucide-react';
 import type { Locale } from '../../lib/i18n';
 import { getBest, recordBest } from '../../lib/games/records';
 import { hasWebGL } from '../../lib/games/webgl';
 import { generateFlightCourse, type FlightCourse } from '../../lib/games/cosmic-flight';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { celebrate } from '../../lib/games/celebration';
+import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from '../../lib/games/share-card';
 
 const CosmicFlightScene = lazy(() => import('./CosmicFlightScene'));
 
@@ -190,6 +192,30 @@ export default function CosmicFlight({ locale = 'ko' }: { locale?: Locale }) {
     setStatus('playing');
   };
 
+  const [shareCardCopied, setShareCardCopied] = useState(false);
+
+  const handleShareCard = useCallback(async () => {
+    const canvas = createShareCardCanvas({
+      title: "Cosmic Ring Rider 3D",
+      subtitle: status === 'cleared' ? "Course Cleared!" : "Asteroid Impact",
+      score: `${finalScore} PTS`,
+      slug: "cosmic-flight-3d",
+      customStats: [
+        { label: "Rings Passed", value: `${passedRings}/${course.rings.length}` },
+        { label: "Max Combo", value: `x${maxCombo}` },
+        { label: "High Score", value: `${bestScore}` },
+        { label: "Flight Status", value: status === 'cleared' ? "Cleared" : "Crashed" },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `cosmic-flight-${finalScore}pts.png`);
+    }
+  }, [status, finalScore, passedRings, course.rings.length, maxCombo, bestScore]);
+
   const handlePassRing = (_ringIndex: number, combo: number) => {
     setPassedRings((p) => p + 1);
     setMaxCombo((c) => Math.max(c, combo));
@@ -197,11 +223,13 @@ export default function CosmicFlight({ locale = 'ko' }: { locale?: Locale }) {
 
   const handleCrash = () => {
     setStatus('crashed');
+    if (containerRef.current) celebrate(containerRef.current, { preset: "shards" });
   };
 
   const handleFinish = (score: number) => {
     setFinalScore(score);
     setStatus('cleared');
+    if (containerRef.current) celebrate(containerRef.current, { preset: "sparks" });
     if (score > bestScore) {
       setBestScore(score);
       recordBest(GAME_KEY, score, 'score');
@@ -346,13 +374,25 @@ export default function CosmicFlight({ locale = 'ko' }: { locale?: Locale }) {
                   </div>
                 )}
               </div>
-              <button
-                onClick={startNewFlight}
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 font-semibold text-primary-foreground transition hover:opacity-90"
-              >
-                <RefreshCw className="h-4 w-4" />
-                {t.retry}
-              </button>
+              <div className="mt-4 flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={startNewFlight}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 font-semibold text-primary-foreground transition hover:opacity-90"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  {t.retry}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleShareCard}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-primary/50 bg-primary/20 py-2.5 text-xs font-bold text-primary transition hover:bg-primary/30"
+                  title={shareCardCopied ? "복사됨!" : "비행 결과 카드"}
+                >
+                  {shareCardCopied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
+                  <span>{shareCardCopied ? "복사 완료" : "비행 결과 카드 공유"}</span>
+                </button>
+              </div>
             </div>
           </div>
         )}

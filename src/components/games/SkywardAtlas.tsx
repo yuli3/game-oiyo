@@ -1,10 +1,12 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
-import { CloudSun, Gauge, Headphones, Maximize2, Minimize2, Mountain, Plane, Volume2, VolumeX, Wind } from "lucide-react";
+import { CloudSun, Gauge, Headphones, Maximize2, Minimize2, Mountain, Plane, Volume2, VolumeX, Wind, Share2, Check } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
 import { getBest, recordAchievementEvent, recordBest } from "../../lib/games/records";
 import { hasWebGL } from "../../lib/games/webgl";
 import { reviewSkywardFlight } from "../../lib/games/skyward-atlas";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
+import { celebrate } from "../../lib/games/celebration";
+import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "../../lib/games/share-card";
 import type { FlightResult, SkywardSceneCopy } from "./SkywardAtlasScene";
 
 const REVIEW: Record<Locale, Record<"gates" | "distance" | "complete", string>> = {
@@ -135,6 +137,8 @@ export default function SkywardAtlas({ locale }: { locale: Locale }) {
     setPhase("loading");
     window.setTimeout(() => setPhase("playing"), 80);
   }, []);
+  const [shareCardCopied, setShareCardCopied] = useState(false);
+
   const finish = useCallback((next: FlightResult) => {
     const previous = getBest(GAME_KEY)?.value ?? 0;
     const beat = next.score > previous;
@@ -142,7 +146,30 @@ export default function SkywardAtlas({ locale }: { locale: Locale }) {
     recordAchievementEvent(GAME_KEY, "played");
     if (beat && next.score > 0) recordAchievementEvent(GAME_KEY, "personal-best");
     setResult(next); setBest(Math.max(previous, next.score)); setPhase("result");
-  }, []);
+    if (containerRef.current) celebrate(containerRef.current, { preset: "stardust" });
+  }, [containerRef]);
+
+  const handleShareCard = useCallback(async () => {
+    if (!result) return;
+    const canvas = createShareCardCanvas({
+      title: "Skyward Atlas",
+      subtitle: "Alpine Flight Simulator",
+      score: `${result.score.toLocaleString()} PTS`,
+      slug: "skyward-atlas",
+      customStats: [
+        { label: "Gates Cleared", value: `${result.gates}` },
+        { label: "Flight Distance", value: `${Math.round(result.distance / 1000)} km` },
+        { label: "High Score", value: `${best.toLocaleString()}` },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `skyward-atlas-${result.score}pts.png`);
+    }
+  }, [result, best]);
   return (
     <section
       ref={containerRef}
@@ -180,21 +207,37 @@ export default function SkywardAtlas({ locale }: { locale: Locale }) {
         <div className="relative isolate min-h-[680px] overflow-hidden p-6 sm:p-12">
           <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_75%_12%,#fff_0,transparent_35%),linear-gradient(145deg,#d8e8e6,#f6f0e1_55%,#c8b68f)]" />
           <div className="mx-auto max-w-5xl">
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-slate-900/15 bg-white/70 px-4 py-2 text-xs font-bold tracking-[.18em]"><Plane size={16}/> ALPINE FLIGHT / ORIGINAL</div>
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-foreground/15 bg-white/70 px-4 py-2 text-xs font-bold tracking-[.18em]"><Plane size={16}/> ALPINE FLIGHT / ORIGINAL</div>
             <h2 className="max-w-3xl text-5xl font-black tracking-[-.05em] text-foreground sm:text-7xl">{copy.title}</h2>
-            <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-700">{copy.subtitle}</p>
-            {phase === "unavailable" && <div role="alert" className="mt-6 max-w-2xl rounded-2xl border border-amber-300 bg-amber-50 p-4 text-amber-950"><p className="font-black">{fallback.title}</p><p className="mt-1 text-sm leading-6">{fallback.body}</p></div>}
+            <p className="mt-5 max-w-2xl text-lg leading-8 text-foreground/80">{copy.subtitle}</p>
+            {phase === "unavailable" && <div role="alert" className="mt-6 max-w-2xl rounded-2xl border border-warning bg-warning/10 p-4 text-warning-foreground"><p className="font-black">{fallback.title}</p><p className="mt-1 text-sm leading-6">{fallback.body}</p></div>}
             <div className="mt-8 flex flex-wrap gap-3">
-              <button onClick={start} className="rounded-full bg-slate-900 px-7 py-4 font-bold text-white shadow-lg hover:bg-slate-700">{phase === "result" ? copy.again : phase === "unavailable" ? fallback.retry : copy.start}</button>
-              <div className="rounded-full border border-slate-300 bg-white/70 px-6 py-4 font-semibold">{copy.best}: {best.toLocaleString()}</div>
+              <button onClick={start} className="rounded-full bg-primary px-7 py-4 font-bold text-primary-foreground shadow-lg hover:bg-primary/90 transition-colors">{phase === "result" ? copy.again : phase === "unavailable" ? fallback.retry : copy.start}</button>
+              <div className="rounded-full border border-border bg-card/70 px-6 py-4 font-semibold">{copy.best}: {best.toLocaleString()}</div>
             </div>
-            {result && <div role="status" aria-live="polite" className="mt-6 max-w-md rounded-3xl bg-white/75 p-6 backdrop-blur"><div className="text-sm font-bold uppercase tracking-widest">{copy.result}</div><div className="mt-2 text-4xl font-black">{result.score.toLocaleString()}</div><div className="mt-2 text-sm text-slate-600">{result.gates} gates · {Math.round(result.distance / 1000)} km</div><p className="mt-3 text-sm font-bold text-sky-800">{REVIEW[locale][reviewSkywardFlight(result)]}</p></div>}
+            {result && (
+              <div role="status" aria-live="polite" className="mt-6 max-w-md rounded-3xl bg-white/75 p-6 backdrop-blur space-y-3">
+                <div className="text-sm font-bold uppercase tracking-widest text-muted-foreground">{copy.result}</div>
+                <div className="text-4xl font-black text-foreground">{result.score.toLocaleString()}</div>
+                <div className="text-sm text-muted-foreground">{result.gates} gates · {Math.round(result.distance / 1000)} km</div>
+                <p className="text-sm font-bold text-primary">{REVIEW[locale][reviewSkywardFlight(result)]}</p>
+                <button
+                  type="button"
+                  onClick={handleShareCard}
+                  className="flex min-h-11 items-center gap-1.5 rounded-full border border-primary/50 bg-primary/20 px-5 text-sm font-bold text-primary shadow-xs hover:bg-primary/30 transition-colors"
+                  title={shareCardCopied ? "복사됨!" : "비행 기록 공유"}
+                >
+                  {shareCardCopied ? <Check className="size-4" /> : <Share2 className="size-4" />}
+                  <span>{shareCardCopied ? "복사 완료" : "비행 기록 카드 공유"}</span>
+                </button>
+              </div>
+            )}
             <div className="mt-12 grid gap-4 md:grid-cols-3">
-              {[Gauge, CloudSun, Mountain].map((Icon, index) => <article key={copy.features[index].title} className="rounded-3xl border border-white bg-white/60 p-6 backdrop-blur"><Icon className="mb-5" /><h2 className="font-black">{copy.features[index].title}</h2><p className="mt-2 text-sm leading-6 text-slate-600">{copy.features[index].body}</p></article>)}
+              {[Gauge, CloudSun, Mountain].map((Icon, index) => <article key={copy.features[index].title} className="rounded-3xl border border-white bg-white/60 p-6 backdrop-blur"><Icon className="mb-5" /><h2 className="font-black">{copy.features[index].title}</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">{copy.features[index].body}</p></article>)}
             </div>
-            <div className="mt-8 grid gap-4 rounded-3xl bg-slate-900 p-6 text-white sm:grid-cols-[1fr_auto]">
-              <div><h2 className="flex items-center gap-2 font-bold"><Wind size={18}/>{copy.controls}</h2><p className="mt-2 text-sm text-slate-300">{copy.keys}</p><p className="mt-1 text-sm text-slate-400">{copy.touch}</p></div>
-              <Headphones className="self-center text-slate-400"/>
+            <div className="mt-8 grid gap-4 rounded-3xl bg-foreground p-6 text-background sm:grid-cols-[1fr_auto]">
+              <div><h2 className="flex items-center gap-2 font-bold"><Wind size={18}/>{copy.controls}</h2><p className="mt-2 text-sm text-background/80">{copy.keys}</p><p className="mt-1 text-sm text-background/70">{copy.touch}</p></div>
+              <Headphones className="self-center text-background/70"/>
             </div>
             <p className="mt-5 text-xs text-muted-foreground">{copy.disclaimer}</p>
           </div>
