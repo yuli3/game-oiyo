@@ -12,6 +12,8 @@ import {
   Heart,
   RotateCcw,
   Save,
+  Share2,
+  Check,
   TreePine,
   Volume2,
   VolumeX,
@@ -45,6 +47,12 @@ import {
   type MallowIsleSave,
   type PlayerPose,
 } from "../../lib/games/mallow-isle";
+import { celebrate } from "../../lib/games/celebration";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
 
 type ToolId = "roam" | "raise" | "lower" | "tree" | "flowers" | "bench" | "erase";
 
@@ -363,9 +371,44 @@ export default function MallowIsleScene({ copy, audioEnabled, onToggleAudio }: P
   const minute = (clockMinutes % 60).toString().padStart(2, "0");
   const description = copy.descriptions[tool];
   const frameloop = usePlayFrameloop(true);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [shareCardCopied, setShareCardCopied] = useState(false);
+
+  const handleShareCard = useCallback(async () => {
+    if (containerRef.current) {
+      celebrate(containerRef.current, { preset: "leaves" });
+    }
+    const canvas = createShareCardCanvas({
+      title: "Mallow Isle 3D",
+      subtitle: `${copy.islandName} · ${copy.cozy} ${save.cozy}%`,
+      score: `포근함 ${save.cozy}%`,
+      slug: "mallow-isle",
+      customStats: [
+        { label: "DECORATIONS", value: `${save.decorations.length}개` },
+        { label: "TIME", value: `${hour}:${minute}` },
+        { label: "BREEZE", value: "2.4 m/s" },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `mallow-isle-cozy${save.cozy}.png`);
+    }
+  }, [copy.cozy, copy.islandName, hour, minute, save.cozy, save.decorations.length]);
+
+  const lastCozyRef = useRef(save.cozy);
+  useEffect(() => {
+    if (save.cozy > lastCozyRef.current && containerRef.current) {
+      celebrate(containerRef.current, { preset: "leaves" });
+    }
+    lastCozyRef.current = save.cozy;
+  }, [save.cozy]);
 
   return (
     <div
+      ref={containerRef}
       className="relative h-full min-h-[680px] w-full select-none overflow-hidden bg-[#a8d8d3] text-[#3f554b] [touch-action:none]"
       onPointerDown={beginCameraDrag}
       onPointerMove={moveCamera}
@@ -419,6 +462,15 @@ export default function MallowIsleScene({ copy, audioEnabled, onToggleAudio }: P
               <Wind className="size-3" aria-hidden="true" /> {copy.breeze} 2.4 m/s
             </p>
           </div>
+          <button
+            type="button"
+            onClick={handleShareCard}
+            className="grid size-11 place-items-center border border-border bg-card/90 text-foreground shadow-sm transition hover:bg-muted"
+            aria-label={shareCardCopied ? "복사 완료!" : "결과 카드 공유"}
+            title={shareCardCopied ? "복사 완료!" : "결과 카드 공유"}
+          >
+            {shareCardCopied ? <Check className="size-5 text-primary" /> : <Share2 className="size-5" />}
+          </button>
           <button
             type="button"
             onClick={onToggleAudio}

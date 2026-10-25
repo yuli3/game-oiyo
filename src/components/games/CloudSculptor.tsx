@@ -5,7 +5,13 @@
  * 방향은 카메라가 아니라 하늘의 축이다. 카드는 이 방문의 화면에만 남긴다.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Maximize2, Minimize2 } from "lucide-react";
+import { Maximize2, Minimize2, Share2, Check } from "lucide-react";
+import { celebrate } from "../../lib/games/celebration";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import type { Locale } from "../../lib/i18n";
 import {
@@ -426,6 +432,7 @@ export default function CloudSculptor({ locale = "en" }: { locale?: Locale }) {
   const [hidden, setHidden] = useState(false);
   const [muted, setMuted] = useState(false);
   const [view, setView] = useState(0);
+  const [shareCardCopied, setShareCardCopied] = useState(false);
   const stateRef = useRef(state);
   const pausedRef = useRef(paused);
   const mutedRef = useRef(muted);
@@ -437,6 +444,37 @@ export default function CloudSculptor({ locale = "en" }: { locale?: Locale }) {
   pausedRef.current = paused;
   mutedRef.current = muted;
   busyRef.current = busy;
+
+  const handleShareCard = useCallback(async () => {
+    const canvas = createShareCardCanvas({
+      title: "3D Cloud Sculptor",
+      subtitle: state.status === "win" ? "구름 조각 완성" : "구름 조각 기록",
+      score: state.status === "win" ? `${state.steps}걸음 완성` : `${state.steps}걸음 진행`,
+      slug: "cloud-sculptor",
+      customStats: [
+        { label: "SEED", value: `#${seed}` },
+        { label: "STEPS", value: `${state.steps}/${STEP_CAP}` },
+        { label: "STATUS", value: state.status === "win" ? "완성 (WIN)" : state.status === "lose" ? "흩어짐 (LOSE)" : "조각 중" },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `cloud-sculptor-${seed}.png`);
+    }
+  }, [seed, state.status, state.steps]);
+
+  const prevStatusRef = useRef(state.status);
+  useEffect(() => {
+    if (state.status !== prevStatusRef.current && containerRef.current) {
+      if (state.status === "win") {
+        celebrate(containerRef.current, { preset: "stardust" });
+      }
+    }
+    prevStatusRef.current = state.status;
+  }, [state.status, containerRef]);
 
   useEffect(() => {
     const player = audio.current;
@@ -626,6 +664,26 @@ export default function CloudSculptor({ locale = "en" }: { locale?: Locale }) {
         </li>
       </ol>
       <p role="status" aria-live="polite" className="text-sm text-foreground">{live}</p>
+      {state.status !== "play" && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
+          <div>
+            <p className="text-sm font-bold text-foreground">
+              {state.status === "win" ? "✨ 구름 조각 완성!" : "💨 구름이 흩어졌습니다"}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {state.status === "win" ? `${state.steps}걸음 만에 목표 구름과 일치했습니다.` : outcome}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleShareCard}
+            className="flex items-center gap-1.5 rounded-xl border border-border bg-secondary px-3.5 py-2 text-xs font-bold text-secondary-foreground shadow-sm transition hover:bg-muted"
+          >
+            {shareCardCopied ? <Check className="h-4 w-4 text-primary" /> : <Share2 className="h-4 w-4" />}
+            <span>{shareCardCopied ? "복사 완료!" : "결과 카드 공유"}</span>
+          </button>
+        </div>
+      )}
       <div className={isImmersive ? "relative flex min-h-64 w-full flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-card" : "relative overflow-hidden rounded-2xl border border-border bg-card"}>
         <div className={isImmersive ? "h-full min-h-64 w-full flex-1" : "h-96"} aria-hidden="true">
           <CloudSculptorScene

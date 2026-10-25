@@ -4,6 +4,14 @@
  * 끌어서 카메라를 돌리면 퍼즐이 아니라 시점이 이기므로 보기는 버튼만 쓴다.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Maximize2, Minimize2, Share2, Check } from "lucide-react";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
+import { celebrate } from "../../lib/games/celebration";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
 import type { Locale } from "../../lib/i18n";
 import {
   ACTS,
@@ -526,6 +534,7 @@ function codeAct(code: string): Act | null {
 
 export default function DreamElevator({ locale = "en" }: { locale?: Locale }) {
   const copy = COPY[locale] ?? COPY.en;
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale });
   const reduce = usePrefersReducedMotion();
   const opening = useRef(createDream(0));
   const [seed, setSeed] = useState(0);
@@ -538,6 +547,7 @@ export default function DreamElevator({ locale = "en" }: { locale?: Locale }) {
   const [hidden, setHidden] = useState(false);
   const [muted, setMuted] = useState(false);
   const [view, setView] = useState(0);
+  const [shareCardCopied, setShareCardCopied] = useState(false);
   const stateRef = useRef(state);
   const pausedRef = useRef(paused);
   const mutedRef = useRef(muted);
@@ -549,6 +559,37 @@ export default function DreamElevator({ locale = "en" }: { locale?: Locale }) {
   pausedRef.current = paused;
   mutedRef.current = muted;
   busyRef.current = busy;
+
+  const handleShareCard = useCallback(async () => {
+    const canvas = createShareCardCanvas({
+      title: "3D Dream Elevator",
+      subtitle: state.status === "win" ? "최상층 꿈 도달" : "꿈의 엘리베이터 기록",
+      score: state.status === "win" ? `${state.floor}F 완료 (${state.steps}걸음)` : `${state.floor}F 도달`,
+      slug: "dream-elevator",
+      customStats: [
+        { label: "FLOOR", value: `${state.floor}층` },
+        { label: "STEPS", value: `${state.steps}/${STEP_CAP}` },
+        { label: "SEED", value: `#${seed}` },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `dream-elevator-${seed}.png`);
+    }
+  }, [seed, state.floor, state.status, state.steps]);
+
+  const prevStatusRef = useRef(state.status);
+  useEffect(() => {
+    if (state.status !== prevStatusRef.current && containerRef.current) {
+      if (state.status === "win") {
+        celebrate(containerRef.current, { preset: "shards" });
+      }
+    }
+    prevStatusRef.current = state.status;
+  }, [state.status, containerRef]);
 
   useEffect(() => {
     const player = audio.current;
@@ -717,8 +758,21 @@ export default function DreamElevator({ locale = "en" }: { locale?: Locale }) {
   };
 
   return (
-    <div className="space-y-4" onPointerDown={arm}>
-      <header className="space-y-2">
+    <div
+      ref={containerRef}
+      className={isImmersive ? "arcade-shell fixed inset-0 z-50 flex h-dvh w-screen flex-col gap-4 overflow-y-auto overscroll-none bg-background" : "space-y-4"}
+      onPointerDown={arm}
+    >
+      <header className="relative shrink-0 space-y-2 pr-12">
+        <button
+          type="button"
+          onClick={togglePortal}
+          className="absolute right-0 top-0 flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-border/60 bg-card text-foreground shadow-sm transition hover:bg-muted"
+          title={isImmersive ? portalLabels.exit : portalLabels.enter}
+          aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+        >
+          {isImmersive ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+        </button>
         <h2 className="text-2xl font-semibold text-foreground">{copy.title}</h2>
         <p className="text-sm leading-6 text-muted-foreground">{copy.lead}</p>
         <p className="text-xs text-muted-foreground">{copy.keys}</p>
@@ -746,6 +800,26 @@ export default function DreamElevator({ locale = "en" }: { locale?: Locale }) {
         ))}
       </ol>
       <p role="status" aria-live="polite" className="text-sm text-foreground">{live}</p>
+      {state.status !== "play" && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
+          <div>
+            <p className="text-sm font-bold text-foreground">
+              {state.status === "win" ? "✨ 꿈의 최상층 도달!" : "🌙 한도 내 엘리베이터 정지"}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {state.status === "win" ? `${state.floor}층의 봉인을 풀고 꿈의 꼭대기에 도달했습니다.` : outcome}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleShareCard}
+            className="flex items-center gap-1.5 rounded-xl border border-border bg-secondary px-3.5 py-2 text-xs font-bold text-secondary-foreground shadow-sm transition hover:bg-muted"
+          >
+            {shareCardCopied ? <Check className="h-4 w-4 text-primary" /> : <Share2 className="h-4 w-4" />}
+            <span>{shareCardCopied ? "복사 완료!" : "결과 카드 공유"}</span>
+          </button>
+        </div>
+      )}
       <div className="relative overflow-hidden rounded-2xl border border-border bg-card">
         <div className="h-96" aria-hidden="true">
           <DreamElevatorScene

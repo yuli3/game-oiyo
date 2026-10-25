@@ -18,6 +18,8 @@ import {
   RotateCcw,
   Route,
   Save,
+  Share2,
+  Check,
   Smile,
   Sparkles,
   Sun,
@@ -42,6 +44,12 @@ import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
 import { HorizontalTiltShiftShader } from "three/addons/shaders/HorizontalTiltShiftShader.js";
 import { VerticalTiltShiftShader } from "three/addons/shaders/VerticalTiltShiftShader.js";
 import { createTonePlayer, type TonePlayer } from "../../lib/games/tone";
+import { celebrate } from "../../lib/games/celebration";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
 import {
   BUILD_COST,
   CITY_SAVE_KEY,
@@ -213,6 +221,41 @@ export default function IsometricCityScene({ copy }: Props) {
   const weatherLabel = city.weather === "rain" ? copy.rain : city.weather === "fog" ? copy.fog : copy.clear;
   const WeatherIcon = city.weather === "rain" ? CloudRain : city.weather === "fog" ? CloudFog : Sun;
   const night = clock.hour < 6 || clock.hour >= 19;
+  const containerRef = useRef<HTMLElement>(null);
+  const [shareCardCopied, setShareCardCopied] = useState(false);
+
+  const handleShareCard = useCallback(async () => {
+    if (containerRef.current) {
+      celebrate(containerRef.current, { preset: "coins" });
+    }
+    const canvas = createShareCardCanvas({
+      title: "Isometric City 3D",
+      subtitle: `${copy.cityName} · DAY ${clock.day}`,
+      score: `${summary.population.toLocaleString()}명 시민`,
+      slug: "isometric-city",
+      customStats: [
+        { label: "FUNDS", value: `$${formatMoney(city.funds)}` },
+        { label: "JOBS", value: `${formatMoney(summary.filledJobs)}/${formatMoney(summary.jobs)}` },
+        { label: "HAPPINESS", value: `${summary.happiness}%` },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `isometric-city-day${clock.day}.png`);
+    }
+  }, [city.funds, clock.day, copy.cityName, summary.filledJobs, summary.happiness, summary.jobs, summary.population]);
+
+  const lastMilestoneRef = useRef(0);
+  useEffect(() => {
+    const pop = summary.population;
+    if (pop >= 100 && pop > lastMilestoneRef.current + 100 && containerRef.current) {
+      celebrate(containerRef.current, { preset: "coins" });
+      lastMilestoneRef.current = Math.floor(pop / 100) * 100;
+    }
+  }, [summary.population]);
 
   const updateHover = useCallback((point: GridPoint | null) => {
     const key = point ? `${point.x}:${point.z}` : "";
@@ -257,7 +300,7 @@ export default function IsometricCityScene({ copy }: Props) {
   };
 
   return (
-    <section className="relative h-[720px] min-h-[680px] touch-none overflow-hidden rounded-[1.7rem] border border-[#cdd9c5] bg-[#dbe8d3] shadow-[0_24px_80px_rgba(53,69,44,.18)] sm:h-[780px]">
+    <section ref={containerRef} className="relative h-[720px] min-h-[680px] touch-none overflow-hidden rounded-[1.7rem] border border-[#cdd9c5] bg-[#dbe8d3] shadow-[0_24px_80px_rgba(53,69,44,.18)] sm:h-[780px]">
       <Canvas
         frameloop={frameloop}
         shadows={coarse ? false : "basic"}
@@ -310,6 +353,13 @@ export default function IsometricCityScene({ copy }: Props) {
             <ControlButton active={city.speed === 4} label={copy.fast} onClick={() => changeSpeed(4)}><FastForward size={15} /></ControlButton>
             <ControlButton label={night ? copy.dayTime : copy.night} onClick={toggleTime}>{night ? <Sun size={15} /> : <Moon size={15} />}</ControlButton>
             <ControlButton active={sound} label={copy.sound} onClick={() => setSound((value) => !value)}><span aria-hidden="true">♪</span></ControlButton>
+            <ControlButton
+              active={shareCardCopied}
+              label={shareCardCopied ? "복사 완료!" : "도시 공유 카드"}
+              onClick={handleShareCard}
+            >
+              {shareCardCopied ? <Check size={15} /> : <Share2 size={15} />}
+            </ControlButton>
           </div>
         </div>
 
