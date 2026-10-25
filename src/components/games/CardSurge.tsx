@@ -260,10 +260,13 @@ export default function CardSurge({ locale = "ko" }: CardSurgeProps) {
 
   return (
     <div
-      style={{
-        transform: shakeOffset.x || shakeOffset.y ? `translate(${shakeOffset.x}px, ${shakeOffset.y}px)` : undefined,
-      }}
-      className="relative mx-auto flex w-full max-w-4xl flex-col items-center justify-between rounded-3xl border border-border bg-card p-4 shadow-xl sm:p-6"
+      style={
+        {
+          "--shake-x": `${shakeOffset.x}px`,
+          "--shake-y": `${shakeOffset.y}px`,
+        } as React.CSSProperties
+      }
+      className="relative mx-auto flex w-full max-w-4xl translate-x-(--shake-x) translate-y-(--shake-y) flex-col items-center justify-between rounded-3xl border border-border bg-card p-4 shadow-xl sm:p-6"
     >
       {/* Top HUD: Ante, Blind info, Targets, Resources */}
       <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-4">

@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import CyberTrack3D from "../../components/games/CyberTrack3D";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "사이버 트랙 3D — 무설치 로우폴리 3D 타임어택 레이서",
+    description: "브라우저에서 바로 즐기는 60fps 로우폴리 3D 타임어택 레이싱. 3개 서킷에서 드리프트와 고스트 레이스로 최고 랩타임에 도전하세요.",
+  },
+  en: {
+    title: "CyberTrack 3D — Low-Poly 3D Time-Attack Racer",
+    description: "Free 60fps low-poly 3D time-attack racing in your browser. Drift through 3 official circuits and compete against your personal best ghost.",
+  },
+  ja: {
+    title: "サイバートラック 3D — ローポリ3Dタイムアタックレーサー",
+    description: "インストール不要、ブラウザで楽しむ60fpsローポリ3Dタイムアタックレース。3つのサーキットでドリフトを決め、ゴーストと競い合おう。",
+  },
+  zh: {
+    title: "赛博赛道 3D — 低多边形3D竞速计时赛",
+    description: "在浏览器中即点即玩的60帧低多边形3D赛车计时挑战。征服3大赛道，漂移过弯，与个人最佳幽灵车一较高下。",
+  },
+  fr: {
+    title: "CyberTrack 3D — Course Contre-la-Montre Low-Poly 3D",
+    description: "Jeu de course 3D low-poly à 60 fps dans le navigateur. Driftez sur 3 circuits officiels et affrontez le fantôme de votre meilleur tour.",
+  },
+  es: {
+    title: "CyberTrack 3D — Carreras Contrarreloj Low-Poly 3D",
+    description: "Juego de carreras 3D low-poly a 60 fps en tu navegador. Derrapa en 3 circuitos oficiales y compite contra el fantasma de tu mejor vuelta.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-4xl px-4 py-8">
+    <CyberTrack3D client:load locale={locale} />
+    <GameGuide slug="cyber-track" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>

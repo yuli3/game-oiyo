@@ -4292,4 +4292,60 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "cyber-track": {
+    origin: {
+      ko: "사이버 트랙 3D(CyberTrack 3D)는 Polytrack과 Trackmania에서 영감을 받은 브라우저 기반 60FPS 로우폴리 3D 타임어택 레이서입니다. Three.js의 커스텀 튜브 지오메트리 트랙, 물리 가감속 및 드리프트 모델, 그리고 완주 기록을 시각화하는 실시간 고스트 카(Ghost Replay) 엔진을 무설치 웹으로 구현했습니다.",
+      en: "CyberTrack 3D is a browser-based 60FPS low-poly 3D time-attack racer inspired by Polytrack and Trackmania. Built with Three.js custom tube geometries, realistic arcade vehicle physics with drift scoring, and a real-time Ghost Replay engine that visualizes your personal best runs.",
+      ja: "サイバートラック 3D（CyberTrack 3D）は、PolytrackやTrackmaniaにインスパイアされたブラウザ完結型60FPSローポリ3Dタイムアタックレースゲームです。Three.jsによる滑らかなコースジオメトリ、ドリフト物理、そして自己ベストと並走するリアルタイムゴーストカー機能を搭載しています。",
+      zh: "赛博赛道 3D（CyberTrack 3D）是一款受 Polytrack 和 Trackmania 启发、运行于浏览器的60FPS低多边形3D极速时间赛。基于Three.js定制管状赛道、敏捷漂移物理引擎与实时幽灵车（Ghost Replay）回放系统，零安装即刻狂飙。",
+      fr: "CyberTrack 3D est un jeu de course contre-la-montre 3D low-poly à 60 FPS inspiré de Polytrack et Trackmania. Conçu avec Three.js, il propose une physique d'arcade avec gestion du drift et un fantôme en temps réel reproduisant votre record personnel.",
+      es: "CyberTrack 3D es un juego de carreras contrarreloj 3D low-poly a 60 FPS para navegador, inspirado en Polytrack y Trackmania. Ofrece físicas arcade con derrapes dinámicos y un coche fantasma en tiempo real que compite contra tu mejor marca personal.",
+    },
+    how: {
+      ko: "W/위쪽 화살표로 가속, S/아래쪽으로 제동 및 후진, A/D 또는 좌우 화살표로 조향합니다. 모바일에서는 화면 하단 터치 버튼으로 조작할 수 있습니다. 각 섹터의 체크포인트를 순서대로 통과해 결승선을 끊으면 랩 타임이 기록됩니다.",
+      en: "Use W/Up arrow to accelerate, S/Down arrow to brake/reverse, and A/D or Left/Right arrows to steer. On mobile devices, responsive on-screen touch pedals and steering buttons are provided. Drive through all checkpoint arches in order to record your lap time.",
+      ja: "W/上矢印で加速、S/下矢印でブレーキ・後退、A/Dまたは左右矢印でステアリング操作を行います。モバイルでは画面上のタッチボタンで操作できます。コース上のチェックポイントゲートを順に通過してゴールを目指してください。",
+      zh: "使用 W/上箭头加速，S/下箭头刹车及倒车，A/D 或左右箭头进行转向。移动端支持底部触摸踏板与方向按钮。按顺序穿过赛道上的所有检查点拱门冲过终点线即可记录圈速。",
+      fr: "Utilisez Z/Flèche Haut pour accélérer, S/Flèche Bas pour freiner/reculer, et Q/D ou Flèches Gauche/Droite pour tourner. Sur mobile, des commandes tactiles dédiées sont affichées. Franchissez tous les points de passage dans l'ordre pour valider votre chrono.",
+      es: "Usa W/Flecha Arriba para acelerar, S/Flecha Abajo para frenar/marcha atrás, y A/D o Flechas Izquierda/Derecha para girar. En móvil dispones de botones táctiles en pantalla. Atraviesa todos los puntos de control en orden para registrar tu vuelta.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "고스트 카(Ghost Car)는 어떻게 동작하나요?",
+          en: "How does the Ghost Car replay work?",
+          ja: "ゴーストカー（Ghost Car）はどのように動作しますか？",
+          zh: "幽灵车（Ghost Car）回放是如何工作的？",
+          fr: "Comment fonctionne la voiture fantôme (Ghost Car) ?",
+          es: "¿Cómo funciona el coche fantasma (Ghost Car)?",
+        },
+        a: {
+          ko: "트랙을 완주하면 해당 랩의 초당 30프레임 주행 궤적이 브라우저 로컬 저장소에 저장됩니다. 다음 주행 시 청록색 반투명 고스트 카가 내 최고 기록과 정확히 동일한 속도와 궤적으로 함께 달려 추월 포인트를 직관적으로 비교할 수 있습니다.",
+          en: "Completing a lap saves your 30fps trajectory to local storage. On subsequent runs, a translucent cyan ghost car drives alongside you mimicking your personal best run, allowing you to instantly compare cornering lines and pacing.",
+          ja: "コースを完走すると、そのラップの走行データ（毎秒30フレーム）がローカルストレージに保存されます。次回以降の走行では、自己ベストの走りを再現するシアン色の半透明ゴーストカーが出現し、ライン取りの比較が可能です。",
+          zh: "完赛后系统会自动将该圈的30FPS行驶轨迹保存在本地。下次挑战时，一辆半透明青色幽灵车将以你个人最佳成绩的轨迹同步出发，便于直观对比过弯走线与出弯时机。",
+          fr: "Chaque tour validé enregistre votre trajectoire à 30 ips en mémoire locale. Lors des essais suivants, une voiture fantôme cyan translucide rejoue votre meilleur tour, vous permettant de comparer immédiatement vos trajectoires de virage.",
+          es: "Al completar una vuelta, tu trayectoria a 30 fps se guarda en el navegador. En los siguientes intentos, un coche fantasma cian translúcido correrá a tu lado replicando tu mejor tiempo para comparar tus trazadas.",
+        },
+      },
+      {
+        q: {
+          ko: "랩 타임을 줄이는 핵심 팁이 있나요?",
+          en: "What are the key tips to improve lap times?",
+          ja: "ラップタイムを縮めるコツはありますか？",
+          zh: "缩短圈速的关键技巧有哪些？",
+          fr: "Quels sont les meilleurs conseils pour améliorer son chrono ?",
+          es: "¿Cuáles son las claves para recortar tiempo por vuelta?",
+        },
+        a: {
+          ko: "급격한 코너에 진입하기 직전에 짧게 브레이크를 밟아 하중을 앞으로 이동시킨 후 스티어링을 꺾으면 드리프트 각도가 빠르게 잡힙니다. 코너 탈출 시점부터는 풀 스로틀로 가속해 직선 코스 최고 속도를 최대한 확보하는 것이 기록 단축의 열쇠입니다.",
+          en: "Briefly tap brake before entering sharp corners to shift weight forward, then steer hard into the apex for an optimal drift angle. Full throttle immediately upon exit to carry maximum momentum into the straightaways.",
+          ja: "急カーブの直前で軽くブレーキを踏んで前荷重を作り、ステアリングを切ることで鋭いドリフト姿勢に入れます。コーナー出口が見えたら全開加速に移行し、ストレートでの最高速度を稼ぐのがタイム短縮の秘訣です。",
+          zh: "在进入急弯前轻点刹车完成重心前移，随后快速打方向即可切入最佳漂移过弯角。在看清出弯路线时立即全油门出弯，以最高速度衔接直道冲刺是打破纪录的关键。",
+          fr: "Donnez un léger coup de frein avant les virages serrés pour charger l'avant, puis braquez pour déclencher la dérive. Réaccélérez à fond dès la corde pour maximiser la vitesse en sortie sur les lignes droites.",
+          es: "Toca levemente el freno antes de una curva cerrada para transferir peso adelante y gira con decisión hacia el vértice. Acelera a fondo en cuanto encares la salida para llegar a la recta con la máxima velocidad.",
+        },
+      },
+    ],
+  },
 };

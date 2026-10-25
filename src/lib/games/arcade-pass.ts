@@ -426,6 +426,20 @@ export const MISSION_CATALOG: Array<{
     goal: 500,
     xpReward: 50,
   },
+  {
+    id: "cybertrack-lap",
+    gameSlug: "cyber-track",
+    title: {
+      ko: "사이버 트랙 3D에서 트랙 1랩 완주하기",
+      en: "Complete 1 full lap in CyberTrack 3D",
+      ja: "サイバートラック 3Dでコースを1ラップ完走",
+      zh: "在赛博赛道 3D中完成1圈赛道冲线",
+      fr: "Terminer 1 tour complet dans CyberTrack 3D",
+      es: "Completa 1 vuelta completa en CyberTrack 3D",
+    },
+    goal: 1,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {
