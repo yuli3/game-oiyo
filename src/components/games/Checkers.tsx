@@ -1,8 +1,14 @@
 import React, { useState, useEffect, useCallback, useRef, type CSSProperties } from 'react';
-import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { Maximize2, Minimize2, Share2, Volume2, VolumeX } from 'lucide-react';
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import type { Locale } from '../../lib/i18n';
+import { celebrate } from '../../lib/games/celebration';
+import {
+    createShareCardCanvas,
+    copyShareCardToClipboard,
+    downloadShareCard,
+} from '../../lib/games/share-card';
 import { checkersApply, checkersApplyTurn, checkersBestMove, checkersMoves, checkersTurnReview, type CheckersPiece, type CheckersMove, type CheckersTurnReview } from '../../lib/games/checkers';
 import type { AiLevel, GameMode } from '../../lib/games/ai/types';
 import { getRecord, recordResult, type GameRecord } from '../../lib/games/records';
@@ -179,12 +185,40 @@ const Checkers: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         storeCheckersSave({ board, isRedTurn, forcedFrom, mode, level });
     }, [board, isRedTurn, forcedFrom, mode, level, winner]);
 
+    const [shareCardCopied, setShareCardCopied] = useState(false);
+
     const finish = (w: number) => {
         setWinner(w);
         tone('win');
         clearCheckersSave();
         if (mode === 'ai') setRecord(recordResult('checkers', w === AI_PLAYER ? 'l' : 'w'));
+        if (containerRef.current && (mode !== 'ai' || w !== AI_PLAYER)) {
+            celebrate(containerRef.current, { preset: "shards" });
+        }
     };
+
+    const handleShareCard = useCallback(async () => {
+        if (!winner) return;
+        try {
+            const canvas = createShareCardCanvas({
+                title: t.title,
+                subtitle: mode === 'ai' ? `vs AI (${aiInfo.depth[level]})` : '2 Players',
+                score: winner === 1 ? t.red : t.black,
+                slug: 'checkers',
+                customStats: [
+                    { label: 'WINNER', value: winner === 1 ? t.red : t.black },
+                    { label: x.captured, value: `${winner === 1 ? 12 - board.filter(p => p?.player === 2).length : 12 - board.filter(p => p?.player === 1).length}` },
+                ],
+            });
+            const success = await copyShareCardToClipboard(canvas);
+            if (success) {
+                setShareCardCopied(true);
+                setTimeout(() => setShareCardCopied(false), 2000);
+            } else {
+                downloadShareCard(canvas, `checkers-${winner === 1 ? 'red' : 'black'}-win.png`);
+            }
+        } catch {}
+    }, [aiInfo.depth, board, level, mode, t.black, t.red, t.title, winner, x.captured]);
 
     const handleSquareClick = (index: number) => {
         if (winner !== null || thinking || paused) return;
@@ -414,9 +448,19 @@ const Checkers: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                     <p className="mb-4 text-sm font-bold text-muted-foreground">{x.redLeft} {board.filter(piece => piece?.player === 1).length} · {x.blackLeft} {board.filter(piece => piece?.player === 2).length}</p>
                     <p className="mb-4 text-xs text-muted-foreground">{x.captured} {winner === 1 ? 12 - board.filter(piece => piece?.player === 2).length : 12 - board.filter(piece => piece?.player === 1).length} · {x.next} 12</p>
                     {mode === 'ai' && winner === AI_PLAYER && lastAiReview && <div className="mb-4 max-w-xs rounded-2xl border border-amber-300/60 bg-amber-50 p-3 text-left text-xs text-stone-800"><p className="font-black text-amber-900">{aiInfo.review} · {squareName(lastAiReview.from)}→{squareName(lastAiReview.to)}</p><p className="mt-1">{lastAiReview.captures > 0 ? `${lastAiReview.captures} ${aiInfo.captures}` : aiInfo.quiet}</p><p className="mt-1 text-[10px] text-stone-500">{aiInfo.difficulty}: {aiInfo.depth[level]}</p></div>}
-                    <button onClick={initGame} className="px-10 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg">
-                        {t.reset}
-                    </button>
+                    <div className="flex flex-wrap justify-center gap-2">
+                        <button onClick={initGame} className="min-h-11 px-8 py-2.5 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90">
+                            {t.reset}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleShareCard}
+                            className="min-h-11 inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-4 py-2 text-xs font-bold text-foreground shadow-sm hover:bg-muted"
+                        >
+                            <Share2 className="size-3.5 text-primary" />
+                            <span>{shareCardCopied ? (locale === 'ko' ? "✓ 복사됨" : "✓ Copied") : (locale === 'ko' ? "결과 카드 복사" : "Share Card")}</span>
+                        </button>
+                    </div>
                 </div>
             )}
         </GameContainer>

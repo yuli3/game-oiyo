@@ -1397,7 +1397,7 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
             <button
               type="button"
               onClick={activateVortex}
-              className="animate-pulse min-h-11 px-3 py-2 rounded-xl border border-primary bg-primary text-primary-foreground font-black text-xs shadow-md hover:bg-primary/90 transition-transform active:scale-95 flex items-center gap-1"
+              className="animate-pulse ring-4 ring-primary min-h-11 px-3 py-2 rounded-xl border border-primary bg-primary text-primary-foreground font-black text-xs shadow-lg shadow-primary/30 hover:bg-primary/90 transition-transform active:scale-95 flex items-center gap-1"
             >
               <span>🌀</span>
               <span>{t.vortexReady}</span>

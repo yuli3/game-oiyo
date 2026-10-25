@@ -605,7 +605,7 @@ export default function WordleGame({ locale = "en" }: { locale?: string }) {
       cue("win");
       hapticsRef.current.fire("win");
       getGlobalBgmController().duck(0.1, 800);
-      if (containerRef.current) celebrate(containerRef.current, { preset: "cards" });
+      if (containerRef.current) celebrate(containerRef.current, { preset: "tiles" });
     } else if (next.status === "lost") {
       cue("fail");
       hapticsRef.current.fire("fail");

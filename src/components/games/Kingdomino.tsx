@@ -1,10 +1,15 @@
 import React, { useCallback, useEffect, useReducer, useRef, useState } from "react";
-import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
+import { Maximize2, Minimize2, Share2, Volume2, VolumeX } from "lucide-react";
 import { GameContainer } from "../ui/game/GamePrimitives";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { celebrate } from "../../lib/games/celebration";
 import { createHaptics } from "../../lib/games/haptics";
 import type { Locale } from "../../lib/i18n";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
 import {
   startGame, place, claim, aiPlace, aiClaim, finalResult, kingdominoAiReview,
   type GameState, type AiLevel, type Kingdom, type KingdominoAiReview,
@@ -202,6 +207,35 @@ const Kingdomino: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
     document.addEventListener("visibilitychange", onHidden);
     return () => document.removeEventListener("visibilitychange", onHidden);
   }, []);
+
+  const [shareCardCopied, setShareCardCopied] = useState(false);
+
+  const handleShareCard = useCallback(async () => {
+    const s = gs.current;
+    if (!s) return;
+    const res = finalResult(s);
+    try {
+      const canvas = createShareCardCanvas({
+        title: t.title,
+        subtitle: `vs AI (${aiInfo.level[level]})`,
+        score: res.you,
+        bestScore: res.ai,
+        slug: "kingdomino",
+        customStats: [
+          { label: t.you, value: `${res.you} pts` },
+          { label: t.ai, value: `${res.ai} pts` },
+          { label: "RESULT", value: res.winner === "you" ? t.youWin : res.winner === "ai" ? t.aiWins : t.draw },
+        ],
+      });
+      const success = await copyShareCardToClipboard(canvas);
+      if (success) {
+        setShareCardCopied(true);
+        setTimeout(() => setShareCardCopied(false), 2000);
+      } else {
+        downloadShareCard(canvas, `kingdomino-${res.you}pts.png`);
+      }
+    } catch {}
+  }, [aiInfo.level, level, t.ai, t.aiWins, t.draw, t.title, t.you, t.youWin]);
 
   const newGame = useCallback(() => {
     gs.current = startGame();
@@ -504,27 +538,27 @@ const Kingdomino: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
         <div className="grid grid-cols-1 gap-5">
           <div className="mx-auto flex w-full max-w-[440px] flex-col gap-1">
             <div className="flex items-center justify-between text-xs font-bold">
-              <span className="text-emerald-700">{t.you}</span>
+              <span className="text-primary">{t.you}</span>
               <span>{t.terrainScore} {scoreBoard(s.you.board, s.you.crowns)}{over ? ` + ${t.bonus} ${res!.youSummary.bonus} = ${res!.you}` : ""}</span>
             </div>
             <KingdomGrid k={s.you} interactive={!paused && yourTurn && pending?.kind === "place" && !mustDiscard}
               legalA={legalA} onPlace={doPlace} locale={locale}
               freshCells={freshLand?.owner === "you" ? freshLand.cells : undefined} reducedMotion={reducedMotion} />
             {over && res!.youSummary.bonus > 0 && (
-              <p className="text-[11px] text-emerald-700">
+              <p className="text-[11px] text-primary">
                 {res!.youSummary.harmony ? t.harmony : ""}{res!.youSummary.harmony && res!.youSummary.middleKingdom ? " · " : ""}{res!.youSummary.middleKingdom ? t.middleKingdom : ""}
               </p>
             )}
           </div>
           <div className="mx-auto flex w-full max-w-[440px] flex-col gap-1">
             <div className="flex items-center justify-between text-xs font-bold">
-              <span className="text-rose-700">{t.ai}</span>
+              <span className="text-destructive">{t.ai}</span>
               <span>{t.terrainScore} {scoreBoard(s.ai.board, s.ai.crowns)}{over ? ` + ${t.bonus} ${res!.aiSummary.bonus} = ${res!.ai}` : ""}</span>
             </div>
             <KingdomGrid k={s.ai} interactive={false} locale={locale}
               freshCells={freshLand?.owner === "ai" ? freshLand.cells : undefined} reducedMotion={reducedMotion} />
             {over && res!.aiSummary.bonus > 0 && (
-              <p className="text-[11px] text-rose-700">
+              <p className="text-[11px] text-destructive">
                 {res!.aiSummary.harmony ? t.harmony : ""}{res!.aiSummary.harmony && res!.aiSummary.middleKingdom ? " · " : ""}{res!.aiSummary.middleKingdom ? t.middleKingdom : ""}
               </p>
             )}
@@ -532,13 +566,32 @@ const Kingdomino: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
         </div>
 
         {over && res!.tieBreaker === "largest-region" && (
-          <p className="text-center text-xs font-semibold text-gray-600">
+          <p className="text-center text-xs font-semibold text-muted-foreground">
             {t.tieRegion}
           </p>
         )}
-        {over&&res!.winner==='ai'&&lastAiReview&&<div className="mx-auto w-full max-w-md rounded-2xl border border-amber-300/60 bg-amber-50 p-3 text-left text-xs text-stone-800"><p className="font-black text-amber-900">{aiInfo.review}</p><p className="mt-1">{lastAiReview.kind==='claim'?`${aiInfo.claim} #${lastAiReview.tileId} · ${lastAiReview.crowns} ${t.crowns} · ${lastAiReview.projectedValue}`:lastAiReview.discarded?`${aiInfo.discard} · #${lastAiReview.tileId}`:`${aiInfo.place} +${lastAiReview.scoreGain} · #${lastAiReview.tileId}`}</p><p className="mt-1 text-[10px] text-stone-500">{aiInfo.difficulty}: {aiInfo.level[level]}</p></div>}
+        {over && (
+          <div className="flex justify-center gap-2">
+            <button
+              type="button"
+              onClick={handleShareCard}
+              className="min-h-11 inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-4 py-2 text-xs font-bold text-foreground shadow-sm hover:bg-muted"
+            >
+              <Share2 className="size-3.5 text-primary" />
+              <span>{shareCardCopied ? (locale === "ko" ? "✓ 복사됨" : "✓ Copied") : (locale === "ko" ? "결과 카드 복사" : "Share Card")}</span>
+            </button>
+            <button
+              type="button"
+              onClick={newGame}
+              className="min-h-11 px-6 py-2 rounded-full bg-primary text-primary-foreground font-black text-xs shadow-md hover:opacity-90"
+            >
+              {t.reset}
+            </button>
+          </div>
+        )}
+        {over&&res!.winner==='ai'&&lastAiReview&&<div className="mx-auto w-full max-w-md rounded-2xl border border-border bg-muted/40 p-3 text-left text-xs text-foreground"><p className="font-black text-foreground">{aiInfo.review}</p><p className="mt-1">{lastAiReview.kind==='claim'?`${aiInfo.claim} #${lastAiReview.tileId} · ${lastAiReview.crowns} ${t.crowns} · ${lastAiReview.projectedValue}`:lastAiReview.discarded?`${aiInfo.discard} · #${lastAiReview.tileId}`:`${aiInfo.place} +${lastAiReview.scoreGain} · #${lastAiReview.tileId}`}</p><p className="mt-1 text-[10px] text-muted-foreground">{aiInfo.difficulty}: {aiInfo.level[level]}</p></div>}
 
-        <p className="text-center text-xs text-gray-400">
+        <p className="text-center text-xs text-muted-foreground">
           {t.record}: {record.w}W {record.l}L {record.d}D
         </p>
       </div>

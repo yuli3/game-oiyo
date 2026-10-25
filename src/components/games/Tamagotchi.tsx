@@ -1,5 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { Maximize2, Minimize2, Share2, Volume2, VolumeX } from 'lucide-react';
+import { celebrate } from '../../lib/games/celebration';
+import {
+    createShareCardCanvas,
+    copyShareCardToClipboard,
+    downloadShareCard,
+} from '../../lib/games/share-card';
 import {
     type Pet, type MealTime, type ActionName,
     createPet, tick, feed, giveWater, play, clean, heal, petPet, careForEgg,
@@ -246,6 +252,32 @@ const Tamagotchi: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         return () => clearInterval(id);
     }, [pet !== null, showMsg]); // eslint-disable-line react-hooks/exhaustive-deps
 
+    const [shareCardCopied, setShareCardCopied] = useState(false);
+
+    const handleShareCard = useCallback(async () => {
+        if (!pet) return;
+        try {
+            const canvas = createShareCardCanvas({
+                title: pet.name,
+                subtitle: `Tamagotchi · ${pet.stage.toUpperCase()}`,
+                score: `${pet.age} Days`,
+                slug: 'tamagotchi',
+                customStats: [
+                    { label: 'STAGE', value: pet.stage },
+                    { label: 'HEALTH', value: `${pet.health}%` },
+                    { label: 'HAPPINESS', value: `${pet.happiness}%` },
+                ],
+            });
+            const success = await copyShareCardToClipboard(canvas);
+            if (success) {
+                setShareCardCopied(true);
+                setTimeout(() => setShareCardCopied(false), 2000);
+            } else {
+                downloadShareCard(canvas, `tamagotchi-${pet.name}.png`);
+            }
+        } catch {}
+    }, [pet]);
+
     /** Run an action, show its message, and settle the state back after 2s. */
     const act = useCallback((fn: (p: Pet) => { pet: Pet; message: string; ok: boolean }) => {
         setPet((p) => {
@@ -255,6 +287,9 @@ const Tamagotchi: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             if (!muted) {
                 if (ok) tamaSound.action();
                 else tamaSound.warn();
+            }
+            if (ok && next.stage !== p.stage && containerRef.current) {
+                celebrate(containerRef.current, { preset: "stardust" });
             }
             if (ok && next.state !== p.state) {
                 if (actionTimer.current) clearTimeout(actionTimer.current);
@@ -266,7 +301,7 @@ const Tamagotchi: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             }
             return next;
         });
-    }, [muted, showMsg]);
+    }, [muted, showMsg, containerRef]);
 
     const startPet = () => {
         const name = nameInput.trim();
@@ -474,6 +509,18 @@ const Tamagotchi: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 )}
 
                 {/* reset / new pet */}
+                {pet && alive && (
+                    <div className="mt-3 text-center">
+                        <button
+                            type="button"
+                            onClick={handleShareCard}
+                            className="tama-button inline-flex items-center gap-1.5 px-3 py-1 text-[10px] tama-pixel-text"
+                        >
+                            <Share2 className="size-3" />
+                            <span>{shareCardCopied ? "✓ COPIED" : "SHARE CARD"}</span>
+                        </button>
+                    </div>
+                )}
                 {(!alive || confirmReset) ? (
                     <div className="mt-4 text-center space-x-2">
                         {confirmReset && <span className="tama-pixel-text text-[10px] text-muted-foreground">{t.confirmReset}</span>}

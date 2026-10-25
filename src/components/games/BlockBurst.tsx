@@ -668,6 +668,9 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
       if (clearedCount >= 2 || i >= 1) {
         triggerCameraShake(clearedCount >= 3 ? 0.75 : clearedCount >= 2 ? 0.5 : 0.35);
       }
+      if (clearedCount >= 3 && containerRef?.current) {
+        celebrate(containerRef.current, { preset: "sparks", scale: 1.2 });
+      }
       setBanner(!wave.clear.rows.length && !wave.clear.cols.length ? "BOOM" : i === 0 && wave.clear.rows.length && wave.clear.cols.length ? "CROSS" : i >= 2 ? `CHAIN x${i + 1}` : wave.clear.cols.length ? "COLUMN" : "LINE");
       tone(Math.min(980, 360 + i * 90), 0.14);
       await wait(burstMs);

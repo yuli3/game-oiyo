@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Calendar, Check, Maximize2, Minimize2, QrCode, Share2, Volume2, VolumeX } from 'lucide-react';
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { celebrate } from '../../lib/games/celebration';
 import { dayIndex, mulberry32, previousDayKey, todayKey } from '../../lib/games/daily';
 import { getDailyStreak, recordDailyWin, type DailyStreak } from '../../lib/games/records';
 import { generateChallengeQrSvg } from '../../lib/games/challenge-qr';
@@ -241,7 +242,10 @@ const Kurodoko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         const v = validateKurodokoBoard(playableBoard(next), puzzle);
         setValidation(v);
         playTone(v.complete ? 'win' : 'move', muted);
-        if (v.complete) clearKurodokoSaveV1();
+        if (v.complete) {
+            clearKurodokoSaveV1();
+            if (containerRef.current) celebrate(containerRef.current, { preset: "shards" });
+        }
         if (v.complete && mode === 'daily') {
             const today = todayKey();
             setStreak(recordDailyWin(DAILY_GAME_ID, today, previousDayKey(today)));

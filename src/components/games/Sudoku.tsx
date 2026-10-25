@@ -658,6 +658,7 @@ const Sudoku: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
         durationSeconds: finalSec,
         customStats: [
           { label: "TIME", value: fmt(finalSec) },
+          { label: "RANK", value: finalSec < 300 ? "MASTER" : finalSec < 600 ? "EXPERT" : "SOLVER" },
           { label: "CLUES", value: clueCount },
         ],
       });

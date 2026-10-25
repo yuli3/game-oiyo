@@ -184,7 +184,7 @@ const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
       clearFreeCellSaveV2();
       setRecord(recordResult('freecell', 'w'));
       tone(660, 0.18);
-      if (containerRef.current) celebrate(containerRef.current, { preset: "shards" });
+      if (containerRef.current) celebrate(containerRef.current, { preset: "cards" });
     }
   }, [isWon, tone, containerRef]);
   useEffect(() => {
