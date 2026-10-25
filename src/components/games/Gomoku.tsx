@@ -564,7 +564,12 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                             {stone !== null && (
                                 <div className={`relative flex h-[85%] w-[85%] items-center justify-center ${i === freshMove ? 'animate-in zoom-in-75 motion-reduce:transform-none motion-reduce:transition-none motion-reduce:animate-none' : ''}`}>
                                     <img src={stone === 1 ? GOMOKU_SPRITES.black : GOMOKU_SPRITES.white} alt="" draggable={false} className="pointer-events-none h-full w-full object-contain drop-shadow-md" />
-                                    {i === lastMove && <div className="absolute inset-[-3px] rounded-full ring-2 ring-primary" />}
+                                    {i === lastMove && (
+                                        <>
+                                            <div className="absolute inset-[-3px] rounded-full ring-2 ring-primary" />
+                                            <div className="pointer-events-none absolute inset-[-6px] rounded-full border border-primary/60 animate-ping opacity-60 motion-reduce:hidden" />
+                                        </>
+                                    )}
                                     {winningLine && winningLine.includes(i) && (
                                         <div className="absolute inset-[-4px] rounded-full ring-4 ring-warning animate-pulse shadow-md z-10" />
                                     )}

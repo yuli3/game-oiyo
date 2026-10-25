@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Maximize2, Minimize2, Volume2, VolumeX, Share2 } from 'lucide-react';
 import type { Locale } from '../../lib/i18n';
+import { celebrate } from '../../lib/games/celebration';
 import { createShareCardCanvas, copyShareCardToClipboard } from '../../lib/games/share-card';
 import {
     createJanggi, janggiAnalysis, janggiBestMove, janggiMoveReview, janggiTargets, isChoPiece, playJanggi,
@@ -138,6 +139,9 @@ const JanggiBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         setGame(next);
         setLastMove(m);
         setSelected(null);
+        if (next.winner && containerRef.current) {
+            celebrate(containerRef.current, { preset: "stardust" });
+        }
         if (next.winner && mode === 'ai') { const aiWon = (next.winner === 'cho') === AI_IS_CHO; setRecord(recordResult('janggi', aiWon ? 'l' : 'w')); }
     };
 

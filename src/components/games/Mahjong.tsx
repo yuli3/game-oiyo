@@ -1,7 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
+import { Maximize2, Minimize2, Share2, Volume2, VolumeX } from "lucide-react";
 import { GameContainer } from "../ui/game/GamePrimitives";
 import type { Locale } from "../../lib/i18n";
+import { celebrate } from "../../lib/games/celebration";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
 import {
   isWinningHand, rankOf, suitOf, isHonor, shanten, getWaitingTiles,
   type AiLevel,
@@ -184,6 +190,8 @@ const Mahjong: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
     if (saved) { setGame(saved.state); setLevel(saved.level); setPaused(true); }
   }, []);
 
+  const [shareCardCopied, setShareCardCopied] = useState(false);
+
   useEffect(() => {
     if (!game || game.phase !== "over" || recorded.current || game.winner === null) return;
     clearMahjongSave();
@@ -191,7 +199,35 @@ const Mahjong: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
     const result = game.winner === 0 ? "w" : game.winner === -1 ? "d" : "l";
     setRecord(recordResult("mahjong", result));
     playTone("win");
+    if (result === "w" && containerRef.current) {
+      celebrate(containerRef.current, { preset: "tiles" });
+    }
   }, [game, playTone]);
+
+  const handleShareCard = useCallback(async () => {
+    if (!game) return;
+    try {
+      const isWin = game.winner === 0;
+      const canvas = createShareCardCanvas({
+        title: t.title,
+        subtitle: isWin ? `화료 승리 (${game.winType === "tsumo" ? t.tsumo : t.ron})` : "Mahjong Game",
+        score: isWin ? "VICTORY" : "COMPLETE",
+        bestScore: `${record.w}W - ${record.l}L`,
+        slug: "mahjong",
+        customStats: [
+          { label: "RESULT", value: isWin ? t.youWin : game.winner === -1 ? t.exhaust : `${t.ai} ${game.winner}${t.aiWin}` },
+          { label: t.record, value: `${record.w}W ${record.l}L ${record.d}D` },
+        ],
+      });
+      const success = await copyShareCardToClipboard(canvas);
+      if (success) {
+        setShareCardCopied(true);
+        setTimeout(() => setShareCardCopied(false), 2000);
+      } else {
+        downloadShareCard(canvas, `mahjong-${Date.now()}.png`);
+      }
+    } catch {}
+  }, [game, record.d, record.l, record.w, t.ai, t.aiWin, t.exhaust, t.record, t.ron, t.title, t.tsumo, t.youWin]);
 
   useEffect(() => () => { void audioContext.current?.close(); }, []);
 
@@ -359,6 +395,25 @@ const Mahjong: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
 
         {/* Action buttons */}
         <div className="flex justify-center gap-2 min-h-11">
+          {over && (
+            <div className="flex flex-wrap justify-center gap-2">
+              <button
+                type="button"
+                onClick={handleShareCard}
+                className="flex min-h-11 items-center gap-1.5 rounded-full border border-border bg-card px-4 py-2 text-xs font-bold text-foreground shadow-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <Share2 className="h-3.5 w-3.5 text-primary" />
+                <span>{shareCardCopied ? "✓ 복사됨" : "결과 카드 복사"}</span>
+              </button>
+              <button
+                type="button"
+                onClick={newGame}
+                className="min-h-11 px-5 rounded-full bg-primary text-primary-foreground font-black text-xs shadow-md hover:opacity-90"
+              >
+                {t.reset}
+              </button>
+            </div>
+          )}
           {canTsumo && <button type="button" onClick={humanTsumo} className="min-h-11 px-4 rounded-md bg-warning text-warning-foreground font-bold">{t.tsumo}</button>}
           {s.phase === "ron" && (
             <>

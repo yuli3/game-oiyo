@@ -293,24 +293,43 @@ const WaterSort: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     {hint && <p className="mb-5 text-xs font-bold text-primary" role="status">{t.hintMove(hint.from + 1, hint.to + 1)}</p>}
                     {deadEnd && <p className="mb-5 max-w-sm text-center text-xs font-bold text-destructive" role="alert">{t.deadEnd}</p>}
                     <div className="mb-8 grid grid-cols-4 gap-3 sm:grid-cols-8 sm:gap-4 justify-items-center" role="group" aria-label={t.title}>
-                        {tubes.map((tube, i) => <button type="button" key={i} ref={(element) => { tubeRefs.current[i] = element; }} tabIndex={focusedTube === i ? 0 : -1} onFocus={() => setFocusedTube(i)} onKeyDown={(event) => { if (event.key === 'ArrowRight' || event.key === 'ArrowDown') { event.preventDefault(); focusTube(i + 1); } if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') { event.preventDefault(); focusTube(i - 1); } if (event.key === 'Home') { event.preventDefault(); focusTube(0); } if (event.key === 'End') { event.preventDefault(); focusTube(tubes.length - 1); } }} onClick={() => handleTubeClick(i)} aria-pressed={selectedTube === i} aria-label={`${t.tube(i + 1, tube.length, tube.map((color) => String(color + 1)).join('-'))}${selectedTube === i ? `, ${t.selected}` : ''}`} className={`relative h-32 w-12 cursor-pointer overflow-hidden rounded-b-3xl border-4 border-muted sm:h-40 sm:w-14 ${!reducedMotion ? 'transition-all' : ''} focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary focus-visible:ring-offset-4 ${selectedTube === i ? `ring-4 ring-primary ring-offset-4 ${!reducedMotion ? '-translate-y-3' : ''}` : (!reducedMotion ? 'hover:-translate-y-1' : '')}`}>
-                            <span className="absolute inset-0 flex flex-col-reverse">{tube.map((color, idx) => {
-                                const poured = Boolean(lastPour && lastPour.to === i && lastPour.count > 0 && idx >= tube.length - lastPour.count);
-                                return (
-                                    <span
-                                        key={idx}
-                                        style={{ backgroundColor: COLORS[color], backgroundImage: PATTERNS[color], backgroundSize: color === 1 ? '12px 12px' : undefined }}
-                                        className={`h-1/4 w-full relative flex items-center justify-center border-t border-white/25 ${poured && !reducedMotion ? 'oiyo-pour' : ''}`}
-                                    >
-                                        {colorblind !== 'none' && (
-                                            <span className="text-xs font-black text-white drop-shadow-xs select-none">
-                                                {getColorblindSymbol(color)}
+                        {tubes.map((tube, i) => {
+                            const isCompleted = tube.length === 4 && tube.every((c) => c === tube[0]);
+                            return (
+                                <button
+                                    type="button"
+                                    key={i}
+                                    ref={(element) => { tubeRefs.current[i] = element; }}
+                                    tabIndex={focusedTube === i ? 0 : -1}
+                                    onFocus={() => setFocusedTube(i)}
+                                    onKeyDown={(event) => { if (event.key === 'ArrowRight' || event.key === 'ArrowDown') { event.preventDefault(); focusTube(i + 1); } if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') { event.preventDefault(); focusTube(i - 1); } if (event.key === 'Home') { event.preventDefault(); focusTube(0); } if (event.key === 'End') { event.preventDefault(); focusTube(tubes.length - 1); } }}
+                                    onClick={() => handleTubeClick(i)}
+                                    aria-pressed={selectedTube === i}
+                                    aria-label={`${t.tube(i + 1, tube.length, tube.map((color) => String(color + 1)).join('-'))}${selectedTube === i ? `, ${t.selected}` : ''}${isCompleted ? ', 완료' : ''}`}
+                                    className={`relative h-32 w-12 cursor-pointer overflow-hidden rounded-b-3xl border-4 ${isCompleted ? 'border-primary ring-2 ring-primary/40 shadow-md shadow-primary/20' : 'border-muted'} sm:h-40 sm:w-14 ${!reducedMotion ? 'transition-all' : ''} focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary focus-visible:ring-offset-4 ${selectedTube === i ? `ring-4 ring-primary ring-offset-4 ${!reducedMotion ? '-translate-y-3' : ''}` : (!reducedMotion ? 'hover:-translate-y-1' : '')}`}
+                                >
+                                    {isCompleted && (
+                                        <span className="absolute top-1 right-1 z-10 size-2 rounded-full bg-primary animate-pulse" aria-hidden="true" />
+                                    )}
+                                    <span className="absolute inset-0 flex flex-col-reverse">{tube.map((color, idx) => {
+                                        const poured = Boolean(lastPour && lastPour.to === i && lastPour.count > 0 && idx >= tube.length - lastPour.count);
+                                        return (
+                                            <span
+                                                key={idx}
+                                                style={{ backgroundColor: COLORS[color], backgroundImage: PATTERNS[color], backgroundSize: color === 1 ? '12px 12px' : undefined }}
+                                                className={`h-1/4 w-full relative flex items-center justify-center border-t border-white/25 ${idx === tube.length - 1 ? 'rounded-t-sm shadow-xs' : ''} ${poured && !reducedMotion ? 'oiyo-pour' : ''}`}
+                                            >
+                                                {colorblind !== 'none' && (
+                                                    <span className="text-xs font-black text-white drop-shadow-xs select-none">
+                                                        {getColorblindSymbol(color)}
+                                                    </span>
+                                                )}
                                             </span>
-                                        )}
-                                    </span>
-                                );
-                            })}</span>
-                        </button>)}
+                                        );
+                                    })}</span>
+                                </button>
+                            );
+                        })}
                     </div>
                     {isWon && game && <div className={`w-full max-w-md rounded-3xl border border-primary/30 bg-primary/5 p-6 text-center ${!reducedMotion ? 'animate-in zoom-in-95' : ''}`} role="status">
                         <h4 className="mb-4 text-2xl font-black text-primary">{t.win}</h4>

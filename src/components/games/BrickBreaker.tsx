@@ -1,7 +1,13 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { Share2 } from "lucide-react";
 import { celebrate } from "../../lib/games/celebration";
 import type { Locale } from "../../lib/i18n";
 import { getBest, recordBest } from "../../lib/games/records";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
 import {
   clearBrickBreakerSave,
   loadBrickBreakerSave,
@@ -132,6 +138,31 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [liveSummary, setLiveSummary] = useState("");
   const [debrief, setDebrief] = useState<Debrief>({ bricks: 0, maxCombo: 0, nextGoal: 100 });
+  const [shareCardCopied, setShareCardCopied] = useState(false);
+
+  const handleShareCard = useCallback(async () => {
+    try {
+      const canvas = createShareCardCanvas({
+        title: t.title,
+        subtitle: `Level ${level} · ${debrief.bricks} Bricks`,
+        score,
+        bestScore: best,
+        slug: "brick-breaker",
+        customStats: [
+          { label: "LEVEL", value: `${level}` },
+          { label: bb2.maxCombo, value: `${debrief.maxCombo}×` },
+          { label: bb2.bricks, value: `${debrief.bricks}` },
+        ],
+      });
+      const success = await copyShareCardToClipboard(canvas);
+      if (success) {
+        setShareCardCopied(true);
+        setTimeout(() => setShareCardCopied(false), 2000);
+      } else {
+        downloadShareCard(canvas, `brickbreaker-${score}pts.png`);
+      }
+    } catch {}
+  }, [bb2.bricks, bb2.maxCombo, best, debrief.bricks, debrief.maxCombo, level, score, t.title]);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const gsRef = useRef<GS | null>(null);
@@ -659,9 +690,21 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
                 <p className="max-w-xs text-xs leading-relaxed text-white/80">{t.controls}</p>
               </>
             )}
-            <button ref={phase === "over" ? restartRef : undefined} onClick={begin} className="min-h-11 rounded-full bg-violet-500 px-8 py-2.5 font-bold text-white transition-colors hover:bg-violet-600">
-              {phase === "over" ? t.restart : t.tapStart}
-            </button>
+            <div className="flex flex-wrap justify-center gap-2">
+              <button ref={phase === "over" ? restartRef : undefined} onClick={begin} className="min-h-11 rounded-full bg-violet-500 px-8 py-2.5 font-bold text-white transition-colors hover:bg-violet-600">
+                {phase === "over" ? t.restart : t.tapStart}
+              </button>
+              {phase === "over" && (
+                <button
+                  type="button"
+                  onClick={handleShareCard}
+                  className="min-h-11 inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-4 py-2 text-xs font-bold text-foreground shadow-sm hover:bg-muted"
+                >
+                  <Share2 className="size-3.5 text-primary" />
+                  <span>{shareCardCopied ? (locale === "ko" ? "✓ 복사됨" : "✓ Copied") : (locale === "ko" ? "결과 카드 복사" : "Share Card")}</span>
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>

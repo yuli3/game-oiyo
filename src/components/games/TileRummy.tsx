@@ -565,9 +565,15 @@ function freshDraft(state: RummyState): Draft {
   };
 }
 
-function sortTiles(tiles: readonly Tile[]): Tile[] {
+function sortTiles(tiles: readonly Tile[], mode: "color" | "value" = "color"): Tile[] {
   return tiles.slice().sort((a, b) => {
     if (a.kind !== b.kind) return a.kind === "joker" ? 1 : -1;
+    if (mode === "value") {
+      const val = (a.value ?? 0) - (b.value ?? 0);
+      if (val !== 0) return val;
+      const color = (a.color ? COLOR_INDEX[a.color] : 0) - (b.color ? COLOR_INDEX[b.color] : 0);
+      return color || a.id - b.id;
+    }
     const color = (a.color ? COLOR_INDEX[a.color] : 0) - (b.color ? COLOR_INDEX[b.color] : 0);
     if (color !== 0) return color;
     return (a.value ?? 0) - (b.value ?? 0) || a.id - b.id;
@@ -670,6 +676,8 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
   const [fx, setFx] = useState<TableFx | null>(null);
   const [combo, setCombo] = useState(0);
   const [mulliganUsed, setMulliganUsed] = useState(false);
+  const [sortMode, setSortMode] = useState<"color" | "value">("color");
+  const prevOpenedRef = useRef(false);
   const recordedDeal = useRef<number | null>(null);
   const pendingSeed = useRef<number>(1);
   const fxSeq = useRef(0);
@@ -843,6 +851,19 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
   }, [dealId, game, haptics, phase, pushFx, reducedMotion, sfx]);
 
   useEffect(() => {
+    if (!game) return;
+    if (!prevOpenedRef.current && game.opened[0]) {
+      prevOpenedRef.current = true;
+      if (containerRef.current && !reducedMotion) {
+        celebrate(containerRef.current, { preset: "tiles", label: "30+ OPENED!" });
+      }
+    }
+    if (!game.opened[0]) {
+      prevOpenedRef.current = false;
+    }
+  }, [game, reducedMotion]);
+
+  useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       const root = containerRef.current;
       if (!root || !(event.target instanceof Node) || !root.contains(event.target)) return;
@@ -870,8 +891,8 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
   const playing = phase === "play";
   const ourTurn = Boolean(playing && game && game.status === "playing" && game.turn === 0);
   const canAct = ourTurn && !paused;
-  const hand = useMemo(() => (game ? sortTiles(ourTurn || !playing ? unusedHand(game, draft) : game.hands[0]) : []), [draft, game, ourTurn, playing]);
-  const loose = ourTurn ? sortTiles(draft.loose) : [];
+  const hand = useMemo(() => (game ? sortTiles(ourTurn || !playing ? unusedHand(game, draft) : game.hands[0], sortMode) : []), [draft, game, ourTurn, playing, sortMode]);
+  const loose = ourTurn ? sortTiles(draft.loose, sortMode) : [];
   const shownTable = game ? (ourTurn || !playing ? draft.table : game.table) : [];
   const pool = [...hand, ...loose];
   const selectedTiles = selected.flatMap((id) => {
@@ -1258,6 +1279,17 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
               <button type="button" onClick={() => { if (game) { setDraft(freshDraft(game)); setSelected([]); setNotice(null); setCombo(0); sfx("tap"); } }} disabled={!canAct} className={`${CONTROL} border-border bg-card text-foreground`}>{t.clear}</button>
               <button type="button" onClick={draw} disabled={!canAct} className={`${CONTROL} border-border bg-card text-foreground`}>{game?.pool.length === 0 ? t.pass : t.drawTile}</button>
               <button type="button" onClick={play} disabled={!canAct} className={PRIMARY}>{t.play}</button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSortMode((prev) => (prev === "color" ? "value" : "color"));
+                  sfx("tap");
+                }}
+                className={`${CONTROL} border-border bg-card text-foreground`}
+                title={sortMode === "color" ? "777 그룹 정렬" : "789 연속 정렬"}
+              >
+                {sortMode === "color" ? "🎨 789" : "🔢 777"}
+              </button>
               {augment === "mulligan" && !mulliganUsed && game?.turnCount === 0 && (
                 <button type="button" onClick={mulligan} disabled={!canAct} className={`${CONTROL} border-primary bg-primary/10 text-primary`}>{m.mulligan}</button>
               )}

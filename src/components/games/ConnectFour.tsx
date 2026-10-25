@@ -656,7 +656,7 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
                       draggable={false}
                       className={`absolute inset-[5px] object-contain ${reducedMotion ? "transition-opacity" : "transition-all"} ${
                         isFalling && !reducedMotion ? "animate-fall" : ""
-                      } ${winHighlight ? `ring-4 ring-yellow-400 drop-shadow-[0_0_14px_rgba(250,204,21,0.9)] ${reducedMotion ? "" : "scale-110 animate-pulse"} z-20` : isLastMove ? "ring-2 ring-white/80 ring-offset-1 ring-offset-blue-700 z-10" : ""}`}
+                      } ${winHighlight ? `ring-4 ring-primary drop-shadow-[0_0_14px_rgba(250,204,21,0.9)] ${reducedMotion ? "" : "scale-110 animate-pulse"} z-20` : isLastMove ? "ring-2 ring-white/80 ring-offset-1 ring-offset-blue-700 z-10" : ""}`}
                       style={{
                         ...(isFalling && !reducedMotion
                           ? {

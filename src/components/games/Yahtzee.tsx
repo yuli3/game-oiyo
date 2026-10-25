@@ -257,7 +257,7 @@ const Yahtzee: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             const isYahtzeeHit = category === 'yahtzee' && (next.scorecard.lower.yahtzee.score ?? 0) === 50;
             const isExtraYahtzee = next.scorecard.yahtzeeBonusCount > s.scorecard.yahtzeeBonusCount;
             if (isYahtzeeHit && containerRef.current) {
-                celebrate(containerRef.current, { preset: "sparks", label: "YAHTZEE!" });
+                celebrate(containerRef.current, { preset: "coins", label: "YAHTZEE!" });
             } else if (isExtraYahtzee && containerRef.current) {
                 celebrate(containerRef.current, { preset: "stardust", label: "+100 YAHTZEE!" });
             } else if (s.scorecard.upperBonus === 0 && next.scorecard.upperBonus > 0 && containerRef.current) {
@@ -458,7 +458,7 @@ const Yahtzee: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                                     aria-pressed={state.heldDice[i]}
                                     aria-label={`Die ${i + 1}: ${value}${state.heldDice[i] ? ' (held)' : ''}`}
                                     className={`min-h-11 min-w-11 rounded-2xl p-1 transition-all ${
-                                        state.heldDice[i] ? 'ring-2 ring-primary bg-primary/10 -translate-y-1' : ''
+                                        state.heldDice[i] ? 'ring-4 ring-primary bg-primary/20 -translate-y-1.5 shadow-lg shadow-primary/25 scale-105' : 'hover:scale-105'
                                     } disabled:cursor-default`}
                                 >
                                     <Die type="D6" value={value} rolling={rolling && !state.heldDice[i]} size={52} />

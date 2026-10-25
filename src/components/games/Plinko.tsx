@@ -1,12 +1,18 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Matter from 'matter-js';
 import { AnimatePresence, motion } from 'motion/react';
-import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { Maximize2, Minimize2, Share2, Volume2, VolumeX } from 'lucide-react';
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { collisionWith, createPhysicsWorld } from '../../lib/games/physics-world';
 import { getBest, recordBest } from '../../lib/games/records';
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
+import { celebrate } from '../../lib/games/celebration';
+import {
+    createShareCardCanvas,
+    copyShareCardToClipboard,
+    downloadShareCard,
+} from '../../lib/games/share-card';
 import {
     DEFAULT_ROWS,
     MIN_BET,
@@ -47,12 +53,12 @@ const RECORD_KEY = 'plinko';
 // pattern our own gambling-prevention content warns about. Keep it that way:
 // no wager/stake/win/refill vocabulary in any locale.
 const COPY = {
-    ko: { title: "플린코", subtitle: "Physics Drop Game", drop: "떨어뜨리기", dropping: "떨어지는 중...", bet: "투입", balance: "점수", best: "최고 기록", won: "기록!", notEnough: "점수 부족 — 초기화하세요" },
-    en: { title: "Plinko", subtitle: "Physics Drop Game", drop: "Drop", dropping: "Dropping...", bet: "Input", balance: "Score", best: "Best score", won: "Scored!", notEnough: "Not enough score — reset to start over" },
-    ja: { title: "プリンコ", subtitle: "Physics Drop Game", drop: "落とす", dropping: "落下中...", bet: "投入", balance: "スコア", best: "最高記録", won: "記録！", notEnough: "スコア不足 — リセットしてください" },
-    zh: { title: "弹珠机", subtitle: "Physics Drop Game", drop: "投放", dropping: "掉落中...", bet: "投入", balance: "分数", best: "最高记录", won: "记录！", notEnough: "分数不足 — 请重置" },
-    fr: { title: "Plinko", subtitle: "Physics Drop Game", drop: "Lâcher", dropping: "Chute...", bet: "Apport", balance: "Score", best: "Meilleur score", won: "Marqué !", notEnough: "Score insuffisant — réinitialisez" },
-    es: { title: "Plinko", subtitle: "Physics Drop Game", drop: "Soltar", dropping: "Cayendo...", bet: "Aporte", balance: "Puntuación", best: "Mejor puntuación", won: "¡Anotado!", notEnough: "Puntuación insuficiente — reinicia" },
+    ko: { title: "플린코", subtitle: "Physics Drop Game", drop: "떨어뜨리기", dropping: "떨어지는 중...", bet: "투입", balance: "점수", best: "최고 기록", won: "기록!", notEnough: "점수 부족 — 초기화하세요", shareCard: "결과 카드 복사", shareCopied: "✓ 카드 복사됨" },
+    en: { title: "Plinko", subtitle: "Physics Drop Game", drop: "Drop", dropping: "Dropping...", bet: "Input", balance: "Score", best: "Best score", won: "Scored!", notEnough: "Not enough score — reset to start over", shareCard: "Share Card", shareCopied: "✓ Card Copied" },
+    ja: { title: "プリンコ", subtitle: "Physics Drop Game", drop: "落とす", dropping: "落下中...", bet: "投入", balance: "スコア", best: "最高記録", won: "記録！", notEnough: "スコア不足 — リセットしてください", shareCard: "結果カード共有", shareCopied: "✓ コピー完了" },
+    zh: { title: "弹珠机", subtitle: "Physics Drop Game", drop: "投放", dropping: "掉落中...", bet: "投入", balance: "分数", best: "最高记录", won: "记录！", notEnough: "分数不足 — 请重置", shareCard: "分享战绩卡", shareCopied: "✓ 已复制卡片" },
+    fr: { title: "Plinko", subtitle: "Physics Drop Game", drop: "Lâcher", dropping: "Chute...", bet: "Apport", balance: "Score", best: "Meilleur score", won: "Marqué !", notEnough: "Score insuffisant — réinitialisez", shareCard: "Partager", shareCopied: "✓ Copié" },
+    es: { title: "Plinko", subtitle: "Physics Drop Game", drop: "Soltar", dropping: "Cayendo...", bet: "Aporte", balance: "Puntuación", best: "Mejor puntuación", won: "¡Anotado!", notEnough: "Puntuación insuficiente — reinicia", shareCard: "Compartir", shareCopied: "✓ Copiado" },
 } as const;
 
 interface DropResult { slot: number; multiplier: number; score: number }
@@ -119,6 +125,31 @@ const Plinko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [lastResult, setLastResult] = useState<DropResult | null>(null);
     const [dropId, setDropId] = useState(0);
     const [best, setBest] = useState<number | null>(null);
+    const [shareCardCopied, setShareCardCopied] = useState(false);
+
+    const handleShareCard = useCallback(async () => {
+        if (!lastResult) return;
+        try {
+            const canvas = createShareCardCanvas({
+                title: t.title,
+                subtitle: `${lastResult.multiplier}× MULTIPLIER`,
+                score: lastResult.score,
+                bestScore: best ?? undefined,
+                slug: 'plinko',
+                customStats: [
+                    { label: 'MULTIPLIER', value: `${lastResult.multiplier}×` },
+                    { label: t.balance, value: `${balance}` },
+                ],
+            });
+            const copied = await copyShareCardToClipboard(canvas);
+            if (copied) {
+                setShareCardCopied(true);
+                setTimeout(() => setShareCardCopied(false), 2000);
+            } else {
+                downloadShareCard(canvas, `plinko-${lastResult.score}pts.png`);
+            }
+        } catch {}
+    }, [balance, best, lastResult, t.balance, t.title]);
 
     useEffect(() => {
         const b = getBest(RECORD_KEY);
@@ -158,7 +189,10 @@ const Plinko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 const ball = ballRef.current;
                 if (!ball || settledRef.current) return;
                 if (collisionWith(pairs, ball, 'peg')) {
-                    playToneRef.current(500 + Math.random() * 250, 0.035, 'triangle');
+                    const pentatonic = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50];
+                    const pitchIdx = Math.floor((ball.position.x / BOARD_W) * pentatonic.length);
+                    const freq = pentatonic[Math.min(pentatonic.length - 1, Math.max(0, pitchIdx))] ?? 659.25;
+                    playToneRef.current(freq, 0.035, 'triangle');
                 }
                 if (!collisionWith(pairs, ball, 'floor')) return;
                 settledRef.current = true;
@@ -172,6 +206,9 @@ const Plinko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 const saved = recordBest(RECORD_KEY, score, 'score');
                 setBest(saved.value);
                 playToneRef.current(multiplier >= 2 ? 880 : 520, 0.15, 'sine');
+                if (multiplier >= 5 && containerRef.current) {
+                    celebrate(containerRef.current, { preset: "coins" });
+                }
                 setTimeout(() => {
                     if (ballRef.current === ball) {
                         Matter.Composite.remove(world, ball);
@@ -381,10 +418,20 @@ const Plinko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0 }}
                                 transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.25 }}
-                                className="text-center"
+                                className="flex flex-col items-center gap-2 text-center"
                             >
-                                <p className="text-xs font-black text-muted-foreground uppercase">{t.won}</p>
-                                <p className="text-2xl font-black text-primary">{lastResult.multiplier}× · +{lastResult.score}</p>
+                                <div>
+                                    <p className="text-xs font-black text-muted-foreground uppercase">{t.won}</p>
+                                    <p className="text-2xl font-black text-primary">{lastResult.multiplier}× · +{lastResult.score}</p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handleShareCard}
+                                    className="flex min-h-11 items-center gap-1.5 rounded-full border border-border bg-card px-4 py-2 text-xs font-bold text-foreground shadow-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                                >
+                                    <Share2 className="h-3.5 w-3.5 text-primary" />
+                                    <span>{shareCardCopied ? t.shareCopied : t.shareCard}</span>
+                                </button>
                             </motion.div>
                         )}
                     </AnimatePresence>

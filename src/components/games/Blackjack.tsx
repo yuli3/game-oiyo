@@ -152,7 +152,11 @@ const Blackjack = ({ locale = "ko" }: { locale?: string }) => {
     });
 
     const dealerScore = evaluateBlackjackHand(game.dealer);
-    if (game.outcome === "win" && dealerScore.total > 21) {
+    const playerScore = evaluateBlackjackHand(game.player);
+    const isNatural = game.outcome === "win" && playerScore.total === 21 && game.player.length === 2;
+    if (isNatural) {
+      if (containerRef.current) celebrate(containerRef.current, { preset: "coins" });
+    } else if (game.outcome === "win" && dealerScore.total > 21) {
       if (containerRef.current) celebrate(containerRef.current, { preset: "shards" });
     }
   }, [activeRoundBet, game, tone]);
@@ -193,6 +197,7 @@ const Blackjack = ({ locale = "ko" }: { locale?: string }) => {
   }, [double, hit, stand, togglePortal]);
 
   const playerScore = evaluateBlackjackHand(game.player), dealerScore = evaluateBlackjackHand(game.dealer), reveal = game.status === "result";
+  const isNatural = game.outcome === "win" && playerScore.total === 21 && game.player.length === 2;
   const advice = game.status === "playing" ? blackjackAdvice(game.player, game.dealer[0]) : null;
   const resultReason = blackjackResultReason(game);
   const actionTrail = game.actions.map(action => action === "hit" ? strategy.hit : action === "double" ? (locale === "ko" ? "더블" : "Double") : strategy.stand).join(" → ");
@@ -324,11 +329,14 @@ const Blackjack = ({ locale = "ko" }: { locale?: string }) => {
 
           <section className="text-center" aria-label={t.player}>
             <div className="mb-3 flex min-h-28 justify-center -space-x-9">
-              {game.player.map((card, index) => (
-                <span key={`${card.suit}-${card.value}-${index}`} className={!reducedMotion ? "oiyo-card-deal" : undefined} style={!reducedMotion ? { animationDelay: `${index * 70}ms` } : undefined}>
-                  <PlayingCard suit={card.suit} value={card.value} className="border-2 border-primary shadow-md" />
-                </span>
-              ))}
+              {game.player.map((card, index) => {
+                const isNaturalCard = isNatural && !reducedMotion;
+                return (
+                  <span key={`${card.suit}-${card.value}-${index}`} className={`${!reducedMotion ? "oiyo-card-deal" : ""} ${isNaturalCard ? "ring-4 ring-primary rounded-xl shadow-xl shadow-primary/30 animate-pulse z-10" : ""}`} style={!reducedMotion ? { animationDelay: `${index * 70}ms` } : undefined}>
+                    <PlayingCard suit={card.suit} value={card.value} className="border-2 border-primary shadow-md" />
+                  </span>
+                );
+              })}
             </div>
             <p className="mb-4 text-xs font-black uppercase tracking-widest text-primary">
               {t.player} · {t.score} {playerScore.total} · {playerScore.soft ? t.soft : t.hard}
