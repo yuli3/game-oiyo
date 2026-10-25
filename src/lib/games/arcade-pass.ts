@@ -496,6 +496,20 @@ export const MISSION_CATALOG: Array<{
     goal: 500,
     xpReward: 50,
   },
+  {
+    id: "minimetro-deliver-20",
+    gameSlug: "mini-metro",
+    title: {
+      ko: "미니 메트로에서 승객 20명 수송 완료",
+      en: "Transport 20 passengers in Mini Metro",
+      ja: "ミニメトロで乗客20名を輸送",
+      zh: "在迷你地铁中运送20名乘客",
+      fr: "Transporter 20 passagers dans Mini Metro",
+      es: "Transporta 20 pasajeros en Mini Metro",
+    },
+    goal: 20,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {

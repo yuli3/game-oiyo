@@ -4572,4 +4572,60 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "mini-metro": {
+    origin: {
+      ko: "미니 메트로(Mini Metro Web)는 인디 게임 명작 Dinosaur Polo Club의 미니멀 지하철 시뮬레이터에서 영감을 받아 제작된 웹 기반 교통망 설계 시뮬레이션입니다. 급성장하는 가상 도시 속에서 기하학적 도형으로 표현된 역과 승객들을 연결하여 과밀로 인한 도시 마비를 방지하는 지적인 시뮬레이터입니다.",
+      en: "Mini Metro Web is a minimalist transit strategy simulation inspired by Dinosaur Polo Club's masterpiece. Connect geometric stations across an expanding procedural city and route passengers efficiently to prevent overcrowding collapse.",
+      ja: "ミニメトロ（Mini Metro Web）は、Dinosaur Polo Clubの名作ミニマル地下鉄シミュレーターに着想を得たWeb交通網設計ゲームです。幾何学模様で表現された駅と乗客を路線でつなぎ、都市の過密崩壊を防ぎます。",
+      zh: "迷你地铁（Mini Metro Web）是一款受 Dinosaur Polo Club 经典极简地铁模拟器启发的网页交通规划策略游戏。在不断扩张的程序化都市中用不同颜色的线路连接几何车站，疏导乘客防止站点瘫痪。",
+      fr: "Mini Metro Web est une simulation de stratégie de transport minimaliste inspirée du chef-d'œuvre de Dinosaur Polo Club. Reliez des stations géométriques dans une ville en expansion pour éviter la saturation du réseau.",
+      es: "Mini Metro Web es una simulación de estrategia de transporte minimalista inspirada en la obra maestra de Dinosaur Polo Club. Conecta estaciones geométricas en una ciudad en expansión y evita el colapso por aglomeración.",
+    },
+    how: {
+      ko: "상단에서 편집할 노선(1호선 빨강, 2호선 파랑, 3호선 초록)을 선택한 뒤, 지도 상의 역들을 차례로 클릭하여 노선을 연결합니다. 열차는 연결된 역 사이를 자동으로 왕복하며 대기 중인 승객을 태우고 해당 역 도형과 일치하는 승객을 하차시킵니다. 한 역에 승객이 6명 이상 누적되면 경고 타이머가 돌며, 15초 내에 해소하지 못하면 게임이 종료됩니다.",
+      en: "Select a line (Red, Blue, or Green) from the toolbar, then click stations sequentially to connect them. Trains shuttle automatically along connected routes, picking up and dropping off passengers matching station shapes. If 6+ passengers accumulate at any station, an overcrowd timer begins; clear it before 15 seconds to survive.",
+      ja: "上部で編集する路線（1号線赤、2号線青、3号線緑）を選び、地図上の駅を順にタップして路線をつなぎます。列車は路線を自動で往復し、形が一致する乗客を降ろします。1つの駅に乗客が6人以上溜まるとタイマーが作動し、15秒以内に解消できないとゲームオーバーです。",
+      zh: "在顶部选择当前编辑线路（红、蓝、绿），依次点击地图上的车站进行线路连接。列车在车站之间自动往返，搭载乘客并在与乘客形状相符的车站放下。任一车站积压6名以上乘客时将启动过载倒计时，必须在15秒内缓解以避免游戏失败。",
+      fr: "Sélectionnez une ligne dans la barre d'outils puis cliquez sur les stations pour les relier. Les rames circulent automatiquement. Si 6 passagers ou plus s'accumulent dans une gare, une minuterie démarre : désengorgez-la avant 15 secondes.",
+      es: "Elige una línea en la barra de herramientas y pulsa las estaciones para unirlas. Los trenes viajan automáticamente. Si se juntan 6 o más pasajeros en una parada, comienza una cuenta atrás: descongéstionala antes de 15 segundos.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "특정 역에 승객이 너무 많이 몰려 위험할 때 어떻게 대처하나요?",
+          en: "What should I do when a station becomes dangerously overcrowded?",
+          ja: "特定の駅に乗客が集中して危険なときはどうすればいいですか？",
+          zh: "当某个车站乘客严重积压濒临瘫痪时该如何应对？",
+          fr: "Comment réagir lorsqu'une station est dangereusement saturée ?",
+          es: "¿Qué hago cuando una estación está saturada y a punto de colapsar?",
+        },
+        a: {
+          ko: "일시정지 버튼을 누른 뒤, 과밀된 역을 지나는 새 노선을 즉시 신설하거나 기존 노선을 '초기화'하여 과밀 역과 승객들이 원하는 목적지 역을 최단 직선으로 직결하세요. 서로 다른 도형의 역들을 번갈아 잇는 교차 노선을 설계하는 것이 체류 승객을 줄이는 지름길입니다.",
+          en: "Pause the game, then immediately clear an unused line and route it directly through the crowded station towards matching destination shapes. Alternating different shapes along a single line (Circle -> Triangle -> Square) ensures rapid passenger turnover.",
+          ja: "一時停止ボタンを押し、過密駅を通る新しい路線を敷くか、不要な路線をリセットして目的地へ直結させましょう。同じ路線に異なる図形の駅を交互に配置する（丸→三角→四角）と、乗客の回転率が上がりスムーズに解消できます。",
+          zh: "先点击暂停游戏，随后清空某条闲置线路并将其直接穿过过载车站连接至目标车站。在同一条线路上交替串联不同几何形状的车站（圆形→三角形→方形）能够最大化列车周转效率。",
+          fr: "Mettez le jeu en pause, effacez une ligne libre et reliez directement la gare saturée aux formes demandées. Alternez les formes sur une même ligne pour accélérer la rotation.",
+          es: "Pausa el juego, reinicia una línea libre y conecta directamente la estación saturada con los destinos requeridos. Alternar formas distintas en la misma línea acelera el flujo de pasajeros.",
+        },
+      },
+      {
+        q: {
+          ko: "별(Star) 역은 왜 드물게 등장하며 어떻게 관리해야 하나요?",
+          en: "Why is the Star station so rare and how should I manage it?",
+          ja: "星（Star）の駅はなぜ稀で、どのように管理すべきですか？",
+          zh: "为什么星形车站非常罕见，应该如何规划？",
+          fr: "Pourquoi la station Étoile est-elle rare et comment la gérer ?",
+          es: "¿Por qué la estación Estrella es tan rara y cómo se gestiona?",
+        },
+        a: {
+          ko: "별 모양 역은 도시 전체에서 1개만 스폰되는 특수 환승 랜드마크입니다. 모든 일반 역에서 별 모양을 원하는 승객들이 지속적으로 발생하므로, 가급적 2개 이상의 노선이 교차하는 중앙 환승 허브로 지정하여 도시 전역의 승객들이 쉽게 도달할 수 있도록 연결해야 합니다.",
+          en: "The Star station is a rare central landmark that spawns once per city. Because passengers from across the entire map want to reach it, treat the Star station as a major transfer hub served by multiple intersecting lines.",
+          ja: "星型の駅はマップ全体に1つしか現れない希少なランドマーク駅です。すべての駅から星を目的地とする乗客が発生するため、複数の路線が乗り入れるターミナル乗換駅として接続するのがベストです。",
+          zh: "星形车站是全城仅有一座的稀有枢纽地标。全地图所有普通车站都会源源不断产生前往星形车站的乘客，因此务必将其作为多条线路交叉换乘的核心交通枢纽进行规划。",
+          fr: "La station Étoile est un repère unique dans la ville. Les passagers de tout le réseau veulent s'y rendre : faites-en un nœud de correspondance desservi par plusieurs lignes.",
+          es: "La estación Estrella es un hito único en la ciudad. Pasajeros de todo el mapa quieren ir allí: conviértela en un intercambiador central conectado por varias líneas.",
+        },
+      },
+    ],
+  },
 };
