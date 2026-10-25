@@ -468,6 +468,20 @@ export const MISSION_CATALOG: Array<{
     goal: 2,
     xpReward: 50,
   },
+  {
+    id: "wordwaffle-solve",
+    gameSlug: "word-waffle",
+    title: {
+      ko: "단어 와플에서 와플 격자 1회 풀기",
+      en: "Solve 1 waffle grid in Word Waffle",
+      ja: "ワードワッフルでワッフル盤面を1回完成",
+      zh: "在文字华夫饼中解开1次华夫格子",
+      fr: "Résoudre 1 grille dans Word Waffle",
+      es: "Resuelve 1 cuadrícula en Word Waffle",
+    },
+    goal: 1,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {

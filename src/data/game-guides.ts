@@ -4460,4 +4460,60 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "word-waffle": {
+    origin: {
+      ko: "단어 와플(Word Waffle)은 전 세계 퍼즐 마니아들에게 사랑받는 Waffle Game에서 영감을 받은 5×5 격자 글자 교환 퍼즐입니다. 가로 3줄과 세로 3줄이 교차하는 와플 보드 위에 섞여 있는 글자들을 15번의 기회 안에 교환하여 6개의 숨겨진 단어를 모두 밝혀내는 고품질 데일리 싱크탱크입니다.",
+      en: "Word Waffle is a 5x5 grid letter-swapping word puzzle inspired by Waffle Game. Swap shuffled letters across intersecting horizontal and vertical words to solve 6 target words within a 15-swap budget. A daily workout for your vocabulary and deductive logic.",
+      ja: "ワードワッフル（Word Waffle）は、世界中で人気のWaffle Gameに着想を得た5×5グリッドの文字入れ替えパズルです。縦横3つずつ交差するワッフル盤面上の文字を15手以内で正しい位置にスワップし、隠された6つの言葉を解き明かします。",
+      zh: "文字华夫饼（Word Waffle）是一款受 Waffle Game 启发的5×5棋盘字母置换益智游戏。在交错的3横3竖网格中，通过最多15次字母对调，揭开全部6个神秘词汇，体验兼具词汇积累与演绎推理的纯粹乐趣。",
+      fr: "Word Waffle est un jeu de lettres sur grille 5x5 inspiré de Waffle Game. Échangez les lettres mélangées pour reconstituer 6 mots croisés en 15 coups maximum. Un entraînement cérébral quotidien idéal.",
+      es: "Word Waffle es un puzle de palabras en cuadrícula 5x5 inspirado en Waffle Game. Intercambia letras desordenadas para formar 6 palabras cruzadas en un límite de 15 movimientos.",
+    },
+    how: {
+      ko: "옮기고 싶은 글자를 누르고 교환할 대상 글자를 누르면 서로 자리가 바뀝니다. 제자리를 찾은 글자는 녹색으로 변하며 자물쇠(🔒)와 함께 고정되어 더 이상 움직이지 않습니다. 노란색은 가로 또는 세로 단어에 포함되지만 자리가 틀렸음을 뜻합니다. 15회 스왑 이내에 21개 글자를 모두 녹색으로 맞추세요.",
+      en: "Tap a letter to select it, then tap another non-locked letter to swap their positions. Correct letters turn green and lock in place (🔒). Yellow letters belong to that row or column but in a different position. Turn all 21 letters green within 15 swaps to win.",
+      ja: "入れ替えたい文字をタップし、別の固定されていない文字をタップして位置を交換します。正解位置の文字は緑色に変わりロック（🔒）されます。黄色は行または列に含まれるが位置が違うことを示します。15手以内に全21文字を緑に揃えてください。",
+      zh: "点击待换字母再点击另一个未锁定的字母即可对调位置。归位的字母变为绿色并锁定（🔒）。黄色代表该字母属于所在行或列但位置有误。在15步以内将21个字母全部变为绿色即可获胜。",
+      fr: "Touchez une lettre puis une autre pour les échanger. Les lettres bien placées deviennent vertes et se verrouillent (🔒). Les jaunes sont dans la ligne ou colonne mais mal positionnées. Remplissez la gaufre en vert en 15 coups max.",
+      es: "Toca una letra y luego otra libre para intercambiarlas. Las letras correctas se tornan verdes y se bloquean (🔒). Las amarillas pertenecen a esa fila o columna en otra posición. Pinta toda la cuadrícula de verde en 15 movimientos.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "노란색 글자는 무슨 의미인가요?",
+          en: "What does a yellow tile mean?",
+          ja: "黄色のタイルは何を意味しますか？",
+          zh: "黄色格子代表什么意思？",
+          fr: "Que signifie une tuile jaune ?",
+          es: "¿Qué significa una casilla amarilla?",
+        },
+        a: {
+          ko: "노란색 글자는 해당 칸이 속한 가로 단어나 세로 단어 중 최소 하나에 포함되는 글자이지만, 현재 칸의 위치가 아니라는 뜻입니다. 교차점(모서리 및 중심)에 위치한 노란색 글자는 가로줄과 세로줄 양쪽 모두를 고려해야 합니다.",
+          en: "A yellow letter means that letter belongs in that specific row or column word, but is currently in the wrong cell. Yellow letters on intersection corners/centers could belong to either the horizontal or vertical word.",
+          ja: "黄色は、そのマスが属する行または列の単語に含まれるものの、現在置かれている位置ではないことを意味します。交差点のマスにある黄色文字は、縦横両方の可能性を考慮して推理しましょう。",
+          zh: "黄色代表该字母属于它所在的那一行或那一列词语，但当前所处的位置不对。若黄色字母恰好位于十字交叉口，则需要综合考虑横排与竖列双重线索。",
+          fr: "Une tuile jaune signifie que la lettre appartient au mot horizontal ou vertical de cette case, mais à un autre emplacement. Sur les intersections, elle peut appartenir à l'un ou l'autre.",
+          es: "Una casilla amarilla indica que la letra está en la fila o columna de esa posición, pero en otro lugar. En las intersecciones puede pertenecer a la palabra horizontal o a la vertical.",
+        },
+      },
+      {
+        q: {
+          ko: "별 5개 만점을 받으려면 어떻게 해야 하나요?",
+          en: "How do I earn a 5-star rating?",
+          ja: "星5つの満点を獲得するには？",
+          zh: "如何达成5颗星的完美通关？",
+          fr: "Comment obtenir la note maximale de 5 étoiles ?",
+          es: "¿Cómo se consiguen las 5 estrellas?",
+        },
+        a: {
+          ko: "남은 스왑 횟수가 10회 이상(즉 5번 이하의 교환만으로 클리어)이면 최고 등급인 별 5개를 획득합니다. 5회 이상 남기면 별 4개, 1회 이상 남기면 별 3개가 주어집니다. 이미 녹색이 된 글자와 교차점의 단서를 먼저 분석해 최소 이동 경로를 찾는 것이 비결입니다.",
+          en: "Solving the waffle with 10 or more swaps remaining (5 swaps or fewer used) earns a 5-star rating. Keeping 5+ swaps awards 4 stars. Analyze intersecting yellow clues first to find optimal two-for-one swap pairs.",
+          ja: "10手以上残して（5手以内で）クリアすると最高ランクの星5つを獲得できます。5手以上残しで星4つ、1手以上残しで星3つとなります。交差点の文字を分析し、一手で2文字が同時に揃う手を見つけるのが秘訣です。",
+          zh: "剩余10步以上（即仅耗费5次以内对调完成）即可斩获5星满分评价。剩余5步以上获4星。优先推敲交叉点字母并寻找一次对调同时归位两个字母的黄金交换是高星诀窍。",
+          fr: "Résoudre la grille avec 10 coups restants ou plus (5 coups max utilisés) vous accorde 5 étoiles. Analysez les indices aux carrefours pour réaliser des échanges doubles gagnants.",
+          es: "Resolver el puzle con 10 o más movimientos restantes (5 o menos usados) otorga 5 estrellas. Analiza las pistas de las intersecciones para lograr intercambios dobles.",
+        },
+      },
+    ],
+  },
 };

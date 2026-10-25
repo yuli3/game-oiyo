@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import WordWaffle from "../../components/games/WordWaffle";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "단어 와플 — 와플 격자 6단어 스왑 데일리 퍼즐",
+    description: "5x5 와플 격자 위에 놓인 글자들을 15번의 기회 안에 교환하여 가로 3개, 세로 3개 총 6개의 5글자 단어를 완성하는 데일리 싱크탱크 퍼즐.",
+  },
+  en: {
+    title: "Word Waffle — 6-Word Grid Swap Daily Puzzle",
+    description: "Swap letters on a 5x5 waffle grid to solve 6 intersecting words in 15 swaps or fewer. A fresh daily thinking challenge.",
+  },
+  ja: {
+    title: "ワードワッフル — ワッフル型文字スワップ デイリーパズル",
+    description: "5x5のワッフル状グリッドで文字を入れ替え、15手以内に縦横6つの単語を完成させる知的思考パズル。",
+  },
+  zh: {
+    title: "文字华夫饼 — 华夫格子字母互换每日谜题",
+    description: "在5x5华夫网格上交换字母，在15步以内揭开交叉的6个5字词语，锻炼深度联想与推理思维。",
+  },
+  fr: {
+    title: "Word Waffle — Puzzle quotidien de swap sur grille gaufre",
+    description: "Échangez les lettres sur une grille 5x5 pour retrouver 6 mots croisés en 15 coups ou moins. Un défi quotidien stimulant.",
+  },
+  es: {
+    title: "Word Waffle — Puzle diario de intercambio en cuadrícula",
+    description: "Intercambia letras en una cuadrícula de gofre 5x5 para descifrar 6 palabras en 15 movimientos o menos. Reto diario.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-4xl px-4 py-8">
+    <WordWaffle client:load locale={locale} />
+    <GameGuide slug="word-waffle" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>
