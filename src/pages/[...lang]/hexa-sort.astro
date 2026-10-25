@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import HexaSort from "../../components/games/HexaSort";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "헥사 소트 3D — 3D 육각 타일 스택 정렬 & 머지 퍼즐",
+    description: "육각형 보드 위에 다채로운 타일 스택을 쌓고 정렬하여 10연쇄 클리어를 달성하는 3D ASMR 캐주얼 퍼즐 게임.",
+  },
+  en: {
+    title: "Hexa Sort 3D — 3D Hexagonal Tile Stacking & Merge Puzzle",
+    description: "Stack, sort, and merge colorful hexagon tiles on a 3D isometric grid to trigger satisfying 10-stack chain clears.",
+  },
+  ja: {
+    title: "ヘキサソート 3D — 3D六角タイル整理＆マージパズル",
+    description: "六角形グリッド上に色鮮やかなタイルを重ねて整理し、10枚連鎖消去を達成する3D ASMRカジュアルパズル。",
+  },
+  zh: {
+    title: "六角排序 3D — 3D六边形彩色瓷砖堆叠消除益智",
+    description: "在立体六边形棋盘上堆叠并归类相同颜色的瓷砖，达成10连消除触发令人心旷神怡的链式连锁。",
+  },
+  fr: {
+    title: "Hexa Sort 3D — Puzzle 3D d'empilage et fusion hexagonale",
+    description: "Empilez, triez et fusionnez des tuiles hexagonales colorées sur une grille 3D pour déclencher des éliminations de piles de 10.",
+  },
+  es: {
+    title: "Hexa Sort 3D — Puzle 3D de apilamiento y fusión hexagonal",
+    description: "Apila, ordena y fusiona fichas hexagonales de colores en una cuadrícula 3D isométrica para lograr combos de 10 fichas.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-4xl px-4 py-8">
+    <HexaSort client:load locale={locale} />
+    <GameGuide slug="hexa-sort" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>

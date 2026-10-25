@@ -440,6 +440,20 @@ export const MISSION_CATALOG: Array<{
     goal: 1,
     xpReward: 50,
   },
+  {
+    id: "hexasort-clear",
+    gameSlug: "hexa-sort",
+    title: {
+      ko: "헥사 소트 3D에서 타일 스택 1회 이상 클리어",
+      en: "Clear at least 1 tile stack in Hexa Sort 3D",
+      ja: "ヘキサソート 3Dでタイル束を1回以上消去",
+      zh: "在六角排序 3D中至少完成1次10连瓷砖消除",
+      fr: "Éliminer au moins 1 pile de tuiles dans Hexa Sort 3D",
+      es: "Elimina al menos 1 pila de fichas en Hexa Sort 3D",
+    },
+    goal: 1,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {

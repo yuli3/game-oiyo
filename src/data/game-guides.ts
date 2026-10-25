@@ -4348,4 +4348,60 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "hexa-sort": {
+    origin: {
+      ko: "헥사 소트 3D(Hexa Sort 3D)는 글로벌 앱스토어 1위를 기록한 Lion Studios의 육각 타일 머지 퍼즐 메커니즘을 순수 웹으로 구현한 3D 캐주얼 퍼즐입니다. 육각 입체 슬롯 위에 타일을 쌓고 인접 색상을 자동으로 끌어당겨 10연쇄 클리어를 만드는 통쾌한 쾌감과 ASMR 사운드를 무설치로 선사합니다.",
+      en: "Hexa Sort 3D brings the global hit hexagonal tile-sorting mechanic to the open web. Stack, sort, and cascade colorful tiles across a 3D isometric grid, pulling matching colors from adjacent towers to trigger satisfying 10-stack pops with rich ASMR audio.",
+      ja: "ヘキサソート 3D（Hexa Sort 3D）は、世界的大ヒットを記録した六角タイル整理＆合体パズルをブラウザ完結型で楽しめる3Dカジュアルパズルです。立体グリッド上にタイルを積み、隣接する同色タイルを引き寄せて10枚連鎖消去を決める爽快感を味わえます。",
+      zh: "六角排序 3D（Hexa Sort 3D）将风靡全球的立体六边形拼图整理消除玩法带入网页端。在3D等距棋盘上放置瓷砖堆，相邻的同色瓷砖会自动吸附飞跃，集齐10张同色瞬间引爆令人极度舒适的消除连锁。",
+      fr: "Hexa Sort 3D adapte le succès mondial du tri de tuiles hexagonales sur le web. Empilez, classez et fusionnez des tuiles colorées en 3D isométrique pour déclencher des éliminations de 10 tuiles avec des effets sonores ASMR apaisants.",
+      es: "Hexa Sort 3D traslada el exitoso puzle de ordenación de fichas hexagonales al navegador. Apila, agrupa y fusiona fichas en una cuadrícula 3D isométrica para conseguir combos de 10 fichas con un diseño ASMR inmersivo.",
+    },
+    how: {
+      ko: "하단 트레이에 있는 3개의 타일 묶음 중 하나를 터치한 뒤 보드의 슬롯을 누르면 타일이 배치됩니다. 인접한 슬롯의 맨 위 타일 색상이 서로 같으면 자동으로 타일이 날아와 합쳐집니다. 한 슬롯에 같은 색상 10장이 모이면 연쇄 폭발하며 목표 수량을 달성하면 다음 레벨로 승급합니다.",
+      en: "Select a tile stack from the bottom dock and tap a board slot to place it. If adjacent stacks share the same top color, tiles fly smoothly to merge together. Stacking 10 of the same color triggers a clear. Reach the target clears to unlock the next level.",
+      ja: "下部トレイの3つのタイル束から1つを選び、盤面の六角スロットをタップして配置します。隣接するスロットの一番上の色が一致すると自動でタイルが移動して合体します。同色10枚が集まると連鎖消去され、目標数を達成すると次のレベルに進みます。",
+      zh: "点击底部的待放瓷砖堆，再点击棋盘格子即可安放。若相邻格子最顶端瓷砖颜色相同，相同瓷砖会自动飞入合并。当单个格子集齐10张同色瓷砖时自动消除，达成关卡目标即可过关晋级。",
+      fr: "Sélectionnez une pile en bas et touchez un emplacement pour la poser. Si des piles voisines partagent la même couleur supérieure, les tuiles fusionnent automatiquement. Réunissez 10 tuiles identiques pour les éliminer et progresser.",
+      es: "Toca una pila del muelle inferior y luego una casilla del tablero para colocarla. Si las casillas adyacentes comparten el color superior, las fichas volarán para unirse. Reúne 10 del mismo color para eliminarlas y superar el nivel.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "10장이 한 번에 모여야만 클리어되나요?",
+          en: "Does a stack require exactly 10 tiles to clear?",
+          ja: "10枚集まらないと消去されませんか？",
+          zh: "必须集齐10张才能消除吗？",
+          fr: "Faut-il obligatoirement 10 tuiles pour une élimination ?",
+          es: "¿Se necesitan exactamente 10 fichas para eliminar?",
+        },
+        a: {
+          ko: "네! 한 슬롯의 최상단부터 연속된 동일 색상 타일이 10장 이상 쌓이면 즉시 10장이 제거되며 콤보 보너스 점수와 함께 화면 흔들림 효과가 발동됩니다. 남은 아래쪽 타일은 그대로 보존되어 후속 연쇄를 이어갈 수 있습니다.",
+          en: "Yes! As soon as 10 matching tiles accumulate continuously from the top of a slot, they pop immediately with a combo score multiplier and juicy screen shake. Any tiles beneath them remain intact for future chain merges.",
+          ja: "はい！スロットの最上部から連続する同色タイルが10枚以上揃うと、即座に10枚が消去され、コンボ得点と画面シェイクが発生します。その下にあった異なる色のタイルはそのまま残り、次の連鎖に活用できます。",
+          zh: "是的！当一个格子从顶部起连续堆叠达10张相同颜色时，立即消除10张并触发连击加分与打击震屏。下层不同颜色的瓷砖会保留，为后续的连锁消除创造条件。",
+          fr: "Oui ! Dès que 10 tuiles de même couleur s'alignent depuis le haut d'une pile, elles disparaissent avec un bonus de combo. Les tuiles inférieures restent en place pour d'autres fusions.",
+          es: "¡Sí! En cuanto se acumulen 10 fichas del mismo color desde la parte superior, desaparecerán otorgando puntos de combo y sacudida de pantalla. Las fichas inferiores se conservan para futuras jugadas.",
+        },
+      },
+      {
+        q: {
+          ko: "보드가 가득 차서 게임 오버가 되지 않으려면?",
+          en: "How do I avoid running out of space and getting game over?",
+          ja: "盤面が埋まってゲームオーバーにならないためのコツは？",
+          zh: "如何避免棋盘被占满导致游戏结束？",
+          fr: "Comment éviter que le plateau ne se remplisse trop vite ?",
+          es: "¿Cómo evitar quedarse sin espacio en el tablero?",
+        },
+        a: {
+          ko: "항상 1~2개의 빈 슬롯을 완충지대로 남겨두는 것이 핵심입니다. 여러 색상을 마구잡이로 섞지 말고 슬롯마다 1~2개 고유 색상만 집중해서 모으면 인접 타일들이 빠르게 흡수되어 슬롯이 다시 비워집니다.",
+          en: "Keep 1 or 2 slots completely empty as buffers. Avoid mixing too many colors in a single slot; designate slots for specific colors so adjacent merges can quickly empty them out and keep the board clear.",
+          ja: "常に1〜2個の空きスロットをバッファとして残しておくのが最大のコツです。1つのスロットに多数の色を混ぜず、スロットごとに色を決めて集めることで迅速な連鎖消去が起き、盤面に余裕が生まれます。",
+          zh: "始终保留1到2个空格作为周转缓冲是致胜关键。切忌在同一格内混入过多杂色，尽量为每个格子分配专属颜色，以便相邻同色快速合并腾出棋盘空间。",
+          fr: "Gardez toujours 1 ou 2 emplacements vides pour manœuvrer. Spécialisez chaque case par couleur pour accélérer les fusions et libérer de la place en continu.",
+          es: "Mantén siempre 1 o 2 casillas libres como comodín. Especializa cada casilla en un color concreto para facilitar absorciones rápidas y despejar el tablero.",
+        },
+      },
+    ],
+  },
 };
