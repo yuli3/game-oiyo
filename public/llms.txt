@@ -10,7 +10,7 @@
 - blog.oiyo.net — guides, lessons, explanations
 - wiki.oiyo.net — dictionary & definitions
 - news.oiyo.net — daily curated news & market briefs
-- ai.oiyo.net — AX / AI-native OS showcase
+- news.oiyo.net/ai/ — AI guides, model catalog and curation (ai.oiyo.net redirects here)
 
 ## Key pages
 - https://game.oiyo.net/en/ — arcade catalog (all games, 6 locales: en/ko/ja/zh/fr/es)
