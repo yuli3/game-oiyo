@@ -566,6 +566,20 @@ export const MISSION_CATALOG: Array<{
     goal: 5,
     xpReward: 50,
   },
+  {
+    id: "watersort-level-1",
+    gameSlug: "water-sort-3d",
+    title: {
+      ko: "워터 소트에서 1개 레벨 이상 정렬 완료",
+      en: "Complete 1 or more levels in Water Sort 3D",
+      ja: "ウォーターソートで1レベル以上の整列を完了",
+      zh: "在水排序3D中完成1关以上的色彩排序",
+      fr: "Terminer 1 niveau ou plus dans Water Sort 3D",
+      es: "Completa 1 nivel o más en Water Sort 3D",
+    },
+    goal: 1,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {

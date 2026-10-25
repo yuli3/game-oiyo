@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { WaterSort3D } from "../../components/games/WaterSort3D";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "워터 소트 3D 피지크 — 비커 액체 분리 정렬 힐링 퍼즐",
+    description: "3D 비커를 기울여 같은 색상의 액체들을 단일 비커로 모아 정렬하는 ASMR 유체 물리 힐링 두뇌 퍼즐 게임.",
+  },
+  en: {
+    title: "Water Sort 3D Physics — Beaker Liquid Color Sorting Puzzle",
+    description: "Tilt 3D glass beakers to sort matching colored water layers into uniform tubes in this calming ASMR fluid physics puzzle.",
+  },
+  ja: {
+    title: "ウォーターソート 3D フィジクス — ビーカー色分け整列パズル",
+    description: "3Dビーカーを傾けて同じ色の液体を一つの試験管に集める、心地よいASMR流体物理ヒーリングパズルゲーム。",
+  },
+  zh: {
+    title: "水排序 3D 物理 — 试管液体分层益智治愈解谜",
+    description: "倾斜3D玻璃试管，将相同颜色的液体分流汇聚至同一容器的ASMR治愈系流体物理大脑益智游戏。",
+  },
+  fr: {
+    title: "Water Sort 3D Physics — Puzzle de tri de liquides en éprouvettes 3D",
+    description: "Inclinez les éprouvettes 3D pour rassembler les liquides de même couleur dans ce puzzle fluide et relaxant aux sons ASMR.",
+  },
+  es: {
+    title: "Water Sort 3D Physics — Puzle de clasificación de líquidos en tubos 3D",
+    description: "Inclina tubos de ensayo 3D para reunir líquidos del mismo color en este relajante puzle de física de fluidos con sonido ASMR.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-4xl px-4 py-8">
+    <WaterSort3D client:load locale={locale} />
+    <GameGuide slug="water-sort-3d" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>

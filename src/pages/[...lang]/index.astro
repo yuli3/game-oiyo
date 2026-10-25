@@ -16,22 +16,22 @@ const { locale } = Astro.props as { locale: Locale };
 const translations = await getTranslations(locale);
 
 const meta: Record<Locale, { title: string; description: string }> = {
-  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 114종", description: "체스·스도쿠·워들부터 OIYO 오리지널 게임까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 114종." },
-  en: { title: "OIYO Arcade — 114 free browser games, no install", description: "Chess, Sudoku, Wordle, and original OIYO games: 114 free games you can play instantly in your browser." },
-  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム114種", description: "チェス・数独・ワードルからOIYOオリジナル作品まで、ブラウザですぐ遊べる無料ゲーム114種。" },
-  zh: { title: "OIYO 街机 — 无需安装的114款免费游戏", description: "从国际象棋、数独、猜词到 OIYO 原创作品，114款游戏无需安装即可畅玩。" },
-  fr: { title: "OIYO Arcade — 114 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations originales OIYO : 114 jeux gratuits dans le navigateur." },
-  es: { title: "OIYO Arcade — 114 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y originales de OIYO: 114 juegos gratuitos en el navegador." },
+  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 115종", description: "체스·스도쿠·워들부터 OIYO 오리지널 게임까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 115종." },
+  en: { title: "OIYO Arcade — 115 free browser games, no install", description: "Chess, Sudoku, Wordle, and original OIYO games: 115 free games you can play instantly in your browser." },
+  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム115種", description: "チェス・数独・ワードルからOIYOオリジナル作品まで、ブラウザですぐ遊べる無料ゲーム115種。" },
+  zh: { title: "OIYO 街机 — 无需安装的115款免费游戏", description: "从国际象棋、数独、猜词到 OIYO 原创作品，115款游戏无需安装即可畅玩。" },
+  fr: { title: "OIYO Arcade — 115 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations originales OIYO : 115 jeux gratuits dans le navigateur." },
+  es: { title: "OIYO Arcade — 115 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y originales de OIYO: 115 juegos gratuitos en el navegador." },
 };
 const m = meta[locale] ?? meta.en;
 
 const hero: Record<Locale, { eyebrow: string; title: string; sub: string }> = {
-  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 114종", sub: "보드·카드·퍼즐·오리지널 아케이드 — 브라우저에서 바로 시작하세요." },
-  en: { eyebrow: "🎮 OIYO Arcade", title: "114 free games, right in your browser", sub: "Board, card, puzzle, and original arcade games — instant and free." },
-  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム114種", sub: "ボード・カード・パズル・オリジナル作品をブラウザですぐに。" },
-  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的114款免费游戏", sub: "棋类、纸牌、益智和原创街机游戏，浏览器直接开玩。" },
-  fr: { eyebrow: "🎮 OIYO Arcade", title: "114 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et créations originales, sans installation." },
-  es: { eyebrow: "🎮 OIYO Arcade", title: "114 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones originales, sin instalación." },
+  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 115종", sub: "보드·카드·퍼즐·오리지널 아케이드 — 브라우저에서 바로 시작하세요." },
+  en: { eyebrow: "🎮 OIYO Arcade", title: "115 free games, right in your browser", sub: "Board, card, puzzle, and original arcade games — instant and free." },
+  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム115種", sub: "ボード・カード・パズル・オリジナル作品をブラウザですぐに。" },
+  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的115款免费游戏", sub: "棋类、纸牌、益智和原创街机游戏，浏览器直接开玩。" },
+  fr: { eyebrow: "🎮 OIYO Arcade", title: "115 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et créations originales, sans installation." },
+  es: { eyebrow: "🎮 OIYO Arcade", title: "115 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones originales, sin instalación." },
 };
 const h = hero[locale] ?? hero.en;
 
@@ -123,6 +123,7 @@ const GAMES: Game[] = [
   { slug: "subway-runner", emoji: "🏃", cat: "arcade", name: { ko: "러너 빌더 3D", en: "Subway Mini-Parkour", ja: "ランナービルダー 3D", zh: "跑酷大师 3D", fr: "Subway Mini-Parkour", es: "Subway Mini-Parkour" } },
   { slug: "shotgun-chess", emoji: "♟️", cat: "arcade", name: { ko: "샷건 체스", en: "Shotgun Chess", ja: "ショットガン チェス", zh: "散弹枪象棋", fr: "Shotgun Chess", es: "Shotgun Chess" } },
   { slug: "spell-tower", emoji: "🔤", cat: "puzzle", name: { ko: "스펠 타워", en: "SpellTower Web", ja: "スペルタワー", zh: "拼字高塔", fr: "SpellTower Web", es: "SpellTower Web" } },
+  { slug: "water-sort-3d", emoji: "🧪", cat: "puzzle", name: { ko: "워터 소트 3D", en: "Water Sort 3D", ja: "ウォーターソート 3D", zh: "水排序 3D", fr: "Water Sort 3D", es: "Water Sort 3D" } },
 
   { slug: "failure-eater", emoji: "👾", cat: "arcade", name: { ko: "실패를 먹는 괴물", en: "Failure Eater", ja: "失敗を食べる怪物", zh: "吃掉失败的怪物", fr: "Monstre des ratés", es: "Monstruo de los fallos" } },
   { slug: "snake-game", emoji: "🐍", cat: "arcade", name: { ko: "스네이크", en: "Snake", ja: "スネーク", zh: "贪吃蛇", fr: "Snake", es: "Snake" } },
@@ -398,6 +399,18 @@ const NEW_RELEASES_CONFIG: Array<{ slug: string; tag: Record<Locale, string>; de
       zh: "8向滑动连线消除单词，引发连环重力坍塌消除阻碍，化解高塔触顶危机。",
       fr: "Reliez les lettres dans 8 directions pour effondrer la tour par gravité avant qu'elle ne déborde.",
       es: "Une letras en 8 direcciones para desatar colapsos por gravedad antes de tocar el techo.",
+    },
+  },
+  {
+    slug: "water-sort-3d",
+    tag: { ko: "3D 비커 액체 분리 정렬", en: "3D Beaker Fluid Color Sorting", ja: "3Dビーカー液体色分け整列", zh: "3D试管液体色彩排序", fr: "Tri de liquides en éprouvettes 3D", es: "Clasificación de líquidos en tubos 3D" },
+    desc: {
+      ko: "3D 비커를 기울여 같은 색상의 액체들을 단일 비커로 모아 정렬하는 힐링 두뇌 퍼즐.",
+      en: "Tilt 3D beakers to sort matching colored water layers into uniform tubes in this calming puzzle.",
+      ja: "3Dビーカーを傾けて同じ色の液体を一つの試験管に集める、心地よい癒やしのパズルゲーム。",
+      zh: "倾斜3D玻璃试管将相同颜色的液体分流汇聚至同一容器，享受沉浸式治愈解谜。",
+      fr: "Inclinez les éprouvettes 3D pour rassembler les liquides de même couleur dans un puzzle relaxant.",
+      es: "Inclina tubos de ensayo 3D para reunir líquidos del mismo color en un puzle relajante.",
     },
   },
 ];

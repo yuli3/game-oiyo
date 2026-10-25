@@ -4852,4 +4852,60 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "water-sort-3d": {
+    origin: {
+      ko: "워터 소트 3D 피지크(Water Sort 3D)는 전 세계 모바일 앱스토어에서 수억 건의 다운로드를 기록하며 힐링 퍼즐 열풍을 일으킨 'Water Sort Puzzle'을 유니티급 3D 비커 기울임 물리와 유체 메니스커스 렌더링으로 재해석한 작품입니다. 복잡한 생각 없이 색깔별로 물을 나누어 담으며 시각적·청각적 만족감을 느낄 수 있는 대표적인 릴랙싱 퍼즐입니다.",
+      en: "Water Sort 3D Physics reimagines the global mobile sensation 'Water Sort Puzzle' with 3D beaker tilt physics, fluid surface meniscus curves, and ASMR water acoustics. It delivers a calming yet deeply satisfying brain teaser centered around color separation.",
+      ja: "ウォーターソート 3D フィジクス（Water Sort 3D）は、世界中で大ヒットした癒やしパズル『Water Sort Puzzle』を3Dビーカーの傾き物理と流体メニスカス表現で美しく昇華させた作品です。色とりどりの液体を試験管ごとに揃える、リラックス効果の高い知育パズルです。",
+      zh: "水排序 3D 物理（Water Sort 3D）重塑了风靡全球的经典色彩分流解谜游戏《Water Sort Puzzle》。采用3D烧杯倾斜物理、流体弯月面光影渲染与真实水流ASMR音效，带来视觉与心灵的双重治愈。",
+      fr: "Water Sort 3D Physics revisite le phénomène mondial 'Water Sort Puzzle' avec une physique 3D d'inclinaison d'éprouvettes et des sons fluides ASMR apaisants.",
+      es: "Water Sort 3D Physics reinterpreta el éxito mundial 'Water Sort Puzzle' con física de inclinación de tubos 3D, curvas de menisco y relajantes sonidos ASMR de agua.",
+    },
+    how: {
+      ko: "액체를 부을 출발 비커를 탭하여 들어올린 뒤, 물을 받을 대상 비커를 탭합니다. 대상 비커가 완전히 비어 있거나, 맨 위 액체 색상이 출발 비커의 맨 위 색상과 일치하며 빈 용량이 남아 있을 때만 물을 부을 수 있습니다. 모든 비커가 한 가지 단일 색상으로 가득 차거나 빈 상태가 되면 레벨을 클리어합니다. 실수했을 때는 '되돌리기' 버튼으로 언제든 이전 상태로 되돌릴 수 있습니다.",
+      en: "Tap a source beaker to lift it, then tap destination beaker to pour. Pouring is allowed only if the destination is empty, or its top liquid color matches the source's top color and has available capacity. The level is solved when every beaker contains only one pure color or is left completely empty.",
+      ja: "液体を注ぐ元のビーカーをタップして持ち上げ、次に注ぎ先のビーカーをタップします。注ぎ先が空であるか、最上段の液体の色が一致していて空き容量がある場合のみ注ぐことができます。すべてのビーカーが単色で満たされるか空になればクリアです。やり直したい時は『戻す』ボタンを使えます。",
+      zh: "点击源试管使其升起，再点击目标试管倒水。只有当目标试管为空，或其顶部液体颜色与源试管顶部一致且尚有容量时，才能完成注水。当所有试管均归类为纯色或留空时即可通关。走错时可随时点击“撤销”回退。",
+      fr: "Touchez une éprouvette pour la soulever, puis touchez l'éprouvette cible. Le transfert n'est possible que si la cible est vide ou possède la même couleur au sommet avec de la place libre. Triez toutes les éprouvettes pour réussir.",
+      es: "Toca un tubo de ensayo para levantarlo y luego toca el tubo de destino. Solo puedes verter si el destino está vacío o su color superior coincide y tiene espacio. Clasifica todos los tubos para superar el nivel.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "막혔을 때 빈 비커를 어떻게 활용해야 하나요?",
+          en: "How should I utilize empty buffer beakers when stuck?",
+          ja: "手詰まりになったとき、空のビーカーをどう活用すべきですか？",
+          zh: "陷入僵局时，该如何高效利用空试管缓冲位？",
+          fr: "Comment utiliser au mieux les éprouvettes vides en cas de blocage ?",
+          es: "¿Cómo aprovechar los tubos vacíos cuando te quedas atascado?",
+        },
+        a: {
+          ko: "빈 비커는 가장 귀중한 전략적 완충 공간입니다. 여러 색상이 복잡하게 뒤섞인 비커의 맨 위 색상을 빈 비커로 먼저 격리하여 아래에 깔려 있는 다른 색상 레이어를 노출시키는 '색상 발굴' 용도로 아껴서 사용하는 것이 핵심입니다.",
+          en: "Empty beakers are your most valuable strategic buffers. Use them sparingly to isolate the top color of a heavily mixed tube, exposing and liberating underlying colors needed to complete other matching tubes.",
+          ja: "空のビーカーは最も貴重なバッファスペースです。色が複雑に混ざり合ったビーカーの最上段の色を逃がし、下に埋もれた色を解放する『発掘』のために計画的に使いましょう。",
+          zh: "空试管是极为宝贵的战略中转站。切勿随意用杂色占用空管，而应保留用于转移堆叠最杂乱试管的顶层颜色，以“挖掘”并释放深层所需的色彩拼图。",
+          fr: "Les éprouvettes vides sont vos réserves les plus précieuses. Utilisez-les pour isoler une couleur bloquante et débloquer les couches inférieures d'un autre tube.",
+          es: "Los tubos vacíos son tus amortiguadores estratégicos más valiosos. Úsalos con cabeza para aislar un color y liberar capas inferiores enterradas en otros tubos.",
+        },
+      },
+      {
+        q: {
+          ko: "연속된 동일 색상은 한 번에 몇 칸까지 부어지나요?",
+          en: "How many units of matching color are transferred in a single pour?",
+          ja: "連続する同色の液体は一度に何マス分注がれますか？",
+          zh: "连续相同的同色液体单次会倒入几格？",
+          fr: "Combien d'unités de même couleur sont versées en un coup ?",
+          es: "¿Cuántas unidades del mismo color se vierten en un solo movimiento?",
+        },
+        a: {
+          ko: "출발 비커의 맨 위에 동일한 색상이 연속으로 쌓여 있다면(예: 2칸 또는 3칸), 대상 비커의 남은 빈 공간이 허용하는 한 해당 동일 색상이 한꺼번에 자동으로 모두 부어집니다.",
+          en: "If the source beaker has multiple contiguous units of the same color on top (e.g., 2 or 3 segments), all of them will be poured automatically in a single move up to the destination's remaining capacity.",
+          ja: "注ぎ元の最上部に同じ色が連続して重なっている場合（2マスや3マスなど）、注ぎ先の空き容量が許す限り、その同色ユニットは1回で自動的にまとめて注がれます。",
+          zh: "若源试管顶部连续堆叠了多格相同颜色（例如连续2格或3格），只要目标试管的剩余可用空间允许，所有连贯同色液体都会在单次倾倒中一次性全数流入。",
+          fr: "Si la source comporte plusieurs blocs consécutifs de la même couleur au sommet, ils sont tous transférés en un seul coup jusqu'à la limite de capacité de la cible.",
+          es: "Si el tubo de origen tiene varias unidades contiguas del mismo color arriba, se verterán todas automáticamente de una sola vez hasta llenar el espacio disponible.",
+        },
+      },
+    ],
+  },
 };
