@@ -4236,4 +4236,60 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "card-surge": {
+    origin: {
+      ko: "카드 서지(Card Surge)는 2025 GOTY 대작 발라트로(Balatro)의 핵심 메커니즘을 순수 브라우저 웹 기술로 재해석한 수학적 포커 로그라이크 덱빌더입니다. 칩(Chips)과 배율(Mult)의 기하급수적 곱셈, 조커의 연쇄 시너지, 8개 안테에 걸친 보스 블라인드 공략의 정수를 무설치로 즐길 수 있습니다.",
+      en: "Card Surge is a mathematical poker roguelike deckbuilder inspired by Balatro, crafted for the web. Experience exponential Chips x Mult scaling, chain Joker synergies, and conquer 8 Ante Boss Blinds instantly in your browser with zero installation.",
+      ja: "カードサージ（Card Surge）は、GOTY受賞作Balatroのコアメカニクスをブラウザ向けに再構築したポーカー×デッキ構築ローグライクです。チップと倍率の乗算、ジョーカーの相乗効果、8つのアンティに挑む奥深い戦略をインストール不要で体験できます。",
+      zh: "卡牌狂涌（Card Surge）是一款受 Balatro 启发的数学扑克肉鸽卡牌构筑游戏。无需安装，在浏览器中即可体验筹码与倍数的指数级乘法碰撞、小丑连环协同，以及挑战8大底注首领盲注的纯粹策略乐趣。",
+      fr: "Card Surge est un roguelite de poker mathématique inspiré de Balatro, conçu pour le web. Profitez d'une mise à l'échelle exponentielle Jetons x Mult, de synergies de Jokers explosives et affrontez 8 boss d'Ante sans installation.",
+      es: "Card Surge es un roguelike de póker matemático inspirado en Balatro, diseñado para navegador. Disfruta de la multiplicación exponencial de Fichas x Mult, sinergias de Comodines y 8 jefes de ciega al instante.",
+    },
+    how: {
+      ko: "손패에서 최대 5장의 카드를 골라 포커 핸드를 냅니다. 족보 기본치와 카드의 칩이 더해지고, 장착한 조커들의 효과가 차례대로 적용되어 (총 칩) × (총 배율)이 계산됩니다. 남은 핸드가 0이 되기 전에 목표 점수를 넘기면 승리하고 상점에서 덱을 강화합니다.",
+      en: "Select up to 5 cards from your hand to play a poker hand. Base chips and card chips combine, then equipped Jokers trigger in order to multiply Chips by Mult. Beat the target score before running out of hands to enter the shop and upgrade your build.",
+      ja: "手札から最大5枚のカードを選んでポーカー役を出します。役の基本値とカードのチップが合算され、装備したジョーカーが順に発動して（チップ）×（倍率）を算出します。手札回数が尽きる前に目標スコアを超えれば勝利となり、ショップでデッキを強化できます。",
+      zh: "从手牌中选择最多5张牌打出扑克牌型。牌型基础值与牌面筹码相加，装备的小丑依次触发计算（筹码）×（倍数）。在出牌次数耗尽前达到目标分即可过关并进入商店强化卡组。",
+      fr: "Choisissez jusqu'à 5 cartes pour jouer une main de poker. Les jetons de base et de cartes s'additionnent, puis vos Jokers s'activent pour calculer (Jetons) × (Mult). Dépassez le score cible pour ouvrir la boutique.",
+      es: "Elige hasta 5 cartas para jugar una mano de póker. Las fichas base y de carta se suman, y los Comodines se activan en orden para multiplicar Fichas x Mult. Supera la puntuación objetivo para acceder a la tienda.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "조커의 배치 순서가 점수에 영향을 주나요?",
+          en: "Does Joker placement order affect scoring?",
+          ja: "ジョーカーの並び順はスコアに影響しますか？",
+          zh: "小丑的排列顺序会影响得分吗？",
+          fr: "L'ordre des Jokers influence-t-il le score ?",
+          es: "¿Afecta el orden de los Comodines a la puntuación?",
+        },
+        a: {
+          ko: "네! 조커는 왼쪽에서 오른쪽 순서로 계산됩니다. +Mult(가산 배율) 조커를 왼쪽에 두고, ×Mult(곱셈 배율) 조커를 오른쪽에 배치해야 점수가 기하급수적으로 폭발합니다. 청사진(Blueprint) 조커는 자신의 바로 오른쪽 조커를 복사합니다.",
+          en: "Yes! Jokers trigger from left to right. Placing +Mult Jokers to the left and ×Mult Jokers to the right results in exponential score explosions. Blueprint copies the Joker immediately to its right.",
+          ja: "はい！ジョーカーは左から右へ順に適用されます。+Mult（加算）を左、×Mult（乗算）を右に配置すると爆発的な高得点になります。設計図（Blueprint）は右隣のジョーカーをコピーします。",
+          zh: "是的！小丑从左到右依次触发结算。将+Mult（加算）放在左侧，×Mult（乘算）放在右侧可以产生爆炸性的高分。蓝图（Blueprint）会直接复制其右侧小丑的技能。",
+          fr: "Oui ! Les Jokers s'activent de gauche à droite. Mettez les Jokers +Mult à gauche et ×Mult à droite pour maximiser les multiplicateurs. Le Plan (Blueprint) copie le Joker à sa droite.",
+          es: "¡Sí! Los Comodines se activan de izquierda a derecha. Coloca los de suma (+Mult) a la izquierda y los de multiplicación (×Mult) a la derecha para un multiplicador masivo. El Plano copia al Comodín a su derecha.",
+        },
+      },
+      {
+        q: {
+          ko: "보스 블라인드의 디버프는 어떻게 대처하나요?",
+          en: "How should I handle Boss Blind debuffs?",
+          ja: "ボスブラインドのデバフにはどう対処すべきですか？",
+          zh: "如何应对首领盲注的特殊减益？",
+          fr: "Comment contrer les malus des Boss Blinds ?",
+          es: "¿Cómo contrarrestar los efectos de los Jefes de ciega?",
+        },
+        a: {
+          ko: "스페이드나 하트 등 특정 무늬가 디버프될 경우 해당 무늬 카드는 칩과 족보 판정에서 제외됩니다. 해당 라운드에서는 다른 무늬의 페어나 트리플 위주로 족보를 구성하거나, 무늬에 구애받지 않는 조커 시너지를 활용하는 것이 핵심입니다.",
+          en: "When a suit is debuffed, cards of that suit give no chips and cannot count for flushes. Pivot to other suits for pairs or three of a kinds, or rely on suit-independent Joker synergies.",
+          ja: "特定のマークが無効化されると、そのカードはチップを獲得できずフラッシュの判定にも使えません。他のマークのペアやスリーカードで戦うか、マークに依存しないジョーカーで突破しましょう。",
+          zh: "当特定花色被减益失效时，该花色牌不提供筹码且无法用于同花。此时应转向其他花色的对子或三条，或依靠不依赖花色的小丑协同来达成目标分。",
+          fr: "Lorsqu'une couleur est affaiblie, ses cartes ne rapportent aucun jeton. Pivotez vers d'autres couleurs ou appuyez-vous sur des Jokers indépendants des couleurs.",
+          es: "Cuando un palo está anulado, sus cartas no dan fichas. Cambia a otros palos para formar parejas o tríos, o apóyate en Comodines que no dependan del palo.",
+        },
+      },
+    ],
+  },
 };

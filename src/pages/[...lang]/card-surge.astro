@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import CardSurge from "../../components/games/CardSurge";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "카드 서지 — 발라트로식 포커 덱빌더 로그라이크",
+    description: "브라우저에서 설치 없이 즐기는 포커 칩×배율 로그라이크 덱빌더. 족보와 조커 시너지를 조합하여 8개의 안테 보스 블라인드를 격파하세요.",
+  },
+  en: {
+    title: "Card Surge — Balatro-style Poker Roguelike Deckbuilder",
+    description: "Free poker chips-and-mult roguelike deckbuilder in your browser. Build exponential synergies with Jokers and defeat 8 Ante Boss Blinds.",
+  },
+  ja: {
+    title: "カードサージ — ポーカーデッキ構築ローグライク",
+    description: "ブラウザですぐ遊べるポーカー×チップ倍率デッキ構築ローグライク。役とジョーカーの相乗効果で8つのアンティボスを打ち破ろう。",
+  },
+  zh: {
+    title: "卡牌狂涌 — 扑克肉鸽卡牌构筑",
+    description: "在浏览器中畅玩的扑克筹码与倍数构筑肉鸽。组合手牌与小丑技能，挑战并击破8个底注首领盲注。",
+  },
+  fr: {
+    title: "Card Surge — Roguelite de Poker et Deckbuilding",
+    description: "Jeu de deckbuilding de poker gratuit dans le navigateur. Combinez jetons, multiplicateurs et Jokers pour vaincre les 8 boss d'Ante.",
+  },
+  es: {
+    title: "Card Surge — Roguelike de Póker y Construcción de Mazos",
+    description: "Roguelike de póker gratuito en tu navegador. Combina fichas, multiplicadores y Comodines para superar los 8 jefes de ciega.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-4xl px-4 py-8">
+    <CardSurge client:load locale={locale} />
+    <GameGuide slug="card-surge" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>

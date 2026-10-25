@@ -16,22 +16,22 @@ const { locale } = Astro.props as { locale: Locale };
 const translations = await getTranslations(locale);
 
 const meta: Record<Locale, { title: string; description: string }> = {
-  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 103종", description: "체스·스도쿠·워들부터 OIYO 오리지널 게임까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 103종." },
-  en: { title: "OIYO Arcade — 103 free browser games, no install", description: "Chess, Sudoku, Wordle, and original OIYO games: 103 free games you can play instantly in your browser." },
-  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム103種", description: "チェス・数独・ワードルからOIYOオリジナル作品まで、ブラウザですぐ遊べる無料ゲーム103種。" },
-  zh: { title: "OIYO 街机 — 无需安装的103款免费游戏", description: "从国际象棋、数独、猜词到 OIYO 原创作品，103款游戏无需安装即可畅玩。" },
-  fr: { title: "OIYO Arcade — 103 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations originales OIYO : 103 jeux gratuits dans le navigateur." },
-  es: { title: "OIYO Arcade — 103 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y originales de OIYO: 103 juegos gratuitos en el navegador." },
+  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 104종", description: "체스·스도쿠·워들부터 OIYO 오리지널 게임까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 104종." },
+  en: { title: "OIYO Arcade — 104 free browser games, no install", description: "Chess, Sudoku, Wordle, and original OIYO games: 104 free games you can play instantly in your browser." },
+  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム104種", description: "チェス・数独・ワードルからOIYOオリジナル作品まで、ブラウザですぐ遊べる無料ゲーム104種。" },
+  zh: { title: "OIYO 街机 — 无需安装的104款免费游戏", description: "从国际象棋、数独、猜词到 OIYO 原创作品，104款游戏无需安装即可畅玩。" },
+  fr: { title: "OIYO Arcade — 104 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations originales OIYO : 104 jeux gratuits dans le navigateur." },
+  es: { title: "OIYO Arcade — 104 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y originales de OIYO: 104 juegos gratuitos en el navegador." },
 };
 const m = meta[locale] ?? meta.en;
 
 const hero: Record<Locale, { eyebrow: string; title: string; sub: string }> = {
-  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 103종", sub: "보드·카드·퍼즐·오리지널 아케이드 — 브라우저에서 바로 시작하세요." },
-  en: { eyebrow: "🎮 OIYO Arcade", title: "103 free games, right in your browser", sub: "Board, card, puzzle, and original arcade games — instant and free." },
-  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム103種", sub: "ボード・カード・パズル・オリジナル作品をブラウザですぐに。" },
-  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的103款免费游戏", sub: "棋类、纸牌、益智和原创街机游戏，浏览器直接开玩。" },
-  fr: { eyebrow: "🎮 OIYO Arcade", title: "103 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et créations originales, sans installation." },
-  es: { eyebrow: "🎮 OIYO Arcade", title: "103 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones originales, sin instalación." },
+  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 104종", sub: "보드·카드·퍼즐·오리지널 아케이드 — 브라우저에서 바로 시작하세요." },
+  en: { eyebrow: "🎮 OIYO Arcade", title: "104 free games, right in your browser", sub: "Board, card, puzzle, and original arcade games — instant and free." },
+  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム104種", sub: "ボード・カード・パズル・オリジナル作品をブラウザですぐに。" },
+  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的104款免费游戏", sub: "棋类、纸牌、益智和原创街机游戏，浏览器直接开玩。" },
+  fr: { eyebrow: "🎮 OIYO Arcade", title: "104 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et créations originales, sans installation." },
+  es: { eyebrow: "🎮 OIYO Arcade", title: "104 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones originales, sin instalación." },
 };
 const h = hero[locale] ?? hero.en;
 
@@ -82,6 +82,7 @@ const GAMES: Game[] = [
   { slug: "solitaire", emoji: "♣️", cat: "card", name: { ko: "솔리테어", en: "Solitaire", ja: "ソリティア", zh: "纸牌接龙", fr: "Solitaire", es: "Solitario" } },
   { slug: "hearts-game", emoji: "♥️", cat: "card", name: { ko: "하트", en: "Hearts", ja: "ハート", zh: "红心大战", fr: "Hearts", es: "Corazones" } },
   { slug: "tile-rummy", emoji: "🟥", cat: "card", name: { ko: "숫자 타일", en: "Number Tiles", ja: "数字タイル", zh: "数字牌", fr: "Tuiles chiffrées", es: "Fichas numéricas" } },
+  { slug: "card-surge", emoji: "🃏", cat: "card", name: { ko: "카드 서지", en: "Card Surge", ja: "カードサージ", zh: "卡牌狂涌", fr: "Card Surge", es: "Card Surge" } },
 
   { slug: "domino-logic", emoji: "🁣", cat: "puzzle", name: { ko: "도미노 칸 맞추기", en: "Domino Cells", ja: "ドミノのマス", zh: "多米诺填格", fr: "Cases de dominos", es: "Casillas de dominó" } },
   { slug: "word-groups", emoji: "🧩", cat: "puzzle", name: { ko: "네 묶음", en: "Four Groups", ja: "四つのグループ", zh: "四组词", fr: "Quatre groupes", es: "Cuatro grupos" } },
@@ -257,6 +258,18 @@ const NEW_RELEASES_CONFIG: Array<{ slug: string; tag: Record<Locale, string>; de
       es: "Alrededor de un solo móvil, descubre al mentiroso con amigos.",
     },
   },
+  {
+    slug: "card-surge",
+    tag: { ko: "포커 덱빌더 로그라이크", en: "Poker Roguelike Deckbuilder", ja: "ポーカー構築ローグライク", zh: "扑克肉鸽卡牌构筑", fr: "Roguelite de Poker", es: "Roguelike de Póker" },
+    desc: {
+      ko: "칩×배율의 폭발적 시너지! 20여 종의 조커를 영입해 8개 안테 보스를 격파하세요.",
+      en: "Exponential Chips x Mult synergies! Draft 20+ Jokers and defeat 8 Ante Bosses.",
+      ja: "チップ×倍率の爆発的シナジー！20種以上のジョーカーで8つのボスを撃破せよ。",
+      zh: "筹码与倍数的爆炸协同！招募20多种小丑击破8大底注首领。",
+      fr: "Synergies exponentielles ! Recrutez 20+ Jokers et terrassez les 8 Boss.",
+      es: "¡Sinergias exponenciales de Fichas x Mult! Recluta más de 20 Comodines y vence a 8 Jefes.",
+    },
+  },
 ];
 
 const newReleaseGames = NEW_RELEASES_CONFIG
@@ -339,7 +352,7 @@ const cardJsonLd = {
         <h2 class="text-xl font-black text-foreground">{newReleaseLabels.sectionTitle}</h2>
         <p class="mt-0.5 text-xs font-medium text-muted-foreground">{newReleaseLabels.subtitle}</p>
       </div>
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {newReleaseGames.map(({ game: g, tag, desc }) => (
           <a
             href={`/${locale}/${g.slug}/`}

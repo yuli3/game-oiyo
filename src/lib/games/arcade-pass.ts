@@ -412,6 +412,20 @@ export const MISSION_CATALOG: Array<{
     goal: 1,
     xpReward: 50,
   },
+  {
+    id: "cardsurge-score",
+    gameSlug: "card-surge",
+    title: {
+      ko: "카드 서지에서 단일 핸드로 500점 이상 획득",
+      en: "Score 500+ points in a single hand in Card Surge",
+      ja: "カードサージで1役500点以上を獲得",
+      zh: "在卡牌狂涌中单手出牌取得500分以上",
+      fr: "Marquer 500+ points en une main dans Card Surge",
+      es: "Consigue 500+ puntos en una mano en Card Surge",
+    },
+    goal: 500,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {
