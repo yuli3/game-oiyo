@@ -552,6 +552,20 @@ export const MISSION_CATALOG: Array<{
     goal: 2,
     xpReward: 50,
   },
+  {
+    id: "spelltower-words-5",
+    gameSlug: "spell-tower",
+    title: {
+      ko: "스펠 타워에서 단어 5개 이상 완성 달성",
+      en: "Form 5 or more words in SpellTower",
+      ja: "スペルタワーで5単語以上の完成を達成",
+      zh: "在拼字高塔中完成拼写5个以上单词",
+      fr: "Former 5 mots ou plus dans SpellTower",
+      es: "Forma 5 o más palabras en SpellTower",
+    },
+    goal: 5,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {

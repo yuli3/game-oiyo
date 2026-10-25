@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { SpellTower } from "../../components/games/SpellTower";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "스펠 타워 — 블록 낙하 단어 연결 & 중력 붕괴 퍼즐",
+    description: "인접한 글자들을 연결하여 단어를 완성하고, 중력 붕괴로 아래 블록들을 낙하시키며 타워가 천장에 닿기 전에 무너뜨리는 단어 전략 퍼즐 게임.",
+  },
+  en: {
+    title: "SpellTower Web — Falling Block Word Link & Gravity Collapse Puzzle",
+    description: "Trace adjacent letters to form valid words. Trigger cascading gravity drops and clear dead blocks before the rising tower reaches the ceiling.",
+  },
+  ja: {
+    title: "スペルタワー — ブロック落下ワード連結＆重力崩壊パズル",
+    description: "隣接する文字を繋げて単語を作り、重力崩壊でブロックを消滅させながらタワーの上昇を食い止める戦略ワードパズルゲーム。",
+  },
+  zh: {
+    title: "拼字高塔 — 下落方块单词连线与重力坍塌益智游戏",
+    description: "滑动连线相邻字母拼写单词，引发连环重力下落与障碍消除，阻止方块高塔触碰顶部警戒线的策略拼字游戏。",
+  },
+  fr: {
+    title: "SpellTower Web — Puzzle de mots et cascade gravitationnelle",
+    description: "Reliez les lettres adjacentes pour former des mots. Déclenchez des chutes gravitationnelles avant que la tour ne déborde.",
+  },
+  es: {
+    title: "SpellTower Web — Puzle de palabras conectadas y colapso por gravedad",
+    description: "Conecta letras adyacentes para formar palabras válidas. Desata caídas gravitatorias y despeja bloques antes del desbordamiento.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-4xl px-4 py-8">
+    <SpellTower client:load locale={locale} />
+    <GameGuide slug="spell-tower" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>

@@ -4796,4 +4796,60 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "spell-tower": {
+    origin: {
+      ko: "스펠 타워(SpellTower Web)는 모바일 인디 거장 Zach Gage가 개발하여 수많은 올해의 게임 상을 휩쓴 글로벌 명작 'SpellTower'에서 영감을 받은 단어 퍼즐입니다. 테트리스 스타일의 블록 낙하 중력 물리와 전통적인 스크래블 단어 찾기를 결합하여, 한 단어를 맞출 때마다 탑이 무너져 내리는 독창적인 쾌감을 선사합니다.",
+      en: "SpellTower Web is a word puzzle game inspired by Zach Gage's award-winning mobile masterpiece 'SpellTower'. Combining Tetris-like falling block gravity physics with deep word-search mechanics, clearing words triggers satisfying multi-tile cascade collapses.",
+      ja: "スペルタワー（SpellTower Web）は、数々のゲームアワードを受賞したインディーの鬼才Zach Gageの名作『SpellTower』に着想を得たワードパズルゲームです。テトリスのようなブロック落下重力物理と単語探しが融合し、単語を揃えるたびに塔が崩れ落ちる爽快感を楽しめます。",
+      zh: "拼字高塔（SpellTower Web）受独立游戏大师 Zach Gage 荣获诸多年度大奖的经典作品《SpellTower》启发。将俄罗斯方块式的重力下落消除与传统拼字寻词紧密结合，每次成功拼词都将引发令人上瘾的多米诺坍塌连击。",
+      fr: "SpellTower Web est un jeu de lettres inspiré du chef-d'œuvre mobile primé de Zach Gage. Alliant la gravité de chute de blocs style Tetris et la recherche de mots, chaque mot trouvé déclenche des effondrements en cascade.",
+      es: "SpellTower Web es un juego de palabras inspirado en la galardonada obra maestra de Zach Gage. Combinando la gravedad de bloques tipo Tetris con la búsqueda de palabras, cada acierto desencadena colapsos en cascada.",
+    },
+    how: {
+      ko: "인접한 글자 타일들을 상하좌우 및 대각선(8방향)으로 순서대로 탭하여 3글자 이상의 유효한 영단어를 만듭니다. 단어를 제출하면 해당 타일들이 사라지며 그 위에 있던 블록들이 중력에 의해 아래로 쏟아져 내립니다. 또한 단어 타일과 맞닿아 있는 해골(☠) 방해 블록들도 함께 연쇄 폭발하여 소멸합니다. 단어를 제출할 때마다 바닥에서 새 블록 줄이 솟아오르며, 탑이 0번 행(천장)에 닿으면 게임이 종료됩니다.",
+      en: "Tap or drag across adjacent letter tiles in 8 directions (orthogonal and diagonal) to construct valid words of 3 or more letters. Submitting clears the word, causing tiles above to fall via gravity. Adjacent skull blocks (☠) also pop and vanish. With every word submitted, a new row pushes up from the bottom; reaching the ceiling ends the game.",
+      ja: "隣接する文字タイルを上下左右・斜め（8方向）にタップして繋げ、3文字以上の有効な単語を作ります。単語を確定するとタイルが消え、上のブロックが重力に従って落下します。隣接するドクロブロック（☠）も連鎖して消滅します。単語を完成させるたびに下から新しい列がせり上がり、最上段に達するとゲームオーバーです。",
+      zh: "沿8个方向（上下左右及对角线）连续点击相邻字母，拼出3个字母以上的有效单词。提交单词后对应方块消除，上方字母受重力下落。相邻的骷髅障碍方块（☠）也会被连带爆破。每次提交单词底部都会上升一行新方块，触碰顶部警戒线即游戏结束。",
+      fr: "Touchez les lettres adjacentes dans 8 directions pour former des mots valides d'au moins 3 lettres. La validation supprime les lettres et fait tomber les blocs supérieurs. Les blocs crânes (☠) voisins sont également éliminés. Une nouvelle ligne monte à chaque coup ; toucher le plafond est éliminatoire.",
+      es: "Toca fichas adyacentes en 8 direcciones para crear palabras de 3 o más letras. Al enviarlas se eliminan y las de arriba caen por gravedad. Los bloques calavera (☠) contiguos también se destruyen. Con cada palabra surge una nueva fila inferior; alcanzar el techo termina la partida.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "해골(☠) 블록을 제거하려면 어떻게 해야 하나요?",
+          en: "How do I remove the skull (☠) obstacle blocks?",
+          ja: "ドクロ（☠）ブロックを消すにはどうすればよいですか？",
+          zh: "如何消除骷髅（☠）障碍方块？",
+          fr: "Comment éliminer les blocs crânes (☠) ?",
+          es: "¿Cómo se eliminan los bloques calavera (☠)?",
+        },
+        a: {
+          ko: "해골 블록은 직접 선택할 수 없습니다. 하지만 해골 블록과 바로 맞닿아 있는(상하좌우 및 대각선 8방향) 인접 글자들을 포함하여 단어를 완성하면, 해당 해골 블록이 연쇄적으로 함께 파괴되어 사라집니다.",
+          en: "Skull blocks cannot be selected directly. However, forming a word using any letter tile adjacent to a skull block (in any of the 8 surrounding directions) triggers an explosion that clears the skull block.",
+          ja: "ドクロブロックは直接選択できません。しかし、ドクロブロックに隣接する文字（周囲8マス）を使って単語を完成させると、巻き込まれて連鎖的に消滅します。",
+          zh: "骷髅方块无法被直接点击选入单词。但只要使用与其相邻（周围8个方向）的任何有效字母拼出单词，骷髅方块就会被连带爆破清除。",
+          fr: "Les blocs crânes ne peuvent pas être sélectionnés directement. Mais en validant un mot contenant une lettre adjacente au crâne, celui-ci est automatiquement détruit.",
+          es: "Los bloques calavera no se pueden seleccionar directamente. Sin embargo, al formar una palabra con cualquier letra contigua a una calavera, esta explota y se elimina.",
+        },
+      },
+      {
+        q: {
+          ko: "고득점을 얻는 가장 좋은 전략은 무엇인가요?",
+          en: "What is the best strategy for getting a high score?",
+          ja: "ハイスコアを出すための最適な戦略は何ですか？",
+          zh: "获取超高分数的关键诀窍是什么？",
+          fr: "Quelle est la meilleure stratégie pour réaliser un score élevé ?",
+          es: "¿Cuál es la mejor estrategia para lograr una puntuación alta?",
+        },
+        a: {
+          ko: "긴 단어일수록 보너스 배율이 기하급수적으로 높아집니다(5글자 2배, 6글자 이상 3배). 또한 반짝이는 보너스 타일(⭐)을 단어 경로에 포함시키면 글자 점수가 2배로 계산됩니다. 가급적 탑의 가장 높은 기둥 쪽에 위치한 글자들을 우선적으로 사용하여 천장 위험을 줄이세요.",
+          en: "Longer words grant massive score multipliers (2x at 5 letters, 3x at 6+ letters). Bonus sparkle tiles (⭐) also double letter point values. Prioritize clearing the tallest columns to keep the ceiling danger away.",
+          ja: "文字数が長い単語ほどスコア倍率が跳ね上がります（5文字で2倍、6文字以上で3倍）。光るボーナスタイル（⭐）を巻き込むと文字得点が2倍になります。最も高く積み上がった列の文字を優先して消し、天井到達を防ぎましょう。",
+          zh: "单词越长得分倍率越高（5字母2倍，6字母及以上高达3倍）。在拼写路径中包含发光奖励方块（⭐）可使字母分值翻倍。优先消除堆叠最高的一列方块，是化解触顶危机的核心策略。",
+          fr: "Les mots longs accordent d'énormes multiplicateurs (x2 à 5 lettres, x3 à 6+ lettres). Les tuiles étoiles (⭐) doublent les points. Visez les colonnes les plus hautes pour éloigner le plafond.",
+          es: "Las palabras más largas otorgan multiplicadores masivos (x2 con 5 letras, x3 con 6+). Las fichas con brillo (⭐) duplican su valor. Despeja prioritariamente las columnas más altas para no tocar el techo.",
+        },
+      },
+    ],
+  },
 };
