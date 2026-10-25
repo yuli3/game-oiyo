@@ -1,8 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { Maximize2, Minimize2, Share2, Volume2, VolumeX } from 'lucide-react';
 import { GameContainer } from '@/components/ui/game/GamePrimitives';
 import { useArcadePortal } from '@/lib/games/arcade-portal';
 import { usePrefersReducedMotion } from '@/lib/games/reduced-motion';
+import { celebrate } from '@/lib/games/celebration';
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from '@/lib/games/share-card';
 import { createMemoryGame, flipMemoryCard, MEMORY_GRID_CONFIG, memoryPairCount, resolveMemoryPair, type MemoryGridSize, type MemoryState } from '@/lib/games/memory-card-game';
 import { clearMemoryCardSave, loadMemoryCardSave, storeMemoryCardSave } from '@/lib/games/memory-card-game-save';
 import { MEMORY_SPRITES, memoryFaceName, memoryFaceSrc } from '@/lib/games/sprites';
@@ -121,6 +127,7 @@ const MemoryCardGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
   const [startTime, setStartTime] = useState<number | null>(null);
   const [restored, setRestored] = useState(false);
   const [paused, setPaused] = useState(false);
+  const [shareCardCopied, setShareCardCopied] = useState(false);
   const [best, setBest] = useState<{ timeMs: number; flips: number } | null>(null);
   const elapsedBase = useRef(0);
   const audio = useRef<AudioContext | null>(null);
@@ -181,7 +188,21 @@ const MemoryCardGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
   useEffect(() => {
     if (!state) return;
-    if (state.status === 'won') { clearMemoryCardSave(); tone(880, 0.24); const key = `oiyo:memory-card-game-best:${state.gridSize}`; const result = { timeMs: elapsedMs, flips: state.flips }; try { const previous = JSON.parse(localStorage.getItem(key) ?? 'null'); if (!previous || result.flips < previous.flips || result.flips === previous.flips && result.timeMs < previous.timeMs) { localStorage.setItem(key, JSON.stringify(result)); setBest(result); } } catch { /* best effort */ } return; }
+    if (state.status === 'won') {
+      clearMemoryCardSave();
+      tone(880, 0.24);
+      if (containerRef.current) celebrate(containerRef.current, { preset: "cards" });
+      const key = `oiyo:memory-card-game-best:${state.gridSize}`;
+      const result = { timeMs: elapsedMs, flips: state.flips };
+      try {
+        const previous = JSON.parse(localStorage.getItem(key) ?? 'null');
+        if (!previous || result.flips < previous.flips || result.flips === previous.flips && result.timeMs < previous.timeMs) {
+          localStorage.setItem(key, JSON.stringify(result));
+          setBest(result);
+        }
+      } catch { /* best effort */ }
+      return;
+    }
     if (state.flipped.length < 2) storeMemoryCardSave(state, elapsedMs);
   }, [state]);
 
@@ -191,6 +212,30 @@ const MemoryCardGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
   }, [state, elapsedMs, startTime]);
 
   const togglePause = () => { if (!state || state.status !== 'playing') return; if (paused) { setStartTime(Date.now()); setPaused(false); } else { elapsedBase.current = elapsedMs; setStartTime(null); setPaused(true); storeMemoryCardSave(state, elapsedMs); } };
+
+  const handleShareCard = async () => {
+    if (!state) return;
+    const canvas = createShareCardCanvas({
+      title: "Memory Card Game",
+      subtitle: `Memory Match Complete (${state.gridSize})`,
+      score: `${formatTime(elapsedMs)}`,
+      slug: "memory-card",
+      customStats: [
+        { label: "Grid Size", value: `${state.gridSize}` },
+        { label: "Total Flips", value: `${state.flips} Flips` },
+        { label: "Pairs Matched", value: `${totalPairs} Pairs` },
+        ...(best ? [{ label: "Best", value: `${best.flips} Flips` }] : []),
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `memory-card-${state.gridSize}.png`);
+    }
+  };
+
   const shareResult = async () => { if (!state) return; const message = `OIYO Memory ${state.gridSize} · ${state.flips} flips · ${formatTime(elapsedMs)}`; try { await navigator.clipboard.writeText(message); } catch { /* best effort */ } };
 
   const handleFlip = (cardId: number) => { tone(360); setRestored(false); setState((current) => current ? flipMemoryCard(current, cardId) : current); };
@@ -305,13 +350,22 @@ const MemoryCardGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
               </p>
               <p className="mt-1 text-xs font-bold text-emerald-700">{locale === 'ko' ? `쌍당 ${(state.flips / totalPairs).toFixed(1)}회 · 다음 목표 ${Math.max(totalPairs * 2, state.flips - 2)}회` : `${(state.flips / totalPairs).toFixed(1)} flips/pair · Next ${Math.max(totalPairs * 2, state.flips - 2)}`}</p>
               {best && <p className="mt-1 text-xs text-emerald-700">PB · {best.flips} · {formatTime(best.timeMs)}</p>}
-              <button
-                onClick={() => startGame(state.gridSize)}
-                className="mt-3 px-6 py-2 rounded-xl bg-primary text-primary-foreground font-black text-sm hover:bg-primary/90 transition-all"
-              >
-                {t.reset}
-              </button>
-              <button onClick={shareResult} className="ml-2 mt-3 min-h-11 rounded-xl border border-emerald-500 px-4 text-sm font-black text-emerald-700">Share</button>
+              <div className="mt-3 flex flex-wrap justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => void handleShareCard()}
+                  className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-primary/50 bg-primary/20 px-4 py-2 text-xs font-bold text-primary transition-colors hover:bg-primary/30 active:scale-95"
+                >
+                  <Share2 className="w-4 h-4" />
+                  <span>{shareCardCopied ? "복사됨!" : "공유 카드"}</span>
+                </button>
+                <button
+                  onClick={() => startGame(state.gridSize)}
+                  className="px-6 py-2 rounded-xl bg-primary text-primary-foreground font-black text-sm hover:bg-primary/90 transition-all"
+                >
+                  {t.reset}
+                </button>
+              </div>
             </div>
           )}
 

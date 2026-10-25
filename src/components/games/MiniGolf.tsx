@@ -21,9 +21,16 @@ import {
   RotateCcw as RotateCounter,
   Maximize2,
   Minimize2,
+  Share2,
   Volume2,
   VolumeX,
 } from 'lucide-react';
+import { celebrate } from '../../lib/games/celebration';
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from '../../lib/games/share-card';
 
 interface Props {
   locale: Locale;
@@ -166,6 +173,7 @@ const UI_TEXT: Record<Locale, {
 
 export default function MiniGolf({ locale }: Props) {
   const [gameState, setGameState] = useState<MiniGolfState>(() => createInitialGolfState(0));
+  const [shareCopied, setShareCopied] = useState(false);
   const stateRef = useRef(gameState);
   stateRef.current = gameState;
 
@@ -355,6 +363,30 @@ export default function MiniGolf({ locale }: Props) {
     setGameState(createInitialGolfState(0));
   }, []);
 
+  const handleShareCard = useCallback(async () => {
+    const isFinished = gameState.status === "finished";
+    const diff = gameState.totalStrokes - gameState.totalPar;
+    const scoreDesc = diff === 0 ? "Even Par" : diff < 0 ? `${diff} Under Par` : `+${diff} Over Par`;
+    const canvas = createShareCardCanvas({
+      title: "Mini Golf 3D",
+      subtitle: isFinished ? `Course Complete (${scoreDesc})` : `${currentHole.name} Cleared`,
+      score: `${gameState.totalStrokes} Strokes`,
+      slug: "mini-golf",
+      customStats: [
+        { label: "Current Hole", value: `Hole ${gameState.currentHoleIndex + 1}/${COURSES.length}` },
+        { label: "Course Par", value: `${gameState.totalPar}` },
+        { label: "This Hole", value: `${gameState.strokesThisHole} Strokes (Par ${currentHole.par})` },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `minigolf-${gameState.totalStrokes}.png`);
+    }
+  }, [gameState.status, gameState.totalStrokes, gameState.totalPar, gameState.currentHoleIndex, gameState.strokesThisHole, currentHole]);
+
   const rotateAim = useCallback((deltaAngle: number) => {
     setGameState((prev) => setAim(prev, prev.aimAngle + deltaAngle));
   }, []);
@@ -383,8 +415,10 @@ export default function MiniGolf({ locale }: Props) {
           }
           if (prev.status === "rolling" && next.status === "holed") {
             playHoleInSound();
+            if (containerRef.current) celebrate(containerRef.current, { preset: "stardust" });
           } else if (prev.status === "rolling" && next.status === "finished") {
             playVictorySound();
+            if (containerRef.current) celebrate(containerRef.current, { preset: "stardust" });
           }
           return next;
         });
@@ -524,14 +558,24 @@ export default function MiniGolf({ locale }: Props) {
                 {gameState.strokesThisHole} {t.strokes} (Par {currentHole.par})
               </span>
             </div>
-            <button
-              type="button"
-              onClick={handleNextHole}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-base shadow-lg hover:opacity-90 active:scale-95 transition-all"
-            >
-              <span>{t.nextHole}</span>
-              <ArrowRight className="w-5 h-5" />
-            </button>
+            <div className="flex flex-wrap justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => void handleShareCard()}
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-primary/50 bg-primary/20 px-4 py-2.5 text-xs font-bold text-primary transition-colors hover:bg-primary/30 active:scale-95"
+              >
+                <Share2 className="w-4 h-4" />
+                <span>{shareCopied ? "복사됨!" : "공유 카드"}</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleNextHole}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-base shadow-lg hover:opacity-90 active:scale-95 transition-all"
+              >
+                <span>{t.nextHole}</span>
+                <ArrowRight className="w-5 h-5" />
+              </button>
+            </div>
           </div>
         )}
 
@@ -555,14 +599,24 @@ export default function MiniGolf({ locale }: Props) {
                 </span>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={handleRestart}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-base shadow-lg hover:opacity-90 active:scale-95 transition-all"
-            >
-              <RotateCcw className="w-5 h-5" />
-              <span>{t.restart}</span>
-            </button>
+            <div className="flex flex-wrap justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => void handleShareCard()}
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-primary/50 bg-primary/20 px-4 py-2.5 text-xs font-bold text-primary transition-colors hover:bg-primary/30 active:scale-95"
+              >
+                <Share2 className="w-4 h-4" />
+                <span>{shareCopied ? "복사됨!" : "공유 카드"}</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleRestart}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-base shadow-lg hover:opacity-90 active:scale-95 transition-all"
+              >
+                <RotateCcw className="w-5 h-5" />
+                <span>{t.restart}</span>
+              </button>
+            </div>
           </div>
         )}
       </div>

@@ -7,8 +7,14 @@ import {
   updateHighway,
 } from '../../lib/games/retro-highway';
 import type { Locale } from '../../lib/i18n';
-import { Play, RotateCcw, Trophy, Zap, Flame, ShieldAlert, ArrowLeft, ArrowRight, Gauge, Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { Play, RotateCcw, Trophy, Zap, Flame, ShieldAlert, ArrowLeft, ArrowRight, Gauge, Maximize2, Minimize2, Share2, Volume2, VolumeX } from 'lucide-react';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { celebrate } from '../../lib/games/celebration';
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from '../../lib/games/share-card';
 
 interface Props {
   locale: Locale;
@@ -125,6 +131,7 @@ export default function RetroHighway({ locale = 'ko' }: Props) {
   const t = UI_TEXT[locale] ?? UI_TEXT.ko;
   const [state, setState] = useState<HighwayState>(createInitialHighwayState);
   const [bestDist, setBestDist] = useState<number>(0);
+  const [shareCopied, setShareCopied] = useState(false);
   const [muted, setMuted] = useState<boolean>(() => {
     try {
       return localStorage.getItem('retro_highway_muted') === 'true';
@@ -215,6 +222,29 @@ export default function RetroHighway({ locale = 'ko' }: Props) {
     lastTimeRef.current = performance.now();
   }, []);
 
+  const handleShareCard = useCallback(async () => {
+    const distKm = (state.player.distance / 1000).toFixed(2);
+    const canvas = createShareCardCanvas({
+      title: "Retro Highway",
+      subtitle: parseFloat(distKm) >= bestDist && parseFloat(distKm) > 0 ? "New Highway Mileage Record!" : "Neon Highway Speedrun",
+      score: `${distKm} km`,
+      slug: "retro-highway",
+      customStats: [
+        { label: "Distance", value: `${distKm} km` },
+        { label: "Score", value: `${state.player.score.toLocaleString()} pts` },
+        { label: "Near Misses", value: `${state.player.nearMissCount}` },
+        { label: "Best Distance", value: `${Math.max(bestDist, parseFloat(distKm)).toFixed(2)} km` },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `retro-highway-${distKm}km.png`);
+    }
+  }, [state.player.distance, state.player.score, state.player.nearMissCount, bestDist]);
+
   // Keyboard controls
   useEffect(() => {
     const activeKeys = new Set<string>();
@@ -289,6 +319,7 @@ export default function RetroHighway({ locale = 'ko' }: Props) {
           const distKm = next.player.distance / 1000;
           setBestDist((cur) => {
             if (distKm > cur) {
+              if (containerRef.current) celebrate(containerRef.current, { preset: "sparks" });
               try {
                 localStorage.setItem('retro_highway_3d_best_dist', distKm.toFixed(2));
               } catch {
@@ -435,13 +466,23 @@ export default function RetroHighway({ locale = 'ko' }: Props) {
               <div>{t.score}: <span className="text-warning">{state.player.score}</span></div>
               <div>{t.nearMiss}: <span className="text-success">{state.player.nearMissCount}</span></div>
             </div>
-            <button
-              onClick={handleRestart}
-              className="px-6 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-bold flex items-center gap-2 hover:opacity-90 shadow-lg"
-            >
-              <RotateCcw className="w-4 h-4" />
-              {t.restart}
-            </button>
+            <div className="flex flex-wrap justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => void handleShareCard()}
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-primary/50 bg-primary/20 px-4 py-2.5 text-xs font-bold text-primary transition-colors hover:bg-primary/30 active:scale-95"
+              >
+                <Share2 className="w-4 h-4" />
+                <span>{shareCopied ? "복사됨!" : "공유 카드"}</span>
+              </button>
+              <button
+                onClick={handleRestart}
+                className="px-6 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-bold flex items-center gap-2 hover:opacity-90 shadow-lg"
+              >
+                <RotateCcw className="w-4 h-4" />
+                {t.restart}
+              </button>
+            </div>
           </div>
         )}
       </div>

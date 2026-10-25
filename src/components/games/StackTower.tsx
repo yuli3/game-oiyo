@@ -10,7 +10,13 @@ import {
   updateMovingBlock,
   createInitialMovingBlock,
 } from '../../lib/games/stack-tower';
-import { Trophy, RotateCcw, Volume2, VolumeX, Sparkles, Maximize2, Minimize2 } from 'lucide-react';
+import { Trophy, RotateCcw, Volume2, VolumeX, Sparkles, Maximize2, Minimize2, Share2 } from 'lucide-react';
+import { celebrate } from '../../lib/games/celebration';
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from '../../lib/games/share-card';
 
 interface FallingPiece extends CutPiece {
   vy: number;
@@ -26,6 +32,7 @@ export default function StackTower({ locale = 'ko' }: { locale?: string }) {
   const [score, setScore] = useState(0);
   const [combo, setCombo] = useState(0);
   const [highScore, setHighScore] = useState(0);
+  const [shareCopied, setShareCopied] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState(() => {
     if (typeof window === 'undefined') return true;
     try {
@@ -146,6 +153,7 @@ export default function StackTower({ locale = 'ko' }: { locale?: string }) {
       if (score > highScore) {
         setHighScore(score);
         try { localStorage.setItem(STORAGE_KEY, String(score)); } catch { /* ignore */ }
+        if (containerRef.current) celebrate(containerRef.current, { preset: "stardust" });
       }
       return;
     }
@@ -241,6 +249,28 @@ export default function StackTower({ locale = 'ko' }: { locale?: string }) {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [status, placeBlock, startGame, togglePortal]);
+
+  const handleShareCard = useCallback(async () => {
+    const isNewBest = score >= highScore && score > 0;
+    const canvas = createShareCardCanvas({
+      title: "Stack Tower 3D",
+      subtitle: isNewBest ? "New Tower Apex Record!" : "3D Skyscraper Run",
+      score: `${score} Floors`,
+      slug: "stack-tower",
+      customStats: [
+        { label: "Height", value: `${score} Blocks` },
+        { label: "High Score", value: `${Math.max(highScore, score)} Floors` },
+        { label: "Combo", value: `${combo} Perfects` },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `stack-tower-${score}.png`);
+    }
+  }, [score, highScore, combo]);
 
   const isKo = locale === 'ko';
 
@@ -356,16 +386,29 @@ export default function StackTower({ locale = 'ko' }: { locale?: string }) {
                 ? (isKo ? '🎉 최고 기록 갱신!' : '🎉 New High Score!')
                 : (isKo ? `최고 기록: ${highScore}층` : `Personal Best: ${highScore}`)}
             </p>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                startGame();
-              }}
-              className="px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold shadow-lg hover:scale-105 transition-transform flex items-center gap-2"
-            >
-              <RotateCcw className="w-4 h-4" />
-              {isKo ? '다시 도전하기' : 'PLAY AGAIN'}
-            </button>
+            <div className="flex flex-wrap justify-center gap-2">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  void handleShareCard();
+                }}
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-primary/50 bg-primary/20 px-4 py-2.5 text-xs font-bold text-primary transition-colors hover:bg-primary/30 active:scale-95"
+              >
+                <Share2 className="w-4 h-4" />
+                <span>{shareCopied ? "복사됨!" : "공유 카드"}</span>
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  startGame();
+                }}
+                className="px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold shadow-lg hover:scale-105 transition-transform flex items-center gap-2"
+              >
+                <RotateCcw className="w-4 h-4" />
+                {isKo ? '다시 도전하기' : 'PLAY AGAIN'}
+              </button>
+            </div>
           </div>
         )}
       </div>

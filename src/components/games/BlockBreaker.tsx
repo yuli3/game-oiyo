@@ -22,10 +22,17 @@ import {
   Target,
   Maximize2,
   Minimize2,
+  Share2,
   Volume2,
   VolumeX,
 } from 'lucide-react';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { celebrate } from '../../lib/games/celebration';
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from '../../lib/games/share-card';
 
 interface Props {
   locale: Locale;
@@ -148,6 +155,7 @@ const UI_TEXT: Record<Locale, {
 export default function BlockBreaker({ locale }: Props) {
   const t = UI_TEXT[locale] ?? UI_TEXT.en;
   const [gameState, setGameState] = useState<BlockBreakerState>(() => createInitialBlockBreakerState());
+  const [shareCopied, setShareCopied] = useState(false);
   const [muted, setMuted] = useState<boolean>(() => {
     try {
       return localStorage.getItem('block_breaker_muted') === 'true';
@@ -236,6 +244,28 @@ export default function BlockBreaker({ locale }: Props) {
       return next;
     });
   }, []);
+
+  const handleShareCard = useCallback(async () => {
+    const isCleared = gameState.status === 'cleared';
+    const canvas = createShareCardCanvas({
+      title: "Block Breaker",
+      subtitle: isCleared ? `Stage ${gameState.level} Cleared!` : "Brick Breaker Run",
+      score: `${gameState.score.toLocaleString()} pts`,
+      slug: "block-breaker",
+      customStats: [
+        { label: "Stage", value: `Level ${gameState.level}` },
+        { label: "High Score", value: `${gameState.highScore.toLocaleString()} pts` },
+        { label: "Lives Left", value: `${gameState.lives}` },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `block-breaker-${gameState.score}.png`);
+    }
+  }, [gameState.status, gameState.level, gameState.score, gameState.highScore, gameState.lives]);
 
   // Keyboard controls
   useEffect(() => {
@@ -328,6 +358,7 @@ export default function BlockBreaker({ locale }: Props) {
         }
         if (prev.status !== 'cleared' && updated.status === 'cleared') {
           playSound('clear');
+          if (containerRef.current) celebrate(containerRef.current, { preset: "sparks" });
         }
         if (prev.balls.length > 0 && updated.balls.length > 0) {
           for (let i = 0; i < updated.balls.length; i++) {
@@ -447,14 +478,24 @@ export default function BlockBreaker({ locale }: Props) {
             <p className="mt-1 text-sm text-muted-foreground font-mono">
               {t.score}: {gameState.score.toLocaleString()}
             </p>
-            <button
-              type="button"
-              onClick={() => setGameState((prev) => nextLevel(prev))}
-              className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-primary px-8 py-3.5 text-base font-bold text-primary-foreground shadow-lg hover:bg-primary/90"
-            >
-              <Play className="w-5 h-5 fill-current" />
-              <span>{t.nextLevel}</span>
-            </button>
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => void handleShareCard()}
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-primary/50 bg-primary/20 px-4 py-2.5 text-xs font-bold text-primary transition-colors hover:bg-primary/30 active:scale-95"
+              >
+                <Share2 className="h-4 w-4" />
+                <span>{shareCopied ? "복사됨!" : "공유 카드"}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setGameState((prev) => nextLevel(prev))}
+                className="inline-flex items-center gap-2 rounded-2xl bg-primary px-8 py-3.5 text-base font-bold text-primary-foreground shadow-lg hover:bg-primary/90"
+              >
+                <Play className="w-5 h-5 fill-current" />
+                <span>{t.nextLevel}</span>
+              </button>
+            </div>
           </div>
         )}
 
@@ -465,14 +506,24 @@ export default function BlockBreaker({ locale }: Props) {
             <p className="mt-1 text-sm text-muted-foreground font-mono">
               {t.score}: {gameState.score.toLocaleString()}
             </p>
-            <button
-              type="button"
-              onClick={() => setGameState(createInitialBlockBreakerState(gameState.highScore))}
-              className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-primary px-8 py-3.5 text-base font-bold text-primary-foreground shadow-lg hover:bg-primary/90"
-            >
-              <RotateCcw className="w-5 h-5" />
-              <span>{t.restart}</span>
-            </button>
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => void handleShareCard()}
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-primary/50 bg-primary/20 px-4 py-2.5 text-xs font-bold text-primary transition-colors hover:bg-primary/30 active:scale-95"
+              >
+                <Share2 className="h-4 w-4" />
+                <span>{shareCopied ? "복사됨!" : "공유 카드"}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setGameState(createInitialBlockBreakerState(gameState.highScore))}
+                className="inline-flex items-center gap-2 rounded-2xl bg-primary px-8 py-3.5 text-base font-bold text-primary-foreground shadow-lg hover:bg-primary/90"
+              >
+                <RotateCcw className="w-5 h-5" />
+                <span>{t.restart}</span>
+              </button>
+            </div>
           </div>
         )}
       </div>

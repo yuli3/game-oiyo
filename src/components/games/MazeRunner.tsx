@@ -7,8 +7,14 @@ import {
   updateMazeRunner,
 } from '../../lib/games/maze-runner';
 import type { Locale } from '../../lib/i18n';
-import { Play, RotateCcw, Trophy, Timer, Diamond, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Compass, Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { Play, RotateCcw, Trophy, Timer, Diamond, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Compass, Maximize2, Minimize2, Share2, Volume2, VolumeX } from 'lucide-react';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { celebrate } from '../../lib/games/celebration';
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from '../../lib/games/share-card';
 
 interface Props {
   locale: Locale;
@@ -132,6 +138,7 @@ export default function MazeRunner({ locale }: Props) {
   const t = UI_TEXT[locale] ?? UI_TEXT.en;
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal();
   const [gameState, setGameState] = useState<MazeRunnerState>(() => createInitialMazeRunnerState(1));
+  const [shareCopied, setShareCopied] = useState(false);
   const [muted, setMuted] = useState(() => {
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
@@ -152,6 +159,29 @@ export default function MazeRunner({ locale }: Props) {
       return next;
     });
   }, []);
+
+  const handleShareCard = useCallback(async () => {
+    const isEscaped = gameState.status === 'escaped';
+    const canvas = createShareCardCanvas({
+      title: "Maze Runner 3D",
+      subtitle: isEscaped ? `Stage ${gameState.level} Escaped!` : "Labyrinth Escape Attempt",
+      score: `${gameState.score.toLocaleString()} pts`,
+      slug: "maze-runner",
+      customStats: [
+        { label: "Stage", value: `Level ${gameState.level}` },
+        { label: "Gems", value: `${gameState.gemsCollected}/${gameState.totalGems}` },
+        { label: "Time Left", value: `${Math.ceil(gameState.timeLeft)}s` },
+        { label: "High Score", value: `${gameState.highScore.toLocaleString()} pts` },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `maze-runner-stage-${gameState.level}.png`);
+    }
+  }, [gameState.status, gameState.level, gameState.score, gameState.gemsCollected, gameState.totalGems, gameState.timeLeft, gameState.highScore]);
 
   const moveQueueRef = useRef<{ dx: number; dz: number } | null>(null);
 
@@ -206,7 +236,11 @@ export default function MazeRunner({ locale }: Props) {
           current = tryMovePlayer(current, moveQueueRef.current.dx, moveQueueRef.current.dz);
           moveQueueRef.current = null;
         }
-        return updateMazeRunner(current, dt);
+        const next = updateMazeRunner(current, dt);
+        if (prev.status !== 'escaped' && next.status === 'escaped') {
+          if (containerRef.current) celebrate(containerRef.current, { preset: "shards" });
+        }
+        return next;
       });
 
       animId = requestAnimationFrame(loop);
@@ -334,14 +368,24 @@ export default function MazeRunner({ locale }: Props) {
             <p className="mt-2 text-sm text-foreground font-bold font-mono">
               {t.score}: {gameState.score.toLocaleString()}
             </p>
-            <button
-              type="button"
-              onClick={() => setGameState(createInitialMazeRunnerState(gameState.level + 1, gameState.highScore))}
-              className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-primary px-8 py-3.5 text-base font-bold text-primary-foreground shadow-lg hover:bg-primary/90"
-            >
-              <Play className="w-5 h-5 fill-current" />
-              <span>{t.nextStage}</span>
-            </button>
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => void handleShareCard()}
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-primary/50 bg-primary/20 px-4 py-2.5 text-xs font-bold text-primary transition-colors hover:bg-primary/30 active:scale-95"
+              >
+                <Share2 className="w-4 h-4" />
+                <span>{shareCopied ? "복사됨!" : "공유 카드"}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setGameState(createInitialMazeRunnerState(gameState.level + 1, gameState.highScore))}
+                className="inline-flex items-center gap-2 rounded-2xl bg-primary px-8 py-3.5 text-base font-bold text-primary-foreground shadow-lg hover:bg-primary/90"
+              >
+                <Play className="w-5 h-5 fill-current" />
+                <span>{t.nextStage}</span>
+              </button>
+            </div>
           </div>
         )}
 
@@ -350,14 +394,24 @@ export default function MazeRunner({ locale }: Props) {
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/85 backdrop-blur-sm p-4 text-center pointer-events-auto">
             <h3 className="text-2xl font-black text-destructive">{t.timeoutTitle}</h3>
             <p className="mt-1 text-xs text-muted-foreground max-w-sm">{t.timeoutDesc}</p>
-            <button
-              type="button"
-              onClick={() => setGameState(createInitialMazeRunnerState(1, gameState.highScore))}
-              className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-primary px-8 py-3.5 text-base font-bold text-primary-foreground shadow-lg hover:bg-primary/90"
-            >
-              <RotateCcw className="w-5 h-5" />
-              <span>{t.restart}</span>
-            </button>
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => void handleShareCard()}
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-primary/50 bg-primary/20 px-4 py-2.5 text-xs font-bold text-primary transition-colors hover:bg-primary/30 active:scale-95"
+              >
+                <Share2 className="w-4 h-4" />
+                <span>{shareCopied ? "복사됨!" : "공유 카드"}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setGameState(createInitialMazeRunnerState(1, gameState.highScore))}
+                className="inline-flex items-center gap-2 rounded-2xl bg-primary px-8 py-3.5 text-base font-bold text-primary-foreground shadow-lg hover:bg-primary/90"
+              >
+                <RotateCcw className="w-5 h-5" />
+                <span>{t.restart}</span>
+              </button>
+            </div>
           </div>
         )}
       </div>

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
-import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { Maximize2, Minimize2, Share2, Volume2, VolumeX } from 'lucide-react';
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { createSolvedPuzzle15Board, movePuzzle15Tile, shufflePuzzle15 } from '../../lib/games/puzzle15';
@@ -9,6 +9,12 @@ import { clearPuzzle15Save, loadPuzzle15Save, storePuzzle15Save } from '../../li
 import { elapsedSeconds } from '../../lib/games/time-contracts';
 import { indexToRowCol } from '../../lib/games/piece-tween';
 import { PUZZLE15_SPRITES } from '../../lib/games/sprites';
+import { celebrate } from '../../lib/games/celebration';
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from '../../lib/games/share-card';
 
 // ─── 15 Puzzle (sliding puzzle) — ported from ahoxy-legacy ────────────────────
 // Shuffled by random moves from the solved state, so every board is solvable.
@@ -45,6 +51,7 @@ const Puzzle15: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [moves, setMoves] = useState(0);
     const [seconds, setSeconds] = useState(0);
     const [won, setWon] = useState(false);
+    const [shareCardCopied, setShareCardCopied] = useState(false);
     const [best, setBest] = useState<Record<string, { moves: number; seconds: number }>>({});
 
     const [muted, setMuted] = useState(() => {
@@ -133,9 +140,33 @@ const Puzzle15: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         setWon(true);
         clearPuzzle15Save();
         tone(660, 0.18);
+        if (containerRef.current) celebrate(containerRef.current, { preset: "tiles" });
         const saved = recordBestForConditions(gameKey(size), seconds, 'seconds', conditionsFor(size, puzzleSeed), String(finalMoves));
         setBest((prev) => ({ ...prev, [size]: { moves: Number(saved.extra) || finalMoves, seconds: saved.value } }));
     };
+
+    const b = best[size];
+
+    const handleShareCard = useCallback(async () => {
+        const canvas = createShareCardCanvas({
+            title: "15 Puzzle",
+            subtitle: `${size}×${size} Sliding Board Solved`,
+            score: `${moves} Moves`,
+            slug: "puzzle15",
+            customStats: [
+                { label: "Board Size", value: `${size}×${size}` },
+                { label: "Time", value: fmt(seconds) },
+                ...(b ? [{ label: "Best", value: `${b.moves} Moves` }] : []),
+            ],
+        });
+        const ok = await copyShareCardToClipboard(canvas);
+        if (ok) {
+            setShareCardCopied(true);
+            setTimeout(() => setShareCardCopied(false), 2000);
+        } else {
+            downloadShareCard(canvas, `puzzle15-${size}x${size}.png`);
+        }
+    }, [size, moves, seconds, b]);
 
     const slide = useCallback((tileIdx: number) => {
         if (won) return;
@@ -181,8 +212,6 @@ const Puzzle15: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         window.addEventListener('keydown', onKey);
         return () => window.removeEventListener('keydown', onKey);
     }, [board, size, won, slide, togglePortal]);
-
-    const b = best[size];
 
     return (
         <div
@@ -260,9 +289,19 @@ const Puzzle15: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         <div className={`absolute inset-0 z-10 bg-background/80 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center gap-3 ${!reducedMotion ? 'animate-in fade-in zoom-in-95' : ''}`} role="status" aria-live="polite">
                             <p className="text-2xl font-black text-success">🎉 {t.win}</p>
                             <p className="text-sm font-bold text-muted-foreground">{t.moves} {moves} · {t.time} {fmt(seconds)}</p>
-                            <button onClick={() => restart()} className="mt-2 min-h-11 px-8 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity">
-                                ↺
-                            </button>
+                            <div className="flex flex-wrap justify-center gap-2 mt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => void handleShareCard()}
+                                    className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-primary/50 bg-primary/20 px-4 py-2.5 text-xs font-bold text-primary transition-colors hover:bg-primary/30 active:scale-95"
+                                >
+                                    <Share2 className="w-4 h-4" />
+                                    <span>{shareCardCopied ? "복사됨!" : "공유 카드"}</span>
+                                </button>
+                                <button onClick={() => restart()} className="min-h-11 px-8 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity">
+                                    ↺
+                                </button>
+                            </div>
                         </div>
                     )}
                 </div>

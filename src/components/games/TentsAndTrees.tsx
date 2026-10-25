@@ -44,10 +44,16 @@ import {
 } from '../../lib/games/tents-chaos';
 import { TENTS_SPRITES } from '../../lib/games/sprites';
 import { tentsAnalyticsPayload, type TentsAnalyticsEvent } from '../../lib/games/tents-analytics';
-import { Maximize2, Minimize2, Volume2, VolumeX, Calendar } from 'lucide-react';
+import { Maximize2, Minimize2, Volume2, VolumeX, Calendar, Share2 } from 'lucide-react';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { DailyPuzzleCalendarModal } from '../ui/game/DailyPuzzleCalendarModal';
 import { recordDailyPuzzleClear } from '../../lib/games/daily-calendar';
+import { celebrate } from '../../lib/games/celebration';
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from '../../lib/games/share-card';
 
 // ─── Tents & Trees — logic puzzle with generated boards ─────────────────────
 // Every tree pairs with one tent on an orthogonally adjacent cell; tents never
@@ -373,6 +379,7 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
     const [hint, setHint] = useState<TentsHint | null>(null);
     const [smartDeduction, setSmartDeduction] = useState<SmartDeduction | null>(null);
+    const [shareCardCopied, setShareCardCopied] = useState(false);
     const mutedRef = useRef(false);
     useEffect(() => { mutedRef.current = muted; }, [muted]);
     const audioRef = useRef<AudioContext | null>(null);
@@ -591,6 +598,7 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             clearTentsSave();
             tone(880, 0.1);
             window.setTimeout(() => tone(1100, 0.16), 90);
+            if (containerRef.current) celebrate(containerRef.current, { preset: "leaves" });
             if (mode === 'daily') {
                 const today = todayKey();
                 setStreak(recordDailyWin(DAILY_GAME_ID, today, previousDayKey(today)));
@@ -601,6 +609,27 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             remember(next);
         }
     };
+
+    const handleShareCard = useCallback(async () => {
+        const canvas = createShareCardCanvas({
+            title: "Tents and Trees",
+            subtitle: mode === 'daily' ? `Daily Puzzle (${dailyDate})` : `${puzzle.size}×${puzzle.size} Logic Grid`,
+            score: validation.complete ? "Solved!" : "Camping In Progress",
+            slug: "tents",
+            customStats: [
+                { label: "Board Size", value: `${puzzle.size}×${puzzle.size}` },
+                { label: "Trees", value: `${puzzle.trees.length}` },
+                ...(streak ? [{ label: "Streak", value: `${streak.currentStreak} Days` }] : []),
+            ],
+        });
+        const ok = await copyShareCardToClipboard(canvas);
+        if (ok) {
+            setShareCardCopied(true);
+            setTimeout(() => setShareCardCopied(false), 2000);
+        } else {
+            downloadShareCard(canvas, `tents-and-trees-${dailyDate}.png`);
+        }
+    }, [mode, dailyDate, puzzle.size, puzzle.trees.length, validation.complete, streak]);
 
     const copyShare = () => {
         if (!chaosAugment || chaosStartedAt == null) return;
@@ -954,16 +983,26 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     {validation.complete ? (
                         <div className="animate-fade-up motion-reduce:animate-none">
                             <p className="text-xl font-black text-success mb-3">🎉 {t.win}</p>
-                            {mode === 'free' && (
-                                <button onClick={() => { track('play_again', 'free'); newPuzzle('free', difficulty); }} className="px-8 py-2.5 bg-primary text-primary-foreground rounded-full font-bold shadow-lg">
-                                    {t.next}
+                            <div className="flex flex-wrap justify-center gap-2 mb-2">
+                                <button
+                                    type="button"
+                                    onClick={() => void handleShareCard()}
+                                    className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-primary/50 bg-primary/20 px-4 py-2.5 text-xs font-bold text-primary transition-colors hover:bg-primary/30 active:scale-95"
+                                >
+                                    <Share2 className="w-4 h-4" />
+                                    <span>{shareCardCopied ? "복사됨!" : "공유 카드"}</span>
                                 </button>
-                            )}
-                            {mode === 'chaos' && chaosAugment && (
-                                <button type="button" onClick={copyShare} className="px-8 py-2.5 bg-primary text-primary-foreground rounded-full font-bold shadow-lg">
-                                    {copied ? chaosCopy.copied : chaosCopy.copyShare}
-                                </button>
-                            )}
+                                {mode === 'free' && (
+                                    <button onClick={() => { track('play_again', 'free'); newPuzzle('free', difficulty); }} className="px-8 py-2.5 bg-primary text-primary-foreground rounded-full font-bold shadow-lg">
+                                        {t.next}
+                                    </button>
+                                )}
+                                {mode === 'chaos' && chaosAugment && (
+                                    <button type="button" onClick={copyShare} className="px-8 py-2.5 bg-primary text-primary-foreground rounded-full font-bold shadow-lg">
+                                        {copied ? chaosCopy.copied : chaosCopy.copyShare}
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     ) : chaosFailed ? (
                         <p className="text-xs font-bold text-destructive">{chaosCopy.timeUp}</p>

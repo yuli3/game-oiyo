@@ -7,11 +7,16 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { celebrate } from "../../lib/games/celebration";
-import { HelpCircle, Lock, Maximize2, Minimize2, Pause, Play, Volume2, VolumeX } from "lucide-react";
+import { HelpCircle, Lock, Maximize2, Minimize2, Pause, Play, Share2, Volume2, VolumeX } from "lucide-react";
 import { GameContainer } from "../ui/game/GamePrimitives";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import type { Locale } from "../../lib/i18n";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
 import {
   getBestForConditions,
   getRecord,
@@ -667,6 +672,7 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
   const [best, setBest] = useState<ConditionalBestRecord | null>(null);
   const [newBest, setNewBest] = useState(false);
   const [dealId, setDealId] = useState(0);
+  const [shareCardCopied, setShareCardCopied] = useState(false);
   const [offers, setOffers] = useState<AugmentId[]>([]);
   const [augment, setAugment] = useState<AugmentId | null>(null);
   const [chaos, setChaos] = useState<ChaosId | null>(null);
@@ -1047,6 +1053,31 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
     }
   };
 
+  const handleShareCard = useCallback(async () => {
+    if (!game) return;
+    const outcome = humanOutcome(game);
+    const outcomeLabel = outcome === "w" ? t.win : outcome === "l" ? t.loss : t.drawGame;
+    const starsCount = resultStars(outcome, Math.ceil(game.turnCount / game.seats));
+    const canvas = createShareCardCanvas({
+      title: "Tile Rummy",
+      subtitle: `${outcomeLabel} · ${"★".repeat(starsCount)} (${setup.mode})`,
+      score: outcome === "w" ? "RUMMIKUB CLEAR!" : `Penalty ${handPenalty(game.hands[0])}`,
+      slug: "tile-rummy",
+      customStats: [
+        { label: "Opponents", value: `${setup.opponents}` },
+        { label: "Turns", value: `${Math.ceil(game.turnCount / game.seats)} Turns` },
+        { label: "Record", value: `${record?.w ?? 0}W ${record?.l ?? 0}L` },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `tile-rummy-${setup.mode}.png`);
+    }
+  }, [game, t, setup, record]);
+
   const toggleMute = () => setMuted((value) => { writePref(MUTE_KEY, value ? "0" : "1"); return !value; });
   const chooseTheme = (next: TableTheme) => {
     if (wins < THEME_UNLOCK[next]) return;
@@ -1261,6 +1292,14 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
               </ul>
               <div className="flex flex-wrap justify-center gap-2">
                 <button type="button" onClick={() => { setPhase("title"); later(enter, 0); }} className={PRIMARY}>{m.restart}</button>
+                <button
+                  type="button"
+                  onClick={() => void handleShareCard()}
+                  className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-primary/50 bg-primary/20 px-4 py-2 text-xs font-bold text-primary transition-colors hover:bg-primary/30 active:scale-95"
+                >
+                  <Share2 className="size-4" />
+                  <span>{shareCardCopied ? "복사됨!" : "공유 카드"}</span>
+                </button>
                 <button type="button" onClick={() => void share()} className={`${CONTROL} border-border bg-card text-foreground`}>{t.share}</button>
                 <button type="button" onClick={toTitle} className={`${CONTROL} border-border bg-card text-foreground`}>{m.exit}</button>
               </div>

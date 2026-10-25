@@ -8,8 +8,14 @@ import {
   COURSE_TILES,
 } from '../../lib/games/marble-roll';
 import type { Locale } from '../../lib/i18n';
-import { Play, RotateCcw, Trophy, Zap, Star, Flag, ArrowUp, ArrowLeft, ArrowRight, Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { Play, RotateCcw, Trophy, Zap, Star, Flag, ArrowUp, ArrowLeft, ArrowRight, Maximize2, Minimize2, Share2, Volume2, VolumeX } from 'lucide-react';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { celebrate } from '../../lib/games/celebration';
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from '../../lib/games/share-card';
 
 interface Props {
   locale: Locale;
@@ -129,6 +135,7 @@ export default function MarbleRoll({ locale = 'ko' }: Props) {
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal();
   const [marble, setMarble] = useState<MarbleState>(createInitialMarbleState);
   const [bestTime, setBestTime] = useState<number | null>(null);
+  const [shareCopied, setShareCopied] = useState(false);
   const [muted, setMuted] = useState(() => {
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
@@ -171,6 +178,27 @@ export default function MarbleRoll({ locale = 'ko' }: Props) {
     inputRef.current = { steerX: 0, throttleZ: 0, jump: false };
     lastTimeRef.current = performance.now();
   }, []);
+
+  const handleShareCard = useCallback(async () => {
+    const canvas = createShareCardCanvas({
+      title: "Marble Roll 3D",
+      subtitle: marble.status === 'cleared' ? "Course Cleared!" : "Rolling Physics Run",
+      score: `${marble.elapsedTime.toFixed(2)}s`,
+      slug: "marble-roll",
+      customStats: [
+        { label: "Score", value: `${marble.score} pts` },
+        { label: "Stars", value: `${marble.starsCollected}/${TOTAL_STARS}` },
+        { label: "Best Time", value: bestTime !== null ? `${bestTime.toFixed(2)}s` : `${marble.elapsedTime.toFixed(2)}s` },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `marble-roll-${marble.score}.png`);
+    }
+  }, [marble.status, marble.elapsedTime, marble.score, marble.starsCollected, bestTime]);
 
   // Keyboard controls
   useEffect(() => {
@@ -248,6 +276,7 @@ export default function MarbleRoll({ locale = 'ko' }: Props) {
         const next = updateMarblePhysics(prev, inputRef.current, dt);
 
         if (next.status === 'cleared') {
+          if (containerRef.current) celebrate(containerRef.current, { preset: "coins" });
           // Check best time
           const time = next.elapsedTime;
           setBestTime((cur) => {
@@ -397,13 +426,23 @@ export default function MarbleRoll({ locale = 'ko' }: Props) {
               <div>{t.score}: <span className="text-warning">{marble.score}</span></div>
               <div>{t.stars}: <span className="text-success">{marble.starsCollected}/{TOTAL_STARS}</span></div>
             </div>
-            <button
-              onClick={handleRestart}
-              className="px-6 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-bold flex items-center gap-2 hover:opacity-90 shadow-lg"
-            >
-              <RotateCcw className="w-4 h-4" />
-              {t.restart}
-            </button>
+            <div className="flex flex-wrap justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => void handleShareCard()}
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-primary/50 bg-primary/20 px-4 py-2.5 text-xs font-bold text-primary transition-colors hover:bg-primary/30 active:scale-95"
+              >
+                <Share2 className="w-4 h-4" />
+                <span>{shareCopied ? "복사됨!" : "공유 카드"}</span>
+              </button>
+              <button
+                onClick={handleRestart}
+                className="px-6 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-bold flex items-center gap-2 hover:opacity-90 shadow-lg"
+              >
+                <RotateCcw className="w-4 h-4" />
+                {t.restart}
+              </button>
+            </div>
           </div>
         )}
       </div>
