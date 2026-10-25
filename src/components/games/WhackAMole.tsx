@@ -8,6 +8,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { celebrate } from "../../lib/games/celebration";
+import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "../../lib/games/share-card";
+import { Share2, Check } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { getBest, recordBest } from "../../lib/games/records";
@@ -425,6 +427,31 @@ const WhackAMole = ({ locale }: { locale: Locale }) => {
   const analysis = game ? whackAnalysis(game) : null;
   const timeLeft = game ? Math.max(0, Math.ceil((WHACK_DURATION_MS - game.elapsedMs) / 1000)) : 30;
 
+  const [shareCardCopied, setShareCardCopied] = useState(false);
+
+  const handleShareCard = useCallback(async () => {
+    if (!game || !analysis) return;
+    const canvas = createShareCardCanvas({
+      title: "Whack-A-Mole",
+      subtitle: "120fps Cyber Arcade",
+      score: `${game.score} PTS`,
+      slug: "whack-a-mole",
+      customStats: [
+        { label: "Accuracy", value: `${analysis.accuracy}%` },
+        { label: "Max Combo", value: `×${analysis.maxCombo}` },
+        { label: "Hits", value: `${analysis.hits}` },
+        { label: "Bombs Avoided", value: `${analysis.bombs}` },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `whack-a-mole-${game.score}.png`);
+    }
+  }, [game, analysis]);
+
   const share = async () => {
     if (!game || !analysis) return;
     try {
@@ -582,6 +609,17 @@ const WhackAMole = ({ locale }: { locale: Locale }) => {
                     : locale === "es"
                     ? "Misma ronda"
                     : "Same round"}
+                </button>
+              )}
+              {game && (
+                <button
+                  type="button"
+                  onClick={handleShareCard}
+                  className="flex min-h-11 items-center gap-1.5 rounded-full border border-primary/50 bg-primary/20 px-5 text-sm font-bold text-primary shadow-xs hover:bg-primary/30 transition-colors"
+                  title={shareCardCopied ? "복사됨!" : "결과 카드"}
+                >
+                  {shareCardCopied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
+                  <span>{shareCardCopied ? "복사 완료" : "결과 카드"}</span>
                 </button>
               )}
               {game && (

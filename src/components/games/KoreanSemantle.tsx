@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
+import { Maximize2, Minimize2, Volume2, VolumeX, Share2, Check } from "lucide-react";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
+import { celebrate } from "../../lib/games/celebration";
+import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "../../lib/games/share-card";
 import {
   dailySecretIndex,
   minutesUntilNextKstMidnight,
@@ -272,6 +274,7 @@ const KoreanSemantle: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
   const [lastWord, setLastWord] = useState<string | null>(null);
   const [stats, setStats] = useState<StreakStats | null>(null);
   const [copied, setCopied] = useState(false);
+  const [shareCardCopied, setShareCardCopied] = useState(false);
   const [puzzleId, setPuzzleId] = useState("");
   const [sound, setSound] = useState(() => {
     if (typeof window === "undefined") return true;
@@ -391,6 +394,7 @@ const KoreanSemantle: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
     if (result.solved) {
       localStorage.removeItem(SAVE_KEY);
       setStatus("won");
+      if (containerRef.current) celebrate(containerRef.current, { preset: "cards" });
       if (!recordedRef.current) {
         recordedRef.current = true;
         setStats(recordStreak(GAME_ID, true));
@@ -423,6 +427,29 @@ const KoreanSemantle: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
       /* clipboard unavailable — no-op */
     }
   }, [status, guesses, t]);
+
+  const handleShareCard = useCallback(async () => {
+    const solved = status === "won";
+    const closest = orderGuesses(guesses)[0];
+    const canvas = createShareCardCanvas({
+      title: "Korean Semantle (꼬맨틀)",
+      subtitle: puzzleId ? `Puzzle #${puzzleId}` : "Daily Word Similarity",
+      score: solved ? `${guesses.length} Guesses` : "In Progress",
+      slug: "korean-semantle",
+      customStats: [
+        { label: "Top Rank", value: closest?.rank != null ? `#${closest.rank}` : "None" },
+        { label: "Similarity", value: closest?.similarity != null ? `${(closest.similarity * 100).toFixed(1)}%` : "0%" },
+        ...(stats ? [{ label: "Streak", value: `${stats.currentStreak} Days` }] : []),
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `korean-semantle-${puzzleId || "daily"}.png`);
+    }
+  }, [status, guesses, puzzleId, stats]);
 
   const ordered = useMemo(() => orderGuesses(guesses), [guesses]);
   const availableHints = useMemo(() => table ? koreanSemantleHints(table, guesses.length) : [], [table, guesses.length]);
@@ -566,8 +593,17 @@ const KoreanSemantle: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
             <p className="text-base font-black text-foreground">
               {status === "won" ? t.won(guesses.length) : t.revealed(table?.meta.secret ?? "")}
             </p>
-            <div className="flex gap-2">
-              <button onClick={share} className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-black">
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={handleShareCard}
+                className="flex min-h-11 items-center gap-1.5 rounded-xl border border-primary/50 bg-primary/20 px-5 text-sm font-bold text-primary shadow-xs hover:bg-primary/30 transition-colors"
+                title={shareCardCopied ? "복사됨!" : "결과 카드"}
+              >
+                {shareCardCopied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
+                <span>{shareCardCopied ? "복사 완료" : "결과 카드"}</span>
+              </button>
+              <button type="button" onClick={share} className="min-h-11 px-5 py-2.5 rounded-xl border border-border bg-card text-foreground font-black hover:bg-muted transition-colors">
                 {copied ? t.copied : t.share}
               </button>
             </div>

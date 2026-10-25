@@ -4,8 +4,10 @@ import {evaluateAkari} from '../../lib/games/logic-puzzles';
 import {createLightUp,explainLightUpHint,hintLightUp,LIGHT_UP_SPEC,parseLightUp,serializeLightUp,toggleLightUp,undoLightUp,type LightUpHint,type LightUpState} from '../../lib/games/light-up';
 import { LIGHT_UP_SPRITES } from '../../lib/games/sprites';
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
-import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { Maximize2, Minimize2, Volume2, VolumeX, Share2, Check } from 'lucide-react';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { celebrate } from '../../lib/games/celebration';
+import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from '../../lib/games/share-card';
 
 const SAVE='oiyo:light-up:v1';
 const COPY={
@@ -62,11 +64,32 @@ export default function LightUp({locale='ko'}:{locale?:string}){
  const [active,setActive]=useState(0);
  const [hint,setHint]=useState<LightUpHint|null>(null);
  const [freshBulb,setFreshBulb]=useState<number|null>(null);
+ const [shareCardCopied,setShareCardCopied]=useState(false);
  const reducedMotion=usePrefersReducedMotion();
  const refs=useRef<Array<HTMLButtonElement|null>>([]);
  useEffect(()=>{const saved=parseLightUp(localStorage.getItem(SAVE));if(saved){setState(saved);setRestored(true);setPaused(true);}},[]);useEffect(()=>localStorage.setItem(SAVE,serializeLightUp(state)),[state]);
  const tone=useCallback((win=false)=>{if(!sound)return;const A=window.AudioContext||window.webkitAudioContext;if(!A)return;const a=new A(),o=a.createOscillator(),g=a.createGain();o.frequency.value=win?880:520;g.gain.setValueAtTime(.03,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+.16);o.connect(g).connect(a.destination);o.start();o.stop(a.currentTime+.16);},[sound]);
- const act=(fn:(s:LightUpState)=>LightUpState)=>{if(paused)return;setState(s=>{const n=fn(s);if(n!==s)tone(n.won);return n;});};const fresh=()=>{setState(createLightUp(state.seed+1));setPaused(false);setRestored(false);setFreshBulb(null);};const ev=evaluateAkari(LIGHT_UP_SPEC,state.bulbs);const bulbs=state.bulbs.flat().filter(Boolean).length, dark=ev.lit.flat().filter((lit,i)=>LIGHT_UP_SPEC[Math.floor(i/7)][i%7]===null&&!lit).length;
+ const act=(fn:(s:LightUpState)=>LightUpState)=>{if(paused)return;setState(s=>{const n=fn(s);if(n!==s){tone(n.won);if(n.won&&!s.won&&containerRef.current)celebrate(containerRef.current,{preset:"stardust"});}return n;});};const fresh=()=>{setState(createLightUp(state.seed+1));setPaused(false);setRestored(false);setFreshBulb(null);};const ev=evaluateAkari(LIGHT_UP_SPEC,state.bulbs);const bulbs=state.bulbs.flat().filter(Boolean).length, dark=ev.lit.flat().filter((lit,i)=>LIGHT_UP_SPEC[Math.floor(i/7)][i%7]===null&&!lit).length;
+ const handleShareCard = useCallback(async () => {
+   const canvas = createShareCardCanvas({
+     title: "Light Up (Akari)",
+     subtitle: "Logic Grid Puzzle Solved",
+     score: `${state.moves} Moves`,
+     slug: "light-up",
+     customStats: [
+       { label: "Bulbs Lit", value: `${bulbs}` },
+       { label: "Hints Used", value: `${state.hints}` },
+       { label: "Dark Cells", value: "0" },
+     ],
+   });
+   const ok = await copyShareCardToClipboard(canvas);
+   if (ok) {
+     setShareCardCopied(true);
+     setTimeout(() => setShareCardCopied(false), 2000);
+   } else {
+     downloadShareCard(canvas, `light-up-${state.moves}moves.png`);
+   }
+ }, [state.moves, state.hints, bulbs]);
  const focus=(e:React.KeyboardEvent,index:number)=>{const r=Math.floor(index/7),c=index%7;let n=index;if(e.key==='ArrowUp')n=Math.max(0,r-1)*7+c;else if(e.key==='ArrowDown')n=Math.min(6,r+1)*7+c;else if(e.key==='ArrowLeft')n=r*7+Math.max(0,c-1);else if(e.key==='ArrowRight')n=r*7+Math.min(6,c+1);else return;e.preventDefault();while(n>=0&&n<49&&LIGHT_UP_SPEC[Math.floor(n/7)][n%7]!==null)n+=e.key==='ArrowLeft'||e.key==='ArrowUp'?-1:1;setActive(n);refs.current[n]?.focus();};
  return (
   <div
@@ -126,7 +149,25 @@ export default function LightUp({locale='ko'}:{locale?:string}){
       </button>
       <Control text={paused?t.resume:t.pause} onClick={()=>setPaused(x=>!x)}/>
      </div>
-     {state.won&&<div className="rounded-3xl border border-amber-300 bg-amber-100 p-6 text-center text-foreground" role="status" aria-live="polite"><div className="text-4xl">✨</div><h3 className="mt-2 text-xl font-black">{t.win}</h3><p className="mt-1 text-sm">{state.moves} {t.moves} · {state.hints} {t.hint}</p><button onClick={fresh} className="mt-4 min-h-11 rounded-full bg-slate-900 px-8 font-bold text-white">{t.next}</button></div>}
+     {state.won && (
+      <div className="rounded-3xl border border-primary/50 bg-card p-6 text-center text-card-foreground shadow-lg" role="status" aria-live="polite">
+       <div className="text-4xl">✨</div>
+       <h3 className="mt-2 text-xl font-black">{t.win}</h3>
+       <p className="mt-1 text-sm text-muted-foreground">{state.moves} {t.moves} · {state.hints} {t.hint}</p>
+       <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+        <button type="button" onClick={fresh} className="min-h-11 rounded-full bg-primary px-8 font-bold text-primary-foreground hover:opacity-90">{t.next}</button>
+        <button
+         type="button"
+         onClick={handleShareCard}
+         className="flex min-h-11 items-center gap-1.5 rounded-full border border-primary/50 bg-primary/20 px-5 text-sm font-bold text-primary shadow-xs hover:bg-primary/30 transition-colors"
+         title={shareCardCopied ? "복사됨!" : "결과 카드"}
+        >
+         {shareCardCopied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
+         <span>{shareCardCopied ? "복사 완료" : "결과 카드"}</span>
+        </button>
+       </div>
+      </div>
+     )}
     </div>
    </GameContainer>
   </div>

@@ -1,9 +1,11 @@
-import { lazy, Suspense, useState, useEffect, useRef } from 'react';
-import { Trophy, RefreshCw, Volume2, VolumeX, Sparkles, AlertCircle, Compass, Play } from 'lucide-react';
+import { lazy, Suspense, useState, useEffect, useRef, useCallback } from 'react';
+import { Trophy, RefreshCw, Volume2, VolumeX, Sparkles, AlertCircle, Compass, Play, Share2, Check } from 'lucide-react';
 import type { Locale } from '../../lib/i18n';
 import { getBest, recordBest } from '../../lib/games/records';
 import { hasWebGL } from '../../lib/games/webgl';
 import { generateMaze, type MazeConfig } from '../../lib/games/marble-maze';
+import { celebrate } from '../../lib/games/celebration';
+import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from '../../lib/games/share-card';
 
 const MarbleMazeScene = lazy(() => import('./MarbleMazeScene'));
 
@@ -150,7 +152,9 @@ export default function MarbleMaze({ locale = 'ko' }: { locale?: Locale }) {
   const [bestScore, setBestScore] = useState(0);
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [webglSupported, setWebglSupported] = useState(true);
+  const [shareCardCopied, setShareCardCopied] = useState(false);
 
+  const containerRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -158,6 +162,28 @@ export default function MarbleMaze({ locale = 'ko' }: { locale?: Locale }) {
     const saved = getBest(GAME_KEY);
     if (saved) setBestScore(saved.value);
   }, []);
+
+  const handleShareCard = useCallback(async () => {
+    const canvas = createShareCardCanvas({
+      title: "Marble Maze 3D",
+      subtitle: `${size}×${size} Tilt Maze Escaped`,
+      score: `${finalScore} PTS`,
+      slug: "marble-maze",
+      customStats: [
+        { label: "Maze Size", value: `${size}×${size}` },
+        { label: "Escape Time", value: `${elapsedTime}s` },
+        { label: "Gems Collected", value: `${collectedGems}/${config.gemTotal}` },
+        { label: "High Score", value: `${bestScore}` },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `marble-maze-${finalScore}pts.png`);
+    }
+  }, [size, finalScore, elapsedTime, collectedGems, config.gemTotal, bestScore]);
 
   const startNewGame = (newSize = size) => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -179,6 +205,7 @@ export default function MarbleMaze({ locale = 'ko' }: { locale?: Locale }) {
     setElapsedTime(Math.floor(finalSeconds));
     setFinalScore(score);
     setStatus('cleared');
+    if (containerRef.current) celebrate(containerRef.current, { preset: "coins" });
     if (score > bestScore) {
       setBestScore(score);
       recordBest(GAME_KEY, score, 'score');
@@ -204,7 +231,7 @@ export default function MarbleMaze({ locale = 'ko' }: { locale?: Locale }) {
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div ref={containerRef} className="mx-auto max-w-4xl space-y-6">
       {/* Header Info Banner */}
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-card p-5">
         <div>
@@ -328,13 +355,27 @@ export default function MarbleMaze({ locale = 'ko' }: { locale?: Locale }) {
                   </div>
                 </div>
               )}
-              <button
-                onClick={() => startNewGame()}
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 font-semibold text-primary-foreground transition hover:opacity-90"
-              >
-                <RefreshCw className="h-4 w-4" />
-                {t.retry}
-              </button>
+              <div className="mt-4 flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={() => startNewGame()}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 font-semibold text-primary-foreground transition hover:opacity-90"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  {t.retry}
+                </button>
+                {status === 'cleared' && (
+                  <button
+                    type="button"
+                    onClick={handleShareCard}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-primary/50 bg-primary/20 py-2.5 text-xs font-bold text-primary transition hover:bg-primary/30"
+                    title={shareCardCopied ? "복사됨!" : "결과 카드 공유"}
+                  >
+                    {shareCardCopied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
+                    <span>{shareCardCopied ? "복사 완료" : "결과 카드 공유"}</span>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         )}

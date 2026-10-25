@@ -2,8 +2,8 @@
 // phone (2026-10-21). The two rows and the background cells are the budget.
 // The fuse is play time, so reduced motion does not skip it.
 
-import { useEffect, useRef, useState } from "react";
-import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { Maximize2, Minimize2, Volume2, VolumeX, Share2, Check } from "lucide-react";
 import { GameContainer } from "../ui/game/GamePrimitives";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import type { Locale } from "../../lib/i18n";
@@ -14,6 +14,7 @@ import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from "../../
 import { createHaptics } from "../../lib/games/haptics";
 import { celebrate } from "../../lib/games/celebration";
 import { TWO_HANDS_SPRITES } from "../../lib/games/sprites";
+import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "../../lib/games/share-card";
 import {
   GAME_ID,
   begin,
@@ -208,6 +209,7 @@ export default function TwoHands({ locale }: { locale: Locale }) {
   const [record, setRecord] = useState<GameRecord | null>(null);
   const [best, setBest] = useState<BestRecord | null>(null);
   const [muted, setMuted] = useState(false);
+  const [shareCardCopied, setShareCardCopied] = useState(false);
   const [remain, setRemain] = useState(Math.ceil(FUSE_MS / 1000));
   const cuesRef = useRef<CuePlayer<CoreCue> | null>(null);
   const hapticsRef = useRef(createHaptics());
@@ -215,6 +217,28 @@ export default function TwoHands({ locale }: { locale: Locale }) {
   const phase = useRef<Run["phase"] | null>(null);
   const runRef = useRef<Run | null>(null);
   runRef.current = run;
+
+  const handleShareCard = useCallback(async () => {
+    if (!run || !dateKey) return;
+    const canvas = createShareCardCanvas({
+      title: "Two Hands",
+      subtitle: `Bilateral Coordination (${dateKey})`,
+      score: run.phase === "won" ? `${run.kept} Sky Kept (Won!)` : "Negotiation Failed",
+      slug: "two-hands",
+      customStats: [
+        { label: "Rounds Crossed", value: `${Math.min(run.round + 1, run.puzzle.rounds.length)}/3` },
+        { label: "Remaining Sky", value: `${run.sky}` },
+        ...(record ? [{ label: "Wins/Losses", value: `${record.w}W ${record.l}L` }] : []),
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `two-hands-${dateKey}.png`);
+    }
+  }, [run, dateKey, record]);
 
   const cue = (kind: CoreCue) => {
     if (muted || reducedMotion) return;
@@ -293,7 +317,7 @@ export default function TwoHands({ locale }: { locale: Locale }) {
     if (run.phase === "won") {
       cue("win");
       hapticsRef.current.fire("win");
-      if (containerRef.current) celebrate(containerRef.current, { preset: "notes" });
+      if (containerRef.current) celebrate(containerRef.current, { preset: "stardust" });
     } else if (run.phase === "lost") {
       cue("fail");
       hapticsRef.current.fire("fail");
@@ -370,7 +394,18 @@ export default function TwoHands({ locale }: { locale: Locale }) {
               <button type="button" onClick={() => { cue("tap"); hapticsRef.current.fire("tap"); setRun((current) => (current ? begin(current) : current)); }} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{run.round === 0 ? t.start : t.next}</button>
             ) : null}
             {run.phase === "won" || run.phase === "lost" ? (
-              <button type="button" onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</button>
+              <div className="flex flex-wrap items-center gap-2">
+                <button type="button" onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</button>
+                <button
+                  type="button"
+                  onClick={handleShareCard}
+                  className={`${CONTROL} inline-flex items-center gap-1.5 border-primary/50 bg-primary/20 text-primary hover:bg-primary/30`}
+                  title={shareCardCopied ? "복사됨!" : "결과 카드"}
+                >
+                  {shareCardCopied ? <Check className="size-4" /> : <Share2 className="size-4" />}
+                  <span>{shareCardCopied ? "복사 완료" : "결과 카드"}</span>
+                </button>
+              </div>
             ) : null}
             <p className="text-sm text-muted-foreground">{t.record(record?.w ?? 0, record?.l ?? 0)}{best?.unit === "score" ? ` · ${t.best(best.value)}` : ""}</p>
           </div>

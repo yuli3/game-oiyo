@@ -8,8 +8,10 @@ import {
   updatePinballPhysics,
 } from '../../lib/games/space-pinball';
 import type { Locale } from '../../lib/i18n';
-import { Play, RotateCcw, Trophy, CircleDot, Zap, Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { Play, RotateCcw, Trophy, CircleDot, Zap, Maximize2, Minimize2, Volume2, VolumeX, Share2, Check } from 'lucide-react';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { celebrate } from '../../lib/games/celebration';
+import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from '../../lib/games/share-card';
 
 interface Props {
   locale: Locale;
@@ -129,8 +131,30 @@ export default function SpacePinball({ locale }: Props) {
   stateRef.current = gameState;
   const audioCtxRef = useRef<AudioContext | null>(null);
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale });
+  const [shareCardCopied, setShareCardCopied] = useState(false);
 
   const t = UI_TEXT[locale] ?? UI_TEXT.en;
+
+  const handleShareCard = useCallback(async () => {
+    const canvas = createShareCardCanvas({
+      title: "Space Pinball 3D",
+      subtitle: "Neon Space Arcade Pinball",
+      score: `${gameState.score.toLocaleString()} PTS`,
+      slug: "space-pinball",
+      customStats: [
+        { label: "High Score", value: `${gameState.highScore.toLocaleString()}` },
+        { label: "Status", value: gameState.status === "gameover" ? "Game Over" : "Active" },
+        { label: "Balls Left", value: `${gameState.ballsLeft}` },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `space-pinball-${gameState.score}.png`);
+    }
+  }, [gameState.score, gameState.highScore, gameState.status, gameState.ballsLeft]);
 
   const playSound = useCallback((type: 'flipper' | 'bumper' | 'launch' | 'gameover') => {
     if (muted) return;
@@ -233,6 +257,7 @@ export default function SpacePinball({ locale }: Props) {
           }
           if (next.status === "gameover" && prev.status !== "gameover") {
             playSound('gameover');
+            if (containerRef.current) celebrate(containerRef.current, { preset: "sparks" });
           }
           return next;
         });
@@ -384,14 +409,25 @@ export default function SpacePinball({ locale }: Props) {
             <span className="text-4xl font-black text-foreground font-mono mb-6">
               {gameState.score.toLocaleString()}
             </span>
-            <button
-              type="button"
-              onClick={handleRestart}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-base shadow-lg hover:opacity-90 active:scale-95 transition-all"
-            >
-              <RotateCcw className="w-5 h-5" />
-              <span>{t.restart}</span>
-            </button>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={handleRestart}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-base shadow-lg hover:opacity-90 active:scale-95 transition-all"
+              >
+                <RotateCcw className="w-5 h-5" />
+                <span>{t.restart}</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleShareCard}
+                className="inline-flex items-center gap-2 px-4 py-3 rounded-xl border border-primary/50 bg-primary/20 text-primary font-bold text-sm shadow-md hover:bg-primary/30 active:scale-95 transition-all"
+                title={shareCardCopied ? "복사됨!" : "결과 카드 공유"}
+              >
+                {shareCardCopied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
+                <span>{shareCardCopied ? "복사 완료" : "결과 카드 공유"}</span>
+              </button>
+            </div>
           </div>
         )}
 

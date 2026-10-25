@@ -3,6 +3,7 @@ import { Calendar, Check, Maximize2, Minimize2, QrCode, Share2, Volume2, VolumeX
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { celebrate } from '../../lib/games/celebration';
+import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from '../../lib/games/share-card';
 import { dayIndex, mulberry32, previousDayKey, todayKey } from '../../lib/games/daily';
 import { getDailyStreak, recordDailyWin, type DailyStreak } from '../../lib/games/records';
 import { generateChallengeQrSvg } from '../../lib/games/challenge-qr';
@@ -136,6 +137,29 @@ const Kurodoko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             });
         }
     };
+    const [shareCardCopied, setShareCardCopied] = useState(false);
+
+    const handleShareCard = useCallback(async () => {
+        const size = puzzle.length;
+        const canvas = createShareCardCanvas({
+            title: "Kurodoko",
+            subtitle: mode === 'daily' ? `Daily Logic (${dailyDate})` : `${size}×${size} Logic Grid`,
+            score: `${moves} Moves`,
+            slug: "kurodoko",
+            customStats: [
+                { label: "Board Size", value: `${size}×${size}` },
+                { label: "Time", value: `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}` },
+                ...(streak ? [{ label: "Streak", value: `${streak.currentStreak} Days` }] : []),
+            ],
+        });
+        const ok = await copyShareCardToClipboard(canvas);
+        if (ok) {
+            setShareCardCopied(true);
+            setTimeout(() => setShareCardCopied(false), 2000);
+        } else {
+            downloadShareCard(canvas, `kurodoko-${dailyDate || size}.png`);
+        }
+    }, [puzzle.length, mode, dailyDate, moves, seconds, streak]);
     const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'ko' });
     const [muted, setMuted] = useState<boolean>(() => {
         try {
@@ -244,7 +268,7 @@ const Kurodoko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         playTone(v.complete ? 'win' : 'move', muted);
         if (v.complete) {
             clearKurodokoSaveV1();
-            if (containerRef.current) celebrate(containerRef.current, { preset: "shards" });
+            if (containerRef.current) celebrate(containerRef.current, { preset: "tiles" });
         }
         if (v.complete && mode === 'daily') {
             const today = todayKey();
@@ -425,6 +449,15 @@ const Kurodoko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         <p className="text-lg font-black text-success">🎉 {t.win}</p>
                         <p className="mt-1 text-xs font-bold text-muted-foreground">{t.moves} {moves} · {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')} · {mode === 'daily' ? t.daily : t[difficulty]}</p>
                         <div className="mt-3 flex flex-wrap justify-center gap-2">
+                            <button
+                                type="button"
+                                onClick={handleShareCard}
+                                className="min-h-11 px-4 py-2 rounded-xl border border-primary/50 bg-primary/20 shadow-xs text-xs font-bold text-primary hover:bg-primary/30 transition-colors flex items-center gap-1.5"
+                                title={shareCardCopied ? "복사됨!" : "결과 카드"}
+                            >
+                                {shareCardCopied ? <Check className="size-4" /> : <Share2 className="size-4" />}
+                                <span>{shareCardCopied ? "복사 완료" : "결과 카드"}</span>
+                            </button>
                             <button
                                 type="button"
                                 onClick={handleCopyChallenge}

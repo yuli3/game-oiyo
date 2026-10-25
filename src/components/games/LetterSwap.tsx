@@ -1,12 +1,13 @@
 // Daily letter-swap board. The shell stays scrollable: data-game-surface would
 // set touch-action:none and block the page on a phone (2026-10-20).
 
-import { useEffect, useRef, useState } from "react";
-import { Maximize2, Minimize2, Undo2, Volume2, VolumeX } from "lucide-react";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { Maximize2, Minimize2, Undo2, Volume2, VolumeX, Share2, Check } from "lucide-react";
 import { GameContainer } from "../ui/game/GamePrimitives";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import type { Locale } from "../../lib/i18n";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
+import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "../../lib/games/share-card";
 import {
   getBestForConditions,
   getRecord,
@@ -262,6 +263,7 @@ export default function LetterSwap({ locale }: { locale: Locale }) {
   const [record, setRecord] = useState<GameRecord | null>(null);
   const [best, setBest] = useState<ConditionalBestRecord | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [shareCardCopied, setShareCardCopied] = useState(false);
   const [muted, setMuted] = useState(false);
   const [phase, setPhase] = useState<"title" | "gather" | "play">("title");
   const [gatherKey, setGatherKey] = useState(0);
@@ -466,6 +468,28 @@ export default function LetterSwap({ locale }: { locale: Locale }) {
     }
   };
 
+  const handleShareCard = useCallback(async () => {
+    if (!board) return;
+    const canvas = createShareCardCanvas({
+      title: "Letter Swap",
+      subtitle: board.practice ? "Practice Word Grid" : `Daily Word Grid (${board.dateKey})`,
+      score: board.play.won ? `${board.play.swaps} Swaps (Solved!)` : `${board.play.swaps} Swaps`,
+      slug: "letter-swap",
+      customStats: [
+        { label: "Remaining Swaps", value: `${Math.max(0, SWAP_LIMIT - board.play.swaps)}` },
+        { label: "Board Size", value: `${board.puzzle.size}×${board.puzzle.size}` },
+        ...(record ? [{ label: "Wins/Losses", value: `${record.w}W ${record.l}L` }] : []),
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `letter-swap-${board.dateKey}.png`);
+    }
+  }, [board, record]);
+
   const play = board?.play;
   const puzzle = board?.puzzle;
   const marks = play && puzzle ? cellMarks(play.cells, puzzle.solution, puzzle.size) : [];
@@ -547,6 +571,15 @@ export default function LetterSwap({ locale }: { locale: Locale }) {
                 {t.undo}
               </button>
               <button type="button" onClick={replay} className={`${CONTROL} border-border bg-card text-foreground`}>{t.replay}</button>
+              <button
+                type="button"
+                onClick={handleShareCard}
+                className={`${CONTROL} inline-flex items-center gap-1 border-primary/50 bg-primary/20 text-primary hover:bg-primary/30`}
+                title={shareCardCopied ? "복사됨!" : "결과 카드"}
+              >
+                {shareCardCopied ? <Check className="size-4" /> : <Share2 className="size-4" />}
+                <span>{shareCardCopied ? "복사 완료" : "결과 카드"}</span>
+              </button>
               <button type="button" onClick={share} className={`${CONTROL} border-border bg-card text-foreground`}>{t.share}</button>
             </div>
             {message ? <p className="text-sm font-bold text-foreground" aria-live="polite">{message}</p> : null}

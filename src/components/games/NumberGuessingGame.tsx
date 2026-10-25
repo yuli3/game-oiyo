@@ -1,9 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Volume2, VolumeX, Maximize2, Minimize2 } from 'lucide-react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { Volume2, VolumeX, Maximize2, Minimize2, Share2, Check } from 'lucide-react';
 import { GameContainer } from '@/components/ui/game/GamePrimitives';
 import { useArcadePortal } from '@/lib/games/arcade-portal';
 import { createNumberGuessingGame, guessNumber, suggestedGuess, type NumberGuessingDifficulty, type NumberGuessingState } from '@/lib/games/number-guessing';
 import { clearNumberGuessingSave, loadNumberGuessingSave, storeNumberGuessingSave } from '@/lib/games/number-guessing-save';
+import { celebrate } from '@/lib/games/celebration';
+import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from '@/lib/games/share-card';
 
 type Best = { attempts: number; elapsedMs: number };
 const formatTime = (ms: number) => `${Math.floor(ms / 60000)}:${String(Math.floor(ms / 1000) % 60).padStart(2, '0')}`;
@@ -50,11 +52,53 @@ const NumberGuessingGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) =>
   useEffect(() => { if (!state) return; if (state.status === 'playing') storeNumberGuessingSave(state, elapsedMs, assisted); else { clearNumberGuessingSave(); if (state.status === 'won' && !assisted) { const result = { attempts: state.attempts.length, elapsedMs }; const key = `oiyo:number-guessing-best:${state.difficulty}`; try { const previous: Best | null = JSON.parse(localStorage.getItem(key) ?? 'null'); if (!previous || result.attempts < previous.attempts || result.attempts === previous.attempts && result.elapsedMs < previous.elapsedMs) { localStorage.setItem(key, JSON.stringify(result)); setBest(result); } } catch { /* best effort */ } } } }, [state, assisted]);
   useEffect(() => { const onVisibility = () => { if (document.hidden && state?.status === 'playing' && !paused) pause(); }; document.addEventListener('visibilitychange', onVisibility); return () => document.removeEventListener('visibilitychange', onVisibility); });
   const pause = () => { if (!state || state.status !== 'playing') return; if (paused) { startedAt.current = Date.now(); setPaused(false); } else { elapsedBase.current = elapsedMs; startedAt.current = null; setPaused(true); storeNumberGuessingSave(state, elapsedMs, assisted); } };
-  const submit = () => { if (!state || paused || state.status !== 'playing') return; const value = Number(input); const next = guessNumber(state, value); if (next === state) { setError(t.invalid); tone(160); return; } setError(''); setInput(''); setRestored(false); setState(next); const attempt = next.attempts.at(-1)!; tone(attempt.direction === 'exact' ? 880 : attempt.temperature === 'hot' ? 660 : attempt.temperature === 'warm' ? 440 : 240, attempt.direction === 'exact' ? .22 : .08); };
+  const [shareCardCopied, setShareCardCopied] = useState(false);
+  const submit = () => {
+    if (!state || paused || state.status !== 'playing') return;
+    const value = Number(input);
+    const next = guessNumber(state, value);
+    if (next === state) {
+      setError(t.invalid);
+      tone(160);
+      return;
+    }
+    setError('');
+    setInput('');
+    setRestored(false);
+    setState(next);
+    const attempt = next.attempts.at(-1)!;
+    tone(attempt.direction === 'exact' ? 880 : attempt.temperature === 'hot' ? 660 : attempt.temperature === 'warm' ? 440 : 240, attempt.direction === 'exact' ? .22 : .08);
+    if (attempt.direction === 'exact' && containerRef.current) {
+      celebrate(containerRef.current, { preset: "sparks" });
+    }
+  };
   const showHelper = () => { if (!state) return; setInput(String(suggestedGuess(state))); setAssisted(true); setError(''); };
   const share = async () => { if (!state) return; try { await navigator.clipboard.writeText(`OIYO Number Guessing ${state.difficulty} · ${state.attempts.length} guesses · ${formatTime(elapsedMs)}${assisted ? ' · assisted' : ''}`); } catch { /* best effort */ } };
   const triesLeft = state?.maxTries === null ? null : state ? state.maxTries! - state.attempts.length : null;
   const ideal = state ? Math.ceil(Math.log2(state.max)) : 0; const efficiency = state?.attempts.length ? Math.round(ideal / state.attempts.length * 100) : 100;
+
+  const handleShareCard = useCallback(async () => {
+    if (!state) return;
+    const canvas = createShareCardCanvas({
+      title: "Number Guessing",
+      subtitle: `${t[state.difficulty]} (1–${state.max})`,
+      score: state.status === 'won' ? `${state.attempts.length} Guesses` : "Game Over",
+      slug: "number-guessing",
+      customStats: [
+        { label: "Search Efficiency", value: `${efficiency}%` },
+        { label: "Elapsed Time", value: formatTime(elapsedMs) },
+        { label: "Secret Number", value: `${state.secret}` },
+        ...(best ? [{ label: "Best", value: `${best.attempts} tries (${formatTime(best.elapsedMs)})` }] : []),
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `number-guessing-${state.difficulty}.png`);
+    }
+  }, [state, efficiency, elapsedMs, best, t]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -106,7 +150,7 @@ const NumberGuessingGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) =>
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2"><div role="status" aria-live="polite"><p className="text-xs font-bold text-muted-foreground">{restored ? t.restored : t[state.difficulty]}</p><p className="text-lg font-black text-primary">{t.range}: {state.lowerBound}–{state.upperBound}</p></div><div className="flex gap-2"><button type="button" onClick={pause} className="min-h-11 rounded-xl border px-3 text-sm font-bold" aria-pressed={paused}>{paused ? '▶' : 'Ⅱ'} <span className="sr-only">{paused ? t.resume : t.pause}</span></button><button type="button" onClick={() => setMuted((value) => !value)} className="min-h-11 rounded-xl border px-3" aria-pressed={muted}>{muted ? '🔇' : '🔊'} <span className="sr-only">{t.sound}</span></button></div></div>
           <div className="mb-4 flex justify-between text-sm font-bold text-muted-foreground"><span>{triesLeft === null ? t.unlimited : t.tries(triesLeft)}</span><span>{t.time} {formatTime(elapsedMs)}</span></div>
           {state.status === 'playing' && <><form className="mb-3 flex flex-col gap-2 sm:flex-row" onSubmit={(event) => { event.preventDefault(); submit(); }}><input inputMode="numeric" pattern="[0-9]*" min={1} max={state.max} value={input} onChange={(event) => setInput(event.target.value)} disabled={paused} aria-describedby="number-error" placeholder={t.placeholder(state.max)} aria-label={t.placeholder(state.max)} className="min-h-11 min-w-0 flex-1 rounded-2xl border-2 bg-background px-4 font-bold focus:border-primary focus:outline-none"/><button type="submit" disabled={paused || !input} className="min-h-11 rounded-2xl bg-primary px-6 font-black text-primary-foreground disabled:opacity-50">{t.guess}</button></form><div className="mb-5 flex flex-wrap items-center gap-2"><button type="button" onClick={showHelper} disabled={paused} className="min-h-11 rounded-xl border px-4 text-sm font-bold">{t.helper}</button>{assisted && <span className="text-xs font-bold text-amber-700">{t.helperUsed}</span>}<span id="number-error" role="alert" className="text-xs font-bold text-red-700">{error}</span></div></>}
-          {state.status !== 'playing' && <div className={`mb-5 rounded-2xl border-2 p-5 text-center ${state.status === 'won' ? 'border-green-400 bg-green-50 text-green-800' : 'border-red-300 bg-red-50 text-red-800'}`} role="status" aria-live="assertive"><p className="text-xl font-black">{state.status === 'won' ? t.won : t.lost(state.secret)}</p><p className="mt-2 text-sm font-bold">{t.attempts} {state.attempts.length} · {t.time} {formatTime(elapsedMs)} · {t.efficiency} {efficiency}%</p>{assisted && <p className="mt-1 text-xs font-bold">{t.helperUsed}</p>}{best && <p className="mt-1 text-xs">{t.best} · {best.attempts} · {formatTime(best.elapsedMs)}</p>}<p className="mt-1 text-xs font-bold">{t.next(Math.max(1, state.attempts.length - 1))}</p><div className="mt-4 flex flex-wrap justify-center gap-2"><button type="button" onClick={() => startGame(state.difficulty)} className="min-h-11 rounded-xl bg-primary px-4 text-sm font-black text-primary-foreground">{t.again}</button><button type="button" onClick={() => setState(null)} className="min-h-11 rounded-xl border px-4 text-sm font-bold">{t.level}</button><button type="button" onClick={share} className="min-h-11 rounded-xl border px-4 text-sm font-bold">{t.share}</button></div></div>}
+          {state.status !== 'playing' && <div className={`mb-5 rounded-2xl border-2 p-5 text-center ${state.status === 'won' ? 'border-primary/50 bg-primary/10 text-foreground' : 'border-destructive/40 bg-destructive/10 text-destructive'}`} role="status" aria-live="assertive"><p className="text-xl font-black">{state.status === 'won' ? t.won : t.lost(state.secret)}</p><p className="mt-2 text-sm font-bold">{t.attempts} {state.attempts.length} · {t.time} {formatTime(elapsedMs)} · {t.efficiency} {efficiency}%</p>{assisted && <p className="mt-1 text-xs font-bold text-muted-foreground">{t.helperUsed}</p>}{best && <p className="mt-1 text-xs">{t.best} · {best.attempts} · {formatTime(best.elapsedMs)}</p>}<p className="mt-1 text-xs font-bold text-muted-foreground">{t.next(Math.max(1, state.attempts.length - 1))}</p><div className="mt-4 flex flex-wrap justify-center gap-2"><button type="button" onClick={() => startGame(state.difficulty)} className="min-h-11 rounded-xl bg-primary px-4 text-sm font-black text-primary-foreground">{t.again}</button><button type="button" onClick={handleShareCard} className="flex min-h-11 items-center gap-1.5 rounded-xl border border-primary/50 bg-primary/20 px-4 text-sm font-bold text-primary shadow-xs hover:bg-primary/30 transition-colors" title={shareCardCopied ? "복사됨!" : "결과 카드"}>{shareCardCopied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}<span>{shareCardCopied ? "복사 완료" : "결과 카드"}</span></button><button type="button" onClick={() => setState(null)} className="min-h-11 rounded-xl border px-4 text-sm font-bold">{t.level}</button><button type="button" onClick={share} className="min-h-11 rounded-xl border px-4 text-sm font-bold">{t.share}</button></div></div>}
           {state.attempts.length > 0 && <div><p className="mb-2 text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.history}</p><ol className="max-h-64 space-y-2 overflow-y-auto" aria-label={t.history}>{[...state.attempts].reverse().map((attempt, index) => <li key={attempt.guess} className="flex min-h-11 items-center justify-between rounded-xl border bg-muted/50 px-4 text-sm font-bold"><span>#{state.attempts.length - index} · {attempt.guess}</span><span>{attempt.direction === 'higher' ? '↑ ' + t.higher : attempt.direction === 'lower' ? '↓ ' + t.lower : '✓ ' + t.won} · {attempt.temperature === 'exact' ? '' : t[attempt.temperature]}</span></li>)}</ol></div>}
         </>}
       </GameContainer>

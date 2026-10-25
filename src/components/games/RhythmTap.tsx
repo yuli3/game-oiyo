@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
+import { Maximize2, Minimize2, Volume2, VolumeX, Share2, Check } from "lucide-react";
 import { celebrate } from "../../lib/games/celebration";
+import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "../../lib/games/share-card";
 import type { Locale } from "../../lib/i18n";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { getBest, recordBest } from "../../lib/games/records";
@@ -128,6 +129,7 @@ const RhythmTap: React.FC<Props> = ({ locale }) => {
   const mutedRef = useRef(false);
   useEffect(() => { mutedRef.current = muted; }, [muted]);
   const prefersReducedMotion = usePrefersReducedMotion();
+  const [shareCardCopied, setShareCardCopied] = useState(false);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const gsRef = useRef<GS | null>(null);
@@ -137,6 +139,29 @@ const RhythmTap: React.FC<Props> = ({ locale }) => {
   phaseRef.current = phase;
 
   useEffect(() => { const b = getBest(GAME_KEY); setBest(b ? b.value : 0); }, []);
+
+  const handleShareCard = useCallback(async (e?: React.MouseEvent | React.PointerEvent) => {
+    if (e) e.stopPropagation();
+    const gs = gsRef.current;
+    const canvas = createShareCardCanvas({
+      title: "Rhythm Tap",
+      subtitle: `Level ${gs?.level ?? 1} Beatmap`,
+      score: `${score} PTS`,
+      slug: "rhythm-tap",
+      customStats: [
+        { label: "Max Combo", value: `${gs?.maxCombo ?? 0}` },
+        { label: "Misses", value: `${miss}/${MAX_MISS}` },
+        { label: "High Score", value: `${best}` },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `rhythm-tap-${score}pts.png`);
+    }
+  }, [score, miss, best]);
 
   const endGame = useCallback((finalScore: number) => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
@@ -368,7 +393,7 @@ const RhythmTap: React.FC<Props> = ({ locale }) => {
               onPointerDown={(e) => { e.preventDefault(); begin(); }}>
               {phase === "over" && (
                 <div role="status" aria-live="polite">
-                  {isNewBest && <div className="text-sm font-black text-violet-300">{t.newBest}</div>}
+                  {isNewBest && <div className="text-sm font-black text-primary">{t.newBest}</div>}
                   <div className="text-xl font-black text-white">{t.gameOver}</div>
                   <div className="text-sm text-white/80">{t.score}: <b>{score}</b> · {t.best}: {best}</div>
                 </div>
@@ -379,9 +404,26 @@ const RhythmTap: React.FC<Props> = ({ locale }) => {
                   <p className="max-w-xs text-xs leading-relaxed text-white/80">{t.controls}</p>
                 </>
               )}
-              <button className="rounded-full bg-violet-500 px-8 py-2.5 font-bold text-white transition-colors hover:bg-violet-600">
-                {phase === "over" ? t.restart : t.tapStart}
-              </button>
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); begin(); }}
+                  className="rounded-full bg-primary px-8 py-2.5 font-bold text-primary-foreground transition-opacity hover:opacity-90"
+                >
+                  {phase === "over" ? t.restart : t.tapStart}
+                </button>
+                {phase === "over" && (
+                  <button
+                    type="button"
+                    onClick={handleShareCard}
+                    className="flex min-h-10 items-center gap-1.5 rounded-full border border-primary/50 bg-primary/20 px-5 text-xs font-bold text-primary shadow-xs hover:bg-primary/30 transition-colors"
+                    title={shareCardCopied ? "복사됨!" : "결과 카드"}
+                  >
+                    {shareCardCopied ? <Check className="size-3.5" /> : <Share2 className="size-3.5" />}
+                    <span>{shareCardCopied ? "복사 완료" : "결과 카드"}</span>
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </div>
