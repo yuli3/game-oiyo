@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Flame, Gamepad2, Headphones, Route, Sparkles, Swords } from "lucide-react";
+import { Flame, Gamepad2, Headphones, Route, Share2, Sparkles, Swords } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
+import { celebrate } from "../../lib/games/celebration";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
 import {
   EMBERDEEP_SAVE_KEY,
   HERO_STATS,
@@ -323,7 +329,7 @@ function Dungeon({ hero, copy, locale = 'en', onFinish }: { hero: HeroClass; cop
         <span /><button onPointerDown={() => press("y", -1)} onPointerUp={() => press("y", 0)} onPointerCancel={() => press("y", 0)} className="size-12 rounded bg-black/70 font-black text-white">▲</button><span />
         <button onPointerDown={() => press("x", -1)} onPointerUp={() => press("x", 0)} onPointerCancel={() => press("x", 0)} className="size-12 rounded bg-black/70 font-black text-white">◀</button><button onPointerDown={() => press("y", 1)} onPointerUp={() => press("y", 0)} onPointerCancel={() => press("y", 0)} className="size-12 rounded bg-black/70 font-black text-white">▼</button><button onPointerDown={() => press("x", 1)} onPointerUp={() => press("x", 0)} onPointerCancel={() => press("x", 0)} className="size-12 rounded bg-black/70 font-black text-white">▶</button>
       </div>
-      <div className="pointer-events-auto grid grid-cols-2 gap-2 text-[10px] font-black">
+      <div className="pointer-events-auto grid grid-cols-2 gap-2 text-xs font-black">
         <button onPointerDown={() => press("jump", true)} className="h-12 rounded-full bg-stone-700 px-3 text-white">JUMP</button><button onPointerDown={() => press("dodge", true)} className="h-12 rounded-full bg-slate-600 px-3 text-white">DODGE</button>
         <button onPointerDown={() => press("spell", true)} className="h-14 rounded-full bg-cyan-700 px-4 text-white">SPELL</button><button onPointerDown={() => press("attack", true)} className="h-14 rounded-full bg-amber-600 px-4 text-black">ATTACK</button>
       </div>
@@ -341,18 +347,64 @@ export default function Emberdeep({ locale }: { locale: Locale }) {
   const [hero, setHero] = useState<HeroClass>("spellblade");
   const [best, setBest] = useState(0);
   const [result, setResult] = useState<Result | null>(null);
+  const [shareCopied, setShareCopied] = useState(false);
+
   useEffect(() => { const saved = parseEmberdeepSave(localStorage.getItem(EMBERDEEP_SAVE_KEY)); if (saved) { setBest(saved.bestScore); setHero(saved.preferredHero); } }, []);
   const finish = useCallback((next: Result) => {
-    setResult(next); setBest(old => { const value = Math.max(old, next.score); localStorage.setItem(EMBERDEEP_SAVE_KEY, JSON.stringify({ version: 1, bestScore: value, deepestRoom: next.room, preferredHero: hero })); return value; }); setPhase("result");
+    setResult(next);
+    setBest(old => {
+      const value = Math.max(old, next.score);
+      localStorage.setItem(EMBERDEEP_SAVE_KEY, JSON.stringify({ version: 1, bestScore: value, deepestRoom: next.room, preferredHero: hero }));
+      return value;
+    });
+    celebrate(null, { preset: "shards" });
+    setPhase("result");
   }, [hero]);
+
+  const handleShareCard = useCallback(async () => {
+    if (!result) return;
+    const canvas = createShareCardCanvas({
+      title: "Emberdeep",
+      subtitle: result.won ? "Oath Fulfilled - Dungeon Conquered" : "Deep Claims Another Soul",
+      score: `${result.score.toLocaleString()} pts`,
+      slug: "emberdeep",
+      customStats: [
+        { label: "Hero", value: t.heroes[hero].name },
+        { label: "Room Reached", value: `Room ${result.room}` },
+        { label: "Enemies Slain", value: `${result.kills} KOs` },
+        { label: "Wing Path", value: result.path || "Ashen" },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `emberdeep-${result.score}.png`);
+    }
+  }, [result, hero, t.heroes]);
+
   if (phase === "playing") return <section className="not-prose relative left-1/2 my-5 w-[min(100vw-1rem,1440px)] -translate-x-1/2 overflow-hidden rounded-xl border border-amber-950 bg-black shadow-[0_0_80px_rgba(120,54,13,.25)]"><Dungeon hero={hero} copy={t} locale={locale} onFinish={finish} /></section>;
   return <section className="not-prose relative left-1/2 my-8 w-[min(100vw-1rem,1200px)] -translate-x-1/2 overflow-hidden rounded-3xl border border-stone-800 bg-[#0a0d0b] text-white shadow-2xl">
     <img src="/games/emberdeep-social.png" alt="" className="absolute inset-0 h-full w-full object-cover opacity-35" />
     <div className="absolute inset-0 bg-gradient-to-r from-[#080b09] via-[#080b09]/90 to-[#080b09]/35" />
     <div className="relative grid min-h-[590px] gap-10 p-6 sm:p-10 lg:grid-cols-[1.05fr_.95fr] lg:p-14">
-      <div className="self-center"><p className="font-mono text-[11px] font-black tracking-[.28em] text-amber-400">{t.eyebrow}</p><h2 className="mt-4 text-6xl font-black uppercase leading-[.82] tracking-[-.06em] sm:text-8xl">{t.title}</h2><p className="mt-6 max-w-xl text-sm leading-7 text-stone-300 sm:text-base">{t.subtitle}</p>
-        <p className="mt-7 text-xs font-black uppercase tracking-[.18em] text-stone-500">{t.choose}</p><div className="mt-3 grid grid-cols-3 gap-2">{(Object.keys(t.heroes) as HeroClass[]).map(id => <button key={id} onClick={() => setHero(id)} className={`min-h-20 border p-2 text-left ${hero === id ? "border-amber-400 bg-amber-400/15" : "border-white/10 bg-black/40"}`}><img src={EMBERDEEP_SPRITES[id]} alt="" width={48} height={58} className="mb-1 h-14 w-12 object-contain [image-rendering:pixelated]" /><strong className="block text-sm text-white">{t.heroes[id].name}</strong><span className="mt-1 block text-[10px] text-stone-200">{t.heroes[id].role}</span></button>)}</div>
-        <div className="mt-5 flex flex-wrap gap-3"><button onClick={() => { setResult(null); setPhase("playing"); }} className="min-h-12 bg-amber-500 px-8 py-3 text-sm font-black uppercase tracking-widest text-black shadow-[0_0_30px_rgba(245,158,11,.25)]">{phase === "result" ? t.again : t.start}</button><span className="border border-white/10 bg-black/60 px-4 py-3 font-mono text-xs">{t.best}: <strong>{best.toLocaleString()}</strong></span></div>
+      <div className="self-center"><p className="font-mono text-xs font-black tracking-[.28em] text-amber-400">{t.eyebrow}</p><h2 className="mt-4 text-6xl font-black uppercase leading-[.82] tracking-[-.06em] sm:text-8xl">{t.title}</h2><p className="mt-6 max-w-xl text-sm leading-7 text-stone-300 sm:text-base">{t.subtitle}</p>
+        <p className="mt-7 text-xs font-black uppercase tracking-[.18em] text-stone-500">{t.choose}</p><div className="mt-3 grid grid-cols-3 gap-2">{(Object.keys(t.heroes) as HeroClass[]).map(id => <button key={id} onClick={() => setHero(id)} className={`min-h-20 border p-2 text-left ${hero === id ? "border-amber-400 bg-amber-400/15" : "border-white/10 bg-black/40"}`}><img src={EMBERDEEP_SPRITES[id]} alt="" width={48} height={58} className="mb-1 h-14 w-12 object-contain [image-rendering:pixelated]" /><strong className="block text-sm text-white">{t.heroes[id].name}</strong><span className="mt-1 block text-xs text-stone-200">{t.heroes[id].role}</span></button>)}</div>
+        <div className="mt-5 flex flex-wrap items-center gap-3">
+          <button onClick={() => { setResult(null); setPhase("playing"); }} className="min-h-12 bg-amber-500 px-8 py-3 text-sm font-black uppercase tracking-widest text-black shadow-[0_0_30px_rgba(245,158,11,.25)]">{phase === "result" ? t.again : t.start}</button>
+          {result && (
+            <button
+              type="button"
+              onClick={() => void handleShareCard()}
+              className="inline-flex min-h-12 items-center gap-2 border border-primary/50 bg-primary/20 px-5 py-3 font-mono text-xs font-black uppercase tracking-wider text-primary transition-colors hover:bg-primary/30 active:scale-95"
+            >
+              <Share2 className="size-4" />
+              <span>{shareCopied ? "COPIED!" : "SHARE CARD"}</span>
+            </button>
+          )}
+          <span className="border border-white/10 bg-black/60 px-4 py-3 font-mono text-xs">{t.best}: <strong>{best.toLocaleString()}</strong></span>
+        </div>
         {result && <p role="status" aria-live="polite" className="mt-4 border-l-2 border-amber-500 pl-4 font-mono text-sm text-amber-100"><strong>{result.won ? t.hud.victory : t.hud.fallen}</strong> · {result.score.toLocaleString()} · {t.hud.room} {result.room} · {result.kills} KOs · {result.path}</p>}
       </div>
       <div className="grid content-center gap-3">{t.features.map((feature, i) => { const Icon = [Swords, Sparkles, Route][i]; return <div key={feature.title} className="flex gap-4 border-l-2 border-amber-700 bg-black/55 p-4 backdrop-blur-sm"><Icon className="size-5 shrink-0 text-amber-400" /><div><h3 className="text-sm font-black uppercase">{feature.title}</h3><p className="mt-1 text-xs leading-5 text-stone-400">{feature.body}</p></div></div>; })}<div className="mt-2 border border-white/10 bg-black/55 p-4"><div className="flex items-center gap-2 text-xs font-black uppercase"><Flame className="size-4 text-orange-500" />{t.local}</div><p className="mt-2 text-xs leading-5 text-stone-400">{t.localBody}</p></div></div>

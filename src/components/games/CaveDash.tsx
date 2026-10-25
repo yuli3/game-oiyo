@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
+import { Maximize2, Minimize2, Share2, Volume2, VolumeX } from "lucide-react";
 import { celebrate } from "../../lib/games/celebration";
 import type { Locale } from "../../lib/i18n";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
@@ -28,6 +28,11 @@ import {
   type DebrisMatterLike,
   type DebrisWorld,
 } from "../../lib/games/debris-world";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
 
 type CaveArt = Record<keyof typeof CAVE_DASH_SPRITES, HTMLImageElement>;
 function loadCaveArt(): CaveArt | null {
@@ -148,6 +153,7 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
 
   const [finalFrames, setFinalFrames] = useState(0);
   const [death, setDeath] = useState<CaveDashDeath | null>(null);
+  const [shareCopied, setShareCopied] = useState(false);
   const seedRef = useRef<number | null>(null);
   const mutedRef = useRef(false);
   mutedRef.current = muted;
@@ -287,6 +293,26 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
       ctx.globalAlpha = 1;
     }
   }, []);
+
+  const handleShareCard = useCallback(async () => {
+    const canvas = createShareCardCanvas({
+      title: "Cave Dash",
+      subtitle: isNewBest ? "New Record Flight!" : "Subterranean Thruster Run",
+      score: `${score} pts`,
+      slug: "cavedash",
+      customStats: [
+        { label: "Best", value: `${best} pts` },
+        { label: "Flight Time", value: `${Math.max(1, Math.round(finalFrames / 60))}s` },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `cavedash-${score}.png`);
+    }
+  }, [score, best, finalFrames, isNewBest]);
 
   const loop = useCallback((now?: number) => {
     const current = gsRef.current; const canvas = canvasRef.current;
@@ -512,7 +538,19 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
                 </>
               )}
               <div className="flex flex-wrap justify-center gap-2">
-                {phase === "over" && <button type="button" onClick={() => seedRef.current !== null ? begin(seedRef.current) : begin()} disabled={seedRef.current === null} className="min-h-11 rounded-full border border-white/40 px-6 py-2.5 font-bold text-white disabled:opacity-40">{t.retrySame}</button>}
+                {phase === "over" && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => void handleShareCard()}
+                      className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-primary/50 bg-primary/20 px-4 py-2.5 text-xs font-bold text-primary transition-colors hover:bg-primary/30 active:scale-95"
+                    >
+                      <Share2 className="h-4 w-4" />
+                      <span>{shareCopied ? "복사됨!" : "공유 카드"}</span>
+                    </button>
+                    <button type="button" onClick={() => seedRef.current !== null ? begin(seedRef.current) : begin()} disabled={seedRef.current === null} className="min-h-11 rounded-full border border-white/40 px-6 py-2.5 font-bold text-white disabled:opacity-40">{t.retrySame}</button>
+                  </>
+                )}
                 <button type="button" onClick={phase === "paused" ? resume : () => begin()} className="min-h-11 rounded-full bg-violet-500 px-8 py-2.5 font-bold text-white transition-colors hover:bg-violet-600">
                   {phase === "paused" ? t.resume : phase === "over" ? t.retryNew : t.tapStart}
                 </button>

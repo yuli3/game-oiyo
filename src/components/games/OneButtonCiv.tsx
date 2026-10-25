@@ -4,7 +4,7 @@
 // see what the last press did before the next one locks in.
 
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
-import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
+import { Maximize2, Minimize2, Share2, Volume2, VolumeX } from "lucide-react";
 import { GameContainer } from "../ui/game/GamePrimitives";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import type { Locale } from "../../lib/i18n";
@@ -14,6 +14,11 @@ import { dateKeyIndex, kstDateKey } from "../../lib/games/todays-game";
 import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from "../../lib/games/game-audio";
 import { createHaptics } from "../../lib/games/haptics";
 import { celebrate } from "../../lib/games/celebration";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
 import { ONE_BUTTON_CIV_SPRITES } from "../../lib/games/sprites";
 import {
   GAME_ID,
@@ -191,6 +196,7 @@ export default function OneButtonCiv({ locale }: { locale: Locale }) {
   const [record, setRecord] = useState<GameRecord | null>(null);
   const [best, setBest] = useState<BestRecord | null>(null);
   const [muted, setMuted] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
   const [quarter, setQuarter] = useState(0);
   const [visible, setVisible] = useState(0);
   const cuesRef = useRef<CuePlayer<CoreCue> | null>(null);
@@ -327,6 +333,30 @@ export default function OneButtonCiv({ locale }: { locale: Locale }) {
     setRun(commit(current, gesture));
   }
 
+  const handleShareCard = async () => {
+    if (!run) return;
+    const isWon = run.phase === "won";
+    const matchCount = matched(run);
+    const canvas = createShareCardCanvas({
+      title: "One Button Civ",
+      subtitle: isWon ? "Golden Age Civilization" : "Dynasty Collapse",
+      score: `${matchCount}/4 Plots Aligned`,
+      slug: "one-button-civ",
+      customStats: [
+        { label: "Date", value: dateKey ?? "Today" },
+        { label: "Seasons", value: "4 Seasons" },
+        { label: "Record", value: `${record?.w ?? 0}W - ${record?.l ?? 0}L` },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `one-button-civ-${dateKey}.png`);
+    }
+  };
+
   const again = () => {
     if (!dateKey) return;
     const seed = (dateKeyIndex(dateKey) * 0x9e3779b1) >>> 0;
@@ -431,7 +461,17 @@ export default function OneButtonCiv({ locale }: { locale: Locale }) {
             {run.phase === "won" || run.phase === "lost" ? (
               <div className="space-y-3">
                 <p className="text-sm font-bold tabular-nums text-foreground">{t.matched(matched(run))}</p>
-                <button type="button" onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button type="button" onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</button>
+                  <button
+                    type="button"
+                    onClick={() => void handleShareCard()}
+                    className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-primary/40 bg-primary/20 px-4 py-2 text-xs font-bold text-primary transition-colors hover:bg-primary/30 active:scale-95"
+                  >
+                    <Share2 className="size-4" />
+                    <span>{shareCopied ? "복사됨!" : "공유 카드"}</span>
+                  </button>
+                </div>
               </div>
             ) : null}
             <p className="text-sm text-muted-foreground">{t.record(record?.w ?? 0, record?.l ?? 0)}{best?.unit === "score" ? ` · ${t.best(best.value)}` : ""}</p>

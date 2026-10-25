@@ -3,7 +3,7 @@
 // opts out of scrolling so a swipe is a step.
 
 import { useEffect, useRef, useState } from "react";
-import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
+import { Maximize2, Minimize2, Share2, Volume2, VolumeX } from "lucide-react";
 import { GameContainer } from "../ui/game/GamePrimitives";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import type { Locale } from "../../lib/i18n";
@@ -13,6 +13,11 @@ import { dateKeyIndex, kstDateKey } from "../../lib/games/todays-game";
 import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from "../../lib/games/game-audio";
 import { createHaptics } from "../../lib/games/haptics";
 import { celebrate } from "../../lib/games/celebration";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
 import { BLACKOUT_COURIER_SPRITES } from "../../lib/games/sprites";
 import {
   DARK_SECONDS,
@@ -184,6 +189,7 @@ export default function BlackoutCourier({ locale }: { locale: Locale }) {
   const [darkLeft, setDarkLeft] = useState(DARK_SECONDS);
   const [record, setRecord] = useState<GameRecord | null>(null);
   const [muted, setMuted] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
   const cuesRef = useRef<CuePlayer<CoreCue> | null>(null);
   const hapticsRef = useRef(createHaptics());
   const noted = useRef(new Set<string>());
@@ -266,6 +272,29 @@ export default function BlackoutCourier({ locale }: { locale: Locale }) {
       cue("tap");
     }
   }, [run, dateKey, attempt, muted, reducedMotion]);
+
+  const handleShareCard = async () => {
+    if (!run) return;
+    const isWon = run.phase === "won";
+    const canvas = createShareCardCanvas({
+      title: "Blackout Courier",
+      subtitle: isWon ? "Blind Run Delivery Complete" : "Lost in the Blackout",
+      score: isWon ? "Delivery Success" : `${run.nextDrop}/${run.puzzle.drops.length} Drops`,
+      slug: "blackout-courier",
+      customStats: [
+        { label: "Date", value: dateKey ?? "Today" },
+        { label: "Moves Used", value: `${run.moves} / ${run.puzzle.moveCap}` },
+        { label: "Record", value: `${record?.w ?? 0}W - ${record?.l ?? 0}L` },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `blackout-courier-${dateKey}.png`);
+    }
+  };
 
   const again = () => {
     if (!dateKey) return;
@@ -356,7 +385,17 @@ export default function BlackoutCourier({ locale }: { locale: Locale }) {
               </button>
             ) : null}
             {run.phase === "won" || run.phase === "lost" ? (
-              <button type="button" onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</button>
+              <div className="flex flex-wrap items-center gap-2">
+                <button type="button" onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</button>
+                <button
+                  type="button"
+                  onClick={() => void handleShareCard()}
+                  className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-primary/40 bg-primary/20 px-4 py-2 text-xs font-bold text-primary transition-colors hover:bg-primary/30 active:scale-95"
+                >
+                  <Share2 className="size-4" />
+                  <span>{shareCopied ? "복사됨!" : "공유 카드"}</span>
+                </button>
+              </div>
             ) : null}
             <div className="flex flex-col items-center gap-2">
               <button type="button" disabled={!walking} onClick={() => move("n")} aria-label={t.north} className={`${CONTROL} border-border bg-card text-foreground disabled:opacity-40`}>{t.north}</button>

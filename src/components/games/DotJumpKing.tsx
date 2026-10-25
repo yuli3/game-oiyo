@@ -1,8 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
+import { Maximize2, Minimize2, Share2, Volume2, VolumeX } from "lucide-react";
 import { GameContainer } from "../ui/game/GamePrimitives";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { frameScale } from "../../lib/games/time-contracts";
+import { celebrate } from "../../lib/games/celebration";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
 import {
   chargeJump,
   createJumpState,
@@ -154,7 +160,8 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
     [height, setHeight] = useState(0),
     [best, setBest] = useState(0),
     [charge, setCharge] = useState(0),
-    [restored, setRestored] = useState(false);
+    [restored, setRestored] = useState(false),
+    [shareCopied, setShareCopied] = useState(false);
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || "en" });
   const [sound, setSound] = useState<boolean>(() => {
     try {
@@ -297,6 +304,7 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
           if (h > best) {
             setBest(h);
             localStorage.setItem(BEST_KEY, String(h));
+            if (c) celebrate(c, { preset: "stardust" });
           }
         }
       }
@@ -313,6 +321,27 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
       document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [best, tone, phase]);
+
+  const handleShareCard = useCallback(async () => {
+    const cardCanvas = createShareCardCanvas({
+      title: "Dot Jump King",
+      subtitle: height >= best && height > 0 ? "New High Altitude Ascent!" : "Cloud Climbing Challenge",
+      score: `${height}m`,
+      slug: "dot-jumpking",
+      customStats: [
+        { label: "Best Ascent", value: `${Math.max(best, height)}m` },
+        { label: "Target", value: "Apex Cloud" },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(cardCanvas);
+    if (ok) {
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    } else {
+      downloadShareCard(cardCanvas, `dot-jumpking-${height}m.png`);
+    }
+  }, [height, best]);
+
   if (phase === "briefing")
     return (
       <div
@@ -450,19 +479,29 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
                 <p className="mt-2">
                   {t.result}: {height}m
                 </p>
-                <button
-                  onClick={() => start()}
-                  className="mt-5 min-h-12 rounded-full bg-primary px-8 font-black text-primary-foreground"
-                >
-                  {t.again}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => start(state.current.seed)}
-                  className="mt-2 min-h-11 rounded-full border px-6 text-sm font-bold"
-                >
-                  {locale === "ko" ? "같은 탑" : locale === "ja" ? "同じ塔" : locale === "zh" ? "同一塔" : locale === "fr" ? "Même tour" : locale === "es" ? "Misma torre" : "Same tower"}
-                </button>
+                <div className="mt-4 flex flex-wrap justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void handleShareCard()}
+                    className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-primary/50 bg-primary/20 px-4 py-2.5 text-xs font-bold text-primary transition-colors hover:bg-primary/30 active:scale-95"
+                  >
+                    <Share2 className="size-4" />
+                    <span>{shareCopied ? "복사됨!" : "공유 카드"}</span>
+                  </button>
+                  <button
+                    onClick={() => start()}
+                    className="min-h-11 rounded-full bg-primary px-6 font-black text-primary-foreground"
+                  >
+                    {t.again}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => start(state.current.seed)}
+                    className="min-h-11 rounded-full border px-5 text-sm font-bold"
+                  >
+                    {locale === "ko" ? "같은 탑" : locale === "ja" ? "同じ塔" : locale === "zh" ? "同一塔" : locale === "fr" ? "Même tour" : locale === "es" ? "Misma torre" : "Same tower"}
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -488,7 +527,7 @@ function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl border bg-card p-2 text-center">
       <div className="text-lg font-black">{value}</div>
-      <div className="text-[10px] text-muted-foreground">{label}</div>
+      <div className="text-xs text-muted-foreground">{label}</div>
     </div>
   );
 }

@@ -1,9 +1,15 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Volume2, VolumeX, Maximize2, Minimize2 } from 'lucide-react';
+import { Volume2, VolumeX, Maximize2, Minimize2, Share2 } from 'lucide-react';
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { createDeltaLoop, elapsedSeconds } from '../../lib/games/time-contracts';
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
+import { celebrate } from '../../lib/games/celebration';
+import {
+    createShareCardCanvas,
+    copyShareCardToClipboard,
+    downloadShareCard,
+} from '../../lib/games/share-card';
 import { mulberry32 } from '../../lib/games/daily';
 import {
     CONFIGS,
@@ -140,6 +146,31 @@ const CatFishing: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         };
     };
 
+    const [shareCardCopied, setShareCardCopied] = useState(false);
+
+    const handleShareCard = useCallback(async () => {
+        try {
+            const canvas = createShareCardCanvas({
+                title: t.title,
+                subtitle: `${t.win} · ${t[difficulty]}`,
+                score: formatElapsed(seconds),
+                slug: 'cat-fishing',
+                customStats: [
+                    { label: 'DIFFICULTY', value: t[difficulty] },
+                    { label: 'FISH', value: `${CONFIGS[difficulty].fishCount}` },
+                    { label: 'BEST', value: best[difficulty] !== undefined ? formatElapsed(best[difficulty]) : formatElapsed(seconds) },
+                ],
+            });
+            const success = await copyShareCardToClipboard(canvas);
+            if (success) {
+                setShareCardCopied(true);
+                setTimeout(() => setShareCardCopied(false), 2000);
+            } else {
+                downloadShareCard(canvas, `cat-fishing-${difficulty}.png`);
+            }
+        } catch {}
+    }, [best, difficulty, seconds, t]);
+
     const catchFish = (id: number) => {
         if (won) return;
         started.current = true;
@@ -154,6 +185,9 @@ const CatFishing: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             const next = catchFishAt(prev, id);
             if (allCaught(next)) {
                 tone(880, 0.22);
+                if (containerRef.current) {
+                    celebrate(containerRef.current, { preset: "stardust" });
+                }
                 setBest((b) => {
                     if (b[difficulty] !== undefined && b[difficulty] <= seconds) return b;
                     const nb = { ...b, [difficulty]: seconds };
@@ -291,6 +325,14 @@ const CatFishing: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                             </button>
                             <button type="button" onClick={() => restart(difficulty, seedRef.current)} className="px-6 py-3 rounded-full border font-bold">
                                 {t.same}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleShareCard}
+                                className="inline-flex items-center gap-1.5 px-6 py-3 rounded-full border border-border bg-card font-bold text-foreground shadow-sm hover:bg-muted"
+                            >
+                                <Share2 className="size-4" />
+                                {shareCardCopied ? '카피 완료!' : 'Share Card 2.0'}
                             </button>
                             </div>
                         </div>

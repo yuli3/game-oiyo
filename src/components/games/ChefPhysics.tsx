@@ -4,7 +4,7 @@
 // The twenty-second clock is play time, so reduced motion does not skip it.
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
+import { Maximize2, Minimize2, Share2, Volume2, VolumeX } from "lucide-react";
 import { GameContainer } from "../ui/game/GamePrimitives";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import type { Locale } from "../../lib/i18n";
@@ -15,6 +15,11 @@ import { createDebrisWorld, type DebrisMatterLike, type DebrisWorld } from "../.
 import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from "../../lib/games/game-audio";
 import { createHaptics } from "../../lib/games/haptics";
 import { celebrate } from "../../lib/games/celebration";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
 import { CHEF_PHYSICS_SPRITES } from "../../lib/games/sprites";
 import {
   CLOCK_MS,
@@ -233,6 +238,7 @@ export default function ChefPhysics({ locale }: { locale: Locale }) {
   const [attempt, setAttempt] = useState(0);
   const [record, setRecord] = useState<GameRecord | null>(null);
   const [muted, setMuted] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
   const [remain, setRemain] = useState(Math.ceil(CLOCK_MS / 1000));
   const cuesRef = useRef<CuePlayer<CoreCue> | null>(null);
   const hapticsRef = useRef(createHaptics());
@@ -402,6 +408,29 @@ export default function ChefPhysics({ locale }: { locale: Locale }) {
     }
   }, [run, dateKey, attempt, cue, containerRef]);
 
+  const handleShareCard = useCallback(async () => {
+    if (!run) return;
+    const isWon = run.phase === "won";
+    const canvas = createShareCardCanvas({
+      title: "Chef Physics",
+      subtitle: isWon ? "Master Chef Perfection" : "Kitchen Shift Over",
+      score: isWon ? "3/3 Dishes Clear" : `${run.round}/3 Dishes`,
+      slug: "chef-physics",
+      customStats: [
+        { label: "Date", value: dateKey ?? "Today" },
+        { label: "Shift Record", value: `${record?.w ?? 0}W - ${record?.l ?? 0}L` },
+        { label: "Result", value: isWon ? "3 Stars" : "Overcooked" },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `chef-physics-${dateKey}.png`);
+    }
+  }, [run, dateKey, record]);
+
   const again = () => {
     if (!dateKey) return;
     const seed = (dateKeyIndex(dateKey) * 0x9e3779b1) >>> 0;
@@ -459,7 +488,17 @@ export default function ChefPhysics({ locale }: { locale: Locale }) {
               <button type="button" onClick={() => { ensureDebris(); setRun((current) => (current ? begin(current) : current)); }} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{run.round === 0 ? t.start : t.next}</button>
             ) : null}
             {run.phase === "won" || run.phase === "lost" ? (
-              <button type="button" onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</button>
+              <div className="flex flex-wrap items-center gap-2">
+                <button type="button" onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</button>
+                <button
+                  type="button"
+                  onClick={() => void handleShareCard()}
+                  className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-warning/40 bg-warning/20 px-4 py-2 text-xs font-bold text-warning transition-colors hover:bg-warning/30 active:scale-95"
+                >
+                  <Share2 className="size-4" />
+                  <span>{shareCopied ? "복사됨!" : "공유 카드"}</span>
+                </button>
+              </div>
             ) : null}
             <p className="text-sm text-muted-foreground">{t.record(record?.w ?? 0, record?.l ?? 0)}</p>
           </div>

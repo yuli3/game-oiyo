@@ -9,8 +9,14 @@ import {
 import { clearDominoesSave, loadDominoesSave, storeDominoesSave } from "../../lib/games/dominoes-save";
 import { cpuDominoes, createDominoes, dominoCpuReview, dominoEnds, dominoHasMove, dominoesAnalysis, drawDominoes, passDominoes, playDominoes, type DominoCpuReview, type DominoesState } from "../../lib/games/dominoes";
 import { getRecord, recordResult, type GameRecord } from "../../lib/games/records";
-import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
+import { Maximize2, Minimize2, Share2, Volume2, VolumeX } from "lucide-react";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
+import { celebrate } from "../../lib/games/celebration";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
 
 const AI_DELAY = 800;
 const extra: Record<Locale,{pause:string;resume:string;restored:string;paused:string;played:string;drawn:string;pips:string;sound:string}>={
@@ -124,14 +130,45 @@ const Dominoes: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
     setGame(createDominoes(seed)); setPendingTile(null); setPaused(false); setRestored(false); setLastCpuReview(null); setFreshId(null); clearDominoesSave(); recorded.current = false;
   }, []);
 
+  const [shareCardCopied, setShareCardCopied] = useState(false);
+
+  const handleShareCard = useCallback(async () => {
+    if (!game || !game.winner) return;
+    try {
+      const analysis = dominoesAnalysis(game);
+      const outcomeText = game.winner === "you" ? t.youWin : game.winner === "cpu" ? t.cpuWins : t.blockDraw;
+      const canvas = createShareCardCanvas({
+        title: "Dominoes",
+        subtitle: `${outcomeText} · AI Lv.${level}`,
+        score: `${analysis.yourPips} vs ${analysis.cpuPips} Pips`,
+        slug: "dominoes",
+        customStats: [
+          { label: "RECORD", value: `${record.w}W ${record.l}L` },
+          { label: "PLAYED", value: `${analysis.plays}` },
+          { label: "DRAWN", value: `${analysis.draws}` },
+        ],
+      });
+      const success = await copyShareCardToClipboard(canvas);
+      if (success) {
+        setShareCardCopied(true);
+        setTimeout(() => setShareCardCopied(false), 2000);
+      } else {
+        downloadShareCard(canvas, `dominoes-${game.winner}.png`);
+      }
+    } catch {}
+  }, [game, level, record.l, record.w, t.blockDraw, t.cpuWins, t.youWin]);
+
   const recordWinner = useCallback((w: DominoesState["winner"]) => {
     if (!w) return;
     if (!recorded.current) {
       recorded.current = true;
       const r = w === "you" ? "w" : w === "cpu" ? "l" : "d";
       setRecord(recordResult("dominoes", r as "w" | "l" | "d"));
+      if (w === "you" && containerRef.current) {
+        celebrate(containerRef.current, { preset: "tiles" });
+      }
     }
-  }, []);
+  }, [containerRef]);
 
   const landNewTile = (before: DominoesState, next: DominoesState) => {
     const seen = new Set(before.board.map((d) => d.id));
@@ -324,7 +361,17 @@ const Dominoes: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
             <p className="text-xs text-muted-foreground mb-4">{t.record}: {record.w}W {record.l}L {record.d}D</p>
             <p className="text-xs text-muted-foreground mb-4">{analysis.plays} {x.played} · {analysis.draws} {x.drawn} · {analysis.yourPips}–{analysis.cpuPips} {x.pips}</p>
             {game.winner==='cpu'&&lastCpuReview&&<div className="mb-4 max-w-xs rounded-2xl border border-amber-300/60 bg-amber-50 p-3 text-left text-xs text-stone-800"><p className="font-black text-amber-900">{aiInfo.review} · {lastCpuReview.tile.a}-{lastCpuReview.tile.b} · {lastCpuReview.end==='left'?t.left:t.right}</p><p className="mt-1">{lastCpuReview.draws>0?`${lastCpuReview.draws} ${aiInfo.draws} · `:''}{aiInfo.reason[lastCpuReview.reason]}</p><p className="mt-1 text-xs text-stone-500">{aiInfo.policy}: {aiInfo.level[level]}</p></div>}
-            <button type="button" onClick={newGame} className="px-10 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg">{t.reset}</button>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <button type="button" onClick={newGame} className="px-10 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg">{t.reset}</button>
+              <button
+                type="button"
+                onClick={handleShareCard}
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-border bg-card px-6 text-sm font-bold text-foreground shadow-md hover:bg-muted"
+              >
+                <Share2 className="size-4" />
+                {shareCardCopied ? "카피 완료!" : "Share Card 2.0"}
+              </button>
+            </div>
           </div>
         )}
       </GameContainer>
