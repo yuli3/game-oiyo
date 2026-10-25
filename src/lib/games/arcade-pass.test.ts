@@ -3,11 +3,12 @@ import {
   generateDailyMissions,
   reportMissionProgress,
   calculateArcadeTier,
+  calculateArcadeLevel,
+  awardMatchPlayXp,
   checkInDailyStreak,
   getUnlockedTitles,
   equipArcadeTitle,
   getEquippedTitleData,
-  ARCADE_TITLES,
   type ArcadePassProgress,
 } from "./arcade-pass";
 
@@ -114,5 +115,42 @@ describe("ArcadePass Engine (M4 Meta-Progression)", () => {
     // Cannot equip title requiring higher XP
     const rejected = equipArcadeTitle(progress, "legend");
     expect(rejected.equippedTitleId).toBeUndefined();
+  });
+
+  it("calculates level 1~20 and progression percentages accurately", () => {
+    const lvl0 = calculateArcadeLevel(0);
+    expect(lvl0.level).toBe(1);
+    expect(lvl0.rankTitle).toBe("RECRUIT");
+    expect(lvl0.currentLevelXp).toBe(0);
+    expect(lvl0.percent).toBe(0);
+
+    const lvl250 = calculateArcadeLevel(250);
+    expect(lvl250.level).toBe(3);
+    expect(lvl250.currentLevelXp).toBe(50);
+    expect(lvl250.percent).toBe(50);
+    expect(lvl250.rankTitle).toBe("CHALLENGER");
+
+    const lvlMax = calculateArcadeLevel(2500);
+    expect(lvlMax.level).toBe(20);
+    expect(lvlMax.rankTitle).toBe("LEGEND");
+  });
+
+  it("awards match play XP and detects level up events", () => {
+    const base: ArcadePassProgress = {
+      xp: 80,
+      completedMissionIds: [],
+      missions: [],
+      lastActiveDate: "2026-10-25",
+    };
+
+    const winRes = awardMatchPlayXp(base, true);
+    expect(winRes.gainedXp).toBe(25);
+    expect(winRes.nextProgress.xp).toBe(105);
+    expect(winRes.levelUp).toBe(true); // 80 (lvl 1) -> 105 (lvl 2)
+
+    const lossRes = awardMatchPlayXp(base, false);
+    expect(lossRes.gainedXp).toBe(10);
+    expect(lossRes.nextProgress.xp).toBe(90);
+    expect(lossRes.levelUp).toBe(false); // 80 -> 90 (still lvl 1)
   });
 });

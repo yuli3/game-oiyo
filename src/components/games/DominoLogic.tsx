@@ -1,8 +1,8 @@
 // Daily domino-cell board. The shell stays scrollable: data-game-surface would
 // set touch-action:none and block the tray on a phone (2026-10-20).
 
-import { useEffect, useRef, useState } from "react";
-import { Maximize2, Minimize2, RotateCw, Undo2, Volume2, VolumeX } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Maximize2, Minimize2, RotateCw, Share2, Undo2, Volume2, VolumeX } from "lucide-react";
 import { GameContainer } from "../ui/game/GamePrimitives";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import type { Locale } from "../../lib/i18n";
@@ -10,6 +10,11 @@ import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from "../../lib/games/game-audio";
 import { createHaptics } from "../../lib/games/haptics";
 import { celebrate } from "../../lib/games/celebration";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
 import { DOMINO_SPRITES, dominoPipSprite } from "../../lib/games/sprites";
 import {
   getBestForConditions,
@@ -610,6 +615,33 @@ export default function DominoLogic({ locale }: { locale: Locale }) {
     setNotice(null);
   };
 
+  const [shareCardCopied, setShareCardCopied] = useState(false);
+
+  const handleShareCard = useCallback(async () => {
+    if (!board || !puzzle || !play) return;
+    try {
+      const wonCount = board.plays.filter((item) => item.won).length;
+      const canvas = createShareCardCanvas({
+        title: t.title,
+        subtitle: `${board.dateKey} · ${names[puzzle.difficulty]} · ${play.won ? t.win : t.today}`,
+        score: `${wonCount} / ${board.plays.length} Solved`,
+        slug: "domino-logic",
+        customStats: [
+          { label: "DIFFICULTY", value: names[puzzle.difficulty] },
+          { label: "TILES", value: `${play.placements.length} / ${puzzle.tiles.length}` },
+          { label: "TIME", value: `${play.seconds ?? 0}s` },
+        ],
+      });
+      const success = await copyShareCardToClipboard(canvas);
+      if (success) {
+        setShareCardCopied(true);
+        setTimeout(() => setShareCardCopied(false), 2000);
+      } else {
+        downloadShareCard(canvas, `domino-logic-${board.dateKey}.png`);
+      }
+    } catch {}
+  }, [board, names, play, puzzle, t.title, t.today, t.win]);
+
   const share = async () => {
     if (!board) return;
     const text = shareGrid(t.title, board.dateKey, board.plays.map((item) => item.won));
@@ -721,6 +753,14 @@ export default function DominoLogic({ locale }: { locale: Locale }) {
               </button>
               <button type="button" onClick={replay} className={`${CONTROL} border-border bg-card text-foreground`}>{t.replay}</button>
               <button type="button" onClick={share} className={`${CONTROL} border-border bg-card text-foreground`}>{t.share}</button>
+              <button
+                type="button"
+                onClick={handleShareCard}
+                className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-foreground hover:bg-muted`}
+              >
+                <Share2 className="size-4" />
+                {shareCardCopied ? "카피 완료!" : "Share Card 2.0"}
+              </button>
             </div>
             <p className="text-sm font-bold text-foreground">{t.tray}</p>
             <div className="flex gap-2 overflow-x-auto pb-1">

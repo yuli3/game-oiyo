@@ -618,6 +618,37 @@ export const GameShell: React.FC<GameShellProps> = ({
         </div>
       </div>
 
+      {/* ── Live Dual Duel Bar ── */}
+      {challengeInfo && challengeInfo.challengerScore > 0 && phase === "play" && (
+        <div className="flex w-full items-center justify-between gap-3 rounded-xl border border-primary/40 bg-primary/10 px-3.5 py-1 text-xs font-black">
+          <div className="flex items-center gap-1.5 text-primary font-mono">
+            <span>YOU</span>
+            <span className="font-bold">{typeof score === "number" ? score.toLocaleString() : score}</span>
+          </div>
+          <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full bg-primary transition-all duration-300 w-(--duel-pct)"
+              style={
+                {
+                  "--duel-pct": `${Math.min(
+                    100,
+                    Math.round(
+                      ((typeof score === "number" ? score : parseFloat(String(score)) || 0) /
+                        Math.max(1, challengeInfo.challengerScore)) *
+                        100
+                    )
+                  )}%`,
+                } as React.CSSProperties
+              }
+            />
+          </div>
+          <div className="flex items-center gap-1.5 text-muted-foreground font-mono">
+            <span className="text-xs uppercase tracking-wide">RIVAL</span>
+            <span className="font-bold">{challengeInfo.challengerScore.toLocaleString()}</span>
+          </div>
+        </div>
+      )}
+
       {/* ── Main Viewport Wrapper ── */}
       <div className="relative flex-1 min-h-0 w-full overflow-hidden rounded-2xl border border-border/80 bg-background/95">
         {/* In-Game Children (Canvas or UI Grid) */}

@@ -4,12 +4,17 @@
  * Pure rules live in src/lib/games/word-groups.ts; this file owns UI and storage.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
+import { Maximize2, Minimize2, Share2, Volume2, VolumeX } from "lucide-react";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from "../../lib/games/game-audio";
 import { createHaptics } from "../../lib/games/haptics";
 import { celebrate } from "../../lib/games/celebration";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
 import { WORD_GROUPS_SPRITES } from "../../lib/games/sprites";
 import WordGroupsCanvas from "./WordGroupsCanvas";
 import { minutesUntilNextDaily, todayKey } from "../../lib/games/daily";
@@ -343,6 +348,32 @@ export default function WordGroups({ locale = "ko" }: { locale?: Locale }) {
     if (phase !== "title") openGather();
   };
 
+  const [shareCardCopied, setShareCardCopied] = useState(false);
+
+  const handleShareCard = useCallback(async () => {
+    if (!puzzle || !game) return;
+    try {
+      const label = mode === "daily" ? dateKey : t.practice;
+      const canvas = createShareCardCanvas({
+        title: t.title,
+        subtitle: `${label} · ${game.status === "won" ? t.won : t.lost}`,
+        score: `${game.solved.length} / 4 Groups`,
+        slug: "word-groups",
+        customStats: [
+          { label: "MISTAKES", value: `${game.mistakes} / ${WORD_GROUPS_MAX_MISTAKES}` },
+          { label: "STREAK", value: `${stats?.currentStreak ?? 0}d` },
+        ],
+      });
+      const success = await copyShareCardToClipboard(canvas);
+      if (success) {
+        setShareCardCopied(true);
+        setTimeout(() => setShareCardCopied(false), 2000);
+      } else {
+        downloadShareCard(canvas, `word-groups-${dateKey}.png`);
+      }
+    } catch {}
+  }, [dateKey, game, mode, puzzle, stats?.currentStreak, t.lost, t.practice, t.title, t.won]);
+
   const share = async () => {
     if (!puzzle || !game) return;
     const label = mode === "daily" ? dateKey : t.practice;
@@ -474,7 +505,17 @@ export default function WordGroups({ locale = "ko" }: { locale?: Locale }) {
           </>
         ) : (
           <div className="flex flex-col items-center gap-2">
-            <button type="button" onClick={share} className="min-h-11 rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground">{copied ? t.copied : t.share}</button>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <button type="button" onClick={share} className="min-h-11 rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground">{copied ? t.copied : t.share}</button>
+              <button
+                type="button"
+                onClick={handleShareCard}
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-border bg-card px-4 text-sm font-bold text-foreground hover:bg-muted"
+              >
+                <Share2 className="size-4" />
+                {shareCardCopied ? "카피 완료!" : "Share Card 2.0"}
+              </button>
+            </div>
             {mode === "daily" && <p className="text-xs font-bold text-muted-foreground">{t.next(nextMinutes)}</p>}
           </div>
         )}

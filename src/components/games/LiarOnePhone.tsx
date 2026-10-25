@@ -2,8 +2,8 @@
 // touch-action:none and block the pass-the-phone screen (2026-10-20).
 // Seats are numbers. Names are not collected or stored.
 
-import { useEffect, useRef, useState } from "react";
-import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Maximize2, Minimize2, Share2, Volume2, VolumeX } from "lucide-react";
 import { GameContainer } from "../ui/game/GamePrimitives";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import type { Locale } from "../../lib/i18n";
@@ -13,6 +13,11 @@ import { dateKeyIndex, kstDateKey } from "../../lib/games/todays-game";
 import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from "../../lib/games/game-audio";
 import { createHaptics } from "../../lib/games/haptics";
 import { celebrate } from "../../lib/games/celebration";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
 import { LIAR_ONEPHONE_SPRITES } from "../../lib/games/sprites";
 import {
   GAME_ID,
@@ -347,6 +352,33 @@ export default function LiarOnePhone({ locale }: { locale: Locale }) {
     setSession(null);
   };
 
+  const [shareCardCopied, setShareCardCopied] = useState(false);
+
+  const handleShareCard = useCallback(async () => {
+    if (!session || !session.winner) return;
+    try {
+      const isGroupWin = session.winner === "group";
+      const canvas = createShareCardCanvas({
+        title: t.title,
+        subtitle: `${isGroupWin ? t.groupWin : t.liarWin} · ${t[mode]}`,
+        score: isGroupWin ? "CITIZEN WIN" : "LIAR WIN",
+        slug: "liar-onephone",
+        customStats: [
+          { label: "WORD", value: session.round.word },
+          { label: "CATEGORY", value: session.round.category },
+          { label: "PLAYERS", value: `${session.round.playerCount}P` },
+        ],
+      });
+      const success = await copyShareCardToClipboard(canvas);
+      if (success) {
+        setShareCardCopied(true);
+        setTimeout(() => setShareCardCopied(false), 2000);
+      } else {
+        downloadShareCard(canvas, `liar-onephone-${session.winner}.png`);
+      }
+    } catch {}
+  }, [mode, session, t]);
+
   const card = session ? visibleCard(session) : "hidden";
   const seat = session ? t.seat(session.cursor + 1) : "";
 
@@ -455,7 +487,17 @@ export default function LiarOnePhone({ locale }: { locale: Locale }) {
                 {session.round.decoy ? <p className="text-sm text-foreground">{t.decoySeen}: {session.round.decoy}</p> : null}
                 <p className="text-sm text-foreground">{t.category}: {session.round.category}</p>
                 <p className="text-sm text-foreground">{session.round.liars.map((seat) => t.seat(seat + 1)).join(" · ")}</p>
-                <button type="button" onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</button>
+                <div className="flex flex-wrap gap-2">
+                  <button type="button" onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</button>
+                  <button
+                    type="button"
+                    onClick={handleShareCard}
+                    className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-foreground hover:bg-muted`}
+                  >
+                    <Share2 className="size-4" />
+                    {shareCardCopied ? "카피 완료!" : "Share Card 2.0"}
+                  </button>
+                </div>
               </div>
             )}
             <p className="text-sm text-muted-foreground">{t.record(record?.w ?? 0, record?.l ?? 0)}</p>

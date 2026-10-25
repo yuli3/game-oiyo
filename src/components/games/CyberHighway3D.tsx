@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Share2 } from 'lucide-react';
 import { Canvas } from '@react-three/fiber';
 import CyberHighway3DScene from './CyberHighway3DScene';
 import {
@@ -10,6 +11,11 @@ import {
   updateCyberHighway,
 } from '../../lib/games/cyber-highway';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from '../../lib/games/share-card';
 
 function getPercentageWidthClass(pct: number): string {
   if (pct >= 95) return 'w-full';
@@ -210,6 +216,31 @@ export default function CyberHighway3D() {
     setGameState(createInitialCyberHighwayState());
   }, []);
 
+  const [shareCardCopied, setShareCardCopied] = useState(false);
+
+  const handleShareCard = useCallback(async () => {
+    try {
+      const canvas = createShareCardCanvas({
+        title: 'Cyber Highway 3D',
+        subtitle: 'Neon Speed Racer · Cyberpunk 3D',
+        score: `${gameState.score.toLocaleString()} pts`,
+        slug: 'cyber-highway-3d',
+        customStats: [
+          { label: 'DISTANCE', value: `${Math.round(gameState.distance)}m` },
+          { label: 'CREDITS', value: `🪙 ${gameState.credits}` },
+          { label: 'SPEED', value: `${Math.round(gameState.speed * 60)} km/h` },
+        ],
+      });
+      const success = await copyShareCardToClipboard(canvas);
+      if (success) {
+        setShareCardCopied(true);
+        setTimeout(() => setShareCardCopied(false), 2000);
+      } else {
+        downloadShareCard(canvas, `cyber-highway-${gameState.score}.png`);
+      }
+    } catch {}
+  }, [gameState.credits, gameState.distance, gameState.score, gameState.speed]);
+
   const speedKmh = Math.round(gameState.speed * 3.6);
 
   return (
@@ -377,13 +408,23 @@ export default function CyberHighway3D() {
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={handleRestart}
-              className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-md hover:bg-primary/90 transition-colors"
-            >
-              다시 도전하기 (RETRY)
-            </button>
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={handleRestart}
+                className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-md hover:bg-primary/90 transition-colors"
+              >
+                다시 도전하기 (RETRY)
+              </button>
+              <button
+                type="button"
+                onClick={handleShareCard}
+                className="w-full py-3 rounded-xl border border-border bg-muted/60 text-foreground font-bold text-sm hover:bg-muted transition-colors flex items-center justify-center gap-2"
+              >
+                <Share2 className="size-4" />
+                {shareCardCopied ? '기록 카드 복사 완료!' : 'Share Card 2.0 소셜 공유'}
+              </button>
+            </div>
           </div>
         </div>
       )}

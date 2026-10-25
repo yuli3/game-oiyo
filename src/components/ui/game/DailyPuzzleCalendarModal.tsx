@@ -3,7 +3,6 @@ import { X, Calendar, Flame, CheckCircle2, ChevronLeft, ChevronRight } from "luc
 import {
   getDaysInMonth,
   getDailyStreak,
-  getTodayDateStr,
   type CalendarDay,
 } from "../../../lib/games/daily-calendar";
 

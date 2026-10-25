@@ -380,6 +380,48 @@ export function calculateArcadeTier(xp: number): ArcadeRankTier {
   return "RECRUIT";
 }
 
+export interface ArcadeLevelInfo {
+  level: number;
+  rankTitle: ArcadeRankTier;
+  currentLevelXp: number;
+  nextLevelXp: number;
+  percent: number;
+}
+
+export function calculateArcadeLevel(xp: number): ArcadeLevelInfo {
+  const level = Math.min(20, Math.max(1, Math.floor(xp / 100) + 1));
+  const currentLevelXp = xp % 100;
+  const nextLevelXp = 100;
+  const percent = level >= 20 ? 100 : Math.floor((currentLevelXp / nextLevelXp) * 100);
+  const rankTitle = calculateArcadeTier(xp);
+  return {
+    level,
+    rankTitle,
+    currentLevelXp,
+    nextLevelXp,
+    percent,
+  };
+}
+
+export function awardMatchPlayXp(
+  progress: ArcadePassProgress,
+  won: boolean
+): { nextProgress: ArcadePassProgress; gainedXp: number; levelUp: boolean } {
+  const gainedXp = won ? 25 : 10;
+  const prevLevel = calculateArcadeLevel(progress.xp).level;
+  const nextXp = progress.xp + gainedXp;
+  const nextLevel = calculateArcadeLevel(nextXp).level;
+  const nextProgress: ArcadePassProgress = {
+    ...progress,
+    xp: nextXp,
+  };
+  return {
+    nextProgress,
+    gainedXp,
+    levelUp: nextLevel > prevLevel,
+  };
+}
+
 /**
  * Deterministic PRNG seed from date string (YYYY-MM-DD)
  */

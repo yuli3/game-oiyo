@@ -321,8 +321,19 @@ const Blackjack = ({ locale = "ko" }: { locale?: string }) => {
 
           <div className="min-h-12 text-center" aria-live="assertive">
             {game.outcome && (
-              <div role="status" className={`inline-block rounded-full px-7 py-2 text-lg font-black ${!reducedMotion ? "animate-in zoom-in-95" : ""} ${game.outcome === "win" ? "bg-primary text-primary-foreground" : game.outcome === "lost" ? "bg-destructive text-destructive-foreground" : "bg-muted"}`}>
-                {t[game.outcome]}
+              <div className="flex flex-col items-center gap-1.5">
+                <div role="status" className={`inline-block rounded-full px-7 py-2 text-lg font-black ${!reducedMotion ? "animate-in zoom-in-95" : ""} ${game.outcome === "win" ? "bg-primary text-primary-foreground" : game.outcome === "lost" ? "bg-destructive text-destructive-foreground" : "bg-muted"}`}>
+                  {t[game.outcome]}
+                </div>
+                {game.outcome === "win" && (
+                  <div className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-1 text-xs font-black text-primary">
+                    <span>🪙 {activeRoundBet * (game.actions.includes("double") ? 2 : 1)}</span>
+                    <span className="text-muted-foreground">×</span>
+                    <span className="text-chart-1 font-extrabold">{isNatural ? "2.5x Natural" : "2.0x Win"}</span>
+                    <span className="text-muted-foreground">=</span>
+                    <span className="text-primary font-black">+🪙 {Math.round(activeRoundBet * (game.actions.includes("double") ? 2 : 1) * (isNatural ? 1.5 : 1))}</span>
+                  </div>
+                )}
               </div>
             )}
           </div>
