@@ -16,22 +16,22 @@ const { locale } = Astro.props as { locale: Locale };
 const translations = await getTranslations(locale);
 
 const meta: Record<Locale, { title: string; description: string }> = {
-  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 108종", description: "체스·스도쿠·워들부터 OIYO 오리지널 게임까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 108종." },
-  en: { title: "OIYO Arcade — 108 free browser games, no install", description: "Chess, Sudoku, Wordle, and original OIYO games: 108 free games you can play instantly in your browser." },
-  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム108種", description: "チェス・数独・ワードルからOIYOオリジナル作品まで、ブラウザですぐ遊べる無料ゲーム108種。" },
-  zh: { title: "OIYO 街机 — 无需安装的108款免费游戏", description: "从国际象棋、数独、猜词到 OIYO 原创作品，108款游戏无需安装即可畅玩。" },
-  fr: { title: "OIYO Arcade — 108 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations originales OIYO : 108 jeux gratuits dans le navigateur." },
-  es: { title: "OIYO Arcade — 108 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y originales de OIYO: 108 juegos gratuitos en el navegador." },
+  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 109종", description: "체스·스도쿠·워들부터 OIYO 오리지널 게임까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 109종." },
+  en: { title: "OIYO Arcade — 109 free browser games, no install", description: "Chess, Sudoku, Wordle, and original OIYO games: 109 free games you can play instantly in your browser." },
+  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム109種", description: "チェス・数独・ワードルからOIYOオリジナル作品まで、ブラウザですぐ遊べる無料ゲーム109種。" },
+  zh: { title: "OIYO 街机 — 无需安装的109款免费游戏", description: "从国际象棋、数独、猜词到 OIYO 原创作品，109款游戏无需安装即可畅玩。" },
+  fr: { title: "OIYO Arcade — 109 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations originales OIYO : 109 jeux gratuits dans le navigateur." },
+  es: { title: "OIYO Arcade — 109 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y originales de OIYO: 109 juegos gratuitos en el navegador." },
 };
 const m = meta[locale] ?? meta.en;
 
 const hero: Record<Locale, { eyebrow: string; title: string; sub: string }> = {
-  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 108종", sub: "보드·카드·퍼즐·오리지널 아케이드 — 브라우저에서 바로 시작하세요." },
-  en: { eyebrow: "🎮 OIYO Arcade", title: "108 free games, right in your browser", sub: "Board, card, puzzle, and original arcade games — instant and free." },
-  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム108種", sub: "ボード・カード・パズル・オリジナル作品をブラウザですぐに。" },
-  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的108款免费游戏", sub: "棋类、纸牌、益智和原创街机游戏，浏览器直接开玩。" },
-  fr: { eyebrow: "🎮 OIYO Arcade", title: "108 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et créations originales, sans installation." },
-  es: { eyebrow: "🎮 OIYO Arcade", title: "108 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones originales, sin instalación." },
+  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 109종", sub: "보드·카드·퍼즐·오리지널 아케이드 — 브라우저에서 바로 시작하세요." },
+  en: { eyebrow: "🎮 OIYO Arcade", title: "109 free games, right in your browser", sub: "Board, card, puzzle, and original arcade games — instant and free." },
+  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム109種", sub: "ボード・カード・パズル・オリジナル作品をブラウザですぐに。" },
+  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的109款免费游戏", sub: "棋类、纸牌、益智和原创街机游戏，浏览器直接开玩。" },
+  fr: { eyebrow: "🎮 OIYO Arcade", title: "109 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et créations originales, sans installation." },
+  es: { eyebrow: "🎮 OIYO Arcade", title: "109 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones originales, sin instalación." },
 };
 const h = hero[locale] ?? hero.en;
 
@@ -117,6 +117,7 @@ const GAMES: Game[] = [
   { slug: "hexa-sort", emoji: "🧩", cat: "puzzle", name: { ko: "헥사 소트 3D", en: "Hexa Sort 3D", ja: "ヘキサソート 3D", zh: "六角排序 3D", fr: "Hexa Sort 3D", es: "Hexa Sort 3D" } },
   { slug: "block-blast", emoji: "💥", cat: "puzzle", name: { ko: "블록 블래스트 인피니트", en: "Block Blast Infinite", ja: "ブロックブラスト", zh: "方块爆破", fr: "Block Blast", es: "Block Blast" } },
   { slug: "word-waffle", emoji: "🧇", cat: "puzzle", name: { ko: "단어 와플", en: "Word Waffle", ja: "ワードワッフル", zh: "文字华夫饼", fr: "Word Waffle", es: "Word Waffle" } },
+  { slug: "slice-master", emoji: "🔪", cat: "arcade", name: { ko: "슬라이스 마스터 3D", en: "Slice Master 3D", ja: "スライスマスター 3D", zh: "切片大师 3D", fr: "Slice Master 3D", es: "Slice Master 3D" } },
 
   { slug: "failure-eater", emoji: "👾", cat: "arcade", name: { ko: "실패를 먹는 괴물", en: "Failure Eater", ja: "失敗を食べる怪物", zh: "吃掉失败的怪物", fr: "Monstre des ratés", es: "Monstruo de los fallos" } },
   { slug: "snake-game", emoji: "🐍", cat: "arcade", name: { ko: "스네이크", en: "Snake", ja: "スネーク", zh: "贪吃蛇", fr: "Snake", es: "Snake" } },
@@ -320,6 +321,18 @@ const NEW_RELEASES_CONFIG: Array<{ slug: string; tag: Record<Locale, string>; de
       zh: "在5x5华夫网格上对调字母，15步以内找出交叉的6个词语。",
       fr: "Échangez les lettres sur la grille 5x5 pour retrouver 6 mots en 15 coups ou moins.",
       es: "Intercambia letras en la cuadrícula de 5x5 para descifrar 6 palabras en 15 movimientos.",
+    },
+  },
+  {
+    slug: "slice-master",
+    tag: { ko: "원터치 나이프 플립", en: "One-Touch Knife Flip", ja: "ワンタップ ナイフフリップ", zh: "一键飞刀切片", fr: "Flip de couteau 3D", es: "Giro de cuchillo 3D" },
+    desc: {
+      ko: "칼을 회전 점프시켜 사물을 베어내고 과녁에 명중시키는 원터치 물리 액션.",
+      en: "Flip your knife in mid-air to slice through obstacles and stick the target.",
+      ja: "ナイフを回転ジャンプさせてオブジェクトを切り刻み、的を射抜く爽快アクション。",
+      zh: "翻转飞刀凌空切碎障碍，精准命中靶心赢取高额翻倍奖励。",
+      fr: "Faites sauter votre couteau pour trancher les obstacles et planter la cible.",
+      es: "Voltea tu cuchillo en el aire para cortar obstáculos y clavar la diana.",
     },
   },
 ];

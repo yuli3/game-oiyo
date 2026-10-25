@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SliceMaster from "../../components/games/SliceMaster";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "슬라이스 마스터 3D — 원터치 나이프 플립 & 사물 절단 ASMR 액션",
+    description: "화면을 탭하여 칼을 회전시키고 과일, 나무, 사물을 경쾌하게 베어내며 과녁에 명중시키는 원터치 물리 액션 게임.",
+  },
+  en: {
+    title: "Slice Master 3D — One-Touch Knife Flip & ASMR Slicing Action",
+    description: "Tap to flip your knife, slice through fruits and obstacles with satisfying ASMR feedback, and stick the target for massive bonus points.",
+  },
+  ja: {
+    title: "スライスマスター 3D — ワンタップ ナイフフリップ＆ASMR切断アクション",
+    description: "画面をタップしてナイフを回転フリップさせ、フルーツや木材を軽快にスライスしながら的を射抜く爽快アクションゲーム。",
+  },
+  zh: {
+    title: "切片大师 3D — 一键翻转飞刀与ASMR爽快切割动作",
+    description: "轻触屏幕翻转飞刀，精准切碎沿途的水果与木块，感受爽快的微定格打击感，最后正中靶心赢取高分奖励。",
+  },
+  fr: {
+    title: "Slice Master 3D — Flip de couteau en un clic et action ASMR",
+    description: "Touchez l'écran pour faire tourner votre couteau, tranchez fruits et obstacles avec un retour ASMR satisfaisant et visez la cible finale.",
+  },
+  es: {
+    title: "Slice Master 3D — Giro de cuchillo con un toque y corte ASMR",
+    description: "Toca la pantalla para voltear tu cuchillo, cortar frutas y obstáculos con retroalimentación física y clavar la diana final.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-4xl px-4 py-8">
+    <SliceMaster client:load locale={locale} />
+    <GameGuide slug="slice-master" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>

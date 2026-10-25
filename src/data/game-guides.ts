@@ -4516,4 +4516,60 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "slice-master": {
+    origin: {
+      ko: "슬라이스 마스터(Slice Master 3D)는 글로벌 하이퍼캐주얼 시장을 뒤흔든 명작 나이프 플립 액션 게임에서 영감을 받은 웹 기반 3D 물리 액션입니다. 탭 타이밍에 맞춰 칼을 회전시키며 과일, 목재 등 다양한 사물을 경쾌하게 베어내고 과녁에 꽂아 넣는 중독성 넘치는 플레이를 선사합니다.",
+      en: "Slice Master 3D is a web-based physics action game inspired by global hypercasual knife-flipping hits. Flip your knife with precise tap timing, slice through fruits and wooden blocks, and stick the final target for huge bonus points.",
+      ja: "スライスマスター（Slice Master 3D）は、世界的大ヒットとなったナイフフリップアクションに着想を得たWeb 3D物理アクションゲームです。タップのタイミングでナイフを回転させ、フルーツや木材を軽快にスライスして最終ターゲットに突き刺します。",
+      zh: "切片大师（Slice Master 3D）是一款受全球大热飞刀动作游戏启发的网页3D物理动作游戏。把握触控时机翻转飞刀，精准切碎沿途的水果与木块，最后命中靶心赢取高额翻倍奖励。",
+      fr: "Slice Master 3D est un jeu d'action physique inspiré des succès mondiaux de couteaux sauteurs. Faites tourner votre lame avec précision, tranchez fruits et bois, et plantez la cible finale.",
+      es: "Slice Master 3D es un juego de acción y física inspirado en los grandes éxitos de volteo de cuchillos. Voltea tu cuchillo con precisión, corta frutas y madera y clava la diana final.",
+    },
+    how: {
+      ko: "화면을 탭할 때마다 칼이 공중으로 튀어 오르며 시계 방향으로 회전합니다. 칼날이 과일이나 나무토막에 닿으면 사물이 둘로 쪼개지며 점수와 콤보를 얻습니다. 가시 톱니바퀴 같은 위험물을 피하고 바닥에 칼날이 아래로 향하도록 꽂아야 살아남을 수 있습니다. 마지막 보너스 과녁에 칼을 꽂아 스테이지를 완결하세요.",
+      en: "Tap anywhere to make the knife jump and flip clockwise. Slice fruits and wooden blocks with the blade to earn points and combo multipliers. Avoid spiked hazards, and make sure the blade sticks into the floor or surfaces. Stick the final target to complete the level.",
+      ja: "画面をタップするたびにナイフが飛び跳ねて時計回りに回転します。刃先がフルーツや木材に触れると真っ二つに切断され、コンボとスコアを獲得できます。トゲのある障害物を避け、刃先を下にして着地・突き刺しましょう。最後の的に命中させてクリアを目指します。",
+      zh: "点击屏幕使飞刀跃起并顺时针翻转。用锋利刀刃切碎水果与木块可斩获分数与连续连击。避开尖刺金属齿轮，让刀尖稳稳刺入地面或台面。精准命中最后的靶心即可通关。",
+      fr: "Touchez l'écran pour faire sauter et tourner le couteau. Tranchez les cibles avec la lame pour cumuler points et combos. Évitez les scies et assurez-vous de planter la lame. Visez la cible finale pour l'emporter.",
+      es: "Toca la pantalla para que el cuchillo salte y gire. Corta frutas y bloques con la hoja para sumar puntos y combos. Esquiva las sierras y clava la punta hacia abajo. Acierta en la diana final para superar el nivel.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "칼이 자꾸 쓰러져서 게임오버가 되는데 비결이 있나요?",
+          en: "Why does the knife keep falling and causing a game over?",
+          ja: "ナイフが倒れてゲームオーバーになってしまいます。コツはありますか？",
+          zh: "飞刀总是倒下导致游戏失败，有什么技巧吗？",
+          fr: "Pourquoi le couteau tombe-t-il souvent à plat ?",
+          es: "¿Por qué se cae el cuchillo y pierdo la partida?",
+        },
+        a: {
+          ko: "칼날 끝(Tip)이 바닥을 향하는 각도(약 30°~150°)일 때만 바닥에 꽂힙니다. 손잡이나 칼등으로 바닥에 닿으면 튕겨 나가며 게임이 끝납니다. 점프 높이와 회전 속도를 관찰하여 칼날이 아래를 향하는 순간 바닥에 닿도록 탭 박자를 조절하세요.",
+          en: "The knife only sticks when the blade tip points downward (between ~30° and 150°). Hitting the ground on the handle or flat spine causes it to bounce off and fail. Watch the rotation speed and time your taps so the blade points down upon landing.",
+          ja: "刃先が地面を向いている角度（約30°〜150°）のときだけ地面に突き刺さります。柄や背から落ちると跳ね返りミスとなります。回転の周期をよく見て、刃先が下を向くタイミングで着地するようにタップのリズムを合わせましょう。",
+          zh: "只有当刀尖朝向地面（约30°至150°夹角）时飞刀才能稳固刺入地面。若手柄或刀背触地则会被弹开判定失败。观察飞刀翻转节奏，在刀尖朝下的时机点触控制着陆即可。",
+          fr: "La lame ne se plante que si la pointe est orientée vers le sol (30° à 150°). Toucher le sol par le manche entraîne la défaite. Observez la rotation pour synchroniser vos sauts.",
+          es: "El cuchillo solo se clava si la punta apunta hacia abajo (30° a 150°). Si toca con el mango se desestabiliza. Ajusta el ritmo de tus toques para que aterrice de punta.",
+        },
+      },
+      {
+        q: {
+          ko: "콤보(Combo) 배율을 길게 유지하려면 어떻게 해야 하나요?",
+          en: "How do I maintain a high combo multiplier?",
+          ja: "コンボ倍率を長く維持するにはどうすればいいですか？",
+          zh: "如何保持高额的Combo连击倍率？",
+          fr: "Comment conserver un multiplicateur de combo élevé ?",
+          es: "¿Cómo mantengo alto el multiplicador de combo?",
+        },
+        a: {
+          ko: "바닥에 꽂히지 않고 공중에 머무는 동안 연속으로 사물을 베어내면 콤보 배율이 1x씩 증가하여 점수가 기하급수적으로 높아집니다. 사물을 벨 때 약간의 반발력으로 공중 체공 시간이 늘어나므로, 연속된 과일들을 공중에서 연속 플립으로 단숨에 썰어 넘기는 것이 고득점의 핵심입니다.",
+          en: "Each object sliced in a single continuous flight increases your combo multiplier. Slicing gives the knife a slight upward bounce, extending your airtime. Chain slices through consecutive fruits in mid-air to score massive combos.",
+          ja: "着地せずに空中にいる間に連続でスライスすると、コンボ倍率が上昇しスコアが飛躍的に伸びます。切断時に生じるわずかな浮力を利用し、空中で連続フリップしながらオブジェクトを切り抜けるのが高得点のコツです。",
+          zh: "在滞空飞行期间连续切碎多个目标而不触地，连击倍率就会持续累加，得分呈几何级增长。每次切碎物体时飞刀会获得轻微向上弹力，利用这点在空中完成连续切割是冲刺最高纪录的关键。",
+          fr: "Chaque découpe consécutive en vol sans toucher le sol augmente le combo. Chaque tranche donne un petit rebond vers le haut, idéal pour enchaîner les fruits en l'air.",
+          es: "Cada corte consecutivo en el aire sin tocar el suelo aumenta el multiplicador de combo. Cortar te da un pequeño impulso hacia arriba para enlazar más frutas.",
+        },
+      },
+    ],
+  },
 };

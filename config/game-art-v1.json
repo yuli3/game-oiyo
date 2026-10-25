@@ -125,6 +125,7 @@
     "unseen-boss": "/assets/sprites/unseen-boss/keyart.webp",
     "untranslatable-creature": "/assets/sprites/untranslatable-creature/keyart.webp",
     "word-groups": "/assets/sprites/word-groups/keyart.webp",
-    "word-waffle": "/games/wordle-social.png"
+    "word-waffle": "/games/wordle-social.png",
+    "slice-master": "/games/maze-social.png"
   }
 }

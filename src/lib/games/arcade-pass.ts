@@ -482,6 +482,20 @@ export const MISSION_CATALOG: Array<{
     goal: 1,
     xpReward: 50,
   },
+  {
+    id: "slicemaster-score-500",
+    gameSlug: "slice-master",
+    title: {
+      ko: "슬라이스 마스터에서 500점 이상 달성",
+      en: "Score 500+ points in Slice Master",
+      ja: "スライスマスターで500点以上を獲得",
+      zh: "在切片大师中获得500分以上",
+      fr: "Marquer 500+ points dans Slice Master",
+      es: "Consigue 500+ puntos en Slice Master",
+    },
+    goal: 500,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {
