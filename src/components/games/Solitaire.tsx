@@ -489,7 +489,28 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     }
   }, [won, mode, legacyMigrated, seconds, bestTime, conditionsFor, dailyDate, undoCount]);
 
-  const stockMove: SolitaireMove = game.stock.length > 0 ? { type: 'draw' } : { type: 'recycle' };
+  const [drawMode, setDrawMode] = useState<1 | 3>(1);
+  const [sparks, setSparks] = useState<{ id: number; x: number; y: number }[]>([]);
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!selection) return;
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const id = Date.now() + Math.random();
+    setSparks((prev) => [...prev.slice(-10), { id, x, y }]);
+  };
+
+  useEffect(() => {
+    if (sparks.length === 0) return;
+    const timer = setTimeout(() => {
+      setSparks((prev) => prev.slice(1));
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [sparks]);
+
+  const stockMove: SolitaireMove = game.stock.length > 0 ? { type: 'draw', count: drawMode } : { type: 'recycle' };
   const stockLabel = game.stock.length > 0 ? t.stock : t.recycle;
   const solvedToday = streak?.lastWinDate === todayKey();
   const tableauHeight = Math.max(420, ...game.tableau.map((pile) => (
@@ -500,12 +521,24 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     <div
       ref={containerRef}
       data-game-surface
+      onPointerMove={handlePointerMove}
       className={
         isImmersive
-          ? "fixed inset-0 z-50 w-screen h-dvh bg-background p-3 sm:p-5 overflow-y-auto flex flex-col items-center justify-between m-0 select-none"
+          ? "fixed inset-0 z-50 w-screen h-dvh bg-background p-3 sm:p-5 overflow-y-auto flex flex-col items-center justify-between m-0 select-none relative"
           : "relative"
       }
     >
+      <svg className="pointer-events-none absolute inset-0 size-full z-40 overflow-hidden" aria-hidden="true">
+        {sparks.map((s) => (
+          <circle
+            key={s.id}
+            cx={s.x}
+            cy={s.y}
+            r="4"
+            className="fill-primary/60 animate-ping"
+          />
+        ))}
+      </svg>
       <GameContainer title={t.title} subtitle={t.subtitle} resetLabel={t.reset} onReset={() => initGame(mode)}>
         <div className="relative">
           <div className="space-y-5">
@@ -517,6 +550,11 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             <button type="button" onClick={() => initGame('free')} aria-pressed={mode === 'free'}
               className={`min-h-11 rounded-lg border px-3 py-2 text-xs font-bold transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${mode === 'free' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:bg-muted'}`}>
               {t.free}
+            </button>
+            <button type="button" onClick={() => setDrawMode((prev) => (prev === 1 ? 3 : 1))}
+              className="min-h-11 rounded-lg border border-border px-3 py-2 text-xs font-bold text-muted-foreground transition-colors hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              title={drawMode === 1 ? '1장 뽑기 (Turn 1)' : '3장 뽑기 (Turn 3)'}>
+              <span>🎴 {drawMode === 1 ? '1장 뽑기' : '3장 뽑기'}</span>
             </button>
             <button type="button" onClick={undo} disabled={undoStack.length === 0 || won}
               className="min-h-11 rounded-lg border border-border px-3 py-2 text-xs font-bold text-muted-foreground transition-colors hover:bg-muted disabled:opacity-40 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"

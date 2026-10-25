@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
+import { Camera, Check, Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
 import { celebrate } from "../../lib/games/celebration";
+import { copyShareCardToClipboard, createShareCardCanvas, downloadShareCard } from "../../lib/games/share-card";
 import type { Locale } from "../../lib/i18n";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { getBest, recordAchievementEvent, recordBest } from "../../lib/games/records";
@@ -175,6 +176,12 @@ function drawGame(
       ctx.fillStyle = bullet.weapon === "arc" ? "#67e8f9" : bullet.weapon === "scatter" ? "#fb923c" : "#c4b5fd";
       ctx.fillRect(bullet.x - 1.5, bullet.y - 8, 3, 10);
     }
+    if (!reducedMotion) {
+      ctx.save();
+      ctx.fillStyle = bullet.weapon === "arc" ? "rgba(103, 232, 249, 0.4)" : "rgba(196, 181, 253, 0.35)";
+      ctx.fillRect(bullet.x - 2, bullet.y + 4, 4, 12);
+      ctx.restore();
+    }
   }
 
   for (const enemy of state.enemies) {
@@ -234,6 +241,17 @@ function drawGame(
     ctx.fillRect(40, 14, (W - 80) * (boss.hp / boss.maxHp), 8);
   }
 
+  if (state.phase === "victory" && !reducedMotion) {
+    ctx.save();
+    const shockRadius = ((renderTime / 4) % 180) + 20;
+    ctx.strokeStyle = "rgba(167, 139, 250, 0.6)";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(W / 2, H / 3, shockRadius, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
   const shipY = H - 44;
   if (!reducedMotion && art?.exhaustSheet) {
     const exhaustFrame = sheetFrameIndex(STAR_BLASTER_EXHAUST_SHEET, renderTime, reducedMotion);
@@ -271,6 +289,7 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
   const resultT = RESULT_T[locale] ?? RESULT_T.en;
   const controlT = CONTROL_T[locale] ?? CONTROL_T.en;
   const [phase, setPhase] = useState<Phase>("menu");
+  const [shareStatus, setShareStatus] = useState<"idle" | "copied" | "downloaded">("idle");
   const [paused, setPaused] = useState(false);
   const [score, setScore] = useState(0);
   const [wave, setWave] = useState(1);
@@ -816,6 +835,42 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
                   className="min-h-11 rounded-full border border-white/30 bg-white/10 px-6 py-2.5 font-bold text-white hover:bg-white/20"
                 >
                   {resultT.newSector}
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const canvas = createShareCardCanvas({
+                      title: "OIYO Star Blaster",
+                      slug: "star-blaster",
+                      score: score,
+                      bestScore: Math.max(score, best),
+                      customStats: [
+                        { label: "Wave", value: String(wave) },
+                      ],
+                    });
+                    const ok = await copyShareCardToClipboard(canvas);
+                    if (ok) {
+                      setShareStatus("copied");
+                      setTimeout(() => setShareStatus("idle"), 2000);
+                    } else {
+                      downloadShareCard(canvas, "star-blaster.png");
+                      setShareStatus("downloaded");
+                      setTimeout(() => setShareStatus("idle"), 2000);
+                    }
+                  }}
+                  className="min-h-11 rounded-full border border-white/30 bg-white/10 px-5 py-2.5 font-bold text-white hover:bg-white/20 inline-flex items-center gap-1.5"
+                >
+                  {shareStatus === "copied" ? (
+                    <>
+                      <Check className="size-4 text-primary" />
+                      <span>{locale === "ko" ? "복사됨!" : "Copied!"}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Camera className="size-4" />
+                      <span>{locale === "ko" ? "성과 카드" : "Share"}</span>
+                    </>
+                  )}
                 </button>
               </div>
             ) : (

@@ -17,7 +17,7 @@ export type SolitaireState = {
 };
 
 export type SolitaireMove =
-  | { type: 'draw' }
+  | { type: 'draw'; count?: number }
   | { type: 'recycle' }
   | { type: 'flip'; column: number }
   | { type: 'tableau-to-tableau'; from: number; cardIndex: number; to: number }
@@ -92,8 +92,9 @@ function revealExposed(pile: SolitaireCard[]): SolitaireCard[] {
 export function applySolitaireMove(state: SolitaireState, move: SolitaireMove): SolitaireState | null {
   if (move.type === 'draw') {
     if (state.stock.length === 0) return null;
-    const card = face(state.stock[state.stock.length - 1], true);
-    return { ...state, stock: state.stock.slice(0, -1), waste: [...state.waste, card] };
+    const count = Math.min(move.count ?? 1, state.stock.length);
+    const drawn = state.stock.slice(-count).reverse().map((c) => face(c, true));
+    return { ...state, stock: state.stock.slice(0, -count), waste: [...state.waste, ...drawn] };
   }
   if (move.type === 'recycle') {
     if (state.stock.length > 0 || state.waste.length === 0) return null;

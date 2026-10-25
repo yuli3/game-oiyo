@@ -3,7 +3,9 @@ import {GameContainer} from '../ui/game/GamePrimitives';
 import {createHitori,explainHitoriHint,hintHitori,parseHitori,serializeHitori,toggleHitori,undoHitori,type HitoriHint,type HitoriState} from '../../lib/games/hitori';
 import {validateHitori} from '../../lib/games/logic-puzzles';
 import { LOGIC_CELL_SPRITES } from '../../lib/games/sprites';
-import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { Camera, Check, Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { celebrate } from '../../lib/games/celebration';
+import { copyShareCardToClipboard, createShareCardCanvas, downloadShareCard } from '../../lib/games/share-card';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 
 const SAVE='oiyo:hitori:v1';
@@ -57,12 +59,22 @@ export default function Hitori({locale='ko'}:{locale?:string}){
  }, [togglePortal, toggleSound]);
 
  const [restored,setRestored]=useState(false);const [active,setActive]=useState(0);const [hint,setHint]=useState<HitoriHint|null>(null);const refs=useRef<Array<HTMLButtonElement|null>>([]);
+ const [shareStatus, setShareStatus] = useState<"idle" | "copied" | "downloaded">("idle");
  useEffect(()=>{const saved=parseHitori(localStorage.getItem(SAVE));if(saved){setState(saved);setRestored(true);setPaused(true);}},[]);
  useEffect(()=>{localStorage.setItem(SAVE,serializeHitori(state));},[state]);
  const tone=useCallback((win=false)=>{if(!sound)return;const A=window.AudioContext||window.webkitAudioContext;if(!A)return;const a=new A(),o=a.createOscillator(),g=a.createGain();o.frequency.value=win?720:330;g.gain.setValueAtTime(.035,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+.12);o.connect(g).connect(a.destination);o.start();o.stop(a.currentTime+.12);},[sound]);
- const act=(fn:(s:HitoriState)=>HitoriState)=>{if(paused)return;setState(s=>{const n=fn(s);if(n!==s)tone(n.won);return n;});};
+ const act=(fn:(s:HitoriState)=>HitoriState)=>{if(paused)return;setState(s=>{const n=fn(s);if(n!==s){tone(n.won);if(n.won)celebrate(containerRef.current,{preset:"shards"});}return n;});};
  const fresh=()=>{setState(createHitori(state.seed+1));setPaused(false);setRestored(false);setHint(null);};
  const v=validateHitori(state.values,state.dark); const shaded=state.dark.flat().filter(Boolean).length;
+ const hasAdjBlack = (r: number, c: number) => {
+   if (!state.dark[r][c]) return false;
+   const dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+   return dirs.some(([dr, dc]) => {
+     const nr = r + dr;
+     const nc = c + dc;
+     return nr >= 0 && nr < 5 && nc >= 0 && nc < 5 && state.dark[nr][nc];
+   });
+ };
  const move=(e:React.KeyboardEvent,index:number)=>{const r=Math.floor(index/5),c=index%5;let n=index;if(e.key==='ArrowUp')n=Math.max(0,r-1)*5+c;else if(e.key==='ArrowDown')n=Math.min(4,r+1)*5+c;else if(e.key==='ArrowLeft')n=r*5+Math.max(0,c-1);else if(e.key==='ArrowRight')n=r*5+Math.min(4,c+1);else return;e.preventDefault();setActive(n);refs.current[n]?.focus();};
  return (
   <div
@@ -78,7 +90,7 @@ export default function Hitori({locale='ko'}:{locale?:string}){
     <div className="mx-auto max-w-md space-y-5"><p className="text-center text-sm text-muted-foreground">{t.desc}</p>
      <div className="grid grid-cols-3 gap-2" aria-label="game stats"><Stat label={t.moves} value={state.moves}/><Stat label={t.shaded} value={shaded}/><Stat label="Seed" value={state.seed+1}/></div>
      {restored&&<p className="rounded-xl bg-primary/10 p-3 text-center text-xs font-bold text-primary" role="status">{t.restored}</p>}
-     <div className="relative rounded-3xl border bg-muted/30 p-3 shadow-inner"><div className="grid grid-cols-5 gap-1" role="grid" aria-label={t.title}>{state.values.flatMap((row,r)=>row.map((value,c)=>{const i=r*5+c;return <button key={i} ref={n=>{refs.current[i]=n;}} role="gridcell" aria-pressed={state.dark[r][c]} aria-label={`${r+1}, ${c+1}: ${value}`} tabIndex={active===i?0:-1} disabled={paused||state.won} onFocus={()=>setActive(i)} onKeyDown={e=>move(e,i)} onClick={()=>act(s=>toggleHitori(s,i))} className={`relative overflow-hidden aspect-square min-h-12 rounded-xl border text-lg font-black transition focus-visible:ring-2 focus-visible:ring-primary ${state.dark[r][c]?'text-white':'bg-card hover:bg-primary/10'} ${hint?.cells.includes(i)?'ring-4 ring-amber-400':''}`}>{state.dark[r][c]?<img src={LOGIC_CELL_SPRITES.black} alt="" draggable={false} className="pointer-events-none absolute inset-0 h-full w-full object-cover"/>:null}<span className="relative z-[1]">{value}</span></button>}))}</div>
+     <div className="relative rounded-3xl border bg-muted/30 p-3 shadow-inner"><div className="grid grid-cols-5 gap-1" role="grid" aria-label={t.title}>{state.values.flatMap((row,r)=>row.map((value,c)=>{const i=r*5+c;return <button key={i} ref={n=>{refs.current[i]=n;}} role="gridcell" aria-pressed={state.dark[r][c]} aria-label={`${r+1}, ${c+1}: ${value}`} tabIndex={active===i?0:-1} disabled={paused||state.won} onFocus={()=>setActive(i)} onKeyDown={e=>move(e,i)} onClick={()=>act(s=>toggleHitori(s,i))} className={`relative overflow-hidden aspect-square min-h-12 rounded-xl border text-lg font-black transition focus-visible:ring-2 focus-visible:ring-primary ${state.dark[r][c]?'text-white':'bg-card hover:bg-primary/10'} ${hint?.cells.includes(i)?'ring-4 ring-amber-400':''} ${hasAdjBlack(r, c)?'ring-2 ring-destructive animate-pulse':''}`}>{state.dark[r][c]?<img src={LOGIC_CELL_SPRITES.black} alt="" draggable={false} className="pointer-events-none absolute inset-0 h-full w-full object-cover"/>:null}<span className="relative z-[1]">{value}</span></button>}))}</div>
       {paused&&<button onClick={()=>setPaused(false)} className="absolute inset-3 rounded-2xl bg-background/95 text-lg font-black backdrop-blur">{t.resume}</button>}</div>
      <div className="grid grid-cols-3 gap-2 text-center text-xs"><Rule ok={v.duplicateFree} text={t.duplicate}/><Rule ok={v.noAdjacentBlack} text={t.adjacent}/><Rule ok={v.whiteConnected} text={t.connected}/></div>
      {hint&&<p className="rounded-xl border border-amber-300/60 bg-amber-50 p-3 text-center text-xs font-bold text-amber-900" role="status">{hintCopy[hint.reason]}{hint.cells.length?` · ${hint.cells.map(i=>`${Math.floor(i/5)+1},${i%5+1}`).join(' / ')}`:''}</p>}
@@ -109,7 +121,26 @@ export default function Hitori({locale='ko'}:{locale?:string}){
       </button>
       <Control text={paused?t.resume:t.pause} onClick={()=>setPaused(x=>!x)}/>
      </div>
-     {state.won&&<div className="rounded-3xl border border-primary/30 bg-primary/10 p-6 text-center" role="status" aria-live="polite"><div className="text-3xl">🌿</div><h3 className="mt-2 text-xl font-black">{t.win}</h3><p className="mt-1 text-sm">{state.moves} {t.moves} · {state.hints} {t.hint}</p><button onClick={fresh} className="mt-4 min-h-11 rounded-full bg-primary px-8 font-bold text-primary-foreground">{t.next}</button></div>}
+     {state.won&&<div className="rounded-3xl border border-primary/30 bg-primary/10 p-6 text-center" role="status" aria-live="polite"><div className="text-3xl">🌿</div><h3 className="mt-2 text-xl font-black">{t.win}</h3><p className="mt-1 text-sm">{state.moves} {t.moves} · {state.hints} {t.hint}</p><div className="mt-4 flex flex-wrap justify-center gap-2"><button onClick={fresh} className="min-h-11 rounded-full bg-primary px-8 font-bold text-primary-foreground">{t.next}</button><button type="button" onClick={async () => {
+      const canvas = createShareCardCanvas({
+        title: "OIYO Hitori",
+        slug: "hitori",
+        score: state.moves,
+        customStats: [
+          { label: "Shaded", value: String(shaded) },
+          { label: "Hints", value: String(state.hints) },
+        ],
+      });
+      const ok = await copyShareCardToClipboard(canvas);
+      if (ok) {
+        setShareStatus("copied");
+        setTimeout(() => setShareStatus("idle"), 2000);
+      } else {
+        downloadShareCard(canvas, "hitori.png");
+        setShareStatus("downloaded");
+        setTimeout(() => setShareStatus("idle"), 2000);
+      }
+     }} className="min-h-11 rounded-full border border-border bg-card px-5 font-bold inline-flex items-center gap-1.5">{shareStatus === "copied" ? (<><Check className="size-4 text-primary" /><span>복사됨!</span></>) : (<><Camera className="size-4" /><span>성과 카드</span></>)}</button></div></div>}
     </div>
    </GameContainer>
   </div>

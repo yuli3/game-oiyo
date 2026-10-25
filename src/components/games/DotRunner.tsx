@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { Camera, Check, Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
 import { celebrate } from "../../lib/games/celebration";
+import { copyShareCardToClipboard, createShareCardCanvas, downloadShareCard } from "../../lib/games/share-card";
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { frameScale } from '../../lib/games/time-contracts';
@@ -107,6 +108,7 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [isNewBest, setIsNewBest] = useState(false);
     const [finalFrames, setFinalFrames] = useState(0);
     const [hasGhost, setHasGhost] = useState(false);
+    const [shareStatus, setShareStatus] = useState<"idle" | "copied" | "downloaded">("idle");
     const prefersReducedMotion = usePrefersReducedMotion();
     const mutedRef = useRef(false);
     mutedRef.current = muted;
@@ -124,6 +126,10 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const ghostTrackRef = useRef<number[]>([]);
     const ghostPBRef = useRef<GhostEnvelope<RunnerGhostPose> | null>(null);
     const recordedFramesRef = useRef<GhostFrame<RunnerGhostPose>[]>([]);
+    const landingRingsRef = useRef<{ x: number; y: number; r: number; alpha: number }[]>([]);
+    const wasJumpingRef = useRef(false);
+    const dashBoosterRef = useRef(0);
+    const perfectCountRef = useRef(0);
 
     const playTone = useCallback((kind: 'jump' | 'coin' | 'crash') => {
         if (mutedRef.current || typeof window === 'undefined') return;
@@ -341,8 +347,39 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 ghostY = ghostTrackRef.current[Math.floor(current.elapsedFrames)];
             }
 
+            if (wasJumpingRef.current && !current?.jumping) {
+                landingRingsRef.current.push({ x: DOT_RUNNER_PLAYER_X + DOT_RUNNER_PLAYER_SIZE / 2, y: DOT_RUNNER_HEIGHT - DOT_RUNNER_GROUND, r: 4, alpha: 0.8 });
+            }
+            wasJumpingRef.current = !!current?.jumping;
+
+            for (let i = landingRingsRef.current.length - 1; i >= 0; i--) {
+                const ring = landingRingsRef.current[i];
+                ring.r += 2.5;
+                ring.alpha -= 0.05;
+                if (ring.alpha <= 0) {
+                    landingRingsRef.current.splice(i, 1);
+                    continue;
+                }
+                ctx.save();
+                ctx.strokeStyle = `rgba(59, 130, 246, ${ring.alpha})`;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.ellipse(ring.x, ring.y, ring.r * 1.6, ring.r * 0.4, 0, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+            }
+
             if (Number.isFinite(ghostY)) drawRunner(ghostY!, 0.38, true, ghostJumping);
             drawRunner(playerY, 1, false, current?.jumping);
+
+            if (dashBoosterRef.current > 0) {
+                dashBoosterRef.current--;
+                ctx.save();
+                ctx.strokeStyle = "rgba(250, 204, 21, 0.7)";
+                ctx.lineWidth = 3;
+                ctx.strokeRect(DOT_RUNNER_PLAYER_X - 4, playerY - 4, DOT_RUNNER_PLAYER_SIZE + 8, DOT_RUNNER_PLAYER_SIZE + 8);
+                ctx.restore();
+            }
 
             for (const o of current?.obstacles ?? []) {
                 if (!art?.cactus || !art.cactus.complete || art.cactus.naturalWidth === 0) {
@@ -487,6 +524,43 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                                 <div className="flex flex-wrap justify-center gap-2">
                                     <button type="button" onClick={retrySame} disabled={seedRef.current === null} className="min-h-11 rounded-full bg-primary px-6 py-2 font-bold text-primary-foreground disabled:opacity-50">{replayCopy.same}</button>
                                     <button type="button" onClick={reset} className="min-h-11 rounded-full border bg-muted px-6 py-2 font-bold">{replayCopy.fresh}</button>
+                                    <button
+                                        type="button"
+                                        onClick={async () => {
+                                            const canvas = createShareCardCanvas({
+                                                title: "OIYO Dot Runner",
+                                                slug: "dot-runner",
+                                                score: score,
+                                                bestScore: best,
+                                                customStats: [
+                                                    { label: "Coins", value: String(coins) },
+                                                    { label: "Pace", value: `x${paceMultiplier}` },
+                                                ],
+                                            });
+                                            const ok = await copyShareCardToClipboard(canvas);
+                                            if (ok) {
+                                                setShareStatus("copied");
+                                                setTimeout(() => setShareStatus("idle"), 2000);
+                                            } else {
+                                                downloadShareCard(canvas, "dot-runner.png");
+                                                setShareStatus("downloaded");
+                                                setTimeout(() => setShareStatus("idle"), 2000);
+                                            }
+                                        }}
+                                        className="min-h-11 rounded-full border border-border bg-card px-5 py-2 font-bold inline-flex items-center gap-1.5"
+                                    >
+                                        {shareStatus === "copied" ? (
+                                            <>
+                                                <Check className="size-4 text-primary" />
+                                                <span>복사됨!</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Camera className="size-4" />
+                                                <span>성과 카드</span>
+                                            </>
+                                        )}
+                                    </button>
                                 </div>
                             ) : (
                                 <button

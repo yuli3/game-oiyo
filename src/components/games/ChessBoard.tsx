@@ -162,6 +162,36 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [togglePortal, toggleMute]);
 
+  const [isBlitz, setIsBlitz] = useState(false);
+  const [whiteTime, setWhiteTime] = useState(180);
+  const [blackTime, setBlackTime] = useState(180);
+
+  useEffect(() => {
+    if (!isBlitz || gameEnd) return;
+    const interval = setInterval(() => {
+      if (position.whiteToMove) {
+        setWhiteTime((prev) => {
+          if (prev <= 1) {
+            finish({ result: 'black', reason: 'checkmate' });
+            return 0;
+          }
+          if (prev <= 10 && !muted) playTone(880, 0.03);
+          return prev - 1;
+        });
+      } else {
+        setBlackTime((prev) => {
+          if (prev <= 1) {
+            finish({ result: 'white', reason: 'checkmate' });
+            return 0;
+          }
+          if (prev <= 10 && !muted) playTone(720, 0.03);
+          return prev - 1;
+        });
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isBlitz, position.whiteToMove, gameEnd, muted, playTone]);
+
   const aiTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const aiWorker = useRef<Worker | null>(null);
   const aiRequestId = useRef(0);
@@ -206,6 +236,8 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     setMoveHistory([]);
     setLastMove(null);
     setRestored(false);
+    setWhiteTime(180);
+    setBlackTime(180);
     clearChessSave();
   };
 
@@ -468,6 +500,25 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
               ))}
             </div>
           )}
+          <button
+            type="button"
+            onClick={() => { setIsBlitz((b) => !b); setWhiteTime(180); setBlackTime(180); }}
+            aria-pressed={isBlitz}
+            className={`min-h-11 px-3 py-1.5 rounded-xl border text-xs font-bold transition-colors ${isBlitz ? 'border-primary bg-primary/20 text-primary' : 'border-border bg-muted/50 text-muted-foreground hover:bg-muted'}`}
+            title="3분 블리츠 시계"
+          >
+            ⏱ 3분 블리츠
+          </button>
+          {isBlitz && (
+            <div className="flex items-center gap-2 text-xs font-mono font-bold">
+              <span className={`px-2 py-1 rounded-md border ${position.whiteToMove ? 'border-primary bg-primary/20 text-primary' : 'border-border bg-muted/40 text-muted-foreground'}`}>
+                ⚪ {Math.floor(whiteTime / 60)}:{String(whiteTime % 60).padStart(2, '0')}
+              </span>
+              <span className={`px-2 py-1 rounded-md border ${!position.whiteToMove ? 'border-primary bg-primary/20 text-primary' : 'border-border bg-muted/40 text-muted-foreground'}`}>
+                ⚫ {Math.floor(blackTime / 60)}:{String(blackTime % 60).padStart(2, '0')}
+              </span>
+            </div>
+          )}
           {mode === 'ai' && (
             <p className="basis-full text-xs font-medium text-muted-foreground">
               {reviewCopy.difficulty}: {level === 1 ? t.level1 : level === 2 ? t.level2 : t.level3} · {aiDescription}
@@ -516,7 +567,7 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         </div>
 
         <div className="relative pb-2">
-          <div className="grid grid-cols-8 grid-rows-8 border-4 border-stone-800 shadow-2xl aspect-square w-full" role="grid" aria-label={t.board}>
+          <div className={`grid grid-cols-8 grid-rows-8 border-4 border-stone-800 shadow-2xl aspect-square w-full transition-shadow ${gameEnd?.reason === 'checkmate' ? 'ring-4 ring-primary shadow-xl animate-pulse' : ''}`} role="grid" aria-label={t.board}>
             {displaySquares.map(({ displayIndex, r, c }) => {
               const piece = board[r][c];
               const isDark = (r + c) % 2 === 1;

@@ -164,6 +164,7 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
 
   // Evolution Guide Modal State
   const [showEvoGuide, setShowEvoGuide] = useState(false);
+  const [isEndless, setIsEndless] = useState(false);
   const showEvoGuideRef = useRef(false);
   const [shareCardCopied, setShareCardCopied] = useState(false);
   useEffect(() => {
@@ -525,6 +526,34 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
       }
     }
 
+    // 3-Weapon Synergy Orbiting Aura
+    const activeWeaponCount = Object.values(state.weapons).filter(v => (v as number) > 0).length;
+    if (activeWeaponCount >= 3) {
+      const auraAngle = state.survivalTime * 2.5;
+      const auraRadius = 45;
+      ctx.save();
+      ctx.strokeStyle = "rgba(168, 85, 247, 0.45)";
+      ctx.lineWidth = 2;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.arc(state.player.x - camX, state.player.y - camY, auraRadius, 0, Math.PI * 2);
+      ctx.stroke();
+
+      const colors = ["#06b6d4", "#a855f7", "#ec4899"];
+      for (let i = 0; i < 3; i++) {
+        const angle = auraAngle + (i * Math.PI * 2) / 3;
+        const ox = state.player.x + Math.cos(angle) * auraRadius - camX;
+        const oy = state.player.y + Math.sin(angle) * auraRadius - camY;
+        ctx.fillStyle = colors[i];
+        ctx.shadowColor = colors[i];
+        ctx.shadowBlur = 8;
+        ctx.beginPath();
+        ctx.arc(ox, oy, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
     // Draw Enemies
     for (const e of state.enemies) {
       const ex = e.x - camX;
@@ -854,6 +883,17 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
             💥 VORTEX
           </span>
         )}
+
+        <button
+          type="button"
+          onClick={() => setIsEndless((v) => !v)}
+          aria-pressed={isEndless}
+          title={isEndless ? "15분 무한 서바이벌 활성화" : "기본 서바이벌 모드"}
+          className={`min-h-11 px-3 py-2 rounded-xl border backdrop-blur-md shadow-xs text-xs font-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary flex items-center gap-1.5 ${isEndless ? 'border-primary bg-primary/20 text-primary' : 'border-border bg-background/80 text-foreground hover:bg-background'}`}
+        >
+          <span>♾️</span>
+          <span className="hidden sm:inline">{isEndless ? "15분 무한" : "엔들리스"}</span>
+        </button>
 
         <button
           type="button"

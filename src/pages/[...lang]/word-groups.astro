@@ -41,7 +41,7 @@ const meta: Record<Locale, { title: string; description: string }> = {
 const m = meta[locale] ?? meta.en;
 ---
 
-<BaseLayout title={m.title} description={m.description} heading={m.title}>
+<BaseLayout title={m.title} description={m.description} heading={m.title} image="/assets/sprites/word-groups/keyart.webp">
   <div class="mx-auto max-w-lg px-4 py-4">
     <WordGroups client:load locale={locale} />
     <GameGuide slug="word-groups" locale={locale} name={m.title.split(" — ")[0]} />

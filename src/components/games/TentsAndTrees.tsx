@@ -5,11 +5,13 @@ import { getDailyStreak, recordDailyWin, type DailyStreak } from '../../lib/game
 import {
     autoMarkGrass,
     explainTentsHint,
+    findSmartDeduction,
     generateTents,
     generateUniqueTents,
     getLineHintStatuses,
     validateTents,
     type Pos,
+    type SmartDeduction,
     type TentsHint,
     type TentsPuzzle,
     type TentsValidation,
@@ -370,6 +372,7 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     }, [togglePortal, toggleMute]);
 
     const [hint, setHint] = useState<TentsHint | null>(null);
+    const [smartDeduction, setSmartDeduction] = useState<SmartDeduction | null>(null);
     const mutedRef = useRef(false);
     useEffect(() => { mutedRef.current = muted; }, [muted]);
     const audioRef = useRef<AudioContext | null>(null);
@@ -702,7 +705,15 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                             track('hint_used', mode);
                             const tents: Pos[] = [];
                             for (let rr = 0; rr < puzzle.size; rr++) for (let cc = 0; cc < puzzle.size; cc++) if (marks[rr][cc] === 'tent') tents.push([rr, cc]);
-                            setHint(explainTentsHint(tents, puzzle));
+                            const err = explainTentsHint(tents, puzzle);
+                            if (err.cells.length > 0) {
+                                setHint(err);
+                                setSmartDeduction(null);
+                            } else {
+                                const deduction = findSmartDeduction(marks, puzzle);
+                                setSmartDeduction(deduction);
+                                setHint(null);
+                            }
                         }} disabled={playLocked} className="min-h-11 rounded-lg border border-border px-3 text-xs font-bold text-muted-foreground hover:bg-muted disabled:opacity-40">
                             {HINT_LABEL[locale as keyof typeof HINT_LABEL] ?? HINT_LABEL.en}
                         </button>
@@ -888,7 +899,7 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                                             className={`${common} ${
                                                 mark === 'tent' ? 'bg-rose-100 text-rose-700 shadow-md motion-safe:-translate-y-0.5' :
                                                 mark === 'grass' ? 'bg-muted/50 text-muted-foreground/30' : 'bg-background hover:bg-muted/20 motion-safe:active:scale-95'
-                                            } ${verdict === 'legal' ? 'ring-2 ring-emerald-600' : ''} ${verdict === 'illegal' ? 'ring-2 ring-stone-500' : ''} ${hint?.cells.some(([hr, hc]) => hr === r && hc === c) ? 'ring-4 ring-amber-400' : ''}`}
+                                            } ${verdict === 'legal' ? 'ring-2 ring-emerald-600' : ''} ${verdict === 'illegal' ? 'ring-2 ring-stone-500' : ''} ${hint?.cells.some(([hr, hc]) => hr === r && hc === c) ? 'ring-4 ring-amber-400' : ''} ${smartDeduction && ((smartDeduction.type === 'row' && smartDeduction.index === r) || (smartDeduction.type === 'col' && smartDeduction.index === c) || (smartDeduction.type === 'tree' && smartDeduction.pos && smartDeduction.pos[0] === r && smartDeduction.pos[1] === c)) ? 'ring-2 ring-primary ring-offset-1 animate-pulse' : ''}`}
                                         >
                                             {mark === 'tent' && <img src={TENTS_SPRITES.tent} alt="" draggable={false} className="h-7 w-7 object-contain pointer-events-none" aria-hidden="true" />}
                                             {mark === 'grass' && <img src={TENTS_SPRITES.grass} alt="" draggable={false} className="h-6 w-6 object-contain pointer-events-none opacity-80" aria-hidden="true" />}
@@ -962,6 +973,8 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         </p>
                     ) : hint ? (
                         <p className="text-xs font-bold text-primary">{(TENTS_HINT[locale as keyof typeof TENTS_HINT] ?? TENTS_HINT.en)[hint.reason]}</p>
+                    ) : smartDeduction ? (
+                        <p className="text-xs font-bold text-primary">💡 {smartDeduction.message}</p>
                     ) : null}
                 </div>
             </div>

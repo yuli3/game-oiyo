@@ -160,6 +160,64 @@ export function validateTents(tents: Pos[], puzzle: TentsPuzzle, rules?: TentsRu
 }
 
 export type TentsHint = { reason: "adjacent" | "orphan" | "count" | "pairing"; cells: Pos[] };
+
+export interface SmartDeduction {
+  type: "row" | "col" | "tree";
+  index?: number;
+  pos?: Pos;
+  message: string;
+}
+
+export function findSmartDeduction(marks: string[][], puzzle: TentsPuzzle): SmartDeduction | null {
+  const { size, trees, rowHints, colHints } = puzzle;
+  const treeSet = new Set(trees.map(([r, c]) => `${r}:${c}`));
+
+  // 1. Check rows where remaining empty cells == needed tents
+  for (let r = 0; r < size; r++) {
+    let currentTents = 0;
+    let emptyCount = 0;
+    for (let c = 0; c < size; c++) {
+      if (marks[r][c] === 'tent') currentTents++;
+      else if (marks[r][c] === 'empty' && !treeSet.has(`${r}:${c}`)) emptyCount++;
+    }
+    const needed = rowHints[r] - currentTents;
+    if (needed > 0 && emptyCount === needed) {
+      return { type: "row", index: r, message: `${r + 1}번째 행: 남은 빈 칸(${emptyCount}개)에 모두 텐트가 들어가야 해요.` };
+    }
+  }
+
+  // 2. Check cols where remaining empty cells == needed tents
+  for (let c = 0; c < size; c++) {
+    let currentTents = 0;
+    let emptyCount = 0;
+    for (let r = 0; r < size; r++) {
+      if (marks[r][c] === 'tent') currentTents++;
+      else if (marks[r][c] === 'empty' && !treeSet.has(`${r}:${c}`)) emptyCount++;
+    }
+    const needed = colHints[c] - currentTents;
+    if (needed > 0 && emptyCount === needed) {
+      return { type: "col", index: c, message: `${c + 1}번째 열: 남은 빈 칸(${emptyCount}개)에 모두 텐트가 들어가야 해요.` };
+    }
+  }
+
+  // 3. Check trees with only 1 possible spot left
+  for (const [tr, tc] of trees) {
+    const adj = [
+      [tr - 1, tc], [tr + 1, tc], [tr, tc - 1], [tr, tc + 1]
+    ].filter(([r, c]) => r >= 0 && r < size && c >= 0 && c < size);
+
+    const hasTent = adj.some(([r, c]) => marks[r][c] === 'tent');
+    if (hasTent) continue;
+
+    const available = adj.filter(([r, c]) => marks[r][c] === 'empty' && !treeSet.has(`${r}:${c}`));
+    if (available.length === 1) {
+      return { type: "tree", pos: [tr, tc], message: `(${tr + 1}, ${tc + 1}) 나무 주변에 텐트를 놓을 수 있는 자리가 1곳뿐이에요.` };
+    }
+  }
+
+  return null;
+}
+
 export function explainTentsHint(tents: Pos[], puzzle: TentsPuzzle): TentsHint {
   const { size, trees, rowHints, colHints } = puzzle;
   for (let i = 0; i < tents.length; i++) {

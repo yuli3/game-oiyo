@@ -154,6 +154,55 @@ export const GameShell: React.FC<GameShellProps> = ({
     getEquippedTitleData(loadArcadePassProgress(todayKey()), locale)
   );
 
+  const [isZenActive, setIsZenActive] = useState(false);
+  const idleTimerRef = useRef<number>(0);
+
+  useEffect(() => {
+    const resetIdle = () => {
+      idleTimerRef.current = 0;
+      if (isZenActive) setIsZenActive(false);
+    };
+
+    const interval = setInterval(() => {
+      idleTimerRef.current += 1;
+      if (idleTimerRef.current >= 60 && phase !== 'play' && phase !== 'countdown') {
+        setIsZenActive(true);
+      }
+    }, 1000);
+
+    window.addEventListener('pointermove', resetIdle);
+    window.addEventListener('keydown', resetIdle);
+    window.addEventListener('touchstart', resetIdle);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('pointermove', resetIdle);
+      window.removeEventListener('keydown', resetIdle);
+      window.removeEventListener('touchstart', resetIdle);
+    };
+  }, [phase, isZenActive]);
+
+  const [isOfflineReady, setIsOfflineReady] = useState(() => {
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      return Boolean(navigator.serviceWorker.controller);
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const checkSw = () => {
+      if ('serviceWorker' in navigator) {
+        setIsOfflineReady(Boolean(navigator.serviceWorker.controller));
+      }
+    };
+    checkSw();
+    navigator.serviceWorker?.addEventListener('controllerchange', checkSw);
+    return () => {
+      navigator.serviceWorker?.removeEventListener('controllerchange', checkSw);
+    };
+  }, []);
+
   useEffect(() => {
     const handleTitleChange = () => {
       setPlayerTitle(getEquippedTitleData(loadArcadePassProgress(todayKey()), locale));
@@ -326,6 +375,11 @@ export const GameShell: React.FC<GameShellProps> = ({
               <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                 {subtitle}
               </p>
+            )}
+            {isOfflineReady && (
+              <span className="hidden sm:inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary mt-1">
+                🔒 오프라인 지원
+              </span>
             )}
           </div>
         </div>
@@ -871,6 +925,17 @@ export const GameShell: React.FC<GameShellProps> = ({
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {isZenActive && (
+        <div
+          onClick={() => setIsZenActive(false)}
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/90 backdrop-blur-md cursor-pointer animate-in fade-in duration-500"
+        >
+          <div className="text-4xl animate-pulse">✨</div>
+          <h4 className="mt-4 text-xl font-black text-foreground">ZEN MODE</h4>
+          <p className="mt-1 text-xs text-muted-foreground">마우스를 움직이거나 아무 키나 누르면 게임으로 돌아옵니다</p>
         </div>
       )}
     </div>

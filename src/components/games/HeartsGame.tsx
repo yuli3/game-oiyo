@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
+import { Camera, Check, Maximize2, Minimize2, Sparkles, Volume2, VolumeX } from "lucide-react";
+import { celebrate } from "../../lib/games/celebration";
+import { copyShareCardToClipboard, createShareCardCanvas, downloadShareCard } from "../../lib/games/share-card";
 import { GameContainer, PlayingCard } from "../ui/game/GamePrimitives";
 import {
   chooseHeartsCpuCard,
@@ -36,6 +38,7 @@ const HeartsGame: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
   const t = COPY[(locale in COPY ? locale : "en") as Locale];
   const [game, setGame] = useState<HeartsState>(() => createHeartsGame());
   const [passSelection, setPassSelection] = useState<string[]>([]);
+  const [shareStatus, setShareStatus] = useState<"idle" | "copied" | "downloaded">("idle");
   const [persistenceReady, setPersistenceReady] = useState(false);
   const [level, setLevel] = useState<HeartsAiLevel>(3);
   const [paused, setPaused] = useState(false);
@@ -136,17 +139,24 @@ const HeartsGame: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
     return () => window.clearTimeout(timer);
   }, [game, level, paused, tone]);
 
+  const roundWinners = game.finalScores ? game.finalScores.map((score, player) => ({ score, player })).filter(({ score }) => score === Math.min(...game.finalScores!)).map(({ player }) => player) : [];
+  const gameWinners = game.phase === "gameOver" ? game.matchScores.map((score, player) => ({ score, player })).filter(({ score }) => score === Math.min(...game.matchScores)).map(({ player }) => player) : [];
+  const moonShooter = game.finalScores && game.capturedPoints.includes(26) ? game.capturedPoints.indexOf(26) : -1;
+
   useEffect(() => {
-    if (game.phase === "roundComplete" || game.phase === "gameOver") tone(660, 0.18);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [game.phase]);
+    if (game.phase === "roundComplete" || game.phase === "gameOver") {
+      tone(660, 0.18);
+      if (moonShooter >= 0) {
+        celebrate(containerRef.current, { preset: "sparks" });
+      } else if (game.phase === "gameOver" && gameWinners.includes(0)) {
+        celebrate(containerRef.current, { preset: "stardust" });
+      }
+    }
+  }, [game.phase, moonShooter, gameWinners, tone, containerRef]);
 
   const legalIds = useMemo(() => new Set(legalHeartsCards(game, 0).map(({ id }) => id)), [game]);
   const shownTrick = game.trick.length > 0 ? game.trick : game.lastTrick;
   const showingPrevious = game.trick.length === 0 && game.lastTrick.length > 0;
-  const roundWinners = game.finalScores ? game.finalScores.map((score, player) => ({ score, player })).filter(({ score }) => score === Math.min(...game.finalScores!)).map(({ player }) => player) : [];
-  const gameWinners = game.phase === "gameOver" ? game.matchScores.map((score, player) => ({ score, player })).filter(({ score }) => score === Math.min(...game.matchScores)).map(({ player }) => player) : [];
-  const moonShooter = game.finalScores && game.capturedPoints.includes(26) ? game.capturedPoints.indexOf(26) : -1;
 
   const cardLabel = (card: HeartsCard) => `${t.suits[card.suit]} ${card.value} ${t.card}`;
   const togglePass = (card: HeartsCard) => setPassSelection((current) => current.includes(card.id) ? current.filter((id) => id !== card.id) : current.length < 3 ? [...current, card.id] : current);
@@ -242,8 +252,52 @@ const HeartsGame: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
       {(game.phase === "roundComplete" || game.phase === "gameOver") && (
         <div className="mt-8 rounded-3xl border border-primary/30 bg-primary/10 p-6 text-center" role="status" aria-live="polite">
           <h4 className="text-2xl font-black">{game.phase === "gameOver" ? t.gameWinner : t.roundWinner}: {(game.phase === "gameOver" ? gameWinners : roundWinners).map((player) => playerName(player, t)).join(" · ")}</h4>
-          {moonShooter >= 0 && <p className="mt-2 font-bold text-destructive">{playerName(moonShooter, t)} — {t.moon}</p>}
-          <button type="button" onClick={game.phase === "gameOver" ? reset : nextRound} className="mt-5 min-h-11 rounded-full bg-primary px-8 py-3 font-black text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 motion-reduce:transition-none">{game.phase === "gameOver" ? t.reset : t.nextRound}</button>
+          {moonShooter >= 0 && (
+            <div className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/20 px-4 py-1.5 text-sm font-black text-primary animate-bounce">
+              <Sparkles className="size-4" />
+              <span>{playerName(moonShooter, t)} — 🚀 {t.moon}</span>
+            </div>
+          )}
+          <div className="mt-5 flex flex-wrap justify-center gap-2">
+            <button type="button" onClick={game.phase === "gameOver" ? reset : nextRound} className="min-h-11 rounded-full bg-primary px-8 py-3 font-black text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 motion-reduce:transition-none">{game.phase === "gameOver" ? t.reset : t.nextRound}</button>
+            <button
+              type="button"
+              onClick={async () => {
+                const canvas = createShareCardCanvas({
+                  title: "OIYO Hearts",
+                  slug: "hearts-game",
+                  score: game.matchScores[0],
+                  customStats: [
+                    { label: "CPU 1", value: String(game.matchScores[1]) },
+                    { label: "CPU 2", value: String(game.matchScores[2]) },
+                    { label: "CPU 3", value: String(game.matchScores[3]) },
+                  ],
+                });
+                const ok = await copyShareCardToClipboard(canvas);
+                if (ok) {
+                  setShareStatus("copied");
+                  setTimeout(() => setShareStatus("idle"), 2000);
+                } else {
+                  downloadShareCard(canvas, "hearts-game.png");
+                  setShareStatus("downloaded");
+                  setTimeout(() => setShareStatus("idle"), 2000);
+                }
+              }}
+              className="min-h-11 rounded-full border border-border bg-card px-5 py-3 font-bold inline-flex items-center gap-1.5"
+            >
+              {shareStatus === "copied" ? (
+                <>
+                  <Check className="size-4 text-primary" />
+                  <span>복사됨!</span>
+                </>
+              ) : (
+                <>
+                  <Camera className="size-4" />
+                  <span>성과 카드</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
       )}
     </GameContainer>

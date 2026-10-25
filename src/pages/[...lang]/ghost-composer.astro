@@ -41,7 +41,7 @@ const meta: Record<Locale, { title: string; description: string }> = {
 const m = meta[locale] ?? meta.en;
 ---
 
-<BaseLayout title={m.title} description={m.description} heading={m.title}>
+<BaseLayout title={m.title} description={m.description} heading={m.title} image="/assets/sprites/ghost-composer/keyart.webp">
   <div class="mx-auto max-w-3xl px-4 py-8">
     <GhostComposer client:load locale={locale} />
     <GameGuide slug="ghost-composer" locale={locale} name={m.title.split(" — ")[0]} />

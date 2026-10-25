@@ -1,7 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Camera, Check, Maximize2, Minimize2, Sparkles, Volume2, VolumeX } from "lucide-react";
 import { PlayingCard, GameContainer } from "../ui/game/GamePrimitives";
 import { getRecord, recordResult } from "../../lib/games/records";
+import { celebrate } from "../../lib/games/celebration";
+import { copyShareCardToClipboard, createShareCardCanvas, downloadShareCard } from "../../lib/games/share-card";
 import {
   compareHands,
   evaluateBest,
@@ -40,6 +42,18 @@ const RANK_LABEL: Record<number, string> = {
   14: "A",
 };
 const rankLabel = (r: number) => RANK_LABEL[r] ?? String(r);
+
+const HAND_MULTIPLIERS: Record<HandCategory, { mult: string; style: string }> = {
+  "straight-flush": { mult: "x500", style: "border-primary/40 bg-primary/20 text-primary" },
+  "four-of-a-kind": { mult: "x250", style: "border-chart-1/40 bg-chart-1/20 text-chart-1" },
+  "full-house": { mult: "x100", style: "border-chart-2/40 bg-chart-2/20 text-chart-2" },
+  flush: { mult: "x50", style: "border-chart-3/40 bg-chart-3/20 text-chart-3" },
+  straight: { mult: "x30", style: "border-chart-4/40 bg-chart-4/20 text-chart-4" },
+  "three-of-a-kind": { mult: "x15", style: "border-chart-5/40 bg-chart-5/20 text-chart-5" },
+  "two-pair": { mult: "x5", style: "border-primary/30 bg-primary/10 text-primary" },
+  "one-pair": { mult: "x2", style: "border-muted-foreground/30 bg-muted/40 text-muted-foreground" },
+  "high-card": { mult: "x1", style: "border-border bg-muted/20 text-muted-foreground" },
+};
 
 const CATEGORY_LABEL: Record<UILocale, Record<HandCategory, string>> = {
   ko: {
@@ -524,6 +538,30 @@ const TexasHoldem: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
     };
   }, [stage, folded, player, ai, board]);
 
+  const [shareStatus, setShareStatus] = useState<"idle" | "copied" | "downloaded">("idle");
+
+  const playChipSound = useCallback(() => {
+    if (!sound) return;
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      for (let i = 0; i < 3; i++) {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        const startTime = ctx.currentTime + i * 0.04;
+        osc.frequency.setValueAtTime(1800 + i * 350, startTime);
+        osc.frequency.exponentialRampToValueAtTime(800, startTime + 0.05);
+        gain.gain.setValueAtTime(0.04, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.05);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(startTime);
+        osc.stop(startTime + 0.05);
+      }
+    } catch {}
+  }, [sound]);
+
   // Record win/lose/tie exactly once when the showdown resolves.
   const [recorded, setRecorded] = useState(false);
   React.useEffect(() => {
@@ -539,9 +577,13 @@ const TexasHoldem: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
               : "d",
         ),
       );
+      if (result.outcome === "win") {
+        playChipSound();
+        celebrate(containerRef.current, { preset: "cards" });
+      }
     }
     if (stage === "preflop") setRecorded(false);
-  }, [result, recorded, folded, stage]);
+  }, [result, recorded, folded, stage, playChipSound]);
 
   const highlight = result
     ? new Set(result.pv.best5.map((c) => `${c.rank}${c.suit}`))
@@ -664,12 +706,18 @@ const TexasHoldem: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
             </span>
             <Hand cards={player} highlight={highlight} />
             {currentBest && !over && (
-              <span className="text-xs text-muted-foreground">
-                {t.current}:{" "}
-                <b className="text-foreground">
-                  {catLabel[currentBest.category]}
-                </b>
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">
+                  {t.current}:{" "}
+                  <b className="text-foreground">
+                    {catLabel[currentBest.category]}
+                  </b>
+                </span>
+                <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-black shadow-xs ${HAND_MULTIPLIERS[currentBest.category].style}`}>
+                  <Sparkles className="size-3" />
+                  {HAND_MULTIPLIERS[currentBest.category].mult}
+                </span>
+              </div>
             )}
           </div>
 
@@ -686,16 +734,26 @@ const TexasHoldem: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
                       : t.tie}
               </p>
               {!folded && result && (
-                <p className="text-xs text-muted-foreground">
-                  {t.you}:{" "}
-                  <b className="text-foreground">
-                    {catLabel[result.pv.category]}
-                  </b>{" "}
-                  · {t.opponent}:{" "}
-                  <b className="text-foreground">
-                    {catLabel[result.av.category]}
-                  </b>
-                </p>
+                <div className="flex flex-col items-center gap-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">
+                      {t.you}:{" "}
+                      <b className="text-foreground">
+                        {catLabel[result.pv.category]}
+                      </b>
+                    </span>
+                    <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-black shadow-xs ${HAND_MULTIPLIERS[result.pv.category].style}`}>
+                      <Sparkles className="size-3" />
+                      {HAND_MULTIPLIERS[result.pv.category].mult}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {t.opponent}:{" "}
+                    <b className="text-foreground">
+                      {catLabel[result.av.category]}
+                    </b>
+                  </p>
+                </div>
               )}
               <div className="flex flex-wrap justify-center gap-2">
               <button
@@ -712,6 +770,44 @@ const TexasHoldem: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
               >
                 {locale === "ko" ? "같은 딜" : locale === "ja" ? "同じディール" : locale === "zh" ? "同一手牌" : locale === "fr" ? "Même donne" : locale === "es" ? "Misma mano" : "Same deal"}
               </button>
+              {result && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const canvas = createShareCardCanvas({
+                      title: "OIYO Texas Hold'em",
+                      slug: "texas-holdem",
+                      score: catLabel[result.pv.category],
+                      customStats: [
+                        { label: "Multiplier", value: HAND_MULTIPLIERS[result.pv.category].mult },
+                        { label: "Record", value: `${rec.w}W ${rec.l}L` },
+                      ],
+                    });
+                    const ok = await copyShareCardToClipboard(canvas);
+                    if (ok) {
+                      setShareStatus("copied");
+                      setTimeout(() => setShareStatus("idle"), 2000);
+                    } else {
+                      downloadShareCard(canvas, "texas-holdem.png");
+                      setShareStatus("downloaded");
+                      setTimeout(() => setShareStatus("idle"), 2000);
+                    }
+                  }}
+                  className="min-h-11 px-4 py-2.5 rounded-xl border border-border font-bold text-sm hover:bg-muted inline-flex items-center gap-1.5"
+                >
+                  {shareStatus === "copied" ? (
+                    <>
+                      <Check className="size-4 text-primary" />
+                      <span>{locale === "ko" ? "복사됨!" : "Copied!"}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Camera className="size-4" />
+                      <span>{locale === "ko" ? "성과 카드" : "Share"}</span>
+                    </>
+                  )}
+                </button>
+              )}
               </div>
             </div>
           ) : (
