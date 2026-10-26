@@ -678,6 +678,20 @@ export const MISSION_CATALOG: Array<{
     goal: 100_000_000,
     xpReward: 50,
   },
+  {
+    id: "ftl-mini-quest-1",
+    gameSlug: "ftl-mini",
+    title: {
+      ko: "FTL 우주선에서 적 함선 1척 이상 격파하기",
+      en: "Destroy 1 or more enemy starships in FTL Spaceship Mini",
+      ja: "FTL 宇宙船で敵艦を1隻以上撃破する",
+      zh: "在超越光速 FTL 中击毁 1 艘及以上敌方星舰",
+      fr: "Détruisez au moins 1 vaisseau ennemi dans FTL Spaceship Mini",
+      es: "Destruye 1 nave enemiga o más en FTL Spaceship Mini",
+    },
+    goal: 1,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {

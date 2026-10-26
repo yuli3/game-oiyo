@@ -16,22 +16,22 @@ const { locale } = Astro.props as { locale: Locale };
 const translations = await getTranslations(locale);
 
 const meta: Record<Locale, { title: string; description: string }> = {
-  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 122종", description: "체스·스도쿠·워들부터 OIYO 오리지널 게임까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 122종." },
-  en: { title: "OIYO Arcade — 122 free browser games, no install", description: "Chess, Sudoku, Wordle, and original OIYO games: 122 free games you can play instantly in your browser." },
-  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム122種", description: "チェス・数独・ワードルからOIYOオリジナル作品まで、ブラウザですぐ遊べる無料ゲーム122種。" },
-  zh: { title: "OIYO 街机 — 无需安装的122款免费游戏", description: "从国际象棋、数独、猜词到 OIYO 原创作品，122款游戏无需安装即可畅玩。" },
-  fr: { title: "OIYO Arcade — 122 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations originales OIYO : 122 jeux gratuits dans le navigateur." },
-  es: { title: "OIYO Arcade — 122 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y originales de OIYO: 122 juegos gratuitos en el navegador." },
+  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 123종", description: "체스·스도쿠·워들부터 OIYO 오리지널 게임까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 123종." },
+  en: { title: "OIYO Arcade — 123 free browser games, no install", description: "Chess, Sudoku, Wordle, and original OIYO games: 123 free games you can play instantly in your browser." },
+  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム123種", description: "チェス・数独・ワードルからOIYOオリジナル作品まで、ブラウザですぐ遊べる無料ゲーム123種。" },
+  zh: { title: "OIYO 街机 — 无需安装的123款免费游戏", description: "从国际象棋、数独、猜词到 OIYO 原创作品，123款游戏无需安装即可畅玩。" },
+  fr: { title: "OIYO Arcade — 123 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations originales OIYO : 123 jeux gratuits dans le navigateur." },
+  es: { title: "OIYO Arcade — 123 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y originales de OIYO: 123 juegos gratuitos en el navegador." },
 };
 const m = meta[locale] ?? meta.en;
 
 const hero: Record<Locale, { eyebrow: string; title: string; sub: string }> = {
-  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 122종", sub: "보드·카드·퍼즐·오리지널 아케이드 — 브라우저에서 바로 시작하세요." },
-  en: { eyebrow: "🎮 OIYO Arcade", title: "122 free games, right in your browser", sub: "Board, card, puzzle, and original arcade games — instant and free." },
-  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム122種", sub: "ボード・カード・パズル・オリジナル作品をブラウザですぐに。" },
-  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的122款免费游戏", sub: "棋类、纸牌、益智和原创街机游戏，浏览器直接开玩。" },
-  fr: { eyebrow: "🎮 OIYO Arcade", title: "122 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et créations originales, sans installation." },
-  es: { eyebrow: "🎮 OIYO Arcade", title: "122 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones originales, sin instalación." },
+  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 123종", sub: "보드·카드·퍼즐·오리지널 아케이드 — 브라우저에서 바로 시작하세요." },
+  en: { eyebrow: "🎮 OIYO Arcade", title: "123 free games, right in your browser", sub: "Board, card, puzzle, and original arcade games — instant and free." },
+  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム123種", sub: "ボード・カード・パズル・オリジナル作品をブラウザですぐに。" },
+  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的123款免费游戏", sub: "棋类、纸牌、益智和原创街机游戏，浏览器直接开玩。" },
+  fr: { eyebrow: "🎮 OIYO Arcade", title: "123 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et créations originales, sans installation." },
+  es: { eyebrow: "🎮 OIYO Arcade", title: "123 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones originales, sin instalación." },
 };
 const h = hero[locale] ?? hero.en;
 
@@ -131,6 +131,7 @@ const GAMES: Game[] = [
   { slug: "merge-mansion", emoji: "🏡", cat: "puzzle", name: { ko: "머지 맨션 웹", en: "Merge Mansion Web", ja: "マージマンション Web", zh: "庄园合合乐", fr: "Merge Mansion Web", es: "Merge Mansion Web" } },
   { slug: "loop-hero", emoji: "🔄", cat: "arcade", name: { ko: "루프 히어로 웹", en: "Loop Hero Mini", ja: "ループヒーロー Web", zh: "循环勇者 Mini", fr: "Loop Hero Mini", es: "Loop Hero Mini" } },
   { slug: "plague-mini", emoji: "☣️", cat: "arcade", name: { ko: "전염병 주식회사 미니", en: "Plague Mini", ja: "伝染病カンパニー Mini", zh: "瘟疫危机 Mini", fr: "Plague Mini", es: "Plague Mini" } },
+  { slug: "ftl-mini", emoji: "🚀", cat: "arcade", name: { ko: "FTL 우주선 미니", en: "FTL Spaceship Mini", ja: "FTL 宇宙船 Mini", zh: "超越光速 FTL Mini", fr: "FTL Spaceship Mini", es: "FTL Spaceship Mini" } },
 
   { slug: "failure-eater", emoji: "👾", cat: "arcade", name: { ko: "실패를 먹는 괴물", en: "Failure Eater", ja: "失敗を食べる怪物", zh: "吃掉失败的怪物", fr: "Monstre des ratés", es: "Monstruo de los fallos" } },
   { slug: "snake-game", emoji: "🐍", cat: "arcade", name: { ko: "스네이크", en: "Snake", ja: "スネーク", zh: "贪吃蛇", fr: "Snake", es: "Snake" } },
@@ -502,6 +503,18 @@ const NEW_RELEASES_CONFIG: Array<{ slug: string; tag: Record<Locale, string>; de
       zh: "操控致命病原体通过跨国航班与远洋海运飞速扩散，采集DNA突变症状与抗药性，赶在疫苗研发完成前瓦解人类防线。",
       fr: "Propagez un pathogène par voies aériennes et maritimes, récoltez de l'ADN et mutez pour déjouer la recherche du vaccin mondial.",
       es: "Propaga un patógeno a través de rutas aéreas y marítimas mundiales, recolecta ADN y muta síntomas para superar la vacuna definitiva.",
+    },
+  },
+  {
+    slug: "ftl-mini",
+    tag: { ko: "함선 구획 배전 & 실시간 함대전", en: "Ship Power Routing & Tactical Space Combat", ja: "艦内電力配分＆リアルタイム宇宙戦", zh: "飞船截面能源调配即时战术舰战", fr: "Gestion de vaisseau et combat spatial", es: "Gestión de nave y combate espacial" },
+    desc: {
+      ko: "우주선 단면 구획에 동력을 배분하고 선원을 지휘하여 수리하며, 적함 구획을 조준 사격하여 반란군을 격파하는 실시간 우주 함대전.",
+      en: "Route ship reactor power, command crew to repair breaches and fires, and target hostile enemy compartments in real-time tactical space combat.",
+      ja: "宇宙船の断面グリッドでシールド・兵器へ電力を配分し、乗組員で修理しながら敵艦の急所を撃破する宇宙戦シミュレーション。",
+      zh: "在飞船纵剖面网格中实时调配反应堆电力，指挥船员抢修灭火，定向集火敌舰核心舱段的即时太空战术策略游戏。",
+      fr: "Distribuez l'énergie du réacteur, commandez votre équipage pour réparer les avaries et ciblez les salles ennemies.",
+      es: "Enruta la energía del reactor, comanda a la tripulación para reparar sistemas y averías, y destruye las naves enemigas.",
     },
   },
 ];
