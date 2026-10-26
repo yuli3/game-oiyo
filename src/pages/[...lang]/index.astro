@@ -16,22 +16,22 @@ const { locale } = Astro.props as { locale: Locale };
 const translations = await getTranslations(locale);
 
 const meta: Record<Locale, { title: string; description: string }> = {
-  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 132종", description: "체스·스도쿠·워들부터 OIYO 오리지널 게임까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 132종." },
-  en: { title: "OIYO Arcade — 132 free browser games, no install", description: "Chess, Sudoku, Wordle, and original OIYO games: 132 free games you can play instantly in your browser." },
-  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム132種", description: "チェス・数独・ワードルからOIYOオリジナル作品まで、ブラウザですぐ遊べる無料ゲーム132種。" },
-  zh: { title: "OIYO 街机 — 无需安装的132款免费游戏", description: "从国际象棋、数独、猜词到 OIYO 原创作品，132款游戏无需安装即可畅玩。" },
-  fr: { title: "OIYO Arcade — 132 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations originales OIYO : 132 jeux gratuits dans le navigateur." },
-  es: { title: "OIYO Arcade — 132 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y originales de OIYO: 132 juegos gratuitos en el navegador." },
+  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 133종", description: "체스·스도쿠·워들부터 OIYO 오리지널 게임까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 133종." },
+  en: { title: "OIYO Arcade — 133 free browser games, no install", description: "Chess, Sudoku, Wordle, and original OIYO games: 133 free games you can play instantly in your browser." },
+  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム133種", description: "チェス・数独・ワードルからOIYOオリジナル作品まで、ブラウザですぐ遊べる無料ゲーム133種。" },
+  zh: { title: "OIYO 街机 — 无需安装的133款免费游戏", description: "从国际象棋、数独、猜词到 OIYO 原创作品，133款游戏无需安装即可畅玩。" },
+  fr: { title: "OIYO Arcade — 133 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations originales OIYO : 133 jeux gratuits dans le navigateur." },
+  es: { title: "OIYO Arcade — 133 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y originales de OIYO: 133 juegos gratuitos en el navegador." },
 };
 const m = meta[locale] ?? meta.en;
 
 const hero: Record<Locale, { eyebrow: string; title: string; sub: string }> = {
-  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 132종", sub: "보드·카드·퍼즐·오리지널 아케이드 — 브라우저에서 바로 시작하세요." },
-  en: { eyebrow: "🎮 OIYO Arcade", title: "132 free games, right in your browser", sub: "Board, card, puzzle, and original arcade games — instant and free." },
-  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム132種", sub: "ボード・カード・パズル・オリジナル作品をブラウザですぐに。" },
-  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的132款免费游戏", sub: "棋类、纸牌、益智和原创街机游戏，浏览器直接开玩。" },
-  fr: { eyebrow: "🎮 OIYO Arcade", title: "132 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et créations originales, sans installation." },
-  es: { eyebrow: "🎮 OIYO Arcade", title: "132 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones originales, sin instalación." },
+  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 133종", sub: "보드·카드·퍼즐·오리지널 아케이드 — 브라우저에서 바로 시작하세요." },
+  en: { eyebrow: "🎮 OIYO Arcade", title: "133 free games, right in your browser", sub: "Board, card, puzzle, and original arcade games — instant and free." },
+  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム133種", sub: "ボード・カード・パズル・オリジナル作品をブラウザですぐに。" },
+  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的133款免费游戏", sub: "棋类、纸牌、益智和原创街机游戏，浏览器直接开玩。" },
+  fr: { eyebrow: "🎮 OIYO Arcade", title: "133 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et créations originales, sans installation." },
+  es: { eyebrow: "🎮 OIYO Arcade", title: "133 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones originales, sin instalación." },
 };
 const h = hero[locale] ?? hero.en;
 
@@ -141,6 +141,7 @@ const GAMES: Game[] = [
   { slug: "sand-balls", emoji: "🏖️", cat: "puzzle", name: { ko: "샌드 볼스 3D", en: "Sand Balls Mini", ja: "サンドボール 3D", zh: "沙球大冲关 3D", fr: "Sand Balls Mini", es: "Sand Balls Mini" } },
   { slug: "powerwash-3d", emoji: "🚿", cat: "arcade", name: { ko: "파워워시 클린 3D", en: "PowerWash Clean 3D", ja: "パワーウォッシュ 3D", zh: "冲就完事模拟器 3D", fr: "PowerWash Clean 3D", es: "PowerWash Clean 3D" } },
   { slug: "factorio-mini", emoji: "🏭", cat: "arcade", name: { ko: "팩토리오 미니", en: "Factorio Automation Mini", ja: "ファクトリオ ミニ", zh: "异星工厂 迷你版", fr: "Factorio Automation Mini", es: "Factorio Automation Mini" } },
+  { slug: "gorogoa-frame", emoji: "🖼️", cat: "puzzle", name: { ko: "고르고아 프레임", en: "Gorogoa Frame Weaver", ja: "ゴロゴア フレーム", zh: "画中世界 帧界编织", fr: "Gorogoa Frame Weaver", es: "Gorogoa Frame Weaver" } },
 
   { slug: "failure-eater", emoji: "👾", cat: "arcade", name: { ko: "실패를 먹는 괴물", en: "Failure Eater", ja: "失敗を食べる怪物", zh: "吃掉失败的怪物", fr: "Monstre des ratés", es: "Monstruo de los fallos" } },
   { slug: "snake-game", emoji: "🐍", cat: "arcade", name: { ko: "스네이크", en: "Snake", ja: "スネーク", zh: "贪吃蛇", fr: "Snake", es: "Snake" } },
@@ -632,6 +633,18 @@ const NEW_RELEASES_CONFIG: Array<{ slug: string; tag: Record<Locale, string>; de
       zh: "在矿脉部署采矿机，经熔炉冶炼铁板与铜板，铺设传送带汇入组装机全自动合成红色科技包，体验酣畅淋漓的工业物流美学。",
       fr: "Extrayez le fer et le cuivre, fondez des plaques et reliez vos convoyeurs et assembleuses pour automatiser la production de packs scientifiques.",
       es: "Extrae hierro y cobre, funde placas metálicas y traza cintas transportadoras hacia las ensambladoras para automatizar tu megafactoría.",
+    },
+  },
+  {
+    slug: "gorogoa-frame",
+    tag: { ko: "2×2 멀티 액자 확대·레이어 퍼즐", en: "2x2 Multi-Frame Zoom & Layer Puzzle", ja: "2×2絵画パネル拡大＆レイヤーパズル", zh: "2×2 四格画框缩放与图层解谜", fr: "Puzzle artistique de cadres 2x2", es: "Puzle artístico de marcos 2x2" },
+    desc: {
+      ko: "4개의 그림 액자를 확대·축소하고 위치를 바꾸거나 창틀 레이어를 겹쳐 끊어진 다리와 시공을 하나로 연결하는 감성 아트워크 퍼즐.",
+      en: "Zoom inside illustrated comic panels, rearrange the 2x2 grid, and stack stencil cutouts to weave broken pathways into a single seamless scene.",
+      ja: "4つのイラストパネルを拡大・縮小し、配置を入れ替えたり窓枠レイヤーを重ねたりして、分断された風景をひとつに繋ぐ芸術的な視覚パズル。",
+      zh: "在四格插画画框中独立缩放视角、交换空间位置、剥离并叠加镂空窗框图层，让错位的时空无缝交织为一体。",
+      fr: "Zoomez dans les vignettes illustrées, réorganisez la grille 2x2 et superposez les pochoirs pour tisser des chemins continus.",
+      es: "Haz zoom dentro de paneles ilustrados, reorganiza la cuadrícula 2x2 y superpón plantillas para entrelazar caminos imposibles.",
     },
   },
 ];

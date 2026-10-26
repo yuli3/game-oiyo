@@ -5986,4 +5986,60 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "gorogoa-frame": {
+    origin: {
+      ko: "『고르고아 프레임 (Gorogoa Frame Weaver)』는 1인 개발자 Jason Roberts가 7년간 수작업 일러스트로 빚어내어 BAFTA 데뷔 게임상을 수상한 걸작 퍼즐 『Gorogoa(2017)』에서 영감을 받은 OIYO 오리지널 2×2 멀티 액자 시각 퍼즐입니다. 4개의 그림 패널을 각각 확대·축소(Zoom)하여 숨겨진 사물을 발견하고, 액자의 상하좌우 배치를 바꿔 끊어진 다리와 계단을 하나로 이어 붙이며, 창틀(스텐실) 레이어를 분리해 다른 배경 위에 포개어 새로운 차원의 통로를 여는 마법 같은 직조 경험을 브라우저에서 구현했습니다.",
+      en: "Gorogoa Frame Weaver is an original OIYO 2x2 multi-frame visual puzzle inspired by Jason Roberts' BAFTA-winning hand-illustrated masterpiece Gorogoa (2017). Zoom inside individual comic panels to uncover hidden details, rearrange the 4 frames spatially to connect broken bridges and staircases, and detach foreground stencil cutouts to composite them onto other scenes.",
+      ja: "『ゴロゴア フレーム（Gorogoa Frame Weaver）』は、Jason Roberts氏が手描きイラストで創り上げBAFTA賞を受賞した名作パズル『Gorogoa（2017）』にインスパイアされたOIYOオリジナルの2×2マルチフレーム視覚パズルです。4つの絵画パネルをそれぞれ拡大・縮小して隠された風景を見つけ、上下左右の配置を入れ替えて橋や階段を繋ぎ、窓枠（ステンシル）レイヤーを別の背景に重ね合わせて新たな道を切り開く体験をブラウザで楽しめます。",
+      zh: "《画中世界 帧界编织（Gorogoa Frame Weaver）》灵感源自独立开发者 Jason Roberts 历时七年手绘打磨并斩获 BAFTA 大奖的艺术解谜神作《Gorogoa（画中世界）》。在 2×2 四格插画画框中独立缩放视角探索细节，通过交换画框空间位置将断裂的桥梁与阶梯无缝拼接，并将镂空窗框图层剥离叠加至另一幅画景之上，编织跨越时空的奇妙通路。",
+      fr: "Gorogoa Frame Weaver est un puzzle visuel en grille 2x2 inspiré du chef-d'œuvre illustré Gorogoa (2017) de Jason Roberts. Zoomez à l'intérieur des cadres, réorganisez les 4 vignettes pour relier ponts et escaliers, et détachez des calques en pochoir pour les superposer sur d'autres scènes.",
+      es: "Gorogoa Frame Weaver es un puzle visual de cuadrícula 2x2 inspirado en la obra maestra ilustrada Gorogoa (2017) de Jason Roberts. Haz zoom dentro de cada viñeta, reorganiza los 4 marcos para unir puentes y escaleras, y superpón plantillas recortadas sobre otros paisajes.",
+    },
+    how: {
+      ko: "2×2 격자에 놓인 4개의 그림 액자를 조작해 각 장(Chapter)의 시공을 하나로 연결하세요. 1) 각 액자 우측 하단의 『🔍+ 확대 / 🔍- 축소』 버튼을 누르면 액자 내부 풍경이 확대되거나 축소됩니다. 2) 액자 하나를 클릭해 선택한 뒤 다른 액자를 클릭하면 두 액자의 위치가 서로 교환됩니다. 3) 『✨ 창틀 분리 가능』 배지가 뜬 스텐실 액자(석조 아치, 황동 망원경, 천문 해시계)를 선택한 상태로 목표 배경 액자를 클릭하면 두 그림이 하나로 포개어져(레이어 결합) 숨겨진 현상이 깨어납니다!",
+      en: "Manipulate the 4 illustrated panels in the 2x2 grid to weave a continuous scene: 1) Click the [🔍+ Zoom In / 🔍- Zoom Out] button on any panel to change its camera magnification. 2) Click one panel and then another to swap their positions in the grid. 3) When a panel displays the '✨ Stencil Ready' badge (Stone Arch, Brass Telescope, Sundial Ring), click it and then click its target background frame to composite the cutout layer on top!",
+      ja: "2×2グリッドの4つのパネルを操作して風景をひとつに繋げましょう。1) 各パネルの『🔍+ 拡大 / 🔍- 縮小』ボタンでパネル内のカメラ倍率を切り替えます。2) パネルを順に2つクリックすると位置が入れ替わります。3) 『✨ 枠レイヤー重ね可能』バッジが表示された枠パネル（石のアーチ、真鍮の望遠鏡、日時計の輪）を選択して対象の背景パネルをクリックすると、2枚の絵が重なり合って奇跡が起きます！",
+      zh: "操控 2×2 网格中的四幅插画画框，将错位的时空连成一体：1) 点击各画框上的“🔍+ 放大 / 🔍- 缩小”按钮切换画框内部景深视角。2) 依次点击两个画框即可交换它们在四宫格中的位置。3) 当带有“✨ 镂空框可叠加”标记的画框（石拱门、黄铜望远镜、日晷圆环）处于放大状态时，点击它再点击目标背景画框，即可将镂空层完美叠合！",
+      fr: "Manipulez les 4 panneaux de la grille 2x2 : 1) Cliquez sur [🔍+ / 🔍-] pour zoomer ou dézoomer dans chaque vignette. 2) Cliquez sur deux cadres successivement pour échanger leur place. 3) Lorsqu'un cadre affiche « ✨ Pochoir prêt », cliquez dessus puis sur le cadre cible pour superposer les deux calques !",
+      es: "Manipula los 4 paneles de la cuadrícula 2x2: 1) Pulsa [🔍+ / 🔍-] para acercar o alejar la vista de cada marco. 2) Haz clic en dos paneles seguidos para intercambiar su posición. 3) Cuando un panel muestre «✨ Plantilla lista», selecciónalo y haz clic en el panel de fondo objetivo para fusionar ambas capas.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "창틀(스텐실) 레이어 겹치기는 언제 발동되나요?",
+          en: "When does Stencil Layer Stacking trigger instead of a normal slot swap?",
+          ja: "通常の位置入替ではなく、枠（ステンシル）レイヤーの重ね合わせが発動する条件は？",
+          zh: "什么情况下会触发“镂空图层叠加”而不是普通的位置交换？",
+          fr: "Quand la superposition de pochoir se déclenche-t-elle au lieu d'un simple échange ?",
+          es: "¿Cuándo se activa la superposición de plantilla en lugar de un intercambio normal?",
+        },
+        a: {
+          ko: "제1장의 '석조 아치 창틀', 제2장의 '황동 망원경 창', 제3장의 '천문 해시계 고리'는 먼저 『🔍+ 확대』 버튼을 눌러 창틀을 클로즈업해야 합니다. 확대하면 하단에 『✨ 창틀 분리 가능』 안내가 나타나며, 이때 짝이 되는 배경 액자(정원 분수대, 북극성 밤하늘, 성소의 황금 종)를 클릭하면 위치 교환 대신 두 액자가 하나로 합쳐집니다.",
+          en: "First, zoom in (🔍+) on the stencil panel—the Stone Arch in Ch.1, the Brass Telescope in Ch.2, or the Sundial Ring in Ch.3. Once zoomed in, a '✨ Stencil Ready' banner appears. Clicking that panel and then clicking its matching background panel (Fountain, Starfield, or Golden Bell) composites the cutout frame directly over the scene!",
+          ja: "第1章の「石造りのアーチ枠」、第2章の「真鍮の望遠鏡枠」、第3章の「天文日時計の輪」は、まず『🔍+ 拡大』ボタンを押して枠をクローズアップする必要があります。拡大すると『✨ 枠レイヤー重ね可能』と表示され、その状態で対応する背景パネル（噴水、夜空、黄金の鐘）をクリックするとレイヤー合成が発動します。",
+          zh: "第一章的“石拱窗框”、第二章的“黄铜望远镜框”与第三章的“天文日晷圆环”，都需要先点击“🔍+ 放大”按钮将窗框拉近特写。放大后会亮起“✨ 镂空框可叠加”提示，此时点击该画框再点击对应的目标背景画框（喷泉、星空或黄金钟），两幅画面就会合二为一。",
+          fr: "Zoomez d'abord (🔍+) sur le panneau pochoir (Arche de pierre, Lunette en laiton ou Anneau solaire). Le bandeau « ✨ Pochoir prêt » apparaît alors : cliquez dessus puis sur le décor correspondant (Fontaine, Ciel étoilé ou Cloche d'or) pour fusionner les calques.",
+          es: "Primero haz zoom (🔍+) en el panel de plantilla (Arco de piedra, Lente de telescopio o Anillo solar). Aparecerá el aviso «✨ Plantilla lista»; selecciónalo y haz clic en el paisaje correspondiente (Fuente, Cielo estrellado o Campana dorada) para superponerlos.",
+        },
+      },
+      {
+        q: {
+          ko: "퍼즐이 막혔을 때 힌트를 볼 수 있나요?",
+          en: "What does the '💡 Hint Step' button do if I get stuck?",
+          ja: "パズルで行き詰まったとき、『💡 ヒント1手』ボタンを押すとどうなりますか？",
+          zh: "解谜卡关时点击“💡 灵感提示”按钮有什么效果？",
+          fr: "Que fait le bouton « 💡 Indice » si je suis bloqué ?",
+          es: "¿Qué hace el botón «💡 Pista» si me quedo atascado?",
+        },
+        a: {
+          ko: "상단의 『💡 영감 한 수』 버튼을 누르면 현재 장의 해법 텍스트 안내가 표시될 뿐만 아니라, 아직 수행하지 않은 다음 핵심 단계(확대, 창틀 결합, 또는 좌우/상하 액자 정렬)를 자동으로 한 수 진행해 줍니다.",
+          en: "Clicking '💡 Hint Step' reveals the chapter's solution guide AND automatically executes the next uncompleted logical step for you—whether that's zooming the right panel, stacking the stencil, or aligning the frames!",
+          ja: "上部の『💡 ヒント1手』ボタンを押すと、その章の攻略ヒントが表示されるだけでなく、まだ完了していない次のステップ（拡大、レイヤー重ね、またはパネルの整列）を自動的に1手進めてくれます。",
+          zh: "点击顶部的“💡 灵感提示”按钮不仅会展示当前章节的图文思路指引，还会自动为您执行下一步尚未完成的关键操作（自动放大目标画框、自动叠合镂空层或自动对齐相邻画框）。",
+          fr: "Le bouton « 💡 Indice » affiche le guide de résolution du chapitre et exécute automatiquement la prochaine étape logique (zoom, superposition de pochoir ou alignement).",
+          es: "El botón «💡 Pista» muestra la guía de solución del capítulo y ejecuta automáticamente el siguiente paso lógico (zoom, superposición de plantilla o alineación).",
+        },
+      },
+    ],
+  },
 };

@@ -1,0 +1,55 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import GorogoaFrame from "../../components/games/GorogoaFrame";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "고르고아 프레임 — 2×2 멀티 액자 확대·교환·레이어 직조 퍼즐",
+    description:
+      "4개의 그림 액자를 확대·축소하고 위치를 바꾸거나 창틀 레이어를 겹쳐 끊어진 길을 하나로 연결하세요! 설치 없이 즐기는 감성 아트워크 퍼즐.",
+  },
+  en: {
+    title: "Gorogoa Frame Weaver — 2x2 Illustrated Frame Zoom & Layer Puzzle",
+    description:
+      "Zoom inside illustrated comic panels, rearrange the 2x2 grid, and stack stencil cutouts to weave impossible pathways together in your browser!",
+  },
+  ja: {
+    title: "ゴロゴア フレーム — 2×2絵画パネル拡大・入替・レイヤーパズル",
+    description:
+      "4つのイラストパネルを拡大・縮小し、配置を入れ替えたり窓枠レイヤーを重ねたりして、分断された風景をひとつに繋ぐ芸術的な視覚パズル。",
+  },
+  zh: {
+    title: "画中世界 帧界编织 (Gorogoa Frame Weaver) — 2×2 四格画框缩放与图层解谜",
+    description:
+      "在四格插画画框中自由缩放视角、交换空间位置、叠加镂空窗框图层，让错位的时空无缝交织！免安装浏览器端艺术解谜游戏。",
+  },
+  fr: {
+    title: "Gorogoa Frame Weaver — Puzzle artistique de cadres 2x2 et calques",
+    description:
+      "Zoomez dans les panneaux illustrés, réorganisez la grille 2x2 et superposez les pochoirs pour tisser des chemins continus !",
+  },
+  es: {
+    title: "Gorogoa Frame Weaver — Puzle artístico de marcos 2x2 y capas",
+    description:
+      "¡Haz zoom dentro de paneles ilustrados, reorganiza la cuadrícula 2x2 y superpón plantillas para conectar caminos imposibles!",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-4xl px-4 py-8">
+    <GorogoaFrame client:load locale={locale} />
+    <GameGuide slug="gorogoa-frame" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>

@@ -818,6 +818,20 @@ export const MISSION_CATALOG: Array<{
     goal: 150,
     xpReward: 50,
   },
+  {
+    id: "gorogoa-frame-chapter-2",
+    gameSlug: "gorogoa-frame",
+    title: {
+      ko: "고르고아 프레임에서 2개 이상의 장(Chapter) 액자 직조 클리어",
+      en: "Complete 2 or more chapters in Gorogoa Frame Weaver",
+      ja: "ゴロゴア フレームで2章以上の絵画パズルをクリア",
+      zh: "在画中世界：帧界编织中通关 2 个及以上章节",
+      fr: "Terminez au moins 2 chapitres dans Gorogoa Frame Weaver",
+      es: "Completa 2 o más capítulos en Gorogoa Frame Weaver",
+    },
+    goal: 2,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {
