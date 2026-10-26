@@ -5132,4 +5132,60 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "merge-mansion": {
+    origin: {
+      ko: "머지 맨션 웹(Merge Mansion Web)은 글로벌 수억 다운로드를 기록한 머지 퍼즐의 대명사 'Merge Mansion'과 'Love & Pies'의 직관적인 합성 메커니즘을 웹에 구현한 힐링 퍼즐 게임입니다. 황폐해진 비밀의 대저택을 상속받아, 7×9 보드에서 원예 도구와 청소 용품, 희귀 꽃들을 융합해 나가며 저택 곳곳의 오래된 비밀과 화려한 구역들을 되살려냅니다.",
+      en: "Merge Mansion Web brings the globally acclaimed merge-2 puzzle formula to the browser. Inheriting a mysterious neglected estate, players merge gardening tools, cleaning supplies, and flowering seedlings on a 7x9 board to restore grand ballrooms, overgrown courtyards, and secret conservatories.",
+      ja: "マージマンション Web（Merge Mansion Web）は、世界的大ヒットを記録したマージパズルの名作『Merge Mansion』の快感をブラウザ上で手軽に楽しめる作品です。荒れ果てた古い大邸宅を受け継ぎ、7×9のボード上で道具を合成してツタやホコリを取り払い、美しい庭園や大広間を蘇らせていきます。",
+      zh: "庄园合合乐 Web（Merge Mansion Web）将全球广受喜爱的经典二合一合成玩法带入网页端。继承神秘荒废的老宅，玩家通过在7×9棋盘中不断合并升级各类园艺工具、洗涤器具与繁花绿植，一步步驱散杂草灰尘，修缮喷泉大堂与奢华温室。",
+      fr: "Merge Mansion Web adapte la formule populaire des jeux de fusion d'objets sur le web. Rénovez un magnifique domaine abandonné en combinant des outils et des plantes sur une grille 7x9.",
+      es: "Merge Mansion Web traslada al navegador la aclamada fórmula de puzles de fusión. Restaura una mansión abandonada combinando herramientas y flores en un tablero de 7x9 para desvelar sus secretos.",
+    },
+    how: {
+      ko: "상단의 생성기(공구함·청소함·화분)를 눌러 1레벨 아이템을 소환합니다(에너지 1 소모). 같은 레벨의 아이템을 드래그하거나 순서대로 클릭하여 다음 레벨로 합성하세요. 거미줄에 갇힌 타일은 동일한 자유 아이템을 위에 합치면 풀립니다. 의뢰에 필요한 아이템이 모두 모이면 '복원' 버튼을 눌러 저택을 수리하고 별을 획득하세요.",
+      en: "Tap spawners (Toolbox, Cleaning Cabinet, Flower Pot) at the top to generate level 1 items using 1 energy. Drag or tap identical items to merge them into higher tiers. Merge into cobwebbed items to unlock them. Once you assemble the items required by an active quest, hit 'Renovate' to restore that estate area and earn stars.",
+      ja: "上部の生成器（工具箱・掃除棚・植木鉢）をタップしてLv.1アイテムを生成します（エネルギー1消費）。同じLvのアイテムをドラッグまたはタップして次のレベルへ合成しましょう。クモの巣にかかったアイテムは同じ通常アイテムを重ねると解放されます。依頼の品が揃ったら『修復』を押して屋敷を直し、星を獲得しましょう。",
+      zh: "点击顶部的生成器（工具箱、清洁柜、花盆）消耗1点体力生成1级基础道具。将两个相同等级的道具拖拽合成更高阶道具。把相同道具拖到蛛网道具上即可解除锁定。凑齐任务所需道具后，点击‘修缮’按钮即可推进豪宅复原并收获星星。",
+      fr: "Touchez les générateurs pour créer des objets niveau 1 (1 énergie). Fusionnez deux objets identiques pour monter de niveau. Fusionnez avec un objet sous toile d'araignée pour le libérer. Remplissez les commandes pour restaurer le manoir.",
+      es: "Toca los generadores para crear objetos de nivel 1 (1 energía). Fusiona dos objetos iguales para subir de nivel. Fusiona con objetos atrapados en telarañas para liberarlos. Completa las misiones para renovar la mansión.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "거미줄(🕸️)에 갇힌 아이템은 어떻게 꺼내나요?",
+          en: "How do I clear items trapped in cobwebs?",
+          ja: "クモの巣（🕸️）にかかったアイテムはどうやって解放しますか？",
+          zh: "如何解救被蛛网（🕸️）封锁锁定的道具？",
+          fr: "Comment libérer les objets pris dans des toiles d'araignée ?",
+          es: "¿Cómo libero los objetos atrapados en telarañas?",
+        },
+        a: {
+          ko: "거미줄 아이템은 직접 드래그할 수 없습니다. 대신 일반 바닥에서 동일한 종류, 동일한 레벨의 아이템을 합성해 만든 뒤, 거미줄 칸 위로 끌어다 놓으면 거미줄이 찢어지며 즉시 한 단계 더 높은 자유 아이템으로 잠금 해제됩니다.",
+          en: "Cobwebbed items cannot be dragged directly. Instead, create an unlocked item of the exact same chain and tier on the board, and drag it onto the cobwebbed cell. This breaks the web and produces an unlocked item of the next tier!",
+          ja: "クモの巣にかかったアイテムは直接動かせません。同じ種類・同じレベルの自由なアイテムをボード上で作り、クモの巣のマスへ重ねて合成することで、巣が破れて1ランク上の解放アイテムに変化します。",
+          zh: "蛛网道具处于受阻状态无法直接抓取移动。你需要在棋盘空白处合成一个同种类、同等级的常规活动道具，将其直接拖放到蛛网格子上，即可破除蛛网并直接进阶为高一阶的解锁道具。",
+          fr: "Les objets sous toile ne peuvent pas bouger. Créez un objet débloqué identique sur le plateau et glissez-le dessus pour déchirer la toile et obtenir le niveau supérieur.",
+          es: "No puedes mover los objetos con telarañas. Crea un objeto idéntico libre en el tablero y arrástralo sobre la casilla con telaraña para romperla y obtener el nivel siguiente.",
+        },
+      },
+      {
+        q: {
+          ko: "보드에 빈 공간이 없어서 생성이 안 될 때는 어떻게 하나요?",
+          en: "What should I do when the board is full and spawners cannot produce items?",
+          ja: "盤面がいっぱいでアイテムが生成できない時はどうすればいいですか？",
+          zh: "当棋盘63格全满无法继续从生成器产出道具时该怎么办？",
+          fr: "Que faire lorsque la grille est pleine et bloque les générateurs ?",
+          es: "¿Qué hago cuando el tablero está lleno y no puedo generar más?",
+        },
+        a: {
+          ko: "보드 내에 같은 레벨의 아이템이 있는지 꼼꼼히 살펴 합성을 진행해 칸을 확보하세요. 특정 아이템을 누르면 합칠 수 있는 대상 칸이 노란색 테두리로 깜빡여 쉽게 찾을 수 있습니다. 또한 퀘스트를 완료하면 해당 도구들이 소모되어 넓은 공간이 열립니다.",
+          en: "Scan the board for matching items to merge and free up cells. Tapping any item highlights all compatible merge targets in pulsing yellow. Additionally, completing quests consumes the required items, opening up multiple vacant slots.",
+          ja: "ボード内にある同レベルのアイテムを見つけて合成し、空きマスを作りましょう。アイテムをタップすると合成可能な相方が黄色く点滅して教えてくれます。また依頼クエストを達成すると素材が消費され、スペースが大きく空きます。",
+          zh: "仔细观察盘面上是否存在相同等级的道具进行合成以腾挪空间。轻点任意道具，所有可与之合成的目标方格都会亮起黄色呼吸光环。此外，完成庄园修缮委托会一次性消耗对应道具，大幅释放空余网格。",
+          fr: "Fusionnez les objets identiques pour libérer des cases. Toucher un objet met en surbrillance jaune ses cibles compatibles. Remplir une mission libère également de l'espace.",
+          es: "Fusiona objetos del mismo nivel para liberar casillas. Al pulsar un objeto se resaltan en amarillo los destinos compatibles. Completar misiones también consume objetos y libera espacio.",
+        },
+      },
+    ],
+  },
 };

@@ -636,6 +636,20 @@ export const MISSION_CATALOG: Array<{
     goal: 300,
     xpReward: 50,
   },
+  {
+    id: "merge-mansion-quest-1",
+    gameSlug: "merge-mansion",
+    title: {
+      ko: "머지 맨션에서 대저택 복원 의뢰 1건 이상 완료하기",
+      en: "Complete 1 or more estate renovation quests in Merge Mansion",
+      ja: "マージマンションで屋敷修復の依頼を1件以上達成する",
+      zh: "在庄园合合乐中完成 1 项以上豪宅修缮委托",
+      fr: "Terminez 1 mission de rénovation dans Merge Mansion",
+      es: "Completa 1 misión de renovación en Merge Mansion",
+    },
+    goal: 1,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {

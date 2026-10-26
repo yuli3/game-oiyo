@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import MergeMansion from "../../components/games/MergeMansion";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "머지 맨션 웹 — 7×9 도구 합성 & 대저택 복원 퍼즐",
+    description: "원예 도구·청소 용품·희귀 화초를 7×9 보드에서 합성하여 대저택의 넝쿨을 걷어내고 분수대와 정원을 복원하는 힐링 머지 퍼즐 게임.",
+  },
+  en: {
+    title: "Merge Mansion Web — 7x9 Item Merging & Estate Renovation",
+    description: "Merge gardening tools, cleaning supplies, and exotic flora on a 7x9 grid to clear overgrowth and restore a magnificent historic estate.",
+  },
+  ja: {
+    title: "マージマンション Web — 7×9 道具合成＆屋敷修復パズル",
+    description: "園芸用具・掃除用品・花植物を7×9グリッドで合成し、荒れ果てた大屋敷のツタを払い噴水や温室を復元していく癒しのマージパズルゲーム。",
+  },
+  zh: {
+    title: "庄园合合乐 Web — 7×9 道具合成与豪宅修缮解谜",
+    description: "在7×9棋盘上网格合成园艺工具、清洁用品与奇珍花卉，扫清荒芜杂草，逐步修葺喷泉、大堂与温室花园的治愈系合成益智游戏。",
+  },
+  fr: {
+    title: "Merge Mansion Web — Fusion d'objets 7x9 et rénovation de manoir",
+    description: "Fusionnez outils de jardinage, matériel de nettoyage et plantes sur une grille 7x9 pour rénover un grand domaine historique.",
+  },
+  es: {
+    title: "Merge Mansion Web — Fusión 7x9 y restauración de mansión",
+    description: "Fusiona herramientas de jardinería, artículos de limpieza y plantas en una cuadrícula de 7x9 para restaurar una majestuosa mansión histórica.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-4xl px-4 py-8">
+    <MergeMansion client:load />
+    <GameGuide slug="merge-mansion" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>
