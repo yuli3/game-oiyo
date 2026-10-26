@@ -832,6 +832,20 @@ export const MISSION_CATALOG: Array<{
     goal: 2,
     xpReward: 50,
   },
+  {
+    id: "sticker-cozy-place-8",
+    gameSlug: "sticker-cozy",
+    title: {
+      ko: "스티커북 코지 룸에서 스티커 8개를 모두 붙여 방 1개 완성하기",
+      en: "Place all 8 stickers to complete a room in Sticker Book Cozy Room",
+      ja: "ステッカーブック コージールームで8枚すべてのシールを貼って部屋を完成させる",
+      zh: "在贴纸书：温馨小屋中贴齐全部 8 枚贴纸完成一间微缩屋装饰",
+      fr: "Placez les 8 autocollants pour terminer une pièce dans Sticker Book Cozy Room",
+      es: "Coloca las 8 pegatinas para completar una habitación en Sticker Book Cozy Room",
+    },
+    goal: 8,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {

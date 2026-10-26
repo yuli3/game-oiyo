@@ -6042,4 +6042,60 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "sticker-cozy": {
+    origin: {
+      ko: "『스티커북 코지 룸 (Sticker Book Cozy Room)』은 BAFTA 수상작 『Unpacking(2021)』의 아늑한 공간 정리 감성과 다이어리 꾸미기(다꾸)·스티커 컬러링 북 트렌드에서 영감을 받은 OIYO 오리지널 ASMR 아이소메트릭 방 꾸미기 퍼즐입니다. 햇살 가득한 다락방 서재, 파스텔 베이커리 카페, 달빛 온실 아틀리에의 3개 미니어처 공간에 다이컷(Die-cut) 테두리가 살아있는 가구·화분·소품·고양이 스티커를 핀셋으로 떼어내어 착 붙이는 촉각적 힐링을 선사합니다.",
+      en: "Sticker Book Cozy Room is an original OIYO ASMR isometric room-decorating puzzle inspired by Witch Beam's BAFTA-winning Unpacking (2021) and tactile sticker-by-number art books. Peel die-cut furniture, lush plants, espresso machines, and sleeping cats from your sticker binder and magnetically snap them into three charming miniature dioramas.",
+      ja: "『ステッカーブック コージールーム（Sticker Book Cozy Room）』は、BAFTA受賞作『Unpacking（2021）』の心地よい部屋づくりの感性とシールパズルブックのトレンドにインスパイアされたOIYOオリジナルASMR箱庭パズルです。陽だまりの屋根裏書斎、パステルベーカリーカフェ、月明かりの温室アトリエの3つの空間に、白フチ付きの可愛い家具や植物、居眠り猫のシールを貼り付ける癒やしの時間を届けます。",
+      zh: "《贴纸书：温馨小屋（Sticker Book Cozy Room）》灵感源自斩获 BAFTA 大奖的收纳神作《Unpacking（2021）》与风靡全球的手账贴纸涂色书。在阳光阁楼书房、马卡龙烘焙咖啡馆与月光温室画室三座等距微缩景观中，用镊子揭下带有精致白边的家具、盆栽与橘猫贴纸，享受磁吸贴合瞬间的清脆 ASMR 治愈反馈。",
+      fr: "Sticker Book Cozy Room est un puzzle de décoration isométrique ASMR inspiré d'Unpacking (2021) et des cahiers d'autocollants relaxants. Décollez des meubles, des plantes et des chats endormis de votre classeur et collez-les dans trois charmants dioramas miniatures.",
+      es: "Sticker Book Cozy Room es un puzle isométrico ASMR de decoración inspirado en Unpacking (2021) y los álbumes de pegatinas relajantes. Despega muebles, plantas y gatos dormidos de tu álbum y colócalos con precisión magnética en tres encantadores dioramas.",
+    },
+    how: {
+      ko: "1) 하단 『📒 스티커 바인더』에서 붙이고 싶은 번호의 스티커를 클릭해 선택하세요(기본으로 다음 번호 스티커가 자동 선택됩니다). 2) 아이소메트릭 방 안의 동일한 번호(`#1`~`#8`)가 적힌 점선 실루엣 위에 마우스를 가져가 클릭하면, 자석처럼 착 달라붙으며 통통 튀는 탄성 애니메이션과 별빛 파티클이 피어오릅니다! 3) 스티커를 붙일 위치를 찾기 어려울 때는 상단의 『🥢 핀셋 위치 찾기』 버튼을 눌러 목표 실루엣을 황금빛으로 깜빡이게 할 수 있습니다.",
+      en: "1) Select a numbered sticker from the '📒 Sticker Binder' below (the next unplaced sticker is automatically selected for you). 2) Hover over the isometric room and click near the matching numbered dashed silhouette (#1–#8) to magnetically snap the die-cut sticker into place with a bouncy pop and golden sparkles! 3) Click '🥢 Tweezers Hint' anytime to highlight the target silhouette in pulsing gold.",
+      ja: "1) 下部の『📒 ステッカーバインダー』から貼りたい番号のシールを選択します（自動的に次の未配置シールが選ばれます）。2) 部屋の中の同じ番号（#1〜#8）が描かれた点線シルエットの近くをクリックすると、磁石のようにピタッと吸着してキラキラのエフェクトが弾けます！3) 場所がわからない時は『🥢 ピンセットヒント』を押すと対象のシルエットが黄金色に点滅します。",
+      zh: "1) 在下方“📒 贴纸收集册”中选择想要粘贴的编号贴纸（系统默认会自动为您选中下一枚待贴贴纸）。2) 将光标移入等距房间内，点击对应编号（#1–#8）的虚线轮廓区域，贴纸即会磁吸贴合并绽放Q弹动画与金色星芒！3) 找不到对应轮廓时，点击顶部的“🥢 镊子定位提示”即可令目标区域闪烁金光。",
+      fr: "1) Sélectionnez un autocollant numéroté dans le « 📒 Cahier d'autocollants » ci-dessous. 2) Survolez la pièce isométrique et cliquez sur la silhouette en pointillés portant le même numéro (#1–#8) pour y coller le sticker avec un rebond joyeux ! 3) Utilisez « 🥢 Indice Pince » pour faire briller la silhouette recherchée.",
+      es: "1) Selecciona una pegatina numerada del «📒 Álbum de pegatinas» inferior. 2) Pasa el cursor por la sala isométrica y haz clic sobre la silueta punteada con el mismo número (#1–#8) para fijarla magnéticamente. 3) Usa «🥢 Pista Pinzas» para resaltar la silueta objetivo en dorado.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "책상 위에 올라가는 소품(스탠드 조명, 책 더미)을 먼저 붙여도 가려지지 않나요?",
+          en: "If I place tabletop items (like the lamp or books) before the desk, will the desk cover them up?",
+          ja: "机の上に乗る小物（ランプや本）を机より先に貼っても隠れてしまいませんか？",
+          zh: "如果先贴桌上的台灯或书堆、后贴书桌，小物件会被书桌遮挡吗？",
+          fr: "Si je colle les objets de table (lampe, livres) avant le bureau, seront-ils masqués ?",
+          es: "¿Si coloco los objetos de mesa (lámpara, libros) antes que el escritorio, quedarán tapados?",
+        },
+        a: {
+          ko: "전혀 가려지지 않습니다! 모든 스티커에는 공간 깊이(Z-Layer: 바닥 러그 0층 → 대형 가구 1층 → 테이블 소품 및 반려동물 2층)가 설계되어 있어, 어떤 순서로 스티커를 붙이더라도 항상 책상과 테이블 위에 소품과 고양이가 자연스럽게 놓이도록 자동 정렬됩니다.",
+          en: "Never! Every sticker has a built-in spatial depth layer (Z-Layer 0 for rugs/windows, Layer 1 for desks/tables, Layer 2 for tabletop props and pets). Regardless of the order you peel and stick them, tabletop items always render cleanly on top of the furniture!",
+          ja: "ご安心ください！すべてのシールには空間の奥行きレイヤー（Zレイヤー：床ラグ0 → 家具1 → 卓上小物・ペット2）が設定されているため、どの順番で貼っても常に机やテーブルの上に小物が自然に乗るよう自動整列されます。",
+          zh: "完全不会遮挡！每枚贴纸均内置了空间景深层级（Z-Layer：地毯/窗户为 0 层 → 书桌/柜台为 1 层 → 桌面摆件与宠物为 2 层）。无论您按什么顺序揭下粘贴，桌面小物与猫咪都会自动渲染在家具上方。",
+          fr: "Pas du tout ! Chaque autocollant possède un calque de profondeur (Z-Layer 0 pour les tapis, 1 pour les meubles, 2 pour les accessoires et animaux). Peu importe l'ordre de collage, les petits objets restent toujours visibles sur les meubles.",
+          es: "¡En absoluto! Cada pegatina tiene una capa de profundidad espacial (Z-Layer 0 para alfombras, 1 para muebles, 2 para accesorios y mascotas). Sin importar el orden en que las pegues, los objetos pequeños siempre se mostrarán sobre los muebles.",
+        },
+      },
+      {
+        q: {
+          ko: "연속으로 정확하게 붙이면 보너스 점수가 있나요?",
+          en: "Is there a combo bonus for snapping stickers accurately without missing?",
+          ja: "ミスせずに連続でシールを貼るとコンボボーナスはありますか？",
+          zh: "连续精准贴合贴纸会有连击加分吗？",
+          fr: "Y a-t-il un bonus de série si l'on colle les stickers sans se tromper ?",
+          es: "¿Hay bonificación de combo por colocar pegatinas seguidas sin fallar?",
+        },
+        a: {
+          ko: "네! 엉뚱한 허공을 클릭하지 않고 목표 실루엣 반경 안에 연속으로 스티커를 착 붙일 때마다 스트리크(Streak)가 누적되어 스티커당 기본 100점에 추가 코지 보너스 점수(+20, +40, +60...)가 가산됩니다.",
+          en: "Yes! Every consecutive accurate snap builds your Cozy Streak, awarding +20 extra bonus points per streak level on top of the 100 base points for each sticker.",
+          ja: "はい！空振りをせずに目標シルエットへ連続でピタッと貼り付けるたびにストリーク（連続記録）が加算され、基本100点に加えて+20、+40、+60…とコージーボーナススコアが増えていきます。",
+          zh: "有的！只要不点空，每次连续精准贴合都会累加治愈连击（Streak），在每枚贴纸 100 基础分之上额外奖励 +20、+40、+60 等递进连击加分。",
+          fr: "Oui ! Chaque collage précis consécutif augmente votre série Cosy, ajoutant +20 points bonus par niveau de série en plus des 100 points de base.",
+          es: "¡Sí! Cada acierto consecutivo aumenta tu racha acogedora, otorgando +20 puntos extra por nivel de racha además de los 100 puntos base.",
+        },
+      },
+    ],
+  },
 };

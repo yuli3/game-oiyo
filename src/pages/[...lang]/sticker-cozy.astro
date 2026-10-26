@@ -1,0 +1,55 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import StickerCozy from "../../components/games/StickerCozy";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "스티커북 코지 룸 — 아이소메트릭 방 꾸미기 & ASMR 스티커 퍼즐",
+    description:
+      "바인더에서 귀여운 가구와 소품, 치즈 고양이 스티커를 떼어내 아늑한 다락방·베이커리 카페·달빛 온실에 착 붙이세요! 설치 없이 즐기는 힐링 방 꾸미기 게임.",
+  },
+  en: {
+    title: "Sticker Book Cozy Room — Isometric Room Decorator & ASMR Sticker Puzzle",
+    description:
+      "Peel adorable die-cut furniture, plants, and sleeping cat stickers from your binder and snap them into cozy isometric rooms in your browser!",
+  },
+  ja: {
+    title: "ステッカーブック コージールーム — 癒やしの箱庭部屋づくり＆ASMRシールパズル",
+    description:
+      "バインダーから可愛い家具や植物、居眠り猫のシールを剥がして、陽だまりの屋根裏部屋やパステルカフェに貼り付ける癒やし系パズルゲーム。",
+  },
+  zh: {
+    title: "贴纸书：温馨小屋 (Sticker Book Cozy) — 治愈系等距房间装饰与 ASMR 贴纸解谜",
+    description:
+      "用镊子从收集册中揭下可爱的家具、绿植与橘猫模切贴纸，严丝合缝地贴入阳光阁楼、烘焙咖啡馆与月光温室中！免安装浏览器端治愈小游戏。",
+  },
+  fr: {
+    title: "Sticker Book Cozy Room — Décoration de chambre isométrique et stickers ASMR",
+    description:
+      "Décollez d'adorables autocollants de meubles, de plantes et de chats pour décorer de chaleureuses pièces en diorama isométrique !",
+  },
+  es: {
+    title: "Sticker Book Cozy Room — Puzle de pegatinas ASMR y decoración isométrica",
+    description:
+      "¡Despega adorables pegatinas de muebles, plantas y gatitos de tu álbum y colócalas en acogedoras habitaciones isométricas!",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-4xl px-4 py-8">
+    <StickerCozy client:load locale={locale} />
+    <GameGuide slug="sticker-cozy" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>
