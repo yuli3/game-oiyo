@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import BabaRuleShifter from "../../components/games/BabaRuleShifter";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "바바 이즈 유 미니 — 단어 블록으로 법칙을 바꾸는 룰 시프터 퍼즐",
+    description: "단어 블록을 밀어 문장을 완성하면 물리 법칙이 실시간으로 치환되는 혁신적인 룰 그래프 퍼즐. 벽을 넘고 세상을 재구성하여 깃발에 도달하세요.",
+  },
+  en: {
+    title: "Baba Rule Shifter — Alter Rules with Words Puzzle",
+    description: "Push word blocks to dynamically alter the fundamental laws of physics. Break the rules, manipulate boundaries, and redefine reality to win.",
+  },
+  ja: {
+    title: "ババ・ルールシフター — 言葉でルールを変えるパズル",
+    description: "単語ブロックを押して文章を完成させると、世界の物理法則がリアルタイムに変化する知的パズル。ルールを書き換えて勝利を掴もう。",
+  },
+  zh: {
+    title: "芭芭变形记 — 用单词重塑物理法则的解谜游戏",
+    description: "推动单词方块组成全新句式，实时改写整个关卡的物理规则与通关条件。打破常规束缚，重新定义世界秩序。",
+  },
+  fr: {
+    title: "Baba Rule Shifter — Modifiez les règles avec des mots",
+    description: "Poussez des blocs de texte pour modifier en temps réel les lois physiques du jeu. Réécrivez la réalité pour atteindre le drapeau.",
+  },
+  es: {
+    title: "Baba Rule Shifter — Puzle de alteración de reglas con palabras",
+    description: "Empuja bloques de palabras para alterar en tiempo real las leyes de la física. Reescribe la realidad y redefine las reglas para ganar.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-4xl px-4 py-8">
+    <BabaRuleShifter client:load locale={locale} />
+    <GameGuide slug="baba-rule-shifter" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>

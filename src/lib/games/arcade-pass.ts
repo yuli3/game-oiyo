@@ -608,6 +608,20 @@ export const MISSION_CATALOG: Array<{
     goal: 2,
     xpReward: 50,
   },
+  {
+    id: "baba-level-2",
+    gameSlug: "baba-rule-shifter",
+    title: {
+      ko: "바바 룰 시프터에서 2개 레벨 이상 클리어하기",
+      en: "Solve 2 or more levels in Baba Rule Shifter",
+      ja: "ババ・ルールシフターで2レベル以上をクリアする",
+      zh: "在芭芭变形记中通关2关以上谜题",
+      fr: "Résoudre 2 niveaux ou plus dans Baba Rule Shifter",
+      es: "Supera 2 o más niveles en Baba Rule Shifter",
+    },
+    goal: 2,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {

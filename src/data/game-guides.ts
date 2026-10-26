@@ -5020,4 +5020,60 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "baba-rule-shifter": {
+    origin: {
+      ko: "바바 이즈 유 미니(Baba Rule Shifter)는 전 세계 인디 게임 어워드와 평단을 휩쓴 Arvi Teikari(Hempuli)의 전설적인 퍼즐 명작 'Baba Is You'를 웹 브라우저 환경에 최적화하여 재해석한 작품입니다. 단어가 적힌 블록 자체가 밀어 움직일 수 있는 물리적 개체이며, 이 단어들이 연결되어 문장을 이루는 순간 게임의 규칙이 실시간으로 컴파일되어 변환되는 메타 퍼즐의 정점입니다.",
+      en: "Baba Rule Shifter brings the mind-bending brilliance of Hempuli's celebrated masterpiece 'Baba Is You' to the web. Words are physical objects you can push and rearrange. Aligning word triplets instantly re-compiles the universe's governing laws in real-time.",
+      ja: "ババ・ルールシフター（Baba Rule Shifter）は、世界的なインディーゲーム賞を総なめにした名作『Baba Is You』をWeb向けに再構築した知的パズルです。言葉そのものが押せるブロックであり、文章が繋がった瞬間に物理法則がリアルタイムに書き換わるメタパズルの金字塔です。",
+      zh: "芭芭变形记（Baba Rule Shifter）致敬了斩获多项国际大奖的独立解谜神作《Baba Is You》。游戏中的规则单词是具有物理实体的可推动方块，当三个单词拼合成特定句式时，整个世界的运转逻辑将瞬间重构。",
+      fr: "Baba Rule Shifter adapte le chef-d'œuvre acclamé 'Baba Is You' où les règles du jeu sont des blocs physiques que vous manipulez pour réécrire les lois de l'univers.",
+      es: "Baba Rule Shifter adapta la aclamada obra maestra 'Baba Is You', donde las reglas del juego son bloques físicos que empujas para transformar la realidad en tiempo real.",
+    },
+    how: {
+      ko: "방향키, WASD, 또는 화면 스와이프를 사용하여 조작 대상('YOU' 속성을 가진 캐릭터)을 움직입니다. 단어 블록을 밀어 가로 또는 세로로 [주어] [IS] [속성] 형태(예: BABA IS YOU, FLAG IS WIN, WALL IS STOP, ROCK IS PUSH)를 완성하면 그 즉시 해당 법칙이 적용됩니다. 반대로 기존의 연결된 단어 블록을 밀어 끊어내면 해당 법칙이 무효화되어 벽을 통과하거나 룰을 비틀 수 있습니다. 실수했을 때는 'Z' 키나 되돌리기 버튼으로 언제든 이전 상태로 되돌릴 수 있습니다.",
+      en: "Move your character using Arrow keys, WASD, or swipe gestures. Push word blocks to form valid horizontal or vertical triplets like [Subject] [IS] [Property] (e.g., BABA IS YOU, FLAG IS WIN, WALL IS STOP, ROCK IS PUSH) to apply rules in real-time. Pushing words apart breaks and revokes existing rules. Use 'Z' or the Undo button to freely rewind moves.",
+      ja: "矢印キー、WASD、またはスワイプで『YOU』の特性を持つキャラクターを操作します。単語ブロックを押して縦横に『主語 IS 属性』（例：BABA IS YOU、FLAG IS WIN、WALL IS STOPなど）を揃えると、その瞬間にルールが発動。単語を崩せばルールが無効化されます。いつでもZキーで手を巻き戻せます。",
+      zh: "通过方向键、WASD或手势滑动操纵具有‘YOU’属性的主角。推动单词方块横向或纵向拼出形如【主语】+【IS】+【属性】的句式（如 BABA IS YOU、FLAG IS WIN、WALL IS STOP 等）即可即时生效该规则。推开断开既有句式则能破坏规则（例如使墙壁失去阻挡能力）。随时可按‘Z’键无限次撤销回退。",
+      fr: "Déplacez le personnage 'YOU' avec les touches ou le tactile. Poussez les blocs de texte pour former des règles valides. Séparez les mots pour annuler une règle existante. Utilisez 'Z' pour annuler un coup.",
+      es: "Mueve tu personaje 'YOU' con las flechas o el táctil. Empuja palabras para formar reglas activas. Separa palabras para romper restricciones. Usa 'Z' para deshacer cualquier movimiento.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "벽(WALL)이 앞을 가로막고 있어 깃발에 갈 수 없을 때는 어떻게 하나요?",
+          en: "What should I do when a wall blocks my path to the flag?",
+          ja: "壁（WALL）が塞がっていて旗にたどり着けない時はどうすればいいですか？",
+          zh: "当实心墙壁（WALL）完全封堵了通往旗帜的道路时该如何破局？",
+          fr: "Que faire lorsqu'un mur infranchissable bloque l'accès au drapeau ?",
+          es: "¿Qué debo hacer cuando un muro me bloquea el paso hacia la bandera?",
+        },
+        a: {
+          ko: "'WALL IS STOP' 문장을 찾아 가운데의 'IS'나 'STOP' 단어를 밀어서 단어의 연결을 끊어버리면, 벽의 정지 속성이 즉시 사라져 유령처럼 벽을 그대로 뚫고 지나갈 수 있게 됩니다.",
+          en: "Locate the 'WALL IS STOP' text triplet and push the middle 'IS' or 'STOP' block out of alignment. Breaking the sentence immediately strips walls of their collision property, letting you phase right through them.",
+          ja: "『WALL IS STOP』という文章を探し、真ん中の『IS』や『STOP』を押して単語の繋がりを断ち切ってみてください。壁の侵入不可ルールが消失し、壁をすり抜けられるようになります。",
+          zh: "寻找场上的‘WALL IS STOP’规则句，推开其中的‘IS’或‘STOP’破坏句型连接。一旦该规则失效，墙壁便会失去物理阻挡碰撞，允许你直接穿墙而过畅行无阻。",
+          fr: "Poussez le mot 'IS' ou 'STOP' de la phrase 'WALL IS STOP' pour la briser. Les murs perdront immédiatement leur collision physique.",
+          es: "Empuja la palabra 'IS' o 'STOP' para romper la frase 'WALL IS STOP'. Los muros perderán su solidez y podrás atravesarlos al instante.",
+        },
+      },
+      {
+        q: {
+          ko: "'YOU' 속성을 가진 단어가 모두 끊어지면 어떻게 되나요?",
+          en: "What happens if all 'YOU' rules are broken and nothing is you?",
+          ja: "『YOU』のルールが全て切れて操作できるものが無くなるとどうなりますか？",
+          zh: "若场上所有的‘YOU’规则均被推断，没有任何东西代表自己会怎样？",
+          fr: "Que se passe-t-il si aucune entité ne possède la propriété 'YOU' ?",
+          es: "¿Qué sucede si se rompe la regla 'YOU' y no controlas nada?",
+        },
+        a: {
+          ko: "조작할 대상이 사라져 이동 키를 눌러도 아무런 움직임이 일어나지 않습니다. 이럴 때는 당황하지 말고 '되돌리기(Z)' 키를 눌러 규칙이 끊어지기 전으로 돌아가면 안전합니다.",
+          en: "With nothing assigned to 'YOU', movement inputs produce no effect. Simply press the Undo key ('Z') to step back in time before the identity was severed.",
+          ja: "操作対象がいなくなるためキーを押しても動けなくなります。そんな時は落ち着いて『戻す（Z）』キーを押せば、ルールを切断する前の状態に戻せます。",
+          zh: "失去了承载‘YOU’属性的实体后，按任何移动指令均不会产生位移。无需惊慌，只需轻点‘撤销（Z）’键即可进行时光倒流，安全回退到规则断裂前的有效状态。",
+          fr: "Sans entité 'YOU', vous ne pouvez plus bouger. Appuyez simplement sur la touche Annuler ('Z') pour remonter le temps.",
+          es: "Al no controlar nada, no podrás moverte. Pulsa Deshacer ('Z') para retroceder en el tiempo y recuperar el control.",
+        },
+      },
+    ],
+  },
 };
