@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PowerWash3D from "../../components/games/PowerWash3D";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta = {
+  ko: {
+    title: "파워워시 클린 3D — 고압 세척기 노즐 & ASMR 클리닝 시뮬레이터",
+    description: "0° 초고압 노즐부터 40° 광역 노즐, 비누 거품 캐논까지! 클래식 캠핑 밴과 황금 분수대의 찌든 때를 씻어내고 파츠별 100% 완결 딩(Ding!) 쾌감을 즐기는 힐링 세척 게임."
+  },
+  en: {
+    title: "PowerWash Clean 3D — High-Pressure Nozzle & ASMR Cleaning Simulator",
+    description: "Blast away stubborn grime and mud with 0°, 15°, and 40° pressure nozzles plus a soap foam cannon. Enjoy the satisfying 'Ding!' as each sub-part hits 100% clean."
+  },
+  ja: {
+    title: "パワーウォッシュ・クリーン 3D — 高圧洗浄ノズル＆ASMRクリーニングシミュレーター",
+    description: "0°超高圧ノズルや40°広角ノズル、石鹸フォームキャノンを駆使して、クラシックバンや噴水の頑固な汚れを洗い流す癒やしの高圧洗浄ゲーム。"
+  },
+  zh: {
+    title: "冲就完事模拟器 PowerWash 3D — 高压水枪喷嘴与 ASMR 清洁解压游戏",
+    description: "切换 0° 超高压直射、40° 广角扇形喷嘴与泡沫发生器，将复古露营车与黄金喷泉上的陈年泥垢冲洗殆尽，享受部件 100% 洁净时的清脆叮咚反馈。"
+  },
+  fr: {
+    title: "PowerWash Clean 3D — Simulateur de nettoyage haute pression ASMR",
+    description: "Décaperez la boue et la rouille avec différentes buses haute pression et un canon à mousse jusqu'à obtenir 100 % de propreté."
+  },
+  es: {
+    title: "PowerWash Clean 3D — Simulador de limpieza a alta presión ASMR",
+    description: "Elimina el barro y el óxido con boquillas de alta presión y cañón de espuma hasta dejar cada pieza 100 % reluciente."
+  }
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-4xl px-4 py-8">
+    <PowerWash3D client:load />
+    <GameGuide slug="powerwash-3d" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>

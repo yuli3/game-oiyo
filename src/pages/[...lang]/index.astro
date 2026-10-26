@@ -16,22 +16,22 @@ const { locale } = Astro.props as { locale: Locale };
 const translations = await getTranslations(locale);
 
 const meta: Record<Locale, { title: string; description: string }> = {
-  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 130종", description: "체스·스도쿠·워들부터 OIYO 오리지널 게임까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 130종." },
-  en: { title: "OIYO Arcade — 130 free browser games, no install", description: "Chess, Sudoku, Wordle, and original OIYO games: 130 free games you can play instantly in your browser." },
-  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム130種", description: "チェス・数独・ワードルからOIYOオリジナル作品まで、ブラウザですぐ遊べる無料ゲーム130種。" },
-  zh: { title: "OIYO 街机 — 无需安装的130款免费游戏", description: "从国际象棋、数独、猜词到 OIYO 原创作品，130款游戏无需安装即可畅玩。" },
-  fr: { title: "OIYO Arcade — 130 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations originales OIYO : 130 jeux gratuits dans le navigateur." },
-  es: { title: "OIYO Arcade — 130 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y originales de OIYO: 130 juegos gratuitos en el navegador." },
+  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 131종", description: "체스·스도쿠·워들부터 OIYO 오리지널 게임까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 131종." },
+  en: { title: "OIYO Arcade — 131 free browser games, no install", description: "Chess, Sudoku, Wordle, and original OIYO games: 131 free games you can play instantly in your browser." },
+  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム131種", description: "チェス・数独・ワードルからOIYOオリジナル作品まで、ブラウザですぐ遊べる無料ゲーム131種。" },
+  zh: { title: "OIYO 街机 — 无需安装的131款免费游戏", description: "从国际象棋、数独、猜词到 OIYO 原创作品，131款游戏无需安装即可畅玩。" },
+  fr: { title: "OIYO Arcade — 131 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations originales OIYO : 131 jeux gratuits dans le navigateur." },
+  es: { title: "OIYO Arcade — 131 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y originales de OIYO: 131 juegos gratuitos en el navegador." },
 };
 const m = meta[locale] ?? meta.en;
 
 const hero: Record<Locale, { eyebrow: string; title: string; sub: string }> = {
-  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 130종", sub: "보드·카드·퍼즐·오리지널 아케이드 — 브라우저에서 바로 시작하세요." },
-  en: { eyebrow: "🎮 OIYO Arcade", title: "130 free games, right in your browser", sub: "Board, card, puzzle, and original arcade games — instant and free." },
-  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム130種", sub: "ボード・カード・パズル・オリジナル作品をブラウザですぐに。" },
-  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的130款免费游戏", sub: "棋类、纸牌、益智和原创街机游戏，浏览器直接开玩。" },
-  fr: { eyebrow: "🎮 OIYO Arcade", title: "130 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et créations originales, sans installation." },
-  es: { eyebrow: "🎮 OIYO Arcade", title: "130 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones originales, sin instalación." },
+  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 131종", sub: "보드·카드·퍼즐·오리지널 아케이드 — 브라우저에서 바로 시작하세요." },
+  en: { eyebrow: "🎮 OIYO Arcade", title: "131 free games, right in your browser", sub: "Board, card, puzzle, and original arcade games — instant and free." },
+  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム131種", sub: "ボード・カード・パズル・オリジナル作品をブラウザですぐに。" },
+  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的131款免费游戏", sub: "棋类、纸牌、益智和原创街机游戏，浏览器直接开玩。" },
+  fr: { eyebrow: "🎮 OIYO Arcade", title: "131 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et créations originales, sans installation." },
+  es: { eyebrow: "🎮 OIYO Arcade", title: "131 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones originales, sin instalación." },
 };
 const h = hero[locale] ?? hero.en;
 
@@ -139,6 +139,7 @@ const GAMES: Game[] = [
   { slug: "beat-slice-3d", emoji: "⚡", cat: "arcade", name: { ko: "비트 슬라이스 3D", en: "Beat Slice 3D", ja: "ビートスライス 3D", zh: "节奏光刃 3D", fr: "Beat Slice 3D", es: "Beat Slice 3D" } },
   { slug: "bad-north-tactics", emoji: "🛡️", cat: "arcade", name: { ko: "배드 노스 미니", en: "Bad North Tactics", ja: "バッドノース Mini", zh: "绝境北方 Mini", fr: "Bad North Tactics", es: "Bad North Tactics" } },
   { slug: "sand-balls", emoji: "🏖️", cat: "puzzle", name: { ko: "샌드 볼스 3D", en: "Sand Balls Mini", ja: "サンドボール 3D", zh: "沙球大冲关 3D", fr: "Sand Balls Mini", es: "Sand Balls Mini" } },
+  { slug: "powerwash-3d", emoji: "🚿", cat: "arcade", name: { ko: "파워워시 클린 3D", en: "PowerWash Clean 3D", ja: "パワーウォッシュ 3D", zh: "冲就完事模拟器 3D", fr: "PowerWash Clean 3D", es: "PowerWash Clean 3D" } },
 
   { slug: "failure-eater", emoji: "👾", cat: "arcade", name: { ko: "실패를 먹는 괴물", en: "Failure Eater", ja: "失敗を食べる怪物", zh: "吃掉失败的怪物", fr: "Monstre des ratés", es: "Monstruo de los fallos" } },
   { slug: "snake-game", emoji: "🐍", cat: "arcade", name: { ko: "스네이크", en: "Snake", ja: "スネーク", zh: "贪吃蛇", fr: "Snake", es: "Snake" } },
@@ -606,6 +607,18 @@ const NEW_RELEASES_CONFIG: Array<{ slug: string; tag: Record<Locale, string>; de
       zh: "在细腻的金黄沙地中滑动开辟通道，利用重力引领五彩弹珠穿过倍率门、避开阻挡障碍，满满装填货车车厢。",
       fr: "Creusez des chemins dans le sable doré, secourez les billes neutres et remplissez la benne du camion de livraison.",
       es: "Abre surcos en la arena con tu dedo, rescata canicas atrapadas, multiplícalas y llena la caja del camión de transporte.",
+    },
+  },
+  {
+    slug: "powerwash-3d",
+    tag: { ko: "ASMR 고압 세척 시뮬레이터", en: "ASMR Pressure Washer Simulator", ja: "ASMR高圧洗浄シミュレーター", zh: "ASMR 高压水枪清洁模拟", fr: "Simulateur de nettoyage ASMR", es: "Simulador de lavado a presión ASMR" },
+    desc: {
+      ko: "4종 고압 노즐과 비누 거품으로 진흙·녹·이끼를 말끔히 벗겨내고 95% 도달 시 울리는 청량한 '딩!' 완료음을 만끽하는 힐링 청소 게임.",
+      en: "Blast away baked mud, rust, and moss across multi-part dioramas with 4 adjustable nozzles and soap suds until every piece chimes with a spotless 'DING!'",
+      ja: "4種類の高圧ノズルと泡ソープで泥・サビ・苔を綺麗に洗い流し、95%到達時に鳴り響く爽快な「チーン！」という完了音を味わう癒やし系洗浄ゲーム。",
+      zh: "切换 4 款高压喷嘴与发泡清洁剂，将复古露营车、皇家喷泉与巨型机甲上的陈年泥垢铁锈彻底冲净，享受“叮！”声高光闪烁的极致解压。",
+      fr: "Décapez la boue, la rouille et la mousse avec 4 buses haute pression et un canon à mousse jusqu'au « DING ! » étincelant de propreté.",
+      es: "Elimina barro, óxido y musgo con 4 boquillas de alta presión y espuma limpiadora hasta escuchar el satisfactorio «¡DING!» de limpieza impecable.",
     },
   },
 ];

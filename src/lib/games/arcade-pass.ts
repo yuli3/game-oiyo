@@ -790,6 +790,20 @@ export const MISSION_CATALOG: Array<{
     goal: 1,
     xpReward: 50,
   },
+  {
+    id: "powerwash-3d-clean-100",
+    gameSlug: "powerwash-3d",
+    title: {
+      ko: "파워워시 클린 3D에서 스테이지 100% 완벽 세척 달성",
+      en: "Complete 100% spotless cleaning on any stage in PowerWash Clean 3D",
+      ja: "パワーウォッシュ 3Dでステージ100%完全洗浄を達成",
+      zh: "在冲就完事模拟器 3D 中达成任意关卡 100% 完美清洁",
+      fr: "Terminez un nettoyage à 100 % dans PowerWash Clean 3D",
+      es: "Completa una limpieza al 100 % en PowerWash Clean 3D",
+    },
+    goal: 100,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {

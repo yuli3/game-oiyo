@@ -5874,4 +5874,60 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "powerwash-3d": {
+    origin: {
+      ko: "『파워워시 클린 3D (PowerWash Clean 3D)』는 영국 인디 개발사 FuturLab이 2022년 선보여 전 세계 천만 플레이어에게 극강의 힐링 쾌감을 선사한 명작 청소 시뮬레이터 『PowerWash Simulator』에서 영감을 받은 OIYO 오리지널 ASMR 고압 세척 시뮬레이터입니다. 진흙, 녹, 이끼로 뒤덮인 빈티지 캠핑카, 왕실 정원 분수대, 거대 메카닉 수호자의 세부 파츠를 4종 고압 노즐과 비누 거품으로 말끔히 벗겨내며 95% 도달 시 울려 퍼지는 청량한 '딩(Ding)!' 완료음과 화이트 플래시의 카타르시스를 웹 브라우저에서 그대로 재현했습니다.",
+      en: "PowerWash Clean 3D is an original OIYO ASMR high-pressure washing simulator inspired by FuturLab's global relaxation phenomenon PowerWash Simulator (2022). Armed with a 4-nozzle pressure washer and foaming soap, you strip away layers of baked mud, rust, and moss across multi-part dioramas—from a Vintage Camper Van to a Royal Fountain and a Giant Mecha Guardian—savoring the iconic 'DING!' chime and white flash as each component snaps to 100% spotless shine.",
+      ja: "『パワーウォッシュ 3D（PowerWash Clean 3D）』は、FuturLabが2022年に発表し世界中で大ヒットした癒やし系高圧洗浄シミュレーター『PowerWash Simulator』にインスパイアされたOIYOオリジナルASMRゲームです。泥やサビ、苔で汚れたヴィンテージキャンピングカー、王宮の噴水、巨大メカガーディアンの各パーツを4種類のノズルと泡ソープで洗い流し、95%到達時に鳴り響く爽快な「チーン！」という完了音とフラッシュ演出の快感をブラウザで楽しめます。",
+      zh: "《冲就完事模拟器 3D（PowerWash Clean 3D）》灵感源自 FuturLab 于 2022 年推出的全球现象级解压清洁神作《PowerWash Simulator》。面对裹满泥垢、铁锈与青苔的复古露营车、皇家喷泉与巨型机甲守卫，你可以自由切换 4 款高压喷嘴与发泡清洁剂逐件冲刷，在部件洁净度达到 95% 时触发清脆的“叮！”声与高光闪烁，尽享强迫症一本满足的治愈快感。",
+      fr: "PowerWash Clean 3D est un simulateur de nettoyage haute pression ASMR inspiré du célèbre PowerWash Simulator (2022) de FuturLab. Équipé de 4 buses interchangeables et d'un canon à mousse, décapez la boue, la rouille et la mousse sur un camping-car vintage, une fontaine royale ou un mécha géant, jusqu'au fameux « DING ! » libérateur.",
+      es: "PowerWash Clean 3D es un simulador ASMR de lavado a alta presión inspirado en el fenómeno mundial PowerWash Simulator (2022) de FuturLab. Con 4 boquillas ajustables y espuma limpiadora, elimina el barro, el óxido y el musgo de una caravana retro, una fuente real y un mecha gigante hasta escuchar el satisfactorio «¡DING!» de limpieza total.",
+    },
+    how: {
+      ko: "캔버스 위에서 마우스를 클릭한 채 드래그하거나 화면을 터치해 고압 물줄기를 분사하세요. 하단 툴바나 숫자키 [1]~[4]로 노즐을 교체할 수 있습니다. [1] 0° 적색 직사 노즐은 좁지만 가장 강력한 수압으로 찌든 녹을 뚫어내고, [2] 15° 황색 노즐과 [3] 40° 녹색 광각 노즐은 넓은 면적의 진흙을 빠르게 씻어냅니다. [4] 비누 노즐로 거품을 먼저 도포하면 찌든 때가 부드럽게 불어나 두 배 빠르게 세척됩니다! [R] 키로 노즐 분사 각도를 가로/세로로 회전하고, [Tab] 키(오점 탐색기)를 눌러 남은 때의 위치를 황금빛으로 스캔하세요.",
+      en: "Click and drag (or touch and slide) across the canvas to spray your high-pressure water jet. Switch nozzles via the toolbar or keys [1]–[4]: [1] 0° Red Jet delivers pinpoint maximum pressure for stubborn rust; [2] 15° Yellow Fan and [3] 40° Green Wide Fan sweep broad surfaces; [4] Pink Soap Foamer coats grime in suds so water washes it away twice as fast! Press [R] to rotate the fan spray horizontally or vertically, and press [Tab] (Show Dirt) to highlight remaining grime in golden yellow.",
+      ja: "キャンバス上でドラッグ（またはタッチスライド）して高圧水流を噴射します。下部ツールバーまたは数字キー[1]〜[4]でノズルを切り替えられます。[1] 0°赤ノズルはピンポイントの超高圧で頑固なサビを落とし、[2] 15°黄ノズルと[3] 40°緑ワイドノズルは広い面を一気に洗浄します。[4] ソープノズルで泡を塗布すると汚れが浮き上がり、水での洗浄速度が2倍になります！[R]キーで噴射の向き（横/縦）を回転、[Tab]キーで残った汚れを黄色くハイライト表示できます。",
+      zh: "在画布上按住鼠标拖拽或触摸滑动即可喷射高压水柱。使用底部工具栏或数字键 [1]–[4] 切换喷嘴：[1] 0° 红色直射喷嘴水压极强，适合攻克顽固铁锈；[2] 15° 黄色扇形与 [3] 40° 绿色广角扇形适合大面积冲刷；[4] 粉色泡沫喷嘴可预先涂抹清洁皂液，使后续水流冲洗效率翻倍！按 [R] 键旋转扇形喷射方向（横/竖），按 [Tab] 键开启污渍高亮扫描。",
+      fr: "Cliquez et glissez sur la toile pour projeter le jet d'eau. Changez de buse avec [1]–[4] : [1] Buse 0° rouge ultra-puissante, [2] Buse 15° jaune, [3] Buse 40° verte large, et [4] Canon à mousse rose qui ramollit la saleté tenace. Appuyez sur [R] pour pivoter l'angle du jet et sur [Tab] pour révéler les taches restantes en jaune d'or.",
+      es: "Haz clic y arrastra por el lienzo para disparar el chorro de agua. Cambia de boquilla con [1]–[4]: [1] Boquilla roja 0° de máxima presión, [2] Boquilla amarilla 15°, [3] Boquilla verde 40° ancha y [4] Espuma rosa para ablandar la suciedad difícil. Pulsa [R] para rotar el abanico de agua y [Tab] para resaltar la suciedad restante.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "비누 거품 노즐(4번)은 어떻게 활용하면 가장 효과적인가요?",
+          en: "How does the Soap Foamer nozzle (#4) help clean tough grime?",
+          ja: "ソープノズル（4番）はどう使うのが一番効果的ですか？",
+          zh: "泡沫清洁剂喷嘴（4号）如何发挥最大去污效果？",
+          fr: "Comment fonctionne le canon à mousse (buse n° 4) sur la saleté tenace ?",
+          es: "¿Cómo ayuda la boquilla de espuma (#4) a limpiar la suciedad difícil?",
+        },
+        a: {
+          ko: "타이어 휠이나 금속 장갑판처럼 저항력(Toughness)이 높은 부품은 일반 광각 물줄기만으로 잘 지워지지 않습니다. 이때 4번 비누 노즐로 하얀 거품을 먼저 도포하면 오염 물질의 결합력이 약해져, 이후 15°나 40° 물 노즐로 훑기만 해도 두 배 이상의 속도로 순식간에 벗겨집니다.",
+          en: "High-toughness parts like tires, stone basins, or mecha armor resist wide-angle water jets. Coating them first with the #4 Soap Foamer softens the grime layer and strips away 40% of surface dirt immediately, allowing a quick pass with the 15° or 40° nozzle to blast the rest away at double speed.",
+          ja: "タイヤのホイールや石造りの土台、メカの装甲など頑固な汚れ（高耐久パーツ）は、ワイドノズルだけではなかなか落ちません。先に4番のソープノズルで白い泡を吹きかけておくと汚れが柔らかくなり、その後15°や40°の水ノズルでなぞるだけで2倍以上の速さで一気に綺麗になります。",
+          zh: "像轮胎轮毂、石雕底座或机甲胸甲等高顽固度部件，直接用广角水枪往往难以冲净。先用 4 号泡沫喷嘴覆上一层白色皂液，不仅能当场瓦解表层浮垢，还能使顽固污渍软化，随后换回 15° 或 40° 扇形水枪一扫即可双倍速彻底洗净。",
+          fr: "Les pièces très encrassées comme les roues ou le blindage résistent aux jets larges. Appliquez d'abord la mousse (buse 4) pour dissoudre la couche superficielle et ramollir la crasse : un simple passage avec la buse 15° ou 40° nettoiera ensuite deux fois plus vite.",
+          es: "Las piezas con suciedad incrustada, como ruedas o blindajes, resisten los chorros anchos. Cubrirlas primero con espuma (#4) ablanda la mugre al instante, permitiendo que una pasada rápida con la boquilla de 15° o 40° limpie el resto al doble de velocidad.",
+        },
+      },
+      {
+        q: {
+          ko: "99%에서 남은 1%의 작은 때를 못 찾겠어요! 어떻게 하나요?",
+          en: "I'm stuck at 98% and can't find the last tiny speck of dirt! What should I do?",
+          ja: "あと少しで100%なのに、残った小さな汚れが見つかりません！",
+          zh: "进度卡在 98% 找不到最后一点残余污渍怎么办？",
+          fr: "Je suis bloqué à 98 % et je ne trouve plus les dernières taches ! Que faire ?",
+          es: "¡Estoy al 98 % y no encuentro la última mancha! ¿Qué puedo hacer?",
+        },
+        a: {
+          ko: "걱정하지 마세요! 첫째, 각 세부 파츠(지붕, 유리창, 바퀴 등)는 세척률이 95%에 도달하면 자동으로 100% 완벽 세척 판정('딩!' 효과음과 백색 플래시)이 발동됩니다. 둘째, 상단의 『오점 탐색 (Tab)』 버튼을 누르면 아직 완료되지 않은 구역의 미세한 때가 2.2초 동안 밝은 황금색 네온으로 빛나므로 한눈에 찾아낼 수 있습니다.",
+          en: "Two built-in features prevent pixel-hunting frustration! First, every individual sub-part automatically snaps to 100% completion (with a celebratory 'DING!' and white flash) once it reaches 95% clean. Second, pressing [Tab] or the 'Show Dirt' button pulses all remaining grime in bright golden yellow for 2.2 seconds.",
+          ja: "ご安心ください！まず、各パーツ（屋根、窓、タイヤなど）は洗浄率が95%に達した時点で自動的に100%完了（「チーン！」という音と白フラッシュ）になります。さらに、上部の「汚れ検知（Tab）」ボタンを押せば、残っている汚れが2.2秒間明るい黄金色に発光して一目で場所がわかります。",
+          zh: "完全不必担心像素级找茬！首先，每个独立部件（如车顶、车窗、轮胎）只要冲洗至 95% 洁净度，系统就会自动触发“叮！”声与白光闪烁并直接补满至 100%。其次，点击顶部“污渍探测（Tab）”按钮，所有残余污垢都会闪烁耀眼的金黄色高亮光芒，位置一目了然。",
+          fr: "Pas de panique ! Chaque sous-élément passe automatiquement à 100 % (avec un « DING ! » et un flash blanc) dès qu'il atteint 95 % de propreté. De plus, appuyez sur [Tab] (« Détecter ») pour faire briller les saletés restantes en jaune doré pendant 2,2 secondes.",
+          es: "¡No te preocupes! Cada pieza individual salta automáticamente al 100 % (con un «¡DING!» y destello blanco) al alcanzar el 95 % de limpieza. Además, al pulsar [Tab] («Detectar»), cualquier resto de suciedad brillará en amarillo dorado durante 2,2 segundos.",
+        },
+      },
+    ],
+  },
 };
