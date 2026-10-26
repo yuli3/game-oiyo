@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import BadNorthTactics from "../../components/games/BadNorthTactics";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta = {
+  ko: {
+    title: "배드 노스 미니 — 바이킹 침략선 상륙 저지 & 실시간 섬 방어 미니멀 RTS",
+    description: "아름다운 3D 고립 섬 디오라마에서 보병, 궁병, 창병 분대를 지휘하여 사방에서 상륙하는 바이킹 침략자들로부터 가옥을 지키는 실시간 전술 디펜스 게임."
+  },
+  en: {
+    title: "Bad North Mini Web — Viking Longship Island Defense RTS",
+    description: "Command infantry, archers, and pikemen to defend charming procedural island diorama cottages against invading Viking longships."
+  },
+  ja: {
+    title: "バッド・ノース Mini Web — 孤島防衛ミニマルリアルタイム戦術RTS",
+    description: "孤島のジオラマで歩兵・弓兵・槍兵の部隊を指揮し、四方から上陸するバイキング略奪船から家々を守り抜くミニマルリアルタイム戦術ゲーム。"
+  },
+  zh: {
+    title: "绝境北方 Bad North Mini Web — 维京海盗孤岛微操防守 RTS",
+    description: "在精致的 3D 孤岛立体微缩模型上调遣步兵、弓兵与枪兵，击退自海面乘船突袭的维京海盗，誓死守卫海岛村庄家园。"
+  },
+  fr: {
+    title: "Bad North Mini Web — Stratégie tactique de défense d'île contre les Vikings",
+    description: "Commandez vos fantassins, archers et piquiers sur de magnifiques îles dioramas pour repousser les drakkars vikings."
+  },
+  es: {
+    title: "Bad North Mini Web — Táctica de defensa de islas en tiempo real",
+    description: "Comanda infantería, arqueros y piqueros en dioramas insulares 3D para defender casas costeras contra los invasores vikingos."
+  }
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-4xl px-4 py-8">
+    <BadNorthTactics client:load />
+    <GameGuide slug="bad-north-tactics" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>

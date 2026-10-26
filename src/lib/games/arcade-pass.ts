@@ -762,6 +762,20 @@ export const MISSION_CATALOG: Array<{
     goal: 30,
     xpReward: 50,
   },
+  {
+    id: "bad-north-island-clear",
+    gameSlug: "bad-north-tactics",
+    title: {
+      ko: "배드 노스에서 3개 웨이브 침략선을 모두 물리치고 섬 방어 성공",
+      en: "Defeat all 3 Viking invasion waves and defend the island in Bad North Tactics",
+      ja: "バッド・ノースで全3ウェーブの略奪船を撃退して島を防衛する",
+      zh: "在绝境北方中成功击溃全部 3 波维京入侵船队并守住岛屿",
+      fr: "Repoussez les 3 vagues de débarquement viking et défendez l'île dans Bad North Tactics",
+      es: "Derrota las 3 oleadas de invasión vikinga y defiende la isla en Bad North Tactics",
+    },
+    goal: 1,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {

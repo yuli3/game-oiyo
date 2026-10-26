@@ -5726,4 +5726,78 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "bad-north-tactics": {
+    origin: {
+      ko: "배드 노스(Bad North, Plausible Concept / Raw Fury)의 3D 고립 섬 디오라마와 미니멀 실시간 전술 RTS 상성 메커니즘을 60fps HTML5 Canvas 아이소메트릭 렌더러로 구현한 바이킹 방어 시뮬레이션 게임입니다.",
+      en: "A minimal real-time tactical island defense game reinterpreting Bad North's 3D isometric diorama battles and rock-paper-scissors squad counters on 60fps HTML5 Canvas.",
+      ja: "『Bad North』の孤島ジオラマとミニマルなリアルタイム戦術相性システムを、60fps HTML5 Canvasアイソメトリック描画で再現したバイキング迎撃シミュレーションです。",
+      zh: "以精巧的 60fps HTML5 Canvas 等轴测立体视效重现《绝境北方》（Bad North）孤岛微型沙盘战场与步弓枪兵种相克机制的极简实时战术防守游戏。",
+      fr: "Un jeu de stratégie tactique minimaliste réinterprétant les batailles d'îles en diorama de Bad North avec un rendu Canvas isométrique à 60 fps.",
+      es: "Un juego de táctica en tiempo real minimalista que recrea las batallas en dioramas insulares de Bad North con gráficos isométricos a 60 fps.",
+    },
+    how: {
+      ko: "하단 분대 카드나 숫자를 눌러 보병, 궁병, 창병을 선택한 뒤 이동시킬 섬 타일을 터치하세요. 좁은 병목 골목에서는 창병을 고정시켜 방진(Brace)을 치고, 절벽이나 모래사장에서는 보병의 밀치기로 적을 바다에 빠뜨리세요. 궁병은 고지대에 배치해 상륙 전 원거리에서 적을 솎아내 가옥을 지켜내야 합니다.",
+      en: "Select a squad (Infantry, Archers, Pikes) and tap an island tile to reposition. Form a lethal phalanx wall with braced Pikemen at narrow chokepoints, use Infantry knockback to push Vikings into the sea, and position Archers on high ground cliffs to soften incoming raiders before they torch your cottages.",
+      ja: "部隊を選択して移動先の島タイルをタップします。狭い通路では槍兵を静止させて防陣を敷き、崖際や浜辺では歩兵のノックバックで敵を海へ叩き落としましょう。弓兵は高台に配置し、敵が上陸して民家に火を放つ前に長距離射撃で仕留めます。",
+      zh: "点击部队列阵选择步兵、弓兵或枪兵，轻触岛屿地块指派布防。在狭窄关隘命令枪兵原地结成拒马方阵，利用步兵强力击退将海盗推入大海溺毙，并将弓兵驻扎于悬崖高地，在海盗点燃茅舍前射杀敌群。",
+      fr: "Sélectionnez une escouade et touchez une case pour la déplacer. Formez un mur de piques dans les goulets d'étranglement, poussez les ennemis dans la mer avec vos fantassins et postez vos archers sur les falaises.",
+      es: "Selecciona una escuadra y toca una casilla para moverla. Planta a los piqueros en desfiladeros estrechos, arroja enemigos al mar con infantería y coloca arqueros en acantilados altos.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "창병은 왜 걸어 다닐 때 적에게 쉽게 쓰러지나요?",
+          en: "Why are Pikemen vulnerable while moving?",
+          ja: "槍兵はなぜ移動中に敵に倒されやすいのですか？",
+          zh: "为什么枪兵在行军移动过程中极易被敌人砍杀？",
+          fr: "Pourquoi les piquiers sont-ils vulnérables en déplacement ?",
+          es: "¿Por qué los piqueros son vulnerables mientras se mueven?",
+        },
+        a: {
+          ko: "창병의 핵심 강점은 제자리에 멈춰 서서 긴 장창을 앞으로 내뻗는 '방진(Braced)' 상태에 있습니다. 방진이 완성되면 돌격해 오는 적을 정면에서 즉사시키지만, 이동 중에는 긴 창을 가누기 어려워 무방비 상태가 되므로 적이 접근하기 전에 미리 목적지에 정지시켜 두어야 합니다.",
+          en: "Pikemen derive their strength from stationary phalanx bracing. When braced, they instantly kill and repel charging enemies. While moving, their long pikes are unready, making them fragile—always move them to defensive chokepoints well in advance!",
+          ja: "槍兵の最大の強みは静止して長槍を構える「防陣（Brace）」にあります。防陣が完成すると突撃してくる敵を正面から即座に撃退しますが、移動中は無防備になります。敵が接近する前に要所へ先回りして待機させましょう。",
+          zh: "枪兵的核心威力取决于其驻足原地竖立的“拒马方阵”。结阵状态下面对正面冲锋的敌人近乎无敌，但行军时由于长枪不便挥舞而极其脆弱，务必提前机动至防守隘口立足备战。",
+          fr: "Les piquiers sont redoutables en formation immobile (phalange). En mouvement, leurs longues piques ne peuvent pas frapper : placez-les toujours à l'avance !",
+          es: "Los piqueros son letales cuando están quietos en falange. Al moverse quedan desprotegidos: colócalos siempre con antelación en los cuellos de botella.",
+        },
+      },
+      {
+        q: {
+          ko: "보병의 '바다 낙하(Knockback)'는 어떻게 노리나요?",
+          en: "How do I trigger water knockback kills with Infantry?",
+          ja: "歩兵の「海への落下ノックバック」はどう狙えばいいですか？",
+          zh: "如何运用步兵的击退特性制造“坠海溺毙”？",
+          fr: "Comment pousser les ennemis dans l'eau avec l'infanterie ?",
+          es: "¿Cómo se arroja a los enemigos al mar con la infantería?",
+        },
+        a: {
+          ko: "보병은 검과 방패로 적을 강하게 밀쳐내는 물리력을 가집니다. 바이킹이 상륙하는 얕은 모래사장이나 절벽 끝 가장자리 타일에 보병을 배치해 교전하면, 적들이 밀려나 바다(높이 0) 타일에 빠지는 순간 체력과 관계없이 즉사 판정으로 처리됩니다.",
+          en: "Infantry deliver powerful physics knockback with their shields. By positioning them right at the water's edge or cliff perimeters, enemies are pushed into the ocean (height 0), instantly drowning regardless of remaining health.",
+          ja: "歩兵は盾と剣で敵を強く押し出すノックバック力を持ちます。バイキングが上陸する砂浜の波打ち際や崖っぷちに歩兵を配置して戦えば、敵が海（高さ0）へ押し出された瞬間に残りHPに関係なく即死します。",
+          zh: "步兵持有强劲的盾击物理击退判定。将步兵驻防于海滩潮水边缘或悬崖边侧，敌人在拼刺中被震退跌入高度为0的大海，不论剩余血量多少都会瞬间溺毙消亡。",
+          fr: "L'infanterie repousse violemment les ennemis. Placez-les au bord de l'eau ou des falaises pour précipiter les assaillants dans la mer où ils se noient sur le coup.",
+          es: "La infantería empuja con fuerza con sus escudos. Colócalos al borde del agua o del acantilado para tirar a los enemigos al mar, donde se ahogarán al instante.",
+        },
+      },
+      {
+        q: {
+          ko: "방패를 든 바이킹은 궁병의 화살을 튕겨내나요?",
+          en: "Do shielded Vikings deflect arrow volleys?",
+          ja: "盾を持ったバイキングは弓矢を跳ね返しますか？",
+          zh: "持盾的维京战士能抵挡弓箭齐射吗？",
+          fr: "Les Vikings avec boucliers bloquent-ils les flèches ?",
+          es: "¿Los vikingos con escudo desvían las flechas?",
+        },
+        a: {
+          ko: "네! 원형 방패를 든 푸른색 바이킹은 정면 화살의 약 75%를 튕겨냅니다. 방패병이 다가올 때는 궁병만으로 상대하기보다 창병 방진으로 들이받게 하거나 보병으로 맞붙여 방패를 무력화하는 병과 상성 전술이 필수적입니다.",
+          en: "Yes! Blue-garbed Vikings with round shields deflect roughly 75% of frontal arrows. Counter them by holding a pike wall or engaging with Infantry in close quarters rather than relying on ranged archery alone.",
+          ja: "はい！ 青い衣装の盾持ちバイキングは正面からの矢の約75%を弾きます。盾持ちに対しては弓兵だけでなく、槍兵の防陣で迎え撃つか歩兵で白兵戦を挑むのが定석です。",
+          zh: "是的！手持圆盾的蓝色海盗会弹开约 75% 的正面飞矢。面对持盾者切勿单靠弓兵盲目输出，应果断以枪兵方阵拒敌或派步兵近身绞杀，善用兵种克制方能克敌制胜。",
+          fr: "Oui ! Les Vikings au bouclier dévient 75 % des flèches. Bloquez-les plutôt avec des piquiers ou engagez-les au corps à corps avec votre infanterie.",
+          es: "¡Sí! Los vikingos con escudo desvían el 75 % de las flechas. Enfréntalos con una pared de picas o infantería en combate cuerpo a cuerpo.",
+        },
+      },
+    ],
+  },
 };
