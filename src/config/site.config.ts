@@ -46,6 +46,7 @@ export const siteConfig = {
     enabled: true,
     slots: {
       gameBelow: "2768903568", // Responsive display unit placed below game surface and above guide
+      gameGuideEnd: "", // oiyo-game-result: after GameGuide. Empty until the AdSense unit exists (2026-10-26)
     },
   },
   newsletter: {

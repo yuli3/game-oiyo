@@ -2,7 +2,8 @@
 /**
  * Hand-placed AdSense units for OIYO Arcade, alongside Auto ads (세운 결정 2026-10-17: "애드센스는 하이브리드로 넘어감").
  *
- * Places a clean, responsive display unit strictly AFTER the game surface and BEFORE GameGuide.
+ * Places a clean, responsive display unit strictly AFTER the game surface and BEFORE GameGuide,
+ * and a second one after GameGuide (2026-10-26).
  * Ensures:
  * 1) At least 150px distance from game surface/controls to eliminate accidental clicks.
  * 2) Height reservation (min-h-72) to prevent Cumulative Layout Shift (CLS).
@@ -85,6 +86,10 @@ const active = config.enabled && Boolean(client) && !noindex;
       }
     }
   }
+  // Second unit after the guide (2026-10-26): game fills 48% of requests, the best in the family.
+  // There is no shared result screen across games, so the end of the guide is the common resting point.
+  var end=guide&&box("game-guide-end",cfg.slots.gameGuideEnd);
+  if(end)guide.parentNode.insertBefore(end,guide.nextSibling);
   if(!units.length)return;
   function fill(el){try{(window.adsbygoogle=window.adsbygoogle||[]).push({})}catch(e){}el.setAttribute("data-manual-ad-requested","1")}
   if(!("IntersectionObserver" in window)){units.forEach(fill);return}
