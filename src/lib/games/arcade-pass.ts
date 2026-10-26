@@ -622,6 +622,20 @@ export const MISSION_CATALOG: Array<{
     goal: 2,
     xpReward: 50,
   },
+  {
+    id: "paper-flight-distance",
+    gameSlug: "paper-flight-3d",
+    title: {
+      ko: "종이비행기 3D에서 300m 이상 활강 비행하기",
+      en: "Glide 300m or farther in Paper Flight 3D",
+      ja: "紙飛行機 3Dで300m以上を滑空飛行する",
+      zh: "在纸飞机 3D 中滑翔飞行突破 300 米",
+      fr: "Planez sur 300 m ou plus dans Paper Flight 3D",
+      es: "Vuela 300 m o más en Paper Flight 3D",
+    },
+    goal: 300,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {

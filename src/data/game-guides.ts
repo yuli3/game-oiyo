@@ -5076,4 +5076,60 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "paper-flight-3d": {
+    origin: {
+      ko: "종이비행기 3D(Paper Flight 3D)는 클래식 매킨토시 명작 '글라이더(Glider PRO)'와 모바일 힐링 글라이딩 게임의 계보를 잇는 3D 항공역학 비행 시뮬레이터입니다. 가벼운 접이식 종이비행기가 되어 양력과 항력, 급강하 에너지 교환, 따뜻한 상승기류(열기둥)를 타며 서재와 공원, 구름, 협곡, 오로라까지 5대 절경 코스를 끝없이 항해합니다.",
+      en: "Paper Flight 3D continues the proud lineage of aerial gliding classics like 'Glider PRO'. Take control of an ultra-light origami glider, exploiting real aerodynamic lift, induced drag, and thermal updrafts to glide across 5 breathtaking biomes from cozy study rooms to celestial auroras.",
+      ja: "紙飛行機 3D（Paper Flight 3D）は、名作『Glider PRO』の精神を受け継ぐ3D航空力学グライディングゲームです。折り紙飛行機となって揚力と抗力、急降下からの運動エネルギー変換、上昇気流（サーマル）を駆使し、書斎からオーロラまで5つの美しいコースをどこまでも滑空します。",
+      zh: "纸飞机 3D（Paper Flight 3D）承袭了经典滑翔游戏《Glider PRO》与现代治愈飞行的精髓。玩家操纵轻盈的折纸飞机，依托真实升力抗力物理、急降重力加速以及自然上升热气流，跨越从静谧书房到极光星云的五大壮丽风光。",
+      fr: "Paper Flight 3D s'inspire des classiques du vol plané comme Glider PRO. Pilotez un planeur en papier origami à travers 5 biomes splendides grâce aux lois aérodynamiques et aux courants thermiques.",
+      es: "Paper Flight 3D rinde tributo a clásicos del planeo como Glider PRO. Pilota un avión de papel origami utilizando física aerodinámica real y corrientes térmicas ascendentes a través de 5 biomas deslumbrantes.",
+    },
+    how: {
+      ko: "방향키 위/아래(W/S)로 기수를 조종하고 좌/우(A/D)로 뱅킹 선회합니다. 다이브로 시속을 올린 뒤 황금 링과 종이학을 관통하고 파란 상승기류 안에서 고도를 회복하세요. 스페이스바로 날개 부스트를 쓸 수 있습니다.",
+      en: "Use Arrow Up/Down or W/S to pitch, and Left/Right or A/D to bank and turn. Dive to build airspeed, fly through golden rings, and circle inside blue thermal columns to regain altitude. Press Space for paper boost flaps.",
+      ja: "上下キー（W/S）で機首の昇降、左右キー（A/D）で旋回します。ダイブで加速して黄金リングをくぐり、青い上昇気流の中で高度を回復しましょう。スペースキーでブースト羽ばたきができます。",
+      zh: "使用方向键上下或W/S控制机头俯仰，左右或A/D进行倾斜转弯。俯冲蓄力加速穿梭黄金光环，进入蓝色上升气流柱回复飞行高度。轻敲空格键即可消耗耐力触发纸翼加速。",
+      fr: "Utilisez les flèches ou Z/S pour piquer ou cabrer, Q/D pour tourner. Plongez pour accélérer, traversez les anneaux et reprenez de l'altitude dans les thermiques. Espace pour booster.",
+      es: "Usa Arriba/Abajo o W/S para cabecear y Izquierda/Derecha o A/D para girar. Pica para ganar velocidad, cruza anillos dorados y recupera altitud en columnas térmicas. Espacio para propulsión.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "비행 중 속도가 급격히 떨어지며 기수가 덜덜 떨릴 때는 어떻게 하나요?",
+          en: "What should I do when my airspeed plummets and the plane shakes violently?",
+          ja: "飛行中に速度が急激に低下し機体が激しく振動したらどうすればいいですか？",
+          zh: "飞行途中空速骤降且机身发生剧烈抖动时该如何处理？",
+          fr: "Que faire lorsque la vitesse s'effondre et que l'avion tremble violemment ?",
+          es: "¿Qué debo hacer cuando la velocidad cae en picado y el avión tiembla?",
+        },
+        a: {
+          ko: "기수를 너무 오래 들어 양력이 사라진 '실속(STALL)' 상태입니다. 즉시 방향키 위(기수 내리기)를 눌러 부드럽게 급강하하며 시속을 20km/h 이상으로 회복하면 수 초 내로 정상 비행으로 복귀합니다.",
+          en: "You have entered an aerodynamic STALL from excessive pitch. Immediately pitch down to dive and restore airspeed over 20 km/h; laminar airflow and lift will recover within moments.",
+          ja: "機首を上げすぎて揚力を失った『失速（STALL）』状態です。慌てず下キー（機首下げ）を押してダイブし時速20km以上を取り戻せば、すぐに通常の滑空に復帰します。",
+          zh: "这是由于长时间大仰角抬头导致的‘气动失速（STALL）’。请立即按下键压低机头顺势俯冲，待空速回升至20km/h以上后，纸翼即可重新凝聚升力恢复飞控。",
+          fr: "Vous êtes en décrochage (STALL). Piquez immédiatement du nez pour reprendre de la vitesse et rétablir la portance.",
+          es: "Has entrado en pérdida (STALL). Baja de inmediato el morro para acelerar y recuperar el flujo laminar de sustentación.",
+        },
+      },
+      {
+        q: {
+          ko: "상승기류(열기둥)를 효율적으로 활용하는 팁이 있나요?",
+          en: "What is the best way to utilize thermal updrafts?",
+          ja: "上昇気流（サーマル）を効率よく活用するコツはありますか？",
+          zh: "高效利用上升热气流柱的最佳技巧是什么？",
+          fr: "Quel est le meilleur moyen d'exploiter les colonnes thermiques ?",
+          es: "¿Cuál es el mejor truco para aprovechar las corrientes térmicas?",
+        },
+        a: {
+          ko: "파란 소용돌이 기둥 안으로 들어선 뒤에는 곧바로 직진해 빠져나가지 말고, 좌우 방향키를 톡톡 눌러 기둥 안에서 완만한 원을 그리며 선회하면 최대 상한 고도까지 단숨에 수직 상승할 수 있습니다.",
+          en: "Do not fly straight through! Inside the blue swirling column, bank into a gentle circling turn to prolong your dwell time and ride the lift all the way to maximum ceiling.",
+          ja: "青い気流の柱に入ったら真っ直ぐ突き抜けるのではなく、左右キーで緩やかに円を描くように旋回してください。気流に長くとどまることで一気に最高高度まで舞い上がれます。",
+          zh: "切勿径直飞穿气流柱！进入蓝色螺旋气旋后，应轻按方向键维持小角度盘旋回转，最大化在柱体内的滞空时间，借力直冲至巡航高度上限。",
+          fr: "Ne traversez pas tout droit ! Décrivez de doux cercles à l'intérieur pour maximiser votre temps d'ascension.",
+          es: "¡No la atravieses en línea recta! Haz círculos suaves dentro de la columna azul para aprovechar el ascenso hasta el techo de vuelo.",
+        },
+      },
+    ],
+  },
 };

@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PaperFlight3D from "../../components/games/PaperFlight3D";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "종이비행기 3D — 공기역학 활강 & 상승기류 비행 시뮬레이터",
+    description: "공기역학 양력과 항력 물리, 상승기류(열기둥) 서핑, 황금 부스트 링을 통과하며 5대 절경 코스를 끝없이 날아가는 3D 종이비행기 글라이딩 게임.",
+  },
+  en: {
+    title: "Paper Flight 3D — Aerodynamic Gliding & Thermal Simulator",
+    description: "Master aerodynamic glide physics, surf rising thermal updrafts, and soar through golden boost rings across 5 stunning biomes in Paper Flight 3D.",
+  },
+  ja: {
+    title: "紙飛行機 3D — 空力滑空＆上昇気流フライトシミュレーター",
+    description: "揚力と抗力の物理演算、上昇気流（サーマル）サーフィン、黄金の加速リングをくぐり抜けて5つの絶景バイオームを滑空する3D紙飛行機ゲーム。",
+  },
+  zh: {
+    title: "纸飞机 3D — 空气动力学滑翔与上升气流模拟器",
+    description: "体验纯正空气动力滑翔物理，驾驭热气流冲上云霄，穿梭黄金加速光环并飞跃五大绝景地貌的3D纸飞机冒险。",
+  },
+  fr: {
+    title: "Paper Flight 3D — Simulateur de vol et thermique d'avion en papier",
+    description: "Maîtrisez la physique aérodynamique, surfez sur les courants thermiques et traversez les anneaux dorés à travers 5 biomes magnifiques.",
+  },
+  es: {
+    title: "Paper Flight 3D — Simulador aerodinámico de planeador de papel",
+    description: "Domina la física aerodinámica de planeo, surfea corrientes térmicas ascendentes y atraviesa anillos dorados por 5 biomas impresionantes.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-5xl px-4 py-8">
+    <PaperFlight3D client:load />
+    <GameGuide slug="paper-flight-3d" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>

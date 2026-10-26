@@ -114,6 +114,7 @@ export default defineConfig([
       "src/components/games/OrbitalFlight3DScene.tsx",
       "src/components/games/VoxelMaze3DScene.tsx",
       "src/components/games/CyberTrack3DScene.tsx",
+      "src/components/games/PaperFlight3DScene.tsx",
     ],
     rules: {
       "shadcn/no-raw-colors": "off",
