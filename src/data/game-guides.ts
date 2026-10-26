@@ -5930,4 +5930,60 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "factorio-mini": {
+    origin: {
+      ko: "『팩토리오 미니 (Factorio Automation Mini)』는 체코의 인디 스튜디오 Wube Software가 창시해 공장 자동화 시뮬레이션 장르의 바이블이 된 『Factorio』와 미니멀 컨베이어 퍼즐 『Shapez.io』에서 영감을 받은 OIYO 오리지널 산업 자동화 시뮬레이터입니다. 철광석과 구리광석 광맥 위에 채굴기를 건설하고, 용광로에서 제련된 금속판을 컨베이어 벨트로 수송하며, 조립기에서 기어·전자회로·적색 과학 팩을 합성해 연구실(Lab)로 끊임없이 공급하는 물류 최적화의 묘미를 웹 브라우저에서 직관적으로 즐길 수 있습니다.",
+      en: "Factorio Automation Mini is an original OIYO industrial logistics and factory automation simulator inspired by Wube Software's genre-defining masterpiece Factorio and minimalist belt puzzle Shapez.io. Place Miners on Iron and Copper veins, smelt raw ore into plates, route Conveyor Belts, and merge materials into Assemblers to synthesize Gears, Circuits, and Red Science Packs for the Research Lab.",
+      ja: "『ファクトリオ ミニ（Factorio Automation Mini）』は、工場自動化シミュレーションの金字塔であるWube Softwareの『Factorio』および『Shapez.io』にインスパイアされたOIYOオリジナルのコンベア物流自動化ゲームです。鉄鉱石や銅鉱石の鉱脈に採掘機を設置し、溶鉱炉で精錬した金属板をコンベアベルトで運び、組立機で歯車・電子回路・赤サイエンスパックを合成して研究所へ自動供給する設計の楽しさをブラウザで体験できます。",
+      zh: "《异星工厂 迷你版（Factorio Automation Mini）》灵感源自 Wube Software 打造的工业自动化神作《Factorio》与极简传送带解谜《Shapez.io》。在铁矿与铜矿脉上部署采矿机，通过熔炉冶炼金属板，铺设四通八达的传送带网络，并在组装机中合成齿轮、电子电路与高价值的红色科技包，源源不断地输送至研究中心。",
+      fr: "Factorio Automation Mini est un simulateur d'automatisation industrielle inspiré du chef-d'œuvre Factorio de Wube Software et de Shapez.io. Installez des foreuses sur les gisements de fer et de cuivre, fondez le minerai en plaques, tracez vos lignes de convoyeurs et combinez les composants dans des machines d'assemblage pour alimenter le laboratoire.",
+      es: "Factorio Automation Mini es un simulador de logística y automatización industrial inspirado en Factorio de Wube Software y Shapez.io. Coloca perforadoras sobre vetas de hierro y cobre, funde el mineral en placas, traza cintas transportadoras y combina materiales en ensambladoras para abastecer el laboratorio de investigación.",
+    },
+    how: {
+      ko: "하단 건설 툴바(또는 숫자키 [1]~[5])에서 설비를 선택한 뒤 10×8 공장 격자 위를 클릭하거나 드래그해 배치하세요. 이미 배치된 설비를 다시 클릭하거나 [R] 키를 누르면 배출 방향(⬆️북·➡️동·⬇️남·⬅️서)이 90° 회전합니다. 기본 공정은 『광맥 위 채굴기(⛏️) → 용광로(🔥) → 컨베이어 벨트(➡️) → 연구실(🔬)』입니다. 철판과 구리판을 하나의 조립기(⚙️)로 동시에 합류시키면 최고 효율인 '적색 과학 팩(65 RP)'이 생산됩니다!",
+      en: "Select a building from the toolbar (or keys [1]–[5]) and click or drag across the 10x8 factory grid to build. Click an existing building again or press [R] to rotate its output direction (N/E/S/W) by 90°. The core production chain is: Miner on Ore Vein -> Smelter -> Conveyor Belt -> Research Lab. Route both Iron Plates and Copper Plates into the same Assembler to craft high-value Red Science Packs (65 RP)!",
+      ja: "下部ツールバー（または数字キー[1]〜[5]）で設備を選び、10×8のグリッドをクリックまたはドラッグして配置します。設置済みの設備を再クリックするか[R]キーを押すと出力方向（北・東・南・西）が90°回転します。基本ラインは「鉱脈上の採掘機(⛏️) → 溶鉱炉(🔥) → ベルト(➡️) → 研究所(🔬)」です。鉄板と銅板を同じ組立機(⚙️)に合流させると、高価値の「赤サイエンスパック(65 RP)」が合成されます！",
+      zh: "在底部工具栏（或数字键 [1]–[5]）选择设施，点击或拖拽 10×8 工厂网格即可建造。再次点击已有设施或按 [R] 键可将其输出方向顺时针旋转 90°。基础产线流程为：“矿脉采矿机(⛏️) → 熔炉(🔥) → 传送带(➡️) → 研究所(🔬)”。若将铁板与铜板同时汇入同一台组装机(⚙️)，即可合成最高价值的“红色科技包（65 RP）”！",
+      fr: "Choisissez un bâtiment dans la barre d'outils ([1]–[5]) et cliquez ou glissez sur la grille 10x8. Cliquez à nouveau sur un bâtiment ou appuyez sur [R] pour pivoter sa sortie de 90°. Acheminez à la fois des plaques de fer et de cuivre dans une même machine d'assemblage pour produire des packs de science rouge (65 RP) !",
+      es: "Selecciona un edificio en la barra de herramientas ([1]–[5]) y haz clic o arrastra sobre la cuadrícula de 10x8. Haz clic de nuevo en un edificio o pulsa [R] para rotar su dirección 90°. ¡Lleva placas de hierro y cobre a una misma ensambladora para sintetizar paquetes de ciencia roja (65 RP)!",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "조립기(⚙️)에서 적색 과학 팩(65 RP)은 어떻게 만드나요?",
+          en: "How do I craft Red Science Packs (65 RP) in the Assembler?",
+          ja: "組立機(⚙️)で赤サイエンスパック(65 RP)を作るにはどうすればいいですか？",
+          zh: "如何在组装机(⚙️)中合成高价值的红色科技包（65 RP）？",
+          fr: "Comment fabriquer des packs de science rouge (65 RP) dans la machine d'assemblage ?",
+          es: "¿Cómo se fabrican los paquetes de ciencia roja (65 RP) en la ensambladora?",
+        },
+        a: {
+          ko: "조립기에 철판만 들어가면 '기어(25 RP)'를 만들고, 구리판만 들어가면 '전자회로(25 RP)'를 만듭니다. 하지만 두 방향에서 컨베이어 벨트나 용광로를 연결해 한 대의 조립기에 철판(Fe)과 구리판(Cu)이 모두 공급되면, 두 재료를 1개씩 결합하여 개당 65 RP를 주는 '적색 과학 팩'을 우선 합성합니다.",
+          en: "If an Assembler receives only Iron Plates, it crafts Gears (25 RP); if it receives only Copper Plates, it crafts Electronic Circuits (25 RP). However, when you feed both Iron Plates (Fe) and Copper Plates (Cu) into the same Assembler from two sides, it combines 1 Fe + 1 Cu into a Red Science Pack worth 65 RP!",
+          ja: "組立機に鉄板だけが入ると「歯車(25 RP)」、銅板だけが入ると「電子回路(25 RP)」を生産します。しかし、2方向からコンベアや溶鉱炉を繋いで1台の組立機に鉄板(Fe)と銅板(Cu)の両方を供給すると、1個ずつ合成して65 RPを獲得できる「赤サイエンスパック」を優先的に生産します。",
+          zh: "当组装机仅输入铁板时会生产“齿轮（25 RP）”，仅输入铜板时会生产“电子电路（25 RP）”。若从两个方向将铁板（Fe）与铜板（Cu）同时送入同一台组装机，它就会将两者 1:1 结合，优先合成单个价值高达 65 RP 的“红色科技包”！",
+          fr: "Si une assembleuse ne reçoit que du fer, elle produit des engrenages (25 RP) ; avec du cuivre seul, des circuits (25 RP). Mais si vous alimentez la même assembleuse en plaques de fer (Fe) et de cuivre (Cu) par deux côtés, elle synthétise un pack de science rouge valant 65 RP !",
+          es: "Si una ensambladora recibe solo hierro, fabrica engranajes (25 RP); si recibe solo cobre, circuitos (25 RP). ¡Pero si conectas hierro (Fe) y cobre (Cu) a la misma ensambladora desde dos lados, combinará ambos para crear un paquete de ciencia roja de 65 RP!",
+        },
+      },
+      {
+        q: {
+          ko: "설비의 노란색 점 표시와 화살표는 무엇을 뜻하나요?",
+          en: "What does the yellow dot on Miners, Smelters, and Assemblers indicate?",
+          ja: "採掘機や溶鉱炉、組立機にある黄色い点は何を表していますか？",
+          zh: "采矿机、熔炉与组装机边缘的黄色圆点代表什么？",
+          fr: "Que signifie le point jaune sur les foreuses, fours et assembleuses ?",
+          es: "¿Qué indica el punto amarillo en las perforadoras, hornos y ensambladoras?",
+        },
+        a: {
+          ko: "노란색 점은 해당 설비가 생산물을 배출하는 '출력구(Output Nozzle)' 방향입니다. 출력구가 바라보는 인접 타일에 컨베이어 벨트나 다음 공정 설비(용광로·조립기·연구실)가 놓여 있어야 아이템이 막히지 않고 흘러갑니다. 방향이 맞지 않으면 설비를 다시 클릭하거나 [R] 키를 눌러 회전시키세요.",
+          en: "The yellow dot marks the building's Output Nozzle—the side where mined ore, smelted plates, or crafted items exit. Make sure a Conveyor Belt, Smelter, Assembler, or Lab is placed on the tile facing that yellow nozzle! Click the building again or press [R] to rotate it.",
+          ja: "黄色い点は、その設備がアイテムを搬出する「出力口（排出口）」の向きを示しています。黄色い点が向いている隣接マスにコンベアベルトや次の工程の設備（溶鉱炉・組立機・研究所）を配置するとスムーズに流れます。向きを変えるには設備を再クリックするか[R]キーを押してください。",
+          zh: "黄色圆点标记的是该设施的“出料口（Output）”方向。请确保出料口朝向的相邻格子上铺有传送带或下一道工序设施（熔炉、组装机或研究所），物资才能顺畅流转。点击该设施或按 [R] 键即可随时调整朝向。",
+          fr: "Le point jaune indique la buse de sortie du bâtiment. Assurez-vous qu'un convoyeur, un four, une assembleuse ou le laboratoire se trouve sur la case adjacente dans cette direction. Cliquez sur le bâtiment ou appuyez sur [R] pour le faire pivoter.",
+          es: "El punto amarillo marca la boquilla de salida del edificio. Asegúrate de que haya una cinta, horno, ensambladora o laboratorio en la casilla hacia la que apunta. Haz clic en el edificio o pulsa [R] para rotarlo.",
+        },
+      },
+    ],
+  },
 };

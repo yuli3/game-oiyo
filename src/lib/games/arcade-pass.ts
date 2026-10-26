@@ -804,6 +804,20 @@ export const MISSION_CATALOG: Array<{
     goal: 100,
     xpReward: 50,
   },
+  {
+    id: "factorio-mini-rp-150",
+    gameSlug: "factorio-mini",
+    title: {
+      ko: "팩토리오 미니에서 연구 점수 150 RP 이상 자동화 달성",
+      en: "Generate 150+ Research Points (RP) via automation in Factorio Mini",
+      ja: "ファクトリオ ミニで研究ポイント150 RP以上を自動生産",
+      zh: "在异星工厂迷你版中通过自动化产线累计获得 150 RP 以上研究点数",
+      fr: "Générez 150+ points de recherche (RP) dans Factorio Automation Mini",
+      es: "Genera 150+ puntos de investigación (RP) en Factorio Automation Mini",
+    },
+    goal: 150,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {

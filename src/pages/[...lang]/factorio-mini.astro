@@ -1,0 +1,55 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import FactorioMini from "../../components/games/FactorioMini";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "팩토리오 미니 — 컨베이어 벨트 공장 자동화 시뮬레이터",
+    description:
+      "철광석과 구리광석을 채굴하고 용광로와 조립기, 컨베이어 벨트를 연결해 적색 과학 팩을 자동 생산하세요! 설치 없이 즐기는 공장 자동화 시뮬레이터.",
+  },
+  en: {
+    title: "Factorio Automation Mini — Conveyor Belt Factory Simulator",
+    description:
+      "Mine iron and copper ore, smelt plates, route conveyor belts, and assemble Red Science Packs to power the Research Lab in your browser!",
+  },
+  ja: {
+    title: "ファクトリオ ミニ — コンベアベルト工場自動化シミュレーター",
+    description:
+      "鉄鉱石と銅鉱石を採掘し、溶鉱炉・組立機・コンベアベルトを繋いで赤サイエンスパックを自動生産しよう！ブラウザで遊べる工場建設シミュレーション。",
+  },
+  zh: {
+    title: "异星工厂 迷你版 — 传送带工厂流水线自动化建造游戏",
+    description:
+      "开采铁矿与铜矿，连接熔炉、组装机与传送带，全自动合成红色科技包输送至研究中心！免安装网页端自动化模拟游戏。",
+  },
+  fr: {
+    title: "Factorio Automation Mini — Simulateur d'usine et convoyeurs",
+    description:
+      "Extrayez le fer et le cuivre, fondez des plaques et reliez vos convoyeurs et machines d'assemblage pour produire des packs scientifiques !",
+  },
+  es: {
+    title: "Factorio Automation Mini — Simulador de fábrica y cintas transportadoras",
+    description:
+      "¡Extrae mineral de hierro y cobre, funde placas y conecta cintas transportadoras y ensambladoras para automatizar la producción científica!",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-4xl px-4 py-8">
+    <FactorioMini client:load locale={locale} />
+    <GameGuide slug="factorio-mini" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>
