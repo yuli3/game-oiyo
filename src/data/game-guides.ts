@@ -5578,4 +5578,78 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "potion-craft": {
+    origin: {
+      ko: "포션 크래프트(Potion Craft: Alchemist Simulator, niceplay games)의 독창적인 '연금술 지도(Alchemy Map) 좌표 탐색'과 '재료 물리 가공(절구 빻기, 가마솥 젓기, 물 희석)' 메커니즘을 웹 브라우저 60fps HTML5 Canvas로 재해석한 연금술 ASMR 시뮬레이션입니다.",
+      en: "An ASMR alchemy simulation reinterpreting Potion Craft's iconic alchemy map coordinate navigation, mortar herb grinding, and cauldron brewing mechanics on 60fps HTML5 Canvas.",
+      ja: "『Potion Craft: Alchemist Simulator』の象徴的な錬金術マップ探索、すり鉢による薬草の粉砕、大鍋の攪拌と希釈システムをHTML5 Canvas上で再現したASMR錬金術シミュレーターです。",
+      zh: "以精巧的 HTML5 Canvas 重现《药剂工艺：炼金术士模拟器》（Potion Craft）经典的古老羊皮纸炼金地图探索、研钵研磨与大锅搅拌调配玩法的 ASMR 模拟经营游戏。",
+      fr: "Une simulation alchimique ASMR réinterprétant la navigation sur carte alchimique et le broyage au mortier de Potion Craft dans votre navigateur.",
+      es: "Una simulación alquímica ASMR que reinterpreta la navegación por el mapa alquímico y la molienda de ingredientes de Potion Craft en el navegador.",
+    },
+    how: {
+      ko: "약초를 골라 절구에 넣고 빻아 궤적 길이를 조절하세요. 가마솥에 투하한 뒤 국자로 저으면 물약 병이 지도 위 곡선 경로를 따라 이동합니다. 치명적인 해골 지대를 피해 원하는 효능 노드에 안착시킨 뒤 풀무로 불을 지펴 비약을 완성하고 손님에게 판매하세요. 지나쳤다면 물을 부어 중심으로 희석할 수 있습니다.",
+      en: "Select an ingredient and grind it in the mortar to determine its trajectory length. Drop it into the cauldron and stir with the ladle to guide the potion bottle along the parchment map. Avoid deadly bone danger zones, align with the target effect node, blow the bellows to finish brewing, and serve the customer!",
+      ja: "薬草を選んですり鉢で粉砕し、移動距離を調整します。大鍋に投入して柄杓でかき混ぜ、羊皮紙マップ上に描かれた軌跡に沿ってフラスコを進めましょう。ドクロの危険地帯を避け、目的の効能ノードに重ねてふいごで火を焚けば完成です。行き過ぎたときは水で薄めて中心へ戻せます。",
+      zh: "选择药草投入研钵研磨以控制轨迹长度。倒入大锅后持勺搅拌，引导药剂瓶沿羊皮纸轨迹前行。避开致命骷髅死域，精准停留在目标药效节点上，拉动风箱生火定型魔药，交付顾客完成订单。若航向偏移过远，可注入清水向中心稀释。",
+      fr: "Choisissez un ingrédient, broyez-le au mortier et remuez le chaudron pour déplacer la fiole sur la carte. Évitez les crânes, atteignez l'effet cible, activez le soufflet et servez le client !",
+      es: "Selecciona un ingrediente, muélelo en el mortero y remueve el caldero para desplazar el frasco por el mapa. Esquiva las calaveras, alcanza el efecto deseado, aviva el fuego con el fuelle y atiende al cliente.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "지도 위의 해골(위험 지대)에 닿으면 어떻게 되나요?",
+          en: "What happens if the potion bottle touches the skull danger zones?",
+          ja: "マップ上のドクロ（危険地帯）に触れるとどうなりますか？",
+          zh: "药剂瓶触碰到地图上的骷髅骨架危险区会发生什么？",
+          fr: "Que se passe-t-il si la fiole touche les zones de danger avec des crânes ?",
+          es: "¿Qué ocurre si el frasco toca las zonas de peligro con calaveras?",
+        },
+        a: {
+          ko: "해골이 널려 있는 지대에 병이 진입하면 비약의 내구도가 급격히 깎이며, 내구도가 0이 되면 병이 깨져 조제가 실패하고 초기화됩니다. 위험 지대 주변을 지나갈 때는 조금씩 조심스럽게 저어 통과해야 합니다.",
+          en: "Entering a skull-filled danger zone rapidly drains the bottle's health. If health reaches zero, the flask shatters, ruining the brew. Stir in careful, controlled increments when navigating tight gaps.",
+          ja: "ドクロが散らばる危険エリアに触れるとフラスコの耐久度が急速に減少します。耐久度が0になると瓶が割れて調合失敗となり最初からやり直しになります。狭い隙間を通る際は慎重にかき混ぜましょう。",
+          zh: "进入密布枯骨的死域会急剧消耗药剂瓶的耐久度。一旦耐久归零，玻璃瓶将碎裂导致调配失败并清空大锅。在危险缝隙间穿行时，请务必微量慢速搅拌。",
+          fr: "Entrer dans une zone de crânes draine rapidement la santé de la fiole. À zéro, le flacon explose et la préparation échoue. Remuez très doucement près de ces zones.",
+          es: "Entrar en una zona de calaveras consume rápidamente la salud del frasco. Si llega a cero, el frasco se rompe y se pierde la poción. Remueve con mucho cuidado.",
+        },
+      },
+      {
+        q: {
+          ko: "약초를 덜 빻으면 어떤 차이가 생기나요?",
+          en: "What is the difference between partially grinding and fully grinding an herb?",
+          ja: "薬草を完全にすりつぶさずに途中で止めるとどうなりますか？",
+          zh: "将草药轻度研磨与完全研磨有什么区别？",
+          fr: "Quelle est la différence entre broyer partiellement ou totalement un ingrédient ?",
+          es: "¿Qué diferencia hay entre moler un ingrediente parcial o totalmente?",
+        },
+        a: {
+          ko: "절구로 100% 빻으면 재료 본연의 최대 경로 전체를 이동할 수 있습니다. 반면 30%나 50%만 빻으면 해당 곡선 경로의 앞부분 일부만 짧게 나아가므로, 원하는 위치에 섬세하게 도달할 때 절구 진행도를 조절해 정밀한 제어가 가능합니다.",
+          en: "Grinding 100% unleashes the full trajectory vector. Partially grinding (e.g. 30% or 50%) moves only a fraction of that path, allowing precise, surgical maneuvers into tight targets.",
+          ja: "100%まで完全に粉砕すると、その素材が持つ移動軌跡を端までフルに進めます。途中で止めると軌跡の一部だけを短く進むため、狙った位置へ微調整しながら着地させたい時に有効です。",
+          zh: "研磨至 100% 可释放该草药完整的全长航行轨迹；若仅研磨 30% 或 50%，则只会激活轨迹的前半段短途路径。在需要极其精密地微调着陆点时，善用轻度研磨是大师级的技巧。",
+          fr: "Broyer à 100 % offre la trajectoire maximale. Un broyage partiel ne déplace la fiole que sur une fraction de la distance, idéal pour viser avec précision.",
+          es: "Moler al 100 % proporciona la trayectoria completa. Una molienda parcial cubre solo una fracción de la ruta, perfecto para afinar el tiro.",
+        },
+      },
+      {
+        q: {
+          ko: "목표 지점을 지나쳤을 때 물(희석)은 어떻게 사용하나요?",
+          en: "How does diluting with water help if I overshoot my target?",
+          ja: "目標を行き過ぎてしまった時、水（希釈）はどう使いますか？",
+          zh: "如果搅拌过度冲过了目标节点，清澈水源该如何使用？",
+          fr: "Comment l'eau aide-t-elle si j'ai dépassé ma cible ?",
+          es: "¿Cómo ayuda el agua si me paso del objetivo?",
+        },
+        a: {
+          ko: "우측 물바가지 버튼을 누르면 연금술 지도의 원점(0, 0) 방향으로 병이 직선으로 끌려옵니다. 원하는 효능을 살짝 지나쳤거나 위험 구역으로 밀려났을 때 물을 조금씩 부어 위치를 완벽하게 맞출 수 있습니다.",
+          en: "Clicking the water ladle draws the potion bottle in a direct straight line back toward the center map origin (0, 0). It acts as an alchemical brake and undo tool to dial in exact effect matches.",
+          ja: "水汲みボタンを押すと、マップの原点（0, 0）に向かってフラスコが直線的に引き戻されます。目的の効果ノードを行き過ぎた時や危険地帯に近づきすぎた時の微調整に活用しましょう。",
+          zh: "点击舀水按钮会向大锅注入清水，将药剂瓶沿直线拉回地图中心原点 (0, 0)。这如同炼金刹车与微调器，能在你稍稍错失目标或逼近死域边缘时化险为夷。",
+          fr: "Ajouter de l'eau ramène la fiole en ligne droite vers l'origine (0, 0). C'est parfait pour corriger un dépassement et affiner l'alignement.",
+          es: "Añadir agua atrae el frasco en línea recta hacia el origen (0, 0). Sirve como freno y ajuste fino si te has pasado del objetivo.",
+        },
+      },
+    ],
+  },
 };

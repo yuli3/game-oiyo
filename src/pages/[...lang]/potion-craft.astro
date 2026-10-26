@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PotionCraft from "../../components/games/PotionCraft";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta = {
+  ko: {
+    title: "포션 크래프트 미니 — 연금술 지도 탐색 & 재료 빻기 약초 조제",
+    description: "절구에 약초를 빻고 가마솥을 저어 연금술 지도 위를 여행하며 손님의 주문에 맞는 비약을 조제하는 ASMR 연금술 시뮬레이션 게임."
+  },
+  en: {
+    title: "Potion Craft Mini Web — Alchemy Map Navigation & Herb Grinding",
+    description: "Grind ingredients in the mortar, stir the cauldron, and chart your path across the parchment alchemy map to brew magical potions."
+  },
+  ja: {
+    title: "ポーション・クラフト Mini Web — 錬金術マップ探索＆調合シミュレーション",
+    description: "薬草をすりつぶして大鍋をかき混ぜ、羊皮紙マップ上を移動しながら客の注文に応じた魔法薬を調合するASMR錬金術シミュレーター。"
+  },
+  zh: {
+    title: "药剂工艺 Potion Craft Mini Web — 炼金地图探索与草药研磨调配",
+    description: "在研钵中研磨草药，搅拌大锅引导药剂瓶在古老羊皮纸地图上航行，躲避致命枯骨，调配契合顾客订单的奇幻魔药。"
+  },
+  fr: {
+    title: "Potion Craft Mini Web — Navigation alchimique et concoction de potions",
+    description: "Broyez les herbes, remuez le chaudron et explorez la carte alchimique pour concocter les potions demandées par vos clients."
+  },
+  es: {
+    title: "Potion Craft Mini Web — Navegación alquímica y elaboración de pociones",
+    description: "Muele ingredientes en el mortero, remueve el caldero y traza tu rumbo por el mapa alquímico para elaborar pociones mágicas."
+  }
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-4xl px-4 py-8">
+    <PotionCraft client:load />
+    <GameGuide slug="potion-craft" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>

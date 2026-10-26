@@ -734,6 +734,20 @@ export const MISSION_CATALOG: Array<{
     goal: 30,
     xpReward: 50,
   },
+  {
+    id: "potion-craft-brew-3",
+    gameSlug: "potion-craft",
+    title: {
+      ko: "포션 크래프트에서 손님 주문 2회 이상 완제 서빙",
+      en: "Brew and serve 2 or more potions to customers in Potion Craft",
+      ja: "ポーション・クラフトで客の注文ポーションを2回以上調合して販売",
+      zh: "在药剂工艺中成功调配并交付 2 次以上顾客订单",
+      fr: "Préparez et servez au moins 2 potions dans Potion Craft",
+      es: "Elabora y sirve 2 o más pociones a clientes en Potion Craft",
+    },
+    goal: 2,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {
