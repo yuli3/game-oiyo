@@ -1,56 +1,52 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import FrostpunkRingGame from "../../components/games/FrostpunkRing";
-import GamePlayBeacon from "../../components/games/GamePlayBeacon";
-import GameGuideSection from "../../components/games/GameGuideSection.astro";
-import RelatedGames from "../../components/games/RelatedGames.astro";
-import ShareChallengeBanner from "../../components/games/ShareChallengeBanner";
-import { LOCALES, type Locale } from "../../lib/i18n";
+import FrostpunkRing from "../../components/games/FrostpunkRing";
+import GameGuide from "../../components/GameGuide.astro";
+import { locales, type Locale } from "../../lib/i18n";
 
 export function getStaticPaths() {
-  return LOCALES.map((locale) => ({
-    params: { lang: locale === "en" ? undefined : locale },
-    props: { locale },
-  }));
+  return locales.map((l) => ({ params: { lang: l === "en" ? undefined : l } }));
 }
 
-const { locale } = Astro.props as { locale: Locale };
+const locale: Locale = (Astro.params.lang as Locale) || "en";
 
-const seoTitle: Record<Locale, string> = {
-  ko: "프로스트펑크 열기 도시 — 증기 발전기 동심원 생존 건설 게임 | OIYO 게임",
-  en: "Frostpunk Heat Ring City — Steam Generator Survival Builder | OIYO Games",
-  ja: "フロストパンク熱気都市 — 蒸気ジェネレーター同心円サバイバル建設 | OIYOゲーム",
-  zh: "冰汽时代热环之城 — 蒸汽核心同心圆生存建造游戏 | OIYO 游戏",
-  fr: "Frostpunk Heat Ring City — Survie et Construction Thermique | OIYO Games",
-  es: "Frostpunk Heat Ring City — Construcción y Supervivencia Térmica | OIYO Games",
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "프로스트펑크 열기 도시 — 증기 발전기 동심원 생존 건설 | OIYO Game",
+    description:
+      "중앙 증기 발전기를 둘러싼 4개의 동심원 열기 구역에 석탄 파쇄기·보온 합숙소·의무실을 배치하고 -70°C 대폭설 화이트아웃을 생존하세요.",
+  },
+  en: {
+    title: "Frostpunk Heat Ring City — Steam Generator Survival Builder | OIYO Game",
+    description:
+      "Build bunkhouses, coal thumpers, and infirmaries across 4 concentric heat rings around the Central Steam Generator to survive the -70°C Great Whiteout.",
+  },
+  ja: {
+    title: "フロストパンク熱気都市 — 蒸気ジェネレーター同心円サバイバル建設 | OIYO Game",
+    description:
+      "中央蒸気ジェネレーターの周囲4つの同心円リングに炭鉱・宿舎・救護所を建設し、-70℃の大寒波ホワイトアウトを生き延びよう。",
+  },
+  zh: {
+    title: "冰汽时代热环之城 — 蒸汽核心同心圆生存建造 | OIYO Game",
+    description:
+      "围绕中央蒸汽发生器的四层同心热力环建造采煤机、保温宿舍与医务所，颁布法典并顶住 -70°C 的大暴雪白化天灾。",
+  },
+  fr: {
+    title: "Frostpunk Heat Ring City — Survie et Construction Thermique | OIYO Game",
+    description:
+      "Construisez dortoirs, mines de charbon et infirmeries sur 4 anneaux thermiques concentriques pour survivre au blizzard à -70°C.",
+  },
+  es: {
+    title: "Frostpunk Heat Ring City — Construcción y Supervivencia Térmica | OIYO Game",
+    description:
+      "Construye barracones, minas de carbón y enfermerías en 4 anillos térmicos concéntricos para sobrevivir a la ventisca de -70°C.",
+  },
 };
 
-const seoDesc: Record<Locale, string> = {
-  ko: "중앙 증기 발전기(Steam Generator)를 중심으로 4개의 동심원 열기 구역에 석탄 파쇄기·보온 합숙소·의무실을 배치하고 -70°C 대폭설 화이트아웃을 생존하세요.",
-  en: "Build insulated bunkhouses, coal thumpers, and infirmaries across 4 concentric heat rings around the Central Steam Generator to survive the -70°C Great Whiteout.",
-  ja: "中央蒸気ジェネレーターの周囲4つの同心円ヒートリングに炭鉱・宿舎・救護所を建設し、-70℃の大寒波ホワイトアウトを生き延びよう。",
-  zh: "围绕中央蒸汽发生器的四层同心热力环建造采煤机、保温宿舍与医务所，颁布法典并顶住 -70°C 的大暴雪白化天灾。",
-  fr: "Construisez des dortoirs isolés, des mines de charbon et des infirmeries sur 4 anneaux thermiques concentriques pour survivre au blizzard à -70°C.",
-  es: "Construye barracones aislados, minas de carbón e enfermerías en 4 anillos térmicos concéntricos para sobrevivir a la ventisca de -70°C.",
-};
+const m = meta[locale] || meta.en;
 ---
 
-<BaseLayout
-  title={seoTitle[locale] ?? seoTitle.en}
-  description={seoDesc[locale] ?? seoDesc.en}
-  locale={locale}
->
-  <main class="mx-auto max-w-5xl px-4 py-6">
-    <FrostpunkRingGame client:load locale={locale} />
-    <div class="mt-6">
-      <ShareChallengeBanner
-        client:visible
-        gameSlug="frostpunk-ring"
-        locale={locale}
-      />
-    </div>
-    <GameGuideSection slug="frostpunk-ring" locale={locale} />
-    <RelatedGames currentSlug="frostpunk-ring" locale={locale} />
-    <GamePlayBeacon client:idle slug="frostpunk-ring" locale={locale} />
-  </main>
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <FrostpunkRing client:load locale={locale} />
+  <GameGuide slug="frostpunk-ring" locale={locale} name={m.title.split(" — ")[0]} />
 </BaseLayout>

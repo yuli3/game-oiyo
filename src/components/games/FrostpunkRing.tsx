@@ -47,7 +47,7 @@ export default function FrostpunkRing({ locale = 'en' }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const audioRef = useRef<AudioContext | null>(null);
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } =
-    useArcadePortal(locale);
+    useArcadePortal({ locale });
 
   const ensureAudio = useCallback(() => {
     if (typeof window === 'undefined') return null;

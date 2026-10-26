@@ -1,6 +1,6 @@
-import { createSeededRng, computeAdaptiveFmodMix, type AdaptiveAudioState } from "./engine-v2";
+import { createSeededRng, computeAdaptiveFmodMix, type AdaptiveAudioMix } from "./engine-v2";
 import { SdfLightField2D } from "./engine-v3-render";
-import { evaluatePostProcessVolume, type PostProcessVolumeDesc } from "./engine-v5";
+import { evaluatePostProcessVolume } from "./engine-v5";
 
 export type FrostBuildingType =
   | "empty"
@@ -52,7 +52,7 @@ export interface FrostpunkRingState {
   laws: Record<FrostLawId, FrostLaw>;
   score: number;
   lastEvent: string;
-  fmodMix: AdaptiveAudioState;
+  fmodMix: AdaptiveAudioMix;
   postProcess: {
     vignette: number;
     chromaticAberration: number;
@@ -180,12 +180,7 @@ export function createInitialFrostpunkRingState(seed = 20261027): FrostpunkRingS
     },
     score: 0,
     lastEvent: "generator-ignited",
-    fmodMix: computeAdaptiveFmodMix({
-      dangerRatio: 0.15,
-      comboCount: 0,
-      hpRatio: 0.68,
-      isPaused: false,
-    }),
+    fmodMix: computeAdaptiveFmodMix(0.15, 0.68),
     postProcess: {
       vignette: 0.25,
       chromaticAberration: 0.05,
@@ -434,18 +429,12 @@ export function stepFrostpunkHour(
   ]);
 
   const coldSeverity = Math.min(1, Math.abs(ambientTempC) / 70);
-  const volumes: PostProcessVolumeDesc[] = [
-    {
-      id: "blizzard-frost",
-      weight: coldSeverity,
-      vignette: 0.45,
-      chromaticAberration: 0.18,
-      bloomIntensity: centerGlow.luma > 0.3 ? 0.65 : 0.15,
-      colorTempShift: -0.6,
-      filmGrain: 0.22,
-    },
-  ];
-  const pp = evaluatePostProcessVolume(volumes);
+  // Generator stress reads as "trauma" so overdrive visibly shakes the lens.
+  const pp = evaluatePostProcessVolume({
+    damageTrauma: generatorStress / 100,
+    temperatureCelsius: ambientTempC,
+    isTimeFrozen: false,
+  });
 
   let status: FrostpunkRingState["status"] = "playing";
   let lastEvent = "shift-completed";
@@ -478,16 +467,16 @@ export function stepFrostpunkHour(
     slots: updatedSlots,
     score: state.score + hoursToAdvance * 35 + (status === "won" ? 1500 : 0),
     lastEvent,
-    fmodMix: computeAdaptiveFmodMix({
-      dangerRatio: Math.max(coldSeverity, generatorStress / 100),
-      comboCount: state.generatorLevel,
-      hpRatio: nextHope / 100,
-      isPaused: status !== "playing",
-    }),
+    fmodMix: computeAdaptiveFmodMix(
+      Math.max(coldSeverity, generatorStress / 100),
+      nextHope / 100
+    ),
     postProcess: {
-      vignette: pp.vignette,
-      chromaticAberration: pp.chromaticAberration,
-      bloomIntensity: pp.bloomIntensity,
+      vignette: pp.frostVignetteAlpha,
+      chromaticAberration: pp.chromaticAberrationPx,
+      bloomIntensity: Number(
+        (pp.radialBloomIntensity + (centerGlow.luma > 0.3 ? 0.3 : 0)).toFixed(2)
+      ),
     },
   };
 }
