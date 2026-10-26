@@ -1,0 +1,55 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SwatBreach from "../../components/games/SwatBreach";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "택티컬 스왓 브리치 — CQB 도어 브리칭 & 인질 구출 전술 시뮬레이터",
+    description:
+      "건물 청사진 위에서 스왓(SWAT) 분대의 진입 경로와 섬광탄 투척 지점을 설계하고 동시 돌입(GO CODE)하여 무장 용의자를 제압하고 인질을 구출하세요!",
+  },
+  en: {
+    title: "Tactical SWAT Breach — CQB Room Clearing & Hostage Rescue Simulator",
+    description:
+      "Plot entry waypoints and flashbang targets on the blueprint floorplan, then execute a synchronized SWAT breach to neutralize suspects and rescue hostages!",
+  },
+  ja: {
+    title: "タクティカル SWAT ブリーチ — CQBドア突入＆人質救出戦術シミュレーター",
+    description:
+      "建物の青写真上でSWAT部隊の突入ルートと閃光弾の投擲位置を設計し、同時突入(GO CODE)で武装容疑者を制圧して人質を救出せよ！",
+  },
+  zh: {
+    title: "战术特警：破门突击 (Tactical SWAT Breach) — CQB 室内清剿与人质营救策略游戏",
+    description:
+      "在建筑蓝图上规划特警干员的突入航点与闪光弹震慑落点，下达行动指令同步破门，制服武装分子并安全解救人质！",
+  },
+  fr: {
+    title: "Tactical SWAT Breach — Simulateur tactique d'assaut CQB et sauvetage d'otages",
+    description:
+      "Tracez les itinéraires d'entrée et les cibles de grenades flash sur le plan, puis lancez l'assaut SWAT coordonné pour libérer les otages !",
+  },
+  es: {
+    title: "Tactical SWAT Breach — Simulador táctico CQB y rescate de rehenes",
+    description:
+      "¡Traza rutas de irrupción y objetivos de granadas cegadoras en el plano y ejecuta un asalto SWAT sincronizado para rescatar a los rehenes!",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-4xl px-4 py-8">
+    <SwatBreach client:load locale={locale} />
+    <GameGuide slug="swat-breach" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>

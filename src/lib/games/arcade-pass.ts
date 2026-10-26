@@ -846,6 +846,20 @@ export const MISSION_CATALOG: Array<{
     goal: 8,
     xpReward: 50,
   },
+  {
+    id: "swat-breach-clear-1",
+    gameSlug: "swat-breach",
+    title: {
+      ko: "택티컬 스왓 브리치에서 무장 용의자를 모두 제압하고 인질 구출 작전 성공",
+      en: "Neutralize all suspects and rescue the hostages in Tactical SWAT Breach",
+      ja: "タクティカル SWAT ブリーチで全容疑者を制圧し人質救出作戦を成功させる",
+      zh: "在战术特警：破门突击中肃清全部歹徒并成功营救人质",
+      fr: "Neutralisez tous les suspects et sauvez les otages dans Tactical SWAT Breach",
+      es: "Neutraliza a todos los sospechosos y rescata a los rehenes en Tactical SWAT Breach",
+    },
+    goal: 1,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {

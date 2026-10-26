@@ -6098,4 +6098,60 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "swat-breach": {
+    origin: {
+      ko: "『택티컬 스왓 브리치 (Tactical SWAT Breach)』는 KillHouse Games의 명작 탑다운 CQB 전술 시뮬레이터 『Door Kickers』와 『Rainbow Six』 시리즈의 사전 브리핑(Planning Phase) 시스템에서 영감을 받은 OIYO 오리지널 근접 실내전(CQB) 전술 게임입니다. 건물 평면도(Blueprint) 위에서 방패병(ALPHA-1)과 돌격병(BRAVO-2)의 진입 동선 및 섬광탄 투척 좌표를 치밀하게 설계한 뒤, 『작전 개시(GO CODE)』 신호와 함께 동시에 문을 박차고 들어가 시야각(FOV) 레이캐스트 사격으로 무장 용의자를 제압하고 인질을 안전하게 구출하는 긴박감을 브라우저에서 구현했습니다.",
+      en: "Tactical SWAT Breach is an original OIYO top-down CQB (Close Quarters Battle) tactical simulator inspired by KillHouse Games' Door Kickers and classic Rainbow Six blueprint planning. Plot entry waypoints and flashbang targets for ALPHA-1 (Ballistic Shield) and BRAVO-2 (Assault Breacher) on the architectural floorplan, then hit GO CODE to watch your synchronized breach unfold with real-time raycast line-of-sight combat.",
+      ja: "『タクティカル SWAT ブリーチ（Tactical SWAT Breach）』は、名作トップダウンCQB戦術ゲーム『Door Kickers』や『Rainbow Six』の突入計画システムにインスパイアされたOIYOオリジナルの室内突入戦術シミュレーターです。建物の青写真上で盾兵（ALPHA-1）と突撃兵（BRAVO-2）の移動経路および閃光弾の投擲位置を設計し、『突入開始（GO CODE）』の合図でドアを突破して武装容疑者を制圧・人質を救出する緊迫の戦術体験を楽しめます。",
+      zh: "《战术特警：破门突击（Tactical SWAT Breach）》灵感源自经典俯视角室内近战（CQB）神作《Door Kickers（破门而入）》与《彩虹六号》战术蓝图规划系统。在建筑平面蓝图上为持盾干员（ALPHA-1）与突击干员（BRAVO-2）预设行进航点与闪光弹震慑落点，随后下达“行动开始（GO CODE）”指令同步破门突入，通过实时视线（LOS）交火肃清歹徒并营救人质。",
+      fr: "Tactical SWAT Breach est un simulateur tactique CQB en vue de dessus inspiré de Door Kickers et Rainbow Six. Tracez les itinéraires d'entrée et les cibles de grenades flash pour ALPHA-1 (Bouclier) et BRAVO-2 (Assaut) sur le plan architectural, puis lancez le GO CODE pour exécuter un assaut coordonné.",
+      es: "Tactical SWAT Breach es un simulador táctico CQB inspirado en Door Kickers y Rainbow Six. Traza rutas de entrada y objetivos de granadas cegadoras para ALPHA-1 (Escudo) y BRAVO-2 (Asalto) en el plano arquitectónico, y pulsa GO CODE para ejecutar la irrupción en tiempo real.",
+    },
+    how: {
+      ko: "1) 『📋 작전 설계(PLANNING)』 단계에서 하단 툴바의 『🛡️ ALPHA-1 (Shield)』 또는 『⚡ BRAVO-2 (Assault)』 대원을 선택하세요. 2) 『📍 이동 경로 설정』 모드에서 도면의 바닥 타일이나 문('DOOR')을 순서대로 클릭해 진입 경로(점선)를 그리거나, 『⚡ 표준 전술 경로』 버튼으로 추천 진입 루트를 불러오세요. 3) 『💥 섬광탄 투척 지점』 모드로 전환해 용의자들이 모인 방 안을 클릭하면 문 돌파 즉시 해당 지점으로 섬광탄이 투척되어 반경 내의 적들을 4.5초간 기절(💫)시킵니다. 4) 상단의 『🚨 작전 개시 (GO CODE)』를 눌러 돌입하세요!",
+      en: "1) During TACTICAL PLANNING, select either '🛡️ ALPHA-1 (Shield)' or '⚡ BRAVO-2 (Assault)' from the bottom bar. 2) In '📍 Plot Waypoints' mode, click floor and door ('DOOR') tiles sequentially to plot their entry path (or click '⚡ Auto-Plan Route'). 3) Switch to '💥 Set Flashbang Target' and click inside a hostile room so the operator automatically tosses a stun grenade upon breaching the door, blinding suspects (💫) for 4.5s. 4) Press '🚨 EXECUTE BREACH (GO CODE)' to launch the assault!",
+      ja: "1) 『📋 戦術プランニング』段階で、下部の『🛡️ ALPHA-1 (Shield)』または『⚡ BRAVO-2 (Assault)』を選択します。2) 『📍 移動経路プロット』モードで床やドア（DOOR）のマスを順にクリックして突入経路を描くか、『⚡ 標準戦術ルート』ボタンを押します。3) 『💥 閃光弾ターゲット』モードに切り替えて敵のいる部屋をクリックすると、ドア突破と同時に閃光弾を投げ込み、周囲の敵を4.5秒間スタン(💫)させます。4) 『🚨 突入開始 (GO CODE)』で実行！",
+      zh: "1) 在“📋 战术路线规划”阶段，从底部选择“🛡️ ALPHA-1（防弹盾）”或“⚡ BRAVO-2（突击手）”。2) 在“📍 规划行进航点”模式下依次点击地面与房门（DOOR）绘制突入路径（或点击“⚡ 标准战术路线”一键生成）。3) 切换至“💥 设定闪光弹落点”并点击歹徒所在的房间，干员破门瞬间便会投出闪光弹令周围敌人在 4.5 秒内致盲眩晕（💫）。4) 点击“🚨 行动开始（GO CODE）”发起突袭！",
+      fr: "1) En phase de planification, sélectionnez ALPHA-1 (Bouclier) ou BRAVO-2 (Assaut). 2) En mode « 📍 Tracer itinéraire », cliquez sur les cases et les portes (« DOOR ») pour définir le chemin d'entrée. 3) En mode « 💥 Cible Grenade Flash », cliquez dans une pièce occupée par l'ennemi pour l'aveugler (💫) dès l'ouverture de la porte. 4) Cliquez sur « 🚨 LANCER L'ASSAUT » !",
+      es: "1) En la fase de planificación, selecciona a ALPHA-1 (Escudo) o BRAVO-2 (Asalto). 2) En modo «📍 Trazar ruta», haz clic en las casillas y puertas («DOOR») para definir el avance. 3) En modo «💥 Objetivo Cegadora», marca el interior de una sala enemiga para aturdir a los sospechosos (💫) al abrir la puerta. 4) ¡Pulsa «🚨 INICIAR IRRUPCIÓN»!",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "방패병(ALPHA-1)과 돌격병(BRAVO-2)의 차이점은 무엇인가요?",
+          en: "What is the difference between ALPHA-1 (Shield) and BRAVO-2 (Assault)?",
+          ja: "盾兵（ALPHA-1）と突撃兵（BRAVO-2）の違いは何ですか？",
+          zh: "一号盾牌干员（ALPHA-1）与二号突击干员（BRAVO-2）有什么区别？",
+          fr: "Quelle est la différence entre ALPHA-1 (Bouclier) et BRAVO-2 (Assaut) ?",
+          es: "¿Cuál es la diferencia entre ALPHA-1 (Escudo) y BRAVO-2 (Asalto)?",
+        },
+        a: {
+          ko: "ALPHA-1은 방탄 방패를 장비하고 있어 체력(160 HP)이 높고 적의 사격 피해를 절반(50%)으로 경감하므로 위험한 정문 돌파(Pointman)에 적합합니다. BRAVO-2는 기동성과 측면 우회 타격에 특화되어 있어 두 대원이 상하 통로에서 동시에 진입해 교차 사격(Crossfire)을 형성하면 손실 없이 제압할 수 있습니다.",
+          en: "ALPHA-1 carries a ballistic shield with higher health (160 HP) and takes 50% reduced gunfire damage, making him the ideal pointman for main doors. BRAVO-2 excels at flanking through secondary doors to establish a synchronized crossfire.",
+          ja: "ALPHA-1は防弾シールドを装備しており、体力が高く(160 HP)敵からの銃撃ダメージを50%軽減できるため、危険な正面突破に向いています。BRAVO-2は側面からの回り込みに適しており、2人で同時に突入して十字砲火（クロスファイア）を作ると安全に制圧できます。",
+          zh: "ALPHA-1 配备重型防弹盾牌，不仅生命值更高（160 HP），还能减免 50% 的敌方枪击伤害，非常适合作为主门吸引火力的先锋；BRAVO-2 则适合从侧门同步破门包抄，形成交叉火力瞬间瓦解敌方防线。",
+          fr: "ALPHA-1 porte un bouclier balistique (160 PV) qui réduit de 50 % les dégâts reçus, idéal pour ouvrir la marche. BRAVO-2 est parfait pour contourner par une porte secondaire et créer des tirs croisés.",
+          es: "ALPHA-1 lleva un escudo balístico (160 PV) que reduce a la mitad el daño recibido, ideal para entrar primero. BRAVO-2 es perfecto para flanquear por puertas secundarias y crear fuego cruzado.",
+        },
+      },
+      {
+        q: {
+          ko: "섬광탄(💥)은 언제 자동으로 투척되나요?",
+          en: "When do operators throw their queued Flashbang (💥)?",
+          ja: "設定した閃光弾（💥）はどのタイミングで自動的に投げ込まれますか？",
+          zh: "预设的闪光弹（💥）会在什么时候自动投出？",
+          fr: "À quel moment les agents lancent-ils leur grenade flash (💥) ?",
+          es: "¿En qué momento lanzan los agentes su granada cegadora (💥)?",
+        },
+        a: {
+          ko: "대원이 지정된 이동 경로를 따라가다가 닫힌 문('DOOR') 타일에 접근해 문을 개방(Breach)하는 순간, 사전에 지정해 둔 『💥 섬광탄 투척 지점』으로 즉시 섬광탄을 먼저 던져 넣습니다. 폭발 반경(3.5타일) 내의 용의자들은 4.5초 동안 반격하지 못하므로 무피해 진압의 핵심입니다.",
+          en: "The moment an operator reaches and breaches a closed door ('DOOR') along their plotted path, they automatically detonate their queued Flashbang at the designated '💥' target coordinate, stunning all suspects within 3.5 tiles for 4.5 seconds before entering the room!",
+          ja: "隊員が移動経路に沿って閉じたドア（DOOR）に近づき、ドアを開放（ブリーチ）した瞬間に、あらかじめ設定した『💥』地点へ自動的に閃光弾を投げ込みます。半径3.5マス以内の容疑者は4.5秒間反撃できなくなるため、無傷クリアの鍵となります。",
+          zh: "当干员沿着规划路线行进至紧闭的房门（DOOR）并破门开启的瞬间，便会第一时间向预设的“💥”坐标投爆闪光弹。爆炸半径 3.5 格内的所有歹徒将陷入 4.5 秒的致盲眩晕，是实现零伤亡完美通关的核心战术。",
+          fr: "Dès qu'un agent atteint et ouvre une porte fermée (« DOOR ») sur son trajet, il déclenche automatiquement sa grenade flash sur la cible « 💥 », aveuglant tous les suspects dans un rayon de 3,5 cases pendant 4,5 secondes.",
+          es: "En el instante en que un agente alcanza y abre una puerta cerrada («DOOR») en su ruta, detona automáticamente su granada cegadora en el punto «💥», aturdiendo a los sospechosos en un radio de 3,5 casillas durante 4,5 segundos.",
+        },
+      },
+    ],
+  },
 };
