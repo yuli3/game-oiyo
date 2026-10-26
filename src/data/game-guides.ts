@@ -5300,4 +5300,60 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "ftl-mini": {
+    origin: {
+      ko: "FTL 우주선 미니(FTL Spaceship Mini Web)는 인디 SF 로그라이크의 불후의 명작 'FTL: Faster Than Light'의 함선 구획 전력 배분과 실시간 전술 함대전을 웹 캔버스에 구현한 전략 게임입니다. 단면으로 펼쳐진 우주선 내부에서 원자로 동력을 쉴드·무기·엔진·의무실로 실시간 라우팅하고, 선원을 이동시켜 화재 진압 및 시스템 수리를 지휘하며, 적함의 핵심 구획을 정밀 타격하여 살아남아야 합니다.",
+      en: "FTL Spaceship Mini Web brings Subset Games' celebrated spaceship simulation classic to the browser. As captain of a lone cruiser fleeing through hostile rebel territory, players route reactor power between shields, weapon batteries, engines, and medbays while directing crew to extinguish blazes and repair critical breaches during real-time tactical ship-to-ship duels.",
+      ja: "FTL 宇宙船 Mini Web（FTL Spaceship Mini Web）は、インディーゲーム界の伝説的SFローグライク『FTL: Faster Than Light』の艦内電力ルーティングとリアルタイム艦隊戦をブラウザ向けに再現した作品です。宇宙船の断面図でシールド・兵装・機関室へ電力を配分し、乗組員を指揮して火災鎮火やシステム修理を行いつつ、敵艦の急所を撃破していきます。",
+      zh: "超越光速 FTL Mini Web（FTL Spaceship Mini Web）将备受赞誉的太空模拟神作《FTL: Faster Than Light》的飞船舱段电力调配与即时战术舰战完整复刻到网页端。玩家坐镇巡洋舰舰桥，在飞船剖面网格中实时调动能源并指挥船员扑灭火情、抢修护盾，针对敌方弱点舱室展开精确火力打击。",
+      fr: "FTL Spaceship Mini Web adapte l'incontournable simulateur de vaisseau spatial rogue-like FTL sur le web. Dirigez la puissance du réacteur entre boucliers, armes et moteurs, commandez votre équipage pour réparer les brèches et ciblez les points faibles des vaisseaux rebelles.",
+      es: "FTL Spaceship Mini Web traslada al navegador la aclamada fórmula de simulación espacial táctica de FTL. Enruta la energía del reactor entre escudos, armas y motores, comanda a la tripulación para sofocar fuegos y averías, y destruye las naves enemigas apuntando a sus salas clave.",
+    },
+    how: {
+      ko: "화면 좌측은 아군 순양함, 우측은 적군 함선입니다. 하단 'Reactor Systems'에서 각 구획(쉴드, 무기, 엔진, 의무실) 옆의 [+]와 [-] 버튼을 눌러 제한된 원자로 전력을 실시간 분배하세요. 무기가 충전되면 클릭 후 적함의 원하는 방(쉴드실, 무기실 등)을 클릭하여 조준 사격합니다. 선원을 클릭한 뒤 아군 방을 클릭하면 해당 구역으로 이동해 화재를 끄고 고장 난 장비를 수리합니다.",
+      en: "Your cruiser is on the left; the hostile vessel is on the right. In the 'Reactor Systems' panel at the bottom, tap [+] and [-] to route limited reactor power between Shields, Weapons, Engines, and Medbay. Once a weapon charges, click it and select an enemy room (Shields, Weapons, etc.) to target. Click a crew member and select any player room to dispatch them for system repairs or firefighting.",
+      ja: "画面左側が自軍の巡洋艦、右側が敵艦です。下部の『Reactor Systems』で各区画（シールド・兵器・エンジン・医療室）の[+]と[-]を押し、限られた原子炉電力をリアルタイムに配分しましょう。兵器がチャージされたらクリックし、敵艦の狙いたい部屋（シールド室や兵器室）をクリックして照準を合わせます。乗組員を選んで部屋をクリックすると移動し、消火や故障修理を行います。",
+      zh: "画面左侧为我方巡洋舰，右侧为敌方交战舰艇。在下方的‘Reactor Systems’控制台点击[+]与[-]，将宝贵的反应堆电量实时注入护盾、火炮、引擎或医务室。武器蓄能完毕后，先点击武器再点击敌方目标舱室（如护盾室或武器室）实施定点轰炸。点击船员再点击受损船舱即可指派前往扑灭火灾与抢修系统。",
+      fr: "Votre vaisseau est à gauche, l'ennemi à droite. Répartissez l'énergie du réacteur avec les boutons [+] et [-]. Lorsqu'une arme est chargée, cliquez dessus puis sur une salle ennemie pour tirer. Déplacez vos équipiers dans les salles endommagées pour réparer les pannes et éteindre les incendies.",
+      es: "Tu crucero está a la izquierda y la nave hostil a la derecha. Distribuye la energía del reactor con [+] y [-]. Cuando un arma se cargue, pulsa sobre ella y selecciona la sala enemiga que deseas bombardear. Envía tripulantes a las salas dañadas para reparar sistemas y sofocar llamas.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "적의 에너지 쉴드(Shield)를 효율적으로 뚫는 공격 순서는 무엇인가요?",
+          en: "What is the most effective tactical weapon sequence to penetrate enemy shields?",
+          ja: "敵のエネルギーシールドを効率よく突破する攻撃手順は何ですか？",
+          zh: "如何编排舰载火力发射时序以最有效率地击碎敌舰能量护盾？",
+          fr: "Quel est l'enchaînement idéal pour percer les boucliers énergétiques ennemis ?",
+          es: "¿Cuál es la secuencia táctica más eficaz para traspasar los escudos enemigos?",
+        },
+        a: {
+          ko: "에너지 쉴드는 레이저 1발당 1겹씩 흡수합니다. 따라서 아르테미스 미사일(Artemis Missile)은 쉴드를 완전히 무시하고 관통하므로 먼저 적의 '쉴드실(Shields)'을 직접 미사일로 타격하여 쉴드 발생 장치 자체를 고장 내세요. 쉴드가 무력화되면 버스트 레이저로 적의 '무기실(Weapons)'을 집중 포격하여 반격을 봉쇄하는 것이 교과서적인 전술입니다.",
+          en: "Energy shields absorb one incoming laser bolt per active layer. However, missiles (like the Artemis Missile) completely bypass shields! Use missiles to directly strike the enemy's Shield room to disable their generator. Once their shields collapse, unleash your Burst Laser volleys into their Weapons room to prevent them from firing back.",
+          ja: "シールドは通常レーザーを1発につき1枚吸収します。しかしミサイル（Artemis Missile）はシールドを完全に貫通して直接命中します！ まずミサイルで敵の『シールド室』を破壊してシールド発生器そのものを停止させ、無防備になったところへバーストレーザーを『兵器室』に叩き込んで反撃を阻止するのが定석です。",
+          zh: "能量护盾每层可抵消一束常规激光。但阿尔忒弥斯导弹具备纯粹护盾穿透特性！先使用导弹精确穿透直击敌舰‘护盾室（Shields）’，彻底摧毁其供电与发生器。待其护盾崩解瓦解后，立刻用连发激光集火其‘武器室（Weapons）’，彻底瘫痪敌舰的一切反击手段。",
+          fr: "Les boucliers absorbent un tir laser par couche. Les missiles traversent les boucliers : ciblez d'abord la salle des boucliers ennemie avec un missile pour couper leur alimentation, puis détruisez leur salle d'armes avec vos lasers.",
+          es: "Los escudos absorben un impacto láser por capa. Los misiles atraviesan los escudos por completo: apunta primero a su sala de escudos con un misil para apagar su generador y luego bombardea su sala de armas con láseres.",
+        },
+      },
+      {
+        q: {
+          ko: "선원의 체력이 떨어지거나 선내에 불이 났을 때는 어떻게 대처하나요?",
+          en: "How do I handle low crew health, cabin fires, and system damage?",
+          ja: "乗組員のHPが低下したり艦内で火災が発生した時はどう対処すべきですか？",
+          zh: "当船员负伤濒死或船舱内部突发火灾与系统故障时该如何快速处置？",
+          fr: "Comment soigner l'équipage blessé et maîtriser les incendies à bord ?",
+          es: "¿Cómo curo a la tripulación herida y controlo los incendios a bordo?",
+        },
+        a: {
+          ko: "선원이 다쳤다면 의무실(Medbay)에 전력을 넣고 선원을 의무실 칸으로 이동시키세요. 초당 20의 체력이 빠르게 치료됩니다. 화재가 발생하면 즉시 선원을 해당 방으로 파견하여 불을 끄게 하세요. 화재는 시스템을 지속적으로 파괴하므로 불을 먼저 진압한 뒤 고장 난 시스템을 수리해야 합니다.",
+          en: "When crew take damage, power up the Medbay and move them inside to rapidly regenerate 20 HP per second. If a compartment catches fire, dispatch crew immediately to extinguish the flames before repairing the system, as active fires cause continuous hull and system degradation.",
+          ja: "乗組員が負傷したら医療室（Medbay）に電力を送り、医療室の部屋へ移動させましょう。毎秒20HPの速度で急速治療されます。火災が発生した場合は直ちに乗組員を送り込んで消火させてください。火災はシステムを刻々と破壊するため、まず消火してから修理を行うのが鉄則です。",
+          zh: "船员负伤时，向医务室（Medbay）通电并将受创船员调入医务室内，每秒可获得20点高速生命自愈。舱内起火时，须立刻指派附近船员进舱灭火，火灾会持续灼烧破坏舱载设备，务必先行扑灭火苗再进行系统抢修。",
+          fr: "Alimentez l'infirmerie (Medbay) et envoyez-y vos membres d'équipage blessés pour les soigner (+20 PV/s). En cas d'incendie, envoyez l'équipage éteindre les flammes en priorité pour éviter la destruction des systèmes.",
+          es: "Activa la enfermería (Medbay) y traslada a los tripulantes heridos para que recuperen 20 PV por segundo. Si se declara un incendio, envía de inmediato a la tripulación a extinguir el fuego antes de reparar la sala.",
+        },
+      },
+    ],
+  },
 };

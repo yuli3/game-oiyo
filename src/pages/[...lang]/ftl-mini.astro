@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { FTLMini } from "../../components/games/FTLMini";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "FTL 우주선 미니 — 함선 단면 구획 배전 & 실시간 우주 함대전",
+    description: "우주선 단면 구획에 동력을 배분하고 선원을 지휘하여 시스템을 수리하며, 적함 구획을 조준 사격하여 반란군 함대를 격파하는 실시간 로그라이크 우주 함대전 게임.",
+  },
+  en: {
+    title: "FTL Spaceship Mini Web — Starship Cutaway & Real-Time Tactical Space Combat",
+    description: "Manage ship reactor power routing, command crew to repair breaches and fires, and target hostile enemy compartments in real-time tactical space combat.",
+  },
+  ja: {
+    title: "FTL 宇宙船 Mini Web — 艦内区画電力配分＆リアルタイム宇宙艦隊戦",
+    description: "宇宙船の断面グリッドでシールド・兵装・エンジンへ電력을 配分し、乗組員を指揮して損傷を修理しながら敵艦の急所を撃破するSFローグライク宇宙戦シミュレーション。",
+  },
+  zh: {
+    title: "超越光速 FTL Mini Web — 飞船截面能源调配与即时太空舰载决战",
+    description: "在飞船纵剖面网格中实时调配反应堆电力，指挥船员扑灭舱内火灾与抢修受损系统，定向集火敌舰核心舱段的即时太空战术策略游戏。",
+  },
+  fr: {
+    title: "FTL Spaceship Mini Web — Gestion de vaisseau et combat spatial tactique",
+    description: "Distribuez l'énergie du réacteur, ordonnez à votre équipage de réparer les avaries et ciblez les salles ennemies dans ce jeu de combat spatial tactique.",
+  },
+  es: {
+    title: "FTL Spaceship Mini Web — Gestión de nave estelar y combate espacial táctico",
+    description: "Enruta la energía del reactor, comanda a la tripulación para extinguir incendios y reparar sistemas, y apunta a los compartimentos enemigos en tiempo real.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-4xl px-4 py-8">
+    <FTLMini client:load />
+    <GameGuide slug="ftl-mini" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>
