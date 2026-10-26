@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import BeatSlice3D from "../../components/games/BeatSlice3D";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta = {
+  ko: {
+    title: "비트 슬라이스 3D — 네온 런웨이 리듬 액션 블록 절단 게임",
+    description: "3D 네온 런웨이를 질주하며 EDM 비트에 맞춰 날아오는 블록을 광선검으로 베어 넘기는 0ms 정밀 싱크 리듬 액션 게임."
+  },
+  en: {
+    title: "Beat Slice 3D — Neon Runway Rhythm Action Slasher",
+    description: "Dash down the 3D neon highway and slice beat blocks in half to pulsing EDM tracks with zero-latency audio clock synchronization."
+  },
+  ja: {
+    title: "ビートスライス 3D — ネオン滑走路リズムアクション・スラッシャー",
+    description: "3Dネオン滑走路を駆け抜け、EDMビートに乗って飛来するブロックをライトセーバーで両断する超精密リズムアクションゲーム。"
+  },
+  zh: {
+    title: "节奏光刃 3D Beat Slice — 霓虹音轨节奏光剑切块游戏",
+    description: "在 3D 霓虹长廊中疾驰，伴随动感 EDM 节拍挥动光刃斩裂方块，体验零延迟时钟同步的爽快打击感。"
+  },
+  fr: {
+    title: "Beat Slice 3D — Découpe de blocs en rythme sur piste néon",
+    description: "Fendez la piste néon en 3D et tranchez les blocs en rythme sur des morceaux EDM électrisants avec synchronisation audio parfaite."
+  },
+  es: {
+    title: "Beat Slice 3D — Acción rítmica y corte de bloques en pista de neón",
+    description: "Recorre la pista de neón en 3D y corta bloques al compás de la música EDM con sincronización de audio ultraprecisa."
+  }
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-4xl px-4 py-8">
+    <BeatSlice3D client:load />
+    <GameGuide slug="beat-slice-3d" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>

@@ -748,6 +748,20 @@ export const MISSION_CATALOG: Array<{
     goal: 2,
     xpReward: 50,
   },
+  {
+    id: "beat-slice-combo-30",
+    gameSlug: "beat-slice-3d",
+    title: {
+      ko: "비트 슬라이스에서 30 콤보 이상 연속 달성",
+      en: "Achieve a 30 or higher combo streak in Beat Slice 3D",
+      ja: "ビートスライスで30コンボ以上を達成する",
+      zh: "在节奏光刃中达成 30 连击以上连斩",
+      fr: "Réussissez un combo de 30 ou plus dans Beat Slice 3D",
+      es: "Consigue un combo de 30 o más en Beat Slice 3D",
+    },
+    goal: 30,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {

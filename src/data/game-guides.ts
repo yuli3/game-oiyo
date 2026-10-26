@@ -5652,4 +5652,78 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "beat-slice-3d": {
+    origin: {
+      ko: "비트 세이버(Beat Saber, Beat Games) 및 비트스타(Beatstar)의 3D 퍼스펙티브 궤적 노트 절단 메커니즘을 웹 브라우저 60fps HTML5 Canvas 및 무지연 Web Audio 정밀 클럭 합성 엔진으로 재해석한 리듬 액션 게임입니다.",
+      en: "A rhythm action slasher reinterpreting the 3D perspective note slicing of Beat Saber and Beatstar via 60fps HTML5 Canvas and zero-latency Web Audio clock synchronization.",
+      ja: "『Beat Saber』や『Beatstar』の3D遠近感ノーツ切断メカニズムを、ブラウザの60fps HTML5 Canvasと超精密Web Audioクロック同期エンジンで再現したリズムアクションゲームです。",
+      zh: "以精巧的 HTML5 Canvas 与零延迟 Web Audio 合成器引擎重现《节奏光剑》（Beat Saber）与《节奏大师》经典的 3D 霓虹音轨方块斩裂玩法的快节奏音乐游戏。",
+      fr: "Un jeu d'action rythmique réinterprétant la découpe de notes en 3D de Beat Saber avec un rendu Canvas 60fps et une synchronisation audio ultra-précise.",
+      es: "Un juego de acción rítmica que reinterpreta el corte de bloques en 3D de Beat Saber con Canvas a 60 fps y sincronización de audio sin latencia.",
+    },
+    how: {
+      ko: "화면 터치 스와이프나 마우스 드래그, 또는 [D, F, J, K] 및 방향키를 눌러 4개 레인으로 날아오는 블록을 화살표 방향에 맞춰 베어 넘기세요. 타이밍에 따라 PERFECT(±65ms), GREAT, GOOD 판정이 주어지며 콤보가 누적되면 피버 모드가 발동하여 2배~8배 보너스 스코어를 획득할 수 있습니다.",
+      en: "Swipe with touch/mouse or press [D, F, J, K] / arrow keys to slash approaching blocks in the direction of their arrows. Time your cuts precisely for PERFECT (±65ms), build huge combos, and unleash FEVER mode for massive 2x~8x multipliers!",
+      ja: "画面タッチのスワイプやマウスドラッグ、または[D, F, J, K]と矢印キーを使って、飛来するブロックの矢印方向に合わせて切り裂きましょう。PERFECT（±65ms）の高精度判定でコンボをつなぎ、フィーバーモードを発動させてスコア倍率を最大化してください。",
+      zh: "通过触控滑动、鼠标拖拽或按键 [D, F, J, K] / 方向键，迎击疾驰而来的方块并顺着箭头方向精准斩切。达成 PERFECT（±65ms）极速判定积累连击，蓄满能量触发狂暴 FEVER 翻倍模式！",
+      fr: "Glissez sur l'écran ou utilisez les touches [D, F, J, K] pour trancher les blocs selon la direction indiquée. Visez le PERFECT, enchaînez les combos et déclenchez le mode FEVER !",
+      es: "Desliza el dedo o pulsa [D, F, J, K] para cortar los bloques en la dirección de la flecha. ¡Acierta con precisión PERFECT, encadena combos y activa el modo FEVER!",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "방향 표시가 없는 동그라미(ANY) 블록은 어떻게 치나요?",
+          en: "How do I hit ANY blocks that have a circle instead of an arrow?",
+          ja: "矢印がなく丸印（ANY）がついたブロックはどう切ればいいですか？",
+          zh: "没有箭头仅标有圆形（ANY）标记的方块该如何斩切？",
+          fr: "Comment frapper les blocs ANY avec un cercle au lieu d'une flèche ?",
+          es: "¿Cómo se golpean los bloques ANY con círculo en lugar de flecha?",
+        },
+        a: {
+          ko: "가운데에 원형 점이 있는 블록은 자유 방향(ANY) 블록입니다. 위, 아래, 좌, 우 어떤 방향으로 베어도 모두 유효 판정으로 처리되므로, 직전이나 직후 동작과 자연스럽게 이어지는 편한 각도로 베어 넘기시면 됩니다.",
+          en: "Blocks with a center circle are omni-directional (ANY). You can slash them in any direction—up, down, left, or right—allowing you to transition smoothly between patterns.",
+          ja: "中央に丸印があるブロックは全方向対応（ANY）です。上下左右どの方向へ切り裂いても有効判定となるため、前後の動きに合わせて最も自然な角度で切ることができます。",
+          zh: "中间带有实心圆点的为任意方向（ANY）方块。向上、下、左、右任意姿态斩击均可被系统识别判定，你可以选择最顺手的连贯轨迹流畅划过。",
+          fr: "Les blocs avec un cercle sont omnidirectionnels (ANY). Tranchez-les dans n'importe quelle direction pour enchaîner naturellement vos mouvements.",
+          es: "Los bloques con círculo son omnidireccionales (ANY). Puedes cortarlos en cualquier dirección para encadenar tus golpes con fluidez.",
+        },
+      },
+      {
+        q: {
+          ko: "모바일 스마트폰 화면에서도 부드럽게 플레이할 수 있나요?",
+          en: "Can I play smoothly on mobile smartphone touchscreens?",
+          ja: "スマートフォンのタッチ画面でも快適に遊べますか？",
+          zh: "在智能手机的触控屏幕上能否流畅游玩？",
+          fr: "Le jeu est-il fluide sur les écrans tactiles mobiles ?",
+          es: "¿Se puede jugar con fluidez en pantallas táctiles móviles?",
+        },
+        a: {
+          ko: "네! 화면을 직접 스와이프하여 광선검 궤적으로 자르는 방식과 하단에 마련된 4개 레인 터치 버튼을 가볍게 탭하는 방식 두 가지를 모두 완벽히 지원하여 모바일 기기에서도 오락실 수준의 찰진 손맛을 느낄 수 있습니다.",
+          en: "Yes! The game fully supports both direct finger swipe slashing and responsive 4-lane virtual tap buttons at the bottom of the screen, optimized for handheld mobile play.",
+          ja: "はい！ 画面を直接指でスワイプして切り裂く操作と、画面下部の4レーンボタンをタップする操作の両方に対応しており、スマートフォンでもアーケード感覚で爽快にプレイできます。",
+          zh: "完全可以！游戏不仅支持手指在画布上随心划动切割，还在屏幕底部配备了 4 轨触控按键，在移动端同样拥有极具节奏感的街机级打击手感。",
+          fr: "Oui ! Le jeu prend en charge le glissement direct du doigt et des boutons virtuels à 4 voies en bas de l'écran pour une prise en main tactile parfaite.",
+          es: "¡Sí! Admite deslizamiento táctil directo y botones virtuales de 4 pistas en la parte inferior, optimizados para jugar en el móvil.",
+        },
+      },
+      {
+        q: {
+          ko: "피버 모드(FEVER MODE)는 어떻게 발동시키나요?",
+          en: "How do I activate FEVER MODE?",
+          ja: "フィーバーモード（FEVER MODE）はどうやって発動しますか？",
+          zh: "狂暴狂热模式（FEVER MODE）是如何激活的？",
+          fr: "Comment activer le MODE FEVER ?",
+          es: "¿Cómo se activa el MODO FEVER?",
+        },
+        a: {
+          ko: "PERFECT나 GREAT 판정을 연속으로 달성하면 상단 피버 게이지가 빠르게 충전됩니다. 게이지가 100%에 도달하면 7초 동안 화면이 붉은 네온으로 불타오르며 모든 타격 점수에 2배의 피버 추가 배율이 적용됩니다.",
+          en: "Scoring consecutive PERFECT and GREAT cuts rapidly fills the fever gauge. Once filled to 100%, the runway erupts into glowing crimson fever for 7 seconds, doubling all score multiplier gains!",
+          ja: "PERFECTやGREAT判定を連続で取ると上部のフィーバーゲージが急速に蓄積されます。ゲージが100%に達すると7秒間画面が真紅に輝き、すべてのスコアに2倍のフィーバー倍率が上乗せされます。",
+          zh: "连续斩出 PERFECT 与 GREAT 评级将快速充盈顶部的狂热计量条。一旦蓄满 100%，赛道将炽烈脉动进入持续 7 秒的狂暴模式，所有得分倍率翻倍跃升！",
+          fr: "Enchaîner les PERFECT et GREAT remplit la jauge. À 100 %, la piste s'enflamme pendant 7 secondes et double tous les multiplicateurs de score !",
+          es: "Encadenar PERFECT y GREAT llena el medidor. ¡Al 100 %, la pista se ilumina durante 7 segundos y duplica todos los multiplicadores!",
+        },
+      },
+    ],
+  },
 };
