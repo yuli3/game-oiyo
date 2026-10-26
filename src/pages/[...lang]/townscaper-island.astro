@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import TownscaperIsland from "../../components/games/TownscaperIsland";
+import GameGuide from "../../components/GameGuide.astro";
+import { locales, type Locale } from "../../lib/i18n";
+
+export function getStaticPaths() {
+  return locales.map((l) => ({ params: { lang: l === "en" ? undefined : l } }));
+}
+
+const locale: Locale = (Astro.params.lang as Locale) || "en";
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "타운스케이퍼 아일랜드 — WFC 파스텔 해상 건축 샌드박스 | OIYO Game",
+    description:
+      "바다 위에 블록을 클릭해 석조 부두를 놓고 위로 쌓아 코티지, 운하 아치교, 4면 위요 중정 정원, 5층 해안 등대를 자동 생성하는 힐링 건축 샌드박스.",
+  },
+  en: {
+    title: "Townscaper Island Builder — WFC Coastal Diorama Sandbox | OIYO Game",
+    description:
+      "Click open water to place Stone Quays and stack pastel blocks to procedurally form Cottages, Canal Arch Bridges, Courtyard Gardens, and Lighthouses.",
+  },
+  ja: {
+    title: "タウンスケーパー・アイランド — WFC 海上街づくりサンドボックス | OIYO Game",
+    description:
+      "海をクリックして石造りの波止場を置き、パステルブロックを積み上げて運河アーチ橋や中庭庭園、5階建て灯台を自動生成する癒やしの建築パズル。",
+  },
+  zh: {
+    title: "城镇叠叠乐海岛 — WFC 程序化海上建筑沙盒 | OIYO Game",
+    description:
+      "点击海面铺设石砌码头，向上堆叠马卡龙色块，通过波函数坍缩自动生成运河拱桥、四合中庭花园与五层海岸灯塔。",
+  },
+  fr: {
+    title: "Townscaper Island Builder — Diorama Côtier WFC | OIYO Game",
+    description:
+      "Cliquez sur l'eau pour poser des quais en pierre et empilez des blocs pastel pour former automatiquement ponts en arche, jardins et phares.",
+  },
+  es: {
+    title: "Townscaper Island Builder — Sandbox Costero WFC | OIYO Game",
+    description:
+      "Haz clic en el mar para colocar muelles de piedra y apila bloques pastel para generar puentes en arco, jardines interiores y faros.",
+  },
+};
+
+const m = meta[locale] || meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <TownscaperIsland client:load locale={locale} />
+  <GameGuide slug="townscaper-island" locale={locale} name={m.title.split(" — ")[0]} />
+</BaseLayout>

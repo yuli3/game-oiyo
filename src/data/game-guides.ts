@@ -6416,4 +6416,42 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "townscaper-island": {
+    origin: {
+      ko: "『타운스케이퍼 아일랜드 (Townscaper Island Builder)』는 Oskar Stålberg의 감성 건축 토이 『Townscaper』에서 영감을 받은 OIYO 오리지널 WFC(Wave Function Collapse, 파동 함수 붕괴) 기반 파스텔 해상 마을 샌드박스입니다. 복잡한 건축 도구나 자원 제약 없이 바다 타일을 클릭하면 석조 부두(Stone Quay)가 솟아오르고, 그 위에 산호·골드·민트·코발트 블록을 쌓으면 주변 4방향 인접 문맥을 실시간으로 감지해 박공지붕 코티지, 수로를 가로지르는 운하 아치교(Arch Bridge), 4면 위요 중정 정원(Courtyard Garden), 5층 해안 등대(Coastal Lighthouse)로 자동 변신합니다.",
+      en: "Townscaper Island Builder is an original OIYO procedural coastal architecture sandbox inspired by Oskar Stålberg's beloved Townscaper. Powered by a real-time 4-direction Wave Function Collapse (WFC) neighbor-bitmask solver, clicking open water places a Stone Quay while stacking Coral, Sunflower, Mint, Cobalt, or Ivory blocks automatically transforms them into Cottages, Canal Arch Bridges, Enclosed Courtyard Gardens, and 5-story Lighthouses.",
+      ja: "『タウンスケーパー・アイランド（Townscaper Island Builder）』は、Oskar Stålberg氏の名作建築トイ『Townscaper』にインスパイアされたWFC（波動関数崩壊）ベースの海上街づくりサンドボックスです。海面をクリックすると石造りの波止場が現れ、その上にパステルカラーのブロックを積むだけで周囲4方向の文脈を自動判定し、運河アーチ橋や中庭庭園、5階建ての灯台へとリアルタイムに変化します。",
+      zh: "《城镇叠叠乐海岛（Townscaper Island Builder）》灵感源自 Oskar Stålberg 的治愈建筑神作《Townscaper》。内置四向邻接位掩码波函数坍缩（WFC）算法，无需繁琐菜单，点击海面即可升起石砌码头，向上堆叠珊瑚红、向日葵金、爱琴海薄荷或圣托里尼蓝方块，系统会自动识别空间拓扑并生成运河拱桥、四合中庭花园与五层海岸灯塔。",
+      fr: "Townscaper Island Builder est un bac à sable d'architecture côtière procédurale inspiré de Townscaper. Grâce à un algorithme WFC contextuel, cliquez sur l'eau pour créer un quai et empilez des blocs pastel pour générer automatiquement cottages, ponts en arche, jardins clos et phares.",
+      es: "Townscaper Island Builder es un sandbox de arquitectura costera procedimental inspirado en Townscaper. Con un algoritmo WFC contextual, haz clic en el agua para crear muelles y apila bloques pastel para formar automáticamente cabañas, puentes en arco, jardines interiores y faros.",
+    },
+    how: {
+      ko: "1) 상단 팔레트에서 원하는 지중해 파스텔 색상(산호 테라코타, 해바라기 골드, 에게해 민트, 산토리니 코발트, 회벽 아이보리)을 선택하세요. 2) 우측 『📐 8×8 WFC 건축 그리드 패드』의 바다 칸을 클릭하면 1층 석조 부두가 건설되고, 같은 칸을 반복 클릭하면 최대 5층까지 건물이 높아집니다(우클릭 또는 『🔽 한 층 철거』 모드로 층수를 낮출 수 있습니다). 3) 『✨ 산토리니 섬 프리셋』 버튼을 누르면 등대·운하 아치교·중정 정원이 모두 구현된 시범 디오라마를 즉시 감상할 수 있습니다.",
+      en: "1) Pick a Mediterranean pastel color from the palette bar. 2) Click any cell on the '📐 8x8 WFC Architectural Pad' to raise a 1F Stone Quay, and click repeatedly up to 5F to stack stories (right-click or switch to '🔽 Remove (-1F)' to demolish). 3) Click '✨ Load Grand Island Preset' anytime to inspect a complete island featuring a Lighthouse, Arch Bridge, and Courtyard Garden.",
+      ja: "1) パレットバーから好みのパステルカラーを選択します。2) 右側の『📐 8×8 WFC 建築グリッドパッド』をクリックすると1階の波止場が建ち、続けてクリックすると最大5階まで積み上がります（右クリックまたは『🔽 撤去(-1F)』で高さを下げられます）。3) 『✨ サントリーニ島プリセット』を押すと、灯台・アーチ橋・中庭が揃った完成ジオラマを即座に読み込めます。",
+      zh: "1) 在顶部调色板中选择地中海马卡龙色系。2) 点击右侧“📐 8×8 WFC 建筑网格面板”即可建造 1 层石砌码头，连续点击同一格可向上堆叠至最高 5 层（右键或切换“🔽 拆除 (-1F)”可降低层数）。3) 点击“✨ 圣托里尼海岛预设”可一键生成包含灯塔、运河拱桥与中庭花园的完整微缩景观。",
+      fr: "1) Choisissez une couleur pastel dans la palette. 2) Cliquez sur la grille 8x8 pour poser un quai (1F) puis empiler jusqu'à 5 étages (clic droit ou mode « 🔽 -1F » pour retirer). 3) Utilisez « ✨ Load Grand Island Preset » pour charger un diorama complet.",
+      es: "1) Elige un color pastel en la barra de paleta. 2) Haz clic en la cuadrícula 8x8 para levantar un muelle (1F) y apilar hasta 5 pisos (clic derecho o modo «🔽 -1F» para demoler). 3) Pulsa «✨ Load Grand Island Preset» para cargar un diorama completo.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "운하 아치교(Canal Arch Bridge)와 중정 정원(Courtyard Garden)은 어떤 조건에서 만들어지나요?",
+          en: "How do I trigger a Canal Arch Bridge or an Enclosed Courtyard Garden?",
+          ja: "運河アーチ橋（Arch Bridge）と中庭庭園（Courtyard Garden）はどうすれば作れますか？",
+          zh: "如何触发运河拱桥（Arch Bridge）与四合中庭花园（Courtyard Garden）？",
+          fr: "Comment faire apparaître un pont en arche ou un jardin intérieur ?",
+          es: "¿Cómo se forman el puente en arco y el jardín interior?",
+        },
+        a: {
+          ko: "운하 아치교는 동-서(좌우) 또는 남-북(상하) 양옆에 건물이 있고 나머지 두 방향은 열린 수로일 때 가운데 타일을 2층 이상 쌓으면 1층이 아치형 수로로 뚫리며 자동 생성됩니다. 중정 정원은 1층 부두 타일의 동·서·남·북 4방향을 모두 건물로 둘러싸면 안뜰에 나무가 자라납니다!",
+          en: "To form a Canal Arch Bridge, place buildings on two opposing sides (East-West or North-South) with open water on the perpendicular axis, then stack the middle tile to 2F+. To bloom a Courtyard Garden, surround a 1F Quay tile on all 4 cardinal sides (N, E, S, W) with buildings!",
+          ja: "運河アーチ橋は、左右（東西）または上下（南北）の両隣に建物があり、もう一方の軸が海になっているマスを2階以上に積むと1階部分がアーチ状に抜けて完成します。中庭庭園は、1階の波止場マスの東西南北4方向すべてを建物で囲むと自動的に緑化されます！",
+          zh: "运河拱桥：当某一格的左右（东西）或上下（南北）两侧均有建筑，且垂直方向为开阔水面时，将该格建到 2 层或以上，底层就会自动镂空形成拱桥。四合中庭花园：将任意 1 层码头格子的东、南、西、北四个正方向全部用建筑围合，中央就会自动长出绿树花园！",
+          fr: "Pour un pont en arche, construisez à 2F+ entre deux bâtiments opposés (Est-Ouest ou Nord-Sud) au-dessus de l'eau. Pour un jardin clos, entourez un quai 1F sur ses 4 côtés cardinaux.",
+          es: "Para un puente en arco, construye a 2F+ entre dos edificios opuestos (Este-Oeste o Norte-Sur) sobre el agua. Para un jardín interior, rodea un muelle de 1F por sus 4 lados cardinales.",
+        },
+      },
+    ],
+  },
 };

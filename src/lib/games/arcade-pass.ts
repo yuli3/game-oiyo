@@ -930,6 +930,20 @@ export const MISSION_CATALOG: Array<{
     goal: 2,
     xpReward: 50,
   },
+  {
+    id: "townscaper-island-build-15",
+    gameSlug: "townscaper-island",
+    title: {
+      ko: "타운스케이퍼 아일랜드에서 15개 이상의 블록으로 해상 마을 건축하기",
+      en: "Build an island town with 15 or more blocks in Townscaper Island Builder",
+      ja: "タウンスケーパー・アイランドで15個以上のブロックを使って海上都市を築く",
+      zh: "在城镇叠叠乐海岛中累计使用 15 个或以上建筑方块",
+      fr: "Construisez une île avec 15 blocs ou plus dans Townscaper Island Builder",
+      es: "Construye una isla con 15 o más bloques en Townscaper Island Builder",
+    },
+    goal: 15,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {
