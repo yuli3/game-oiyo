@@ -16,22 +16,22 @@ const { locale } = Astro.props as { locale: Locale };
 const translations = await getTranslations(locale);
 
 const meta: Record<Locale, { title: string; description: string }> = {
-  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 119종", description: "체스·스도쿠·워들부터 OIYO 오리지널 게임까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 119종." },
-  en: { title: "OIYO Arcade — 119 free browser games, no install", description: "Chess, Sudoku, Wordle, and original OIYO games: 119 free games you can play instantly in your browser." },
-  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム119種", description: "チェス・数独・ワードルからOIYOオリジナル作品まで、ブラウザですぐ遊べる無料ゲーム119種。" },
-  zh: { title: "OIYO 街机 — 无需安装的119款免费游戏", description: "从国际象棋、数独、猜词到 OIYO 原创作品，119款游戏无需安装即可畅玩。" },
-  fr: { title: "OIYO Arcade — 119 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations originales OIYO : 119 jeux gratuits dans le navigateur." },
-  es: { title: "OIYO Arcade — 119 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y originales de OIYO: 119 juegos gratuitos en el navegador." },
+  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 122종", description: "체스·스도쿠·워들부터 OIYO 오리지널 게임까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 122종." },
+  en: { title: "OIYO Arcade — 122 free browser games, no install", description: "Chess, Sudoku, Wordle, and original OIYO games: 122 free games you can play instantly in your browser." },
+  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム122種", description: "チェス・数独・ワードルからOIYOオリジナル作品まで、ブラウザですぐ遊べる無料ゲーム122種。" },
+  zh: { title: "OIYO 街机 — 无需安装的122款免费游戏", description: "从国际象棋、数独、猜词到 OIYO 原创作品，122款游戏无需安装即可畅玩。" },
+  fr: { title: "OIYO Arcade — 122 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations originales OIYO : 122 jeux gratuits dans le navigateur." },
+  es: { title: "OIYO Arcade — 122 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y originales de OIYO: 122 juegos gratuitos en el navegador." },
 };
 const m = meta[locale] ?? meta.en;
 
 const hero: Record<Locale, { eyebrow: string; title: string; sub: string }> = {
-  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 119종", sub: "보드·카드·퍼즐·오리지널 아케이드 — 브라우저에서 바로 시작하세요." },
-  en: { eyebrow: "🎮 OIYO Arcade", title: "119 free games, right in your browser", sub: "Board, card, puzzle, and original arcade games — instant and free." },
-  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム119種", sub: "ボード・カード・パズル・オリジナル作品をブラウザですぐに。" },
-  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的119款免费游戏", sub: "棋类、纸牌、益智和原创街机游戏，浏览器直接开玩。" },
-  fr: { eyebrow: "🎮 OIYO Arcade", title: "119 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et créations originales, sans installation." },
-  es: { eyebrow: "🎮 OIYO Arcade", title: "119 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones originales, sin instalación." },
+  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 122종", sub: "보드·카드·퍼즐·오리지널 아케이드 — 브라우저에서 바로 시작하세요." },
+  en: { eyebrow: "🎮 OIYO Arcade", title: "122 free games, right in your browser", sub: "Board, card, puzzle, and original arcade games — instant and free." },
+  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム122種", sub: "ボード・カード・パズル・オリジナル作品をブラウザですぐに。" },
+  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的122款免费游戏", sub: "棋类、纸牌、益智和原创街机游戏，浏览器直接开玩。" },
+  fr: { eyebrow: "🎮 OIYO Arcade", title: "122 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et créations originales, sans installation." },
+  es: { eyebrow: "🎮 OIYO Arcade", title: "122 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones originales, sin instalación." },
 };
 const h = hero[locale] ?? hero.en;
 
@@ -128,6 +128,9 @@ const GAMES: Game[] = [
   { slug: "backpack-hero", emoji: "🎒", cat: "puzzle", name: { ko: "백팩 히어로", en: "Backpack Hero Web", ja: "バックパック・ヒーロー", zh: "背包英雄", fr: "Backpack Hero Web", es: "Backpack Hero Web" } },
   { slug: "baba-rule-shifter", emoji: "🐰", cat: "puzzle", name: { ko: "바바 이즈 유 미니", en: "Baba Rule Shifter", ja: "ババ・ルールシフター", zh: "芭芭变形记", fr: "Baba Rule Shifter", es: "Baba Rule Shifter" } },
   { slug: "paper-flight-3d", emoji: "✈️", cat: "arcade", name: { ko: "종이비행기 3D", en: "Paper Flight 3D", ja: "紙飛行機 3D", zh: "纸飞机 3D", fr: "Paper Flight 3D", es: "Paper Flight 3D" } },
+  { slug: "merge-mansion", emoji: "🏡", cat: "puzzle", name: { ko: "머지 맨션 웹", en: "Merge Mansion Web", ja: "マージマンション Web", zh: "庄园合合乐", fr: "Merge Mansion Web", es: "Merge Mansion Web" } },
+  { slug: "loop-hero", emoji: "🔄", cat: "arcade", name: { ko: "루프 히어로 웹", en: "Loop Hero Mini", ja: "ループヒーロー Web", zh: "循环勇者 Mini", fr: "Loop Hero Mini", es: "Loop Hero Mini" } },
+  { slug: "plague-mini", emoji: "☣️", cat: "arcade", name: { ko: "전염병 주식회사 미니", en: "Plague Mini", ja: "伝染病カンパニー Mini", zh: "瘟疫危机 Mini", fr: "Plague Mini", es: "Plague Mini" } },
 
   { slug: "failure-eater", emoji: "👾", cat: "arcade", name: { ko: "실패를 먹는 괴물", en: "Failure Eater", ja: "失敗を食べる怪物", zh: "吃掉失败的怪物", fr: "Monstre des ratés", es: "Monstruo de los fallos" } },
   { slug: "snake-game", emoji: "🐍", cat: "arcade", name: { ko: "스네이크", en: "Snake", ja: "スネーク", zh: "贪吃蛇", fr: "Snake", es: "Snake" } },
@@ -463,6 +466,42 @@ const NEW_RELEASES_CONFIG: Array<{ slug: string; tag: Record<Locale, string>; de
       zh: "依托真实空气动力升力抗力物理，驾驭上升气流冲上云霄，穿梭黄金光环飞跃五大绝景的3D纸飞机冒险。",
       fr: "Surfez sur les courants thermiques et traversez les anneaux dorés dans ce simulateur de vol plané en 3D.",
       es: "Domina la física aerodinámica de planeo, surfea corrientes térmicas y vuela a través de 5 biomas impresionantes.",
+    },
+  },
+  {
+    slug: "merge-mansion",
+    tag: { ko: "7×9 아이템 합성 & 저택 복원", en: "7x9 Item Merging Puzzle", ja: "7×9 道具合成＆屋敷修復", zh: "7×9 道具合成豪宅修缮", fr: "Fusion d'objets et rénovation", es: "Fusión y restauración" },
+    desc: {
+      ko: "원예 도구·청소 용품·희귀 화초를 7×9 보드에서 합성하여 대저택의 넝쿨을 걷어내고 분수대와 정원을 복원하는 머지 퍼즐.",
+      en: "Merge tools, supplies, and flowers on a 7x9 board to clear overgrowth and renovate a grand historic estate.",
+      ja: "園芸用具・掃除用品・花植物を7×9グリッドで合成し、荒れ果てた大屋敷のツタを払い噴水や温室を復元していくパズル。",
+      zh: "在7×9棋盘中合成园艺工具、清洁用品与奇珍花卉，扫清荒芜杂草，逐步修葺喷泉、大堂与温室花园。",
+      fr: "Fusionnez des outils et des plantes sur une grille 7x9 pour restaurer un magnifique domaine abandonné.",
+      es: "Fusiona herramientas, suministros y flores en un tablero de 7x9 para renovar una majestuosa mansión histórica.",
+    },
+  },
+  {
+    slug: "loop-hero",
+    tag: { ko: "원형 트랙 덱빌딩 & 지형 합성 RPG", en: "Track Deckbuilder & Tile Morphing RPG", ja: "円形トラック ランドスケープ合成RPG", zh: "环形闭环构筑打宝RPG", fr: "Deckbuilder circulaire et fusion RPG", es: "Deckbuilder cíclico y fusión RPG" },
+    desc: {
+      ko: "무한 루프를 도는 용사를 위해 지형 카드(숲, 바위, 흡혈귀 저택)를 배치하고 3×3 산맥을 합성하여 강력한 장비를 파밍하는 덱빌더 RPG.",
+      en: "Place landscape cards (Groves, Rocks, Vampire Mansions), morph 3x3 Mountain Peaks, and gear up for real-time combat in an endless expedition loop.",
+      ja: "無限のループを巡る勇者のために地形カード（森、岩山、吸血鬼の館）を配置し、3×3山頂を合成して装備を強化するダークファンタジーRPG。",
+      zh: "在无尽循环跑道上放置森林、墓园与吸血鬼庄园，3×3合成巍峨山峰，全自动战斗刷出极品神装的暗黑地牢构筑RPG。",
+      fr: "Placez des cartes de terrain le long de la boucle, formez des sommets 3x3 et équipez votre héros dans ce deckbuilder d'expédition.",
+      es: "Coloca cartas de terreno a lo largo del sendero, fusiona picos 3x3 y equipa a tu héroe para el combate en un circuito infinito.",
+    },
+  },
+  {
+    slug: "plague-mini",
+    tag: { ko: "세계 지도 감염 & 변이 전략", en: "Global Pandemic & Mutation Strategy", ja: "世界感染＆遺伝子変異戦略", zh: "全球传染与基因突变模拟", fr: "Pandémie mondiale et mutation", es: "Pandemia global y mutación" },
+    desc: {
+      ko: "세계 지도에서 항공·해상 항로를 타고 확산하는 병원균을 조작하여 DNA를 수집하고 백신에 맞서 전 세계를 감염시키는 전략 시뮬레이션.",
+      en: "Spread a deadly pathogen through international flight routes and sea lanes, collecting DNA to mutate symptoms against humanity's vaccine race.",
+      ja: "世界地図上で航空機や船舶を通じて感染を拡大させ、DNAを集めて症状を変異させワクチンの完成を阻止する感染シミュレーション。",
+      zh: "操控致命病原体通过跨国航班与远洋海运飞速扩散，采集DNA突变症状与抗药性，赶在疫苗研发完成前瓦解人类防线。",
+      fr: "Propagez un pathogène par voies aériennes et maritimes, récoltez de l'ADN et mutez pour déjouer la recherche du vaccin mondial.",
+      es: "Propaga un patógeno a través de rutas aéreas y marítimas mundiales, recolecta ADN y muta síntomas para superar la vacuna definitiva.",
     },
   },
 ];

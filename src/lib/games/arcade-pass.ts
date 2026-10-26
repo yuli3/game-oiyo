@@ -636,6 +636,48 @@ export const MISSION_CATALOG: Array<{
     goal: 300,
     xpReward: 50,
   },
+  {
+    id: "merge-mansion-quest-1",
+    gameSlug: "merge-mansion",
+    title: {
+      ko: "머지 맨션에서 대저택 복원 의뢰 1건 이상 완료하기",
+      en: "Complete 1 or more estate renovation quests in Merge Mansion",
+      ja: "マージマンションで屋敷修復の依頼を1件以上達成する",
+      zh: "在庄园合合乐中完成 1 项以上豪宅修缮委托",
+      fr: "Terminez 1 mission de rénovation dans Merge Mansion",
+      es: "Completa 1 misión de renovación en Merge Mansion",
+    },
+    goal: 1,
+    xpReward: 50,
+  },
+  {
+    id: "loop-hero-quest-1",
+    gameSlug: "loop-hero",
+    title: {
+      ko: "루프 히어로에서 원형 루프 2바퀴 이상 완주하기",
+      en: "Survive and complete 2 or more full loops in Loop Hero Mini",
+      ja: "ループヒーローで円形トラックを2周以上完走する",
+      zh: "在循环勇者中成功完成 2 圈及以上闭环巡航",
+      fr: "Survivez et terminez au moins 2 boucles dans Loop Hero Mini",
+      es: "Sobrevive y completa al menos 2 bucles en Loop Hero Mini",
+    },
+    goal: 2,
+    xpReward: 50,
+  },
+  {
+    id: "plague-mini-quest-1",
+    gameSlug: "plague-mini",
+    title: {
+      ko: "전염병 주식회사에서 글로벌 인구 1억 명 이상 감염시키기",
+      en: "Infect 100 million or more people worldwide in Plague Mini",
+      ja: "伝染病カンパニーで世界人口1億人以上を感染させる",
+      zh: "在瘟疫危机中全球累计感染人数突破 1 亿人",
+      fr: "Infectez 100 millions de personnes ou plus dans Plague Mini",
+      es: "Infecta a 100 millones de personas o más en Plague Mini",
+    },
+    goal: 100_000_000,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {
