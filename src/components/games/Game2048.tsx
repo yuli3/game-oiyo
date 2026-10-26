@@ -213,6 +213,11 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
   const reducedMotion = usePrefersReducedMotion();
 
   const [phase, setPhase] = useState<FlowPhase>("title");
+  // Pixi boots WebGL on mount; wait until the player leaves the title screen.
+  const [canvasMounted, setCanvasMounted] = useState(false);
+  useEffect(() => {
+    if (phase !== "title") setCanvasMounted(true);
+  }, [phase]);
   const [game, setGame] = useState<Game2048State>(() => createGame2048(1));
   const [best, setBest] = useState(0);
   const [muted, setMuted] = useState(false);
@@ -689,15 +694,19 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
       </div>
 
       <div className="relative aspect-square w-full max-w-sm mx-auto">
-        <Suspense fallback={null}>
-          <Game2048PixiCanvas
-            board={game.board}
-            onDirection={move}
-            muted={muted}
-            reducedMotion={reducedMotion}
-            theme={theme}
-          />
-        </Suspense>
+        {canvasMounted ? (
+          <Suspense fallback={null}>
+            <Game2048PixiCanvas
+              board={game.board}
+              onDirection={move}
+              muted={muted}
+              reducedMotion={reducedMotion}
+              theme={theme}
+            />
+          </Suspense>
+        ) : (
+          <div className="absolute inset-0 rounded-2xl bg-muted/60" aria-hidden="true" />
+        )}
       </div>
 
       {/* Mobile Touch D-Pad */}
