@@ -580,6 +580,20 @@ export const MISSION_CATALOG: Array<{
     goal: 1,
     xpReward: 50,
   },
+  {
+    id: "vampire-survive-60s",
+    gameSlug: "vampire-survivor",
+    title: {
+      ko: "뱀파이어 서바이벌에서 60초 이상 생존하기",
+      en: "Survive for 60 seconds or more in Vampire Survivor",
+      ja: "ヴァンパイア・サバイバーで60秒以上生存する",
+      zh: "在吸血鬼幸存者中生存达到60秒以上",
+      fr: "Survivre pendant 60 secondes ou plus dans Vampire Survivor",
+      es: "Sobrevive 60 segundos o más en Vampire Survivor",
+    },
+    goal: 60,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {

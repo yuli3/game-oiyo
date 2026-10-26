@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import VampireSurvivor from "../../components/games/VampireSurvivor";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "뱀파이어 서바이벌 웹 — 360° 탄막 슈팅 로그라이크",
+    description: "몰려드는 몬스터 대군을 피해 360° 가상 조이스틱으로 생존하고, 무기 진화와 패시브 증강으로 끝없이 살아남는 탑다운 서바이벌 로그라이크 게임.",
+  },
+  en: {
+    title: "Vampire Survivor Web — 360° Bullet Hell Roguelite",
+    description: "Dodge relentless hordes of monsters with a 360° virtual joystick, auto-fire deadly weapons, and pick powerful synergy upgrades in this survival roguelite.",
+  },
+  ja: {
+    title: "ヴァンパイア・サバイバー Web — 360°弾幕サバイバルローグライク",
+    description: "大群の魔物を360°バーチャルジョイスティックで回避しながら自動攻撃。武器の進化とパッシブ強化で生き残るトップダウンローグライク。",
+  },
+  zh: {
+    title: "吸血鬼幸存者网页版 — 360°弹幕射击肉鸽生存",
+    description: "利用360°虚拟摇杆躲避狂潮般的怪物大军，全自动武器射击与肉鸽三选一升级，在无尽黑夜中求生。",
+  },
+  fr: {
+    title: "Vampire Survivor Web — Roguelite de survie bullet hell 360°",
+    description: "Esquivez les hordes de monstres avec un joystick virtuel 360°, tirez automatiquement et choisissez de puissantes améliorations dans ce roguelite de survie.",
+  },
+  es: {
+    title: "Vampire Survivor Web — Roguelite de supervivencia bullet hell 360°",
+    description: "Esquiva hordas de monstruos con un joystick virtual de 360°, dispara automáticamente y elige mejoras devastadoras en este roguelite de supervivencia.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-4xl px-4 py-8">
+    <VampireSurvivor client:load locale={locale} />
+    <GameGuide slug="vampire-survivor" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>

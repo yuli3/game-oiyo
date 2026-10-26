@@ -4908,4 +4908,60 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "vampire-survivor": {
+    origin: {
+      ko: "뱀파이어 서바이벌 웹(Vampire Survivor Web)은 2022년 글로벌 게임 업계에 서바이버-라이크(Survivor-like)라는 완전히 새로운 하위 장르를 개척한 Poncle의 인디 명작 'Vampire Survivors'를 유니티급 모바일 웹 아키텍처로 구현한 작품입니다. 360° 가변 플로팅 조이스틱 이동과 자동 탄막 발사, 공간 분할 해싱(Spatial Partitioning)을 통한 수백 마리의 몬스터 군집 연산이 특징입니다.",
+      en: "Vampire Survivor Web brings the revolutionary survivor-like phenomenon pioneered by Poncle's 'Vampire Survivors' to the high-performance mobile web. Built with 360° floating virtual joystick controls, automatic weapon firing, and spatial hash grid optimization to handle relentless hordes of hundreds of swarming monsters.",
+      ja: "ヴァンパイア・サバイバー Web（Vampire Survivor Web）は、2022年にサバイバー系という新ジャンルを切り拓いたPoncleのインディー名作『Vampire Survivors』をモバイルWeb向けに高度に再構築したゲームです。360°可変ジョイスティック、自動弾幕射撃、空間分割ハッシュによる数百匹の魔物群集シミュレーションが特徴です。",
+      zh: "吸血鬼幸存者网页版（Vampire Survivor Web）致敬了开创“幸存者类”肉鸽狂潮的殿堂级独立神作《Vampire Survivors》。搭载360°动态自适应虚拟摇杆、全自动弹幕射击与基于空间哈希网格（Spatial Hash Grid）的高密度群潮运算，在浏览器中重现千军万马的割草狂欢。",
+      fr: "Vampire Survivor Web transpose le hit révolutionnaire de Poncle 'Vampire Survivors' sur le web avec un joystick virtuel 360°, des tirs automatiques et une optimisation spatiale supportant des centaines de monstres simultanés.",
+      es: "Vampire Survivor Web adapta el revolucionario éxito 'Vampire Survivors' de Poncle a la web móvil, con joystick virtual 360°, disparo automático y optimización espacial para hordas de cientos de monstruos.",
+    },
+    how: {
+      ko: "화면을 터치·드래그하거나 WASD/방향키를 사용하여 360° 전방향으로 이동합니다. 무기는 가장 가까운 적을 향해 자동으로 조준 및 발사됩니다. 처치한 몬스터가 떨어뜨리는 파란색/초록색/빨간색 경험치 보석을 흡수하여 레벨업하면 3개의 강화 선택지 중 원하는 무기(매직 미사일, 마늘 결계, 성경책, 비도, 벼락) 또는 패시브(시금치, 날개, 갑옷, 자석, 검은 심장)를 선택해 빌드를 완성하세요.",
+      en: "Move in 360 degrees by dragging anywhere on the screen or using WASD/Arrow keys. Weapons automatically aim and discharge at nearby targets. Collect XP gems dropped by slain monsters to level up and select from 3 offered upgrades (Magic Wand, Garlic Aura, Holy Bible, Throwing Knife, Lightning Ring, Spinach, Wings, Armor, Attractorb, Hollow Heart) to craft an unstoppable build.",
+      ja: "画面をドラッグするかWASD/矢印キーで全方位360°自由に移動します。攻撃は最も近い敵へ全自動で行われます。倒した敵が落とす経験値ジェムを拾ってレベルアップし、提示される3つの武器やパッシブ強化（マジックミサイル、ニンニクオーラ、聖書、投げナイフ、雷輪など）を選択してビルドを極限まで強化しましょう。",
+      zh: "轻触拖拽屏幕任意区域或使用WASD/方向键实现360°全向灵活走位。角色将全自动锁定并攻击射程内的敌人。吸取击败魔物掉落的经验宝石完成升级，并在每次升级弹出的三选一升级树中精选武器与被动增益（魔法飞弹、大蒜结界、旋转圣经、飞刀、落雷、菠菜增伤、磁铁吸引等），构筑割草神装。",
+      fr: "Déplacez-vous à 360° en glissant sur l'écran ou avec les touches ZQSD/flèches. Les armes tirent automatiquement. Récoltez les gemmes d'XP pour monter de niveau et choisissez parmi 3 améliorations pour concevoir votre build idéal.",
+      es: "Muévete en 360 grados arrastrando el dedo o con WASD/flechas. Las armas disparan solas. Recoge gemas de experiencia para subir de nivel y elige entre 3 mejoras para forjar tu build invencible.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "초반 생존에 가장 추천하는 무기 조합은 무엇인가요?",
+          en: "What is the recommended weapon synergy for early survival?",
+          ja: "序盤の生き残りに最もおすすめの武器の組み合わせは何ですか？",
+          zh: "游戏前中期开荒最推荐的武器搭配是什么？",
+          fr: "Quelle est la meilleure combinaison d'armes pour survivre au début ?",
+          es: "¿Cuál es la mejor combinación de armas para sobrevivir al principio?",
+        },
+        a: {
+          ko: "초반에는 접근하는 박쥐와 해골을 즉각 밀어내고 안전지대를 확보할 수 있는 '마늘 결계(Garlic Aura)'와 '성경책(Holy Bible)'을 1순위로 올리는 것이 좋습니다. 이와 함께 원거리 킬 결정을 위한 '매직 미사일'과 공격력을 뻥튀기하는 '시금치'를 조합하면 거대한 군집도 무난히 돌파할 수 있습니다.",
+          en: "In the early game, prioritizing Garlic Aura and Holy Bible provides an immediate protective barrier and knockback zone around your hero. Pair this with Magic Wand for single-target sniping and Spinach for flat damage scaling to easily clear dense waves.",
+          ja: "序盤は接近するコウモリやガイコツを押し返して安全圏を作れる『ニンニクオーラ（Garlic Aura）』と『聖書（Holy Bible）』の優先取得が鉄板です。これらに遠距離を仕留めるマジックミサイルと火力底上げのホウレンソウを合わせれば、大群の突破が容易になります。",
+          zh: "开荒期强烈建议优先点出‘大蒜结界’与‘旋转圣经’，二者可在主角周围构筑坚不可摧的近身击退安全圈；随后补足单体狙击利器‘魔法飞弹’与全局增伤的‘菠菜’，即可轻松在重重包围中杀出一条血路。",
+          fr: "Au début, privilégiez l'Aura d'Ail et la Sainte Bible pour repousser les ennemis proches. Associez-les au Projectile Magique et aux Épinards pour maximiser vos dégâts.",
+          es: "Al principio, prioriza el Aura de Ajo y la Santa Biblia para mantener a raya a los enemigos cercanos. Combínalos con el Proyectil Mágico y las Espinacas para arrasar con las oleadas.",
+        },
+      },
+      {
+        q: {
+          ko: "보석을 효율적으로 획득하는 이동 테크닉이 있나요?",
+          en: "What movement technique maximizes gem collection efficiency?",
+          ja: "ジェムを効率よく回収するための移動テクニックはありますか？",
+          zh: "有哪些走位技巧可以最大化拾取宝石的效率？",
+          fr: "Quelle technique de déplacement optimise la collecte de gemmes ?",
+          es: "¿Qué técnica de movimiento maximiza la recolección de gemas?",
+        },
+        a: {
+          ko: "한 방향으로만 일직선 도망치면 보석이 맵 전체에 분산되어 회수하기 어려워집니다. 몬스터 무리의 외곽을 큰 원 형태로 완만하게 돌면서(Kiting), 무리가 밀집한 중앙에 결계나 탄막 피해를 집중시킨 뒤 쓸어담는 '원형 카이팅'이 가장 높은 경험치 파밍 효율을 제공합니다.",
+          en: "Fleeing in a straight line scatters gems across the vast arena. Instead, practice circular kite routing—orbiting the outer edge of the horde in a wide circular motion to concentrate defeated mobs into dense clusters where you can sweep through and vacuum up massive XP reserves.",
+          ja: "直線的に逃げ続けるとジェムが広範囲に散らばり回収不能になります。群れの周囲を緩やかな大きな円を描くように旋回（カイティング）し、敵を一箇所にまとめながら撃破して一気に回収するのが最も効率的です。",
+          zh: "切勿朝单一方向直线逃窜，否则经验宝石将被拉扯得极其分散。最佳策略是保持大范围‘环形风筝走位’（Circular Kiting），让追击的魔物聚拢在圆心附近被AOE集中消灭，随后折返一网打尽吸光全部宝石。",
+          fr: "Évitez de fuir en ligne droite. Tournez en grands cercles autour de la horde pour regrouper les monstres et aspirer facilement d'énormes réserves d'XP.",
+          es: "No huyas en línea recta. Describe círculos amplios alrededor de la horda para agrupar a los monstruos y aspirar grandes reservas de gemas de un solo barrido.",
+        },
+      },
+    ],
+  },
 };
