@@ -944,6 +944,20 @@ export const MISSION_CATALOG: Array<{
     goal: 15,
     xpReward: 50,
   },
+  {
+    id: "candle-sacrifice-win-1",
+    gameSlug: "candle-sacrifice",
+    title: {
+      ko: "인스크립션 캔들 덱에서 피의 공양으로 야수를 소환해 이빨 천칭을 +5까지 기울여 승리하기",
+      en: "Tip the Teeth Scale to +5 and win a cabin duel in Candle Sacrifice Deck",
+      ja: "インスクリプション・キャンドルデッキで天秤を+5まで傾けて決闘に勝利する",
+      zh: "在邪恶冥刻烛光牌中将金牙天平推向 +5 赢得木屋决斗",
+      fr: "Faites pencher la balance à +5 et remportez un duel dans Candle Sacrifice Deck",
+      es: "Lleva la balanza de dientes a +5 y gana un duelo en Candle Sacrifice Deck",
+    },
+    goal: 1,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {

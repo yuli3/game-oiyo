@@ -6454,4 +6454,42 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "candle-sacrifice": {
+    origin: {
+      ko: "『인스크립션 캔들 덱 (Candle Sacrifice Deck)』은 Daniel Mullins의 호러 덱빌딩 명작 『Inscryption』에서 영감을 받은 OIYO 오리지널 4레인 피의 공양 & 천칭 카드 결투 게임입니다. 다람쥐 보조 덱(Squirrel Deck)과 야수 메인 덱(Main Deck)을 운용하며, 보드 위의 다람쥐를 제물로 바쳐 피(Blood)를 공양하고 아군 사망 시 쌓이는 뼈(Bone) 토큰으로 살무사(치명독)·까마귀(비행)·사마귀 신(양갈래 일격)·회색곰을 소환해 이빨 천칭을 +5까지 기울이세요.",
+      en: "Candle Sacrifice Deck is an original OIYO 4-lane woodland cabin card duel inspired by Daniel Mullins's acclaimed Inscryption. Manage a dual-deck system (Squirrel Side-Deck + Main Beast Deck), sacrifice creatures on the board for Blood, collect Bone tokens from fallen allies, and unleash Sigils like Touch of Death, Airborne, and Bifurcated Strike to tip the Teeth Scale to +5.",
+      ja: "『インスクリプション・キャンドルデッキ（Candle Sacrifice Deck）』は、『Inscryption』にインスパイアされた4レーン生贄＆天秤カード決闘ゲームです。リス補助デッキとメイン獣デッキを使い分け、盤面のリスを生贄に捧げて血(Blood)と骨(Bone)でカマキリの神やグリズリーを召喚し、歯の天秤を+5まで傾ければ勝利です。",
+      zh: "《邪恶冥刻烛光牌（Candle Sacrifice Deck）》灵感源自克苏鲁风卡牌神作《Inscryption》。采用松鼠副牌库+野兽主牌库双轨抽牌机制，将场上的松鼠献祭化为鲜血（Blood），收集阵亡野兽留下的骨头代币（Bone），驱动剧毒、飞行与双向连击印记，将金牙天平推向 +5 即可获胜。",
+      fr: "Candle Sacrifice Deck est un duel de cartes tactique sur 4 voies inspiré d'Inscryption. Gérez votre deck d'Écureuils et votre deck de Bêtes, sacrifiez des créatures pour du Sang et des Os, et faites pencher la balance des dents à +5.",
+      es: "Candle Sacrifice Deck es un duelo de cartas táctico en 4 carriles inspirado en Inscryption. Gestiona tu mazo de Ardillas y tu mazo de Bestias, sacrifica criaturas por Sangre y Huesos, y lleva la balanza de dientes a +5.",
+    },
+    how: {
+      ko: "1) 손패에서 무료 카드인 『🐿️ 다람쥐』를 선택한 뒤 아군 전선의 빈 레인을 클릭해 배치하세요. 2) 피(🩸) 비용이 필요한 상위 야수(담비·다이어 울프·살무사·사마귀 신)를 손패에서 선택하고, 이미 전선에 나와 있는 다람쥐(또는 다른 아군)를 필요한 피 개수만큼 클릭해 제물로 바치면 그 자리에 상위 야수가 소환됩니다! 3) 『🔔 전투 종 울리기』를 누르면 아군 야수가 정면 공격을 수행하며, 빈 레인을 타격한 피해만큼 천칭이 +방향으로 기울어 +5에 도달하면 즉시 승리합니다.",
+      en: "1) Select a 0-cost '🐿️ Squirrel' from your hand and click an empty Player Row lane to place it. 2) Select a Blood-cost beast (Stoat, Dire Wolf, Adder, Mantis God) in your hand, then click living creatures on your row to sacrifice them and summon the beast! 3) Click '🔔 RING COMBAT BELL' to strike across the 4 lanes—tipping the scale to +5 wins immediately.",
+      ja: "1) 手札からコスト0の『🐿️ リス』を選び、自군レーンの空きマスに配置します。2) 血(🩸)コストが必要な上位獣を手札で選び、盤面のリスを必要数クリックして生贄に捧げると召喚完了です！ 3) 『🔔 戦闘の鐘を鳴らす』で攻撃し、天秤を+5まで傾ければ勝利となります。",
+      zh: "1) 从手牌选中 0 费的“🐿️ 松鼠”，点击己方前排空位放置。2) 在手牌中选中需要鲜血（🩸）的野兽，然后点击场上已有的松鼠献祭即可完成上位召唤！3) 点击“🔔 敲响战斗钟”发起对位进攻，溢出的直接伤害会推动天平，达到 +5 立即获胜。",
+      fr: "1) Placez un « 🐿️ Écureuil » gratuit sur une voie libre. 2) Sélectionnez une bête coûtant du Sang (🩸) puis cliquez sur vos créatures en jeu pour les sacrifier. 3) Sonnez la cloche « 🔔 RING COMBAT BELL » pour attaquer et atteindre +5 sur la balance.",
+      es: "1) Coloca una «🐿️ Ardilla» gratuita en un carril vacío. 2) Selecciona una bestia con coste de Sangre (🩸) y haz clic en tus criaturas en mesa para sacrificarlas. 3) Toca la campana «🔔 RING COMBAT BELL» para atacar y llevar la balanza a +5.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "다람쥐 덱과 야수 덱 중 언제 어떤 덱을 뽑아야 하나요?",
+          en: "When should I draw from the Squirrel deck versus the Main Beast deck?",
+          ja: "リスデッキと獣メインデッキはどのように使い分ければいいですか？",
+          zh: "什么时候该抽松鼠副牌库，什么时候该抽野兽主牌库？",
+          fr: "Quand faut-il piocher un Écureuil plutôt qu'une Bête ?",
+          es: "¿Cuándo debo robar del mazo de Ardillas frente al mazo de Bestias?",
+        },
+        a: {
+          ko: "손패에 고비용 야수는 많지만 제물로 바칠 카드가 부족할 때는 『🐿️ 다람쥐 뽑기』로 확정 제물을 확보하세요. 반대로 보드에 다람쥐나 뼈 토큰(🦴)이 충분할 때는 『🐺 야수 덱 뽑기』로 공격수를 보충하면 됩니다.",
+          en: "Draw a Squirrel whenever you need guaranteed Blood fodder to summon the predators already in your hand; draw from the Main Beast deck when you already have Squirrels on the board or plenty of Bone tokens (🦴) to spend.",
+          ja: "手札に上位獣がいるのに生贄が足りない時は『🐿️ リスを引く』で確実にコストを確保し、盤面にリスや骨トークン(🦴)が十分ある時は『🐺 獣デッキを引く』でアタッカーを補充しましょう。",
+          zh: "当手牌里有强力野兽却缺乏祭品时，选择“🐿️ 抽松鼠”稳定获取献祭素材；当场上已有松鼠或积攒了足够骨头代币（🦴）时，选择“🐺 抽野兽牌”补充主力打手。",
+          fr: "Piochez un Écureuil lorsque vous manquez de sacrifices pour invoquer vos prédateurs en main ; piochez une Bête quand votre plateau ou votre réserve d'Os (🦴) est déjà prête.",
+          es: "Roba una Ardilla cuando necesites sacrificios garantizados para invocar a tus depredadores; roba una Bestia cuando ya tengas ardillas en mesa o suficientes Huesos (🦴).",
+        },
+      },
+    ],
+  },
 };

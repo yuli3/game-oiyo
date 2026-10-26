@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import CandleSacrifice from "../../components/games/CandleSacrifice";
+import GameGuide from "../../components/GameGuide.astro";
+import { locales, type Locale } from "../../lib/i18n";
+
+export function getStaticPaths() {
+  return locales.map((l) => ({ params: { lang: l === "en" ? undefined : l } }));
+}
+
+const locale: Locale = (Astro.params.lang as Locale) || "en";
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "인스크립션 캔들 덱 — 4레인 피의 공양 & 천칭 카드 결투 | OIYO Game",
+    description:
+      "오두막 4레인 테이블에서 다람쥐를 제물로 바쳐 피(Blood)와 뼈(Bone)로 살무사·사마귀 신·다이어 울프를 소환하고 이빨 천칭을 +5까지 기울이세요.",
+  },
+  en: {
+    title: "Candle Sacrifice Deck — 4-Lane Blood & Scale Card Duel | OIYO Game",
+    description:
+      "Sacrifice Squirrels on a 4-lane cabin table, spend Blood and Bone tokens to summon Dire Wolves and Mantis Gods, and tip the Teeth Scale to +5.",
+  },
+  ja: {
+    title: "インスクリプション・キャンドルデッキ — 生贄と天秤のカード決闘 | OIYO Game",
+    description:
+      "山小屋の4レーン盤面でリスを生贄に捧げ、血と骨のコストで狼やカマキリの神を召喚して天秤を+5まで傾けよう。",
+  },
+  zh: {
+    title: "邪恶冥刻烛光牌 — 四路献祭与天平卡牌决斗 | OIYO Game",
+    description:
+      "在林间木屋 4 路牌桌上献祭松鼠，消耗鲜血与骨头代币召唤恐狼、螳螂神与剧毒蝮蛇，将金牙天平推向 +5 获胜。",
+  },
+  fr: {
+    title: "Candle Sacrifice Deck — Duel de Cartes et Sacrifices | OIYO Game",
+    description:
+      "Sacrifiez des écureuils sur 4 voies, invoquez loups et mantes divines avec du sang et des os, et faites pencher la balance à +5.",
+  },
+  es: {
+    title: "Candle Sacrifice Deck — Duelo de Cartas y Sacrificios | OIYO Game",
+    description:
+      "Sacrifica ardillas en un tablero de 4 carriles, invoca lobos y dioses mantis con sangre y huesos, y lleva la balanza a +5.",
+  },
+};
+
+const m = meta[locale] || meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <CandleSacrifice client:load locale={locale} />
+  <GameGuide slug="candle-sacrifice" locale={locale} name={m.title.split(" — ")[0]} />
+</BaseLayout>
