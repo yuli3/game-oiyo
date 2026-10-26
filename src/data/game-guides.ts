@@ -6492,4 +6492,42 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "cozy-glider": {
+    origin: {
+      ko: "『어 숏 하이크 글라이더 (Cozy Peak Glider)』는 Adam Robinson-Yu의 힐링 산악 탐험 명작 『A Short Hike』에서 영감을 받은 OIYO 오리지널 황금 깃털(Golden Feathers) 스태미나 등반 & 상승기류 활공 어드벤처입니다. 조개껍질 해변 캠프(0m)에서 출발해 보물상자와 단풍 성소를 탐험하며 최대 황금 깃털 개수를 늘리고, 화강암 절벽과 만년설 능선을 넘어 해발 550m 호크 피크 정상(Hawk Peak Summit)에 등정한 뒤 섬 전체를 가로지르는 장거리 활공의 해방감을 만끽하세요.",
+      en: "Cozy Peak Glider is an original OIYO mountain trail exploration and wingsuit gliding adventure inspired by Adam Robinson-Yu's beloved A Short Hike. Start at Seashell Beach (0m) with 2 Golden Feathers, explore coastal chests and autumn shrines to expand your feather stamina capacity, scale granite cliffs, and reach the 550m Hawk Peak Summit.",
+      ja: "『コージー・ピーク・グライダー（Cozy Peak Glider）』は、癒やし系山岳探検ゲーム『A Short Hike』にインスパイアされた黄金の羽スタミナ登山＆滑空アドベンチャーです。海岸キャンプ(0m)からスタートし、宝箱や祠を巡って黄金の羽の最大数を増やしながら標高550mのホークピーク山頂を目指します。",
+      zh: "《短途徒步滑翔机（Cozy Peak Glider）》灵感源自治愈系徒步神作《A Short Hike》。从海滩营地（0m）携带 2 根黄金羽毛出发，探索灯塔宝箱与红叶神龛扩充羽毛体力上限，攀登花岗岩峭壁与雪线营地，最终登顶海拔 550 米的鹰峰之巅并畅享长距离滑翔。",
+      fr: "Cozy Peak Glider est un jeu d'exploration insulaire et de vol plané inspiré d'A Short Hike. Partez de la plage avec 2 Plumes d'Or, ouvrez des coffres pour augmenter votre endurance d'escalade et atteignez le sommet enneigé de Hawk Peak à 550m.",
+      es: "Cozy Peak Glider es una aventura de senderismo y planeo inspirada en A Short Hike. Comienza en la playa con 2 Plumas Doradas, descubre cofres y santuarios para ampliar tu resistencia de escalada y alcanza la cima nevada de Hawk Peak a 550m.",
+    },
+    how: {
+      ko: "1) 우측 『🧗 연결된 등반·이동 코스』에서 이동할 지점을 선택하세요. 더 높은 고도로 등반할 때는 표시된 개수만큼 활성 황금 깃털(🪶)이 소모됩니다. 2) 보물상자(🎁)나 성소에 처음 방문하면 최대 황금 깃털 상한선이 영구적으로 증가합니다! 3) 깃털이 부족할 때는 『🪂 활공 비행』으로 낮은 지점으로 활강하거나 『🔥 깃털 숨고르기 충전』을 눌러 스태미나를 100% 회복한 뒤 호크 피크 정상(🪶×3 필요)에 도전하세요.",
+      en: "1) Choose a connected trail or cliff route on the right panel. Climbing to a higher elevation consumes active Golden Feathers (🪶). 2) Visiting Treasure Chests (🎁) and Shrines for the first time permanently increases your Max Golden Feathers! 3) Glide down via '🪂 Wingsuit Glide Targets' or click '🔥 Recharge Feathers' at campfires to restore 100% stamina before tackling Hawk Peak Summit (requires 🪶×3).",
+      ja: "1) 右パネルの『🧗 登山・移動コース』から行き先を選びます。標高が高い場所へ登るには黄金の羽(🪶)を消費します。2) 宝箱(🎁)や祠を初めて訪れると、黄金の羽の最大上限が永続的に増えます！ 3) 羽が足りない時は『🪂 滑空飛行』で下山するか『🔥 羽チャージ』で全回復してからホークピーク山頂(🪶×3必要)へ挑みましょう。",
+      zh: "1) 在右侧“🧗 攀登与徒步路线”中选择目的地，向更高海拔攀爬需消耗对应数量的激活黄金羽毛（🪶）。2) 首次造访宝箱（🎁）与神龛可永久提升黄金羽毛上限！3) 羽毛不足时可通过“🪂 滑翔降落”或点击“🔥 营火恢复羽毛”补满体力，集齐 3 根以上羽毛即可冲刺鹰峰山顶。",
+      fr: "1) Choisissez un sentier à droite. Grimper consomme des Plumes d'Or actives (🪶). 2) Les coffres (🎁) augmentent définitivement votre maximum de plumes. 3) Planez vers le bas (🪂) ou reposez-vous au feu de camp (🔥) pour recharger vos plumes avant l'ascension finale.",
+      es: "1) Elige una ruta en el panel derecho. Subir de altitud consume Plumas Doradas activas (🪶). 2) Los cofres (🎁) aumentan permanentemente tu máximo de plumas. 3) Planea hacia abajo (🪂) o descansa en la hoguera (🔥) para recargar plumas antes del ascenso final.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "호크 피크 정상(550m)에 오르려면 황금 깃털을 몇 개까지 모아야 하나요?",
+          en: "How many Golden Feathers do I need to reach Hawk Peak Summit?",
+          ja: "ホークピーク山頂(550m)に登るには黄金の羽がいくつ必要ですか？",
+          zh: "登顶鹰峰（550m）至少需要收集多少根黄金羽毛？",
+          fr: "Combien de Plumes d'Or faut-il pour atteindre le sommet de Hawk Peak ?",
+          es: "¿Cuántas Plumas Doradas necesito para llegar a la cima de Hawk Peak?",
+        },
+        a: {
+          ko: "만년설 능선 모닥불(420m)에서 호크 피크 정상(550m)으로 오르는 마지막 빙벽 구간은 한 번에 황금 깃털 3개(🪶×3)를 요구합니다. 해변 출발 시 기본 2개가 주어지므로, 등대 바위 보물상자나 단풍나무 성소 중 한 곳만 들러도 최대 깃털이 3개 이상이 되어 능선 모닥불에서 숨을 고른 뒤 정상에 오를 수 있습니다.",
+          en: "The final icy ascent from Snowline Ridge Camp (420m) to Hawk Peak Summit (550m) requires 3 Golden Feathers (🪶×3). Since you start with 2 feathers at the beach, visiting just one chest or shrine along the way gives you the 3+ feather capacity needed!",
+          ja: "雪線キャンプ(420m)からホークピーク山頂(550m)への最終アタックには黄金の羽が3つ(🪶×3)必要です。初期状態で2つ持っているため、道中の宝箱や祠を1つでも開ければ最大値が3以上になり、雪線キャンプで全回復してから登頂できます。",
+          zh: "从雪线营地（420m）冲刺鹰峰山顶（550m）的最后一段冰壁需要 3 根黄金羽毛（🪶×3）。初始自带 2 根，只需在途中任意开启一个宝箱或造访红叶神龛即可将上限提升至 3 根以上！",
+          fr: "L'ascension finale depuis le camp de la crête (420m) jusqu'au sommet (550m) exige 3 Plumes d'Or (🪶×3). Comme vous commencez avec 2 plumes, ouvrir un seul coffre en chemin suffit !",
+          es: "El ascenso final desde el campamento de la cresta (420m) hasta la cima (550m) requiere 3 Plumas Doradas (🪶×3). Como empiezas con 2 plumas, ¡basta con abrir un cofre en el camino!",
+        },
+      },
+    ],
+  },
 };

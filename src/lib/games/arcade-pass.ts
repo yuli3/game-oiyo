@@ -958,6 +958,20 @@ export const MISSION_CATALOG: Array<{
     goal: 1,
     xpReward: 50,
   },
+  {
+    id: "cozy-glider-summit-1",
+    gameSlug: "cozy-glider",
+    title: {
+      ko: "어 숏 하이크 글라이더에서 황금 깃털을 모아 호크 피크 정상(550m) 등정하기",
+      en: "Collect Golden Feathers and reach Hawk Peak Summit (550m) in Cozy Peak Glider",
+      ja: "コージー・ピーク・グライダーで黄金の羽を集めてホークピーク山頂(550m)に到達する",
+      zh: "在短途徒步滑翔机中收集黄金羽毛并成功登顶 550 米鹰峰之巅",
+      fr: "Atteignez le sommet de Hawk Peak (550m) dans Cozy Peak Glider",
+      es: "Alcanza la cima de Hawk Peak (550m) en Cozy Peak Glider",
+    },
+    goal: 1,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {

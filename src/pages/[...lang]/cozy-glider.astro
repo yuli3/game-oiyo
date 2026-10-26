@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import CozyGlider from "../../components/games/CozyGlider";
+import GameGuide from "../../components/GameGuide.astro";
+import { locales, type Locale } from "../../lib/i18n";
+
+export function getStaticPaths() {
+  return locales.map((l) => ({ params: { lang: l === "en" ? undefined : l } }));
+}
+
+const locale: Locale = (Astro.params.lang as Locale) || "en";
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "어 숏 하이크 글라이더 — 황금 깃털 암벽등반 & 상승기류 활공 | OIYO Game",
+    description:
+      "호크 피크 섬의 보물상자와 성소에서 황금 깃털(Golden Feathers)을 모으고 암벽등반과 상승기류 활공으로 해발 550m 설산 정상에 오르세요.",
+  },
+  en: {
+    title: "Cozy Peak Glider — Golden Feather Climb & Island Glide | OIYO Game",
+    description:
+      "Collect Golden Feathers across Hawk Peak island, climb granite cliff walls, catch thermal updrafts, and glide from the 550m snowy summit.",
+  },
+  ja: {
+    title: "コージー・ピーク・グライダー — 黄金の羽登山＆滑空アドベンチャー | OIYO Game",
+    description:
+      "ホークピーク島で黄金の羽を集め、岩壁クライミングと上昇気流グライドで標高550mの雪山山頂を目指そう。",
+  },
+  zh: {
+    title: "短途徒步滑翔机 — 黄金羽毛攀岩与热气流滑翔 | OIYO Game",
+    description:
+      "在鹰峰岛探索宝箱与神龛收集黄金羽毛，利用攀岩体力与峡谷上升热气流登顶 550 米雪山之巅。",
+  },
+  fr: {
+    title: "Cozy Peak Glider — Escalade et Vol Plané sur l'Île | OIYO Game",
+    description:
+      "Collectez des Plumes d'Or, escaladez les falaises de granit et planez dans les courants thermiques jusqu'au sommet de Hawk Peak.",
+  },
+  es: {
+    title: "Cozy Peak Glider — Escalada con Plumas Doradas y Planeo | OIYO Game",
+    description:
+      "Reúne Plumas Doradas en la isla Hawk Peak, escala acantilados de granito y planea desde la cima nevada de 550m.",
+  },
+};
+
+const m = meta[locale] || meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <CozyGlider client:load locale={locale} />
+  <GameGuide slug="cozy-glider" locale={locale} name={m.title.split(" — ")[0]} />
+</BaseLayout>
