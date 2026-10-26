@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, lazy, Suspense } from "react";
 import { GameShell } from "../ui/game/GameShell";
 import {
   getBest,
@@ -35,7 +35,7 @@ import {
   type Game2048Direction,
   type Game2048State,
 } from "../../lib/games/game-2048";
-import Game2048PixiCanvas, { type Game2048Theme } from "./Game2048PixiCanvas";
+import type { Game2048Theme } from "./Game2048PixiCanvas";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import type { Locale } from "../../lib/i18n";
 import {
@@ -61,6 +61,8 @@ import {
   downloadShareCard,
 } from "../../lib/games/share-card";
 import type { FlowPhase } from "../../lib/games/game-flow";
+
+const Game2048PixiCanvas = lazy(() => import("./Game2048PixiCanvas"));
 
 const COPY = {
   ko: {
@@ -687,13 +689,15 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
       </div>
 
       <div className="relative aspect-square w-full max-w-sm mx-auto">
-        <Game2048PixiCanvas
-          board={game.board}
-          onDirection={move}
-          muted={muted}
-          reducedMotion={reducedMotion}
-          theme={theme}
-        />
+        <Suspense fallback={null}>
+          <Game2048PixiCanvas
+            board={game.board}
+            onDirection={move}
+            muted={muted}
+            reducedMotion={reducedMotion}
+            theme={theme}
+          />
+        </Suspense>
       </div>
 
       {/* Mobile Touch D-Pad */}
