@@ -692,6 +692,20 @@ export const MISSION_CATALOG: Array<{
     goal: 1,
     xpReward: 50,
   },
+  {
+    id: "into-the-breach-defend-1",
+    gameSlug: "into-the-breach",
+    title: {
+      ko: "인투 더 브리치에서 전력망을 지키며 2턴 이상 생존하기",
+      en: "Survive 2 or more turns while protecting power grid in Into the Breach Mini",
+      ja: "Into the Breach で送電網を守りながら2ターン以上生存する",
+      zh: "在陷阵之志中守护电网并存活 2 回合以上",
+      fr: "Survivez au moins 2 tours en protégeant le réseau dans Into the Breach Mini",
+      es: "Sobrevive 2 turnos o más protegiendo la red en Into the Breach Mini",
+    },
+    goal: 2,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {

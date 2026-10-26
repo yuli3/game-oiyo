@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import IntoTheBreach from "../../components/games/IntoTheBreach";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "인투 더 브리치 미니 — 8×8 아이소메트릭 메카 전술 & 넉백 방어 퍼즐",
+    description: "외계 벡(Vek)의 공격 예고를 읽고, 메카의 넉백 밀쳐내기로 아군 민간 전력망 빌딩을 지키며 적끼리 충돌시키는 8×8 쿼터뷰 턴제 전술 퍼즐 게임.",
+  },
+  en: {
+    title: "Into the Breach Mini Web — 8x8 Isometric Tactical Mech Defense & Push Puzzle",
+    description: "Anticipate alien Vek attack intentions, position mech squads, and use tactical knockback to protect civilian power grids and collide enemies.",
+  },
+  ja: {
+    title: "Into the Breach Mini Web — 8×8 クォータービュー メカ戦術防衛パズル",
+    description: "敵怪獣ヴェックの攻撃予兆を見極め、メカタックルによるノックバックで民間電力網を守り抜くターン制クォータービュータクティカルパズル。",
+  },
+  zh: {
+    title: "陷阵之志 Into the Breach Mini Web — 8×8 轴测机甲战术推撞防卫战",
+    description: "预判异形怪兽 Vek 的攻击意图，利用机甲的击退与位移技巧保卫城市电网，巧妙制造撞击连击与淹没溺毙的硬核战棋策略游戏。",
+  },
+  fr: {
+    title: "Into the Breach Mini Web — Tactique de méchas 8x8 et puzzle de poussée",
+    description: "Anticipez les attaques extraterrestres Vek, déplacez vos méchas et utilisez le recul tactique pour protéger le réseau électrique civil.",
+  },
+  es: {
+    title: "Into the Breach Mini Web — Táctica de mechas 8x8 y puzle de empuje",
+    description: "Anticípate a los ataques alienígenas Vek, posiciona a tus mechas y utiliza el empuje táctico para proteger la red eléctrica de la ciudad.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-4xl px-4 py-8">
+    <IntoTheBreach client:load />
+    <GameGuide slug="into-the-breach" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>

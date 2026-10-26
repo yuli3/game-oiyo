@@ -5356,4 +5356,78 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "into-the-breach": {
+    origin: {
+      ko: "인투 더 브리치 미니(Into the Breach Mini Web)는 Subset Games의 세계적인 턴제 전술 명작 'Into the Breach'를 웹 캔버스 8×8 쿼터뷰 아이소메트릭 그리드로 구현한 전략 퍼즐 게임입니다. 외계 거대 괴수 벡(Vek)의 공격 예고를 한 수 앞서 읽고, 타이탄 프라임·브루트 캐논·시즈 아틸러리 3대 메카의 공격 및 넉백(밀쳐내기)을 구사하여 민간 도시 전력망을 사수해야 합니다.",
+      en: "Into the Breach Mini Web brings the award-winning tactical turn-based puzzle classic by Subset Games into the browser via an 8x8 isometric grid. Predict alien Vek attack trajectories, maneuver the Titan Prime, Brute Cannon, and Siege Artillery squad, and use tactical knockbacks to defend civilian power grids and collide invaders into one another.",
+      ja: "Into the Breach Mini Web（イントゥ・ザ・ブリーチ Mini Web）は、傑作ターン制タクティカルパズル『Into the Breach』を8×8のクォータービュー（アイソメトリック）キャンバスで再現した作品です。巨大怪獣ヴェックの攻撃予兆を一手先読みし、3機のメ카のノックバック（押し出し）攻撃を駆使して民間の送電網ビルを死守しながら敵同士を衝突させます。",
+      zh: "陷阵之志 Into the Breach Mini Web（Into the Breach Mini Web）将 Subset Games 享誉全球的硬核战棋神作复刻为 8×8 轴测网格即时战术防卫游戏。提前读取异形怪兽 Vek 的攻击红线指示，指挥泰坦机甲、巨炮机甲与重炮机甲，巧妙利用击退击飞机制化解电网危机，将敌人推入水域或撞向峭壁。",
+      fr: "Into the Breach Mini Web adapte le chef-d'œuvre de stratégie tactique au tour par tour de Subset Games dans une grille isométrique 8x8. Anticipez les intentions d'attaque des monstres Vek et utilisez le recul pour dévier les frappes et protéger le réseau électrique.",
+      es: "Into the Breach Mini Web recrea la aclamada obra maestra táctica por turnos de Subset Games en una cuadrícula isométrica de 8x8. Anticipa los ataques de los gigantescos alienígenas Vek y usa el empuje de tus mechas para proteger la red eléctrica.",
+    },
+    how: {
+      ko: "매 턴 시작 시 적들이 노리는 공격 방향(붉은 점선 및 조준선)을 확인하세요. 하단에서 아군 메카를 선택하고 '이동(MOVE)'으로 원하는 위치를 선점한 뒤 '공격(ATTACK)'을 실행합니다. 적을 처치하지 못하더라도 공격의 넉백(밀쳐내기) 효과로 적의 공격 방향을 건물 밖으로 비틀거나 다른 유닛/장애물과 충돌시켜 추가 대미지를 줄 수 있습니다. 물 타일로 빠뜨리면 즉사합니다. 4턴 동안 전력망(Power Grid)을 지켜내면 승리합니다.",
+      en: "At the start of each turn, read the enemy's telegraphed attack trajectories (red dashed lines and crosshairs). Select your mechs and tap 'MOVE' to position them, then 'ATTACK'. Even without destroying an enemy outright, your attacks push targets by 1 tile, deflecting attacks away from power grid buildings or causing collision damage against obstacles and other units. Pushing units into water instantly drowns them. Survive 4 turns to win.",
+      ja: "ターン開始時に敵の攻撃予告線（赤の破線と照準）を確認しましょう。下部でメ카を選択し『MOVE』で移動後、『ATTACK』で攻撃します。敵を一撃で倒せなくても、ノックバックで攻撃方向を建物からそらしたり、障害物や他の敵に衝突させて衝突ダメージを与えられます。水域に落とせば即座に撃破できます。4ターンの間電力網を守り抜けば勝利です。",
+      zh: "每回合开始时仔细查看敌方的攻击红线与预兆瞄准标尺。选择己方机甲，先点击'MOVE'走位卡点，再点击'ATTACK'发动攻击。哪怕无法直接消灭敌人，机甲攻击附带的击退推移也能改变敌人的朝向与弹道，使其攻击偏离城市电网，或撞向障碍物造成额外碰撞伤害。推入水区可直接秒杀。坚守 4 回合保全电网即可获胜。",
+      fr: "Observez les lignes d'attaque ennemies en rouge au début du tour. Sélectionnez vos méchas, déplacez-les avec 'MOVE' et attaquez avec 'ATTACK'. Utilisez la poussée pour dévier les tirs ciblant les bâtiments, infliger des dégâts de collision ou noyer les ennemis dans l'eau. Protégez le réseau pendant 4 tours pour vaincre.",
+      es: "Observa las líneas de ataque rojas del enemigo al inicio del turno. Selecciona tus mechas, muévelos con 'MOVE' y ataca con 'ATTACK'. Usa el empuje para desviar proyectiles fuera de los edificios, causar daño de colisión o ahogar enemigos en el agua. Defiende la red durante 4 turnos para ganar.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "적과 적끼리 부딪히면 둘 다 피해를 입나요?",
+          en: "Do enemies both take damage when knocked into one another?",
+          ja: "敵同士が衝突した場合、両方にダメージが入りますか？",
+          zh: "两只怪兽撞在一起时，双方都会受到伤害吗？",
+          fr: "Deux ennemis subissent-ils des dégâts s'ils sont projetés l'un contre l'autre ?",
+          es: "¿Ambos enemigos sufren daño si colisionan entre sí?",
+        },
+        a: {
+          ko: "네, 맞습니다! 밀려난 유닛과 부딪힌 유닛 모두에게 1의 충돌 대미지(Collision Damage)가 발생합니다. 체력이 1 남은 적 2마리를 서로 충돌시키면 한 번의 공격으로 둘 다 동시 처치할 수 있습니다.",
+          en: "Yes! Both the pushed unit and the unit it collides with suffer 1 point of collision damage. Colliding two enemies with 1 HP remaining eliminates both simultaneously in a single strike.",
+          ja: "はい！ 押し出されたユニットと、ぶつかられたユニットの双方に1の衝突ダメージ（Collision Damage）が発生します。残りHPが1の敵同士をぶつければ、1回の手番で両方を同時に殲滅可能です。",
+          zh: "是的！被推撞的目标与被撞的目标均会受到 1 点碰撞伤害。如果利用击退让两只残余 1 点生命的怪兽相撞，即可用一次攻击瞬间双杀。",
+          fr: "Oui ! L'unité projetée et l'unité percutée subissent toutes deux 1 point de dégât de collision, permettant des éliminations doubles très efficaces.",
+          es: "¡Sí! Ambas unidades reciben 1 punto de daño de colisión, lo que permite lograr bajas dobles con un solo ataque bien calculado.",
+        },
+      },
+      {
+        q: {
+          ko: "적을 물 타일로 밀어 넣으면 어떻게 되나요?",
+          en: "What happens when an enemy is knocked into water tiles?",
+          ja: "敵を水域タイルに落とすとどうなりますか？",
+          zh: "将怪兽击退推入水域地块会怎样？",
+          fr: "Que se passe-t-il si un ennemi est projeté dans l'eau ?",
+          es: "¿Qué ocurre si un enemigo es empujado al agua?",
+        },
+        a: {
+          ko: "외계 벡(Vek) 유닛은 물에 빠지면 남은 체력과 상관없이 즉시 익사(Drown)하여 사망합니다. 체력이 3인 강력한 대형 적도 물가 근처에 있다면 단 한 번의 밀쳐내기로 손쉽게 제압할 수 있습니다.",
+          en: "Non-flying Vek units instantly drown and die when pushed into water tiles regardless of remaining health. Even massive enemies with 3 HP can be cleanly eliminated with a single push near water.",
+          ja: "ヴェックは水に落ちると残りHPに関係なく即座に水没死（Drown）します。残り3HPの強敵であっても、水辺に誘導して一撃押し出すだけで瞬時に撃破できます。",
+          zh: "怪兽跌入水中会无视当前剩余生命值直接溺毙死亡。即便拥有 3 点高额生命的精英巨兽，只要其处于水边，一次击退即可轻松将其秒杀吞噬。",
+          fr: "Les unités terrestres Vek se noient immédiatement lorsqu'elles tombent dans l'eau, même avec leur santé maximale.",
+          es: "Los alienígenas terrestres Vek se ahogan de inmediato si caen al agua, sin importar cuánta vida les quede.",
+        },
+      },
+      {
+        q: {
+          ko: "시즈 아틸러리(Siege Artillery)의 포격은 어떻게 작동하나요?",
+          en: "How does the Siege Artillery's mortar barrage work?",
+          ja: "シージ・アーティラリ（Siege Artillery）の曲射砲撃はどう機能しますか？",
+          zh: "重炮机甲（Siege Artillery）的迫击炮弹是如何生效的？",
+          fr: "Comment fonctionne l'artillerie de siège ?",
+          es: "¿Cómo funciona la artillería de asedio?",
+        },
+        a: {
+          ko: "시즈 아틸러리는 장애물을 뛰어넘어 최소 2칸 이상 떨어진 목표 지점을 포격합니다. 목표 타일에 1 대미지를 주며, 목표 지점의 상·하·좌·우 4방향 인접 타일의 모든 대상을 바깥쪽으로 사방 밀쳐냅니다. 뭉쳐 있는 적들의 대형을 한 번에 와해시킬 수 있습니다.",
+          en: "The Siege Artillery lobs shells over obstacles to targets at least 2 tiles away. It inflicts 1 damage to the epicenter and produces a shockwave that knocks all 4 adjacent orthogonally neighboring tiles outwards, scattering clustered enemies.",
+          ja: "シージ・アーティラリは障害物を飛び越えて2マス以上離れた目標を曲射砲撃します。着弾点に1ダメージを与えつつ、着弾点の上下左右4マスにいる全ユニットを外側へと一斉にノックバックさせ、敵の包囲網を崩します。",
+          zh: "重炮机甲可无视中间山体障碍，对 2 格以外的目标发起超视距迫击轰炸。对中心点造成 1 点杀伤，同时向上下左右四个方向产生冲击波，将相邻单位一并向外推开，是瓦解敌方集群阵型的利器。",
+          fr: "L'artillerie de siège tire par-dessus les obstacles à 2 cases minimum. Elle inflige 1 dégât au centre et repousse les 4 cases adjacentes vers l'extérieur.",
+          es: "La artillería de asedio dispara por encima de obstáculos a más de 2 casillas. Causa 1 de daño en el centro y empuja las 4 casillas adyacentes hacia afuera.",
+        },
+      },
+    ],
+  },
 };
