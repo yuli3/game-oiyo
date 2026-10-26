@@ -6606,4 +6606,42 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "dome-keeper": {
+    origin: {
+      ko: "『돔 키퍼 채굴 디펜스 (Dome Keeper Drill Defense)』는 Bippinbits의 글로벌 히트작 『Dome Keeper』에서 영감을 받아 OIYO Web-Unity Engine v5.0(보로노이 강체 파쇄 물리)으로 구현한 지하 광산 굴착 & 지상 유리 돔 레이저 방어 게임입니다. 외계 웨이브가 몰려오기 전까지 지하 지층에서 철광석(Iron)과 코발트(Cobalt)를 채굴해 플라즈마 드릴과 레이저 포탑을 강화하고, 심층부의 고대 유물 코어(Relic Core)를 인양하세요.",
+      en: "Dome Keeper Drill Defense is an original OIYO dual-loop underground mining and glass-dome wave defense game inspired by Dome Keeper and powered by OIYO Web-Unity Engine v5.0 Voronoi Shatter physics. Excavate Iron and Cobalt veins before the alien wave timer hits zero, upgrade your plasma drill and dome laser turret, and extract the deep Ancient Relic Core.",
+      ja: "『ドームキーパー採掘ディフェンス（Dome Keeper Drill Defense）』は、人気インディー作『Dome Keeper』に着想を得てOIYO Web-Unity Engine v5.0（ボロノイ破砕物理）で構築した地下採掘＆ドーム防衛ゲームです。ウェーブ襲来までの限られた時間で鉄鉱石とコバルトを掘り出し、ドリルとレーザー砲を強化して最深部の古代遺物コアを回収しましょう。",
+      zh: "《穹顶守护者采矿防卫（Dome Keeper Drill Defense）》灵感源自热门独立游戏《Dome Keeper》，搭载 OIYO Web-Unity Engine v5.0 泰森多边形破碎物理引擎。在异形波次倒计时结束前深入地下岩层挖掘铁矿与钴水晶，升级等离子钻头与穹顶激光炮，发掘最底层的远古遗物核心。",
+      fr: "Dome Keeper : Défense & Forage est un jeu hybride de minage souterrain et de défense de dôme propulsé par la physique Voronoi Shatter v5.0.",
+      es: "Dome Keeper: Defensa y Perforación es un juego híbrido de minería subterránea y defensa láser impulsado por la física Voronoi Shatter v5.0.",
+    },
+    how: {
+      ko: "1) 채굴 페이즈(Mining)에서는 이미 뚫린 통로와 인접한 지하 블록을 클릭해 플라즈마 드릴로 굴착하고 철광석(⛏️)과 코발트(💎)를 획득하세요. 2) 하단 워크숍에서 철광석으로 드릴 위력·제트팩·레이저 포탑을 업그레이드하고, 코발트로 유리 돔 내구도와 보호막을 수리하세요. 3) 웨이브 타이머가 0이 되면 방어 페이즈(Defense)로 전환됩니다. 몰려오는 외계 괴수 카드를 클릭해 돔 레이저로 격추하세요!",
+      en: "1) During the Mining Phase, click any underground block adjacent to an excavated tunnel to drill it and harvest Iron (⛏️) and Cobalt (💎). 2) Spend Iron in the Workshop to upgrade your Plasma Drill, Jetpack, and Dome Laser, or spend Cobalt to repair Dome HP & Shield. 3) When the wave timer reaches 0, click incoming alien invaders to fire the Dome Laser and repel the assault!",
+      ja: "1) 採掘フェーズでは掘削済み通路に隣接するブロックをクリックして掘り進め、鉄鉱石(⛏️)とコバルト(💎)を集めます。2) 鉄鉱石でドリル・ジェットパック・レーザー砲を強化し、コバルトでドームHPとシールドを修復します。3) 防衛フェーズになったら襲来するエイリアンをクリックしてレーザーで迎撃しましょう！",
+      zh: "1) 在采矿阶段点击与已挖掘通道相邻的岩块进行钻探，收集铁矿（⛏️）与钴水晶（💎）。2) 在下方工坊消耗铁矿升级钻头、喷气背包与激光炮，或消耗钴水晶修复穹顶护盾。3) 进入防卫阶段后点击来袭异形发射穹顶激光将其击退！",
+      fr: "1) En phase de forage, cliquez sur les blocs adjacents au tunnel pour extraire Fer et Cobalt. 2) Améliorez votre foreuse et votre laser dans l'atelier. 3) En phase de défense, cliquez sur les aliens pour tirer au laser !",
+      es: "1) En fase de minería, haz clic en los bloques adyacentes al túnel para extraer Hierro y Cobalto. 2) Mejora tu taladro y láser en el taller. 3) ¡En fase de defensa, haz clic en los alienígenas para disparar el láser!",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "철광석(Iron)과 코발트(Cobalt)는 각각 어디에 우선 투자하는 것이 좋나요?",
+          en: "How should I prioritize spending Iron versus Cobalt?",
+          ja: "鉄鉱石とコバルトはそれぞれ何に優先して使うべきですか？",
+          zh: "铁矿石与钴水晶应该优先投资在哪些项目上？",
+          fr: "Comment prioriser l'utilisation du Fer et du Cobalt ?",
+          es: "¿Cómo debo priorizar el gasto de Hierro y Cobalto?",
+        },
+        a: {
+          ko: "1웨이브에는 철광석으로 『플라즈마 드릴 Lv.2』를 먼저 올려 채굴 속도를 높인 뒤 『돔 레이저 Lv.2』를 맞추는 것이 효율적입니다. 코발트는 희귀 자원이므로 유리 돔 보호막이 깎였을 때 『코발트 보호막 수리(+30 HP / +25 Shield)』로 아껴 두면 보스 웨이브도 안전하게 버틸 수 있습니다.",
+          en: "In Wave 1, upgrade Plasma Drill Lv.2 first so each drill strike breaks deep rock in fewer hits, then upgrade Dome Laser Lv.2 before the wave hits. Save your rare Cobalt for 'Cobalt Shield Repair' (+30 HP & +25 Overcharge Shield) before Boss waves!",
+          ja: "ウェーブ1ではまず鉄鉱石で『プラズマドリル Lv.2』に上げて掘削効率を高め、次に『ドームレーザー Lv.2』を強化するのがおすすめです。貴重なコバルトはボス戦前のシールド修復に温存しましょう。",
+          zh: "第 1 波建议先用铁矿升级“等离子钻头 Lv.2”大幅提升挖掘效率，随后补上“穹顶激光 Lv.2”。稀有的钴水晶则留作首领波次前的“钴护盾修复（+30耐久/+25护盾）”。",
+          fr: "Améliorez d'abord la Foreuse Plasma au Niv.2 pour accélérer l'extraction, puis le Laser du Dôme, et gardez le Cobalt pour régénérer le bouclier.",
+          es: "Mejora primero el Taladro de Plasma a Niv.2 para acelerar la excavación, luego el Láser del Domo, y guarda el Cobalto para reparar el escudo.",
+        },
+      },
+    ],
+  },
 };

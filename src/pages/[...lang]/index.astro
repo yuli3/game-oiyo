@@ -16,22 +16,22 @@ const { locale } = Astro.props as { locale: Locale };
 const translations = await getTranslations(locale);
 
 const meta: Record<Locale, { title: string; description: string }> = {
-  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 145종", description: "체스·스도쿠·워들부터 OIYO 오리지널 게임까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 145종." },
-  en: { title: "OIYO Arcade — 145 free browser games, no install", description: "Chess, Sudoku, Wordle, and original OIYO games: 145 free games you can play instantly in your browser." },
-  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム145種", description: "チェス・数独・ワードルからOIYOオリジナル作品まで、ブラウザですぐ遊べる無料ゲーム145種。" },
-  zh: { title: "OIYO 街机 — 无需安装的145款免费游戏", description: "从国际象棋、数独、猜词到 OIYO 原创作品，145款游戏无需安装即可畅玩。" },
-  fr: { title: "OIYO Arcade — 145 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations originales OIYO : 145 jeux gratuits dans le navigateur." },
-  es: { title: "OIYO Arcade — 145 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y originales de OIYO: 145 juegos gratuitos en el navegador." },
+  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 146종", description: "체스·스도쿠·워들부터 OIYO 오리지널 게임까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 146종." },
+  en: { title: "OIYO Arcade — 146 free browser games, no install", description: "Chess, Sudoku, Wordle, and original OIYO games: 146 free games you can play instantly in your browser." },
+  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム146種", description: "チェス・数独・ワードルからOIYOオリジナル作品まで、ブラウザですぐ遊べる無料ゲーム146種。" },
+  zh: { title: "OIYO 街机 — 无需安装的146款免费游戏", description: "从国际象棋、数独、猜词到 OIYO 原创作品，146款游戏无需安装即可畅玩。" },
+  fr: { title: "OIYO Arcade — 146 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations originales OIYO : 146 jeux gratuits dans le navigateur." },
+  es: { title: "OIYO Arcade — 146 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y originales de OIYO: 146 juegos gratuitos en el navegador." },
 };
 const m = meta[locale] ?? meta.en;
 
 const hero: Record<Locale, { eyebrow: string; title: string; sub: string }> = {
-  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 145종", sub: "보드·카드·퍼즐·오리지널 아케이드 — 브라우저에서 바로 시작하세요." },
-  en: { eyebrow: "🎮 OIYO Arcade", title: "145 free games, right in your browser", sub: "Board, card, puzzle, and original arcade games — instant and free." },
-  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム145種", sub: "ボード・カード・パズル・オリジナル作品をブラウザですぐに。" },
-  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的145款免费游戏", sub: "棋类、纸牌、益智和原创街机游戏，浏览器直接开玩。" },
-  fr: { eyebrow: "🎮 OIYO Arcade", title: "145 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et créations originales, sans installation." },
-  es: { eyebrow: "🎮 OIYO Arcade", title: "145 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones originales, sin instalación." },
+  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 146종", sub: "보드·카드·퍼즐·오리지널 아케이드 — 브라우저에서 바로 시작하세요." },
+  en: { eyebrow: "🎮 OIYO Arcade", title: "146 free games, right in your browser", sub: "Board, card, puzzle, and original arcade games — instant and free." },
+  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム146種", sub: "ボード・カード・パズル・オリジナル作品をブラウザですぐに。" },
+  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的146款免费游戏", sub: "棋类、纸牌、益智和原创街机游戏，浏览器直接开玩。" },
+  fr: { eyebrow: "🎮 OIYO Arcade", title: "146 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et créations originales, sans installation." },
+  es: { eyebrow: "🎮 OIYO Arcade", title: "146 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones originales, sin instalación." },
 };
 const h = hero[locale] ?? hero.en;
 
@@ -154,6 +154,7 @@ const GAMES: Game[] = [
   { slug: "cozy-glider", emoji: "🪶", cat: "arcade", name: { ko: "어 숏 하이크 글라이더", en: "Cozy Peak Glider", ja: "コージー・ピーク・グライダー", zh: "短途徒步滑翔机", fr: "Cozy Peak Glider", es: "Cozy Peak Glider" } },
   { slug: "mini-motorways", emoji: "🛣️", cat: "puzzle", name: { ko: "미니 모터웨이 교차로", en: "Mini Motorways Traffic", ja: "ミニ・モーターウェイズ交差点", zh: "迷你公路交叉口", fr: "Mini Motorways Traffic", es: "Mini Motorways Traffic" } },
   { slug: "chrono-detective", emoji: "⏱️", cat: "puzzle", name: { ko: "오브라 딘 크로노 추리", en: "Memento Mori Chrono", ja: "オブラ・ディン・クロノ推理", zh: "奥伯拉丁怀表推理", fr: "Memento Mori Chrono", es: "Memento Mori Chrono" } },
+  { slug: "dome-keeper", emoji: "⛏️", cat: "arcade", name: { ko: "돔 키퍼 채굴 디펜스", en: "Dome Keeper Drill Defense", ja: "ドームキーパー採掘防衛", zh: "穹顶守护者：钻探防卫", fr: "Dome Keeper Drill Defense", es: "Dome Keeper Drill Defense" } },
 
   { slug: "failure-eater", emoji: "👾", cat: "arcade", name: { ko: "실패를 먹는 괴물", en: "Failure Eater", ja: "失敗を食べる怪物", zh: "吃掉失败的怪物", fr: "Monstre des ratés", es: "Monstruo de los fallos" } },
   { slug: "snake-game", emoji: "🐍", cat: "arcade", name: { ko: "스네이크", en: "Snake", ja: "スネーク", zh: "贪吃蛇", fr: "Snake", es: "Snake" } },
@@ -801,6 +802,18 @@ const NEW_RELEASES_CONFIG: Array<{ slug: string; tag: Record<Locale, string>; de
       zh: "使用死神怀表（Memento Mori）勘查三幕凝固的船难现场，在命运账簿中完整推导三名船员的身份、死因与凶手。",
       fr: "Inspectez 3 scènes figées dans le temps et déduisez l'identité, la cause et le coupable des 3 victimes selon la Règle de Trois.",
       es: "Inspecciona 3 escenas congeladas en el tiempo y deduce la identidad, causa y culpable de las 3 víctimas mediante la Regla de Tres.",
+    },
+  },
+  {
+    slug: "dome-keeper",
+    tag: { ko: "지하 제트팩 채굴 & 돔 아크 레이저 디펜스", en: "Jetpack Drill Mining & Dome Arc Laser Defense", ja: "地下ジェット採掘＆ドームアーク防衛", zh: "喷气钻探采矿与穹顶电弧激光防卫", fr: "Forage Jetpack & Défense Laser du Dôme", es: "Perforación Jetpack y Defensa Láser del Domo" },
+    desc: {
+      ko: "웨이브 사이의 짧은 정적 동안 지하 암반을 굴착해 철·코발트·고대 유물 코어를 인양하고, 괴수 습격 전 돔 콕핏으로 귀환해 아크 레이저로 방어하세요.",
+      en: "Excavate underground strata for Iron, Cobalt, and the Ancient Relic Core between alien waves, then race back to the Dome cockpit to fire the Arc Laser.",
+      ja: "ウェーブの合間に地下岩盤を掘削して鉄・コバルト・古代遺物コアを運び上げ、怪獣襲撃前にドームへ帰還してアークレーザーで迎撃しよう。",
+      zh: "在异星怪兽波次间隙深入地下岩层开采铁矿、钴晶与远古遗物核心，并在袭击来临前返回穹顶驾驶舱操控电弧激光迎击。",
+      fr: "Forez les strates souterraines pour extraire fer, cobalt et la relique ancienne entre deux vagues, puis défendez le dôme au laser.",
+      es: "Excava estratos subterráneos en busca de hierro, cobalto y la reliquia ancestral entre oleadas y regresa al domo para disparar el láser.",
     },
   },
 ];

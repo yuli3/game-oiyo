@@ -1000,6 +1000,20 @@ export const MISSION_CATALOG: Array<{
     goal: 1,
     xpReward: 50,
   },
+  {
+    id: "dome-keeper-relic-1",
+    gameSlug: "dome-keeper",
+    title: {
+      ko: "돔 키퍼 채굴 디펜스에서 외계 괴수 웨이브를 막아내거나 고대 유물 코어 인양하기",
+      en: "Repel the final alien wave or extract the Ancient Relic Core in Dome Keeper Drill Defense",
+      ja: "ドームキーパー採掘ディフェンスで最終ウェーブを撃退するか古代遺物コアを回収する",
+      zh: "在穹顶守护者采矿防卫中击退最终异形波次或发掘远古遗物核心",
+      fr: "Repoussez la vague finale ou extrayez le Cœur Relique dans Dome Keeper",
+      es: "Repele la oleada final o extrae el Núcleo Reliquia en Dome Keeper",
+    },
+    goal: 1,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {

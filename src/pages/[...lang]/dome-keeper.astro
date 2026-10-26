@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import DomeKeeper from "../../components/games/DomeKeeper";
+import GameGuide from "../../components/GameGuide.astro";
+import { locales, type Locale } from "../../lib/i18n";
+
+export function getStaticPaths() {
+  return locales.map((l) => ({ params: { lang: l === "en" ? undefined : l } }));
+}
+
+const locale: Locale = (Astro.params.lang as Locale) || "en";
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "돔 키퍼 채굴 디펜스 — 지하 광산 보로노이 굴착 & 유리 돔 레이저 방어 | OIYO Game",
+    description:
+      "지하 지층에서 철광석과 코발트를 채굴해 드릴·제트팩·레이저 포탑을 강화하고, 몰려오는 외계 괴수 웨이브로부터 유리 돔과 고대 유물을 수호하세요.",
+  },
+  en: {
+    title: "Dome Keeper Drill Defense — Underground Mining & Glass Dome Laser Defense | OIYO Game",
+    description:
+      "Excavate underground Iron and Cobalt veins with Voronoi shatter physics, upgrade your drill and laser turret, and defend the Glass Dome against alien waves.",
+  },
+  ja: {
+    title: "ドームキーパー採掘ディフェンス — 地下鉱山掘削＆ドームレーザー防衛 | OIYO Game",
+    description:
+      "地下地層から鉄鉱石とコバルトを採掘してドリルとレーザー砲を強化し、エイリアンの襲撃からガラスドームと古代遺物を守り抜こう。",
+  },
+  zh: {
+    title: "穹顶守护者采矿防卫 — 地下钻探与玻璃穹顶激光防卫 | OIYO Game",
+    description:
+      "在地下岩层钻探铁矿与钴水晶，升级等离子钻头与穹顶激光炮，抵御异形怪物波次并回收远古遗物核心。",
+  },
+  fr: {
+    title: "Dome Keeper : Défense & Forage — Mine Souterraine & Laser du Dôme | OIYO Game",
+    description:
+      "Forez les strates souterraines pour extraire le fer et le cobalt, améliorez votre canon laser et défendez le dôme contre les vagues extraterrestres.",
+  },
+  es: {
+    title: "Dome Keeper: Defensa y Perforación — Minería Subterránea y Láser del Domo | OIYO Game",
+    description:
+      "Excava vetas de hierro y cobalto bajo tierra, mejora tu taladro y cañón láser, y defiende la cúpula de cristal de las oleadas alienígenas.",
+  },
+};
+
+const m = meta[locale] || meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <DomeKeeper client:load locale={locale} />
+  <GameGuide slug="dome-keeper" locale={locale} name={m.title.split(" — ")[0]} />
+</BaseLayout>
