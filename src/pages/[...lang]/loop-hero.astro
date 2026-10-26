@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { LoopHero } from "../../components/games/LoopHero";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "루프 히어로 웹 — 원형 트랙 덱빌딩 & 지형 합성 RPG",
+    description: "무한 루프를 도는 용사를 위해 지형 카드(숲, 바위, 흡혈귀 저택)를 배치하고 3×3 산맥을 합성하여 강력한 장비를 파밍하는 다크 판타지 덱빌더 RPG.",
+  },
+  en: {
+    title: "Loop Hero Mini Web — Circular Track Deckbuilder & Tile Morphing RPG",
+    description: "Shape the endless expedition loop by placing landscape cards (Groves, Rocks, Vampire Mansions), morphing 3x3 Mountain Peaks, and gearing up for real-time combat.",
+  },
+  ja: {
+    title: "ループヒーロー Web — 円形トラック ランドスケープ合成デッキ構築RPG",
+    description: "無限のループを巡る勇者のために地形カード（森、岩山、吸血鬼の館）を配置し、3×3の山頂を合成して装備を強化するダークファンタジー放置系RPG。",
+  },
+  zh: {
+    title: "循环勇者 Mini Web — 环形闭环地形构筑与装备打宝RPG",
+    description: "在无尽的黑暗循环之路上为勇者放置森林、墓园与吸血鬼庄园，3×3合成巍峨山峰，全自动战斗刷出极品装备的暗黑地牢构筑RPG。",
+  },
+  fr: {
+    title: "Loop Hero Mini Web — Deckbuilder de circuit circulaire et fusion de tuiles RPG",
+    description: "Placez des cartes de terrain le long de la boucle de l'expédition (Bosquets, Roches, Manoirs de vampire), formez des sommets de montagne 3x3 et équipez votre héros.",
+  },
+  es: {
+    title: "Loop Hero Mini Web — Deckbuilder de circuito cerrado y fusión de terrenos RPG",
+    description: "Guía al héroe a lo largo de un circuito infinito colocando cartas de terreno (Arboledas, Rocas, Mansiones Vampíricas), fusiona picos de montaña 3x3 y equipa equipo épico.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-4xl px-4 py-8">
+    <LoopHero client:load />
+    <GameGuide slug="loop-hero" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>

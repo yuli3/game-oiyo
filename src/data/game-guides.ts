@@ -5188,4 +5188,60 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "loop-hero": {
+    origin: {
+      ko: "루프 히어로 웹(Loop Hero Mini Web)은 인디 게임계에 일대 파란을 일으킨 명작 'Loop Hero'의 지형 배치 덱빌딩과 무한 순환 전투 메커니즘을 웹 캔버스에 충실히 구현한 다크 판타지 RPG입니다. 모든 기억을 잃고 끝없는 공허의 원형 도로를 순환하는 용사를 위해, 플레이어는 환경 카드를 배치해 세계를 재창조하고 몬스터와 전투를 유도하여 전설적인 무구들을 획득합니다.",
+      en: "Loop Hero Mini Web faithfully captures the revolutionary circular track deckbuilding and tile-morphing combat of Four Quarters' celebrated masterpiece. As a brave knight marches through an amnesiac void, you place environmental cards along and around the track, morphing landscapes to spawn monsters and forge legendary artifacts.",
+      ja: "ループヒーロー Web（Loop Hero Mini Web）は、インディー界に衝撃を与えた名作『Loop Hero』の円形トラックデッキ構築と自動戦闘システムをブラウザ向けに凝縮したダークファンタジーRPGです。虚無の周回ルートを歩み続ける勇者のため、プレイヤーは地形カードを配置して世界を再構築し、戦いを通じて強力な武具を集めます。",
+      zh: "循环勇者 Mini Web（Loop Hero Mini Web）完美还原了独立黑马神作《Loop Hero》开创的环形闭环构筑与全自动打宝核心机制。在遗忘与虚无的环形公路上，勇者孤身漫步，玩家扮演幕后创世者放置地块卡牌构建世界，引发怪物伏击并刷取神级神装。",
+      fr: "Loop Hero Mini Web recrée la boucle d'expédition et la construction de monde du chef-d'œuvre indépendant Loop Hero. Placez des cartes de terrain autour du sentier pour faire apparaître des ennemis, améliorer vos statistiques et forger un équipement puissant.",
+      es: "Loop Hero Mini Web adapta la adictiva mecánica de construcción de mundos y combate cíclico del aclamado juego indie. Coloca cartas de paisaje a lo largo del sendero para invocar enemigos, transformar biomas y equipar a tu héroe con botín épico.",
+    },
+    how: {
+      ko: "용사는 닫힌 원형 트랙을 자동으로 순환합니다. 손패에 있는 지형 카드를 클릭한 뒤 유효한 타일에 배치하세요(숲·묘지·흡혈귀 저택은 길가, 바위·초원은 풍경 칸). 바위와 산을 3×3으로 모으면 '산봉우리'로 변신해 엄청난 최대 체력을 부여합니다. 몬스터를 처치해 얻은 무기·방패·갑옷·반지를 인벤토리에서 '장착'하여 용사를 강화하세요.",
+      en: "The hero walks continuously along the closed loop. Click a card in your hand and place it on a valid board tile (Roadside for Groves/Cemeteries/Mansions, Landscape for Meadows/Rocks). Grouping rocks in a 3x3 formation morphs them into a majestic 'Mountain Peak' with massive bonus HP. Equip dropped swords, shields, armor, and rings to withstand higher loops.",
+      ja: "勇者は閉じた円形トラックを自動で歩き続けます。手札のカードを選び、ハイライトされた有効マスに配置しましょう（木立ち・墓場・吸血鬼の館は道路脇、草原・岩山は風景）。岩を3×3の正方形に敷き詰めると『巨大山頂』へと覚醒し膨大な最大HPを獲得します。モンスターを討伐して手に入れた装備を装着して強化しましょう。",
+      zh: "勇者会在闭环跑道上恒速漫步。点击手牌中的地形卡，再点击高亮方格完成建造（森林、墓园、吸血鬼公馆需贴路建造，草地与岩石可建在开阔地）。将9块岩石拼成3×3方阵会自动蜕变为‘崇山峻岭’并大幅拔高生命上限。击败沿途魔物掉落装备，在行囊中点击‘Equip’换装变强。",
+      fr: "Le héros avance automatiquement le long de la boucle. Cliquez sur une carte puis sur une case disponible. Réunir 9 roches en bloc 3x3 crée un Sommet de Montagne conférant un bonus massif de points de vie. Équipez les armes et armures obtenues sur les monstres.",
+      es: "El héroe camina de forma continua por el circuito. Selecciona una carta y colócala en una casilla válida. Agrupar rocas en un bloque de 3x3 las transforma en un 'Pico de Montaña' con gran bonificación de salud. Equipa las armas y armaduras que sueltan los enemigos.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "3×3 산봉우리(Mountain Peak)는 어떻게 만드나요?",
+          en: "How do I create a 3x3 Mountain Peak?",
+          ja: "3×3の『巨大山頂（Mountain Peak）』はどうやって作りますか？",
+          zh: "如何触发合成3×3的‘巍峨山峰（Mountain Peak）’？",
+          fr: "Comment former un Sommet de Montagne 3x3 ?",
+          es: "¿Cómo creo un Pico de Montaña de 3x3?",
+        },
+        a: {
+          ko: "바위(Rock) 또는 산(Mountain) 카드를 가로 3칸 × 세로 3칸의 정사각형 영역(총 9칸)에 모두 빈틈없이 채우면, 즉시 중앙 타일이 눈 덮인 거대한 '산봉우리(Mountain Peak)'로 변신합니다. 산봉우리는 용사의 기본 최대 체력을 +120 증가시키고 매일 아침 추가 체력을 회복시켜 줍니다.",
+          en: "Fill any 3x3 contiguous block of cells (9 tiles in total) entirely with Rock or Mountain cards. The moment the 9th tile is placed, the center morphs into a snow-crested Mountain Peak, granting a massive +120 base Max HP and daily health regeneration!",
+          ja: "岩（Rock）または山（Mountain）カードを縦3マス×横3マスの正方形（合計9マス）すべてに隙間なく敷き詰めてください。9枚目を置いた瞬間に中央が雪を冠した『巨大山頂』へと融合進化し、最大HPが+120跳ね上がり毎朝の治癒量も増大します。",
+          zh: "将9张岩石（Rock）或山脉卡牌整齐填满任意3×3的连续网格。当第9块岩石放置的瞬间，九宫格中心便会羽化升华为常年积雪的巍峨山峰，立刻为勇者永久提供+120最大生命值加成与每日晨间生命回复！",
+          fr: "Remplissez une zone de 3x3 avec des roches ou montagnes. Dès que la 9e tuile est posée, le centre se transforme en Sommet de Montagne, offrant +120 PV max et une régénération quotidienne.",
+          es: "Completa un bloque contiguo de 3x3 enteramente con cartas de Roca o Montaña. En cuanto coloques la novena, el centro se transformará en un Pico de Montaña con +120 de salud máxima y regeneración diaria.",
+        },
+      },
+      {
+        q: {
+          ko: "전투에서 체력이 부족할 때 생존율을 높이는 팁은 무엇인가요?",
+          en: "What are the best survival tips when HP runs low in combat?",
+          ja: "戦闘でHPが削られてピンチの時、生き残るコツは何ですか？",
+          zh: "战局中频繁残血濒死时，有哪些提高生存率的配装与建造技巧？",
+          fr: "Quelles sont les meilleures astuces pour survivre aux combats difficiles ?",
+          es: "¿Cuáles son los mejores consejos para sobrevivir cuando escasea la salud?",
+        },
+        a: {
+          ko: "흡혈(Vampirism) 옵션이 붙은 무기나 반지를 장착하세요. 공격할 때마다 입힌 피해의 일정 비율을 즉시 체력으로 흡수합니다. 또한 모닥불을 통과할 때마다 최대 체력의 20%가 회복되므로, 초원 타일을 비(非)초원 타일 옆에 붙여 '꽃 핀 초원'으로 활성화하면 매일 아침 체력을 풍성하게 회복할 수 있습니다.",
+          en: "Prioritize equipment with Vampirism (life steal) on weapons and rings to heal back damage dealt in every swing. Passing the starting Campfire automatically restores 20% Max HP, and placing Meadows next to non-meadow tiles blossoms them into Blooming Meadows with higher daily healing.",
+          ja: "吸血（Vampirism）特性が付いた剣や指輪を優先して装備しましょう。敵を斬るたびに与ダメージの一部が瞬時にHPとして還元されます。また焚き火マスを通過すると最大HPの20%が全回復するほか、草原を異種タイルの隣に置いて『咲き誇る草原』にすると毎朝の回復量が倍増します。",
+          zh: "优先穿戴附带吸血（Vampirism）属性的武器或神级戒圈，每次挥剑都能按伤害比例实时吸血自愈。每次跑完一圈经过初始营火（Campfire）均会瞬间满血回复20%最大HP；另外将草地贴近异种建筑建造能进化为‘繁花草地’，让每日清晨获得更多自动愈合血量。",
+          fr: "Privilégiez les objets dotés de Vampirisme pour régénérer des points de vie à chaque frappe. Passer par le feu de camp restaure 20% des PV max, et les prairies fleuries augmentent le soin matinal.",
+          es: "Equipa objetos con Vampirismo en armas y anillos para recuperar salud con cada golpe. Pasar por la hoguera inicial restaura el 20% de salud máxima, y las praderas florecidas aumentan la curación matutina.",
+        },
+      },
+    ],
+  },
 };
