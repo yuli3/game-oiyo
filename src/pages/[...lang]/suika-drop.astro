@@ -1,0 +1,55 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SuikaDrop from "../../components/games/SuikaDrop";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "수박 머지 3D 물리 — 과일 드롭 & 연쇄 진화 수박게임",
+    description:
+      "체리(🍒)부터 대왕 수박(🍉)까지 10단계 원형 과일을 떨어뜨리고 부딪혀 연쇄 진화시키는 중독성 만점 물리 머지 퍼즐!",
+  },
+  en: {
+    title: "Suika Fruit Drop Physics — Watermelon Merge Physics Puzzle",
+    description:
+      "Drop and collide matching circular fruits from Cherry (🍒) to Giant Watermelon (🍉) with realistic rolling physics and pop shockwaves!",
+  },
+  ja: {
+    title: "スイカマージ 3D物理 — フルーツ落下＆連鎖進化パズル",
+    description:
+      "サクランボ(🍒)から巨大スイカ(🍉)まで、同じフルーツをぶつけて10段階に連鎖進化させる爽快物理マージパズル！",
+  },
+  zh: {
+    title: "合成大西瓜 3D物理 (Suika Fruit Drop) — 水果掉落连锁合成益智游戏",
+    description:
+      "投落相同等级的水果碰撞融合，从樱桃(🍒)一路连锁进化至超级大西瓜(🍉)的物理合成解压游戏！",
+  },
+  fr: {
+    title: "Suika Fruit Drop Physics — Jeu de fusion physique de pastèques",
+    description:
+      "Lâchez et fusionnez les fruits identiques de la Cerise (🍒) jusqu'à la Pastèque Géante (🍉) avec une physique réaliste !",
+  },
+  es: {
+    title: "Suika Fruit Drop Physics — Puzle físico de fusión de sandías",
+    description:
+      "¡Suelta y combina frutas iguales desde la Cereza (🍒) hasta la Sandía Gigante (🍉) con física de rodadura y ondas expansivas!",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-4xl px-4 py-8">
+    <SuikaDrop client:load lang={locale} />
+    <GameGuide slug="suika-drop" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>

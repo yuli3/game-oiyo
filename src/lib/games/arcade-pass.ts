@@ -874,6 +874,20 @@ export const MISSION_CATALOG: Array<{
     goal: 2,
     xpReward: 50,
   },
+  {
+    id: "suika-drop-merge-10",
+    gameSlug: "suika-drop",
+    title: {
+      ko: "수박 머지 3D 물리에서 과일 10회 이상 연쇄 합성하기",
+      en: "Merge fruits 10 or more times in Suika Fruit Drop Physics",
+      ja: "スイカマージ 3D物理でフルーツを10回以上合体させる",
+      zh: "在合成大西瓜 3D物理中累计完成 10 次或以上水果合成",
+      fr: "Fusionnez des fruits 10 fois ou plus dans Suika Fruit Drop Physics",
+      es: "Fusiona frutas 10 o más veces en Suika Fruit Drop Physics",
+    },
+    goal: 10,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {

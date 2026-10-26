@@ -6210,4 +6210,60 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "suika-drop": {
+    origin: {
+      ko: "『수박 머지 3D 물리 (Suika Fruit Drop Physics)』는 글로벌 열풍을 일으킨 물리 합체 퍼즐 『수박게임 (Suika Game)』에서 영감을 받은 OIYO 오리지널 과일 진화 물리 게임입니다. 체리(🍒, 1단계)부터 대왕 수박(🍉, 10단계)까지 원형 과일의 질량·마찰·각운동량 구름 회전과 합성 시 발생하는 팝업 팽창 충격파(Pop Shockwave)를 정밀 구현하여, 과일이 상단 데드라인을 넘지 않도록 연쇄 합성을 유도하는 쫄깃한 손맛을 웹에서 즐길 수 있습니다.",
+      en: "Suika Fruit Drop Physics is an original OIYO multi-circle rigid-body merge puzzle inspired by the global hit Suika Game. Drop circular fruits from Cherry (🍒, Tier 1) to Giant Watermelon (🍉, Tier 10) into the wooden box, leveraging angular rolling momentum and Pop Shockwave impulses to trigger chain evolutions without crossing the top deadline.",
+      ja: "『スイカマージ 3D物理（Suika Fruit Drop Physics）』は、世界的大ヒットとなった物理パズル『スイカゲーム』にインスパイアされたOIYOオリジナルのフルーツ進化パズルです。サクランボ（🍒）から巨大スイカ（🍉）まで10段階の球体物理（質量・摩擦・回転モーメント）と合体時のポップ衝撃波を再現し、箱から溢れないように連鎖合体を狙う中毒性の高いパズル体験を提供します。",
+      zh: "《合成大西瓜 3D物理（Suika Fruit Drop Physics）》灵感源自风靡全球的物理合成游戏《Suika Game（合成大西瓜）》。从第 1 阶樱桃（🍒）到第 10 阶超级大西瓜（🍉），真实还原圆球质量、滚动摩擦力与合成瞬间的膨胀冲击波（Pop Shockwave），在不超出箱顶警戒线的前提下引爆爽快连环进化。",
+      fr: "Suika Fruit Drop Physics est un jeu de fusion physique inspiré du phénomène mondial Suika Game. Faites tomber des fruits ronds de la Cerise (🍒) à la Pastèque Géante (🍉) en exploitant le roulement et les ondes de choc de fusion sans dépasser la ligne limite.",
+      es: "Suika Fruit Drop Physics es un puzle físico de fusión inspirado en el fenómeno global Suika Game. Suelta frutas circulares desde la Cereza (🍒) hasta la Sandía Gigante (🍉), aprovechando el giro y las ondas expansivas de fusión sin superar la línea superior.",
+    },
+    how: {
+      ko: "1) 마우스나 손가락을 좌우로 움직여(또는 방향키 ◀/▶) 상단 구름에서 떨어뜨릴 과일의 위치를 조준하세요. 2) 클릭/터치(또는 스페이스바)하면 과일이 수직 가이드라인을 따라 낙하합니다. 3) 같은 종류의 과일 2개가 서로 닿으면 '퐁!' 소리와 함께 한 단계 더 큰 과일로 진화(🍒체리 → 🍓딸기 → 🍇포도 → 🍊한라봉 → 🍅단감 → 🍎사과 → 🍐배 → 🍑복숭아 → 🍍파인애플 → 🍉수박)합니다. 4) 미세하게 틈이 벌어져 합쳐지지 않을 때는 상단의 『🫨 상자 흔들기』 버튼(2회 제공)을 눌러 과일들을 살짝 흔들어 주세요!",
+      en: "1) Move your pointer or finger left and right (or press Left/Right arrow keys) to aim the drop line. 2) Click/tap (or press Spacebar) to drop the current fruit. 3) When two identical fruits touch, they pop and merge into the next evolution tier (🍒Cherry → 🍓Strawberry → 🍇Grape → 🍊Dekopon → 🍅Persimmon → 🍎Apple → 🍐Pear → 🍑Peach → 🍍Pineapple → 🍉Watermelon). 4) Use the '🫨 Shake Box' button (2 charges per run) to nudge fruits that are almost touching!",
+      ja: "1) マウスや指を左右に動かして（または矢印キー◀/▶）落下位置を狙います。2) クリック・タップ（またはスペースキー）でフルーツを落とします。3) 同じ種類のフルーツ同士が触れると「ポン！」と弾けて1段階大きなフルーツへ進化（🍒→🍓→🍇→🍊→🍅→🍎→🍐→🍑→🍍→🍉）します。4) あと少しでくっつきそうな時は『🫨 箱を揺らす』ボタン（2回まで）を使って連鎖を誘発しましょう！",
+      zh: "1) 左右移动鼠标或手指（或按方向键 ◀/▶）对准落点虚线。2) 点击或轻触屏幕（或按空格键）投下当前水果。3) 当两个相同的水果相互接触时，便会“啵！”地一声融合进化为更高一阶的水果（🍒樱桃 → 🍓草莓 → 🍇葡萄 → 🍊柑橘 → 🍅柿子 → 🍎苹果 → 🍐香梨 → 🍑水蜜桃 → 🍍菠萝 → 🍉大西瓜）。4) 若两颗同级水果仅差毫厘未能相碰，可点击上方的“🫨 摇晃果箱”（每局 2 次）助推合成！",
+      fr: "1) Déplacez votre curseur ou votre doigt (ou flèches gauche/droite) pour viser. 2) Cliquez ou appuyez sur Espace pour lâcher le fruit. 3) Deux fruits identiques qui se touchent fusionnent au niveau supérieur (🍒 → 🍓 → 🍇 → 🍊 → 🍅 → 🍎 → 🍐 → 🍑 → 🍍 → 🍉). 4) Utilisez le bouton « 🫨 Secouer » (2 fois par partie) pour débloquer les fusions !",
+      es: "1) Mueve el puntero o el dedo (o flechas izquierda/derecha) para apuntar. 2) Haz clic o pulsa Espacio para soltar la fruta. 3) Dos frutas idénticas que se tocan se fusionan al siguiente nivel (🍒 → 🍓 → 🍇 → 🍊 → 🍅 → 🍎 → 🍐 → 🍑 → 🍍 → 🍉). 4) ¡Usa el botón «🫨 Agitar Caja» (2 usos por partida) para empujar frutas cercanas!",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "큰 과일과 작은 과일을 어떤 순서로 배치해야 수박(🍉)을 만들기 쉽나요?",
+          en: "How should I arrange large and small fruits to reach the Giant Watermelon (🍉)?",
+          ja: "大きなフルーツと小さなフルーツはどのように配置するとスイカ（🍉）を作りやすいですか？",
+          zh: "大小水果应该如何排列布局才更容易合成大西瓜（🍉）？",
+          fr: "Comment organiser les gros et petits fruits pour atteindre la Pastèque (🍉) ?",
+          es: "¿Cómo debo organizar las frutas grandes y pequeñas para lograr la Sandía (🍉)?",
+        },
+        a: {
+          ko: "가장 큰 과일(복숭아·파인애플)을 상자 왼쪽이나 오른쪽 한쪽 구석에 고정해 두고, 그 옆으로 단계별로 작아지는 순서(배 → 사과 → 단감 → 한라봉)로 계단식 정렬을 유지하면 작은 과일이 큰 과일 밑에 깔려 공간을 막는 현상을 예방할 수 있습니다.",
+          en: "Keep your largest fruits (Peach, Pineapple) anchored in one bottom corner (left or right) and build a descending staircase of sizes next to them (Pear → Apple → Persimmon). This prevents tiny cherries from getting trapped underneath heavy fruits!",
+          ja: "一番大きなフルーツ（モモ・パイナップル）を箱の左右どちらか片隅に固定し、その隣に段階的に小さくなる順（ナシ→リンゴ→カキ）で階段状に並べると、小さなフルーツが下敷きになって詰まるのを防げます。",
+          zh: "建议将体积最大的水果（水蜜桃、菠萝）固定在果箱左下或右下角落，并由大到小呈阶梯状向另一侧排列（香梨 → 苹果 → 柿子），这样能避免小樱桃卡在巨型水果下方浪费空间。",
+          fr: "Gardez vos plus gros fruits (Pêche, Ananas) dans un coin inférieur et formez un escalier décroissant vers l'autre côté pour éviter que les petites cerises ne restent coincées en dessous.",
+          es: "Mantén tus frutas más grandes (Melocotón, Piña) en una esquina inferior y forma una escalera descendente hacia el otro lado para evitar que las cerezas pequeñas queden atrapadas debajo.",
+        },
+      },
+      {
+        q: {
+          ko: "합성 시 발생하는 팝 충격파(Pop Shockwave)는 무엇인가요?",
+          en: "What is the Pop Shockwave when two fruits merge?",
+          ja: "合体時に発生するポップ衝撃波（Pop Shockwave）とは何ですか？",
+          zh: "水果合成时产生的膨胀冲击波（Pop Shockwave）有什么作用？",
+          fr: "Qu'est-ce que l'onde de choc lors d'une fusion ?",
+          es: "¿Qué es la onda expansiva cuando dos frutas se fusionan?",
+        },
+        a: {
+          ko: "두 과일이 합쳐져 더 큰 과일로 진화할 때 주변 과일들을 살짝 밀어내는 탄성 충격파가 발생합니다. 이를 활용하면 인접한 다른 과일들까지 연쇄적으로 굴러가 부딪히며 최대 4배 점수 보너스를 주는 콤보 합성을 터뜨릴 수 있습니다.",
+          en: "When two fruits fuse into a larger tier, they emit a radial elastic shockwave that nudges neighboring fruits. You can use this impulse to push nearby matching fruits into each other for up to a 4x Combo multiplier!",
+          ja: "2つのフルーツが合体して大きくなる瞬間、周囲のフルーツを軽く押し出す弾性衝撃波が発生します。これを利用して隣のフルーツを転がし、最大4倍のコンボボーナスを狙うことができます。",
+          zh: "当两颗水果融合进化为更大体积时，会向外释放一圈弹性冲击波推开周围水果。巧妙利用这股推力可以让旁边的同级水果顺势滚落相撞，触发最高 4 倍加成的连锁 Combo！",
+          fr: "Lorsque deux fruits fusionnent, ils émettent une onde élastique qui pousse légèrement les fruits voisins, permettant de déclencher des combos en chaîne jusqu'à x4.",
+          es: "Cuando dos frutas se fusionan, emiten una onda elástica que empuja ligeramente a las frutas vecinas, ¡permitiendo desencadenar combos en cadena de hasta x4!",
+        },
+      },
+    ],
+  },
 };
