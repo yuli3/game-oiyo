@@ -45,8 +45,8 @@ export const siteConfig = {
   manualAds: {
     enabled: true,
     slots: {
-      gameBelow: "2768903568", // Responsive display unit placed below game surface and above guide
-      gameGuideEnd: "", // oiyo-game-result: after GameGuide. Empty until the AdSense unit exists (2026-10-26)
+      gameBelow: "8397240979", // oiyo-game-below-canvas: below game surface, above guide (own unit since 2026-10-26)
+      gameGuideEnd: "1561911873", // oiyo-game-result: after GameGuide (2026-10-26)
     },
   },
   newsletter: {
