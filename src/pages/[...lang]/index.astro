@@ -16,22 +16,22 @@ const { locale } = Astro.props as { locale: Locale };
 const translations = await getTranslations(locale);
 
 const meta: Record<Locale, { title: string; description: string }> = {
-  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 135종", description: "체스·스도쿠·워들부터 OIYO 오리지널 게임까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 135종." },
-  en: { title: "OIYO Arcade — 135 free browser games, no install", description: "Chess, Sudoku, Wordle, and original OIYO games: 135 free games you can play instantly in your browser." },
-  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム135種", description: "チェス・数独・ワードルからOIYOオリジナル作品まで、ブラウザですぐ遊べる無料ゲーム135種。" },
-  zh: { title: "OIYO 街机 — 无需安装的135款免费游戏", description: "从国际象棋、数独、猜词到 OIYO 原创作品，135款游戏无需安装即可畅玩。" },
-  fr: { title: "OIYO Arcade — 135 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations originales OIYO : 135 jeux gratuits dans le navigateur." },
-  es: { title: "OIYO Arcade — 135 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y originales de OIYO: 135 juegos gratuitos en el navegador." },
+  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 136종", description: "체스·스도쿠·워들부터 OIYO 오리지널 게임까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 136종." },
+  en: { title: "OIYO Arcade — 136 free browser games, no install", description: "Chess, Sudoku, Wordle, and original OIYO games: 136 free games you can play instantly in your browser." },
+  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム136種", description: "チェス・数独・ワードルからOIYOオリジナル作品まで、ブラウザですぐ遊べる無料ゲーム136種。" },
+  zh: { title: "OIYO 街机 — 无需安装的136款免费游戏", description: "从国际象棋、数独、猜词到 OIYO 原创作品，136款游戏无需安装即可畅玩。" },
+  fr: { title: "OIYO Arcade — 136 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations originales OIYO : 136 jeux gratuits dans le navigateur." },
+  es: { title: "OIYO Arcade — 136 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y originales de OIYO: 136 juegos gratuitos en el navegador." },
 };
 const m = meta[locale] ?? meta.en;
 
 const hero: Record<Locale, { eyebrow: string; title: string; sub: string }> = {
-  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 135종", sub: "보드·카드·퍼즐·오리지널 아케이드 — 브라우저에서 바로 시작하세요." },
-  en: { eyebrow: "🎮 OIYO Arcade", title: "135 free games, right in your browser", sub: "Board, card, puzzle, and original arcade games — instant and free." },
-  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム135種", sub: "ボード・カード・パズル・オリジナル作品をブラウザですぐに。" },
-  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的135款免费游戏", sub: "棋类、纸牌、益智和原创街机游戏，浏览器直接开玩。" },
-  fr: { eyebrow: "🎮 OIYO Arcade", title: "135 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et créations originales, sans installation." },
-  es: { eyebrow: "🎮 OIYO Arcade", title: "135 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones originales, sin instalación." },
+  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 136종", sub: "보드·카드·퍼즐·오리지널 아케이드 — 브라우저에서 바로 시작하세요." },
+  en: { eyebrow: "🎮 OIYO Arcade", title: "136 free games, right in your browser", sub: "Board, card, puzzle, and original arcade games — instant and free." },
+  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム136種", sub: "ボード・カード・パズル・オリジナル作品をブラウザですぐに。" },
+  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的136款免费游戏", sub: "棋类、纸牌、益智和原创街机游戏，浏览器直接开玩。" },
+  fr: { eyebrow: "🎮 OIYO Arcade", title: "136 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et créations originales, sans installation." },
+  es: { eyebrow: "🎮 OIYO Arcade", title: "136 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones originales, sin instalación." },
 };
 const h = hero[locale] ?? hero.en;
 
@@ -144,6 +144,7 @@ const GAMES: Game[] = [
   { slug: "gorogoa-frame", emoji: "🖼️", cat: "puzzle", name: { ko: "고르고아 프레임", en: "Gorogoa Frame Weaver", ja: "ゴロゴア フレーム", zh: "画中世界 帧界编织", fr: "Gorogoa Frame Weaver", es: "Gorogoa Frame Weaver" } },
   { slug: "sticker-cozy", emoji: "📒", cat: "puzzle", name: { ko: "스티커북 코지 룸", en: "Sticker Book Cozy Room", ja: "ステッカーブック コージー", zh: "贴纸书：温馨小屋", fr: "Sticker Book Cozy Room", es: "Sticker Book Cozy Room" } },
   { slug: "swat-breach", emoji: "🚨", cat: "arcade", name: { ko: "택티컬 스왓 브리치", en: "Tactical SWAT Breach", ja: "タクティカル SWAT ブリーチ", zh: "战术特警：破门突击", fr: "Tactical SWAT Breach", es: "Tactical SWAT Breach" } },
+  { slug: "spire-rogue", emoji: "🗡️", cat: "card", name: { ko: "슬레이 더 스파이어 미니", en: "Spire Deckbuilder Rogue", ja: "スレイ・ザ・スパイア ミニ", zh: "杀戮尖塔迷你版", fr: "Spire Deckbuilder Rogue", es: "Spire Deckbuilder Rogue" } },
 
   { slug: "failure-eater", emoji: "👾", cat: "arcade", name: { ko: "실패를 먹는 괴물", en: "Failure Eater", ja: "失敗を食べる怪物", zh: "吃掉失败的怪物", fr: "Monstre des ratés", es: "Monstruo de los fallos" } },
   { slug: "snake-game", emoji: "🐍", cat: "arcade", name: { ko: "스네이크", en: "Snake", ja: "スネーク", zh: "贪吃蛇", fr: "Snake", es: "Snake" } },
@@ -671,6 +672,18 @@ const NEW_RELEASES_CONFIG: Array<{ slug: string; tag: Record<Locale, string>; de
       zh: "在建筑平面蓝图上规划防弹盾与突击干员的行进航点及闪光弹落点，下达行动指令同步破门突入，零伤亡肃清歹徒并安全解救人质。",
       fr: "Tracez les itinéraires d'entrée et les cibles de grenades flash sur le plan, puis lancez l'assaut SWAT coordonné pour libérer les otages.",
       es: "Traza rutas de irrupción y objetivos de granadas cegadoras en el plano y ejecuta un asalto SWAT sincronizado para rescatar a los rehenes.",
+    },
+  },
+  {
+    slug: "spire-rogue",
+    tag: { ko: "적 의도(Intent) 예측 덱빌딩 로그라이크", en: "Enemy Intent Roguelike Deckbuilder", ja: "敵意図予測デッキ構築ローグライク", zh: "敌方意图预判卡牌构筑肉鸽", fr: "Roguelike de deckbuilding tactique", es: "Roguelike de construcción de mazos" },
+    desc: {
+      ko: "5층 분기형 첨탑을 오르며 적의 다음 턴 의도(Intent)를 100% 읽고, 3에너지 안에서 공격·방어도·취약·힘 시너지를 조합해 첨탑 보스를 격파하세요.",
+      en: "Ascend a 5-floor branching Spire map, read 100% transparent Enemy Intents, and chain 3-Energy Attack, Block, Vulnerable, and Strength synergies.",
+      ja: "5階層の分岐マップを登り、敵の次ターンの行動意図(Intent)を読みながら3エナジーで攻撃・ブロック・弱体・筋力シナジーを組んでボスを討伐せよ。",
+      zh: "攀登 5 层分支尖塔，根据 100% 透明的敌方下回合意图（Intent），在 3 点能量内组合打击、格挡、易伤与力量卡牌连锁击败六火亡魂。",
+      fr: "Gravissez la Flèche sur 5 étages, lisez les intentions ennemies et enchaînez vos cartes d'attaque, d'armure et de force avec 3 Énergies.",
+      es: "Asciende por 5 pisos de la Aguja, lee las intenciones del enemigo y combina cartas de ataque, bloqueo y fuerza con 3 de energía.",
     },
   },
 ];

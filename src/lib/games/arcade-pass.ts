@@ -860,6 +860,20 @@ export const MISSION_CATALOG: Array<{
     goal: 1,
     xpReward: 50,
   },
+  {
+    id: "spire-rogue-floor-2",
+    gameSlug: "spire-rogue",
+    title: {
+      ko: "슬레이 더 스파이어 미니에서 적의 의도를 읽고 2개 층 이상 돌파하기",
+      en: "Clear 2 or more floors in Spire Deckbuilder Rogue",
+      ja: "スレイ・ザ・スパイア ミニで2階層以上を突破する",
+      zh: "在杀戮尖塔迷你版中成功突破 2 层或以上尖塔节点",
+      fr: "Franchissez 2 étages ou plus dans Spire Deckbuilder Rogue",
+      es: "Supera 2 o más pisos en Spire Deckbuilder Rogue",
+    },
+    goal: 2,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {

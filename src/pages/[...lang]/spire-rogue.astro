@@ -1,0 +1,55 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SpireRogue from "../../components/games/SpireRogue";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "슬레이 더 스파이어 미니 — 적 의도(Intent) 예측 덱빌딩 로그라이크",
+    description:
+      "5층 분기형 첨탑을 오르며 적의 다음 턴 의도(Intent)를 100% 읽고, 3에너지 안에서 공격·방어도·취약·힘 카드 시너지를 조합해 첨탑 보스 헥사고스트를 격파하세요!",
+  },
+  en: {
+    title: "Spire Deckbuilder Rogue — Turn-Based Enemy Intent Roguelike Deckbuilder",
+    description:
+      "Ascend a 5-floor branching Spire map, read 100% transparent Enemy Intents, and chain 3-Energy Attack, Block, Vulnerable, and Strength card synergies!",
+  },
+  ja: {
+    title: "スレイ・ザ・スパイア ミニ — 敵意図予測デッキ構築ローグライク",
+    description:
+      "5階層の分岐マップを登り、敵の次ターンの行動意図(Intent)を読みながら3エナジーで攻撃・ブロック・弱体・筋力カードを組み合わせて尖塔ボスを討伐せよ！",
+  },
+  zh: {
+    title: "杀戮尖塔迷你版 (Spire Deckbuilder Rogue) — 卡牌构筑肉鸽策略游戏",
+    description:
+      "攀登 5 层分支尖塔，预判敌人下回合意图(Intent)，在 3 点能量内组合打击、格挡、易伤与力量卡牌连锁击败六火亡魂！",
+  },
+  fr: {
+    title: "Spire Deckbuilder Rogue — Roguelike de construction de deck tactique",
+    description:
+      "Gravissez la Flèche sur 5 étages, lisez les intentions ennemies et combinez vos cartes d'attaque, d'armure et de force avec 3 Énergies par tour !",
+  },
+  es: {
+    title: "Spire Deckbuilder Rogue — Roguelike de construcción de mazos por turnos",
+    description:
+      "¡Asciende por 5 pisos de la Aguja, lee las intenciones del enemigo y combina cartas de ataque, bloqueo, vulnerable y fuerza con 3 de energía!",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-4xl px-4 py-8">
+    <SpireRogue client:load lang={locale} />
+    <GameGuide slug="spire-rogue" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>

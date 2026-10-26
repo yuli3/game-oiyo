@@ -6154,4 +6154,60 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "spire-rogue": {
+    origin: {
+      ko: "『슬레이 더 스파이어 미니 (Spire Deckbuilder Rogue)』는 Mega Crit의 전설적인 로그라이크 덱빌더 『Slay the Spire』에서 영감을 받은 OIYO 오리지널 턴제 카드 전술 게임입니다. 5개 층으로 이루어진 분기형 첨탑 지도(전투·엘리트·화롯불·보스)를 오르며, 적의 머리 위에 100% 공개되는 다음 턴 행동 의도(Intent)를 읽고 매 턴 주어지는 3에너지 안에서 공격·방어도(Block)·취약(Vulnerable)·힘(Strength) 시너지를 조합해 첨탑 보스 헥사고스트를 토벌하는 깊이 있는 덱빌딩 재미를 웹에서 구현했습니다.",
+      en: "Spire Deckbuilder Rogue is an original OIYO turn-based roguelike deckbuilder inspired by Mega Crit's legendary Slay the Spire. Ascend a 5-floor branching Spire map (Combat, Elite, Campfire, Boss), read 100% transparent Enemy Intents above each foe, and weave 3-Energy Attack, Block, Vulnerable, and Strength card synergies to defeat the Hexaghost boss.",
+      ja: "『スレイ・ザ・スパイア ミニ（Spire Deckbuilder Rogue）』は、名作ローグライクデッキ構築ゲーム『Slay the Spire』にインスパイアされたOIYOオリジナルのターン制カード戦術ゲームです。5階層の分岐マップ（通常戦・エリート・焚き火・ボス）を登り、敵の頭上に100%表示される次ターンの意図（Intent）を読みながら、毎ターン3エナジーで攻撃・ブロック・弱体・筋力のシナジーを組んでボス「ヘキサゴースト」を討伐します。",
+      zh: "《杀戮尖塔迷你版（Spire Deckbuilder Rogue）》灵感源自殿堂级卡牌肉鸽神作《Slay the Spire》。攀登由 5 层分支节点（普通战斗、精英、营火、首领）构成的尖塔，根据敌人头顶 100% 透明公开的下回合意图（Intent），在每回合 3 点能量内精妙调配打击、格挡、易伤与力量卡牌连锁，击败最终首领六火亡魂。",
+      fr: "Spire Deckbuilder Rogue est un jeu roguelike de construction de deck au tour par tour inspiré de Slay the Spire. Gravissez une carte ramifiée sur 5 étages, lisez les intentions ennemies 100 % transparentes et combinez vos cartes d'attaque, d'armure et de force avec 3 Énergies par tour.",
+      es: "Spire Deckbuilder Rogue es un roguelike de construcción de mazos por turnos inspirado en Slay the Spire. Asciende por un mapa ramificado de 5 pisos, lee las intenciones enemigas 100 % transparentes y encadena sinergias de ataque, bloqueo, vulnerable y fuerza con 3 de energía por turno.",
+    },
+    how: {
+      ko: "1) 첨탑 지도에서 점선으로 연결된 다음 층 노드를 클릭해 진입하세요. 2) 전투가 시작되면 적 머리 위의 『의도(Intent: ⚔️공격 피해량 / 🛡방어 / ✨힘 강화)』를 먼저 확인하세요. 3) 매 턴 주어지는 ⚡3에너지를 사용해 손패의 카드를 클릭(또는 숫자키 1~5)하여 발동하세요. 적이 강하게 공격할 턴에는 『수비/어깨 으쓱』으로 방어도(🛡)를 쌓고, 빈틈이 보일 때는 『강타(취약 부여)』 후 공격 카드를 연계하면 1.5배 피해를 입힙니다. 4) 『턴 종료(E)』를 누르면 적이 예고된 행동을 실행하고 다음 턴 카드 5장을 새로 뽑습니다.",
+      en: "1) Click an available node on the Spire Map to enter Combat, Elite, Campfire, or Boss encounters. 2) In combat, check the Enemy Intent badge above the monster first (⚔️ Attack DMG, 🛡 Block, or ✨ Strength Buff). 3) Spend your ⚡3 Energy per turn by clicking cards in your hand (or pressing keys 1–5). Stack Block (🛡) when the enemy intends a heavy attack, and apply Vulnerable ('Bash') before striking for +50% bonus damage. 4) Press 'End Turn (E)' to resolve the enemy's turn and draw 5 fresh cards.",
+      ja: "1) マップ上で選択可能なノードをクリックして進みます。2) 戦闘中はまず敵の頭上の『意図（⚔️攻撃ダメージ / 🛡ブロック / ✨筋力強化）』を確認しましょう。3) 毎ターン与えられる⚡3エナジーを使って手札のカードをクリック（または数字キー1〜5）して発動します。敵の強攻撃ターンにはブロック(🛡)を固め、『強打』で弱体（被ダメージ1.5倍）を付与してから攻撃を叩き込みましょう。4) 『ターン終了(E)』で敵ターンへ移行します。",
+      zh: "1) 在尖塔地图上点击高亮的可选节点进入下一层。2) 战斗开始时，先观察敌人头顶的“意图（⚔️攻击伤害 / 🛡格挡 / ✨力量强化）”。3) 每回合拥有 ⚡3 点能量，点击手牌（或按数字键 1~5）打出卡牌：敌方高伤回合优先叠甲（🛡），进攻回合先打出“痛击”施加易伤（伤害提升 50%）再衔接高伤卡。4) 点击“结束回合（E）”结算敌方行动并重新抽取 5 张牌。",
+      fr: "1) Cliquez sur un nœud disponible sur la carte de la Flèche. 2) En combat, observez l'intention au-dessus de l'ennemi (⚔️ Dégâts, 🛡 Armure, ✨ Force). 3) Dépensez vos ⚡3 Énergies en cliquant sur vos cartes (ou touches 1 à 5). Accumulez de l'Armure face aux grosses attaques et appliquez Vulnérable avant de frapper. 4) Cliquez sur « Fin du Tour (E) ».",
+      es: "1) Haz clic en un nodo disponible del mapa de la Aguja. 2) En combate, revisa primero la intención sobre el enemigo (⚔️ Daño, 🛡 Bloqueo, ✨ Fuerza). 3) Usa tus ⚡3 de Energía haciendo clic en las cartas (o teclas 1–5). Acumula Bloqueo ante ataques fuertes y aplica Vulnerable antes de golpear. 4) Pulsa «Fin de Turno (E)».",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "취약(Vulnerable)과 힘(Strength), 몸통 박치기(Body Slam) 시너지는 어떻게 작동하나요?",
+          en: "How do Vulnerable, Strength, and Body Slam synergies work?",
+          ja: "弱体（Vulnerable）、筋力（Strength）、ボディスラムのシナジーはどう機能しますか？",
+          zh: "易伤（Vulnerable）、力量（Strength）与全身撞击（Body Slam）如何配合？",
+          fr: "Comment fonctionnent les synergies Vulnérable, Force et Plaquage ?",
+          es: "¿Cómo funcionan las sinergias de Vulnerable, Fuerza y Plancha?",
+        },
+        a: {
+          ko: "『힘(Strength)』은 모든 공격 카드의 타격당 기본 피해량을 영구히 높여주어 『연속 베기(2회 타격)』와 결합하면 효과가 2배가 됩니다. 또한 『불요불굴(+22 방어도)』이나 『수비』로 높은 방어도를 쌓은 뒤 1코스트 『몸통 박치기』를 사용하면 현재 방어도 수치만큼 그대로 강력한 피해를 입히며, 적에게 『취약』이 걸려 있다면 최종 피해량이 1.5배로 증폭됩니다.",
+          en: "Strength adds flat damage to every hit of an Attack card, doubling its benefit on multi-hit cards like 'Twin Strike'. Meanwhile, stacking high Block with 'Impervious' (+22 Block) and playing 'Body Slam' deals damage equal to your current Block—which is further multiplied by 1.5x if the enemy is Vulnerable!",
+          ja: "『筋力』はすべてのアタックカードの1ヒットあたりの基礎ダメージを上昇させるため、『ツインストライク（2回攻撃）』では効果が2倍になります。また、『不動（+22ブロック）』などで大量のブロックを積んでから『ボディスラム』を使うと現在ブロック値と同じ大ダメージを与えられ、敵が『弱体』状態ならさらに1.5倍に増幅されます。",
+          zh: "“力量”会直接增加每次攻击的基础伤害，配合“双重打击（连击2次）”可享受双倍收益；而通过“岿然不动（+22格挡）”叠出高额护甲后打出“全身撞击”，即可造成等同于当前格挡值的巨额伤害，若敌人处于“易伤”状态还会再放大 1.5 倍！",
+          fr: "La Force augmente les dégâts de chaque coup, doublant son effet sur « Frappe Double ». Empiler de l'Armure avec « Imperméable » (+22) puis jouer « Plaquage » inflige autant de dégâts que votre Armure actuelle, multipliés par 1,5 si l'ennemi est Vulnérable.",
+          es: "La Fuerza suma daño a cada golpe, duplicando su efecto en «Golpe Gemelo». Acumular Bloqueo con «Impasible» (+22) y jugar «Plancha» inflige daño igual a tu Bloqueo actual, ¡multiplicado por 1,5 si el enemigo está Vulnerable!",
+        },
+      },
+      {
+        q: {
+          ko: "화롯불(Campfire)에서 휴식(Rest)과 벼리기(Smith) 중 무엇을 선택하는 것이 좋나요?",
+          en: "Should I choose Rest or Smith at the Campfire?",
+          ja: "焚き火では「休憩」と「鍛冶」のどちらを選ぶべきですか？",
+          zh: "在营火处应该选择“休息”还是“锻造”？",
+          fr: "Faut-il choisir Repos ou Forger au Feu de Camp ?",
+          es: "¿Debo elegir Descansar o Forjar en la Hoguera?",
+        },
+        a: {
+          ko: "기본 유물인 『불타는 피』가 매 전투 승리 시 체력을 6씩 회복시켜 주므로, 체력이 절반 이상 남아 있다면 『벼리기(Smith)』를 선택해 덱의 카드 3장을 영구 강화(+3 위력/방어도)하는 것이 보스전 돌파에 훨씬 유리합니다.",
+          en: "Because your starter relic 'Burning Blood' automatically heals 6 HP after every combat, choosing 'Smith' to permanently upgrade 3 cards (+3 DMG/Block) is usually the strongest play before the Boss unless your HP is critically low.",
+          ja: "初期レリック『バーニングブラッド』の効果で戦闘勝利ごとにHPが6回復するため、HPに余裕がある場合は『鍛冶（Smith）』を選んでカード3枚を永久強化（+3ダメージ/ブロック）する方がボス戦の突破率が大きく上がります。",
+          zh: "由于初始遗物“燃烧之血”在每次战斗胜利后都会自动恢复 6 点生命，只要生命值尚算健康，优先选择“锻造（Smith）”永久升级 3 张卡牌（+3伤害/格挡）能大幅提升首领战的爆发力。",
+          fr: "Comme votre relique de départ « Sang Brûlant » soigne 6 PV après chaque combat, choisir « Forger » pour améliorer définitivement 3 cartes (+3 Dégâts/Armure) est souvent le meilleur choix avant le Boss.",
+          es: "Dado que tu reliquia inicial «Sangre Ardiente» cura 6 PV tras cada combate, elegir «Forjar» para mejorar permanentemente 3 cartas (+3 Daño/Bloqueo) suele ser la mejor opción antes del Jefe.",
+        },
+      },
+    ],
+  },
 };
