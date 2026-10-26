@@ -1014,6 +1014,20 @@ export const MISSION_CATALOG: Array<{
     goal: 1,
     xpReward: 50,
   },
+  {
+    id: "frostpunk-ring-survive-1",
+    gameSlug: "frostpunk-ring",
+    title: {
+      ko: "프로스트펑크 열기 도시에서 동심원 증기 발전기를 가동해 -70°C 화이트아웃 생존하기",
+      en: "Survive the -70°C Great Whiteout in Frostpunk Heat Ring City",
+      ja: "フロストパンク熱気都市で-70℃のホワイトアウトを生き延びる",
+      zh: "在冰汽时代热环之城中顶住 -70°C 大暴雪白化浩劫",
+      fr: "Survivez au blizzard à -70°C dans Frostpunk Heat Ring City",
+      es: "Sobrevive a la ventisca de -70°C en Frostpunk Heat Ring City",
+    },
+    goal: 1,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {

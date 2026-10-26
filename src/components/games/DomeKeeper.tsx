@@ -170,11 +170,7 @@ export default function DomeKeeper({ locale = 'ko' }: Props) {
       try {
         const dateKey = new Date().toISOString().slice(0, 10);
         const current = loadArcadePassProgress(dateKey);
-        const updated = reportMissionProgress(
-          current,
-          { gameSlug: 'dome-keeper', metric: 'relic_extracted', delta: 1 },
-          dateKey
-        );
+        const updated = reportMissionProgress(current, 'dome-keeper', 1);
         saveArcadePassProgress(updated);
       } catch {
         // ignore storage errors

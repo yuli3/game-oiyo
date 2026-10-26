@@ -6644,4 +6644,42 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "frostpunk-ring": {
+    origin: {
+      ko: "『프로스트펑크 열기 도시 (Frostpunk Heat Ring City)』는 11 bit studios의 명작 『Frostpunk』에서 영감을 받아 OIYO Web-Unity Engine v5.0(2D SDF 열복사 라이트필드 & 블리자드 포스트 프로세스 볼륨)으로 구축한 동심원 증기 도시 생존 시뮬레이션입니다. 중앙 증기 발전기(Steam Generator)를 중심으로 4개의 동심원 구역(Ring 1~4)에 보온 합숙소, 석탄 파쇄기, 제재소, 의무실을 건설하고 6일 차 -70°C 대폭설(Great Whiteout)을 버텨내세요.",
+      en: "Frostpunk Heat Ring City is a concentric thermal city-builder inspired by Frostpunk and powered by OIYO Web-Unity Engine v5.0 (2D SDF thermal light field & blizzard post-processing volumes). Build insulated bunkhouses, coal thumpers, sawmills, and infirmaries across 4 radial rings around the Central Steam Generator to survive the Day 6 -70°C Great Whiteout.",
+      ja: "『フロストパンク熱気都市（Frostpunk Heat Ring City）』は名作『Frostpunk』に着想を得てOIYO Web-Unity Engine v5.0（2D SDF熱放射フィールド＆ブリザード後処理ボリューム）で構築された同心円都市サバイバルです。中央蒸気ジェネレーターの周囲4リングに炭鉱や宿舎を建設し、-70℃のホワイトアウトを生き延びましょう。",
+      zh: "《冰汽时代热环之城（Frostpunk Heat Ring City）》灵感源自《Frostpunk》，搭载 OIYO Web-Unity Engine v5.0 二维有向距离场热辐射与暴风雪后处理系统。围绕中央蒸汽核心在 4 层同心圆环区建造采煤机、保温宿舍与医务所，顶住第 6 天 -70°C 的大暴雪白化浩劫。",
+      fr: "Frostpunk Heat Ring City est un jeu de survie urbaine thermique sur 4 anneaux concentriques autour d'un générateur à vapeur central.",
+      es: "Frostpunk Heat Ring City es un simulador de supervivencia urbana térmica en 4 anillos concéntricos alrededor de un generador de vapor central.",
+    },
+    how: {
+      ko: "1) 동심원 구역 레이더 아래에서 빈 눈밭 구획(R1~R4)을 선택하고 목재(🪵)·강철(⚙️)을 소모해 석탄 채굴 파쇄기, 보온 합숙소, 의무실을 건설하세요. 2) 날씨가 -20°C에서 -70°C로 급강하할수록 외곽 링이 결빙되므로 『증기 코어 증폭(Lv.1→Lv.4)』과 『오버드라이브 가동(+15°C)』으로 난방 반경을 넓히세요. 3) 과부하 압력이 100%에 도달하면 발전기가 폭발하므로 필요할 때 오버드라이브를 해제하거나 『안전 밸브 커플링』 법령을 제정하세요.",
+      en: "1) Select an empty radial slot (R1–R4) and spend Wood (🪵) and Steel (⚙️) to construct Coal Thumpers, Insulated Bunkhouses, and Infirmaries. 2) As ambient temperature plunges from -20°C to -70°C, upgrade the Steam Generator Core (Lv.1→Lv.4) and toggle Overdrive (+15°C) to keep outer rings above freezing. 3) Watch Generator Stress — if it hits 100%, the core explodes!",
+      ja: "1) 同心円スロット(R1〜R4)を選択し、木材(🪵)と鋼鉄(⚙️)で炭鉱・宿舎・救護所を建設します。2) 気温が-70℃まで低下するため、蒸気コアのレベルアップとオーバードライブ(+15℃)で暖房範囲を広げます。3) ストレスが100%に達すると爆発するため安全弁法典を活用しましょう。",
+      zh: "1) 选择同心圆环槽位（R1–R4），消耗木材（🪵）与钢铁（⚙️）建造采煤机、保温宿舍与医务所。2) 随着气温从 -20°C 骤降至 -70°C，升级蒸汽核心（Lv.1→Lv.4）并适时开启超载运作（+15°C）。3) 切勿让过载压力达到 100%，可颁布法典降低风险。",
+      fr: "1) Sélectionnez un emplacement radial (R1–R4) pour bâtir mines et dortoirs. 2) Améliorez le générateur et gérez la surcharge thermique sans dépasser 100% de stress.",
+      es: "1) Selecciona una ranura radial (R1–R4) para construir minas y barracones. 2) Mejora el generador y controla la sobrecarga térmica sin superar el 100% de estrés.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "오버드라이브(Overdrive)는 언제 켜고 꺼야 하나요?",
+          en: "When should I engage and disengage Generator Overdrive?",
+          ja: "オーバードライブはどのタイミングでオン・オフすべきですか？",
+          zh: "蒸汽核心的超载运作（Overdrive）应该在什么时候开启或关闭？",
+          fr: "Quand faut-il activer et couper la surcharge du générateur ?",
+          es: "¿Cuándo debo activar y desactivar la sobrecarga del generador?",
+        },
+        a: {
+          ko: "오버드라이브는 전 구역 온도를 즉시 +15°C 높여주지만 4시간 교대마다 과부하 압력을 빠르게 누적시킵니다. 기온이 -50°C 이하로 떨어지는 4~6일 차 혹한기에 켜고, 압력이 75%를 넘기면 잠시 꺼서 냉각하거나 『안전 밸브 커플링』 법령으로 압력 상승률을 절반으로 줄이세요.",
+          en: "Overdrive immediately boosts all ring temperatures by +15°C, but builds Generator Stress every shift. Save it for Day 4–6 (-50°C to -70°C), enact 'Safety Couplings' in the Book of Laws to halve stress buildup, and toggle it off to vent steam before Stress reaches 100%.",
+          ja: "オーバードライブは全リングを+15℃暖めますがストレスが蓄積します。4〜6日目の極寒期に使い、ストレスが80%に近づいたら一度切って冷却しましょう。",
+          zh: "超载运作可令全环区温度立升 +15°C，但每班次会累积过载压力。建议在第 4–6 天极寒期启用，并配合“安全阀耦合器”法典减半压力增速。",
+          fr: "Activez la surcharge lors des grands froids (Jours 4 à 6) et coupez-la avant que la pression n'atteigne 100%.",
+          es: "Activa la sobrecarga durante el frío extremo (Días 4 a 6) y apágala antes de que la presión llegue al 100%.",
+        },
+      },
+    ],
+  },
 };
