@@ -594,6 +594,20 @@ export const MISSION_CATALOG: Array<{
     goal: 60,
     xpReward: 50,
   },
+  {
+    id: "backpack-floor-2",
+    gameSlug: "backpack-hero",
+    title: {
+      ko: "백팩 히어로에서 지하 2층 이상 도달하기",
+      en: "Reach Floor 2 or deeper in Backpack Hero",
+      ja: "バックパック・ヒーローで地下2階以上に到達する",
+      zh: "在背包英雄中到达地下2层或更深处",
+      fr: "Atteindre l'étage 2 ou plus dans Backpack Hero",
+      es: "Alcanza el piso 2 o superior en Backpack Hero",
+    },
+    goal: 2,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {

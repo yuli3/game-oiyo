@@ -4964,4 +4964,60 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "backpack-hero": {
+    origin: {
+      ko: "백팩 히어로 웹(Backpack Hero Web)은 인벤토리 가방 정리라는 정적인 행위를 로그라이크 덱빌딩 전투의 핵심 전투력으로 승화시켜 글로벌 스팀과 닌텐도 스위치에서 폭발적인 인기를 얻은 Jaspel의 명작 'Backpack Hero'를 순수 웹으로 구현한 게임입니다. 아이템의 공간적 위치, 90도 회전, 인접 타일 간의 기하학적 시너지를 계산하는 전략적 두뇌 퍼즐과 턴제 전투가 결합되었습니다.",
+      en: "Backpack Hero Web brings Jaspel's breakout inventory-management roguelike to the mobile web. Where traditional RPGs treat item management as a chore, Backpack Hero turns your grid bag into the primary engine of power—where placement, rotation, and spatial adjacency dictate your combat synergy.",
+      ja: "バックパック・ヒーロー Web（Backpack Hero Web）は、アイテム整理をデッキ構築バトルの中心に据えて世界的な大ヒットを記録した名作『Backpack Hero』のWebリメイクです。アイテムのグリッド配置、90度回転、隣接シナジーが勝敗を分ける奥深いパズルRPGです。",
+      zh: "背包英雄网页版（Backpack Hero Web）重塑了将“背包空间整理”升华为肉鸽卡组构筑核心玩法的独立神作《Backpack Hero》。不仅是装备数值的比拼，更是一场关于空间邻接、旋转与几何协同增益的极致脑力风暴。",
+      fr: "Backpack Hero Web adapte le hit indépendant révolutionnaire où l'organisation spatiale de votre sac à dos détermine votre puissance de combat dans un RPG roguelike au tour par tour.",
+      es: "Backpack Hero Web adapta el aclamado éxito indie donde la gestión espacial de la mochila es el motor central de combate en un RPG roguelike por turnos.",
+    },
+    how: {
+      ko: "배낭 안의 무기, 방어구, 물약 아이템을 탭하여 에너지를 소모해 발동합니다. 무기는 적의 체력을 깎고, 방패는 적의 반격을 막아낼 방어도를 쌓아줍니다. 전투 승리 후에는 새로운 전리품을 획득하고, 잠긴 슬롯(🔒)을 클릭하여 배낭 공간을 확장할 수 있습니다. 아이템을 선택하고 'R' 키 또는 회전 버튼을 눌러 90° 회전시키며 인접 시너지(예: 보석과 무기 같은 행/열 배치, 투구 아래 무기 배치)를 극대화하세요.",
+      en: "Tap items in your backpack to activate them by spending energy. Weapons strike enemies while shields generate protective block before you end your turn. Defeating monsters yields fresh loot and unlocks new backpack grid slots (🔒). Select items and press 'R' or the rotate button to rotate them 90 degrees and optimize powerful adjacency synergies.",
+      ja: "バックパック内の武器や盾、ポーションをタップしてエネルギーを消費し行動します。ターン終了時に敵の攻撃を受けるため、十分なシールドを確保することが重要です。勝利後は戦利品を選び、鍵のかかったマス（🔒）を解除して容量を拡張。Rキーでアイテムを90度回転させて隣接ボーナスを最大化しましょう。",
+      zh: "点击背包中的装备消耗能量发动效果。武器消耗能量输出伤害，护盾积攒护甲抵御敌人下回合意图攻击。战胜敌人后可挑选强力战利品并点击未解锁格（🔒）扩张背包空间。利用‘R’键或旋转按钮90度旋转物品，最大化相邻增益（如宝石对同行列武器的强力增幅）。",
+      fr: "Touchez les objets pour les activer contre de l'énergie. Terminez votre tour pour encaisser l'action adverse. Gagnez des combats pour étendre votre sac et faites pivoter les objets à 90° pour maximiser les synergies.",
+      es: "Toca los objetos para activarlos gastando energía. Pasa turno cuando estés listo. Supera combates para ampliar tu mochila y rota objetos 90 grados para desatar sinergias espaciales.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "배낭에서 가장 먼저 챙겨야 할 공간 배치 원칙은 무엇인가요?",
+          en: "What is the primary spatial placement rule to remember?",
+          ja: "バックパック整理で最も優先すべき配置ルールは何ですか？",
+          zh: "背包布局中最重要的核心空间规则是什么？",
+          fr: "Quelle est la règle d'agencement spatial la plus importante ?",
+          es: "¿Cuál es la regla de colocación espacial más importante?",
+        },
+        a: {
+          ko: "보석과 유물은 '같은 행/열'에 영향을 주므로 배낭의 중앙 교차점에 배치하고, 방어구(투구 등)는 패시브로 바로 아래 칸의 무기 공격력을 높여주므로 무기 바로 윗줄에 배치하는 것이 가장 큰 대미지 뻥튀기를 만듭니다.",
+          en: "Relics and gems like Fire Ruby often affect all items in the 'same row or column', making central intersections ideal. Place armor/helmets directly above weapons to trigger directional passive attack boosts.",
+          ja: "火炎ルビーのようなレリックは『同じ行または列』の武器を強化するため、交差点となる中央に置くのがベストです。また兜などの防具は直下の武器を強化するため、武器のすぐ上に配置しましょう。",
+          zh: "诸如‘火红宝石’等遗物能够强化‘同一行或同一列’的所有武器，因此放置在背包中心十字交叉位收益最高；而头盔类防具多带有强化正下方武器的被动，务必置于主武器的正上方。",
+          fr: "Placez les reliques qui affectent une ligne ou une colonne aux carrefours centraux. Mettez les casques directement au-dessus des armes pour activer leurs bonus verticaux.",
+          es: "Coloca las reliquias que potencian filas o columnas en intersecciones centrales. Pon los yelmos justo encima de las armas para activar bonificaciones directas.",
+        },
+      },
+      {
+        q: {
+          ko: "슬롯 확장은 어떤 방향으로 넓히는 것이 유리한가요?",
+          en: "In which direction should I prioritize expanding bag slots?",
+          ja: "スロット拡張はどの方向に広げるのが有利ですか？",
+          zh: "升级扩容时，优先朝哪个方向拓展背包最为有利？",
+          fr: "Dans quelle direction devrais-je étendre mon sac en priorité ?",
+          es: "¿En qué dirección conviene expandir la mochila primero?",
+        },
+        a: {
+          ko: "2×2 대형 무기나 1×3 장창 등 대형 고위력 기물을 수용할 수 있도록 가로세로 정사각형 형태(4×4 이상)로 고르게 확장해 나가는 것이 모양 불일치로 인한 슬롯 낭비를 방지하는 최선책입니다.",
+          en: "Expand outward into a solid rectangular or square core (4x4 or wider) rather than long narrow tentacles, ensuring you have enough continuous contiguous space to house bulky 2x2 warhammers or heavy shields.",
+          ja: "細長く伸ばすのではなく、2×2や3×1などの大型装備を無理なく収められるよう、均等な正方形・長方形を目指して広げるのが最もデッドスペースを生みません。",
+          zh: "切忌单向延伸为狭长细条，而应优先向四周匀称扩张为致密的矩形区块（如4×4），以便无缝容纳战锤（2×2）或长矛等占地庞大的高阶稀有装备。",
+          fr: "Élargissez vers un carré ou rectangle compact pour loger de gros équipements 2x2 sans perdre de cases.",
+          es: "Expande en forma rectangular o cuadrada compacta para albergar equipo voluminoso de 2x2 sin dejar huecos muertos.",
+        },
+      },
+    ],
+  },
 };

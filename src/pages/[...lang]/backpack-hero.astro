@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import BackpackHero from "../../components/games/BackpackHero";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "백팩 히어로 웹 — 인벤토리 정렬 덱빌더 턴제 던전 RPG",
+    description: "제한된 배낭 공간에 무기, 방어구, 유물을 테트리스 격자로 정리하고 90° 회전 및 인접 시너지를 극대화하여 던전 몬스터를 격파하는 인벤토리 덱빌딩 로그라이크.",
+  },
+  en: {
+    title: "Backpack Hero Web — Inventory Management Roguelike RPG",
+    description: "Organize weapons, shields, and relics in a grid backpack. Maximize spatial adjacency synergies and 90-degree rotations to conquer dungeon depths.",
+  },
+  ja: {
+    title: "バックパック・ヒーロー Web — インベントリ整理ローグライクRPG",
+    description: "限られたバックパックに武器や盾、レリックをテトリスのように整理。90度回転や隣接シナジーを活かしてダンジョンを踏破するターン制RPG。",
+  },
+  zh: {
+    title: "背包英雄网页版 — 背包整理肉鸽回合制地牢RPG",
+    description: "在有限的网格背包中旋转摆放武器、护盾与遗物。利用空间相邻协同效应激发超强战力，征服幽深未知的地下迷宫。",
+  },
+  fr: {
+    title: "Backpack Hero Web — RPG roguelike de gestion d'inventaire",
+    description: "Organisez armes, boucliers et reliques dans votre sac à dos. Optimisez les synergies d'adjacence spatiale pour vaincre les donjons.",
+  },
+  es: {
+    title: "Backpack Hero Web — RPG roguelike de gestión de inventario",
+    description: "Organiza armas, escudos y reliquias en una mochila cuadriculada. Maximiza las sinergias espaciales adyacentes para conquistar mazmorras.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-4xl px-4 py-8">
+    <BackpackHero client:load locale={locale} />
+    <GameGuide slug="backpack-hero" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>
