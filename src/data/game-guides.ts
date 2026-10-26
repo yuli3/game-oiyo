@@ -6530,4 +6530,42 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "mini-motorways": {
+    origin: {
+      ko: "『미니 모터웨이 교차로 (Mini Motorways Traffic)』는 Dinosaur Polo Club의 미니멀 도시 교통망 퍼즐 『Mini Motorways』에서 영감을 받은 OIYO 오리지널 도로 네트워크 & 교차로 물류 시뮬레이터입니다. 크림슨(🟥)·코발트(🟦)·앰버(🟨) 색상별 주택 단지와 목적지 쇼핑몰을 도로 타일로 연결하고, 병목 지점에 회전교차로(Roundabout)와 도시를 가로지르는 직통 고속도로(Motorway #1)를 배치해 쇼핑몰 수요 핀(📍)이 폭발하기 전에 30대의 통근 차량을 수송하세요.",
+      en: "Mini Motorways Traffic is an original OIYO urban road network and intersection logistics puzzle inspired by Dinosaur Polo Club's hit Mini Motorways. Connect Crimson (🟥), Cobalt (🟦), and Amber (🟨) commuter houses to matching destination malls using Road tiles, Roundabouts, and the Motorway #1 express overpass before demand pins (📍) overflow into gridlock.",
+      ja: "『ミニ・モーターウェイズ交差点（Mini Motorways Traffic）』は、『Mini Motorways』にインスパイアされた都市道路網＆交差点物流パズルです。赤・青・黄の住宅とショッピングモールを道路タイルで結び、ラウンドアバウトや高速道路(#1)で渋滞を防ぎながら30台の通勤車を送り届けます。",
+      zh: "《迷你公路交叉口（Mini Motorways Traffic）》灵感源自极简城市交通规划名作《Mini Motorways》。用道路方块、环岛（Roundabout）与 1 号跨城高速（Motorway #1）连接绯红、钴蓝、琥珀三色住宅与对应商场，在商场需求图钉（📍）满溢瘫痪前完成 30 次通勤运输。",
+      fr: "Mini Motorways Traffic est un jeu de gestion de réseau routier urbain inspiré de Mini Motorways. Reliez les maisons et centres commerciaux de même couleur grâce aux routes, ronds-points et à l'Autoroute #1 avant que la demande ne provoque un embouteillage.",
+      es: "Mini Motorways Traffic es un puzle de logística vial inspirado en Mini Motorways. Conecta casas y centros comerciales del mismo color mediante carreteras, rotondas y la Autopista #1 antes de que los pines de demanda colapsen la ciudad.",
+    },
+    how: {
+      ko: "1) 상단 툴바에서 『🛣️ 도로 포설』을 선택하고 빈 격자를 클릭해 같은 색상의 주택(🏠)과 쇼핑몰(🏢)을 연결하세요. 2) 교차로에 『🔄 회전교차로』를 설치하면 해당 노선을 통과하는 통근 차량 수송량이 증가하며, 『🌉 고속도로 #1』로 멀리 떨어진 두 지점을 클릭하면 기존 도로를 건너뛰는 직통 고가도로가 개통됩니다! 3) 『🚗 주간 통근 차량 출발』을 눌러 30대 통근 목표를 달성하세요.",
+      en: "1) Select '🛣️ Draw Road' and click empty grid tiles to link matching colored Houses (🏠) and Malls (🏢). 2) Place a '🔄 Roundabout' on busy road tiles to boost route throughput, or select '🌉 Motorway #1' and click two distant tiles to build an express overpass! 3) Click '🚗 DISPATCH RUSH HOUR TRAFFIC' to process commuter waves and reach 30 trips.",
+      ja: "1) ツールバーで『🛣️ 道路敷設』を選び、同じ色の住宅(🏠)とモール(🏢)を繋ぎます。2) 道路上に『🔄 ラウンドアバウト』を置くと輸送力が増加し、『🌉 高速道路 #1』で離れた2マスをクリックすると直通バイパスが開通します！ 3) 『🚗 通勤車両出発』を押して30台の目標を達成しましょう。",
+      zh: "1) 选择“🛣️ 铺设道路”点击空白格，将同色住宅（🏠）与商场（🏢）连通。2) 在繁忙路段加装“🔄 环岛”可提升单周通勤吞吐量；选择“🌉 1号高速”依次点击远端两格即可架设空中跨线桥！3) 点击“🚗 发车（推进高峰期）”累计完成 30 辆通勤目标。",
+      fr: "1) Sélectionnez « 🛣️ Draw Road » pour relier les maisons (🏠) aux centres commerciaux (🏢) de même couleur. 2) Ajoutez un « 🔄 Roundabout » ou tracez l'« 🌉 Autoroute #1 » entre deux cases éloignées. 3) Lancez « 🚗 DISPATCH RUSH HOUR TRAFFIC » pour atteindre 30 trajets.",
+      es: "1) Elige «🛣️ Draw Road» para unir casas (🏠) y centros comerciales (🏢) del mismo color. 2) Coloca una «🔄 Rotonda» o traza la «🌉 Autopista #1» entre dos puntos lejanos. 3) Pulsa «🚗 DISPATCH RUSH HOUR TRAFFIC» para alcanzar los 30 viajes.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "다른 색상의 도로망끼리 교차시키는 것이 왜 불리한가요?",
+          en: "Why is it better to segregate road networks by color or use Motorway #1?",
+          ja: "なぜ色ごとに専用道路を分けたり高速道路(#1)を使う方が有利なのですか？",
+          zh: "为什么不同颜色的车流最好分道行驶或使用跨线高速？",
+          fr: "Pourquoi vaut-il mieux séparer les réseaux par couleur ou utiliser l'Autoroute #1 ?",
+          es: "¿Por qué conviene separar las rutas por color o usar la Autopista #1?",
+        },
+        a: {
+          ko: "도로 타일 수량이 제한되어 있을 때 남서쪽 앰버(🟨) 주택에서 북동쪽 앰버 몰까지 일반 도로를 길게 끌면 타일이 부족해집니다. 장거리 노선은 『🌉 고속도로 #1』 직통 고가교로 한 번에 넘기고, 주요 간선도로에는 『🔄 회전교차로』를 배치하면 모든 쇼핑몰의 수요 핀(📍)을 안정적으로 줄일 수 있습니다.",
+          en: "Spanning the entire map with regular road tiles for the Amber (🟨) route consumes too many tiles. Bridging long-distance pairs with '🌉 Motorway #1' and placing a '🔄 Roundabout' on your main arterial road keeps demand pins (📍) low across all malls!",
+          ja: "マップの端から端まで一般道路を引くと道路タイルが不足します。長距離の黄色(🟨)ルートには『🌉 高速道路 #1』を使い、幹線道路に『🔄 ラウンドアバウト』を配置するとピン(📍)の増加を効率よく抑えられます。",
+          zh: "若用普通道路跨越整张地图连接琥珀色（🟨）路线会消耗大量路面配额。使用“🌉 1号高速”直接飞跃对角线，并在主干道部署“🔄 环岛”，即可轻松压制各商场的需求图钉（📍）！",
+          fr: "Utiliser l'« 🌉 Autoroute #1 » pour la longue diagonale Ambre (🟨) économise vos tuiles de route et évite la saturation des carrefours.",
+          es: "Usar la «🌉 Autopista #1» para la diagonal larga Ámbar (🟨) ahorra baldosas de carretera y evita la saturación en las intersecciones.",
+        },
+      },
+    ],
+  },
 };

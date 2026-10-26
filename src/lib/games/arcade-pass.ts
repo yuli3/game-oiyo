@@ -972,6 +972,20 @@ export const MISSION_CATALOG: Array<{
     goal: 1,
     xpReward: 50,
   },
+  {
+    id: "mini-motorways-trips-30",
+    gameSlug: "mini-motorways",
+    title: {
+      ko: "미니 모터웨이 교차로에서 도로·회전교차로·고속도로를 연결해 통근 차량 30대 수송하기",
+      en: "Complete 30 commuter trips without gridlock in Mini Motorways Traffic",
+      ja: "ミニ・モーターウェイズ交差点で渋滞させずに通勤車30台を送り届ける",
+      zh: "在迷你公路交叉口中无瘫痪完成 30 辆通勤车辆输送",
+      fr: "Complétez 30 trajets sans embouteillage dans Mini Motorways Traffic",
+      es: "Completa 30 viajes sin atascos en Mini Motorways Traffic",
+    },
+    goal: 30,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {

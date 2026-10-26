@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import MiniMotorways from "../../components/games/MiniMotorways";
+import GameGuide from "../../components/GameGuide.astro";
+import { locales, type Locale } from "../../lib/i18n";
+
+export function getStaticPaths() {
+  return locales.map((l) => ({ params: { lang: l === "en" ? undefined : l } }));
+}
+
+const locale: Locale = (Astro.params.lang as Locale) || "en";
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "미니 모터웨이 교차로 — 도심 도로망 설계 & 회전교차로 물류 | OIYO Game",
+    description:
+      "색상별 주택과 쇼핑몰을 도로 타일, 회전교차로(Roundabout), 고속도로(Motorway #1)로 연결해 병목 정체 없이 30대의 통근 차량을 수송하세요.",
+  },
+  en: {
+    title: "Mini Motorways Traffic — Urban Road Network & Roundabout Puzzle | OIYO Game",
+    description:
+      "Connect color-coded Houses to Destination Malls using Road tiles, Roundabouts, and Motorway #1 overpasses to dispatch 30 commuter trips without gridlock.",
+  },
+  ja: {
+    title: "ミニ・モーターウェイズ交差点 — 都市道路網＆ラウンドアバウト設計 | OIYO Game",
+    description:
+      "色別の住宅とショッピングモールを道路・ラウンドアバウト・高速道路(#1)で結び、渋滞を起こさずに30台の通勤車を送り届けよう。",
+  },
+  zh: {
+    title: "迷你公路交叉口 — 城市路网规划与环岛立交调度 | OIYO Game",
+    description:
+      "利用道路方块、环岛（Roundabout）与 1 号跨线高速公路连接同色住宅与商场，在需求图钉爆满前完成 30 辆通勤车输送。",
+  },
+  fr: {
+    title: "Mini Motorways Traffic — Réseau Routier et Ronds-Points | OIYO Game",
+    description:
+      "Reliez les maisons et centres commerciaux par couleur avec des routes, des ronds-points et l'Autoroute #1 sans créer d'embouteillage.",
+  },
+  es: {
+    title: "Mini Motorways Traffic — Red Vial Urbana y Rotondas | OIYO Game",
+    description:
+      "Conecta casas y centros comerciales del mismo color con carreteras, rotondas y la Autopista #1 para completar 30 viajes sin atascos.",
+  },
+};
+
+const m = meta[locale] || meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <MiniMotorways client:load locale={locale} />
+  <GameGuide slug="mini-motorways" locale={locale} name={m.title.split(" — ")[0]} />
+</BaseLayout>
