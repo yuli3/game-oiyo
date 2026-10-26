@@ -1028,6 +1028,20 @@ export const MISSION_CATALOG: Array<{
     goal: 1,
     xpReward: 50,
   },
+  {
+    id: "darkest-torch-boss-1",
+    gameSlug: "darkest-torch",
+    title: {
+      ko: "다키스트 던전 횃불 원정에서 4열 파티를 지휘해 강령술사 군주 토벌하기",
+      en: "Vanquish the Necromancer Lord in Torchlight Stress Dungeon",
+      ja: "ダーケスト・トーチ遠征で死霊術師の王を討伐する",
+      zh: "在暗黑火炬远征中击败死灵法师领主",
+      fr: "Vaincre le Seigneur Nécromancien dans Torchlight Stress Dungeon",
+      es: "Derrota al Señor Nigromante en Torchlight Stress Dungeon",
+    },
+    goal: 1,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {

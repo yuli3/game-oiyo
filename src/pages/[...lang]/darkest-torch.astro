@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import DarkestTorch from "../../components/games/DarkestTorch";
+import GameGuide from "../../components/GameGuide.astro";
+import { locales, type Locale } from "../../lib/i18n";
+
+export function getStaticPaths() {
+  return locales.map((l) => ({ params: { lang: l === "en" ? undefined : l } }));
+}
+
+const locale: Locale = (Astro.params.lang as Locale) || "en";
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "다키스트 던전 횃불 원정 — 4열 포지션 & 스트레스 결의 판정 RPG | OIYO Game",
+    description:
+      "성전사·노상강도·역병의사·성녀 4열 파티의 포지션과 횃불 광량, 스트레스 100 결의 판정(각성 vs 붕괴)을 관리하며 강령술사 군주를 처치하세요.",
+  },
+  en: {
+    title: "Torchlight Stress Dungeon — 4-Rank Tactical Roguelike RPG | OIYO Game",
+    description:
+      "Command a 4-Rank party of Crusader, Highwayman, Plague Doctor, and Vestal, manage Torchlight and Stress 100 Resolve Checks, and defeat the Necromancer Lord.",
+  },
+  ja: {
+    title: "ダーケスト・トーチ遠征 — 4列編成＆ストレス決意判定RPG | OIYO Game",
+    description:
+      "4列パーティを指揮し、松明の明かりとストレス100の決意判定（覚醒か崩壊か）を管理して死霊術師の王を討伐しよう。",
+  },
+  zh: {
+    title: "暗黑火炬远征 — 四排站位与压力意志判定 RPG | OIYO Game",
+    description:
+      "指挥四排英雄小队，管理火炬光度与 100 压力下的意志检定（美德觉醒或折磨崩溃），击败死灵法师领主。",
+  },
+  fr: {
+    title: "Torchlight Stress Dungeon — RPG Tactique à 4 Rangs | OIYO Game",
+    description:
+      "Dirigez une équipe sur 4 rangs, gérez la torche et le test de résolution à 100 de stress pour vaincre le Seigneur Nécromancien.",
+  },
+  es: {
+    title: "Torchlight Stress Dungeon — RPG Táctico de 4 Filas | OIYO Game",
+    description:
+      "Dirige un grupo en 4 filas, gestiona la antorcha y la prueba de resolución a 100 de estrés para derrotar al Señor Nigromante.",
+  },
+};
+
+const m = meta[locale] || meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <DarkestTorch client:load locale={locale} />
+  <GameGuide slug="darkest-torch" locale={locale} name={m.title.split(" — ")[0]} />
+</BaseLayout>

@@ -16,22 +16,22 @@ const { locale } = Astro.props as { locale: Locale };
 const translations = await getTranslations(locale);
 
 const meta: Record<Locale, { title: string; description: string }> = {
-  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 147종", description: "체스·스도쿠·워들부터 OIYO 오리지널 게임까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 147종." },
-  en: { title: "OIYO Arcade — 147 free browser games, no install", description: "Chess, Sudoku, Wordle, and original OIYO games: 147 free games you can play instantly in your browser." },
-  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム147種", description: "チェス・数独・ワードルからOIYOオリジナル作品まで、ブラウザですぐ遊べる無料ゲーム147種。" },
-  zh: { title: "OIYO 街机 — 无需安装的147款免费游戏", description: "从国际象棋、数独、猜词到 OIYO 原创作品，147款游戏无需安装即可畅玩。" },
-  fr: { title: "OIYO Arcade — 147 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations originales OIYO : 147 jeux gratuits dans le navigateur." },
-  es: { title: "OIYO Arcade — 147 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y originales de OIYO: 147 juegos gratuitos en el navegador." },
+  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 148종", description: "체스·스도쿠·워들부터 OIYO 오리지널 게임까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 148종." },
+  en: { title: "OIYO Arcade — 148 free browser games, no install", description: "Chess, Sudoku, Wordle, and original OIYO games: 148 free games you can play instantly in your browser." },
+  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム148種", description: "チェス・数独・ワードルからOIYOオリジナル作品まで、ブラウザですぐ遊べる無料ゲーム148種。" },
+  zh: { title: "OIYO 街机 — 无需安装的148款免费游戏", description: "从国际象棋、数独、猜词到 OIYO 原创作品，148款游戏无需安装即可畅玩。" },
+  fr: { title: "OIYO Arcade — 148 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations originales OIYO : 148 jeux gratuits dans le navigateur." },
+  es: { title: "OIYO Arcade — 148 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y originales de OIYO: 148 juegos gratuitos en el navegador." },
 };
 const m = meta[locale] ?? meta.en;
 
 const hero: Record<Locale, { eyebrow: string; title: string; sub: string }> = {
-  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 147종", sub: "보드·카드·퍼즐·오리지널 아케이드 — 브라우저에서 바로 시작하세요." },
-  en: { eyebrow: "🎮 OIYO Arcade", title: "147 free games, right in your browser", sub: "Board, card, puzzle, and original arcade games — instant and free." },
-  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム147種", sub: "ボード・カード・パズル・オリジナル作品をブラウザですぐに。" },
-  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的147款免费游戏", sub: "棋类、纸牌、益智和原创街机游戏，浏览器直接开玩。" },
-  fr: { eyebrow: "🎮 OIYO Arcade", title: "147 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et créations originales, sans installation." },
-  es: { eyebrow: "🎮 OIYO Arcade", title: "147 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones originales, sin instalación." },
+  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 148종", sub: "보드·카드·퍼즐·오리지널 아케이드 — 브라우저에서 바로 시작하세요." },
+  en: { eyebrow: "🎮 OIYO Arcade", title: "148 free games, right in your browser", sub: "Board, card, puzzle, and original arcade games — instant and free." },
+  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム148種", sub: "ボード・カード・パズル・オリジナル作品をブラウザですぐに。" },
+  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的148款免费游戏", sub: "棋类、纸牌、益智和原创街机游戏，浏览器直接开玩。" },
+  fr: { eyebrow: "🎮 OIYO Arcade", title: "148 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et créations originales, sans installation." },
+  es: { eyebrow: "🎮 OIYO Arcade", title: "148 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones originales, sin instalación." },
 };
 const h = hero[locale] ?? hero.en;
 
@@ -156,6 +156,7 @@ const GAMES: Game[] = [
   { slug: "chrono-detective", emoji: "⏱️", cat: "puzzle", name: { ko: "오브라 딘 크로노 추리", en: "Memento Mori Chrono", ja: "オブラ・ディン・クロノ推理", zh: "奥伯拉丁怀表推理", fr: "Memento Mori Chrono", es: "Memento Mori Chrono" } },
   { slug: "dome-keeper", emoji: "⛏️", cat: "arcade", name: { ko: "돔 키퍼 채굴 디펜스", en: "Dome Keeper Drill Defense", ja: "ドームキーパー採掘防衛", zh: "穹顶守护者：钻探防卫", fr: "Dome Keeper Drill Defense", es: "Dome Keeper Drill Defense" } },
   { slug: "frostpunk-ring", emoji: "❄️", cat: "puzzle", name: { ko: "프로스트펑크 열기 도시", en: "Frostpunk Heat Ring City", ja: "フロストパンク熱気都市", zh: "冰汽时代：热环之城", fr: "Frostpunk Heat Ring City", es: "Frostpunk Heat Ring City" } },
+  { slug: "darkest-torch", emoji: "🕯️", cat: "arcade", name: { ko: "다키스트 던전 횃불 원정", en: "Torchlight Stress Dungeon", ja: "ダーケスト・トーチ遠征", zh: "暗黑火炬远征", fr: "Torchlight Stress Dungeon", es: "Torchlight Stress Dungeon" } },
 
   { slug: "failure-eater", emoji: "👾", cat: "arcade", name: { ko: "실패를 먹는 괴물", en: "Failure Eater", ja: "失敗を食べる怪物", zh: "吃掉失败的怪物", fr: "Monstre des ratés", es: "Monstruo de los fallos" } },
   { slug: "snake-game", emoji: "🐍", cat: "arcade", name: { ko: "스네이크", en: "Snake", ja: "スネーク", zh: "贪吃蛇", fr: "Snake", es: "Snake" } },
@@ -827,6 +828,18 @@ const NEW_RELEASES_CONFIG: Array<{ slug: string; tag: Record<Locale, string>; de
       zh: "围绕中央蒸汽核心在 4 层同心热力环建造采煤机、保温宿舍与医务所，合理调控超载运作与法典以顶住 -70°C 的大暴雪。",
       fr: "Bâtissez mines de charbon, dortoirs et infirmeries sur 4 anneaux thermiques autour du générateur pour survivre au blizzard à -70°C.",
       es: "Construye minas de carbón, barracones y enfermerías en 4 anillos térmicos alrededor del generador para sobrevivir a -70°C.",
+    },
+  },
+  {
+    slug: "darkest-torch",
+    tag: { ko: "4열 파티 포지셔닝 & 스트레스 결의 판정 RPG", en: "4-Rank Party Positioning & Stress Resolve Check", ja: "4列パーティ編成＆ストレス決意判定RPG", zh: "四排战术站位与百压意志检定 RPG", fr: "Positionnement sur 4 Rangs & Test de Résolution", es: "Posicionamiento en 4 Filas y Prueba de Resolución" },
+    desc: {
+      ko: "성전사·노상강도·역병의사·성녀의 4열 대열과 횃불 광량(0~100), 스트레스 100 도달 시 발동하는 영웅적 각성/붕괴 판정을 관리해 강령술사 군주를 토벌하세요.",
+      en: "Command a 4-Rank expedition, balance Torchlight risk/reward and Stress 100 Resolve Checks (Virtue vs Affliction), and vanquish the Necromancer Lord.",
+      ja: "4列パーティの隊列と松明の明かり、ストレス100で発生する決意判定（英雄的覚醒・崩壊）を管理しながら死霊術師の王を討伐しよう。",
+      zh: "统筹四排英雄站位、火炬光度与 100 压力下的美德觉醒/折磨崩溃检定，深入三层地牢讨伐死灵法师领主。",
+      fr: "Gérez la formation sur 4 rangs, la lumière de la torche et le test de résolution à 100 de stress pour vaincre le Seigneur Nécromancien.",
+      es: "Gestiona la formación en 4 filas, la luz de la antorcha y la prueba de resolución a 100 de estrés para derrotar al Señor Nigromante.",
     },
   },
 ];

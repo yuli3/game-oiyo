@@ -6682,4 +6682,42 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "darkest-torch": {
+    origin: {
+      ko: "『다키스트 던전 횃불 원정 (Torchlight Stress Dungeon)』은 Red Hook Studios의 명작 『Darkest Dungeon』에서 영감을 받아 OIYO Web-Unity Engine v5.0(행동 트리 AI · 셔플백 · 포먼트 보이스 신스)으로 구현한 4열 포지션 전술 RPG입니다. 성전사·노상강도·역병의사·성녀로 구성된 4열 대형을 지휘하고, 횃불 광량(0~100)과 스트레스 100 도달 시 발동하는 결의 판정(영웅적 각성 Virtue vs 붕괴 Affliction)을 돌파해 강령술사 군주를 토벌하세요.",
+      en: "Torchlight Stress Dungeon is a 4-Rank tactical roguelike RPG inspired by Darkest Dungeon and powered by OIYO Web-Unity Engine v5.0 (Hierarchical Behavior Tree AI, ShuffleBag crit distribution, and Pity-backed Resolve Checks). Manage Torchlight (0–100) and Stress (0–100) across 3 crypt rooms to defeat the Necromancer Lord.",
+      ja: "『ダーケスト・トーチ遠征（Torchlight Stress Dungeon）』は名作『Darkest Dungeon』に着想を得てOIYO Web-Unity Engine v5.0（行動ツリーAI・シャッフルバッグ・決意判定）で構築された4列編成タクティカルRPGです。松明の明かりとストレスを管理しながら死霊術師の王を討伐しましょう。",
+      zh: "《暗黑火炬远征（Torchlight Stress Dungeon）》灵感源自《Darkest Dungeon》，搭载 OIYO Web-Unity Engine v5.0 行为树 AI 与保底意志检定系统。统筹四排英雄站位、火炬光度与 100 压力下的美德觉醒/折磨崩溃检定，讨伐死灵法师领主。",
+      fr: "Torchlight Stress Dungeon est un RPG tactique sur 4 rangs inspiré de Darkest Dungeon avec gestion de la torche et du stress.",
+      es: "Torchlight Stress Dungeon es un RPG táctico en 4 filas inspirado en Darkest Dungeon con gestión de antorcha y estrés.",
+    },
+    how: {
+      ko: "1) 우측 적군 목록에서 공격할 대상을 클릭해 지정하고, 좌측 전술 스킬(성전사 강타, 노상강도 영거리 사격, 역병의사 맹독 수류탄, 성녀 신성한 위로, 고무의 외침)을 발동하세요. 2) 턴마다 횃불 광량이 5씩 감소합니다. 광량이 25 이하로 떨어지면 적의 스트레스 공격이 40% 강해지지만 전리품 금화가 2배로 증가합니다. 3) 영웅의 스트레스가 100에 도달하면 결의 판정(Resolve Check)이 발동해 『영웅적 각성(Virtuous: 스트레스 45로 감소 & 공격력 +6)』 또는 『심리적 붕괴(Afflicted)』가 결정됩니다.",
+      en: "1) Click an enemy rank on the right to target it, then execute a tactical skill (Crusader Smite, Highwayman Point Blank Shot, Plague Grenade, Vestal Divine Comfort, or Inspiring Cry). 2) Torchlight drops by 5 each turn: low light (<25%) increases enemy Stress damage by 40% but doubles gold loot. 3) At 100 Stress, a hero undergoes a Resolve Check — rolling either Virtuous (Stress reset to 45 & +6 ATK) or Afflicted.",
+      ja: "1) 右側の敵を選択し、クルセイダー強打・零距離射撃・ペスト手榴弾・修道女の癒やし・鼓舞の叫びを発動します。2) 松明が25%以下になるとストレス被害が増える代わりに戦利品が倍増します。3) ストレス100で決意判定が発生し、英雄的覚醒または崩壊が決まります。",
+      zh: "1) 点击右侧敌军设定目标，施放十字军重击、强盗零距离射击、瘟疫手雷、修女群疗或鼓舞呐喊。2) 火炬低于 25% 时敌方压力伤害增加但战利品翻倍。3) 压力满 100 时触发意志检定，判定美德觉醒或折磨崩溃。",
+      fr: "1) Ciblez un ennemi et lancez une compétence tactique. 2) Rallumez la torche pour réduire le stress de l'équipe. 3) À 100 de stress, un test de résolution détermine Vertu ou Affliction.",
+      es: "1) Selecciona un enemigo y ejecuta una habilidad táctica. 2) Enciende antorchas para reducir el estrés del grupo. 3) Al llegar a 100 de estrés, se activa la prueba de resolución (Virtud o Aflicción).",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "횃불을 일부러 끄거나 어둡게 유지하는 '다크 런(Dark Run)'도 가능한가요?",
+          en: "Is there a benefit to letting the Torchlight drop into Pitch Black (<25%)?",
+          ja: "あえて松明を暗く保つ『ダークラン』にはメリットがありますか？",
+          zh: "故意让火炬熄灭进行“无光暗黑跑法（Dark Run）”有什么收益？",
+          fr: "Y a-t-il un avantage à laisser la torche descendre sous 25% ?",
+          es: "¿Hay alguna ventaja en dejar que la antorcha baje del 25%?",
+        },
+        a: {
+          ko: "네! 횃불 광량이 25% 이하(Pitch Black)일 때 적을 처치하면 전리품 금화 보상이 2배(120G)로 폭증합니다. 위험해지면 상단의 『횃불 점화(+30 광량)』 버튼이나 성전사의 『고무의 외침(+22 광량 & 파티 스트레스 -14)』으로 언제든 빛을 되살릴 수 있습니다.",
+          en: "Yes! Defeating enemies in Pitch Black (<25% Torchlight) awards double Gold (120G per kill). Whenever stress gets too high, use 'Light Torch (+30)' or the Crusader's 'Inspiring Cry (+22 Torch & -14 Party Stress)' to recover.",
+          ja: "はい！松明25%以下で敵を倒すと獲得ゴールドが2倍になります。危険になったら『松明点火(+30)』や『鼓舞の叫び』でいつでも立て直せます。",
+          zh: "是的！当火炬处于漆黑状态（≤25%）击杀敌人可获得双倍金币赏金。若压力过高，可随时点击“点燃火炬（+30）”或施放“鼓舞呐喊”恢复光明。",
+          fr: "Oui, vaincre des ennemis sous 25% de lumière double l'or gagné !",
+          es: "¡Sí, derrotar enemigos con menos del 25% de luz duplica el oro obtenido!",
+        },
+      },
+    ],
+  },
 };
