@@ -664,6 +664,20 @@ export const MISSION_CATALOG: Array<{
     goal: 2,
     xpReward: 50,
   },
+  {
+    id: "plague-mini-quest-1",
+    gameSlug: "plague-mini",
+    title: {
+      ko: "전염병 주식회사에서 글로벌 인구 1억 명 이상 감염시키기",
+      en: "Infect 100 million or more people worldwide in Plague Mini",
+      ja: "伝染病カンパニーで世界人口1億人以上を感染させる",
+      zh: "在瘟疫危机中全球累计感染人数突破 1 亿人",
+      fr: "Infectez 100 millions de personnes ou plus dans Plague Mini",
+      es: "Infecta a 100 millones de personas o más en Plague Mini",
+    },
+    goal: 100_000_000,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {

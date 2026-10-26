@@ -5244,4 +5244,60 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "plague-mini": {
+    origin: {
+      ko: "전염병 주식회사 미니(Plague Mini Web)는 전 세계 1억 명 이상이 즐긴 전설적인 역발상 시뮬레이션 명작 'Plague Inc.'의 핵심 전염병 확산과 유전자 변이 메커니즘을 웹 캔버스에 충실히 구현한 글로벌 전략 게임입니다. 플레이어는 인류를 위협하는 미지의 병원균을 진화시켜 전 세계의 공항과 항구를 통해 감염을 전파하고, 각국 정부의 백신 개발을 따돌려 인류를 전멸시키는 독창적인 재미를 선사합니다.",
+      en: "Plague Mini Web brings the globally celebrated pandemic simulation strategy of Plague Inc. directly to the browser. As the master architect of an emergent pathogen, players steer contagion through air and sea transit routes across continents, evolving symptoms and resistances to stay ahead of the global vaccine development race.",
+      ja: "伝染病カンパニー Mini Web（Plague Mini Web）は、世界的大ヒットを記録した逆転の発想シミュレーション『Plague Inc.』の感染拡大と遺伝子変異メカニズムをブラウザ向けに再現した作品です。未知の病原体を世界地図上で進化させ、航空機や貨物船を介して大陸を越えさせ、人類のワクチン完成前に全人類の滅亡を目指します。",
+      zh: "瘟疫危机 Mini Web（Plague Mini Web）将风靡全球的经典逆向策略神作《Plague Inc.》的宏观传染动力学与基因树演化玩法带入网页端。玩家掌控致命病原体，借助真实大洋航线与国际航班跨国扩散，在全人类联合启动终极疫苗研发的倒计时压力下上演终极灭世角逐。",
+      fr: "Plague Mini Web adapte les mécaniques acclamées de simulation de pandémie de Plague Inc. sur le web. Faites évoluer un agent pathogène mortel, traversez les continents par voies aériennes et maritimes, et devancez les laboratoires mondiaux dans leur course au vaccin.",
+      es: "Plague Mini Web traslada al navegador la exitosa fórmula de estrategia y simulación de pandemias de Plague Inc. Evoluciona un patógeno letal a través de rutas aéreas y marítimas por todo el mundo antes de que la humanidad desarrolle una cura definitiva.",
+    },
+    how: {
+      ko: "세계 지도에서 환자 제로(Patient Zero)가 발생하며 게임이 시작됩니다. 감염과 사망이 진행되면 나타나는 붉은색 DNA 방울(☣️)을 클릭하여 DNA 포인트를 수집하세요. 우측 하단의 'Evolve Disease'를 열어 전파 경로(공기, 물, 조류), 증상(기침, 재채기, 발열, 장기부전), 특수 능력(내한성, 내열성, 약물 저항, 유전자 경화)을 진화시킵니다. 세계 연구소가 백신을 연구하기 시작하면 파란색 연구 방울(💉)을 터뜨려 연구 진척도를 늦추세요.",
+      en: "The pandemic begins with Patient Zero in East Asia. Click red DNA bubbles (☣️) as infections spread to earn DNA points. Open the 'Evolve Disease' lab to unlock Transmissions (Air, Water, Birds), Symptoms (Coughing, Fever, Total Organ Failure), and Abilities (Cold, Heat, Drug Resistances). When international cure research begins, tap blue Cure bubbles (💉) to set back the vaccine percentage.",
+      ja: "東アジアの患者ゼロから感染が始まります。感染や死亡が拡大すると出現する赤いDNAバブル（☣️）をタップしてDNAポイントを回収しましょう。右下の『Evolve Disease』から感染経路（空気・水・鳥類）、症状（咳・発熱・多臓器不全）、能力（耐寒性・耐熱性・薬物耐性・遺伝子硬화）を進化させます。治療薬研究が始まったら青い注射器バブル（💉）を割って開発を妨害しましょう。",
+      zh: "疫情从首发地的‘零号病人’展开。随着感染与死亡激增，点击地图上浮现的红色DNA气泡（☣️）收集变异点数。点击右下角‘Evolve Disease’突变传播途径（空气、水源、候鸟）、症状（咳嗽、高烧、器官衰竭）及抗性（抗寒、抗热、抗药性、基因重组）。当全球启动疫苗研制后，点击蓝色针筒气泡（💉）可强制打断研发进度。",
+      fr: "La pandémie débute avec le Patient Zéro. Touchez les bulles rouges d'ADN (☣️) pour récolter des points. Ouvrez le laboratoire pour faire évoluer la transmission (air, eau), les symptômes (toux, fièvre, défaillance d'organes) et les résistances (froid, chaleur). Éclatez les bulles bleues de vaccin (💉) pour ralentir la recherche.",
+      es: "La pandemia comienza con el Paciente Cero. Toca las burbujas rojas de ADN (☣️) para ganar puntos. Abre el laboratorio para evolucionar vías de transmisión (aire, agua), síntomas (tos, fiebre, fallo multiorgánico) y resistencias (frío, calor). Explota las burbujas azules de cura (💉) para retrasar la vacuna.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "치명률(Lethality)을 초반부터 너무 높이면 왜 패배하나요?",
+          en: "Why is it dangerous to increase Lethality too early in the game?",
+          ja: "序盤から致死率（Lethality）を上げすぎると敗北するのはなぜですか？",
+          zh: "为什么过早大幅提升致死率（Lethality）极易导致游戏直接崩盘失败？",
+          fr: "Pourquoi est-il risqué d'augmenter la létalité trop tôt dans la partie ?",
+          es: "¿Por qué es peligroso aumentar la letalidad al principio del juego?",
+        },
+        a: {
+          ko: "치명률이 너무 높으면 병원균이 다른 사람에게 전파되기도 전에 숙주가 먼저 사망해 버립니다. 또한 높은 치명률과 심각성은 세계 각국 정부의 경각심을 급격히 자극하여 국경(공항·항구) 폐쇄와 백신 공동 연구를 가속화시킵니다. 따라서 초반에는 기침·재채기·공기·물 등의 전염력 위주로 은밀히 전파한 뒤, 전 세계가 감염되었을 때 치명적인 증상(장기 부전, 괴사)을 폭발시키는 것이 정석 전략입니다.",
+          en: "If lethality is too high too early, infected hosts die before they can pass the pathogen to new victims, causing the disease to burn out. High severity also triggers immediate border closures (shutting down flights and ships) and initiates the global cure race. The winning strategy is to spread stealthily via mild symptoms and transmission, then rapidly evolve lethal organ failure once the world is covered.",
+          ja: "致死率が高すぎると、未感染者へ広がる前に宿主が息絶えて病気が自然鎮火してしまいます。また重症度が高いと各国が即座に空港・港湾を封鎖し、ワクチン開発を一気に加速させます。序盤は咳や空気感染で目立たず世界中に広げ、全人口に蔓延した後に多臓器不全などの致死症状を一気に解禁するのが必勝パターンです。",
+          zh: "致死率若过早过高，被感染者尚未接触他人便已死亡，会导致病毒链条迅速断裂自灭。同时高重症度会瞬间拉响全球防疫警报，导致各国立即锁死航班与港口并全力攻关疫苗。顶级策略是在前期保持低调，依靠轻微咳嗽与海空传播让病毒潜伏感染全人类，再瞬间突变‘全身器官衰竭’一举终结。",
+          fr: "Si la létalité est trop élevée au départ, les hôtes meurent avant d'avoir pu infecter d'autres personnes, et les gouvernements ferment aussitôt les frontières. Privilégiez une contagion discrète au début, puis déclenchez la défaillance d'organes une fois la planète infectée.",
+          es: "Si la letalidad es muy alta al principio, los huéspedes mueren antes de contagiar a otros y los países cierran aeropuertos y puertos marítimos. Conviene propagarse discretamente al inicio y evolucionar síntomas letales cuando la población mundial ya esté infectada.",
+        },
+      },
+      {
+        q: {
+          ko: "그린란드나 마다가스카르 같은 고립된 섬나라는 어떻게 감염시키나요?",
+          en: "How do I infect isolated island nations like Greenland or Madagascar?",
+          ja: "グリーンランドやマダガスカルのような孤立した島国はどうやって感染させますか？",
+          zh: "如何攻克格陵兰（Greenland）与马达加斯加等极其孤立的海岛国家？",
+          fr: "Comment infecter les îles isolées comme le Groenland ou Madagascar ?",
+          es: "¿Cómo infecto naciones isleñas aisladas como Groenlandia o Madagascar?",
+        },
+        a: {
+          ko: "그린란드와 마다가스카르는 공항이 없고 오직 항구(해상 항로)만 존재합니다. 따라서 수인성 전파(Water 1, Water 2)를 진화시켜 선박을 통한 감염 확률을 높여야 합니다. 특히 그린란드는 극한의 추운 기후이므로 '내한성(Cold Resistance 1, 2)'이 없으면 전파되지 못합니다. 항구가 폐쇄되기 전에 조기에 선박을 통해 침투시키는 것이 중요합니다.",
+          en: "Greenland and Madagascar have no airports and rely exclusively on seaports. You must evolve Water 1 and Water 2 transmission to hitch rides on cargo ships. Furthermore, Greenland has an extreme polar climate and requires Cold Resistance 1 and 2 to flourish. Ensuring overseas ship transmission before countries lock down their ports is the key.",
+          ja: "グリーンランドやマダガスカルには空港がなく、唯一の交通路は港湾（海運）のみです。そのため『水（Water 1・2）』感染を進化させて貨物船経由での侵入率を高める必要があります。さらにグリーンランドは極寒地域のため『耐寒性（Cold Resistance 1・2）』が必須です。港が封鎖される前に船を送り込むことが勝敗を分けます。",
+          zh: "格陵兰与马达加斯加均为无机场的纯海运孤岛。你必须尽早点出‘水源传播（Water 1、Water 2）’以大幅提升货轮带毒远洋越境概率。针对极寒冰原的格陵兰，还必须同步进化‘抗寒能力（Cold Resistance 1、2）’，否则即使登岛也无法繁殖。赶在其港口封锁前完成海运登陆是破局核心。",
+          fr: "Le Groenland et Madagascar n'ont pas d'aéroports et dépendent uniquement de leurs ports maritimes. Développez la transmission par l'eau (Water 1 et 2) et la résistance au froid (Cold Resistance) avant la fermeture définitive des frontières.",
+          es: "Groenlandia y Madagascar carecen de aeropuertos y dependen únicamente de sus puertos marítimos. Desarrolla la transmisión por agua (Water 1 y 2) y la resistencia al frío (Cold Resistance) antes de que cierren sus puertos para siempre.",
+        },
+      },
+    ],
+  },
 };

@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { PlagueMini } from "../../components/games/PlagueMini";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "전염병 주식회사 미니 — 전 세계 감염 시뮬레이션 & 변이 전략 게임",
+    description: "세계 지도에서 항공·해상 항로를 타고 확산하는 병원균을 조작하여 DNA 포인트를 모으고, 백신 연구에 맞서 인류를 전멸시키는 글로벌 전염 시뮬레이션 전략 게임.",
+  },
+  en: {
+    title: "Plague Mini Web — Global Infection Simulation & Mutation Strategy",
+    description: "Evolve a deadly global pathogen on an interactive world map. Spread through international flight routes and sea lanes, mutating symptoms to outrun humanity's vaccine race.",
+  },
+  ja: {
+    title: "伝染病カンパニー Mini Web — 世界地図 感染拡大＆変異戦略シミュレーション",
+    description: "世界地図上で航空路や航路を通じて病原体を拡散させ、DNAポイントで感染力・症状・耐性を変異させて人類のワクチン開発に対抗する感染シミュレーション戦略ゲーム。",
+  },
+  zh: {
+    title: "瘟疫危机 Mini Web — 全球地图传染扩散与基因突变策略模拟",
+    description: "在世界地图上操控致命病原体借助国际空运航线与港口越洋扩散，收集DNA点数突变症状与抗药性，赶在全球疫苗研发成功前终结人类的策略模拟游戏。",
+  },
+  fr: {
+    title: "Plague Mini Web — Simulation d'infection mondiale et stratégie d'évolution",
+    description: "Faites évoluer un agent pathogène mortel sur une carte du monde interactive. Propagez-vous par voies aériennes et maritimes face à la course au vaccin.",
+  },
+  es: {
+    title: "Plague Mini Web — Simulación de infección global y estrategia de mutación",
+    description: "Evoluciona un patógeno letal en un mapa mundial interactivo. Propágate por rutas aéreas y marítimas mientras superas la carrera de investigación de la cura.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-4xl px-4 py-8">
+    <PlagueMini client:load />
+    <GameGuide slug="plague-mini" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>
