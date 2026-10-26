@@ -720,6 +720,20 @@ export const MISSION_CATALOG: Array<{
     goal: 2,
     xpReward: 50,
   },
+  {
+    id: "crossy-road-hop-50",
+    gameSlug: "crossy-road-3d",
+    title: {
+      ko: "크로시 로드에서 30미터 이상 길 건너기",
+      en: "Cross 30 or more meters in Crossy Road 3D",
+      ja: "クロッシーロードで30メートル以上横断する",
+      zh: "在天天过马路中成功横穿 30 米以上距离",
+      fr: "Traversez au moins 30 mètres dans Crossy Road 3D",
+      es: "Cruza 30 metros o más en Crossy Road 3D",
+    },
+    goal: 30,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {

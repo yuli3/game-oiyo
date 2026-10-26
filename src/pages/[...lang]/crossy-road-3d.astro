@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import CrossyRoad3D from "../../components/games/CrossyRoad3D";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "크로시 로드 3D — 원터치 호핑 복셀 길 건너기 & 독수리 탈출",
+    description: "원터치 탭과 스와이프로 쌩쌩 달리는 고속도로 자동차, 초고속 특급열차, 급류에 떠내려가는 통나무를 건너며 독수리를 피해 무한 질주하는 3D 복셀 아케이드 게임.",
+  },
+  en: {
+    title: "Crossy Road 3D Web — Endless Voxel Road Crossing & Eagle Escape",
+    description: "Tap to hop forward, dodge zooming cars, avoid high-speed trains, and surf floating river logs in this vibrant 3D voxel endless hopping classic.",
+  },
+  ja: {
+    title: "クロッシーロード 3D Web — ワンタップ無限ボクセル横断＆ワシ脱出",
+    description: "タップで飛び跳ね、猛スピードの自動車や急行列車をすり抜け、激流に流れる丸太を乗り継いで進む3Dボクセル無限道路横断アクションゲーム。",
+  },
+  zh: {
+    title: "天天过马路 3D Web — 一键跳跃体素横穿公路与老鹰突袭",
+    description: "轻触即跳！穿梭于飞驰的汽车洪流、呼啸而过的高速特快列车与漂浮的原木流水之间，躲避盘旋而降的凶猛老鹰，挑战无限极限距离。",
+  },
+  fr: {
+    title: "Crossy Road 3D Web — Traversée infinie en voxels et esquive d'aigle",
+    description: "Touchez pour sauter, esquivez les voitures et les trains, et sautez sur les rondins flottants dans ce classique d'arcade en 3D voxel.",
+  },
+  es: {
+    title: "Crossy Road 3D Web — Cruce de carreteras vóxel infinito y escape del águila",
+    description: "Toca para saltar, esquiva coches veloces, trenes expresos y flota en troncos para evitar que te atrape el águila en este clásico arcade 3D.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-4xl px-4 py-8">
+    <CrossyRoad3D client:load />
+    <GameGuide slug="crossy-road-3d" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>

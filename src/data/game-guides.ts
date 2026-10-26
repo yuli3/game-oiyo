@@ -5504,4 +5504,78 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "crossy-road-3d": {
+    origin: {
+      ko: "크로시 로드 3D(Crossy Road 3D Web)는 전 세계 수억 명의 사랑을 받은 힙스터 웨일(Hipster Whale)의 불후의 3D 복셀 명작 'Crossy Road'를 웹 캔버스에 구현한 원터치 아케이드 액션 게임입니다. 클래식 픽셀 치킨이 되어 질주하는 자동차와 트럭, 굉음을 울리며 통과하는 특급열차, 급류에 떠내려가는 통나무를 뛰어넘으며 최고 전진 거리에 도전합니다.",
+      en: "Crossy Road 3D Web brings Hipster Whale's legendary voxel arcade smash hit to the browser. As the classic pixel chicken, time your hops to dodge speeding sedans and trucks, evade roaring express trains, and surf drifting river logs while aiming for the ultimate distance score.",
+      ja: "クロッシーロード 3D Web（Crossy Road 3D Web）は、世界中で大ヒットを記録したHipster Whaleの傑作ボクセルアクション『Crossy Road』をブラウザ上で再現した作品です。おなじみのドット絵ニワトリを操作し、猛スピードの自動車や長大な急行列車、急流を流れる丸太をリズミカルに飛び越えてハイスコアを目指します。",
+      zh: "天天过马路 3D Web（Crossy Road 3D Web）将 Hipster Whale 享誉全球的体素街机爆款完整复刻至网页端。玩家操控经典像素小鸡，凭借极佳的反应力与节奏感跳跃躲避呼啸而过的轿车卡车、风驰电掣的高铁特快与漂流原木，刷新无尽前进记录。",
+      fr: "Crossy Road 3D Web adapte le chef-d'œuvre arcade en voxels de Hipster Whale dans le navigateur. Dans la peau du célèbre poulet en pixels, sautez au bon moment pour éviter les voitures et les trains et surfez sur les rondins flottants.",
+      es: "Crossy Road 3D Web recrea el legendario éxito arcade de vóxeles de Hipster Whale en el navegador. Controla a la clásica gallina pixelada, esquiva camiones y trenes veloces, y salta sobre troncos a la deriva para batir tu récord.",
+    },
+    how: {
+      ko: "화면을 터치하거나 키보드 방향키(또는 WASD, 스페이스바)를 눌러 한 칸씩 통통 뛰어오르세요. 고속도로에서는 차량 사이의 틈새를 노려 건너고, 철로에서는 붉은 경고등이 깜빡일 때 즉시 멈춰 열차를 피해야 합니다. 강물에서는 반드시 통나무 위에 올라타야 하며, 너무 오래 멈춰 있으면 거대한 독수리가 강습해오므로 끊임없이 판단하고 전진하세요.",
+      en: "Tap the screen or press Arrow keys (or WASD / Spacebar) to hop forward one tile at a time. Watch vehicle patterns on roads, halt when red railroad crossing lights flash, and land precisely on logs in rivers. Never idle in one spot for too long, or a hungry eagle will swoop down and grab you!",
+      ja: "画面タップまたは方向キー（WASD、スペースキー）で1マスずつ前進・左右にホップします。道路では車の切れ目を縫うように渡り、踏切の赤ランプが点滅したら列車通過を待ちましょう。川では必ず丸太の上に着地し、一定時間同じ場所に留まるとワシにさらわれるため素早い決断が重要です。",
+      zh: "轻触屏幕或使用方向键（或 WASD、空格键）一格格跳跃前进。横穿高速路需精准预判车流空隙；铁道红灯闪烁即代表特快逼近须立即止步；河流中必须稳准降落在浮木之上。切勿原地犹豫滞留，盘旋的老鹰将在数秒内俯冲抓捕！",
+      fr: "Appuyez sur l'écran ou utilisez les flèches pour sauter case par case. Esquivez les véhicules sur la route, attendez l'arrêt du clignotant rouge aux voies ferrées et sautez sur les rondins. Ne restez pas immobile trop longtemps sous peine d'être emporté par un aigle !",
+      es: "Pulsa en la pantalla o usa las flechas para saltar de casilla en casilla. Cruza las carreteras con cuidado, espera si la luz roja del tren parpadea y salta sobre los troncos en los ríos. ¡No te detengas demasiado tiempo o el águila se abalanzará sobre ti!",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "통나무 위에 서 있으면 자동으로 함께 떠내려가나요?",
+          en: "Does the player drift automatically while standing on floating logs?",
+          ja: "丸太の上に乗っていると、自動的に一緒に流されますか？",
+          zh: "站在漂流的原木上时，角色会跟随水流一起位移吗？",
+          fr: "Le joueur dérive-t-il automatiquement sur les rondins ?",
+          es: "¿El jugador se desplaza automáticamente sobre los troncos?",
+        },
+        a: {
+          ko: "네, 맞습니다! 통나무에 올라타면 통나무의 유속에 맞춰 플레이어도 함께 좌우로 이동합니다. 다만 화면 바깥으로 너무 멀리 떠내려가면 강물에 빠져 탈락하므로, 강 건너편의 안전한 육지로 적절한 타이밍에 뛰어내려야 합니다.",
+          en: "Yes! While on a log, your character drifts at the log's exact speed. However, drifting too far past the screen edges causes you to fall in and drown, so time your exit leap to the opposite bank carefully.",
+          ja: "はい！ 丸太に乗っている間は丸太の流速に合わせてプレイヤーも左右に流されます。ただし画面外へ流されすぎると脱落となるため、タイミングよく対岸の陸地へ飛び移りましょう。",
+          zh: "是的！小鸡站在原木上会以完全相同的流速同步平移。但请注意不要随木头漂出屏幕边界导致溺水，需算准时机果断起跳蹬陆。",
+          fr: "Oui ! Vous dérivez à la vitesse du rondin. Veillez à sauter sur la berge avant d'être entraîné hors de l'écran !",
+          es: "¡Sí! Te desplazarás a la misma velocidad que el tronco. Ten cuidado de no salirte de la pantalla y salta a la orilla a tiempo.",
+        },
+      },
+      {
+        q: {
+          ko: "철로(기찻길)에서 열차가 오는지 어떻게 미리 알 수 있나요?",
+          en: "How can I anticipate incoming high-speed trains on rail tracks?",
+          ja: "線路で列車が近づいていることを事前に知るには？",
+          zh: "在铁轨路段如何提前察觉高速列车即将驶来？",
+          fr: "Comment anticiper l'arrivée d'un train à grande vitesse ?",
+          es: "¿Cómo puedo anticipar los trenes de alta velocidad?",
+        },
+        a: {
+          ko: "철로 옆에 설치된 건널목 신호등을 주목하세요. 열차가 다가오면 붉은색 경고등이 빠른 속도로 깜빡이며 경고음을 울립니다. 신호등이 깜빡이기 시작하면 열차가 쏜살같이 지나갈 때까지 철로 밖 안전지대에서 대기해야 합니다.",
+          en: "Watch the crossing signal lights beside the tracks. When a train approaches, the red beacon flashes rapidly and warns you. Whenever the light blinks, step back and wait for the train to zoom by.",
+          ja: "線路脇の踏切警報灯に注目してください。列車が接近すると赤いランプが高速点滅します。点滅が始まったら無理に渡らず、列車が猛スピードで通過するまで安全な場所で待機しましょう。",
+          zh: "密切留意铁轨旁的警示信号灯。当列车接近时，红色指示灯会快速频闪并发出蜂鸣预警，此时切勿贸然踏上铁轨，等待列车掠过方为上策。",
+          fr: "Observez les feux de signalisation près des rails. Lorsqu'un train approche, le feu rouge clignote rapidement pour vous avertir.",
+          es: "Fíjate en las señales luminosas junto a las vías. Cuando se aproxima un tren, la luz roja parpadea rápidamente para advertirte.",
+        },
+      },
+      {
+        q: {
+          ko: "독수리는 정확히 언제 나타나나요?",
+          en: "When exactly does the predatory eagle strike?",
+          ja: "捕食者のワシは具体的にどのような条件で現れますか？",
+          zh: "凶猛的老鹰究竟会在什么情况下发动突袭？",
+          fr: "Quand l'aigle prédateur attaque-t-il ?",
+          es: "¿Cuándo ataca exactamente el águila rapaz?",
+        },
+        a: {
+          ko: "플레이어가 앞으로 전진하지 않고 한자리에서 약 3.5초 이상 망설이면 바닥에 거대한 그림자가 드리워지며 독수리가 강습합니다. 뒤로 후퇴하는 것은 허용되지만, 전진하지 않고 지체하는 것은 목숨을 잃는 지름길입니다.",
+          en: "If you idle in place without making forward progress for more than roughly 3.5 seconds, a massive shadow grows beneath you and the eagle swoops down. Always keep your momentum moving forward!",
+          ja: "前進せずに約3.5秒以上同じ場所で立ち止まると、地面に巨大な影が差し、ワシが急降下して連れ去られます。常に前進するリズムを保つことが生存の秘訣です。",
+          zh: "若角色停留驻足超过约 3.5 秒未向前推进，地面便会浮现巨大的黑影，老鹰随即俯冲掠走小鸡。保持前进的冲劲与节奏是生存的核心准则。",
+          fr: "Si vous restez immobile plus de 3,5 secondes sans avancer, une ombre gigantesque apparaît et l'aigle vous attrape.",
+          es: "Si te quedas parado más de 3,5 segundos sin avanzar, una sombra enorme te cubrirá y el águila te arrebatará.",
+        },
+      },
+    ],
+  },
 };
