@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SandBalls from "../../components/games/SandBalls";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta = {
+  ko: {
+    title: "샌드 볼스 3D — 실시간 모래 절삭 & 구체 물리 낙하 시뮬레이션",
+    description: "손가락으로 모래를 파서 길을 내고 중력으로 떨어지는 수십 개의 다채로운 구체를 트럭 적재함에 골인시키는 힐링 물리 퍼즐 게임."
+  },
+  en: {
+    title: "Sand Balls Mini Web — Digging Physics & Marble Gravity Simulation",
+    description: "Carve paths through soft golden sand with your finger, rescue trapped neutral marbles, multiply them through gates, and fill the delivery truck."
+  },
+  ja: {
+    title: "サンドボール 3D — リアルタイム砂掘削＆重力ビー玉物理シミュレーション",
+    description: "指先で砂を掘って滑り台を作り、重力で転がり落ちるカラフルな球体を障害物を避けながらトラックの荷台へ集める爽快物理パズル。"
+  },
+  zh: {
+    title: "沙球大冲关 Sand Balls Mini Web — 手指挖沙物理重力落球游戏",
+    description: "在细腻的金黄沙地中滑动开辟通道，利用重力引领五彩弹珠穿过倍率门、避开阻挡障碍，满满装填货车车厢。"
+  },
+  fr: {
+    title: "Sand Balls Mini Web — Physique de creusement de sable et billes",
+    description: "Creusez des chemins dans le sable doré, secourez les billes neutres et remplissez la benne du camion de livraison."
+  },
+  es: {
+    title: "Sand Balls Mini Web — Física de excavación en arena y caída de canicas",
+    description: "Abre surcos en la arena con tu dedo, rescata canicas atrapadas, multiplícalas y llena la caja del camión de transporte."
+  }
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-4xl px-4 py-8">
+    <SandBalls client:load />
+    <GameGuide slug="sand-balls" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>

@@ -16,22 +16,22 @@ const { locale } = Astro.props as { locale: Locale };
 const translations = await getTranslations(locale);
 
 const meta: Record<Locale, { title: string; description: string }> = {
-  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 129종", description: "체스·스도쿠·워들부터 OIYO 오리지널 게임까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 129종." },
-  en: { title: "OIYO Arcade — 129 free browser games, no install", description: "Chess, Sudoku, Wordle, and original OIYO games: 129 free games you can play instantly in your browser." },
-  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム129種", description: "チェス・数独・ワードルからOIYOオリジナル作品まで、ブラウザですぐ遊べる無料ゲーム129種。" },
-  zh: { title: "OIYO 街机 — 无需安装的129款免费游戏", description: "从国际象棋、数独、猜词到 OIYO 原创作品，129款游戏无需安装即可畅玩。" },
-  fr: { title: "OIYO Arcade — 129 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations originales OIYO : 129 jeux gratuits dans le navigateur." },
-  es: { title: "OIYO Arcade — 129 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y originales de OIYO: 129 juegos gratuitos en el navegador." },
+  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 130종", description: "체스·스도쿠·워들부터 OIYO 오리지널 게임까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 130종." },
+  en: { title: "OIYO Arcade — 130 free browser games, no install", description: "Chess, Sudoku, Wordle, and original OIYO games: 130 free games you can play instantly in your browser." },
+  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム130種", description: "チェス・数独・ワードルからOIYOオリジナル作品まで、ブラウザですぐ遊べる無料ゲーム130種。" },
+  zh: { title: "OIYO 街机 — 无需安装的130款免费游戏", description: "从国际象棋、数独、猜词到 OIYO 原创作品，130款游戏无需安装即可畅玩。" },
+  fr: { title: "OIYO Arcade — 130 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations originales OIYO : 130 jeux gratuits dans le navigateur." },
+  es: { title: "OIYO Arcade — 130 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y originales de OIYO: 130 juegos gratuitos en el navegador." },
 };
 const m = meta[locale] ?? meta.en;
 
 const hero: Record<Locale, { eyebrow: string; title: string; sub: string }> = {
-  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 129종", sub: "보드·카드·퍼즐·오리지널 아케이드 — 브라우저에서 바로 시작하세요." },
-  en: { eyebrow: "🎮 OIYO Arcade", title: "129 free games, right in your browser", sub: "Board, card, puzzle, and original arcade games — instant and free." },
-  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム129種", sub: "ボード・カード・パズル・オリジナル作品をブラウザですぐに。" },
-  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的129款免费游戏", sub: "棋类、纸牌、益智和原创街机游戏，浏览器直接开玩。" },
-  fr: { eyebrow: "🎮 OIYO Arcade", title: "129 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et créations originales, sans installation." },
-  es: { eyebrow: "🎮 OIYO Arcade", title: "129 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones originales, sin instalación." },
+  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 130종", sub: "보드·카드·퍼즐·오리지널 아케이드 — 브라우저에서 바로 시작하세요." },
+  en: { eyebrow: "🎮 OIYO Arcade", title: "130 free games, right in your browser", sub: "Board, card, puzzle, and original arcade games — instant and free." },
+  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム130種", sub: "ボード・カード・パズル・オリジナル作品をブラウザですぐに。" },
+  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的130款免费游戏", sub: "棋类、纸牌、益智和原创街机游戏，浏览器直接开玩。" },
+  fr: { eyebrow: "🎮 OIYO Arcade", title: "130 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et créations originales, sans installation." },
+  es: { eyebrow: "🎮 OIYO Arcade", title: "130 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones originales, sin instalación." },
 };
 const h = hero[locale] ?? hero.en;
 
@@ -138,6 +138,7 @@ const GAMES: Game[] = [
   { slug: "potion-craft", emoji: "🧪", cat: "arcade", name: { ko: "포션 크래프트 미니", en: "Potion Craft Mini", ja: "ポーションクラフト Mini", zh: "药剂工艺 Mini", fr: "Potion Craft Mini", es: "Potion Craft Mini" } },
   { slug: "beat-slice-3d", emoji: "⚡", cat: "arcade", name: { ko: "비트 슬라이스 3D", en: "Beat Slice 3D", ja: "ビートスライス 3D", zh: "节奏光刃 3D", fr: "Beat Slice 3D", es: "Beat Slice 3D" } },
   { slug: "bad-north-tactics", emoji: "🛡️", cat: "arcade", name: { ko: "배드 노스 미니", en: "Bad North Tactics", ja: "バッドノース Mini", zh: "绝境北方 Mini", fr: "Bad North Tactics", es: "Bad North Tactics" } },
+  { slug: "sand-balls", emoji: "🏖️", cat: "puzzle", name: { ko: "샌드 볼스 3D", en: "Sand Balls Mini", ja: "サンドボール 3D", zh: "沙球大冲关 3D", fr: "Sand Balls Mini", es: "Sand Balls Mini" } },
 
   { slug: "failure-eater", emoji: "👾", cat: "arcade", name: { ko: "실패를 먹는 괴물", en: "Failure Eater", ja: "失敗を食べる怪物", zh: "吃掉失败的怪物", fr: "Monstre des ratés", es: "Monstruo de los fallos" } },
   { slug: "snake-game", emoji: "🐍", cat: "arcade", name: { ko: "스네이크", en: "Snake", ja: "スネーク", zh: "贪吃蛇", fr: "Snake", es: "Snake" } },
@@ -593,6 +594,18 @@ const NEW_RELEASES_CONFIG: Array<{ slug: string; tag: Record<Locale, string>; de
       zh: "在精致的 3D 孤岛立体微缩模型上调遣步兵、弓兵与枪兵，击退自海面乘船突袭的维京海盗，誓死守卫海岛村庄家园。",
       fr: "Commandez vos fantassins, archers et piquiers sur de magnifiques îles dioramas pour repousser les drakkars vikings.",
       es: "Comanda infantería, arqueros y piqueros en dioramas insulares 3D para defender casas costeras contra los invasores vikingos.",
+    },
+  },
+  {
+    slug: "sand-balls",
+    tag: { ko: "모래 절삭 구체 물리 낙하", en: "Digging Physics & Marble Gravity", ja: "砂掘削＆重力ビー玉物理パズル", zh: "手指挖沙物理重力落球", fr: "Physique de creusement et billes", es: "Física de excavación y caída de canicas" },
+    desc: {
+      ko: "손가락으로 모래를 파서 길을 내고 중력으로 떨어지는 수십 개의 다채로운 구체를 트럭 적재함에 골인시키는 힐링 물리 퍼즐.",
+      en: "Carve paths through soft golden sand with your finger, rescue trapped neutral marbles, multiply them through gates, and fill the delivery truck.",
+      ja: "指先で砂を掘って滑り台を作り、重力で転がり落ちるカラフルな球体を障害物を避けながらトラックの荷台へ集める爽快物理パズル。",
+      zh: "在细腻的金黄沙地中滑动开辟通道，利用重力引领五彩弹珠穿过倍率门、避开阻挡障碍，满满装填货车车厢。",
+      fr: "Creusez des chemins dans le sable doré, secourez les billes neutres et remplissez la benne du camion de livraison.",
+      es: "Abre surcos en la arena con tu dedo, rescata canicas atrapadas, multiplícalas y llena la caja del camión de transporte.",
     },
   },
 ];

@@ -5800,4 +5800,78 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "sand-balls": {
+    origin: {
+      ko: "샌드 볼스(Sand Balls, SayGames)의 부드러운 모래 절삭 물리와 중력 낙하 구체 상호작용 메커니즘을 60fps HTML5 Canvas 및 탄성 충돌 물리 엔진으로 구현한 캐주얼 힐링 퍼즐 게임입니다.",
+      en: "A relaxing physics puzzle reinterpreting Sand Balls' satisfying terrain carving and gravity marble collision mechanics on 60fps HTML5 Canvas.",
+      ja: "『Sand Balls』の心地よい砂掘削物理と重力ビー玉落下シミュレーションを、60fps HTML5 Canvasと弾性衝突物理エンジンで再現したカジュアルパズルゲームです。",
+      zh: "以流畅的 60fps HTML5 Canvas 重现《沙球大冲关》（Sand Balls）指尖丝滑挖沙与重力弹珠碰撞解密快感的休闲物理益智游戏。",
+      fr: "Un jeu de puzzle physique relaxant réinterprétant le creusement de sable et la chute de billes de Sand Balls dans votre navigateur à 60 fps.",
+      es: "Un relajante juego de puzles físicos que recrea la excavación en arena y la caída de canicas de Sand Balls en el navegador a 60 fps.",
+    },
+    how: {
+      ko: "화면을 손가락이나 마우스로 드래그하여 모래를 파내 길을 만드세요. 상단에 갇힌 다채로운 컬러 볼이 중력으로 굴러 떨어지며, 중간 모래주머니에 갇힌 회색 무채색 볼과 접촉시키면 함께 화사한 색상으로 활성화됩니다. 배율 게이트를 통과해 볼의 수를 2배로 불리고, 하단 트럭의 적재함에 목표 수량 이상을 골인시키세요.",
+      en: "Drag your finger or mouse across the screen to dig tunnels through the sand. Gravity pulls the colored spheres downward; bump them into trapped grey marbles to colorize and recruit them. Navigate through multiplier gates to clone your balls and fill the delivery truck to 100% capacity!",
+      ja: "画面を指やマウスでドラッグして砂を掘り進め、滑らかな道を作りましょう。上部のカラーボールが重力で転がり落ち、砂に埋もれた灰色の無色ボールに触れるとカラフルに染まって活性化します。倍率ゲートを通って球の数を増やし、トラックの荷台を満載にしてください。",
+      zh: "手指或鼠标随心划动沙地开凿深沟。彩球在重力牵引下奔涌而下，触碰沙坑中沉睡的灰色哑光小球即可将其同化唤醒。引导球群穿过绿色倍率翻倍门，规避反弹木桩，最终满载下方的集装货车！",
+      fr: "Glissez pour creuser des tranchées dans le sable. Les billes colorées tombent par gravité et colorent les billes grises au contact. Passez les portails multiplicateurs et remplissez le camion !",
+      es: "Desliza para abrir túneles en la arena. Las canicas de colores caen por gravedad y contagian de color a las grises. Atraviesa puertas multiplicadoras y llena el camión.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "모래에 갇힌 회색 볼은 어떻게 깨우나요?",
+          en: "How do I activate the grey neutral marbles trapped in the sand?",
+          ja: "砂に埋まった灰色の無色ボールはどうやって活性化しますか？",
+          zh: "如何激活并解救被困在沙包中的灰色哑光小球？",
+          fr: "Comment activer les billes grises neutres piégées dans le sable ?",
+          es: "¿Cómo se activan las canicas grises atrapadas en la arena?",
+        },
+        a: {
+          ko: "회색 볼은 모래 속에 잠들어 있는 비활성 상태입니다. 이미 활성화된 붉은색, 푸른색, 녹색 등 채색 볼이 회색 볼에 단 한 번이라도 부딪히면 '컬러 감염(Color Infection)'이 일어나 동일한 색상의 활성 볼로 변신하여 함께 떨어지게 됩니다.",
+          en: "Grey marbles are dormant neutral spheres. As soon as any colored ball bumps into a grey marble, it triggers a Color Infection, instantly converting it into an active bouncy colored ball that joins the herd.",
+          ja: "灰色のボールは眠っている休眠状態です。すでに色のついたアクティブなボールが灰色ボールに一回でもぶつかると「カラー感染」が起き、同じ色の元気なボールへと目覚めて一緒に落下します。",
+          zh: "灰色小球是处于休眠状态的中立弹珠。只要任何一颗红、蓝、绿等彩色小球与其发生碰撞，便会触发“色彩感染”，使其瞬间染上璀璨色彩并跟随大部队滚动坠落。",
+          fr: "Les billes grises sont dormantes. Dès qu'une bille colorée en touche une, elle s'illumine de la même couleur et se joint à la course vers le camion.",
+          es: "Las canicas grises están dormidas. En cuanto una canica de color choca con una gris, se contagia de color y se une a la manada.",
+        },
+      },
+      {
+        q: {
+          ko: "배율 게이트(x2)는 어떻게 작동하나요?",
+          en: "How does the multiplier gate (x2) work?",
+          ja: "倍率ゲート（x2）はどのように機能しますか？",
+          zh: "倍率翻倍传送门（x2）是如何运作的？",
+          fr: "Comment fonctionne le portail multiplicateur (x2) ?",
+          es: "¿Cómo funciona la puerta multiplicadora (x2)?",
+        },
+        a: {
+          ko: "네온 테두리로 빛나는 게이트를 볼이 통과할 때마다 게이트 내부에서 동일한 크기와 색상을 지닌 복제 볼이 실시간으로 추가 생성되어 즉시 2배의 수량으로 증식됩니다. 가능한 한 많은 볼이 게이트를 통과하도록 모래 터널의 각도를 완만하게 설계하는 것이 고득점의 비결입니다.",
+          en: "Whenever a ball passes through the glowing neon multiplier portal, an identical clone sphere is spawned in real time, doubling your count. Shape your sand slopes gently to funnel as many marbles as possible through the center of the gate!",
+          ja: "ネオンに輝くゲートをボールが通過するたびに、同じ色と大きさの複製ボールがリアルタイムで生み出され、数が2倍に増殖します。できるだけ多くのボールがゲートを通るよう、砂の傾斜をなだらかに削るのがコツです。",
+          zh: "每当小球穿过散发霓虹微光的传送门，门框便会即时复制出一颗同色同速的全新弹珠，实现球量成倍激增。精细雕琢漏斗状的缓坡让尽可能多的小球对准门框冲过是通关的关键技巧。",
+          fr: "Chaque bille traversant le portail néon est dupliquée instantanément. Creusez des pentes en entonnoir pour faire passer un maximum de billes au centre !",
+          es: "Cada canica que cruza el portal se duplica en tiempo real. Modela surcos en embudo para canalizar la mayor cantidad posible de canicas por la puerta.",
+        },
+      },
+      {
+        q: {
+          ko: "트럭에 몇 개 이상의 볼을 넣어야 클리어할 수 있나요?",
+          en: "How many balls are required to fill the truck and clear the level?",
+          ja: "トラックに何個のボールを集めればクリアになりますか？",
+          zh: "需要将多少颗小球送入货车车厢方可达成通关？",
+          fr: "Combien de billes faut-il pour remplir le camion et gagner ?",
+          es: "¿Cuántas canicas se necesitan para llenar el camión y ganar?",
+        },
+        a: {
+          ko: "각 스테이지마다 트럭 하단 적재함에 목표 적재량(기본 25개)이 표시됩니다. 모래 터널을 타고 내려와 트럭 평판에 골인한 볼의 수가 목표량에 도달하면 경적을 울리며 트럭이 출발하고 다음 스테이지가 잠금 해제됩니다.",
+          en: "Each stage displays the truck's target load capacity (default 25 balls). Once your delivered ball count reaches that goal, the truck honks its horn and departs in triumph, unlocking the next stage!",
+          ja: "ステージごとにトラック荷台の目標積載数（基本25個）が表示されます。砂のトンネルを通って荷台に飛び込んだボールが目標数に達すると、クラクションを鳴らしてトラックが出発しクリアとなります。",
+          zh: "每个关卡货车车斗均会清晰显示目标装填容量（基础为 25 颗）。当顺着沙坑漏下进斗的弹珠数量达到额定值时，货车便会长鸣汽笛满载启程，解锁全新关卡！",
+          fr: "Chaque niveau indique la capacité du camion (25 billes par défaut). Atteignez ce quota pour faire klaxonner le camion et passer au niveau suivant !",
+          es: "Cada nivel muestra la capacidad del camión (25 canicas por defecto). ¡Alcanza la meta para hacer sonar el claxon y avanzar al siguiente nivel!",
+        },
+      },
+    ],
+  },
 };

@@ -776,6 +776,20 @@ export const MISSION_CATALOG: Array<{
     goal: 1,
     xpReward: 50,
   },
+  {
+    id: "sand-balls-truck-fill",
+    gameSlug: "sand-balls",
+    title: {
+      ko: "샌드 볼스에서 트럭 적재함 100% 충전 달성",
+      en: "Fill the delivery truck to 100% capacity in Sand Balls",
+      ja: "サンドボールでトラックの荷台を100%満載にする",
+      zh: "在沙球大冲关中将货车车厢装填至 100% 满载",
+      fr: "Remplissez la benne du camion à 100 % dans Sand Balls",
+      es: "Llena el camión al 100 % de su capacidad en Sand Balls",
+    },
+    goal: 1,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {
