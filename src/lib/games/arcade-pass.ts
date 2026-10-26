@@ -986,6 +986,20 @@ export const MISSION_CATALOG: Array<{
     goal: 30,
     xpReward: 50,
   },
+  {
+    id: "chrono-detective-case-1",
+    gameSlug: "chrono-detective",
+    title: {
+      ko: "오브라 딘 크로노 추리에서 회중시계 단서를 조사해 3인의 운명 장부(Rule of Three) 완성하기",
+      en: "Complete the Rule of Three Fate Ledger in Memento Mori Chrono",
+      ja: "オブラ・ディン・クロノ推理で3人の運命手帳（Rule of Three）を完成させる",
+      zh: "在奥伯拉丁怀表推理中完成三人法则（Rule of Three）命运账簿封印",
+      fr: "Complétez le Registre des Destins (Règle de Trois) dans Memento Mori Chrono",
+      es: "Completa el Libro de Destinos (Regla de Tres) en Memento Mori Chrono",
+    },
+    goal: 1,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {

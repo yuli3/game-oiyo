@@ -6568,4 +6568,42 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "chrono-detective": {
+    origin: {
+      ko: "『오브라 딘 크로노 추리 (Memento Mori Chrono)』는 Lucas Pope의 추리 걸작 『Return of the Obra Dinn』과 『The Case of the Golden Idol』에서 영감을 받은 OIYO 오리지널 시간 정지 검시 & 3인의 법칙(Rule of Three) 연역 미스터리입니다. 죽음의 순간을 정지된 풍경으로 보여 주는 회중시계(Memento Mori)로 선미 갑판·주마스트·화물창 금고의 3개 현장을 조사하고, 운명 장부(The Fate Ledger)에 희생자 3인의 [신원 · 사인 · 가해자]를 정확히 기입해 진실을 영구 봉인하세요.",
+      en: "Memento Mori Chrono is an original OIYO time-freeze forensic mystery inspired by Lucas Pope's Return of the Obra Dinn and The Case of the Golden Idol. Peer into 3 frozen moments of maritime tragedy using the Memento Mori pocket watch, inspect physical evidence hotspots, and complete all 3 crew Fates [Identity · Cause · Culprit] in the Ledger to trigger the Rule of Three lock-in.",
+      ja: "『オブラ・ディン・クロノ推理（Memento Mori Chrono）』は、『Return of the Obra Dinn』と『The Case of the Golden Idol』にインスパイアされた時間停止検死＆「3人の法則」演繹ミステリーです。死の瞬間を映し出す懐中時計(Memento Mori)で3つの船上現場を調査し、乗組員3名の「身元・死因・犯人」を手帳に正しく記入して真実を封印します。",
+      zh: "《奥伯拉丁怀表推理（Memento Mori Chrono）》灵感源自推理神作《Return of the Obra Dinn》与《The Case of the Golden Idol》。借助能够凝固死亡瞬间的死神怀表（Memento Mori），勘查后甲板、主桅杆与底舱金库三幕现场，在命运账簿中完整推导 3 名船员的【身份 · 死因 · 凶手】，触发“三人法则（Rule of Three）”永久锁定真相。",
+      fr: "Memento Mori Chrono est un jeu d'enquête médico-légale figée dans le temps inspiré de Return of the Obra Dinn. Inspectez 3 scènes de tragédie maritime avec votre montre à gousset et complétez l'identité, la cause et le coupable des 3 victimes dans le Registre.",
+      es: "Memento Mori Chrono es un misterio deductivo de tiempo congelado inspirado en Return of the Obra Dinn. Examina 3 escenas de tragedia marítima con el reloj Memento Mori y completa la identidad, causa y culpable de las 3 víctimas en el Libro de Destinos.",
+    },
+    how: {
+      ko: "1) 좌측 상단 탭(『⏱️ 기억 #1 ~ #3』)을 눌러 선미 갑판, 주마스트, 화물창 금고의 정지된 사건 현장을 전환하세요. 2) 각 현장의 『🔍 정밀 조사 포인트』를 클릭하면 하단 검시 기록에 결정적 단서(인물의 제복·문신·반지·약병)가 표시됩니다. 3) 우측 『📖 선원 운명 추리 장부』에서 인물 #1~#3의 [1. 신원 · 2. 사인 · 3. 가해자/원인]을 선택하세요. 3인의 추리가 모두 정확히 일치하면 『3인의 법칙』이 발동하며 사건이 해결됩니다!",
+      en: "1) Switch between '⏱️ Memory #1 ~ #3' on the left to inspect the Quarterdeck, Main Mast, and Cargo Vault scenes. 2) Click the '🔍 Interactive Evidence Hotspots' in each scene to read coroner notes on logbooks, signet rings, whale tattoos, and arsenic vials. 3) In '📖 The Crew Fate Ledger' on the right, select the [1. Identity · 2. Cause · 3. Culprit] for all 3 victims—when all 3 triads are correct, the Rule of Three seals the case!",
+      ja: "1) 左上のタブ（『⏱️ 記憶 #1〜#3』）で船尾甲板・メインマスト・貨物室金庫の3つの現場を切り替えます。2) 各現場の『🔍 調査ポイント』をクリックして航海日誌や指輪、タトゥー、毒薬瓶の手がかりを確認します。3) 右側の『📖 乗組員運命手帳』で3人全員の「身元・死因・犯人」を正しく選ぶと『3人の法則』が発動してクリアとなります！",
+      zh: "1) 点击左上方的“⏱️ 记忆 #1 ~ #3”切换后甲板、主桅杆与底舱金库三个凝固现场。2) 点击场景内的“🔍 现场勘查热点”获取航海日志、纹章戒指、捕鲸纹身与砒霜药瓶等关键证言。3) 在右侧“📖 船员命运推理账簿”中为 3 名受害者选定正确的【身份 · 死因 · 凶手】，三组全部正确即刻触发“三人法则”破案！",
+      fr: "1) Naviguez entre les « ⏱️ Souvenirs #1 à #3 ». 2) Cliquez sur les indices (🔍) pour lire les notes du légiste. 3) Remplissez l'Identité, la Cause et le Coupable des 3 victimes dans le Registre pour valider la Règle de Trois.",
+      es: "1) Alterna entre los «⏱️ Recuerdos #1 a #3». 2) Haz clic en las pistas (🔍) para leer las notas forenses. 3) Completa la Identidad, Causa y Culpable de las 3 víctimas en el Libro para activar la Regla de Tres.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "왜 1명씩 바로 정답 여부를 알려주지 않고 『3인의 법칙 (Rule of Three)』으로 검증하나요?",
+          en: "Why does the Ledger validate fates using the 'Rule of Three' instead of one by one?",
+          ja: "なぜ1人ずつではなく『3人の法則（Rule of Three）』でまとめて正解判定するのですか？",
+          zh: "为什么账簿采用“三人法则（Rule of Three）”而不是单人验证？",
+          fr: "Pourquoi le Registre valide-t-il les destins par la « Règle de Trois » ?",
+          es: "¿Por qué el Libro valida los destinos mediante la «Regla de Tres»?",
+        },
+        a: {
+          ko: "1명씩 즉시 정답을 알려주면 단서를 읽지 않고 무작위 대입(Brute-force)만으로 쉽게 답을 맞힐 수 있기 때문입니다. 원작 『Return of the Obra Dinn』의 핵심 설계처럼 3명의 운명이 동시에 맞아야 봉인되도록 하여 진짜 검시관처럼 단서를 교차 검증하는 추리의 쾌감을 살렸습니다(상단 카운터에서 현재 몇 명의 추리가 완성되었는지 실시간 힌트를 확인할 수 있습니다).",
+          en: "Validating every single dropdown immediately would allow brute-force guessing without reading the clues. Inspired by Return of the Obra Dinn, sealing fates when all 3 triads match rewards genuine forensic cross-referencing (while the top HUD counter still tracks how many of the 3 triads are currently valid!).",
+          ja: "1項目ごとにすぐ正解が出ると、手がかりを読まずに総当たりで当てられてしまうためです。『Return of the Obra Dinn』と同様に3人分の推理が揃った時点で封印される仕組みにより、本物の検死官のように証拠を照合する推理の醍醐味を味わえます。",
+          zh: "如果每填一项都立刻提示对错，玩家无需阅读线索就能靠穷举试出答案。借鉴《奥伯拉丁的回归》经典的“三人法则”，当 3 名船员的命运同时推导正确时才予以永久封印，最大化还原硬核刑侦推理的成就感（顶部计数器也会实时提示当前已答对的组数）。",
+          fr: "Valider trois destins ensemble empêche les essais au hasard et récompense la véritable déduction logique à partir des indices.",
+          es: "Validar tres destinos a la vez evita el tanteo al azar y premia la deducción lógica genuina basada en las pruebas.",
+        },
+      },
+    ],
+  },
 };

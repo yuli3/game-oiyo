@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ChronoDetective from "../../components/games/ChronoDetective";
+import GameGuide from "../../components/GameGuide.astro";
+import { locales, type Locale } from "../../lib/i18n";
+
+export function getStaticPaths() {
+  return locales.map((l) => ({ params: { lang: l === "en" ? undefined : l } }));
+}
+
+const locale: Locale = (Astro.params.lang as Locale) || "en";
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "오브라 딘 크로노 추리 — 회중시계 시간 정지 & 3인의 법칙 장부 | OIYO Game",
+    description:
+      "회중시계(Memento Mori)로 박제된 선상 비극의 3개 장면을 정밀 조사하고, 운명 장부(Ledger)에 3인의 신원·사인·가해자를 완성해 3인의 법칙을 검증하세요.",
+  },
+  en: {
+    title: "Memento Mori Chrono — Pocket Watch & Rule of Three Mystery | OIYO Game",
+    description:
+      "Inspect 3 frozen maritime scenes with the Memento Mori watch and deduce all 3 crew Fates [Identity · Cause · Culprit] in the Ledger.",
+  },
+  ja: {
+    title: "オブラ・ディン・クロノ推理 — 懐中時計と3人の法則ミステリー | OIYO Game",
+    description:
+      "懐中時計(Memento Mori)で静止した船上の3つの場面を調査し、乗組員3名の身元・死因・犯人を手帳に記して「3人の法則」を証明しよう。",
+  },
+  zh: {
+    title: "奥伯拉丁怀表推理 — 时停现场勘查与三人法则账簿 | OIYO Game",
+    description:
+      "使用死神怀表（Memento Mori）勘查三幕凝固的船难现场，在命运账簿中完整推导三名船员的身份、死因与凶手。",
+  },
+  fr: {
+    title: "Memento Mori Chrono — Montre à Gousset et Registre des Destins | OIYO Game",
+    description:
+      "Inspectez 3 scènes figées dans le temps et déduisez l'identité, la cause et le coupable des 3 victimes selon la Règle de Trois.",
+  },
+  es: {
+    title: "Memento Mori Chrono — Reloj de Bolsillo y Libro de Destinos | OIYO Game",
+    description:
+      "Inspecciona 3 escenas congeladas en el tiempo y deduce la identidad, causa y culpable de las 3 víctimas mediante la Regla de Tres.",
+  },
+};
+
+const m = meta[locale] || meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <ChronoDetective client:load locale={locale} />
+  <GameGuide slug="chrono-detective" locale={locale} name={m.title.split(" — ")[0]} />
+</BaseLayout>
