@@ -5430,4 +5430,78 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "stanley-choice": {
+    origin: {
+      ko: "스탠리 패러블 웹(The Stanley Choice Web)은 비디오 게임 역사상 가장 혁신적인 메타 내러티브 명작 'The Stanley Parable'을 웹 3D 1인칭 어드벤처로 오마주한 작품입니다. 정해진 일과를 살아가던 427번 직원 스탠리가 되어, 모든 것을 지켜보며 이야기하는 전지적 내레이터의 지시를 따를지 거역할지 매 순간 선택해야 합니다. 선택에 따라 총 8가지의 철학적이고 유쾌한 멀티 엔딩이 펼쳐집니다.",
+      en: "The Stanley Choice Web is an interactive 3D first-person meta-narrative adventure paying homage to the gaming masterpiece 'The Stanley Parable'. As Stanley, employee #427, you must decide at every turn whether to obey the omniscient Narrator's instructions or rebel into the unknown, discovering 8 distinct philosophical and comedic endings.",
+      ja: "スタンリー・パラブル Web（The Stanley Choice Web）は、メタフィクションゲームの金字塔『The Stanley Parable』をブラウザ向け3D主観視点アドベンチャーとしてオマージュした作品です。427番の社員スタンリーとなり、物語を語るナレーターの指示に従うか反抗するかを毎分選択しながら、全8種類の哲学的かつユーモラスな結末を解き明かします。",
+      zh: "史丹利的寓言 Stanley Choice Web（The Stanley Choice Web）是致敬游戏史上最负盛名的元叙事杰作《史丹利的寓言》的 3D 第一人称网页分支冒险。玩家扮演 427 号员工史丹利，在神秘无人的公司大楼中，面对无所不知的旁白指示做出顺从或叛逆的抉择，解锁 8 种深具哲理与讽刺幽默的多重结局。",
+      fr: "The Stanley Choice Web est une aventure méta-narrative en vue à la première personne rendant hommage au jeu culte The Stanley Parable. Dans la peau de Stanley, choisissez d'obéir ou de désobéir aux instructions du narrateur à chaque croisement pour débloquer 8 fins uniques.",
+      es: "The Stanley Choice Web es una aventura meta-narrativa en 3D y primera persona que homenajea al clásico The Stanley Parable. Como Stanley, empleado 427, decide si obedecer o rebelarte contra el narrador para descubrir 8 finales filosóficos y humorísticos.",
+    },
+    how: {
+      ko: "화면의 3D 복도를 바라보며 하단의 선택지 버튼을 눌러 스탠리의 행동을 결정하세요. '두 개의 문' 방에서 내레이터의 지시대로 왼쪽 문으로 들어갈 수도 있고, 오른쪽 문으로 반항할 수도 있습니다. 사무실 문을 닫고 버티거나, 빗자루 보관함에 숨거나, 창고 리프트에서 뛰어내리는 등 기상천외한 선택을 통해 우측 상단 '엔딩 도감'의 8개 엔딩을 모두 수집해보세요.",
+      en: "Watch the 3D first-person office corridor and click the choice options to steer Stanley's path. In the iconic 'Two Doors' room, obey the Narrator through the left door or rebel through the right. Try shutting office doors, hiding inside broom closets, or jumping from cargo lifts to collect all 8 unique endings in your Codex.",
+      ja: "3Dオフィス廊下を見渡しながら、下部の選択肢ボタンを押してスタンリーの行動を決めましょう。『2つの扉』で指示通り左の扉に入ることも、反逆して右の扉に進むこともできます。ドアを閉めて引きこもる、ほうき入れに潜む、リフトから飛び降りるなど自由な行動で全8大エンディングを図鑑に集めましょう。",
+      zh: "观察 3D 第一人称办公室长廊，点击下方选项按钮决定史丹利的行动路径。在标志性的'两扇门'前，你可以顺从旁白步入左门，也可叛逆右转。通过关门逃避、躲进扫帚间、跳下货运升降台等各种离谱脑洞尝试，解锁图鉴中全部 8 个分支结局。",
+      fr: "Observez le couloir 3D et cliquez sur les choix pour diriger Stanley. Devant les deux portes, obéissez en prenant la porte de gauche ou rebellez-vous par celle de droite. Explorez tous les recoins insolites pour débloquer les 8 fins dans votre codex.",
+      es: "Observa el pasillo en 3D y pulsa en las opciones para guiar a Stanley. Frente a las dos puertas, obedece por la izquierda o rebélate por la derecha. Prueba decisiones absurdas como encerrarte en el armario para completar los 8 finales en tu códice.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "엔딩을 보고 나면 이전 진행 상황과 발견한 엔딩이 사라지나요?",
+          en: "Are collected endings erased when I restart a run?",
+          ja: "エンディングに到達した後、集めた図鑑の記録は消えてしまいますか？",
+          zh: "达成结局重新开始后，已收集的图鉴会丢失吗？",
+          fr: "Les fins débloquées sont-elles effacées lors du redémarrage ?",
+          es: "¿Se borran los finales desbloqueados al reiniciar?",
+        },
+        a: {
+          ko: "아닙니다! 발견한 엔딩은 브라우저 로컬 저장소에 영구 보존됩니다. 언제든지 우측 상단 '엔딩 도감' 버튼을 눌러 달성한 엔딩 목록과 미발견 엔딩의 단서를 확인할 수 있습니다.",
+          en: "No! All unlocked endings are permanently saved to your browser's local storage. You can open the Codex anytime in the top header to review your progress and find hints for undiscovered branches.",
+          ja: "いいえ、消えません！ 解除したエンディングはブラウザに永続保存されます。いつでも右上の『エンディング図鑑』ボタンから達成リストや未発見エンドのヒントを確認可能です。",
+          zh: "不会！所有达成的结局均会永久保存在本地浏览器中。随时点击右上角'结局图鉴'按钮即可检视收集进度，并获取未解锁分支的探索线索。",
+          fr: "Non ! Toutes vos fins débloquées sont enregistrées en local. Vous pouvez consulter le codex à tout moment pour voir votre progression et les indices.",
+          es: "¡No! Todos los finales descubiertos se guardan en tu navegador. Puedes pulsar en el Códice en cualquier momento para revisar tu progreso y pistas.",
+        },
+      },
+      {
+        q: {
+          ko: "'빗자루 보관함 엔딩'은 어떻게 볼 수 있나요?",
+          en: "How do I unlock the Broom Closet Ending?",
+          ja: "『ほうき入れエンド（Broom Closet）』はどうすれば見られますか？",
+          zh: "如何触发经典的‘扫帚间结局’？",
+          fr: "Comment débloquer la fin du placard à balais ?",
+          es: "¿Cómo consigo el final del armario de escobas?",
+        },
+        a: {
+          ko: "사무실을 나와 중앙 복도를 지날 때, 벽에 작게 붙은 '빗자루 보관함(Broom Closet)' 문을 열고 들어가세요. 내레이터가 어서 나오라고 재촉하지만 계속해서 문을 잠그고 버티면 당황한 내레이터가 전용 엔딩을 선사합니다.",
+          en: "While walking through the main corridor, open the small Broom Closet door. The Narrator will plead with you to step back outside, but if you stubbornly refuse to leave, you will unlock this hilarious iconic ending.",
+          ja: "中央廊下を進む際、壁にある小さな『ほうき入れ』の扉を開けて中に入りましょう。ナレーターが出てくるよう促しますが、頑なに無視して居座り続けると専用エンドが発動します。",
+          zh: "从 427 办公室进入中央走廊时，选择打开侧面不起眼的‘扫帚间’小门。旁白会极力催促你赶紧出来，但只要你固执地选择锁门赖在里面不走，旁白便会崩溃并送上该专属结局。",
+          fr: "Dans le couloir principal, entrez dans le placard à balais. Le narrateur vous suppliera de sortir, mais en insistant pour y rester, vous débloquerez cette fin emblématique.",
+          es: "En el pasillo principal, entra en el armario de escobas. El narrador te insistirá para que salgas, pero si te quedas encerrado dentro a propósito, desbloquearás este cómico final.",
+        },
+      },
+      {
+        q: {
+          ko: "진짜 '자유 엔딩'에 도달하려면 어떤 경로를 선택해야 하나요?",
+          en: "What is the exact sequence to reach the True Freedom Ending?",
+          ja: "真の『自由エンディング（Freedom Ending）』に到達する正規ルートは？",
+          zh: "达成正统‘自由结局’的完整路线是什么？",
+          fr: "Quel est le chemin pour la fin de la liberté ?",
+          es: "¿Cuál es la ruta exacta para conseguir el Final de la Libertad?",
+        },
+        a: {
+          ko: "복도 전진 -> '왼쪽 문' 선택 -> 대회의실 통과 -> 사장실 비밀 키패드(2-8-4-5) 엘리베이터 탑승 -> 마인드 컨트롤 시설에서 [OFF] 버튼을 누르면 아름다운 햇살과 함께 자유 엔딩을 맞이합니다.",
+          en: "Advance through the corridor -> Choose the Left Door -> Pass the Meeting Room -> Enter the Secret Elevator in the Boss Office -> Press [OFF] in the Mind Control Facility to step into sunlight.",
+          ja: "廊下を進む -> 『左の扉』を選択 -> 会議室を通過 -> 社長室の隠しエレベーターに乗る -> マインドコントロール施設で[OFF]ボタンを押すことで、光あふれる自由エンディングを迎えます。",
+          zh: "前进穿过走廊 -> 选择‘左门’ -> 穿过大会议室 -> 乘坐老板办公室暗门电梯 -> 在洗脑控制台按下‘OFF’断电按钮，即可迎来阳光普照的自由真结局。",
+          fr: "Avancez dans le couloir -> Prenez la porte de gauche -> Traversez la salle de réunion -> Prenez l'ascenseur du bureau du directeur -> Appuyez sur [OFF] dans le complexe de contrôle mental.",
+          es: "Avanza por el pasillo -> Elige la puerta izquierda -> Cruza la sala de reuniones -> Sube al ascensor secreto en el despacho del jefe -> Pulsa [OFF] en la sala de control mental.",
+        },
+      },
+    ],
+  },
 };

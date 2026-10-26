@@ -706,6 +706,20 @@ export const MISSION_CATALOG: Array<{
     goal: 2,
     xpReward: 50,
   },
+  {
+    id: "stanley-discover-endings",
+    gameSlug: "stanley-choice",
+    title: {
+      ko: "스탠리 패러블에서 2가지 이상의 멀티 엔딩 발견하기",
+      en: "Discover 2 or more multi-endings in The Stanley Choice",
+      ja: "スタンリー・パラブルで2種類以上のエンディングを発見する",
+      zh: "在史丹利的寓言中探索达成 2 种及以上结局",
+      fr: "Débloquez au moins 2 fins dans The Stanley Choice",
+      es: "Descubre 2 o más finales en The Stanley Choice",
+    },
+    goal: 2,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {

@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import StanleyChoice from "../../components/games/StanleyChoice";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "스탠리 패러블 웹 — 두 개의 문과 내레이터의 8대 멀티 엔딩",
+    description: "427호 사무실에서 일어난 스탠리. 내레이터의 목소리를 따를 것인가, 거역할 것인가? 3D 1인칭 오피스 복도를 탐험하며 8가지 서로 다른 철학적 엔딩을 수집하는 메타 내러티브 어드벤처.",
+  },
+  en: {
+    title: "The Stanley Choice Web — Two Doors & 8 Multi-Endings Meta Narrative",
+    description: "Step into Office 427 as Stanley. Will you obey the Narrator's instructions or forge your own rebellious path? Explore 3D corridors to uncover all 8 philosophical endings.",
+  },
+  ja: {
+    title: "スタンリー・パラブル Web — 2つの扉とナレーターの8大マルチエンディング",
+    description: "427号室のオフィスで立ち上がったスタンリー。天の声に従うか、逆らうか？ 3D主観視点でオフィス廊下を探索し、8つの哲学的マルチエンディングを解き明かす名作メタアドベンチャー。",
+  },
+  zh: {
+    title: "史丹利的寓言 Stanley Choice Web — 两扇门与旁白者的8大分支结局",
+    description: "427号办公室的史丹利起身离座。你是顺从旁白的指引，还是叛逆抗命？在3D第一人称办公室长廊中做出抉择，收集全套 8 种哲学思考结局。",
+  },
+  fr: {
+    title: "The Stanley Choice Web — Deux portes et 8 fins narratives",
+    description: "Incarnez Stanley dans le bureau 427. Suivrez-vous les ordres du narrateur ou choisirez-vous la rébellion ? Explorez les couloirs 3D pour débloquer les 8 fins.",
+  },
+  es: {
+    title: "The Stanley Choice Web — Dos puertas y 8 finales de meta-narrativa",
+    description: "Ponte en la piel de Stanley en la oficina 427. ¿Obedecerás las órdenes del narrador o te rebelarás? Explora pasillos en 3D para descubrir los 8 finales filosóficos.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-4xl px-4 py-8">
+    <StanleyChoice client:load />
+    <GameGuide slug="stanley-choice" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>

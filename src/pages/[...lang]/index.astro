@@ -16,22 +16,22 @@ const { locale } = Astro.props as { locale: Locale };
 const translations = await getTranslations(locale);
 
 const meta: Record<Locale, { title: string; description: string }> = {
-  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 124종", description: "체스·스도쿠·워들부터 OIYO 오리지널 게임까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 124종." },
-  en: { title: "OIYO Arcade — 124 free browser games, no install", description: "Chess, Sudoku, Wordle, and original OIYO games: 124 free games you can play instantly in your browser." },
-  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム124種", description: "チェス・数独・ワードルからOIYOオリジナル作品まで、ブラウザですぐ遊べる無料ゲーム124種。" },
-  zh: { title: "OIYO 街机 — 无需安装的124款免费游戏", description: "从国际象棋、数独、猜词到 OIYO 原创作品，124款游戏无需安装即可畅玩。" },
-  fr: { title: "OIYO Arcade — 124 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations originales OIYO : 124 jeux gratuits dans le navigateur." },
-  es: { title: "OIYO Arcade — 124 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y originales de OIYO: 124 juegos gratuitos en el navegador." },
+  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 125종", description: "체스·스도쿠·워들부터 OIYO 오리지널 게임까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 125종." },
+  en: { title: "OIYO Arcade — 125 free browser games, no install", description: "Chess, Sudoku, Wordle, and original OIYO games: 125 free games you can play instantly in your browser." },
+  ja: { title: "OIYOアーケード — インストール不要の無料ゲーム125種", description: "チェス・数独・ワードルからOIYOオリジナル作品まで、ブラウザですぐ遊べる無料ゲーム125種。" },
+  zh: { title: "OIYO 街机 — 无需安装的125款免费游戏", description: "从国际象棋、数独、猜词到 OIYO 原创作品，125款游戏无需安装即可畅玩。" },
+  fr: { title: "OIYO Arcade — 125 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations originales OIYO : 125 jeux gratuits dans le navigateur." },
+  es: { title: "OIYO Arcade — 125 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y originales de OIYO: 125 juegos gratuitos en el navegador." },
 };
 const m = meta[locale] ?? meta.en;
 
 const hero: Record<Locale, { eyebrow: string; title: string; sub: string }> = {
-  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 124종", sub: "보드·카드·퍼즐·오리지널 아케이드 — 브라우저에서 바로 시작하세요." },
-  en: { eyebrow: "🎮 OIYO Arcade", title: "124 free games, right in your browser", sub: "Board, card, puzzle, and original arcade games — instant and free." },
-  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム124種", sub: "ボード・カード・パズル・オリジナル作品をブラウザですぐに。" },
-  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的124款免费游戏", sub: "棋类、纸牌、益智和原创街机游戏，浏览器直接开玩。" },
-  fr: { eyebrow: "🎮 OIYO Arcade", title: "124 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et créations originales, sans installation." },
-  es: { eyebrow: "🎮 OIYO Arcade", title: "124 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones originales, sin instalación." },
+  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 125종", sub: "보드·카드·퍼즐·오리지널 아케이드 — 브라우저에서 바로 시작하세요." },
+  en: { eyebrow: "🎮 OIYO Arcade", title: "125 free games, right in your browser", sub: "Board, card, puzzle, and original arcade games — instant and free." },
+  ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム125種", sub: "ボード・カード・パズル・オリジナル作品をブラウザですぐに。" },
+  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的125款免费游戏", sub: "棋类、纸牌、益智和原创街机游戏，浏览器直接开玩。" },
+  fr: { eyebrow: "🎮 OIYO Arcade", title: "125 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et créations originales, sans installation." },
+  es: { eyebrow: "🎮 OIYO Arcade", title: "125 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones originales, sin instalación." },
 };
 const h = hero[locale] ?? hero.en;
 
@@ -133,6 +133,7 @@ const GAMES: Game[] = [
   { slug: "plague-mini", emoji: "☣️", cat: "arcade", name: { ko: "전염병 주식회사 미니", en: "Plague Mini", ja: "伝染病カンパニー Mini", zh: "瘟疫危机 Mini", fr: "Plague Mini", es: "Plague Mini" } },
   { slug: "ftl-mini", emoji: "🚀", cat: "arcade", name: { ko: "FTL 우주선 미니", en: "FTL Spaceship Mini", ja: "FTL 宇宙船 Mini", zh: "超越光速 FTL Mini", fr: "FTL Spaceship Mini", es: "FTL Spaceship Mini" } },
   { slug: "into-the-breach", emoji: "🤖", cat: "arcade", name: { ko: "인투 더 브리치 미니", en: "Into the Breach Mini", ja: "Into the Breach Mini", zh: "陷阵之志 Mini", fr: "Into the Breach Mini", es: "Into the Breach Mini" } },
+  { slug: "stanley-choice", emoji: "🚪", cat: "arcade", name: { ko: "스탠리 패러블 웹", en: "The Stanley Choice", ja: "スタンリー・パラブル Web", zh: "史丹利的寓言 Web", fr: "The Stanley Choice", es: "The Stanley Choice" } },
 
   { slug: "failure-eater", emoji: "👾", cat: "arcade", name: { ko: "실패를 먹는 괴물", en: "Failure Eater", ja: "失敗を食べる怪物", zh: "吃掉失败的怪物", fr: "Monstre des ratés", es: "Monstruo de los fallos" } },
   { slug: "snake-game", emoji: "🐍", cat: "arcade", name: { ko: "스네이크", en: "Snake", ja: "スネーク", zh: "贪吃蛇", fr: "Snake", es: "Snake" } },
@@ -528,6 +529,18 @@ const NEW_RELEASES_CONFIG: Array<{ slug: string; tag: Record<Locale, string>; de
       zh: "预判异形怪兽攻击意图，利用机甲击退位移保卫城市电网，巧妙制造撞击连击的硬核战棋策略游戏。",
       fr: "Anticipez les attaques extraterrestres Vek et utilisez le recul pour protéger le réseau électrique civil.",
       es: "Anticípate a los ataques alienígenas Vek y usa el empuje táctico de tus mechas para proteger la red eléctrica.",
+    },
+  },
+  {
+    slug: "stanley-choice",
+    tag: { ko: "두 개의 문 & 내레이터 8대 엔딩", en: "Two Doors & 8 Narrator Endings", ja: "2つの扉＆ナレーター8大結末", zh: "两扇门与旁白者8大结局", fr: "Deux portes et 8 fins", es: "Dos puertas y 8 finales" },
+    desc: {
+      ko: "427호 사무실에서 일어난 스탠리. 내레이터의 지시를 따를 것인가, 거역할 것인가? 3D 1인칭 복도를 탐험하며 8대 멀티 엔딩을 수집하는 메타 어드벤처.",
+      en: "Step into Office 427 as Stanley. Obey the Narrator or forge your own rebellious path through 3D corridors to discover 8 philosophical endings.",
+      ja: "427号室で目覚めたスタンリー。天の声に従うか反抗するか？ 3D主観視点で廊下を探索し8つの結末を図鑑に集めるメタアドベンチャー。",
+      zh: "427号办公室的史丹利起身离座。在两扇门前顺从或反抗旁白的意志，在3D第一人称长廊中收集全套 8 种哲学思考结局。",
+      fr: "Suivez ou désobéissez aux ordres du narrateur dans des couloirs 3D pour découvrir 8 fins narratives et insolites.",
+      es: "Obedece o desobedece las órdenes del narrador en pasillos 3D para desbloquear 8 finales filosóficos e hilarantes.",
     },
   },
 ];
