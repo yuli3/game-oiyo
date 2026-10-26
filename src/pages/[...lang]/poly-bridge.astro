@@ -1,0 +1,55 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PolyBridge from "../../components/games/PolyBridge";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "폴리 브릿지 트러스 물리 — 구조 역학 교량 건설 & 응력 시뮬레이션",
+    description:
+      "예산($) 안에서 도로·목재 트러스·강철 케이블을 삼각형 구조로 설계하고 베를레(Verlet) 장력/압축 응력 테스트로 중장비 트럭을 도하시키세요!",
+  },
+  en: {
+    title: "Poly Bridge Truss Architect — Structural Stress & Bridge Physics Puzzle",
+    description:
+      "Design triangular Road, Wood Truss, and Steel Cable bridges within budget and watch real-time Verlet tensile stress heatmaps as the heavy truck crosses!",
+  },
+  ja: {
+    title: "ポリブリッジ トラス物理 — 構造力学橋梁建設＆応力シミュレーション",
+    description:
+      "予算($)内で道路・木製トラス・鋼鉄ケーブルを三角形に設計し、リアルタイム応力ヒートマップを検証して大型トラックを対岸へ渡らせよう！",
+  },
+  zh: {
+    title: "建桥专家：桁架物理 (Poly Bridge Truss) — 桥梁结构力学物理益智游戏",
+    description:
+      "在预算内运用公路桥面、木材桁架与高强钢索搭建三角形承重结构，通过实时应力热力图测试护送重型卡车安全过峡谷！",
+  },
+  fr: {
+    title: "Poly Bridge Truss Architect — Simulation physique de construction de ponts",
+    description:
+      "Concevez des ponts en treillis triangulaires dans le budget imparti et observez la tension structurelle en temps réel lors du passage du camion !",
+  },
+  es: {
+    title: "Poly Bridge Truss Architect — Puzle físico de construcción de puentes",
+    description:
+      "¡Diseña puentes triangulares con carretera, madera y cables de acero dentro del presupuesto y supera la prueba de carga del camión pesado!",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-4xl px-4 py-8">
+    <PolyBridge client:load lang={locale} />
+    <GameGuide slug="poly-bridge" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>

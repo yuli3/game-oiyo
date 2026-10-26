@@ -902,6 +902,20 @@ export const MISSION_CATALOG: Array<{
     goal: 4,
     xpReward: 50,
   },
+  {
+    id: "poly-bridge-clear-1",
+    gameSlug: "poly-bridge",
+    title: {
+      ko: "폴리 브릿지 트러스 물리에서 트러스 교량을 설계해 중장비 트럭 도하 성공",
+      en: "Build a truss bridge that safely carries the heavy truck across in Poly Bridge Truss Architect",
+      ja: "ポリブリッジ トラス物理でトラス橋を設計し大型トラックの渡河に成功する",
+      zh: "在建桥专家：桁架物理中成功设计桁架桥梁护送重型卡车安全过峡谷",
+      fr: "Faites traverser le camion en toute sécurité dans Poly Bridge Truss Architect",
+      es: "Logra que el camión pesado cruce el puente en Poly Bridge Truss Architect",
+    },
+    goal: 1,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {

@@ -6322,4 +6322,60 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "poly-bridge": {
+    origin: {
+      ko: "『폴리 브릿지 트러스 물리 (Poly Bridge Truss Architect)』는 Dry Cactus의 대표 물리 건축 퍼즐 『Poly Bridge』에서 영감을 받은 OIYO 오리지널 구조 역학 교량 건설 시뮬레이터입니다. 협곡 양안의 고정 앵커(Anchor Pin)를 기점으로 제한된 예산($) 안에서 도로 상판(Road Deck), 목재 트러스(Wood Truss), 강철 케이블(Steel Cable)을 삼각형 구조로 연결하고, 베를레(Verlet) 질점-스프링 솔버가 실시간으로 계산하는 장력·압축 응력(녹색 0% → 적색 100%)을 견뎌내며 중장비 트럭을 도하시키는 엔지니어링의 쾌감을 웹에서 구현했습니다.",
+      en: "Poly Bridge Truss Architect is an original OIYO structural engineering puzzle inspired by Dry Cactus's hit Poly Bridge. Connect Road Decks, Wood Trusses, and Steel Cables across gorge anchor pins within a strict budget ($), then run the real-time Verlet physics stress test (0% Green to 100% Red fracture) as a heavy cargo truck drives across your bridge.",
+      ja: "『ポリブリッジ トラス物理（Poly Bridge Truss Architect）』は、名作橋梁建設物理パズル『Poly Bridge』にインスパイアされたOIYOオリジナル構造力学シミュレーターです。限られた予算($)の中で道路デッキ・木製トラス・鋼鉄ケーブルを三角形に組み上げ、Verlet物理エンジンによるリアルタイム応力ヒートマップ（緑0%→赤100%破断）を検証しながら大型トラックを対岸へ渡らせます。",
+      zh: "《建桥专家：桁架物理（Poly Bridge Truss Architect）》灵感源自经典桥梁建造物理神作《Poly Bridge》。在有限预算（$）内以两岸红色锚点为支点，架设公路桥面、木材桁架与高强钢索，通过 Verlet 质点弹簧力学求解器实时渲染构件张力与压缩应力热力图（绿色 0% → 红色 100% 断裂），护送重型卡车安全驶过深谷。",
+      fr: "Poly Bridge Truss Architect est un jeu de construction de ponts basé sur la physique inspiré de Poly Bridge. Reliez tabliers routiers, treillis en bois et câbles d'acier dans le budget imparti et observez la carte thermique de contrainte en temps réel au passage du camion.",
+      es: "Poly Bridge Truss Architect es un puzle de ingeniería estructural inspirado en Poly Bridge. Conecta carretera, cerchas de madera y cables de acero dentro del presupuesto y observa el mapa de calor de tensión en tiempo real mientras cruza el camión pesado.",
+    },
+    how: {
+      ko: "1) 상단 툴바에서 자재(🛣️ 도로 상판 / 🪵 목재 트러스 / ⛓️ 강철 케이블)를 선택하세요. 2) 캔버스에서 붉은색 고정 앵커(●)나 기존 연결점을 클릭한 뒤, 빈 격자 공간이나 다른 노드를 클릭하면 두 지점을 잇는 빔이 설치됩니다(또는 『📐 표준 트러스 설계도』 버튼으로 정석 워렌/현수교 트러스 구조를 즉시 불러올 수 있습니다). 3) 『🚛 주행 테스트 시작』을 누르면 트럭이 출발하며 각 부재가 받는 하중 응력이 초록색(안전)에서 노란색·붉은색(위험)으로 실시간 표시됩니다.",
+      en: "1) Select a material from the toolbar (🛣️ Road Deck, 🪵 Wood Truss, or ⛓️ Steel Cable). 2) Click a red anchor pin (●) or existing joint on the blueprint, then click another point to build a beam (or click '📐 Auto-Truss Blueprint' to load a reference triangular truss). 3) Click '🚛 Start Stress Test' to drive the heavy truck across and watch real-time stress colors shift from green (safe) to red (100% fracture).",
+      ja: "1) ツールバーから資材（🛣️ 道路デッキ / 🪵 木製トラス / ⛓️ 鋼鉄ケーブル）を選択します。2) キャンバス上の赤い固定ピン(●)や既存の節点をクリックし、別の場所をクリックして梁を接続します（『📐 標準トラス設計図』ボタンで模範トラスを一発配置することも可能です）。3) 『🚛 走行テスト開始』を押すとトラックが出発し、各部材の応力が緑（安全）から赤（100%破断）へリアルタイムに表示されます。",
+      zh: "1) 从顶部工具栏选择建材（🛣️ 公路桥面 / 🪵 木材桁架 / ⛓️ 钢索横梁）。2) 点击蓝图上的红色固定锚点（●）或已有节点，再点击另一处即可架设横梁（也可点击“📐 一键标准桁架蓝图”直接生成示范桁架）。3) 点击“🚛 开始通车测试”，重卡将驶上桥面，各构件承受的应力会从绿色（安全）实时渐变至红色（100% 断裂）。",
+      fr: "1) Choisissez un matériau (🛣️ Tablier Route, 🪵 Treillis Bois, ⛓️ Câble Acier). 2) Cliquez sur une ancre rouge (●) puis sur un autre point pour créer une poutre (ou cliquez sur « 📐 Plan Treillis Auto »). 3) Lancez « 🚛 Tester le Pont » pour voir le camion traverser et surveiller la tension en temps réel.",
+      es: "1) Elige un material (🛣️ Carretera, 🪵 Cercha Madera, ⛓️ Cable Acero). 2) Haz clic en un anclaje rojo (●) y luego en otro punto para construir una viga (o pulsa «📐 Plano Auto-Cercha»). 3) Pulsa «🚛 Probar Puente» para ver cruzar el camión y observar la tensión en tiempo real.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "왜 사각형 구조보다 삼각형 트러스(Triangle Truss) 구조가 훨씬 튼튼한가요?",
+          en: "Why are triangular trusses so much stronger than rectangular frames?",
+          ja: "なぜ四角形の構造よりも三角形のトラス構造の方が頑丈なのですか？",
+          zh: "为什么三角形桁架（Triangle Truss）比矩形框架稳固得多？",
+          fr: "Pourquoi les treillis triangulaires sont-ils beaucoup plus solides que les cadres rectangulaires ?",
+          es: "¿Por qué las cerchas triangulares son mucho más resistentes que los marcos rectangulares?",
+        },
+        a: {
+          ko: "사각형 구조는 대각선 지지대가 없어 위에서 하중을 받으면 평행사변형처럼 쉽게 찌그러지지만, 삼각형(워렌 트러스·하우 트러스)은 세 변의 길이가 고정되어 있는 한 형태가 변형되지 않고 상판의 수직 하중을 양쪽 교각 앵커로 고르게 분산시킵니다.",
+          en: "A rectangle without a diagonal brace easily shears into a parallelogram under vertical load, whereas a triangle cannot deform without changing the length of its sides—efficiently distributing the truck's weight outward to the pinned cliff anchors!",
+          ja: "四角形は対角線の支えがないと荷重で平行四辺形に歪んでしまいますが、三角形（トラス）は3辺の長さが変わらない限り変形せず、トラックの垂直荷重を両岸の固定ピンへ効率よく分散できます。",
+          zh: "没有对角支撑的四边形在承受垂直重力时极易变形坍塌，而三角形（如华伦式桁架）具有几何刚性，能将桥面受到的下压重力转化为沿杆件方向的张力与压力，均匀传导至两岸岩石锚点。",
+          fr: "Un rectangle sans diagonale se déforme facilement sous la charge, tandis qu'un triangle est géométriquement indéformable et répartit efficacement le poids vers les ancres des falaises.",
+          es: "Un rectángulo sin diagonal se deforma fácilmente bajo carga, mientras que un triángulo es geométricamente indeformable y distribuye el peso del camión hacia los anclajes de roca.",
+        },
+      },
+      {
+        q: {
+          ko: "강철 케이블(Steel)은 어느 부위에 사용하는 것이 가장 경제적인가요?",
+          en: "Where is the most cost-effective place to use Steel Cables?",
+          ja: "鋼鉄ケーブル（Steel）はどの部分に使うのが最も効果的ですか？",
+          zh: "钢索（Steel）用在桥梁的哪个部位性价比最高？",
+          fr: "Où est-il le plus rentable d'utiliser des câbles en acier ?",
+          es: "¿Dónde resulta más rentable utilizar los cables de acero?",
+        },
+        a: {
+          ko: "강철은 목재보다 가격이 비싸지만 허용 변형률(28%)과 최대 길이(185px)가 훨씬 높습니다. 따라서 상판 위쪽 아치에는 저렴한 목재 트러스를 쓰고, 가장 큰 응력이 집중되는 협곡 하단 지지대나 현수교 주탑 케이블에만 강철을 배치하면 예산을 아끼며 붕괴를 막을 수 있습니다.",
+          en: "Steel costs more than Wood but boasts a much higher max span (185px) and strain tolerance (28%). Use economical Wood for upper triangular arches, and reserve Steel for high-stress cliff under-struts or long suspension tower cables!",
+          ja: "鋼鉄は木材より高価ですが、最大長(185px)と許容ひずみ(28%)が非常に高いのが特徴です。上部のアーチには安価な木材を使い、最も負荷がかかる岸壁下部の支えや吊り橋のメインケーブルに鋼鉄を使うと予算内で頑丈な橋が作れます。",
+          zh: "钢材造价高于木材，但极限跨度（185px）与抗拉应变极限（28%）远超木材。建议桥面上方三角拱架采用廉价木材，而在受力最集中的峡谷底部斜撑或悬索主塔拉索处使用钢材，既省钱又稳固。",
+          fr: "L'acier est plus cher mais supporte une portée (185px) et une contrainte (28%) bien supérieures. Utilisez le bois pour les arches supérieures et réservez l'acier aux jambes de force basses ou aux haubans.",
+          es: "El acero es más caro pero soporta mayor longitud (185px) y tensión (28%). Usa madera económica para los triángulos superiores y reserva el acero para los puntales inferiores o tirantes largos.",
+        },
+      },
+    ],
+  },
 };
