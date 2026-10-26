@@ -6266,4 +6266,60 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "border-inspector": {
+    origin: {
+      ko: "『페이퍼 플리즈 국경 심사 (Border Inspector Desk)』는 Lucas Pope의 전설적인 서류 검문 스릴러 『Papers, Please』에서 영감을 받은 OIYO 오리지널 입국 심사 추리 시뮬레이터입니다. 가상의 국경 검문소 데스크에서 입국자의 여권(Passport), 입국 허가증(Entry Permit), 입국부 공식 규칙서(Rulebook), 그리고 검문소 기준일(1982-11-23)을 대조하여 만료된 여권, 존재하지 않는 위조 발급 도시, 번호/성명 불일치, 위조 직인을 적발하고 묵직한 승인(APPROVED) 및 거부(DENIED) 스탬프를 날인하는 손맛을 웹에서 구현했습니다.",
+      en: "Border Inspector Desk is an original OIYO document-verification thriller inspired by Lucas Pope's acclaimed Papers, Please. Cross-reference each traveler's Passport, Entry Permit, Ministry Rulebook, and the booth date (1982-11-23) using the two-field Discrepancy Inspector to catch expired dates, fake issuing cities, mismatched IDs, and forged seals before stamping APPROVED or DENIED.",
+      ja: "『ペーパー・プリーズ 国境審査（Border Inspector Desk）』は、名作入国審査スリラー『Papers, Please』にインスパイアされたOIYOオリジナルの書類照合推理シミュレーターです。検問所のデスクで申請者のパスポート、入国許可証、公式規則書、現在日付（1982-11-23）を2項目照合スキャナーで突き合わせ、期限切れや偽造都市、番号不一致、偽造公印を見抜いて承認・拒否スタンプを押す緊張感を楽しめます。",
+      zh: "《请出示证件：边境审查（Border Inspector Desk）》灵感源自独立神作《Papers, Please（请出示证件）》。在边境检查站桌面比对入境者的护照、入境许可证、官方规则手册与当前日期（1982-11-23），利用双栏矛盾核查器识破过期证件、虚构签发城市、编号不符与伪造钢印，果断盖下批准（APPROVED）或拒绝（DENIED）印章。",
+      fr: "Border Inspector Desk est un simulateur d'inspection documentaire inspiré de Papers, Please. Comparez le passeport, le permis d'entrée, le règlement officiel et la date du poste (1982-11-23) pour repérer les dates expirées, les fausses villes et les sceaux contrefaits avant de tamponner.",
+      es: "Border Inspector Desk es un simulador de verificación documental inspirado en Papers, Please. Compara el pasaporte, el permiso de entrada, el reglamento oficial y la fecha actual (1982-11-23) para detectar fechas vencidas, ciudades falsas y sellos falsificados antes de sellar.",
+    },
+    how: {
+      ko: "1) 입국자가 제출한 『여권』과 『입국 허가증』의 성명, 여권 번호, 발급 도시, 만료일, 직인을 꼼꼼히 확인하세요. 2) 의심스러운 항목이 보이면 두 항목(예: 상단 『📅 검문소 기준일』과 『여권 만료일』, 또는 『여권 번호』와 『허가증 여권 번호』, 또는 『발급 도시』와 규칙서의 『국가별 적법 발급 도시』)을 차례로 클릭해 대조하세요. 3) 위조·불일치를 적발한 뒤 『⛔ 거부 스탬프 [DENIED]』를 찍으면 기본 급여(+20₵)에 더해 적발 수당(+15₵)을 추가로 받습니다! 4) 모든 항목에 이상이 없다면 『✅ 승인 스탬프 [APPROVED]』를 찍어 통과시키세요.",
+      en: "1) Examine the traveler's Passport and Entry Permit against the Ministry Rulebook. 2) To verify a suspicion, click any two related fields (e.g., '📅 Booth Date' + 'Passport Expires On', 'Passport No.' + 'Permit Passport No.', or 'Issuing City' + 'Valid Issuing Cities'). 3) If a discrepancy is confirmed, stamping '⛔ STAMP [DENIED]' awards +15₵ bonus pay on top of your +20₵ base salary! 4) If all fields are valid, click '✅ STAMP [APPROVED]'.",
+      ja: "1) 申請者の『パスポート』と『入国許可証』の氏名、旅券番号、発行都市、有効期限、公印を確認します。2) 怪しい箇所があれば、関連する2つの項目（例：『📅 検問所日付』と『有効期限』、『旅券番号』同士、『発行都市』と規則書の『正規発行都市』など）を順にクリックして照合します。3) 矛盾を検出してから『⛔ 拒否スタンプ [DENIED]』を押すと、基本給(+20₵)に加えて摘発ボーナス(+15₵)を獲得できます！ 4) 問題なければ『✅ 承認スタンプ [APPROVED]』を押しましょう。",
+      zh: "1) 仔细核对申请人护照与入境许可证上的姓名、护照编号、签发城市、有效期限及印章。2) 若发现可疑之处，依次点击两个相关联的栏目（例如：“📅 检查站日期”与“护照有效期限”、“护照编号”与“许可证编号”、或“签发城市”与规则手册中的“合法签发城市”）。3) 锁定矛盾后再盖下“⛔ 拒绝盖章 [DENIED]”，除了 +20₵ 基础薪水外还能额外获得 +15₵ 识破奖金！4) 若全部合规，点击“✅ 批准盖章 [APPROVED]”。",
+      fr: "1) Examinez le passeport et le permis d'entrée. 2) Cliquez sur deux champs liés (ex. Date du poste + Expiration, N° de passeport sur les deux documents, ou Ville d'émission + Règlement) pour vérifier une incohérence. 3) Si une fraude est confirmée, tamponner « ⛔ [DENIED] » rapporte +15₵ de bonus ! 4) Si tout est en règle, tamponnez « ✅ [APPROVED] ».",
+      es: "1) Examina el pasaporte y el permiso de entrada. 2) Haz clic en dos campos relacionados (p. ej., Fecha actual + Vencimiento, N.º de pasaporte en ambos documentos, o Ciudad emisora + Reglamento) para verificar discrepancias. 3) Si confirmas un fraude, ¡sellar «⛔ [DENIED]» otorga +15₵ extra! 4) Si todo es válido, sella «✅ [APPROVED]».",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "대조(Inspect)로 불일치를 먼저 찾지 않고 바로 거부(DENIED) 도장을 찍어도 되나요?",
+          en: "Can I stamp DENIED immediately without linking the discrepancy first?",
+          ja: "照合（Inspect）で矛盾を特定せずに直接「拒否（DENIED）」スタンプを押してもいいですか？",
+          zh: "不先点击比对锁定矛盾，直接盖下拒绝（DENIED）印章可以吗？",
+          fr: "Puis-je tamponner DENIED directement sans pointer l'incohérence ?",
+          es: "¿Puedo sellar DENIED directamente sin señalar antes la discrepancia?",
+        },
+        a: {
+          ko: "네, 서류에 결함이 있는 입국자에게 바로 거부 도장을 찍어도 정답으로 인정되어 경고장을 받지 않고 기본 급여(+20₵)를 받습니다. 다만 두 항목을 클릭해 『🚨 불일치 적발 완료!』를 띄운 뒤 거부 도장을 찍으면 +15₵ 보너스 수당(총 +35₵)을 받을 수 있습니다.",
+          en: "Yes! Denying an invalid applicant directly is still counted as a correct judgment (+20₵ base pay, no Citation). However, linking the two conflicting fields first to trigger '🚨 Discrepancy Confirmed!' grants an extra +15₵ bonus (total +35₵).",
+          ja: "はい、書類に不備がある申請者に直接拒否スタンプを押しても正解となり、基本給(+20₵)が支給されます。ただし、2項目をクリックして『🚨 矛盾を検出！』を表示させてから拒否すると、+15₵の追加ボーナス（合計+35₵）がもらえます。",
+          zh: "可以！对证件有问题的申请人直接盖拒绝章依然算作正确判决（获得 +20₵ 基础薪资且不会收到罚单）。但若先通过双栏点击触发“🚨 已锁定伪造矛盾！”再盖章拒绝，可额外多拿 +15₵ 奖金（共 +35₵）。",
+          fr: "Oui, refuser directement un dossier invalide est correct (+20₵). Mais pointer d'abord les deux champs contradictoires vous accorde une prime supplémentaire de +15₵ (soit +35₵ au total).",
+          es: "Sí, rechazar directamente a un solicitante inválido es válido (+20₵). Sin embargo, señalar primero los dos campos en conflicto te otorga una bonificación adicional de +15₵ (total +35₵).",
+        },
+      },
+      {
+        q: {
+          ko: "경고장(Citation)은 몇 번까지 받을 수 있나요?",
+          en: "How many Ministry Citations can I receive before losing?",
+          ja: "入国省からの警告状（Citation）は何回まで許容されますか？",
+          zh: "最多能承受多少张入境部违规罚单（Citation）？",
+          fr: "Combien de blâmes du Ministère puis-je recevoir ?",
+          es: "¿Cuántas amonestaciones del Ministerio puedo recibir?",
+        },
+        a: {
+          ko: "첫 번째 경고장은 급여 감봉 없는 구두 경고로 처리되지만, 두 번째 경고장부터는 건당 10₵의 벌금이 차감되며, 총 4회의 경고가 누적되면 즉시 해임(Game Over)됩니다.",
+          en: "Your first Citation is a formal warning with no fine, the 2nd and 3rd Citations deduct 10₵ each, and accumulating 4 Citations results in immediate dismissal.",
+          ja: "1回目の警告状は減給なしの注意となりますが、2回目以降は10₵の罰金が科され、合計4回累積すると即座に解雇（ゲームオーバー）となります。",
+          zh: "第 1 张罚单为口头警告不扣薪，从第 2 张起每次倒扣 10₵ 薪水，累计收到 4 张罚单将立即被解雇。",
+          fr: "Le premier blâme est un avertissement sans amende, les suivants coûtent 10₵ chacun, et 4 blâmes entraînent votre renvoi immédiat.",
+          es: "La primera amonestación es una advertencia sin multa, las siguientes descuentan 10₵ cada una y acumular 4 supone el despido inmediato.",
+        },
+      },
+    ],
+  },
 };

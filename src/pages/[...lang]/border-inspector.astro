@@ -1,0 +1,55 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import BorderInspector from "../../components/games/BorderInspector";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "페이퍼 플리즈 국경 심사 — 서류 대조 & 위조 적발 스탬프 시뮬레이션",
+    description:
+      "국경 검문소 데스크에서 입국자의 여권·입국 허가증·규칙서를 대조하여 만료일, 위조 직인, 발급 도시 불일치를 적발하고 승인/거부 도장을 날인하세요!",
+  },
+  en: {
+    title: "Border Inspector Desk — Document Verification & Discrepancy Simulator",
+    description:
+      "Cross-check Passports, Entry Permits, and the Ministry Rulebook at the checkpoint booth to spot forged seals and expired dates before stamping!",
+  },
+  ja: {
+    title: "ペーパー・プリーズ 国境審査 — 書類照合＆偽造摘発スタンプシミュレーター",
+    description:
+      "国境検問所のデスクでパスポート・入国許可証・規則書を照合し、有効期限切れや偽造公印を見抜いて承認・拒否スタンプを押そう！",
+  },
+  zh: {
+    title: "请出示证件：边境审查 (Border Inspector Desk) — 证件核查推理模拟游戏",
+    description:
+      "在边境检查站比对入境者的护照、许可证与规则手册，识破过期证件、虚构签发城市与伪造印章，盖下批准或拒绝印章！",
+  },
+  fr: {
+    title: "Border Inspector Desk — Simulateur de contrôle frontalier et d'inspection",
+    description:
+      "Comparez les passeports, les permis d'entrée et le règlement du ministère pour débusquer les faux sceaux et les dates expirées avant de tamponner !",
+  },
+  es: {
+    title: "Border Inspector Desk — Simulador de control fronterizo e inspección",
+    description:
+      "¡Compara pasaportes, permisos de entrada y el reglamento oficial en la cabina fronteriza para detectar sellos falsos antes de sellar!",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-4xl px-4 py-8">
+    <BorderInspector client:load lang={locale} />
+    <GameGuide slug="border-inspector" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>

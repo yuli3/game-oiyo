@@ -888,6 +888,20 @@ export const MISSION_CATALOG: Array<{
     goal: 10,
     xpReward: 50,
   },
+  {
+    id: "border-inspector-check-4",
+    gameSlug: "border-inspector",
+    title: {
+      ko: "페이퍼 플리즈 국경 심사에서 4명 이상의 입국자를 정확히 심사하기",
+      en: "Correctly process 4 or more applicants in Border Inspector Desk",
+      ja: "ペーパー・プリーズ 国境審査で4名以上の申請者を正確に審査する",
+      zh: "在请出示证件：边境审查中准确完成 4 名或以上入境者审查",
+      fr: "Contrôlez correctement 4 voyageurs ou plus dans Border Inspector Desk",
+      es: "Procesa correctamente a 4 o más solicitantes en Border Inspector Desk",
+    },
+    goal: 4,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {
