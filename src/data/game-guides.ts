@@ -6378,4 +6378,42 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "slot-rogue": {
+    origin: {
+      ko: "『럭 비 어 랜드로드 슬롯 (Slot Synergy Rogue)』는 TrampolineTales의 인디 덱빌더 히트작 『Luck be a Landlord』에서 영감을 받은 OIYO 오리지널 5×4 심볼 시너지 슬롯 로그라이크입니다. 매 스핀 후 3개의 후보 심볼 중 하나를 덱에 추가하고, 길고양이+우유(+$12 소비), 광부+철광석(+$15 및 사파이어 보석 영구 생성), 괴도+강철 금고(+$30 일격), 태양+해바라기, 국왕+왕관 등 8방향 인접 시너지를 폭발시켜 5스핀마다 찾아오는 집세(Rent)를 완납하세요.",
+      en: "Slot Synergy Rogue is an original OIYO 5x4 symbol deckbuilding roguelike inspired by TrampolineTales's hit Luck be a Landlord. Draft 1 of 3 symbols after each spin, trigger 8-way adjacency cascades like Stray Cat + Fresh Milk (+$12 consume), Dwarf Miner + Iron Ore (+$15 & permanent Sapphire Gem), and Master Thief + Steel Safe (+$30 heist), and pay escalating rent every 5 spins.",
+      ja: "『スロット・シナジー・ローグ（Slot Synergy Rogue）』は、『Luck be a Landlord』にインスパイアされた5×4シンボル構築型ローグライクです。毎スピン後に3つの候補からシンボルをデッキに加え、猫+ミルク(+$12消費)、鉱夫+鉄鉱石(+$15＆サファイア生成)、怪盗+金庫(+$30)などの8方向隣接シナジーを連鎖させて5スピンごとの家賃を突破します。",
+      zh: "《幸运房东协同老虎机（Slot Synergy Rogue）》灵感源自经典肉鸽神作《Luck be a Landlord》。在 5×4 转盘上每次旋转后从 3 个候选符号中抓取 1 个加入牌库，触发流浪猫喝鲜奶（+$12 吞噬）、矿工挖铁矿（+$15 并永久产出蓝宝石）、怪盗撬保险箱（+$30）等八向相邻连锁，按时交齐每 5 转递增的房租。",
+      fr: "Slot Synergy Rogue est un roguelike de construction de symboles 5x4 inspiré de Luck be a Landlord. Recrutez 1 symbole parmi 3 après chaque tour, déclenchez des synergies adjacentes (Chat+Lait, Mineur+Minerai, Voleur+Coffre) et payez votre loyer tous les 5 tours.",
+      es: "Slot Synergy Rogue es un roguelike de construcción de símbolos 5x4 inspirado en Luck be a Landlord. Elige 1 de 3 símbolos tras cada tirada, activa sinergias adyacentes (Gato+Leche, Minero+Mineral, Ladrón+Caja Fuerte) y paga el alquiler cada 5 giros.",
+    },
+    how: {
+      ko: "1) 『🎰 레버 당기기 (SPIN REELS)』를 눌러 보유 덱 심볼을 5×4 보드에 무작위 배치하고 기본 수익과 8방향 인접 시너지 보너스를 획득하세요. 2) 스핀 직후 우측 『🃏 심볼 드래프트 (3택 1)』에서 현재 덱과 시너지가 나는 심볼을 골라 추가하거나, 리롤 토큰(🎲)을 쓰거나, 『⏭️ 건너뛰기』로 덱 압축을 유지하세요. 3) 5스핀마다 임대료가 자동 정산되며, 총 4차 임대료($25 → $60 → $115 → $190)를 모두 완납하면 승리합니다!",
+      en: "1) Click '🎰 PULL SLOT LEVER (SPIN)' to deal up to 20 symbols from your deck onto the 5x4 grid and collect base + adjacency synergy payouts. 2) In the '🃏 Post-Spin Symbol Draft', pick 1 of 3 symbols, spend a Reroll token (🎲), or click '⏭️ Skip Draft' to keep your deck lean. 3) Rent is collected every 5 spins—clear all 4 Rent Cycles ($25 → $60 → $115 → $190) to defeat the Landlord!",
+      ja: "1) 『🎰 レバーを引く(SPIN)』でデッキから5×4盤面にシンボルを配置し、基本配当と8方向隣接シナジーを獲得します。2) スピン後に右側の『🃏 シンボルドラフト』から1つ選ぶか、リロール(🎲)またはスキップでデッキ圧縮を維持します。3) 5スピンごとに家賃が自動徴収され、全4回の家賃($25→$60→$115→$190)を完納すれば勝利です！",
+      zh: "1) 点击“🎰 拉动摇杆 (SPIN)”将牌库符号随机投放到 5×4 棋盘，结算基础收益与八向相邻加成。2) 在右侧“🃏 符号抓取（3选1）”中挑选契合流派的符号，或使用重随代币（🎲）、点击“⏭️ 跳过”保持精简牌库。3) 每 5 次旋转自动扣除房租，成功交齐全部 4 轮房租（$25 → $60 → $115 → $190）即可获胜！",
+      fr: "1) Cliquez sur « 🎰 PULL SLOT LEVER » pour placer vos symboles sur la grille 5x4 et encaisser les synergies. 2) Choisissez 1 symbole parmi 3, relancez (🎲) ou passez pour garder un deck compact. 3) Payez les 4 échéances de loyer tous les 5 tours pour gagner !",
+      es: "1) Pulsa «🎰 PULL SLOT LEVER» para repartir tus símbolos en la cuadrícula 5x4 y cobrar sinergias. 2) Elige 1 de 3 símbolos, usa un Reroll (🎲) o salta la elección para mantener tu mazo compacto. 3) ¡Supera los 4 ciclos de alquiler cada 5 giros para ganar!",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "왜 심볼 추가 건너뛰기(Skip Draft)가 중요한가요?",
+          en: "Why is Skipping a Draft choice sometimes the best play?",
+          ja: "なぜシンボル追加をスキップ(Skip Draft)することが重要なのですか？",
+          zh: "为什么有时跳过抓取（Skip Draft）反而是最优策略？",
+          fr: "Pourquoi est-il parfois préférable de passer le recrutement d'un symbole ?",
+          es: "¿Por qué a veces es mejor saltar la elección de símbolo?",
+        },
+        a: {
+          ko: "슬롯 보드는 총 20칸(5×4)이므로 덱의 심볼이 20개를 넘어가면 가치 낮은 기본 동전이 핵심 시너지 심볼의 등장을 방해합니다. 또한 고양이+우유, 광부+광석, 괴도+금고 같은 소비형 조합은 발동 시 대상 심볼을 덱에서 제거해 주므로 자연스럽게 덱 압축과 폭리를 동시에 달성할 수 있습니다.",
+          en: "Because the reel matrix holds exactly 20 slots (5x4), carrying more than 20 symbols dilutes the odds of your Cat+Milk or Sun+Flower landing adjacent to each other. Consumable pairs (Cat+Milk, Miner+Ore, Thief+Safe) also self-thin your deck while paying huge bursts!",
+          ja: "スロット盤面は最大20マス(5×4)なので、20個を超えると低配当シンボルが主力シナジーの出現を邪魔してしまいます。猫+ミルクや鉱夫+鉱石などの消費型ペアを活用すると、大金を稼ぎながらデッキを自動圧縮できます。",
+          zh: "因为转盘只有 20 个格子（5×4），一旦牌库超过 20 个符号，低价值硬币就会稀释核心协同符号相邻的概率。此外，猫+鲜奶、矿工+矿石、怪盗+保险箱在触发暴利的同时会自动销毁目标符号，帮你实现牌库精简！",
+          fr: "La grille ne comporte que 20 cases (5x4). Dépasser 20 symboles dilue vos chances d'aligner vos meilleures combinaisons, tandis que les paires consommables épurent votre deck automatiquement.",
+          es: "La cuadrícula tiene 20 casillas (5x4). Superar los 20 símbolos reduce la probabilidad de que tus parejas clave caigan juntas, mientras que las parejas consumibles depuran tu mazo automáticamente.",
+        },
+      },
+    ],
+  },
 };

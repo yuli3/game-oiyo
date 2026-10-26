@@ -916,6 +916,20 @@ export const MISSION_CATALOG: Array<{
     goal: 1,
     xpReward: 50,
   },
+  {
+    id: "slot-rogue-rent-2",
+    gameSlug: "slot-rogue",
+    title: {
+      ko: "럭 비 어 랜드로드 슬롯에서 인접 시너지로 2차 이상 임대료 납부 돌파하기",
+      en: "Clear 2 or more Rent Cycles in Slot Synergy Rogue",
+      ja: "スロット・シナジー・ローグで2回目以上の家賃支払いを突破する",
+      zh: "在幸运房东协同老虎机中成功完成 2 轮或以上房租缴纳",
+      fr: "Payez 2 cycles de loyer ou plus dans Slot Synergy Rogue",
+      es: "Supera 2 o más ciclos de alquiler en Slot Synergy Rogue",
+    },
+    goal: 2,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {

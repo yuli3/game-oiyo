@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SlotRogue from "../../components/games/SlotRogue";
+import GameGuide from "../../components/GameGuide.astro";
+import { locales, type Locale } from "../../lib/i18n";
+
+export function getStaticPaths() {
+  return locales.map((l) => ({ params: { lang: l === "en" ? undefined : l } }));
+}
+
+const locale: Locale = (Astro.params.lang as Locale) || "en";
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "럭 비 어 랜드로드 슬롯 — 5×4 심볼 시너지 덱빌더 | OIYO Game",
+    description:
+      "5×4 슬롯 릴에 고양이·우유, 광부·광석, 괴도·금고 심볼을 추가하고 8방향 인접 시너지와 파괴 연쇄로 5스핀마다 다가오는 집세를 납부하세요.",
+  },
+  en: {
+    title: "Slot Synergy Rogue — 5×4 Symbol Deckbuilder | OIYO Game",
+    description:
+      "Draft synergistic symbols onto a 5×4 slot grid, trigger Cat+Milk and Miner+Ore cascades, and beat escalating rent deadlines.",
+  },
+  ja: {
+    title: "スロット・シナジー・ローグ — 5×4 シンボルデッキ構築 | OIYO Game",
+    description:
+      "5×4スロットに猫・ミルクや鉱夫・鉱石を追加し、隣接シナジー連鎖で5スピンごとの家賃を突破しよう。",
+  },
+  zh: {
+    title: "幸运房东协同老虎机 — 5×4 符号构筑肉鸽 | OIYO Game",
+    description:
+      "在5×4转盘中构筑猫咪喝牛奶、矿工挖宝石等相邻协同符号，在每5次旋转后按时交齐房租。",
+  },
+  fr: {
+    title: "Slot Synergy Rogue — Deckbuilder de Symboles 5×4 | OIYO Game",
+    description:
+      "Recrutez des symboles synergiques sur une grille 5×4, déclenchez des cascades adjacentes et payez votre loyer à temps.",
+  },
+  es: {
+    title: "Slot Synergy Rogue — Deckbuilder de Símbolos 5×4 | OIYO Game",
+    description:
+      "Construye tu mazo de símbolos en una cuadrícula 5×4, activa sinergias adyacentes y paga el alquiler a tiempo.",
+  },
+};
+
+const m = meta[locale] || meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <SlotRogue client:load locale={locale} />
+  <GameGuide slug="slot-rogue" locale={locale} name={m.title.split(" — ")[0]} />
+</BaseLayout>
