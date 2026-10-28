@@ -28,7 +28,7 @@ import type { AiLevel } from "../../lib/games/ai/types";
 import { chooseRummyAction } from "../../lib/games/ai/rummy";
 import { kstDateKey } from "../../lib/games/todays-game";
 import { createCuePlayer, type CuePlayer, type CueTable } from "../../lib/games/game-audio";
-import { createHaptics } from "../../lib/games/haptics";
+import { createHaptics, readHapticsEnabled, writeHapticsEnabled } from "../../lib/games/haptics";
 import {
   COLOR_MARK,
   applyRummy,
@@ -125,6 +125,7 @@ interface Copy {
   rivalTurn: (name: string) => string;
   thinking: string;
   pause: string;
+  haptic: string;
   resume: string;
   win: string;
   loss: string;
@@ -181,6 +182,7 @@ const COPY: Record<Locale, Copy> = {
     rivalTurn: (name) => `${name}의 차례`,
     thinking: "생각 중",
     pause: "일시정지",
+    haptic: "진동",
     resume: "계속",
     win: "승리",
     loss: "패배",
@@ -248,6 +250,7 @@ const COPY: Record<Locale, Copy> = {
     rivalTurn: (name) => `${name}'s turn`,
     thinking: "Thinking",
     pause: "Pause",
+    haptic: "Haptics",
     resume: "Resume",
     win: "Win",
     loss: "Loss",
@@ -315,6 +318,7 @@ const COPY: Record<Locale, Copy> = {
     rivalTurn: (name) => `${name}の番`,
     thinking: "思考中",
     pause: "一時停止",
+    haptic: "振動",
     resume: "再開",
     win: "勝ち",
     loss: "負け",
@@ -382,6 +386,7 @@ const COPY: Record<Locale, Copy> = {
     rivalTurn: (name) => `轮到${name}`,
     thinking: "思考中",
     pause: "暂停",
+    haptic: "振动",
     resume: "继续",
     win: "胜利",
     loss: "失败",
@@ -449,6 +454,7 @@ const COPY: Record<Locale, Copy> = {
     rivalTurn: (name) => `Tour de ${name}`,
     thinking: "Réflexion",
     pause: "Pause",
+    haptic: "Vibrations",
     resume: "Reprendre",
     win: "Victoire",
     loss: "Défaite",
@@ -516,6 +522,7 @@ const COPY: Record<Locale, Copy> = {
     rivalTurn: (name) => `Turno de ${name}`,
     thinking: "Pensando",
     pause: "Pausa",
+    haptic: "Vibración",
     resume: "Seguir",
     win: "Victoria",
     loss: "Derrota",
@@ -699,6 +706,7 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
   const [selected, setSelected] = useState<number[]>([]);
   const [notice, setNotice] = useState<Notice | null>(null);
   const [paused, setPaused] = useState(false);
+  const [hapticsOn, setHapticsOn] = useState(true);
   const [muted, setMuted] = useState(false);
   const [theme, setTheme] = useState<TableTheme>("felt");
   const [record, setRecord] = useState<GameRecord | null>(null);
@@ -806,6 +814,9 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
     const savedTheme = readPref(THEME_KEY);
     if (savedTheme === "felt" || savedTheme === "walnut" || savedTheme === "midnight") setTheme(savedTheme);
     setMuted(readPref(MUTE_KEY) === "1");
+    const hapticEnabled = readHapticsEnabled();
+    setHapticsOn(hapticEnabled);
+    haptics.setEnabled(hapticEnabled);
     const pending = timers.current;
     return () => {
       pending.forEach((id) => window.clearTimeout(id));
@@ -813,6 +824,13 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
     };
   }, []);
 
+  useEffect(() => {
+    const onHide = () => {
+      if (document.visibilityState === "hidden" && phase === "play") setPaused(true);
+    };
+    document.addEventListener("visibilitychange", onHide);
+    return () => document.removeEventListener("visibilitychange", onHide);
+  }, [phase]);
   const wins = record?.w ?? 0;
   const tier = titleTier(wins);
   const nextStep = TITLE_STEPS[tier + 1];
@@ -1380,6 +1398,7 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
                 <button type="button" onClick={() => { setPaused(false); startSetup(); }} className={`${CONTROL} border-border bg-card text-foreground`}>{m.restart}</button>
                 <button type="button" onClick={toTitle} className={`${CONTROL} border-border bg-card text-foreground`}>{m.exit}</button>
                 <button type="button" onClick={toggleMute} aria-pressed={muted} className={`${CONTROL} border-border bg-card text-foreground`}>{muted ? portalLabels.unmute : portalLabels.mute}</button>
+                <button type="button" data-tile-haptics onClick={() => setHapticsOn((value) => { const next = !value; writeHapticsEnabled(next); haptics.setEnabled(next); return next; })} aria-pressed={hapticsOn} className={`${CONTROL} border-border bg-card text-foreground`}>{t.haptic}</button>
               </div>
             </div>
           )}

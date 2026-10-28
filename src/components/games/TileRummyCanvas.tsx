@@ -8,6 +8,7 @@ import type { Application, Container, Graphics, Text } from "pixi.js";
 import type { Meld, Tile, TileColor } from "../../lib/games/tile-rummy";
 import type { TableTheme } from "../../lib/games/tile-rummy-augments";
 import { TILE_RUMMY_SPRITES } from "../../lib/games/sprites";
+import { JUICE } from "../../lib/games/juice";
 import {
   hitDrop,
   hitTile,
@@ -378,6 +379,7 @@ export default function TileRummyCanvas(props: TileRummyCanvasProps) {
       };
       renderRef.current = render;
 
+      let holdMs = 0;
       const burst = (x: number, y: number, color: number, count: number) => {
         if (propsRef.current.reducedMotion) return;
         for (let i = 0; i < count; i++) {
@@ -420,6 +422,7 @@ export default function TileRummyCanvas(props: TileRummyCanvasProps) {
           const anchor = spots[0];
           if (anchor) showSheet(anchor.x + current.tileW / 2, anchor.y + current.tileH / 2);
           if (anchor && fx.combo > 1) popup(`COMBO ×${fx.combo}`, Math.min(current.width - 70, anchor.x + 50), anchor.y - 6, 0xffd34d);
+          if (!propsRef.current.reducedMotion) holdMs = Math.max(holdMs, JUICE.hitstop.hit);
           spots.forEach((spot) => {
             const sprite = sprites.get(spot.id);
             if (sprite) sprite.scale = 1.18;
@@ -534,8 +537,13 @@ export default function TileRummyCanvas(props: TileRummyCanvasProps) {
 
       instance.ticker.add((ticker) => {
         const delta = ticker.deltaTime;
+        const dtMs = typeof ticker.deltaMS === "number" ? ticker.deltaMS : delta * (1000 / 60);
         clock += delta;
         const p = propsRef.current;
+        if (holdMs > 0 && !p.reducedMotion) {
+          holdMs = Math.max(0, holdMs - dtMs);
+          return;
+        }
         const ease = p.reducedMotion ? 1 : Math.min(1, 0.22 * delta);
         for (const [id, sprite] of sprites) {
           sprite.x += (sprite.tx - sprite.x) * ease;
