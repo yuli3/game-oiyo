@@ -20,6 +20,18 @@ import {
   type TimeLoopMission,
   type TimeLoopPoint,
 } from "../../lib/games/time-loop-rescue";
+import {
+  acceptTimeLoopShare,
+  createTimeLoopWeeklyEnvelope,
+  encodeTimeLoopShare,
+  readTimeLoopWeeklyBadge,
+  timeLoopRivalTrack,
+  timeLoopWeekLabel,
+  timeLoopWeekSeed,
+  writeTimeLoopWeeklyBadge,
+  type TimeLoopReplayAction,
+} from "../../lib/games/time-loop-weekly";
+import type { ReplayInput } from "../../lib/games/replay";
 
 type Status = "idle" | "playing" | "paused";
 type Direction = "up" | "down" | "left" | "right";
@@ -31,6 +43,15 @@ const COPY = {
   zh: { title:"时光回环救援队", subtitle:"与过去的自己协作，救出隔离区的队友", start:"开始救援", record:"记录本轮", reset:"重新开始", pause:"暂停", resume:"继续", mute:"静音", unmute:"开启声音", loop:"轮回", time:"剩余时间", echoes:"残影", mission:"任务", idle:"待命", search:"救援中", carry:"撤离中", won:"救援成功", failed:"时间结束", hint:"使用方向键、WASD或触控板移动 · 残影踩住开关时门会打开", first:"先站到左上方的开关上，然后记录本轮。", echo:"紫色残影到达开关时，穿过中央隔离门。", extract:"已接到队友，请前往右下方出口。", success:"你与过去的自己协作完成了救援。", retry:"缩短路线，再试一次。", area:"时光回环救援队游戏区域" },
   fr: { title:"Sauvetage temporel", subtitle:"Coopérez avec votre double passé pour sauver un équipier", start:"Lancer le sauvetage", record:"Enregistrer cette boucle", reset:"Recommencer", pause:"Pause", resume:"Reprendre", mute:"Couper le son", unmute:"Activer le son", loop:"Boucle", time:"Temps restant", echoes:"Échos", mission:"Mission", idle:"Prêt", search:"Sauvetage", carry:"Extraction", won:"Sauvetage réussi", failed:"Temps écoulé", hint:"Flèches, WASD ou pavé tactile · la porte s'ouvre quand un écho maintient l'interrupteur", first:"Placez-vous sur l'interrupteur en haut à gauche, puis enregistrez la boucle.", echo:"Franchissez la porte centrale quand l'écho violet atteint l'interrupteur.", extract:"Équipier sécurisé. Rejoignez la sortie en bas à droite.", success:"Vous avez coopéré avec votre double passé pour réussir le sauvetage.", retry:"Raccourcissez votre trajet et réessayez.", area:"Zone de jeu Sauvetage temporel" },
   es: { title:"Rescate temporal", subtitle:"Coopera con tu yo del pasado para rescatar a un compañero", start:"Iniciar rescate", record:"Grabar este bucle", reset:"Empezar de nuevo", pause:"Pausa", resume:"Continuar", mute:"Silenciar", unmute:"Activar sonido", loop:"Bucle", time:"Tiempo restante", echoes:"Ecos", mission:"Misión", idle:"Listo", search:"Rescatando", carry:"Evacuando", won:"Rescate completo", failed:"Tiempo agotado", hint:"Muévete con flechas, WASD o el panel · la puerta se abre cuando un eco pisa el interruptor", first:"Ponte sobre el interruptor superior izquierdo y graba este bucle.", echo:"Cruza la puerta central cuando el eco violeta llegue al interruptor.", extract:"Compañero asegurado. Llega a la salida inferior derecha.", success:"Cooperaste con tu yo del pasado y completaste el rescate.", retry:"Acorta la ruta e inténtalo de nuevo.", area:"Área de juego de Rescate temporal" },
+} as const;
+
+const WEEKLY = {
+  ko: { week: "이번 주", share: "잔상 링크 복사", copied: "링크를 복사했습니다", badge: "주간 배지", rival: "공유 잔상", invalid: "이 잔상 링크는 규칙 재실행을 통과하지 못했습니다" },
+  en: { week: "This week", share: "Copy echo link", copied: "Link copied", badge: "Weekly badge", rival: "Shared echo", invalid: "This echo link failed rule replay" },
+  ja: { week: "今週", share: "残像リンクをコピー", copied: "リンクをコピーしました", badge: "週間バッジ", rival: "共有残像", invalid: "この残像リンクは再実行検証に失敗しました" },
+  zh: { week: "本周", share: "复制残影链接", copied: "已复制链接", badge: "每周徽章", rival: "共享残影", invalid: "这个残影链接没有通过规则重放" },
+  fr: { week: "Cette semaine", share: "Copier le lien", copied: "Lien copié", badge: "Badge hebdomadaire", rival: "Écho partagé", invalid: "Ce lien n'a pas passé la relecture des règles" },
+  es: { week: "Esta semana", share: "Copiar enlace", copied: "Enlace copiado", badge: "Insignia semanal", rival: "Eco compartido", invalid: "Este enlace no superó la repetición de las reglas" },
 } as const;
 
 const BOARD_COPY = {
@@ -68,6 +89,7 @@ const CONTROL = "min-h-11 min-w-11 rounded-xl border px-3 py-2 text-sm font-bold
 export default function TimeLoopRescue({ locale = "ko" }: { locale?: Locale | string }) {
   const loc = (COPY[locale as keyof typeof COPY] ? locale : "en") as Locale;
   const t = COPY[loc] ?? COPY.en;
+  const weekly = WEEKLY[loc];
   const boardText = BOARD_COPY[loc as keyof typeof BOARD_COPY] ?? BOARD_COPY.en;
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: loc });
   const hapticsRef = useRef(createHaptics());
@@ -78,15 +100,31 @@ export default function TimeLoopRescue({ locale = "ko" }: { locale?: Locale | st
   const mutedRef = useRef(false);
   const lastDoorRef = useRef(false);
   const frameRef = useRef(0);
+  const logRef = useRef<ReplayInput<TimeLoopReplayAction>[]>([]);
+  const weekSeedRef = useRef(timeLoopWeekSeed());
   const [status, setStatus] = useState<Status>("idle");
   const [mission, setMission] = useState<TimeLoopMission>(missionRef.current);
   const [muted, setMuted] = useState(false);
+  const [shareCode, setShareCode] = useState("");
+  const [shareNote, setShareNote] = useState("");
+  const [rival, setRival] = useState<TimeLoopPoint[]>([]);
+  const [badge, setBadge] = useState(false);
   const [sprites,setSprites]=useState<Partial<Record<"operative"|"crew"|"floor",HTMLImageElement>>>({});
   useEffect(()=>{
     let active=true;
     const images=(["operative","crew","floor"] as const).map(name=>{const image=new Image();image.onload=()=>{if(active)setSprites(old=>({...old,[name]:image}));};image.src=`/games/time-loop-rescue-${name}.webp`;return image;});
     return()=>{active=false;images.forEach(image=>{image.onload=null;});};
   },[]);
+  useEffect(() => {
+    const seed = timeLoopWeekSeed();
+    weekSeedRef.current = seed;
+    setBadge(Boolean(readTimeLoopWeeklyBadge(typeof localStorage === "undefined" ? undefined : localStorage, seed)));
+    const code = window.location.hash.startsWith("#ghost=") ? decodeURIComponent(window.location.hash.slice(7)) : "";
+    if (!code) return;
+    const envelope = acceptTimeLoopShare(code);
+    if (envelope) setRival(timeLoopRivalTrack(envelope));
+    else setShareNote(weekly.invalid);
+  }, [weekly.invalid]);
   const reducedMotion = usePrefersReducedMotion();
 
   const tone = useCallback((kind: "record" | "door" | "rescue" | "win") => {
@@ -131,6 +169,8 @@ export default function TimeLoopRescue({ locale = "ko" }: { locale?: Locale | st
 
   const reset = useCallback(() => {
     clearInput();
+    logRef.current = [];
+    setShareCode("");
     const next = createTimeLoopMission();
     publish(next); statusRef.current = "idle"; setStatus("idle"); lastDoorRef.current = false;
   }, [publish, clearInput]);
@@ -143,6 +183,8 @@ export default function TimeLoopRescue({ locale = "ko" }: { locale?: Locale | st
   const commit = useCallback(() => {
     if (statusRef.current !== "playing") return;
     const previous = missionRef.current;
+    if (previous.currentRecording.length === 0 || previous.phase !== "playing") return;
+    logRef.current.push({ tick: logRef.current.length, input: "commit" });
     const next = advanceTimeLoop(previous, { type:"commit-loop" });
     if (next !== previous) { clearInput();publish(next);lastDoorRef.current=false;tone("record");canvasRef.current?.focus(); }
   }, [publish, tone, clearInput]);
@@ -164,6 +206,7 @@ export default function TimeLoopRescue({ locale = "ko" }: { locale?: Locale | st
             y: held.down === held.up ? 0 : held.down ? 1 : -1,
           };
           const before = missionRef.current;
+          logRef.current.push({ tick: logRef.current.length, input });
           const next = advanceTimeLoop(before, { type:"tick", input });
           missionRef.current = next;
           const doorOpen = isTimeLoopPlateHeld(next);
@@ -176,6 +219,10 @@ export default function TimeLoopRescue({ locale = "ko" }: { locale?: Locale | st
             hapticsRef.current.fire("place");
           }
           if (next.phase === "rescued" && before.phase !== "rescued") {
+            const envelope = createTimeLoopWeeklyEnvelope(logRef.current, next, weekSeedRef.current);
+            setShareCode(encodeTimeLoopShare(envelope));
+            writeTimeLoopWeeklyBadge(localStorage, { seed: weekSeedRef.current, loops: next.loop, tick: next.tick, at: envelope.achievedAt });
+            setBadge(true);
             tone("win");
             hapticsRef.current.fire("win");
             if (canvasRef.current) {
@@ -238,12 +285,15 @@ export default function TimeLoopRescue({ locale = "ko" }: { locale?: Locale | st
     };
     if (!mission.carrying) sprite(rescue,sprites.crew,CREW_FRAME,"#ffd166","!");
     ghosts.forEach((ghost,index)=>sprite(ghost,sprites.crew,ECHO_FRAMES[traceFacing(mission.recordings[index]!,mission.tick)],"#b3a3ff",String(index+1),.78));
+    const rivalStep = mission.recordings.reduce((count: number, recording: readonly TimeLoopPoint[]) => count + recording.length, 0) + mission.currentRecording.length;
+    const rivalPoint = rival[Math.min(rivalStep, rival.length - 1)];
+    if (rivalPoint) sprite(rivalPoint, undefined, ECHO_FRAMES.down, "#7c3aed", "R", 0.92);
     const last=mission.currentRecording.at(-1),previous=mission.currentRecording.at(-2)??TIME_LOOP_ROOM.start;
     const moving=last&&(last.x!==previous.x||last.y!==previous.y);
     const frame=!reducedMotion&&moving?Math.floor(mission.tick/4)%4:0;
     if(mission.carrying)sprite({x:mission.player.x-25_000,y:mission.player.y+15_000},sprites.crew,CREW_FRAME,"#ffd166","");
     sprite(mission.player,sprites.operative,OPERATIVE_FRAMES[traceFacing(mission.currentRecording)][frame]!,"#55ead4",mission.carrying?"+":"");
-  }, [mission, reducedMotion, boardText, sprites]);
+  }, [mission, reducedMotion, boardText, sprites, rival]);
 
   useEffect(() => {
     const map: Record<string, Direction> = { ArrowUp:"up",w:"up",W:"up",ArrowDown:"down",s:"down",S:"down",ArrowLeft:"left",a:"left",A:"left",ArrowRight:"right",d:"right",D:"right" };
@@ -320,12 +370,28 @@ export default function TimeLoopRescue({ locale = "ko" }: { locale?: Locale | st
             <button type="button" onClick={commit} disabled={status!=="playing"||mission.currentRecording.length===0||mission.phase!=="playing"} className="min-h-11 flex-1 rounded-xl bg-teal-300 px-4 font-black text-teal-950 disabled:cursor-not-allowed disabled:opacity-40">{t.record}</button>
             <button type="button" onClick={togglePause} disabled={status==="idle"||mission.phase!=="playing"} className="min-h-11 rounded-xl bg-slate-800 px-4 font-bold text-white disabled:opacity-40">{status==="paused"?t.resume:t.pause}</button>
             <button type="button" onClick={reset} className="min-h-11 rounded-xl bg-slate-800 px-4 font-bold text-white">{t.reset}</button>
+            <button
+              type="button"
+              data-time-loop-share="true"
+              disabled={!shareCode}
+              onClick={() => {
+                const url = `${window.location.origin}${window.location.pathname}#ghost=${encodeURIComponent(shareCode)}`;
+                void navigator.clipboard?.writeText(url).then(() => setShareNote(weekly.copied), () => setShareNote(url));
+              }}
+              className="min-h-11 rounded-xl bg-violet-300 px-4 font-black text-violet-950 disabled:opacity-40"
+            >{weekly.share}</button>
           </div>
           <div className="mx-auto grid w-fit grid-cols-3 gap-2" aria-label={t.hint}>
             <span/><DirectionButton label="▲" direction="up" accessibleLabel={boardText.up} setDirection={setDirection}/><span/>
             <DirectionButton label="◀" direction="left" accessibleLabel={boardText.left} setDirection={setDirection}/><DirectionButton label="▼" direction="down" accessibleLabel={boardText.down} setDirection={setDirection}/><DirectionButton label="▶" direction="right" accessibleLabel={boardText.right} setDirection={setDirection}/>
           </div>
           <p className="text-center text-xs font-medium text-muted-foreground">{t.hint}</p>
+          <p className="text-center text-xs font-bold text-violet-700" data-time-loop-week={timeLoopWeekLabel(weekSeedRef.current)}>
+            {weekly.week} {timeLoopWeekLabel(weekSeedRef.current)}
+            {badge ? ` · ${weekly.badge}` : ""}
+            {rival.length ? ` · ${weekly.rival}` : ""}
+            {shareNote ? ` · ${shareNote}` : ""}
+          </p>
         </div>
       </GameContainer>
     </div>
