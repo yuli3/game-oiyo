@@ -6,6 +6,7 @@ import type { AugmentId, ChaosId, TableTheme } from "../../lib/games/tile-rummy-
 
 export interface TileRummyMoreCopy {
   enter: string;
+  start: string;
   tagline: string;
   titleLabel: string;
   titles: [string, string, string, string];
@@ -33,6 +34,7 @@ export interface TileRummyMoreCopy {
 export const MORE: Record<Locale, TileRummyMoreCopy> = {
   ko: {
     enter: "입장하기",
+    start: "시작하기",
     tagline: "타일을 끌어 줄을 만들고, 손을 먼저 비우면 이겨요.",
     titleLabel: "칭호",
     titles: ["초보 타일공", "숙련 타일공", "타일 장인", "타일 명인"],
@@ -70,6 +72,7 @@ export const MORE: Record<Locale, TileRummyMoreCopy> = {
   },
   en: {
     enter: "Enter",
+    start: "Start",
     tagline: "Drag tiles into lines. Empty your hand first to win.",
     titleLabel: "Title",
     titles: ["Tile novice", "Tile hand", "Tile artisan", "Tile master"],
@@ -107,6 +110,7 @@ export const MORE: Record<Locale, TileRummyMoreCopy> = {
   },
   ja: {
     enter: "入場する",
+    start: "始める",
     tagline: "牌をドラッグして列を作り、先に手札をなくせば勝ち。",
     titleLabel: "称号",
     titles: ["見習い牌士", "熟練牌士", "牌の職人", "牌の名人"],
@@ -144,6 +148,7 @@ export const MORE: Record<Locale, TileRummyMoreCopy> = {
   },
   zh: {
     enter: "进入",
+    start: "开始",
     tagline: "把牌拖成一列，先出完手牌就赢。",
     titleLabel: "称号",
     titles: ["新手牌士", "熟练牌士", "牌桌匠人", "牌桌名家"],
@@ -181,6 +186,7 @@ export const MORE: Record<Locale, TileRummyMoreCopy> = {
   },
   fr: {
     enter: "Entrer",
+    start: "Commencer",
     tagline: "Glissez les tuiles en lignes. Videz votre main le premier pour gagner.",
     titleLabel: "Titre",
     titles: ["Novice des tuiles", "Joueur confirmé", "Artisan des tuiles", "Maître des tuiles"],
@@ -218,6 +224,7 @@ export const MORE: Record<Locale, TileRummyMoreCopy> = {
   },
   es: {
     enter: "Entrar",
+    start: "Empezar",
     tagline: "Arrastra fichas para formar líneas. Vacía tu mano primero para ganar.",
     titleLabel: "Título",
     titles: ["Novato de fichas", "Jugador diestro", "Artesano de fichas", "Maestro de fichas"],

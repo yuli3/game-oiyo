@@ -42,6 +42,8 @@ export interface TileRummyCanvasProps {
   peek: Tile | null;
   theme: TableTheme;
   reducedMotion: boolean;
+  /** Play-canvas floor. 0 on the title so the preview stays content-sized. */
+  minHeight?: number;
   interactive: boolean;
   /** Table tiles can be lifted only after the player has opened. */
   tableLocked: boolean;
@@ -63,6 +65,7 @@ const THEMES: Record<TableTheme, { base: number; dark: number; line: number; gra
 
 interface TileSprite {
   root: Container;
+  face: Container;
   ring: Graphics;
   hint: Graphics;
   x: number;
@@ -71,6 +74,7 @@ interface TileSprite {
   ty: number;
   scale: number;
   w: number;
+  faceState: string;
 }
 
 interface Particle {
@@ -98,49 +102,32 @@ function drawStar(g: Graphics, cx: number, cy: number, outer: number, inner: num
   g.poly(points);
 }
 
-function drawMark(g: Graphics, color: TileColor, cx: number, cy: number, r: number) {
-  // A shape per color, so the colors still read for color-blind players.
-  if (color === "crimson") g.circle(cx, cy, r);
-  else if (color === "amber") g.poly([cx, cy - r, cx + r, cy + r * 0.8, cx - r, cy + r * 0.8]);
-  else if (color === "teal") g.rect(cx - r * 0.85, cy - r * 0.85, r * 1.7, r * 1.7);
-  else g.poly([cx, cy - r, cx + r, cy, cx, cy + r, cx - r, cy]);
-  g.fill({ color: INK[color] });
-}
-
 function makeTile(PIXI: Pixi, tile: Tile, w: number, h: number): TileSprite {
   const root = new PIXI.Container();
-  const shadow = new PIXI.Graphics().roundRect(2, 3, w, h, 7).fill({ color: 0x000000, alpha: 0.32 });
-  const body = new PIXI.Graphics()
-    .roundRect(0, 0, w, h, 7)
-    .fill({ color: 0xefe6cf })
-    .roundRect(1.5, 1.5, w - 3, h * 0.5, 6)
-    .fill({ color: 0xfffbf1, alpha: 0.75 })
-    .roundRect(0, 0, w, h, 7)
-    .stroke({ color: 0xbfae86, width: 1 });
-  root.addChild(shadow, body);
+  const face = PIXI.Sprite.from(TILE_RUMMY_SPRITES.tiles.normal);
+  face.width = w;
+  face.height = h;
+  root.addChild(face);
   if (tile.kind === "joker") {
     const star = new PIXI.Graphics();
-    drawStar(star, w / 2, h * 0.45, w * 0.36, w * 0.15);
+    drawStar(star, w / 2, h * 0.48, w * 0.28, w * 0.12);
     star.fill({ color: 0xe8b21c }).stroke({ color: 0x8c6300, width: 1.5 });
-    const sparkle = new PIXI.Graphics().circle(w * 0.42, h * 0.38, w * 0.05).fill({ color: 0xfff6c8 });
-    root.addChild(star, sparkle);
+    root.addChild(star);
   } else if (tile.color) {
     const numeral = new PIXI.Text({
       text: String(tile.value),
-      style: { fontFamily: "system-ui, -apple-system, sans-serif", fontSize: Math.round(h * 0.46), fontWeight: "900", fill: INK[tile.color] },
+      style: { fontFamily: "system-ui, -apple-system, sans-serif", fontSize: Math.round(h * 0.42), fontWeight: "900", fill: INK[tile.color] },
     });
     numeral.anchor.set(0.5);
-    numeral.position.set(w / 2, h * 0.42);
-    const mark = new PIXI.Graphics();
-    drawMark(mark, tile.color, w / 2, h * 0.8, h * 0.075);
-    root.addChild(numeral, mark);
+    numeral.position.set(w / 2, h * 0.46);
+    root.addChild(numeral);
   }
   const hint = new PIXI.Graphics().roundRect(-2, -2, w + 4, h + 4, 9).stroke({ color: 0x7ee0a8, width: 2, alpha: 0.95 });
   const ring = new PIXI.Graphics().roundRect(-3, -3, w + 6, h + 6, 10).stroke({ color: 0xffd34d, width: 3 });
   hint.visible = false;
   ring.visible = false;
   root.addChild(hint, ring);
-  return { root, ring, hint, x: 0, y: 0, tx: 0, ty: 0, scale: 1, w };
+  return { root, face, ring, hint, x: 0, y: 0, tx: 0, ty: 0, scale: 1, w, faceState: "normal" };
 }
 
 export default function TileRummyCanvas(props: TileRummyCanvasProps) {
@@ -182,6 +169,7 @@ export default function TileRummyCanvas(props: TileRummyCanvasProps) {
       wrap.replaceChildren(canvas);
 
       const scene = new PIXI.Container();
+      const feltCloth = PIXI.Sprite.from(TILE_RUMMY_SPRITES.felt);
       const felt = new PIXI.Graphics();
       const chrome = new PIXI.Graphics();
       const glow = new PIXI.Graphics();
@@ -190,16 +178,23 @@ export default function TileRummyCanvas(props: TileRummyCanvasProps) {
       const sparks = new PIXI.Graphics();
       const textLayer = new PIXI.Container();
       const popupLayer = new PIXI.Container();
-      scene.addChild(felt, chrome, glow, textLayer, tileLayer, dragLayer, sparks, popupLayer);
+      const burstSheet = PIXI.Sprite.from(TILE_RUMMY_SPRITES.burstSheet);
+      burstSheet.anchor.set(0.5);
+      burstSheet.visible = false;
+      popupLayer.addChild(burstSheet);
+      scene.addChild(feltCloth, felt, chrome, glow, textLayer, tileLayer, dragLayer, sparks, popupLayer);
       instance.stage.addChild(scene);
 
       const sprites = new Map<number, TileSprite>();
       const particles: Particle[] = [];
       const popups: Popup[] = [];
-      const avatars: { body: Container; ring: Graphics; dots: Graphics; seat: number }[] = [];
+      const avatars: { body: Container; ring: Graphics; dots: Graphics; seat: number; face: Container; avatarNum: 1 | 2 | 3; mood: "idle" | "think" | "win" }[] = [];
       let layout: TableLayout | null = null;
       let shake = 0;
       let clock = 0;
+      let burstLife = 0;
+      let invalidUntil = 0;
+      let winUntil = 0;
       // The canvas is touch-none so tiles can be dragged; a swipe on bare cloth
       // scrolls whatever holds the table instead, so a tall table stays reachable.
       let pan: { y: number; pointer: number } | null = null;
@@ -220,25 +215,11 @@ export default function TileRummyCanvas(props: TileRummyCanvasProps) {
         return node;
       };
 
-      const drawFelt = (current: TableLayout, theme: TableTheme) => {
-        const colors = THEMES[theme];
+      const drawFelt = (current: TableLayout) => {
+        feltCloth.width = current.width;
+        feltCloth.height = current.height;
         felt.clear();
-        felt.roundRect(0, 0, current.width, current.height, 18).fill({ color: colors.dark });
-        felt.roundRect(4, 4, current.width - 8, current.height - 8, 15).fill({ color: colors.base });
-        // Grain: fixed pseudo-random flecks, so the cloth does not shimmer between renders.
-        let seed = 7;
-        const next = () => {
-          seed = (seed * 16807) % 2147483647;
-          return seed / 2147483647;
-        };
-        if (theme === "walnut") {
-          for (let y = 10; y < current.height; y += 9) felt.rect(6, y, current.width - 12, 1 + next() * 1.5).fill({ color: colors.grain, alpha: 0.5 });
-        } else {
-          for (let i = 0; i < Math.floor((current.width * current.height) / 900); i++) {
-            felt.circle(6 + next() * (current.width - 12), 6 + next() * (current.height - 12), 0.8 + next()).fill({ color: colors.grain, alpha: 0.6 });
-          }
-        }
-        felt.roundRect(4, 4, current.width - 8, current.height - 8, 15).stroke({ color: colors.line, width: 1.5, alpha: 0.6 });
+        felt.roundRect(4, 4, current.width - 8, current.height - 8, 15).stroke({ color: 0xf4efe2, width: 1.5, alpha: 0.35 });
       };
 
       const drawChrome = (current: TableLayout, p: TileRummyCanvasProps) => {
@@ -285,18 +266,18 @@ export default function TileRummyCanvas(props: TileRummyCanvasProps) {
           const spriteUrl = TILE_RUMMY_SPRITES.avatars[avatarNum][mood];
           const avatarSprite = PIXI.Sprite.from(spriteUrl);
           avatarSprite.anchor.set(0.5);
-          avatarSprite.width = 38;
-          avatarSprite.height = 38;
+          avatarSprite.width = 48;
+          avatarSprite.height = 48;
           const dots = new PIXI.Graphics();
           const info = new PIXI.Text({
             text: `${p.labels.rival(seat)} · ${p.rivals[index]?.tiles ?? 0}${p.rivals[index]?.opened ? " ✓" : ""}`,
             style: { fontFamily: "system-ui, sans-serif", fontSize: 10, fontWeight: "700", fill: 0xf4efe2 },
           });
           info.anchor.set(0.5, 0);
-          info.position.set(0, 23);
+          info.position.set(0, 28);
           body.addChild(ring, avatarSprite, dots, info);
           scene.addChild(body);
-          avatars.push({ body, ring, dots, seat });
+          avatars.push({ body, ring, dots, seat, face: avatarSprite, avatarNum, mood });
         });
       };
 
@@ -312,12 +293,12 @@ export default function TileRummyCanvas(props: TileRummyCanvasProps) {
       const render = () => {
         const p = propsRef.current;
         const width = Math.max(280, wrap.clientWidth);
-        const current = layoutTable({ width, table: p.table, loose: p.loose, hand: p.hand, rivals: p.rivals.length });
+        const current = layoutTable({ width, table: p.table, loose: p.loose, hand: p.hand, rivals: p.rivals.length, minHeight: p.minHeight });
         layout = current;
         if (instance.renderer.width !== current.width || instance.renderer.height !== current.height) {
           instance.renderer.resize(current.width, current.height);
         }
-        drawFelt(current, p.theme);
+        drawFelt(current);
         drawChrome(current, p);
         drawAvatars(current, p);
         const selected = new Set(p.selected);
@@ -352,6 +333,17 @@ export default function TileRummyCanvas(props: TileRummyCanvasProps) {
           sprite.ty = spot.y - (lifted ? 8 : 0);
           sprite.ring.visible = selected.has(spot.id);
           sprite.hint.visible = !sprite.ring.visible && p.hinted.has(spot.id);
+          const faceState = clock < invalidUntil && selected.has(spot.id)
+            ? "invalid"
+            : selected.has(spot.id)
+              ? "selected"
+              : p.hinted.has(spot.id)
+                ? "valid"
+                : "normal";
+          if (sprite.faceState !== faceState && "texture" in sprite.face) {
+            sprite.faceState = faceState;
+            (sprite.face as { texture: unknown }).texture = PIXI.Texture.from(TILE_RUMMY_SPRITES.tiles[faceState]);
+          }
           if (p.reducedMotion) {
             sprite.x = sprite.tx;
             sprite.y = sprite.ty;
@@ -388,12 +380,23 @@ export default function TileRummyCanvas(props: TileRummyCanvasProps) {
         if (!current) return;
         if (fx.kind === "error") {
           if (!propsRef.current.reducedMotion) shake = 6;
+          invalidUntil = clock + 24;
           return;
         }
+        const showSheet = (x: number, y: number) => {
+          if (propsRef.current.reducedMotion) return;
+          burstSheet.position.set(x, y);
+          burstSheet.visible = true;
+          burstSheet.alpha = 1;
+          burstSheet.scale.set(0.35);
+          burstLife = 28;
+          winUntil = clock + 28;
+        };
         if (fx.kind === "lay") {
           const spots = current.spots.filter((spot) => fx.ids.includes(spot.id));
           spots.forEach((spot) => burst(spot.x + current.tileW / 2, spot.y + current.tileH / 2, 0xffe08a, 6));
           const anchor = spots[0];
+          if (anchor) showSheet(anchor.x + current.tileW / 2, anchor.y + current.tileH / 2);
           if (anchor && fx.combo > 1) popup(`COMBO ×${fx.combo}`, Math.min(current.width - 70, anchor.x + 50), anchor.y - 6, 0xffd34d);
           spots.forEach((spot) => {
             const sprite = sprites.get(spot.id);
@@ -402,6 +405,7 @@ export default function TileRummyCanvas(props: TileRummyCanvasProps) {
           return;
         }
         for (let i = 0; i < 4; i++) burst(current.width * (0.2 + i * 0.2), current.tableBox.y + 30, [0xffd34d, 0x7ee0a8, 0xe58fb5, 0x7cc4e8][i], 18);
+        showSheet(current.width / 2, current.tableBox.y + 40);
       };
 
       const toLocal = (event: PointerEvent) => {
@@ -520,6 +524,14 @@ export default function TileRummyCanvas(props: TileRummyCanvasProps) {
         }
         avatars.forEach((avatar) => {
           const thinking = p.playing && p.turn === avatar.seat;
+          const mood: "idle" | "think" | "win" = thinking ? "think" : "idle";
+          const nextMood: "idle" | "think" | "win" = clock < winUntil && !thinking ? "win" : mood;
+          if (avatar.mood !== nextMood) {
+            avatar.mood = nextMood;
+            if ("texture" in avatar.face) {
+              (avatar.face as { texture: unknown }).texture = PIXI.Texture.from(TILE_RUMMY_SPRITES.avatars[avatar.avatarNum][nextMood]);
+            }
+          }
           avatar.ring.visible = thinking;
           avatar.ring.alpha = 0.55 + Math.sin(clock / 8) * 0.45;
           avatar.dots.clear();
@@ -536,6 +548,12 @@ export default function TileRummyCanvas(props: TileRummyCanvasProps) {
           scene.position.set((Math.random() - 0.5) * shake * 2, (Math.random() - 0.5) * shake);
         } else scene.position.set(0, 0);
         sparks.clear();
+        if (burstLife > 0) {
+          burstLife -= delta;
+          burstSheet.alpha = Math.max(0, burstLife / 28);
+          burstSheet.scale.set(0.35 + (28 - burstLife) * 0.012);
+          if (burstLife <= 0) burstSheet.visible = false;
+        }
         for (let i = particles.length - 1; i >= 0; i--) {
           const spark = particles[i];
           spark.x += spark.vx * delta;

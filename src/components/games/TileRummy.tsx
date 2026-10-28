@@ -80,7 +80,7 @@ const MUTE_KEY = "tile-rummy:muted";
 
 type Notice = PlayReject | "loose" | "dirty" | "not-a-meld" | "copied" | "copyFailed";
 type Setup = { mode: "match" | "daily"; opponents: OpponentCount; level: AiLevel };
-type Phase = "title" | "augment" | "countdown" | "play";
+type Phase = "title" | "setup" | "augment" | "countdown" | "play";
 type FxInput = { kind: "lay"; ids: number[]; combo: number } | { kind: "error" } | { kind: "win" };
 type Sfx = "tap" | "place" | "meld" | "error" | "draw" | "win" | "lose";
 
@@ -548,7 +548,7 @@ const COPY: Record<Locale, Copy> = {
 };
 
 const COLOR_INDEX: Record<TileColor, number> = { crimson: 0, amber: 1, teal: 2, violet: 3 };
-const CONTROL = "min-h-11 min-w-11 rounded-xl border px-3 text-xs font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50";
+const CONTROL = "min-h-11 min-w-11 whitespace-nowrap rounded-xl border px-3 text-xs font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50";
 const PRIMARY = "min-h-11 rounded-xl bg-primary px-4 text-sm font-bold text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50";
 const OVERLAY = "absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 overflow-y-auto rounded-2xl bg-background/80 p-4 text-center backdrop-blur-sm";
 /** The title panel sits in flow over the dealt table, so its button is never cut off. */
@@ -653,6 +653,31 @@ function writePref(key: string, value: string) {
   try { window.localStorage.setItem(key, value); } catch { /* private mode */ }
 }
 
+/** Available viewport minus notch insets. Denominator for the 70% play board. */
+function useAvailableViewport(): number {
+  const [px, setPx] = useState(0);
+  useEffect(() => {
+    const probe = document.createElement("div");
+    probe.style.cssText = "position:fixed;visibility:hidden;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)";
+    document.body.appendChild(probe);
+    const read = () => {
+      const style = getComputedStyle(probe);
+      const notch = (Number.parseFloat(style.paddingTop) || 0) + (Number.parseFloat(style.paddingBottom) || 0);
+      const viewport = window.visualViewport?.height ?? window.innerHeight;
+      setPx(Math.max(0, Math.round(viewport - notch)));
+    };
+    read();
+    window.addEventListener("resize", read);
+    window.visualViewport?.addEventListener("resize", read);
+    return () => {
+      probe.remove();
+      window.removeEventListener("resize", read);
+      window.visualViewport?.removeEventListener("resize", read);
+    };
+  }, []);
+  return px;
+}
+
 export default function TileRummy({ locale = "ko" }: { locale?: string }) {
   const loc: Locale = locale in COPY ? (locale as Locale) : "en";
   const t = COPY[loc];
@@ -661,6 +686,7 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: loc });
   const [setup, setSetup] = useState<Setup>({ mode: "match", opponents: 1, level: 1 });
   const [phase, setPhase] = useState<Phase>("title");
+  const availableViewport = useAvailableViewport();
   const [game, setGame] = useState<RummyState | null>(null);
   const [draft, setDraft] = useState<Draft>({ table: [], loose: [] });
   const [selected, setSelected] = useState<number[]>([]);
@@ -772,6 +798,11 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
 
   const enter = () => {
     if (!isImmersive) togglePortal();
+    setPhase("setup");
+    sfx("tap");
+  };
+
+  const startSetup = () => {
     if (setup.mode === "daily") {
       deal({ mode: "daily", opponents: 1, level: DAILY_LEVEL }, 0, null);
       countdown(() => undefined);
@@ -1161,6 +1192,7 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
                 peek={peekTile}
                 theme={theme}
                 reducedMotion={reducedMotion}
+                minHeight={phase === "play" ? Math.round(availableViewport * 0.7) : 0}
                 interactive={canAct}
                 tableLocked={!game.opened[0]}
                 actorSeat={actorSeat}
@@ -1187,11 +1219,17 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
               <button
                 type="button"
                 onClick={enter}
-                className="min-h-14 w-full max-w-xs rounded-2xl bg-primary px-8 text-lg font-black text-primary-foreground shadow-lg hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-transform active:scale-95"
+                data-tile-enter
+                className="min-h-14 w-full max-w-xs whitespace-nowrap rounded-2xl bg-primary px-8 text-lg font-black text-primary-foreground shadow-lg hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-transform active:scale-95"
               >
                 {m.enter}
               </button>
-              {record && <p className="text-xs font-bold text-muted-foreground">{t.record} {record.w}–{record.l}–{record.d}{nextStep !== undefined ? ` · ${m.nextTitle(nextStep - wins)}` : ""}</p>}
+            </div>
+          )}
+
+          {phase === "setup" && (
+            <div className={OVERLAY} data-tile-setup>
+              <p className="text-base font-black text-foreground">{m.tagline}</p>
               <div className="flex flex-wrap justify-center gap-2" role="group" aria-label={t.match}>
                 <button type="button" onClick={() => setSetup((current) => ({ ...current, mode: "match" }))} aria-pressed={setup.mode === "match"} className={`${CONTROL} ${setup.mode === "match" ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground"}`}>{t.match}</button>
                 <button type="button" onClick={() => setSetup((current) => ({ ...current, mode: "daily" }))} aria-pressed={setup.mode === "daily"} className={`${CONTROL} ${setup.mode === "daily" ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground"}`}>{t.daily}</button>
@@ -1226,6 +1264,9 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
                   );
                 })}
               </div>
+              <button type="button" onClick={startSetup} className="min-h-14 whitespace-nowrap rounded-2xl bg-primary px-8 text-lg font-black text-primary-foreground">{m.start}</button>
+              {record && <p className="text-xs font-bold text-muted-foreground">{t.record} {record.w}–{record.l}–{record.d}{nextStep !== undefined ? ` · ${m.nextTitle(nextStep - wins)}` : ""}</p>}
+              <button type="button" onClick={toTitle} className={`${CONTROL} border-border bg-card text-foreground`}>{m.exit}</button>
             </div>
           )}
 
@@ -1273,7 +1314,7 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
               <p className="text-2xl font-black text-foreground">{t.pause}</p>
               <div className="flex flex-wrap justify-center gap-2">
                 <button type="button" onClick={() => setPaused(false)} className={PRIMARY}>{t.resume}</button>
-                <button type="button" onClick={() => { setPaused(false); setPhase("title"); later(enter, 0); }} className={`${CONTROL} border-border bg-card text-foreground`}>{m.restart}</button>
+                <button type="button" onClick={() => { setPaused(false); startSetup(); }} className={`${CONTROL} border-border bg-card text-foreground`}>{m.restart}</button>
                 <button type="button" onClick={toTitle} className={`${CONTROL} border-border bg-card text-foreground`}>{m.exit}</button>
                 <button type="button" onClick={toggleMute} aria-pressed={muted} className={`${CONTROL} border-border bg-card text-foreground`}>{muted ? portalLabels.unmute : portalLabels.mute}</button>
               </div>
@@ -1291,7 +1332,7 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
                 ))}
               </ul>
               <div className="flex flex-wrap justify-center gap-2">
-                <button type="button" onClick={() => { setPhase("title"); later(enter, 0); }} className={PRIMARY}>{m.restart}</button>
+                <button type="button" onClick={() => startSetup()} className={PRIMARY}>{m.restart}</button>
                 <button
                   type="button"
                   onClick={() => void handleShareCard()}
@@ -1313,8 +1354,8 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
           <>
             {message && <p className="mt-2 text-sm font-medium text-foreground" role="status">{message}</p>}
             <div className="mt-2 flex flex-wrap gap-2">
-              <button type="button" onClick={() => lay("group")} disabled={!canAct || !groupMeld} className={`${CONTROL} border-border bg-card text-foreground`}>{t.group}{meldPoints(groupMeld) !== null ? ` · ${t.points(meldPoints(groupMeld) ?? 0)}` : ""}</button>
-              <button type="button" onClick={() => lay("run")} disabled={!canAct || !runMeld} className={`${CONTROL} border-border bg-card text-foreground`}>{t.run}{meldPoints(runMeld) !== null ? ` · ${t.points(meldPoints(runMeld) ?? 0)}` : ""}</button>
+              <button type="button" data-tile-group onClick={() => lay("group")} disabled={!canAct || !groupMeld} className={`${CONTROL} border-border bg-card text-foreground`}>{t.group}{meldPoints(groupMeld) !== null ? ` · ${t.points(meldPoints(groupMeld) ?? 0)}` : ""}</button>
+              <button type="button" data-tile-run onClick={() => lay("run")} disabled={!canAct || !runMeld} className={`${CONTROL} border-border bg-card text-foreground`}>{t.run}{meldPoints(runMeld) !== null ? ` · ${t.points(meldPoints(runMeld) ?? 0)}` : ""}</button>
               <button type="button" onClick={() => { if (game) { setDraft(freshDraft(game)); setSelected([]); setNotice(null); setCombo(0); sfx("tap"); } }} disabled={!canAct} className={`${CONTROL} border-border bg-card text-foreground`}>{t.clear}</button>
               <button type="button" onClick={draw} disabled={!canAct} className={`${CONTROL} border-border bg-card text-foreground`}>{game?.pool.length === 0 ? t.pass : t.drawTile}</button>
               <button type="button" onClick={play} disabled={!canAct} className={PRIMARY}>{t.play}</button>
