@@ -191,9 +191,16 @@ export default function TileRummyCanvas(props: TileRummyCanvasProps) {
       const sparks = new PIXI.Graphics();
       const textLayer = new PIXI.Container();
       const popupLayer = new PIXI.Container();
-      const burstSheet = PIXI.Sprite.from(TILE_RUMMY_SPRITES.burstSheet);
+      const burstBase = PIXI.Texture.from(TILE_RUMMY_SPRITES.burstSheet);
+      const burstFrames = Array.from({ length: 8 }, (_, index) => new PIXI.Texture({
+        source: burstBase.source,
+        frame: new PIXI.Rectangle(index * 64, 0, 64, 64),
+      }));
+      const burstSheet = new PIXI.Sprite(burstFrames[0]);
       burstSheet.anchor.set(0.5);
       burstSheet.visible = false;
+      burstSheet.width = 72;
+      burstSheet.height = 72;
       popupLayer.addChild(burstSheet);
       scene.addChild(feltCloth, felt, chrome, glow, textLayer, tileLayer, dragLayer, sparks, popupLayer);
       instance.stage.addChild(scene);
@@ -399,11 +406,13 @@ export default function TileRummyCanvas(props: TileRummyCanvasProps) {
         const showSheet = (x: number, y: number) => {
           if (propsRef.current.reducedMotion) return;
           burstSheet.position.set(x, y);
+          burstSheet.texture = burstFrames[0];
+          burstSheet.width = 72;
+          burstSheet.height = 72;
           burstSheet.visible = true;
           burstSheet.alpha = 1;
-          burstSheet.scale.set(0.35);
-          burstLife = 28;
-          winUntil = clock + 28;
+          burstLife = 48;
+          winUntil = clock + 48;
         };
         if (fx.kind === "lay") {
           const spots = current.spots.filter((spot) => fx.ids.includes(spot.id));
@@ -528,12 +537,23 @@ export default function TileRummyCanvas(props: TileRummyCanvasProps) {
         clock += delta;
         const p = propsRef.current;
         const ease = p.reducedMotion ? 1 : Math.min(1, 0.22 * delta);
-        for (const sprite of sprites.values()) {
+        for (const [id, sprite] of sprites) {
           sprite.x += (sprite.tx - sprite.x) * ease;
           sprite.y += (sprite.ty - sprite.y) * ease;
           if (!drag || drag.sprite !== sprite) sprite.scale += (1 - sprite.scale) * Math.min(1, 0.18 * delta);
           sprite.root.position.set(sprite.x, sprite.y);
           sprite.root.scale.set(sprite.scale);
+          const faceState = clock < invalidUntil && p.selected.includes(id)
+            ? "invalid"
+            : p.selected.includes(id)
+              ? "selected"
+              : p.hinted.has(id)
+                ? "valid"
+                : "normal";
+          if (sprite.faceState !== faceState && "texture" in sprite.face) {
+            sprite.faceState = faceState;
+            (sprite.face as { texture: unknown }).texture = PIXI.Texture.from(TILE_RUMMY_SPRITES.tiles[faceState]);
+          }
         }
         avatars.forEach((avatar) => {
           const thinking = p.playing && p.turn === avatar.seat;
@@ -562,9 +582,12 @@ export default function TileRummyCanvas(props: TileRummyCanvasProps) {
         } else scene.position.set(0, 0);
         sparks.clear();
         if (burstLife > 0) {
+          const frame = Math.min(7, Math.floor((1 - burstLife / 48) * 8));
+          burstSheet.texture = burstFrames[frame];
+          burstSheet.width = 72;
+          burstSheet.height = 72;
           burstLife -= delta;
-          burstSheet.alpha = Math.max(0, burstLife / 28);
-          burstSheet.scale.set(0.35 + (28 - burstLife) * 0.012);
+          burstSheet.alpha = Math.max(0, burstLife / 48);
           if (burstLife <= 0) burstSheet.visible = false;
         }
         for (let i = particles.length - 1; i >= 0; i--) {
