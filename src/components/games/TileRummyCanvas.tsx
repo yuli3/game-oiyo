@@ -102,6 +102,16 @@ function drawStar(g: Graphics, cx: number, cy: number, outer: number, inner: num
   g.poly(points);
 }
 
+function spriteUrls(): string[] {
+  const set = TILE_RUMMY_SPRITES;
+  return [
+    set.felt,
+    set.burstSheet,
+    ...Object.values(set.tiles),
+    ...Object.values(set.avatars).flatMap((poses) => Object.values(poses)),
+  ];
+}
+
 function makeTile(PIXI: Pixi, tile: Tile, w: number, h: number): TileSprite {
   const root = new PIXI.Container();
   const face = PIXI.Sprite.from(TILE_RUMMY_SPRITES.tiles.normal);
@@ -147,6 +157,9 @@ export default function TileRummyCanvas(props: TileRummyCanvasProps) {
 
     void (async () => {
       const PIXI = await import("pixi.js");
+      if (disposed) return;
+      // Pixi 8 Texture.from(url) only reads the asset cache. It does not fetch.
+      await PIXI.Assets.load(spriteUrls());
       if (disposed) return;
       const instance = new PIXI.Application();
       await instance.init({

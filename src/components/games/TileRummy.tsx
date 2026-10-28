@@ -6,7 +6,6 @@
 // plus the table is taller than a phone.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { celebrate } from "../../lib/games/celebration";
 import { HelpCircle, Lock, Maximize2, Minimize2, Pause, Play, Share2, Volume2, VolumeX } from "lucide-react";
 import { GameContainer } from "../ui/game/GamePrimitives";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
@@ -552,7 +551,7 @@ const CONTROL = "min-h-11 min-w-11 whitespace-nowrap rounded-xl border px-3 text
 const PRIMARY = "min-h-11 rounded-xl bg-primary px-4 text-sm font-bold text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50";
 const OVERLAY = "absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 overflow-y-auto rounded-2xl bg-background/80 p-4 text-center backdrop-blur-sm";
 /** The title panel sits in flow over the dealt table, so its button is never cut off. */
-const TITLE_PANEL = "relative z-10 flex flex-col items-center justify-center gap-4 rounded-2xl bg-background/80 px-4 py-8 text-center backdrop-blur-sm";
+const TITLE_PANEL = "relative z-10 flex flex-col items-center justify-center gap-2 rounded-2xl bg-background/80 px-4 py-4 text-center backdrop-blur-sm";
 const THEMES: TableTheme[] = ["felt", "walnut", "midnight"];
 
 function matchSeed(): number {
@@ -874,7 +873,6 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
       sfx("win");
       haptics.fire("win");
       pushFx({ kind: "win" });
-      if (!reducedMotion) celebrate(containerRef.current, { preset: "tiles", colors: ["#ef4444", "#3b82f6", "#f59e0b", "#111827"], origin: { x: 0.5, y: 0.55 } });
     } else sfx("lose");
     if (game.mode === "daily" && game.dateKey && outcome === "w") {
       const margin = game.hands.slice(1).reduce((sum, hand) => sum + handPenalty(hand), 0);
@@ -885,20 +883,17 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
         setNewBest(!previous || saved.value !== previous.value);
       } catch { /* best-effort */ }
     }
-  }, [dealId, game, haptics, phase, pushFx, reducedMotion, sfx]);
+  }, [dealId, game, haptics, phase, pushFx, sfx]);
 
   useEffect(() => {
     if (!game) return;
     if (!prevOpenedRef.current && game.opened[0]) {
       prevOpenedRef.current = true;
-      if (containerRef.current && !reducedMotion) {
-        celebrate(containerRef.current, { preset: "tiles", label: "30+ OPENED!" });
-      }
     }
     if (!game.opened[0]) {
       prevOpenedRef.current = false;
     }
-  }, [game, reducedMotion]);
+  }, [game]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -1211,11 +1206,11 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
               <img
                 src={TILE_RUMMY_SPRITES.keyart}
                 alt={t.title}
-                className="w-full max-w-sm rounded-2xl shadow-xl border border-border/40"
+                className="w-full max-w-sm max-h-36 rounded-2xl object-cover object-center shadow-xl border border-border/40"
               />
               <p className="text-xs font-bold uppercase tracking-widest text-primary">{m.titleLabel} · {m.titles[tier]}</p>
-              <h2 className="text-3xl font-black text-foreground">{t.title}</h2>
-              <p className="max-w-xs text-sm text-muted-foreground">{m.tagline}</p>
+              <h2 className="text-2xl font-black text-foreground">{t.title}</h2>
+              <p className="max-w-xs line-clamp-2 text-sm text-muted-foreground">{m.tagline}</p>
               <button
                 type="button"
                 onClick={enter}
