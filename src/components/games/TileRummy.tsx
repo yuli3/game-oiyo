@@ -55,7 +55,6 @@ import {
   THEME_UNLOCK,
   TITLE_STEPS,
   resultStars,
-  rollAugments,
   rollChaos,
   shiftedLevel,
   tableVariant,
@@ -64,6 +63,8 @@ import {
   type ChaosId,
   type TableTheme,
 } from "../../lib/games/tile-rummy-augments";
+import { tileRummyAnalyticsPayload, type TileRummyAnalyticsEvent } from "../../lib/games/tile-rummy-analytics";
+import { rollTieredOffer, runLevel, runOffersAugment, tierOf } from "../../lib/games/tile-rummy-run";
 import type { DropTarget, TileSpot } from "../../lib/games/tile-rummy-layout";
 import { dropDraft, extendMeld, isNewMeld, meldKey, pullTile, unusedHand, type Draft } from "../../lib/games/tile-rummy-draft";
 import TileRummyCanvas, { type TableFx } from "./TileRummyCanvas";
@@ -78,7 +79,7 @@ const THEME_KEY = "tile-rummy:theme";
 const MUTE_KEY = "tile-rummy:muted";
 
 type Notice = PlayReject | "loose" | "dirty" | "not-a-meld" | "copied" | "copyFailed";
-type Setup = { mode: "match" | "daily"; opponents: OpponentCount; level: AiLevel };
+type Setup = { mode: "match" | "daily" | "run"; opponents: OpponentCount; level: AiLevel };
 type Phase = "title" | "setup" | "augment" | "countdown" | "play";
 type FxInput = { kind: "lay"; ids: number[]; combo: number } | { kind: "error" } | { kind: "win" };
 type Sfx = "tap" | "place" | "meld" | "error" | "draw" | "win" | "lose";
@@ -100,6 +101,7 @@ interface Copy {
   replay: string;
   daily: string;
   match: string;
+  runMode: string;
   opponents: string;
   level: string;
   level1: string;
@@ -155,6 +157,7 @@ const COPY: Record<Locale, Copy> = {
     replay: "오늘 판 다시",
     daily: "오늘의 판",
     match: "대국",
+    runMode: "도전",
     opponents: "상대",
     level: "난이도",
     level1: "견습",
@@ -221,6 +224,7 @@ const COPY: Record<Locale, Copy> = {
     replay: "Replay today",
     daily: "Today's table",
     match: "Match",
+    runMode: "Run",
     opponents: "Opponents",
     level: "Level",
     level1: "Apprentice",
@@ -287,6 +291,7 @@ const COPY: Record<Locale, Copy> = {
     replay: "今日の卓をもう一度",
     daily: "今日の卓",
     match: "対局",
+    runMode: "連勝",
     opponents: "相手",
     level: "難易度",
     level1: "見習い",
@@ -353,6 +358,7 @@ const COPY: Record<Locale, Copy> = {
     replay: "再打今天",
     daily: "今日牌桌",
     match: "对局",
+    runMode: "连胜",
     opponents: "对手",
     level: "难度",
     level1: "学徒",
@@ -419,6 +425,7 @@ const COPY: Record<Locale, Copy> = {
     replay: "Rejouer aujourd'hui",
     daily: "Table du jour",
     match: "Partie",
+    runMode: "Série",
     opponents: "Adversaires",
     level: "Niveau",
     level1: "Apprenti",
@@ -485,6 +492,7 @@ const COPY: Record<Locale, Copy> = {
     replay: "Repetir hoy",
     daily: "Mesa de hoy",
     match: "Partida",
+    runMode: "Racha",
     opponents: "Rivales",
     level: "Nivel",
     level1: "Aprendiz",
@@ -699,6 +707,11 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
   const [dealId, setDealId] = useState(0);
   const [shareCardCopied, setShareCardCopied] = useState(false);
   const [offers, setOffers] = useState<AugmentId[]>([]);
+  const [owned, setOwned] = useState<Partial<Record<AugmentId, number>>>({});
+  const [streak, setStreak] = useState(0);
+  const [runIndex, setRunIndex] = useState(0);
+  const [tableLevel, setTableLevel] = useState<AiLevel>(1);
+  const startedAt = useRef<number | null>(null);
   const [augment, setAugment] = useState<AugmentId | null>(null);
   const [chaos, setChaos] = useState<ChaosId | null>(null);
   const [chaosFlash, setChaosFlash] = useState(false);
@@ -715,6 +728,11 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
   const cuesRef = useRef<CuePlayer<Sfx> | null>(null);
   const haptics = useMemo(() => createHaptics(), []);
   const timers = useRef<number[]>([]);
+
+  const emit = useCallback((event: TileRummyAnalyticsEvent, fields: { mode?: Setup["mode"]; result?: "w" | "l" | "d"; duration?: number; id?: string; tier?: string } = {}) => {
+    const analytics = window as Window & { gtag?: (...args: unknown[]) => void };
+    analytics.gtag?.("event", event, tileRummyAnalyticsPayload(event, fields));
+  }, []);
 
   const later = useCallback((fn: () => void, ms: number) => {
     timers.current.push(window.setTimeout(fn, ms));
@@ -738,7 +756,7 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
     pushFx({ kind: "error" });
   }, [haptics, pushFx, sfx]);
 
-  const deal = useCallback((next: Setup, seed: number, pick: AugmentId | null) => {
+  const deal = useCallback((next: Setup, seed: number, pick: AugmentId | null, level?: AiLevel) => {
     let state: RummyState;
     let bent: ChaosId | null = null;
     if (next.mode === "daily") {
@@ -747,8 +765,10 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
     } else {
       bent = rollChaos(seed);
       state = createTileRummy({ seed, opponents: next.opponents, mode: "match", variant: tableVariant(pick, bent) });
+      setTableLevel(level ?? next.level);
     }
     recordedDeal.current = null;
+    startedAt.current = Date.now();
     setGame(state);
     setDraft(freshDraft(state));
     setSelected([]);
@@ -760,9 +780,11 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
     setAugment(next.mode === "daily" ? null : pick);
     setChaos(bent);
     setDealId((id) => id + 1);
+    emit("game_start", { mode: next.mode });
+    if (bent) emit("chaos_seen", { id: bent });
     if (state.mode === "daily" && state.dateKey) setBest(getBestForConditions(GAME_ID, dailyBestConditions(state.dateKey)));
     else setBest(null);
-  }, []);
+  }, [emit]);
 
   const countdown = useCallback((onDone: () => void) => {
     const step = reducedMotion ? 350 : 650;
@@ -798,7 +820,15 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
   const enter = () => {
     if (!isImmersive) togglePortal();
     setPhase("setup");
+    emit("game_enter");
     sfx("tap");
+  };
+
+  const openOffer = (seed: number, taken: Partial<Record<AugmentId, number>>) => {
+    pendingSeed.current = seed;
+    setOffers(rollTieredOffer(seed, taken));
+    setPhase("augment");
+    sfx("draw");
   };
 
   const startSetup = () => {
@@ -807,16 +837,28 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
       countdown(() => undefined);
       return;
     }
-    const seed = matchSeed();
-    pendingSeed.current = seed;
-    setOffers(rollAugments(seed));
-    setPhase("augment");
-    sfx("draw");
+    if (setup.mode === "run") {
+      setStreak(0);
+      setRunIndex(0);
+      setOwned({});
+      if (runOffersAugment(0)) openOffer(matchSeed(), {});
+      else {
+        const seed = matchSeed();
+        pendingSeed.current = seed;
+        deal(setup, seed, null, runLevel(setup.level, 0));
+        countdown(() => undefined);
+      }
+      return;
+    }
+    openOffer(matchSeed(), {});
   };
 
   const pickAugment = (pick: AugmentId) => {
-    deal(setup, pendingSeed.current, pick);
+    const level = setup.mode === "run" ? runLevel(setup.level, streak) : setup.level;
+    deal(setup, pendingSeed.current, pick, level);
+    setOwned((current) => ({ ...current, [pick]: (current[pick] ?? 0) + 1 }));
     setMulliganUsed(false);
+    emit("augment_pick", { id: pick, tier: tierOf(pick) });
     sfx("place");
     countdown(() => {
       if (rollChaos(pendingSeed.current)) {
@@ -848,7 +890,7 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
     setCombo(0);
   }, [game]);
 
-  const aiLevel: AiLevel = game?.mode === "daily" ? DAILY_LEVEL : shiftedLevel(setup.level, augment);
+  const aiLevel: AiLevel = game?.mode === "daily" ? DAILY_LEVEL : shiftedLevel(tableLevel, augment);
 
   useEffect(() => {
     if (phase !== "play" || !game || game.status !== "playing" || game.turn === 0 || paused) return;
@@ -869,6 +911,8 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
     const outcome = humanOutcome(game);
     if (!outcome) return;
     try { setRecord(recordResult(GAME_ID, outcome)); } catch { /* best-effort */ }
+    const elapsed = startedAt.current ? Math.max(0, Math.round((Date.now() - startedAt.current) / 1000)) : 0;
+    emit("game_end", { mode: setup.mode, result: outcome, duration: elapsed });
     if (outcome === "w") {
       sfx("win");
       haptics.fire("win");
@@ -883,7 +927,7 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
         setNewBest(!previous || saved.value !== previous.value);
       } catch { /* best-effort */ }
     }
-  }, [dealId, game, haptics, phase, pushFx, sfx]);
+  }, [dealId, emit, game, haptics, phase, pushFx, setup.mode, sfx]);
 
   useEffect(() => {
     if (!game) return;
@@ -1068,6 +1112,7 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
 
   const share = async () => {
     if (!game) return;
+    emit("share_click");
     const outcome = humanOutcome(game);
     const label = outcome === "w" ? t.win : outcome === "l" ? t.loss : t.drawGame;
     try {
@@ -1112,6 +1157,27 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
     sfx("tap");
   };
 
+  const retry = () => {
+    emit("retry_click");
+    if (setup.mode !== "run" || !game || game.status !== "over") {
+      toTitle();
+      return;
+    }
+    const finished = humanOutcome(game);
+    const nextStreak = finished === "w" ? streak + 1 : 0;
+    const nextIndex = runIndex + 1;
+    setStreak(nextStreak);
+    setRunIndex(nextIndex);
+    const level = runLevel(setup.level, nextStreak);
+    if (runOffersAugment(nextIndex)) openOffer(matchSeed(), owned);
+    else {
+      const seed = matchSeed();
+      pendingSeed.current = seed;
+      deal(setup, seed, null, level);
+      countdown(() => undefined);
+    }
+  };
+
   const message = notice === "copied" ? t.copied : notice === "copyFailed" ? t.copyFailed : notice ? t.reasons[notice] : null;
   const outcome = game ? humanOutcome(game) : null;
   const over = playing && game?.status === "over";
@@ -1134,7 +1200,7 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
         title={t.title}
         subtitle={t.subtitle}
         resetLabel={setup.mode === "daily" ? t.replay : t.newMatch}
-        onReset={toTitle}
+        onReset={setup.mode === "run" ? retry : toTitle}
       >
         {playing && (
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
@@ -1227,9 +1293,10 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
               <p className="text-base font-black text-foreground">{m.tagline}</p>
               <div className="flex flex-wrap justify-center gap-2" role="group" aria-label={t.match}>
                 <button type="button" onClick={() => setSetup((current) => ({ ...current, mode: "match" }))} aria-pressed={setup.mode === "match"} className={`${CONTROL} ${setup.mode === "match" ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground"}`}>{t.match}</button>
+                <button type="button" data-tile-run onClick={() => setSetup((current) => ({ ...current, mode: "run" }))} aria-pressed={setup.mode === "run"} className={`${CONTROL} ${setup.mode === "run" ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground"}`}>{t.runMode}</button>
                 <button type="button" onClick={() => setSetup((current) => ({ ...current, mode: "daily" }))} aria-pressed={setup.mode === "daily"} className={`${CONTROL} ${setup.mode === "daily" ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground"}`}>{t.daily}</button>
               </div>
-              {setup.mode === "match" ? (
+              {setup.mode !== "daily" ? (
                 <div className="flex flex-wrap justify-center gap-2">
                   <div className="inline-flex gap-1" role="group" aria-label={t.opponents}>
                     {([1, 2, 3] as OpponentCount[]).map((n) => (
@@ -1269,8 +1336,9 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
             <div className={OVERLAY}>
               <p className="text-base font-black text-foreground">{m.pickAugment}</p>
               <div className="grid w-full max-w-md gap-3">
-                {offers.map((id, idx) => {
-                  const frame = idx === 0 ? TILE_RUMMY_SPRITES.frames.silver : idx === 1 ? TILE_RUMMY_SPRITES.frames.gold : TILE_RUMMY_SPRITES.frames.prism;
+                {offers.map((id) => {
+                  const tierName = tierOf(id);
+                  const frame = tierName === "silver" ? TILE_RUMMY_SPRITES.frames.silver : tierName === "gold" ? TILE_RUMMY_SPRITES.frames.gold : TILE_RUMMY_SPRITES.frames.prism;
                   return (
                     <button
                       key={id}
