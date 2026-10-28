@@ -130,6 +130,18 @@ describe("tile rummy layout", () => {
     }
   });
 
+  it("grows the table to a play-canvas floor without moving table tiles", () => {
+    const hand = [numberTile(1, "amber", 4)];
+    const bare = layoutTable({ width: 375, table: [run(3, 3, 100)], loose: [], hand, rivals: 1 });
+    const raised = layoutTable({ width: 375, table: [run(3, 3, 100)], loose: [], hand, rivals: 1, minHeight: bare.height + 120 });
+    const bareTile = bare.spots.find((spot) => spot.zone === "table");
+    const raisedTile = raised.spots.find((spot) => spot.id === bareTile?.id);
+    expect(raised.height).toBe(bare.height + 120);
+    expect(raised.tableBox.h).toBe(bare.tableBox.h + 120);
+    expect(raisedTile?.y).toBe(bareTile?.y);
+    expect(raised.handBox.y).toBe(bare.handBox.y + 120);
+  });
+
   it("keeps tiles at least the touch size", () => {
     const layout = layoutTable({ width: 320, table: [], loose: [], hand: [], rivals: 1 });
     expect(layout.tileW).toBeGreaterThanOrEqual(34);

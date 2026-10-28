@@ -32,6 +32,8 @@ export interface LayoutInput {
   loose: readonly Tile[];
   hand: readonly Tile[];
   rivals: number;
+  /** Play-canvas floor in CSS pixels. Extra space grows the table, not the hand. */
+  minHeight?: number;
 }
 
 export interface TableLayout {
@@ -143,7 +145,17 @@ export function layoutTable(input: LayoutInput): TableLayout {
   }
   // The hand sits lower by its lift height, so a raised tile never clips.
   const handBox = flow(input.hand, "hand", cursor + 12);
-  const height = handBox.y + handBox.h + PAD + 8;
+  const contentHeight = handBox.y + handBox.h + PAD + 8;
+  const extra = Math.max(0, Math.floor(input.minHeight ?? 0) - contentHeight);
+  if (extra > 0) {
+    tableBox.h += extra;
+    if (looseBox) looseBox.y += extra;
+    handBox.y += extra;
+    for (const spot of spots) {
+      if (spot.zone !== "table") spot.y += extra;
+    }
+  }
+  const height = contentHeight + extra;
 
   return { width, height, tileW, tileH, header, pile, rivals, tableBox, melds, newZone, looseBox, handBox, spots };
 }
