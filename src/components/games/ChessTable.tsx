@@ -93,12 +93,12 @@ export default function ChessTable({ locale = "ko", onBack }: { locale?: Locale 
     <div data-chess-table="true" data-chess-engine={CHESS_TABLE_ENGINE} className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
         <button type="button" onClick={onBack} className="min-h-11 rounded-xl border border-border px-3 text-sm font-bold">{t.back}</button>
-        <button type="button" data-chess-resign="true" onClick={() => setTable((current) => chessTableResign(current))} disabled={Boolean(table.end)} className="min-h-11 rounded-xl bg-slate-900 px-3 text-sm font-bold text-white disabled:opacity-40">{t.resign}</button>
+        <button type="button" data-chess-resign="true" onClick={() => setTable((current) => chessTableResign(current))} disabled={Boolean(table.end)} className="min-h-11 rounded-xl bg-foreground px-3 text-sm font-bold text-white disabled:opacity-40">{t.resign}</button>
         <span className="text-sm font-bold tabular-nums">{clock(table.whiteSeconds)} / {clock(table.blackSeconds)}</span>
       </div>
       <p className="text-sm text-muted-foreground">{t.engine}</p>
-      <div className="relative h-[28rem] overflow-x-auto rounded-2xl bg-slate-900">
-        <div className="h-full min-w-[352px]">
+      <div className="relative h-112 overflow-x-auto rounded-2xl bg-foreground">
+        <div className="h-full min-w-88">
           {webgl ? (
             <Suspense fallback={<p className="p-4 text-sm text-white">{t.loading}</p>}>
               <Scene table={table} label={label} onPick={pick} />
@@ -106,7 +106,7 @@ export default function ChessTable({ locale = "ko", onBack }: { locale?: Locale 
           ) : (
             <div className="grid h-full grid-cols-8">
               {table.position.board.map((rank, row) => rank.map((piece, column) => (
-                <button key={`${row}-${column}`} type="button" aria-label={label(row, column)} onClick={() => pick([row, column])} className={`min-h-11 text-xs font-black ${(row + column) % 2 ? "bg-amber-900 text-amber-50" : "bg-amber-100 text-slate-900"}`}>
+                <button key={`${row}-${column}`} type="button" aria-label={label(row, column)} onClick={() => pick([row, column])} className={`min-h-11 text-xs font-black ${(row + column) % 2 ? "bg-primary text-primary-foreground" : "bg-background text-foreground"}`}>
                   {piece ?? ""}
                 </button>
               )))}

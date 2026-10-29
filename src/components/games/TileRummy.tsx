@@ -20,6 +20,7 @@ import {
   getBestForConditions,
   getRecord,
   recordBestForConditions,
+  recordDailyWin,
   recordResult,
   type ConditionalBestRecord,
   type GameRecord,
@@ -27,6 +28,7 @@ import {
 import type { AiLevel } from "../../lib/games/ai/types";
 import { chooseRummyAction } from "../../lib/games/ai/rummy";
 import { kstDateKey } from "../../lib/games/todays-game";
+import { previousDayKey } from "../../lib/games/daily";
 import { createCuePlayer, type CuePlayer, type CueTable } from "../../lib/games/game-audio";
 import { createHaptics, readHapticsEnabled, writeHapticsEnabled } from "../../lib/games/haptics";
 import {
@@ -937,6 +939,8 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
       pushFx({ kind: "win" });
     } else sfx("lose");
     if (game.mode === "daily" && game.dateKey && outcome === "w") {
+      // Existing DailyStreak store only; a same-day replay is a no-op there.
+      try { recordDailyWin(GAME_ID, game.dateKey, previousDayKey(game.dateKey)); } catch { /* best-effort */ }
       const margin = game.hands.slice(1).reduce((sum, hand) => sum + handPenalty(hand), 0);
       try {
         const previous = getBestForConditions(GAME_ID, dailyBestConditions(game.dateKey));

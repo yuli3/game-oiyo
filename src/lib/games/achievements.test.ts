@@ -28,6 +28,7 @@ const EMPTY: AchievementSnapshot = {
   bestRecordCount: 0,
   bestDailyStreak: 0,
   bestWinStreak: 0,
+  tileRummyWins: 0,
 };
 
 describe("achievements: evaluateAchievements", () => {
@@ -144,5 +145,16 @@ describe("achievements: cross-store snapshot", () => {
     localStorage.setItem("oiyo:game-records:v1", "null");
     localStorage.setItem("oiyo:game-bests:v1", "[]");
     expect(buildAchievementSnapshot()).toEqual(EMPTY);
+  });
+});
+
+describe("achievements: number tiles", () => {
+  it("unlocks the number-tile achievement from tile-rummy wins only", () => {
+    const def = ACHIEVEMENTS.find((a) => a.id === "tile-rummy-wins-10");
+    expect(def?.metric).toBe("tileRummyWins");
+    const below = evaluateAchievements({ ...EMPTY, totalWins: 50, tileRummyWins: 9 }).find((a) => a.id === "tile-rummy-wins-10");
+    expect(below?.unlocked).toBe(false);
+    const at = evaluateAchievements({ ...EMPTY, tileRummyWins: 10 }).find((a) => a.id === "tile-rummy-wins-10");
+    expect(at?.unlocked).toBe(true);
   });
 });

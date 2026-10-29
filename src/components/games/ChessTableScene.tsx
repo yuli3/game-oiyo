@@ -2,6 +2,8 @@ import { useEffect } from "react";
 import { Canvas, useThree, type ThreeEvent } from "@react-three/fiber";
 import type { ChessTableState } from "../../lib/games/chess-table";
 
+const BOARD_WOOD = "#6b4a32";
+
 function FixedCamera() {
   const { camera } = useThree();
   useEffect(() => {
@@ -39,7 +41,7 @@ export default function ChessTableScene({
       <color attach="background" args={["#1a2430"]} />
       <ambientLight intensity={0.7} />
       <directionalLight position={[4, 8, 3]} intensity={0.8} />
-      <mesh position={[0, -0.08, 0]}><boxGeometry args={[9.2, 0.16, 9.2]} /><meshStandardMaterial color="#6b4a32" /></mesh>
+      <mesh position={[0, -0.08, 0]}><boxGeometry args={[9.2, 0.16, 9.2]} /><meshStandardMaterial color={BOARD_WOOD} /></mesh>
       {table.position.board.map((rank, row) => rank.map((piece, column) => {
         const x = column - 3.5;
         const z = row - 3.5;

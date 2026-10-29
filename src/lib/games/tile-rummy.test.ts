@@ -201,6 +201,22 @@ describe("tile rummy deal", () => {
   it("shares the table as one emoji row per meld", () => {
     const tiles: Tile[] = [c(1, 7), a(2, 7), t(3, 7)];
     const game = state({ hands: [[], []], table: [{ tiles, shape: "group" }], status: "over", winner: 0 });
-    expect(shareGrid(game, "숫자 타일", "승리")).toBe("숫자 타일\n승리\n🟥7 🟧7 🟦7");
+    expect(shareGrid(game, "숫자 타일", "승리")).toBe("숫자 타일 #1\n승리\n🟥7 🟧7 🟦7");
+  });
+
+  it("puts the table number in the copy and never a hand", () => {
+    const game = state({ hands: [[c(1, 11)], [a(2, 12)]], table: [], status: "over", winner: 0, seed: 4242 });
+    const copy = shareGrid(game, "숫자 타일", "승리");
+    expect(copy.split("\n")[0]).toBe("숫자 타일 #4242");
+    expect(copy).not.toContain("11");
+    expect(copy).not.toContain("12");
+    const daily = state({ hands: [[], []], table: [], status: "over", winner: 0, mode: "daily", dateKey: "2026-10-29" });
+    expect(shareGrid(daily, "숫자 타일", "승리").split("\n")[0]).toBe("숫자 타일 2026-10-29");
+  });
+
+  it("links today's table win to the existing DailyStreak store only", () => {
+    const view = readFileSync(new URL("../../components/games/TileRummy.tsx", import.meta.url), "utf8");
+    expect(view).toContain("recordDailyWin(GAME_ID, game.dateKey, previousDayKey(game.dateKey))");
+    expect(view.match(/localStorage\.setItem/g)).toHaveLength(1);
   });
 });
