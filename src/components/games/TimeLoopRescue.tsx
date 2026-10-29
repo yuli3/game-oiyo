@@ -355,21 +355,21 @@ export default function TimeLoopRescue({ locale = "ko" }: { locale?: Locale | st
             <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
           </button>
         </div>
-        <div className="space-y-4 selection:bg-teal-300 selection:text-teal-950">
+        <div className="space-y-4 selection:bg-terrain-water selection:text-accent-foreground">
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" aria-label={t.mission}>
-            {[[t.loop,`${mission.loop} / ${TIME_LOOP_MAX_LOOPS}`],[t.time,`${remaining.toFixed(1)}s`],[t.echoes,String(mission.recordings.length)],[t.mission,label]].map(([name,value])=><div key={name} className="rounded-xl bg-slate-950 px-3 py-2 text-center shadow-[0_8px_24px_rgba(2,8,23,.24)]"><strong className="block tabular-nums text-lg text-white">{value}</strong><span className="text-[11px] font-bold text-slate-300">{name}</span></div>)}
+            {[[t.loop,`${mission.loop} / ${TIME_LOOP_MAX_LOOPS}`],[t.time,`${remaining.toFixed(1)}s`],[t.echoes,String(mission.recordings.length)],[t.mission,label]].map(([name,value])=><div key={name} className="rounded-xl bg-foreground px-3 py-2 text-center shadow-[0_8px_24px_rgba(2,8,23,.24)]"><strong className="block tabular-nums text-lg text-white">{value}</strong><span className="text-[11px] font-bold text-background">{name}</span></div>)}
           </div>
-          <div className="relative overflow-hidden rounded-2xl bg-slate-950 shadow-[0_18px_50px_rgba(2,8,23,.32)]">
-            <canvas ref={canvasRef} width={960} height={540} tabIndex={0} onBlur={clearInput} aria-label={t.area} className="block aspect-video w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-teal-300" />
-            {status === "paused" && mission.phase === "playing" && <button type="button" onClick={togglePause} className="absolute inset-0 grid place-items-center bg-slate-950/70 text-lg font-bold text-white">{t.resume}</button>}
-            {mission.phase !== "playing" && <div role="status" className="absolute inset-x-0 bottom-0 bg-slate-950/90 px-4 py-3 text-center font-bold text-white">{mission.phase === "rescued" ? t.won : t.failed}</div>}
-            {status === "idle" && <button type="button" onClick={start} className="absolute inset-0 m-auto h-14 w-fit rounded-xl bg-teal-300 px-8 font-black text-teal-950 shadow-[0_12px_32px_rgba(45,212,191,.28)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">{t.start}</button>}
+          <div className="relative overflow-hidden rounded-2xl bg-foreground shadow-[0_18px_50px_rgba(2,8,23,.32)]">
+            <canvas ref={canvasRef} width={960} height={540} tabIndex={0} onBlur={clearInput} aria-label={t.area} className="block aspect-video w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-terrain-water" />
+            {status === "paused" && mission.phase === "playing" && <button type="button" onClick={togglePause} className="absolute inset-0 grid place-items-center bg-foreground/70 text-lg font-bold text-white">{t.resume}</button>}
+            {mission.phase !== "playing" && <div role="status" className="absolute inset-x-0 bottom-0 bg-foreground/90 px-4 py-3 text-center font-bold text-white">{mission.phase === "rescued" ? t.won : t.failed}</div>}
+            {status === "idle" && <button type="button" onClick={start} className="absolute inset-0 m-auto h-14 w-fit rounded-xl bg-terrain-water px-8 font-black text-accent-foreground shadow-[0_12px_32px_rgba(45,212,191,.28)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">{t.start}</button>}
           </div>
-          <p className="min-h-12 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-100" aria-live="polite">{message}</p>
+          <p className="min-h-12 rounded-xl bg-foreground px-4 py-3 text-sm font-semibold text-background" aria-live="polite">{message}</p>
           <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={commit} disabled={status!=="playing"||mission.currentRecording.length===0||mission.phase!=="playing"} className="min-h-11 flex-1 rounded-xl bg-teal-300 px-4 font-black text-teal-950 disabled:cursor-not-allowed disabled:opacity-40">{t.record}</button>
-            <button type="button" onClick={togglePause} disabled={status==="idle"||mission.phase!=="playing"} className="min-h-11 rounded-xl bg-slate-800 px-4 font-bold text-white disabled:opacity-40">{status==="paused"?t.resume:t.pause}</button>
-            <button type="button" onClick={reset} className="min-h-11 rounded-xl bg-slate-800 px-4 font-bold text-white">{t.reset}</button>
+            <button type="button" onClick={commit} disabled={status!=="playing"||mission.currentRecording.length===0||mission.phase!=="playing"} className="min-h-11 flex-1 rounded-xl bg-terrain-water px-4 font-black text-accent-foreground disabled:cursor-not-allowed disabled:opacity-40">{t.record}</button>
+            <button type="button" onClick={togglePause} disabled={status==="idle"||mission.phase!=="playing"} className="min-h-11 rounded-xl bg-secondary-foreground px-4 font-bold text-white disabled:opacity-40">{status==="paused"?t.resume:t.pause}</button>
+            <button type="button" onClick={reset} className="min-h-11 rounded-xl bg-secondary-foreground px-4 font-bold text-white">{t.reset}</button>
             <button
               type="button"
               data-time-loop-share="true"
@@ -378,7 +378,7 @@ export default function TimeLoopRescue({ locale = "ko" }: { locale?: Locale | st
                 const url = `${window.location.origin}${window.location.pathname}#ghost=${encodeURIComponent(shareCode)}`;
                 void navigator.clipboard?.writeText(url).then(() => setShareNote(weekly.copied), () => setShareNote(url));
               }}
-              className="min-h-11 rounded-xl bg-violet-300 px-4 font-black text-violet-950 disabled:opacity-40"
+              className="min-h-11 rounded-xl bg-terrain-water px-4 font-black text-accent-foreground disabled:opacity-40"
             >{weekly.share}</button>
           </div>
           <div className="mx-auto grid w-fit grid-cols-3 gap-2" aria-label={t.hint}>
@@ -386,7 +386,7 @@ export default function TimeLoopRescue({ locale = "ko" }: { locale?: Locale | st
             <DirectionButton label="◀" direction="left" accessibleLabel={boardText.left} setDirection={setDirection}/><DirectionButton label="▼" direction="down" accessibleLabel={boardText.down} setDirection={setDirection}/><DirectionButton label="▶" direction="right" accessibleLabel={boardText.right} setDirection={setDirection}/>
           </div>
           <p className="text-center text-xs font-medium text-muted-foreground">{t.hint}</p>
-          <p className="text-center text-xs font-bold text-violet-700" data-time-loop-week={timeLoopWeekLabel(weekSeedRef.current)}>
+          <p className="text-center text-xs font-bold text-primary" data-time-loop-week={timeLoopWeekLabel(weekSeedRef.current)}>
             {weekly.week} {timeLoopWeekLabel(weekSeedRef.current)}
             {badge ? ` · ${weekly.badge}` : ""}
             {rival.length ? ` · ${weekly.rival}` : ""}
@@ -399,5 +399,5 @@ export default function TimeLoopRescue({ locale = "ko" }: { locale?: Locale | st
 }
 
 function DirectionButton({ label, accessibleLabel, direction, setDirection }: { label:string; accessibleLabel:string; direction:Direction; setDirection:(direction:Direction,pressed:boolean)=>void }) {
-  return <button type="button" aria-label={accessibleLabel} onPointerDown={(event)=>{event.currentTarget.setPointerCapture(event.pointerId);setDirection(direction,true);}} onPointerUp={()=>setDirection(direction,false)} onPointerCancel={()=>setDirection(direction,false)} onLostPointerCapture={()=>setDirection(direction,false)} onPointerLeave={()=>setDirection(direction,false)} className="touch-none h-14 w-14 rounded-xl bg-slate-800 text-lg font-black text-white shadow-[0_7px_18px_rgba(2,8,23,.26)] active:translate-y-px active:bg-teal-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-300">{label}</button>;
+  return <button type="button" aria-label={accessibleLabel} onPointerDown={(event)=>{event.currentTarget.setPointerCapture(event.pointerId);setDirection(direction,true);}} onPointerUp={()=>setDirection(direction,false)} onPointerCancel={()=>setDirection(direction,false)} onLostPointerCapture={()=>setDirection(direction,false)} onPointerLeave={()=>setDirection(direction,false)} className="touch-none h-14 w-14 rounded-xl bg-secondary-foreground text-lg font-black text-white shadow-[0_7px_18px_rgba(2,8,23,.26)] active:translate-y-px active:bg-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-terrain-water">{label}</button>;
 }

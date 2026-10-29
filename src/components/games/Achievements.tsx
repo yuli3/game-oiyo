@@ -146,6 +146,9 @@ const ACHIEVEMENT_COPY: Record<string, Record<UILocale, { title: string; desc: s
   curator: {
     ko:{title:"게임 큐레이터",desc:"서로 다른 30개 게임을 플레이하세요."},en:{title:"Game Curator",desc:"Play 30 different games."},ja:{title:"ゲームキュレーター",desc:"異なる30作品をプレイしましょう。"},zh:{title:"游戏策展人",desc:"游玩30款不同游戏。"},fr:{title:"Curateur de jeux",desc:"Jouez à 30 jeux différents."},es:{title:"Curador de juegos",desc:"Juega a 30 juegos distintos."},
   },
+  "tile-rummy-wins-10": {
+    ko:{title:"숫자 타일 열 판",desc:"숫자 타일에서 10승을 거두세요."},en:{title:"Ten Tile Tables",desc:"Win 10 games of Number Tiles."},ja:{title:"数字タイル10勝",desc:"数字タイルで10勝しましょう。"},zh:{title:"数字牌十胜",desc:"在数字牌中赢得10局。"},fr:{title:"Dix tables de tuiles",desc:"Remportez 10 parties de Tuiles chiffrées."},es:{title:"Diez mesas de fichas",desc:"Gana 10 partidas de Fichas numéricas."},
+  },
   "versatile-finisher": {
     ko:{title:"다재다능한 완주자",desc:"서로 다른 5개 게임을 끝까지 플레이하세요."},en:{title:"Versatile Finisher",desc:"Finish 5 different games."},ja:{title:"多才な完走者",desc:"異なる5作品を最後までプレイしましょう。"},zh:{title:"多面完赛者",desc:"完成5款不同游戏。"},fr:{title:"Finisseur polyvalent",desc:"Terminez 5 jeux différents."},es:{title:"Finalista versátil",desc:"Termina 5 juegos distintos."},
   },

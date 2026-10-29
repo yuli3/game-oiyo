@@ -488,10 +488,16 @@ export function tileMark(tile: Tile, role?: Assignment): string {
 }
 
 /** Emoji rows, one meld per line. No image. */
+/** Table number for the copied result: the date for today's table, the seed otherwise. */
+export function tableNumber(state: RummyState): string {
+  return state.mode === "daily" && state.dateKey ? state.dateKey : `#${state.seed}`;
+}
+
+/** Copied result: heading with table number, outcome, then the public table only (never a hand). */
 export function shareGrid(state: RummyState, heading: string, outcome: string): string {
   const rows = state.table.map((meld) => {
     const check = validateMeld(meld);
     return meld.tiles.map((tile, index) => tileMark(tile, check.ok ? check.roles[index] : undefined)).join(" ");
   });
-  return [heading, outcome, ...rows].join("\n");
+  return [`${heading} ${tableNumber(state)}`, outcome, ...rows].join("\n");
 }

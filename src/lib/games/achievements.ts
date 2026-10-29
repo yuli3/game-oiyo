@@ -23,6 +23,8 @@ export interface AchievementSnapshot {
   bestRecordCount: number;
   bestDailyStreak: number;
   bestWinStreak: number;
+  /** Number-tile wins, read from the existing win/loss record only. */
+  tileRummyWins: number;
 }
 
 export type AchievementCategory = "milestone" | "streak" | "collection" | "record";
@@ -64,6 +66,7 @@ export const ACHIEVEMENTS: readonly AchievementDef[] = [
   { id: "versatile-finisher", category: "collection", icon: "🏁", metric: "distinctGamesCleared", target: 5 },
   { id: "arcade-atlas", category: "collection", icon: "🌏", metric: "distinctGamesOpened", target: 40 },
 
+  { id: "tile-rummy-wins-10", category: "record", icon: "🀄", metric: "tileRummyWins", target: 10 },
   { id: "record-holder", category: "record", icon: "⏱️", metric: "bestRecordCount", target: 1 },
   { id: "record-cabinet", category: "record", icon: "📚", metric: "bestRecordCount", target: 5 },
   { id: "record-archive", category: "record", icon: "💎", metric: "bestRecordCount", target: 15 },
@@ -143,5 +146,6 @@ export function buildAchievementSnapshot(): AchievementSnapshot {
     bestRecordCount,
     bestDailyStreak,
     bestWinStreak,
+    tileRummyWins: records["tile-rummy"]?.w ?? 0,
   };
 }
