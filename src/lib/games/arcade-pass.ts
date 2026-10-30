@@ -1042,6 +1042,20 @@ export const MISSION_CATALOG: Array<{
     goal: 1,
     xpReward: 50,
   },
+  {
+    id: "stacklands-village-survive-1",
+    gameSlug: "stacklands-village",
+    title: {
+      ko: "스택랜드 카드 빌리지에서 카드 스택 조합으로 6번의 달 주기 생존하기",
+      en: "Survive 6 Moon cycles with card stacking in Stacklands Card Village",
+      ja: "スタックランド・カードビレッジで6回の月周期を生き延びる",
+      zh: "在堆叠大陆卡牌村庄中通过卡牌堆叠存活 6 个月度周期",
+      fr: "Survivez à 6 cycles lunaires dans Stacklands Card Village",
+      es: "Sobrevive a 6 ciclos lunares en Stacklands Card Village",
+    },
+    goal: 1,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {

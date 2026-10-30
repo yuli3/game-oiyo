@@ -6720,4 +6720,42 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "stacklands-village": {
+    origin: {
+      ko: "『스택랜드 카드 빌리지 (Stacklands Card Village)』는 Sokpop Collective의 대표작 『Stacklands』에서 영감을 받아 구현한 카드 드래그 & 스택 조합 기반의 마을 경영 서바이벌 게임입니다. 작업대 위에서 카드를 자유롭게 포개어 자원을 수확하고, 건축과 인구 번영을 이뤄내며 매 달(Moon)마다 돌아오는 식량 배급과 고블린 침략을 이겨내세요.",
+      en: "Stacklands Card Village is a card-stacking village builder inspired by Sokpop's hit indie title Stacklands. Drag and stack cards to harvest resources, discover crafting recipes, expand your population, and survive monthly food consumption and goblin raids.",
+      ja: "『スタックランド・カードビレッジ（Stacklands Card Village）』は、名作『Stacklands』に着想を得たカード重ね合わせ村経営シミュレーションです。作業台の上でカードを重ねて資源を集め、家や自警団をクラフトし、毎月の食料配給とゴ布林の襲撃を生き延びましょう。",
+      zh: "《堆叠大陆卡牌村庄（Stacklands Card Village）》灵感源自独立名作《Stacklands》，基于卡牌堆叠机制构建。在作业桌面上叠放卡牌采集资源、合成建筑与训练民兵，抵御每月食粮消耗与哥布林强盗的进犯。",
+      fr: "Stacklands Card Village est un jeu de gestion de village par superposition de cartes inspiré de Stacklands.",
+      es: "Stacklands Card Village es un constructor de aldeas mediante apilamiento de cartas inspirado en Stacklands.",
+    },
+    how: {
+      ko: "1) 주민 카드를 클릭한 뒤 나무·바위·베리 덤불 카드에 클릭하여 포개면 게이지가 차오르며 목재, 석재, 열매를 수확합니다. 2) [주민 + 목재 2 + 석재]를 포개면 초가집이 완성되며, [주민 + 초가집]으로 인구를 늘릴 수 있습니다. 3) 달 타이머가 100%에 도달할 때마다 주민 1명당 열매 1개씩 소비되므로 꾸준히 식량을 확보하고, 코인을 모아 부스터 팩을 개봉해 새 자원을 얻으세요.",
+      en: "1) Click a Villager and stack them onto Trees, Rocks, or Berry Bushes to harvest materials. 2) Combine [Villager + 2 Wood + 1 Stone] to build a House, and [Villager + House] to grow population. 3) At the end of each Moon, each villager consumes 1 Berry. Buy Booster Packs with coins to unlock new resources.",
+      ja: "1) 村人を木や岩、ベリーの茂みに重ねて収穫します。2) [村人＋木材2＋石材]で家を建て、[村人＋家]で人口を増やします。3) 月の終わりごとに村人1人につきベリー1個を消費するため食糧を切らさないようにしましょう。",
+      zh: "1) 将村民卡牌叠放至树木、岩石或浆果丛上采集资源。2) 将 [村民 + 2 木材 + 1 石材] 叠放即可建造房屋，[村民 + 房屋] 繁衍人口。3) 月度结束时每位村民消耗 1 颗浆果，使用金币购买扩展包补充资源。",
+      fr: "1) Empilez les villageois sur les ressources pour récolter. 2) Combinez les ingrédients pour bâtir des maisons et entraîner la milice. 3) Veillez à nourrir vos villageois à chaque lune.",
+      es: "1) Apila aldeanos sobre recursos para recolectar. 2) Combina cartas para construir casas y entrenar milicias. 3) Alimenta a tus aldeanos en cada ciclo lunar.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "식량이 부족할 때 주민이 굶어 죽는 것을 어떻게 방지하나요?",
+          en: "How do I prevent my villagers from starving when food runs low?",
+          ja: "食糧が不足したとき、村人の餓死を防ぐにはどうすればよいですか？",
+          zh: "食物短缺时如何避免村民饿死？",
+          fr: "Comment éviter la famine lorsque la nourriture vient à manquer ?",
+          es: "¿Cómo evito la inanición si escasea la comida?",
+        },
+        a: {
+          ko: "베리 덤불에 주민을 상시 배치해 열매를 비축하세요. 덤불이 소진되면 우측 상단의 『부스터 팩 구매』를 통해 새로운 베리 덤불이나 열매를 뽑을 수 있습니다. 잉여 목재나 석재는 『선택 카드 판매』로 코인화하여 부스터 팩을 구매하세요.",
+          en: "Keep a villager dedicated to foraging Berry Bushes to stockpile berries before the Moon finishes. If you run out of bushes, sell surplus wood or stone for coins and purchase Booster Packs to discover more bushes.",
+          ja: "ベリーの茂みに村人を常駐させて食料を備蓄しましょう。茂みが尽きたら不要な木材や石材を売却してブースターパックを購入してください。",
+          zh: "常态化安排村民采集浆果丛备足粮食。若丛林枯竭，可点击右上角“出售选中卡牌”将多余木石变现，购买扩展包开出新浆果。",
+          fr: "Gardez toujours un villageois assigné à la cueillette et vendez les surplus pour racheter des paquets de cartes.",
+          es: "Mantén a un aldeano recolectando bayas y vende recursos sobrantes para comprar nuevos sobres de cartas.",
+        },
+      },
+    ],
+  },
 };

@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import StacklandsVillage from "../../components/games/StacklandsVillage";
+import GameGuide from "../../components/GameGuide.astro";
+import { locales, type Locale } from "../../lib/i18n";
+
+export function getStaticPaths() {
+  return locales.map((l) => ({ params: { lang: l === "en" ? undefined : l } }));
+}
+
+const locale: Locale = (Astro.params.lang as Locale) || "en";
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "스택랜드 카드 빌리지 — 카드 합성 & 마을 경영 생존 | OIYO Game",
+    description:
+      "주민을 나무·바위에 포개어 자원을 채집하고 집과 민병대를 건축하세요. 매달 돌아오는 식량 배급과 고블린 습격을 막아내는 카드 빌리지 시뮬레이터.",
+  },
+  en: {
+    title: "Stacklands Card Village — Card Stacking Village Survival | OIYO Game",
+    description:
+      "Stack villagers onto trees and rocks to gather resources, craft houses and militia, and survive monthly food rationing and goblin raids.",
+  },
+  ja: {
+    title: "スタックランド・カードビレッジ — カード重ね合わせ村経営サバイバル | OIYO Game",
+    description:
+      "村人を木や岩に重ねて資材を集め、家や自警団をクラフトしよう。毎月の食糧配給とゴブリン襲撃を乗り越えるカード経営ゲーム。",
+  },
+  zh: {
+    title: "堆叠大陆卡牌村庄 — 卡牌堆叠合成与生存建造 | OIYO Game",
+    description:
+      "将村民堆叠至树木与岩石上采集资源，建造民居与民兵，抵御每月度食粮消耗与哥布林突袭的卡牌生存建造游戏。",
+  },
+  fr: {
+    title: "Stacklands Card Village — Survie et Gestion de Village par Cartes | OIYO Game",
+    description:
+      "Empilez vos villageois sur les ressources pour récolter bois et pierre, bâtissez des maisons et survivez aux famines et aux gobelins.",
+  },
+  es: {
+    title: "Stacklands Card Village — Supervivencia y Gestión con Cartas | OIYO Game",
+    description:
+      "Apila aldeanos sobre árboles y rocas para recolectar recursos, construye casas y sobrevive a las raciones mensuales y asaltos de duendes.",
+  },
+};
+
+const m = meta[locale] || meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <StacklandsVillage client:load locale={locale} />
+  <GameGuide slug="stacklands-village" locale={locale} name={m.title.split(" — ")[0]} />
+</BaseLayout>
