@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Canvas } from "@react-three/fiber";
+import { useGhostTimeAttackPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import {
   OFFICIAL_TRACKS,
   createInitialCarState,
@@ -49,6 +50,12 @@ export default function CyberTrack3D({ locale = "ko" }: CyberTrack3DProps) {
   const [bestLapMs, setBestLapMs] = useState<number | null>(null);
   const [ghostFrames, setGhostFrames] = useState<GhostFrame[]>([]);
   const [copySuccess, setCopySuccess] = useState<boolean>(false);
+
+  const {
+    liveDelta,
+    recordLap: recordGhostLap,
+    updateProgress: updateGhostProgress,
+  } = useGhostTimeAttackPro(`cyber-track-3d-${track.id}`);
 
   // Active key state
   const keysRef = useRef<Record<string, boolean>>({});
@@ -141,10 +148,13 @@ export default function CyberTrack3D({ locale = "ko" }: CyberTrack3DProps) {
 
         if (checkpointPassed) {
           playCheckpointSound();
+          MobileHapticsPro.light();
         }
 
         if (isLapFinished) {
           playFinishSound();
+          MobileHapticsPro.impact();
+          recordGhostLap(nextCar.lapTimeMs / 1000);
           // Check if new personal best
           const finishedTime = nextCar.lapTimeMs;
           if (!bestLapMs || finishedTime < bestLapMs) {
@@ -162,8 +172,12 @@ export default function CyberTrack3D({ locale = "ko" }: CyberTrack3DProps) {
           }
         }
 
-        // Record ghost frame every 100ms
+        // Record ghost frame every 100ms & update pro ghost engine
         if (nextCar.status === "racing") {
+          const totalCp = Math.max(1, track.checkpoints.length);
+          const progress = (nextCar.currentCheckpointIdx + 1) / totalCp;
+          updateGhostProgress(progress, nextCar.lapTimeMs / 1000);
+
           const lastRecorded =
             recordedGhostRef.current[recordedGhostRef.current.length - 1];
           if (!lastRecorded || nextCar.lapTimeMs - lastRecorded.timeMs >= 100) {
@@ -262,6 +276,18 @@ export default function CyberTrack3D({ locale = "ko" }: CyberTrack3DProps) {
               {bestLapMs && (
                 <span className="text-xs font-semibold text-foreground">
                   PB: {formatLapTime(bestLapMs)}
+                </span>
+              )}
+              {liveDelta && (
+                <span
+                  className={`mt-1 inline-flex w-fit rounded-md border px-2 py-0.5 text-xs font-black ${
+                    liveDelta.isAhead
+                      ? 'border-success/30 bg-success/10 text-success'
+                      : 'border-destructive/30 bg-destructive/10 text-destructive'
+                  }`}
+                >
+                  PB {liveDelta.deltaSec <= 0 ? '' : '+'}
+                  {liveDelta.deltaSec.toFixed(2)}s
                 </span>
               )}
             </div>

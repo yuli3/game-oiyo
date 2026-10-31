@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import {
   initGame,
   toggleCardSelection,
@@ -87,6 +88,67 @@ const RANK_LABELS: Record<number, string> = {
   13: "K",
   14: "A",
 };
+
+function TiltSurgeCardButton({
+  card,
+  isSelected,
+  isDebuffed,
+  disabled,
+  locale,
+  onClick,
+}: {
+  card: SurgeCard;
+  isSelected: boolean;
+  isDebuffed: boolean;
+  disabled: boolean;
+  locale: string;
+  onClick: () => void;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.15);
+        MobileHapticsPro.light();
+        onClick();
+      }}
+      disabled={disabled}
+      className={`relative flex h-28 w-18 flex-col justify-between rounded-xl border-2 bg-card p-2 shadow-sm transition-all will-change-transform transform-(--card-tilt) sm:h-32 sm:w-20 ${
+        isSelected
+          ? "-translate-y-4 border-primary shadow-md ring-2 ring-primary/40"
+          : "border-border hover:-translate-y-1 hover:border-primary/50"
+      } ${isDebuffed ? "opacity-60" : ""}`}
+    >
+      {/* Top Rank & Suit */}
+      <div className={`flex items-center gap-1 font-black ${SUIT_COLORS[card.suit]}`}>
+        <span className="text-sm sm:text-base">{RANK_LABELS[card.rank]}</span>
+        <span className="text-xs sm:text-sm">{SUIT_ICONS[card.suit]}</span>
+      </div>
+
+      {/* Center Large Suit Icon */}
+      <div className={`m-auto text-3xl font-black ${SUIT_COLORS[card.suit]}`}>
+        {SUIT_ICONS[card.suit]}
+      </div>
+
+      {/* Bottom Rank (Inverted) */}
+      <div className={`self-end text-xs font-bold ${SUIT_COLORS[card.suit]}`}>
+        {RANK_LABELS[card.rank]}
+      </div>
+
+      {/* Debuff Banner */}
+      {isDebuffed && (
+        <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-background/80 font-black text-destructive text-xs uppercase">
+          {locale === "ko" ? "무효" : "Debuff"}
+        </div>
+      )}
+    </button>
+  );
+}
 
 export default function CardSurge({ locale = "ko" }: CardSurgeProps) {
   const [state, setState] = useState<CardSurgeState>(() => initGame());
@@ -193,10 +255,12 @@ export default function CardSurge({ locale = "ko" }: CardSurgeProps) {
           const step = breakdown.steps[stepIdx];
           setActiveStep(step);
           playScoreStepSound(stepIdx);
+          MobileHapticsPro.light();
           stepIdx++;
         } else {
           clearInterval(interval);
           playBigScoreSound();
+          MobileHapticsPro.impact();
           triggerShake(breakdown.totalScore > 500 ? 0.6 : 0.3);
           setTimeout(() => {
             setIsScoringAnim(false);
@@ -442,40 +506,15 @@ export default function CardSurge({ locale = "ko" }: CardSurgeProps) {
             );
 
             return (
-              <button
+              <TiltSurgeCardButton
                 key={card.id}
-                type="button"
-                onClick={() => handleCardClick(card.id)}
+                card={card}
+                isSelected={isSelected}
+                isDebuffed={isDebuffed}
                 disabled={isScoringAnim || state.phase !== "play"}
-                className={`relative flex h-28 w-18 flex-col justify-between rounded-xl border-2 bg-card p-2 shadow-sm transition-all sm:h-32 sm:w-20 ${
-                  isSelected
-                    ? "-translate-y-4 border-primary shadow-md ring-2 ring-primary/40"
-                    : "border-border hover:-translate-y-1 hover:border-primary/50"
-                } ${isDebuffed ? "opacity-60" : ""}`}
-              >
-                {/* Top Rank & Suit */}
-                <div className={`flex items-center gap-1 font-black ${SUIT_COLORS[card.suit]}`}>
-                  <span className="text-sm sm:text-base">{RANK_LABELS[card.rank]}</span>
-                  <span className="text-xs sm:text-sm">{SUIT_ICONS[card.suit]}</span>
-                </div>
-
-                {/* Center Large Suit Icon */}
-                <div className={`m-auto text-3xl font-black ${SUIT_COLORS[card.suit]}`}>
-                  {SUIT_ICONS[card.suit]}
-                </div>
-
-                {/* Bottom Rank (Inverted) */}
-                <div className={`self-end text-xs font-bold ${SUIT_COLORS[card.suit]}`}>
-                  {RANK_LABELS[card.rank]}
-                </div>
-
-                {/* Debuff Banner */}
-                {isDebuffed && (
-                  <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-background/80 font-black text-destructive text-xs uppercase">
-                    {locale === "ko" ? "무효" : "Debuff"}
-                  </div>
-                )}
-              </button>
+                locale={locale}
+                onClick={() => handleCardClick(card.id)}
+              />
             );
           })}
         </div>

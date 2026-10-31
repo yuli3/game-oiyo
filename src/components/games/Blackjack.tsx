@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Maximize2, Minimize2, Share2, Volume2, VolumeX } from "lucide-react";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import { GameContainer, PlayingCard } from "../ui/game/GamePrimitives";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
@@ -37,6 +38,41 @@ const getTierName = (bankroll: number, locale: string) => {
   if (bankroll >= 500) return locale === "ko" ? "하이롤러 주니어" : "High Roller";
   return locale === "ko" ? "신입 베터" : "Rookie";
 };
+
+function TiltPlayerCard({
+  card,
+  index,
+  isNaturalCard,
+  reducedMotion,
+}: {
+  card: { suit: any; value: any };
+  index: number;
+  isNaturalCard: boolean;
+  reducedMotion: boolean;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <span
+      style={{
+        '--card-tilt': transformCss,
+        ...(!reducedMotion ? { animationDelay: `${index * 70}ms` } : {}),
+      } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.12);
+        MobileHapticsPro.light();
+      }}
+      className={`inline-block cursor-pointer will-change-transform transform-(--card-tilt) ${
+        !reducedMotion ? "oiyo-card-deal" : ""
+      } ${
+        isNaturalCard ? "ring-4 ring-primary rounded-xl shadow-xl shadow-primary/30 animate-pulse z-10" : ""
+      }`}
+    >
+      <PlayingCard suit={card.suit} value={card.value} className="border-2 border-primary shadow-md" />
+    </span>
+  );
+}
 
 const Blackjack = ({ locale = "ko" }: { locale?: string }) => {
   const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
@@ -161,12 +197,26 @@ const Blackjack = ({ locale = "ko" }: { locale?: string }) => {
     }
   }, [activeRoundBet, game, tone]);
 
-  const hit = useCallback(() => { if (paused || game.status !== "playing") return; const next = hitBlackjack(game); if (next !== game) { tone("card"); setGame(next); } }, [game, paused, tone]);
-  const stand = useCallback(() => { if (paused || game.status !== "playing") return; setGame(standBlackjack(game)); }, [game, paused]);
+  const hit = useCallback(() => {
+    if (paused || game.status !== "playing") return;
+    const next = hitBlackjack(game);
+    if (next !== game) {
+      tone("card");
+      MobileHapticsPro.light();
+      setGame(next);
+    }
+  }, [game, paused, tone]);
+
+  const stand = useCallback(() => {
+    if (paused || game.status !== "playing") return;
+    MobileHapticsPro.light();
+    setGame(standBlackjack(game));
+  }, [game, paused]);
 
   const double = useCallback(() => {
     if (paused || game.status !== "playing" || game.player.length !== 2) return;
     tone("chip");
+    MobileHapticsPro.impact();
     const next = doubleBlackjack(game);
     setGame(next);
   }, [game, paused, tone]);
@@ -343,9 +393,13 @@ const Blackjack = ({ locale = "ko" }: { locale?: string }) => {
               {game.player.map((card, index) => {
                 const isNaturalCard = isNatural && !reducedMotion;
                 return (
-                  <span key={`${card.suit}-${card.value}-${index}`} className={`${!reducedMotion ? "oiyo-card-deal" : ""} ${isNaturalCard ? "ring-4 ring-primary rounded-xl shadow-xl shadow-primary/30 animate-pulse z-10" : ""}`} style={!reducedMotion ? { animationDelay: `${index * 70}ms` } : undefined}>
-                    <PlayingCard suit={card.suit} value={card.value} className="border-2 border-primary shadow-md" />
-                  </span>
+                  <TiltPlayerCard
+                    key={`${card.suit}-${card.value}-${index}`}
+                    card={card}
+                    index={index}
+                    isNaturalCard={isNaturalCard}
+                    reducedMotion={reducedMotion}
+                  />
                 );
               })}
             </div>

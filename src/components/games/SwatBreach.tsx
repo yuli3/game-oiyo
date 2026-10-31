@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useDynamicDifficultyPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import {
   loadArcadePassProgress,
   reportMissionProgress,
@@ -189,6 +190,14 @@ export default function SwatBreach({ locale = "ko" }: Props) {
   const [uiHostagesRescued, setUiHostagesRescued] = useState(0);
   const [uiHostagesTotal, setUiHostagesTotal] = useState(1);
 
+  const {
+    flowState,
+    currentMultiplier,
+    recordHit: recordDdaHit,
+    recordKill: recordDdaKill,
+    recordDeath: recordDdaDeath,
+  } = useDynamicDifficultyPro();
+
   const ensureAudio = useCallback(() => {
     if (typeof window === "undefined") return null;
     if (!audioCtxRef.current) {
@@ -325,12 +334,31 @@ export default function SwatBreach({ locale = "ko" }: Props) {
         const prevSuspects = st.suspects.filter((s) => !s.neutralized).length;
         const events = stepSwatBreach(st, dt);
 
-        if (events.flashDetonated) playSoundEffect("flash");
-        else if (events.doorBreached) playSoundEffect("door");
-        else if (events.shotsFired > 0) playSoundEffect("shot");
+        if (events.flashDetonated) {
+          playSoundEffect("flash");
+          MobileHapticsPro.impact();
+        } else if (events.doorBreached) {
+          playSoundEffect("door");
+          MobileHapticsPro.light();
+        } else if (events.shotsFired > 0) {
+          playSoundEffect("shot");
+          MobileHapticsPro.light();
+        }
 
         const nowSuspects = st.suspects.filter((s) => !s.neutralized).length;
-        if (st.phase !== prevPhase || nowSuspects !== prevSuspects) {
+        if (nowSuspects < prevSuspects) {
+          recordDdaKill();
+          MobileHapticsPro.light();
+        }
+
+        const currentPhase = st.phase as string;
+        if (currentPhase !== prevPhase || nowSuspects !== prevSuspects) {
+          if (currentPhase === "victory") {
+            MobileHapticsPro.impact();
+          } else if (currentPhase === "failed") {
+            recordDdaDeath();
+            MobileHapticsPro.heavy();
+          }
           syncUi();
         }
       }
@@ -585,6 +613,17 @@ export default function SwatBreach({ locale = "ko" }: Props) {
           <div className="flex items-center gap-2">
             <span className="rounded-md bg-primary/15 px-2.5 py-0.5 text-xs font-bold text-primary">
               {spec.title[lang]}
+            </span>
+            <span
+              className={`rounded-full border px-2.5 py-0.5 font-mono text-xs font-black ${
+                flowState === 'flow'
+                  ? 'border-primary/40 bg-primary/20 text-primary'
+                  : flowState === 'danger'
+                    ? 'border-destructive/40 bg-destructive/20 text-destructive'
+                    : 'border-chart-3/40 bg-chart-3/20 text-chart-3'
+              }`}
+            >
+              DDA: {flowState.toUpperCase()}
             </span>
             <span className="text-xs font-bold text-muted-foreground">
               {uiPhase === "planning"

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Share2 } from 'lucide-react';
 import { Canvas } from '@react-three/fiber';
+import { useGhostTimeAttackPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import CyberHighway3DScene from './CyberHighway3DScene';
 import {
   type CyberHighwayState,
@@ -116,6 +117,12 @@ export default function CyberHighway3D() {
   const mutedRef = useRef(muted);
   mutedRef.current = muted;
 
+  const {
+    liveDelta,
+    recordLap: recordGhostLap,
+    updateProgress: updateGhostProgress,
+  } = useGhostTimeAttackPro('cyber-highway-3d');
+
   const audioRef = useRef<ReturnType<typeof createCyberAudio> | null>(null);
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal();
 
@@ -149,28 +156,26 @@ export default function CyberHighway3D() {
         const current = stateRef.current;
         const next = updateCyberHighway(current, dt);
 
-        // Sound triggers
+        // Sound & Haptics triggers
         if (!mutedRef.current) {
           if (next.hp < current.hp) {
             audioRef.current?.playCrash();
+            MobileHapticsPro.heavy();
           } else if (next.credits > current.credits) {
             audioRef.current?.playCoin();
+            MobileHapticsPro.light();
           } else if (next.isBoosting && !current.isBoosting) {
             audioRef.current?.playNitro();
+            MobileHapticsPro.impact();
           }
         }
 
-        // Haptic feedback
-        if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-          try {
-            if (next.hp < current.hp) {
-              navigator.vibrate(next.gameOver ? [50, 50, 100] : [30, 30, 60]);
-            } else if (next.credits > current.credits) {
-              navigator.vibrate(15);
-            } else if (next.isBoosting && !current.isBoosting) {
-              navigator.vibrate(25);
-            }
-          } catch {}
+        // Live ghost time attack tracking
+        const normProgress = Math.min(1, next.distance / 1000);
+        updateGhostProgress(normProgress, next.distance / Math.max(1, next.speed * 0.28));
+        if (next.gameOver && !current.gameOver) {
+          recordGhostLap(next.distance / Math.max(1, next.speed * 0.28));
+          MobileHapticsPro.heavy();
         }
 
         setGameState(next);
@@ -273,6 +278,18 @@ export default function CyberHighway3D() {
             <div className="text-xs text-muted-foreground mt-0.5">
               거리: <span className="font-bold text-foreground">{Math.round(gameState.distance)} m</span>
             </div>
+            {liveDelta && (
+              <div
+                className={`mt-1 inline-flex rounded-md border px-2 py-0.5 text-xs font-black ${
+                  liveDelta.isAhead
+                    ? 'border-success/30 bg-success/10 text-success'
+                    : 'border-destructive/30 bg-destructive/10 text-destructive'
+                }`}
+              >
+                PB {liveDelta.deltaSec <= 0 ? '' : '+'}
+                {liveDelta.deltaSec.toFixed(2)}s
+              </div>
+            )}
           </div>
           <button
             type="button"

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useGhostTimeAttackPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import VoxelRunnerScene from './VoxelRunnerScene';
 import {
   type PlayerState,
@@ -50,6 +51,12 @@ export default function VoxelRunner({ locale = 'ko' }: { locale?: string }) {
   const [distance, setDistance] = useState(0);
   const [highScore, setHighScore] = useState(0);
   const [shareCardCopied, setShareCardCopied] = useState(false);
+
+  const {
+    liveDelta,
+    recordLap: recordGhostLap,
+    updateProgress: updateGhostProgress,
+  } = useGhostTimeAttackPro('voxel-runner');
 
   const handleShareCard = useCallback(async () => {
     const canvas = createShareCardCanvas({
@@ -178,6 +185,7 @@ export default function VoxelRunner({ locale = 'ko' }: { locale?: string }) {
 
   const handleAction = useCallback((act: 'left' | 'right' | 'jump' | 'duck') => {
     if (status !== 'playing') return;
+    MobileHapticsPro.light();
     if (act === 'left') {
       setPlayer((p) => switchLane(p, 'left'));
     } else if (act === 'right') {
@@ -207,7 +215,11 @@ export default function VoxelRunner({ locale = 'ko' }: { locale?: string }) {
       speedRef.current = Math.min(speedRef.current + delta * 0.25, 34);
       const curSpeed = speedRef.current;
 
-      setDistance((d) => d + curSpeed * delta);
+      setDistance((d) => {
+        const nextDist = d + curSpeed * delta;
+        updateGhostProgress(Math.min(1, nextDist / 1000), nextDist / 20);
+        return nextDist;
+      });
       setScore((s) => s + Math.round(curSpeed * delta * 2));
 
       // Update player physics
@@ -242,6 +254,7 @@ export default function VoxelRunner({ locale = 'ko' }: { locale?: string }) {
             setCrystals((c) => c + 1);
             setScore((s) => s + 50);
             playSound('collect');
+            MobileHapticsPro.light();
           }
 
           if (result.collision) {
@@ -254,6 +267,8 @@ export default function VoxelRunner({ locale = 'ko' }: { locale?: string }) {
         if (hit) {
           setStatus('gameover');
           playSound('gameover');
+          MobileHapticsPro.heavy();
+          recordGhostLap(distance / 20);
           if (containerRef.current) {
             celebrate(containerRef.current, { preset: "sparks" });
           }
@@ -386,6 +401,18 @@ export default function VoxelRunner({ locale = 'ko' }: { locale?: string }) {
           <div className="text-xs text-white/70 font-mono">
             {Math.round(distance)}m
           </div>
+          {liveDelta && (
+            <div
+              className={`rounded-md border px-2 py-0.5 text-xs font-black ${
+                liveDelta.isAhead
+                  ? 'border-success/30 bg-success/10 text-success'
+                  : 'border-destructive/30 bg-destructive/10 text-destructive'
+              }`}
+            >
+              PB {liveDelta.deltaSec <= 0 ? '' : '+'}
+              {liveDelta.deltaSec.toFixed(2)}s
+            </div>
+          )}
         </div>
 
         {/* Start / Gameover Overlays */}

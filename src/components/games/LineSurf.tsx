@@ -5,6 +5,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Maximize2, Minimize2, Volume2, VolumeX, Share2, Check } from "lucide-react";
+import { useDynamicDifficultyPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import { GameContainer } from "../ui/game/GamePrimitives";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import type { Locale } from "../../lib/i18n";
@@ -345,6 +346,14 @@ export default function LineSurf({ locale }: { locale: Locale }) {
   const [practice, setPractice] = useState(false);
   const [paused, setPaused] = useState(false);
   const [shareCardCopied, setShareCardCopied] = useState(false);
+
+  const {
+    flowState,
+    currentMultiplier,
+    recordHit: recordDdaHit,
+    recordKill: recordDdaKill,
+    recordDeath: recordDdaDeath,
+  } = useDynamicDifficultyPro();
   const audio = useRef<AudioContext | null>(null);
   const hapticsRef = useRef(createHaptics());
   const noted = useRef(new Set<string>());
@@ -474,11 +483,15 @@ export default function LineSurf({ locale }: { locale: Locale }) {
       }
       if (run.phase === "won") {
         hapticsRef.current.fire("win");
+        recordDdaKill();
+        MobileHapticsPro.impact();
         if (containerRef.current) {
           celebrate(containerRef.current, { preset: "coins" });
         }
       } else {
         hapticsRef.current.fire("fail");
+        recordDdaDeath();
+        MobileHapticsPro.heavy();
       }
     }
     if (!nextCue || muted || reducedMotion) return;
@@ -555,7 +568,18 @@ export default function LineSurf({ locale }: { locale: Locale }) {
             className="h-32 w-full object-cover sm:h-44"
           />
         </div>
-        <div className="mb-4 flex flex-wrap gap-2">
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <span
+            className={`rounded-full border px-2.5 py-1 font-mono text-xs font-black ${
+              flowState === 'flow'
+                ? 'border-primary/40 bg-primary/20 text-primary'
+                : flowState === 'danger'
+                  ? 'border-destructive/40 bg-destructive/20 text-destructive'
+                  : 'border-chart-3/40 bg-chart-3/20 text-chart-3'
+            }`}
+          >
+            DDA: {flowState.toUpperCase()}
+          </span>
           <button type="button" onClick={() => setMuted((value) => !value)} aria-pressed={muted} aria-label={muted ? portalLabels.unmute : portalLabels.mute} title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`} className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-muted-foreground`}>
             {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
           </button>

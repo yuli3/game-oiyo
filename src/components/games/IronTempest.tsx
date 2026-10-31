@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Bomb, Crosshair, Gamepad2, Headphones, Maximize2, Minimize2, Shield, Volume2, VolumeX, Share2, Check } from "lucide-react";
+import { useDynamicDifficultyPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import type { Locale } from "../../lib/i18n";
 import { getBest, recordBest } from "../../lib/games/records";
 import { reviewTempestMission } from "../../lib/games/iron-tempest";
@@ -234,6 +235,15 @@ function TempestGame({
   const finishRef=useRef(onFinish); finishRef.current=onFinish;
   const audioRef=useRef<ReturnType<typeof createAudio>|null>(null);
 
+  const {
+    flowState,
+    currentMultiplier,
+    recordHit: recordDdaHit,
+    recordKill: recordDdaKill,
+    recordDeath: recordDdaDeath,
+    recordSurvivalTime: recordDdaSurvival,
+  } = useDynamicDifficultyPro();
+
   useEffect(() => {
     audioRef.current?.setMuted(muted);
   }, [muted]);
@@ -262,13 +272,13 @@ function TempestGame({
       const targetSpawn=Math.floor(player.x/170)+3;while(enemies.length+player.kills<targetSpawn&&player.x<2100)spawn(player.x+600+Math.random()*240,Math.random()<.22?"rocketeer":Math.random()<.18?"shield":"rifleman");
       if(player.x>2150&&!bossSpawn){bossSpawn=true;spawn(2700,"boss");message=copy.boss;messageT=2;audio.alarm()}
       for(const e of enemies){if(e.dead>0){e.dead+=dt;e.y-=e.dead*90*dt;e.x+=e.vx*dt;continue}const dx=player.x-e.x;e.vx=Math.abs(dx)>260?Math.sign(dx)*-42:0;e.x+=e.vx*dt;e.fire-=dt;if(Math.abs(dx)<650&&e.fire<=0){e.fire=e.kind==="boss"?.28:e.kind==="rocketeer"?1.6:1.05;shots.push({x:e.x,y:e.y+20,vx:Math.sign(dx)*-(e.kind==="boss"?360:260),vy:(Math.random()-.5)*35,enemy:true,rocket:e.kind==="rocketeer"||e.kind==="boss",life:3})}}
-      for(const s of shots){s.life-=dt;s.vy+=(s.rocket?430:0)*dt;s.x+=s.vx*dt;s.y+=s.vy*dt;if(s.y>GROUND&&s.rocket){s.life=0;burst(s.x,GROUND);for(const e of enemies){if(e.dead<=0){const d=Math.hypot(e.x-s.x,e.y-s.y),dam=blastDamage(90,d,115);if(dam)e.hp-=dam}}for(const st of structures){const d=Math.abs(st.x+st.w/2-s.x);if(d<170)st.hp-=blastDamage(120,d,170)}}if(s.enemy&&s.life>0&&Math.abs(s.x-player.x)<24&&Math.abs(s.y-player.y)<48&&player.inv<=0){s.life=0;player.hp-=s.rocket?20:8;player.inv=.3;shake=12;audio.hurt()}if(!s.enemy&&s.life>0){for(const e of enemies){if(e.dead<=0&&Math.abs(s.x-e.x)<(e.kind==="boss"?110:24)&&Math.abs(s.y-(e.y+20))<(e.kind==="boss"?100:36)){s.life=0;const armored=e.kind==="shield";const hit=applyTempestDamage(e.hp,WEAPONS[player.weapon].damage,armored);e.hp=hit.health;if(e.kind==="boss")bossHp=e.hp;for(let p=0;p<5;p++)particles.push({x:s.x,y:s.y,vx:(Math.random()-.5)*140,vy:(Math.random()-.5)*140,life:.3,color:"#ffe37c",size:3});if(hit.killed){e.dead=.01;e.vx=s.vx*.22;player.kills++;const drop=weaponDrop(player.kills);if(drop)pickups.push({x:e.x,y:GROUND-28,kind:drop,life:12});player.score+=e.kind==="boss"?8000:125;burst(e.x,e.y+18,e.kind==="boss"?"#ff5b14":"#d6c3a0",e.kind==="boss"?60:14)}}}}
+      for(const s of shots){s.life-=dt;s.vy+=(s.rocket?430:0)*dt;s.x+=s.vx*dt;s.y+=s.vy*dt;if(s.y>GROUND&&s.rocket){s.life=0;burst(s.x,GROUND);for(const e of enemies){if(e.dead<=0){const d=Math.hypot(e.x-s.x,e.y-s.y),dam=blastDamage(90,d,115);if(dam)e.hp-=dam}}for(const st of structures){const d=Math.abs(st.x+st.w/2-s.x);if(d<170)st.hp-=blastDamage(120,d,170)}}if(s.enemy&&s.life>0&&Math.abs(s.x-player.x)<24&&Math.abs(s.y-player.y)<48&&player.inv<=0){s.life=0;player.hp-=s.rocket?20:8;player.inv=.3;shake=12;audio.hurt();recordDdaHit();MobileHapticsPro.heavy()}if(!s.enemy&&s.life>0){for(const e of enemies){if(e.dead<=0&&Math.abs(s.x-e.x)<(e.kind==="boss"?110:24)&&Math.abs(s.y-(e.y+20))<(e.kind==="boss"?100:36)){s.life=0;const armored=e.kind==="shield";const hit=applyTempestDamage(e.hp,WEAPONS[player.weapon].damage,armored);e.hp=hit.health;if(e.kind==="boss")bossHp=e.hp;for(let p=0;p<5;p++)particles.push({x:s.x,y:s.y,vx:(Math.random()-.5)*140,vy:(Math.random()-.5)*140,life:.3,color:"#ffe37c",size:3});if(hit.killed){e.dead=.01;e.vx=s.vx*.22;player.kills++;recordDdaKill();MobileHapticsPro.light();const drop=weaponDrop(player.kills);if(drop)pickups.push({x:e.x,y:GROUND-28,kind:drop,life:12});player.score+=e.kind==="boss"?8000:125;burst(e.x,e.y+18,e.kind==="boss"?"#ff5b14":"#d6c3a0",e.kind==="boss"?60:14)}}}}
       }
       for(const st of structures){if(st.hp<=0&&st.max>0){st.max=-st.max;player.score+=600;burst(st.x+st.w/2,st.y+st.h/2,"#bb8a53",34)}}
       for(const p of pickups){p.life-=dt;if(Math.abs(p.x-player.x)<45){player.weapon=p.kind;player.ammo=WEAPONS[p.kind].ammo;p.life=0;message=p.kind==="heavy"?copy.hmg:copy.rocket;messageT=2;audio.pickup()}}
       for(const p of particles){p.life-=dt;p.vy+=650*dt;p.x+=p.vx*dt;p.y+=p.vy*dt}
       for(let i=shots.length-1;i>=0;i--)if(shots[i].life<=0)shots.splice(i,1);for(let i=particles.length-1;i>=0;i--)if(particles[i].life<=0)particles.splice(i,1);for(let i=pickups.length-1;i>=0;i--)if(pickups[i].life<=0)pickups.splice(i,1);
-      if((player.hp<=0||bossSpawn&&bossHp<=0)&&!ended){ended=true;message=player.hp<=0?copy.over:copy.clear;const score=missionScore(player.kills,structures.filter(s=>s.max<0).length,ENEMY_HEALTH.boss-bossHp,time);setTimeout(()=>finishRef.current({score,kills:player.kills,seconds:Math.round(time)}),1300)}
+      if((player.hp<=0||bossSpawn&&bossHp<=0)&&!ended){ended=true;if(player.hp<=0){recordDdaDeath();MobileHapticsPro.heavy();}else{MobileHapticsPro.impact();}message=player.hp<=0?copy.over:copy.clear;const score=missionScore(player.kills,structures.filter(s=>s.max<0).length,ENEMY_HEALTH.boss-bossHp,time);setTimeout(()=>finishRef.current({score,kills:player.kills,seconds:Math.round(time)}),1300)}
       draw(ctx,{player,camera,shake,enemies,shots,particles,pickups,structures,bossHp,time,message:messageT>0||ended?message:"",copy,weaponImages});shake=Math.max(0,shake-dt*28);if(!ended||messageT>0)raf=requestAnimationFrame(frame);else audio.stop()};
     const onVisibility=()=>{if(document.hidden){cancelAnimationFrame(raf);raf=0;return;}if(ended&&messageT<=0)return;if(!raf){last=performance.now();raf=requestAnimationFrame(frame)}};
     document.addEventListener("visibilitychange",onVisibility);
@@ -279,6 +289,20 @@ function TempestGame({
     <canvas ref={canvas} width={W} height={H} className={`block aspect-video [image-rendering:pixelated] ${isImmersive ? "h-full max-h-screen max-w-full" : "w-full max-h-[86vh]"}`} aria-label="Iron Tempest game canvas"/>
     
     {/* HUD Controls */}
+    <div className="absolute left-3 top-3 z-30 flex items-center gap-2">
+      <span
+        className={`rounded-full border px-3 py-1 font-mono text-xs font-black backdrop-blur-md ${
+          flowState === 'flow'
+            ? 'border-primary/40 bg-primary/20 text-primary'
+            : flowState === 'danger'
+              ? 'border-destructive/40 bg-destructive/20 text-destructive'
+              : 'border-chart-3/40 bg-chart-3/20 text-chart-3'
+        }`}
+      >
+        DDA: {flowState.toUpperCase()} ({currentMultiplier.toFixed(2)}x)
+      </span>
+    </div>
+
     <div className="absolute right-3 top-3 z-30 flex items-center gap-2">
       <button
         type="button"

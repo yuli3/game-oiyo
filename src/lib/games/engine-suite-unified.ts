@@ -40,6 +40,31 @@ export class MobileHapticsPro {
   public static warningPattern(): void {
     MotionGestureController.triggerHaptic("warning");
   }
+
+  // Developer convenience aliases
+  public static light(): void {
+    MotionGestureController.triggerHaptic("light");
+  }
+
+  public static medium(): void {
+    MotionGestureController.triggerHaptic("medium");
+  }
+
+  public static heavy(): void {
+    MotionGestureController.triggerHaptic("heavy");
+  }
+
+  public static impact(): void {
+    MotionGestureController.triggerHaptic("medium");
+  }
+
+  public static click(): void {
+    MotionGestureController.triggerHaptic("selection");
+  }
+
+  public static success(): void {
+    MotionGestureController.triggerHaptic("success");
+  }
 }
 
 /**
@@ -118,13 +143,26 @@ export function useDynamicDifficultyPro() {
     }
   }, []);
 
+  const flowState: "flow" | "danger" | "chill" =
+    modifiers.flowCategory === "optimal"
+      ? "flow"
+      : modifiers.flowCategory === "frustrated"
+        ? "danger"
+        : "chill";
+
   return {
     modifiers,
+    flowState,
+    currentMultiplier: modifiers.enemySpeedMultiplier,
     reportAction,
     reportHit,
     reportDeath,
     reportVictory,
     updateTime,
+    recordHit: reportHit,
+    recordKill: reportVictory,
+    recordDeath: reportDeath,
+    recordSurvivalTime: updateTime,
   };
 }
 
@@ -192,13 +230,44 @@ export function useGhostTimeAttackPro(trackId: string) {
     recorderRef.current.reset();
   }, []);
 
+  const [liveDelta, setLiveDelta] = useState<{
+    deltaSec: number;
+    deltaMs: number;
+    formatted: string;
+    isAhead: boolean;
+  } | null>(null);
+
+  const updateProgress = useCallback(
+    (currentProgress: number, currentTimeSec: number) => {
+      const res = getLiveDelta(currentProgress, currentTimeSec * 1000);
+      setLiveDelta({
+        deltaSec: res.deltaMs / 1000,
+        deltaMs: res.deltaMs,
+        formatted: res.formatted,
+        isAhead: res.isAhead,
+      });
+    },
+    [getLiveDelta]
+  );
+
+  const recordLap = useCallback(
+    (finalLapSec: number): boolean => {
+      return saveBestIfFaster(finalLapSec * 1000);
+    },
+    [saveBestIfFaster]
+  );
+
   return {
     bestGhost,
+    hasPersonalBest: Boolean(bestGhost),
+    liveDelta,
     recordFrame,
     saveBestIfFaster,
     getGhostSample,
     getLiveDelta,
     resetRun,
+    updateProgress,
+    recordLap,
   };
 }
 

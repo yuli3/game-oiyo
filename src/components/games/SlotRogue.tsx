@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import {
   loadArcadePassProgress,
   reportMissionProgress,
@@ -34,6 +35,51 @@ const SYMBOL_ICONS: Record<SymbolKey, string> = {
   crown: '👑',
 };
 
+function TiltDraftChoiceButton({
+  symKey,
+  isKo,
+  onSelect,
+}: {
+  symKey: SymbolKey;
+  isKo: boolean;
+  onSelect: () => void;
+}) {
+  const spec = SYMBOL_CATALOG[symKey];
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.15);
+        MobileHapticsPro.light();
+        onSelect();
+      }}
+      className="flex w-full items-center gap-3 rounded-xl border border-border bg-background p-3 text-left transition hover:border-primary hover:bg-accent will-change-transform transform-(--card-tilt)"
+    >
+      <span className="shrink-0 text-3xl" aria-hidden="true">
+        {SYMBOL_ICONS[symKey]}
+      </span>
+      <div className="flex-1">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-bold text-foreground">
+            {isKo ? spec.nameKo : spec.nameEn}
+          </span>
+          <span className="rounded bg-secondary px-2 py-0.5 text-xs font-semibold text-primary">
+            {isKo ? `기본 +$${spec.baseCoins}` : `Base +$${spec.baseCoins}`}
+          </span>
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground">
+          {isKo ? spec.descKo : spec.descEn}
+        </p>
+      </div>
+    </button>
+  );
+}
+
 export default function SlotRogue({ locale }: Props) {
   const isKo = locale === 'ko';
   const [state, setState] = useState<SlotRogueState>(() => createSlotRogueState());
@@ -50,6 +96,7 @@ export default function SlotRogue({ locale }: Props) {
   };
 
   const handleSpin = () => {
+    MobileHapticsPro.impact();
     const next = spinSlotGrid(state);
     setState(next);
     if (next.rentCycle > state.rentCycle) {
@@ -282,34 +329,14 @@ export default function SlotRogue({ locale }: Props) {
             </div>
 
             <div className="space-y-2.5">
-              {state.draftChoices.map((symKey) => {
-                const spec = SYMBOL_CATALOG[symKey];
-                return (
-                  <button
-                    key={symKey}
-                    type="button"
-                    onClick={() => handleDraft(symKey)}
-                    className="flex w-full items-center gap-3 rounded-xl border border-border bg-background p-3 text-left transition hover:border-primary hover:bg-accent"
-                  >
-                    <span className="shrink-0 text-3xl" aria-hidden="true">
-                      {SYMBOL_ICONS[symKey]}
-                    </span>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-bold text-foreground">
-                          {isKo ? spec.nameKo : spec.nameEn}
-                        </span>
-                        <span className="rounded bg-secondary px-2 py-0.5 text-xs font-semibold text-primary">
-                          {isKo ? `기본 +$${spec.baseCoins}` : `Base +$${spec.baseCoins}`}
-                        </span>
-                      </div>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {isKo ? spec.descKo : spec.descEn}
-                      </p>
-                    </div>
-                  </button>
-                );
-              })}
+              {state.draftChoices.map((symKey) => (
+                <TiltDraftChoiceButton
+                  key={symKey}
+                  symKey={symKey}
+                  isKo={isKo}
+                  onSelect={() => handleDraft(symKey)}
+                />
+              ))}
 
               <button
                 type="button"
