@@ -18,6 +18,7 @@ import {
   type ScreenShakeState,
 } from "@/lib/games/juice-engine";
 import { playSyntheticTone } from "@/lib/games/audio-mixer";
+import { useCardTiltPro, MobileHapticsPro } from "@/lib/games/engine-suite-unified";
 import { RotateCcw, Volume2, VolumeX, CheckCircle, Sparkles, AlertTriangle } from "lucide-react";
 
 interface SpellTowerProps {
@@ -119,6 +120,68 @@ const I18N: Record<string, Record<string, string>> = {
   },
 };
 
+function TiltSpellTileButton({
+  tile,
+  isSelected,
+  pathIndex,
+  isDead,
+  isBonus,
+  onClick,
+}: {
+  tile: { letter: string; points: number; type: string };
+  isSelected: boolean;
+  pathIndex: number;
+  isDead: boolean;
+  isBonus: boolean;
+  onClick: () => void;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      style={
+        {
+          "--card-tilt": isDead ? "none" : transformCss,
+        } as React.CSSProperties
+      }
+      onPointerMove={isDead ? undefined : onPointerMove}
+      onPointerLeave={isDead ? undefined : onPointerLeave}
+      onClick={() => {
+        if (!isDead) {
+          triggerPop(0.18);
+        }
+        onClick();
+      }}
+      disabled={isDead}
+      className={`relative flex h-12 flex-col items-center justify-center rounded-xl font-bold transition-transform cursor-pointer will-change-transform transform-(--card-tilt) active:scale-95 ${
+        isDead
+          ? "border border-border bg-muted text-muted-foreground cursor-not-allowed"
+          : isSelected
+          ? "border-2 border-primary bg-primary text-primary-foreground shadow-md scale-105"
+          : isBonus
+          ? "border border-warning/40 bg-card text-foreground ring-1 ring-warning/50"
+          : "border border-border bg-card text-foreground shadow-sm hover:border-primary/50"
+      }`}
+    >
+      <span className="text-lg font-black">{tile.letter}</span>
+      {!isDead && (
+        <span className="absolute bottom-0.5 right-1 text-xs font-semibold opacity-70">
+          {tile.points}
+        </span>
+      )}
+      {isBonus && !isSelected && (
+        <Sparkles className="absolute top-0.5 right-0.5 h-2.5 w-2.5 text-warning" />
+      )}
+      {isSelected && (
+        <span className="absolute -top-1.5 -left-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-background text-xs font-bold text-foreground shadow">
+          {pathIndex + 1}
+        </span>
+      )}
+    </button>
+  );
+}
+
 export const SpellTower: React.FC<SpellTowerProps> = ({ locale = "ko" }) => {
   const t = useMemo(() => I18N[locale] ?? I18N.ko, [locale]);
 
@@ -172,6 +235,7 @@ export const SpellTower: React.FC<SpellTowerProps> = ({ locale = "ko" }) => {
         setGame(next);
         const len = next.selectedPath.length;
         if (len > 0) {
+          MobileHapticsPro.light();
           triggerHaptic("light");
           if (soundEnabled) {
             const freq = PENTATONIC_SCALE[(len - 1) % PENTATONIC_SCALE.length] ?? 440;
@@ -187,12 +251,14 @@ export const SpellTower: React.FC<SpellTowerProps> = ({ locale = "ko" }) => {
     if (game.selectedPath.length < 3) {
       setMessage(t.tooShort);
       setTimeout(() => setMessage(null), 1500);
+      MobileHapticsPro.warning();
       return;
     }
 
     if (!isCurrentValid) {
       setMessage(t.invalidWord);
       setTimeout(() => setMessage(null), 1500);
+      MobileHapticsPro.warning();
       triggerHaptic("warning");
       if (soundEnabled) {
         playSyntheticTone(getAudioCtx(), { freq: 160, duration: 0.2, type: "sawtooth" });
@@ -206,6 +272,11 @@ export const SpellTower: React.FC<SpellTowerProps> = ({ locale = "ko" }) => {
     if (result.clearedWord) {
       const mult = result.clearedWord.length >= 5 ? 0.6 : 0.3;
       setShakeState((s) => addTrauma(s, mult));
+      if (result.clearedWord.length >= 5) {
+        MobileHapticsPro.success();
+      } else {
+        MobileHapticsPro.heavy();
+      }
       triggerHaptic("heavy");
 
       if (soundEnabled) {
@@ -220,10 +291,12 @@ export const SpellTower: React.FC<SpellTowerProps> = ({ locale = "ko" }) => {
   }, [game, isCurrentValid, t, soundEnabled, getAudioCtx]);
 
   const handleClearPath = useCallback(() => {
+    MobileHapticsPro.click();
     setGame((prev) => ({ ...prev, selectedPath: [] }));
   }, []);
 
   const handleRestart = useCallback(() => {
+    MobileHapticsPro.light();
     setGame(initSpellTower());
     setMessage(null);
   }, []);
@@ -333,36 +406,15 @@ export const SpellTower: React.FC<SpellTowerProps> = ({ locale = "ko" }) => {
               const isBonus = tile.type === "bonus";
 
               return (
-                <button
+                <TiltSpellTileButton
                   key={`${r}-${c}`}
-                  type="button"
+                  tile={tile}
+                  isSelected={isSelected}
+                  pathIndex={pathIndex}
+                  isDead={isDead}
+                  isBonus={isBonus}
                   onClick={() => handleTileClick(r, c)}
-                  disabled={isDead}
-                  className={`relative flex h-12 flex-col items-center justify-center rounded-xl font-bold transition-transform cursor-pointer active:scale-95 ${
-                    isDead
-                      ? "border border-border bg-muted text-muted-foreground cursor-not-allowed"
-                      : isSelected
-                      ? "border-2 border-primary bg-primary text-primary-foreground shadow-md scale-105"
-                      : isBonus
-                      ? "border border-warning/40 bg-card text-foreground ring-1 ring-warning/50"
-                      : "border border-border bg-card text-foreground shadow-sm hover:border-primary/50"
-                  }`}
-                >
-                  <span className="text-lg font-black">{tile.letter}</span>
-                  {!isDead && (
-                    <span className="absolute bottom-0.5 right-1 text-xs font-semibold opacity-70">
-                      {tile.points}
-                    </span>
-                  )}
-                  {isBonus && !isSelected && (
-                    <Sparkles className="absolute top-0.5 right-0.5 h-2.5 w-2.5 text-warning" />
-                  )}
-                  {isSelected && (
-                    <span className="absolute -top-1.5 -left-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-background text-xs font-bold text-foreground shadow">
-                      {pathIndex + 1}
-                    </span>
-                  )}
-                </button>
+                />
               );
             })
           )}

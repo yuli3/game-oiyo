@@ -33,6 +33,7 @@ import { celebrate } from "../../lib/games/celebration";
 import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from '../../lib/games/share-card';
+import { MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 
 const LEGACY_BEST_KEY = 'oiyo-minesweeper-best'; // pre-unification key, read once for migration
 
@@ -203,6 +204,7 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     }, []);
 
     const vibrate = useCallback((pattern: number | number[]) => {
+        MobileHapticsPro.light();
         if (typeof window !== 'undefined' && 'vibrate' in navigator) {
             try {
                 navigator.vibrate(pattern);
@@ -498,10 +500,12 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         if (result.status === 'lost') {
             triggerShake();
             playExplosionSound();
+            MobileHapticsPro.heavy();
             vibrate([80, 40, 120]);
         }
         if (result.status === 'won' && firstTerminal) {
             playWinFanfare();
+            MobileHapticsPro.success();
             vibrate([40, 40, 40, 40, 100]);
             celebrate(containerRef.current, { preset: "tiles", colors: ["#94a3b8", "#38bdf8", "#f8fafc"], origin: { x: 0.25, y: 0.6 }, extraOrigins: [{ x: 0.75, y: 0.6 }] });
             const elapsed = recordedGameSeconds(startedAtRef.current, performance.now());
@@ -544,9 +548,11 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             if (result.status === 'playing') {
                 if (wasRevealed) {
                     playChordSound();
+                    MobileHapticsPro.impact();
                     vibrate([10, 30, 15]);
                 } else {
                     playDigSound();
+                    MobileHapticsPro.light();
                     vibrate(8);
                 }
             }
@@ -563,10 +569,12 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             advanceOnboarding('flagged');
             setFreshFlag(`${x}:${y}`);
             playFlagSound(true);
+            MobileHapticsPro.click();
             vibrate(18);
         } else {
             setFreshFlag(null);
             playFlagSound(false);
+            MobileHapticsPro.light();
             vibrate(10);
         }
         setBoard(next);

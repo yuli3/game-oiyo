@@ -16,6 +16,7 @@ import {
   type ScreenShakeState,
 } from "@/lib/games/juice-engine";
 import { playSyntheticTone } from "@/lib/games/audio-mixer";
+import { useCardTiltPro, MobileHapticsPro } from "@/lib/games/engine-suite-unified";
 import { RotateCcw, Undo2, Volume2, VolumeX, Sparkles, Trophy } from "lucide-react";
 
 const COLOR_CLASS_MAP: Record<LiquidColor, string> = {
@@ -108,6 +109,72 @@ const I18N: Record<string, Record<string, string>> = {
   },
 };
 
+function TiltTubeButton({
+  tube,
+  isSelected,
+  onClick,
+}: {
+  tube: { id: string; layers: LiquidColor[] };
+  isSelected: boolean;
+  onClick: () => void;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      style={
+        {
+          "--card-tilt": transformCss,
+        } as React.CSSProperties
+      }
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.2);
+        onClick();
+      }}
+      className={`group relative flex flex-col items-center justify-end rounded-b-full rounded-t-lg border-2 border-border/70 bg-card/60 p-1 w-14 h-48 transition-all cursor-pointer backdrop-blur-xs shadow-md will-change-transform transform-(--card-tilt) ${
+        isSelected
+          ? "border-primary ring-2 ring-primary -translate-y-4 scale-105 shadow-xl"
+          : "hover:border-primary/60 hover:-translate-y-1"
+      }`}
+    >
+      {/* Glass Rim highlight */}
+      <div className="absolute top-0 inset-x-0 h-2.5 rounded-t-md border-b border-border/40 bg-card/80" />
+
+      {/* Vertical Glass Glare Reflection */}
+      <div className="pointer-events-none absolute left-1.5 top-3 bottom-6 w-1 rounded-full bg-foreground/15" />
+
+      {/* Liquid Segments (Bottom to Top) */}
+      <div className="flex w-full flex-col-reverse overflow-hidden rounded-b-full">
+        {tube.layers.map((color, layerIdx) => {
+          const colorClass = COLOR_CLASS_MAP[color as LiquidColor] ?? "bg-primary";
+          return (
+            <div
+              key={`${tube.id}-layer-${layerIdx}`}
+              className={`relative h-10 w-full transition-all ${colorClass}`}
+            >
+              {/* Meniscus / Surface curve on top layer */}
+              {layerIdx === tube.layers.length - 1 && (
+                <div className="absolute top-0 inset-x-0 h-1 rounded-b-full bg-foreground/25" />
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Empty slot indicators for capacity */}
+      {Array.from({ length: TUBE_CAPACITY - tube.layers.length }).map((_, i) => (
+        <div
+          key={`empty-${i}`}
+          className="h-10 w-full border-b border-border/10"
+        />
+      ))}
+    </button>
+  );
+}
+
 export const WaterSort3D: React.FC<WaterSort3DProps> = ({ locale = "ko" }) => {
   const t = useMemo(() => I18N[locale] ?? I18N.ko, [locale]);
 
@@ -154,11 +221,13 @@ export const WaterSort3D: React.FC<WaterSort3DProps> = ({ locale = "ko" }) => {
       setGame(res.state);
 
       if (res.action === "selected") {
+        MobileHapticsPro.light();
         triggerHaptic("light");
         if (soundEnabled) {
           playSyntheticTone(getAudioCtx(), { freq: 440, duration: 0.06, type: "sine" });
         }
       } else if (res.action === "poured") {
+        MobileHapticsPro.impact();
         triggerHaptic("medium");
         if (soundEnabled) {
           // ASMR water trickling modulation: 320Hz -> 540Hz
@@ -169,6 +238,7 @@ export const WaterSort3D: React.FC<WaterSort3DProps> = ({ locale = "ko" }) => {
 
         if (res.state.status === "level_cleared") {
           setShakeState((s) => addTrauma(s, 0.4));
+          MobileHapticsPro.success();
           triggerHaptic("heavy");
           if (soundEnabled) {
             // Level cleared chord fanfare (E5 -> G#5 -> B5)
@@ -185,14 +255,17 @@ export const WaterSort3D: React.FC<WaterSort3DProps> = ({ locale = "ko" }) => {
 
   const handleUndo = useCallback(() => {
     setGame((prev) => undoMove(prev));
+    MobileHapticsPro.click();
     triggerHaptic("light");
   }, []);
 
   const handleRestart = useCallback(() => {
+    MobileHapticsPro.light();
     setGame(initWaterSort(game.level));
   }, [game.level]);
 
   const handleNextLevel = useCallback(() => {
+    MobileHapticsPro.success();
     setGame(initWaterSort(game.level + 1));
   }, [game.level]);
 
@@ -248,48 +321,12 @@ export const WaterSort3D: React.FC<WaterSort3DProps> = ({ locale = "ko" }) => {
           const isSelected = game.selectedTubeIndex === idx;
 
           return (
-            <button
+            <TiltTubeButton
               key={tube.id}
-              type="button"
+              tube={tube}
+              isSelected={isSelected}
               onClick={() => handleTubeClick(idx)}
-              className={`group relative flex flex-col items-center justify-end rounded-b-full rounded-t-lg border-2 border-border/70 bg-card/60 p-1 w-14 h-48 transition-all cursor-pointer backdrop-blur-xs shadow-md ${
-                isSelected
-                  ? "border-primary ring-2 ring-primary -translate-y-4 scale-105 shadow-xl"
-                  : "hover:border-primary/60 hover:-translate-y-1"
-              }`}
-            >
-              {/* Glass Rim highlight */}
-              <div className="absolute top-0 inset-x-0 h-2.5 rounded-t-md border-b border-border/40 bg-card/80" />
-
-              {/* Vertical Glass Glare Reflection */}
-              <div className="pointer-events-none absolute left-1.5 top-3 bottom-6 w-1 rounded-full bg-foreground/15" />
-
-              {/* Liquid Segments (Bottom to Top) */}
-              <div className="flex w-full flex-col-reverse overflow-hidden rounded-b-full">
-                {tube.layers.map((color, layerIdx) => {
-                  const colorClass = COLOR_CLASS_MAP[color as LiquidColor] ?? "bg-primary";
-                  return (
-                    <div
-                      key={`${tube.id}-layer-${layerIdx}`}
-                      className={`relative h-10 w-full transition-all ${colorClass}`}
-                    >
-                      {/* Meniscus / Surface curve on top layer */}
-                      {layerIdx === tube.layers.length - 1 && (
-                        <div className="absolute top-0 inset-x-0 h-1 rounded-b-full bg-foreground/25" />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Empty slot indicators for capacity */}
-              {Array.from({ length: TUBE_CAPACITY - tube.layers.length }).map((_, i) => (
-                <div
-                  key={`empty-${i}`}
-                  className="h-10 w-full border-b border-border/10"
-                />
-              ))}
-            </button>
+            />
           );
         })}
       </div>

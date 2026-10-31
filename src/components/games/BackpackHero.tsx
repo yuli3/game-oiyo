@@ -8,9 +8,71 @@ import {
 } from '@/lib/games/backpack-hero';
 import { addTrauma, createShakeState, triggerHaptic, updateShake } from '@/lib/games/juice-engine';
 import { playSyntheticTone } from '@/lib/games/audio-mixer';
+import { useCardTiltPro, MobileHapticsPro } from '@/lib/games/engine-suite-unified';
 
 interface BackpackHeroProps {
   locale?: string;
+}
+
+function TiltBackpackItemButton({
+  item,
+  def,
+  value,
+  bonus,
+  isSelected,
+  onClick,
+}: {
+  item: PlacedItem;
+  def: (typeof ITEM_CATALOG)[string];
+  value: number;
+  bonus: number;
+  isSelected: boolean;
+  onClick: () => void;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      style={
+        {
+          '--card-tilt': transformCss,
+        } as React.CSSProperties
+      }
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.2);
+        onClick();
+      }}
+      className={`h-16 rounded border p-1 flex flex-col items-center justify-between text-xs transition-all cursor-pointer will-change-transform transform-(--card-tilt) ${
+        isSelected
+          ? 'border-primary bg-primary/25 ring-2 ring-primary scale-105 shadow-md'
+          : def.type === 'weapon'
+          ? 'border-destructive/60 bg-destructive/15 hover:bg-destructive/25'
+          : def.type === 'shield'
+          ? 'border-chart-1/60 bg-chart-1/15 hover:bg-chart-1/25'
+          : def.type === 'armor'
+          ? 'border-warning/60 bg-warning/15 hover:bg-warning/25'
+          : def.type === 'potion'
+          ? 'border-success/60 bg-success/15 hover:bg-success/25'
+          : 'border-chart-2/60 bg-chart-2/15 hover:bg-chart-2/25'
+      }`}
+    >
+      <div className="flex items-center justify-between w-full text-xs font-mono leading-none">
+        <span className="font-bold text-primary">⚡{def.energyCost}</span>
+        {bonus > 0 && <span className="text-success font-bold">+{bonus}</span>}
+      </div>
+      <span className="text-xl leading-none">{def.icon}</span>
+      <span className="text-xs font-mono font-bold leading-none">
+        {def.type === 'weapon' && `⚔️${value}`}
+        {def.type === 'shield' && `🛡️${value}`}
+        {def.type === 'potion' && `🧪+${value}`}
+        {def.type === 'armor' && `🪖+${value}`}
+        {def.type === 'relic' && `💎+${value}`}
+      </span>
+    </button>
+  );
 }
 
 export default function BackpackHero({ locale = 'ko' }: BackpackHeroProps) {
@@ -99,22 +161,26 @@ export default function BackpackHero({ locale = 'ko' }: BackpackHeroProps) {
             playSyntheticTone(audioCtxRef.current, { freq: 440, duration: 0.1, type: 'sawtooth', gain: 0.25 });
           }
           addTrauma(shakeStateRef.current, 0.25);
+          MobileHapticsPro.heavy();
           triggerHaptic('medium');
         } else if (def?.type === 'shield') {
           if (audioCtxRef.current) {
             playSyntheticTone(audioCtxRef.current, { freq: 300, duration: 0.12, type: 'triangle', gain: 0.2 });
           }
+          MobileHapticsPro.medium();
           triggerHaptic('light');
         } else if (def?.type === 'potion') {
           if (audioCtxRef.current) {
             playSyntheticTone(audioCtxRef.current, { freq: 660, duration: 0.15, type: 'sine', gain: 0.2 });
           }
+          MobileHapticsPro.success();
           triggerHaptic('success');
         }
       }
       syncState();
     } else {
       // In loot or organizing mode: select for moving or rotating
+      MobileHapticsPro.light();
       setSelectedInstanceId(selectedInstanceId === item.instanceId ? null : item.instanceId);
     }
   };
@@ -131,6 +197,7 @@ export default function BackpackHero({ locale = 'ko' }: BackpackHeroProps) {
       if (audioCtxRef.current) {
         playSyntheticTone(audioCtxRef.current, { freq: 520, duration: 0.08, type: 'sine', gain: 0.15 });
       }
+      MobileHapticsPro.light();
       triggerHaptic('light');
       syncState();
     }
@@ -145,6 +212,7 @@ export default function BackpackHero({ locale = 'ko' }: BackpackHeroProps) {
           if (audioCtxRef.current) {
             playSyntheticTone(audioCtxRef.current, { freq: 784, duration: 0.15, type: 'triangle', gain: 0.25 });
           }
+          MobileHapticsPro.success();
           triggerHaptic('success');
           syncState();
         }
@@ -160,6 +228,7 @@ export default function BackpackHero({ locale = 'ko' }: BackpackHeroProps) {
           if (audioCtxRef.current) {
             playSyntheticTone(audioCtxRef.current, { freq: 480, duration: 0.06, type: 'triangle', gain: 0.15 });
           }
+          MobileHapticsPro.impact();
           triggerHaptic('light');
           setSelectedInstanceId(null);
           syncState();
@@ -174,6 +243,7 @@ export default function BackpackHero({ locale = 'ko' }: BackpackHeroProps) {
     if (audioCtxRef.current) {
       playSyntheticTone(audioCtxRef.current, { freq: 330, duration: 0.1, type: 'sawtooth', gain: 0.2 });
     }
+    MobileHapticsPro.click();
     triggerHaptic('medium');
     syncState();
   };
@@ -184,6 +254,7 @@ export default function BackpackHero({ locale = 'ko' }: BackpackHeroProps) {
       if (audioCtxRef.current) {
         playSyntheticTone(audioCtxRef.current, { freq: 880, duration: 0.12, type: 'triangle', gain: 0.2 });
       }
+      MobileHapticsPro.impact();
       triggerHaptic('success');
       syncState();
     }
@@ -194,11 +265,13 @@ export default function BackpackHero({ locale = 'ko' }: BackpackHeroProps) {
     if (audioCtxRef.current) {
       playSyntheticTone(audioCtxRef.current, { freq: 587, duration: 0.15, type: 'sine', gain: 0.2 });
     }
+    MobileHapticsPro.success();
     triggerHaptic('combo');
     syncState();
   };
 
   const handleRestart = () => {
+    MobileHapticsPro.light();
     engineRef.current.restart();
     setSelectedInstanceId(null);
     syncState();
@@ -338,36 +411,15 @@ export default function BackpackHero({ locale = 'ko' }: BackpackHeroProps) {
                 const { value, bonus } = engineRef.current.calculateEffectiveItemValue(item.instanceId);
 
                 return (
-                  <button
+                  <TiltBackpackItemButton
                     key={key}
+                    item={item}
+                    def={def}
+                    value={value}
+                    bonus={bonus}
+                    isSelected={Boolean(isSelected)}
                     onClick={() => handleItemClick(item)}
-                    className={`h-16 rounded border p-1 flex flex-col items-center justify-between text-xs transition-all cursor-pointer ${
-                      isSelected
-                        ? 'border-primary bg-primary/25 ring-2 ring-primary'
-                        : def.type === 'weapon'
-                        ? 'border-destructive/60 bg-destructive/15 hover:bg-destructive/25'
-                        : def.type === 'shield'
-                        ? 'border-chart-1/60 bg-chart-1/15 hover:bg-chart-1/25'
-                        : def.type === 'armor'
-                        ? 'border-warning/60 bg-warning/15 hover:bg-warning/25'
-                        : def.type === 'potion'
-                        ? 'border-success/60 bg-success/15 hover:bg-success/25'
-                        : 'border-chart-2/60 bg-chart-2/15 hover:bg-chart-2/25'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between w-full text-xs font-mono leading-none">
-                      <span className="font-bold text-primary">⚡{def.energyCost}</span>
-                      {bonus > 0 && <span className="text-success font-bold">+{bonus}</span>}
-                    </div>
-                    <span className="text-xl leading-none">{def.icon}</span>
-                    <span className="text-xs font-mono font-bold leading-none">
-                      {def.type === 'weapon' && `⚔️${value}`}
-                      {def.type === 'shield' && `🛡️${value}`}
-                      {def.type === 'potion' && `🧪+${value}`}
-                      {def.type === 'armor' && `🪖+${value}`}
-                      {def.type === 'relic' && `💎+${value}`}
-                    </span>
-                  </button>
+                  />
                 );
               }
 

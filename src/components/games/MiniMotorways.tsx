@@ -12,9 +12,102 @@ import {
   type CommuterColor,
   type MiniMotorwaysState,
 } from '../../lib/games/mini-motorways';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 
 interface Props {
   locale: string;
+}
+
+function playMotorwayAudio(type: 'road' | 'dispatch' | 'victory' | 'gridlock') {
+  if (typeof window === 'undefined') return;
+  try {
+    const AudioCtx =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const now = ctx.currentTime;
+
+    if (type === 'road') {
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(380, now);
+      osc.frequency.exponentialRampToValueAtTime(540, now + 0.08);
+      gain.gain.setValueAtTime(0.1, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.09);
+    } else if (type === 'dispatch') {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(180, now);
+      osc.frequency.exponentialRampToValueAtTime(360, now + 0.2);
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.22);
+    } else if (type === 'gridlock') {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(140, now);
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.3);
+    } else if (type === 'victory') {
+      [523.25, 659.25, 783.99].forEach((f, idx) => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = 'sine';
+        o.frequency.setValueAtTime(f, now + idx * 0.08);
+        g.gain.setValueAtTime(0.12, now + idx * 0.08);
+        g.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.25);
+        o.connect(g).connect(ctx.destination);
+        o.start(now + idx * 0.08);
+        o.stop(now + idx * 0.08 + 0.25);
+      });
+    }
+    setTimeout(() => ctx.close().catch(() => {}), 400);
+  } catch {}
+}
+
+function TiltMotorwayToolButton({
+  isSelected,
+  label,
+  onClick,
+}: {
+  isSelected: boolean;
+  label: string;
+  onClick: () => void;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      style={
+        {
+          '--card-tilt': transformCss,
+        } as React.CSSProperties
+      }
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.15);
+        MobileHapticsPro.light();
+        onClick();
+      }}
+      className={`rounded-lg border px-3 py-1.5 text-xs font-bold transition will-change-transform transform-(--card-tilt) ${
+        isSelected
+          ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+          : 'border-border bg-background text-foreground hover:bg-accent'
+      }`}
+    >
+      {label}
+    </button>
+  );
 }
 
 const COLOR_BADGES: Record<CommuterColor, { icon: string; nameKo: string; nameEn: string }> = {
@@ -42,11 +135,23 @@ export default function MiniMotorways({ locale }: Props) {
 
   const handleDispatch = () => {
     const next = stepCommuterTraffic(state);
+    if (next.status === 'victory') {
+      playMotorwayAudio('victory');
+      MobileHapticsPro.success();
+    } else if (next.status === 'gridlock') {
+      playMotorwayAudio('gridlock');
+      MobileHapticsPro.heavy();
+    } else {
+      playMotorwayAudio('dispatch');
+      MobileHapticsPro.impact();
+    }
     setState(next);
     recordArcadePass(next.tripsCompleted);
   };
 
   const handlePreset = () => {
+    playMotorwayAudio('road');
+    MobileHapticsPro.success();
     setState(applyAutoHighwayNetworkPreset(state));
   };
 
@@ -150,9 +255,10 @@ export default function MiniMotorways({ locale }: Props) {
               },
             ] as const
           ).map((tool) => (
-            <button
+            <TiltMotorwayToolButton
               key={tool.id}
-              type="button"
+              isSelected={state.selectedTool === tool.id}
+              label={isKo ? tool.labelKo : tool.labelEn}
               onClick={() =>
                 setState((prev) => ({
                   ...prev,
@@ -160,14 +266,7 @@ export default function MiniMotorways({ locale }: Props) {
                   pendingMotorwayStart: null,
                 }))
               }
-              className={`rounded-lg border px-3 py-1.5 text-xs font-bold transition ${
-                state.selectedTool === tool.id
-                  ? 'border-primary bg-primary text-primary-foreground'
-                  : 'border-border bg-background text-foreground hover:bg-accent'
-              }`}
-            >
-              {isKo ? tool.labelKo : tool.labelEn}
-            </button>
+            />
           ))}
         </div>
 
@@ -214,9 +313,11 @@ export default function MiniMotorways({ locale }: Props) {
                 <button
                   key={`${cell.row}-${cell.col}`}
                   type="button"
-                  onClick={() =>
-                    setState(clickUrbanCell(state, cell.row, cell.col))
-                  }
+                  onClick={() => {
+                    playMotorwayAudio('road');
+                    MobileHapticsPro.light();
+                    setState(clickUrbanCell(state, cell.row, cell.col));
+                  }}
                   className={`relative flex min-h-20 flex-col items-center justify-center rounded-xl border p-2 text-center transition ${
                     cell.kind === 'house' || cell.kind === 'mall'
                       ? 'border-primary bg-primary/10'
