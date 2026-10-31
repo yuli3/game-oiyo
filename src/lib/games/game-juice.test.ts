@@ -60,9 +60,10 @@ describe('Game Juice & Game-Feel Engine (v1.0)', () => {
     expect(spawned).toBe(10);
     expect(ps.getActiveCount()).toBe(10);
 
-    // Update particles
+    const initialVy = ps.vy[0];
+    // Update particles with gravity
     ps.update(0.1);
-    expect(ps.y[0]).toBeGreaterThan(100); // affected by velocity & gravity
+    expect(ps.vy[0]).toBeGreaterThan(initialVy); // gravity accelerated downward velocity
 
     // Age particles to death
     ps.update(2.0);
