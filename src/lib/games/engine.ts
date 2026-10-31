@@ -28,3 +28,6 @@ export * from "./engine-v5";
 
 // Runtime Supervisor
 export * from "./studio-engine-runtime";
+
+// Native Game-Feel & Juice Engine
+export * from "./game-juice";
