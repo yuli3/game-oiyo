@@ -6796,4 +6796,42 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "sushi-conveyor": {
+    origin: {
+      ko: "『회전초밥 타이쿤: 스플라인 마스터 (Ginza Conveyor Sushi Tycoon)』는 일본 긴자의 회전초밥 전문점 경영에서 영감을 받아 구현한 아케이드 타이쿤 게임입니다. 수학적 호 길이(Arc-length) 등속 폐곡선 스플라인 레일과 가비지 컬렉션 없는(Zero-GC) 접시 오브젝트 풀을 엔진 코어로 탑재하여 매끄럽고 빠른 손님 주문 서빙과 주방 설비 업그레이드를 즐길 수 있습니다.",
+      en: "Ginza Conveyor Sushi Tycoon is an arcade restaurant management simulation inspired by Tokyo conveyor sushi bars. Powered by constant-speed arc-length spline curves and zero-GC plate object pooling, craft fresh nigiri to fulfill seat orders and trigger high-multiplier Fever Combos.",
+      ja: "『銀座回転寿司タイクーン（Ginza Conveyor Sushi Tycoon）』は、本格的な江戸前回転寿司の活気を再現したアーケード経営シミュレーションです。弧長パラメータ化スプラインによる等速コンベアレールとZero-GCオブジェクトプールをエンジンに採用し、注文に応じた迅速な握りとフィーバーコンボが楽しめます。",
+      zh: "《银座回转寿司大亨（Ginza Conveyor Sushi Tycoon）》灵感来自东京银座回转寿司店。运用恒速弧长样条闭环轨道与零GC对象池核心算法，玩家化身寿司主厨即时捏制握寿司，根据吧台食客头顶的气泡需求精准出餐，累积连击触发双倍金币狂热模式。",
+      fr: "Ginza Conveyor Sushi Tycoon est un jeu de gestion de bar à sushi sur tapis roulant spline avec pooling d'objets.",
+      es: "Magnate del Sushi Giratorio de Ginza es una simulación de restaurante con cinta transportadora spline.",
+    },
+    how: {
+      ko: "1) 숫자 키 1~5(또는 화면 하단 버튼)를 눌러 참치, 연어, 새우, 계란, 장어 초밥을 즉석 제조하여 컨베이어 벨트에 올리세요. 2) 벨트가 등속 회전하며 손님 앞을 지나갈 때, 손님이 주문한 초밥과 일치하면 손님이 집어먹고 골드와 팁을 지불합니다. 3) 5연속 성공 시 12초간 피버 모드(매출 2배, 인내심 정지)가 발동됩니다. 벨트를 2바퀴 이상 돌아 변질된 접시는 폐기되어 평판이 깎이므로 손님이 원하는 종류를 파악하여 제작하세요. 모은 골드로 벨트 속도와 접시 단가, 자동 밥 쥐기 기계를 업그레이드할 수 있습니다.",
+      en: "1) Press keys 1-5 (or click buttons) to craft Tuna, Salmon, Shrimp, Tamago, and Unagi nigiri onto the conveyor belt. 2) As plates travel along the spline loop, seated customers will pick matching plates, paying cash and leaving tips. 3) 5 consecutive matches ignite Fever Mode (2x revenue, customer patience frozen). Avoid over-crafting unwanted sushi as spoiled plates after 2 laps reduce reputation. Reinvest revenue into faster belts, premium ingredients, and auto-rice shapers.",
+      ja: "1) 数字キー1〜5でマグロ、サーモン、エビ、玉子、ウナギを握ってレーンに流します。2) レールを流れる皿が客の注文と一致すると客が取り、売上とチップを獲得します。3) 5連続提供で12秒間のフィーバータイム（売上2倍、忍耐ゲージ停止）に突入します。売れ残って2周した皿は廃棄となり評判が下がるので需要を見て握りましょう。",
+      zh: "1) 按数字键 1~5 捏制金枪鱼、三文鱼、熟虾、玉子烧和鳗鱼寿司放入传送带。2) 盘子沿轨道等速循环，途经食客身前时若匹配订单则会被取下食用，赚取售价与小费。3) 达成 5 连击即触发狂热时间（双倍收益且冻结耐心值）。多余盘子循环超过2圈会变质废弃扣除声誉，积累资金可升级轨道转速与全自动捏饭机。",
+      fr: "1) Préparez des sushis (touches 1-5) sur le tapis roulant. 2) Les clients prennent les assiettes correspondant à leur commande. 3) Enchaînez les combos pour débloquer le mode Fièvre.",
+      es: "1) Elabora sushi (teclas 1-5) en la cinta transportadora. 2) Los clientes toman los platos que coinciden con su pedido. 3) Encadena combos para activar el modo Fiebre.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "초밥이 버려져서 평판이 깎이는 것을 어떻게 방지하나요?",
+          en: "How do I prevent spoiled plates from being discarded and hurting my reputation?",
+          ja: "寿司が廃棄されて評判が下がるのを防ぐにはどうすればよいですか？",
+          zh: "如何避免寿司变质废弃导致餐厅声誉受损？",
+          fr: "Comment éviter que les assiettes périmées ne nuisent à ma réputation ?",
+          es: "¿Cómo evito que los platos caducados perjudiquen mi reputación?",
+        },
+        a: {
+          ko: "무작정 많은 접시를 올리지 말고, 현재 카운터석 손님들의 말풍선 주문(TUM, SAL, SHR, TAM, UNA)을 확인한 뒤 필요한 수량만 정밀하게 제작하세요. 벨트 속도 업그레이드를 진행하면 접시가 손님에게 도달하는 시간이 단축되어 변질 전 빠른 서빙이 가능합니다.",
+          en: "Avoid blindly spamming plates. Observe the order speech bubbles above seated customers and craft only the required quantities. Upgrading your Belt Motor also speeds up delivery, ensuring plates reach customers well before their freshness expires.",
+          ja: "無闇に大量に流さず、客の吹き出し（注文）を確認して必要な皿だけを握りましょう。ベルト速度を強化すれば鮮度が落ちる前に素早く客席へ届きます。",
+          zh: "切勿盲目大量出餐，观察当前座位食客头顶的气泡缩写（TUN, SAL, SHR, TAM, UNA），按需定制出餐。升级传送带电机可加快运行速度，确保在保鲜期结束前送达食客。",
+          fr: "Regardez attentivement les bulles de commande des clients et n'envoyez que les sushis demandés.",
+          es: "Observa los bocadillos de pedido de los clientes y prepara únicamente los sushis solicitados.",
+        },
+      },
+    ],
+  },
 };

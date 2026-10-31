@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SushiConveyor from "../../components/games/SushiConveyor";
+import GameGuide from "../../components/GameGuide.astro";
+import { locales, type Locale } from "../../lib/i18n";
+
+export function getStaticPaths() {
+  return locales.map((l) => ({ params: { lang: l === "en" ? undefined : l } }));
+}
+
+const locale: Locale = (Astro.params.lang as Locale) || "en";
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "회전초밥 타이쿤: 스플라인 마스터 — 스플라인 레일 & 주문 서빙 | OIYO Game",
+    description:
+      "호 길이 스플라인(Spline) 폐곡선 컨베이어 벨트와 가비지 컬렉션 없는(Zero-GC) 초밥 접시 풀링을 적용한 긴자 회전초밥 경영 타이쿤. 참치·연어·장어 초밥을 즉석 제조하여 손님을 만족시키세요.",
+  },
+  en: {
+    title: "Ginza Conveyor Sushi Tycoon — Spline Rail & Zero-GC Serving | OIYO Game",
+    description:
+      "Run a bustling Ginza conveyor sushi bar powered by arc-length spline loop tracks and zero-GC plate pooling. Craft fresh nigiri, manage customer patience, and trigger Fever combos.",
+  },
+  ja: {
+    title: "銀座回転寿司タイクーン — スプラインレール＆オーダー提供経営 | OIYO Game",
+    description:
+      "弧長スプライン閉曲線コンベアとZero-GCプレートプーリングを採用した本格回転寿司経営ゲーム。マグロ・サーモン・ウナギを握り、お客の満足度とフィーバーコンボを狙え。",
+  },
+  zh: {
+    title: "银座回转寿司大亨 — 弧长样条环线与极速出餐 | OIYO Game",
+    description:
+      "基于弧长样条闭环传送带与零GC对象池打造的银座回转寿司模拟经营。即时捏制金枪鱼、三文鱼与鳗鱼寿司，满足顾客订单，触发狂热暴击连击。",
+  },
+  fr: {
+    title: "Ginza Conveyor Sushi Tycoon — Gestion de Bar à Sushi sur Rail Spline | OIYO Game",
+    description:
+      "Gérez un restaurant de sushi sur tapis roulant en boucle spline. Préparez thon, saumon et anguille pour satisfaire vos clients et activer le mode fièvre.",
+  },
+  es: {
+    title: "Magnate del Sushi Giratorio de Ginza — Cinta de Bucle y Gestión | OIYO Game",
+    description:
+      "Gestiona una barra de sushi giratoria con cinta transportadora en curva spline. Prepara atún, salmón y anguila al momento y activa el modo fiebre.",
+  },
+};
+
+const m = meta[locale] || meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <SushiConveyor client:load />
+  <GameGuide slug="sushi-conveyor" locale={locale} name={m.title.split(" — ")[0]} />
+</BaseLayout>

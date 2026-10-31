@@ -1070,6 +1070,20 @@ export const MISSION_CATALOG: Array<{
     goal: 1,
     xpReward: 50,
   },
+  {
+    id: "sushi-conveyor-served-15",
+    gameSlug: "sushi-conveyor",
+    title: {
+      ko: "회전초밥 타이쿤에서 스플라인 컨베이어 벨트를 통해 손님에게 초밥 15접시 서빙하기",
+      en: "Serve 15 sushi plates to seated customers via the spline conveyor in Sushi Conveyor",
+      ja: "銀座回転寿司タイクーンでスプラインレーンを通じて客に15皿の寿司を提供する",
+      zh: "在银座回转寿司大亨中通过样条传送带向食客成功提供 15 盘寿司",
+      fr: "Servez 15 assiettes de sushi via le tapis roulant dans Sushi Conveyor",
+      es: "Sirve 15 platos de sushi mediante la cinta transportadora en Sushi Conveyor",
+    },
+    goal: 1,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {
