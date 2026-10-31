@@ -56,6 +56,7 @@ describe('Game Juice & Game-Feel Engine (v1.0)', () => {
       count: 10,
       kind: 'spark',
       gravity: 200,
+      drag: 1.0,
     });
     expect(spawned).toBe(10);
     expect(ps.getActiveCount()).toBe(10);
