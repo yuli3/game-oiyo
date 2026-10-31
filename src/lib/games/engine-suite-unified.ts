@@ -42,6 +42,10 @@ export class MobileHapticsPro {
   }
 
   // Developer convenience aliases
+  public static selection(): void {
+    this.selectionClick();
+  }
+
   public static light(): void {
     MotionGestureController.triggerHaptic("light");
   }

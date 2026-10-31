@@ -7,6 +7,84 @@ import {
 } from '../../lib/games/merge-mansion';
 import { Button } from '../ui/button';
 import { Volume2, VolumeX, RotateCcw, Zap, Sparkles, CheckCircle2, ChevronRight, Lock } from 'lucide-react';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+
+function TiltMergeCell({
+  item,
+  def,
+  isSelected,
+  isCompatible,
+  onDragStart,
+  onDrop,
+  onClick,
+}: {
+  item: MergeItem | null;
+  def: (typeof CHAIN_DEFINITIONS)[keyof typeof CHAIN_DEFINITIONS]['items'][number] | null;
+  isSelected: boolean;
+  isCompatible: boolean;
+  onDragStart: (e: React.DragEvent) => void;
+  onDrop: (e: React.DragEvent) => void;
+  onClick: () => void;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <div
+      draggable={item !== null && !item.isCobwebbed}
+      onDragStart={onDragStart}
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={onDrop}
+      style={
+        {
+          '--card-tilt': item ? transformCss : 'none',
+        } as React.CSSProperties
+      }
+      onPointerMove={item ? onPointerMove : undefined}
+      onPointerLeave={item ? onPointerLeave : undefined}
+      onClick={() => {
+        if (item) triggerPop(0.15);
+        onClick();
+      }}
+      className={`relative aspect-square rounded-xl border flex flex-col items-center justify-center cursor-pointer transition-all duration-150 will-change-transform transform-(--card-tilt) ${
+        isSelected
+          ? 'bg-primary/20 border-primary ring-2 ring-primary ring-offset-2 ring-offset-background scale-95 shadow-md'
+          : isCompatible
+          ? 'bg-warning/20 border-warning ring-2 ring-warning/60 animate-pulse'
+          : item
+          ? 'bg-card border-border hover:border-primary/40 hover:bg-muted/40 shadow-xs'
+          : 'bg-muted/20 border-border/40 hover:bg-muted/40'
+      }`}
+    >
+      {item && def && (
+        <>
+          {/* Spawner Badge */}
+          {item.isSpawner && (
+            <span className="absolute top-1 left-1 px-1 py-0.5 rounded bg-warning text-foreground font-black text-xs scale-75 origin-top-left shadow-xs">
+              ⚡생성
+            </span>
+          )}
+
+          {/* Cobweb Lock Icon */}
+          {item.isCobwebbed && (
+            <div className="absolute inset-0 bg-background/50 backdrop-blur-xs rounded-xl flex items-center justify-center">
+              <Lock className="w-4 h-4 text-muted-foreground" />
+            </div>
+          )}
+
+          {/* Item Emoji & Visual */}
+          <span className={`text-2xl sm:text-3xl select-none ${item.isCobwebbed ? 'opacity-40' : ''}`}>
+            {def.emoji}
+          </span>
+
+          {/* Level Pill */}
+          <span className="text-xs font-bold text-muted-foreground scale-90">
+            Lv.{item.tier}
+          </span>
+        </>
+      )}
+    </div>
+  );
+}
 
 export default function MergeMansion() {
   const engineRef = useRef<MergeMansionEngine | null>(null);
@@ -118,8 +196,10 @@ export default function MergeMansion() {
       const res = engine.tapSpawner(idx);
       if (res.success) {
         playSfx('tap');
+        MobileHapticsPro.light();
         setMessage(`생성기에서 새로운 아이템을 소환했습니다! (잔여 에너지: ${engine.energy})`);
       } else {
+        MobileHapticsPro.warning();
         setMessage(res.reason || '소환할 수 없습니다.');
       }
       updateState();
@@ -130,9 +210,11 @@ export default function MergeMansion() {
     if (selectedIdx === null) {
       if (item && !item.isCobwebbed) {
         setSelectedIdx(idx);
+        MobileHapticsPro.light();
         const def = CHAIN_DEFINITIONS[item.chain].items[item.tier - 1];
         setMessage(`'${def.name.ko}' 선택됨. 빈 칸으로 이동하거나 같은 아이템과 합치세요.`);
       } else if (item?.isCobwebbed) {
+        MobileHapticsPro.warning();
         setMessage('거미줄에 갇혀 있습니다! 동일한 레벨의 아이템을 끌어다 합치면 해제됩니다.');
       }
       return;
@@ -141,6 +223,7 @@ export default function MergeMansion() {
     // Second click: move or merge
     if (selectedIdx === idx) {
       // Deselect
+      MobileHapticsPro.click();
       setSelectedIdx(null);
       return;
     }
@@ -148,12 +231,15 @@ export default function MergeMansion() {
     const res = engine.moveOrMerge(selectedIdx, idx);
     if (res.action === 'merged') {
       playSfx('merge');
+      MobileHapticsPro.impact();
       setMessage(`합성 성공! Lv.${res.newTier} 아이템을 제작했습니다! (+${res.starsEarned} 별)`);
     } else if (res.action === 'unlockedCobweb') {
       playSfx('unlock');
+      MobileHapticsPro.success();
       setMessage(`거미줄 해제! Lv.${res.newTier} 아이템이 잠금 해제되었습니다!`);
     } else if (res.action === 'moved') {
       playSfx('tap');
+      MobileHapticsPro.light();
     }
 
     setSelectedIdx(null);
@@ -168,6 +254,7 @@ export default function MergeMansion() {
       e.preventDefault();
       return;
     }
+    MobileHapticsPro.light();
     e.dataTransfer.setData('text/plain', idx.toString());
   };
 
@@ -181,12 +268,15 @@ export default function MergeMansion() {
     const res = engine.moveOrMerge(fromIdx, targetIdx);
     if (res.action === 'merged') {
       playSfx('merge');
+      MobileHapticsPro.impact();
       setMessage(`합성 성공! Lv.${res.newTier} 아이템 제작 (+${res.starsEarned} 별)`);
     } else if (res.action === 'unlockedCobweb') {
       playSfx('unlock');
+      MobileHapticsPro.success();
       setMessage(`거미줄 해제! Lv.${res.newTier} 잠금 해제!`);
     } else if (res.action === 'moved') {
       playSfx('tap');
+      MobileHapticsPro.light();
     }
     updateState();
   };
@@ -197,15 +287,18 @@ export default function MergeMansion() {
     const res = engine.completeQuest(questId);
     if (res.success) {
       playSfx('quest');
+      MobileHapticsPro.success();
       setMessage('저택 구역 복원 퀘스트 완료! 별과 보너스 에너지를 획득했습니다!');
       updateState();
     } else {
+      MobileHapticsPro.warning();
       setMessage(res.reason || '퀘스트를 완료할 수 없습니다.');
     }
   };
 
   const handleRestart = () => {
     initAudio();
+    MobileHapticsPro.light();
     engine.initBoard();
     engine.energy = 50;
     engine.stars = 0;
@@ -367,51 +460,16 @@ export default function MergeMansion() {
           const def = item ? CHAIN_DEFINITIONS[item.chain].items[item.tier - 1] : null;
 
           return (
-            <div
+            <TiltMergeCell
               key={idx}
-              draggable={item !== null && !item.isCobwebbed}
+              item={item}
+              def={def}
+              isSelected={isSelected}
+              isCompatible={Boolean(isCompatible)}
               onDragStart={(e) => handleDragStart(e, idx)}
-              onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => handleDrop(e, idx)}
               onClick={() => handleCellClick(idx)}
-              className={`relative aspect-square rounded-xl border flex flex-col items-center justify-center cursor-pointer transition-all duration-150 ${
-                isSelected
-                  ? 'bg-primary/20 border-primary ring-2 ring-primary ring-offset-2 ring-offset-background scale-95 shadow-md'
-                  : isCompatible
-                  ? 'bg-warning/20 border-warning ring-2 ring-warning/60 animate-pulse'
-                  : item
-                  ? 'bg-card border-border hover:border-primary/40 hover:bg-muted/40 shadow-xs'
-                  : 'bg-muted/20 border-border/40 hover:bg-muted/40'
-              }`}
-            >
-              {item && def && (
-                <>
-                  {/* Spawner Badge */}
-                  {item.isSpawner && (
-                    <span className="absolute top-1 left-1 px-1 py-0.5 rounded bg-warning text-foreground font-black text-xs scale-75 origin-top-left shadow-xs">
-                      ⚡생성
-                    </span>
-                  )}
-
-                  {/* Cobweb Lock Icon */}
-                  {item.isCobwebbed && (
-                    <div className="absolute inset-0 bg-background/50 backdrop-blur-xs rounded-xl flex items-center justify-center">
-                      <Lock className="w-4 h-4 text-muted-foreground" />
-                    </div>
-                  )}
-
-                  {/* Item Emoji & Visual */}
-                  <span className={`text-2xl sm:text-3xl select-none ${item.isCobwebbed ? 'opacity-40' : ''}`}>
-                    {def.emoji}
-                  </span>
-
-                  {/* Level Pill */}
-                  <span className="text-xs font-bold text-muted-foreground scale-90">
-                    Lv.{item.tier}
-                  </span>
-                </>
-              )}
-            </div>
+            />
           );
         })}
       </div>

@@ -26,7 +26,105 @@ import {
   transformShadowBlock,
   type ShadowBlockId,
 } from "../../lib/games/shadow-architect";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 const Scene=lazy(()=>import("./ShadowArchitectScene"));const BLOCKS=["I","L","—","T","S"];
+
+function playShadowAudio(type: 'select' | 'move' | 'rotate' | 'complete') {
+  if (typeof window === 'undefined') return;
+  try {
+    const AudioCtx =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const now = ctx.currentTime;
+
+    if (type === 'select') {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(520, now);
+      osc.frequency.exponentialRampToValueAtTime(800, now + 0.05);
+      gain.gain.setValueAtTime(0.1, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.06);
+    } else if (type === 'move') {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(140, now);
+      osc.frequency.exponentialRampToValueAtTime(70, now + 0.08);
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.09);
+    } else if (type === 'rotate') {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(280, now);
+      osc.frequency.exponentialRampToValueAtTime(560, now + 0.1);
+      gain.gain.setValueAtTime(0.1, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.11);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.11);
+    } else if (type === 'complete') {
+      [261.63, 329.63, 392.0, 523.25, 659.25].forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + idx * 0.07);
+        gain.gain.setValueAtTime(0.12, now + idx * 0.07);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.07 + 0.4);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(now + idx * 0.07);
+        osc.stop(now + idx * 0.07 + 0.4);
+      });
+    }
+    setTimeout(() => ctx.close().catch(() => {}), 600);
+  } catch {}
+}
+
+function TiltShadowBlockButton({
+  name,
+  isSelected,
+  onClick,
+}: {
+  name: string;
+  isSelected: boolean;
+  onClick: () => void;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      style={
+        {
+          '--card-tilt': transformCss,
+        } as React.CSSProperties
+      }
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.12);
+        onClick();
+      }}
+      aria-pressed={isSelected}
+      className={`rounded-xl border p-3 font-black transition will-change-transform transform-(--card-tilt) ${
+        isSelected
+          ? "border-primary bg-primary text-primary-foreground shadow-sm"
+          : "border-border bg-card text-card-foreground hover:bg-accent"
+      }`}
+    >
+      {name}
+    </button>
+  );
+}
 const COPY={
 ko:{title:"그림자 건축가",sub:"입체를 쌓아 벽의 실루엣을 완성하세요",enter:"빛의 작업실 열기",target:"목표 그림자",current:"현재 그림자",match:"일치율",moves:"조작",best:"최고",rotate:"회전",left:"왼쪽",right:"오른쪽",up:"위",down:"아래",front:"앞층",back:"뒷층",reset:"설계 초기화",next:"다음 실루엣",done:"빛과 구조가 정확히 맞았어요",hint:"블록을 고르고 이동·회전하세요. 깊이는 벽 그림자에 보이지 않아 같은 실루엣을 여러 구조로 만들 수 있어요.",fallback:"이 기기에서는 2D 그림자 설계도로 플레이합니다."},
 en:{title:"Shadow Architect",sub:"Build in 3D to complete the silhouette on the wall",enter:"Open the light studio",target:"Target shadow",current:"Current shadow",match:"Match",moves:"Moves",best:"Best",rotate:"Rotate",left:"Left",right:"Right",up:"Up",down:"Down",front:"Front layer",back:"Back layer",reset:"Reset design",next:"Next silhouette",done:"Light and structure align",hint:"Select a block, then move and rotate it. Depth is hidden in the wall shadow, so many structures can make the same silhouette.",fallback:"Play from the 2D shadow plan on this device."},
@@ -81,15 +179,26 @@ export default function ShadowArchitect({ locale = "ko" }: { locale?: string }) 
   useEffect(() => {
     if (!complete || celebrated.current) return;
     celebrated.current = true;
+    playShadowAudio('complete');
+    MobileHapticsPro.success();
     const saved = recordBestForConditions("shadow-architect", shadowArchitectScore(state), "score", conditions, `${state.moves} moves`);
     setBest(saved.value);
     recordAchievementEvent("shadow-architect", "cleared");
     celebrateStage({ preset: "tiles", colors: ["#d9b95f", "#718a55", "#f4eddc"], origin: { x: 0.5, y: 0.6 } });
   }, [celebrateStage, complete, conditions, state]);
 
-  const act = (change: Parameters<typeof transformShadowBlock>[1]) => setState(s => transformShadowBlock(s, change));
+  const act = (change: Parameters<typeof transformShadowBlock>[1]) => {
+    if ('rotate' in change) {
+      playShadowAudio('rotate');
+    } else {
+      playShadowAudio('move');
+    }
+    MobileHapticsPro.light();
+    setState(s => transformShadowBlock(s, change));
+  };
   const reset = (next = state.puzzle) => {
     celebrated.current = false;
+    MobileHapticsPro.selection();
     setState(createShadowArchitect(next));
   };
 
@@ -130,14 +239,16 @@ export default function ShadowArchitect({ locale = "ko" }: { locale?: string }) 
           <>
             <div className="grid grid-cols-5 gap-2">
               {BLOCKS.map((name, i) => (
-                <button
+                <TiltShadowBlockButton
                   key={name}
-                  onClick={() => setState(s => selectShadowBlock(s, i as ShadowBlockId))}
-                  aria-pressed={state.selected === i}
-                  className={`rounded-xl border p-3 font-black ${state.selected === i ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-card-foreground"}`}
-                >
-                  {name}
-                </button>
+                  name={name}
+                  isSelected={state.selected === i}
+                  onClick={() => {
+                    playShadowAudio('select');
+                    MobileHapticsPro.selection();
+                    setState(s => selectShadowBlock(s, i as ShadowBlockId));
+                  }}
+                />
               ))}
             </div>
             <div className="grid grid-cols-3 gap-2">

@@ -10,9 +10,42 @@ import {
 } from '@/lib/games/baba-rule-shifter';
 import { addTrauma, createShakeState, triggerHaptic, updateShake } from '@/lib/games/juice-engine';
 import { playSyntheticTone } from '@/lib/games/audio-mixer';
+import { useCardTiltPro, MobileHapticsPro } from '@/lib/games/engine-suite-unified';
 
 interface BabaRuleShifterProps {
   locale?: string;
+}
+
+function TiltDirButton({
+  dir,
+  label,
+  onMove,
+}: {
+  dir: Direction;
+  label: string;
+  onMove: (dir: Direction) => void;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      style={
+        {
+          '--card-tilt': transformCss,
+        } as React.CSSProperties
+      }
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.15);
+        onMove(dir);
+      }}
+      className="flex h-12 w-12 items-center justify-center rounded-xl border border-border bg-card text-foreground font-black shadow-sm transition will-change-transform transform-(--card-tilt) hover:bg-muted active:scale-95"
+    >
+      {label}
+    </button>
+  );
 }
 
 export default function BabaRuleShifter({ locale = 'ko' }: BabaRuleShifterProps) {
@@ -60,6 +93,7 @@ export default function BabaRuleShifter({ locale = 'ko' }: BabaRuleShifterProps)
       if (audioCtxRef.current) {
         playSyntheticTone(audioCtxRef.current, { freq: 360, duration: 0.05, type: 'triangle', gain: 0.15 });
       }
+      MobileHapticsPro.light();
       triggerHaptic('light');
 
       // Check if rules changed
@@ -69,6 +103,7 @@ export default function BabaRuleShifter({ locale = 'ko' }: BabaRuleShifterProps)
           playSyntheticTone(audioCtxRef.current, { freq: 659.25, duration: 0.12, type: 'sine', gain: 0.25 });
         }
         addTrauma(shakeStateRef.current, 0.2);
+        MobileHapticsPro.medium();
         triggerHaptic('medium');
       }
 
@@ -81,6 +116,7 @@ export default function BabaRuleShifter({ locale = 'ko' }: BabaRuleShifterProps)
             }
           }, 150);
         }
+        MobileHapticsPro.success();
         triggerHaptic('combo');
       }
 
@@ -95,6 +131,7 @@ export default function BabaRuleShifter({ locale = 'ko' }: BabaRuleShifterProps)
       if (audioCtxRef.current) {
         playSyntheticTone(audioCtxRef.current, { freq: 280, duration: 0.06, type: 'sine', gain: 0.15 });
       }
+      MobileHapticsPro.click();
       triggerHaptic('light');
       syncState();
     }
@@ -106,6 +143,7 @@ export default function BabaRuleShifter({ locale = 'ko' }: BabaRuleShifterProps)
     if (audioCtxRef.current) {
       playSyntheticTone(audioCtxRef.current, { freq: 440, duration: 0.08, type: 'triangle', gain: 0.2 });
     }
+    MobileHapticsPro.light();
     triggerHaptic('medium');
     syncState();
   }, [levelId, syncState]);
@@ -308,21 +346,13 @@ export default function BabaRuleShifter({ locale = 'ko' }: BabaRuleShifterProps)
         </div>
       </div>
 
-      {/* Mobile Touch D-Pad */}
-      <div className="flex flex-col items-center gap-1 pt-1 md:hidden">
-        <Button size="sm" variant="outline" onClick={() => handleMove('up')} className="w-14 h-10">
-          ▲
-        </Button>
+      {/* Mobile Touch D-Pad with 3D Tilt */}
+      <div className="flex flex-col items-center gap-1.5 pt-1 md:hidden">
+        <TiltDirButton dir="up" label="▲" onMove={handleMove} />
         <div className="flex gap-2">
-          <Button size="sm" variant="outline" onClick={() => handleMove('left')} className="w-14 h-10">
-            ◀
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => handleMove('down')} className="w-14 h-10">
-            ▼
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => handleMove('right')} className="w-14 h-10">
-            ▶
-          </Button>
+          <TiltDirButton dir="left" label="◀" onMove={handleMove} />
+          <TiltDirButton dir="down" label="▼" onMove={handleMove} />
+          <TiltDirButton dir="right" label="▶" onMove={handleMove} />
         </div>
       </div>
 

@@ -16,9 +16,108 @@ import {
   updateFateDraft,
   type ChronoDetectiveState,
 } from '../../lib/games/chrono-detective';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 
 interface Props {
   locale: string;
+}
+
+function playChronoAudio(type: 'tick' | 'clue' | 'sealed' | 'victory') {
+  if (typeof window === 'undefined') return;
+  try {
+    const AudioCtx =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const now = ctx.currentTime;
+
+    if (type === 'tick') {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(600, now);
+      osc.frequency.exponentialRampToValueAtTime(300, now + 0.04);
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.05);
+    } else if (type === 'clue') {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(440, now);
+      osc.frequency.exponentialRampToValueAtTime(880, now + 0.12);
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.15);
+    } else if (type === 'sealed') {
+      [220, 330, 440].forEach((freq, idx) => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = 'sawtooth';
+        o.frequency.setValueAtTime(freq, now + idx * 0.04);
+        g.gain.setValueAtTime(0.15, now + idx * 0.04);
+        g.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.04 + 0.3);
+        o.connect(g).connect(ctx.destination);
+        o.start(now + idx * 0.04);
+        o.stop(now + idx * 0.04 + 0.3);
+      });
+    } else if (type === 'victory') {
+      [440, 554.37, 659.25, 880].forEach((freq, idx) => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = 'sine';
+        o.frequency.setValueAtTime(freq, now + idx * 0.08);
+        g.gain.setValueAtTime(0.15, now + idx * 0.08);
+        g.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.4);
+        o.connect(g).connect(ctx.destination);
+        o.start(now + idx * 0.08);
+        o.stop(now + idx * 0.08 + 0.4);
+      });
+    }
+    setTimeout(() => ctx.close().catch(() => {}), 500);
+  } catch {}
+}
+
+function TiltMemoryTabButton({
+  isSelected,
+  label,
+  onClick,
+}: {
+  isSelected: boolean;
+  label: string;
+  onClick: () => void;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      style={
+        {
+          '--card-tilt': transformCss,
+        } as React.CSSProperties
+      }
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.15);
+        MobileHapticsPro.light();
+        onClick();
+      }}
+      className={`rounded-lg border px-3 py-1.5 text-xs font-bold transition will-change-transform transform-(--card-tilt) ${
+        isSelected
+          ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+          : 'border-border bg-background text-foreground hover:bg-accent'
+      }`}
+    >
+      {label}
+    </button>
+  );
 }
 
 export default function ChronoDetective({ locale }: Props) {
@@ -47,14 +146,23 @@ export default function ChronoDetective({ locale }: Props) {
     field: 'identity' | 'cause' | 'culprit',
     value: string
   ) => {
+    playChronoAudio('tick');
+    MobileHapticsPro.click();
     const next = updateFateDraft(state, entryId, field, value);
     setState(next);
     if (next.status === 'case-solved') {
+      playChronoAudio('victory');
+      MobileHapticsPro.success();
       recordArcadePass(1);
+    } else if (next.confirmedTriadsCount > state.confirmedTriadsCount) {
+      playChronoAudio('sealed');
+      MobileHapticsPro.success();
     }
   };
 
   const handleAutoSolve = () => {
+    playChronoAudio('victory');
+    MobileHapticsPro.success();
     const next = applyAutoDeductionHint(state);
     setState(next);
     recordArcadePass(1);
@@ -130,20 +238,15 @@ export default function ChronoDetective({ locale }: Props) {
           {/* Scene Switcher Tabs */}
           <div className="flex flex-wrap gap-1.5">
             {MARITIME_SCENES.map((scene, idx) => (
-              <button
+              <TiltMemoryTabButton
                 key={scene.id}
-                type="button"
-                onClick={() =>
-                  setState((prev) => ({ ...prev, activeSceneIndex: idx }))
-                }
-                className={`rounded-lg border px-3 py-1.5 text-xs font-bold transition ${
-                  state.activeSceneIndex === idx
-                    ? 'border-primary bg-primary text-primary-foreground'
-                    : 'border-border bg-background text-foreground hover:bg-accent'
-                }`}
-              >
-                ⏱️ {isKo ? `기억 #${idx + 1}` : `Memory #${idx + 1}`}
-              </button>
+                isSelected={state.activeSceneIndex === idx}
+                label={`⏱️ ${isKo ? `기억 #${idx + 1}` : `Memory #${idx + 1}`}`}
+                onClick={() => {
+                  playChronoAudio('tick');
+                  setState((prev) => ({ ...prev, activeSceneIndex: idx }));
+                }}
+              />
             ))}
           </div>
 
@@ -178,7 +281,11 @@ export default function ChronoDetective({ locale }: Props) {
                   <button
                     key={clue.id}
                     type="button"
-                    onClick={() => setState(inspectSceneClue(state, clue.id))}
+                    onClick={() => {
+                      playChronoAudio('clue');
+                      MobileHapticsPro.light();
+                      setState(inspectSceneClue(state, clue.id));
+                    }}
                     className={`flex w-full items-center justify-between rounded-xl border p-3 text-left text-xs font-bold transition ${
                       inspected
                         ? 'border-primary bg-primary/15 text-foreground'

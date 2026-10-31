@@ -20,6 +20,7 @@ import {
 } from "../../lib/games/emotion-weather";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import EmotionWeatherScene, { type TownGlide } from "./EmotionWeatherScene";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 
 interface Copy {
   title: string;
@@ -394,6 +395,48 @@ function actClass(tone: "live" | "quiet" | "danger"): string {
   return "min-h-11 min-w-11 rounded-xl bg-muted px-3 text-left text-sm font-semibold text-foreground disabled:opacity-40";
 }
 
+function TiltActButton({
+  tone,
+  shortcutKey,
+  label,
+  detail,
+  disabled,
+  onClick,
+}: {
+  tone: "live" | "quiet" | "danger";
+  shortcutKey: string;
+  label: string;
+  detail: string;
+  disabled: boolean;
+  onClick: () => void;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      style={
+        {
+          '--card-tilt': transformCss,
+        } as React.CSSProperties
+      }
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`${actClass(tone)} transition will-change-transform transform-(--card-tilt)`}
+      aria-keyshortcuts={shortcutKey}
+      aria-label={`${label}. ${detail}`}
+      disabled={disabled}
+      onClick={() => {
+        triggerPop(0.12);
+        onClick();
+      }}
+    >
+      {label}
+      <span className="block text-xs font-normal">{detail}</span>
+    </button>
+  );
+}
+
 function gaugeClass(matched: boolean): string {
   if (matched) return "rounded-xl bg-card px-2 py-2 text-sm text-foreground";
   return "rounded-xl bg-muted px-2 py-2 text-sm text-muted-foreground";
@@ -521,10 +564,13 @@ export default function EmotionWeather({ locale = "en" }: { locale?: Locale }) {
     if (next.status === "win") {
       note(lawTick(next.lastAction));
       note("win");
+      MobileHapticsPro.success();
     } else if (next.status === "lose") {
       note("lose");
+      MobileHapticsPro.warning();
     } else {
       note(lawTick(next.lastAction));
+      MobileHapticsPro.light();
     }
     glideSerial.current += 1;
     setShown(stateRef.current);
@@ -675,18 +721,15 @@ export default function EmotionWeather({ locale = "en" }: { locale?: Locale }) {
             const tone = locked || noop ? "quiet" : doomed ? "danger" : "live";
             const detail = detailFor(state, act, copy);
             return (
-              <button
+              <TiltActButton
                 key={act}
-                type="button"
-                className={actClass(tone)}
-                aria-keyshortcuts={shortcut(act)}
-                aria-label={`${label(act, copy)}. ${detail}`}
+                tone={tone}
+                shortcutKey={shortcut(act)}
+                label={label(act, copy)}
+                detail={detail}
                 disabled={locked || noop}
                 onClick={() => move(act)}
-              >
-                {label(act, copy)}
-                <span className="block text-xs font-normal">{detail}</span>
-              </button>
+              />
             );
           })}
         </div>
