@@ -146,31 +146,42 @@ function TiltTubeButton({
       {/* Vertical Glass Glare Reflection */}
       <div className="pointer-events-none absolute left-1.5 top-3 bottom-6 w-1 rounded-full bg-foreground/15" />
 
-      {/* Liquid Segments (Bottom to Top) */}
-      <div className="flex w-full flex-col-reverse overflow-hidden rounded-b-full">
-        {tube.layers.map((color, layerIdx) => {
-          const colorClass = COLOR_CLASS_MAP[color as LiquidColor] ?? "bg-primary";
-          return (
-            <div
-              key={`${tube.id}-layer-${layerIdx}`}
-              className={`relative h-10 w-full transition-all ${colorClass}`}
-            >
-              {/* Meniscus / Surface curve on top layer */}
-              {layerIdx === tube.layers.length - 1 && (
-                <div className="absolute top-0 inset-x-0 h-1 rounded-b-full bg-foreground/25" />
-              )}
-            </div>
-          );
-        })}
-      </div>
+      {/* Test Tube Interior (Empty slots at top, liquid layers settling to the bottom) */}
+      <div className="flex w-full flex-col justify-end overflow-hidden rounded-b-full pb-0.5">
+        {/* Empty slots on top */}
+        {Array.from({ length: TUBE_CAPACITY - tube.layers.length }).map((_, i) => (
+          <div
+            key={`empty-${i}`}
+            className="h-10 w-full border-b border-border/10"
+          />
+        ))}
 
-      {/* Empty slot indicators for capacity */}
-      {Array.from({ length: TUBE_CAPACITY - tube.layers.length }).map((_, i) => (
-        <div
-          key={`empty-${i}`}
-          className="h-10 w-full border-b border-border/10"
-        />
-      ))}
+        {/* Liquid Segments (From top surface down to the bottom base) */}
+        {tube.layers
+          .slice()
+          .reverse()
+          .map((color, revIdx) => {
+            const originalIdx = tube.layers.length - 1 - revIdx;
+            const isTopSurface = revIdx === 0;
+            const isBottomBase = originalIdx === 0;
+            const colorClass = COLOR_CLASS_MAP[color as LiquidColor] ?? "bg-primary";
+            return (
+              <div
+                key={`${tube.id}-layer-${originalIdx}`}
+                className={`relative h-10 w-full transition-all ${colorClass} ${
+                  isBottomBase ? "rounded-b-full" : ""
+                }`}
+              >
+                {/* Meniscus / Surface curve on top layer */}
+                {isTopSurface && (
+                  <div className="absolute top-0 inset-x-0 h-1.5 rounded-b-full bg-foreground/25" />
+                )}
+                {/* Vertical reflective sheen inside liquid */}
+                <div className="pointer-events-none absolute left-1 inset-y-0.5 w-1 rounded-full bg-foreground/20" />
+              </div>
+            );
+          })}
+      </div>
     </button>
   );
 }

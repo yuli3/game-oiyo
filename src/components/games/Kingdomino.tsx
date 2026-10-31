@@ -1,3 +1,111 @@
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+
+function playKingdominoAudio(type: "pick" | "rotate" | "place" | "win" | "lose") {
+  if (typeof window === "undefined") return;
+  try {
+    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const now = ctx.currentTime;
+    if (type === "pick") {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(440, now);
+      osc.frequency.exponentialRampToValueAtTime(660, now + 0.06);
+      gain.gain.setValueAtTime(0.1, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.06);
+    } else if (type === "rotate") {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(300, now);
+      osc.frequency.exponentialRampToValueAtTime(500, now + 0.07);
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.07);
+    } else if (type === "place") {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(260, now);
+      osc.frequency.exponentialRampToValueAtTime(130, now + 0.1);
+      gain.gain.setValueAtTime(0.14, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.1);
+    } else if (type === "win") {
+      [392.0, 523.25, 659.25, 783.99].forEach((freq, idx) => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = "sine";
+        o.frequency.setValueAtTime(freq, now + idx * 0.08);
+        g.gain.setValueAtTime(0.12, now + idx * 0.08);
+        g.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.35);
+        o.connect(g).connect(ctx.destination);
+        o.start(now + idx * 0.08);
+        o.stop(now + idx * 0.08 + 0.35);
+      });
+    } else if (type === "lose") {
+      [196.0, 164.81, 130.81].forEach((freq, idx) => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = "triangle";
+        o.frequency.setValueAtTime(freq, now + idx * 0.1);
+        g.gain.setValueAtTime(0.1, now + idx * 0.1);
+        g.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.1 + 0.25);
+        o.connect(g).connect(ctx.destination);
+        o.start(now + idx * 0.1);
+        o.stop(now + idx * 0.1 + 0.25);
+      });
+    }
+    setTimeout(() => ctx.close().catch(() => {}), 500);
+  } catch {}
+}
+
+function TiltDraftChipButton({
+  children,
+  onClick,
+  disabled,
+  className = "",
+  ariaLabel,
+  title,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  className?: string;
+  ariaLabel?: string;
+  title?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      style={{ "--card-tilt": transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.12);
+        onClick?.();
+      }}
+      disabled={disabled}
+      className={`transition will-change-transform transform-(--card-tilt) ${className}`}
+      aria-label={ariaLabel}
+      title={title}
+    >
+      {children}
+    </button>
+  );
+}
+
 import React, { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { Maximize2, Minimize2, Share2, Volume2, VolumeX } from "lucide-react";
 import { GameContainer } from "../ui/game/GamePrimitives";
@@ -140,14 +248,18 @@ function TileChip({ tile, owner, dim, onClick, youLabel, aiLabel, locale }: {
     </div>
   );
   return (
-    <button
-      onClick={onClick}
+    <TiltDraftChipButton
+      onClick={() => {
+        playKingdominoAudio("pick");
+        MobileHapticsPro.light();
+        onClick?.();
+      }}
       disabled={!onClick}
       className={`flex min-h-11 items-center gap-[3px] rounded-md border p-1 ${
         onClick ? "border-emerald-500 ring-1 ring-emerald-400/50 hover:bg-emerald-50 cursor-pointer" : "border-black/10"
       } ${dim ? "opacity-40" : ""}`}
       title={`#${tile.id}`}
-      aria-label={`#${tile.id}: ${cellNames[locale][tile.a.terrain]} ${tile.a.crowns} ${i18n[locale].crowns}, ${cellNames[locale][tile.b.terrain]} ${tile.b.crowns} ${i18n[locale].crowns}`}
+      ariaLabel={`#${tile.id}: ${cellNames[locale][tile.a.terrain]} ${tile.a.crowns} ${i18n[locale].crowns}, ${cellNames[locale][tile.b.terrain]} ${tile.b.crowns} ${i18n[locale].crowns}`}
     >
       <span className="text-[9px] font-bold text-gray-400 w-4 text-center">{tile.id}</span>
       {sq(tile.a)}{sq(tile.b)}
@@ -156,7 +268,7 @@ function TileChip({ tile, owner, dim, onClick, youLabel, aiLabel, locale }: {
           {owner === "you" ? youLabel : aiLabel}
         </span>
       )}
-    </button>
+    </TiltDraftChipButton>
   );
 }
 

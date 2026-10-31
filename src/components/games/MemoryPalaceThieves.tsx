@@ -6,6 +6,38 @@ import {usePrefersReducedMotion} from "../../lib/games/reduced-motion";
 import {getBestForConditions,recordAchievementEvent,recordBestForConditions} from "../../lib/games/records";
 import {MEMORY_PALACE_RULESET, MEMORY_PALACE_OBSERVE_INTERVAL_MS, MEMORY_PALACE_EXIT, MEMORY_PALACE_HEIGHT, MEMORY_PALACE_OBSERVE_TURNS, MEMORY_PALACE_WIDTH, createMemoryPalace, isPalaceWall, palaceLineOfSight, moveMemoryPalace, observeMemoryPalace, revealMemoryPalace, type MemoryPalaceState, type PalaceDirection} from "../../lib/games/memory-palace-thieves";
 import {MEMORY_PALACE_SPRITES} from "../../lib/games/sprites";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+
+function TiltThiefButton({
+  label,
+  ariaLabel,
+  onClick,
+  className = "",
+}: {
+  label: React.ReactNode;
+  ariaLabel?: string;
+  onClick: () => void;
+  className?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      style={{ "--card-tilt": transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.12);
+        onClick();
+      }}
+      aria-label={ariaLabel}
+      className={`rounded-lg border border-border bg-card text-card-foreground transition will-change-transform transform-(--card-tilt) hover:bg-accent ${className}`}
+    >
+      {label}
+    </button>
+  );
+}
 
 const Scene=lazy(()=>import("./MemoryPalaceThievesScene"));
 const COPY={
@@ -41,10 +73,14 @@ export default function MemoryPalaceThieves({locale="ko"}:{locale?:string}){cons
  const flashTimer=useRef<number|undefined>(undefined);
  useEffect(()=>()=>window.clearTimeout(flashTimer.current),[]);
  const tone=useCallback((frequency:number)=>{if(muted||typeof window==="undefined")return;const C=window.AudioContext??(window as typeof window&{webkitAudioContext?:typeof AudioContext}).webkitAudioContext;if(!C)return;try {const c=new C(),o=c.createOscillator(),g=c.createGain();o.frequency.value=frequency;g.gain.setValueAtTime(.035,c.currentTime);g.gain.exponentialRampToValueAtTime(.0001,c.currentTime+.12);o.connect(g).connect(c.destination);o.start();o.stop(c.currentTime+.13);o.addEventListener("ended",()=>void c.close().catch(()=>{}),{once:true});}catch{}},[muted]);
- const act=useCallback((d:PalaceDirection)=>setState(s=>moveMemoryPalace(s,d)),[]);
+ const act=useCallback((d:PalaceDirection)=>{
+   MobileHapticsPro.light();
+   tone(300);
+   setState(s=>moveMemoryPalace(s,d));
+ },[tone]);
  useEffect(()=>{if(!started||observationPaused||state.phase!=="observing")return;const advance=()=>{if(!document.hidden)setState(observeMemoryPalace);};const id=window.setInterval(advance,MEMORY_PALACE_OBSERVE_INTERVAL_MS);return()=>clearInterval(id);},[started,state,observationPaused]);
  useEffect(()=>{const conditions={seed:String(seed),difficulty:MEMORY_PALACE_RULESET,assist:"none" as const};setBest(getBestForConditions("memory-palace-thieves",conditions)?.value??0);recordAchievementEvent("memory-palace-thieves","opened");},[seed]);
- useEffect(()=>{if(state.phase==="observing"){resultHandled.current=false;return;}if(resultHandled.current)return;if(state.phase==="escaped"||state.phase==="caught")resultHandled.current=true;if(state.phase==="escaped"){const score=Math.max(100,2000-state.turn*20-(2-state.reveals)*100);const next=recordBestForConditions("memory-palace-thieves",score,"score",{seed:String(seed),difficulty:MEMORY_PALACE_RULESET,assist:state.reveals===2?"none":"hint"},`${state.turn} turns`);setBest(next.value);recordAchievementEvent("memory-palace-thieves","cleared");tone(880);celebrateStage({preset:"coins",colors:["#64733e","#d6b65c","#f4eedb"],origin:{x:.5,y:.6}});}else if(state.phase==="caught")tone(130);},[seed,state.phase,state.reveals,state.turn,tone]);
+ useEffect(()=>{if(state.phase==="observing"){resultHandled.current=false;return;}if(resultHandled.current)return;if(state.phase==="escaped"||state.phase==="caught")resultHandled.current=true;if(state.phase==="escaped"){const score=Math.max(100,2000-state.turn*20-(2-state.reveals)*100);const next=recordBestForConditions("memory-palace-thieves",score,"score",{seed:String(seed),difficulty:MEMORY_PALACE_RULESET,assist:state.reveals===2?"none":"hint"},`${state.turn} turns`);setBest(next.value);recordAchievementEvent("memory-palace-thieves","cleared");tone(880);MobileHapticsPro.success();celebrateStage({preset:"coins",colors:["#64733e","#d6b65c","#f4eedb"],origin:{x:.5,y:.6}});}else if(state.phase==="caught"){tone(130);MobileHapticsPro.heavy();}},[seed,state.phase,state.reveals,state.turn,tone]);
  useEffect(()=>{const key=(e:KeyboardEvent)=>{if(!started||state.phase!=="infiltrating"||e.repeat||e.ctrlKey||e.metaKey||e.altKey)return;if(e.target instanceof HTMLElement&&e.target.closest("input,textarea,select,button,a,[contenteditable=true]"))return;const m:Record<string,PalaceDirection>={ArrowUp:"up",w:"up",ArrowDown:"down",s:"down",ArrowLeft:"left",a:"left",ArrowRight:"right",d:"right"," ":"wait",q:"left",z:"up"};const direction=m[e.key.length===1?e.key.toLowerCase():e.key];if(direction){e.preventDefault();act(direction);}};window.addEventListener("keydown",key);return()=>window.removeEventListener("keydown",key);},[act,started,state.phase]);
  const begin=()=>{setStarted(true);recordAchievementEvent("memory-palace-thieves","played");tone(440);};
  const reset=()=>{setObservationPaused(false);window.clearTimeout(flashTimer.current);setState(createMemoryPalace(seed));setStarted(true);setFlash(false);recordAchievementEvent("memory-palace-thieves","played");tone(440);};
@@ -56,7 +92,28 @@ export default function MemoryPalaceThieves({locale="ko"}:{locale?:string}){cons
    <div ref={stageRef}><Lazy3DStage active={active} className="h-[min(44vh,360px)] rounded-2xl border bg-[#11180f]" placeholder={<div className="grid h-full place-items-center p-8 text-center"><button className="rounded-xl bg-primary px-5 py-3 font-bold text-primary-foreground" onClick={begin}>{t.start}</button></div>} fallback={<PalaceFallback state={state} visible={observing||flash||ended}/>}><Scene state={state} mapVisible={observing||flash||ended} reducedMotion={Boolean(reduced)}/></Lazy3DStage></div>
    {active&&<div aria-live="polite" className="rounded-xl border p-3 text-center font-semibold">{observing?`${t.observe} ${state.observationTurn+1}/${MEMORY_PALACE_OBSERVE_TURNS}`:state.phase==="infiltrating"?(state.carrying?t.artifact:t.infiltrate):state.phase==="escaped"?t.escape:t.caught}</div>}
    {active&&observing&&<div className="flex flex-wrap gap-2"><button className="min-h-11 flex-1 rounded-xl border px-3" onClick={()=>setObservationPaused(v=>!v)}>{observationPaused?controls.resume:controls.pause}</button><button className="min-h-11 flex-1 rounded-xl border px-3" onClick={reset}>{controls.replay}</button></div>}
-   {active&&!observing&&!ended&&<><div className="mx-auto grid w-48 grid-cols-3 gap-2"><span/><button onClick={()=>act("up")} aria-label={controls.up} className="rounded-lg border p-3">↑</button><span/><button onClick={()=>act("left")} aria-label={controls.left} className="rounded-lg border p-3">←</button><button onClick={()=>act("wait")} className="rounded-lg border p-2 text-xs">{t.wait}</button><button onClick={()=>act("right")} aria-label={controls.right} className="rounded-lg border p-3">→</button><span/><button onClick={()=>act("down")} aria-label={controls.down} className="rounded-lg border p-3">↓</button><span/></div><button onClick={reveal} disabled={flash||state.reveals===0} className="w-full rounded-xl border px-4 py-3 font-semibold disabled:opacity-40">{t.memory} · {state.reveals}</button></>}
+   {active&&!observing&&!ended&&(
+      <>
+        <div className="mx-auto grid w-48 grid-cols-3 gap-2">
+          <span/>
+          <TiltThiefButton onClick={()=>act("up")} ariaLabel={controls.up} label="↑" className="p-3 font-bold"/>
+          <span/>
+          <TiltThiefButton onClick={()=>act("left")} ariaLabel={controls.left} label="←" className="p-3 font-bold"/>
+          <TiltThiefButton onClick={()=>act("wait")} label={t.wait} className="p-2 text-xs font-bold"/>
+          <TiltThiefButton onClick={()=>act("right")} ariaLabel={controls.right} label="→" className="p-3 font-bold"/>
+          <span/>
+          <TiltThiefButton onClick={()=>act("down")} ariaLabel={controls.down} label="↓" className="p-3 font-bold"/>
+          <span/>
+        </div>
+        <button
+          onClick={()=>{MobileHapticsPro.medium();reveal();}}
+          disabled={flash||state.reveals===0}
+          className="w-full rounded-xl border border-border bg-card text-card-foreground px-4 py-3 font-semibold disabled:opacity-40"
+        >
+          {t.memory} · {state.reveals}
+        </button>
+      </>
+    )}
    {ended&&<button onClick={reset} className="w-full rounded-xl bg-primary px-4 py-3 font-bold text-primary-foreground">{t.retry}</button>}
    <button onClick={()=>setMuted(v=>!v)} className="w-full rounded-xl border px-4 py-2 text-sm">{t.sound}: {muted?"OFF":"ON"}</button>
    <p className="text-sm text-muted-foreground">{t.hint} {controls.sight}</p>

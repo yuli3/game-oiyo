@@ -4,6 +4,114 @@ import {GameContainer} from "../ui/game/GamePrimitives";
 import {recordAchievementEvent,recordBestForConditions} from "../../lib/games/records";
 import {RIVALS_MIND_RULESET,createRivalsMind,playRivalsMindRound,readRivalHabit,type DuelAction,type DuelRead} from "../../lib/games/rivals-mind";
 import {RIVALS_MIND_POSES} from "../../lib/games/sprites";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+
+function playDuelAudio(type: "strike" | "guard" | "evade" | "hit" | "win" | "lose") {
+  if (typeof window === "undefined") return;
+  try {
+    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const now = ctx.currentTime;
+    if (type === "strike") {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(800, now);
+      osc.frequency.exponentialRampToValueAtTime(200, now + 0.1);
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.1);
+    } else if (type === "guard") {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(1200, now);
+      osc.frequency.exponentialRampToValueAtTime(600, now + 0.15);
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.15);
+    } else if (type === "evade") {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(300, now);
+      osc.frequency.exponentialRampToValueAtTime(700, now + 0.08);
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.08);
+    } else if (type === "hit") {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "square";
+      osc.frequency.setValueAtTime(120, now);
+      osc.frequency.exponentialRampToValueAtTime(40, now + 0.14);
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.14);
+    } else if (type === "win") {
+      [440, 554.37, 659.25, 880].forEach((freq, idx) => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = "sine";
+        o.frequency.setValueAtTime(freq, now + idx * 0.08);
+        g.gain.setValueAtTime(0.12, now + idx * 0.08);
+        g.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.35);
+        o.connect(g).connect(ctx.destination);
+        o.start(now + idx * 0.08);
+        o.stop(now + idx * 0.08 + 0.35);
+      });
+    } else if (type === "lose") {
+      [220, 180, 140].forEach((freq, idx) => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = "sawtooth";
+        o.frequency.setValueAtTime(freq, now + idx * 0.1);
+        g.gain.setValueAtTime(0.1, now + idx * 0.1);
+        g.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.1 + 0.25);
+        o.connect(g).connect(ctx.destination);
+        o.start(now + idx * 0.1);
+        o.stop(now + idx * 0.1 + 0.25);
+      });
+    }
+    setTimeout(() => ctx.close().catch(() => {}), 600);
+  } catch {}
+}
+
+function TiltDuelActionButton({
+  label,
+  onClick,
+}: {
+  label: string;
+  onClick: () => void;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      style={{ "--card-tilt": transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.15);
+        onClick();
+      }}
+      className="min-h-14 rounded-xl border border-border bg-card p-3 font-extrabold text-foreground shadow-sm transition will-change-transform transform-(--card-tilt) hover:bg-accent active:scale-[.98]"
+    >
+      {label}
+    </button>
+  );
+}
+
 
 const ACTIONS:readonly DuelAction[]=["strike","guard","evade-left","evade-right"];
 const COPY={
@@ -20,9 +128,38 @@ export default function RivalsMind({locale="ko"}:{locale?:string}){const{ref:sta
  const read=readRivalHabit(state.history); const last=state.history.at(-1);
  const impactTimer=useRef<number|undefined>(undefined);
  useEffect(()=>()=>window.clearTimeout(impactTimer.current),[]);
- const play=(action:DuelAction)=>{if(!started||state.phase!=="playing"||impactTimer.current!==undefined)return;const next=playRivalsMindRound(state,action),round=next.history.at(-1);setState(next);setImpact(round?.playerDamage?"player":round?.rivalDamage?"rival":null);impactTimer.current=window.setTimeout(()=>{setImpact(null);impactTimer.current=undefined;},220);};
+ const play=(action:DuelAction)=>{
+   if(!started||state.phase!=="playing"||impactTimer.current!==undefined)return;
+   if(action==="strike") playDuelAudio("strike");
+   else if(action==="guard") playDuelAudio("guard");
+   else playDuelAudio("evade");
+   MobileHapticsPro.light();
+   const next=playRivalsMindRound(state,action),round=next.history.at(-1);
+   setState(next);
+   if(round?.playerDamage){
+     playDuelAudio("hit");
+     MobileHapticsPro.heavy();
+     setImpact("player");
+   } else if(round?.rivalDamage){
+     playDuelAudio("hit");
+     MobileHapticsPro.heavy();
+     setImpact("rival");
+   } else {
+     setImpact(null);
+   }
+   impactTimer.current=window.setTimeout(()=>{setImpact(null);impactTimer.current=undefined;},220);
+ };
  useEffect(()=>{recordAchievementEvent("rivals-mind","opened");},[]);
- useEffect(()=>{if(state.phase==="playing")return;const score=state.phase==="won"?state.playerHealth*100+state.rivalHealth*-10:0;recordBestForConditions("rivals-mind",score,"score",{seed:String(state.seed),difficulty:RIVALS_MIND_RULESET,assist:"none"},`${state.round} rounds`);recordAchievementEvent("rivals-mind",state.phase==="won"?"cleared":"played");if(state.phase==="won")celebrateStage({preset:"sparks",colors:["#657344","#d0ad55","#802f2f"],origin:{x:.5,y:.6}});},[state.phase,state.playerHealth,state.rivalHealth,state.round,state.seed]);
+ useEffect(()=>{if(state.phase==="playing")return;const score=state.phase==="won"?state.playerHealth*100+state.rivalHealth*-10:0;recordBestForConditions("rivals-mind",score,"score",{seed:String(state.seed),difficulty:RIVALS_MIND_RULESET,assist:"none"},`${state.round} rounds`);recordAchievementEvent("rivals-mind",state.phase==="won"?"cleared":"played");
+  if(state.phase==="won"){
+    playDuelAudio("win");
+    MobileHapticsPro.success();
+    celebrateStage({preset:"sparks",colors:["#657344","#d0ad55","#802f2f"],origin:{x:.5,y:.6}});
+  } else if(state.phase==="lost"){
+    playDuelAudio("lose");
+    MobileHapticsPro.warning();
+  }
+ },[state.phase,state.playerHealth,state.rivalHealth,state.round,state.seed]);
  const reset=()=>{window.clearTimeout(impactTimer.current);impactTimer.current=undefined;setImpact(null);setState(createRivalsMind((state.seed+state.round+1)%1_000_003));setStarted(true);recordAchievementEvent("rivals-mind","played");};
  const result=state.phase==="won"?t.won:state.phase==="lost"?t.lost:t.draw;
  return <GameContainer title={t.title} subtitle={t.sub}><div className="space-y-4">{!started&&<img src="/games/rivals-mind-keyart.webp" alt="" width={1730} height={909} decoding="async" className="aspect-[1.9/1] w-full rounded-2xl object-cover"/>}
@@ -33,7 +170,7 @@ export default function RivalsMind({locale="ko"}:{locale?:string}){const{ref:sta
     <img src={last?RIVALS_MIND_POSES.rival[last.rival]:"/games/rivals-mind-rival.webp"} alt="" width={512} height={512} draggable={false} className={`w-full origin-bottom object-contain drop-shadow-xl transition-transform motion-reduce:transition-none ${impact==="rival"?"translate-x-3 -rotate-6":""}`}/>
    </div>
   </div>
-  {!started?<button onClick={()=>{setStarted(true);recordAchievementEvent("rivals-mind","played");}} className="w-full rounded-xl bg-primary px-5 py-3 font-bold text-primary-foreground">{t.start}</button>:state.phase==="playing"?<div className="grid grid-cols-2 gap-2">{ACTIONS.map(a=><button key={a} onClick={()=>play(a)} className="min-h-12 rounded-xl border bg-background px-3 py-2 font-semibold active:scale-[.98]">{t.actions[a]}</button>)}</div>:<><div aria-live="polite" className="rounded-xl bg-muted p-4 text-center font-bold">{result}</div><button onClick={reset} className="w-full rounded-xl bg-primary px-5 py-3 font-bold text-primary-foreground">{t.again}</button></>}
+  {!started?<button onClick={()=>{setStarted(true);recordAchievementEvent("rivals-mind","played");}} className="w-full rounded-xl bg-primary px-5 py-3 font-bold text-primary-foreground">{t.start}</button>:state.phase==="playing"?<div className="grid grid-cols-2 gap-2">{ACTIONS.map(a=><TiltDuelActionButton key={a} onClick={()=>play(a)} label={t.actions[a]} />)}</div>:<><div aria-live="polite" className="rounded-xl bg-muted p-4 text-center font-bold">{result}</div><button onClick={reset} className="w-full rounded-xl bg-primary px-5 py-3 font-bold text-primary-foreground">{t.again}</button></>}
   <div className="rounded-xl border p-4"><div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.mind}</div><div className="mt-1 text-lg font-bold">{t.reads[read.read as DuelRead]}</div></div>
   {state.history.length>0&&<ol className="space-y-1 text-sm">{state.history.slice().reverse().map(r=><li key={r.round} className="rounded-lg bg-muted px-3 py-2">#{r.round} {t.actions[r.player]} ↔ {t.actions[r.rival]} · {t.reads[r.read]}</li>)}</ol>}
   <p className="text-sm text-muted-foreground">{t.explain}</p>
