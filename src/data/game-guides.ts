@@ -6872,4 +6872,42 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "grappling-boss": {
+    origin: {
+      ko: "『그래플링 보스 아레나 (Grappling Boss Arena: Beholder)』는 명작 샌드박스 액션 『Terraria』의 공중 보스전(크툴루의 눈)과 그래플링 훅 기동에서 영감을 얻어 제작된 2D 액션 게임입니다. 베를레 진자 적분(Verlet Pendulum) 기반의 사실적인 훅 장력·스윙 물리와 거대 보스의 4개 다관절 촉수를 실시간으로 움직이는 FABRIK 역운동학(IK)을 엔진 코어로 탑재했습니다.",
+      en: "Grappling Boss Arena: Beholder is an aerial combat action game inspired by Terraria's legendary Eye of Cthulhu boss fights and grapple maneuvering. Powered by Verlet pendulum swing physics and procedural 4-chain FABRIK inverse kinematics, weave through mechanical tentacle sweeps and plasma barrages.",
+      ja: "『グラップリング・ボスアリーナ：ビホルダー（Grappling Boss Arena: Beholder）』は、『Terraria』の空中ボス戦とフックアクションに着想を得た2Dバトルアクションです。ベルレ積分による振り子スイング物理と、巨大ボスの4本触手をリアルタイム制御するFABRIK逆運動学（IK）を搭載しています。",
+      zh: "《抓钩领主竞技场：机械眼魔（Grappling Boss Arena: Beholder）》灵感来自《泰拉瑞亚（Terraria）》经典的克苏鲁之眼空战与抓钩高机动荡绳玩法。运用韦尔莱摆锤张力物理与驱动机械四触手实时追击的FABRIK反向动力学算法构建。",
+      fr: "Grappling Boss Arena est un jeu d'action aérienne inspiré des combats de boss de Terraria avec grappin Verlet et tentacules IK FABRIK.",
+      es: "Arena del Jefe con Gancho es un juego de acción aérea inspirado en los combates de jefes de Terraria con física de gancho Verlet y tentáculos IK.",
+    },
+    how: {
+      ko: "1) 이동(A/D) 및 점프(W)로 바닥 발판을 이동하고, 마우스 우클릭(또는 Space)으로 천장 앵커 오브(푸른 구체)에 그래플링 훅을 발사해 매달리세요. 2) 진자 스윙 반동으로 가속한 뒤 점프(W)를 누르면 로프를 풀고 폭발적인 탄성 도약(Slingshot)을 펼칠 수 있습니다. 3) 마우스 좌클릭(또는 F)으로 보스의 눈을 조준 사격하세요. 보스 HP가 50% 이하가 되면 붉게 폭주(ENRAGED)하며 촉수 휘두르기와 탄막 속도가 2배 빨라지므로 바닥 용암 가시에 떨어지지 않도록 공중 기동을 유지하세요.",
+      en: "1) Move with A/D and jump with W, then fire your grapple hook with Right-Click or Space at floating cyan anchor orbs to latch on. 2) Build pendulum swing momentum, then press W to release with an explosive slingshot jump. 3) Aim and fire energy bolts at the Beholder's eye with Left-Click or F. When below 50% HP, the boss enters Enraged Phase 2 with whirling tentacle strikes and faster plasma volleys—stay airborne to avoid bottom spike lava.",
+      ja: "1) A/Dで移動しWでジャンプ、右クリック（またはSpace）で天井の青いアンカーにフックを撃ち込んでスイングします。2) 振り子の反動をつけた状態でWを押すとパチンコのように空中へ急加速ジャンプします。3) 左クリック（またはF）でボスの眼球を狙い撃ちしてください。ボスの体力が半分以下になると怒り状態となり触手攻撃が激化します。",
+      zh: "1) 使用 A/D 左右走位、W 键跳跃，按鼠标右键（或 Space 键）向空中蓝光锚点射出抓钩挂绳。2) 顺应钟摆张力摆动加速，在最高点按 W 键松钩实现弹弓弹射飞跃。3) 按鼠标左键（或 F 键）瞄准眼魔弱点射击。Boss 血量降至 50% 时进入狂暴二阶段，触手挥击与弹幕加速，需全程依靠抓钩滞空规避下方的熔岩地刺。",
+      fr: "1) Déplacez-vous et sautez, puis lancez le grappin (clic droit ou Espace) vers les ancres. 2) Utilisez le balancier pour vous propulser. 3) Tirez sur le boss et esquivez ses tentacules.",
+      es: "1) Muévete y salta, dispara tu gancho (clic derecho o Espacio) a los anclajes celestes. 2) Aprovecha el balanceo para lanzarte en tirachinas. 3) Dispara al ojo del jefe y esquiva los tentáculos.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "보스의 채찍 같은 촉수 공격을 피하는 가장 효과적인 방법은 무엇인가요?",
+          en: "What is the best technique to evade the whipping FABRIK tentacles?",
+          ja: "うねる触手攻撃を避ける最も効果的なテクニックは何ですか？",
+          zh: "规避四根触手抽击（Tentacle Strikes）的最佳技巧是什么？",
+          fr: "Quelle est la meilleure technique pour éviter les coups de tentacules ?",
+          es: "¿Cuál es la mejor táctica para esquivar los latigazos de los tentáculos?",
+        },
+        a: {
+          ko: "바닥에 머무르면 촉수 끝단에 맞기 쉽습니다. 천장 앵커에 훅을 걸어 진자 운동 중 반대편으로 스윙하거나, 스윙 최정점에서 W 점프를 눌러 보스의 머리 위로 높게 슬링샷 도약하세요. 공중에 오래 머무를수록 촉수의 유효 타격 범위를 벗어날 수 있습니다.",
+          en: "Staying grounded makes you an easy target. Hook into high ceiling anchors to build swing speed, and slingshot jump (W) right over the boss's head. Maintaining high aerial momentum keeps you well clear of the tentacle tips' lethal strike radius.",
+          ja: "地上にとどまると格好の的になります。高いアンカーにフックをかけてスピードをつけ、ボスの頭上を飛び越えるようにスリングショットジャンプしてください。",
+          zh: "地面停留极易被触手尖端横扫。利用天花板高位锚点荡绳，在摆速最大时按 W 弹射跃过眼魔头顶，高空高机动滞空可彻底破坏触手的攻击判定。",
+          fr: "Ne restez pas au sol : balancez-vous haut au plafond et sautez par-dessus la tête du boss.",
+          es: "No te quedes en el suelo: engánchate alto al techo y balancéate por encima de la cabeza del jefe.",
+        },
+      },
+    ],
+  },
 };

@@ -1098,6 +1098,20 @@ export const MISSION_CATALOG: Array<{
     goal: 1,
     xpReward: 50,
   },
+  {
+    id: "grappling-boss-damage-500",
+    gameSlug: "grappling-boss",
+    title: {
+      ko: "그래플링 보스 아레나에서 공중 스윙을 구사하며 보스 비홀더에게 500 이상의 피해 입히기",
+      en: "Deal 500+ damage to the Mechanical Beholder using grapple swings in Grappling Boss Arena",
+      ja: "グラップリング・ボスアリーナで空中スイングを駆使しビホルダーに500以上のダメージを与える",
+      zh: "在抓钩领主竞技场中利用空中荡绳向机械眼魔累计造成 500 点以上伤害",
+      fr: "Infligez 500+ dégâts au Beholder en utilisant le grappin dans Grappling Boss Arena",
+      es: "Inflige más de 500 de daño al Beholder usando el gancho en la Arena del Jefe",
+    },
+    goal: 1,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {

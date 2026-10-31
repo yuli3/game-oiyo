@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import GrapplingBoss from "../../components/games/GrapplingBoss";
+import GameGuide from "../../components/GameGuide.astro";
+import { locales, type Locale } from "../../lib/i18n";
+
+export function getStaticPaths() {
+  return locales.map((l) => ({ params: { lang: l === "en" ? undefined : l } }));
+}
+
+const locale: Locale = (Astro.params.lang as Locale) || "en";
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "그래플링 보스 아레나 — 베를레 훅 물리 & FABRIK 촉수 보스전 | OIYO Game",
+    description:
+      "테라리아(Terraria) 풍 그래플링 훅 진자 운동과 FABRIK 역운동학(IK) 촉수를 지닌 거대 메카니컬 비홀더와의 결투. 아레나 천장 앵커를 타고 공중 스윙을 펼치며 보스를 처치하세요.",
+  },
+  en: {
+    title: "Grappling Boss Arena: Beholder — Verlet Swing & FABRIK IK Battle | OIYO Game",
+    description:
+      "A high-flying boss battle featuring Verlet pendulum grappling swings and a giant Mechanical Beholder with 4 procedural FABRIK IK tentacles. Master aerial momentum to conquer the arena.",
+  },
+  ja: {
+    title: "グラップリング・ボスアリーナ：ビホルダー — 鉤縄振り子物理＆FABRIK触手バトル | OIYO Game",
+    description:
+      "テラリア風のグラップリングフック振り子スイングと、FABRIK逆運動学でうねる触手を持つ巨大メカニカル・ビホルダーとの死闘。空中軌도를 장악하여 보스를 격퇴하라.",
+  },
+  zh: {
+    title: "抓钩领主竞技场：机械眼魔 — 韦尔莱摆锤物理与FABRIK反向动力学触手对决 | OIYO Game",
+    description:
+      "泰拉瑞亚风格的抓钩摆锤跳跃与拥有 4 根 FABRIK 逆运动学触手的机械眼魔决战。荡绳高速空战，规避熔岩地刺并击破狂暴二阶段。",
+  },
+  fr: {
+    title: "Grappling Boss Arena: Beholder — Grappin Pendulaire & Tentacules IK | OIYO Game",
+    description:
+      "Combattez le Beholder Mécanique avec un grappin à balancier Verlet et affrontez ses tentacules animés par cinématique inverse FABRIK.",
+  },
+  es: {
+    title: "Arena del Jefe con Gancho: Beholder — Péndulo Verlet y Tentáculos IK | OIYO Game",
+    description:
+      "Enfréntate al Beholder Mecánico balanceándote con tu gancho de péndulo Verlet y esquivando sus tentáculos con cinemática inversa FABRIK.",
+  },
+};
+
+const m = meta[locale] || meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <GrapplingBoss client:load />
+  <GameGuide slug="grappling-boss" locale={locale} name={m.title.split(" — ")[0]} />
+</BaseLayout>
