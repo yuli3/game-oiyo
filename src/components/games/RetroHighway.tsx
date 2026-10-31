@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import RetroHighwayScene from './RetroHighwayScene';
+import { useGhostTimeAttackPro } from '../../lib/games/engine-suite-unified';
 import {
   type HighwayState,
   type HighwayInput,
@@ -132,6 +133,12 @@ export default function RetroHighway({ locale = 'ko' }: Props) {
   const [state, setState] = useState<HighwayState>(createInitialHighwayState);
   const [bestDist, setBestDist] = useState<number>(0);
   const [shareCopied, setShareCopied] = useState(false);
+  const [liveDelta, setLiveDelta] = useState<{ formatted: string; isAhead: boolean }>({
+    formatted: 'PB 준비',
+    isAhead: true,
+  });
+
+  const { recordFrame, saveBestIfFaster, getLiveDelta, resetRun } = useGhostTimeAttackPro('retro-highway-3d');
   const [muted, setMuted] = useState<boolean>(() => {
     try {
       return localStorage.getItem('retro_highway_muted') === 'true';
@@ -220,7 +227,8 @@ export default function RetroHighway({ locale = 'ko' }: Props) {
     setState(createInitialHighwayState());
     inputRef.current = { steer: 0, boost: false, brake: false };
     lastTimeRef.current = performance.now();
-  }, []);
+    resetRun();
+  }, [resetRun]);
 
   const handleShareCard = useCallback(async () => {
     const distKm = (state.player.distance / 1000).toFixed(2);
@@ -314,9 +322,25 @@ export default function RetroHighway({ locale = 'ko' }: Props) {
 
         const next = updateHighway(prev, inputRef.current, dt);
 
+        if (next.player.status === 'playing') {
+          const prog = Math.min(1.0, next.player.distance / 5000);
+          recordFrame(dt * 1000, {
+            x: next.player.x,
+            y: 0,
+            angle: next.player.speed > 0 ? (inputRef.current.steer * 0.15) : 0,
+            speed: next.player.speed,
+            progress: prog,
+          });
+
+          // 델타 HUD 갱신
+          const d = getLiveDelta(prog, Math.round((next.player.distance / 120) * 1000));
+          setLiveDelta({ formatted: d.formatted, isAhead: d.isAhead });
+        }
+
         if (next.player.status === 'gameover') {
           playSound('crash');
           const distKm = next.player.distance / 1000;
+          saveBestIfFaster(Math.round((next.player.distance / 120) * 1000));
           setBestDist((cur) => {
             if (distKm > cur) {
               if (containerRef.current) celebrate(containerRef.current, { preset: "sparks" });
@@ -369,6 +393,18 @@ export default function RetroHighway({ locale = 'ko' }: Props) {
         </div>
 
         <div className="flex items-center gap-2">
+          {liveDelta.formatted && (
+            <div
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold border transition-colors ${
+                liveDelta.isAhead
+                  ? 'border-success/30 bg-success/10 text-success'
+                  : 'border-destructive/30 bg-destructive/10 text-destructive'
+              }`}
+            >
+              <span>PB</span>
+              <span>{liveDelta.formatted}</span>
+            </div>
+          )}
           {bestDist > 0 && (
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted text-xs font-medium text-foreground">
               <Trophy className="w-4 h-4 text-warning" />

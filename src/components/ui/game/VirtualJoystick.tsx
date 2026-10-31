@@ -7,6 +7,7 @@
 
 import React, { useCallback, useRef, useState } from "react";
 import { createHaptics } from "../../../lib/games/haptics";
+import { MobileHapticsPro } from "../../../lib/games/engine-suite-unified";
 
 export interface JoystickVector {
   x: number;
@@ -110,6 +111,7 @@ export const VirtualJoystick: React.FC<VirtualJoystickProps> = ({
       setActive(true);
       thresholdPassed.current = false;
       hapticsRef.current.fire("tap");
+      MobileHapticsPro.lightImpact();
     },
     []
   );
@@ -140,6 +142,7 @@ export const VirtualJoystick: React.FC<VirtualJoystickProps> = ({
       if (finalVec.magnitude > 0.8 && !thresholdPassed.current) {
         thresholdPassed.current = true;
         hapticsRef.current.fire("place");
+        MobileHapticsPro.mediumImpact();
       } else if (finalVec.magnitude < 0.6) {
         thresholdPassed.current = false;
       }
@@ -156,6 +159,7 @@ export const VirtualJoystick: React.FC<VirtualJoystickProps> = ({
       setActive(false);
       setKnobPos({ x: 0, y: 0 });
       thresholdPassed.current = false;
+      MobileHapticsPro.selectionClick();
 
       onMove({ x: 0, y: 0, magnitude: 0, angle: 0, knobDistance: 0 });
       onRelease?.();

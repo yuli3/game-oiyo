@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useCardTiltPro } from '../../lib/games/engine-suite-unified';
 import {
   loadArcadePassProgress,
   reportMissionProgress,
@@ -39,6 +40,51 @@ function renderCostBadge(card: BeastCard, isKo: boolean) {
     <span className="rounded bg-primary/15 px-1.5 py-0.5 text-xs font-bold text-primary">
       {isKo ? '무료' : 'FREE'}
     </span>
+  );
+}
+
+function TiltHandCardButton({
+  card,
+  isSelected,
+  isKo,
+  onSelect,
+}: {
+  card: BeastCard;
+  isSelected: boolean;
+  isKo: boolean;
+  onSelect: () => void;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.2);
+        onSelect();
+      }}
+      className={`flex w-full items-center gap-3 rounded-xl border p-2.5 text-left transition-all duration-150 will-change-transform transform-(--card-tilt) ${
+        isSelected
+          ? 'border-primary bg-primary/15 shadow-sm'
+          : 'border-border bg-background hover:bg-accent'
+      }`}
+    >
+      <span className="text-2xl">{card.icon}</span>
+      <div className="flex-1">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-bold text-foreground">
+            {isKo ? card.nameKo : card.nameEn} (⚔️{card.attack}/❤️{card.hp})
+          </span>
+          {renderCostBadge(card, isKo)}
+        </div>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          {isKo ? card.sigilDescKo : card.sigilDescEn}
+        </p>
+      </div>
+    </button>
   );
 }
 
@@ -299,34 +345,15 @@ export default function CandleSacrifice({ locale }: Props) {
               {isKo ? `✋ 보유 손패 (${state.hand.length}장)` : `✋ Your Hand (${state.hand.length})`}
             </h3>
             <div className="space-y-2">
-              {state.hand.map((card) => {
-                const isSelected = card.id === state.selectedHandCardId;
-                return (
-                  <button
-                    key={card.id}
-                    type="button"
-                    onClick={() => setState(selectHandCard(state, card.id))}
-                    className={`flex w-full items-center gap-3 rounded-xl border p-2.5 text-left transition ${
-                      isSelected
-                        ? 'border-primary bg-primary/15 shadow-xs'
-                        : 'border-border bg-background hover:bg-accent'
-                    }`}
-                  >
-                    <span className="text-2xl">{card.icon}</span>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-foreground">
-                          {isKo ? card.nameKo : card.nameEn} (⚔️{card.attack}/❤️{card.hp})
-                        </span>
-                        {renderCostBadge(card, isKo)}
-                      </div>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {isKo ? card.sigilDescKo : card.sigilDescEn}
-                      </p>
-                    </div>
-                  </button>
-                );
-              })}
+              {state.hand.map((card) => (
+                <TiltHandCardButton
+                  key={card.id}
+                  card={card}
+                  isSelected={card.id === state.selectedHandCardId}
+                  isKo={isKo}
+                  onSelect={() => setState(selectHandCard(state, card.id))}
+                />
+              ))}
             </div>
           </div>
 

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
+import { useDynamicDifficultyPro } from '@/lib/games/engine-suite-unified';
 import {
   VampireSurvivorEngine,
   UPGRADE_CATALOG,
@@ -46,6 +47,10 @@ export default function VampireSurvivor({ locale = 'ko' }: VampireSurvivorProps)
   const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0 });
   const shakeStateRef = useRef(createShakeState());
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const lastHpRef = useRef<number>(100);
+
+  const { modifiers, reportAction, reportHit, reportDeath, updateTime: updateDdaTime } =
+    useDynamicDifficultyPro();
 
   // Initialize Web Audio
   useEffect(() => {
@@ -121,6 +126,7 @@ export default function VampireSurvivor({ locale = 'ko' }: VampireSurvivorProps)
   const handleSelectUpgrade = (upgradeId: UpgradeId) => {
     const engine = engineRef.current;
     engine.chooseUpgrade(upgradeId);
+    reportAction();
 
     if (audioCtxRef.current) {
       playSyntheticTone(audioCtxRef.current, { freq: 587.33, duration: 0.1, type: 'triangle', gain: 0.2 });
@@ -150,6 +156,7 @@ export default function VampireSurvivor({ locale = 'ko' }: VampireSurvivorProps)
   const handleRestart = () => {
     const engine = engineRef.current;
     engine.restart();
+    lastHpRef.current = 100;
     const s = engine.getState();
     setGameState(s.gameState);
     setHud({
@@ -211,12 +218,20 @@ export default function VampireSurvivor({ locale = 'ko' }: VampireSurvivorProps)
 
         engine.movePlayer(vx, vy, dt);
         engine.update(dt);
+        updateDdaTime(dt);
 
         // Throttle React state updates to ~10Hz
         hudTimer += dt;
         if (hudTimer > 0.1 || curState.gameState !== 'playing') {
           hudTimer = 0;
           const s = engine.getState();
+
+          // HP 감소 감지 시 DDA 피격 리포트
+          if (s.playerHp < lastHpRef.current) {
+            reportHit();
+          }
+          lastHpRef.current = s.playerHp;
+
           if (s.gameState !== gameState) {
             setGameState(s.gameState);
             if (s.gameState === 'level_up') {
@@ -227,6 +242,7 @@ export default function VampireSurvivor({ locale = 'ko' }: VampireSurvivorProps)
             } else if (s.gameState === 'game_over') {
               addTrauma(shakeStateRef.current, 0.6);
               triggerHaptic('heavy');
+              reportDeath();
             }
           }
           setHud({
@@ -477,6 +493,21 @@ export default function VampireSurvivor({ locale = 'ko' }: VampireSurvivorProps)
           <span className="font-bold text-primary">Lv.{hud.level}</span>
           <span>⏱️ {formatTime(hud.survivalTime)}</span>
           <span>💀 {hud.kills}</span>
+          <span
+            className={`hidden sm:inline-block px-1.5 py-0.5 rounded text-xs font-bold ${
+              modifiers.flowCategory === 'frustrated'
+                ? 'bg-success/15 text-success'
+                : modifiers.flowCategory === 'bored'
+                  ? 'bg-destructive/15 text-destructive'
+                  : 'bg-primary/15 text-primary'
+            }`}
+          >
+            {modifiers.flowCategory === 'frustrated'
+              ? 'DDA: Assist'
+              : modifiers.flowCategory === 'bored'
+                ? 'DDA: Intense'
+                : 'DDA: Flow'}
+          </span>
         </div>
 
         {/* Player HP Bar */}
