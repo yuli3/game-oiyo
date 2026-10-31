@@ -1056,6 +1056,20 @@ export const MISSION_CATALOG: Array<{
     goal: 1,
     xpReward: 50,
   },
+  {
+    id: "viking-longship-runestones-1",
+    gameSlug: "viking-longship",
+    title: {
+      ko: "바이킹 롱쉽에서 3개의 고대 룬스톤을 해금하고 발할라 비프로스트로 항해하기",
+      en: "Activate all 3 ancient Runestones and sail into the Bifrost in Viking Longship",
+      ja: "ヴァイキング・ロングシップで3つの古代ルーンを起動しビフレストへ突入する",
+      zh: "在维京长船中激活全部 3 块古代符文石并驶入英灵殿彩虹桥",
+      fr: "Activez les 3 runes et franchissez le Bifröst dans Viking Longship",
+      es: "Activa las 3 runas y navega al Bifrost en Drakkar Vikingo",
+    },
+    goal: 1,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {

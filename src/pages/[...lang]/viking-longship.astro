@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import VikingLongship from "../../components/games/VikingLongship";
+import GameGuide from "../../components/GameGuide.astro";
+import { locales, type Locale } from "../../lib/i18n";
+
+export function getStaticPaths() {
+  return locales.map((l) => ({ params: { lang: l === "en" ? undefined : l } }));
+}
+
+const locale: Locale = (Astro.params.lang as Locale) || "en";
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "바이킹 롱쉽: 발할라 항해 — 돛 조종 & 해상 생존 | OIYO Game",
+    description:
+      "공기역학 풍향 돛 트리밍과 보로노이 군도 탐험, 바다뱀·크라켄과의 작살 전투를 벌이며 3개의 고대 룬스톤을 해금하고 발할라 비프로스트로 항해하세요.",
+  },
+  en: {
+    title: "Viking Longship: Valhalla Seas — Aerodynamic Sailing Survival | OIYO Game",
+    description:
+      "Master aerodynamic sail trim, explore Voronoi archipelagos, fight sea serpents with iron harpoons, activate 3 ancient runestones, and sail into the Bifrost.",
+  },
+  ja: {
+    title: "ヴァイキング・ロングシップ：ヴァルハラの航海 — 帆走＆海洋サバイバル | OIYO Game",
+    description:
+      "風向きに合わせた帆のトリム、ボロノイ群島の探検、クラーケンや海蛇との銛撃ちバトル。3つの古代ルーンストーンを解放してビフレストを目指せ。",
+  },
+  zh: {
+    title: "维京长船：英灵殿航路 — 帆船气动力学与海洋生存 | OIYO Game",
+    description:
+      "掌握风向与帆面修剪气动力学，探索沃罗诺伊群岛，投掷铁锚与鱼叉迎击海蛇巨妖，激活3块古老符文石并驶入彩虹桥。",
+  },
+  fr: {
+    title: "Viking Longship: Mers du Valhalla — Survie et Navigation Aérodynamique | OIYO Game",
+    description:
+      "Ajustez vos voiles selon le vent, explorez les archipels de Voronoï, harponnez les monstres marins et activez les 3 runes pour franchir le Bifröst.",
+  },
+  es: {
+    title: "Drakkar Vikingo: Mares de Valhalla — Supervivencia Náutica y Viento | OIYO Game",
+    description:
+      "Ajusta las velas al viento con aerodinámica real, explora archipiélagos Voronoi, arponéa serpientes marinas y activa las 3 piedras rúnicas hacia el Bifrost.",
+  },
+};
+
+const m = meta[locale] || meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <VikingLongship client:load />
+  <GameGuide slug="viking-longship" locale={locale} name={m.title.split(" — ")[0]} />
+</BaseLayout>

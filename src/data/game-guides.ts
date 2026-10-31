@@ -6758,4 +6758,42 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "viking-longship": {
+    origin: {
+      ko: "『바이킹 롱쉽: 발할라 항해 (Viking Longship: Valhalla Seas)』는 발하임(Valheim)과 시 오브 씨브즈의 바이킹 항해 경험에서 영감을 얻은 2D 탑다운 해상 탐험 생존 게임입니다. 풍향에 맞춘 돛 트리밍과 보로노이 절차적 군도 탐험, 바다 괴물과의 작살 전투를 치르며 3개의 룬스톤을 활성화하고 발할라 비프로스트로 진입하세요.",
+      en: "Viking Longship: Valhalla Seas is a top-down nautical exploration and survival game inspired by Valheim and Sea of Thieves. Master aerodynamic sail trim and tacking, explore Voronoi-generated archipelagos, harpoon sea monsters, activate ancient runestones, and enter the Bifrost to Valhalla.",
+      ja: "『ヴァイキング・ロングシップ：ヴァルハラの航海（Viking Longship: Valhalla Seas）』は、Valheim等の航海サバイバルに着想を得た海洋探検ゲームです。風向きに応じた帆の角度調整（トリム）やボロノイ群島の探検、銛による海獣退治をこなし、3つの古代ルーンストーンを起動してビフレストを目指します。",
+      zh: "《维京长船：英灵殿航路（Viking Longship: Valhalla Seas）》灵感来自《Valheim》等航海生存名作。运用真实的空气动力学帆面修剪与迎风抢风航行，探索沃罗诺伊算法生成的群岛，掷出铁制鱼叉搏杀海蛇巨兽，激活3块符文神石通往英灵殿彩虹桥。",
+      fr: "Viking Longship: Mers du Valhalla est un jeu d'exploration nautique inspiré de Valheim et Sea of Thieves.",
+      es: "Drakkar Vikingo: Mares de Valhalla es un juego de supervivencia y navegación inspirado en Valheim.",
+    },
+    how: {
+      ko: "1) 방향타(A/D)로 배의 침로를 잡고, 돛 트리밍(W/S)으로 풍향에 맞춰 돛 각도를 조절해 최대 추진력을 얻으세요. 역풍일 때는 노 젓기(R)를 켜서 보조 추진력을 발휘합니다. 2) 섬에 근접했을 때 탐험(E)을 눌러 고대 룬스톤을 활성화하고 목재·철광석·식량을 채집합니다. 3) 바다뱀과 크라켄이 나타나면 작살(F)을 발사해 처치하고, 선체 피해는 수리(C)로 복구하세요. 3개의 룬스톤을 모두 모은 뒤 남동쪽 비프로스트 관문으로 항해하면 승리합니다.",
+      en: "1) Steer with rudder (A/D) and trim your square sail (W/S) aligned with the wind for top aerodynamic thrust; engage oars (R) when stuck in headwind. 2) Approach islands and press Explore (E) to activate Runestones and forage timber, iron, and rations. 3) Launch iron harpoons (F) to fell aggressive sea serpents and krakens, repair your hull (C) with timber, and navigate into the Bifrost gateway once 3 Runestones are glowing.",
+      ja: "1) 舵（A/D）で針路を合わせ、帆トリム（W/S）で風を捉えて加速します。向かい風ではオール（R）を漕いで前進しましょう。2) 島に近づいて探検（E）を押すとルーンストーンの起動や木材・食料の採取ができます。3) 銛（F）で海蛇やクラーケンを迎撃し、木材で船体を修理（C）しながら3つのルーンを集めて南東のビフレストへ突入してください。",
+      zh: "1) 使用舵（A/D）调整船头朝向，调整帆面（W/S）顺应风向获得最大推进力；遭遇顶风时划桨（R）辅助前行。2) 靠近岛屿按探索（E）激活符文石并采集木料、铁矿与浆果口粮。3) 遇到海蛇与海妖时发射鱼叉（F）击退，消耗木料修船（C），收集齐3块符文石后驶入东南方的彩虹桥即可获胜。",
+      fr: "1) Barrez au gouvernail (A/D) et orientez la voile (W/S) face au vent. 2) Explorez les îles (E) pour activer les runes. 3) Harponnez les monstres marins (F) et réparez la coque (C).",
+      es: "1) Dirige con el timón (A/D) y ajusta la vela (W/S) al viento. 2) Explora islas (E) para activar runas y recolectar provisiones. 3) Arponea monstruos marinos (F) y repara el casco (C).",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "역풍을 맞아 배가 멈췄을 때 어떻게 빠져나오나요?",
+          en: "What should I do when I am caught in a headwind stall?",
+          ja: "向かい風で船が失速（Stall）したときはどうすればよいですか？",
+          zh: "顶风导致船只失速停滞（Headwind Stall）时该如何脱困？",
+          fr: "Que faire en cas de calage face au vent ?",
+          es: "¿Qué hago si me quedo atascado con viento de proa?",
+        },
+        a: {
+          ko: "우측 상단 풍향 나침반을 확인하고, 뱃머리를 바람과 45도 이상 비스듬히 틀어 지그재그로 항해하는 '태킹(Tacking)' 기동을 하거나, 노 젓기(R 키)를 즉시 활성화하여 바이킹 선원들의 노로 역풍 구역을 벗어나세요.",
+          en: "Check the wind compass in the top right, turn your bow at least 45 degrees away from the wind direction to perform a tacking maneuver, or press R to engage oars so your rowing crew pulls through the dead zone.",
+          ja: "右上の風向コンパスを確認し、風向きに対して斜め45度以上船首を向けてジグザグに進む「タッキング」を行うか、Rキーでオールを漕いで向かい風を突破してください。",
+          zh: "观察右上角风向罗盘，将船头偏转至迎风45度以上执行“之字形抢风航行（Tacking）”，或立即按下 R 键展开船桨由水手划出停滞风区。",
+          fr: "Birez de bord à 45 degrés pour louvoyer (tacking) ou activez les rames (touche R) pour propulser le navire hors de la zone morte.",
+          es: "Vira a 45 grados para bordear el viento o usa los remos (tecla R) para sacar el barco del punto muerto.",
+        },
+      },
+    ],
+  },
 };
