@@ -6834,4 +6834,42 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "chaos-kitchen": {
+    origin: {
+      ko: "『카오스 키친: 오버쿡드 러시 (Chaos Kitchen: Overcooked Rush)』는 명작 파티 게임 『Overcooked』의 긴박한 협동 주방 시뮬레이션에서 영감을 받아 제작된 아케이드 게임입니다. 다익스트라 플로우 필드(Dijkstra Flow-Field) AI 보조 시스템과 결정론적 락스텝(Lockstep) 동기화를 적용하여 조리대 동선과 화재, 요리 완성을 구현했습니다.",
+      en: "Chaos Kitchen: Overcooked Rush is a high-octane culinary co-op arcade game inspired by Overcooked. Powered by Dijkstra flow-field pathfinding for AI assistant navigation and deterministic lockstep synchronization, master chaotic prep lines, sizzling pans, and fire safety.",
+      ja: "『カオスキッチン：オーバークック・ラッシュ（Chaos Kitchen: Overcooked Rush）』は、名作『Overcooked』の混沌とした協力調理に着想を得たアーケードゲームです。ダイクストラ・フローフィールドAIアシストと決定論的ロックステップ同期を搭載し、刻み作業や焼き調理、消火器の使い分けをこなします。",
+      zh: "《混乱厨房：胡闹厨房大冲刺（Chaos Kitchen: Overcooked Rush）》灵感来自聚会经典《Overcooked》。采用迪杰斯特拉流场寻路算法驱动AI帮厨走位，并结合确定性锁步机制，在混乱的备菜台前切碎食材、煎烤肉饼与合力灭火。",
+      fr: "Chaos Kitchen est un jeu de coopération culinaire effréné inspiré d'Overcooked.",
+      es: "Cocina Caótica es una simulación de cocina cooperativa inspirada en Overcooked.",
+    },
+    how: {
+      ko: "1) 이동(WASD/방향키)과 들기/놓기(Space)로 토마토, 양상추, 고기 패티를 상자에서 꺼내 도마나 프라이팬에 올리세요. 2) 도마 앞에서 썰기(F 키)를 눌러 식재료를 다듬고, 프라이팬에 올린 고기는 적당히 익었을 때 꺼내세요. 너무 오래 두면 불이 붙어 소화기(🧯)로 꺼야 합니다. 3) 접시(🍽️)에 조리된 재료들을 올려 샐러드나 버거로 조합한 뒤, 상단 배달 창구(SERVE)로 운반하면 골드와 콤보 점수를 획득합니다.",
+      en: "1) Move with WASD/Arrows and pick/place items with Space from ingredient crates onto cutting boards or stoves. 2) Press F to chop at cutting boards, and keep an eye on cooking patties on stoves—remove before they burn and catch fire (use extinguisher 🧯 to put out fires). 3) Place finished ingredients onto a clean plate (🍽️) to assemble Salads or Burgers, then carry them to the top Delivery counter (SERVE).",
+      ja: "1) 移動（WASD/矢印）と持ち/置き（Space）で食材箱からトマトやレタス、肉を取り出します。2) まな板でFキーを押して刻み、フライパンでパティを焼きます。焼きすぎると出火するため消火器で消火してください。3) 皿に盛り付けてサラダやバーガーを完成させ、上部の配膳窓口（SERVE）へ運んでください。",
+      zh: "1) 使用 WASD/方向键移动，按 Space 键拾取/放置食材，放置在案板或煎锅上。2) 在案板前按 F 键切碎，煎锅上的肉饼需在烤焦前取下（若起火需取灭火器扑灭）。3) 将切好的蔬菜或肉饼装入干净盘子合成沙拉或汉堡，运送至顶部出餐口（SERVE）即可完成订单。",
+      fr: "1) Déplacez-vous et prenez/posez les ingrédients avec Espace. 2) Coupez (touche F) et surveillez les cuissons pour éviter les incendies. 3) Assemblez les assiettes et servez.",
+      es: "1) Muévete y toma/suelta ingredientes con Espacio. 2) Corta (tecla F) y vigila la sartén para evitar incendios. 3) Monta los platos y sírvelos en la entrega.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "스토브에 불이 났을 때 어떻게 대처하나요?",
+          en: "What should I do if a stove catches fire?",
+          ja: "コンロから火が出たときはどうすればよいですか？",
+          zh: "灶台起火（Stove caught fire）时该如何扑灭？",
+          fr: "Que faire si la cuisinière prend feu ?",
+          es: "¿Qué hago si se incendia un fogón?",
+        },
+        a: {
+          ko: "주방 좌측 하단 카운터에 비치된 소화기(🧯)를 Space 키로 집어 불이 난 스토브 앞으로 가져가세요. 조리 중인 음식을 방치하지 말고 패티 게이지가 꽉 찼을 때 즉시 꺼내는 것이 화재 예방의 지름길입니다.",
+          en: "Pick up the fire extinguisher (🧯) located at the bottom-left counter with Space, and bring it directly to the burning stove. The best prevention is to monitor your stoves and pull patties the moment they are cooked.",
+          ja: "左下のカウンターにある消火器（🧯）をSpaceで持ち、燃えているコンロの前に運んでください。肉が焼き上がったら放置せずすぐに取り出すことが火災予防になります。",
+          zh: "立即按 Space 键拾取厨房左下角柜台备用的灭火器（🧯），前往着火的灶台扑灭。最好的预防是在肉饼变熟时第一时间移至盘中。",
+          fr: "Prenez l'extincteur en bas à gauche avec Espace et amenez-le devant le feu.",
+          es: "Recoge el extintor abajo a la izquierda con Espacio y llévalo al fogón incendiado.",
+        },
+      },
+    ],
+  },
 };

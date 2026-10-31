@@ -1084,6 +1084,20 @@ export const MISSION_CATALOG: Array<{
     goal: 1,
     xpReward: 50,
   },
+  {
+    id: "chaos-kitchen-served-6",
+    gameSlug: "chaos-kitchen",
+    title: {
+      ko: "카오스 키친에서 화재 없이 완성된 요리 6건을 창구로 배달 서빙하기",
+      en: "Deliver and serve 6 completed dishes without burning down the Chaos Kitchen",
+      ja: "カオスキッチンで火災を起こさずに調理した料理を6回提供する",
+      zh: "在混乱厨房中安全出餐并完成 6 份无焦糊的烹饪订单",
+      fr: "Servez 6 plats cuisinés sans incendie dans Chaos Kitchen",
+      es: "Sirve 6 pedidos cocinados sin quemar nada en Cocina Caótica",
+    },
+    goal: 1,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {

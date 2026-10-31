@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ChaosKitchen from "../../components/games/ChaosKitchen";
+import GameGuide from "../../components/GameGuide.astro";
+import { locales, type Locale } from "../../lib/i18n";
+
+export function getStaticPaths() {
+  return locales.map((l) => ({ params: { lang: l === "en" ? undefined : l } }));
+}
+
+const locale: Locale = (Astro.params.lang as Locale) || "en";
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "카오스 키친: 오버쿡드 러시 — 협동 주방 & 주문 서빙 | OIYO Game",
+    description:
+      "다익스트라 플로우 필드(Dijkstra Flow-Field) AI 보조와 락스텝(Lockstep) 동기화가 적용된 주방 협동 아케이드. 토마토를 썰고 패티를 구워 화재 없이 3성급 주문을 완성하세요.",
+  },
+  en: {
+    title: "Chaos Kitchen: Overcooked Rush — Co-op Cooking & Serving | OIYO Game",
+    description:
+      "A fast-paced kitchen simulation powered by Dijkstra flow-field pathfinding and lockstep synchronization. Chop vegetables, grill patties, extinguish fires, and complete orders.",
+  },
+  ja: {
+    title: "カオスキッチン：オーバークック・ラッシュ — 協力調理＆オーダー提供 | OIYO Game",
+    description:
+      "ダイクストラ・フローフィールドAIアシストとロックステップ同期を搭載した厨房協力アクション。トマトを切りパティを焼き、火災を防いで3つ星クリアを目指せ。",
+  },
+  zh: {
+    title: "混乱厨房：胡闹厨房大冲刺 — 协作烹饪与极速出餐 | OIYO Game",
+    description:
+      "基于迪杰斯特拉流场导航与确定性锁步机制打造的厨房协作游戏。切碎蔬菜、煎熟肉饼、扑灭火灾，无懈可击地完成所有订单。",
+  },
+  fr: {
+    title: "Chaos Kitchen: Rush Overcooked — Simulation et Coopération Culinaire | OIYO Game",
+    description:
+      "Un jeu de cuisine effréné avec navigation par champ de flux de Dijkstra et lockstep. Coupez, cuisinez, éteignez les feux et servez les plats.",
+  },
+  es: {
+    title: "Cocina Caótica: Fiebre de Chef — Cooperación y Cocina Exprés | OIYO Game",
+    description:
+      "Simulación de cocina rápida con campos de flujo Dijkstra y sincronización lockstep. Corta verduras, asa hamburguesas, extingue incendios y sirve a tiempo.",
+  },
+};
+
+const m = meta[locale] || meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <ChaosKitchen client:load />
+  <GameGuide slug="chaos-kitchen" locale={locale} name={m.title.split(" — ")[0]} />
+</BaseLayout>
