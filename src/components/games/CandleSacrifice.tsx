@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useCardTiltPro } from '../../lib/games/engine-suite-unified';
+import { useState, useCallback } from 'react';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import {
   loadArcadePassProgress,
   reportMissionProgress,
@@ -19,6 +19,107 @@ import {
 
 interface Props {
   locale: string;
+}
+
+const playCabinAudio = (kind: 'card' | 'sacrifice' | 'bell' | 'victory' | 'defeat') => {
+  if (typeof AudioContext === 'undefined') return;
+  try {
+    const ctx = new AudioContext();
+    const t = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain).connect(ctx.destination);
+    if (kind === 'card') {
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(440, t);
+      osc.frequency.exponentialRampToValueAtTime(660, t + 0.08);
+      gain.gain.setValueAtTime(0.08, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+    } else if (kind === 'sacrifice') {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(160, t);
+      osc.frequency.exponentialRampToValueAtTime(80, t + 0.12);
+      gain.gain.setValueAtTime(0.12, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+    } else if (kind === 'bell') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, t);
+      osc.frequency.exponentialRampToValueAtTime(440, t + 0.4);
+      gain.gain.setValueAtTime(0.18, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+    } else if (kind === 'victory') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(523.25, t);
+      osc.frequency.setValueAtTime(659.25, t + 0.1);
+      osc.frequency.setValueAtTime(783.99, t + 0.2);
+      gain.gain.setValueAtTime(0.15, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+    } else {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(110, t);
+      gain.gain.setValueAtTime(0.15, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+    }
+    osc.start(t);
+    osc.stop(t + (kind === 'bell' ? 0.42 : 0.36));
+  } catch {}
+};
+
+function TiltPlayerLaneButton({
+  children,
+  onClick,
+  className,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  className?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.12);
+        onClick();
+      }}
+      className={`${className ?? ''} will-change-transform transform-(--card-tilt)`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function TiltBellButton({
+  children,
+  onClick,
+  disabled,
+  className,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+  className?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.15);
+        onClick();
+      }}
+      className={`${className ?? ''} will-change-transform transform-(--card-tilt)`}
+    >
+      {children}
+    </button>
+  );
 }
 
 function renderCostBadge(card: BeastCard, isKo: boolean) {
@@ -106,11 +207,36 @@ export default function CandleSacrifice({ locale }: Props) {
   };
 
   const handleRingBell = () => {
+    playCabinAudio('bell');
+    MobileHapticsPro.heavy();
     const next = ringCombatBell(state);
     setState(next);
     if (next.status === 'victory') {
+      playCabinAudio('victory');
+      MobileHapticsPro.success();
       recordArcadePass(1);
+    } else if (next.status === 'defeat') {
+      playCabinAudio('defeat');
+      MobileHapticsPro.warning();
     }
+  };
+
+  const handleLaneClick = (idx: number) => {
+    const next = clickPlayerLane(state, idx);
+    setState(next);
+    if (next.sacrificedLanes.length > state.sacrificedLanes.length) {
+      playCabinAudio('sacrifice');
+      MobileHapticsPro.impact();
+    } else {
+      playCabinAudio('card');
+      MobileHapticsPro.light();
+    }
+  };
+
+  const handleDraw = (deckType: 'squirrel' | 'main') => {
+    playCabinAudio('card');
+    MobileHapticsPro.click();
+    setState(drawFromDeck(state, deckType));
   };
 
   const selectedCard = state.hand.find((c) => c.id === state.selectedHandCardId);
@@ -268,10 +394,9 @@ export default function CandleSacrifice({ locale }: Props) {
               {state.playerRow.map((card, idx) => {
                 const isSacrificed = state.sacrificedLanes.includes(idx);
                 return (
-                  <button
+                  <TiltPlayerLaneButton
                     key={`pr-${idx}`}
-                    type="button"
-                    onClick={() => setState(clickPlayerLane(state, idx))}
+                    onClick={() => handleLaneClick(idx)}
                     className={`flex min-h-28 flex-col items-center justify-center rounded-xl border p-2.5 text-center transition ${
                       isSacrificed
                         ? 'border-destructive bg-destructive/20'
@@ -300,7 +425,7 @@ export default function CandleSacrifice({ locale }: Props) {
                         {isKo ? `+ ${idx + 1}번 레인 배치` : `+ Place Lane ${idx + 1}`}
                       </span>
                     )}
-                  </button>
+                  </TiltPlayerLaneButton>
                 );
               })}
             </div>
@@ -311,7 +436,7 @@ export default function CandleSacrifice({ locale }: Props) {
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => setState(drawFromDeck(state, 'squirrel'))}
+                onClick={() => handleDraw('squirrel')}
                 disabled={state.squirrelsLeft <= 0}
                 className="rounded-xl border border-border bg-secondary px-3 py-2 text-xs font-bold text-secondary-foreground hover:bg-accent disabled:opacity-40"
               >
@@ -319,7 +444,7 @@ export default function CandleSacrifice({ locale }: Props) {
               </button>
               <button
                 type="button"
-                onClick={() => setState(drawFromDeck(state, 'main'))}
+                onClick={() => handleDraw('main')}
                 disabled={state.mainDeck.length <= 0}
                 className="rounded-xl border border-border bg-secondary px-3 py-2 text-xs font-bold text-secondary-foreground hover:bg-accent disabled:opacity-40"
               >
@@ -327,14 +452,13 @@ export default function CandleSacrifice({ locale }: Props) {
               </button>
             </div>
 
-            <button
-              type="button"
+            <TiltBellButton
               onClick={handleRingBell}
               disabled={state.status !== 'player-turn'}
               className="rounded-xl bg-primary px-5 py-2.5 text-sm font-extrabold text-primary-foreground shadow-sm hover:opacity-90 disabled:opacity-40"
             >
               🔔 {isKo ? '전투 종 울리기 (END TURN)' : 'RING COMBAT BELL (STRIKE)'}
-            </button>
+            </TiltBellButton>
           </div>
         </div>
 

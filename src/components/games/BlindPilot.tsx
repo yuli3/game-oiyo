@@ -8,6 +8,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Maximize2, Minimize2, Share2, Check } from "lucide-react";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import type { Locale } from "../../lib/i18n";
 import { celebrate } from "../../lib/games/celebration";
@@ -676,6 +677,42 @@ function landClass(ready: boolean): string {
   return "min-h-11 w-full rounded-xl bg-muted px-3 text-sm font-semibold text-foreground disabled:opacity-40";
 }
 
+function TiltPilotButton({
+  children,
+  onClick,
+  disabled,
+  className,
+  ariaKeyshortcuts,
+  ariaLabel,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+  className?: string;
+  ariaKeyshortcuts?: string;
+  ariaLabel?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      aria-keyshortcuts={ariaKeyshortcuts}
+      aria-label={ariaLabel}
+      style={{ "--card-tilt": transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.1);
+        onClick();
+      }}
+      className={`${className ?? ""} will-change-transform transform-(--card-tilt)`}
+    >
+      {children}
+    </button>
+  );
+}
+
 function gaugeClass(dead: boolean): string {
   if (dead) return "rounded-xl bg-muted px-3 py-2 text-sm text-foreground";
   return "rounded-xl bg-card px-3 py-2 text-sm text-muted-foreground";
@@ -863,6 +900,11 @@ export default function BlindPilot({ locale = "en" }: { locale?: Locale }) {
   }, []);
 
   const note = useCallback((kind: Tick) => {
+    if (kind === "nudge") MobileHapticsPro.light();
+    else if (kind === "block") MobileHapticsPro.warning();
+    else if (kind === "win") MobileHapticsPro.success();
+    else MobileHapticsPro.heavy();
+
     if (mutedRef.current || pausedRef.current) return;
     audio.current?.tick(kind);
   }, []);
@@ -1088,32 +1130,30 @@ export default function BlindPilot({ locale = "en" }: { locale?: Locale }) {
             const available = open.has(action);
             const detail = detailFor(state, action, copy);
             return (
-              <button
+              <TiltPilotButton
                 key={action}
-                type="button"
                 className={available ? controlClass("primary") : controlClass("quiet")}
-                aria-keyshortcuts={shortcut(action)}
-                aria-label={`${label(action, copy)}. ${detail}`}
+                ariaKeyshortcuts={shortcut(action)}
+                ariaLabel={`${label(action, copy)}. ${detail}`}
                 disabled={locked || !available}
                 onClick={() => move(action)}
               >
                 {label(action, copy)}
                 <span className="block text-xs font-normal">{detail}</span>
-              </button>
+              </TiltPilotButton>
             );
           })}
         </div>
-        <button
-          type="button"
+        <TiltPilotButton
           className={landClass(!locked)}
-          aria-keyshortcuts="L"
-          aria-label={`${copy.land}. ${detailFor(state, "land", copy)}`}
+          ariaKeyshortcuts="L"
+          ariaLabel={`${copy.land}. ${detailFor(state, "land", copy)}`}
           disabled={locked}
           onClick={() => move("land")}
         >
           {copy.land}
           <span className="block text-xs font-normal">{detailFor(state, "land", copy)}</span>
-        </button>
+        </TiltPilotButton>
       </div>
       <div className="flex flex-wrap gap-2">
         <button type="button" className={paused ? controlClass("primary") : controlClass("quiet")} aria-pressed={paused} onClick={() => setPaused((value) => !value)}>

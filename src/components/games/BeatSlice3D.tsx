@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import {
   Play,
   RotateCcw,
@@ -47,6 +48,63 @@ const TRACKS_METADATA = [
   { id: "neon-overdrive", title: "Neon Overdrive", bpm: 148, bars: 28, diff: "Hard" },
   { id: "synth-horizon", title: "Synthwave Horizon", bpm: 128, bars: 20, diff: "Easy" },
 ];
+
+function TiltBeatLaneButton({
+  children,
+  onClick,
+  disabled,
+  className,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+  className?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      style={{ "--card-tilt": transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.12);
+        onClick();
+      }}
+      className={`${className ?? ""} will-change-transform transform-(--card-tilt)`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function TiltBeatActionButton({
+  children,
+  onClick,
+  className,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  className?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      style={{ "--card-tilt": transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.08);
+        onClick();
+      }}
+      className={`${className ?? ""} will-change-transform transform-(--card-tilt)`}
+    >
+      {children}
+    </button>
+  );
+}
 
 export default function BeatSlice3D() {
   const [selectedTrackId, setSelectedTrackId] = useState("cyber-rush");
@@ -227,8 +285,16 @@ export default function BeatSlice3D() {
 
     if (res.judgment === "MISS") {
       playSound("miss");
+      MobileHapticsPro.warning();
       setLastJudg({ text: "MISS", key: Date.now() });
     } else {
+      if (res.judgment === "PERFECT") {
+        MobileHapticsPro.heavy();
+      } else if (res.judgment === "GREAT") {
+        MobileHapticsPro.impact();
+      } else {
+        MobileHapticsPro.light();
+      }
       const isCyan = lane < 2;
       playSound(isCyan ? "slice_cyan" : "slice_mag");
       setLastJudg({ text: res.judgment, key: Date.now() });
@@ -762,14 +828,13 @@ export default function BeatSlice3D() {
             <p className="mt-1 max-w-xs text-xs text-muted-foreground">
               마우스 스와이프, 터치 드래그, 또는 D/F/J/K 키보드로 리듬에 맞춰 3D 블록을 절단하세요!
             </p>
-            <button
-              type="button"
+            <TiltBeatActionButton
               className="mt-4 flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow transition hover:opacity-90"
               onClick={handleStartGame}
             >
               곡 재생 및 플레이
               <ChevronRight className="h-4 w-4" />
-            </button>
+            </TiltBeatActionButton>
           </div>
         )}
 
@@ -798,59 +863,54 @@ export default function BeatSlice3D() {
                 <p className="text-sm font-semibold text-foreground">{accuracy}%</p>
               </div>
             </div>
-            <button
-              type="button"
+            <TiltBeatActionButton
               className="mt-2 flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground shadow hover:opacity-90"
               onClick={() => initGame(selectedTrackId)}
             >
               <RotateCcw className="h-4 w-4" />
               다시 도전하기
-            </button>
+            </TiltBeatActionButton>
           </div>
         )}
       </div>
 
       {/* 4 Mobile / Keyboard Lane Tap Controls */}
       <div className="grid grid-cols-4 gap-2 pt-1">
-        <button
-          type="button"
+        <TiltBeatLaneButton
           disabled={!isPlaying}
           className="flex flex-col items-center justify-center rounded-lg border border-border bg-primary/10 py-3 text-primary transition hover:bg-primary/20 active:scale-95 disabled:opacity-50"
           onClick={() => handleTriggerSlice(0, "down")}
         >
           <span className="text-xs font-bold">LANE 1</span>
           <span className="text-xs text-muted-foreground font-mono mt-0.5">[D]</span>
-        </button>
+        </TiltBeatLaneButton>
 
-        <button
-          type="button"
+        <TiltBeatLaneButton
           disabled={!isPlaying}
           className="flex flex-col items-center justify-center rounded-lg border border-border bg-primary/10 py-3 text-primary transition hover:bg-primary/20 active:scale-95 disabled:opacity-50"
           onClick={() => handleTriggerSlice(1, "down")}
         >
           <span className="text-xs font-bold">LANE 2</span>
           <span className="text-xs text-muted-foreground font-mono mt-0.5">[F]</span>
-        </button>
+        </TiltBeatLaneButton>
 
-        <button
-          type="button"
+        <TiltBeatLaneButton
           disabled={!isPlaying}
           className="flex flex-col items-center justify-center rounded-lg border border-border bg-secondary py-3 text-secondary-foreground transition hover:bg-secondary/80 active:scale-95 disabled:opacity-50"
           onClick={() => handleTriggerSlice(2, "down")}
         >
           <span className="text-xs font-bold">LANE 3</span>
           <span className="text-xs text-muted-foreground font-mono mt-0.5">[J]</span>
-        </button>
+        </TiltBeatLaneButton>
 
-        <button
-          type="button"
+        <TiltBeatLaneButton
           disabled={!isPlaying}
           className="flex flex-col items-center justify-center rounded-lg border border-border bg-secondary py-3 text-secondary-foreground transition hover:bg-secondary/80 active:scale-95 disabled:opacity-50"
           onClick={() => handleTriggerSlice(3, "down")}
         >
           <span className="text-xs font-bold">LANE 4</span>
           <span className="text-xs text-muted-foreground font-mono mt-0.5">[K]</span>
-        </button>
+        </TiltBeatLaneButton>
       </div>
 
       {/* Footer Instructions */}

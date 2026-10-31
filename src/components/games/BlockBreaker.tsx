@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import BlockBreakerScene from './BlockBreakerScene';
 import {
   type BlockBreakerState,
@@ -36,6 +37,39 @@ import {
 
 interface Props {
   locale: Locale;
+}
+
+function TiltBreakerButton({
+  children,
+  onClick,
+  onPointerDown,
+  onPointerUp,
+  className,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  onPointerDown?: () => void;
+  onPointerUp?: () => void;
+  className?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onPointerDown={onPointerDown}
+      onPointerUp={onPointerUp}
+      onClick={() => {
+        triggerPop(0.1);
+        onClick?.();
+      }}
+      className={`${className ?? ''} will-change-transform transform-(--card-tilt)`}
+    >
+      {children}
+    </button>
+  );
 }
 
 const UI_TEXT: Record<Locale, {
@@ -172,6 +206,12 @@ export default function BlockBreaker({ locale }: Props) {
 
   // Web Audio procedural sound synthesizer
   const playSound = useCallback((type: 'bounce' | 'brick' | 'laser' | 'die' | 'clear') => {
+    if (type === 'bounce') MobileHapticsPro.light();
+    else if (type === 'brick') MobileHapticsPro.impact();
+    else if (type === 'laser') MobileHapticsPro.click();
+    else if (type === 'die') MobileHapticsPro.warning();
+    else if (type === 'clear') MobileHapticsPro.success();
+
     if (muted) return;
     try {
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
@@ -530,17 +570,15 @@ export default function BlockBreaker({ locale }: Props) {
 
       {/* Mobile Touch Controls */}
       <div className="grid grid-cols-3 gap-2 touch-none select-none sm:pointer-fine:hidden p-3 bg-card rounded-xl border border-border">
-        <button
-          type="button"
+        <TiltBreakerButton
           onPointerDown={() => { inputRef.current.moveX = -1; }}
           onPointerUp={() => { inputRef.current.moveX = 0; }}
           className="p-4 rounded-xl bg-muted text-foreground flex justify-center items-center active:bg-primary active:text-primary-foreground"
         >
           <ArrowLeft className="w-6 h-6" />
-        </button>
+        </TiltBreakerButton>
 
-        <button
-          type="button"
+        <TiltBreakerButton
           onClick={() => {
             setGameState((prev) => {
               if (prev.status === 'ready') {
@@ -557,16 +595,15 @@ export default function BlockBreaker({ locale }: Props) {
           className="p-4 rounded-xl bg-primary text-primary-foreground font-bold flex justify-center items-center active:opacity-90"
         >
           {gameState.status === 'ready' ? <Play className="w-6 h-6 fill-current" /> : <Zap className="w-6 h-6" />}
-        </button>
+        </TiltBreakerButton>
 
-        <button
-          type="button"
+        <TiltBreakerButton
           onPointerDown={() => { inputRef.current.moveX = 1; }}
           onPointerUp={() => { inputRef.current.moveX = 0; }}
           className="p-4 rounded-xl bg-muted text-foreground flex justify-center items-center active:bg-primary active:text-primary-foreground"
         >
           <ArrowRight className="w-6 h-6" />
-        </button>
+        </TiltBreakerButton>
       </div>
     </div>
   );

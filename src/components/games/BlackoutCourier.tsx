@@ -4,6 +4,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Maximize2, Minimize2, Share2, Volume2, VolumeX } from "lucide-react";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import { GameContainer } from "../ui/game/GamePrimitives";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import type { Locale } from "../../lib/i18n";
@@ -33,6 +34,39 @@ import {
 } from "../../lib/games/blackout-courier";
 
 const CONTROL = "min-h-11 min-w-11 rounded-xl border px-3 py-2 text-sm font-bold motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
+
+function TiltBlackoutButton({
+  children,
+  onClick,
+  disabled,
+  className,
+  ariaLabel,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+  className?: string;
+  ariaLabel?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      aria-label={ariaLabel}
+      style={{ "--card-tilt": transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.1);
+        onClick();
+      }}
+      className={`${className ?? ""} will-change-transform transform-(--card-tilt)`}
+    >
+      {children}
+    </button>
+  );
+}
 
 interface Copy {
   title: string;
@@ -264,12 +298,15 @@ export default function BlackoutCourier({ locale }: { locale: Locale }) {
     if (run.phase === "won") {
       cue("win");
       hapticsRef.current.fire("win");
+      MobileHapticsPro.success();
       if (containerRef.current) celebrate(containerRef.current, { preset: "sparks" });
     } else if (run.phase === "lost") {
       cue("fail");
       hapticsRef.current.fire("fail");
+      MobileHapticsPro.warning();
     } else if (run.phase === "dark") {
       cue("tap");
+      MobileHapticsPro.medium();
     }
   }, [run, dateKey, attempt, muted, reducedMotion]);
 
@@ -306,7 +343,15 @@ export default function BlackoutCourier({ locale }: { locale: Locale }) {
   const move = (dir: Dir) => {
     cue("place");
     hapticsRef.current.fire("place");
-    setRun((current) => (current ? step(current, dir) : current));
+    MobileHapticsPro.light();
+    setRun((current) => {
+      if (!current) return current;
+      const next = step(current, dir);
+      if (next.nextDrop > current.nextDrop) {
+        MobileHapticsPro.impact();
+      }
+      return next;
+    });
   };
 
   const onSwipe = (dx: number, dy: number) => {
@@ -372,21 +417,21 @@ export default function BlackoutCourier({ locale }: { locale: Locale }) {
               })}
             </div>
             {run.phase === "plan" ? (
-              <button
-                type="button"
+              <TiltBlackoutButton
                 onClick={() => {
                   cue("tap");
                   hapticsRef.current.fire("tap");
+                  MobileHapticsPro.medium();
                   setRun(extinguish(run));
                 }}
                 className={`${CONTROL} border-primary bg-primary text-primary-foreground`}
               >
                 {t.go}
-              </button>
+              </TiltBlackoutButton>
             ) : null}
             {run.phase === "won" || run.phase === "lost" ? (
               <div className="flex flex-wrap items-center gap-2">
-                <button type="button" onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</button>
+                <TiltBlackoutButton onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</TiltBlackoutButton>
                 <button
                   type="button"
                   onClick={() => void handleShareCard()}
@@ -398,11 +443,11 @@ export default function BlackoutCourier({ locale }: { locale: Locale }) {
               </div>
             ) : null}
             <div className="flex flex-col items-center gap-2">
-              <button type="button" disabled={!walking} onClick={() => move("n")} aria-label={t.north} className={`${CONTROL} border-border bg-card text-foreground disabled:opacity-40`}>{t.north}</button>
+              <TiltBlackoutButton disabled={!walking} onClick={() => move("n")} ariaLabel={t.north} className={`${CONTROL} border-border bg-card text-foreground disabled:opacity-40`}>{t.north}</TiltBlackoutButton>
               <div className="flex gap-2">
-                <button type="button" disabled={!walking} onClick={() => move("w")} aria-label={t.west} className={`${CONTROL} border-border bg-card text-foreground disabled:opacity-40`}>{t.west}</button>
-                <button type="button" disabled={!walking} onClick={() => move("s")} aria-label={t.south} className={`${CONTROL} border-border bg-card text-foreground disabled:opacity-40`}>{t.south}</button>
-                <button type="button" disabled={!walking} onClick={() => move("e")} aria-label={t.east} className={`${CONTROL} border-border bg-card text-foreground disabled:opacity-40`}>{t.east}</button>
+                <TiltBlackoutButton disabled={!walking} onClick={() => move("w")} ariaLabel={t.west} className={`${CONTROL} border-border bg-card text-foreground disabled:opacity-40`}>{t.west}</TiltBlackoutButton>
+                <TiltBlackoutButton disabled={!walking} onClick={() => move("s")} ariaLabel={t.south} className={`${CONTROL} border-border bg-card text-foreground disabled:opacity-40`}>{t.south}</TiltBlackoutButton>
+                <TiltBlackoutButton disabled={!walking} onClick={() => move("e")} ariaLabel={t.east} className={`${CONTROL} border-border bg-card text-foreground disabled:opacity-40`}>{t.east}</TiltBlackoutButton>
               </div>
             </div>
             <p className="text-sm text-muted-foreground">{t.record(record?.w ?? 0, record?.l ?? 0)}</p>
