@@ -14,10 +14,68 @@ import {
   triggerHaptic,
 } from "../../lib/games/juice-engine";
 import { playSyntheticTone } from "../../lib/games/audio-mixer";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import { Button } from "../ui/button";
 
 interface WordWaffleProps {
   locale?: string;
+}
+
+function TiltWaffleTile({
+  cell,
+  isSelected,
+  onClick,
+}: {
+  cell: WaffleCell;
+  isSelected: boolean;
+  onClick: () => void;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  let stateCls = "";
+  switch (cell.state) {
+    case "green":
+      stateCls = "border-chart-2 bg-chart-2 text-primary-foreground";
+      break;
+    case "yellow":
+      stateCls = "border-chart-4 bg-chart-4 text-foreground";
+      break;
+    case "gray":
+    default:
+      stateCls = "border-muted bg-muted text-muted-foreground";
+      break;
+  }
+
+  const selectCls = isSelected
+    ? "ring-4 ring-primary scale-110 z-10 shadow-lg"
+    : cell.isLocked
+    ? "cursor-default"
+    : "cursor-pointer hover:brightness-110 active:scale-95";
+
+  return (
+    <button
+      type="button"
+      onPointerMove={cell.isLocked ? undefined : onPointerMove}
+      onPointerLeave={cell.isLocked ? undefined : onPointerLeave}
+      onClick={() => {
+        if (!cell.isLocked) {
+          triggerPop(0.15);
+        }
+        onClick();
+      }}
+      style={
+        {
+          "--card-tilt": cell.isLocked ? "none" : transformCss,
+        } as React.CSSProperties
+      }
+      className={`relative flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-xl border-2 text-xl font-black uppercase transition-all duration-150 will-change-transform transform-(--card-tilt) ${stateCls} ${selectCls}`}
+    >
+      {cell.letter}
+      {cell.isLocked && (
+        <span className="absolute bottom-1 right-1 text-xs opacity-80">🔒</span>
+      )}
+    </button>
+  );
 }
 
 export default function WordWaffle({ locale = "ko" }: WordWaffleProps) {
@@ -75,6 +133,7 @@ export default function WordWaffle({ locale = "ko" }: WordWaffleProps) {
     const cell = game.grid[r][c];
     if (!cell || cell.isLocked) {
       playSyntheticTone(audioCtxRef.current, { freq: 240, duration: 0.1, type: "sawtooth" });
+      MobileHapticsPro.warning();
       triggerHaptic("warning");
       return;
     }
@@ -82,6 +141,7 @@ export default function WordWaffle({ locale = "ko" }: WordWaffleProps) {
     if (!selectedCoord) {
       setSelectedCoord({ r, c });
       playSyntheticTone(audioCtxRef.current, { freq: 440, duration: 0.08, type: "sine" });
+      MobileHapticsPro.light();
       triggerHaptic("light");
       return;
     }
@@ -96,10 +156,12 @@ export default function WordWaffle({ locale = "ko" }: WordWaffleProps) {
     setGame(nextGame);
     setSelectedCoord(null);
     playSyntheticTone(audioCtxRef.current, { freq: 520, duration: 0.1, type: "triangle" });
+    MobileHapticsPro.impact();
     triggerHaptic("medium");
 
     if (nextGame.status === "won") {
       shakeStateRef.current = addTrauma(shakeStateRef.current, 0.5);
+      MobileHapticsPro.success();
       triggerHaptic("combo");
 
       // Celebratory melody
@@ -110,10 +172,13 @@ export default function WordWaffle({ locale = "ko" }: WordWaffleProps) {
       setTimeout(() => {
         playSyntheticTone(audioCtxRef.current, { freq: 783.99, duration: 0.35, type: "sine" });
       }, 140);
+    } else if (nextGame.status === "lost") {
+      MobileHapticsPro.heavy();
     }
   };
 
   const handleRestart = () => {
+    MobileHapticsPro.light();
     const fresh = createInitialWaffleGame(locale, 0, Date.now());
     setGame(fresh.game);
     setSelectedCoord(null);
@@ -142,32 +207,6 @@ export default function WordWaffle({ locale = "ko" }: WordWaffleProps) {
       setShareCopied(true);
       setTimeout(() => setShareCopied(false), 2000);
     });
-  };
-
-  const getCellClasses = (cell: WaffleCell | null, isSelected: boolean) => {
-    if (!cell) return "opacity-0 pointer-events-none";
-
-    let stateCls = "";
-    switch (cell.state) {
-      case "green":
-        stateCls = "border-chart-2 bg-chart-2 text-primary-foreground";
-        break;
-      case "yellow":
-        stateCls = "border-chart-4 bg-chart-4 text-foreground";
-        break;
-      case "gray":
-      default:
-        stateCls = "border-muted bg-muted text-muted-foreground";
-        break;
-    }
-
-    const selectCls = isSelected
-      ? "ring-4 ring-primary scale-110 z-10 shadow-lg"
-      : cell.isLocked
-      ? "cursor-default"
-      : "cursor-pointer hover:brightness-110 active:scale-95";
-
-    return `${stateCls} ${selectCls}`;
   };
 
   return (
@@ -208,27 +247,19 @@ export default function WordWaffle({ locale = "ko" }: WordWaffleProps) {
       <div className="relative my-6 grid grid-cols-5 gap-2.5 rounded-2xl bg-muted/20 p-3 sm:p-4">
         {game.grid.map((row, r) =>
           row.map((cell, c) => {
-            if (IS_WAFFLE_HOLE(r, c)) {
+            if (IS_WAFFLE_HOLE(r, c) || !cell) {
               return <div key={`${r}-${c}`} className="h-12 w-12 sm:h-14 sm:w-14" />;
             }
 
             const isSelected = selectedCoord?.r === r && selectedCoord?.c === c;
 
             return (
-              <button
+              <TiltWaffleTile
                 key={`${r}-${c}`}
-                type="button"
+                cell={cell}
+                isSelected={isSelected}
                 onClick={() => handleCellClick(r, c)}
-                className={`relative flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-xl border-2 text-xl font-black uppercase transition-all duration-150 ${getCellClasses(
-                  cell,
-                  isSelected
-                )}`}
-              >
-                {cell?.letter}
-                {cell?.isLocked && (
-                  <span className="absolute bottom-1 right-1 text-xs opacity-80">🔒</span>
-                )}
-              </button>
+              />
             );
           })
         )}

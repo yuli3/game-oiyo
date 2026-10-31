@@ -16,10 +16,70 @@ import {
   triggerHaptic,
 } from "../../lib/games/juice-engine";
 import { playSyntheticTone } from "../../lib/games/audio-mixer";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import { Button } from "../ui/button";
 
 interface BlockBlastProps {
   locale?: string;
+}
+
+function TiltHandShapeButton({
+  shape,
+  isSelected,
+  onSelect,
+}: {
+  shape: { id: string; matrix: number[][]; color: BlockColor };
+  isSelected: boolean;
+  onSelect: () => void;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  const shapeHex = BLOCK_COLOR_HEXES[shape.color];
+
+  return (
+    <button
+      type="button"
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.2);
+        MobileHapticsPro.light();
+        onSelect();
+      }}
+      style={
+        {
+          "--shape-hex": shapeHex,
+          "--card-tilt": transformCss,
+        } as React.CSSProperties
+      }
+      className={`flex h-20 w-24 items-center justify-center rounded-2xl border p-2 transition-all duration-150 will-change-transform transform-(--card-tilt) ${
+        isSelected
+          ? "border-primary bg-primary/10 ring-2 ring-primary scale-105 shadow-md"
+          : "border-border bg-muted/40 hover:bg-muted/70"
+      }`}
+    >
+      {/* Mini shape grid preview */}
+      <div
+        className="grid gap-1 grid-rows-(--rows) grid-cols-(--cols)"
+        style={
+          {
+            "--rows": `repeat(${shape.matrix.length}, minmax(0, 1fr))`,
+            "--cols": `repeat(${shape.matrix[0].length}, minmax(0, 1fr))`,
+          } as React.CSSProperties
+        }
+      >
+        {shape.matrix.map((row, r) =>
+          row.map((val, c) => (
+            <div
+              key={`${r}-${c}`}
+              className={`h-3.5 w-3.5 rounded-xs ${
+                val === 1 ? "bg-(--shape-hex) border border-black/20" : "opacity-0"
+              }`}
+            />
+          ))
+        )}
+      </div>
+    </button>
+  );
 }
 
 export default function BlockBlast({ locale = "ko" }: BlockBlastProps) {
@@ -71,6 +131,7 @@ export default function BlockBlast({ locale = "ko" }: BlockBlastProps) {
     if (!game.hand[idx]) return;
     setSelectedHandIdx((prev) => (prev === idx ? null : idx));
     playSyntheticTone(audioCtxRef.current, { freq: 460, duration: 0.08, type: "sine" });
+    MobileHapticsPro.light();
     triggerHaptic("light");
   };
 
@@ -80,6 +141,7 @@ export default function BlockBlast({ locale = "ko" }: BlockBlastProps) {
     const result = placeShapeAndClear(game, selectedHandIdx, r, c);
     if (!result) {
       playSyntheticTone(audioCtxRef.current, { freq: 220, duration: 0.12, type: "sawtooth" });
+      MobileHapticsPro.warning();
       triggerHaptic("warning");
       return;
     }
@@ -89,12 +151,18 @@ export default function BlockBlast({ locale = "ko" }: BlockBlastProps) {
     setSelectedHandIdx(null);
     setHoverCoord(null);
     playSyntheticTone(audioCtxRef.current, { freq: 540, duration: 0.1, type: "triangle" });
+    MobileHapticsPro.light();
     triggerHaptic("medium");
 
     const lines = result.clearedRows.length + result.clearedCols.length;
     if (lines > 0) {
       const traumaAmount = Math.min(0.8, 0.35 + lines * 0.15 + result.nextState.comboCount * 0.1);
       setShakeState((prev) => addTrauma(prev, traumaAmount));
+      if (lines >= 2 || result.nextState.comboCount > 1) {
+        MobileHapticsPro.success();
+      } else {
+        MobileHapticsPro.impact();
+      }
       triggerHaptic("combo");
 
       // Ascending blast chime
@@ -114,12 +182,14 @@ export default function BlockBlast({ locale = "ko" }: BlockBlastProps) {
     if (revived) {
       setGame(revived);
       setShakeState((prev) => addTrauma(prev, 0.6));
+      MobileHapticsPro.heavy();
       triggerHaptic("heavy");
       playSyntheticTone(audioCtxRef.current, { freq: 300, duration: 0.4, type: "triangle" });
     }
   };
 
   const handleRestart = () => {
+    MobileHapticsPro.light();
     setGame(createInitialBlockBlastGame(Date.now(), game.highScore));
     setSelectedHandIdx(null);
     setHoverCoord(null);
@@ -274,42 +344,13 @@ export default function BlockBlast({ locale = "ko" }: BlockBlastProps) {
               );
             }
 
-            const shapeHex = BLOCK_COLOR_HEXES[shape.color];
-
             return (
-              <button
+              <TiltHandShapeButton
                 key={shape.id}
-                type="button"
-                onClick={() => handleSelectHand(idx)}
-                style={{ "--shape-hex": shapeHex } as React.CSSProperties}
-                className={`flex h-20 w-24 items-center justify-center rounded-2xl border p-2 transition-all duration-150 ${
-                  isSelected
-                    ? "border-primary bg-primary/10 ring-2 ring-primary scale-105 shadow-md"
-                    : "border-border bg-muted/40 hover:bg-muted/70"
-                }`}
-              >
-                {/* Mini shape grid preview */}
-                <div
-                  className="grid gap-1 grid-rows-(--rows) grid-cols-(--cols)"
-                  style={
-                    {
-                      "--rows": `repeat(${shape.matrix.length}, minmax(0, 1fr))`,
-                      "--cols": `repeat(${shape.matrix[0].length}, minmax(0, 1fr))`,
-                    } as React.CSSProperties
-                  }
-                >
-                  {shape.matrix.map((row, r) =>
-                    row.map((val, c) => (
-                      <div
-                        key={`${r}-${c}`}
-                        className={`h-3.5 w-3.5 rounded-xs ${
-                          val === 1 ? "bg-(--shape-hex) border border-black/20" : "opacity-0"
-                        }`}
-                      />
-                    ))
-                  )}
-                </div>
-              </button>
+                shape={shape}
+                isSelected={isSelected}
+                onSelect={() => handleSelectHand(idx)}
+              />
             );
           })}
         </div>

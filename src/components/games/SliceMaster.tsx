@@ -10,6 +10,7 @@ import {
 } from "@/lib/games/slice-master";
 import { addTrauma, createShakeState, triggerHaptic, updateShake } from "@/lib/games/juice-engine";
 import { playSyntheticTone } from "@/lib/games/audio-mixer";
+import { useDynamicDifficultyPro, MobileHapticsPro } from "@/lib/games/engine-suite-unified";
 
 interface SliceMasterProps {
   locale?: string;
@@ -20,6 +21,7 @@ export default function SliceMaster({ locale = "ko" }: SliceMasterProps) {
   const [game, setGame] = useState<SliceMasterGame>(() => createSliceMasterLevel(1));
   const [bestScore, setBestScore] = useState(0);
   const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0 });
+  const { modifiers, reportSuccess, reportFailure } = useDynamicDifficultyPro();
 
   const gameRef = useRef<SliceMasterGame>(game);
   gameRef.current = game;
@@ -66,7 +68,9 @@ export default function SliceMaster({ locale = "ko" }: SliceMasterProps) {
         if (step.slicedObstacles.length > 0) {
           // Trigger juice
           shakeStateRef.current = addTrauma(shakeStateRef.current, 0.35);
+          MobileHapticsPro.impact();
           triggerHaptic("medium");
+          reportSuccess();
 
           // Play ASMR slice sound with pitch variance
           playSyntheticTone(audioCtxRef.current, {
@@ -78,7 +82,9 @@ export default function SliceMaster({ locale = "ko" }: SliceMasterProps) {
 
         if (step.hitTarget) {
           shakeStateRef.current = addTrauma(shakeStateRef.current, 0.7);
+          MobileHapticsPro.success();
           triggerHaptic("combo");
+          reportSuccess();
           playSyntheticTone(audioCtxRef.current, {
             freq: 660,
             duration: 0.25,
@@ -88,7 +94,9 @@ export default function SliceMaster({ locale = "ko" }: SliceMasterProps) {
 
         if (step.hitHazard) {
           shakeStateRef.current = addTrauma(shakeStateRef.current, 0.8);
+          MobileHapticsPro.heavy();
           triggerHaptic("heavy");
+          reportFailure();
           playSyntheticTone(audioCtxRef.current, {
             freq: 120,
             duration: 0.3,
@@ -97,6 +105,7 @@ export default function SliceMaster({ locale = "ko" }: SliceMasterProps) {
         }
 
         if (step.stuckFloor) {
+          MobileHapticsPro.click();
           triggerHaptic("light");
           playSyntheticTone(audioCtxRef.current, {
             freq: 260,
@@ -133,15 +142,18 @@ export default function SliceMaster({ locale = "ko" }: SliceMasterProps) {
       duration: 0.05,
       type: "sine",
     });
+    MobileHapticsPro.light();
     triggerHaptic("light");
   };
 
   const handleRestart = () => {
+    MobileHapticsPro.light();
     const fresh = createSliceMasterLevel(level);
     setGame(fresh);
   };
 
   const handleNextLevel = () => {
+    MobileHapticsPro.success();
     const nextLvl = level + 1;
     setLevel(nextLvl);
     setGame(createSliceMasterLevel(nextLvl));

@@ -65,6 +65,14 @@ export class MobileHapticsPro {
   public static success(): void {
     MotionGestureController.triggerHaptic("success");
   }
+
+  public static warning(): void {
+    MotionGestureController.triggerHaptic("warning");
+  }
+
+  public static error(): void {
+    MotionGestureController.triggerHaptic("heavy");
+  }
 }
 
 /**
@@ -158,6 +166,8 @@ export function useDynamicDifficultyPro() {
     reportHit,
     reportDeath,
     reportVictory,
+    reportSuccess: reportAction,
+    reportFailure: reportDeath,
     updateTime,
     recordHit: reportHit,
     recordKill: reportVictory,

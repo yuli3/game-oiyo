@@ -13,10 +13,62 @@ import {
   triggerHaptic,
 } from "../../lib/games/juice-engine";
 import { playSyntheticTone } from "../../lib/games/audio-mixer";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import { Button } from "../ui/button";
 
 interface HexaSortProps {
   locale?: string;
+}
+
+function TiltHandHexaButton({
+  slot,
+  isSelected,
+  onSelect,
+}: {
+  slot: { id: string; stack: HexColor[] };
+  isSelected: boolean;
+  onSelect: () => void;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      style={
+        {
+          "--card-tilt": transformCss,
+        } as React.CSSProperties
+      }
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.2);
+        MobileHapticsPro.light();
+        onSelect();
+      }}
+      className={`relative flex h-24 w-20 flex-col-reverse items-center justify-start rounded-2xl border p-2 transition-all duration-150 will-change-transform transform-(--card-tilt) ${
+        isSelected
+          ? "border-primary bg-primary/10 ring-2 ring-primary scale-105 shadow-md"
+          : "border-border bg-muted/40 hover:bg-muted/70"
+      }`}
+    >
+      {/* Mini Isometric Stack in Hand */}
+      <div className="relative mb-2 flex flex-col-reverse items-center">
+        {slot.stack.map((color, tileIdx) => (
+          <div
+            key={tileIdx}
+            style={{ "--tile-bg": HEX_COLOR_HEXES[color] } as React.CSSProperties}
+            className={`h-6 w-12 rounded-md border border-black/20 shadow-xs bg-(--tile-bg) ${
+              tileIdx > 0 ? "-mt-3" : ""
+            }`}
+          />
+        ))}
+      </div>
+      <span className="text-xs font-bold text-muted-foreground">
+        {slot.stack.length}
+      </span>
+    </button>
+  );
 }
 
 export default function HexaSort({ locale = "ko" }: HexaSortProps) {
@@ -67,6 +119,7 @@ export default function HexaSort({ locale = "ko" }: HexaSortProps) {
     if (!game.hand[idx]) return;
     setSelectedHandIdx((prev) => (prev === idx ? null : idx));
     playSyntheticTone(audioCtxRef.current, { freq: 440, duration: 0.08, type: "sine" });
+    MobileHapticsPro.light();
     triggerHaptic("light");
   };
 
@@ -76,6 +129,7 @@ export default function HexaSort({ locale = "ko" }: HexaSortProps) {
     const resolution = placeAndResolve(game, selectedHandIdx, slotId);
     if (!resolution) {
       playSyntheticTone(audioCtxRef.current, { freq: 220, duration: 0.15, type: "sawtooth" });
+      MobileHapticsPro.warning();
       triggerHaptic("warning");
       return;
     }
@@ -84,11 +138,13 @@ export default function HexaSort({ locale = "ko" }: HexaSortProps) {
     setGame(resolution.nextState);
     setSelectedHandIdx(null);
     playSyntheticTone(audioCtxRef.current, { freq: 520, duration: 0.12, type: "triangle" });
+    MobileHapticsPro.impact();
     triggerHaptic("medium");
 
     // Check for 10-stack clear cascade
     if (resolution.clears.length > 0) {
       setShakeState((prev) => addTrauma(prev, 0.45));
+      MobileHapticsPro.success();
       triggerHaptic("combo");
 
       // Celebratory ASMR chime chord
@@ -103,11 +159,13 @@ export default function HexaSort({ locale = "ko" }: HexaSortProps) {
   };
 
   const handleRestart = () => {
+    MobileHapticsPro.light();
     setGame(createInitialHexaSortGame(1, Date.now()));
     setSelectedHandIdx(null);
   };
 
   const handleNextLevel = () => {
+    MobileHapticsPro.success();
     setGame(createInitialHexaSortGame(game.level + 1, Date.now()));
     setSelectedHandIdx(null);
   };
@@ -311,32 +369,12 @@ export default function HexaSort({ locale = "ko" }: HexaSortProps) {
             }
 
             return (
-              <button
+              <TiltHandHexaButton
                 key={handSlot.id}
-                type="button"
-                onClick={() => handleSelectHand(idx)}
-                className={`relative flex h-24 w-20 flex-col-reverse items-center justify-start rounded-2xl border p-2 transition-all duration-150 ${
-                  isSelected
-                    ? "border-primary bg-primary/10 ring-2 ring-primary scale-105 shadow-md"
-                    : "border-border bg-muted/40 hover:bg-muted/70"
-                }`}
-              >
-                {/* Mini Isometric Stack in Hand */}
-                <div className="relative mb-2 flex flex-col-reverse items-center">
-                  {handSlot.stack.map((color, tileIdx) => (
-                    <div
-                      key={tileIdx}
-                      style={{ "--tile-bg": HEX_COLOR_HEXES[color] } as React.CSSProperties}
-                      className={`h-6 w-12 rounded-md border border-black/20 shadow-xs bg-(--tile-bg) ${
-                        tileIdx > 0 ? "-mt-3" : ""
-                      }`}
-                    />
-                  ))}
-                </div>
-                <span className="text-xs font-bold text-muted-foreground">
-                  {handSlot.stack.length}
-                </span>
-              </button>
+                slot={handSlot}
+                isSelected={isSelected}
+                onSelect={() => handleSelectHand(idx)}
+              />
             );
           })}
         </div>

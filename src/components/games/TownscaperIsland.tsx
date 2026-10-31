@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import {
   loadArcadePassProgress,
   reportMissionProgress,
@@ -29,6 +30,62 @@ const FEATURE_BADGES: Record<ArchFeature, { icon: string; labelKo: string; label
   'gabled-manor': { icon: '🏛️', labelKo: '박공 저택', labelEn: 'Manor' },
   lighthouse: { icon: '🚨', labelKo: '해안 등대', labelEn: 'Lighthouse' },
 };
+
+function playPopAudio(height: number) {
+  if (typeof window === 'undefined') return;
+  try {
+    const AudioCtx =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const freq = 260 + Math.min(height, 8) * 45;
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(freq * 1.4, ctx.currentTime + 0.08);
+    gain.gain.setValueAtTime(0.12, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.09);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.09);
+    setTimeout(() => ctx.close().catch(() => {}), 200);
+  } catch {}
+}
+
+function TiltPaletteButton({
+  isSelected,
+  name,
+  onSelect,
+}: {
+  isSelected: boolean;
+  name: string;
+  onSelect: () => void;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.15);
+        MobileHapticsPro.light();
+        onSelect();
+      }}
+      className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition will-change-transform transform-(--card-tilt) ${
+        isSelected
+          ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+          : 'border-border bg-background text-foreground hover:bg-accent'
+      }`}
+    >
+      🎨 {name}
+    </button>
+  );
+}
 
 export default function TownscaperIsland({ locale }: Props) {
   const isKo = locale === 'ko';
@@ -162,11 +219,20 @@ export default function TownscaperIsland({ locale }: Props) {
 
   const handleCellClick = (r: number, c: number, forceMode?: 'build' | 'demolish') => {
     const next = interactIslandCell(state, r, c, forceMode);
+    const targetCell = next.grid[r][c];
+    playPopAudio(targetCell.height);
+    if (targetCell.feature !== 'water' && targetCell.feature !== 'quay') {
+      MobileHapticsPro.impact();
+    } else {
+      MobileHapticsPro.light();
+    }
     setState(next);
     recordArcadePass(next.totalBlocks);
   };
 
   const handleLoadPreset = () => {
+    MobileHapticsPro.success();
+    playPopAudio(5);
     const next = applyPresetGrandIsland(state);
     setState(next);
     recordArcadePass(next.totalBlocks);
@@ -211,25 +277,20 @@ export default function TownscaperIsland({ locale }: Props) {
         <div className="flex flex-wrap items-center gap-1.5">
           {(Object.keys(PALETTE_SPECS) as PaletteKey[]).map((key) => {
             const spec = PALETTE_SPECS[key];
+            const isSelected = state.selectedPalette === key && state.toolMode === 'build';
             return (
-              <button
+              <TiltPaletteButton
                 key={key}
-                type="button"
-                onClick={() =>
+                isSelected={isSelected}
+                name={isKo ? spec.nameKo : spec.nameEn}
+                onSelect={() =>
                   setState((prev) => ({
                     ...prev,
                     selectedPalette: key,
                     toolMode: 'build',
                   }))
                 }
-                className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${
-                  state.selectedPalette === key && state.toolMode === 'build'
-                    ? 'border-primary bg-primary text-primary-foreground'
-                    : 'border-border bg-background text-foreground hover:bg-accent'
-                }`}
-              >
-                🎨 {isKo ? spec.nameKo : spec.nameEn}
-              </button>
+              />
             );
           })}
         </div>
