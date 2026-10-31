@@ -9,10 +9,12 @@ import {
 import { useAudioContext } from "../../lib/games/use-audio-context";
 import { useClipboardShare } from "../../lib/games/use-clipboard-share";
 import { GameStatTile } from "../ui/game/GameStatTile";
+import { GameJuice } from "../../lib/games/game-juice";
 
 export function GrapplingBoss() {
   const [gameState, setGameState] = useState<GrapplingBossState>(() => initializeGrapplingBoss());
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const juiceRef = useRef<GameJuice>(new GameJuice(384));
   const inputRef = useRef({
     moveAxis: 0 as -1 | 0 | 1,
     jump: false,
@@ -23,6 +25,10 @@ export function GrapplingBoss() {
   });
 
   const getAudioContext = useAudioContext();
+
+  useEffect(() => {
+    juiceRef.current.audio.setContextGetter(getAudioContext);
+  }, [getAudioContext]);
   const playTone = useCallback(
     (freq: number, type: OscillatorType = "sine", dur = 0.1) => {
       const ctx = getAudioContext();
@@ -132,11 +138,19 @@ export function GrapplingBoss() {
     let animId: number;
 
     const tick = (now: number) => {
-      const dt = Math.min(0.1, (now - lastTime) / 1000);
+      const realDt = Math.min(0.1, (now - lastTime) / 1000);
       lastTime = now;
 
+      const juice = juiceRef.current;
+      const effectiveDt = juice.update(realDt);
+
       setGameState((prev) => {
-        const next = stepGrapplingBoss(prev, dt, {
+        // If hit-stop freeze is active, skip physics step but keep inputs fresh
+        if (effectiveDt <= 0.0001) {
+          return prev;
+        }
+
+        const next = stepGrapplingBoss(prev, effectiveDt, {
           moveAxis: inputRef.current.moveAxis,
           jump: inputRef.current.jump,
           fireHook: inputRef.current.fireHook,
@@ -144,6 +158,27 @@ export function GrapplingBoss() {
           aimY: inputRef.current.aimY,
           fireWeapon: inputRef.current.fireWeapon,
         });
+
+        // Visceral Juice Reactions
+        if (next.boss.hp < prev.boss.hp) {
+          const dmg = Math.round(prev.boss.hp - next.boss.hp);
+          const isHeavy = dmg >= 25 || next.boss.phase === 2;
+          juice.impact(next.boss.x, next.boss.y, isHeavy ? "heavy" : "medium", `-${dmg}`);
+        }
+
+        if (next.playerHp < prev.playerHp) {
+          // Heavy red screen shake on player hit
+          juice.camera.addTrauma(0.65);
+          juice.particles.emit(next.player.x, next.player.y, {
+            count: 14,
+            kind: "spark",
+            color: "#ef4444",
+          });
+        }
+
+        if (next.status === "victory" && prev.status !== "victory") {
+          juice.impact(next.boss.x, next.boss.y, "heavy", "BOSS SLAIN!");
+        }
 
         // Clear pulse inputs
         inputRef.current.jump = false;
@@ -170,8 +205,13 @@ export function GrapplingBoss() {
     const width = canvas.width;
     const height = canvas.height;
 
+    const juice = juiceRef.current;
+
     ctx.save();
     ctx.clearRect(0, 0, width, height);
+
+    // Apply visceral Camera Shake around canvas center
+    juice.camera.applyToContext(ctx, width * 0.5, height * 0.5);
 
     // Dark subterranean cavern background
     ctx.fillStyle = "#09090b";
@@ -364,6 +404,9 @@ export function GrapplingBoss() {
     ctx.lineWidth = 1.5;
     ctx.stroke();
     ctx.restore();
+
+    // 7. Render Native GameJuice Particles & Floating Damage Numbers
+    juice.render(ctx);
 
     ctx.restore();
   }, [gameState]);
