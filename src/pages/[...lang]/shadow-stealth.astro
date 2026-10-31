@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ShadowStealth from "../../components/games/ShadowStealth";
+import GameGuide from "../../components/GameGuide.astro";
+import { locales, type Locale } from "../../lib/i18n";
+
+export function getStaticPaths() {
+  return locales.map((l) => ({ params: { lang: l === "en" ? undefined : l } }));
+}
+
+const locale: Locale = (Astro.params.lang as Locale) || "en";
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "시노비 잠입 암살 — 동적 시야각 레이캐스팅 & 결정론적 고스트 리플레이 | OIYO Game",
+    description:
+      "쇼군의 요새 성에 은밀히 침투한 닌자 잠입 액션. 동적 FOV 시야각 콘 및 벽 가시선(LOS) 차단 판정, 그림자 은신, 수리검 교란, 연막탄, 배후 암살, 결정론적 키프레임 리플레이 테이프를 경험하세요.",
+  },
+  en: {
+    title: "Shinobi Shadow Infiltration — Dynamic FOV Raycasting & Ghost Replay | OIYO Game",
+    description:
+      "A precision ninja stealth action game inside a feudal Shogun keep. Navigate guard FOV vision cones, line-of-sight wall occlusions, shadow concealment, shuriken distractions, smoke bombs, and deterministic ghost replays.",
+  },
+  ja: {
+    title: "忍び・シャドウ潜入 — 動的視野角レイキャスティング＆ゴーストリプレイ | OIYO Game",
+    description:
+      "将軍の城砦に潜入する本格ステルス忍者アクション。動的FOV視界コーンと壁の射線遮蔽判定、影への潜伏、手裏剣による陽動、煙幕、背後暗殺、決定論的リプレイテープを搭載。",
+  },
+  zh: {
+    title: "影之潜入：极意忍者 — 动态视锥射线追踪与确定性回放磁带 | OIYO Game",
+    description:
+      "潜入幕府将军天守阁的硬核战术潜行游戏。内置视锥（FOV Cone）与墙体遮挡判定算法，暗影潜行、手里剑声东击西、烟雾弹封锁视线、暗杀处决与确定性鬼影回放磁带。",
+  },
+  fr: {
+    title: "Shinobi Shadow Infiltration — Cône de Vision Dynamique & Replay Fantôme | OIYO Game",
+    description:
+      "Infiltrez la forteresse du Shogun dans ce jeu d'action furtive ninja. Évitez les cônes de vision des samouraïs, cachez-vous dans l'ombre et exportez votre replay fantôme.",
+  },
+  es: {
+    title: "Infiltración Shinobi en las Sombras — Visión FOV Dinámica y Replay Fantasma | OIYO Game",
+    description:
+      "Infiltra la fortaleza del Shogun en este juego de sigilo ninja. Esquiva los conos de visión de los samuráis, ocúltate en las sombras y genera tu replay fantasma determinista.",
+  },
+};
+
+const m = meta[locale] || meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <ShadowStealth client:load />
+  <GameGuide slug="shadow-stealth" locale={locale} name={m.title.split(" — ")[0]} />
+</BaseLayout>

@@ -6948,4 +6948,42 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "shadow-stealth": {
+    origin: {
+      ko: "『시노비 잠입 암살 (Shinobi Shadow Infiltration)』은 『마크 오브 더 닌자(Mark of the Ninja)』와 『섀도우 택틱스(Shadow Tactics)』의 정통 전술 잠입 액션을 웹 브라우저 캔버스로 재해석한 게임입니다. 경비병의 동적 시야각(FOV) 콘 및 벽 가시선(LOS) 차단을 연산하는 isPointInViewCone2D 알고리즘과, 완벽한 잠입 런을 60fps 무손실 압축으로 기록하는 DeterministicReplayTape 엔진을 탑재했습니다.",
+      en: "Shinobi Shadow Infiltration reimagines classic tactical stealth games like Mark of the Ninja and Shadow Tactics for the browser canvas. Powered by isPointInViewCone2D computing dynamic guard FOV vision cones and raycast wall line-of-sight occlusion, paired with a DeterministicReplayTape engine that records and compresses your run into a shareable Ghost playback token.",
+      ja: "『忍び・シャドウ潜入（Shinobi Shadow Infiltration）』は、『Mark of the Ninja』や『Shadow Tactics』の本格戦術ステルスアクションをブラウザ向けに再構築したゲームです。警備兵の動的視界コーンと壁の視線遮蔽を判定するisPointInViewCone2Dと、完璧な潜入ルートを記録するDeterministicReplayTapeを搭載しています。",
+      zh: "《影之潜入：极意忍者（Shinobi Shadow Infiltration）》致敬《忍者之印（Mark of the Ninja）》与《影子战术（Shadow Tactics）》的硬核战术潜行神作。底层搭载用于视锥射线扫描与实体墙线遮蔽判定的 isPointInViewCone2D 算法，以及支持 60fps 确定性压缩回放的 DeterministicReplayTape 磁带系统。",
+      fr: "Shinobi Shadow Infiltration s'inspire de Mark of the Ninja avec des cônes de vision dynamiques et des replays déterministes.",
+      es: "Infiltración Shinobi en las Sombras se inspira en Mark of the Ninja con conos de visión dinámicos y replays deterministas.",
+    },
+    how: {
+      ko: "1) WASD 또는 방향키로 은밀히 이동하며, 푸른 점선으로 표시된 그림자 구역(대나무 숲, 병풍 뒤)에 들어가 은신하세요. 그림자 안에서는 경비병 시야각 콘에 닿아도 발각되지 않습니다. 2) 경비병 등 뒤 30px 이내로 접근하여 Q 키를 누르면 소리 없이 배후 암살(Takedown)할 수 있습니다. 3) 위급할 때 Space/F 키로 수리검을 벽이나 등불에 던져 경비병의 시선을 분산시키고, E 키로 연막탄을 터뜨려 5초간 시야를 차단하세요. 4) 성 깊숙한 방의 비밀 두루마리(📜)를 획득한 후 시작 지점의 탈출 나룻배(🛶)로 무사히 복귀하면 클리어됩니다.",
+      en: "1) Move stealthily with WASD or Arrow keys and duck into darkened alcoves (marked by cyan dashed borders). While in shadows, guards cannot see you even if you touch their vision cones. 2) Sneak within 30px directly behind an unaware guard and press Q to perform a silent takedown. 3) Throw a shuriken (Space/F) to create noise distractions, or deploy a smoke bomb (E) to blind guards for 5 seconds. 4) Steal the Secret Scroll (📜) from the inner sanctum and return to the extraction boat (🛶) to complete the mission.",
+      ja: "1) WASDで静かに移動し、青い破線の影ゾーン（竹林や屏風の裏）に身を隠しましょう。影の中にいる間は視界コーンに入っても発見されません。2) 警備兵の背後30px以内に忍び寄り、Qキーを押して無音で暗殺（テイクダウン）します。3) Space/Fキーで手裏剣を投げて注意を引きつけ、ピンチの時はEキーで煙幕を展開して視界を遮断しましょう。4) 奥の部屋にある秘密の巻物（📜）を奪い、脱出小舟（🛶）へ帰還すれば任務完了です。",
+      zh: "1) 使用 WASD 走位，及时潜入青色虚线围起的暗影区域（竹林、屏风后）。暗影状态下即刻隐形，即便处于敌人视锥内也不会被侦测。2) 从正背后接近武士守卫 30px 范围内按 Q 键执行暗杀（Takedown）。3) 按 Space/F 投掷手里剑击打墙面声东击西，按 E 键引爆烟雾弹在 5 秒内彻底遮蔽敌人视线。4) 盗取核心密室的密卷（📜）后，原路撤回至撤离小舟（🛶）完成任务。",
+      fr: "1) Déplacez-vous avec WASD et cachez-vous dans l'ombre. 2) Approchez-vous par-derrière pour exécuter un takedown (Q). 3) Utilisez shuriken (Space) et fumigène (E). 4) Volez le parchemin (📜) et évadez-vous en bateau (🛶).",
+      es: "1) Muévete con WASD y ocúltate en las sombras. 2) Acércate por la espalda para un derribo silencioso (Q). 3) Usa shurikens (Espacio) y bombas de humo (E). 4) Roba el pergamino secreto (📜) y huye en la barca (🛶).",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "경비병에게 들켰을 때(느낌표 경보) 살아남는 방법은 무엇인가요?",
+          en: "What should you do when guards enter alert state (red exclamation mark)?",
+          ja: "警備兵に発見され警告状態（赤いびっくりマーク）になった時の対処法は？",
+          zh: "当被守卫发现并进入红色感叹号追击状态时如何脱身？",
+          fr: "Comment réagir lorsque les gardes passent en alerte (point d'exclamation rouge) ?",
+          es: "¿Qué hacer cuando los guardias entran en estado de alerta (signo de exclamación rojo)?",
+        },
+        a: {
+          ko: "발각 즉시 E 키를 눌러 연막탄(Smoke Bomb)을 터뜨리세요. 연막탄 구름은 경비병의 시야선(LOS)을 완전히 차단하므로, 연막을 틈타 가까운 모퉁이를 돌거나 그림자 구역으로 재빨리 숨으면 경비병이 추적을 포기하고 의심 모드로 돌아갑니다.",
+          en: "Instantly deploy a smoke bomb (E key). Smoke clouds completely block line-of-sight raycasts, giving you 5 seconds to break away around a partition or slip into a shadowed alcove until guards lose track and return to patrol.",
+          ja: "即座にEキーを押して煙幕を展開してください。煙幕は視線を完全に遮蔽するため、その隙に曲がり角を抜けて影のゾーンへ身を隠せば追跡を振り切ることができます。",
+          zh: "立刻按 E 键引爆烟雾弹。烟雾完全阻断视线投射判定，趁敌人致盲的 5 秒窗口迅速绕过转角屏风或扎入暗影掩体，守卫失去目标后将自动降级为巡逻警戒状态。",
+          fr: "Déployez immédiatement un fumigène (E) pour bloquer la ligne de vue et réfugiez-vous dans une zone d'ombre.",
+          es: "Despliega una bomba de humo (E) de inmediato para bloquear su línea de visión y escóndete en la sombra más cercana.",
+        },
+      },
+    ],
+  },
 };

@@ -1126,6 +1126,20 @@ export const MISSION_CATALOG: Array<{
     goal: 8,
     xpReward: 50,
   },
+  {
+    id: "shadow-stealth-scroll-1",
+    gameSlug: "shadow-stealth",
+    title: {
+      ko: "시노비 잠입 암살에서 경비병의 시야를 피해 비밀 두루마리를 획득하고 탈출하기",
+      en: "Steal the Secret Scroll and escape unseen in Shinobi Shadow Infiltration",
+      ja: "忍び・シャドウ潜入で警備兵の目をかいくぐり秘密の巻物を奪取して脱出する",
+      zh: "在影之潜入极意忍者中避开武士视线夺取秘密密卷并成功逃脱",
+      fr: "Volez le parchemin secret et évadez-vous dans Shinobi Shadow Infiltration",
+      es: "Roba el pergamino secreto y escapa sin ser visto en Infiltración Shinobi",
+    },
+    goal: 1,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {
