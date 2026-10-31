@@ -3,7 +3,10 @@ import {
   type PendulumBody2D,
   type IkJoint2D,
 } from "./engine";
-import { NewtonianGrapplePhysics2D } from "./grappling-engine-pro";
+import {
+  NewtonianGrapplePhysics2D,
+  MagneticTargetSolver2D,
+} from "./grappling-engine-pro";
 
 export interface ArenaAnchor {
   id: string;
@@ -175,33 +178,25 @@ export function fireGrappleHookToNearestAnchor(
     return;
   }
 
-  // Find best anchor (closest or in aim direction)
-  let bestAnchor: ArenaAnchor | null = null;
-  let bestDist = Infinity;
-
-  for (const anchor of anchors) {
-    const dist = Math.hypot(anchor.x - player.x, anchor.y - player.y);
-    if (dist > 30 && dist < 360) {
-      if (aimX !== undefined && aimY !== undefined) {
-        const aimDist = Math.hypot(anchor.x - aimX, anchor.y - aimY);
-        if (aimDist < bestDist) {
-          bestDist = aimDist;
-          bestAnchor = anchor;
-        }
-      } else if (anchor.y < player.y && dist < bestDist) {
-        bestDist = dist;
-        bestAnchor = anchor;
-      }
-    }
-  }
+  // Generous Magnetic Target Snapping (Velocity direction + Aim intent + Distance)
+  const bestAnchor = MagneticTargetSolver2D.findBestAnchor(
+    player.x,
+    player.y,
+    player.vx,
+    player.vy,
+    anchors,
+    aimX,
+    aimY,
+    480
+  );
 
   if (bestAnchor) {
     player.isHooked = true;
     player.anchorX = bestAnchor.x;
     player.anchorY = bestAnchor.y;
     player.ropeLength = Math.hypot(bestAnchor.x - player.x, bestAnchor.y - player.y);
-    // Slight impulse upward on hook engagement
-    player.vy = Math.min(-100, player.vy);
+    // Gentle upward assist impulse to prevent ground scraping
+    player.vy = Math.min(-90, player.vy);
   }
 }
 
@@ -387,13 +382,15 @@ export function stepGrapplingBoss(
       const distToBoss = Math.hypot(b.x - proj.x, b.y - proj.y);
       if (distToBoss < 45) {
         b.hp = Math.max(0, b.hp - proj.damage);
+        // Kinetic Siphon: Offensive aggression restores shield!
+        nextState.playerHp = Math.min(nextState.maxPlayerHp, nextState.playerHp + 4);
         nextState.score += Math.floor(proj.damage * 10);
         continue; // Projectile absorbed
       }
     } else {
-      // Hostile projectile vs Player
+      // Hostile projectile vs Player (Generous 10px Core Micro-Hurtbox)
       const distToPlayer = Math.hypot(p.x - proj.x, p.y - proj.y);
-      if (distToPlayer < 20) {
+      if (distToPlayer < 10) {
         nextState.playerHp = Math.max(0, nextState.playerHp - proj.damage);
         continue; // Projectile absorbed
       }

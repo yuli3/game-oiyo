@@ -221,6 +221,199 @@ export class NewtonianGrapplePhysics2D {
 }
 
 // ============================================================================
+// 1.8. Virtual Input Generosity Engine (Buffer & Coyote Time)
+// ============================================================================
+
+export class VirtualInputGenerosity2D {
+  private buffer: Map<string, number> = new Map();
+  private coyoteTimers: Map<string, number> = new Map();
+
+  /**
+   * Registers a button press/touch with generous input buffer window.
+   * Default ttl: 0.14s (8.4 frames at 60fps), eliminating touch eating.
+   */
+  public bufferPress(action: string, ttlSeconds: number = 0.14): void {
+    this.buffer.set(action, Math.max(0.01, ttlSeconds));
+  }
+
+  /**
+   * Checks if action was pressed within generous buffer window, and consumes it.
+   */
+  public consumeBufferedPress(action: string): boolean {
+    const remaining = this.buffer.get(action) ?? 0;
+    if (remaining > 0) {
+      this.buffer.delete(action);
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Activates coyote time (e.g. after leaving rope or floor).
+   * Default window: 0.12s (7.2 frames).
+   */
+  public startCoyote(timerName: string, durationSeconds: number = 0.12): void {
+    this.coyoteTimers.set(timerName, Math.max(0.01, durationSeconds));
+  }
+
+  /**
+   * Checks if coyote window is still active, and consumes it.
+   */
+  public consumeCoyote(timerName: string): boolean {
+    const remaining = this.coyoteTimers.get(timerName) ?? 0;
+    if (remaining > 0) {
+      this.coyoteTimers.delete(timerName);
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Updates all timers with delta time.
+   */
+  public update(dtSeconds: number): void {
+    for (const [key, val] of this.buffer.entries()) {
+      const nextVal = val - dtSeconds;
+      if (nextVal <= 0) this.buffer.delete(key);
+      else this.buffer.set(key, nextVal);
+    }
+    for (const [key, val] of this.coyoteTimers.entries()) {
+      const nextVal = val - dtSeconds;
+      if (nextVal <= 0) this.coyoteTimers.delete(key);
+      else this.coyoteTimers.set(key, nextVal);
+    }
+  }
+}
+
+// ============================================================================
+// 1.9. Magnetic Target & Aim-Assist Solver (Smart Snapping)
+// ============================================================================
+
+export interface SnappableAnchor {
+  id: string;
+  x: number;
+  y: number;
+  radius: number;
+}
+
+export class MagneticTargetSolver2D {
+  /**
+   * Solves the most natural, generous target anchor based on:
+   * 1. Distance to player
+   * 2. Velocity heading alignment (Dot product)
+   * 3. Intent aiming vector (if touch/mouse aim is provided)
+   */
+  public static findBestAnchor(
+    playerX: number,
+    playerY: number,
+    playerVx: number,
+    playerVy: number,
+    anchors: SnappableAnchor[],
+    aimX?: number,
+    aimY?: number,
+    maxRange: number = 480
+  ): SnappableAnchor | null {
+    if (anchors.length === 0) return null;
+
+    let bestAnchor: SnappableAnchor | null = null;
+    let highestScore = -Infinity;
+
+    const playerSpeed = Math.hypot(playerVx, playerVy);
+    const velNormX = playerSpeed > 10 ? playerVx / playerSpeed : 0;
+    const velNormY = playerSpeed > 10 ? playerVy / playerSpeed : -1;
+
+    for (const anchor of anchors) {
+      const dx = anchor.x - playerX;
+      const dy = anchor.y - playerY;
+      const dist = Math.hypot(dx, dy);
+
+      if (dist > maxRange || dist < 10) continue;
+
+      const dirX = dx / dist;
+      const dirY = dy / dist;
+
+      // 1. Distance score (closer is better, normalized [0..1])
+      const distScore = 1.0 - dist / maxRange;
+
+      // 2. Velocity heading alignment score (heading towards anchor gives massive bonus)
+      const headingDot = dirX * velNormX + dirY * velNormY;
+      const headingScore = Math.max(0, headingDot);
+
+      // 3. User Aim Intent score (if user tapped near this anchor)
+      let aimScore = 0;
+      if (aimX !== undefined && aimY !== undefined) {
+        const aimDist = Math.hypot(anchor.x - aimX, anchor.y - aimY);
+        aimScore = Math.max(0, 1.0 - aimDist / 260);
+      }
+
+      // Generous composite score: Aim intent (40%) + Heading alignment (35%) + Proximity (25%)
+      const totalScore = aimScore * 4.0 + headingScore * 3.5 + distScore * 2.5;
+
+      if (totalScore > highestScore) {
+        highestScore = totalScore;
+        bestAnchor = anchor;
+      }
+    }
+
+    // Fallback: If no anchor scored in range, pick closest within extended bounds
+    if (!bestAnchor) {
+      let minDist = Infinity;
+      for (const a of anchors) {
+        const d = Math.hypot(a.x - playerX, a.y - playerY);
+        if (d < minDist) {
+          minDist = d;
+          bestAnchor = a;
+        }
+      }
+    }
+
+    return bestAnchor;
+  }
+}
+
+// ============================================================================
+// 1.10. Bullet Hell Micro-Hurtbox & Invulnerability Frames
+// ============================================================================
+
+export class BulletHellHitbox2D {
+  public static readonly VISUAL_RADIUS = 14;
+  public static readonly CORE_HURTBOX_RADIUS = 4.5; // Only 4.5px core hurtbox!
+
+  /**
+   * Tests if a laser segment hits the player's core micro-hurtbox.
+   */
+  public static testLaserHit(
+    playerX: number,
+    playerY: number,
+    laserStartX: number,
+    laserStartY: number,
+    laserEndX: number,
+    laserEndY: number,
+    laserRadius: number = 8
+  ): boolean {
+    const ldx = laserEndX - laserStartX;
+    const ldy = laserEndY - laserStartY;
+    const lenSq = ldx * ldx + ldy * ldy;
+    if (lenSq < 0.001) return false;
+
+    // Projection onto line segment clamped [0..1]
+    const t = Math.max(
+      0,
+      Math.min(
+        1,
+        ((playerX - laserStartX) * ldx + (playerY - laserStartY) * ldy) / lenSq
+      )
+    );
+    const closestX = laserStartX + t * ldx;
+    const closestY = laserStartY + t * ldy;
+
+    const dist = Math.hypot(playerX - closestX, playerY - closestY);
+    // Generous threshold: only hits if laser core touches player's core hurtbox
+    return dist < BulletHellHitbox2D.CORE_HURTBOX_RADIUS + laserRadius * 0.35;
+  }
+}
+
+// ============================================================================
 // 2. Arcade Velocity Speed Lines System
 // ============================================================================
 

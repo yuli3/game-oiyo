@@ -6,6 +6,9 @@ import {
   ProceduralSfxBank,
   ProceduralMechaSpriteRenderer,
   NewtonianGrapplePhysics2D,
+  VirtualInputGenerosity2D,
+  MagneticTargetSolver2D,
+  BulletHellHitbox2D,
 } from './grappling-engine-pro';
 
 describe('Grappling Engine Pro (AAA Feel & Dynamics)', () => {
@@ -104,5 +107,56 @@ describe('Grappling Engine Pro (AAA Feel & Dynamics)', () => {
     const released = sim.releaseWithMomentum(hookedBody, 100);
     expect(released.isHooked).toBe(false);
     expect(Math.hypot(released.vx, released.vy)).toBeGreaterThan(Math.hypot(hookedBody.vx, hookedBody.vy));
+  });
+
+  it('7. tests virtual input generosity (buffer and coyote time)', () => {
+    const input = new VirtualInputGenerosity2D();
+
+    // Buffer press
+    input.bufferPress('jump', 0.1);
+    expect(input.consumeBufferedPress('jump')).toBe(true);
+    expect(input.consumeBufferedPress('jump')).toBe(false); // Consumed
+
+    // Expire buffer
+    input.bufferPress('hook', 0.05);
+    input.update(0.1);
+    expect(input.consumeBufferedPress('hook')).toBe(false);
+
+    // Coyote time
+    input.startCoyote('slingshot', 0.12);
+    expect(input.consumeCoyote('slingshot')).toBe(true);
+  });
+
+  it('8. verifies magnetic target aim-assist solver', () => {
+    const anchors = [
+      { id: 'a1', x: 200, y: 50, radius: 10 },
+      { id: 'a2', x: 400, y: 50, radius: 10 },
+      { id: 'a3', x: 600, y: 50, radius: 10 },
+    ];
+
+    // Player flying right towards a2
+    const target = MagneticTargetSolver2D.findBestAnchor(
+      250,
+      200,
+      300,
+      -50,
+      anchors,
+      390,
+      60
+    );
+    expect(target?.id).toBe('a2');
+  });
+
+  it('9. tests bullet-hell micro-hurtbox laser collision', () => {
+    // Player core at (200, 200)
+    // Laser passing through (200, 195) -> within core margin
+    expect(
+      BulletHellHitbox2D.testLaserHit(200, 200, 0, 198, 400, 198, 10)
+    ).toBe(true);
+
+    // Laser passing far away at (200, 250) -> miss
+    expect(
+      BulletHellHitbox2D.testLaserHit(200, 200, 0, 250, 400, 250, 10)
+    ).toBe(false);
   });
 });

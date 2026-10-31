@@ -22,6 +22,8 @@ import {
   DynamicLightRenderer,
   ProceduralSfxBank,
   ProceduralMechaSpriteRenderer,
+  VirtualInputGenerosity2D,
+  BulletHellHitbox2D,
 } from "../../lib/games/grappling-engine-pro";
 
 export function GrapplingBoss() {
@@ -41,6 +43,8 @@ export function GrapplingBoss() {
   const lightRef = useRef<DynamicLightRenderer>(new DynamicLightRenderer());
   const sfxRef = useRef<ProceduralSfxBank>(new ProceduralSfxBank());
   const spritesRef = useRef<ProceduralMechaSpriteRenderer>(new ProceduralMechaSpriteRenderer());
+  const inputGenerosityRef = useRef<VirtualInputGenerosity2D>(new VirtualInputGenerosity2D());
+  const iFrameTimerRef = useRef<number>(0);
 
   // Input & Touch State (Entirely In-Canvas)
   const touchControlRef = useRef<{
@@ -134,8 +138,8 @@ export function GrapplingBoss() {
         currentY: coords.y,
       };
 
-      // Instant Grapple Hook on Screen Touch
-      inputRef.current.fireHook = true;
+      // Generous Input Buffer: Hook action buffered for 0.16s
+      inputGenerosityRef.current.bufferPress("hook", 0.16);
       sfxRef.current.playWireClack();
       triggerMobileHaptic("light");
     };
@@ -184,9 +188,10 @@ export function GrapplingBoss() {
           touchCtrl.touchId = null;
           inputRef.current.moveAxis = 0;
 
-          // Slingshot Jump on Finger Release
+          // Slingshot Jump on Finger Release with Generous Input Buffer & Coyote Window
           if (stateRef.current.player.isHooked) {
-            inputRef.current.jump = true;
+            inputGenerosityRef.current.bufferPress("jump", 0.16);
+            inputGenerosityRef.current.startCoyote("slingshot", 0.14);
             sfxRef.current.playWireClack();
             triggerMobileHaptic("medium");
           }
@@ -208,7 +213,7 @@ export function GrapplingBoss() {
         currentX: coords.x,
         currentY: coords.y,
       };
-      inputRef.current.fireHook = true;
+      inputGenerosityRef.current.bufferPress("hook", 0.16);
       sfxRef.current.playWireClack();
     };
 
@@ -232,7 +237,8 @@ export function GrapplingBoss() {
         touchCtrl.touchId = null;
         inputRef.current.moveAxis = 0;
         if (stateRef.current.player.isHooked) {
-          inputRef.current.jump = true;
+          inputGenerosityRef.current.bufferPress("jump", 0.16);
+          inputGenerosityRef.current.startCoyote("slingshot", 0.14);
         }
       }
     };
@@ -326,11 +332,20 @@ export function GrapplingBoss() {
         const prevBossHp = state.boss.hp;
         const prevPlayerHp = state.playerHp;
 
-        // Step physics simulation
+        // Update Generous Input Buffer and i-Frames
+        inputGenerosityRef.current.update(effectiveDt);
+        if (iFrameTimerRef.current > 0) {
+          iFrameTimerRef.current -= effectiveDt;
+        }
+
+        const shouldHook = inputRef.current.fireHook || inputGenerosityRef.current.consumeBufferedPress("hook");
+        const shouldJump = inputRef.current.jump || inputGenerosityRef.current.consumeBufferedPress("jump") || inputGenerosityRef.current.consumeCoyote("slingshot");
+
+        // Step physics simulation with generous inputs
         stateRef.current = stepGrapplingBoss(state, effectiveDt, {
           moveAxis: inputRef.current.moveAxis,
-          jump: inputRef.current.jump,
-          fireHook: inputRef.current.fireHook,
+          jump: shouldJump,
+          fireHook: shouldHook,
           aimX: state.boss.x,
           aimY: state.boss.y,
           fireWeapon: false,
@@ -380,15 +395,20 @@ export function GrapplingBoss() {
           }
           laser.fire(curState.boss.x, curState.boss.y, curState.player.x, curState.player.y);
 
-          // Damage player inside beam
-          const ldx = laser.endX - laser.startX;
-          const ldy = laser.endY - laser.startY;
-          const ldist = Math.max(1, Math.hypot(ldx, ldy));
-          const nx = -ldy / ldist;
-          const ny = ldx / ldist;
-          const pDist = Math.abs((curState.player.x - laser.startX) * nx + (curState.player.y - laser.startY) * ny);
-          if (pDist < 22) {
-            curState.playerHp = Math.max(0, curState.playerHp - 45 * effectiveDt);
+          // Generous Bullet Hell Laser Hitbox (Core 4.5px hurtbox) + i-Frames
+          const isLaserHit = BulletHellHitbox2D.testLaserHit(
+            curState.player.x,
+            curState.player.y,
+            laser.startX,
+            laser.startY,
+            laser.endX,
+            laser.endY,
+            14
+          );
+
+          if (isLaserHit && iFrameTimerRef.current <= 0) {
+            curState.playerHp = Math.max(0, curState.playerHp - 25);
+            iFrameTimerRef.current = 0.55; // 0.55s invulnerability window
             juice.camera.addTrauma(0.05);
             triggerMobileHaptic("warning");
           }
@@ -522,17 +542,22 @@ export function GrapplingBoss() {
     // 5. Thruster Plasma Flame Particles
     thruster.render(ctx);
 
-    // 6. High-Res Player Viper-X Mecha Sprite
-    const bankAngle = Math.max(-0.4, Math.min(0.4, (p.vx / 380) * 0.4));
-    sprites.renderPlayerVessel(
-      ctx,
-      p.x,
-      p.y,
-      bankAngle,
-      juice.spring.scaleX,
-      juice.spring.scaleY,
-      p.isHooked
-    );
+    // 6. High-Res Player Viper-X Mecha Sprite (With i-Frames Blinking)
+    const isInvulnerable = iFrameTimerRef.current > 0;
+    const isBlinkInvisible = isInvulnerable && Math.floor(state.gameTimeSec * 16) % 2 === 0;
+
+    if (!isBlinkInvisible) {
+      const bankAngle = Math.max(-0.4, Math.min(0.4, (p.vx / 380) * 0.4));
+      sprites.renderPlayerVessel(
+        ctx,
+        p.x,
+        p.y,
+        bankAngle,
+        juice.spring.scaleX,
+        juice.spring.scaleY,
+        p.isHooked
+      );
+    }
 
     // 7. Boss Death Beam Laser
     laser.render(ctx);
