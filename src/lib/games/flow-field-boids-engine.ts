@@ -65,7 +65,6 @@ export class VectorFlowField2D {
   }
 
   public generateTowardsCell(targetGx: number, targetGy: number): void {
-    const totalCells = this.cols * this.rows;
     this.integrationField.fill(65535);
     this.vectors.fill(0);
 
