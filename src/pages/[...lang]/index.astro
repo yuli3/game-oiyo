@@ -16,22 +16,22 @@ const { locale } = Astro.props as { locale: Locale };
 const translations = await getTranslations(locale);
 
 const meta: Record<Locale, { title: string; description: string }> = {
-  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 153종", description: "체스·스도쿠·워들부터 OIYO 오리지널 게임까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 153종." },
-  en: { title: "OIYO Arcade — 153 free browser games, no install", description: "Chess, Sudoku, Wordle, and original OIYO games: 153 free games you can play instantly in your browser." },
+  ko: { title: "OIYO 아케이드 — 설치 없이 즐기는 무료 게임 154종", description: "체스·스도쿠·워들부터 OIYO 오리지널 게임까지. 설치 없이 브라우저에서 바로 즐기는 무료 게임 154종." },
+  en: { title: "OIYO Arcade — 154 free browser games, no install", description: "Chess, Sudoku, Wordle, and original OIYO games: 154 free games you can play instantly in your browser." },
   ja: { title: "OIYOアーケード — インストール不要の無料ゲーム153種", description: "チェス・数独・ワードルからOIYOオリジナル作品まで、ブラウザですぐ遊べる無料ゲーム153種。" },
-  zh: { title: "OIYO 街机 — 无需安装的153款免费游戏", description: "从国际象棋、数独、猜词到 OIYO 原创作品，153款游戏无需安装即可畅玩。" },
-  fr: { title: "OIYO Arcade — 153 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations originales OIYO : 153 jeux gratuits dans le navigateur." },
-  es: { title: "OIYO Arcade — 153 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y originales de OIYO: 153 juegos gratuitos en el navegador." },
+  zh: { title: "OIYO 街机 — 无需安装的154款免费游戏", description: "从国际象棋、数独、猜词到 OIYO 原创作品，154款游戏无需安装即可畅玩。" },
+  fr: { title: "OIYO Arcade — 154 jeux gratuits sans installation", description: "Échecs, Sudoku, Wordle et créations originales OIYO : 154 jeux gratuits dans le navigateur." },
+  es: { title: "OIYO Arcade — 154 juegos gratis sin instalación", description: "Ajedrez, Sudoku, Wordle y originales de OIYO: 154 juegos gratuitos en el navegador." },
 };
 const m = meta[locale] ?? meta.en;
 
 const hero: Record<Locale, { eyebrow: string; title: string; sub: string }> = {
-  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 153종", sub: "보드·카드·퍼즐·오리지널 아케이드 — 브라우저에서 바로 시작하세요." },
-  en: { eyebrow: "🎮 OIYO Arcade", title: "153 free games, right in your browser", sub: "Board, card, puzzle, and original arcade games — instant and free." },
+  ko: { eyebrow: "🎮 OIYO 아케이드", title: "설치 없이, 바로 즐기는 무료 게임 154종", sub: "보드·카드·퍼즐·오리지널 아케이드 — 브라우저에서 바로 시작하세요." },
+  en: { eyebrow: "🎮 OIYO Arcade", title: "154 free games, right in your browser", sub: "Board, card, puzzle, and original arcade games — instant and free." },
   ja: { eyebrow: "🎮 OIYOアーケード", title: "インストール不要、すぐ遊べる無料ゲーム153種", sub: "ボード・カード・パズル・オリジナル作品をブラウザですぐに。" },
-  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的153款免费游戏", sub: "棋类、纸牌、益智和原创街机游戏，浏览器直接开玩。" },
-  fr: { eyebrow: "🎮 OIYO Arcade", title: "153 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et créations originales, sans installation." },
-  es: { eyebrow: "🎮 OIYO Arcade", title: "153 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones originales, sin instalación." },
+  zh: { eyebrow: "🎮 OIYO 街机", title: "无需安装，即玩的154款免费游戏", sub: "棋类、纸牌、益智和原创街机游戏，浏览器直接开玩。" },
+  fr: { eyebrow: "🎮 OIYO Arcade", title: "154 jeux gratuits dans votre navigateur", sub: "Plateau, cartes, réflexion et créations originales, sans installation." },
+  es: { eyebrow: "🎮 OIYO Arcade", title: "154 juegos gratis en tu navegador", sub: "Mesa, cartas, lógica y creaciones originales, sin instalación." },
 };
 const h = hero[locale] ?? hero.en;
 
@@ -162,6 +162,7 @@ const GAMES: Game[] = [
   { slug: "sushi-conveyor", emoji: "🍣", cat: "arcade", name: { ko: "회전초밥 타이쿤", en: "Conveyor Sushi Tycoon", ja: "回転寿司タイクーン", zh: "回转寿司大亨", fr: "Conveyor Sushi", es: "Sushi Giratorio" } },
   { slug: "chaos-kitchen", emoji: "🍳", cat: "arcade", name: { ko: "카오스 키친", en: "Chaos Kitchen", ja: "カオスキッチン", zh: "混乱厨房", fr: "Chaos Kitchen", es: "Cocina Caótica" } },
   { slug: "grappling-boss", emoji: "🪝", cat: "arcade", name: { ko: "그래플링 보스", en: "Grappling Boss Arena", ja: "グラップリング・ボス", zh: "抓钩领主", fr: "Grappling Boss", es: "Jefe con Gancho" } },
+  { slug: "cheese-factory", emoji: "🧀", cat: "arcade", name: { ko: "치즈 팩토리 타이쿤", en: "Cheese Factory Tycoon", ja: "チーズ・ファクトリー", zh: "奶酪工厂大亨", fr: "Cheese Factory", es: "Fábrica de Quesos" } },
 
   { slug: "failure-eater", emoji: "👾", cat: "arcade", name: { ko: "실패를 먹는 괴물", en: "Failure Eater", ja: "失敗を食べる怪物", zh: "吃掉失败的怪物", fr: "Monstre des ratés", es: "Monstruo de los fallos" } },
   { slug: "snake-game", emoji: "🐍", cat: "arcade", name: { ko: "스네이크", en: "Snake", ja: "スネーク", zh: "贪吃蛇", fr: "Snake", es: "Snake" } },
@@ -905,6 +906,18 @@ const NEW_RELEASES_CONFIG: Array<{ slug: string; tag: Record<Locale, string>; de
       zh: "利用天花板锚点施展韦尔莱摆锤张力荡绳高速机动，在躲避熔岩地刺的同时击溃挥舞FABRIK多关节触手的机械眼魔。",
       fr: "Accrochez-vous aux ancres pour vous balancer et esquiver les tentacules articulés du Beholder Mécanique.",
       es: "Engánchate a los anclajes del techo para balancearte en péndulo y abatir al Beholder Mecánico con tentáculos articulados.",
+    },
+  },
+  {
+    slug: "cheese-factory",
+    tag: { ko: "SoA Archetype ECS & Boids 자율 AGV 물류 타이쿤", en: "SoA Archetype ECS & Steering Boids AGV Logistics", ja: "SoA Archetype ECS＆Boids自律AGV工場自動化", zh: "SoA Archetype ECS与Boids集群搬运物流大亨", fr: "SoA Archetype ECS & Logistique Boids AGV", es: "SoA Archetype ECS y Logística de Robots Boids" },
+    desc: {
+      ko: "알프스 목장 우유 저장고부터 살균, 압착, 숙성실 온습도 관리까지! Archetype ECS 대규모 개체 처리와 Boids 군집 AGV 로봇으로 자동화 치즈 제국을 건설하세요.",
+      en: "From alpine milk silos to curd pressing and cellar climate curing! Build an automated cheese empire powered by Archetype SoA ECS and Boids transport bots.",
+      ja: "アルプスの生乳サイロから低温殺菌、圧搾、熟成庫の温湿度管理まで！ECS大量エンティティとBoids群知能AGVでチーズ帝国を築き上げよう。",
+      zh: "从阿尔卑斯原奶筒仓到凝乳压榨与熟成地窖温控！利用高性能 SoA ECS 与 Boids 避障机器人打造现代化全自动奶酪商业帝国。",
+      fr: "Du silo de lait au pressage et à l'affinage en cave ! Bâtissez un empire fromager automatisé avec ECS et robots Boids.",
+      es: "¡Desde silos de leche alpina hasta el prensado y curado en cava! Construye un imperio quesero con ECS y robots Boids.",
     },
   },
 ];

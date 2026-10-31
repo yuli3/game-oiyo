@@ -6910,4 +6910,42 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "cheese-factory": {
+    origin: {
+      ko: "『치즈 팩토리 타이쿤 (Cheese Factory Tycoon)』은 팩토리오(Factorio)와 빅 팜(Big Farm)의 정밀 생산 자동화 재미를 스위스 알프스 전통 치즈 공방에 결합한 타이쿤 게임입니다. 대규모 원유 및 커드·치즈 휠 개체를 캐시 친화적인 SoA(Structure-of-Arrays) 구조로 시뮬레이션하는 Archetype ECS 월드와, 복도와 선반 사이를 서로 충돌 없이 누비는 Boids 군집 조향 무인 운반 로봇(AGV)을 탑재했습니다.",
+      en: "Cheese Factory Tycoon combines precision factory automation with the pastoral art of Swiss alpine cheesemaking. Powered by an Archetype SoA ECS world simulating hundreds of curd and cheese wheel entities in real time, and collision-avoiding Boids multi-agent AGV transport robots handling inter-station logistics.",
+      ja: "『チーズ・ファクトリー・タイクーン（Cheese Factory Tycoon）』は、生産自動化タイクーンの奥深さとスイス・アルプスの伝統的なチーズ工房を融合させた経営ゲームです。大量の生乳・カード・チーズホイールを高速シミュレートするArchetype SoA ECSと、衝突回避型Boids群知能AGV搬送ロボットを搭載しています。",
+      zh: "《奶酪工厂大亨（Cheese Factory Tycoon）》将自动化工厂精密流水线与瑞士阿尔卑斯高山传统奶酪酿造工艺完美融合。内置高性能 SoA Archetype ECS 世界，实时模拟海量原奶与奶酪实体，并配有自律集群避障的 Boids 算法 AGV 搬运机器人矩阵。",
+      fr: "Cheese Factory Tycoon combine l'automatisation industrielle et la tradition fromagère alpine avec un moteur ECS SoA et des robots AGV Boids.",
+      es: "Magnate de la Fábrica de Quesos fusiona la automatización industrial con la tradición quesera alpina mediante un motor ECS SoA y robots AGV Boids.",
+    },
+    how: {
+      ko: "1) 상단 생산 바트에서 모짜렐라, 체다, 고다, 로크포르, 파르미지아노 중 생산할 치즈 품종을 선택하세요. 2) 원유 저장고에서 투입된 치즈는 살균기, 응고조, 유압 프레스, 염지조를 거쳐 숙성실(Aging Cellar)로 이동합니다. 3) 숙성실 목표 온도를 품종의 적정 온도(예: 체다 12°C, 로크포르 9°C)에 맞추면 숙성 속도가 극대화됩니다. 4) 숙성을 마친 치즈가 선적 창구에서 자동 판매되면 자금을 모아 탱크 증설, AGV 로봇 추가, AOP 원산지 인증 업그레이드를 해금하세요.",
+      en: "1) Choose a cheese recipe to produce from the top vat selector (Mozzarella, Cheddar, Gouda, Roquefort, or Parmigiano). 2) Batches travel from the Milk Silo through the Pasteurizer, Curd Vat, Hydraulic Press, and Salting Basin into the Aging Cellar. 3) Regulate the cellar temperature to match each variety's sweet spot (e.g. 12°C for Cheddar, 9°C for Roquefort) for maximum aging speed. 4) Once shipped, invest proceeds into faster milk tankers, additional AGV transport bots, and AOP artisan certification.",
+      ja: "1) 上部メニューから製造するチーズ（モッツァレラ、チェダー、ゴーダ、ロックフォール、パルミジャーノ）を選択します。2) 原乳サイロから投入されたチーズは殺菌機、凝固槽、油圧プレス、塩水槽を経て熟成庫へ進みます。3) 熟成庫の目標温度を品種の最適温度（例：チェダー12℃、ロックフォール9℃）に調整して熟成を早めましょう。4) 出荷で得た資金でタンク増設、AGVロボット追加、AOP原産地認証アップグレードを解放してください。",
+      zh: "1) 从上方选择要生产的品种（莫扎里拉、车达、高达、洛克福蓝纹或帕玛森）。2) 批次依次流经原奶仓、低温杀菌机、凝乳分馏槽、液压压榨机与盐水池进入熟成地窖。3) 调节熟成室设定温度以契合目标奶酪的最佳环境（如车达12°C、洛克福9°C）以加速发酵成熟。4) 发货获得利润后，升级高容量奶罐车、追加 Boids 巡逻 AGV 机器人并获得 AOP 原产地保护认证。",
+      fr: "1) Choisissez une recette de fromage. 2) Les meules traversent pasteurisation, pressage et salage vers la cave. 3) Réglez la température idéale. 4) Réinvestissez les profits dans des robots AGV et certifications.",
+      es: "1) Seleccione una receta de queso. 2) Las piezas pasan por pasteurización, prensado y salado hasta la cava. 3) Ajuste la temperatura de maduración. 4) Reinvierta en robots AGV y certificaciones AOP.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "숙성실(Aging Cellar) 온도를 잘못 맞추면 어떤 불이익이 있나요?",
+          en: "What happens if the Aging Cellar temperature deviates from the ideal setting?",
+          ja: "熟成庫の温度が適正温度から外れるとどうなりますか？",
+          zh: "如果熟成地窖的环境温度偏离理想设定会有什么影响？",
+          fr: "Que se passe-t-il si la température de la cave ne correspond pas au fromage ?",
+          es: "¿Qué ocurre si la temperatura de la cava no es la ideal para el queso?",
+        },
+        a: {
+          ko: "품종별 이상 온도와 실제 온도의 편차가 커질수록 숙성 진행 속도가 최대 60%까지 느려져 출하 회전율이 떨어집니다. '정밀 칠러' 업그레이드를 설치하고 수시로 목표 온도를 조절해 최적의 숙성 환경을 유지하세요.",
+          en: "The larger the temperature delta from the variety's ideal climate, the slower the aging rate (down to a 60% penalty), delaying sales revenue. Install the Precision Chiller upgrade and adjust target temps when switching between cold-cave cheeses (Roquefort) and mild cheeses (Mozzarella).",
+          ja: "適正温度との差が大きいほど熟成スピードが最大60%低下し、出荷までの時間が伸びてしまいます。冷却装置アップグレードを導入し、品種に合わせてこまめに温度を調整しましょう。",
+          zh: "实际温度与理想温度的温差越大，熟成速度惩罚越高（最高降速60%），从而拖慢回款周期。尽早加装精准制冷装置，并在切换品种（如低温冷窖洛克福 vs 常温莫扎里拉）时及时调节目标温控。",
+          fr: "Un écart de température ralentit l'affinage jusqu'à 60%. Installez le refroidisseur de précision et ajustez les réglages selon la meule.",
+          es: "Una desviación de temperatura ralentiza la curación hasta un 60%. Instale el refrigerador de precisión y ajuste la temperatura según el queso.",
+        },
+      },
+    ],
+  },
 };

@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import CheeseFactory from "../../components/games/CheeseFactory";
+import GameGuide from "../../components/GameGuide.astro";
+import { locales, type Locale } from "../../lib/i18n";
+
+export function getStaticPaths() {
+  return locales.map((l) => ({ params: { lang: l === "en" ? undefined : l } }));
+}
+
+const locale: Locale = (Astro.params.lang as Locale) || "en";
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "치즈 팩토리 타이쿤 — ECS 대규모 개체 시뮬레이션 & 보이드 자율 AGV 물류 | OIYO Game",
+    description:
+      "알프스 목장 우유 저장고부터 살균, 응고, 압착, 숙성실, 출하까지 이어지는 자동화 치즈 공장 경영 타이쿤. Archetype ECS 메모리 캐시 최적화와 Boids 무리 조향 AGV 로봇을 경험해보세요.",
+  },
+  en: {
+    title: "Cheese Factory Tycoon — Archetype ECS & Steering Boids AGV Logistics | OIYO Game",
+    description:
+      "Automate an artisanal alpine cheese factory from milk silos to curd pressing, aging cellar climate control, and global shipping. Powered by SoA Archetype ECS and collision-avoiding Boids transport bots.",
+  },
+  ja: {
+    title: "チーズ・ファクトリー・タイクーン — ECS大量エンティティ＆群知能AGV自動化 | OIYO Game",
+    description:
+      "アルプスの生乳サイロから低温殺菌、凝固、圧搾、熟成庫、出荷までを一元管理するチーズ工場経営シミュレーション。Archetype ECSとBoids操舵ロボットによる工場自動化タイクーン。",
+  },
+  zh: {
+    title: "奶酪工厂大亨 — Archetype ECS大规模实体与Boids自导搬运物流 | OIYO Game",
+    description:
+      "阿尔卑斯纯正奶酪工业自动化经营！从原奶筒仓、巴氏杀菌、凝乳分馏、压榨定型到温控熟成地窖与全球物流发货。SoA ECS与集群避障AGV赋能的大亨游戏。",
+  },
+  fr: {
+    title: "Cheese Factory Tycoon — Simulation ECS & Logistique Boids AGV | OIYO Game",
+    description:
+      "Gérez une fromagerie artisanale alpine automatisée, du silo de lait au pressage des meules et à l'affinage en cave avec robots de transport Boids autonomes.",
+  },
+  es: {
+    title: "Magnate de la Fábrica de Quesos — Simulación ECS y Robots Boids AGV | OIYO Game",
+    description:
+      "Automatice una fábrica de quesos alpinos desde silos de leche hasta el prensado, curado en cava y despacho con robots de transporte Boids que evitan colisiones.",
+  },
+};
+
+const t = meta[locale] || meta.en;
+---
+
+<BaseLayout title={t.title} description={t.description} heading={t.title}>
+  <CheeseFactory client:load />
+  <GameGuide slug="cheese-factory" locale={locale} name={t.title.split(" — ")[0]} />
+</BaseLayout>

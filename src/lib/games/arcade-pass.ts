@@ -1112,6 +1112,20 @@ export const MISSION_CATALOG: Array<{
     goal: 1,
     xpReward: 50,
   },
+  {
+    id: "cheese-factory-shipped-8",
+    gameSlug: "cheese-factory",
+    title: {
+      ko: "치즈 팩토리 타이쿤에서 숙성실을 관리하여 치즈 8개 이상 완제품 출하하기",
+      en: "Ship 8+ aged cheese wheels by regulating cellar curing in Cheese Factory Tycoon",
+      ja: "チーズ・ファクトリー・タイクーンで熟成庫を管理しチーズを8個以上出荷する",
+      zh: "在奶酪工厂大亨中管理温控地窖并成功发货 8 个以上陈年奶酪轮",
+      fr: "Expédiez 8+ meules de fromage affinées dans Cheese Factory Tycoon",
+      es: "Envía 8+ ruedas de queso curadas en Magnate de la Fábrica de Quesos",
+    },
+    goal: 8,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {
