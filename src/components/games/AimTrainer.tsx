@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { celebrate } from "../../lib/games/celebration";
 import { Maximize2, Minimize2, Share2, Volume2, VolumeX } from "lucide-react";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import type { Locale } from "../../lib/i18n";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { getBest, recordBest } from "../../lib/games/records";
@@ -76,13 +77,44 @@ const DIFF_CFG: Record<Diff, { size: number; speed: number; grid: number; ttl: n
 // Rank thresholds keyed on the primary metric per mode (see computeRank).
 type Rank = AimRank;
 const RANK_COLOR: Record<Rank, string> = {
-  Bronze: "text-amber-700",
-  Silver: "text-slate-400",
-  Gold: "text-yellow-500",
-  Platinum: "text-cyan-400",
-  Diamond: "text-sky-400",
-  Master: "text-violet-500",
+  Bronze: "text-chart-5",
+  Silver: "text-muted-foreground",
+  Gold: "text-chart-4",
+  Platinum: "text-chart-2",
+  Diamond: "text-primary",
+  Master: "text-chart-1",
 };
+
+function TiltAimCardButton({
+  children,
+  onClick,
+  className,
+  ariaPressed,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  className?: string;
+  ariaPressed?: boolean;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      aria-pressed={ariaPressed}
+      style={{ "--card-tilt": transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.1);
+        MobileHapticsPro.selection();
+        onClick();
+      }}
+      className={`${className ?? ""} will-change-transform transform-(--card-tilt)`}
+    >
+      {children}
+    </button>
+  );
+}
 
 interface I18n {
   title: string;
@@ -447,6 +479,13 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
   }, [muted]);
 
   const playHitSound = useCallback((streak: number) => {
+    if (streak >= 5) {
+      MobileHapticsPro.heavy();
+    } else if (streak >= 2) {
+      MobileHapticsPro.impact();
+    } else {
+      MobileHapticsPro.light();
+    }
     const ctx = getAudioContext();
     if (!ctx) return;
     const now = ctx.currentTime;
@@ -469,6 +508,7 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
   }, [getAudioContext]);
 
   const playMissSound = useCallback(() => {
+    MobileHapticsPro.warning();
     const ctx = getAudioContext();
     if (!ctx) return;
     const now = ctx.currentTime;
@@ -598,6 +638,11 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
     const saved = recordBest(key, score, "score", `${t.diffName[diff]}`);
     setBest(saved.value);
     setIsNewBest(beat && score > 0);
+    if (beat && score > 0) {
+      MobileHapticsPro.success();
+    } else {
+      MobileHapticsPro.medium();
+    }
     tone(beat && score > 0 ? 880 : 440, beat && score > 0 ? 0.22 : 0.15);
     if (beat && score > 0 && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       celebrate(shellRef.current, { preset: "sparks", colors: ["#f87171", "#fde68a", "#ffffff"], origin: { x: 0.5, y: 0.5 } });
@@ -988,11 +1033,11 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
             <div className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">{t.chooseMode}</div>
             <div className="grid grid-cols-2 gap-2">
               {MODES.map((m) => (
-                <button
+                <TiltAimCardButton
                   key={m}
                   onClick={() => setMode(m)}
-                  aria-pressed={mode === m}
-                  className={`rounded-2xl border p-3 text-left transition-colors ${mode === m ? "border-violet-500 bg-violet-500/10" : "border-border hover:border-violet-300"}`}
+                  ariaPressed={mode === m}
+                  className={`rounded-2xl border p-3 text-left transition-colors ${mode === m ? "border-primary bg-primary/10 shadow-sm" : "border-border hover:border-primary/40 bg-muted/20"}`}
                 >
                   <div className="flex items-center gap-2 font-bold">
                     <img
@@ -1006,7 +1051,7 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
                     {t.modeName[m]}
                   </div>
                   <div className="mt-1 text-[11px] leading-snug text-muted-foreground">{t.modeDesc[m]}</div>
-                </button>
+                </TiltAimCardButton>
               ))}
             </div>
           </div>
@@ -1014,14 +1059,14 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
             <div className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">{t.chooseDiff}</div>
             <div className="grid grid-cols-4 gap-2">
               {DIFFS.map((d) => (
-                <button
+                <TiltAimCardButton
                   key={d}
                   onClick={() => setDiff(d)}
-                  aria-pressed={diff === d}
-                  className={`min-h-11! rounded-xl border py-2 text-xs font-bold transition-colors ${diff === d ? "border-violet-500 bg-violet-500/10 text-primary" : "border-border text-muted-foreground hover:border-violet-300"}`}
+                  ariaPressed={diff === d}
+                  className={`min-h-11! rounded-xl border py-2 text-xs font-bold transition-colors ${diff === d ? "border-primary bg-primary/10 text-primary shadow-sm" : "border-border text-muted-foreground hover:border-primary/40 bg-muted/20"}`}
                 >
                   {t.diffName[d]}
-                </button>
+                </TiltAimCardButton>
               ))}
             </div>
           </div>

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import { GameContainer } from "../ui/game/GamePrimitives";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { getBest, recordAchievementEvent, recordBest } from "../../lib/games/records";
@@ -73,6 +74,64 @@ import {
 const SAVE = "oiyo:block-burst-state:v1";
 const GAME = "block-burst";
 const wait = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms));
+
+function TiltAugmentCardButton({
+  children,
+  onClick,
+  className,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  className?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      style={{ "--card-tilt": transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.12);
+        MobileHapticsPro.selection();
+        onClick();
+      }}
+      className={`${className ?? ""} will-change-transform transform-(--card-tilt)`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function TiltBurstControlButton({
+  children,
+  onClick,
+  className,
+  ariaLabel,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  className?: string;
+  ariaLabel?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      aria-label={ariaLabel}
+      style={{ "--card-tilt": transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.08);
+        onClick();
+      }}
+      className={`${className ?? ""} will-change-transform transform-(--card-tilt)`}
+    >
+      {children}
+    </button>
+  );
+}
 
 const COPY = {
   ko: {
@@ -665,6 +724,13 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
       const colors = wave.clear.cells.map((cell) => wave.before[cell.r][cell.c] ?? 1);
       burstFx(wave.clear.cells, colors);
       const clearedCount = wave.clear.rows.length + wave.clear.cols.length;
+      if (clearedCount >= 3) {
+        MobileHapticsPro.heavy();
+      } else if (clearedCount >= 2) {
+        MobileHapticsPro.impact();
+      } else {
+        MobileHapticsPro.medium();
+      }
       if (clearedCount >= 2 || i >= 1) {
         triggerCameraShake(clearedCount >= 3 ? 0.75 : clearedCount >= 2 ? 0.5 : 0.35);
       }
@@ -689,6 +755,7 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
     // Goal #3: Perfect Board Clear detection
     let finalBase = base;
     if (isBoardClear(base.board)) {
+      MobileHapticsPro.success();
       finalBase = { ...base, score: base.score + PERFECT_CLEAR_BONUS };
       setBanner("PERFECT CLEAR! +1000");
       celebrate(containerRef?.current, { preset: "shards", scale: 1.4 });
@@ -715,6 +782,7 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
     }
     if (settled.wavesDetail.length === 0) {
       spawnNext(settled.state);
+      MobileHapticsPro.light();
       tone(240);
       return;
     }
@@ -758,20 +826,29 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
   const move = useCallback((dr: number, dc: number) => {
     if (phaseRef.current !== "playing" || resolvingRef.current) return;
     const next = tryMove(gameRef.current, dr, dc);
-    if (apply(next)) tone(dc === 0 ? 190 : 260, 0.05);
+    if (apply(next)) {
+      MobileHapticsPro.light();
+      tone(dc === 0 ? 190 : 260, 0.05);
+    }
   }, [apply, tone]);
 
   const rotate = useCallback(() => {
     if (phaseRef.current !== "playing" || resolvingRef.current) return;
     const next = tryRotate(gameRef.current);
-    if (apply(next)) tone(410, 0.07);
+    if (apply(next)) {
+      MobileHapticsPro.click();
+      tone(410, 0.07);
+    }
   }, [apply, tone]);
 
   const dropSoft = useCallback(() => {
     if (phaseRef.current !== "playing" || resolvingRef.current) return;
     const next = softDrop(gameRef.current);
     if (!apply(next)) void lockNow(gameRef.current);
-    else tone(210, 0.04);
+    else {
+      MobileHapticsPro.light();
+      tone(210, 0.04);
+    }
   }, [apply, lockNow, tone]);
 
   const dropHard = useCallback(() => {
@@ -785,6 +862,7 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
       current = { ...next, score: next.score + 2 * dropMult };
     }
     setGame(current);
+    MobileHapticsPro.heavy();
     void lockNow(current);
     tone(640, 0.1);
   }, [lockNow, tone]);
@@ -988,9 +1066,8 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
                 const tier = TIER_OF[id];
                 const stack = run.owned[id] ?? 0;
                 return (
-                  <button
+                  <TiltAugmentCardButton
                     key={id}
-                    type="button"
                     onClick={() => pick(id)}
                     className={`min-h-14 w-full rounded-2xl border-2 px-3 py-1.5 text-left shadow-sm transition active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${TIER_TONE[tier]}`}
                   >
@@ -1000,7 +1077,7 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
                     </span>
                     <span className="block text-sm font-black">{t.augments[id].name}</span>
                     <span className="block text-xs font-semibold leading-tight opacity-85">{t.augments[id].desc}</span>
-                  </button>
+                  </TiltAugmentCardButton>
                 );
               })}
               <p className="hidden text-center text-xs text-muted-foreground sm:block">{t.pickKeys}</p>
@@ -1088,12 +1165,12 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
           </div>
         </div>
         <div className="mt-4 grid grid-cols-4 gap-2">
-          <button type="button" className={btn} onClick={() => move(0, -1)} aria-label={t.left}>←</button>
-          <button type="button" className={btn} onClick={rotate} aria-label={t.rotate}>⟳</button>
-          <button type="button" className={btn} onClick={() => move(0, 1)} aria-label={t.right}>→</button>
-          <button type="button" className={btn} onClick={dropHard} aria-label={t.drop}>⬇</button>
-          <button type="button" className={`${btn} col-span-2`} onClick={dropSoft}>{t.down}</button>
-          <button type="button" className={`${btn} col-span-2`} onClick={() => setPhase((p) => (p === "paused" ? (runStateRef.current?.offer ? "picking" : "playing") : p === "playing" ? "paused" : p))}>{phase === "paused" ? t.resume : t.pause}</button>
+          <TiltBurstControlButton className={btn} onClick={() => move(0, -1)} ariaLabel={t.left}>←</TiltBurstControlButton>
+          <TiltBurstControlButton className={btn} onClick={rotate} ariaLabel={t.rotate}>⟳</TiltBurstControlButton>
+          <TiltBurstControlButton className={btn} onClick={() => move(0, 1)} ariaLabel={t.right}>→</TiltBurstControlButton>
+          <TiltBurstControlButton className={btn} onClick={dropHard} ariaLabel={t.drop}>⬇</TiltBurstControlButton>
+          <TiltBurstControlButton className={`${btn} col-span-2`} onClick={dropSoft}>{t.down}</TiltBurstControlButton>
+          <TiltBurstControlButton className={`${btn} col-span-2`} onClick={() => setPhase((p) => (p === "paused" ? (runStateRef.current?.offer ? "picking" : "playing") : p === "playing" ? "paused" : p))}>{phase === "paused" ? t.resume : t.pause}</TiltBurstControlButton>
         </div>
         {mode === "augment" && run && Object.keys(run.owned).length > 0 ? (
           <div className="mt-3">

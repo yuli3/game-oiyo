@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import {
   initializeChaosKitchen,
   stepChaosKitchen,
@@ -10,6 +11,33 @@ import {
 import { useAudioContext } from "../../lib/games/use-audio-context";
 import { useClipboardShare } from "../../lib/games/use-clipboard-share";
 import { GameStatTile } from "../ui/game/GameStatTile";
+
+function TiltKitchenButton({
+  children,
+  onClick,
+  className,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  className?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      style={{ "--card-tilt": transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.1);
+        onClick();
+      }}
+      className={`${className ?? ""} will-change-transform transform-(--card-tilt)`}
+    >
+      {children}
+    </button>
+  );
+}
 
 export function ChaosKitchen() {
   const [gameState, setGameState] = useState<ChaosKitchenState>(() => initializeChaosKitchen());
@@ -40,6 +68,14 @@ export function ChaosKitchen() {
 
   const { copied, shareText } = useClipboardShare();
 
+  useEffect(() => {
+    if (gameState.status === "cleared") {
+      MobileHapticsPro.success();
+    } else if (gameState.status === "failed") {
+      MobileHapticsPro.warning();
+    }
+  }, [gameState.status]);
+
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -48,25 +84,31 @@ export function ChaosKitchen() {
         case "w":
         case "arrowup":
           inputRef.current.chef1Mask |= 1;
+          MobileHapticsPro.light();
           break;
         case "s":
         case "arrowdown":
           inputRef.current.chef1Mask |= 2;
+          MobileHapticsPro.light();
           break;
         case "a":
         case "arrowleft":
           inputRef.current.chef1Mask |= 4;
+          MobileHapticsPro.light();
           break;
         case "d":
         case "arrowright":
           inputRef.current.chef1Mask |= 8;
+          MobileHapticsPro.light();
           break;
         case " ":
           inputRef.current.chef1Mask |= 16;
+          MobileHapticsPro.impact();
           playTone(440, "sine", 0.08);
           break;
         case "f":
           inputRef.current.chef1Mask |= 32;
+          MobileHapticsPro.heavy();
           playTone(600, "triangle", 0.06);
           break;
       }
@@ -450,10 +492,10 @@ export function ChaosKitchen() {
       <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-muted/40 rounded-lg border border-border text-xs">
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="font-semibold text-muted-foreground mr-1">Controls:</span>
-          <button
-            type="button"
+          <TiltKitchenButton
             onClick={() => {
               inputRef.current.chef1Mask |= 1;
+              MobileHapticsPro.light();
               setTimeout(() => {
                 inputRef.current.chef1Mask &= ~1;
               }, 200);
@@ -461,11 +503,11 @@ export function ChaosKitchen() {
             className="px-2 py-1 rounded border border-border bg-card hover:bg-accent transition-colors"
           >
             Up (W)
-          </button>
-          <button
-            type="button"
+          </TiltKitchenButton>
+          <TiltKitchenButton
             onClick={() => {
               inputRef.current.chef1Mask |= 2;
+              MobileHapticsPro.light();
               setTimeout(() => {
                 inputRef.current.chef1Mask &= ~2;
               }, 200);
@@ -473,11 +515,11 @@ export function ChaosKitchen() {
             className="px-2 py-1 rounded border border-border bg-card hover:bg-accent transition-colors"
           >
             Down (S)
-          </button>
-          <button
-            type="button"
+          </TiltKitchenButton>
+          <TiltKitchenButton
             onClick={() => {
               inputRef.current.chef1Mask |= 4;
+              MobileHapticsPro.light();
               setTimeout(() => {
                 inputRef.current.chef1Mask &= ~4;
               }, 200);
@@ -485,11 +527,11 @@ export function ChaosKitchen() {
             className="px-2 py-1 rounded border border-border bg-card hover:bg-accent transition-colors"
           >
             Left (A)
-          </button>
-          <button
-            type="button"
+          </TiltKitchenButton>
+          <TiltKitchenButton
             onClick={() => {
               inputRef.current.chef1Mask |= 8;
+              MobileHapticsPro.light();
               setTimeout(() => {
                 inputRef.current.chef1Mask &= ~8;
               }, 200);
@@ -497,24 +539,24 @@ export function ChaosKitchen() {
             className="px-2 py-1 rounded border border-border bg-card hover:bg-accent transition-colors"
           >
             Right (D)
-          </button>
+          </TiltKitchenButton>
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5">
-          <button
-            type="button"
+          <TiltKitchenButton
             onClick={() => {
               inputRef.current.chef1Mask |= 16;
+              MobileHapticsPro.impact();
               playTone(440, "sine", 0.08);
             }}
             className="px-3 py-1.5 rounded bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors"
           >
             Pick / Place (Space)
-          </button>
-          <button
-            type="button"
+          </TiltKitchenButton>
+          <TiltKitchenButton
             onClick={() => {
               inputRef.current.chef1Mask |= 32;
+              MobileHapticsPro.heavy();
               playTone(600, "triangle", 0.08);
               setTimeout(() => {
                 inputRef.current.chef1Mask &= ~32;
@@ -523,7 +565,7 @@ export function ChaosKitchen() {
             className="px-3 py-1.5 rounded bg-secondary text-secondary-foreground font-semibold hover:bg-secondary/90 transition-colors"
           >
             Chop / Action (F)
-          </button>
+          </TiltKitchenButton>
         </div>
       </div>
     </div>

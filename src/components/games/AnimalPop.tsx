@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { Maximize2, Minimize2, Share2, Volume2, VolumeX } from "lucide-react";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { celebrate } from "../../lib/games/celebration";
 import { copyShareCardToClipboard, createShareCardCanvas, downloadShareCard } from "../../lib/games/share-card";
@@ -52,6 +53,75 @@ const animalHue = (animal: string): number => {
   for (const ch of animal) h = (h * 31 + ch.codePointAt(0)!) % 360;
   return h;
 };
+
+function TiltAnimalAugmentButton({
+  children,
+  onClick,
+  className,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  className?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      style={{ "--card-tilt": transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.12);
+        MobileHapticsPro.selection();
+        onClick();
+      }}
+      className={`${className ?? ""} will-change-transform transform-(--card-tilt)`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function TiltAnimalTileButton({
+  children,
+  onClick,
+  className,
+  style,
+  role,
+  ariaLabel,
+  ariaPressed,
+  disabled,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  className?: string;
+  style?: CSSProperties;
+  role?: string;
+  ariaLabel?: string;
+  ariaPressed?: boolean;
+  disabled?: boolean;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      role={role}
+      aria-label={ariaLabel}
+      aria-pressed={ariaPressed}
+      disabled={disabled}
+      style={{ ...style, "--card-tilt": transformCss } as CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.08);
+        onClick();
+      }}
+      className={`${className ?? ""} will-change-transform transform-(--card-tilt)`}
+    >
+      {children}
+    </button>
+  );
+}
 
 const SAVE = "oiyo:animal-pop:v1",
   BEST = "oiyo-animal-pop-best";
@@ -583,6 +653,7 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
     runRef.current = nextRun;
     setRun(nextRun);
     setTime(picked.timeLeft);
+    MobileHapticsPro.selection();
     tone(700);
     if (!nextRun.offer) setPhase("playing");
   };
@@ -590,12 +661,14 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
     if (phase !== "playing" || resolving) return;
     if (selected === null) {
       setSelected(i);
+      MobileHapticsPro.selection();
       return;
     }
     const owned = mode === "augment" && runRef.current ? runRef.current.owned : null;
     const x = owned ? swapAnimals(board, selected, i, seed, animalMods(owned)) : swapAnimals(board, selected, i, seed);
     setSelected(null);
     if (!x.valid) {
+      MobileHapticsPro.warning();
       tone(150);
       return;
     }
@@ -611,8 +684,13 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
       setBursting(step.matched);
       burstShards(step.matched, step.before);
       if (step.matched.length >= 7) {
+        MobileHapticsPro.heavy();
         tone(1200);
+      } else if (wave >= 1) {
+        MobileHapticsPro.impact();
+        tone(Math.min(1050, 440 + wave * 95));
       } else {
+        MobileHapticsPro.light();
         tone(Math.min(1050, 440 + wave * 95));
       }
       await wait(burstMs);
@@ -807,11 +885,11 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
               const fall = fallAt(r,c);
               const fallRows = fall ? Math.max(1, fall.toRow - fall.fromRow) : 0;
               return (
-                <button
+                <TiltAnimalTileButton
                   key={i}
                   role="gridcell"
-                  aria-label={`${animal} ${r + 1},${c + 1}`}
-                  aria-pressed={selected === i}
+                  ariaLabel={`${animal} ${r + 1},${c + 1}`}
+                  ariaPressed={selected === i}
                   onClick={() => pick(i)}
                   disabled={phase !== "playing" || resolving}
                   style={fall ? ({ "--animal-fall": `${fallRows * 108}%`, animationDuration: reducedMotion ? "65ms" : `${Math.min(430,180+fallRows*34)}ms` } as CSSProperties) : undefined}
@@ -823,7 +901,7 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
                     animal
                   )}
                   {isBursting && <><span className="animal-ring" aria-hidden="true"/><span className="animal-spark-sheet animal-spark-a" aria-hidden="true"/><span className="animal-spark-sheet animal-spark-b" aria-hidden="true"/><span className="animal-spark-sheet animal-spark-c" aria-hidden="true"/></>}
-                </button>
+                </TiltAnimalTileButton>
               );
             }),
           )}
@@ -836,7 +914,7 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
                 const tier = TIER_OF[id];
                 const stack = run.owned[id] ?? 0;
                 return (
-                  <button
+                  <TiltAnimalAugmentButton
                     key={id}
                     onClick={() => take(id)}
                     className={`min-h-14 w-full rounded-2xl border-2 px-3 py-1.5 text-left shadow-sm active:translate-y-px focus-visible:ring-2 focus-visible:ring-primary ${TIER_TONE[tier]}`}
@@ -847,7 +925,7 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
                     </span>
                     <span className="block text-sm font-black">{t.augments[id].name}</span>
                     <span className="block text-xs font-semibold leading-tight opacity-85">{t.augments[id].desc}</span>
-                  </button>
+                  </TiltAnimalAugmentButton>
                 );
               })}
               </div>

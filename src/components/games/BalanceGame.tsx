@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Volume2, VolumeX, Maximize2, Minimize2 } from 'lucide-react';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import {
   PENDING_STORAGE_KEY, addVote, parsePending, removeFlushed, shouldFlush, toDeltas,
   withLocalPending, type PendingVotes,
@@ -38,6 +39,33 @@ function shuffledOrder(length: number): number[] {
     [order[i], order[j]] = [order[j], order[i]];
   }
   return order;
+}
+
+function TiltBalanceChoiceButton({
+  children,
+  onClick,
+  className,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  className?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.12);
+        onClick();
+      }}
+      className={`${className ?? ''} will-change-transform transform-(--card-tilt)`}
+    >
+      {children}
+    </button>
+  );
 }
 
 const BalanceGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
@@ -205,6 +233,10 @@ const BalanceGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
   const pick = useCallback((choice: 'a' | 'b') => {
     if (!currentPrompt) return;
     playPop(choice === 'a' ? 520 : 660, 0.07);
+    MobileHapticsPro.impact();
+    if (cursor + 1 >= order.length) {
+      MobileHapticsPro.success();
+    }
     setStored((prev) => {
       const next: Stored = { answered: prev.answered + (prev.picks[currentPrompt.id] ? 0 : 1), picks: { ...prev.picks, [currentPrompt.id]: choice } };
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch { /* storage best-effort */ }
@@ -215,7 +247,7 @@ const BalanceGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     persistPending();
     if (shouldFlush(pendingRef.current)) void flush();
     setCursor((c) => c + 1);
-  }, [currentPrompt, persistPending, flush, playPop]);
+  }, [currentPrompt, cursor, order.length, persistPending, flush, playPop]);
 
   const restart = useCallback(() => {
     playPop(440, 0.06);
@@ -290,20 +322,18 @@ const BalanceGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         {!finished && currentPrompt && (
           <div className="w-full max-w-xl">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2" role="group" aria-label={t.subtitle}>
-              <button
-                type="button"
+              <TiltBalanceChoiceButton
                 onClick={() => pick('a')}
                 className="min-h-24 rounded-2xl border-2 border-border bg-card p-5 text-center text-base font-bold shadow-sm transition-all hover:border-primary hover:bg-primary/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               >
                 {currentPrompt.a}
-              </button>
-              <button
-                type="button"
+              </TiltBalanceChoiceButton>
+              <TiltBalanceChoiceButton
                 onClick={() => pick('b')}
                 className="min-h-24 rounded-2xl border-2 border-border bg-card p-5 text-center text-base font-bold shadow-sm transition-all hover:border-primary hover:bg-primary/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               >
                 {currentPrompt.b}
-              </button>
+              </TiltBalanceChoiceButton>
             </div>
             <p className="mt-3 text-center text-[10px] font-black uppercase tracking-widest text-muted-foreground">{t.vs}</p>
           </div>
