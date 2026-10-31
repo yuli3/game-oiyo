@@ -9,7 +9,7 @@
  */
 
 // ============================================================================
-// 1. Camera Dynamics (Punch Zoom & Elastic FOV)
+// 1. Camera Dynamics (Mild & Polished Punch Zoom & Elastic FOV)
 // ============================================================================
 
 export class CameraDynamics2D {
@@ -18,25 +18,25 @@ export class CameraDynamics2D {
   private zoomVelocity: number = 0;
   public punchAmount: number = 0;
 
-  // Spring constants
-  private readonly stiffness: number = 180;
-  private readonly damping: number = 14;
+  // Polished mild spring constants (no extreme disorienting shakes)
+  private readonly stiffness: number = 240;
+  private readonly damping: number = 22;
 
   /**
-   * Adds an instant punch zoom effect on heavy impacts.
-   * e.g. amount = 0.15 makes the camera instantly snap closer and spring back.
+   * Adds a subtle, high-impact punch zoom (capped low for comfort).
+   * amount = 0.04..0.06 creates a crisp tactile snap without causing nausea.
    */
-  public punch(amount: number = 0.12): void {
-    this.punchAmount = Math.min(0.35, this.punchAmount + amount);
+  public punch(amount: number = 0.04): void {
+    this.punchAmount = Math.min(0.08, this.punchAmount + amount * 0.5);
   }
 
   /**
    * Updates camera zoom responding to player speed and elastic recovery.
    */
   public update(dtSeconds: number, playerSpeed: number): void {
-    // Velocity-responsive FOV: higher speed zooms out to 0.88 to reveal wider arena
+    // Subtle velocity FOV: mild zoom-out up to 0.95 at peak velocity
     const speedRatio = Math.min(1.0, playerSpeed / 450);
-    this.targetZoom = 1.0 - speedRatio * 0.12;
+    this.targetZoom = 1.0 - speedRatio * 0.05;
 
     // Decay punch amount with spring physics
     const currentTotalZoom = this.zoom + this.punchAmount;
@@ -47,10 +47,10 @@ export class CameraDynamics2D {
 
     this.zoomVelocity += acceleration * dtSeconds;
     this.zoom += this.zoomVelocity * dtSeconds;
-    this.punchAmount = Math.max(0, this.punchAmount - dtSeconds * 3.5);
+    this.punchAmount = Math.max(0, this.punchAmount - dtSeconds * 4.0);
 
-    // Clamp zoom to reasonable limits
-    this.zoom = Math.max(0.75, Math.min(1.35, this.zoom));
+    // Tightly clamped for visual comfort
+    this.zoom = Math.max(0.92, Math.min(1.08, this.zoom));
   }
 
   public apply(ctx: CanvasRenderingContext2D, centerX: number, centerY: number): void {
@@ -309,3 +309,235 @@ export class ProceduralSfxBank {
     }
   }
 }
+
+// ============================================================================
+// 5. High-Resolution Procedural Vector Sprite & Texture Renderer
+// ============================================================================
+
+export class ProceduralMechaSpriteRenderer {
+  /**
+   * Renders high-fidelity Viper-X mecha interceptor vessel with specular glass canopy,
+   * panel lines, and twin afterburner exhaust ports.
+   */
+  public renderPlayerVessel(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    bankAngle: number,
+    squash: number,
+    stretch: number,
+    isHooked: boolean
+  ): void {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(bankAngle);
+    ctx.scale(squash, stretch);
+
+    // 1. Afterburner Twin Exhaust Glow
+    ctx.save();
+    ctx.fillStyle = isHooked ? '#38bdf8' : '#60a5fa';
+    ctx.beginPath();
+    ctx.ellipse(-7, 12, 3, 5, 0, 0, Math.PI * 2);
+    ctx.ellipse(7, 12, 3, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // 2. Main Aerodynamic Carbon-Titanium Hull
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(0, -22); // Nose tip
+    ctx.lineTo(8, -8);
+    ctx.lineTo(22, 14); // Right wing tip
+    ctx.lineTo(12, 12);
+    ctx.lineTo(6, 16);  // Right thruster cowing
+    ctx.lineTo(0, 10);  // Center keel
+    ctx.lineTo(-6, 16); // Left thruster cowing
+    ctx.lineTo(-12, 12);
+    ctx.lineTo(-22, 14); // Left wing tip
+    ctx.lineTo(-8, -8);
+    ctx.closePath();
+
+    const hullGrad = ctx.createLinearGradient(-22, -22, 22, 16);
+    if (isHooked) {
+      hullGrad.addColorStop(0, '#0284c7');
+      hullGrad.addColorStop(0.5, '#0369a1');
+      hullGrad.addColorStop(1, '#0c4a6e');
+    } else {
+      hullGrad.addColorStop(0, '#2563eb');
+      hullGrad.addColorStop(0.5, '#1d4ed8');
+      hullGrad.addColorStop(1, '#1e3a8a');
+    }
+    ctx.fillStyle = hullGrad;
+    ctx.fill();
+
+    ctx.strokeStyle = '#93c5fd';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // 3. Wing Inset Panels & Rivet Accents
+    ctx.beginPath();
+    ctx.moveTo(-16, 10);
+    ctx.lineTo(-8, -2);
+    ctx.lineTo(8, -2);
+    ctx.lineTo(16, 10);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // 4. Cockpit Canopy Dome with Specular Highlights
+    ctx.beginPath();
+    ctx.ellipse(0, -5, 4.5, 9, 0, 0, Math.PI * 2);
+    const canopyGrad = ctx.createLinearGradient(-4, -14, 4, 4);
+    canopyGrad.addColorStop(0, '#67e8f9');
+    canopyGrad.addColorStop(0.6, '#0284c7');
+    canopyGrad.addColorStop(1, '#082f49');
+    ctx.fillStyle = canopyGrad;
+    ctx.fill();
+
+    // Specular Glass Reflection Arc
+    ctx.beginPath();
+    ctx.ellipse(-1.5, -7, 1.5, 4, -0.3, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+    ctx.fill();
+
+    ctx.restore();
+    ctx.restore();
+  }
+
+  /**
+   * Renders the Mechanical Beholder Sovereign with hexagonal armor plating,
+   * aperture blades, and spherical lens reflections.
+   */
+  public renderBossBeholder(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    phase: 1 | 2,
+    lookDx: number,
+    lookDy: number,
+    timeSec: number
+  ): void {
+    ctx.save();
+    ctx.translate(x, y);
+
+    const isPhase2 = phase === 2;
+    const bodyRadius = 48;
+
+    // 1. Heavy Outer Titanium Hull with Hex Armor Rivets
+    ctx.beginPath();
+    ctx.arc(0, 0, bodyRadius, 0, Math.PI * 2);
+    const hullGrad = ctx.createRadialGradient(0, -10, 8, 0, 0, bodyRadius);
+    hullGrad.addColorStop(0, isPhase2 ? '#450a0a' : '#1e293b');
+    hullGrad.addColorStop(0.7, isPhase2 ? '#260505' : '#0f172a');
+    hullGrad.addColorStop(1, isPhase2 ? '#160202' : '#020617');
+    ctx.fillStyle = hullGrad;
+    ctx.fill();
+
+    ctx.strokeStyle = isPhase2 ? '#ef4444' : '#64748b';
+    ctx.lineWidth = 3.5;
+    ctx.stroke();
+
+    // Rivet studs along hull border
+    const rivetCount = 8;
+    ctx.fillStyle = isPhase2 ? '#fca5a5' : '#94a3b8';
+    for (let i = 0; i < rivetCount; i++) {
+      const ang = (i / rivetCount) * Math.PI * 2 + timeSec * 0.15;
+      const rx = Math.cos(ang) * (bodyRadius - 4);
+      const ry = Math.sin(ang) * (bodyRadius - 4);
+      ctx.beginPath();
+      ctx.arc(rx, ry, 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 2. Optical Eye Sensor Tracking Player
+    const dist = Math.max(1, Math.hypot(lookDx, lookDy));
+    const maxOffset = 16;
+    const ex = (lookDx / dist) * maxOffset;
+    const ey = (lookDy / dist) * maxOffset;
+
+    // Sclera Housing (Lens Socket)
+    ctx.beginPath();
+    ctx.arc(ex, ey, 22, 0, Math.PI * 2);
+    ctx.fillStyle = '#f8fafc';
+    ctx.fill();
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Aperture Iris Blades
+    ctx.beginPath();
+    ctx.arc(ex, ey, 13, 0, Math.PI * 2);
+    const irisGrad = ctx.createRadialGradient(ex, ey, 2, ex, ey, 13);
+    if (isPhase2) {
+      irisGrad.addColorStop(0, '#f87171');
+      irisGrad.addColorStop(0.6, '#dc2626');
+      irisGrad.addColorStop(1, '#7f1d1d');
+    } else {
+      irisGrad.addColorStop(0, '#38bdf8');
+      irisGrad.addColorStop(0.6, '#0284c7');
+      irisGrad.addColorStop(1, '#075985');
+    }
+    ctx.fillStyle = irisGrad;
+    ctx.fill();
+
+    // Central Slit Pupil Core
+    ctx.beginPath();
+    ctx.ellipse(ex, ey, 4.5, 11, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#020617';
+    ctx.fill();
+
+    // Glass Lens Spherical Reflection Arc
+    ctx.beginPath();
+    ctx.arc(ex - 4, ey - 6, 8, -Math.PI * 0.8, -Math.PI * 0.2);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.75)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  /**
+   * Renders Graviton ceiling anchor nodes with counter-rotating calibration rings.
+   */
+  public renderGravitonAnchor(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    radius: number,
+    isTarget: boolean,
+    timeSec: number
+  ): void {
+    ctx.save();
+    ctx.translate(x, y);
+
+    // Counter-rotating tech rings
+    ctx.save();
+    ctx.rotate(timeSec * (isTarget ? 2.5 : 1.0));
+    ctx.beginPath();
+    ctx.arc(0, 0, radius + 4, 0, Math.PI * 2);
+    ctx.strokeStyle = isTarget ? '#38bdf8' : '#d97706';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 6]);
+    ctx.stroke();
+    ctx.restore();
+
+    // Core Solid Node
+    ctx.beginPath();
+    ctx.arc(0, 0, radius - 2, 0, Math.PI * 2);
+    ctx.fillStyle = isTarget ? '#0284c7' : '#451a03';
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Pulsing Core Light Pip
+    const pulse = Math.sin(timeSec * 6) * 1.5;
+    ctx.beginPath();
+    ctx.arc(0, 0, 4 + pulse, 0, Math.PI * 2);
+    ctx.fillStyle = isTarget ? '#e0f2fe' : '#fef08a';
+    ctx.fill();
+
+    ctx.restore();
+  }
+}
+

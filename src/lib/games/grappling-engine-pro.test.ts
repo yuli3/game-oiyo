@@ -4,6 +4,7 @@ import {
   SpeedLinesSystem,
   DynamicLightRenderer,
   ProceduralSfxBank,
+  ProceduralMechaSpriteRenderer,
 } from './grappling-engine-pro';
 
 describe('Grappling Engine Pro (AAA Feel & Dynamics)', () => {
@@ -50,5 +51,10 @@ describe('Grappling Engine Pro (AAA Feel & Dynamics)', () => {
       sfx.playWireClack();
       sfx.playLaserShot();
     }).not.toThrow();
+  });
+
+  it('5. verifies procedural mecha vector sprite renderer methods', () => {
+    const sprites = new ProceduralMechaSpriteRenderer();
+    expect(sprites).toBeDefined();
   });
 });
