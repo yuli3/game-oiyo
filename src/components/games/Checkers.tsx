@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, type CSSProperties } from 'react';
 import { Maximize2, Minimize2, Share2, Volume2, VolumeX } from 'lucide-react';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import type { Locale } from '../../lib/i18n';
@@ -21,6 +22,45 @@ function checkersSrc(piece: CheckersPiece) {
         ? (piece.isKing ? CHECKERS_SPRITES.redKing : CHECKERS_SPRITES.red)
         : (piece.isKing ? CHECKERS_SPRITES.blackKing : CHECKERS_SPRITES.black);
 }
+
+const TiltCheckersSquare: React.FC<{
+    children: React.ReactNode;
+    className?: string;
+    style?: CSSProperties;
+    onClick?: () => void;
+    onFocus?: () => void;
+    onKeyDown?: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
+    disabled?: boolean;
+    tabIndex?: number;
+    role?: string;
+    'aria-selected'?: boolean;
+    'aria-label'?: string;
+    refNode?: (node: HTMLButtonElement | null) => void;
+}> = ({ children, className, style, onClick, onFocus, onKeyDown, disabled, tabIndex, role, 'aria-selected': ariaSelected, 'aria-label': ariaLabel, refNode }) => {
+    const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+    return (
+        <button
+            ref={refNode}
+            style={{ ...style, '--card-tilt': transformCss } as CSSProperties}
+            onClick={() => {
+                triggerPop(0.08);
+                onClick?.();
+            }}
+            onPointerMove={onPointerMove}
+            onPointerLeave={onPointerLeave}
+            onFocus={onFocus}
+            onKeyDown={onKeyDown}
+            disabled={disabled}
+            tabIndex={tabIndex}
+            role={role}
+            aria-selected={ariaSelected}
+            aria-label={ariaLabel}
+            className={`${className ?? ''} will-change-transform transform-(--card-tilt)`}
+        >
+            {children}
+        </button>
+    );
+};
 
 const SIZE = 8;
 
@@ -119,13 +159,19 @@ const Checkers: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     const squareRefs = useRef<(HTMLButtonElement | null)[]>([]);
     const audio = useRef<AudioContext | null>(null);
 
-    const tone = useCallback((kind: 'move' | 'capture' | 'win') => {
+    const tone = useCallback((kind: 'move' | 'capture' | 'win' | 'king') => {
+        if (kind === 'move') MobileHapticsPro.light();
+        else if (kind === 'capture') MobileHapticsPro.impact();
+        else if (kind === 'win') MobileHapticsPro.success();
+        else if (kind === 'king') MobileHapticsPro.medium();
+
         if (mutedRef.current || typeof AudioContext === 'undefined') return;
         const context = audio.current ?? new AudioContext(); audio.current = context;
         const oscillator = context.createOscillator(), gain = context.createGain();
-        oscillator.frequency.value = kind === 'capture' ? 180 : kind === 'win' ? 620 : 360;
-        gain.gain.setValueAtTime(.045, context.currentTime); gain.gain.exponentialRampToValueAtTime(.001, context.currentTime + .1);
-        oscillator.connect(gain).connect(context.destination); oscillator.start(); oscillator.stop(context.currentTime + .1);
+        oscillator.type = kind === 'capture' ? 'triangle' : 'sine';
+        oscillator.frequency.value = kind === 'capture' ? 180 : kind === 'win' ? 620 : kind === 'king' ? 520 : 360;
+        gain.gain.setValueAtTime(.045, context.currentTime); gain.gain.exponentialRampToValueAtTime(.001, context.currentTime + (kind === 'win' ? .3 : .1));
+        oscillator.connect(gain).connect(context.destination); oscillator.start(); oscillator.stop(context.currentTime + (kind === 'win' ? .3 : .1));
     }, []);
 
     const initGame = useCallback(() => {
@@ -190,6 +236,11 @@ const Checkers: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     const finish = (w: number) => {
         setWinner(w);
         tone('win');
+        if (mode === 'ai' && w === AI_PLAYER) {
+            MobileHapticsPro.warning();
+        } else {
+            MobileHapticsPro.success();
+        }
         clearCheckersSave();
         if (mode === 'ai') setRecord(recordResult('checkers', w === AI_PLAYER ? 'l' : 'w'));
         if (containerRef.current && (mode !== 'ai' || w !== AI_PLAYER)) {
@@ -228,12 +279,16 @@ const Checkers: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         const legalMoves = checkersMoves(board, player, forcedFrom ?? undefined);
 
         if (selected !== null) {
-            if (selected === index && forcedFrom === null) { setSelected(null); return; }
+            if (selected === index && forcedFrom === null) { setSelected(null); MobileHapticsPro.selection(); return; }
             const move = legalMoves.find((candidate) => candidate.from === selected && candidate.to === index);
             if (move) executeMove(move);
-            else if (forcedFrom === null && piece?.player === player && legalMoves.some((candidate) => candidate.from === index)) setSelected(index);
+            else if (forcedFrom === null && piece?.player === player && legalMoves.some((candidate) => candidate.from === index)) {
+                setSelected(index);
+                MobileHapticsPro.selection();
+            }
         } else if (piece?.player === player && legalMoves.some((move) => move.from === index)) {
             setSelected(index);
+            MobileHapticsPro.selection();
         }
     };
 
@@ -253,7 +308,11 @@ const Checkers: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         setBoard(newBoard);
         slideKey.current += 1;
         setLastSlide({ from: move.from, to: move.to, key: slideKey.current });
-        tone(move.jumpOver !== undefined ? 'capture' : 'move');
+        if (crowned) {
+            tone('king');
+        } else {
+            tone(move.jumpOver !== undefined ? 'capture' : 'move');
+        }
         if (move.jumpOver !== undefined && !crowned && checkersMoves(newBoard, before.player, move.to).length > 0) {
             setForcedFrom(move.to);
             setSelected(move.to);
@@ -389,16 +448,16 @@ const Checkers: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
             </div>
 
             <div className="pb-2">
-            <div className="grid grid-cols-8 grid-rows-8 aspect-square w-full border-4 border-stone-800 shadow-lg overflow-hidden rounded-lg" role="grid" aria-label={t.boardLabel} aria-disabled={paused}>
+            <div className="grid grid-cols-8 grid-rows-8 aspect-square w-full border-4 border-foreground/20 shadow-lg overflow-hidden rounded-lg" role="grid" aria-label={t.boardLabel} aria-disabled={paused}>
                 {board.map((piece, i) => {
                     const r = Math.floor(i / SIZE), c = i % SIZE;
                     const isDark = (r + c) % 2 === 1;
                     const isSelected = selected === i;
                     const isDestination = selected !== null && availableMoves.some((move) => move.from === selected && move.to === i);
                     return (
-                        <button
+                        <TiltCheckersSquare
                             key={i}
-                            ref={(node) => { squareRefs.current[i] = node; }}
+                            refNode={(node) => { squareRefs.current[i] = node; }}
                             onClick={() => handleSquareClick(i)}
                             disabled={paused}
                             onFocus={() => setFocusIndex(i)}
@@ -407,8 +466,8 @@ const Checkers: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                             role="gridcell"
                             aria-selected={isSelected}
                             aria-label={`${String.fromCharCode(65 + c)}${8 - r}, ${piece ? `${piece.player === 1 ? t.red : t.black}${piece.isKing ? ` ${t.king}` : ''}` : t.empty}${isSelected ? `, ${t.selectedLabel}` : ''}${isDestination ? `, ${t.destinationLabel}` : ''}`}
-                            className={`relative flex min-h-11 min-w-11 items-center justify-center cursor-pointer transition-colors motion-reduce:transition-none focus-visible:z-20 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-[-4px] focus-visible:outline-sky-500 ${
-                                isDark ? 'bg-stone-700' : 'bg-stone-200'
+                            className={`relative flex min-h-11 min-w-11 items-center justify-center cursor-pointer transition-colors motion-reduce:transition-none focus-visible:z-20 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-[-4px] focus-visible:outline-primary ${
+                                isDark ? 'bg-muted/80' : 'bg-card'
                             }`}
                         >
                             {isSelected && <div className="absolute inset-0 bg-primary/20 ring-4 ring-primary ring-inset z-10" />}
@@ -432,7 +491,7 @@ const Checkers: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                                     className="pointer-events-none h-[80%] w-[80%] object-contain drop-shadow-md animate-in zoom-in-75 motion-reduce:animate-none"
                                 />
                             ) : null}
-                        </button>
+                        </TiltCheckersSquare>
                     );
                 })}
             </div>
@@ -447,7 +506,7 @@ const Checkers: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                     <h4 className="text-4xl font-black text-foreground mb-4">{winLabel}</h4>
                     <p className="mb-4 text-sm font-bold text-muted-foreground">{x.redLeft} {board.filter(piece => piece?.player === 1).length} · {x.blackLeft} {board.filter(piece => piece?.player === 2).length}</p>
                     <p className="mb-4 text-xs text-muted-foreground">{x.captured} {winner === 1 ? 12 - board.filter(piece => piece?.player === 2).length : 12 - board.filter(piece => piece?.player === 1).length} · {x.next} 12</p>
-                    {mode === 'ai' && winner === AI_PLAYER && lastAiReview && <div className="mb-4 max-w-xs rounded-2xl border border-amber-300/60 bg-amber-50 p-3 text-left text-xs text-stone-800"><p className="font-black text-amber-900">{aiInfo.review} · {squareName(lastAiReview.from)}→{squareName(lastAiReview.to)}</p><p className="mt-1">{lastAiReview.captures > 0 ? `${lastAiReview.captures} ${aiInfo.captures}` : aiInfo.quiet}</p><p className="mt-1 text-[10px] text-stone-500">{aiInfo.difficulty}: {aiInfo.depth[level]}</p></div>}
+                    {mode === 'ai' && winner === AI_PLAYER && lastAiReview && <div className="mb-4 max-w-xs rounded-2xl border border-warning/40 bg-warning/10 p-3 text-left text-xs text-foreground"><p className="font-black text-warning">{aiInfo.review} · {squareName(lastAiReview.from)}→{squareName(lastAiReview.to)}</p><p className="mt-1">{lastAiReview.captures > 0 ? `${lastAiReview.captures} ${aiInfo.captures}` : aiInfo.quiet}</p><p className="mt-1 text-[10px] text-muted-foreground">{aiInfo.difficulty}: {aiInfo.depth[level]}</p></div>}
                     <div className="flex flex-wrap justify-center gap-2">
                         <button onClick={initGame} className="min-h-11 px-8 py-2.5 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90">
                             {t.reset}

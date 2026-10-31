@@ -1,3 +1,4 @@
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Check, Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
@@ -271,6 +272,7 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
     osc2.connect(gain2).connect(context.destination);
     osc2.start(now + 0.04);
     osc2.stop(now + 0.08);
+    MobileHapticsPro.impact();
   }, [muted]);
 
   useEffect(() => {

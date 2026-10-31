@@ -10,6 +10,36 @@ import {
   selectInspectField,
   stampApplicantDecision,
 } from '../../lib/games/border-inspector';
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+
+function TiltStampButton({
+  children,
+  onClick,
+  className = "",
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  className?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      style={{ "--card-tilt": transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.2);
+        onClick();
+      }}
+      className={`rounded-xl px-4 py-3 text-sm font-bold shadow-sm transition will-change-transform transform-(--card-tilt) hover:opacity-90 ${className}`}
+    >
+      {children}
+    </button>
+  );
+}
+
 import {
   loadArcadePassProgress,
   reportMissionProgress,

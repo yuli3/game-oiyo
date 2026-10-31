@@ -39,6 +39,40 @@ const getTierName = (bankroll: number, locale: string) => {
   return locale === "ko" ? "신입 베터" : "Rookie";
 };
 
+function TiltBlackjackActionButton({
+  children,
+  onClick,
+  disabled,
+  className = "",
+  title,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+  className?: string;
+  title?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      title={title}
+      style={{ "--card-tilt": transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.15);
+        onClick();
+      }}
+      className={`min-h-12 rounded-full px-7 font-black transition will-change-transform transform-(--card-tilt) disabled:opacity-50 ${className}`}
+    >
+      {children}
+    </button>
+  );
+}
+
 function TiltPlayerCard({
   card,
   index,
@@ -417,18 +451,17 @@ const Blackjack = ({ locale = "ko" }: { locale?: string }) => {
                   </div>
                 )}
                 <div className="flex flex-wrap justify-center gap-3">
-                  <button type="button" onClick={hit} disabled={paused} className="min-h-12 rounded-full bg-primary px-7 font-black text-primary-foreground disabled:opacity-50">{t.hit}</button>
-                  <button type="button" onClick={stand} disabled={paused} className="min-h-12 rounded-full border bg-muted px-7 font-black disabled:opacity-50">{t.stand}</button>
+                  <TiltBlackjackActionButton onClick={hit} disabled={paused} className="bg-primary text-primary-foreground shadow-md">{t.hit}</TiltBlackjackActionButton>
+                  <TiltBlackjackActionButton onClick={stand} disabled={paused} className="border bg-muted shadow-sm">{t.stand}</TiltBlackjackActionButton>
                   {game.player.length === 2 && (
-                    <button
-                      type="button"
+                    <TiltBlackjackActionButton
                       onClick={double}
                       disabled={paused}
-                      className="min-h-12 rounded-full border-2 border-chart-3 bg-chart-3/10 px-6 font-black text-chart-3 hover:bg-chart-3/20 disabled:opacity-50"
+                      className="border-2 border-chart-3 bg-chart-3/10 text-chart-3 hover:bg-chart-3/20 shadow-md"
                       title={t.doubleDown}
                     >
                       {t.double}
-                    </button>
+                    </TiltBlackjackActionButton>
                   )}
                 </div>
               </div>

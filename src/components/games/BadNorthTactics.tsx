@@ -14,6 +14,43 @@ import {
   Home,
   CheckCircle2,
 } from "lucide-react";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+
+function TiltSquadCardButton({
+  children,
+  isSelected,
+  isDead,
+  onClick,
+}: {
+  children: React.ReactNode;
+  isSelected: boolean;
+  isDead: boolean;
+  onClick: () => void;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      disabled={isDead}
+      style={{ "--card-tilt": transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.12);
+        onClick();
+      }}
+      className={`flex items-center justify-between rounded-lg border p-3 text-left transition will-change-transform transform-(--card-tilt) ${
+        isSelected
+          ? "border-primary bg-primary/10 shadow-sm"
+          : "border-border bg-muted/20 hover:bg-muted/40"
+      } ${isDead ? "opacity-40 cursor-not-allowed" : ""}`}
+    >
+      {children}
+    </button>
+  );
+}
+
 import {
   BadNorthEngine,
   type BadNorthState,
@@ -162,6 +199,7 @@ export default function BadNorthTactics() {
 
   // Select Squad
   const handleSelectSquad = (squadId: string) => {
+    MobileHapticsPro.light();
     engine.selectSquad(squadId);
     setGameState({ ...engine.getState() });
     playSound("sword");
@@ -204,6 +242,7 @@ export default function BadNorthTactics() {
     if (closestTile) {
       const moved = engine.moveSelectedSquad(closestTile.x, closestTile.y);
       if (moved) {
+        MobileHapticsPro.impact();
         playSound("bow");
         setGameState({ ...engine.getState() });
         // Target flag particle
@@ -746,15 +785,10 @@ export default function BadNorthTactics() {
           const isDead = sq.count <= 0;
 
           return (
-            <button
+            <TiltSquadCardButton
               key={sq.id}
-              type="button"
-              disabled={isDead}
-              className={`flex items-center justify-between rounded-lg border p-3 text-left transition ${
-                isSelected
-                  ? "border-primary bg-primary/10 shadow-sm"
-                  : "border-border bg-muted/20 hover:bg-muted/40"
-              } ${isDead ? "opacity-40 cursor-not-allowed" : ""}`}
+              isDead={isDead}
+              isSelected={isSelected}
               onClick={() => handleSelectSquad(sq.id)}
             >
               <div className="flex items-center gap-2.5">
@@ -798,7 +832,7 @@ export default function BadNorthTactics() {
                   {sq.kills} Kills
                 </span>
               </div>
-            </button>
+            </TiltSquadCardButton>
           );
         })}
       </div>
