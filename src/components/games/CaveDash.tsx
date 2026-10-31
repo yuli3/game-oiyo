@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Maximize2, Minimize2, Share2, Volume2, VolumeX } from "lucide-react";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import { celebrate } from "../../lib/games/celebration";
 import type { Locale } from "../../lib/i18n";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
@@ -94,6 +95,33 @@ function paintShip(
 
 const GAME_KEY = "cave-dash";
 type Phase = "menu" | "playing" | "paused" | "over";
+
+function TiltCaveActionButton({
+  children,
+  onClick,
+  className,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  className?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      style={{ "--card-tilt": transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.12);
+        onClick();
+      }}
+      className={`${className ?? ""} will-change-transform transform-(--card-tilt)`}
+    >
+      {children}
+    </button>
+  );
+}
 
 type I18n = {
   title: string; subtitle: string; tapStart: string; controls: string;
@@ -201,6 +229,10 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
   }, []);
 
   const playTone = useCallback((kind: "flap" | "point" | "crash") => {
+    if (kind === "flap") MobileHapticsPro.light();
+    else if (kind === "point") MobileHapticsPro.impact();
+    else if (kind === "crash") MobileHapticsPro.heavy();
+
     if (mutedRef.current || typeof window === "undefined") return;
     const AudioContextClass = window.AudioContext ?? (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!AudioContextClass) return;
@@ -242,6 +274,9 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
     setFinalFrames(gsRef.current?.elapsedFrames ?? 0);
     setDeath(gsRef.current ? explainCaveDashDeath(gsRef.current) : null);
     setIsNewBest(beat && finalScore > 0);
+    if (beat && finalScore > 0) {
+      MobileHapticsPro.success();
+    }
     if (beat && finalScore > 0 && !prefersReducedMotion) celebrate(canvasRef.current, { preset: "shards", colors: ["#67e8f9", "#c4b5fd", "#fef08a"], origin: { x: 0.5, y: 0.5 } });
     phaseRef.current = "over";
     setPhase("over");
@@ -520,9 +555,9 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 rounded-2xl bg-black/55 px-6 text-center backdrop-blur-sm">
               {phase === "over" && (
                 <>
-                  {isNewBest && <div className="text-sm font-black text-violet-300">{t.newBest}</div>}
+                  {isNewBest && <div className="text-sm font-black text-primary">{t.newBest}</div>}
                   <div className="text-xl font-black text-white">{t.gameOver}</div>
-                  {death && <div className="text-sm font-bold text-amber-200">{t.death[death]}</div>}
+                  {death && <div className="text-sm font-bold text-warning">{t.death[death]}</div>}
                   <div className="text-sm text-white/80">{t.score}: <b>{score}</b> · {t.best}: {best}</div>
                   <div className="grid w-full max-w-xs grid-cols-2 gap-2 text-left text-xs text-white/80">
                     <div className="rounded-xl bg-white/10 p-3"><span className="block text-white/60">{t.flightTime}</span><b>{Math.max(1, Math.round(finalFrames / 60))} {t.seconds}</b></div>
@@ -548,12 +583,12 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
                       <Share2 className="h-4 w-4" />
                       <span>{shareCopied ? "복사됨!" : "공유 카드"}</span>
                     </button>
-                    <button type="button" onClick={() => seedRef.current !== null ? begin(seedRef.current) : begin()} disabled={seedRef.current === null} className="min-h-11 rounded-full border border-white/40 px-6 py-2.5 font-bold text-white disabled:opacity-40">{t.retrySame}</button>
+                    <TiltCaveActionButton onClick={() => seedRef.current !== null ? begin(seedRef.current) : begin()} className="min-h-11 rounded-full border border-white/40 px-6 py-2.5 font-bold text-white hover:bg-white/10">{t.retrySame}</TiltCaveActionButton>
                   </>
                 )}
-                <button type="button" onClick={phase === "paused" ? resume : () => begin()} className="min-h-11 rounded-full bg-violet-500 px-8 py-2.5 font-bold text-white transition-colors hover:bg-violet-600">
+                <TiltCaveActionButton onClick={phase === "paused" ? resume : () => begin()} className="min-h-11 rounded-full bg-primary px-8 py-2.5 font-bold text-primary-foreground transition-colors hover:bg-primary/90">
                   {phase === "paused" ? t.resume : phase === "over" ? t.retryNew : t.tapStart}
-                </button>
+                </TiltCaveActionButton>
               </div>
             </div>
           )}

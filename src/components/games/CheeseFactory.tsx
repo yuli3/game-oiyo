@@ -14,10 +14,45 @@ import {
 } from '../../lib/games/cheese-factory';
 import { useAudioContext } from '../../lib/games/use-audio-context';
 import { useClipboardShare } from '../../lib/games/use-clipboard-share';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import { GameStatTile } from '../ui/game/GameStatTile';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import { Badge } from '../ui/badge';
+
+function TiltCheeseVarietyButton({
+  vKey,
+  canAfford,
+  onSpawn,
+}: {
+  vKey: CheeseVariety;
+  canAfford: boolean;
+  onSpawn: (key: CheeseVariety) => void;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  const def = CHEESE_VARIETIES[vKey];
+
+  return (
+    <Button
+      variant={canAfford ? 'default' : 'secondary'}
+      size="sm"
+      disabled={!canAfford}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop();
+        onSpawn(vKey);
+      }}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      className="will-change-transform transform-(--card-tilt) flex flex-col items-center justify-center h-auto"
+    >
+      <span className="font-medium">{def.name.split(' ')[0]}</span>
+      <span className="text-muted-foreground text-xs">
+        {def.baseMilkCost}L • ${def.basePrice}
+      </span>
+    </Button>
+  );
+}
 
 export default function CheeseFactory() {
   const [gameState, setGameState] = useState<CheeseFactoryGameState>(() =>
@@ -55,6 +90,7 @@ export default function CheeseFactory() {
   );
 
   const playCoinSfx = useCallback(() => {
+    MobileHapticsPro.light();
     playTone(587.33, 'sine', 0.08);
     setTimeout(() => playTone(880, 'sine', 0.12), 60);
   }, [playTone]);
@@ -224,6 +260,7 @@ export default function CheeseFactory() {
   }, []);
 
   const handleSpawnBatch = (variety: CheeseVariety) => {
+    MobileHapticsPro.impact();
     const success = spawnCheeseBatch(stateRef.current, variety);
     if (success) {
       playPressSfx();
@@ -232,6 +269,7 @@ export default function CheeseFactory() {
   };
 
   const handleBuyUpgrade = (upgradeId: string) => {
+    MobileHapticsPro.click();
     const success = buyFactoryUpgrade(stateRef.current, upgradeId);
     if (success) {
       playBotSfx();
@@ -240,6 +278,7 @@ export default function CheeseFactory() {
   };
 
   const handleAdjustTemp = (delta: number) => {
+    MobileHapticsPro.selection();
     setCellarTargetTemp(stateRef.current, stateRef.current.targetCellarTemp + delta);
     setGameState({ ...stateRef.current });
   };
@@ -247,6 +286,7 @@ export default function CheeseFactory() {
   const activeCheeses = gameState.ecsWorld.getActiveCount();
 
   const handleShareReport = () => {
+    MobileHapticsPro.success();
     const text = `🧀 [Cheese Factory Tycoon Report]\n• Revenue: $${gameState.totalRevenueEarned} (${gameState.totalCheesesShipped} wheels shipped)\n• Cash: $${gameState.cash}\n• Active Vat Entities: ${activeCheeses}\n• Cellar Temp: ${gameState.cellarTemp.toFixed(1)}°C\nPlay on game.oiyo.net!`;
     shareText(text);
   };
@@ -328,19 +368,12 @@ export default function CheeseFactory() {
                 const def = CHEESE_VARIETIES[vKey];
                 const canAfford = gameState.milkInventory >= def.baseMilkCost;
                 return (
-                  <Button
+                  <TiltCheeseVarietyButton
                     key={vKey}
-                    variant={canAfford ? 'default' : 'secondary'}
-                    size="sm"
-                    disabled={!canAfford}
-                    onClick={() => handleSpawnBatch(vKey)}
-                    className="flex flex-col items-center justify-center h-auto"
-                  >
-                    <span className="font-medium">{def.name.split(' ')[0]}</span>
-                    <span className="text-muted-foreground text-xs">
-                      {def.baseMilkCost}L • ${def.basePrice}
-                    </span>
-                  </Button>
+                    vKey={vKey}
+                    canAfford={canAfford}
+                    onSpawn={handleSpawnBatch}
+                  />
                 );
               })}
             </div>

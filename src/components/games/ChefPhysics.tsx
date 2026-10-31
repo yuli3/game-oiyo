@@ -15,6 +15,7 @@ import { createDebrisWorld, type DebrisMatterLike, type DebrisWorld } from "../.
 import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from "../../lib/games/game-audio";
 import { createHaptics } from "../../lib/games/haptics";
 import { celebrate } from "../../lib/games/celebration";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import {
   createShareCardCanvas,
   copyShareCardToClipboard,
@@ -226,6 +227,34 @@ function Meter({ label, value }: { label: string; value: number }) {
   );
 }
 
+function TiltChefActionButton({
+  disabled,
+  onClick,
+  children,
+}: {
+  disabled: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop();
+        onClick();
+      }}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      className={`${BUTTON} touch-none will-change-transform transform-(--card-tilt) transition-transform duration-150`}
+    >
+      {children}
+    </button>
+  );
+}
+
 export default function ChefPhysics({ locale }: { locale: Locale }) {
   const loc = COPY[locale] ? locale : "en";
   const t = COPY[loc];
@@ -354,6 +383,13 @@ export default function ChefPhysics({ locale }: { locale: Locale }) {
     const current = runRef.current;
     if (!current || current.phase !== "play") return;
     if (choice === "C" && current.cut) return;
+    if (choice === "C") {
+      MobileHapticsPro.impact();
+    } else if (choice === "T") {
+      MobileHapticsPro.medium();
+    } else {
+      MobileHapticsPro.light();
+    }
     hapticsRef.current.fire("place");
     cue("place");
     if (choice === "C" || choice === "T") {
@@ -397,12 +433,14 @@ export default function ChefPhysics({ locale }: { locale: Locale }) {
       try { setRecord(recordResult(GAME_ID, run.phase === "won" ? "w" : "l")); } catch { /* best-effort */ }
     }
     if (run.phase === "won") {
+      MobileHapticsPro.success();
       cue("win");
       hapticsRef.current.fire("win");
       if (containerRef.current) {
         celebrate(containerRef.current, { preset: "sparks" });
       }
     } else if (run.phase === "lost") {
+      MobileHapticsPro.warning();
       cue("fail");
       hapticsRef.current.fire("fail");
     }
@@ -480,7 +518,13 @@ export default function ChefPhysics({ locale }: { locale: Locale }) {
             {run.phase === "play" ? (
               <div className="grid grid-cols-2 gap-2">
                 {(["W", "L", "C", "T"] as const).map((choice) => (
-                  <button key={choice} type="button" disabled={choice === "C" && run.cut} onClick={() => press(choice)} className={`${BUTTON} touch-none`}>{t.act[choice]}</button>
+                  <TiltChefActionButton
+                    key={choice}
+                    disabled={choice === "C" && run.cut}
+                    onClick={() => press(choice)}
+                  >
+                    {t.act[choice]}
+                  </TiltChefActionButton>
                 ))}
               </div>
             ) : null}

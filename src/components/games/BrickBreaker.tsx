@@ -31,6 +31,36 @@ import { BRICK_BREAKER_SPRITES, FX_SPARK_SHEET, FX_SPRITES } from "../../lib/gam
 import { createDebrisWorld, type DebrisMatterLike, type DebrisWorld } from "../../lib/games/debris-world";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { playSpatialTone } from "../../lib/games/spatial-audio";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+
+function TiltBrickBreakerButton({
+  ref,
+  onClick,
+  disabled,
+  className,
+  children,
+  ...props
+}: React.ComponentProps<'button'>) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      ref={ref}
+      type="button"
+      disabled={disabled}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={(e) => {
+        triggerPop();
+        onClick?.(e);
+      }}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      className={`will-change-transform transform-(--card-tilt) transition-transform duration-150 ${className ?? ''}`}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+}
 
 type BrickArt = Record<keyof typeof BRICK_BREAKER_SPRITES, HTMLImageElement> & { sparkSheet: HTMLImageElement };
 function loadBrickArt(): BrickArt | null {
@@ -293,6 +323,11 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
     const events = pausedRef.current ? [] : stepBrickBreaker(gs, deltaMs);
     for (const event of events) {
       if (event.type === "brick-hit") {
+        if (event.destroyed) {
+          MobileHapticsPro.impact();
+        } else {
+          MobileHapticsPro.light();
+        }
         scoreRef.current = gs.score;
         maxComboRef.current = Math.max(maxComboRef.current, gs.combo);
         if (event.destroyed) destroyedRef.current += 1;
@@ -309,6 +344,7 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
         }
       }
       if (event.type === "level-clear") {
+        MobileHapticsPro.success();
         levelRef.current = event.level;
         debrisRef.current?.clear();
         playTone(523, 0.12, "triangle", 0.045);
@@ -319,10 +355,12 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
         toastTimerRef.current = setTimeout(() => setToast(""), reducedMotionRef.current ? 800 : 1200);
       }
       if (event.type === "life-lost") {
+        MobileHapticsPro.warning();
         playTone(82, 0.2, "sawtooth", 0.05);
         setLiveSummary(`${bb2.lifeLost}. ${t.lives} ${event.lives}. ${bb2.ready}.`);
       }
       if (event.type === "game-over") {
+        MobileHapticsPro.heavy();
         playTone(65, 0.28, "sawtooth", 0.055);
         endGame(event.score);
         return;
@@ -337,6 +375,7 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
       const yReversed = prevVy !== 0 && Math.sign(gs.vy) !== Math.sign(prevVy);
 
       if (xReversed || yReversed) {
+        MobileHapticsPro.light();
         // Spawn radial collision sparks
         const count = qualityRef.current === "balanced" ? 4 : 8;
         for (let i = 0; i < count; i++) {
@@ -564,6 +603,7 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
   const launch = useCallback(() => {
     const gs = gsRef.current;
     if (!gs || phaseRef.current !== "playing" || pausedRef.current || gs.launched) return;
+    MobileHapticsPro.medium();
     if (!audioRef.current) audioRef.current = new AudioContext();
     if (audioRef.current.state === "suspended") void audioRef.current.resume();
     launchBrickBreakerBall(gs);
@@ -691,9 +731,9 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
               </>
             )}
             <div className="flex flex-wrap justify-center gap-2">
-              <button ref={phase === "over" ? restartRef : undefined} onClick={begin} className="min-h-11 rounded-full bg-violet-500 px-8 py-2.5 font-bold text-white transition-colors hover:bg-violet-600">
+              <TiltBrickBreakerButton ref={phase === "over" ? restartRef : undefined} onClick={begin} className="min-h-11 rounded-full bg-primary px-8 py-2.5 font-bold text-primary-foreground transition-colors hover:bg-primary/90">
                 {phase === "over" ? t.restart : t.tapStart}
-              </button>
+              </TiltBrickBreakerButton>
               {phase === "over" && (
                 <button
                   type="button"
@@ -711,15 +751,15 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
 
       {phase === "playing" && (
         <div className="mt-3 grid grid-cols-3 gap-2 w-full max-w-md">
-          <button type="button" onClick={launch} disabled={paused || Boolean(gsRef.current?.launched)} className="min-h-11 rounded-xl bg-primary px-2 text-xs font-bold text-primary-foreground disabled:opacity-45">
+          <TiltBrickBreakerButton onClick={launch} disabled={paused || Boolean(gsRef.current?.launched)} className="min-h-11 rounded-xl bg-primary px-2 text-xs font-bold text-primary-foreground disabled:opacity-45">
             {bb2.launch}
-          </button>
-          <button type="button" onClick={togglePause} className="min-h-11 rounded-xl border border-border bg-card px-2 text-xs font-bold">
+          </TiltBrickBreakerButton>
+          <TiltBrickBreakerButton onClick={togglePause} className="min-h-11 rounded-xl border border-border bg-card px-2 text-xs font-bold text-foreground">
             {paused ? bb2.resume : bb2.pause}
-          </button>
-          <button type="button" onClick={() => setSoundEnabled((value) => !value)} aria-label={soundEnabled ? bb2.soundOn : bb2.soundOff} aria-pressed={soundEnabled} className="min-h-11 rounded-xl border border-border bg-card px-2 text-lg">
+          </TiltBrickBreakerButton>
+          <TiltBrickBreakerButton onClick={() => setSoundEnabled((value) => !value)} aria-label={soundEnabled ? bb2.soundOn : bb2.soundOff} aria-pressed={soundEnabled} className="min-h-11 rounded-xl border border-border bg-card px-2 text-lg text-foreground">
             {soundEnabled ? "🔊" : "🔇"}
-          </button>
+          </TiltBrickBreakerButton>
         </div>
       )}
       <div className="sr-only" aria-live="polite" aria-atomic="true">{liveSummary}</div>

@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Volume2, VolumeX, Maximize2, Minimize2, Share2 } from 'lucide-react';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { createDeltaLoop, elapsedSeconds } from '../../lib/games/time-contracts';
@@ -28,6 +29,64 @@ import { CAT_FISHING_KOI } from '../../lib/games/sprites';
 // score is now time-to-catch-all, which makes "best" meaningful.
 
 const BEST_KEY = 'oiyo-cat-fishing-best'; // per difficulty: seconds
+
+function TiltCatDifficultyButton({
+  children,
+  onClick,
+  ariaPressed,
+  className,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  ariaPressed?: boolean;
+  className?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      aria-pressed={ariaPressed}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.1);
+        MobileHapticsPro.selection();
+        onClick();
+      }}
+      className={`${className ?? ''} will-change-transform transform-(--card-tilt)`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function TiltCatActionButton({
+  children,
+  onClick,
+  className,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  className?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.12);
+        onClick();
+      }}
+      className={`${className ?? ''} will-change-transform transform-(--card-tilt)`}
+    >
+      {children}
+    </button>
+  );
+}
 
 const COPY = {
     ko: { title: '고양이 낚시', subtitle: 'Cat Fishing', normal: '보통', hard: '어려움', hell: '헬', caught: '잡은 물고기', time: '시간', best: '최단 기록', win: '다 잡았어요! 🐱', winSub: '오늘 밤 고양이들은 만찬이에요.', hintNormal: '물고기를 탭해서 잡으세요!', hintHard: '조심! 도망가요!', hintHell: '초고속 모드!', again: '다시 하기', same: '같은 연못', sound: '소리' },
@@ -184,6 +243,7 @@ const CatFishing: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         setFish((prev) => {
             const next = catchFishAt(prev, id);
             if (allCaught(next)) {
+                MobileHapticsPro.success();
                 tone(880, 0.22);
                 if (containerRef.current) {
                     celebrate(containerRef.current, { preset: "stardust" });
@@ -195,6 +255,7 @@ const CatFishing: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     return nb;
                 });
             } else {
+                MobileHapticsPro.impact();
                 tone(520, 0.06);
             }
             return next;
@@ -264,11 +325,11 @@ const CatFishing: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 <div className="mb-4 flex flex-wrap items-center gap-2">
                     <div className="inline-flex gap-1">
                         {(['normal', 'hard', 'hell'] as Difficulty[]).map((d) => (
-                            <button key={d} onClick={() => restart(d)}
-                                aria-pressed={difficulty === d}
+                            <TiltCatDifficultyButton key={d} onClick={() => restart(d)}
+                                ariaPressed={difficulty === d}
                                 className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-colors ${difficulty === d ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
                                 {t[d]}
-                            </button>
+                            </TiltCatDifficultyButton>
                         ))}
                     </div>
                     <div className="ml-auto flex gap-3 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
@@ -282,7 +343,7 @@ const CatFishing: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     ref={areaRef}
                     onMouseMove={(e) => trackPointer(e.clientX, e.clientY)}
                     onTouchMove={(e) => trackPointer(e.touches[0].clientX, e.touches[0].clientY)}
-                    className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden border border-border bg-gradient-to-b from-sky-100 to-blue-200 cursor-crosshair touch-none select-none"
+                    className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden border border-border bg-gradient-to-b from-muted to-muted/80 cursor-crosshair touch-none select-none"
                     aria-label={t.title}
                 >
                     {fish.map((f) => !f.caught && (
@@ -320,12 +381,12 @@ const CatFishing: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                             <p className="text-sm text-muted-foreground">{t.winSub}</p>
                             <p className="text-sm font-bold text-muted-foreground">{t.time} {formatElapsed(seconds)}</p>
                             <div className="mt-3 flex flex-wrap justify-center gap-2">
-                            <button type="button" onClick={() => restart()} className="px-8 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity">
+                            <TiltCatActionButton onClick={() => restart()} className="px-8 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity">
                                 {t.again}
-                            </button>
-                            <button type="button" onClick={() => restart(difficulty, seedRef.current)} className="px-6 py-3 rounded-full border font-bold">
+                            </TiltCatActionButton>
+                            <TiltCatActionButton onClick={() => restart(difficulty, seedRef.current)} className="px-6 py-3 rounded-full border border-border bg-card text-foreground font-bold hover:bg-muted">
                                 {t.same}
-                            </button>
+                            </TiltCatActionButton>
                             <button
                                 type="button"
                                 onClick={handleShareCard}
