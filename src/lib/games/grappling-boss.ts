@@ -1,9 +1,9 @@
 import {
-  stepVerletPendulum2D,
   solveFabrikChain2D,
   type PendulumBody2D,
   type IkJoint2D,
 } from "./engine";
+import { NewtonianGrapplePhysics2D } from "./grappling-engine-pro";
 
 export interface ArenaAnchor {
   id: string;
@@ -244,32 +244,34 @@ export function stepGrapplingBoss(
     nextState.activeLog = p.isHooked ? "Hook attached! Pendulum swing active." : "Hook released!";
   }
 
-  // 2. Player Horizontal Movement & Jump
+  const newtonianSim = new NewtonianGrapplePhysics2D(460, 0.0006, 0.015);
+
+  // 2. Player Horizontal Jet Thrusters
+  let thrustX = 0;
   if (input.moveAxis !== 0) {
-    const accel = p.isHooked ? 380 : 550;
-    p.vx += input.moveAxis * accel * dt;
-  } else {
-    // Air/Ground friction
-    const friction = p.isHooked ? 0.995 : 0.92;
-    p.vx *= Math.pow(friction, dt * 60);
+    thrustX = input.moveAxis * (p.isHooked ? 480 : 620);
   }
 
+  // 3. Jump / Momentum Slingshot Release
   if (input.jump && (nextState.isGrounded || p.isHooked)) {
     if (p.isHooked) {
-      // Slingshot jump off the rope!
+      // Natural momentum conservation: releases along current tangential velocity vector!
+      const released = newtonianSim.releaseWithMomentum(p, 120);
+      p.x = released.x;
+      p.y = released.y;
+      p.vx = released.vx;
+      p.vy = released.vy;
       p.isHooked = false;
       p.ropeLength = 0;
-      p.vy = -340;
-      p.vx *= 1.3;
-      nextState.activeLog = "Grapple Slingshot Jump!";
+      nextState.activeLog = "Grapple Slingshot Momentum Boost!";
     } else {
       p.vy = -380;
       nextState.isGrounded = false;
     }
   }
 
-  // 3. Step Verlet Pendulum Physics
-  const steppedBody = stepVerletPendulum2D(p, dt, 420); // 420px/s^2 gravity
+  // 4. Step Physical Dynamics (Lagrangian Pendulum & Aerodynamic Flight)
+  const steppedBody = newtonianSim.step(p, dt, thrustX, 0);
   p.x = steppedBody.x;
   p.y = steppedBody.y;
   p.vx = steppedBody.vx;

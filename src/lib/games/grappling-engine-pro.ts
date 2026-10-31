@@ -9,7 +9,7 @@
  */
 
 // ============================================================================
-// 1. Camera Dynamics (Mild & Polished Punch Zoom & Elastic FOV)
+// 1. Camera Dynamics (Rock-Solid & Non-Dizzying Stable Camera)
 // ============================================================================
 
 export class CameraDynamics2D {
@@ -18,27 +18,24 @@ export class CameraDynamics2D {
   private zoomVelocity: number = 0;
   public punchAmount: number = 0;
 
-  // Polished mild spring constants (no extreme disorienting shakes)
-  private readonly stiffness: number = 240;
-  private readonly damping: number = 22;
+  // Ultra-mild, locked constants to strictly prevent nausea/dizziness
+  private readonly stiffness: number = 300;
+  private readonly damping: number = 30;
 
   /**
-   * Adds a subtle, high-impact punch zoom (capped low for comfort).
-   * amount = 0.04..0.06 creates a crisp tactile snap without causing nausea.
+   * Adds an imperceptible micro-punch (capped extremely low: max 0.015)
+   * to provide subtle feedback without vibrating or tilting the screen.
    */
-  public punch(amount: number = 0.04): void {
-    this.punchAmount = Math.min(0.08, this.punchAmount + amount * 0.5);
+  public punch(amount: number = 0.01): void {
+    this.punchAmount = Math.min(0.015, this.punchAmount + amount * 0.2);
   }
 
   /**
-   * Updates camera zoom responding to player speed and elastic recovery.
+   * Rock-solid camera: Keep zoom fixed at 1.0. No dizzying velocity-FOV zoom pulses.
    */
-  public update(dtSeconds: number, playerSpeed: number): void {
-    // Subtle velocity FOV: mild zoom-out up to 0.95 at peak velocity
-    const speedRatio = Math.min(1.0, playerSpeed / 450);
-    this.targetZoom = 1.0 - speedRatio * 0.05;
+  public update(dtSeconds: number, _playerSpeed: number): void {
+    this.targetZoom = 1.0; // Strictly stable 1.0 zoom
 
-    // Decay punch amount with spring physics
     const currentTotalZoom = this.zoom + this.punchAmount;
     const displacement = currentTotalZoom - this.targetZoom;
     const springForce = -this.stiffness * displacement;
@@ -47,16 +44,179 @@ export class CameraDynamics2D {
 
     this.zoomVelocity += acceleration * dtSeconds;
     this.zoom += this.zoomVelocity * dtSeconds;
-    this.punchAmount = Math.max(0, this.punchAmount - dtSeconds * 4.0);
+    this.punchAmount = Math.max(0, this.punchAmount - dtSeconds * 6.0);
 
-    // Tightly clamped for visual comfort
-    this.zoom = Math.max(0.92, Math.min(1.08, this.zoom));
+    // Locked within 0.99..1.01 for rock-solid visual stability
+    this.zoom = Math.max(0.99, Math.min(1.01, this.zoom));
   }
 
   public apply(ctx: CanvasRenderingContext2D, centerX: number, centerY: number): void {
     ctx.translate(centerX, centerY);
     ctx.scale(this.zoom, this.zoom);
     ctx.translate(-centerX, -centerY);
+  }
+}
+
+// ============================================================================
+// 1.5. Newtonian Grapple & Pendulum Physics Engine (Conservation of Momentum)
+// ============================================================================
+
+export interface NewtonianBody2D {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  isHooked: boolean;
+  anchorX: number;
+  anchorY: number;
+  ropeLength: number;
+}
+
+export class NewtonianGrapplePhysics2D {
+  public readonly gravity: number;
+  public readonly airDragCoeff: number;
+  public readonly wireDampingCoeff: number;
+
+  constructor(
+    gravity: number = 440,
+    airDragCoeff: number = 0.0008,
+    wireDampingCoeff: number = 0.015
+  ) {
+    this.gravity = gravity;
+    this.airDragCoeff = airDragCoeff;
+    this.wireDampingCoeff = wireDampingCoeff;
+  }
+
+  /**
+   * Steps the body through dt using exact Lagrangian/Newtonian mechanics:
+   * - Constrained circular pendulum mechanics when wire is taut
+   * - Full linear momentum conservation on release (no artificial velocity overrides)
+   * - Aerodynamic drag and gravity in free flight
+   */
+  public step(
+    body: NewtonianBody2D,
+    dtSeconds: number,
+    thrustX: number = 0,
+    thrustY: number = 0
+  ): NewtonianBody2D {
+    const dt = Math.min(0.05, Math.max(0.001, dtSeconds));
+    let { x, y, vx, vy, isHooked, anchorX, anchorY, ropeLength } = body;
+
+    if (!isHooked || ropeLength <= 0) {
+      // ----------------------------------------------------------------------
+      // Free-Fall Projectile Flight (Parabolic Trajectory & Momentum)
+      // ----------------------------------------------------------------------
+      const speed = Math.hypot(vx, vy);
+      const dragFactor = Math.max(0, 1 - this.airDragCoeff * speed * dt * 60);
+
+      vx = (vx + thrustX * dt) * dragFactor;
+      vy = (vy + (this.gravity + thrustY) * dt) * dragFactor;
+
+      x += vx * dt;
+      y += vy * dt;
+    } else {
+      // ----------------------------------------------------------------------
+      // Constrained Ideal Pendulum Mechanics (Tangential & Centripetal Forces)
+      // ----------------------------------------------------------------------
+      const relX = x - anchorX;
+      const relY = y - anchorY;
+      const currentDist = Math.hypot(relX, relY);
+
+      if (currentDist < 0.0001) {
+        // Degenerate case: at anchor center, fall down
+        y += 1;
+        return { x, y, vx, vy, isHooked, anchorX, anchorY, ropeLength };
+      }
+
+      // Unit radial vector pointing outwards from anchor
+      const nx = relX / currentDist;
+      const ny = relY / currentDist;
+
+      // Unit tangent vector in direction of motion (clockwise: -ny, nx)
+      const tx = -ny;
+      const ty = nx;
+
+      // Decompose current velocity into tangential component
+      let vt = vx * tx + vy * ty;
+
+      // If wire is taut (distance >= ropeLength):
+      if (currentDist >= ropeLength) {
+        // Enforce physical rope length constraint
+        x = anchorX + nx * ropeLength;
+        y = anchorY + ny * ropeLength;
+
+        // Radial velocity outwards is eliminated by rope tension T
+        // Tension T = m * (g * cos(theta) + vt^2 / L)
+        // Tangential acceleration comes strictly from gravity and thrusters:
+        // a_t = g * tx + thrust * tangent
+        const gravityTangential = this.gravity * ty; // ty = nx = sin(theta)
+        const thrustTangential = thrustX * tx + thrustY * ty;
+
+        vt += (gravityTangential + thrustTangential) * dt;
+
+        // Wire internal friction and air resistance
+        vt *= Math.max(0, 1 - this.wireDampingCoeff * dt * 60);
+
+        // Reconstruct 2D Cartesian velocity purely from tangential momentum
+        vx = vt * tx;
+        vy = vt * ty;
+
+        // Integrate position along arc
+        x += vx * dt;
+        y += vy * dt;
+
+        // Re-enforce exact constraint to prevent numerical drift
+        const updatedRelX = x - anchorX;
+        const updatedRelY = y - anchorY;
+        const updatedDist = Math.max(0.0001, Math.hypot(updatedRelX, updatedRelY));
+        x = anchorX + (updatedRelX / updatedDist) * ropeLength;
+        y = anchorY + (updatedRelY / updatedDist) * ropeLength;
+      } else {
+        // Rope is slack: regular free-fall until rope tautens
+        vx += thrustX * dt;
+        vy += (this.gravity + thrustY) * dt;
+        x += vx * dt;
+        y += vy * dt;
+      }
+    }
+
+    return {
+      x,
+      y,
+      vx,
+      vy,
+      isHooked,
+      anchorX,
+      anchorY,
+      ropeLength,
+    };
+  }
+
+  /**
+   * Release rope with conservation of momentum:
+   * Keeps exact tangential velocity, and optionally adds an elastic impulse along velocity vector.
+   */
+  public releaseWithMomentum(
+    body: NewtonianBody2D,
+    elasticBoost: number = 0
+  ): NewtonianBody2D {
+    let { vx, vy } = body;
+    const speed = Math.hypot(vx, vy);
+
+    if (elasticBoost > 0 && speed > 10) {
+      const dirX = vx / speed;
+      const dirY = vy / speed;
+      vx += dirX * elasticBoost;
+      vy += dirY * elasticBoost;
+    }
+
+    return {
+      ...body,
+      isHooked: false,
+      ropeLength: 0,
+      vx,
+      vy,
+    };
   }
 }
 

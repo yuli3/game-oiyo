@@ -372,9 +372,9 @@ export function GrapplingBoss() {
           );
         } else if (cycleProgress < chargeTime + firingTime) {
           if (!laser.active) {
-            // Mild screen shake (no violent dizziness)
-            juice.camera.addTrauma(0.22);
-            cameraDyn.punch(0.04);
+            // Ultra-mild, non-dizzying screen feedback
+            juice.camera.addTrauma(0.04);
+            cameraDyn.punch(0.005);
             sfx.playHeavyExplosion();
             triggerMobileHaptic("medium");
           }
@@ -389,26 +389,24 @@ export function GrapplingBoss() {
           const pDist = Math.abs((curState.player.x - laser.startX) * nx + (curState.player.y - laser.startY) * ny);
           if (pDist < 22) {
             curState.playerHp = Math.max(0, curState.playerHp - 45 * effectiveDt);
-            juice.camera.addTrauma(0.25);
+            juice.camera.addTrauma(0.05);
             triggerMobileHaptic("warning");
           }
         } else {
           laser.clear();
         }
 
-        // Boss Impact Feedback (Mild punch zoom)
+        // Boss Impact Feedback (Clean particle impact, stable camera)
         if (curState.boss.hp < prevBossHp) {
           const dmg = Math.round(prevBossHp - curState.boss.hp);
           const isCrit = dmg > 35;
           juice.impact(curState.boss.x, curState.boss.y, isCrit ? "heavy" : "light", `-${dmg}`);
-          cameraDyn.punch(isCrit ? 0.04 : 0.02);
           triggerMobileHaptic("light");
         }
 
-        // Player Impact Feedback
+        // Player Impact Feedback (Subtle warning trauma only)
         if (curState.playerHp < prevPlayerHp) {
-          juice.camera.addTrauma(0.3);
-          cameraDyn.punch(0.05);
+          juice.camera.addTrauma(0.06);
           juice.particles.emit(curState.player.x, curState.player.y, {
             count: 14,
             kind: "spark",
