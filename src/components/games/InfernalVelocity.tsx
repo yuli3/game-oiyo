@@ -6,11 +6,54 @@ import { reviewInfernalRun } from "../../lib/games/infernal-velocity";
 import type { InfernalResult, InfernalSceneCopy } from "./InfernalVelocityScene";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { celebrate } from "../../lib/games/celebration";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import {
   createShareCardCanvas,
   copyShareCardToClipboard,
   downloadShareCard,
 } from "../../lib/games/share-card";
+
+function TiltInfernalButton({
+  children,
+  onClick,
+  className = "",
+  disabled = false,
+  title,
+  ariaLabel,
+  ariaPressed,
+  type = "button",
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+  ariaPressed?: boolean;
+  type?: "button" | "submit";
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type={type}
+      onClick={() => {
+        triggerPop(0.2);
+        onClick?.();
+      }}
+      disabled={disabled}
+      title={title}
+      aria-label={ariaLabel}
+      aria-pressed={ariaPressed}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      style={{ "--infernal-tilt": transformCss } as React.CSSProperties}
+      className={`touch-manipulation will-change-transform transform-(--infernal-tilt) transition-transform duration-100 active:scale-95 disabled:pointer-events-none disabled:opacity-40 ${className}`}
+    >
+      {children}
+    </button>
+  );
+}
 
 const Scene = lazy(() => import("./InfernalVelocityScene"));
 const GAME_KEY = "infernal-velocity";
@@ -126,17 +169,19 @@ export default function InfernalVelocity({ locale }: { locale: Locale }) {
       >
         {/* Top-Right Portal Toggle in Playing */}
         <div className="absolute right-4 top-4 z-30 flex items-center gap-2">
-          <button
-            type="button"
-            onClick={togglePortal}
-            aria-pressed={isImmersive}
-            aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+          <TiltInfernalButton
+            onClick={() => {
+              MobileHapticsPro.light();
+              togglePortal();
+            }}
+            ariaPressed={isImmersive}
+            ariaLabel={isImmersive ? portalLabels.exit : portalLabels.enter}
             title={isImmersive ? portalLabels.exit : portalLabels.enter}
-            className="flex min-h-11 items-center gap-1.5 rounded-xl border border-border bg-card/80 px-3 py-2 text-xs font-bold text-foreground shadow-xs backdrop-blur-md transition-transform hover:bg-muted active:scale-95"
+            className="flex min-h-11 items-center gap-1.5 rounded-xl border border-border bg-card/80 px-3 py-2 text-xs font-bold text-foreground shadow-xs backdrop-blur-md hover:bg-muted"
           >
             {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
             <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
-          </button>
+          </TiltInfernalButton>
         </div>
 
         <div className={`w-full ${isImmersive ? "h-full" : "aspect-[16/10] min-h-[560px] max-h-[84vh]"}`}>
@@ -157,24 +202,30 @@ export default function InfernalVelocity({ locale }: { locale: Locale }) {
           <h2 className="mt-4 text-5xl font-black uppercase leading-[.86] tracking-[-.055em] sm:text-7xl">{t.title}</h2>
           <p className="mt-6 max-w-2xl text-sm leading-7 text-zinc-300 sm:text-base">{t.subtitle}</p>
           <div className="mt-7 flex flex-wrap items-center gap-3">
-            <button
+            <TiltInfernalButton
               disabled={!available}
-              onClick={() => { setResult(null); setPhase("playing"); }}
-              className="min-h-12 skew-x-[-5deg] bg-orange-500 px-8 py-3 text-sm font-black uppercase tracking-widest text-black shadow-[0_0_30px_rgba(249,115,22,.25)] transition-transform hover:-translate-y-0.5 disabled:opacity-40"
+              onClick={() => {
+                MobileHapticsPro.medium();
+                setResult(null);
+                setPhase("playing");
+              }}
+              className="min-h-12 skew-x-[-5deg] bg-orange-500 px-8 py-3 text-sm font-black uppercase tracking-widest text-black shadow-[0_0_30px_rgba(249,115,22,.25)] hover:-translate-y-0.5"
             >
               {phase === "result" ? t.again : t.start}
-            </button>
-            <button
-              type="button"
-              onClick={togglePortal}
-              aria-pressed={isImmersive}
-              aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+            </TiltInfernalButton>
+            <TiltInfernalButton
+              onClick={() => {
+                MobileHapticsPro.light();
+                togglePortal();
+              }}
+              ariaPressed={isImmersive}
+              ariaLabel={isImmersive ? portalLabels.exit : portalLabels.enter}
               title={isImmersive ? portalLabels.exit : portalLabels.enter}
-              className="flex min-h-12 items-center gap-1.5 rounded-xl border border-border bg-card/60 px-4 py-3 text-xs font-bold text-foreground transition-transform hover:bg-muted active:scale-95"
+              className="flex min-h-12 items-center gap-1.5 rounded-xl border border-border bg-card/60 px-4 py-3 text-xs font-bold text-foreground hover:bg-muted"
             >
               {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
               <span>{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
-            </button>
+            </TiltInfernalButton>
             <span className="border border-white/10 bg-white/5 px-4 py-3 font-mono text-xs">{t.best}: <strong>{best.toLocaleString()}</strong></span>
           </div>
           {!available && <p role="alert" className="mt-4 text-sm font-bold text-orange-300">{t.unavailable}</p>}
@@ -192,14 +243,16 @@ export default function InfernalVelocity({ locale }: { locale: Locale }) {
                 → {reviewInfernalRun(result) === "accuracy" ? t.accuracy : reviewInfernalRun(result) === "kills" ? t.kills : t.wave}
               </p>
               <div className="mt-4 flex justify-center">
-                <button
-                  type="button"
-                  onClick={handleShareCard}
-                  className="flex min-h-11 items-center gap-1.5 rounded-xl border border-border bg-card/80 hover:bg-muted px-5 py-2.5 text-xs font-bold text-foreground transition-colors shadow-xs"
+                <TiltInfernalButton
+                  onClick={() => {
+                    MobileHapticsPro.light();
+                    handleShareCard();
+                  }}
+                  className="flex min-h-11 items-center gap-1.5 rounded-xl border border-border bg-card/80 hover:bg-muted px-5 py-2.5 text-xs font-bold text-foreground shadow-xs"
                 >
                   {shareCardCopied ? <Check className="size-4 text-primary" /> : <Share2 className="size-4" />}
                   <span>{shareCardCopied ? "복사 완료!" : "전투 결과 카드 공유"}</span>
-                </button>
+                </TiltInfernalButton>
               </div>
             </>
           )}

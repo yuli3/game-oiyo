@@ -2,6 +2,7 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { usePlayFrameloop } from "../../lib/games/play-frameloop";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AdditiveBlending, CanvasTexture, MathUtils, NearestFilter, RepeatWrapping, Vector3, type Group, type Mesh, type MeshBasicMaterial } from "three";
+import { MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import {
   DEMON_HEALTH,
   INFERNAL_WEAPONS,
@@ -132,7 +133,12 @@ export default function InfernalVelocityScene({ copy, onFinish }: Props) {
         <div className="min-w-32 bg-black/55 px-3 py-2 text-right backdrop-blur-sm">
           <div className="text-[10px] text-red-400">{copy.health}</div>
           <div className="text-2xl font-black">{Math.ceil(hud.health)}</div>
-          <div className="mt-1 h-1.5 bg-white/10"><div className="h-full bg-red-500" style={{ width: `${hud.health}%` }} /></div>
+          <div className="mt-1 h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-red-500 transition-all duration-100 w-(--health-pct)"
+              style={{ '--health-pct': `${Math.max(0, Math.min(100, Math.round(hud.health)))}%` } as React.CSSProperties}
+            />
+          </div>
         </div>
       </div>
 
@@ -169,8 +175,26 @@ export default function InfernalVelocityScene({ copy, onFinish }: Props) {
 }
 
 function Touch({ label, onChange, hot = false }: { label: string; onChange: (value: boolean) => void; hot?: boolean }) {
-  return <button className={`size-14 rounded-full border text-[10px] font-black backdrop-blur ${hot ? "border-orange-400 bg-orange-500/70 text-black" : "border-white/20 bg-black/55"}`}
-    onPointerDown={(e) => { e.preventDefault(); onChange(true); }} onPointerUp={() => onChange(false)} onPointerCancel={() => onChange(false)}>{label}</button>;
+  return (
+    <button
+      className={`size-14 touch-manipulation rounded-full border text-[10px] font-black backdrop-blur transition-transform active:scale-95 ${
+        hot ? "border-orange-400 bg-orange-500/70 text-black shadow-lg" : "border-white/20 bg-black/55 text-white"
+      }`}
+      onPointerDown={(e) => {
+        e.preventDefault();
+        if (hot) {
+          MobileHapticsPro.medium();
+        } else {
+          MobileHapticsPro.light();
+        }
+        onChange(true);
+      }}
+      onPointerUp={() => onChange(false)}
+      onPointerCancel={() => onChange(false)}
+    >
+      {label}
+    </button>
+  );
 }
 
 function InfernalWorld({ controls, setHud, onFinish, coarse, muted }: {
@@ -231,13 +255,13 @@ function InfernalWorld({ controls, setHud, onFinish, coarse, muted }: {
     }
 
     if (c.jump && !s.jumpHeld && canJump(s.jumps)) {
-      s.velocity.y = 8.2; s.jumps++; s.grounded = false; audio.current?.jump();
+      s.velocity.y = 8.2; s.jumps++; s.grounded = false; audio.current?.jump(); MobileHapticsPro.light();
     }
     s.jumpHeld = c.jump;
     s.dash = Math.min(1, s.dash + delta / 1.45);
     if (c.dash && !s.dashHeld && s.dash >= 1) {
       const dash = dashVelocity({ x: forward.x, z: forward.z }, { x: right.x, z: right.z }, { x: inputX, z: inputZ });
-      s.velocity.x = dash.x; s.velocity.z = dash.z; s.dash = 0; s.shake = .18; audio.current?.dash();
+      s.velocity.x = dash.x; s.velocity.z = dash.z; s.dash = 0; s.shake = .18; audio.current?.dash(); MobileHapticsPro.medium();
     }
     s.dashHeld = c.dash;
     s.velocity.y -= 22 * delta; s.y += s.velocity.y * delta;
@@ -253,7 +277,7 @@ function InfernalWorld({ controls, setHud, onFinish, coarse, muted }: {
       const order: InfernalWeaponId[] = ["scattergun", "rocket", "plasma"];
       s.weapon = order[(order.indexOf(s.weapon) + 1) % order.length];
       s.ammo = Math.min(s.ammo || INFERNAL_WEAPONS[s.weapon].magazine, INFERNAL_WEAPONS[s.weapon].magazine);
-      s.reserve = Math.max(s.reserve, INFERNAL_WEAPONS[s.weapon].reserve); audio.current?.swap();
+      s.reserve = Math.max(s.reserve, INFERNAL_WEAPONS[s.weapon].reserve); audio.current?.swap(); MobileHapticsPro.selection();
     }
     s.swapHeld = c.swap;
     s.heat = coolHeat(s.heat, delta);
@@ -261,7 +285,7 @@ function InfernalWorld({ controls, setHud, onFinish, coarse, muted }: {
     const now = performance.now();
     if (c.fire && s.ammo > 0 && s.heat < 100 && now - s.lastShot >= shotIntervalMs(weapon)) {
       s.lastShot = now; s.ammo--; s.shots++; s.heat += weapon.heat; s.shake = s.weapon === "rocket" ? .55 : .25;
-      audio.current?.shot(s.weapon);
+      audio.current?.shot(s.weapon); MobileHapticsPro.light();
       const direction = new Vector3(0, 0, -1).applyEuler(camera.rotation);
       if (s.weapon === "rocket" || s.weapon === "plasma") {
         projectiles.current.push({
@@ -282,8 +306,11 @@ function InfernalWorld({ controls, setHud, onFinish, coarse, muted }: {
           target.health = result.health; s.hits++; s.lastHit = now;
           explode(target.position, result.killed ? "#ff2b00" : "#ffb000", result.killed ? 1.8 : .7); audio.current?.impact(result.killed);
           if (result.killed) {
+            MobileHapticsPro.success();
             s.kills++; s.combo++; s.score += eliminationScore(target.kind, s.combo);
             demons.current = demons.current.filter((demon) => demon.id !== target!.id);
+          } else {
+            MobileHapticsPro.light();
           }
         }
       }
@@ -328,7 +355,7 @@ function InfernalWorld({ controls, setHud, onFinish, coarse, muted }: {
       s.spawnLeft--; s.spawnClock = Math.max(.18, .72 - s.wave * .035);
     }
     if (s.spawnLeft === 0 && demons.current.length === 0) {
-      s.wave++; s.spawnLeft = waveBudget(s.wave); s.health = Math.min(100, s.health + 18); s.ammo = weapon.magazine; s.reserve += Math.ceil(weapon.reserve * .3); audio.current?.wave();
+      s.wave++; s.spawnLeft = waveBudget(s.wave); s.health = Math.min(100, s.health + 18); s.ammo = weapon.magazine; s.reserve += Math.ceil(weapon.reserve * .3); audio.current?.wave(); MobileHapticsPro.success();
     }
 
     for (const demon of demons.current) {
@@ -339,11 +366,11 @@ function InfernalWorld({ controls, setHud, onFinish, coarse, muted }: {
       if (distance < (demon.kind === "brute" ? 2.2 : 1.45) && s.elapsed >= demon.nextAttack) {
         s.health -= demon.kind === "brute" ? 19 : 8;
         demon.nextAttack = s.elapsed + (demon.kind === "crawler" ? .72 : 1.05);
-        s.shake = .35; audio.current?.impact(false);
+        s.shake = .35; audio.current?.impact(false); MobileHapticsPro.heavy();
       }
     }
     if (s.health <= 0 || s.elapsed >= 210) {
-      s.ended = true; audio.current?.death();
+      s.ended = true; audio.current?.death(); MobileHapticsPro.heavy();
       onFinish({ score: s.score, kills: s.kills, wave: s.wave, accuracy: s.shots ? Math.round(s.hits / s.shots * 100) : 0 });
     }
     if (Math.floor(s.elapsed * 15) !== Math.floor((s.elapsed - delta) * 15)) {

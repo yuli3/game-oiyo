@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Bomb, Crosshair, Gamepad2, Headphones, Maximize2, Minimize2, Shield, Volume2, VolumeX, Share2, Check } from "lucide-react";
-import { useDynamicDifficultyPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { useDynamicDifficultyPro, useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import type { Locale } from "../../lib/i18n";
 import { getBest, recordBest } from "../../lib/games/records";
 import { reviewTempestMission } from "../../lib/games/iron-tempest";
@@ -13,6 +13,48 @@ import {
   copyShareCardToClipboard,
   downloadShareCard,
 } from "../../lib/games/share-card";
+
+function TiltTempestButton({
+  children,
+  onClick,
+  className = "",
+  disabled = false,
+  title,
+  ariaLabel,
+  ariaPressed,
+  type = "button",
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+  ariaPressed?: boolean;
+  type?: "button" | "submit";
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type={type}
+      onClick={() => {
+        triggerPop(0.2);
+        onClick?.();
+      }}
+      disabled={disabled}
+      title={title}
+      aria-label={ariaLabel}
+      aria-pressed={ariaPressed}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      style={{ "--tempest-tilt": transformCss } as React.CSSProperties}
+      className={`touch-manipulation will-change-transform transform-(--tempest-tilt) transition-transform duration-100 active:scale-95 disabled:pointer-events-none disabled:opacity-40 ${className}`}
+    >
+      {children}
+    </button>
+  );
+}
 
 const GAME_KEY = "iron-tempest";
 type Phase = "briefing" | "playing" | "result";
@@ -142,28 +184,32 @@ export default function IronTempest({ locale }: { locale: Locale }) {
         <section className="not-prose relative left-1/2 my-7 w-[min(100vw-1rem,1200px)] -translate-x-1/2 overflow-hidden rounded-2xl border-4 border-[#17110b] bg-[#17110b] text-[#fff6d8] shadow-2xl">
           {/* Top portal controls in briefing / result */}
           <div className="absolute right-4 top-4 z-20 flex items-center gap-2">
-            <button
-              type="button"
-              onClick={toggleMute}
-              aria-pressed={muted}
-              aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+            <TiltTempestButton
+              onClick={() => {
+                MobileHapticsPro.light();
+                toggleMute();
+              }}
+              ariaPressed={muted}
+              ariaLabel={muted ? portalLabels.unmute : portalLabels.mute}
               title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`}
-              className="flex min-h-11 items-center gap-1.5 rounded-xl border border-border bg-card/85 px-3 py-2 text-xs font-bold text-foreground shadow-xs backdrop-blur-md transition-transform hover:bg-muted active:scale-95"
+              className="flex min-h-11 items-center gap-1.5 rounded-xl border border-border bg-card/85 px-3 py-2 text-xs font-bold text-foreground shadow-xs backdrop-blur-md hover:bg-muted"
             >
               {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
               <span className="hidden sm:inline">{muted ? portalLabels.unmute : portalLabels.mute}</span>
-            </button>
-            <button
-              type="button"
-              onClick={togglePortal}
-              aria-pressed={isImmersive}
-              aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+            </TiltTempestButton>
+            <TiltTempestButton
+              onClick={() => {
+                MobileHapticsPro.light();
+                togglePortal();
+              }}
+              ariaPressed={isImmersive}
+              ariaLabel={isImmersive ? portalLabels.exit : portalLabels.enter}
               title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
-              className="flex min-h-11 items-center gap-1.5 rounded-xl border border-border bg-card/85 px-3 py-2 text-xs font-bold text-foreground shadow-xs backdrop-blur-md transition-transform hover:bg-muted active:scale-95"
+              className="flex min-h-11 items-center gap-1.5 rounded-xl border border-border bg-card/85 px-3 py-2 text-xs font-bold text-foreground shadow-xs backdrop-blur-md hover:bg-muted"
             >
               {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
               <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
-            </button>
+            </TiltTempestButton>
           </div>
 
           <div className="relative min-h-[520px] bg-cover bg-center p-5 sm:p-10 lg:p-14" style={{ backgroundImage: "linear-gradient(90deg,rgba(6,8,8,.96),rgba(6,8,8,.72) 48%,rgba(6,8,8,.08)),url('/games/iron-tempest-social.png')" }}>
@@ -173,7 +219,18 @@ export default function IronTempest({ locale }: { locale: Locale }) {
                 <img src="/assets/sprites/weapons/heavy-machine-gun.webp" alt="" className="h-16 min-w-0 flex-1 object-contain"/>
                 <img src="/assets/sprites/weapons/rocket-launcher.webp" alt="" className="h-16 min-w-0 flex-1 object-contain"/>
               </div>
-              <div className="mt-7 flex flex-wrap items-center gap-3"><button onClick={() => setPhase("playing")} className="min-h-12 border-b-4 border-[#8b290f] bg-[#ffb11b] px-9 py-3 font-mono text-sm font-black text-[#1d1204] active:translate-y-1 active:border-b-0">{phase === "result" ? t.again : t.start}</button><span className="bg-black/75 px-4 py-3 font-mono text-xs">{t.best} <b className="text-[#ffcf4f]">{best.toLocaleString()}</b></span></div>
+              <div className="mt-7 flex flex-wrap items-center gap-3">
+                <TiltTempestButton
+                  onClick={() => {
+                    MobileHapticsPro.medium();
+                    setPhase("playing");
+                  }}
+                  className="min-h-12 border-b-4 border-[#8b290f] bg-[#ffb11b] px-9 py-3 font-mono text-sm font-black text-[#1d1204] active:translate-y-1 active:border-b-0"
+                >
+                  {phase === "result" ? t.again : t.start}
+                </TiltTempestButton>
+                <span className="bg-black/75 px-4 py-3 font-mono text-xs">{t.best} <b className="text-[#ffcf4f]">{best.toLocaleString()}</b></span>
+              </div>
               {phase === "result" && (
                 <>
                   <dl role="status" aria-live="polite" className="mt-5 grid grid-cols-3 border-2 border-white/15 bg-black/75 p-3 text-center font-mono">
@@ -185,14 +242,16 @@ export default function IronTempest({ locale }: { locale: Locale }) {
                     → {reviewTempestMission(result) === "kills" ? t.kills : reviewTempestMission(result) === "speed" ? t.time : t.score}
                   </p>
                   <div className="mt-4 flex justify-center">
-                    <button
-                      type="button"
-                      onClick={handleShareCard}
-                      className="flex min-h-11 items-center gap-1.5 rounded-xl border border-border bg-card/85 hover:bg-muted px-5 py-2.5 text-xs font-bold text-foreground transition-colors shadow-xs"
+                    <TiltTempestButton
+                      onClick={() => {
+                        MobileHapticsPro.light();
+                        handleShareCard();
+                      }}
+                      className="flex min-h-11 items-center gap-1.5 rounded-xl border border-border bg-card/85 hover:bg-muted px-5 py-2.5 text-xs font-bold text-foreground shadow-xs"
                     >
                       {shareCardCopied ? <Check className="size-4 text-primary" /> : <Share2 className="size-4" />}
                       <span>{shareCardCopied ? "복사 완료!" : "작전 결과 카드 공유"}</span>
-                    </button>
+                    </TiltTempestButton>
                   </div>
                 </>
               )}
@@ -262,23 +321,23 @@ function TempestGame({
     audio.setMuted(muted);
     const burst=(x:number,y:number,color="#ff9d16",n=18)=>{for(let i=0;i<n;i++)particles.push({x,y,vx:(Math.random()-.5)*280,vy:-Math.random()*260,life:.35+Math.random()*.55,color,size:2+Math.random()*7});audio.boom();shake=Math.max(shake,10)};
     const spawn=(x:number,kind:TempestEnemy)=>enemies.push({id:id++,x,y:GROUND-(kind==="boss"?150:42),vx:0,hp:ENEMY_HEALTH[kind],max:ENEMY_HEALTH[kind],kind,dead:0,fire:Math.random()});
-    const shoot=()=>{if(player.ammo<=0){player.weapon="rifle";player.ammo=Infinity}const w=WEAPONS[player.weapon];if(player.shot>0)return;player.shot=w.cooldown;if(Number.isFinite(player.ammo))player.ammo--;shots.push({x:player.x+34,y:player.y+(player.duck?31:18),vx:w.speed,vy:(Math.random()-.5)*(player.weapon==="heavy"?18:8),enemy:false,rocket:player.weapon==="rocket",life:2});audio.shot(player.weapon);shake=Math.max(shake,player.weapon==="rocket"?8:2)};
-    const grenade=()=>{if(player.grenades<=0)return;player.grenades--;shots.push({x:player.x+20,y:player.y,vx:310,vy:-330,enemy:false,rocket:true,life:1.15});audio.shot("rocket")};
+    const shoot=()=>{if(player.ammo<=0){player.weapon="rifle";player.ammo=Infinity}const w=WEAPONS[player.weapon];if(player.shot>0)return;player.shot=w.cooldown;if(Number.isFinite(player.ammo))player.ammo--;shots.push({x:player.x+34,y:player.y+(player.duck?31:18),vx:w.speed,vy:(Math.random()-.5)*(player.weapon==="heavy"?18:8),enemy:false,rocket:player.weapon==="rocket",life:2});audio.shot(player.weapon);MobileHapticsPro.light();shake=Math.max(shake,player.weapon==="rocket"?8:2)};
+    const grenade=()=>{if(player.grenades<=0)return;player.grenades--;shots.push({x:player.x+20,y:player.y,vx:310,vy:-330,enemy:false,rocket:true,life:1.15});audio.shot("rocket");MobileHapticsPro.heavy();};
     const frame=(now:number)=>{if(document.hidden){raf=0;return;}const dt=Math.min(.033,(now-last)/1000);last=now;time+=dt;player.shot=Math.max(0,player.shot-dt);player.inv=Math.max(0,player.inv-dt);messageT=Math.max(0,messageT-dt);
       const held=(...c:string[])=>c.some(k=>keys.current.has(k)||touch.current.has(k));const move=Number(held("KeyD","ArrowRight","right"))-Number(held("KeyA","ArrowLeft","left"));
-      player.duck=held("KeyS","ArrowDown")&&player.y>=GROUND-47;player.vx+=(move*(player.duck?120:240)-player.vx)*Math.min(1,dt*10);if(held("KeyW","ArrowUp","Space","jump")&&player.y>=GROUND-47){player.vy=-430;audio.jump()}player.vy+=980*dt;player.x=Math.max(25,Math.min(3100,player.x+player.vx*dt));player.y=Math.min(GROUND-46,player.y+player.vy*dt);if(player.y>=GROUND-46)player.vy=0;
-      if(held("KeyJ","KeyF","fire"))shoot();if(held("KeyK","KeyG","bomb")){keys.current.delete("KeyK");keys.current.delete("KeyG");touch.current.delete("bomb");grenade()}if(held("KeyE","vehicle")&&player.x>1430&&player.x<1690){player.vehicle=true;player.hp=Math.min(160,player.hp+40);message=copy.vehicle;messageT=1.5;keys.current.delete("KeyE");touch.current.delete("vehicle")}
+      player.duck=held("KeyS","ArrowDown")&&player.y>=GROUND-47;player.vx+=(move*(player.duck?120:240)-player.vx)*Math.min(1,dt*10);if(held("KeyW","ArrowUp","Space","jump")&&player.y>=GROUND-47){player.vy=-430;audio.jump();MobileHapticsPro.light();}player.vy+=980*dt;player.x=Math.max(25,Math.min(3100,player.x+player.vx*dt));player.y=Math.min(GROUND-46,player.y+player.vy*dt);if(player.y>=GROUND-46)player.vy=0;
+      if(held("KeyJ","KeyF","fire"))shoot();if(held("KeyK","KeyG","bomb")){keys.current.delete("KeyK");keys.current.delete("KeyG");touch.current.delete("bomb");grenade()}if(held("KeyE","vehicle")&&player.x>1430&&player.x<1690){player.vehicle=true;player.hp=Math.min(160,player.hp+40);message=copy.vehicle;messageT=1.5;keys.current.delete("KeyE");touch.current.delete("vehicle");MobileHapticsPro.medium();}
       camera+=(Math.max(0,player.x-250)-camera)*Math.min(1,dt*5);
       const targetSpawn=Math.floor(player.x/170)+3;while(enemies.length+player.kills<targetSpawn&&player.x<2100)spawn(player.x+600+Math.random()*240,Math.random()<.22?"rocketeer":Math.random()<.18?"shield":"rifleman");
-      if(player.x>2150&&!bossSpawn){bossSpawn=true;spawn(2700,"boss");message=copy.boss;messageT=2;audio.alarm()}
+      if(player.x>2150&&!bossSpawn){bossSpawn=true;spawn(2700,"boss");message=copy.boss;messageT=2;audio.alarm();MobileHapticsPro.warning();}
       for(const e of enemies){if(e.dead>0){e.dead+=dt;e.y-=e.dead*90*dt;e.x+=e.vx*dt;continue}const dx=player.x-e.x;e.vx=Math.abs(dx)>260?Math.sign(dx)*-42:0;e.x+=e.vx*dt;e.fire-=dt;if(Math.abs(dx)<650&&e.fire<=0){e.fire=e.kind==="boss"?.28:e.kind==="rocketeer"?1.6:1.05;shots.push({x:e.x,y:e.y+20,vx:Math.sign(dx)*-(e.kind==="boss"?360:260),vy:(Math.random()-.5)*35,enemy:true,rocket:e.kind==="rocketeer"||e.kind==="boss",life:3})}}
       for(const s of shots){s.life-=dt;s.vy+=(s.rocket?430:0)*dt;s.x+=s.vx*dt;s.y+=s.vy*dt;if(s.y>GROUND&&s.rocket){s.life=0;burst(s.x,GROUND);for(const e of enemies){if(e.dead<=0){const d=Math.hypot(e.x-s.x,e.y-s.y),dam=blastDamage(90,d,115);if(dam)e.hp-=dam}}for(const st of structures){const d=Math.abs(st.x+st.w/2-s.x);if(d<170)st.hp-=blastDamage(120,d,170)}}if(s.enemy&&s.life>0&&Math.abs(s.x-player.x)<24&&Math.abs(s.y-player.y)<48&&player.inv<=0){s.life=0;player.hp-=s.rocket?20:8;player.inv=.3;shake=12;audio.hurt();recordDdaHit();MobileHapticsPro.heavy()}if(!s.enemy&&s.life>0){for(const e of enemies){if(e.dead<=0&&Math.abs(s.x-e.x)<(e.kind==="boss"?110:24)&&Math.abs(s.y-(e.y+20))<(e.kind==="boss"?100:36)){s.life=0;const armored=e.kind==="shield";const hit=applyTempestDamage(e.hp,WEAPONS[player.weapon].damage,armored);e.hp=hit.health;if(e.kind==="boss")bossHp=e.hp;for(let p=0;p<5;p++)particles.push({x:s.x,y:s.y,vx:(Math.random()-.5)*140,vy:(Math.random()-.5)*140,life:.3,color:"#ffe37c",size:3});if(hit.killed){e.dead=.01;e.vx=s.vx*.22;player.kills++;recordDdaKill();MobileHapticsPro.light();const drop=weaponDrop(player.kills);if(drop)pickups.push({x:e.x,y:GROUND-28,kind:drop,life:12});player.score+=e.kind==="boss"?8000:125;burst(e.x,e.y+18,e.kind==="boss"?"#ff5b14":"#d6c3a0",e.kind==="boss"?60:14)}}}}
       }
-      for(const st of structures){if(st.hp<=0&&st.max>0){st.max=-st.max;player.score+=600;burst(st.x+st.w/2,st.y+st.h/2,"#bb8a53",34)}}
-      for(const p of pickups){p.life-=dt;if(Math.abs(p.x-player.x)<45){player.weapon=p.kind;player.ammo=WEAPONS[p.kind].ammo;p.life=0;message=p.kind==="heavy"?copy.hmg:copy.rocket;messageT=2;audio.pickup()}}
+      for(const st of structures){if(st.hp<=0&&st.max>0){st.max=-st.max;player.score+=600;burst(st.x+st.w/2,st.y+st.h/2,"#bb8a53",34);MobileHapticsPro.medium();}}
+      for(const p of pickups){p.life-=dt;if(Math.abs(p.x-player.x)<45){player.weapon=p.kind;player.ammo=WEAPONS[p.kind].ammo;p.life=0;message=p.kind==="heavy"?copy.hmg:copy.rocket;messageT=2;audio.pickup();MobileHapticsPro.success();}}
       for(const p of particles){p.life-=dt;p.vy+=650*dt;p.x+=p.vx*dt;p.y+=p.vy*dt}
       for(let i=shots.length-1;i>=0;i--)if(shots[i].life<=0)shots.splice(i,1);for(let i=particles.length-1;i>=0;i--)if(particles[i].life<=0)particles.splice(i,1);for(let i=pickups.length-1;i>=0;i--)if(pickups[i].life<=0)pickups.splice(i,1);
-      if((player.hp<=0||bossSpawn&&bossHp<=0)&&!ended){ended=true;if(player.hp<=0){recordDdaDeath();MobileHapticsPro.heavy();}else{MobileHapticsPro.impact();}message=player.hp<=0?copy.over:copy.clear;const score=missionScore(player.kills,structures.filter(s=>s.max<0).length,ENEMY_HEALTH.boss-bossHp,time);setTimeout(()=>finishRef.current({score,kills:player.kills,seconds:Math.round(time)}),1300)}
+      if((player.hp<=0||bossSpawn&&bossHp<=0)&&!ended){ended=true;if(player.hp<=0){recordDdaDeath();MobileHapticsPro.heavy();}else{MobileHapticsPro.success();}message=player.hp<=0?copy.over:copy.clear;const score=missionScore(player.kills,structures.filter(s=>s.max<0).length,ENEMY_HEALTH.boss-bossHp,time);setTimeout(()=>finishRef.current({score,kills:player.kills,seconds:Math.round(time)}),1300)}
       draw(ctx,{player,camera,shake,enemies,shots,particles,pickups,structures,bossHp,time,message:messageT>0||ended?message:"",copy,weaponImages});shake=Math.max(0,shake-dt*28);if(!ended||messageT>0)raf=requestAnimationFrame(frame);else audio.stop()};
     const onVisibility=()=>{if(document.hidden){cancelAnimationFrame(raf);raf=0;return;}if(ended&&messageT<=0)return;if(!raf){last=performance.now();raf=requestAnimationFrame(frame)}};
     document.addEventListener("visibilitychange",onVisibility);
@@ -304,28 +363,32 @@ function TempestGame({
     </div>
 
     <div className="absolute right-3 top-3 z-30 flex items-center gap-2">
-      <button
-        type="button"
-        onClick={onToggleMute}
-        aria-pressed={muted}
-        aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+      <TiltTempestButton
+        onClick={() => {
+          MobileHapticsPro.light();
+          onToggleMute();
+        }}
+        ariaPressed={muted}
+        ariaLabel={muted ? portalLabels.unmute : portalLabels.mute}
         title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`}
-        className="flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-xl border border-border bg-background/85 px-3 py-2 text-xs font-bold text-foreground shadow-xs backdrop-blur-md transition-transform hover:bg-muted active:scale-95"
+        className="flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-xl border border-border bg-background/85 px-3 py-2 text-xs font-bold text-foreground shadow-xs backdrop-blur-md hover:bg-muted"
       >
         {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
         <span className="hidden sm:inline">{muted ? portalLabels.unmute : portalLabels.mute}</span>
-      </button>
-      <button
-        type="button"
-        onClick={onTogglePortal}
-        aria-pressed={isImmersive}
-        aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+      </TiltTempestButton>
+      <TiltTempestButton
+        onClick={() => {
+          MobileHapticsPro.light();
+          onTogglePortal();
+        }}
+        ariaPressed={isImmersive}
+        ariaLabel={isImmersive ? portalLabels.exit : portalLabels.enter}
         title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
-        className="flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-xl border border-border bg-background/85 px-3 py-2 text-xs font-bold text-foreground shadow-xs backdrop-blur-md transition-transform hover:bg-muted active:scale-95"
+        className="flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-xl border border-border bg-background/85 px-3 py-2 text-xs font-bold text-foreground shadow-xs backdrop-blur-md hover:bg-muted"
       >
         {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
         <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
-      </button>
+      </TiltTempestButton>
     </div>
 
     {/* 2026-09-28 touch audit: hide only for wide screens with a mouse — a width breakpoint alone removed the controls on landscape phones and iPads. touch-none keeps a held button from turning into a page scroll (pointercancel). */}
@@ -333,7 +396,28 @@ function TempestGame({
     <div className="absolute bottom-3 right-3 grid touch-none select-none grid-cols-2 gap-2 md:pointer-fine:hidden"><Touch k="bomb" label="BOMB" press={press}/><Touch k="fire" label="FIRE" hot press={press}/></div>
   </div>
 }
-function Touch({k,label,press,hot=false}:{k:string;label:string;press:(k:string,v:boolean)=>void;hot?:boolean}){return <button className={`min-h-12 min-w-12 border-2 font-mono text-[9px] font-black ${hot?"border-yellow-200 bg-orange-500/80":"border-white/40 bg-black/60"} text-white`} onPointerDown={e=>{e.preventDefault();press(k,true)}} onPointerUp={()=>press(k,false)} onPointerCancel={()=>press(k,false)}>{label}</button>}
+function Touch({k,label,press,hot=false}:{k:string;label:string;press:(k:string,v:boolean)=>void;hot?:boolean}){
+  return (
+    <button
+      className={`min-h-12 min-w-12 touch-manipulation border-2 font-mono text-[9px] font-black transition-transform active:scale-95 ${
+        hot ? "border-yellow-200 bg-orange-500/80 text-black shadow-md" : "border-white/40 bg-black/60 text-white"
+      }`}
+      onPointerDown={(e) => {
+        e.preventDefault();
+        if (hot || k === "bomb") {
+          MobileHapticsPro.medium();
+        } else {
+          MobileHapticsPro.light();
+        }
+        press(k, true);
+      }}
+      onPointerUp={() => press(k, false)}
+      onPointerCancel={() => press(k, false)}
+    >
+      {label}
+    </button>
+  );
+}
 
 type TempestBody = keyof typeof IRON_TEMPEST_SPRITES;
 function loadTempestBodies(): Record<TempestBody, HTMLImageElement> | null {

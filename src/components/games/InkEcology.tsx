@@ -26,7 +26,50 @@ import {
   type PondState,
 } from "../../lib/games/ink-ecology";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import InkEcologyScene, { type PondGlide } from "./InkEcologyScene";
+
+function TiltInkButton({
+  children,
+  onClick,
+  className = "",
+  disabled = false,
+  title,
+  ariaLabel,
+  ariaPressed,
+  type = "button",
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+  ariaPressed?: boolean;
+  type?: "button" | "submit";
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type={type}
+      onClick={() => {
+        triggerPop(0.2);
+        onClick?.();
+      }}
+      disabled={disabled}
+      title={title}
+      aria-label={ariaLabel}
+      aria-pressed={ariaPressed}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      style={{ "--ink-tilt": transformCss } as React.CSSProperties}
+      className={`touch-manipulation will-change-transform transform-(--ink-tilt) transition-transform duration-100 active:scale-95 disabled:pointer-events-none disabled:opacity-40 ${className}`}
+    >
+      {children}
+    </button>
+  );
+}
 
 interface Copy {
   title: string;
@@ -602,6 +645,15 @@ export default function InkEcology({ locale = "en" }: { locale?: Locale }) {
   const begin = useCallback((next: PondState, kind: Tick) => {
     arm();
     note(kind);
+    if (kind === "win") {
+      MobileHapticsPro.success();
+    } else if (kind === "lose") {
+      MobileHapticsPro.warning();
+    } else if (kind === "legs") {
+      MobileHapticsPro.medium();
+    } else {
+      MobileHapticsPro.light();
+    }
     glideSerial.current += 1;
     setShown(stateRef.current);
     setState(next);
@@ -692,19 +744,36 @@ export default function InkEcology({ locale = "en" }: { locale?: Locale }) {
       onPointerDown={arm}
     >
       <header className="relative shrink-0 space-y-2 pr-12">
-        <button
-          type="button"
-          onClick={togglePortal}
-          className="absolute right-0 top-0 flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-border/60 bg-card text-foreground shadow-sm transition hover:bg-muted"
+        <TiltInkButton
+          onClick={() => {
+            MobileHapticsPro.light();
+            togglePortal();
+          }}
+          className="absolute right-0 top-0 flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-border/60 bg-card text-foreground shadow-xs hover:bg-muted"
           title={isImmersive ? portalLabels.exit : portalLabels.enter}
-          aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+          ariaLabel={isImmersive ? portalLabels.exit : portalLabels.enter}
         >
           {isImmersive ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-        </button>
+        </TiltInkButton>
         <h2 className="text-2xl font-semibold text-foreground">{copy.title}</h2>
         <p className="text-sm leading-6 text-muted-foreground">{copy.lead}</p>
         <p className="text-xs leading-5 text-muted-foreground">{copy.keys}</p>
       </header>
+
+      {/* Progress Bar */}
+      <div className="space-y-1 rounded-2xl border border-border/60 bg-muted/20 p-3">
+        <div className="flex justify-between text-xs text-muted-foreground font-semibold">
+          <span>획 진행도 (최대 {STEP_CAP}획)</span>
+          <span className="font-mono text-primary font-bold">{state.steps} / {STEP_CAP} ({Math.min(100, Math.round((state.steps / STEP_CAP) * 100))}%)</span>
+        </div>
+        <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+          <div
+            className="h-full bg-primary transition-all duration-300 w-(--step-pct)"
+            style={{ '--step-pct': `${Math.min(100, Math.round((state.steps / STEP_CAP) * 100))}%` } as React.CSSProperties}
+          />
+        </div>
+      </div>
+
       <div className="grid grid-cols-2 gap-2 text-center text-sm">
         <div className="rounded-xl bg-muted p-2">
           <b>{copy.steps}</b>
@@ -739,14 +808,16 @@ export default function InkEcology({ locale = "en" }: { locale?: Locale }) {
               {state.status === "win" ? `${state.steps}수 만에 목표 연못 생태계와 조화를 이루었습니다.` : outcome}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={handleShareCard}
-            className="flex items-center gap-1.5 rounded-xl border border-border bg-secondary px-3.5 py-2 text-xs font-bold text-secondary-foreground shadow-sm transition hover:bg-muted"
+          <TiltInkButton
+            onClick={() => {
+              MobileHapticsPro.light();
+              handleShareCard();
+            }}
+            className="flex items-center gap-1.5 rounded-xl border border-border bg-secondary px-3.5 py-2 text-xs font-bold text-secondary-foreground shadow-xs hover:bg-muted"
           >
             {shareCardCopied ? <Check className="h-4 w-4 text-primary" /> : <Share2 className="h-4 w-4" />}
             <span>{shareCardCopied ? "복사 완료!" : "결과 카드 공유"}</span>
-          </button>
+          </TiltInkButton>
         </div>
       )}
       <div className="relative overflow-hidden rounded-2xl border border-border bg-card">
@@ -763,9 +834,15 @@ export default function InkEcology({ locale = "en" }: { locale?: Locale }) {
         </div>
         {paused ? (
           <div className="absolute inset-0 flex items-center justify-center bg-background/80">
-            <button type="button" className={controlClass("primary")} onClick={() => setPaused(false)}>
+            <TiltInkButton
+              className={controlClass("primary")}
+              onClick={() => {
+                MobileHapticsPro.light();
+                setPaused(false);
+              }}
+            >
               {copy.resume}
-            </button>
+            </TiltInkButton>
           </div>
         ) : null}
       </div>
@@ -779,32 +856,54 @@ export default function InkEcology({ locale = "en" }: { locale?: Locale }) {
             const tone = locked || noop ? "quiet" : doomed ? "danger" : "live";
             const detail = detailFor(state, act, copy);
             return (
-              <button
+              <TiltInkButton
                 key={act}
-                type="button"
                 className={actClass(tone)}
-                aria-keyshortcuts={shortcut(act)}
-                aria-label={`${label(act, copy)}. ${detail}`}
+                ariaLabel={`${label(act, copy)}. ${detail}`}
                 disabled={locked || noop}
-                onClick={() => move(act)}
+                onClick={() => {
+                  MobileHapticsPro.selection();
+                  move(act);
+                }}
               >
                 {label(act, copy)}
                 <span className="block text-xs font-normal">{detail}</span>
-              </button>
+              </TiltInkButton>
             );
           })}
         </div>
       </div>
       <div className="flex flex-wrap gap-2">
-        <button type="button" className={paused ? controlClass("primary") : controlClass("quiet")} aria-pressed={paused} onClick={() => setPaused((value) => !value)}>
+        <TiltInkButton
+          className={paused ? controlClass("primary") : controlClass("quiet")}
+          ariaPressed={paused}
+          onClick={() => {
+            MobileHapticsPro.light();
+            setPaused((value) => !value);
+          }}
+        >
           {paused ? copy.resume : copy.pause}
-        </button>
-        <button type="button" className={controlClass("quiet")} onClick={() => setView((value) => (value + 1) % 4)}>
+        </TiltInkButton>
+        <TiltInkButton
+          className={controlClass("quiet")}
+          onClick={() => {
+            MobileHapticsPro.light();
+            setView((value) => (value + 1) % 4);
+          }}
+        >
           {copy.view}
-        </button>
-        <button type="button" className={muted ? controlClass("primary") : controlClass("quiet")} aria-pressed={muted} onClick={() => { arm(); setMuted((value) => !value); }}>
+        </TiltInkButton>
+        <TiltInkButton
+          className={muted ? controlClass("primary") : controlClass("quiet")}
+          ariaPressed={muted}
+          onClick={() => {
+            MobileHapticsPro.light();
+            arm();
+            setMuted((value) => !value);
+          }}
+        >
           {muted ? copy.sound : copy.mute}
-        </button>
+        </TiltInkButton>
         <button type="button" className={controlClass("danger")} disabled={state.status !== "play"} onClick={giveUp}>
           {copy.giveUp}
         </button>
