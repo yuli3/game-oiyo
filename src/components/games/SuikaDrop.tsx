@@ -24,6 +24,7 @@ import {
   downloadShareCard,
 } from '../../lib/games/share-card';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { SUIKA_FRUIT_SPRITES, getSpriteUrl } from '../../lib/games/sprites';
 import { Maximize2, Minimize2, Share2, Check } from 'lucide-react';
 
 function TiltSuikaButton({
@@ -264,6 +265,19 @@ export default function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const lastMergeCountRef = useRef(0);
+  const fruitImgsRef = useRef<Map<number, HTMLImageElement>>(new Map());
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const map = new Map<number, HTMLImageElement>();
+    Object.entries(SUIKA_FRUIT_SPRITES).forEach(([tierStr, src]) => {
+      const tier = Number(tierStr);
+      const img = new Image();
+      img.src = src;
+      map.set(tier, img);
+    });
+    fruitImgsRef.current = map;
+  }, []);
 
   const handleShareScore = useCallback(async () => {
     MobileHapticsPro.mediumImpact();
@@ -287,7 +301,7 @@ export default function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
     }
   }, [state.maxTierReached, state.score, state.mergesCount, t]);
 
-  const playPopSfx = useCallback((freq = 420) => {
+  const playPopSfx = useCallback((tier = 0) => {
     try {
       const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (!Ctx) return;
@@ -296,17 +310,38 @@ export default function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
       if (ctx.state === 'suspended') ctx.resume();
 
       const now = ctx.currentTime;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, now);
-      osc.frequency.exponentialRampToValueAtTime(freq * 1.65, now + 0.11);
-      gain.gain.setValueAtTime(0.16, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.13);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(now);
-      osc.stop(now + 0.13);
+      // Pentatonic xylophone scale for fruit merge progression
+      const PENTATONIC = [261.63, 293.66, 329.63, 392.0, 440.0, 523.25, 587.33, 659.25, 783.99, 1046.5];
+      const baseFreq = PENTATONIC[Math.min(tier, PENTATONIC.length - 1)] || 330;
+
+      // Primary marimba fundamental
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(baseFreq, now);
+      osc1.frequency.exponentialRampToValueAtTime(baseFreq * 1.5, now + 0.08);
+
+      gain1.gain.setValueAtTime(0.24, now);
+      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+
+      // Wooden/crystal overtone harmonic
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.type = 'triangle';
+      osc2.frequency.setValueAtTime(baseFreq * 2.76, now);
+
+      gain2.gain.setValueAtTime(0.12, now);
+      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+      osc1.connect(gain1);
+      gain1.connect(ctx.destination);
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+
+      osc1.start(now);
+      osc2.start(now);
+      osc1.stop(now + 0.17);
+      osc2.stop(now + 0.17);
     } catch {
       // Ignore audio errors
     }
@@ -315,7 +350,7 @@ export default function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
   const handleDrop = useCallback(() => {
     setState((prev) => {
       if (prev.status !== 'playing' || prev.dropCooldown > 0) return prev;
-      playPopSfx(260);
+      playPopSfx(prev.currentTier);
       MobileHapticsPro.lightImpact();
       return dropSuikaFruit(prev);
     });
@@ -337,7 +372,7 @@ export default function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
         }
         if (next.mergesCount > lastMergeCountRef.current) {
           lastMergeCountRef.current = next.mergesCount;
-          playPopSfx(360 + next.maxTierReached * 55);
+          playPopSfx(next.maxTierReached);
           if (next.maxTierReached >= 9) {
             MobileHapticsPro.heavyImpact();
             if (!celebratedWatermelonRef.current) {
@@ -400,21 +435,27 @@ export default function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
             ctx.stroke();
             ctx.restore();
 
-            // Cloud dropper mascot & preview fruit
-            ctx.fillStyle = dropDef.color;
-            ctx.beginPath();
-            ctx.arc(cur.dropperX, DEADLINE_Y - 24, dropDef.radius, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.strokeStyle = dropDef.rimColor;
-            ctx.lineWidth = 2.5;
-            ctx.stroke();
-            ctx.font = `${Math.max(14, Math.floor(dropDef.radius * 0.95))}px sans-serif`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(dropDef.emoji, cur.dropperX, DEADLINE_Y - 24);
+            // Cloud dropper mascot & preview 3D fruit
+            const dropSprite = fruitImgsRef.current.get(cur.currentTier);
+            if (dropSprite && dropSprite.complete) {
+              const d = dropDef.radius * 2.25;
+              ctx.drawImage(dropSprite, cur.dropperX - d / 2, DEADLINE_Y - 24 - d / 2, d, d);
+            } else {
+              ctx.fillStyle = dropDef.color;
+              ctx.beginPath();
+              ctx.arc(cur.dropperX, DEADLINE_Y - 24, dropDef.radius, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.strokeStyle = dropDef.rimColor;
+              ctx.lineWidth = 2.5;
+              ctx.stroke();
+              ctx.font = `${Math.max(14, Math.floor(dropDef.radius * 0.95))}px sans-serif`;
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillText(dropDef.emoji, cur.dropperX, DEADLINE_Y - 24);
+            }
           }
 
-          // Render all active fruits with 3D specular gloss and rotation
+          // Render all active fruits with 3D specular gloss, shadow and rotation
           for (const f of cur.fruits) {
             const def = FRUIT_TIERS[f.tier];
             const r = f.radius * f.popScale;
@@ -422,31 +463,37 @@ export default function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
             ctx.translate(f.x, f.y);
             ctx.rotate(f.angle);
 
-            // Base sphere
-            const sphereGrad = ctx.createRadialGradient(-r * 0.3, -r * 0.3, r * 0.1, 0, 0, r);
-            sphereGrad.addColorStop(0, '#ffffff');
-            sphereGrad.addColorStop(0.28, def.color);
-            sphereGrad.addColorStop(1, def.rimColor);
-            ctx.fillStyle = sphereGrad;
+            // Subtle drop shadow under fruit
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
             ctx.beginPath();
-            ctx.arc(0, 0, r, 0, Math.PI * 2);
+            ctx.ellipse(0, r * 0.15, r * 0.95, r * 0.85, 0, 0, Math.PI * 2);
             ctx.fill();
 
-            ctx.strokeStyle = def.rimColor;
-            ctx.lineWidth = 2.5;
-            ctx.stroke();
+            const spriteImg = fruitImgsRef.current.get(f.tier);
+            if (spriteImg && spriteImg.complete) {
+              // High-resolution 3D Fruit Sprite Render
+              const drawD = r * 2.2;
+              ctx.drawImage(spriteImg, -drawD / 2, -drawD / 2, drawD, drawD);
+            } else {
+              // Fallback procedural sphere
+              const sphereGrad = ctx.createRadialGradient(-r * 0.3, -r * 0.3, r * 0.1, 0, 0, r);
+              sphereGrad.addColorStop(0, '#ffffff');
+              sphereGrad.addColorStop(0.28, def.color);
+              sphereGrad.addColorStop(1, def.rimColor);
+              ctx.fillStyle = sphereGrad;
+              ctx.beginPath();
+              ctx.arc(0, 0, r, 0, Math.PI * 2);
+              ctx.fill();
 
-            // Specular highlight
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.42)';
-            ctx.beginPath();
-            ctx.ellipse(-r * 0.32, -r * 0.32, r * 0.24, r * 0.14, -Math.PI / 4, 0, Math.PI * 2);
-            ctx.fill();
+              ctx.strokeStyle = def.rimColor;
+              ctx.lineWidth = 2.5;
+              ctx.stroke();
 
-            // Emoji icon
-            ctx.font = `${Math.max(14, Math.floor(r * 0.9))}px sans-serif`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(def.emoji, 0, 2);
+              ctx.font = `${Math.max(14, Math.floor(r * 0.9))}px sans-serif`;
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillText(def.emoji, 0, 2);
+            }
 
             ctx.restore();
           }
@@ -583,10 +630,24 @@ export default function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
               className="block h-auto w-full max-w-sm cursor-pointer touch-none select-none"
             />
             {state.status === 'gameover' && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/90 p-6 text-center backdrop-blur-xs">
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/90 p-6 text-center backdrop-blur-xs z-10">
+                <div className="relative flex size-20 items-center justify-center rounded-3xl bg-primary/20 p-2 mb-1 border border-primary/40 shadow-xl">
+                  <img
+                    src={getSpriteUrl('trophy', 128)}
+                    alt="Trophy"
+                    className="size-14 object-contain animate-bounce"
+                    draggable={false}
+                  />
+                  <img
+                    src={SUIKA_FRUIT_SPRITES[9]}
+                    alt="Watermelon"
+                    className="absolute -bottom-2 -right-2 size-8 object-contain drop-shadow"
+                    draggable={false}
+                  />
+                </div>
                 <h3 className="text-xl font-bold">{t.gameOverTitle}</h3>
                 <p className="text-xs text-muted-foreground">{t.gameOverDesc}</p>
-                <div className="text-base font-bold">
+                <div className="text-base font-bold text-primary">
                   {t.scoreLabel}: {state.score}
                 </div>
                 <div className="flex items-center gap-2">
@@ -618,8 +679,17 @@ export default function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
         <div className="flex flex-col gap-3 md:col-span-5">
           <div className="flex items-center justify-between rounded-xl border border-border bg-muted/40 p-3.5">
             <span className="text-xs font-bold text-muted-foreground">{t.nextLabel}</span>
-            <div className="flex items-center gap-2 text-sm font-bold">
-              <span className="text-2xl">{FRUIT_TIERS[state.nextTier].emoji}</span>
+            <div className="flex items-center gap-2.5 text-sm font-bold">
+              {SUIKA_FRUIT_SPRITES[state.nextTier] ? (
+                <img
+                  src={SUIKA_FRUIT_SPRITES[state.nextTier]}
+                  alt={t.fruits[FRUIT_TIERS[state.nextTier].nameKey]}
+                  className="size-7 object-contain"
+                  draggable={false}
+                />
+              ) : (
+                <span className="text-2xl">{FRUIT_TIERS[state.nextTier].emoji}</span>
+              )}
               <span>{t.fruits[FRUIT_TIERS[state.nextTier].nameKey]}</span>
             </div>
           </div>
@@ -634,14 +704,24 @@ export default function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
                     key={ft.tier}
                     className={`flex items-center justify-between rounded-lg border px-2.5 py-1.5 text-xs ${
                       unlocked
-                        ? 'border-primary bg-card font-semibold text-card-foreground'
+                        ? 'border-primary bg-card font-semibold text-card-foreground shadow-xs'
                         : 'border-border bg-background/50 text-muted-foreground opacity-60'
                     }`}
                   >
-                    <span>
-                      {ft.emoji} {t.fruits[ft.nameKey]}
-                    </span>
-                    <span className="text-muted-foreground">+{ft.score}</span>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      {SUIKA_FRUIT_SPRITES[ft.tier] ? (
+                        <img
+                          src={SUIKA_FRUIT_SPRITES[ft.tier]}
+                          alt={t.fruits[ft.nameKey]}
+                          className="size-4 shrink-0 object-contain"
+                          draggable={false}
+                        />
+                      ) : (
+                        <span>{ft.emoji}</span>
+                      )}
+                      <span className="truncate">{t.fruits[ft.nameKey]}</span>
+                    </div>
+                    <span className="text-muted-foreground text-xs shrink-0">+{ft.score}</span>
                   </div>
                 );
               })}

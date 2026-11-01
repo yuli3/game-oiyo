@@ -521,6 +521,19 @@ export const POWER_WASH_SPRITES = {
   foam: "/assets/sprites/power-wash/soap-foam-128.png",
 } as const;
 
+export const SUIKA_FRUIT_SPRITES: Record<number, string> = {
+  0: "/assets/sprites/suika-drop/cherry-128.png",
+  1: "/assets/sprites/suika-drop/strawberry-128.png",
+  2: "/assets/sprites/suika-drop/grape-128.png",
+  3: "/assets/sprites/suika-drop/dekopon-128.png",
+  4: "/assets/sprites/suika-drop/apple-128.png",
+  5: "/assets/sprites/suika-drop/apple-128.png",
+  6: "/assets/sprites/suika-drop/peach-128.png",
+  7: "/assets/sprites/suika-drop/peach-128.png",
+  8: "/assets/sprites/suika-drop/pineapple-128.png",
+  9: "/assets/sprites/suika-drop/watermelon-128.png",
+};
+
 export const DOT_PET_SPRITES: Record<string, { baby: string; adult: string }> = {
   normal: {
     baby: "/assets/sprites/dot-pet/normal-baby.png",
