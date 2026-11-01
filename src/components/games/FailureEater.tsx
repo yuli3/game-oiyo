@@ -14,6 +14,7 @@ import { dateKeyIndex, kstDateKey } from "../../lib/games/todays-game";
 import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from "../../lib/games/game-audio";
 import { createHaptics } from "../../lib/games/haptics";
 import { celebrate } from "../../lib/games/celebration";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import {
   createShareCardCanvas,
   copyShareCardToClipboard,
@@ -30,6 +31,42 @@ import {
   createRun,
   type Run,
 } from "../../lib/games/failure-eater";
+
+function TiltFailureButton({
+  children,
+  onClick,
+  disabled,
+  className,
+  'aria-label': ariaLabel,
+  'aria-pressed': ariaPressed,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  className?: string;
+  'aria-label'?: string;
+  'aria-pressed'?: boolean;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      aria-label={ariaLabel}
+      aria-pressed={ariaPressed}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.2);
+        onClick?.();
+      }}
+      className={`will-change-transform transform-(--card-tilt) ${className ?? ''}`}
+    >
+      {children}
+    </button>
+  );
+}
 
 const BEAT_MS = 1200;
 const CONTROL = "min-h-11 min-w-11 rounded-xl border px-3 py-2 text-sm font-bold motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
@@ -220,7 +257,11 @@ export default function FailureEater({ locale }: { locale: Locale }) {
 
   const press = (jump: boolean) => {
     cue(jump ? "place" : "tap");
-    hapticsRef.current.fire(jump ? "place" : "tap");
+    if (jump) {
+      MobileHapticsPro.medium();
+    } else {
+      MobileHapticsPro.light();
+    }
     setRun((current) => (current && current.phase === "play" ? act(current, jump) : current));
     setPulse((value) => value + 1);
   };
@@ -259,8 +300,14 @@ export default function FailureEater({ locale }: { locale: Locale }) {
     return () => window.clearInterval(id);
   }, [run?.phase, pulse]);
 
+  const prevFailsRef = useRef(0);
   useEffect(() => {
     if (!run || !dateKey) return;
+    if (run.fails > prevFailsRef.current) {
+      prevFailsRef.current = run.fails;
+      MobileHapticsPro.warning();
+    }
+
     const previous = phase.current;
     phase.current = run.phase;
     if (previous === run.phase) return;
@@ -275,11 +322,11 @@ export default function FailureEater({ locale }: { locale: Locale }) {
     }
     if (run.phase === "won") {
       cue("win");
-      hapticsRef.current.fire("win");
+      MobileHapticsPro.success();
       if (containerRef.current) celebrate(containerRef.current, { preset: "stardust" });
     } else if (run.phase === "lost") {
       cue("fail");
-      hapticsRef.current.fire("fail");
+      MobileHapticsPro.heavy();
     }
   }, [run, dateKey, attempt, muted, reducedMotion]);
 
@@ -333,7 +380,18 @@ export default function FailureEater({ locale }: { locale: Locale }) {
         {!run || !dateKey ? <p className="text-sm text-muted-foreground">{t.preparing}</p> : (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">{t.date(dateKey)}</p>
-            <p className="text-sm font-bold tabular-nums text-foreground" aria-live="polite">{t.fails(run.fails)}</p>
+            <div>
+              <div className="flex justify-between text-sm font-bold tabular-nums text-foreground mb-1" aria-live="polite">
+                <span>{t.fails(run.fails)}</span>
+                <span className="text-xs text-muted-foreground font-mono">{run.fails} / {LIVES}</span>
+              </div>
+              <div className="w-full bg-muted h-2 rounded-full overflow-hidden border border-border/40">
+                <div
+                  className="bg-destructive h-full transition-all duration-200 rounded-full w-(--fail-pct)"
+                  style={{ '--fail-pct': `${Math.min(100, Math.round((run.fails / LIVES) * 100))}%` } as React.CSSProperties}
+                />
+              </div>
+            </div>
             <p className="text-sm text-foreground">{run.phase === "won" ? t.won : run.phase === "lost" ? t.lost : run.phase === "play" ? t.play : t.ready}</p>
             <div className="flex flex-wrap gap-3 text-sm text-foreground">
               <span className="inline-flex items-center gap-2"><span className="inline-block size-4 rounded-md border border-border bg-card" />{t.open}</span>
@@ -369,35 +427,33 @@ export default function FailureEater({ locale }: { locale: Locale }) {
               })}
             </div>
             {run.phase === "ready" ? (
-              <button
-                type="button"
+              <TiltFailureButton
                 onClick={() => {
                   cue("tap");
-                  hapticsRef.current.fire("tap");
+                  MobileHapticsPro.impact();
                   setRun(begin(run));
                 }}
-                className={`${CONTROL} border-primary bg-primary text-primary-foreground`}
+                className={`${CONTROL} w-full border-primary bg-primary text-primary-foreground`}
               >
                 {t.start}
-              </button>
+              </TiltFailureButton>
             ) : null}
             {playing ? (
               <div className="grid grid-cols-2 gap-2">
-                <button type="button" onClick={() => press(false)} aria-label={t.wait} className={`${CONTROL} border-border bg-card text-foreground`}>{t.wait}</button>
-                <button type="button" onClick={() => press(true)} aria-label={t.jump} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.jump}</button>
+                <TiltFailureButton onClick={() => press(false)} aria-label={t.wait} className={`${CONTROL} border-border bg-card text-foreground`}>{t.wait}</TiltFailureButton>
+                <TiltFailureButton onClick={() => press(true)} aria-label={t.jump} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.jump}</TiltFailureButton>
               </div>
             ) : null}
             {run.phase === "won" || run.phase === "lost" ? (
               <div className="flex flex-wrap items-center gap-2">
-                <button type="button" onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</button>
-                <button
-                  type="button"
-                  onClick={() => void handleShareCard()}
-                  className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-primary/40 bg-primary/20 px-4 py-2 text-xs font-bold text-primary transition-colors hover:bg-primary/30 active:scale-95"
+                <TiltFailureButton onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</TiltFailureButton>
+                <TiltFailureButton
+                  onClick={handleShareCard}
+                  className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-foreground`}
                 >
                   <Share2 className="size-4" />
-                  <span>{shareCopied ? "복사됨!" : "공유 카드"}</span>
-                </button>
+                  <span>{shareCopied ? "COPIED!" : "SHARE CARD"}</span>
+                </TiltFailureButton>
               </div>
             ) : null}
             <p className="text-sm text-muted-foreground">{t.record(record?.w ?? 0, record?.l ?? 0)}{best?.unit === "score" ? ` · ${t.best(best.value)}` : ""}</p>

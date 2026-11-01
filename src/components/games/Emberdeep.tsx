@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Flame, Gamepad2, Headphones, Route, Share2, Sparkles, Swords } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
 import { celebrate } from "../../lib/games/celebration";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import {
   createShareCardCanvas,
   copyShareCardToClipboard,
@@ -110,6 +111,51 @@ function loadEnemyArt(): Record<EnemyKind, HTMLImageElement> | null {
 }
 const enemyArt = loadEnemyArt();
 
+function TiltEmberButton({
+  children,
+  onClick,
+  onPointerDown,
+  onPointerUp,
+  onPointerCancel,
+  disabled,
+  className,
+  'aria-label': ariaLabel,
+  'aria-pressed': ariaPressed,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  onPointerDown?: () => void;
+  onPointerUp?: () => void;
+  onPointerCancel?: () => void;
+  disabled?: boolean;
+  className?: string;
+  'aria-label'?: string;
+  'aria-pressed'?: boolean;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      aria-label={ariaLabel}
+      aria-pressed={ariaPressed}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onPointerDown={onPointerDown}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerCancel}
+      onClick={() => {
+        triggerPop(0.2);
+        onClick?.();
+      }}
+      className={`will-change-transform transform-(--card-tilt) ${className ?? ''}`}
+    >
+      {children}
+    </button>
+  );
+}
+
 function drawHero(ctx: CanvasRenderingContext2D, x: number, y: number, facing: number, hero: HeroClass, attack: number, jump: number) {
   ctx.save(); ctx.translate(x, y - jump); ctx.scale(facing, 1);
   ctx.fillStyle = "rgba(0,0,0,.45)"; ctx.beginPath(); ctx.ellipse(0, jump + 8, 22, 7, 0, 0, Math.PI * 2); ctx.fill();
@@ -197,18 +243,32 @@ function Dungeon({ hero, copy, locale = 'en', onFinish }: { hero: HeroClass; cop
     const attack = () => {
       if (state.attackT > 0 || state.choosing) return; state.attackStep = state.comboT > 0 ? (state.attackStep + 1) % 4 : 0; state.attackT = .22; state.comboT = .55;
       const damage = comboDamage(stats.attack, state.attackStep, state.jump > 4);
+      let hitAny = false;
       enemies.forEach(e => {
         if (e.hp > 0 && attackConnects(state, e, state.attackStep === 3 ? 125 : 88)) {
+          hitAny = true;
           e.hp -= damage; e.hit = .13; e.x += state.facing * (state.attackStep === 3 ? 62 : 22); state.combo++; state.score += scoreForHit(damage, state.combo, e.hp <= 0);
           frozen = hitStopFrames(damage, state.attackStep === 3); shake = state.attackStep === 3 ? 14 : 6; burst(e.x, e.y - 45, "#ffd36b", state.attackStep === 3 ? 22 : 10); audio.hit(); if (e.hp <= 0) state.kills++;
         }
       });
+      if (hitAny) {
+        if (state.attackStep === 3) {
+          MobileHapticsPro.heavy();
+        } else {
+          MobileHapticsPro.impact();
+        }
+      }
     };
     const cast = () => {
       const chosen = spellRef.current;
       if (state.choosing) return;
-      if (explainCastFailure(state.mana, chosen)) { setCastNotice(copy.hud.mana); return; }
+      if (explainCastFailure(state.mana, chosen)) {
+        MobileHapticsPro.warning();
+        setCastNotice(copy.hud.mana);
+        return;
+      }
       setCastNotice(null);
+      MobileHapticsPro.impact();
       state.mana = spendMana(state.mana, chosen); state.attackT = .2; audio.cast();
       const radius = chosen === "storm" ? 250 : chosen === "frost" ? 175 : 135, damage = chosen === "storm" ? 52 : chosen === "frost" ? 38 : 31;
       enemies.forEach(e => { if (e.hp > 0 && Math.hypot(e.x - state.x, (e.y - state.y) * 1.5) < radius) { e.hp -= damage; e.hit = .22; state.score += scoreForHit(damage, state.combo, e.hp <= 0); burst(e.x, e.y - 40, chosen === "ember" ? "#ff7438" : chosen === "frost" ? "#8be5ff" : "#d8b8ff", 18); if (e.hp <= 0) { state.kills++; state.combo++; } } });
@@ -242,7 +302,17 @@ function Dungeon({ hero, copy, locale = 'en', onFinish }: { hero: HeroClass; cop
         e.hit = Math.max(0, e.hit - dt); e.attack = Math.max(0, e.attack - dt); if (e.hp <= 0) return;
         const dx = state.x - e.x, dy = state.y - e.y, distance = Math.hypot(dx, dy * 1.7);
         if (distance > 65) { const es = e.kind === "hound" ? 92 : e.kind === "knight" ? 42 : 58; e.x += Math.sign(dx) * es * dt; e.y += Math.sign(dy) * es * .45 * dt; e.vx = Math.sign(dx); }
-        else if (e.attack <= 0 && state.invuln <= 0) { const harm = e.kind === "knight" ? 22 : e.kind === "hound" ? 8 : 12; state.health -= harm; state.combo = 0; state.attackStep = 0; state.invuln = .65; e.attack = 1.1; shake = 11; burst(state.x, state.y - 45, "#ef6b50", 14); }
+        else if (e.attack <= 0 && state.invuln <= 0) {
+          const harm = e.kind === "knight" ? 22 : e.kind === "hound" ? 8 : 12;
+          state.health -= harm;
+          state.combo = 0;
+          state.attackStep = 0;
+          state.invuln = .65;
+          e.attack = 1.1;
+          shake = 11;
+          MobileHapticsPro.heavy();
+          burst(state.x, state.y - 45, "#ef6b50", 14);
+        }
       });
       for (let i = particles.length - 1; i >= 0; i--) { const p = particles[i]; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 450 * dt; p.life -= dt; if (p.life <= 0) particles.splice(i, 1); }
       if (!state.choosing && enemies.length && enemies.every(e => e.hp <= 0)) { if (state.room >= 5) finish(true); else choosePath(); }
@@ -251,6 +321,11 @@ function Dungeon({ hero, copy, locale = 'en', onFinish }: { hero: HeroClass; cop
     };
     const finish = (won: boolean) => {
       if (state.finished) return; state.finished = true; cancelAnimationFrame(raf); audio.stop();
+      if (won) {
+        MobileHapticsPro.success();
+      } else {
+        MobileHapticsPro.heavy();
+      }
       onFinish({ score: state.score + (won ? 2500 : 0), room: state.room, kills: state.kills, path: state.path, won });
     };
     const draw = (now: number) => {
@@ -326,17 +401,64 @@ function Dungeon({ hero, copy, locale = 'en', onFinish }: { hero: HeroClass; cop
     {/* 2026-09-28 touch audit: hide only for wide screens with a mouse — a width breakpoint alone removed the controls on landscape phones and iPads. touch-none keeps a held button from turning into a page scroll (pointercancel). */}
     <div className="pointer-events-none absolute bottom-4 left-3 right-3 flex touch-none select-none items-end justify-between gap-2 md:pointer-fine:hidden">
       <div className="pointer-events-auto grid grid-cols-3 gap-1">
-        <span /><button onPointerDown={() => press("y", -1)} onPointerUp={() => press("y", 0)} onPointerCancel={() => press("y", 0)} className="size-12 rounded bg-black/70 font-black text-white">▲</button><span />
-        <button onPointerDown={() => press("x", -1)} onPointerUp={() => press("x", 0)} onPointerCancel={() => press("x", 0)} className="size-12 rounded bg-black/70 font-black text-white">◀</button><button onPointerDown={() => press("y", 1)} onPointerUp={() => press("y", 0)} onPointerCancel={() => press("y", 0)} className="size-12 rounded bg-black/70 font-black text-white">▼</button><button onPointerDown={() => press("x", 1)} onPointerUp={() => press("x", 0)} onPointerCancel={() => press("x", 0)} className="size-12 rounded bg-black/70 font-black text-white">▶</button>
+        <span />
+        <TiltEmberButton onPointerDown={() => { MobileHapticsPro.light(); press("y", -1); }} onPointerUp={() => press("y", 0)} onPointerCancel={() => press("y", 0)} className="size-12 rounded-lg bg-black/70 font-black text-white border border-white/20">▲</TiltEmberButton>
+        <span />
+        <TiltEmberButton onPointerDown={() => { MobileHapticsPro.light(); press("x", -1); }} onPointerUp={() => press("x", 0)} onPointerCancel={() => press("x", 0)} className="size-12 rounded-lg bg-black/70 font-black text-white border border-white/20">◀</TiltEmberButton>
+        <TiltEmberButton onPointerDown={() => { MobileHapticsPro.light(); press("y", 1); }} onPointerUp={() => press("y", 0)} onPointerCancel={() => press("y", 0)} className="size-12 rounded-lg bg-black/70 font-black text-white border border-white/20">▼</TiltEmberButton>
+        <TiltEmberButton onPointerDown={() => { MobileHapticsPro.light(); press("x", 1); }} onPointerUp={() => press("x", 0)} onPointerCancel={() => press("x", 0)} className="size-12 rounded-lg bg-black/70 font-black text-white border border-white/20">▶</TiltEmberButton>
       </div>
       <div className="pointer-events-auto grid grid-cols-2 gap-2 text-xs font-black">
-        <button onPointerDown={() => press("jump", true)} className="h-12 rounded-full bg-stone-700 px-3 text-white">JUMP</button><button onPointerDown={() => press("dodge", true)} className="h-12 rounded-full bg-slate-600 px-3 text-white">DODGE</button>
-        <button onPointerDown={() => press("spell", true)} className="h-14 rounded-full bg-cyan-700 px-4 text-white">SPELL</button><button onPointerDown={() => press("attack", true)} className="h-14 rounded-full bg-amber-600 px-4 text-black">ATTACK</button>
+        <TiltEmberButton onPointerDown={() => { MobileHapticsPro.light(); press("jump", true); }} className="h-12 rounded-full bg-muted px-3 text-foreground border border-border">JUMP</TiltEmberButton>
+        <TiltEmberButton onPointerDown={() => { MobileHapticsPro.light(); press("dodge", true); }} className="h-12 rounded-full bg-secondary px-3 text-secondary-foreground border border-border">DODGE</TiltEmberButton>
+        <TiltEmberButton onPointerDown={() => { MobileHapticsPro.impact(); press("spell", true); }} className="h-14 rounded-full bg-info px-4 text-info-foreground border border-info/40">SPELL</TiltEmberButton>
+        <TiltEmberButton onPointerDown={() => { MobileHapticsPro.heavy(); press("attack", true); }} className="h-14 rounded-full bg-warning px-4 text-warning-foreground border border-warning">ATTACK</TiltEmberButton>
       </div>
     </div>
-    <div className="absolute right-4 top-4 flex gap-1">{(["ember", "frost", "storm"] as SpellId[]).map((id, i) => <button key={id} onClick={() => setSpell(id)} className={`min-h-11 border px-3 font-mono text-xs font-black ${spell === id ? "border-amber-300 bg-amber-400 text-black" : "border-white/20 bg-black/70 text-white"}`}>{i + 1} {id.toUpperCase()}</button>)}</div>
-    {castNotice && <p role="status" className="absolute right-4 top-16 bg-black/80 px-3 py-2 font-mono text-xs font-black text-cyan-200">{castNotice}</p>}
-    {pathChoice && <div className="absolute inset-0 grid place-items-center bg-black/80 p-6"><div className="w-full max-w-2xl text-center"><h3 className="text-xl font-black tracking-[.18em] text-amber-200">{copy.hud.choosePath}</h3><div className="mt-6 grid gap-3 sm:grid-cols-2"><button onClick={() => pathChoice("crypt")} className="min-h-28 border border-cyan-800 bg-[#07151b] p-5 text-lg font-black text-cyan-100">{copy.hud.crypt}<span className="mt-2 block text-xs font-normal text-cyan-300/70">Frost shades · mana wells</span></button><button onClick={() => pathChoice("foundry")} className="min-h-28 border border-orange-800 bg-[#1b0b06] p-5 text-lg font-black text-orange-100">{copy.hud.foundry}<span className="mt-2 block text-xs font-normal text-orange-300/70">Armored raiders · flame vents</span></button></div></div></div>}
+    <div className="absolute right-4 top-4 flex gap-1">
+      {(["ember", "frost", "storm"] as SpellId[]).map((id, i) => (
+        <TiltEmberButton
+          key={id}
+          onClick={() => {
+            MobileHapticsPro.selection();
+            setSpell(id);
+          }}
+          className={`min-h-11 border px-3 font-mono text-xs font-black rounded ${spell === id ? "border-warning bg-warning text-warning-foreground shadow-sm" : "border-white/20 bg-black/70 text-white"}`}
+        >
+          {i + 1} {id.toUpperCase()}
+        </TiltEmberButton>
+      ))}
+    </div>
+    {castNotice && <p role="status" className="absolute right-4 top-16 bg-black/80 px-3 py-2 font-mono text-xs font-black text-info">{castNotice}</p>}
+    {pathChoice && (
+      <div className="absolute inset-0 grid place-items-center bg-black/80 p-6 z-20">
+        <div className="w-full max-w-2xl text-center">
+          <h3 className="text-xl font-black tracking-[.18em] text-warning">{copy.hud.choosePath}</h3>
+          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            <TiltEmberButton
+              onClick={() => {
+                MobileHapticsPro.selection();
+                pathChoice("crypt");
+              }}
+              className="min-h-28 border border-info/60 bg-[#07151b] p-5 text-lg font-black text-info rounded-xl"
+            >
+              {copy.hud.crypt}
+              <span className="mt-2 block text-xs font-normal text-info/70">Frost shades · mana wells</span>
+            </TiltEmberButton>
+            <TiltEmberButton
+              onClick={() => {
+                MobileHapticsPro.selection();
+                pathChoice("foundry");
+              }}
+              className="min-h-28 border border-warning/60 bg-[#1b0b06] p-5 text-lg font-black text-warning rounded-xl"
+            >
+              {copy.hud.foundry}
+              <span className="mt-2 block text-xs font-normal text-warning/70">Armored raiders · flame vents</span>
+            </TiltEmberButton>
+          </div>
+        </div>
+      </div>
+    )}
     </div>
   );
 }
@@ -390,25 +512,49 @@ export default function Emberdeep({ locale }: { locale: Locale }) {
     <div className="absolute inset-0 bg-gradient-to-r from-[#080b09] via-[#080b09]/90 to-[#080b09]/35" />
     <div className="relative grid min-h-[590px] gap-10 p-6 sm:p-10 lg:grid-cols-[1.05fr_.95fr] lg:p-14">
       <div className="self-center"><p className="font-mono text-xs font-black tracking-[.28em] text-amber-400">{t.eyebrow}</p><h2 className="mt-4 text-6xl font-black uppercase leading-[.82] tracking-[-.06em] sm:text-8xl">{t.title}</h2><p className="mt-6 max-w-xl text-sm leading-7 text-stone-300 sm:text-base">{t.subtitle}</p>
-        <p className="mt-7 text-xs font-black uppercase tracking-[.18em] text-stone-500">{t.choose}</p><div className="mt-3 grid grid-cols-3 gap-2">{(Object.keys(t.heroes) as HeroClass[]).map(id => <button key={id} onClick={() => setHero(id)} className={`min-h-20 border p-2 text-left ${hero === id ? "border-amber-400 bg-amber-400/15" : "border-white/10 bg-black/40"}`}><img src={EMBERDEEP_SPRITES[id]} alt="" width={48} height={58} className="mb-1 h-14 w-12 object-contain [image-rendering:pixelated]" /><strong className="block text-sm text-white">{t.heroes[id].name}</strong><span className="mt-1 block text-xs text-stone-200">{t.heroes[id].role}</span></button>)}</div>
+        <p className="mt-7 text-xs font-black uppercase tracking-[.18em] text-muted-foreground">{t.choose}</p>
+        <div className="mt-3 grid grid-cols-3 gap-2">
+          {(Object.keys(t.heroes) as HeroClass[]).map(id => (
+            <TiltEmberButton
+              key={id}
+              onClick={() => {
+                MobileHapticsPro.selection();
+                setHero(id);
+              }}
+              className={`min-h-20 border p-2 text-left rounded-xl ${hero === id ? "border-warning bg-warning/15 shadow-sm" : "border-white/10 bg-black/40"}`}
+            >
+              <img src={EMBERDEEP_SPRITES[id]} alt="" width={48} height={58} className="mb-1 h-14 w-12 object-contain [image-rendering:pixelated]" />
+              <strong className="block text-sm text-white">{t.heroes[id].name}</strong>
+              <span className="mt-1 block text-xs text-muted-foreground">{t.heroes[id].role}</span>
+            </TiltEmberButton>
+          ))}
+        </div>
         <div className="mt-5 flex flex-wrap items-center gap-3">
-          <button onClick={() => { setResult(null); setPhase("playing"); }} className="min-h-12 bg-amber-500 px-8 py-3 text-sm font-black uppercase tracking-widest text-black shadow-[0_0_30px_rgba(245,158,11,.25)]">{phase === "result" ? t.again : t.start}</button>
+          <TiltEmberButton
+            onClick={() => {
+              MobileHapticsPro.impact();
+              setResult(null);
+              setPhase("playing");
+            }}
+            className="min-h-12 bg-warning px-8 py-3 text-sm font-black uppercase tracking-widest text-warning-foreground rounded-xl shadow-md"
+          >
+            {phase === "result" ? t.again : t.start}
+          </TiltEmberButton>
           {result && (
-            <button
-              type="button"
+            <TiltEmberButton
               onClick={() => void handleShareCard()}
-              className="inline-flex min-h-12 items-center gap-2 border border-primary/50 bg-primary/20 px-5 py-3 font-mono text-xs font-black uppercase tracking-wider text-primary transition-colors hover:bg-primary/30 active:scale-95"
+              className="inline-flex min-h-12 items-center gap-2 border border-primary/50 bg-primary/20 px-5 py-3 font-mono text-xs font-black uppercase tracking-wider text-primary transition-colors hover:bg-primary/30 rounded-xl"
             >
               <Share2 className="size-4" />
               <span>{shareCopied ? "COPIED!" : "SHARE CARD"}</span>
-            </button>
+            </TiltEmberButton>
           )}
           <span className="border border-white/10 bg-black/60 px-4 py-3 font-mono text-xs">{t.best}: <strong>{best.toLocaleString()}</strong></span>
         </div>
-        {result && <p role="status" aria-live="polite" className="mt-4 border-l-2 border-amber-500 pl-4 font-mono text-sm text-amber-100"><strong>{result.won ? t.hud.victory : t.hud.fallen}</strong> · {result.score.toLocaleString()} · {t.hud.room} {result.room} · {result.kills} KOs · {result.path}</p>}
+        {result && <p role="status" aria-live="polite" className="mt-4 border-l-2 border-warning pl-4 font-mono text-sm text-foreground"><strong>{result.won ? t.hud.victory : t.hud.fallen}</strong> · {result.score.toLocaleString()} · {t.hud.room} {result.room} · {result.kills} KOs · {result.path}</p>}
       </div>
-      <div className="grid content-center gap-3">{t.features.map((feature, i) => { const Icon = [Swords, Sparkles, Route][i]; return <div key={feature.title} className="flex gap-4 border-l-2 border-amber-700 bg-black/55 p-4 backdrop-blur-sm"><Icon className="size-5 shrink-0 text-amber-400" /><div><h3 className="text-sm font-black uppercase">{feature.title}</h3><p className="mt-1 text-xs leading-5 text-stone-400">{feature.body}</p></div></div>; })}<div className="mt-2 border border-white/10 bg-black/55 p-4"><div className="flex items-center gap-2 text-xs font-black uppercase"><Flame className="size-4 text-orange-500" />{t.local}</div><p className="mt-2 text-xs leading-5 text-stone-400">{t.localBody}</p></div></div>
+      <div className="grid content-center gap-3">{t.features.map((feature, i) => { const Icon = [Swords, Sparkles, Route][i]; return <div key={feature.title} className="flex gap-4 border-l-2 border-warning/60 bg-black/55 p-4 backdrop-blur-sm"><Icon className="size-5 shrink-0 text-warning" /><div><h3 className="text-sm font-black uppercase">{feature.title}</h3><p className="mt-1 text-xs leading-5 text-muted-foreground">{feature.body}</p></div></div>; })}<div className="mt-2 border border-white/10 bg-black/55 p-4"><div className="flex items-center gap-2 text-xs font-black uppercase"><Flame className="size-4 text-warning" />{t.local}</div><p className="mt-2 text-xs leading-5 text-muted-foreground">{t.localBody}</p></div></div>
     </div>
-    <div className="relative grid gap-3 border-t border-white/10 bg-black/70 p-5 text-xs text-stone-400 sm:grid-cols-2 sm:p-7"><div><strong className="mb-1 flex items-center gap-2 text-white"><Gamepad2 className="size-4 text-amber-500" />{t.controls}</strong>{t.desktop}</div><div><strong className="mb-1 flex items-center gap-2 text-white"><Headphones className="size-4 text-amber-500" />MOBILE + AUDIO</strong>{t.mobile}</div></div>
+    <div className="relative grid gap-3 border-t border-white/10 bg-black/70 p-5 text-xs text-muted-foreground sm:grid-cols-2 sm:p-7"><div><strong className="mb-1 flex items-center gap-2 text-white"><Gamepad2 className="size-4 text-warning" />{t.controls}</strong>{t.desktop}</div><div><strong className="mb-1 flex items-center gap-2 text-white"><Headphones className="size-4 text-warning" />MOBILE + AUDIO</strong>{t.mobile}</div></div>
   </section>;
 }

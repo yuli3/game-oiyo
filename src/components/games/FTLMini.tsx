@@ -18,6 +18,49 @@ import {
   Volume2,
   VolumeX,
 } from 'lucide-react';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { celebrate } from '../../lib/games/celebration';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import type { Locale } from '../../lib/i18n';
+
+function TiltFTLButton({
+  children,
+  onClick,
+  disabled,
+  className,
+  title,
+  'aria-label': ariaLabel,
+  'aria-pressed': ariaPressed,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  className?: string;
+  title?: string;
+  'aria-label'?: string;
+  'aria-pressed'?: boolean;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      title={title}
+      aria-label={ariaLabel}
+      aria-pressed={ariaPressed}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.2);
+        onClick?.();
+      }}
+      className={`will-change-transform transform-(--card-tilt) ${className ?? ''}`}
+    >
+      {children}
+    </button>
+  );
+}
 
 interface SpaceParticle {
   x: number;
@@ -30,7 +73,8 @@ interface SpaceParticle {
   maxLife: number;
 }
 
-export const FTLMini: React.FC = () => {
+export const FTLMini: React.FC<{ locale?: Locale }> = ({ locale = 'en' }) => {
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale });
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const engineRef = useRef<FTLEngine | null>(null);
   const animFrameRef = useRef<number | null>(null);
@@ -76,6 +120,13 @@ export const FTLMini: React.FC = () => {
   const audioCtxRef = useRef<AudioContext | null>(null);
 
   const playSfx = useCallback((type: 'laser' | 'missile' | 'shield' | 'explosion' | 'jump' | 'alarm') => {
+    if (type === 'laser') MobileHapticsPro.light();
+    else if (type === 'missile') MobileHapticsPro.impact();
+    else if (type === 'shield') MobileHapticsPro.medium();
+    else if (type === 'explosion') MobileHapticsPro.heavy();
+    else if (type === 'jump') MobileHapticsPro.success();
+    else if (type === 'alarm') MobileHapticsPro.warning();
+
     if (!soundEnabled) return;
     try {
       if (!audioCtxRef.current) {
@@ -226,6 +277,7 @@ export const FTLMini: React.FC = () => {
   };
 
   const handleRestart = () => {
+    MobileHapticsPro.medium();
     engineRef.current = new FTLEngine();
     setSelectedCrewId(null);
     setSelectedWeaponId(null);
@@ -234,12 +286,14 @@ export const FTLMini: React.FC = () => {
 
   const togglePause = () => {
     if (!engineRef.current) return;
+    MobileHapticsPro.selection();
     engineRef.current.isPaused = !engineRef.current.isPaused;
     setIsPaused(engineRef.current.isPaused);
   };
 
   const cycleGameSpeed = () => {
     if (!engineRef.current) return;
+    MobileHapticsPro.light();
     const next = gameSpeed === 1 ? 2 : 1;
     engineRef.current.gameSpeed = next;
     setGameSpeed(next);
@@ -247,11 +301,13 @@ export const FTLMini: React.FC = () => {
 
   const handleAllocatePower = (roomId: string, delta: number) => {
     if (!engineRef.current) return;
+    MobileHapticsPro.light();
     engineRef.current.allocatePower(roomId, delta);
     syncSnapshot();
   };
 
   const handleSelectCrew = (crewId: string) => {
+    MobileHapticsPro.selection();
     if (selectedCrewId === crewId) {
       setSelectedCrewId(null);
     } else {
@@ -261,6 +317,7 @@ export const FTLMini: React.FC = () => {
   };
 
   const handleSelectWeapon = (weaponId: string) => {
+    MobileHapticsPro.selection();
     if (selectedWeaponId === weaponId) {
       setSelectedWeaponId(null);
     } else {
@@ -274,6 +331,7 @@ export const FTLMini: React.FC = () => {
     const ok = engineRef.current.jumpSector();
     if (ok) {
       playSfx('jump');
+      celebrate(null, { preset: 'stardust' });
       syncSnapshot();
     }
   };
@@ -564,7 +622,15 @@ export const FTLMini: React.FC = () => {
   const enemyHullPct = Math.round((enemyHull / enemyMaxHull) * 100);
 
   return (
-    <div className="flex flex-col items-center w-full max-w-4xl mx-auto p-4 gap-4 select-none">
+    <div
+      ref={containerRef}
+      data-game-surface
+      className={
+        isImmersive
+          ? "fixed inset-0 z-50 w-screen h-dvh bg-background select-none touch-none overflow-y-auto m-0 p-4 flex flex-col items-center justify-start gap-4"
+          : "flex flex-col items-center w-full max-w-4xl mx-auto p-4 gap-4 select-none"
+      }
+    >
       {/* Top Combat HUD */}
       <div className="flex flex-wrap items-center justify-between w-full bg-card/80 border border-border p-3 rounded-xl backdrop-blur-md gap-3">
         {/* Player Hull & Shields */}
@@ -615,41 +681,56 @@ export const FTLMini: React.FC = () => {
 
           {/* Action Controls */}
           <div className="flex items-center gap-1.5 ml-2">
-            <Button
-              variant="outline"
-              size="icon-sm"
+            <TiltFTLButton
               onClick={togglePause}
+              aria-label={isPaused ? "Play" : "Pause"}
+              className="p-2 rounded-lg border border-border bg-card text-foreground hover:bg-muted"
             >
               {isPaused ? <Play className="size-4 text-primary" /> : <Pause className="size-4" />}
-            </Button>
+            </TiltFTLButton>
 
-            <Button
-              variant={gameSpeed === 2 ? 'default' : 'outline'}
-              size="sm"
+            <TiltFTLButton
               onClick={cycleGameSpeed}
+              aria-label="Speed"
+              className={`px-2.5 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-1 ${
+                gameSpeed === 2 ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-foreground'
+              }`}
             >
               <Zap className="size-3.5" /> {gameSpeed}x
-            </Button>
+            </TiltFTLButton>
 
-            <Button
-              variant="outline"
-              size="icon-sm"
-              onClick={() => setSoundEnabled(!soundEnabled)}
+            <TiltFTLButton
+              onClick={() => {
+                MobileHapticsPro.selection();
+                setSoundEnabled(!soundEnabled);
+              }}
+              aria-label={soundEnabled ? "Mute" : "Unmute"}
+              className="p-2 rounded-lg border border-border bg-card text-foreground hover:bg-muted"
             >
               {soundEnabled ? (
                 <Volume2 className="size-4 text-primary" />
               ) : (
                 <VolumeX className="size-4 text-muted-foreground" />
               )}
-            </Button>
+            </TiltFTLButton>
 
-            <Button
-              variant="outline"
-              size="icon-sm"
+            <TiltFTLButton
               onClick={handleRestart}
+              aria-label="Restart"
+              className="p-2 rounded-lg border border-border bg-card text-foreground hover:bg-muted"
             >
               <RotateCcw className="size-4" />
-            </Button>
+            </TiltFTLButton>
+
+            <TiltFTLButton
+              onClick={togglePortal}
+              aria-pressed={isImmersive}
+              aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+              title={isImmersive ? portalLabels.exit : portalLabels.enter}
+              className="px-2.5 py-1.5 rounded-lg border border-border bg-card text-foreground hover:bg-muted text-xs font-bold flex items-center gap-1"
+            >
+              <span>{isImmersive ? '✕' : '⛶'}</span>
+            </TiltFTLButton>
           </div>
         </div>
       </div>
@@ -694,9 +775,12 @@ export const FTLMini: React.FC = () => {
                 </p>
               </>
             )}
-            <Button onClick={handleRestart} size="lg">
+            <TiltFTLButton
+              onClick={handleRestart}
+              className="px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-lg hover:bg-primary/90 flex items-center gap-2"
+            >
               <RotateCcw className="size-4" /> Recommission Starship
-            </Button>
+            </TiltFTLButton>
           </div>
         )}
       </div>
@@ -725,20 +809,18 @@ export const FTLMini: React.FC = () => {
                   <span className="text-muted-foreground font-mono">
                     {room.powered}/{room.level}
                   </span>
-                  <button
-                    type="button"
+                  <TiltFTLButton
                     onClick={() => handleAllocatePower(room.id, -1)}
                     className="size-5 flex items-center justify-center bg-card border border-border rounded text-xs font-bold hover:bg-muted"
                   >
                     -
-                  </button>
-                  <button
-                    type="button"
+                  </TiltFTLButton>
+                  <TiltFTLButton
                     onClick={() => handleAllocatePower(room.id, 1)}
                     className="size-5 flex items-center justify-center bg-primary/20 text-primary border border-primary/40 rounded text-xs font-bold hover:bg-primary/30"
                   >
                     +
-                  </button>
+                  </TiltFTLButton>
                 </div>
               </div>
             ))}
@@ -761,9 +843,8 @@ export const FTLMini: React.FC = () => {
               const targetRoom = enemyRooms.find(r => r.id === weapon.targetRoomId);
 
               return (
-                <button
+                <TiltFTLButton
                   key={weapon.id}
-                  type="button"
                   onClick={() => handleSelectWeapon(weapon.id)}
                   className={`flex flex-col p-2 rounded-lg border text-left transition-all ${
                     isSelected
@@ -786,7 +867,7 @@ export const FTLMini: React.FC = () => {
                       style={{ '--charge-w': `${chargePct}%` } as React.CSSProperties}
                     />
                   </div>
-                </button>
+                </TiltFTLButton>
               );
             })}
           </div>
@@ -808,9 +889,8 @@ export const FTLMini: React.FC = () => {
                 const currentRoom = playerRooms.find(r => r.id === crew.roomId);
 
                 return (
-                  <button
+                  <TiltFTLButton
                     key={crew.id}
-                    type="button"
                     onClick={() => handleSelectCrew(crew.id)}
                     className={`flex items-center justify-between p-1.5 rounded-lg border text-left text-xs transition-all ${
                       isSelected
@@ -828,7 +908,7 @@ export const FTLMini: React.FC = () => {
                     <span className="text-muted-foreground">
                       {currentRoom ? currentRoom.name : 'Transit'}
                     </span>
-                  </button>
+                  </TiltFTLButton>
                 );
               })}
             </div>
@@ -849,14 +929,17 @@ export const FTLMini: React.FC = () => {
               </div>
             </div>
 
-            <Button
-              size="sm"
-              variant={playerFtl >= 100 ? 'default' : 'outline'}
+            <TiltFTLButton
               disabled={playerFtl < 100}
               onClick={handleJump}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                playerFtl >= 100
+                  ? 'bg-primary text-primary-foreground shadow-md hover:bg-primary/90'
+                  : 'bg-muted text-muted-foreground opacity-50 cursor-not-allowed'
+              }`}
             >
               FTL Jump
-            </Button>
+            </TiltFTLButton>
           </div>
         </div>
       </div>

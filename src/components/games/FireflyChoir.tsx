@@ -13,6 +13,7 @@ import { dateKeyIndex, kstDateKey } from "../../lib/games/todays-game";
 import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from "../../lib/games/game-audio";
 import { createHaptics } from "../../lib/games/haptics";
 import { celebrate } from "../../lib/games/celebration";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import { FIREFLY_CHOIR_SPRITES } from "../../lib/games/sprites";
 import {
   FLIES,
@@ -27,6 +28,42 @@ import {
   pair,
   type Run,
 } from "../../lib/games/firefly-choir";
+
+function TiltFireflyButton({
+  children,
+  onClick,
+  disabled,
+  className,
+  'aria-label': ariaLabel,
+  'aria-pressed': ariaPressed,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  className?: string;
+  'aria-label'?: string;
+  'aria-pressed'?: boolean;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      aria-label={ariaLabel}
+      aria-pressed={ariaPressed}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.2);
+        onClick?.();
+      }}
+      className={`will-change-transform transform-(--card-tilt) ${className ?? ''}`}
+    >
+      {children}
+    </button>
+  );
+}
 
 const BEAT_MS = 1200;
 const CONTROL = "min-h-11 min-w-11 rounded-xl border px-3 py-2 text-sm font-bold motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
@@ -267,7 +304,7 @@ export default function FireflyChoir({ locale }: { locale: Locale }) {
       if (heardTick.current === run.tick || run.lastSung === 0 || muted || reducedMotion) return;
       heardTick.current = run.tick;
       cue("tap");
-      hapticsRef.current.fire("place");
+      MobileHapticsPro.impact();
       return;
     }
     if (previous === run.phase || (run.phase !== "won" && run.phase !== "lost")) return;
@@ -281,16 +318,17 @@ export default function FireflyChoir({ locale }: { locale: Locale }) {
     }
     if (run.phase === "won") {
       cue("win");
-      hapticsRef.current.fire("win");
+      MobileHapticsPro.success();
       if (containerRef.current) celebrate(containerRef.current, { preset: "notes" });
     } else if (run.phase === "lost") {
       cue("fail");
-      hapticsRef.current.fire("fail");
+      MobileHapticsPro.heavy();
     }
   }, [run, dateKey, attempt, muted, reducedMotion]);
 
   const again = () => {
     if (!dateKey) return;
+    MobileHapticsPro.medium();
     const seed = (dateKeyIndex(dateKey) * 0x9e3779b1) >>> 0;
     heardTick.current = null;
     setAttempt((value) => value + 1);
@@ -299,7 +337,7 @@ export default function FireflyChoir({ locale }: { locale: Locale }) {
 
   const onPair = (index: number) => {
     cue("place");
-    hapticsRef.current.fire("tap");
+    MobileHapticsPro.selection();
     setRun((current) => (current ? pair(current, index) : current));
   };
 
@@ -323,9 +361,20 @@ export default function FireflyChoir({ locale }: { locale: Locale }) {
         {!run || !dateKey ? <p className="text-sm text-muted-foreground">{t.preparing}</p> : (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">{t.date(dateKey)}</p>
-            <p className="text-sm font-bold tabular-nums text-foreground" aria-live="polite">{t.score(run.sounds)} · {run.tick + 1} / {TICKS}</p>
+            <div>
+              <div className="flex justify-between text-sm font-bold tabular-nums text-foreground mb-1" aria-live="polite">
+                <span>{t.score(run.sounds)} · {run.tick + 1} / {TICKS}</span>
+                <span className="text-xs text-muted-foreground font-mono">{run.sounds} / {NEED}</span>
+              </div>
+              <div className="w-full bg-muted h-2 rounded-full overflow-hidden border border-border/40">
+                <div
+                  className="bg-primary h-full transition-all duration-200 rounded-full w-(--sound-pct)"
+                  style={{ '--sound-pct': `${Math.min(100, Math.round((run.sounds / NEED) * 100))}%` } as React.CSSProperties}
+                />
+              </div>
+            </div>
             <p className="text-sm text-foreground">{run.phase === "won" ? t.won : run.phase === "lost" ? t.lost : run.phase === "play" ? t.play : t.ready}</p>
-            {run.phase === "play" && run.lastSung > 0 ? <p className="text-sm text-foreground">{t.sung}</p> : null}
+            {run.phase === "play" && run.lastSung > 0 ? <p className="text-sm text-foreground font-bold text-primary">{t.sung}</p> : null}
             <div className="flex gap-1" aria-hidden="true">
               {ticks.map((tick) => (
                 <div key={tick} className="flex flex-col gap-1">
@@ -342,35 +391,33 @@ export default function FireflyChoir({ locale }: { locale: Locale }) {
                 const selected = run.pending === index;
                 const mark = markOf(run, index);
                 return (
-                  <button
+                  <TiltFireflyButton
                     key={index}
-                    type="button"
                     disabled={run.phase !== "play"}
                     onClick={() => onPair(index)}
                     aria-pressed={selected}
                     aria-label={`${t.fly(index + 1)}. ${lit ? t.lit : t.dim}. ${grouped ? t.grouped : t.open}`}
-                    className={`min-h-16 rounded-xl border text-2xl font-bold motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60 ${selected ? "border-primary bg-primary text-primary-foreground" : lit ? "border-primary bg-foreground/15 text-foreground" : "border-border bg-card text-muted-foreground"}`}
+                    className={`min-h-16 rounded-xl border text-2xl font-bold motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60 ${selected ? "border-primary bg-primary text-primary-foreground shadow-md" : lit ? "border-primary bg-foreground/15 text-foreground" : "border-border bg-card text-muted-foreground"}`}
                   >
                     {lit ? "●" : "○"}{mark ? ` ${mark}` : ""}
-                  </button>
+                  </TiltFireflyButton>
                 );
               })}
             </div>
             {run.phase === "ready" ? (
-              <button
-                type="button"
+              <TiltFireflyButton
                 onClick={() => {
                   cue("tap");
-                  hapticsRef.current.fire("tap");
+                  MobileHapticsPro.impact();
                   setRun((current) => (current ? begin(current) : current));
                 }}
-                className={`${CONTROL} border-primary bg-primary text-primary-foreground`}
+                className={`${CONTROL} w-full border-primary bg-primary text-primary-foreground`}
               >
                 {t.start}
-              </button>
+              </TiltFireflyButton>
             ) : null}
             {run.phase === "won" || run.phase === "lost" ? (
-              <button type="button" onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</button>
+              <TiltFireflyButton onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</TiltFireflyButton>
             ) : null}
             <p className="text-sm text-muted-foreground">{t.record(record?.w ?? 0, record?.l ?? 0)}{best?.unit === "score" ? ` · ${t.best(best.value)}` : ""}</p>
           </div>

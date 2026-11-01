@@ -19,6 +19,48 @@ import {
   type FactorioState,
   type ItemType,
 } from "../../lib/games/factorio-mini";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
+import { celebrate } from "../../lib/games/celebration";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+
+function TiltFactorioButton({
+  children,
+  onClick,
+  disabled,
+  className,
+  title,
+  'aria-label': ariaLabel,
+  'aria-pressed': ariaPressed,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  className?: string;
+  title?: string;
+  'aria-label'?: string;
+  'aria-pressed'?: boolean;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      title={title}
+      aria-label={ariaLabel}
+      aria-pressed={ariaPressed}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.2);
+        onClick?.();
+      }}
+      className={`will-change-transform transform-(--card-tilt) ${className ?? ''}`}
+    >
+      {children}
+    </button>
+  );
+}
 
 type Locale = "ko" | "en" | "ja" | "zh" | "fr" | "es";
 
@@ -256,6 +298,7 @@ interface FloatingPopup {
 export default function FactorioMini({ locale = "ko" }: Props) {
   const lang: Locale = (locale in I18N ? locale : "en") as Locale;
   const t = I18N[lang];
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: lang });
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const stateRef = useRef<FactorioState>(createFactorioState(0));
@@ -289,6 +332,7 @@ export default function FactorioMini({ locale = "ko" }: Props) {
   }, []);
 
   const playPlaceSound = useCallback(() => {
+    MobileHapticsPro.light();
     const ctx = ensureAudio();
     if (!ctx) return;
     const now = ctx.currentTime;
@@ -307,6 +351,7 @@ export default function FactorioMini({ locale = "ko" }: Props) {
 
   const playDeliverChime = useCallback(
     (itemType: ItemType) => {
+      MobileHapticsPro.medium();
       const ctx = ensureAudio();
       if (!ctx) return;
       const now = ctx.currentTime;
@@ -331,6 +376,7 @@ export default function FactorioMini({ locale = "ko" }: Props) {
     [ensureAudio]
   );
 
+  const prevClearedRef = useRef(false);
   const syncUi = useCallback(() => {
     const st = stateRef.current;
     setUiStageIdx(st.stageIndex);
@@ -341,10 +387,18 @@ export default function FactorioMini({ locale = "ko" }: Props) {
     setUiDir(st.selectedDir);
     setUiSpeed(st.simSpeed);
     setUiCleared(st.isCleared);
+
+    if (st.isCleared && !prevClearedRef.current) {
+      prevClearedRef.current = true;
+      MobileHapticsPro.success();
+      celebrate(null, { preset: "shards" });
+    }
   }, []);
 
   const loadStage = useCallback(
     (idx: number) => {
+      MobileHapticsPro.selection();
+      prevClearedRef.current = false;
       stateRef.current = createFactorioState(idx);
       popupsRef.current = [];
       syncUi();
@@ -354,6 +408,7 @@ export default function FactorioMini({ locale = "ko" }: Props) {
 
   const handleSelectTool = useCallback(
     (tool: BuildingType) => {
+      MobileHapticsPro.selection();
       stateRef.current.selectedTool = tool;
       setUiTool(tool);
     },
@@ -361,17 +416,20 @@ export default function FactorioMini({ locale = "ko" }: Props) {
   );
 
   const handleRotate = useCallback(() => {
+    MobileHapticsPro.selection();
     const nextDir = rotateSelectedTool(stateRef.current);
     setUiDir(nextDir);
   }, []);
 
   const handleBlueprint = useCallback(() => {
+    MobileHapticsPro.impact();
     applyStageBlueprint(stateRef.current);
     playPlaceSound();
     syncUi();
   }, [playPlaceSound, syncUi]);
 
   const handleToggleSpeed = useCallback(() => {
+    MobileHapticsPro.light();
     const nextSpeed = stateRef.current.simSpeed === 1 ? 2 : 1;
     stateRef.current.simSpeed = nextSpeed;
     setUiSpeed(nextSpeed);
@@ -691,7 +749,15 @@ export default function FactorioMini({ locale = "ko" }: Props) {
   const progressPct = Math.min(100, Math.round((uiRp / uiTargetRp) * 100));
 
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 text-card-foreground shadow-sm">
+    <div
+      ref={containerRef}
+      data-game-surface
+      className={
+        isImmersive
+          ? "fixed inset-0 z-50 w-screen h-dvh bg-card select-none touch-none overflow-y-auto m-0 p-4 flex flex-col gap-4 text-card-foreground"
+          : "flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 text-card-foreground shadow-sm"
+      }
+    >
         {/* Top HUD Bar */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
           <div>
@@ -709,27 +775,33 @@ export default function FactorioMini({ locale = "ko" }: Props) {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
+            <TiltFactorioButton
               onClick={handleBlueprint}
               className="rounded-lg bg-secondary px-3 py-1.5 text-xs font-bold text-secondary-foreground transition hover:opacity-90"
             >
               {t.blueprintBtn}
-            </button>
-            <button
-              type="button"
+            </TiltFactorioButton>
+            <TiltFactorioButton
               onClick={handleToggleSpeed}
               className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-bold text-foreground transition hover:bg-muted"
             >
               {t.speedBtn}: {uiSpeed}x
-            </button>
-            <button
-              type="button"
+            </TiltFactorioButton>
+            <TiltFactorioButton
               onClick={() => loadStage(uiStageIdx)}
               className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-semibold text-muted-foreground transition hover:bg-muted"
             >
               {t.resetBtn}
-            </button>
+            </TiltFactorioButton>
+            <TiltFactorioButton
+              onClick={togglePortal}
+              aria-pressed={isImmersive}
+              aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+              title={isImmersive ? portalLabels.exit : portalLabels.enter}
+              className="rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs font-bold text-foreground transition hover:bg-muted flex items-center gap-1"
+            >
+              <span>{isImmersive ? '✕' : '⛶'}</span>
+            </TiltFactorioButton>
           </div>
         </div>
 
@@ -741,18 +813,17 @@ export default function FactorioMini({ locale = "ko" }: Props) {
             </span>
             <div className="flex gap-1.5">
               {STAGES.map((s, idx) => (
-                <button
+                <TiltFactorioButton
                   key={s.id}
-                  type="button"
                   onClick={() => loadStage(idx)}
                   className={`rounded px-2 py-0.5 text-xs font-bold transition ${
                     idx === uiStageIdx
-                      ? "bg-primary text-primary-foreground"
+                      ? "bg-primary text-primary-foreground shadow-xs"
                       : "bg-muted text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   #{idx + 1}
-                </button>
+                </TiltFactorioButton>
               ))}
             </div>
           </div>
@@ -770,13 +841,12 @@ export default function FactorioMini({ locale = "ko" }: Props) {
             <span className="text-sm font-bold text-primary">
               {t.stageComplete}
             </span>
-            <button
-              type="button"
+            <TiltFactorioButton
               onClick={() => loadStage((uiStageIdx + 1) % STAGES.length)}
               className="rounded-lg bg-primary px-4 py-1.5 text-xs font-bold text-primary-foreground shadow-xs transition hover:opacity-90"
             >
               {t.nextStageBtn}
-            </button>
+            </TiltFactorioButton>
           </div>
         )}
 
@@ -813,9 +883,8 @@ export default function FactorioMini({ locale = "ko" }: Props) {
             {(
               ["belt", "miner", "smelter", "assembler", "empty"] as BuildingType[]
             ).map((tool) => (
-              <button
+              <TiltFactorioButton
                 key={tool}
-                type="button"
                 onClick={() => handleSelectTool(tool)}
                 className={`rounded-lg px-3 py-2 text-xs font-bold transition ${
                   uiTool === tool
@@ -824,17 +893,16 @@ export default function FactorioMini({ locale = "ko" }: Props) {
                 }`}
               >
                 {t.tools[tool]}
-              </button>
+              </TiltFactorioButton>
             ))}
           </div>
 
-          <button
-            type="button"
+          <TiltFactorioButton
             onClick={handleRotate}
             className="rounded-lg border border-border bg-card px-3.5 py-2 text-xs font-bold text-primary transition hover:bg-muted"
           >
             {t.rotateBtn}: {t.dirs[uiDir]}
-          </button>
+          </TiltFactorioButton>
         </div>
 
         <p className="text-center text-xs text-muted-foreground">
