@@ -48,6 +48,34 @@ import {
   sampleScreenShakeOffset,
   type ScreenShakeEngine,
 } from "../../lib/games/screen-shake";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+
+function TiltCosmicButton({
+  onClick,
+  disabled,
+  className,
+  children,
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={(e) => {
+        triggerPop();
+        onClick?.(e);
+      }}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      className={`will-change-transform transform-(--card-tilt) transition-transform duration-150 ${className ?? ''}`}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+}
 
 interface Props {
   locale?: Locale;
@@ -497,6 +525,7 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
   // Activate Gravitational Singularity Vortex (Chaos Modifier)
   const activateVortex = useCallback(() => {
     if (vortexEnergyRef.current < VORTEX_MAX_ENERGY || vortexActiveRef.current) return;
+    MobileHapticsPro.heavy();
     vortexActiveRef.current = true;
     vortexEndTimeRef.current = performance.now() + VORTEX_DURATION_MS;
     setIsVortexActive(true);
@@ -520,6 +549,7 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
     const targetIds = new Set(selectBlackHoleTargets(candidates));
     if (targetIds.size === 0) return;
 
+    MobileHapticsPro.warning();
     setBlackHoleUsed(true);
     vibrate([40, 60, 80]);
     shakeEngineRef.current = addScreenShakeTrauma(shakeEngineRef.current, 0.7);
@@ -723,6 +753,15 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
               const trauma = Math.min(0.85, 0.2 + (mergeResult.nextTier / MAX_TIER_INDEX) * 0.65);
               shakeEngineRef.current = addScreenShakeTrauma(shakeEngineRef.current, trauma);
               playMergeSound(mergeResult.nextTier);
+              if (mergeResult.nextTier === MAX_TIER_INDEX) {
+                MobileHapticsPro.success();
+              } else if (mergeResult.nextTier >= 7) {
+                MobileHapticsPro.heavy();
+              } else if (mergeResult.nextTier >= 4) {
+                MobileHapticsPro.impact();
+              } else {
+                MobileHapticsPro.light();
+              }
               vibrate(mergeResult.nextTier >= 7 ? [15, 20, 30] : 18);
 
               // Sound ducking on merge
@@ -784,6 +823,7 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
     Matter.Composite.add(engineRef.current.world, body);
 
     playDropSound();
+    MobileHapticsPro.light();
     vibrate(10);
 
     // Roll next tiers
@@ -1358,12 +1398,11 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
           )}
 
           {/* Emergency Black Hole Cleanse Button */}
-          <button
-            type="button"
+          <TiltCosmicButton
             disabled={blackHoleUsed || phase !== "play" || isGameOver}
             onClick={handleBlackHoleCleanse}
             title={blackHoleUsed ? t.blackHoleUsed : t.blackHole}
-            className={`min-h-11 px-2.5 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1 transition-all active:scale-95 ${
+            className={`min-h-11 px-2.5 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1 transition-all ${
               blackHoleUsed
                 ? "border-border/40 bg-muted/30 text-muted-foreground/60 cursor-not-allowed"
                 : isDanger
@@ -1373,7 +1412,7 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
           >
             <span>🕳️</span>
             <span className="hidden sm:inline">{blackHoleUsed ? t.blackHoleUsed : t.blackHole}</span>
-          </button>
+          </TiltCosmicButton>
 
           {/* Next Planet Pill */}
           <div className="px-2.5 py-1.5 rounded-xl border border-border/80 bg-background/85 backdrop-blur-md shadow-xs flex items-center gap-1.5">
@@ -1394,14 +1433,13 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
               🌀 {t.vortexActive}
             </div>
           ) : vortexEnergy >= VORTEX_MAX_ENERGY ? (
-            <button
-              type="button"
+            <TiltCosmicButton
               onClick={activateVortex}
-              className="animate-pulse ring-4 ring-primary min-h-11 px-3 py-2 rounded-xl border border-primary bg-primary text-primary-foreground font-black text-xs shadow-lg shadow-primary/30 hover:bg-primary/90 transition-transform active:scale-95 flex items-center gap-1"
+              className="animate-pulse ring-4 ring-primary min-h-11 px-3 py-2 rounded-xl border border-primary bg-primary text-primary-foreground font-black text-xs shadow-lg shadow-primary/30 hover:bg-primary/90 flex items-center gap-1"
             >
               <span>🌀</span>
               <span>{t.vortexReady}</span>
-            </button>
+            </TiltCosmicButton>
           ) : (
             <div className="px-2.5 py-1.5 rounded-xl border border-border bg-background/85 backdrop-blur-md text-xs font-mono font-bold text-muted-foreground flex items-center gap-1">
               <span>🌀</span>
@@ -1410,8 +1448,7 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
           )}
 
           {/* Codex Button */}
-          <button
-            type="button"
+          <TiltCosmicButton
             onClick={() => setShowCodex((s) => !s)}
             aria-pressed={showCodex}
             aria-label={t.codex}
@@ -1420,7 +1457,7 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
           >
             <span>📖</span>
             <span className="hidden sm:inline">{t.codex}</span>
-          </button>
+          </TiltCosmicButton>
         </div>
       }
     >

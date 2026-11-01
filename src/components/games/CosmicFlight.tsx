@@ -7,8 +7,34 @@ import { generateFlightCourse, type FlightCourse } from '../../lib/games/cosmic-
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { celebrate } from '../../lib/games/celebration';
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from '../../lib/games/share-card';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 
 const CosmicFlightScene = lazy(() => import('./CosmicFlightScene'));
+
+function TiltFlightButton({
+  onClick,
+  className,
+  children,
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={(e) => {
+        triggerPop();
+        onClick?.(e);
+      }}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      className={`will-change-transform transform-(--card-tilt) transition-transform duration-150 ${className ?? ''}`}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+}
 
 const GAME_KEY = 'cosmic-flight-3d';
 
@@ -185,6 +211,7 @@ export default function CosmicFlight({ locale = 'ko' }: { locale?: Locale }) {
   }, [togglePortal, toggleAudio]);
 
   const startNewFlight = () => {
+    MobileHapticsPro.medium();
     setCourse(generateFlightCourse(Date.now(), 22));
     setPassedRings(0);
     setMaxCombo(0);
@@ -217,16 +244,25 @@ export default function CosmicFlight({ locale = 'ko' }: { locale?: Locale }) {
   }, [status, finalScore, passedRings, course.rings.length, maxCombo, bestScore]);
 
   const handlePassRing = (_ringIndex: number, combo: number) => {
+    if (combo >= 5) {
+      MobileHapticsPro.heavy();
+    } else if (combo >= 3) {
+      MobileHapticsPro.impact();
+    } else {
+      MobileHapticsPro.light();
+    }
     setPassedRings((p) => p + 1);
     setMaxCombo((c) => Math.max(c, combo));
   };
 
   const handleCrash = () => {
+    MobileHapticsPro.heavy();
     setStatus('crashed');
     if (containerRef.current) celebrate(containerRef.current, { preset: "shards" });
   };
 
   const handleFinish = (score: number) => {
+    MobileHapticsPro.success();
     setFinalScore(score);
     setStatus('cleared');
     if (containerRef.current) celebrate(containerRef.current, { preset: "sparks" });
@@ -343,13 +379,13 @@ export default function CosmicFlight({ locale = 'ko' }: { locale?: Locale }) {
               </div>
               <h2 className="text-xl font-bold text-foreground sm:text-2xl">{t.title}</h2>
               <p className="mt-2 max-w-md text-sm text-muted-foreground">{t.controlsHint}</p>
-              <button
+              <TiltFlightButton
                 onClick={startNewFlight}
-                className="mt-6 flex items-center gap-2 rounded-xl bg-primary px-6 py-3 font-semibold text-primary-foreground transition hover:opacity-90 active:scale-95"
+                className="mt-6 flex items-center gap-2 rounded-xl bg-primary px-6 py-3 font-semibold text-primary-foreground transition hover:opacity-90"
               >
                 <Play className="h-5 w-5 fill-current" />
                 {t.start}
-              </button>
+              </TiltFlightButton>
             </div>
           )}
         </Suspense>
@@ -375,14 +411,13 @@ export default function CosmicFlight({ locale = 'ko' }: { locale?: Locale }) {
                 )}
               </div>
               <div className="mt-4 flex flex-col gap-2">
-                <button
-                  type="button"
+                <TiltFlightButton
                   onClick={startNewFlight}
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 font-semibold text-primary-foreground transition hover:opacity-90"
                 >
                   <RefreshCw className="h-4 w-4" />
                   {t.retry}
-                </button>
+                </TiltFlightButton>
                 <button
                   type="button"
                   onClick={handleShareCard}

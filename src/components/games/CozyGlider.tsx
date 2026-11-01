@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import {
   loadArcadePassProgress,
   reportMissionProgress,
@@ -27,6 +28,31 @@ const LANDMARK_ICONS: Record<LandmarkType, string> = {
   'lookout-camp': '🔥',
   'hawk-summit': '🏔️',
 };
+
+function TiltGliderActionButton({
+  onClick,
+  className,
+  children,
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={(e) => {
+        triggerPop();
+        onClick?.(e);
+      }}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      className={`will-change-transform transform-(--card-tilt) transition-transform duration-150 ${className ?? ''}`}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+}
 
 export default function CozyGlider({ locale }: Props) {
   const isKo = locale === 'ko';
@@ -141,8 +167,19 @@ export default function CozyGlider({ locale }: Props) {
 
   const handleMove = (targetId: string) => {
     const next = moveOrGlideToNode(state, targetId);
+    if (next.currentNodeId === state.currentNodeId) {
+      MobileHapticsPro.warning();
+    } else {
+      const isGlide = currentNode.glideTargets.includes(targetId);
+      if (isGlide) {
+        MobileHapticsPro.medium();
+      } else {
+        MobileHapticsPro.light();
+      }
+    }
     setState(next);
     if (next.status === 'summit-reached') {
+      MobileHapticsPro.success();
       recordArcadePass(1);
     }
   };
@@ -179,27 +216,33 @@ export default function CozyGlider({ locale }: Props) {
         </div>
 
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setState(restAtCampfire(state))}
+          <TiltGliderActionButton
+            onClick={() => {
+              MobileHapticsPro.click();
+              setState(restAtCampfire(state));
+            }}
             className="rounded-xl border border-border bg-secondary px-3 py-2 text-xs font-semibold text-secondary-foreground hover:bg-accent"
           >
             🔥 {isKo ? '깃털 숨고르기 충전' : 'Recharge Feathers'}
-          </button>
-          <button
-            type="button"
-            onClick={() => setState(applyGoldenFeatherPackPreset(state))}
+          </TiltGliderActionButton>
+          <TiltGliderActionButton
+            onClick={() => {
+              MobileHapticsPro.selection();
+              setState(applyGoldenFeatherPackPreset(state));
+            }}
             className="rounded-xl border border-border bg-secondary px-3 py-2 text-xs font-semibold text-secondary-foreground hover:bg-accent"
           >
             {isKo ? '⚡ 황금 깃털 6개 + 능선 캠프 이동' : '⚡ 6 Feathers + Ridge Camp'}
-          </button>
-          <button
-            type="button"
-            onClick={() => setState(createCozyGliderState())}
+          </TiltGliderActionButton>
+          <TiltGliderActionButton
+            onClick={() => {
+              MobileHapticsPro.selection();
+              setState(createCozyGliderState());
+            }}
             className="rounded-xl border border-border bg-background px-3 py-2 text-xs font-semibold hover:bg-accent"
           >
             {isKo ? '새 하이킹' : 'New Hike'}
-          </button>
+          </TiltGliderActionButton>
         </div>
       </div>
 
@@ -252,9 +295,8 @@ export default function CozyGlider({ locale }: Props) {
                 const climbingUp = target.elevation > currentNode.elevation;
                 const firstVisit = !state.claimedChestIds.includes(target.id);
                 return (
-                  <button
+                  <TiltGliderActionButton
                     key={target.id}
-                    type="button"
                     onClick={() => handleMove(target.id)}
                     className="flex w-full items-center justify-between rounded-xl border border-border bg-background p-3 text-left transition hover:border-primary hover:bg-accent"
                   >
@@ -281,7 +323,7 @@ export default function CozyGlider({ locale }: Props) {
                     <span className="rounded-lg bg-primary px-2.5 py-1 text-xs font-bold text-primary-foreground">
                       {climbingUp ? (isKo ? '등반' : 'Climb') : isKo ? '이동' : 'Hike'}
                     </span>
-                  </button>
+                  </TiltGliderActionButton>
                 );
               })}
             </div>
@@ -296,9 +338,8 @@ export default function CozyGlider({ locale }: Props) {
                 {currentNode.glideTargets.map((glideId) => {
                   const target = getNodeById(glideId);
                   return (
-                    <button
+                    <TiltGliderActionButton
                       key={`glide-${target.id}`}
-                      type="button"
                       onClick={() => handleMove(target.id)}
                       className="flex w-full items-center justify-between rounded-xl border border-border bg-secondary p-2.5 text-left transition hover:bg-accent"
                     >
@@ -308,7 +349,7 @@ export default function CozyGlider({ locale }: Props) {
                       <span className="text-xs font-semibold text-primary">
                         {isKo ? '활공 착륙 → 🪶완충' : 'Glide & Recharge'}
                       </span>
-                    </button>
+                    </TiltGliderActionButton>
                   );
                 })}
               </div>

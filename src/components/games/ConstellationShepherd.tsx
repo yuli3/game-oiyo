@@ -27,6 +27,7 @@ import {
   type SkyState,
 } from "../../lib/games/constellation-shepherd";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import ConstellationShepherdScene, { type SkyGlide } from "./ConstellationShepherdScene";
 
 interface Copy {
@@ -372,6 +373,40 @@ function codeDir(code: string): Dir | null {
   return null;
 }
 
+function TiltDirButton({
+  name,
+  detail,
+  available,
+  disabled,
+  onClick,
+}: {
+  name: string;
+  detail: string;
+  available: boolean;
+  disabled: boolean;
+  onClick: () => void;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      className={`${available ? controlClass("primary") : controlClass("quiet")} w-full will-change-transform transform-(--card-tilt) transition-transform duration-150`}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      aria-label={`${name}. ${detail}`}
+      disabled={disabled}
+      onClick={() => {
+        triggerPop();
+        onClick();
+      }}
+    >
+      {name}
+      <span className="block text-xs font-normal">{detail}</span>
+    </button>
+  );
+}
+
 export default function ConstellationShepherd({ locale = "en" }: { locale?: Locale }) {
   const copy = COPY[locale] ?? COPY.en;
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale });
@@ -464,6 +499,12 @@ export default function ConstellationShepherd({ locale = "en" }: { locale?: Loca
   }, []);
 
   const note = useCallback((kind: "walk" | "light" | "heavy", next: SkyState) => {
+    if (kind === "walk") MobileHapticsPro.light();
+    else if (kind === "light") MobileHapticsPro.selection();
+    else if (kind === "heavy") MobileHapticsPro.impact();
+    if (next.status === "win") MobileHapticsPro.success();
+    if (next.status === "lose") MobileHapticsPro.warning();
+
     const player = audio.current;
     if (!player || mutedRef.current || pausedRef.current) return;
     player.tick(kind);
@@ -497,6 +538,7 @@ export default function ConstellationShepherd({ locale = "en" }: { locale?: Loca
     const next = stepDir(current, dir);
     if (next === current) {
       arm();
+      MobileHapticsPro.warning();
       if (!mutedRef.current && !pausedRef.current) audio.current?.tick("block");
       return;
     }
@@ -536,6 +578,7 @@ export default function ConstellationShepherd({ locale = "en" }: { locale?: Loca
     const current = stateRef.current;
     if (current.status !== "play") return;
     arm();
+    MobileHapticsPro.warning();
     const next = resign(current);
     if (!mutedRef.current) audio.current?.tick("lose");
     glideSerial.current += 1;
@@ -593,16 +636,13 @@ export default function ConstellationShepherd({ locale = "en" }: { locale?: Loca
     const available = open.has(dir);
     const detail = !available ? copy.shut : hauled === null ? copy.walk : state.stars[hauled.index].mass === 1 ? copy.light : copy.heavy;
     return (
-      <button
-        type="button"
-        className={available ? controlClass("primary") : controlClass("quiet")}
-        aria-label={`${name}. ${detail}`}
+      <TiltDirButton
+        name={name}
+        detail={detail}
+        available={available}
         disabled={locked || !available}
         onClick={() => move(dir)}
-      >
-        {name}
-        <span className="block text-xs font-normal">{detail}</span>
-      </button>
+      />
     );
   };
 

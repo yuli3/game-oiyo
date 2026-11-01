@@ -1,5 +1,31 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { CrossyRoadEngine } from '../../lib/games/crossy-road';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+
+function TiltCrossyActionButton({
+  onClick,
+  className,
+  children,
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={(e) => {
+        triggerPop();
+        onClick?.(e);
+      }}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      className={`will-change-transform transform-(--card-tilt) transition-transform duration-150 ${className ?? ''}`}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+}
 
 export default function CrossyRoad3D() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -107,13 +133,20 @@ export default function CrossyRoad3D() {
 
     const success = engine.hop(dx, dy);
     if (success) {
+      MobileHapticsPro.light();
       playSound('hop');
       setScore(engine.state.score);
-      setHighScore((prev) => Math.max(prev, engine.state.score));
+      setHighScore((prev) => {
+        if (engine.state.score > prev && prev > 0) {
+          MobileHapticsPro.success();
+        }
+        return Math.max(prev, engine.state.score);
+      });
     }
   }, [initAudio, playSound]);
 
   const handleRestart = useCallback(() => {
+    MobileHapticsPro.click();
     initAudio();
     engineRef.current = new CrossyRoadEngine();
     setIsGameOver(false);
@@ -188,10 +221,19 @@ export default function CrossyRoad3D() {
 
       if (wasAlive && !engine.state.isAlive) {
         setIsGameOver(true);
-        if (engine.state.deathReason === 'car') playSound('hit');
-        else if (engine.state.deathReason === 'drown') playSound('drown');
-        else if (engine.state.deathReason === 'eagle') playSound('eagle');
-        else if (engine.state.deathReason === 'train') playSound('hit');
+        if (engine.state.deathReason === 'car') {
+          MobileHapticsPro.heavy();
+          playSound('hit');
+        } else if (engine.state.deathReason === 'drown') {
+          MobileHapticsPro.warning();
+          playSound('drown');
+        } else if (engine.state.deathReason === 'eagle') {
+          MobileHapticsPro.heavy();
+          playSound('eagle');
+        } else if (engine.state.deathReason === 'train') {
+          MobileHapticsPro.heavy();
+          playSound('hit');
+        }
         setDeathReason(
           engine.state.deathReason === 'car'
             ? '자동차에 치였습니다!'
@@ -464,12 +506,12 @@ export default function CrossyRoad3D() {
             <div className="text-base font-bold text-warning font-mono">🏆 {highScore}</div>
           </div>
 
-          <button
+          <TiltCrossyActionButton
             onClick={handleRestart}
-            className="px-3.5 py-1.5 bg-secondary hover:bg-secondary/80 text-secondary-foreground font-bold rounded-lg text-xs transition-all active:scale-95"
+            className="px-3.5 py-1.5 bg-secondary hover:bg-secondary/80 text-secondary-foreground font-bold rounded-lg text-xs"
           >
             다시 시작 ↺
-          </button>
+          </TiltCrossyActionButton>
         </div>
       </div>
 
@@ -498,12 +540,12 @@ export default function CrossyRoad3D() {
                 <div className="text-2xl font-black text-warning font-mono">{highScore} m</div>
               </div>
             </div>
-            <button
+            <TiltCrossyActionButton
               onClick={handleRestart}
-              className="mt-2 px-6 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-lg shadow-lg text-sm transition-all"
+              className="mt-2 px-6 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-lg shadow-lg text-sm"
             >
               다시 도전하기 ↺
-            </button>
+            </TiltCrossyActionButton>
           </div>
         )}
       </div>
@@ -516,31 +558,31 @@ export default function CrossyRoad3D() {
 
         {/* Quick D-Pad Buttons for Touch / Mobile users */}
         <div className="flex flex-col items-center gap-1">
-          <button
+          <TiltCrossyActionButton
             onClick={() => handleHop(0, 1)}
-            className="w-12 h-10 bg-muted hover:bg-muted/80 text-foreground font-bold rounded-lg flex items-center justify-center active:scale-95 border border-border"
+            className="w-12 h-10 bg-muted hover:bg-muted/80 text-foreground font-bold rounded-lg flex items-center justify-center border border-border"
           >
             ⬆️
-          </button>
+          </TiltCrossyActionButton>
           <div className="flex gap-1">
-            <button
+            <TiltCrossyActionButton
               onClick={() => handleHop(-1, 0)}
-              className="w-12 h-10 bg-muted hover:bg-muted/80 text-foreground font-bold rounded-lg flex items-center justify-center active:scale-95 border border-border"
+              className="w-12 h-10 bg-muted hover:bg-muted/80 text-foreground font-bold rounded-lg flex items-center justify-center border border-border"
             >
               ⬅️
-            </button>
-            <button
+            </TiltCrossyActionButton>
+            <TiltCrossyActionButton
               onClick={() => handleHop(0, -1)}
-              className="w-12 h-10 bg-muted hover:bg-muted/80 text-foreground font-bold rounded-lg flex items-center justify-center active:scale-95 border border-border"
+              className="w-12 h-10 bg-muted hover:bg-muted/80 text-foreground font-bold rounded-lg flex items-center justify-center border border-border"
             >
               ⬇️
-            </button>
-            <button
+            </TiltCrossyActionButton>
+            <TiltCrossyActionButton
               onClick={() => handleHop(1, 0)}
-              className="w-12 h-10 bg-muted hover:bg-muted/80 text-foreground font-bold rounded-lg flex items-center justify-center active:scale-95 border border-border"
+              className="w-12 h-10 bg-muted hover:bg-muted/80 text-foreground font-bold rounded-lg flex items-center justify-center border border-border"
             >
               ➡️
-            </button>
+            </TiltCrossyActionButton>
           </div>
         </div>
       </div>
