@@ -542,6 +542,14 @@ export const CHAOS_KITCHEN_SPRITES = {
   salad: "/assets/sprites/chaos-kitchen/salad-dish-128.png",
 } as const;
 
+export const POTION_CRAFT_SPRITES = {
+  flaskMana: "/assets/sprites/potion-craft/flask-mana-128.png",
+  flaskHealing: "/assets/sprites/potion-craft/flask-healing-128.png",
+  flaskPoison: "/assets/sprites/potion-craft/flask-poison-128.png",
+  flaskFire: "/assets/sprites/potion-craft/flask-fire-128.png",
+  cauldron: "/assets/sprites/potion-craft/alchemy-cauldron-128.png",
+} as const;
+
 export const DOT_PET_SPRITES: Record<string, { baby: string; adult: string }> = {
   normal: {
     baby: "/assets/sprites/dot-pet/normal-baby.png",

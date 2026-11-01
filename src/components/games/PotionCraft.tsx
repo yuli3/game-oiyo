@@ -14,7 +14,7 @@ import {
   downloadShareCard,
 } from '../../lib/games/share-card';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
-import { getSpriteUrl } from '../../lib/games/sprites';
+import { getSpriteUrl, POTION_CRAFT_SPRITES } from '../../lib/games/sprites';
 import { Maximize2, Minimize2, Share2, Check, RotateCcw, Sparkles } from 'lucide-react';
 
 function TiltPotionButton({
@@ -84,6 +84,24 @@ export default function PotionCraft() {
   const [inventory, setInventory] = useState<Record<IngredientId, Ingredient>>(
     engineRef.current.state.ingredients
   );
+
+  const spritesRef = useRef<{
+    healing: HTMLImageElement | null;
+    mana: HTMLImageElement | null;
+    poison: HTMLImageElement | null;
+    fire: HTMLImageElement | null;
+    cauldron: HTMLImageElement | null;
+  }>({ healing: null, mana: null, poison: null, fire: null, cauldron: null });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const h = new Image(); h.src = POTION_CRAFT_SPRITES.flaskHealing;
+    const m = new Image(); m.src = POTION_CRAFT_SPRITES.flaskMana;
+    const p = new Image(); p.src = POTION_CRAFT_SPRITES.flaskPoison;
+    const f = new Image(); f.src = POTION_CRAFT_SPRITES.flaskFire;
+    const c = new Image(); c.src = POTION_CRAFT_SPRITES.cauldron;
+    spritesRef.current = { healing: h, mana: m, poison: p, fire: f, cauldron: c };
+  }, []);
 
   // Audio Context for Procedural Alchemy ASMR
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -497,34 +515,51 @@ export default function PotionCraft() {
       // Bottle Shadow
       ctx.fillStyle = 'rgba(0,0,0,0.18)';
       ctx.beginPath();
-      ctx.ellipse(bx, by + 12, 12, 5, 0, 0, Math.PI * 2);
+      ctx.ellipse(bx, by + 14, 14, 6, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // Glass Bottle Body
-      ctx.fillStyle = engine.state.isFailed
-        ? '#7f1d1d'
-        : engine.state.activeEffects.length > 0
-        ? '#3b82f6'
-        : '#e2e8f0';
-      ctx.beginPath();
-      ctx.arc(bx, by, 11, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = '#0f172a';
-      ctx.lineWidth = 2;
-      ctx.stroke();
+      // Determine active sprite based on current potion effects
+      let activeSprite = spritesRef.current.mana;
+      if (engine.state.isFailed) {
+        activeSprite = spritesRef.current.cauldron;
+      } else if (engine.state.activeEffects.includes('healing')) {
+        activeSprite = spritesRef.current.healing;
+      } else if (engine.state.activeEffects.includes('poison')) {
+        activeSprite = spritesRef.current.poison;
+      } else if (engine.state.activeEffects.includes('fire')) {
+        activeSprite = spritesRef.current.fire;
+      }
 
-      // Bottle Neck & Cork
-      ctx.fillStyle = '#92400e'; // Cork
-      ctx.fillRect(bx - 3.5, by - 18, 7, 5);
-      ctx.strokeStyle = '#0f172a';
-      ctx.lineWidth = 1.5;
-      ctx.strokeRect(bx - 3.5, by - 18, 7, 5);
+      if (activeSprite && activeSprite.complete) {
+        // Draw 3D glowing potion bottle/flask (32x32px centered)
+        ctx.drawImage(activeSprite, bx - 16, by - 16, 32, 32);
+      } else {
+        // Fallback Vector Glass Bottle Body
+        ctx.fillStyle = engine.state.isFailed
+          ? '#7f1d1d'
+          : engine.state.activeEffects.length > 0
+          ? '#3b82f6'
+          : '#e2e8f0';
+        ctx.beginPath();
+        ctx.arc(bx, by, 11, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = 2;
+        ctx.stroke();
 
-      // Glass Reflection highlight
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-      ctx.beginPath();
-      ctx.arc(bx - 3, by - 3, 3, 0, Math.PI * 2);
-      ctx.fill();
+        // Bottle Neck & Cork
+        ctx.fillStyle = '#92400e'; // Cork
+        ctx.fillRect(bx - 3.5, by - 18, 7, 5);
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(bx - 3.5, by - 18, 7, 5);
+
+        // Glass Reflection highlight
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.beginPath();
+        ctx.arc(bx - 3, by - 3, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
       // 6. Boiling Bubbles in Cauldron Atmosphere
       ctx.fillStyle = 'rgba(217, 119, 6, 0.12)';
@@ -685,7 +720,14 @@ export default function PotionCraft() {
         <div className="bg-card/90 border border-border rounded-xl p-3 flex flex-col justify-between shadow-md">
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <span className="font-bold text-xs text-foreground">2. 가마솥 (Cauldron)</span>
+              <span className="font-bold text-xs text-foreground flex items-center gap-1.5">
+                <img
+                  src={POTION_CRAFT_SPRITES.cauldron}
+                  alt="Cauldron"
+                  className="size-4 object-contain"
+                />
+                2. 가마솥 (Cauldron)
+              </span>
               <span className={`text-xs font-bold ${isFailed ? 'text-destructive' : 'text-primary'}`}>
                 {isFailed ? '⚠️ 파괴됨' : '정상 가동'}
               </span>
@@ -732,7 +774,12 @@ export default function PotionCraft() {
             disabled={isFailed || activeEffects.length === 0}
             className="w-full py-2 bg-warning hover:bg-warning/90 text-warning-foreground font-black text-xs rounded-lg shadow-md transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-1.5"
           >
-            <span>🔥 불 지피기 & 서빙 (Serve)</span>
+            <img
+              src={POTION_CRAFT_SPRITES.flaskHealing}
+              alt="Potion"
+              className="size-4 object-contain"
+            />
+            <span>불 지피기 & 서빙 (Serve)</span>
           </TiltPotionButton>
         </div>
       </div>
@@ -745,6 +792,15 @@ export default function PotionCraft() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           {(Object.keys(inventory) as IngredientId[]).map((id) => {
             const ing = inventory[id];
+            const spriteUrl =
+              id === 'terraria'
+                ? POTION_CRAFT_SPRITES.flaskHealing
+                : id === 'waterbloom'
+                ? POTION_CRAFT_SPRITES.flaskMana
+                : id === 'firebell'
+                ? POTION_CRAFT_SPRITES.flaskFire
+                : POTION_CRAFT_SPRITES.flaskPoison;
+
             return (
               <button
                 key={id}
@@ -753,7 +809,14 @@ export default function PotionCraft() {
                 className="p-2 rounded-lg border border-border bg-card hover:bg-muted/60 transition-all text-left flex flex-col justify-between disabled:opacity-40"
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-foreground">{ing.name.split(' ')[0]}</span>
+                  <div className="flex items-center gap-1.5">
+                    <img
+                      src={spriteUrl}
+                      alt={ing.name}
+                      className="size-4 object-contain"
+                    />
+                    <span className="text-xs font-bold text-foreground">{ing.name.split(' ')[0]}</span>
+                  </div>
                   <span className="text-xs font-mono font-bold text-primary">x{ing.count}</span>
                 </div>
                 <span className="text-xs text-muted-foreground mt-1">
