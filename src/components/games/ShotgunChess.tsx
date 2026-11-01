@@ -19,7 +19,15 @@ import {
   type ScreenShakeState,
 } from "@/lib/games/juice-engine";
 import { playSyntheticTone } from "@/lib/games/audio-mixer";
-import { RotateCcw, Volume2, VolumeX, Shield, Crosshair, Award } from "lucide-react";
+import { useArcadePortal } from "@/lib/games/arcade-portal";
+import { useCardTiltPro, MobileHapticsPro } from "@/lib/games/engine-suite-unified";
+import { getSpriteUrl } from "@/lib/games/sprites";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "@/lib/games/share-card";
+import { RotateCcw, Volume2, VolumeX, Shield, Crosshair, Award, Maximize2, Minimize2, Share2, Check } from "lucide-react";
 
 interface ShotgunChessProps {
   locale?: string;
@@ -151,14 +159,53 @@ const I18N: Record<string, Record<string, string>> = {
   },
 };
 
+function TiltUpgradeCard({
+  card,
+  locale,
+  onSelect,
+}: {
+  card: UpgradeCard;
+  locale: string;
+  onSelect: () => void;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      style={
+        {
+          "--card-tilt": transformCss,
+        } as React.CSSProperties
+      }
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className="flex flex-col items-start gap-1 rounded-xl border border-border bg-card p-3.5 text-left transition will-change-transform transform-(--card-tilt) hover:bg-muted cursor-pointer shadow-xs"
+      onClick={() => {
+        triggerPop(0.12);
+        onSelect();
+      }}
+    >
+      <span className="font-bold text-foreground">
+        {card.name[locale as "ko" | "en"] ?? card.name.en}
+      </span>
+      <span className="text-xs text-muted-foreground">
+        {card.desc[locale as "ko" | "en"] ?? card.desc.en}
+      </span>
+    </button>
+  );
+}
+
 export const ShotgunChess: React.FC<ShotgunChessProps> = ({ locale = "ko" }) => {
   const t = useMemo(() => I18N[locale] ?? I18N.ko, [locale]);
+  const { isImmersive, containerRef, togglePortal } = useArcadePortal({ locale: (locale as any) || "ko" });
 
   const [game, setGame] = useState<ShotgunChessGame>(() => initShotgunChess(1));
   const [actionMode, setActionMode] = useState<"move" | "shoot">("move");
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [, setShakeState] = useState<ScreenShakeState>(() => createShakeState());
   const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0 });
+  const [shareCardCopied, setShareCardCopied] = useState(false);
 
   const audioCtxRef = useRef<AudioContext | null>(null);
   const getAudioCtx = useCallback(() => {
@@ -209,6 +256,7 @@ export const ShotgunChess: React.FC<ShotgunChessProps> = ({ locale = "ko" }) => 
           playSyntheticTone(getAudioCtx(), { freq: 260, duration: 0.08, type: "triangle" });
         }
         triggerHaptic("light");
+        MobileHapticsPro.light();
 
         setGame((prev) => movePlayerKing(prev, { r, c }));
       }
@@ -228,15 +276,19 @@ export const ShotgunChess: React.FC<ShotgunChessProps> = ({ locale = "ko" }) => 
       }
       setShakeState((prev) => addTrauma(prev, 0.5));
       triggerHaptic("heavy");
+      MobileHapticsPro.heavy();
 
       setGame((prev) => {
         const next = shootShotgun(prev, dr, dc);
         if (next.status === "wave_clear" || next.status === "victory") {
           setShakeState((s) => addTrauma(s, 0.7));
           triggerHaptic("heavy");
+          MobileHapticsPro.success();
           if (soundEnabled) {
             playSyntheticTone(getAudioCtx(), { freq: 660, duration: 0.35, type: "sine" });
           }
+        } else if (next.status === "game_over") {
+          MobileHapticsPro.error();
         }
         return next;
       });
@@ -250,6 +302,7 @@ export const ShotgunChess: React.FC<ShotgunChessProps> = ({ locale = "ko" }) => 
         playSyntheticTone(getAudioCtx(), { freq: 440, duration: 0.15, type: "sine" });
       }
       triggerHaptic("medium");
+      MobileHapticsPro.medium();
       setGame((prev) => applyUpgrade(prev, card.id));
       setActionMode("move");
     },
@@ -257,13 +310,40 @@ export const ShotgunChess: React.FC<ShotgunChessProps> = ({ locale = "ko" }) => 
   );
 
   const handleRestart = useCallback(() => {
+    MobileHapticsPro.selection();
     setGame(initShotgunChess(1));
     setActionMode("move");
   }, []);
 
+  const handleShareCard = useCallback(async () => {
+    MobileHapticsPro.selection();
+    const canvas = createShareCardCanvas({
+      title: "Shotgun Chess",
+      score: game.status === "victory" ? `VICTORY (Floor ${game.floor})` : `Floor ${game.floor}`,
+      customStats: [
+        { label: "Floor", value: `${game.floor}` },
+        { label: "Turn", value: `${game.turn}` },
+        { label: "Souls", value: `${game.souls}` },
+      ],
+      slug: "shotgun-chess",
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `shotgun-chess-floor${game.floor}.png`);
+    }
+  }, [game]);
+
   return (
     <div
-      className="mx-auto flex max-w-2xl flex-col items-center gap-4 p-4 font-sans text-foreground translate-x-(--shake-x) translate-y-(--shake-y)"
+      ref={containerRef}
+      className={`${
+        isImmersive
+          ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col items-center overflow-y-auto bg-background p-4 sm:p-6"
+          : "mx-auto flex max-w-2xl flex-col items-center gap-4 p-4 font-sans text-foreground"
+      } translate-x-(--shake-x) translate-y-(--shake-y)`}
       style={
         {
           "--shake-x": `${shakeOffset.x}px`,
@@ -272,19 +352,25 @@ export const ShotgunChess: React.FC<ShotgunChessProps> = ({ locale = "ko" }) => 
       }
     >
       {/* Top Header & Stats */}
-      <div className="flex w-full items-center justify-between rounded-xl border border-border bg-card p-4 shadow-sm">
+      <div className="flex w-full flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="rounded-lg bg-primary/10 p-2 text-primary font-bold">
             {t.floor} {game.floor}
           </div>
-          <div className="text-sm text-muted-foreground">
-            {t.turn} {game.turn} · {t.souls} {game.souls}
+          <div className="text-sm text-muted-foreground flex items-center gap-1.5">
+            <span>{t.turn} {game.turn}</span>
+            <span>·</span>
+            <span className="flex items-center gap-1 font-semibold text-foreground">
+              <img src={getSpriteUrl("trophy", 64)} alt="Souls" className="size-4 inline-block" />
+              {game.souls}
+            </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 text-sm font-semibold">
-            <span className="text-destructive">❤️</span> {game.player.hp}/{game.player.maxHp}
+            <img src={getSpriteUrl("heart", 64)} alt="HP" className="size-4 inline-block" />
+            <span>{game.player.hp}/{game.player.maxHp}</span>
           </div>
           <div className="flex items-center gap-1.5 text-sm font-semibold">
             <span>💥</span> {game.shotgun.ammo}/{game.shotgun.maxAmmo}
@@ -299,6 +385,22 @@ export const ShotgunChess: React.FC<ShotgunChessProps> = ({ locale = "ko" }) => 
           </Button>
           <Button variant="ghost" size="icon" onClick={handleRestart} aria-label="Restart">
             <RotateCcw className="h-5 w-5" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleShareCard}
+            title={shareCardCopied ? "Copied!" : "Share"}
+          >
+            {shareCardCopied ? <Check className="h-4 w-4 text-primary" /> : <Share2 className="h-4 w-4" />}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={togglePortal}
+            title={isImmersive ? "Exit Focus" : "Focus"}
+          >
+            {isImmersive ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
           </Button>
         </div>
       </div>
@@ -404,25 +506,22 @@ export const ShotgunChess: React.FC<ShotgunChessProps> = ({ locale = "ko" }) => 
       {game.status === "wave_clear" && (
         <div className="absolute inset-0 z-30 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
           <div className="flex max-w-md flex-col items-center gap-4 rounded-2xl border border-border bg-card p-6 shadow-2xl text-center">
-            <Award className="h-12 w-12 text-primary" />
+            <img
+              src={getSpriteUrl("trophy", 64)}
+              alt="Wave Clear"
+              className="size-16 animate-bounce drop-shadow"
+            />
             <h3 className="text-2xl font-bold text-foreground">{t.waveClear}</h3>
             <p className="text-sm text-muted-foreground">{t.chooseUpgrade}</p>
 
             <div className="grid w-full grid-cols-1 gap-2.5">
               {UPGRADE_POOL.map((card) => (
-                <button
+                <TiltUpgradeCard
                   key={card.id}
-                  type="button"
-                  className="flex flex-col items-start gap-1 rounded-xl border border-border bg-card p-3 text-left transition hover:bg-muted cursor-pointer"
-                  onClick={() => handleSelectUpgrade(card)}
-                >
-                  <span className="font-bold text-foreground">
-                    {card.name[locale as "ko" | "en"] ?? card.name.en}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {card.desc[locale as "ko" | "en"] ?? card.desc.en}
-                  </span>
-                </button>
+                  card={card}
+                  locale={locale}
+                  onSelect={() => handleSelectUpgrade(card)}
+                />
               ))}
             </div>
           </div>
@@ -438,9 +537,14 @@ export const ShotgunChess: React.FC<ShotgunChessProps> = ({ locale = "ko" }) => 
             <p className="text-sm text-muted-foreground">
               {t.floor} {game.floor} · {t.souls} {game.souls}
             </p>
-            <Button variant="default" className="w-full" onClick={handleRestart}>
-              {t.restart}
-            </Button>
+            <div className="flex w-full gap-2">
+              <Button variant="default" className="flex-1" onClick={handleRestart}>
+                {t.restart}
+              </Button>
+              <Button variant="outline" onClick={handleShareCard}>
+                {shareCardCopied ? "Copied!" : "Share"}
+              </Button>
+            </div>
           </div>
         </div>
       )}
@@ -449,15 +553,26 @@ export const ShotgunChess: React.FC<ShotgunChessProps> = ({ locale = "ko" }) => 
       {game.status === "victory" && (
         <div className="absolute inset-0 z-30 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
           <div className="flex max-w-sm flex-col items-center gap-4 rounded-2xl border border-primary/30 bg-card p-6 shadow-2xl text-center">
-            <span className="text-5xl">👑</span>
+            <img
+              src={getSpriteUrl("trophy", 64)}
+              alt="Victory"
+              className="size-16 animate-bounce drop-shadow mb-1"
+            />
             <h3 className="text-2xl font-bold text-primary">{t.victory}</h3>
             <p className="text-sm text-muted-foreground">{t.souls} {game.souls}</p>
-            <Button variant="default" className="w-full" onClick={handleRestart}>
-              {t.restart}
-            </Button>
+            <div className="flex w-full gap-2">
+              <Button variant="default" className="flex-1" onClick={handleRestart}>
+                {t.restart}
+              </Button>
+              <Button variant="outline" onClick={handleShareCard}>
+                {shareCardCopied ? "Copied!" : "Share"}
+              </Button>
+            </div>
           </div>
         </div>
       )}
     </div>
   );
 };
+
+export default ShotgunChess;

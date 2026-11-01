@@ -1,5 +1,9 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { getSpriteUrl } from '../../lib/games/sprites';
+import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from '../../lib/games/share-card';
+import { Share2, Check, Maximize2, Minimize2 } from 'lucide-react';
 import {
   loadArcadePassProgress,
   reportMissionProgress,
@@ -82,7 +86,9 @@ function TiltDraftChoiceButton({
 
 export default function SlotRogue({ locale }: Props) {
   const isKo = locale === 'ko';
+  const { isImmersive, containerRef, togglePortal } = useArcadePortal({ locale: (locale as any) || "ko" });
   const [state, setState] = useState<SlotRogueState>(() => createSlotRogueState());
+  const [shareCardCopied, setShareCardCopied] = useState(false);
 
   const recordArcadePass = (rentCyclesCleared: number) => {
     try {
@@ -99,39 +105,77 @@ export default function SlotRogue({ locale }: Props) {
     MobileHapticsPro.impact();
     const next = spinSlotGrid(state);
     setState(next);
+    if (next.status === 'victory') {
+      MobileHapticsPro.success();
+    } else if (next.status === 'evicted') {
+      MobileHapticsPro.error();
+    }
     if (next.rentCycle > state.rentCycle) {
       recordArcadePass(next.rentCycle);
     }
   };
 
   const handleDraft = (symbol: SymbolKey | 'skip') => {
+    MobileHapticsPro.light();
     setState(draftSymbol(state, symbol));
   };
 
   const handleReroll = () => {
+    MobileHapticsPro.medium();
     setState(rerollDraftChoices(state));
   };
 
   const handleInjectCombo = () => {
+    MobileHapticsPro.selection();
     setState(injectSynergyComboPreset(state));
   };
 
   const handleReset = () => {
+    MobileHapticsPro.selection();
     setState(createSlotRogueState());
   };
+
+  const handleShareCard = useCallback(async () => {
+    MobileHapticsPro.selection();
+    const canvas = createShareCardCanvas({
+      title: "Slot Rogue",
+      score: `$${state.coins}`,
+      customStats: [
+        { label: "Coins", value: `$${state.coins}` },
+        { label: "Rent Cycle", value: `#${state.rentCycle + 1}/${state.rentTargets.length}` },
+        { label: "Deck", value: `${state.inventory.length} syms` },
+      ],
+      slug: "slot-rogue",
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `slot-rogue-coins${state.coins}.png`);
+    }
+  }, [state.coins, state.rentCycle, state.rentTargets.length, state.inventory.length]);
 
   const currentRentTarget =
     state.rentTargets[state.rentCycle] ??
     state.rentTargets[state.rentTargets.length - 1];
 
   return (
-    <div className="mx-auto max-w-5xl p-4 text-foreground">
+    <div
+      ref={containerRef}
+      className={
+        isImmersive
+          ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col items-center overflow-y-auto bg-background p-4 sm:p-6"
+          : "mx-auto max-w-5xl p-4 text-foreground"
+      }
+    >
       {/* Top Rent & Coin HUD */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 text-card-foreground shadow-sm">
         <div className="flex flex-wrap items-center gap-3">
           <div className="rounded-xl border border-border bg-secondary px-3.5 py-2 text-secondary-foreground">
-            <div className="text-xs text-muted-foreground">
-              {isKo ? '보유 코인 (이번 스핀 수익)' : 'Coins (Last Spin)'}
+            <div className="text-xs text-muted-foreground flex items-center gap-1">
+              <img src={getSpriteUrl("coin", 64)} alt="Coins" className="size-3.5 inline-block" />
+              <span>{isKo ? '보유 코인 (이번 스핀 수익)' : 'Coins (Last Spin)'}</span>
             </div>
             <div className="text-xl font-bold text-primary">
               ${state.coins}{' '}
@@ -165,13 +209,29 @@ export default function SlotRogue({ locale }: Props) {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={handleShareCard}
+            className="flex items-center gap-1.5 rounded-xl border border-border bg-secondary px-3 py-2 text-xs font-semibold text-secondary-foreground hover:bg-accent"
+          >
+            {shareCardCopied ? <Check className="size-3.5 text-primary" /> : <Share2 className="size-3.5" />}
+            <span>{shareCardCopied ? (isKo ? '복사됨!' : 'Copied!') : (isKo ? '기록 공유' : 'Share')}</span>
+          </button>
+          <button
+            type="button"
+            onClick={togglePortal}
+            className="flex items-center gap-1.5 rounded-xl border border-border bg-secondary px-3 py-2 text-xs font-semibold text-secondary-foreground hover:bg-accent"
+          >
+            {isImmersive ? <Minimize2 className="size-3.5" /> : <Maximize2 className="size-3.5" />}
+            <span>{isImmersive ? 'Exit Focus' : 'Focus'}</span>
+          </button>
           <button
             type="button"
             onClick={handleInjectCombo}
             className="rounded-xl border border-border bg-secondary px-3 py-2 text-xs font-semibold text-secondary-foreground hover:bg-accent"
           >
-            {isKo ? '⚡ 시너지 콤보 세트 장착' : '⚡ Load Synergy Combo Deck'}
+            {isKo ? '⚡ 시너지 콤보 세트' : '⚡ Combo Deck'}
           </button>
           <button
             type="button"
@@ -287,7 +347,12 @@ export default function SlotRogue({ locale }: Props) {
         <div className="lg:col-span-5 flex flex-col gap-4">
           {/* Status Banner for Victory / Evicted */}
           {state.status === 'victory' && (
-            <div className="rounded-2xl border border-primary bg-primary/10 p-4 text-center">
+            <div className="flex flex-col items-center rounded-2xl border border-primary bg-primary/10 p-4 text-center">
+              <img
+                src={getSpriteUrl("trophy", 64)}
+                alt="Victory"
+                className="size-14 animate-bounce drop-shadow mb-1"
+              />
               <h3 className="text-lg font-extrabold text-primary">
                 {isKo ? '🏆 4차 임대료 완납! 악덕 집주인 격파!' : '🏆 All 4 Rent Cycles Paid! Landlord Defeated!'}
               </h3>

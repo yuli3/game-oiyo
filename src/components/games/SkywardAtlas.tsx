@@ -6,6 +6,8 @@ import { hasWebGL } from "../../lib/games/webgl";
 import { reviewSkywardFlight } from "../../lib/games/skyward-atlas";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { celebrate } from "../../lib/games/celebration";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { getSpriteUrl } from "../../lib/games/sprites";
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "../../lib/games/share-card";
 import type { FlightResult, SkywardSceneCopy } from "./SkywardAtlasScene";
 
@@ -133,6 +135,7 @@ export default function SkywardAtlas({ locale }: { locale: Locale }) {
   }, [togglePortal, toggleAudio]);
 
   const start = useCallback(() => {
+    MobileHapticsPro.selection();
     if (!hasWebGL()) { setPhase("unavailable"); return; }
     setPhase("loading");
     window.setTimeout(() => setPhase("playing"), 80);
@@ -140,6 +143,7 @@ export default function SkywardAtlas({ locale }: { locale: Locale }) {
   const [shareCardCopied, setShareCardCopied] = useState(false);
 
   const finish = useCallback((next: FlightResult) => {
+    MobileHapticsPro.success();
     const previous = getBest(GAME_KEY)?.value ?? 0;
     const beat = next.score > previous;
     recordBest(GAME_KEY, next.score, "score", undefined, { trackPlay: false });
@@ -177,7 +181,7 @@ export default function SkywardAtlas({ locale }: { locale: Locale }) {
       className={`relative overflow-hidden select-none ${
         isImmersive
           ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col items-center justify-center overflow-y-auto bg-background p-2"
-          : "rounded-[2rem] border border-border bg-[#f4f0e7] shadow-xl"
+          : "rounded-[2rem] border border-border bg-card shadow-xl"
       }`}
     >
       <div className="absolute right-4 top-4 z-40 flex items-center gap-2">
@@ -217,8 +221,17 @@ export default function SkywardAtlas({ locale }: { locale: Locale }) {
             </div>
             {result && (
               <div role="status" aria-live="polite" className="mt-6 max-w-md rounded-3xl bg-white/75 p-6 backdrop-blur space-y-3">
-                <div className="text-sm font-bold uppercase tracking-widest text-muted-foreground">{copy.result}</div>
-                <div className="text-4xl font-black text-foreground">{result.score.toLocaleString()}</div>
+                <div className="flex items-center gap-3">
+                  <img
+                    src={getSpriteUrl("trophy", 64)}
+                    alt="Flight result"
+                    className="size-12 animate-bounce drop-shadow"
+                  />
+                  <div>
+                    <div className="text-sm font-bold uppercase tracking-widest text-muted-foreground">{copy.result}</div>
+                    <div className="text-4xl font-black text-foreground">{result.score.toLocaleString()}</div>
+                  </div>
+                </div>
                 <div className="text-sm text-muted-foreground">{result.gates} gates · {Math.round(result.distance / 1000)} km</div>
                 <p className="text-sm font-bold text-primary">{REVIEW[locale][reviewSkywardFlight(result)]}</p>
                 <button

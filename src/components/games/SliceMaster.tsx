@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   createSliceMasterLevel,
@@ -10,17 +10,23 @@ import {
 } from "@/lib/games/slice-master";
 import { addTrauma, createShakeState, triggerHaptic, updateShake } from "@/lib/games/juice-engine";
 import { playSyntheticTone } from "@/lib/games/audio-mixer";
-import { useDynamicDifficultyPro, MobileHapticsPro } from "@/lib/games/engine-suite-unified";
+import { useDynamicDifficultyPro, useCardTiltPro, MobileHapticsPro } from "@/lib/games/engine-suite-unified";
+import { useArcadePortal } from "@/lib/games/arcade-portal";
+import { getSpriteUrl } from "@/lib/games/sprites";
+import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "@/lib/games/share-card";
+import { Maximize2, Minimize2, Share2, Check } from "lucide-react";
 
 interface SliceMasterProps {
   locale?: string;
 }
 
 export default function SliceMaster({ locale = "ko" }: SliceMasterProps) {
+  const { isImmersive, containerRef, togglePortal } = useArcadePortal({ locale: (locale as any) || "ko" });
   const [level, setLevel] = useState(1);
   const [game, setGame] = useState<SliceMasterGame>(() => createSliceMasterLevel(1));
   const [bestScore, setBestScore] = useState(0);
   const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0 });
+  const [shareCardCopied, setShareCardCopied] = useState(false);
   const { modifiers, reportSuccess, reportFailure } = useDynamicDifficultyPro();
 
   const gameRef = useRef<SliceMasterGame>(game);
@@ -28,6 +34,27 @@ export default function SliceMaster({ locale = "ko" }: SliceMasterProps) {
 
   const shakeStateRef = useRef(createShakeState());
   const audioCtxRef = useRef<AudioContext | null>(null);
+
+  const handleShareCard = useCallback(async () => {
+    MobileHapticsPro.selection();
+    const canvas = createShareCardCanvas({
+      title: "Slice Master 3D",
+      score: `${game.score} PTS`,
+      customStats: [
+        { label: "Level", value: `Stage ${level}` },
+        { label: "Sliced", value: `${game.sliceCount}` },
+        { label: "Best", value: `${bestScore}` },
+      ],
+      slug: "slice-master",
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `slice-master-lvl${level}.png`);
+    }
+  }, [game.score, game.sliceCount, level, bestScore]);
 
   // Initialize Web Audio
   useEffect(() => {
@@ -164,16 +191,21 @@ export default function SliceMaster({ locale = "ko" }: SliceMasterProps) {
 
   return (
     <div
+      ref={containerRef}
       style={
         {
           "--shake-x": `${shakeOffset.x}px`,
           "--shake-y": `${shakeOffset.y}px`,
         } as React.CSSProperties
       }
-      className="mx-auto flex w-full max-w-2xl translate-x-(--shake-x) translate-y-(--shake-y) flex-col items-center gap-4 p-4 select-none"
+      className={`${
+        isImmersive
+          ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col items-center overflow-y-auto bg-background p-4 sm:p-6"
+          : "mx-auto flex w-full max-w-2xl translate-x-(--shake-x) translate-y-(--shake-y) flex-col items-center gap-4 p-4 select-none"
+      }`}
     >
       {/* Header HUD */}
-      <div className="flex w-full items-center justify-between border-b border-border pb-3">
+      <div className="flex w-full flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
         <div>
           <h2 className="text-xl font-bold tracking-tight">
             {locale === "ko" ? "슬라이스 마스터 3D" : "Slice Master 3D"}
@@ -185,7 +217,7 @@ export default function SliceMaster({ locale = "ko" }: SliceMasterProps) {
           </p>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <div className="text-right">
             <span className="block text-xs font-semibold uppercase text-muted-foreground">
               {locale === "ko" ? "점수" : "Score"}
@@ -197,8 +229,29 @@ export default function SliceMaster({ locale = "ko" }: SliceMasterProps) {
             <span className="block text-xs font-semibold uppercase text-muted-foreground">
               {locale === "ko" ? "최고" : "Best"}
             </span>
-            <span className="text-xl font-black text-foreground">{bestScore}</span>
+            <span className="text-xl font-black text-foreground flex items-center gap-1">
+              <img src={getSpriteUrl("star", 64)} alt="Best" className="size-4 inline-block" />
+              {bestScore}
+            </span>
           </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleShareCard}
+            title={shareCardCopied ? "Copied!" : "Share"}
+          >
+            {shareCardCopied ? <Check className="h-4 w-4 text-primary" /> : <Share2 className="h-4 w-4" />}
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={togglePortal}
+            title={isImmersive ? "Exit Focus" : "Focus"}
+          >
+            {isImmersive ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+          </Button>
         </div>
       </div>
 
@@ -275,16 +328,25 @@ export default function SliceMaster({ locale = "ko" }: SliceMasterProps) {
                 ? `최종 점수: ${game.score}점 (슬라이스: ${game.sliceCount}회)`
                 : `Final Score: ${game.score} (${game.sliceCount} sliced)`}
             </p>
-            <Button onClick={handleRestart} size="lg">
-              {locale === "ko" ? "다시 도전" : "Try Again"}
-            </Button>
+            <div className="flex gap-3">
+              <Button onClick={handleRestart} size="lg">
+                {locale === "ko" ? "다시 도전" : "Try Again"}
+              </Button>
+              <Button onClick={handleShareCard} variant="outline" size="lg">
+                {shareCardCopied ? "복사됨!" : "기록 공유"}
+              </Button>
+            </div>
           </div>
         )}
 
         {/* Level Complete Modal */}
         {game.status === "completed" && (
           <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-background/85 p-6 text-center backdrop-blur-sm">
-            <span className="mb-2 text-4xl">🎯</span>
+            <img
+              src={getSpriteUrl("trophy", 64)}
+              alt="Clear"
+              className="size-16 animate-bounce drop-shadow mb-2"
+            />
             <h3 className="mb-1 text-2xl font-black tracking-tight text-primary">
               {locale === "ko" ? "과녁 명중! 레벨 클리어!" : "Target Hit! Stage Clear!"}
             </h3>
@@ -293,12 +355,15 @@ export default function SliceMaster({ locale = "ko" }: SliceMasterProps) {
                 ? `보너스 획득! 총 ${game.score}점`
                 : `Bonus Earned! Total: ${game.score}`}
             </p>
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3 justify-center">
               <Button onClick={handleRestart} variant="outline" size="lg">
                 {locale === "ko" ? "다시 플레이" : "Replay"}
               </Button>
               <Button onClick={handleNextLevel} size="lg">
                 {locale === "ko" ? "다음 레벨" : "Next Level"}
+              </Button>
+              <Button onClick={handleShareCard} variant="secondary" size="lg">
+                {shareCardCopied ? "복사됨!" : "기록 카드 공유"}
               </Button>
             </div>
           </div>

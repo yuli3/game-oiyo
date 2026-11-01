@@ -31,7 +31,8 @@ import { getBest, recordAchievementEvent, recordBest } from '../../lib/games/rec
 import type { Locale } from '../../lib/i18n';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { celebrate } from '../../lib/games/celebration';
-import { SNAKE_GAME_SPRITES } from '../../lib/games/sprites';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { getSpriteUrl, SNAKE_GAME_SPRITES } from '../../lib/games/sprites';
 import {
     bufferSnakeDirection,
     createSnakeGame,
@@ -79,6 +80,49 @@ const DETAILS = {
 } as const;
 
 const PENTATONIC = [261.63, 293.66, 329.63, 392.0, 440.0, 523.25, 587.33, 659.25, 783.99, 880.0];
+
+function TiltAugmentChoiceCard({
+    choice,
+    idx,
+    loc,
+    onSelect,
+}: {
+    choice: AugmentInfo;
+    idx: number;
+    loc: Locale;
+    onSelect: () => void;
+}) {
+    const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+    return (
+        <button
+            type="button"
+            style={{ '--card-tilt': transformCss } as React.CSSProperties}
+            onPointerMove={onPointerMove}
+            onPointerLeave={onPointerLeave}
+            onClick={() => {
+                triggerPop(0.12);
+                onSelect();
+            }}
+            className="group relative rounded-2xl border border-border bg-card p-4 text-left shadow-sm hover:border-primary hover:bg-card/80 transition will-change-transform transform-(--card-tilt) flex flex-col justify-between cursor-pointer"
+        >
+            <div>
+                <div className="flex items-center justify-between mb-2">
+                    <span className="text-2xl">{choice.icon}</span>
+                    <span className="text-xs font-mono font-bold text-muted-foreground px-1.5 py-0.5 rounded-md border border-border bg-muted/60">
+                        [{idx + 1}]
+                    </span>
+                </div>
+                <div className="font-black text-sm text-foreground group-hover:text-primary transition-colors">
+                    {choice.name[loc] ?? choice.name.en}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1 line-clamp-3 leading-relaxed">
+                    {choice.desc[loc] ?? choice.desc.en}
+                </p>
+            </div>
+        </button>
+    );
+}
 
 const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const loc = (locale as Locale) || 'ko';
@@ -176,9 +220,11 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         osc.connect(gain).connect(ctx.destination);
         osc.start();
         osc.stop(ctx.currentTime + 0.12);
+        MobileHapticsPro.light();
     }, [muted]);
 
     const playDeathSound = useCallback(() => {
+        MobileHapticsPro.error();
         if (muted || !audioRef.current) return;
         const ctx = audioRef.current;
         if (ctx.state === 'suspended') ctx.resume().catch(() => {});
@@ -201,6 +247,7 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     }, []);
 
     const selectAugment = useCallback((choice: AugmentInfo) => {
+        MobileHapticsPro.medium();
         activeAugmentsRef.current.push(choice.id);
         setActiveAugments([...activeAugmentsRef.current]);
         if (choice.id === 'ghost') {
@@ -243,6 +290,7 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
     const changeDir = useCallback((nx: number, ny: number) => {
         initAudio();
+        MobileHapticsPro.selection();
         const requested = { x: nx, y: ny };
         setGame((current) => {
             if (!current) return current;
@@ -820,27 +868,13 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2">
                                     {draftChoices.map((choice, idx) => (
-                                        <button
+                                        <TiltAugmentChoiceCard
                                             key={choice.id}
-                                            type="button"
-                                            onClick={() => selectAugment(choice)}
-                                            className="group relative rounded-2xl border border-border bg-card p-4 text-left shadow-sm hover:border-primary hover:bg-card/80 transition-all active:scale-95 flex flex-col justify-between"
-                                        >
-                                            <div>
-                                                <div className="flex items-center justify-between mb-2">
-                                                    <span className="text-2xl">{choice.icon}</span>
-                                                    <span className="text-xs font-mono font-bold text-muted-foreground px-1.5 py-0.5 rounded-md border border-border bg-muted/60">
-                                                        [{idx + 1}]
-                                                    </span>
-                                                </div>
-                                                <div className="font-black text-sm text-foreground group-hover:text-primary transition-colors">
-                                                    {choice.name[loc] ?? choice.name.en}
-                                                </div>
-                                                <p className="text-xs text-muted-foreground mt-1 line-clamp-3 leading-relaxed">
-                                                    {choice.desc[loc] ?? choice.desc.en}
-                                                </p>
-                                            </div>
-                                        </button>
+                                            choice={choice}
+                                            idx={idx}
+                                            loc={loc}
+                                            onSelect={() => selectAugment(choice)}
+                                        />
                                     ))}
                                 </div>
                             </div>
