@@ -6,8 +6,16 @@ import {
   TOTAL_CELLS,
 } from '../../lib/games/merge-mansion';
 import { Button } from '../ui/button';
-import { Volume2, VolumeX, RotateCcw, Zap, Sparkles, CheckCircle2, ChevronRight, Lock } from 'lucide-react';
+import { Volume2, VolumeX, RotateCcw, Zap, Sparkles, CheckCircle2, ChevronRight, Lock, Share2, Maximize2, Minimize2 } from 'lucide-react';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from '../../lib/games/share-card';
+import { getSpriteUrl } from '../../lib/games/sprites';
+import { celebrate } from '../../lib/games/celebration';
 
 function TiltMergeCell({
   item,
@@ -100,6 +108,25 @@ export default function MergeMansion() {
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
   const [message, setMessage] = useState<string>('스포너를 눌러 도구를 만들고, 같은 도구를 합쳐보세요!');
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [shareCardCopied, setShareCardCopied] = useState(false);
+
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: 'ko' });
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        togglePortal();
+      } else if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        setSoundEnabled((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [togglePortal]);
 
   // Audio synthesis
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -290,11 +317,41 @@ export default function MergeMansion() {
       MobileHapticsPro.success();
       setMessage('저택 구역 복원 퀘스트 완료! 별과 보너스 에너지를 획득했습니다!');
       updateState();
+      if (containerRef.current) {
+        celebrate(containerRef.current, { preset: 'stardust' });
+      }
     } else {
       MobileHapticsPro.warning();
       setMessage(res.reason || '퀘스트를 완료할 수 없습니다.');
     }
   };
+
+  const progressPct = Math.round((completedCount / engine.quests.length) * 100);
+
+  const handleShareCard = useCallback(async () => {
+    try {
+      const canvas = createShareCardCanvas({
+        title: 'Merge Mansion',
+        subtitle: '저택 복원 머지 퍼즐',
+        score: `${stars} STARS`,
+        slug: 'merge-mansion',
+        customStats: [
+          { label: '복원 구역', value: `${completedCount} / ${engine.quests.length}` },
+          { label: '진행률', value: `${progressPct}%` },
+          { label: '잔여 에너지', value: `${energy}` },
+        ],
+      });
+      const success = await copyShareCardToClipboard(canvas);
+      if (success) {
+        setShareCardCopied(true);
+        setTimeout(() => setShareCardCopied(false), 2000);
+      } else {
+        downloadShareCard(canvas, `merge-mansion-${stars}stars.png`);
+      }
+    } catch {
+      /* best effort */
+    }
+  }, [stars, completedCount, engine.quests.length, progressPct, energy]);
 
   const handleRestart = () => {
     initAudio();
@@ -312,16 +369,29 @@ export default function MergeMansion() {
   // Current quest list (active first, max 2 shown)
   const activeQuests = engine.quests.filter((q) => !q.completed).slice(0, 2);
   const selectedItem = selectedIdx !== null ? board[selectedIdx] : null;
-  const progressPct = Math.round((completedCount / engine.quests.length) * 100);
 
   return (
-    <div className="w-full max-w-4xl mx-auto flex flex-col gap-4 p-2 sm:p-4 bg-card rounded-2xl border border-border shadow-xl select-none">
+    <div
+      ref={containerRef}
+      data-game-surface
+      className={
+        isImmersive
+          ? 'fixed inset-0 z-50 w-screen h-dvh bg-background p-3 sm:p-5 overflow-y-auto flex flex-col items-center justify-between m-0 select-none'
+          : 'w-full max-w-4xl mx-auto flex flex-col gap-4 p-2 sm:p-4 bg-card rounded-2xl border border-border shadow-xl select-none'
+      }
+    >
       {/* Top Header: Energy & Stars & Mansion Renovation Progress */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 rounded-xl bg-muted/40 border border-border">
-        <div className="flex items-center gap-4 w-full sm:w-auto">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 rounded-xl bg-muted/40 border border-border w-full">
+        <div className="flex items-center gap-3 w-full sm:w-auto flex-wrap">
           {/* Energy */}
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-card border border-border shadow-sm">
-            <Zap className="w-4 h-4 text-warning fill-current" />
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-card border border-border shadow-xs">
+            <img
+              src={getSpriteUrl('gem', 64)}
+              alt="Energy Gem"
+              width={20}
+              height={20}
+              className="size-5 object-contain select-none pointer-events-none"
+            />
             <span className="text-xs text-muted-foreground">에너지</span>
             <span className="text-sm font-black text-foreground font-mono">
               {energy}/{engine.maxEnergy}
@@ -329,21 +399,48 @@ export default function MergeMansion() {
           </div>
 
           {/* Stars */}
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-card border border-border shadow-sm">
-            <Sparkles className="w-4 h-4 text-warning" />
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-card border border-border shadow-xs">
+            <img
+              src={getSpriteUrl('star', 64)}
+              alt="Restoration Star"
+              width={20}
+              height={20}
+              className="size-5 object-contain select-none pointer-events-none"
+            />
             <span className="text-xs text-muted-foreground">복원 별</span>
             <span className="text-sm font-black text-primary font-mono">{stars}</span>
           </div>
 
-          {/* Sound Toggle */}
-          <button
-            type="button"
-            className="p-2 rounded-xl bg-card border border-border text-foreground hover:bg-muted ml-auto sm:ml-0"
-            onClick={() => setSoundEnabled(!soundEnabled)}
-            aria-label="음소거 토글"
-          >
-            {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4 text-muted-foreground" />}
-          </button>
+          {/* Action buttons: Sound, Share, Fullscreen */}
+          <div className="flex items-center gap-1.5 ml-auto sm:ml-0">
+            <button
+              type="button"
+              className="p-2 rounded-xl bg-card border border-border text-foreground hover:bg-muted"
+              onClick={() => setSoundEnabled(!soundEnabled)}
+              title="음소거 토글 (M)"
+              aria-label="음소거 토글"
+            >
+              {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4 text-muted-foreground" />}
+            </button>
+            <button
+              type="button"
+              className="p-2 rounded-xl bg-card border border-border text-foreground hover:bg-muted"
+              onClick={handleShareCard}
+              title="소셜 공유 카드"
+              aria-label="소셜 공유 카드"
+            >
+              <Share2 className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              className="p-2 rounded-xl bg-card border border-border text-foreground hover:bg-muted"
+              onClick={togglePortal}
+              title={isImmersive ? portalLabels.exit : portalLabels.enter}
+              aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+            >
+              {isImmersive ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4 text-muted-foreground" />}
+            </button>
+          </div>
         </div>
 
         {/* Renovation Progress */}
@@ -427,8 +524,17 @@ export default function MergeMansion() {
             );
           })}
           {activeQuests.length === 0 && (
-            <div className="col-span-full p-4 rounded-xl bg-primary/10 border border-primary/30 flex items-center justify-center gap-2 text-primary font-bold text-sm">
-              <Sparkles className="w-5 h-5" /> 모든 저택 구역이 완벽히 복원되었습니다! 축하합니다!
+            <div className="col-span-full p-4 rounded-xl bg-primary/10 border border-primary/30 flex flex-col items-center justify-center gap-2 text-primary font-bold text-sm">
+              <img
+                src={getSpriteUrl('trophy', 64)}
+                alt="Victory Trophy"
+                width={48}
+                height={48}
+                className="size-12 drop-shadow-md select-none pointer-events-none"
+              />
+              <div className="flex items-center gap-1.5">
+                <Sparkles className="w-5 h-5" /> 모든 저택 구역이 완벽히 복원되었습니다! 축하합니다!
+              </div>
             </div>
           )}
         </div>
@@ -475,19 +581,26 @@ export default function MergeMansion() {
       </div>
 
       {/* Footer Info & Controls */}
-      <div className="flex items-center justify-between pt-2 border-t border-border">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-2 border-t border-border w-full">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <span>도움말: 동일 레벨 아이템을 드래그하거나 순서대로 클릭하면 다음 레벨로 합성됩니다.</span>
         </div>
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleRestart}
-        >
-          <RotateCcw />
-          보드 재설정
-        </Button>
+        <div className="flex items-center gap-2">
+          {shareCardCopied && (
+            <span className="text-xs font-bold text-primary animate-in fade-in">
+              ✓ 결과 카드 복사 완료!
+            </span>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRestart}
+          >
+            <RotateCcw className="w-4 h-4" />
+            보드 재설정
+          </Button>
+        </div>
       </div>
     </div>
   );

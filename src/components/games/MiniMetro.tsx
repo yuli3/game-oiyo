@@ -20,6 +20,7 @@ import {
   downloadShareCard,
 } from "@/lib/games/share-card";
 import { useCardTiltPro, MobileHapticsPro } from "@/lib/games/engine-suite-unified";
+import { getSpriteUrl } from "@/lib/games/sprites";
 import { Maximize2, Minimize2, Share2, Check, RotateCcw, Play, Pause } from "lucide-react";
 
 function TiltMetroButton({
@@ -382,7 +383,19 @@ export default function MiniMetro({ locale = "ko" }: MiniMetroProps) {
         {/* Game Over Modal */}
         {game.status === "gameover" && (
           <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-background/85 p-6 text-center backdrop-blur-sm">
-            <span className="mb-2 text-4xl">⚠️</span>
+            <img
+              src={
+                game.passengersDelivered >= 100
+                  ? getSpriteUrl('trophy', 64)
+                  : game.passengersDelivered >= 50
+                  ? getSpriteUrl('star', 64)
+                  : getSpriteUrl('coin', 64)
+              }
+              alt="Result Badge"
+              width={56}
+              height={56}
+              className="size-14 drop-shadow-md select-none pointer-events-none mb-2"
+            />
             <h3 className="mb-1 text-2xl font-black tracking-tight text-destructive">
               {locale === "ko" ? "역이 과밀로 마비되었습니다!" : "Station Overcrowded!"}
             </h3>

@@ -27,13 +27,53 @@ import {
     type MinesweeperHint,
     type RevealResult,
 } from '../../lib/games/minesweeper';
-import { MINESWEEPER_SPRITES } from '../../lib/games/sprites';
+import { MINESWEEPER_SPRITES, getSpriteUrl } from '../../lib/games/sprites';
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 import { celebrate } from "../../lib/games/celebration";
 import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from '../../lib/games/share-card';
-import { MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+
+function TiltSweepButton({
+  children,
+  onClick,
+  className = '',
+  disabled = false,
+  title,
+  ariaLabel,
+  ariaPressed,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+  ariaPressed?: boolean;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      title={title}
+      aria-label={ariaLabel || title}
+      aria-pressed={ariaPressed}
+      onClick={() => {
+        triggerPop(0.12);
+        onClick?.();
+      }}
+      disabled={disabled}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`touch-manipulation select-none transition-all duration-150 transform-(--card-tilt) will-change-transform ${className}`}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 
 const LEGACY_BEST_KEY = 'oiyo-minesweeper-best'; // pre-unification key, read once for migration
 
@@ -898,7 +938,16 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             </div>
 
             {status !== 'playing' ? (
-                <div className="mt-6 text-center animate-in fade-in slide-in-from-bottom-2 motion-reduce:animate-none" role="status" aria-live="polite">
+                <div className="mt-6 text-center animate-in fade-in slide-in-from-bottom-2 motion-reduce:animate-none flex flex-col items-center" role="status" aria-live="polite">
+                    {status === 'won' && (
+                        <img
+                            src={getSpriteUrl('trophy', 64)}
+                            alt="Victory Trophy"
+                            width={64}
+                            height={64}
+                            className="size-16 mb-2 drop-shadow-md select-none pointer-events-none"
+                        />
+                    )}
                     <p className={`text-lg font-black ${status === 'won' ? 'text-primary' : 'text-destructive'}`}>
                         {status === 'won' ? t.win : t.over}
                     </p>
@@ -913,22 +962,21 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         <p className="text-xs text-muted-foreground mt-2">{isNewBest ? m3.newBest : `${t.best}: ${bestTime}s`} · {m3.nextGoal}: {Math.max(1, bestTime - 1)}s</p>
                     )}
                     <div className="mt-3 flex justify-center">
-                        <button
-                            type="button"
+                        <TiltSweepButton
                             onClick={handleShareCard}
                             className="min-h-11 inline-flex items-center gap-1.5 px-5 py-2 rounded-full border border-primary/40 bg-primary/10 text-primary font-bold text-xs hover:bg-primary/20 transition-colors"
                         >
                             <span>📸</span>
                             <span>{shareCardCopied ? (locale === 'ko' ? "✓ 카드 복사됨" : "✓ Copied") : (locale === 'ko' ? "결과 카드 복사" : "Share Result Card")}</span>
-                        </button>
+                        </TiltSweepButton>
                     </div>
                     {assist === 'hint' && <p className="mt-1 text-xs font-bold text-muted-foreground">{m3.assistedResult}</p>}
-                    <button
+                    <TiltSweepButton
                         onClick={() => initBoard(mode)}
                         className="mt-4 min-h-11 px-8 py-2 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity"
                     >
                         {t.reset}
-                    </button>
+                    </TiltSweepButton>
                 </div>
             ) : onboardingText ? (
                 <p role="status" aria-live="polite" className="mx-auto mt-4 max-w-md rounded-xl border border-chart-2/40 bg-chart-2/10 px-3 py-2 text-center text-xs font-bold text-foreground">

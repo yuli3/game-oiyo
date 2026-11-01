@@ -5,8 +5,15 @@ import {Lazy3DStage} from "../ui/game/Lazy3DStage";
 import {usePrefersReducedMotion} from "../../lib/games/reduced-motion";
 import {getBestForConditions,recordAchievementEvent,recordBestForConditions} from "../../lib/games/records";
 import {MEMORY_PALACE_RULESET, MEMORY_PALACE_OBSERVE_INTERVAL_MS, MEMORY_PALACE_EXIT, MEMORY_PALACE_HEIGHT, MEMORY_PALACE_OBSERVE_TURNS, MEMORY_PALACE_WIDTH, createMemoryPalace, isPalaceWall, palaceLineOfSight, moveMemoryPalace, observeMemoryPalace, revealMemoryPalace, type MemoryPalaceState, type PalaceDirection} from "../../lib/games/memory-palace-thieves";
-import {MEMORY_PALACE_SPRITES} from "../../lib/games/sprites";
+import {MEMORY_PALACE_SPRITES, getSpriteUrl} from "../../lib/games/sprites";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
+import { Share2, Check, Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
 
 function TiltThiefButton({
   label,
@@ -64,8 +71,10 @@ function PalaceFallback({state,visible}:{state:MemoryPalaceState;visible:boolean
 }
 
 export default function MemoryPalaceThieves({locale="ko"}:{locale?:string}){const{ref:stageRef,celebrate:celebrateStage}=useCelebration();
+ const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || "ko" });
  const controls=CONTROLS[locale as keyof typeof CONTROLS]??CONTROLS.en;
  const [observationPaused,setObservationPaused]=useState(false);
+ const [shareCardCopied, setShareCardCopied]=useState(false);
  const resultHandled=useRef(false);
  const t=COPY[locale as keyof typeof COPY]??COPY.en; const reduced=usePrefersReducedMotion();
  const seed=useMemo(()=>{const d=new Date();return d.getUTCFullYear()*10000+(d.getUTCMonth()+1)*100+d.getUTCDate();},[]);
@@ -78,6 +87,41 @@ export default function MemoryPalaceThieves({locale="ko"}:{locale?:string}){cons
    tone(300);
    setState(s=>moveMemoryPalace(s,d));
  },[tone]);
+
+ const handleShareCard = useCallback(async () => {
+   const isEscaped = state.phase === "escaped";
+   const canvas = createShareCardCanvas({
+     title: t.title,
+     subtitle: isEscaped ? t.escape : t.caught,
+     score: isEscaped ? `${state.turn} Turns` : "CAUGHT",
+     bestScore: best ? `${best} pts` : undefined,
+     slug: "memory-palace-thieves",
+     customStats: [
+       { label: t.turn, value: state.turn },
+       { label: t.memory, value: `${state.reveals} Left` },
+       { label: t.artifact, value: state.carrying ? "Secured" : "Lost" },
+     ],
+   });
+   const success = await copyShareCardToClipboard(canvas);
+   if (success) {
+     setShareCardCopied(true);
+     setTimeout(() => setShareCardCopied(false), 2000);
+   } else {
+     downloadShareCard(canvas, `memory-palace-${state.turn}turns.png`);
+   }
+ }, [best, state.carrying, state.phase, state.reveals, state.turn, t.artifact, t.caught, t.escape, t.memory, t.title, t.turn]);
+
+ useEffect(() => {
+   const handleKeyDown = (e: KeyboardEvent) => {
+     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+     if (e.key === "f" || e.key === "F") {
+       e.preventDefault();
+       togglePortal();
+     }
+   };
+   window.addEventListener("keydown", handleKeyDown);
+   return () => window.removeEventListener("keydown", handleKeyDown);
+ }, [togglePortal]);
  useEffect(()=>{if(!started||observationPaused||state.phase!=="observing")return;const advance=()=>{if(!document.hidden)setState(observeMemoryPalace);};const id=window.setInterval(advance,MEMORY_PALACE_OBSERVE_INTERVAL_MS);return()=>clearInterval(id);},[started,state,observationPaused]);
  useEffect(()=>{const conditions={seed:String(seed),difficulty:MEMORY_PALACE_RULESET,assist:"none" as const};setBest(getBestForConditions("memory-palace-thieves",conditions)?.value??0);recordAchievementEvent("memory-palace-thieves","opened");},[seed]);
  useEffect(()=>{if(state.phase==="observing"){resultHandled.current=false;return;}if(resultHandled.current)return;if(state.phase==="escaped"||state.phase==="caught")resultHandled.current=true;if(state.phase==="escaped"){const score=Math.max(100,2000-state.turn*20-(2-state.reveals)*100);const next=recordBestForConditions("memory-palace-thieves",score,"score",{seed:String(seed),difficulty:MEMORY_PALACE_RULESET,assist:state.reveals===2?"none":"hint"},`${state.turn} turns`);setBest(next.value);recordAchievementEvent("memory-palace-thieves","cleared");tone(880);MobileHapticsPro.success();celebrateStage({preset:"coins",colors:["#64733e","#d6b65c","#f4eedb"],origin:{x:.5,y:.6}});}else if(state.phase==="caught"){tone(130);MobileHapticsPro.heavy();}},[seed,state.phase,state.reveals,state.turn,tone]);
@@ -86,11 +130,62 @@ export default function MemoryPalaceThieves({locale="ko"}:{locale?:string}){cons
  const reset=()=>{setObservationPaused(false);window.clearTimeout(flashTimer.current);setState(createMemoryPalace(seed));setStarted(true);setFlash(false);recordAchievementEvent("memory-palace-thieves","played");tone(440);};
  const reveal=()=>{if(flash||state.phase!=="infiltrating"||state.reveals===0)return;setState(s=>revealMemoryPalace(s));setFlash(true);flashTimer.current=window.setTimeout(()=>setFlash(false),900);};
  const active=started; const observing=state.phase==="observing"; const ended=state.phase==="escaped"||state.phase==="caught";
- return <GameContainer title={t.title} subtitle={t.sub}>
-  <div className="space-y-4">{!started&&<img src="/games/memory-palace-thieves-keyart.webp" alt="" width={1730} height={909} decoding="async" className="aspect-[1.9/1] w-full rounded-2xl object-cover"/>}
-   <div className="grid grid-cols-4 gap-2 text-center text-sm"><div className="rounded-xl bg-muted p-2"><b>{t.turn}</b><br/>{state.turn}</div><div className="rounded-xl bg-muted p-2"><b>{t.memory}</b><br/>{state.reveals}</div><div className="rounded-xl bg-muted p-2"><b>{t.artifact}</b><br/>{state.carrying?"✓":"—"}</div><div className="rounded-xl bg-muted p-2"><b>{t.best}</b><br/>{best||"—"}</div></div>
+  return (
+    <div
+      ref={containerRef}
+      data-game-surface
+      className={
+        isImmersive
+          ? "fixed inset-0 z-50 w-screen h-dvh bg-background p-3 sm:p-5 overflow-y-auto flex flex-col items-center justify-between m-0 select-none"
+          : "relative"
+      }
+    >
+      <GameContainer title={t.title} subtitle={t.sub}>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between pb-2 border-b border-border gap-2">
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setMuted((v) => !v)}
+                className="p-2 rounded-xl border border-border bg-card text-foreground hover:bg-muted"
+                title={`${t.sound}: ${muted ? "OFF" : "ON"}`}
+                aria-label={`${t.sound}: ${muted ? "OFF" : "ON"}`}
+              >
+                {muted ? <VolumeX className="size-4 text-muted-foreground" /> : <Volume2 className="size-4" />}
+              </button>
+              <button
+                type="button"
+                onClick={handleShareCard}
+                className="p-2 rounded-xl border border-border bg-card text-foreground hover:bg-muted"
+                title="공유 카드"
+                aria-label="공유 카드"
+              >
+                {shareCardCopied ? <Check className="size-4 text-success" /> : <Share2 className="size-4" />}
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={togglePortal}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border bg-card text-xs font-bold hover:bg-muted"
+            >
+              {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+              <span>{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+            </button>
+          </div>
+          {!started && (
+            <img
+              src="/games/memory-palace-thieves-keyart.webp"
+              alt=""
+              width={1730}
+              height={909}
+              decoding="async"
+              className="aspect-[1.9/1] w-full rounded-2xl object-cover"
+            />
+          )}
+   <div className="grid grid-cols-4 gap-2 text-center text-sm"><div className="rounded-xl bg-muted p-2"><b>{t.turn}</b><br/>{state.turn}</div><div className="rounded-xl bg-muted p-2"><b>{t.memory}</b><br/>{state.reveals}</div><div className="rounded-xl bg-muted p-2"><b>{t.artifact}</b><br/>{state.carrying ? <img src={getSpriteUrl("gem", 64)} alt="Gem" className="inline size-4 object-contain" /> : "—"}</div><div className="rounded-xl bg-muted p-2"><b>{t.best}</b><br/>{best||"—"}</div></div>
    <div ref={stageRef}><Lazy3DStage active={active} className="h-[min(44vh,360px)] rounded-2xl border bg-[#11180f]" placeholder={<div className="grid h-full place-items-center p-8 text-center"><button className="rounded-xl bg-primary px-5 py-3 font-bold text-primary-foreground" onClick={begin}>{t.start}</button></div>} fallback={<PalaceFallback state={state} visible={observing||flash||ended}/>}><Scene state={state} mapVisible={observing||flash||ended} reducedMotion={Boolean(reduced)}/></Lazy3DStage></div>
-   {active&&<div aria-live="polite" className="rounded-xl border p-3 text-center font-semibold">{observing?`${t.observe} ${state.observationTurn+1}/${MEMORY_PALACE_OBSERVE_TURNS}`:state.phase==="infiltrating"?(state.carrying?t.artifact:t.infiltrate):state.phase==="escaped"?t.escape:t.caught}</div>}
+   {active&&<div aria-live="polite" className="rounded-xl border p-3 text-center font-semibold flex flex-col items-center gap-1.5">{state.phase === "escaped" && <img src={getSpriteUrl("trophy", 64)} alt="Trophy" className="size-12 drop-shadow-md select-none pointer-events-none" />}{observing?`${t.observe} ${state.observationTurn+1}/${MEMORY_PALACE_OBSERVE_TURNS}`:state.phase==="infiltrating"?(state.carrying?t.artifact:t.infiltrate):state.phase==="escaped"?t.escape:t.caught}</div>}
    {active&&observing&&<div className="flex flex-wrap gap-2"><button className="min-h-11 flex-1 rounded-xl border px-3" onClick={()=>setObservationPaused(v=>!v)}>{observationPaused?controls.resume:controls.pause}</button><button className="min-h-11 flex-1 rounded-xl border px-3" onClick={reset}>{controls.replay}</button></div>}
    {active&&!observing&&!ended&&(
       <>
@@ -118,5 +213,7 @@ export default function MemoryPalaceThieves({locale="ko"}:{locale?:string}){cons
    <button onClick={()=>setMuted(v=>!v)} className="w-full rounded-xl border px-4 py-2 text-sm">{t.sound}: {muted?"OFF":"ON"}</button>
    <p className="text-sm text-muted-foreground">{t.hint} {controls.sight}</p>
   </div>
- </GameContainer>;
+      </GameContainer>
+    </div>
+  );
 }

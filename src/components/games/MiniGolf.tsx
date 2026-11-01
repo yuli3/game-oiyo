@@ -31,6 +31,45 @@ import {
   copyShareCardToClipboard,
   downloadShareCard,
 } from '../../lib/games/share-card';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { getSpriteUrl } from '../../lib/games/sprites';
+
+function TiltGolfButton({
+  children,
+  onClick,
+  className = '',
+  disabled = false,
+  title,
+  ariaLabel,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      title={title}
+      aria-label={ariaLabel || title}
+      onClick={() => {
+        triggerPop(0.12);
+        onClick?.();
+      }}
+      disabled={disabled}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`touch-manipulation select-none transition-all duration-150 transform-(--card-tilt) will-change-transform ${className}`}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 
 interface Props {
   locale: Locale;
@@ -348,6 +387,7 @@ export default function MiniGolf({ locale }: Props) {
   const handlePutt = useCallback(() => {
     setGameState((prev) => {
       if (prev.status === "aiming") {
+        MobileHapticsPro.heavyImpact();
         playPuttSound(prev.aimPower);
         return executePutt(prev);
       }
@@ -356,10 +396,12 @@ export default function MiniGolf({ locale }: Props) {
   }, [playPuttSound]);
 
   const handleNextHole = useCallback(() => {
+    MobileHapticsPro.selectionClick();
     setGameState((prev) => advanceToNextHole(prev));
   }, []);
 
   const handleRestart = useCallback(() => {
+    MobileHapticsPro.lightImpact();
     setGameState(createInitialGolfState(0));
   }, []);
 
@@ -409,14 +451,18 @@ export default function MiniGolf({ locale }: Props) {
         setGameState((prev) => {
           const next = updateGolfPhysics(prev, dt);
           if (next.lastEvent === "wall_hit") {
+            MobileHapticsPro.mediumImpact();
             playBounceSound();
           } else if (next.lastEvent === "water_hazard") {
+            MobileHapticsPro.warningPattern();
             playWaterSplashSound();
           }
           if (prev.status === "rolling" && next.status === "holed") {
+            MobileHapticsPro.successPattern();
             playHoleInSound();
             if (containerRef.current) celebrate(containerRef.current, { preset: "stardust" });
           } else if (prev.status === "rolling" && next.status === "finished") {
+            MobileHapticsPro.successPattern();
             playVictorySound();
             if (containerRef.current) celebrate(containerRef.current, { preset: "stardust" });
           }
@@ -549,7 +595,13 @@ export default function MiniGolf({ locale }: Props) {
         {/* Modal: Hole In */}
         {gameState.status === "holed" && (
           <div className="absolute inset-0 bg-background/80 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center pointer-events-auto">
-            <Flag className="w-12 h-12 text-primary animate-bounce mb-2" />
+            <img
+              src={getSpriteUrl('star', 64)}
+              alt="Hole Star"
+              width={48}
+              height={48}
+              className="size-12 drop-shadow-md select-none pointer-events-none mb-2"
+            />
             <h2 className="text-2xl sm:text-3xl font-black text-foreground mb-1">{t.holedTitle}</h2>
             <p className="text-sm text-muted-foreground mb-4">{t.holedSubtitle}</p>
             <div className="bg-card border border-border rounded-xl p-4 mb-6 text-center min-w-48">
@@ -559,22 +611,20 @@ export default function MiniGolf({ locale }: Props) {
               </span>
             </div>
             <div className="flex flex-wrap justify-center gap-2">
-              <button
-                type="button"
+              <TiltGolfButton
                 onClick={() => void handleShareCard()}
-                className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-primary/50 bg-primary/20 px-4 py-2.5 text-xs font-bold text-primary transition-colors hover:bg-primary/30 active:scale-95"
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-primary/50 bg-primary/20 px-4 py-2.5 text-xs font-bold text-primary transition-colors hover:bg-primary/30"
               >
                 <Share2 className="w-4 h-4" />
                 <span>{shareCopied ? "복사됨!" : "공유 카드"}</span>
-              </button>
-              <button
-                type="button"
+              </TiltGolfButton>
+              <TiltGolfButton
                 onClick={handleNextHole}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-base shadow-lg hover:opacity-90 active:scale-95 transition-all"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-base shadow-lg hover:opacity-90 transition-all"
               >
                 <span>{t.nextHole}</span>
                 <ArrowRight className="w-5 h-5" />
-              </button>
+              </TiltGolfButton>
             </div>
           </div>
         )}
@@ -582,7 +632,13 @@ export default function MiniGolf({ locale }: Props) {
         {/* Modal: Course Finished */}
         {gameState.status === "finished" && (
           <div className="absolute inset-0 bg-background/85 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center pointer-events-auto">
-            <Trophy className="w-14 h-14 text-warning mb-3" />
+            <img
+              src={getSpriteUrl('trophy', 64)}
+              alt="Course Trophy"
+              width={64}
+              height={64}
+              className="size-16 drop-shadow-md select-none pointer-events-none mb-3"
+            />
             <h2 className="text-2xl sm:text-3xl font-black text-foreground mb-1">
               {t.finishedTitle}
             </h2>
@@ -600,22 +656,20 @@ export default function MiniGolf({ locale }: Props) {
               </div>
             </div>
             <div className="flex flex-wrap justify-center gap-2">
-              <button
-                type="button"
+              <TiltGolfButton
                 onClick={() => void handleShareCard()}
-                className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-primary/50 bg-primary/20 px-4 py-2.5 text-xs font-bold text-primary transition-colors hover:bg-primary/30 active:scale-95"
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-primary/50 bg-primary/20 px-4 py-2.5 text-xs font-bold text-primary transition-colors hover:bg-primary/30"
               >
                 <Share2 className="w-4 h-4" />
                 <span>{shareCopied ? "복사됨!" : "공유 카드"}</span>
-              </button>
-              <button
-                type="button"
+              </TiltGolfButton>
+              <TiltGolfButton
                 onClick={handleRestart}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-base shadow-lg hover:opacity-90 active:scale-95 transition-all"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-base shadow-lg hover:opacity-90 transition-all"
               >
                 <RotateCcw className="w-5 h-5" />
                 <span>{t.restart}</span>
-              </button>
+              </TiltGolfButton>
             </div>
           </div>
         )}
@@ -671,15 +725,14 @@ export default function MiniGolf({ locale }: Props) {
         </div>
 
         {/* Putt Button */}
-        <button
-          type="button"
+        <TiltGolfButton
           onClick={handlePutt}
           disabled={gameState.status !== "aiming"}
-          className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-md hover:opacity-90 active:scale-95 disabled:opacity-40 transition-all flex items-center justify-center gap-2"
+          className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-md hover:opacity-90 disabled:opacity-40 transition-all flex items-center justify-center gap-2"
         >
           <Play className="w-4 h-4 fill-current" />
           <span>{t.putt}</span>
-        </button>
+        </TiltGolfButton>
       </div>
     </div>
   );
