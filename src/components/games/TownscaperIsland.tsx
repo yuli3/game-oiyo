@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { useAudioContext } from '../../lib/games/use-audio-context';
+import { TOWNSCAPER_SPRITES } from '../../lib/games/sprites';
 import {
   loadArcadePassProgress,
   reportMissionProgress,
@@ -91,6 +93,40 @@ export default function TownscaperIsland({ locale }: Props) {
   const isKo = locale === 'ko';
   const [state, setState] = useState<TownscaperState>(() => createTownscaperState());
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  const getAudioContext = useAudioContext();
+  const spritesRef = useRef<{
+    tree: HTMLImageElement | null;
+    beacon: HTMLImageElement | null;
+    monument: HTMLImageElement | null;
+    roof: HTMLImageElement | null;
+  }>({ tree: null, beacon: null, monument: null, roof: null });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const t = new Image(); t.src = TOWNSCAPER_SPRITES.tree;
+    const b = new Image(); b.src = TOWNSCAPER_SPRITES.beacon;
+    const m = new Image(); m.src = TOWNSCAPER_SPRITES.monument;
+    const r = new Image(); r.src = TOWNSCAPER_SPRITES.roof;
+    spritesRef.current = { tree: t, beacon: b, monument: m, roof: r };
+  }, []);
+
+  const playPop = useCallback((height: number) => {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const t = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const freq = 260 + Math.min(height, 8) * 45;
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(freq, t);
+    osc.frequency.exponentialRampToValueAtTime(freq * 1.5, t + 0.08);
+    gain.gain.setValueAtTime(0.15, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.1);
+  }, [getAudioContext]);
 
   const recordArcadePass = (blocks: number) => {
     try {
@@ -205,13 +241,23 @@ export default function TownscaperIsland({ locale }: Props) {
           ctx.stroke();
         }
 
+        // Courtyard Garden 3D Tree at top
+        if (cell.feature === 'courtyard-garden' && spritesRef.current.tree?.complete) {
+          const topY = isoY - cell.height * floorH;
+          ctx.drawImage(spritesRef.current.tree, isoX - 12, topY - 10, 24, 24);
+        }
+
         // Lighthouse beacon crown at height 5
         if (cell.feature === 'lighthouse') {
           const topY = isoY - cell.height * floorH;
-          ctx.fillStyle = '#fde047';
-          ctx.beginPath();
-          ctx.arc(isoX, topY + 6, 8, 0, Math.PI * 2);
-          ctx.fill();
+          if (spritesRef.current.beacon?.complete) {
+            ctx.drawImage(spritesRef.current.beacon, isoX - 10, topY - 4, 20, 20);
+          } else {
+            ctx.fillStyle = '#fde047';
+            ctx.beginPath();
+            ctx.arc(isoX, topY + 6, 8, 0, Math.PI * 2);
+            ctx.fill();
+          }
         }
       }
     }
@@ -220,7 +266,7 @@ export default function TownscaperIsland({ locale }: Props) {
   const handleCellClick = (r: number, c: number, forceMode?: 'build' | 'demolish') => {
     const next = interactIslandCell(state, r, c, forceMode);
     const targetCell = next.grid[r][c];
-    playPopAudio(targetCell.height);
+    playPop(targetCell.height);
     if (targetCell.feature !== 'water' && targetCell.feature !== 'quay') {
       MobileHapticsPro.impact();
     } else {
@@ -232,7 +278,7 @@ export default function TownscaperIsland({ locale }: Props) {
 
   const handleLoadPreset = () => {
     MobileHapticsPro.success();
-    playPopAudio(5);
+    playPop(5);
     const next = applyPresetGrandIsland(state);
     setState(next);
     recordArcadePass(next.totalBlocks);
@@ -258,9 +304,14 @@ export default function TownscaperIsland({ locale }: Props) {
           <button
             type="button"
             onClick={handleLoadPreset}
-            className="rounded-xl border border-border bg-secondary px-3 py-1.5 text-xs font-semibold text-secondary-foreground hover:bg-accent"
+            className="flex items-center gap-1.5 rounded-xl border border-border bg-secondary px-3 py-1.5 text-xs font-semibold text-secondary-foreground hover:bg-accent"
           >
-            {isKo ? '✨ 산토리니 섬 프리셋' : '✨ Load Grand Island Preset'}
+            <img
+              src={TOWNSCAPER_SPRITES.monument}
+              alt="Preset"
+              className="size-4 object-contain inline-block"
+            />
+            <span>{isKo ? '산토리니 섬 프리셋' : 'Load Grand Island Preset'}</span>
           </button>
           <button
             type="button"

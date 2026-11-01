@@ -558,6 +558,13 @@ export const MERGE_MANSION_SPRITES = {
   spawner: "/assets/sprites/merge-mansion/mansion-spawner-128.png",
 } as const;
 
+export const TOWNSCAPER_SPRITES = {
+  tree: "/assets/sprites/townscaper-island/garden-tree-128.png",
+  beacon: "/assets/sprites/townscaper-island/lighthouse-beacon-128.png",
+  monument: "/assets/sprites/townscaper-island/grand-monument-128.png",
+  roof: "/assets/sprites/townscaper-island/terracotta-roof-128.png",
+} as const;
+
 export const DOT_PET_SPRITES: Record<string, { baby: string; adult: string }> = {
   normal: {
     baby: "/assets/sprites/dot-pet/normal-baby.png",
