@@ -27,7 +27,46 @@ import {
 } from "../../lib/games/reverse-dungeon";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { getSpriteUrl } from "../../lib/games/sprites";
 import ReverseDungeonScene, { type DungeonSpin } from "./ReverseDungeonScene";
+
+function TiltDungeonButton({
+  children,
+  onClick,
+  className = '',
+  disabled = false,
+  title,
+  ariaLabel,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        triggerPop(0.12);
+        onClick?.();
+      }}
+      disabled={disabled}
+      title={title}
+      aria-label={ariaLabel}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`transition-transform duration-100 ease-out active:scale-95 disabled:pointer-events-none disabled:opacity-50 transform-(--card-tilt) ${className}`}
+      style={{ '--card-tilt': transformCss || 'none' } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 
 const AUTO_MS = 1200;
 
@@ -472,15 +511,25 @@ export default function ReverseDungeon({ locale = "en" }: { locale?: Locale }) {
 
   const note = useCallback((next: DungeonState, kind: "turn" | "step") => {
     const player = audio.current;
-    if (!player || mutedRef.current || pausedRef.current) return;
+    if (kind === "turn") MobileHapticsPro.light();
+    if (kind === "step") MobileHapticsPro.medium();
+    if (!player || mutedRef.current || pausedRef.current) {
+      if (next.status === "win") MobileHapticsPro.success();
+      if (next.status === "lose") MobileHapticsPro.warning();
+      return;
+    }
     player.tick(kind);
     if (next.status === "win") {
       player.tick("win");
+      MobileHapticsPro.success();
       if (containerRef.current) {
         celebrate(containerRef.current, { preset: "tiles" });
       }
     }
-    if (next.status === "lose") player.tick("lose");
+    if (next.status === "lose") {
+      player.tick("lose");
+      MobileHapticsPro.warning();
+    }
   }, [containerRef]);
 
   const onSettled = useCallback((id: number) => {
@@ -687,25 +736,41 @@ export default function ReverseDungeon({ locale = "en" }: { locale?: Locale }) {
       </div>
       <p role="status" aria-live="polite" className="text-sm text-foreground">{live}</p>
       {(state.status === "win" || state.status === "lose") && (
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={handleShareCard}
-            className="flex-1 py-3 px-4 rounded-xl border border-border bg-card hover:bg-muted font-bold text-sm text-foreground transition-colors flex items-center justify-center gap-1.5 shadow-sm"
-          >
-            {shareCardCopied ? <Check className="w-4 h-4 text-primary" /> : <Share2 className="w-4 h-4" />}
-            {shareCardCopied ? "결과 복사 완료!" : "결과 카드 공유"}
-          </button>
-          <button
-            type="button"
-            className="flex-1 py-3 px-4 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-sm hover:bg-primary/90 transition-colors"
-            onClick={() => {
-              arm();
-              load(nextSeed(seed));
-            }}
-          >
-            {copy.next}
-          </button>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 rounded-2xl border border-border bg-card shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="flex size-12 items-center justify-center rounded-xl bg-primary/20 p-1.5 shrink-0">
+              <img
+                src={getSpriteUrl(state.status === "win" ? "trophy" : "star", 64)}
+                alt="Dungeon Result"
+                className="size-8 object-contain"
+                draggable={false}
+              />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-foreground">
+                {state.status === "win" ? "✨ 던전 출구 탈출 성공!" : "💀 모험 실패"}
+              </p>
+              <p className="text-xs text-muted-foreground">{live}</p>
+            </div>
+          </div>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <TiltDungeonButton
+              onClick={handleShareCard}
+              className="flex-1 sm:flex-none py-2.5 px-4 rounded-xl border border-border bg-card hover:bg-muted font-bold text-xs text-foreground transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+            >
+              {shareCardCopied ? <Check className="w-4 h-4 text-primary" /> : <Share2 className="w-4 h-4" />}
+              <span>{shareCardCopied ? "결과 복사 완료!" : "결과 카드 공유"}</span>
+            </TiltDungeonButton>
+            <TiltDungeonButton
+              className="flex-1 sm:flex-none py-2.5 px-4 rounded-xl bg-primary text-primary-foreground font-bold text-xs shadow-sm hover:bg-primary/90 transition-colors"
+              onClick={() => {
+                arm();
+                load(nextSeed(seed));
+              }}
+            >
+              {copy.next}
+            </TiltDungeonButton>
+          </div>
         </div>
       )}
       <div className="relative overflow-hidden rounded-2xl border border-border bg-card">

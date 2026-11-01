@@ -4,6 +4,8 @@ import type { Locale } from "@/lib/i18n";
 import { hasWebGL } from "@/lib/games/webgl";
 import { recordAchievementEvent, recordResult } from "@/lib/games/records";
 import { useArcadePortal } from "@/lib/games/arcade-portal";
+import { useCardTiltPro, MobileHapticsPro } from "@/lib/games/engine-suite-unified";
+import { getSpriteUrl } from "@/lib/games/sprites";
 import {
   BEST_KEY,
   HORIZON_DAYS,
@@ -26,6 +28,43 @@ import {
   type StallId,
   type Weather,
 } from "@/lib/games/run-a-business";
+
+function TiltBusinessButton({
+  children,
+  onClick,
+  className = '',
+  disabled = false,
+  title,
+  ariaLabel,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        triggerPop(0.12);
+        onClick?.();
+      }}
+      disabled={disabled}
+      title={title}
+      aria-label={ariaLabel}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`transition-transform duration-100 ease-out active:scale-95 disabled:pointer-events-none disabled:opacity-50 transform-(--card-tilt) ${className}`}
+      style={{ '--card-tilt': transformCss || 'none' } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 
 const COPY = {
   ko: {
@@ -526,17 +565,24 @@ export default function RunABusiness({ locale }: { locale: Locale }) {
 
   const closeShift = () => {
     recordAchievementEvent("run-a-business", "played");
-    apply(playPeriod(run, prep));
+    const next = playPeriod(run, prep);
+    if ((next.period?.profitCents ?? 0) > 0) MobileHapticsPro.success();
+    else MobileHapticsPro.warning();
+    apply(next);
     setRush(null);
   };
 
   const openShop = () => {
+    MobileHapticsPro.medium();
     if (horizon === "day" && hasWebGL()) {
       const forecast = forecastShift(run, prep);
       setRush({ demand: forecast.demand, sold: forecast.sold });
       return;
     }
-    apply(playPeriod(run, prep));
+    const next = playPeriod(run, prep);
+    if ((next.period?.profitCents ?? 0) > 0) MobileHapticsPro.success();
+    else MobileHapticsPro.warning();
+    apply(next);
   };
 
   const pickStall = (stall: StallId) => {
@@ -633,7 +679,13 @@ export default function RunABusiness({ locale }: { locale: Locale }) {
           </div>
           <div className="grid grid-cols-3 gap-2 text-right">
             <div><p className="text-[10px] font-bold uppercase tracking-wider text-white/50">{t.day}</p><p className="font-mono text-sm font-black">{run.day}</p></div>
-            <div><p className="text-[10px] font-bold uppercase tracking-wider text-white/50">{t.cash}</p><p className="font-mono text-sm font-black text-[#f0d58f]">{formatUsd(run.cashCents)}</p></div>
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-white/50">{t.cash}</p>
+              <p className="font-mono text-sm font-black text-[#f0d58f] flex items-center justify-end gap-1">
+                <img src={getSpriteUrl('coin', 64)} alt="Cash" className="size-3.5 object-contain" draggable={false} />
+                <span>{formatUsd(run.cashCents)}</span>
+              </p>
+            </div>
             <div><p className="text-[10px] font-bold uppercase tracking-wider text-white/50">{t.reputation}</p><p className="font-mono text-sm font-black">{run.reputation ?? 50}</p></div>
           </div>
         </div>
@@ -679,18 +731,18 @@ export default function RunABusiness({ locale }: { locale: Locale }) {
               <div>{t.sold}</div><div className="text-right font-mono">{books.sold}</div>
               <div>{t.revenue}</div><div className="text-right font-mono">{formatUsd(books.revenueCents)}</div>
               <div title={t.cogsTip}>{t.cogs}</div><div className="text-right font-mono">{formatUsd(books.cogsCents)}</div>
-              <div className="text-stone-500">{t.gross}</div>
-              <div className="text-right font-mono text-stone-500">{formatUsd(books.revenueCents - books.cogsCents)}</div>
+              <div className="text-muted-foreground">{t.gross}</div>
+              <div className="text-right font-mono text-muted-foreground">{formatUsd(books.revenueCents - books.cogsCents)}</div>
               <div title={t.wasteTip}>{t.waste}</div><div className="text-right font-mono">{formatUsd(books.wasteCents)}</div>
               <div title={t.opexTip}>{t.overhead}</div><div className="text-right font-mono">{formatUsd(books.overheadCents)}</div>
               <div title={t.depTip}>{t.dep}</div><div className="text-right font-mono">{formatUsd(books.depreciationCents)}</div>
               <div className="font-black" title={t.profitTip}>{t.profit}</div>
-              <div className={`text-right font-mono font-black ${books.profitCents < 0 ? "text-red-700" : "text-emerald-800"}`}>
+              <div className={`text-right font-mono font-black ${books.profitCents < 0 ? "text-destructive" : "text-primary"}`}>
                 {formatUsd(books.profitCents)}
               </div>
             </dl>
             {(books.profitCents > 0 && (books.wasteCents > 0 || books.purchaseCents > books.revenueCents - books.cogsCents)) && (
-              <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-900">{t.profitCash}</p>
+              <p className="mt-3 rounded-lg bg-warning/15 px-3 py-2 text-xs leading-5 text-warning">{t.profitCash}</p>
             )}
             <p className="mt-3 text-xs leading-5 text-muted-foreground">{t.cogsTip} {t.depTip}</p>
           </div>
@@ -713,7 +765,7 @@ export default function RunABusiness({ locale }: { locale: Locale }) {
       )}
 
       {run.bust ? (
-        <p className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-800">{t.bust}</p>
+        <p className="rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm font-bold text-destructive">{t.bust}</p>
       ) : rush ? null : (
         <div className="overflow-hidden rounded-2xl border border-[#cbbd9d] bg-[#efe5d1] shadow-[0_16px_48px_rgba(50,40,22,.12)]">
           <div className="border-b border-[#cbbd9d] bg-[#26351f] px-4 py-3 text-xs font-black uppercase tracking-[0.18em] text-[#f0d58f]">{t.open}</div>
@@ -724,54 +776,68 @@ export default function RunABusiness({ locale }: { locale: Locale }) {
                 label={stallCopy.keys[key as keyof typeof stallCopy.keys] ?? key}
                 value={prep.buy[key] ?? 0}
                 step={1}
-                onChange={(n) => setPrep({ ...prep, buy: { ...prep.buy, [key]: n } })}
+                onChange={(n) => {
+                  MobileHapticsPro.light();
+                  setPrep({ ...prep, buy: { ...prep.buy, [key]: n } });
+                }}
               />
             ))}
-            <Stepper label={t.price} value={prep.priceCents} step={50} onChange={(n) => setPrep({ ...prep, priceCents: Math.max(50, n) })} />
+            <Stepper
+              label={t.price}
+              value={prep.priceCents}
+              step={50}
+              onChange={(n) => {
+                MobileHapticsPro.light();
+                setPrep({ ...prep, priceCents: Math.max(50, n) });
+              }}
+            />
           </div>
           <div className="grid grid-cols-3 gap-2 px-3 pb-3 sm:px-4">
               {([0, 1, 2] as Richness[]).map((r) => (
                 <button
                   key={r}
                   type="button"
-                  onClick={() => setPrep({ ...prep, richness: r })}
+                  onClick={() => {
+                    MobileHapticsPro.selection();
+                    setPrep({ ...prep, richness: r });
+                  }}
                   className={`min-h-12 rounded-xl px-3 text-sm font-black ${prep.richness === r ? "bg-[#26351f] text-white shadow-md" : "border border-[#c9b990] bg-[#fffaf0] text-[#514a39]"}`}
                 >
                   {r === 0 ? t.plain : r === 1 ? t.normal : t.rich}
                 </button>
               ))}
           </div>
-          <button type="button" onClick={openShop} className="min-h-14 w-full bg-[#b95032] px-4 text-base font-black text-white shadow-[inset_0_1px_rgba(255,255,255,.2)] transition-colors hover:bg-[#a64228] active:bg-[#913921] motion-reduce:transition-none">
+          <TiltBusinessButton onClick={openShop} className="min-h-14 w-full bg-[#b95032] px-4 text-base font-black text-white shadow-[inset_0_1px_rgba(255,255,255,.2)] transition-colors hover:bg-[#a64228] active:bg-[#913921]">
             {t.open}
-          </button>
+          </TiltBusinessButton>
         </div>
       )}
 
       <div className="flex gap-2">
         {!run.creditUsed && (
-          <button type="button" className="min-h-11 flex-1 rounded-xl border text-sm font-bold" onClick={() => apply(takeCredit(run))}>
+          <TiltBusinessButton className="min-h-11 flex-1 rounded-xl border text-sm font-bold" onClick={() => apply(takeCredit(run))}>
             {t.credit}
-          </button>
+          </TiltBusinessButton>
         )}
         {(run.debtCents ?? 0) > 0 && (
-          <button type="button" className="min-h-11 flex-1 rounded-xl border text-sm font-bold" onClick={() => apply(repayCredit(run))}>
+          <TiltBusinessButton className="min-h-11 flex-1 rounded-xl border text-sm font-bold" onClick={() => apply(repayCredit(run))}>
             {t.repay}
-          </button>
+          </TiltBusinessButton>
         )}
-        <button type="button" className="min-h-11 flex-1 rounded-xl border text-sm font-bold" onClick={rematch}>
+        <TiltBusinessButton className="min-h-11 flex-1 rounded-xl border text-sm font-bold" onClick={rematch}>
           {t.rematch}
-        </button>
-        <button type="button" className="min-h-11 flex-1 rounded-xl border text-sm font-bold" onClick={() => void share()}>
+        </TiltBusinessButton>
+        <TiltBusinessButton className="min-h-11 flex-1 rounded-xl border text-sm font-bold" onClick={() => void share()}>
           {copied ? t.copied : t.share}
-        </button>
+        </TiltBusinessButton>
       </div>
       <div className="flex gap-2">
-        <button type="button" className="min-h-11 flex-1 rounded-xl border text-sm font-bold" onClick={() => apply(startRun({ seed: seed || newSeed(), stall: run.stall, horizon: run.horizon }))}>
+        <TiltBusinessButton className="min-h-11 flex-1 rounded-xl border text-sm font-bold" onClick={() => apply(startRun({ seed: seed || newSeed(), stall: run.stall, horizon: run.horizon }))}>
           {t.again}
-        </button>
-        <button type="button" className="min-h-11 flex-1 rounded-xl border text-sm font-bold" onClick={() => setPhase("pick")}>
+        </TiltBusinessButton>
+        <TiltBusinessButton className="min-h-11 flex-1 rounded-xl border text-sm font-bold" onClick={() => setPhase("pick")}>
           {t.other}
-        </button>
+        </TiltBusinessButton>
       </div>
       <p className="text-xs text-muted-foreground">{t.hint}</p>
       <p className="text-sm">

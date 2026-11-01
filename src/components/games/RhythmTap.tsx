@@ -7,6 +7,8 @@ import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { getBest, recordBest } from "../../lib/games/records";
 import { frameDeltaSeconds } from "../../lib/games/time-contracts";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { getSpriteUrl } from "../../lib/games/sprites";
 import {
   GOOD_MS,
   beatToSeconds,
@@ -30,6 +32,43 @@ import {
  * measured in milliseconds, so scroll speed never changes how strict the game is.
  * Audio is a synthesized click layered on top — the game is fully playable muted.
  * ────────────────────────────────────────────────────────────────────────── */
+
+function TiltRhythmButton({
+  children,
+  onClick,
+  className = '',
+  disabled = false,
+  title,
+  ariaLabel,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        triggerPop(0.12);
+        onClick?.();
+      }}
+      disabled={disabled}
+      title={title}
+      aria-label={ariaLabel}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`transition-transform duration-100 ease-out active:scale-95 disabled:pointer-events-none disabled:opacity-50 transform-(--card-tilt) ${className}`}
+      style={{ '--card-tilt': transformCss || 'none' } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 
 const W = 360;
 const H = 520;
@@ -176,7 +215,12 @@ const RhythmTap: React.FC<Props> = ({ locale }) => {
     const saved = recordBest(GAME_KEY, finalScore, "score", rhythmRecordExtra(nextLevel, gs?.maxCombo ?? 0));
     setBest(saved.value);
     setIsNewBest(beat && finalScore > 0);
-    if (beat && finalScore > 0 && !prefersReducedMotion) celebrate(canvasRef.current, { preset: "notes", colors: ["#f0abfc", "#67e8f9", "#fde68a"], origin: { x: 0.5, y: 0.75 } });
+    if (beat && finalScore > 0) {
+      MobileHapticsPro.success();
+      if (!prefersReducedMotion) celebrate(canvasRef.current, { preset: "notes", colors: ["#f0abfc", "#67e8f9", "#fde68a"], origin: { x: 0.5, y: 0.75 } });
+    } else {
+      MobileHapticsPro.heavy();
+    }
     setPhase("over");
   }, [prefersReducedMotion]);
 
@@ -197,6 +241,8 @@ const RhythmTap: React.FC<Props> = ({ locale }) => {
     if (bestIdx < 0 || Math.abs(bestOffsetMs) > GOOD_MS) return;
 
     const judgement = judgeOffset(bestOffsetMs);
+    if (judgement === "perfect") MobileHapticsPro.medium();
+    else MobileHapticsPro.light();
     gs.notes.splice(bestIdx, 1);
     gs.score += scoreForJudgement(judgement, gs.combo);
     gs.judge = judgement === "perfect" ? t.perfect : t.good;
@@ -227,7 +273,13 @@ const RhythmTap: React.FC<Props> = ({ locale }) => {
     }
     gs.notes = survivors;
     if (gs.notes.length === 0) { endGame(gs.score); return; }
-    if (missed) { gs.judge = t.missed; gs.judgeT = 20; setMiss(gs.miss); setCombo(0); }
+    if (missed) {
+      MobileHapticsPro.error();
+      gs.judge = t.missed;
+      gs.judgeT = 20;
+      setMiss(gs.miss);
+      setCombo(0);
+    }
 
     // draw
     ctx.fillStyle = "#0b1020"; ctx.fillRect(0, 0, W, H);
@@ -384,44 +436,57 @@ const RhythmTap: React.FC<Props> = ({ locale }) => {
           {phase === "playing" && (
             <div className="pointer-events-none absolute left-2 top-2 flex gap-3 text-[11px] font-bold text-white/90">
               <span>{t.combo} {combo}</span>
-              <span className="text-red-300">{t.miss} {miss}/{MAX_MISS}</span>
+              <span className="text-destructive font-black">{t.miss} {miss}/{MAX_MISS}</span>
             </div>
           )}
 
           {phase !== "playing" && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 rounded-2xl bg-black/55 px-6 text-center backdrop-blur-sm"
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 rounded-2xl bg-black/60 px-6 text-center backdrop-blur-sm"
               onPointerDown={(e) => { e.preventDefault(); begin(); }}>
               {phase === "over" && (
-                <div role="status" aria-live="polite">
+                <div role="status" aria-live="polite" className="flex flex-col items-center">
+                  <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/20 p-2 mb-2">
+                    <img
+                      src={getSpriteUrl('trophy', 64)}
+                      alt="Game Over"
+                      className="size-10 object-contain"
+                      draggable={false}
+                    />
+                  </div>
                   {isNewBest && <div className="text-sm font-black text-primary">{t.newBest}</div>}
                   <div className="text-xl font-black text-white">{t.gameOver}</div>
                   <div className="text-sm text-white/80">{t.score}: <b>{score}</b> · {t.best}: {best}</div>
                 </div>
               )}
               {phase === "menu" && (
-                <>
-                  <div className="text-4xl">🎵</div>
+                <div className="flex flex-col items-center">
+                  <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/20 p-2 mb-2">
+                    <img
+                      src={getSpriteUrl('star', 64)}
+                      alt="Rhythm Star"
+                      className="size-10 object-contain"
+                      draggable={false}
+                    />
+                  </div>
                   <p className="max-w-xs text-xs leading-relaxed text-white/80">{t.controls}</p>
-                </>
+                </div>
               )}
               <div className="flex flex-wrap items-center justify-center gap-2">
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); begin(); }}
-                  className="rounded-full bg-primary px-8 py-2.5 font-bold text-primary-foreground transition-opacity hover:opacity-90"
+                <TiltRhythmButton
+                  onClick={() => begin()}
+                  className="rounded-full bg-primary px-8 py-2.5 font-bold text-primary-foreground shadow-md transition-opacity hover:opacity-90"
                 >
                   {phase === "over" ? t.restart : t.tapStart}
-                </button>
+                </TiltRhythmButton>
                 {phase === "over" && (
-                  <button
-                    type="button"
+                  <TiltRhythmButton
                     onClick={handleShareCard}
                     className="flex min-h-10 items-center gap-1.5 rounded-full border border-primary/50 bg-primary/20 px-5 text-xs font-bold text-primary shadow-xs hover:bg-primary/30 transition-colors"
                     title={shareCardCopied ? "복사됨!" : "결과 카드"}
                   >
                     {shareCardCopied ? <Check className="size-3.5" /> : <Share2 className="size-3.5" />}
                     <span>{shareCardCopied ? "복사 완료" : "결과 카드"}</span>
-                  </button>
+                  </TiltRhythmButton>
                 )}
               </div>
             </div>

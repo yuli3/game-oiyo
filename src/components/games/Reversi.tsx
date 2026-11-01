@@ -8,12 +8,53 @@ import type { AiLevel, GameMode } from '../../lib/games/ai/types';
 import { getRecord, recordResult, type GameRecord } from '../../lib/games/records';
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 import { clearReversiSave, loadReversiSave, storeReversiSave } from '../../lib/games/active-game-save';
-import { REVERSI_SPRITES } from '../../lib/games/sprites';
+import { REVERSI_SPRITES, getSpriteUrl } from '../../lib/games/sprites';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import {
     createShareCardCanvas,
     copyShareCardToClipboard,
     downloadShareCard,
 } from '../../lib/games/share-card';
+
+function TiltReversiButton({
+  children,
+  onClick,
+  className = '',
+  disabled = false,
+  title,
+  ariaLabel,
+  ariaPressed,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+  ariaPressed?: boolean;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        triggerPop(0.12);
+        onClick?.();
+      }}
+      disabled={disabled}
+      title={title}
+      aria-label={ariaLabel}
+      aria-pressed={ariaPressed}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`transition-transform duration-100 ease-out active:scale-95 disabled:pointer-events-none disabled:opacity-50 transform-(--card-tilt) ${className}`}
+      style={{ '--card-tilt': transformCss || 'none' } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 
 const SIZE = 8;
 const AI_PLAYER = 2; // AI plays white; human opens as black
@@ -177,11 +218,18 @@ const Reversi: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         setHoveredCell(null);
         if (flips.length > 0) {
             playDiskFlip(flips.length);
+            if (flips.length >= 3) MobileHapticsPro.medium();
+            else MobileHapticsPro.light();
         } else {
+            MobileHapticsPro.light();
             tone(next.status === 'over' ? 880 : next.passed ? 260 : 520, next.status === 'over' ? .24 : .08);
         }
-        if (next.status === 'over' && mode === 'ai') {
-            setRecord(recordResult('reversi', next.winner === 0 ? 'd' : next.winner === AI_PLAYER ? 'l' : 'w'));
+        if (next.status === 'over') {
+            if (next.winner === 1) MobileHapticsPro.success();
+            else if (next.winner === 2) MobileHapticsPro.error();
+            if (mode === 'ai') {
+                setRecord(recordResult('reversi', next.winner === 0 ? 'd' : next.winner === AI_PLAYER ? 'l' : 'w'));
+            }
         }
         return true;
     };
@@ -363,7 +411,7 @@ const Reversi: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                                     +{previewFlips.length}
                                 </span>
                             ) : (
-                                <div className="h-2.5 w-2.5 rounded-full border-2 border-white bg-slate-900/70" />
+                                <div className="h-2.5 w-2.5 rounded-full border-2 border-primary-foreground bg-foreground/70" />
                             )
                         )}
                         {cell !== null && (
@@ -387,22 +435,31 @@ const Reversi: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                 {game.status === 'over' && (
                     <div className={`absolute inset-0 z-10 bg-background/60 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center ${!reducedMotion ? 'animate-in fade-in zoom-in-95' : ''}`}>
                         <div className="m-3 rounded-3xl border-4 border-primary/20 bg-card p-5 text-center shadow-xl">
+                            <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/20 p-2 mx-auto mb-2">
+                                <img
+                                    src={getSpriteUrl(game.winner === 1 ? 'trophy' : 'star', 64)}
+                                    alt="Result"
+                                    className="size-10 object-contain"
+                                    draggable={false}
+                                />
+                            </div>
                             <h4 className="text-2xl font-black text-foreground mb-2">{winLabel}</h4>
                             <p className="text-sm font-bold text-muted-foreground">{bCount}–{wCount} · {t.moves} {game.moves}</p><p className="text-xs font-bold text-muted-foreground">{t.mobility} {analysis.mobility} · {t.corners} {analysis.corners}</p><p className="mt-1 text-xs font-bold text-primary">{t.next}</p>
-                            {mode === 'ai' && game.winner === AI_PLAYER && lastAiReview && <div className="mx-auto mt-3 max-w-xs rounded-2xl border border-amber-300/60 bg-amber-50 p-3 text-left text-xs text-stone-800"><p className="font-black text-amber-900">{aiInfo.review} · {String.fromCharCode(65+lastAiReview.index%8)}{8-Math.floor(lastAiReview.index/8)}</p><p className="mt-1">{lastAiReview.corner?aiInfo.corner:lastAiReview.edge?aiInfo.edge:`${lastAiReview.flips} ${aiInfo.flips}`} · {aiInfo.mobility} ${lastAiReview.opponentMobility}</p><p className="mt-1 text-xs text-stone-500">{aiInfo.difficulty}: {aiInfo.level[level]}</p></div>}
+                            {mode === 'ai' && game.winner === AI_PLAYER && lastAiReview && <div className="mx-auto mt-3 max-w-xs rounded-2xl border border-warning/40 bg-warning/10 p-3 text-left text-xs text-foreground"><p className="font-black text-warning">{aiInfo.review} · {String.fromCharCode(65+lastAiReview.index%8)}{8-Math.floor(lastAiReview.index/8)}</p><p className="mt-1">{lastAiReview.corner?aiInfo.corner:lastAiReview.edge?aiInfo.edge:`${lastAiReview.flips} ${aiInfo.flips}`} · {aiInfo.mobility} ${lastAiReview.opponentMobility}</p><p className="mt-1 text-xs text-muted-foreground">{aiInfo.difficulty}: {aiInfo.level[level]}</p></div>}
                             <div className="mt-4 flex flex-wrap justify-center gap-2">
-                                <button
-                                    type="button"
+                                <TiltReversiButton
                                     onClick={handleShareCard}
                                     className="min-h-11 px-4 py-2 rounded-xl border border-primary/40 bg-primary/10 shadow-xs text-xs font-bold text-primary hover:bg-primary/20 transition-colors flex items-center gap-1.5"
                                 >
-                                    {shareCardCopied ? <Check className="size-4 text-success" /> : <span>🖼️</span>}
+                                    {shareCardCopied ? <Check className="size-4 text-primary" /> : <span>🖼️</span>}
                                     <span>{shareCardCopied ? '카드 복사됨!' : '카드 공유 2.0'}</span>
-                                </button>
-                                <button type="button" onClick={initGame} className={`min-h-11 rounded-xl bg-primary px-5 font-black text-primary-foreground ${!reducedMotion ? 'hover:scale-105 transition-transform' : ''}`}>
+                                </TiltReversiButton>
+                                <TiltReversiButton onClick={initGame} className="min-h-11 rounded-xl bg-primary px-5 font-black text-primary-foreground">
                                     {t.reset}
-                                </button>
-                                <button type="button" onClick={share} className="min-h-11 rounded-xl border px-4 text-sm font-bold">{t.share}</button>
+                                </TiltReversiButton>
+                                <TiltReversiButton onClick={share} className="min-h-11 rounded-xl border border-border px-4 text-sm font-bold text-foreground">
+                                    {t.share}
+                                </TiltReversiButton>
                             </div>
                         </div>
                     </div>

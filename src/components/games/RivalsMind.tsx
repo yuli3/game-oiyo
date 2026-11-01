@@ -3,8 +3,14 @@ import{useCelebration}from"../../lib/games/celebration";
 import {GameContainer} from "../ui/game/GamePrimitives";
 import {recordAchievementEvent,recordBestForConditions} from "../../lib/games/records";
 import {RIVALS_MIND_RULESET,createRivalsMind,playRivalsMindRound,readRivalHabit,type DuelAction,type DuelRead} from "../../lib/games/rivals-mind";
-import {RIVALS_MIND_POSES} from "../../lib/games/sprites";
+import {RIVALS_MIND_POSES, getSpriteUrl} from "../../lib/games/sprites";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
+import { Share2, Check } from "lucide-react";
 
 function playDuelAudio(type: "strike" | "guard" | "evade" | "hit" | "win" | "lose") {
   if (typeof window === "undefined") return;
@@ -125,9 +131,34 @@ const COPY={
 
 export default function RivalsMind({locale="ko"}:{locale?:string}){const{ref:stageRef,celebrate:celebrateStage}=useCelebration();
  const t=COPY[locale as keyof typeof COPY]??COPY.en; const seed=useMemo(()=>Date.now()%1_000_003,[]);const [state,setState]=useState(()=>createRivalsMind(seed));const [started,setStarted]=useState(false);const [impact,setImpact]=useState<"player"|"rival"|null>(null);
+ const [shareCardCopied, setShareCardCopied] = useState(false);
  const read=readRivalHabit(state.history); const last=state.history.at(-1);
  const impactTimer=useRef<number|undefined>(undefined);
  useEffect(()=>()=>window.clearTimeout(impactTimer.current),[]);
+
+ const handleShareCard = async () => {
+   MobileHapticsPro.medium();
+   const canvas = createShareCardCanvas({
+     title: "The Rival's Mind",
+     subtitle: "Psychological Boss Duel",
+     score: state.phase === "won" ? "VICTORY" : state.phase === "lost" ? "DEFEATED" : "DRAW",
+     slug: "rivals-mind",
+     customStats: [
+       { label: "Rounds", value: `${state.round}/5` },
+       { label: "Your HP", value: `${state.playerHealth}` },
+       { label: "Rival HP", value: `${state.rivalHealth}` },
+       { label: "Rival Read", value: t.reads[read.read as DuelRead] },
+     ],
+   });
+   const ok = await copyShareCardToClipboard(canvas);
+   if (ok) {
+     setShareCardCopied(true);
+     setTimeout(() => setShareCardCopied(false), 2000);
+   } else {
+     downloadShareCard(canvas, `rivals-mind-${state.phase}.png`);
+   }
+ };
+
  const play=(action:DuelAction)=>{
    if(!started||state.phase!=="playing"||impactTimer.current!==undefined)return;
    if(action==="strike") playDuelAudio("strike");
@@ -163,16 +194,66 @@ export default function RivalsMind({locale="ko"}:{locale?:string}){const{ref:sta
  const reset=()=>{window.clearTimeout(impactTimer.current);impactTimer.current=undefined;setImpact(null);setState(createRivalsMind((state.seed+state.round+1)%1_000_003));setStarted(true);recordAchievementEvent("rivals-mind","played");};
  const result=state.phase==="won"?t.won:state.phase==="lost"?t.lost:t.draw;
  return <GameContainer title={t.title} subtitle={t.sub}><div className="space-y-4">{!started&&<img src="/games/rivals-mind-keyart.webp" alt="" width={1730} height={909} decoding="async" className="aspect-[1.9/1] w-full rounded-2xl object-cover"/>}
-  <div ref={stageRef} className="relative overflow-hidden rounded-2xl border bg-[linear-gradient(180deg,#eee8d5,#c9c2a3)] p-5">
-   <div className="mb-5 flex justify-between text-xs font-bold uppercase tracking-widest"><span>{t.you} · {"♥".repeat(state.playerHealth)}</span><span>{t.round} {state.round}/5</span><span>{"♥".repeat(state.rivalHealth)} · {t.rival}</span></div>
-   <div className="relative grid h-44 grid-cols-2 sm:h-64 items-end border-b-4 border-[#68704d]">
+  <div ref={stageRef} className="relative overflow-hidden rounded-2xl border border-border bg-muted/40 p-5">
+   <div className="mb-5 flex justify-between items-center text-xs font-bold uppercase tracking-widest">
+     <div className="flex items-center gap-1.5">
+       <span className="text-foreground">{t.you}</span>
+       <div className="flex gap-0.5">
+         {Array.from({ length: state.playerHealth }).map((_, i) => (
+           <img key={i} src={getSpriteUrl('heart', 64)} alt="HP" className="size-3.5 object-contain" draggable={false} />
+         ))}
+       </div>
+     </div>
+     <span className="text-muted-foreground">{t.round} {state.round}/5</span>
+     <div className="flex items-center gap-1.5">
+       <div className="flex gap-0.5">
+         {Array.from({ length: state.rivalHealth }).map((_, i) => (
+           <img key={i} src={getSpriteUrl('heart', 64)} alt="Rival HP" className="size-3.5 object-contain" draggable={false} />
+         ))}
+       </div>
+       <span className="text-foreground">{t.rival}</span>
+     </div>
+   </div>
+   <div className="relative grid h-44 grid-cols-2 sm:h-64 items-end border-b-2 border-border">
     <img src={last?RIVALS_MIND_POSES.player[last.player]:"/games/rivals-mind-player.webp"} alt="" width={512} height={512} draggable={false} className={`w-full origin-bottom object-contain drop-shadow-xl transition-transform motion-reduce:transition-none ${impact==="player"?"-translate-x-3 rotate-6":""}`}/>
     <img src={last?RIVALS_MIND_POSES.rival[last.rival]:"/games/rivals-mind-rival.webp"} alt="" width={512} height={512} draggable={false} className={`w-full origin-bottom object-contain drop-shadow-xl transition-transform motion-reduce:transition-none ${impact==="rival"?"translate-x-3 -rotate-6":""}`}/>
    </div>
   </div>
-  {!started?<button onClick={()=>{setStarted(true);recordAchievementEvent("rivals-mind","played");}} className="w-full rounded-xl bg-primary px-5 py-3 font-bold text-primary-foreground">{t.start}</button>:state.phase==="playing"?<div className="grid grid-cols-2 gap-2">{ACTIONS.map(a=><TiltDuelActionButton key={a} onClick={()=>play(a)} label={t.actions[a]} />)}</div>:<><div aria-live="polite" className="rounded-xl bg-muted p-4 text-center font-bold">{result}</div><button onClick={reset} className="w-full rounded-xl bg-primary px-5 py-3 font-bold text-primary-foreground">{t.again}</button></>}
-  <div className="rounded-xl border p-4"><div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.mind}</div><div className="mt-1 text-lg font-bold">{t.reads[read.read as DuelRead]}</div></div>
-  {state.history.length>0&&<ol className="space-y-1 text-sm">{state.history.slice().reverse().map(r=><li key={r.round} className="rounded-lg bg-muted px-3 py-2">#{r.round} {t.actions[r.player]} ↔ {t.actions[r.rival]} · {t.reads[r.read]}</li>)}</ol>}
+  {!started ? (
+    <button onClick={()=>{setStarted(true);recordAchievementEvent("rivals-mind","played");}} className="w-full rounded-xl bg-primary px-5 py-3 font-bold text-primary-foreground shadow-md transition-opacity hover:opacity-90">{t.start}</button>
+  ) : state.phase==="playing" ? (
+    <div className="grid grid-cols-2 gap-2">{ACTIONS.map(a=><TiltDuelActionButton key={a} onClick={()=>play(a)} label={t.actions[a]} />)}</div>
+  ) : (
+    <>
+      <div aria-live="polite" className="rounded-xl bg-card border border-border p-4 text-center font-bold shadow-md flex flex-col items-center">
+        <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/20 p-2 mb-2">
+          <img
+            src={getSpriteUrl(state.phase === "won" ? 'trophy' : 'star', 64)}
+            alt="Duel Outcome"
+            className="size-10 object-contain"
+            draggable={false}
+          />
+        </div>
+        <p className="text-base text-foreground">{result}</p>
+        <p className="text-xs text-muted-foreground mt-1">{t.round} {state.round}/5 완결</p>
+      </div>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={handleShareCard}
+          className="flex-1 py-3 px-4 rounded-xl border border-primary/40 bg-primary/10 hover:bg-primary/20 font-bold text-xs text-primary transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+        >
+          {shareCardCopied ? <Check className="w-4 h-4 text-primary" /> : <Share2 className="w-4 h-4" />}
+          <span>{shareCardCopied ? "결과 복사 완료!" : "결과 카드 공유"}</span>
+        </button>
+        <button onClick={reset} className="flex-1 rounded-xl bg-primary px-5 py-3 font-bold text-xs text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors">
+          {t.again}
+        </button>
+      </div>
+    </>
+  )}
+  <div className="rounded-xl border border-border bg-card p-4"><div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.mind}</div><div className="mt-1 text-lg font-bold text-foreground">{t.reads[read.read as DuelRead]}</div></div>
+  {state.history.length>0&&<ol className="space-y-1 text-sm">{state.history.slice().reverse().map(r=><li key={r.round} className="rounded-lg bg-muted px-3 py-2 text-foreground">#{r.round} {t.actions[r.player]} ↔ {t.actions[r.rival]} · {t.reads[r.read]}</li>)}</ol>}
   <p className="text-sm text-muted-foreground">{t.explain}</p>
  </div></GameContainer>;
 }
