@@ -13,6 +13,48 @@ import {
     copyShareCardToClipboard,
     downloadShareCard,
 } from '../../lib/games/share-card';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { getSpriteUrl } from '../../lib/games/sprites';
+
+function TiltPlinkoButton({
+    children,
+    onClick,
+    className = '',
+    disabled = false,
+    title,
+    ariaLabel,
+    type = 'button',
+}: {
+    children: React.ReactNode;
+    onClick?: () => void;
+    className?: string;
+    disabled?: boolean;
+    title?: string;
+    ariaLabel?: string;
+    type?: 'button' | 'submit';
+}) {
+    const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+    return (
+        <button
+            type={type}
+            title={title}
+            aria-label={ariaLabel || title}
+            onClick={() => {
+                triggerPop(0.12);
+                MobileHapticsPro.light();
+                onClick?.();
+            }}
+            disabled={disabled}
+            onPointerMove={onPointerMove}
+            onPointerLeave={onPointerLeave}
+            className={`touch-manipulation select-none transition-all duration-150 transform-(--card-tilt) will-change-transform ${className}`}
+            style={{ '--card-tilt': transformCss } as React.CSSProperties}
+        >
+            {children}
+        </button>
+    );
+}
 import {
     DEFAULT_ROWS,
     MIN_BET,
@@ -206,8 +248,13 @@ const Plinko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 const saved = recordBest(RECORD_KEY, score, 'score');
                 setBest(saved.value);
                 playToneRef.current(multiplier >= 2 ? 880 : 520, 0.15, 'sine');
-                if (multiplier >= 5 && containerRef.current) {
-                    celebrate(containerRef.current, { preset: "coins" });
+                if (multiplier >= 5) {
+                    MobileHapticsPro.success();
+                    if (containerRef.current) {
+                        celebrate(containerRef.current, { preset: "coins" });
+                    }
+                } else {
+                    MobileHapticsPro.medium();
                 }
                 setTimeout(() => {
                     if (ballRef.current === ball) {
@@ -352,8 +399,16 @@ const Plinko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             >
                 <div className="flex flex-col items-center gap-4">
                     <div className="flex w-full max-w-md items-center justify-between text-xs font-bold text-muted-foreground">
-                        <span>{t.balance}: <span className="text-primary text-base font-black">{balance}</span></span>
-                        {best !== null && <span>{t.best}: <span className="text-chart-2 font-black">{best}</span></span>}
+                        <span className="flex items-center gap-1.5">
+                            <img src={getSpriteUrl('coin', 64)} alt="Balance" width={64} height={64} className="size-4 object-contain inline-block drop-shadow-xs" />
+                            {t.balance}: <span className="text-primary text-base font-black">{balance}</span>
+                        </span>
+                        {best !== null && (
+                            <span className="flex items-center gap-1.5">
+                                <img src={getSpriteUrl('trophy', 64)} alt="Best" width={64} height={64} className="size-4 object-contain inline-block drop-shadow-xs" />
+                                {t.best}: <span className="text-chart-2 font-black">{best}</span>
+                            </span>
+                        )}
                     </div>
 
                     <div className="relative w-full max-w-md rounded-2xl border border-border bg-muted/20 overflow-hidden">
@@ -383,29 +438,29 @@ const Plinko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
                     <div className="flex w-full max-w-md items-center gap-3">
                         <span className="text-xs font-bold text-muted-foreground">{t.bet}</span>
-                        <button
+                        <TiltPlinkoButton
                             onClick={() => adjustBet(-BET_STEP)}
                             disabled={isDropping || bet <= MIN_BET}
                             className="px-3 py-1.5 rounded-lg border border-border bg-muted hover:bg-accent disabled:opacity-40 font-black text-sm"
                         >
                             −
-                        </button>
+                        </TiltPlinkoButton>
                         <span className="min-w-12 text-center font-black text-sm">{bet}</span>
-                        <button
+                        <TiltPlinkoButton
                             onClick={() => adjustBet(BET_STEP)}
                             disabled={isDropping || bet >= MAX_BET}
                             className="px-3 py-1.5 rounded-lg border border-border bg-muted hover:bg-accent disabled:opacity-40 font-black text-sm"
                         >
                             +
-                        </button>
+                        </TiltPlinkoButton>
 
-                        <button
+                        <TiltPlinkoButton
                             onClick={drop}
                             disabled={!canDrop}
-                            className="flex-1 py-3 bg-primary text-primary-foreground rounded-2xl font-black text-sm shadow-lg hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
+                            className="flex-1 py-3 bg-primary text-primary-foreground rounded-2xl font-black text-sm shadow-lg disabled:opacity-50"
                         >
                             {isDropping ? t.dropping : t.drop}
-                        </button>
+                        </TiltPlinkoButton>
                     </div>
 
                     {bet > balance && <p className="text-xs font-bold text-destructive">{t.notEnough}</p>}
@@ -421,17 +476,27 @@ const Plinko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                                 className="flex flex-col items-center gap-2 text-center"
                             >
                                 <div>
+                                    {lastResult.multiplier >= 5 && (
+                                        <div className="flex justify-center mb-1">
+                                            <img
+                                                src={getSpriteUrl('trophy', 64)}
+                                                alt="Mega Payout Trophy"
+                                                width={64}
+                                                height={64}
+                                                className="size-10 object-contain animate-bounce drop-shadow-sm"
+                                            />
+                                        </div>
+                                    )}
                                     <p className="text-xs font-black text-muted-foreground uppercase">{t.won}</p>
                                     <p className="text-2xl font-black text-primary">{lastResult.multiplier}× · +{lastResult.score}</p>
                                 </div>
-                                <button
-                                    type="button"
+                                <TiltPlinkoButton
                                     onClick={handleShareCard}
-                                    className="flex min-h-11 items-center gap-1.5 rounded-full border border-border bg-card px-4 py-2 text-xs font-bold text-foreground shadow-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                                    className="flex min-h-11 items-center gap-1.5 rounded-full border border-border bg-card px-4 py-2 text-xs font-bold text-foreground shadow-sm hover:bg-muted"
                                 >
                                     <Share2 className="h-3.5 w-3.5 text-primary" />
                                     <span>{shareCardCopied ? t.shareCopied : t.shareCard}</span>
-                                </button>
+                                </TiltPlinkoButton>
                             </motion.div>
                         )}
                     </AnimatePresence>

@@ -19,7 +19,59 @@ import {
   Radio,
   Volume2,
   VolumeX,
+  Maximize2,
+  Minimize2,
+  Share2,
+  Check,
 } from 'lucide-react';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { getSpriteUrl } from '../../lib/games/sprites';
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from '../../lib/games/share-card';
+
+function TiltPlagueButton({
+  children,
+  onClick,
+  className = '',
+  disabled = false,
+  title,
+  ariaLabel,
+  type = 'button',
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+  type?: 'button' | 'submit';
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type={type}
+      title={title}
+      aria-label={ariaLabel || title}
+      onClick={() => {
+        triggerPop(0.12);
+        MobileHapticsPro.light();
+        onClick?.();
+      }}
+      disabled={disabled}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`touch-manipulation select-none transition-all duration-150 transform-(--card-tilt) will-change-transform ${className}`}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 
 interface Particle {
   x: number;
@@ -62,6 +114,31 @@ export const PlagueMini: React.FC = () => {
   const [latestNews, setLatestNews] = useState<string>('Patient Zero infected in East Asia.');
   const [gameOver, setGameOver] = useState(false);
   const [victory, setVictory] = useState(false);
+  const [shareCardCopied, setShareCardCopied] = useState(false);
+
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal();
+
+  const handleShareCard = useCallback(async () => {
+    const canvas = createShareCardCanvas({
+      title: "Plague Mini",
+      subtitle: victory ? "전 지구적 대변혁 — 박멸 성공" : "백신 개발로 진압됨",
+      score: victory ? "WORLD EXTINCTION" : `CURE ${cureProgress}%`,
+      slug: "plague-mini",
+      customStats: [
+        { label: "DAYS", value: `${day} Days` },
+        { label: "DEAD", value: totalDead.toLocaleString() },
+        { label: "INFECTED", value: totalInfected.toLocaleString() },
+        { label: "MUTATIONS", value: `${unlockedTraits.length} Evolved` },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `plague-mini-day${day}.png`);
+    }
+  }, [victory, cureProgress, day, totalDead, totalInfected, unlockedTraits]);
 
   // Web Audio Context for authentic retro SFX
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -475,7 +552,14 @@ export const PlagueMini: React.FC = () => {
   const traitsInTab = Object.values(TRAITS).filter(t => t.category === activeTab);
 
   return (
-    <div className="flex flex-col items-center w-full max-w-4xl mx-auto p-4 gap-4 select-none">
+    <div
+      ref={containerRef}
+      className={`select-none ${
+        isImmersive
+          ? 'fixed inset-0 z-50 flex flex-col items-center w-screen h-dvh bg-background p-4 gap-4 overflow-y-auto'
+          : 'flex flex-col items-center w-full max-w-4xl mx-auto p-4 gap-4'
+      }`}
+    >
       {/* Top Global Status HUD */}
       <div className="flex flex-wrap items-center justify-between w-full bg-card/80 border border-border p-3 rounded-xl backdrop-blur-md gap-3">
         {/* Day & DNA Points */}
@@ -488,7 +572,7 @@ export const PlagueMini: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-1.5 bg-destructive/15 border border-destructive/30 px-3 py-1.5 rounded-lg">
-            <Dna className="size-4 text-destructive" />
+            <img src={getSpriteUrl('gem', 64)} alt="DNA" width={64} height={64} className="size-4 object-contain drop-shadow-xs" />
             <span className="text-sm font-black text-destructive">{dnaPoints} DNA</span>
           </div>
         </div>
@@ -565,6 +649,16 @@ export const PlagueMini: React.FC = () => {
           <Button
             variant="outline"
             size="icon-sm"
+            onClick={togglePortal}
+            aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+            title={isImmersive ? portalLabels.exit : portalLabels.enter}
+          >
+            {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+          </Button>
+
+          <Button
+            variant="outline"
+            size="icon-sm"
             onClick={handleRestart}
           >
             <RotateCcw className="size-4" />
@@ -629,7 +723,14 @@ export const PlagueMini: React.FC = () => {
 
         {/* Game Over Modal */}
         {gameOver && (
-          <div className="absolute inset-0 bg-background/90 backdrop-blur-md flex flex-col items-center justify-center p-6 gap-4 z-30">
+          <div className="absolute inset-0 bg-background/90 backdrop-blur-md flex flex-col items-center justify-center p-6 gap-4 z-30 animate-in fade-in zoom-in-95">
+            <img
+              src={getSpriteUrl(victory ? 'trophy' : 'star', 64)}
+              alt="Pandemic Outcome"
+              width={64}
+              height={64}
+              className="size-16 object-contain animate-bounce drop-shadow-md"
+            />
             {victory ? (
               <>
                 <h2 className="text-3xl font-black text-destructive tracking-wider">
@@ -647,9 +748,21 @@ export const PlagueMini: React.FC = () => {
                 </p>
               </>
             )}
-            <Button onClick={handleRestart} size="lg">
-              <RotateCcw className="size-4" /> Start New Pandemic
-            </Button>
+            <div className="flex items-center gap-2">
+              <TiltPlagueButton
+                onClick={handleRestart}
+                className="flex items-center gap-1.5 rounded-xl bg-primary px-5 py-2.5 text-xs font-bold text-primary-foreground shadow-md hover:bg-primary/90"
+              >
+                <RotateCcw className="size-4" /> Start New Pandemic
+              </TiltPlagueButton>
+              <TiltPlagueButton
+                onClick={handleShareCard}
+                className="flex items-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2.5 text-xs font-bold text-foreground shadow-xs hover:bg-muted"
+              >
+                {shareCardCopied ? <Check className="size-4 text-primary" /> : <Share2 className="size-4" />}
+                <span>{shareCardCopied ? "복사됨!" : "결과 카드"}</span>
+              </TiltPlagueButton>
+            </div>
           </div>
         )}
       </div>

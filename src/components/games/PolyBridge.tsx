@@ -23,6 +23,7 @@ import {
   downloadShareCard,
 } from '../../lib/games/share-card';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { getSpriteUrl } from '../../lib/games/sprites';
 import { Maximize2, Minimize2, Share2, Check, RotateCcw, Play, Wrench } from 'lucide-react';
 
 function TiltBridgeButton({
@@ -524,8 +525,9 @@ export default function PolyBridge({ lang = 'ko' }: PolyBridgeProps) {
           <span className="rounded-lg bg-secondary px-2.5 py-1 text-secondary-foreground">
             {t.levels[lvl.nameKey]}
           </span>
-          <span className="rounded-lg bg-secondary px-2.5 py-1 text-secondary-foreground">
-            💰 {t.budgetLabel}: ${state.spent} / ${state.budget}
+          <span className="flex items-center gap-1.5 rounded-lg bg-secondary px-2.5 py-1 text-secondary-foreground">
+            <img src={getSpriteUrl('coin', 64)} alt="Budget" width={64} height={64} className="size-3.5 object-contain" />
+            {t.budgetLabel}: ${state.spent} / ${state.budget}
           </span>
           <span className="rounded-lg bg-secondary px-2.5 py-1 text-secondary-foreground">
             📈 {t.stressLabel}: {Math.round(state.maxStressPeak * 100)}%
@@ -536,7 +538,7 @@ export default function PolyBridge({ lang = 'ko' }: PolyBridgeProps) {
             className="p-1.5 rounded-lg border border-border bg-card hover:bg-muted text-foreground"
             ariaLabel="Share Bridge Record"
           >
-            {copied ? <Check className="size-4 text-success" /> : <Share2 className="size-4" />}
+            {copied ? <Check className="size-4 text-primary" /> : <Share2 className="size-4" />}
           </TiltBridgeButton>
 
           <TiltBridgeButton
@@ -635,10 +637,27 @@ export default function PolyBridge({ lang = 'ko' }: PolyBridgeProps) {
         />
 
         {(state.phase === 'victory' || state.phase === 'collapsed') && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/85 p-6 text-center backdrop-blur-xs">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/85 p-6 text-center backdrop-blur-xs animate-in fade-in zoom-in-95">
+            {state.phase === 'victory' ? (
+              <img
+                src={getSpriteUrl('trophy', 64)}
+                alt="Bridge Truss Victory Trophy"
+                width={64}
+                height={64}
+                className="size-14 object-contain animate-bounce drop-shadow-md"
+              />
+            ) : (
+              <img
+                src={getSpriteUrl('star', 64)}
+                alt="Bridge Truss Attempt"
+                width={64}
+                height={64}
+                className="size-12 object-contain drop-shadow-md opacity-80"
+              />
+            )}
             <h3 className="text-xl font-bold">
               {state.phase === 'victory'
-                ? `🏆 ${t.victoryTitle}`
+                ? t.victoryTitle
                 : `💥 ${t.collapseTitle}`}
             </h3>
             <p className="text-xs text-muted-foreground">
@@ -658,7 +677,7 @@ export default function PolyBridge({ lang = 'ko' }: PolyBridgeProps) {
                 onClick={handleShare}
                 className="rounded-xl border border-border bg-card px-4 py-2 text-xs font-semibold hover:bg-accent flex items-center gap-1.5"
               >
-                {copied ? <Check className="size-4 text-success" /> : <Share2 className="size-4" />} Share Record
+                {copied ? <Check className="size-4 text-primary" /> : <Share2 className="size-4" />} Share Record
               </TiltBridgeButton>
               {state.phase === 'victory' && (
                 <TiltBridgeButton

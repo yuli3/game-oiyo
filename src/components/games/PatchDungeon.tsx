@@ -3,8 +3,8 @@
 // swap, that printed word is the old control, and pressing it loses the room.
 // The fuse is play time, so reduced motion does not skip it.
 
-import { useEffect, useRef, useState } from "react";
-import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { Maximize2, Minimize2, Volume2, VolumeX, Share2, Check } from "lucide-react";
 import { GameContainer } from "../ui/game/GamePrimitives";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import type { Locale } from "../../lib/i18n";
@@ -14,7 +14,53 @@ import { dateKeyIndex, kstDateKey } from "../../lib/games/todays-game";
 import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from "../../lib/games/game-audio";
 import { createHaptics } from "../../lib/games/haptics";
 import { celebrate } from "../../lib/games/celebration";
-import { PATCH_DUNGEON_SPRITES } from "../../lib/games/sprites";
+import { PATCH_DUNGEON_SPRITES, getSpriteUrl } from "../../lib/games/sprites";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
+
+function TiltDungeonButton({
+  children,
+  onClick,
+  className = "",
+  disabled = false,
+  title,
+  ariaLabel,
+  type = "button",
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+  type?: "button" | "submit";
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type={type}
+      title={title}
+      aria-label={ariaLabel || title}
+      onClick={() => {
+        triggerPop(0.12);
+        MobileHapticsPro.light();
+        onClick?.();
+      }}
+      disabled={disabled}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`touch-manipulation select-none transition-all duration-150 transform-(--card-tilt) will-change-transform ${className}`}
+      style={{ "--card-tilt": transformCss } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 import {
   GAME_ID,
   ROOMS,
@@ -187,6 +233,7 @@ export default function PatchDungeon({ locale }: { locale: Locale }) {
   const [record, setRecord] = useState<GameRecord | null>(null);
   const [best, setBest] = useState<BestRecord | null>(null);
   const [muted, setMuted] = useState(false);
+  const [shareCardCopied, setShareCardCopied] = useState(false);
   const [remain, setRemain] = useState(Math.ceil(FUSE_MS / 1000));
   const cuesRef = useRef<CuePlayer<CoreCue> | null>(null);
   const hapticsRef = useRef(createHaptics());
@@ -194,6 +241,30 @@ export default function PatchDungeon({ locale }: { locale: Locale }) {
   const phase = useRef<Run["phase"] | null>(null);
   const runRef = useRef<Run | null>(null);
   runRef.current = run;
+
+  const handleShareCard = useCallback(async () => {
+    if (!run || !dateKey) return;
+    const isWon = run.phase === "won";
+    const cleared = isWon ? ROOMS : run.index;
+    const canvas = createShareCardCanvas({
+      title: "Patch Dungeon",
+      subtitle: isWon ? "패치노트 던전 완파 — 무오류 돌파" : "던전 탐험 종료",
+      score: `${cleared}/${ROOMS} Rooms`,
+      slug: "patch-dungeon",
+      customStats: [
+        { label: "Date", value: dateKey },
+        { label: "Cleared", value: `${cleared} Rooms` },
+        { label: "Record", value: `${record?.w ?? 0}W - ${record?.l ?? 0}L` },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `patch-dungeon-${dateKey}.png`);
+    }
+  }, [run, dateKey, record]);
 
   const cue = (kind: CoreCue) => {
     if (muted || reducedMotion) return;
@@ -321,20 +392,18 @@ export default function PatchDungeon({ locale }: { locale: Locale }) {
             {run.phase !== "ready" ? <p className="text-sm text-foreground" aria-live="polite">{GLYPH[room.need]} {t.scene[room.need]} {patchLine}</p> : null}
             <div className="grid grid-cols-3 gap-2">
               {VERBS.map((verb, index) => (
-                <button
+                <TiltDungeonButton
                   key={verb}
-                  type="button"
                   disabled={run.phase !== "play"}
                   onClick={() => onPress(index)}
                   className="min-h-16 rounded-xl border border-border bg-card text-sm font-bold text-foreground motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60"
                 >
                   {t.verb[verb]}
-                </button>
+                </TiltDungeonButton>
               ))}
             </div>
             {run.phase === "ready" ? (
-              <button
-                type="button"
+              <TiltDungeonButton
                 onClick={() => {
                   cue("tap");
                   hapticsRef.current.fire("tap");
@@ -343,10 +412,34 @@ export default function PatchDungeon({ locale }: { locale: Locale }) {
                 className={`${CONTROL} border-primary bg-primary text-primary-foreground`}
               >
                 {t.start}
-              </button>
+              </TiltDungeonButton>
             ) : null}
             {run.phase === "won" || run.phase === "lost" ? (
-              <button type="button" onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</button>
+              <div className="space-y-3 rounded-2xl border border-border bg-card/60 p-4">
+                {run.phase === "won" && (
+                  <div className="flex justify-center mb-2">
+                    <img
+                      src={getSpriteUrl("trophy", 64)}
+                      alt="Dungeon Conqueror Trophy"
+                      width={64}
+                      height={64}
+                      className="size-14 object-contain animate-bounce drop-shadow-md"
+                    />
+                  </div>
+                )}
+                <div className="flex flex-wrap items-center gap-2">
+                  <TiltDungeonButton onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>
+                    {t.again}
+                  </TiltDungeonButton>
+                  <TiltDungeonButton
+                    onClick={handleShareCard}
+                    className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-primary/40 bg-primary/20 px-4 py-2 text-xs font-bold text-primary transition-colors hover:bg-primary/30"
+                  >
+                    {shareCardCopied ? <Check className="size-4" /> : <Share2 className="size-4" />}
+                    <span>{shareCardCopied ? "복사 완료!" : "공유 카드"}</span>
+                  </TiltDungeonButton>
+                </div>
+              </div>
             ) : null}
             <p className="text-sm text-muted-foreground">{t.record(record?.w ?? 0, record?.l ?? 0)}{best?.unit === "score" ? ` · ${t.best(best.value)}` : ""}</p>
           </div>

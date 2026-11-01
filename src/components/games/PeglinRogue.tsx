@@ -19,6 +19,7 @@ import {
   downloadShareCard,
 } from "@/lib/games/share-card";
 import { useCardTiltPro, MobileHapticsPro } from "@/lib/games/engine-suite-unified";
+import { getSpriteUrl } from "@/lib/games/sprites";
 import { Maximize2, Minimize2, Share2, Check, RotateCcw, Target } from "lucide-react";
 
 function TiltPeglinButton({
@@ -397,7 +398,13 @@ export default function PeglinRogue({ locale = "ko" }: PeglinRogueProps) {
         {/* Victory Modal */}
         {game.status === "won" && (
           <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-background/85 p-6 text-center backdrop-blur-sm">
-            <span className="mb-2 text-4xl">🏆</span>
+            <img
+              src={getSpriteUrl("trophy", 64)}
+              alt="Victory Trophy"
+              width={64}
+              height={64}
+              className="size-14 object-contain animate-bounce drop-shadow-md mb-2"
+            />
             <h3 className="mb-1 text-2xl font-black tracking-tight text-primary">
               {locale === "ko" ? "몬스터 격퇴 완료!" : "Monster Defeated!"}
             </h3>
@@ -417,7 +424,7 @@ export default function PeglinRogue({ locale = "ko" }: PeglinRogueProps) {
                 onClick={handleShare}
                 className="px-4 py-2 rounded-xl border border-border bg-card text-xs font-semibold hover:bg-muted flex items-center gap-1.5"
               >
-                {copied ? <Check className="size-4 text-success" /> : <Share2 className="size-4" />} {locale === "ko" ? "기록 공유" : "Share"}
+                {copied ? <Check className="size-4 text-primary" /> : <Share2 className="size-4" />} {locale === "ko" ? "기록 공유" : "Share"}
               </TiltPeglinButton>
               <TiltPeglinButton
                 onClick={handleNextStage}
@@ -432,7 +439,13 @@ export default function PeglinRogue({ locale = "ko" }: PeglinRogueProps) {
         {/* Game Over Modal */}
         {game.status === "gameover" && (
           <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-background/85 p-6 text-center backdrop-blur-sm">
-            <span className="mb-2 text-4xl">💀</span>
+            <img
+              src={getSpriteUrl("star", 64)}
+              alt="Stage Record"
+              width={64}
+              height={64}
+              className="size-12 object-contain drop-shadow-md mb-2 opacity-80"
+            />
             <h3 className="mb-1 text-2xl font-black tracking-tight text-destructive">
               {locale === "ko" ? "용사가 쓰러졌습니다!" : "Hero Defeated!"}
             </h3>
@@ -452,7 +465,7 @@ export default function PeglinRogue({ locale = "ko" }: PeglinRogueProps) {
                 onClick={handleShare}
                 className="px-4 py-2.5 rounded-xl border border-border bg-card text-xs font-semibold hover:bg-muted flex items-center gap-1.5"
               >
-                {copied ? <Check className="size-4 text-success" /> : <Share2 className="size-4" />} {locale === "ko" ? "기록 공유" : "Share"}
+                {copied ? <Check className="size-4 text-primary" /> : <Share2 className="size-4" />} {locale === "ko" ? "기록 공유" : "Share"}
               </TiltPeglinButton>
             </div>
           </div>
