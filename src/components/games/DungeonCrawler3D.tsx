@@ -3,7 +3,41 @@ import { Canvas } from '@react-three/fiber';
 import { Maximize2, Minimize2, Volume2, VolumeX, Share2, Check } from 'lucide-react';
 import DungeonCrawler3DScene from './DungeonCrawler3DScene';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import { celebrate } from '../../lib/games/celebration';
+
+function TiltDungeonButton({
+  children,
+  onClick,
+  disabled,
+  className,
+  'aria-label': ariaLabel,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+  className?: string;
+  'aria-label'?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      aria-label={ariaLabel}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.2);
+        onClick();
+      }}
+      className={`will-change-transform transform-(--card-tilt) ${className ?? ''}`}
+    >
+      {children}
+    </button>
+  );
+}
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from '../../lib/games/share-card';
 import {
   type DungeonCrawlerState,
@@ -73,14 +107,19 @@ export default function DungeonCrawler3D() {
       }
 
       if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+        MobileHapticsPro.light();
         setGameState((s) => moveDungeonPlayer(s, 0, -1));
       } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
+        MobileHapticsPro.light();
         setGameState((s) => moveDungeonPlayer(s, 0, 1));
       } else if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+        MobileHapticsPro.light();
         setGameState((s) => moveDungeonPlayer(s, -1, 0));
       } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+        MobileHapticsPro.light();
         setGameState((s) => moveDungeonPlayer(s, 1, 0));
       } else if (e.key === 'p' || e.key === 'P' || e.key === '1') {
+        MobileHapticsPro.medium();
         setGameState((s) => useDungeonPotion(s));
       }
     };
@@ -90,6 +129,7 @@ export default function DungeonCrawler3D() {
   }, [togglePortal, toggleMute]);
 
   const handleNextFloor = useCallback(() => {
+    MobileHapticsPro.selection();
     setGameState((s) => {
       const next = createDungeonFloor(s.floor + 1);
       return {
@@ -105,16 +145,19 @@ export default function DungeonCrawler3D() {
   }, []);
 
   const handleRestart = useCallback(() => {
+    MobileHapticsPro.selection();
     setGameState(createDungeonFloor(1));
   }, []);
 
   const [shareCardCopied, setShareCardCopied] = useState(false);
 
   useEffect(() => {
-    if (gameState.floorCleared && containerRef.current) {
-      celebrate(containerRef.current, { preset: "coins" });
-    } else if (gameState.gameOver && containerRef.current) {
-      celebrate(containerRef.current, { preset: "shards" });
+    if (gameState.floorCleared) {
+      MobileHapticsPro.success();
+      if (containerRef.current) celebrate(containerRef.current, { preset: "coins" });
+    } else if (gameState.gameOver) {
+      MobileHapticsPro.heavy();
+      if (containerRef.current) celebrate(containerRef.current, { preset: "shards" });
     }
   }, [gameState.floorCleared, gameState.gameOver, containerRef]);
 
@@ -245,43 +288,47 @@ export default function DungeonCrawler3D() {
 
       {/* Mobile D-Pad (Minimum 48px touch targets) */}
       <div className="absolute bottom-4 left-4 pointer-events-auto flex flex-col items-center gap-1.5 touch-none">
-        <button
-          type="button"
-          data-game-control
-          onPointerDown={(e) => { e.preventDefault(); setGameState((s) => moveDungeonPlayer(s, 0, -1)); }}
-          className="w-14 h-14 rounded-2xl bg-background/90 backdrop-blur-md border border-border flex items-center justify-center text-lg font-bold text-foreground shadow-lg active:scale-95 transition-transform"
+        <TiltDungeonButton
+          onClick={() => {
+            MobileHapticsPro.light();
+            setGameState((s) => moveDungeonPlayer(s, 0, -1));
+          }}
+          className="w-14 h-14 rounded-2xl bg-background/90 backdrop-blur-md border border-border flex items-center justify-center text-lg font-bold text-foreground shadow-lg"
           aria-label="북쪽 이동"
         >
           ▲
-        </button>
+        </TiltDungeonButton>
         <div className="flex gap-2">
-          <button
-            type="button"
-            data-game-control
-            onPointerDown={(e) => { e.preventDefault(); setGameState((s) => moveDungeonPlayer(s, -1, 0)); }}
-            className="w-14 h-14 rounded-2xl bg-background/90 backdrop-blur-md border border-border flex items-center justify-center text-lg font-bold text-foreground shadow-lg active:scale-95 transition-transform"
+          <TiltDungeonButton
+            onClick={() => {
+              MobileHapticsPro.light();
+              setGameState((s) => moveDungeonPlayer(s, -1, 0));
+            }}
+            className="w-14 h-14 rounded-2xl bg-background/90 backdrop-blur-md border border-border flex items-center justify-center text-lg font-bold text-foreground shadow-lg"
             aria-label="서쪽 이동"
           >
             ◀
-          </button>
-          <button
-            type="button"
-            data-game-control
-            onPointerDown={(e) => { e.preventDefault(); setGameState((s) => moveDungeonPlayer(s, 0, 1)); }}
-            className="w-14 h-14 rounded-2xl bg-background/90 backdrop-blur-md border border-border flex items-center justify-center text-lg font-bold text-foreground shadow-lg active:scale-95 transition-transform"
+          </TiltDungeonButton>
+          <TiltDungeonButton
+            onClick={() => {
+              MobileHapticsPro.light();
+              setGameState((s) => moveDungeonPlayer(s, 0, 1));
+            }}
+            className="w-14 h-14 rounded-2xl bg-background/90 backdrop-blur-md border border-border flex items-center justify-center text-lg font-bold text-foreground shadow-lg"
             aria-label="남쪽 이동"
           >
             ▼
-          </button>
-          <button
-            type="button"
-            data-game-control
-            onPointerDown={(e) => { e.preventDefault(); setGameState((s) => moveDungeonPlayer(s, 1, 0)); }}
-            className="w-14 h-14 rounded-2xl bg-background/90 backdrop-blur-md border border-border flex items-center justify-center text-lg font-bold text-foreground shadow-lg active:scale-95 transition-transform"
+          </TiltDungeonButton>
+          <TiltDungeonButton
+            onClick={() => {
+              MobileHapticsPro.light();
+              setGameState((s) => moveDungeonPlayer(s, 1, 0));
+            }}
+            className="w-14 h-14 rounded-2xl bg-background/90 backdrop-blur-md border border-border flex items-center justify-center text-lg font-bold text-foreground shadow-lg"
             aria-label="동쪽 이동"
           >
             ▶
-          </button>
+          </TiltDungeonButton>
         </div>
       </div>
 
@@ -308,22 +355,20 @@ export default function DungeonCrawler3D() {
             </div>
 
             <div className="flex flex-col gap-2">
-              <button
-                type="button"
+              <TiltDungeonButton
                 onClick={handleNextFloor}
                 className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-md hover:bg-primary/90 transition-colors"
               >
                 지하 {gameState.floor + 1}층으로 내려가기 (NEXT FLOOR)
-              </button>
-              <button
-                type="button"
+              </TiltDungeonButton>
+              <TiltDungeonButton
                 onClick={handleShareCard}
                 className="w-full py-2.5 rounded-xl border border-primary/50 bg-primary/20 text-primary font-bold text-xs shadow-xs hover:bg-primary/30 transition-colors flex items-center justify-center gap-1.5"
-                title={shareCardCopied ? "복사됨!" : "결과 카드 공유"}
+                aria-label={shareCardCopied ? "복사됨!" : "결과 카드 공유"}
               >
                 {shareCardCopied ? <Check className="size-3.5" /> : <Share2 className="size-3.5" />}
                 <span>{shareCardCopied ? "복사 완료" : "탐험 결과 카드 공유"}</span>
-              </button>
+              </TiltDungeonButton>
             </div>
           </div>
         </div>
@@ -356,22 +401,20 @@ export default function DungeonCrawler3D() {
             </div>
 
             <div className="flex flex-col gap-2">
-              <button
-                type="button"
+              <TiltDungeonButton
                 onClick={handleRestart}
                 className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-md hover:bg-primary/90 transition-colors"
               >
                 처음부터 다시 도전하기 (RETRY)
-              </button>
-              <button
-                type="button"
+              </TiltDungeonButton>
+              <TiltDungeonButton
                 onClick={handleShareCard}
                 className="w-full py-2.5 rounded-xl border border-primary/50 bg-primary/20 text-primary font-bold text-xs shadow-xs hover:bg-primary/30 transition-colors flex items-center justify-center gap-1.5"
-                title={shareCardCopied ? "복사됨!" : "결과 카드 공유"}
+                aria-label={shareCardCopied ? "복사됨!" : "결과 카드 공유"}
               >
                 {shareCardCopied ? <Check className="size-3.5" /> : <Share2 className="size-3.5" />}
                 <span>{shareCardCopied ? "복사 완료" : "탐험 기록 카드 공유"}</span>
-              </button>
+              </TiltDungeonButton>
             </div>
           </div>
         </div>

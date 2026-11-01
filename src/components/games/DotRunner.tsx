@@ -4,7 +4,38 @@ import { celebrate } from "../../lib/games/celebration";
 import { copyShareCardToClipboard, createShareCardCanvas, downloadShareCard } from "../../lib/games/share-card";
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import { frameScale } from '../../lib/games/time-contracts';
+
+function TiltRunnerButton({
+  children,
+  onClick,
+  disabled,
+  className,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+  className?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.2);
+        onClick();
+      }}
+      className={`will-change-transform transform-(--card-tilt) ${className ?? ''}`}
+    >
+      {children}
+    </button>
+  );
+}
 import { loadReplayEnvelope, saveReplayEnvelope, verifyReplayEnvelope, type ReplayInput } from '../../lib/games/replay';
 import { createDotRunnerReplay, dotRunnerGhostTrack, replayDotRunner, type DotRunnerReplayAction } from '../../lib/games/dot-runner-replay';
 import { getBest, recordAchievementEvent, recordBest } from '../../lib/games/records';
@@ -208,6 +239,7 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             game.current = next;
             if (next !== current) {
                 replayInputsRef.current.push({ tick: Math.floor(current.elapsedFrames), input: { type: 'jump' } });
+                MobileHapticsPro.light();
                 playTone('jump');
             }
         }
@@ -254,12 +286,21 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     setScore((previous) => previous === next.score ? previous : next.score);
                     const nextPace = getDotRunnerPace(next.elapsedFrames).level;
                     setPaceLevel((previous) => previous === nextPace ? previous : nextPace);
-                    if (next.coins !== previousCoins) { setCoins(next.coins); playTone('coin'); }
+                    if (next.coins !== previousCoins) {
+                        setCoins(next.coins);
+                        MobileHapticsPro.selection();
+                        playTone('coin');
+                    }
                     if (next.status === 'over') {
                         clearDotRunnerSave();
                         statusRef.current = 'over';
                         setStatus('over');
                         const beat = next.score > bestRef.current;
+                        if (beat && next.score > 0) {
+                            MobileHapticsPro.success();
+                        } else {
+                            MobileHapticsPro.heavy();
+                        }
                         if (beat && next.score > 0 && seedRef.current !== null) {
                             try {
                                 const replay = createDotRunnerReplay(seedRef.current, next, replayInputsRef.current);
@@ -507,7 +548,7 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         <div className="absolute inset-0 bg-background/70 backdrop-blur-sm flex flex-col items-center justify-center gap-3" role="status" aria-live="polite">
                             {status === 'over' && (
                                 <>
-                                    {isNewBest && <p className="text-sm font-black text-amber-500">{t.newBest}</p>}
+                                    {isNewBest && <p className="text-sm font-black text-warning">{t.newBest}</p>}
                                     <p className="text-2xl font-black text-destructive">{t.over}</p>
                                     <p className="text-lg font-bold text-foreground">{t.score}: {score}</p>
                                     <div className="grid w-full max-w-xs grid-cols-2 gap-2 text-xs text-foreground">
@@ -519,11 +560,11 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                                 </>
                             )}
                             {status === 'paused' ? (
-                                <><p className="text-2xl font-black text-foreground">⏸</p><p className="font-bold text-foreground">{t.paused}</p><button type="button" onClick={togglePause} className="min-h-11 rounded-full bg-primary px-8 py-2 font-bold text-primary-foreground">{t.resume}</button></>
+                                <><p className="text-2xl font-black text-foreground">⏸</p><p className="font-bold text-foreground">{t.paused}</p><TiltRunnerButton onClick={togglePause} className="min-h-11 rounded-full bg-primary px-8 py-2 font-bold text-primary-foreground shadow hover:bg-primary/90">{t.resume}</TiltRunnerButton></>
                             ) : status === 'over' ? (
                                 <div className="flex flex-wrap justify-center gap-2">
-                                    <button type="button" onClick={retrySame} disabled={seedRef.current === null} className="min-h-11 rounded-full bg-primary px-6 py-2 font-bold text-primary-foreground disabled:opacity-50">{replayCopy.same}</button>
-                                    <button type="button" onClick={reset} className="min-h-11 rounded-full border bg-muted px-6 py-2 font-bold">{replayCopy.fresh}</button>
+                                    <TiltRunnerButton onClick={retrySame} disabled={seedRef.current === null} className="min-h-11 rounded-full bg-primary px-6 py-2 font-bold text-primary-foreground shadow disabled:opacity-50">{replayCopy.same}</TiltRunnerButton>
+                                    <TiltRunnerButton onClick={reset} className="min-h-11 rounded-full border border-border bg-card px-6 py-2 font-bold text-foreground hover:bg-muted">{replayCopy.fresh}</TiltRunnerButton>
                                     <button
                                         type="button"
                                         onClick={async () => {
@@ -547,7 +588,7 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                                                 setTimeout(() => setShareStatus("idle"), 2000);
                                             }
                                         }}
-                                        className="min-h-11 rounded-full border border-border bg-card px-5 py-2 font-bold inline-flex items-center gap-1.5"
+                                        className="min-h-11 rounded-full border border-border bg-card px-5 py-2 font-bold inline-flex items-center gap-1.5 hover:bg-muted"
                                     >
                                         {shareStatus === "copied" ? (
                                             <>
@@ -563,12 +604,12 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                                     </button>
                                 </div>
                             ) : (
-                                <button
+                                <TiltRunnerButton
                                     onClick={reset}
                                     className="px-8 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity"
                                 >
                                     {t.start}
-                                </button>
+                                </TiltRunnerButton>
                             )}
                         </div>
                     )}

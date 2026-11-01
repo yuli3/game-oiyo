@@ -1,7 +1,41 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Maximize2, Minimize2 } from 'lucide-react';
 import { GameContainer } from '../ui/game/GamePrimitives';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { celebrate } from '../../lib/games/celebration';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import { explainDotPetAction, type DotPetAction } from '../../lib/games/dot-pet';
 import { DOT_PET_SPRITES, dotPetSprite } from '../../lib/games/sprites';
+
+function TiltPetButton({
+  children,
+  onClick,
+  disabled,
+  className,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+  className?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.2);
+        onClick();
+      }}
+      className={`will-change-transform transform-(--card-tilt) ${className ?? ''}`}
+    >
+      {children}
+    </button>
+  );
+}
 
 // ─── Dot Pet — virtual pet, ported from ahoxy-legacy ─────────────────────────
 // Pick a pet, keep it fed/happy/rested; stats decay over time (including while
@@ -124,8 +158,10 @@ const StatBar: React.FC<{ label: string; icon: string; value: number; max?: numb
         <span className="w-24 shrink-0 text-xs font-bold text-muted-foreground">{icon} {label}</span>
         <div className="flex-1 h-3 rounded-full bg-muted overflow-hidden" role="progressbar" aria-valuenow={value} aria-valuemin={0} aria-valuemax={max} aria-label={label}>
             <div
-                className={`h-full rounded-full transition-all ${value / max > 0.5 ? 'bg-success' : value / max > 0.2 ? 'bg-warning' : 'bg-destructive'}`}
-                style={{ width: `${Math.min(100, (value / max) * 100)}%` }}
+                className={`h-full rounded-full transition-all w-(--stat-pct) ${value / max > 0.5 ? 'bg-success' : value / max > 0.2 ? 'bg-warning' : 'bg-destructive'}`}
+                style={{
+                    '--stat-pct': `${Math.min(100, (value / max) * 100)}%`,
+                } as React.CSSProperties}
             />
         </div>
         <span className="w-8 text-right text-xs font-black text-foreground">{value}</span>
@@ -134,6 +170,7 @@ const StatBar: React.FC<{ label: string; icon: string; value: number; max?: numb
 
 const DotPet: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const t = COPY[(locale as keyof typeof COPY)] ?? COPY.en;
+    const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'ko' });
 
     const [pet, setPet] = useState<Pet | null>(null);
     const [loaded, setLoaded] = useState(false);
@@ -174,26 +211,42 @@ const DotPet: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             if (stageIdx < STAGES.length - 1 && next.experience >= threshold) {
                 next = { ...next, stage: STAGES[stageIdx + 1], experience: next.experience - threshold };
                 setGrewUp(true);
+                MobileHapticsPro.success();
+                if (containerRef.current) celebrate(containerRef.current, { preset: "stardust" });
                 if (grewTimer.current) clearTimeout(grewTimer.current);
                 grewTimer.current = setTimeout(() => setGrewUp(false), 2500);
             }
             return next;
         });
-    }, []);
+    }, [containerRef]);
 
-    const feed = () => pet && care('feed', { hunger: Math.min(100, pet.hunger + 20), energy: Math.min(100, pet.energy + 5) }, 5);
-    const play = () => pet && care('play', { happiness: Math.min(100, pet.happiness + 20), hunger: Math.max(0, pet.hunger - 10), energy: Math.max(0, pet.energy - 15) }, 10);
-    const rest = () => pet && care('rest', { energy: Math.min(100, pet.energy + 30), happiness: Math.max(0, pet.happiness - 5) }, 3);
+    const feed = () => {
+        MobileHapticsPro.light();
+        pet && care('feed', { hunger: Math.min(100, pet.hunger + 20), energy: Math.min(100, pet.energy + 5) }, 5);
+    };
+    const play = () => {
+        MobileHapticsPro.medium();
+        pet && care('play', { happiness: Math.min(100, pet.happiness + 20), hunger: Math.max(0, pet.hunger - 10), energy: Math.max(0, pet.energy - 15) }, 10);
+    };
+    const rest = () => {
+        MobileHapticsPro.selection();
+        pet && care('rest', { energy: Math.min(100, pet.energy + 30), happiness: Math.max(0, pet.happiness - 5) }, 3);
+    };
 
     const care = (action: DotPetAction, delta: Partial<Pet>, xp: number) => {
         if (!pet) return;
         const reason = explainDotPetAction(pet, action);
-        if (reason) { setNotice(t[reason]); return; }
+        if (reason) {
+            MobileHapticsPro.warning();
+            setNotice(t[reason]);
+            return;
+        }
         setNotice(null);
         update(delta, xp);
     };
 
     const adopt = (type: PetType) => {
+        MobileHapticsPro.selection();
         setPet({ type, stage: 'baby', happiness: 80, hunger: 80, energy: 80, experience: 0, lastInteraction: Date.now() });
         setConfirmReset(false);
     };
@@ -202,22 +255,38 @@ const DotPet: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
     if (!pet) {
         return (
-            <GameContainer title={t.title} subtitle={t.subtitle}>
-                <h4 className="text-center text-lg font-black text-foreground mb-6">{t.choose}</h4>
-                <div className="grid grid-cols-2 gap-3">
-                    {PET_TYPES.map((type) => (
-                        <button
-                            key={type}
-                            onClick={() => adopt(type)}
-                            className="p-5 rounded-2xl border-2 border-border bg-card hover:border-primary hover:-translate-y-0.5 transition-all text-center space-y-2"
-                        >
-                            <img src={DOT_PET_SPRITES[type].baby} alt="" draggable={false} className="mx-auto h-16 w-16 object-contain" />
-                            <div className="font-black text-foreground">{t.types[type]}</div>
-                            <div className="text-[10px] text-muted-foreground">{t.typeDesc[type]}</div>
-                        </button>
-                    ))}
+            <div
+                ref={containerRef}
+                className={isImmersive ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-y-auto bg-background p-4" : "relative"}
+            >
+                <div className="mb-2 flex justify-end">
+                    <button
+                        type="button"
+                        onClick={togglePortal}
+                        className="flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-bold text-foreground shadow-sm hover:bg-muted"
+                        aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+                    >
+                        {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+                        <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+                    </button>
                 </div>
-            </GameContainer>
+                <GameContainer title={t.title} subtitle={t.subtitle}>
+                    <h4 className="text-center text-lg font-black text-foreground mb-6">{t.choose}</h4>
+                    <div className="grid grid-cols-2 gap-3">
+                        {PET_TYPES.map((type) => (
+                            <TiltPetButton
+                                key={type}
+                                onClick={() => adopt(type)}
+                                className="p-5 rounded-2xl border-2 border-border bg-card hover:border-primary transition-all text-center space-y-2 shadow-sm"
+                            >
+                                <img src={DOT_PET_SPRITES[type].baby} alt="" draggable={false} className="mx-auto h-16 w-16 object-contain" />
+                                <div className="font-black text-foreground">{t.types[type]}</div>
+                                <div className="text-xs text-muted-foreground">{t.typeDesc[type]}</div>
+                            </TiltPetButton>
+                        ))}
+                    </div>
+                </GameContainer>
+            </div>
         );
     }
 
@@ -228,64 +297,80 @@ const DotPet: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const spriteSize = ['h-16 w-16', 'h-20 w-20', 'h-24 w-24', 'h-28 w-28'][stageIdx];
 
     return (
-        <GameContainer title={t.title} subtitle={t.subtitle}>
-            {/* Pet stage area */}
-            <div className="relative min-h-[220px] rounded-2xl border-2 border-primary/30 bg-gradient-to-b from-muted/20 to-muted/60 flex flex-col items-center justify-center mb-6 overflow-hidden">
-                <div className={`${spriteSize} relative animate-bounce motion-reduce:animate-none`} role="img" aria-label={t.types[pet.type]}>
-                    <img src={petSprite} alt="" draggable={false} className="h-full w-full object-contain" />
-                    {mood && <span className="absolute -right-2 -top-1 text-xl">{mood}</span>}
-                </div>
-                <div className="absolute bottom-3 text-[10px] font-black text-muted-foreground bg-background/70 px-3 py-1 rounded-full uppercase tracking-widest">
-                    {t.stages[pet.stage]} · {t.types[pet.type]}
-                </div>
-                {grewUp && (
-                    <div className="absolute top-3 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-success text-success-foreground rounded-full text-xs font-black shadow-lg animate-fade-up motion-reduce:animate-none" role="status">
-                        ✨ {t.grown}
+        <div
+            ref={containerRef}
+            className={isImmersive ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-y-auto bg-background p-4" : "relative"}
+        >
+            <div className="mb-2 flex justify-end">
+                <button
+                    type="button"
+                    onClick={togglePortal}
+                    className="flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-bold text-foreground shadow-sm hover:bg-muted"
+                    aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+                >
+                    {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+                    <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
+                </button>
+            </div>
+            <GameContainer title={t.title} subtitle={t.subtitle}>
+                {/* Pet stage area */}
+                <div className="relative min-h-56 rounded-2xl border-2 border-primary/30 bg-gradient-to-b from-muted/20 to-muted/60 flex flex-col items-center justify-center mb-6 overflow-hidden">
+                    <div className={`${spriteSize} relative animate-bounce motion-reduce:animate-none`} role="img" aria-label={t.types[pet.type]}>
+                        <img src={petSprite} alt="" draggable={false} className="h-full w-full object-contain" />
+                        {mood && <span className="absolute -right-2 -top-1 text-xl">{mood}</span>}
                     </div>
-                )}
-            </div>
+                    <div className="absolute bottom-3 text-xs font-black text-muted-foreground bg-background/70 px-3 py-1 rounded-full uppercase tracking-widest">
+                        {t.stages[pet.stage]} · {t.types[pet.type]}
+                    </div>
+                    {grewUp && (
+                        <div className="absolute top-3 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-success text-success-foreground rounded-full text-xs font-black shadow-lg animate-fade-up motion-reduce:animate-none" role="status">
+                            ✨ {t.grown}
+                        </div>
+                    )}
+                </div>
 
-            {/* Stats */}
-            <div className="space-y-3 mb-6">
-                <StatBar label={t.happiness} icon="💗" value={pet.happiness} />
-                <StatBar label={t.hunger} icon="🍚" value={pet.hunger} />
-                <StatBar label={t.energy} icon="⚡" value={pet.energy} />
-            </div>
+                {/* Stats */}
+                <div className="space-y-3 mb-6">
+                    <StatBar label={t.happiness} icon="💗" value={pet.happiness} />
+                    <StatBar label={t.hunger} icon="🍚" value={pet.hunger} />
+                    <StatBar label={t.energy} icon="⚡" value={pet.energy} />
+                </div>
 
-            {/* Actions */}
-            <div className="grid grid-cols-3 gap-3 mb-6">
-                <button type="button" onClick={feed} className="py-3 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-sm hover:opacity-90 transition-all active:scale-95">
-                    🍚 {t.feed}
-                </button>
-                <button type="button" onClick={play} className="py-3 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-sm hover:opacity-90 transition-all active:scale-95">
-                    🎮 {t.play}
-                </button>
-                <button type="button" onClick={rest} className="py-3 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-sm hover:opacity-90 transition-all active:scale-95">
-                    🛏️ {t.rest}
-                </button>
-            </div>
-            {notice && <p className="mb-4 text-center text-xs font-bold text-amber-700" role="status">{notice}</p>}
+                {/* Actions */}
+                <div className="grid grid-cols-3 gap-3 mb-6">
+                    <TiltPetButton onClick={feed} className="py-3 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-sm hover:opacity-90 transition-all">
+                        🍚 {t.feed}
+                    </TiltPetButton>
+                    <TiltPetButton onClick={play} className="py-3 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-sm hover:opacity-90 transition-all">
+                        🎮 {t.play}
+                    </TiltPetButton>
+                    <TiltPetButton onClick={rest} className="py-3 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-sm hover:opacity-90 transition-all">
+                        🛏️ {t.rest}
+                    </TiltPetButton>
+                </div>
+                {notice && <p className="mb-4 text-center text-xs font-bold text-warning" role="status">{notice}</p>}
 
-            {/* XP */}
-            <StatBar label={t.xp} icon="⭐" value={pet.experience} max={xpMax} />
+                {/* XP */}
+                <StatBar label={t.xp} icon="⭐" value={pet.experience} max={xpMax} />
 
-            {/* Reset */}
-            <div className="mt-6 text-center">
-                {confirmReset ? (
-                    <span className="inline-flex items-center gap-2 text-xs">
-                        <span className="font-bold text-muted-foreground">{t.resetAsk}</span>
-                        <button onClick={() => { setPet(null); savePet(null); setConfirmReset(false); }} className="px-3 py-1.5 rounded-lg bg-destructive text-destructive-foreground font-bold">{t.confirm}</button>
-                        <button onClick={() => setConfirmReset(false)} className="px-3 py-1.5 rounded-lg bg-muted text-muted-foreground font-bold border border-border">✕</button>
-                    </span>
-                ) : (
-                    <button onClick={() => setConfirmReset(true)} className="text-[10px] font-bold text-muted-foreground hover:text-destructive transition-colors underline underline-offset-2">
-                        {t.reset}
-                    </button>
-                )}
-            </div>
+                {/* Reset */}
+                <div className="mt-6 text-center">
+                    {confirmReset ? (
+                        <span className="inline-flex items-center gap-2 text-xs">
+                            <span className="font-bold text-muted-foreground">{t.resetAsk}</span>
+                            <button onClick={() => { setPet(null); savePet(null); setConfirmReset(false); }} className="px-3 py-1.5 rounded-lg bg-destructive text-destructive-foreground font-bold">{t.confirm}</button>
+                            <button onClick={() => setConfirmReset(false)} className="px-3 py-1.5 rounded-lg bg-muted text-muted-foreground font-bold border border-border">✕</button>
+                        </span>
+                    ) : (
+                        <button onClick={() => setConfirmReset(true)} className="text-xs font-bold text-muted-foreground hover:text-destructive transition-colors underline underline-offset-2">
+                            {t.reset}
+                        </button>
+                    )}
+                </div>
 
-            <p className="mt-4 text-center text-[10px] text-muted-foreground">{t.tip}</p>
-        </GameContainer>
+                <p className="mt-4 text-center text-xs text-muted-foreground">{t.tip}</p>
+            </GameContainer>
+        </div>
     );
 };
 

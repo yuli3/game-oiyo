@@ -2,7 +2,38 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Maximize2, Minimize2, Share2, Volume2, VolumeX } from "lucide-react";
 import { GameContainer } from "../ui/game/GamePrimitives";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import { frameScale } from "../../lib/games/time-contracts";
+
+function TiltJumpKingButton({
+  children,
+  onClick,
+  disabled,
+  className,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+  className?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.2);
+        onClick();
+      }}
+      className={`will-change-transform transform-(--card-tilt) ${className ?? ''}`}
+    >
+      {children}
+    </button>
+  );
+}
 import { celebrate } from "../../lib/games/celebration";
 import {
   createShareCardCanvas,
@@ -229,13 +260,17 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
   const down = (clientX: number) => {
     if (phaseRef.current !== "playing") return;
     aim(clientX);
+    MobileHapticsPro.light();
     state.current = chargeJump(state.current, 0.1, state.current.aim);
   };
   const up = () => {
     if (phaseRef.current !== "playing") return;
     const before = state.current;
     state.current = releaseJump(before);
-    if (state.current !== before) tone(520);
+    if (state.current !== before) {
+      MobileHapticsPro.impact();
+      tone(520);
+    }
   };
   useEffect(() => {
     const keyDown = (e: KeyboardEvent) => {
@@ -304,7 +339,10 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
           if (h > best) {
             setBest(h);
             localStorage.setItem(BEST_KEY, String(h));
+            MobileHapticsPro.success();
             if (c) celebrate(c, { preset: "stardust" });
+          } else {
+            MobileHapticsPro.heavy();
           }
         }
       }
@@ -386,12 +424,12 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
             />
             <div className="p-5 text-center">
               <p className="text-sm text-muted-foreground">{t.hint}</p>
-              <button
+              <TiltJumpKingButton
                 onClick={() => start()}
-                className="mt-5 min-h-12 rounded-full bg-primary px-8 font-black text-primary-foreground"
+                className="mt-5 min-h-12 rounded-full bg-primary px-8 font-black text-primary-foreground shadow-md hover:bg-primary/90"
               >
                 {t.start}
-              </button>
+              </TiltJumpKingButton>
             </div>
           </div>
         </GameContainer>
@@ -488,32 +526,31 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
                     <Share2 className="size-4" />
                     <span>{shareCopied ? "복사됨!" : "공유 카드"}</span>
                   </button>
-                  <button
+                  <TiltJumpKingButton
                     onClick={() => start()}
-                    className="min-h-11 rounded-full bg-primary px-6 font-black text-primary-foreground"
+                    className="min-h-11 rounded-full bg-primary px-6 font-black text-primary-foreground shadow hover:bg-primary/90"
                   >
                     {t.again}
-                  </button>
-                  <button
-                    type="button"
+                  </TiltJumpKingButton>
+                  <TiltJumpKingButton
                     onClick={() => start(state.current.seed)}
-                    className="min-h-11 rounded-full border px-5 text-sm font-bold"
+                    className="min-h-11 rounded-full border border-border px-5 text-sm font-bold bg-card text-foreground hover:bg-muted"
                   >
                     {locale === "ko" ? "같은 탑" : locale === "ja" ? "同じ塔" : locale === "zh" ? "同一塔" : locale === "fr" ? "Même tour" : locale === "es" ? "Misma torre" : "Same tower"}
-                  </button>
+                  </TiltJumpKingButton>
                 </div>
               </div>
             )}
           </div>
           <div className="mt-3">
-            <button
+            <TiltJumpKingButton
               onClick={() =>
                 setPhase((p) => (p === "playing" ? "paused" : "playing"))
               }
-              className="w-full min-h-11 rounded-xl border bg-card font-bold hover:bg-muted"
+              className="w-full min-h-11 rounded-xl border border-border bg-card font-bold hover:bg-muted"
             >
               {phase === "paused" ? t.resume : t.pause}
-            </button>
+            </TiltJumpKingButton>
           </div>
           <p className="mt-3 text-center text-xs text-muted-foreground">
             {t.hint}

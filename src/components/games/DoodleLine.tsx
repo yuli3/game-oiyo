@@ -30,7 +30,47 @@ import {
   type LineState,
 } from "../../lib/games/doodle-line";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import DoodleLineScene, { type LineGlide } from "./DoodleLineScene";
+
+function TiltDoodleButton({
+  children,
+  onClick,
+  disabled,
+  className,
+  'aria-label': ariaLabel,
+  'aria-keyshortcuts': ariaKeyShortcuts,
+  'aria-pressed': ariaPressed,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+  className?: string;
+  'aria-label'?: string;
+  'aria-keyshortcuts'?: string;
+  'aria-pressed'?: boolean;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      aria-label={ariaLabel}
+      aria-keyshortcuts={ariaKeyShortcuts}
+      aria-pressed={ariaPressed}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.2);
+        onClick();
+      }}
+      className={`will-change-transform transform-(--card-tilt) ${className ?? ''}`}
+    >
+      {children}
+    </button>
+  );
+}
 
 interface Copy {
   title: string;
@@ -669,7 +709,19 @@ export default function DoodleLine({ locale = "en" }: { locale?: Locale }) {
     const current = stateRef.current;
     if (pausedRef.current || busyRef.current || current.status !== "play") return;
     const next = stepLine(current, act);
-    if (next === current) return;
+    if (next === current) {
+      MobileHapticsPro.warning();
+      return;
+    }
+    if (next.status === "win") {
+      MobileHapticsPro.success();
+    } else if (next.status === "lose") {
+      MobileHapticsPro.warning();
+    } else if (act === "H") {
+      MobileHapticsPro.medium();
+    } else {
+      MobileHapticsPro.light();
+    }
     const kind: Tick = next.status === "win" ? "win" : next.status === "lose" ? "lose" : "draw";
     begin(next, kind);
   }, [begin]);
@@ -761,6 +813,22 @@ export default function DoodleLine({ locale = "en" }: { locale?: Locale }) {
         <p className="text-sm leading-6 text-muted-foreground">{copy.lead}</p>
         <p className="text-xs leading-5 text-muted-foreground">{copy.keys}</p>
       </header>
+      {/* Ink Steps Progress Bar */}
+      <div className="space-y-1">
+        <div className="flex justify-between text-xs font-bold text-muted-foreground">
+          <span>{copy.steps}: <b className="text-foreground">{state.steps}</b>/{STEP_CAP}</span>
+          <span>{Math.max(0, STEP_CAP - state.steps)} left</span>
+        </div>
+        <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+          <div
+            className="h-full rounded-full bg-primary transition-all duration-300 w-(--ink-pct)"
+            style={{
+              '--ink-pct': `${Math.min(100, (state.steps / STEP_CAP) * 100)}%`,
+            } as React.CSSProperties}
+          />
+        </div>
+      </div>
+
       <div className="grid grid-cols-2 gap-2 text-center text-sm">
         <div className="rounded-xl bg-muted p-2">
           <b>{copy.steps}</b>
@@ -787,16 +855,14 @@ export default function DoodleLine({ locale = "en" }: { locale?: Locale }) {
       <p role="status" aria-live="polite" className="text-sm text-foreground">{live}</p>
       {(state.status === "win" || state.status === "lose") && (
         <div className="flex gap-2">
-          <button
-            type="button"
+          <TiltDoodleButton
             onClick={handleShareCard}
             className="flex-1 py-3 px-4 rounded-xl border border-border bg-card hover:bg-muted font-bold text-sm text-foreground transition-colors flex items-center justify-center gap-1.5 shadow-sm"
           >
             {shareCardCopied ? <Check className="w-4 h-4 text-primary" /> : <Share2 className="w-4 h-4" />}
             {shareCardCopied ? "결과 복사 완료!" : "결과 카드 공유"}
-          </button>
-          <button
-            type="button"
+          </TiltDoodleButton>
+          <TiltDoodleButton
             className="flex-1 py-3 px-4 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-sm hover:bg-primary/90 transition-colors"
             onClick={() => {
               arm();
@@ -804,7 +870,7 @@ export default function DoodleLine({ locale = "en" }: { locale?: Locale }) {
             }}
           >
             {copy.next}
-          </button>
+          </TiltDoodleButton>
         </div>
       )}
       <div className={isImmersive ? "relative flex min-h-64 w-full flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-card" : "relative overflow-hidden rounded-2xl border border-border bg-card"}>
@@ -821,9 +887,9 @@ export default function DoodleLine({ locale = "en" }: { locale?: Locale }) {
         </div>
         {paused ? (
           <div className="absolute inset-0 flex items-center justify-center bg-background/80">
-            <button type="button" className={controlClass("primary")} onClick={() => setPaused(false)}>
+            <TiltDoodleButton className={controlClass("primary")} onClick={() => setPaused(false)}>
               {copy.resume}
-            </button>
+            </TiltDoodleButton>
           </div>
         ) : null}
       </div>
@@ -838,9 +904,8 @@ export default function DoodleLine({ locale = "en" }: { locale?: Locale }) {
             const tone = locked || noop ? "quiet" : doomed ? "danger" : "live";
             const detail = detailFor(state, act, copy);
             return (
-              <button
+              <TiltDoodleButton
                 key={act}
-                type="button"
                 className={actClass(tone)}
                 aria-keyshortcuts={shortcut(act)}
                 aria-label={`${label(act, copy)}. ${detail}`}
@@ -849,24 +914,52 @@ export default function DoodleLine({ locale = "en" }: { locale?: Locale }) {
               >
                 {label(act, copy)}
                 <span className="block text-xs font-normal">{detail}</span>
-              </button>
+              </TiltDoodleButton>
             );
           })}
         </div>
       </div>
       <div className="flex flex-wrap gap-2">
-        <button type="button" className={paused ? controlClass("primary") : controlClass("quiet")} aria-pressed={paused} onClick={() => setPaused((value) => !value)}>
+        <TiltDoodleButton
+          className={paused ? controlClass("primary") : controlClass("quiet")}
+          aria-pressed={paused}
+          onClick={() => {
+            MobileHapticsPro.selection();
+            setPaused((value) => !value);
+          }}
+        >
           {paused ? copy.resume : copy.pause}
-        </button>
-        <button type="button" className={controlClass("quiet")} onClick={() => setView((value) => (value + 1) % 4)}>
+        </TiltDoodleButton>
+        <TiltDoodleButton
+          className={controlClass("quiet")}
+          onClick={() => {
+            MobileHapticsPro.selection();
+            setView((value) => (value + 1) % 4);
+          }}
+        >
           {copy.view}
-        </button>
-        <button type="button" className={muted ? controlClass("primary") : controlClass("quiet")} aria-pressed={muted} onClick={() => { arm(); setMuted((value) => !value); }}>
+        </TiltDoodleButton>
+        <TiltDoodleButton
+          className={muted ? controlClass("primary") : controlClass("quiet")}
+          aria-pressed={muted}
+          onClick={() => {
+            arm();
+            MobileHapticsPro.selection();
+            setMuted((value) => !value);
+          }}
+        >
           {muted ? copy.sound : copy.mute}
-        </button>
-        <button type="button" className={controlClass("danger")} disabled={state.status !== "play"} onClick={giveUp}>
+        </TiltDoodleButton>
+        <TiltDoodleButton
+          className={controlClass("danger")}
+          disabled={state.status !== "play"}
+          onClick={() => {
+            MobileHapticsPro.warning();
+            giveUp();
+          }}
+        >
           {copy.giveUp}
-        </button>
+        </TiltDoodleButton>
       </div>
       <form
         className="flex flex-wrap items-end gap-2"
