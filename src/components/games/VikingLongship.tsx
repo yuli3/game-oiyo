@@ -37,6 +37,7 @@ export function VikingLongship() {
   const [gameState, setGameState] = useState<VikingLongshipState>(() => initializeVikingLongship());
   const [isCopied, setIsCopied] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const wakeHistoryRef = useRef<Array<{ x: number; y: number; alpha: number; size: number }>>([]);
   const inputRef = useRef({
     rudder: 0 as -1 | 0 | 1,
     trimDelta: 0,
@@ -48,20 +49,79 @@ export function VikingLongship() {
   });
 
   const getAudioContext = useAudioContext();
-  const playTone = useCallback((freq: number, type: OscillatorType = "sine", dur = 0.1) => {
-    const ctx = getAudioContext();
-    if (!ctx) return;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = type;
-    osc.frequency.setValueAtTime(freq, ctx.currentTime);
-    gain.gain.setValueAtTime(0.08, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + dur);
-  }, [getAudioContext]);
+  const playVikingSound = useCallback(
+    (type: "splash" | "sail" | "harpoon" | "rune" | "oars") => {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      if (type === "splash") {
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(140, now);
+        osc.frequency.exponentialRampToValueAtTime(70, now + 0.18);
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+        osc.start(now);
+        osc.stop(now + 0.18);
+      } else if (type === "sail") {
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(320, now);
+        osc.frequency.linearRampToValueAtTime(260, now + 0.2);
+        gain.gain.setValueAtTime(0.06, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+        osc.start(now);
+        osc.stop(now + 0.22);
+      } else if (type === "harpoon") {
+        osc.type = "square";
+        osc.frequency.setValueAtTime(580, now);
+        osc.frequency.exponentialRampToValueAtTime(220, now + 0.12);
+        gain.gain.setValueAtTime(0.07, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+        osc.start(now);
+        osc.stop(now + 0.14);
+      } else if (type === "rune") {
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.setValueAtTime(554.37, now + 0.09);
+        osc.frequency.setValueAtTime(659.25, now + 0.18);
+        gain.gain.setValueAtTime(0.09, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        osc.start(now);
+        osc.stop(now + 0.35);
+      } else if (type === "oars") {
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(180, now);
+        osc.frequency.exponentialRampToValueAtTime(90, now + 0.15);
+        gain.gain.setValueAtTime(0.07, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+        osc.start(now);
+        osc.stop(now + 0.15);
+      }
+    },
+    [getAudioContext]
+  );
+
+  const playTone = useCallback(
+    (freq: number, type: OscillatorType = "sine", dur = 0.1) => {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+      gain.gain.setValueAtTime(0.08, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + dur);
+    },
+    [getAudioContext]
+  );
 
   // Keyboard navigation
   useEffect(() => {
@@ -86,18 +146,20 @@ export function VikingLongship() {
           break;
         case " ":
           inputRef.current.toggleAnchor = true;
-          playTone(220, "sine", 0.15);
+          playVikingSound("splash");
           break;
         case "r":
           inputRef.current.toggleOars = true;
-          playTone(330, "triangle", 0.1);
+          playVikingSound("oars");
           break;
         case "f":
           inputRef.current.fireHarpoon = true;
-          playTone(520, "square", 0.08);
+          playVikingSound("harpoon");
           break;
         case "e":
           inputRef.current.interactIsland = true;
+          playVikingSound("rune");
+          break;
           playTone(440, "sine", 0.12);
           break;
         case "c":
@@ -205,6 +267,29 @@ export function VikingLongship() {
 
     ctx.translate(-cameraX, -cameraY);
 
+    // Update & draw Water Foam Wake Particles
+    if (gameState.speed > 1) {
+      const sternX = gameState.shipX + Math.sin(gameState.headingRad) * 22;
+      const sternY = gameState.shipY - Math.cos(gameState.headingRad) * 22;
+      wakeHistoryRef.current.push({
+        x: sternX + (Math.random() - 0.5) * 8,
+        y: sternY + (Math.random() - 0.5) * 8,
+        alpha: 0.55,
+        size: Math.random() * 5 + 3,
+      });
+    }
+
+    wakeHistoryRef.current = wakeHistoryRef.current
+      .map((p) => ({ ...p, alpha: p.alpha - 0.025, size: p.size + 0.35 }))
+      .filter((p) => p.alpha > 0);
+
+    for (const p of wakeHistoryRef.current) {
+      ctx.fillStyle = `rgba(240, 249, 255, ${p.alpha})`;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
     // Render Islands
     for (const isl of gameState.islands) {
       ctx.beginPath();
@@ -305,54 +390,140 @@ export function VikingLongship() {
       ctx.restore();
     }
 
-    // Render Longship
+    // Render Longship (Viking Drakkar)
     ctx.save();
     ctx.translate(gameState.shipX, gameState.shipY);
     ctx.rotate(gameState.headingRad);
 
-    // Ship Hull (Viking Drakkar)
-    ctx.fillStyle = "#854d0e";
+    // Soft drop shadow on water
+    ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
     ctx.beginPath();
-    ctx.ellipse(0, 0, 9, 24, 0, 0, Math.PI * 2);
+    ctx.ellipse(2, 4, 11, 26, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.lineWidth = 1.5;
+
+    // Ship Hull Outer (Dark Oak Wood)
+    ctx.fillStyle = "#582f0e";
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 10, 26, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.lineWidth = 1.8;
     ctx.strokeStyle = "#ca8a04";
     ctx.stroke();
 
-    // Dragon Prow (Front)
-    ctx.fillStyle = "#eab308";
+    // Inner Wooden Deck (Deck Planks)
+    ctx.fillStyle = "#78350f";
     ctx.beginPath();
-    ctx.moveTo(0, -26);
-    ctx.lineTo(-4, -20);
-    ctx.lineTo(4, -20);
+    ctx.ellipse(0, 0, 7.5, 22, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Deck plank lines
+    ctx.strokeStyle = "rgba(40, 20, 10, 0.4)";
+    ctx.lineWidth = 1;
+    for (let dy = -16; dy <= 16; dy += 6) {
+      ctx.beginPath();
+      ctx.moveTo(-6, dy);
+      ctx.lineTo(6, dy);
+      ctx.stroke();
+    }
+
+    // Viking Round Shields on Gunwales (3 on left, 3 on right)
+    const shieldColors = ["#eab308", "#dc2626", "#2563eb"];
+    for (let i = 0; i < 3; i++) {
+      const sy = -10 + i * 10;
+      const sColor = shieldColors[i];
+
+      // Left Shield
+      ctx.fillStyle = sColor;
+      ctx.beginPath();
+      ctx.arc(-8.5, sy, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Right Shield
+      ctx.fillStyle = sColor;
+      ctx.beginPath();
+      ctx.arc(8.5, sy, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+
+    // Dragon Prow (Front Dragon Head carving)
+    ctx.fillStyle = "#facc15";
+    ctx.beginPath();
+    ctx.moveTo(0, -30);
+    ctx.lineTo(-4, -22);
+    ctx.lineTo(4, -22);
     ctx.closePath();
     ctx.fill();
+    ctx.strokeStyle = "#854d0e";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Dragon Prow Eyes/Horns
+    ctx.fillStyle = "#dc2626";
+    ctx.beginPath();
+    ctx.arc(-2, -26, 1, 0, Math.PI * 2);
+    ctx.arc(2, -26, 1, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Stern Rudder (Steering oar reacting to rudder input)
+    ctx.save();
+    ctx.translate(6, 24);
+    ctx.rotate(inputRef.current.rudder * 0.35);
+    ctx.fillStyle = "#b45309";
+    ctx.fillRect(-1.5, 0, 3, 10);
+    ctx.restore();
 
     // Oars on sides if engaged
     if (gameState.oarsEngaged) {
       ctx.strokeStyle = "#d97706";
-      ctx.lineWidth = 1.5;
-      const oarSwing = Math.sin(gameState.gameTimeSec * 8) * 4;
-      for (let y = -10; y <= 10; y += 8) {
+      ctx.lineWidth = 1.8;
+      const oarSwing = Math.sin(gameState.gameTimeSec * 9) * 5;
+      for (let y = -8; y <= 12; y += 10) {
         ctx.beginPath();
-        ctx.moveTo(-9, y);
-        ctx.lineTo(-20, y + oarSwing);
+        ctx.moveTo(-8, y);
+        ctx.lineTo(-22, y + oarSwing);
         ctx.stroke();
 
         ctx.beginPath();
-        ctx.moveTo(9, y);
-        ctx.lineTo(20, y - oarSwing);
+        ctx.moveTo(8, y);
+        ctx.lineTo(22, y - oarSwing);
         ctx.stroke();
       }
     }
 
-    // Main Mast & Square Sail (Rotated by sailTrimRad)
+    // Main Mast & 3D Billowing Crimson Viking Sail
     ctx.save();
     ctx.rotate(gameState.sailTrimRad);
-    ctx.fillStyle = "#dc2626"; // Crimson Viking striped sail
-    ctx.fillRect(-14, -4, 28, 6);
-    ctx.fillStyle = "#f8fafc";
-    ctx.fillRect(-14, -2, 28, 2);
+
+    // Mast crossbeam
+    ctx.fillStyle = "#451a03";
+    ctx.fillRect(-16, -3, 32, 2.5);
+
+    // Billowing Sail (curved with wind bulge)
+    const billow = Math.min(8, Math.max(2, gameState.speed * 0.6 + 3));
+    ctx.fillStyle = "#dc2626"; // Crimson
+    ctx.beginPath();
+    ctx.moveTo(-16, -2);
+    ctx.quadraticCurveTo(0, -2 - billow, 16, -2);
+    ctx.lineTo(16, 6);
+    ctx.quadraticCurveTo(0, 6 - billow, -16, 6);
+    ctx.closePath();
+    ctx.fill();
+
+    // White stripes on sail
+    ctx.strokeStyle = "#f8fafc";
+    ctx.lineWidth = 3;
+    for (const sx of [-8, 0, 8]) {
+      ctx.beginPath();
+      ctx.moveTo(sx, -2);
+      ctx.quadraticCurveTo(sx, -2 - billow * 0.7, sx, 6);
+      ctx.stroke();
+    }
     ctx.restore();
 
     ctx.restore(); // Longship restore
