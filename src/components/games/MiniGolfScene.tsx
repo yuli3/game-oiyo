@@ -10,6 +10,34 @@ interface Props {
   onAimDelta?: (deltaAngle: number) => void;
 }
 
+/** Generates procedural 2-tone fairway striped grass texture */
+function createGrassStripesTexture(): THREE.CanvasTexture {
+  const canvas = document.createElement("canvas");
+  canvas.width = 256;
+  canvas.height = 256;
+  const ctx = canvas.getContext("2d");
+  if (ctx) {
+    // Base lush fairway green
+    ctx.fillStyle = "#22c55e";
+    ctx.fillRect(0, 0, 256, 256);
+    // Darker mowed stripe
+    ctx.fillStyle = "#16a34a";
+    for (let y = 0; y < 256; y += 64) {
+      ctx.fillRect(0, y, 256, 32);
+    }
+    // Subtle blade noise
+    ctx.fillStyle = "rgba(255, 255, 255, 0.06)";
+    for (let i = 0; i < 1500; i++) {
+      ctx.fillRect(Math.random() * 256, Math.random() * 256, 1.5, 1.5);
+    }
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(2, 6);
+  return texture;
+}
+
 export default function MiniGolfScene({ gameState, onAimDelta }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const stateRef = useRef(gameState);
@@ -43,10 +71,10 @@ export default function MiniGolfScene({ gameState, onAimDelta }: Props) {
     container.appendChild(renderer.domElement);
 
     // 2. Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
     scene.add(ambientLight);
 
-    const sunLight = new THREE.DirectionalLight(0xfffbeb, 1.4);
+    const sunLight = new THREE.DirectionalLight(0xfffbeb, 1.5);
     sunLight.position.set(8, 16, 10);
     sunLight.castShadow = true;
     sunLight.shadow.mapSize.width = 1024;
@@ -58,6 +86,14 @@ export default function MiniGolfScene({ gameState, onAimDelta }: Props) {
     scene.add(courseGroup);
 
     let currentRenderedHole = -1;
+    let flagMesh: THREE.Mesh | null = null;
+    let grassTexture: THREE.CanvasTexture | null = null;
+
+    try {
+      grassTexture = createGrassStripesTexture();
+    } catch {
+      // Fallback
+    }
 
     const buildCourse = (holeIndex: number) => {
       // Clear previous course objects
@@ -72,11 +108,12 @@ export default function MiniGolfScene({ gameState, onAimDelta }: Props) {
       const centerX = (minX + maxX) / 2;
       const centerZ = (minZ + maxZ) / 2;
 
-      // Green Fairway base
+      // Green Fairway base with procedural 2-tone grass texture
       const fairwayGeo = new THREE.BoxGeometry(width, 0.4, length);
       const fairwayMat = new THREE.MeshStandardMaterial({
-        color: 0x22c55e,
-        roughness: 0.8,
+        color: grassTexture ? 0xffffff : 0x22c55e,
+        map: grassTexture,
+        roughness: 0.75,
         metalness: 0.05,
       });
       const fairway = new THREE.Mesh(fairwayGeo, fairwayMat);
@@ -84,11 +121,11 @@ export default function MiniGolfScene({ gameState, onAimDelta }: Props) {
       fairway.receiveShadow = true;
       courseGroup.add(fairway);
 
-      // Wooden Boundaries
+      // Wooden Boundaries with polished finish
       const wallMat = new THREE.MeshStandardMaterial({
         color: 0x92400e,
-        roughness: 0.7,
-        metalness: 0.1,
+        roughness: 0.6,
+        metalness: 0.15,
       });
       const wallThickness = 0.3;
       const wallHeight = 0.5;
@@ -127,15 +164,16 @@ export default function MiniGolfScene({ gameState, onAimDelta }: Props) {
           const waterMat = new THREE.MeshStandardMaterial({
             color: 0x38bdf8,
             transparent: true,
-            opacity: 0.75,
+            opacity: 0.8,
             roughness: 0.1,
+            metalness: 0.2,
           });
           const water = new THREE.Mesh(waterGeo, waterMat);
           water.position.set(tile.x, -0.21, tile.z);
           courseGroup.add(water);
         } else if (tile.type === "wall") {
           const obstGeo = new THREE.BoxGeometry(1.4, 0.6, 1.4);
-          const obstMat = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.6 });
+          const obstMat = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.5, metalness: 0.2 });
           const obst = new THREE.Mesh(obstGeo, obstMat);
           obst.position.set(tile.x, 0.1, tile.z);
           obst.castShadow = true;
@@ -144,21 +182,28 @@ export default function MiniGolfScene({ gameState, onAimDelta }: Props) {
         }
       });
 
-      // Hole Cup
-      const holeCupGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.05, 24);
+      // Hole Cup with Gold Bevel Rim
+      const cupRimGeo = new THREE.RingGeometry(0.32, 0.38, 24);
+      const cupRimMat = new THREE.MeshBasicMaterial({ color: 0xeab308, side: THREE.DoubleSide });
+      const cupRim = new THREE.Mesh(cupRimGeo, cupRimMat);
+      cupRim.rotation.x = -Math.PI / 2;
+      cupRim.position.set(hole.holePos.x, 0.015, hole.holePos.z);
+      courseGroup.add(cupRim);
+
+      const holeCupGeo = new THREE.CylinderGeometry(0.32, 0.32, 0.05, 24);
       const holeCupMat = new THREE.MeshBasicMaterial({ color: 0x020617 });
       const holeCup = new THREE.Mesh(holeCupGeo, holeCupMat);
       holeCup.position.set(hole.holePos.x, 0.01, hole.holePos.z);
       courseGroup.add(holeCup);
 
-      // Flag Pole
+      // Flag Pole (Chrome Steel)
       const poleGeo = new THREE.CylinderGeometry(0.03, 0.03, 2.2, 12);
-      const poleMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.8 });
+      const poleMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.9, roughness: 0.2 });
       const pole = new THREE.Mesh(poleGeo, poleMat);
       pole.position.set(hole.holePos.x, 1.1, hole.holePos.z);
       courseGroup.add(pole);
 
-      // Flag Cloth
+      // Waving Flag Cloth
       const flagGeo = new THREE.BufferGeometry();
       const flagVerts = new Float32Array([
         0, 0, 0,
@@ -169,10 +214,11 @@ export default function MiniGolfScene({ gameState, onAimDelta }: Props) {
       const flagMat = new THREE.MeshStandardMaterial({
         color: 0xef4444,
         side: THREE.DoubleSide,
+        roughness: 0.4,
       });
-      const flag = new THREE.Mesh(flagGeo, flagMat);
-      flag.position.set(hole.holePos.x, 2.1, hole.holePos.z);
-      courseGroup.add(flag);
+      flagMesh = new THREE.Mesh(flagGeo, flagMat);
+      flagMesh.position.set(hole.holePos.x, 2.1, hole.holePos.z);
+      courseGroup.add(flagMesh);
     };
 
     buildCourse(stateRef.current.currentHoleIndex);
@@ -183,7 +229,7 @@ export default function MiniGolfScene({ gameState, onAimDelta }: Props) {
     const ballMat = new THREE.MeshStandardMaterial({
       color: 0xffffff,
       roughness: 0.25,
-      metalness: 0.1,
+      metalness: 0.15,
     });
     const ballMesh = new THREE.Mesh(ballGeo, ballMat);
     ballMesh.castShadow = true;
@@ -257,14 +303,22 @@ export default function MiniGolfScene({ gameState, onAimDelta }: Props) {
 
     // Animation Loop
     let animId: number;
+    const clock = new THREE.Clock();
+
     const animate = () => {
       animId = requestAnimationFrame(animate);
       const cur = stateRef.current;
+      const time = clock.getElapsedTime();
 
       // Rebuild course if hole index changed
       if (cur.currentHoleIndex !== currentRenderedHole) {
         buildCourse(cur.currentHoleIndex);
         currentRenderedHole = cur.currentHoleIndex;
+      }
+
+      // Wind wave animation on flag
+      if (flagMesh) {
+        flagMesh.rotation.y = Math.sin(time * 3.5) * 0.18;
       }
 
       // Update ball position and spin
@@ -312,6 +366,7 @@ export default function MiniGolfScene({ gameState, onAimDelta }: Props) {
       container.removeEventListener("pointerup", onPointerUp);
       container.removeEventListener("pointercancel", onPointerUp);
       renderer.dispose();
+      grassTexture?.dispose();
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
       }

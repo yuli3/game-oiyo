@@ -507,6 +507,13 @@ export const SLICE_MASTER_SPRITES = {
   hazard: "/assets/sprites/slice-master/spiked-mine-128.png",
 } as const;
 
+export const MINI_GOLF_SPRITES = {
+  ball: "/assets/sprites/mini-golf/golf-ball-3d-128.png",
+  putter: "/assets/sprites/mini-golf/golf-putter-3d-128.png",
+  flag: "/assets/sprites/common/star-rating-128.png",
+  trophy: "/assets/sprites/common/trophy-gold-128.png",
+} as const;
+
 export const DOT_PET_SPRITES: Record<string, { baby: string; adult: string }> = {
   normal: {
     baby: "/assets/sprites/dot-pet/normal-baby.png",

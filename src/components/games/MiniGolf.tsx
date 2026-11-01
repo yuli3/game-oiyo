@@ -26,13 +26,9 @@ import {
   VolumeX,
 } from 'lucide-react';
 import { celebrate } from '../../lib/games/celebration';
-import {
-  createShareCardCanvas,
-  copyShareCardToClipboard,
-  downloadShareCard,
-} from '../../lib/games/share-card';
+import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from '../../lib/games/share-card';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
-import { getSpriteUrl } from '../../lib/games/sprites';
+import { getSpriteUrl, MINI_GOLF_SPRITES } from '../../lib/games/sprites';
 
 function TiltGolfButton({
   children,
@@ -248,17 +244,31 @@ export default function MiniGolf({ locale }: Props) {
       if (!ctx) return;
       try {
         const time = ctx.currentTime;
+        // Primary acoustic clubhead thud
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = "triangle";
-        osc.frequency.setValueAtTime(140 + power * 120, time);
-        osc.frequency.exponentialRampToValueAtTime(40, time + 0.12);
-        gain.gain.setValueAtTime(0.35 + power * 0.25, time);
-        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.15);
+        osc.frequency.setValueAtTime(180 + power * 140, time);
+        osc.frequency.exponentialRampToValueAtTime(45, time + 0.1);
+        gain.gain.setValueAtTime(0.4 + power * 0.25, time);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.12);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start(time);
-        osc.stop(time + 0.15);
+        osc.stop(time + 0.13);
+
+        // Crisp metallic ping harmonic (sweet spot hit)
+        const ping = ctx.createOscillator();
+        const pingGain = ctx.createGain();
+        ping.type = "sine";
+        ping.frequency.setValueAtTime(840, time);
+        ping.frequency.exponentialRampToValueAtTime(420, time + 0.05);
+        pingGain.gain.setValueAtTime(0.18 + power * 0.1, time);
+        pingGain.gain.exponentialRampToValueAtTime(0.001, time + 0.06);
+        ping.connect(pingGain);
+        pingGain.connect(ctx.destination);
+        ping.start(time);
+        ping.stop(time + 0.07);
       } catch {
         // Audio optional
       }
@@ -325,9 +335,24 @@ export default function MiniGolf({ locale }: Props) {
     const ctx = getAudioContext();
     if (!ctx) return;
     try {
-      const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
+      const now = ctx.currentTime;
+      // Acoustic cup bottom rattle & drop click
+      const dropOsc = ctx.createOscillator();
+      const dropGain = ctx.createGain();
+      dropOsc.type = "sine";
+      dropOsc.frequency.setValueAtTime(320, now);
+      dropOsc.frequency.exponentialRampToValueAtTime(70, now + 0.08);
+      dropGain.gain.setValueAtTime(0.35, now);
+      dropGain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+      dropOsc.connect(dropGain);
+      dropGain.connect(ctx.destination);
+      dropOsc.start(now);
+      dropOsc.stop(now + 0.1);
+
+      // Cheerful C5-E5-G5-C6 success arpeggio
+      const notes = [523.25, 659.25, 783.99, 1046.5];
       notes.forEach((freq, idx) => {
-        const time = ctx.currentTime + idx * 0.08;
+        const time = now + 0.08 + idx * 0.08;
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = "sine";
@@ -568,7 +593,10 @@ export default function MiniGolf({ locale }: Props) {
         </div>
 
         <div className="bg-card border border-border rounded-xl p-2.5 sm:p-3 flex flex-col items-center justify-center">
-          <span className="text-xs text-muted-foreground">{t.strokes}</span>
+          <span className="text-xs text-muted-foreground flex items-center gap-1">
+            <img src={MINI_GOLF_SPRITES.ball} alt="Ball" className="size-3.5 inline-block" />
+            {t.strokes}
+          </span>
           <span className="text-base sm:text-xl font-black text-primary font-mono">
             {gameState.strokesThisHole}
           </span>
@@ -596,11 +624,11 @@ export default function MiniGolf({ locale }: Props) {
         {gameState.status === "holed" && (
           <div className="absolute inset-0 bg-background/80 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center pointer-events-auto">
             <img
-              src={getSpriteUrl('star', 64)}
-              alt="Hole Star"
-              width={48}
-              height={48}
-              className="size-12 drop-shadow-md select-none pointer-events-none mb-2"
+              src={MINI_GOLF_SPRITES.ball}
+              alt="Hole In Ball"
+              width={56}
+              height={56}
+              className="size-14 drop-shadow-xl select-none pointer-events-none mb-2 animate-bounce"
             />
             <h2 className="text-2xl sm:text-3xl font-black text-foreground mb-1">{t.holedTitle}</h2>
             <p className="text-sm text-muted-foreground mb-4">{t.holedSubtitle}</p>
@@ -633,11 +661,11 @@ export default function MiniGolf({ locale }: Props) {
         {gameState.status === "finished" && (
           <div className="absolute inset-0 bg-background/85 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center pointer-events-auto">
             <img
-              src={getSpriteUrl('trophy', 64)}
+              src={getSpriteUrl('trophy', 128)}
               alt="Course Trophy"
               width={64}
               height={64}
-              className="size-16 drop-shadow-md select-none pointer-events-none mb-3"
+              className="size-16 drop-shadow-2xl select-none pointer-events-none mb-3 animate-pulse"
             />
             <h2 className="text-2xl sm:text-3xl font-black text-foreground mb-1">
               {t.finishedTitle}
@@ -706,7 +734,8 @@ export default function MiniGolf({ locale }: Props) {
 
         {/* Power Slider */}
         <div className="flex-1 w-full max-w-xs flex items-center gap-3">
-          <span className="text-xs font-semibold text-muted-foreground whitespace-nowrap">
+          <span className="text-xs font-semibold text-muted-foreground whitespace-nowrap flex items-center gap-1.5">
+            <img src={MINI_GOLF_SPRITES.putter} alt="Putter" className="size-4 inline-block" />
             {t.power}
           </span>
           <input
