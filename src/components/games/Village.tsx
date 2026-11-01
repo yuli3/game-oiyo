@@ -1,5 +1,11 @@
-import { useEffect, useRef, useState, type ReactElement } from "react";
+import { useEffect, useRef, useState, useCallback, type ReactElement } from "react";
 import { GameContainer } from "../ui/game/GamePrimitives";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { getSpriteUrl } from "../../lib/games/sprites";
+import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "../../lib/games/share-card";
+import { celebrate } from "../../lib/games/celebration";
+import { Maximize2, Minimize2, Camera, Check } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
 import {
   BUILDINGS,
@@ -49,6 +55,25 @@ import { VILLAGE_COPY, type VillageCopy } from "./VillageCopy";
 const fill = (text: string, values: Record<string, string | number>) => text.replace(/\{(\w+)\}/g, (_, key: string) => String(values[key] ?? ""));
 const signed = (n: number) => (n > 0 ? `+${n}` : String(n));
 const newSeed = () => crypto.getRandomValues(new Uint32Array(1))[0];
+
+function TiltVillageButton({
+  children,
+  className = "",
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const { transformCss, onPointerMove, onPointerLeave } = useCardTiltPro();
+  return (
+    <button
+      style={{ "--card-tilt": transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`transform-(--card-tilt) will-change-transform ${className}`}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+}
 
 function readBest(): number {
   try {
@@ -111,6 +136,7 @@ function lineText(t: VillageCopy, line: ReportLine): string {
 }
 
 export default function Village({ locale = "ko" }: { locale?: Locale }) {
+  const { isImmersive, containerRef, togglePortal } = useArcadePortal();
   const t = VILLAGE_COPY[locale] ?? VILLAGE_COPY.en;
   // The first render must match the server's, so the real village (a saved one or a fresh seed) arrives in the effect.
   const [state, setState] = useState<VillageState>(() => createVillage(1));
@@ -121,6 +147,7 @@ export default function Village({ locale = "ko" }: { locale?: Locale }) {
   const [selected, setSelected] = useState<number | null>(null);
   const [codeInput, setCodeInput] = useState("");
   const [notice, setNotice] = useState("");
+  const [isCopied, setIsCopied] = useState(false);
   const noticeTimer = useRef(0);
 
   useEffect(() => {
@@ -167,13 +194,16 @@ export default function Village({ locale = "ko" }: { locale?: Locale }) {
   const costText = (cost: Cost) => (["wood", "stone", "gold"] as const).filter((key) => cost[key]).map((key) => `${res[key]} ${cost[key]}`).join(" · ");
 
   const order = (id: CommandId) => {
+    MobileHapticsPro.medium();
     setPlacing(null);
     if (id === "build" && !state.project) { setPicking(true); return; }
     setState(command(state, id));
   };
   const tapTile = (tile: number) => {
+    MobileHapticsPro.light();
     if (placing) {
       if (!canCommand(state, "build", placing, tile)) return;
+      MobileHapticsPro.medium();
       setState(command(state, "build", placing, tile));
       setPlacing(null);
       setSelected(tile);
@@ -182,10 +212,46 @@ export default function Village({ locale = "ko" }: { locale?: Locale }) {
     setSelected(selected === tile ? null : tile);
   };
   const restart = () => {
+    MobileHapticsPro.click();
     if (!done && state.turn > 0 && !window.confirm(t.againConfirm)) return;
     setPicking(false); setPlacing(null); setSelected(null);
     setState(createVillage(newSeed()));
   };
+
+  const handleShareCard = useCallback(async () => {
+    MobileHapticsPro.click();
+    const score = villageScore(state);
+    const grade = t.grades[villageGrade(score)];
+    const canvas = await createShareCardCanvas({
+      title: "VILLAGE SIMULATION",
+      subtitle: `${fill(t.date, { y: villageYear(state.turn), m: villageMonth(state.turn) })} 마을 정착 결산`,
+      score: `${score}점`,
+      slug: "village",
+      customStats: [
+        { label: "마을 등급", value: grade },
+        { label: "마을 인구", value: `${villagePop(state)} / ${villageHousing(state)}명` },
+        { label: "마을 치안", value: `${villageSafety(state)}점` },
+      ],
+      playerTitle: "VILLAGE MAYOR",
+    });
+
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `village-score-${score}.png`);
+    }
+  }, [state, t.date, t.grades]);
+
+  useEffect(() => {
+    if (done) {
+      MobileHapticsPro.success();
+      if (containerRef.current) {
+        celebrate(containerRef.current, { preset: "stardust" });
+      }
+    }
+  }, [done]);
   const copyCode = async () => {
     const code = villageSaveCode(state);
     try { await navigator.clipboard.writeText(code); say(t.save.copied); }
@@ -214,7 +280,25 @@ export default function Village({ locale = "ko" }: { locale?: Locale }) {
   const projectTile = state.project?.tile ?? -1;
 
   return (
-    <GameContainer title={t.title} subtitle={t.sub} resetLabel={t.again} onReset={restart}>
+    <div
+      ref={containerRef}
+      className={`transition-all ${
+        isImmersive
+          ? "fixed inset-0 z-50 overflow-y-auto bg-background/95 backdrop-blur-md p-6 w-full h-full"
+          : ""
+      }`}
+    >
+      <div className="flex justify-end mb-2">
+        <button
+          type="button"
+          onClick={togglePortal}
+          className="p-1.5 rounded-lg bg-card border border-border text-foreground hover:bg-muted/80 transition-colors"
+          title={isImmersive ? "포털 축소" : "100dvh 전체화면"}
+        >
+          {isImmersive ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+        </button>
+      </div>
+      <GameContainer title={t.title} subtitle={t.sub} resetLabel={t.again} onReset={restart}>
       <div className="mx-auto max-w-md" data-village-ready={ready ? "1" : "0"}>
         <p className="mb-3 rounded-xl bg-muted px-3 py-2 text-xs leading-relaxed text-muted-foreground">{t.intro}</p>
 
@@ -309,12 +393,31 @@ export default function Village({ locale = "ko" }: { locale?: Locale }) {
         ) : null}
 
         {done ? (
-          <section className="mt-3 rounded-2xl border border-border bg-card p-4 text-center">
+          <section className="mt-3 rounded-2xl border border-primary/40 bg-primary/10 p-4 text-center shadow-lg">
+            <div className="relative mb-2 flex items-center justify-center">
+              <img
+                src={getSpriteUrl("trophy")}
+                alt="3D Trophy"
+                className="w-16 h-16 drop-shadow-xl animate-bounce"
+              />
+            </div>
             <p className="text-sm font-semibold text-muted-foreground">{t.score}</p>
             <p className="text-4xl font-black text-primary">{villageScore(state)}</p>
             <p className="mt-1 text-lg font-black text-foreground">{t.grades[villageGrade(villageScore(state))]}</p>
             <p className="mt-1 text-xs text-muted-foreground">{t.best} {Math.max(best, villageScore(state))}</p>
-            <button type="button" onClick={restart} className="mt-3 min-h-11 rounded-full bg-primary px-6 text-sm font-black text-primary-foreground">{t.again}</button>
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+              <TiltVillageButton type="button" onClick={restart} className="min-h-11 rounded-full bg-primary px-6 text-sm font-black text-primary-foreground shadow-md">
+                {t.again} ↺
+              </TiltVillageButton>
+              <TiltVillageButton
+                type="button"
+                onClick={handleShareCard}
+                className="min-h-11 rounded-full border border-border bg-secondary px-5 text-sm font-bold text-secondary-foreground hover:bg-secondary/80 flex items-center gap-1.5 shadow-sm"
+              >
+                {isCopied ? <Check className="w-4 h-4 text-primary" /> : <Camera className="w-4 h-4" />}
+                <span>{isCopied ? "복사 완료!" : "결산 카드 공유"}</span>
+              </TiltVillageButton>
+            </div>
           </section>
         ) : null}
 
@@ -427,5 +530,6 @@ export default function Village({ locale = "ko" }: { locale?: Locale }) {
         </details>
       </div>
     </GameContainer>
+    </div>
   );
 }

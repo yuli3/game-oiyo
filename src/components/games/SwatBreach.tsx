@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useDynamicDifficultyPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
+import { useDynamicDifficultyPro, useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { getSpriteUrl } from "../../lib/games/sprites";
+import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "../../lib/games/share-card";
+import { celebrate } from "../../lib/games/celebration";
+import { Maximize2, Minimize2, Camera, Check } from "lucide-react";
 import {
   loadArcadePassProgress,
   reportMissionProgress,
@@ -15,6 +20,25 @@ import {
   stepSwatBreach,
   type SwatBreachState,
 } from "../../lib/games/swat-breach";
+
+function TiltSwatButton({
+  children,
+  className = "",
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const { transformCss, onPointerMove, onPointerLeave } = useCardTiltPro();
+  return (
+    <button
+      style={{ "--card-tilt": transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`transform-(--card-tilt) will-change-transform ${className}`}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+}
 
 type Locale = "ko" | "en" | "ja" | "zh" | "fr" | "es";
 
@@ -173,6 +197,7 @@ const OFFSET_X = 40;
 const OFFSET_Y = 22;
 
 export default function SwatBreach({ locale = "ko" }: Props) {
+  const { isImmersive, containerRef, togglePortal } = useArcadePortal();
   const lang: Locale = (locale in I18N ? locale : "en") as Locale;
   const t = I18N[lang];
 
@@ -189,6 +214,7 @@ export default function SwatBreach({ locale = "ko" }: Props) {
   const [uiSuspectsLeft, setUiSuspectsLeft] = useState(3);
   const [uiHostagesRescued, setUiHostagesRescued] = useState(0);
   const [uiHostagesTotal, setUiHostagesTotal] = useState(1);
+  const [isCopied, setIsCopied] = useState(false);
 
   const {
     flowState,
@@ -295,9 +321,35 @@ export default function SwatBreach({ locale = "ko" }: Props) {
     [syncUi]
   );
 
+  const handleShareCard = useCallback(async () => {
+    MobileHapticsPro.click();
+    const curMission = MISSIONS[uiMissionIdx];
+    const canvas = await createShareCardCanvas({
+      title: "TACTICAL SWAT BREACH",
+      subtitle: `${curMission.title[lang]} 작전 완료`,
+      score: `${uiHostagesRescued}/${uiHostagesTotal}`,
+      slug: "swat-breach",
+      customStats: [
+        { label: "작전 번호", value: `Op.${curMission.missionNum}` },
+        { label: "인질 구출", value: `${uiHostagesRescued} / ${uiHostagesTotal}명` },
+        { label: "DDA 템포", value: flowState.toUpperCase() },
+      ],
+      playerTitle: "SWAT TACTICAL COMMANDER",
+    });
+
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `swat-breach-op${curMission.missionNum}-cleared.png`);
+    }
+  }, [flowState, lang, uiHostagesRescued, uiHostagesTotal, uiMissionIdx]);
+
   const handleSelectOp = useCallback(
     (opId: "alpha" | "bravo") => {
       stateRef.current.selectedOpId = opId;
+      MobileHapticsPro.light();
       playSoundEffect("click");
       syncUi();
     },
@@ -307,6 +359,7 @@ export default function SwatBreach({ locale = "ko" }: Props) {
   const handleSelectTool = useCallback(
     (mode: "waypoint" | "flashbang") => {
       stateRef.current.toolMode = mode;
+      MobileHapticsPro.light();
       playSoundEffect("click");
       syncUi();
     },
@@ -315,6 +368,7 @@ export default function SwatBreach({ locale = "ko" }: Props) {
 
   const handleExecuteBreach = useCallback(() => {
     startBreachExecution(stateRef.current);
+    MobileHapticsPro.heavy();
     playSoundEffect("door");
     syncUi();
   }, [playSoundEffect, syncUi]);
@@ -354,7 +408,10 @@ export default function SwatBreach({ locale = "ko" }: Props) {
         const currentPhase = st.phase as string;
         if (currentPhase !== prevPhase || nowSuspects !== prevSuspects) {
           if (currentPhase === "victory") {
-            MobileHapticsPro.impact();
+            MobileHapticsPro.success();
+            if (containerRef.current) {
+              celebrate(containerRef.current, { preset: "sparks" });
+            }
           } else if (currentPhase === "failed") {
             recordDdaDeath();
             MobileHapticsPro.heavy();
@@ -606,7 +663,14 @@ export default function SwatBreach({ locale = "ko" }: Props) {
   const spec = MISSIONS[uiMissionIdx];
 
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 text-card-foreground shadow-sm">
+    <div
+      ref={containerRef}
+      className={`flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 text-card-foreground shadow-sm transition-all ${
+        isImmersive
+          ? "fixed inset-0 z-50 overflow-y-auto bg-background/95 backdrop-blur-md max-w-none w-full h-full p-6 justify-center"
+          : ""
+      }`}
+    >
       {/* Top Tactical Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
         <div>
@@ -662,6 +726,14 @@ export default function SwatBreach({ locale = "ko" }: Props) {
           >
             {t.resetBtn}
           </button>
+          <button
+            type="button"
+            onClick={togglePortal}
+            className="p-1.5 rounded-lg bg-card border border-border text-foreground hover:bg-muted/80 transition-colors"
+            title={isImmersive ? "포털 축소" : "100dvh 전체화면"}
+          >
+            {isImmersive ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </button>
         </div>
       </div>
 
@@ -679,54 +751,78 @@ export default function SwatBreach({ locale = "ko" }: Props) {
         <div className="flex flex-wrap items-center gap-2">
           {uiPhase === "planning" && (
             <>
-              <button
+              <TiltSwatButton
                 type="button"
                 onClick={() => {
                   applyAutoTacticalPlan(stateRef.current);
                   playSoundEffect("click");
                   syncUi();
                 }}
-                className="rounded-lg bg-secondary px-3 py-1.5 text-xs font-bold text-secondary-foreground transition hover:opacity-90"
+                className="rounded-lg bg-secondary px-3 py-1.5 text-xs font-bold text-secondary-foreground transition hover:opacity-90 shadow-xs"
               >
                 {t.autoPlanBtn}
-              </button>
-              <button
+              </TiltSwatButton>
+              <TiltSwatButton
                 type="button"
                 onClick={() => {
                   clearOperatorWaypoints(stateRef.current);
                   playSoundEffect("click");
                   syncUi();
                 }}
-                className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-muted"
+                className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-muted shadow-xs"
               >
                 {t.clearPathBtn}
-              </button>
-              <button
+              </TiltSwatButton>
+              <TiltSwatButton
                 type="button"
                 onClick={handleExecuteBreach}
-                className="rounded-lg bg-primary px-4 py-1.5 text-xs font-bold text-primary-foreground shadow-xs transition hover:opacity-90"
+                className="rounded-lg bg-primary px-4 py-1.5 text-xs font-bold text-primary-foreground shadow-sm transition hover:opacity-90"
               >
                 {t.goCodeBtn}
-              </button>
+              </TiltSwatButton>
             </>
           )}
         </div>
       </div>
 
       {uiPhase === "victory" && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-primary/10 px-4 py-3">
-          <span className="text-sm font-bold text-primary">
-            {t.victoryBanner}
-          </span>
-          {uiMissionIdx < MISSIONS.length - 1 && (
-            <button
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary/40 bg-primary/10 p-4 shadow-md">
+          <div className="flex items-center gap-3">
+            <img
+              src={getSpriteUrl("trophy")}
+              alt="3D Gold Trophy"
+              className="w-12 h-12 drop-shadow-md animate-bounce"
+            />
+            <div>
+              <span className="text-sm font-bold text-primary block">
+                {t.victoryBanner}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                인질 {uiHostagesRescued}명 전원 구출 및 용의자 무력화 완료!
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <TiltSwatButton
               type="button"
-              onClick={() => loadMission(uiMissionIdx + 1)}
-              className="rounded-lg bg-primary px-4 py-1.5 text-xs font-bold text-primary-foreground shadow-xs transition hover:opacity-90"
+              onClick={handleShareCard}
+              className="rounded-lg bg-secondary px-4 py-2 text-xs font-bold text-secondary-foreground border border-border flex items-center gap-1.5 shadow-sm"
             >
-              {t.nextMissionBtn}
-            </button>
-          )}
+              {isCopied ? <Check className="w-4 h-4 text-primary" /> : <Camera className="w-4 h-4" />}
+              <span>{isCopied ? "복사 완료!" : "작전 기록 공유"}</span>
+            </TiltSwatButton>
+
+            {uiMissionIdx < MISSIONS.length - 1 && (
+              <TiltSwatButton
+                type="button"
+                onClick={() => loadMission(uiMissionIdx + 1)}
+                className="rounded-lg bg-primary px-4 py-2 text-xs font-bold text-primary-foreground shadow-sm transition hover:opacity-90"
+              >
+                {t.nextMissionBtn}
+              </TiltSwatButton>
+            )}
+          </div>
         </div>
       )}
 

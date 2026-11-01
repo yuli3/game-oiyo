@@ -1,4 +1,9 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
+import { getSpriteUrl } from "../../lib/games/sprites";
+import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "../../lib/games/share-card";
+import { celebrate } from "../../lib/games/celebration";
+import { Maximize2, Minimize2, Camera, Check } from "lucide-react";
 import {
   type WaffleGameState,
   type WafflePuzzleDefinition,
@@ -79,6 +84,7 @@ function TiltWaffleTile({
 }
 
 export default function WordWaffle({ locale = "ko" }: WordWaffleProps) {
+  const { isImmersive, containerRef, togglePortal } = useArcadePortal();
   const [initData] = useState(() => createInitialWaffleGame(locale, 0, Date.now()));
   const [puzzle] = useState<WafflePuzzleDefinition>(initData.puzzle);
   const [game, setGame] = useState<WaffleGameState>(initData.game);
@@ -86,7 +92,7 @@ export default function WordWaffle({ locale = "ko" }: WordWaffleProps) {
 
   const shakeStateRef = useRef(createShakeState());
   const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0 });
-  const [shareCopied, setShareCopied] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
 
   const audioCtxRef = useRef<AudioContext | null>(null);
 
@@ -204,20 +210,60 @@ export default function WordWaffle({ locale = "ko" }: WordWaffleProps) {
         : `🧇 Word Waffle - ${game.status === "won" ? `Solved! Swaps left: ${game.swapsRemaining}` : "Failed"} (${game.stars} stars)\n${waffleEmoji}https://game.oiyo.net/word-waffle`;
 
     navigator.clipboard?.writeText(text).then(() => {
-      setShareCopied(true);
-      setTimeout(() => setShareCopied(false), 2000);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
     });
   };
 
+  const handleShareCard = useCallback(async () => {
+    MobileHapticsPro.click();
+    const canvas = await createShareCardCanvas({
+      title: "WORD WAFFLE",
+      subtitle: game.status === "won" ? "와플 퍼즐 완성!" : "단어 와플 도전 기록",
+      score: `${game.stars}★ (${game.swapsRemaining} 남음)`,
+      slug: "word-waffle",
+      customStats: [
+        { label: "달성 별점", value: `${game.stars} / 5개` },
+        { label: "남은 스왑", value: `${game.swapsRemaining} / ${game.maxSwaps}` },
+        { label: "퍼즐 상태", value: game.status === "won" ? "완전 정복" : "도전 완료" },
+      ],
+      playerTitle: "WAFFLE WORDSMITH",
+    });
+
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `word-waffle-stars-${game.stars}.png`);
+    }
+  }, [game.maxSwaps, game.stars, game.status, game.swapsRemaining]);
+
+  useEffect(() => {
+    if (game.status === "won") {
+      MobileHapticsPro.success();
+      if (containerRef.current) {
+        celebrate(containerRef.current, { preset: "stardust" });
+      }
+    } else if (game.status === "lost") {
+      MobileHapticsPro.heavy();
+    }
+  }, [game.status]);
+
   return (
     <div
+      ref={containerRef}
       style={
         {
           "--shake-x": `${shakeOffset.x}px`,
           "--shake-y": `${shakeOffset.y}px`,
         } as React.CSSProperties
       }
-      className="relative mx-auto flex w-full max-w-md translate-x-(--shake-x) translate-y-(--shake-y) flex-col items-center justify-between rounded-3xl border border-border bg-card p-4 shadow-xl sm:p-6"
+      className={`relative mx-auto flex w-full max-w-md translate-x-(--shake-x) translate-y-(--shake-y) flex-col items-center justify-between rounded-3xl border border-border bg-card p-4 shadow-xl sm:p-6 transition-all ${
+        isImmersive
+          ? "fixed inset-0 z-50 overflow-y-auto bg-background/95 backdrop-blur-md max-w-none w-full h-full justify-center"
+          : ""
+      }`}
     >
       {/* Top Header: Swaps remaining & Goal */}
       <div className="flex w-full items-center justify-between border-b border-border pb-3">
@@ -230,16 +276,27 @@ export default function WordWaffle({ locale = "ko" }: WordWaffleProps) {
           </span>
         </div>
 
-        {/* Legend */}
-        <div className="flex items-center gap-2 text-xs font-semibold">
-          <span className="flex items-center gap-1">
-            <span className="h-3 w-3 rounded-xs bg-chart-2" />
-            <span className="text-muted-foreground">{locale === "ko" ? "정답" : "Correct"}</span>
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="h-3 w-3 rounded-xs bg-chart-4" />
-            <span className="text-muted-foreground">{locale === "ko" ? "포함" : "In word"}</span>
-          </span>
+        <div className="flex items-center gap-3">
+          {/* Legend */}
+          <div className="flex items-center gap-2 text-xs font-semibold">
+            <span className="flex items-center gap-1">
+              <span className="h-3 w-3 rounded-xs bg-chart-2" />
+              <span className="text-muted-foreground">{locale === "ko" ? "정답" : "Correct"}</span>
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="h-3 w-3 rounded-xs bg-chart-4" />
+              <span className="text-muted-foreground">{locale === "ko" ? "포함" : "In word"}</span>
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={togglePortal}
+            className="p-1.5 rounded-lg bg-card border border-border text-foreground hover:bg-muted/80 transition-colors"
+            title={isImmersive ? "포털 축소" : "100dvh 전체화면"}
+          >
+            {isImmersive ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </button>
         </div>
       </div>
 
@@ -266,9 +323,15 @@ export default function WordWaffle({ locale = "ko" }: WordWaffleProps) {
 
         {/* Victory Modal */}
         {game.status === "won" && (
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center rounded-2xl bg-card/95 p-6 backdrop-blur-xs text-center">
-            <span className="text-5xl">🧇🎉</span>
-            <h2 className="mt-2 text-2xl font-black text-warning">
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center rounded-2xl bg-card/95 p-6 backdrop-blur-md text-center">
+            <div className="relative mb-2 flex items-center justify-center">
+              <img
+                src={getSpriteUrl("trophy")}
+                alt="3D Trophy"
+                className="w-16 h-16 drop-shadow-xl animate-bounce"
+              />
+            </div>
+            <h2 className="mt-1 text-2xl font-black text-warning">
               {locale === "ko" ? "와플 완성!" : "Waffle Solved!"}
             </h2>
             <div className="my-2 flex gap-1 text-2xl">
@@ -284,15 +347,18 @@ export default function WordWaffle({ locale = "ko" }: WordWaffleProps) {
                 : `Solved with ${game.swapsRemaining} swaps to spare!`}
             </p>
 
-            <div className="mt-5 flex gap-2">
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
               <Button type="button" variant="default" size="lg" onClick={handleRestart}>
-                {locale === "ko" ? "다시 도전" : "Play Again"}
+                {locale === "ko" ? "다시 도전 ↺" : "Play Again ↺"}
               </Button>
-              <Button type="button" variant="outline" size="lg" onClick={handleShare}>
-                {shareCopied
-                  ? locale === "ko" ? "복사 완료!" : "Copied!"
-                  : locale === "ko" ? "결과 공유" : "Share"}
-              </Button>
+              <button
+                type="button"
+                onClick={handleShareCard}
+                className="px-4 py-2.5 rounded-lg border border-border bg-secondary hover:bg-secondary/80 text-secondary-foreground font-semibold text-sm flex items-center gap-1.5"
+              >
+                {isCopied ? <Check className="w-4 h-4 text-primary" /> : <Camera className="w-4 h-4" />}
+                <span>{isCopied ? (locale === "ko" ? "복사 완료!" : "Copied!") : (locale === "ko" ? "결과 카드 공유" : "Share Card")}</span>
+              </button>
             </div>
           </div>
         )}

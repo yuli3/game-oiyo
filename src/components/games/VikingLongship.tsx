@@ -1,15 +1,41 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { getSpriteUrl } from "../../lib/games/sprites";
+import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "../../lib/games/share-card";
+import { celebrate } from "../../lib/games/celebration";
+import { Maximize2, Minimize2, Camera, Check } from "lucide-react";
 import {
   initializeVikingLongship,
   stepVikingLongship,
   type VikingLongshipState,
 } from "../../lib/games/viking-longship";
 import { useAudioContext } from "../../lib/games/use-audio-context";
-import { useClipboardShare } from "../../lib/games/use-clipboard-share";
 import { GameStatTile } from "../ui/game/GameStatTile";
 
+function TiltVikingButton({
+  children,
+  className = "",
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const { transformCss, onPointerMove, onPointerLeave } = useCardTiltPro();
+  return (
+    <button
+      style={{ "--card-tilt": transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`transform-(--card-tilt) will-change-transform ${className}`}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+}
+
 export function VikingLongship() {
+  const { isImmersive, containerRef, togglePortal } = useArcadePortal();
   const [gameState, setGameState] = useState<VikingLongshipState>(() => initializeVikingLongship());
+  const [isCopied, setIsCopied] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const inputRef = useRef({
     rudder: 0 as -1 | 0 | 1,
@@ -36,8 +62,6 @@ export function VikingLongship() {
     osc.start();
     osc.stop(ctx.currentTime + dur);
   }, [getAudioContext]);
-
-  const { copied, shareText } = useClipboardShare();
 
   // Keyboard navigation
   useEffect(() => {
@@ -360,19 +384,55 @@ export function VikingLongship() {
   }, [gameState]);
 
   const handleReset = () => {
+    MobileHapticsPro.click();
     setGameState(initializeVikingLongship());
     playTone(440, "sine", 0.15);
   };
 
-  const handleShare = () => {
-    shareText(
-      `Sailed the Drakkar Longship in Valhalla Seas! Runestones: ${gameState.runestonesFound}/3, Hull: ${gameState.hullHp}% https://game.oiyo.net/viking-longship`
-    );
-    playTone(660, "triangle", 0.1);
-  };
+  const handleShareCard = useCallback(async () => {
+    MobileHapticsPro.click();
+    const canvas = await createShareCardCanvas({
+      title: "VIKING LONGSHIP",
+      subtitle: gameState.status === "victory" ? "발할라 비프로스트 도달 성공!" : "발할라 해양 탐험 항해기",
+      score: `${gameState.runestonesFound}/${gameState.requiredRunestones}`,
+      slug: "viking-longship",
+      customStats: [
+        { label: "고대 룬스톤", value: `${gameState.runestonesFound} / ${gameState.requiredRunestones}개` },
+        { label: "선체 내구도", value: `${Math.max(0, Math.floor(gameState.hullHp))}%` },
+        { label: "항해 속도", value: `${gameState.speed.toFixed(1)} kts` },
+      ],
+      playerTitle: "VALHALLA VIKING CHIEFTAIN",
+    });
+
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `viking-longship-runestones-${gameState.runestonesFound}.png`);
+    }
+  }, [gameState.hullHp, gameState.requiredRunestones, gameState.runestonesFound, gameState.speed, gameState.status]);
+
+  useEffect(() => {
+    if (gameState.status === "victory") {
+      MobileHapticsPro.success();
+      if (containerRef.current) {
+        celebrate(containerRef.current, { preset: "sparks" });
+      }
+    } else if (gameState.status === "shipwrecked") {
+      MobileHapticsPro.heavy();
+    }
+  }, [gameState.status]);
 
   return (
-    <div className="flex flex-col gap-4 max-w-4xl mx-auto p-4 bg-background text-foreground rounded-xl border border-border shadow-sm">
+    <div
+      ref={containerRef}
+      className={`flex flex-col gap-4 max-w-4xl mx-auto p-4 bg-background text-foreground rounded-xl border border-border shadow-sm transition-all ${
+        isImmersive
+          ? "fixed inset-0 z-50 overflow-y-auto bg-background/95 backdrop-blur-md max-w-none w-full h-full p-6 justify-center"
+          : ""
+      }`}
+    >
       {/* Top Banner & Header */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
         <div>
@@ -382,19 +442,28 @@ export function VikingLongship() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button
+          <TiltVikingButton
             type="button"
-            onClick={handleShare}
-            className="px-3 py-1.5 text-xs font-semibold rounded-md border border-border bg-secondary hover:bg-secondary/80 transition-colors"
+            onClick={handleShareCard}
+            className="px-3 py-1.5 text-xs font-semibold rounded-md border border-border bg-secondary hover:bg-secondary/80 transition-colors flex items-center gap-1.5"
           >
-            {copied ? "Copied!" : "Share Voyage"}
-          </button>
-          <button
+            {isCopied ? <Check className="w-3.5 h-3.5 text-primary" /> : <Camera className="w-3.5 h-3.5" />}
+            <span>{isCopied ? "복사 완료!" : "항해 카드 공유"}</span>
+          </TiltVikingButton>
+          <TiltVikingButton
             type="button"
             onClick={handleReset}
             className="px-3 py-1.5 text-xs font-semibold rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
           >
-            New Expedition
+            New Expedition ↺
+          </TiltVikingButton>
+          <button
+            type="button"
+            onClick={togglePortal}
+            className="p-1.5 rounded-lg bg-card border border-border text-foreground hover:bg-muted/80 transition-colors"
+            title={isImmersive ? "포털 축소" : "100dvh 전체화면"}
+          >
+            {isImmersive ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
           </button>
         </div>
       </div>
@@ -444,7 +513,14 @@ export function VikingLongship() {
 
         {/* Victory / Defeat Overlay */}
         {(gameState.status === "victory" || gameState.status === "shipwrecked") && (
-          <div className="absolute inset-0 bg-background/85 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center gap-3">
+          <div className="absolute inset-0 bg-background/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center gap-3 z-20">
+            <div className="relative mb-1 flex items-center justify-center">
+              <img
+                src={getSpriteUrl("trophy")}
+                alt="3D Trophy"
+                className="w-16 h-16 drop-shadow-xl animate-bounce"
+              />
+            </div>
             <h2 className="text-2xl font-black">
               {gameState.status === "victory" ? "🏆 Welcomed to Valhalla!" : "💀 Drakkar Shipwrecked"}
             </h2>
@@ -453,13 +529,23 @@ export function VikingLongship() {
                 ? "You activated all 3 ancient runestones and navigated through the Bifrost Gateway! Eternal glory awaits."
                 : "Your hull was crushed or your crew succumbed to the icy abyss. Try again, chieftain."}
             </p>
-            <button
-              type="button"
-              onClick={handleReset}
-              className="px-4 py-2 font-bold text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-            >
-              Set Sail Again
-            </button>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <TiltVikingButton
+                type="button"
+                onClick={handleReset}
+                className="px-5 py-2 font-bold text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-lg"
+              >
+                Set Sail Again ↺
+              </TiltVikingButton>
+              <TiltVikingButton
+                type="button"
+                onClick={handleShareCard}
+                className="px-4 py-2 font-semibold text-sm rounded-lg border border-border bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors flex items-center gap-1.5 shadow-sm"
+              >
+                {isCopied ? <Check className="w-4 h-4 text-primary" /> : <Camera className="w-4 h-4" />}
+                <span>{isCopied ? "복사 완료!" : "항해 기록 공유"}</span>
+              </TiltVikingButton>
+            </div>
           </div>
         )}
       </div>
@@ -468,90 +554,98 @@ export function VikingLongship() {
       <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-muted/40 rounded-lg border border-border text-xs">
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="font-semibold text-muted-foreground mr-1">Controls:</span>
-          <button
+          <TiltVikingButton
             type="button"
             onClick={() => {
               inputRef.current.rudder = -1;
+              MobileHapticsPro.light();
               setTimeout(() => {
                 inputRef.current.rudder = 0;
               }, 250);
             }}
-            className="px-2 py-1 rounded border border-border bg-card hover:bg-accent transition-colors"
+            className="px-2 py-1 rounded border border-border bg-card hover:bg-accent transition-colors shadow-xs"
           >
             ◀ Port (A)
-          </button>
-          <button
+          </TiltVikingButton>
+          <TiltVikingButton
             type="button"
             onClick={() => {
               inputRef.current.rudder = 1;
+              MobileHapticsPro.light();
               setTimeout(() => {
                 inputRef.current.rudder = 0;
               }, 250);
             }}
-            className="px-2 py-1 rounded border border-border bg-card hover:bg-accent transition-colors"
+            className="px-2 py-1 rounded border border-border bg-card hover:bg-accent transition-colors shadow-xs"
           >
             Starboard (D) ▶
-          </button>
-          <button
+          </TiltVikingButton>
+          <TiltVikingButton
             type="button"
             onClick={() => {
               inputRef.current.trimDelta = 1.0;
+              MobileHapticsPro.light();
               setTimeout(() => {
                 inputRef.current.trimDelta = 0;
               }, 250);
             }}
-            className="px-2 py-1 rounded border border-border bg-card hover:bg-accent transition-colors"
+            className="px-2 py-1 rounded border border-border bg-card hover:bg-accent transition-colors shadow-xs"
           >
             Trim Sail (W)
-          </button>
-          <button
+          </TiltVikingButton>
+          <TiltVikingButton
             type="button"
             onClick={() => {
               inputRef.current.toggleOars = true;
+              MobileHapticsPro.medium();
             }}
-            className="px-2 py-1 rounded border border-border bg-card hover:bg-accent transition-colors"
+            className="px-2 py-1 rounded border border-border bg-card hover:bg-accent transition-colors shadow-xs"
           >
             {gameState.oarsEngaged ? "Rest Oars (R)" : "Row Oars (R)"}
-          </button>
-          <button
+          </TiltVikingButton>
+          <TiltVikingButton
             type="button"
             onClick={() => {
               inputRef.current.toggleAnchor = true;
+              MobileHapticsPro.medium();
             }}
-            className="px-2 py-1 rounded border border-border bg-card hover:bg-accent transition-colors"
+            className="px-2 py-1 rounded border border-border bg-card hover:bg-accent transition-colors shadow-xs"
           >
             Anchor (Space)
-          </button>
+          </TiltVikingButton>
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5">
-          <button
+          <TiltVikingButton
             type="button"
             onClick={() => {
               inputRef.current.fireHarpoon = true;
+              MobileHapticsPro.heavy();
             }}
-            className="px-2.5 py-1 rounded bg-destructive text-destructive-foreground font-semibold hover:bg-destructive/90 transition-colors"
+            className="px-2.5 py-1 rounded bg-destructive text-destructive-foreground font-semibold hover:bg-destructive/90 transition-colors shadow-xs"
           >
             Harpoon (F)
-          </button>
-          <button
+          </TiltVikingButton>
+          <TiltVikingButton
             type="button"
             onClick={() => {
               inputRef.current.interactIsland = true;
+              MobileHapticsPro.medium();
             }}
-            className="px-2.5 py-1 rounded bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors"
+            className="px-2.5 py-1 rounded bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors shadow-xs"
           >
             Explore Island (E)
-          </button>
-          <button
+          </TiltVikingButton>
+          <TiltVikingButton
             type="button"
             onClick={() => {
               inputRef.current.repairShip = true;
+              MobileHapticsPro.medium();
             }}
-            className="px-2.5 py-1 rounded bg-secondary text-secondary-foreground font-semibold hover:bg-secondary/90 transition-colors"
+            className="px-2.5 py-1 rounded bg-secondary text-secondary-foreground font-semibold hover:bg-secondary/90 transition-colors shadow-xs"
           >
             Repair (C) [10 Timber]
-          </button>
+          </TiltVikingButton>
         </div>
       </div>
     </div>

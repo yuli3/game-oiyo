@@ -1,4 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { getSpriteUrl } from "../../lib/games/sprites";
+import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "../../lib/games/share-card";
+import { celebrate } from "../../lib/games/celebration";
+import { Maximize2, Minimize2, Camera, Check } from "lucide-react";
 import {
   initializeSushiConveyor,
   stepSushiConveyor,
@@ -8,11 +14,31 @@ import {
   type SushiType,
 } from "../../lib/games/sushi-conveyor";
 import { useAudioContext } from "../../lib/games/use-audio-context";
-import { useClipboardShare } from "../../lib/games/use-clipboard-share";
 import { GameStatTile } from "../ui/game/GameStatTile";
 
+function TiltSushiButton({
+  children,
+  className = "",
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const { transformCss, onPointerMove, onPointerLeave } = useCardTiltPro();
+  return (
+    <button
+      style={{ "--card-tilt": transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`transform-(--card-tilt) will-change-transform ${className}`}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+}
+
 export function SushiConveyor() {
+  const { isImmersive, containerRef, togglePortal } = useArcadePortal();
   const [gameState, setGameState] = useState<SushiConveyorState>(() => initializeSushiConveyor());
+  const [isCopied, setIsCopied] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const inputRef = useRef<{
     craftSushi?: SushiType;
@@ -37,8 +63,6 @@ export function SushiConveyor() {
     },
     [getAudioContext]
   );
-
-  const { copied, shareText } = useClipboardShare();
 
   // Keyboard shortcut listener for crafting (1-5)
   useEffect(() => {
@@ -297,28 +321,64 @@ export function SushiConveyor() {
 
   const handleCraft = (type: SushiType) => {
     inputRef.current.craftSushi = type;
+    MobileHapticsPro.light();
     playTone(520, "sine", 0.08);
   };
 
   const handleUpgrade = (type: "beltSpeed" | "plateValue" | "autoPrep") => {
     inputRef.current.buyUpgrade = type;
+    MobileHapticsPro.medium();
     playTone(660, "triangle", 0.12);
   };
 
   const handleReset = () => {
+    MobileHapticsPro.click();
     setGameState(initializeSushiConveyor());
     playTone(440, "sine", 0.15);
   };
 
-  const handleShare = () => {
-    shareText(
-      `Conveyor Sushi Tycoon: Served ${gameState.totalServed} plates in Ginza, Revenue ¥${gameState.cash}! Play free: https://game.oiyo.net/sushi-conveyor`
-    );
-    playTone(700, "sine", 0.1);
-  };
+  const handleShareCard = useCallback(async () => {
+    MobileHapticsPro.click();
+    const canvas = await createShareCardCanvas({
+      title: "GINZA SUSHI TYCOON",
+      subtitle: gameState.status === "day_cleared" ? "긴자 스타 셰프 선정!" : "회전초밥 영업 결산",
+      score: `¥${gameState.cash}`,
+      slug: "sushi-conveyor",
+      customStats: [
+        { label: "누적 매출", value: `¥${gameState.cash}` },
+        { label: "판매 접시", value: `${gameState.totalServed}접시` },
+        { label: "가게 평판", value: `${gameState.reputation}%` },
+      ],
+      playerTitle: "GINZA MASTER CHEF",
+    });
+
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `sushi-tycoon-revenue-¥${gameState.cash}.png`);
+    }
+  }, [gameState.cash, gameState.reputation, gameState.status, gameState.totalServed]);
+
+  useEffect(() => {
+    if (gameState.status === "day_cleared") {
+      MobileHapticsPro.success();
+      if (containerRef.current) {
+        celebrate(containerRef.current, { preset: "coins" });
+      }
+    }
+  }, [gameState.status]);
 
   return (
-    <div className="flex flex-col gap-4 max-w-4xl mx-auto p-4 bg-background text-foreground rounded-xl border border-border shadow-sm">
+    <div
+      ref={containerRef}
+      className={`flex flex-col gap-4 max-w-4xl mx-auto p-4 bg-background text-foreground rounded-xl border border-border shadow-sm transition-all ${
+        isImmersive
+          ? "fixed inset-0 z-50 overflow-y-auto bg-background/95 backdrop-blur-md max-w-none w-full h-full p-6 justify-center"
+          : ""
+      }`}
+    >
       {/* Top Banner */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
         <div>
@@ -328,19 +388,28 @@ export function SushiConveyor() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button
+          <TiltSushiButton
             type="button"
-            onClick={handleShare}
-            className="px-3 py-1.5 text-xs font-semibold rounded-md border border-border bg-secondary hover:bg-secondary/80 transition-colors"
+            onClick={handleShareCard}
+            className="px-3 py-1.5 text-xs font-semibold rounded-md border border-border bg-secondary hover:bg-secondary/80 transition-colors flex items-center gap-1.5"
           >
-            {copied ? "Copied!" : "Share Result"}
-          </button>
-          <button
+            {isCopied ? <Check className="w-3.5 h-3.5 text-primary" /> : <Camera className="w-3.5 h-3.5" />}
+            <span>{isCopied ? "복사 완료!" : "결과 카드 공유"}</span>
+          </TiltSushiButton>
+          <TiltSushiButton
             type="button"
             onClick={handleReset}
             className="px-3 py-1.5 text-xs font-semibold rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
           >
-            New Shift
+            New Shift ↺
+          </TiltSushiButton>
+          <button
+            type="button"
+            onClick={togglePortal}
+            className="p-1.5 rounded-lg bg-card border border-border text-foreground hover:bg-muted/80 transition-colors"
+            title={isImmersive ? "포털 축소" : "100dvh 전체화면"}
+          >
+            {isImmersive ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
           </button>
         </div>
       </div>
@@ -391,7 +460,14 @@ export function SushiConveyor() {
 
         {/* Game Over / Day Cleared Overlay */}
         {(gameState.status === "bankrupt" || gameState.status === "day_cleared") && (
-          <div className="absolute inset-0 bg-background/85 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center gap-3">
+          <div className="absolute inset-0 bg-background/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center gap-3 z-20">
+            <div className="relative mb-1 flex items-center justify-center">
+              <img
+                src={getSpriteUrl("trophy")}
+                alt="3D Trophy"
+                className="w-16 h-16 drop-shadow-xl animate-bounce"
+              />
+            </div>
             <h2 className="text-2xl font-black">
               {gameState.status === "day_cleared" ? "⭐ Ginza Star Rating Awarded!" : "💸 Restaurant Bankrupt"}
             </h2>
@@ -400,13 +476,23 @@ export function SushiConveyor() {
                 ? `Sensational service! Served ${gameState.totalServed} guests and accumulated ¥${gameState.cash}.`
                 : "Funds and reputation collapsed from discarded spoiled plates and angry customers."}
             </p>
-            <button
-              type="button"
-              onClick={handleReset}
-              className="px-4 py-2 font-bold text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-            >
-              Open Next Shift
-            </button>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <TiltSushiButton
+                type="button"
+                onClick={handleReset}
+                className="px-5 py-2 font-bold text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-lg"
+              >
+                Open Next Shift ↺
+              </TiltSushiButton>
+              <TiltSushiButton
+                type="button"
+                onClick={handleShareCard}
+                className="px-4 py-2 font-semibold text-sm rounded-lg border border-border bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors flex items-center gap-1.5 shadow-sm"
+              >
+                {isCopied ? <Check className="w-4 h-4 text-primary" /> : <Camera className="w-4 h-4" />}
+                <span>{isCopied ? "복사 완료!" : "결과 카드 공유"}</span>
+              </TiltSushiButton>
+            </div>
           </div>
         )}
       </div>
@@ -427,11 +513,11 @@ export function SushiConveyor() {
             const recipe = SUSHI_RECIPES[type];
             const cost = Math.floor(recipe.price * 0.3);
             return (
-              <button
+              <TiltSushiButton
                 key={type}
                 type="button"
                 onClick={() => handleCraft(type)}
-                className="flex flex-col items-center p-2 rounded-lg border border-border bg-card hover:bg-accent transition-all text-left"
+                className="flex flex-col items-center p-2 rounded-lg border border-border bg-card hover:bg-accent transition-all text-left shadow-xs"
               >
                 <div className="flex items-center gap-1.5 w-full">
                   <span className="font-bold text-xs bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
@@ -443,7 +529,7 @@ export function SushiConveyor() {
                   <span>-¥{cost}</span>
                   <span className="text-primary font-bold">+¥{recipe.price}</span>
                 </div>
-              </button>
+              </TiltSushiButton>
             );
           })}
         </div>
@@ -451,11 +537,11 @@ export function SushiConveyor() {
 
       {/* Kitchen Upgrades */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-        <button
+        <TiltSushiButton
           type="button"
           onClick={() => handleUpgrade("beltSpeed")}
           disabled={gameState.upgrades.beltSpeedLevel >= 5 || gameState.cash < gameState.upgrades.beltSpeedLevel * 300}
-          className="p-2.5 rounded-lg border border-border bg-card hover:bg-accent disabled:opacity-50 transition-colors text-left"
+          className="p-2.5 rounded-lg border border-border bg-card hover:bg-accent disabled:opacity-50 transition-colors text-left shadow-xs"
         >
           <div className="font-bold text-xs">⚡ Faster Belt Motor (Lv.{gameState.upgrades.beltSpeedLevel}/5)</div>
           <div className="text-xs text-muted-foreground mt-0.5">
@@ -463,13 +549,13 @@ export function SushiConveyor() {
               ? `¥${gameState.upgrades.beltSpeedLevel * 300} (+20 px/s speed)`
               : "MAX LEVEL"}
           </div>
-        </button>
+        </TiltSushiButton>
 
-        <button
+        <TiltSushiButton
           type="button"
           onClick={() => handleUpgrade("plateValue")}
           disabled={gameState.upgrades.plateValueLevel >= 5 || gameState.cash < gameState.upgrades.plateValueLevel * 350}
-          className="p-2.5 rounded-lg border border-border bg-card hover:bg-accent disabled:opacity-50 transition-colors text-left"
+          className="p-2.5 rounded-lg border border-border bg-card hover:bg-accent disabled:opacity-50 transition-colors text-left shadow-xs"
         >
           <div className="font-bold text-xs">🍣 Premium Ingredients (Lv.{gameState.upgrades.plateValueLevel}/5)</div>
           <div className="text-xs text-muted-foreground mt-0.5">
@@ -477,13 +563,13 @@ export function SushiConveyor() {
               ? `¥${gameState.upgrades.plateValueLevel * 350} (+20% plate value)`
               : "MAX LEVEL"}
           </div>
-        </button>
+        </TiltSushiButton>
 
-        <button
+        <TiltSushiButton
           type="button"
           onClick={() => handleUpgrade("autoPrep")}
           disabled={gameState.upgrades.autoPrepLevel >= 3 || gameState.cash < (gameState.upgrades.autoPrepLevel + 1) * 600}
-          className="p-2.5 rounded-lg border border-border bg-card hover:bg-accent disabled:opacity-50 transition-colors text-left"
+          className="p-2.5 rounded-lg border border-border bg-card hover:bg-accent disabled:opacity-50 transition-colors text-left shadow-xs"
         >
           <div className="font-bold text-xs">🤖 Auto Rice Shaper (Lv.{gameState.upgrades.autoPrepLevel}/3)</div>
           <div className="text-xs text-muted-foreground mt-0.5">
@@ -491,7 +577,7 @@ export function SushiConveyor() {
               ? `¥${(gameState.upgrades.autoPrepLevel + 1) * 600} (Auto-makes nigiri)`
               : "MAX LEVEL"}
           </div>
-        </button>
+        </TiltSushiButton>
       </div>
     </div>
   );

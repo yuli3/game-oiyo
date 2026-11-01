@@ -1,4 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent as ReactDragEvent, type PointerEvent as ReactPointerEvent } from "react";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { getSpriteUrl } from "../../lib/games/sprites";
+import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "../../lib/games/share-card";
+import { celebrate } from "../../lib/games/celebration";
+import { Maximize2, Minimize2, Camera, Check } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
 import {
   RECOMMENDED_IMAGE_PX,
@@ -52,6 +58,25 @@ const TONE: Record<TierColor, { chip: string; fill: string; ink: string }> = {
   pink: { chip: "bg-pink-500 text-white", fill: "#ec4899", ink: "#fff" },
   stone: { chip: "bg-stone-500 text-white", fill: "#78716c", ink: "#fff" },
 };
+
+function TiltTierButton({
+  children,
+  className = "",
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const { transformCss, onPointerMove, onPointerLeave } = useCardTiltPro();
+  return (
+    <button
+      style={{ "--card-tilt": transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`transform-(--card-tilt) will-change-transform ${className}`}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+}
 
 // 기기 이미지를 정사각으로 잘라 LOCAL_IMAGE_PX 로 줄인다. 원본은 어디에도 보내지 않는다.
 async function fileToLocalImage(file: Blob): Promise<string | null> {
@@ -382,9 +407,11 @@ function newId(prefix: string) {
 }
 
 export default function TierListStudio({ locale = "ko" as Locale }: { locale?: Locale }) {
+  const { isImmersive, containerRef, togglePortal } = useArcadePortal();
   const copy = copyFor(locale);
   const loc = (["ko", "en", "ja", "zh", "fr", "es"].includes(locale) ? locale : "en") as "ko" | "en" | "ja" | "zh" | "fr" | "es";
   const [doc, setDoc] = useState<TierListDocument>(() => emptyDocument());
+  const [isCopied, setIsCopied] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
   const [label, setLabel] = useState("");
   const [imageUrl, setImageUrl] = useState("");
@@ -460,6 +487,7 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
   }, [doc, selected]);
 
   const moveItem = useCallback((itemId: string, tierId: TierId, index = Number.MAX_SAFE_INTEGER) => {
+    MobileHapticsPro.light();
     setDoc((prev) => moveTierItem(prev, itemId, tierId, index));
     setSelected(null);
   }, []);
@@ -521,8 +549,40 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
     }
     setSaves(next);
     savesRevision.current = JSON.stringify(next);
+    MobileHapticsPro.success();
+    if (containerRef.current) {
+      celebrate(containerRef.current, { preset: "cards" });
+    }
     setStatus(copy.saved);
-  }, [copy.saved, copy.storageFail, doc, saves, storageReady, savesProtected]);
+  }, [containerRef, copy.saved, copy.storageFail, doc, saves, storageReady, savesProtected]);
+
+  const handleShareCard = useCallback(async () => {
+    MobileHapticsPro.click();
+    const rankedCount = doc.tiers
+      .filter((t) => t.id !== "unranked")
+      .reduce((acc, t) => acc + t.items.length, 0);
+    const totalCount = doc.tiers.reduce((acc, t) => acc + t.items.length, 0);
+    const canvas = await createShareCardCanvas({
+      title: "TIER LIST STUDIO",
+      subtitle: doc.title || "티어리스트 배치 결과",
+      score: `${rankedCount}/${totalCount}`,
+      slug: "tier-list",
+      customStats: [
+        { label: "평가 항목", value: `${rankedCount}개 완료` },
+        { label: "티어 등급 수", value: `${doc.tiers.filter((t) => t.id !== "unranked").length}개 티어` },
+        { label: "전체 아이템", value: `${totalCount}개` },
+      ],
+      playerTitle: "TIER LIST CURATOR",
+    });
+
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `tier-list-${doc.title.replace(/[^a-zA-Z0-9가-힣_-]+/g, "-") || "chart"}.png`);
+    }
+  }, [doc.tiers, doc.title]);
 
   const share = useCallback(async () => {
     setBusy(true);
@@ -619,7 +679,7 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
 
   return (
     <section
-      ref={studioRef}
+      ref={containerRef}
       onPointerMove={(event) => followDrag(event.clientX, event.clientY)}
       onPointerUp={finishPointerDrag}
       onPointerCancel={clearDrag}
@@ -632,7 +692,11 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
         const images = Array.from(event.clipboardData.files).filter((file) => file.type.startsWith("image/"));
         if (images.length) { event.preventDefault(); void addImages(images, images.map((file) => file.name)); }
       }}
-      className="mx-auto max-w-6xl space-y-4 px-1"
+      className={`mx-auto max-w-6xl space-y-4 px-1 transition-all ${
+        isImmersive
+          ? "fixed inset-0 z-50 overflow-y-auto bg-background/95 backdrop-blur-md max-w-none w-full h-full p-6"
+          : ""
+      }`}
     >
       {presenting ? <h2 className="text-center text-3xl font-black">{doc.title}</h2> : <label className="block">
         <span className="sr-only">{copy.titleLabel}</span>
@@ -643,10 +707,26 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
         />
       </label>}
 
-      <div className="flex flex-wrap justify-end gap-2">
-        <button type="button" className="min-h-11 rounded-xl border px-4 font-bold" onClick={() => setPresenting((value) => !value)}>{presenting ? copy.edit : copy.present}</button>
-        {!presenting && <button type="button" aria-pressed={editingRows} className="min-h-11 rounded-xl border px-4 font-bold" onClick={() => setEditingRows((value) => !value)}>{editingRows ? copy.rowsDone : copy.rowsEdit}</button>}
-        <button type="button" className="min-h-11 rounded-xl border px-4 font-bold" onClick={() => void exportPng()}>{copy.exportPng}</button>
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <TiltTierButton
+          type="button"
+          className="min-h-11 rounded-xl border border-border bg-secondary hover:bg-secondary/80 px-4 font-bold flex items-center gap-1.5 shadow-xs"
+          onClick={handleShareCard}
+        >
+          {isCopied ? <Check className="w-4 h-4 text-primary" /> : <Camera className="w-4 h-4" />}
+          <span>{isCopied ? "복사 완료!" : "카드 공유"}</span>
+        </TiltTierButton>
+        <TiltTierButton type="button" className="min-h-11 rounded-xl border px-4 font-bold" onClick={() => setPresenting((value) => !value)}>{presenting ? copy.edit : copy.present}</TiltTierButton>
+        {!presenting && <TiltTierButton type="button" aria-pressed={editingRows} className="min-h-11 rounded-xl border px-4 font-bold" onClick={() => setEditingRows((value) => !value)}>{editingRows ? copy.rowsDone : copy.rowsEdit}</TiltTierButton>}
+        <TiltTierButton type="button" className="min-h-11 rounded-xl border px-4 font-bold" onClick={() => void exportPng()}>{copy.exportPng}</TiltTierButton>
+        <button
+          type="button"
+          onClick={togglePortal}
+          className="min-h-11 p-2.5 rounded-xl bg-card border border-border text-foreground hover:bg-muted/80 transition-colors"
+          title={isImmersive ? "포털 축소" : "100dvh 전체화면"}
+        >
+          {isImmersive ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+        </button>
       </div>
 
       {!presenting && <><div className="flex flex-col gap-2 sm:flex-row">
