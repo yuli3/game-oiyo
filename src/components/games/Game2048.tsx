@@ -60,7 +60,48 @@ import {
   copyShareCardToClipboard,
   downloadShareCard,
 } from "../../lib/games/share-card";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import type { FlowPhase } from "../../lib/games/game-flow";
+
+function Tilt2048Button({
+  children,
+  onClick,
+  onPointerDown,
+  className = "",
+  disabled = false,
+  title,
+  ariaLabel,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  onPointerDown?: (e: React.PointerEvent<HTMLButtonElement>) => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      title={title}
+      aria-label={ariaLabel || title}
+      onClick={() => {
+        triggerPop(0.12);
+        onClick?.();
+      }}
+      onPointerDown={onPointerDown}
+      disabled={disabled}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`transition-all duration-150 transform-(--card-tilt) will-change-transform ${className}`}
+      style={{ "--card-tilt": transformCss || "none" } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 
 const Game2048PixiCanvas = lazy(() => import("./Game2048PixiCanvas"));
 
@@ -397,11 +438,13 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
       if (game.status === "won") {
         cue("win");
         hapticsRef.current.fire("win");
+        MobileHapticsPro.successPattern();
         if (containerRef.current)
-          celebrate(containerRef.current, { preset: "tiles" });
+          celebrate(containerRef.current, { preset: "sparks" });
       } else if (game.status === "over") {
         cue("fail");
         hapticsRef.current.fire("fail");
+        MobileHapticsPro.warningPattern();
       }
     }
   }, [game.status, cue, containerRef]);
@@ -422,6 +465,11 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
       if (next.lastGain > 0) {
         cue("combo");
         hapticsRef.current.fire("combo");
+        if (next.lastGain >= 512) {
+          MobileHapticsPro.heavyImpact();
+        } else {
+          MobileHapticsPro.mediumImpact();
+        }
         getGlobalBgmController().duck(0.2, 400);
         if (gameMode === "blitz") {
           setBlitzTimeLeft((t) =>
@@ -431,6 +479,7 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
       } else {
         cue("place");
         hapticsRef.current.fire("place");
+        MobileHapticsPro.lightImpact();
       }
 
       if (next.score > best) {
@@ -659,12 +708,11 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
 
       {/* Undo & Visual Theme Controls */}
       <div className="mx-auto mb-3 flex w-full max-w-sm items-center justify-between gap-2 px-1">
-        <button
-          type="button"
+        <Tilt2048Button
           onClick={handleUndo}
           disabled={!canUndo}
           className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card/60 px-3 py-1.5 text-xs font-bold text-foreground transition-all hover:bg-muted active:scale-95 disabled:pointer-events-none disabled:opacity-40"
-          aria-label={t.undo}
+          ariaLabel={t.undo}
         >
           <span aria-hidden="true">⤺</span>
           <span>{t.undo}</span>
@@ -673,7 +721,7 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
               {game.history?.length}
             </span>
           )}
-        </button>
+        </Tilt2048Button>
 
         <div className="flex items-center gap-1 rounded-xl border border-border bg-card/60 p-1">
           {(["classic", "neon", "pastel"] as const).map((th) => (
@@ -714,51 +762,47 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
         className="mt-4 flex flex-col items-center sm:pointer-fine:hidden select-none touch-none"
         aria-label="Touch Controls"
       >
-        <button
-          type="button"
+        <Tilt2048Button
           onPointerDown={(e) => {
             e.preventDefault();
             move("up");
           }}
           className="size-14 rounded-2xl bg-muted/80 active:bg-primary active:text-primary-foreground text-xl font-bold flex items-center justify-center border border-border shadow-sm touch-none"
-          aria-label="Up"
+          ariaLabel="Up"
         >
           ▲
-        </button>
+        </Tilt2048Button>
         <div className="flex gap-4 my-1">
-          <button
-            type="button"
+          <Tilt2048Button
             onPointerDown={(e) => {
               e.preventDefault();
               move("left");
             }}
             className="size-14 rounded-2xl bg-muted/80 active:bg-primary active:text-primary-foreground text-xl font-bold flex items-center justify-center border border-border shadow-sm touch-none"
-            aria-label="Left"
+            ariaLabel="Left"
           >
             ◀
-          </button>
-          <button
-            type="button"
+          </Tilt2048Button>
+          <Tilt2048Button
             onPointerDown={(e) => {
               e.preventDefault();
               move("down");
             }}
             className="size-14 rounded-2xl bg-muted/80 active:bg-primary active:text-primary-foreground text-xl font-bold flex items-center justify-center border border-border shadow-sm touch-none"
-            aria-label="Down"
+            ariaLabel="Down"
           >
             ▼
-          </button>
-          <button
-            type="button"
+          </Tilt2048Button>
+          <Tilt2048Button
             onPointerDown={(e) => {
               e.preventDefault();
               move("right");
             }}
             className="size-14 rounded-2xl bg-muted/80 active:bg-primary active:text-primary-foreground text-xl font-bold flex items-center justify-center border border-border shadow-sm touch-none"
-            aria-label="Right"
+            ariaLabel="Right"
           >
             ▶
-          </button>
+          </Tilt2048Button>
         </div>
       </div>
 

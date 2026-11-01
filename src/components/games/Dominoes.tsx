@@ -9,7 +9,7 @@ import {
 import { clearDominoesSave, loadDominoesSave, storeDominoesSave } from "../../lib/games/dominoes-save";
 import { cpuDominoes, createDominoes, dominoCpuReview, dominoEnds, dominoHasMove, dominoesAnalysis, drawDominoes, passDominoes, playDominoes, type DominoCpuReview, type DominoesState } from "../../lib/games/dominoes";
 import { getRecord, recordResult, type GameRecord } from "../../lib/games/records";
-import { Maximize2, Minimize2, Share2, Volume2, VolumeX } from "lucide-react";
+import { Maximize2, Minimize2, Share2, Volume2, VolumeX, Check } from "lucide-react";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { celebrate } from "../../lib/games/celebration";
 import {
@@ -17,6 +17,47 @@ import {
   copyShareCardToClipboard,
   downloadShareCard,
 } from "../../lib/games/share-card";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+
+function TiltDominoButton({
+  children,
+  onClick,
+  className = "",
+  disabled = false,
+  title,
+  ariaLabel,
+  ariaPressed,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+  ariaPressed?: boolean;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      title={title}
+      aria-label={ariaLabel || title}
+      aria-pressed={ariaPressed}
+      onClick={() => {
+        triggerPop(0.12);
+        onClick?.();
+      }}
+      disabled={disabled}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`transition-all duration-150 transform-(--card-tilt) will-change-transform ${className}`}
+      style={{ "--card-tilt": transformCss || "none" } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 
 const AI_DELAY = 800;
 const extra: Record<Locale,{pause:string;resume:string;restored:string;paused:string;played:string;drawn:string;pips:string;sound:string}>={
@@ -164,8 +205,13 @@ const Dominoes: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
       recorded.current = true;
       const r = w === "you" ? "w" : w === "cpu" ? "l" : "d";
       setRecord(recordResult("dominoes", r as "w" | "l" | "d"));
-      if (w === "you" && containerRef.current) {
-        celebrate(containerRef.current, { preset: "tiles" });
+      if (w === "you") {
+        MobileHapticsPro.successPattern();
+        if (containerRef.current) {
+          celebrate(containerRef.current, { preset: "sparks" });
+        }
+      } else if (w === "cpu") {
+        MobileHapticsPro.warningPattern();
       }
     }
   }, [containerRef]);
@@ -177,11 +223,13 @@ const Dominoes: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
 
   const humanPlay = (tile: Tile, end: End) => {
     if (!game || paused) return; const next = playDominoes(game, tile.id, end); if (next === game) return;
+    MobileHapticsPro.mediumImpact();
     landNewTile(game, next); setGame(next); setPendingTile(null);tone(next.winner?660:320); if (next.winner) recordWinner(next.winner);
   };
 
   const clickHandTile = (tile: Tile) => {
     if (!game || paused || game.turn !== "you" || game.status === "over") return;
+    MobileHapticsPro.selectionClick();
     const fitsL = tileFits(tile, ends.left);
     const fitsR = tileFits(tile, ends.right);
     if (fitsL && fitsR) setPendingTile(tile);         // ask which end
@@ -192,7 +240,13 @@ const Dominoes: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
   const humanHasMove = game ? dominoHasMove(game.player, ends) : false;
 
   const humanDrawOrPass = () => {
-    if (!game || paused) return; const next = game.bone.length ? drawDominoes(game) : passDominoes(game); if (next === game) return; setGame(next);tone(game.bone.length?180:120); if (next.winner) recordWinner(next.winner);
+    if (!game || paused) return;
+    MobileHapticsPro.lightImpact();
+    const next = game.bone.length ? drawDominoes(game) : passDominoes(game);
+    if (next === game) return;
+    setGame(next);
+    tone(game.bone.length?180:120);
+    if (next.winner) recordWinner(next.winner);
   };
 
   // CPU turn.
@@ -320,8 +374,8 @@ const Dominoes: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
         {pendingTile && (
           <div className="flex items-center justify-center gap-3 mb-4">
             <span className="text-xs font-bold text-muted-foreground">{t.pickEnd}</span>
-            <button type="button" onClick={() => humanPlay(pendingTile, "left")} className="px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-sm font-bold">{t.left}</button>
-            <button type="button" onClick={() => humanPlay(pendingTile, "right")} className="px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-sm font-bold">{t.right}</button>
+            <TiltDominoButton onClick={() => humanPlay(pendingTile, "left")} className="px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-sm font-bold">{t.left}</TiltDominoButton>
+            <TiltDominoButton onClick={() => humanPlay(pendingTile, "right")} className="px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-sm font-bold">{t.right}</TiltDominoButton>
           </div>
         )}
 
@@ -345,9 +399,9 @@ const Dominoes: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
           {/* Draw / pass */}
           {game.turn === "you" && game.status === "playing" && !humanHasMove && (
             <div className="flex flex-col items-center gap-1">
-              <button type="button" onClick={humanDrawOrPass} className="px-5 py-2 rounded-lg bg-amber-500 text-white font-bold">
+              <TiltDominoButton onClick={humanDrawOrPass} className="px-5 py-2 rounded-lg bg-warning text-warning-foreground font-bold">
                 {game.bone.length > 0 ? `${t.draw} (${game.bone.length})` : t.pass}
-              </button>
+              </TiltDominoButton>
               <span className="text-xs text-muted-foreground">{t.noMove}</span>
             </div>
           )}
@@ -360,17 +414,16 @@ const Dominoes: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
             </h4>
             <p className="text-xs text-muted-foreground mb-4">{t.record}: {record.w}W {record.l}L {record.d}D</p>
             <p className="text-xs text-muted-foreground mb-4">{analysis.plays} {x.played} · {analysis.draws} {x.drawn} · {analysis.yourPips}–{analysis.cpuPips} {x.pips}</p>
-            {game.winner==='cpu'&&lastCpuReview&&<div className="mb-4 max-w-xs rounded-2xl border border-amber-300/60 bg-amber-50 p-3 text-left text-xs text-stone-800"><p className="font-black text-amber-900">{aiInfo.review} · {lastCpuReview.tile.a}-{lastCpuReview.tile.b} · {lastCpuReview.end==='left'?t.left:t.right}</p><p className="mt-1">{lastCpuReview.draws>0?`${lastCpuReview.draws} ${aiInfo.draws} · `:''}{aiInfo.reason[lastCpuReview.reason]}</p><p className="mt-1 text-xs text-stone-500">{aiInfo.policy}: {aiInfo.level[level]}</p></div>}
+            {game.winner==='cpu'&&lastCpuReview&&<div className="mb-4 max-w-xs rounded-2xl border border-warning/40 bg-warning/10 p-3 text-left text-xs text-foreground"><p className="font-black text-foreground">{aiInfo.review} · {lastCpuReview.tile.a}-{lastCpuReview.tile.b} · {lastCpuReview.end==='left'?t.left:t.right}</p><p className="mt-1">{lastCpuReview.draws>0?`${lastCpuReview.draws} ${aiInfo.draws} · `:''}{aiInfo.reason[lastCpuReview.reason]}</p><p className="mt-1 text-xs text-muted-foreground">{aiInfo.policy}: {aiInfo.level[level]}</p></div>}
             <div className="flex flex-wrap items-center justify-center gap-3">
-              <button type="button" onClick={newGame} className="px-10 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg">{t.reset}</button>
-              <button
-                type="button"
+              <TiltDominoButton onClick={newGame} className="px-10 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg">{t.reset}</TiltDominoButton>
+              <TiltDominoButton
                 onClick={handleShareCard}
                 className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-border bg-card px-6 text-sm font-bold text-foreground shadow-md hover:bg-muted"
               >
-                <Share2 className="size-4" />
-                {shareCardCopied ? "카피 완료!" : "Share Card 2.0"}
-              </button>
+                {shareCardCopied ? <Check className="size-4 text-primary" /> : <Share2 className="size-4" />}
+                <span>{shareCardCopied ? "복사됨!" : "기록 공유"}</span>
+              </TiltDominoButton>
             </div>
           </div>
         )}

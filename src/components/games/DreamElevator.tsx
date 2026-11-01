@@ -12,7 +12,45 @@ import {
   copyShareCardToClipboard,
   downloadShareCard,
 } from "../../lib/games/share-card";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import type { Locale } from "../../lib/i18n";
+
+function TiltDreamButton({
+  children,
+  onClick,
+  className = "",
+  disabled = false,
+  title,
+  ariaLabel,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      title={title}
+      aria-label={ariaLabel || title}
+      onClick={() => {
+        triggerPop(0.12);
+        onClick?.();
+      }}
+      disabled={disabled}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`transition-all duration-150 transform-(--card-tilt) will-change-transform ${className}`}
+      style={{ "--card-tilt": transformCss || "none" } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 import {
   ACTS,
   FLOOR_COUNT,
@@ -660,6 +698,16 @@ export default function DreamElevator({ locale = "en" }: { locale?: Locale }) {
       if (!mutedRef.current && !pausedRef.current) audio.current?.tick("block");
       return;
     }
+    if (act === "swap") {
+      MobileHapticsPro.mediumImpact();
+    } else {
+      MobileHapticsPro.lightImpact();
+    }
+    if (next.status === "win") {
+      MobileHapticsPro.successPattern();
+    } else if (next.status === "lose") {
+      MobileHapticsPro.warningPattern();
+    }
     const kind = act === "swap" ? "swap" : act === "down" ? "down" : current.laws[current.floor + 1] ? "rewrite" : "open";
     arm();
     note(kind, next);
@@ -744,16 +792,15 @@ export default function DreamElevator({ locale = "en" }: { locale?: Locale }) {
   const actButton = (act: Act, detail: string) => {
     const available = open.has(act);
     return (
-      <button
-        type="button"
+      <TiltDreamButton
         className={available ? controlClass("primary") : controlClass("quiet")}
-        aria-label={`${copy[act]}. ${detail}`}
+        ariaLabel={`${copy[act]}. ${detail}`}
         disabled={locked || !available}
         onClick={() => move(act)}
       >
         {copy[act]}
         <span className="block text-xs font-normal">{detail}</span>
-      </button>
+      </TiltDreamButton>
     );
   };
 
@@ -764,15 +811,14 @@ export default function DreamElevator({ locale = "en" }: { locale?: Locale }) {
       onPointerDown={arm}
     >
       <header className="relative shrink-0 space-y-2 pr-12">
-        <button
-          type="button"
+        <TiltDreamButton
           onClick={togglePortal}
           className="absolute right-0 top-0 flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-border/60 bg-card text-foreground shadow-sm transition hover:bg-muted"
           title={isImmersive ? portalLabels.exit : portalLabels.enter}
-          aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+          ariaLabel={isImmersive ? portalLabels.exit : portalLabels.enter}
         >
           {isImmersive ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-        </button>
+        </TiltDreamButton>
         <h2 className="text-2xl font-semibold text-foreground">{copy.title}</h2>
         <p className="text-sm leading-6 text-muted-foreground">{copy.lead}</p>
         <p className="text-xs text-muted-foreground">{copy.keys}</p>
@@ -810,14 +856,13 @@ export default function DreamElevator({ locale = "en" }: { locale?: Locale }) {
               {state.status === "win" ? `${state.floor}층의 봉인을 풀고 꿈의 꼭대기에 도달했습니다.` : outcome}
             </p>
           </div>
-          <button
-            type="button"
+          <TiltDreamButton
             onClick={handleShareCard}
             className="flex items-center gap-1.5 rounded-xl border border-border bg-secondary px-3.5 py-2 text-xs font-bold text-secondary-foreground shadow-sm transition hover:bg-muted"
           >
             {shareCardCopied ? <Check className="h-4 w-4 text-primary" /> : <Share2 className="h-4 w-4" />}
             <span>{shareCardCopied ? "복사 완료!" : "결과 카드 공유"}</span>
-          </button>
+          </TiltDreamButton>
         </div>
       )}
       <div className="relative overflow-hidden rounded-2xl border border-border bg-card">

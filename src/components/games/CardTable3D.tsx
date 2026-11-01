@@ -1,10 +1,54 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { Maximize2, Minimize2 } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Maximize2, Minimize2, Share2, Check } from 'lucide-react';
 import { CardTable3DScene } from './CardTable3DScene';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { celebrate } from '../../lib/games/celebration';
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from '../../lib/games/share-card';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import type { Locale } from '../../lib/i18n';
+
+function TiltCardButton({
+  children,
+  onClick,
+  className = '',
+  disabled = false,
+  title,
+  ariaLabel,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      title={title}
+      aria-label={ariaLabel || title}
+      onClick={() => {
+        triggerPop(0.12);
+        onClick?.();
+      }}
+      disabled={disabled}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`transition-all duration-150 transform-(--card-tilt) will-change-transform ${className}`}
+      style={{ '--card-tilt': transformCss || 'none' } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 import {
   createInitialSolitaireState,
   drawFromStock,
@@ -145,6 +189,40 @@ export function CardTable3D({ lang = 'ko' }: Props) {
 
   const [seconds, setSeconds] = useState(0);
   const [timerActive, setTimerActive] = useState(true);
+  const [isCopied, setIsCopied] = useState(false);
+  const celebratedRef = useRef(false);
+
+  useEffect(() => {
+    if (state.isWon && !celebratedRef.current) {
+      celebratedRef.current = true;
+      MobileHapticsPro.heavyImpact();
+      celebrate(containerRef.current, { preset: 'sparks' });
+    }
+  }, [state.isWon, containerRef]);
+
+  const handleShareScore = useCallback(async () => {
+    MobileHapticsPro.mediumImpact();
+    try {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      const timeStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      const canvas = await createShareCardCanvas({
+        title: t.title,
+        slug: 'card-table-3d',
+        score: `${state.score} (${t.moves} ${state.moves})`,
+        subtitle: `${t.time}: ${timeStr} | Solitaire 3D`,
+      });
+      const copied = await copyShareCardToClipboard(canvas);
+      if (copied) {
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+      } else {
+        downloadShareCard(canvas, 'solitaire-3d-score.png');
+      }
+    } catch {
+      // fallback
+    }
+  }, [t, state.score, state.moves, seconds]);
 
   useEffect(() => {
     if (!timerActive || state.isWon) return;
@@ -376,36 +454,40 @@ export function CardTable3D({ lang = 'ko' }: Props) {
             {t.time}: <span className="font-black text-foreground">{formatTime(seconds)}</span>
           </div>
 
-          <button
-            type="button"
+          <TiltCardButton
             onClick={handleAutoSolve}
             className="rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-bold text-foreground transition hover:bg-secondary"
           >
             {t.autoSolve}
-          </button>
-          <button
-            type="button"
+          </TiltCardButton>
+          <TiltCardButton
             onClick={handleUndo}
             disabled={state.history.length === 0}
             className="rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-bold text-foreground transition hover:bg-secondary disabled:opacity-40"
           >
             {t.undo}
-          </button>
-          <button
-            type="button"
+          </TiltCardButton>
+          <TiltCardButton
             onClick={handleReset}
             className="rounded-xl bg-primary px-3 py-1.5 text-xs font-black text-primary-foreground shadow transition hover:opacity-90 active:scale-95"
           >
             {t.newGame}
-          </button>
-          <button
-            type="button"
-            onClick={togglePortal}
+          </TiltCardButton>
+          <TiltCardButton
+            onClick={handleShareScore}
+            title={lang === 'ko' ? '기록 공유' : 'Share Score'}
             className="flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-border bg-card text-foreground"
-            aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+          >
+            {isCopied ? <Check className="h-4 w-4 text-primary" /> : <Share2 className="h-4 w-4" />}
+          </TiltCardButton>
+          <TiltCardButton
+            onClick={togglePortal}
+            title={isImmersive ? portalLabels.exit : portalLabels.enter}
+            className="flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-border bg-card text-foreground"
+            ariaLabel={isImmersive ? portalLabels.exit : portalLabels.enter}
           >
             {isImmersive ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-          </button>
+          </TiltCardButton>
         </div>
       </div>
 
@@ -434,13 +516,21 @@ export function CardTable3D({ lang = 'ko' }: Props) {
             <div className="rounded-2xl bg-secondary p-3 text-xs font-bold text-secondary-foreground">
               {t.score}: {state.score} · {t.moves}: {state.moves} · {t.time}: {formatTime(seconds)}
             </div>
-            <button
-              type="button"
-              onClick={handleReset}
-              className="w-full rounded-2xl bg-primary py-3 text-sm font-black text-primary-foreground shadow transition hover:opacity-90 active:scale-95"
-            >
-              {t.playAgain}
-            </button>
+            <div className="flex gap-2">
+              <TiltCardButton
+                onClick={handleShareScore}
+                className="flex-1 flex items-center justify-center gap-1.5 rounded-2xl border border-border bg-card py-3 text-sm font-black text-foreground shadow transition hover:bg-secondary"
+              >
+                {isCopied ? <Check className="h-4 w-4 text-primary" /> : <Share2 className="h-4 w-4" />}
+                <span>{isCopied ? (lang === 'ko' ? '복사됨!' : 'Copied!') : (lang === 'ko' ? '기록 공유' : 'Share')}</span>
+              </TiltCardButton>
+              <TiltCardButton
+                onClick={handleReset}
+                className="flex-1 rounded-2xl bg-primary py-3 text-sm font-black text-primary-foreground shadow transition hover:opacity-90 active:scale-95"
+              >
+                {t.playAgain}
+              </TiltCardButton>
+            </div>
           </div>
         </div>
       )}
