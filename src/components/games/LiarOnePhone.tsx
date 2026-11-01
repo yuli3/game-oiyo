@@ -3,7 +3,7 @@
 // Seats are numbers. Names are not collected or stored.
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Maximize2, Minimize2, Share2, Volume2, VolumeX } from "lucide-react";
+import { Maximize2, Minimize2, Share2, Volume2, VolumeX, Check } from "lucide-react";
 import { GameContainer } from "../ui/game/GamePrimitives";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import type { Locale } from "../../lib/i18n";
@@ -18,7 +18,45 @@ import {
   copyShareCardToClipboard,
   downloadShareCard,
 } from "../../lib/games/share-card";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import { LIAR_ONEPHONE_SPRITES } from "../../lib/games/sprites";
+
+function TiltLiarButton({
+  children,
+  onClick,
+  className = '',
+  disabled = false,
+  title,
+  ariaLabel,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      title={title}
+      aria-label={ariaLabel || title}
+      onClick={() => {
+        triggerPop(0.12);
+        onClick?.();
+      }}
+      disabled={disabled}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`transition-all duration-150 transform-(--card-tilt) will-change-transform ${className}`}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 import {
   GAME_ID,
   MAX_PLAYERS,
@@ -328,11 +366,17 @@ export default function LiarOnePhone({ locale }: { locale: Locale }) {
     try { setRecord(recordResult(GAME_ID, session.winner === "group" ? "w" : "l")); } catch { /* best-effort */ }
     cue("win");
     const isGroup = session.winner === "group";
-    celebrate(containerRef.current, {
-      preset: isGroup ? "stardust" : "sparks",
-      colors: isGroup ? ["#38bdf8", "#fbbf24", "#34d399"] : ["#ef4444", "#f97316", "#fbbf24"],
-      label: isGroup ? t.groupWin : t.liarWin,
-    });
+    if (isGroup) {
+      MobileHapticsPro.successPattern();
+    } else {
+      MobileHapticsPro.warningPattern();
+    }
+    if (containerRef.current) {
+      celebrate(containerRef.current, {
+        preset: isGroup ? "stardust" : "sparks",
+        label: isGroup ? t.groupWin : t.liarWin,
+      });
+    }
   }, [session, loc, muted, reducedMotion]);
 
   const begin = () => {
@@ -423,7 +467,7 @@ export default function LiarOnePhone({ locale }: { locale: Locale }) {
                 <button key={minute} type="button" aria-pressed={minutes === minute} onClick={() => setMinutes(minute)} className={`${CONTROL} ${minutes === minute ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground"}`}>{minute}</button>
               ))}
             </div>
-            <button type="button" onClick={enter} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.enter}</button>
+            <TiltLiarButton onClick={enter} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.enter}</TiltLiarButton>
             <p className="text-sm text-muted-foreground">{t.record(record?.w ?? 0, record?.l ?? 0)}</p>
           </div>
         ) : (
@@ -432,7 +476,7 @@ export default function LiarOnePhone({ locale }: { locale: Locale }) {
               <div className="space-y-4 rounded-2xl border border-border bg-card p-4">
                 <p className="text-lg font-bold text-foreground">{seat}</p>
                 <p className="text-sm text-muted-foreground">{session.phase === "cover" ? t.cover : t.voteCover}</p>
-                <button type="button" onClick={() => { cue("tap"); setSession(ready(session)); }} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.look}</button>
+                <TiltLiarButton onClick={() => { cue("tap"); MobileHapticsPro.selectionClick(); setSession(ready(session)); }} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.look}</TiltLiarButton>
               </div>
             )}
             {session.phase === "peek" && card === "word" && (
@@ -440,14 +484,14 @@ export default function LiarOnePhone({ locale }: { locale: Locale }) {
                 <p className="text-sm font-bold text-foreground">{seat} · {t.word}</p>
                 <p className="text-2xl font-bold text-foreground">{revealedWord(session)}</p>
                 <p className="text-sm text-muted-foreground">{t.category}: {session.round.category}</p>
-                <button type="button" onClick={() => { cue("place"); setSession(hide(session)); }} className={`${CONTROL} border-border bg-card text-foreground`}>{t.hide}</button>
+                <TiltLiarButton onClick={() => { cue("place"); MobileHapticsPro.lightImpact(); setSession(hide(session)); }} className={`${CONTROL} border-border bg-card text-foreground`}>{t.hide}</TiltLiarButton>
               </div>
             )}
             {session.phase === "peek" && card === "category" && (
               <div className="space-y-4 rounded-2xl border border-warning bg-warning/15 p-4">
                 <p className="text-sm font-bold text-foreground">{seat} · {t.category}</p>
                 <p className="text-2xl font-bold text-foreground">{session.round.category}</p>
-                <button type="button" onClick={() => { cue("place"); setSession(hide(session)); }} className={`${CONTROL} border-border bg-card text-foreground`}>{t.hide}</button>
+                <TiltLiarButton onClick={() => { cue("place"); MobileHapticsPro.lightImpact(); setSession(hide(session)); }} className={`${CONTROL} border-border bg-card text-foreground`}>{t.hide}</TiltLiarButton>
               </div>
             )}
             {session.phase === "discuss" && (
@@ -455,7 +499,7 @@ export default function LiarOnePhone({ locale }: { locale: Locale }) {
                 <p className="text-sm text-muted-foreground">{t.discuss}</p>
                 <p className="text-2xl font-bold text-foreground tabular-nums" aria-live="polite">{clock(left)}</p>
                 {left === 0 ? <p className="text-sm font-bold text-foreground">{t.timeUp}</p> : null}
-                <button type="button" onClick={() => { cue("tap"); setSession(beginVote(session)); }} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.voteStart}</button>
+                <TiltLiarButton onClick={() => { cue("tap"); MobileHapticsPro.mediumImpact(); setSession(beginVote(session)); }} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.voteStart}</TiltLiarButton>
               </div>
             )}
             {session.phase === "vote" && (
@@ -464,7 +508,7 @@ export default function LiarOnePhone({ locale }: { locale: Locale }) {
                 <p className="text-sm text-muted-foreground">{t.voteHint}</p>
                 <div className="flex flex-wrap gap-2">
                   {session.votes.map((_, index) => (
-                    <button key={index} type="button" onClick={() => { cue("place"); setSession(castVote(session, index)); }} className={`${CONTROL} border-border bg-card text-foreground`}>{t.seat(index + 1)}</button>
+                    <TiltLiarButton key={index} onClick={() => { cue("place"); MobileHapticsPro.heavyImpact(); setSession(castVote(session, index)); }} className={`${CONTROL} border-border bg-card text-foreground`}>{t.seat(index + 1)}</TiltLiarButton>
                   ))}
                 </div>
               </div>
@@ -475,7 +519,7 @@ export default function LiarOnePhone({ locale }: { locale: Locale }) {
                 <p className="text-sm font-bold text-foreground">{t.category}: {session.round.category}</p>
                 <div className="flex flex-wrap gap-2">
                   {session.round.choices.map((word) => (
-                    <button key={word} type="button" onClick={() => { cue("place"); setSession(guessWord(session, word)); }} className={`${CONTROL} border-border bg-card text-foreground`}>{word}</button>
+                    <TiltLiarButton key={word} onClick={() => { cue("place"); MobileHapticsPro.heavyImpact(); setSession(guessWord(session, word)); }} className={`${CONTROL} border-border bg-card text-foreground`}>{word}</TiltLiarButton>
                   ))}
                 </div>
               </div>
@@ -488,15 +532,14 @@ export default function LiarOnePhone({ locale }: { locale: Locale }) {
                 <p className="text-sm text-foreground">{t.category}: {session.round.category}</p>
                 <p className="text-sm text-foreground">{session.round.liars.map((seat) => t.seat(seat + 1)).join(" · ")}</p>
                 <div className="flex flex-wrap gap-2">
-                  <button type="button" onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</button>
-                  <button
-                    type="button"
+                  <TiltLiarButton onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</TiltLiarButton>
+                  <TiltLiarButton
                     onClick={handleShareCard}
                     className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-foreground hover:bg-muted`}
                   >
-                    <Share2 className="size-4" />
-                    {shareCardCopied ? "카피 완료!" : "Share Card 2.0"}
-                  </button>
+                    {shareCardCopied ? <Check className="size-4 text-primary" /> : <Share2 className="size-4" />}
+                    <span>{shareCardCopied ? "복사 완료!" : "결과 카드 공유"}</span>
+                  </TiltLiarButton>
                 </div>
               </div>
             )}

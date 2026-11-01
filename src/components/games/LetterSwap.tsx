@@ -8,6 +8,7 @@ import { useArcadePortal } from "../../lib/games/arcade-portal";
 import type { Locale } from "../../lib/i18n";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "../../lib/games/share-card";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import {
   getBestForConditions,
   getRecord,
@@ -38,6 +39,43 @@ import { createHaptics } from "../../lib/games/haptics";
 import { celebrate } from "../../lib/games/celebration";
 import { LETTER_SWAP_SPRITES } from "../../lib/games/sprites";
 import LetterSwapCanvas from "./LetterSwapCanvas";
+
+function TiltSwapButton({
+  children,
+  onClick,
+  className = '',
+  disabled = false,
+  title,
+  ariaLabel,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      title={title}
+      aria-label={ariaLabel || title}
+      onClick={() => {
+        triggerPop(0.12);
+        onClick?.();
+      }}
+      disabled={disabled}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`transition-all duration-150 transform-(--card-tilt) will-change-transform ${className}`}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 
 const CONTROL = "min-h-11 min-w-11 rounded-xl border px-3 py-2 text-sm font-bold motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
 const MARK_CLASS: Record<Exclude<Mark, "hole">, string> = {
@@ -402,11 +440,14 @@ export default function LetterSwap({ locale }: { locale: Locale }) {
     setAnimating(true);
     if (solved) {
       cue("win");
-      celebrate(containerRef.current, { preset: "cards", colors: ["#10b981", "#38bdf8", "#f59e0b"], label: "SOLVED!" });
+      MobileHapticsPro.successPattern();
+      if (containerRef.current) celebrate(containerRef.current, { preset: "cards", label: "SOLVED!" });
     } else if (lost) {
       cue("fail");
+      MobileHapticsPro.warningPattern();
     } else {
       cue("place");
+      MobileHapticsPro.mediumImpact();
     }
   };
 
@@ -522,12 +563,12 @@ export default function LetterSwap({ locale }: { locale: Locale }) {
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">{t.subtitle}</p>
             {phase === "title" ? (
-              <button type="button" onClick={enter} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.enter}</button>
+              <TiltSwapButton onClick={enter} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.enter}</TiltSwapButton>
             ) : (
               <div className="flex flex-wrap gap-2">
-                <button type="button" onClick={board.practice ? resumeDaily : beginPractice} className={`${CONTROL} border-border bg-card text-foreground`}>
+                <TiltSwapButton onClick={board.practice ? resumeDaily : beginPractice} className={`${CONTROL} border-border bg-card text-foreground`}>
                   {board.practice ? t.today : t.practice}
-                </button>
+                </TiltSwapButton>
               </div>
             )}
             {board.practice ? <p className="text-sm font-bold text-foreground">{t.practiceNote}</p> : null}
@@ -566,21 +607,43 @@ export default function LetterSwap({ locale }: { locale: Locale }) {
             <p className="text-sm text-muted-foreground">{t.hint}</p>
             <p className="text-sm text-muted-foreground">{t.limit}</p>
             <div className="flex flex-wrap gap-2">
-              <button type="button" onClick={undo} disabled={locked || animating || play.past.length === 0} className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-foreground disabled:opacity-50`}>
+              <TiltSwapButton
+                onClick={() => {
+                  MobileHapticsPro.selectionClick();
+                  undo();
+                }}
+                disabled={locked || animating || play.past.length === 0}
+                className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-foreground disabled:opacity-50`}
+              >
                 <Undo2 className="size-4" />
                 {t.undo}
-              </button>
-              <button type="button" onClick={replay} className={`${CONTROL} border-border bg-card text-foreground`}>{t.replay}</button>
-              <button
-                type="button"
+              </TiltSwapButton>
+              <TiltSwapButton
+                onClick={() => {
+                  MobileHapticsPro.selectionClick();
+                  replay();
+                }}
+                className={`${CONTROL} border-border bg-card text-foreground`}
+              >
+                {t.replay}
+              </TiltSwapButton>
+              <TiltSwapButton
                 onClick={handleShareCard}
                 className={`${CONTROL} inline-flex items-center gap-1 border-primary/50 bg-primary/20 text-primary hover:bg-primary/30`}
                 title={shareCardCopied ? "복사됨!" : "결과 카드"}
               >
                 {shareCardCopied ? <Check className="size-4" /> : <Share2 className="size-4" />}
                 <span>{shareCardCopied ? "복사 완료" : "결과 카드"}</span>
-              </button>
-              <button type="button" onClick={share} className={`${CONTROL} border-border bg-card text-foreground`}>{t.share}</button>
+              </TiltSwapButton>
+              <TiltSwapButton
+                onClick={() => {
+                  MobileHapticsPro.selectionClick();
+                  share();
+                }}
+                className={`${CONTROL} border-border bg-card text-foreground`}
+              >
+                {t.share}
+              </TiltSwapButton>
             </div>
             {message ? <p className="text-sm font-bold text-foreground" aria-live="polite">{message}</p> : null}
             <p className="text-sm text-muted-foreground">

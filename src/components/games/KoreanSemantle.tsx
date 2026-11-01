@@ -1,8 +1,11 @@
+"use client";
+
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Maximize2, Minimize2, Volume2, VolumeX, Share2, Check } from "lucide-react";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { celebrate } from "../../lib/games/celebration";
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "../../lib/games/share-card";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import {
   dailySecretIndex,
   minutesUntilNextKstMidnight,
@@ -20,32 +23,64 @@ import {
   type ProximityBand,
   type SimilarityTable,
 } from "../../lib/games/korean-semantle";
-
 import { getStreak, recordStreak, type StreakStats } from "../../lib/games/records";
-import { Spinner } from "../ui/spinner";
+
+function TiltSemantleButton({
+  children,
+  onClick,
+  className = '',
+  disabled = false,
+  title,
+  ariaLabel,
+  type = 'button',
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+  type?: 'button' | 'submit' | 'reset';
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type={type}
+      title={title}
+      aria-label={ariaLabel || title}
+      onClick={() => {
+        triggerPop(0.12);
+        onClick?.();
+      }}
+      disabled={disabled}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`transition-all duration-150 transform-(--card-tilt) will-change-transform ${className}`}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 
 type UILocale = "ko" | "en" | "ja" | "zh" | "fr" | "es";
 type Status = "loading" | "playing" | "won" | "revealed" | "error";
 
-// 2026-09-29: play loads one shared pool. Today's secret is an index into that
-// pool, not a separate similarity JSON per word.
 const DATA_BASE = "/data/korean-semantle";
 const GAME_ID = "korean-semantle";
 const SAVE_KEY = "oiyo:korean-semantle:v1";
 const HINT_KEY_PREFIX = "oiyo:korean-semantle:hints:v1:";
 const SOUND_STORAGE_KEY = "korean_semantle_sound_muted";
 
-// ─── Band presentation ─────────────────────────────────────────────────────────
-// Temperature palette — games keep their own vivid surface (not the olive tool
-// tokens). Order coldest→hottest matches ProximityBand.
 const BAND_STYLE: Record<ProximityBand, { bar: string; dot: string }> = {
-  secret: { bar: "bg-emerald-500", dot: "bg-emerald-500" },
-  burning: { bar: "bg-red-500", dot: "bg-red-500" },
-  hot: { bar: "bg-orange-500", dot: "bg-orange-500" },
-  warm: { bar: "bg-amber-500", dot: "bg-amber-400" },
-  tepid: { bar: "bg-lime-500", dot: "bg-lime-500" },
-  cold: { bar: "bg-sky-500", dot: "bg-sky-500" },
-  freezing: { bar: "bg-slate-400", dot: "bg-slate-400" },
+  secret: { bar: "bg-primary", dot: "bg-primary" },
+  burning: { bar: "bg-destructive", dot: "bg-destructive" },
+  hot: { bar: "bg-destructive/80", dot: "bg-destructive/80" },
+  warm: { bar: "bg-chart-1", dot: "bg-chart-1" },
+  tepid: { bar: "bg-chart-2", dot: "bg-chart-2" },
+  cold: { bar: "bg-chart-3", dot: "bg-chart-3" },
+  freezing: { bar: "bg-muted-foreground/60", dot: "bg-muted-foreground/60" },
 };
 
 const BAND_LABEL: Record<UILocale, Record<ProximityBand, string>> = {
@@ -57,7 +92,6 @@ const BAND_LABEL: Record<UILocale, Record<ProximityBand, string>> = {
   es: { secret: "¡Resuelto!", burning: "Ardiente", hot: "Caliente", warm: "Cálido", tepid: "Tibio", cold: "Frío", freezing: "Helado" },
 };
 
-// ─── Copy ──────────────────────────────────────────────────────────────────────
 const COPY: Record<UILocale, {
   subtitle: string;
   title: string;
@@ -252,11 +286,9 @@ const HINT_COPY: Record<UILocale, { open: string; locked: (n: number) => string;
   es: { open: "Abrir pista justa", locked: n => `Siguiente pista al intento ${n}`, next: m => `Próximo puzle en ${Math.floor(m / 60)} h ${m % 60} min (medianoche, hora de Corea)`, format: h => h.kind === "length" ? `La respuesta tiene ${h.value} sílabas.` : h.kind === "initial" ? `La inicial coreana es ${h.value}.` : `Palabra fija de distancia media: ${h.value} (puesto ${h.rank})` },
 };
 
-/** Progress width for a guess: closer rank → fuller bar (log-scaled). */
 function barWidth(g: Guess): number {
   if (g.band === "secret") return 100;
   if (g.rank == null) return 4;
-  // rank 1 → ~96%, decaying as rank grows.
   return Math.max(6, Math.min(96, 100 - Math.log10(g.rank) * 30));
 }
 
@@ -264,7 +296,7 @@ const KoreanSemantle: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
   const t = COPY[locale] ?? COPY.en;
   const bandLabel = BAND_LABEL[locale] ?? BAND_LABEL.en;
   const hintCopy = HINT_COPY[locale] ?? HINT_COPY.en;
-  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal();
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: locale as any });
 
   const [status, setStatus] = useState<Status>("loading");
   const [table, setTable] = useState<SimilarityTable | null>(null);
@@ -373,10 +405,18 @@ const KoreanSemantle: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
   }, [guesses, puzzleId, status, table]);
 
   const tone = useCallback((frequency: number) => {
-    if (!sound) return; const AudioCtor = window.AudioContext || window.webkitAudioContext; if (!AudioCtor) return;
-    const audio = new AudioCtor(), oscillator = audio.createOscillator(), gain = audio.createGain();
-    oscillator.frequency.value = frequency; gain.gain.setValueAtTime(0.035, audio.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.12);
-    oscillator.connect(gain).connect(audio.destination); oscillator.start(); oscillator.stop(audio.currentTime + 0.12);
+    if (!sound) return;
+    const AudioCtor = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtor) return;
+    const audio = new AudioCtor();
+    const oscillator = audio.createOscillator();
+    const gain = audio.createGain();
+    oscillator.frequency.value = frequency;
+    gain.gain.setValueAtTime(0.035, audio.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.12);
+    oscillator.connect(gain).connect(audio.destination);
+    oscillator.start();
+    oscillator.stop(audio.currentTime + 0.12);
   }, [sound]);
 
   const submit = useCallback(() => {
@@ -384,121 +424,139 @@ const KoreanSemantle: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
     const result = scoreGuess(table, input, guesses.map((g) => g.word));
     if (!result.ok) {
       flashToast(result.reason === "duplicate" ? t.duplicate : result.reason === "empty" ? "" : t.notHangul);
+      MobileHapticsPro.warningPattern();
       return;
     }
     setInput("");
     setLastWord(result.guess.word);
     setGuesses((prev) => [...prev, result.guess]);
     tone(result.solved ? 760 : result.guess.known ? 320 + Math.max(0, 300 - (result.guess.rank ?? 300)) : 180);
-    if (!result.guess.known) flashToast(t.unknown);
+
     if (result.solved) {
       localStorage.removeItem(SAVE_KEY);
       setStatus("won");
+      MobileHapticsPro.successPattern();
       if (containerRef.current) celebrate(containerRef.current, { preset: "cards" });
       if (!recordedRef.current) {
         recordedRef.current = true;
         setStats(recordStreak(GAME_ID, true));
       }
+    } else if (result.guess.known) {
+      if ((result.guess.rank ?? 9999) <= 100) {
+        MobileHapticsPro.heavyImpact();
+      } else if ((result.guess.rank ?? 9999) <= 1000) {
+        MobileHapticsPro.mediumImpact();
+      } else {
+        MobileHapticsPro.lightImpact();
+      }
+    } else {
+      MobileHapticsPro.selectionClick();
+      flashToast(t.unknown);
     }
-  }, [table, status, input, guesses, flashToast, t, tone]);
+  }, [table, status, input, guesses, flashToast, t, tone, containerRef]);
 
   const reveal = useCallback(() => {
-    if (!table) return;
+    if (status !== "playing") return;
     localStorage.removeItem(SAVE_KEY);
     setStatus("revealed");
+    MobileHapticsPro.warningPattern();
     if (!recordedRef.current) {
       recordedRef.current = true;
       setStats(recordStreak(GAME_ID, false));
     }
-  }, [table]);
+  }, [status]);
 
-  const share = useCallback(async () => {
-    const solved = status === "won";
-    const closest = orderGuesses(guesses)[0];
-    const line = solved
-      ? t.won(guesses.length)
-      : `꼬맨틀 — ${t.rankLabel} ${closest?.rank ?? "?"}`;
-    const text = `${line}\n${typeof window !== "undefined" ? window.location.href : ""}`;
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1600);
-    } catch {
-      /* clipboard unavailable — no-op */
-    }
-  }, [status, guesses, t]);
-
-  const handleShareCard = useCallback(async () => {
-    const solved = status === "won";
-    const closest = orderGuesses(guesses)[0];
-    const canvas = createShareCardCanvas({
-      title: "Korean Semantle (꼬맨틀)",
-      subtitle: puzzleId ? `Puzzle #${puzzleId}` : "Daily Word Similarity",
-      score: solved ? `${guesses.length} Guesses` : "In Progress",
-      slug: "korean-semantle",
-      customStats: [
-        { label: "Top Rank", value: closest?.rank != null ? `#${closest.rank}` : "None" },
-        { label: "Similarity", value: closest?.similarity != null ? `${(closest.similarity * 100).toFixed(1)}%` : "0%" },
-        ...(stats ? [{ label: "Streak", value: `${stats.currentStreak} Days` }] : []),
-      ],
-    });
-    const ok = await copyShareCardToClipboard(canvas);
-    if (ok) {
-      setShareCardCopied(true);
-      setTimeout(() => setShareCardCopied(false), 2000);
-    } else {
-      downloadShareCard(canvas, `korean-semantle-${puzzleId || "daily"}.png`);
-    }
-  }, [status, guesses, puzzleId, stats]);
-
-  const ordered = useMemo(() => orderGuesses(guesses), [guesses]);
-  const availableHints = useMemo(() => table ? koreanSemantleHints(table, guesses.length) : [], [table, guesses.length]);
-  const nextHintAt = [5, 12, 20].find(value => value > guesses.length) ?? null;
   const openNextHint = useCallback(() => {
-    if (!puzzleId || shownHints >= availableHints.length) return;
+    if (!table) return;
+    const unlocked = koreanSemantleHints(table, guesses.length);
+    if (shownHints >= unlocked.length) return;
     const next = shownHints + 1;
     setShownHints(next);
     localStorage.setItem(`${HINT_KEY_PREFIX}${puzzleId}`, String(next));
-  }, [availableHints.length, puzzleId, shownHints]);
-  const isDemo = table?.meta.source === "handcrafted-demo";
+    MobileHapticsPro.selectionClick();
+  }, [guesses.length, puzzleId, shownHints, table]);
+
+  const handleShareCard = useCallback(async () => {
+    if (!table) return;
+    const isWon = status === "won";
+    const bestRank = guesses.reduce((min, g) => (g.rank != null && g.rank < min ? g.rank : min), 9999);
+    try {
+      const canvas = createShareCardCanvas({
+        title: t.title,
+        subtitle: `${puzzleId} · ${isWon ? "SOLVED" : "REVEALED"}`,
+        score: isWon ? `${guesses.length} Guesses` : "Revealed",
+        slug: "korean-semantle",
+        qrUrl: typeof window !== "undefined" ? window.location.href : undefined,
+        customStats: [
+          { label: "GUESSES", value: guesses.length },
+          { label: "BEST RANK", value: bestRank < 9999 ? `#${bestRank}` : "—" },
+          ...(stats?.currentStreak ? [{ label: "STREAK", value: `${stats.currentStreak} Days` }] : []),
+        ],
+      });
+      const ok = await copyShareCardToClipboard(canvas);
+      if (ok) {
+        setShareCardCopied(true);
+        MobileHapticsPro.successPattern();
+        setTimeout(() => setShareCardCopied(false), 2000);
+      } else {
+        downloadShareCard(canvas, `kkomantle-${puzzleId}.png`);
+      }
+    } catch {
+      // share fallback
+    }
+  }, [guesses, puzzleId, stats?.currentStreak, status, t.title, table]);
+
+  const share = useCallback(async () => {
+    const text = `${t.title} #${puzzleId} · ${guesses.length}회\nhttps://game.oiyo.net/korean-semantle`;
+    if (navigator.clipboard) {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      MobileHapticsPro.selectionClick();
+      setTimeout(() => setCopied(false), 2000);
+    }
+  }, [guesses.length, puzzleId, t.title]);
+
+  const ordered = useMemo(() => orderGuesses(guesses), [guesses]);
+  const availableHints = useMemo(() => (table ? koreanSemantleHints(table, guesses.length) : []), [guesses.length, table]);
+  const nextHintAt = guesses.length < 10 ? 10 : guesses.length < 25 ? 25 : guesses.length < 50 ? 50 : null;
 
   if (status === "loading") {
     return (
-      <div className="not-prose flex flex-col items-center justify-center py-24 gap-4">
-        <Spinner className="size-8 text-primary motion-reduce:animate-none" />
-        <p className="text-sm text-muted-foreground font-bold">{t.loading}</p>
+      <div className="flex flex-col items-center justify-center min-h-75 gap-3">
+        <p className="text-sm font-bold text-muted-foreground">{t.loading}</p>
       </div>
     );
   }
 
   if (status === "error") {
     return (
-      <div className="not-prose flex flex-col items-center py-16 gap-4">
-        <p className="text-sm text-muted-foreground font-bold">{t.loadFail}</p>
-        <button onClick={loadPuzzle} className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-black">
+      <div className="flex flex-col items-center justify-center min-h-75 gap-3">
+        <p className="text-sm font-bold text-destructive">{t.loadFail}</p>
+        <TiltSemantleButton onClick={loadPuzzle} className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-bold">
           {t.playAgain}
-        </button>
+        </TiltSemantleButton>
       </div>
     );
   }
 
   const over = status === "won" || status === "revealed";
+  const isDemo = Boolean((table?.meta as Record<string, unknown> | undefined)?.isDemo);
 
   const renderHud = () => (
-    <div className="w-full flex items-center justify-end gap-2 pb-1">
+    <div className="flex items-center justify-end gap-2 w-full pb-2">
       <button
         type="button"
         onClick={toggleSound}
-        className="flex h-9 w-9 items-center justify-center rounded-xl border border-border/60 bg-card text-foreground shadow-sm transition hover:bg-muted"
-        title={sound ? portalLabels.mute : portalLabels.unmute}
-        aria-label={sound ? portalLabels.mute : portalLabels.unmute}
+        className="flex h-9 w-9 items-center justify-center rounded-xl border border-border/60 bg-card text-foreground shadow-xs transition-colors hover:bg-muted"
+        title={sound ? portalLabels.unmute : portalLabels.mute}
+        aria-label={sound ? portalLabels.unmute : portalLabels.mute}
       >
         {sound ? <Volume2 className="h-4 w-4 text-foreground" /> : <VolumeX className="h-4 w-4 text-muted-foreground" />}
       </button>
       <button
         type="button"
         onClick={togglePortal}
-        className="flex h-9 w-9 items-center justify-center rounded-xl border border-border/60 bg-card text-foreground shadow-sm transition hover:bg-muted"
+        className="flex h-9 w-9 items-center justify-center rounded-xl border border-border/60 bg-card text-foreground shadow-xs transition-colors hover:bg-muted"
         title={isImmersive ? portalLabels.exit : portalLabels.enter}
         aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
       >
@@ -518,23 +576,21 @@ const KoreanSemantle: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
     >
       <div className="w-full max-w-lg mx-auto flex flex-col items-center gap-5">
         {renderHud()}
-        {/* Header */}
-        <img src="/games/korean-semantle-social.png" alt="" className="h-36 w-full rounded-3xl object-cover shadow-sm sm:h-44" />
+        <img src="/games/korean-semantle-social.png" alt="" className="h-36 w-full rounded-3xl object-cover shadow-xs sm:h-44" />
         <div className="w-full text-center border-b border-border pb-4">
           <div className="flex items-center justify-center gap-2">
-            <h1 className="text-2xl font-black tracking-tight">{t.title}</h1>
+            <h1 className="text-2xl font-black tracking-tight text-foreground">{t.title}</h1>
             {isDemo && (
-              <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400">
+              <span className="text-xs font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary">
                 {t.demoBadge}
               </span>
             )}
           </div>
           <p className="text-xs font-bold text-muted-foreground mt-1">{t.subtitle}</p>
           {stats && stats.played > 0 && (
-            <p className="text-[10px] font-bold text-muted-foreground mt-2">{t.stats(stats)}</p>
+            <p className="text-xs font-bold text-muted-foreground mt-2">{t.stats(stats)}</p>
           )}
-          <p className="mt-1 text-[10px] font-bold text-primary">{hintCopy.next(nextMinutes)}</p>
-          <button type="button" onClick={toggleSound} className="mt-2 min-h-10 rounded-full border px-4 text-[11px] font-black">{t.sound} {sound ? "ON" : "OFF"}</button>
+          <p className="mt-1 text-xs font-bold text-primary">{hintCopy.next(nextMinutes)}</p>
         </div>
         {restored && <p role="status" className="w-full rounded-xl bg-primary/10 p-3 text-center text-xs font-bold text-primary">{t.restored}</p>}
 
@@ -557,21 +613,29 @@ const KoreanSemantle: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
               autoComplete="off"
               autoCapitalize="off"
               inputMode="text"
-              className="flex-1 h-12 rounded-xl border border-border bg-background px-4 text-base font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="flex-1 h-12 rounded-xl border border-border bg-background px-4 text-base font-bold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             />
-            <button type="submit" className="h-12 px-5 rounded-xl bg-primary text-primary-foreground font-black shrink-0">
+            <TiltSemantleButton type="submit" className="h-12 px-5 rounded-xl bg-primary text-primary-foreground font-black shrink-0 hover:opacity-90">
               {t.submit}
-            </button>
+            </TiltSemantleButton>
           </form>
         )}
 
         {/* Guess count */}
-        <p className="text-[11px] font-bold text-muted-foreground self-start">{t.guessCount(guesses.length)}</p>
+        <p className="text-xs font-bold text-muted-foreground self-start">{t.guessCount(guesses.length)}</p>
 
-        {!over && (availableHints.length > 0 || nextHintAt) && <section className="w-full rounded-2xl border border-amber-300/60 bg-amber-50 p-3 text-xs text-stone-800" aria-label={hintCopy.open}>
-          {availableHints.slice(0, shownHints).map(hint => <p key={hint.kind} className="mb-1 font-bold">{hintCopy.format(hint)}</p>)}
-          {shownHints < availableHints.length ? <button type="button" onClick={openNextHint} className="mt-1 min-h-10 rounded-full bg-amber-700 px-4 font-black text-white">{hintCopy.open}</button> : nextHintAt ? <p className="text-stone-600">{hintCopy.locked(nextHintAt)}</p> : null}
-        </section>}
+        {!over && (availableHints.length > 0 || nextHintAt) && (
+          <section className="w-full rounded-2xl border border-border bg-muted/40 p-3 text-xs text-foreground" aria-label={hintCopy.open}>
+            {availableHints.slice(0, shownHints).map(hint => <p key={hint.kind} className="mb-1 font-bold">{hintCopy.format(hint)}</p>)}
+            {shownHints < availableHints.length ? (
+              <TiltSemantleButton onClick={openNextHint} className="mt-1 min-h-10 rounded-full bg-primary px-4 font-black text-primary-foreground hover:opacity-90">
+                {hintCopy.open}
+              </TiltSemantleButton>
+            ) : nextHintAt ? (
+              <p className="text-muted-foreground">{hintCopy.locked(nextHintAt)}</p>
+            ) : null}
+          </section>
+        )}
 
         {/* Latest guess highlight */}
         {lastWord && (() => {
@@ -594,31 +658,30 @@ const KoreanSemantle: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
               {status === "won" ? t.won(guesses.length) : t.revealed(table?.meta.secret ?? "")}
             </p>
             <div className="flex flex-wrap items-center justify-center gap-2">
-              <button
-                type="button"
+              <TiltSemantleButton
                 onClick={handleShareCard}
                 className="flex min-h-11 items-center gap-1.5 rounded-xl border border-primary/50 bg-primary/20 px-5 text-sm font-bold text-primary shadow-xs hover:bg-primary/30 transition-colors"
                 title={shareCardCopied ? "복사됨!" : "결과 카드"}
               >
                 {shareCardCopied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
                 <span>{shareCardCopied ? "복사 완료" : "결과 카드"}</span>
-              </button>
-              <button type="button" onClick={share} className="min-h-11 px-5 py-2.5 rounded-xl border border-border bg-card text-foreground font-black hover:bg-muted transition-colors">
+              </TiltSemantleButton>
+              <TiltSemantleButton onClick={share} className="min-h-11 px-5 py-2.5 rounded-xl border border-border bg-card text-foreground font-black hover:bg-muted transition-colors">
                 {copied ? t.copied : t.share}
-              </button>
+              </TiltSemantleButton>
             </div>
           </div>
         )}
 
         {/* Give up */}
         {!over && guesses.length > 0 && (
-          <button onClick={reveal} className="text-xs font-bold text-muted-foreground underline underline-offset-2 hover:text-foreground">
+          <button type="button" onClick={reveal} className="text-xs font-bold text-muted-foreground underline underline-offset-2 hover:text-foreground">
             {t.reveal}
           </button>
         )}
 
         {/* Info */}
-        <p className="text-[10px] text-muted-foreground text-center leading-relaxed max-w-md">
+        <p className="text-xs text-muted-foreground text-center leading-relaxed max-w-md">
           {t.hint}
           <br />
           <span className="opacity-70">{isDemo ? t.demoCredit : t.credit}</span>
@@ -637,7 +700,7 @@ const GuessRow: React.FC<{
   const style = BAND_STYLE[g.band];
   return (
     <div className={`relative flex items-center gap-3 rounded-xl border px-3 py-2 ${highlight ? "border-foreground/30 bg-muted/60" : "border-border"}`}>
-      <span className="font-black text-sm min-w-0 truncate flex-1">{g.word}</span>
+      <span className="font-black text-sm min-w-0 truncate flex-1 text-foreground">{g.word}</span>
       <div className="flex items-center gap-2 shrink-0">
         <div
           className="w-24 h-2 rounded-full bg-muted overflow-hidden"
@@ -649,10 +712,10 @@ const GuessRow: React.FC<{
         >
           <div className={`h-full ${style.bar} transition-all`} style={{ width: `${barWidth(g)}%` }} />
         </div>
-        <span className="text-[11px] font-bold text-muted-foreground w-16 text-right tabular-nums">
+        <span className="text-xs font-bold text-muted-foreground w-16 text-right tabular-nums">
           {g.known ? `${rankLabel} ${g.rank}` : "—"}
         </span>
-        <span className={`text-[10px] font-black w-2 h-2 rounded-full ${style.dot}`} aria-hidden="true" />
+        <span className={`text-xs font-black size-2 rounded-full ${style.dot}`} aria-hidden="true" />
         <span className="sr-only">{bandLabel[g.band]}</span>
       </div>
     </div>
@@ -660,5 +723,3 @@ const GuessRow: React.FC<{
 };
 
 export default KoreanSemantle;
-
-declare global { interface Window { webkitAudioContext?: typeof AudioContext } }

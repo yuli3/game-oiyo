@@ -5,7 +5,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Maximize2, Minimize2, Volume2, VolumeX, Share2, Check } from "lucide-react";
-import { useDynamicDifficultyPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { useDynamicDifficultyPro, MobileHapticsPro, useCardTiltPro } from "../../lib/games/engine-suite-unified";
 import { GameContainer } from "../ui/game/GamePrimitives";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import type { Locale } from "../../lib/i18n";
@@ -20,6 +20,43 @@ import {
 } from "../../lib/games/share-card";
 import { createHaptics } from "../../lib/games/haptics";
 import { LINE_SURF_SPRITES } from "../../lib/games/sprites";
+
+function TiltSurfButton({
+  children,
+  onClick,
+  className = '',
+  disabled = false,
+  title,
+  ariaLabel,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      title={title}
+      aria-label={ariaLabel || title}
+      onClick={() => {
+        triggerPop(0.12);
+        onClick?.();
+      }}
+      disabled={disabled}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`transition-all duration-150 transform-(--card-tilt) will-change-transform ${className}`}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 import {
   ACTS,
   GAME_ID,
@@ -632,25 +669,25 @@ export default function LineSurf({ locale }: { locale: Locale }) {
               </details>
             )}
             {gate === "title" ? (
-              <button type="button" onClick={enter} className={`${BUTTON} border-primary bg-primary text-primary-foreground`}>{t.enter}</button>
+              <TiltSurfButton onClick={enter} className={`${BUTTON} border-primary bg-primary text-primary-foreground`}>{t.enter}</TiltSurfButton>
             ) : null}
             {gate === "offer" && offer ? (
               <div className="space-y-2" data-augment-offer={offer.join(" ")}>
                 <p className="text-sm font-bold text-foreground">{t.pick}</p>
                 {offer.map((id) => (
-                  <button key={id} type="button" onClick={() => pickAugment(id)} className={`${BUTTON} block w-full text-left`}>
+                  <TiltSurfButton key={id} onClick={() => pickAugment(id)} className={`${BUTTON} block w-full text-left`}>
                     <span className="block">{t.augment[id].name}</span>
                     <span className="mt-1 block text-sm font-normal text-muted-foreground">{t.augment[id].body}</span>
-                  </button>
+                  </TiltSurfButton>
                 ))}
-                <button type="button" onClick={leave} className={`${CONTROL} border-border bg-card text-foreground`}>{t.leave}</button>
+                <TiltSurfButton onClick={leave} className={`${CONTROL} border-border bg-card text-foreground`}>{t.leave}</TiltSurfButton>
               </div>
             ) : null}
             {gate === "board" && paused ? (
               <div className="flex flex-wrap gap-2">
-                <button type="button" onClick={resume} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.resume}</button>
-                <button type="button" onClick={practiceWave} className={`${CONTROL} border-border bg-card text-foreground`}>{t.practice}</button>
-                <button type="button" onClick={leave} className={`${CONTROL} border-border bg-card text-foreground`}>{t.leave}</button>
+                <TiltSurfButton onClick={resume} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.resume}</TiltSurfButton>
+                <TiltSurfButton onClick={practiceWave} className={`${CONTROL} border-border bg-card text-foreground`}>{t.practice}</TiltSurfButton>
+                <TiltSurfButton onClick={leave} className={`${CONTROL} border-border bg-card text-foreground`}>{t.leave}</TiltSurfButton>
                 <button type="button" onClick={() => setMuted((value) => !value)} className={`${CONTROL} border-border bg-card text-foreground`}>{muted ? portalLabels.unmute : portalLabels.mute}</button>
               </div>
             ) : null}
@@ -658,9 +695,8 @@ export default function LineSurf({ locale }: { locale: Locale }) {
               <>
                 <div className="grid grid-cols-2 gap-2">
                   {ACTS.map((act) => (
-                    <button
+                    <TiltSurfButton
                       key={act}
-                      type="button"
                       onClick={() => {
                         hapticsRef.current.fire("place");
                         setRun((current) => (current ? ride(current, act) : current));
@@ -668,32 +704,30 @@ export default function LineSurf({ locale }: { locale: Locale }) {
                       className={BUTTON}
                     >
                       {t.act[act]}
-                    </button>
+                    </TiltSurfButton>
                   ))}
                 </div>
-                <button type="button" onClick={pause} className={`${CONTROL} border-border bg-card text-foreground`}>{t.pause}</button>
+                <TiltSurfButton onClick={pause} className={`${CONTROL} border-border bg-card text-foreground`}>{t.pause}</TiltSurfButton>
               </>
             ) : null}
             {gate === "board" && !paused && run.phase === "ready" ? (
-              <button type="button" onClick={() => setRun((current) => (current ? begin(current) : current))} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.start}</button>
+              <TiltSurfButton onClick={() => setRun((current) => (current ? begin(current) : current))} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.start}</TiltSurfButton>
             ) : null}
             {gate === "board" && !paused && (run.phase === "won" || run.phase === "lost") ? (
               <div className="flex gap-2">
-                <button
-                  type="button"
+                <TiltSurfButton
                   onClick={handleShareCard}
                   className={`${BUTTON} flex-1 flex items-center justify-center gap-1.5`}
                 >
                   {shareCardCopied ? <Check className="size-4 text-primary" /> : <Share2 className="size-4" />}
                   {shareCardCopied ? "복사됨!" : "결과 카드 공유"}
-                </button>
-                <button
-                  type="button"
+                </TiltSurfButton>
+                <TiltSurfButton
                   onClick={practiceWave}
                   className={`${BUTTON} flex-1 border-primary bg-primary text-primary-foreground`}
                 >
                   {t.practice}
-                </button>
+                </TiltSurfButton>
               </div>
             ) : null}
             <p className="text-sm text-muted-foreground">{t.record(record?.w ?? 0, record?.l ?? 0)}{best?.unit === "score" ? ` · ${t.best(best.value)}` : ""}</p>
