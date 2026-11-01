@@ -22,6 +22,48 @@ import {
 } from '../../lib/games/orbital-defense';
 import { OrbitalDefense3DScene } from './OrbitalDefense3DScene';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { getSpriteUrl } from '../../lib/games/sprites';
+
+function TiltDefenseButton({
+  children,
+  onClick,
+  className = '',
+  disabled = false,
+  title,
+  ariaLabel,
+  type = 'button',
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+  type?: 'button' | 'submit';
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type={type}
+      title={title}
+      aria-label={ariaLabel || title}
+      onClick={() => {
+        triggerPop(0.12);
+        MobileHapticsPro.light();
+        onClick?.();
+      }}
+      disabled={disabled}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`touch-manipulation select-none transition-all duration-150 transform-(--card-tilt) will-change-transform ${className}`}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 
 interface Props {
   locale?: string;
@@ -146,6 +188,7 @@ export default function OrbitalDefense3D({ locale = 'ko' }: Props) {
   const prevOverRef = useRef(false);
   useEffect(() => {
     if (gameState.isGameOver && !prevOverRef.current) {
+      MobileHapticsPro.warning();
       if (containerRef.current) {
         celebrate(containerRef.current, { preset: "stardust" });
       }
@@ -178,11 +221,13 @@ export default function OrbitalDefense3D({ locale = 'ko' }: Props) {
   }, []);
 
   const handleSelectSlot = useCallback((orbitIndex: number, slotIndex: number) => {
+    MobileHapticsPro.light();
     setSelectedSlot({ orbitIndex, slotIndex });
     setSelectedTurretId(null);
   }, []);
 
   const handleSelectTurret = useCallback((turretId: string) => {
+    MobileHapticsPro.light();
     setSelectedTurretId(turretId);
     setSelectedSlot(null);
   }, []);
@@ -193,6 +238,7 @@ export default function OrbitalDefense3D({ locale = 'ko' }: Props) {
       const next = { ...prev };
       const success = buildTurret(next, selectedSlot.orbitIndex, selectedSlot.slotIndex, type);
       if (success) {
+        MobileHapticsPro.medium();
         setSelectedSlot(null);
       }
       return next;
@@ -204,11 +250,13 @@ export default function OrbitalDefense3D({ locale = 'ko' }: Props) {
     setGameState((prev) => {
       const next = { ...prev };
       upgradeTurret(next, selectedTurretId);
+      MobileHapticsPro.success();
       return next;
     });
   };
 
   const handleStartWave = () => {
+    MobileHapticsPro.heavy();
     setGameState((prev) => {
       const next = { ...prev };
       startWave(next);
@@ -250,12 +298,12 @@ export default function OrbitalDefense3D({ locale = 'ko' }: Props) {
             <span className="font-bold text-foreground">{gameState.planetHealth}/{gameState.maxPlanetHealth}</span>
           </div>
           <div className="flex items-center gap-1.5 rounded-lg bg-muted/40 px-3 py-1.5">
-            <span className="text-chart-5">💰</span>
+            <img src={getSpriteUrl('coin', 64)} alt="Gold" width={64} height={64} className="size-4 object-contain drop-shadow-xs" />
             <span className="text-muted-foreground">{t.gold}:</span>
             <span className="font-bold text-foreground">{gameState.gold}</span>
           </div>
           <div className="flex items-center gap-1.5 rounded-lg bg-muted/40 px-3 py-1.5">
-            <span className="text-primary">★</span>
+            <img src={getSpriteUrl('star', 64)} alt="Score" width={64} height={64} className="size-4 object-contain drop-shadow-xs" />
             <span className="text-muted-foreground">{t.score}:</span>
             <span className="font-bold text-foreground">{gameState.score}</span>
           </div>
@@ -301,24 +349,29 @@ export default function OrbitalDefense3D({ locale = 'ko' }: Props) {
       <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
         {gameState.isGameOver ? (
           <div className="flex flex-col items-center justify-center gap-3 py-4 text-center">
+            <img
+              src={getSpriteUrl("trophy", 64)}
+              alt="Orbital Defense Record"
+              width={64}
+              height={64}
+              className="size-14 object-contain animate-bounce drop-shadow-md mx-auto"
+            />
             <p className="text-lg font-bold text-destructive">{t.gameOver}</p>
             <p className="text-sm text-muted-foreground">최종 점수: {gameState.score.toLocaleString()}점 (웨이브 {gameState.wave})</p>
             <div className="flex gap-2">
-              <button
-                type="button"
+              <TiltDefenseButton
                 onClick={handleShareCard}
-                className="flex items-center gap-1.5 rounded-xl border border-border bg-card hover:bg-muted px-4 py-2.5 text-sm font-bold text-foreground transition-colors shadow-xs"
+                className="flex items-center gap-1.5 rounded-xl border border-border bg-card hover:bg-muted px-4 py-2.5 text-sm font-bold text-foreground shadow-xs"
               >
                 {shareCardCopied ? <Check className="w-4 h-4 text-primary" /> : <Share2 className="w-4 h-4" />}
                 {shareCardCopied ? "복사됨!" : "결과 카드 공유"}
-              </button>
-              <button
-                type="button"
+              </TiltDefenseButton>
+              <TiltDefenseButton
                 onClick={handleRestart}
-                className="rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-90"
+                className="rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm"
               >
                 {t.restart}
-              </button>
+              </TiltDefenseButton>
             </div>
           </div>
         ) : selectedSlot ? (
@@ -340,12 +393,11 @@ export default function OrbitalDefense3D({ locale = 'ko' }: Props) {
                 const spec = TURRET_SPECS[type];
                 const canAfford = gameState.gold >= spec.cost;
                 return (
-                  <button
+                  <TiltDefenseButton
                     key={type}
-                    type="button"
                     disabled={!canAfford}
                     onClick={() => handleBuild(type)}
-                    className={`flex flex-col gap-1 rounded-xl border p-3 text-left transition-all ${
+                    className={`flex flex-col gap-1 rounded-xl border p-3 text-left ${
                       canAfford
                         ? 'border-border bg-muted/20 hover:border-primary hover:bg-muted/40'
                         : 'border-border/40 opacity-50 cursor-not-allowed'
@@ -359,7 +411,7 @@ export default function OrbitalDefense3D({ locale = 'ko' }: Props) {
                       <p>공격력: {spec.damage} | 사거리: {spec.range}</p>
                       <p>연사: {spec.fireRate}/s</p>
                     </div>
-                  </button>
+                  </TiltDefenseButton>
                 );
               })}
             </div>
@@ -381,38 +433,35 @@ export default function OrbitalDefense3D({ locale = 'ko' }: Props) {
             </div>
 
             <div className="flex items-center gap-2">
-              <button
-                type="button"
+              <TiltDefenseButton
                 onClick={handleUpgrade}
                 disabled={gameState.gold < TURRET_SPECS[selectedTurret.type].upgradeCost * selectedTurret.level}
                 className="rounded-xl bg-chart-1 px-4 py-2 text-xs font-bold text-primary-foreground shadow-sm hover:opacity-90 disabled:opacity-50"
               >
                 {t.upgradeTurret} ({TURRET_SPECS[selectedTurret.type].upgradeCost * selectedTurret.level}G)
-              </button>
-              <button
-                type="button"
+              </TiltDefenseButton>
+              <TiltDefenseButton
                 onClick={() => setSelectedTurretId(null)}
                 className="rounded-xl border border-border px-3 py-2 text-xs text-muted-foreground hover:bg-muted"
               >
                 선택 해제
-              </button>
+              </TiltDefenseButton>
             </div>
           </div>
         ) : (
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-xs text-muted-foreground">{t.selectSlot}</p>
-            <button
-              type="button"
+            <TiltDefenseButton
               disabled={gameState.isWaveActive}
               onClick={handleStartWave}
-              className={`rounded-xl px-5 py-2.5 text-sm font-bold shadow-sm transition-all ${
+              className={`rounded-xl px-5 py-2.5 text-sm font-bold shadow-sm ${
                 gameState.isWaveActive
                   ? 'bg-muted text-muted-foreground cursor-not-allowed'
                   : 'bg-primary text-primary-foreground hover:opacity-90'
               }`}
             >
               {gameState.isWaveActive ? t.waveActive : `${t.startWave} (웨이브 ${gameState.wave})`}
-            </button>
+            </TiltDefenseButton>
           </div>
         )}
       </div>

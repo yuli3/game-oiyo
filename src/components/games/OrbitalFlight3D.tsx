@@ -10,6 +10,48 @@ import {
   createInitialOrbitalState,
   updateOrbitalFlight,
 } from '../../lib/games/orbital-flight';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { getSpriteUrl } from '../../lib/games/sprites';
+
+function TiltFlightButton({
+  children,
+  onClick,
+  className = '',
+  disabled = false,
+  title,
+  ariaLabel,
+  type = 'button',
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+  type?: 'button' | 'submit';
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type={type}
+      title={title}
+      aria-label={ariaLabel || title}
+      onClick={() => {
+        triggerPop(0.12);
+        MobileHapticsPro.light();
+        onClick?.();
+      }}
+      disabled={disabled}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`touch-manipulation select-none transition-all duration-150 transform-(--card-tilt) will-change-transform ${className}`}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 
 function getPercentageWidthClass(pct: number): string {
   if (pct >= 95) return 'w-full';
@@ -42,6 +84,7 @@ function createOrbitalAudio() {
 
   return {
     playGatePass() {
+      MobileHapticsPro.medium();
       const c = getCtx();
       if (!c) return;
       try {
@@ -58,6 +101,7 @@ function createOrbitalAudio() {
       } catch {}
     },
     playCollision() {
+      MobileHapticsPro.heavy();
       const c = getCtx();
       if (!c) return;
       try {
@@ -74,6 +118,7 @@ function createOrbitalAudio() {
       } catch {}
     },
     playBoost() {
+      MobileHapticsPro.light();
       const c = getCtx();
       if (!c) return;
       try {
@@ -455,6 +500,15 @@ export default function OrbitalFlight3D() {
       {gameState.gameOver && (
         <div className="absolute inset-0 bg-background/85 backdrop-blur-md flex items-center justify-center p-6 z-10">
           <div className="max-w-md w-full rounded-2xl border border-border bg-card p-6 shadow-2xl text-center space-y-4 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex justify-center mb-1">
+              <img
+                src={getSpriteUrl("trophy", 64)}
+                alt="Orbital Flight Record"
+                width={64}
+                height={64}
+                className="size-14 object-contain animate-bounce drop-shadow-md"
+              />
+            </div>
             <div className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">
               {gameState.gameOverReason === "atmospheric_burn"
                 ? "대기권 추락 — 기체 소실"
@@ -486,20 +540,18 @@ export default function OrbitalFlight3D() {
             </div>
 
             <div className="flex gap-2">
-              <button
-                type="button"
+              <TiltFlightButton
                 onClick={handleShareCard}
-                className="flex-1 py-3.5 rounded-xl border border-border bg-card hover:bg-muted font-bold text-sm text-foreground transition-colors flex items-center justify-center gap-1.5"
+                className="flex-1 py-3.5 rounded-xl border border-border bg-card hover:bg-muted font-bold text-sm text-foreground flex items-center justify-center gap-1.5 shadow-xs"
               >
                 {shareCardCopied ? "✓ 복사 완료!" : "결과 카드 공유"}
-              </button>
-              <button
-                type="button"
+              </TiltFlightButton>
+              <TiltFlightButton
                 onClick={handleRestart}
-                className="flex-1 py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-md hover:bg-primary/90 transition-colors"
+                className="flex-1 py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-md"
               >
                 새로운 궤도 재진입 (RETRY)
-              </button>
+              </TiltFlightButton>
             </div>
           </div>
         </div>

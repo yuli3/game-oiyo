@@ -19,7 +19,48 @@ import {
   copyShareCardToClipboard,
   downloadShareCard,
 } from "../../lib/games/share-card";
-import { ONE_BUTTON_CIV_SPRITES } from "../../lib/games/sprites";
+import { ONE_BUTTON_CIV_SPRITES, getSpriteUrl } from "../../lib/games/sprites";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+
+function TiltCivButton({
+  children,
+  onClick,
+  className = "",
+  disabled = false,
+  title,
+  ariaLabel,
+  type = "button",
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+  type?: "button" | "submit";
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type={type}
+      title={title}
+      aria-label={ariaLabel || title}
+      onClick={() => {
+        triggerPop(0.12);
+        MobileHapticsPro.light();
+        onClick?.();
+      }}
+      disabled={disabled}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`touch-manipulation select-none transition-all duration-150 transform-(--card-tilt) will-change-transform ${className}`}
+      style={{ "--card-tilt": transformCss } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 import {
   GAME_ID,
   PLOTS,
@@ -375,6 +416,11 @@ export default function OneButtonCiv({ locale }: { locale: Locale }) {
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
+    if (held >= HOLD_MS) {
+      MobileHapticsPro.heavy();
+    } else {
+      MobileHapticsPro.medium();
+    }
     apply(held >= HOLD_MS ? "hold" : "tap");
   };
 
@@ -440,10 +486,11 @@ export default function OneButtonCiv({ locale }: { locale: Locale }) {
                 </div>
                 <button
                   type="button"
-                  className="min-h-16 w-full touch-none rounded-xl border border-primary bg-primary px-3 py-2 text-2xl font-bold text-primary-foreground motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                  className="min-h-16 w-full touch-none rounded-xl border border-primary bg-primary px-3 py-2 text-2xl font-bold text-primary-foreground motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-transform active:scale-95"
                   aria-label={t.button}
                   onPointerDown={(event) => {
                     event.preventDefault();
+                    MobileHapticsPro.light();
                     downAt.current = performance.now();
                     event.currentTarget.setPointerCapture(event.pointerId);
                   }}
@@ -456,21 +503,38 @@ export default function OneButtonCiv({ locale }: { locale: Locale }) {
               </div>
             ) : null}
             {run.phase === "ready" ? (
-              <button type="button" onClick={() => { locked.current = -1; setRun((current) => (current ? begin(current) : current)); }} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.start}</button>
+              <TiltCivButton
+                onClick={() => { locked.current = -1; setRun((current) => (current ? begin(current) : current)); }}
+                className={`${CONTROL} border-primary bg-primary text-primary-foreground`}
+              >
+                {t.start}
+              </TiltCivButton>
             ) : null}
             {run.phase === "won" || run.phase === "lost" ? (
-              <div className="space-y-3">
+              <div className="space-y-3 rounded-2xl border border-border bg-card/60 p-4">
+                {run.phase === "won" && (
+                  <div className="flex justify-center mb-2">
+                    <img
+                      src={getSpriteUrl("trophy", 64)}
+                      alt="Civilization Golden Age Trophy"
+                      width={64}
+                      height={64}
+                      className="size-14 object-contain animate-bounce drop-shadow-md"
+                    />
+                  </div>
+                )}
                 <p className="text-sm font-bold tabular-nums text-foreground">{t.matched(matched(run))}</p>
                 <div className="flex flex-wrap items-center gap-2">
-                  <button type="button" onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</button>
-                  <button
-                    type="button"
+                  <TiltCivButton onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>
+                    {t.again}
+                  </TiltCivButton>
+                  <TiltCivButton
                     onClick={() => void handleShareCard()}
-                    className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-primary/40 bg-primary/20 px-4 py-2 text-xs font-bold text-primary transition-colors hover:bg-primary/30 active:scale-95"
+                    className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-primary/40 bg-primary/20 px-4 py-2 text-xs font-bold text-primary transition-colors hover:bg-primary/30"
                   >
                     <Share2 className="size-4" />
                     <span>{shareCopied ? "복사됨!" : "공유 카드"}</span>
-                  </button>
+                  </TiltCivButton>
                 </div>
               </div>
             ) : null}

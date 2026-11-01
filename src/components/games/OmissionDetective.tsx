@@ -2,8 +2,8 @@
 // on a phone (2026-10-20). Statements stay on screen; the true route does not,
 // until the case is closed.
 
-import { useEffect, useRef, useState } from "react";
-import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { Maximize2, Minimize2, Volume2, VolumeX, Share2, Check } from "lucide-react";
 import { GameContainer } from "../ui/game/GamePrimitives";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import type { Locale } from "../../lib/i18n";
@@ -13,7 +13,56 @@ import { dateKeyIndex, kstDateKey } from "../../lib/games/todays-game";
 import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from "../../lib/games/game-audio";
 import { createHaptics } from "../../lib/games/haptics";
 import { celebrate } from "../../lib/games/celebration";
-import { OMISSION_DETECTIVE_SPRITES } from "../../lib/games/sprites";
+import { OMISSION_DETECTIVE_SPRITES, getSpriteUrl } from "../../lib/games/sprites";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
+
+function TiltDetectiveButton({
+  children,
+  onClick,
+  className = "",
+  disabled = false,
+  title,
+  ariaLabel,
+  ariaPressed,
+  type = "button",
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+  ariaPressed?: boolean;
+  type?: "button" | "submit";
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type={type}
+      title={title}
+      aria-label={ariaLabel || title}
+      aria-pressed={ariaPressed}
+      onClick={() => {
+        triggerPop(0.12);
+        MobileHapticsPro.light();
+        onClick?.();
+      }}
+      disabled={disabled}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`touch-manipulation select-none transition-all duration-150 transform-(--card-tilt) will-change-transform ${className}`}
+      style={{ "--card-tilt": transformCss } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 import {
   GAME_ID,
   TRIES,
@@ -168,10 +217,34 @@ export default function OmissionDetective({ locale }: { locale: Locale }) {
   const [attempt, setAttempt] = useState(0);
   const [record, setRecord] = useState<GameRecord | null>(null);
   const [muted, setMuted] = useState(false);
+  const [shareCardCopied, setShareCardCopied] = useState(false);
   const cuesRef = useRef<CuePlayer<CoreCue> | null>(null);
   const hapticsRef = useRef(createHaptics());
   const noted = useRef(new Set<string>());
   const phase = useRef<Board["phase"] | null>(null);
+
+  const handleShareCard = useCallback(async () => {
+    if (!board || !dateKey) return;
+    const isWon = board.phase === "won";
+    const canvas = createShareCardCanvas({
+      title: "Omission Detective",
+      subtitle: isWon ? "사건 추리 완결 — 무결점 검거" : "미제 사건 보존",
+      score: isWon ? "CASE SOLVED" : "CASE UNSOLVED",
+      slug: "omission-detective",
+      customStats: [
+        { label: "Date", value: dateKey },
+        { label: "Tries", value: `${board.tries}/${TRIES}` },
+        { label: "Record", value: `${record?.w ?? 0}W - ${record?.l ?? 0}L` },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `omission-detective-${dateKey}.png`);
+    }
+  }, [board, dateKey, record]);
 
   const cue = (kind: CoreCue) => {
     if (muted || reducedMotion) return;
@@ -285,27 +358,71 @@ export default function OmissionDetective({ locale }: { locale: Locale }) {
             {board.broken === null && board.tries > 0 && board.phase === "ask" ? <p className="text-sm font-bold text-foreground">{t.open}</p> : null}
             <div className="flex flex-wrap gap-2">
               {board.picks.map((place, index) => (
-                <button key={`${place}-${index}`} type="button" onClick={() => onTogglePlace(place)} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.places[place]}</button>
+                <TiltDetectiveButton
+                  key={`${place}-${index}`}
+                  onClick={() => onTogglePlace(place)}
+                  className={`${CONTROL} border-primary bg-primary text-primary-foreground`}
+                >
+                  {t.places[place]}
+                </TiltDetectiveButton>
               ))}
               {Array.from({ length: board.daily.order.length - board.picks.length }, (_, index) => (
-                <span key={index} className={`${CONTROL} inline-flex items-center border-dashed border-border text-muted-foreground`}>{board.picks.length + index + 1}</span>
+                <span key={index} className={`${CONTROL} inline-flex items-center justify-center border-dashed border-border text-muted-foreground`}>
+                  {board.picks.length + index + 1}
+                </span>
               ))}
             </div>
             <div className="flex flex-wrap gap-2">
               {tray(board.daily).map((place) => {
                 const picked = board.picks.includes(place);
                 return (
-                  <button key={place} type="button" disabled={closed} aria-pressed={picked} onClick={() => onTogglePlace(place)} className={`${CONTROL} ${picked ? "border-primary bg-primary/15 text-foreground" : "border-border bg-card text-foreground"} disabled:opacity-40`}>{t.places[place]}</button>
+                  <TiltDetectiveButton
+                    key={place}
+                    disabled={closed}
+                    ariaPressed={picked}
+                    onClick={() => onTogglePlace(place)}
+                    className={`${CONTROL} ${picked ? "border-primary bg-primary/15 text-foreground" : "border-border bg-card text-foreground"} disabled:opacity-40`}
+                  >
+                    {t.places[place]}
+                  </TiltDetectiveButton>
                 );
               })}
             </div>
             {board.phase === "ask" ? (
-              <button type="button" disabled={board.picks.length !== board.daily.order.length} onClick={onSubmit} className={`${CONTROL} border-primary bg-primary text-primary-foreground disabled:opacity-40`}>{t.check}</button>
+              <TiltDetectiveButton
+                disabled={board.picks.length !== board.daily.order.length}
+                onClick={onSubmit}
+                className={`${CONTROL} border-primary bg-primary text-primary-foreground disabled:opacity-40`}
+              >
+                {t.check}
+              </TiltDetectiveButton>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-3 rounded-2xl border border-border bg-card/60 p-4">
+                {board.phase === "won" && (
+                  <div className="flex justify-center mb-2">
+                    <img
+                      src={getSpriteUrl("trophy", 64)}
+                      alt="Solved Trophy"
+                      width={64}
+                      height={64}
+                      className="size-14 object-contain animate-bounce drop-shadow-md"
+                    />
+                  </div>
+                )}
                 <p className="text-sm font-bold text-foreground">{t.route}</p>
                 <p className="text-sm text-foreground">{board.daily.order.map((place) => t.places[place]).join(" → ")}</p>
-                <button type="button" onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</button>
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  <TiltDetectiveButton onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>
+                    {t.again}
+                  </TiltDetectiveButton>
+                  <TiltDetectiveButton
+                    onClick={handleShareCard}
+                    className="flex min-h-11 items-center gap-1.5 rounded-xl border border-primary/40 bg-primary/20 px-4 py-2 text-xs font-bold text-primary transition-colors hover:bg-primary/30"
+                  >
+                    {shareCardCopied ? <Check className="size-4" /> : <Share2 className="size-4" />}
+                    <span>{shareCardCopied ? "복사 완료!" : "결과 카드"}</span>
+                  </TiltDetectiveButton>
+                </div>
               </div>
             )}
             <p className="text-sm text-muted-foreground">{t.record(record?.w ?? 0, record?.l ?? 0)}</p>

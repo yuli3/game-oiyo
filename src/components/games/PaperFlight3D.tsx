@@ -31,6 +31,7 @@ import {
   downloadShareCard,
 } from '../../lib/games/share-card';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { getSpriteUrl } from '../../lib/games/sprites';
 
 function TiltFlightButton({
   children,
@@ -574,8 +575,14 @@ export default function PaperFlight3D() {
       {status === 'ready' && (
         <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="max-w-md w-full p-6 rounded-2xl bg-card border border-border shadow-2xl flex flex-col items-center text-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-3xl">
-              ✈️
+            <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+              <img
+                src={getSpriteUrl('star', 64)}
+                alt="Paper Flight Launch"
+                width={64}
+                height={64}
+                className="size-10 object-contain drop-shadow-sm"
+              />
             </div>
             <div>
               <h2 className="text-2xl font-black text-foreground">종이비행기 3D</h2>
@@ -592,14 +599,13 @@ export default function PaperFlight3D() {
               <div>• <b>황금 링 & 종이학</b>: 속도 폭발 및 보너스 점수</div>
             </div>
 
-            <Button
-              size="lg"
-              className="w-full"
+            <TiltFlightButton
+              className="w-full min-h-12 rounded-xl bg-primary px-6 font-black text-primary-foreground flex items-center justify-center gap-2 shadow-md hover:bg-primary/90"
               onClick={handleLaunch}
             >
-              <Play />
+              <Play className="size-4 fill-current" />
               비행 활주 시작
-            </Button>
+            </TiltFlightButton>
           </div>
         </div>
       )}
@@ -609,8 +615,14 @@ export default function PaperFlight3D() {
         <div className="absolute inset-0 bg-background/85 backdrop-blur-md flex items-center justify-center p-4">
           <div className="max-w-md w-full animate-in fade-in zoom-in-95">
             <div className="w-full p-6 rounded-2xl bg-card border border-border shadow-2xl flex flex-col items-center text-center gap-5">
-              <div className="w-16 h-16 rounded-2xl bg-warning/10 border border-warning/20 flex items-center justify-center text-3xl">
-                {status === 'cleared' ? '🏆' : '🛬'}
+              <div className="w-16 h-16 rounded-2xl bg-warning/10 border border-warning/20 flex items-center justify-center">
+                <img
+                  src={getSpriteUrl(status === 'cleared' ? 'trophy' : 'star', 64)}
+                  alt="Flight Result Trophy"
+                  width={64}
+                  height={64}
+                  className="size-12 object-contain animate-bounce drop-shadow-md"
+                />
               </div>
 
               <div>
@@ -631,7 +643,7 @@ export default function PaperFlight3D() {
                 </div>
                 <div className="p-3 rounded-xl bg-muted/50 flex flex-col">
                   <span className="text-xs text-muted-foreground">통과한 링</span>
-                  <span className="text-lg font-black text-warning">{rings}개</span>
+                  <span className="text-lg font-black text-chart-5">{rings}개</span>
                 </div>
                 <div className="p-3 rounded-xl bg-muted/50 flex flex-col">
                   <span className="text-xs text-muted-foreground">최종 점수</span>
@@ -640,21 +652,20 @@ export default function PaperFlight3D() {
               </div>
 
               <div className="flex items-center gap-3 w-full">
-                <Button
-                  size="lg"
-                  className="flex-1"
+                <TiltFlightButton
+                  className="flex-1 min-h-12 rounded-xl bg-primary px-4 font-bold text-sm text-primary-foreground flex items-center justify-center gap-1.5 shadow-md hover:bg-primary/90"
                   onClick={handleRestart}
                 >
-                  <RotateCcw />
+                  <RotateCcw className="size-4" />
                   다시 비행하기
-                </Button>
-                <Button
-                  variant="outline"
-                  size="lg"
+                </TiltFlightButton>
+                <TiltFlightButton
+                  className="min-h-12 rounded-xl border border-border bg-card px-4 font-bold text-sm text-foreground flex items-center justify-center gap-1.5 shadow-xs hover:bg-muted"
                   onClick={handleShare}
                 >
-                  {copied ? <Check className="size-4 text-success" /> : <Share2 className="size-4" />} 공유
-                </Button>
+                  {copied ? <Check className="size-4 text-primary" /> : <Share2 className="size-4" />}
+                  <span>{copied ? "복사됨!" : "공유 카드"}</span>
+                </TiltFlightButton>
               </div>
             </div>
           </div>
