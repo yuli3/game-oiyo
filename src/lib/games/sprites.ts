@@ -550,6 +550,14 @@ export const POTION_CRAFT_SPRITES = {
   cauldron: "/assets/sprites/potion-craft/alchemy-cauldron-128.png",
 } as const;
 
+export const MERGE_MANSION_SPRITES = {
+  shears: "/assets/sprites/merge-mansion/tool-shears-128.png",
+  soap: "/assets/sprites/merge-mansion/cleaning-soap-128.png",
+  spray: "/assets/sprites/merge-mansion/cleaning-spray-128.png",
+  plant: "/assets/sprites/merge-mansion/plant-fruit-128.png",
+  spawner: "/assets/sprites/merge-mansion/mansion-spawner-128.png",
+} as const;
+
 export const DOT_PET_SPRITES: Record<string, { baby: string; adult: string }> = {
   normal: {
     baby: "/assets/sprites/dot-pet/normal-baby.png",

@@ -14,8 +14,18 @@ import {
   copyShareCardToClipboard,
   downloadShareCard,
 } from '../../lib/games/share-card';
-import { getSpriteUrl } from '../../lib/games/sprites';
+import { getSpriteUrl, MERGE_MANSION_SPRITES } from '../../lib/games/sprites';
 import { celebrate } from '../../lib/games/celebration';
+
+function getItemSprite(it: MergeItem): string | null {
+  if (it.isSpawner) return MERGE_MANSION_SPRITES.spawner;
+  if (it.chain === 'tools') return MERGE_MANSION_SPRITES.shears;
+  if (it.chain === 'cleaning') {
+    return it.tier >= 3 ? MERGE_MANSION_SPRITES.spray : MERGE_MANSION_SPRITES.soap;
+  }
+  if (it.chain === 'plants') return MERGE_MANSION_SPRITES.plant;
+  return null;
+}
 
 function TiltMergeCell({
   item,
@@ -35,6 +45,7 @@ function TiltMergeCell({
   onClick: () => void;
 }) {
   const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  const sprite = item ? getItemSprite(item) : null;
 
   return (
     <div
@@ -74,15 +85,26 @@ function TiltMergeCell({
 
           {/* Cobweb Lock Icon */}
           {item.isCobwebbed && (
-            <div className="absolute inset-0 bg-background/50 backdrop-blur-xs rounded-xl flex items-center justify-center">
+            <div className="absolute inset-0 bg-background/50 backdrop-blur-xs rounded-xl flex items-center justify-center z-10">
               <Lock className="w-4 h-4 text-muted-foreground" />
             </div>
           )}
 
-          {/* Item Emoji & Visual */}
-          <span className={`text-2xl sm:text-3xl select-none ${item.isCobwebbed ? 'opacity-40' : ''}`}>
-            {def.emoji}
-          </span>
+          {/* Item 3D Sprite & Visual */}
+          <div className={`relative size-8 sm:size-10 flex items-center justify-center ${item.isCobwebbed ? 'opacity-40 grayscale' : ''}`}>
+            {sprite ? (
+              <img
+                src={sprite}
+                alt={def.name.ko}
+                className="size-full object-contain filter drop-shadow-xs select-none pointer-events-none"
+                draggable={false}
+              />
+            ) : (
+              <span className="text-2xl sm:text-3xl select-none">
+                {def.emoji}
+              </span>
+            )}
+          </div>
 
           {/* Level Pill */}
           <span className="text-xs font-bold text-muted-foreground scale-90">
@@ -494,16 +516,21 @@ export default function MergeMansion() {
                       const hasItem = board.some(
                         (it) => it !== null && !it.isCobwebbed && it.chain === req.chain && it.tier === req.tier,
                       );
+                      const reqSprite = getItemSprite({ id: 'req', chain: req.chain, tier: req.tier });
                       return (
                         <div
                           key={idx}
-                          className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-xs border ${
+                          className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs border ${
                             hasItem
                               ? 'bg-card border-primary/50 text-foreground'
                               : 'bg-muted/60 border-border text-muted-foreground opacity-75'
                           }`}
                         >
-                          <span>{itemDef.emoji}</span>
+                          {reqSprite ? (
+                            <img src={reqSprite} alt={itemDef.name.ko} className="size-3.5 object-contain inline-block" />
+                          ) : (
+                            <span>{itemDef.emoji}</span>
+                          )}
                           <span>Lv.{req.tier}</span>
                         </div>
                       );
