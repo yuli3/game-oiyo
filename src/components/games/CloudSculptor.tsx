@@ -26,6 +26,7 @@ import {
   type Dir,
 } from "../../lib/games/cloud-sculptor";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import CloudSculptorScene, { type CloudGlide } from "./CloudSculptorScene";
 
 interface Copy {
@@ -417,6 +418,45 @@ function codeAction(code: string): Dir | null {
 
 const PAD: readonly Dir[] = ["N", "W", "E", "S"];
 
+function TiltWindButton({
+  dir,
+  available,
+  locked,
+  shortcutKey,
+  labelName,
+  detail,
+  onClick,
+}: {
+  dir: Dir;
+  available: boolean;
+  locked: boolean;
+  shortcutKey: string;
+  labelName: string;
+  detail: string;
+  onClick: () => void;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      className={`${windClass(dir, available && !locked)} will-change-transform transform-(--card-tilt) transition-transform duration-150`}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      aria-keyshortcuts={shortcutKey}
+      aria-label={`${labelName}. ${detail}`}
+      disabled={locked || !available}
+      onClick={() => {
+        triggerPop();
+        onClick();
+      }}
+    >
+      {labelName}
+      <span className="block text-xs font-normal">{detail}</span>
+    </button>
+  );
+}
+
 export default function CloudSculptor({ locale = "en" }: { locale?: Locale }) {
   const copy = COPY[locale] ?? COPY.en;
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale });
@@ -535,6 +575,13 @@ export default function CloudSculptor({ locale = "en" }: { locale?: Locale }) {
   }, [busy, glide, hidden, paused, reduce]);
 
   const begin = useCallback((next: CloudState, kind: Tick) => {
+    if (kind === "nudge") {
+      MobileHapticsPro.light();
+    } else if (kind === "win") {
+      MobileHapticsPro.success();
+    } else if (kind === "lose") {
+      MobileHapticsPro.warning();
+    }
     arm();
     note(kind);
     glideSerial.current += 1;
@@ -550,6 +597,7 @@ export default function CloudSculptor({ locale = "en" }: { locale?: Locale }) {
     const next = stepCloud(current, dir);
     if (next === current) {
       arm();
+      MobileHapticsPro.warning();
       if (!mutedRef.current && !pausedRef.current) audio.current?.tick("block");
       return;
     }
@@ -711,18 +759,16 @@ export default function CloudSculptor({ locale = "en" }: { locale?: Locale }) {
             const available = open.has(dir);
             const detail = detailFor(state, dir, copy);
             return (
-              <button
+              <TiltWindButton
                 key={dir}
-                type="button"
-                className={windClass(dir, available && !locked)}
-                aria-keyshortcuts={shortcut(dir)}
-                aria-label={`${label(dir, copy)}. ${detail}`}
-                disabled={locked || !available}
+                dir={dir}
+                available={available}
+                locked={locked}
+                shortcutKey={shortcut(dir)}
+                labelName={label(dir, copy)}
+                detail={detail}
                 onClick={() => move(dir)}
-              >
-                {label(dir, copy)}
-                <span className="block text-xs font-normal">{detail}</span>
-              </button>
+              />
             );
           })}
         </div>

@@ -18,6 +18,7 @@ import {
   type FlashRound,
 } from "../../lib/games/flash-dodge";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
+import { MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 
 /* Flash-dodge drill ("삥 피하기"): face the doorway, turn away before the flash pops, turn back
  * and shoot the target that steps out. Unlike the other aim modes this one rotates a view
@@ -112,11 +113,17 @@ export default function AimFlashField({ diff, copy, tone, onHit, onMiss }: Props
     const { tone: play, onHit: hit, onMiss: miss, copy: text } = callbacks.current;
     if (isOnFlashTarget(yaw.current, diff)) {
       const clean = blindness.current < 0.25;
+      if (clean) {
+        MobileHapticsPro.success();
+      } else {
+        MobileHapticsPro.impact();
+      }
       note.current = { text: clean ? text.dodged : text.blinded, good: clean, at: now };
       play(clean ? 880 : 620, 0.07);
       hit(now - stageAt.current);
       startRound();
     } else {
+      MobileHapticsPro.warning();
       play(180, 0.06);
       miss();
     }
@@ -319,6 +326,7 @@ export default function AimFlashField({ diff, copy, tone, onHit, onMiss }: Props
           if (facedMs.current >= round.current.delayMs) {
             stage.current = "fuse";
             stageAt.current = now;
+            MobileHapticsPro.light();
             callbacks.current.tone(1320, 0.05);
           }
         } else if (stage.current === "fuse") {
@@ -326,6 +334,11 @@ export default function AimFlashField({ diff, copy, tone, onHit, onMiss }: Props
             blindness.current = flashBlindness(yaw.current, round.current.flashYaw);
             stage.current = "live";
             stageAt.current = now;
+            if (blindness.current > 0.5) {
+              MobileHapticsPro.heavy();
+            } else {
+              MobileHapticsPro.medium();
+            }
             callbacks.current.tone(240, 0.12);
           }
         } else if (now - stageAt.current >= FLASH_ROUND_TIMEOUT_MS) {

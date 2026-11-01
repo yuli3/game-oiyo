@@ -3,6 +3,7 @@ import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
 import { getBest, recordBest } from "../../lib/games/records";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import {
   AJAE_KEYS,
   AJAE_MIN_LEN,
@@ -12,6 +13,57 @@ import {
   isAjaeKey,
   makeAjaePattern,
 } from "../../lib/games/ajae-pattern";
+
+function TiltAjaeKeyButton({
+  label,
+  onClick,
+}: {
+  label: string;
+  onClick: () => void;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop();
+        onClick();
+      }}
+      aria-label={label}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      className="h-12 w-12 rounded-lg border font-black will-change-transform transform-(--card-tilt) transition-transform duration-150"
+    >
+      {label}
+    </button>
+  );
+}
+
+function TiltAjaeActionButton({
+  onClick,
+  className,
+  children,
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={(e) => {
+        triggerPop();
+        onClick?.(e);
+      }}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      className={`will-change-transform transform-(--card-tilt) transition-transform duration-150 ${className ?? ''}`}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+}
 
 /* ────────────────────────────────────────────────────────────────────────────
  * 아재패턴 연습 — QWERASDF key-sequence trainer for the Lost Ark "아재절단기"
@@ -377,6 +429,7 @@ const AjaePattern: React.FC<{ locale: Locale }> = ({ locale }) => {
       const left = Math.max(0, deadline.current - now);
       setRemaining(left / total);
       if (left <= 0) {
+        MobileHapticsPro.heavy();
         playAjaeSound('timeout', mutedRef.current);
         setActive(false);
         setMessage(t.timeout);
@@ -404,6 +457,7 @@ const AjaePattern: React.FC<{ locale: Locale }> = ({ locale }) => {
     (key: string) => {
       if (!active) return;
       if (key !== pattern[cursor]) {
+        MobileHapticsPro.warning();
         playAjaeSound('wrong', mutedRef.current);
         clearTimers();
         setActive(false);
@@ -417,6 +471,7 @@ const AjaePattern: React.FC<{ locale: Locale }> = ({ locale }) => {
       const next = cursor + 1;
       setCursor(next);
       if (next < pattern.length) {
+        MobileHapticsPro.light();
         playAjaeSound('tap', mutedRef.current);
         return;
       }
@@ -429,6 +484,7 @@ const AjaePattern: React.FC<{ locale: Locale }> = ({ locale }) => {
       // be frozen while the clock kept running. Judge the round on elapsed time
       // rather than on whether the timer got a chance to fire.
       if (!isAjaeClear(elapsed, patternLen.current)) {
+        MobileHapticsPro.heavy();
         playAjaeSound('timeout', mutedRef.current);
         const cur = loadStats();
         persist({ ...cur, plays: cur.plays + 1, streak: 0 });
@@ -438,6 +494,7 @@ const AjaePattern: React.FC<{ locale: Locale }> = ({ locale }) => {
         return;
       }
 
+      MobileHapticsPro.success();
       playAjaeSound('clear', mutedRef.current);
       const cur = loadStats();
       const streak = cur.streak + 1;
@@ -579,28 +636,24 @@ const AjaePattern: React.FC<{ locale: Locale }> = ({ locale }) => {
 
             <div className="flex flex-wrap justify-center gap-2">
               {!active && (
-                <button type="button" onClick={beginRound} className="min-h-11 rounded-full bg-primary px-6 font-black text-primary-foreground">
+                <TiltAjaeActionButton onClick={beginRound} className="min-h-11 rounded-full bg-primary px-6 font-black text-primary-foreground">
                   {pattern.length ? t.again : t.start}
-                </button>
+                </TiltAjaeActionButton>
               )}
               {active && (
-                <button type="button" onClick={stop} className="min-h-11 rounded-full border px-6 font-black">
+                <TiltAjaeActionButton onClick={stop} className="min-h-11 rounded-full border px-6 font-black">
                   {t.stop}
-                </button>
+                </TiltAjaeActionButton>
               )}
             </div>
 
             <div className="flex flex-wrap justify-center gap-2">
               {KEYS.map((key) => (
-                <button
+                <TiltAjaeKeyButton
                   key={key}
-                  type="button"
+                  label={key}
                   onClick={() => press(key)}
-                  aria-label={key}
-                  className="h-12 w-12 rounded-lg border font-black"
-                >
-                  {key}
-                </button>
+                />
               ))}
             </div>
           </div>

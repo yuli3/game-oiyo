@@ -1,8 +1,33 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Share2 } from 'lucide-react';
 import { Canvas } from '@react-three/fiber';
-import { useGhostTimeAttackPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { useGhostTimeAttackPro, MobileHapticsPro, useCardTiltPro } from '../../lib/games/engine-suite-unified';
 import CyberHighway3DScene from './CyberHighway3DScene';
+
+function TiltCyberButton({
+  onClick,
+  className,
+  children,
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={(e) => {
+        triggerPop();
+        onClick?.(e);
+      }}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      className={`will-change-transform transform-(--card-tilt) transition-transform duration-150 ${className ?? ''}`}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+}
 import {
   type CyberHighwayState,
   createInitialCyberHighwayState,
@@ -359,35 +384,38 @@ export default function CyberHighway3D() {
       <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between pointer-events-auto touch-none">
         {/* Left / Right Steering Buttons */}
         <div className="flex gap-3">
-          <button
-            type="button"
+          <TiltCyberButton
             data-game-control
-            onPointerDown={(e) => { e.preventDefault(); setGameState((s) => steerPlayer(s, -1)); }}
-            className="w-16 h-16 rounded-2xl bg-background/90 backdrop-blur-md border border-border flex items-center justify-center text-xl font-black text-foreground shadow-lg active:scale-95 transition-transform"
+            onClick={() => {
+              MobileHapticsPro.light();
+              setGameState((s) => steerPlayer(s, -1));
+            }}
+            className="w-16 h-16 rounded-2xl bg-background/90 backdrop-blur-md border border-border flex items-center justify-center text-xl font-black text-foreground shadow-lg"
             aria-label="좌측 차선 이동"
           >
             ◀
-          </button>
-          <button
-            type="button"
+          </TiltCyberButton>
+          <TiltCyberButton
             data-game-control
-            onPointerDown={(e) => { e.preventDefault(); setGameState((s) => steerPlayer(s, 1)); }}
-            className="w-16 h-16 rounded-2xl bg-background/90 backdrop-blur-md border border-border flex items-center justify-center text-xl font-black text-foreground shadow-lg active:scale-95 transition-transform"
+            onClick={() => {
+              MobileHapticsPro.light();
+              setGameState((s) => steerPlayer(s, 1));
+            }}
+            className="w-16 h-16 rounded-2xl bg-background/90 backdrop-blur-md border border-border flex items-center justify-center text-xl font-black text-foreground shadow-lg"
             aria-label="우측 차선 이동"
           >
             ▶
-          </button>
+          </TiltCyberButton>
         </div>
 
         {/* Nitro Boost Button */}
         <div>
-          <button
-            type="button"
+          <TiltCyberButton
             data-game-control
             onPointerDown={(e) => { e.preventDefault(); setGameState((s) => activateNitro(s)); }}
             onPointerUp={() => setGameState((s) => deactivateNitro(s))}
             onPointerLeave={() => setGameState((s) => deactivateNitro(s))}
-            className={`px-6 h-16 rounded-2xl border font-black text-sm shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 ${
+            className={`px-6 h-16 rounded-2xl border font-black text-sm shadow-lg flex items-center justify-center gap-2 ${
               gameState.isBoosting
                 ? 'bg-primary text-primary-foreground border-primary ring-4 ring-primary/30'
                 : 'bg-background/90 backdrop-blur-md border-border text-foreground'
@@ -395,7 +423,7 @@ export default function CyberHighway3D() {
             aria-label="니트로 부스트"
           >
             ⚡ NITRO
-          </button>
+          </TiltCyberButton>
         </div>
       </div>
 
@@ -426,13 +454,15 @@ export default function CyberHighway3D() {
             </div>
 
             <div className="flex flex-col gap-2">
-              <button
-                type="button"
-                onClick={handleRestart}
+              <TiltCyberButton
+                onClick={() => {
+                  MobileHapticsPro.medium();
+                  handleRestart();
+                }}
                 className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-md hover:bg-primary/90 transition-colors"
               >
                 다시 도전하기 (RETRY)
-              </button>
+              </TiltCyberButton>
               <button
                 type="button"
                 onClick={handleShareCard}

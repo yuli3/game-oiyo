@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Canvas } from "@react-three/fiber";
-import { useGhostTimeAttackPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { useGhostTimeAttackPro, MobileHapticsPro, useCardTiltPro } from "../../lib/games/engine-suite-unified";
 import {
   OFFICIAL_TRACKS,
   createInitialCarState,
@@ -13,6 +13,35 @@ import {
 } from "../../lib/games/cyber-track";
 import CyberTrack3DScene from "./CyberTrack3DScene";
 import { Button } from "../ui/button";
+
+function TiltTrackSelectButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <Button
+      type="button"
+      variant={active ? "default" : "outline"}
+      size="sm"
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop();
+        onClick();
+      }}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      className="will-change-transform transform-(--card-tilt)"
+    >
+      {children}
+    </Button>
+  );
+}
 
 interface CyberTrack3DProps {
   locale?: string;
@@ -153,7 +182,7 @@ export default function CyberTrack3D({ locale = "ko" }: CyberTrack3DProps) {
 
         if (isLapFinished) {
           playFinishSound();
-          MobileHapticsPro.impact();
+          MobileHapticsPro.success();
           recordGhostLap(nextCar.lapTimeMs / 1000);
           // Check if new personal best
           const finishedTime = nextCar.lapTimeMs;
@@ -242,15 +271,16 @@ export default function CyberTrack3D({ locale = "ko" }: CyberTrack3DProps) {
 
         <div className="flex gap-1.5">
           {OFFICIAL_TRACKS.map((t, idx) => (
-            <Button
+            <TiltTrackSelectButton
               key={t.id}
-              type="button"
-              variant={idx === selectedTrackIdx ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSelectedTrackIdx(idx)}
+              active={idx === selectedTrackIdx}
+              onClick={() => {
+                MobileHapticsPro.selection();
+                setSelectedTrackIdx(idx);
+              }}
             >
               {t.name[locale] ?? t.name.ko}
-            </Button>
+            </TiltTrackSelectButton>
           ))}
         </div>
       </div>
