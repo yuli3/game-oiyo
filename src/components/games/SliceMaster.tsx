@@ -9,15 +9,203 @@ import {
   tapFlipKnife,
 } from "@/lib/games/slice-master";
 import { addTrauma, createShakeState, triggerHaptic, updateShake } from "@/lib/games/juice-engine";
-import { playSyntheticTone } from "@/lib/games/audio-mixer";
-import { useDynamicDifficultyPro, useCardTiltPro, MobileHapticsPro } from "@/lib/games/engine-suite-unified";
+import { useDynamicDifficultyPro, MobileHapticsPro } from "@/lib/games/engine-suite-unified";
 import { useArcadePortal } from "@/lib/games/arcade-portal";
-import { getSpriteUrl } from "@/lib/games/sprites";
+import { getSpriteUrl, SLICE_MASTER_SPRITES } from "@/lib/games/sprites";
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "@/lib/games/share-card";
-import { Maximize2, Minimize2, Share2, Check } from "lucide-react";
+import { Maximize2, Minimize2, Share2, Check, Sparkles } from "lucide-react";
 
 interface SliceMasterProps {
   locale?: string;
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * SliceMasterAudio — Acoustic ASMR sound synthesizer
+ * ────────────────────────────────────────────────────────────────────────── */
+class SliceMasterAudio {
+  private ctx: AudioContext | null = null;
+
+  constructor() {
+    if (typeof window !== "undefined") {
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (AudioCtx) this.ctx = new AudioCtx();
+    }
+  }
+
+  private ensure() {
+    if (this.ctx && this.ctx.state === "suspended") {
+      this.ctx.resume().catch(() => {});
+    }
+    return this.ctx;
+  }
+
+  /** Air whoosh swish on knife flip */
+  playSwish() {
+    const ctx = this.ensure();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+
+    // Filtered noise swoosh
+    const bufferSize = Math.floor(ctx.sampleRate * 0.08);
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = Math.random() * 2 - 1;
+    }
+
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+
+    const filter = ctx.createBiquadFilter();
+    filter.type = "bandpass";
+    filter.frequency.setValueAtTime(600, now);
+    filter.frequency.exponentialRampToValueAtTime(180, now + 0.07);
+    filter.Q.setValueAtTime(3, now);
+
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.12, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+    noise.start(now);
+  }
+
+  /** Crisp ASMR fruit slice with combo pitch escalation */
+  playSlice(combo: number = 1) {
+    const ctx = this.ensure();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+
+    // Harmonic pentatonic frequencies C5-D5-E5-G5-A5
+    const pentatonic = [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5];
+    const baseFreq = pentatonic[Math.min(combo - 1, pentatonic.length - 1)];
+
+    // Crisp high slice attack
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(baseFreq * 1.5, now);
+    osc.frequency.exponentialRampToValueAtTime(baseFreq, now + 0.06);
+
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+
+    // Juice crunch noise transient
+    const noiseLen = Math.floor(ctx.sampleRate * 0.03);
+    const noiseBuf = ctx.createBuffer(1, noiseLen, ctx.sampleRate);
+    const nData = noiseBuf.getChannelData(0);
+    for (let i = 0; i < noiseLen; i++) nData[i] = (Math.random() * 2 - 1) * (1 - i / noiseLen);
+    const nSrc = ctx.createBufferSource();
+    nSrc.buffer = noiseBuf;
+    const nGain = ctx.createGain();
+    nGain.gain.setValueAtTime(0.18, now);
+    nGain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    nSrc.connect(nGain);
+    nGain.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.1);
+    nSrc.start(now);
+  }
+
+  /** Deep wood chop impact */
+  playWood() {
+    const ctx = this.ensure();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(180, now);
+    osc.frequency.exponentialRampToValueAtTime(60, now + 0.07);
+
+    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.09);
+  }
+
+  /** Metallic clank impact when hitting hazard */
+  playHazard() {
+    const ctx = this.ensure();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+
+    const osc1 = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc1.type = "sawtooth";
+    osc2.type = "sine";
+    osc1.frequency.setValueAtTime(920, now);
+    osc2.frequency.setValueAtTime(1430, now);
+
+    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+
+    osc1.connect(gain);
+    osc2.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc1.start(now);
+    osc2.start(now);
+    osc1.stop(now + 0.26);
+    osc2.stop(now + 0.26);
+  }
+
+  /** Thump stick when embedded in floor */
+  playStuck() {
+    const ctx = this.ensure();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(160, now);
+    osc.frequency.exponentialRampToValueAtTime(40, now + 0.05);
+
+    gain.gain.setValueAtTime(0.18, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.07);
+  }
+
+  /** Victory fanfare arpeggio */
+  playClear() {
+    const ctx = this.ensure();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const notes = [523.25, 659.25, 783.99, 1046.5]; // C5-E5-G5-C6
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, now + i * 0.07);
+      gain.gain.setValueAtTime(0.2, now + i * 0.07);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.07 + 0.18);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now + i * 0.07);
+      osc.stop(now + i * 0.07 + 0.2);
+    });
+  }
+
+  destroy() {
+    this.ctx?.close().catch(() => {});
+  }
 }
 
 export default function SliceMaster({ locale = "ko" }: SliceMasterProps) {
@@ -27,13 +215,13 @@ export default function SliceMaster({ locale = "ko" }: SliceMasterProps) {
   const [bestScore, setBestScore] = useState(0);
   const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0 });
   const [shareCardCopied, setShareCardCopied] = useState(false);
-  const { modifiers, reportSuccess, reportFailure } = useDynamicDifficultyPro();
+  const { reportSuccess, reportFailure } = useDynamicDifficultyPro();
 
   const gameRef = useRef<SliceMasterGame>(game);
   gameRef.current = game;
 
   const shakeStateRef = useRef(createShakeState());
-  const audioCtxRef = useRef<AudioContext | null>(null);
+  const audioRef = useRef<SliceMasterAudio | null>(null);
 
   const handleShareCard = useCallback(async () => {
     MobileHapticsPro.selection();
@@ -56,16 +244,11 @@ export default function SliceMaster({ locale = "ko" }: SliceMasterProps) {
     }
   }, [game.score, game.sliceCount, level, bestScore]);
 
-  // Initialize Web Audio
+  // Initialize Web Audio Synthesizer
   useEffect(() => {
-    const AudioContextClass =
-      window.AudioContext ||
-      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    if (AudioContextClass) {
-      audioCtxRef.current = new AudioContextClass();
-    }
+    audioRef.current = new SliceMasterAudio();
     return () => {
-      audioCtxRef.current?.close().catch(() => {});
+      audioRef.current?.destroy();
     };
   }, []);
 
@@ -99,12 +282,12 @@ export default function SliceMaster({ locale = "ko" }: SliceMasterProps) {
           triggerHaptic("medium");
           reportSuccess();
 
-          // Play ASMR slice sound with pitch variance
-          playSyntheticTone(audioCtxRef.current, {
-            freq: 440,
-            duration: 0.08,
-            type: "triangle",
-          });
+          const isWood = step.slicedObstacles.some((o) => o.type === "wood");
+          if (isWood) {
+            audioRef.current?.playWood();
+          } else {
+            audioRef.current?.playSlice(current.combo);
+          }
         }
 
         if (step.hitTarget) {
@@ -112,11 +295,7 @@ export default function SliceMaster({ locale = "ko" }: SliceMasterProps) {
           MobileHapticsPro.success();
           triggerHaptic("combo");
           reportSuccess();
-          playSyntheticTone(audioCtxRef.current, {
-            freq: 660,
-            duration: 0.25,
-            type: "sine",
-          });
+          audioRef.current?.playClear();
         }
 
         if (step.hitHazard) {
@@ -124,21 +303,13 @@ export default function SliceMaster({ locale = "ko" }: SliceMasterProps) {
           MobileHapticsPro.heavy();
           triggerHaptic("heavy");
           reportFailure();
-          playSyntheticTone(audioCtxRef.current, {
-            freq: 120,
-            duration: 0.3,
-            type: "sawtooth",
-          });
+          audioRef.current?.playHazard();
         }
 
         if (step.stuckFloor) {
           MobileHapticsPro.click();
           triggerHaptic("light");
-          playSyntheticTone(audioCtxRef.current, {
-            freq: 260,
-            duration: 0.05,
-            type: "sine",
-          });
+          audioRef.current?.playStuck();
         }
 
         if (step.state.score > bestScore) {
@@ -153,7 +324,7 @@ export default function SliceMaster({ locale = "ko" }: SliceMasterProps) {
 
     animId = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(animId);
-  }, [bestScore, shakeOffset.x, shakeOffset.y]);
+  }, [bestScore, shakeOffset.x, shakeOffset.y, reportSuccess, reportFailure]);
 
   const handleTap = () => {
     if (game.status === "gameover" || game.status === "completed") {
@@ -164,11 +335,7 @@ export default function SliceMaster({ locale = "ko" }: SliceMasterProps) {
     setGame(flipped);
 
     // Flip whoosh
-    playSyntheticTone(audioCtxRef.current, {
-      freq: 320,
-      duration: 0.05,
-      type: "sine",
-    });
+    audioRef.current?.playSwish();
     MobileHapticsPro.light();
     triggerHaptic("light");
   };
@@ -264,26 +431,9 @@ export default function SliceMaster({ locale = "ko" }: SliceMasterProps) {
           viewBox="0 0 600 400"
           className="h-auto w-full touch-none select-none bg-muted/30"
         >
-          <defs>
-            {/* Knife Blade Metallic Gradient */}
-            <linearGradient id="bladeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="var(--color-sidebar)" />
-              <stop offset="50%" stopColor="var(--color-border)" />
-              <stop offset="100%" stopColor="var(--color-muted-foreground)" />
-            </linearGradient>
-
-            {/* Target Gradient */}
-            <radialGradient id="targetGrad" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="var(--color-destructive)" />
-              <stop offset="40%" stopColor="var(--color-sidebar)" />
-              <stop offset="70%" stopColor="var(--color-destructive)" />
-              <stop offset="100%" stopColor="var(--color-sidebar)" />
-            </radialGradient>
-          </defs>
-
           {/* Camera World Group */}
           <g transform={`translate(${-cameraX}, 0)`}>
-            {/* Floor Plane */}
+            {/* Floor Plane with Bevel Track */}
             <rect x="0" y="360" width="8000" height="40" className="fill-muted stroke-border" strokeWidth="2" />
             <line x1="0" y1="360" x2="8000" y2="360" className="stroke-primary/40" strokeWidth="3" />
 
@@ -292,7 +442,7 @@ export default function SliceMaster({ locale = "ko" }: SliceMasterProps) {
               <RenderObstacleSvg key={obs.id} obstacle={obs} />
             ))}
 
-            {/* Knife */}
+            {/* 3D Knife */}
             <RenderKnifeSvg knife={knife} />
           </g>
         </svg>
@@ -303,7 +453,8 @@ export default function SliceMaster({ locale = "ko" }: SliceMasterProps) {
             {locale === "ko" ? `레벨 ${level}` : `Level ${level}`}
           </span>
           {game.combo > 1 && (
-            <span className="animate-pulse text-lg font-black text-primary drop-shadow">
+            <span className="animate-pulse text-lg font-black text-primary drop-shadow flex items-center gap-1">
+              <Sparkles className="size-4 inline text-warning" />
               {game.combo}x COMBO! 🔥
             </span>
           )}
@@ -348,76 +499,152 @@ export default function SliceMaster({ locale = "ko" }: SliceMasterProps) {
               className="size-16 animate-bounce drop-shadow mb-2"
             />
             <h3 className="mb-1 text-2xl font-black tracking-tight text-primary">
-              {locale === "ko" ? "과녁 명중! 레벨 클리어!" : "Target Hit! Stage Clear!"}
+              {locale === "ko" ? "스테이지 클리어! 🎉" : "Stage Cleared! 🎉"}
             </h3>
             <p className="mb-6 text-sm text-muted-foreground">
               {locale === "ko"
-                ? `보너스 획득! 총 ${game.score}점`
-                : `Bonus Earned! Total: ${game.score}`}
+                ? `보너스 획득! 총 점수: ${game.score}점 (슬라이스: ${game.sliceCount}회)`
+                : `Target Hit! Score: ${game.score} (${game.sliceCount} sliced)`}
             </p>
-            <div className="flex flex-wrap gap-3 justify-center">
-              <Button onClick={handleRestart} variant="outline" size="lg">
-                {locale === "ko" ? "다시 플레이" : "Replay"}
-              </Button>
+            <div className="flex gap-3">
               <Button onClick={handleNextLevel} size="lg">
                 {locale === "ko" ? "다음 레벨" : "Next Level"}
               </Button>
-              <Button onClick={handleShareCard} variant="secondary" size="lg">
-                {shareCardCopied ? "복사됨!" : "기록 카드 공유"}
+              <Button onClick={handleShareCard} variant="outline" size="lg">
+                {shareCardCopied ? "복사됨!" : "기록 공유"}
               </Button>
             </div>
           </div>
         )}
       </div>
+
+      {/* Footer Instructions */}
+      <div className="w-full text-center text-xs text-muted-foreground">
+        {locale === "ko"
+          ? "칼날(뾰족한 끝)로 물체를 자르고 안전하게 착지하세요. 칼자루가 닿거나 가시에 부딪히면 게임오버입니다."
+          : "Slice targets with the sharp knife tip and stick the landing. Hitting hazards or landing on the handle causes game over."}
+      </div>
     </div>
   );
 }
 
+/* ────────────────────────────────────────────────────────────────────────────
+ * RenderObstacleSvg — High-fidelity 3D Asset Slicing Renderers
+ * ────────────────────────────────────────────────────────────────────────── */
 function RenderObstacleSvg({ obstacle }: { obstacle: SliceObstacle }) {
-  const { x, y, width, height, type, label, color, sliced } = obstacle;
+  const { x, y, width, height, type, label, sliced, color } = obstacle;
 
+  // Finish Target: 3D Golden Podium with Trophy
   if (type === "finish_target") {
     return (
       <g transform={`translate(${x}, ${y})`}>
-        {/* Target Stand */}
-        <line x1={width / 2} y1={height} x2={width / 2} y2={height + 20} className="stroke-muted-foreground" strokeWidth="6" />
-        {/* Target Board */}
-        <circle cx={width / 2} cy={height / 2} r={width / 2} fill="url(#targetGrad)" className="stroke-destructive" strokeWidth="2" />
+        {/* Podium Base */}
+        <rect
+          x="0"
+          y="20"
+          width={width}
+          height={height - 20}
+          rx="6"
+          className="fill-warning/30 stroke-warning"
+          strokeWidth="2"
+        />
+        {/* 3D Trophy on top */}
+        <image
+          href={getSpriteUrl("trophy", 128)}
+          x={width / 2 - 24}
+          y="-16"
+          width="48"
+          height="48"
+          preserveAspectRatio="xMidYMid meet"
+        />
         <text
           x={width / 2}
-          y={height / 2 + 4}
+          y={height - 10}
           textAnchor="middle"
-          fontSize="10"
+          fontSize="12"
           fontWeight="bold"
-          className="fill-foreground"
+          className="fill-warning"
         >
-          1000
+          {label}
         </text>
       </g>
     );
   }
 
+  // Tactical Spiked Mine Hazard: 3D Gunmetal Hazard Render
   if (type === "metal_hazard") {
     return (
-      <g transform={`translate(${x + width / 2}, ${y + height / 2})`}>
-        {/* Spiked Gear */}
-        <circle r={width / 2 - 2} className="fill-muted-foreground stroke-foreground" strokeWidth="2" />
-        <line x1={-width / 2} y1="0" x2={width / 2} y2="0" className="stroke-foreground" strokeWidth="4" />
-        <line x1="0" y1={-height / 2} x2="0" y2={height / 2} className="stroke-foreground" strokeWidth="4" />
-        <circle r="4" className="fill-border" />
+      <g transform={`translate(${x}, ${y})`}>
+        <image
+          href={SLICE_MASTER_SPRITES.hazard}
+          x="-4"
+          y="-4"
+          width={width + 8}
+          height={height + 8}
+          preserveAspectRatio="xMidYMid meet"
+        />
       </g>
     );
   }
 
-  // Fruit or Wood
+  // Fruit & Wood 3D Assets: Orange or Watermelon
+  const isWatermelon = label.includes("수박");
+  const fruitSprite = isWatermelon ? SLICE_MASTER_SPRITES.watermelon : SLICE_MASTER_SPRITES.orange;
+
+  if (type === "fruit") {
+    if (sliced) {
+      return (
+        <g transform={`translate(${x}, ${y})`}>
+          {/* Left / Top Sliced Half Flying Left */}
+          <g transform="translate(-10, -12) rotate(-22)">
+            <image
+              href={fruitSprite}
+              x="0"
+              y="0"
+              width={width}
+              height={height}
+              preserveAspectRatio="xMidYMid meet"
+              opacity={0.9}
+            />
+          </g>
+          {/* Right / Bottom Sliced Half Flying Right */}
+          <g transform="translate(10, 8) rotate(18)">
+            <image
+              href={fruitSprite}
+              x="0"
+              y="0"
+              width={width}
+              height={height}
+              preserveAspectRatio="xMidYMid meet"
+              opacity={0.9}
+            />
+          </g>
+        </g>
+      );
+    }
+
+    return (
+      <g transform={`translate(${x}, ${y})`}>
+        <image
+          href={fruitSprite}
+          x="0"
+          y="0"
+          width={width}
+          height={height}
+          preserveAspectRatio="xMidYMid meet"
+        />
+      </g>
+    );
+  }
+
+  // Wood Block: Beveled Wood texture
   if (sliced) {
     return (
       <g
         transform={`translate(${x}, ${y})`}
         style={{ "--item-color": color } as React.CSSProperties}
       >
-        {/* Sliced Top Half */}
-        <g transform="translate(-4, -10) rotate(-12)">
+        <g transform="translate(-6, -10) rotate(-14)">
           <rect
             x="0"
             y="0"
@@ -426,11 +653,10 @@ function RenderObstacleSvg({ obstacle }: { obstacle: SliceObstacle }) {
             rx="4"
             fill="var(--item-color)"
             className="stroke-border"
-            strokeWidth="1"
+            strokeWidth="1.5"
           />
         </g>
-        {/* Sliced Bottom Half */}
-        <g transform="translate(4, 6) rotate(8)">
+        <g transform="translate(6, 6) rotate(10)">
           <rect
             x="0"
             y={height / 2}
@@ -439,7 +665,7 @@ function RenderObstacleSvg({ obstacle }: { obstacle: SliceObstacle }) {
             rx="4"
             fill="var(--item-color)"
             className="stroke-border"
-            strokeWidth="1"
+            strokeWidth="1.5"
           />
         </g>
       </g>
@@ -475,6 +701,9 @@ function RenderObstacleSvg({ obstacle }: { obstacle: SliceObstacle }) {
   );
 }
 
+/* ────────────────────────────────────────────────────────────────────────────
+ * RenderKnifeSvg — 3D High-Gloss Chef Knife with Dynamic Floor Shadow
+ * ────────────────────────────────────────────────────────────────────────── */
 function RenderKnifeSvg({ knife }: { knife: Knife }) {
   const { x, y, angle } = knife;
   const deg = (angle * 180) / Math.PI;
@@ -486,21 +715,24 @@ function RenderKnifeSvg({ knife }: { knife: Knife }) {
       <ellipse
         cx={x}
         cy="360"
-        rx={Math.max(8, 22 * shadowOpacity)}
-        ry="3"
+        rx={Math.max(8, 24 * shadowOpacity)}
+        ry="3.5"
         className="fill-foreground"
         opacity={shadowOpacity * 0.35}
       />
 
-      {/* Knife Body: Pivot on handle base */}
+      {/* 3D Japanese Chef Knife: Rotated around knife handle pivot */}
       <g transform={`translate(${x}, ${y}) rotate(${deg})`}>
-        {/* Handle */}
-        <rect x="0" y="-4" width="16" height="8" rx="2" className="fill-muted-foreground stroke-foreground" strokeWidth="1" />
-        {/* Guard */}
-        <rect x="15" y="-7" width="3" height="14" rx="1" className="fill-primary" />
-        {/* Steel Blade */}
-        <polygon points="18,-5 54,0 18,5" fill="url(#bladeGrad)" className="stroke-border" strokeWidth="1" />
-        <line x1="20" y1="-1" x2="48" y2="0" className="stroke-foreground" strokeWidth="1.2" />
+        {/* High-resolution 3D Knife Sprite (horizontal, pointing right) */}
+        <image
+          href={SLICE_MASTER_SPRITES.knife}
+          x="-8"
+          y="-22"
+          width="72"
+          height="44"
+          preserveAspectRatio="xMidYMid meet"
+          className="drop-shadow-md"
+        />
       </g>
     </>
   );

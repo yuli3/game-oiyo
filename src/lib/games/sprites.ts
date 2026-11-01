@@ -500,6 +500,13 @@ export const CAT_FISHING_KOI = [
 
 export const CAT_FISHING_PAW = "/assets/sprites/cat-fishing/cat-paw-128.png";
 
+export const SLICE_MASTER_SPRITES = {
+  knife: "/assets/sprites/slice-master/knife-chef-128.png",
+  orange: "/assets/sprites/slice-master/orange-fruit-128.png",
+  watermelon: "/assets/sprites/slice-master/watermelon-fruit-128.png",
+  hazard: "/assets/sprites/slice-master/spiked-mine-128.png",
+} as const;
+
 export const DOT_PET_SPRITES: Record<string, { baby: string; adult: string }> = {
   normal: {
     baby: "/assets/sprites/dot-pet/normal-baby.png",
