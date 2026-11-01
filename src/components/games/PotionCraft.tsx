@@ -14,6 +14,7 @@ import {
   downloadShareCard,
 } from '../../lib/games/share-card';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { getSpriteUrl } from '../../lib/games/sprites';
 import { Maximize2, Minimize2, Share2, Check, RotateCcw, Sparkles } from 'lucide-react';
 
 function TiltPotionButton({
@@ -560,8 +561,14 @@ export default function PotionCraft() {
         <div className="flex items-center gap-3">
           <div className="flex flex-col">
             <span className="text-xs font-bold text-muted-foreground tracking-wider">연금술사 작업실</span>
-            <div className="text-xl font-black text-warning font-mono flex items-center gap-1">
-              <span>💰 {gold} Gold</span>
+            <div className="text-xl font-black text-warning font-mono flex items-center gap-1.5">
+              <img
+                src={getSpriteUrl('coin', 64)}
+                alt="Gold"
+                className="size-5 object-contain"
+                draggable={false}
+              />
+              <span>{gold} Gold</span>
             </div>
           </div>
         </div>
@@ -573,7 +580,13 @@ export default function PotionCraft() {
               <span className="font-bold text-primary mr-1.5">👤 {currentCustomer.customerName}:</span>
               <span className="text-foreground">"{currentCustomer.requestText}"</span>
             </div>
-            <div className="text-right shrink-0">
+            <div className="text-right shrink-0 flex items-center gap-1.5">
+              <img
+                src={getSpriteUrl('trophy', 64)}
+                alt="Reward"
+                className="size-4 object-contain"
+                draggable={false}
+              />
               <span className="px-2 py-0.5 rounded bg-warning/20 text-warning font-bold font-mono">
                 보수: +{currentCustomer.rewardGold}G
               </span>
@@ -587,7 +600,7 @@ export default function PotionCraft() {
             className="p-1.5 rounded-lg border border-border bg-card hover:bg-muted text-foreground"
             ariaLabel="Share Potion Craft Record"
           >
-            {copied ? <Check className="size-4 text-success" /> : <Share2 className="size-4" />}
+            {copied ? <Check className="size-4 text-primary" /> : <Share2 className="size-4" />}
           </TiltPotionButton>
 
           <TiltPotionButton

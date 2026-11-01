@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import RetroHighwayScene from './RetroHighwayScene';
-import { useGhostTimeAttackPro } from '../../lib/games/engine-suite-unified';
+import { useGhostTimeAttackPro, useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { getSpriteUrl } from '../../lib/games/sprites';
 import {
   type HighwayState,
   type HighwayInput,
@@ -19,6 +20,43 @@ import {
 
 interface Props {
   locale: Locale;
+}
+
+function TiltHighwayButton({
+  children,
+  onClick,
+  className = '',
+  disabled = false,
+  title,
+  ariaLabel,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        triggerPop(0.12);
+        onClick?.();
+      }}
+      disabled={disabled}
+      title={title}
+      aria-label={ariaLabel}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`transition-transform duration-100 ease-out active:scale-95 disabled:pointer-events-none disabled:opacity-50 transform-(--card-tilt) ${className}`}
+      style={{ '--card-tilt': transformCss || 'none' } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
 }
 
 const UI_TEXT: Record<Locale, {
@@ -323,6 +361,9 @@ export default function RetroHighway({ locale = 'ko' }: Props) {
         const next = updateHighway(prev, inputRef.current, dt);
 
         if (next.player.status === 'playing') {
+          if (next.player.nearMissCount > prev.player.nearMissCount) {
+            MobileHapticsPro.light();
+          }
           const prog = Math.min(1.0, next.player.distance / 5000);
           recordFrame(dt * 1000, {
             x: next.player.x,
@@ -339,10 +380,12 @@ export default function RetroHighway({ locale = 'ko' }: Props) {
 
         if (next.player.status === 'gameover') {
           playSound('crash');
+          MobileHapticsPro.heavy();
           const distKm = next.player.distance / 1000;
           saveBestIfFaster(Math.round((next.player.distance / 120) * 1000));
           setBestDist((cur) => {
             if (distKm > cur) {
+              MobileHapticsPro.success();
               if (containerRef.current) celebrate(containerRef.current, { preset: "sparks" });
               try {
                 localStorage.setItem('retro_highway_3d_best_dist', distKm.toFixed(2));
@@ -397,7 +440,7 @@ export default function RetroHighway({ locale = 'ko' }: Props) {
             <div
               className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold border transition-colors ${
                 liveDelta.isAhead
-                  ? 'border-success/30 bg-success/10 text-success'
+                  ? 'border-primary/30 bg-primary/10 text-primary'
                   : 'border-destructive/30 bg-destructive/10 text-destructive'
               }`}
             >
@@ -407,7 +450,12 @@ export default function RetroHighway({ locale = 'ko' }: Props) {
           )}
           {bestDist > 0 && (
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted text-xs font-medium text-foreground">
-              <Trophy className="w-4 h-4 text-warning" />
+              <img
+                src={getSpriteUrl('trophy', 64)}
+                alt="Best"
+                className="size-4 object-contain"
+                draggable={false}
+              />
               <span>{t.bestDist}: {bestDist.toFixed(2)} km</span>
             </div>
           )}
@@ -427,13 +475,13 @@ export default function RetroHighway({ locale = 'ko' }: Props) {
           >
             {isImmersive ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
           </button>
-          <button
+          <TiltHighwayButton
             onClick={handleRestart}
             className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90 transition-opacity"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             {t.restart}
-          </button>
+          </TiltHighwayButton>
         </div>
       </div>
 
@@ -494,30 +542,31 @@ export default function RetroHighway({ locale = 'ko' }: Props) {
         {/* Crash / Game Over Overlay */}
         {state.player.status === 'gameover' && (
           <div className="absolute inset-0 bg-background/80 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center">
-            <ShieldAlert className="w-12 h-12 text-destructive mb-2" />
+            <div className="flex size-14 items-center justify-center rounded-2xl bg-destructive/20 p-2 mb-2">
+              <ShieldAlert className="w-10 h-10 text-destructive" />
+            </div>
             <h3 className="text-2xl font-extrabold text-foreground mb-1">{t.crashTitle}</h3>
             <p className="text-xs text-muted-foreground mb-4">{t.crashDesc}</p>
             <div className="flex items-center gap-4 text-sm font-semibold text-foreground mb-6">
               <div>{t.distance}: <span className="text-primary">{distanceKm} km</span></div>
               <div>{t.score}: <span className="text-warning">{state.player.score}</span></div>
-              <div>{t.nearMiss}: <span className="text-success">{state.player.nearMissCount}</span></div>
+              <div>{t.nearMiss}: <span className="text-primary">{state.player.nearMissCount}</span></div>
             </div>
             <div className="flex flex-wrap justify-center gap-2">
-              <button
-                type="button"
+              <TiltHighwayButton
                 onClick={() => void handleShareCard()}
                 className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-primary/50 bg-primary/20 px-4 py-2.5 text-xs font-bold text-primary transition-colors hover:bg-primary/30 active:scale-95"
               >
                 <Share2 className="w-4 h-4" />
                 <span>{shareCopied ? "복사됨!" : "공유 카드"}</span>
-              </button>
-              <button
+              </TiltHighwayButton>
+              <TiltHighwayButton
                 onClick={handleRestart}
                 className="px-6 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-bold flex items-center gap-2 hover:opacity-90 shadow-lg"
               >
                 <RotateCcw className="w-4 h-4" />
                 {t.restart}
-              </button>
+              </TiltHighwayButton>
             </div>
           </div>
         )}

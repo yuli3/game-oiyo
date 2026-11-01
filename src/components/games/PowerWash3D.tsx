@@ -30,6 +30,7 @@ import {
   downloadShareCard,
 } from "../../lib/games/share-card";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { getSpriteUrl } from "../../lib/games/sprites";
 
 function TiltWashButton({
   children,
@@ -639,13 +640,13 @@ export default function PowerWash3D() {
         <div className="rounded-lg border border-border bg-muted/40 p-3">
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span>{hoveredPart ? hoveredPart.name : "파츠 위에 조준선을 올리세요"}</span>
-            <span className="font-bold text-success">
+            <span className="font-bold text-primary">
               {hoveredPart ? `${hoveredPart.cleanPercent}%` : `${completedCount}/${gameState.parts.length} 완료`}
             </span>
           </div>
           <div className="mt-1.5 h-2.5 w-full overflow-hidden rounded-full bg-muted">
             <div
-              className="h-full bg-success transition-all duration-150 w-(--part-w)"
+              className="h-full bg-primary transition-all duration-150 w-(--part-w)"
               style={
                 {
                   "--part-w": `${hoveredPart ? hoveredPart.cleanPercent : (completedCount / gameState.parts.length) * 100}%`,
@@ -658,8 +659,14 @@ export default function PowerWash3D() {
         <div className="flex items-center justify-between rounded-lg border border-border bg-muted/40 p-3">
           <div>
             <span className="text-xs text-muted-foreground">EARNED CASH</span>
-            <p className="text-lg font-black text-warning flex items-center gap-1">
-              <Coins className="h-4 w-4" />${gameState.cashEarned}
+            <p className="text-lg font-black text-warning flex items-center gap-1.5">
+              <img
+                src={getSpriteUrl('coin', 64)}
+                alt="Cash"
+                className="size-4 object-contain"
+                draggable={false}
+              />
+              <span>${gameState.cashEarned}</span>
             </p>
           </div>
           <div className="text-right">
@@ -698,8 +705,13 @@ export default function PowerWash3D() {
         {/* Stage Clear Overlay */}
         {gameState.status === "stage_clear" && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 p-6 backdrop-blur-xs text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-success/20 text-success mb-2">
-              <Trophy className="h-8 w-8" />
+            <div className="flex size-16 items-center justify-center rounded-2xl bg-primary/20 p-2 mb-2">
+              <img
+                src={getSpriteUrl('trophy', 64)}
+                alt="Clear Trophy"
+                className="size-12 object-contain"
+                draggable={false}
+              />
             </div>
             <h3 className="text-2xl font-black text-foreground">JOB COMPLETE! 100% CLEAN</h3>
             <p className="text-xs text-muted-foreground mt-1 max-w-xs">
@@ -708,7 +720,7 @@ export default function PowerWash3D() {
             <div className="my-3 grid grid-cols-2 gap-4 border border-border rounded-lg p-3 bg-card/60 text-left">
               <div>
                 <p className="text-xs text-muted-foreground">PARTS WASHED</p>
-                <p className="text-lg font-bold text-success">
+                <p className="text-lg font-bold text-primary">
                   {gameState.parts.length} / {gameState.parts.length}
                 </p>
               </div>

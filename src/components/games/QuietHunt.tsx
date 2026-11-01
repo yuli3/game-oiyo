@@ -27,7 +27,46 @@ import {
   type HuntState,
 } from "../../lib/games/quiet-hunt";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { getSpriteUrl } from "../../lib/games/sprites";
 import QuietHuntScene, { type FieldGlide } from "./QuietHuntScene";
+
+function TiltHuntButton({
+  children,
+  onClick,
+  className = '',
+  disabled = false,
+  title,
+  ariaLabel,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        triggerPop(0.12);
+        onClick?.();
+      }}
+      disabled={disabled}
+      title={title}
+      aria-label={ariaLabel}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`transition-transform duration-100 ease-out active:scale-95 disabled:pointer-events-none disabled:opacity-50 transform-(--card-tilt) ${className}`}
+      style={{ '--card-tilt': transformCss || 'none' } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 
 interface Copy {
   title: string;
@@ -569,10 +608,16 @@ export default function QuietHunt({ locale = "en" }: { locale?: Locale }) {
     if (next.status === "win") {
       note(lawTick(next.lastAction));
       note("win");
+      MobileHapticsPro.success();
+      if (containerRef.current) {
+        celebrate(containerRef.current, { preset: "sparks" });
+      }
     } else if (next.status === "lose") {
       note("lose");
+      MobileHapticsPro.warning();
     } else {
       note(lawTick(next.lastAction));
+      MobileHapticsPro.light();
     }
     glideSerial.current += 1;
     setShown(stateRef.current);
@@ -710,22 +755,31 @@ export default function QuietHunt({ locale = "en" }: { locale?: Locale }) {
       <p role="status" aria-live="polite" className="text-sm text-foreground">{live}</p>
       {state.status !== "play" && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
-          <div>
-            <p className="text-sm font-bold text-foreground">
-              {state.status === "win" ? "✨ 야생 생태 관찰 성공!" : "🌿 추적 한계 도달"}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {state.status === "win" ? `${state.steps}스텝 만에 바람과 동물 흔적의 일치를 기록했습니다.` : outcome}
-            </p>
+          <div className="flex items-center gap-3">
+            <div className="flex size-12 items-center justify-center rounded-xl bg-primary/20 p-1.5 shrink-0">
+              <img
+                src={getSpriteUrl(state.status === "win" ? "trophy" : "star", 64)}
+                alt="Hunt Result"
+                className="size-8 object-contain"
+                draggable={false}
+              />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-foreground">
+                {state.status === "win" ? "✨ 야생 생태 관찰 성공!" : "🌿 추적 한계 도달"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {state.status === "win" ? `${state.steps}스텝 만에 바람과 동물 흔적의 일치를 기록했습니다.` : outcome}
+              </p>
+            </div>
           </div>
-          <button
-            type="button"
+          <TiltHuntButton
             onClick={handleShareCard}
             className="flex items-center gap-1.5 rounded-xl border border-border bg-secondary px-3.5 py-2 text-xs font-bold text-secondary-foreground shadow-sm transition hover:bg-muted"
           >
             {shareCardCopied ? <Check className="h-4 w-4 text-primary" /> : <Share2 className="h-4 w-4" />}
             <span>{shareCardCopied ? "복사 완료!" : "결과 카드 공유"}</span>
-          </button>
+          </TiltHuntButton>
         </div>
       )}
       <div className="relative overflow-hidden rounded-2xl border border-border bg-card">

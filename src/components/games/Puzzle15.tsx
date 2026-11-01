@@ -8,13 +8,54 @@ import { getBestForConditions, recordBestForConditions, type BestConditions } fr
 import { clearPuzzle15Save, loadPuzzle15Save, storePuzzle15Save } from '../../lib/games/active-game-save';
 import { elapsedSeconds } from '../../lib/games/time-contracts';
 import { indexToRowCol } from '../../lib/games/piece-tween';
-import { PUZZLE15_SPRITES } from '../../lib/games/sprites';
+import { PUZZLE15_SPRITES, getSpriteUrl } from '../../lib/games/sprites';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import { celebrate } from '../../lib/games/celebration';
 import {
   createShareCardCanvas,
   copyShareCardToClipboard,
   downloadShareCard,
 } from '../../lib/games/share-card';
+
+function TiltPuzzleButton({
+  children,
+  onClick,
+  className = '',
+  disabled = false,
+  title,
+  ariaLabel,
+  ariaPressed,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+  ariaPressed?: boolean;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        triggerPop(0.12);
+        onClick?.();
+      }}
+      disabled={disabled}
+      title={title}
+      aria-label={ariaLabel}
+      aria-pressed={ariaPressed}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`transition-transform duration-100 ease-out active:scale-95 disabled:pointer-events-none disabled:opacity-50 transform-(--card-tilt) ${className}`}
+      style={{ '--card-tilt': transformCss || 'none' } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 
 // ─── 15 Puzzle (sliding puzzle) — ported from ahoxy-legacy ────────────────────
 // Shuffled by random moves from the solved state, so every board is solvable.
@@ -140,6 +181,7 @@ const Puzzle15: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         setWon(true);
         clearPuzzle15Save();
         tone(660, 0.18);
+        MobileHapticsPro.success();
         if (containerRef.current) celebrate(containerRef.current, { preset: "tiles" });
         const saved = recordBestForConditions(gameKey(size), seconds, 'seconds', conditionsFor(size, puzzleSeed), String(finalMoves));
         setBest((prev) => ({ ...prev, [size]: { moves: Number(saved.extra) || finalMoves, seconds: saved.value } }));
@@ -180,6 +222,7 @@ const Puzzle15: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         const nextMoves = moves + 1;
         setBoard(transition.board);
         setMoves(nextMoves);
+        MobileHapticsPro.light();
         if (transition.solved) finish(nextMoves);
         else tone(300, 0.04);
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -281,26 +324,36 @@ const Puzzle15: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                             } as CSSProperties : undefined}
                         >
                             <img src={PUZZLE15_SPRITES.tile} alt="" draggable={false} className="pointer-events-none absolute inset-0 h-full w-full object-cover" />
-                            <span className={`relative z-[1] flex h-full w-full items-center justify-center ${v === (i + 1) % (size * size) ? 'text-primary' : 'text-stone-900'}`}>{v}</span>
+                            <span className={`relative z-[1] flex h-full w-full items-center justify-center ${v === (i + 1) % (size * size) ? 'text-primary' : 'text-card-foreground'}`}>{v}</span>
                         </button>
                     ))}
 
                     {won && (
                         <div className={`absolute inset-0 z-10 bg-background/80 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center gap-3 ${!reducedMotion ? 'animate-in fade-in zoom-in-95' : ''}`} role="status" aria-live="polite">
-                            <p className="text-2xl font-black text-success">🎉 {t.win}</p>
+                            <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/20 p-2">
+                                <img
+                                    src={getSpriteUrl('trophy', 64)}
+                                    alt="Puzzle Solved"
+                                    className="size-10 object-contain"
+                                    draggable={false}
+                                />
+                            </div>
+                            <p className="text-2xl font-black text-primary">🎉 {t.win}</p>
                             <p className="text-sm font-bold text-muted-foreground">{t.moves} {moves} · {t.time} {fmt(seconds)}</p>
                             <div className="flex flex-wrap justify-center gap-2 mt-2">
-                                <button
-                                    type="button"
+                                <TiltPuzzleButton
                                     onClick={() => void handleShareCard()}
-                                    className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-primary/50 bg-primary/20 px-4 py-2.5 text-xs font-bold text-primary transition-colors hover:bg-primary/30 active:scale-95"
+                                    className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-primary/50 bg-primary/20 px-4 py-2.5 text-xs font-bold text-primary transition-colors hover:bg-primary/30"
                                 >
                                     <Share2 className="w-4 h-4" />
                                     <span>{shareCardCopied ? "복사됨!" : "공유 카드"}</span>
-                                </button>
-                                <button onClick={() => restart()} className="min-h-11 px-8 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity">
+                                </TiltPuzzleButton>
+                                <TiltPuzzleButton
+                                    onClick={() => restart()}
+                                    className="min-h-11 px-8 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity"
+                                >
                                     ↺
-                                </button>
+                                </TiltPuzzleButton>
                             </div>
                         </div>
                     )}
