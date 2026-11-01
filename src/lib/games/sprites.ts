@@ -492,11 +492,13 @@ export const CHESS_SPRITES: Record<string, string> = {
 };
 
 export const CAT_FISHING_KOI = [
-  "/assets/sprites/cat-fishing/koi-gold.png",
-  "/assets/sprites/cat-fishing/koi-red.png",
+  "/assets/sprites/cat-fishing/koi-gold-3d-128.png",
+  "/assets/sprites/cat-fishing/koi-calico-3d-128.png",
+  "/assets/sprites/cat-fishing/koi-ruby-3d-128.png",
   "/assets/sprites/cat-fishing/koi-white.png",
-  "/assets/sprites/cat-fishing/koi-calico.png",
 ] as const;
+
+export const CAT_FISHING_PAW = "/assets/sprites/cat-fishing/cat-paw-128.png";
 
 export const DOT_PET_SPRITES: Record<string, { baby: string; adult: string }> = {
   normal: {

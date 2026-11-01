@@ -67,14 +67,16 @@ export default defineConfig([
   // here only for what a token cannot express. no-raw-colors is never lifted: colours
   // always go through tokens. Growing eslint-suppressions.json is not an exception.
   {
-    // 2026-10-06 (updated 2026-10-25) — Block Burst, Animal Pop, and Tamagotchi retro device shells.
+    // 2026-10-06 (updated 2026-11-01) — Block Burst, Animal Pop, Tamagotchi, and Cat Fishing animated ponds.
     // Why: the board and retro handheld device are drawn objects with custom LCD scanlines,
-    // pixel typography, egg wobble animations, and custom <style> keyframes (.tama-*, .burst-*).
+    // pixel typography, egg wobble animations, dynamic fish physics coordinates (left/top/rotate),
+    // and custom <style> keyframes (.tama-*, .burst-*).
     // The controls, HUD and dialogs follow every shadcn rule and theme token.
     files: [
       "src/components/games/BlockBurst.tsx",
       "src/components/games/AnimalPop.tsx",
       "src/components/games/Tamagotchi.tsx",
+      "src/components/games/CatFishing.tsx",
     ],
     rules: {
       "shadcn/no-arbitrary-values": "off",
