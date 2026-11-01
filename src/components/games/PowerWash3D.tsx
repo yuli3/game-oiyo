@@ -30,7 +30,7 @@ import {
   downloadShareCard,
 } from "../../lib/games/share-card";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
-import { getSpriteUrl } from "../../lib/games/sprites";
+import { getSpriteUrl, POWER_WASH_SPRITES } from "../../lib/games/sprites";
 
 function TiltWashButton({
   children,
@@ -98,6 +98,17 @@ export default function PowerWash3D() {
   const lastTimeRef = useRef<number>(0);
   const flashPartMapRef = useRef<Record<string, number>>({});
   const clearedCelebratedRef = useRef(false);
+  const gunImgRef = useRef<HTMLImageElement | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const img = new Image();
+      img.src = POWER_WASH_SPRITES.gun;
+      img.onload = () => {
+        gunImgRef.current = img;
+      };
+    }
+  }, []);
 
   const isMutedRef = useRef(isMuted);
   isMutedRef.current = isMuted;
@@ -470,13 +481,26 @@ export default function PowerWash3D() {
         ctx.restore();
       }
 
-      // Draw PowerWasher Lance Barrel
+      // Draw 3D High-Pressure Wash Gun Sprite & Lance
       ctx.save();
-      ctx.strokeStyle = "#1e293b";
-      ctx.lineWidth = 14;
+      const recoil = isSprayingRef.current ? Math.sin(time * 0.05) * 4 : 0;
+      const gunOriginX = lanceBaseX + Math.cos(angle) * (recoil - 15);
+      const gunOriginY = lanceBaseY + Math.sin(angle) * (recoil - 15);
+
+      // Draw metallic lance extension barrel
+      ctx.strokeStyle = "#475569";
+      ctx.lineWidth = 12;
       ctx.lineCap = "round";
       ctx.beginPath();
-      ctx.moveTo(lanceBaseX, lanceBaseY);
+      ctx.moveTo(gunOriginX, gunOriginY);
+      ctx.lineTo(nozzleTipX, nozzleTipY);
+      ctx.stroke();
+
+      // Inner metallic highlight line
+      ctx.strokeStyle = "#94a3b8";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(gunOriginX, gunOriginY);
       ctx.lineTo(nozzleTipX, nozzleTipY);
       ctx.stroke();
 
@@ -488,6 +512,15 @@ export default function PowerWash3D() {
       ctx.moveTo(nozzleTipX - Math.cos(angle) * 14, nozzleTipY - Math.sin(angle) * 14);
       ctx.lineTo(nozzleTipX, nozzleTipY);
       ctx.stroke();
+
+      // Draw 3D Gun Sprite overlay if loaded
+      if (gunImgRef.current && gunImgRef.current.complete) {
+        ctx.save();
+        ctx.translate(gunOriginX + 15, gunOriginY + 15);
+        ctx.rotate(angle - Math.PI / 4);
+        ctx.drawImage(gunImgRef.current, -56, -56, 112, 112);
+        ctx.restore();
+      }
       ctx.restore();
 
       // 4. Draw Nozzle Reticle at Cursor
@@ -704,12 +737,18 @@ export default function PowerWash3D() {
 
         {/* Stage Clear Overlay */}
         {gameState.status === "stage_clear" && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 p-6 backdrop-blur-xs text-center">
-            <div className="flex size-16 items-center justify-center rounded-2xl bg-primary/20 p-2 mb-2">
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/85 p-6 backdrop-blur-xs text-center z-10">
+            <div className="relative flex size-20 items-center justify-center rounded-3xl bg-primary/20 p-2 mb-3 border border-primary/40 shadow-xl">
               <img
-                src={getSpriteUrl('trophy', 64)}
+                src={getSpriteUrl('trophy', 128)}
                 alt="Clear Trophy"
-                className="size-12 object-contain"
+                className="size-14 object-contain animate-bounce"
+                draggable={false}
+              />
+              <img
+                src={POWER_WASH_SPRITES.gun}
+                alt="Power Gun"
+                className="absolute -bottom-2 -right-2 size-8 object-contain drop-shadow"
                 draggable={false}
               />
             </div>
@@ -717,7 +756,7 @@ export default function PowerWash3D() {
             <p className="text-xs text-muted-foreground mt-1 max-w-xs">
               {gameState.stageTitle}의 모든 찌든 때를 완벽하게 세척했습니다!
             </p>
-            <div className="my-3 grid grid-cols-2 gap-4 border border-border rounded-lg p-3 bg-card/60 text-left">
+            <div className="my-3 grid grid-cols-2 gap-4 border border-border rounded-lg p-3 bg-card/70 text-left w-full max-w-xs shadow-xs">
               <div>
                 <p className="text-xs text-muted-foreground">PARTS WASHED</p>
                 <p className="text-lg font-bold text-primary">
@@ -754,29 +793,44 @@ export default function PowerWash3D() {
         {(["0deg", "15deg", "40deg", "soap"] as NozzleType[]).map((nozId, idx) => {
           const spec = NOZZLE_SPECS[nozId];
           const isSelected = gameState.selectedNozzle === nozId;
+          const isSoap = nozId === "soap";
           return (
             <TiltWashButton
               key={nozId}
-              className={`flex flex-col items-start rounded-lg border p-2.5 text-left transition ${
+              className={`flex items-center gap-2.5 rounded-lg border p-2.5 text-left transition ${
                 isSelected
-                  ? "border-primary bg-primary/15 shadow-xs"
+                  ? "border-primary bg-primary/15 shadow-xs ring-1 ring-primary"
                   : "border-border bg-muted/20 hover:bg-muted/40"
               }`}
               onClick={() => handleSelectNozzle(nozId)}
             >
-              <div className="flex w-full items-center justify-between">
-                <span className="text-xs font-bold text-foreground">{spec.name}</span>
-                <span className="text-xs font-mono text-muted-foreground">[{idx + 1}]</span>
+              <div className="relative flex size-10 shrink-0 items-center justify-center rounded-lg bg-card border border-border overflow-hidden">
+                <img
+                  src={isSoap ? POWER_WASH_SPRITES.foam : POWER_WASH_SPRITES.nozzle}
+                  alt={spec.name}
+                  className="size-8 object-contain"
+                  draggable={false}
+                />
+                <span
+                  className="absolute bottom-0 right-0 size-2.5 rounded-tl-xs bg-(--noz-col)"
+                  style={{ "--noz-col": spec.color } as React.CSSProperties}
+                />
               </div>
-              <span className="mt-1 text-xs text-muted-foreground">
-                {nozId === "0deg"
-                  ? "초고압 찌든 때 분쇄"
-                  : nozId === "15deg"
-                  ? "표준 밸런스 부채꼴"
-                  : nozId === "40deg"
-                  ? "광역 빠른 먼지 제거"
-                  : "비누 거품 도포 (효율 2배)"}
-              </span>
+              <div className="flex flex-col min-w-0">
+                <div className="flex w-full items-center justify-between gap-1">
+                  <span className="text-xs font-bold text-foreground truncate">{spec.name}</span>
+                  <span className="text-xs font-mono text-muted-foreground">[{idx + 1}]</span>
+                </div>
+                <span className="text-xs text-muted-foreground line-clamp-1">
+                  {nozId === "0deg"
+                    ? "초고압 찌든때 분쇄"
+                    : nozId === "15deg"
+                    ? "표준 밸런스 부채꼴"
+                    : nozId === "40deg"
+                    ? "광역 빠른 먼지 제거"
+                    : "비누 거품 도포 (2배)"}
+                </span>
+              </div>
             </TiltWashButton>
           );
         })}

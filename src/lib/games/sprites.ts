@@ -514,6 +514,13 @@ export const MINI_GOLF_SPRITES = {
   trophy: "/assets/sprites/common/trophy-gold-128.png",
 } as const;
 
+export const POWER_WASH_SPRITES = {
+  gun: "/assets/sprites/power-wash/powerwash-gun-128.png",
+  nozzle: "/assets/sprites/power-wash/nozzle-pack-128.png",
+  badge: "/assets/sprites/common/star-rating-128.png",
+  foam: "/assets/sprites/power-wash/soap-foam-128.png",
+} as const;
+
 export const DOT_PET_SPRITES: Record<string, { baby: string; adult: string }> = {
   normal: {
     baby: "/assets/sprites/dot-pet/normal-baby.png",
