@@ -395,6 +395,7 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     }, [mode, isBlackTurn, winner, paused]);
 
     const reset = () => {
+        MobileHapticsPro.selection();
         if (aiTimer.current) clearTimeout(aiTimer.current);
         setBoard(createGomokuBoard());
         setIsBlackTurn(true);
@@ -484,8 +485,7 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                         </div>
                     </div>
                     <TiltGomokuButton
-                        onClick={() => { MobileHapticsPro.selection(); reset(); }}
-                        className="min-h-11 px-4 py-2 bg-muted hover:bg-muted/80 text-muted-foreground rounded-xl text-xs font-bold border border-border"
+                        onClick={reset} className="min-h-11 px-4 py-2 bg-muted hover:bg-muted/80 text-muted-foreground rounded-xl text-xs font-bold border border-border"
                     >
                         {t.reset}
                     </TiltGomokuButton>
