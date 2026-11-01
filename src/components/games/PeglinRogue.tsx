@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   CANNON_X,
@@ -9,14 +9,67 @@ import {
   type PeglinGame,
   stepPeglinPhysics,
 } from "@/lib/games/peglin-rogue";
-import { addTrauma, createShakeState, triggerHaptic, updateShake } from "@/lib/games/juice-engine";
+import { addTrauma, createShakeState, updateShake } from "@/lib/games/juice-engine";
 import { playSyntheticTone } from "@/lib/games/audio-mixer";
+import { useArcadePortal } from "@/lib/games/arcade-portal";
+import { celebrate } from "@/lib/games/celebration";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "@/lib/games/share-card";
+import { useCardTiltPro, MobileHapticsPro } from "@/lib/games/engine-suite-unified";
+import { Maximize2, Minimize2, Share2, Check, RotateCcw, Target } from "lucide-react";
+
+function TiltPeglinButton({
+  children,
+  onClick,
+  className = "",
+  disabled = false,
+  title,
+  ariaLabel,
+  ariaPressed,
+  type = "button",
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+  ariaPressed?: boolean;
+  type?: "button" | "submit";
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type={type}
+      onClick={() => {
+        triggerPop(0.15);
+        onClick?.();
+      }}
+      disabled={disabled}
+      title={title}
+      aria-label={ariaLabel}
+      aria-pressed={ariaPressed}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`transition-transform duration-100 ease-out active:scale-95 disabled:pointer-events-none disabled:opacity-50 transform-(--card-tilt) ${className}`}
+      style={{ "--card-tilt": transformCss || "none" } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 
 interface PeglinRogueProps {
   locale?: string;
 }
 
 export default function PeglinRogue({ locale = "ko" }: PeglinRogueProps) {
+  const { isImmersive, containerRef, togglePortal } = useArcadePortal();
+  const [copied, setCopied] = useState(false);
   const [game, setGame] = useState<PeglinGame>(() => createInitialPeglinGame(1));
   const [aimAngle, setAimAngle] = useState(Math.PI / 2); // default straight down
   const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0 });
@@ -26,6 +79,8 @@ export default function PeglinRogue({ locale = "ko" }: PeglinRogueProps) {
 
   const shakeStateRef = useRef(createShakeState());
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const victoryHandledRef = useRef(false);
+  const gameOverHandledRef = useRef(false);
 
   // Initialize Web Audio
   useEffect(() => {
@@ -63,7 +118,7 @@ export default function PeglinRogue({ locale = "ko" }: PeglinRogueProps) {
         const step = stepPeglinPhysics(current, dt);
 
         if (step.pegHitCount > 0) {
-          triggerHaptic("light");
+          MobileHapticsPro.light();
           const pitchBase = 320 + (current.currentTurnDamage % 30) * 18;
           playSyntheticTone(audioCtxRef.current, {
             freq: pitchBase,
@@ -75,7 +130,7 @@ export default function PeglinRogue({ locale = "ko" }: PeglinRogueProps) {
 
         if (step.bombExploded) {
           shakeStateRef.current = addTrauma(shakeStateRef.current, 0.45);
-          triggerHaptic("heavy");
+          MobileHapticsPro.heavy();
           playSyntheticTone(audioCtxRef.current, {
             freq: 120,
             duration: 0.25,
@@ -85,7 +140,7 @@ export default function PeglinRogue({ locale = "ko" }: PeglinRogueProps) {
         }
 
         if (step.critActivated) {
-          triggerHaptic("combo");
+          MobileHapticsPro.medium();
           playSyntheticTone(audioCtxRef.current, {
             freq: 880,
             duration: 0.15,
@@ -96,15 +151,22 @@ export default function PeglinRogue({ locale = "ko" }: PeglinRogueProps) {
 
         if (step.enemyDamaged > 0) {
           shakeStateRef.current = addTrauma(shakeStateRef.current, 0.5);
-          triggerHaptic("combo");
+          MobileHapticsPro.heavy();
         }
 
         if (step.playerDamaged > 0) {
           shakeStateRef.current = addTrauma(shakeStateRef.current, 0.6);
-          triggerHaptic("heavy");
+          MobileHapticsPro.heavy();
         }
 
         setGame(step.game);
+      } else if (current.status === "won" && !victoryHandledRef.current) {
+        victoryHandledRef.current = true;
+        MobileHapticsPro.heavy();
+        celebrate(containerRef.current, { preset: "sparks" });
+      } else if (current.status === "gameover" && !gameOverHandledRef.current) {
+        gameOverHandledRef.current = true;
+        MobileHapticsPro.error();
       }
 
       animId = requestAnimationFrame(loop);
@@ -134,15 +196,38 @@ export default function PeglinRogue({ locale = "ko" }: PeglinRogueProps) {
     const fired = firePeglinBall(game, aimAngle);
     setGame(fired);
     playSyntheticTone(audioCtxRef.current, { freq: 240, duration: 0.1, type: "sine" });
-    triggerHaptic("medium");
+    MobileHapticsPro.medium();
   };
 
   const handleNextStage = () => {
+    victoryHandledRef.current = false;
+    gameOverHandledRef.current = false;
+    MobileHapticsPro.medium();
     setGame(createInitialPeglinGame(game.stage + 1));
   };
 
   const handleRestart = () => {
+    victoryHandledRef.current = false;
+    gameOverHandledRef.current = false;
+    MobileHapticsPro.medium();
     setGame(createInitialPeglinGame(1));
+  };
+
+  const handleShare = async () => {
+    MobileHapticsPro.medium();
+    const canvas = createShareCardCanvas({
+      title: "Peglin Rogue Pachinko",
+      slug: "peglin-rogue",
+      score: `Stage ${game.stage}`,
+      subtitle: `Hero HP: ${game.playerHp}/${game.maxPlayerHp} • VS ${game.enemy.name}`,
+    });
+    const success = await copyShareCardToClipboard(canvas);
+    if (success) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `peglin-rogue-stage${game.stage}.png`);
+    }
   };
 
   const { playerHp, maxPlayerHp, enemy, pegs, activeBall, currentTurnDamage, isCritActive } = game;
@@ -153,18 +238,23 @@ export default function PeglinRogue({ locale = "ko" }: PeglinRogueProps) {
 
   return (
     <div
+      ref={containerRef}
       style={
         {
           "--shake-x": `${shakeOffset.x}px`,
           "--shake-y": `${shakeOffset.y}px`,
         } as React.CSSProperties
       }
-      className="mx-auto flex w-full max-w-xl translate-x-(--shake-x) translate-y-(--shake-y) flex-col items-center gap-4 p-4 select-none"
+      className={`select-none transition-colors duration-200 translate-x-(--shake-x) translate-y-(--shake-y) ${
+        isImmersive
+          ? "fixed inset-0 z-50 bg-background flex flex-col justify-between p-3 sm:p-4 overflow-y-auto"
+          : "mx-auto flex w-full max-w-xl flex-col items-center gap-4 p-3 sm:p-4"
+      }`}
     >
-      {/* Top RPG Battle Bar */}
-      <div className="flex w-full items-center justify-between rounded-xl border border-border bg-card p-3 shadow-sm">
+      {/* Top Controls & Status Bar */}
+      <div className="flex w-full items-center justify-between rounded-xl border border-border bg-card p-3 shadow-sm gap-2">
         {/* Player Status */}
-        <div className="flex flex-col gap-1 w-32">
+        <div className="flex flex-col gap-1 w-28 sm:w-32">
           <div className="flex justify-between text-xs font-bold">
             <span>🛡️ {locale === "ko" ? "용사" : "Hero"}</span>
             <span className="text-primary font-black">
@@ -197,7 +287,7 @@ export default function PeglinRogue({ locale = "ko" }: PeglinRogueProps) {
         </div>
 
         {/* Enemy Status */}
-        <div className="flex flex-col gap-1 w-36 text-right">
+        <div className="flex flex-col gap-1 w-32 sm:w-36 text-right">
           <div className="flex justify-between text-xs font-bold">
             <span className="text-destructive font-black">
               {enemy.hp}/{enemy.maxHp}
@@ -219,6 +309,24 @@ export default function PeglinRogue({ locale = "ko" }: PeglinRogueProps) {
           <span className="text-xs text-muted-foreground">
             ⚔️ {locale === "ko" ? `공격 예고: ${enemy.attack}` : `Intent: ${enemy.attack}`}
           </span>
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          <TiltPeglinButton
+            onClick={handleShare}
+            className="p-1.5 rounded-lg border border-border bg-card hover:bg-muted text-foreground"
+            ariaLabel="Share Battle Record"
+          >
+            {copied ? <Check className="size-4 text-success" /> : <Share2 className="size-4" />}
+          </TiltPeglinButton>
+
+          <TiltPeglinButton
+            onClick={togglePortal}
+            className="p-1.5 rounded-lg border border-border bg-card hover:bg-muted text-foreground"
+            ariaLabel={isImmersive ? "Exit Fullscreen" : "Enter Fullscreen"}
+          >
+            {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+          </TiltPeglinButton>
         </div>
       </div>
 
@@ -277,9 +385,12 @@ export default function PeglinRogue({ locale = "ko" }: PeglinRogueProps) {
         {/* Fire Button Trigger (Mobile Touch Friendly) */}
         {game.status === "aiming" && (
           <div className="absolute bottom-3 left-1/2 -translate-x-1/2">
-            <Button onClick={handleFire} size="sm">
-              {locale === "ko" ? "구슬 발사!" : "Drop Orb!"}
-            </Button>
+            <TiltPeglinButton
+              onClick={handleFire}
+              className="px-4 py-2 rounded-full bg-primary font-bold text-xs text-primary-foreground shadow-lg flex items-center gap-1.5"
+            >
+              <Target className="size-4" /> {locale === "ko" ? "구슬 발사!" : "Drop Orb!"}
+            </TiltPeglinButton>
           </div>
         )}
 
@@ -296,12 +407,24 @@ export default function PeglinRogue({ locale = "ko" }: PeglinRogueProps) {
                 : `Stage ${game.stage} Cleared! Face the next enemy.`}
             </p>
             <div className="flex gap-3">
-              <Button onClick={handleRestart} variant="outline" size="lg">
+              <TiltPeglinButton
+                onClick={handleRestart}
+                className="px-4 py-2 rounded-xl border border-border bg-card text-xs font-semibold hover:bg-muted"
+              >
                 {locale === "ko" ? "처음부터" : "Restart"}
-              </Button>
-              <Button onClick={handleNextStage} size="lg">
+              </TiltPeglinButton>
+              <TiltPeglinButton
+                onClick={handleShare}
+                className="px-4 py-2 rounded-xl border border-border bg-card text-xs font-semibold hover:bg-muted flex items-center gap-1.5"
+              >
+                {copied ? <Check className="size-4 text-success" /> : <Share2 className="size-4" />} {locale === "ko" ? "기록 공유" : "Share"}
+              </TiltPeglinButton>
+              <TiltPeglinButton
+                onClick={handleNextStage}
+                className="px-4 py-2 rounded-xl bg-primary text-xs font-bold text-primary-foreground shadow"
+              >
                 {locale === "ko" ? "다음 스테이지" : "Next Stage"}
-              </Button>
+              </TiltPeglinButton>
             </div>
           </div>
         )}
@@ -318,9 +441,20 @@ export default function PeglinRogue({ locale = "ko" }: PeglinRogueProps) {
                 ? `도달한 스테이지: ${game.stage}층`
                 : `Reached Stage: ${game.stage}`}
             </p>
-            <Button onClick={handleRestart} size="lg">
-              {locale === "ko" ? "다시 도전" : "Try Again"}
-            </Button>
+            <div className="flex items-center gap-3">
+              <TiltPeglinButton
+                onClick={handleRestart}
+                className="px-5 py-2.5 rounded-xl bg-primary text-xs font-bold text-primary-foreground shadow flex items-center gap-1.5"
+              >
+                <RotateCcw className="size-4" /> {locale === "ko" ? "다시 도전" : "Try Again"}
+              </TiltPeglinButton>
+              <TiltPeglinButton
+                onClick={handleShare}
+                className="px-4 py-2.5 rounded-xl border border-border bg-card text-xs font-semibold hover:bg-muted flex items-center gap-1.5"
+              >
+                {copied ? <Check className="size-4 text-success" /> : <Share2 className="size-4" />} {locale === "ko" ? "기록 공유" : "Share"}
+              </TiltPeglinButton>
+            </div>
           </div>
         )}
       </div>

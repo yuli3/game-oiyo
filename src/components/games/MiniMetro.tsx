@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   clearLine,
@@ -11,14 +11,66 @@ import {
   type StationShape,
   stepMiniMetro,
 } from "@/lib/games/mini-metro";
-import { triggerHaptic } from "@/lib/games/juice-engine";
 import { playSyntheticTone } from "@/lib/games/audio-mixer";
+import { useArcadePortal } from "@/lib/games/arcade-portal";
+import { celebrate } from "@/lib/games/celebration";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "@/lib/games/share-card";
+import { useCardTiltPro, MobileHapticsPro } from "@/lib/games/engine-suite-unified";
+import { Maximize2, Minimize2, Share2, Check, RotateCcw, Play, Pause } from "lucide-react";
+
+function TiltMetroButton({
+  children,
+  onClick,
+  className = "",
+  disabled = false,
+  title,
+  ariaLabel,
+  ariaPressed,
+  type = "button",
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+  ariaPressed?: boolean;
+  type?: "button" | "submit";
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type={type}
+      onClick={() => {
+        triggerPop(0.15);
+        onClick?.();
+      }}
+      disabled={disabled}
+      title={title}
+      aria-label={ariaLabel}
+      aria-pressed={ariaPressed}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`transition-transform duration-100 ease-out active:scale-95 disabled:pointer-events-none disabled:opacity-50 transform-(--card-tilt) ${className}`}
+      style={{ "--card-tilt": transformCss || "none" } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 
 interface MiniMetroProps {
   locale?: string;
 }
 
 export default function MiniMetro({ locale = "ko" }: MiniMetroProps) {
+  const { isImmersive, containerRef, togglePortal } = useArcadePortal();
+  const [copied, setCopied] = useState(false);
   const [game, setGame] = useState<MiniMetroGame>(() => createInitialMiniMetroGame());
   const [activeLineId, setActiveLineId] = useState<string>("line-red");
   const [selectedStationId, setSelectedStationId] = useState<string | null>(null);
@@ -27,6 +79,8 @@ export default function MiniMetro({ locale = "ko" }: MiniMetroProps) {
   gameRef.current = game;
 
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const milestoneDeliveredRef = useRef(0);
+  const gameOverHandledRef = useRef(false);
 
   // Initialize Web Audio
   useEffect(() => {
@@ -55,7 +109,7 @@ export default function MiniMetro({ locale = "ko" }: MiniMetroProps) {
         const { game: nextGame, events } = stepMiniMetro(current, dt);
 
         if (events.deliveredCount > 0) {
-          triggerHaptic("light");
+          MobileHapticsPro.light();
           // Play ambient chime based on total delivered count mod 5
           const notes = [523.25, 587.33, 659.25, 783.99, 880.0];
           const noteFreq = notes[nextGame.passengersDelivered % notes.length];
@@ -65,10 +119,18 @@ export default function MiniMetro({ locale = "ko" }: MiniMetroProps) {
             type: "sine",
             gain: 0.12,
           });
+
+          // Milestone celebrations every 25 passengers
+          const currentMilestone = Math.floor(nextGame.passengersDelivered / 25);
+          if (currentMilestone > milestoneDeliveredRef.current) {
+            milestoneDeliveredRef.current = currentMilestone;
+            MobileHapticsPro.heavy();
+            celebrate(containerRef.current, { preset: "sparks" });
+          }
         }
 
         if (events.newStationSpawned) {
-          triggerHaptic("medium");
+          MobileHapticsPro.medium();
           playSyntheticTone(audioCtxRef.current, {
             freq: 440,
             duration: 0.2,
@@ -78,10 +140,13 @@ export default function MiniMetro({ locale = "ko" }: MiniMetroProps) {
         }
 
         if (events.overcrowdedStationIds.length > 0) {
-          triggerHaptic("light");
+          MobileHapticsPro.heavy();
         }
 
         setGame(nextGame);
+      } else if (current.status === "gameover" && !gameOverHandledRef.current) {
+        gameOverHandledRef.current = true;
+        MobileHapticsPro.error();
       }
 
       animId = requestAnimationFrame(loop);
@@ -97,18 +162,17 @@ export default function MiniMetro({ locale = "ko" }: MiniMetroProps) {
     if (!selectedStationId) {
       // First click: select station to connect from
       setSelectedStationId(stationId);
-      // If the active line doesn't have this station, add it
       const nextGame = connectStationToLine(game, activeLineId, stationId);
       setGame(nextGame);
       playSyntheticTone(audioCtxRef.current, { freq: 392, duration: 0.06, type: "sine" });
-      triggerHaptic("light");
+      MobileHapticsPro.selection();
     } else {
       // Second click: connect selected station to clicked station
       const nextGame = connectStationToLine(game, activeLineId, stationId);
       setGame(nextGame);
       setSelectedStationId(null);
       playSyntheticTone(audioCtxRef.current, { freq: 523.25, duration: 0.08, type: "sine" });
-      triggerHaptic("light");
+      MobileHapticsPro.medium();
     }
   };
 
@@ -117,27 +181,55 @@ export default function MiniMetro({ locale = "ko" }: MiniMetroProps) {
     setGame(nextGame);
     setSelectedStationId(null);
     playSyntheticTone(audioCtxRef.current, { freq: 220, duration: 0.1, type: "sawtooth" });
-    triggerHaptic("medium");
+    MobileHapticsPro.medium();
   };
 
   const handleRestart = () => {
+    MobileHapticsPro.medium();
+    milestoneDeliveredRef.current = 0;
+    gameOverHandledRef.current = false;
     setGame(createInitialMiniMetroGame());
     setSelectedStationId(null);
   };
 
   const handleTogglePause = () => {
+    MobileHapticsPro.light();
     setGame((prev) => ({
       ...prev,
       status: prev.status === "running" ? "paused" : "running",
     }));
   };
 
+  const handleShare = async () => {
+    MobileHapticsPro.medium();
+    const canvas = createShareCardCanvas({
+      title: "Mini Metro Web",
+      slug: "mini-metro",
+      score: game.passengersDelivered,
+      subtitle: `Day ${game.day} | ${game.lines.length} Lines • ${game.stations.length} Stations`,
+    });
+    const success = await copyShareCardToClipboard(canvas);
+    if (success) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `mini-metro-day${game.day}.png`);
+    }
+  };
+
   const activeLine = game.lines.find((l) => l.id === activeLineId);
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-4 p-4 select-none">
+    <div
+      ref={containerRef}
+      className={`select-none transition-colors duration-200 ${
+        isImmersive
+          ? "fixed inset-0 z-50 bg-background flex flex-col justify-between p-3 sm:p-4 overflow-y-auto"
+          : "mx-auto flex w-full max-w-3xl flex-col items-center gap-4 p-3 sm:p-4"
+      }`}
+    >
       {/* Header HUD */}
-      <div className="flex w-full items-center justify-between border-b border-border pb-3">
+      <div className="flex w-full flex-wrap items-center justify-between border-b border-border pb-3 gap-2">
         <div>
           <h2 className="text-xl font-bold tracking-tight">
             {locale === "ko" ? "미니 메트로 웹" : "Mini Metro Web"}
@@ -149,7 +241,7 @@ export default function MiniMetro({ locale = "ko" }: MiniMetroProps) {
           </p>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-3">
           <div className="text-right">
             <span className="block text-xs font-semibold uppercase text-muted-foreground">
               {locale === "ko" ? "수송 승객" : "Delivered"}
@@ -164,13 +256,29 @@ export default function MiniMetro({ locale = "ko" }: MiniMetroProps) {
             <span className="text-xl font-black text-foreground">{game.day}</span>
           </div>
 
-          <Button
-            variant="outline"
-            size="sm"
+          <TiltMetroButton
             onClick={handleTogglePause}
+            className="p-2 rounded-lg border border-border bg-card hover:bg-muted text-foreground"
+            ariaLabel={game.status === "running" ? "Pause" : "Play"}
           >
-            {game.status === "running" ? (locale === "ko" ? "일시정지" : "Pause") : (locale === "ko" ? "재개" : "Play")}
-          </Button>
+            {game.status === "running" ? <Pause className="size-4" /> : <Play className="size-4 text-primary" />}
+          </TiltMetroButton>
+
+          <TiltMetroButton
+            onClick={handleShare}
+            className="p-2 rounded-lg border border-border bg-card hover:bg-muted text-foreground"
+            ariaLabel="Share Metro Map"
+          >
+            {copied ? <Check className="size-4 text-success" /> : <Share2 className="size-4" />}
+          </TiltMetroButton>
+
+          <TiltMetroButton
+            onClick={togglePortal}
+            className="p-2 rounded-lg border border-border bg-card hover:bg-muted text-foreground"
+            ariaLabel={isImmersive ? "Exit Fullscreen" : "Enter Fullscreen"}
+          >
+            {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+          </TiltMetroButton>
         </div>
       </div>
 
@@ -184,6 +292,7 @@ export default function MiniMetro({ locale = "ko" }: MiniMetroProps) {
                 key={line.id}
                 type="button"
                 onClick={() => {
+                  MobileHapticsPro.selection();
                   setActiveLineId(line.id);
                   setSelectedStationId(null);
                 }}
@@ -282,9 +391,14 @@ export default function MiniMetro({ locale = "ko" }: MiniMetroProps) {
                 ? `수송 완료한 승객: ${game.passengersDelivered}명 (생존 일수: ${game.day}일)`
                 : `Passengers transported: ${game.passengersDelivered} (Survived: ${game.day} days)`}
             </p>
-            <Button onClick={handleRestart} size="lg">
-              {locale === "ko" ? "새 지하철망 설계하기" : "Redesign Transit Network"}
-            </Button>
+            <div className="flex items-center gap-3">
+              <Button onClick={handleRestart} size="lg">
+                <RotateCcw className="size-4" /> {locale === "ko" ? "새 지하철망 설계하기" : "Redesign Transit Network"}
+              </Button>
+              <Button variant="outline" size="lg" onClick={handleShare}>
+                {copied ? <Check className="size-4 text-success" /> : <Share2 className="size-4" />} {locale === "ko" ? "기록 공유" : "Share"}
+              </Button>
+            </div>
           </div>
         )}
       </div>

@@ -15,6 +15,57 @@ import {
   reportMissionProgress,
   saveArcadePassProgress,
 } from '../../lib/games/arcade-pass';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { celebrate } from '../../lib/games/celebration';
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from '../../lib/games/share-card';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { Maximize2, Minimize2, Share2, Check, RotateCcw, Play, Wrench } from 'lucide-react';
+
+function TiltBridgeButton({
+  children,
+  onClick,
+  className = '',
+  disabled = false,
+  title,
+  ariaLabel,
+  ariaPressed,
+  type = 'button',
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+  ariaPressed?: boolean;
+  type?: 'button' | 'submit';
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type={type}
+      onClick={() => {
+        triggerPop(0.12);
+        onClick?.();
+      }}
+      disabled={disabled}
+      title={title}
+      aria-label={ariaLabel}
+      aria-pressed={ariaPressed}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`transition-transform duration-100 ease-out active:scale-95 disabled:pointer-events-none disabled:opacity-50 transform-(--card-tilt) ${className}`}
+      style={{ '--card-tilt': transformCss || 'none' } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 
 interface PolyBridgeProps {
   lang?: string;
@@ -197,6 +248,8 @@ function resolveLocale(lang?: string): LocaleCode {
 }
 
 export default function PolyBridge({ lang = 'ko' }: PolyBridgeProps) {
+  const { isImmersive, containerRef, togglePortal } = useArcadePortal();
+  const [copied, setCopied] = useState(false);
   const locale = resolveLocale(lang);
   const t = COPY[locale];
 
@@ -268,14 +321,19 @@ export default function PolyBridge({ lang = 'ko' }: PolyBridgeProps) {
           const next = stepBridgePhysics(prev, dt);
           if (next.brokenBeamsCount > prev.brokenBeamsCount) {
             playSfx('snap');
+            MobileHapticsPro.heavy();
           }
           if (next.phase === 'victory' && prev.phase !== 'victory') {
             playSfx('victory');
+            MobileHapticsPro.heavy();
+            celebrate(containerRef.current, { preset: 'sparks' });
             const dateKey = new Date().toISOString().slice(0, 10);
             const progress = loadArcadePassProgress(dateKey);
             saveArcadePassProgress(
               reportMissionProgress(progress, 'poly-bridge', next.levelsCleared)
             );
+          } else if (next.phase === 'collapsed' && prev.phase !== 'collapsed') {
+            MobileHapticsPro.error();
           }
           return next;
         });
@@ -423,13 +481,39 @@ export default function PolyBridge({ lang = 'ko' }: PolyBridgeProps) {
     const x = ((clientX - rect.left) / rect.width) * canvas.width;
     const y = ((clientY - rect.top) / rect.height) * canvas.height;
     playSfx('build');
+    MobileHapticsPro.selection();
     setState((prev) => addOrConnectBridgeNode(prev, x, y));
+  };
+
+  const handleShare = async () => {
+    MobileHapticsPro.medium();
+    const lvlName = t.levels[BRIDGE_LEVELS[state.levelIndex].nameKey];
+    const canvas = createShareCardCanvas({
+      title: 'Poly Bridge Truss Architect',
+      slug: 'poly-bridge',
+      score: `${lvlName} Cleared`,
+      subtitle: `Budget: $${state.spent}/$${state.budget} • Peak Stress: ${Math.round(state.maxStressPeak * 100)}%`,
+    });
+    const success = await copyShareCardToClipboard(canvas);
+    if (success) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `poly-bridge-stage${state.levelIndex + 1}.png`);
+    }
   };
 
   const lvl = BRIDGE_LEVELS[state.levelIndex];
 
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 text-card-foreground shadow-sm">
+    <div
+      ref={containerRef}
+      className={`select-none transition-colors duration-200 ${
+        isImmersive
+          ? 'fixed inset-0 z-50 bg-background flex flex-col justify-between p-3 sm:p-4 overflow-y-auto'
+          : 'flex flex-col gap-4 rounded-2xl border border-border bg-card p-3 sm:p-4 text-card-foreground shadow-sm'
+      }`}
+    >
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
         <div>
@@ -446,6 +530,22 @@ export default function PolyBridge({ lang = 'ko' }: PolyBridgeProps) {
           <span className="rounded-lg bg-secondary px-2.5 py-1 text-secondary-foreground">
             📈 {t.stressLabel}: {Math.round(state.maxStressPeak * 100)}%
           </span>
+
+          <TiltBridgeButton
+            onClick={handleShare}
+            className="p-1.5 rounded-lg border border-border bg-card hover:bg-muted text-foreground"
+            ariaLabel="Share Bridge Record"
+          >
+            {copied ? <Check className="size-4 text-success" /> : <Share2 className="size-4" />}
+          </TiltBridgeButton>
+
+          <TiltBridgeButton
+            onClick={togglePortal}
+            className="p-1.5 rounded-lg border border-border bg-card hover:bg-muted text-foreground"
+            ariaLabel={isImmersive ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+          >
+            {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+          </TiltBridgeButton>
         </div>
       </div>
 
@@ -463,9 +563,10 @@ export default function PolyBridge({ lang = 'ko' }: PolyBridgeProps) {
               key={mat.id}
               type="button"
               disabled={state.phase !== 'build'}
-              onClick={() =>
-                setState((prev) => ({ ...prev, selectedMaterial: mat.id }))
-              }
+              onClick={() => {
+                MobileHapticsPro.selection();
+                setState((prev) => ({ ...prev, selectedMaterial: mat.id }));
+              }}
               className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${
                 state.selectedMaterial === mat.id
                   ? 'border-primary bg-primary text-primary-foreground'
@@ -478,43 +579,47 @@ export default function PolyBridge({ lang = 'ko' }: PolyBridgeProps) {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
+          <TiltBridgeButton
             onClick={() => {
               playSfx('build');
+              MobileHapticsPro.medium();
               setState((prev) => applyAutoTrussBlueprint(prev));
             }}
             className="rounded-lg border border-border bg-secondary px-3 py-1.5 text-xs font-semibold text-secondary-foreground transition hover:opacity-90"
           >
             {t.blueprintBtn}
-          </button>
-          <button
-            type="button"
-            onClick={() =>
+          </TiltBridgeButton>
+          <TiltBridgeButton
+            onClick={() => {
+              MobileHapticsPro.selection();
               setState((prev) =>
                 createBridgeLevelState(prev.levelIndex, prev.levelsCleared)
-              )
-            }
+              );
+            }}
             className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-semibold hover:bg-accent"
           >
             {t.clearBtn}
-          </button>
+          </TiltBridgeButton>
           {state.phase === 'build' ? (
-            <button
-              type="button"
-              onClick={() => setState((prev) => startBridgeSimulation(prev))}
+            <TiltBridgeButton
+              onClick={() => {
+                MobileHapticsPro.medium();
+                setState((prev) => startBridgeSimulation(prev));
+              }}
               className="rounded-lg bg-primary px-4 py-1.5 text-xs font-bold text-primary-foreground shadow-sm transition hover:opacity-90"
             >
               {t.simulateBtn}
-            </button>
+            </TiltBridgeButton>
           ) : (
-            <button
-              type="button"
-              onClick={() => setState((prev) => resetBridgeToBuild(prev))}
+            <TiltBridgeButton
+              onClick={() => {
+                MobileHapticsPro.light();
+                setState((prev) => resetBridgeToBuild(prev));
+              }}
               className="rounded-lg bg-primary px-4 py-1.5 text-xs font-bold text-primary-foreground shadow-sm transition hover:opacity-90"
             >
               {t.editBtn}
-            </button>
+            </TiltBridgeButton>
           )}
         </div>
       </div>
@@ -540,17 +645,25 @@ export default function PolyBridge({ lang = 'ko' }: PolyBridgeProps) {
               {state.phase === 'victory' ? t.victoryDesc : t.collapseDesc}
             </p>
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setState((prev) => resetBridgeToBuild(prev))}
+              <TiltBridgeButton
+                onClick={() => {
+                  MobileHapticsPro.light();
+                  setState((prev) => resetBridgeToBuild(prev));
+                }}
                 className="rounded-xl border border-border bg-card px-4 py-2 text-xs font-semibold hover:bg-accent"
               >
                 {t.editBtn}
-              </button>
+              </TiltBridgeButton>
+              <TiltBridgeButton
+                onClick={handleShare}
+                className="rounded-xl border border-border bg-card px-4 py-2 text-xs font-semibold hover:bg-accent flex items-center gap-1.5"
+              >
+                {copied ? <Check className="size-4 text-success" /> : <Share2 className="size-4" />} Share Record
+              </TiltBridgeButton>
               {state.phase === 'victory' && (
-                <button
-                  type="button"
-                  onClick={() =>
+                <TiltBridgeButton
+                  onClick={() => {
+                    MobileHapticsPro.medium();
                     setState((prev) =>
                       applyAutoTrussBlueprint(
                         createBridgeLevelState(
@@ -558,12 +671,12 @@ export default function PolyBridge({ lang = 'ko' }: PolyBridgeProps) {
                           prev.levelsCleared
                         )
                       )
-                    )
-                  }
+                    );
+                  }}
                   className="rounded-xl bg-primary px-5 py-2 text-xs font-bold text-primary-foreground shadow-sm"
                 >
                   {t.nextLevelBtn}
-                </button>
+                </TiltBridgeButton>
               )}
             </div>
           </div>

@@ -6,6 +6,57 @@ import {
   type CustomerOrder,
   type Ingredient,
 } from '../../lib/games/potion-craft';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { celebrate } from '../../lib/games/celebration';
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from '../../lib/games/share-card';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { Maximize2, Minimize2, Share2, Check, RotateCcw, Sparkles } from 'lucide-react';
+
+function TiltPotionButton({
+  children,
+  onClick,
+  className = '',
+  disabled = false,
+  title,
+  ariaLabel,
+  ariaPressed,
+  type = 'button',
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+  ariaPressed?: boolean;
+  type?: 'button' | 'submit';
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type={type}
+      onClick={() => {
+        triggerPop(0.12);
+        onClick?.();
+      }}
+      disabled={disabled}
+      title={title}
+      aria-label={ariaLabel}
+      aria-pressed={ariaPressed}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`transition-transform duration-100 ease-out active:scale-95 disabled:pointer-events-none disabled:opacity-50 transform-(--card-tilt) ${className}`}
+      style={{ '--card-tilt': transformCss || 'none' } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 
 interface BoilingBubble {
   x: number;
@@ -16,6 +67,8 @@ interface BoilingBubble {
 }
 
 export default function PotionCraft() {
+  const { isImmersive, containerRef, togglePortal } = useArcadePortal();
+  const [copied, setCopied] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const engineRef = useRef<PotionCraftEngine>(new PotionCraftEngine());
 
@@ -179,6 +232,7 @@ export default function PotionCraft() {
     const success = engineRef.current.selectIngredientForMortar(id);
     if (success) {
       playASMR('cork');
+      MobileHapticsPro.selection();
       setFeedbackMsg(`${engineRef.current.state.ingredients[id].name}을 절구에 넣었습니다. 빻아주세요!`);
       syncState();
     }
@@ -188,6 +242,7 @@ export default function PotionCraft() {
   const handleGrind = () => {
     initAudio();
     playASMR('grind');
+    MobileHapticsPro.light();
     engineRef.current.grind(0.25);
     syncState();
   };
@@ -196,6 +251,7 @@ export default function PotionCraft() {
   const handleAddToCauldron = () => {
     initAudio();
     playASMR('stir');
+    MobileHapticsPro.medium();
     const success = engineRef.current.addToCauldron();
     if (success) {
       setFeedbackMsg('가마솥에 재료를 넣었습니다. 국자로 저어주세요!');
@@ -207,9 +263,11 @@ export default function PotionCraft() {
   const handleStir = () => {
     initAudio();
     playASMR('stir');
+    MobileHapticsPro.light();
     const success = engineRef.current.stir(0.25);
     if (engineRef.current.state.isFailed) {
       playASMR('fail');
+      MobileHapticsPro.error();
       setFeedbackMsg('해골 지대에 닿아 물약이 끓어 넘치며 파괴되었습니다! 가마솥을 비우세요.');
     } else if (success) {
       setFeedbackMsg('국자를 저어 물약 병을 궤적을 따라 이동시켰습니다.');
@@ -221,6 +279,7 @@ export default function PotionCraft() {
   const handleAddWater = () => {
     initAudio();
     playASMR('water');
+    MobileHapticsPro.selection();
     engineRef.current.addWater(0.3);
     setFeedbackMsg('물을 부어 중심 방향으로 물약 병을 희석·이동시켰습니다.');
     syncState();
@@ -234,19 +293,24 @@ export default function PotionCraft() {
 
     if (!brew.success || !brew.brewedEffect) {
       playASMR('fail');
+      MobileHapticsPro.error();
       setFeedbackMsg(brew.message);
       syncState();
       return;
     }
 
     playASMR('bellows');
+    MobileHapticsPro.medium();
     setTimeout(() => {
       const serve = engine.serveCustomer(brew.brewedEffect!);
       if (serve.success) {
         playASMR('coin');
+        MobileHapticsPro.heavy();
+        celebrate(containerRef.current, { preset: 'sparks' });
         setFeedbackMsg(serve.feedback);
       } else {
         playASMR('fail');
+        MobileHapticsPro.error();
         setFeedbackMsg(serve.feedback);
       }
       syncState();
@@ -257,9 +321,27 @@ export default function PotionCraft() {
   const handleResetCauldron = () => {
     initAudio();
     playASMR('water');
+    MobileHapticsPro.medium();
     engineRef.current.resetCauldron();
     setFeedbackMsg('가마솥을 깨끗하게 비우고 새로 시작합니다.');
     syncState();
+  };
+
+  const handleShare = async () => {
+    MobileHapticsPro.medium();
+    const canvas = createShareCardCanvas({
+      title: 'Potion Craft Alchemist',
+      slug: 'potion-craft',
+      score: `${gold}G`,
+      subtitle: `Effects: ${activeEffects.length > 0 ? activeEffects.join(', ') : 'None'} • Customer: ${currentCustomer?.customerName || 'None'}`,
+    });
+    const success = await copyShareCardToClipboard(canvas);
+    if (success) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `potion-craft-${gold}gold.png`);
+    }
   };
 
   // 60fps Parchment Alchemy Map Canvas Loop
@@ -465,9 +547,16 @@ export default function PotionCraft() {
   }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center p-3 text-foreground max-w-4xl mx-auto select-none">
+    <div
+      ref={containerRef}
+      className={`select-none transition-colors duration-200 ${
+        isImmersive
+          ? 'fixed inset-0 z-50 bg-background flex flex-col justify-between p-3 sm:p-4 overflow-y-auto'
+          : 'flex flex-col items-center justify-center p-3 text-foreground max-w-4xl mx-auto'
+      }`}
+    >
       {/* Top Header: Shop Gold, Customer Order, Day Status */}
-      <div className="w-full bg-card/90 border border-border rounded-xl p-3 mb-2 flex items-center justify-between shadow-lg">
+      <div className="w-full bg-card/90 border border-border rounded-xl p-3 mb-2 flex flex-wrap items-center justify-between shadow-lg gap-2">
         <div className="flex items-center gap-3">
           <div className="flex flex-col">
             <span className="text-xs font-bold text-muted-foreground tracking-wider">연금술사 작업실</span>
@@ -479,7 +568,7 @@ export default function PotionCraft() {
 
         {/* Customer Request Dialogue Card */}
         {currentCustomer && (
-          <div className="flex-1 mx-4 bg-muted/60 border border-border/80 rounded-lg p-2 text-xs flex items-center justify-between gap-3">
+          <div className="flex-1 mx-2 sm:mx-4 bg-muted/60 border border-border/80 rounded-lg p-2 text-xs flex items-center justify-between gap-3">
             <div>
               <span className="font-bold text-primary mr-1.5">👤 {currentCustomer.customerName}:</span>
               <span className="text-foreground">"{currentCustomer.requestText}"</span>
@@ -492,12 +581,30 @@ export default function PotionCraft() {
           </div>
         )}
 
-        <button
-          onClick={handleResetCauldron}
-          className="px-3 py-1.5 bg-secondary hover:bg-secondary/80 text-secondary-foreground text-xs font-bold rounded-lg transition-all"
-        >
-          가마솥 비우기 ↺
-        </button>
+        <div className="flex items-center gap-2">
+          <TiltPotionButton
+            onClick={handleShare}
+            className="p-1.5 rounded-lg border border-border bg-card hover:bg-muted text-foreground"
+            ariaLabel="Share Potion Craft Record"
+          >
+            {copied ? <Check className="size-4 text-success" /> : <Share2 className="size-4" />}
+          </TiltPotionButton>
+
+          <TiltPotionButton
+            onClick={togglePortal}
+            className="p-1.5 rounded-lg border border-border bg-card hover:bg-muted text-foreground"
+            ariaLabel={isImmersive ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+          >
+            {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+          </TiltPotionButton>
+
+          <TiltPotionButton
+            onClick={handleResetCauldron}
+            className="px-3 py-1.5 bg-secondary hover:bg-secondary/80 text-secondary-foreground text-xs font-bold rounded-lg transition-all"
+          >
+            가마솥 비우기 ↺
+          </TiltPotionButton>
+        </div>
       </div>
 
       {/* Main Parchment Alchemy Map Canvas */}
@@ -544,20 +651,20 @@ export default function PotionCraft() {
           </div>
 
           <div className="flex gap-1.5">
-            <button
+            <TiltPotionButton
               onClick={handleGrind}
               disabled={!activeIngredient || grindProgress >= 1}
               className="flex-1 py-1.5 bg-muted hover:bg-muted/80 text-foreground font-bold text-xs rounded border border-border disabled:opacity-40"
             >
               🔨 빻기 (Grind)
-            </button>
-            <button
+            </TiltPotionButton>
+            <TiltPotionButton
               onClick={handleAddToCauldron}
               disabled={!activeIngredient}
               className="flex-1 py-1.5 bg-primary text-primary-foreground font-bold text-xs rounded disabled:opacity-40"
             >
               투입 ➔
-            </button>
+            </TiltPotionButton>
           </div>
         </div>
 
@@ -576,20 +683,20 @@ export default function PotionCraft() {
           </div>
 
           <div className="flex gap-1.5">
-            <button
+            <TiltPotionButton
               onClick={handleStir}
               disabled={isFailed}
               className="flex-1 py-1.5 bg-muted hover:bg-muted/80 text-foreground font-bold text-xs rounded border border-border disabled:opacity-40"
             >
               🥄 젓기 (Stir)
-            </button>
-            <button
+            </TiltPotionButton>
+            <TiltPotionButton
               onClick={handleAddWater}
               disabled={isFailed}
               className="flex-1 py-1.5 bg-secondary hover:bg-secondary/80 text-secondary-foreground font-bold text-xs rounded disabled:opacity-40"
             >
               💧 물 붓기
-            </button>
+            </TiltPotionButton>
           </div>
         </div>
 
@@ -607,13 +714,13 @@ export default function PotionCraft() {
             </p>
           </div>
 
-          <button
+          <TiltPotionButton
             onClick={handleBrewAndServe}
             disabled={isFailed || activeEffects.length === 0}
             className="w-full py-2 bg-warning hover:bg-warning/90 text-warning-foreground font-black text-xs rounded-lg shadow-md transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-1.5"
           >
             <span>🔥 불 지피기 & 서빙 (Serve)</span>
-          </button>
+          </TiltPotionButton>
         </div>
       </div>
 

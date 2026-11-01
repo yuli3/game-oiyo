@@ -17,7 +17,62 @@ import {
   Sparkles,
   Volume2,
   VolumeX,
+  Maximize2,
+  Minimize2,
+  Share2,
+  Camera,
+  Check,
 } from 'lucide-react';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { celebrate } from '../../lib/games/celebration';
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from '../../lib/games/share-card';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+
+function TiltHeroButton({
+  children,
+  onClick,
+  className = '',
+  disabled = false,
+  title,
+  ariaLabel,
+  ariaPressed,
+  type = 'button',
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+  ariaPressed?: boolean;
+  type?: 'button' | 'submit';
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type={type}
+      onClick={() => {
+        triggerPop(0.2);
+        onClick?.();
+      }}
+      disabled={disabled}
+      title={title}
+      aria-label={ariaLabel}
+      aria-pressed={ariaPressed}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`transition-transform duration-100 ease-out active:scale-95 disabled:pointer-events-none disabled:opacity-50 transform-(--card-tilt) ${className}`}
+      style={{ '--card-tilt': transformCss || 'none' } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 
 interface Particle {
   x: number;
@@ -38,6 +93,8 @@ export const LoopHero: React.FC = () => {
   const particlesRef = useRef<Particle[]>([]);
 
   // React state for HUD and UI panels
+  const { isImmersive, containerRef, togglePortal } = useArcadePortal();
+  const [copied, setCopied] = useState(false);
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
   const [hoveredEquip, setHoveredEquip] = useState<Equipment | null>(null);
   const [isPaused, setIsPaused] = useState(false);
@@ -141,6 +198,10 @@ export const LoopHero: React.FC = () => {
     }
   }, [soundEnabled]);
 
+  // Track loop completion celebration
+  const prevLoopCountRef = useRef(1);
+  const prevGameOverRef = useRef(false);
+
   // Initialize engine
   useEffect(() => {
     engineRef.current = new LoopHeroEngine();
@@ -158,16 +219,26 @@ export const LoopHero: React.FC = () => {
 
         eng.update(dt);
 
+        if (eng.loopCount > prevLoopCountRef.current) {
+          prevLoopCountRef.current = eng.loopCount;
+          MobileHapticsPro.heavy();
+          celebrate(containerRef.current, { preset: 'sparks' });
+        }
+
         if (!prevCombat && eng.inCombat) {
           playSfx('hit');
+          MobileHapticsPro.selection();
         } else if (eng.inCombat && eng.heroAttackMeter === 0) {
           playSfx('slash');
         }
         if (eng.heroStats.hp < prevHp && eng.inCombat) {
           playSfx('hit');
+          MobileHapticsPro.heavy();
         }
-        if (eng.gameOver) {
+        if (eng.gameOver && !prevGameOverRef.current) {
+          prevGameOverRef.current = true;
           playSfx('defeat');
+          MobileHapticsPro.error();
         }
 
         renderCanvas(eng, dt);
@@ -207,18 +278,23 @@ export const LoopHero: React.FC = () => {
   };
 
   const handleRestart = () => {
+    MobileHapticsPro.medium();
     engineRef.current = new LoopHeroEngine();
+    prevLoopCountRef.current = 1;
+    prevGameOverRef.current = false;
     setSelectedCardIndex(null);
     syncSnapshot();
   };
 
   const togglePause = () => {
+    MobileHapticsPro.light();
     if (!engineRef.current) return;
     engineRef.current.isPaused = !engineRef.current.isPaused;
     setIsPaused(engineRef.current.isPaused);
   };
 
   const cycleGameSpeed = () => {
+    MobileHapticsPro.selection();
     if (!engineRef.current) return;
     const next = gameSpeed === 1 ? 2 : 1;
     engineRef.current.gameSpeed = next;
@@ -226,6 +302,7 @@ export const LoopHero: React.FC = () => {
   };
 
   const handleCardClick = (index: number) => {
+    MobileHapticsPro.selection();
     if (selectedCardIndex === index) {
       setSelectedCardIndex(null);
     } else {
@@ -233,7 +310,7 @@ export const LoopHero: React.FC = () => {
     }
   };
 
-  const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const placeCardAt = (clientX: number, clientY: number) => {
     const canvas = canvasRef.current;
     const eng = engineRef.current;
     if (!canvas || !eng || selectedCardIndex === null) return;
@@ -241,8 +318,8 @@ export const LoopHero: React.FC = () => {
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
-    const clickX = (e.clientX - rect.left) * scaleX;
-    const clickY = (e.clientY - rect.top) * scaleY;
+    const clickX = (clientX - rect.left) * scaleX;
+    const clickY = (clientY - rect.top) * scaleY;
 
     const tileW = canvas.width / eng.width;
     const tileH = canvas.height / eng.height;
@@ -255,6 +332,7 @@ export const LoopHero: React.FC = () => {
       if (eng.canPlaceCard(card, gridX, gridY)) {
         eng.placeCard(selectedCardIndex, gridX, gridY);
         playSfx('place');
+        MobileHapticsPro.medium();
         setSelectedCardIndex(null);
 
         // Spawn placement burst particles
@@ -276,8 +354,20 @@ export const LoopHero: React.FC = () => {
     }
   };
 
+  const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    placeCardAt(e.clientX, e.clientY);
+  };
+
+  const handleCanvasTouch = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    if (e.changedTouches.length > 0) {
+      const touch = e.changedTouches[0];
+      placeCardAt(touch.clientX, touch.clientY);
+    }
+  };
+
   const equipItem = (item: Equipment, invIndex: number) => {
     if (!engineRef.current) return;
+    MobileHapticsPro.light();
     engineRef.current.equipItem(item, invIndex);
     playSfx('loot');
     syncSnapshot();
@@ -285,8 +375,26 @@ export const LoopHero: React.FC = () => {
 
   const discardItem = (invIndex: number) => {
     if (!engineRef.current) return;
+    MobileHapticsPro.selection();
     engineRef.current.discardInventoryItem(invIndex);
     syncSnapshot();
+  };
+
+  const handleShare = async () => {
+    MobileHapticsPro.medium();
+    const canvas = createShareCardCanvas({
+      title: 'Loop Hero',
+      slug: 'loop-hero',
+      score: loopCount,
+      subtitle: `Day ${dayCount} • HP ${heroHp}/${heroMaxHp} • ATK ${heroAtk} • DEF ${heroDef}`,
+    });
+    const success = await copyShareCardToClipboard(canvas);
+    if (success) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `loop-hero-loop${loopCount}.png`);
+    }
   };
 
   /**
@@ -704,7 +812,14 @@ export const LoopHero: React.FC = () => {
   const hpPercent = Math.max(0, Math.min(100, Math.round((heroHp / heroMaxHp) * 100)));
 
   return (
-    <div className="flex flex-col items-center w-full max-w-4xl mx-auto p-4 gap-4 select-none">
+    <div
+      ref={containerRef}
+      className={`select-none transition-colors duration-200 ${
+        isImmersive
+          ? 'fixed inset-0 z-50 bg-background flex flex-col justify-between p-3 sm:p-4 overflow-y-auto'
+          : 'flex flex-col items-center w-full max-w-4xl mx-auto p-3 sm:p-4 gap-3.5'
+      }`}
+    >
       {/* Top Status & Controls HUD */}
       <div className="flex flex-wrap items-center justify-between w-full bg-card/80 border border-border p-3 rounded-xl backdrop-blur-md gap-3">
         {/* Loop & Day meter */}
@@ -757,42 +872,65 @@ export const LoopHero: React.FC = () => {
         </div>
 
         {/* Action Controls */}
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="icon-sm"
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <TiltHeroButton
             onClick={togglePause}
+            className="p-2 rounded-lg border border-border bg-card hover:bg-muted text-foreground"
+            ariaLabel={isPaused ? 'Resume Game' : 'Pause Game'}
           >
             {isPaused ? <Play className="size-4 text-primary" /> : <Pause className="size-4" />}
-          </Button>
+          </TiltHeroButton>
 
-          <Button
-            variant={gameSpeed === 2 ? 'default' : 'outline'}
-            size="sm"
+          <TiltHeroButton
             onClick={cycleGameSpeed}
+            className={`px-2.5 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-1 ${
+              gameSpeed === 2
+                ? 'border-primary bg-primary text-primary-foreground'
+                : 'border-border bg-card hover:bg-muted text-foreground'
+            }`}
+            ariaLabel={`Cycle Game Speed, current ${gameSpeed}x`}
           >
             <Zap className="size-3.5" /> {gameSpeed}x
-          </Button>
+          </TiltHeroButton>
 
-          <Button
-            variant="outline"
-            size="icon-sm"
-            onClick={() => setSoundEnabled(!soundEnabled)}
+          <TiltHeroButton
+            onClick={() => {
+              MobileHapticsPro.selection();
+              setSoundEnabled(!soundEnabled);
+            }}
+            className="p-2 rounded-lg border border-border bg-card hover:bg-muted text-foreground"
+            ariaLabel={soundEnabled ? 'Mute Sound' : 'Unmute Sound'}
           >
             {soundEnabled ? (
               <Volume2 className="size-4 text-primary" />
             ) : (
               <VolumeX className="size-4 text-muted-foreground" />
             )}
-          </Button>
+          </TiltHeroButton>
 
-          <Button
-            variant="outline"
-            size="icon-sm"
+          <TiltHeroButton
+            onClick={handleShare}
+            className="p-2 rounded-lg border border-border bg-card hover:bg-muted text-foreground"
+            ariaLabel="Share Expedition"
+          >
+            {copied ? <Check className="size-4 text-success" /> : <Share2 className="size-4" />}
+          </TiltHeroButton>
+
+          <TiltHeroButton
+            onClick={togglePortal}
+            className="p-2 rounded-lg border border-border bg-card hover:bg-muted text-foreground"
+            ariaLabel={isImmersive ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+          >
+            {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+          </TiltHeroButton>
+
+          <TiltHeroButton
             onClick={handleRestart}
+            className="p-2 rounded-lg border border-border bg-card hover:bg-muted text-foreground"
+            ariaLabel="Restart Expedition"
           >
             <RotateCcw className="size-4" />
-          </Button>
+          </TiltHeroButton>
         </div>
       </div>
 
@@ -803,7 +941,8 @@ export const LoopHero: React.FC = () => {
           width={960}
           height={640}
           onClick={handleCanvasClick}
-          className="w-full h-full cursor-crosshair block"
+          onTouchEnd={handleCanvasTouch}
+          className="w-full h-full cursor-crosshair block touch-none"
         />
 
         {/* Game Over Overlay */}
@@ -813,9 +952,14 @@ export const LoopHero: React.FC = () => {
             <p className="text-muted-foreground text-xs max-w-sm text-center">
               The loop claimed another soul. You completed {loopCount - 1} loops and survived {dayCount} days.
             </p>
-            <Button onClick={handleRestart} size="lg">
-              <RotateCcw className="size-4" /> Start New Expedition
-            </Button>
+            <div className="flex items-center gap-3">
+              <Button onClick={handleRestart} size="lg">
+                <RotateCcw className="size-4" /> Start New Expedition
+              </Button>
+              <Button variant="outline" size="lg" onClick={handleShare}>
+                {copied ? <Check className="size-4 text-success" /> : <Share2 className="size-4" />} Share Record
+              </Button>
+            </div>
           </div>
         )}
 
