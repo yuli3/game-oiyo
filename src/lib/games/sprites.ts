@@ -535,6 +535,13 @@ export const SUIKA_FRUIT_SPRITES: Record<number, string> = {
   9: "/assets/sprites/suika-drop/watermelon-128.png",
 };
 
+export const CHAOS_KITCHEN_SPRITES = {
+  burger: "/assets/sprites/chaos-kitchen/burger-dish-128.png",
+  knife: "/assets/sprites/chaos-kitchen/chef-knife-128.png",
+  tomato: "/assets/sprites/chaos-kitchen/tomato-fresh-128.png",
+  salad: "/assets/sprites/chaos-kitchen/salad-dish-128.png",
+} as const;
+
 export const DOT_PET_SPRITES: Record<string, { baby: string; adult: string }> = {
   normal: {
     baby: "/assets/sprites/dot-pet/normal-baby.png",

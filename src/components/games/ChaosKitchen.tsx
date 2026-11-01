@@ -11,6 +11,7 @@ import {
 import { useAudioContext } from "../../lib/games/use-audio-context";
 import { useClipboardShare } from "../../lib/games/use-clipboard-share";
 import { GameStatTile } from "../ui/game/GameStatTile";
+import { CHAOS_KITCHEN_SPRITES } from "../../lib/games/sprites";
 
 function TiltKitchenButton({
   children,
@@ -47,6 +48,22 @@ export function ChaosKitchen() {
     chef2Mask: 0,
   });
 
+  const spritesRef = useRef<{
+    burger: HTMLImageElement | null;
+    knife: HTMLImageElement | null;
+    tomato: HTMLImageElement | null;
+    salad: HTMLImageElement | null;
+  }>({ burger: null, knife: null, tomato: null, salad: null });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const b = new Image(); b.src = CHAOS_KITCHEN_SPRITES.burger;
+    const k = new Image(); k.src = CHAOS_KITCHEN_SPRITES.knife;
+    const t = new Image(); t.src = CHAOS_KITCHEN_SPRITES.tomato;
+    const s = new Image(); s.src = CHAOS_KITCHEN_SPRITES.salad;
+    spritesRef.current = { burger: b, knife: k, tomato: t, salad: s };
+  }, []);
+
   const getAudioContext = useAudioContext();
   const playTone = useCallback(
     (freq: number, type: OscillatorType = "sine", dur = 0.1) => {
@@ -65,6 +82,44 @@ export function ChaosKitchen() {
     },
     [getAudioContext]
   );
+
+  const playSizzle = useCallback(() => {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const t = ctx.currentTime;
+    const bufferSize = Math.floor(ctx.sampleRate * 0.08);
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * 0.25;
+    }
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = "bandpass";
+    filter.frequency.value = 3200;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.05, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+    noise.connect(filter).connect(gain).connect(ctx.destination);
+    noise.start(t);
+  }, [getAudioContext]);
+
+  const playChop = useCallback(() => {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const t = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(180, t);
+    osc.frequency.exponentialRampToValueAtTime(60, t + 0.05);
+    gain.gain.setValueAtTime(0.12, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.06);
+  }, [getAudioContext]);
 
   const { copied, shareText } = useClipboardShare();
 
@@ -109,7 +164,7 @@ export function ChaosKitchen() {
         case "f":
           inputRef.current.chef1Mask |= 32;
           MobileHapticsPro.heavy();
-          playTone(600, "triangle", 0.06);
+          playChop();
           break;
       }
     };
@@ -147,7 +202,7 @@ export function ChaosKitchen() {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [playTone]);
+  }, [playTone, playChop]);
 
   // Main 60FPS tick
   useEffect(() => {
@@ -230,9 +285,13 @@ export function ChaosKitchen() {
             ctx.fillText("🍽️", px + tileW / 2, py + tileH / 2 + 5);
           } else if (tile === "cutting_board") {
             ctx.fillStyle = "#ca8a04";
-            ctx.fillRect(px + 6, py + 6, tileW - 12, tileH - 12);
-            ctx.fillStyle = "#0f172a";
-            ctx.fillText("🔪", px + tileW / 2, py + tileH / 2 + 5);
+            ctx.fillRect(px + 4, py + 4, tileW - 8, tileH - 8);
+            if (spritesRef.current.knife && spritesRef.current.knife.complete) {
+              ctx.drawImage(spritesRef.current.knife, px + 6, py + 6, tileW - 12, tileH - 12);
+            } else {
+              ctx.fillStyle = "#0f172a";
+              ctx.fillText("🔪", px + tileW / 2, py + tileH / 2 + 5);
+            }
           } else if (tile === "stove") {
             ctx.fillStyle = "#b91c1c";
             ctx.fillRect(px + 4, py + 4, tileW - 8, tileH - 8);
@@ -265,23 +324,31 @@ export function ChaosKitchen() {
       ctx.save();
       ctx.translate(cx, cy);
 
-      // Item icon
-      ctx.textAlign = "center";
-      ctx.font = "14px sans-serif";
-      let icon = "📦";
-      if (item.type === "tomato_raw") icon = "🍅";
-      else if (item.type === "tomato_chopped") icon = "🥫";
-      else if (item.type === "lettuce_raw") icon = "🥬";
-      else if (item.type === "lettuce_chopped") icon = "🥗";
-      else if (item.type === "meat_raw") icon = "🥩";
-      else if (item.type === "meat_cooked") icon = "🍖";
-      else if (item.type === "meat_burned") icon = "💀";
-      else if (item.type === "plate_clean") icon = "🍽️";
-      else if (item.type === "salad_dish") icon = "🥗";
-      else if (item.type === "burger_dish") icon = "🍔";
-      else if (item.type === "extinguisher") icon = "🧯";
+      // Item icon / 3D sprite
+      if (item.type === "burger_dish" && spritesRef.current.burger?.complete) {
+        ctx.drawImage(spritesRef.current.burger, -12, -12, 24, 24);
+      } else if (item.type === "salad_dish" && spritesRef.current.salad?.complete) {
+        ctx.drawImage(spritesRef.current.salad, -12, -12, 24, 24);
+      } else if (item.type === "tomato_raw" && spritesRef.current.tomato?.complete) {
+        ctx.drawImage(spritesRef.current.tomato, -10, -10, 20, 20);
+      } else {
+        ctx.textAlign = "center";
+        ctx.font = "14px sans-serif";
+        let icon = "📦";
+        if (item.type === "tomato_raw") icon = "🍅";
+        else if (item.type === "tomato_chopped") icon = "🥫";
+        else if (item.type === "lettuce_raw") icon = "🥬";
+        else if (item.type === "lettuce_chopped") icon = "🥗";
+        else if (item.type === "meat_raw") icon = "🥩";
+        else if (item.type === "meat_cooked") icon = "🍖";
+        else if (item.type === "meat_burned") icon = "💀";
+        else if (item.type === "plate_clean") icon = "🍽️";
+        else if (item.type === "salad_dish") icon = "🥗";
+        else if (item.type === "burger_dish") icon = "🍔";
+        else if (item.type === "extinguisher") icon = "🧯";
 
-      ctx.fillText(icon, 0, 5);
+        ctx.fillText(icon, 0, 5);
+      }
 
       // Cooking progress bar for stove
       if (item.isCooking) {
@@ -337,20 +404,28 @@ export function ChaosKitchen() {
 
       // Held item floating above chef
       if (chef.heldItem) {
-        let heldIcon = "📦";
-        if (chef.heldItem.type === "tomato_raw") heldIcon = "🍅";
-        else if (chef.heldItem.type === "tomato_chopped") heldIcon = "🥫";
-        else if (chef.heldItem.type === "lettuce_raw") heldIcon = "🥬";
-        else if (chef.heldItem.type === "lettuce_chopped") heldIcon = "🥗";
-        else if (chef.heldItem.type === "meat_raw") heldIcon = "🥩";
-        else if (chef.heldItem.type === "meat_cooked") heldIcon = "🍖";
-        else if (chef.heldItem.type === "plate_clean") heldIcon = "🍽️";
-        else if (chef.heldItem.type === "salad_dish") heldIcon = "🥗";
-        else if (chef.heldItem.type === "burger_dish") heldIcon = "🍔";
-        else if (chef.heldItem.type === "extinguisher") heldIcon = "🧯";
+        if (chef.heldItem.type === "burger_dish" && spritesRef.current.burger?.complete) {
+          ctx.drawImage(spritesRef.current.burger, -12, -34, 24, 24);
+        } else if (chef.heldItem.type === "salad_dish" && spritesRef.current.salad?.complete) {
+          ctx.drawImage(spritesRef.current.salad, -12, -34, 24, 24);
+        } else if (chef.heldItem.type === "tomato_raw" && spritesRef.current.tomato?.complete) {
+          ctx.drawImage(spritesRef.current.tomato, -10, -32, 20, 20);
+        } else {
+          let heldIcon = "📦";
+          if (chef.heldItem.type === "tomato_raw") heldIcon = "🍅";
+          else if (chef.heldItem.type === "tomato_chopped") heldIcon = "🥫";
+          else if (chef.heldItem.type === "lettuce_raw") heldIcon = "🥬";
+          else if (chef.heldItem.type === "lettuce_chopped") heldIcon = "🥗";
+          else if (chef.heldItem.type === "meat_raw") heldIcon = "🥩";
+          else if (chef.heldItem.type === "meat_cooked") heldIcon = "🍖";
+          else if (chef.heldItem.type === "plate_clean") heldIcon = "🍽️";
+          else if (chef.heldItem.type === "salad_dish") heldIcon = "🥗";
+          else if (chef.heldItem.type === "burger_dish") heldIcon = "🍔";
+          else if (chef.heldItem.type === "extinguisher") heldIcon = "🧯";
 
-        ctx.font = "14px sans-serif";
-        ctx.fillText(heldIcon, 0, -22);
+          ctx.font = "14px sans-serif";
+          ctx.fillText(heldIcon, 0, -22);
+        }
       }
 
       // Chopping gauge
@@ -442,8 +517,13 @@ export function ChaosKitchen() {
               key={o.id}
               className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-card border border-border text-xs shadow-xs"
             >
-              <span className="font-bold">
-                {o.recipe === "salad" ? "🥗 Salad" : o.recipe === "burger" ? "🍔 Burger" : "🥩 Steak"}
+              <img
+                src={o.recipe === "salad" ? CHAOS_KITCHEN_SPRITES.salad : CHAOS_KITCHEN_SPRITES.burger}
+                alt={o.recipe}
+                className="w-4 h-4 object-contain inline-block"
+              />
+              <span className="font-bold capitalize">
+                {o.recipe}
               </span>
               <span className="text-muted-foreground">({Math.ceil(o.timeRemainingSec)}s)</span>
               <span className="text-primary font-semibold">¥{o.reward}</span>
@@ -557,7 +637,7 @@ export function ChaosKitchen() {
             onClick={() => {
               inputRef.current.chef1Mask |= 32;
               MobileHapticsPro.heavy();
-              playTone(600, "triangle", 0.08);
+              playChop();
               setTimeout(() => {
                 inputRef.current.chef1Mask &= ~32;
               }, 300);
