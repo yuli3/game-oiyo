@@ -11,7 +11,45 @@ import {
 } from '@/lib/games/share-card';
 import { createMemoryGame, flipMemoryCard, MEMORY_GRID_CONFIG, memoryPairCount, resolveMemoryPair, type MemoryGridSize, type MemoryState } from '@/lib/games/memory-card-game';
 import { clearMemoryCardSave, loadMemoryCardSave, storeMemoryCardSave } from '@/lib/games/memory-card-game-save';
-import { MEMORY_SPRITES, memoryFaceName, memoryFaceSrc } from '@/lib/games/sprites';
+import { MEMORY_SPRITES, memoryFaceName, memoryFaceSrc, getSpriteUrl } from '@/lib/games/sprites';
+import { useCardTiltPro, MobileHapticsPro } from '@/lib/games/engine-suite-unified';
+
+function TiltMemoryButton({
+  children,
+  onClick,
+  className = '',
+  disabled = false,
+  title,
+  ariaLabel,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      title={title}
+      aria-label={ariaLabel || title}
+      onClick={() => {
+        triggerPop(0.12);
+        onClick?.();
+      }}
+      disabled={disabled}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`touch-manipulation select-none transition-all duration-150 transform-(--card-tilt) will-change-transform ${className}`}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 
 function formatTime(ms: number): string {
   const s = Math.floor(ms / 1000);
@@ -181,7 +219,16 @@ const MemoryCardGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
   useEffect(() => {
     if (state?.flipped.length === 2) {
       const ids = state.flipped; const matched = state.cards[ids[0]].symbolId === state.cards[ids[1]].symbolId;
-      const id = setTimeout(() => { tone(matched ? 660 : 180, matched ? 0.14 : 0.1); setState((current) => current ? resolveMemoryPair(current) : current); }, prefersReducedMotion ? 180 : 650);
+      const id = setTimeout(() => {
+        if (matched) {
+          MobileHapticsPro.mediumImpact();
+          tone(660, 0.14);
+        } else {
+          MobileHapticsPro.warningPattern();
+          tone(180, 0.1);
+        }
+        setState((current) => current ? resolveMemoryPair(current) : current);
+      }, prefersReducedMotion ? 180 : 650);
       return () => clearTimeout(id);
     }
   }, [state?.flipped, prefersReducedMotion]);
@@ -190,6 +237,7 @@ const MemoryCardGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     if (!state) return;
     if (state.status === 'won') {
       clearMemoryCardSave();
+      MobileHapticsPro.successPattern();
       tone(880, 0.24);
       if (containerRef.current) celebrate(containerRef.current, { preset: "cards" });
       const key = `oiyo:memory-card-game-best:${state.gridSize}`;
@@ -238,7 +286,12 @@ const MemoryCardGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
   const shareResult = async () => { if (!state) return; const message = `OIYO Memory ${state.gridSize} · ${state.flips} flips · ${formatTime(elapsedMs)}`; try { await navigator.clipboard.writeText(message); } catch { /* best effort */ } };
 
-  const handleFlip = (cardId: number) => { tone(360); setRestored(false); setState((current) => current ? flipMemoryCard(current, cardId) : current); };
+  const handleFlip = (cardId: number) => {
+    MobileHapticsPro.lightImpact();
+    tone(360);
+    setRestored(false);
+    setState((current) => current ? flipMemoryCard(current, cardId) : current);
+  };
   const handleKey = (event: React.KeyboardEvent<HTMLButtonElement>, cardId: number) => {
     if (!state || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return;
     event.preventDefault(); const count = state.cards.length; let next = cardId;
@@ -277,26 +330,24 @@ const MemoryCardGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
       }`}
     >
       <div className="w-full max-w-xl mx-auto mb-2 flex items-center justify-end gap-2 px-1">
-        <button
-          type="button"
+        <TiltMemoryButton
           onClick={() => setMuted((v) => !v)}
           className="flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-bold text-foreground shadow-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-          aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+          ariaLabel={muted ? portalLabels.unmute : portalLabels.mute}
           title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`}
         >
           {muted ? <VolumeX className="h-4 w-4 text-muted-foreground" /> : <Volume2 className="h-4 w-4 text-primary" />}
           <span className="sr-only">{muted ? portalLabels.unmute : portalLabels.mute}</span>
-        </button>
-        <button
-          type="button"
+        </TiltMemoryButton>
+        <TiltMemoryButton
           onClick={togglePortal}
           className="flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-bold text-foreground shadow-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-          aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+          ariaLabel={isImmersive ? portalLabels.exit : portalLabels.enter}
           title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
         >
           {isImmersive ? <Minimize2 className="h-4 w-4 text-primary" /> : <Maximize2 className="h-4 w-4" />}
           <span className="sr-only">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
-        </button>
+        </TiltMemoryButton>
       </div>
 
       <GameContainer
@@ -310,14 +361,14 @@ const MemoryCardGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">{t.chooseLevel}</p>
             <div className="flex flex-col gap-3">
               {(['4x4', '6x4', '6x6'] as MemoryGridSize[]).map((size, i) => (
-                <button
+                <TiltMemoryButton
                   key={size}
                   onClick={() => startGame(size)}
-                  aria-label={[t.easy, t.medium, t.hard][i]}
+                  ariaLabel={[t.easy, t.medium, t.hard][i]}
                   className="w-full py-3 px-4 rounded-2xl border-2 border-border bg-muted hover:bg-accent hover:border-primary font-bold text-sm transition-all text-left"
                 >
                   {[t.easy, t.medium, t.hard][i]}
-                </button>
+                </TiltMemoryButton>
               ))}
             </div>
           </div>
@@ -329,9 +380,9 @@ const MemoryCardGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             <div className="mb-3 flex items-center justify-between gap-2">
               <span className="text-xs font-bold text-muted-foreground" role="status" aria-live="polite">{restored ? (locale === 'ko' ? '이전 게임을 복원했습니다' : 'Game restored') : `${state.gridSize} · ${state.cards.length} cards`}</span>
               <div className="flex gap-2">
-                <button type="button" onClick={togglePause} className="min-h-11 rounded-xl border border-border px-3 text-sm font-bold hover:bg-muted" aria-pressed={paused}>
+                <TiltMemoryButton onClick={togglePause} className="min-h-11 rounded-xl border border-border px-3 text-sm font-bold hover:bg-muted" ariaLabel="Pause">
                   {paused ? '▶' : 'Ⅱ'} <span className="sr-only">Pause</span>
-                </button>
+                </TiltMemoryButton>
               </div>
             </div>
           {/* Stats bar */}
@@ -343,28 +394,34 @@ const MemoryCardGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
           {/* Win message */}
           {state.status === 'won' && (
-            <div className="mb-4 p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-300 text-center" role="status" aria-live="assertive">
-              <p className="text-lg font-black text-emerald-700">{t.won}</p>
-              <p className="text-sm text-emerald-600">
+            <div className="mb-4 p-5 rounded-2xl bg-success/10 border-2 border-success/30 text-center flex flex-col items-center" role="status" aria-live="assertive">
+              <img
+                src={getSpriteUrl('trophy', 64)}
+                alt="Victory Trophy"
+                width={52}
+                height={52}
+                className="mb-2 drop-shadow-md animate-bounce"
+              />
+              <p className="text-lg font-black text-foreground">{t.won}</p>
+              <p className="text-sm font-mono font-bold text-foreground/90 mt-1">
                 {formatTime(elapsedMs)} — {state.flips} {t.flipsUnit}
               </p>
-              <p className="mt-1 text-xs font-bold text-emerald-700">{locale === 'ko' ? `쌍당 ${(state.flips / totalPairs).toFixed(1)}회 · 다음 목표 ${Math.max(totalPairs * 2, state.flips - 2)}회` : `${(state.flips / totalPairs).toFixed(1)} flips/pair · Next ${Math.max(totalPairs * 2, state.flips - 2)}`}</p>
-              {best && <p className="mt-1 text-xs text-emerald-700">PB · {best.flips} · {formatTime(best.timeMs)}</p>}
+              <p className="mt-1 text-xs font-bold text-muted-foreground">{locale === 'ko' ? `쌍당 ${(state.flips / totalPairs).toFixed(1)}회 · 다음 목표 ${Math.max(totalPairs * 2, state.flips - 2)}회` : `${(state.flips / totalPairs).toFixed(1)} flips/pair · Next ${Math.max(totalPairs * 2, state.flips - 2)}`}</p>
+              {best && <p className="mt-1 text-xs text-muted-foreground">PB · {best.flips} · {formatTime(best.timeMs)}</p>}
               <div className="mt-3 flex flex-wrap justify-center gap-2">
-                <button
-                  type="button"
+                <TiltMemoryButton
                   onClick={() => void handleShareCard()}
                   className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-primary/50 bg-primary/20 px-4 py-2 text-xs font-bold text-primary transition-colors hover:bg-primary/30 active:scale-95"
                 >
                   <Share2 className="w-4 h-4" />
                   <span>{shareCardCopied ? "복사됨!" : "공유 카드"}</span>
-                </button>
-                <button
+                </TiltMemoryButton>
+                <TiltMemoryButton
                   onClick={() => startGame(state.gridSize)}
                   className="px-6 py-2 rounded-xl bg-primary text-primary-foreground font-black text-sm hover:bg-primary/90 transition-all"
                 >
                   {t.reset}
-                </button>
+                </TiltMemoryButton>
               </div>
             </div>
           )}

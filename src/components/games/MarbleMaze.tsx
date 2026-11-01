@@ -1,11 +1,51 @@
 import { lazy, Suspense, useState, useEffect, useRef, useCallback } from 'react';
-import { Trophy, RefreshCw, Volume2, VolumeX, Sparkles, AlertCircle, Compass, Play, Share2, Check } from 'lucide-react';
+import { Trophy, RefreshCw, Volume2, VolumeX, Sparkles, AlertCircle, Compass, Play, Share2, Check, Maximize2, Minimize2 } from 'lucide-react';
 import type { Locale } from '../../lib/i18n';
 import { getBest, recordBest } from '../../lib/games/records';
 import { hasWebGL } from '../../lib/games/webgl';
 import { generateMaze, type MazeConfig } from '../../lib/games/marble-maze';
 import { celebrate } from '../../lib/games/celebration';
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from '../../lib/games/share-card';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { getSpriteUrl } from '../../lib/games/sprites';
+
+function TiltMarbleButton({
+  children,
+  onClick,
+  className = '',
+  disabled = false,
+  title,
+  ariaLabel,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      title={title}
+      aria-label={ariaLabel || title}
+      onClick={() => {
+        triggerPop(0.12);
+        onClick?.();
+      }}
+      disabled={disabled}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`touch-manipulation select-none transition-all duration-150 transform-(--card-tilt) will-change-transform ${className}`}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 
 const MarbleMazeScene = lazy(() => import('./MarbleMazeScene'));
 
@@ -154,8 +194,20 @@ export default function MarbleMaze({ locale = 'ko' }: { locale?: Locale }) {
   const [webglSupported, setWebglSupported] = useState(true);
   const [shareCardCopied, setShareCardCopied] = useState(false);
 
-  const containerRef = useRef<HTMLDivElement>(null);
+  const { isImmersive, containerRef, togglePortal } = useArcadePortal({ locale });
   const timerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        togglePortal();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [togglePortal]);
 
   useEffect(() => {
     setWebglSupported(hasWebGL());
@@ -187,6 +239,7 @@ export default function MarbleMaze({ locale = 'ko' }: { locale?: Locale }) {
 
   const startNewGame = (newSize = size) => {
     if (timerRef.current) clearInterval(timerRef.current);
+    MobileHapticsPro.selectionClick();
     const newConfig = generateMaze(newSize, newSize, Date.now());
     setConfig(newConfig);
     setCollectedGems(0);
@@ -202,6 +255,7 @@ export default function MarbleMaze({ locale = 'ko' }: { locale?: Locale }) {
 
   const handleClear = (finalSeconds: number, score: number) => {
     if (timerRef.current) clearInterval(timerRef.current);
+    MobileHapticsPro.successPattern();
     setElapsedTime(Math.floor(finalSeconds));
     setFinalScore(score);
     setStatus('cleared');
@@ -214,10 +268,12 @@ export default function MarbleMaze({ locale = 'ko' }: { locale?: Locale }) {
 
   const handleFall = () => {
     if (timerRef.current) clearInterval(timerRef.current);
+    MobileHapticsPro.warningPattern();
     setStatus('fallen');
   };
 
   const handleGemCollected = (count: number) => {
+    MobileHapticsPro.mediumImpact();
     setCollectedGems(count);
   };
 
@@ -231,7 +287,12 @@ export default function MarbleMaze({ locale = 'ko' }: { locale?: Locale }) {
   }
 
   return (
-    <div ref={containerRef} className="mx-auto max-w-4xl space-y-6">
+    <div
+      ref={containerRef}
+      className={`mx-auto max-w-4xl space-y-6 transition-all duration-300 ${
+        isImmersive ? 'fixed inset-0 z-50 flex flex-col justify-center bg-background p-4 overflow-y-auto max-w-none' : ''
+      }`}
+    >
       {/* Header Info Banner */}
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-card p-5">
         <div>
@@ -247,13 +308,22 @@ export default function MarbleMaze({ locale = 'ko' }: { locale?: Locale }) {
             <Trophy className="h-4 w-4" />
             <span>{t.best}: {bestScore}</span>
           </div>
-          <button
+          <TiltMarbleButton
             onClick={() => setAudioEnabled(!audioEnabled)}
-            className="rounded-xl border border-border bg-secondary p-2 text-secondary-foreground transition hover:bg-accent"
-            aria-label="Toggle Audio"
+            className="rounded-xl border border-border bg-secondary p-2.5 text-secondary-foreground transition hover:bg-accent"
+            ariaLabel="Toggle Audio"
+            title="Toggle Audio"
           >
             {audioEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
-          </button>
+          </TiltMarbleButton>
+          <TiltMarbleButton
+            onClick={togglePortal}
+            className="rounded-xl border border-border bg-secondary p-2.5 text-secondary-foreground transition hover:bg-accent"
+            ariaLabel={isImmersive ? 'Exit Immersion' : 'Immersion'}
+            title={isImmersive ? 'Exit Immersion' : 'Immersion'}
+          >
+            {isImmersive ? <Minimize2 className="h-4 w-4 text-primary" /> : <Maximize2 className="h-4 w-4" />}
+          </TiltMarbleButton>
         </div>
       </div>
 
@@ -267,7 +337,7 @@ export default function MarbleMaze({ locale = 'ko' }: { locale?: Locale }) {
             { val: 11, label: t.normal },
             { val: 15, label: t.hard },
           ].map(({ val, label }) => (
-            <button
+            <TiltMarbleButton
               key={val}
               disabled={status === 'playing'}
               onClick={() => {
@@ -281,14 +351,20 @@ export default function MarbleMaze({ locale = 'ko' }: { locale?: Locale }) {
               }`}
             >
               {label}
-            </button>
+            </TiltMarbleButton>
           ))}
         </div>
 
-        {/* Real-time Stats */}
+        {/* Real-time Stats with Common 3D Gem */}
         <div className="flex items-center gap-6 font-mono text-sm">
           <div className="flex items-center gap-1.5 text-info">
-            <Sparkles className="h-4 w-4" />
+            <img
+              src={getSpriteUrl('gem', 64)}
+              alt="Gem"
+              width={20}
+              height={20}
+              className="drop-shadow-sm"
+            />
             <span>{t.gems}: {collectedGems} / {config.gemTotal}</span>
           </div>
           <div className="text-muted-foreground">
@@ -324,13 +400,13 @@ export default function MarbleMaze({ locale = 'ko' }: { locale?: Locale }) {
               </div>
               <h2 className="text-xl font-bold text-foreground sm:text-2xl">{t.title}</h2>
               <p className="mt-2 max-w-md text-sm text-muted-foreground">{t.controlsHint}</p>
-              <button
+              <TiltMarbleButton
                 onClick={() => startNewGame()}
-                className="mt-6 flex items-center gap-2 rounded-xl bg-primary px-6 py-3 font-semibold text-primary-foreground transition hover:opacity-90 active:scale-95"
+                className="mt-6 flex items-center gap-2 rounded-xl bg-primary px-8 py-3.5 font-bold text-primary-foreground shadow-lg hover:opacity-90 active:scale-95"
               >
                 <Play className="h-5 w-5 fill-current" />
                 {t.start}
-              </button>
+              </TiltMarbleButton>
             </div>
           )}
         </Suspense>
@@ -338,42 +414,50 @@ export default function MarbleMaze({ locale = 'ko' }: { locale?: Locale }) {
         {/* Modal Overlay on Clear or Fallen */}
         {(status === 'cleared' || status === 'fallen') && (
           <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-2xl p-6">
-            <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 text-center">
+            <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 text-center flex flex-col items-center">
+              {status === 'cleared' && (
+                <img
+                  src={getSpriteUrl('trophy', 64)}
+                  alt="Clear Trophy"
+                  width={56}
+                  height={56}
+                  className="mb-2 drop-shadow-md animate-bounce"
+                />
+              )}
               <h3 className="text-xl font-bold text-foreground mb-2">
                 {status === 'cleared' ? t.cleared : t.fallen}
               </h3>
               {status === 'cleared' && (
-                <div className="my-4 space-y-1.5 font-mono text-sm">
+                <div className="my-4 space-y-1.5 font-mono text-sm w-full">
                   <div className="text-muted-foreground">
                     {t.time}: <span className="text-foreground font-bold">{elapsedTime}s</span>
                   </div>
-                  <div className="text-muted-foreground">
-                    {t.gems}: <span className="text-info font-bold">{collectedGems} / {config.gemTotal}</span>
+                  <div className="text-muted-foreground flex items-center justify-center gap-1.5">
+                    <img src={getSpriteUrl('gem', 64)} alt="Gem" width={16} height={16} />
+                    <span>{t.gems}: <strong className="text-info">{collectedGems} / {config.gemTotal}</strong></span>
                   </div>
                   <div className="text-warning text-lg font-bold mt-2">
                     {t.score}: {finalScore}
                   </div>
                 </div>
               )}
-              <div className="mt-4 flex flex-col gap-2">
-                <button
-                  type="button"
+              <div className="mt-4 flex flex-col gap-2 w-full">
+                <TiltMarbleButton
                   onClick={() => startNewGame()}
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 font-semibold text-primary-foreground transition hover:opacity-90"
                 >
                   <RefreshCw className="h-4 w-4" />
                   {t.retry}
-                </button>
+                </TiltMarbleButton>
                 {status === 'cleared' && (
-                  <button
-                    type="button"
+                  <TiltMarbleButton
                     onClick={handleShareCard}
                     className="flex w-full items-center justify-center gap-2 rounded-xl border border-primary/50 bg-primary/20 py-2.5 text-xs font-bold text-primary transition hover:bg-primary/30"
                     title={shareCardCopied ? "복사됨!" : "결과 카드 공유"}
                   >
                     {shareCardCopied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
                     <span>{shareCardCopied ? "복사 완료" : "결과 카드 공유"}</span>
-                  </button>
+                  </TiltMarbleButton>
                 )}
               </div>
             </div>

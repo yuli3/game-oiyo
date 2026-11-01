@@ -27,10 +27,48 @@ import {
 import { clearMahjongSave, loadMahjongSave, storeMahjongSave } from "../../lib/games/mahjong-save";
 import { getRecord, recordResult, type GameRecord } from "../../lib/games/records";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
-import { MAHJONG_SPRITES, mahjongTileSrc } from "../../lib/games/sprites";
+import { MAHJONG_SPRITES, mahjongTileSrc, getSpriteUrl } from "../../lib/games/sprites";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 
 const AI_DELAY = 700;
+
+function TiltMahjongButton({
+  children,
+  onClick,
+  className = '',
+  disabled = false,
+  title,
+  ariaLabel,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      title={title}
+      aria-label={ariaLabel || title}
+      onClick={() => {
+        triggerPop(0.12);
+        onClick?.();
+      }}
+      disabled={disabled}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`touch-manipulation select-none transition-all duration-150 transform-(--card-tilt) will-change-transform ${className}`}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 
 const i18n: Record<Locale, {
   title: string; you: string; ai: string; wall: string; discard: string; tsumo: string; ron: string;
@@ -199,8 +237,11 @@ const Mahjong: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
     const result = game.winner === 0 ? "w" : game.winner === -1 ? "d" : "l";
     setRecord(recordResult("mahjong", result));
     playTone("win");
-    if (result === "w" && containerRef.current) {
-      celebrate(containerRef.current, { preset: "tiles" });
+    if (result === "w") {
+      MobileHapticsPro.successPattern();
+      if (containerRef.current) celebrate(containerRef.current, { preset: "tiles" });
+    } else {
+      MobileHapticsPro.warningPattern();
     }
   }, [game, playTone]);
 
@@ -251,10 +292,24 @@ const Mahjong: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
     return () => document.removeEventListener("visibilitychange", onVisibility);
   }, [game, level]);
 
-  const humanDiscard = (tileIndex: number) => { playTone("discard"); setGame((state) => state ? discardMahjong(state, tileIndex) : state); setSelectedTile(0); };
-  const humanTsumo = () => setGame((state) => state ? claimHumanTsumo(state) : state);
-  const humanRon = () => setGame((state) => state ? claimHumanRon(state) : state);
-  const humanPassRon = () => setGame((state) => state ? passHumanRon(state) : state);
+  const humanDiscard = (tileIndex: number) => {
+    MobileHapticsPro.lightImpact();
+    playTone("discard");
+    setGame((state) => (state ? discardMahjong(state, tileIndex) : state));
+    setSelectedTile(0);
+  };
+  const humanTsumo = () => {
+    MobileHapticsPro.heavyImpact();
+    setGame((state) => (state ? claimHumanTsumo(state) : state));
+  };
+  const humanRon = () => {
+    MobileHapticsPro.heavyImpact();
+    setGame((state) => (state ? claimHumanRon(state) : state));
+  };
+  const humanPassRon = () => {
+    MobileHapticsPro.selectionClick();
+    setGame((state) => (state ? passHumanRon(state) : state));
+  };
 
   // AI / auto stepping.
   useEffect(() => {
@@ -350,17 +405,19 @@ const Mahjong: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
       <GameContainer title={t.title} subtitle={`${t.wall}: ${drawsLeft} ${t.draws}`} onReset={newGame}>
         <div className="relative flex flex-col gap-3">
           <div className="flex justify-end gap-2">
-            <button type="button" onClick={() => setShowYakuGuide(true)} className="min-h-11 rounded-lg border border-border px-3 text-xs font-bold hover:bg-muted transition-colors flex items-center gap-1.5">
+            <TiltMahjongButton onClick={() => setShowYakuGuide(true)} className="min-h-11 rounded-lg border border-border px-3 text-xs font-bold hover:bg-muted transition-colors flex items-center gap-1.5" title={x.yakuGuide}>
               <span>📖</span>
               <span className="hidden sm:inline">{x.yakuGuide}</span>
-            </button>
-            <button type="button" onClick={() => { if (!paused) storeMahjongSave(s, level); setPaused((value) => !value); }} className="min-h-11 rounded-lg border border-border px-4 text-xs font-bold hover:bg-muted">{paused ? t.resume : t.pause}</button>
-            <button type="button" onClick={toggleSound} aria-label={muted ? x.soundOn : x.soundOff} aria-pressed={!muted} className="grid min-h-11 min-w-11 place-items-center rounded-lg border border-border text-muted-foreground hover:bg-muted">
+            </TiltMahjongButton>
+            <TiltMahjongButton onClick={() => { if (!paused) storeMahjongSave(s, level); setPaused((value) => !value); }} className="min-h-11 rounded-lg border border-border px-4 text-xs font-bold hover:bg-muted" title={paused ? t.resume : t.pause}>
+              {paused ? t.resume : t.pause}
+            </TiltMahjongButton>
+            <TiltMahjongButton onClick={toggleSound} ariaLabel={muted ? x.soundOn : x.soundOff} className="grid min-h-11 min-w-11 place-items-center rounded-lg border border-border text-muted-foreground hover:bg-muted" title={muted ? x.soundOn : x.soundOff}>
               {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
-            </button>
-            <button type="button" onClick={togglePortal} aria-label={isImmersive ? 'Exit Immersion' : 'Immersion'} className="grid min-h-11 min-w-11 place-items-center rounded-lg border border-border text-muted-foreground hover:bg-muted">
+            </TiltMahjongButton>
+            <TiltMahjongButton onClick={togglePortal} ariaLabel={isImmersive ? 'Exit Immersion' : 'Immersion'} className="grid min-h-11 min-w-11 place-items-center rounded-lg border border-border text-muted-foreground hover:bg-muted" title={isImmersive ? 'Exit Immersion' : 'Immersion'}>
               {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
-            </button>
+            </TiltMahjongButton>
           </div>
         {/* AI seats */}
         <div className="grid grid-cols-3 gap-2">
@@ -370,7 +427,7 @@ const Mahjong: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
               <div className="flex flex-wrap gap-[2px] mb-1">
                 {s.hands[pl].map((_, i) => <TileBack key={i} small />)}
               </div>
-              <div className="flex flex-wrap gap-[1px] min-h-[16px]">
+              <div className="flex flex-wrap gap-[1px] min-h-4">
                 {s.discards[pl].slice(-8).map((k, i) => { const start = Math.max(0, s.discards[pl].length - 8); return <Tile key={`${pl}-${start + i}`} k={k} small dim fresh={start + i === s.discards[pl].length - 1} reducedMotion={reducedMotion} ariaLabel={`${t.discard}: ${tileLabel(k).text}`} />; })}
               </div>
             </div>
@@ -378,12 +435,23 @@ const Mahjong: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
         </div>
 
         {/* Status */}
-        <div className="text-center min-h-[24px]">
+        <div className="text-center min-h-6 flex flex-col items-center justify-center">
           {over ? (
-            <span className="text-lg font-black">
-              {s.winner === 0 ? `🎉 ${t.youWin}` : s.winner === -1 ? t.exhaust
-                : `${t.ai} ${s.winner}${t.aiWin} (${s.winType === "tsumo" ? t.byTsumo : t.byRon})`}
-            </span>
+            <div className="flex flex-col items-center gap-1">
+              {s.winner === 0 && (
+                <img
+                  src={getSpriteUrl('trophy', 64)}
+                  alt="Victory Trophy"
+                  width={44}
+                  height={44}
+                  className="drop-shadow-md animate-bounce"
+                />
+              )}
+              <span className="text-lg font-black">
+                {s.winner === 0 ? `🎉 ${t.youWin}` : s.winner === -1 ? t.exhaust
+                  : `${t.ai} ${s.winner}${t.aiWin} (${s.winType === "tsumo" ? t.byTsumo : t.byRon})`}
+              </span>
+            </div>
           ) : s.turn !== 0 ? (
             <span className="text-sm text-muted-foreground">{t.thinking}</span>
           ) : s.phase === "ron" ? (
@@ -397,34 +465,40 @@ const Mahjong: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
         <div className="flex justify-center gap-2 min-h-11">
           {over && (
             <div className="flex flex-wrap justify-center gap-2">
-              <button
-                type="button"
+              <TiltMahjongButton
                 onClick={handleShareCard}
                 className="flex min-h-11 items-center gap-1.5 rounded-full border border-border bg-card px-4 py-2 text-xs font-bold text-foreground shadow-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 <Share2 className="h-3.5 w-3.5 text-primary" />
                 <span>{shareCardCopied ? "✓ 복사됨" : "결과 카드 복사"}</span>
-              </button>
-              <button
-                type="button"
+              </TiltMahjongButton>
+              <TiltMahjongButton
                 onClick={newGame}
                 className="min-h-11 px-5 rounded-full bg-primary text-primary-foreground font-black text-xs shadow-md hover:opacity-90"
               >
                 {t.reset}
-              </button>
+              </TiltMahjongButton>
             </div>
           )}
-          {canTsumo && <button type="button" onClick={humanTsumo} className="min-h-11 px-4 rounded-md bg-warning text-warning-foreground font-bold">{t.tsumo}</button>}
+          {canTsumo && (
+            <TiltMahjongButton onClick={humanTsumo} className="min-h-11 px-4 rounded-md bg-warning text-warning-foreground font-bold">
+              {t.tsumo}
+            </TiltMahjongButton>
+          )}
           {s.phase === "ron" && (
             <>
-              <button type="button" onClick={humanRon} className="min-h-11 px-4 rounded-md bg-destructive text-destructive-foreground font-bold">{t.ron}</button>
-              <button type="button" onClick={humanPassRon} className="min-h-11 px-4 rounded-md border border-border font-bold hover:bg-muted">{t.pass}</button>
+              <TiltMahjongButton onClick={humanRon} className="min-h-11 px-4 rounded-md bg-destructive text-destructive-foreground font-bold">
+                {t.ron}
+              </TiltMahjongButton>
+              <TiltMahjongButton onClick={humanPassRon} className="min-h-11 px-4 rounded-md border border-border font-bold hover:bg-muted">
+                {t.pass}
+              </TiltMahjongButton>
             </>
           )}
         </div>
 
         {/* Your discards */}
-        <div className="flex flex-wrap gap-[2px] justify-center min-h-[36px]">
+        <div className="flex flex-wrap gap-[2px] justify-center min-h-9">
           {s.discards[0].map((k, i) => <Tile key={i} k={k} small dim fresh={i === s.discards[0].length - 1} reducedMotion={reducedMotion} ariaLabel={`${t.discard}: ${tileLabel(k).text}`} />)}
         </div>
 

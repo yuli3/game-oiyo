@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { GameContainer } from "../ui/game/GamePrimitives";
-import { Share2, Check } from "lucide-react";
+import { Share2, Check, Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
 import {
   generateSeededMaze,
   MAZE_SIZES,
@@ -9,7 +9,7 @@ import {
   serializeMaze,
   type MazeDifficulty,
 } from "../../lib/games/maze";
-import { MAZE_SPRITES } from "../../lib/games/sprites";
+import { MAZE_SPRITES, getSpriteUrl } from "../../lib/games/sprites";
 import { createTonePlayer, type TonePlayer } from "../../lib/games/tone";
 import { celebrate } from "../../lib/games/celebration";
 import {
@@ -17,6 +17,45 @@ import {
   copyShareCardToClipboard,
   downloadShareCard,
 } from "../../lib/games/share-card";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+
+function TiltMazeButton({
+  children,
+  onClick,
+  className = '',
+  disabled = false,
+  title,
+  ariaLabel,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      title={title}
+      aria-label={ariaLabel || title}
+      onClick={() => {
+        triggerPop(0.12);
+        onClick?.();
+      }}
+      disabled={disabled}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`touch-manipulation select-none transition-all duration-150 transform-(--card-tilt) will-change-transform ${className}`}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 const SAVE = "oiyo:maze:v1",
   BEST = "oiyo-maze-best";
 const C = {
@@ -149,6 +188,7 @@ const C = {
 } as const;
 export default function MazeGame({ locale = "ko" }: { locale?: string }) {
   const t = C[locale as keyof typeof C] ?? C.en;
+  const { isImmersive, containerRef, togglePortal } = useArcadePortal({ locale: (locale as any) || "ko" });
   const [difficulty, setDifficulty] = useState<MazeDifficulty>("easy"),
     [seed, setSeed] = useState(1),
     [maze, setMaze] = useState(() => generateSeededMaze(11, 1)),
@@ -161,7 +201,6 @@ export default function MazeGame({ locale = "ko" }: { locale?: string }) {
     [sound, setSound] = useState(true),
     [restored, setRestored] = useState(false),
     [shareCardCopied, setShareCardCopied] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
   const touch = useRef<{ x: number; y: number } | null>(null);
   const player = useRef<TonePlayer | null>(null);
 
@@ -234,14 +273,17 @@ export default function MazeGame({ locale = "ko" }: { locale?: string }) {
       if (phase !== "playing") return;
       const next = moveMaze(maze, pos, dr, dc);
       if (next === pos) {
+        MobileHapticsPro.warningPattern();
         tone(140);
         return;
       }
+      MobileHapticsPro.lightImpact();
       setPos(next);
       tone(360);
       if (next[0] === maze.length - 1 && next[1] === maze.length - 1) {
         setPhase("won");
         localStorage.removeItem(SAVE);
+        MobileHapticsPro.successPattern();
         tone(760);
         if (containerRef.current) {
           celebrate(containerRef.current, { preset: "leaves" });
@@ -262,207 +304,248 @@ export default function MazeGame({ locale = "ko" }: { locale?: string }) {
   );
   useEffect(() => {
     const k = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === "f" || e.key === "F") {
+        e.preventDefault();
+        togglePortal();
+        return;
+      }
+      if (e.key === "m" || e.key === "M") {
+        e.preventDefault();
+        setSound((v) => !v);
+        return;
+      }
       const map: Record<string, [number, number]> = {
         ArrowUp: [-1, 0],
         ArrowDown: [1, 0],
         ArrowLeft: [0, -1],
         ArrowRight: [0, 1],
+        KeyW: [-1, 0],
+        KeyS: [1, 0],
+        KeyA: [0, -1],
+        KeyD: [0, 1],
       };
-      // Outside a run the arrow keys keep scrolling the page.
-      if (map[e.key] && phase === "playing") {
+      if (map[e.code || e.key] && phase === "playing") {
         e.preventDefault();
-        go(...map[e.key]);
+        go(...map[e.code || e.key]);
       }
-      if (e.key.toLowerCase() === "p")
+      if (e.key.toLowerCase() === "p") {
         setPhase((p) =>
           p === "playing" ? "paused" : p === "paused" ? "playing" : p,
         );
+      }
     };
     window.addEventListener("keydown", k);
     return () => window.removeEventListener("keydown", k);
-  }, [go, phase]);
+  }, [go, phase, togglePortal]);
   if (phase === "briefing")
     return (
-      <GameContainer title={t.title} subtitle={t.sub} onReset={() => start()}>
-        <div className="overflow-hidden rounded-3xl border">
-          <img
-            src="/games/maze-social.png"
-            alt=""
-            className="h-64 w-full object-cover sm:h-80"
-          />
-          <div className="p-5 text-center">
-            <p className="text-sm text-muted-foreground">{t.hint}</p>
-            <button
-              onClick={() => start()}
-              className="mt-4 min-h-12! rounded-full bg-primary px-8 font-black text-primary-foreground"
-            >
-              {t.start}
-            </button>
+      <div ref={containerRef} className={`w-full ${isImmersive ? 'fixed inset-0 z-50 flex flex-col items-center justify-center bg-background p-4 overflow-y-auto' : ''}`}>
+        <GameContainer title={t.title} subtitle={t.sub} onReset={() => start()}>
+          <div className="overflow-hidden rounded-3xl border border-border bg-card">
+            <img
+              src="/games/maze-social.png"
+              alt=""
+              className="h-64 w-full object-cover sm:h-80"
+            />
+            <div className="p-5 text-center flex flex-col items-center">
+              <p className="text-sm text-muted-foreground">{t.hint}</p>
+              <TiltMazeButton
+                onClick={() => start()}
+                className="mt-4 min-h-12 rounded-full bg-primary px-8 font-black text-primary-foreground shadow-md hover:bg-primary/90"
+              >
+                {t.start}
+              </TiltMazeButton>
+            </div>
           </div>
-        </div>
-      </GameContainer>
+        </GameContainer>
+      </div>
     );
   return (
-    <GameContainer title={t.title} subtitle={t.sub} onReset={() => start()}>
-      <div ref={containerRef} className="mx-auto max-w-md">
-        <div className="mb-3 flex gap-1">
-          {(["easy", "medium", "hard"] as MazeDifficulty[]).map((d) => (
-            <button
-              key={d}
-              onClick={() => start(d)}
-              aria-pressed={difficulty === d}
-              className={`min-h-11 flex-1 rounded-xl border text-xs font-bold ${difficulty === d ? "bg-primary text-primary-foreground" : ""}`}
-            >
-              {t[d]} {MAZE_SIZES[d]}²
-            </button>
-          ))}
-        </div>
-        {restored && (
-          <p
-            role="status"
-            className="mb-3 rounded-xl bg-primary/10 p-3 text-center text-xs font-bold text-primary"
-          >
-            {t.restored}
-          </p>
-        )}
-        <div className="mb-2 flex justify-between text-xs font-bold">
-          <span>
-            {t.time} {seconds}s
-          </span>
-          <span>
-            {t.best} {best[difficulty] === undefined ? "—" : `${best[difficulty]}s`}
-          </span>
-        </div>
-        <div
-          className="relative aspect-square touch-none"
-          onTouchStart={(e) => {
-            const x = e.touches[0];
-            touch.current = { x: x.clientX, y: x.clientY };
-          }}
-          onTouchEnd={(e) => {
-            if (!touch.current) return;
-            const x = e.changedTouches[0],
-              dx = x.clientX - touch.current.x,
-              dy = x.clientY - touch.current.y;
-            touch.current = null;
-            if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) return;
-            Math.abs(dx) > Math.abs(dy)
-              ? go(0, dx > 0 ? 1 : -1)
-              : go(dy > 0 ? 1 : -1, 0);
-          }}
-        >
-          <div
-            className="grid h-full w-full overflow-hidden rounded-2xl border-2 border-[#53623d]"
-            style={{ gridTemplateColumns: `repeat(${maze.length},1fr)` }}
-            role="grid"
-            aria-label={t.title}
-          >
-            {maze.flatMap((row, r) =>
-              row.map((cell, c) => (
-                <div
-                  key={`${r}-${c}`}
-                  role="gridcell"
-                  aria-label={`${r + 1},${c + 1}`}
-                  className={`grid place-items-center ${cell ? "bg-[#617047]" : "bg-[#f9f5e7]"}`}
+    <div ref={containerRef} className={`w-full ${isImmersive ? 'fixed inset-0 z-50 flex flex-col items-center justify-center bg-background p-4 overflow-y-auto' : ''}`}>
+      <GameContainer title={t.title} subtitle={t.sub} onReset={() => start()}>
+        <div className="mx-auto max-w-md">
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <div className="flex flex-1 gap-1">
+              {(["easy", "medium", "hard"] as MazeDifficulty[]).map((d) => (
+                <TiltMazeButton
+                  key={d}
+                  onClick={() => start(d)}
+                  ariaLabel={`${t[d]} ${MAZE_SIZES[d]}²`}
+                  className={`min-h-11 flex-1 rounded-xl border text-xs font-bold ${difficulty === d ? "bg-primary text-primary-foreground border-primary" : "border-border hover:bg-muted"}`}
                 >
-                  {pos[0] === r && pos[1] === c ? (
-                    <span className="h-3/4 w-3/4 rounded-full bg-[#df7655]" />
-                  ) : r === maze.length - 1 && c === maze.length - 1 ? (
-                    <img src={MAZE_SPRITES.exit} alt="" draggable={false} className="h-3/4 w-3/4 object-contain pointer-events-none" />
-                  ) : (
-                    ""
-                  )}
+                  {t[d]} {MAZE_SIZES[d]}²
+                </TiltMazeButton>
+              ))}
+            </div>
+            <div className="flex items-center gap-1">
+              <TiltMazeButton
+                onClick={() => setSound((v) => !v)}
+                className="min-h-11 min-w-11 rounded-xl border border-border flex items-center justify-center hover:bg-muted text-muted-foreground"
+                ariaLabel="Toggle Sound"
+              >
+                {sound ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+              </TiltMazeButton>
+              <TiltMazeButton
+                onClick={togglePortal}
+                className="min-h-11 min-w-11 rounded-xl border border-border flex items-center justify-center hover:bg-muted text-muted-foreground"
+                ariaLabel={isImmersive ? "Exit Fullscreen" : "Fullscreen"}
+              >
+                {isImmersive ? <Minimize2 className="h-4 w-4 text-primary" /> : <Maximize2 className="h-4 w-4" />}
+              </TiltMazeButton>
+            </div>
+          </div>
+          {restored && (
+            <p
+              role="status"
+              className="mb-3 rounded-xl bg-primary/10 p-3 text-center text-xs font-bold text-primary"
+            >
+              {t.restored}
+            </p>
+          )}
+          <div className="mb-2 flex justify-between text-xs font-bold">
+            <span>
+              {t.time} {seconds}s
+            </span>
+            <span>
+              {t.best} {best[difficulty] === undefined ? "—" : `${best[difficulty]}s`}
+            </span>
+          </div>
+          <div
+            className="relative aspect-square touch-none"
+            onTouchStart={(e) => {
+              const x = e.touches[0];
+              touch.current = { x: x.clientX, y: x.clientY };
+            }}
+            onTouchEnd={(e) => {
+              if (!touch.current) return;
+              const x = e.changedTouches[0],
+                dx = x.clientX - touch.current.x,
+                dy = x.clientY - touch.current.y;
+              touch.current = null;
+              if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) return;
+              Math.abs(dx) > Math.abs(dy)
+                ? go(0, dx > 0 ? 1 : -1)
+                : go(dy > 0 ? 1 : -1, 0);
+            }}
+          >
+            <div
+              className="grid h-full w-full overflow-hidden rounded-2xl border-2 border-primary/40 bg-card"
+              style={{ gridTemplateColumns: `repeat(${maze.length},1fr)` }}
+              role="grid"
+              aria-label={t.title}
+            >
+              {maze.flatMap((row, r) =>
+                row.map((cell, c) => (
+                  <div
+                    key={`${r}-${c}`}
+                    role="gridcell"
+                    aria-label={`${r + 1},${c + 1}`}
+                    className={`grid place-items-center ${cell ? "bg-primary/20" : "bg-card"}`}
+                  >
+                    {pos[0] === r && pos[1] === c ? (
+                      <span className="h-3/4 w-3/4 rounded-full bg-accent shadow-sm" />
+                    ) : r === maze.length - 1 && c === maze.length - 1 ? (
+                      <img src={MAZE_SPRITES.exit} alt="" draggable={false} className="h-3/4 w-3/4 object-contain pointer-events-none" />
+                    ) : (
+                      ""
+                    )}
+                  </div>
+                )),
+              )}
+            </div>
+            {phase === "paused" && (
+              <button
+                onClick={() => setPhase("playing")}
+                className="absolute inset-0 rounded-2xl bg-background/90 backdrop-blur-sm text-xl font-black text-foreground"
+              >
+                {t.resume}
+              </button>
+            )}
+            {phase === "won" && (
+              <div
+                className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl bg-background/95 backdrop-blur-sm p-4 border border-border"
+                role="status"
+              >
+                <img
+                  src={getSpriteUrl('trophy', 64)}
+                  alt="Victory Trophy"
+                  width={56}
+                  height={56}
+                  className="mb-2 drop-shadow-md animate-bounce"
+                />
+                <h3 className="px-5 text-center text-xl font-black">{t.win}</h3>
+                <p className="mt-2 font-mono font-bold">{seconds}s</p>
+                <div className="mt-4 flex gap-2">
+                  <TiltMazeButton
+                    onClick={handleShareCard}
+                    className="min-h-12 rounded-full border border-border bg-card hover:bg-muted px-6 font-bold text-foreground flex items-center gap-1.5 transition-colors shadow-sm"
+                  >
+                    {shareCardCopied ? <Check className="w-4 h-4 text-primary" /> : <Share2 className="w-4 h-4" />}
+                    <span>{shareCardCopied ? "복사됨!" : "결과 공유"}</span>
+                  </TiltMazeButton>
+                  <TiltMazeButton
+                    onClick={() => start()}
+                    className="min-h-12 rounded-full bg-primary px-8 font-black text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors"
+                  >
+                    {t.again}
+                  </TiltMazeButton>
                 </div>
-              )),
+              </div>
             )}
           </div>
-          {phase === "paused" && (
-            <button
-              onClick={() => setPhase("playing")}
-              className="absolute inset-0 rounded-2xl bg-white/95 text-xl font-black"
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            <TiltMazeButton
+              onClick={() => go(0, -1)}
+              ariaLabel={t.left}
+              className="min-h-11 rounded-xl border border-border bg-card hover:bg-muted font-bold text-lg"
             >
-              {t.resume}
-            </button>
-          )}
-          {phase === "won" && (
-            <div
-              className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl bg-white/95 p-4"
-              role="status"
+              ←
+            </TiltMazeButton>
+            <TiltMazeButton
+              onClick={() => go(-1, 0)}
+              ariaLabel={t.up}
+              className="min-h-11 rounded-xl border border-border bg-card hover:bg-muted font-bold text-lg"
             >
-              <h3 className="px-5 text-center text-xl font-black">{t.win}</h3>
-              <p className="mt-2 font-mono font-bold">{seconds}s</p>
-              <div className="mt-4 flex gap-2">
-                <button
-                  type="button"
-                  onClick={handleShareCard}
-                  className="min-h-12! rounded-full border border-border bg-card hover:bg-muted px-6 font-bold text-foreground flex items-center gap-1.5 transition-colors shadow-sm"
-                >
-                  {shareCardCopied ? <Check className="w-4 h-4 text-primary" /> : <Share2 className="w-4 h-4" />}
-                  {shareCardCopied ? "복사됨!" : "결과 공유"}
-                </button>
-                <button
-                  onClick={() => start()}
-                  className="min-h-12! rounded-full bg-primary px-8 font-black text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors"
-                >
-                  {t.again}
-                </button>
-              </div>
-            </div>
-          )}
+              ↑
+            </TiltMazeButton>
+            <TiltMazeButton
+              onClick={() => go(0, 1)}
+              ariaLabel={t.right}
+              className="min-h-11 rounded-xl border border-border bg-card hover:bg-muted font-bold text-lg"
+            >
+              →
+            </TiltMazeButton>
+            <TiltMazeButton
+              onClick={() => go(1, 0)}
+              ariaLabel={t.down}
+              className="min-h-11 rounded-xl border border-border bg-card hover:bg-muted font-bold text-lg"
+            >
+              ↓
+            </TiltMazeButton>
+            <TiltMazeButton
+              onClick={() =>
+                setPhase((p) =>
+                  p === "playing" ? "paused" : p === "paused" ? "playing" : p,
+                )
+              }
+              disabled={phase === "won"}
+              className="min-h-11 rounded-xl border border-border bg-card hover:bg-muted font-bold text-xs disabled:opacity-40"
+            >
+              {phase === "paused" ? t.resume : t.pause}
+            </TiltMazeButton>
+            <TiltMazeButton
+              onClick={() => setSound((v) => !v)}
+              className="min-h-11 rounded-xl border border-border bg-card hover:bg-muted text-xs font-bold"
+            >
+              {t.sound} {sound ? "ON" : "OFF"}
+            </TiltMazeButton>
+          </div>
+          <p className="mt-3 text-center text-xs text-muted-foreground">
+            {t.hint}
+          </p>
         </div>
-        <div className="mt-3 grid grid-cols-3 gap-2">
-          <button
-            onClick={() => go(0, -1)}
-            aria-label={t.left}
-            className="min-h-11! rounded-xl border"
-          >
-            ←
-          </button>
-          <button
-            onClick={() => go(-1, 0)}
-            aria-label={t.up}
-            className="min-h-11! rounded-xl border"
-          >
-            ↑
-          </button>
-          <button
-            onClick={() => go(0, 1)}
-            aria-label={t.right}
-            className="min-h-11! rounded-xl border"
-          >
-            →
-          </button>
-          <button
-            onClick={() => go(1, 0)}
-            aria-label={t.down}
-            className="min-h-11! rounded-xl border"
-          >
-            ↓
-          </button>
-          <button
-            onClick={() =>
-              // A finished maze stays finished: only a running or paused one toggles.
-              setPhase((p) =>
-                p === "playing" ? "paused" : p === "paused" ? "playing" : p,
-              )
-            }
-            disabled={phase === "won"}
-            className="min-h-11! rounded-xl border font-bold disabled:opacity-40"
-          >
-            {phase === "paused" ? t.resume : t.pause}
-          </button>
-          <button
-            onClick={() => setSound((v) => !v)}
-            aria-pressed={sound}
-            className="min-h-11! rounded-xl border text-xs font-bold"
-          >
-            {t.sound} {sound ? "ON" : "OFF"}
-          </button>
-        </div>
-        <p className="mt-3 text-center text-xs text-muted-foreground">
-          {t.hint}
-        </p>
-      </div>
-    </GameContainer>
+      </GameContainer>
+    </div>
   );
 }
