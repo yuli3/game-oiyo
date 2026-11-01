@@ -16,6 +16,52 @@ import {
   reportMissionProgress,
   saveArcadePassProgress,
 } from '../../lib/games/arcade-pass';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { celebrate } from '../../lib/games/celebration';
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from '../../lib/games/share-card';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { Maximize2, Minimize2, Share2, Check } from 'lucide-react';
+
+function TiltSuikaButton({
+  children,
+  onClick,
+  className = '',
+  disabled = false,
+  title,
+  ariaLabel,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      title={title}
+      aria-label={ariaLabel || title}
+      onClick={() => {
+        triggerPop(0.12);
+        onClick?.();
+      }}
+      disabled={disabled}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`transition-all duration-150 transform-(--card-tilt) will-change-transform ${className}`}
+      style={{ '--card-tilt': transformCss || 'none' } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 
 interface SuikaDropProps {
   lang?: string;
@@ -208,13 +254,38 @@ export default function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
   const locale = resolveLocale(lang);
   const t = COPY[locale];
 
+  const { isImmersive, containerRef, togglePortal } = useArcadePortal({ locale: locale as any });
   const [state, setState] = useState<SuikaState>(() => createInitialSuikaState());
   const stateRef = useRef<SuikaState>(state);
   stateRef.current = state;
 
+  const [isCopied, setIsCopied] = useState(false);
+  const celebratedWatermelonRef = useRef(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const lastMergeCountRef = useRef(0);
+
+  const handleShareScore = useCallback(async () => {
+    MobileHapticsPro.mediumImpact();
+    try {
+      const topFruit = FRUIT_TIERS[state.maxTierReached]?.emoji || '🍒';
+      const canvas = await createShareCardCanvas({
+        title: t.title,
+        slug: 'suika-drop',
+        score: `${state.score} (${t.mergesLabel} ${state.mergesCount})`,
+        subtitle: `${topFruit} ${t.fruits[FRUIT_TIERS[state.maxTierReached]?.nameKey || 'cherry']} 달성!`,
+      });
+      const copied = await copyShareCardToClipboard(canvas);
+      if (copied) {
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+      } else {
+        downloadShareCard(canvas, 'suika-drop-score.png');
+      }
+    } catch {
+      // fallback
+    }
+  }, [state.maxTierReached, state.score, state.mergesCount, t]);
 
   const playPopSfx = useCallback((freq = 420) => {
     try {
@@ -245,6 +316,7 @@ export default function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
     setState((prev) => {
       if (prev.status !== 'playing' || prev.dropCooldown > 0) return prev;
       playPopSfx(260);
+      MobileHapticsPro.lightImpact();
       return dropSuikaFruit(prev);
     });
   }, [playPopSfx]);
@@ -260,9 +332,23 @@ export default function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
 
       setState((prev) => {
         const next = stepSuikaPhysics(prev, dt);
+        if (prev.status === 'playing' && next.status === 'gameover') {
+          MobileHapticsPro.warningPattern();
+        }
         if (next.mergesCount > lastMergeCountRef.current) {
           lastMergeCountRef.current = next.mergesCount;
           playPopSfx(360 + next.maxTierReached * 55);
+          if (next.maxTierReached >= 9) {
+            MobileHapticsPro.heavyImpact();
+            if (!celebratedWatermelonRef.current) {
+              celebratedWatermelonRef.current = true;
+              celebrate(containerRef.current, { preset: 'sparks' });
+            }
+          } else if (next.maxTierReached >= 5) {
+            MobileHapticsPro.mediumImpact();
+          } else {
+            MobileHapticsPro.lightImpact();
+          }
           const dateKey = new Date().toISOString().slice(0, 10);
           const progress = loadArcadePassProgress(dateKey);
           saveArcadePassProgress(
@@ -418,7 +504,12 @@ export default function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
   };
 
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 text-card-foreground shadow-sm">
+    <div
+      ref={containerRef}
+      className={`flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 text-card-foreground shadow-sm transition-all ${
+        isImmersive ? 'fixed inset-0 z-50 overflow-y-auto rounded-none w-screen h-screen bg-background' : ''
+      }`}
+    >
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
         <div>
@@ -435,24 +526,44 @@ export default function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
           <span className="rounded-lg bg-secondary px-2.5 py-1 text-secondary-foreground">
             ✨ {t.mergesLabel}: {state.mergesCount}
           </span>
-          <button
-            type="button"
+
+          <TiltSuikaButton
             disabled={state.shakesLeft <= 0 || state.fruits.length === 0}
-            onClick={() => setState((prev) => shakeSuikaContainer(prev))}
+            onClick={() => {
+              MobileHapticsPro.mediumImpact();
+              setState((prev) => shakeSuikaContainer(prev));
+            }}
             className="rounded-lg border border-border bg-background px-2.5 py-1 text-xs font-semibold text-foreground transition hover:bg-accent disabled:opacity-40"
           >
             🫨 {t.shakeBtn} ({state.shakesLeft})
-          </button>
-          <button
-            type="button"
+          </TiltSuikaButton>
+
+          <TiltSuikaButton
             onClick={() => {
               lastMergeCountRef.current = 0;
+              celebratedWatermelonRef.current = false;
               setState((prev) => createInitialSuikaState(prev.bestScore));
             }}
             className="rounded-lg bg-primary px-3 py-1 text-xs font-bold text-primary-foreground shadow-sm transition hover:opacity-90"
           >
             {t.newGame}
-          </button>
+          </TiltSuikaButton>
+
+          <TiltSuikaButton
+            onClick={handleShareScore}
+            title={locale === 'ko' ? '기록 공유' : 'Share Score'}
+            className="rounded-lg border border-border bg-background p-1 text-foreground transition hover:bg-accent"
+          >
+            {isCopied ? <Check className="w-4 h-4 text-primary" /> : <Share2 className="w-4 h-4" />}
+          </TiltSuikaButton>
+
+          <TiltSuikaButton
+            onClick={togglePortal}
+            title={isImmersive ? '창모드로 복귀' : '100dvh 전체화면 몰입'}
+            className="rounded-lg border border-border bg-background p-1 text-foreground transition hover:bg-accent"
+          >
+            {isImmersive ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </TiltSuikaButton>
         </div>
       </div>
 
@@ -478,16 +589,25 @@ export default function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
                 <div className="text-base font-bold">
                   {t.scoreLabel}: {state.score}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    lastMergeCountRef.current = 0;
-                    setState((prev) => createInitialSuikaState(prev.bestScore));
-                  }}
-                  className="rounded-xl bg-primary px-5 py-2 text-sm font-bold text-primary-foreground shadow-sm"
-                >
-                  {t.newGame}
-                </button>
+                <div className="flex items-center gap-2">
+                  <TiltSuikaButton
+                    onClick={handleShareScore}
+                    className="flex items-center gap-1.5 rounded-xl border border-border bg-background px-4 py-2 text-sm font-bold text-foreground shadow-sm transition hover:bg-accent"
+                  >
+                    {isCopied ? <Check className="w-4 h-4 text-primary" /> : <Share2 className="w-4 h-4" />}
+                    <span>{isCopied ? '복사됨!' : '점수 공유'}</span>
+                  </TiltSuikaButton>
+                  <TiltSuikaButton
+                    onClick={() => {
+                      lastMergeCountRef.current = 0;
+                      celebratedWatermelonRef.current = false;
+                      setState((prev) => createInitialSuikaState(prev.bestScore));
+                    }}
+                    className="rounded-xl bg-primary px-5 py-2 text-sm font-bold text-primary-foreground shadow-sm"
+                  >
+                    {t.newGame}
+                  </TiltSuikaButton>
+                </div>
               </div>
             )}
           </div>

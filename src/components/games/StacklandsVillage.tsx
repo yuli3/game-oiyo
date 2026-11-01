@@ -1,10 +1,15 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useAudioContext } from "../../lib/games/use-audio-context";
-import { useClipboardShare } from "../../lib/games/use-clipboard-share";
 import { GameStatTile } from "../ui/game/GameStatTile";
 import { playSyntheticTone } from "../../lib/games/audio-mixer";
-import { triggerHaptic } from "../../lib/games/juice-engine";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
+import { celebrate } from "../../lib/games/celebration";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import { recordResult } from "../../lib/games/records";
 import {
   loadArcadePassProgress,
@@ -24,6 +29,44 @@ import {
   type VillageCard,
 } from "../../lib/games/stacklands-village";
 import type { Locale } from "../../lib/i18n";
+import { Maximize2, Minimize2, Share2, Check } from "lucide-react";
+
+function TiltVillageButton({
+  children,
+  onClick,
+  className = "",
+  disabled = false,
+  title,
+  ariaLabel,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      title={title}
+      aria-label={ariaLabel || title}
+      onClick={() => {
+        triggerPop(0.12);
+        onClick?.();
+      }}
+      disabled={disabled}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`transition-all duration-150 transform-(--card-tilt) will-change-transform ${className}`}
+      style={{ "--card-tilt": transformCss || "none" } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 
 interface Props {
   locale?: Locale;
@@ -51,11 +94,35 @@ export default function StacklandsVillage({ locale = "en" }: Props) {
     createInitialStacklandsState(20261031)
   );
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+  const [isCopied, setIsCopied] = useState(false);
+  const celebratedRef = useRef(false);
 
   const getAudio = useAudioContext();
-  const { copied, shareText } = useClipboardShare(2000);
-  const { isImmersive, containerRef, togglePortal, labels: portalLabels } =
+  const { isImmersive, containerRef, togglePortal } =
     useArcadePortal({ locale });
+
+  const popCount = state.cards.filter((c) => c.type === "villager" || c.type === "militia").length;
+
+  const handleShareCard = useCallback(async () => {
+    MobileHapticsPro.mediumImpact();
+    try {
+      const canvas = await createShareCardCanvas({
+        title: isKo ? "스택랜드 카드 빌리지" : "Stacklands Card Village",
+        slug: "stacklands-village",
+        score: `Moon ${state.moon}/${state.maxMoons} (Score: ${state.score})`,
+        subtitle: isKo ? `인구: ${popCount}명 | 코인: ${state.coins}C` : `Pop: ${popCount} | Coins: ${state.coins}C`,
+      });
+      const copied = await copyShareCardToClipboard(canvas);
+      if (copied) {
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+      } else {
+        downloadShareCard(canvas, "stacklands-score.png");
+      }
+    } catch {
+      // fallback
+    }
+  }, [isKo, state.moon, state.maxMoons, state.score, popCount, state.coins]);
 
   // Ticking loop (~60fps logical step)
   const lastTimeRef = useRef<number>(Date.now());
@@ -70,7 +137,7 @@ export default function StacklandsVillage({ locale = "en" }: Props) {
     return () => window.clearInterval(timer);
   }, []);
 
-  // Win handling
+  // Win / Loss handling
   useEffect(() => {
     if (state.status === "won") {
       try {
@@ -82,27 +149,34 @@ export default function StacklandsVillage({ locale = "en" }: Props) {
         // ignore
       }
       recordResult("stacklands-village", "w");
+      if (!celebratedRef.current) {
+        celebratedRef.current = true;
+        MobileHapticsPro.heavyImpact();
+        celebrate(containerRef.current, { preset: "sparks" });
+      }
+    } else if (state.status === "lost") {
+      MobileHapticsPro.warningPattern();
     }
-  }, [state.status]);
+  }, [state.status, containerRef]);
 
   const handleCardClick = (card: VillageCard) => {
     const audio = getAudio();
     if (!selectedCardId) {
       // Select source card
       setSelectedCardId(card.id);
-      triggerHaptic("light");
+      MobileHapticsPro.selectionClick();
       playSyntheticTone(audio, { freq: 440, duration: 0.08, type: "sine", gain: 0.1 });
     } else if (selectedCardId === card.id) {
       // Deselect or unstack
       if (card.stackedOnId) {
         setState((prev) => stackCardOn(prev, card.id, null));
-        triggerHaptic("medium");
+        MobileHapticsPro.lightImpact();
         playSyntheticTone(audio, { freq: 350, duration: 0.1, type: "triangle", gain: 0.12 });
       }
       setSelectedCardId(null);
     } else {
       // Stack source onto this card
-      triggerHaptic("medium");
+      MobileHapticsPro.mediumImpact();
       playSyntheticTone(audio, { freq: 520, duration: 0.12, type: "triangle", gain: 0.14 });
       setState((prev) => stackCardOn(prev, selectedCardId, card.id));
       setSelectedCardId(null);
@@ -111,7 +185,7 @@ export default function StacklandsVillage({ locale = "en" }: Props) {
 
   const onBuyPack = () => {
     const audio = getAudio();
-    triggerHaptic("success");
+    MobileHapticsPro.successPattern();
     playSyntheticTone(audio, { freq: 660, duration: 0.15, type: "square", gain: 0.12 });
     setState((prev) => buyBoosterPack(prev));
   };
@@ -119,15 +193,10 @@ export default function StacklandsVillage({ locale = "en" }: Props) {
   const onSellSelected = () => {
     if (!selectedCardId) return;
     const audio = getAudio();
-    triggerHaptic("medium");
+    MobileHapticsPro.mediumImpact();
     playSyntheticTone(audio, { freq: 580, duration: 0.12, type: "sine", gain: 0.14 });
     setState((prev) => sellCardForCoins(prev, selectedCardId));
     setSelectedCardId(null);
-  };
-
-  const handleShare = async () => {
-    const text = `🃏 ${isKo ? "스택랜드 카드 빌리지" : "Stacklands Card Village"}\nMoon ${state.moon}/${state.maxMoons} | Coins: ${state.coins} | Score: ${state.score}\nhttps://game.oiyo.net/${locale === "en" ? "" : `${locale}/`}stacklands-village`;
-    await shareText(text);
   };
 
   // Group cards into stacks for table rendering
@@ -155,8 +224,7 @@ export default function StacklandsVillage({ locale = "en" }: Props) {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
+          <TiltVillageButton
             onClick={onBuyPack}
             disabled={state.coins < state.boosterCost}
             className="rounded-xl bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground shadow hover:opacity-90 disabled:opacity-40"
@@ -164,30 +232,38 @@ export default function StacklandsVillage({ locale = "en" }: Props) {
             {isKo
               ? `📦 부스터 팩 구매 (${state.boosterCost}코인)`
               : `📦 Buy Booster Pack (${state.boosterCost}c)`}
-          </button>
+          </TiltVillageButton>
           {selectedCardId && (
-            <button
-              type="button"
+            <TiltVillageButton
               onClick={onSellSelected}
               className="rounded-xl border border-border bg-secondary px-3 py-1.5 text-xs font-bold text-secondary-foreground hover:opacity-90"
             >
               {isKo ? "💰 선택 카드 판매" : "💰 Sell Selected"}
-            </button>
+            </TiltVillageButton>
           )}
-          <button
-            type="button"
-            onClick={() => setState(createInitialStacklandsState(Date.now()))}
+          <TiltVillageButton
+            onClick={() => {
+              celebratedRef.current = false;
+              setState(createInitialStacklandsState(Date.now()));
+            }}
             className="rounded-xl border border-border bg-background px-3 py-1.5 text-xs font-bold text-foreground hover:bg-muted"
           >
             {isKo ? "새 마을" : "New Village"}
-          </button>
-          <button
-            type="button"
-            onClick={togglePortal}
-            className="rounded-xl border border-border bg-background px-3 py-1.5 text-xs font-bold text-foreground hover:bg-muted"
+          </TiltVillageButton>
+          <TiltVillageButton
+            onClick={handleShareCard}
+            title={isKo ? "생존 기록 공유" : "Share Score"}
+            className="rounded-xl border border-border bg-background p-1.5 text-foreground hover:bg-muted"
           >
-            {isImmersive ? portalLabels.exit : portalLabels.enter}
-          </button>
+            {isCopied ? <Check className="w-4 h-4 text-primary" /> : <Share2 className="w-4 h-4" />}
+          </TiltVillageButton>
+          <TiltVillageButton
+            onClick={togglePortal}
+            title={isImmersive ? "창모드로 복귀" : "100dvh 전체화면 몰입"}
+            className="rounded-xl border border-border bg-background p-1.5 text-foreground hover:bg-muted"
+          >
+            {isImmersive ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </TiltVillageButton>
         </div>
       </div>
 
@@ -344,19 +420,21 @@ export default function StacklandsVillage({ locale = "en" }: Props) {
               Score: {state.score} · Moon {state.moon}/{state.maxMoons} · Coins: {state.coins}
             </div>
           </div>
-          <button
-            type="button"
-            onClick={handleShare}
-            className="rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground shadow"
+          <TiltVillageButton
+            onClick={handleShareCard}
+            className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground shadow"
           >
-            {copied
-              ? isKo
-                ? "클립보드 복사됨!"
-                : "Copied!"
-              : isKo
-                ? "생존 기록 공유"
-                : "Share Result"}
-          </button>
+            {isCopied ? <Check className="w-4 h-4 text-primary-foreground" /> : <Share2 className="w-4 h-4" />}
+            <span>
+              {isCopied
+                ? isKo
+                  ? "복사됨!"
+                  : "Copied!"
+                : isKo
+                  ? "생존 기록 공유"
+                  : "Share Result"}
+            </span>
+          </TiltVillageButton>
         </div>
       )}
     </div>

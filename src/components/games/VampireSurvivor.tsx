@@ -1,6 +1,10 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { useDynamicDifficultyPro } from '@/lib/games/engine-suite-unified';
+import {
+  useDynamicDifficultyPro,
+  useCardTiltPro,
+  MobileHapticsPro,
+} from '@/lib/games/engine-suite-unified';
 import {
   VampireSurvivorEngine,
   UPGRADE_CATALOG,
@@ -10,13 +14,58 @@ import {
 import { FloatingJoystick } from '@/lib/games/floating-joystick';
 import { addTrauma, createShakeState, triggerHaptic, updateShake } from '@/lib/games/juice-engine';
 import { playSyntheticTone } from '@/lib/games/audio-mixer';
+import { useArcadePortal } from '@/lib/games/arcade-portal';
+import { celebrate } from '@/lib/games/celebration';
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from '@/lib/games/share-card';
+import { Maximize2, Minimize2, Share2, Check } from 'lucide-react';
+
+function TiltSurvivorButton({
+  children,
+  onClick,
+  className = '',
+  disabled = false,
+  title,
+  ariaLabel,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      title={title}
+      aria-label={ariaLabel || title}
+      onClick={() => {
+        triggerPop(0.12);
+        onClick?.();
+      }}
+      disabled={disabled}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`transition-all duration-150 transform-(--card-tilt) will-change-transform ${className}`}
+      style={{ '--card-tilt': transformCss || 'none' } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 
 interface VampireSurvivorProps {
   locale?: string;
 }
 
 export default function VampireSurvivor({ locale = 'ko' }: VampireSurvivorProps) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
+  const { isImmersive, containerRef, togglePortal } = useArcadePortal({ locale: locale as any });
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const engineRef = useRef<VampireSurvivorEngine>(new VampireSurvivorEngine(2400));
@@ -24,6 +73,7 @@ export default function VampireSurvivor({ locale = 'ko' }: VampireSurvivorProps)
   const keysPressedRef = useRef<Record<string, boolean>>({});
 
   const [gameState, setGameState] = useState<VampireSurvivorState['gameState']>('playing');
+  const [isCopied, setIsCopied] = useState(false);
   const [hud, setHud] = useState({
     hp: 100,
     maxHp: 100,
@@ -35,6 +85,30 @@ export default function VampireSurvivor({ locale = 'ko' }: VampireSurvivorProps)
     offeredUpgrades: [] as UpgradeId[],
     upgrades: {} as Record<UpgradeId, number>,
   });
+
+  const handleShareScore = useCallback(async () => {
+    MobileHapticsPro.mediumImpact();
+    try {
+      const mins = Math.floor(hud.survivalTime / 60);
+      const secs = hud.survivalTime % 60;
+      const timeStr = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+      const canvas = await createShareCardCanvas({
+        title: locale === 'ko' ? '뱀파이어 서바이벌' : 'Vampire Survivor',
+        slug: 'vampire-survivor',
+        score: `${timeStr} (${hud.kills} Kills)`,
+        subtitle: locale === 'ko' ? `생존 레벨 Lv.${hud.level} 달성!` : `Reached Level ${hud.level}!`,
+      });
+      const copied = await copyShareCardToClipboard(canvas);
+      if (copied) {
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+      } else {
+        downloadShareCard(canvas, 'vampire-survivor-score.png');
+      }
+    } catch {
+      // fallback
+    }
+  }, [locale, hud.survivalTime, hud.kills, hud.level]);
 
   const [joystickVisual, setJoystickVisual] = useState<{
     active: boolean;
@@ -226,9 +300,10 @@ export default function VampireSurvivor({ locale = 'ko' }: VampireSurvivorProps)
           hudTimer = 0;
           const s = engine.getState();
 
-          // HP 감소 감지 시 DDA 피격 리포트
+          // HP 감소 감지 시 DDA 피격 리포트 및 햅틱
           if (s.playerHp < lastHpRef.current) {
             reportHit();
+            MobileHapticsPro.lightImpact();
           }
           lastHpRef.current = s.playerHp;
 
@@ -239,9 +314,12 @@ export default function VampireSurvivor({ locale = 'ko' }: VampireSurvivorProps)
                 playSyntheticTone(audioCtxRef.current, { freq: 440, duration: 0.1, type: 'sine', gain: 0.2 });
               }
               triggerHaptic('combo');
+              MobileHapticsPro.heavyImpact();
+              celebrate(containerRef.current, { preset: 'sparks' });
             } else if (s.gameState === 'game_over') {
               addTrauma(shakeStateRef.current, 0.6);
               triggerHaptic('heavy');
+              MobileHapticsPro.warningPattern();
               reportDeath();
             }
           }
@@ -468,7 +546,11 @@ export default function VampireSurvivor({ locale = 'ko' }: VampireSurvivorProps)
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
-      className="relative w-full h-150 select-none overflow-hidden rounded-xl border border-border bg-background touch-none translate-x-(--shake-x) translate-y-(--shake-y)"
+      className={`select-none overflow-hidden touch-none font-sans bg-background border border-border transition-all ${
+        isImmersive
+          ? 'fixed inset-0 z-50 w-screen h-screen rounded-none'
+          : 'relative w-full h-150 rounded-xl shadow-2xl'
+      } translate-x-(--shake-x) translate-y-(--shake-y)`}
       style={
         {
           '--shake-x': `${shakeOffset.x}px`,
@@ -480,7 +562,7 @@ export default function VampireSurvivor({ locale = 'ko' }: VampireSurvivorProps)
       <canvas ref={canvasRef} className="absolute inset-0 block w-full h-full" />
 
       {/* Top HUD: XP Bar */}
-      <div className="absolute top-0 left-0 right-0 h-3 bg-muted">
+      <div className="absolute top-0 left-0 right-0 h-3 bg-muted z-10">
         <div
           className="h-full bg-primary transition-all duration-150 w-(--xp-w)"
           style={{ '--xp-w': `${xpPercent}%` } as React.CSSProperties}
@@ -488,8 +570,8 @@ export default function VampireSurvivor({ locale = 'ko' }: VampireSurvivorProps)
       </div>
 
       {/* Stats Bar */}
-      <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none">
-        <div className="flex items-center gap-3 bg-card/85 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-border text-xs text-foreground font-mono">
+      <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none z-10">
+        <div className="flex items-center gap-2 sm:gap-3 bg-card/85 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-border text-xs text-foreground font-mono">
           <span className="font-bold text-primary">Lv.{hud.level}</span>
           <span>⏱️ {formatTime(hud.survivalTime)}</span>
           <span>💀 {hud.kills}</span>
@@ -510,18 +592,37 @@ export default function VampireSurvivor({ locale = 'ko' }: VampireSurvivorProps)
           </span>
         </div>
 
-        {/* Player HP Bar */}
-        <div className="w-32 bg-card/85 backdrop-blur-sm p-1.5 rounded-lg border border-border">
-          <div className="flex justify-between text-xs font-mono text-muted-foreground mb-1">
-            <span>HP</span>
-            <span>{hud.hp}/{hud.maxHp}</span>
+        {/* Right Controls: HP bar + Portal / Share buttons */}
+        <div className="flex items-center gap-2 pointer-events-auto">
+          {/* Player HP Bar */}
+          <div className="w-24 sm:w-32 bg-card/85 backdrop-blur-sm p-1.5 rounded-lg border border-border">
+            <div className="flex justify-between text-xs font-mono text-muted-foreground mb-1">
+              <span>HP</span>
+              <span>{hud.hp}/{hud.maxHp}</span>
+            </div>
+            <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+              <div
+                className="h-full bg-destructive transition-all duration-100 w-(--hp-w)"
+                style={{ '--hp-w': `${hpPercent}%` } as React.CSSProperties}
+              />
+            </div>
           </div>
-          <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-            <div
-              className="h-full bg-destructive transition-all duration-100 w-(--hp-w)"
-              style={{ '--hp-w': `${hpPercent}%` } as React.CSSProperties}
-            />
-          </div>
+
+          <TiltSurvivorButton
+            onClick={handleShareScore}
+            title={locale === 'ko' ? '기록 공유' : 'Share Score'}
+            className="p-2 rounded-lg bg-card/85 backdrop-blur-sm border border-border text-foreground hover:text-primary hover:border-primary transition-colors"
+          >
+            {isCopied ? <Check className="w-4 h-4 text-primary" /> : <Share2 className="w-4 h-4" />}
+          </TiltSurvivorButton>
+
+          <TiltSurvivorButton
+            onClick={togglePortal}
+            title={isImmersive ? '창모드로 복귀' : '100dvh 전체화면 몰입'}
+            className="p-2 rounded-lg bg-card/85 backdrop-blur-sm border border-border text-foreground hover:text-primary hover:border-primary transition-colors"
+          >
+            {isImmersive ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </TiltSurvivorButton>
         </div>
       </div>
 
@@ -573,7 +674,7 @@ export default function VampireSurvivor({ locale = 'ko' }: VampireSurvivorProps)
                 const def = UPGRADE_CATALOG[id];
                 const curLvl = hud.upgrades[id] ?? 0;
                 return (
-                  <button
+                  <TiltSurvivorButton
                     key={id}
                     onClick={() => handleSelectUpgrade(id)}
                     className="w-full flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/40 hover:bg-muted/80 hover:border-primary transition-all text-left group"
@@ -594,7 +695,7 @@ export default function VampireSurvivor({ locale = 'ko' }: VampireSurvivorProps)
                         {def.description}
                       </p>
                     </div>
-                  </button>
+                  </TiltSurvivorButton>
                 );
               })}
             </div>
@@ -627,9 +728,22 @@ export default function VampireSurvivor({ locale = 'ko' }: VampireSurvivorProps)
               </div>
             </div>
 
-            <Button onClick={handleRestart} className="w-full">
-              {locale === 'ko' ? '다시 도전하기' : 'Try Again'}
-            </Button>
+            <div className="flex gap-2">
+              <TiltSurvivorButton
+                onClick={handleShareScore}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg border border-border bg-muted/40 text-xs font-bold text-foreground hover:bg-muted/80 transition-colors"
+              >
+                {isCopied ? <Check className="w-4 h-4 text-primary" /> : <Share2 className="w-4 h-4" />}
+                <span>{locale === 'ko' ? (isCopied ? '복사됨!' : '기록 공유') : (isCopied ? 'Copied!' : 'Share')}</span>
+              </TiltSurvivorButton>
+
+              <TiltSurvivorButton
+                onClick={handleRestart}
+                className="flex-1 py-2.5 rounded-lg bg-primary text-primary-foreground font-bold text-xs hover:bg-primary/90 transition-colors"
+              >
+                {locale === 'ko' ? '다시 도전하기' : 'Try Again'}
+              </TiltSurvivorButton>
+            </div>
           </div>
         </div>
       )}

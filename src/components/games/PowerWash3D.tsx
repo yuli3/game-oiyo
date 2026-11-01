@@ -11,6 +11,10 @@ import {
   CheckCircle2,
   ChevronRight,
   Coins,
+  Maximize2,
+  Minimize2,
+  Share2,
+  Check,
 } from "lucide-react";
 import {
   PowerWashEngine,
@@ -18,6 +22,51 @@ import {
   type NozzleType,
   type PowerWashState,
 } from "../../lib/games/powerwash-3d";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
+import { celebrate } from "../../lib/games/celebration";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+
+function TiltWashButton({
+  children,
+  onClick,
+  className = "",
+  disabled = false,
+  title,
+  ariaLabel,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      title={title}
+      aria-label={ariaLabel || title}
+      onClick={() => {
+        triggerPop(0.12);
+        onClick?.();
+      }}
+      disabled={disabled}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`transition-all duration-150 transform-(--card-tilt) will-change-transform ${className}`}
+      style={{ "--card-tilt": transformCss || "none" } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 
 interface WaterParticle {
   x: number;
@@ -31,10 +80,12 @@ interface WaterParticle {
 }
 
 export default function PowerWash3D() {
+  const { isImmersive, containerRef, togglePortal } = useArcadePortal({ locale: "ko" });
   const [engine] = useState(() => new PowerWashEngine(0));
   const [gameState, setGameState] = useState<PowerWashState>(() => engine.getState());
   const [isMuted, setIsMuted] = useState(false);
   const [isSpraying, setIsSpraying] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
   const [dingBanner, setDingBanner] = useState<{ name: string; reward: number; key: number } | null>(null);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -45,6 +96,7 @@ export default function PowerWash3D() {
   const animFrameIdRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number>(0);
   const flashPartMapRef = useRef<Record<string, number>>({});
+  const clearedCelebratedRef = useRef(false);
 
   const isMutedRef = useRef(isMuted);
   isMutedRef.current = isMuted;
@@ -141,7 +193,31 @@ export default function PowerWash3D() {
     }
   }, [engine]);
 
+  const completedCount = gameState.parts.filter((p) => p.isCompleted).length;
+
+  const handleShareScore = useCallback(async () => {
+    MobileHapticsPro.mediumImpact();
+    try {
+      const canvas = await createShareCardCanvas({
+        title: "파워워시 클린 3D",
+        slug: "powerwash-3d",
+        score: `${gameState.totalCleanPercent}% (${gameState.stageTitle})`,
+        subtitle: `보상: $${gameState.cashEarned} | 완료: ${completedCount}/${gameState.parts.length}`,
+      });
+      const copied = await copyShareCardToClipboard(canvas);
+      if (copied) {
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+      } else {
+        downloadShareCard(canvas, "powerwash-score.png");
+      }
+    } catch {
+      // fallback
+    }
+  }, [gameState.totalCleanPercent, gameState.stageTitle, gameState.cashEarned, completedCount, gameState.parts.length]);
+
   const handleSelectStage = (stageIdx: number) => {
+    clearedCelebratedRef.current = false;
     const fresh = engine.initStage(stageIdx);
     Object.assign(engine.getState(), fresh);
     setGameState({ ...engine.getState() });
@@ -255,9 +331,15 @@ export default function PowerWash3D() {
           flashPartMapRef.current[completed.id] = 1.0;
           setDingBanner({ name: completed.name, reward: completed.reward, key: Date.now() });
           playSound("ding");
+          MobileHapticsPro.mediumImpact();
 
           if (engine.getState().status === "stage_clear") {
             playSound("win");
+            if (!clearedCelebratedRef.current) {
+              clearedCelebratedRef.current = true;
+              MobileHapticsPro.heavyImpact();
+              celebrate(containerRef.current, { preset: "sparks" });
+            }
           }
         }
       }
@@ -447,10 +529,14 @@ export default function PowerWash3D() {
   }, [engine, playSound]);
 
   const hoveredPart = gameState.parts.find((p) => p.id === gameState.hoveredPartId);
-  const completedCount = gameState.parts.filter((p) => p.isCompleted).length;
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 sm:p-6 text-card-foreground shadow-lg">
+    <div
+      ref={containerRef}
+      className={`flex flex-col gap-4 rounded-xl border border-border bg-card p-4 sm:p-6 text-card-foreground shadow-lg transition-all ${
+        isImmersive ? "fixed inset-0 z-50 overflow-y-auto rounded-none w-screen h-screen bg-background" : ""
+      }`}
+    >
       {/* Top Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
         <div className="flex items-center gap-2">
@@ -478,24 +564,40 @@ export default function PowerWash3D() {
           </select>
 
           {/* Show Dirt Highlight Button */}
-          <button
-            type="button"
+          <TiltWashButton
             className="flex items-center gap-1 rounded-lg border border-border bg-warning/15 px-2.5 py-1.5 text-xs font-semibold text-warning transition hover:bg-warning/25"
             onClick={handleTriggerHighlight}
           >
             <Eye className="h-3.5 w-3.5" />
             잔여 오염 스캔 [F]
-          </button>
+          </TiltWashButton>
 
           {/* Rotate Nozzle */}
-          <button
-            type="button"
+          <TiltWashButton
             className="flex items-center gap-1 rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground transition hover:bg-muted"
             onClick={handleToggleOrientation}
           >
             <RefreshCw className="h-3.5 w-3.5" />
-            {gameState.orientation === "horizontal" ? "수평 분사 [R]" : "수직 분사 [R]"}
-          </button>
+            {gameState.orientation === "horizontal" ? "수평 [R]" : "수직 [R]"}
+          </TiltWashButton>
+
+          {/* Share Score Button */}
+          <TiltWashButton
+            title="세척 기록 공유"
+            className="rounded-lg border border-border bg-background p-2 text-foreground transition hover:bg-muted"
+            onClick={handleShareScore}
+          >
+            {isCopied ? <Check className="h-4 w-4 text-primary" /> : <Share2 className="h-4 w-4" />}
+          </TiltWashButton>
+
+          {/* Arcade Portal Toggle */}
+          <TiltWashButton
+            title={isImmersive ? "창모드로 복귀" : "100dvh 전체화면 몰입"}
+            className="rounded-lg border border-border bg-background p-2 text-foreground transition hover:bg-muted"
+            onClick={togglePortal}
+          >
+            {isImmersive ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+          </TiltWashButton>
 
           {/* Sound Toggle */}
           <button
@@ -615,14 +717,22 @@ export default function PowerWash3D() {
                 <p className="text-lg font-bold text-warning">${gameState.cashEarned}</p>
               </div>
             </div>
-            <button
-              type="button"
-              className="mt-2 flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground shadow hover:opacity-90"
-              onClick={() => handleSelectStage((gameState.stageIndex + 1) % 3)}
-            >
-              다음 의뢰 오브젝트 세척하기
-              <ChevronRight className="h-4 w-4" />
-            </button>
+            <div className="flex items-center gap-2">
+              <TiltWashButton
+                className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground shadow hover:bg-muted"
+                onClick={handleShareScore}
+              >
+                {isCopied ? <Check className="h-4 w-4 text-primary" /> : <Share2 className="h-4 w-4" />}
+                <span>{isCopied ? "복사됨!" : "기록 공유"}</span>
+              </TiltWashButton>
+              <TiltWashButton
+                className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground shadow hover:opacity-90"
+                onClick={() => handleSelectStage((gameState.stageIndex + 1) % 3)}
+              >
+                다음 의뢰 오브젝트 세척하기
+                <ChevronRight className="h-4 w-4" />
+              </TiltWashButton>
+            </div>
           </div>
         )}
       </div>
@@ -633,9 +743,8 @@ export default function PowerWash3D() {
           const spec = NOZZLE_SPECS[nozId];
           const isSelected = gameState.selectedNozzle === nozId;
           return (
-            <button
+            <TiltWashButton
               key={nozId}
-              type="button"
               className={`flex flex-col items-start rounded-lg border p-2.5 text-left transition ${
                 isSelected
                   ? "border-primary bg-primary/15 shadow-xs"
@@ -656,7 +765,7 @@ export default function PowerWash3D() {
                   ? "광역 빠른 먼지 제거"
                   : "비누 거품 도포 (효율 2배)"}
               </span>
-            </button>
+            </TiltWashButton>
           );
         })}
       </div>

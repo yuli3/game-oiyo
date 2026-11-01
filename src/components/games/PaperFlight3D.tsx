@@ -8,7 +8,71 @@ import {
 import { SpringCamera } from '../../lib/games/spring-camera';
 import PaperFlight3DScene from './PaperFlight3DScene';
 import { Button } from '../ui/button';
-import { Volume2, VolumeX, RotateCcw, Play, Zap, ArrowUp, ArrowDown, ArrowLeft, ArrowRight } from 'lucide-react';
+import {
+  Volume2,
+  VolumeX,
+  RotateCcw,
+  Play,
+  Zap,
+  ArrowUp,
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight,
+  Maximize2,
+  Minimize2,
+  Share2,
+  Check,
+} from 'lucide-react';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { celebrate } from '../../lib/games/celebration';
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from '../../lib/games/share-card';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+
+function TiltFlightButton({
+  children,
+  onClick,
+  className = '',
+  disabled = false,
+  title,
+  ariaLabel,
+  ariaPressed,
+  type = 'button',
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+  ariaPressed?: boolean;
+  type?: 'button' | 'submit';
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type={type}
+      onClick={() => {
+        triggerPop(0.12);
+        onClick?.();
+      }}
+      disabled={disabled}
+      title={title}
+      aria-label={ariaLabel}
+      aria-pressed={ariaPressed}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`transition-transform duration-100 ease-out active:scale-95 disabled:pointer-events-none disabled:opacity-50 transform-(--card-tilt) ${className}`}
+      style={{ '--card-tilt': transformCss || 'none' } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 
 export default function PaperFlight3D() {
   const engineRef = useRef<PaperFlightEngine | null>(null);
@@ -30,6 +94,8 @@ export default function PaperFlight3D() {
   }
   const cameraController = cameraControllerRef.current;
 
+  const { isImmersive, containerRef, togglePortal } = useArcadePortal();
+  const [copied, setCopied] = useState(false);
   const [plane, setPlane] = useState<PaperPlaneState>(() => ({ ...engine.plane }));
   const [status, setStatus] = useState<'ready' | 'flying' | 'landed' | 'cleared'>('ready');
   const [score, setScore] = useState(0);
@@ -37,6 +103,8 @@ export default function PaperFlight3D() {
   const [rings, setRings] = useState(0);
   const [cranes, setCranes] = useState(0);
   const [soundEnabled, setSoundEnabled] = useState(true);
+
+  const clearedCelebratedRef = useRef(false);
 
   // Audio synthesis
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -210,10 +278,12 @@ export default function PaperFlight3D() {
 
         if (engine.ringsCount > prevRings) {
           playSfx('ring');
+          MobileHapticsPro.lightImpact();
           prevRings = engine.ringsCount;
         }
         if (engine.cranesCount > prevCranes) {
           playSfx('crane');
+          MobileHapticsPro.mediumImpact();
           prevCranes = engine.cranesCount;
         }
 
@@ -227,6 +297,13 @@ export default function PaperFlight3D() {
 
         if (wasFlying && nowLanded) {
           playSfx('land');
+          MobileHapticsPro.heavyImpact();
+        }
+
+        if ((engine.status as string) === 'cleared' && !clearedCelebratedRef.current) {
+          clearedCelebratedRef.current = true;
+          MobileHapticsPro.heavyImpact();
+          celebrate(containerRef.current, { preset: 'sparks' });
         }
       }
 
@@ -246,12 +323,15 @@ export default function PaperFlight3D() {
 
   const handleLaunch = useCallback(() => {
     initAudio();
+    MobileHapticsPro.medium();
     engine.launch();
     setStatus('flying');
   }, [engine, initAudio]);
 
   const handleRestart = useCallback(() => {
     initAudio();
+    MobileHapticsPro.medium();
+    clearedCelebratedRef.current = false;
     engine.reset(Date.now());
     cameraController.snapTo({
       position: { x: 0, y: 20, z: 0 },
@@ -269,6 +349,23 @@ export default function PaperFlight3D() {
     setCranes(0);
   }, [engine, cameraController, initAudio]);
 
+  const handleShare = async () => {
+    MobileHapticsPro.medium();
+    const canvas = createShareCardCanvas({
+      title: 'Paper Flight 3D',
+      slug: 'paper-flight-3d',
+      score: `${distance}m`,
+      subtitle: `Score: ${score} • Rings: ${rings} • Cranes: ${cranes}`,
+    });
+    const success = await copyShareCardToClipboard(canvas);
+    if (success) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `paper-flight-${distance}m.png`);
+    }
+  };
+
   const currentBiome = getBiomeForZ(plane.z);
   const biomeNames: Record<string, string> = {
     study: '서재 복도 (Study Room)',
@@ -281,7 +378,14 @@ export default function PaperFlight3D() {
   const speedKmh = Math.floor(plane.airspeed * 3.6);
 
   return (
-    <div className="relative w-full h-160 md:h-180 bg-background rounded-2xl overflow-hidden border border-border shadow-2xl select-none">
+    <div
+      ref={containerRef}
+      className={`select-none transition-colors duration-200 ${
+        isImmersive
+          ? 'fixed inset-0 z-50 bg-background flex flex-col justify-between overflow-hidden'
+          : 'relative w-full h-160 md:h-180 bg-background rounded-2xl overflow-hidden border border-border shadow-2xl'
+      }`}
+    >
       <Canvas
         camera={{ position: [0, 22, 7], fov: 55, near: 0.1, far: 1200 }}
         className="w-full h-full"
@@ -316,9 +420,9 @@ export default function PaperFlight3D() {
           </div>
         </div>
 
-        {/* Counters & Sound */}
-        <div className="flex items-center gap-3">
-          <div className="px-3 py-1.5 rounded-xl bg-card/90 border border-border flex items-center gap-4 text-xs font-medium text-foreground">
+        {/* Counters & Action Buttons */}
+        <div className="flex items-center gap-2 pointer-events-auto">
+          <div className="px-3 py-1.5 rounded-xl bg-card/90 border border-border flex items-center gap-3 text-xs font-medium text-foreground">
             <div className="flex items-center gap-1.5">
               <span>링</span>
               <span className="font-bold text-warning">{rings}</span>
@@ -333,14 +437,32 @@ export default function PaperFlight3D() {
             </div>
           </div>
 
-          <button
-            type="button"
-            className="pointer-events-auto p-2 rounded-xl bg-card/90 border border-border text-foreground hover:bg-muted transition-colors"
-            onClick={() => setSoundEnabled(!soundEnabled)}
-            aria-label="음소거 토글"
+          <TiltFlightButton
+            className="p-2 rounded-xl bg-card/90 border border-border text-foreground hover:bg-muted transition-colors"
+            onClick={() => {
+              MobileHapticsPro.selection();
+              setSoundEnabled(!soundEnabled);
+            }}
+            ariaLabel="음소거 토글"
           >
-            {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4 text-muted-foreground" />}
-          </button>
+            {soundEnabled ? <Volume2 className="size-4" /> : <VolumeX className="size-4 text-muted-foreground" />}
+          </TiltFlightButton>
+
+          <TiltFlightButton
+            className="p-2 rounded-xl bg-card/90 border border-border text-foreground hover:bg-muted transition-colors"
+            onClick={handleShare}
+            ariaLabel="비행 기록 공유"
+          >
+            {copied ? <Check className="size-4 text-success" /> : <Share2 className="size-4" />}
+          </TiltFlightButton>
+
+          <TiltFlightButton
+            className="p-2 rounded-xl bg-card/90 border border-border text-foreground hover:bg-muted transition-colors"
+            onClick={togglePortal}
+            ariaLabel={isImmersive ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+          >
+            {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+          </TiltFlightButton>
         </div>
       </div>
 
@@ -363,7 +485,7 @@ export default function PaperFlight3D() {
         <div className="px-3 py-2 rounded-xl bg-card/90 border border-border flex flex-col gap-1 w-32">
           <div className="flex items-center justify-between text-xs">
             <span className="text-muted-foreground flex items-center gap-1">
-              <Zap className="w-3 h-3 text-warning" /> 부스트
+              <Zap className="size-3 text-warning" /> 부스트
             </span>
             <span className="text-xs font-mono font-bold text-warning">{Math.floor(plane.stamina)}%</span>
           </div>
@@ -383,53 +505,68 @@ export default function PaperFlight3D() {
           <button
             type="button"
             className="w-10 h-10 rounded-xl flex items-center justify-center active:bg-primary/20 text-foreground"
-            onTouchStart={() => handleTouchControl('pitchDown', true)}
+            onTouchStart={() => {
+              MobileHapticsPro.light();
+              handleTouchControl('pitchDown', true);
+            }}
             onTouchEnd={() => handleTouchControl('pitchDown', false)}
             aria-label="기수 하강"
           >
-            <ArrowUp className="w-5 h-5" />
+            <ArrowUp className="size-5" />
           </button>
           <div />
 
           <button
             type="button"
             className="w-10 h-10 rounded-xl flex items-center justify-center active:bg-primary/20 text-foreground"
-            onTouchStart={() => handleTouchControl('rollLeft', true)}
+            onTouchStart={() => {
+              MobileHapticsPro.light();
+              handleTouchControl('rollLeft', true);
+            }}
             onTouchEnd={() => handleTouchControl('rollLeft', false)}
             aria-label="좌측 뱅킹"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="size-5" />
           </button>
 
           <button
             type="button"
             className="w-10 h-10 rounded-xl flex items-center justify-center active:bg-primary/20 text-foreground"
-            onTouchStart={() => handleTouchControl('pitchUp', true)}
+            onTouchStart={() => {
+              MobileHapticsPro.light();
+              handleTouchControl('pitchUp', true);
+            }}
             onTouchEnd={() => handleTouchControl('pitchUp', false)}
             aria-label="기수 상승"
           >
-            <ArrowDown className="w-5 h-5" />
+            <ArrowDown className="size-5" />
           </button>
 
           <button
             type="button"
             className="w-10 h-10 rounded-xl flex items-center justify-center active:bg-primary/20 text-foreground"
-            onTouchStart={() => handleTouchControl('rollRight', true)}
+            onTouchStart={() => {
+              MobileHapticsPro.light();
+              handleTouchControl('rollRight', true);
+            }}
             onTouchEnd={() => handleTouchControl('rollRight', false)}
             aria-label="우측 뱅킹"
           >
-            <ArrowRight className="w-5 h-5" />
+            <ArrowRight className="size-5" />
           </button>
         </div>
 
         <button
           type="button"
           className="w-14 h-14 rounded-full bg-warning text-foreground font-bold shadow-lg flex items-center justify-center active:scale-95"
-          onTouchStart={() => handleTouchControl('boost', true)}
+          onTouchStart={() => {
+            MobileHapticsPro.medium();
+            handleTouchControl('boost', true);
+          }}
           onTouchEnd={() => handleTouchControl('boost', false)}
           aria-label="부스트"
         >
-          <Zap className="w-6 h-6 fill-current" />
+          <Zap className="size-6 fill-current" />
         </button>
       </div>
 
@@ -502,14 +639,23 @@ export default function PaperFlight3D() {
                 </div>
               </div>
 
-              <Button
-                size="lg"
-                className="w-full"
-                onClick={handleRestart}
-              >
-                <RotateCcw />
-                다시 비행하기
-              </Button>
+              <div className="flex items-center gap-3 w-full">
+                <Button
+                  size="lg"
+                  className="flex-1"
+                  onClick={handleRestart}
+                >
+                  <RotateCcw />
+                  다시 비행하기
+                </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={handleShare}
+                >
+                  {copied ? <Check className="size-4 text-success" /> : <Share2 className="size-4" />} 공유
+                </Button>
+              </div>
             </div>
           </div>
         </div>
