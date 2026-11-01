@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
-import { Maximize2, Minimize2, Share2, Volume2, VolumeX } from "lucide-react";
+import { Maximize2, Minimize2, Share2, Volume2, VolumeX, Star, Flame, Sparkles } from "lucide-react";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { celebrate } from "../../lib/games/celebration";
@@ -359,6 +359,152 @@ const COPY = {
     },
   },
 } as const;
+
+class AnimalPopAudio {
+  private ctx: AudioContext | null = null;
+  public enabled = true;
+
+  constructor(enabled = true) {
+    this.enabled = enabled;
+  }
+
+  private getContext(): AudioContext | null {
+    if (!this.enabled || typeof window === "undefined") return null;
+    try {
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!this.ctx && AudioCtx) {
+        this.ctx = new AudioCtx();
+      }
+      if (this.ctx && this.ctx.state === "suspended") {
+        void this.ctx.resume();
+      }
+      return this.ctx;
+    } catch {
+      return null;
+    }
+  }
+
+  playMatch(wave: number, count: number) {
+    const ctx = this.getContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const scale = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50, 1174.66, 1318.51, 1567.98];
+    const freq = scale[Math.min(wave - 1, scale.length - 1)] || 523.25;
+    const dur = 0.22;
+    const vol = count >= 6 ? 0.35 : 0.22;
+
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.type = "sine";
+    osc1.frequency.setValueAtTime(freq, now);
+    gain1.gain.setValueAtTime(vol, now);
+    gain1.gain.exponentialRampToValueAtTime(0.001, now + dur);
+    osc1.connect(gain1).connect(ctx.destination);
+    osc1.start(now);
+    osc1.stop(now + dur);
+
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = "triangle";
+    osc2.frequency.setValueAtTime(freq * 3.8, now);
+    gain2.gain.setValueAtTime(vol * 0.35, now);
+    gain2.gain.exponentialRampToValueAtTime(0.001, now + dur * 0.35);
+    osc2.connect(gain2).connect(ctx.destination);
+    osc2.start(now);
+    osc2.stop(now + dur * 0.35);
+  }
+
+  playPop(freq = 480) {
+    const ctx = this.getContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(freq * 0.75, now);
+    osc.frequency.exponentialRampToValueAtTime(freq * 1.35, now + 0.05);
+    gain.gain.setValueAtTime(0.18, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.05);
+  }
+
+  playInvalid() {
+    const ctx = this.getContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(160, now);
+    osc.frequency.exponentialRampToValueAtTime(75, now + 0.08);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.08);
+  }
+
+  playFever() {
+    const ctx = this.getContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const notes = [587.33, 783.99, 1046.50, 1318.51];
+    notes.forEach((f, idx) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = "sine";
+      o.frequency.setValueAtTime(f, now + idx * 0.06);
+      g.gain.setValueAtTime(0.22, now + idx * 0.06);
+      g.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.22);
+      o.connect(g).connect(ctx.destination);
+      o.start(now + idx * 0.06);
+      o.stop(now + idx * 0.06 + 0.22);
+    });
+  }
+
+  playGameOver() {
+    const ctx = this.getContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const notes = [659.25, 523.25, 440.00, 329.63];
+    notes.forEach((f, idx) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = "sine";
+      o.frequency.setValueAtTime(f, now + idx * 0.09);
+      g.gain.setValueAtTime(0.2, now + idx * 0.09);
+      g.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.09 + 0.22);
+      o.connect(g).connect(ctx.destination);
+      o.start(now + idx * 0.09);
+      o.stop(now + idx * 0.09 + 0.22);
+    });
+  }
+
+  playTone(freq: number, duration = 0.1, volume = 0.025) {
+    const ctx = this.getContext();
+    if (!ctx) return;
+    try {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(volume, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + duration);
+    } catch {}
+  }
+
+  close() {
+    if (this.ctx && this.ctx.state !== "closed") {
+      void this.ctx.close().catch(() => undefined);
+    }
+    this.ctx = null;
+  }
+}
+
 export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
   const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'ko' });
@@ -410,7 +556,17 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
   const debrisRef = useRef<DebrisWorld | null>(null);
   const debrisLoadingRef = useRef(false);
   const rafRef = useRef(0);
-  const player = useRef<TonePlayer | null>(null);
+  const audio = useRef<AnimalPopAudio | null>(null);
+  useEffect(() => {
+    audio.current = new AnimalPopAudio(sound);
+    return () => {
+      audio.current?.close();
+      audio.current = null;
+    };
+  }, []);
+  useEffect(() => {
+    if (audio.current) audio.current.enabled = sound;
+  }, [sound]);
   const reducedMotionRef = useRef(reducedMotion);
   reducedMotionRef.current = reducedMotion;
   const feverRef = useRef(feverSeconds);
@@ -523,12 +679,10 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
   const tone = useCallback(
     (f: number) => {
       if (!sound) return;
-      player.current ??= createTonePlayer();
-      player.current.play(f, 0.12, 0.03);
+      audio.current?.playTone(f, 0.12, 0.03);
     },
     [sound],
   );
-  useEffect(() => () => player.current?.close(), []);
   const scoreRef = useRef(score);
   const toneRef = useRef(tone);
   scoreRef.current = score;
@@ -577,19 +731,19 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
                 runRef.current = saved.run;
                 setRun(saved.run);
                 setNotice("second");
-                toneRef.current(760);
+                audio.current?.playFever();
                 return saved.timeLeft;
               }
               setPhase("over");
               localStorage.removeItem(ANIMAL_AUGMENT_SAVE);
-              toneRef.current(140);
+              audio.current?.playGameOver();
               // Augment scores never touch the classic best: the rules are not the same game.
               setAugmentBest(writeAnimalAugmentBest(scoreRef.current));
               return 0;
             }
             setPhase("over");
             localStorage.removeItem(SAVE);
-            toneRef.current(140);
+            audio.current?.playGameOver();
             setBest((b) => {
               const n = Math.max(b, scoreRef.current);
               localStorage.setItem(BEST, String(n));
@@ -661,6 +815,7 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
     if (phase !== "playing" || resolving) return;
     if (selected === null) {
       setSelected(i);
+      audio.current?.playPop(520);
       MobileHapticsPro.selection();
       return;
     }
@@ -669,7 +824,7 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
     setSelected(null);
     if (!x.valid) {
       MobileHapticsPro.warning();
-      tone(150);
+      audio.current?.playInvalid();
       return;
     }
     const run = ++animationRun.current;
@@ -685,13 +840,13 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
       burstShards(step.matched, step.before);
       if (step.matched.length >= 7) {
         MobileHapticsPro.heavy();
-        tone(1200);
+        audio.current?.playMatch(wave + 1, step.matched.length);
       } else if (wave >= 1) {
         MobileHapticsPro.impact();
-        tone(Math.min(1050, 440 + wave * 95));
+        audio.current?.playMatch(wave + 1, step.matched.length);
       } else {
         MobileHapticsPro.light();
-        tone(Math.min(1050, 440 + wave * 95));
+        audio.current?.playMatch(wave + 1, step.matched.length);
       }
       await wait(burstMs);
       if (run !== animationRun.current) return;
@@ -710,6 +865,10 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
       ? scoreAnimalAugmented(x.cleared, x.waves, feverRef.current, owned)
       : scoreAnimalMatch(x.cleared, x.waves, feverRef.current);
     const bonus = owned ? animalAugmentedTimeBonus(x.cleared, x.waves, owned) : animalMatchTimeBonus(x.cleared, x.waves);
+    if (award.feverSeconds > 0 && feverRef.current === 0) {
+      audio.current?.playFever();
+      if (boardRef.current) celebrate(boardRef.current, { preset: "stardust" });
+    }
     feverRef.current = award.feverSeconds;
     setFeverSeconds(award.feverSeconds);
     setScore((v) => v + award.points);
@@ -853,6 +1012,31 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
           <Stat l={t.score} v={String(score)} />
           <Stat l={t.best} v={String(mode === "augment" ? Math.max(augmentBest, score) : best)} />
         </div>
+
+        {/* Star Milestone Rating Bar */}
+        <div className="mt-3 mb-1 px-1">
+          <div className="flex items-center justify-between text-xs text-muted-foreground font-bold mb-1">
+            <div className="flex items-center gap-1">
+              <Star className={`w-3.5 h-3.5 ${score >= 3000 ? "text-warning fill-warning" : "text-muted-foreground/30"}`} />
+              <span className={score >= 3000 ? "text-warning font-black" : ""}>★ 3K</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Star className={`w-3.5 h-3.5 ${score >= 8000 ? "text-warning fill-warning" : "text-muted-foreground/30"}`} />
+              <span className={score >= 8000 ? "text-warning font-black" : ""}>★★ 8K</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Star className={`w-3.5 h-3.5 ${score >= 15000 ? "text-warning fill-warning" : "text-muted-foreground/30"}`} />
+              <span className={score >= 15000 ? "text-warning font-black" : ""}>★★★ 15K</span>
+            </div>
+          </div>
+          <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden border border-border/40">
+            <div
+              className="h-full bg-primary transition-all duration-300"
+              style={{ width: `${Math.min(100, (score / 15000) * 100)}%` }}
+            />
+          </div>
+        </div>
+
         {restored && (
           <p
             role="status"
@@ -869,7 +1053,7 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
         </div>
         <div
           ref={boardRef}
-          className={`relative grid grid-cols-7 gap-1 overflow-hidden rounded-3xl border bg-[#edf1df] p-2 transition-all duration-300 ${bursting.length ? "animal-board-hit" : ""} ${feverSeconds > 0 ? "ring-4 ring-chart-3 shadow-lg shadow-chart-3/30" : ""}`}
+          className={`relative grid grid-cols-7 gap-1 overflow-hidden rounded-3xl border border-border bg-muted/40 p-2 transition-all duration-300 ${bursting.length ? "animal-board-hit" : ""} ${feverSeconds > 0 ? "ring-4 ring-warning shadow-lg shadow-warning/30" : ""}`}
           role="grid"
           aria-label={t.title}
         >
@@ -893,10 +1077,10 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
                   onClick={() => pick(i)}
                   disabled={phase !== "playing" || resolving}
                   style={fall ? ({ "--animal-fall": `${fallRows * 108}%`, animationDuration: reducedMotion ? "65ms" : `${Math.min(430,180+fallRows*34)}ms` } as CSSProperties) : undefined}
-                  className={`animal-tile relative flex aspect-square min-h-10 items-center justify-center rounded-xl bg-card shadow-sm focus-visible:ring-2 focus-visible:ring-primary ${selected === i ? "ring-2 ring-primary scale-105" : ""} ${isBursting ? "animal-burst z-10" : ""} ${fall ? "animal-fall" : ""}`}
+                  className={`animal-tile relative flex aspect-square min-h-10 items-center justify-center rounded-2xl bg-card border-b-2 border-border/80 shadow-sm focus-visible:ring-2 focus-visible:ring-primary ${selected === i ? "ring-4 ring-primary scale-105 animal-selected" : ""} ${isBursting ? "animal-burst z-10" : ""} ${fall ? "animal-fall" : ""}`}
                 >
                   {ANIMAL_POP_SPRITES[animal] ? (
-                    <img src={ANIMAL_POP_SPRITES[animal]} alt="" draggable={false} className="h-[78%] w-[78%] object-contain pointer-events-none select-none" />
+                    <img src={ANIMAL_POP_SPRITES[animal]} alt="" draggable={false} className="h-[80%] w-[80%] object-contain pointer-events-none select-none drop-shadow-md" />
                   ) : (
                     animal
                   )}
@@ -906,7 +1090,7 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
             }),
           )}
           {phase === "picking" && run?.offer && (
-            <div className="absolute inset-0 z-30 flex overflow-y-auto bg-white/95 p-2" role="dialog" aria-label={t.pick}>
+            <div className="absolute inset-0 z-30 flex overflow-y-auto bg-card/95 text-foreground p-2" role="dialog" aria-label={t.pick}>
               {/* m-auto centres the cards when they fit and lets them scroll from the top when they do not. */}
               <div className="m-auto flex w-full flex-col gap-1.5">
               <p className="text-center text-sm font-black">{t.pick}</p>
@@ -934,7 +1118,7 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
           {phase === "paused" && (
             <button
               onClick={() => setPhase(run?.offer ? "picking" : "playing")}
-              className="absolute inset-2 rounded-2xl bg-white/95 text-xl font-black"
+              className="absolute inset-2 rounded-2xl bg-card/95 text-foreground text-xl font-black"
             >
               {t.resume}
             </button>
@@ -1004,6 +1188,10 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
           .animal-spark-b{left:58%;top:26%;animation:animalSparkSheet 230ms steps(3) both,animalSparkB 230ms ease-out both}
           .animal-spark-c{left:38%;top:56%;animation:animalSparkSheet 250ms steps(3) both,animalSparkC 250ms ease-out both}
           @keyframes animalSparkSheet { from { background-position: 0 0; } to { background-position: 100% 0; } }
+          .animal-tile { box-shadow: 0 3px 0 rgba(0, 0, 0, 0.08), 0 5px 8px rgba(0, 0, 0, 0.05); transition: transform 0.12s ease-out; }
+          .animal-tile:active { transform: translateY(2px) scale(0.96); box-shadow: 0 1px 0 rgba(0, 0, 0, 0.08); }
+          .animal-selected { animation: animalSquash 0.8s ease-in-out infinite; }
+          @keyframes animalSquash { 0%, 100% { transform: scale(1.06, 0.95); } 50% { transform: scale(0.96, 1.06); } }
           .animal-fall{animation-name:animalFall;animation-timing-function:cubic-bezier(.18,.72,.22,1.08);animation-fill-mode:both}
           .animal-board-hit{animation:animalBoardHit 150ms ease-out}
           @media(prefers-reduced-motion:reduce){.animal-burst{animation-duration:55ms;box-shadow:none}.animal-ring,.animal-spark-sheet{display:none}.animal-board-hit{animation:none}.animal-fall{animation-duration:65ms!important}}
