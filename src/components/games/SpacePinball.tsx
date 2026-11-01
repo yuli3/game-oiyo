@@ -6,9 +6,10 @@ import {
   launchBall,
   setFlipperState,
   updatePinballPhysics,
+  nudgeTable,
 } from '../../lib/games/space-pinball';
 import type { Locale } from '../../lib/i18n';
-import { Play, RotateCcw, Trophy, CircleDot, Zap, Maximize2, Minimize2, Volume2, VolumeX, Share2, Check } from 'lucide-react';
+import { Play, RotateCcw, Trophy, CircleDot, Zap, Maximize2, Minimize2, Volume2, VolumeX, Share2, Check, Sparkles, AlertTriangle } from 'lucide-react';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import { getSpriteUrl } from '../../lib/games/sprites';
@@ -27,8 +28,13 @@ const UI_TEXT: Record<Locale, {
   score: string;
   highScore: string;
   balls: string;
+  multiplier: string;
+  combo: string;
   leftFlipper: string;
   rightFlipper: string;
+  nudgeLeft: string;
+  nudgeRight: string;
+  tiltWarning: string;
   gameOver: string;
   finalScore: string;
   instructions: string;
@@ -41,11 +47,16 @@ const UI_TEXT: Record<Locale, {
     score: "점수",
     highScore: "최고 점수",
     balls: "남은 볼",
+    multiplier: "배율",
+    combo: "콤보",
     leftFlipper: "왼쪽 플리퍼 (A / ←)",
     rightFlipper: "오른쪽 플리퍼 (D / →)",
+    nudgeLeft: "테이블 툭치기 (Z)",
+    nudgeRight: "테이블 툭치기 (/)",
+    tiltWarning: "경고: 틸트 주의!",
     gameOver: "게임 종료",
     finalScore: "최종 획득 점수",
-    instructions: "스페이스바로 볼을 쏘아 올리고, A / D 키나 화면 양쪽 터치로 플리퍼를 쳐서 범퍼를 타격하세요!",
+    instructions: "스페이스바로 볼을 쏘아 올리고, A / D 키나 화면 양쪽 터치로 플리퍼를 쳐서 범퍼와 슬링샷을 타격하세요! 상단 S-P-A 레인을 모두 밝히면 잭팟 배율이 상승합니다.",
   },
   en: {
     title: "Space Pinball 3D",
@@ -55,11 +66,16 @@ const UI_TEXT: Record<Locale, {
     score: "Score",
     highScore: "High Score",
     balls: "Balls Left",
+    multiplier: "Multiplier",
+    combo: "Combo",
     leftFlipper: "Left Flipper (A / ←)",
     rightFlipper: "Right Flipper (D / →)",
+    nudgeLeft: "Nudge Left (Z)",
+    nudgeRight: "Nudge Right (/)",
+    tiltWarning: "WARNING: TILT DANGER!",
     gameOver: "Game Over",
     finalScore: "Final Score",
-    instructions: "Launch with Spacebar, use A/D or touch sides to trigger flippers and hit bumpers for high scores!",
+    instructions: "Launch with Spacebar, use A/D or touch sides to trigger flippers and hit bumpers & slingshots! Light up all S-P-A lanes for Jackpot Multipliers.",
   },
   ja: {
     title: "スペースピンボール 3D",
@@ -69,11 +85,16 @@ const UI_TEXT: Record<Locale, {
     score: "スコア",
     highScore: "ハイスコア",
     balls: "残機",
+    multiplier: "倍率",
+    combo: "コンボ",
     leftFlipper: "左フリッパー (A / ←)",
     rightFlipper: "右フリッパー (D / →)",
+    nudgeLeft: "左ナッジ (Z)",
+    nudgeRight: "右ナッジ (/)",
+    tiltWarning: "警告: ティルト注意！",
     gameOver: "ゲームオーバー",
     finalScore: "最終スコア",
-    instructions: "スペースでボールを発射し、A/Dキーや画面タッチでフリッパーを操作してハイスコアを目指しましょう！",
+    instructions: "スペースでボールを発射し、A/Dキーや画面タッチでフ리ッパーを操作してバンパーを狙いましょう！S-P-Aレーン全点灯でジャックポット！",
   },
   zh: {
     title: "太空弹珠台 3D",
@@ -83,11 +104,16 @@ const UI_TEXT: Record<Locale, {
     score: "得分",
     highScore: "最高分",
     balls: "剩余弹球",
+    multiplier: "倍率",
+    combo: "连击",
     leftFlipper: "左挡板 (A / ←)",
     rightFlipper: "右挡板 (D / →)",
+    nudgeLeft: "左推台 (Z)",
+    nudgeRight: "右推台 (/)",
+    tiltWarning: "警告：防倾倒！",
     gameOver: "游戏结束",
     finalScore: "最终得分",
-    instructions: "按空格键发射弹球，使用 A/D 键或轻触屏幕两侧操作挡板击打发光缓冲器！",
+    instructions: "按空格键发射弹球，使用 A/D 键或轻触屏幕两侧操作挡板击打缓冲器与弹弓！点亮全部 S-P-A 轨道赢取大奖乘数。",
   },
   fr: {
     title: "Flipper Spatial 3D",
@@ -97,11 +123,16 @@ const UI_TEXT: Record<Locale, {
     score: "Score",
     highScore: "Meilleur Score",
     balls: "Billes",
+    multiplier: "Multiplicateur",
+    combo: "Combo",
     leftFlipper: "Batte Gauche (A / ←)",
     rightFlipper: "Batte Droite (D / →)",
+    nudgeLeft: "Secouer Gauche (Z)",
+    nudgeRight: "Secouer Droite (/)",
+    tiltWarning: "ATTENTION : TILT !",
     gameOver: "Partie Terminée",
     finalScore: "Score Final",
-    instructions: "Lancez la bille avec Espace et actionnez les batteurs avec A/D ou en touchant les côtés !",
+    instructions: "Lancez la bille avec Espace et actionnez les batteurs avec A/D ! Allumez les couloirs S-P-A pour décrocher le Jackpot Multiplicateur.",
   },
   es: {
     title: "Pinball Espacial 3D",
@@ -111,11 +142,16 @@ const UI_TEXT: Record<Locale, {
     score: "Puntuación",
     highScore: "Récord",
     balls: "Bolas",
+    multiplier: "Multiplicador",
+    combo: "Combo",
     leftFlipper: "Paleta Izquierda (A / ←)",
     rightFlipper: "Paleta Derecha (D / →)",
+    nudgeLeft: "Empuje Izq (Z)",
+    nudgeRight: "Empuje Der (/)",
+    tiltWarning: "¡CUIDADO: TILT!",
     gameOver: "Fin de la Partida",
     finalScore: "Puntuación Final",
-    instructions: "¡Lanza la bola con Espacio y usa A/D o toques en pantalla para accionar las paletas!",
+    instructions: "¡Lanza la bola con Espacio y usa A/D para accionar las paletas! Enciende todos los carriles S-P-A para activar el Jackpot.",
   },
 };
 
@@ -160,8 +196,8 @@ export default function SpacePinball({ locale }: Props) {
       slug: "space-pinball",
       customStats: [
         { label: "High Score", value: `${gameState.highScore.toLocaleString()}` },
-        { label: "Status", value: gameState.status === "gameover" ? "Game Over" : "Active" },
-        { label: "Balls Left", value: `${gameState.ballsLeft}` },
+        { label: "Multiplier", value: `x${gameState.multiplier}` },
+        { label: "Best Combo", value: `x${gameState.combo}` },
       ],
     });
     const ok = await copyShareCardToClipboard(canvas);
@@ -171,9 +207,12 @@ export default function SpacePinball({ locale }: Props) {
     } else {
       downloadShareCard(canvas, `space-pinball-${gameState.score}.png`);
     }
-  }, [gameState.score, gameState.highScore, gameState.status, gameState.ballsLeft]);
+  }, [gameState.score, gameState.highScore, gameState.multiplier, gameState.combo]);
 
-  const playSound = useCallback((type: 'flipper' | 'bumper' | 'launch' | 'gameover') => {
+  const playSound = useCallback((
+    type: 'flipper' | 'bumper' | 'slingshot' | 'lane' | 'jackpot' | 'launch' | 'tilt' | 'gameover',
+    combo = 1
+  ) => {
     if (muted) return;
     try {
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
@@ -192,31 +231,70 @@ export default function SpacePinball({ locale }: Props) {
 
       if (type === 'flipper') {
         osc.type = 'triangle';
-        osc.frequency.setValueAtTime(320, now);
-        osc.frequency.exponentialRampToValueAtTime(120, now + 0.08);
+        osc.frequency.setValueAtTime(280, now);
+        osc.frequency.exponentialRampToValueAtTime(70, now + 0.06);
         gain.gain.setValueAtTime(0.2, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
         osc.start(now);
-        osc.stop(now + 0.08);
+        osc.stop(now + 0.06);
       } else if (type === 'bumper') {
+        const scale = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50, 1174.66, 1318.51];
+        const pitch = scale[Math.min(combo - 1, scale.length - 1)];
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(659.25, now); // E5
-        osc.frequency.exponentialRampToValueAtTime(880, now + 0.12);
-        gain.gain.setValueAtTime(0.25, now);
+        osc.frequency.setValueAtTime(pitch, now);
+        osc.frequency.exponentialRampToValueAtTime(pitch * 1.4, now + 0.12);
+        gain.gain.setValueAtTime(0.26, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
         osc.start(now);
         osc.stop(now + 0.12);
+      } else if (type === 'slingshot') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(420, now);
+        osc.frequency.exponentialRampToValueAtTime(110, now + 0.08);
+        gain.gain.setValueAtTime(0.24, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+        osc.start(now);
+        osc.stop(now + 0.08);
+      } else if (type === 'lane') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(987.77, now);
+        osc.frequency.exponentialRampToValueAtTime(1318.51, now + 0.15);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+        osc.start(now);
+        osc.stop(now + 0.15);
+      } else if (type === 'jackpot') {
+        const notes = [523.25, 659.25, 783.99, 1046.50];
+        notes.forEach((freq, idx) => {
+          const o = ctx.createOscillator();
+          const g = ctx.createGain();
+          o.type = 'triangle';
+          o.frequency.setValueAtTime(freq, now + idx * 0.07);
+          g.gain.setValueAtTime(0.22, now + idx * 0.07);
+          g.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.07 + 0.22);
+          o.connect(g);
+          g.connect(ctx.destination);
+          o.start(now + idx * 0.07);
+          o.stop(now + idx * 0.07 + 0.22);
+        });
       } else if (type === 'launch') {
         osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(150, now);
-        osc.frequency.exponentialRampToValueAtTime(500, now + 0.25);
-        gain.gain.setValueAtTime(0.18, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+        osc.frequency.setValueAtTime(120, now);
+        osc.frequency.exponentialRampToValueAtTime(620, now + 0.24);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
         osc.start(now);
-        osc.stop(now + 0.25);
+        osc.stop(now + 0.24);
+      } else if (type === 'tilt') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(130, now);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        osc.start(now);
+        osc.stop(now + 0.35);
       } else if (type === 'gameover') {
         osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(260, now);
+        osc.frequency.setValueAtTime(280, now);
         osc.frequency.exponentialRampToValueAtTime(50, now + 0.45);
         gain.gain.setValueAtTime(0.25, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
@@ -254,6 +332,12 @@ export default function SpacePinball({ locale }: Props) {
     setGameState((prev) => setFlipperState(prev, side, isPressed));
   }, [playSound]);
 
+  // Handle table nudge
+  const handleNudge = useCallback((dir: "left" | "right") => {
+    MobileHapticsPro.medium();
+    setGameState((prev) => nudgeTable(prev, dir));
+  }, []);
+
   // Handle restart
   const handleRestart = useCallback(() => {
     playSound('launch');
@@ -274,10 +358,25 @@ export default function SpacePinball({ locale }: Props) {
       if (stateRef.current.status === "playing" && stateRef.current.ball.active) {
         setGameState((prev) => {
           const next = updatePinballPhysics(prev, dt);
-          if (next.score > prev.score) {
-            playSound('bumper');
+
+          if (next.lastEvent === "bumper") {
+            playSound('bumper', next.combo);
             MobileHapticsPro.medium();
+          } else if (next.lastEvent === "slingshot") {
+            playSound('slingshot');
+            MobileHapticsPro.heavy();
+          } else if (next.lastEvent === "lane") {
+            playSound('lane');
+            MobileHapticsPro.light();
+          } else if (next.lastEvent === "jackpot") {
+            playSound('jackpot');
+            MobileHapticsPro.success();
+            if (containerRef.current) celebrate(containerRef.current, { preset: "stardust" });
+          } else if (next.lastEvent === "tilt") {
+            playSound('tilt');
+            MobileHapticsPro.error();
           }
+
           if (next.status === "gameover" && prev.status !== "gameover") {
             playSound('gameover');
             MobileHapticsPro.error();
@@ -290,7 +389,7 @@ export default function SpacePinball({ locale }: Props) {
 
     animId = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(animId);
-  }, [playSound]);
+  }, [playSound, containerRef]);
 
   // Keyboard controls
   useEffect(() => {
@@ -314,6 +413,12 @@ export default function SpacePinball({ locale }: Props) {
       } else if (e.code === "KeyD" || e.code === "ArrowRight") {
         e.preventDefault();
         handleFlipper("right", true);
+      } else if (e.code === "KeyZ") {
+        e.preventDefault();
+        handleNudge("left");
+      } else if (e.code === "Slash" || e.code === "KeyC") {
+        e.preventDefault();
+        handleNudge("right");
       }
     };
 
@@ -331,7 +436,7 @@ export default function SpacePinball({ locale }: Props) {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [handleLaunch, handleFlipper, handleRestart, toggleMute, togglePortal]);
+  }, [handleLaunch, handleFlipper, handleNudge, handleRestart, toggleMute, togglePortal]);
 
   return (
     <div
@@ -344,15 +449,33 @@ export default function SpacePinball({ locale }: Props) {
     >
       {/* Header HUD */}
       <div className="w-full flex items-center justify-between gap-2 sm:gap-4 mb-3">
-        <div className="flex-1 grid grid-cols-3 gap-2 sm:gap-4">
-          <div className="bg-card border border-border rounded-xl p-2.5 sm:p-3 flex flex-col items-center justify-center">
+        <div className="flex-1 grid grid-cols-4 gap-1.5 sm:gap-3">
+          {/* Score & Combo */}
+          <div className="bg-card border border-border rounded-xl p-2 sm:p-3 flex flex-col items-center justify-center relative overflow-hidden shadow-sm">
             <span className="text-xs text-muted-foreground">{t.score}</span>
-            <span className="text-lg sm:text-2xl font-black text-primary font-mono">
+            <span className="text-base sm:text-2xl font-black text-primary font-mono tracking-tight">
               {gameState.score.toLocaleString()}
             </span>
+            {gameState.combo > 1 && (
+              <span className="absolute top-1 right-1 text-xs px-1.5 py-0.5 rounded-full bg-primary/20 text-primary font-bold animate-pulse">
+                x{gameState.combo}
+              </span>
+            )}
           </div>
 
-          <div className="bg-card border border-border rounded-xl p-2.5 sm:p-3 flex flex-col items-center justify-center">
+          {/* Multiplier */}
+          <div className="bg-card border border-border rounded-xl p-2 sm:p-3 flex flex-col items-center justify-center shadow-sm">
+            <span className="text-xs text-muted-foreground">{t.multiplier}</span>
+            <div className="flex items-center gap-1 mt-0.5">
+              <Zap className={`w-3.5 h-3.5 ${gameState.multiplier > 1 ? "text-warning fill-warning animate-bounce" : "text-muted-foreground"}`} />
+              <span className={`text-base sm:text-2xl font-black font-mono ${gameState.multiplier > 1 ? "text-warning" : "text-foreground"}`}>
+                x{gameState.multiplier}
+              </span>
+            </div>
+          </div>
+
+          {/* Balls */}
+          <div className="bg-card border border-border rounded-xl p-2 sm:p-3 flex flex-col items-center justify-center shadow-sm">
             <span className="text-xs text-muted-foreground">{t.balls}</span>
             <div className="flex gap-1.5 mt-1">
               {[1, 2, 3].map((b) => (
@@ -366,12 +489,13 @@ export default function SpacePinball({ locale }: Props) {
             </div>
           </div>
 
-          <div className="bg-card border border-border rounded-xl p-2.5 sm:p-3 flex flex-col items-center justify-center">
+          {/* High Score */}
+          <div className="bg-card border border-border rounded-xl p-2 sm:p-3 flex flex-col items-center justify-center shadow-sm">
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <Trophy className="w-3.5 h-3.5 text-warning" />
-              <span>{t.highScore}</span>
+              <span className="hidden sm:inline">{t.highScore}</span>
             </div>
-            <span className="text-lg sm:text-2xl font-black text-warning font-mono">
+            <span className="text-base sm:text-2xl font-black text-warning font-mono">
               {gameState.highScore.toLocaleString()}
             </span>
           </div>
@@ -399,11 +523,21 @@ export default function SpacePinball({ locale }: Props) {
         </div>
       </div>
 
-      {/* 3D Viewport */}
+      {/* 3D Viewport with Overlays */}
       <div className={`relative w-full rounded-2xl overflow-hidden border border-border bg-background shadow-2xl ${
         isImmersive ? 'flex-1 min-h-0' : 'aspect-video'
       }`}>
         <SpacePinballScene gameState={gameState} />
+
+        {/* Tilt Warning Banner */}
+        {gameState.isTilted && (
+          <div className="absolute top-4 inset-x-0 flex justify-center pointer-events-none z-10">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-destructive text-destructive-foreground font-black text-sm uppercase tracking-wider animate-bounce shadow-xl">
+              <AlertTriangle className="w-4 h-4" />
+              <span>{t.tiltWarning}</span>
+            </div>
+          </div>
+        )}
 
         {/* Overlay for Idle / Game Over */}
         {gameState.status === "idle" && (
@@ -470,36 +604,59 @@ export default function SpacePinball({ locale }: Props) {
           </div>
         )}
 
-        {/* Mobile touch trigger buttons */}
-        <div className="absolute inset-x-0 bottom-0 h-28 flex pointer-events-auto sm:hidden">
+        {/* Mobile touch trigger buttons (Flippers & Nudges) */}
+        <div className="absolute inset-x-0 bottom-0 h-32 flex pointer-events-auto sm:hidden">
+          {/* Nudge Left */}
+          <button
+            type="button"
+            onClick={() => handleNudge("left")}
+            className="w-14 bg-muted/40 active:bg-muted/70 border-r border-border/40 flex items-center justify-center text-xs font-bold text-muted-foreground"
+            aria-label="Nudge Left"
+          >
+            NUDGE
+          </button>
+
+          {/* Left Flipper */}
           <button
             type="button"
             onTouchStart={() => handleFlipper("left", true)}
             onTouchEnd={() => handleFlipper("left", false)}
             onMouseDown={() => handleFlipper("left", true)}
             onMouseUp={() => handleFlipper("left", false)}
-            className="flex-1 bg-primary/10 active:bg-primary/30 border-r border-border/40 flex items-center justify-center text-xs font-bold text-primary"
+            className="flex-1 bg-primary/10 active:bg-primary/30 border-r border-border/40 flex items-center justify-center text-sm font-black text-primary"
           >
             ◀ LEFT
           </button>
+
+          {/* Right Flipper */}
           <button
             type="button"
             onTouchStart={() => handleFlipper("right", true)}
             onTouchEnd={() => handleFlipper("right", false)}
             onMouseDown={() => handleFlipper("right", true)}
             onMouseUp={() => handleFlipper("right", false)}
-            className="flex-1 bg-primary/10 active:bg-primary/30 flex items-center justify-center text-xs font-bold text-primary"
+            className="flex-1 bg-primary/10 active:bg-primary/30 border-r border-border/40 flex items-center justify-center text-sm font-black text-primary"
           >
             RIGHT ▶
+          </button>
+
+          {/* Nudge Right */}
+          <button
+            type="button"
+            onClick={() => handleNudge("right")}
+            className="w-14 bg-muted/40 active:bg-muted/70 flex items-center justify-center text-xs font-bold text-muted-foreground"
+            aria-label="Nudge Right"
+          >
+            NUDGE
           </button>
         </div>
       </div>
 
       {/* Desktop Controls Hint */}
-      <div className="w-full mt-4 flex items-center justify-between text-xs text-muted-foreground px-2">
-        <span>{t.leftFlipper}</span>
-        <span>Space: {t.launch}</span>
-        <span>{t.rightFlipper}</span>
+      <div className="w-full mt-3 flex items-center justify-between text-xs text-muted-foreground px-2">
+        <span>A / ← : {t.leftFlipper} · Z: {t.nudgeLeft}</span>
+        <span className="font-semibold text-foreground">Space / Enter: {t.launch}</span>
+        <span>D / → : {t.rightFlipper} · / : {t.nudgeRight}</span>
       </div>
     </div>
   );
