@@ -65,6 +65,7 @@ import {
   JUMP_KING_SPRITES,
   mahjongTileSrc,
   pipSprite,
+  SUSHI_CONVEYOR_SPRITES,
 } from "./sprites";
 
 const publicRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../../public");
@@ -98,6 +99,7 @@ describe("in-game sprite maps", () => {
       ...Object.values(TIME_LOOP_RESCUE_SPRITES),
       ...Object.values(BLACKOUT_COURIER_SPRITES),
       ...Object.values(DELAY_CURSOR_SPRITES),
+      ...Object.values(SUSHI_CONVEYOR_SPRITES),
       ...Object.values(FIREFLY_CHOIR_SPRITES),
       ...Object.values(PATCH_DUNGEON_SPRITES),
       ...Object.values(GHOST_COMPOSER_SPRITES),

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
-import { getSpriteUrl } from "../../lib/games/sprites";
+import { getSpriteUrl, SUSHI_CONVEYOR_SPRITES } from "../../lib/games/sprites";
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "../../lib/games/share-card";
 import { celebrate } from "../../lib/games/celebration";
 import { Maximize2, Minimize2, Camera, Check } from "lucide-react";
@@ -40,10 +40,22 @@ export function SushiConveyor() {
   const [gameState, setGameState] = useState<SushiConveyorState>(() => initializeSushiConveyor());
   const [isCopied, setIsCopied] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const sushiImagesRef = useRef<Record<string, HTMLImageElement>>({});
   const inputRef = useRef<{
     craftSushi?: SushiType;
     buyUpgrade?: "beltSpeed" | "plateValue" | "autoPrep";
   }>({});
+
+  // Preload sushi 3D sprites
+  useEffect(() => {
+    for (const [key, src] of Object.entries(SUSHI_CONVEYOR_SPRITES)) {
+      const img = new Image();
+      img.src = src;
+      img.onload = () => {
+        sushiImagesRef.current[key] = img;
+      };
+    }
+  }, []);
 
   const getAudioContext = useAudioContext();
   const playTone = useCallback(
@@ -252,15 +264,20 @@ export function SushiConveyor() {
           ctx.stroke();
 
           // Mini Sushi Icon & Name
-          ctx.fillStyle = recipe.color;
-          ctx.beginPath();
-          ctx.roundRect(-16, -10, 14, 8, 2);
-          ctx.fill();
+          const bubbleSprite = sushiImagesRef.current[seat.wantedSushi];
+          if (bubbleSprite) {
+            ctx.drawImage(bubbleSprite, -20, -12, 16, 16);
+          } else {
+            ctx.fillStyle = recipe.color;
+            ctx.beginPath();
+            ctx.roundRect(-16, -10, 14, 8, 2);
+            ctx.fill();
+          }
 
           ctx.fillStyle = "#0f172a";
           ctx.font = "bold 9px sans-serif";
           ctx.textAlign = "left";
-          ctx.fillText(seat.wantedSushi.slice(0, 3).toUpperCase(), 2, -3);
+          ctx.fillText(seat.wantedSushi.slice(0, 3).toUpperCase(), 0, -3);
 
           ctx.restore();
         }
@@ -278,39 +295,53 @@ export function SushiConveyor() {
       ctx.translate(sample.x, sample.y);
       ctx.rotate(sample.headingRad);
 
-      // Ceramic Plate Base
+      // Ceramic Plate Base with 3D Bevel
       ctx.beginPath();
-      ctx.arc(0, 0, 13, 0, Math.PI * 2);
+      ctx.arc(0, 0, 16, 0, Math.PI * 2);
       ctx.fillStyle = "#f8fafc";
       ctx.fill();
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 2.5;
       ctx.strokeStyle = recipe.color;
       ctx.stroke();
 
-      // Rice Bed (Shari)
-      ctx.fillStyle = "#ffffff";
+      // Inner plate rim
       ctx.beginPath();
-      ctx.roundRect(-7, -4, 14, 8, 3);
-      ctx.fill();
+      ctx.arc(0, 0, 12, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(148, 163, 184, 0.4)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
 
-      // Fish Topping (Neta)
-      ctx.fillStyle = recipe.color;
-      ctx.beginPath();
-      ctx.roundRect(-8, -5, 16, 7, 2);
-      ctx.fill();
+      const spriteImg = sushiImagesRef.current[plate.sushiType];
+      if (spriteImg) {
+        // High-res 3D Isometric Sushi Sprite
+        ctx.drawImage(spriteImg, -14, -14, 28, 28);
+      } else {
+        // Procedural Sushi Fallback
+        // Rice Bed (Shari)
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.roundRect(-7, -4, 14, 8, 3);
+        ctx.fill();
 
-      // Nori Seaweed Ribbon for Tamago & Unagi
-      if (plate.sushiType === "tamago" || plate.sushiType === "unagi") {
-        ctx.fillStyle = "#0f172a";
-        ctx.fillRect(-2, -5, 4, 10);
+        // Fish Topping (Neta)
+        ctx.fillStyle = recipe.color;
+        ctx.beginPath();
+        ctx.roundRect(-8, -5, 16, 7, 2);
+        ctx.fill();
+
+        // Nori Seaweed Ribbon for Tamago & Unagi
+        if (plate.sushiType === "tamago" || plate.sushiType === "unagi") {
+          ctx.fillStyle = "#0f172a";
+          ctx.fillRect(-2, -5, 4, 10);
+        }
       }
 
       // Freshness Ring
       const freshRatio = 1 - plate.freshnessTimeSec / plate.maxFreshnessSec;
       ctx.beginPath();
-      ctx.arc(0, 0, 15, 0, Math.PI * 2 * freshRatio);
-      ctx.strokeStyle = freshRatio > 0.4 ? "rgba(34, 197, 94, 0.7)" : "rgba(239, 68, 68, 0.7)";
-      ctx.lineWidth = 1.5;
+      ctx.arc(0, 0, 17, 0, Math.PI * 2 * freshRatio);
+      ctx.strokeStyle = freshRatio > 0.4 ? "rgba(34, 197, 94, 0.8)" : "rgba(239, 68, 68, 0.8)";
+      ctx.lineWidth = 2;
       ctx.stroke();
 
       ctx.restore();
@@ -525,7 +556,21 @@ export function SushiConveyor() {
                   </span>
                   <span className="font-bold text-xs truncate">{recipe.name}</span>
                 </div>
-                <div className="flex items-center justify-between w-full mt-1.5 text-xs text-muted-foreground">
+                {SUSHI_CONVEYOR_SPRITES[type as keyof typeof SUSHI_CONVEYOR_SPRITES] ? (
+                  <div className="my-1 flex items-center justify-center">
+                    <img
+                      src={SUSHI_CONVEYOR_SPRITES[type as keyof typeof SUSHI_CONVEYOR_SPRITES]}
+                      alt={recipe.name}
+                      className="w-8 h-8 object-contain drop-shadow-sm"
+                    />
+                  </div>
+                ) : (
+                  <div
+                    className="w-8 h-4 my-3 rounded-xs border border-border/40 bg-(--item-color)"
+                    style={{ "--item-color": recipe.color } as React.CSSProperties}
+                  />
+                )}
+                <div className="flex items-center justify-between w-full mt-1 text-xs text-muted-foreground">
                   <span>-¥{cost}</span>
                   <span className="text-primary font-bold">+¥{recipe.price}</span>
                 </div>
