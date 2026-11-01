@@ -27,6 +27,45 @@ import {
 } from "../../lib/games/museum-night";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import MuseumNightScene, { type NightGlide } from "./MuseumNightScene";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { getSpriteUrl } from "../../lib/games/sprites";
+
+function TiltMuseumButton({
+  children,
+  onClick,
+  className = "",
+  disabled = false,
+  title,
+  ariaLabel,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      title={title}
+      aria-label={ariaLabel || title}
+      onClick={() => {
+        triggerPop(0.12);
+        onClick?.();
+      }}
+      disabled={disabled}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`touch-manipulation select-none transition-all duration-150 transform-(--card-tilt) will-change-transform ${className}`}
+      style={{ "--card-tilt": transformCss } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 
 interface Copy {
   title: string;
@@ -505,7 +544,10 @@ export default function MuseumNight({ locale = "en" }: { locale?: Locale }) {
   useEffect(() => {
     if (state.status !== prevStatusRef.current && containerRef.current) {
       if (state.status === "win") {
+        MobileHapticsPro.successPattern();
         celebrate(containerRef.current, { preset: "sparks" });
+      } else if (state.status === "lose") {
+        MobileHapticsPro.warningPattern();
       }
     }
     prevStatusRef.current = state.status;
@@ -702,22 +744,32 @@ export default function MuseumNight({ locale = "en" }: { locale?: Locale }) {
       <p role="status" aria-live="polite" className="text-sm text-foreground">{live}</p>
       {state.status !== "play" && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
-          <div>
-            <p className="text-sm font-bold text-foreground">
-              {state.status === "win" ? "✨ 심야 순찰 목표 달성!" : "🚨 순찰 종료"}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {state.status === "win" ? `${state.steps}스텝 만에 시선과 카메라를 피해 목표 표식에 도달했습니다.` : outcome}
-            </p>
+          <div className="flex items-center gap-3">
+            {state.status === "win" && (
+              <img
+                src={getSpriteUrl('trophy', 64)}
+                alt="Victory Trophy"
+                width={56}
+                height={56}
+                className="size-14 drop-shadow-md select-none pointer-events-none"
+              />
+            )}
+            <div>
+              <p className="text-sm font-bold text-foreground">
+                {state.status === "win" ? "✨ 심야 순찰 목표 달성!" : "🚨 순찰 종료"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {state.status === "win" ? `${state.steps}스텝 만에 시선과 카메라를 피해 목표 표식에 도달했습니다.` : outcome}
+              </p>
+            </div>
           </div>
-          <button
-            type="button"
+          <TiltMuseumButton
             onClick={handleShareCard}
             className="flex items-center gap-1.5 rounded-xl border border-border bg-secondary px-3.5 py-2 text-xs font-bold text-secondary-foreground shadow-sm transition hover:bg-muted"
           >
             {shareCardCopied ? <Check className="h-4 w-4 text-primary" /> : <Share2 className="h-4 w-4" />}
             <span>{shareCardCopied ? "복사 완료!" : "결과 카드 공유"}</span>
-          </button>
+          </TiltMuseumButton>
         </div>
       )}
       <div className="relative overflow-hidden rounded-2xl border border-border bg-card">

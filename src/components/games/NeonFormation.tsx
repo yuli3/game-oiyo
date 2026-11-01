@@ -11,6 +11,47 @@ import {
   copyShareCardToClipboard,
   downloadShareCard,
 } from "../../lib/games/share-card";
+import { useCardTiltPro, MobileHapticsPro } from "@/lib/games/engine-suite-unified";
+import { getSpriteUrl } from "../../lib/games/sprites";
+
+function TiltNeonButton({
+  children,
+  onClick,
+  className = "",
+  disabled = false,
+  type = "button",
+  "aria-label": ariaLabel,
+  title,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  type?: "button" | "submit" | "reset";
+  "aria-label"?: string;
+  title?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type={type}
+      disabled={disabled}
+      aria-label={ariaLabel}
+      title={title}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.12);
+        MobileHapticsPro.light();
+        onClick?.();
+      }}
+      className={`touch-manipulation select-none transition-all duration-150 transform-(--card-tilt) will-change-transform ${className}`}
+      style={{ "--card-tilt": transformCss } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 
 const Scene = lazy(() => import("./NeonFormationScene"));
 const GAME_KEY = "neon-formation";
@@ -98,6 +139,7 @@ export default function NeonFormation({ locale }: { locale: Locale }) {
     setBest(saved.value);
     setResult(next);
     setPhase("result");
+    MobileHapticsPro.success();
     if (containerRef.current) {
       celebrate(containerRef.current, { preset: "sparks" });
     }
@@ -115,17 +157,15 @@ export default function NeonFormation({ locale }: { locale: Locale }) {
         }`}
       >
         <div className="absolute right-3 top-3 z-30 flex items-center gap-2">
-          <button
-            type="button"
+          <TiltNeonButton
             onClick={togglePortal}
-            aria-pressed={isImmersive}
             aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
             title={isImmersive ? portalLabels.exit : portalLabels.enter}
-            className="flex min-h-11 items-center gap-1.5 rounded-xl border border-border bg-card/85 px-3 py-2 text-xs font-bold text-foreground shadow-xs backdrop-blur-md transition-transform hover:bg-muted active:scale-95"
+            className="flex min-h-11 items-center gap-1.5 rounded-xl border border-border bg-card/85 px-3 py-2 text-xs font-bold text-foreground shadow-xs backdrop-blur-md"
           >
             {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
             <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
-          </button>
+          </TiltNeonButton>
         </div>
         <div className={`w-full ${isImmersive ? "h-full" : "h-[72vh] min-h-[520px] max-h-[680px] sm:h-auto sm:min-h-[580px] sm:max-h-[86vh] sm:aspect-[16/10]"}`}>
           <Suspense fallback={<div className="grid h-full place-items-center bg-[#02030a] font-mono text-primary">{t.loading}</div>}>
@@ -145,31 +185,45 @@ export default function NeonFormation({ locale }: { locale: Locale }) {
           <h2 className="mt-4 text-5xl font-black uppercase leading-[.86] tracking-[-.055em] sm:text-7xl">{t.title}</h2>
           <p className="mt-6 max-w-xl text-sm leading-7 text-muted-foreground sm:text-base">{t.subtitle}</p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <button
+            <TiltNeonButton
               disabled={!available}
               onClick={() => { setResult(null); setPhase("playing"); }}
-              className="min-h-12 rounded-full bg-primary px-8 py-3 text-sm font-black uppercase tracking-widest text-primary-foreground shadow-lg transition-transform hover:-translate-y-0.5 disabled:opacity-40"
+              className="min-h-12 rounded-full bg-primary px-8 py-3 text-sm font-black uppercase tracking-widest text-primary-foreground shadow-lg disabled:opacity-40"
             >
               {phase === "result" ? t.again : t.start}
-            </button>
-            <button
-              type="button"
+            </TiltNeonButton>
+            <TiltNeonButton
               onClick={togglePortal}
-              aria-pressed={isImmersive}
               aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
               title={isImmersive ? portalLabels.exit : portalLabels.enter}
-              className="flex min-h-12 items-center gap-1.5 rounded-full border border-border bg-card/60 px-5 py-3 text-xs font-bold text-foreground transition-transform hover:bg-muted active:scale-95"
+              className="flex min-h-12 items-center gap-1.5 rounded-full border border-border bg-card/60 px-5 py-3 text-xs font-bold text-foreground"
             >
               {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
               <span>{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
-            </button>
-            <span className="rounded-full border border-border bg-card/70 px-5 py-3 font-mono text-xs">
+            </TiltNeonButton>
+            <span className="flex items-center gap-2 rounded-full border border-border bg-card/70 px-5 py-3 font-mono text-xs">
+              <img
+                src={getSpriteUrl("trophy", 64)}
+                alt="High Score Trophy"
+                width={64}
+                height={64}
+                className="size-4 object-contain inline-block drop-shadow-sm"
+              />
               {t.best}: <strong>{best.toLocaleString()}</strong>
             </span>
           </div>
           {!available && <p role="alert" className="mt-4 text-sm font-bold text-destructive">{t.unavailable}</p>}
           {result && (
             <div className="mt-7 rounded-2xl border border-border bg-card/60 p-4">
+              <div className="mb-3 flex items-center justify-center gap-2">
+                <img
+                  src={getSpriteUrl("trophy", 64)}
+                  alt="Sortie Victory Trophy"
+                  width={64}
+                  height={64}
+                  className="size-12 object-contain drop-shadow-md animate-bounce"
+                />
+              </div>
               <dl role="status" aria-live="polite" className="grid grid-cols-4 gap-2 text-center">
                 {[[t.score, result.score.toLocaleString()], [t.wave, result.wave], [t.accuracy, `${result.accuracy}%`], [t.rescued, result.rescues]].map(([label, value]) => (
                   <div key={label} className="rounded-xl bg-muted/40 p-3">
@@ -182,14 +236,13 @@ export default function NeonFormation({ locale }: { locale: Locale }) {
                 → {reviewNeonSortie(result) === "accuracy" ? t.accuracy : reviewNeonSortie(result) === "rescue" ? t.rescued : t.wave}
               </p>
               <div className="mt-4 flex justify-center">
-                <button
-                  type="button"
+                <TiltNeonButton
                   onClick={handleShareCard}
-                  className="flex min-h-11 items-center gap-1.5 rounded-xl border border-border bg-card hover:bg-muted px-5 py-2.5 text-xs font-bold text-foreground transition-colors shadow-xs"
+                  className="flex min-h-11 items-center gap-1.5 rounded-xl border border-border bg-card hover:bg-muted px-5 py-2.5 text-xs font-bold text-foreground shadow-xs"
                 >
                   {shareCardCopied ? <Check className="size-4 text-primary" /> : <Share2 className="size-4" />}
                   <span>{shareCardCopied ? "복사 완료!" : "출격 결과 카드 공유"}</span>
-                </button>
+                </TiltNeonButton>
               </div>
             </div>
           )}

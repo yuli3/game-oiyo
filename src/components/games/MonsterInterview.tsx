@@ -2,8 +2,8 @@
 // phone (2026-10-21). The two cells are the monster's standard. The fuse is
 // play time, so reduced motion does not skip it.
 
-import { useEffect, useRef, useState } from "react";
-import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { Maximize2, Minimize2, Volume2, VolumeX, Share2, Check } from "lucide-react";
 import { GameContainer } from "../ui/game/GamePrimitives";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import type { Locale } from "../../lib/i18n";
@@ -13,7 +13,13 @@ import { dateKeyIndex, kstDateKey } from "../../lib/games/todays-game";
 import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from "../../lib/games/game-audio";
 import { createHaptics } from "../../lib/games/haptics";
 import { celebrate } from "../../lib/games/celebration";
-import { MONSTER_INTERVIEW_SPRITES } from "../../lib/games/sprites";
+import { MONSTER_INTERVIEW_SPRITES, getSpriteUrl } from "../../lib/games/sprites";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
 import {
   GAME_ID,
   answer,
@@ -25,6 +31,43 @@ import {
   type Answer,
   type Run,
 } from "../../lib/games/monster-interview";
+
+function TiltInterviewButton({
+  children,
+  onClick,
+  className = "",
+  disabled = false,
+  title,
+  ariaLabel,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      title={title}
+      aria-label={ariaLabel || title}
+      onClick={() => {
+        triggerPop(0.12);
+        onClick?.();
+      }}
+      disabled={disabled}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`touch-manipulation select-none transition-all duration-150 transform-(--card-tilt) will-change-transform ${className}`}
+      style={{ "--card-tilt": transformCss } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 
 const FUSE_MS = 3200;
 const CONTROL = "min-h-11 min-w-11 rounded-xl border px-3 py-2 text-sm font-bold motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
@@ -251,6 +294,34 @@ export default function MonsterInterview({ locale }: { locale: Locale }) {
     return () => window.clearInterval(id);
   }, [run?.phase, run?.round, run?.moves]);
 
+  const [shareCardCopied, setShareCardCopied] = useState(false);
+
+  const handleShareCard = useCallback(async () => {
+    if (!run) return;
+    try {
+      const isWon = run.phase === "won";
+      const canvas = createShareCardCanvas({
+        title: t.title,
+        subtitle: isWon ? "인터뷰 합격 완료" : "인터뷰 기록",
+        score: isWon ? "ACCEPTED" : `${run.round + 1} ROUNDS`,
+        slug: "monster-interview",
+        customStats: [
+          { label: "ROUND", value: `${run.round + 1}/${run.puzzle.rounds.length}` },
+          { label: "RECORD", value: `${record?.w ?? 0}W ${record?.l ?? 0}L` },
+        ],
+      });
+      const success = await copyShareCardToClipboard(canvas);
+      if (success) {
+        setShareCardCopied(true);
+        setTimeout(() => setShareCardCopied(false), 2000);
+      } else {
+        downloadShareCard(canvas, `monster-interview-${Date.now()}.png`);
+      }
+    } catch {
+      /* best effort */
+    }
+  }, [record?.l, record?.w, run, t.title]);
+
   const onAnswer = (choice: Answer) => {
     cue("place");
     hapticsRef.current.fire("place");
@@ -332,6 +403,10 @@ export default function MonsterInterview({ locale }: { locale: Locale }) {
             {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
             <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
           </button>
+          <button type="button" onClick={handleShareCard} className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-muted-foreground`} title="결과 공유 카드">
+            {shareCardCopied ? <Check className="size-4 text-success" /> : <Share2 className="size-4" />}
+            <span className="hidden sm:inline">{shareCardCopied ? "복사됨" : "공유"}</span>
+          </button>
         </div>
         {!run || !dateKey ? <p className="text-sm text-muted-foreground">{t.preparing}</p> : (
           <div className="space-y-4">
@@ -340,7 +415,21 @@ export default function MonsterInterview({ locale }: { locale: Locale }) {
               {t.crossing(Math.min(run.round + 1, run.puzzle.rounds.length), run.puzzle.rounds.length)}
               {run.phase === "play" ? ` · ${t.left(remain)}` : ""}
             </p>
-            <p className="text-sm text-foreground">{run.phase === "won" ? t.won : run.phase === "lost" ? t.lost : run.phase === "play" ? t.play : t.ready}</p>
+            {run.phase === "won" && (
+              <div className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-primary/10 border border-primary/30">
+                <img
+                  src={getSpriteUrl('trophy', 64)}
+                  alt="Victory Trophy"
+                  width={64}
+                  height={64}
+                  className="size-16 drop-shadow-md select-none pointer-events-none"
+                />
+                <p className="text-base font-black text-primary">{t.won}</p>
+              </div>
+            )}
+            {run.phase !== "won" && (
+              <p className="text-sm text-foreground">{run.phase === "lost" ? t.lost : run.phase === "play" ? t.play : t.ready}</p>
+            )}
             <div className="flex touch-none flex-col gap-3">
               <div className="flex items-center gap-2" aria-label={t.standard}>
                 <span className="shrink-0 text-sm text-muted-foreground">{t.standard}</span>
@@ -360,13 +449,14 @@ export default function MonsterInterview({ locale }: { locale: Locale }) {
             {run.phase === "play" ? (
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                 {(["H", "W", "R"] as const).map((choice) => (
-                  <button key={choice} type="button" disabled={run.used.includes(choice)} onClick={() => onAnswer(choice)} className={`${BUTTON} touch-none`}>{t.act[choice]}</button>
+                  <TiltInterviewButton key={choice} disabled={run.used.includes(choice)} onClick={() => onAnswer(choice)} className={`${BUTTON} touch-none`}>
+                    {t.act[choice]}
+                  </TiltInterviewButton>
                 ))}
               </div>
             ) : null}
             {run.phase === "ready" ? (
-              <button
-                type="button"
+              <TiltInterviewButton
                 onClick={() => {
                   cue("tap");
                   hapticsRef.current.fire("tap");
@@ -375,10 +465,12 @@ export default function MonsterInterview({ locale }: { locale: Locale }) {
                 className={`${CONTROL} border-primary bg-primary text-primary-foreground`}
               >
                 {run.round === 0 ? t.start : t.next}
-              </button>
+              </TiltInterviewButton>
             ) : null}
             {run.phase === "won" || run.phase === "lost" ? (
-              <button type="button" onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</button>
+              <TiltInterviewButton onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>
+                {t.again}
+              </TiltInterviewButton>
             ) : null}
             <p className="text-sm text-muted-foreground">{t.record(record?.w ?? 0, record?.l ?? 0)}</p>
           </div>

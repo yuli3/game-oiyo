@@ -6,6 +6,47 @@ import { createNumberGuessingGame, guessNumber, suggestedGuess, type NumberGuess
 import { clearNumberGuessingSave, loadNumberGuessingSave, storeNumberGuessingSave } from '@/lib/games/number-guessing-save';
 import { celebrate } from '@/lib/games/celebration';
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from '@/lib/games/share-card';
+import { useCardTiltPro, MobileHapticsPro } from '@/lib/games/engine-suite-unified';
+import { getSpriteUrl } from '@/lib/games/sprites';
+
+function TiltGuessButton({
+  children,
+  onClick,
+  className = "",
+  disabled = false,
+  type = "button",
+  "aria-label": ariaLabel,
+  title,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  type?: "button" | "submit" | "reset";
+  "aria-label"?: string;
+  title?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type={type}
+      disabled={disabled}
+      aria-label={ariaLabel}
+      title={title}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.12);
+        MobileHapticsPro.light();
+        onClick?.();
+      }}
+      className={`touch-manipulation select-none transition-all duration-150 transform-(--card-tilt) will-change-transform ${className}`}
+      style={{ "--card-tilt": transformCss } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 
 type Best = { attempts: number; elapsedMs: number };
 const formatTime = (ms: number) => `${Math.floor(ms / 60000)}:${String(Math.floor(ms / 1000) % 60).padStart(2, '0')}`;
@@ -60,6 +101,7 @@ const NumberGuessingGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) =>
     if (next === state) {
       setError(t.invalid);
       tone(160);
+      MobileHapticsPro.heavy();
       return;
     }
     setError('');
@@ -68,8 +110,13 @@ const NumberGuessingGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) =>
     setState(next);
     const attempt = next.attempts.at(-1)!;
     tone(attempt.direction === 'exact' ? 880 : attempt.temperature === 'hot' ? 660 : attempt.temperature === 'warm' ? 440 : 240, attempt.direction === 'exact' ? .22 : .08);
-    if (attempt.direction === 'exact' && containerRef.current) {
-      celebrate(containerRef.current, { preset: "sparks" });
+    if (attempt.direction === 'exact') {
+      MobileHapticsPro.success();
+      if (containerRef.current) {
+        celebrate(containerRef.current, { preset: "sparks" });
+      }
+    } else {
+      MobileHapticsPro.medium();
     }
   };
   const showHelper = () => { if (!state) return; setInput(String(suggestedGuess(state))); setAssisted(true); setError(''); };
@@ -146,13 +193,171 @@ const NumberGuessingGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) =>
       </div>
 
       <GameContainer title={t.title} subtitle={t.subtitle} onReset={state ? () => startGame(state.difficulty) : undefined}>
-        {!state ? <div><p className="mb-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.choose}</p><div className="flex flex-col gap-3">{(['easy', 'normal', 'hard'] as NumberGuessingDifficulty[]).map((difficulty) => <button key={difficulty} type="button" onClick={() => startGame(difficulty)} className="min-h-11 w-full rounded-2xl border-2 bg-muted px-4 py-3 text-left text-sm font-bold hover:border-primary hover:bg-accent">{t[difficulty]}</button>)}</div></div> : <>
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-2"><div role="status" aria-live="polite"><p className="text-xs font-bold text-muted-foreground">{restored ? t.restored : t[state.difficulty]}</p><p className="text-lg font-black text-primary">{t.range}: {state.lowerBound}–{state.upperBound}</p></div><div className="flex gap-2"><button type="button" onClick={pause} className="min-h-11 rounded-xl border px-3 text-sm font-bold" aria-pressed={paused}>{paused ? '▶' : 'Ⅱ'} <span className="sr-only">{paused ? t.resume : t.pause}</span></button><button type="button" onClick={() => setMuted((value) => !value)} className="min-h-11 rounded-xl border px-3" aria-pressed={muted}>{muted ? '🔇' : '🔊'} <span className="sr-only">{t.sound}</span></button></div></div>
-          <div className="mb-4 flex justify-between text-sm font-bold text-muted-foreground"><span>{triesLeft === null ? t.unlimited : t.tries(triesLeft)}</span><span>{t.time} {formatTime(elapsedMs)}</span></div>
-          {state.status === 'playing' && <><form className="mb-3 flex flex-col gap-2 sm:flex-row" onSubmit={(event) => { event.preventDefault(); submit(); }}><input inputMode="numeric" pattern="[0-9]*" min={1} max={state.max} value={input} onChange={(event) => setInput(event.target.value)} disabled={paused} aria-describedby="number-error" placeholder={t.placeholder(state.max)} aria-label={t.placeholder(state.max)} className="min-h-11 min-w-0 flex-1 rounded-2xl border-2 bg-background px-4 font-bold focus:border-primary focus:outline-none"/><button type="submit" disabled={paused || !input} className="min-h-11 rounded-2xl bg-primary px-6 font-black text-primary-foreground disabled:opacity-50">{t.guess}</button></form><div className="mb-5 flex flex-wrap items-center gap-2"><button type="button" onClick={showHelper} disabled={paused} className="min-h-11 rounded-xl border px-4 text-sm font-bold">{t.helper}</button>{assisted && <span className="text-xs font-bold text-amber-700">{t.helperUsed}</span>}<span id="number-error" role="alert" className="text-xs font-bold text-red-700">{error}</span></div></>}
-          {state.status !== 'playing' && <div className={`mb-5 rounded-2xl border-2 p-5 text-center ${state.status === 'won' ? 'border-primary/50 bg-primary/10 text-foreground' : 'border-destructive/40 bg-destructive/10 text-destructive'}`} role="status" aria-live="assertive"><p className="text-xl font-black">{state.status === 'won' ? t.won : t.lost(state.secret)}</p><p className="mt-2 text-sm font-bold">{t.attempts} {state.attempts.length} · {t.time} {formatTime(elapsedMs)} · {t.efficiency} {efficiency}%</p>{assisted && <p className="mt-1 text-xs font-bold text-muted-foreground">{t.helperUsed}</p>}{best && <p className="mt-1 text-xs">{t.best} · {best.attempts} · {formatTime(best.elapsedMs)}</p>}<p className="mt-1 text-xs font-bold text-muted-foreground">{t.next(Math.max(1, state.attempts.length - 1))}</p><div className="mt-4 flex flex-wrap justify-center gap-2"><button type="button" onClick={() => startGame(state.difficulty)} className="min-h-11 rounded-xl bg-primary px-4 text-sm font-black text-primary-foreground">{t.again}</button><button type="button" onClick={handleShareCard} className="flex min-h-11 items-center gap-1.5 rounded-xl border border-primary/50 bg-primary/20 px-4 text-sm font-bold text-primary shadow-xs hover:bg-primary/30 transition-colors" title={shareCardCopied ? "복사됨!" : "결과 카드"}>{shareCardCopied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}<span>{shareCardCopied ? "복사 완료" : "결과 카드"}</span></button><button type="button" onClick={() => setState(null)} className="min-h-11 rounded-xl border px-4 text-sm font-bold">{t.level}</button><button type="button" onClick={share} className="min-h-11 rounded-xl border px-4 text-sm font-bold">{t.share}</button></div></div>}
-          {state.attempts.length > 0 && <div><p className="mb-2 text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.history}</p><ol className="max-h-64 space-y-2 overflow-y-auto" aria-label={t.history}>{[...state.attempts].reverse().map((attempt, index) => <li key={attempt.guess} className="flex min-h-11 items-center justify-between rounded-xl border bg-muted/50 px-4 text-sm font-bold"><span>#{state.attempts.length - index} · {attempt.guess}</span><span>{attempt.direction === 'higher' ? '↑ ' + t.higher : attempt.direction === 'lower' ? '↓ ' + t.lower : '✓ ' + t.won} · {attempt.temperature === 'exact' ? '' : t[attempt.temperature]}</span></li>)}</ol></div>}
-        </>}
+        {!state ? (
+          <div>
+            <p className="mb-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.choose}</p>
+            <div className="flex flex-col gap-3">
+              {(['easy', 'normal', 'hard'] as NumberGuessingDifficulty[]).map((difficulty) => (
+                <TiltGuessButton
+                  key={difficulty}
+                  onClick={() => startGame(difficulty)}
+                  className="min-h-11 w-full rounded-2xl border-2 border-border bg-muted px-4 py-3 text-left text-sm font-bold hover:border-primary hover:bg-accent text-foreground"
+                >
+                  {t[difficulty]}
+                </TiltGuessButton>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+              <div role="status" aria-live="polite">
+                <p className="text-xs font-bold text-muted-foreground">{restored ? t.restored : t[state.difficulty]}</p>
+                <p className="text-lg font-black text-primary">{t.range}: {state.lowerBound}–{state.upperBound}</p>
+              </div>
+              <div className="flex gap-2">
+                <TiltGuessButton
+                  onClick={pause}
+                  className="min-h-11 rounded-xl border border-border bg-background px-3 text-sm font-bold text-foreground"
+                  aria-label={paused ? t.resume : t.pause}
+                >
+                  {paused ? '▶' : 'Ⅱ'} <span className="sr-only">{paused ? t.resume : t.pause}</span>
+                </TiltGuessButton>
+                <TiltGuessButton
+                  onClick={() => setMuted((value) => !value)}
+                  className="min-h-11 rounded-xl border border-border bg-background px-3 text-foreground"
+                  aria-label={t.sound}
+                >
+                  {muted ? '🔇' : '🔊'} <span className="sr-only">{t.sound}</span>
+                </TiltGuessButton>
+              </div>
+            </div>
+            <div className="mb-4 flex justify-between text-sm font-bold text-muted-foreground">
+              <span>{triesLeft === null ? t.unlimited : t.tries(triesLeft)}</span>
+              <span>{t.time} {formatTime(elapsedMs)}</span>
+            </div>
+            {state.status === 'playing' && (
+              <>
+                <form
+                  className="mb-3 flex flex-col gap-2 sm:flex-row"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    submit();
+                  }}
+                >
+                  <input
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    min={1}
+                    max={state.max}
+                    value={input}
+                    onChange={(event) => setInput(event.target.value)}
+                    disabled={paused}
+                    aria-describedby="number-error"
+                    placeholder={t.placeholder(state.max)}
+                    aria-label={t.placeholder(state.max)}
+                    className="min-h-11 min-w-0 flex-1 rounded-2xl border-2 border-border bg-background px-4 font-bold focus:border-primary focus:outline-none text-foreground"
+                  />
+                  <TiltGuessButton
+                    type="submit"
+                    disabled={paused || !input}
+                    className="min-h-11 rounded-2xl bg-primary px-6 font-black text-primary-foreground disabled:opacity-50"
+                  >
+                    {t.guess}
+                  </TiltGuessButton>
+                </form>
+                <div className="mb-5 flex flex-wrap items-center gap-2">
+                  <TiltGuessButton
+                    onClick={showHelper}
+                    disabled={paused}
+                    className="min-h-11 rounded-xl border border-border bg-background px-4 text-sm font-bold text-foreground"
+                  >
+                    {t.helper}
+                  </TiltGuessButton>
+                  {assisted && <span className="text-xs font-bold text-muted-foreground">{t.helperUsed}</span>}
+                  <span id="number-error" role="alert" className="text-xs font-bold text-destructive">{error}</span>
+                </div>
+              </>
+            )}
+            {state.status !== 'playing' && (
+              <div
+                className={`mb-5 rounded-2xl border-2 p-5 text-center ${
+                  state.status === 'won'
+                    ? 'border-primary/50 bg-primary/10 text-foreground'
+                    : 'border-destructive/40 bg-destructive/10 text-destructive'
+                }`}
+                role="status"
+                aria-live="assertive"
+              >
+                {state.status === 'won' && (
+                  <div className="mb-3 flex items-center justify-center">
+                    <img
+                      src={getSpriteUrl('trophy', 64)}
+                      alt="Victory Trophy"
+                      width={64}
+                      height={64}
+                      className="size-14 object-contain drop-shadow-md animate-bounce"
+                    />
+                  </div>
+                )}
+                <p className="text-xl font-black">{state.status === 'won' ? t.won : t.lost(state.secret)}</p>
+                <p className="mt-2 text-sm font-bold">
+                  {t.attempts} {state.attempts.length} · {t.time} {formatTime(elapsedMs)} · {t.efficiency} {efficiency}%
+                </p>
+                {assisted && <p className="mt-1 text-xs font-bold text-muted-foreground">{t.helperUsed}</p>}
+                {best && <p className="mt-1 text-xs">{t.best} · {best.attempts} · {formatTime(best.elapsedMs)}</p>}
+                <p className="mt-1 text-xs font-bold text-muted-foreground">{t.next(Math.max(1, state.attempts.length - 1))}</p>
+                <div className="mt-4 flex flex-wrap justify-center gap-2">
+                  <TiltGuessButton
+                    onClick={() => startGame(state.difficulty)}
+                    className="min-h-11 rounded-xl bg-primary px-4 text-sm font-black text-primary-foreground"
+                  >
+                    {t.again}
+                  </TiltGuessButton>
+                  <TiltGuessButton
+                    onClick={handleShareCard}
+                    className="flex min-h-11 items-center gap-1.5 rounded-xl border border-primary/50 bg-primary/20 px-4 text-sm font-bold text-primary shadow-xs hover:bg-primary/30"
+                    title={shareCardCopied ? "복사됨!" : "결과 카드"}
+                  >
+                    {shareCardCopied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
+                    <span>{shareCardCopied ? "복사 완료" : "결과 카드"}</span>
+                  </TiltGuessButton>
+                  <TiltGuessButton
+                    onClick={() => setState(null)}
+                    className="min-h-11 rounded-xl border border-border bg-background px-4 text-sm font-bold text-foreground"
+                  >
+                    {t.level}
+                  </TiltGuessButton>
+                  <TiltGuessButton
+                    onClick={share}
+                    className="min-h-11 rounded-xl border border-border bg-background px-4 text-sm font-bold text-foreground"
+                  >
+                    {t.share}
+                  </TiltGuessButton>
+                </div>
+              </div>
+            )}
+            {state.attempts.length > 0 && (
+              <div>
+                <p className="mb-2 text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.history}</p>
+                <ol className="max-h-64 space-y-2 overflow-y-auto" aria-label={t.history}>
+                  {[...state.attempts].reverse().map((attempt, index) => (
+                    <li
+                      key={attempt.guess}
+                      className="flex min-h-11 items-center justify-between rounded-xl border border-border bg-muted/50 px-4 text-sm font-bold text-foreground"
+                    >
+                      <span>#{state.attempts.length - index} · {attempt.guess}</span>
+                      <span>
+                        {attempt.direction === 'higher' ? '↑ ' + t.higher : attempt.direction === 'lower' ? '↓ ' + t.lower : '✓ ' + t.won}
+                        {attempt.temperature === 'exact' ? '' : ' · ' + t[attempt.temperature]}
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
+          </>
+        )}
       </GameContainer>
     </div>
   );

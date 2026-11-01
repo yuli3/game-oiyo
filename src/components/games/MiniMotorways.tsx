@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   loadArcadePassProgress,
   reportMissionProgress,
@@ -13,6 +13,51 @@ import {
   type MiniMotorwaysState,
 } from '../../lib/games/mini-motorways';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from '../../lib/games/share-card';
+import { getSpriteUrl } from '../../lib/games/sprites';
+import { Share2, Check, Maximize2, Minimize2 } from 'lucide-react';
+
+function TiltMotorButton({
+  children,
+  onClick,
+  className = '',
+  disabled = false,
+  title,
+  ariaLabel,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      title={title}
+      aria-label={ariaLabel || title}
+      onClick={() => {
+        triggerPop(0.12);
+        onClick?.();
+      }}
+      disabled={disabled}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`touch-manipulation select-none transition-all duration-150 transform-(--card-tilt) will-change-transform ${className}`}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 
 interface Props {
   locale: string;
@@ -118,9 +163,23 @@ const COLOR_BADGES: Record<CommuterColor, { icon: string; nameKo: string; nameEn
 
 export default function MiniMotorways({ locale }: Props) {
   const isKo = locale === 'ko';
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'ko' });
   const [state, setState] = useState<MiniMotorwaysState>(() =>
     createMiniMotorwaysState()
   );
+  const [shareCardCopied, setShareCardCopied] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        togglePortal();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [togglePortal]);
 
   const recordArcadePass = (trips: number) => {
     try {
@@ -132,6 +191,34 @@ export default function MiniMotorways({ locale }: Props) {
       // Safe fallback in SSR/test
     }
   };
+
+  const handleShareCard = useCallback(async () => {
+    try {
+      const isVictory = state.status === 'victory';
+      const canvas = createShareCardCanvas({
+        title: isKo ? '미니 모터웨이' : 'Mini Motorways',
+        subtitle: isVictory
+          ? (isKo ? '무정체 도시 교통망 마스터' : 'Zero-Gridlock City Master')
+          : (isKo ? `Week ${state.week} 운행 기록` : `Week ${state.week} Transit Record`),
+        score: `${state.tripsCompleted} Trips`,
+        slug: 'mini-motorways',
+        customStats: [
+          { label: isKo ? '연결 주택' : 'Houses', value: `${state.connectedHousesCount} / 4` },
+          { label: isKo ? '진행 주차' : 'Week', value: `W${state.week}` },
+          { label: isKo ? '잔여 도로' : 'Roads Left', value: state.roadTilesLeft },
+        ],
+      });
+      const success = await copyShareCardToClipboard(canvas);
+      if (success) {
+        setShareCardCopied(true);
+        setTimeout(() => setShareCardCopied(false), 2000);
+      } else {
+        downloadShareCard(canvas, `mini-motorways-${state.tripsCompleted}trips.png`);
+      }
+    } catch {
+      /* best effort */
+    }
+  }, [isKo, state.connectedHousesCount, state.roadTilesLeft, state.status, state.tripsCompleted, state.week]);
 
   const handleDispatch = () => {
     const next = stepCommuterTraffic(state);
@@ -156,7 +243,15 @@ export default function MiniMotorways({ locale }: Props) {
   };
 
   return (
-    <div className="mx-auto max-w-5xl p-4 text-foreground">
+    <div
+      ref={containerRef}
+      data-game-surface
+      className={
+        isImmersive
+          ? 'fixed inset-0 z-50 w-screen h-dvh bg-background p-3 sm:p-5 overflow-y-auto flex flex-col justify-between m-0 select-none'
+          : 'mx-auto max-w-5xl p-4 text-foreground'
+      }
+    >
       {/* Top Urban Traffic Control HUD */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 text-card-foreground shadow-sm">
         <div className="flex flex-wrap items-center gap-3">
@@ -190,26 +285,47 @@ export default function MiniMotorways({ locale }: Props) {
         </div>
 
         <div className="flex items-center gap-2">
-          <button
-            type="button"
+          <TiltMotorButton
             onClick={handlePreset}
             className="rounded-xl border border-border bg-secondary px-3 py-2 text-xs font-semibold text-secondary-foreground hover:bg-accent"
           >
-            {isKo ? '⚡ 전 구간 고속도로망 개통' : '⚡ Load Full Highway Network'}
-          </button>
-          <button
-            type="button"
+            {isKo ? '⚡ 고속도로망 개통' : '⚡ Load Highway'}
+          </TiltMotorButton>
+          <TiltMotorButton
             onClick={() => setState(createMiniMotorwaysState())}
             className="rounded-xl border border-border bg-background px-3 py-2 text-xs font-semibold hover:bg-accent"
           >
             {isKo ? '초기화' : 'Reset'}
-          </button>
+          </TiltMotorButton>
+          <TiltMotorButton
+            onClick={handleShareCard}
+            className="p-2 rounded-xl border border-border bg-background hover:bg-muted"
+            title="공유 카드"
+            ariaLabel="공유 카드"
+          >
+            {shareCardCopied ? <Check className="size-4 text-success" /> : <Share2 className="size-4" />}
+          </TiltMotorButton>
+          <TiltMotorButton
+            onClick={togglePortal}
+            className="p-2 rounded-xl border border-border bg-background hover:bg-muted"
+            title={isImmersive ? portalLabels.exit : portalLabels.enter}
+            ariaLabel={isImmersive ? portalLabels.exit : portalLabels.enter}
+          >
+            {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+          </TiltMotorButton>
         </div>
       </div>
 
       {/* Victory / Gridlock Banner */}
       {state.status === 'victory' && (
-        <div className="mb-4 rounded-2xl border border-primary bg-primary/10 p-4 text-center">
+        <div className="mb-4 rounded-2xl border border-primary bg-primary/10 p-4 text-center flex flex-col items-center justify-center gap-2">
+          <img
+            src={getSpriteUrl('trophy', 64)}
+            alt="Victory Trophy"
+            width={64}
+            height={64}
+            className="size-16 drop-shadow-md select-none pointer-events-none"
+          />
           <h3 className="text-lg font-extrabold text-primary">
             {isKo
               ? `🏆 누적 ${state.tripsCompleted}대 통근 완료! 무정체 도시 교통망 마스터!`
@@ -270,14 +386,13 @@ export default function MiniMotorways({ locale }: Props) {
           ))}
         </div>
 
-        <button
-          type="button"
+        <TiltMotorButton
           onClick={handleDispatch}
           disabled={state.status !== 'planning'}
           className="rounded-xl bg-primary px-5 py-2 text-xs font-extrabold text-primary-foreground shadow-sm hover:opacity-90 disabled:opacity-40"
         >
           🚗 {isKo ? '주간 통근 차량 출발 (DISPATCH)' : 'DISPATCH RUSH HOUR TRAFFIC'}
-        </button>
+        </TiltMotorButton>
       </div>
 
       {/* 8x6 Urban Grid Canvas */}
