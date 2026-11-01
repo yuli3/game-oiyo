@@ -23,6 +23,14 @@ interface Props {
   locale?: Locale;
 }
 
+interface NeonSurvivorSprites {
+  player: HTMLImageElement | null;
+  scout: HTMLImageElement | null;
+  brute: HTMLImageElement | null;
+  boss: HTMLImageElement | null;
+  gem: HTMLImageElement | null;
+}
+
 const drawRoundRect = (
   c: CanvasRenderingContext2D,
   x: number,
@@ -172,6 +180,49 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
   }, [showEvoGuide]);
 
   // Sound Synthesizer
+  const spritesRef = useRef<NeonSurvivorSprites>({
+    player: null,
+    scout: null,
+    brute: null,
+    boss: null,
+    gem: null,
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const loadImg = (src: string): Promise<HTMLImageElement> =>
+      new Promise((resolve) => {
+        const img = new Image();
+        img.src = src;
+        img.onload = () => resolve(img);
+        img.onerror = () => {
+          if (src.endsWith('.webp')) {
+            const fallback = new Image();
+            fallback.src = src.replace('.webp', '.png');
+            fallback.onload = () => resolve(fallback);
+          }
+        };
+      });
+
+    void Promise.all([
+      loadImg('/assets/sprites/neon-survivor/player-ship-128.webp').then((img) => {
+        spritesRef.current.player = img;
+      }),
+      loadImg('/assets/sprites/neon-survivor/enemy-scout-128.webp').then((img) => {
+        spritesRef.current.scout = img;
+      }),
+      loadImg('/assets/sprites/neon-survivor/enemy-brute-128.webp').then((img) => {
+        spritesRef.current.brute = img;
+      }),
+      loadImg('/assets/sprites/neon-survivor/enemy-boss-256.webp').then((img) => {
+        spritesRef.current.boss = img;
+      }),
+      loadImg('/assets/sprites/common/gem-blue-64.webp').then((img) => {
+        spritesRef.current.gem = img;
+      }),
+    ]);
+  }, []);
+
   const [muted, setMuted] = useState(false);
   const mutedRef = useRef(false);
   useEffect(() => { mutedRef.current = muted; }, [muted]);
@@ -476,16 +527,21 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
       ctx.save();
       ctx.translate(gx, gy);
       ctx.rotate(state.survivalTime * 2);
-      ctx.fillStyle = g.color;
-      ctx.shadowColor = g.color;
-      ctx.shadowBlur = 8;
-      ctx.beginPath();
-      ctx.moveTo(0, -6);
-      ctx.lineTo(6, 0);
-      ctx.lineTo(0, 6);
-      ctx.lineTo(-6, 0);
-      ctx.closePath();
-      ctx.fill();
+      const gemImg = spritesRef.current.gem;
+      if (gemImg) {
+        ctx.drawImage(gemImg, -9, -9, 18, 18);
+      } else {
+        ctx.fillStyle = g.color;
+        ctx.shadowColor = g.color;
+        ctx.shadowBlur = 8;
+        ctx.beginPath();
+        ctx.moveTo(0, -6);
+        ctx.lineTo(6, 0);
+        ctx.lineTo(0, 6);
+        ctx.lineTo(-6, 0);
+        ctx.closePath();
+        ctx.fill();
+      }
       ctx.restore();
     }
 
@@ -567,16 +623,22 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
       ctx.shadowBlur = e.kind === 'boss' ? 20 : 10;
 
       if (e.kind === 'scout') {
-        // Red Triangle
         const faceAngle = Math.atan2(state.player.y - e.y, state.player.x - e.x);
         ctx.rotate(faceAngle);
-        ctx.beginPath();
-        ctx.moveTo(e.radius * 1.2, 0);
-        ctx.lineTo(-e.radius, -e.radius * 0.8);
-        ctx.lineTo(-e.radius * 0.5, 0);
-        ctx.lineTo(-e.radius, e.radius * 0.8);
-        ctx.closePath();
-        ctx.fill();
+        const scoutImg = spritesRef.current.scout;
+        if (scoutImg) {
+          ctx.rotate(-Math.PI / 2);
+          const size = e.radius * 2.6;
+          ctx.drawImage(scoutImg, -size / 2, -size / 2, size, size);
+        } else {
+          ctx.beginPath();
+          ctx.moveTo(e.radius * 1.2, 0);
+          ctx.lineTo(-e.radius, -e.radius * 0.8);
+          ctx.lineTo(-e.radius * 0.5, 0);
+          ctx.lineTo(-e.radius, e.radius * 0.8);
+          ctx.closePath();
+          ctx.fill();
+        }
       } else if (e.kind === 'swarmer') {
         // Purple Diamond
         ctx.beginPath();
@@ -587,17 +649,24 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
         ctx.closePath();
         ctx.fill();
       } else if (e.kind === 'brute') {
-        // Cyan Hexagon
-        ctx.beginPath();
-        for (let i = 0; i < 6; i++) {
-          const a = (i * Math.PI) / 3;
-          const hx = Math.cos(a) * e.radius;
-          const hy = Math.sin(a) * e.radius;
-          if (i === 0) ctx.moveTo(hx, hy);
-          else ctx.lineTo(hx, hy);
+        const bruteImg = spritesRef.current.brute;
+        if (bruteImg) {
+          const faceAngle = Math.atan2(state.player.y - e.y, state.player.x - e.x);
+          ctx.rotate(faceAngle - Math.PI / 2);
+          const size = e.radius * 2.5;
+          ctx.drawImage(bruteImg, -size / 2, -size / 2, size, size);
+        } else {
+          ctx.beginPath();
+          for (let i = 0; i < 6; i++) {
+            const a = (i * Math.PI) / 3;
+            const hx = Math.cos(a) * e.radius;
+            const hy = Math.sin(a) * e.radius;
+            if (i === 0) ctx.moveTo(hx, hy);
+            else ctx.lineTo(hx, hy);
+          }
+          ctx.closePath();
+          ctx.fill();
         }
-        ctx.closePath();
-        ctx.fill();
       } else if (e.kind === 'boss') {
         if (e.isElite) {
           ctx.beginPath();
@@ -607,18 +676,24 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
           ctx.stroke();
         }
 
-        ctx.beginPath();
-        const points = e.isElite ? 10 : 8;
-        for (let i = 0; i < points; i++) {
-          const r = i % 2 === 0 ? e.radius : e.radius * 0.6;
-          const a = (i * Math.PI * 2) / points + state.survivalTime * (e.isElite ? 1.5 : 1);
-          const sx = Math.cos(a) * r;
-          const sy = Math.sin(a) * r;
-          if (i === 0) ctx.moveTo(sx, sy);
-          else ctx.lineTo(sx, sy);
+        const bossImg = spritesRef.current.boss;
+        if (bossImg) {
+          const size = e.radius * 2.8;
+          ctx.drawImage(bossImg, -size / 2, -size / 2, size, size);
+        } else {
+          ctx.beginPath();
+          const points = e.isElite ? 10 : 8;
+          for (let i = 0; i < points; i++) {
+            const r = i % 2 === 0 ? e.radius : e.radius * 0.6;
+            const a = (i * Math.PI * 2) / points + state.survivalTime * (e.isElite ? 1.5 : 1);
+            const sx = Math.cos(a) * r;
+            const sy = Math.sin(a) * r;
+            if (i === 0) ctx.moveTo(sx, sy);
+            else ctx.lineTo(sx, sy);
+          }
+          ctx.closePath();
+          ctx.fill();
         }
-        ctx.closePath();
-        ctx.fill();
 
         // Boss Floating HP Bar
         const barW = e.radius * 2;
@@ -668,26 +743,35 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
     // Main Cyber Ship
     const alpha = state.player.invulnTimer > 0 ? (Math.sin(state.survivalTime * 30) > 0 ? 0.4 : 1.0) : 1.0;
     ctx.globalAlpha = alpha;
-    ctx.fillStyle = '#0284c7';
-    ctx.strokeStyle = '#38bdf8';
-    ctx.lineWidth = 2;
-    ctx.shadowColor = '#38bdf8';
-    ctx.shadowBlur = 12;
 
-    ctx.beginPath();
-    ctx.moveTo(18, 0);
-    ctx.lineTo(-14, -12);
-    ctx.lineTo(-8, 0);
-    ctx.lineTo(-14, 12);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
+    const playerImg = spritesRef.current.player;
+    if (playerImg) {
+      // Generated pointing upwards (-Y), rotate +90deg to point right (+X)
+      ctx.rotate(Math.PI / 2);
+      const shipSize = 42;
+      ctx.drawImage(playerImg, -shipSize / 2, -shipSize / 2, shipSize, shipSize);
+    } else {
+      ctx.fillStyle = '#0284c7';
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 2;
+      ctx.shadowColor = '#38bdf8';
+      ctx.shadowBlur = 12;
 
-    // Cockpit neon core
-    ctx.fillStyle = '#f8fafc';
-    ctx.beginPath();
-    ctx.arc(2, 0, 4, 0, Math.PI * 2);
-    ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(18, 0);
+      ctx.lineTo(-14, -12);
+      ctx.lineTo(-8, 0);
+      ctx.lineTo(-14, 12);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Cockpit neon core
+      ctx.fillStyle = '#f8fafc';
+      ctx.beginPath();
+      ctx.arc(2, 0, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
     ctx.restore();
 

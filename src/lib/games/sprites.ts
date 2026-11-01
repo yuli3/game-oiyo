@@ -558,3 +558,152 @@ export const TILE_RUMMY_BURST_SHEET = {
 
 
 
+
+/**
+ * Common Game Sprites & Preloader
+ * Standardized 2D/3D rendered asset catalog for OIYO Arcade games
+ */
+
+export type CommonSpriteKey = 'coin' | 'gem' | 'heart' | 'star' | 'trophy';
+
+export interface SpriteDefinition {
+  name: string;
+  category: 'currency' | 'reward' | 'life' | 'achievement';
+  basePath: string;
+  defaultSize: number;
+}
+
+export const COMMON_SPRITES: Record<CommonSpriteKey, SpriteDefinition> = {
+  coin: {
+    name: 'Gold Arcade Coin',
+    category: 'currency',
+    basePath: '/assets/sprites/common/coin-gold',
+    defaultSize: 128,
+  },
+  gem: {
+    name: 'Blue Crystal Gem',
+    category: 'currency',
+    basePath: '/assets/sprites/common/gem-blue',
+    defaultSize: 128,
+  },
+  heart: {
+    name: 'Vibrant Life Heart',
+    category: 'life',
+    basePath: '/assets/sprites/common/heart-life',
+    defaultSize: 128,
+  },
+  star: {
+    name: 'Golden Rating Star',
+    category: 'reward',
+    basePath: '/assets/sprites/common/star-rating',
+    defaultSize: 128,
+  },
+  trophy: {
+    name: 'Championship Trophy',
+    category: 'achievement',
+    basePath: '/assets/sprites/common/trophy-gold',
+    defaultSize: 128,
+  },
+};
+
+/**
+ * Returns optimized sprite URL according to size and format
+ */
+export function getSpriteUrl(
+  key: CommonSpriteKey,
+  size?: 64 | 128 | 256,
+  format: 'webp' | 'png' = 'webp'
+): string {
+  const sprite = COMMON_SPRITES[key];
+  if (!sprite) {
+    throw new Error(`Unknown sprite key: ${key}`);
+  }
+  if (!size) {
+    return `${sprite.basePath}.${format}`;
+  }
+  return `${sprite.basePath}-${size}.${format}`;
+}
+
+const loadedImageCache = new Map<string, HTMLImageElement>();
+
+/**
+ * Preloads sprite images into browser memory to eliminate rendering flicker
+ */
+export async function preloadSprite(
+  key: CommonSpriteKey,
+  size?: 64 | 128 | 256,
+  format: 'webp' | 'png' = 'webp'
+): Promise<HTMLImageElement | null> {
+  if (typeof window === 'undefined') return null;
+
+  const url = getSpriteUrl(key, size, format);
+  if (loadedImageCache.has(url)) {
+    return loadedImageCache.get(url)!;
+  }
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.src = url;
+    img.onload = () => {
+      loadedImageCache.set(url, img);
+      resolve(img);
+    };
+    img.onerror = () => {
+      if (format === 'webp') {
+        const fallbackUrl = getSpriteUrl(key, size, 'png');
+        const fallbackImg = new Image();
+        fallbackImg.src = fallbackUrl;
+        fallbackImg.onload = () => {
+          loadedImageCache.set(url, fallbackImg);
+          resolve(fallbackImg);
+        };
+        fallbackImg.onerror = () => resolve(null);
+      } else {
+        resolve(null);
+      }
+    };
+  });
+}
+
+/**
+ * Preload multiple sprites at once
+ */
+export async function preloadAllSprites(keys: CommonSpriteKey[] = ['coin', 'gem', 'heart', 'star', 'trophy']) {
+  return Promise.all(keys.map((k) => preloadSprite(k)));
+}
+
+/**
+ * Helper to draw a sprite on an HTML5 2D Canvas with rotation, scale and alpha
+ */
+export function drawCanvasSprite(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement | CanvasImageSource,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  options?: {
+    rotation?: number;
+    alpha?: number;
+    scale?: number;
+  }
+) {
+  const rotation = options?.rotation ?? 0;
+  const alpha = options?.alpha ?? 1;
+  const scale = options?.scale ?? 1;
+
+  ctx.save();
+  ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+  ctx.translate(x, y);
+
+  if (rotation !== 0) {
+    ctx.rotate(rotation);
+  }
+
+  if (scale !== 1) {
+    ctx.scale(scale, scale);
+  }
+
+  ctx.drawImage(img, -width / 2, -height / 2, width, height);
+  ctx.restore();
+}

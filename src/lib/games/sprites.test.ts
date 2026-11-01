@@ -189,3 +189,55 @@ describe("in-game sprite maps", () => {
     expect(Object.keys(RIVALS_MIND_POSES.player)).toEqual(["strike", "guard", "evade-left", "evade-right"]);
   });
 });
+
+import { COMMON_SPRITES, getSpriteUrl, drawCanvasSprite } from './sprites';
+import { vi } from 'vitest';
+
+describe('Common Game Sprites', () => {
+  it('registers all 5 essential arcade sprites', () => {
+    expect(COMMON_SPRITES.coin).toBeDefined();
+    expect(COMMON_SPRITES.gem).toBeDefined();
+    expect(COMMON_SPRITES.heart).toBeDefined();
+    expect(COMMON_SPRITES.star).toBeDefined();
+    expect(COMMON_SPRITES.trophy).toBeDefined();
+  });
+
+  it('generates correct URLs for default, sized, and webp/png variants', () => {
+    expect(getSpriteUrl('coin')).toBe('/assets/sprites/common/coin-gold.webp');
+    expect(getSpriteUrl('coin', 64)).toBe('/assets/sprites/common/coin-gold-64.webp');
+    expect(getSpriteUrl('coin', 128, 'png')).toBe('/assets/sprites/common/coin-gold-128.png');
+    expect(getSpriteUrl('trophy', 256, 'webp')).toBe('/assets/sprites/common/trophy-gold-256.webp');
+  });
+
+  it('throws error for invalid sprite key', () => {
+    // @ts-expect-error test invalid key
+    expect(() => getSpriteUrl('non-existent')).toThrow();
+  });
+
+  it('draws sprite on canvas context with correct transformations', () => {
+    const mockCtx = {
+      save: vi.fn(),
+      restore: vi.fn(),
+      translate: vi.fn(),
+      rotate: vi.fn(),
+      scale: vi.fn(),
+      drawImage: vi.fn(),
+      globalAlpha: 1,
+    } as unknown as CanvasRenderingContext2D;
+
+    const mockImg = {} as HTMLImageElement;
+
+    drawCanvasSprite(mockCtx, mockImg, 100, 200, 50, 50, {
+      rotation: Math.PI / 4,
+      scale: 1.2,
+      alpha: 0.8,
+    });
+
+    expect(mockCtx.save).toHaveBeenCalled();
+    expect(mockCtx.translate).toHaveBeenCalledWith(100, 200);
+    expect(mockCtx.rotate).toHaveBeenCalledWith(Math.PI / 4);
+    expect(mockCtx.scale).toHaveBeenCalledWith(1.2, 1.2);
+    expect(mockCtx.drawImage).toHaveBeenCalledWith(mockImg, -25, -25, 50, 50);
+    expect(mockCtx.restore).toHaveBeenCalled();
+  });
+});
