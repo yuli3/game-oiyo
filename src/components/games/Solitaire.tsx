@@ -3,6 +3,8 @@ import { celebrate } from "../../lib/games/celebration";
 import { Camera, Check, Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
 import { GameContainer, PlayingCard } from '../ui/game/GamePrimitives';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { getSpriteUrl } from '../../lib/games/sprites';
 import {
   copyShareCardToClipboard,
   createShareCardCanvas,
@@ -134,6 +136,21 @@ const DAILY_GAME_ID = 'solitaire-daily';
 
 function createGenerationSeed(): number {
   return (Date.now() ^ Math.floor(Math.random() * 0x1_0000_0000)) | 0;
+}
+
+function TiltCardButton({ children, className = '', ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const { transformCss, onPointerMove, onPointerLeave } = useCardTiltPro();
+  return (
+    <button
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`transform-(--card-tilt) will-change-transform ${className}`}
+      {...props}
+    >
+      {children}
+    </button>
+  );
 }
 
 const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
@@ -278,6 +295,7 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     if (!next) {
       const reason=explainSolitaireMove(game,move);
       setAnnouncement(reason?moveReason[reason]:t.illegal);
+      MobileHapticsPro.warning();
       return false;
     }
     if (startedAt.current === null) startedAt.current = performance.now();
@@ -296,10 +314,10 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         audioRef.current?.playCardSlide();
       }
     }
-    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-      try {
-        navigator.vibrate(move.type.includes('foundation') ? 20 : 10);
-      } catch {}
+    if (move.type.includes('foundation')) {
+      MobileHapticsPro.medium();
+    } else {
+      MobileHapticsPro.light();
     }
 
     return true;
@@ -318,6 +336,7 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
       });
       setMoves((count) => count + 1);
       setAnnouncement(t.undone);
+      MobileHapticsPro.click();
       return stack.slice(0, -1);
     });
   }, [conditionsFor, dailyDate, mode, t.undone]);
@@ -328,6 +347,7 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     if (!hint) {
       setAnnouncement('더 이상 둘 수 있는 수가 없습니다.');
       setHintMessage('더 이상 이동 가능한 수가 없습니다.');
+      MobileHapticsPro.warning();
       return;
     }
     setHintMessage(hint.description);
@@ -338,6 +358,7 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         setSelection({ type: 'tableau', column: hint.sourceColumn, cardIndex: col.length - 1 });
       }
     }
+    MobileHapticsPro.light();
     if (!mutedRef.current) {
       audioRef.current?.playCardSlide();
     }
@@ -348,6 +369,7 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const { nextState, count } = autoCollectToFoundations(game);
     if (count === 0) {
       setAnnouncement('현재 파운데이션으로 바로 올릴 수 있는 카드가 없습니다.');
+      MobileHapticsPro.warning();
       return;
     }
     setUndoStack((stack) => [...stack, game]);
@@ -357,6 +379,7 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     setGame(nextState);
     setHintMessage(null);
     setAnnouncement(`${count}장의 카드를 파운데이션으로 자동 수납했습니다.`);
+    MobileHapticsPro.medium();
     if (!mutedRef.current) {
       audioRef.current?.playFoundationSnap();
     }
@@ -425,10 +448,12 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     }
     if (!isValidTableauRun(pile.slice(cardIndex))) {
       setAnnouncement(t.illegal);
+      MobileHapticsPro.warning();
       return;
     }
     setSelection({ type: 'tableau', column, cardIndex });
     setAnnouncement(t.selected);
+    MobileHapticsPro.click();
   };
 
   const moveToTableau = (to: number) => {
@@ -441,18 +466,27 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
   const chooseFoundation = (suit: SolitaireSuit) => {
     if (selection?.type === 'tableau') {
       const pile = game.tableau[selection.column];
-      if (selection.cardIndex !== pile.length - 1 || pile.at(-1)?.suit !== suit) setAnnouncement(t.illegal);
-      else commit({ type: 'tableau-to-foundation', from: selection.column });
+      if (selection.cardIndex !== pile.length - 1 || pile.at(-1)?.suit !== suit) {
+        setAnnouncement(t.illegal);
+        MobileHapticsPro.warning();
+      } else {
+        commit({ type: 'tableau-to-foundation', from: selection.column });
+      }
       return;
     }
     if (selection?.type === 'waste') {
-      if (game.waste.at(-1)?.suit !== suit) setAnnouncement(t.illegal);
-      else commit({ type: 'waste-to-foundation' });
+      if (game.waste.at(-1)?.suit !== suit) {
+        setAnnouncement(t.illegal);
+        MobileHapticsPro.warning();
+      } else {
+        commit({ type: 'waste-to-foundation' });
+      }
       return;
     }
     if (game.foundations[suit].length > 0) {
       setSelection({ type: 'foundation', suit });
       setAnnouncement(t.selected);
+      MobileHapticsPro.click();
     }
   };
 
@@ -469,11 +503,7 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
       if (!mutedRef.current) {
         audioRef.current?.playWinFanfare();
       }
-      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-        try {
-          navigator.vibrate([40, 40, 80, 40, 120]);
-        } catch {}
-      }
+      MobileHapticsPro.success();
 
       if (mode === 'daily') {
         const today = todayKey();
@@ -543,34 +573,34 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         <div className="relative">
           <div className="space-y-5">
           <div className="flex flex-wrap items-center gap-1.5">
-            <button type="button" onClick={() => initGame('daily')} aria-pressed={mode === 'daily'}
+            <TiltCardButton type="button" onClick={() => initGame('daily')} aria-pressed={mode === 'daily'}
               className={`min-h-11 rounded-lg border px-3 py-2 text-xs font-bold transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${mode === 'daily' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:bg-muted'}`}>
               {t.daily}{solvedToday ? ' ✓' : ''}
-            </button>
-            <button type="button" onClick={() => initGame('free')} aria-pressed={mode === 'free'}
+            </TiltCardButton>
+            <TiltCardButton type="button" onClick={() => initGame('free')} aria-pressed={mode === 'free'}
               className={`min-h-11 rounded-lg border px-3 py-2 text-xs font-bold transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${mode === 'free' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:bg-muted'}`}>
               {t.free}
-            </button>
-            <button type="button" onClick={() => setDrawMode((prev) => (prev === 1 ? 3 : 1))}
+            </TiltCardButton>
+            <TiltCardButton type="button" onClick={() => setDrawMode((prev) => (prev === 1 ? 3 : 1))}
               className="min-h-11 rounded-lg border border-border px-3 py-2 text-xs font-bold text-muted-foreground transition-colors hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               title={drawMode === 1 ? '1장 뽑기 (Turn 1)' : '3장 뽑기 (Turn 3)'}>
               <span>🎴 {drawMode === 1 ? '1장 뽑기' : '3장 뽑기'}</span>
-            </button>
-            <button type="button" onClick={undo} disabled={undoStack.length === 0 || won}
+            </TiltCardButton>
+            <TiltCardButton type="button" onClick={undo} disabled={undoStack.length === 0 || won}
               className="min-h-11 rounded-lg border border-border px-3 py-2 text-xs font-bold text-muted-foreground transition-colors hover:bg-muted disabled:opacity-40 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               title="Undo (Z)">
               ↩︎ {t.undo}
-            </button>
-            <button type="button" onClick={requestHint} disabled={won}
+            </TiltCardButton>
+            <TiltCardButton type="button" onClick={requestHint} disabled={won}
               className="min-h-11 rounded-lg border border-border px-3 py-2 text-xs font-bold text-muted-foreground transition-colors hover:bg-muted disabled:opacity-40 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               title="힌트 (H)">
               💡 힌트
-            </button>
-            <button type="button" onClick={autoFinish} disabled={won}
+            </TiltCardButton>
+            <TiltCardButton type="button" onClick={autoFinish} disabled={won}
               className="min-h-11 rounded-lg border border-primary/40 bg-primary/5 px-3 py-2 text-xs font-bold text-primary transition-colors hover:bg-primary/10 disabled:opacity-40 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               title="파운데이션 자동 수납">
               ⚡ 자동 수납
-            </button>
+            </TiltCardButton>
             <button type="button" onClick={() => setMuted((m) => !m)} aria-pressed={muted}
               className="min-h-11 rounded-lg border border-border px-3 py-2 text-xs font-bold text-muted-foreground transition-colors hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               aria-label={muted ? '소리 켜기' : '소리 끄기'}
@@ -606,7 +636,7 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             {bestTime !== null && !legacyMigrated && <span>{t.best} {fmt(bestTime)}{undoCount > 0 ? ` · ${t.assisted}` : ''}</span>}
           </div>
         </div>
-        {legacyMigrated && <p className="text-[11px] font-medium text-muted-foreground">{t.untimed}</p>}
+        {legacyMigrated && <p className="text-xs font-medium text-muted-foreground">{t.untimed}</p>}
         <p className="text-xs text-muted-foreground">{t.instructions}</p>
         <p aria-live="polite" className="min-h-5 text-sm font-semibold text-primary">{announcement}</p>
 
@@ -614,7 +644,7 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
           <div className="flex gap-2">
             <button type="button" onClick={() => commit(stockMove)} disabled={game.stock.length === 0 && game.waste.length === 0} aria-label={`${stockLabel} (${game.stock.length})`} className="relative min-h-24 min-w-16 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-40">
               {game.stock.length > 0 ? <PlayingCard suit="spades" value="" isFaceUp={false} className="pointer-events-none motion-reduce:transition-none" /> : <span className="flex h-24 w-16 items-center justify-center rounded-xl border-2 border-dashed text-2xl">↻</span>}
-              {game.stock.length > 0 && <span className="absolute -right-1 -top-1 rounded-full bg-primary px-2 py-1 text-[10px] font-black text-primary-foreground">{game.stock.length}</span>}
+              {game.stock.length > 0 && <span className="absolute -right-1 -top-1 rounded-full bg-primary px-2 py-1 text-xs font-black text-primary-foreground">{game.stock.length}</span>}
             </button>
             <div className="min-h-24 min-w-16">
               {game.waste.length > 0 && (
@@ -661,7 +691,14 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
         {won && (
           <div className="absolute inset-0 z-30 flex flex-col items-center justify-center rounded-4xl bg-background/90 p-6 text-center backdrop-blur-xl motion-reduce:animate-none" role="status" aria-live="polite">
-            <div aria-hidden="true" className="mb-6 text-6xl">🏆</div>
+            <div className="relative mb-4 flex size-24 items-center justify-center">
+              <img
+                src={getSpriteUrl('trophy', 128)}
+                alt="Victory Trophy"
+                className="size-24 object-contain drop-shadow-xl animate-bounce"
+                loading="lazy"
+              />
+            </div>
             <h4 className="mb-2 text-3xl font-black text-primary sm:text-4xl">{t.win}</h4>
             <p className="mb-1 text-sm font-bold text-muted-foreground">
               {legacyMigrated ? `${t.moves} ${moves}` : `${t.time} ${fmt(Math.max(1, seconds))} · ${t.moves} ${moves}`}

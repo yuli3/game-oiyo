@@ -3,6 +3,11 @@ import { useCelebration } from "../../lib/games/celebration";
 import type { Locale } from "../../lib/i18n";
 import { getBest, recordBest } from "../../lib/games/records";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { getSpriteUrl } from "../../lib/games/sprites";
+import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "../../lib/games/share-card";
+import { Camera, Check, Maximize2, Minimize2, RotateCcw, Play } from "lucide-react";
 import {
   MAX_SPATIAL_LEVEL,
   generateSequence,
@@ -132,9 +137,26 @@ function detectWebgl(): boolean {
   }
 }
 
+function TiltSpatialButton({ children, className = '', ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const { transformCss, onPointerMove, onPointerLeave } = useCardTiltPro();
+  return (
+    <button
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`transform-(--card-tilt) will-change-transform ${className}`}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+}
+
 export default function SpatialMemory({ locale }: { locale: Locale }) {
   const t = COPY[locale] ?? COPY.en;
   const reducedMotion = usePrefersReducedMotion();
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || "ko" });
+  const [shareCardCopied, setShareCardCopied] = useState(false);
 
   const { ref: stageRef, celebrate: celebrateStage } = useCelebration();
   const [phase, setPhase] = useState<Phase>("menu");
@@ -187,6 +209,29 @@ export default function SpatialMemory({ locale }: { locale: Locale }) {
   const order = useMemo(() => keyboardOrder(level), [level]);
   const label = useCallback((index: number) => t.marker(order.indexOf(index) + 1), [order, t]);
 
+  const handleShareCard = useCallback(async () => {
+    try {
+      const canvas = createShareCardCanvas({
+        title: "Spatial Memory",
+        subtitle: "3D Perspective Recall Arena",
+        score: `${score} PTS`,
+        slug: "spatial-memory",
+        customStats: [
+          { label: "Level", value: `${level}/${MAX_SPATIAL_LEVEL}` },
+          { label: "Streak", value: `${streak}` },
+          { label: "Best Score", value: `${best}` },
+        ],
+      });
+      const ok = await copyShareCardToClipboard(canvas);
+      if (ok) {
+        setShareCardCopied(true);
+        setTimeout(() => setShareCardCopied(false), 2000);
+      } else {
+        downloadShareCard(canvas, `spatial-memory-${score}.png`);
+      }
+    } catch {}
+  }, [best, level, score, streak]);
+
   /** Plays the sequence back, then hands control to the player. */
   const playback = useCallback((next: number[], forLevel: number) => {
     const { showMs } = spatialDifficulty(forLevel);
@@ -196,7 +241,11 @@ export default function SpatialMemory({ locale }: { locale: Locale }) {
     setEntered([]);
     next.forEach((markerIndex, step) => {
       timers.current.push(
-        window.setTimeout(() => { setLit(markerIndex); tone(440, 0.08); }, step * showMs),
+        window.setTimeout(() => {
+          setLit(markerIndex);
+          tone(440, 0.08);
+          MobileHapticsPro.click();
+        }, step * showMs),
       );
       timers.current.push(
         window.setTimeout(() => setLit(null), step * showMs + showMs * 0.62),
@@ -207,6 +256,7 @@ export default function SpatialMemory({ locale }: { locale: Locale }) {
         setLit(null);
         setPhase("input");
         setStatus(t.recall);
+        MobileHapticsPro.medium();
       }, next.length * showMs),
     );
   }, [clearTimers, t, tone]);
@@ -258,8 +308,13 @@ export default function SpatialMemory({ locale }: { locale: Locale }) {
     setBest(saved.value);
     setIsNewBest(beat && finalScore > 0);
     tone(beat && finalScore > 0 ? 880 : 220, beat && finalScore > 0 ? 0.22 : 0.15);
-    if (beat && finalScore > 0 && !reducedMotion) {
-      celebrateStage({ preset: "stardust", colors: ["#5eead4", "#a78bfa", "#fef3c7"], origin: { x: 0.5, y: 0.5 } });
+    if (beat && finalScore > 0) {
+      MobileHapticsPro.success();
+      if (!reducedMotion) {
+        celebrateStage({ preset: "stardust", colors: ["#5eead4", "#a78bfa", "#fef3c7"], origin: { x: 0.5, y: 0.5 } });
+      }
+    } else {
+      MobileHapticsPro.error();
     }
   }, [celebrateStage, clearTimers, reducedMotion, tone]);
 
@@ -271,6 +326,7 @@ export default function SpatialMemory({ locale }: { locale: Locale }) {
     if (result === "wrong") {
       setStatus(t.wrong);
       tone(140, 0.18);
+      MobileHapticsPro.error();
       endGame(score, level, streak);
       return;
     }
@@ -280,11 +336,13 @@ export default function SpatialMemory({ locale }: { locale: Locale }) {
     if (result === "correct") {
       setStatus(t.correct);
       tone(560, 0.06);
+      MobileHapticsPro.light();
       return;
     }
 
     // Round cleared.
     tone(700, 0.14);
+    MobileHapticsPro.success();
     const gained = scoreForRound(level, streak);
     const nextScore = score + gained;
     const advanced = nextLevel(level, true);
@@ -316,16 +374,34 @@ export default function SpatialMemory({ locale }: { locale: Locale }) {
   const playing = phase === "showing" || phase === "input";
 
   return (
-    <div className="not-prose my-10 mx-auto max-w-2xl rounded-3xl border border-border bg-card p-4 text-card-foreground shadow-sm">
+    <div
+      ref={containerRef}
+      className={`not-prose mx-auto rounded-3xl border border-border bg-card p-4 text-card-foreground shadow-sm select-none ${
+        isImmersive
+          ? "fixed inset-0 z-50 w-screen h-dvh overflow-y-auto flex flex-col justify-between m-0 rounded-none border-none p-3 sm:p-6"
+          : "my-10 max-w-2xl"
+      }`}
+    >
       <div className="mb-3 flex items-start justify-between gap-3">
         <div>
           <div className="text-sm font-black uppercase tracking-widest text-primary">{t.title}</div>
           <p className="text-xs text-muted-foreground">{t.subtitle}</p>
         </div>
-        <dl className="text-right text-sm font-bold">
-          <div><dt className="inline text-muted-foreground">{t.score}: </dt><dd className="inline text-primary">{score}</dd></div>
-          <div><dt className="inline text-muted-foreground">{t.best}: </dt><dd className="inline text-primary">{best}</dd></div>
-        </dl>
+        <div className="flex items-center gap-2">
+          <dl className="text-right text-sm font-bold">
+            <div><dt className="inline text-muted-foreground">{t.score}: </dt><dd className="inline text-primary font-mono">{score}</dd></div>
+            <div><dt className="inline text-muted-foreground">{t.best}: </dt><dd className="inline text-primary font-mono">{best}</dd></div>
+          </dl>
+          <button
+            type="button"
+            onClick={togglePortal}
+            aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+            className="min-h-11 min-w-11 rounded-xl border border-border text-foreground hover:bg-muted flex items-center justify-center transition-colors"
+            title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+          >
+            {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+          </button>
+        </div>
       </div>
 
       <div className="mb-2 flex items-center gap-3 text-xs font-bold">
@@ -335,7 +411,7 @@ export default function SpatialMemory({ locale }: { locale: Locale }) {
           type="button"
           onClick={() => setMuted((value) => !value)}
           aria-pressed={muted}
-          className="ml-auto min-h-11 rounded-xl border border-border px-3 text-xs font-bold text-muted-foreground"
+          className="ml-auto min-h-11 rounded-xl border border-border px-3 text-xs font-bold text-muted-foreground hover:bg-muted transition-colors"
         >
           {muted ? "🔇" : "🔊"} {t.sound}
         </button>
@@ -346,7 +422,7 @@ export default function SpatialMemory({ locale }: { locale: Locale }) {
         {status}
       </p>
 
-      <div ref={stageRef} className="relative aspect-square w-full overflow-hidden rounded-2xl bg-[#070b16]">
+      <div ref={stageRef} className={`relative w-full overflow-hidden rounded-2xl bg-slate-950 border border-border/40 ${isImmersive ? "flex-1 min-h-0" : "aspect-square"}`}>
         {playing && webgl && (
           <Suspense fallback={<StaticField {...sceneProps} loading={t.loading} />}>
             <Scene {...sceneProps} />
@@ -354,48 +430,86 @@ export default function SpatialMemory({ locale }: { locale: Locale }) {
         )}
         {playing && !webgl && <StaticField {...sceneProps} notice={t.noWebgl} />}
         {playing && paused && (
-          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-[#070b16]/90 px-6 text-center" role="status" aria-live="polite">
-            <p className="text-sm font-bold text-slate-200">{t.paused}</p>
-            <button
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-background/90 px-6 text-center" role="status" aria-live="polite">
+            <p className="text-sm font-bold text-foreground">{t.paused}</p>
+            <TiltSpatialButton
               type="button"
               onClick={resumeFromPause}
-              className="min-h-11 rounded-2xl bg-primary px-8 py-3 font-black text-primary-foreground"
+              className="min-h-11 rounded-2xl bg-primary px-8 py-3 font-black text-primary-foreground shadow-lg"
             >
               {t.resume}
-            </button>
+            </TiltSpatialButton>
           </div>
         )}
         {!playing && (
-          <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
-            <p className="text-sm leading-relaxed text-slate-300">{t.controls}</p>
-            {phase === "over" && isNewBest && (
-              <p className="text-sm font-black text-lime-300">{t.newBest}</p>
+          <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
+            {phase === "over" ? (
+              <div className="relative mb-2 flex size-20 items-center justify-center">
+                <img
+                  src={getSpriteUrl('trophy', 128)}
+                  alt="Trophy"
+                  className="size-20 object-contain drop-shadow-xl animate-bounce"
+                  loading="lazy"
+                />
+              </div>
+            ) : (
+              <div className="relative mb-2 flex size-16 items-center justify-center">
+                <img
+                  src={getSpriteUrl('star', 64)}
+                  alt="Star"
+                  className="size-16 object-contain drop-shadow-lg animate-pulse"
+                  loading="lazy"
+                />
+              </div>
             )}
-            <button
-              type="button"
-              onClick={begin}
-              className="min-h-11 rounded-2xl bg-primary px-8 py-3 font-black text-primary-foreground"
-            >
-              {phase === "over" ? t.again : t.start}
-            </button>
+            <p className="text-sm leading-relaxed text-muted-foreground max-w-sm">{t.controls}</p>
+            {phase === "over" && isNewBest && (
+              <p className="text-sm font-black text-primary animate-pulse">{t.newBest}</p>
+            )}
+            <div className="flex flex-wrap items-center justify-center gap-2 mt-2">
+              <TiltSpatialButton
+                type="button"
+                onClick={begin}
+                className="inline-flex items-center gap-2 min-h-11 rounded-2xl bg-primary px-8 py-3 font-black text-primary-foreground shadow-lg hover:opacity-90 active:scale-95 transition-all"
+              >
+                {phase === "over" ? <RotateCcw className="size-4" /> : <Play className="size-4 fill-current" />}
+                <span>{phase === "over" ? t.again : t.start}</span>
+              </TiltSpatialButton>
+              {phase === "over" && (
+                <TiltSpatialButton
+                  type="button"
+                  onClick={handleShareCard}
+                  className="inline-flex items-center gap-2 min-h-11 px-4 py-3 rounded-2xl border border-primary/40 bg-primary/10 text-xs font-bold text-primary hover:bg-primary/20 transition-all"
+                >
+                  {shareCardCopied ? <Check className="size-4" /> : <Camera className="size-4" />}
+                  <span>{shareCardCopied ? "카드 복사됨!" : "스냅샷 카드"}</span>
+                </TiltSpatialButton>
+              )}
+            </div>
           </div>
         )}
       </div>
 
       {playing && (
         <div className="mt-3 flex justify-center gap-2">
-          <button
+          <TiltSpatialButton
             type="button"
             aria-label={t.rotateLeft}
-            onClick={() => setYaw((c) => c + YAW_STEP)}
-            className="min-h-11 min-w-11 rounded-xl border border-border font-bold"
-          >←</button>
-          <button
+            onClick={() => {
+              setYaw((c) => c + YAW_STEP);
+              MobileHapticsPro.light();
+            }}
+            className="min-h-11 min-w-11 rounded-xl border border-border bg-card font-bold text-foreground hover:bg-muted"
+          >←</TiltSpatialButton>
+          <TiltSpatialButton
             type="button"
             aria-label={t.rotateRight}
-            onClick={() => setYaw((c) => c - YAW_STEP)}
-            className="min-h-11 min-w-11 rounded-xl border border-border font-bold"
-          >→</button>
+            onClick={() => {
+              setYaw((c) => c - YAW_STEP);
+              MobileHapticsPro.light();
+            }}
+            className="min-h-11 min-w-11 rounded-xl border border-border bg-card font-bold text-foreground hover:bg-muted"
+          >→</TiltSpatialButton>
         </div>
       )}
     </div>
@@ -435,13 +549,13 @@ function StaticField(
               opacity: 0.35 + depth * 0.65,
             }}
             className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full border-2 transition-colors motion-reduce:transition-none ${
-              isLit ? "border-lime-200 bg-lime-400" : isEntered ? "border-lime-600 bg-lime-700" : "border-slate-600 bg-slate-800"
-            } focus-visible:outline focus-visible:outline-2 focus-visible:outline-lime-300`}
+              isLit ? "border-primary bg-primary" : isEntered ? "border-primary/60 bg-primary/40" : "border-border bg-muted"
+            } focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary`}
           />
         );
       })}
       {(loading || notice) && (
-        <p className="absolute inset-x-0 bottom-3 px-4 text-center text-xs text-slate-400">
+        <p className="absolute inset-x-0 bottom-3 px-4 text-center text-xs text-muted-foreground">
           {loading ?? notice}
         </p>
       )}

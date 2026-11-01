@@ -1,4 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { getSpriteUrl } from '../../lib/games/sprites';
+import { celebrate } from '../../lib/games/celebration';
+import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from '../../lib/games/share-card';
+import { Camera, Check, Maximize2, Minimize2 } from 'lucide-react';
 import {
   CARD_DEFS,
   type CardId,
@@ -432,14 +438,61 @@ function resolveLocale(lang?: string): LocaleCode {
   return COPY[code] ? code : 'ko';
 }
 
+function TiltSpireCardButton({
+  children,
+  className = '',
+  disabled,
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const { transformCss, onPointerMove, onPointerLeave } = useCardTiltPro();
+  return (
+    <button
+      style={{ '--card-tilt': disabled ? 'none' : transformCss } as React.CSSProperties}
+      onPointerMove={disabled ? undefined : onPointerMove}
+      onPointerLeave={disabled ? undefined : onPointerLeave}
+      className={`transform-(--card-tilt) will-change-transform ${className}`}
+      disabled={disabled}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+}
+
 export default function SpireRogue({ lang = 'ko' }: SpireRogueProps) {
   const locale = resolveLocale(lang);
   const t = COPY[locale];
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'ko' });
+  const [shareCardCopied, setShareCardCopied] = useState(false);
 
   const [state, setState] = useState<SpireState>(() => createInitialSpireState());
   const [hoveredCardUid, setHoveredCardUid] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
+
+  const handleShareCard = useCallback(async () => {
+    try {
+      const clearedCount = state.map.filter((n) => n.cleared).length;
+      const canvas = createShareCardCanvas({
+        title: "Spire Rogue",
+        subtitle: `Floor ${state.floor + 1} / 5`,
+        score: `${clearedCount * 120 + state.player.hp * 10} PTS`,
+        slug: "spire-rogue",
+        customStats: [
+          { label: "Floor", value: `${state.floor + 1}F` },
+          { label: "Deck Size", value: `${state.masterDeck.length} Cards` },
+          { label: "Status", value: state.phase === 'victory' ? "Spire Conquered" : state.phase === 'defeat' ? "Fallen in Spire" : "Active" },
+        ],
+      });
+      const ok = await copyShareCardToClipboard(canvas);
+      if (ok) {
+        setShareCardCopied(true);
+        setTimeout(() => setShareCardCopied(false), 2000);
+      } else {
+        downloadShareCard(canvas, `spire-rogue-floor${state.floor + 1}.png`);
+      }
+    } catch {}
+  }, [state.floor, state.masterDeck.length, state.map, state.phase, state.player.hp]);
 
   const playSfx = useCallback((kind: 'attack' | 'block' | 'power' | 'turn' | 'victory') => {
     try {
@@ -507,14 +560,29 @@ export default function SpireRogue({ lang = 'ko' }: SpireRogueProps) {
   const handlePlayCard = useCallback(
     (card: SpireCard) => {
       if (state.phase !== 'combat' || state.player.energy < card.cost) return;
-      if (card.type === 'attack') playSfx('attack');
-      else if (card.type === 'skill') playSfx('block');
-      else playSfx('power');
+      if (card.type === 'attack') {
+        playSfx('attack');
+        MobileHapticsPro.medium();
+      } else if (card.type === 'skill') {
+        playSfx('block');
+        MobileHapticsPro.light();
+      } else {
+        playSfx('power');
+        MobileHapticsPro.heavy();
+      }
 
       setState((prev) => {
         const next = playSpireCard(prev, card.uid);
         if (next.phase === 'reward' || next.phase === 'victory') {
           playSfx('victory');
+          if (next.phase === 'victory') {
+            MobileHapticsPro.success();
+            try {
+              if (containerRef.current) celebrate(containerRef.current, { preset: "sparks" });
+            } catch {}
+          } else {
+            MobileHapticsPro.medium();
+          }
           const clearedCount = next.map.filter((n) => n.cleared).length;
           const dateKey = new Date().toISOString().slice(0, 10);
           const progress = loadArcadePassProgress(dateKey);
@@ -523,12 +591,13 @@ export default function SpireRogue({ lang = 'ko' }: SpireRogueProps) {
         return next;
       });
     },
-    [playSfx, state.phase, state.player.energy]
+    [playSfx, state.phase, state.player.energy, containerRef]
   );
 
   const handleEndTurn = useCallback(() => {
     if (state.phase !== 'combat') return;
     playSfx('turn');
+    MobileHapticsPro.heavy();
     setState((prev) => endPlayerTurn(prev));
   }, [playSfx, state.phase]);
 
@@ -764,7 +833,14 @@ export default function SpireRogue({ lang = 'ko' }: SpireRogueProps) {
   };
 
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 text-card-foreground shadow-sm">
+    <div
+      ref={containerRef}
+      className={`flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 text-card-foreground shadow-sm select-none ${
+        isImmersive
+          ? "fixed inset-0 z-50 w-screen h-dvh overflow-y-auto bg-background p-3 sm:p-6 justify-between m-0 rounded-none border-none max-w-none"
+          : "w-full max-w-4xl mx-auto"
+      }`}
+    >
       {/* Top Spire Status Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
         <div>
@@ -787,6 +863,15 @@ export default function SpireRogue({ lang = 'ko' }: SpireRogueProps) {
             className="rounded-lg border border-border bg-background px-3 py-1 text-xs font-semibold text-foreground transition hover:bg-accent"
           >
             {t.newRun}
+          </button>
+          <button
+            type="button"
+            onClick={togglePortal}
+            aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+            title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+            className="rounded-lg border border-border bg-background p-1.5 text-foreground hover:bg-muted transition flex items-center justify-center"
+          >
+            {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
           </button>
         </div>
       </div>
@@ -898,7 +983,7 @@ export default function SpireRogue({ lang = 'ko' }: SpireRogueProps) {
               const playable = state.player.energy >= card.cost;
               const cardTitle = t.cards[card.id]?.name || card.id;
               return (
-                <button
+                <TiltSpireCardButton
                   key={card.uid}
                   type="button"
                   disabled={!playable}
@@ -924,7 +1009,7 @@ export default function SpireRogue({ lang = 'ko' }: SpireRogueProps) {
                   <p className="text-xs leading-snug text-muted-foreground">
                     {formatCardDesc(card)}
                   </p>
-                </button>
+                </TiltSpireCardButton>
               );
             })}
           </div>
@@ -949,10 +1034,13 @@ export default function SpireRogue({ lang = 'ko' }: SpireRogueProps) {
                 upgraded: false,
               };
               return (
-                <button
+                <TiltSpireCardButton
                   key={cid}
                   type="button"
-                  onClick={() => setState((prev) => pickCardReward(prev, cid))}
+                  onClick={() => {
+                    MobileHapticsPro.click();
+                    setState((prev) => pickCardReward(prev, cid));
+                  }}
                   className="flex flex-col justify-between rounded-xl border border-primary bg-card p-3.5 text-left transition hover:-translate-y-0.5 hover:bg-accent"
                 >
                   <div className="flex items-center justify-between">
@@ -964,14 +1052,17 @@ export default function SpireRogue({ lang = 'ko' }: SpireRogueProps) {
                   <p className="mt-2 text-xs text-muted-foreground">
                     {formatCardDesc(previewCard)}
                   </p>
-                </button>
+                </TiltSpireCardButton>
               );
             })}
           </div>
           <div className="flex justify-end">
             <button
               type="button"
-              onClick={() => setState((prev) => pickCardReward(prev, null))}
+              onClick={() => {
+                MobileHapticsPro.click();
+                setState((prev) => pickCardReward(prev, null));
+              }}
               className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-accent"
             >
               {t.skipReward}
@@ -985,22 +1076,28 @@ export default function SpireRogue({ lang = 'ko' }: SpireRogueProps) {
         <div className="flex flex-col gap-3 rounded-xl border border-border bg-muted/30 p-4">
           <h3 className="text-base font-bold">🔥 {t.campfireTitle}</h3>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <button
+            <TiltSpireCardButton
               type="button"
-              onClick={() => setState((prev) => resolveCampfireChoice(prev, 'rest'))}
+              onClick={() => {
+                MobileHapticsPro.medium();
+                setState((prev) => resolveCampfireChoice(prev, 'rest'));
+              }}
               className="flex flex-col gap-1 rounded-xl border border-primary bg-card p-4 text-left transition hover:bg-accent"
             >
               <span className="font-bold text-sm">🛌 {t.campfireRest}</span>
               <span className="text-xs text-muted-foreground">{t.campfireRestDesc}</span>
-            </button>
-            <button
+            </TiltSpireCardButton>
+            <TiltSpireCardButton
               type="button"
-              onClick={() => setState((prev) => resolveCampfireChoice(prev, 'smith'))}
+              onClick={() => {
+                MobileHapticsPro.heavy();
+                setState((prev) => resolveCampfireChoice(prev, 'smith'));
+              }}
               className="flex flex-col gap-1 rounded-xl border border-primary bg-card p-4 text-left transition hover:bg-accent"
             >
               <span className="font-bold text-sm">⚒️ {t.campfireSmith}</span>
               <span className="text-xs text-muted-foreground">{t.campfireSmithDesc}</span>
-            </button>
+            </TiltSpireCardButton>
           </div>
         </div>
       )}
@@ -1008,19 +1105,40 @@ export default function SpireRogue({ lang = 'ko' }: SpireRogueProps) {
       {/* Phase 5: Victory / Defeat */}
       {(state.phase === 'victory' || state.phase === 'defeat') && (
         <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-muted/40 p-6 text-center">
+          <div className="relative mb-2 flex size-20 items-center justify-center">
+            <img
+              src={getSpriteUrl('trophy', 128)}
+              alt="Trophy"
+              className="size-20 object-contain drop-shadow-xl animate-bounce"
+              loading="lazy"
+            />
+          </div>
           <h3 className="text-xl font-bold">
             {state.phase === 'victory' ? `🏆 ${t.victoryTitle}` : `💀 ${t.defeatTitle}`}
           </h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground max-w-md">
             {state.phase === 'victory' ? t.victoryDesc : t.defeatDesc}
           </p>
-          <button
-            type="button"
-            onClick={() => setState(createInitialSpireState())}
-            className="rounded-xl bg-primary px-5 py-2 text-sm font-bold text-primary-foreground shadow-sm transition hover:opacity-90"
-          >
-            {t.newRun}
-          </button>
+          <div className="flex flex-wrap items-center justify-center gap-2 mt-2">
+            <TiltSpireCardButton
+              type="button"
+              onClick={() => {
+                MobileHapticsPro.medium();
+                setState(createInitialSpireState());
+              }}
+              className="rounded-xl bg-primary px-5 py-2 text-sm font-bold text-primary-foreground shadow-sm transition hover:opacity-90"
+            >
+              {t.newRun}
+            </TiltSpireCardButton>
+            <TiltSpireCardButton
+              type="button"
+              onClick={handleShareCard}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-primary/40 bg-primary/10 px-4 py-2 text-xs font-bold text-primary hover:bg-primary/20 transition"
+            >
+              {shareCardCopied ? <Check className="size-4" /> : <Camera className="size-4" />}
+              <span>{shareCardCopied ? "카드 복사됨!" : "스냅샷 카드"}</span>
+            </TiltSpireCardButton>
+          </div>
         </div>
       )}
     </div>

@@ -19,7 +19,11 @@ import {
 } from "@/lib/games/juice-engine";
 import { playSyntheticTone } from "@/lib/games/audio-mixer";
 import { useCardTiltPro, MobileHapticsPro } from "@/lib/games/engine-suite-unified";
-import { RotateCcw, Volume2, VolumeX, CheckCircle, Sparkles, AlertTriangle } from "lucide-react";
+import { useArcadePortal } from "@/lib/games/arcade-portal";
+import { celebrate } from "@/lib/games/celebration";
+import { getSpriteUrl } from "@/lib/games/sprites";
+import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "@/lib/games/share-card";
+import { RotateCcw, Volume2, VolumeX, CheckCircle, Sparkles, AlertTriangle, Maximize2, Minimize2, Camera, Check } from "lucide-react";
 
 interface SpellTowerProps {
   locale?: string;
@@ -184,12 +188,36 @@ function TiltSpellTileButton({
 
 export const SpellTower: React.FC<SpellTowerProps> = ({ locale = "ko" }) => {
   const t = useMemo(() => I18N[locale] ?? I18N.ko, [locale]);
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || "ko" });
+  const [shareCardCopied, setShareCardCopied] = useState(false);
 
   const [game, setGame] = useState<SpellTowerState>(() => initSpellTower());
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [, setShakeState] = useState<ScreenShakeState>(() => createShakeState());
   const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0 });
   const [message, setMessage] = useState<string | null>(null);
+
+  const handleShareCard = useCallback(async () => {
+    try {
+      const canvas = createShareCardCanvas({
+        title: "SpellTower Web",
+        subtitle: "Gravity Letter Word Arena",
+        score: `${game.score} PTS`,
+        slug: "spell-tower",
+        customStats: [
+          { label: "Words Cleared", value: `${game.wordsFound.length}` },
+          { label: "Status", value: game.status === "game_over" ? "Tower Collapsed" : "Active" },
+        ],
+      });
+      const ok = await copyShareCardToClipboard(canvas);
+      if (ok) {
+        setShareCardCopied(true);
+        setTimeout(() => setShareCardCopied(false), 2000);
+      } else {
+        downloadShareCard(canvas, `spelltower-${game.score}.png`);
+      }
+    } catch {}
+  }, [game.score, game.status, game.wordsFound.length]);
 
   const audioCtxRef = useRef<AudioContext | null>(null);
   const getAudioCtx = useCallback(() => {
@@ -274,6 +302,9 @@ export const SpellTower: React.FC<SpellTowerProps> = ({ locale = "ko" }) => {
       setShakeState((s) => addTrauma(s, mult));
       if (result.clearedWord.length >= 5) {
         MobileHapticsPro.success();
+        try {
+          if (containerRef.current) celebrate(containerRef.current, { preset: "stardust" });
+        } catch {}
       } else {
         MobileHapticsPro.heavy();
       }
@@ -288,7 +319,7 @@ export const SpellTower: React.FC<SpellTowerProps> = ({ locale = "ko" }) => {
       setMessage(`"${result.clearedWord}" +${result.pointsEarned}${t.pointsPlus}`);
       setTimeout(() => setMessage(null), 2000);
     }
-  }, [game, isCurrentValid, t, soundEnabled, getAudioCtx]);
+  }, [game, isCurrentValid, t, soundEnabled, getAudioCtx, containerRef]);
 
   const handleClearPath = useCallback(() => {
     MobileHapticsPro.click();
@@ -303,7 +334,12 @@ export const SpellTower: React.FC<SpellTowerProps> = ({ locale = "ko" }) => {
 
   return (
     <div
-      className="mx-auto flex max-w-xl flex-col items-center gap-4 p-4 font-sans text-foreground translate-x-(--shake-x) translate-y-(--shake-y)"
+      ref={containerRef}
+      className={`relative mx-auto flex flex-col items-center gap-4 p-4 font-sans text-foreground select-none translate-x-(--shake-x) translate-y-(--shake-y) ${
+        isImmersive
+          ? "fixed inset-0 z-50 w-screen h-dvh overflow-y-auto bg-background p-3 sm:p-6 justify-between m-0 max-w-none"
+          : "max-w-xl"
+      }`}
       style={
         {
           "--shake-x": `${shakeOffset.x}px`,
@@ -316,7 +352,7 @@ export const SpellTower: React.FC<SpellTowerProps> = ({ locale = "ko" }) => {
         <div className="flex items-center gap-3">
           <div className="flex flex-col">
             <span className="text-xs font-semibold text-muted-foreground">{t.score}</span>
-            <span className="text-2xl font-black text-primary">{game.score}</span>
+            <span className="text-2xl font-black text-primary font-mono">{game.score}</span>
           </div>
           <div className="text-xs text-muted-foreground">
             {t.words}: {game.wordsFound.length}
@@ -334,6 +370,15 @@ export const SpellTower: React.FC<SpellTowerProps> = ({ locale = "ko" }) => {
           </Button>
           <Button variant="ghost" size="icon" onClick={handleRestart} aria-label="Restart">
             <RotateCcw className="h-5 w-5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={togglePortal}
+            aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+            title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+          >
+            {isImmersive ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
           </Button>
         </div>
       </div>
@@ -425,18 +470,37 @@ export const SpellTower: React.FC<SpellTowerProps> = ({ locale = "ko" }) => {
       {game.status === "game_over" && (
         <div className="absolute inset-0 z-30 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
           <div className="flex max-w-sm flex-col items-center gap-4 rounded-2xl border border-destructive/40 bg-card p-6 shadow-2xl text-center">
-            <span className="text-5xl">💥</span>
+            <div className="relative mb-1 flex size-20 items-center justify-center">
+              <img
+                src={getSpriteUrl('trophy', 128)}
+                alt="Trophy"
+                className="size-20 object-contain drop-shadow-xl animate-bounce"
+                loading="lazy"
+              />
+            </div>
             <h3 className="text-2xl font-bold text-destructive">{t.gameOver}</h3>
             <p className="text-sm text-muted-foreground">{t.gameOverDesc}</p>
             <div className="rounded-lg bg-muted px-4 py-2 text-sm font-semibold text-foreground">
               {t.score}: {game.score} · {t.words}: {game.wordsFound.length}
             </div>
-            <Button variant="default" className="w-full" onClick={handleRestart}>
-              {t.restart}
-            </Button>
+            <div className="flex flex-wrap items-center justify-center gap-2 w-full mt-2">
+              <Button variant="default" className="flex-1 min-w-30" onClick={handleRestart}>
+                {t.restart}
+              </Button>
+              <button
+                type="button"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-primary/40 bg-primary/10 px-3 py-2 text-xs font-bold text-primary hover:bg-primary/20 transition"
+                onClick={handleShareCard}
+              >
+                {shareCardCopied ? <Check className="size-4" /> : <Camera className="size-4" />}
+                <span>{shareCardCopied ? "복사됨!" : "스냅샷 카드"}</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
     </div>
   );
 };
+
+export default SpellTower;

@@ -10,6 +10,8 @@ import {
 import type { Locale } from '../../lib/i18n';
 import { Play, RotateCcw, Trophy, CircleDot, Zap, Maximize2, Minimize2, Volume2, VolumeX, Share2, Check } from 'lucide-react';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { getSpriteUrl } from '../../lib/games/sprites';
 import { celebrate } from '../../lib/games/celebration';
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from '../../lib/games/share-card';
 
@@ -116,6 +118,21 @@ const UI_TEXT: Record<Locale, {
     instructions: "¡Lanza la bola con Espacio y usa A/D o toques en pantalla para accionar las paletas!",
   },
 };
+
+function TiltPinballButton({ children, className = '', ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const { transformCss, onPointerMove, onPointerLeave } = useCardTiltPro();
+  return (
+    <button
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`transform-(--card-tilt) will-change-transform ${className}`}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+}
 
 export default function SpacePinball({ locale }: Props) {
   const [gameState, setGameState] = useState<PinballGameState>(() => createInitialPinballState());
@@ -224,18 +241,23 @@ export default function SpacePinball({ locale }: Props) {
   // Handle launch
   const handleLaunch = useCallback(() => {
     playSound('launch');
+    MobileHapticsPro.heavy();
     setGameState((prev) => launchBall(prev, 1));
   }, [playSound]);
 
   // Handle flipper action
   const handleFlipper = useCallback((side: "left" | "right", isPressed: boolean) => {
-    if (isPressed) playSound('flipper');
+    if (isPressed) {
+      playSound('flipper');
+      MobileHapticsPro.light();
+    }
     setGameState((prev) => setFlipperState(prev, side, isPressed));
   }, [playSound]);
 
   // Handle restart
   const handleRestart = useCallback(() => {
     playSound('launch');
+    MobileHapticsPro.medium();
     setGameState((prev) => createInitialPinballState(prev.highScore));
   }, [playSound]);
 
@@ -254,9 +276,11 @@ export default function SpacePinball({ locale }: Props) {
           const next = updatePinballPhysics(prev, dt);
           if (next.score > prev.score) {
             playSound('bumper');
+            MobileHapticsPro.medium();
           }
           if (next.status === "gameover" && prev.status !== "gameover") {
             playSound('gameover');
+            MobileHapticsPro.error();
             if (containerRef.current) celebrate(containerRef.current, { preset: "sparks" });
           }
           return next;
@@ -384,41 +408,56 @@ export default function SpacePinball({ locale }: Props) {
         {/* Overlay for Idle / Game Over */}
         {gameState.status === "idle" && (
           <div className="absolute inset-0 bg-background/60 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center pointer-events-auto">
-            <Zap className="w-12 h-12 text-primary animate-pulse mb-3" />
+            <div className="relative mb-3 flex size-16 items-center justify-center">
+              <img
+                src={getSpriteUrl('star', 64)}
+                alt="Space Star"
+                className="size-16 object-contain drop-shadow-lg animate-pulse"
+                loading="lazy"
+              />
+            </div>
             <h2 className="text-2xl sm:text-3xl font-black text-foreground mb-2">
               {t.title}
             </h2>
             <p className="text-sm text-muted-foreground max-w-md mb-6">
               {t.instructions}
             </p>
-            <button
+            <TiltPinballButton
               type="button"
               onClick={handleLaunch}
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-base shadow-lg hover:opacity-90 active:scale-95 transition-all"
             >
               <Play className="w-5 h-5 fill-current" />
               <span>{t.launch}</span>
-            </button>
+            </TiltPinballButton>
           </div>
         )}
 
         {gameState.status === "gameover" && (
           <div className="absolute inset-0 bg-background/80 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center pointer-events-auto">
-            <h2 className="text-3xl font-black text-destructive mb-2">{t.gameOver}</h2>
+            <div className="relative mb-2 flex size-20 items-center justify-center">
+              <img
+                src={getSpriteUrl('trophy', 128)}
+                alt="Game Trophy"
+                className="size-20 object-contain drop-shadow-xl animate-bounce"
+                loading="lazy"
+              />
+            </div>
+            <h2 className="text-3xl font-black text-destructive mb-1">{t.gameOver}</h2>
             <p className="text-sm text-muted-foreground mb-2">{t.finalScore}</p>
             <span className="text-4xl font-black text-foreground font-mono mb-6">
               {gameState.score.toLocaleString()}
             </span>
             <div className="flex flex-wrap items-center justify-center gap-2">
-              <button
+              <TiltPinballButton
                 type="button"
                 onClick={handleRestart}
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-base shadow-lg hover:opacity-90 active:scale-95 transition-all"
               >
                 <RotateCcw className="w-5 h-5" />
                 <span>{t.restart}</span>
-              </button>
-              <button
+              </TiltPinballButton>
+              <TiltPinballButton
                 type="button"
                 onClick={handleShareCard}
                 className="inline-flex items-center gap-2 px-4 py-3 rounded-xl border border-primary/50 bg-primary/20 text-primary font-bold text-sm shadow-md hover:bg-primary/30 active:scale-95 transition-all"
@@ -426,7 +465,7 @@ export default function SpacePinball({ locale }: Props) {
               >
                 {shareCardCopied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
                 <span>{shareCardCopied ? "복사 완료" : "결과 카드 공유"}</span>
-              </button>
+              </TiltPinballButton>
             </div>
           </div>
         )}
