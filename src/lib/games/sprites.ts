@@ -265,6 +265,9 @@ export const MAZE_SPRITES = {
 export const SUSHI_CONVEYOR_SPRITES = {
   tuna: "/assets/sprites/sushi-conveyor/sushi-maguro-128.png",
   salmon: "/assets/sprites/sushi-conveyor/sushi-salmon-128.png",
+  shrimp: "/assets/sprites/sushi-conveyor/sushi-ebi-128.png",
+  tamago: "/assets/sprites/sushi-conveyor/sushi-tamago-128.png",
+  unagi: "/assets/sprites/sushi-conveyor/sushi-unagi-128.png",
 } as const;
 
 export const CHECKERS_SPRITES = {
