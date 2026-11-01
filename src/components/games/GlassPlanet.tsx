@@ -8,6 +8,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Maximize2, Minimize2, Share2, Check } from "lucide-react";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { celebrate } from "../../lib/games/celebration";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import {
   createShareCardCanvas,
   copyShareCardToClipboard,
@@ -338,6 +339,50 @@ function controlClass(tone: "primary" | "quiet" | "danger"): string {
   return "min-h-11 min-w-11 rounded-xl bg-muted px-3 text-sm font-semibold text-foreground disabled:opacity-40";
 }
 
+function TiltGlassButton({
+  children,
+  onClick,
+  disabled,
+  className,
+  tone = "quiet",
+  ariaLabel,
+  title,
+  ariaPressed,
+  type = "button",
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  className?: string;
+  tone?: "primary" | "quiet" | "danger";
+  ariaLabel?: string;
+  title?: string;
+  ariaPressed?: boolean;
+  type?: "button" | "submit";
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  const baseClass = controlClass(tone);
+  return (
+    <button
+      type={type}
+      onClick={() => {
+        triggerPop(0.2);
+        onClick?.();
+      }}
+      disabled={disabled}
+      title={title}
+      aria-label={ariaLabel}
+      aria-pressed={ariaPressed}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      className={`will-change-transform transform-(--card-tilt) transition-transform duration-100 ${baseClass} ${className ?? ""}`}
+    >
+      {children}
+    </button>
+  );
+}
+
 export default function GlassPlanet({ locale = "en" }: { locale?: Locale }) {
   const copy = COPY[locale] ?? COPY.en;
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale });
@@ -392,6 +437,9 @@ export default function GlassPlanet({ locale = "en" }: { locale?: Locale }) {
     if (state.status !== prevStatusRef.current && containerRef.current) {
       if (state.status === "win") {
         celebrate(containerRef.current, { preset: "leaves" });
+        MobileHapticsPro.success();
+      } else if (state.status === "lose") {
+        MobileHapticsPro.heavy();
       }
     }
     prevStatusRef.current = state.status;
@@ -464,10 +512,12 @@ export default function GlassPlanet({ locale = "en" }: { locale?: Locale }) {
     if (next === current) {
       arm();
       if (!mutedRef.current && !pausedRef.current) audio.current?.tick("block");
+      MobileHapticsPro.warning();
       return;
     }
     arm();
     note(next);
+    MobileHapticsPro.light();
     glideSerial.current += 1;
     setShown(current);
     setState(next);
@@ -492,6 +542,7 @@ export default function GlassPlanet({ locale = "en" }: { locale?: Locale }) {
     const current = stateRef.current;
     if (current.status !== "play") return;
     arm();
+    MobileHapticsPro.heavy();
     const next = resign(current);
     if (!mutedRef.current) audio.current?.tick("lose");
     glideSerial.current += 1;
@@ -575,6 +626,18 @@ export default function GlassPlanet({ locale = "en" }: { locale?: Locale }) {
           <span className="tabular-nums">{seed}</span>
         </div>
       </div>
+      <div className="space-y-1">
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span>{copy.steps} 소모율</span>
+          <span className="font-semibold text-foreground">{Math.round((state.steps / STEP_CAP) * 100)}% ({state.steps}/{STEP_CAP})</span>
+        </div>
+        <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+          <div
+            className="h-full bg-primary transition-all duration-300 w-(--step-pct)"
+            style={{ '--step-pct': `${Math.min(100, Math.round((state.steps / STEP_CAP) * 100))}%` } as React.CSSProperties}
+          />
+        </div>
+      </div>
       <p role="status" aria-live="polite" className="text-sm text-foreground">{live}</p>
       {state.status !== "play" && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
@@ -610,9 +673,9 @@ export default function GlassPlanet({ locale = "en" }: { locale?: Locale }) {
         </div>
         {paused ? (
           <div className="absolute inset-0 flex items-center justify-center bg-background/80">
-            <button type="button" className={controlClass("primary")} onClick={() => setPaused(false)}>
+            <TiltGlassButton tone="primary" onClick={() => { MobileHapticsPro.selection(); setPaused(false); }}>
               {copy.resume}
-            </button>
+            </TiltGlassButton>
           </div>
         ) : null}
       </div>
@@ -623,33 +686,47 @@ export default function GlassPlanet({ locale = "en" }: { locale?: Locale }) {
             const open = axisOpen(state, item.bit);
             const name = copy[item.key];
             return (
-              <button
+              <TiltGlassButton
                 key={item.key}
-                type="button"
-                className={open ? controlClass("primary") : controlClass("quiet")}
-                aria-label={`${name}. ${open ? copy.open : copy.shut}`}
+                tone={open ? "primary" : "quiet"}
+                ariaLabel={`${name}. ${open ? copy.open : copy.shut}`}
                 disabled={locked || !open}
                 onClick={() => move(item.bit)}
               >
                 {name}
-              </button>
+              </TiltGlassButton>
             );
           })}
         </div>
       </div>
       <div className="flex flex-wrap gap-2">
-        <button type="button" className={paused ? controlClass("primary") : controlClass("quiet")} aria-pressed={paused} onClick={() => setPaused((value) => !value)}>
+        <TiltGlassButton
+          tone={paused ? "primary" : "quiet"}
+          ariaPressed={paused}
+          onClick={() => { MobileHapticsPro.selection(); setPaused((value) => !value); }}
+        >
           {paused ? copy.resume : copy.pause}
-        </button>
-        <button type="button" className={controlClass("quiet")} onClick={() => setView((value) => (value + 1) % 4)}>
+        </TiltGlassButton>
+        <TiltGlassButton
+          tone="quiet"
+          onClick={() => { MobileHapticsPro.light(); setView((value) => (value + 1) % 4); }}
+        >
           {copy.view}
-        </button>
-        <button type="button" className={muted ? controlClass("primary") : controlClass("quiet")} aria-pressed={muted} onClick={() => { arm(); setMuted((value) => !value); }}>
+        </TiltGlassButton>
+        <TiltGlassButton
+          tone={muted ? "primary" : "quiet"}
+          ariaPressed={muted}
+          onClick={() => { arm(); MobileHapticsPro.selection(); setMuted((value) => !value); }}
+        >
           {muted ? copy.sound : copy.mute}
-        </button>
-        <button type="button" className={controlClass("danger")} disabled={state.status !== "play"} onClick={giveUp}>
+        </TiltGlassButton>
+        <TiltGlassButton
+          tone="danger"
+          disabled={state.status !== "play"}
+          onClick={giveUp}
+        >
           {copy.giveUp}
-        </button>
+        </TiltGlassButton>
       </div>
       <form
         className="flex flex-wrap items-end gap-2"
@@ -670,17 +747,17 @@ export default function GlassPlanet({ locale = "en" }: { locale?: Locale }) {
             className="min-h-11 w-28 rounded-xl border border-border bg-card px-3 text-foreground"
           />
         </label>
-        <button type="submit" className={controlClass("quiet")}>{copy.apply}</button>
-        <button
-          type="button"
-          className={controlClass("quiet")}
+        <TiltGlassButton type="submit" tone="quiet" onClick={() => MobileHapticsPro.light()}>{copy.apply}</TiltGlassButton>
+        <TiltGlassButton
+          tone="quiet"
           onClick={() => {
             arm();
+            MobileHapticsPro.light();
             load(nextSeed(seed));
           }}
         >
           {copy.next}
-        </button>
+        </TiltGlassButton>
       </form>
     </div>
   );

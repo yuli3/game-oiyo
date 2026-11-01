@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Camera, Check, Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { celebrate } from '../../lib/games/celebration';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import type { Locale } from '../../lib/i18n';
 import { gomokuBestMove, gomokuThreatAt, type GomokuThreat } from '../../lib/games/ai/gomoku';
 import type { AiLevel, GameMode } from '../../lib/games/ai/types';
@@ -60,6 +62,47 @@ const AI_INFO: Record<Locale, { difficulty:string; level:Record<AiLevel,string>;
     fr:{difficulty:'Recherche IA',level:{1:'top 5 pondéré',2:'meilleur motif à 1 ply',3:'top 6 · réponse à 2 ply'},review:'Revoir la défaite',threats:{five:'cinq alignés','open-four':'quatre ouvert','four':'quatre à une issue','open-three':'trois ouvert',none:'dernier coup forcé'}},
     es:{difficulty:'Búsqueda IA',level:{1:'top 5 ponderado',2:'mejor patrón a 1 ply',3:'top 6 · respuesta a 2 ply'},review:'Revisión de derrota',threats:{five:'cinco en línea','open-four':'cuatro abierto','four':'cuatro con un extremo','open-three':'tres abierto',none:'última jugada forzada'}},
 };
+
+function TiltGomokuButton({
+    children,
+    onClick,
+    disabled,
+    className,
+    ariaPressed,
+    ariaLabel,
+    title,
+    type = 'button',
+}: {
+    children: React.ReactNode;
+    onClick?: () => void;
+    disabled?: boolean;
+    className?: string;
+    ariaPressed?: boolean;
+    ariaLabel?: string;
+    title?: string;
+    type?: 'button' | 'submit';
+}) {
+    const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+    return (
+        <button
+            type={type}
+            onClick={() => {
+                triggerPop(0.2);
+                onClick?.();
+            }}
+            disabled={disabled}
+            aria-pressed={ariaPressed}
+            aria-label={ariaLabel}
+            title={title}
+            onPointerMove={onPointerMove}
+            onPointerLeave={onPointerLeave}
+            style={{ '--card-tilt': transformCss } as React.CSSProperties}
+            className={`will-change-transform transform-(--card-tilt) transition-transform duration-100 ${className ?? ''}`}
+        >
+            {children}
+        </button>
+    );
+}
 
 const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     const t = i18n[locale] ?? i18n.en;
@@ -229,6 +272,14 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         } else {
             tone(220, 0.08);
         }
+        if (result === 1 || (mode === 'local' && result !== 0)) {
+            MobileHapticsPro.success();
+            if (containerRef.current) {
+                celebrate(containerRef.current, { preset: 'sparks' });
+            }
+        } else if (result === AI_PLAYER) {
+            MobileHapticsPro.heavy();
+        }
         if (mode === 'ai') {
             const outcome = result === 0 ? 'd' : result === AI_PLAYER ? 'l' : 'w';
             setRecord(recordResult('gomoku', outcome));
@@ -249,6 +300,7 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
             if (threat !== 'none') setLastAiForcing(current => threat === 'five' && current ? current : { index, threat });
         }
         playStoneSnap();
+        MobileHapticsPro.light();
         if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
             try { navigator.vibrate(12); } catch {}
         }
@@ -319,6 +371,7 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                 }
             } else {
                 tone(180, 0.12);
+                MobileHapticsPro.warning();
                 setTsumegoFeedback("오답입니다. 다른 급소를 찾아보세요!");
                 setTimeout(() => setTsumegoFeedback(null), 2200);
             }
@@ -420,40 +473,63 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
             }
         >
             <div className={`not-prose ${isImmersive ? 'my-0 w-full max-w-2xl' : 'my-12 max-w-lg'} p-4 sm:p-8 bg-card border border-border rounded-4xl shadow-sm mx-auto`}>
-                <div className="flex justify-between items-center mb-4">
+                <div className="flex justify-between items-center mb-3">
                     <div>
                         <h3 className="text-xl font-black text-foreground">{t.title}</h3>
                         <div className="flex items-center gap-2 mt-1" aria-live="polite">
-                            <div className={`w-3 h-3 rounded-full ${isBlackTurn ? 'bg-slate-900' : 'bg-slate-200 border border-slate-400'}`} />
+                            <div className={`w-3 h-3 rounded-full ${isBlackTurn ? 'bg-foreground' : 'bg-muted border border-border'}`} />
                             <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
                                 {thinking ? t.thinking : `${isBlackTurn ? t.black : t.white} ${t.turn}`}
                             </span>
                         </div>
                     </div>
-                    <button type="button" onClick={reset} className="min-h-11 px-4 py-2 bg-muted hover:bg-muted/80 text-muted-foreground rounded-xl text-xs font-bold transition-colors motion-reduce:transition-none border border-border">
+                    <TiltGomokuButton
+                        onClick={() => { MobileHapticsPro.selection(); reset(); }}
+                        className="min-h-11 px-4 py-2 bg-muted hover:bg-muted/80 text-muted-foreground rounded-xl text-xs font-bold border border-border"
+                    >
                         {t.reset}
-                    </button>
+                    </TiltGomokuButton>
+                </div>
+
+                {/* Progress bar */}
+                <div className="mb-4 space-y-1">
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>{x.moves} 진행</span>
+                        <span className="font-semibold text-foreground">{moveCount} / 225</span>
+                    </div>
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                        <div
+                            className="h-full bg-primary transition-all duration-300 w-(--moves-pct)"
+                            style={{ '--moves-pct': `${Math.min(100, Math.round((moveCount / 225) * 100))}%` } as React.CSSProperties}
+                        />
+                    </div>
                 </div>
 
                 {/* Mode + difficulty */}
                 <div className="mb-4 flex flex-wrap items-center gap-2">
                     <div className="inline-flex rounded-xl border border-border overflow-hidden" role="group" aria-label="Game Mode">
                         {(['local', 'ai', 'tsumego'] as const).map((m) => (
-                            <button type="button" key={m} onClick={() => switchMode(m)}
-                                aria-pressed={mode === m}
-                                className={`min-h-11 px-3 py-1.5 text-xs font-bold transition-colors motion-reduce:transition-none ${mode === m ? 'bg-primary text-primary-foreground' : 'bg-muted/50 text-muted-foreground hover:bg-muted'}`}>
+                            <TiltGomokuButton
+                                key={m}
+                                onClick={() => { MobileHapticsPro.selection(); switchMode(m); }}
+                                ariaPressed={mode === m}
+                                className={`min-h-11 px-3 py-1.5 text-xs font-bold ${mode === m ? 'bg-primary text-primary-foreground' : 'bg-muted/50 text-muted-foreground hover:bg-muted'}`}
+                            >
                                 {m === 'local' ? t.modeLocal : m === 'ai' ? t.modeAi : '묘수풀이'}
-                            </button>
+                            </TiltGomokuButton>
                         ))}
                     </div>
                     {mode === 'ai' && (
                         <div className="inline-flex gap-1">
                             {([1, 2, 3] as AiLevel[]).map((lv) => (
-                                <button type="button" key={lv} onClick={() => { setLevel(lv); reset(); }}
-                                    aria-pressed={level === lv}
-                                    className={`min-h-11 px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-colors motion-reduce:transition-none ${level === lv ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
+                                <TiltGomokuButton
+                                    key={lv}
+                                    onClick={() => { MobileHapticsPro.selection(); setLevel(lv); reset(); }}
+                                    ariaPressed={level === lv}
+                                    className={`min-h-11 px-2.5 py-1.5 rounded-lg text-xs font-bold border ${level === lv ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}
+                                >
                                     {lv === 1 ? t.level1 : lv === 2 ? t.level2 : t.level3}
-                                </button>
+                                </TiltGomokuButton>
                             ))}
                         </div>
                     )}
@@ -467,39 +543,49 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                             <p className="mt-1 text-muted-foreground">{tsumegoPuzzle.description}</p>
                             <p className="mt-1 font-bold text-primary/80">💡 힌트: {tsumegoPuzzle.hint}</p>
                             {tsumegoFeedback && (
-                                <p className={`mt-2 font-black ${tsumegoFeedback.includes('정답') ? 'text-emerald-500' : 'text-destructive'}`}>
+                                <p className={`mt-2 font-black ${tsumegoFeedback.includes('정답') ? 'text-primary' : 'text-destructive'}`}>
                                     {tsumegoFeedback}
                                 </p>
                             )}
                         </div>
                     )}
                     {moveCount > 0 && winner === null && (
-                        <button type="button" onClick={() => setPaused((value) => { if (value) setRestored(false); return !value; })} className="min-h-11 px-3 rounded-lg border border-border text-xs font-bold text-muted-foreground hover:bg-muted">
+                        <TiltGomokuButton
+                            onClick={() => {
+                                MobileHapticsPro.selection();
+                                setPaused((value) => { if (value) setRestored(false); return !value; });
+                            }}
+                            className="min-h-11 px-3 rounded-lg border border-border text-xs font-bold text-muted-foreground hover:bg-muted"
+                        >
                             {paused ? `▶ ${x.resume}` : `Ⅱ ${x.pause}`}
-                        </button>
+                        </TiltGomokuButton>
                     )}
-                    <button
-                        type="button"
-                        onClick={() => setMuted((value) => !value)}
-                        aria-pressed={muted}
-                        aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+                    <TiltGomokuButton
+                        onClick={() => {
+                            MobileHapticsPro.selection();
+                            setMuted((value) => !value);
+                        }}
+                        ariaPressed={muted}
+                        ariaLabel={muted ? portalLabels.unmute : portalLabels.mute}
                         title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`}
                         className="min-h-11 px-3 py-1.5 rounded-lg border border-border text-xs font-bold text-muted-foreground hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                     >
                         {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
                         <span className="hidden sm:inline">{muted ? portalLabels.unmute : portalLabels.mute}</span>
-                    </button>
-                    <button
-                        type="button"
-                        onClick={togglePortal}
-                        aria-pressed={isImmersive}
-                        aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+                    </TiltGomokuButton>
+                    <TiltGomokuButton
+                        onClick={() => {
+                            MobileHapticsPro.light();
+                            togglePortal();
+                        }}
+                        ariaPressed={isImmersive}
+                        ariaLabel={isImmersive ? portalLabels.exit : portalLabels.enter}
                         title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
                         className="min-h-11 px-3 py-1.5 rounded-lg border border-border text-xs font-bold text-muted-foreground hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                     >
                         {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
                         <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
-                    </button>
+                    </TiltGomokuButton>
                 {mode === 'ai' && record && (record.w + record.l + record.d > 0) && (
                     <span className="ml-auto text-xs font-bold text-muted-foreground uppercase tracking-widest">
                         {t.record} {record.w}–{record.l}{record.d ? `–${record.d}` : ''}
@@ -533,7 +619,7 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                 {/* Board Lines */}
                 <div className="absolute inset-2 grid grid-cols-14 grid-rows-14 pointer-events-none">
                     {Array.from({ length: 196 }).map((_, i) => (
-                        <div key={i} className="border-t border-l border-slate-900/20" />
+                        <div key={i} className="border-t border-l border-foreground/20" />
                     ))}
                 </div>
 
@@ -554,11 +640,11 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                             tabIndex={focusIndex === i ? 0 : -1}
                             role="gridcell"
                             aria-label={`${String.fromCharCode(65 + (i % SIZE))}${Math.floor(i / SIZE) + 1}, ${stone === null ? t.empty : `${stone === 1 ? t.black : t.white} ${t.stone}`}${i === lastMove ? `, ${t.lastMove}` : ''}`}
-                            className="relative flex items-center justify-center group focus-visible:z-20 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-[-4px] focus-visible:outline-sky-600"
+                            className="relative flex items-center justify-center group focus-visible:z-20 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-[-4px] focus-visible:outline-primary"
                         >
                             {/* Hover Ghost */}
                             {stone === null && winner === null && !thinking && !paused && (
-                                <div className={`absolute w-[80%] h-[80%] rounded-full opacity-0 group-hover:opacity-30 transition-opacity motion-reduce:transition-none ${isBlackTurn ? 'bg-slate-900' : 'bg-card shadow-sm'}`} />
+                                <div className={`absolute w-[80%] h-[80%] rounded-full opacity-0 group-hover:opacity-30 transition-opacity motion-reduce:transition-none ${isBlackTurn ? 'bg-foreground' : 'bg-card shadow-sm'}`} />
                             )}
                             {/* Real Stone */}
                             {stone !== null && (
@@ -588,17 +674,25 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                             {winner !== 0 && <p className="text-xs text-muted-foreground mb-4 max-w-xs mx-auto">{x.nextGoal}</p>}
                             {aiReview && <div className="mb-5 max-w-xs mx-auto rounded-2xl border border-warning/40 bg-warning/10 p-3 text-left text-xs text-foreground"><p className="font-black text-warning">{aiInfo.review} · {coordinate(aiReview.index)}</p><p className="mt-1">{aiInfo.threats[aiReview.threat]}</p><p className="mt-1 text-xs text-muted-foreground">{aiInfo.difficulty}: {aiInfo.level[level]}</p></div>}
                             <div className="flex flex-wrap justify-center gap-2">
-                                <button
-                                    type="button"
-                                    onClick={handleShareCard}
+                                <TiltGomokuButton
+                                    onClick={() => {
+                                        MobileHapticsPro.light();
+                                        handleShareCard();
+                                    }}
                                     className="min-h-11 px-4 py-2 rounded-xl border border-primary/40 bg-primary/10 text-xs font-bold text-primary hover:bg-primary/20 transition-colors flex items-center gap-1.5"
                                 >
                                     {shareCardCopied ? <Check className="size-4" /> : <Camera className="size-4" />}
                                     <span>{shareCardCopied ? '카드 복사됨!' : '스냅샷 카드'}</span>
-                                </button>
-                                <button type="button" onClick={reset} className="min-h-11 px-6 py-2 bg-primary text-primary-foreground rounded-xl font-bold text-xs shadow-md hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
+                                </TiltGomokuButton>
+                                <TiltGomokuButton
+                                    onClick={() => {
+                                        MobileHapticsPro.selection();
+                                        reset();
+                                    }}
+                                    className="min-h-11 px-6 py-2 bg-primary text-primary-foreground rounded-xl font-bold text-xs shadow-md hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                                >
                                     {t.reset}
-                                </button>
+                                </TiltGomokuButton>
                             </div>
                         </div>
                     </div>

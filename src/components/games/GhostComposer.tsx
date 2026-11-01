@@ -13,6 +13,7 @@ import { dateKeyIndex, kstDateKey } from "../../lib/games/todays-game";
 import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from "../../lib/games/game-audio";
 import { createHaptics } from "../../lib/games/haptics";
 import { celebrate } from "../../lib/games/celebration";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import {
   createShareCardCanvas,
   copyShareCardToClipboard,
@@ -30,6 +31,45 @@ import {
   type Note,
   type Run,
 } from "../../lib/games/ghost-composer";
+
+function TiltGhostButton({
+  children,
+  onClick,
+  disabled,
+  className,
+  title,
+  'aria-label': ariaLabel,
+  'aria-pressed': ariaPressed,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  className?: string;
+  title?: string;
+  'aria-label'?: string;
+  'aria-pressed'?: boolean;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      title={title}
+      aria-label={ariaLabel}
+      aria-pressed={ariaPressed}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.2);
+        onClick?.();
+      }}
+      className={`will-change-transform transform-(--card-tilt) ${className ?? ''}`}
+    >
+      {children}
+    </button>
+  );
+}
 
 const GLYPH = ["▾", "▴"] as const;
 const CONTROL = "min-h-11 min-w-11 rounded-xl border px-3 py-2 text-sm font-bold motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
@@ -261,11 +301,11 @@ export default function GhostComposer({ locale }: { locale: Locale }) {
     }
     if (run.phase === "won") {
       cue("win");
-      hapticsRef.current.fire("win");
+      MobileHapticsPro.success();
       if (containerRef.current) celebrate(containerRef.current, { preset: "notes" });
     } else if (run.phase === "lost") {
       cue("fail");
-      hapticsRef.current.fire("fail");
+      MobileHapticsPro.heavy();
     }
   }, [run, dateKey, attempt, muted, reducedMotion]);
 
@@ -273,8 +313,14 @@ export default function GhostComposer({ locale }: { locale: Locale }) {
     const current = runRef.current;
     if (!current || current.phase !== "play") return;
     cue("place");
-    hapticsRef.current.fire(note === 1 ? "win" : "place");
     const next = play(current, note);
+    if (next.lastBroke) {
+      MobileHapticsPro.impact();
+    } else if (note === 1) {
+      MobileHapticsPro.medium();
+    } else {
+      MobileHapticsPro.light();
+    }
     setRun(next);
   }
 
@@ -303,6 +349,7 @@ export default function GhostComposer({ locale }: { locale: Locale }) {
 
   const again = () => {
     if (!dateKey) return;
+    MobileHapticsPro.medium();
     const seed = (dateKeyIndex(dateKey) * 0x9e3779b1) >>> 0;
     setAttempt((value) => value + 1);
     setRun(createRun(createPuzzle(seed)));
@@ -328,9 +375,20 @@ export default function GhostComposer({ locale }: { locale: Locale }) {
         {!run || !dateKey ? <p className="text-sm text-muted-foreground">{t.preparing}</p> : (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">{t.date(dateKey)}</p>
-            <p className="text-sm font-bold tabular-nums text-foreground" aria-live="polite">{t.score(run.breaks)} · {run.notes.length} / {BEATS}</p>
+            <div>
+              <div className="flex justify-between text-sm font-bold tabular-nums text-foreground mb-1" aria-live="polite">
+                <span>{t.score(run.breaks)} · {run.notes.length} / {BEATS}</span>
+                <span className="text-xs text-muted-foreground font-mono">{run.breaks} / {NEED}</span>
+              </div>
+              <div className="w-full bg-muted h-2 rounded-full overflow-hidden border border-border/40">
+                <div
+                  className="bg-primary h-full transition-all duration-200 rounded-full w-(--break-pct)"
+                  style={{ '--break-pct': `${Math.min(100, Math.round((run.breaks / NEED) * 100))}%` } as React.CSSProperties}
+                />
+              </div>
+            </div>
             <p className="text-sm text-foreground">{run.phase === "won" ? t.won : run.phase === "lost" ? t.lost : run.phase === "play" ? t.play : t.ready}</p>
-            {verdict ? <p className="text-sm text-foreground">{verdict}</p> : null}
+            {verdict ? <p className="text-sm text-foreground font-semibold">{verdict}</p> : null}
             <div className="flex min-h-11 flex-wrap gap-2" aria-hidden="true">
               {Array.from({ length: BEATS }, (_, index) => {
                 const note = run.notes[index];
@@ -339,34 +397,32 @@ export default function GhostComposer({ locale }: { locale: Locale }) {
             </div>
             {run.phase === "play" ? (
               <div className="grid grid-cols-2 gap-2">
-                <button type="button" onClick={() => choose(0)} className="min-h-16 rounded-xl border border-primary bg-primary text-2xl font-bold text-primary-foreground motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2" aria-label={t.low}>{GLYPH[0]}</button>
-                <button type="button" onClick={() => choose(1)} className="min-h-16 rounded-xl border border-border bg-card text-2xl font-bold text-foreground motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2" aria-label={t.high}>{GLYPH[1]}</button>
+                <TiltGhostButton onClick={() => choose(0)} className="min-h-16 rounded-xl border border-primary bg-primary text-2xl font-bold text-primary-foreground motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2" aria-label={t.low}>{GLYPH[0]}</TiltGhostButton>
+                <TiltGhostButton onClick={() => choose(1)} className="min-h-16 rounded-xl border border-border bg-card text-2xl font-bold text-foreground motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2" aria-label={t.high}>{GLYPH[1]}</TiltGhostButton>
               </div>
             ) : null}
             {run.phase === "ready" ? (
-              <button
-                type="button"
+              <TiltGhostButton
                 onClick={() => {
                   cue("tap");
-                  hapticsRef.current.fire("tap");
+                  MobileHapticsPro.impact();
                   setRun((current) => (current ? begin(current) : current));
                 }}
-                className={`${CONTROL} border-primary bg-primary text-primary-foreground`}
+                className={`${CONTROL} w-full border-primary bg-primary text-primary-foreground`}
               >
                 {t.start}
-              </button>
+              </TiltGhostButton>
             ) : null}
             {run.phase === "won" || run.phase === "lost" ? (
               <div className="flex flex-wrap items-center gap-2">
-                <button type="button" onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</button>
-                <button
-                  type="button"
+                <TiltGhostButton onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</TiltGhostButton>
+                <TiltGhostButton
                   onClick={() => void handleShareCard()}
                   className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-primary/40 bg-primary/20 px-4 py-2 text-xs font-bold text-primary transition-colors hover:bg-primary/30 active:scale-95"
                 >
                   <Share2 className="size-4" />
                   <span>{shareCopied ? "복사됨!" : "공유 카드"}</span>
-                </button>
+                </TiltGhostButton>
               </div>
             ) : null}
             <p className="text-sm text-muted-foreground">{t.record(record?.w ?? 0, record?.l ?? 0)}{best?.unit === "score" ? ` · ${t.best(best.value)}` : ""}</p>

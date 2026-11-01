@@ -4,11 +4,51 @@ import { GameContainer, PlayingCard } from '../ui/game/GamePrimitives';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { getRecord, recordResult, type GameRecord } from '../../lib/games/records';
 import { celebrate } from '../../lib/games/celebration';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import {
   createShareCardCanvas,
   copyShareCardToClipboard,
   downloadShareCard,
 } from '../../lib/games/share-card';
+
+function TiltFreeCellButton({
+  children,
+  onClick,
+  disabled,
+  className,
+  title,
+  'aria-label': ariaLabel,
+  'aria-pressed': ariaPressed,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  className?: string;
+  title?: string;
+  'aria-label'?: string;
+  'aria-pressed'?: boolean;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      title={title}
+      aria-label={ariaLabel}
+      aria-pressed={ariaPressed}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.2);
+        onClick?.();
+      }}
+      className={`will-change-transform transform-(--card-tilt) ${className ?? ''}`}
+    >
+      {children}
+    </button>
+  );
+}
 import {
   FREECELL_SUITS,
   autoCollectSafeFoundationMoves,
@@ -184,6 +224,7 @@ const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
       clearFreeCellSaveV2();
       setRecord(recordResult('freecell', 'w'));
       tone(660, 0.18);
+      MobileHapticsPro.success();
       if (containerRef.current) celebrate(containerRef.current, { preset: "cards" });
     }
   }, [isWon, tone, containerRef]);
@@ -228,6 +269,7 @@ const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
       setMoves((count) => count + collected.movesCount);
       setStatus(`${collected.movesCount}장 자동 수납 완료`);
       tone(520, 0.1);
+      MobileHapticsPro.medium();
     }
   };
 
@@ -236,10 +278,12 @@ const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     if (!cards.length || (source.type === 'tableau' && !isDescendingAlternatingRun(cards))) {
       setStatus(t.invalid);
       tone(150, 0.06);
+      MobileHapticsPro.warning();
       return;
     }
     setSelected(source);
     setStatus(t.selected(cards.length));
+    MobileHapticsPro.selection();
   };
 
   const tryDestination = (destination: FreeCellDestination): boolean => {
@@ -248,6 +292,7 @@ const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     if (!result.ok) {
       setStatus(reasonCopy[result.reason]);
       tone(150, 0.06);
+      MobileHapticsPro.warning();
       return false;
     }
     if (!moveMadeRef.current) startedAt.current = performance.now();
@@ -257,6 +302,7 @@ const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     setMoves((count) => count + 1);
     setStatus(t.moved);
     tone(300, 0.05);
+    MobileHapticsPro.light();
     return true;
   };
 
@@ -297,17 +343,15 @@ const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
           <div className="flex flex-wrap items-start justify-between gap-3">
             <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">{t.instructions}</p>
             <div className="flex items-center gap-2">
-              <button
-                type="button"
+              <TiltFreeCellButton
                 onClick={handleAutoMove}
                 title="기초 더미로 안전한 카드 자동 이동"
                 className="min-h-11 px-3 py-2 rounded-lg border border-primary/40 bg-primary/10 text-xs font-bold text-primary hover:bg-primary/20 transition-colors flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
                 <span>⚡</span>
                 <span className="hidden sm:inline">자동 수납</span>
-              </button>
-              <button
-                type="button"
+              </TiltFreeCellButton>
+              <TiltFreeCellButton
                 onClick={() => setMuted((value) => !value)}
                 aria-pressed={muted}
                 aria-label={muted ? portalLabels.unmute : portalLabels.mute}
@@ -316,9 +360,8 @@ const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
               >
                 {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
                 <span className="hidden sm:inline">{muted ? portalLabels.unmute : portalLabels.mute}</span>
-              </button>
-              <button
-                type="button"
+              </TiltFreeCellButton>
+              <TiltFreeCellButton
                 onClick={togglePortal}
                 aria-pressed={isImmersive}
                 aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
@@ -327,14 +370,29 @@ const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
               >
                 {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
                 <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
-              </button>
+              </TiltFreeCellButton>
               {record && record.w + record.l > 0 && (
-              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.record} {record.w}–{record.l}</p>
-            )}
+                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.record} {record.w}–{record.l}</p>
+              )}
+            </div>
           </div>
-        </div>
-        {legacyMigrated && <p className="text-xs font-medium text-muted-foreground">{t.untimed}</p>}
-        <p className="min-h-6 text-sm font-semibold text-primary" aria-live="polite">{status}</p>
+
+          {/* Progress Gauge */}
+          <div>
+            <div className="flex justify-between text-xs font-bold text-muted-foreground mb-1">
+              <span>기초 더미 완성도 ({game.foundation.reduce((sum, p) => sum + p.length, 0)} / 52)</span>
+              <span>{Math.round((game.foundation.reduce((sum, p) => sum + p.length, 0) / 52) * 100)}%</span>
+            </div>
+            <div className="w-full bg-muted h-2 rounded-full overflow-hidden border border-border/40">
+              <div
+                className="bg-primary h-full transition-all duration-200 rounded-full w-(--foundation-pct)"
+                style={{ '--foundation-pct': `${Math.round((game.foundation.reduce((sum, p) => sum + p.length, 0) / 52) * 100)}%` } as React.CSSProperties}
+              />
+            </div>
+          </div>
+
+          {legacyMigrated && <p className="text-xs font-medium text-muted-foreground">{t.untimed}</p>}
+          <p className="min-h-6 text-sm font-semibold text-primary" aria-live="polite">{status}</p>
 
         <div className="overflow-x-auto pb-2">
           <div className="flex min-w-[600px] justify-between gap-6">
@@ -409,16 +467,15 @@ const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             {legacyMigrated ? `${t.moves} ${moves}` : `${t.time} ${fmt(seconds)} · ${t.moves} ${moves}`}
           </p>
           <div className="flex flex-wrap justify-center gap-2">
-            <button
-              type="button"
+            <TiltFreeCellButton
               onClick={handleShareCard}
               className="min-h-11 px-6 py-3 rounded-full border border-primary/40 bg-primary/10 font-black text-primary hover:bg-primary/20 transition-colors flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               {shareCardCopied ? <Check className="size-4 text-success" /> : <span>🖼️</span>}
               <span>{shareCardCopied ? '카드 복사됨!' : '카드 공유 2.0'}</span>
-            </button>
-            <button type="button" onClick={() => closeWin(true)} disabled={seedRef.current===null} className="min-h-11 rounded-full border border-primary px-6 py-3 font-black text-primary disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">{retryCopy.same}</button>
-            <button type="button" onClick={() => closeWin(false)} className="min-h-11 rounded-full bg-primary px-8 py-3 font-black text-primary-foreground shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">{retryCopy.fresh}</button>
+            </TiltFreeCellButton>
+            <TiltFreeCellButton onClick={() => closeWin(true)} disabled={seedRef.current===null} className="min-h-11 rounded-full border border-primary px-6 py-3 font-black text-primary disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">{retryCopy.same}</TiltFreeCellButton>
+            <TiltFreeCellButton onClick={() => closeWin(false)} className="min-h-11 rounded-full bg-primary px-8 py-3 font-black text-primary-foreground shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">{retryCopy.fresh}</TiltFreeCellButton>
           </div>
         </div>
       )}

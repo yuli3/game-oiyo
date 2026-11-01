@@ -6,8 +6,49 @@ import {
   saveArcadePassProgress,
 } from '../../lib/games/arcade-pass';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { celebrate } from '../../lib/games/celebration';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import { triggerHaptic } from '../../lib/games/juice-engine';
 import { recordResult } from '../../lib/games/records';
+
+function TiltFrostButton({
+  children,
+  onClick,
+  disabled,
+  className,
+  title,
+  'aria-label': ariaLabel,
+  'aria-pressed': ariaPressed,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  className?: string;
+  title?: string;
+  'aria-label'?: string;
+  'aria-pressed'?: boolean;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      title={title}
+      aria-label={ariaLabel}
+      aria-pressed={ariaPressed}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.2);
+        onClick?.();
+      }}
+      className={`will-change-transform transform-(--card-tilt) ${className ?? ''}`}
+    >
+      {children}
+    </button>
+  );
+}
 import {
   BUILDING_COSTS,
   constructFrostBuilding,
@@ -72,6 +113,11 @@ export default function FrostpunkRing({ locale = 'en' }: Props) {
         // ignore storage errors
       }
       recordResult('frostpunk-ring', 'w');
+      MobileHapticsPro.success();
+      celebrate(null, { preset: 'shards' });
+    } else if (state.status === 'lost') {
+      recordResult('frostpunk-ring', 'l');
+      MobileHapticsPro.heavy();
     }
   }, [state.status]);
 
@@ -181,6 +227,7 @@ export default function FrostpunkRing({ locale = 'en' }: Props) {
   const onBuild = (building: Exclude<FrostBuildingType, 'empty'>) => {
     if (!selectedSlot) return;
     triggerHaptic('medium');
+    MobileHapticsPro.medium();
     playSyntheticTone(ensureAudio(), {
       freq: 360,
       duration: 0.12,
@@ -192,6 +239,7 @@ export default function FrostpunkRing({ locale = 'en' }: Props) {
 
   const onAdvanceShift = () => {
     triggerHaptic('light');
+    MobileHapticsPro.light();
     playSyntheticTone(ensureAudio(), {
       freq: 220,
       duration: 0.1,
@@ -203,6 +251,7 @@ export default function FrostpunkRing({ locale = 'en' }: Props) {
 
   const onUpgradeGen = () => {
     triggerHaptic('heavy');
+    MobileHapticsPro.heavy();
     playSyntheticTone(ensureAudio(), {
       freq: 520,
       duration: 0.16,
@@ -214,6 +263,7 @@ export default function FrostpunkRing({ locale = 'en' }: Props) {
 
   const onToggleOverdrive = () => {
     triggerHaptic('heavy');
+    MobileHapticsPro.heavy();
     playSyntheticTone(ensureAudio(), {
       freq: 640,
       duration: 0.14,
@@ -225,6 +275,7 @@ export default function FrostpunkRing({ locale = 'en' }: Props) {
 
   const onEnactLaw = (lawId: FrostLawId) => {
     triggerHaptic('medium');
+    MobileHapticsPro.impact();
     playSyntheticTone(ensureAudio(), {
       freq: 440,
       duration: 0.12,
@@ -236,6 +287,7 @@ export default function FrostpunkRing({ locale = 'en' }: Props) {
 
   const onQuickAutoSetup = () => {
     triggerHaptic('success');
+    MobileHapticsPro.impact();
     setState((prev) => {
       let s = constructFrostBuilding(prev, 'r1-s1', 'coal-thumper');
       s = constructFrostBuilding(s, 'r1-s3', 'coal-thumper');
@@ -277,34 +329,33 @@ export default function FrostpunkRing({ locale = 'en' }: Props) {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
+          <TiltFrostButton
             onClick={onQuickAutoSetup}
             className="rounded-xl bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground shadow hover:opacity-90"
           >
             {isKo ? '⚡ 발전기 & 탄광 급속 증설' : '⚡ Quick Coal & Gen Setup'}
-          </button>
-          <button
-            type="button"
+          </TiltFrostButton>
+          <TiltFrostButton
             onClick={onAdvanceShift}
             className="rounded-xl border border-border bg-secondary px-3 py-1.5 text-xs font-bold text-secondary-foreground hover:opacity-90"
           >
             {isKo ? '⏱️ +4시간 교대 근무 진행' : '⏱️ Advance +4 Hours'}
-          </button>
-          <button
-            type="button"
+          </TiltFrostButton>
+          <TiltFrostButton
             onClick={() => setState(createInitialFrostpunkRingState(Date.now()))}
             className="rounded-xl border border-border bg-background px-3 py-1.5 text-xs font-bold text-foreground hover:bg-muted"
           >
             {isKo ? '새 도시' : 'New City'}
-          </button>
-          <button
-            type="button"
+          </TiltFrostButton>
+          <TiltFrostButton
             onClick={togglePortal}
+            aria-pressed={isImmersive}
+            aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+            title={isImmersive ? portalLabels.exit : portalLabels.enter}
             className="rounded-xl border border-border bg-background px-3 py-1.5 text-xs font-bold text-foreground hover:bg-muted"
           >
             {isImmersive ? portalLabels.exit : portalLabels.enter}
-          </button>
+          </TiltFrostButton>
         </div>
       </div>
 
@@ -402,12 +453,12 @@ export default function FrostpunkRing({ locale = 'en' }: Props) {
               {state.slots.slice(0, 16).map((slot) => {
                 const isSel = slot.id === selectedSlot?.id;
                 return (
-                  <button
+                  <TiltFrostButton
                     key={slot.id}
-                    type="button"
-                    onClick={() =>
-                      setState((prev) => ({ ...prev, selectedSlotId: slot.id }))
-                    }
+                    onClick={() => {
+                      MobileHapticsPro.selection();
+                      setState((prev) => ({ ...prev, selectedSlotId: slot.id }));
+                    }}
                     className={`flex flex-col items-center rounded-lg border px-1.5 py-1 text-xs font-bold transition ${
                       isSel
                         ? 'border-primary bg-primary text-primary-foreground'
@@ -416,7 +467,7 @@ export default function FrostpunkRing({ locale = 'en' }: Props) {
                   >
                     <span>{BUILDING_LABELS[slot.building].emoji}</span>
                     <span>R{slot.ring}</span>
-                  </button>
+                  </TiltFrostButton>
                 );
               })}
             </div>
@@ -460,9 +511,8 @@ export default function FrostpunkRing({ locale = 'en' }: Props) {
                   state.wood >= cost.wood &&
                   state.steel >= cost.steel;
                 return (
-                  <button
+                  <TiltFrostButton
                     key={bType}
-                    type="button"
                     disabled={!canBuild}
                     onClick={() => onBuild(bType)}
                     className="flex items-center justify-between rounded-xl border border-border bg-card p-2.5 text-left text-xs transition hover:border-primary disabled:opacity-45"
@@ -481,7 +531,7 @@ export default function FrostpunkRing({ locale = 'en' }: Props) {
                     <span className="rounded-lg bg-primary px-2 py-1 font-bold text-primary-foreground">
                       {isKo ? '건설' : 'Build'}
                     </span>
-                  </button>
+                  </TiltFrostButton>
                 );
               })}
             </div>
@@ -495,8 +545,7 @@ export default function FrostpunkRing({ locale = 'en' }: Props) {
                 : '🔥 Central Steam Generator Controls'}
             </div>
             <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
-              <button
-                type="button"
+              <TiltFrostButton
                 onClick={onUpgradeGen}
                 disabled={state.generatorLevel >= 4}
                 className="rounded-xl bg-primary px-3 py-2 text-xs font-bold text-primary-foreground shadow hover:opacity-90 disabled:opacity-45"
@@ -504,9 +553,8 @@ export default function FrostpunkRing({ locale = 'en' }: Props) {
                 {isKo
                   ? `증기 코어 증폭 Lv.${state.generatorLevel} → Lv.${Math.min(4, state.generatorLevel + 1)} (🪵${state.generatorLevel * 30}/⚙️${state.generatorLevel * 20})`
                   : `Upgrade Core Lv.${state.generatorLevel} → Lv.${Math.min(4, state.generatorLevel + 1)}`}
-              </button>
-              <button
-                type="button"
+              </TiltFrostButton>
+              <TiltFrostButton
                 onClick={onToggleOverdrive}
                 className="rounded-xl border border-border bg-secondary px-3 py-2 text-xs font-bold text-secondary-foreground hover:opacity-90"
               >
@@ -517,7 +565,7 @@ export default function FrostpunkRing({ locale = 'en' }: Props) {
                   : isKo
                     ? '🔥 오버드라이브 가동 (전 구역 +15°C)'
                     : '🔥 Engage Overdrive (+15°C)'}
-              </button>
+              </TiltFrostButton>
             </div>
           </div>
 
@@ -548,16 +596,15 @@ export default function FrostpunkRing({ locale = 'en' }: Props) {
               ).map((law) => {
                 const enacted = state.laws[law.id].enacted;
                 return (
-                  <button
+                  <TiltFrostButton
                     key={law.id}
-                    type="button"
                     disabled={enacted}
                     onClick={() => onEnactLaw(law.id)}
                     className="rounded-lg border border-border bg-background px-2.5 py-2 text-xs font-bold text-foreground hover:border-primary disabled:opacity-50"
                   >
                     {enacted ? '✓ ' : '⚖️ '}
                     {isKo ? law.ko : law.en}
-                  </button>
+                  </TiltFrostButton>
                 );
               })}
             </div>
@@ -583,8 +630,7 @@ export default function FrostpunkRing({ locale = 'en' }: Props) {
               {state.hope}%
             </div>
           </div>
-          <button
-            type="button"
+          <TiltFrostButton
             onClick={handleShare}
             className="rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground shadow"
           >
@@ -595,7 +641,7 @@ export default function FrostpunkRing({ locale = 'en' }: Props) {
               : isKo
                 ? '생존 기록 공유'
                 : 'Share Result'}
-          </button>
+          </TiltFrostButton>
         </div>
       )}
     </div>
