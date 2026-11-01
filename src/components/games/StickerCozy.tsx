@@ -1,4 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { getSpriteUrl } from "../../lib/games/sprites";
+import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "../../lib/games/share-card";
+import { celebrate } from "../../lib/games/celebration";
+import { Maximize2, Minimize2, Camera, Check } from "lucide-react";
 import {
   loadArcadePassProgress,
   reportMissionProgress,
@@ -12,6 +18,25 @@ import {
   type StickerCozyState,
   type StickerSpec,
 } from "../../lib/games/sticker-cozy";
+
+function TiltStickerButton({
+  children,
+  className = "",
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const { transformCss, onPointerMove, onPointerLeave } = useCardTiltPro();
+  return (
+    <button
+      style={{ "--card-tilt": transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`transform-(--card-tilt) will-change-transform ${className}`}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+}
 
 type Locale = "ko" | "en" | "ja" | "zh" | "fr" | "es";
 
@@ -127,6 +152,7 @@ interface SparkleParticle {
 }
 
 export default function StickerCozy({ locale = "ko" }: Props) {
+  const { isImmersive, containerRef, togglePortal } = useArcadePortal();
   const lang: Locale = (locale in I18N ? locale : "en") as Locale;
   const t = I18N[lang];
 
@@ -144,6 +170,7 @@ export default function StickerCozy({ locale = "ko" }: Props) {
   const [uiScore, setUiScore] = useState(0);
   const [uiComplete, setUiComplete] = useState(false);
   const [uiAllComplete, setUiAllComplete] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
 
   const ensureAudio = useCallback(() => {
     if (typeof window === "undefined") return null;
@@ -227,6 +254,7 @@ export default function StickerCozy({ locale = "ko" }: Props) {
   const handleSelectSticker = useCallback(
     (id: string) => {
       stateRef.current.selectedStickerId = id;
+      MobileHapticsPro.light();
       playPeelSound();
       syncUi();
     },
@@ -235,9 +263,35 @@ export default function StickerCozy({ locale = "ko" }: Props) {
 
   const handleHint = useCallback(() => {
     triggerTweezersHint(stateRef.current);
+    MobileHapticsPro.medium();
     playPeelSound();
     syncUi();
   }, [playPeelSound, syncUi]);
+
+  const handleShareCard = useCallback(async () => {
+    MobileHapticsPro.click();
+    const curTheme = ROOM_THEMES[uiRoomIdx];
+    const canvas = await createShareCardCanvas({
+      title: "STICKER BOOK COZY ROOM",
+      subtitle: `${curTheme.title[lang]} 디오라마 완성`,
+      score: uiScore,
+      slug: "sticker-cozy",
+      customStats: [
+        { label: "방 번호", value: `#${curTheme.roomNumber}` },
+        { label: "코지 점수", value: `${uiScore}점` },
+        { label: "부착 완료", value: `${uiPlacedIds.length} / ${curTheme.stickers.length}` },
+      ],
+      playerTitle: "COZY DESIGNER",
+    });
+
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `sticker-cozy-room-${curTheme.roomNumber}.png`);
+    }
+  }, [lang, uiPlacedIds.length, uiRoomIdx, uiScore]);
 
   const spawnSparkles = useCallback((spec: StickerSpec) => {
     for (let i = 0; i < 14; i++) {
@@ -272,8 +326,15 @@ export default function StickerCozy({ locale = "ko" }: Props) {
         performance.now()
       );
       if (res.snapped && res.spec) {
+        MobileHapticsPro.medium();
         playSnapPopSound();
         spawnSparkles(res.spec);
+        if (st.isRoomComplete) {
+          MobileHapticsPro.success();
+          if (containerRef.current) {
+            celebrate(containerRef.current, { preset: "stardust" });
+          }
+        }
         syncUi();
       }
     },
@@ -490,7 +551,14 @@ export default function StickerCozy({ locale = "ko" }: Props) {
   );
 
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 text-card-foreground shadow-sm">
+    <div
+      ref={containerRef}
+      className={`flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 text-card-foreground shadow-sm transition-all ${
+        isImmersive
+          ? "fixed inset-0 z-50 overflow-y-auto bg-background/95 backdrop-blur-md w-full h-full p-6"
+          : "max-w-4xl mx-auto"
+      }`}
+    >
       {/* Header Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
         <div>
@@ -537,6 +605,14 @@ export default function StickerCozy({ locale = "ko" }: Props) {
           >
             {t.resetBtn}
           </button>
+          <button
+            type="button"
+            onClick={togglePortal}
+            className="p-1.5 rounded-lg bg-card border border-border text-foreground hover:bg-muted/80 transition-colors"
+            title={isImmersive ? "포털 축소" : "100dvh 전체화면"}
+          >
+            {isImmersive ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </button>
         </div>
       </div>
 
@@ -549,19 +625,43 @@ export default function StickerCozy({ locale = "ko" }: Props) {
       </div>
 
       {uiComplete && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-primary/10 px-4 py-3">
-          <span className="text-sm font-bold text-primary">
-            {uiAllComplete ? t.allComplete : t.roomComplete}
-          </span>
-          {uiRoomIdx < ROOM_THEMES.length - 1 && (
-            <button
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary/40 bg-primary/10 p-4 shadow-md">
+          <div className="flex items-center gap-3">
+            <img
+              src={getSpriteUrl("trophy")}
+              alt="3D Gold Trophy"
+              className="w-12 h-12 drop-shadow-md animate-bounce"
+            />
+            <div>
+              <span className="text-sm font-bold text-primary block">
+                {uiAllComplete ? t.allComplete : t.roomComplete}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                스티커 {uiPlacedIds.length}개 모두 완벽 부착 완료!
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <TiltStickerButton
               type="button"
-              onClick={() => loadRoom(uiRoomIdx + 1)}
-              className="rounded-lg bg-primary px-4 py-1.5 text-xs font-bold text-primary-foreground shadow-xs transition hover:opacity-90"
+              onClick={handleShareCard}
+              className="rounded-lg bg-secondary px-4 py-2 text-xs font-bold text-secondary-foreground border border-border flex items-center gap-1.5 shadow-sm"
             >
-              {t.nextRoomBtn}
-            </button>
-          )}
+              {isCopied ? <Check className="w-4 h-4 text-primary" /> : <Camera className="w-4 h-4" />}
+              <span>{isCopied ? "복사 완료!" : "다이어리 카드 공유"}</span>
+            </TiltStickerButton>
+
+            {uiRoomIdx < ROOM_THEMES.length - 1 && (
+              <TiltStickerButton
+                type="button"
+                onClick={() => loadRoom(uiRoomIdx + 1)}
+                className="rounded-lg bg-primary px-4 py-2 text-xs font-bold text-primary-foreground shadow-sm transition hover:opacity-90"
+              >
+                {t.nextRoomBtn}
+              </TiltStickerButton>
+            )}
+          </div>
         </div>
       )}
 
@@ -598,14 +698,14 @@ export default function StickerCozy({ locale = "ko" }: Props) {
             const isPlaced = uiPlacedIds.includes(spec.id);
             const isSelected = uiSelectedId === spec.id;
             return (
-              <button
+              <TiltStickerButton
                 key={spec.id}
                 type="button"
                 disabled={isPlaced}
                 onClick={() => handleSelectSticker(spec.id)}
                 className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-left text-xs font-bold transition ${
                   isPlaced
-                    ? "border-border bg-muted/40 text-muted-foreground opacity-45 line-through"
+                    ? "border-border bg-muted/40 text-muted-foreground opacity-45 line-through pointer-events-none"
                     : isSelected
                       ? "border-primary bg-primary text-primary-foreground shadow-xs"
                       : "border-border bg-card text-foreground hover:border-primary/50"
@@ -616,7 +716,7 @@ export default function StickerCozy({ locale = "ko" }: Props) {
                   <div className="text-xs opacity-75">#{spec.number}</div>
                   <div className="truncate">{spec.name[lang]}</div>
                 </div>
-              </button>
+              </TiltStickerButton>
             );
           })}
         </div>

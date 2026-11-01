@@ -1,6 +1,11 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Locale } from "../../lib/i18n";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { getSpriteUrl } from "../../lib/games/sprites";
+import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "../../lib/games/share-card";
+import { Maximize2, Minimize2, Camera, Check } from "lucide-react";
 import {
   ENCOUNTER_CHANCE,
   ENCOUNTER_STEP_DISTANCE,
@@ -54,6 +59,21 @@ import type { SpiritAction } from "./SpiritModel";
  * ────────────────────────────────────────────────────────────────────────── */
 
 const Scene = lazy(() => import("./SpiritValeScene"));
+
+function TiltSpiritButton({ children, className = '', ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const { transformCss, onPointerMove, onPointerLeave } = useCardTiltPro();
+  return (
+    <button
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`transform-(--card-tilt) will-change-transform ${className}`}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+}
 
 const WALK_SPEED = 7.2; // metres per second
 const GAME_KEY = "spirit-vale";
@@ -546,6 +566,8 @@ function hasWebGL(): boolean {
 export default function SpiritVale({ locale = "en" }: { locale?: Locale }) {
   const t = COPY[locale] ?? COPY.en;
   const reducedMotion = usePrefersReducedMotion();
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || "en" });
+  const [shareCardCopied, setShareCardCopied] = useState(false);
 
   const [phase, setPhase] = useState<Phase>("menu");
   const [seed, setSeed] = useState(7);
@@ -564,6 +586,29 @@ export default function SpiritVale({ locale = "en" }: { locale?: Locale }) {
     key: 0,
   });
   const [muted, setMuted] = useState(false);
+
+  const handleShareCard = useCallback(async () => {
+    try {
+      const canvas = createShareCardCanvas({
+        title: "Spirit Vale",
+        subtitle: "12 Zodiac Spirits of the Valley",
+        score: `${met.length}/${SPIRITS.length} SPIRITS`,
+        slug: "spirit-vale",
+        customStats: [
+          { label: "Spirits Met", value: `${met.length} / 12` },
+          { label: "Status", value: phase === "encounter" ? "In Battle" : "Exploring" },
+          { label: "Evolved", value: `${Object.values(xp).filter((v) => stageOf(v) > 1).length}` },
+        ],
+      });
+      const ok = await copyShareCardToClipboard(canvas);
+      if (ok) {
+        setShareCardCopied(true);
+        setTimeout(() => setShareCardCopied(false), 2000);
+      } else {
+        downloadShareCard(canvas, `spirit-vale-${met.length}spirits.png`);
+      }
+    } catch {}
+  }, [met.length, phase, xp]);
 
   // `tone` must stay referentially stable so the persistent movement rAF loop
   // (below) can call it without restarting every time the mute toggle flips —
@@ -788,6 +833,7 @@ export default function SpiritVale({ locale = "en" }: { locale?: Locale }) {
               // Both sides hop in rather than blinking into place.
               setAnim({ wild: "appear", party: "appear", key: Date.now() });
               setPhase("encounter");
+              MobileHapticsPro.heavy();
               tone(600, 0.06);
               window.setTimeout(() => tone(800, 0.09), 90);
               setRender((r) => ({ ...r, x: next.x, z: next.z, moving: false }));
@@ -840,6 +886,10 @@ export default function SpiritVale({ locale = "en" }: { locale?: Locale }) {
 
   const act = useCallback(
     (action: BattleAction) => {
+      if (action.type === "skill") MobileHapticsPro.medium();
+      else if (action.type === "capture") MobileHapticsPro.light();
+      else MobileHapticsPro.click();
+
       setBattle((prev) => {
         if (!prev || prev.phase !== "active") return prev;
         const next = resolveTurn(prev, action, rng.current);
@@ -859,10 +909,12 @@ export default function SpiritVale({ locale = "en" }: { locale?: Locale }) {
         // Persist the moment it resolves, so closing the tab mid-celebration
         // still keeps the catch.
         if (next.phase === "caught") {
+          MobileHapticsPro.success();
           const save = recordCatch(next.wild.spirit.id);
           setMet(save.caught);
           recordResult(GAME_KEY, "w");
         } else if (next.phase === "won") {
+          MobileHapticsPro.success();
           recordResult(GAME_KEY, "w");
           // Experience goes to the spirit that actually fought — winning is
           // what grows a spirit, catching is what widens the collection.
@@ -881,6 +933,7 @@ export default function SpiritVale({ locale = "en" }: { locale?: Locale }) {
             }
           }
         } else if (next.phase === "lost") {
+          MobileHapticsPro.error();
           recordResult(GAME_KEY, "l");
         }
         return next;
@@ -916,10 +969,39 @@ export default function SpiritVale({ locale = "en" }: { locale?: Locale }) {
   };
 
   return (
-    <div className="w-full">
-      <header className="mb-4 text-center">
-        <h2 className="text-2xl font-black text-emerald-950">{t.title}</h2>
-        <p className="mt-1 text-sm text-emerald-700/80">{t.subtitle}</p>
+    <div
+      ref={containerRef}
+      className={`relative mx-auto rounded-3xl border border-border bg-card p-4 text-card-foreground shadow-sm select-none ${
+        isImmersive
+          ? "fixed inset-0 z-50 w-screen h-dvh overflow-y-auto flex flex-col justify-between m-0 rounded-none border-none p-3 sm:p-6"
+          : "my-6 w-full max-w-4xl"
+      }`}
+    >
+      <header className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-border/60 pb-3">
+        <div>
+          <h2 className="text-2xl font-black text-foreground">{t.title}</h2>
+          <p className="mt-1 text-xs text-muted-foreground">{t.subtitle}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleShareCard}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-bold text-foreground hover:bg-muted transition"
+            title="도감 결과 공유"
+          >
+            {shareCardCopied ? <Check className="size-3.5 text-primary" /> : <Camera className="size-3.5" />}
+            <span>{shareCardCopied ? "복사됨!" : "스냅샷"}</span>
+          </button>
+          <button
+            type="button"
+            onClick={togglePortal}
+            aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+            title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+            className="rounded-lg border border-border bg-card p-1.5 text-foreground hover:bg-muted transition flex items-center justify-center"
+          >
+            {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+          </button>
+        </div>
       </header>
 
       {webgl === false ? (
@@ -927,23 +1009,34 @@ export default function SpiritVale({ locale = "en" }: { locale?: Locale }) {
           {t.noWebgl}
         </p>
       ) : (
-        <div className="relative overflow-hidden rounded-3xl border border-emerald-200 bg-emerald-50 shadow-sm">
+        <div className="relative overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
           <div
-            className="relative aspect-[4/3] w-full touch-none sm:aspect-[16/10]"
+            className={`relative w-full touch-none ${isImmersive ? "flex-1 min-h-[380px]" : "aspect-[4/3] sm:aspect-[16/10]"}`}
             onPointerDown={phase === "explore" ? onPointerDown : undefined}
             onPointerMove={phase === "explore" ? onPointerMove : undefined}
             onPointerUp={onPointerUp}
             onPointerCancel={onPointerUp}
           >
             {phase === "menu" ? (
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-gradient-to-b from-sky-100 to-emerald-100 px-6 text-center">
-                <p className="max-w-sm text-sm leading-6 text-emerald-900/80">{t.controls}</p>
-                <button
-                  onClick={() => setPhase("explore")}
-                  className="rounded-full bg-emerald-700 px-8 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-200 transition-transform hover:-translate-y-0.5 hover:bg-emerald-800"
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-gradient-to-b from-sky-100 to-emerald-100 px-6 text-center">
+                <div className="relative mb-2 flex size-20 items-center justify-center">
+                  <img
+                    src={getSpriteUrl('trophy', 128)}
+                    alt="Spirit Vale Trophy"
+                    className="size-20 object-contain drop-shadow-xl animate-bounce"
+                    loading="lazy"
+                  />
+                </div>
+                <p className="max-w-sm text-xs leading-5 text-emerald-950 font-medium">{t.controls}</p>
+                <TiltSpiritButton
+                  onClick={() => {
+                    MobileHapticsPro.medium();
+                    setPhase("explore");
+                  }}
+                  className="rounded-full bg-emerald-700 px-8 py-3 text-sm font-bold text-white shadow-lg transition-transform hover:-translate-y-0.5 hover:bg-emerald-800"
                 >
                   {t.start}
-                </button>
+                </TiltSpiritButton>
               </div>
             ) : (
               <Suspense
@@ -971,12 +1064,7 @@ export default function SpiritVale({ locale = "en" }: { locale?: Locale }) {
               </div>
             )}
 
-            {/* Battle HUD.
-                Deliberately NOT a full-screen modal: an earlier version covered
-                the canvas with a centred card, which hid the two spirits
-                standing in the world and reduced a 3D battle to two buttons.
-                Health sits at the top, controls at the bottom, and the middle
-                of the frame — where the creatures actually are — stays clear. */}
+            {/* Battle HUD */}
             {phase === "encounter" && encounter && battle && (
               <>
                 {/* Wild spirit's bar, top */}
@@ -987,7 +1075,7 @@ export default function SpiritVale({ locale = "en" }: { locale?: Locale }) {
                         {encounter.name[locale] ?? encounter.name.en}
                       </p>
                       <span
-                        className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold text-white"
+                        className="shrink-0 rounded-full px-2 py-0.5 text-xs font-bold text-white"
                         style={{ background: ELEMENT_COLOR[encounter.element] }}
                       >
                         {ELEMENT_LABEL[encounter.element][locale]}
@@ -1007,7 +1095,7 @@ export default function SpiritVale({ locale = "en" }: { locale?: Locale }) {
                     {battle.log.slice(-2).map((entry, i) => (
                       <li
                         key={battle.log.length - 2 + i}
-                        className="inline-block rounded-full bg-emerald-950/70 px-3 py-1 text-[11px] font-semibold text-emerald-50"
+                        className="inline-block rounded-full bg-emerald-950/70 px-3 py-1 text-xs font-semibold text-emerald-50"
                       >
                         {describeLog(entry, t, locale)}
                       </li>
@@ -1032,7 +1120,7 @@ export default function SpiritVale({ locale = "en" }: { locale?: Locale }) {
                         </div>
                       </div>
                     ) : (
-                      <p className="mb-2 rounded-xl bg-amber-50 p-2 text-[11px] leading-4 text-amber-900">
+                      <p className="mb-2 rounded-xl bg-amber-50 p-2 text-xs leading-4 text-amber-900">
                         {t.barehanded}
                       </p>
                     )}
@@ -1043,32 +1131,32 @@ export default function SpiritVale({ locale = "en" }: { locale?: Locale }) {
                         {battle.player && (
                           <div className="grid grid-cols-3 gap-1.5">
                             {skillsFor(battle.player.spirit, battle.player.stage).map((skill) => (
-                              <button
+                              <TiltSpiritButton
                                 key={skill.id}
                                 onClick={() => act({ type: "skill", skillId: skill.id })}
                                 className="rounded-xl bg-emerald-700 px-2 py-2 text-xs font-bold text-white hover:bg-emerald-800"
                               >
                                 <span className="block truncate">{t.skillName(skill.id)}</span>
-                                <span className="block text-[10px] font-semibold text-emerald-200">
+                                <span className="block text-xs font-semibold text-emerald-200">
                                   {Math.round(skill.accuracy * 100)}%
                                 </span>
-                              </button>
+                              </TiltSpiritButton>
                             ))}
                           </div>
                         )}
                         <div className="mt-1.5 grid grid-cols-2 gap-1.5">
-                          <button
+                          <TiltSpiritButton
                             onClick={() => act({ type: "capture" })}
                             className="rounded-xl bg-amber-600 px-3 py-2 text-xs font-bold text-white hover:bg-amber-700"
                           >
                             {t.capture} · {Math.round(captureChance(battle.wild, battle.captureBonus) * 100)}%
-                          </button>
-                          <button
+                          </TiltSpiritButton>
+                          <TiltSpiritButton
                             onClick={() => act({ type: "flee" })}
                             className="rounded-xl border border-emerald-200 px-3 py-2 text-xs font-bold text-emerald-800 hover:bg-emerald-50"
                           >
                             {t.flee}
-                          </button>
+                          </TiltSpiritButton>
                         </div>
                       </>
                     ) : (
@@ -1097,12 +1185,12 @@ export default function SpiritVale({ locale = "en" }: { locale?: Locale }) {
                           const note = why.faintMatchup === "overcomes" ? t.logSuper : why.faintMatchup === "overcomeBy" ? t.logWeak : why.faintMatchup === "generates" ? t.logFeed : null;
                           return note ? <p className="mt-1 text-center text-xs font-bold text-amber-800">{note}</p> : null;
                         })()}
-                        <button
+                        <TiltSpiritButton
                           onClick={leaveBattle}
                           className="mt-2 w-full rounded-xl bg-emerald-700 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-800"
                         >
                           {t.close}
-                        </button>
+                        </TiltSpiritButton>
                       </>
                     )}
                   </div>
@@ -1174,7 +1262,7 @@ export default function SpiritVale({ locale = "en" }: { locale?: Locale }) {
                     {seen ? spirit.name[locale] ?? spirit.name.en : "???"}
                   </p>
                 </div>
-                <p className="mt-1 text-[11px] font-semibold text-muted-foreground">
+                <p className="mt-1 text-xs font-semibold text-muted-foreground">
                   {ELEMENT_LABEL[spirit.element][locale]}
                   {seen && ` · ${t.stageTitle(stageOf(xp[spirit.id] ?? 0))}`}
                 </p>
@@ -1227,7 +1315,7 @@ export default function SpiritVale({ locale = "en" }: { locale?: Locale }) {
             );
           })}
         </div>
-        <p className="mt-3 text-[11px] leading-5 text-emerald-900/70">
+        <p className="mt-3 text-xs leading-5 text-emerald-900/70">
           {t.overcomes} ×{MATCHUP_MULTIPLIER.overcomes} · {t.generates} ×
           {MATCHUP_MULTIPLIER.generates}
         </p>

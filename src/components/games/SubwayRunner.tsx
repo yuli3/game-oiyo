@@ -1,5 +1,11 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { getSpriteUrl } from "../../lib/games/sprites";
+import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "../../lib/games/share-card";
+import { celebrate } from "../../lib/games/celebration";
+import { Maximize2, Minimize2, Camera, Check } from "lucide-react";
 import {
   changeRunnerLane,
   createInitialSubwayRunnerGame,
@@ -13,20 +19,66 @@ import {
 import { addTrauma, createShakeState, triggerHaptic, updateShake } from "@/lib/games/juice-engine";
 import { playSyntheticTone } from "@/lib/games/audio-mixer";
 
+function TiltRunnerButton({
+  children,
+  className = "",
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const { transformCss, onPointerMove, onPointerLeave } = useCardTiltPro();
+  return (
+    <button
+      style={{ "--card-tilt": transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`transform-(--card-tilt) will-change-transform ${className}`}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+}
+
 interface SubwayRunnerProps {
   locale?: string;
 }
 
 export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
+  const { isImmersive, containerRef, togglePortal } = useArcadePortal();
   const [game, setGame] = useState<SubwayRunnerGame>(() => createInitialSubwayRunnerGame());
   const [bestScore, setBestScore] = useState(0);
   const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0 });
+  const [isCopied, setIsCopied] = useState(false);
 
   const gameRef = useRef<SubwayRunnerGame>(game);
   gameRef.current = game;
 
   const shakeStateRef = useRef(createShakeState());
   const audioCtxRef = useRef<AudioContext | null>(null);
+
+  const handleShareCard = useCallback(async () => {
+    MobileHapticsPro.click();
+    const cur = gameRef.current;
+    const canvas = await createShareCardCanvas({
+      title: "SUBWAY MINI-PARKOUR",
+      subtitle: locale === "ko" ? "지하철 파쿠르 질주 기록" : "Subway Parkour Record",
+      score: cur.score,
+      slug: "subway-runner",
+      customStats: [
+        { label: "점수", value: `${cur.score}점` },
+        { label: "질주 거리", value: `${cur.distance.toFixed(0)}m` },
+        { label: "수집 코인", value: `${cur.coins}개` },
+      ],
+      playerTitle: "SUBWAY RUNNER",
+    });
+
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `subway-runner-score-${cur.score}.png`);
+    }
+  }, [locale]);
 
   // Initialize Web Audio
   useEffect(() => {
@@ -64,7 +116,7 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
         const step = stepSubwayRunner(current, dt);
 
         if (step.collectedCoinCount > 0) {
-          triggerHaptic("light");
+          MobileHapticsPro.light();
           const coinFreq = 587.33 + (step.game.coins % 8) * 60;
           playSyntheticTone(audioCtxRef.current, {
             freq: coinFreq,
@@ -76,7 +128,7 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
 
         if (step.crashed) {
           shakeStateRef.current = addTrauma(shakeStateRef.current, 0.85);
-          triggerHaptic("heavy");
+          MobileHapticsPro.heavy();
           playSyntheticTone(audioCtxRef.current, {
             freq: 110,
             duration: 0.35,
@@ -87,6 +139,9 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
 
         if (step.game.score > bestScore) {
           setBestScore(step.game.score);
+          if (step.game.score > 200 && step.game.score % 100 === 0 && containerRef.current) {
+            celebrate(containerRef.current, { preset: "coins" });
+          }
         }
 
         setGame(step.game);
@@ -107,21 +162,21 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
       if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") {
         e.preventDefault();
         setGame((prev) => changeRunnerLane(prev, -1));
-        triggerHaptic("light");
+        MobileHapticsPro.light();
       } else if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") {
         e.preventDefault();
         setGame((prev) => changeRunnerLane(prev, 1));
-        triggerHaptic("light");
+        MobileHapticsPro.light();
       } else if (e.key === "ArrowUp" || e.key === "w" || e.key === "W" || e.key === " ") {
         e.preventDefault();
         setGame((prev) => jumpRunner(prev));
         playSyntheticTone(audioCtxRef.current, { freq: 440, duration: 0.08, type: "triangle" });
-        triggerHaptic("medium");
+        MobileHapticsPro.medium();
       } else if (e.key === "ArrowDown" || e.key === "s" || e.key === "S") {
         e.preventDefault();
         setGame((prev) => slideRunner(prev));
         playSyntheticTone(audioCtxRef.current, { freq: 220, duration: 0.08, type: "sawtooth" });
-        triggerHaptic("medium");
+        MobileHapticsPro.medium();
       }
     };
 
@@ -152,25 +207,26 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
     if (absDx > absDy) {
       if (dx < 0) {
         setGame((prev) => changeRunnerLane(prev, -1));
-        triggerHaptic("light");
+        MobileHapticsPro.light();
       } else {
         setGame((prev) => changeRunnerLane(prev, 1));
-        triggerHaptic("light");
+        MobileHapticsPro.light();
       }
     } else {
       if (dy < 0) {
         setGame((prev) => jumpRunner(prev));
         playSyntheticTone(audioCtxRef.current, { freq: 440, duration: 0.08, type: "triangle" });
-        triggerHaptic("medium");
+        MobileHapticsPro.medium();
       } else {
         setGame((prev) => slideRunner(prev));
         playSyntheticTone(audioCtxRef.current, { freq: 220, duration: 0.08, type: "sawtooth" });
-        triggerHaptic("medium");
+        MobileHapticsPro.medium();
       }
     }
   };
 
   const handleRestart = () => {
+    MobileHapticsPro.click();
     setGame(createInitialSubwayRunnerGame());
   };
 
@@ -178,13 +234,18 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
 
   return (
     <div
+      ref={containerRef}
       style={
         {
           "--shake-x": `${shakeOffset.x}px`,
           "--shake-y": `${shakeOffset.y}px`,
         } as React.CSSProperties
       }
-      className="mx-auto flex w-full max-w-xl translate-x-(--shake-x) translate-y-(--shake-y) flex-col items-center gap-4 p-4 select-none"
+      className={`mx-auto flex w-full max-w-xl translate-x-(--shake-x) translate-y-(--shake-y) flex-col items-center gap-4 p-4 select-none transition-all ${
+        isImmersive
+          ? "fixed inset-0 z-50 overflow-y-auto bg-background/95 backdrop-blur-md max-w-none w-full h-full justify-center"
+          : ""
+      }`}
     >
       {/* Header HUD */}
       <div className="flex w-full items-center justify-between border-b border-border pb-3">
@@ -199,7 +260,7 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
           </p>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <div className="text-right">
             <span className="block text-xs font-semibold uppercase text-muted-foreground">
               {locale === "ko" ? "점수" : "Score"}
@@ -213,6 +274,15 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
             </span>
             <span className="text-xl font-black text-foreground">🪙 {coins}</span>
           </div>
+
+          <button
+            type="button"
+            onClick={togglePortal}
+            className="p-1.5 rounded-lg bg-card border border-border text-foreground hover:bg-muted/80 transition-colors"
+            title={isImmersive ? "포털 축소" : "100dvh 전체화면"}
+          >
+            {isImmersive ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </button>
         </div>
       </div>
 
@@ -239,22 +309,18 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
           <rect x="0" y="0" width="500" height="400" fill="url(#tunnelGrad)" />
 
           {/* 3D Perspective Tracks: 3 lanes */}
-          {/* Horizon at y = 140, base width = 420, horizon width = 60 */}
-          {/* Left Track */}
           <polygon
             points="40,390 220,140 230,140 100,390"
             className="fill-muted stroke-border"
             strokeWidth="1.5"
             opacity="0.8"
           />
-          {/* Center Track */}
           <polygon
             points="180,390 245,140 255,140 320,390"
             className="fill-muted stroke-border"
             strokeWidth="1.5"
             opacity="0.8"
           />
-          {/* Right Track */}
           <polygon
             points="400,390 270,140 280,140 460,390"
             className="fill-muted stroke-border"
@@ -291,69 +357,89 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
         {/* Mobile On-Screen Controls */}
         <div className="absolute bottom-3 inset-x-4 flex justify-between items-center pointer-events-auto">
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
+            <TiltRunnerButton
+              type="button"
+              className="px-3.5 py-1.5 rounded-lg border border-border bg-card/90 text-foreground font-bold text-sm shadow-sm hover:bg-muted"
               onClick={() => {
                 setGame((prev) => changeRunnerLane(prev, -1));
-                triggerHaptic("light");
+                MobileHapticsPro.light();
               }}
             >
               ◀
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
+            </TiltRunnerButton>
+            <TiltRunnerButton
+              type="button"
+              className="px-3.5 py-1.5 rounded-lg border border-border bg-card/90 text-foreground font-bold text-sm shadow-sm hover:bg-muted"
               onClick={() => {
                 setGame((prev) => changeRunnerLane(prev, 1));
-                triggerHaptic("light");
+                MobileHapticsPro.light();
               }}
             >
               ▶
-            </Button>
+            </TiltRunnerButton>
           </div>
 
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
+            <TiltRunnerButton
+              type="button"
+              className="px-3.5 py-1.5 rounded-lg border border-border bg-card/90 text-foreground font-bold text-sm shadow-sm hover:bg-muted"
               onClick={() => {
                 setGame((prev) => jumpRunner(prev));
                 playSyntheticTone(audioCtxRef.current, { freq: 440, duration: 0.08, type: "triangle" });
-                triggerHaptic("medium");
+                MobileHapticsPro.medium();
               }}
             >
               ▲ 점프
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
+            </TiltRunnerButton>
+            <TiltRunnerButton
+              type="button"
+              className="px-3.5 py-1.5 rounded-lg border border-border bg-card/90 text-foreground font-bold text-sm shadow-sm hover:bg-muted"
               onClick={() => {
                 setGame((prev) => slideRunner(prev));
                 playSyntheticTone(audioCtxRef.current, { freq: 220, duration: 0.08, type: "sawtooth" });
-                triggerHaptic("medium");
+                MobileHapticsPro.medium();
               }}
             >
               ▼ 슬라이딩
-            </Button>
+            </TiltRunnerButton>
           </div>
         </div>
 
         {/* Game Over Modal */}
         {game.status === "gameover" && (
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-background/85 p-6 text-center backdrop-blur-sm">
-            <span className="mb-2 text-4xl">💥</span>
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-background/90 p-6 text-center backdrop-blur-md">
+            <div className="relative mb-2 flex items-center justify-center">
+              <img
+                src={getSpriteUrl("trophy")}
+                alt="3D Trophy"
+                className="w-16 h-16 drop-shadow-xl animate-bounce"
+              />
+            </div>
             <h3 className="mb-1 text-2xl font-black tracking-tight text-destructive">
               {locale === "ko" ? "충돌했습니다!" : "Crashed!"}
             </h3>
-            <p className="mb-6 text-sm text-muted-foreground">
+            <p className="mb-5 text-sm text-muted-foreground">
               {locale === "ko"
                 ? `최종 점수: ${score}점 (질주 거리: ${distance.toFixed(0)}m, 코인: ${coins}개)`
                 : `Final Score: ${score} (${distance.toFixed(0)}m, Coins: ${coins})`}
             </p>
-            <Button onClick={handleRestart} size="lg">
-              {locale === "ko" ? "다시 질주하기" : "Run Again"}
-            </Button>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <TiltRunnerButton
+                type="button"
+                onClick={handleRestart}
+                className="px-6 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-lg shadow-lg text-sm transition-all"
+              >
+                {locale === "ko" ? "다시 질주하기 ↺" : "Run Again ↺"}
+              </TiltRunnerButton>
+              <TiltRunnerButton
+                type="button"
+                onClick={handleShareCard}
+                className="px-4 py-2.5 bg-secondary hover:bg-secondary/80 text-secondary-foreground font-semibold rounded-lg text-sm border border-border flex items-center gap-1.5"
+              >
+                {isCopied ? <Check className="w-4 h-4 text-primary" /> : <Camera className="w-4 h-4" />}
+                <span>{isCopied ? "복사 완료!" : "기록 카드 공유"}</span>
+              </TiltRunnerButton>
+            </div>
           </div>
         )}
       </div>

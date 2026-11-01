@@ -1,10 +1,29 @@
 import { Suspense, lazy, useCallback, useState } from "react";
-import { CloudSun, Flower2, Music2, PawPrint, Sparkles, TreePine } from "lucide-react";
+import { CloudSun, Flower2, Music2, PawPrint, Sparkles, TreePine, Maximize2, Minimize2, Camera, Check } from "lucide-react";
 import { hasWebGL } from "../../lib/games/webgl";
 import type { Locale } from "../../lib/i18n";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { getSpriteUrl } from "../../lib/games/sprites";
+import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "../../lib/games/share-card";
 import type { MallowSceneCopy } from "./MallowIsleScene";
 
 const Scene = lazy(() => import("./MallowIsleScene"));
+
+function TiltMallowButton({ children, className = '', ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const { transformCss, onPointerMove, onPointerLeave } = useCardTiltPro();
+  return (
+    <button
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`transform-(--card-tilt) will-change-transform ${className}`}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+}
 
 interface Copy {
   eyebrow: string;
@@ -209,28 +228,86 @@ const COPY: Record<Locale, Copy> = {
 
 export default function MallowIsle({ locale }: { locale: Locale }) {
   const copy = COPY[locale] ?? COPY.en;
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'en' });
   const [started, setStarted] = useState(false);
   const [unsupported, setUnsupported] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState(true);
+  const [shareCardCopied, setShareCardCopied] = useState(false);
+
+  const handleShareCard = useCallback(async () => {
+    try {
+      const canvas = createShareCardCanvas({
+        title: "Mallow Isle",
+        subtitle: "Cozy 3D Pastel Island Sanctuary",
+        score: "COZY ISLAND",
+        slug: "mallow-isle",
+        customStats: [
+          { label: "Island", value: "Mallow Isle" },
+          { label: "Atmosphere", value: "Gentle Sea Breeze" },
+          { label: "Neighbors", value: "Rabbit, Fox, Cat" },
+        ],
+      });
+      const ok = await copyShareCardToClipboard(canvas);
+      if (ok) {
+        setShareCardCopied(true);
+        setTimeout(() => setShareCardCopied(false), 2000);
+      } else {
+        downloadShareCard(canvas, "mallow-isle.png");
+      }
+    } catch {}
+  }, []);
 
   const begin = useCallback(() => {
     if (!hasWebGL()) {
       setUnsupported(true);
+      MobileHapticsPro.error();
       return;
     }
+    MobileHapticsPro.success();
     setStarted(true);
   }, []);
 
   if (started) {
     return (
-      <section className="overflow-hidden border border-[#d8dfcf] bg-[#eef3e7] shadow-[0_24px_70px_rgba(67,93,79,.14)]">
-        <div className="h-[78vh] min-h-[680px] max-h-[920px]">
+      <section
+        ref={containerRef}
+        className={`relative overflow-hidden border border-border bg-card shadow-xl select-none ${
+          isImmersive ? "fixed inset-0 z-50 w-screen h-dvh p-2 sm:p-4 flex flex-col justify-between m-0 rounded-none border-none" : "rounded-2xl"
+        }`}
+      >
+        <div className="flex items-center justify-between p-2 sm:p-3 border-b border-border/50 bg-background/80 backdrop-blur-sm">
+          <div className="flex items-center gap-2">
+            <PawPrint className="size-4 text-primary" />
+            <span className="text-xs font-black tracking-wide text-foreground">{copy.title}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleShareCard}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-bold text-foreground hover:bg-muted transition"
+              title="결과 카드 공유"
+            >
+              {shareCardCopied ? <Check className="size-3.5 text-primary" /> : <Camera className="size-3.5" />}
+              <span className="hidden sm:inline">{shareCardCopied ? "복사됨!" : "스냅샷"}</span>
+            </button>
+            <button
+              type="button"
+              onClick={togglePortal}
+              aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+              title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
+              className="rounded-lg border border-border bg-card p-1.5 text-foreground hover:bg-muted transition flex items-center justify-center"
+            >
+              {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+            </button>
+          </div>
+        </div>
+        <div className={isImmersive ? "flex-1 min-h-0 w-full" : "h-[78vh] min-h-[680px] max-h-[920px] w-full"}>
           <Suspense
             fallback={(
-              <div className="grid h-full place-items-center bg-[#b8dfd8] px-6 text-center text-[#48675a]">
+              <div className="grid h-full place-items-center bg-muted/60 px-6 text-center text-foreground">
                 <div>
-                  <Sparkles className="mx-auto size-8 animate-pulse" aria-hidden="true" />
-                  <p className="mt-4 text-sm font-black uppercase tracking-[0.16em]">{copy.loading}</p>
+                  <Sparkles className="mx-auto size-8 animate-pulse text-primary" aria-hidden="true" />
+                  <p className="mt-4 text-xs font-black uppercase tracking-widest">{copy.loading}</p>
                 </div>
               </div>
             )}
@@ -238,7 +315,10 @@ export default function MallowIsle({ locale }: { locale: Locale }) {
             <Scene
               copy={copy.scene}
               audioEnabled={audioEnabled}
-              onToggleAudio={() => setAudioEnabled((value) => !value)}
+              onToggleAudio={() => {
+                MobileHapticsPro.click();
+                setAudioEnabled((value) => !value);
+              }}
             />
           </Suspense>
         </div>
@@ -247,33 +327,33 @@ export default function MallowIsle({ locale }: { locale: Locale }) {
   }
 
   return (
-    <section className="overflow-hidden border border-[#d8dfcf] bg-[#f7f3e9] shadow-[0_24px_70px_rgba(67,93,79,.12)]">
+    <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-xl select-none">
       <div className="grid lg:grid-cols-[1.02fr_.98fr]">
         <div className="flex flex-col justify-center px-6 py-10 sm:px-10 sm:py-14 lg:px-14">
-          <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#779078]">{copy.eyebrow}</p>
-          <h2 className="mt-4 max-w-xl font-serif text-5xl font-semibold tracking-[-0.045em] text-[#405b50] sm:text-6xl">
+          <p className="text-xs font-black uppercase tracking-widest text-primary">{copy.eyebrow}</p>
+          <h2 className="mt-4 max-w-xl font-serif text-5xl font-semibold tracking-tight text-foreground sm:text-6xl">
             {copy.title}
           </h2>
-          <p className="mt-5 max-w-xl text-base leading-7 text-[#66776e] sm:text-lg">{copy.subtitle}</p>
+          <p className="mt-5 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg">{copy.subtitle}</p>
           <div className="mt-8 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
-            <button
+            <TiltMallowButton
               type="button"
               onClick={begin}
-              className="inline-flex min-h-12 items-center justify-center gap-2 bg-[#4f715e] px-6 py-3 text-sm font-black text-white shadow-[0_12px_28px_rgba(79,113,94,.22)] transition hover:-translate-y-0.5 hover:bg-[#405f4e] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#4f715e]"
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-black text-primary-foreground shadow-lg transition hover:opacity-90 active:scale-95"
             >
               <PawPrint className="size-4" aria-hidden="true" />
-              {copy.start}
-            </button>
-            <p className="text-xs font-semibold text-[#829087]">{copy.localOnly}</p>
+              <span>{copy.start}</span>
+            </TiltMallowButton>
+            <p className="text-xs font-semibold text-muted-foreground">{copy.localOnly}</p>
           </div>
           {unsupported && (
-            <p role="alert" className="mt-4 border-l-4 border-[#d98c8c] bg-[#f8e8e4] px-4 py-3 text-sm font-bold text-[#805755]">
+            <p role="alert" className="mt-4 border-l-4 border-destructive bg-destructive/10 px-4 py-3 text-sm font-bold text-destructive">
               {copy.unavailable}
             </p>
           )}
         </div>
 
-        <div className="relative min-h-[360px] overflow-hidden bg-[#b8dfd8] lg:min-h-[560px]">
+        <div className="relative min-h-[360px] overflow-hidden bg-muted/40 lg:min-h-[560px]">
           <img
             src="/games/mallow-isle-social.png"
             alt=""
@@ -282,24 +362,24 @@ export default function MallowIsle({ locale }: { locale: Locale }) {
             height="630"
             loading="eager"
           />
-          <div className="absolute bottom-5 left-5 flex items-center gap-2 border border-white/65 bg-[#fff9ef]/88 px-3 py-2 text-xs font-black text-[#4d675a] shadow-[0_10px_28px_rgba(64,93,78,.14)] backdrop-blur-md">
-            <CloudSun className="size-4 text-[#d79978]" aria-hidden="true" />
+          <div className="absolute bottom-5 left-5 flex items-center gap-2 rounded-xl border border-border/60 bg-background/80 px-3 py-2 text-xs font-black text-foreground shadow-lg backdrop-blur-md">
+            <CloudSun className="size-4 text-warning" aria-hidden="true" />
             <span>soft-painted · procedural · local-first</span>
           </div>
         </div>
       </div>
 
-      <div className="grid border-t border-[#d8dfcf] sm:grid-cols-3">
+      <div className="grid border-t border-border sm:grid-cols-3">
         {copy.features.map((feature, index) => {
           const Icon = [Flower2, TreePine, Music2][index] ?? Flower2;
           return (
             <article
               key={feature.title}
-              className={`p-6 sm:p-7 ${index > 0 ? "border-t border-[#d8dfcf] sm:border-l sm:border-t-0" : ""}`}
+              className={`p-6 sm:p-7 ${index > 0 ? "border-t border-border sm:border-l sm:border-t-0" : ""}`}
             >
-              <Icon className="size-5 text-[#6d9074]" strokeWidth={2} aria-hidden="true" />
-              <h3 className="mt-4 text-sm font-black text-[#405b50]">{feature.title}</h3>
-              <p className="mt-2 text-sm leading-6 text-[#718077]">{feature.body}</p>
+              <Icon className="size-5 text-primary" strokeWidth={2} aria-hidden="true" />
+              <h3 className="mt-4 text-sm font-black text-foreground">{feature.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">{feature.body}</p>
             </article>
           );
         })}

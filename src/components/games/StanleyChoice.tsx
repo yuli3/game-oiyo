@@ -1,4 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { getSpriteUrl } from '../../lib/games/sprites';
+import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from '../../lib/games/share-card';
+import { Maximize2, Minimize2, Camera, Check } from 'lucide-react';
 import {
   StanleyChoiceEngine,
   ENDINGS_CATALOG,
@@ -8,7 +13,23 @@ import {
 
 const STORAGE_KEY = 'oiyo_stanley_choice_endings_v1';
 
+function TiltStanleyButton({ children, className = '', ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const { transformCss, onPointerMove, onPointerLeave } = useCardTiltPro();
+  return (
+    <button
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`transform-(--card-tilt) will-change-transform ${className}`}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+}
+
 export default function StanleyChoice() {
+  const { isImmersive, containerRef, togglePortal } = useArcadePortal();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const engineRef = useRef<StanleyChoiceEngine>(new StanleyChoiceEngine());
 
@@ -21,6 +42,9 @@ export default function StanleyChoice() {
   const [hoveredOptionId, setHoveredOptionId] = useState<string | null>(null);
   const [doorSwing, setDoorSwing] = useState<number>(0); // 0 to 1 open animation
   const [showCodex, setShowCodex] = useState<boolean>(false);
+  const [isCopied, setIsCopied] = useState<boolean>(false);
+
+  const completionPct = Math.round((unlockedEndings.length / ENDINGS_CATALOG.length) * 100);
 
   // Web Audio Context
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -173,6 +197,7 @@ export default function StanleyChoice() {
     (choiceId: string) => {
       initAudio();
       playSound('click');
+      MobileHapticsPro.medium();
       setDoorSwing(1.0); // trigger door opening swing
 
       setTimeout(() => {
@@ -180,6 +205,7 @@ export default function StanleyChoice() {
         if (res.success) {
           if (engineRef.current.state.currentEnding) {
             playSound('ending');
+            MobileHapticsPro.success();
           } else {
             playSound('door');
           }
@@ -189,6 +215,31 @@ export default function StanleyChoice() {
     },
     [initAudio, playSound, syncState]
   );
+
+  const handleShareCard = useCallback(async () => {
+    MobileHapticsPro.click();
+    const endingData = ENDINGS_CATALOG.find((e) => e.id === currentEnding);
+    const canvas = await createShareCardCanvas({
+      title: 'THE STANLEY PARABLE',
+      subtitle: endingData?.title || '수수께끼의 엔딩 도달',
+      score: `${completionPct}%`,
+      slug: 'stanley-choice',
+      customStats: [
+        { label: '도달 엔딩', value: endingData?.code || 'END' },
+        { label: '엔딩 수집율', value: `${completionPct}%` },
+        { label: '현재 방', value: currentRoom.title },
+      ],
+      playerTitle: 'PARABLE EXPLORER',
+    });
+
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `stanley-ending-${currentEnding || 'loop'}.png`);
+    }
+  }, [completionPct, currentEnding, currentRoom.title]);
 
   // Restart Loop
   const handleRestart = useCallback(() => {
@@ -435,10 +486,15 @@ export default function StanleyChoice() {
     return () => cancelAnimationFrame(animId);
   }, [doorSwing, hoveredOptionId, syncState]);
 
-  const completionPct = Math.round((unlockedEndings.length / ENDINGS_CATALOG.length) * 100);
-
   return (
-    <div className="flex flex-col items-center justify-center p-3 text-foreground max-w-4xl mx-auto select-none">
+    <div
+      ref={containerRef}
+      className={`flex flex-col items-center justify-center p-3 text-foreground select-none transition-all ${
+        isImmersive
+          ? 'fixed inset-0 z-50 bg-background/95 backdrop-blur-md overflow-y-auto w-full h-full'
+          : 'max-w-4xl mx-auto'
+      }`}
+    >
       {/* Top Header: Narrator Speech & Ending Completion Bar */}
       <div className="w-full bg-card/90 border border-border rounded-xl p-3 mb-2 flex items-center justify-between shadow-lg">
         <div className="flex items-center gap-3">
@@ -452,20 +508,31 @@ export default function StanleyChoice() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <button
+            type="button"
             onClick={() => setShowCodex(!showCodex)}
             className="px-3 py-1.5 bg-muted hover:bg-muted/80 text-foreground border border-border rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
           >
-            <span>📜 엔딩 도감 ({unlockedEndings.length}/8)</span>
+            <span>📜 엔딩 ({unlockedEndings.length}/8)</span>
             <span className="font-mono text-primary">{completionPct}%</span>
           </button>
 
           <button
+            type="button"
             onClick={handleRestart}
             className="px-3 py-1.5 bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-lg text-xs font-bold transition-all active:scale-95"
           >
-            처음부터 ↺
+            리셋 ↺
+          </button>
+
+          <button
+            type="button"
+            onClick={togglePortal}
+            className="p-1.5 rounded-lg bg-card border border-border text-foreground hover:bg-muted/80 transition-colors"
+            title={isImmersive ? '포털 축소' : '100dvh 전체화면'}
+          >
+            {isImmersive ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
           </button>
         </div>
       </div>
@@ -484,6 +551,13 @@ export default function StanleyChoice() {
         {/* Ending Screen Overlay */}
         {currentEnding && (
           <div className="absolute inset-0 bg-background/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-20">
+            <div className="relative mb-3 flex items-center justify-center">
+              <img
+                src={getSpriteUrl('trophy')}
+                alt="3D Trophy"
+                className="w-16 h-16 drop-shadow-xl animate-bounce"
+              />
+            </div>
             <span className="text-xs font-mono font-bold text-primary tracking-widest uppercase mb-1">
               THE STANLEY PARABLE
             </span>
@@ -493,19 +567,29 @@ export default function StanleyChoice() {
             <p className="text-muted-foreground text-sm max-w-md mb-6 leading-relaxed">
               {ENDINGS_CATALOG.find((e) => e.id === currentEnding)?.desc}
             </p>
-            <div className="flex items-center gap-3">
-              <button
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <TiltStanleyButton
+                type="button"
                 onClick={handleRestart}
-                className="px-6 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-lg shadow-lg text-sm transition-all"
+                className="px-5 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-lg shadow-lg text-sm transition-all"
               >
-                사무실 427로 다시 리셋 ↺
-              </button>
-              <button
+                사무실 427로 리셋 ↺
+              </TiltStanleyButton>
+              <TiltStanleyButton
+                type="button"
+                onClick={handleShareCard}
+                className="px-4 py-2.5 bg-secondary hover:bg-secondary/80 text-secondary-foreground font-semibold rounded-lg text-sm border border-border flex items-center gap-1.5"
+              >
+                {isCopied ? <Check className="w-4 h-4 text-primary" /> : <Camera className="w-4 h-4" />}
+                <span>{isCopied ? '복사 완료!' : '결과 카드 공유'}</span>
+              </TiltStanleyButton>
+              <TiltStanleyButton
+                type="button"
                 onClick={() => setShowCodex(true)}
                 className="px-4 py-2.5 bg-muted hover:bg-muted/80 text-foreground font-semibold rounded-lg text-sm border border-border"
               >
                 도감 확인
-              </button>
+              </TiltStanleyButton>
             </div>
           </div>
         )}
@@ -515,18 +599,19 @@ export default function StanleyChoice() {
       {!currentEnding && (
         <div className="w-full max-w-2xl mt-2 flex flex-col gap-2">
           {currentRoom.options.map((option) => (
-            <button
+            <TiltStanleyButton
               key={option.id}
+              type="button"
               onClick={() => handleSelectOption(option.id)}
               onMouseEnter={() => setHoveredOptionId(option.id)}
               onMouseLeave={() => setHoveredOptionId(null)}
-              className="w-full text-left p-3 rounded-xl border border-border bg-card/80 hover:bg-primary/10 hover:border-primary transition-all text-sm font-semibold flex items-center justify-between group"
+              className="w-full text-left p-3 rounded-xl border border-border bg-card/80 hover:bg-primary/10 hover:border-primary transition-all text-sm font-semibold flex items-center justify-between group shadow-sm"
             >
               <span className="text-foreground group-hover:text-primary transition-colors">
                 👉 {option.label}
               </span>
               <span className="text-xs text-muted-foreground font-mono">선택</span>
-            </button>
+            </TiltStanleyButton>
           ))}
         </div>
       )}
