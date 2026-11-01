@@ -21,6 +21,7 @@ import {
 import { playSyntheticTone } from "../../lib/games/audio-mixer";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import { Button } from "../ui/button";
+import { GameStatTile } from "../ui/game/GameStatTile";
 
 interface WordWaffleProps {
   locale?: string;
@@ -40,22 +41,22 @@ function TiltWaffleTile({
   let stateCls = "";
   switch (cell.state) {
     case "green":
-      stateCls = "border-chart-2 bg-chart-2 text-primary-foreground";
+      stateCls = "border-chart-2/90 bg-chart-2 text-primary-foreground shadow-md border-b-4 border-b-black/30";
       break;
     case "yellow":
-      stateCls = "border-chart-4 bg-chart-4 text-foreground";
+      stateCls = "border-chart-4/90 bg-chart-4 text-foreground shadow-xs border-b-4 border-b-black/25";
       break;
     case "gray":
     default:
-      stateCls = "border-muted bg-muted text-muted-foreground";
+      stateCls = "border-border bg-muted/80 text-foreground shadow-2xs border-b-4 border-b-black/20";
       break;
   }
 
   const selectCls = isSelected
-    ? "ring-4 ring-primary scale-110 z-10 shadow-lg"
+    ? "ring-4 ring-primary scale-110 z-10 shadow-xl"
     : cell.isLocked
-    ? "cursor-default"
-    : "cursor-pointer hover:brightness-110 active:scale-95";
+    ? "cursor-default brightness-95"
+    : "cursor-pointer hover:brightness-105 active:scale-95 active:border-b-2";
 
   return (
     <button
@@ -73,11 +74,13 @@ function TiltWaffleTile({
           "--card-tilt": cell.isLocked ? "none" : transformCss,
         } as React.CSSProperties
       }
-      className={`relative flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-xl border-2 text-xl font-black uppercase transition-all duration-150 will-change-transform transform-(--card-tilt) ${stateCls} ${selectCls}`}
+      className={`relative flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl border-2 text-xl font-black uppercase transition-all duration-150 will-change-transform transform-(--card-tilt) ${stateCls} ${selectCls}`}
     >
-      {cell.letter}
+      {/* 3D Waffle indent grid marks */}
+      <span className="absolute inset-1 rounded-xl border border-white/20 pointer-events-none" aria-hidden="true" />
+      <span className="relative z-10 drop-shadow-xs">{cell.letter}</span>
       {cell.isLocked && (
-        <span className="absolute bottom-1 right-1 text-xs opacity-80">🔒</span>
+        <span className="absolute bottom-1 right-1 text-xs opacity-90 drop-shadow-xs">✨</span>
       )}
     </button>
   );
@@ -267,18 +270,16 @@ export default function WordWaffle({ locale = "ko" }: WordWaffleProps) {
     >
       {/* Top Header: Swaps remaining & Goal */}
       <div className="flex w-full items-center justify-between border-b border-border pb-3">
-        <div className="flex flex-col">
-          <span className="text-xs font-bold text-muted-foreground">
-            {locale === "ko" ? "남은 교환" : "SWAPS LEFT"}
-          </span>
-          <span className="text-2xl font-black font-mono text-foreground">
-            {game.swapsRemaining} / {game.maxSwaps}
-          </span>
+        <div>
+          <h1 className="text-xl font-bold tracking-tight">Word Waffle</h1>
+          <p className="text-xs text-muted-foreground">
+            {locale === "ko" ? "가로세로 6개 단어를 완성하는 와플 퍼즐" : "5x5 Waffle grid letter swapping puzzle"}
+          </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {/* Legend */}
-          <div className="flex items-center gap-2 text-xs font-semibold">
+          <div className="hidden sm:flex items-center gap-2 text-xs font-semibold mr-1">
             <span className="flex items-center gap-1">
               <span className="h-3 w-3 rounded-xs bg-chart-2" />
               <span className="text-muted-foreground">{locale === "ko" ? "정답" : "Correct"}</span>
@@ -300,8 +301,26 @@ export default function WordWaffle({ locale = "ko" }: WordWaffleProps) {
         </div>
       </div>
 
-      {/* 5x5 Waffle Grid Board */}
-      <div className="relative my-6 grid grid-cols-5 gap-2.5 rounded-2xl bg-muted/20 p-3 sm:p-4">
+      {/* Telemetry Stat Tiles */}
+      <div className="grid grid-cols-3 gap-2 w-full mt-3">
+        <GameStatTile
+          label={locale === "ko" ? "남은 교환" : "Swaps Left"}
+          value={`${game.swapsRemaining} / ${game.maxSwaps}`}
+          highlight={game.swapsRemaining <= 3}
+        />
+        <GameStatTile
+          label={locale === "ko" ? "정답 글자" : "Solved Tiles"}
+          value={`${game.grid.flat().filter((c) => c?.isLocked).length} / 21`}
+          highlight={game.grid.flat().filter((c) => c?.isLocked).length >= 15}
+        />
+        <GameStatTile
+          label={locale === "ko" ? "예상 별점" : "Stars Rating"}
+          value={game.stars > 0 ? "⭐".repeat(game.stars) : "–"}
+        />
+      </div>
+
+      {/* 5x5 Waffle Grid Board (Waffle Iron Cast Texture) */}
+      <div className="relative my-4 grid grid-cols-5 gap-2.5 rounded-3xl border-2 border-border/80 bg-muted/40 p-3 sm:p-5 shadow-inner">
         {game.grid.map((row, r) =>
           row.map((cell, c) => {
             if (IS_WAFFLE_HOLE(r, c) || !cell) {
