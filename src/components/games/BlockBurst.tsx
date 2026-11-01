@@ -5,7 +5,7 @@ import { GameContainer } from "../ui/game/GamePrimitives";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { getBest, recordAchievementEvent, recordBest } from "../../lib/games/records";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
-import { BLOCK_BURST_FX, BLOCK_BURST_SPRITES } from "../../lib/games/sprites";
+import { BLOCK_BURST_FX, BLOCK_BURST_SPRITES, BLOCK_BURST_BOMB_SPRITE } from "../../lib/games/sprites";
 import { celebrate } from "../../lib/games/celebration";
 import {
   createShareCardCanvas,
@@ -416,7 +416,7 @@ function Gem({ color, ghost, bursting, bomb, colorblind }: { color: BurstColor; 
       style={{ filter: ghost ? "none" : `drop-shadow(0 0 8px ${gem.glow})`, opacity: ghost ? 0.38 : 1 }}
     >
       <img
-        src={BLOCK_BURST_SPRITES[color]}
+        src={bomb ? BLOCK_BURST_BOMB_SPRITE : BLOCK_BURST_SPRITES[color]}
         alt=""
         draggable={false}
         className="pointer-events-none h-full w-full object-contain"
@@ -509,6 +509,63 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
     osc.connect(gain).connect(ctx.destination);
     osc.start();
     osc.stop(ctx.currentTime + dur);
+  }, [sound]);
+
+  const playClearChime = useCallback((combo = 1) => {
+    if (!sound) return;
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return;
+      const ctx = new Ctx();
+      const t = ctx.currentTime;
+      // C5 - E5 - G5 - B5 - C6 Pentatonic Crystal Chime Scale
+      const PENTATONIC = [523.25, 659.25, 783.99, 987.77, 1046.5, 1318.51];
+      const root = PENTATONIC[Math.min(combo - 1, PENTATONIC.length - 2)] || 523.25;
+      const third = PENTATONIC[Math.min(combo, PENTATONIC.length - 1)] || 659.25;
+
+      // Primary crystalline triangle tone
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.type = "sine";
+      osc1.frequency.setValueAtTime(root, t);
+      osc1.frequency.exponentialRampToValueAtTime(root * 1.5, t + 0.12);
+      gain1.gain.setValueAtTime(0.18, t);
+      gain1.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+      osc1.connect(gain1).connect(ctx.destination);
+      osc1.start(t);
+      osc1.stop(t + 0.23);
+
+      // Glass shimmer overtone
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.type = "triangle";
+      osc2.frequency.setValueAtTime(third * 1.5, t);
+      gain2.gain.setValueAtTime(0.1, t);
+      gain2.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+      osc2.connect(gain2).connect(ctx.destination);
+      osc2.start(t);
+      osc2.stop(t + 0.19);
+    } catch {}
+  }, [sound]);
+
+  const playDropThud = useCallback(() => {
+    if (!sound) return;
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return;
+      const ctx = new Ctx();
+      const t = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(140, t);
+      osc.frequency.exponentialRampToValueAtTime(38, t + 0.14);
+      gain.gain.setValueAtTime(0.25, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + 0.15);
+    } catch {}
   }, [sound]);
 
   const triggerCameraShake = useCallback((amount: number) => {
@@ -738,6 +795,7 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
         celebrate(containerRef.current, { preset: "sparks", scale: 1.2 });
       }
       setBanner(!wave.clear.rows.length && !wave.clear.cols.length ? "BOOM" : i === 0 && wave.clear.rows.length && wave.clear.cols.length ? "CROSS" : i >= 2 ? `CHAIN x${i + 1}` : wave.clear.cols.length ? "COLUMN" : "LINE");
+      playClearChime(i + 1);
       tone(Math.min(980, 360 + i * 90), 0.14);
       await wait(burstMs);
       if (run !== runRef.current) return;
@@ -864,7 +922,8 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
     setGame(current);
     MobileHapticsPro.heavy();
     void lockNow(current);
-    tone(640, 0.1);
+    playDropThud();
+    tone(640, 0.08);
   }, [lockNow, tone]);
 
   const fallMult = mods?.fallMult ?? 1;

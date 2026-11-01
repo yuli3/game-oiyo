@@ -1,11 +1,12 @@
 /** In-game sprite URLs. Engine state still stores emoji/ids; only the renderer reads these. */
 export const BLOCK_BURST_SPRITES: Record<1 | 2 | 3 | 4 | 5, string> = {
-  1: "/assets/sprites/block-burst/gem-olive.png",
-  2: "/assets/sprites/block-burst/gem-amber.png",
-  3: "/assets/sprites/block-burst/gem-coral.png",
-  4: "/assets/sprites/block-burst/gem-teal.png",
-  5: "/assets/sprites/block-burst/gem-gold.png",
+  1: "/assets/sprites/block-burst/gem-olive-128.png",
+  2: "/assets/sprites/block-burst/gem-amber-128.png",
+  3: "/assets/sprites/block-burst/gem-coral-128.png",
+  4: "/assets/sprites/block-burst/gem-teal-128.png",
+  5: "/assets/sprites/block-burst/gem-gold-128.png",
 };
+export const BLOCK_BURST_BOMB_SPRITE = "/assets/sprites/block-burst/bomb-block-128.png";
 export const BLOCK_BURST_FX = {
   burst: "/assets/sprites/block-burst/burst.png",
   burstSheet: "/assets/sprites/block-burst/burst-sheet.png",
