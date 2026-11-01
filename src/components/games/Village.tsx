@@ -5,6 +5,8 @@ import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-u
 import { getSpriteUrl } from "../../lib/games/sprites";
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "../../lib/games/share-card";
 import { celebrate } from "../../lib/games/celebration";
+import { useAudioContext } from "../../lib/games/use-audio-context";
+import { GameStatTile } from "../ui/game/GameStatTile";
 import { Maximize2, Minimize2, Camera, Check } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
 import {
@@ -181,6 +183,70 @@ export default function Village({ locale = "ko" }: { locale?: Locale }) {
   const waiting = !state.eventDone && state.event !== null;
   const res = t.res as Record<string, string>;
 
+  const getAudioContext = useAudioContext();
+  const playVillageSound = useCallback(
+    (type: "click" | "build" | "harvest" | "season" | "alert" | "worker") => {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      if (type === "click") {
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(520, now);
+        gain.gain.setValueAtTime(0.06, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+        osc.start(now);
+        osc.stop(now + 0.08);
+      } else if (type === "worker") {
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.exponentialRampToValueAtTime(660, now + 0.1);
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+        osc.start(now);
+        osc.stop(now + 0.12);
+      } else if (type === "build") {
+        osc.type = "square";
+        osc.frequency.setValueAtTime(220, now);
+        osc.frequency.exponentialRampToValueAtTime(440, now + 0.15);
+        gain.gain.setValueAtTime(0.07, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+        osc.start(now);
+        osc.stop(now + 0.18);
+      } else if (type === "harvest") {
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(392, now);
+        osc.frequency.setValueAtTime(523.25, now + 0.08);
+        osc.frequency.setValueAtTime(659.25, now + 0.16);
+        gain.gain.setValueAtTime(0.09, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+        osc.start(now);
+        osc.stop(now + 0.3);
+      } else if (type === "season") {
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(330, now);
+        osc.frequency.exponentialRampToValueAtTime(587.33, now + 0.25);
+        gain.gain.setValueAtTime(0.09, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        osc.start(now);
+        osc.stop(now + 0.35);
+      } else if (type === "alert") {
+        osc.type = "sawtooth";
+        osc.frequency.setValueAtTime(300, now);
+        osc.frequency.setValueAtTime(220, now + 0.1);
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+        osc.start(now);
+        osc.stop(now + 0.25);
+      }
+    },
+    [getAudioContext]
+  );
+
   const effectText = (effect: Record<string, number | undefined> | undefined) => {
     if (!effect) return "";
     const parts: string[] = [];
@@ -195,6 +261,15 @@ export default function Village({ locale = "ko" }: { locale?: Locale }) {
 
   const order = (id: CommandId) => {
     MobileHapticsPro.medium();
+    if (id === "build") {
+      playVillageSound("build");
+    } else if (id === "lumber" || id === "quarry") {
+      playVillageSound("worker");
+    } else if (id === "tend" || id === "hunt") {
+      playVillageSound("harvest");
+    } else {
+      playVillageSound("click");
+    }
     setPlacing(null);
     if (id === "build" && !state.project) { setPicking(true); return; }
     setState(command(state, id));
@@ -204,15 +279,18 @@ export default function Village({ locale = "ko" }: { locale?: Locale }) {
     if (placing) {
       if (!canCommand(state, "build", placing, tile)) return;
       MobileHapticsPro.medium();
+      playVillageSound("build");
       setState(command(state, "build", placing, tile));
       setPlacing(null);
       setSelected(tile);
       return;
     }
+    playVillageSound("click");
     setSelected(selected === tile ? null : tile);
   };
   const restart = () => {
     MobileHapticsPro.click();
+    playVillageSound("click");
     if (!done && state.turn > 0 && !window.confirm(t.againConfirm)) return;
     setPicking(false); setPlacing(null); setSelected(null);
     setState(createVillage(newSeed()));
@@ -347,13 +425,24 @@ export default function Village({ locale = "ko" }: { locale?: Locale }) {
                 aria-label={`${Math.floor(tile / 6) + 1},${(tile % 6) + 1} ${label}`}
                 aria-pressed={selected === tile}
                 onClick={() => tapTile(tile)}
-                className={`relative flex aspect-square items-center justify-center rounded-lg text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${TERRAIN_TONE[terrain]} ${selected === tile ? "ring-2 ring-primary" : ""} ${placing ? (valid ? "ring-2 ring-warning" : "opacity-45") : ""}`}
+                className={`relative flex aspect-square items-center justify-center rounded-lg text-foreground transition-all duration-150 active:scale-95 shadow-xs border-b-2 border-black/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${TERRAIN_TONE[terrain]} ${selected === tile ? "ring-2 ring-primary scale-105 z-10 shadow-md" : "hover:brightness-105"} ${placing ? (valid ? "ring-2 ring-warning animate-pulse" : "opacity-45") : ""}`}
               >
+                {/* 2.5D Seasonal Weather Overlay */}
+                {season === 3 ? (
+                  <span className="absolute inset-0 rounded-lg bg-primary/10 pointer-events-none" aria-hidden="true" />
+                ) : season === 2 ? (
+                  <span className="absolute inset-0 rounded-lg bg-warning/10 pointer-events-none" aria-hidden="true" />
+                ) : null}
+
                 {!building && !isProject ? <TerrainMark terrain={terrain} /> : null}
-                {building ? <BuildingIcon id={building} /> : null}
-                {isProject ? <span className="absolute inset-1 rounded-md border-2 border-dashed border-foreground/60" aria-hidden="true" /> : null}
-                {building && staffed ? <span className="absolute bottom-0.5 right-0.5 h-2 w-2 rounded-full bg-primary" aria-hidden="true" /> : null}
-                {needsWorker ? <span className="absolute bottom-0.5 right-0.5 h-2 w-2 rounded-full border border-foreground/70 bg-background" aria-hidden="true" /> : null}
+                {building ? (
+                  <div className="relative size-3/5 flex items-center justify-center drop-shadow-sm transition-transform group-hover:scale-110">
+                    <BuildingIcon id={building} />
+                  </div>
+                ) : null}
+                {isProject ? <span className="absolute inset-1 rounded-md border-2 border-dashed border-foreground/60 animate-pulse" aria-hidden="true" /> : null}
+                {building && staffed ? <span className="absolute bottom-1 right-1 h-2 w-2 rounded-full bg-primary ring-1 ring-background shadow-xs" aria-hidden="true" /> : null}
+                {needsWorker ? <span className="absolute bottom-1 right-1 h-2 w-2 rounded-full border border-foreground/70 bg-background shadow-xs animate-bounce" aria-hidden="true" /> : null}
               </button>
             );
           })}
@@ -479,7 +568,17 @@ export default function Village({ locale = "ko" }: { locale?: Locale }) {
                     </button>
                   );
                 })}
-                <button type="button" disabled={waiting} onClick={() => { setPicking(false); setState(endMonth(state)); }} className="col-span-2 min-h-11 rounded-xl bg-primary px-3 py-2 text-sm font-black text-primary-foreground disabled:opacity-40">
+                <button
+                  type="button"
+                  disabled={waiting}
+                  onClick={() => {
+                    MobileHapticsPro.impact();
+                    playVillageSound("harvest");
+                    setPicking(false);
+                    setState(endMonth(state));
+                  }}
+                  className="col-span-2 min-h-11 rounded-xl bg-primary px-3 py-2 text-sm font-black text-primary-foreground disabled:opacity-40 hover:bg-primary/90 transition-colors shadow-md"
+                >
                   {t.endMonth}
                 </button>
               </div>
