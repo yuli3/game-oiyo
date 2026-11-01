@@ -462,10 +462,20 @@ export default function SwatBreach({ locale = "ko" }: Props) {
                 ctx.textAlign = "center";
                 ctx.fillText("DOOR", px + CELL_SIZE / 2, py + CELL_SIZE / 2 + 4);
               } else if (tile === "door_open") {
-                ctx.strokeStyle = "#f59e0b";
-                ctx.setLineDash([4, 4]);
-                ctx.strokeRect(px + 6, py + 6, CELL_SIZE - 12, CELL_SIZE - 12);
-                ctx.setLineDash([]);
+                // Breached door frame & wooden splinter debris
+                ctx.strokeStyle = "#b45309";
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(px + 4, py + 4, CELL_SIZE - 8, CELL_SIZE - 8);
+
+                // Broken hinge & door swing
+                ctx.fillStyle = "#78350f";
+                ctx.fillRect(px + 4, py + 4, 4, CELL_SIZE - 8);
+
+                // Wood splinters / debris shards
+                ctx.fillStyle = "#d97706";
+                ctx.fillRect(px + 14, py + 12, 6, 2.5);
+                ctx.fillRect(px + 24, py + 22, 5, 2);
+                ctx.fillRect(px + 18, py + 32, 7, 3);
               } else if (tile === "cover") {
                 ctx.fillStyle = "#1e293b";
                 ctx.beginPath();
@@ -528,45 +538,172 @@ export default function SwatBreach({ locale = "ko" }: Props) {
           }
         }
 
-        // Draw Hostages
+        // Draw Hostages (Tactical Civilian VIPs)
         for (const h of st.hostages) {
           const hx = OFFSET_X + (h.x + 0.5) * CELL_SIZE;
           const hy = OFFSET_Y + (h.y + 0.5) * CELL_SIZE;
-          ctx.fillStyle = h.rescued ? "#22c55e" : "#facc15";
+
+          ctx.save();
+          ctx.translate(hx, hy);
+
+          // Soft drop shadow
+          ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
           ctx.beginPath();
-          ctx.arc(hx, hy, 15, 0, Math.PI * 2);
+          ctx.ellipse(0, 2, 14, 10, 0, 0, Math.PI * 2);
           ctx.fill();
-          ctx.font = "bold 12px sans-serif";
-          ctx.fillStyle = "#090d16";
-          ctx.textAlign = "center";
-          ctx.fillText(h.rescued ? "SAFE" : "VIP", hx, hy + 4);
+
+          if (h.rescued) {
+            // Secured civilian: green aura + untied hands
+            ctx.fillStyle = "rgba(34, 197, 94, 0.25)";
+            ctx.beginPath();
+            ctx.arc(0, 0, 20, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Civilian body
+            ctx.fillStyle = "#22c55e";
+            ctx.beginPath();
+            ctx.roundRect(-8, -10, 16, 20, 6);
+            ctx.fill();
+
+            // Head
+            ctx.fillStyle = "#fde047";
+            ctx.beginPath();
+            ctx.arc(0, -2, 7, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "bold 9px monospace";
+            ctx.textAlign = "center";
+            ctx.fillText("SAFE", 0, 15);
+          } else {
+            // Bound hostage: kneeling, hands tied behind back
+            ctx.strokeStyle = "rgba(250, 204, 21, 0.6)";
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([3, 3]);
+            ctx.beginPath();
+            ctx.arc(0, 0, 18, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Civilian clothes (bright orange/amber vest for high visibility)
+            ctx.fillStyle = "#f59e0b";
+            ctx.beginPath();
+            ctx.roundRect(-7, -8, 14, 16, 5);
+            ctx.fill();
+
+            // Head
+            ctx.fillStyle = "#fef08a";
+            ctx.beginPath();
+            ctx.arc(0, -1, 6, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Zip-tie on wrists (behind back)
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(-3, 6, 6, 2);
+
+            ctx.fillStyle = "#090d16";
+            ctx.font = "bold 9px monospace";
+            ctx.textAlign = "center";
+            ctx.fillText("VIP", 0, 3);
+          }
+
+          ctx.restore();
         }
 
-        // Draw Suspects
+        // Draw Suspects (Armed Insurgents)
         for (const sus of st.suspects) {
           const sx = OFFSET_X + (sus.x + 0.5) * CELL_SIZE;
           const sy = OFFSET_Y + (sus.y + 0.5) * CELL_SIZE;
+
+          ctx.save();
+          ctx.translate(sx, sy);
+
           if (sus.neutralized) {
-            ctx.strokeStyle = "#64748b";
+            // Neutralized suspect: fallen body outline & mark
+            ctx.strokeStyle = "rgba(100, 116, 139, 0.6)";
             ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.arc(sx, sy, 12, 0, Math.PI * 2);
+            ctx.arc(0, 0, 12, 0, Math.PI * 2);
             ctx.stroke();
+
+            ctx.strokeStyle = "#ef4444";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(-6, -6);
+            ctx.lineTo(6, 6);
+            ctx.moveTo(6, -6);
+            ctx.lineTo(-6, 6);
+            ctx.stroke();
+
+            ctx.restore();
             continue;
           }
 
-          ctx.fillStyle = sus.stunTimer > 0 ? "#f59e0b" : "#ef4444";
+          // Aim angle towards nearest operator
+          let aimAngle = 0;
+          let nearestDist = 999;
+          for (const op of st.operators) {
+            if (op.hp > 0) {
+              const dx = op.x - sus.x;
+              const dy = op.y - sus.y;
+              const dist = Math.hypot(dx, dy);
+              if (dist < nearestDist) {
+                nearestDist = dist;
+                aimAngle = Math.atan2(dy, dx);
+              }
+            }
+          }
+
+          // Soft drop shadow
+          ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
           ctx.beginPath();
-          ctx.arc(sx, sy, 16, 0, Math.PI * 2);
+          ctx.ellipse(0, 2, 16, 11, 0, 0, Math.PI * 2);
           ctx.fill();
-          ctx.strokeStyle = "#ffffff";
-          ctx.lineWidth = 2;
+
+          ctx.rotate(aimAngle);
+
+          // Guerilla vest & shoulders
+          ctx.fillStyle = sus.stunTimer > 0 ? "#b45309" : "#7f1d1d";
+          ctx.beginPath();
+          ctx.roundRect(-9, -12, 18, 24, 4);
+          ctx.fill();
+
+          // AK-47 Assault Rifle barrel extending forward
+          ctx.fillStyle = "#1e293b";
+          ctx.fillRect(4, 2, 15, 3.5); // Gun barrel
+          ctx.fillStyle = "#b45309";
+          ctx.fillRect(8, 3, 6, 4);   // Curved banana magazine (wood/bakelite)
+
+          // Arms holding weapon
+          ctx.fillStyle = sus.stunTimer > 0 ? "#d97706" : "#dc2626";
+          ctx.beginPath();
+          ctx.arc(5, -6, 4, 0, Math.PI * 2);
+          ctx.arc(4, 4, 4, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Balaclava mask / Head
+          ctx.fillStyle = "#18181b";
+          ctx.beginPath();
+          ctx.arc(0, 0, 8, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = sus.stunTimer > 0 ? "#facc15" : "#ef4444";
+          ctx.lineWidth = 1.5;
           ctx.stroke();
 
+          // Headband / eye slit
+          ctx.fillStyle = "#ef4444";
+          ctx.fillRect(3, -3, 3, 6);
+
+          ctx.restore();
+
+          // Stun effect overlay
           if (sus.stunTimer > 0) {
+            ctx.save();
+            ctx.translate(sx, sy);
             ctx.font = "14px sans-serif";
             ctx.textAlign = "center";
-            ctx.fillText("💫", sx, sy - 20);
+            ctx.fillText("💫", 0, -20);
+            ctx.restore();
           }
         }
 
@@ -590,19 +727,77 @@ export default function SwatBreach({ locale = "ko" }: Props) {
           ctx.fill();
           ctx.restore();
 
-          // Operator Circle
-          ctx.fillStyle = color;
+          // High-Fidelity Tactical Operator Silhouette
+          ctx.save();
+          ctx.translate(ox, oy);
+
+          // Soft drop shadow
+          ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
           ctx.beginPath();
-          ctx.arc(ox, oy, 17, 0, Math.PI * 2);
+          ctx.ellipse(0, 2, 17, 12, 0, 0, Math.PI * 2);
           ctx.fill();
-          ctx.strokeStyle = "#ffffff";
-          ctx.lineWidth = 2.5;
+
+          ctx.rotate(op.angle);
+
+          // Tactical Plate Carrier (Dark Navy/Slate armor)
+          ctx.fillStyle = "#0f172a";
+          ctx.beginPath();
+          ctx.roundRect(-10, -13, 20, 26, 4);
+          ctx.fill();
+          ctx.strokeStyle = "#334155";
+          ctx.lineWidth = 1;
           ctx.stroke();
 
-          ctx.fillStyle = "#090d16";
-          ctx.font = "bold 11px monospace";
+          // Tactical Assault Rifle (M4/HK416 with suppressor & rail)
+          ctx.fillStyle = "#020617";
+          ctx.fillRect(5, 2, 17, 3.5); // Barrel & suppressor
+          ctx.fillStyle = "#475569";
+          ctx.fillRect(8, 0, 7, 3);    // Picatinny rail / EOTech holo sight
+          ctx.fillStyle = "#1e293b";
+          ctx.fillRect(3, 4, 3, 4);    // Magazine
+
+          // Arms gripping weapon (colored uniform sleeves)
+          ctx.fillStyle = color;
+          ctx.beginPath();
+          ctx.arc(6, -6, 4.5, 0, Math.PI * 2); // Left hand on foregrip
+          ctx.arc(4, 4, 4.5, 0, Math.PI * 2);  // Right hand on trigger
+          ctx.fill();
+
+          // Ballistic FAST Helmet
+          ctx.fillStyle = "#1e293b";
+          ctx.beginPath();
+          ctx.arc(0, 0, 9, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+
+          // NVG mount / Goggle visor rim
+          ctx.fillStyle = color;
+          ctx.fillRect(5, -4, 3.5, 8);
+
+          // Tactical IR Laser Line (aiming indicator)
+          ctx.strokeStyle = op.id === "alpha" ? "rgba(56, 189, 248, 0.4)" : "rgba(74, 222, 128, 0.4)";
+          ctx.lineWidth = 1;
+          ctx.setLineDash([2, 4]);
+          ctx.beginPath();
+          ctx.moveTo(22, 4);
+          ctx.lineTo(80, 4);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          ctx.restore();
+
+          // Team Badge ID Text
+          ctx.save();
+          ctx.translate(ox, oy);
+          ctx.fillStyle = "#ffffff";
+          ctx.font = "bold 9px monospace";
           ctx.textAlign = "center";
-          ctx.fillText(op.id === "alpha" ? "A1" : "B2", ox, oy + 4);
+          ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
+          ctx.shadowBlur = 3;
+          ctx.fillText(op.id === "alpha" ? "ALPHA" : "BRAVO", 0, 18);
+          ctx.restore();
         }
 
         // Draw Flashbang shockwaves
