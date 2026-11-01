@@ -6,7 +6,7 @@ import {
   saveArcadePassProgress,
 } from '../../lib/games/arcade-pass';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
-import { triggerHaptic } from '../../lib/games/juice-engine';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import { recordResult } from '../../lib/games/records';
 import {
   createInitialDarkestTorchState,
@@ -21,6 +21,36 @@ import type { Locale } from '../../lib/i18n';
 
 interface Props {
   locale?: Locale;
+}
+
+function TiltTorchButton({
+  children,
+  onClick,
+  disabled,
+  className,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+  className?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.2);
+        onClick();
+      }}
+      className={`will-change-transform transform-(--card-tilt) ${className ?? ''}`}
+    >
+      {children}
+    </button>
+  );
 }
 
 export default function DarkestTorch({ locale = 'en' }: Props) {
@@ -50,6 +80,7 @@ export default function DarkestTorch({ locale = 'en' }: Props) {
 
   useEffect(() => {
     if (state.status === 'won') {
+      MobileHapticsPro.success();
       try {
         const dateKey = new Date().toISOString().slice(0, 10);
         const current = loadArcadePassProgress(dateKey);
@@ -59,13 +90,21 @@ export default function DarkestTorch({ locale = 'en' }: Props) {
         // ignore storage errors
       }
       recordResult('darkest-torch', 'w');
+    } else if (state.status === 'lost') {
+      MobileHapticsPro.warning();
     }
   }, [state.status]);
 
   const torchTier = getTorchLightTier(state.torch);
 
   const onSkill = (skillId: HeroSkillId) => {
-    triggerHaptic('heavy');
+    if (skillId === 'smite' || skillId === 'point-blank') {
+      MobileHapticsPro.heavy();
+    } else if (skillId === 'plague-grenade') {
+      MobileHapticsPro.impact();
+    } else {
+      MobileHapticsPro.light();
+    }
     playSyntheticTone(ensureAudio(), {
       freq: state.lastVoiceFormantHz || 420,
       duration: 0.14,
@@ -76,7 +115,7 @@ export default function DarkestTorch({ locale = 'en' }: Props) {
   };
 
   const onRelightTorch = () => {
-    triggerHaptic('medium');
+    MobileHapticsPro.medium();
     playSyntheticTone(ensureAudio(), {
       freq: 560,
       duration: 0.14,
@@ -87,7 +126,7 @@ export default function DarkestTorch({ locale = 'en' }: Props) {
   };
 
   const onSwap = (rankA: 1 | 2 | 3 | 4, rankB: 1 | 2 | 3 | 4) => {
-    triggerHaptic('light');
+    MobileHapticsPro.selection();
     setState((prev) => swapHeroRanks(prev, rankA, rankB));
   };
 
@@ -124,8 +163,7 @@ export default function DarkestTorch({ locale = 'en' }: Props) {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
+          <TiltTorchButton
             disabled={state.torchesInPack <= 0}
             onClick={onRelightTorch}
             className="rounded-xl bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground shadow hover:opacity-90 disabled:opacity-45"
@@ -133,64 +171,75 @@ export default function DarkestTorch({ locale = 'en' }: Props) {
             {isKo
               ? `🔥 횃불 점화 (+30 광량 · 잔여 ${state.torchesInPack}개)`
               : `🔥 Light Torch (+30 · ${state.torchesInPack} left)`}
-          </button>
-          <button
-            type="button"
+          </TiltTorchButton>
+          <TiltTorchButton
             onClick={() => setState(createInitialDarkestTorchState(Date.now()))}
             className="rounded-xl border border-border bg-background px-3 py-1.5 text-xs font-bold text-foreground hover:bg-muted"
           >
             {isKo ? '새 원정' : 'New Expedition'}
-          </button>
-          <button
-            type="button"
+          </TiltTorchButton>
+          <TiltTorchButton
             onClick={togglePortal}
             className="rounded-xl border border-border bg-background px-3 py-1.5 text-xs font-bold text-foreground hover:bg-muted"
           >
             {isImmersive ? portalLabels.exit : portalLabels.enter}
-          </button>
+          </TiltTorchButton>
         </div>
       </div>
 
-      {/* Torchlight & Dungeon Status Bar */}
-      <div className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-5">
-        <div className="rounded-2xl border border-border bg-background p-2.5">
-          <div className="text-xs font-semibold text-muted-foreground">
-            {isKo ? '지하 묘지 구역' : 'Crypt Room'}
+      {/* Torchlight Ambient Overlay (Darkest Dungeon Visual Juice) */}
+      <div
+        className={`pointer-events-none mt-2 rounded-2xl border border-border/50 p-2 transition-all duration-500 ${
+          state.torch > 75
+            ? 'shadow-inner'
+            : state.torch > 50
+              ? 'ring-1 ring-primary/30'
+              : state.torch > 25
+                ? 'ring-2 ring-destructive/40'
+                : 'ring-2 ring-destructive/80 bg-destructive/5'
+        }`}
+      >
+        {/* Torchlight & Dungeon Status Bar */}
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-5">
+          <div className="rounded-2xl border border-border bg-background p-2.5">
+            <div className="text-xs font-semibold text-muted-foreground">
+              {isKo ? '지하 묘지 구역' : 'Crypt Room'}
+            </div>
+            <div className="mt-1 text-sm font-black text-foreground">
+              🚪 Room {state.room}/{state.maxRooms} · T{state.turn}
+            </div>
           </div>
-          <div className="mt-1 text-sm font-black text-foreground">
-            🚪 Room {state.room}/{state.maxRooms} · T{state.turn}
+          <div className="rounded-2xl border border-border bg-background p-2.5">
+            <div className="text-xs font-semibold text-muted-foreground">
+              {isKo ? '횃불 광량 단계' : 'Torchlight Tier'}
+            </div>
+            <div className="mt-1 text-sm font-black text-primary">
+              🕯️ {state.torch}% ({torchTier.toUpperCase()})
+            </div>
           </div>
-        </div>
-        <div className="rounded-2xl border border-border bg-background p-2.5">
-          <div className="text-xs font-semibold text-muted-foreground">
-            {isKo ? '횃불 광량 단계' : 'Torchlight Tier'}
+          <div className="rounded-2xl border border-border bg-background p-2.5">
+            <div className="text-xs font-semibold text-muted-foreground">
+              {isKo ? '전리품 금화' : 'Looted Gold'}
+            </div>
+            <div className="mt-1 text-sm font-black text-foreground">
+              🪙 {state.gold} G
+            </div>
           </div>
-          <div className="mt-1 text-sm font-black text-primary">
-            🕯️ {state.torch}% ({torchTier.toUpperCase()})
+          <div className="rounded-2xl border border-border bg-background p-2.5">
+            <div className="text-xs font-semibold text-muted-foreground">
+              {isKo ? '각성 보정 스택' : 'Virtue Pity'}
+            </div>
+            <div className="mt-1 text-sm font-black text-foreground">
+              🌟 {state.virtuePityCounter}/3
+            </div>
           </div>
-        </div>
-        <div className="rounded-2xl border border-border bg-background p-2.5">
-          <div className="text-xs font-semibold text-muted-foreground">
-            {isKo ? '전리품 금화' : 'Looted Gold'}
-          </div>
-          <div className="mt-1 text-sm font-black text-foreground">
-            🪙 {state.gold} G
-          </div>
-        </div>
-        <div className="rounded-2xl border border-border bg-background p-2.5">
-          <div className="text-xs font-semibold text-muted-foreground">
-            {isKo ? '각성 보정 스택' : 'Virtue Pity'}
-          </div>
-          <div className="mt-1 text-sm font-black text-foreground">
-            🌟 {state.virtuePityCounter}/3
-          </div>
-        </div>
-        <div className="rounded-2xl border border-border bg-background p-2.5">
-          <div className="text-xs font-semibold text-muted-foreground">
-            {isKo ? '원정 점수' : 'Expedition Score'}
-          </div>
-          <div className="mt-1 text-sm font-black text-foreground">
-            🏆 {state.score}
+          <div className="rounded-2xl border border-border bg-background p-2.5">
+            <div className="text-xs font-semibold text-muted-foreground">
+              {isKo ? '원정 점수' : 'Expedition Score'}
+            </div>
+            <div className="mt-1 text-sm font-black text-foreground">
+              🏆 {state.score}
+            </div>
           </div>
         </div>
       </div>
@@ -206,20 +255,18 @@ export default function DarkestTorch({ locale = 'en' }: Props) {
                 : '🛡️ Hero 4-Rank Formation (Rank 1 Front → Rank 4 Back)'}
             </h2>
             <div className="flex gap-1.5">
-              <button
-                type="button"
+              <TiltTorchButton
                 onClick={() => onSwap(1, 2)}
                 className="rounded-lg border border-border bg-secondary px-2 py-1 text-xs font-bold text-secondary-foreground hover:opacity-90"
               >
                 ⇄ R1↔R2
-              </button>
-              <button
-                type="button"
+              </TiltTorchButton>
+              <TiltTorchButton
                 onClick={() => onSwap(2, 3)}
                 className="rounded-lg border border-border bg-secondary px-2 py-1 text-xs font-bold text-secondary-foreground hover:opacity-90"
               >
                 ⇄ R2↔R3
-              </button>
+              </TiltTorchButton>
             </div>
           </div>
 
@@ -246,16 +293,36 @@ export default function DarkestTorch({ locale = 'en' }: Props) {
                   </div>
                 </div>
 
-                <div className="mt-3 space-y-1 text-xs">
-                  <div className="flex justify-between font-bold text-foreground">
-                    <span>HP</span>
-                    <span>
-                      {hero.hp}/{hero.maxHp}
-                    </span>
+                <div className="mt-3 space-y-1.5 text-xs">
+                  <div>
+                    <div className="flex justify-between font-bold text-foreground">
+                      <span>HP</span>
+                      <span>
+                        {hero.hp}/{hero.maxHp}
+                      </span>
+                    </div>
+                    <div className="mt-0.5 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full rounded-full bg-primary transition-all duration-300 w-(--hp-pct)"
+                        style={{
+                          '--hp-pct': `${Math.max(0, Math.min(100, (hero.hp / hero.maxHp) * 100))}%`,
+                        } as React.CSSProperties}
+                      />
+                    </div>
                   </div>
-                  <div className="flex justify-between font-bold text-primary">
-                    <span>STRESS</span>
-                    <span>{hero.stress}/100</span>
+                  <div>
+                    <div className="flex justify-between font-bold text-muted-foreground">
+                      <span>STRESS</span>
+                      <span>{hero.stress}/100</span>
+                    </div>
+                    <div className="mt-0.5 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full rounded-full bg-destructive transition-all duration-300 w-(--stress-pct)"
+                        style={{
+                          '--stress-pct': `${Math.max(0, Math.min(100, hero.stress))}%`,
+                        } as React.CSSProperties}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -270,8 +337,7 @@ export default function DarkestTorch({ locale = 'en' }: Props) {
                 : 'Execute Tactical Skill:'}
             </div>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              <button
-                type="button"
+              <TiltTorchButton
                 onClick={() => onSkill('smite')}
                 className="rounded-xl bg-primary px-3 py-2.5 text-left text-xs font-bold text-primary-foreground shadow hover:opacity-90"
               >
@@ -279,9 +345,8 @@ export default function DarkestTorch({ locale = 'en' }: Props) {
                 {isKo
                   ? '성전사 강타 (Smite — 단일 강타 + 치명타 보정)'
                   : 'Crusader Smite (Single Target Strike)'}
-              </button>
-              <button
-                type="button"
+              </TiltTorchButton>
+              <TiltTorchButton
                 onClick={() => onSkill('point-blank')}
                 className="rounded-xl border border-border bg-secondary px-3 py-2.5 text-left text-xs font-bold text-secondary-foreground hover:opacity-90"
               >
@@ -289,9 +354,8 @@ export default function DarkestTorch({ locale = 'en' }: Props) {
                 {isKo
                   ? '노상강도 영거리 사격 (135% 피해 + R1↔R2 전열 교대)'
                   : 'Point Blank Shot (135% DMG + R1↔R2 Shift)'}
-              </button>
-              <button
-                type="button"
+              </TiltTorchButton>
+              <TiltTorchButton
                 onClick={() => onSkill('plague-grenade')}
                 className="rounded-xl border border-border bg-secondary px-3 py-2.5 text-left text-xs font-bold text-secondary-foreground hover:opacity-90"
               >
@@ -299,9 +363,8 @@ export default function DarkestTorch({ locale = 'en' }: Props) {
                 {isKo
                   ? '역병의사 맹독 수류탄 (적 전체 광역 역병 타격)'
                   : 'Plague Grenade (AoE Blight All Enemies)'}
-              </button>
-              <button
-                type="button"
+              </TiltTorchButton>
+              <TiltTorchButton
                 onClick={() => onSkill('divine-comfort')}
                 className="rounded-xl border border-border bg-secondary px-3 py-2.5 text-left text-xs font-bold text-secondary-foreground hover:opacity-90"
               >
@@ -309,9 +372,8 @@ export default function DarkestTorch({ locale = 'en' }: Props) {
                 {isKo
                   ? '성녀 신성한 위로 (파티 전원 +14 HP & -6 스트레스)'
                   : 'Vestal Divine Comfort (+14 Party HP & -6 Stress)'}
-              </button>
-              <button
-                type="button"
+              </TiltTorchButton>
+              <TiltTorchButton
                 onClick={() => onSkill('inspiring-torch')}
                 className="rounded-xl border border-border bg-card px-3 py-2.5 text-left text-xs font-bold text-foreground hover:border-primary sm:col-span-2"
               >
@@ -319,7 +381,7 @@ export default function DarkestTorch({ locale = 'en' }: Props) {
                 {isKo
                   ? '성전사 고무의 외침 (횃불 광량 +22 & 파티 전원 스트레스 -14)'
                   : 'Inspiring Cry (+22 Torchlight & -14 Party Stress)'}
-              </button>
+              </TiltTorchButton>
             </div>
           </div>
         </div>
@@ -340,7 +402,10 @@ export default function DarkestTorch({ locale = 'en' }: Props) {
                   <button
                     key={enemy.id}
                     type="button"
-                    onClick={() => setSelectedEnemyId(enemy.id)}
+                    onClick={() => {
+                      MobileHapticsPro.light();
+                      setSelectedEnemyId(enemy.id);
+                    }}
                     className={`flex w-full items-center justify-between rounded-xl border p-3 text-left transition ${
                       isTarget
                         ? 'border-primary bg-primary/15'
@@ -403,8 +468,7 @@ export default function DarkestTorch({ locale = 'en' }: Props) {
               Score: {state.score} · Gold: {state.gold} G · Torch: {state.torch}%
             </div>
           </div>
-          <button
-            type="button"
+          <TiltTorchButton
             onClick={handleShare}
             className="rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground shadow"
           >
@@ -415,7 +479,7 @@ export default function DarkestTorch({ locale = 'en' }: Props) {
               : isKo
                 ? '원정 기록 공유'
                 : 'Share Result'}
-          </button>
+          </TiltTorchButton>
         </div>
       )}
     </div>

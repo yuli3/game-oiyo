@@ -30,7 +30,47 @@ import {
   type ShotState,
 } from "../../lib/games/deep-photographer";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import DeepPhotographerScene, { type ShotGlide } from "./DeepPhotographerScene";
+
+function TiltDeepButton({
+  children,
+  onClick,
+  disabled,
+  className,
+  'aria-label': ariaLabel,
+  'aria-keyshortcuts': ariaKeyShortcuts,
+  'aria-pressed': ariaPressed,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+  className?: string;
+  'aria-label'?: string;
+  'aria-keyshortcuts'?: string;
+  'aria-pressed'?: boolean;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      aria-label={ariaLabel}
+      aria-keyshortcuts={ariaKeyShortcuts}
+      aria-pressed={ariaPressed}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.18);
+        onClick();
+      }}
+      className={`will-change-transform transform-(--card-tilt) ${className ?? ''}`}
+    >
+      {children}
+    </button>
+  );
+}
 
 interface Copy {
   title: string;
@@ -518,6 +558,7 @@ export default function DeepPhotographer({ locale = "en" }: { locale?: Locale })
   const [muted, setMuted] = useState(false);
   const [view, setView] = useState(0);
   const [shareCardCopied, setShareCardCopied] = useState(false);
+  const [isShutterFlashing, setIsShutterFlashing] = useState(false);
   const stateRef = useRef(state);
   const pausedRef = useRef(paused);
   const mutedRef = useRef(muted);
@@ -629,9 +670,25 @@ export default function DeepPhotographer({ locale = "en" }: { locale?: Locale })
     const next = stepShot(current, action);
     if (next === current) {
       arm();
+      MobileHapticsPro.warning();
       if (!mutedRef.current && !pausedRef.current) audio.current?.tick("block");
       return;
     }
+
+    if (action === "shutter") {
+      setIsShutterFlashing(true);
+      window.setTimeout(() => setIsShutterFlashing(false), 240);
+      if (next.status === "win") {
+        MobileHapticsPro.success();
+      } else {
+        MobileHapticsPro.warning();
+      }
+    } else if (action === "dim") {
+      MobileHapticsPro.light();
+    } else if (action === "bright") {
+      MobileHapticsPro.medium();
+    }
+
     const kind: Tick = action === "shutter"
       ? (next.status === "win" ? "win" : "miss")
       : next.status === "lose" ? "lose" : "nudge";
@@ -773,6 +830,14 @@ export default function DeepPhotographer({ locale = "en" }: { locale?: Locale })
         </div>
       )}
       <div className={isImmersive ? "relative flex min-h-64 w-full flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-card" : "relative overflow-hidden rounded-2xl border border-border bg-card"}>
+        {/* Viewfinder Shutter Flash Visual Juice */}
+        {isShutterFlashing && (
+          <div
+            className="pointer-events-none absolute inset-0 z-30 bg-white/85 transition-opacity duration-200"
+            role="presentation"
+            aria-hidden="true"
+          />
+        )}
         <div className={isImmersive ? "h-full min-h-64 w-full flex-1" : "h-96"} aria-hidden="true">
           <DeepPhotographerScene
             state={state}
@@ -786,9 +851,9 @@ export default function DeepPhotographer({ locale = "en" }: { locale?: Locale })
         </div>
         {paused ? (
           <div className="absolute inset-0 flex items-center justify-center bg-background/80">
-            <button type="button" className={controlClass("primary")} onClick={() => setPaused(false)}>
+            <TiltDeepButton className={controlClass("primary")} onClick={() => setPaused(false)}>
               {copy.resume}
-            </button>
+            </TiltDeepButton>
           </div>
         ) : null}
       </div>
@@ -799,9 +864,8 @@ export default function DeepPhotographer({ locale = "en" }: { locale?: Locale })
             const available = open.has(action);
             const detail = detailFor(state, action, copy);
             return (
-              <button
+              <TiltDeepButton
                 key={action}
-                type="button"
                 className={available ? controlClass("primary") : controlClass("quiet")}
                 aria-keyshortcuts={shortcut(action)}
                 aria-label={`${label(action, copy)}. ${detail}`}
@@ -810,12 +874,11 @@ export default function DeepPhotographer({ locale = "en" }: { locale?: Locale })
               >
                 {label(action, copy)}
                 <span className="block text-xs font-normal">{detail}</span>
-              </button>
+              </TiltDeepButton>
             );
           })}
         </div>
-        <button
-          type="button"
+        <TiltDeepButton
           className={shutterClass(shutterReady)}
           aria-keyshortcuts="F"
           aria-label={`${copy.shutter}. ${detailFor(state, "shutter", copy)}`}
@@ -824,21 +887,49 @@ export default function DeepPhotographer({ locale = "en" }: { locale?: Locale })
         >
           {copy.shutter}
           <span className="block text-xs font-normal">{detailFor(state, "shutter", copy)}</span>
-        </button>
+        </TiltDeepButton>
       </div>
       <div className="flex flex-wrap gap-2">
-        <button type="button" className={paused ? controlClass("primary") : controlClass("quiet")} aria-pressed={paused} onClick={() => setPaused((value) => !value)}>
+        <TiltDeepButton
+          className={paused ? controlClass("primary") : controlClass("quiet")}
+          aria-pressed={paused}
+          onClick={() => {
+            MobileHapticsPro.selection();
+            setPaused((value) => !value);
+          }}
+        >
           {paused ? copy.resume : copy.pause}
-        </button>
-        <button type="button" className={controlClass("quiet")} onClick={() => setView((value) => (value + 1) % 4)}>
+        </TiltDeepButton>
+        <TiltDeepButton
+          className={controlClass("quiet")}
+          onClick={() => {
+            MobileHapticsPro.selection();
+            setView((value) => (value + 1) % 4);
+          }}
+        >
           {copy.view}
-        </button>
-        <button type="button" className={muted ? controlClass("primary") : controlClass("quiet")} aria-pressed={muted} onClick={() => { arm(); setMuted((value) => !value); }}>
+        </TiltDeepButton>
+        <TiltDeepButton
+          className={muted ? controlClass("primary") : controlClass("quiet")}
+          aria-pressed={muted}
+          onClick={() => {
+            arm();
+            MobileHapticsPro.selection();
+            setMuted((value) => !value);
+          }}
+        >
           {muted ? copy.sound : copy.mute}
-        </button>
-        <button type="button" className={controlClass("danger")} disabled={state.status !== "play"} onClick={giveUp}>
+        </TiltDeepButton>
+        <TiltDeepButton
+          className={controlClass("danger")}
+          disabled={state.status !== "play"}
+          onClick={() => {
+            MobileHapticsPro.warning();
+            giveUp();
+          }}
+        >
           {copy.giveUp}
-        </button>
+        </TiltDeepButton>
       </div>
       <form
         className="flex flex-wrap items-end gap-2"

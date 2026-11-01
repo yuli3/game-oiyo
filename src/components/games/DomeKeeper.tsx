@@ -6,7 +6,7 @@ import {
   saveArcadePassProgress,
 } from '../../lib/games/arcade-pass';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
-import { triggerHaptic } from '../../lib/games/juice-engine';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import { recordResult } from '../../lib/games/records';
 import {
   applyRelicOverdrivePreset,
@@ -22,6 +22,36 @@ import type { Locale } from '../../lib/i18n';
 
 interface Props {
   locale?: Locale;
+}
+
+function TiltDomeButton({
+  children,
+  onClick,
+  disabled,
+  className,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+  className?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.2);
+        onClick();
+      }}
+      className={`will-change-transform transform-(--card-tilt) ${className ?? ''}`}
+    >
+      {children}
+    </button>
+  );
 }
 
 const COPY: Record<
@@ -167,6 +197,7 @@ export default function DomeKeeper({ locale = 'ko' }: Props) {
 
   useEffect(() => {
     if (state.status === 'won') {
+      MobileHapticsPro.success();
       try {
         const dateKey = new Date().toISOString().slice(0, 10);
         const current = loadArcadePassProgress(dateKey);
@@ -176,6 +207,8 @@ export default function DomeKeeper({ locale = 'ko' }: Props) {
         // ignore storage errors
       }
       recordResult('dome-keeper', 'w');
+    } else if (state.status === 'lost') {
+      MobileHapticsPro.warning();
     }
   }, [state.status]);
 
@@ -197,22 +230,41 @@ export default function DomeKeeper({ locale = 'ko' }: Props) {
     ctx.fillStyle = sky;
     ctx.fillRect(0, 0, w, h);
 
+    // Background Stars
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+    for (let i = 0; i < 28; i++) {
+      const sx = (i * 47) % w;
+      const sy = (i * 23) % (h * 0.6);
+      ctx.fillRect(sx, sy, 1.5, 1.5);
+    }
+
     const groundY = h - 32;
     ctx.fillStyle = '#334155';
     ctx.fillRect(0, groundY, w, 32);
 
-    // Glass Dome at center
+    // Glass Dome at center with 2.5D Hex Barrier Glow
     const domeX = w / 2;
     const domeR = 54;
     ctx.save();
     ctx.beginPath();
     ctx.arc(domeX, groundY, domeR, Math.PI, 0, false);
     ctx.closePath();
-    ctx.fillStyle = 'rgba(56, 189, 248, 0.25)';
+    ctx.fillStyle = state.domeShield > 0 ? 'rgba(56, 189, 248, 0.35)' : 'rgba(56, 189, 248, 0.18)';
     ctx.fill();
     ctx.lineWidth = 3;
     ctx.strokeStyle = state.domeShield > 0 ? '#38bdf8' : '#94a3b8';
     ctx.stroke();
+
+    // Dome Shield Hex grid lines
+    if (state.domeShield > 0) {
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.3)';
+      ctx.lineWidth = 1;
+      for (let r = 20; r < domeR; r += 16) {
+        ctx.beginPath();
+        ctx.arc(domeX, groundY, r, Math.PI, 0, false);
+        ctx.stroke();
+      }
+    }
 
     // Rotating Laser Turret along dome arc
     const rad = (state.turretAngleDeg * Math.PI) / 180;
@@ -232,19 +284,32 @@ export default function DomeKeeper({ locale = 'ko' }: Props) {
       const ix = domeX - Math.cos(iRad) * distPx;
       const iy = groundY - Math.sin(iRad) * distPx * 0.65;
 
+      ctx.save();
+      // Invader Bio-silhouette
       ctx.fillStyle = inv.isBoss ? '#ef4444' : '#a855f7';
       ctx.beginPath();
       ctx.arc(ix, iy, inv.isBoss ? 14 : 10, 0, Math.PI * 2);
       ctx.fill();
 
-      // Laser beam to currently targeted angle
+      // Glowing alien eye
+      ctx.fillStyle = '#fef08a';
+      ctx.beginPath();
+      ctx.arc(ix - 2, iy - 2, inv.isBoss ? 4 : 2.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // High-power Laser beam with Glow effect
       if (Math.abs(inv.angleDeg - state.turretAngleDeg) < 5) {
+        ctx.save();
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = '#fde047';
         ctx.strokeStyle = '#fde047';
-        ctx.lineWidth = 2.5;
+        ctx.lineWidth = 3.5;
         ctx.beginPath();
         ctx.moveTo(tx, ty);
         ctx.lineTo(ix, iy);
         ctx.stroke();
+        ctx.restore();
       }
     }
 
@@ -258,25 +323,25 @@ export default function DomeKeeper({ locale = 'ko' }: Props) {
   }, [state]);
 
   const onDrillTile = (row: number, col: number) => {
-    triggerHaptic('medium');
+    MobileHapticsPro.medium();
     playSyntheticTone(ensureAudio(), { freq: 240 + row * 35, duration: 0.1, type: 'sawtooth', gain: 0.12 });
     setState((prev) => drillMineCell(prev, row, col));
   };
 
   const onFireLaser = (invaderId: string) => {
-    triggerHaptic('heavy');
+    MobileHapticsPro.heavy();
     playSyntheticTone(ensureAudio(), { freq: 680, duration: 0.14, type: 'square', gain: 0.15 });
     setState((prev) => fireDomeLaserAtInvader(prev, invaderId));
   };
 
   const onUpgrade = (kind: 'drill' | 'jetpack' | 'laser' | 'shield') => {
-    triggerHaptic('light');
+    MobileHapticsPro.selection();
     playSyntheticTone(ensureAudio(), { freq: 520, duration: 0.12, type: 'triangle', gain: 0.14 });
     setState((prev) => upgradeDomeSystem(prev, kind));
   };
 
   const onPreset = () => {
-    triggerHaptic('success');
+    MobileHapticsPro.success();
     playSyntheticTone(ensureAudio(), { freq: 740, duration: 0.18, type: 'sine', gain: 0.15 });
     setState((prev) => applyRelicOverdrivePreset(prev));
   };
@@ -303,34 +368,36 @@ export default function DomeKeeper({ locale = 'ko' }: Props) {
           <p className="mt-1 text-xs text-muted-foreground md:text-sm">{t.subtitle}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
+          <TiltDomeButton
             onClick={onPreset}
             className="rounded-xl bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground shadow hover:opacity-90"
           >
             {t.presetBtn}
-          </button>
-          <button
-            type="button"
-            onClick={() => setState((prev) => startAlienWaveDefense(prev))}
+          </TiltDomeButton>
+          <TiltDomeButton
+            onClick={() => {
+              MobileHapticsPro.heavy();
+              setState((prev) => startAlienWaveDefense(prev));
+            }}
             className="rounded-xl border border-border bg-secondary px-3 py-1.5 text-xs font-bold text-secondary-foreground hover:opacity-90"
           >
             {t.triggerWaveBtn}
-          </button>
-          <button
-            type="button"
-            onClick={() => setState(createInitialDomeKeeperState(Date.now()))}
+          </TiltDomeButton>
+          <TiltDomeButton
+            onClick={() => {
+              MobileHapticsPro.selection();
+              setState(createInitialDomeKeeperState(Date.now()));
+            }}
             className="rounded-xl border border-border bg-background px-3 py-1.5 text-xs font-bold text-foreground hover:bg-muted"
           >
             {t.resetBtn}
-          </button>
-          <button
-            type="button"
+          </TiltDomeButton>
+          <TiltDomeButton
             onClick={togglePortal}
             className="rounded-xl border border-border bg-background px-3 py-1.5 text-xs font-bold text-foreground hover:bg-muted"
           >
             {isImmersive ? portalLabels.exit : portalLabels.enter}
-          </button>
+          </TiltDomeButton>
         </div>
       </div>
 
@@ -378,13 +445,12 @@ export default function DomeKeeper({ locale = 'ko' }: Props) {
           <div className="text-sm font-black text-foreground">
             {state.status === 'won' ? '🏆 VICTORY — Dome Colony & Ancient Relic Secured!' : '💥 DOME BREACHED — Try Again!'}
           </div>
-          <button
-            type="button"
+          <TiltDomeButton
             onClick={handleShare}
-            className="rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground"
+            className="rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground shadow"
           >
             {copied ? t.copied : t.shareBtn}
-          </button>
+          </TiltDomeButton>
         </div>
       )}
 
@@ -394,9 +460,8 @@ export default function DomeKeeper({ locale = 'ko' }: Props) {
           <h2 className="text-sm font-black text-foreground">{t.defenseTitle}</h2>
           <div className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
             {state.invaders.map((inv) => (
-              <button
+              <TiltDomeButton
                 key={inv.id}
-                type="button"
                 onClick={() => onFireLaser(inv.id)}
                 className="flex flex-col items-start justify-between rounded-xl border border-border bg-card p-3 text-left transition hover:border-primary"
               >
@@ -415,7 +480,7 @@ export default function DomeKeeper({ locale = 'ko' }: Props) {
                 <div className="mt-2 w-full rounded-lg bg-primary px-2.5 py-1 text-center text-xs font-bold text-primary-foreground">
                   🎯 Fire Laser ({22 + state.laserCannonLv * 14} DMG)
                 </div>
-              </button>
+              </TiltDomeButton>
             ))}
           </div>
         </div>
@@ -473,38 +538,34 @@ export default function DomeKeeper({ locale = 'ko' }: Props) {
       <div className="mt-4 rounded-2xl border border-border bg-background p-4">
         <h2 className="text-sm font-black text-foreground">{t.upgradesTitle}</h2>
         <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <button
-            type="button"
+          <TiltDomeButton
             onClick={() => onUpgrade('drill')}
             className="rounded-xl border border-border bg-card p-2.5 text-left text-xs hover:border-primary"
           >
             <div className="font-bold text-foreground">⚙️ Plasma Drill Lv.{state.drillPowerLv}</div>
             <div className="mt-1 text-muted-foreground">Cost: {state.drillPowerLv * 4} Iron</div>
-          </button>
-          <button
-            type="button"
+          </TiltDomeButton>
+          <TiltDomeButton
             onClick={() => onUpgrade('jetpack')}
             className="rounded-xl border border-border bg-card p-2.5 text-left text-xs hover:border-primary"
           >
             <div className="font-bold text-foreground">🚀 Jetpack Lv.{state.jetpackLv}</div>
             <div className="mt-1 text-muted-foreground">Cost: {state.jetpackLv * 3} Iron</div>
-          </button>
-          <button
-            type="button"
+          </TiltDomeButton>
+          <TiltDomeButton
             onClick={() => onUpgrade('laser')}
             className="rounded-xl border border-border bg-card p-2.5 text-left text-xs hover:border-primary"
           >
             <div className="font-bold text-foreground">⚡ Dome Laser Lv.{state.laserCannonLv}</div>
             <div className="mt-1 text-muted-foreground">Cost: {state.laserCannonLv * 4} Iron</div>
-          </button>
-          <button
-            type="button"
+          </TiltDomeButton>
+          <TiltDomeButton
             onClick={() => onUpgrade('shield')}
             className="rounded-xl border border-border bg-card p-2.5 text-left text-xs hover:border-primary"
           >
             <div className="font-bold text-foreground">🛡️ Cobalt Shield Repair</div>
             <div className="mt-1 text-muted-foreground">Cost: 2 Cobalt (+30HP/+25Shd)</div>
-          </button>
+          </TiltDomeButton>
         </div>
       </div>
     </div>

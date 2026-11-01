@@ -3,6 +3,40 @@ import { Volume2, VolumeX, Maximize2, Minimize2 } from 'lucide-react';
 import { GameContainer, Die, type DieType } from '@/components/ui/game/GamePrimitives';
 import { useArcadePortal } from '@/lib/games/arcade-portal';
 import { usePrefersReducedMotion } from '@/lib/games/reduced-motion';
+import { useCardTiltPro, MobileHapticsPro } from '@/lib/games/engine-suite-unified';
+
+function TiltDiceButton({
+  children,
+  onClick,
+  disabled,
+  className,
+  'aria-label': ariaLabel,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+  className?: string;
+  'aria-label'?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      aria-label={ariaLabel}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.2);
+        onClick();
+      }}
+      className={`will-change-transform transform-(--card-tilt) ${className ?? ''}`}
+    >
+      {children}
+    </button>
+  );
+}
 
 interface RollRecord {
   dice: DieType[];
@@ -134,11 +168,13 @@ const DiceRoller: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     setThrottled(true);
     dispatch({ type: 'ROLL_START' });
     playClack(280, 0.05);
+    MobileHapticsPro.impact();
 
     if (reducedMotion) {
       const results = state.selectedDice.map((die) => Math.floor(Math.random() * DICE_SIDES[die]) + 1);
       dispatch({ type: 'ROLL_END', results });
       playClack(520, 0.09);
+      MobileHapticsPro.heavy();
       setThrottled(false);
       return;
     }
@@ -148,6 +184,7 @@ const DiceRoller: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     tickRef.current = setInterval(() => {
       setPreview(state.selectedDice.map((die) => Math.floor(Math.random() * DICE_SIDES[die]) + 1));
       playClack(260 + Math.random() * 120, 0.03);
+      MobileHapticsPro.light();
     }, 70);
 
     setTimeout(() => {
@@ -156,6 +193,14 @@ const DiceRoller: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
       const results = state.selectedDice.map((die) => Math.floor(Math.random() * DICE_SIDES[die]) + 1);
       dispatch({ type: 'ROLL_END', results });
       playClack(520, 0.09);
+
+      const isNat20 = results.some((val, idx) => state.selectedDice[idx] === 'D20' && val === 20);
+      if (isNat20) {
+        MobileHapticsPro.success();
+      } else {
+        MobileHapticsPro.heavy();
+      }
+
       setTimeout(() => setThrottled(false), 400);
     }, 700);
   }, [reducedMotion, state.selectedDice, state.rolling, throttled, playClack]);
@@ -220,16 +265,19 @@ const DiceRoller: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">{t.addDie}</p>
         <div className="flex flex-wrap gap-2">
           {DICE_ORDER.map((die) => (
-            <button
+            <TiltDiceButton
               key={die}
-              onClick={() => dispatch({ type: 'ADD_DIE', die })}
+              onClick={() => {
+                MobileHapticsPro.selection();
+                dispatch({ type: 'ADD_DIE', die });
+              }}
               disabled={state.selectedDice.length >= MAX_DICE}
               aria-label={`Add ${die}`}
               className="flex flex-col items-center justify-center w-16 h-16 rounded-2xl border-2 border-border bg-muted hover:bg-accent hover:border-primary disabled:opacity-40 disabled:cursor-not-allowed transition-all gap-0.5"
             >
               <Die type={die} value={die === 'D6' ? 6 : DICE_SIDES[die]} size={30} />
-              <span className="text-[10px] font-black text-muted-foreground">{die}</span>
-            </button>
+              <span className="text-xs font-black text-muted-foreground">{die}</span>
+            </TiltDiceButton>
           ))}
         </div>
         {state.selectedDice.length >= MAX_DICE && (
@@ -238,7 +286,7 @@ const DiceRoller: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
       </div>
 
       {/* Selected dice tray */}
-      <div className="mb-6 min-h-[4rem] p-4 rounded-2xl bg-muted/50 border border-border flex flex-wrap gap-3 items-center">
+      <div className={`mb-6 min-h-16 p-4 rounded-2xl bg-muted/50 border border-border flex flex-wrap gap-3 items-center transition-all duration-200 ${state.rolling ? 'shadow-inner scale-105' : ''}`}>
         {state.selectedDice.length === 0 ? (
           <span className="text-sm text-muted-foreground">{t.noDice}</span>
         ) : (
@@ -247,13 +295,17 @@ const DiceRoller: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             return (
               <button
                 key={i}
-                onClick={() => dispatch({ type: 'REMOVE_DIE', index: i })}
+                type="button"
+                onClick={() => {
+                  MobileHapticsPro.selection();
+                  dispatch({ type: 'REMOVE_DIE', index: i });
+                }}
                 aria-label={`Remove ${die} (${shown ?? ''})`}
                 title={die}
                 className="relative flex items-center justify-center rounded-2xl p-1 hover:bg-destructive/10 transition-all group"
               >
                 <Die type={die} value={shown ?? null} rolling={state.rolling} size={56} />
-                <span className="absolute -top-1 -right-1 hidden group-hover:flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-black text-white">✕</span>
+                <span className="absolute -top-1 -right-1 hidden group-hover:flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs font-black text-white">✕</span>
               </button>
             );
           })
@@ -262,21 +314,21 @@ const DiceRoller: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
       {/* Sum display */}
       {state.lastResults.length > 0 && !state.rolling && (
-        <div className="mb-6 flex items-center justify-center gap-4 p-4 rounded-2xl bg-primary/10 border border-primary/20">
+        <div className="mb-6 flex items-center justify-center gap-4 p-4 rounded-2xl bg-primary/10 border border-primary/20 shadow-sm animate-in fade-in zoom-in-95 duration-200">
           <span className="text-sm font-bold text-muted-foreground uppercase tracking-widest">{t.sum}</span>
           <span className="text-4xl font-black text-primary" aria-live="polite" aria-label={`${t.sum}: ${sum}`}>{sum}</span>
         </div>
       )}
 
       {/* Roll button */}
-      <button
+      <TiltDiceButton
         onClick={rollDice}
         disabled={state.selectedDice.length === 0 || state.rolling || throttled}
         aria-label={t.roll}
-        className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-black text-lg tracking-wide hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
+        className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-black text-lg tracking-wide hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
       >
         {state.rolling ? t.rolling : t.roll}
-      </button>
+      </TiltDiceButton>
 
       {/* History */}
       {state.history.length > 0 && (

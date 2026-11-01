@@ -12,6 +12,7 @@ import { getBest, getRecord, recordBest, recordResult, type BestRecord, type Gam
 import { dateKeyIndex, kstDateKey } from "../../lib/games/todays-game";
 import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from "../../lib/games/game-audio";
 import { createHaptics } from "../../lib/games/haptics";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import { celebrate } from "../../lib/games/celebration";
 import { DELAY_CURSOR_SPRITES } from "../../lib/games/sprites";
 import {
@@ -27,6 +28,39 @@ import {
 } from "../../lib/games/delay-cursor";
 
 const CONTROL = "min-h-11 min-w-11 rounded-xl border px-3 py-2 text-sm font-bold motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
+
+function TiltCursorButton({
+  children,
+  onClick,
+  disabled,
+  className,
+  'aria-label': ariaLabel,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+  className?: string;
+  'aria-label'?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      aria-label={ariaLabel}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.2);
+        onClick();
+      }}
+      className={`will-change-transform transform-(--card-tilt) ${className ?? ''}`}
+    >
+      {children}
+    </button>
+  );
+}
 
 interface Copy {
   title: string;
@@ -249,14 +283,17 @@ export default function DelayCursor({ locale }: { locale: Locale }) {
     if (run.phase === "won") {
       cue("win");
       hapticsRef.current.fire("win");
+      MobileHapticsPro.success();
       if (containerRef.current) celebrate(containerRef.current, { preset: "stardust" });
     } else if (run.phase === "lost") {
       cue("fail");
       hapticsRef.current.fire("fail");
+      MobileHapticsPro.warning();
     }
   }, [run, dateKey, attempt, muted, reducedMotion]);
 
   const again = () => {
+    MobileHapticsPro.selection();
     if (!dateKey) return;
     const seed = (dateKeyIndex(dateKey) * 0x9e3779b1) >>> 0;
     setAttempt((value) => value + 1);
@@ -266,6 +303,7 @@ export default function DelayCursor({ locale }: { locale: Locale }) {
   const move = (dir: Dir) => {
     cue("place");
     hapticsRef.current.fire("place");
+    MobileHapticsPro.light();
     setRun((current) => (current ? tick(current, dir) : current));
     setPulse((value) => value + 1);
   };
@@ -291,14 +329,29 @@ export default function DelayCursor({ locale }: { locale: Locale }) {
         {!run || !dateKey ? <p className="text-sm text-muted-foreground">{t.preparing}</p> : (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">{t.date(dateKey)}</p>
-            <p className="text-sm font-bold tabular-nums text-foreground" aria-live="polite">{t.seconds(run.elapsed)}</p>
+            {/* Time progress bar */}
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs font-bold text-muted-foreground">
+                <span className="tabular-nums text-foreground">{t.seconds(run.elapsed)}</span>
+                <span>{Math.max(0, LIMIT - run.elapsed)}s remaining</span>
+              </div>
+              <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-primary transition-all duration-300 w-(--time-pct)"
+                  style={{
+                    '--time-pct': `${Math.min(100, (run.elapsed / LIMIT) * 100)}%`,
+                  } as React.CSSProperties}
+                />
+              </div>
+            </div>
+
             <p className="text-sm text-foreground">{run.phase === "won" ? t.won : run.phase === "lost" ? t.lost : run.phase === "play" ? t.play : t.ready}</p>
             <div className="flex flex-wrap gap-3 text-sm text-foreground">
-              <span className="inline-flex items-center gap-2"><span className="inline-block size-4 rounded-md bg-primary" />{t.now}</span>
-              <span className="inline-flex items-center gap-2"><span className="inline-block size-4 rounded-md bg-chart-1/50" />{t.then}</span>
+              <span className="inline-flex items-center gap-2"><span className="inline-block size-4 rounded-md bg-primary shadow-sm" />{t.now}</span>
+              <span className="inline-flex items-center gap-2"><span className="inline-block size-4 rounded-md bg-chart-1/60 shadow-sm" />{t.then}</span>
             </div>
             <div
-              className="mx-auto grid w-full max-w-sm touch-none grid-cols-5 gap-1 select-none"
+              className="mx-auto grid w-full max-w-sm touch-none grid-cols-5 gap-1.5 select-none"
               onPointerDown={(event) => { point.current = { x: event.clientX, y: event.clientY }; }}
               onPointerUp={(event) => {
                 if (!point.current) return;
@@ -313,45 +366,55 @@ export default function DelayCursor({ locale }: { locale: Locale }) {
                 const isLive = index === run.at;
                 const isGhost = index === ghost;
                 const tone = cell === 1
-                  ? "bg-muted"
+                  ? "bg-muted opacity-80"
                   : isLive
-                    ? "bg-primary text-primary-foreground"
+                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30"
                     : isGhost
-                      ? "bg-chart-1/40 text-foreground"
+                      ? "bg-chart-1/40 text-foreground ring-1 ring-chart-1/60"
                       : index === run.puzzle.livePlate
-                        ? "bg-primary/15 text-foreground"
+                        ? "bg-primary/20 text-primary border border-primary/40"
                         : index === run.puzzle.ghostPlate
-                          ? "bg-chart-1/20 text-foreground"
+                          ? "bg-chart-1/25 text-chart-1 border border-chart-1/40"
                           : "border border-border bg-card text-foreground";
                 return (
-                  <div key={index} className={`flex aspect-square items-center justify-center rounded-md text-sm font-black ${isLive && isGhost ? "ring-2 ring-chart-1" : ""} ${tone}`}>
-                    {isLive ? "●" : isGhost ? "○" : ""}
+                  <div key={index} className={`flex aspect-square items-center justify-center rounded-lg text-sm font-black transition-all ${isLive && isGhost ? "ring-2 ring-chart-1 scale-105" : ""} ${tone}`}>
+                    {isLive ? (
+                      <span className="flex size-3.5 items-center justify-center rounded-full bg-white shadow-sm ring-2 ring-primary" />
+                    ) : isGhost ? (
+                      <span className="flex size-3 items-center justify-center rounded-full border-2 border-foreground/80 opacity-90" />
+                    ) : cell === 1 ? (
+                      <span className="size-2 rounded-sm bg-muted-foreground/30" />
+                    ) : index === run.puzzle.livePlate ? (
+                      <span className="text-xs font-bold opacity-60">⚡</span>
+                    ) : index === run.puzzle.ghostPlate ? (
+                      <span className="text-xs font-bold opacity-60">⌛</span>
+                    ) : ""}
                   </div>
                 );
               })}
             </div>
             {run.phase === "ready" ? (
-              <button
-                type="button"
+              <TiltCursorButton
                 onClick={() => {
                   cue("tap");
                   hapticsRef.current.fire("tap");
+                  MobileHapticsPro.selection();
                   setRun(begin(run));
                 }}
-                className={`${CONTROL} border-primary bg-primary text-primary-foreground`}
+                className={`${CONTROL} w-full border-primary bg-primary text-primary-foreground`}
               >
                 {t.start}
-              </button>
+              </TiltCursorButton>
             ) : null}
             {run.phase === "won" || run.phase === "lost" ? (
-              <button type="button" onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</button>
+              <TiltCursorButton onClick={again} className={`${CONTROL} w-full border-primary bg-primary text-primary-foreground`}>{t.again}</TiltCursorButton>
             ) : null}
             <div className="flex flex-col items-center gap-2">
-              <button type="button" disabled={!playing} onClick={() => move("n")} aria-label={t.north} className={`${CONTROL} border-border bg-card text-foreground disabled:opacity-40`}>{t.north}</button>
+              <TiltCursorButton disabled={!playing} onClick={() => move("n")} aria-label={t.north} className={`${CONTROL} border-border bg-card text-foreground disabled:opacity-40`}>{t.north}</TiltCursorButton>
               <div className="flex gap-2">
-                <button type="button" disabled={!playing} onClick={() => move("w")} aria-label={t.west} className={`${CONTROL} border-border bg-card text-foreground disabled:opacity-40`}>{t.west}</button>
-                <button type="button" disabled={!playing} onClick={() => move("s")} aria-label={t.south} className={`${CONTROL} border-border bg-card text-foreground disabled:opacity-40`}>{t.south}</button>
-                <button type="button" disabled={!playing} onClick={() => move("e")} aria-label={t.east} className={`${CONTROL} border-border bg-card text-foreground disabled:opacity-40`}>{t.east}</button>
+                <TiltCursorButton disabled={!playing} onClick={() => move("w")} aria-label={t.west} className={`${CONTROL} border-border bg-card text-foreground disabled:opacity-40`}>{t.west}</TiltCursorButton>
+                <TiltCursorButton disabled={!playing} onClick={() => move("s")} aria-label={t.south} className={`${CONTROL} border-border bg-card text-foreground disabled:opacity-40`}>{t.south}</TiltCursorButton>
+                <TiltCursorButton disabled={!playing} onClick={() => move("e")} aria-label={t.east} className={`${CONTROL} border-border bg-card text-foreground disabled:opacity-40`}>{t.east}</TiltCursorButton>
               </div>
             </div>
             <p className="text-sm text-muted-foreground">{t.record(record?.w ?? 0, record?.l ?? 0)}{best?.unit === "seconds" ? ` · ${t.best(best.value)}` : ""}</p>
