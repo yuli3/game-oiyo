@@ -1,4 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Maximize2, Minimize2 } from "lucide-react";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
+import { celebrate } from "../../lib/games/celebration";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import {
   loadArcadePassProgress,
   reportMissionProgress,
@@ -377,9 +381,51 @@ function drawSceneCanvas(
   }
 }
 
+function TiltGorogoaButton({
+  children,
+  onClick,
+  disabled,
+  className,
+  title,
+  ariaLabel,
+  ariaPressed,
+  type = "button",
+}: {
+  children: React.ReactNode;
+  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  disabled?: boolean;
+  className?: string;
+  title?: string;
+  ariaLabel?: string;
+  ariaPressed?: boolean;
+  type?: "button" | "submit";
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type={type}
+      disabled={disabled}
+      title={title}
+      aria-label={ariaLabel}
+      aria-pressed={ariaPressed}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={(e) => {
+        triggerPop(0.2);
+        onClick?.(e);
+      }}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      className={`will-change-transform transform-(--card-tilt) transition-transform duration-100 ${className ?? ""}`}
+    >
+      {children}
+    </button>
+  );
+}
+
 export default function GorogoaFrame({ locale = "ko" }: Props) {
   const lang: Locale = (locale in I18N ? locale : "en") as Locale;
   const t = I18N[lang];
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || "ko" });
 
   const stateRef = useRef<GorogoaState>(createGorogoaState(0));
   const canvasRefs = useRef<Record<string, HTMLCanvasElement | null>>({});
@@ -441,6 +487,10 @@ export default function GorogoaFrame({ locale = "ko" }: Props) {
 
     if (st.isChapterCleared) {
       playHarmonicTone(523.25, 0.45);
+      MobileHapticsPro.success();
+      if (containerRef.current) {
+        celebrate(containerRef.current, { preset: st.isAllCleared ? "stardust" : "leaves" });
+      }
       const dateKey = new Date().toISOString().slice(0, 10);
       const pass = loadArcadePassProgress(dateKey);
       const updated = reportMissionProgress(
@@ -450,10 +500,11 @@ export default function GorogoaFrame({ locale = "ko" }: Props) {
       );
       saveArcadePassProgress(updated);
     }
-  }, [playHarmonicTone]);
+  }, [containerRef, playHarmonicTone]);
 
   const loadChapter = useCallback(
     (idx: number) => {
+      MobileHapticsPro.selection();
       stateRef.current = createGorogoaState(idx);
       setShowHintBanner(false);
       syncUi();
@@ -468,16 +519,20 @@ export default function GorogoaFrame({ locale = "ko" }: Props) {
 
       if (st.selectedSlot === null) {
         st.selectedSlot = slot;
+        MobileHapticsPro.selection();
         playHarmonicTone(330, 0.1);
         syncUi();
       } else if (st.selectedSlot === slot) {
         st.selectedSlot = null;
+        MobileHapticsPro.selection();
         syncUi();
       } else {
         const res = interactSlots(st, st.selectedSlot, slot);
         if (res.action === "stacked") {
+          MobileHapticsPro.impact();
           playHarmonicTone(659.25, 0.28);
         } else {
+          MobileHapticsPro.light();
           playHarmonicTone(440, 0.14);
         }
         syncUi();
@@ -490,6 +545,7 @@ export default function GorogoaFrame({ locale = "ko" }: Props) {
     (panelId: string) => {
       const ok = togglePanelZoom(stateRef.current, panelId);
       if (ok) {
+        MobileHapticsPro.selection();
         playHarmonicTone(392, 0.16);
         syncUi();
       }
@@ -499,6 +555,7 @@ export default function GorogoaFrame({ locale = "ko" }: Props) {
 
   const handleHint = useCallback(() => {
     setShowHintBanner(true);
+    MobileHapticsPro.light();
     applyHintStep(stateRef.current);
     playHarmonicTone(587.33, 0.2);
     syncUi();
@@ -538,7 +595,14 @@ export default function GorogoaFrame({ locale = "ko" }: Props) {
   const slotsOrder: SlotIndex[] = [0, 1, 2, 3];
 
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 text-card-foreground shadow-sm">
+    <div
+      ref={containerRef}
+      className={
+        isImmersive
+          ? "arcade-shell fixed inset-0 z-50 flex h-dvh w-screen flex-col gap-4 overflow-y-auto overscroll-none bg-background p-3 sm:p-5 text-card-foreground select-none"
+          : "flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 text-card-foreground shadow-sm"
+      }
+    >
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
         <div>
@@ -557,10 +621,10 @@ export default function GorogoaFrame({ locale = "ko" }: Props) {
 
         <div className="flex flex-wrap items-center gap-2">
           {CHAPTERS.map((ch, idx) => (
-            <button
+            <TiltGorogoaButton
               key={ch.id}
-              type="button"
               onClick={() => loadChapter(idx)}
+              ariaPressed={idx === uiChapterIdx}
               className={`rounded-lg px-2.5 py-1 text-xs font-bold transition ${
                 idx === uiChapterIdx
                   ? "bg-primary text-primary-foreground"
@@ -568,22 +632,45 @@ export default function GorogoaFrame({ locale = "ko" }: Props) {
               }`}
             >
               Ch.{ch.chapterNum}
-            </button>
+            </TiltGorogoaButton>
           ))}
-          <button
-            type="button"
+          <TiltGorogoaButton
             onClick={handleHint}
             className="rounded-lg bg-secondary px-3 py-1.5 text-xs font-bold text-secondary-foreground transition hover:opacity-90"
           >
             {t.hintBtn}
-          </button>
-          <button
-            type="button"
+          </TiltGorogoaButton>
+          <TiltGorogoaButton
             onClick={() => loadChapter(uiChapterIdx)}
             className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-semibold text-muted-foreground transition hover:bg-muted"
           >
             {t.resetBtn}
-          </button>
+          </TiltGorogoaButton>
+          <TiltGorogoaButton
+            onClick={togglePortal}
+            ariaPressed={isImmersive}
+            ariaLabel={isImmersive ? portalLabels.exit : portalLabels.enter}
+            title={isImmersive ? portalLabels.exit : portalLabels.enter}
+            className="flex min-h-8 min-w-8 items-center justify-center rounded-lg border border-border bg-card p-1 text-foreground shadow-sm transition hover:bg-muted"
+          >
+            {isImmersive ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+          </TiltGorogoaButton>
+        </div>
+      </div>
+
+      {/* Chapter & Moves Progress Bar */}
+      <div className="space-y-1">
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span>{spec.title[lang]} 진행률</span>
+          <span className="font-semibold text-foreground">
+            Ch.{spec.chapterNum} / {CHAPTERS.length} · {t.movesLabel}: {uiMoves}
+          </span>
+        </div>
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+          <div
+            className="h-full bg-primary transition-all duration-300 w-(--chapter-pct)"
+            style={{ '--chapter-pct': `${Math.round(((uiChapterIdx + 1) / CHAPTERS.length) * 100)}%` } as React.CSSProperties}
+          />
         </div>
       </div>
 
@@ -599,13 +686,12 @@ export default function GorogoaFrame({ locale = "ko" }: Props) {
             {uiAllCleared ? t.allCleared : t.chapterCleared}
           </span>
           {uiChapterIdx < CHAPTERS.length - 1 && (
-            <button
-              type="button"
+            <TiltGorogoaButton
               onClick={() => loadChapter(uiChapterIdx + 1)}
               className="rounded-lg bg-primary px-4 py-1.5 text-xs font-bold text-primary-foreground shadow-xs transition hover:opacity-90"
             >
               {t.nextChapterBtn}
-            </button>
+            </TiltGorogoaButton>
           )}
         </div>
       )}
@@ -648,8 +734,7 @@ export default function GorogoaFrame({ locale = "ko" }: Props) {
                 <span className="truncate text-xs font-bold text-foreground">
                   {def.title[lang]}
                 </span>
-                <button
-                  type="button"
+                <TiltGorogoaButton
                   onClick={(e) => {
                     e.stopPropagation();
                     handleZoomClick(panel.id);
@@ -657,7 +742,7 @@ export default function GorogoaFrame({ locale = "ko" }: Props) {
                   className="rounded-md bg-primary/15 px-2 py-0.5 text-xs font-bold text-primary transition hover:bg-primary hover:text-primary-foreground"
                 >
                   {panel.zoom === 0 ? t.zoomInBtn : t.zoomOutBtn}
-                </button>
+                </TiltGorogoaButton>
               </div>
 
               {/* Stencil / Stack Status Pill */}

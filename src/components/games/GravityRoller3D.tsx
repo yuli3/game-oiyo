@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Maximize2, Minimize2, Volume2, VolumeX, Share2, Check } from 'lucide-react';
 import { celebrate } from '../../lib/games/celebration';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import {
   createShareCardCanvas,
   copyShareCardToClipboard,
@@ -57,6 +58,59 @@ const TEXT: Record<string, Record<string, string>> = {
   },
 };
 
+function TiltRollerButton({
+  children,
+  onClick,
+  onTouchStart,
+  onTouchEnd,
+  onMouseDown,
+  onMouseUp,
+  disabled,
+  className,
+  title,
+  ariaLabel,
+  ariaPressed,
+  type = "button",
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  onTouchStart?: () => void;
+  onTouchEnd?: () => void;
+  onMouseDown?: () => void;
+  onMouseUp?: () => void;
+  disabled?: boolean;
+  className?: string;
+  title?: string;
+  ariaLabel?: string;
+  ariaPressed?: boolean;
+  type?: "button" | "submit";
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type={type}
+      disabled={disabled}
+      title={title}
+      aria-label={ariaLabel}
+      aria-pressed={ariaPressed}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+      onMouseDown={onMouseDown}
+      onMouseUp={onMouseUp}
+      onClick={() => {
+        triggerPop(0.2);
+        onClick?.();
+      }}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      className={`will-change-transform transform-(--card-tilt) transition-transform duration-100 ${className ?? ""}`}
+    >
+      {children}
+    </button>
+  );
+}
+
 export default function GravityRoller3D({ locale = 'ko' }: Props) {
   const t = TEXT[locale] ?? TEXT.ko;
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal();
@@ -90,8 +144,10 @@ export default function GravityRoller3D({ locale = 'ko' }: Props) {
     if (gameState.status !== prevStatusRef.current && containerRef.current) {
       if (gameState.status === 'cleared') {
         celebrate(containerRef.current, { preset: "coins" });
+        MobileHapticsPro.success();
       } else if (gameState.status === 'failed') {
         celebrate(containerRef.current, { preset: "shards" });
+        MobileHapticsPro.heavy();
       }
     }
     prevStatusRef.current = gameState.status;
@@ -222,6 +278,7 @@ export default function GravityRoller3D({ locale = 'ko' }: Props) {
 
   // Virtual D-pad helpers for mobile
   const handleTouchDir = (dir: 'up' | 'down' | 'left' | 'right', isPressed: boolean) => {
+    if (isPressed) MobileHapticsPro.light();
     const keyMap = {
       up: 'arrowup',
       down: 'arrowdown',
@@ -272,28 +329,48 @@ export default function GravityRoller3D({ locale = 'ko' }: Props) {
           </div>
 
           <div className="flex items-center gap-1.5 border-l border-border pl-2">
-            <button
-              type="button"
-              onClick={toggleMute}
-              aria-pressed={muted}
-              aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+            <TiltRollerButton
+              onClick={() => {
+                MobileHapticsPro.selection();
+                toggleMute();
+              }}
+              ariaPressed={muted}
+              ariaLabel={muted ? portalLabels.unmute : portalLabels.mute}
               title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`}
               className="min-h-10 px-2.5 py-1.5 rounded-xl border border-border bg-background/85 text-xs font-bold text-foreground shadow-xs hover:bg-muted active:scale-95 transition-transform flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
               <span className="hidden md:inline">{muted ? portalLabels.unmute : portalLabels.mute}</span>
-            </button>
-            <button
-              type="button"
-              onClick={togglePortal}
-              aria-pressed={isImmersive}
-              aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+            </TiltRollerButton>
+            <TiltRollerButton
+              onClick={() => {
+                MobileHapticsPro.light();
+                togglePortal();
+              }}
+              ariaPressed={isImmersive}
+              ariaLabel={isImmersive ? portalLabels.exit : portalLabels.enter}
               title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`}
               className="min-h-10 px-2.5 py-1.5 rounded-xl border border-border bg-background/85 text-xs font-bold text-foreground shadow-xs hover:bg-muted active:scale-95 transition-transform flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
               <span className="hidden md:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
-            </button>
+            </TiltRollerButton>
+          </div>
+        </div>
+
+        {/* Gem Collection Progress Bar */}
+        <div className="mt-3 w-full space-y-1">
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>보석 수집률</span>
+            <span className="font-semibold text-foreground">
+              {totalGemsCount > 0 ? Math.round((collectedGemsCount / totalGemsCount) * 100) : 0}% ({collectedGemsCount}/{totalGemsCount})
+            </span>
+          </div>
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full bg-primary transition-all duration-300 w-(--gem-pct)"
+              style={{ '--gem-pct': `${totalGemsCount > 0 ? Math.round((collectedGemsCount / totalGemsCount) * 100) : 0}%` } as React.CSSProperties}
+            />
           </div>
         </div>
       </div>
@@ -315,41 +392,49 @@ export default function GravityRoller3D({ locale = 'ko' }: Props) {
             <p className="text-sm font-semibold text-foreground">
               스테이지 {gameState.currentLevelIndex + 1}: {LEVELS[gameState.currentLevelIndex % LEVELS.length].name}
             </p>
-            <button
-              type="button"
-              onClick={handleStart}
+            <TiltRollerButton
+              onClick={() => {
+                MobileHapticsPro.medium();
+                handleStart();
+              }}
               className="rounded-xl bg-primary px-8 py-2.5 text-sm font-bold text-primary-foreground shadow-sm hover:opacity-90"
             >
               {t.start}
-            </button>
+            </TiltRollerButton>
           </div>
         ) : gameState.status === 'cleared' ? (
           <div className="flex flex-col items-center justify-center gap-3 py-3 text-center">
             <p className="text-base font-bold text-chart-1">{t.cleared}</p>
             <p className="text-xs text-muted-foreground">{t.clearMessage}</p>
             <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={handleShareCard}
+              <TiltRollerButton
+                onClick={() => {
+                  MobileHapticsPro.light();
+                  handleShareCard();
+                }}
                 className="flex items-center gap-1.5 rounded-xl border border-border bg-card hover:bg-muted px-4 py-2 text-xs font-bold text-foreground transition-colors shadow-xs"
               >
                 {shareCardCopied ? <Check className="w-4 h-4 text-primary" /> : <Share2 className="w-4 h-4" />}
                 {shareCardCopied ? "복사됨!" : "결과 카드 공유"}
-              </button>
-              <button
-                type="button"
-                onClick={handleRetry}
+              </TiltRollerButton>
+              <TiltRollerButton
+                onClick={() => {
+                  MobileHapticsPro.selection();
+                  handleRetry();
+                }}
                 className="rounded-xl border border-border px-4 py-2 text-xs font-semibold text-foreground hover:bg-muted"
               >
                 {t.restart}
-              </button>
-              <button
-                type="button"
-                onClick={handleNextLevel}
+              </TiltRollerButton>
+              <TiltRollerButton
+                onClick={() => {
+                  MobileHapticsPro.medium();
+                  handleNextLevel();
+                }}
                 className="rounded-xl bg-primary px-6 py-2 text-xs font-bold text-primary-foreground shadow-sm hover:opacity-90"
               >
                 {t.nextLevel}
-              </button>
+              </TiltRollerButton>
             </div>
           </div>
         ) : gameState.status === 'failed' ? (
@@ -357,21 +442,25 @@ export default function GravityRoller3D({ locale = 'ko' }: Props) {
             <p className="text-base font-bold text-destructive">{t.failed}</p>
             <p className="text-xs text-muted-foreground">{t.trapMessage}</p>
             <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={handleShareCard}
+              <TiltRollerButton
+                onClick={() => {
+                  MobileHapticsPro.light();
+                  handleShareCard();
+                }}
                 className="flex items-center gap-1.5 rounded-xl border border-border bg-card hover:bg-muted px-4 py-2 text-xs font-bold text-foreground transition-colors shadow-xs"
               >
                 {shareCardCopied ? <Check className="w-4 h-4 text-primary" /> : <Share2 className="w-4 h-4" />}
                 {shareCardCopied ? "복사됨!" : "결과 카드 공유"}
-              </button>
-              <button
-                type="button"
-                onClick={handleRetry}
+              </TiltRollerButton>
+              <TiltRollerButton
+                onClick={() => {
+                  MobileHapticsPro.medium();
+                  handleRetry();
+                }}
                 className="rounded-xl bg-primary px-6 py-2 text-xs font-bold text-primary-foreground shadow-sm hover:opacity-90"
               >
                 {t.restart}
-              </button>
+              </TiltRollerButton>
             </div>
           </div>
         ) : (
@@ -379,8 +468,7 @@ export default function GravityRoller3D({ locale = 'ko' }: Props) {
             <p className="text-xs text-muted-foreground">{t.controls}</p>
             {/* Mobile Virtual D-pad */}
             <div className="flex flex-col items-center gap-1 sm:hidden">
-              <button
-                type="button"
+              <TiltRollerButton
                 onTouchStart={() => handleTouchDir('up', true)}
                 onTouchEnd={() => handleTouchDir('up', false)}
                 onMouseDown={() => handleTouchDir('up', true)}
@@ -388,10 +476,9 @@ export default function GravityRoller3D({ locale = 'ko' }: Props) {
                 className="rounded-lg bg-muted px-4 py-2 text-xs font-bold text-foreground"
               >
                 ▲
-              </button>
+              </TiltRollerButton>
               <div className="flex gap-2">
-                <button
-                  type="button"
+                <TiltRollerButton
                   onTouchStart={() => handleTouchDir('left', true)}
                   onTouchEnd={() => handleTouchDir('left', false)}
                   onMouseDown={() => handleTouchDir('left', true)}
@@ -399,9 +486,8 @@ export default function GravityRoller3D({ locale = 'ko' }: Props) {
                   className="rounded-lg bg-muted px-4 py-2 text-xs font-bold text-foreground"
                 >
                   ◀
-                </button>
-                <button
-                  type="button"
+                </TiltRollerButton>
+                <TiltRollerButton
                   onTouchStart={() => handleTouchDir('down', true)}
                   onTouchEnd={() => handleTouchDir('down', false)}
                   onMouseDown={() => handleTouchDir('down', true)}
@@ -409,9 +495,8 @@ export default function GravityRoller3D({ locale = 'ko' }: Props) {
                   className="rounded-lg bg-muted px-4 py-2 text-xs font-bold text-foreground"
                 >
                   ▼
-                </button>
-                <button
-                  type="button"
+                </TiltRollerButton>
+                <TiltRollerButton
                   onTouchStart={() => handleTouchDir('right', true)}
                   onTouchEnd={() => handleTouchDir('right', false)}
                   onMouseDown={() => handleTouchDir('right', true)}
@@ -419,7 +504,7 @@ export default function GravityRoller3D({ locale = 'ko' }: Props) {
                   className="rounded-lg bg-muted px-4 py-2 text-xs font-bold text-foreground"
                 >
                   ▶
-                </button>
+                </TiltRollerButton>
               </div>
             </div>
           </div>

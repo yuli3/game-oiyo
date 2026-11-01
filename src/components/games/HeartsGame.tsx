@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Camera, Check, Maximize2, Minimize2, Sparkles, Volume2, VolumeX } from "lucide-react";
 import { celebrate } from "../../lib/games/celebration";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import { copyShareCardToClipboard, createShareCardCanvas, downloadShareCard } from "../../lib/games/share-card";
 import { GameContainer, PlayingCard } from "../ui/game/GamePrimitives";
 import {
@@ -33,6 +34,47 @@ const COPY = {
 } satisfies Record<Locale, Record<string, unknown>>;
 
 function playerName(player: number, t: (typeof COPY)[Locale]): string { return player === 0 ? t.you : `${t.cpu} ${player}`; }
+
+function TiltHeartsButton({
+  children,
+  onClick,
+  disabled,
+  className,
+  title,
+  ariaLabel,
+  ariaPressed,
+  type = "button",
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  className?: string;
+  title?: string;
+  ariaLabel?: string;
+  ariaPressed?: boolean;
+  type?: "button" | "submit";
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type={type}
+      disabled={disabled}
+      title={title}
+      aria-label={ariaLabel}
+      aria-pressed={ariaPressed}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.2);
+        onClick?.();
+      }}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      className={`will-change-transform transform-(--card-tilt) transition-transform duration-100 ${className ?? ""}`}
+    >
+      {children}
+    </button>
+  );
+}
 
 const HeartsGame: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
   const t = COPY[(locale in COPY ? locale : "en") as Locale];
@@ -147,62 +189,129 @@ const HeartsGame: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
     if (game.phase === "roundComplete" || game.phase === "gameOver") {
       tone(660, 0.18);
       if (moonShooter >= 0) {
+        MobileHapticsPro.success();
         celebrate(containerRef.current, { preset: "sparks" });
-      } else if (game.phase === "gameOver" && gameWinners.includes(0)) {
-        celebrate(containerRef.current, { preset: "stardust" });
+      } else if (game.phase === "gameOver") {
+        if (gameWinners.includes(0)) {
+          MobileHapticsPro.success();
+          celebrate(containerRef.current, { preset: "stardust" });
+        } else {
+          MobileHapticsPro.heavy();
+        }
+      } else if (roundWinners.includes(0)) {
+        MobileHapticsPro.success();
       }
     }
-  }, [game.phase, moonShooter, gameWinners, tone, containerRef]);
+  }, [game.phase, moonShooter, gameWinners, roundWinners, tone, containerRef]);
 
   const legalIds = useMemo(() => new Set(legalHeartsCards(game, 0).map(({ id }) => id)), [game]);
   const shownTrick = game.trick.length > 0 ? game.trick : game.lastTrick;
   const showingPrevious = game.trick.length === 0 && game.lastTrick.length > 0;
 
   const cardLabel = (card: HeartsCard) => `${t.suits[card.suit]} ${card.value} ${t.card}`;
-  const togglePass = (card: HeartsCard) => setPassSelection((current) => current.includes(card.id) ? current.filter((id) => id !== card.id) : current.length < 3 ? [...current, card.id] : current);
+  const togglePass = (card: HeartsCard) => {
+    MobileHapticsPro.selection();
+    setPassSelection((current) => current.includes(card.id) ? current.filter((id) => id !== card.id) : current.length < 3 ? [...current, card.id] : current);
+  };
   const confirmPass = () => {
     if (passSelection.length !== 3) return;
+    MobileHapticsPro.impact();
     setGame((current) => passHeartsCards(current, current.hands.map((hand, player) => player === 0 ? passSelection : chooseHeartsPassCards(hand).map(({ id }) => id))));
     setPassSelection([]);
     tone(300, 0.05);
   };
   const play = (card: HeartsCard) => {
     if (!legalIds.has(card.id)) return;
+    MobileHapticsPro.light();
     setGame((current) => {
       const next = playHeartsCard(current, 0, card.id);
       tone(next.trick.length === 0 ? 220 : 300, 0.05);
       return next;
     });
   };
-  const nextRound = () => { setGame((current) => startNextHeartsRound(current)); setPassSelection([]); };
+  const nextRound = () => {
+    MobileHapticsPro.selection();
+    setGame((current) => startNextHeartsRound(current));
+    setPassSelection([]);
+  };
 
   return (
-    <div ref={containerRef} className="w-full flex flex-col items-center justify-center">
+    <div
+      ref={containerRef}
+      className={
+        isImmersive
+          ? "arcade-shell fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-y-auto overscroll-none bg-background p-3 sm:p-5 select-none"
+          : "w-full flex flex-col items-center justify-center select-none"
+      }
+    >
     <GameContainer title={t.title} subtitle={t.subtitle} resetLabel={t.reset} onReset={reset}>
       <p className="mb-5 text-sm font-medium leading-6 text-muted-foreground">{t.desc}</p>
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.difficulty}</span>
         <div className="inline-flex gap-1">
           {([1, 2, 3] as HeartsAiLevel[]).map((lv) => (
-            <button key={lv} onClick={() => setLevel(lv)}
-              aria-pressed={level === lv}
-              className={`min-h-11 px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-colors ${level === lv ? "border-primary text-primary bg-primary/10" : "border-border text-muted-foreground hover:bg-muted"}`}>
+            <TiltHeartsButton
+              key={lv}
+              onClick={() => {
+                MobileHapticsPro.selection();
+                setLevel(lv);
+              }}
+              ariaPressed={level === lv}
+              className={`min-h-11 px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-colors ${level === lv ? "border-primary text-primary bg-primary/10" : "border-border text-muted-foreground hover:bg-muted"}`}
+            >
               {lv === 1 ? t.level1 : lv === 2 ? t.level2 : t.level3}
-            </button>
+            </TiltHeartsButton>
           ))}
         </div>
         {game.phase === "playing" && (
-          <button type="button" onClick={() => setPaused((value) => !value)} className="min-h-11 px-3 rounded-lg border border-border text-xs font-bold text-muted-foreground">
+          <TiltHeartsButton
+            onClick={() => {
+              MobileHapticsPro.selection();
+              setPaused((value) => !value);
+            }}
+            className="min-h-11 px-3 rounded-lg border border-border text-xs font-bold text-muted-foreground hover:bg-muted"
+          >
             {paused ? `▶ ${t.resume}` : `Ⅱ ${t.pause}`}
-          </button>
+          </TiltHeartsButton>
         )}
-        <button type="button" onClick={toggleSound} aria-pressed={muted} className="min-h-11 px-3 rounded-lg border border-border text-xs font-bold text-muted-foreground inline-flex items-center gap-1.5">
+        <TiltHeartsButton
+          onClick={() => {
+            MobileHapticsPro.selection();
+            toggleSound();
+          }}
+          ariaPressed={muted}
+          className="min-h-11 px-3 rounded-lg border border-border text-xs font-bold text-muted-foreground inline-flex items-center gap-1.5 hover:bg-muted"
+        >
           {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />} {t.sound}
-        </button>
-        <button type="button" onClick={togglePortal} aria-label={isImmersive ? 'Exit Immersion' : 'Immersion'} className="min-h-11 px-3 rounded-lg border border-border text-xs font-bold text-muted-foreground inline-flex items-center gap-1.5">
+        </TiltHeartsButton>
+        <TiltHeartsButton
+          onClick={() => {
+            MobileHapticsPro.light();
+            togglePortal();
+          }}
+          ariaLabel={isImmersive ? 'Exit Immersion' : 'Immersion'}
+          className="min-h-11 px-3 rounded-lg border border-border text-xs font-bold text-muted-foreground inline-flex items-center gap-1.5 hover:bg-muted"
+        >
           {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
-        </button>
+        </TiltHeartsButton>
       </div>
+
+      {/* Progress Bar */}
+      {game.phase === "playing" && (
+        <div className="space-y-1 mb-4">
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>트릭 진행 ({game.trickNumber}/13)</span>
+            <span className="font-semibold text-foreground">{Math.round((game.trickNumber / 13) * 100)}%</span>
+          </div>
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full bg-primary transition-all duration-300 w-(--trick-pct)"
+              style={{ '--trick-pct': `${Math.min(100, Math.round((game.trickNumber / 13) * 100))}%` } as React.CSSProperties}
+            />
+          </div>
+        </div>
+      )}
+
       <p className="mb-4 text-center text-xs text-muted-foreground">{t.localSave}</p>
       {paused && game.phase === "playing" && (
         <div className="mb-3 rounded-xl border border-border bg-muted/40 p-3 text-center text-xs font-bold text-muted-foreground" role="status">{t.paused}</div>
@@ -243,9 +352,30 @@ const HeartsGame: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
             const legal = legalIds.has(card.id);
             const selected = passSelection.includes(card.id);
             const enabled = !paused && (game.phase === "passing" ? selected || passSelection.length < 3 : legal);
-            return <button key={card.id} type="button" disabled={!enabled} onClick={() => game.phase === "passing" ? togglePass(card) : play(card)} aria-label={cardLabel(card)} aria-pressed={game.phase === "passing" ? selected : undefined} className={`min-h-11 min-w-11 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-35 motion-reduce:transition-none ${selected ? "-translate-y-2 ring-2 ring-primary" : ""}`}><PlayingCard suit={card.suit} value={card.value} className={`pointer-events-none ${enabled ? "motion-safe:hover:-translate-y-1" : "cursor-not-allowed"}`} /></button>;
+            return (
+              <TiltHeartsButton
+                key={card.id}
+                disabled={!enabled}
+                onClick={() => game.phase === "passing" ? togglePass(card) : play(card)}
+                ariaLabel={cardLabel(card)}
+                ariaPressed={game.phase === "passing" ? selected : undefined}
+                className={`min-h-11 min-w-11 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-35 motion-reduce:transition-none ${selected ? "-translate-y-2 ring-2 ring-primary" : ""}`}
+              >
+                <PlayingCard suit={card.suit} value={card.value} className={`pointer-events-none ${enabled ? "motion-safe:hover:-translate-y-1" : "cursor-not-allowed"}`} />
+              </TiltHeartsButton>
+            );
           })}</div>
-          {game.phase === "passing" && <div className="mt-5 text-center"><button type="button" disabled={passSelection.length !== 3} onClick={confirmPass} className="min-h-11 rounded-full bg-primary px-8 py-3 font-black text-primary-foreground disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">{t.confirmPass}</button></div>}
+          {game.phase === "passing" && (
+            <div className="mt-5 text-center">
+              <TiltHeartsButton
+                disabled={passSelection.length !== 3}
+                onClick={confirmPass}
+                className="min-h-11 rounded-full bg-primary px-8 py-3 font-black text-primary-foreground disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 shadow-md"
+              >
+                {t.confirmPass}
+              </TiltHeartsButton>
+            </div>
+          )}
         </section>
       )}
 
@@ -259,10 +389,15 @@ const HeartsGame: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
             </div>
           )}
           <div className="mt-5 flex flex-wrap justify-center gap-2">
-            <button type="button" onClick={game.phase === "gameOver" ? reset : nextRound} className="min-h-11 rounded-full bg-primary px-8 py-3 font-black text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 motion-reduce:transition-none">{game.phase === "gameOver" ? t.reset : t.nextRound}</button>
-            <button
-              type="button"
+            <TiltHeartsButton
+              onClick={game.phase === "gameOver" ? reset : nextRound}
+              className="min-h-11 rounded-full bg-primary px-8 py-3 font-black text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 motion-reduce:transition-none shadow-md"
+            >
+              {game.phase === "gameOver" ? t.reset : t.nextRound}
+            </TiltHeartsButton>
+            <TiltHeartsButton
               onClick={async () => {
+                MobileHapticsPro.light();
                 const canvas = createShareCardCanvas({
                   title: "OIYO Hearts",
                   slug: "hearts-game",
@@ -283,7 +418,7 @@ const HeartsGame: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
                   setTimeout(() => setShareStatus("idle"), 2000);
                 }
               }}
-              className="min-h-11 rounded-full border border-border bg-card px-5 py-3 font-bold inline-flex items-center gap-1.5"
+              className="min-h-11 rounded-full border border-border bg-card px-5 py-3 font-bold inline-flex items-center gap-1.5 shadow-sm hover:bg-muted"
             >
               {shareStatus === "copied" ? (
                 <>
@@ -296,7 +431,7 @@ const HeartsGame: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
                   <span>성과 카드</span>
                 </>
               )}
-            </button>
+            </TiltHeartsButton>
           </div>
         </div>
       )}

@@ -1,4 +1,8 @@
 import { useEffect, useRef, useState } from "react";
+import { Maximize2, Minimize2 } from "lucide-react";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
+import { celebrate } from "../../lib/games/celebration";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import {
   initializeGrapplingBoss,
   stepGrapplingBoss,
@@ -26,9 +30,47 @@ import {
   BulletHellHitbox2D,
 } from "../../lib/games/grappling-engine-pro";
 
+function TiltBossButton({
+  children,
+  onClick,
+  disabled,
+  className,
+  title,
+  ariaLabel,
+  type = "button",
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  className?: string;
+  title?: string;
+  ariaLabel?: string;
+  type?: "button" | "submit";
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type={type}
+      disabled={disabled}
+      title={title}
+      aria-label={ariaLabel}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.2);
+        onClick?.();
+      }}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      className={`will-change-transform transform-(--card-tilt) transition-transform duration-100 ${className ?? ""}`}
+    >
+      {children}
+    </button>
+  );
+}
+
 export function GrapplingBoss() {
-  const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: "en" });
 
   // 1. Ref-based Native Zero-GC 60/120fps Simulation State
   const stateRef = useRef<GrapplingBossState>(initializeGrapplingBoss());
@@ -266,21 +308,7 @@ export function GrapplingBoss() {
   }, []);
 
   const toggleFullscreenMode = () => {
-    setIsFullscreen((prev) => {
-      const next = !prev;
-      if (next) {
-        // Try native requestFullscreen if available
-        const elem = containerRef.current;
-        if (elem?.requestFullscreen) {
-          elem.requestFullscreen().catch(() => {});
-        }
-      } else {
-        if (document.fullscreenElement && document.exitFullscreen) {
-          document.exitFullscreen().catch(() => {});
-        }
-      }
-      return next;
-    });
+    togglePortal();
   };
 
   // Main Native 60/120fps Animation Loop
@@ -439,6 +467,14 @@ export function GrapplingBoss() {
 
         if (curState.status !== "playing" && modalState.status === "playing") {
           setModalState((s) => ({ ...s, status: curState.status, score: curState.score }));
+          if (curState.status === "victory") {
+            MobileHapticsPro.success();
+            if (containerRef.current) {
+              celebrate(containerRef.current, { preset: "sparks" });
+            }
+          } else {
+            MobileHapticsPro.heavy();
+          }
         }
       }
 
@@ -681,16 +717,16 @@ export function GrapplingBoss() {
 
     // Fullscreen F11 Toggle Button (Top Right ⛶)
     const btnX = ARENA_WIDTH - 80;
-    ctx.fillStyle = isFullscreen ? "rgba(56, 189, 248, 0.35)" : "rgba(15, 23, 42, 0.75)";
+    ctx.fillStyle = isImmersive ? "rgba(56, 189, 248, 0.35)" : "rgba(15, 23, 42, 0.75)";
     ctx.fillRect(btnX, 14, 66, 24);
-    ctx.strokeStyle = isFullscreen ? "#38bdf8" : "#ffffff";
+    ctx.strokeStyle = isImmersive ? "#38bdf8" : "#ffffff";
     ctx.lineWidth = 1;
     ctx.strokeRect(btnX, 14, 66, 24);
 
     ctx.font = "bold 10px monospace";
     ctx.fillStyle = "#ffffff";
     ctx.textAlign = "center";
-    ctx.fillText(isFullscreen ? "⛶ EXIT" : "⛶ FULL", btnX + 33, 30);
+    ctx.fillText(isImmersive ? "⛶ EXIT" : "⛶ FULL", btnX + 33, 30);
 
     // Minimal Instruction
     ctx.font = "10px sans-serif";
@@ -712,10 +748,12 @@ export function GrapplingBoss() {
       status: "playing",
       score: 0,
     });
+    MobileHapticsPro.medium();
     sfxRef.current.playWireClack();
   };
 
   const handleShare = () => {
+    MobileHapticsPro.light();
     shareText(
       `Conquered Titan Beholder in Grappling Boss Arena! Score: ${modalState.score}. Free full-screen arcade: https://game.oiyo.net/grappling-boss`
     );
@@ -725,24 +763,36 @@ export function GrapplingBoss() {
     <div
       ref={containerRef}
       className={`relative select-none touch-none ${
-        isFullscreen
-          ? "fixed inset-0 z-50 w-screen h-screen bg-black flex items-center justify-center p-0 m-0"
+        isImmersive
+          ? "arcade-shell fixed inset-0 z-50 flex h-dvh w-screen items-center justify-center bg-black p-0 m-0"
           : "w-full max-w-5xl mx-auto rounded-2xl overflow-hidden bg-black shadow-2xl border border-border"
       }`}
     >
+      {/* Top Floating Portal Control */}
+      <div className="absolute top-3 right-3 z-20 pointer-events-auto">
+        <TiltBossButton
+          onClick={togglePortal}
+          className="flex min-h-9 min-w-9 items-center justify-center rounded-xl border border-border/60 bg-card/80 p-2 text-foreground shadow-sm backdrop-blur-xs transition hover:bg-muted"
+          title={isImmersive ? portalLabels.exit : portalLabels.enter}
+          ariaLabel={isImmersive ? portalLabels.exit : portalLabels.enter}
+        >
+          {isImmersive ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+        </TiltBossButton>
+      </div>
+
       {/* 100% In-Screen Responsive Arcade Canvas */}
       <canvas
         ref={canvasRef}
         width={ARENA_WIDTH}
         height={ARENA_HEIGHT}
         className={`block cursor-crosshair bg-black ${
-          isFullscreen ? "w-full h-full object-contain" : "w-full aspect-video"
+          isImmersive ? "w-full h-full object-contain" : "w-full aspect-video"
         }`}
       />
 
       {/* Victory / Defeat Modal (Clean In-Screen Arcade Overlay) */}
       {modalState.status !== "playing" && (
-        <div className="absolute inset-0 bg-black/85 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center animate-in fade-in zoom-in-95 duration-200">
+        <div className="absolute inset-0 z-30 bg-black/85 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center animate-in fade-in zoom-in-95 duration-200">
           {modalState.status === "victory" ? (
             <div className="flex flex-col items-center gap-3">
               <span className="text-5xl">🏆</span>
@@ -753,20 +803,18 @@ export function GrapplingBoss() {
                 Aerial momentum mastered. Final Arena Score: {modalState.score}
               </p>
               <div className="flex gap-2 mt-2">
-                <button
-                  type="button"
+                <TiltBossButton
                   onClick={handleShare}
                   className="px-4 py-2 text-xs font-bold rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground shadow-md transition-all"
                 >
                   {copied ? "Copied!" : "Share Battle"}
-                </button>
-                <button
-                  type="button"
+                </TiltBossButton>
+                <TiltBossButton
                   onClick={handleReset}
                   className="px-4 py-2 text-xs font-bold rounded-lg bg-secondary hover:bg-secondary/80 text-foreground border border-border shadow-md transition-all"
                 >
                   Play Again
-                </button>
+                </TiltBossButton>
               </div>
             </div>
           ) : (
@@ -778,13 +826,12 @@ export function GrapplingBoss() {
               <p className="text-sm text-muted-foreground max-w-sm">
                 Touch and hold to swing across ceiling anchors; release to slingshot over death beams!
               </p>
-              <button
-                type="button"
+              <TiltBossButton
                 onClick={handleReset}
                 className="px-5 py-2.5 text-xs font-bold rounded-lg bg-destructive hover:bg-destructive/90 text-destructive-foreground shadow-md transition-all mt-2"
               >
                 Retry Arena
-              </button>
+              </TiltBossButton>
             </div>
           )}
         </div>

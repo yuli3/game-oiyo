@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react'
 import { useArcadePortal } from '../../lib/games/arcade-portal'
+import { celebrate } from '../../lib/games/celebration'
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified'
 
 type Locale = 'ko' | 'en' | 'ja' | 'fr' | 'es' | 'zh'
 
@@ -147,6 +149,44 @@ function getResultKey(score: number): string {
 
 interface Props { locale: Locale }
 
+function TiltHanjaButton({
+  children,
+  onClick,
+  disabled,
+  className,
+  title,
+  ariaLabel,
+  type = "button",
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  className?: string;
+  title?: string;
+  ariaLabel?: string;
+  type?: "button" | "submit";
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  return (
+    <button
+      type={type}
+      disabled={disabled}
+      title={title}
+      aria-label={ariaLabel}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.2);
+        onClick?.();
+      }}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+      className={`will-change-transform transform-(--card-tilt) transition-transform duration-100 ${className ?? ""}`}
+    >
+      {children}
+    </button>
+  );
+}
+
 export default function HanjaQuiz({ locale }: Props) {
   const l = LABELS[locale] ?? LABELS.en
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal()
@@ -180,6 +220,7 @@ export default function HanjaQuiz({ locale }: Props) {
   useEffect(() => { setQuestions(pickQuestions()) }, [])
 
   const start = useCallback(() => {
+    MobileHapticsPro.selection()
     playQuizSound('select', mutedRef.current)
     setQuestions(pickQuestions())
     setStarted(true)
@@ -197,6 +238,11 @@ export default function HanjaQuiz({ locale }: Props) {
     setSelected(opt)
     const correct = opt === questions[current].idiom
     playQuizSound(correct ? 'correct' : 'wrong', mutedRef.current)
+    if (correct) {
+      MobileHapticsPro.success()
+    } else {
+      MobileHapticsPro.warning()
+    }
     const newScore = correct ? score + 1 : score
     const newHistory = [...history, correct]
     setScore(newScore)
@@ -205,11 +251,18 @@ export default function HanjaQuiz({ locale }: Props) {
       setTimeout(() => {
         playQuizSound('finish', mutedRef.current)
         setFinished(true)
+        if (newScore >= 8) {
+          MobileHapticsPro.success()
+          if (containerRef.current) {
+            celebrate(containerRef.current, { preset: 'stardust' })
+          }
+        }
       }, 800)
     }
-  }, [current, history, questions, score, selected])
+  }, [containerRef, current, history, questions, score, selected])
 
   const next = useCallback(() => {
+    MobileHapticsPro.selection()
     playQuizSound('select', mutedRef.current)
     setCurrent(c => c + 1)
     setSelected(null)
@@ -259,24 +312,28 @@ export default function HanjaQuiz({ locale }: Props) {
 
   const renderHud = () => (
     <div className="flex items-center justify-end gap-2 pb-2">
-      <button
-        type="button"
-        onClick={toggleSound}
+      <TiltHanjaButton
+        onClick={() => {
+          MobileHapticsPro.selection()
+          toggleSound()
+        }}
         className="flex h-9 w-9 items-center justify-center rounded-xl border border-border/60 bg-card text-foreground shadow-sm transition hover:bg-muted"
         title={muted ? portalLabels.unmute : portalLabels.mute}
-        aria-label={muted ? portalLabels.unmute : portalLabels.mute}
+        ariaLabel={muted ? portalLabels.unmute : portalLabels.mute}
       >
         {muted ? <VolumeX className="h-4 w-4 text-muted-foreground" /> : <Volume2 className="h-4 w-4 text-foreground" />}
-      </button>
-      <button
-        type="button"
-        onClick={togglePortal}
+      </TiltHanjaButton>
+      <TiltHanjaButton
+        onClick={() => {
+          MobileHapticsPro.light()
+          togglePortal()
+        }}
         className="flex h-9 w-9 items-center justify-center rounded-xl border border-border/60 bg-card text-foreground shadow-sm transition hover:bg-muted"
         title={isImmersive ? portalLabels.exit : portalLabels.enter}
-        aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
+        ariaLabel={isImmersive ? portalLabels.exit : portalLabels.enter}
       >
         {isImmersive ? <Minimize2 className="h-4 w-4 text-foreground" /> : <Maximize2 className="h-4 w-4 text-foreground" />}
-      </button>
+      </TiltHanjaButton>
     </div>
   )
 
@@ -286,7 +343,7 @@ export default function HanjaQuiz({ locale }: Props) {
         ref={containerRef}
         className={`relative select-none ${
           isImmersive
-            ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col items-center justify-center overflow-y-auto bg-background p-4 sm:p-6"
+            ? "arcade-shell fixed inset-0 z-50 flex h-dvh w-screen flex-col items-center justify-center overflow-y-auto overscroll-none bg-background p-4 sm:p-6"
             : "space-y-6 py-5 sm:py-8"
         }`}
       >
@@ -296,7 +353,7 @@ export default function HanjaQuiz({ locale }: Props) {
           <h2 className="text-2xl font-bold">{l.title}</h2>
           <p className="text-muted-foreground">{l.subtitle}</p>
           <p className="text-sm text-muted-foreground">10문제 · 뜻에 맞는 사자성어 고르기</p>
-          <button onClick={start} className="px-4 sm:px-8 py-3 bg-primary text-primary-foreground rounded-full font-semibold hover:bg-primary/90 transition-colors">{l.start}</button>
+          <TiltHanjaButton onClick={start} className="px-6 sm:px-8 py-3 bg-primary text-primary-foreground rounded-full font-semibold hover:bg-primary/90 transition-colors shadow-md">{l.start}</TiltHanjaButton>
         </div>
       </div>
     )
@@ -309,7 +366,7 @@ export default function HanjaQuiz({ locale }: Props) {
         ref={containerRef}
         className={`relative select-none ${
           isImmersive
-            ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col items-center justify-center overflow-y-auto bg-background p-4 sm:p-6"
+            ? "arcade-shell fixed inset-0 z-50 flex h-dvh w-screen flex-col items-center justify-center overflow-y-auto overscroll-none bg-background p-4 sm:p-6"
             : "space-y-6 py-4 text-center"
         }`}
       >
@@ -324,7 +381,7 @@ export default function HanjaQuiz({ locale }: Props) {
           <div className="flex gap-1.5 justify-center flex-wrap">
             {history.map((h, i) => <span key={i} className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${h ? 'bg-primary/15 text-primary' : 'bg-destructive/15 text-destructive'}`}>{i + 1}</span>)}
           </div>
-          <button onClick={restart} className="px-4 sm:px-8 py-3 border rounded-full text-sm font-medium hover:bg-accent transition-colors">{l.restart}</button>
+          <TiltHanjaButton onClick={restart} className="px-6 sm:px-8 py-3 border rounded-full text-sm font-medium hover:bg-accent transition-colors shadow-sm">{l.restart}</TiltHanjaButton>
         </div>
       </div>
     )
@@ -337,15 +394,30 @@ export default function HanjaQuiz({ locale }: Props) {
       ref={containerRef}
       className={`relative select-none ${
         isImmersive
-          ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col items-center justify-center overflow-y-auto bg-background p-4 sm:p-6"
+          ? "arcade-shell fixed inset-0 z-50 flex h-dvh w-screen flex-col items-center justify-center overflow-y-auto overscroll-none bg-background p-4 sm:p-6"
           : "space-y-5 py-4"
       }`}
     >
       <div className="w-full max-w-lg mx-auto space-y-5">
         {renderHud()}
+        
+        {/* Progress Bar */}
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>{l.progress(current + 1, questions.length)}</span>
+            <span className="font-semibold text-foreground">{Math.round(((current + 1) / questions.length) * 100)}%</span>
+          </div>
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full bg-primary transition-all duration-300 w-(--quiz-pct)"
+              style={{ '--quiz-pct': `${Math.round(((current + 1) / questions.length) * 100)}%` } as React.CSSProperties}
+            />
+          </div>
+        </div>
+
         <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">{l.progress(current + 1, questions.length)}</span>
-          <div className="flex gap-1">{history.map((h, i) => <span key={i} className={`w-2 h-2 rounded-full ${h ? 'bg-primary' : 'bg-destructive'}`} />)}</div>
+          <div className="flex gap-1">{history.map((h, i) => <span key={i} className={`w-2.5 h-2.5 rounded-full ${h ? 'bg-primary' : 'bg-destructive'}`} />)}</div>
+          <span className="text-xs font-semibold text-muted-foreground">맞힌 개수: {score} / {current + (selected ? 1 : 0)}</span>
         </div>
         <div className="rounded-2xl bg-muted p-5 text-center space-y-2">
           <p className="text-sm text-muted-foreground">{locale === 'ko' ? '뜻' : 'Meaning'}</p>
@@ -353,16 +425,16 @@ export default function HanjaQuiz({ locale }: Props) {
         </div>
         <div className="grid grid-cols-2 gap-3">
           {q.options.map((opt, idx) => {
-            let cls = 'relative border rounded-xl p-4 text-center font-bold text-lg transition-all'
+            let cls = 'relative border rounded-xl p-4 text-center font-bold text-lg transition-all w-full'
             if (selected === null) cls += ' hover:bg-accent hover:border-primary cursor-pointer'
             else if (opt === q.idiom) cls += ' bg-primary/10 border-primary/50 text-primary'
             else if (opt === selected) cls += ' bg-destructive/10 border-destructive/50 text-destructive'
             else cls += ' opacity-50'
             return (
-              <button key={opt} onClick={() => choose(opt)} className={cls}>
+              <TiltHanjaButton key={opt} onClick={() => choose(opt)} className={cls}>
                 <span className="absolute top-1.5 left-2 text-xs font-mono text-muted-foreground/60">{idx + 1}</span>
                 {opt}
-              </button>
+              </TiltHanjaButton>
             )
           })}
         </div>
@@ -373,7 +445,7 @@ export default function HanjaQuiz({ locale }: Props) {
           </div>
         )}
         {selected && current + 1 < questions.length && (
-          <button onClick={next} className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-medium hover:bg-primary/90 transition-colors">{l.next} →</button>
+          <TiltHanjaButton onClick={next} className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-medium hover:bg-primary/90 transition-colors shadow-md">{l.next} →</TiltHanjaButton>
         )}
       </div>
     </div>
