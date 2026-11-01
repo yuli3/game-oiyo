@@ -1,84 +1,129 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react'
-import { useArcadePortal } from '../../lib/games/arcade-portal'
+"use client";
 
-const SOUND_STORAGE_KEY = 'korean_history_quiz_sound_muted'
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Maximize2, Minimize2, Volume2, VolumeX, Share2, Check } from 'lucide-react';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { celebrate } from '../../lib/games/celebration';
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from '../../lib/games/share-card';
+
+const SOUND_STORAGE_KEY = 'korean_history_quiz_sound_muted';
+
+function TiltQuizButton({
+  children,
+  onClick,
+  className = '',
+  disabled = false,
+  title,
+  ariaLabel,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      title={title}
+      aria-label={ariaLabel || title}
+      onClick={() => {
+        triggerPop(0.12);
+        onClick?.();
+      }}
+      disabled={disabled}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`transition-all duration-150 transform-(--card-tilt) will-change-transform ${className}`}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 
 function playQuizSound(type: 'select' | 'correct' | 'wrong' | 'finish', muted: boolean) {
-  if (muted || typeof window === 'undefined') return
-  const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
-  if (!AudioCtx) return
-  const ctx = new AudioCtx()
-  const now = ctx.currentTime
+  if (muted || typeof window === 'undefined') return;
+  const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+  if (!AudioCtx) return;
+  const ctx = new AudioCtx();
+  const now = ctx.currentTime;
 
   if (type === 'select') {
-    const osc = ctx.createOscillator()
-    const gain = ctx.createGain()
-    osc.type = 'sine'
-    osc.frequency.setValueAtTime(440, now)
-    osc.frequency.exponentialRampToValueAtTime(520, now + 0.08)
-    gain.gain.setValueAtTime(0.04, now)
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08)
-    osc.connect(gain).connect(ctx.destination)
-    osc.start(now)
-    osc.stop(now + 0.08)
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(440, now);
+    osc.frequency.exponentialRampToValueAtTime(520, now + 0.08);
+    gain.gain.setValueAtTime(0.04, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.08);
   } else if (type === 'correct') {
-    const osc = ctx.createOscillator()
-    const gain = ctx.createGain()
-    osc.type = 'triangle'
-    osc.frequency.setValueAtTime(587.33, now) // D5
-    osc.frequency.setValueAtTime(880, now + 0.1) // A5
-    gain.gain.setValueAtTime(0.06, now)
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28)
-    osc.connect(gain).connect(ctx.destination)
-    osc.start(now)
-    osc.stop(now + 0.28)
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(587.33, now); // D5
+    osc.frequency.setValueAtTime(880, now + 0.1); // A5
+    gain.gain.setValueAtTime(0.06, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.28);
   } else if (type === 'wrong') {
-    const osc = ctx.createOscillator()
-    const gain = ctx.createGain()
-    osc.type = 'sawtooth'
-    osc.frequency.setValueAtTime(220, now)
-    osc.frequency.linearRampToValueAtTime(140, now + 0.22)
-    gain.gain.setValueAtTime(0.06, now)
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22)
-    osc.connect(gain).connect(ctx.destination)
-    osc.start(now)
-    osc.stop(now + 0.22)
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(220, now);
+    osc.frequency.linearRampToValueAtTime(140, now + 0.22);
+    gain.gain.setValueAtTime(0.06, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.22);
   } else if (type === 'finish') {
-    const freqs = [523.25, 659.25, 783.99, 1046.5] // C5, E5, G5, C6
+    const freqs = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
     freqs.forEach((freq, idx) => {
-      const osc = ctx.createOscillator()
-      const gain = ctx.createGain()
-      const start = now + idx * 0.09
-      osc.type = 'triangle'
-      osc.frequency.setValueAtTime(freq, start)
-      gain.gain.setValueAtTime(0.05, start)
-      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.3)
-      osc.connect(gain).connect(ctx.destination)
-      osc.start(start)
-      osc.stop(start + 0.3)
-    })
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const start = now + idx * 0.09;
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, start);
+      gain.gain.setValueAtTime(0.05, start);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.3);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + 0.3);
+    });
   }
 }
 
-
-type Locale = 'ko' | 'en' | 'ja' | 'fr' | 'es' | 'zh'
+type Locale = 'ko' | 'en' | 'ja' | 'fr' | 'es' | 'zh';
 
 interface HistoryQuestion {
-  question: string
-  options: string[]
-  answer: string
-  period: string
-  explanation: string
+  question: string;
+  options: string[];
+  answer: string;
+  period: string;
+  explanation: string;
 }
 
 const LABELS: Record<Locale, {
-  title: string; subtitle: string; start: string; restart: string
-  correct: string; wrong: string; correctIs: string
-  period: string; explanation: string
-  score: string; outOf: string; next: string
-  results: { [k: string]: string }
-  progress: (c: number, t: number) => string
+  title: string; subtitle: string; start: string; restart: string;
+  correct: string; wrong: string; correctIs: string;
+  period: string; explanation: string;
+  score: string; outOf: string; next: string;
+  results: { [k: string]: string };
+  progress: (c: number, t: number) => string;
 }> = {
   ko: {
     title: '한국사 퀴즈', subtitle: '선사시대부터 현대까지 한국 역사를 테스트해보세요',
@@ -102,7 +147,7 @@ const LABELS: Record<Locale, {
   fr: { title: 'Quiz d\'Histoire Coréenne', subtitle: 'Testez vos connaissances sur l\'histoire coréenne', start: 'Commencer', restart: 'Recommencer', correct: 'Correct ! ✓', wrong: 'Faux ✗', correctIs: 'Réponse :', period: 'Période', explanation: 'Explication', score: 'Score', outOf: '/ 10', next: 'Suivant', results: { perfect: 'Maître de l\'histoire coréenne ! 🏆', great: 'Expert en histoire ! 🌟', good: 'Bonnes bases ! 📚', low: 'Continuez à étudier 💪' }, progress: (c, t) => `${c} / ${t}` },
   es: { title: 'Quiz de Historia Coreana', subtitle: 'Pon a prueba tus conocimientos de historia coreana', start: 'Comenzar', restart: 'Reintentar', correct: '¡Correcto! ✓', wrong: 'Incorrecto ✗', correctIs: 'Respuesta:', period: 'Período', explanation: 'Explicación', score: 'Puntuación', outOf: '/ 10', next: 'Siguiente', results: { perfect: '¡Maestro de historia coreana! 🏆', great: '¡Experto en historia! 🌟', good: '¡Buenas bases! 📚', low: 'Sigue estudiando 💪' }, progress: (c, t) => `${c} / ${t}` },
   zh: { title: '韩国历史测验', subtitle: '从史前到现代测试您的韩国历史知识', start: '开始', restart: '重新测试', correct: '正确！✓', wrong: '错误 ✗', correctIs: '答案：', period: '时期', explanation: '解说', score: '分数', outOf: '/ 10', next: '下一题', results: { perfect: '韩国历史大师！🏆', great: '历史专家！🌟', good: '有基础！📚', low: '继续学习 💪' }, progress: (c, t) => `${c} / ${t}` },
-}
+};
 
 const ALL_QUESTIONS: HistoryQuestion[] = [
   { question: '고조선을 건국한 인물은?', options: ['단군왕검', '주몽', '온조', '박혁거세'], answer: '단군왕검', period: '고조선', explanation: '단군왕검이 기원전 2333년에 고조선을 건국했다고 전해집니다. 삼국유사에 기록된 단군 신화가 출처입니다.' },
@@ -120,138 +165,186 @@ const ALL_QUESTIONS: HistoryQuestion[] = [
   { question: '조선의 화폐이자 세종대왕 시절 만들어진 독자적 화폐는?', options: ['조선통보', '상평통보', '해동통보', '건원중보'], answer: '조선통보', period: '조선', explanation: '세종 시절 조선통보가 주조되었습니다. 상평통보는 조선 후기 숙종 때부터 본격 사용된 화폐입니다.' },
   { question: '고려 시대에 금속 활자를 발명하여 "직지심체요절"을 인쇄한 것은 언제?', options: ['1377년', '1392년', '1443년', '1234년'], answer: '1377년', period: '고려', explanation: '1377년 청주 흥덕사에서 세계 최초의 금속 활자 인쇄본 "직지심체요절"이 간행되었습니다. 독일 구텐베르크보다 78년 앞섰습니다.' },
   { question: '조선의 왕 중 사도세자의 아들은?', options: ['정조', '영조', '순조', '헌종'], answer: '정조', period: '조선', explanation: '정조(재위 1776~1800)는 영조의 손자이자 사도세자의 아들입니다. 규장각 설치, 수원 화성 축조 등 개혁 정치를 펼쳤습니다.' },
-]
+];
 
 function shuffle<T>(arr: T[]): T[] {
-  const a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[a[i], a[j]] = [a[j], a[i]] } return a
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
 }
 
 function pickQuestions(): HistoryQuestion[] {
-  return shuffle(ALL_QUESTIONS).slice(0, 10).map(q => ({ ...q, options: shuffle(q.options) }))
+  return shuffle(ALL_QUESTIONS).slice(0, 10).map(q => ({ ...q, options: shuffle(q.options) }));
 }
 
 function getResultKey(score: number): string {
-  if (score === 10) return 'perfect'; if (score >= 8) return 'great'; if (score >= 5) return 'good'; return 'low'
+  if (score === 10) return 'perfect';
+  if (score >= 8) return 'great';
+  if (score >= 5) return 'good';
+  return 'low';
 }
 
 interface Props { locale: Locale }
 
 export default function KoreanHistoryQuiz({ locale }: Props) {
-  const l = LABELS[locale] ?? LABELS.en
-  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal()
-  const [questions, setQuestions] = useState<HistoryQuestion[]>([])
-  const [started, setStarted] = useState(false)
-  const [current, setCurrent] = useState(0)
-  const [selected, setSelected] = useState<string | null>(null)
-  const [score, setScore] = useState(0)
-  const [finished, setFinished] = useState(false)
-  const [history, setHistory] = useState<boolean[]>([])
+  const l = LABELS[locale] ?? LABELS.en;
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: locale as any });
+  const [questions, setQuestions] = useState<HistoryQuestion[]>([]);
+  const [started, setStarted] = useState(false);
+  const [current, setCurrent] = useState(0);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [score, setScore] = useState(0);
+  const [finished, setFinished] = useState(false);
+  const [history, setHistory] = useState<boolean[]>([]);
+  const [shareCopied, setShareCopied] = useState(false);
   const [muted, setMuted] = useState(() => {
-    if (typeof window === 'undefined') return false
-    return localStorage.getItem(SOUND_STORAGE_KEY) === 'true'
-  })
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem(SOUND_STORAGE_KEY) === 'true';
+  });
 
-  const mutedRef = useRef(muted)
-  mutedRef.current = muted
+  const mutedRef = useRef(muted);
+  mutedRef.current = muted;
 
   const toggleSound = useCallback(() => {
     setMuted(prev => {
-      const next = !prev
+      const next = !prev;
       try {
-        localStorage.setItem(SOUND_STORAGE_KEY, String(next))
+        localStorage.setItem(SOUND_STORAGE_KEY, String(next));
       } catch {
         /* storage disabled */
       }
-      return next
-    })
-  }, [])
+      return next;
+    });
+  }, []);
 
-  useEffect(() => { setQuestions(pickQuestions()) }, [])
+  useEffect(() => { setQuestions(pickQuestions()); }, []);
 
   const start = useCallback(() => {
-    playQuizSound('select', mutedRef.current)
-    setQuestions(pickQuestions())
-    setStarted(true)
-    setCurrent(0)
-    setSelected(null)
-    setScore(0)
-    setFinished(false)
-    setHistory([])
-  }, [])
+    playQuizSound('select', mutedRef.current);
+    MobileHapticsPro.selectionClick();
+    setQuestions(pickQuestions());
+    setStarted(true);
+    setCurrent(0);
+    setSelected(null);
+    setScore(0);
+    setFinished(false);
+    setHistory([]);
+  }, []);
 
-  const restart = useCallback(() => { start() }, [start])
+  const restart = useCallback(() => { start(); }, [start]);
 
   const choose = useCallback((opt: string) => {
-    if (selected !== null || !questions[current]) return
-    setSelected(opt)
-    const correct = opt === questions[current].answer
-    playQuizSound(correct ? 'correct' : 'wrong', mutedRef.current)
-    const newScore = correct ? score + 1 : score
-    const newHistory = [...history, correct]
-    setScore(newScore)
-    setHistory(newHistory)
+    if (selected !== null || !questions[current]) return;
+    setSelected(opt);
+    const correct = opt === questions[current].answer;
+    playQuizSound(correct ? 'correct' : 'wrong', mutedRef.current);
+    if (correct) {
+      MobileHapticsPro.successPattern();
+    } else {
+      MobileHapticsPro.warningPattern();
+    }
+    const newScore = correct ? score + 1 : score;
+    const newHistory = [...history, correct];
+    setScore(newScore);
+    setHistory(newHistory);
     if (current + 1 >= questions.length) {
       setTimeout(() => {
-        playQuizSound('finish', mutedRef.current)
-        setFinished(true)
-      }, 900)
+        playQuizSound('finish', mutedRef.current);
+        MobileHapticsPro.successPattern();
+        setFinished(true);
+        if (containerRef.current && (newScore >= 8)) {
+          celebrate(containerRef.current, { preset: 'stardust' });
+        }
+      }, 900);
     }
-  }, [current, history, questions, score, selected])
+  }, [current, history, questions, score, selected, containerRef]);
 
   const next = useCallback(() => {
-    playQuizSound('select', mutedRef.current)
-    setCurrent(c => c + 1)
-    setSelected(null)
-  }, [])
+    playQuizSound('select', mutedRef.current);
+    MobileHapticsPro.lightImpact();
+    setCurrent(c => c + 1);
+    setSelected(null);
+  }, []);
 
   // Keyboard shortcuts support
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
       if (e.key === 'f' || e.key === 'F') {
-        e.preventDefault()
-        togglePortal()
-        return
+        e.preventDefault();
+        togglePortal();
+        return;
       }
       if (e.key === 'm' || e.key === 'M') {
-        e.preventDefault()
-        toggleSound()
-        return
+        e.preventDefault();
+        toggleSound();
+        return;
       }
       if (!started || finished) {
         if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-          if (!started) start()
-          else if (finished) restart()
+          e.preventDefault();
+          if (!started) start();
+          else if (finished) restart();
         }
-        return
+        return;
       }
       if (selected !== null) {
         if ((e.key === 'Enter' || e.key === ' ') && current + 1 < questions.length) {
-          e.preventDefault()
-          next()
+          e.preventDefault();
+          next();
         }
-        return
+        return;
       }
       if (['1', '2', '3', '4'].includes(e.key)) {
-        const idx = Number(e.key) - 1
-        const curQ = questions[current]
+        const idx = Number(e.key) - 1;
+        const curQ = questions[current];
         if (curQ && curQ.options[idx]) {
-          e.preventDefault()
-          choose(curQ.options[idx])
+          e.preventDefault();
+          choose(curQ.options[idx]);
         }
       }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [choose, current, finished, next, questions, restart, selected, start, started, togglePortal, toggleSound]);
+
+  const handleShare = useCallback(async () => {
+    const rk = getResultKey(score);
+    const resultLabel = l.results[rk];
+    try {
+      const canvas = createShareCardCanvas({
+        title: l.title,
+        subtitle: `Korean History Quiz`,
+        score: `${score} / 10`,
+        slug: 'korean-history-quiz',
+        qrUrl: typeof window !== 'undefined' ? window.location.href : undefined,
+        customStats: [
+          { label: 'SCORE', value: `${score} / 10` },
+          { label: 'GRADE', value: resultLabel },
+        ],
+      });
+      const ok = await copyShareCardToClipboard(canvas);
+      if (ok) {
+        setShareCopied(true);
+        MobileHapticsPro.successPattern();
+        setTimeout(() => setShareCopied(false), 2500);
+      } else {
+        downloadShareCard(canvas, `korean-history-quiz-${score}pts.png`);
+      }
+    } catch {
+      // share fallback
     }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [choose, current, finished, next, questions, restart, selected, start, started, togglePortal, toggleSound])
+  }, [score, l.title, l.results]);
 
   const renderHud = () => (
     <div className="flex items-center justify-end gap-2 pb-2">
       <button
         type="button"
         onClick={toggleSound}
-        className="flex h-9 w-9 items-center justify-center rounded-xl border border-border/60 bg-card text-foreground shadow-sm transition hover:bg-muted"
+        className="flex h-9 w-9 items-center justify-center rounded-xl border border-border/60 bg-card text-foreground shadow-xs transition-colors hover:bg-muted"
         title={muted ? portalLabels.unmute : portalLabels.mute}
         aria-label={muted ? portalLabels.unmute : portalLabels.mute}
       >
@@ -260,14 +353,14 @@ export default function KoreanHistoryQuiz({ locale }: Props) {
       <button
         type="button"
         onClick={togglePortal}
-        className="flex h-9 w-9 items-center justify-center rounded-xl border border-border/60 bg-card text-foreground shadow-sm transition hover:bg-muted"
+        className="flex h-9 w-9 items-center justify-center rounded-xl border border-border/60 bg-card text-foreground shadow-xs transition-colors hover:bg-muted"
         title={isImmersive ? portalLabels.exit : portalLabels.enter}
         aria-label={isImmersive ? portalLabels.exit : portalLabels.enter}
       >
         {isImmersive ? <Minimize2 className="h-4 w-4 text-foreground" /> : <Maximize2 className="h-4 w-4 text-foreground" />}
       </button>
     </div>
-  )
+  );
 
   if (!started || questions.length === 0) {
     return (
@@ -282,17 +375,19 @@ export default function KoreanHistoryQuiz({ locale }: Props) {
         <div className="w-full max-w-lg mx-auto text-center space-y-6">
           {renderHud()}
           <div className="text-5xl">🏯</div>
-          <h2 className="text-2xl font-bold">{l.title}</h2>
+          <h2 className="text-2xl font-bold text-foreground">{l.title}</h2>
           <p className="text-muted-foreground">{l.subtitle}</p>
           <p className="text-sm text-muted-foreground">10문제 · 무작위 출제</p>
-          <button onClick={start} className="px-4 sm:px-8 py-3 bg-primary text-primary-foreground rounded-full font-semibold hover:bg-primary/90 transition-colors">{l.start}</button>
+          <TiltQuizButton onClick={start} className="px-6 sm:px-10 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90">
+            {l.start}
+          </TiltQuizButton>
         </div>
       </div>
-    )
+    );
   }
 
   if (finished) {
-    const rk = getResultKey(score)
+    const rk = getResultKey(score);
     return (
       <div
         ref={containerRef}
@@ -307,20 +402,35 @@ export default function KoreanHistoryQuiz({ locale }: Props) {
           <div className="text-5xl">{score === 10 ? '🏆' : score >= 8 ? '🌟' : score >= 5 ? '📚' : '💪'}</div>
           <div>
             <p className="text-sm text-muted-foreground mb-1">{l.score}</p>
-            <p className="text-4xl font-black">{score} <span className="text-base font-normal text-muted-foreground">{l.outOf}</span></p>
+            <p className="text-4xl font-black text-foreground">{score} <span className="text-base font-normal text-muted-foreground">{l.outOf}</span></p>
           </div>
-          <p className="font-semibold text-lg">{l.results[rk]}</p>
+          <p className="font-semibold text-lg text-foreground">{l.results[rk]}</p>
           <div className="flex gap-1.5 justify-center flex-wrap">
-            {history.map((h, i) => <span key={i} className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${h ? 'bg-primary/15 text-primary' : 'bg-destructive/15 text-destructive'}`}>{i + 1}</span>)}
+            {history.map((h, i) => (
+              <span key={i} className={`size-7 rounded-full flex items-center justify-center text-xs font-bold ${h ? 'bg-primary/15 text-primary' : 'bg-destructive/15 text-destructive'}`}>
+                {i + 1}
+              </span>
+            ))}
           </div>
-          <button onClick={restart} className="px-4 sm:px-8 py-3 border rounded-full text-sm font-medium hover:bg-accent transition-colors">{l.restart}</button>
+          <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+            <TiltQuizButton
+              onClick={handleShare}
+              className="px-5 py-3 bg-secondary text-secondary-foreground rounded-full font-bold shadow-md hover:bg-secondary/80 flex items-center gap-1.5 text-xs"
+            >
+              {shareCopied ? <Check className="size-4" /> : <Share2 className="size-4" />}
+              <span>{shareCopied ? '복사 완료!' : '결과 카드 공유'}</span>
+            </TiltQuizButton>
+            <TiltQuizButton onClick={restart} className="px-6 sm:px-8 py-3 border border-border rounded-full text-sm font-semibold hover:bg-accent text-foreground">
+              {l.restart}
+            </TiltQuizButton>
+          </div>
         </div>
       </div>
-    )
+    );
   }
 
-  const q = questions[current]
-  const isCorrect = selected === q.answer
+  const q = questions[current];
+  const isCorrect = selected === q.answer;
   return (
     <div
       ref={containerRef}
@@ -337,21 +447,21 @@ export default function KoreanHistoryQuiz({ locale }: Props) {
           <span className="text-xs bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full border border-border">{q.period}</span>
         </div>
         <div className="rounded-2xl bg-muted p-5 text-center">
-          <p className="text-base font-semibold">{q.question}</p>
+          <p className="text-base font-semibold text-foreground">{q.question}</p>
         </div>
         <div className="grid grid-cols-2 gap-3">
           {q.options.map((opt, idx) => {
-            let cls = 'relative border rounded-xl p-4 text-center font-medium text-sm transition-all'
-            if (selected === null) cls += ' hover:bg-accent hover:border-primary cursor-pointer'
-            else if (opt === q.answer) cls += ' bg-primary/10 border-primary/50 text-primary font-bold'
-            else if (opt === selected) cls += ' bg-destructive/10 border-destructive/50 text-destructive line-through'
-            else cls += ' opacity-50'
+            let cls = 'relative border rounded-xl p-4 text-center font-medium text-sm transition-all ';
+            if (selected === null) cls += ' hover:bg-accent hover:border-primary cursor-pointer border-border text-foreground';
+            else if (opt === q.answer) cls += ' bg-primary/10 border-primary/50 text-primary font-bold';
+            else if (opt === selected) cls += ' bg-destructive/10 border-destructive/50 text-destructive line-through';
+            else cls += ' opacity-50 border-border text-muted-foreground';
             return (
-              <button key={opt} onClick={() => choose(opt)} className={cls}>
+              <TiltQuizButton key={opt} onClick={() => choose(opt)} className={cls}>
                 <span className="absolute top-1.5 left-2 text-xs font-mono text-muted-foreground/60">{idx + 1}</span>
                 {opt}
-              </button>
-            )
+              </TiltQuizButton>
+            );
           })}
         </div>
         {selected && (
@@ -363,9 +473,11 @@ export default function KoreanHistoryQuiz({ locale }: Props) {
           </div>
         )}
         {selected && current + 1 < questions.length && (
-          <button onClick={next} className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-medium hover:bg-primary/90 transition-colors">{l.next} →</button>
+          <TiltQuizButton onClick={next} className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:opacity-90">
+            {l.next} →
+          </TiltQuizButton>
         )}
       </div>
     </div>
-  )
+  );
 }

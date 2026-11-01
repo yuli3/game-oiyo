@@ -1,10 +1,12 @@
+"use client";
+
 // The shell stays scrollable. data-game-surface would block the guide on a
 // phone (2026-10-21). Body, fog, and background are the same pixels: there
 // is no numeric resource readout. The fuse is play time, so reduced motion
 // does not skip it.
 
-import { useEffect, useRef, useState } from "react";
-import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { Maximize2, Minimize2, Volume2, VolumeX, Share2, Check } from "lucide-react";
 import { GameContainer } from "../ui/game/GamePrimitives";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import type { Locale } from "../../lib/i18n";
@@ -12,8 +14,13 @@ import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { getBest, getRecord, recordBest, recordResult, type BestRecord, type GameRecord } from "../../lib/games/records";
 import { dateKeyIndex, kstDateKey } from "../../lib/games/todays-game";
 import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from "../../lib/games/game-audio";
-import { createHaptics } from "../../lib/games/haptics";
 import { celebrate } from "../../lib/games/celebration";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import { LAST_PIXEL_SPRITES } from "../../lib/games/sprites";
 import {
   GAME_ID,
@@ -32,6 +39,43 @@ import {
 const FUSE_MS = 3200;
 const CONTROL = "min-h-11 min-w-11 rounded-xl border px-3 py-2 text-sm font-bold motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
 const BUTTON = "min-h-16 rounded-xl border border-border bg-card text-sm font-bold text-foreground motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60";
+
+function TiltPixelButton({
+  children,
+  onClick,
+  className = '',
+  disabled = false,
+  title,
+  ariaLabel,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      title={title}
+      aria-label={ariaLabel || title}
+      onClick={() => {
+        triggerPop(0.12);
+        onClick?.();
+      }}
+      disabled={disabled}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`transition-all duration-150 transform-(--card-tilt) will-change-transform ${className}`}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 
 interface Copy {
   title: string;
@@ -180,8 +224,8 @@ const TONE: Record<Cell, string> = {
   F: "bg-muted text-foreground",
   H: "bg-foreground/15 text-foreground",
   "?": "bg-muted text-muted-foreground",
-  P: "bg-chart-1 text-foreground",
-  B: "bg-warning/15 text-foreground",
+  P: "bg-primary text-primary-foreground",
+  B: "bg-destructive/15 text-destructive",
 };
 
 const GLYPH: Record<Cell, string> = { F: "·", H: "■", "?": "?", P: "▬", B: "×" };
@@ -204,8 +248,8 @@ export default function LastPixel({ locale }: { locale: Locale }) {
   const [best, setBest] = useState<BestRecord | null>(null);
   const [muted, setMuted] = useState(false);
   const [remain, setRemain] = useState(Math.ceil(FUSE_MS / 1000));
+  const [shareCopied, setShareCopied] = useState(false);
   const cuesRef = useRef<CuePlayer<CoreCue> | null>(null);
-  const hapticsRef = useRef(createHaptics());
   const noted = useRef(new Set<string>());
   const phase = useRef<Run["phase"] | null>(null);
   const runRef = useRef<Run | null>(null);
@@ -251,7 +295,13 @@ export default function LastPixel({ locale }: { locale: Locale }) {
 
   const onAct = (act: Act) => {
     cue("place");
-    hapticsRef.current.fire("place");
+    if (act === "look") {
+      MobileHapticsPro.selectionClick();
+    } else if (act === "plank") {
+      MobileHapticsPro.mediumImpact();
+    } else {
+      MobileHapticsPro.heavyImpact();
+    }
     setRun((current) => (current ? applyAct(current, act) : current));
   };
 
@@ -293,11 +343,11 @@ export default function LastPixel({ locale }: { locale: Locale }) {
     }
     if (run.phase === "won") {
       cue("win");
-      hapticsRef.current.fire("win");
+      MobileHapticsPro.successPattern();
       if (containerRef.current) celebrate(containerRef.current, { preset: "stardust" });
     } else if (run.phase === "lost") {
       cue("fail");
-      hapticsRef.current.fire("fail");
+      MobileHapticsPro.warningPattern();
     }
   }, [run, dateKey, attempt, muted, reducedMotion]);
 
@@ -307,7 +357,35 @@ export default function LastPixel({ locale }: { locale: Locale }) {
     setAttempt((value) => value + 1);
     setRemain(Math.ceil(FUSE_MS / 1000));
     setRun(createRun(createPuzzle(seed)));
+    MobileHapticsPro.selectionClick();
   };
+
+  const handleShare = useCallback(async () => {
+    if (!run) return;
+    try {
+      const canvas = createShareCardCanvas({
+        title: t.title,
+        subtitle: `Last Pixel Survival`,
+        score: `${run.kept} Pixels Kept`,
+        slug: 'last-pixel',
+        qrUrl: typeof window !== 'undefined' ? window.location.href : undefined,
+        customStats: [
+          { label: 'ROUND', value: `${run.round + 1} / 3` },
+          { label: 'RESULT', value: run.phase === "won" ? 'SURVIVED' : 'LOST' },
+        ],
+      });
+      const ok = await copyShareCardToClipboard(canvas);
+      if (ok) {
+        setShareCopied(true);
+        MobileHapticsPro.successPattern();
+        setTimeout(() => setShareCopied(false), 2500);
+      } else {
+        downloadShareCard(canvas, `last-pixel-${run.kept}.png`);
+      }
+    } catch {
+      // share fallback
+    }
+  }, [run, t.title]);
 
   const canLook = Boolean(run && run.body > 0 && run.row.includes("?"));
   const canPlank = Boolean(run && run.sky > 0 && run.row.some((cell) => cell === "?" || cell === "H"));
@@ -319,10 +397,10 @@ export default function LastPixel({ locale }: { locale: Locale }) {
           <img src={LAST_PIXEL_SPRITES.keyart} alt={t.title} className="h-32 w-full object-cover sm:h-44" />
         </div>
         <div className="mb-4 flex flex-wrap gap-2">
-          <button type="button" onClick={() => setMuted((value) => !value)} aria-pressed={muted} aria-label={muted ? portalLabels.unmute : portalLabels.mute} title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`} className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-muted-foreground`}>
+          <button type="button" onClick={() => setMuted((value) => !value)} aria-pressed={muted} aria-label={muted ? portalLabels.unmute : portalLabels.mute} title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`} className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-muted-foreground hover:bg-muted transition-colors`}>
             {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
           </button>
-          <button type="button" onClick={togglePortal} aria-pressed={isImmersive} aria-label={isImmersive ? portalLabels.exit : portalLabels.enter} title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`} className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-muted-foreground`}>
+          <button type="button" onClick={togglePortal} aria-pressed={isImmersive} aria-label={isImmersive ? portalLabels.exit : portalLabels.enter} title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`} className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-muted-foreground hover:bg-muted transition-colors`}>
             {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
             <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
           </button>
@@ -349,26 +427,34 @@ export default function LastPixel({ locale }: { locale: Locale }) {
             <p className="text-sm text-muted-foreground">● {t.face.body} · ○ {t.face.sky} · ? {t.face["?"]} · ■ {t.face.H} · · {t.face.F}</p>
             {run.phase === "play" ? (
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                <button type="button" disabled={!canLook} onClick={() => onAct("look")} className={`${BUTTON} touch-none`}>{t.act.look}</button>
-                <button type="button" disabled={!canPlank} onClick={() => onAct("plank")} className={`${BUTTON} touch-none`}>{t.act.plank}</button>
-                <button type="button" onClick={() => onAct("leap")} className={`${BUTTON} touch-none`}>{t.act.leap}</button>
+                <TiltPixelButton disabled={!canLook} onClick={() => onAct("look")} className={`${BUTTON} touch-none`}>{t.act.look}</TiltPixelButton>
+                <TiltPixelButton disabled={!canPlank} onClick={() => onAct("plank")} className={`${BUTTON} touch-none`}>{t.act.plank}</TiltPixelButton>
+                <TiltPixelButton onClick={() => onAct("leap")} className={`${BUTTON} touch-none`}>{t.act.leap}</TiltPixelButton>
               </div>
             ) : null}
             {run.phase === "ready" ? (
-              <button
-                type="button"
+              <TiltPixelButton
                 onClick={() => {
                   cue("tap");
-                  hapticsRef.current.fire("tap");
+                  MobileHapticsPro.selectionClick();
                   setRun((current) => (current ? begin(current) : current));
                 }}
-                className={`${CONTROL} border-primary bg-primary text-primary-foreground`}
+                className={`${CONTROL} border-primary bg-primary text-primary-foreground hover:opacity-90`}
               >
                 {run.round === 0 ? t.start : t.next}
-              </button>
+              </TiltPixelButton>
             ) : null}
             {run.phase === "won" || run.phase === "lost" ? (
-              <button type="button" onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</button>
+              <div className="flex flex-wrap items-center gap-2">
+                <TiltPixelButton
+                  onClick={handleShare}
+                  className="min-h-11 px-4 py-2 bg-secondary text-secondary-foreground rounded-xl font-bold flex items-center gap-1.5 text-xs hover:bg-secondary/80"
+                >
+                  {shareCopied ? <Check className="size-4" /> : <Share2 className="size-4" />}
+                  <span>{shareCopied ? '복사 완료!' : '결과 카드 공유'}</span>
+                </TiltPixelButton>
+                <TiltPixelButton onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground hover:opacity-90`}>{t.again}</TiltPixelButton>
+              </div>
             ) : null}
             <p className="text-sm text-muted-foreground">{t.record(record?.w ?? 0, record?.l ?? 0)}{best?.unit === "score" ? ` · ${t.best(best.value)}` : ""}</p>
           </div>

@@ -1,8 +1,15 @@
-import React, { useEffect, useRef, useState, type CSSProperties } from 'react';
-import { Maximize2, Minimize2, Volume2, VolumeX, Share2 } from 'lucide-react';
+"use client";
+
+import React, { useEffect, useRef, useState, useCallback, type CSSProperties } from 'react';
+import { Maximize2, Minimize2, Volume2, VolumeX, Share2, Check } from 'lucide-react';
 import type { Locale } from '../../lib/i18n';
 import { celebrate } from '../../lib/games/celebration';
-import { createShareCardCanvas, copyShareCardToClipboard } from '../../lib/games/share-card';
+import {
+    createShareCardCanvas,
+    copyShareCardToClipboard,
+    downloadShareCard,
+} from '../../lib/games/share-card';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import {
     createJanggi, janggiAnalysis, janggiBestMove, janggiMoveReview, janggiTargets, isChoPiece, playJanggi,
     type JanggiMove, type JanggiMoveReview, type JanggiState,
@@ -12,6 +19,43 @@ import type { AiLevel, GameMode } from '../../lib/games/ai/types';
 import { getRecord, recordResult, type GameRecord } from '../../lib/games/records';
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
+
+function TiltGameButton({
+    children,
+    onClick,
+    className = '',
+    disabled = false,
+    title,
+    ariaLabel,
+}: {
+    children: React.ReactNode;
+    onClick?: () => void;
+    className?: string;
+    disabled?: boolean;
+    title?: string;
+    ariaLabel?: string;
+}) {
+    const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+    return (
+        <button
+            type="button"
+            title={title}
+            aria-label={ariaLabel || title}
+            onClick={() => {
+                triggerPop(0.12);
+                onClick?.();
+            }}
+            disabled={disabled}
+            onPointerMove={onPointerMove}
+            onPointerLeave={onPointerLeave}
+            className={`transition-all duration-150 transform-(--card-tilt) will-change-transform ${className}`}
+            style={{ '--card-tilt': transformCss } as React.CSSProperties}
+        >
+            {children}
+        </button>
+    );
+}
 
 // ─── Janggi (Korean chess) with real movement rules ──────────────────────────
 // Cho (초, blue, lowercase) opens from the top; Han (한, red, uppercase) from
@@ -60,7 +104,7 @@ const AI_INFO: Record<Locale,{difficulty:string;level:Record<AiLevel,string>;rev
 const JanggiBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     const t = i18n[locale] ?? i18n.en;
     const x = extra[locale] ?? extra.en;
-    const aiInfo=AI_INFO[locale]??AI_INFO.en;
+    const aiInfo = AI_INFO[locale] ?? AI_INFO.en;
     const reducedMotion = usePrefersReducedMotion();
 
     const [game, setGame] = useState<JanggiState>(createJanggi);
@@ -79,7 +123,8 @@ const JanggiBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
             return false;
         }
     });
-    const toggleSound = () => {
+
+    const toggleSound = useCallback(() => {
         setMuted((prev) => {
             const next = !prev;
             try {
@@ -89,7 +134,8 @@ const JanggiBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
             }
             return next;
         });
-    };
+    }, []);
+
     const { isImmersive, containerRef, togglePortal } = useArcadePortal({ locale: locale as Locale });
 
     useEffect(() => {
@@ -105,44 +151,110 @@ const JanggiBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [togglePortal]);
+    }, [togglePortal, toggleSound]);
 
     const [record, setRecord] = useState<GameRecord | null>(null);
-    const [lastAiReview,setLastAiReview]=useState<JanggiMoveReview|null>(null);
+    const [lastAiReview, setLastAiReview] = useState<JanggiMoveReview | null>(null);
     const [lastMove, setLastMove] = useState<JanggiMove | null>(null);
     const aiTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const audio = useRef<AudioContext | null>(null);
-    const tone = (frequency: number, duration = 0.06) => { if (muted || typeof window === 'undefined') return; const context = audio.current ?? new AudioContext(); audio.current = context; const oscillator = context.createOscillator(); const gain = context.createGain(); oscillator.frequency.value = frequency; gain.gain.setValueAtTime(0.05, context.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + duration); oscillator.connect(gain).connect(context.destination); oscillator.start(); oscillator.stop(context.currentTime + duration); };
 
-    useEffect(() => { setRecord(getRecord('janggi')); const saved = loadJanggiSave(); if (saved) { setGame(saved.state); setMode(saved.mode); setLevel(saved.level); setPaused(true); setRestored(true); } }, []);
-    useEffect(() => () => { if (aiTimer.current) clearTimeout(aiTimer.current); void audio.current?.close(); }, []);
-    useEffect(() => { if (game.status === 'playing') storeJanggiSave(game, mode, level); else clearJanggiSave(); }, [game, mode, level]);
-    useEffect(() => { const hidden = () => { if (document.hidden) { setPaused(true); if (aiTimer.current) clearTimeout(aiTimer.current); setThinking(false); } }; document.addEventListener('visibilitychange', hidden); return () => document.removeEventListener('visibilitychange', hidden); }, []);
+    const tone = (frequency: number, duration = 0.06) => {
+        if (muted || typeof window === 'undefined') return;
+        const context = audio.current ?? new AudioContext();
+        audio.current = context;
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        oscillator.frequency.value = frequency;
+        gain.gain.setValueAtTime(0.05, context.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + duration);
+        oscillator.connect(gain).connect(context.destination);
+        oscillator.start();
+        oscillator.stop(context.currentTime + duration);
+    };
 
-    const board = game.board; const isChoTurn = game.current === 'cho'; const winner = game.winner;
+    useEffect(() => {
+        setRecord(getRecord('janggi'));
+        const saved = loadJanggiSave();
+        if (saved) {
+            setGame(saved.state);
+            setMode(saved.mode);
+            setLevel(saved.level);
+            setPaused(true);
+            setRestored(true);
+        }
+    }, []);
+
+    useEffect(() => () => {
+        if (aiTimer.current) clearTimeout(aiTimer.current);
+        void audio.current?.close();
+    }, []);
+
+    useEffect(() => {
+        if (game.status === 'playing') storeJanggiSave(game, mode, level);
+        else clearJanggiSave();
+    }, [game, mode, level]);
+
+    useEffect(() => {
+        const hidden = () => {
+            if (document.hidden) {
+                setPaused(true);
+                if (aiTimer.current) clearTimeout(aiTimer.current);
+                setThinking(false);
+            }
+        };
+        document.addEventListener('visibilitychange', hidden);
+        return () => document.removeEventListener('visibilitychange', hidden);
+    }, []);
+
+    const board = game.board;
+    const isChoTurn = game.current === 'cho';
+    const winner = game.winner;
     const targets = selected ? janggiTargets(board, selected[0], selected[1]) : [];
 
-    const reset = () => {
+    const reset = useCallback(() => {
         if (aiTimer.current) clearTimeout(aiTimer.current);
-        setGame(createJanggi()); clearJanggiSave();
+        setGame(createJanggi());
+        clearJanggiSave();
         setSelected(null);
         setLastMove(null);
         setThinking(false);
-        setPaused(false); setRestored(false); setLastAiReview(null);
-    };
+        setPaused(false);
+        setRestored(false);
+        setLastAiReview(null);
+        MobileHapticsPro.selectionClick();
+    }, []);
 
     const applyMove = (current: JanggiState, m: JanggiMove) => {
-        const movingCho=current.current==='cho';const review=movingCho===AI_IS_CHO?janggiMoveReview(current.board,m):null;
-        const next = playJanggi(current, m); if (next === current) return;
-        if(review)setLastAiReview(review);
-        const captured = Boolean(current.board[m.to[0]][m.to[1]]); tone(next.winner ? 660 : captured ? 420 : 260, next.winner ? 0.18 : 0.06);
+        const movingCho = current.current === 'cho';
+        const review = movingCho === AI_IS_CHO ? janggiMoveReview(current.board, m) : null;
+        const next = playJanggi(current, m);
+        if (next === current) return;
+        if (review) setLastAiReview(review);
+        const captured = Boolean(current.board[m.to[0]][m.to[1]]);
+        
+        if (next.winner) {
+            tone(660, 0.18);
+            MobileHapticsPro.successPattern();
+        } else if (captured) {
+            tone(420, 0.08);
+            MobileHapticsPro.heavyImpact();
+        } else {
+            tone(260, 0.06);
+            MobileHapticsPro.mediumImpact();
+        }
+
         setGame(next);
         setLastMove(m);
         setSelected(null);
+
         if (next.winner && containerRef.current) {
             celebrate(containerRef.current, { preset: "stardust" });
         }
-        if (next.winner && mode === 'ai') { const aiWon = (next.winner === 'cho') === AI_IS_CHO; setRecord(recordResult('janggi', aiWon ? 'l' : 'w')); }
+        if (next.winner && mode === 'ai') {
+            const aiWon = (next.winner === 'cho') === AI_IS_CHO;
+            setRecord(recordResult('janggi', aiWon ? 'l' : 'w'));
+        }
     };
 
     const handleSquareClick = (r: number, c: number) => {
@@ -152,16 +264,27 @@ const JanggiBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
 
         if (selected) {
             const [sr, sc] = selected;
-            if (sr === r && sc === c) { setSelected(null); return; }
+            if (sr === r && sc === c) {
+                setSelected(null);
+                MobileHapticsPro.lightImpact();
+                return;
+            }
             if (targets.some(([tr, tc]) => tr === r && tc === c)) {
                 applyMove(game, { from: [sr, sc], to: [r, c] });
                 return;
             }
             // reselect own piece, otherwise deselect
-            if (piece && isChoPiece(piece) === isChoTurn) setSelected([r, c]);
-            else { setSelected(null); tone(120); }
+            if (piece && isChoPiece(piece) === isChoTurn) {
+                setSelected([r, c]);
+                MobileHapticsPro.selectionClick();
+            } else {
+                setSelected(null);
+                tone(120);
+                MobileHapticsPro.warningPattern();
+            }
         } else if (piece && isChoPiece(piece) === isChoTurn) {
             setSelected([r, c]);
+            MobileHapticsPro.selectionClick();
         }
     };
 
@@ -197,7 +320,7 @@ const JanggiBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
             const canvas = createShareCardCanvas({
                 title: t.title,
                 subtitle: mode === 'ai' ? `vs AI Janggi` : '2 Players Janggi',
-                score: game.moves,
+                score: `${game.moves} ${x.moves}`,
                 slug: 'janggi',
                 qrUrl: typeof window !== 'undefined' ? window.location.href : undefined,
                 customStats: [
@@ -208,51 +331,57 @@ const JanggiBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
             const copied = await copyShareCardToClipboard(canvas);
             if (copied) {
                 setShareCopied(true);
+                MobileHapticsPro.successPattern();
                 setTimeout(() => setShareCopied(false), 2500);
+            } else {
+                downloadShareCard(canvas, `janggi-result.png`);
             }
-        } catch {}
+        } catch {
+            // share card fallback
+        }
     };
 
     return (
         <div ref={containerRef} className="w-full flex flex-col items-center justify-center">
-            <div className="not-prose my-12 p-4 sm:p-8 bg-[#e8dcc4] border-8 border-[#c4a484] rounded-xl shadow-xl max-w-lg mx-auto overflow-hidden">
+            <div className="not-prose my-12 p-4 sm:p-8 bg-card border-8 border-border rounded-xl shadow-xl max-w-lg mx-auto overflow-hidden">
                 <div className="flex justify-between items-center mb-4">
                     <div>
-                        <h3 className="text-xl font-black text-stone-800">{t.title}</h3>
-                        <p className={`text-xs font-bold uppercase tracking-widest mt-1 ${isChoTurn ? 'text-blue-600' : 'text-red-600'}`} aria-live="polite">
+                        <h3 className="text-xl font-black text-foreground">{t.title}</h3>
+                        <p className={`text-xs font-bold uppercase tracking-widest mt-1 ${isChoTurn ? 'text-primary' : 'text-destructive'}`} aria-live="polite">
                             {thinking ? t.thinking : `${isChoTurn ? t.cho : t.han} ${t.turn}`}
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <button
-                            type="button"
+                        <TiltGameButton
                             onClick={toggleSound}
-                            aria-label={muted ? 'Unmute' : 'Mute'}
-                            className="min-h-11 px-3 py-2 bg-foreground text-background rounded-lg font-bold text-xs uppercase hover:opacity-90 transition-opacity inline-flex items-center gap-1.5"
+                            ariaLabel={muted ? 'Unmute' : 'Mute'}
+                            className="min-h-11 px-3 py-2 bg-foreground text-background rounded-lg font-bold text-xs uppercase hover:opacity-90 inline-flex items-center gap-1.5"
                         >
                             {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
-                        </button>
-                        <button
-                            type="button"
+                        </TiltGameButton>
+                        <TiltGameButton
                             onClick={togglePortal}
-                            aria-label={isImmersive ? 'Exit Immersion' : 'Immersion'}
-                            className="min-h-11 px-3 py-2 bg-foreground text-background rounded-lg font-bold text-xs uppercase hover:opacity-90 transition-opacity inline-flex items-center gap-1.5"
+                            ariaLabel={isImmersive ? 'Exit Immersion' : 'Immersion'}
+                            className="min-h-11 px-3 py-2 bg-foreground text-background rounded-lg font-bold text-xs uppercase hover:opacity-90 inline-flex items-center gap-1.5"
                         >
                             {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
-                        </button>
-                        <button onClick={reset} className="min-h-11 px-4 py-2 bg-stone-800 text-[#e8dcc4] rounded-lg font-bold text-xs uppercase hover:opacity-90 transition-opacity">
+                        </TiltGameButton>
+                        <TiltGameButton
+                            onClick={reset}
+                            className="min-h-11 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-bold text-xs uppercase hover:opacity-90"
+                        >
                             {t.reset}
-                        </button>
+                        </TiltGameButton>
                     </div>
                 </div>
 
                 {/* Mode + difficulty */}
                 <div className="mb-4 flex flex-wrap items-center gap-2">
-                    <div className="inline-flex rounded-xl border border-stone-800/30 overflow-hidden" role="group" aria-label={`${t.modeLocal} / ${t.modeAi}`}>
+                    <div className="inline-flex rounded-xl border border-border overflow-hidden" role="group" aria-label={`${t.modeLocal} / ${t.modeAi}`}>
                         {(['local', 'ai'] as GameMode[]).map((m) => (
                             <button key={m} onClick={() => switchMode(m)}
                                 aria-pressed={mode === m}
-                                className={`min-h-11 px-3 py-1.5 text-xs font-bold transition-colors ${mode === m ? 'bg-stone-800 text-[#e8dcc4]' : 'bg-[#f4ebd0] text-stone-600 hover:bg-[#e8dcc4]'}`}>
+                                className={`min-h-11 px-3 py-1.5 text-xs font-bold transition-colors ${mode === m ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}>
                                 {m === 'local' ? t.modeLocal : t.modeAi}
                             </button>
                         ))}
@@ -262,33 +391,33 @@ const JanggiBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                             {([1, 2, 3] as AiLevel[]).map((lv) => (
                                 <button key={lv} onClick={() => { setLevel(lv); reset(); }}
                                     aria-pressed={level === lv}
-                                    className={`min-h-11 px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-colors ${level === lv ? 'border-stone-800 text-stone-800 bg-stone-800/10' : 'border-stone-800/30 text-stone-500 hover:bg-[#f4ebd0]'}`}>
+                                    className={`min-h-11 px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-colors ${level === lv ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:bg-muted'}`}>
                                     {lv === 1 ? t.level1 : lv === 2 ? t.level2 : t.level3}
                                 </button>
                             ))}
                         </div>
                     )}
-                    {mode === 'ai' && <p className="basis-full text-xs font-medium text-stone-600">{aiInfo.difficulty}: {aiInfo.level[level]} · {aiInfo.scope}</p>}
+                    {mode === 'ai' && <p className="basis-full text-xs font-medium text-muted-foreground">{aiInfo.difficulty}: {aiInfo.level[level]} · {aiInfo.scope}</p>}
                     {mode === 'ai' && record && (record.w + record.l + record.d > 0) && (
-                        <span className="ml-auto text-xs font-bold text-stone-600 uppercase tracking-widest">
+                        <span className="ml-auto text-xs font-bold text-muted-foreground uppercase tracking-widest">
                             {t.record} {record.w}–{record.l}{record.d ? `–${record.d}` : ''}
                         </span>
                     )}
-                    {game.moves > 0 && game.status === 'playing' && <button type="button" onClick={() => { setPaused((value) => !value); setRestored(false); }} className="min-h-11 px-3 rounded-lg border border-stone-800/40 text-xs font-bold text-stone-700">{paused ? `▶ ${x.resume}` : `Ⅱ ${x.pause}`}</button>}
-                    <button type="button" onClick={toggleSound} aria-pressed={muted} className="min-h-11 px-3 rounded-lg border border-stone-800/40 text-xs font-bold text-stone-700 inline-flex items-center gap-1.5">{muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />} {x.sound}</button>
+                    {game.moves > 0 && game.status === 'playing' && <button type="button" onClick={() => { setPaused((value) => !value); setRestored(false); }} className="min-h-11 px-3 rounded-lg border border-border text-xs font-bold text-foreground">{paused ? `▶ ${x.resume}` : `Ⅱ ${x.pause}`}</button>}
+                    <button type="button" onClick={toggleSound} aria-pressed={muted} className="min-h-11 px-3 rounded-lg border border-border text-xs font-bold text-foreground inline-flex items-center gap-1.5">{muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />} {x.sound}</button>
                 </div>
 
-            {(paused || restored) && <div className="mb-3 rounded-xl border border-stone-800/20 bg-white/50 p-3 text-center text-xs font-bold text-stone-700" role="status">{restored ? `${x.restored} · ` : ''}{x.paused}</div>}
+            {(paused || restored) && <div className="mb-3 rounded-xl border border-border bg-muted/40 p-3 text-center text-xs font-bold text-foreground" role="status">{restored ? `${x.restored} · ` : ''}{x.paused}</div>}
 
-            <div className="relative aspect-[9/10] w-full max-w-[360px] mx-auto border-2 border-stone-800 bg-[#f4ebd0]">
+            <div className="relative aspect-9/10 w-full max-w-[360px] mx-auto border-2 border-border bg-muted/20 rounded-lg overflow-hidden">
                 {/* Board Lines (Grid) */}
                 <div className="absolute inset-0 grid grid-cols-8 grid-rows-9 pointer-events-none p-[5.5%]">
                     {Array.from({ length: 72 }).map((_, i) => (
-                        <div key={i} className="border-r border-b border-stone-800/40" />
+                        <div key={i} className="border-r border-b border-border/70" />
                     ))}
                     {/* Palace Lines Simplified */}
-                    <div className="absolute top-[5%] left-[38.9%] w-[22.2%] h-[20%] border-2 border-stone-800/20" />
-                    <div className="absolute bottom-[5%] left-[38.9%] w-[22.2%] h-[20%] border-2 border-stone-800/20" />
+                    <div className="absolute top-[5%] left-[38.9%] w-[22.2%] h-[20%] border-2 border-border/50" />
+                    <div className="absolute bottom-[5%] left-[38.9%] w-[22.2%] h-[20%] border-2 border-border/50" />
                 </div>
 
                 {/* Pieces */}
@@ -306,7 +435,7 @@ const JanggiBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                                 onKeyDown={(event) => { const keys = ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Home','End']; if (!keys.includes(event.key)) return; event.preventDefault(); let nr = r, nc = c; if (event.key === 'ArrowUp') nr = Math.max(0, r - 1); if (event.key === 'ArrowDown') nr = Math.min(9, r + 1); if (event.key === 'ArrowLeft') nc = Math.max(0, c - 1); if (event.key === 'ArrowRight') nc = Math.min(8, c + 1); if (event.key === 'Home') nc = 0; if (event.key === 'End') nc = 8; document.querySelector<HTMLElement>(`[data-janggi-cell="${nr}-${nc}"]`)?.focus(); }}
                                 aria-label={`${String.fromCharCode(65 + c)}${10-r} ${piece ? PIECE_ICONS[piece] : x.empty}${isTarget ? ` ${x.target}` : ''}`}
                                 style={{ touchAction: 'manipulation' }}
-                                className={`relative flex items-center justify-center cursor-pointer p-0.5 sm:p-1 ${isLastMove ? 'after:pointer-events-none after:absolute after:inset-1 after:rounded-full after:border after:border-amber-500/70' : ''}`}
+                                className={`relative flex items-center justify-center cursor-pointer p-0.5 sm:p-1 ${isLastMove ? 'after:pointer-events-none after:absolute after:inset-1 after:rounded-full after:border after:border-primary/80' : ''}`}
                             >
                                 {isTarget && (
                                     piece
@@ -317,8 +446,8 @@ const JanggiBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                                     <div
                                         key={sliding ? `slide-${game.moves}` : undefined}
                                         className={`${sliding ? 'oiyo-piece-slide ' : ''}relative z-20 flex aspect-square w-full items-center justify-center font-black text-xs sm:text-lg ${!reducedMotion && !sliding ? 'transition-transform' : ''} ${
-                                        isSelected ? `${!reducedMotion ? 'scale-110 ' : ''}z-10 drop-shadow-[0_0_7px_rgba(245,158,11,.9)]` : 'drop-shadow-[0_2px_2px_rgba(41,25,12,.35)]'
-                                    } ${isChoPiece(piece) ? 'text-blue-800' : 'text-red-800'}`}
+                                        isSelected ? `${!reducedMotion ? 'scale-110 ' : ''}z-10 drop-shadow-[0_0_7px_rgba(245,158,11,.9)]` : 'drop-shadow-[0_2px_2px_rgba(0,0,0,.2)]'
+                                    } ${isChoPiece(piece) ? 'text-primary' : 'text-destructive'}`}
                                         style={sliding && lastMove ? { '--dx': lastMove.from[1] - c, '--dy': lastMove.from[0] - r } as CSSProperties : undefined}
                                     >
                                         <img
@@ -327,7 +456,7 @@ const JanggiBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                                             draggable={false}
                                             className="absolute inset-0 size-full select-none object-contain"
                                         />
-                                        <span className="relative z-[1] -translate-y-[2%] [font-family:serif] [text-shadow:0_1px_0_rgba(255,255,255,.55)]">{PIECE_ICONS[piece]}</span>
+                                        <span className="relative z-1 -translate-y-[2%] font-serif">{PIECE_ICONS[piece]}</span>
                                     </div>
                                 )}
                             </button>
@@ -336,20 +465,20 @@ const JanggiBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                 </div>
 
                 {winner && (
-                    <div className={`absolute inset-0 z-20 bg-background/60 backdrop-blur-sm flex flex-col items-center justify-center ${!reducedMotion ? 'animate-in fade-in zoom-in-95' : ''}`} role="status" aria-live="polite">
+                    <div className={`absolute inset-0 z-20 bg-background/60 backdrop-blur-xs flex flex-col items-center justify-center ${!reducedMotion ? 'animate-in fade-in zoom-in-95' : ''}`} role="status" aria-live="polite">
                         <div className="bg-card p-8 rounded-3xl shadow-xl border border-border text-center">
                             <h4 className="text-3xl font-black text-foreground mb-2">{winLabel}</h4>
                             <p className="text-muted-foreground mb-6 uppercase tracking-widest font-bold text-xs">{t.over}</p>
                             <p className="text-sm text-muted-foreground mb-4">{game.moves} {x.moves} · {analysis.captures} {x.captures} · {analysis.mobility} {x.mobility}</p>
-                            {mode==='ai'&&winner&&((winner==='cho')===AI_IS_CHO)&&lastAiReview&&<div className="mb-5 max-w-xs rounded-2xl border border-amber-300/60 bg-amber-50 p-3 text-left text-xs text-amber-950"><p className="font-black text-amber-950">{aiInfo.review} · {String.fromCharCode(65+lastAiReview.from[1])}{10-lastAiReview.from[0]}→{String.fromCharCode(65+lastAiReview.to[1])}{10-lastAiReview.to[0]}</p><p className="mt-1">{lastAiReview.captured?`${aiInfo.capture}: ${PIECE_ICONS[lastAiReview.captured]} · ${lastAiReview.capturedValue} ${x.material}`:aiInfo.quiet}</p><p className="mt-1 text-xs text-amber-800">{aiInfo.difficulty}: {aiInfo.level[level]} · {aiInfo.scope}</p></div>}
+                            {mode==='ai'&&winner&&((winner==='cho')===AI_IS_CHO)&&lastAiReview&&<div className="mb-5 max-w-xs rounded-2xl border border-border bg-muted/40 p-3 text-left text-xs text-foreground"><p className="font-black text-foreground">{aiInfo.review} · {String.fromCharCode(65+lastAiReview.from[1])}{10-lastAiReview.from[0]}→{String.fromCharCode(65+lastAiReview.to[1])}{10-lastAiReview.to[0]}</p><p className="mt-1">{lastAiReview.captured?`${aiInfo.capture}: ${PIECE_ICONS[lastAiReview.captured]} · ${lastAiReview.capturedValue} ${x.material}`:aiInfo.quiet}</p><p className="mt-1 text-xs text-muted-foreground">{aiInfo.difficulty}: {aiInfo.level[level]} · {aiInfo.scope}</p></div>}
                             <div className="flex flex-wrap items-center justify-center gap-2">
-                                <button type="button" onClick={handleShareCard} className="min-h-11 px-5 py-3 bg-secondary text-secondary-foreground rounded-full font-bold shadow-md hover:bg-secondary/80 flex items-center gap-1.5 text-xs">
-                                    <Share2 className="h-4 w-4" />
+                                <TiltGameButton onClick={handleShareCard} className="min-h-11 px-5 py-3 bg-secondary text-secondary-foreground rounded-full font-bold shadow-md hover:bg-secondary/80 flex items-center gap-1.5 text-xs">
+                                    {shareCopied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
                                     {shareCopied ? '복사 완료!' : '결과 카드 공유'}
-                                </button>
-                                <button type="button" onClick={reset} className="min-h-11 px-8 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90 transition-opacity">
+                                </TiltGameButton>
+                                <TiltGameButton onClick={reset} className="min-h-11 px-8 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-lg hover:opacity-90">
                                     {t.reset}
-                                </button>
+                                </TiltGameButton>
                             </div>
                         </div>
                     </div>
@@ -357,12 +486,12 @@ const JanggiBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
             </div>
 
             <div className="mt-6 flex flex-col items-center gap-2">
-                <div className="flex justify-center gap-8 text-xs font-black text-stone-600 uppercase tracking-widest">
-                    <div className="flex items-center gap-2"><img src="/assets/sprites/janggi/piece-blue.webp" alt="" width="32" height="32" className="size-8 object-contain"/><span className="text-blue-700">{t.cho}</span></div>
-                    <div className="flex items-center gap-2"><img src="/assets/sprites/janggi/piece-red.webp" alt="" width="32" height="32" className="size-8 object-contain"/><span className="text-red-700">{t.han}</span></div>
+                <div className="flex justify-center gap-8 text-xs font-black text-muted-foreground uppercase tracking-widest">
+                    <div className="flex items-center gap-2"><img src="/assets/sprites/janggi/piece-blue.webp" alt="" width="32" height="32" className="size-8 object-contain"/><span className="text-primary">{t.cho}</span></div>
+                    <div className="flex items-center gap-2"><img src="/assets/sprites/janggi/piece-red.webp" alt="" width="32" height="32" className="size-8 object-contain"/><span className="text-destructive">{t.han}</span></div>
                 </div>
-                <p className="text-xs text-stone-500 font-medium">{t.goal}</p>
-                <p className="text-xs text-stone-500">{game.moves} {x.moves} · {t.cho} {analysis.material} {x.material} · {analysis.mobility} {x.mobility}</p>
+                <p className="text-xs text-muted-foreground font-medium">{t.goal}</p>
+                <p className="text-xs text-muted-foreground">{game.moves} {x.moves} · {t.cho} {analysis.material} {x.material} · {analysis.mobility} {x.mobility}</p>
             </div>
         </div>
         </div>

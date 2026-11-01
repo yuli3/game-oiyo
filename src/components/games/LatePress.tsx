@@ -1,9 +1,11 @@
+"use client";
+
 // The shell stays scrollable. data-game-surface would block the guide on a
 // phone (2026-10-21). Movements look alike, and nothing on screen counts
 // down to the limit: waiting to see if another feint is coming misses it.
 
-import { useEffect, useRef, useState } from "react";
-import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { Maximize2, Minimize2, Volume2, VolumeX, Share2, Check } from "lucide-react";
 import { GameContainer } from "../ui/game/GamePrimitives";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import type { Locale } from "../../lib/i18n";
@@ -11,8 +13,13 @@ import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { getBest, getRecord, recordBest, recordResult, type BestRecord, type GameRecord } from "../../lib/games/records";
 import { dateKeyIndex, kstDateKey } from "../../lib/games/todays-game";
 import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from "../../lib/games/game-audio";
-import { createHaptics } from "../../lib/games/haptics";
 import { celebrate } from "../../lib/games/celebration";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import { LATE_PRESS_SPRITES } from "../../lib/games/sprites";
 import {
   GAME_ID,
@@ -28,6 +35,43 @@ import {
 } from "../../lib/games/late-press";
 
 const CONTROL = "min-h-11 min-w-11 rounded-xl border px-3 py-2 text-sm font-bold motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
+
+function TiltPressButton({
+  children,
+  onClick,
+  className = '',
+  disabled = false,
+  title,
+  ariaLabel,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      title={title}
+      aria-label={ariaLabel || title}
+      onClick={() => {
+        triggerPop(0.12);
+        onClick?.();
+      }}
+      disabled={disabled}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`transition-all duration-150 transform-(--card-tilt) will-change-transform ${className}`}
+      style={{ '--card-tilt': transformCss } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 
 interface Copy {
   title: string;
@@ -171,8 +215,8 @@ export default function LatePress({ locale }: { locale: Locale }) {
   const [best, setBest] = useState<BestRecord | null>(null);
   const [muted, setMuted] = useState(false);
   const [seen, setSeen] = useState(0);
+  const [shareCopied, setShareCopied] = useState(false);
   const cuesRef = useRef<CuePlayer<CoreCue> | null>(null);
-  const hapticsRef = useRef(createHaptics());
   const noted = useRef(new Set<string>());
   const phase = useRef<Run["phase"] | null>(null);
   const runRef = useRef<Run | null>(null);
@@ -256,11 +300,11 @@ export default function LatePress({ locale }: { locale: Locale }) {
     }
     if (run.phase === "won") {
       cue("win");
-      hapticsRef.current.fire("win");
+      MobileHapticsPro.successPattern();
       if (containerRef.current) celebrate(containerRef.current, { preset: "sparks" });
     } else if (run.phase === "lost") {
       cue("fail");
-      hapticsRef.current.fire("fail");
+      MobileHapticsPro.warningPattern();
     }
   }, [run, dateKey, attempt, muted, reducedMotion]);
 
@@ -276,7 +320,7 @@ export default function LatePress({ locale }: { locale: Locale }) {
     const current = runRef.current;
     if (!current || current.phase !== "play") return;
     cue("place");
-    hapticsRef.current.fire("place");
+    MobileHapticsPro.heavyImpact();
     finish(press(current, performance.now() - roundStart.current));
   }
 
@@ -287,7 +331,35 @@ export default function LatePress({ locale }: { locale: Locale }) {
     setSeen(0);
     setAttempt((value) => value + 1);
     setRun(createRun(createMatch(seed)));
+    MobileHapticsPro.selectionClick();
   };
+
+  const handleShare = useCallback(async () => {
+    if (!run) return;
+    try {
+      const canvas = createShareCardCanvas({
+        title: t.title,
+        subtitle: `Late Press Reaction Contest`,
+        score: `${run.hits} / ${NEED} Hits`,
+        slug: 'late-press',
+        qrUrl: typeof window !== 'undefined' ? window.location.href : undefined,
+        customStats: [
+          { label: 'HITS', value: `${run.hits} / ${ROUNDS}` },
+          { label: 'RESULT', value: run.phase === "won" ? 'WON' : 'LOST' },
+        ],
+      });
+      const ok = await copyShareCardToClipboard(canvas);
+      if (ok) {
+        setShareCopied(true);
+        MobileHapticsPro.successPattern();
+        setTimeout(() => setShareCopied(false), 2500);
+      } else {
+        downloadShareCard(canvas, `late-press-${run.hits}hits.png`);
+      }
+    } catch {
+      // share fallback
+    }
+  }, [run, t.title]);
 
   const shownRound = !run || run.phase === "ready" ? 1 : run.phase === "play" ? run.index + 1 : Math.max(1, Math.min(ROUNDS, run.index));
 
@@ -298,10 +370,10 @@ export default function LatePress({ locale }: { locale: Locale }) {
           <img src={LATE_PRESS_SPRITES.keyart} alt={t.title} className="h-32 w-full object-cover sm:h-44" />
         </div>
         <div className="mb-4 flex flex-wrap gap-2">
-          <button type="button" onClick={() => setMuted((value) => !value)} aria-pressed={muted} aria-label={muted ? portalLabels.unmute : portalLabels.mute} title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`} className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-muted-foreground`}>
+          <button type="button" onClick={() => setMuted((value) => !value)} aria-pressed={muted} aria-label={muted ? portalLabels.unmute : portalLabels.mute} title={`${muted ? portalLabels.unmute : portalLabels.mute} (M)`} className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-muted-foreground hover:bg-muted transition-colors`}>
             {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
           </button>
-          <button type="button" onClick={togglePortal} aria-pressed={isImmersive} aria-label={isImmersive ? portalLabels.exit : portalLabels.enter} title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`} className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-muted-foreground`}>
+          <button type="button" onClick={togglePortal} aria-pressed={isImmersive} aria-label={isImmersive ? portalLabels.exit : portalLabels.enter} title={`${isImmersive ? portalLabels.exit : portalLabels.enter} (F)`} className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-muted-foreground hover:bg-muted transition-colors`}>
             {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
             <span className="hidden sm:inline">{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
           </button>
@@ -324,26 +396,34 @@ export default function LatePress({ locale }: { locale: Locale }) {
               ))}
             </div>
             {run.phase === "play" ? (
-              <button type="button" onClick={stamp} className="min-h-16 w-full rounded-xl border border-primary bg-primary px-3 py-2 text-2xl font-bold text-primary-foreground motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
+              <TiltPressButton onClick={stamp} className="min-h-16 w-full rounded-xl border border-primary bg-primary px-3 py-2 text-2xl font-bold text-primary-foreground hover:opacity-90">
                 {t.now}
-              </button>
+              </TiltPressButton>
             ) : null}
             {run.phase === "ready" ? (
-              <button
-                type="button"
+              <TiltPressButton
                 onClick={() => {
                   cue("tap");
-                  hapticsRef.current.fire("tap");
+                  MobileHapticsPro.selectionClick();
                   locked.current = -1;
                   setRun((current) => (current ? begin(current) : current));
                 }}
-                className={`${CONTROL} border-primary bg-primary text-primary-foreground`}
+                className={`${CONTROL} border-primary bg-primary text-primary-foreground hover:opacity-90`}
               >
                 {t.start}
-              </button>
+              </TiltPressButton>
             ) : null}
             {run.phase === "won" || run.phase === "lost" ? (
-              <button type="button" onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</button>
+              <div className="flex flex-wrap items-center gap-2">
+                <TiltPressButton
+                  onClick={handleShare}
+                  className="min-h-11 px-4 py-2 bg-secondary text-secondary-foreground rounded-xl font-bold flex items-center gap-1.5 text-xs hover:bg-secondary/80"
+                >
+                  {shareCopied ? <Check className="size-4" /> : <Share2 className="size-4" />}
+                  <span>{shareCopied ? '복사 완료!' : '결과 카드 공유'}</span>
+                </TiltPressButton>
+                <TiltPressButton onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground hover:opacity-90`}>{t.again}</TiltPressButton>
+              </div>
             ) : null}
             <p className="text-sm text-muted-foreground">{t.record(record?.w ?? 0, record?.l ?? 0)}{best?.unit === "score" ? ` · ${t.best(best.value)}` : ""}</p>
           </div>
