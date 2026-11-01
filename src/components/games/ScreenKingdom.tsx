@@ -22,6 +22,13 @@ import {
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import ScreenKingdomScene, { type FieldGlide } from "./ScreenKingdomScene";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
+import { getSpriteUrl } from "../../lib/games/sprites";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
 
 interface Copy {
   title: string;
@@ -487,6 +494,8 @@ function codeAction(code: string): Act | null {
 export default function ScreenKingdom({ locale = "en" }: { locale?: Locale }) {
   const copy = COPY[locale] ?? COPY.en;
   const reduce = usePrefersReducedMotion();
+  const { isImmersive, containerRef, togglePortal } = useArcadePortal({ locale });
+  const [shareCardCopied, setShareCardCopied] = useState(false);
   const opening = useRef(createKingdom(0));
   const [seed, setSeed] = useState(0);
   const [draft, setDraft] = useState("0");
@@ -638,6 +647,27 @@ export default function ScreenKingdom({ locale = "en" }: { locale?: Locale }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [move]);
 
+  const handleShareCard = useCallback(async () => {
+    MobileHapticsPro.selection();
+    const canvas = createShareCardCanvas({
+      title: copy.title,
+      score: state.status === "win" ? `CLEAR (${state.steps}/${STEP_CAP})` : `SEED #${seed}`,
+      customStats: [
+        { label: copy.steps, value: `${state.steps}/${STEP_CAP}` },
+        { label: copy.seed, value: `${seed}` },
+        { label: copy.field, value: state.status === "win" ? "MATCHED" : state.status },
+      ],
+      slug: "screen-kingdom",
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `screen-kingdom-seed${seed}.png`);
+    }
+  }, [copy, state, seed]);
+
   const locked = paused || busy || state.status !== "play";
   const named = ACTS.filter((act) => {
     const next = stepKingdom(state, act);
@@ -656,13 +686,48 @@ export default function ScreenKingdom({ locale = "en" }: { locale?: Locale }) {
           : `${copy.playing} ${named.join(" · ")}`;
 
   return (
-    <div className="space-y-4" onPointerDown={arm}>
-      <header className="space-y-2">
-        <h2 className="text-2xl font-semibold text-foreground">{copy.title}</h2>
-        <p className="text-sm leading-6 text-muted-foreground">{copy.lead}</p>
-        <p className="text-xs leading-5 text-muted-foreground">{copy.keys}</p>
+    <div
+      ref={containerRef}
+      className={
+        isImmersive
+          ? "fixed inset-0 z-50 overflow-y-auto bg-background p-4 flex flex-col items-center justify-start min-h-dvh max-w-lg mx-auto space-y-4"
+          : "space-y-4"
+      }
+      onPointerDown={arm}
+    >
+      <header className="flex items-start justify-between gap-4">
+        <div className="space-y-1">
+          <h2 className="text-2xl font-semibold text-foreground flex items-center gap-2">
+            <span>{copy.title}</span>
+            {state.status === "win" && (
+              <img
+                src={getSpriteUrl("trophy", 64)}
+                alt="Clear"
+                className="size-7 inline-block animate-bounce drop-shadow"
+              />
+            )}
+          </h2>
+          <p className="text-sm leading-6 text-muted-foreground">{copy.lead}</p>
+          <p className="text-xs leading-5 text-muted-foreground">{copy.keys}</p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            className="rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted"
+            onClick={togglePortal}
+          >
+            {isImmersive ? "Exit Focus" : "Focus"}
+          </button>
+          <button
+            type="button"
+            className="rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted"
+            onClick={handleShareCard}
+          >
+            {shareCardCopied ? "Copied!" : "Share"}
+          </button>
+        </div>
       </header>
-      <div className="grid grid-cols-2 gap-2 text-center text-sm">
+      <div className="grid grid-cols-2 gap-2 text-center text-sm w-full">
         <div className="rounded-xl bg-muted p-2">
           <b>{copy.steps}</b>
           <br />
@@ -674,7 +739,7 @@ export default function ScreenKingdom({ locale = "en" }: { locale?: Locale }) {
           <span className="tabular-nums">{seed}</span>
         </div>
       </div>
-      <div className="space-y-2">
+      <div className="space-y-2 w-full">
         <p className="text-sm font-semibold text-foreground">{copy.mark}</p>
         <ol aria-label={copy.mark} className="grid grid-cols-5 gap-2 text-center">
           {state.goal.map((kind, index) => (
@@ -696,13 +761,13 @@ export default function ScreenKingdom({ locale = "en" }: { locale?: Locale }) {
           ))}
         </ol>
       </div>
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm text-muted-foreground w-full">
         <b>{copy.readLabel}</b>
         {" "}
         {spoken}
       </p>
-      <p role="status" aria-live="polite" className="text-sm text-foreground">{live}</p>
-      <div className="relative overflow-hidden rounded-2xl border border-border bg-card">
+      <p role="status" aria-live="polite" className="text-sm text-foreground w-full">{live}</p>
+      <div className="relative overflow-hidden rounded-2xl border border-border bg-card w-full">
         <div className="h-96" aria-hidden="true">
           <ScreenKingdomScene
             state={state}
@@ -722,7 +787,7 @@ export default function ScreenKingdom({ locale = "en" }: { locale?: Locale }) {
           </div>
         ) : null}
       </div>
-      <div className="space-y-2">
+      <div className="space-y-2 w-full">
         <p id="screen-kingdom-acts" className="text-sm font-semibold text-foreground">{copy.acts}</p>
         <div role="group" aria-labelledby="screen-kingdom-acts" className="grid grid-cols-1 gap-2">
           {ACTS.map((act) => {
@@ -745,7 +810,7 @@ export default function ScreenKingdom({ locale = "en" }: { locale?: Locale }) {
           })}
         </div>
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 w-full">
         <button type="button" className={paused ? controlClass("primary") : controlClass("quiet")} aria-pressed={paused} onClick={() => setPaused((value) => !value)}>
           {paused ? copy.resume : copy.pause}
         </button>
@@ -760,7 +825,7 @@ export default function ScreenKingdom({ locale = "en" }: { locale?: Locale }) {
         </button>
       </div>
       <form
-        className="flex flex-wrap items-end gap-2"
+        className="flex flex-wrap items-end gap-2 w-full"
         onSubmit={(event) => {
           event.preventDefault();
           const value = Number(draft);

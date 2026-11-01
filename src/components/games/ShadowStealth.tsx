@@ -15,12 +15,21 @@ import {
 } from '../../lib/games/shadow-stealth';
 import { useAudioContext } from '../../lib/games/use-audio-context';
 import { useClipboardShare } from '../../lib/games/use-clipboard-share';
+import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { getSpriteUrl } from '../../lib/games/sprites';
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from '../../lib/games/share-card';
 import { GameStatTile } from '../ui/game/GameStatTile';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import { Badge } from '../ui/badge';
 
 export default function ShadowStealth() {
+  const { isImmersive, containerRef, togglePortal } = useArcadePortal({ locale: 'en' });
   const [gameState, setGameState] = useState<ShadowStealthGameState>(() =>
     createShadowStealthGame(20261031)
   );
@@ -29,6 +38,7 @@ export default function ShadowStealth() {
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+  const [shareCardCopied, setShareCardCopied] = useState(false);
 
   const inputStateRef = useRef({
     up: false,
@@ -66,14 +76,17 @@ export default function ShadowStealth() {
   );
 
   const playShurikenSfx = useCallback(() => {
+    MobileHapticsPro.light();
     playTone(750, 'triangle', 0.05);
   }, [playTone]);
 
   const playSmokeSfx = useCallback(() => {
+    MobileHapticsPro.medium();
     playTone(180, 'square', 0.2);
   }, [playTone]);
 
   const playVictorySfx = useCallback(() => {
+    MobileHapticsPro.success();
     playTone(523.25, 'sine', 0.12);
     setTimeout(() => playTone(659.25, 'sine', 0.15), 100);
     setTimeout(() => playTone(783.99, 'sine', 0.25), 220);
@@ -111,6 +124,7 @@ export default function ShadowStealth() {
           break;
         case 'q':
           inputStateRef.current.takedown = true;
+          MobileHapticsPro.heavy();
           break;
       }
     };
@@ -162,6 +176,7 @@ export default function ShadowStealth() {
     if (!ctx) return;
 
     let hasTriggeredVictorySound = false;
+    let hasTriggeredGameOver = false;
 
     const loop = () => {
       const current = stateRef.current;
@@ -182,6 +197,9 @@ export default function ShadowStealth() {
           hasTriggeredVictorySound = true;
           playVictorySfx();
         }
+      } else if (current.isGameOver && !hasTriggeredGameOver) {
+        hasTriggeredGameOver = true;
+        MobileHapticsPro.error();
       }
 
       // -------------------------------------------------------------
@@ -394,21 +412,52 @@ export default function ShadowStealth() {
   }, []);
 
   const handleRestart = () => {
+    MobileHapticsPro.selection();
     const fresh = createShadowStealthGame(Date.now());
     stateRef.current = fresh;
     setGameState(fresh);
   };
 
+  const handleShareCard = useCallback(async () => {
+    MobileHapticsPro.selection();
+    const current = stateRef.current;
+    const canvas = createShareCardCanvas({
+      title: "Shadow Stealth",
+      score: current.isVictory ? `EXTRACTION (Score: ${current.score})` : `Score: ${current.score}`,
+      customStats: [
+        { label: "Status", value: current.isVictory ? "VICTORY" : current.isGameOver ? "APPREHENDED" : "INFILTRATING" },
+        { label: "Scroll", value: current.player.hasScroll ? "ACQUIRED" : "SEARCHING" },
+        { label: "Alert", value: `${Math.round(current.alertLevel)}%` },
+      ],
+      slug: "shadow-stealth",
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `shadow-stealth-score${current.score}.png`);
+    }
+  }, []);
+
   const handleShareReplay = () => {
+    MobileHapticsPro.selection();
     const token = gameState.replayToken || 'Replay Token pending';
     const text = `🥷 [Shinobi Infiltration Report]\n• Mission: Infiltrate Shogun Fortress\n• Score: ${gameState.score}\n• Scroll Recovered: ${gameState.player.hasScroll ? 'Yes' : 'No'}\n• Escaped: ${gameState.isVictory ? 'Flawless Extraction' : 'In Progress'}\n• Ghost Tape Token: ${token}\nPlay on game.oiyo.net!`;
     shareText(text);
   };
 
   return (
-    <div className="flex flex-col gap-4 w-full max-w-5xl mx-auto p-2">
+    <div
+      ref={containerRef}
+      className={
+        isImmersive
+          ? "fixed inset-0 z-50 overflow-y-auto bg-background p-4 flex flex-col items-center justify-start min-h-dvh max-w-5xl mx-auto space-y-4"
+          : "flex flex-col gap-4 w-full max-w-5xl mx-auto p-2"
+      }
+    >
       {/* Top Telemetry Stat Dashboard */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full">
         <GameStatTile
           icon="👁️"
           label="Alert Status"
@@ -426,15 +475,24 @@ export default function ShadowStealth() {
           label="Shuriken / Smoke"
           value={`${gameState.player.shurikens} / ${gameState.player.smokeBombs}`}
         />
-        <GameStatTile
-          icon="🏆"
-          label="Infiltration Score"
-          value={`${gameState.score}`}
-        />
+        <div className="flex items-center justify-between rounded-xl border border-border bg-card p-3 shadow-xs">
+          <div className="space-y-0.5">
+            <span className="text-xs font-medium text-muted-foreground">Infiltration Score</span>
+            <div className="text-lg font-bold tabular-nums text-foreground flex items-center gap-1.5">
+              <img src={getSpriteUrl("trophy", 64)} alt="Score" className="size-5 inline-block" />
+              <span>{gameState.score}</span>
+            </div>
+          </div>
+          <div className="flex gap-1">
+            <Button variant="outline" size="sm" onClick={togglePortal}>
+              {isImmersive ? "Exit Focus" : "Focus"}
+            </Button>
+          </div>
+        </div>
       </div>
 
       {/* Main Tactical Canvas */}
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden w-full">
         <div className="relative aspect-video w-full bg-background flex items-center justify-center">
           <canvas
             ref={canvasRef}
@@ -454,13 +512,21 @@ export default function ShadowStealth() {
 
           {gameState.isVictory && (
             <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center p-4">
+              <img
+                src={getSpriteUrl("trophy", 64)}
+                alt="Victory"
+                className="size-16 animate-bounce drop-shadow mb-2"
+              />
               <h3 className="text-xl font-bold text-foreground">Flawless Extraction!</h3>
               <p className="text-xs text-muted-foreground mt-1 max-w-sm text-center">
                 You stole the Secret Scroll and escaped the Shogun Fortress unseen. Deterministic ghost replay tape compiled!
               </p>
-              <div className="flex gap-2 mt-4">
-                <Button size="sm" onClick={handleShareReplay}>
-                  {copied ? 'Replay Copied!' : 'Copy Ghost Replay Token'}
+              <div className="flex flex-wrap gap-2 mt-4 justify-center">
+                <Button size="sm" onClick={handleShareCard}>
+                  Share Card
+                </Button>
+                <Button variant="secondary" size="sm" onClick={handleShareReplay}>
+                  {copied ? 'Replay Copied!' : 'Copy Ghost Token'}
                 </Button>
                 <Button variant="outline" size="sm" onClick={handleRestart}>
                   Play Again
@@ -475,9 +541,12 @@ export default function ShadowStealth() {
               <p className="text-xs text-muted-foreground mt-1">
                 The Samurai Guards cornered you in the corridor.
               </p>
-              <div className="mt-4">
+              <div className="flex gap-2 mt-4">
                 <Button size="sm" onClick={handleRestart}>
                   Retry Infiltration
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleShareCard}>
+                  Share Report
                 </Button>
               </div>
             </div>
@@ -486,7 +555,7 @@ export default function ShadowStealth() {
       </Card>
 
       {/* Controls & Mission Brief */}
-      <Card>
+      <Card className="w-full">
         <CardContent>
           <div className="flex flex-col gap-3 pt-4">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
@@ -499,6 +568,9 @@ export default function ShadowStealth() {
                 </p>
               </div>
               <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={handleShareCard}>
+                  {shareCardCopied ? 'Copied!' : 'Share Card'}
+                </Button>
                 <Button variant="outline" size="sm" onClick={handleShareReplay}>
                   {copied ? 'Copied!' : 'Share Run Stats'}
                 </Button>

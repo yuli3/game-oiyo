@@ -9,8 +9,58 @@ import {
   CheckCircle2,
   ChevronRight,
   Zap,
+  Maximize2,
+  Minimize2,
+  Share2,
+  Check,
 } from "lucide-react";
 import { SandBallsEngine, type SandBallsState } from "../../lib/games/sand-balls";
+import { useArcadePortal } from "../../lib/games/arcade-portal";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { getSpriteUrl } from "../../lib/games/sprites";
+import { celebrate } from "../../lib/games/celebration";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
+
+function TiltSandButton({
+  children,
+  onClick,
+  className = '',
+  disabled = false,
+  title,
+  ariaLabel,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        triggerPop(0.12);
+        onClick?.();
+      }}
+      disabled={disabled}
+      title={title}
+      aria-label={ariaLabel}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`transition-transform duration-100 ease-out active:scale-95 disabled:pointer-events-none disabled:opacity-50 transform-(--card-tilt) ${className}`}
+      style={{ '--card-tilt': transformCss || 'none' } as React.CSSProperties}
+    >
+      {children}
+    </button>
+  );
+}
 
 interface Particle {
   x: number;
@@ -24,10 +74,12 @@ interface Particle {
 }
 
 export default function SandBalls() {
+  const { isImmersive, containerRef, togglePortal } = useArcadePortal({ locale: "ko" });
   const [engine] = useState(() => new SandBallsEngine(400, 600, 8));
   const [gameState, setGameState] = useState<SandBallsState>(() => engine.getState());
   const [isMuted, setIsMuted] = useState(false);
   const [isCarving, setIsCarving] = useState(false);
+  const [shareCardCopied, setShareCardCopied] = useState(false);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -35,6 +87,30 @@ export default function SandBalls() {
   const animFrameIdRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number>(0);
   const truckOffsetRef = useRef<number>(0);
+  const celebratedRef = useRef(false);
+
+  const handleShareCard = async () => {
+    MobileHapticsPro.medium();
+    const loadPct = Math.min(100, Math.round((gameState.collectedCount / gameState.truckCapacity) * 100));
+    const canvas = createShareCardCanvas({
+      title: 'Sand Balls 3D',
+      subtitle: `Stage ${gameState.level} Cleared`,
+      score: `${gameState.collectedCount} Balls`,
+      slug: 'sand-balls',
+      customStats: [
+        { label: 'Level', value: `Stage ${gameState.level}` },
+        { label: 'Truck Fill', value: `${loadPct}%` },
+        { label: 'Saved Balls', value: `${gameState.collectedCount}/${gameState.truckCapacity}` },
+      ],
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `sand-balls-stage${gameState.level}.png`);
+    }
+  };
 
   const isMutedRef = useRef(isMuted);
   isMutedRef.current = isMuted;
@@ -148,12 +224,14 @@ export default function SandBalls() {
   }, []);
 
   const handleReset = (nextLevel = 1) => {
+    celebratedRef.current = false;
     const fresh = engine.initLevel(nextLevel, 400, 600, 8);
     Object.assign(engine.getState(), fresh);
     setGameState({ ...engine.getState() });
     particlesRef.current = [];
     truckOffsetRef.current = 0;
     playSound("clack");
+    MobileHapticsPro.selection();
   };
 
   const performCarve = useCallback((clientX: number, clientY: number) => {
@@ -168,6 +246,7 @@ export default function SandBalls() {
 
     engine.carve(x, y, 22);
     playSound("carve");
+    MobileHapticsPro.light();
 
     // Spawn digging dust particles
     for (let i = 0; i < 3; i++) {
@@ -215,6 +294,13 @@ export default function SandBalls() {
         if (nextState.status === "victory") {
           playSound("truck_horn");
           playSound("win");
+          if (!celebratedRef.current) {
+            celebratedRef.current = true;
+            MobileHapticsPro.success();
+            if (containerRef.current) {
+              celebrate(containerRef.current, { preset: "sparks" });
+            }
+          }
         }
       }
 
@@ -396,7 +482,12 @@ export default function SandBalls() {
   const loadPercent = Math.min(100, Math.round((gameState.collectedCount / gameState.truckCapacity) * 100));
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 sm:p-6 text-card-foreground shadow-lg">
+    <div
+      ref={containerRef}
+      className={`flex flex-col gap-4 rounded-xl border border-border bg-card p-4 sm:p-6 text-card-foreground shadow-lg transition-all ${
+        isImmersive ? "fixed inset-0 z-50 overflow-y-auto rounded-none w-screen h-screen bg-background" : ""
+      }`}
+    >
       {/* Top Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
         <div className="flex items-center gap-2">
@@ -431,6 +522,24 @@ export default function SandBalls() {
           >
             <RotateCcw className="h-4 w-4" />
           </button>
+
+          {/* Share Score Button */}
+          <TiltSandButton
+            title="기록 공유"
+            className="rounded-lg border border-border bg-background p-2 text-foreground transition hover:bg-muted"
+            onClick={handleShareCard}
+          >
+            {shareCardCopied ? <Check className="h-4 w-4 text-primary" /> : <Share2 className="h-4 w-4" />}
+          </TiltSandButton>
+
+          {/* Arcade Portal Toggle */}
+          <TiltSandButton
+            title={isImmersive ? "창모드로 복귀" : "100dvh 전체화면 몰입"}
+            className="rounded-lg border border-border bg-background p-2 text-foreground transition hover:bg-muted"
+            onClick={togglePortal}
+          >
+            {isImmersive ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+          </TiltSandButton>
         </div>
       </div>
 
@@ -445,8 +554,9 @@ export default function SandBalls() {
         {/* Collected */}
         <div className="rounded-lg border border-border bg-muted/40 p-2.5 text-center">
           <span className="text-xs text-muted-foreground">LOAD CAPACITY</span>
-          <p className="text-xl font-black tracking-tight text-warning">
-            {gameState.collectedCount} / {gameState.truckCapacity}
+          <p className="text-xl font-black tracking-tight text-warning flex items-center justify-center gap-1.5">
+            <img src={getSpriteUrl('star', 64)} alt="Star" className="size-4 object-contain" draggable={false} />
+            <span>{gameState.collectedCount} / {gameState.truckCapacity}</span>
           </p>
         </div>
 
@@ -461,7 +571,7 @@ export default function SandBalls() {
         {/* Colored % */}
         <div className="rounded-lg border border-border bg-muted/40 p-2.5 text-center">
           <span className="text-xs text-muted-foreground">TRUCK FILL</span>
-          <p className="text-xl font-black tracking-tight text-success">{loadPercent}%</p>
+          <p className="text-xl font-black tracking-tight text-primary">{loadPercent}%</p>
         </div>
       </div>
 
@@ -498,8 +608,13 @@ export default function SandBalls() {
         {/* Victory Screen */}
         {gameState.status === "victory" && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/85 p-6 backdrop-blur-xs text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-success/20 text-success mb-2">
-              <Trophy className="h-8 w-8" />
+            <div className="flex size-16 items-center justify-center rounded-2xl bg-primary/20 p-2 mb-2">
+              <img
+                src={getSpriteUrl('trophy', 64)}
+                alt="Victory Trophy"
+                className="size-12 object-contain"
+                draggable={false}
+              />
             </div>
             <h3 className="text-2xl font-black text-foreground">TRUCK FULL & DEPARTED!</h3>
             <p className="text-xs text-muted-foreground mt-1 max-w-xs">
@@ -508,21 +623,29 @@ export default function SandBalls() {
             <div className="my-3 grid grid-cols-2 gap-4 border border-border rounded-lg p-3 bg-card/60 text-left">
               <div>
                 <p className="text-xs text-muted-foreground">SAVED BALLS</p>
-                <p className="text-lg font-bold text-success">{gameState.collectedCount} 개</p>
+                <p className="text-lg font-bold text-primary">{gameState.collectedCount} 개</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">ACCURACY</p>
                 <p className="text-lg font-bold text-warning">{loadPercent}%</p>
               </div>
             </div>
-            <button
-              type="button"
-              className="mt-2 flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground shadow hover:opacity-90"
-              onClick={() => handleReset(gameState.level + 1)}
-            >
-              다음 스테이지 도전
-              <ChevronRight className="h-4 w-4" />
-            </button>
+            <div className="flex items-center gap-2 mt-2">
+              <TiltSandButton
+                className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground shadow hover:bg-muted"
+                onClick={handleShareCard}
+              >
+                {shareCardCopied ? <Check className="h-4 w-4 text-primary" /> : <Share2 className="h-4 w-4" />}
+                <span>{shareCardCopied ? "복사됨!" : "기록 공유"}</span>
+              </TiltSandButton>
+              <TiltSandButton
+                className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground shadow hover:opacity-90"
+                onClick={() => handleReset(gameState.level + 1)}
+              >
+                다음 스테이지 도전
+                <ChevronRight className="h-4 w-4" />
+              </TiltSandButton>
+            </div>
           </div>
         )}
       </div>

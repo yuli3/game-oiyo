@@ -27,6 +27,7 @@ import {
   type ShadowBlockId,
 } from "../../lib/games/shadow-architect";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { getSpriteUrl } from "../../lib/games/sprites";
 const Scene=lazy(()=>import("./ShadowArchitectScene"));const BLOCKS=["I","L","—","T","S"];
 
 function playShadowAudio(type: 'select' | 'move' | 'rotate' | 'complete') {
@@ -122,6 +123,42 @@ function TiltShadowBlockButton({
       }`}
     >
       {name}
+    </button>
+  );
+}
+
+function TiltShadowActionButton({
+  label,
+  isPrimary,
+  onClick,
+}: {
+  label: React.ReactNode;
+  isPrimary?: boolean;
+  onClick: () => void;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      style={
+        {
+          '--card-tilt': transformCss,
+        } as React.CSSProperties
+      }
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      onClick={() => {
+        triggerPop(0.12);
+        onClick();
+      }}
+      className={`rounded-xl border p-3 font-bold transition will-change-transform transform-(--card-tilt) ${
+        isPrimary
+          ? "border-primary bg-primary text-primary-foreground shadow-sm"
+          : "border-border bg-card text-card-foreground hover:bg-accent"
+      }`}
+    >
+      {label}
     </button>
   );
 }
@@ -252,21 +289,28 @@ export default function ShadowArchitect({ locale = "ko" }: { locale?: string }) 
               ))}
             </div>
             <div className="grid grid-cols-3 gap-2">
-              <button onClick={() => act({ x: -1 })} className="rounded-xl border border-border bg-card p-3 text-card-foreground">← {t.left}</button>
-              <button onClick={() => act({ y: 1 })} className="rounded-xl border border-border bg-card p-3 text-card-foreground">↑ {t.up}</button>
-              <button onClick={() => act({ x: 1 })} className="rounded-xl border border-border bg-card p-3 text-card-foreground">{t.right} →</button>
-              <button onClick={() => act({ z: -1 })} className="rounded-xl border border-border bg-card p-3 text-card-foreground">{t.back}</button>
-              <button onClick={() => act({ rotate: 1 })} className="rounded-xl bg-primary p-3 font-bold text-primary-foreground">↻ {t.rotate}</button>
-              <button onClick={() => act({ z: 1 })} className="rounded-xl border border-border bg-card p-3 text-card-foreground">{t.front}</button>
+              <TiltShadowActionButton onClick={() => act({ x: -1 })} label={`← ${t.left}`} />
+              <TiltShadowActionButton onClick={() => act({ y: 1 })} label={`↑ ${t.up}`} />
+              <TiltShadowActionButton onClick={() => act({ x: 1 })} label={`${t.right} →`} />
+              <TiltShadowActionButton onClick={() => act({ z: -1 })} label={t.back} />
+              <TiltShadowActionButton isPrimary onClick={() => act({ rotate: 1 })} label={`↻ ${t.rotate}`} />
+              <TiltShadowActionButton onClick={() => act({ z: 1 })} label={t.front} />
               <span />
-              <button onClick={() => act({ y: -1 })} className="rounded-xl border border-border bg-card p-3 text-card-foreground">↓ {t.down}</button>
+              <TiltShadowActionButton onClick={() => act({ y: -1 })} label={`↓ ${t.down}`} />
               <span />
             </div>
           </>
         )}
         {complete && (
           <div aria-live="polite" className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
-            <div className="font-bold text-foreground">✨ {t.done}</div>
+            <div className="flex items-center gap-3">
+              <img
+                src={getSpriteUrl("trophy", 64)}
+                alt="Clear"
+                className="size-8 animate-bounce drop-shadow"
+              />
+              <div className="font-bold text-foreground">✨ {t.done}</div>
+            </div>
             <button
               type="button"
               onClick={handleShareCard}

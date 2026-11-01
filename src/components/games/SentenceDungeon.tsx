@@ -5,9 +5,16 @@
  * 화면 왼쪽이 서쪽이고 화면 위가 북쪽이다. 이 방의 기록은 화면에만 남긴다.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
+import { Maximize2, Minimize2, Volume2, VolumeX, Share2 } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
+import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { getSpriteUrl } from "../../lib/games/sprites";
+import {
+  createShareCardCanvas,
+  copyShareCardToClipboard,
+  downloadShareCard,
+} from "../../lib/games/share-card";
 import {
   ACTS,
   FIRE,
@@ -415,6 +422,48 @@ function actClass(tone: "live" | "quiet" | "danger"): string {
   return "min-h-11 min-w-11 rounded-xl bg-muted px-3 text-left text-sm font-semibold text-foreground disabled:opacity-40";
 }
 
+function TiltSentenceButton({
+  tone,
+  shortcutKey,
+  label,
+  detail,
+  disabled,
+  onClick,
+}: {
+  tone: "live" | "quiet" | "danger";
+  shortcutKey: string;
+  label: string;
+  detail: string;
+  disabled: boolean;
+  onClick: () => void;
+}) {
+  const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+
+  return (
+    <button
+      type="button"
+      style={
+        {
+          '--card-tilt': transformCss,
+        } as React.CSSProperties
+      }
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+      className={`${actClass(tone)} transition will-change-transform transform-(--card-tilt)`}
+      aria-keyshortcuts={shortcutKey}
+      aria-label={`${label}. ${detail}`}
+      disabled={disabled}
+      onClick={() => {
+        triggerPop(0.12);
+        onClick();
+      }}
+    >
+      {label}
+      <span className="block text-xs font-normal">{detail}</span>
+    </button>
+  );
+}
+
 function gaugeClass(matched: boolean): string {
   if (matched) return "rounded-xl bg-card px-2 py-2 text-sm text-foreground";
   return "rounded-xl bg-muted px-2 py-2 text-sm text-muted-foreground";
@@ -463,7 +512,8 @@ function codeAction(code: string): Act | null {
 
 export default function SentenceDungeon({ locale = "en" }: { locale?: Locale }) {
   const copy = COPY[locale] ?? COPY.en;
-  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal();
+  const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale });
+  const [shareCardCopied, setShareCardCopied] = useState(false);
   const reduce = usePrefersReducedMotion();
   const opening = useRef(createRoom(0));
   const [seed, setSeed] = useState(0);
@@ -551,10 +601,13 @@ export default function SentenceDungeon({ locale = "en" }: { locale?: Locale }) 
     if (next.status === "win") {
       note(lawTick(next.lastAction));
       note("win");
+      MobileHapticsPro.success();
     } else if (next.status === "lose") {
       note("lose");
+      MobileHapticsPro.warning();
     } else {
       note(lawTick(next.lastAction));
+      MobileHapticsPro.light();
     }
     glideSerial.current += 1;
     setShown(stateRef.current);
@@ -635,8 +688,38 @@ export default function SentenceDungeon({ locale = "en" }: { locale?: Locale }) 
           ? copy.stuck
           : `${copy.playing} ${named.join(" · ")}`;
 
+  const handleShareCard = useCallback(async () => {
+    MobileHapticsPro.selection();
+    const canvas = createShareCardCanvas({
+      title: copy.title,
+      score: state.status === "win" ? `CLEAR (${state.steps}/${STEP_CAP})` : `SEED #${seed}`,
+      customStats: [
+        { label: copy.steps, value: `${state.steps}/${STEP_CAP}` },
+        { label: copy.seed, value: `${seed}` },
+        { label: copy.room, value: state.status === "win" ? "MATCHED" : state.status },
+      ],
+      slug: "sentence-dungeon",
+    });
+    const ok = await copyShareCardToClipboard(canvas);
+    if (ok) {
+      setShareCardCopied(true);
+      setTimeout(() => setShareCardCopied(false), 2000);
+    } else {
+      downloadShareCard(canvas, `sentence-dungeon-seed${seed}.png`);
+    }
+  }, [copy, state, seed]);
+
   const renderHud = () => (
     <div className="flex items-center justify-end gap-2 pb-2">
+      <button
+        type="button"
+        onClick={handleShareCard}
+        className="flex h-9 w-9 items-center justify-center rounded-xl border border-border/60 bg-card text-foreground shadow-sm transition hover:bg-muted"
+        title={shareCardCopied ? "Copied!" : "Share"}
+        aria-label={shareCardCopied ? "Copied!" : "Share"}
+      >
+        <Share2 className="h-4 w-4 text-foreground" />
+      </button>
       <button
         type="button"
         onClick={() => { arm(); setMuted((value) => !value); }}
@@ -671,7 +754,16 @@ export default function SentenceDungeon({ locale = "en" }: { locale?: Locale }) 
       <div className="w-full max-w-2xl mx-auto space-y-4">
         {renderHud()}
         <header className="space-y-2">
-          <h2 className="text-2xl font-semibold text-foreground">{copy.title}</h2>
+          <h2 className="text-2xl font-semibold text-foreground flex items-center gap-2">
+            <span>{copy.title}</span>
+            {state.status === "win" && (
+              <img
+                src={getSpriteUrl("trophy", 64)}
+                alt="Clear"
+                className="size-7 inline-block animate-bounce drop-shadow"
+              />
+            )}
+          </h2>
           <p className="text-sm leading-6 text-muted-foreground">{copy.lead}</p>
           <p className="text-xs leading-5 text-muted-foreground">{copy.keys}</p>
         </header>
@@ -743,18 +835,15 @@ export default function SentenceDungeon({ locale = "en" }: { locale?: Locale }) 
               const tone = locked || noop ? "quiet" : doomed ? "danger" : "live";
               const detail = detailFor(state, act, copy);
               return (
-                <button
+                <TiltSentenceButton
                   key={act}
-                  type="button"
-                  className={actClass(tone)}
-                  aria-keyshortcuts={shortcut(act)}
-                  aria-label={`${label(act, copy)}. ${detail}`}
+                  tone={tone}
+                  shortcutKey={shortcut(act)}
+                  label={label(act, copy)}
+                  detail={detail}
                   disabled={locked || noop}
                   onClick={() => move(act)}
-                >
-                  {label(act, copy)}
-                  <span className="block text-xs font-normal">{detail}</span>
-                </button>
+                />
               );
             })}
           </div>
