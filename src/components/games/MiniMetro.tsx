@@ -20,7 +20,7 @@ import {
   downloadShareCard,
 } from "@/lib/games/share-card";
 import { useCardTiltPro, MobileHapticsPro } from "@/lib/games/engine-suite-unified";
-import { getSpriteUrl } from "@/lib/games/sprites";
+import { getSpriteUrl, MINI_METRO_SPRITES } from "@/lib/games/sprites";
 import { Maximize2, Minimize2, Share2, Check, RotateCcw, Play, Pause } from "lucide-react";
 
 function TiltMetroButton({
@@ -126,7 +126,7 @@ export default function MiniMetro({ locale = "ko" }: MiniMetroProps) {
           if (currentMilestone > milestoneDeliveredRef.current) {
             milestoneDeliveredRef.current = currentMilestone;
             MobileHapticsPro.heavy();
-            celebrate(containerRef.current, { preset: "sparks" });
+            celebrate(containerRef.current, { preset: "stardust" });
           }
         }
 
@@ -247,14 +247,28 @@ export default function MiniMetro({ locale = "ko" }: MiniMetroProps) {
             <span className="block text-xs font-semibold uppercase text-muted-foreground">
               {locale === "ko" ? "수송 승객" : "Delivered"}
             </span>
-            <span className="text-xl font-black text-primary">{game.passengersDelivered}</span>
+            <div className="flex items-center justify-end gap-1">
+              <img
+                src={MINI_METRO_SPRITES.commuter}
+                alt="Commuters"
+                className="size-5 select-none pointer-events-none"
+              />
+              <span className="text-xl font-black text-primary">{game.passengersDelivered}</span>
+            </div>
           </div>
 
           <div className="text-right">
             <span className="block text-xs font-semibold uppercase text-muted-foreground">
               {locale === "ko" ? "일차" : "Day"}
             </span>
-            <span className="text-xl font-black text-foreground">{game.day}</span>
+            <div className="flex items-center justify-end gap-1">
+              <img
+                src={MINI_METRO_SPRITES.train}
+                alt="Metro Days"
+                className="size-5 select-none pointer-events-none"
+              />
+              <span className="text-xl font-black text-foreground">{game.day}</span>
+            </div>
           </div>
 
           <TiltMetroButton
@@ -384,17 +398,11 @@ export default function MiniMetro({ locale = "ko" }: MiniMetroProps) {
         {game.status === "gameover" && (
           <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-background/85 p-6 text-center backdrop-blur-sm">
             <img
-              src={
-                game.passengersDelivered >= 100
-                  ? getSpriteUrl('trophy', 64)
-                  : game.passengersDelivered >= 50
-                  ? getSpriteUrl('star', 64)
-                  : getSpriteUrl('coin', 64)
-              }
+              src={MINI_METRO_SPRITES.trophy}
               alt="Result Badge"
-              width={56}
-              height={56}
-              className="size-14 drop-shadow-md select-none pointer-events-none mb-2"
+              width={64}
+              height={64}
+              className="size-16 animate-bounce drop-shadow-xl select-none pointer-events-none mb-2"
             />
             <h3 className="mb-1 text-2xl font-black tracking-tight text-destructive">
               {locale === "ko" ? "역이 과밀로 마비되었습니다!" : "Station Overcrowded!"}

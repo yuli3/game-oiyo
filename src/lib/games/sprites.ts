@@ -648,6 +648,13 @@ export const DOME_KEEPER_SPRITES = {
   trophy: "/assets/sprites/dome-keeper/trophy-dome-defender-128.png",
 } as const;
 
+export const MINI_METRO_SPRITES = {
+  train: "/assets/sprites/mini-metro/metro-train-128.png",
+  station: "/assets/sprites/mini-metro/station-terminal-128.png",
+  commuter: "/assets/sprites/mini-metro/passenger-commuter-128.png",
+  trophy: "/assets/sprites/mini-metro/trophy-transit-master-128.png",
+} as const;
+
 export const DOT_PET_SPRITES: Record<string, { baby: string; adult: string }> = {
   normal: {
     baby: "/assets/sprites/dot-pet/normal-baby.png",
