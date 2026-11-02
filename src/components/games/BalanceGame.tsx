@@ -8,6 +8,8 @@ import {
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { BALANCE_GAME_PROMPTS } from '../../data/balance-game-prompts';
+import { celebrate } from '../../lib/games/celebration';
+import { BALANCE_GAME_SPRITES } from '../../lib/games/sprites';
 
 const STORAGE_KEY = 'oiyo:balance-game:v1';
 
@@ -236,6 +238,7 @@ const BalanceGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     MobileHapticsPro.impact();
     if (cursor + 1 >= order.length) {
       MobileHapticsPro.success();
+      if (containerRef.current) celebrate(containerRef.current, { preset: 'stardust' });
     }
     setStored((prev) => {
       const next: Stored = { answered: prev.answered + (prev.picks[currentPrompt.id] ? 0 : 1), picks: { ...prev.picks, [currentPrompt.id]: choice } };
@@ -315,7 +318,8 @@ const BalanceGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
       <GameContainer title={t.title} subtitle={t.subtitle} resetLabel={t.restart} onReset={restart}>
       <div className="flex flex-col items-center gap-5">
         <p className="text-xs font-medium text-muted-foreground">{t.note}</p>
-        <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+        <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+          <img src={BALANCE_GAME_SPRITES.scale} alt="" aria-hidden="true" className="h-5 w-5 object-contain" />
           <span>{t.progress(Math.min(cursor, total), total)}</span>
         </div>
 
@@ -324,15 +328,17 @@ const BalanceGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2" role="group" aria-label={t.subtitle}>
               <TiltBalanceChoiceButton
                 onClick={() => pick('a')}
-                className="min-h-24 rounded-2xl border-2 border-border bg-card p-5 text-center text-base font-bold shadow-sm transition-all hover:border-primary hover:bg-primary/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                className="flex min-h-24 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-border bg-card p-5 text-center text-base font-bold shadow-sm transition-all hover:border-primary hover:bg-primary/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               >
-                {currentPrompt.a}
+                <img src={BALANCE_GAME_SPRITES.badgeA} alt="" aria-hidden="true" className="h-7 w-7 object-contain" />
+                <span>{currentPrompt.a}</span>
               </TiltBalanceChoiceButton>
               <TiltBalanceChoiceButton
                 onClick={() => pick('b')}
-                className="min-h-24 rounded-2xl border-2 border-border bg-card p-5 text-center text-base font-bold shadow-sm transition-all hover:border-primary hover:bg-primary/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                className="flex min-h-24 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-border bg-card p-5 text-center text-base font-bold shadow-sm transition-all hover:border-primary hover:bg-primary/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               >
-                {currentPrompt.b}
+                <img src={BALANCE_GAME_SPRITES.badgeB} alt="" aria-hidden="true" className="h-7 w-7 object-contain" />
+                <span>{currentPrompt.b}</span>
               </TiltBalanceChoiceButton>
             </div>
             <p className="mt-3 text-center text-[10px] font-black uppercase tracking-widest text-muted-foreground">{t.vs}</p>
@@ -365,6 +371,7 @@ const BalanceGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
         {finished && (
           <div className="w-full max-w-xl text-center animate-in zoom-in-95 motion-reduce:animate-none" role="status" aria-live="polite">
+            <img src={BALANCE_GAME_SPRITES.trophy} alt="" aria-hidden="true" className="mx-auto mb-2 h-12 w-12 object-contain" />
             <h4 className="text-xl font-black text-primary">{t.done}</h4>
             {answeredCount > 0 && (
               <div className="mt-4 rounded-2xl border border-border bg-muted/40 p-4">

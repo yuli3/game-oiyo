@@ -16,6 +16,7 @@ import {
 import { PetDisplay } from './tamagotchi/PetDisplay';
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { TAMAGOTCHI_SPRITES } from '../../lib/games/sprites';
 
 const SOUND_KEY = 'tamagotchi_sound_muted';
 
@@ -352,7 +353,7 @@ const Tamagotchi: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 <div className="w-full max-w-md">
                     <TamaShell title={t.title}>
                         <div className="flex flex-col items-center justify-center gap-4 py-12">
-                            <div className="text-5xl tama-egg-wobble">🥚</div>
+                            <img src={TAMAGOTCHI_SPRITES.egg} alt="🥚" className="h-16 w-16 object-contain tama-egg-wobble" />
                             <p className="tama-pixel-text text-sm text-foreground">{t.namePrompt}</p>
                             <input
                                 value={nameInput}
@@ -452,7 +453,10 @@ const Tamagotchi: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                             <div className="flex justify-between items-center mb-1.5">
                                 <span className="tama-pixel-text text-[10px] font-black">{t.meals}</span>
                                 {pet.mealStatus.streak > 0 && (
-                                    <span className="tama-pixel-text text-[10px] text-primary">🔥 {t.streak} {pet.mealStatus.streak}</span>
+                                    <span className="inline-flex items-center gap-1 tama-pixel-text text-[10px] text-primary">
+                                        <img src={TAMAGOTCHI_SPRITES.trophy} alt="" aria-hidden="true" className="h-3.5 w-3.5 object-contain" />
+                                        🔥 {t.streak} {pet.mealStatus.streak}
+                                    </span>
                                 )}
                             </div>
                             <div className="grid grid-cols-3 gap-1.5">
@@ -570,7 +574,10 @@ const TamaShell: React.FC<{
 }> = ({ title, headerLeft, headerRight, onGuide, children }) => (
     <div className="tama-device border-8 border-border rounded-3xl bg-secondary overflow-hidden">
         <div className="bg-muted px-3 py-2 flex justify-between items-center">
-            <span className="tama-pixel-text text-[10px] text-foreground">{headerLeft ?? title}</span>
+            <span className="inline-flex items-center gap-1.5 tama-pixel-text text-[10px] text-foreground">
+                <img src={TAMAGOTCHI_SPRITES.console} alt="" aria-hidden="true" className="h-4 w-4 object-contain" />
+                {headerLeft ?? title}
+            </span>
             <span className="tama-pixel-text text-[10px] font-black text-foreground">{headerRight ?? ''}</span>
             {onGuide ? (
                 <button onClick={onGuide} aria-label="guide" className="w-5 h-5 rounded-full bg-secondary border border-border text-[10px] font-black text-foreground">?</button>

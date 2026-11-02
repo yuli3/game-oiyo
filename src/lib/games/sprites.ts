@@ -383,6 +383,9 @@ export const WORD_GROUPS_SPRITES = {
 
 export const LIAR_ONEPHONE_SPRITES = {
   keyart: "/assets/sprites/liar-onephone/keyart.webp",
+  mask: "/assets/sprites/liar-onephone/mask-liar-3d-128.png",
+  card: "/assets/sprites/liar-onephone/card-secret-3d-128.png",
+  trophy: "/assets/sprites/liar-onephone/trophy-liar-3d-128.png",
 } as const;
 
 export const CHEF_PHYSICS_SPRITES = {
@@ -603,6 +606,31 @@ export const AJAE_PATTERN_SPRITES = {
   keycap: "/assets/sprites/ajae-pattern/keycap-qwer-3d-128.png",
   stopwatch: "/assets/sprites/ajae-pattern/stopwatch-reflex-3d-128.png",
   trophy: "/assets/sprites/ajae-pattern/trophy-ajae-3d-128.png",
+} as const;
+
+export const BALANCE_GAME_SPRITES = {
+  scale: "/assets/sprites/balance-game/scale-balance-3d-128.png",
+  badgeA: "/assets/sprites/balance-game/badge-choice-a-3d-128.png",
+  badgeB: "/assets/sprites/balance-game/badge-choice-b-3d-128.png",
+  trophy: "/assets/sprites/balance-game/trophy-balance-3d-128.png",
+} as const;
+
+export const TIER_LIST_SPRITES = {
+  crownS: "/assets/sprites/tier-list/crown-tier-s-3d-128.png",
+  palette: "/assets/sprites/tier-list/palette-swatch-3d-128.png",
+  trophy: "/assets/sprites/tier-list/trophy-tier-3d-128.png",
+} as const;
+
+export const TAMAGOTCHI_SPRITES = {
+  egg: "/assets/sprites/tamagotchi/egg-shell-3d-128.png",
+  console: "/assets/sprites/tamagotchi/console-retro-3d-128.png",
+  trophy: "/assets/sprites/tamagotchi/trophy-tama-3d-128.png",
+} as const;
+
+export const DOT_PET_UI_SPRITES = {
+  bowl: "/assets/sprites/dot-pet/treat-bowl-3d-128.png",
+  ball: "/assets/sprites/dot-pet/toy-ball-3d-128.png",
+  trophy: "/assets/sprites/dot-pet/trophy-dotpet-3d-128.png",
 } as const;
 
 export const GAME_2048_SPRITES = {

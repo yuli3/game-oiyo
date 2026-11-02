@@ -474,14 +474,20 @@ export default function LiarOnePhone({ locale }: { locale: Locale }) {
           <div className="space-y-4" data-liar-phase={session.phase} data-liar-mode={session.round.mode}>
             {(session.phase === "cover" || session.phase === "voteCover") && (
               <div className="space-y-4 rounded-2xl border border-border bg-card p-4">
-                <p className="text-lg font-bold text-foreground">{seat}</p>
+                <div className="flex items-center gap-2.5">
+                  <img src={LIAR_ONEPHONE_SPRITES.mask} alt="" aria-hidden="true" className="size-7 object-contain" />
+                  <p className="text-lg font-bold text-foreground">{seat}</p>
+                </div>
                 <p className="text-sm text-muted-foreground">{session.phase === "cover" ? t.cover : t.voteCover}</p>
                 <TiltLiarButton onClick={() => { cue("tap"); MobileHapticsPro.selectionClick(); setSession(ready(session)); }} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.look}</TiltLiarButton>
               </div>
             )}
             {session.phase === "peek" && card === "word" && (
               <div className="space-y-4 rounded-2xl border border-chart-1 bg-chart-1/15 p-4">
-                <p className="text-sm font-bold text-foreground">{seat} · {t.word}</p>
+                <div className="flex items-center gap-2">
+                  <img src={LIAR_ONEPHONE_SPRITES.card} alt="" aria-hidden="true" className="size-6 object-contain" />
+                  <p className="text-sm font-bold text-foreground">{seat} · {t.word}</p>
+                </div>
                 <p className="text-2xl font-bold text-foreground">{revealedWord(session)}</p>
                 <p className="text-sm text-muted-foreground">{t.category}: {session.round.category}</p>
                 <TiltLiarButton onClick={() => { cue("place"); MobileHapticsPro.lightImpact(); setSession(hide(session)); }} className={`${CONTROL} border-border bg-card text-foreground`}>{t.hide}</TiltLiarButton>
@@ -526,7 +532,15 @@ export default function LiarOnePhone({ locale }: { locale: Locale }) {
             )}
             {session.phase === "result" && session.winner && (
               <div className="space-y-4">
-                <p className="text-sm font-bold text-foreground" aria-live="polite">{session.winner === "group" ? t.groupWin : t.liarWin}</p>
+                <div className="flex items-center gap-2.5">
+                  <img
+                    src={session.winner === "group" ? LIAR_ONEPHONE_SPRITES.trophy : LIAR_ONEPHONE_SPRITES.mask}
+                    alt=""
+                    aria-hidden="true"
+                    className="size-8 object-contain"
+                  />
+                  <p className="text-sm font-bold text-foreground" aria-live="polite">{session.winner === "group" ? t.groupWin : t.liarWin}</p>
+                </div>
                 <p className="text-sm text-foreground">{t.word}: {session.round.word}</p>
                 {session.round.decoy ? <p className="text-sm text-foreground">{t.decoySeen}: {session.round.decoy}</p> : null}
                 <p className="text-sm text-foreground">{t.category}: {session.round.category}</p>

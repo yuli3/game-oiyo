@@ -5,7 +5,7 @@ import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { celebrate } from '../../lib/games/celebration';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import { explainDotPetAction, type DotPetAction } from '../../lib/games/dot-pet';
-import { DOT_PET_SPRITES, dotPetSprite } from '../../lib/games/sprites';
+import { DOT_PET_SPRITES, DOT_PET_UI_SPRITES, dotPetSprite } from '../../lib/games/sprites';
 
 function TiltPetButton({
   children,
@@ -323,8 +323,9 @@ const DotPet: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         {t.stages[pet.stage]} · {t.types[pet.type]}
                     </div>
                     {grewUp && (
-                        <div className="absolute top-3 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-success text-success-foreground rounded-full text-xs font-black shadow-lg animate-fade-up motion-reduce:animate-none" role="status">
-                            ✨ {t.grown}
+                        <div className="absolute top-3 left-1/2 -translate-x-1/2 inline-flex items-center gap-1.5 px-4 py-1.5 bg-success text-success-foreground rounded-full text-xs font-black shadow-lg animate-fade-up motion-reduce:animate-none" role="status">
+                            <img src={DOT_PET_UI_SPRITES.trophy} alt="" aria-hidden="true" className="h-4 w-4 object-contain" />
+                            <span>✨ {t.grown}</span>
                         </div>
                     )}
                 </div>
@@ -338,11 +339,13 @@ const DotPet: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
                 {/* Actions */}
                 <div className="grid grid-cols-3 gap-3 mb-6">
-                    <TiltPetButton onClick={feed} className="py-3 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-sm hover:opacity-90 transition-all">
-                        🍚 {t.feed}
+                    <TiltPetButton onClick={feed} className="inline-flex items-center justify-center gap-1.5 py-3 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-sm hover:opacity-90 transition-all">
+                        <img src={DOT_PET_UI_SPRITES.bowl} alt="" aria-hidden="true" className="h-4 w-4 object-contain" />
+                        <span>{t.feed}</span>
                     </TiltPetButton>
-                    <TiltPetButton onClick={play} className="py-3 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-sm hover:opacity-90 transition-all">
-                        🎮 {t.play}
+                    <TiltPetButton onClick={play} className="inline-flex items-center justify-center gap-1.5 py-3 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-sm hover:opacity-90 transition-all">
+                        <img src={DOT_PET_UI_SPRITES.ball} alt="" aria-hidden="true" className="h-4 w-4 object-contain" />
+                        <span>{t.play}</span>
                     </TiltPetButton>
                     <TiltPetButton onClick={rest} className="py-3 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-sm hover:opacity-90 transition-all">
                         🛏️ {t.rest}

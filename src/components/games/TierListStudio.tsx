@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent as ReactDragEvent, type PointerEvent as ReactPointerEvent } from "react";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
-import { getSpriteUrl } from "../../lib/games/sprites";
+import { TIER_LIST_SPRITES } from "../../lib/games/sprites";
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "../../lib/games/share-card";
 import { celebrate } from "../../lib/games/celebration";
 import { Maximize2, Minimize2, Camera, Check } from "lucide-react";
@@ -551,7 +551,7 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
     savesRevision.current = JSON.stringify(next);
     MobileHapticsPro.success();
     if (containerRef.current) {
-      celebrate(containerRef.current, { preset: "cards" });
+      celebrate(containerRef.current, { preset: "stardust" });
     }
     setStatus(copy.saved);
   }, [containerRef, copy.saved, copy.storageFail, doc, saves, storageReady, savesProtected]);
@@ -707,7 +707,12 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
         />
       </label>}
 
-      <div className="flex flex-wrap items-center justify-end gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="inline-flex items-center gap-2 text-xs font-bold text-muted-foreground">
+          <img src={TIER_LIST_SPRITES.crownS} alt="" aria-hidden="true" className="size-6 object-contain" />
+          <img src={TIER_LIST_SPRITES.trophy} alt="" aria-hidden="true" className="size-5 object-contain" />
+        </span>
+        <div className="flex flex-wrap items-center justify-end gap-2">
         <TiltTierButton
           type="button"
           className="min-h-11 rounded-xl border border-border bg-secondary hover:bg-secondary/80 px-4 font-bold flex items-center gap-1.5 shadow-xs"
@@ -717,7 +722,12 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
           <span>{isCopied ? "복사 완료!" : "카드 공유"}</span>
         </TiltTierButton>
         <TiltTierButton type="button" className="min-h-11 rounded-xl border px-4 font-bold" onClick={() => setPresenting((value) => !value)}>{presenting ? copy.edit : copy.present}</TiltTierButton>
-        {!presenting && <TiltTierButton type="button" aria-pressed={editingRows} className="min-h-11 rounded-xl border px-4 font-bold" onClick={() => setEditingRows((value) => !value)}>{editingRows ? copy.rowsDone : copy.rowsEdit}</TiltTierButton>}
+        {!presenting && (
+          <TiltTierButton type="button" aria-pressed={editingRows} className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border px-4 font-bold" onClick={() => setEditingRows((value) => !value)}>
+            <img src={TIER_LIST_SPRITES.palette} alt="" aria-hidden="true" className="size-4 object-contain" />
+            <span>{editingRows ? copy.rowsDone : copy.rowsEdit}</span>
+          </TiltTierButton>
+        )}
         <TiltTierButton type="button" className="min-h-11 rounded-xl border px-4 font-bold" onClick={() => void exportPng()}>{copy.exportPng}</TiltTierButton>
         <button
           type="button"
@@ -727,6 +737,7 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
         >
           {isImmersive ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
         </button>
+        </div>
       </div>
 
       {!presenting && <><div className="flex flex-col gap-2 sm:flex-row">
