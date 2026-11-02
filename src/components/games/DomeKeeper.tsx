@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { playSyntheticTone } from '../../lib/games/audio-mixer';
+import { celebrate } from '../../lib/games/celebration';
+import { DOME_KEEPER_SPRITES } from '../../lib/games/sprites';
 import {
   loadArcadePassProgress,
   reportMissionProgress,
@@ -198,6 +200,7 @@ export default function DomeKeeper({ locale = 'ko' }: Props) {
   useEffect(() => {
     if (state.status === 'won') {
       MobileHapticsPro.success();
+      celebrate(containerRef.current, { preset: 'stardust' });
       try {
         const dateKey = new Date().toISOString().slice(0, 10);
         const current = loadArcadePassProgress(dateKey);
@@ -423,11 +426,17 @@ export default function DomeKeeper({ locale = 'ko' }: Props) {
         </div>
         <div className="rounded-2xl border border-border bg-background p-3">
           <div className="text-xs text-muted-foreground">{t.iron}</div>
-          <div className="mt-0.5 text-lg font-black text-foreground">⛏️ {state.iron}</div>
+          <div className="mt-0.5 text-lg font-black text-foreground flex items-center gap-1.5">
+            <img src={DOME_KEEPER_SPRITES.iron} alt="Iron" className="size-5 select-none pointer-events-none" />
+            <span>{state.iron}</span>
+          </div>
         </div>
         <div className="rounded-2xl border border-border bg-background p-3">
           <div className="text-xs text-muted-foreground">{t.cobalt}</div>
-          <div className="mt-0.5 text-lg font-black text-foreground">💎 {state.cobalt}</div>
+          <div className="mt-0.5 text-lg font-black text-foreground flex items-center gap-1.5">
+            <img src={DOME_KEEPER_SPRITES.cobalt} alt="Cobalt" className="size-5 select-none pointer-events-none" />
+            <span>{state.cobalt}</span>
+          </div>
         </div>
       </div>
 
@@ -442,8 +451,17 @@ export default function DomeKeeper({ locale = 'ko' }: Props) {
 
       {state.status !== 'playing' && (
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary bg-primary/10 p-4">
-          <div className="text-sm font-black text-foreground">
-            {state.status === 'won' ? '🏆 VICTORY — Dome Colony & Ancient Relic Secured!' : '💥 DOME BREACHED — Try Again!'}
+          <div className="flex items-center gap-3">
+            {state.status === 'won' && (
+              <img
+                src={DOME_KEEPER_SPRITES.trophy}
+                alt="Victory"
+                className="size-12 animate-bounce drop-shadow-md select-none pointer-events-none"
+              />
+            )}
+            <div className="text-sm font-black text-foreground">
+              {state.status === 'won' ? '🏆 VICTORY — Dome Colony & Ancient Relic Secured!' : '💥 DOME BREACHED — Try Again!'}
+            </div>
           </div>
           <TiltDomeButton
             onClick={handleShare}
@@ -509,13 +527,22 @@ export default function DomeKeeper({ locale = 'ko' }: Props) {
                   ? '🪨 ROCK'
                   : '🟫 DIRT';
 
+              const sprite =
+                cell.kind === 'iron'
+                  ? DOME_KEEPER_SPRITES.iron
+                  : cell.kind === 'cobalt'
+                  ? DOME_KEEPER_SPRITES.cobalt
+                  : cell.kind === 'relic'
+                  ? DOME_KEEPER_SPRITES.relic
+                  : null;
+
               return (
                 <button
                   key={`${cell.row}-${cell.col}`}
                   type="button"
                   disabled={cell.kind === 'empty' || state.phase !== 'mining'}
                   onClick={() => onDrillTile(cell.row, cell.col)}
-                  className={`flex h-14 flex-col items-center justify-center rounded-xl border text-xs font-bold transition ${
+                  className={`flex h-14 flex-col items-center justify-center rounded-xl border text-xs font-bold transition p-1 ${
                     cell.kind === 'empty'
                       ? 'border-border/40 bg-muted/30 text-muted-foreground'
                       : reachable
@@ -523,9 +550,20 @@ export default function DomeKeeper({ locale = 'ko' }: Props) {
                       : 'border-border bg-secondary/40 text-muted-foreground opacity-65'
                   }`}
                 >
-                  <span>{badge}</span>
+                  {sprite ? (
+                    <div className="size-6 flex items-center justify-center">
+                      <img
+                        src={sprite}
+                        alt={cell.kind}
+                        className="size-full object-contain filter drop-shadow-xs select-none pointer-events-none"
+                        draggable={false}
+                      />
+                    </div>
+                  ) : (
+                    <span>{badge}</span>
+                  )}
                   {cell.kind !== 'empty' && (
-                    <span className="mt-0.5 font-mono text-xs text-muted-foreground">{cell.hp}hp</span>
+                    <span className="mt-0.5 font-mono text-xs text-muted-foreground leading-none">{cell.hp}hp</span>
                   )}
                 </button>
               );

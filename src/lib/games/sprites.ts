@@ -641,6 +641,13 @@ export const INTO_THE_BREACH_SPRITES = {
   trophy: "/assets/sprites/into-the-breach/trophy-timeline-saver-128.png",
 } as const;
 
+export const DOME_KEEPER_SPRITES = {
+  iron: "/assets/sprites/dome-keeper/ore-iron-128.png",
+  cobalt: "/assets/sprites/dome-keeper/gem-cobalt-128.png",
+  relic: "/assets/sprites/dome-keeper/relic-ancient-core-128.png",
+  trophy: "/assets/sprites/dome-keeper/trophy-dome-defender-128.png",
+} as const;
+
 export const DOT_PET_SPRITES: Record<string, { baby: string; adult: string }> = {
   normal: {
     baby: "/assets/sprites/dot-pet/normal-baby.png",
