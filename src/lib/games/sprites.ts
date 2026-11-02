@@ -415,6 +415,40 @@ export const SAND_BALLS_SPRITES = {
   trophy: "/assets/sprites/sand-balls/trophy-sand-3d-128.png",
 } as const;
 
+export const SUBWAY_RUNNER_SPRITES = {
+  board: "/assets/sprites/subway-runner/hover-board-3d-128.png",
+  coin: "/assets/sprites/subway-runner/coin-metro-3d-128.png",
+  train: "/assets/sprites/subway-runner/train-express-3d-128.png",
+  trophy: "/assets/sprites/subway-runner/trophy-runner-3d-128.png",
+} as const;
+
+export const CROSSY_ROAD_SPRITES = {
+  chicken: "/assets/sprites/crossy-road/chicken-voxel-3d-128.png",
+  car: "/assets/sprites/crossy-road/car-sedan-3d-128.png",
+  eagle: "/assets/sprites/crossy-road/eagle-hawk-3d-128.png",
+  trophy: "/assets/sprites/crossy-road/trophy-crossy-3d-128.png",
+} as const;
+
+export const BEAT_SLICE_SPRITES = {
+  saberCyan: "/assets/sprites/beat-slice/saber-cyan-3d-128.png",
+  saberMagenta: "/assets/sprites/beat-slice/saber-magenta-3d-128.png",
+  cube: "/assets/sprites/beat-slice/cube-beat-3d-128.png",
+  trophy: "/assets/sprites/beat-slice/trophy-beat-3d-128.png",
+} as const;
+
+export const COZY_GLIDER_SPRITES = {
+  feather: "/assets/sprites/cozy-glider/feather-golden-3d-128.png",
+  campfire: "/assets/sprites/cozy-glider/campfire-warm-3d-128.png",
+  glider: "/assets/sprites/cozy-glider/glider-wings-3d-128.png",
+  trophy: "/assets/sprites/cozy-glider/trophy-summit-3d-128.png",
+} as const;
+
+export const GRAVITY_GARDEN_SPRITES = {
+  drop: "/assets/sprites/gravity-garden/drop-water-3d-128.png",
+  pool: "/assets/sprites/gravity-garden/pool-oasis-3d-128.png",
+  trophy: "/assets/sprites/gravity-garden/trophy-garden-3d-128.png",
+} as const;
+
 export const ONE_BUTTON_CIV_SPRITES = {
   keyart: "/assets/sprites/one-button-civ/keyart.webp",
   field: "/assets/sprites/one-button-civ/field-plot-3d-128.png",

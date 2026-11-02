@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { celebrate } from "../../lib/games/celebration";
+import { BEAT_SLICE_SPRITES } from "../../lib/games/sprites";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import {
   Play,
@@ -454,6 +456,10 @@ export default function BeatSlice3D() {
         if (state.isComplete) {
           setShowResult(true);
           setIsPlaying(false);
+          MobileHapticsPro.success();
+          if (canvasRef.current) {
+            celebrate(canvasRef.current, { preset: "stardust" });
+          }
         }
       }
 
@@ -691,8 +697,8 @@ export default function BeatSlice3D() {
       {/* Header controls & Track Selection */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
         <div className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20 text-primary">
-            <Zap className="h-5 w-5" />
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/20 p-1 text-primary">
+            <img src={BEAT_SLICE_SPRITES.cube} alt="" className="size-7 object-contain" draggable={false} />
           </span>
           <div>
             <h2 className="text-lg font-bold leading-none tracking-tight">비트 슬라이스 3D</h2>
@@ -841,8 +847,8 @@ export default function BeatSlice3D() {
         {/* Result Overlay */}
         {showResult && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/85 p-6 backdrop-blur-xs text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-warning/20 text-warning mb-2">
-              <Trophy className="h-7 w-7" />
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-warning/20 p-2 text-warning mb-2">
+              <img src={BEAT_SLICE_SPRITES.trophy} alt="Victory Trophy" className="size-12 object-contain" draggable={false} />
             </div>
             <h3 className="text-2xl font-black text-foreground">STATION CLEAR!</h3>
             <div className="my-3 grid grid-cols-2 gap-4 text-left border border-border rounded-lg p-3 bg-card/60">
@@ -881,7 +887,10 @@ export default function BeatSlice3D() {
           className="flex flex-col items-center justify-center rounded-lg border border-border bg-primary/10 py-3 text-primary transition hover:bg-primary/20 active:scale-95 disabled:opacity-50"
           onClick={() => handleTriggerSlice(0, "down")}
         >
-          <span className="text-xs font-bold">LANE 1</span>
+          <span className="inline-flex items-center gap-1 text-xs font-bold">
+            <img src={BEAT_SLICE_SPRITES.saberCyan} alt="" className="size-4 object-contain" draggable={false} />
+            <span>LANE 1</span>
+          </span>
           <span className="text-xs text-muted-foreground font-mono mt-0.5">[D]</span>
         </TiltBeatLaneButton>
 
@@ -890,7 +899,10 @@ export default function BeatSlice3D() {
           className="flex flex-col items-center justify-center rounded-lg border border-border bg-primary/10 py-3 text-primary transition hover:bg-primary/20 active:scale-95 disabled:opacity-50"
           onClick={() => handleTriggerSlice(1, "down")}
         >
-          <span className="text-xs font-bold">LANE 2</span>
+          <span className="inline-flex items-center gap-1 text-xs font-bold">
+            <img src={BEAT_SLICE_SPRITES.saberCyan} alt="" className="size-4 object-contain" draggable={false} />
+            <span>LANE 2</span>
+          </span>
           <span className="text-xs text-muted-foreground font-mono mt-0.5">[F]</span>
         </TiltBeatLaneButton>
 
@@ -899,7 +911,10 @@ export default function BeatSlice3D() {
           className="flex flex-col items-center justify-center rounded-lg border border-border bg-secondary py-3 text-secondary-foreground transition hover:bg-secondary/80 active:scale-95 disabled:opacity-50"
           onClick={() => handleTriggerSlice(2, "down")}
         >
-          <span className="text-xs font-bold">LANE 3</span>
+          <span className="inline-flex items-center gap-1 text-xs font-bold">
+            <img src={BEAT_SLICE_SPRITES.saberMagenta} alt="" className="size-4 object-contain" draggable={false} />
+            <span>LANE 3</span>
+          </span>
           <span className="text-xs text-muted-foreground font-mono mt-0.5">[J]</span>
         </TiltBeatLaneButton>
 
@@ -908,7 +923,10 @@ export default function BeatSlice3D() {
           className="flex flex-col items-center justify-center rounded-lg border border-border bg-secondary py-3 text-secondary-foreground transition hover:bg-secondary/80 active:scale-95 disabled:opacity-50"
           onClick={() => handleTriggerSlice(3, "down")}
         >
-          <span className="text-xs font-bold">LANE 4</span>
+          <span className="inline-flex items-center gap-1 text-xs font-bold">
+            <img src={BEAT_SLICE_SPRITES.saberMagenta} alt="" className="size-4 object-contain" draggable={false} />
+            <span>LANE 4</span>
+          </span>
           <span className="text-xs text-muted-foreground font-mono mt-0.5">[K]</span>
         </TiltBeatLaneButton>
       </div>

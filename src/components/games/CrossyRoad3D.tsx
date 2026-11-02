@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { CrossyRoadEngine } from '../../lib/games/crossy-road';
+import { celebrate } from '../../lib/games/celebration';
+import { CROSSY_ROAD_SPRITES } from '../../lib/games/sprites';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 
 function TiltCrossyActionButton({
@@ -139,6 +141,9 @@ export default function CrossyRoad3D() {
       setHighScore((prev) => {
         if (engine.state.score > prev && prev > 0) {
           MobileHapticsPro.success();
+          if (canvasRef.current) {
+            celebrate(canvasRef.current, { preset: 'stardust' });
+          }
         }
         return Math.max(prev, engine.state.score);
       });
@@ -494,6 +499,12 @@ export default function CrossyRoad3D() {
       {/* Top Header: Score HUD & Highest Record */}
       <div className="w-full bg-card/90 border border-border rounded-xl p-3 mb-2 flex items-center justify-between shadow-lg">
         <div className="flex items-center gap-3">
+          <img
+            src={CROSSY_ROAD_SPRITES.chicken}
+            alt=""
+            className="size-8 shrink-0 object-contain drop-shadow-xs"
+            draggable={false}
+          />
           <div className="flex flex-col">
             <span className="text-xs font-bold text-muted-foreground tracking-wider">점수 (SCORE)</span>
             <div className="text-2xl font-black text-primary font-mono">{score}</div>
@@ -503,7 +514,10 @@ export default function CrossyRoad3D() {
         <div className="flex items-center gap-4">
           <div className="text-right">
             <span className="text-xs text-muted-foreground">최고 기록</span>
-            <div className="text-base font-bold text-warning font-mono">🏆 {highScore}</div>
+            <div className="flex items-center justify-end gap-1.5 text-base font-bold text-warning font-mono">
+              <img src={CROSSY_ROAD_SPRITES.trophy} alt="" className="size-4 object-contain" draggable={false} />
+              <span>{highScore}</span>
+            </div>
           </div>
 
           <TiltCrossyActionButton
@@ -526,6 +540,12 @@ export default function CrossyRoad3D() {
         {/* Game Over Modal Overlay */}
         {isGameOver && (
           <div className="absolute inset-0 bg-background/90 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center z-20">
+            <img
+              src={CROSSY_ROAD_SPRITES.trophy}
+              alt=""
+              className="mb-2 size-12 object-contain drop-shadow-md"
+              draggable={false}
+            />
             <span className="text-xs font-mono font-bold text-destructive tracking-widest uppercase mb-1">
               GAME OVER
             </span>

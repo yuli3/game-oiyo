@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import { celebrate } from '../../lib/games/celebration';
+import { COZY_GLIDER_SPRITES } from '../../lib/games/sprites';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import {
   loadArcadePassProgress,
@@ -180,6 +182,9 @@ export default function CozyGlider({ locale }: Props) {
     setState(next);
     if (next.status === 'summit-reached') {
       MobileHapticsPro.success();
+      if (canvasRef.current) {
+        celebrate(canvasRef.current, { preset: 'stardust' });
+      }
       recordArcadePass(1);
     }
   };
@@ -192,8 +197,9 @@ export default function CozyGlider({ locale }: Props) {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 text-card-foreground shadow-sm">
         <div className="flex flex-wrap items-center gap-3">
           <div className="rounded-xl border border-border bg-secondary px-3.5 py-2 text-secondary-foreground">
-            <div className="text-xs text-muted-foreground">
-              {isKo ? '황금 깃털 스태미나 (활성 / 최대)' : 'Golden Feathers (Active / Max)'}
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <img src={COZY_GLIDER_SPRITES.feather} alt="" className="size-4 object-contain" draggable={false} />
+              <span>{isKo ? '황금 깃털 스태미나 (활성 / 최대)' : 'Golden Feathers (Active / Max)'}</span>
             </div>
             <div className="text-lg font-extrabold text-primary">
               {'🪶'.repeat(state.activeFeathers)}
@@ -205,8 +211,9 @@ export default function CozyGlider({ locale }: Props) {
           </div>
 
           <div className="rounded-xl border border-border bg-secondary px-3.5 py-2 text-secondary-foreground">
-            <div className="text-xs text-muted-foreground">
-              {isKo ? '현재 고도 / 수집한 조개껍질' : 'Elevation / Seashells'}
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <img src={COZY_GLIDER_SPRITES.glider} alt="" className="size-4 object-contain" draggable={false} />
+              <span>{isKo ? '현재 고도 / 수집한 조개껍질' : 'Elevation / Seashells'}</span>
             </div>
             <div className="text-lg font-bold text-foreground">
               ⛰️ {isKo ? `${state.elevation}단 고도` : `Tier ${state.elevation}`} · 🐚{' '}
@@ -221,9 +228,10 @@ export default function CozyGlider({ locale }: Props) {
               MobileHapticsPro.click();
               setState(restAtCampfire(state));
             }}
-            className="rounded-xl border border-border bg-secondary px-3 py-2 text-xs font-semibold text-secondary-foreground hover:bg-accent"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-secondary px-3 py-2 text-xs font-semibold text-secondary-foreground hover:bg-accent"
           >
-            🔥 {isKo ? '깃털 숨고르기 충전' : 'Recharge Feathers'}
+            <img src={COZY_GLIDER_SPRITES.campfire} alt="" className="size-4 object-contain" draggable={false} />
+            <span>{isKo ? '깃털 숨고르기 충전' : 'Recharge Feathers'}</span>
           </TiltGliderActionButton>
           <TiltGliderActionButton
             onClick={() => {
@@ -248,7 +256,8 @@ export default function CozyGlider({ locale }: Props) {
 
       {/* Summit Reached Banner */}
       {state.status === 'summit-reached' && (
-        <div className="mb-4 rounded-2xl border border-primary bg-primary/10 p-4 text-center">
+        <div className="mb-4 flex items-center justify-center gap-3 rounded-2xl border border-primary bg-primary/10 p-4 text-center">
+          <img src={COZY_GLIDER_SPRITES.trophy} alt="" className="size-10 shrink-0 object-contain drop-shadow-sm" draggable={false} />
           <h3 className="text-lg font-extrabold text-primary">
             {isKo
               ? '🏆 호크 피크 정상 전망대(550m) 등정 성공! 아래 해변으로 장거리 활공을 즐겨보세요!'

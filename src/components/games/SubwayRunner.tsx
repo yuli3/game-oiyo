@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
-import { getSpriteUrl } from "../../lib/games/sprites";
+import { SUBWAY_RUNNER_SPRITES } from "../../lib/games/sprites";
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "../../lib/games/share-card";
 import { celebrate } from "../../lib/games/celebration";
 import { Maximize2, Minimize2, Camera, Check } from "lucide-react";
@@ -140,7 +140,7 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
         if (step.game.score > bestScore) {
           setBestScore(step.game.score);
           if (step.game.score > 200 && step.game.score % 100 === 0 && containerRef.current) {
-            celebrate(containerRef.current, { preset: "coins" });
+            celebrate(containerRef.current, { preset: "stardust" });
           }
         }
 
@@ -249,15 +249,23 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
     >
       {/* Header HUD */}
       <div className="flex w-full items-center justify-between border-b border-border pb-3">
-        <div>
-          <h2 className="text-xl font-bold tracking-tight">
-            {locale === "ko" ? "러너 빌더 3D" : "Subway Mini-Parkour"}
-          </h2>
-          <p className="text-xs text-muted-foreground">
-            {locale === "ko"
-              ? "좌우 스와이프 차선 변경, 점프와 슬라이딩으로 무한 질주!"
-              : "Swipe left/right to change lanes, jump and slide to sprint indefinitely!"}
-          </p>
+        <div className="flex items-center gap-2.5">
+          <img
+            src={SUBWAY_RUNNER_SPRITES.board}
+            alt=""
+            className="size-8 shrink-0 object-contain drop-shadow-xs"
+            draggable={false}
+          />
+          <div>
+            <h2 className="text-xl font-bold tracking-tight">
+              {locale === "ko" ? "러너 빌더 3D" : "Subway Mini-Parkour"}
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              {locale === "ko"
+                ? "좌우 스와이프 차선 변경, 점프와 슬라이딩으로 무한 질주!"
+                : "Swipe left/right to change lanes, jump and slide to sprint indefinitely!"}
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center gap-3">
@@ -272,7 +280,10 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
             <span className="block text-xs font-semibold uppercase text-muted-foreground">
               {locale === "ko" ? "코인" : "Coins"}
             </span>
-            <span className="text-xl font-black text-foreground">🪙 {coins}</span>
+            <span className="inline-flex items-center gap-1 text-xl font-black text-foreground">
+              <img src={SUBWAY_RUNNER_SPRITES.coin} alt="" className="size-5 object-contain" draggable={false} />
+              <span>{coins}</span>
+            </span>
           </div>
 
           <button
@@ -410,7 +421,7 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
           <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-background/90 p-6 text-center backdrop-blur-md">
             <div className="relative mb-2 flex items-center justify-center">
               <img
-                src={getSpriteUrl("trophy")}
+                src={SUBWAY_RUNNER_SPRITES.trophy}
                 alt="3D Trophy"
                 className="w-16 h-16 drop-shadow-xl animate-bounce"
               />
