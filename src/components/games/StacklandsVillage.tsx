@@ -11,6 +11,7 @@ import {
 } from "../../lib/games/share-card";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import { recordResult } from "../../lib/games/records";
+import { STACKLANDS_SPRITES } from "../../lib/games/sprites";
 import {
   loadArcadePassProgress,
   reportMissionProgress,
@@ -88,6 +89,13 @@ const CARD_META: Record<
   goblin: { emoji: "👺", nameKo: "고블린", nameEn: "Goblin", colorClass: "border-red-600 bg-red-600/10" },
 };
 
+function getVillageCardSprite(type: CardType): string | null {
+  if (type === "villager") return STACKLANDS_SPRITES.villager;
+  if (type === "berry") return STACKLANDS_SPRITES.berry;
+  if (type === "house") return STACKLANDS_SPRITES.house;
+  return null;
+}
+
 export default function StacklandsVillage({ locale = "en" }: Props) {
   const isKo = locale === "ko";
   const [state, setState] = useState<StacklandsVillageState>(() =>
@@ -152,7 +160,7 @@ export default function StacklandsVillage({ locale = "en" }: Props) {
       if (!celebratedRef.current) {
         celebratedRef.current = true;
         MobileHapticsPro.heavyImpact();
-        celebrate(containerRef.current, { preset: "sparks" });
+        celebrate(containerRef.current, { preset: "stardust" });
       }
     } else if (state.status === "lost") {
       MobileHapticsPro.warningPattern();
@@ -321,6 +329,7 @@ export default function StacklandsVillage({ locale = "en" }: Props) {
                   {stack.map((card, idx) => {
                     const meta = CARD_META[card.type];
                     const isCardSelected = card.id === selectedCardId;
+                    const sprite = getVillageCardSprite(card.type);
 
                     return (
                       <div
@@ -335,7 +344,20 @@ export default function StacklandsVillage({ locale = "en" }: Props) {
                           idx > 0 ? "-mt-3" : ""
                         }`}
                       >
-                        <div className="text-2xl">{meta.emoji}</div>
+                        <div className="size-8 mx-auto flex items-center justify-center">
+                          {sprite ? (
+                            <img
+                              src={sprite}
+                              alt={isKo ? meta.nameKo : meta.nameEn}
+                              className="size-full object-contain filter drop-shadow-xs select-none pointer-events-none"
+                              draggable={false}
+                            />
+                          ) : (
+                            <span className="text-2xl leading-none" aria-hidden="true">
+                              {meta.emoji}
+                            </span>
+                          )}
+                        </div>
                         <div className="mt-1 text-xs font-black truncate text-foreground">
                           {isKo ? meta.nameKo : meta.nameEn}
                         </div>
@@ -406,18 +428,27 @@ export default function StacklandsVillage({ locale = "en" }: Props) {
       {/* Win / Loss Modal Banner */}
       {state.status !== "playing" && (
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary bg-primary/10 p-4">
-          <div>
-            <div className="text-sm font-black text-foreground">
-              {state.status === "won"
-                ? isKo
-                  ? "🏆 번영의 달 생존 완료! 전설적인 카드 빌리지를 일구었습니다!"
-                  : "🏆 Moon Cycles Survived! Your Village Prospered!"
-                : isKo
-                  ? "💀 모든 주민이 사망하여 정착지가 버려졌습니다."
-                  : "💀 The Village Fell to Starvation or Raids."}
-            </div>
-            <div className="mt-1 text-xs text-muted-foreground">
-              Score: {state.score} · Moon {state.moon}/{state.maxMoons} · Coins: {state.coins}
+          <div className="flex items-center gap-3">
+            {state.status === "won" && (
+              <img
+                src={STACKLANDS_SPRITES.trophy}
+                alt="Victory Trophy"
+                className="size-12 animate-bounce drop-shadow-md select-none pointer-events-none"
+              />
+            )}
+            <div>
+              <div className="text-sm font-black text-foreground">
+                {state.status === "won"
+                  ? isKo
+                    ? "🏆 번영의 달 생존 완료! 전설적인 카드 빌리지를 일구었습니다!"
+                    : "🏆 Moon Cycles Survived! Your Village Prospered!"
+                  : isKo
+                    ? "💀 모든 주민이 사망하여 정착지가 버려졌습니다."
+                    : "💀 The Village Fell to Starvation or Raids."}
+              </div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                Score: {state.score} · Moon {state.moon}/{state.maxMoons} · Coins: {state.coins}
+              </div>
             </div>
           </div>
           <TiltVillageButton

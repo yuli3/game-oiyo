@@ -620,6 +620,13 @@ export const SLOT_ROGUE_SPRITES = {
   trophy: "/assets/sprites/slot-rogue/trophy-jackpot-master-128.png",
 } as const;
 
+export const STACKLANDS_SPRITES = {
+  villager: "/assets/sprites/stacklands-village/card-villager-128.png",
+  berry: "/assets/sprites/stacklands-village/card-berry-128.png",
+  house: "/assets/sprites/stacklands-village/card-house-128.png",
+  trophy: "/assets/sprites/stacklands-village/trophy-village-master-128.png",
+} as const;
+
 export const DOT_PET_SPRITES: Record<string, { baby: string; adult: string }> = {
   normal: {
     baby: "/assets/sprites/dot-pet/normal-baby.png",
