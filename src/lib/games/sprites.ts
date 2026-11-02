@@ -690,6 +690,13 @@ export const PLAGUE_MINI_SPRITES = {
   trophy: "/assets/sprites/plague-mini/trophy-plague-3d-128.png",
 } as const;
 
+export const FACTORIO_MINI_SPRITES = {
+  miner: "/assets/sprites/factorio-mini/miner-drill-3d-128.png",
+  smelter: "/assets/sprites/factorio-mini/furnace-smelter-3d-128.png",
+  assembler: "/assets/sprites/factorio-mini/assembler-factory-3d-128.png",
+  trophy: "/assets/sprites/factorio-mini/trophy-factorio-3d-128.png",
+} as const;
+
 export const DOT_PET_SPRITES: Record<string, { baby: string; adult: string }> = {
   normal: {
     baby: "/assets/sprites/dot-pet/normal-baby.png",

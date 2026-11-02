@@ -22,6 +22,7 @@ import {
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { celebrate } from "../../lib/games/celebration";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { FACTORIO_MINI_SPRITES } from "../../lib/games/sprites";
 
 function TiltFactorioButton({
   children,
@@ -306,6 +307,22 @@ export default function FactorioMini({ locale = "ko" }: Props) {
   const audioCtxRef = useRef<AudioContext | null>(null);
   const isPointerDownRef = useRef(false);
   const lastPaintedTileRef = useRef<string | null>(null);
+  const spritesRef = useRef<Record<string, HTMLImageElement>>({});
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const load = (key: string, src: string) => {
+      const img = new Image();
+      img.src = src;
+      img.onload = () => {
+        spritesRef.current[key] = img;
+      };
+    };
+    load("miner", FACTORIO_MINI_SPRITES.miner);
+    load("smelter", FACTORIO_MINI_SPRITES.smelter);
+    load("assembler", FACTORIO_MINI_SPRITES.assembler);
+    load("trophy", FACTORIO_MINI_SPRITES.trophy);
+  }, []);
 
   const [uiStageIdx, setUiStageIdx] = useState(0);
   const [uiRp, setUiRp] = useState(0);
@@ -391,7 +408,15 @@ export default function FactorioMini({ locale = "ko" }: Props) {
     if (st.isCleared && !prevClearedRef.current) {
       prevClearedRef.current = true;
       MobileHapticsPro.success();
-      celebrate(null, { preset: "shards" });
+      celebrate(containerRef.current, { preset: "stardust" });
+      try {
+        const dateKey = new Date().toISOString().slice(0, 10);
+        const current = loadArcadePassProgress(dateKey);
+        const updated = reportMissionProgress(current, 'factorio-mini', 1);
+        saveArcadePassProgress(updated);
+      } catch {
+        // arcade pass fallback
+      }
     }
   }, []);
 
@@ -572,53 +597,68 @@ export default function FactorioMini({ locale = "ko" }: Props) {
                 ctx.stroke();
               }
             } else if (cell.building === "miner") {
-              ctx.fillStyle = "#1d4ed8";
-              ctx.beginPath();
-              ctx.roundRect(px + 6, py + 6, CELL_SIZE - 12, CELL_SIZE - 12, 8);
-              ctx.fill();
-              ctx.strokeStyle = "#93c5fd";
-              ctx.lineWidth = 2;
-              ctx.stroke();
+              const minerImg = spritesRef.current["miner"];
+              if (minerImg) {
+                ctx.drawImage(minerImg, px + 4, py + 4, CELL_SIZE - 8, CELL_SIZE - 8);
+              } else {
+                ctx.fillStyle = "#1d4ed8";
+                ctx.beginPath();
+                ctx.roundRect(px + 6, py + 6, CELL_SIZE - 12, CELL_SIZE - 12, 8);
+                ctx.fill();
+                ctx.strokeStyle = "#93c5fd";
+                ctx.lineWidth = 2;
+                ctx.stroke();
 
-              // Rotating drill head
-              const angle = (now / 180) % (Math.PI * 2);
-              ctx.save();
-              ctx.translate(cx, cy);
-              ctx.rotate(angle);
-              ctx.fillStyle = "#e2e8f0";
-              ctx.fillRect(-10, -3, 20, 6);
-              ctx.fillRect(-3, -10, 6, 20);
-              ctx.restore();
+                // Rotating drill head
+                const angle = (now / 180) % (Math.PI * 2);
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.rotate(angle);
+                ctx.fillStyle = "#e2e8f0";
+                ctx.fillRect(-10, -3, 20, 6);
+                ctx.fillRect(-3, -10, 6, 20);
+                ctx.restore();
+              }
             } else if (cell.building === "smelter") {
-              ctx.fillStyle = "#7c2d12";
-              ctx.beginPath();
-              ctx.roundRect(px + 6, py + 6, CELL_SIZE - 12, CELL_SIZE - 12, 10);
-              ctx.fill();
-              ctx.strokeStyle = "#fb923c";
-              ctx.lineWidth = 2;
-              ctx.stroke();
+              const smelterImg = spritesRef.current["smelter"];
+              if (smelterImg) {
+                ctx.drawImage(smelterImg, px + 4, py + 4, CELL_SIZE - 8, CELL_SIZE - 8);
+              } else {
+                ctx.fillStyle = "#7c2d12";
+                ctx.beginPath();
+                ctx.roundRect(px + 6, py + 6, CELL_SIZE - 12, CELL_SIZE - 12, 10);
+                ctx.fill();
+                ctx.strokeStyle = "#fb923c";
+                ctx.lineWidth = 2;
+                ctx.stroke();
 
-              // Glowing furnace core
-              const glow = 0.7 + 0.3 * Math.sin(now / 150);
-              ctx.fillStyle = `rgba(251, 146, 60, ${glow})`;
-              ctx.beginPath();
-              ctx.arc(cx, cy, 11, 0, Math.PI * 2);
-              ctx.fill();
+                // Glowing furnace core
+                const glow = 0.7 + 0.3 * Math.sin(now / 150);
+                ctx.fillStyle = `rgba(251, 146, 60, ${glow})`;
+                ctx.beginPath();
+                ctx.arc(cx, cy, 11, 0, Math.PI * 2);
+                ctx.fill();
+              }
             } else if (cell.building === "assembler") {
-              ctx.fillStyle = "#14532d";
-              ctx.beginPath();
-              ctx.roundRect(px + 6, py + 6, CELL_SIZE - 12, CELL_SIZE - 12, 10);
-              ctx.fill();
-              ctx.strokeStyle = "#4ade80";
-              ctx.lineWidth = 2;
-              ctx.stroke();
+              const assemblerImg = spritesRef.current["assembler"];
+              if (assemblerImg) {
+                ctx.drawImage(assemblerImg, px + 4, py + 4, CELL_SIZE - 8, CELL_SIZE - 8);
+              } else {
+                ctx.fillStyle = "#14532d";
+                ctx.beginPath();
+                ctx.roundRect(px + 6, py + 6, CELL_SIZE - 12, CELL_SIZE - 12, 10);
+                ctx.fill();
+                ctx.strokeStyle = "#4ade80";
+                ctx.lineWidth = 2;
+                ctx.stroke();
+              }
 
               // Buffer indicators (Iron & Copper counts inside assembler)
               ctx.fillStyle = "#93c5fd";
               ctx.font = "bold 10px monospace";
-              ctx.fillText(`Fe:${cell.bufferIron}`, px + 10, py + 19);
+              ctx.fillText(`Fe:${cell.bufferIron}`, px + 8, py + 18);
               ctx.fillStyle = "#fdba74";
-              ctx.fillText(`Cu:${cell.bufferCopper}`, px + 10, py + 52);
+              ctx.fillText(`Cu:${cell.bufferCopper}`, px + 8, py + 52);
             } else if (cell.building === "lab") {
               const pulse = 0.65 + 0.35 * Math.sin(now / 220);
               ctx.fillStyle = "#312e81";
@@ -837,10 +877,19 @@ export default function FactorioMini({ locale = "ko" }: Props) {
 
         {/* Stage Clear Banner */}
         {uiCleared && (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-primary/10 px-4 py-3">
-            <span className="text-sm font-bold text-primary">
-              {t.stageComplete}
-            </span>
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary/40 bg-primary/10 px-4 py-3 shadow-md animate-in fade-in zoom-in-95">
+            <div className="flex items-center gap-3">
+              <img
+                src={FACTORIO_MINI_SPRITES.trophy}
+                alt="Factorio Trophy"
+                width={40}
+                height={40}
+                className="size-10 object-contain animate-bounce drop-shadow-md"
+              />
+              <span className="text-sm font-black text-primary">
+                {t.stageComplete}
+              </span>
+            </div>
             <TiltFactorioButton
               onClick={() => loadStage((uiStageIdx + 1) % STAGES.length)}
               className="rounded-lg bg-primary px-4 py-1.5 text-xs font-bold text-primary-foreground shadow-xs transition hover:opacity-90"
@@ -882,19 +931,39 @@ export default function FactorioMini({ locale = "ko" }: Props) {
           <div className="flex flex-wrap items-center gap-1.5">
             {(
               ["belt", "miner", "smelter", "assembler", "empty"] as BuildingType[]
-            ).map((tool) => (
-              <TiltFactorioButton
-                key={tool}
-                onClick={() => handleSelectTool(tool)}
-                className={`rounded-lg px-3 py-2 text-xs font-bold transition ${
-                  uiTool === tool
-                    ? "bg-primary text-primary-foreground shadow-xs"
-                    : "bg-card text-foreground hover:bg-muted"
-                }`}
-              >
-                {t.tools[tool]}
-              </TiltFactorioButton>
-            ))}
+            ).map((tool) => {
+              const spriteIcon =
+                tool === "miner"
+                  ? FACTORIO_MINI_SPRITES.miner
+                  : tool === "smelter"
+                    ? FACTORIO_MINI_SPRITES.smelter
+                    : tool === "assembler"
+                      ? FACTORIO_MINI_SPRITES.assembler
+                      : null;
+
+              return (
+                <TiltFactorioButton
+                  key={tool}
+                  onClick={() => handleSelectTool(tool)}
+                  className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold transition ${
+                    uiTool === tool
+                      ? "bg-primary text-primary-foreground shadow-xs"
+                      : "bg-card text-foreground hover:bg-muted"
+                  }`}
+                >
+                  {spriteIcon && (
+                    <img
+                      src={spriteIcon}
+                      alt={tool}
+                      width={16}
+                      height={16}
+                      className="size-4 object-contain inline-block drop-shadow-xs"
+                    />
+                  )}
+                  <span>{t.tools[tool]}</span>
+                </TiltFactorioButton>
+              );
+            })}
           </div>
 
           <TiltFactorioButton
