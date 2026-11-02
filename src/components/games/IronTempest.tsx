@@ -5,7 +5,7 @@ import type { Locale } from "../../lib/i18n";
 import { getBest, recordBest } from "../../lib/games/records";
 import { reviewTempestMission } from "../../lib/games/iron-tempest";
 import { ENEMY_HEALTH, WEAPONS, applyTempestDamage, blastDamage, missionScore, structureStage, weaponDrop, type TempestEnemy, type TempestWeapon } from "../../lib/games/iron-tempest";
-import { IRON_TEMPEST_SPRITES } from "../../lib/games/sprites";
+import { IRON_TEMPEST_SPRITES, IRON_TEMPEST_UI_SPRITES } from "../../lib/games/sprites";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { celebrate } from "../../lib/games/celebration";
 import {
@@ -140,7 +140,7 @@ export default function IronTempest({ locale }: { locale: Locale }) {
     setBest(recordBest(GAME_KEY, r.score, "score", JSON.stringify(r)).value);
     setPhase("result");
     if (containerRef.current) {
-      celebrate(containerRef.current, { preset: "sparks" });
+      celebrate(containerRef.current, { preset: "stardust" });
     }
   }, [containerRef]);
 
@@ -213,8 +213,9 @@ export default function IronTempest({ locale }: { locale: Locale }) {
           </div>
 
           <div className="relative min-h-[520px] bg-cover bg-center p-5 sm:p-10 lg:p-14" style={{ backgroundImage: "linear-gradient(90deg,rgba(6,8,8,.96),rgba(6,8,8,.72) 48%,rgba(6,8,8,.08)),url('/games/iron-tempest-social.png')" }}>
-            <div className="max-w-xl"><p className="font-mono text-[10px] font-black tracking-[.28em] text-[#ffbe3f]">{t.eyebrow}</p><h2 className="mt-4 font-mono text-5xl font-black leading-[.82] tracking-[-.08em] text-white [text-shadow:4px_4px_0_#7a1f0b] sm:text-7xl">{t.title}</h2><p className="mt-6 max-w-lg text-sm font-semibold leading-7 text-[#eadfc8] sm:text-base">{t.subtitle}</p>
+            <div className="max-w-xl"><p className="inline-flex items-center gap-2 font-mono text-[10px] font-black tracking-[.28em] text-[#ffbe3f]"><img src={IRON_TEMPEST_UI_SPRITES.medal} alt="" width={18} height={18} className="size-4.5 object-contain drop-shadow-xs" />{t.eyebrow}</p><h2 className="mt-4 font-mono text-5xl font-black leading-[.82] tracking-[-.08em] text-white [text-shadow:4px_4px_0_#7a1f0b] sm:text-7xl">{t.title}</h2><p className="mt-6 max-w-lg text-sm font-semibold leading-7 text-[#eadfc8] sm:text-base">{t.subtitle}</p>
               <div className="mt-5 flex h-20 max-w-lg items-end gap-1 overflow-hidden border-y border-white/15 bg-black/45 px-3" aria-hidden="true">
+                <img src={IRON_TEMPEST_UI_SPRITES.crate} alt="" width={56} height={56} className="h-14 w-14 shrink-0 object-contain drop-shadow-xs" />
                 <img src="/assets/sprites/weapons/assault-rifle.webp" alt="" className="h-16 min-w-0 flex-1 object-contain"/>
                 <img src="/assets/sprites/weapons/heavy-machine-gun.webp" alt="" className="h-16 min-w-0 flex-1 object-contain"/>
                 <img src="/assets/sprites/weapons/rocket-launcher.webp" alt="" className="h-16 min-w-0 flex-1 object-contain"/>
@@ -229,7 +230,7 @@ export default function IronTempest({ locale }: { locale: Locale }) {
                 >
                   {phase === "result" ? t.again : t.start}
                 </TiltTempestButton>
-                <span className="bg-black/75 px-4 py-3 font-mono text-xs">{t.best} <b className="text-[#ffcf4f]">{best.toLocaleString()}</b></span>
+                <span className="inline-flex items-center gap-1.5 bg-black/75 px-4 py-3 font-mono text-xs"><img src={IRON_TEMPEST_UI_SPRITES.trophy} alt="" width={16} height={16} className="size-4 object-contain" />{t.best} <b className="text-[#ffcf4f]">{best.toLocaleString()}</b></span>
               </div>
               {phase === "result" && (
                 <>

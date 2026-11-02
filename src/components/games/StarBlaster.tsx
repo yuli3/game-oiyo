@@ -26,6 +26,7 @@ import {
   STAR_BLASTER_BURST_SHEET,
   STAR_BLASTER_EXHAUST_SHEET,
   STAR_BLASTER_SPRITES,
+  STAR_BLASTER_UI_SPRITES,
 } from "../../lib/games/sprites";
 
 type BlasterArt = Record<keyof typeof STAR_BLASTER_SPRITES, HTMLImageElement> & { sparkSheet: HTMLImageElement };
@@ -411,7 +412,7 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
     const weaponKey = `${GAME_KEY}:${finalState.weapon}`;
     const weaponRecord = recordBest(weaponKey, finalScore, "score", undefined, { trackPlay: false });
     setDebrief({ kills: finalState.stats.kills, damageTaken: finalState.stats.damageTaken, weaponBest: weaponRecord.value, lastHit: lastHitRef.current });
-    if (beat && finalScore > 0 && !reducedMotionRef.current) {
+    if ((won || (beat && finalScore > 0)) && !reducedMotionRef.current) {
       celebrate(canvasRef.current, { preset: "stardust", colors: ["#7dd3fc", "#fde68a", "#f0abfc"], origin: { x: 0.5, y: 0.5 } });
     }
     if (won) {
@@ -700,13 +701,16 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
     >
       <div className={`not-prose ${isImmersive ? "my-0 w-full max-w-md" : "my-10 mx-auto max-w-md"} rounded-3xl border border-border bg-card p-4 text-card-foreground shadow-sm select-none`}>
         <div className="mb-3 flex items-center justify-between gap-3">
-          <div>
-            <div className="text-sm font-black uppercase tracking-widest text-primary">{t.title}</div>
-            <div className="text-[11px] text-muted-foreground">{t.subtitle}</div>
+          <div className="flex items-center gap-2.5">
+            <img src={STAR_BLASTER_UI_SPRITES.shield} alt="" width={28} height={28} className="size-7 object-contain drop-shadow-xs" />
+            <div>
+              <div className="text-sm font-black uppercase tracking-widest text-primary">{t.title}</div>
+              <div className="text-[11px] text-muted-foreground">{t.subtitle}</div>
+            </div>
           </div>
           <div className="text-right text-xs font-bold">
             <div>{t.score}: <b className="text-primary">{score}</b></div>
-            <div className="text-muted-foreground">{t.best}: {best}</div>
+            <div className="inline-flex items-center gap-1 text-muted-foreground"><img src={STAR_BLASTER_UI_SPRITES.trophy} alt="" width={14} height={14} className="size-3.5 object-contain" />{t.best}: {best}</div>
           </div>
           <div className="flex items-center gap-1.5">
             <button
@@ -781,8 +785,9 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
             )}
             {phase === "victory" && (
               <>
+                <img src={STAR_BLASTER_UI_SPRITES.trophy} alt="" width={44} height={44} className="size-11 object-contain drop-shadow-sm" />
                 {isNewBest && <div className="text-sm font-black text-amber-300">{t.newBest}</div>}
-                <div className="text-2xl font-black text-white">🏆 {resultT.victory}</div>
+                <div className="text-2xl font-black text-white">{resultT.victory}</div>
                 <div className="text-sm text-white/80">{t.score}: <b>{score}</b> · {t.best}: {best}</div>
               </>
             )}
@@ -801,7 +806,7 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
             )}
             {phase === "menu" && (
               <>
-                <div className="text-4xl" aria-hidden="true">🚀</div>
+                <img src={STAR_BLASTER_UI_SPRITES.core} alt="" width={48} height={48} className="size-12 object-contain drop-shadow-sm" />
                 <p className="max-w-xs text-xs leading-relaxed text-white/80">{t.controls}</p>
               </>
             )}

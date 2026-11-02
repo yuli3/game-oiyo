@@ -999,6 +999,43 @@ export const STICKER_COZY_SPRITES = {
   trophy: "/assets/sprites/sticker-cozy/trophy-cozy-3d-128.png",
 } as const;
 
+export const EMBERDEEP_UI_SPRITES = {
+  sigil: "/assets/sprites/emberdeep/sigil-ember-3d-128.png",
+  mana: "/assets/sprites/emberdeep/crystal-mana-3d-128.png",
+  trophy: "/assets/sprites/emberdeep/trophy-emberdeep-3d-128.png",
+} as const;
+
+export const IRON_TEMPEST_UI_SPRITES = {
+  medal: "/assets/sprites/iron-tempest/medal-tempest-3d-128.png",
+  crate: "/assets/sprites/iron-tempest/crate-ammo-3d-128.png",
+  trophy: "/assets/sprites/iron-tempest/trophy-tempest-3d-128.png",
+} as const;
+
+export const CAVE_DASH_UI_SPRITES = {
+  crystal: "/assets/sprites/cave-dash/crystal-cave-3d-128.png",
+  thruster: "/assets/sprites/cave-dash/thruster-boost-3d-128.png",
+  trophy: "/assets/sprites/cave-dash/trophy-cavedash-3d-128.png",
+} as const;
+
+export const STAR_BLASTER_UI_SPRITES = {
+  core: "/assets/sprites/star-blaster/core-helix-3d-128.png",
+  shield: "/assets/sprites/star-blaster/shield-wing-3d-128.png",
+  trophy: "/assets/sprites/star-blaster/trophy-starblaster-3d-128.png",
+} as const;
+
+export const PLINKO_SPRITES = {
+  ball: "/assets/sprites/plinko/ball-amber-3d-128.png",
+  peg: "/assets/sprites/plinko/peg-bumper-3d-128.png",
+  pocket: "/assets/sprites/plinko/pocket-jackpot-3d-128.png",
+  trophy: "/assets/sprites/plinko/trophy-plinko-3d-128.png",
+} as const;
+
+export const BRICK_BREAKER_UI_SPRITES = {
+  fireball: "/assets/sprites/brick-breaker/fireball-comet-3d-128.png",
+  brick: "/assets/sprites/brick-breaker/brick-prism-3d-128.png",
+  trophy: "/assets/sprites/brick-breaker/trophy-breaker-3d-128.png",
+} as const;
+
 
 
 

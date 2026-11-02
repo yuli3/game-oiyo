@@ -21,7 +21,7 @@ import {
   type HeroClass,
   type SpellId,
 } from "../../lib/games/emberdeep";
-import { EMBERDEEP_ENEMY_DRAW_H, EMBERDEEP_ENEMY_SPRITES, EMBERDEEP_HERO_DRAW_H, EMBERDEEP_SPRITES } from "../../lib/games/sprites";
+import { EMBERDEEP_ENEMY_DRAW_H, EMBERDEEP_ENEMY_SPRITES, EMBERDEEP_HERO_DRAW_H, EMBERDEEP_SPRITES, EMBERDEEP_UI_SPRITES } from "../../lib/games/sprites";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 
 type Phase = "briefing" | "playing" | "result";
@@ -479,7 +479,7 @@ export default function Emberdeep({ locale }: { locale: Locale }) {
       localStorage.setItem(EMBERDEEP_SAVE_KEY, JSON.stringify({ version: 1, bestScore: value, deepestRoom: next.room, preferredHero: hero }));
       return value;
     });
-    celebrate(null, { preset: "shards" });
+    celebrate(null, { preset: next.won ? "stardust" : "shards" });
     setPhase("result");
   }, [hero]);
 
@@ -511,8 +511,8 @@ export default function Emberdeep({ locale }: { locale: Locale }) {
     <img src="/games/emberdeep-social.png" alt="" className="absolute inset-0 h-full w-full object-cover opacity-35" />
     <div className="absolute inset-0 bg-gradient-to-r from-[#080b09] via-[#080b09]/90 to-[#080b09]/35" />
     <div className="relative grid min-h-[590px] gap-10 p-6 sm:p-10 lg:grid-cols-[1.05fr_.95fr] lg:p-14">
-      <div className="self-center"><p className="font-mono text-xs font-black tracking-[.28em] text-amber-400">{t.eyebrow}</p><h2 className="mt-4 text-6xl font-black uppercase leading-[.82] tracking-[-.06em] sm:text-8xl">{t.title}</h2><p className="mt-6 max-w-xl text-sm leading-7 text-stone-300 sm:text-base">{t.subtitle}</p>
-        <p className="mt-7 text-xs font-black uppercase tracking-[.18em] text-muted-foreground">{t.choose}</p>
+      <div className="self-center"><p className="inline-flex items-center gap-2 font-mono text-xs font-black tracking-[.28em] text-amber-400"><img src={EMBERDEEP_UI_SPRITES.sigil} alt="" width={20} height={20} className="size-5 object-contain drop-shadow-xs" />{t.eyebrow}</p><h2 className="mt-4 text-6xl font-black uppercase leading-[.82] tracking-[-.06em] sm:text-8xl">{t.title}</h2><p className="mt-6 max-w-xl text-sm leading-7 text-stone-300 sm:text-base">{t.subtitle}</p>
+        <p className="mt-7 inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-[.18em] text-muted-foreground"><img src={EMBERDEEP_UI_SPRITES.mana} alt="" width={16} height={16} className="size-4 object-contain" />{t.choose}</p>
         <div className="mt-3 grid grid-cols-3 gap-2">
           {(Object.keys(t.heroes) as HeroClass[]).map(id => (
             <TiltEmberButton
@@ -549,9 +549,9 @@ export default function Emberdeep({ locale }: { locale: Locale }) {
               <span>{shareCopied ? "COPIED!" : "SHARE CARD"}</span>
             </TiltEmberButton>
           )}
-          <span className="border border-white/10 bg-black/60 px-4 py-3 font-mono text-xs">{t.best}: <strong>{best.toLocaleString()}</strong></span>
+          <span className="inline-flex items-center gap-1.5 border border-white/10 bg-black/60 px-4 py-3 font-mono text-xs"><img src={EMBERDEEP_UI_SPRITES.trophy} alt="" width={16} height={16} className="size-4 object-contain" />{t.best}: <strong>{best.toLocaleString()}</strong></span>
         </div>
-        {result && <p role="status" aria-live="polite" className="mt-4 border-l-2 border-warning pl-4 font-mono text-sm text-foreground"><strong>{result.won ? t.hud.victory : t.hud.fallen}</strong> · {result.score.toLocaleString()} · {t.hud.room} {result.room} · {result.kills} KOs · {result.path}</p>}
+        {result && <p role="status" aria-live="polite" className="mt-4 flex items-center gap-2 border-l-2 border-warning pl-4 font-mono text-sm text-foreground"><img src={result.won ? EMBERDEEP_UI_SPRITES.trophy : EMBERDEEP_UI_SPRITES.sigil} alt="" width={20} height={20} className="size-5 object-contain" /><span><strong>{result.won ? t.hud.victory : t.hud.fallen}</strong> · {result.score.toLocaleString()} · {t.hud.room} {result.room} · {result.kills} KOs · {result.path}</span></p>}
       </div>
       <div className="grid content-center gap-3">{t.features.map((feature, i) => { const Icon = [Swords, Sparkles, Route][i]; return <div key={feature.title} className="flex gap-4 border-l-2 border-warning/60 bg-black/55 p-4 backdrop-blur-sm"><Icon className="size-5 shrink-0 text-warning" /><div><h3 className="text-sm font-black uppercase">{feature.title}</h3><p className="mt-1 text-xs leading-5 text-muted-foreground">{feature.body}</p></div></div>; })}<div className="mt-2 border border-white/10 bg-black/55 p-4"><div className="flex items-center gap-2 text-xs font-black uppercase"><Flame className="size-4 text-warning" />{t.local}</div><p className="mt-2 text-xs leading-5 text-muted-foreground">{t.localBody}</p></div></div>
     </div>

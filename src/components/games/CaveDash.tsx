@@ -23,7 +23,7 @@ import {
 } from "../../lib/games/cave-dash";
 import { clearCaveDashSave, loadCaveDashSave, storeCaveDashSave } from "../../lib/games/cave-dash-save";
 import { blitSheetFrame, sheetFrameIndex } from "../../lib/games/sprite-sheet";
-import { CAVE_DASH_EXHAUST_SHEET, CAVE_DASH_SHIP_HULL_SX, CAVE_DASH_SPRITES } from "../../lib/games/sprites";
+import { CAVE_DASH_EXHAUST_SHEET, CAVE_DASH_SHIP_HULL_SX, CAVE_DASH_SPRITES, CAVE_DASH_UI_SPRITES } from "../../lib/games/sprites";
 import {
   createDebrisWorld,
   type DebrisMatterLike,
@@ -277,7 +277,7 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
     if (beat && finalScore > 0) {
       MobileHapticsPro.success();
     }
-    if (beat && finalScore > 0 && !prefersReducedMotion) celebrate(canvasRef.current, { preset: "shards", colors: ["#67e8f9", "#c4b5fd", "#fef08a"], origin: { x: 0.5, y: 0.5 } });
+    if (beat && finalScore > 0 && !prefersReducedMotion) celebrate(canvasRef.current, { preset: "stardust", colors: ["#67e8f9", "#c4b5fd", "#fef08a"], origin: { x: 0.5, y: 0.5 } });
     phaseRef.current = "over";
     setPhase("over");
   }, [prefersReducedMotion]);
@@ -491,13 +491,16 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
     >
       <div className={`not-prose ${isImmersive ? "my-0 w-full max-w-md" : "my-10 mx-auto max-w-md"} rounded-3xl border border-border bg-card p-4 text-card-foreground shadow-sm select-none`}>
         <div className="mb-3 flex items-center justify-between">
-          <div>
-            <div className="text-sm font-black uppercase tracking-widest text-primary">{t.title}</div>
-            <div className="text-[11px] text-muted-foreground">{t.subtitle}</div>
+          <div className="flex items-center gap-2.5">
+            <img src={CAVE_DASH_UI_SPRITES.crystal} alt="" width={28} height={28} className="size-7 object-contain drop-shadow-xs" />
+            <div>
+              <div className="text-sm font-black uppercase tracking-widest text-primary">{t.title}</div>
+              <div className="text-[11px] text-muted-foreground">{t.subtitle}</div>
+            </div>
           </div>
           <div className="text-right text-xs font-bold">
             <div>{t.score}: <b className="text-primary">{score}</b></div>
-            <div className="text-muted-foreground">{t.best}: {best}</div>
+            <div className="inline-flex items-center gap-1 text-muted-foreground"><img src={CAVE_DASH_UI_SPRITES.trophy} alt="" width={14} height={14} className="size-3.5 object-contain" />{t.best}: {best}</div>
           </div>
         </div>
 
@@ -555,6 +558,7 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 rounded-2xl bg-black/55 px-6 text-center backdrop-blur-sm">
               {phase === "over" && (
                 <>
+                  <img src={CAVE_DASH_UI_SPRITES.trophy} alt="" width={40} height={40} className="size-10 object-contain drop-shadow-sm" />
                   {isNewBest && <div className="text-sm font-black text-primary">{t.newBest}</div>}
                   <div className="text-xl font-black text-white">{t.gameOver}</div>
                   {death && <div className="text-sm font-bold text-warning">{t.death[death]}</div>}
@@ -568,7 +572,7 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
               {phase === "paused" && <div className="text-xl font-black text-white">{t.paused}</div>}
               {phase === "menu" && (
                 <>
-                  <div className="text-4xl">🚀</div>
+                  <img src={CAVE_DASH_UI_SPRITES.thruster} alt="" width={48} height={48} className="size-12 object-contain drop-shadow-sm" />
                   <p className="max-w-xs text-xs leading-relaxed text-white/80">{t.controls}</p>
                 </>
               )}

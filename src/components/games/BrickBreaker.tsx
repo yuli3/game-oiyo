@@ -27,7 +27,7 @@ import {
 } from "../../lib/games/brick-breaker";
 import { getPrefersReducedMotion, subscribeToReducedMotion } from "../../lib/games/reduced-motion";
 import { blitSheetFrame } from "../../lib/games/sprite-sheet";
-import { BRICK_BREAKER_SPRITES, FX_SPARK_SHEET, FX_SPRITES } from "../../lib/games/sprites";
+import { BRICK_BREAKER_SPRITES, BRICK_BREAKER_UI_SPRITES, FX_SPARK_SHEET, FX_SPRITES } from "../../lib/games/sprites";
 import { createDebrisWorld, type DebrisMatterLike, type DebrisWorld } from "../../lib/games/debris-world";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { playSpatialTone } from "../../lib/games/spatial-audio";
@@ -295,7 +295,7 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
       nextGoal: brickBreakerNextGoal(finalScore, saved.value),
     });
     setIsNewBest(beat && finalScore > 0);
-    if (beat && finalScore > 0 && !reducedMotionRef.current) celebrate(canvasRef.current, { preset: "shards", colors: ["#a78bfa", "#f472b6", "#fde68a"], origin: { x: 0.5, y: 0.55 } });
+    if (beat && finalScore > 0 && !reducedMotionRef.current) celebrate(canvasRef.current, { preset: "stardust", colors: ["#a78bfa", "#f472b6", "#fde68a"], origin: { x: 0.5, y: 0.55 } });
     setPhase("over");
   }, []);
 
@@ -642,14 +642,17 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
       }
     >
       <div className="mb-3 flex items-center justify-between w-full max-w-md">
-        <div>
-          <div className="text-sm font-black uppercase tracking-widest text-primary">{t.title}</div>
-          <div className="text-[11px] text-muted-foreground">{t.subtitle}</div>
+        <div className="flex items-center gap-2.5">
+          <img src={BRICK_BREAKER_UI_SPRITES.fireball} alt="" width={28} height={28} className="size-7 object-contain drop-shadow-xs" />
+          <div>
+            <div className="text-sm font-black uppercase tracking-widest text-primary">{t.title}</div>
+            <div className="text-[11px] text-muted-foreground">{t.subtitle}</div>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <div className="text-right text-xs font-bold">
             <div>{t.score}: <b className="text-primary">{score}</b></div>
-            <div className="text-muted-foreground">{t.best}: {best} · {t.bestLevel}: {bestLevel}</div>
+            <div className="inline-flex items-center gap-1 text-muted-foreground"><img src={BRICK_BREAKER_UI_SPRITES.trophy} alt="" width={14} height={14} className="size-3.5 object-contain" />{t.best}: {best} · {t.bestLevel}: {bestLevel}</div>
           </div>
           <button
             type="button"
@@ -712,6 +715,7 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 rounded-2xl bg-black/55 px-6 text-center backdrop-blur-sm">
             {phase === "over" && (
               <>
+                <img src={BRICK_BREAKER_UI_SPRITES.trophy} alt="" width={40} height={40} className="size-10 object-contain drop-shadow-sm" />
                 {isNewBest && <div className="text-sm font-black text-violet-300">{t.newBest}</div>}
                 <div className="text-xl font-black text-white">{t.gameOver}</div>
                 <div className="text-sm font-bold text-amber-200">{locale === "ko" ? "공을 놓쳤습니다" : locale === "ja" ? "ボールを落とした" : locale === "zh" ? "球掉下去了" : locale === "fr" ? "Balle perdue" : locale === "es" ? "Perdiste la bola" : "Ball dropped"}</div>
@@ -726,7 +730,7 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
             )}
             {phase === "menu" && (
               <>
-                <div className="text-4xl">🧱</div>
+                <img src={BRICK_BREAKER_UI_SPRITES.brick} alt="" width={48} height={48} className="size-12 object-contain drop-shadow-sm" />
                 <p className="max-w-xs text-xs leading-relaxed text-white/80">{t.controls}</p>
               </>
             )}

@@ -14,7 +14,7 @@ import {
     downloadShareCard,
 } from '../../lib/games/share-card';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
-import { getSpriteUrl } from '../../lib/games/sprites';
+import { PLINKO_SPRITES } from '../../lib/games/sprites';
 
 function TiltPlinkoButton({
     children,
@@ -251,7 +251,7 @@ const Plinko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 if (multiplier >= 5) {
                     MobileHapticsPro.success();
                     if (containerRef.current) {
-                        celebrate(containerRef.current, { preset: "coins" });
+                        celebrate(containerRef.current, { preset: "stardust" });
                     }
                 } else {
                     MobileHapticsPro.medium();
@@ -400,12 +400,12 @@ const Plinko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 <div className="flex flex-col items-center gap-4">
                     <div className="flex w-full max-w-md items-center justify-between text-xs font-bold text-muted-foreground">
                         <span className="flex items-center gap-1.5">
-                            <img src={getSpriteUrl('coin', 64)} alt="Balance" width={64} height={64} className="size-4 object-contain inline-block drop-shadow-xs" />
+                            <img src={PLINKO_SPRITES.ball} alt="Balance" width={64} height={64} className="size-4.5 object-contain inline-block drop-shadow-xs" />
                             {t.balance}: <span className="text-primary text-base font-black">{balance}</span>
                         </span>
                         {best !== null && (
                             <span className="flex items-center gap-1.5">
-                                <img src={getSpriteUrl('trophy', 64)} alt="Best" width={64} height={64} className="size-4 object-contain inline-block drop-shadow-xs" />
+                                <img src={PLINKO_SPRITES.trophy} alt="Best" width={64} height={64} className="size-4.5 object-contain inline-block drop-shadow-xs" />
                                 {t.best}: <span className="text-chart-2 font-black">{best}</span>
                             </span>
                         )}
@@ -457,9 +457,10 @@ const Plinko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         <TiltPlinkoButton
                             onClick={drop}
                             disabled={!canDrop}
-                            className="flex-1 py-3 bg-primary text-primary-foreground rounded-2xl font-black text-sm shadow-lg disabled:opacity-50"
+                            className="flex-1 inline-flex items-center justify-center gap-2 py-3 bg-primary text-primary-foreground rounded-2xl font-black text-sm shadow-lg disabled:opacity-50"
                         >
-                            {isDropping ? t.dropping : t.drop}
+                            <img src={PLINKO_SPRITES.peg} alt="" width={18} height={18} className="size-4.5 object-contain" />
+                            <span>{isDropping ? t.dropping : t.drop}</span>
                         </TiltPlinkoButton>
                     </div>
 
@@ -477,9 +478,16 @@ const Plinko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                             >
                                 <div>
                                     {lastResult.multiplier >= 5 && (
-                                        <div className="flex justify-center mb-1">
+                                        <div className="flex justify-center gap-2 mb-1">
                                             <img
-                                                src={getSpriteUrl('trophy', 64)}
+                                                src={PLINKO_SPRITES.pocket}
+                                                alt="Jackpot Pocket"
+                                                width={64}
+                                                height={64}
+                                                className="size-10 object-contain drop-shadow-sm"
+                                            />
+                                            <img
+                                                src={PLINKO_SPRITES.trophy}
                                                 alt="Mega Payout Trophy"
                                                 width={64}
                                                 height={64}
