@@ -655,6 +655,13 @@ export const MINI_METRO_SPRITES = {
   trophy: "/assets/sprites/mini-metro/trophy-transit-master-128.png",
 } as const;
 
+export const BAD_NORTH_SPRITES = {
+  infantry: "/assets/sprites/bad-north/squad-infantry-3d-128.png",
+  archer: "/assets/sprites/bad-north/squad-archer-3d-128.png",
+  longship: "/assets/sprites/bad-north/viking-longship-3d-128.png",
+  trophy: "/assets/sprites/bad-north/trophy-island-3d-128.png",
+} as const;
+
 export const DOT_PET_SPRITES: Record<string, { baby: string; adult: string }> = {
   normal: {
     baby: "/assets/sprites/dot-pet/normal-baby.png",

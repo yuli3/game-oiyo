@@ -15,6 +15,13 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { BAD_NORTH_SPRITES } from "../../lib/games/sprites";
+import { celebrate } from "../../lib/games/celebration";
+import {
+  loadArcadePassProgress,
+  reportMissionProgress,
+  saveArcadePassProgress,
+} from "../../lib/games/arcade-pass";
 
 function TiltSquadCardButton({
   children,
@@ -76,6 +83,7 @@ export default function BadNorthTactics() {
   const [isMuted, setIsMuted] = useState(false);
   const [gameSpeed, setGameSpeed] = useState<1 | 2>(1);
 
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const particlesRef = useRef<Particle[]>([]);
@@ -84,6 +92,24 @@ export default function BadNorthTactics() {
 
   const isMutedRef = useRef(isMuted);
   isMutedRef.current = isMuted;
+
+  // Stardust celebration and mission report on victory
+  useEffect(() => {
+    if (gameState.gameStatus === "victory") {
+      MobileHapticsPro.success();
+      if (containerRef.current) {
+        celebrate(containerRef.current, { preset: "stardust" });
+      }
+      try {
+        const dateKey = new Date().toISOString().slice(0, 10);
+        const current = loadArcadePassProgress(dateKey);
+        const updated = reportMissionProgress(current, "bad-north-tactics", 1);
+        saveArcadePassProgress(updated);
+      } catch {
+        // arcade pass fallback
+      }
+    }
+  }, [gameState.gameStatus]);
 
   // Sound synthesis
   const playSound = useCallback((type: "horn" | "sword" | "bow" | "fire" | "win" | "splash") => {
@@ -619,7 +645,7 @@ export default function BadNorthTactics() {
   }, [gameState, isPaused, gameSpeed]);
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 sm:p-6 text-card-foreground shadow-lg">
+    <div ref={containerRef} className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 sm:p-6 text-card-foreground shadow-lg">
       {/* Top Header & Wave Controls */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
         <div className="flex items-center gap-2">
@@ -699,7 +725,10 @@ export default function BadNorthTactics() {
 
         {/* Raiders Left */}
         <div className="rounded-lg border border-border bg-muted/40 p-2.5 text-center">
-          <span className="text-xs text-muted-foreground">ENEMIES LEFT</span>
+          <span className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+            <img src={BAD_NORTH_SPRITES.longship} alt="Longship" className="h-3.5 w-3.5 object-contain" />
+            ENEMIES LEFT
+          </span>
           <p className="text-xl font-black tracking-tight text-destructive">
             {gameState.raiders.length + gameState.ships.filter((s) => !s.landed).length * 6}
           </p>
@@ -727,9 +756,13 @@ export default function BadNorthTactics() {
 
         {/* Victory Screen */}
         {gameState.gameStatus === "victory" && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 p-6 backdrop-blur-xs text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-success/20 text-success mb-2">
-              <Trophy className="h-8 w-8" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/85 p-6 backdrop-blur-xs text-center z-20">
+            <div className="relative mb-2">
+              <img
+                src={BAD_NORTH_SPRITES.trophy}
+                alt="Nordic Island Defender Trophy"
+                className="h-20 w-20 object-contain drop-shadow-xl animate-bounce"
+              />
             </div>
             <h3 className="text-2xl font-black text-foreground">ISLAND DEFENDED!</h3>
             <p className="text-xs text-muted-foreground mt-1 max-w-xs">
@@ -758,9 +791,13 @@ export default function BadNorthTactics() {
 
         {/* Defeat Screen */}
         {gameState.gameStatus === "defeat" && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/85 p-6 backdrop-blur-xs text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-destructive/20 text-destructive mb-2">
-              <Flame className="h-8 w-8" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/85 p-6 backdrop-blur-xs text-center z-20">
+            <div className="mb-2">
+              <img
+                src={BAD_NORTH_SPRITES.longship}
+                alt="Invading Longship"
+                className="h-16 w-16 object-contain opacity-80 drop-shadow-md"
+              />
             </div>
             <h3 className="text-2xl font-black text-destructive">ISLAND FALLEN</h3>
             <p className="text-xs text-muted-foreground mt-1 max-w-xs">
@@ -792,13 +829,21 @@ export default function BadNorthTactics() {
               onClick={() => handleSelectSquad(sq.id)}
             >
               <div className="flex items-center gap-2.5">
-                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-background border border-border">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-background border border-border overflow-hidden p-1 shadow-xs">
                   {sq.type === "infantry" ? (
-                    <Swords className="h-4 w-4 text-primary" />
+                    <img
+                      src={BAD_NORTH_SPRITES.infantry}
+                      alt="Infantry"
+                      className="h-full w-full object-contain"
+                    />
                   ) : sq.type === "archers" ? (
-                    <Crosshair className="h-4 w-4 text-success" />
+                    <img
+                      src={BAD_NORTH_SPRITES.archer}
+                      alt="Archers"
+                      className="h-full w-full object-contain"
+                    />
                   ) : (
-                    <Shield className="h-4 w-4 text-warning" />
+                    <Shield className="h-5 w-5 text-warning" />
                   )}
                 </span>
                 <div>
