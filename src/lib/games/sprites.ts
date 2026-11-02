@@ -613,6 +613,13 @@ export const VAMPIRE_SURVIVOR_SPRITES = {
   trophy: "/assets/sprites/vampire-survivor/trophy-dracula-slayer-128.png",
 } as const;
 
+export const SLOT_ROGUE_SPRITES = {
+  coin: "/assets/sprites/slot-rogue/symbol-lucky-coin-128.png",
+  gem: "/assets/sprites/slot-rogue/symbol-gem-sapphire-128.png",
+  crown: "/assets/sprites/slot-rogue/symbol-royal-crown-128.png",
+  trophy: "/assets/sprites/slot-rogue/trophy-jackpot-master-128.png",
+} as const;
+
 export const DOT_PET_SPRITES: Record<string, { baby: string; adult: string }> = {
   normal: {
     baby: "/assets/sprites/dot-pet/normal-baby.png",

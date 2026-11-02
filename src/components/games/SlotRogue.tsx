@@ -1,7 +1,8 @@
 import { useState, useCallback } from 'react';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
-import { getSpriteUrl } from '../../lib/games/sprites';
+import { getSpriteUrl, SLOT_ROGUE_SPRITES } from '../../lib/games/sprites';
+import { celebrate } from '../../lib/games/celebration';
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from '../../lib/games/share-card';
 import { Share2, Check, Maximize2, Minimize2 } from 'lucide-react';
 import {
@@ -39,6 +40,14 @@ const SYMBOL_ICONS: Record<SymbolKey, string> = {
   crown: '👑',
 };
 
+function getSlotSymbolSprite(symKey: SymbolKey | null): string | null {
+  if (!symKey) return null;
+  if (symKey === 'coin') return SLOT_ROGUE_SPRITES.coin;
+  if (symKey === 'gem') return SLOT_ROGUE_SPRITES.gem;
+  if (symKey === 'crown' || symKey === 'king') return SLOT_ROGUE_SPRITES.crown;
+  return null;
+}
+
 function TiltDraftChoiceButton({
   symKey,
   isKo,
@@ -50,6 +59,7 @@ function TiltDraftChoiceButton({
 }) {
   const spec = SYMBOL_CATALOG[symKey];
   const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  const sprite = getSlotSymbolSprite(symKey);
 
   return (
     <button
@@ -64,9 +74,20 @@ function TiltDraftChoiceButton({
       }}
       className="flex w-full items-center gap-3 rounded-xl border border-border bg-background p-3 text-left transition hover:border-primary hover:bg-accent will-change-transform transform-(--card-tilt)"
     >
-      <span className="shrink-0 text-3xl" aria-hidden="true">
-        {SYMBOL_ICONS[symKey]}
-      </span>
+      <div className="size-9 shrink-0 flex items-center justify-center">
+        {sprite ? (
+          <img
+            src={sprite}
+            alt={spec.nameKo}
+            className="size-full object-contain filter drop-shadow-xs select-none pointer-events-none"
+            draggable={false}
+          />
+        ) : (
+          <span className="text-3xl" aria-hidden="true">
+            {SYMBOL_ICONS[symKey]}
+          </span>
+        )}
+      </div>
       <div className="flex-1">
         <div className="flex items-center justify-between">
           <span className="text-sm font-bold text-foreground">
@@ -107,6 +128,7 @@ export default function SlotRogue({ locale }: Props) {
     setState(next);
     if (next.status === 'victory') {
       MobileHapticsPro.success();
+      celebrate(containerRef.current, { preset: 'stardust' });
     } else if (next.status === 'evicted') {
       MobileHapticsPro.error();
     }
@@ -259,6 +281,7 @@ export default function SlotRogue({ locale }: Props) {
             {state.grid.flatMap((row) =>
               row.map((cell) => {
                 const spec = cell.symbol ? SYMBOL_CATALOG[cell.symbol] : null;
+                const sprite = getSlotSymbolSprite(cell.symbol);
                 return (
                   <div
                     key={`${cell.row}-${cell.col}`}
@@ -270,9 +293,20 @@ export default function SlotRogue({ locale }: Props) {
                           : 'border-border bg-card'
                     }`}
                   >
-                    <span className="text-3xl leading-none" aria-hidden="true">
-                      {cell.symbol ? SYMBOL_ICONS[cell.symbol] : '·'}
-                    </span>
+                    <div className="size-8 flex items-center justify-center">
+                      {sprite ? (
+                        <img
+                          src={sprite}
+                          alt={spec?.nameKo || ''}
+                          className="size-full object-contain filter drop-shadow-xs select-none pointer-events-none"
+                          draggable={false}
+                        />
+                      ) : (
+                        <span className="text-3xl leading-none" aria-hidden="true">
+                          {cell.symbol ? SYMBOL_ICONS[cell.symbol] : '·'}
+                        </span>
+                      )}
+                    </div>
                     <div className="mt-1.5 max-w-full truncate text-center text-xs font-semibold text-foreground">
                       {spec ? (isKo ? spec.nameKo : spec.nameEn) : isKo ? '빈 칸' : 'Empty'}
                     </div>
@@ -349,9 +383,9 @@ export default function SlotRogue({ locale }: Props) {
           {state.status === 'victory' && (
             <div className="flex flex-col items-center rounded-2xl border border-primary bg-primary/10 p-4 text-center">
               <img
-                src={getSpriteUrl("trophy", 64)}
+                src={SLOT_ROGUE_SPRITES.trophy}
                 alt="Victory"
-                className="size-14 animate-bounce drop-shadow mb-1"
+                className="size-16 animate-bounce drop-shadow-xl mb-1 select-none pointer-events-none"
               />
               <h3 className="text-lg font-extrabold text-primary">
                 {isKo ? '🏆 4차 임대료 완납! 악덕 집주인 격파!' : '🏆 All 4 Rent Cycles Paid! Landlord Defeated!'}
