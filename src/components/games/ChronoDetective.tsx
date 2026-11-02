@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   loadArcadePassProgress,
   reportMissionProgress,
   saveArcadePassProgress,
 } from '../../lib/games/arcade-pass';
+import { celebrate } from '../../lib/games/celebration';
+import { CHRONO_DETECTIVE_SPRITES } from '../../lib/games/sprites';
 import {
   applyAutoDeductionHint,
   CAUSE_OPTIONS,
@@ -122,6 +124,7 @@ function TiltMemoryTabButton({
 
 export default function ChronoDetective({ locale }: Props) {
   const isKo = locale === 'ko';
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const [state, setState] = useState<ChronoDetectiveState>(() =>
     createChronoDetectiveState()
   );
@@ -153,6 +156,9 @@ export default function ChronoDetective({ locale }: Props) {
     if (next.status === 'case-solved') {
       playChronoAudio('victory');
       MobileHapticsPro.success();
+      if (containerRef.current) {
+        celebrate(containerRef.current, { preset: 'stardust' });
+      }
       recordArcadePass(1);
     } else if (next.confirmedTriadsCount > state.confirmedTriadsCount) {
       playChronoAudio('sealed');
@@ -165,22 +171,33 @@ export default function ChronoDetective({ locale }: Props) {
     MobileHapticsPro.success();
     const next = applyAutoDeductionHint(state);
     setState(next);
+    if (containerRef.current) {
+      celebrate(containerRef.current, { preset: 'stardust' });
+    }
     recordArcadePass(1);
   };
 
   const activeScene = MARITIME_SCENES[state.activeSceneIndex];
 
   return (
-    <div className="mx-auto max-w-5xl p-4 text-foreground">
+    <div ref={containerRef} className="mx-auto max-w-5xl p-4 text-foreground">
       {/* Top Pocket Watch & Rule of Three HUD */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 text-card-foreground shadow-sm">
         <div className="flex flex-wrap items-center gap-3">
+          <img
+            src={CHRONO_DETECTIVE_SPRITES.watch}
+            alt="Memento Mori Pocket Watch"
+            width={48}
+            height={48}
+            className="size-12 object-contain drop-shadow-sm"
+          />
           <div className="rounded-xl border border-border bg-secondary px-3.5 py-2 text-secondary-foreground">
             <div className="text-xs text-muted-foreground">
               {isKo ? '⏱️ 3인의 법칙 검증 (Rule of Three)' : '⏱️ Rule of Three Validation'}
             </div>
-            <div className="text-xl font-extrabold text-primary">
-              📖 {state.confirmedTriadsCount} / 3{' '}
+            <div className="flex items-center gap-1.5 text-xl font-extrabold text-primary">
+              <img src={CHRONO_DETECTIVE_SPRITES.ledger} alt="" width={20} height={20} className="size-5 object-contain" />
+              {state.confirmedTriadsCount} / 3{' '}
               <span className="text-xs font-semibold text-foreground">
                 {state.status === 'case-solved'
                   ? isKo
@@ -197,8 +214,9 @@ export default function ChronoDetective({ locale }: Props) {
             <div className="text-xs text-muted-foreground">
               {isKo ? '단서 조사 현황' : 'Inspected Clues'}
             </div>
-            <div className="text-lg font-bold text-foreground">
-              🔍 {state.inspectedClueIds.length} / 4
+            <div className="flex items-center gap-1.5 text-lg font-bold text-foreground">
+              <img src={CHRONO_DETECTIVE_SPRITES.lens} alt="" width={18} height={18} className="size-4.5 object-contain" />
+              {state.inspectedClueIds.length} / 4
             </div>
           </div>
         </div>
@@ -223,11 +241,18 @@ export default function ChronoDetective({ locale }: Props) {
 
       {/* Case Solved Banner */}
       {state.status === 'case-solved' && (
-        <div className="mb-4 rounded-2xl border border-primary bg-primary/10 p-4 text-center">
+        <div className="mb-4 flex flex-col items-center gap-2 rounded-2xl border border-primary bg-primary/10 p-4 text-center">
+          <img
+            src={CHRONO_DETECTIVE_SPRITES.trophy}
+            alt="Obra Dinn Fate Ledger Trophy"
+            width={56}
+            height={56}
+            className="size-14 object-contain animate-bounce drop-shadow-md"
+          />
           <h3 className="text-lg font-extrabold text-primary">
             {isKo
-              ? '🏆 [3인의 법칙 달성!] 상선 오브라 딘 호의 3대 비극과 진범이 장부에 영구 기록되었습니다!'
-              : '🏆 [Rule of Three Complete!] All 3 Maritime Fates Have Been Permanently Sealed in the Ledger!'}
+              ? '[3인의 법칙 달성!] 상선 오브라 딘 호의 3대 비극과 진범이 장부에 영구 기록되었습니다!'
+              : '[Rule of Three Complete!] All 3 Maritime Fates Have Been Permanently Sealed in the Ledger!'}
           </h3>
         </div>
       )}

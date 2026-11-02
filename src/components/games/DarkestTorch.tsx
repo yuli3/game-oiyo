@@ -6,8 +6,10 @@ import {
   saveArcadePassProgress,
 } from '../../lib/games/arcade-pass';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { celebrate } from '../../lib/games/celebration';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import { recordResult } from '../../lib/games/records';
+import { DARKEST_TORCH_SPRITES, getSpriteUrl } from '../../lib/games/sprites';
 import {
   createInitialDarkestTorchState,
   executeHeroSkill,
@@ -81,6 +83,9 @@ export default function DarkestTorch({ locale = 'en' }: Props) {
   useEffect(() => {
     if (state.status === 'won') {
       MobileHapticsPro.success();
+      if (containerRef.current) {
+        celebrate(containerRef.current, { preset: 'stardust' });
+      }
       try {
         const dateKey = new Date().toISOString().slice(0, 10);
         const current = loadArcadePassProgress(dateKey);
@@ -93,7 +98,7 @@ export default function DarkestTorch({ locale = 'en' }: Props) {
     } else if (state.status === 'lost') {
       MobileHapticsPro.warning();
     }
-  }, [state.status]);
+  }, [containerRef, state.status]);
 
   const torchTier = getTorchLightTier(state.torch);
 
@@ -150,27 +155,37 @@ export default function DarkestTorch({ locale = 'en' }: Props) {
     >
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
-        <div>
-          <h1 className="text-xl font-black tracking-tight md:text-2xl">
-            {isKo
-              ? '🕯️ 다키스트 던전 횃불 원정 (Torchlight Stress Dungeon)'
-              : '🕯️ Torchlight Stress Dungeon'}
-          </h1>
-          <p className="mt-1 text-xs text-muted-foreground md:text-sm">
-            {isKo
-              ? '4열 파티 포지셔닝(Rank 1~4), 횃불 광량(Torchlight), 스트레스 100 결의 판정(영웅적 각성 vs 붕괴)을 관리하며 강령술사 군주를 토벌하세요.'
-              : 'Command a 4-Rank expedition, manage Torchlight & Stress 100 Resolve Checks (Virtue vs Affliction), and vanquish the Necromancer Lord.'}
-          </p>
+        <div className="flex items-center gap-3">
+          <img
+            src={DARKEST_TORCH_SPRITES.torch}
+            alt="Expedition Torch"
+            width={44}
+            height={44}
+            className="size-11 object-contain drop-shadow-md"
+          />
+          <div>
+            <h1 className="text-xl font-black tracking-tight md:text-2xl">
+              {isKo
+                ? '다키스트 던전 횃불 원정 (Torchlight Stress Dungeon)'
+                : 'Torchlight Stress Dungeon'}
+            </h1>
+            <p className="mt-1 text-xs text-muted-foreground md:text-sm">
+              {isKo
+                ? '4열 파티 포지셔닝(Rank 1~4), 횃불 광량(Torchlight), 스트레스 100 결의 판정(영웅적 각성 vs 붕괴)을 관리하며 강령술사 군주를 토벌하세요.'
+                : 'Command a 4-Rank expedition, manage Torchlight & Stress 100 Resolve Checks (Virtue vs Affliction), and vanquish the Necromancer Lord.'}
+            </p>
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <TiltTorchButton
             disabled={state.torchesInPack <= 0}
             onClick={onRelightTorch}
-            className="rounded-xl bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground shadow hover:opacity-90 disabled:opacity-45"
+            className="flex items-center gap-1.5 rounded-xl bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground shadow hover:opacity-90 disabled:opacity-45"
           >
+            <img src={DARKEST_TORCH_SPRITES.torch} alt="" width={16} height={16} className="size-4 object-contain" />
             {isKo
-              ? `🔥 횃불 점화 (+30 광량 · 잔여 ${state.torchesInPack}개)`
-              : `🔥 Light Torch (+30 · ${state.torchesInPack} left)`}
+              ? `횃불 점화 (+30 광량 · 잔여 ${state.torchesInPack}개)`
+              : `Light Torch (+30 · ${state.torchesInPack} left)`}
           </TiltTorchButton>
           <TiltTorchButton
             onClick={() => setState(createInitialDarkestTorchState(Date.now()))}
@@ -213,16 +228,18 @@ export default function DarkestTorch({ locale = 'en' }: Props) {
             <div className="text-xs font-semibold text-muted-foreground">
               {isKo ? '횃불 광량 단계' : 'Torchlight Tier'}
             </div>
-            <div className="mt-1 text-sm font-black text-primary">
-              🕯️ {state.torch}% ({torchTier.toUpperCase()})
+            <div className="mt-1 flex items-center gap-1.5 text-sm font-black text-primary">
+              <img src={DARKEST_TORCH_SPRITES.torch} alt="" width={16} height={16} className="size-4 object-contain" />
+              {state.torch}% ({torchTier.toUpperCase()})
             </div>
           </div>
           <div className="rounded-2xl border border-border bg-background p-2.5">
             <div className="text-xs font-semibold text-muted-foreground">
               {isKo ? '전리품 금화' : 'Looted Gold'}
             </div>
-            <div className="mt-1 text-sm font-black text-foreground">
-              🪙 {state.gold} G
+            <div className="mt-1 flex items-center gap-1.5 text-sm font-black text-foreground">
+              <img src={getSpriteUrl('coin', 64)} alt="" width={16} height={16} className="size-4 object-contain" />
+              {state.gold} G
             </div>
           </div>
           <div className="rounded-2xl border border-border bg-background p-2.5">
@@ -454,18 +471,37 @@ export default function DarkestTorch({ locale = 'en' }: Props) {
       {/* Win / Loss Banner */}
       {state.status !== 'playing' && (
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary bg-primary/10 p-4">
-          <div>
-            <div className="text-sm font-black text-foreground">
-              {state.status === 'won'
-                ? isKo
-                  ? '🏆 강령술사 군주 토벌 완료! 폐허의 어둠 속에서 원정대가 승리했습니다!'
-                  : '🏆 Necromancer Lord Vanquished! The Expedition Triumphed!'
-                : isKo
-                  ? '💀 원정대가 심연의 공포에 쓰러졌습니다.'
-                  : '💀 The Expedition Fell Into the Abyss.'}
-            </div>
-            <div className="mt-1 text-xs text-muted-foreground">
-              Score: {state.score} · Gold: {state.gold} G · Torch: {state.torch}%
+          <div className="flex items-center gap-3">
+            {state.status === 'won' ? (
+              <img
+                src={DARKEST_TORCH_SPRITES.trophy}
+                alt="Expedition Trophy"
+                width={56}
+                height={56}
+                className="size-14 object-contain animate-bounce drop-shadow-md"
+              />
+            ) : (
+              <img
+                src={DARKEST_TORCH_SPRITES.skull}
+                alt="Necromancer Skull"
+                width={52}
+                height={52}
+                className="size-13 object-contain drop-shadow-md"
+              />
+            )}
+            <div>
+              <div className="text-sm font-black text-foreground">
+                {state.status === 'won'
+                  ? isKo
+                    ? '강령술사 군주 토벌 완료! 폐허의 어둠 속에서 원정대가 승리했습니다!'
+                    : 'Necromancer Lord Vanquished! The Expedition Triumphed!'
+                  : isKo
+                    ? '원정대가 심연의 공포에 쓰러졌습니다.'
+                    : 'The Expedition Fell Into the Abyss.'}
+              </div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                Score: {state.score} · Gold: {state.gold} G · Torch: {state.torch}%
+              </div>
             </div>
           </div>
           <TiltTorchButton

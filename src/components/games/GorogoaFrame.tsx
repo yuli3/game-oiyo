@@ -3,6 +3,7 @@ import { Maximize2, Minimize2 } from "lucide-react";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { celebrate } from "../../lib/games/celebration";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { GOROGOA_FRAME_SPRITES } from "../../lib/games/sprites";
 import {
   loadArcadePassProgress,
   reportMissionProgress,
@@ -489,7 +490,7 @@ export default function GorogoaFrame({ locale = "ko" }: Props) {
       playHarmonicTone(523.25, 0.45);
       MobileHapticsPro.success();
       if (containerRef.current) {
-        celebrate(containerRef.current, { preset: st.isAllCleared ? "stardust" : "leaves" });
+        celebrate(containerRef.current, { preset: "stardust" });
       }
       const dateKey = new Date().toISOString().slice(0, 10);
       const pass = loadArcadePassProgress(dateKey);
@@ -605,18 +606,28 @@ export default function GorogoaFrame({ locale = "ko" }: Props) {
     >
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="rounded-md bg-primary/15 px-2.5 py-0.5 text-xs font-bold text-primary">
-              {spec.title[lang]}
-            </span>
-            <span className="text-xs font-semibold text-muted-foreground">
-              {t.movesLabel}: {uiMoves}
-            </span>
+        <div className="flex items-center gap-3">
+          <img
+            src={GOROGOA_FRAME_SPRITES.frame}
+            alt="Gorogoa Stencil Frame"
+            width={40}
+            height={40}
+            className="size-10 object-contain drop-shadow-sm"
+          />
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="rounded-md bg-primary/15 px-2.5 py-0.5 text-xs font-bold text-primary">
+                {spec.title[lang]}
+              </span>
+              <span className="flex items-center gap-1 text-xs font-semibold text-muted-foreground">
+                <img src={GOROGOA_FRAME_SPRITES.fruit} alt="" width={14} height={14} className="size-3.5 object-contain" />
+                {t.movesLabel}: {uiMoves}
+              </span>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {spec.objective[lang]}
+            </p>
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {spec.objective[lang]}
-          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -682,9 +693,18 @@ export default function GorogoaFrame({ locale = "ko" }: Props) {
 
       {uiCleared && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-primary/10 px-4 py-3">
-          <span className="text-sm font-bold text-primary">
-            {uiAllCleared ? t.allCleared : t.chapterCleared}
-          </span>
+          <div className="flex items-center gap-2.5">
+            <img
+              src={GOROGOA_FRAME_SPRITES.trophy}
+              alt="Gorogoa Trophy"
+              width={44}
+              height={44}
+              className="size-11 object-contain animate-bounce drop-shadow-md"
+            />
+            <span className="text-sm font-bold text-primary">
+              {uiAllCleared ? t.allCleared : t.chapterCleared}
+            </span>
+          </div>
           {uiChapterIdx < CHAPTERS.length - 1 && (
             <TiltGorogoaButton
               onClick={() => loadChapter(uiChapterIdx + 1)}

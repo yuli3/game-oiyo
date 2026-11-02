@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
-import { getSpriteUrl } from "../../lib/games/sprites";
+import { STICKER_COZY_SPRITES } from "../../lib/games/sprites";
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "../../lib/games/share-card";
 import { celebrate } from "../../lib/games/celebration";
 import { Maximize2, Minimize2, Camera, Check } from "lucide-react";
@@ -561,19 +561,29 @@ export default function StickerCozy({ locale = "ko" }: Props) {
     >
       {/* Header Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="rounded-md bg-primary/15 px-2.5 py-0.5 text-xs font-bold text-primary">
-              {theme.title[lang]}
-            </span>
-            <span className="text-xs font-semibold text-muted-foreground">
-              {t.placedLabel}: {uiPlacedIds.length} / {theme.stickers.length} ·{" "}
-              {t.scoreLabel}: {uiScore}
-            </span>
+        <div className="flex items-center gap-3">
+          <img
+            src={STICKER_COZY_SPRITES.binder}
+            alt="Sticker Binder"
+            width={42}
+            height={42}
+            className="size-10.5 object-contain drop-shadow-sm"
+          />
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="rounded-md bg-primary/15 px-2.5 py-0.5 text-xs font-bold text-primary">
+                {theme.title[lang]}
+              </span>
+              <span className="flex items-center gap-1 text-xs font-semibold text-muted-foreground">
+                <img src={STICKER_COZY_SPRITES.cat} alt="" width={14} height={14} className="size-3.5 object-contain" />
+                {t.placedLabel}: {uiPlacedIds.length} / {theme.stickers.length} ·{" "}
+                {t.scoreLabel}: {uiScore}
+              </span>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {theme.subtitle[lang]}
+            </p>
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {theme.subtitle[lang]}
-          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -594,8 +604,9 @@ export default function StickerCozy({ locale = "ko" }: Props) {
           <button
             type="button"
             onClick={handleHint}
-            className="rounded-lg bg-secondary px-3 py-1.5 text-xs font-bold text-secondary-foreground transition hover:opacity-90"
+            className="flex items-center gap-1.5 rounded-lg bg-secondary px-3 py-1.5 text-xs font-bold text-secondary-foreground transition hover:opacity-90"
           >
+            <img src={STICKER_COZY_SPRITES.tweezers} alt="" width={15} height={15} className="size-3.5 object-contain" />
             {t.hintBtn}
           </button>
           <button
@@ -628,8 +639,10 @@ export default function StickerCozy({ locale = "ko" }: Props) {
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary/40 bg-primary/10 p-4 shadow-md">
           <div className="flex items-center gap-3">
             <img
-              src={getSpriteUrl("trophy")}
-              alt="3D Gold Trophy"
+              src={STICKER_COZY_SPRITES.trophy}
+              alt="3D Cozy Trophy"
+              width={48}
+              height={48}
               className="w-12 h-12 drop-shadow-md animate-bounce"
             />
             <div>

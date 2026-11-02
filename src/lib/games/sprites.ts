@@ -367,6 +367,7 @@ export const KINGDOMINO_SPRITES = {
   swamp: "/assets/sprites/kingdomino/swamp.png",
   mine: "/assets/sprites/kingdomino/mine.png",
   castle: "/assets/sprites/kingdomino/castle.png",
+  trophy: "/assets/sprites/kingdomino/trophy-kingdomino-3d-128.png",
 } as const;
 
 export const LETTER_SWAP_SPRITES = {
@@ -789,6 +790,34 @@ export const BORDER_INSPECTOR_SPRITES = {
   stamp: "/assets/sprites/border-inspector/stamp-approved-3d-128.png",
   seal: "/assets/sprites/border-inspector/seal-arstotzka-3d-128.png",
   trophy: "/assets/sprites/border-inspector/trophy-border-3d-128.png",
+} as const;
+
+export const DARKEST_TORCH_SPRITES = {
+  torch: "/assets/sprites/darkest-torch/torch-flame-3d-128.png",
+  helm: "/assets/sprites/darkest-torch/crusader-helm-3d-128.png",
+  skull: "/assets/sprites/darkest-torch/necromancer-skull-3d-128.png",
+  trophy: "/assets/sprites/darkest-torch/trophy-torch-3d-128.png",
+} as const;
+
+export const GOROGOA_FRAME_SPRITES = {
+  frame: "/assets/sprites/gorogoa-frame/frame-stencil-3d-128.png",
+  fruit: "/assets/sprites/gorogoa-frame/fruit-crimson-3d-128.png",
+  moth: "/assets/sprites/gorogoa-frame/moth-star-3d-128.png",
+  trophy: "/assets/sprites/gorogoa-frame/trophy-gorogoa-3d-128.png",
+} as const;
+
+export const CHRONO_DETECTIVE_SPRITES = {
+  watch: "/assets/sprites/chrono-detective/watch-memento-3d-128.png",
+  ledger: "/assets/sprites/chrono-detective/ledger-fate-3d-128.png",
+  lens: "/assets/sprites/chrono-detective/lens-clue-3d-128.png",
+  trophy: "/assets/sprites/chrono-detective/trophy-chrono-3d-128.png",
+} as const;
+
+export const STICKER_COZY_SPRITES = {
+  binder: "/assets/sprites/sticker-cozy/binder-book-3d-128.png",
+  tweezers: "/assets/sprites/sticker-cozy/tweezers-mint-3d-128.png",
+  cat: "/assets/sprites/sticker-cozy/sticker-cat-3d-128.png",
+  trophy: "/assets/sprites/sticker-cozy/trophy-cozy-3d-128.png",
 } as const;
 
 

@@ -385,7 +385,7 @@ const Kingdomino: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
         if (res.winner === "you") {
           hapticsRef.current.fire("win");
           if (containerRef.current) {
-            celebrate(containerRef.current, { preset: "cards" });
+            celebrate(containerRef.current, { preset: "stardust" });
           }
         } else if (res.winner === "ai") {
           hapticsRef.current.fire("fail");
@@ -592,9 +592,20 @@ const Kingdomino: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
         {/* Status bar */}
         <div className="text-center min-h-[24px]" aria-live="polite">
           {over ? (
-            <span className="text-lg font-black">
-              {res!.winner === "you" ? `🎉 ${t.youWin}` : res!.winner === "ai" ? t.aiWins : t.draw}
-            </span>
+            <div className="flex flex-col items-center gap-1.5">
+              {res!.winner === "you" && (
+                <img
+                  src={KINGDOMINO_SPRITES.trophy}
+                  alt="Kingdomino Royal Trophy"
+                  width={56}
+                  height={56}
+                  className="size-14 object-contain animate-bounce drop-shadow-md"
+                />
+              )}
+              <span className="text-lg font-black">
+                {res!.winner === "you" ? `🎉 ${t.youWin}` : res!.winner === "ai" ? t.aiWins : t.draw}
+              </span>
+            </div>
           ) : owner === "ai" ? (
             <span className="text-sm text-muted-foreground">{t.thinking}</span>
           ) : pending?.kind === "claim" ? (
