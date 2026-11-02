@@ -704,6 +704,13 @@ export const MINI_MOTORWAYS_SPRITES = {
   trophy: "/assets/sprites/mini-motorways/trophy-motorway-3d-128.png",
 } as const;
 
+export const FROSTPUNK_RING_SPRITES = {
+  generator: "/assets/sprites/frostpunk-ring/generator-tower-3d-128.png",
+  thumper: "/assets/sprites/frostpunk-ring/coal-thumper-3d-128.png",
+  bunkhouse: "/assets/sprites/frostpunk-ring/bunkhouse-shelter-3d-128.png",
+  trophy: "/assets/sprites/frostpunk-ring/trophy-frostpunk-3d-128.png",
+} as const;
+
 export const DOT_PET_SPRITES: Record<string, { baby: string; adult: string }> = {
   normal: {
     baby: "/assets/sprites/dot-pet/normal-baby.png",

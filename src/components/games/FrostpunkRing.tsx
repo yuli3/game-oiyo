@@ -10,6 +10,7 @@ import { celebrate } from '../../lib/games/celebration';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import { triggerHaptic } from '../../lib/games/juice-engine';
 import { recordResult } from '../../lib/games/records';
+import { FROSTPUNK_RING_SPRITES } from '../../lib/games/sprites';
 
 function TiltFrostButton({
   children,
@@ -87,8 +88,24 @@ export default function FrostpunkRing({ locale = 'en' }: Props) {
   const [copied, setCopied] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const audioRef = useRef<AudioContext | null>(null);
+  const spritesRef = useRef<Record<string, HTMLImageElement>>({});
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } =
     useArcadePortal({ locale });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const load = (key: string, src: string) => {
+      const img = new Image();
+      img.src = src;
+      img.onload = () => {
+        spritesRef.current[key] = img;
+      };
+    };
+    load('generator', FROSTPUNK_RING_SPRITES.generator);
+    load('thumper', FROSTPUNK_RING_SPRITES.thumper);
+    load('bunkhouse', FROSTPUNK_RING_SPRITES.bunkhouse);
+    load('trophy', FROSTPUNK_RING_SPRITES.trophy);
+  }, []);
 
   const ensureAudio = useCallback(() => {
     if (typeof window === 'undefined') return null;
@@ -114,7 +131,9 @@ export default function FrostpunkRing({ locale = 'en' }: Props) {
       }
       recordResult('frostpunk-ring', 'w');
       MobileHapticsPro.success();
-      celebrate(null, { preset: 'shards' });
+      if (containerRef.current) {
+        celebrate(containerRef.current, { preset: 'stardust' });
+      }
     } else if (state.status === 'lost') {
       recordResult('frostpunk-ring', 'l');
       MobileHapticsPro.heavy();
@@ -180,7 +199,7 @@ export default function FrostpunkRing({ locale = 'en' }: Props) {
 
       const isSelected = state.selectedSlotId === slot.id;
       ctx.beginPath();
-      ctx.arc(sx, sy, isSelected ? 14 : 11, 0, Math.PI * 2);
+      ctx.arc(sx, sy, isSelected ? 15 : 12, 0, Math.PI * 2);
       if (slot.building === 'empty') {
         ctx.fillStyle = slot.frozen
           ? 'rgba(30, 58, 138, 0.55)'
@@ -193,32 +212,58 @@ export default function FrostpunkRing({ locale = 'en' }: Props) {
       ctx.strokeStyle = isSelected ? '#facc15' : '#94a3b8';
       ctx.stroke();
 
-      ctx.font = '11px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = '#ffffff';
-      ctx.fillText(BUILDING_LABELS[slot.building].emoji, sx, sy);
+      if (slot.building === 'bunkhouse' && spritesRef.current['bunkhouse']) {
+        ctx.drawImage(spritesRef.current['bunkhouse'], sx - 13, sy - 13, 26, 26);
+      } else if (slot.building === 'coal-thumper' && spritesRef.current['thumper']) {
+        ctx.drawImage(spritesRef.current['thumper'], sx - 13, sy - 13, 26, 26);
+      } else {
+        ctx.font = '11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(BUILDING_LABELS[slot.building].emoji, sx, sy);
+      }
     });
 
     // Central Steam Generator Tower
-    ctx.beginPath();
-    ctx.arc(cx, cy, 26, 0, Math.PI * 2);
-    ctx.fillStyle = state.generatorOn
-      ? state.overdriveActive
-        ? '#dc2626'
-        : '#f97316'
-      : '#334155';
-    ctx.fill();
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = '#fde047';
-    ctx.stroke();
+    const genImg = spritesRef.current['generator'];
+    if (genImg) {
+      if (state.generatorOn) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(cx, cy, 32, 0, Math.PI * 2);
+        ctx.fillStyle = state.overdriveActive
+          ? 'rgba(239, 68, 68, 0.45)'
+          : 'rgba(249, 115, 22, 0.35)';
+        ctx.fill();
+        ctx.restore();
+      }
+      ctx.drawImage(genImg, cx - 28, cy - 28, 56, 56);
 
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 11px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText(`LV.${state.generatorLevel}`, cx, cy - 3);
-    ctx.font = '9px monospace';
-    ctx.fillText(`${state.ambientTempC}°C`, cx, cy + 9);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 9px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(`LV.${state.generatorLevel}`, cx, cy + 24);
+    } else {
+      ctx.beginPath();
+      ctx.arc(cx, cy, 26, 0, Math.PI * 2);
+      ctx.fillStyle = state.generatorOn
+        ? state.overdriveActive
+          ? '#dc2626'
+          : '#f97316'
+        : '#334155';
+      ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#fde047';
+      ctx.stroke();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 11px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(`LV.${state.generatorLevel}`, cx, cy - 3);
+      ctx.font = '9px monospace';
+      ctx.fillText(`${state.ambientTempC}°C`, cx, cy + 9);
+    }
   }, [state]);
 
   const selectedSlot =
@@ -614,20 +659,33 @@ export default function FrostpunkRing({ locale = 'en' }: Props) {
 
       {/* Win / Loss Banner */}
       {state.status !== 'playing' && (
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary bg-primary/10 p-4">
-          <div>
-            <div className="text-sm font-black text-foreground">
-              {state.status === 'won'
-                ? isKo
-                  ? '🏆 -70°C 대폭설 화이트아웃 생존 성공! 뉴 런던이 살아남았습니다!'
-                  : '🏆 Survived the -70°C Great Whiteout! The City Survived!'
-                : isKo
-                  ? '💥 증기 발전기 폭발 또는 추방으로 도시가 무너졌습니다.'
-                  : '💥 The City Fell — Generator Exploded or Hope Reached Zero.'}
-            </div>
-            <div className="mt-1 text-xs text-muted-foreground">
-              Score: {state.score} · Day {state.day}/{state.maxDays} · Hope{' '}
-              {state.hope}%
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/40 bg-primary/10 p-4 shadow-md animate-in fade-in zoom-in-95">
+          <div className="flex items-center gap-3">
+            {state.status === 'won' ? (
+              <img
+                src={FROSTPUNK_RING_SPRITES.trophy}
+                alt="Frostpunk Trophy"
+                width={48}
+                height={48}
+                className="size-12 object-contain animate-bounce drop-shadow-md"
+              />
+            ) : (
+              <span className="text-3xl">💥</span>
+            )}
+            <div>
+              <div className="text-sm font-black text-foreground">
+                {state.status === 'won'
+                  ? isKo
+                    ? '🏆 -70°C 대폭설 화이트아웃 생존 성공! 뉴 런던이 살아남았습니다!'
+                    : '🏆 Survived the -70°C Great Whiteout! The City Survived!'
+                  : isKo
+                    ? '💥 증기 발전기 폭발 또는 추방으로 도시가 무너졌습니다.'
+                    : '💥 The City Fell — Generator Exploded or Hope Reached Zero.'}
+              </div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                Score: {state.score} · Day {state.day}/{state.maxDays} · Hope{' '}
+                {state.hope}%
+              </div>
             </div>
           </div>
           <TiltFrostButton
