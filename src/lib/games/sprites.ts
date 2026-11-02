@@ -592,6 +592,13 @@ export const PEGLIN_ROGUE_SPRITES = {
   trophy: "/assets/sprites/peglin-rogue/trophy-goblin-128.png",
 } as const;
 
+export const CARD_SURGE_SPRITES = {
+  joker: "/assets/sprites/card-surge/joker-jester-128.png",
+  chip: "/assets/sprites/card-surge/poker-chip-gold-128.png",
+  mult: "/assets/sprites/card-surge/mult-flame-ruby-128.png",
+  trophy: "/assets/sprites/card-surge/trophy-ante-master-128.png",
+} as const;
+
 export const DOT_PET_SPRITES: Record<string, { baby: string; adult: string }> = {
   normal: {
     baby: "/assets/sprites/dot-pet/normal-baby.png",

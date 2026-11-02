@@ -23,6 +23,8 @@ import {
   updateCameraShake,
   type ScreenTraumaState,
 } from "../../lib/games/screen-shake";
+import { celebrate } from "../../lib/games/celebration";
+import { CARD_SURGE_SPRITES } from "../../lib/games/sprites";
 import { Button } from "../ui/button";
 
 function playWebTone(freq: number, type: OscillatorType = "sine", duration: number = 0.1, gain: number = 0.15) {
@@ -151,11 +153,19 @@ function TiltSurgeCardButton({
 }
 
 export default function CardSurge({ locale = "ko" }: CardSurgeProps) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const [state, setState] = useState<CardSurgeState>(() => initGame());
   const [isScoringAnim, setIsScoringAnim] = useState<boolean>(false);
   const [activeStep, setActiveStep] = useState<ScoringStep | null>(null);
   const [sortMode, setSortMode] = useState<"rank" | "suit">("rank");
   const [copySuccess, setCopySuccess] = useState<boolean>(false);
+
+  // Trigger celebration on victory
+  useEffect(() => {
+    if (state.phase === "victory" && containerRef.current) {
+      celebrate(containerRef.current, { preset: "stardust" });
+    }
+  }, [state.phase]);
 
   const shakeEngineRef = useRef<ScreenTraumaState>(createCameraShake());
   const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0 });
@@ -324,6 +334,7 @@ export default function CardSurge({ locale = "ko" }: CardSurgeProps) {
 
   return (
     <div
+      ref={containerRef}
       style={
         {
           "--shake-x": `${shakeOffset.x}px`,
@@ -431,7 +442,11 @@ export default function CardSurge({ locale = "ko" }: CardSurgeProps) {
                       <span className="text-xs font-black line-clamp-1 text-foreground">
                         {joker.name[locale] ?? joker.name.ko}
                       </span>
-                      <span className="text-xs">🃏</span>
+                      <img
+                        src={CARD_SURGE_SPRITES.joker}
+                        alt="Joker"
+                        className="size-4.5 object-contain filter drop-shadow-xs select-none pointer-events-none"
+                      />
                     </div>
                     <p className="mt-1 text-xs font-medium leading-tight text-muted-foreground line-clamp-2">
                       {joker.description[locale] ?? joker.description.ko}
@@ -467,9 +482,23 @@ export default function CardSurge({ locale = "ko" }: CardSurgeProps) {
             <div className="flex w-full items-center justify-between font-black text-primary">
               <span className="text-sm">{activeStep.sourceName}</span>
               <div className="flex items-center gap-2 text-base">
-                <span className="text-foreground">{activeStep.totalChips}</span>
+                <span className="flex items-center text-foreground">
+                  <img
+                    src={CARD_SURGE_SPRITES.chip}
+                    alt="Chips"
+                    className="size-4 inline-block mr-1 object-contain select-none pointer-events-none"
+                  />
+                  {activeStep.totalChips}
+                </span>
                 <span className="text-primary">×</span>
-                <span className="text-destructive">{activeStep.totalMult}</span>
+                <span className="flex items-center text-destructive">
+                  <img
+                    src={CARD_SURGE_SPRITES.mult}
+                    alt="Mult"
+                    className="size-4 inline-block mr-1 object-contain select-none pointer-events-none"
+                  />
+                  {activeStep.totalMult}
+                </span>
                 <span className="text-muted-foreground">=</span>
                 <span className="text-lg text-primary">
                   {(activeStep.totalChips * activeStep.totalMult).toLocaleString()}
@@ -480,11 +509,21 @@ export default function CardSurge({ locale = "ko" }: CardSurgeProps) {
             <>
               <span className="text-sm font-black text-foreground">{handPreview.name}</span>
               <div className="flex items-center gap-2 font-black">
-                <span className="rounded-md bg-card px-2 py-0.5 text-xs text-foreground shadow-xs">
+                <span className="inline-flex items-center rounded-md bg-card px-2 py-0.5 text-xs text-foreground shadow-xs">
+                  <img
+                    src={CARD_SURGE_SPRITES.chip}
+                    alt="Chips"
+                    className="size-3.5 inline-block mr-1 object-contain select-none pointer-events-none"
+                  />
                   {handPreview.chips} {locale === "ko" ? "칩" : "Chips"}
                 </span>
                 <span className="text-primary">×</span>
-                <span className="rounded-md bg-destructive/10 px-2 py-0.5 text-xs text-destructive">
+                <span className="inline-flex items-center rounded-md bg-destructive/10 px-2 py-0.5 text-xs text-destructive">
+                  <img
+                    src={CARD_SURGE_SPRITES.mult}
+                    alt="Mult"
+                    className="size-3.5 inline-block mr-1 object-contain select-none pointer-events-none"
+                  />
                   {handPreview.mult} {locale === "ko" ? "배율" : "Mult"}
                 </span>
               </div>
@@ -632,7 +671,12 @@ export default function CardSurge({ locale = "ko" }: CardSurgeProps) {
                           <span className="text-base font-black text-foreground">
                             {joker.name[locale] ?? joker.name.ko}
                           </span>
-                          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">
+                            <img
+                              src={CARD_SURGE_SPRITES.joker}
+                              alt="Joker"
+                              className="size-3.5 object-contain select-none pointer-events-none"
+                            />
                             {joker.rarity}
                           </span>
                         </div>
@@ -714,8 +758,13 @@ export default function CardSurge({ locale = "ko" }: CardSurgeProps) {
 
       {/* Victory Modal */}
       {state.phase === "victory" && (
-        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center rounded-3xl bg-background/95 p-6 backdrop-blur-xs">
-          <span className="text-5xl">👑</span>
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center rounded-3xl bg-background/95 p-6 backdrop-blur-xs animate-in zoom-in-95">
+          <img
+            src={CARD_SURGE_SPRITES.trophy}
+            alt="Ante Master Trophy"
+            className="size-24 object-contain animate-bounce drop-shadow-2xl mb-3 select-none pointer-events-none"
+            draggable={false}
+          />
           <h2 className="mt-2 text-3xl font-black text-primary">
             {locale === "ko" ? "서지 마스터 등극!" : "Surge Master Victory!"}
           </h2>
