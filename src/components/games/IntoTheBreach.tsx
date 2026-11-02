@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Camera, Check, Maximize2, Minimize2, Share2, Volume2, VolumeX } from 'lucide-react';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { celebrate } from '../../lib/games/celebration';
+import { INTO_THE_BREACH_SPRITES } from '../../lib/games/sprites';
 import {
   createShareCardCanvas,
   copyShareCardToClipboard,
@@ -75,6 +76,11 @@ interface FloatingText {
   color: string;
   life: number;
   maxLife: number;
+}
+
+function getMechSprite(mechId: string): string {
+  if (mechId === 'mech-cannon' || mechId === 'mech-artillery') return INTO_THE_BREACH_SPRITES.cannon;
+  return INTO_THE_BREACH_SPRITES.combat;
 }
 
 export default function IntoTheBreach({ locale = 'ko' }: { locale?: string }) {
@@ -229,7 +235,7 @@ export default function IntoTheBreach({ locale = 'ko' }: { locale?: string }) {
     setGamePhase(s.phase);
     setMechsState([...s.mechs]);
     if (s.phase === 'victory' && containerRef.current) {
-      celebrate(containerRef.current, { preset: 'sparks' });
+      celebrate(containerRef.current, { preset: 'stardust' });
     }
   }, [containerRef]);
 
@@ -755,7 +761,14 @@ export default function IntoTheBreach({ locale = 'ko' }: { locale?: string }) {
       <div className="w-full bg-card/90 border border-border rounded-2xl p-3 mb-2 flex flex-wrap items-center justify-between gap-3 shadow-lg">
         <div className="flex items-center gap-3">
           <div className="flex flex-col">
-            <span className="text-xs font-bold text-muted-foreground tracking-wider">전력망 (POWER GRID)</span>
+            <span className="text-xs font-bold text-muted-foreground tracking-wider flex items-center gap-1.5">
+              <img
+                src={INTO_THE_BREACH_SPRITES.building}
+                alt="Power Grid"
+                className="size-4 inline-block select-none pointer-events-none"
+              />
+              <span>전력망 (POWER GRID)</span>
+            </span>
             <div className="flex items-center gap-1 mt-1">
               {Array.from({ length: maxPowerGrid }).map((_, idx) => (
                 <div
@@ -839,6 +852,11 @@ export default function IntoTheBreach({ locale = 'ko' }: { locale?: string }) {
         {/* Phase Overlays */}
         {gamePhase === 'victory' && (
           <div className="absolute inset-0 bg-background/90 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center z-20 animate-in fade-in zoom-in-95">
+            <img
+              src={INTO_THE_BREACH_SPRITES.trophy}
+              alt="Timeline Saved"
+              className="size-16 animate-bounce drop-shadow-xl mb-2 select-none pointer-events-none"
+            />
             <h2 className="text-3xl font-extrabold text-primary mb-2">섬 방어 성공! (TIMELINE SAVED)</h2>
             <p className="text-muted-foreground text-sm max-w-md mb-5">
               외계 벡(Vek)의 침공으로부터 민간인 전력망과 대도시를 완벽하게 사수했습니다!
@@ -910,11 +928,23 @@ export default function IntoTheBreach({ locale = 'ko' }: { locale?: string }) {
                   : 'border-border bg-card/60 hover:border-border/80'
               } ${mech.isDead ? 'opacity-40 grayscale' : ''}`}
             >
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="font-bold text-sm text-foreground">{mech.name}</span>
-                <span className="text-xs px-2 py-0.5 rounded-lg bg-muted text-muted-foreground uppercase font-mono font-bold">
-                  {mech.mechClass}
-                </span>
+              <div className="flex items-center gap-2.5 mb-1.5">
+                <div className="size-10 shrink-0 flex items-center justify-center rounded-xl bg-background/60 border border-border/60 p-1">
+                  <img
+                    src={getMechSprite(mech.id)}
+                    alt={mech.name}
+                    className="size-full object-contain filter drop-shadow-xs select-none pointer-events-none"
+                    draggable={false}
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-sm text-foreground truncate">{mech.name}</span>
+                    <span className="text-xs px-2 py-0.5 rounded-lg bg-muted text-muted-foreground uppercase font-mono font-bold">
+                      {mech.mechClass}
+                    </span>
+                  </div>
+                </div>
               </div>
 
               {/* HP Bar */}

@@ -634,6 +634,13 @@ export const LOOP_HERO_SPRITES = {
   trophy: "/assets/sprites/loop-hero/trophy-loop-master-128.png",
 } as const;
 
+export const INTO_THE_BREACH_SPRITES = {
+  combat: "/assets/sprites/into-the-breach/mech-combat-128.png",
+  cannon: "/assets/sprites/into-the-breach/mech-cannon-128.png",
+  building: "/assets/sprites/into-the-breach/building-grid-128.png",
+  trophy: "/assets/sprites/into-the-breach/trophy-timeline-saver-128.png",
+} as const;
+
 export const DOT_PET_SPRITES: Record<string, { baby: string; adult: string }> = {
   normal: {
     baby: "/assets/sprites/dot-pet/normal-baby.png",
