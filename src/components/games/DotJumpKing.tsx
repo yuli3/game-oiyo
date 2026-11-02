@@ -449,9 +449,9 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
         <div className="mx-auto max-w-[400px]">
           <div className="mb-3 flex items-center justify-between gap-2">
             <div className="grid grid-cols-3 gap-2 flex-1">
-              <Stat label={t.height} value={`${height}m`} />
-              <Stat label={t.best} value={`${best}m`} />
-              <Stat label={t.charge} value={`${charge}%`} />
+              <Stat label={t.height} value={`${height}m`} icon={JUMP_KING_SPRITES.boots} />
+              <Stat label={t.best} value={`${best}m`} icon={JUMP_KING_SPRITES.crown} />
+              <Stat label={t.charge} value={`${charge}%`} icon={JUMP_KING_SPRITES.jumper} />
             </div>
             <div className="flex items-center gap-1.5">
               <button
@@ -513,6 +513,12 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
                 className="absolute inset-0 flex flex-col items-center justify-center bg-white/90 p-6 text-center"
                 role="status"
               >
+                <img
+                  src={JUMP_KING_SPRITES.trophy}
+                  alt=""
+                  className="mb-2 size-12 object-contain drop-shadow-sm"
+                  draggable={false}
+                />
                 <h3 className="text-xl font-black">{t.over}</h3>
                 <p className="mt-2">
                   {t.result}: {height}m
@@ -560,10 +566,13 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
     </div>
   );
 }
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({ label, value, icon }: { label: string; value: string; icon?: string }) {
   return (
     <div className="rounded-2xl border bg-card p-2 text-center">
-      <div className="text-lg font-black">{value}</div>
+      <div className="flex items-center justify-center gap-1 text-lg font-black">
+        {icon ? <img src={icon} alt="" className="size-4 shrink-0 object-contain" draggable={false} /> : null}
+        <span>{value}</span>
+      </div>
       <div className="text-xs text-muted-foreground">{label}</div>
     </div>
   );

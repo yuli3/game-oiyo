@@ -94,6 +94,9 @@ export const JUMP_KING_SPRITES = {
   jumper: "/assets/sprites/dot-jumpking/jumper.png",
   platform: "/assets/sprites/dot-jumpking/platform.png",
   jumperSheet: "/assets/sprites/dot-jumpking/jumper-sheet.png",
+  crown: "/assets/sprites/dot-jumpking/crown-king-3d-128.png",
+  boots: "/assets/sprites/dot-jumpking/boots-spring-3d-128.png",
+  trophy: "/assets/sprites/dot-jumpking/trophy-jumpking-3d-128.png",
 } as const;
 
 export const JUMP_KING_JUMPER_SHEET = {
@@ -384,10 +387,32 @@ export const LIAR_ONEPHONE_SPRITES = {
 
 export const CHEF_PHYSICS_SPRITES = {
   keyart: "/assets/sprites/chef-physics/keyart.webp",
+  pan: "/assets/sprites/chef-physics/pan-skillet-3d-128.png",
+  ice: "/assets/sprites/chef-physics/ice-chill-3d-128.png",
+  cleaver: "/assets/sprites/chef-physics/cleaver-cut-3d-128.png",
+  trophy: "/assets/sprites/chef-physics/trophy-chef-3d-128.png",
+} as const;
+
+export const GRAPPLING_BOSS_SPRITES = {
+  mecha: "/assets/sprites/grappling-boss/viper-mecha-3d-128.png",
+  anchor: "/assets/sprites/grappling-boss/anchor-graviton-3d-128.png",
+  beholder: "/assets/sprites/grappling-boss/beholder-eye-3d-128.png",
+  trophy: "/assets/sprites/grappling-boss/trophy-boss-3d-128.png",
 } as const;
 
 export const LINE_SURF_SPRITES = {
   keyart: "/assets/sprites/line-surf/keyart.webp",
+  surfer: "/assets/sprites/line-surf/surfer-board-3d-128.png",
+  lip: "/assets/sprites/line-surf/wave-lip-3d-128.png",
+  wall: "/assets/sprites/line-surf/reef-wall-3d-128.png",
+  trophy: "/assets/sprites/line-surf/trophy-surf-3d-128.png",
+} as const;
+
+export const SAND_BALLS_SPRITES = {
+  truck: "/assets/sprites/sand-balls/truck-cargo-3d-128.png",
+  marble: "/assets/sprites/sand-balls/ball-marble-3d-128.png",
+  shovel: "/assets/sprites/sand-balls/shovel-dig-3d-128.png",
+  trophy: "/assets/sprites/sand-balls/trophy-sand-3d-128.png",
 } as const;
 
 export const ONE_BUTTON_CIV_SPRITES = {

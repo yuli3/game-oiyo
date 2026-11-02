@@ -17,7 +17,7 @@ import {
 import { SandBallsEngine, type SandBallsState } from "../../lib/games/sand-balls";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
-import { getSpriteUrl } from "../../lib/games/sprites";
+import { SAND_BALLS_SPRITES } from "../../lib/games/sprites";
 import { celebrate } from "../../lib/games/celebration";
 import {
   createShareCardCanvas,
@@ -298,7 +298,7 @@ export default function SandBalls() {
             celebratedRef.current = true;
             MobileHapticsPro.success();
             if (containerRef.current) {
-              celebrate(containerRef.current, { preset: "sparks" });
+              celebrate(containerRef.current, { preset: "stardust" });
             }
           }
         }
@@ -491,8 +491,8 @@ export default function SandBalls() {
       {/* Top Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
         <div className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-warning/20 text-warning">
-            <Truck className="h-5 w-5" />
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-warning/20 p-1 text-warning">
+            <img src={SAND_BALLS_SPRITES.truck} alt="" className="size-7 object-contain" draggable={false} />
           </span>
           <div>
             <h2 className="text-lg font-bold leading-none tracking-tight">샌드 볼스 3D</h2>
@@ -548,14 +548,17 @@ export default function SandBalls() {
         {/* Level */}
         <div className="rounded-lg border border-border bg-muted/40 p-2.5 text-center">
           <span className="text-xs text-muted-foreground">LEVEL</span>
-          <p className="text-xl font-black tracking-tight text-primary">STAGE {gameState.level}</p>
+          <p className="text-xl font-black tracking-tight text-primary flex items-center justify-center gap-1.5">
+            <img src={SAND_BALLS_SPRITES.shovel} alt="" className="size-4 object-contain" draggable={false} />
+            <span>STAGE {gameState.level}</span>
+          </p>
         </div>
 
         {/* Collected */}
         <div className="rounded-lg border border-border bg-muted/40 p-2.5 text-center">
           <span className="text-xs text-muted-foreground">LOAD CAPACITY</span>
           <p className="text-xl font-black tracking-tight text-warning flex items-center justify-center gap-1.5">
-            <img src={getSpriteUrl('star', 64)} alt="Star" className="size-4 object-contain" draggable={false} />
+            <img src={SAND_BALLS_SPRITES.marble} alt="Marble" className="size-4 object-contain" draggable={false} />
             <span>{gameState.collectedCount} / {gameState.truckCapacity}</span>
           </p>
         </div>
@@ -610,7 +613,7 @@ export default function SandBalls() {
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/85 p-6 backdrop-blur-xs text-center">
             <div className="flex size-16 items-center justify-center rounded-2xl bg-primary/20 p-2 mb-2">
               <img
-                src={getSpriteUrl('trophy', 64)}
+                src={SAND_BALLS_SPRITES.trophy}
                 alt="Victory Trophy"
                 className="size-12 object-contain"
                 draggable={false}

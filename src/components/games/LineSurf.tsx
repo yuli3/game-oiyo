@@ -523,7 +523,7 @@ export default function LineSurf({ locale }: { locale: Locale }) {
         recordDdaKill();
         MobileHapticsPro.impact();
         if (containerRef.current) {
-          celebrate(containerRef.current, { preset: "coins" });
+          celebrate(containerRef.current, { preset: "stardust" });
         }
       } else {
         hapticsRef.current.fire("fail");
@@ -634,6 +634,12 @@ export default function LineSurf({ locale }: { locale: Locale }) {
               <>
                 <p className="text-sm font-bold tabular-nums text-foreground" aria-live="polite">{t.speed(run.speed)} · {Math.min(run.step + 1, STEPS)} / {STEPS}{run.phase === "play" && !paused ? ` · ${t.left(remain)}` : ""}</p>
                 <p className="text-sm text-foreground">{paused ? t.pause : run.phase === "won" ? t.won : run.phase === "lost" ? t.lost : run.phase === "play" ? t.play : t.ready}</p>
+                {run.phase === "won" ? (
+                  <div className="flex items-center gap-2 rounded-xl border border-primary/40 bg-primary/10 px-3 py-2 text-xs font-bold text-primary">
+                    <img src={LINE_SURF_SPRITES.trophy} alt="" className="size-6 shrink-0 object-contain drop-shadow-xs" draggable={false} />
+                    <span>{t.won}</span>
+                  </div>
+                ) : null}
               </>
             ) : null}
             {/* Eight size-8 columns measured 389px on a 375px phone (2026-10-21). */}
@@ -647,7 +653,13 @@ export default function LineSurf({ locale }: { locale: Locale }) {
                     const bursting = spray?.step === step && spray.lane === lane;
                     return (
                       <span key={lane} className={`relative flex aspect-square w-full items-center justify-center rounded-sm text-xs ${tone}`}>
-                        {here ? "●" : tile === "wall" ? "▮" : tile === "lip" ? "△" : ""}
+                        {here ? (
+                          <img src={LINE_SURF_SPRITES.surfer} alt="●" className="size-4 object-contain" draggable={false} />
+                        ) : tile === "wall" ? (
+                          <img src={LINE_SURF_SPRITES.wall} alt="▮" className="size-4 object-contain" draggable={false} />
+                        ) : tile === "lip" ? (
+                          <img src={LINE_SURF_SPRITES.lip} alt="△" className="size-4 object-contain" draggable={false} />
+                        ) : ""}
                         {bursting ? (
                           <span data-spray={`${spray.step}:${spray.lane}`} className="pointer-events-none absolute inset-0 motion-reduce:hidden" aria-hidden="true">
                             <span className="absolute left-1/2 top-0 size-1.5 -translate-x-1/2 rounded-full bg-chart-1 motion-safe:animate-ping" />

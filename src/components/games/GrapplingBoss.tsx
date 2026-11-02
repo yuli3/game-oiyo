@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Maximize2, Minimize2 } from "lucide-react";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { celebrate } from "../../lib/games/celebration";
+import { GRAPPLING_BOSS_SPRITES } from "../../lib/games/sprites";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import {
   initializeGrapplingBoss,
@@ -470,7 +471,7 @@ export function GrapplingBoss() {
           if (curState.status === "victory") {
             MobileHapticsPro.success();
             if (containerRef.current) {
-              celebrate(containerRef.current, { preset: "sparks" });
+              celebrate(containerRef.current, { preset: "stardust" });
             }
           } else {
             MobileHapticsPro.heavy();
@@ -768,7 +769,14 @@ export function GrapplingBoss() {
           : "w-full max-w-5xl mx-auto rounded-2xl overflow-hidden bg-black shadow-2xl border border-border"
       }`}
     >
-      {/* Top Floating Portal Control */}
+      {/* Top Floating Portal & 3D Status Bar */}
+      <div className="pointer-events-none absolute top-3 left-3 z-20 hidden sm:flex items-center gap-2 rounded-xl border border-border/60 bg-card/75 px-3 py-1.5 text-xs font-bold text-foreground shadow-sm backdrop-blur-xs">
+        <img src={GRAPPLING_BOSS_SPRITES.mecha} alt="" className="size-5 object-contain" draggable={false} />
+        <span>VIPER-X</span>
+        <span className="text-muted-foreground">vs</span>
+        <img src={GRAPPLING_BOSS_SPRITES.beholder} alt="" className="size-5 object-contain" draggable={false} />
+        <span>BEHOLDER</span>
+      </div>
       <div className="absolute top-3 right-3 z-20 pointer-events-auto">
         <TiltBossButton
           onClick={togglePortal}
@@ -795,7 +803,7 @@ export function GrapplingBoss() {
         <div className="absolute inset-0 z-30 bg-black/85 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center animate-in fade-in zoom-in-95 duration-200">
           {modalState.status === "victory" ? (
             <div className="flex flex-col items-center gap-3">
-              <span className="text-5xl">🏆</span>
+              <img src={GRAPPLING_BOSS_SPRITES.trophy} alt="Victory Trophy" className="size-16 object-contain drop-shadow-md" draggable={false} />
               <h2 className="text-2xl font-black tracking-tight text-primary">
                 TITAN BEHOLDER DEFEATED!
               </h2>
@@ -819,7 +827,7 @@ export function GrapplingBoss() {
             </div>
           ) : (
             <div className="flex flex-col items-center gap-3">
-              <span className="text-5xl">💀</span>
+              <img src={GRAPPLING_BOSS_SPRITES.beholder} alt="Beholder" className="size-16 object-contain drop-shadow-md" draggable={false} />
               <h2 className="text-2xl font-black tracking-tight text-destructive">
                 SHIELD BREACHED
               </h2>

@@ -437,7 +437,7 @@ export default function ChefPhysics({ locale }: { locale: Locale }) {
       cue("win");
       hapticsRef.current.fire("win");
       if (containerRef.current) {
-        celebrate(containerRef.current, { preset: "sparks" });
+        celebrate(containerRef.current, { preset: "stardust" });
       }
     } else if (run.phase === "lost") {
       MobileHapticsPro.warning();
@@ -507,6 +507,12 @@ export default function ChefPhysics({ locale }: { locale: Locale }) {
             </p>
             <p className="text-sm text-foreground">{run.phase === "won" ? t.won : run.phase === "lost" ? t.lost : run.phase === "play" ? t.play : t.ready}</p>
             <p className="text-sm font-bold text-foreground">{t.goal} · {t.target[dish.target]}</p>
+            {run.phase === "won" ? (
+              <div className="flex items-center gap-3 rounded-xl border border-primary/40 bg-primary/10 p-3">
+                <img src={CHEF_PHYSICS_SPRITES.trophy} alt="" className="size-10 shrink-0 object-contain drop-shadow-sm" draggable={false} />
+                <p className="text-sm font-bold text-foreground">{t.won}</p>
+              </div>
+            ) : null}
             <div ref={panRef} className="relative h-16 overflow-hidden rounded-xl border border-border bg-muted/40">
               <canvas ref={fxCanvasRef} aria-hidden="true" className="pointer-events-none absolute inset-0 h-full w-full text-foreground" />
             </div>
@@ -517,15 +523,28 @@ export default function ChefPhysics({ locale }: { locale: Locale }) {
             </div>
             {run.phase === "play" ? (
               <div className="grid grid-cols-2 gap-2">
-                {(["W", "L", "C", "T"] as const).map((choice) => (
-                  <TiltChefActionButton
-                    key={choice}
-                    disabled={choice === "C" && run.cut}
-                    onClick={() => press(choice)}
-                  >
-                    {t.act[choice]}
-                  </TiltChefActionButton>
-                ))}
+                {(["W", "L", "C", "T"] as const).map((choice) => {
+                  const iconSrc =
+                    choice === "W"
+                      ? CHEF_PHYSICS_SPRITES.pan
+                      : choice === "L"
+                        ? CHEF_PHYSICS_SPRITES.ice
+                        : choice === "C"
+                          ? CHEF_PHYSICS_SPRITES.cleaver
+                          : CHEF_PHYSICS_SPRITES.trophy;
+                  return (
+                    <TiltChefActionButton
+                      key={choice}
+                      disabled={choice === "C" && run.cut}
+                      onClick={() => press(choice)}
+                    >
+                      <span className="inline-flex items-center justify-center gap-2">
+                        <img src={iconSrc} alt="" className="size-5 shrink-0 object-contain drop-shadow-xs" draggable={false} />
+                        <span>{t.act[choice]}</span>
+                      </span>
+                    </TiltChefActionButton>
+                  );
+                })}
               </div>
             ) : null}
             {run.phase === "ready" ? (
