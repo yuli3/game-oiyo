@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { celebrate } from '../../lib/games/celebration';
+import { LOOP_HERO_SPRITES } from '../../lib/games/sprites';
 import {
   createShareCardCanvas,
   copyShareCardToClipboard,
@@ -83,6 +84,13 @@ interface Particle {
   size: number;
   life: number;
   maxLife: number;
+}
+
+function getEquipSlotSprite(slot: EquipSlot): string | null {
+  if (slot === 'weapon') return LOOP_HERO_SPRITES.sword;
+  if (slot === 'shield') return LOOP_HERO_SPRITES.shield;
+  if (slot === 'ring') return LOOP_HERO_SPRITES.ring;
+  return null;
 }
 
 export const LoopHero: React.FC = () => {
@@ -222,7 +230,7 @@ export const LoopHero: React.FC = () => {
         if (eng.loopCount > prevLoopCountRef.current) {
           prevLoopCountRef.current = eng.loopCount;
           MobileHapticsPro.heavy();
-          celebrate(containerRef.current, { preset: 'sparks' });
+          celebrate(containerRef.current, { preset: 'stardust' });
         }
 
         if (!prevCombat && eng.inCombat) {
@@ -948,6 +956,11 @@ export const LoopHero: React.FC = () => {
         {/* Game Over Overlay */}
         {gameOver && (
           <div className="absolute inset-0 bg-background/85 backdrop-blur-md flex flex-col items-center justify-center p-6 gap-4 z-20">
+            <img
+              src={LOOP_HERO_SPRITES.trophy}
+              alt="Expedition Summary"
+              className="size-16 animate-bounce drop-shadow-xl select-none pointer-events-none"
+            />
             <h2 className="text-3xl font-black text-destructive tracking-wider">HERO FALLEN</h2>
             <p className="text-muted-foreground text-xs max-w-sm text-center">
               The loop claimed another soul. You completed {loopCount - 1} loops and survived {dayCount} days.
@@ -1037,15 +1050,28 @@ export const LoopHero: React.FC = () => {
           <div className="grid grid-cols-4 gap-2">
             {(['weapon', 'shield', 'armor', 'ring'] as EquipSlot[]).map(slot => {
               const item = equipped[slot];
+              const sprite = getEquipSlotSprite(slot);
               return (
                 <div
                   key={slot}
                   onMouseEnter={() => setHoveredEquip(item)}
                   onMouseLeave={() => setHoveredEquip(null)}
-                  className={`flex flex-col items-center justify-center p-2 rounded-lg border border-border/80 bg-background/50 h-16 text-center ${
-                    item ? 'border-primary/40' : 'border-dashed border-border/40'
+                  className={`flex flex-col items-center justify-center p-2 rounded-xl border border-border/80 bg-background/50 h-20 text-center transition-all ${
+                    item ? 'border-primary/50 bg-primary/5' : 'border-dashed border-border/40'
                   }`}
                 >
+                  <div className="size-7 flex items-center justify-center mb-0.5">
+                    {sprite ? (
+                      <img
+                        src={sprite}
+                        alt={slot}
+                        className="size-full object-contain filter drop-shadow-xs select-none pointer-events-none"
+                        draggable={false}
+                      />
+                    ) : (
+                      <Shield className="size-5 text-muted-foreground/60" />
+                    )}
+                  </div>
                   <span className="text-xs font-bold uppercase text-muted-foreground">
                     {slot}
                   </span>

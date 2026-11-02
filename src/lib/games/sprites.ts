@@ -627,6 +627,13 @@ export const STACKLANDS_SPRITES = {
   trophy: "/assets/sprites/stacklands-village/trophy-village-master-128.png",
 } as const;
 
+export const LOOP_HERO_SPRITES = {
+  sword: "/assets/sprites/loop-hero/equip-sword-128.png",
+  shield: "/assets/sprites/loop-hero/equip-shield-128.png",
+  ring: "/assets/sprites/loop-hero/equip-ring-128.png",
+  trophy: "/assets/sprites/loop-hero/trophy-loop-master-128.png",
+} as const;
+
 export const DOT_PET_SPRITES: Record<string, { baby: string; adult: string }> = {
   normal: {
     baby: "/assets/sprites/dot-pet/normal-baby.png",
