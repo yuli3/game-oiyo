@@ -427,9 +427,18 @@ export default function LastPixel({ locale }: { locale: Locale }) {
             <p className="text-sm text-muted-foreground">● {t.face.body} · ○ {t.face.sky} · ? {t.face["?"]} · ■ {t.face.H} · · {t.face.F}</p>
             {run.phase === "play" ? (
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                <TiltPixelButton disabled={!canLook} onClick={() => onAct("look")} className={`${BUTTON} touch-none`}>{t.act.look}</TiltPixelButton>
-                <TiltPixelButton disabled={!canPlank} onClick={() => onAct("plank")} className={`${BUTTON} touch-none`}>{t.act.plank}</TiltPixelButton>
-                <TiltPixelButton onClick={() => onAct("leap")} className={`${BUTTON} touch-none`}>{t.act.leap}</TiltPixelButton>
+                <TiltPixelButton disabled={!canLook} onClick={() => onAct("look")} className={`${BUTTON} flex items-center justify-center gap-1.5 touch-none`}>
+                  <img src={LAST_PIXEL_SPRITES.body} alt="" className="size-5 object-contain" />
+                  <span>{t.act.look}</span>
+                </TiltPixelButton>
+                <TiltPixelButton disabled={!canPlank} onClick={() => onAct("plank")} className={`${BUTTON} flex items-center justify-center gap-1.5 touch-none`}>
+                  <img src={LAST_PIXEL_SPRITES.plank} alt="" className="size-5 object-contain" />
+                  <span>{t.act.plank}</span>
+                </TiltPixelButton>
+                <TiltPixelButton onClick={() => onAct("leap")} className={`${BUTTON} flex items-center justify-center gap-1.5 touch-none`}>
+                  <img src={LAST_PIXEL_SPRITES.hole} alt="" className="size-5 object-contain" />
+                  <span>{t.act.leap}</span>
+                </TiltPixelButton>
               </div>
             ) : null}
             {run.phase === "ready" ? (
@@ -445,15 +454,22 @@ export default function LastPixel({ locale }: { locale: Locale }) {
               </TiltPixelButton>
             ) : null}
             {run.phase === "won" || run.phase === "lost" ? (
-              <div className="flex flex-wrap items-center gap-2">
-                <TiltPixelButton
-                  onClick={handleShare}
-                  className="min-h-11 px-4 py-2 bg-secondary text-secondary-foreground rounded-xl font-bold flex items-center gap-1.5 text-xs hover:bg-secondary/80"
-                >
-                  {shareCopied ? <Check className="size-4" /> : <Share2 className="size-4" />}
-                  <span>{shareCopied ? '복사 완료!' : '결과 카드 공유'}</span>
-                </TiltPixelButton>
-                <TiltPixelButton onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground hover:opacity-90`}>{t.again}</TiltPixelButton>
+              <div className="space-y-3 rounded-2xl border border-border bg-card/60 p-4">
+                {run.phase === "won" && (
+                  <div className="flex justify-center">
+                    <img src={LAST_PIXEL_SPRITES.trophy} alt="" className="size-14 object-contain animate-bounce drop-shadow-md" />
+                  </div>
+                )}
+                <div className="flex flex-wrap items-center gap-2">
+                  <TiltPixelButton
+                    onClick={handleShare}
+                    className="min-h-11 px-4 py-2 bg-secondary text-secondary-foreground rounded-xl font-bold flex items-center gap-1.5 text-xs hover:bg-secondary/80"
+                  >
+                    {shareCopied ? <Check className="size-4" /> : <Share2 className="size-4" />}
+                    <span>{shareCopied ? '복사 완료!' : '결과 카드 공유'}</span>
+                  </TiltPixelButton>
+                  <TiltPixelButton onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground hover:opacity-90`}>{t.again}</TiltPixelButton>
+                </div>
               </div>
             ) : null}
             <p className="text-sm text-muted-foreground">{t.record(record?.w ?? 0, record?.l ?? 0)}{best?.unit === "score" ? ` · ${t.best(best.value)}` : ""}</p>

@@ -347,8 +347,8 @@ export default function DelayCursor({ locale }: { locale: Locale }) {
 
             <p className="text-sm text-foreground">{run.phase === "won" ? t.won : run.phase === "lost" ? t.lost : run.phase === "play" ? t.play : t.ready}</p>
             <div className="flex flex-wrap gap-3 text-sm text-foreground">
-              <span className="inline-flex items-center gap-2"><span className="inline-block size-4 rounded-md bg-primary shadow-sm" />{t.now}</span>
-              <span className="inline-flex items-center gap-2"><span className="inline-block size-4 rounded-md bg-chart-1/60 shadow-sm" />{t.then}</span>
+              <span className="inline-flex items-center gap-2"><img src={DELAY_CURSOR_SPRITES.live} alt="" className="size-4 object-contain" />{t.now}</span>
+              <span className="inline-flex items-center gap-2"><img src={DELAY_CURSOR_SPRITES.ghost} alt="" className="size-4 object-contain" />{t.then}</span>
             </div>
             <div
               className="mx-auto grid w-full max-w-sm touch-none grid-cols-5 gap-1.5 select-none"
@@ -379,13 +379,13 @@ export default function DelayCursor({ locale }: { locale: Locale }) {
                 return (
                   <div key={index} className={`flex aspect-square items-center justify-center rounded-lg text-sm font-black transition-all ${isLive && isGhost ? "ring-2 ring-chart-1 scale-105" : ""} ${tone}`}>
                     {isLive ? (
-                      <span className="flex size-3.5 items-center justify-center rounded-full bg-white shadow-sm ring-2 ring-primary" />
+                      <img src={DELAY_CURSOR_SPRITES.live} alt="●" className="size-6 object-contain drop-shadow-sm" />
                     ) : isGhost ? (
-                      <span className="flex size-3 items-center justify-center rounded-full border-2 border-foreground/80 opacity-90" />
+                      <img src={DELAY_CURSOR_SPRITES.ghost} alt="○" className="size-6 object-contain opacity-90" />
                     ) : cell === 1 ? (
                       <span className="size-2 rounded-sm bg-muted-foreground/30" />
                     ) : index === run.puzzle.livePlate ? (
-                      <span className="text-xs font-bold opacity-60">⚡</span>
+                      <img src={DELAY_CURSOR_SPRITES.plate} alt="⚡" className="size-5 object-contain opacity-80" />
                     ) : index === run.puzzle.ghostPlate ? (
                       <span className="text-xs font-bold opacity-60">⌛</span>
                     ) : ""}
@@ -407,7 +407,14 @@ export default function DelayCursor({ locale }: { locale: Locale }) {
               </TiltCursorButton>
             ) : null}
             {run.phase === "won" || run.phase === "lost" ? (
-              <TiltCursorButton onClick={again} className={`${CONTROL} w-full border-primary bg-primary text-primary-foreground`}>{t.again}</TiltCursorButton>
+              <div className="space-y-3 rounded-2xl border border-border bg-card/60 p-4">
+                {run.phase === "won" && (
+                  <div className="flex justify-center">
+                    <img src={DELAY_CURSOR_SPRITES.trophy} alt="" className="size-14 object-contain animate-bounce drop-shadow-md" />
+                  </div>
+                )}
+                <TiltCursorButton onClick={again} className={`${CONTROL} w-full border-primary bg-primary text-primary-foreground`}>{t.again}</TiltCursorButton>
+              </div>
             ) : null}
             <div className="flex flex-col items-center gap-2">
               <TiltCursorButton disabled={!playing} onClick={() => move("n")} aria-label={t.north} className={`${CONTROL} border-border bg-card text-foreground disabled:opacity-40`}>{t.north}</TiltCursorButton>

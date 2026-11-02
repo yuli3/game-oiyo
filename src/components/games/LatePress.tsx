@@ -301,7 +301,7 @@ export default function LatePress({ locale }: { locale: Locale }) {
     if (run.phase === "won") {
       cue("win");
       MobileHapticsPro.successPattern();
-      if (containerRef.current) celebrate(containerRef.current, { preset: "sparks" });
+      if (containerRef.current) celebrate(containerRef.current, { preset: "stardust" });
     } else if (run.phase === "lost") {
       cue("fail");
       MobileHapticsPro.warningPattern();
@@ -385,7 +385,9 @@ export default function LatePress({ locale }: { locale: Locale }) {
             <p className="text-sm text-foreground">{run.phase === "won" ? t.won : run.phase === "lost" ? t.lost : run.phase === "play" ? t.play : t.ready}</p>
             <div className="flex min-h-11 items-center gap-2" aria-live="polite">
               {seen === 0 ? <span className="text-sm text-muted-foreground">{t.moves(0)}</span> : Array.from({ length: seen }, (_, index) => (
-                <span key={index} className="inline-flex size-11 items-center justify-center rounded-full bg-primary text-xl text-primary-foreground" aria-label={t.moves(index + 1)}>●</span>
+                <span key={index} className="inline-flex size-11 items-center justify-center rounded-full bg-primary text-xl text-primary-foreground" aria-label={t.moves(index + 1)}>
+                  <img src={LATE_PRESS_SPRITES.pulse} alt="●" className="size-8 object-contain" />
+                </span>
               ))}
             </div>
             <div className="flex gap-2">
@@ -396,8 +398,9 @@ export default function LatePress({ locale }: { locale: Locale }) {
               ))}
             </div>
             {run.phase === "play" ? (
-              <TiltPressButton onClick={stamp} className="min-h-16 w-full rounded-xl border border-primary bg-primary px-3 py-2 text-2xl font-bold text-primary-foreground hover:opacity-90">
-                {t.now}
+              <TiltPressButton onClick={stamp} className="flex min-h-16 w-full items-center justify-center gap-2 rounded-xl border border-primary bg-primary px-3 py-2 text-2xl font-bold text-primary-foreground hover:opacity-90">
+                <img src={LATE_PRESS_SPRITES.stamp} alt="" className="size-7 object-contain" />
+                <span>{t.now}</span>
               </TiltPressButton>
             ) : null}
             {run.phase === "ready" ? (
@@ -414,15 +417,22 @@ export default function LatePress({ locale }: { locale: Locale }) {
               </TiltPressButton>
             ) : null}
             {run.phase === "won" || run.phase === "lost" ? (
-              <div className="flex flex-wrap items-center gap-2">
-                <TiltPressButton
-                  onClick={handleShare}
-                  className="min-h-11 px-4 py-2 bg-secondary text-secondary-foreground rounded-xl font-bold flex items-center gap-1.5 text-xs hover:bg-secondary/80"
-                >
-                  {shareCopied ? <Check className="size-4" /> : <Share2 className="size-4" />}
-                  <span>{shareCopied ? '복사 완료!' : '결과 카드 공유'}</span>
-                </TiltPressButton>
-                <TiltPressButton onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground hover:opacity-90`}>{t.again}</TiltPressButton>
+              <div className="space-y-3 rounded-2xl border border-border bg-card/60 p-4">
+                {run.phase === "won" && (
+                  <div className="flex justify-center">
+                    <img src={LATE_PRESS_SPRITES.trophy} alt="" className="size-14 object-contain animate-bounce drop-shadow-md" />
+                  </div>
+                )}
+                <div className="flex flex-wrap items-center gap-2">
+                  <TiltPressButton
+                    onClick={handleShare}
+                    className="min-h-11 px-4 py-2 bg-secondary text-secondary-foreground rounded-xl font-bold flex items-center gap-1.5 text-xs hover:bg-secondary/80"
+                  >
+                    {shareCopied ? <Check className="size-4" /> : <Share2 className="size-4" />}
+                    <span>{shareCopied ? '복사 완료!' : '결과 카드 공유'}</span>
+                  </TiltPressButton>
+                  <TiltPressButton onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground hover:opacity-90`}>{t.again}</TiltPressButton>
+                </div>
               </div>
             ) : null}
             <p className="text-sm text-muted-foreground">{t.record(record?.w ?? 0, record?.l ?? 0)}{best?.unit === "score" ? ` · ${t.best(best.value)}` : ""}</p>

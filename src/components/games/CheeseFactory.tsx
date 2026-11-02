@@ -15,6 +15,8 @@ import {
 import { useAudioContext } from '../../lib/games/use-audio-context';
 import { useClipboardShare } from '../../lib/games/use-clipboard-share';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { CHEESE_FACTORY_SPRITES } from '../../lib/games/sprites';
+import { celebrate } from '../../lib/games/celebration';
 import { GameStatTile } from '../ui/game/GameStatTile';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
@@ -61,6 +63,8 @@ export default function CheeseFactory() {
   const stateRef = useRef(gameState);
   stateRef.current = gameState;
 
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const celebratedRef = useRef(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animationFrameRef = useRef<number | null>(null);
 
@@ -121,6 +125,10 @@ export default function CheeseFactory() {
         const stepResult = stepCheeseFactory(current, dt);
         if (stepResult.revenueGained > 0) {
           playCoinSfx();
+          if (!celebratedRef.current && current.totalCheesesShipped >= 5 && containerRef.current) {
+            celebratedRef.current = true;
+            celebrate(containerRef.current, { preset: 'stardust' });
+          }
         }
       }
 
@@ -292,7 +300,24 @@ export default function CheeseFactory() {
   };
 
   return (
-    <div className="flex flex-col gap-4 w-full max-w-5xl mx-auto p-2">
+    <div ref={containerRef} className="flex flex-col gap-4 w-full max-w-5xl mx-auto p-2">
+      {/* Top 3D Artisan Header */}
+      <div className="flex items-center justify-between rounded-xl border border-border bg-card p-3 shadow-sm">
+        <div className="flex items-center gap-3">
+          <img src={CHEESE_FACTORY_SPRITES.wheel} alt="" className="size-10 object-contain drop-shadow-sm" />
+          <div>
+            <h2 className="text-sm font-bold text-foreground">Artisan Alpine Cheese Factory</h2>
+            <p className="text-xs text-muted-foreground">ECS Coagulation Vats & Autonomous Boid AGV Logistics</p>
+          </div>
+        </div>
+        {gameState.totalCheesesShipped >= 5 && (
+          <div className="flex items-center gap-1.5 rounded-lg bg-primary/10 px-2.5 py-1 border border-primary/30">
+            <img src={CHEESE_FACTORY_SPRITES.trophy} alt="" className="size-6 object-contain animate-bounce" />
+            <span className="text-xs font-bold text-primary">Master Fromager</span>
+          </div>
+        )}
+      </div>
+
       {/* Top Stat Dashboard */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         <GameStatTile

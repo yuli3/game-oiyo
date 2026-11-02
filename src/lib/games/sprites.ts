@@ -412,6 +412,10 @@ export const BLACKOUT_COURIER_SPRITES = {
 
 export const DELAY_CURSOR_SPRITES = {
   keyart: "/assets/sprites/delay-cursor/keyart.webp",
+  live: "/assets/sprites/delay-cursor/cursor-live-3d-128.png",
+  ghost: "/assets/sprites/delay-cursor/cursor-ghost-3d-128.png",
+  plate: "/assets/sprites/delay-cursor/plate-sync-3d-128.png",
+  trophy: "/assets/sprites/delay-cursor/trophy-cursor-3d-128.png",
 } as const;
 
 export const FIREFLY_CHOIR_SPRITES = {
@@ -444,10 +448,32 @@ export const UNSEEN_BOSS_SPRITES = {
 
 export const LAST_PIXEL_SPRITES = {
   keyart: "/assets/sprites/last-pixel/keyart.webp",
+  body: "/assets/sprites/last-pixel/pixel-body-3d-128.png",
+  plank: "/assets/sprites/last-pixel/plank-bridge-3d-128.png",
+  hole: "/assets/sprites/last-pixel/hole-abyss-3d-128.png",
+  trophy: "/assets/sprites/last-pixel/trophy-pixel-3d-128.png",
 } as const;
 
 export const LATE_PRESS_SPRITES = {
   keyart: "/assets/sprites/late-press/keyart.webp",
+  pulse: "/assets/sprites/late-press/pulse-signal-3d-128.png",
+  stamp: "/assets/sprites/late-press/stamp-now-3d-128.png",
+  timer: "/assets/sprites/late-press/timer-reflex-3d-128.png",
+  trophy: "/assets/sprites/late-press/trophy-press-3d-128.png",
+} as const;
+
+export const CANDLE_SACRIFICE_SPRITES = {
+  scale: "/assets/sprites/candle-sacrifice/scale-teeth-3d-128.png",
+  candle: "/assets/sprites/candle-sacrifice/candle-life-3d-128.png",
+  bell: "/assets/sprites/candle-sacrifice/bell-combat-3d-128.png",
+  trophy: "/assets/sprites/candle-sacrifice/trophy-candle-3d-128.png",
+} as const;
+
+export const CHEESE_FACTORY_SPRITES = {
+  wheel: "/assets/sprites/cheese-factory/wheel-cheddar-3d-128.png",
+  milk: "/assets/sprites/cheese-factory/milk-churn-3d-128.png",
+  bot: "/assets/sprites/cheese-factory/agv-bot-3d-128.png",
+  trophy: "/assets/sprites/cheese-factory/trophy-cheese-3d-128.png",
 } as const;
 
 export const MONSTER_INTERVIEW_SPRITES = {
