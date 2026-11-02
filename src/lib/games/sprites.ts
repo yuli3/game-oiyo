@@ -777,6 +777,13 @@ export const TILE_RUMMY_BURST_SHEET = {
   loop: false,
 } as const;
 
+export const POLY_BRIDGE_SPRITES = {
+  truck: "/assets/sprites/poly-bridge/truck-cargo-3d-128.png",
+  girder: "/assets/sprites/poly-bridge/girder-steel-3d-128.png",
+  flag: "/assets/sprites/poly-bridge/flag-goal-3d-128.png",
+  trophy: "/assets/sprites/poly-bridge/trophy-bridge-3d-128.png",
+} as const;
+
 
 
 

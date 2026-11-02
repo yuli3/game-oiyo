@@ -23,7 +23,7 @@ import {
   downloadShareCard,
 } from '../../lib/games/share-card';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
-import { getSpriteUrl } from '../../lib/games/sprites';
+import { getSpriteUrl, POLY_BRIDGE_SPRITES } from '../../lib/games/sprites';
 import { Maximize2, Minimize2, Share2, Check, RotateCcw, Play, Wrench } from 'lucide-react';
 
 function TiltBridgeButton({
@@ -262,6 +262,22 @@ export default function PolyBridge({ lang = 'ko' }: PolyBridgeProps) {
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const spritesRef = useRef<Record<keyof typeof POLY_BRIDGE_SPRITES, HTMLImageElement | null>>({
+    truck: null,
+    girder: null,
+    flag: null,
+    trophy: null,
+  });
+
+  useEffect(() => {
+    (Object.keys(POLY_BRIDGE_SPRITES) as Array<keyof typeof POLY_BRIDGE_SPRITES>).forEach((key) => {
+      const img = new Image();
+      img.src = POLY_BRIDGE_SPRITES[key];
+      img.onload = () => {
+        spritesRef.current[key] = img;
+      };
+    });
+  }, []);
 
   const playSfx = useCallback((kind: 'build' | 'snap' | 'victory') => {
     try {
@@ -327,7 +343,7 @@ export default function PolyBridge({ lang = 'ko' }: PolyBridgeProps) {
           if (next.phase === 'victory' && prev.phase !== 'victory') {
             playSfx('victory');
             MobileHapticsPro.heavy();
-            celebrate(containerRef.current, { preset: 'sparks' });
+            celebrate(containerRef.current, { preset: 'stardust' });
             const dateKey = new Date().toISOString().slice(0, 10);
             const progress = loadArcadePassProgress(dateKey);
             saveArcadePassProgress(
@@ -389,15 +405,20 @@ export default function PolyBridge({ lang = 'ko' }: PolyBridgeProps) {
           ctx.fillRect(lvl.rightBankX, lvl.deckY - 6, w - lvl.rightBankX, 8);
 
           // Goal Flag on Right Bank
-          ctx.fillStyle = '#facc15';
-          ctx.fillRect(lvl.rightBankX + 60, lvl.deckY - 42, 4, 42);
-          ctx.fillStyle = '#ef4444';
-          ctx.beginPath();
-          ctx.moveTo(lvl.rightBankX + 64, lvl.deckY - 42);
-          ctx.lineTo(lvl.rightBankX + 92, lvl.deckY - 32);
-          ctx.lineTo(lvl.rightBankX + 64, lvl.deckY - 22);
-          ctx.closePath();
-          ctx.fill();
+          const flagImg = spritesRef.current.flag;
+          if (flagImg && flagImg.complete && flagImg.naturalWidth > 0) {
+            ctx.drawImage(flagImg, lvl.rightBankX + 42, lvl.deckY - 48, 48, 48);
+          } else {
+            ctx.fillStyle = '#facc15';
+            ctx.fillRect(lvl.rightBankX + 60, lvl.deckY - 42, 4, 42);
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.moveTo(lvl.rightBankX + 64, lvl.deckY - 42);
+            ctx.lineTo(lvl.rightBankX + 92, lvl.deckY - 32);
+            ctx.lineTo(lvl.rightBankX + 64, lvl.deckY - 22);
+            ctx.closePath();
+            ctx.fill();
+          }
 
           // Map nodes by id
           const nodeMap = new Map<number, (typeof cur.nodes)[0]>();
@@ -451,18 +472,23 @@ export default function PolyBridge({ lang = 'ko' }: PolyBridgeProps) {
           ctx.save();
           ctx.translate(cur.truck.x, cur.truck.y - 14);
           ctx.rotate(cur.truck.angle);
-          // Truck cargo body
-          ctx.fillStyle = '#f97316';
-          ctx.fillRect(-26, -18, 36, 20);
-          // Cab
-          ctx.fillStyle = '#fbbf24';
-          ctx.fillRect(10, -13, 14, 15);
-          // Wheels
-          ctx.fillStyle = '#0f172a';
-          ctx.beginPath();
-          ctx.arc(-16, 4, 6, 0, Math.PI * 2);
-          ctx.arc(14, 4, 6, 0, Math.PI * 2);
-          ctx.fill();
+          const truckImg = spritesRef.current.truck;
+          if (truckImg && truckImg.complete && truckImg.naturalWidth > 0) {
+            ctx.drawImage(truckImg, -32, -28, 64, 48);
+          } else {
+            // Truck cargo body
+            ctx.fillStyle = '#f97316';
+            ctx.fillRect(-26, -18, 36, 20);
+            // Cab
+            ctx.fillStyle = '#fbbf24';
+            ctx.fillRect(10, -13, 14, 15);
+            // Wheels
+            ctx.fillStyle = '#0f172a';
+            ctx.beginPath();
+            ctx.arc(-16, 4, 6, 0, Math.PI * 2);
+            ctx.arc(14, 4, 6, 0, Math.PI * 2);
+            ctx.fill();
+          }
           ctx.restore();
         }
       }
@@ -517,20 +543,31 @@ export default function PolyBridge({ lang = 'ko' }: PolyBridgeProps) {
     >
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
-        <div>
-          <h2 className="text-lg font-bold tracking-tight">🌉 {t.title}</h2>
-          <p className="text-xs text-muted-foreground">{t.subtitle}</p>
+        <div className="flex items-center gap-2.5">
+          <img
+            src={POLY_BRIDGE_SPRITES.girder}
+            alt="Poly Bridge Truss"
+            width={40}
+            height={40}
+            className="size-10 object-contain drop-shadow-sm"
+          />
+          <div>
+            <h2 className="text-lg font-bold tracking-tight">{t.title}</h2>
+            <p className="text-xs text-muted-foreground">{t.subtitle}</p>
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
-          <span className="rounded-lg bg-secondary px-2.5 py-1 text-secondary-foreground">
+          <span className="flex items-center gap-1.5 rounded-lg bg-secondary px-2.5 py-1 text-secondary-foreground">
+            <img src={POLY_BRIDGE_SPRITES.flag} alt="Stage" width={16} height={16} className="size-4 object-contain" />
             {t.levels[lvl.nameKey]}
           </span>
           <span className="flex items-center gap-1.5 rounded-lg bg-secondary px-2.5 py-1 text-secondary-foreground">
             <img src={getSpriteUrl('coin', 64)} alt="Budget" width={64} height={64} className="size-3.5 object-contain" />
             {t.budgetLabel}: ${state.spent} / ${state.budget}
           </span>
-          <span className="rounded-lg bg-secondary px-2.5 py-1 text-secondary-foreground">
-            📈 {t.stressLabel}: {Math.round(state.maxStressPeak * 100)}%
+          <span className="flex items-center gap-1.5 rounded-lg bg-secondary px-2.5 py-1 text-secondary-foreground">
+            <img src={POLY_BRIDGE_SPRITES.truck} alt="Truck Load" width={16} height={16} className="size-4 object-contain" />
+            {t.stressLabel}: {Math.round(state.maxStressPeak * 100)}%
           </span>
 
           <TiltBridgeButton
@@ -640,11 +677,11 @@ export default function PolyBridge({ lang = 'ko' }: PolyBridgeProps) {
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/85 p-6 text-center backdrop-blur-xs animate-in fade-in zoom-in-95">
             {state.phase === 'victory' ? (
               <img
-                src={getSpriteUrl('trophy', 64)}
+                src={POLY_BRIDGE_SPRITES.trophy}
                 alt="Bridge Truss Victory Trophy"
                 width={64}
                 height={64}
-                className="size-14 object-contain animate-bounce drop-shadow-md"
+                className="size-16 object-contain animate-bounce drop-shadow-md"
               />
             ) : (
               <img
