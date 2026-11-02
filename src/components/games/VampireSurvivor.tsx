@@ -16,6 +16,7 @@ import { addTrauma, createShakeState, triggerHaptic, updateShake } from '@/lib/g
 import { playSyntheticTone } from '@/lib/games/audio-mixer';
 import { useArcadePortal } from '@/lib/games/arcade-portal';
 import { celebrate } from '@/lib/games/celebration';
+import { VAMPIRE_SURVIVOR_SPRITES } from '@/lib/games/sprites';
 import {
   createShareCardCanvas,
   copyShareCardToClipboard,
@@ -315,12 +316,15 @@ export default function VampireSurvivor({ locale = 'ko' }: VampireSurvivorProps)
               }
               triggerHaptic('combo');
               MobileHapticsPro.heavyImpact();
-              celebrate(containerRef.current, { preset: 'sparks' });
+              celebrate(containerRef.current, { preset: 'stardust' });
             } else if (s.gameState === 'game_over') {
               addTrauma(shakeStateRef.current, 0.6);
               triggerHaptic('heavy');
               MobileHapticsPro.warningPattern();
               reportDeath();
+              if (s.survivalTime >= 60 || s.killCount >= 30) {
+                celebrate(containerRef.current, { preset: 'stardust' });
+              }
             }
           }
           setHud({
@@ -574,7 +578,14 @@ export default function VampireSurvivor({ locale = 'ko' }: VampireSurvivorProps)
         <div className="flex items-center gap-2 sm:gap-3 bg-card/85 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-border text-xs text-foreground font-mono">
           <span className="font-bold text-primary">Lv.{hud.level}</span>
           <span>⏱️ {formatTime(hud.survivalTime)}</span>
-          <span>💀 {hud.kills}</span>
+          <span className="inline-flex items-center gap-1">
+            <img
+              src={VAMPIRE_SURVIVOR_SPRITES.gem}
+              alt="Gem"
+              className="size-3.5 object-contain select-none pointer-events-none"
+            />
+            {hud.kills}
+          </span>
           <span
             className={`hidden sm:inline-block px-1.5 py-0.5 rounded text-xs font-bold ${
               modifiers.flowCategory === 'frustrated'
@@ -673,15 +684,31 @@ export default function VampireSurvivor({ locale = 'ko' }: VampireSurvivorProps)
               {hud.offeredUpgrades.map((id) => {
                 const def = UPGRADE_CATALOG[id];
                 const curLvl = hud.upgrades[id] ?? 0;
+                const customSprite =
+                  id === 'throwing_knife'
+                    ? VAMPIRE_SURVIVOR_SPRITES.knife
+                    : id === 'magic_missile'
+                      ? VAMPIRE_SURVIVOR_SPRITES.wand
+                      : null;
+
                 return (
                   <TiltSurvivorButton
                     key={id}
                     onClick={() => handleSelectUpgrade(id)}
                     className="w-full flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/40 hover:bg-muted/80 hover:border-primary transition-all text-left group"
                   >
-                    <span className="text-2xl p-2 rounded-md bg-background border border-border">
-                      {def.icon}
-                    </span>
+                    <div className="size-10 rounded-md bg-background border border-border flex items-center justify-center shrink-0 p-1">
+                      {customSprite ? (
+                        <img
+                          src={customSprite}
+                          alt={def.name}
+                          className="size-full object-contain filter drop-shadow-xs select-none pointer-events-none"
+                          draggable={false}
+                        />
+                      ) : (
+                        <span className="text-2xl">{def.icon}</span>
+                      )}
+                    </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
@@ -705,15 +732,22 @@ export default function VampireSurvivor({ locale = 'ko' }: VampireSurvivorProps)
 
       {/* Game Over Modal */}
       {gameState === 'game_over' && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-in zoom-in-95">
           <div className="w-full max-w-sm bg-card border border-border rounded-xl p-6 shadow-2xl text-center space-y-4">
-            <div className="text-3xl">🪦</div>
+            <div className="flex justify-center">
+              <img
+                src={VAMPIRE_SURVIVOR_SPRITES.trophy}
+                alt="Victory Trophy"
+                className="size-16 object-contain drop-shadow-xl animate-bounce select-none pointer-events-none"
+                draggable={false}
+              />
+            </div>
             <div className="space-y-1">
-              <h2 className="text-xl font-bold text-destructive">
-                {locale === 'ko' ? '사냥 실패' : 'Game Over'}
+              <h2 className="text-xl font-bold text-primary">
+                {locale === 'ko' ? '원정 기록 정산' : 'Expedition Summary'}
               </h2>
               <p className="text-xs text-muted-foreground">
-                {locale === 'ko' ? '마물들의 거대한 파도에 삼켜졌습니다.' : 'You were overrun by the horde.'}
+                {locale === 'ko' ? '마물들의 거대한 파도에 맞서 용맹하게 싸웠습니다.' : 'You fought valiantly against the horde.'}
               </p>
             </div>
 

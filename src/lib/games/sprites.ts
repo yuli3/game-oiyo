@@ -606,6 +606,13 @@ export const SPIRE_ROGUE_SPRITES = {
   trophy: "/assets/sprites/spire-rogue/trophy-spire-conqueror-128.png",
 } as const;
 
+export const VAMPIRE_SURVIVOR_SPRITES = {
+  knife: "/assets/sprites/vampire-survivor/weapon-throwing-knife-128.png",
+  gem: "/assets/sprites/vampire-survivor/gem-xp-emerald-128.png",
+  wand: "/assets/sprites/vampire-survivor/magic-orb-wand-128.png",
+  trophy: "/assets/sprites/vampire-survivor/trophy-dracula-slayer-128.png",
+} as const;
+
 export const DOT_PET_SPRITES: Record<string, { baby: string; adult: string }> = {
   normal: {
     baby: "/assets/sprites/dot-pet/normal-baby.png",
