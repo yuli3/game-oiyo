@@ -26,7 +26,13 @@ import {
 } from 'lucide-react';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
-import { getSpriteUrl } from '../../lib/games/sprites';
+import { getSpriteUrl, PLAGUE_MINI_SPRITES } from '../../lib/games/sprites';
+import { celebrate } from '@/lib/games/celebration';
+import {
+  loadArcadePassProgress,
+  reportMissionProgress,
+  saveArcadePassProgress,
+} from '@/lib/games/arcade-pass';
 import {
   createShareCardCanvas,
   copyShareCardToClipboard,
@@ -229,6 +235,22 @@ export const PlagueMini: React.FC = () => {
         }
         if (!prevOver && eng.gameOver) {
           playSfx('gameover');
+          if (eng.victory) {
+            MobileHapticsPro.success();
+            if (containerRef.current) {
+              celebrate(containerRef.current, { preset: 'stardust' });
+            }
+            try {
+              const dateKey = new Date().toISOString().slice(0, 10);
+              const current = loadArcadePassProgress(dateKey);
+              const updated = reportMissionProgress(current, 'plague-mini', 1);
+              saveArcadePassProgress(updated);
+            } catch {
+              // arcade pass fallback
+            }
+          } else {
+            MobileHapticsPro.error();
+          }
         }
 
         renderCanvas(eng, dt);
@@ -571,8 +593,8 @@ export const PlagueMini: React.FC = () => {
             <span className="text-xl font-black text-foreground">#{day}</span>
           </div>
 
-          <div className="flex items-center gap-1.5 bg-destructive/15 border border-destructive/30 px-3 py-1.5 rounded-lg">
-            <img src={getSpriteUrl('gem', 64)} alt="DNA" width={64} height={64} className="size-4 object-contain drop-shadow-xs" />
+          <div className="flex items-center gap-1.5 bg-destructive/15 border border-destructive/30 px-3 py-1.5 rounded-lg shadow-xs">
+            <img src={PLAGUE_MINI_SPRITES.dna} alt="DNA" width={20} height={20} className="size-5 object-contain drop-shadow-xs animate-pulse" />
             <span className="text-sm font-black text-destructive">{dnaPoints} DNA</span>
           </div>
         </div>
@@ -603,8 +625,8 @@ export const PlagueMini: React.FC = () => {
         {/* Cure Research Progress Meter */}
         <div className="flex flex-col min-w-36">
           <div className="flex items-center justify-between text-xs font-bold text-info">
-            <span className="flex items-center gap-1">
-              <Syringe className="size-3.5" /> Cure
+            <span className="flex items-center gap-1.5">
+              <img src={PLAGUE_MINI_SPRITES.cure} alt="Cure" width={16} height={16} className="size-4 object-contain inline-block drop-shadow-xs" /> Cure
             </span>
             <span>{isCureStarted ? `${cureProgress}%` : 'Not Started'}</span>
           </div>
@@ -716,7 +738,7 @@ export const PlagueMini: React.FC = () => {
             size="lg"
             onClick={() => setIsEvolutionOpen(!isEvolutionOpen)}
           >
-            <Dna className="size-4 mr-1.5" />
+            <img src={PLAGUE_MINI_SPRITES.pathogen} alt="Pathogen" width={20} height={20} className="size-5 mr-1.5 object-contain inline-block drop-shadow-xs" />
             Evolve Disease ({dnaPoints} DNA)
           </Button>
         </div>
@@ -725,11 +747,11 @@ export const PlagueMini: React.FC = () => {
         {gameOver && (
           <div className="absolute inset-0 bg-background/90 backdrop-blur-md flex flex-col items-center justify-center p-6 gap-4 z-30 animate-in fade-in zoom-in-95">
             <img
-              src={getSpriteUrl(victory ? 'trophy' : 'star', 64)}
+              src={victory ? PLAGUE_MINI_SPRITES.trophy : PLAGUE_MINI_SPRITES.cure}
               alt="Pandemic Outcome"
-              width={64}
-              height={64}
-              className="size-16 object-contain animate-bounce drop-shadow-md"
+              width={80}
+              height={80}
+              className="size-20 object-contain animate-bounce drop-shadow-xl"
             />
             {victory ? (
               <>

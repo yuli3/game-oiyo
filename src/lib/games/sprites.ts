@@ -683,6 +683,13 @@ export const BABA_IS_YOU_SPRITES = {
   trophy: "/assets/sprites/baba-is-you/trophy-baba-3d-128.png",
 } as const;
 
+export const PLAGUE_MINI_SPRITES = {
+  pathogen: "/assets/sprites/plague-mini/pathogen-virus-3d-128.png",
+  dna: "/assets/sprites/plague-mini/dna-helix-3d-128.png",
+  cure: "/assets/sprites/plague-mini/cure-vial-3d-128.png",
+  trophy: "/assets/sprites/plague-mini/trophy-plague-3d-128.png",
+} as const;
+
 export const DOT_PET_SPRITES: Record<string, { baby: string; adult: string }> = {
   normal: {
     baby: "/assets/sprites/dot-pet/normal-baby.png",
