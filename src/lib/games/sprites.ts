@@ -676,6 +676,13 @@ export const FTL_MINI_SPRITES = {
   trophy: "/assets/sprites/ftl-mini/trophy-galaxy-3d-128.png",
 } as const;
 
+export const BABA_IS_YOU_SPRITES = {
+  baba: "/assets/sprites/baba-is-you/baba-character-3d-128.png",
+  flag: "/assets/sprites/baba-is-you/golden-flag-3d-128.png",
+  rock: "/assets/sprites/baba-is-you/magic-rock-3d-128.png",
+  trophy: "/assets/sprites/baba-is-you/trophy-baba-3d-128.png",
+} as const;
+
 export const DOT_PET_SPRITES: Record<string, { baby: string; adult: string }> = {
   normal: {
     baby: "/assets/sprites/dot-pet/normal-baby.png",

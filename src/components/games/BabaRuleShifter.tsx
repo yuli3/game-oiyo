@@ -11,6 +11,13 @@ import {
 import { addTrauma, createShakeState, triggerHaptic, updateShake } from '@/lib/games/juice-engine';
 import { playSyntheticTone } from '@/lib/games/audio-mixer';
 import { useCardTiltPro, MobileHapticsPro } from '@/lib/games/engine-suite-unified';
+import { celebrate } from '@/lib/games/celebration';
+import { BABA_IS_YOU_SPRITES } from '@/lib/games/sprites';
+import {
+  loadArcadePassProgress,
+  reportMissionProgress,
+  saveArcadePassProgress,
+} from '@/lib/games/arcade-pass';
 
 interface BabaRuleShifterProps {
   locale?: string;
@@ -49,6 +56,7 @@ function TiltDirButton({
 }
 
 export default function BabaRuleShifter({ locale = 'ko' }: BabaRuleShifterProps) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const engineRef = useRef<BabaRuleShifterEngine>(new BabaRuleShifterEngine(1));
   const [levelId, setLevelId] = useState(1);
   const [entities, setEntities] = useState<GridEntity[]>(() => [...engineRef.current.getEntities()]);
@@ -60,6 +68,24 @@ export default function BabaRuleShifter({ locale = 'ko' }: BabaRuleShifterProps)
   const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0 });
   const shakeStateRef = useRef(createShakeState());
   const audioCtxRef = useRef<AudioContext | null>(null);
+
+  // Stardust celebration and arcade pass mission reporting on victory
+  useEffect(() => {
+    if (isWon) {
+      MobileHapticsPro.success();
+      if (containerRef.current) {
+        celebrate(containerRef.current, { preset: 'stardust' });
+      }
+      try {
+        const dateKey = new Date().toISOString().slice(0, 10);
+        const current = loadArcadePassProgress(dateKey);
+        const updated = reportMissionProgress(current, 'baba-rule-shifter', 1);
+        saveArcadePassProgress(updated);
+      } catch {
+        // arcade pass fallback
+      }
+    }
+  }, [isWon]);
 
   // Initialize Web Audio
   useEffect(() => {
@@ -226,13 +252,31 @@ export default function BabaRuleShifter({ locale = 'ko' }: BabaRuleShifterProps)
   const renderEntityBadge = (type: EntityType) => {
     switch (type) {
       case 'baba':
-        return <span className="text-xl">🐰</span>;
+        return (
+          <img
+            src={BABA_IS_YOU_SPRITES.baba}
+            alt="Baba"
+            className="size-8 object-contain drop-shadow-sm animate-bounce"
+          />
+        );
       case 'flag':
-        return <span className="text-xl">🚩</span>;
+        return (
+          <img
+            src={BABA_IS_YOU_SPRITES.flag}
+            alt="Flag"
+            className="size-7 object-contain drop-shadow-sm"
+          />
+        );
       case 'wall':
         return <span className="text-xl">🧱</span>;
       case 'rock':
-        return <span className="text-xl">🪨</span>;
+        return (
+          <img
+            src={BABA_IS_YOU_SPRITES.rock}
+            alt="Rock"
+            className="size-7 object-contain drop-shadow-xs"
+          />
+        );
       case 'water':
         return <span className="text-xl">🌊</span>;
       case 'skull':
@@ -272,6 +316,7 @@ export default function BabaRuleShifter({ locale = 'ko' }: BabaRuleShifterProps)
 
   return (
     <div
+      ref={containerRef}
       className="relative w-full select-none overflow-hidden rounded-xl border border-border bg-card p-4 space-y-4 translate-x-(--shake-x) translate-y-(--shake-y)"
       style={
         {
@@ -283,6 +328,11 @@ export default function BabaRuleShifter({ locale = 'ko' }: BabaRuleShifterProps)
       {/* Top Bar: Level, Steps, Active Rules */}
       <div className="flex items-center justify-between border-b border-border pb-3 text-xs font-mono">
         <div className="flex items-center gap-2">
+          <img
+            src={BABA_IS_YOU_SPRITES.baba}
+            alt="Baba"
+            className="size-5 object-contain inline-block"
+          />
           <span className="font-bold text-primary px-2 py-0.5 rounded bg-primary/10 border border-primary/20">
             Level {levelId} / {BABA_LEVELS.length}
           </span>
@@ -367,7 +417,13 @@ export default function BabaRuleShifter({ locale = 'ko' }: BabaRuleShifterProps)
       {isWon && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in">
           <div className="w-full max-w-sm bg-card border border-border rounded-xl p-6 shadow-2xl text-center space-y-4">
-            <div className="text-4xl">🌟</div>
+            <div className="flex justify-center">
+              <img
+                src={BABA_IS_YOU_SPRITES.trophy}
+                alt="Rule Master Trophy"
+                className="size-20 animate-bounce drop-shadow-xl object-contain"
+              />
+            </div>
             <div className="space-y-1">
               <span className="text-xs font-mono text-primary uppercase tracking-wider">Level Complete!</span>
               <h2 className="text-xl font-bold text-foreground">
