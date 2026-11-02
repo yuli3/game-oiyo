@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
-import { getSpriteUrl } from '../../lib/games/sprites';
+import { getSpriteUrl, SPIRE_ROGUE_SPRITES } from '../../lib/games/sprites';
 import { celebrate } from '../../lib/games/celebration';
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from '../../lib/games/share-card';
 import { Camera, Check, Maximize2, Minimize2 } from 'lucide-react';
@@ -578,7 +578,7 @@ export default function SpireRogue({ lang = 'ko' }: SpireRogueProps) {
           if (next.phase === 'victory') {
             MobileHapticsPro.success();
             try {
-              if (containerRef.current) celebrate(containerRef.current, { preset: "sparks" });
+              if (containerRef.current) celebrate(containerRef.current, { preset: "stardust" });
             } catch {}
           } else {
             MobileHapticsPro.medium();
@@ -883,7 +883,12 @@ export default function SpireRogue({ lang = 'ko' }: SpireRogueProps) {
             key={r}
             className="flex items-center gap-1.5 rounded-lg border border-border bg-muted/50 px-2.5 py-1 text-xs"
           >
-            <span className="font-bold text-foreground">🏺 {t.relics[r].name}:</span>
+            <img
+              src={SPIRE_ROGUE_SPRITES.relic}
+              alt={t.relics[r].name}
+              className="size-4 object-contain select-none pointer-events-none"
+            />
+            <span className="font-bold text-foreground">{t.relics[r].name}:</span>
             <span className="text-muted-foreground">{t.relics[r].desc}</span>
           </div>
         ))}
@@ -958,11 +963,21 @@ export default function SpireRogue({ lang = 'ko' }: SpireRogueProps) {
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-muted/40 px-3 py-2 text-xs">
             <div className="flex items-center gap-3 font-semibold">
-              <span className="rounded-md bg-primary px-2.5 py-1 text-primary-foreground">
-                ⚡ {t.energyLabel}: {state.player.energy} / {state.player.maxEnergy}
+              <span className="inline-flex items-center gap-1.5 rounded-md bg-primary px-2.5 py-1 text-primary-foreground font-bold">
+                <img
+                  src={SPIRE_ROGUE_SPRITES.energy}
+                  alt="Energy"
+                  className="size-4 object-contain select-none pointer-events-none"
+                />
+                {t.energyLabel}: {state.player.energy} / {state.player.maxEnergy}
               </span>
-              <span>
-                🛡 {t.blockLabel}: {state.player.block}
+              <span className="inline-flex items-center gap-1.5 font-semibold text-foreground">
+                <img
+                  src={SPIRE_ROGUE_SPRITES.shield}
+                  alt="Block"
+                  className="size-4 object-contain select-none pointer-events-none"
+                />
+                {t.blockLabel}: {state.player.block}
               </span>
               <span className="text-muted-foreground">
                 {t.drawLabel}: {state.drawPile.length} · {t.discardLabel}: {state.discardPile.length}
@@ -1104,12 +1119,12 @@ export default function SpireRogue({ lang = 'ko' }: SpireRogueProps) {
 
       {/* Phase 5: Victory / Defeat */}
       {(state.phase === 'victory' || state.phase === 'defeat') && (
-        <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-muted/40 p-6 text-center">
+        <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-muted/40 p-6 text-center animate-in zoom-in-95">
           <div className="relative mb-2 flex size-20 items-center justify-center">
             <img
-              src={getSpriteUrl('trophy', 128)}
+              src={state.phase === 'victory' ? SPIRE_ROGUE_SPRITES.trophy : getSpriteUrl('trophy', 128)}
               alt="Trophy"
-              className="size-20 object-contain drop-shadow-xl animate-bounce"
+              className="size-20 object-contain drop-shadow-xl animate-bounce select-none pointer-events-none"
               loading="lazy"
             />
           </div>

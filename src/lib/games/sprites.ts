@@ -599,6 +599,13 @@ export const CARD_SURGE_SPRITES = {
   trophy: "/assets/sprites/card-surge/trophy-ante-master-128.png",
 } as const;
 
+export const SPIRE_ROGUE_SPRITES = {
+  relic: "/assets/sprites/spire-rogue/relic-burning-blood-128.png",
+  energy: "/assets/sprites/spire-rogue/energy-orb-spire-128.png",
+  shield: "/assets/sprites/spire-rogue/shield-ironclad-128.png",
+  trophy: "/assets/sprites/spire-rogue/trophy-spire-conqueror-128.png",
+} as const;
+
 export const DOT_PET_SPRITES: Record<string, { baby: string; adult: string }> = {
   normal: {
     baby: "/assets/sprites/dot-pet/normal-baby.png",
