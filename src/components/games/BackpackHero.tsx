@@ -9,9 +9,24 @@ import {
 import { addTrauma, createShakeState, triggerHaptic, updateShake } from '@/lib/games/juice-engine';
 import { playSyntheticTone } from '@/lib/games/audio-mixer';
 import { useCardTiltPro, MobileHapticsPro } from '@/lib/games/engine-suite-unified';
+import { BACKPACK_HERO_SPRITES } from '@/lib/games/sprites';
+import { celebrate } from '@/lib/games/celebration';
 
 interface BackpackHeroProps {
   locale?: string;
+}
+
+function getBackpackItemSprite(defId: string, type: string): string | null {
+  if (defId.includes('dagger') || defId.includes('sword') || type === 'weapon') {
+    return BACKPACK_HERO_SPRITES.dagger;
+  }
+  if (type === 'relic' || defId.includes('ruby') || defId.includes('gem')) {
+    return BACKPACK_HERO_SPRITES.relic;
+  }
+  if (type === 'potion') {
+    return BACKPACK_HERO_SPRITES.potion;
+  }
+  return null;
 }
 
 function TiltBackpackItemButton({
@@ -30,6 +45,7 @@ function TiltBackpackItemButton({
   onClick: () => void;
 }) {
   const { transformCss, onPointerMove, onPointerLeave, triggerPop } = useCardTiltPro();
+  const sprite = getBackpackItemSprite(def.id, def.type);
 
   return (
     <button
@@ -63,7 +79,18 @@ function TiltBackpackItemButton({
         <span className="font-bold text-primary">⚡{def.energyCost}</span>
         {bonus > 0 && <span className="text-success font-bold">+{bonus}</span>}
       </div>
-      <span className="text-xl leading-none">{def.icon}</span>
+      <div className="relative size-6 flex items-center justify-center">
+        {sprite ? (
+          <img
+            src={sprite}
+            alt={def.name}
+            className="size-full object-contain filter drop-shadow-xs select-none pointer-events-none"
+            draggable={false}
+          />
+        ) : (
+          <span className="text-xl leading-none">{def.icon}</span>
+        )}
+      </div>
       <span className="text-xs font-mono font-bold leading-none">
         {def.type === 'weapon' && `⚔️${value}`}
         {def.type === 'shield' && `🛡️${value}`}
@@ -76,6 +103,7 @@ function TiltBackpackItemButton({
 }
 
 export default function BackpackHero({ locale = 'ko' }: BackpackHeroProps) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const engineRef = useRef<BackpackHeroEngine>(new BackpackHeroEngine(5, 6));
   const [engineState, setEngineState] = useState<BackpackHeroState>(() => engineRef.current.getState());
 
@@ -83,6 +111,13 @@ export default function BackpackHero({ locale = 'ko' }: BackpackHeroProps) {
   const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0 });
   const shakeStateRef = useRef(createShakeState());
   const audioCtxRef = useRef<AudioContext | null>(null);
+
+  // Trigger celebration on victory
+  useEffect(() => {
+    if (engineState.gameState === 'victory' && containerRef.current) {
+      celebrate(containerRef.current, { preset: 'stardust' });
+    }
+  }, [engineState.gameState]);
 
   // Initialize Web Audio
   useEffect(() => {
@@ -283,6 +318,7 @@ export default function BackpackHero({ locale = 'ko' }: BackpackHeroProps) {
 
   return (
     <div
+      ref={containerRef}
       className="relative w-full select-none overflow-hidden rounded-xl border border-border bg-card p-4 space-y-4 translate-x-(--shake-x) translate-y-(--shake-y)"
       style={
         {
@@ -482,15 +518,25 @@ export default function BackpackHero({ locale = 'ko' }: BackpackHeroProps) {
               {engineState.lootPool.map((defId) => {
                 const def = ITEM_CATALOG[defId];
                 if (!def) return null;
+                const lootSprite = getBackpackItemSprite(def.id, def.type);
                 return (
                   <div
                     key={defId}
                     className="flex items-center justify-between p-2.5 rounded-lg border border-border bg-muted/30"
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <span className="text-2xl p-1.5 rounded bg-background border border-border">
-                        {def.icon}
-                      </span>
+                      <div className="size-10 rounded bg-background border border-border flex items-center justify-center shrink-0 p-1">
+                        {lootSprite ? (
+                          <img
+                            src={lootSprite}
+                            alt={def.name}
+                            className="size-full object-contain filter drop-shadow-xs select-none pointer-events-none"
+                            draggable={false}
+                          />
+                        ) : (
+                          <span className="text-2xl">{def.icon}</span>
+                        )}
+                      </div>
                       <div className="min-w-0">
                         <span className="text-xs font-semibold text-foreground block">
                           {def.name}
@@ -517,9 +563,16 @@ export default function BackpackHero({ locale = 'ko' }: BackpackHeroProps) {
 
       {/* Victory Modal */}
       {engineState.gameState === 'victory' && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-in zoom-in-95">
           <div className="w-full max-w-sm bg-card border border-border rounded-xl p-6 shadow-2xl text-center space-y-4">
-            <div className="text-4xl">🏆</div>
+            <div className="flex justify-center">
+              <img
+                src={BACKPACK_HERO_SPRITES.trophy}
+                alt="Victory Trophy"
+                className="size-20 object-contain drop-shadow-xl animate-bounce select-none pointer-events-none"
+                draggable={false}
+              />
+            </div>
             <div className="space-y-1">
               <h2 className="text-xl font-bold text-primary">
                 {locale === 'ko' ? '던전 완전 정복!' : 'Dungeon Conquered!'}

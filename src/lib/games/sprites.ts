@@ -578,6 +578,13 @@ export const HEXA_SORT_SPRITES = {
   trophy: "/assets/sprites/hexa-sort/hexa-trophy-128.png",
 } as const;
 
+export const BACKPACK_HERO_SPRITES = {
+  dagger: "/assets/sprites/backpack-hero/weapon-dagger-128.png",
+  relic: "/assets/sprites/backpack-hero/relic-gem-128.png",
+  potion: "/assets/sprites/backpack-hero/potion-health-128.png",
+  trophy: "/assets/sprites/backpack-hero/hero-trophy-128.png",
+} as const;
+
 export const DOT_PET_SPRITES: Record<string, { baby: string; adult: string }> = {
   normal: {
     baby: "/assets/sprites/dot-pet/normal-baby.png",
