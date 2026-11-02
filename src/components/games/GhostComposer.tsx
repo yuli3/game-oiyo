@@ -302,7 +302,7 @@ export default function GhostComposer({ locale }: { locale: Locale }) {
     if (run.phase === "won") {
       cue("win");
       MobileHapticsPro.success();
-      if (containerRef.current) celebrate(containerRef.current, { preset: "notes" });
+      if (containerRef.current) celebrate(containerRef.current, { preset: "stardust" });
     } else if (run.phase === "lost") {
       cue("fail");
       MobileHapticsPro.heavy();
@@ -397,8 +397,14 @@ export default function GhostComposer({ locale }: { locale: Locale }) {
             </div>
             {run.phase === "play" ? (
               <div className="grid grid-cols-2 gap-2">
-                <TiltGhostButton onClick={() => choose(0)} className="min-h-16 rounded-xl border border-primary bg-primary text-2xl font-bold text-primary-foreground motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2" aria-label={t.low}>{GLYPH[0]}</TiltGhostButton>
-                <TiltGhostButton onClick={() => choose(1)} className="min-h-16 rounded-xl border border-border bg-card text-2xl font-bold text-foreground motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2" aria-label={t.high}>{GLYPH[1]}</TiltGhostButton>
+                <TiltGhostButton onClick={() => choose(0)} className="flex min-h-16 items-center justify-center gap-2 rounded-xl border border-primary bg-primary text-2xl font-bold text-primary-foreground motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2" aria-label={t.low}>
+                  <img src={GHOST_COMPOSER_SPRITES.low} alt="" className="size-7 object-contain" />
+                  <span>{GLYPH[0]}</span>
+                </TiltGhostButton>
+                <TiltGhostButton onClick={() => choose(1)} className="flex min-h-16 items-center justify-center gap-2 rounded-xl border border-border bg-card text-2xl font-bold text-foreground motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2" aria-label={t.high}>
+                  <img src={GHOST_COMPOSER_SPRITES.high} alt="" className="size-7 object-contain" />
+                  <span>{GLYPH[1]}</span>
+                </TiltGhostButton>
               </div>
             ) : null}
             {run.phase === "ready" ? (
@@ -414,15 +420,22 @@ export default function GhostComposer({ locale }: { locale: Locale }) {
               </TiltGhostButton>
             ) : null}
             {run.phase === "won" || run.phase === "lost" ? (
-              <div className="flex flex-wrap items-center gap-2">
-                <TiltGhostButton onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</TiltGhostButton>
-                <TiltGhostButton
-                  onClick={() => void handleShareCard()}
-                  className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-primary/40 bg-primary/20 px-4 py-2 text-xs font-bold text-primary transition-colors hover:bg-primary/30 active:scale-95"
-                >
-                  <Share2 className="size-4" />
-                  <span>{shareCopied ? "복사됨!" : "공유 카드"}</span>
-                </TiltGhostButton>
+              <div className="space-y-3 rounded-2xl border border-border bg-card/60 p-4">
+                {run.phase === "won" && (
+                  <div className="flex justify-center">
+                    <img src={GHOST_COMPOSER_SPRITES.trophy} alt="" className="size-14 object-contain animate-bounce drop-shadow-md" />
+                  </div>
+                )}
+                <div className="flex flex-wrap items-center gap-2">
+                  <TiltGhostButton onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</TiltGhostButton>
+                  <TiltGhostButton
+                    onClick={() => void handleShareCard()}
+                    className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-primary/40 bg-primary/20 px-4 py-2 text-xs font-bold text-primary transition-colors hover:bg-primary/30 active:scale-95"
+                  >
+                    <Share2 className="size-4" />
+                    <span>{shareCopied ? "복사됨!" : "공유 카드"}</span>
+                  </TiltGhostButton>
+                </div>
               </div>
             ) : null}
             <p className="text-sm text-muted-foreground">{t.record(record?.w ?? 0, record?.l ?? 0)}{best?.unit === "score" ? ` · ${t.best(best.value)}` : ""}</p>

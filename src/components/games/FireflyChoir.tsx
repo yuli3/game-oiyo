@@ -319,7 +319,7 @@ export default function FireflyChoir({ locale }: { locale: Locale }) {
     if (run.phase === "won") {
       cue("win");
       MobileHapticsPro.success();
-      if (containerRef.current) celebrate(containerRef.current, { preset: "notes" });
+      if (containerRef.current) celebrate(containerRef.current, { preset: "stardust" });
     } else if (run.phase === "lost") {
       cue("fail");
       MobileHapticsPro.heavy();
@@ -397,9 +397,10 @@ export default function FireflyChoir({ locale }: { locale: Locale }) {
                     onClick={() => onPair(index)}
                     aria-pressed={selected}
                     aria-label={`${t.fly(index + 1)}. ${lit ? t.lit : t.dim}. ${grouped ? t.grouped : t.open}`}
-                    className={`min-h-16 rounded-xl border text-2xl font-bold motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60 ${selected ? "border-primary bg-primary text-primary-foreground shadow-md" : lit ? "border-primary bg-foreground/15 text-foreground" : "border-border bg-card text-muted-foreground"}`}
+                    className={`flex min-h-16 items-center justify-center gap-1.5 rounded-xl border text-2xl font-bold motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60 ${selected ? "border-primary bg-primary text-primary-foreground shadow-md" : lit ? "border-primary bg-foreground/15 text-foreground" : "border-border bg-card text-muted-foreground"}`}
                   >
-                    {lit ? "●" : "○"}{mark ? ` ${mark}` : ""}
+                    <img src={lit ? FIREFLY_CHOIR_SPRITES.lit : FIREFLY_CHOIR_SPRITES.dim} alt="" className="size-7 object-contain" />
+                    <span>{lit ? "●" : "○"}{mark ? ` ${mark}` : ""}</span>
                   </TiltFireflyButton>
                 );
               })}
@@ -417,7 +418,14 @@ export default function FireflyChoir({ locale }: { locale: Locale }) {
               </TiltFireflyButton>
             ) : null}
             {run.phase === "won" || run.phase === "lost" ? (
-              <TiltFireflyButton onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</TiltFireflyButton>
+              <div className="space-y-3 rounded-2xl border border-border bg-card/60 p-4">
+                {run.phase === "won" && (
+                  <div className="flex justify-center">
+                    <img src={FIREFLY_CHOIR_SPRITES.trophy} alt="" className="size-14 object-contain animate-bounce drop-shadow-md" />
+                  </div>
+                )}
+                <TiltFireflyButton onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</TiltFireflyButton>
+              </div>
             ) : null}
             <p className="text-sm text-muted-foreground">{t.record(record?.w ?? 0, record?.l ?? 0)}{best?.unit === "score" ? ` · ${t.best(best.value)}` : ""}</p>
           </div>

@@ -400,6 +400,10 @@ export const ONE_BUTTON_CIV_SPRITES = {
 
 export const TIME_LOOP_RESCUE_SPRITES = {
   keyart: "/assets/sprites/time-loop-rescue/keyart.webp",
+  switch: "/assets/sprites/time-loop-rescue/beacon-switch-3d-128.png",
+  echo: "/assets/sprites/time-loop-rescue/echo-clone-3d-128.png",
+  exit: "/assets/sprites/time-loop-rescue/portal-exit-3d-128.png",
+  trophy: "/assets/sprites/time-loop-rescue/trophy-rescue-3d-128.png",
 } as const;
 
 export const BLACKOUT_COURIER_SPRITES = {
@@ -412,6 +416,10 @@ export const DELAY_CURSOR_SPRITES = {
 
 export const FIREFLY_CHOIR_SPRITES = {
   keyart: "/assets/sprites/firefly-choir/keyart.webp",
+  lit: "/assets/sprites/firefly-choir/firefly-lit-3d-128.png",
+  dim: "/assets/sprites/firefly-choir/firefly-dim-3d-128.png",
+  jar: "/assets/sprites/firefly-choir/lantern-jar-3d-128.png",
+  trophy: "/assets/sprites/firefly-choir/trophy-firefly-3d-128.png",
 } as const;
 
 export const PATCH_DUNGEON_SPRITES = {
@@ -424,6 +432,10 @@ export const PATCH_DUNGEON_SPRITES = {
 
 export const GHOST_COMPOSER_SPRITES = {
   keyart: "/assets/sprites/ghost-composer/keyart.webp",
+  low: "/assets/sprites/ghost-composer/note-low-3d-128.png",
+  high: "/assets/sprites/ghost-composer/note-high-3d-128.png",
+  metronome: "/assets/sprites/ghost-composer/metronome-ghost-3d-128.png",
+  trophy: "/assets/sprites/ghost-composer/trophy-ghost-3d-128.png",
 } as const;
 
 export const UNSEEN_BOSS_SPRITES = {
@@ -448,6 +460,10 @@ export const MONSTER_INTERVIEW_SPRITES = {
 
 export const FAILURE_EATER_SPRITES = {
   keyart: "/assets/sprites/failure-eater/keyart.webp",
+  beast: "/assets/sprites/failure-eater/beast-eater-3d-128.png",
+  hurdle: "/assets/sprites/failure-eater/hurdle-spike-3d-128.png",
+  runner: "/assets/sprites/failure-eater/runner-orb-3d-128.png",
+  trophy: "/assets/sprites/failure-eater/trophy-eater-3d-128.png",
 } as const;
 
 export const OMISSION_DETECTIVE_SPRITES = {
@@ -467,6 +483,10 @@ export const STANLEY_CHOICE_SPRITES = {
 
 export const TIME_COUNSEL_SPRITES = {
   keyart: "/assets/sprites/time-counsel/keyart.webp",
+  when: "/assets/sprites/time-counsel/gavel-when-3d-128.png",
+  where: "/assets/sprites/time-counsel/pillar-where-3d-128.png",
+  who: "/assets/sprites/time-counsel/scale-who-3d-128.png",
+  trophy: "/assets/sprites/time-counsel/trophy-counsel-3d-128.png",
 } as const;
 
 export const TWO_HANDS_SPRITES = {

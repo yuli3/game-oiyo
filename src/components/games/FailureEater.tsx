@@ -395,8 +395,8 @@ export default function FailureEater({ locale }: { locale: Locale }) {
             <p className="text-sm text-foreground">{run.phase === "won" ? t.won : run.phase === "lost" ? t.lost : run.phase === "play" ? t.play : t.ready}</p>
             <div className="flex flex-wrap gap-3 text-sm text-foreground">
               <span className="inline-flex items-center gap-2"><span className="inline-block size-4 rounded-md border border-border bg-card" />{t.open}</span>
-              <span className="inline-flex items-center gap-2"><span className="inline-block size-4 rounded-md bg-foreground/15" />{t.hurdle}</span>
-              <span className="inline-flex items-center gap-2"><span className="inline-block size-4 rounded-md bg-warning/30" />{t.monster}</span>
+              <span className="inline-flex items-center gap-2"><img src={FAILURE_EATER_SPRITES.hurdle} alt="" className="size-4 object-contain" />{t.hurdle}</span>
+              <span className="inline-flex items-center gap-2"><img src={FAILURE_EATER_SPRITES.beast} alt="" className="size-4 object-contain" />{t.monster}</span>
             </div>
             <div
               className="mx-auto grid w-full max-w-sm touch-none grid-cols-5 gap-1 select-none"
@@ -421,7 +421,7 @@ export default function FailureEater({ locale }: { locale: Locale }) {
                     : "border border-border bg-card text-foreground";
                 return (
                   <div key={index} className={`flex aspect-square items-center justify-center rounded-md text-sm font-black ${isCurrent ? "ring-2 ring-primary" : ""} ${tone}`}>
-                    {isMonster ? "●" : isHurdle ? "▴" : isCurrent ? "●" : ""}
+                    {isMonster ? <img src={FAILURE_EATER_SPRITES.beast} alt="●" className="size-6 object-contain" /> : isHurdle ? <img src={FAILURE_EATER_SPRITES.hurdle} alt="▴" className="size-6 object-contain" /> : isCurrent ? <img src={FAILURE_EATER_SPRITES.runner} alt="●" className="size-5 object-contain" /> : ""}
                   </div>
                 );
               })}
@@ -445,15 +445,22 @@ export default function FailureEater({ locale }: { locale: Locale }) {
               </div>
             ) : null}
             {run.phase === "won" || run.phase === "lost" ? (
-              <div className="flex flex-wrap items-center gap-2">
-                <TiltFailureButton onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</TiltFailureButton>
-                <TiltFailureButton
-                  onClick={handleShareCard}
-                  className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-foreground`}
-                >
-                  <Share2 className="size-4" />
-                  <span>{shareCopied ? "COPIED!" : "SHARE CARD"}</span>
-                </TiltFailureButton>
+              <div className="space-y-3 rounded-2xl border border-border bg-card/60 p-4">
+                {run.phase === "won" && (
+                  <div className="flex justify-center">
+                    <img src={FAILURE_EATER_SPRITES.trophy} alt="" className="size-14 object-contain animate-bounce drop-shadow-md" />
+                  </div>
+                )}
+                <div className="flex flex-wrap items-center gap-2">
+                  <TiltFailureButton onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</TiltFailureButton>
+                  <TiltFailureButton
+                    onClick={handleShareCard}
+                    className={`${CONTROL} inline-flex items-center gap-1 border-border bg-card text-foreground`}
+                  >
+                    <Share2 className="size-4" />
+                    <span>{shareCopied ? "COPIED!" : "SHARE CARD"}</span>
+                  </TiltFailureButton>
+                </div>
               </div>
             ) : null}
             <p className="text-sm text-muted-foreground">{t.record(record?.w ?? 0, record?.l ?? 0)}{best?.unit === "score" ? ` · ${t.best(best.value)}` : ""}</p>

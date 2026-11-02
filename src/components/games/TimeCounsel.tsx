@@ -283,7 +283,7 @@ export default function TimeCounsel({ locale }: { locale: Locale }) {
     if (run.phase === "won") {
       cue("win");
       hapticsRef.current.fire("win");
-      if (containerRef.current) celebrate(containerRef.current, { preset: "shards" });
+      if (containerRef.current) celebrate(containerRef.current, { preset: "stardust" });
     } else if (run.phase === "lost") {
       cue("fail");
       hapticsRef.current.fire("fail");
@@ -336,7 +336,10 @@ export default function TimeCounsel({ locale }: { locale: Locale }) {
             <div className="grid grid-cols-3 gap-2">
               {COLUMNS.map((column) => (
                 <div key={column} className="space-y-2">
-                  <p className="text-center text-sm font-bold text-foreground">{t.columns[column]}</p>
+                  <div className="flex flex-col items-center gap-1">
+                    <img src={TIME_COUNSEL_SPRITES[column]} alt="" className="size-7 object-contain drop-shadow-sm" />
+                    <p className="text-center text-sm font-bold text-foreground">{t.columns[column]}</p>
+                  </div>
                   <p className="text-center text-sm text-muted-foreground">{t.facts[COLUMN_FACT[column]]}</p>
                   {COLUMN_CARDS[column].map((card) => {
                     const pointed = run.brief.target[column] === card;
@@ -363,7 +366,14 @@ export default function TimeCounsel({ locale }: { locale: Locale }) {
               </ul>
             ) : null}
             {run.phase === "won" || run.phase === "lost" ? (
-              <button type="button" onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</button>
+              <div className="space-y-3 rounded-2xl border border-border bg-card/60 p-4">
+                {run.phase === "won" && (
+                  <div className="flex justify-center">
+                    <img src={TIME_COUNSEL_SPRITES.trophy} alt="" className="size-14 object-contain animate-bounce drop-shadow-md" />
+                  </div>
+                )}
+                <button type="button" onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</button>
+              </div>
             ) : null}
             <p className="text-sm text-muted-foreground">{t.record(record?.w ?? 0, record?.l ?? 0)}{best?.unit === "seconds" ? ` · ${t.best(best.value)}` : ""}</p>
           </div>

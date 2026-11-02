@@ -362,7 +362,14 @@ export default function TimeLoopRescue({ locale = "ko" }: { locale?: Locale | st
           <div className="relative overflow-hidden rounded-2xl bg-foreground shadow-[0_18px_50px_rgba(2,8,23,.32)]">
             <canvas ref={canvasRef} width={960} height={540} tabIndex={0} onBlur={clearInput} aria-label={t.area} className="block aspect-video w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-terrain-water" />
             {status === "paused" && mission.phase === "playing" && <button type="button" onClick={togglePause} className="absolute inset-0 grid place-items-center bg-foreground/70 text-lg font-bold text-white">{t.resume}</button>}
-            {mission.phase !== "playing" && <div role="status" className="absolute inset-x-0 bottom-0 bg-foreground/90 px-4 py-3 text-center font-bold text-white">{mission.phase === "rescued" ? t.won : t.failed}</div>}
+            {mission.phase !== "playing" && (
+              <div role="status" className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-2 bg-foreground/90 px-4 py-3 text-center font-bold text-white">
+                {mission.phase === "rescued" && (
+                  <img src={TIME_LOOP_RESCUE_SPRITES.trophy} alt="" className="size-8 object-contain animate-bounce" />
+                )}
+                <span>{mission.phase === "rescued" ? t.won : t.failed}</span>
+              </div>
+            )}
             {status === "idle" && <button type="button" onClick={start} className="absolute inset-0 m-auto h-14 w-fit rounded-xl bg-terrain-water px-8 font-black text-accent-foreground shadow-[0_12px_32px_rgba(45,212,191,.28)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">{t.start}</button>}
           </div>
           <p className="min-h-12 rounded-xl bg-foreground px-4 py-3 text-sm font-semibold text-background" aria-live="polite">{message}</p>
