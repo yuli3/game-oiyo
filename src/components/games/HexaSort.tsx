@@ -14,6 +14,8 @@ import {
 } from "../../lib/games/juice-engine";
 import { playSyntheticTone } from "../../lib/games/audio-mixer";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { HEXA_SORT_SPRITES } from "../../lib/games/sprites";
+import { celebrate } from "../../lib/games/celebration";
 import { Button } from "../ui/button";
 
 interface HexaSortProps {
@@ -77,6 +79,7 @@ export default function HexaSort({ locale = "ko" }: HexaSortProps) {
   const [shakeState, setShakeState] = useState(() => createShakeState());
   const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0 });
   const [shareCopied, setShareCopied] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   const audioCtxRef = useRef<AudioContext | null>(null);
 
@@ -147,6 +150,10 @@ export default function HexaSort({ locale = "ko" }: HexaSortProps) {
       MobileHapticsPro.success();
       triggerHaptic("combo");
 
+      if (resolution.nextState.status === "level_completed" && containerRef.current) {
+        celebrate(containerRef.current, { preset: "tiles" });
+      }
+
       // Celebratory ASMR chime chord
       playSyntheticTone(audioCtxRef.current, { freq: 523.25, duration: 0.25, type: "sine" });
       setTimeout(() => {
@@ -194,6 +201,7 @@ export default function HexaSort({ locale = "ko" }: HexaSortProps) {
 
   return (
     <div
+      ref={containerRef}
       style={
         {
           "--shake-x": `${shakeOffset.x}px`,
@@ -204,11 +212,18 @@ export default function HexaSort({ locale = "ko" }: HexaSortProps) {
     >
       {/* Top Header: Level, Score, Target Progress */}
       <div className="flex w-full items-center justify-between gap-2 border-b border-border pb-3">
-        <div className="flex flex-col">
-          <span className="text-xs font-bold text-muted-foreground">
-            {locale === "ko" ? "레벨" : "LEVEL"}
-          </span>
-          <span className="text-xl font-black text-foreground">{game.level}</span>
+        <div className="flex items-center gap-2">
+          <img
+            src={HEXA_SORT_SPRITES.gemEmerald}
+            alt="Hexa Sort"
+            className="size-7 object-contain drop-shadow-xs"
+          />
+          <div className="flex flex-col">
+            <span className="text-xs font-bold text-muted-foreground">
+              {locale === "ko" ? "레벨" : "LEVEL"}
+            </span>
+            <span className="text-xl font-black text-foreground">{game.level}</span>
+          </div>
         </div>
 
         {/* Clear Progress Bar */}
@@ -311,7 +326,11 @@ export default function HexaSort({ locale = "ko" }: HexaSortProps) {
         {/* Level Completed Overlay Modal */}
         {game.status === "level_completed" && (
           <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-card/90 p-6 backdrop-blur-xs">
-            <span className="text-5xl">🎉</span>
+            <img
+              src={HEXA_SORT_SPRITES.trophy}
+              alt="Level Complete"
+              className="size-16 object-contain drop-shadow-md select-none pointer-events-none animate-bounce"
+            />
             <h2 className="mt-2 text-2xl font-black text-warning">
               {locale === "ko" ? "레벨 클리어!" : "Level Complete!"}
             </h2>

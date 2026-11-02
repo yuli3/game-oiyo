@@ -572,6 +572,12 @@ export const WATER_SORT_3D_SPRITES = {
   trophy: "/assets/sprites/water-sort/trophy-gold-128.png",
 } as const;
 
+export const HEXA_SORT_SPRITES = {
+  gemEmerald: "/assets/sprites/hexa-sort/hexa-gem-emerald-128.png",
+  gemAmber: "/assets/sprites/hexa-sort/hexa-gem-amber-128.png",
+  trophy: "/assets/sprites/hexa-sort/hexa-trophy-128.png",
+} as const;
+
 export const DOT_PET_SPRITES: Record<string, { baby: string; adult: string }> = {
   normal: {
     baby: "/assets/sprites/dot-pet/normal-baby.png",
