@@ -669,6 +669,13 @@ export const SHOTGUN_CHESS_SPRITES = {
   trophy: "/assets/sprites/shotgun-chess/trophy-shotgun-3d-128.png",
 } as const;
 
+export const FTL_MINI_SPRITES = {
+  cruiser: "/assets/sprites/ftl-mini/ship-cruiser-3d-128.png",
+  laser: "/assets/sprites/ftl-mini/weapon-laser-3d-128.png",
+  scrap: "/assets/sprites/ftl-mini/space-scrap-3d-128.png",
+  trophy: "/assets/sprites/ftl-mini/trophy-galaxy-3d-128.png",
+} as const;
+
 export const DOT_PET_SPRITES: Record<string, { baby: string; adult: string }> = {
   normal: {
     baby: "/assets/sprites/dot-pet/normal-baby.png",

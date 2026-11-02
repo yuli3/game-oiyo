@@ -21,6 +21,12 @@ import {
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { celebrate } from '../../lib/games/celebration';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { FTL_MINI_SPRITES } from '../../lib/games/sprites';
+import {
+  loadArcadePassProgress,
+  reportMissionProgress,
+  saveArcadePassProgress,
+} from '../../lib/games/arcade-pass';
 import type { Locale } from '../../lib/i18n';
 
 function TiltFTLButton({
@@ -325,6 +331,24 @@ export const FTLMini: React.FC<{ locale?: Locale }> = ({ locale = 'en' }) => {
       setSelectedCrewId(null);
     }
   };
+
+  // Stardust celebration and arcade pass mission reporting on victory
+  useEffect(() => {
+    if (victory) {
+      MobileHapticsPro.success();
+      if (containerRef.current) {
+        celebrate(containerRef.current, { preset: 'stardust' });
+      }
+      try {
+        const dateKey = new Date().toISOString().slice(0, 10);
+        const current = loadArcadePassProgress(dateKey);
+        const updated = reportMissionProgress(current, 'ftl-mini', 1);
+        saveArcadePassProgress(updated);
+      } catch {
+        // arcade pass fallback
+      }
+    }
+  }, [victory, containerRef]);
 
   const handleJump = () => {
     if (!engineRef.current) return;
@@ -636,8 +660,11 @@ export const FTLMini: React.FC<{ locale?: Locale }> = ({ locale = 'en' }) => {
         {/* Player Hull & Shields */}
         <div className="flex items-center gap-4">
           <div className="flex flex-col min-w-32">
-            <div className="flex justify-between text-xs font-bold">
-              <span className="text-primary">USS Antigravity</span>
+            <div className="flex justify-between text-xs font-bold items-center">
+              <span className="text-primary flex items-center gap-1">
+                <img src={FTL_MINI_SPRITES.cruiser} alt="Kestrel Cruiser" className="size-4 object-contain inline-block" />
+                USS Antigravity
+              </span>
               <span>{playerHull}/{playerMaxHull}</span>
             </div>
             <div className="w-full bg-muted h-2.5 rounded-full overflow-hidden mt-1 border border-border/40">
@@ -661,7 +688,10 @@ export const FTLMini: React.FC<{ locale?: Locale }> = ({ locale = 'en' }) => {
 
         {/* Resources & Sector */}
         <div className="flex items-center gap-3 text-xs font-bold">
-          <span className="text-warning">🔩 {scrap} Scrap</span>
+          <span className="text-warning flex items-center gap-1">
+            <img src={FTL_MINI_SPRITES.scrap} alt="Scrap" className="size-3.5 object-contain inline-block" />
+            {scrap} Scrap
+          </span>
           <span className="text-destructive">🚀 {missiles} Missiles</span>
           <span className="text-foreground">Sector {sector}</span>
         </div>
@@ -760,6 +790,11 @@ export const FTLMini: React.FC<{ locale?: Locale }> = ({ locale = 'en' }) => {
           <div className="absolute inset-0 bg-background/90 backdrop-blur-md flex flex-col items-center justify-center p-6 gap-4 z-30">
             {victory ? (
               <>
+                <img
+                  src={FTL_MINI_SPRITES.trophy}
+                  alt="Galaxy Saver Trophy"
+                  className="size-20 animate-bounce drop-shadow-xl mb-1 object-contain"
+                />
                 <h2 className="text-3xl font-black text-primary tracking-wider">
                   SECTOR CLEARED
                 </h2>
@@ -853,7 +888,10 @@ export const FTLMini: React.FC<{ locale?: Locale }> = ({ locale = 'en' }) => {
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-foreground">{weapon.name}</span>
+                    <span className="text-xs font-bold text-foreground flex items-center gap-1">
+                      <img src={FTL_MINI_SPRITES.laser} alt="Laser" className="size-3.5 object-contain inline-block" />
+                      {weapon.name}
+                    </span>
                     <span className="text-xs text-muted-foreground flex items-center gap-1">
                       <Crosshair className="size-3" />
                       {targetRoom ? targetRoom.name : 'No Target'}
