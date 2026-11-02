@@ -19,7 +19,7 @@ import {
   downloadShareCard,
 } from "@/lib/games/share-card";
 import { useCardTiltPro, MobileHapticsPro } from "@/lib/games/engine-suite-unified";
-import { getSpriteUrl } from "@/lib/games/sprites";
+import { getSpriteUrl, PEGLIN_ROGUE_SPRITES } from "@/lib/games/sprites";
 import { Maximize2, Minimize2, Share2, Check, RotateCcw, Target } from "lucide-react";
 
 function TiltPeglinButton({
@@ -164,7 +164,7 @@ export default function PeglinRogue({ locale = "ko" }: PeglinRogueProps) {
       } else if (current.status === "won" && !victoryHandledRef.current) {
         victoryHandledRef.current = true;
         MobileHapticsPro.heavy();
-        celebrate(containerRef.current, { preset: "sparks" });
+        celebrate(containerRef.current, { preset: "stardust" });
       } else if (current.status === "gameover" && !gameOverHandledRef.current) {
         gameOverHandledRef.current = true;
         MobileHapticsPro.error();
@@ -377,8 +377,14 @@ export default function PeglinRogue({ locale = "ko" }: PeglinRogueProps) {
           {/* Active Pachinko Ball */}
           {activeBall && (
             <g transform={`translate(${activeBall.x}, ${activeBall.y})`}>
-              <circle r={activeBall.radius} className="fill-foreground stroke-card" strokeWidth="1.5" />
-              <circle cx="-1.5" cy="-1.5" r="1.5" className="fill-card" />
+              <image
+                href={PEGLIN_ROGUE_SPRITES.orb}
+                x={-activeBall.radius * 1.8}
+                y={-activeBall.radius * 1.8}
+                width={activeBall.radius * 3.6}
+                height={activeBall.radius * 3.6}
+                className="select-none pointer-events-none filter drop-shadow-md"
+              />
             </g>
           )}
         </svg>
@@ -397,13 +403,14 @@ export default function PeglinRogue({ locale = "ko" }: PeglinRogueProps) {
 
         {/* Victory Modal */}
         {game.status === "won" && (
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-background/85 p-6 text-center backdrop-blur-sm">
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-background/85 p-6 text-center backdrop-blur-sm animate-in zoom-in-95">
             <img
-              src={getSpriteUrl("trophy", 64)}
+              src={PEGLIN_ROGUE_SPRITES.trophy}
               alt="Victory Trophy"
-              width={64}
-              height={64}
-              className="size-14 object-contain animate-bounce drop-shadow-md mb-2"
+              width={80}
+              height={80}
+              className="size-20 object-contain animate-bounce drop-shadow-xl mb-3 select-none pointer-events-none"
+              draggable={false}
             />
             <h3 className="mb-1 text-2xl font-black tracking-tight text-primary">
               {locale === "ko" ? "몬스터 격퇴 완료!" : "Monster Defeated!"}
@@ -482,12 +489,26 @@ function RenderPegSvg({ peg }: { peg: Peg }) {
     return (
       <g transform={`translate(${x}, ${y})`}>
         <circle
-          r={radius}
-          className={hit ? "fill-muted stroke-border" : "fill-destructive stroke-card"}
+          r={radius * 1.3}
+          className={hit ? "fill-muted stroke-border" : "fill-destructive/20 stroke-destructive"}
           strokeWidth="1.5"
           opacity={hit ? 0.3 : 1}
         />
-        {!hit && <circle cx="-1" cy="-1" r="1.5" className="fill-card" />}
+        <circle
+          r={radius * 0.85}
+          className={hit ? "fill-muted" : "fill-destructive"}
+          opacity={hit ? 0.3 : 1}
+        />
+        {!hit && (
+          <text
+            textAnchor="middle"
+            dominantBaseline="central"
+            fontSize="10"
+            className="select-none pointer-events-none"
+          >
+            💣
+          </text>
+        )}
       </g>
     );
   }
@@ -495,13 +516,15 @@ function RenderPegSvg({ peg }: { peg: Peg }) {
   if (type === "crit") {
     return (
       <g transform={`translate(${x}, ${y})`}>
-        <circle
-          r={radius}
-          className={hit ? "fill-muted stroke-border" : "fill-primary stroke-card"}
-          strokeWidth="1.5"
-          opacity={hit ? 0.3 : 1}
+        <image
+          href={PEGLIN_ROGUE_SPRITES.pegCrit}
+          x={-radius * 1.5}
+          y={-radius * 1.5}
+          width={radius * 3}
+          height={radius * 3}
+          opacity={hit ? 0.35 : 1}
+          className="select-none pointer-events-none filter drop-shadow-xs"
         />
-        {!hit && <circle cx="-1" cy="-1" r="1.5" className="fill-card" />}
       </g>
     );
   }
@@ -509,13 +532,15 @@ function RenderPegSvg({ peg }: { peg: Peg }) {
   if (type === "refresh") {
     return (
       <g transform={`translate(${x}, ${y})`}>
-        <circle
-          r={radius}
-          className={hit ? "fill-muted stroke-border" : "fill-success stroke-card"}
-          strokeWidth="1.5"
-          opacity={hit ? 0.3 : 1}
+        <image
+          href={PEGLIN_ROGUE_SPRITES.pegRefresh}
+          x={-radius * 1.5}
+          y={-radius * 1.5}
+          width={radius * 3}
+          height={radius * 3}
+          opacity={hit ? 0.35 : 1}
+          className="select-none pointer-events-none filter drop-shadow-xs"
         />
-        {!hit && <circle cx="-1" cy="-1" r="1.5" className="fill-card" />}
       </g>
     );
   }

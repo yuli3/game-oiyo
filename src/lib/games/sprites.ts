@@ -585,6 +585,13 @@ export const BACKPACK_HERO_SPRITES = {
   trophy: "/assets/sprites/backpack-hero/hero-trophy-128.png",
 } as const;
 
+export const PEGLIN_ROGUE_SPRITES = {
+  orb: "/assets/sprites/peglin-rogue/orb-pegglin-128.png",
+  pegCrit: "/assets/sprites/peglin-rogue/peg-crit-crystal-128.png",
+  pegRefresh: "/assets/sprites/peglin-rogue/peg-refresh-emerald-128.png",
+  trophy: "/assets/sprites/peglin-rogue/trophy-goblin-128.png",
+} as const;
+
 export const DOT_PET_SPRITES: Record<string, { baby: string; adult: string }> = {
   normal: {
     baby: "/assets/sprites/dot-pet/normal-baby.png",
