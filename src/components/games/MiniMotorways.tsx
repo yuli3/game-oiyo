@@ -14,12 +14,13 @@ import {
 } from '../../lib/games/mini-motorways';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { celebrate } from '../../lib/games/celebration';
 import {
   createShareCardCanvas,
   copyShareCardToClipboard,
   downloadShareCard,
 } from '../../lib/games/share-card';
-import { getSpriteUrl } from '../../lib/games/sprites';
+import { getSpriteUrl, MINI_MOTORWAYS_SPRITES } from '../../lib/games/sprites';
 import { Share2, Check, Maximize2, Minimize2 } from 'lucide-react';
 
 function TiltMotorButton({
@@ -225,6 +226,7 @@ export default function MiniMotorways({ locale }: Props) {
     if (next.status === 'victory') {
       playMotorwayAudio('victory');
       MobileHapticsPro.success();
+      celebrate(containerRef.current, { preset: 'stardust' });
     } else if (next.status === 'gridlock') {
       playMotorwayAudio('gridlock');
       MobileHapticsPro.heavy();
@@ -259,8 +261,9 @@ export default function MiniMotorways({ locale }: Props) {
             <div className="text-xs text-muted-foreground">
               {isKo ? '누적 통근 차량 (목표 30대)' : 'Commuter Trips (Goal 30)'}
             </div>
-            <div className="text-xl font-extrabold text-primary">
-              🚗 {state.tripsCompleted} / {state.tripGoal}
+            <div className="text-xl font-extrabold text-primary flex items-center gap-1.5">
+              <img src={MINI_MOTORWAYS_SPRITES.car} alt="Car" width={20} height={20} className="size-5 object-contain inline-block drop-shadow-xs" />
+              <span>{state.tripsCompleted} / {state.tripGoal}</span>
             </div>
           </div>
 
@@ -277,9 +280,10 @@ export default function MiniMotorways({ locale }: Props) {
             <div className="text-xs text-muted-foreground">
               {isKo ? '보유 도로 / 회전교차로 / 고속도로' : 'Roads / Roundabouts / Motorways'}
             </div>
-            <div className="text-sm font-bold text-foreground">
-              🛣️ {state.roadTilesLeft} · 🔄 {state.roundaboutsLeft} · 🌉{' '}
-              {state.motorwaysLeft}
+            <div className="text-sm font-bold text-foreground flex items-center gap-1.5">
+              <span>🛣️ {state.roadTilesLeft} · 🔄 {state.roundaboutsLeft} · </span>
+              <img src={MINI_MOTORWAYS_SPRITES.bridge} alt="Bridge" width={16} height={16} className="size-4 object-contain inline-block drop-shadow-xs" />
+              <span>{state.motorwaysLeft}</span>
             </div>
           </div>
         </div>
@@ -318,13 +322,13 @@ export default function MiniMotorways({ locale }: Props) {
 
       {/* Victory / Gridlock Banner */}
       {state.status === 'victory' && (
-        <div className="mb-4 rounded-2xl border border-primary bg-primary/10 p-4 text-center flex flex-col items-center justify-center gap-2">
+        <div className="mb-4 rounded-2xl border border-primary bg-primary/10 p-4 text-center flex flex-col items-center justify-center gap-2 shadow-md animate-in fade-in zoom-in-95">
           <img
-            src={getSpriteUrl('trophy', 64)}
+            src={MINI_MOTORWAYS_SPRITES.trophy}
             alt="Victory Trophy"
-            width={64}
-            height={64}
-            className="size-16 drop-shadow-md select-none pointer-events-none"
+            width={80}
+            height={80}
+            className="size-20 object-contain animate-bounce drop-shadow-xl select-none pointer-events-none"
           />
           <h3 className="text-lg font-extrabold text-primary">
             {isKo
@@ -389,9 +393,10 @@ export default function MiniMotorways({ locale }: Props) {
         <TiltMotorButton
           onClick={handleDispatch}
           disabled={state.status !== 'planning'}
-          className="rounded-xl bg-primary px-5 py-2 text-xs font-extrabold text-primary-foreground shadow-sm hover:opacity-90 disabled:opacity-40"
+          className="flex items-center gap-1.5 rounded-xl bg-primary px-5 py-2 text-xs font-extrabold text-primary-foreground shadow-sm hover:opacity-90 disabled:opacity-40"
         >
-          🚗 {isKo ? '주간 통근 차량 출발 (DISPATCH)' : 'DISPATCH RUSH HOUR TRAFFIC'}
+          <img src={MINI_MOTORWAYS_SPRITES.car} alt="Car" width={16} height={16} className="size-4 object-contain inline-block drop-shadow-xs" />
+          <span>{isKo ? '주간 통근 차량 출발 (DISPATCH)' : 'DISPATCH RUSH HOUR TRAFFIC'}</span>
         </TiltMotorButton>
       </div>
 
@@ -454,9 +459,10 @@ export default function MiniMotorways({ locale }: Props) {
 
                   {cell.kind === 'mall' && colorBadge && (
                     <>
-                      <span className="text-xl leading-none">
-                        🏢{colorBadge.icon}
-                      </span>
+                      <div className="relative flex items-center justify-center">
+                        <img src={MINI_MOTORWAYS_SPRITES.mall} alt="Mall" width={32} height={32} className="size-8 object-contain drop-shadow-xs" />
+                        <span className="absolute -top-1 -right-1 text-xs">{colorBadge.icon}</span>
+                      </div>
                       <span className="mt-1 text-xs font-bold text-foreground">
                         {isKo ? `${colorBadge.nameKo} 몰` : `${colorBadge.nameEn} Mall`}
                       </span>
@@ -468,9 +474,13 @@ export default function MiniMotorways({ locale }: Props) {
 
                   {cell.kind === 'road' && (
                     <>
-                      <span className="text-xl leading-none">
-                        {cell.hasRoundabout ? '🔄' : isMwEndpoint ? '🌉' : '🛣️'}
-                      </span>
+                      {isMwEndpoint ? (
+                        <img src={MINI_MOTORWAYS_SPRITES.bridge} alt="Bridge" width={28} height={28} className="size-7 object-contain drop-shadow-xs" />
+                      ) : (
+                        <span className="text-xl leading-none">
+                          {cell.hasRoundabout ? '🔄' : '🛣️'}
+                        </span>
+                      )}
                       <span className="mt-1 text-xs font-semibold">
                         {cell.hasRoundabout
                           ? isKo

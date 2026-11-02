@@ -697,6 +697,13 @@ export const FACTORIO_MINI_SPRITES = {
   trophy: "/assets/sprites/factorio-mini/trophy-factorio-3d-128.png",
 } as const;
 
+export const MINI_MOTORWAYS_SPRITES = {
+  car: "/assets/sprites/mini-motorways/car-commuter-3d-128.png",
+  mall: "/assets/sprites/mini-motorways/building-mall-3d-128.png",
+  bridge: "/assets/sprites/mini-motorways/bridge-motorway-3d-128.png",
+  trophy: "/assets/sprites/mini-motorways/trophy-motorway-3d-128.png",
+} as const;
+
 export const DOT_PET_SPRITES: Record<string, { baby: string; adult: string }> = {
   normal: {
     baby: "/assets/sprites/dot-pet/normal-baby.png",
