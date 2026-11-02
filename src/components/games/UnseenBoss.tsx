@@ -309,7 +309,7 @@ export default function UnseenBoss({ locale }: { locale: Locale }) {
     if (run.phase === "won") {
       cue("win");
       hapticsRef.current.fire("win");
-      if (containerRef.current) celebrate(containerRef.current, { preset: "shards" });
+      if (containerRef.current) celebrate(containerRef.current, { preset: "stardust" });
     } else if (run.phase === "lost") {
       cue("fail");
       hapticsRef.current.fire("fail");
@@ -356,10 +356,17 @@ export default function UnseenBoss({ locale }: { locale: Locale }) {
             <p className="text-sm text-muted-foreground">{t.date(dateKey)}</p>
             <p className="text-sm font-bold tabular-nums text-foreground" aria-live="polite">{t.misses(run.misses)}</p>
             <p className="text-sm text-foreground">{run.phase === "won" ? t.won : run.phase === "lost" ? t.lost : run.phase === "ask" ? t.ask : run.phase === "watch" ? t.watch : t.ready}</p>
+            {run.phase === "won" ? (
+              <div className="flex items-center gap-3 rounded-xl border border-primary/40 bg-primary/10 p-3">
+                <img src={UNSEEN_BOSS_SPRITES.trophy} alt="" className="size-10 shrink-0 object-contain drop-shadow-sm" draggable={false} />
+                <p className="text-sm font-bold text-foreground">{t.won}</p>
+              </div>
+            ) : null}
             <div className="mx-auto grid w-full max-w-sm grid-cols-3 gap-2">
               {([0, 1, 2] as const).map((lane) => (
-                <div key={lane} className={`flex aspect-square items-center justify-center rounded-xl text-2xl ${latest === lane ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"}`} aria-label={t.lanes[lane]}>
-                  {GLYPH[lane]}
+                <div key={lane} className={`flex aspect-square flex-col items-center justify-center gap-1 rounded-xl text-2xl ${latest === lane ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"}`} aria-label={t.lanes[lane]}>
+                  <img src={latest === lane ? UNSEEN_BOSS_SPRITES.pulse : UNSEEN_BOSS_SPRITES.eye} alt="" className="size-7 object-contain" draggable={false} />
+                  <span>{GLYPH[lane]}</span>
                 </div>
               ))}
             </div>
@@ -388,7 +395,10 @@ export default function UnseenBoss({ locale }: { locale: Locale }) {
                   const selected = run.lastGuess === rule;
                   return (
                     <button key={rule} type="button" disabled={!asking} onClick={() => onGuess(rule)} aria-pressed={selected} className={`${CONTROL} w-full text-left disabled:opacity-40 ${selected ? "ring-2 ring-primary" : ""} border-border bg-card text-foreground`}>
-                      <span className="block">{t.rules[rule].name}</span>
+                      <span className="inline-flex items-center gap-2">
+                        <img src={UNSEEN_BOSS_SPRITES.tablet} alt="" className="size-4 shrink-0 object-contain" draggable={false} />
+                        <span>{t.rules[rule].name}</span>
+                      </span>
                       <span className="block font-normal text-muted-foreground">{t.rules[rule].hint}</span>
                     </button>
                   );

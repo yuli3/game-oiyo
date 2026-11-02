@@ -367,6 +367,12 @@ export default function TwoHands({ locale }: { locale: Locale }) {
               {run.phase === "play" ? ` · ${t.left(remain)}` : ""}
             </p>
             <p className="text-sm text-foreground">{run.phase === "won" ? t.won : run.phase === "lost" ? t.lost : run.phase === "play" ? t.play : t.ready}</p>
+            {run.phase === "won" ? (
+              <div className="flex items-center gap-3 rounded-xl border border-primary/40 bg-primary/10 p-3">
+                <img src={TWO_HANDS_SPRITES.trophy} alt="" className="size-10 shrink-0 object-contain drop-shadow-sm" draggable={false} />
+                <p className="text-sm font-bold text-foreground">{t.won}</p>
+              </div>
+            ) : null}
             <div className="flex touch-none flex-col gap-1">
               <div className="flex items-center gap-1" aria-label={t.rowLeft}>
                 <Pixel label={t.face.body} tone="bg-primary text-primary-foreground" glyph="●" />
@@ -385,9 +391,18 @@ export default function TwoHands({ locale }: { locale: Locale }) {
             <p className="text-sm text-muted-foreground">● {t.face.body} · ○ {t.face.sky} · ■ {t.face.H} · · {t.face.F}</p>
             {run.phase === "play" ? (
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                <button type="button" disabled={run.sky <= 0 || !run.top.includes("H")} onClick={() => onAct("L")} className={`${BUTTON} touch-none`}>{t.act.L}</button>
-                <button type="button" disabled={run.sky <= 0 || !run.bottom.includes("H")} onClick={() => onAct("R")} className={`${BUTTON} touch-none`}>{t.act.R}</button>
-                <button type="button" onClick={() => onAct("E")} className={`${BUTTON} touch-none`}>{t.act.E}</button>
+                <button type="button" disabled={run.sky <= 0 || !run.top.includes("H")} onClick={() => onAct("L")} className={`${BUTTON} inline-flex items-center justify-center gap-2 touch-none`}>
+                  <img src={TWO_HANDS_SPRITES.left} alt="" className="size-5 shrink-0 object-contain" draggable={false} />
+                  <span>{t.act.L}</span>
+                </button>
+                <button type="button" disabled={run.sky <= 0 || !run.bottom.includes("H")} onClick={() => onAct("R")} className={`${BUTTON} inline-flex items-center justify-center gap-2 touch-none`}>
+                  <img src={TWO_HANDS_SPRITES.right} alt="" className="size-5 shrink-0 object-contain" draggable={false} />
+                  <span>{t.act.R}</span>
+                </button>
+                <button type="button" onClick={() => onAct("E")} className={`${BUTTON} inline-flex items-center justify-center gap-2 touch-none`}>
+                  <img src={TWO_HANDS_SPRITES.plank} alt="" className="size-5 shrink-0 object-contain" draggable={false} />
+                  <span>{t.act.E}</span>
+                </button>
               </div>
             ) : null}
             {run.phase === "ready" ? (

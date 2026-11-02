@@ -503,6 +503,10 @@ export const GHOST_COMPOSER_SPRITES = {
 
 export const UNSEEN_BOSS_SPRITES = {
   keyart: "/assets/sprites/unseen-boss/keyart.webp",
+  pulse: "/assets/sprites/unseen-boss/pulse-tremor-3d-128.png",
+  eye: "/assets/sprites/unseen-boss/eye-oracle-3d-128.png",
+  tablet: "/assets/sprites/unseen-boss/tablet-rule-3d-128.png",
+  trophy: "/assets/sprites/unseen-boss/trophy-unseen-3d-128.png",
 } as const;
 
 export const LAST_PIXEL_SPRITES = {
@@ -576,10 +580,29 @@ export const TIME_COUNSEL_SPRITES = {
 
 export const TWO_HANDS_SPRITES = {
   keyart: "/assets/sprites/two-hands/keyart.webp",
+  left: "/assets/sprites/two-hands/hand-left-3d-128.png",
+  right: "/assets/sprites/two-hands/hand-right-3d-128.png",
+  plank: "/assets/sprites/two-hands/plank-pair-3d-128.png",
+  trophy: "/assets/sprites/two-hands/trophy-hands-3d-128.png",
 } as const;
 
 export const UNTRANSLATABLE_CREATURE_SPRITES = {
   keyart: "/assets/sprites/untranslatable-creature/keyart.webp",
+  orb: "/assets/sprites/untranslatable-creature/orb-creature-3d-128.png",
+  glyph: "/assets/sprites/untranslatable-creature/glyph-rhythm-3d-128.png",
+  trophy: "/assets/sprites/untranslatable-creature/trophy-creature-3d-128.png",
+} as const;
+
+export const SPIRIT_VALE_SPRITES = {
+  talisman: "/assets/sprites/spirit-vale/talisman-capture-3d-128.png",
+  wheel: "/assets/sprites/spirit-vale/wheel-elements-3d-128.png",
+  trophy: "/assets/sprites/spirit-vale/trophy-spirit-3d-128.png",
+} as const;
+
+export const AJAE_PATTERN_SPRITES = {
+  keycap: "/assets/sprites/ajae-pattern/keycap-qwer-3d-128.png",
+  stopwatch: "/assets/sprites/ajae-pattern/stopwatch-reflex-3d-128.png",
+  trophy: "/assets/sprites/ajae-pattern/trophy-ajae-3d-128.png",
 } as const;
 
 export const GAME_2048_SPRITES = {

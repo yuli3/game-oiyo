@@ -4,6 +4,8 @@ import type { Locale } from "../../lib/i18n";
 import { getBest, recordBest } from "../../lib/games/records";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { celebrate } from "../../lib/games/celebration";
+import { AJAE_PATTERN_SPRITES } from "../../lib/games/sprites";
 import {
   AJAE_KEYS,
   AJAE_MIN_LEN,
@@ -496,6 +498,7 @@ const AjaePattern: React.FC<{ locale: Locale }> = ({ locale }) => {
 
       MobileHapticsPro.success();
       playAjaeSound('clear', mutedRef.current);
+      celebrate(containerRef.current, { preset: "stardust" });
       const cur = loadStats();
       const streak = cur.streak + 1;
       persist({
@@ -571,9 +574,17 @@ const AjaePattern: React.FC<{ locale: Locale }> = ({ locale }) => {
     >
       <div className="w-full max-w-2xl mx-auto flex flex-col gap-6">
         <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="mb-2 text-xs font-extrabold uppercase tracking-widest text-primary">{t.eyebrow}</p>
-            <p className="text-muted-foreground leading-relaxed">{t.lead}</p>
+          <div className="flex items-start gap-3">
+            <img
+              src={AJAE_PATTERN_SPRITES.keycap}
+              alt=""
+              aria-hidden="true"
+              className="mt-0.5 h-9 w-9 shrink-0 object-contain drop-shadow-sm"
+            />
+            <div>
+              <p className="mb-2 text-xs font-extrabold uppercase tracking-widest text-primary">{t.eyebrow}</p>
+              <p className="text-muted-foreground leading-relaxed">{t.lead}</p>
+            </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <button
@@ -599,10 +610,30 @@ const AjaePattern: React.FC<{ locale: Locale }> = ({ locale }) => {
 
         <div className="overflow-hidden rounded-2xl border bg-card">
           <div className="flex items-center justify-between gap-4 border-b px-5 py-4">
-            <strong aria-live="polite" data-tone={tone} className={tone === "good" ? "text-success" : tone === "bad" ? "text-destructive" : ""}>
-              {message}
-            </strong>
-            <span className="text-sm text-muted-foreground">{levelLabel}</span>
+            <div className="flex items-center gap-2">
+              {tone === "good" && (
+                <img
+                  src={AJAE_PATTERN_SPRITES.trophy}
+                  alt=""
+                  aria-hidden="true"
+                  className="h-5 w-5 object-contain"
+                />
+              )}
+              <strong aria-live="polite" data-tone={tone} className={tone === "good" ? "text-success" : tone === "bad" ? "text-destructive" : ""}>
+                {message}
+              </strong>
+            </div>
+            {levelLabel && (
+              <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+                <img
+                  src={AJAE_PATTERN_SPRITES.stopwatch}
+                  alt=""
+                  aria-hidden="true"
+                  className="h-4 w-4 object-contain"
+                />
+                {levelLabel}
+              </span>
+            )}
           </div>
 
           <div

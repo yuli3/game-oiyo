@@ -307,7 +307,15 @@ export default function UntranslatableCreature({ locale }: { locale: Locale }) {
             <p className="text-sm text-muted-foreground">{t.date(dateKey)}</p>
             <p className="text-sm font-bold tabular-nums text-foreground" aria-live="polite">{t.misses(run.misses)}</p>
             <p className="text-sm text-foreground">{run.phase === "won" ? t.won : run.phase === "lost" ? t.lost : run.phase === "ask" ? t.ask : run.phase === "teach" ? t.teach : t.ready}</p>
-            <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-primary/15 text-2xl text-foreground" aria-hidden="true">●</div>
+            {run.phase === "won" ? (
+              <div className="flex items-center gap-3 rounded-xl border border-primary/40 bg-primary/10 p-3">
+                <img src={UNTRANSLATABLE_CREATURE_SPRITES.trophy} alt="" className="size-10 shrink-0 object-contain drop-shadow-sm" draggable={false} />
+                <p className="text-sm font-bold text-foreground">{t.won}</p>
+              </div>
+            ) : null}
+            <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-primary/15 p-2 text-2xl text-foreground" aria-hidden="true">
+              <img src={UNTRANSLATABLE_CREATURE_SPRITES.orb} alt="●" className="size-12 object-contain" draggable={false} />
+            </div>
             {rhythm ? (
               <div className="mx-auto grid w-full max-w-xs grid-cols-4 gap-2" aria-hidden="true">
                 {rhythm.map((on, index) => {
@@ -324,8 +332,9 @@ export default function UntranslatableCreature({ locale }: { locale: Locale }) {
             {run.phase === "teach" || run.phase === "ask" ? (
               <div className="grid grid-cols-2 gap-2">
                 {SIGNALS.map((id, index) => (
-                  <button key={id} type="button" disabled={!shown} onClick={() => choose(id)} aria-label={`${index + 1}. ${t.signals[id]}`} className={`${CONTROL} min-h-16 text-2xl disabled:opacity-40 ${teachTarget === id ? "border-primary bg-primary/15 text-foreground ring-2 ring-primary" : "border-border bg-card text-foreground"}`}>
-                    {GLYPH[id]}
+                  <button key={id} type="button" disabled={!shown} onClick={() => choose(id)} aria-label={`${index + 1}. ${t.signals[id]}`} className={`${CONTROL} inline-flex min-h-16 items-center justify-center gap-2 text-2xl disabled:opacity-40 ${teachTarget === id ? "border-primary bg-primary/15 text-foreground ring-2 ring-primary" : "border-border bg-card text-foreground"}`}>
+                    <img src={UNTRANSLATABLE_CREATURE_SPRITES.glyph} alt="" className="size-5 shrink-0 object-contain" draggable={false} />
+                    <span>{GLYPH[id]}</span>
                   </button>
                 ))}
               </div>

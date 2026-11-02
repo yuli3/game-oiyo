@@ -3,7 +3,8 @@ import type { Locale } from "../../lib/i18n";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
-import { getSpriteUrl } from "../../lib/games/sprites";
+import { SPIRIT_VALE_SPRITES } from "../../lib/games/sprites";
+import { celebrate } from "../../lib/games/celebration";
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "../../lib/games/share-card";
 import { Maximize2, Minimize2, Camera, Check } from "lucide-react";
 import {
@@ -910,11 +911,17 @@ export default function SpiritVale({ locale = "en" }: { locale?: Locale }) {
         // still keeps the catch.
         if (next.phase === "caught") {
           MobileHapticsPro.success();
+          if (containerRef.current) {
+            celebrate(containerRef.current, { preset: "stardust" });
+          }
           const save = recordCatch(next.wild.spirit.id);
           setMet(save.caught);
           recordResult(GAME_KEY, "w");
         } else if (next.phase === "won") {
           MobileHapticsPro.success();
+          if (containerRef.current) {
+            celebrate(containerRef.current, { preset: "stardust" });
+          }
           recordResult(GAME_KEY, "w");
           // Experience goes to the spirit that actually fought — winning is
           // what grows a spirit, catching is what widens the collection.
@@ -1021,7 +1028,7 @@ export default function SpiritVale({ locale = "en" }: { locale?: Locale }) {
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-gradient-to-b from-sky-100 to-emerald-100 px-6 text-center">
                 <div className="relative mb-2 flex size-20 items-center justify-center">
                   <img
-                    src={getSpriteUrl('trophy', 128)}
+                    src={SPIRIT_VALE_SPRITES.trophy}
                     alt="Spirit Vale Trophy"
                     className="size-20 object-contain drop-shadow-xl animate-bounce"
                     loading="lazy"
@@ -1147,9 +1154,10 @@ export default function SpiritVale({ locale = "en" }: { locale?: Locale }) {
                         <div className="mt-1.5 grid grid-cols-2 gap-1.5">
                           <TiltSpiritButton
                             onClick={() => act({ type: "capture" })}
-                            className="rounded-xl bg-amber-600 px-3 py-2 text-xs font-bold text-white hover:bg-amber-700"
+                            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-amber-600 px-3 py-2 text-xs font-bold text-white hover:bg-amber-700"
                           >
-                            {t.capture} · {Math.round(captureChance(battle.wild, battle.captureBonus) * 100)}%
+                            <img src={SPIRIT_VALE_SPRITES.talisman} alt="" className="size-4 object-contain" draggable={false} />
+                            <span>{t.capture} · {Math.round(captureChance(battle.wild, battle.captureBonus) * 100)}%</span>
                           </TiltSpiritButton>
                           <TiltSpiritButton
                             onClick={() => act({ type: "flee" })}
@@ -1286,7 +1294,10 @@ export default function SpiritVale({ locale = "en" }: { locale?: Locale }) {
       {/* The matchup table, stated rather than hidden — 오행 has two cycles, and
           a player who can't see both can't reason about the third relation. */}
       <section className="mt-6 rounded-2xl border border-emerald-100 bg-emerald-50/60 p-4">
-        <h3 className="text-sm font-black text-emerald-950">{t.cycleTitle}</h3>
+        <h3 className="flex items-center gap-2 text-sm font-black text-emerald-950">
+          <img src={SPIRIT_VALE_SPRITES.wheel} alt="" className="size-5 object-contain" draggable={false} />
+          <span>{t.cycleTitle}</span>
+        </h3>
         <div className="mt-3 grid gap-2 sm:grid-cols-2">
           {(Object.keys(ELEMENT_LABEL) as ElementId[]).map((el) => {
             const strong = (Object.keys(ELEMENT_LABEL) as ElementId[]).filter(
