@@ -662,6 +662,13 @@ export const BAD_NORTH_SPRITES = {
   trophy: "/assets/sprites/bad-north/trophy-island-3d-128.png",
 } as const;
 
+export const SHOTGUN_CHESS_SPRITES = {
+  king: "/assets/sprites/shotgun-chess/shotgun-king-3d-128.png",
+  shell: "/assets/sprites/shotgun-chess/shotgun-shell-3d-128.png",
+  queen: "/assets/sprites/shotgun-chess/enemy-queen-3d-128.png",
+  trophy: "/assets/sprites/shotgun-chess/trophy-shotgun-3d-128.png",
+} as const;
+
 export const DOT_PET_SPRITES: Record<string, { baby: string; adult: string }> = {
   normal: {
     baby: "/assets/sprites/dot-pet/normal-baby.png",

@@ -21,7 +21,13 @@ import {
 import { playSyntheticTone } from "@/lib/games/audio-mixer";
 import { useArcadePortal } from "@/lib/games/arcade-portal";
 import { useCardTiltPro, MobileHapticsPro } from "@/lib/games/engine-suite-unified";
-import { getSpriteUrl } from "@/lib/games/sprites";
+import { getSpriteUrl, SHOTGUN_CHESS_SPRITES } from "@/lib/games/sprites";
+import { celebrate } from "@/lib/games/celebration";
+import {
+  loadArcadePassProgress,
+  reportMissionProgress,
+  saveArcadePassProgress,
+} from "@/lib/games/arcade-pass";
 import {
   createShareCardCanvas,
   copyShareCardToClipboard,
@@ -239,6 +245,24 @@ export const ShotgunChess: React.FC<ShotgunChessProps> = ({ locale = "ko" }) => 
     return () => cancelAnimationFrame(animId);
   }, []);
 
+  // Stardust victory ceremony & arcade pass mission reporting
+  useEffect(() => {
+    if (game.status === "victory") {
+      MobileHapticsPro.success();
+      if (containerRef.current) {
+        celebrate(containerRef.current, { preset: "stardust" });
+      }
+      try {
+        const dateKey = new Date().toISOString().slice(0, 10);
+        const current = loadArcadePassProgress(dateKey);
+        const updated = reportMissionProgress(current, "shotgun-chess", 1);
+        saveArcadePassProgress(updated);
+      } catch {
+        // arcade pass fallback
+      }
+    }
+  }, [game.status, containerRef]);
+
   const validMoves = useMemo(() => {
     if (actionMode !== "move") return [];
     return getValidKingMoves(game);
@@ -361,7 +385,7 @@ export const ShotgunChess: React.FC<ShotgunChessProps> = ({ locale = "ko" }) => 
             <span>{t.turn} {game.turn}</span>
             <span>·</span>
             <span className="flex items-center gap-1 font-semibold text-foreground">
-              <img src={getSpriteUrl("trophy", 64)} alt="Souls" className="size-4 inline-block" />
+              <img src={SHOTGUN_CHESS_SPRITES.trophy} alt="Souls" className="size-4.5 inline-block object-contain" />
               {game.souls}
             </span>
           </div>
@@ -373,7 +397,8 @@ export const ShotgunChess: React.FC<ShotgunChessProps> = ({ locale = "ko" }) => 
             <span>{game.player.hp}/{game.player.maxHp}</span>
           </div>
           <div className="flex items-center gap-1.5 text-sm font-semibold">
-            <span>💥</span> {game.shotgun.ammo}/{game.shotgun.maxAmmo}
+            <img src={SHOTGUN_CHESS_SPRITES.shell} alt="Ammo" className="size-4.5 inline-block object-contain" />
+            <span>{game.shotgun.ammo}/{game.shotgun.maxAmmo}</span>
           </div>
           <Button
             variant="ghost"
@@ -421,8 +446,10 @@ export const ShotgunChess: React.FC<ShotgunChessProps> = ({ locale = "ko" }) => 
           onClick={() => setActionMode("shoot")}
           disabled={game.shotgun.ammo <= 0}
         >
-          <Crosshair className="mr-1.5 h-4 w-4" />
-          {t.shootMode} ({game.shotgun.ammo})
+          <span className="flex items-center justify-center gap-1.5">
+            <img src={SHOTGUN_CHESS_SPRITES.shell} alt="Shell" className="size-4 object-contain inline-block" />
+            <span>{t.shootMode} ({game.shotgun.ammo})</span>
+          </span>
         </Button>
       </div>
 
@@ -446,10 +473,14 @@ export const ShotgunChess: React.FC<ShotgunChessProps> = ({ locale = "ko" }) => 
                     isDark ? "bg-muted/70" : "bg-card"
                   } ${isValidMove ? "ring-2 ring-primary ring-inset cursor-pointer bg-primary/20" : ""}`}
                 >
-                  {/* Player King */}
+                  {/* Player Shotgun King */}
                   {isPlayer && (
-                    <div className="relative flex items-center justify-center text-3xl font-extrabold text-foreground drop-shadow-md">
-                      ♚
+                    <div className="relative flex items-center justify-center">
+                      <img
+                        src={SHOTGUN_CHESS_SPRITES.king}
+                        alt="Shotgun King"
+                        className="size-9 object-contain drop-shadow-md animate-pulse"
+                      />
                       <span className="absolute -bottom-1 text-xs font-bold text-primary">
                         KING
                       </span>
@@ -459,7 +490,15 @@ export const ShotgunChess: React.FC<ShotgunChessProps> = ({ locale = "ko" }) => 
                   {/* Enemy White Pieces */}
                   {piece && (
                     <div className="relative flex flex-col items-center justify-center text-3xl font-bold text-primary">
-                      {PIECE_SYMBOLS[piece.type] ?? "♟"}
+                      {piece.type === "queen" ? (
+                        <img
+                          src={SHOTGUN_CHESS_SPRITES.queen}
+                          alt="Queen"
+                          className="size-8 object-contain drop-shadow-sm"
+                        />
+                      ) : (
+                        <span>{PIECE_SYMBOLS[piece.type] ?? "♟"}</span>
+                      )}
                       {piece.maxHp > 1 && (
                         <span className="absolute -top-1 right-0.5 text-xs font-semibold text-destructive">
                           {piece.hp}
@@ -507,9 +546,9 @@ export const ShotgunChess: React.FC<ShotgunChessProps> = ({ locale = "ko" }) => 
         <div className="absolute inset-0 z-30 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
           <div className="flex max-w-md flex-col items-center gap-4 rounded-2xl border border-border bg-card p-6 shadow-2xl text-center">
             <img
-              src={getSpriteUrl("trophy", 64)}
+              src={SHOTGUN_CHESS_SPRITES.trophy}
               alt="Wave Clear"
-              className="size-16 animate-bounce drop-shadow"
+              className="size-16 animate-bounce drop-shadow object-contain"
             />
             <h3 className="text-2xl font-bold text-foreground">{t.waveClear}</h3>
             <p className="text-sm text-muted-foreground">{t.chooseUpgrade}</p>
@@ -554,9 +593,9 @@ export const ShotgunChess: React.FC<ShotgunChessProps> = ({ locale = "ko" }) => 
         <div className="absolute inset-0 z-30 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
           <div className="flex max-w-sm flex-col items-center gap-4 rounded-2xl border border-primary/30 bg-card p-6 shadow-2xl text-center">
             <img
-              src={getSpriteUrl("trophy", 64)}
+              src={SHOTGUN_CHESS_SPRITES.trophy}
               alt="Victory"
-              className="size-16 animate-bounce drop-shadow mb-1"
+              className="size-20 animate-bounce drop-shadow-xl mb-1 object-contain"
             />
             <h3 className="text-2xl font-bold text-primary">{t.victory}</h3>
             <p className="text-sm text-muted-foreground">{t.souls} {game.souls}</p>
