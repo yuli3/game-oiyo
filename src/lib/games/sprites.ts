@@ -565,6 +565,13 @@ export const TOWNSCAPER_SPRITES = {
   roof: "/assets/sprites/townscaper-island/terracotta-roof-128.png",
 } as const;
 
+export const WATER_SORT_3D_SPRITES = {
+  dropBlue: "/assets/sprites/water-sort/liquid-drop-blue-128.png",
+  dropAmber: "/assets/sprites/water-sort/liquid-drop-amber-128.png",
+  dropRed: "/assets/sprites/water-sort/liquid-drop-red-128.png",
+  trophy: "/assets/sprites/water-sort/trophy-gold-128.png",
+} as const;
+
 export const DOT_PET_SPRITES: Record<string, { baby: string; adult: string }> = {
   normal: {
     baby: "/assets/sprites/dot-pet/normal-baby.png",

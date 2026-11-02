@@ -17,6 +17,8 @@ import {
 } from "@/lib/games/juice-engine";
 import { playSyntheticTone } from "@/lib/games/audio-mixer";
 import { useCardTiltPro, MobileHapticsPro } from "@/lib/games/engine-suite-unified";
+import { WATER_SORT_3D_SPRITES } from "@/lib/games/sprites";
+import { celebrate } from "@/lib/games/celebration";
 import { RotateCcw, Undo2, Volume2, VolumeX, Sparkles, Trophy } from "lucide-react";
 
 const COLOR_CLASS_MAP: Record<LiquidColor, string> = {
@@ -193,6 +195,7 @@ export const WaterSort3D: React.FC<WaterSort3DProps> = ({ locale = "ko" }) => {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [, setShakeState] = useState<ScreenShakeState>(() => createShakeState());
   const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0 });
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   const audioCtxRef = useRef<AudioContext | null>(null);
   const getAudioCtx = useCallback(() => {
@@ -251,6 +254,9 @@ export const WaterSort3D: React.FC<WaterSort3DProps> = ({ locale = "ko" }) => {
           setShakeState((s) => addTrauma(s, 0.4));
           MobileHapticsPro.success();
           triggerHaptic("heavy");
+          if (containerRef.current) {
+            celebrate(containerRef.current, { preset: "stardust" });
+          }
           if (soundEnabled) {
             // Level cleared chord fanfare (E5 -> G#5 -> B5)
             const ctx = getAudioCtx();
@@ -282,6 +288,7 @@ export const WaterSort3D: React.FC<WaterSort3DProps> = ({ locale = "ko" }) => {
 
   return (
     <div
+      ref={containerRef}
       className="mx-auto flex max-w-xl flex-col items-center gap-6 p-4 font-sans text-foreground translate-x-(--shake-x) translate-y-(--shake-y)"
       style={
         {
@@ -293,6 +300,11 @@ export const WaterSort3D: React.FC<WaterSort3DProps> = ({ locale = "ko" }) => {
       {/* Top Header & Stats */}
       <div className="flex w-full items-center justify-between rounded-xl border border-border bg-card p-4 shadow-sm">
         <div className="flex items-center gap-3">
+          <img
+            src={WATER_SORT_3D_SPRITES.dropBlue}
+            alt="Water Sort 3D"
+            className="size-8 object-contain drop-shadow-xs"
+          />
           <div className="flex flex-col">
             <span className="text-xs font-semibold text-muted-foreground">{t.level}</span>
             <span className="text-2xl font-black text-primary">{game.level}</span>
@@ -349,7 +361,11 @@ export const WaterSort3D: React.FC<WaterSort3DProps> = ({ locale = "ko" }) => {
       {game.status === "level_cleared" && (
         <div className="absolute inset-0 z-30 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
           <div className="flex max-w-sm flex-col items-center gap-4 rounded-2xl border border-primary/30 bg-card p-6 shadow-2xl text-center">
-            <Trophy className="h-14 w-14 text-primary" />
+            <img
+              src={WATER_SORT_3D_SPRITES.trophy}
+              alt="Victory Trophy"
+              className="h-16 w-16 object-contain drop-shadow-md select-none pointer-events-none animate-bounce"
+            />
             <h3 className="text-2xl font-bold text-primary">{t.levelClear}</h3>
             <p className="text-sm text-muted-foreground">{t.levelClearDesc}</p>
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
