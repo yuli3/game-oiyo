@@ -392,6 +392,10 @@ export const LINE_SURF_SPRITES = {
 
 export const ONE_BUTTON_CIV_SPRITES = {
   keyart: "/assets/sprites/one-button-civ/keyart.webp",
+  field: "/assets/sprites/one-button-civ/field-plot-3d-128.png",
+  wall: "/assets/sprites/one-button-civ/wall-fort-3d-128.png",
+  road: "/assets/sprites/one-button-civ/road-pave-3d-128.png",
+  trophy: "/assets/sprites/one-button-civ/trophy-civ-3d-128.png",
 } as const;
 
 export const TIME_LOOP_RESCUE_SPRITES = {
@@ -412,6 +416,10 @@ export const FIREFLY_CHOIR_SPRITES = {
 
 export const PATCH_DUNGEON_SPRITES = {
   keyart: "/assets/sprites/patch-dungeon/keyart.webp",
+  step: "/assets/sprites/patch-dungeon/step-boot-3d-128.png",
+  brace: "/assets/sprites/patch-dungeon/brace-shield-3d-128.png",
+  look: "/assets/sprites/patch-dungeon/look-lantern-3d-128.png",
+  trophy: "/assets/sprites/patch-dungeon/trophy-patch-3d-128.png",
 } as const;
 
 export const GHOST_COMPOSER_SPRITES = {
@@ -432,6 +440,10 @@ export const LATE_PRESS_SPRITES = {
 
 export const MONSTER_INTERVIEW_SPRITES = {
   keyart: "/assets/sprites/monster-interview/keyart.webp",
+  H: "/assets/sprites/monster-interview/badge-hire-3d-128.png",
+  W: "/assets/sprites/monster-interview/hourglass-hold-3d-128.png",
+  R: "/assets/sprites/monster-interview/stamp-reject-3d-128.png",
+  trophy: "/assets/sprites/monster-interview/trophy-interview-3d-128.png",
 } as const;
 
 export const FAILURE_EATER_SPRITES = {
@@ -440,6 +452,17 @@ export const FAILURE_EATER_SPRITES = {
 
 export const OMISSION_DETECTIVE_SPRITES = {
   keyart: "/assets/sprites/omission-detective/keyart.webp",
+  pin: "/assets/sprites/omission-detective/pin-place-3d-128.png",
+  tape: "/assets/sprites/omission-detective/tape-witness-3d-128.png",
+  compass: "/assets/sprites/omission-detective/compass-route-3d-128.png",
+  trophy: "/assets/sprites/omission-detective/trophy-omission-3d-128.png",
+} as const;
+
+export const STANLEY_CHOICE_SPRITES = {
+  doorRed: "/assets/sprites/stanley-choice/door-red-3d-128.png",
+  doorBlue: "/assets/sprites/stanley-choice/door-blue-3d-128.png",
+  monitor: "/assets/sprites/stanley-choice/monitor-427-3d-128.png",
+  trophy: "/assets/sprites/stanley-choice/trophy-stanley-3d-128.png",
 } as const;
 
 export const TIME_COUNSEL_SPRITES = {

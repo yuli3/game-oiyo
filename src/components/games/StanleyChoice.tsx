@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
-import { getSpriteUrl } from '../../lib/games/sprites';
+import { STANLEY_CHOICE_SPRITES } from '../../lib/games/sprites';
+import { celebrate } from '../../lib/games/celebration';
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from '../../lib/games/share-card';
 import { Maximize2, Minimize2, Camera, Check } from 'lucide-react';
 import {
@@ -206,6 +207,9 @@ export default function StanleyChoice() {
           if (engineRef.current.state.currentEnding) {
             playSound('ending');
             MobileHapticsPro.success();
+            if (containerRef.current) {
+              celebrate(containerRef.current, { preset: 'stardust' });
+            }
           } else {
             playSound('door');
           }
@@ -498,6 +502,11 @@ export default function StanleyChoice() {
       {/* Top Header: Narrator Speech & Ending Completion Bar */}
       <div className="w-full bg-card/90 border border-border rounded-xl p-3 mb-2 flex items-center justify-between shadow-lg">
         <div className="flex items-center gap-3">
+          <img
+            src={STANLEY_CHOICE_SPRITES.monitor}
+            alt=""
+            className="w-9 h-9 object-contain drop-shadow-md"
+          />
           <div className="flex flex-col">
             <span className="text-xs font-bold text-primary tracking-wider flex items-center gap-1.5">
               <span>🎙️ 내레이터 (THE NARRATOR)</span>
@@ -553,7 +562,7 @@ export default function StanleyChoice() {
           <div className="absolute inset-0 bg-background/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-20">
             <div className="relative mb-3 flex items-center justify-center">
               <img
-                src={getSpriteUrl('trophy')}
+                src={STANLEY_CHOICE_SPRITES.trophy}
                 alt="3D Trophy"
                 className="w-16 h-16 drop-shadow-xl animate-bounce"
               />

@@ -19,7 +19,7 @@ import {
   copyShareCardToClipboard,
   downloadShareCard,
 } from "../../lib/games/share-card";
-import { ONE_BUTTON_CIV_SPRITES, getSpriteUrl } from "../../lib/games/sprites";
+import { ONE_BUTTON_CIV_SPRITES } from "../../lib/games/sprites";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 
 function TiltCivButton({
@@ -355,7 +355,7 @@ export default function OneButtonCiv({ locale }: { locale: Locale }) {
       cue("win");
       hapticsRef.current.fire("win");
       if (containerRef.current) {
-        celebrate(containerRef.current, { preset: "leaves" });
+        celebrate(containerRef.current, { preset: "stardust" });
       }
     } else if (run.phase === "lost") {
       cue("fail");
@@ -449,15 +449,19 @@ export default function OneButtonCiv({ locale }: { locale: Locale }) {
             <p className="text-sm text-foreground">{run.phase === "won" ? t.won : run.phase === "lost" ? t.lost : run.phase === "play" ? t.play : t.ready}</p>
             <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
               {POLICIES.map((policy) => (
-                <span key={policy}>{GLYPH[policy]} {t.policies[policy]}</span>
+                <span key={policy} className="inline-flex items-center gap-1.5">
+                  <img src={ONE_BUTTON_CIV_SPRITES[policy]} alt="" className="size-4 object-contain" />
+                  <span>{GLYPH[policy]} {t.policies[policy]}</span>
+                </span>
               ))}
             </div>
             <div>
               <p className="mb-2 text-sm font-bold text-foreground">{t.target}</p>
               <div className="grid grid-cols-4 gap-2">
                 {run.puzzle.target.map((policy, index) => (
-                  <div key={index} className="flex aspect-square items-center justify-center rounded-xl bg-muted text-2xl text-foreground" aria-label={`${t.target} ${index + 1} ${t.policies[policy]}`}>
-                    {GLYPH[policy]}
+                  <div key={index} className="flex aspect-square flex-col items-center justify-center gap-1 rounded-xl bg-muted text-xl text-foreground" aria-label={`${t.target} ${index + 1} ${t.policies[policy]}`}>
+                    <img src={ONE_BUTTON_CIV_SPRITES[policy]} alt="" className="size-8 object-contain drop-shadow-sm" />
+                    <span className="text-xs font-bold">{GLYPH[policy]}</span>
                   </div>
                 ))}
               </div>
@@ -469,8 +473,13 @@ export default function OneButtonCiv({ locale }: { locale: Locale }) {
                   const policy = index < visible ? resolved(run, index) : null;
                   const current = run.phase === "play" && index === run.cursor;
                   return (
-                    <div key={index} className={`flex aspect-square items-center justify-center rounded-xl text-2xl ${current ? "bg-primary text-primary-foreground" : "bg-foreground/15 text-foreground"}`} aria-label={policy ? `${t.land} ${index + 1} ${t.policies[policy]}` : `${t.land} ${index + 1}`}>
-                      {policy ? GLYPH[policy] : ""}
+                    <div key={index} className={`flex aspect-square flex-col items-center justify-center gap-1 rounded-xl text-xl ${current ? "bg-primary text-primary-foreground" : "bg-foreground/15 text-foreground"}`} aria-label={policy ? `${t.land} ${index + 1} ${t.policies[policy]}` : `${t.land} ${index + 1}`}>
+                      {policy ? (
+                        <>
+                          <img src={ONE_BUTTON_CIV_SPRITES[policy]} alt="" className="size-8 object-contain drop-shadow-sm" />
+                          <span className="text-xs font-bold">{GLYPH[policy]}</span>
+                        </>
+                      ) : ""}
                     </div>
                   );
                 })}
@@ -515,7 +524,7 @@ export default function OneButtonCiv({ locale }: { locale: Locale }) {
                 {run.phase === "won" && (
                   <div className="flex justify-center mb-2">
                     <img
-                      src={getSpriteUrl("trophy", 64)}
+                      src={ONE_BUTTON_CIV_SPRITES.trophy}
                       alt="Civilization Golden Age Trophy"
                       width={64}
                       height={64}

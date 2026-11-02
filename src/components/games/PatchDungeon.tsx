@@ -14,7 +14,7 @@ import { dateKeyIndex, kstDateKey } from "../../lib/games/todays-game";
 import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from "../../lib/games/game-audio";
 import { createHaptics } from "../../lib/games/haptics";
 import { celebrate } from "../../lib/games/celebration";
-import { PATCH_DUNGEON_SPRITES, getSpriteUrl } from "../../lib/games/sprites";
+import { PATCH_DUNGEON_SPRITES } from "../../lib/games/sprites";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import {
   createShareCardCanvas,
@@ -350,7 +350,7 @@ export default function PatchDungeon({ locale }: { locale: Locale }) {
     if (run.phase === "won") {
       cue("win");
       hapticsRef.current.fire("win");
-      if (containerRef.current) celebrate(containerRef.current, { preset: "shards" });
+      if (containerRef.current) celebrate(containerRef.current, { preset: "stardust" });
     } else if (run.phase === "lost") {
       cue("fail");
       hapticsRef.current.fire("fail");
@@ -389,16 +389,22 @@ export default function PatchDungeon({ locale }: { locale: Locale }) {
             <p className="text-sm text-muted-foreground">{t.date(dateKey)}</p>
             <p className="text-sm font-bold tabular-nums text-foreground" aria-live="polite">{t.score(cleared)}{run.phase === "play" ? ` · ${t.left(remain)}` : ""}</p>
             <p className="text-sm text-foreground">{run.phase === "won" ? t.won : run.phase === "lost" ? t.lost : run.phase === "play" ? t.play : t.ready}</p>
-            {run.phase !== "ready" ? <p className="text-sm text-foreground" aria-live="polite">{GLYPH[room.need]} {t.scene[room.need]} {patchLine}</p> : null}
+            {run.phase !== "ready" ? (
+              <div className="flex items-center gap-2 text-sm text-foreground" aria-live="polite">
+                <img src={PATCH_DUNGEON_SPRITES[room.need]} alt="" className="size-6 object-contain drop-shadow-sm" />
+                <span>{GLYPH[room.need]} {t.scene[room.need]} {patchLine}</span>
+              </div>
+            ) : null}
             <div className="grid grid-cols-3 gap-2">
               {VERBS.map((verb, index) => (
                 <TiltDungeonButton
                   key={verb}
                   disabled={run.phase !== "play"}
                   onClick={() => onPress(index)}
-                  className="min-h-16 rounded-xl border border-border bg-card text-sm font-bold text-foreground motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60"
+                  className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-xl border border-border bg-card text-sm font-bold text-foreground motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60"
                 >
-                  {t.verb[verb]}
+                  <img src={PATCH_DUNGEON_SPRITES[verb]} alt="" className="size-6 object-contain" />
+                  <span>{t.verb[verb]}</span>
                 </TiltDungeonButton>
               ))}
             </div>
@@ -419,7 +425,7 @@ export default function PatchDungeon({ locale }: { locale: Locale }) {
                 {run.phase === "won" && (
                   <div className="flex justify-center mb-2">
                     <img
-                      src={getSpriteUrl("trophy", 64)}
+                      src={PATCH_DUNGEON_SPRITES.trophy}
                       alt="Dungeon Conqueror Trophy"
                       width={64}
                       height={64}

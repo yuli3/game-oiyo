@@ -13,7 +13,7 @@ import { dateKeyIndex, kstDateKey } from "../../lib/games/todays-game";
 import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from "../../lib/games/game-audio";
 import { createHaptics } from "../../lib/games/haptics";
 import { celebrate } from "../../lib/games/celebration";
-import { OMISSION_DETECTIVE_SPRITES, getSpriteUrl } from "../../lib/games/sprites";
+import { OMISSION_DETECTIVE_SPRITES } from "../../lib/games/sprites";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import {
   createShareCardCanvas,
@@ -294,7 +294,7 @@ export default function OmissionDetective({ locale }: { locale: Locale }) {
       if (board.phase === "won") {
         cue("win");
         hapticsRef.current.fire("win");
-        if (containerRef.current) celebrate(containerRef.current, { preset: "cards" });
+        if (containerRef.current) celebrate(containerRef.current, { preset: "stardust" });
       } else if (board.phase === "lost") {
         cue("fail");
         hapticsRef.current.fire("fail");
@@ -349,7 +349,10 @@ export default function OmissionDetective({ locale }: { locale: Locale }) {
             <div className="space-y-2">
               {board.daily.lines.map((line, index) => (
                 <div key={index} className={`rounded-2xl border p-3 ${board.broken === index ? "border-warning bg-warning/15" : "border-border bg-card"}`}>
-                  <p className="mb-2 text-sm font-bold text-foreground">{t.witness(index + 1)}</p>
+                  <p className="mb-2 flex items-center gap-1.5 text-sm font-bold text-foreground">
+                    <img src={OMISSION_DETECTIVE_SPRITES.tape} alt="" className="size-4 object-contain" />
+                    <span>{t.witness(index + 1)}</span>
+                  </p>
                   <p className="text-sm text-foreground">{line.map((place) => t.places[place]).join(" → ")}</p>
                 </div>
               ))}
@@ -401,7 +404,7 @@ export default function OmissionDetective({ locale }: { locale: Locale }) {
                 {board.phase === "won" && (
                   <div className="flex justify-center mb-2">
                     <img
-                      src={getSpriteUrl("trophy", 64)}
+                      src={OMISSION_DETECTIVE_SPRITES.trophy}
                       alt="Solved Trophy"
                       width={64}
                       height={64}

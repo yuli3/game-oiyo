@@ -13,7 +13,7 @@ import { dateKeyIndex, kstDateKey } from "../../lib/games/todays-game";
 import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from "../../lib/games/game-audio";
 import { createHaptics } from "../../lib/games/haptics";
 import { celebrate } from "../../lib/games/celebration";
-import { MONSTER_INTERVIEW_SPRITES, getSpriteUrl } from "../../lib/games/sprites";
+import { MONSTER_INTERVIEW_SPRITES } from "../../lib/games/sprites";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import {
   createShareCardCanvas,
@@ -364,7 +364,7 @@ export default function MonsterInterview({ locale }: { locale: Locale }) {
     if (run.phase === "won") {
       cue("win");
       hapticsRef.current.fire("win");
-      if (containerRef.current) celebrate(containerRef.current, { preset: "cards" });
+      if (containerRef.current) celebrate(containerRef.current, { preset: "stardust" });
     } else if (run.phase === "lost") {
       cue("fail");
       hapticsRef.current.fire("fail");
@@ -418,7 +418,7 @@ export default function MonsterInterview({ locale }: { locale: Locale }) {
             {run.phase === "won" && (
               <div className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-primary/10 border border-primary/30">
                 <img
-                  src={getSpriteUrl('trophy', 64)}
+                  src={MONSTER_INTERVIEW_SPRITES.trophy}
                   alt="Victory Trophy"
                   width={64}
                   height={64}
@@ -449,8 +449,9 @@ export default function MonsterInterview({ locale }: { locale: Locale }) {
             {run.phase === "play" ? (
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                 {(["H", "W", "R"] as const).map((choice) => (
-                  <TiltInterviewButton key={choice} disabled={run.used.includes(choice)} onClick={() => onAnswer(choice)} className={`${BUTTON} touch-none`}>
-                    {t.act[choice]}
+                  <TiltInterviewButton key={choice} disabled={run.used.includes(choice)} onClick={() => onAnswer(choice)} className={`${BUTTON} flex items-center justify-center gap-2 touch-none`}>
+                    <img src={MONSTER_INTERVIEW_SPRITES[choice]} alt="" className="size-6 object-contain" />
+                    <span>{t.act[choice]}</span>
                   </TiltInterviewButton>
                 ))}
               </div>
