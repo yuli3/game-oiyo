@@ -784,6 +784,13 @@ export const POLY_BRIDGE_SPRITES = {
   trophy: "/assets/sprites/poly-bridge/trophy-bridge-3d-128.png",
 } as const;
 
+export const BORDER_INSPECTOR_SPRITES = {
+  passport: "/assets/sprites/border-inspector/passport-book-3d-128.png",
+  stamp: "/assets/sprites/border-inspector/stamp-approved-3d-128.png",
+  seal: "/assets/sprites/border-inspector/seal-arstotzka-3d-128.png",
+  trophy: "/assets/sprites/border-inspector/trophy-border-3d-128.png",
+} as const;
+
 
 
 

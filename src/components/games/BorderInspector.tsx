@@ -45,6 +45,8 @@ import {
   reportMissionProgress,
   saveArcadePassProgress,
 } from '../../lib/games/arcade-pass';
+import { celebrate } from '../../lib/games/celebration';
+import { BORDER_INSPECTOR_SPRITES, getSpriteUrl } from '../../lib/games/sprites';
 
 interface BorderInspectorProps {
   lang?: string;
@@ -397,8 +399,25 @@ export default function BorderInspector({ lang = 'ko' }: BorderInspectorProps) {
   const t = COPY[locale];
 
   const [state, setState] = useState<BorderInspectorState>(() => createInitialBorderState());
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const spritesRef = useRef<Record<keyof typeof BORDER_INSPECTOR_SPRITES, HTMLImageElement | null>>({
+    passport: null,
+    stamp: null,
+    seal: null,
+    trophy: null,
+  });
+
+  useEffect(() => {
+    (Object.keys(BORDER_INSPECTOR_SPRITES) as Array<keyof typeof BORDER_INSPECTOR_SPRITES>).forEach((key) => {
+      const img = new Image();
+      img.src = BORDER_INSPECTOR_SPRITES[key];
+      img.onload = () => {
+        spritesRef.current[key] = img;
+      };
+    });
+  }, []);
 
   const applicant = getCurrentApplicant(state);
 
@@ -453,10 +472,12 @@ export default function BorderInspector({ lang = 'ko' }: BorderInspectorProps) {
 
   const handleStamp = (decision: 'approved' | 'denied') => {
     playSfx('stamp');
+    MobileHapticsPro.medium();
     setState((prev) => {
       const next = stampApplicantDecision(prev, decision);
       if (next.citations > prev.citations) {
         setTimeout(() => playSfx('buzzer'), 120);
+        MobileHapticsPro.error();
       }
       if (next.correctCount > prev.correctCount) {
         const dateKey = new Date().toISOString().slice(0, 10);
@@ -464,6 +485,10 @@ export default function BorderInspector({ lang = 'ko' }: BorderInspectorProps) {
         saveArcadePassProgress(
           reportMissionProgress(progress, 'border-inspector', next.correctCount)
         );
+      }
+      if (next.status === 'shift_complete' && prev.status !== 'shift_complete') {
+        MobileHapticsPro.heavy();
+        celebrate(containerRef.current, { preset: 'stardust' });
       }
       return next;
     });
@@ -537,6 +562,14 @@ export default function BorderInspector({ lang = 'ko' }: BorderInspectorProps) {
     // Right side Stamp Preview Badge
     ctx.fillStyle = '#0f172a';
     ctx.fillRect(515, 20, 225, h - 40);
+    const sealImg = spritesRef.current.seal;
+    if (sealImg && sealImg.complete && sealImg.naturalWidth > 0) {
+      ctx.drawImage(sealImg, 526, 28, 36, 36);
+    }
+    const passImg = spritesRef.current.passport;
+    if (passImg && passImg.complete && passImg.naturalWidth > 0) {
+      ctx.drawImage(passImg, 694, 28, 34, 34);
+    }
     ctx.fillStyle = '#94a3b8';
     ctx.font = 'bold 12px monospace';
     ctx.textAlign = 'center';
@@ -573,12 +606,21 @@ export default function BorderInspector({ lang = 'ko' }: BorderInspectorProps) {
   };
 
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 text-card-foreground shadow-sm">
+    <div ref={containerRef} className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 text-card-foreground shadow-sm">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
-        <div>
-          <h2 className="text-lg font-bold tracking-tight">🛂 {t.title}</h2>
-          <p className="text-xs text-muted-foreground">{t.subtitle}</p>
+        <div className="flex items-center gap-2.5">
+          <img
+            src={BORDER_INSPECTOR_SPRITES.passport}
+            alt="Arstotzka Passport"
+            width={40}
+            height={40}
+            className="size-10 object-contain drop-shadow-sm"
+          />
+          <div>
+            <h2 className="text-lg font-bold tracking-tight">{t.title}</h2>
+            <p className="text-xs text-muted-foreground">{t.subtitle}</p>
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
           <button
@@ -592,11 +634,13 @@ export default function BorderInspector({ lang = 'ko' }: BorderInspectorProps) {
           >
             📅 {t.todayDateLabel}: {CHECKPOINT_DATE}
           </button>
-          <span className="rounded-lg bg-secondary px-2.5 py-1 text-secondary-foreground">
-            👤 {t.applicantLabel}: {state.currentIndex + 1}/{state.cases.length}
+          <span className="flex items-center gap-1.5 rounded-lg bg-secondary px-2.5 py-1 text-secondary-foreground">
+            <img src={BORDER_INSPECTOR_SPRITES.seal} alt="Applicant" width={16} height={16} className="size-4 object-contain" />
+            {t.applicantLabel}: {state.currentIndex + 1}/{state.cases.length}
           </span>
-          <span className="rounded-lg bg-secondary px-2.5 py-1 text-secondary-foreground">
-            ₵ {t.creditsLabel}: {state.credits}
+          <span className="flex items-center gap-1.5 rounded-lg bg-secondary px-2.5 py-1 text-secondary-foreground">
+            <img src={getSpriteUrl('coin', 64)} alt="Credits" width={16} height={16} className="size-3.5 object-contain" />
+            {t.creditsLabel}: {state.credits}₵
           </span>
           <span className="rounded-lg bg-secondary px-2.5 py-1 text-secondary-foreground">
             ⚠️ {t.citationsLabel}: {state.citations}/{state.maxCitations}
@@ -766,27 +810,43 @@ export default function BorderInspector({ lang = 'ko' }: BorderInspectorProps) {
 
           {/* Stamp Bar */}
           <div className="grid grid-cols-2 gap-3 pt-1">
-            <button
-              type="button"
+            <TiltStampButton
               onClick={() => handleStamp('approved')}
-              className="rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-sm transition hover:opacity-90"
+              className="flex items-center justify-center gap-2 bg-primary text-primary-foreground"
             >
-              ✅ {t.approveBtn}
-            </button>
-            <button
-              type="button"
+              <img src={BORDER_INSPECTOR_SPRITES.stamp} alt="Approved Stamp" width={20} height={20} className="size-5 object-contain" />
+              {t.approveBtn}
+            </TiltStampButton>
+            <TiltStampButton
               onClick={() => handleStamp('denied')}
-              className="rounded-xl bg-destructive px-4 py-3 text-sm font-bold text-destructive-foreground shadow-sm transition hover:opacity-90"
+              className="flex items-center justify-center gap-2 bg-destructive text-destructive-foreground"
             >
               ⛔ {t.denyBtn}
-            </button>
+            </TiltStampButton>
           </div>
         </>
       ) : (
         <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-muted/40 p-6 text-center">
+          {state.status === 'shift_complete' ? (
+            <img
+              src={BORDER_INSPECTOR_SPRITES.trophy}
+              alt="Ministry of Admission Trophy"
+              width={64}
+              height={64}
+              className="size-16 object-contain animate-bounce drop-shadow-md"
+            />
+          ) : (
+            <img
+              src={BORDER_INSPECTOR_SPRITES.seal}
+              alt="Ministry Seal"
+              width={56}
+              height={56}
+              className="size-14 object-contain opacity-80"
+            />
+          )}
           <h3 className="text-xl font-bold">
             {state.status === 'shift_complete'
-              ? `🎖️ ${t.shiftCompleteTitle}`
+              ? t.shiftCompleteTitle
               : `🚨 ${t.firedTitle}`}
           </h3>
           <p className="text-sm text-muted-foreground">
