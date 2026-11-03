@@ -10,6 +10,7 @@ import {
 } from '../../lib/games/tents';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { celebrate } from '../../lib/games/celebration';
+import { TENTS_ISLAND_3D_UI_SPRITES } from '../../lib/games/sprites';
 import {
   createShareCardCanvas,
   copyShareCardToClipboard,
@@ -249,9 +250,12 @@ export function TentsIsland3D({ lang = 'ko' }: Props) {
     <div ref={containerRef} className="mx-auto w-full max-w-4xl space-y-4">
       {/* Top HUD */}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
-        <div>
-          <h2 className="text-xl font-black text-foreground">{t.title}</h2>
-          <p className="text-xs text-muted-foreground">{t.subtitle}</p>
+        <div className="flex items-center gap-2.5">
+          <img src={TENTS_ISLAND_3D_UI_SPRITES.pine} alt="" className="size-8 object-contain" />
+          <div>
+            <h2 className="text-xl font-black text-foreground">{t.title}</h2>
+            <p className="text-xs text-muted-foreground">{t.subtitle}</p>
+          </div>
         </div>
 
         {/* Difficulty Selector */}
@@ -274,10 +278,12 @@ export function TentsIsland3D({ lang = 'ko' }: Props) {
 
         {/* Stats */}
         <div className="flex flex-wrap items-center gap-2">
-          <div className="rounded-xl bg-secondary px-3 py-1.5 text-xs font-bold text-secondary-foreground">
+          <div className="inline-flex items-center gap-1.5 rounded-xl bg-secondary px-3 py-1.5 text-xs font-bold text-secondary-foreground">
+            <img src={TENTS_ISLAND_3D_UI_SPRITES.lantern} alt="" className="size-4 object-contain" />
             {t.time}: <span className="font-black text-foreground">{formatTime(seconds)}</span>
           </div>
-          <div className="rounded-xl bg-secondary px-3 py-1.5 text-xs font-bold text-secondary-foreground">
+          <div className="inline-flex items-center gap-1.5 rounded-xl bg-secondary px-3 py-1.5 text-xs font-bold text-secondary-foreground">
+            <img src={TENTS_ISLAND_3D_UI_SPRITES.tent} alt="" className="size-4 object-contain" />
             {t.tentsRemaining}:{' '}
             <span
               className={`font-black ${
@@ -318,8 +324,8 @@ export function TentsIsland3D({ lang = 'ko' }: Props) {
       {isComplete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm">
           <div className="w-full max-w-md space-y-4 rounded-3xl border border-border bg-card p-6 text-center shadow-2xl">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-chart-1/20 text-3xl">
-              🏕️
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-chart-1/20">
+              <img src={TENTS_ISLAND_3D_UI_SPRITES.trophy} alt="" className="size-11 object-contain" />
             </div>
             <h3 className="text-2xl font-black text-foreground">{t.wonTitle}</h3>
             <p className="text-sm text-muted-foreground">{t.wonDesc}</p>

@@ -8,6 +8,7 @@ import { loadWindwardSave, type WindwardSaveV1 } from "../../lib/games/windward-
 import type { VoyageResult, WindwardSceneCopy } from "./WindwardHorizonsScene";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { celebrate } from "../../lib/games/celebration";
+import { WINDWARD_HORIZONS_UI_SPRITES } from "../../lib/games/sprites";
 import {
   createShareCardCanvas,
   copyShareCardToClipboard,
@@ -437,7 +438,10 @@ export default function WindwardHorizons({ locale }: { locale: Locale }) {
       <div className="absolute inset-x-0 bottom-0 h-32 opacity-40 [background:repeating-radial-gradient(ellipse_at_50%_130%,transparent_0_16px,rgba(182,221,215,.18)_17px_18px)]" />
       <div className="relative grid gap-9 p-6 sm:p-10 lg:grid-cols-[1.15fr_.85fr] lg:p-14">
         <div>
-          <p className="font-mono text-[10px] font-bold tracking-[.3em] text-[#d6b778]">{t.eyebrow}</p>
+          <p className="inline-flex items-center gap-2 font-mono text-xs font-bold tracking-[.3em] text-[#d6b778]">
+            <img src={WINDWARD_HORIZONS_UI_SPRITES.compass} alt="" className="size-4 object-contain" />
+            {t.eyebrow}
+          </p>
           <h2 className="mt-4 font-serif text-4xl font-black tracking-[-.045em] text-[#f8f0dc] sm:text-6xl">{t.title}</h2>
           <p className="mt-5 max-w-2xl text-sm leading-7 text-[#c9d6d3] sm:text-base">{t.subtitle}</p>
 
@@ -446,8 +450,9 @@ export default function WindwardHorizons({ locale }: { locale: Locale }) {
               type="button"
               onClick={() => void beginVoyage()}
               disabled={!available || isStarting}
-              className="min-h-12 rounded-xl bg-[#e3bd72] px-8 py-3 text-sm font-black uppercase tracking-[.13em] text-[#102325] shadow-[0_0_32px_rgba(227,189,114,.2)] transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-[#e3bd72] px-8 py-3 text-sm font-black uppercase tracking-[.13em] text-[#102325] shadow-[0_0_32px_rgba(227,189,114,.2)] transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40"
             >
+              <img src={WINDWARD_HORIZONS_UI_SPRITES.sail} alt="" className="size-5 object-contain" />
               {phase === "result" ? t.again : hasSave ? t.resume : t.start}
             </button>
             <button
@@ -461,7 +466,8 @@ export default function WindwardHorizons({ locale }: { locale: Locale }) {
               {isImmersive ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
               <span>{isImmersive ? portalLabels.exit : portalLabels.enter}</span>
             </button>
-            <span className="rounded-lg border border-white/10 bg-white/5 px-4 py-3 font-mono text-xs text-[#c8d5d2]">
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-4 py-3 font-mono text-xs text-[#c8d5d2]">
+              <img src={WINDWARD_HORIZONS_UI_SPRITES.spyglass} alt="" className="size-4 object-contain" />
               {t.best}: <strong className="text-white">{best.toLocaleString()}</strong>
             </span>
           </div>
@@ -470,7 +476,10 @@ export default function WindwardHorizons({ locale }: { locale: Locale }) {
 
           {result && (
             <div className="mt-7 rounded-2xl border border-[#d7bc82]/25 bg-black/25 p-5">
-              <p className="text-xs font-black uppercase tracking-[.2em] text-[#d6b778]">{t.resultTitle}</p>
+              <p className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[.2em] text-[#d6b778]">
+                <img src={WINDWARD_HORIZONS_UI_SPRITES.trophy} alt="" className="size-5 object-contain" />
+                {t.resultTitle}
+              </p>
               <p className="mt-2 text-3xl font-black text-white">{t.score}: {result.score.toLocaleString()}</p>
               <dl className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
                 {[

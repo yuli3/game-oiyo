@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Maximize2, Minimize2, Share2, Check } from "lucide-react";
 import { celebrate } from "../../lib/games/celebration";
+import { CONSTELLATION_SHEPHERD_UI_SPRITES } from "../../lib/games/sprites";
 import {
   createShareCardCanvas,
   copyShareCardToClipboard,
@@ -662,18 +663,27 @@ export default function ConstellationShepherd({ locale = "en" }: { locale?: Loca
         >
           {isImmersive ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
         </button>
-        <h2 className="text-2xl font-semibold text-foreground">{copy.title}</h2>
+        <h2 className="inline-flex items-center gap-2 text-2xl font-semibold text-foreground">
+          <img src={CONSTELLATION_SHEPHERD_UI_SPRITES.star} alt="" className="size-6 object-contain" />
+          {copy.title}
+        </h2>
         <p className="text-sm leading-6 text-muted-foreground">{copy.lead}</p>
         <p className="text-xs text-muted-foreground">{copy.keys}</p>
       </header>
       <div className="grid grid-cols-2 gap-2 text-center text-sm">
         <div className="rounded-xl bg-muted p-2">
-          <b>{copy.steps}</b>
+          <b className="inline-flex items-center justify-center gap-1.5">
+            <img src={CONSTELLATION_SHEPHERD_UI_SPRITES.staff} alt="" className="size-4 object-contain" />
+            {copy.steps}
+          </b>
           <br />
           <span className="tabular-nums">{state.steps}/{STEP_CAP}</span>
         </div>
         <div className="rounded-xl bg-muted p-2">
-          <b>{copy.seed}</b>
+          <b className="inline-flex items-center justify-center gap-1.5">
+            <img src={CONSTELLATION_SHEPHERD_UI_SPRITES.lantern} alt="" className="size-4 object-contain" />
+            {copy.seed}
+          </b>
           <br />
           <span className="tabular-nums">{seed}</span>
         </div>
@@ -681,13 +691,16 @@ export default function ConstellationShepherd({ locale = "en" }: { locale?: Loca
       <p role="status" aria-live="polite" className="text-sm text-foreground">{live}</p>
       {state.status !== "play" && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
-          <div>
-            <p className="text-sm font-bold text-foreground">
-              {state.status === "win" ? "✨ 별자리 수호 완성!" : "🌌 걸음 한도에 도달했습니다"}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {state.status === "win" ? `${state.steps}걸음 만에 모든 별이 제자리를 찾았습니다.` : outcome}
-            </p>
+          <div className="flex items-center gap-2.5">
+            <img src={CONSTELLATION_SHEPHERD_UI_SPRITES.trophy} alt="" className="size-8 object-contain" />
+            <div>
+              <p className="text-sm font-bold text-foreground">
+                {state.status === "win" ? "✨ 별자리 수호 완성!" : "🌌 걸음 한도에 도달했습니다"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {state.status === "win" ? `${state.steps}걸음 만에 모든 별이 제자리를 찾았습니다.` : outcome}
+              </p>
+            </div>
           </div>
           <button
             type="button"

@@ -37,6 +37,8 @@ import {
   updateCyberHighway,
 } from '../../lib/games/cyber-highway';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { CYBER_HIGHWAY_UI_SPRITES } from '../../lib/games/sprites';
+import { celebrate } from '../../lib/games/celebration';
 import {
   createShareCardCanvas,
   copyShareCardToClipboard,
@@ -201,6 +203,9 @@ export default function CyberHighway3D() {
         if (next.gameOver && !current.gameOver) {
           recordGhostLap(next.distance / Math.max(1, next.speed * 0.28));
           MobileHapticsPro.heavy();
+          if (next.score >= 500 && containerRef.current) {
+            celebrate(containerRef.current, { preset: 'stardust' });
+          }
         }
 
         setGameState(next);
@@ -296,11 +301,15 @@ export default function CyberHighway3D() {
         {/* Speed & Controls Toggle */}
         <div className="flex items-center gap-2">
           <div className="rounded-xl border border-border bg-background/85 backdrop-blur-md px-4 py-2.5 shadow-sm">
-            <div className="text-xs text-muted-foreground font-medium">속도 (SPEED)</div>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
+              <img src={CYBER_HIGHWAY_UI_SPRITES.car} alt="" className="size-4 object-contain" />
+              속도 (SPEED)
+            </div>
             <div className="text-2xl font-black tracking-tight text-foreground">
               {speedKmh} <span className="text-xs font-semibold text-primary">KM/H</span>
             </div>
-            <div className="text-xs text-muted-foreground mt-0.5">
+            <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+              <img src={CYBER_HIGHWAY_UI_SPRITES.gate} alt="" className="size-3.5 object-contain" />
               거리: <span className="font-bold text-foreground">{Math.round(gameState.distance)} m</span>
             </div>
             {liveDelta && (
@@ -357,7 +366,10 @@ export default function CyberHighway3D() {
           {/* Nitro Bar */}
           <div>
             <div className="flex justify-between text-xs mb-1">
-              <span className="font-bold text-foreground">니트로 부스트 (NITRO)</span>
+              <span className="inline-flex items-center gap-1 font-bold text-foreground">
+                <img src={CYBER_HIGHWAY_UI_SPRITES.nitro} alt="" className="size-3.5 object-contain" />
+                니트로 부스트 (NITRO)
+              </span>
               <span className="font-bold text-primary">{Math.round(gameState.nitro)}%</span>
             </div>
             <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
@@ -431,6 +443,7 @@ export default function CyberHighway3D() {
       {gameState.gameOver && (
         <div className="absolute inset-0 bg-background/85 backdrop-blur-md flex items-center justify-center p-6 z-10">
           <div className="max-w-md w-full rounded-2xl border border-border bg-card p-6 shadow-2xl text-center space-y-5 animate-in fade-in zoom-in-95 duration-200">
+            <img src={CYBER_HIGHWAY_UI_SPRITES.trophy} alt="" className="mx-auto size-12 object-contain drop-shadow-md" />
             <div className="text-3xl font-black tracking-tight text-foreground">
               CRASH! GAME OVER
             </div>

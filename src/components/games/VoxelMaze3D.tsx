@@ -4,6 +4,7 @@ import { celebrate } from "../../lib/games/celebration";
 import { Maximize2, Minimize2, Volume2, VolumeX, Share2, Check } from 'lucide-react';
 import VoxelMaze3DScene from './VoxelMaze3DScene';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { VOXEL_MAZE_3D_UI_SPRITES } from '../../lib/games/sprites';
 import {
   createShareCardCanvas,
   copyShareCardToClipboard,
@@ -314,12 +315,14 @@ export default function VoxelMaze3D() {
         {/* Keys & Objectives */}
         <div className="flex gap-2 rounded-xl border border-border bg-background/85 backdrop-blur-md px-4 py-2.5 shadow-xs">
           <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
-            <span>🔑 열쇠:</span>
+            <img src={VOXEL_MAZE_3D_UI_SPRITES.key} alt="" className="size-4 object-contain" />
+            <span>열쇠:</span>
             <span className={gameState.isGateOpen ? 'text-primary' : 'text-foreground'}>
               {gameState.keysCollected} / {gameState.keysRequired}
             </span>
           </div>
           <div className="border-l border-border pl-2 flex items-center gap-1 text-xs text-muted-foreground">
+            <img src={VOXEL_MAZE_3D_UI_SPRITES.compass} alt="" className="size-4 object-contain" />
             <span>보석:</span>
             <span className="font-bold text-foreground">{gameState.gemsCollected}</span>
           </div>
@@ -329,7 +332,10 @@ export default function VoxelMaze3D() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-3 rounded-xl border border-border bg-background/85 backdrop-blur-md px-4 py-2 shadow-xs">
             <div className="text-right">
-              <div className="text-xs text-muted-foreground">남은 시간</div>
+              <div className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                <img src={VOXEL_MAZE_3D_UI_SPRITES.torch} alt="" className="size-3.5 object-contain" />
+                남은 시간
+              </div>
               <div className={`text-base font-black font-mono ${gameState.timeLeft <= 15 ? 'text-destructive animate-pulse' : 'text-foreground'}`}>
                 {Math.ceil(gameState.timeLeft)}초
               </div>
@@ -414,6 +420,7 @@ export default function VoxelMaze3D() {
       {gameState.levelCleared && (
         <div className="absolute inset-0 bg-background/85 backdrop-blur-md flex items-center justify-center p-6 z-10">
           <div className="max-w-md w-full rounded-2xl border border-border bg-card p-6 shadow-2xl text-center space-y-4 animate-in fade-in zoom-in-95 duration-200">
+            <img src={VOXEL_MAZE_3D_UI_SPRITES.trophy} alt="" className="mx-auto size-12 object-contain drop-shadow-md" />
             <div className="text-2xl sm:text-3xl font-black tracking-tight text-primary">
               🎉 탈출 성공! LEVEL CLEAR!
             </div>
