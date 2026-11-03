@@ -1258,3 +1258,74 @@ export const REVERSE_DUNGEON_UI_SPRITES = {
   trophy: "/assets/sprites/reverse-dungeon/trophy-overlord-3d-128.png",
 } as const;
 
+export const CHESS_PLAY_UI_SPRITES = {
+  knight: "/assets/sprites/chess-play/knight-royal-3d-128.png",
+  clock: "/assets/sprites/chess-play/clock-blitz-3d-128.png",
+  scroll: "/assets/sprites/chess-play/scroll-opening-3d-128.png",
+  trophy: "/assets/sprites/chess-play/trophy-chess-3d-128.png",
+} as const;
+
+export const WORDLE_GAME_UI_SPRITES = {
+  tile: "/assets/sprites/wordle-game/tile-letter-3d-128.png",
+  hint: "/assets/sprites/wordle-game/key-hint-3d-128.png",
+  streak: "/assets/sprites/wordle-game/flame-streak-3d-128.png",
+  trophy: "/assets/sprites/wordle-game/trophy-wordle-3d-128.png",
+} as const;
+
+export const TILE_RUMMY_UI_SPRITES = {
+  joker: "/assets/sprites/tile-rummy/joker-tile-3d-128.png",
+  rack: "/assets/sprites/tile-rummy/rack-mahogany-3d-128.png",
+  hourglass: "/assets/sprites/tile-rummy/hourglass-turn-3d-128.png",
+  trophy: "/assets/sprites/tile-rummy/trophy-rummy-3d-128.png",
+} as const;
+
+export const TEXAS_HOLDEM_UI_SPRITES = {
+  chip: "/assets/sprites/texas-holdem/chip-allin-3d-128.png",
+  pocket: "/assets/sprites/texas-holdem/cards-pocket-3d-128.png",
+  pot: "/assets/sprites/texas-holdem/pot-gold-3d-128.png",
+  trophy: "/assets/sprites/texas-holdem/trophy-holdem-3d-128.png",
+} as const;
+
+export const BLACKJACK_UI_SPRITES = {
+  shoe: "/assets/sprites/blackjack/shoe-dealer-3d-128.png",
+  doubleChip: "/assets/sprites/blackjack/chip-double-3d-128.png",
+  ace: "/assets/sprites/blackjack/ace-blackjack-3d-128.png",
+  trophy: "/assets/sprites/blackjack/trophy-blackjack-3d-128.png",
+} as const;
+
+export const CYBER_HIGHWAY_UI_SPRITES = {
+  car: "/assets/sprites/cyber-highway-3d/car-synth-3d-128.png",
+  nitro: "/assets/sprites/cyber-highway-3d/nitro-cell-3d-128.png",
+  gate: "/assets/sprites/cyber-highway-3d/gate-neon-3d-128.png",
+  trophy: "/assets/sprites/cyber-highway-3d/trophy-highway-3d-128.png",
+} as const;
+
+export const WINDWARD_HORIZONS_UI_SPRITES = {
+  compass: "/assets/sprites/windward-horizons/compass-brass-3d-128.png",
+  sail: "/assets/sprites/windward-horizons/sail-galleon-3d-128.png",
+  spyglass: "/assets/sprites/windward-horizons/spyglass-chart-3d-128.png",
+  trophy: "/assets/sprites/windward-horizons/trophy-windward-3d-128.png",
+} as const;
+
+export const CONSTELLATION_SHEPHERD_UI_SPRITES = {
+  star: "/assets/sprites/constellation-shepherd/star-astral-3d-128.png",
+  staff: "/assets/sprites/constellation-shepherd/staff-shepherd-3d-128.png",
+  lantern: "/assets/sprites/constellation-shepherd/nebula-lantern-3d-128.png",
+  trophy: "/assets/sprites/constellation-shepherd/trophy-constellation-3d-128.png",
+} as const;
+
+export const TENTS_ISLAND_3D_UI_SPRITES = {
+  tent: "/assets/sprites/tents-island-3d/tent-canvas-3d-128.png",
+  pine: "/assets/sprites/tents-island-3d/pine-island-3d-128.png",
+  lantern: "/assets/sprites/tents-island-3d/lantern-camp-3d-128.png",
+  trophy: "/assets/sprites/tents-island-3d/trophy-tents3d-3d-128.png",
+} as const;
+
+export const VOXEL_MAZE_3D_UI_SPRITES = {
+  compass: "/assets/sprites/voxel-maze-3d/cube-compass-3d-128.png",
+  key: "/assets/sprites/voxel-maze-3d/key-portal-3d-128.png",
+  torch: "/assets/sprites/voxel-maze-3d/torch-dungeon-3d-128.png",
+  trophy: "/assets/sprites/voxel-maze-3d/trophy-voxels-3d-128.png",
+} as const;
+
+

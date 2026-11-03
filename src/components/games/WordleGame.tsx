@@ -39,7 +39,7 @@ import {
 } from "../../lib/games/game-audio";
 import { createHaptics } from "../../lib/games/haptics";
 import { celebrate } from "../../lib/games/celebration";
-import { WORDLE_SPRITES } from "../../lib/games/sprites";
+import { WORDLE_SPRITES, WORDLE_GAME_UI_SPRITES } from "../../lib/games/sprites";
 import { GameShell } from "../ui/game/GameShell";
 import type { FlowPhase } from "../../lib/games/game-flow";
 import { getGlobalBgmController } from "../../lib/games/bgm";
@@ -831,10 +831,11 @@ export default function WordleGame({ locale = "en" }: { locale?: string }) {
             type="button"
             onClick={() => setHard((v) => !v)}
             aria-pressed={hard}
-            className={`min-h-11 rounded-xl border border-border px-3 text-xs font-bold transition-colors ${
+            className={`inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-border px-3 text-xs font-bold transition-colors ${
               hard ? "bg-primary text-primary-foreground" : "bg-muted/60 text-muted-foreground hover:bg-muted"
             }`}
           >
+            <img src={WORDLE_GAME_UI_SPRITES.streak} alt="" className="size-4 object-contain" />
             {t.hard}
           </button>
         </div>
@@ -847,26 +848,34 @@ export default function WordleGame({ locale = "en" }: { locale?: string }) {
             type="button"
             onClick={() => start("daily")}
             aria-pressed={game.mode === "daily"}
-            className={`min-h-11 rounded-xl border border-border px-3 text-xs font-bold transition-colors ${
+            className={`inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-border px-3 text-xs font-bold transition-colors ${
               game.mode === "daily"
                 ? "bg-primary text-primary-foreground shadow-xs"
                 : "bg-muted/40 text-foreground hover:bg-muted"
             }`}
           >
+            <img src={WORDLE_GAME_UI_SPRITES.tile} alt="" className="size-4 object-contain" />
             {t.daily}
           </button>
           <button
             type="button"
             onClick={() => start("random")}
             aria-pressed={game.mode === "random"}
-            className={`min-h-11 rounded-xl border border-border px-3 text-xs font-bold transition-colors ${
+            className={`inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-border px-3 text-xs font-bold transition-colors ${
               game.mode === "random"
                 ? "bg-primary text-primary-foreground shadow-xs"
                 : "bg-muted/40 text-foreground hover:bg-muted"
             }`}
           >
+            <img src={WORDLE_GAME_UI_SPRITES.hint} alt="" className="size-4 object-contain" />
             {t.random}
           </button>
+          {stats && stats.currentStreak > 0 && (
+            <span className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-border bg-muted/40 px-3 text-xs font-bold text-foreground">
+              <img src={WORDLE_GAME_UI_SPRITES.trophy} alt="" className="size-4 object-contain" />
+              {stats.currentStreak}
+            </span>
+          )}
           {seedCode && (
             <span className="inline-flex min-h-11 items-center rounded-xl border border-border bg-muted/40 px-3 font-mono text-xs font-bold text-muted-foreground">
               SEED #{seedCode}

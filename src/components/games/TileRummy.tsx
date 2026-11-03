@@ -71,7 +71,8 @@ import type { DropTarget, TileSpot } from "../../lib/games/tile-rummy-layout";
 import { dropDraft, extendMeld, isNewMeld, meldKey, pullTile, unusedHand, type Draft } from "../../lib/games/tile-rummy-draft";
 import TileRummyCanvas, { type TableFx } from "./TileRummyCanvas";
 import { MORE } from "./tile-rummy-copy";
-import { TILE_RUMMY_SPRITES } from "../../lib/games/sprites";
+import { TILE_RUMMY_SPRITES, TILE_RUMMY_UI_SPRITES } from "../../lib/games/sprites";
+import { celebrate } from "../../lib/games/celebration";
 
 const GAME_ID = "tile-rummy";
 /** dailyBestConditions is one cohort: one opponent, adept search, no hint or undo. */
@@ -937,6 +938,7 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
       sfx("win");
       haptics.fire("win");
       pushFx({ kind: "win" });
+      if (containerRef.current) celebrate(containerRef.current, { preset: "stardust" });
     } else sfx("lose");
     if (game.mode === "daily" && game.dateKey && outcome === "w") {
       // Existing DailyStreak store only; a same-day replay is a no-op there.
@@ -1226,7 +1228,8 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
       >
         {playing && (
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-            <p className="text-sm font-bold text-foreground" role="status" aria-live="polite">
+            <p className="inline-flex items-center gap-1.5 text-sm font-bold text-foreground" role="status" aria-live="polite">
+              <img src={TILE_RUMMY_UI_SPRITES.hourglass} alt="" className="size-4 object-contain" />
               {!game && t.preparing}
               {game && game.status === "over" && (outcome === "w" ? t.win : outcome === "l" ? t.loss : t.drawGame)}
               {game && game.status === "playing" && game.turn === 0 && t.yourTurn}
@@ -1409,6 +1412,7 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
 
           {over && game && (
             <div className={OVERLAY}>
+              <img src={TILE_RUMMY_UI_SPRITES.trophy} alt="" className="size-12 object-contain drop-shadow-md" />
               <p className="text-4xl font-black text-foreground">{outcome === "w" ? t.win : outcome === "l" ? t.loss : t.drawGame}</p>
               <p className="text-3xl tracking-widest text-primary" aria-label={m.stars(stars)}>{"★".repeat(stars)}{"☆".repeat(3 - stars)}</p>
               {newBest && <p className="text-sm font-black text-primary">{m.newBest}</p>}
@@ -1451,10 +1455,11 @@ export default function TileRummy({ locale = "ko" }: { locale?: string }) {
                   setSortMode((prev) => (prev === "color" ? "value" : "color"));
                   sfx("tap");
                 }}
-                className={`${CONTROL} border-border bg-card text-foreground`}
+                className={`${CONTROL} inline-flex items-center gap-1.5 border-border bg-card text-foreground`}
                 title={sortMode === "color" ? "777 그룹 정렬" : "789 연속 정렬"}
               >
-                {sortMode === "color" ? "🎨 789" : "🔢 777"}
+                <img src={sortMode === "color" ? TILE_RUMMY_UI_SPRITES.rack : TILE_RUMMY_UI_SPRITES.joker} alt="" className="size-4 object-contain" />
+                {sortMode === "color" ? "789" : "777"}
               </button>
               {augment === "mulligan" && !mulliganUsed && game?.turnCount === 0 && (
                 <button type="button" onClick={mulligan} disabled={!canAct} className={`${CONTROL} border-primary bg-primary/10 text-primary`}>{m.mulligan}</button>

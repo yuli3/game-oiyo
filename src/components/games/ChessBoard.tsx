@@ -13,7 +13,8 @@ import {
   CHESS_AI_BUDGET_MS, CHESS_AI_MAX_DEPTH, isCurrentChessSearchResponse,
   type ChessSearchRequest, type ChessSearchResponse,
 } from '../../lib/games/chess-worker-protocol';
-import { CHESS_SPRITES } from '../../lib/games/sprites';
+import { CHESS_SPRITES, CHESS_PLAY_UI_SPRITES } from '../../lib/games/sprites';
+import { celebrate } from '../../lib/games/celebration';
 import { castleRookDelta, visualSquare } from '../../lib/games/piece-tween';
 import { Maximize2, Minimize2, Volume2, VolumeX, Share2 } from 'lucide-react';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
@@ -247,6 +248,11 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     if (mode === 'ai') {
       const aiColor = AI_IS_WHITE ? 'white' : 'black';
       setRecord(recordResult('chess', end.result === 'draw' ? 'd' : end.result === aiColor ? 'l' : 'w'));
+      if (end.result !== 'draw' && end.result !== aiColor && containerRef.current) {
+        celebrate(containerRef.current, { preset: 'stardust' });
+      }
+    } else if (end.result !== 'draw' && containerRef.current) {
+      celebrate(containerRef.current, { preset: 'stardust' });
     }
   };
 
@@ -445,11 +451,14 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
     >
       <div className="not-prose my-12 p-4 sm:p-8 bg-card border border-border rounded-4xl shadow-sm max-w-lg mx-auto w-full">
         <div className="flex justify-between items-center mb-4">
-          <div>
-            <h3 className="text-xl font-black text-foreground">{t.title}</h3>
-            <p className="text-xs font-bold text-primary uppercase tracking-widest mt-1" aria-live="polite">
-              {turnSummary}
-            </p>
+          <div className="flex items-center gap-2.5">
+            <img src={CHESS_PLAY_UI_SPRITES.knight} alt="" className="size-8 object-contain drop-shadow-sm" />
+            <div>
+              <h3 className="text-xl font-black text-foreground">{t.title}</h3>
+              <p className="text-xs font-bold text-primary uppercase tracking-widest mt-1" aria-live="polite">
+                {turnSummary}
+              </p>
+            </div>
           </div>
           <div className="flex items-center gap-1.5">
             <button
@@ -504,10 +513,11 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
             type="button"
             onClick={() => { setIsBlitz((b) => !b); setWhiteTime(180); setBlackTime(180); }}
             aria-pressed={isBlitz}
-            className={`min-h-11 px-3 py-1.5 rounded-xl border text-xs font-bold transition-colors ${isBlitz ? 'border-primary bg-primary/20 text-primary' : 'border-border bg-muted/50 text-muted-foreground hover:bg-muted'}`}
+            className={`inline-flex items-center gap-1.5 min-h-11 px-3 py-1.5 rounded-xl border text-xs font-bold transition-colors ${isBlitz ? 'border-primary bg-primary/20 text-primary' : 'border-border bg-muted/50 text-muted-foreground hover:bg-muted'}`}
             title="3분 블리츠 시계"
           >
-            ⏱ 3분 블리츠
+            <img src={CHESS_PLAY_UI_SPRITES.clock} alt="" className="size-4 object-contain" />
+            3분 블리츠
           </button>
           {isBlitz && (
             <div className="flex items-center gap-2 text-xs font-mono font-bold">
@@ -550,8 +560,9 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                 </span>
               </div>
             </div>
-            <span className="text-xs font-mono text-primary/80 shrink-0 hidden sm:inline">
-              📖 오프닝 북
+            <span className="inline-flex items-center gap-1 text-xs font-mono text-primary/80 shrink-0 hidden sm:inline-flex">
+              <img src={CHESS_PLAY_UI_SPRITES.scroll} alt="" className="size-4 object-contain" />
+              오프닝 북
             </span>
           </div>
         )}
@@ -644,6 +655,7 @@ const ChessBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
           {gameEnd && (
             <div className="absolute inset-0 z-20 bg-background/70 backdrop-blur-sm flex flex-col items-center justify-center animate-in fade-in zoom-in-95 motion-reduce:animate-none" role="dialog" aria-modal="true" aria-labelledby="chess-result-title">
               <div className="mx-3 max-w-sm bg-card p-5 sm:p-8 rounded-3xl shadow-xl border border-border text-center">
+                <img src={CHESS_PLAY_UI_SPRITES.trophy} alt="" className="mx-auto mb-2 size-12 object-contain drop-shadow-md" />
                 <p className="mb-1 text-xs font-black uppercase tracking-widest text-muted-foreground">{c3.summary}</p>
                 <h4 id="chess-result-title" className="text-2xl sm:text-3xl font-black text-foreground mb-2">{endLabel}</h4>
                 <p className="text-muted-foreground mb-6 uppercase tracking-widest font-bold text-xs">

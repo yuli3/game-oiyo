@@ -5,6 +5,7 @@ import { GameContainer, PlayingCard } from "../ui/game/GamePrimitives";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { celebrate } from "../../lib/games/celebration";
+import { BLACKJACK_UI_SPRITES } from "../../lib/games/sprites";
 import { copyShareCardToClipboard, createShareCardCanvas, downloadShareCard } from "../../lib/games/share-card";
 import { blackjackAdvice, blackjackResultReason, createBlackjackGame, doubleBlackjack, evaluateBlackjackHand, hitBlackjack, standBlackjack, type BlackjackAdviceReason, type BlackjackOutcome, type BlackjackResultReason, type BlackjackState } from "../../lib/games/blackjack";
 import { clearBlackjackSave, loadBlackjackSave, storeBlackjackSave } from "../../lib/games/blackjack-save";
@@ -329,10 +330,14 @@ const Blackjack = ({ locale = "ko" }: { locale?: string }) => {
       <GameContainer title={t.title} subtitle={t.subtitle} onReset={start}>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2 text-xs font-bold">
           <div className="flex items-center gap-3">
-            <span className="rounded-full bg-chart-3/15 px-2.5 py-1 text-chart-3 font-black">
-              🪙 {bankroll.toLocaleString()}
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-chart-3/15 px-2.5 py-1 text-chart-3 font-black">
+              <img src={BLACKJACK_UI_SPRITES.doubleChip} alt="" className="size-4 object-contain" />
+              {bankroll.toLocaleString()}
             </span>
-            <span className="text-muted-foreground">{t.record} {record ? `${record.w}–${record.l}–${record.d}` : "0–0–0"}</span>
+            <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+              <img src={BLACKJACK_UI_SPRITES.shoe} alt="" className="size-4 object-contain" />
+              {t.record} {record ? `${record.w}–${record.l}–${record.d}` : "0–0–0"}
+            </span>
           </div>
           <div className="flex gap-2">
             <button type="button" onClick={() => { setPaused(value => !value); setRestored(false); }} disabled={game.status !== "playing"} className="min-h-11 rounded-xl border border-border px-3 text-xs font-bold text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50">{paused ? `▶ ${t.resume}` : `Ⅱ ${t.pause}`}</button>
@@ -406,7 +411,8 @@ const Blackjack = ({ locale = "ko" }: { locale?: string }) => {
           <div className="min-h-12 text-center" aria-live="assertive">
             {game.outcome && (
               <div className="flex flex-col items-center gap-1.5">
-                <div role="status" className={`inline-block rounded-full px-7 py-2 text-lg font-black ${!reducedMotion ? "animate-in zoom-in-95" : ""} ${game.outcome === "win" ? "bg-primary text-primary-foreground" : game.outcome === "lost" ? "bg-destructive text-destructive-foreground" : "bg-muted"}`}>
+                <div role="status" className={`inline-flex items-center gap-2 rounded-full px-7 py-2 text-lg font-black ${!reducedMotion ? "animate-in zoom-in-95" : ""} ${game.outcome === "win" ? "bg-primary text-primary-foreground" : game.outcome === "lost" ? "bg-destructive text-destructive-foreground" : "bg-muted"}`}>
+                  <img src={game.outcome === "win" ? BLACKJACK_UI_SPRITES.trophy : BLACKJACK_UI_SPRITES.ace} alt="" className="size-5 object-contain" />
                   {t[game.outcome]}
                 </div>
                 {game.outcome === "win" && (

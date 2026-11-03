@@ -3,6 +3,7 @@ import { Camera, Check, Maximize2, Minimize2, Sparkles, Volume2, VolumeX } from 
 import { PlayingCard, GameContainer } from "../ui/game/GamePrimitives";
 import { getRecord, recordResult } from "../../lib/games/records";
 import { celebrate } from "../../lib/games/celebration";
+import { TEXAS_HOLDEM_UI_SPRITES } from "../../lib/games/sprites";
 import { copyShareCardToClipboard, createShareCardCanvas, downloadShareCard } from "../../lib/games/share-card";
 import {
   compareHands,
@@ -630,8 +631,9 @@ const TexasHoldem: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
           <button
             onClick={() => deal()}
             aria-label={t.dealLabel}
-            className="px-8 py-3 rounded-2xl bg-primary text-primary-foreground font-black text-lg hover:bg-primary/90 transition-colors"
+            className="inline-flex items-center gap-2 px-8 py-3 rounded-2xl bg-primary text-primary-foreground font-black text-lg hover:bg-primary/90 transition-colors"
           >
+            <img src={TEXAS_HOLDEM_UI_SPRITES.chip} alt="" className="size-6 object-contain" />
             {t.deal}
           </button>
           <p className="text-xs text-muted-foreground text-center max-w-md leading-relaxed">
@@ -685,7 +687,8 @@ const TexasHoldem: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
 
           {/* Community */}
           <div className="flex flex-col items-center gap-1.5 border-y border-border py-4">
-            <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+              <img src={TEXAS_HOLDEM_UI_SPRITES.pot} alt="" className="size-4 object-contain" />
               {t.community}
             </span>
             <div className="flex gap-1.5 sm:gap-2 min-h-[128px] items-center">
@@ -701,7 +704,8 @@ const TexasHoldem: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
 
           {/* Player */}
           <div className="flex flex-col items-center gap-1.5">
-            <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+              <img src={TEXAS_HOLDEM_UI_SPRITES.pocket} alt="" className="size-4 object-contain" />
               {t.you}
             </span>
             <Hand cards={player} highlight={highlight} />
@@ -724,6 +728,7 @@ const TexasHoldem: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
           {/* Result / controls */}
           {over ? (
             <div className="flex flex-col items-center gap-3">
+              <img src={TEXAS_HOLDEM_UI_SPRITES.trophy} alt="" className="size-10 object-contain drop-shadow-sm" />
               <p className="text-lg font-black">
                 {folded
                   ? t.foldLose
