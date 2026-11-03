@@ -27,7 +27,7 @@ import {
     type MinesweeperHint,
     type RevealResult,
 } from '../../lib/games/minesweeper';
-import { MINESWEEPER_SPRITES, getSpriteUrl } from '../../lib/games/sprites';
+import { MINESWEEPER_SPRITES, MINESWEEPER_UI_SPRITES } from '../../lib/games/sprites';
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 import { celebrate } from "../../lib/games/celebration";
 import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
@@ -547,7 +547,7 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             playWinFanfare();
             MobileHapticsPro.success();
             vibrate([40, 40, 40, 40, 100]);
-            celebrate(containerRef.current, { preset: "tiles", colors: ["#94a3b8", "#38bdf8", "#f8fafc"], origin: { x: 0.25, y: 0.6 }, extraOrigins: [{ x: 0.75, y: 0.6 }] });
+            celebrate(containerRef.current, { preset: "stardust", colors: ["#94a3b8", "#38bdf8", "#f8fafc"], origin: { x: 0.25, y: 0.6 }, extraOrigins: [{ x: 0.75, y: 0.6 }] });
             const elapsed = recordedGameSeconds(startedAtRef.current, performance.now());
             setTimer(elapsed);
             const previousBest = bestTime;
@@ -801,8 +801,8 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 )}
 
                 <div className="flex justify-between items-center mb-4 gap-2">
-                    <div className="flex items-center gap-1 px-3 py-1.5 bg-muted rounded-lg text-xs font-black text-muted-foreground" aria-label={t.mines}>
-                        <img src={MINESWEEPER_SPRITES.flag} alt="" draggable={false} className="h-4 w-4 object-contain" />
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted rounded-lg text-xs font-black text-muted-foreground" aria-label={t.mines}>
+                        <img src={MINESWEEPER_UI_SPRITES.mine} alt="" draggable={false} className="size-4 object-contain" />
                         {mineCount - flaggedCount}
                     </div>
                     <div className="flex items-center gap-2">
@@ -816,7 +816,7 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                                     : 'bg-muted text-muted-foreground border-border'
                             }`}
                         >
-                            {flagMode ? <span className="inline-flex items-center gap-1"><img src={MINESWEEPER_SPRITES.flag} alt="" draggable={false} className="h-4 w-4 object-contain" />{t.flag}</span> : `⛏️ ${t.dig}`}
+                            {flagMode ? <span className="inline-flex items-center gap-1.5"><img src={MINESWEEPER_UI_SPRITES.flag} alt="" draggable={false} className="size-4 object-contain" />{t.flag}</span> : `⛏️ ${t.dig}`}
                         </button>
                         <button
                             type="button"
@@ -853,8 +853,9 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
             <div className="mb-3 flex flex-col items-center gap-2">
                 <button type="button" onClick={requestHint} disabled={status !== 'playing'}
-                    className="min-h-11 rounded-xl border border-border bg-background px-4 py-2 text-xs font-black text-foreground hover:bg-muted disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
-                    💡 {ht.action}
+                    className="min-h-11 rounded-xl border border-border bg-background px-4 py-2 text-xs font-black text-foreground hover:bg-muted disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 inline-flex items-center gap-1.5">
+                    <img src={MINESWEEPER_UI_SPRITES.radar} alt="" className="size-4 object-contain" />
+                    <span>{ht.action}</span>
                 </button>
                 {assist === 'hint' && <span className="text-xs font-bold text-muted-foreground">{ht.assisted}</span>}
                 {hintMessage && (
@@ -941,7 +942,7 @@ const Minesweeper: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 <div className="mt-6 text-center animate-in fade-in slide-in-from-bottom-2 motion-reduce:animate-none flex flex-col items-center" role="status" aria-live="polite">
                     {status === 'won' && (
                         <img
-                            src={getSpriteUrl('trophy', 64)}
+                            src={MINESWEEPER_UI_SPRITES.trophy}
                             alt="Victory Trophy"
                             width={64}
                             height={64}

@@ -1187,3 +1187,74 @@ export function drawCanvasSprite(
   ctx.drawImage(img, -width / 2, -height / 2, width, height);
   ctx.restore();
 }
+
+export const GAME_2048_UI_SPRITES = {
+  cube: "/assets/sprites/game-2048/cube-2048-3d-128.png",
+  undo: "/assets/sprites/game-2048/gear-undo-3d-128.png",
+  theme: "/assets/sprites/game-2048/prism-theme-3d-128.png",
+  trophy: "/assets/sprites/game-2048/trophy-2048-3d-128.png",
+} as const;
+
+export const MINESWEEPER_UI_SPRITES = {
+  mine: "/assets/sprites/minesweeper/mine-naval-3d-128.png",
+  flag: "/assets/sprites/minesweeper/flag-beacon-3d-128.png",
+  radar: "/assets/sprites/minesweeper/radar-sweep-3d-128.png",
+  trophy: "/assets/sprites/minesweeper/trophy-minesweeper-3d-128.png",
+} as const;
+
+export const SOLITAIRE_UI_SPRITES = {
+  ace: "/assets/sprites/solitaire/card-ace-spade-3d-128.png",
+  hint: "/assets/sprites/solitaire/bulb-hint-3d-128.png",
+  crown: "/assets/sprites/solitaire/crown-foundation-3d-128.png",
+  trophy: "/assets/sprites/solitaire/trophy-solitaire-3d-128.png",
+} as const;
+
+export const SUDOKU_UI_SPRITES = {
+  cube: "/assets/sprites/sudoku/cube-number-3d-128.png",
+  quill: "/assets/sprites/sudoku/quill-note-3d-128.png",
+  timer: "/assets/sprites/sudoku/chrono-timer-3d-128.png",
+  trophy: "/assets/sprites/sudoku/trophy-sudoku-3d-128.png",
+} as const;
+
+export const GOMOKU_UI_SPRITES = {
+  black: "/assets/sprites/gomoku/stone-obsidian-3d-128.png",
+  white: "/assets/sprites/gomoku/stone-jade-3d-128.png",
+  goban: "/assets/sprites/gomoku/board-goban-3d-128.png",
+  trophy: "/assets/sprites/gomoku/trophy-gomoku-3d-128.png",
+} as const;
+
+export const COSMIC_MERGE_UI_SPRITES = {
+  planet: "/assets/sprites/cosmic-merge/planet-saturn-3d-128.png",
+  supernova: "/assets/sprites/cosmic-merge/core-supernova-3d-128.png",
+  vortex: "/assets/sprites/cosmic-merge/vortex-blackhole-3d-128.png",
+  trophy: "/assets/sprites/cosmic-merge/trophy-cosmic-3d-128.png",
+} as const;
+
+export const SNAKE_GAME_UI_SPRITES = {
+  viper: "/assets/sprites/snake-game/viper-emerald-3d-128.png",
+  apple: "/assets/sprites/snake-game/apple-magnet-3d-128.png",
+  augment: "/assets/sprites/snake-game/core-augment-3d-128.png",
+  trophy: "/assets/sprites/snake-game/trophy-snake-3d-128.png",
+} as const;
+
+export const ORBITAL_DEFENSE_UI_SPRITES = {
+  cannon: "/assets/sprites/orbital-defense-3d/satellite-cannon-3d-128.png",
+  shield: "/assets/sprites/orbital-defense-3d/shield-aegis-3d-128.png",
+  meteor: "/assets/sprites/orbital-defense-3d/meteor-hazard-3d-128.png",
+  trophy: "/assets/sprites/orbital-defense-3d/trophy-orbital-3d-128.png",
+} as const;
+
+export const PAPER_FLIGHT_UI_SPRITES = {
+  glider: "/assets/sprites/paper-flight-3d/glider-origami-3d-128.png",
+  ring: "/assets/sprites/paper-flight-3d/ring-thermal-3d-128.png",
+  boost: "/assets/sprites/paper-flight-3d/star-boost-3d-128.png",
+  trophy: "/assets/sprites/paper-flight-3d/trophy-centurion-3d-128.png",
+} as const;
+
+export const REVERSE_DUNGEON_UI_SPRITES = {
+  crown: "/assets/sprites/reverse-dungeon/crown-overlord-3d-128.png",
+  trap: "/assets/sprites/reverse-dungeon/trap-spike-3d-128.png",
+  sigil: "/assets/sprites/reverse-dungeon/sigil-minion-3d-128.png",
+  trophy: "/assets/sprites/reverse-dungeon/trophy-overlord-3d-128.png",
+} as const;
+

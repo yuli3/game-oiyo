@@ -4,7 +4,7 @@ import { Camera, Check, Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-re
 import { GameContainer, PlayingCard } from '../ui/game/GamePrimitives';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
-import { getSpriteUrl } from '../../lib/games/sprites';
+import { SOLITAIRE_UI_SPRITES } from '../../lib/games/sprites';
 import {
   copyShareCardToClipboard,
   createShareCardCanvas,
@@ -498,7 +498,7 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
       // Card burst over the table and win fanfare
       try {
-        celebrate(containerRef.current, { preset: "cards", colors: ["#f8fafc", "#dc2626", "#1e293b"], origin: { x: 0.5, y: 0.45 } });
+        celebrate(containerRef.current, { preset: "stardust", colors: ["#f8fafc", "#dc2626", "#1e293b"], origin: { x: 0.5, y: 0.45 } });
       } catch {}
       if (!mutedRef.current) {
         audioRef.current?.playWinFanfare();
@@ -584,7 +584,8 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             <TiltCardButton type="button" onClick={() => setDrawMode((prev) => (prev === 1 ? 3 : 1))}
               className="min-h-11 rounded-lg border border-border px-3 py-2 text-xs font-bold text-muted-foreground transition-colors hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               title={drawMode === 1 ? '1장 뽑기 (Turn 1)' : '3장 뽑기 (Turn 3)'}>
-              <span>🎴 {drawMode === 1 ? '1장 뽑기' : '3장 뽑기'}</span>
+              <img src={SOLITAIRE_UI_SPRITES.ace} alt="" className="size-4 object-contain" />
+              <span>{drawMode === 1 ? '1장 뽑기' : '3장 뽑기'}</span>
             </TiltCardButton>
             <TiltCardButton type="button" onClick={undo} disabled={undoStack.length === 0 || won}
               className="min-h-11 rounded-lg border border-border px-3 py-2 text-xs font-bold text-muted-foreground transition-colors hover:bg-muted disabled:opacity-40 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
@@ -592,14 +593,16 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
               ↩︎ {t.undo}
             </TiltCardButton>
             <TiltCardButton type="button" onClick={requestHint} disabled={won}
-              className="min-h-11 rounded-lg border border-border px-3 py-2 text-xs font-bold text-muted-foreground transition-colors hover:bg-muted disabled:opacity-40 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              className="min-h-11 rounded-lg border border-border px-3 py-2 text-xs font-bold text-muted-foreground transition-colors hover:bg-muted disabled:opacity-40 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 flex items-center gap-1.5"
               title="힌트 (H)">
-              💡 힌트
+              <img src={SOLITAIRE_UI_SPRITES.hint} alt="" className="size-4 object-contain" />
+              <span>힌트</span>
             </TiltCardButton>
             <TiltCardButton type="button" onClick={autoFinish} disabled={won}
-              className="min-h-11 rounded-lg border border-primary/40 bg-primary/5 px-3 py-2 text-xs font-bold text-primary transition-colors hover:bg-primary/10 disabled:opacity-40 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              className="min-h-11 rounded-lg border border-primary/40 bg-primary/5 px-3 py-2 text-xs font-bold text-primary transition-colors hover:bg-primary/10 disabled:opacity-40 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 flex items-center gap-1.5"
               title="파운데이션 자동 수납">
-              ⚡ 자동 수납
+              <img src={SOLITAIRE_UI_SPRITES.crown} alt="" className="size-4 object-contain" />
+              <span>자동 수납</span>
             </TiltCardButton>
             <button type="button" onClick={() => setMuted((m) => !m)} aria-pressed={muted}
               className="min-h-11 rounded-lg border border-border px-3 py-2 text-xs font-bold text-muted-foreground transition-colors hover:bg-muted flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
@@ -693,7 +696,7 @@ const Solitaire: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
           <div className="absolute inset-0 z-30 flex flex-col items-center justify-center rounded-4xl bg-background/90 p-6 text-center backdrop-blur-xl motion-reduce:animate-none" role="status" aria-live="polite">
             <div className="relative mb-4 flex size-24 items-center justify-center">
               <img
-                src={getSpriteUrl('trophy', 128)}
+                src={SOLITAIRE_UI_SPRITES.trophy}
                 alt="Victory Trophy"
                 className="size-24 object-contain drop-shadow-xl animate-bounce"
                 loading="lazy"

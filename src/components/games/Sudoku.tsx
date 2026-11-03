@@ -26,7 +26,7 @@ import {
   type SudokuMode,
 } from "../../lib/games/sudoku-save";
 import { elapsedSeconds } from "../../lib/games/time-contracts";
-import { PUZZLE15_SPRITES, SUDOKU_SPRITES } from "../../lib/games/sprites";
+import { PUZZLE15_SPRITES, SUDOKU_SPRITES, SUDOKU_UI_SPRITES } from "../../lib/games/sprites";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import {
   CORE_CUES,
@@ -549,7 +549,7 @@ const Sudoku: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
       hapticsRef.current.fire("win");
       getGlobalBgmController().duck(0.1, 1000);
       if (containerRef.current)
-        celebrate(containerRef.current, { preset: "sparks" });
+        celebrate(containerRef.current, { preset: "stardust" });
 
       const finalSeconds = Math.max(1, seconds);
       const previousBest = bestTime;
@@ -784,8 +784,19 @@ const Sudoku: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
             </button>
           ))}
           {seedCode && (
-            <span className="inline-flex min-h-11 items-center rounded-xl border border-border bg-muted/40 px-3 font-mono text-xs font-bold text-muted-foreground">
-              SEED #{seedCode}
+            <span className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-border bg-muted/40 px-3 font-mono text-xs font-bold text-muted-foreground">
+              <img src={SUDOKU_UI_SPRITES.cube} alt="" className="size-4 object-contain" />
+              <span>SEED #{seedCode}</span>
+            </span>
+          )}
+          <span className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-border bg-muted/40 px-3 font-mono text-xs font-bold text-foreground">
+            <img src={SUDOKU_UI_SPRITES.timer} alt="" className="size-4 object-contain" />
+            <span>{fmt(seconds)}</span>
+          </span>
+          {bestTime !== null && (
+            <span className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 px-3 font-mono text-xs font-bold text-primary">
+              <img src={SUDOKU_UI_SPRITES.trophy} alt="" className="size-4 object-contain" />
+              <span>{fmt(bestTime)}</span>
             </span>
           )}
         </div>
@@ -907,7 +918,7 @@ const Sudoku: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
                 : "border-border bg-muted/50 text-muted-foreground hover:bg-muted"
             }`}
           >
-            <span>✏️</span>
+            <img src={SUDOKU_UI_SPRITES.quill} alt="" className="size-4 object-contain" />
             <span>{t.memo}</span>
           </button>
           <button

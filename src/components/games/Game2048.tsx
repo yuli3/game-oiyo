@@ -46,7 +46,7 @@ import {
 } from "../../lib/games/game-audio";
 import { createHaptics } from "../../lib/games/haptics";
 import { celebrate } from "../../lib/games/celebration";
-import { GAME_2048_SPRITES } from "../../lib/games/sprites";
+import { GAME_2048_SPRITES, GAME_2048_UI_SPRITES } from "../../lib/games/sprites";
 import { getGlobalBgmController } from "../../lib/games/bgm";
 import {
   buildChallengeUrl,
@@ -440,7 +440,7 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
         hapticsRef.current.fire("win");
         MobileHapticsPro.successPattern();
         if (containerRef.current)
-          celebrate(containerRef.current, { preset: "sparks" });
+          celebrate(containerRef.current, { preset: "stardust" });
       } else if (game.status === "over") {
         cue("fail");
         hapticsRef.current.fire("fail");
@@ -666,13 +666,14 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
               setGameMode("classic");
               initGame();
             }}
-            className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all ${
+            className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all inline-flex items-center gap-1.5 ${
               gameMode === "classic"
                 ? "bg-primary text-primary-foreground shadow-xs"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            클래식
+            <img src={GAME_2048_UI_SPRITES.cube} alt="" className="size-4 object-contain" />
+            <span>클래식</span>
           </button>
           <button
             type="button"
@@ -681,13 +682,13 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
               setBlitzTimeLeft(BLITZ_DURATION_SEC);
               initGame();
             }}
-            className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all flex items-center gap-1 ${
+            className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all flex items-center gap-1.5 ${
               gameMode === "blitz"
                 ? "bg-warning text-warning-foreground shadow-xs"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <span>⚡</span>
+            <img src={GAME_2048_UI_SPRITES.trophy} alt="" className="size-4 object-contain" />
             <span>60초 블리츠</span>
           </button>
         </div>
@@ -714,7 +715,7 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
           className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card/60 px-3 py-1.5 text-xs font-bold text-foreground transition-all hover:bg-muted active:scale-95 disabled:pointer-events-none disabled:opacity-40"
           ariaLabel={t.undo}
         >
-          <span aria-hidden="true">⤺</span>
+          <img src={GAME_2048_UI_SPRITES.undo} alt="" className="size-4 object-contain" />
           <span>{t.undo}</span>
           {(game.history?.length ?? 0) > 0 && (
             <span className="rounded-full bg-primary/20 px-1.5 text-primary text-xs font-black">
@@ -724,6 +725,7 @@ const Game2048: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
         </Tilt2048Button>
 
         <div className="flex items-center gap-1 rounded-xl border border-border bg-card/60 p-1">
+          <img src={GAME_2048_UI_SPRITES.theme} alt="" className="ml-1 size-4 object-contain" />
           {(["classic", "neon", "pastel"] as const).map((th) => (
             <button
               key={th}

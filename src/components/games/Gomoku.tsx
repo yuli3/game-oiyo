@@ -13,7 +13,7 @@ import {
     storeGomokuSaveV2,
 } from '../../lib/games/gomoku-save';
 import { createGomokuBoard, getGomokuWinningIndices, GOMOKU_SIZE, placeGomokuStone, type GomokuCell, type GomokuPlayer } from '../../lib/games/gomoku';
-import { GOMOKU_SPRITES } from '../../lib/games/sprites';
+import { GOMOKU_SPRITES, GOMOKU_UI_SPRITES } from '../../lib/games/sprites';
 import { playFanfare, type TonePlayer } from '../../lib/games/game-audio';
 import { copyShareCardToClipboard, createShareCardCanvas, downloadShareCard } from '../../lib/games/share-card';
 import { getDailyTsumego, evaluateTsumegoMove, type TsumegoPuzzle } from '../../lib/games/gomoku-tsumego';
@@ -275,7 +275,7 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
         if (result === 1 || (mode === 'local' && result !== 0)) {
             MobileHapticsPro.success();
             if (containerRef.current) {
-                celebrate(containerRef.current, { preset: 'sparks' });
+                celebrate(containerRef.current, { preset: 'stardust' });
             }
         } else if (result === AI_PLAYER) {
             MobileHapticsPro.heavy();
@@ -476,9 +476,12 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
             <div className={`not-prose ${isImmersive ? 'my-0 w-full max-w-2xl' : 'my-12 max-w-lg'} p-4 sm:p-8 bg-card border border-border rounded-4xl shadow-sm mx-auto`}>
                 <div className="flex justify-between items-center mb-3">
                     <div>
-                        <h3 className="text-xl font-black text-foreground">{t.title}</h3>
+                        <h3 className="text-xl font-black text-foreground flex items-center gap-2">
+                            <img src={GOMOKU_UI_SPRITES.goban} alt="" className="size-6 object-contain" />
+                            <span>{t.title}</span>
+                        </h3>
                         <div className="flex items-center gap-2 mt-1" aria-live="polite">
-                            <div className={`w-3 h-3 rounded-full ${isBlackTurn ? 'bg-foreground' : 'bg-muted border border-border'}`} />
+                            <img src={isBlackTurn ? GOMOKU_UI_SPRITES.black : GOMOKU_UI_SPRITES.white} alt="" className="size-4 object-contain" />
                             <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
                                 {thinking ? t.thinking : `${isBlackTurn ? t.black : t.white} ${t.turn}`}
                             </span>
@@ -667,7 +670,8 @@ const Gomoku: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
 
                 {winner !== null && (
                     <div className="absolute inset-0 z-10 bg-background/60 backdrop-blur-sm flex flex-col items-center justify-center animate-in fade-in zoom-in-95 motion-reduce:animate-none" role="status" aria-live="assertive">
-                        <div className="bg-card p-6 sm:p-8 rounded-3xl shadow-xl border border-border text-center max-w-sm w-full mx-4">
+                        <div className="bg-card p-6 sm:p-8 rounded-3xl shadow-xl border border-border text-center max-w-sm w-full mx-4 flex flex-col items-center">
+                            <img src={GOMOKU_UI_SPRITES.trophy} alt="" className="size-16 object-contain mb-2 drop-shadow-md" />
                             <h4 className="text-3xl font-black text-foreground mb-2">{winLabel}</h4>
                             <p className="text-muted-foreground mb-2 uppercase tracking-widest font-bold text-xs">{t.over}</p>
                             <p className="text-sm text-muted-foreground mb-1">{moveCount} {x.moves}</p>
