@@ -23,7 +23,7 @@ import {
 import { OrbitalDefense3DScene } from './OrbitalDefense3DScene';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
-import { getSpriteUrl } from '../../lib/games/sprites';
+import { ORBITAL_DEFENSE_UI_SPRITES, getSpriteUrl } from '../../lib/games/sprites';
 
 function TiltDefenseButton({
   children,
@@ -287,13 +287,16 @@ export default function OrbitalDefense3D({ locale = 'ko' }: Props) {
       {/* HUD Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
         <div>
-          <h2 className="text-xl font-bold text-foreground">{t.title}</h2>
+          <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+            <img src={ORBITAL_DEFENSE_UI_SPRITES.cannon} alt="" className="size-6 object-contain" />
+            <span>{t.title}</span>
+          </h2>
           <p className="text-xs text-muted-foreground">{t.subtitle}</p>
         </div>
 
         <div className="flex items-center gap-2 sm:gap-4 text-xs font-semibold">
           <div className="flex items-center gap-1.5 rounded-lg bg-muted/40 px-3 py-1.5">
-            <span className="text-chart-1">♥</span>
+            <img src={ORBITAL_DEFENSE_UI_SPRITES.shield} alt="" className="size-4 object-contain" />
             <span className="text-muted-foreground">{t.planetHealth}:</span>
             <span className="font-bold text-foreground">{gameState.planetHealth}/{gameState.maxPlanetHealth}</span>
           </div>
@@ -308,6 +311,7 @@ export default function OrbitalDefense3D({ locale = 'ko' }: Props) {
             <span className="font-bold text-foreground">{gameState.score}</span>
           </div>
           <div className="flex items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-1.5 text-primary">
+            <img src={ORBITAL_DEFENSE_UI_SPRITES.meteor} alt="" className="size-4 object-contain" />
             <span>{t.wave} {gameState.wave}</span>
           </div>
 
@@ -350,7 +354,7 @@ export default function OrbitalDefense3D({ locale = 'ko' }: Props) {
         {gameState.isGameOver ? (
           <div className="flex flex-col items-center justify-center gap-3 py-4 text-center">
             <img
-              src={getSpriteUrl("trophy", 64)}
+              src={ORBITAL_DEFENSE_UI_SPRITES.trophy}
               alt="Orbital Defense Record"
               width={64}
               height={64}

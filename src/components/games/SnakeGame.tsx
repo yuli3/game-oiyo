@@ -32,7 +32,7 @@ import type { Locale } from '../../lib/i18n';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { celebrate } from '../../lib/games/celebration';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
-import { getSpriteUrl, SNAKE_GAME_SPRITES } from '../../lib/games/sprites';
+import { SNAKE_GAME_SPRITES, SNAKE_GAME_UI_SPRITES } from '../../lib/games/sprites';
 import {
     bufferSnakeDirection,
     createSnakeGame,
@@ -593,7 +593,7 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             recordAchievementEvent('snake-game', 'personal-best');
             setBest(recordBest('snake-game', score, 'score', undefined, { trackPlay: false }).value);
             if (score > 10 && containerRef.current) {
-                celebrate(containerRef.current, { preset: 'sparks' });
+                celebrate(containerRef.current, { preset: 'stardust' });
             }
         }
     }, [score, best, containerRef]);
@@ -805,27 +805,33 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             shareCardCopied={shareCardCopied}
             controlsHint={t.hint}
             extraHeaderActions={
-                activeAugments.length > 0 ? (
-                    <div className="flex items-center gap-1 overflow-x-auto max-w-44 sm:max-w-xs py-1">
-                        {activeAugments.map((augId, i) => {
-                            const item = AUGMENTS_CATALOG.find((a) => a.id === augId);
-                            if (!item) return null;
-                            return (
-                                <span
-                                    key={`${augId}-${i}`}
-                                    title={item.name[loc] ?? item.name.en}
-                                    className="px-2 py-1 rounded-lg border border-border bg-muted/60 text-xs font-bold flex items-center gap-1 shrink-0"
-                                >
-                                    <span>{item.icon}</span>
-                                    <span className="hidden sm:inline">{item.name[loc] ?? item.name.en}</span>
-                                    {augId === 'ghost' && ghostCharges > 0 && (
-                                        <span className="font-mono text-primary font-black">x{ghostCharges}</span>
-                                    )}
-                                </span>
-                            );
-                        })}
-                    </div>
-                ) : null
+                <div className="flex items-center gap-1.5 overflow-x-auto max-w-52 sm:max-w-xs py-1">
+                    <span className="px-2 py-1 rounded-lg border border-border bg-muted/60 text-xs font-bold flex items-center gap-1 shrink-0">
+                        <img src={SNAKE_GAME_UI_SPRITES.viper} alt="" className="size-4 object-contain" />
+                        <span>{d.length}: {length}</span>
+                    </span>
+                    <span className="px-2 py-1 rounded-lg border border-border bg-muted/60 text-xs font-bold flex items-center gap-1 shrink-0">
+                        <img src={SNAKE_GAME_UI_SPRITES.trophy} alt="" className="size-4 object-contain" />
+                        <span>{best}</span>
+                    </span>
+                    {activeAugments.map((augId, i) => {
+                        const item = AUGMENTS_CATALOG.find((a) => a.id === augId);
+                        if (!item) return null;
+                        return (
+                            <span
+                                key={`${augId}-${i}`}
+                                title={item.name[loc] ?? item.name.en}
+                                className="px-2 py-1 rounded-lg border border-border bg-muted/60 text-xs font-bold flex items-center gap-1 shrink-0"
+                            >
+                                <img src={SNAKE_GAME_UI_SPRITES.apple} alt="" className="size-3.5 object-contain" />
+                                <span className="hidden sm:inline">{item.name[loc] ?? item.name.en}</span>
+                                {augId === 'ghost' && ghostCharges > 0 && (
+                                    <span className="font-mono text-primary font-black">x{ghostCharges}</span>
+                                )}
+                            </span>
+                        );
+                    })}
+                </div>
             }
         >
             <div className="relative w-full h-full flex flex-col items-center justify-center bg-background overflow-hidden p-2 sm:p-4">
@@ -858,7 +864,7 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         <div className="absolute inset-0 z-40 bg-background/90 backdrop-blur-md flex flex-col items-center justify-center p-4 text-center animate-in fade-in duration-200 pointer-events-auto">
                             <div className="max-w-md w-full space-y-3">
                                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/40 bg-primary/10 text-primary text-xs font-black">
-                                    <span>⚡</span>
+                                    <img src={SNAKE_GAME_UI_SPRITES.augment} alt="" className="size-4 object-contain" />
                                     <span>{d.draftTitle}</span>
                                 </div>
                                 <h3 className="text-xl font-black text-foreground tracking-tight">

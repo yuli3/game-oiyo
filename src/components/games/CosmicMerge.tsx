@@ -11,7 +11,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import Matter from "matter-js";
 import { celebrate } from "../../lib/games/celebration";
-import { COSMIC_MERGE_SPRITES } from "../../lib/games/sprites";
+import { COSMIC_MERGE_SPRITES, COSMIC_MERGE_UI_SPRITES } from "../../lib/games/sprites";
 import type { Locale } from "../../lib/i18n";
 import {
   ARENA_HEIGHT,
@@ -1402,7 +1402,7 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
             disabled={blackHoleUsed || phase !== "play" || isGameOver}
             onClick={handleBlackHoleCleanse}
             title={blackHoleUsed ? t.blackHoleUsed : t.blackHole}
-            className={`min-h-11 px-2.5 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1 transition-all ${
+            className={`min-h-11 px-2.5 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition-all ${
               blackHoleUsed
                 ? "border-border/40 bg-muted/30 text-muted-foreground/60 cursor-not-allowed"
                 : isDanger
@@ -1410,12 +1410,13 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
                   : "border-border bg-background/85 hover:bg-muted text-foreground"
             }`}
           >
-            <span>🕳️</span>
+            <img src={COSMIC_MERGE_UI_SPRITES.vortex} alt="" className="size-4 object-contain" />
             <span className="hidden sm:inline">{blackHoleUsed ? t.blackHoleUsed : t.blackHole}</span>
           </TiltCosmicButton>
 
           {/* Next Planet Pill */}
           <div className="px-2.5 py-1.5 rounded-xl border border-border/80 bg-background/85 backdrop-blur-md shadow-xs flex items-center gap-1.5">
+            <img src={COSMIC_MERGE_UI_SPRITES.planet} alt="" className="size-4 object-contain shrink-0" />
             <div>
               <span className="text-xs uppercase tracking-wider text-muted-foreground block">{t.next}</span>
               <span className="text-xs font-bold text-foreground truncate max-w-24 block">
@@ -1429,20 +1430,21 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
 
           {/* Vortex Gauge / Trigger Button (Pillar 2 Chaos Modifier) */}
           {isVortexActive ? (
-            <div className="animate-bounce px-2.5 py-1.5 rounded-xl border border-chart-2 bg-chart-2/20 text-chart-2 font-black text-xs">
-              🌀 {t.vortexActive}
+            <div className="animate-bounce px-2.5 py-1.5 rounded-xl border border-chart-2 bg-chart-2/20 text-chart-2 font-black text-xs inline-flex items-center gap-1.5">
+              <img src={COSMIC_MERGE_UI_SPRITES.supernova} alt="" className="size-4 object-contain" />
+              <span>{t.vortexActive}</span>
             </div>
           ) : vortexEnergy >= VORTEX_MAX_ENERGY ? (
             <TiltCosmicButton
               onClick={activateVortex}
-              className="animate-pulse ring-4 ring-primary min-h-11 px-3 py-2 rounded-xl border border-primary bg-primary text-primary-foreground font-black text-xs shadow-lg shadow-primary/30 hover:bg-primary/90 flex items-center gap-1"
+              className="animate-pulse ring-4 ring-primary min-h-11 px-3 py-2 rounded-xl border border-primary bg-primary text-primary-foreground font-black text-xs shadow-lg shadow-primary/30 hover:bg-primary/90 flex items-center gap-1.5"
             >
-              <span>🌀</span>
+              <img src={COSMIC_MERGE_UI_SPRITES.supernova} alt="" className="size-4 object-contain" />
               <span>{t.vortexReady}</span>
             </TiltCosmicButton>
           ) : (
-            <div className="px-2.5 py-1.5 rounded-xl border border-border bg-background/85 backdrop-blur-md text-xs font-mono font-bold text-muted-foreground flex items-center gap-1">
-              <span>🌀</span>
+            <div className="px-2.5 py-1.5 rounded-xl border border-border bg-background/85 backdrop-blur-md text-xs font-mono font-bold text-muted-foreground flex items-center gap-1.5">
+              <img src={COSMIC_MERGE_UI_SPRITES.supernova} alt="" className="size-4 object-contain" />
               <span>{vortexEnergy}%</span>
             </div>
           )}
@@ -1453,9 +1455,9 @@ export const CosmicMerge: React.FC<Props> = ({ locale = "en" }) => {
             aria-pressed={showCodex}
             aria-label={t.codex}
             title={t.codex}
-            className="min-h-11 px-3 py-2 rounded-xl border border-border bg-muted/60 hover:bg-muted text-foreground text-xs font-bold flex items-center gap-1 transition-colors"
+            className="min-h-11 px-3 py-2 rounded-xl border border-border bg-muted/60 hover:bg-muted text-foreground text-xs font-bold flex items-center gap-1.5 transition-colors"
           >
-            <span>📖</span>
+            <img src={COSMIC_MERGE_UI_SPRITES.trophy} alt="" className="size-4 object-contain" />
             <span className="hidden sm:inline">{t.codex}</span>
           </TiltCosmicButton>
         </div>

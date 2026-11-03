@@ -31,7 +31,7 @@ import {
   downloadShareCard,
 } from '../../lib/games/share-card';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
-import { getSpriteUrl } from '../../lib/games/sprites';
+import { PAPER_FLIGHT_UI_SPRITES } from '../../lib/games/sprites';
 
 function TiltFlightButton({
   children,
@@ -304,7 +304,7 @@ export default function PaperFlight3D() {
         if ((engine.status as string) === 'cleared' && !clearedCelebratedRef.current) {
           clearedCelebratedRef.current = true;
           MobileHapticsPro.heavyImpact();
-          celebrate(containerRef.current, { preset: 'sparks' });
+          celebrate(containerRef.current, { preset: 'stardust' });
         }
       }
 
@@ -425,14 +425,17 @@ export default function PaperFlight3D() {
         <div className="flex items-center gap-2 pointer-events-auto">
           <div className="px-3 py-1.5 rounded-xl bg-card/90 border border-border flex items-center gap-3 text-xs font-medium text-foreground">
             <div className="flex items-center gap-1.5">
+              <img src={PAPER_FLIGHT_UI_SPRITES.ring} alt="" className="size-4 object-contain" />
               <span>링</span>
               <span className="font-bold text-warning">{rings}</span>
             </div>
             <div className="flex items-center gap-1.5">
+              <img src={PAPER_FLIGHT_UI_SPRITES.glider} alt="" className="size-4 object-contain" />
               <span>학</span>
               <span className="font-bold text-chart-3">{cranes}</span>
             </div>
             <div className="flex items-center gap-1.5">
+              <img src={PAPER_FLIGHT_UI_SPRITES.boost} alt="" className="size-4 object-contain" />
               <span>점수</span>
               <span className="font-bold text-primary">{score}</span>
             </div>
@@ -577,7 +580,7 @@ export default function PaperFlight3D() {
           <div className="max-w-md w-full p-6 rounded-2xl bg-card border border-border shadow-2xl flex flex-col items-center text-center gap-4">
             <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
               <img
-                src={getSpriteUrl('star', 64)}
+                src={PAPER_FLIGHT_UI_SPRITES.glider}
                 alt="Paper Flight Launch"
                 width={64}
                 height={64}
@@ -617,7 +620,7 @@ export default function PaperFlight3D() {
             <div className="w-full p-6 rounded-2xl bg-card border border-border shadow-2xl flex flex-col items-center text-center gap-5">
               <div className="w-16 h-16 rounded-2xl bg-warning/10 border border-warning/20 flex items-center justify-center">
                 <img
-                  src={getSpriteUrl(status === 'cleared' ? 'trophy' : 'star', 64)}
+                  src={status === 'cleared' ? PAPER_FLIGHT_UI_SPRITES.trophy : PAPER_FLIGHT_UI_SPRITES.boost}
                   alt="Flight Result Trophy"
                   width={64}
                   height={64}

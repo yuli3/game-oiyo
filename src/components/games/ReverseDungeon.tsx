@@ -28,7 +28,7 @@ import {
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
-import { getSpriteUrl } from "../../lib/games/sprites";
+import { REVERSE_DUNGEON_UI_SPRITES } from "../../lib/games/sprites";
 import ReverseDungeonScene, { type DungeonSpin } from "./ReverseDungeonScene";
 
 function TiltDungeonButton({
@@ -523,7 +523,7 @@ export default function ReverseDungeon({ locale = "en" }: { locale?: Locale }) {
       player.tick("win");
       MobileHapticsPro.success();
       if (containerRef.current) {
-        celebrate(containerRef.current, { preset: "tiles" });
+        celebrate(containerRef.current, { preset: "stardust" });
       }
     }
     if (next.status === "lose") {
@@ -718,20 +718,26 @@ export default function ReverseDungeon({ locale = "en" }: { locale?: Locale }) {
         </div>
       </header>
       <div className="grid grid-cols-3 gap-2 text-center text-sm">
-        <div className="rounded-xl bg-muted p-2">
-          <b>{copy.steps}</b>
-          <br />
+        <div className="rounded-xl bg-muted p-2 flex flex-col items-center">
+          <div className="inline-flex items-center gap-1.5">
+            <img src={REVERSE_DUNGEON_UI_SPRITES.trap} alt="" className="size-4 object-contain" />
+            <b>{copy.steps}</b>
+          </div>
           <span className="tabular-nums">{state.steps}/{STEP_CAP}</span>
         </div>
-        <div className="rounded-xl bg-muted p-2">
-          <b>{copy.seed}</b>
-          <br />
+        <div className="rounded-xl bg-muted p-2 flex flex-col items-center">
+          <div className="inline-flex items-center gap-1.5">
+            <img src={REVERSE_DUNGEON_UI_SPRITES.crown} alt="" className="size-4 object-contain" />
+            <b>{copy.seed}</b>
+          </div>
           <span className="tabular-nums">{seed}</span>
         </div>
-        <div className="rounded-xl bg-muted p-2">
-          <b>{copy.layers}</b>
-          <br />
-          {layerLabel}
+        <div className="rounded-xl bg-muted p-2 flex flex-col items-center">
+          <div className="inline-flex items-center gap-1.5">
+            <img src={REVERSE_DUNGEON_UI_SPRITES.sigil} alt="" className="size-4 object-contain" />
+            <b>{copy.layers}</b>
+          </div>
+          <span>{layerLabel}</span>
         </div>
       </div>
       <p role="status" aria-live="polite" className="text-sm text-foreground">{live}</p>
@@ -740,7 +746,7 @@ export default function ReverseDungeon({ locale = "en" }: { locale?: Locale }) {
           <div className="flex items-center gap-3">
             <div className="flex size-12 items-center justify-center rounded-xl bg-primary/20 p-1.5 shrink-0">
               <img
-                src={getSpriteUrl(state.status === "win" ? "trophy" : "star", 64)}
+                src={state.status === "win" ? REVERSE_DUNGEON_UI_SPRITES.trophy : REVERSE_DUNGEON_UI_SPRITES.trap}
                 alt="Dungeon Result"
                 className="size-8 object-contain"
                 draggable={false}
