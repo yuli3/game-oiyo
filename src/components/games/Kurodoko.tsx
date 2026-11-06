@@ -33,7 +33,7 @@ import {
     type KurodokoMark as Mark,
     type KurodokoMode as Mode,
 } from '../../lib/games/kurodoko-save';
-import { LOGIC_CELL_SPRITES } from '../../lib/games/sprites';
+import { LOGIC_CELL_SPRITES, KURODOKO_UI_SPRITES } from '../../lib/games/sprites';
 
 function TiltKurodokoButton({
     children,
@@ -506,6 +506,9 @@ const Kurodoko: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             <div className="mt-4 min-h-8 text-center" role="status" aria-live="polite">
                 {validation.complete ? (
                     <div className="rounded-xl border border-primary/30 bg-primary/10 px-4 py-3">
+                        <div className="flex justify-center mb-2">
+                            <img src={KURODOKO_UI_SPRITES.trophy} alt="Victory Trophy" className="size-16 object-contain animate-bounce drop-shadow" />
+                        </div>
                         <p className="text-lg font-black text-primary">🎉 {t.win}</p>
                         <p className="mt-1 text-xs font-bold text-muted-foreground">{t.moves} {moves} · {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')} · {mode === 'daily' ? t.daily : t[difficulty]}</p>
                         <div className="mt-3 flex flex-wrap justify-center gap-2">

@@ -6,6 +6,7 @@ import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { celebrate } from "../../lib/games/celebration";
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "../../lib/games/share-card";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { KOREAN_SEMANTLE_UI_SPRITES } from "../../lib/games/sprites";
 import {
   dailySecretIndex,
   minutesUntilNextKstMidnight,
@@ -576,6 +577,11 @@ const KoreanSemantle: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
     >
       <div className="w-full max-w-lg mx-auto flex flex-col items-center gap-5">
         {renderHud()}
+        <div className="flex items-center gap-3 justify-center mb-1">
+          <img src={KOREAN_SEMANTLE_UI_SPRITES.cube} alt="Korean Cube" className="size-14 object-contain drop-shadow" />
+          <img src={KOREAN_SEMANTLE_UI_SPRITES.lens} alt="Semantic Lens" className="size-14 object-contain drop-shadow" />
+          <img src={KOREAN_SEMANTLE_UI_SPRITES.meter} alt="Temp Meter" className="size-14 object-contain drop-shadow" />
+        </div>
         <img src="/games/korean-semantle-social.png" alt="" className="h-36 w-full rounded-3xl object-cover shadow-xs sm:h-44" />
         <div className="w-full text-center border-b border-border pb-4">
           <div className="flex items-center justify-center gap-2">
@@ -654,6 +660,9 @@ const KoreanSemantle: React.FC<{ locale?: UILocale }> = ({ locale = "ko" }) => {
         {/* End state */}
         {over && (
           <div className="flex flex-col items-center gap-3 pt-2">
+            {status === "won" && (
+              <img src={KOREAN_SEMANTLE_UI_SPRITES.trophy} alt="Trophy" className="size-16 object-contain animate-bounce drop-shadow" />
+            )}
             <p className="text-base font-black text-foreground">
               {status === "won" ? t.won(guesses.length) : t.revealed(table?.meta.secret ?? "")}
             </p>

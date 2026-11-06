@@ -4,7 +4,7 @@ import { hasWebGL } from "../../lib/games/webgl";
 import type { Locale } from "../../lib/i18n";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
-import { getSpriteUrl } from "../../lib/games/sprites";
+import { getSpriteUrl, MALLOW_ISLE_UI_SPRITES } from "../../lib/games/sprites";
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "../../lib/games/share-card";
 import type { MallowSceneCopy } from "./MallowIsleScene";
 
@@ -330,6 +330,11 @@ export default function MallowIsle({ locale }: { locale: Locale }) {
     <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-xl select-none">
       <div className="grid lg:grid-cols-[1.02fr_.98fr]">
         <div className="flex flex-col justify-center px-6 py-10 sm:px-10 sm:py-14 lg:px-14">
+          <div className="flex items-center gap-3 mb-3">
+            <img src={MALLOW_ISLE_UI_SPRITES.mallow} alt="Marshmallow" className="size-14 object-contain drop-shadow" />
+            <img src={MALLOW_ISLE_UI_SPRITES.mug} alt="Cocoa Mug" className="size-14 object-contain drop-shadow" />
+            <img src={MALLOW_ISLE_UI_SPRITES.fire} alt="Campfire" className="size-14 object-contain drop-shadow" />
+          </div>
           <p className="text-xs font-black uppercase tracking-widest text-primary">{copy.eyebrow}</p>
           <h2 className="mt-4 max-w-xl font-serif text-5xl font-semibold tracking-tight text-foreground sm:text-6xl">
             {copy.title}
@@ -344,6 +349,7 @@ export default function MallowIsle({ locale }: { locale: Locale }) {
               <PawPrint className="size-4" aria-hidden="true" />
               <span>{copy.start}</span>
             </TiltMallowButton>
+            <img src={MALLOW_ISLE_UI_SPRITES.trophy} alt="Trophy" className="size-11 object-contain drop-shadow animate-bounce" />
             <p className="text-xs font-semibold text-muted-foreground">{copy.localOnly}</p>
           </div>
           {unsupported && (

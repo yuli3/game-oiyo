@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { evaluateAkari } from '../../lib/games/logic-puzzles';
 import { createLightUp, explainLightUpHint, hintLightUp, LIGHT_UP_SPEC, parseLightUp, serializeLightUp, toggleLightUp, undoLightUp, type LightUpHint, type LightUpState } from '../../lib/games/light-up';
-import { LIGHT_UP_SPRITES } from '../../lib/games/sprites';
+import { LIGHT_UP_SPRITES, LIGHT_UP_UI_SPRITES } from '../../lib/games/sprites';
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 import { Maximize2, Minimize2, Volume2, VolumeX, Share2, Check } from 'lucide-react';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
@@ -363,7 +363,9 @@ export default function LightUp({ locale = 'ko' }: { locale?: string }) {
      </div>
      {state.won && (
       <div className="rounded-3xl border border-primary/50 bg-card p-6 text-center text-card-foreground shadow-lg" role="status" aria-live="polite">
-       <div className="text-4xl">✨</div>
+       <div className="flex justify-center mb-2">
+         <img src={LIGHT_UP_UI_SPRITES.trophy} alt="Victory Trophy" className="size-16 object-contain animate-bounce drop-shadow" />
+       </div>
        <h3 className="mt-2 text-xl font-black">{t.win}</h3>
        <p className="mt-1 text-sm text-muted-foreground">{state.moves} {t.moves} · {state.hints} {t.hint}</p>
        <div className="mt-4 flex flex-wrap items-center justify-center gap-2">

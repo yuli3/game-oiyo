@@ -12,7 +12,7 @@ import {
   type HitoriState,
 } from '../../lib/games/hitori';
 import { validateHitori } from '../../lib/games/logic-puzzles';
-import { LOGIC_CELL_SPRITES } from '../../lib/games/sprites';
+import { LOGIC_CELL_SPRITES, HITORI_UI_SPRITES } from '../../lib/games/sprites';
 import { Camera, Check, Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
 import { celebrate } from '../../lib/games/celebration';
 import { copyShareCardToClipboard, createShareCardCanvas, downloadShareCard } from '../../lib/games/share-card';
@@ -397,7 +397,9 @@ export default function Hitori({ locale = 'ko' }: { locale?: string }) {
           {/* Victory Modal */}
           {state.won && (
             <div className="rounded-3xl border border-primary/30 bg-primary/10 p-6 text-center animate-in fade-in zoom-in-95" role="status" aria-live="polite">
-              <div className="text-3xl">🌿</div>
+              <div className="flex justify-center mb-2">
+                <img src={HITORI_UI_SPRITES.trophy} alt="Victory Trophy" className="size-16 object-contain animate-bounce drop-shadow" />
+              </div>
               <h3 className="mt-2 text-xl font-black text-foreground">{t.win}</h3>
               <p className="mt-1 text-sm text-muted-foreground">
                 {state.moves} {t.moves} · {state.hints} {t.hint}
