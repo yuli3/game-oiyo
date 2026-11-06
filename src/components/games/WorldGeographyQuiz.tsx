@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react'
 import { useArcadePortal } from '../../lib/games/arcade-portal'
+import { WORLD_GEOGRAPHY_QUIZ_UI_SPRITES } from '../../lib/games/sprites'
 
 const SOUND_STORAGE_KEY = 'world_geography_quiz_sound_muted'
 
@@ -280,7 +281,10 @@ export default function WorldGeographyQuiz({ locale }: Props) {
       >
         <div className="w-full max-w-lg mx-auto text-center space-y-6">
           {renderHud()}
-          <div className="text-5xl">🌍</div>
+          <div className="flex justify-center items-center gap-3">
+            <img src={WORLD_GEOGRAPHY_QUIZ_UI_SPRITES.globe} alt="3D Globe" className="w-16 h-16 object-contain drop-shadow-md" />
+            <img src={WORLD_GEOGRAPHY_QUIZ_UI_SPRITES.compass} alt="Flight Compass" className="w-14 h-14 object-contain drop-shadow-md" />
+          </div>
           <h2 className="text-2xl font-bold">{l.title}</h2>
           <p className="text-muted-foreground">{l.subtitle}</p>
           <p className="text-sm text-muted-foreground">10문제 · 무작위 출제</p>
@@ -303,7 +307,13 @@ export default function WorldGeographyQuiz({ locale }: Props) {
       >
         <div className="w-full max-w-lg mx-auto space-y-6 text-center">
           {renderHud()}
-          <div className="text-5xl">{score === 10 ? '🏆' : score >= 8 ? '🌟' : score >= 5 ? '📚' : '💪'}</div>
+          <div className="flex justify-center items-center gap-3">
+            <img
+              src={score >= 8 ? WORLD_GEOGRAPHY_QUIZ_UI_SPRITES.trophy : WORLD_GEOGRAPHY_QUIZ_UI_SPRITES.passport}
+              alt="Geography Trophy"
+              className="w-20 h-20 object-contain drop-shadow-lg animate-bounce"
+            />
+          </div>
           <div>
             <p className="text-sm text-muted-foreground mb-1">{l.score}</p>
             <p className="text-4xl font-black">{score} <span className="text-base font-normal text-muted-foreground">{l.outOf}</span></p>

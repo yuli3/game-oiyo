@@ -7,7 +7,7 @@ import { clearNumberGuessingSave, loadNumberGuessingSave, storeNumberGuessingSav
 import { celebrate } from '@/lib/games/celebration';
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from '@/lib/games/share-card';
 import { useCardTiltPro, MobileHapticsPro } from '@/lib/games/engine-suite-unified';
-import { getSpriteUrl } from '@/lib/games/sprites';
+import { getSpriteUrl, NUMBER_GUESSING_UI_SPRITES } from '@/lib/games/sprites';
 
 function TiltGuessButton({
   children,
@@ -195,6 +195,11 @@ const NumberGuessingGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) =>
       <GameContainer title={t.title} subtitle={t.subtitle} onReset={state ? () => startGame(state.difficulty) : undefined}>
         {!state ? (
           <div>
+            <div className="mb-4 flex justify-center items-center gap-3">
+              <img src={NUMBER_GUESSING_UI_SPRITES.baseball} alt="Baseball" className="w-14 h-14 object-contain drop-shadow-md" />
+              <img src={NUMBER_GUESSING_UI_SPRITES.glove} alt="Glove" className="w-14 h-14 object-contain drop-shadow-md" />
+              <img src={NUMBER_GUESSING_UI_SPRITES.scoreboard} alt="Scoreboard" className="w-14 h-14 object-contain drop-shadow-md" />
+            </div>
             <p className="mb-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.choose}</p>
             <div className="flex flex-col gap-3">
               {(['easy', 'normal', 'hard'] as NumberGuessingDifficulty[]).map((difficulty) => (
@@ -292,11 +297,11 @@ const NumberGuessingGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) =>
                 {state.status === 'won' && (
                   <div className="mb-3 flex items-center justify-center">
                     <img
-                      src={getSpriteUrl('trophy', 64)}
+                      src={NUMBER_GUESSING_UI_SPRITES.trophy}
                       alt="Victory Trophy"
                       width={64}
                       height={64}
-                      className="size-14 object-contain drop-shadow-md animate-bounce"
+                      className="size-16 object-contain drop-shadow-md animate-bounce"
                     />
                   </div>
                 )}

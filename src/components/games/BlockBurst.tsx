@@ -5,7 +5,7 @@ import { GameContainer } from "../ui/game/GamePrimitives";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { getBest, recordAchievementEvent, recordBest } from "../../lib/games/records";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
-import { BLOCK_BURST_FX, BLOCK_BURST_SPRITES, BLOCK_BURST_BOMB_SPRITE } from "../../lib/games/sprites";
+import { BLOCK_BURST_FX, BLOCK_BURST_SPRITES, BLOCK_BURST_BOMB_SPRITE, BLOCK_BURST_UI_SPRITES } from "../../lib/games/sprites";
 import { celebrate } from "../../lib/games/celebration";
 import {
   createShareCardCanvas,
@@ -1085,9 +1085,18 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
         <div aria-live="polite" className="sr-only">{banner || (phase === "over" ? t.over : "")}</div>
         <div className="mb-3 flex items-center justify-between gap-2">
           <div className="grid grid-cols-3 gap-2 text-center text-xs font-bold uppercase tracking-wider text-muted-foreground flex-1">
-            <div className="rounded-xl border border-border bg-card px-2 py-2"><div>{t.score}</div><div className="text-lg text-foreground">{game.score}</div></div>
-            <div className="rounded-xl border border-border bg-card px-2 py-2"><div>{t.best}</div><div className="text-lg text-foreground">{Math.max(mode === "augment" ? augmentBest : best, game.score)}</div></div>
-            <div className="rounded-xl border border-border bg-card px-2 py-2"><div>{t.level}</div><div className="text-lg text-foreground">{game.level}</div></div>
+            <div className="rounded-xl border border-border bg-card px-2 py-2 flex items-center justify-center gap-2">
+              <img src={BLOCK_BURST_UI_SPRITES.topaz} alt="Gem" className="h-6 w-6 object-contain hidden sm:inline" />
+              <div><div>{t.score}</div><div className="text-lg text-foreground">{game.score}</div></div>
+            </div>
+            <div className="rounded-xl border border-border bg-card px-2 py-2 flex items-center justify-center gap-2">
+              <img src={BLOCK_BURST_UI_SPRITES.emerald} alt="Best" className="h-6 w-6 object-contain hidden sm:inline" />
+              <div><div>{t.best}</div><div className="text-lg text-foreground">{Math.max(mode === "augment" ? augmentBest : best, game.score)}</div></div>
+            </div>
+            <div className="rounded-xl border border-border bg-card px-2 py-2 flex items-center justify-center gap-2">
+              <img src={BLOCK_BURST_UI_SPRITES.bomb} alt="Level" className="h-6 w-6 object-contain hidden sm:inline" />
+              <div><div>{t.level}</div><div className="text-lg text-foreground">{game.level}</div></div>
+            </div>
           </div>
           <div className="flex items-center gap-1.5">
             <button
@@ -1178,8 +1187,13 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
               <div className="pointer-events-none absolute right-3 top-3 text-sm font-black text-warning-foreground">+{gainPop}</div>
             ) : null}
             {phase === "paused" || phase === "over" ? (
-              <div className="absolute inset-0 grid place-items-center bg-[#f7f1dc]/80 backdrop-blur-[2px]">
-                <div className="text-center">
+              <div className="absolute inset-0 grid place-items-center bg-card/90 backdrop-blur-[2px]">
+                <div className="text-center p-4">
+                  {phase === "over" && (
+                    <div className="mb-2 flex justify-center">
+                      <img src={BLOCK_BURST_UI_SPRITES.trophy} alt="Trophy" className="h-16 w-16 animate-bounce" />
+                    </div>
+                  )}
                   <p className="mb-3 text-lg font-black text-foreground">{phase === "over" ? t.over : t.pause}</p>
                   <button type="button" className={`${btn} bg-primary text-primary-foreground`} onClick={() => (phase === "over" ? start() : setPhase(run?.offer ? "picking" : "playing"))}>
                     {phase === "over" ? t.again : t.resume}

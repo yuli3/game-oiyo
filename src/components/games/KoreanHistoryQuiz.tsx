@@ -5,6 +5,7 @@ import { Maximize2, Minimize2, Volume2, VolumeX, Share2, Check } from 'lucide-re
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import { celebrate } from '../../lib/games/celebration';
+import { KOREAN_HISTORY_QUIZ_UI_SPRITES } from '../../lib/games/sprites';
 import {
   createShareCardCanvas,
   copyShareCardToClipboard,
@@ -374,7 +375,10 @@ export default function KoreanHistoryQuiz({ locale }: Props) {
       >
         <div className="w-full max-w-lg mx-auto text-center space-y-6">
           {renderHud()}
-          <div className="text-5xl">🏯</div>
+          <div className="flex justify-center items-center gap-3">
+            <img src={KOREAN_HISTORY_QUIZ_UI_SPRITES.tower} alt="Astronomy Tower" className="w-16 h-16 object-contain drop-shadow-md" />
+            <img src={KOREAN_HISTORY_QUIZ_UI_SPRITES.ship} alt="Turtle Ship" className="w-16 h-16 object-contain drop-shadow-md" />
+          </div>
           <h2 className="text-2xl font-bold text-foreground">{l.title}</h2>
           <p className="text-muted-foreground">{l.subtitle}</p>
           <p className="text-sm text-muted-foreground">10문제 · 무작위 출제</p>
@@ -399,7 +403,13 @@ export default function KoreanHistoryQuiz({ locale }: Props) {
       >
         <div className="w-full max-w-lg mx-auto space-y-6 text-center">
           {renderHud()}
-          <div className="text-5xl">{score === 10 ? '🏆' : score >= 8 ? '🌟' : score >= 5 ? '📚' : '💪'}</div>
+          <div className="flex justify-center items-center gap-3">
+            <img
+              src={score >= 8 ? KOREAN_HISTORY_QUIZ_UI_SPRITES.trophy : KOREAN_HISTORY_QUIZ_UI_SPRITES.scroll}
+              alt="History Result"
+              className="w-20 h-20 object-contain drop-shadow-lg animate-bounce"
+            />
+          </div>
           <div>
             <p className="text-sm text-muted-foreground mb-1">{l.score}</p>
             <p className="text-4xl font-black text-foreground">{score} <span className="text-base font-normal text-muted-foreground">{l.outOf}</span></p>

@@ -1560,6 +1560,77 @@ export const LETTER_SWAP_UI_SPRITES = {
   trophy: "/assets/sprites/letter-swap/trophy-anagram-3d-128.png",
 } as const;
 
+export const BLOCK_BURST_UI_SPRITES = {
+  topaz: "/assets/sprites/block-burst/gem-topaz-3d-128.png",
+  emerald: "/assets/sprites/block-burst/gem-emerald-3d-128.png",
+  bomb: "/assets/sprites/block-burst/bomb-orb-3d-128.png",
+  trophy: "/assets/sprites/block-burst/trophy-burst-3d-128.png",
+} as const;
+
+export const HANJA_QUIZ_UI_SPRITES = {
+  tablet: "/assets/sprites/hanja-quiz/jade-tablet-3d-128.png",
+  brush: "/assets/sprites/hanja-quiz/ink-brush-3d-128.png",
+  hat: "/assets/sprites/hanja-quiz/scholar-hat-3d-128.png",
+  trophy: "/assets/sprites/hanja-quiz/trophy-hanja-3d-128.png",
+} as const;
+
+export const KOREAN_HISTORY_QUIZ_UI_SPRITES = {
+  tower: "/assets/sprites/korean-history-quiz/astronomy-tower-3d-128.png",
+  ship: "/assets/sprites/korean-history-quiz/turtle-ship-3d-128.png",
+  scroll: "/assets/sprites/korean-history-quiz/hunmin-scroll-3d-128.png",
+  trophy: "/assets/sprites/korean-history-quiz/trophy-history-3d-128.png",
+} as const;
+
+export const WORLD_GEOGRAPHY_QUIZ_UI_SPRITES = {
+  globe: "/assets/sprites/world-geography-quiz/globe-earth-3d-128.png",
+  compass: "/assets/sprites/world-geography-quiz/compass-flight-3d-128.png",
+  passport: "/assets/sprites/world-geography-quiz/passport-stamp-3d-128.png",
+  trophy: "/assets/sprites/world-geography-quiz/trophy-geography-3d-128.png",
+} as const;
+
+export const NUMBER_GUESSING_UI_SPRITES = {
+  baseball: "/assets/sprites/number-guessing/baseball-orb-3d-128.png",
+  glove: "/assets/sprites/number-guessing/catcher-glove-3d-128.png",
+  scoreboard: "/assets/sprites/number-guessing/scoreboard-lcd-3d-128.png",
+  trophy: "/assets/sprites/number-guessing/trophy-strike-3d-128.png",
+} as const;
+
+export const COSMIC_FLIGHT_UI_SPRITES = {
+  fighter: "/assets/sprites/cosmic-flight/fighter-jet-3d-128.png",
+  crystal: "/assets/sprites/cosmic-flight/meteor-crystal-3d-128.png",
+  gate: "/assets/sprites/cosmic-flight/warp-gate-3d-128.png",
+  trophy: "/assets/sprites/cosmic-flight/trophy-cosmic-3d-128.png",
+} as const;
+
+export const CYBER_TRACK_3D_UI_SPRITES = {
+  bike: "/assets/sprites/cyber-track-3d/cyber-bike-3d-128.png",
+  core: "/assets/sprites/cyber-track-3d/turbo-core-3d-128.png",
+  grid: "/assets/sprites/cyber-track-3d/finish-grid-3d-128.png",
+  trophy: "/assets/sprites/cyber-track-3d/trophy-cyber-3d-128.png",
+} as const;
+
+export const GRAVITY_ROLLER_3D_UI_SPRITES = {
+  orb: "/assets/sprites/gravity-roller-3d/gravity-orb-3d-128.png",
+  pad: "/assets/sprites/gravity-roller-3d/antigrav-pad-3d-128.png",
+  loop: "/assets/sprites/gravity-roller-3d/loop-track-3d-128.png",
+  trophy: "/assets/sprites/gravity-roller-3d/trophy-gravity-3d-128.png",
+} as const;
+
+export const INFERNAL_VELOCITY_UI_SPRITES = {
+  car: "/assets/sprites/infernal-velocity/infernal-car-3d-128.png",
+  flame: "/assets/sprites/infernal-velocity/nitro-flame-3d-128.png",
+  lava: "/assets/sprites/infernal-velocity/lava-boulder-3d-128.png",
+  trophy: "/assets/sprites/infernal-velocity/trophy-infernal-3d-128.png",
+} as const;
+
+export const ISOMETRIC_CITY_UI_SPRITES = {
+  building: "/assets/sprites/isometric-city/city-skyscraper-3d-128.png",
+  park: "/assets/sprites/isometric-city/green-park-3d-128.png",
+  hall: "/assets/sprites/isometric-city/city-hall-3d-128.png",
+  trophy: "/assets/sprites/isometric-city/trophy-mayor-3d-128.png",
+} as const;
+
+
 
 
 
