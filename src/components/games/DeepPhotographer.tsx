@@ -32,6 +32,7 @@ import {
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import DeepPhotographerScene, { type ShotGlide } from "./DeepPhotographerScene";
+import { DEEP_PHOTOGRAPHER_UI_SPRITES } from "../../lib/games/sprites";
 
 function TiltDeepButton({
   children,
@@ -808,25 +809,52 @@ export default function DeepPhotographer({ locale = "en" }: { locale?: Locale })
       </ol>
       <p role="status" aria-live="polite" className="text-sm text-foreground">{live}</p>
       {(state.status === "win" || state.status === "lose") && (
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={handleShareCard}
-            className="flex-1 py-3 px-4 rounded-xl border border-border bg-card hover:bg-muted font-bold text-sm text-foreground transition-colors flex items-center justify-center gap-1.5 shadow-sm"
-          >
-            {shareCardCopied ? <Check className="w-4 h-4 text-primary" /> : <Share2 className="w-4 h-4" />}
-            {shareCardCopied ? "결과 복사 완료!" : "결과 카드 공유"}
-          </button>
-          <button
-            type="button"
-            className="flex-1 py-3 px-4 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-sm hover:bg-primary/90 transition-colors"
-            onClick={() => {
-              arm();
-              load(nextSeed(seed));
-            }}
-          >
-            {copy.next}
-          </button>
+        <div className="flex flex-col gap-3">
+          {state.status === "win" && (
+            <div className="flex items-center justify-center gap-3 py-2 px-3 rounded-2xl bg-primary/10 border border-primary/30 text-center animate-in fade-in zoom-in-95">
+              <img
+                src={DEEP_PHOTOGRAPHER_UI_SPRITES.helmet}
+                alt="Diving Helmet"
+                width={36}
+                height={36}
+                className="drop-shadow-sm opacity-90"
+              />
+              <img
+                src={DEEP_PHOTOGRAPHER_UI_SPRITES.trophy}
+                alt="Deep Photographer Trophy"
+                width={48}
+                height={48}
+                className="drop-shadow-lg animate-bounce"
+              />
+              <img
+                src={DEEP_PHOTOGRAPHER_UI_SPRITES.camera}
+                alt="Underwater Camera"
+                width={36}
+                height={36}
+                className="drop-shadow-sm opacity-90"
+              />
+            </div>
+          )}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={handleShareCard}
+              className="flex-1 py-3 px-4 rounded-xl border border-border bg-card hover:bg-muted font-bold text-sm text-foreground transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+            >
+              {shareCardCopied ? <Check className="w-4 h-4 text-primary" /> : <Share2 className="w-4 h-4" />}
+              {shareCardCopied ? "결과 복사 완료!" : "결과 카드 공유"}
+            </button>
+            <button
+              type="button"
+              className="flex-1 py-3 px-4 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-sm hover:bg-primary/90 transition-colors"
+              onClick={() => {
+                arm();
+                load(nextSeed(seed));
+              }}
+            >
+              {copy.next}
+            </button>
+          </div>
         </div>
       )}
       <div className={isImmersive ? "relative flex min-h-64 w-full flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-card" : "relative overflow-hidden rounded-2xl border border-border bg-card"}>

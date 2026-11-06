@@ -36,6 +36,7 @@ import {
 } from "../../lib/games/blind-pilot";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import BlindPilotScene, { type PilotGlide } from "./BlindPilotScene";
+import { BLIND_PILOT_UI_SPRITES } from "../../lib/games/sprites";
 
 interface Copy {
   title: string;
@@ -1082,7 +1083,33 @@ export default function BlindPilot({ locale = "en" }: { locale?: Locale }) {
       </ol>
       <p role="status" aria-live="polite" className="text-sm text-foreground">{live}</p>
       {(state.status === "win" || state.status === "lose") && (
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-3">
+          {state.status === "win" && (
+            <div className="flex items-center justify-center gap-3 py-2 px-3 rounded-2xl bg-primary/10 border border-primary/30 text-center animate-in fade-in zoom-in-95">
+              <img
+                src={BLIND_PILOT_UI_SPRITES.radar}
+                alt="Radar Scope"
+                width={36}
+                height={36}
+                className="drop-shadow-sm opacity-90"
+              />
+              <img
+                src={BLIND_PILOT_UI_SPRITES.trophy}
+                alt="Top Gun Ace Trophy"
+                width={48}
+                height={48}
+                className="drop-shadow-lg animate-bounce"
+              />
+              <img
+                src={BLIND_PILOT_UI_SPRITES.jet}
+                alt="Stealth Jet"
+                width={36}
+                height={36}
+                className="drop-shadow-sm opacity-90"
+              />
+            </div>
+          )}
+          <div className="flex gap-2">
           <button
             type="button"
             onClick={handleShareCard}
@@ -1101,6 +1128,7 @@ export default function BlindPilot({ locale = "en" }: { locale?: Locale }) {
           >
             {copy.next}
           </button>
+        </div>
         </div>
       )}
       <div className={isImmersive ? "relative flex min-h-64 w-full flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-card" : "relative overflow-hidden rounded-2xl border border-border bg-card"}>

@@ -37,7 +37,7 @@ import {
 import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from "../../lib/games/game-audio";
 import { createHaptics } from "../../lib/games/haptics";
 import { celebrate } from "../../lib/games/celebration";
-import { LETTER_SWAP_SPRITES } from "../../lib/games/sprites";
+import { LETTER_SWAP_SPRITES, LETTER_SWAP_UI_SPRITES } from "../../lib/games/sprites";
 import LetterSwapCanvas from "./LetterSwapCanvas";
 
 function TiltSwapButton({
@@ -645,7 +645,36 @@ export default function LetterSwap({ locale }: { locale: Locale }) {
                 {t.share}
               </TiltSwapButton>
             </div>
-            {message ? <p className="text-sm font-bold text-foreground" aria-live="polite">{message}</p> : null}
+            {message ? (
+              <div className="flex flex-col items-center gap-2">
+                {play?.won && (
+                  <div className="flex items-center justify-center gap-3 py-2 px-4 rounded-2xl bg-primary/10 border border-primary/30 text-center animate-in fade-in zoom-in-95">
+                    <img
+                      src={LETTER_SWAP_UI_SPRITES.quill}
+                      alt="Magic Quill"
+                      width={32}
+                      height={32}
+                      className="drop-shadow-sm opacity-90"
+                    />
+                    <img
+                      src={LETTER_SWAP_UI_SPRITES.trophy}
+                      alt="Lexicon Master Trophy"
+                      width={48}
+                      height={48}
+                      className="drop-shadow-lg animate-bounce"
+                    />
+                    <img
+                      src={LETTER_SWAP_UI_SPRITES.cube}
+                      alt="Alphabet Cube"
+                      width={32}
+                      height={32}
+                      className="drop-shadow-sm opacity-90"
+                    />
+                  </div>
+                )}
+                <p className="text-sm font-bold text-foreground" aria-live="polite">{message}</p>
+              </div>
+            ) : null}
             <p className="text-sm text-muted-foreground">
               {t.record(record?.w ?? 0, record?.l ?? 0)}
               {best ? ` · ${t.best(best.value)}` : ""}

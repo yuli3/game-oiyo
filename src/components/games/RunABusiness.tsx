@@ -5,7 +5,7 @@ import { hasWebGL } from "@/lib/games/webgl";
 import { recordAchievementEvent, recordResult } from "@/lib/games/records";
 import { useArcadePortal } from "@/lib/games/arcade-portal";
 import { useCardTiltPro, MobileHapticsPro } from "@/lib/games/engine-suite-unified";
-import { getSpriteUrl } from "@/lib/games/sprites";
+import { getSpriteUrl, RUN_A_BUSINESS_UI_SPRITES } from "@/lib/games/sprites";
 import {
   BEST_KEY,
   HORIZON_DAYS,
@@ -724,7 +724,34 @@ export default function RunABusiness({ locale }: { locale: Locale }) {
       </div>
 
       {books && (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-center gap-3 py-2 px-4 rounded-2xl bg-primary/10 text-foreground border border-primary/30 shadow-sm">
+            <img
+              src={RUN_A_BUSINESS_UI_SPRITES.briefcase}
+              alt="Briefcase"
+              width={32}
+              height={32}
+              className="drop-shadow-sm opacity-90"
+            />
+            <div className="flex items-center gap-2">
+              <img
+                src={RUN_A_BUSINESS_UI_SPRITES.trophy}
+                alt="Business Tycoon Trophy"
+                width={40}
+                height={40}
+                className="drop-shadow-md animate-bounce"
+              />
+              <span className="text-sm font-black text-primary">{t.statement}</span>
+            </div>
+            <img
+              src={RUN_A_BUSINESS_UI_SPRITES.cash}
+              alt="Cash Bundle"
+              width={32}
+              height={32}
+              className="drop-shadow-sm opacity-90"
+            />
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
           <div className="rounded-2xl border p-4 text-sm">
             <p className="mb-2 text-xs font-black uppercase tracking-widest text-muted-foreground">{t.statement}</p>
             <dl className="grid grid-cols-2 gap-2">
@@ -761,6 +788,7 @@ export default function RunABusiness({ locale }: { locale: Locale }) {
               <p className="mt-3 text-xs leading-5 text-muted-foreground">{t.sheetTip}</p>
             </div>
           )}
+        </div>
         </div>
       )}
 

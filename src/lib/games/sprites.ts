@@ -1486,6 +1486,80 @@ export const TENTS_AND_TREES_UI_SPRITES = {
   trophy: "/assets/sprites/tents-and-trees/trophy-camping-3d-128.png",
 } as const;
 
+export const CAT_FISHING_UI_SPRITES = {
+  salmon: "/assets/sprites/cat-fishing/fish-salmon-3d-128.png",
+  fish: "/assets/sprites/cat-fishing/fish-salmon-3d-128.png",
+  hook: "/assets/sprites/cat-fishing/hook-gold-3d-128.png",
+  bobber: "/assets/sprites/cat-fishing/bobber-catnip-3d-128.png",
+  trophy: "/assets/sprites/cat-fishing/trophy-fishing-3d-128.png",
+} as const;
+
+export const SUIKA_DROP_UI_SPRITES = {
+  watermelon: "/assets/sprites/suika-drop/fruit-watermelon-3d-128.png",
+  melon: "/assets/sprites/suika-drop/fruit-melon-3d-128.png",
+  strawberry: "/assets/sprites/suika-drop/fruit-strawberry-3d-128.png",
+  trophy: "/assets/sprites/suika-drop/trophy-suika-3d-128.png",
+} as const;
+
+export const SPACE_PINBALL_UI_SPRITES = {
+  ball: "/assets/sprites/space-pinball/ball-chrome-3d-128.png",
+  chromeBall: "/assets/sprites/space-pinball/ball-chrome-3d-128.png",
+  flipper: "/assets/sprites/space-pinball/flipper-neon-3d-128.png",
+  bumper: "/assets/sprites/space-pinball/bumper-light-3d-128.png",
+  trophy: "/assets/sprites/space-pinball/trophy-pinball-3d-128.png",
+} as const;
+
+export const MARBLE_ROLL_UI_SPRITES = {
+  marble: "/assets/sprites/marble-roll/marble-opal-3d-128.png",
+  opalMarble: "/assets/sprites/marble-roll/marble-opal-3d-128.png",
+  hole: "/assets/sprites/marble-roll/hole-target-3d-128.png",
+  compass: "/assets/sprites/marble-roll/compass-gyro-3d-128.png",
+  trophy: "/assets/sprites/marble-roll/trophy-marble-3d-128.png",
+} as const;
+
+export const SUBWAY_CONDUCTOR_UI_SPRITES = {
+  train: "/assets/sprites/subway-conductor/train-express-3d-128.png",
+  signal: "/assets/sprites/subway-conductor/signal-green-3d-128.png",
+  console: "/assets/sprites/subway-conductor/console-control-3d-128.png",
+  trophy: "/assets/sprites/subway-conductor/trophy-conductor-3d-128.png",
+} as const;
+
+export const RUN_A_BUSINESS_UI_SPRITES = {
+  briefcase: "/assets/sprites/run-a-business/briefcase-leather-3d-128.png",
+  cash: "/assets/sprites/run-a-business/cash-bundle-3d-128.png",
+  unicorn: "/assets/sprites/run-a-business/unicorn-horn-3d-128.png",
+  trophy: "/assets/sprites/run-a-business/trophy-tycoon-3d-128.png",
+} as const;
+
+export const BLIND_PILOT_UI_SPRITES = {
+  jet: "/assets/sprites/blind-pilot/jet-stealth-3d-128.png",
+  radar: "/assets/sprites/blind-pilot/radar-scope-3d-128.png",
+  headset: "/assets/sprites/blind-pilot/radio-headset-3d-128.png",
+  trophy: "/assets/sprites/blind-pilot/trophy-pilot-3d-128.png",
+} as const;
+
+export const DEEP_PHOTOGRAPHER_UI_SPRITES = {
+  helmet: "/assets/sprites/deep-photographer/helmet-diver-3d-128.png",
+  camera: "/assets/sprites/deep-photographer/camera-underwater-3d-128.png",
+  jellyfish: "/assets/sprites/deep-photographer/jellyfish-glow-3d-128.png",
+  trophy: "/assets/sprites/deep-photographer/trophy-photographer-3d-128.png",
+} as const;
+
+export const CLOUD_SCULPTOR_UI_SPRITES = {
+  cloud: "/assets/sprites/cloud-sculptor/cloud-cumulus-3d-128.png",
+  harp: "/assets/sprites/cloud-sculptor/harp-angel-3d-128.png",
+  drop: "/assets/sprites/cloud-sculptor/prism-raindrop-3d-128.png",
+  prism: "/assets/sprites/cloud-sculptor/prism-raindrop-3d-128.png",
+  trophy: "/assets/sprites/cloud-sculptor/trophy-sculptor-3d-128.png",
+} as const;
+
+export const LETTER_SWAP_UI_SPRITES = {
+  cube: "/assets/sprites/letter-swap/cube-letter-3d-128.png",
+  quill: "/assets/sprites/letter-swap/quill-magic-3d-128.png",
+  scroll: "/assets/sprites/letter-swap/scroll-dict-3d-128.png",
+  trophy: "/assets/sprites/letter-swap/trophy-anagram-3d-128.png",
+} as const;
+
 
 
 

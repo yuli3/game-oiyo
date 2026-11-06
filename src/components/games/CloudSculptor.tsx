@@ -28,6 +28,7 @@ import {
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import CloudSculptorScene, { type CloudGlide } from "./CloudSculptorScene";
+import { CLOUD_SCULPTOR_UI_SPRITES } from "../../lib/games/sprites";
 
 interface Copy {
   title: string;
@@ -713,23 +714,50 @@ export default function CloudSculptor({ locale = "en" }: { locale?: Locale }) {
       </ol>
       <p role="status" aria-live="polite" className="text-sm text-foreground">{live}</p>
       {state.status !== "play" && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
-          <div>
-            <p className="text-sm font-bold text-foreground">
-              {state.status === "win" ? "✨ 구름 조각 완성!" : "💨 구름이 흩어졌습니다"}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {state.status === "win" ? `${state.steps}걸음 만에 목표 구름과 일치했습니다.` : outcome}
-            </p>
+        <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm animate-in fade-in zoom-in-95">
+          {state.status === "win" && (
+            <div className="flex items-center justify-center gap-3 py-1">
+              <img
+                src={CLOUD_SCULPTOR_UI_SPRITES.harp}
+                alt="Angel Harp"
+                width={36}
+                height={36}
+                className="drop-shadow-sm opacity-90"
+              />
+              <img
+                src={CLOUD_SCULPTOR_UI_SPRITES.trophy}
+                alt="Cloud Artist Trophy"
+                width={48}
+                height={48}
+                className="drop-shadow-lg animate-bounce"
+              />
+              <img
+                src={CLOUD_SCULPTOR_UI_SPRITES.cloud}
+                alt="Cumulus Cloud"
+                width={36}
+                height={36}
+                className="drop-shadow-sm opacity-90"
+              />
+            </div>
+          )}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-bold text-foreground">
+                {state.status === "win" ? "✨ 구름 조각 완성!" : "💨 구름이 흩어졌습니다"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {state.status === "win" ? `${state.steps}걸음 만에 목표 구름과 일치했습니다.` : outcome}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleShareCard}
+              className="flex items-center gap-1.5 rounded-xl border border-border bg-secondary px-3.5 py-2 text-xs font-bold text-secondary-foreground shadow-sm transition hover:bg-muted"
+            >
+              {shareCardCopied ? <Check className="h-4 w-4 text-primary" /> : <Share2 className="h-4 w-4" />}
+              <span>{shareCardCopied ? "복사 완료!" : "결과 카드 공유"}</span>
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={handleShareCard}
-            className="flex items-center gap-1.5 rounded-xl border border-border bg-secondary px-3.5 py-2 text-xs font-bold text-secondary-foreground shadow-sm transition hover:bg-muted"
-          >
-            {shareCardCopied ? <Check className="h-4 w-4 text-primary" /> : <Share2 className="h-4 w-4" />}
-            <span>{shareCardCopied ? "복사 완료!" : "결과 카드 공유"}</span>
-          </button>
         </div>
       )}
       <div className={isImmersive ? "relative flex min-h-64 w-full flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-card" : "relative overflow-hidden rounded-2xl border border-border bg-card"}>
