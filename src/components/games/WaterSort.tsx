@@ -15,7 +15,7 @@ import type { Locale } from '../../lib/i18n';
 import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from '../../lib/games/game-audio';
 import { createHaptics } from '../../lib/games/haptics';
 import { celebrate } from '../../lib/games/celebration';
-import { WATER_SORT_SPRITES } from '../../lib/games/sprites';
+import { WATER_SORT_SPRITES, WATER_SORT_UI_SPRITES } from '../../lib/games/sprites';
 import { buildChallengeUrl } from '../../lib/games/seed-challenge';
 import { generateChallengeQrSvg } from '../../lib/games/challenge-qr';
 import { getColorblindMode, getColorblindSymbol, type ColorblindMode } from '../../lib/games/accessibility';
@@ -332,6 +332,9 @@ const WaterSort: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         })}
                     </div>
                     {isWon && game && <div className={`w-full max-w-md rounded-3xl border border-primary/30 bg-primary/5 p-6 text-center ${!reducedMotion ? 'animate-in zoom-in-95' : ''}`} role="status">
+                        <div className="flex justify-center mb-3">
+                            <img src={WATER_SORT_UI_SPRITES.trophy} alt="Purification Trophy" className="size-16 object-contain animate-bounce drop-shadow" />
+                        </div>
                         <h4 className="mb-4 text-2xl font-black text-primary">{t.win}</h4>
                         <div className="mb-5 grid grid-cols-2 gap-3 text-sm"><p><strong>{t.moves}</strong><br />{game.moves}</p><p><strong>{t.time}</strong><br />{elapsedSeconds} {t.seconds}</p><p><strong>{t.efficiency}</strong><br />{efficiency}%</p><p><strong>{t.best}</strong><br />{displayedBest?.value ?? elapsedSeconds} {t.seconds}</p></div>
                         <p className="mb-5 text-xs font-bold text-muted-foreground">{t.next}: {Math.max(0, (displayedBest?.value ?? elapsedSeconds) - 1)} {t.seconds}</p>

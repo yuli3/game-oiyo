@@ -5,7 +5,7 @@ import { getBest, recordBest } from "../../lib/games/records";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
-import { getSpriteUrl } from "../../lib/games/sprites";
+import { getSpriteUrl, SPATIAL_MEMORY_UI_SPRITES } from "../../lib/games/sprites";
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "../../lib/games/share-card";
 import { Camera, Check, Maximize2, Minimize2, RotateCcw, Play } from "lucide-react";
 import {
@@ -446,7 +446,7 @@ export default function SpatialMemory({ locale }: { locale: Locale }) {
             {phase === "over" ? (
               <div className="relative mb-2 flex size-20 items-center justify-center">
                 <img
-                  src={getSpriteUrl('trophy', 128)}
+                  src={SPATIAL_MEMORY_UI_SPRITES.trophy}
                   alt="Trophy"
                   className="size-20 object-contain drop-shadow-xl animate-bounce"
                   loading="lazy"
@@ -455,8 +455,8 @@ export default function SpatialMemory({ locale }: { locale: Locale }) {
             ) : (
               <div className="relative mb-2 flex size-16 items-center justify-center">
                 <img
-                  src={getSpriteUrl('star', 64)}
-                  alt="Star"
+                  src={SPATIAL_MEMORY_UI_SPRITES.matrix}
+                  alt="Cube Matrix"
                   className="size-16 object-contain drop-shadow-lg animate-pulse"
                   loading="lazy"
                 />

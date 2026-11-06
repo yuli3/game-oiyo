@@ -19,7 +19,7 @@ import {
   copyShareCardToClipboard,
   downloadShareCard,
 } from "../../lib/games/share-card";
-import { BLACKOUT_COURIER_SPRITES } from "../../lib/games/sprites";
+import { BLACKOUT_COURIER_SPRITES, BLACKOUT_COURIER_UI_SPRITES } from "../../lib/games/sprites";
 import {
   DARK_SECONDS,
   GAME_ID,
@@ -430,16 +430,23 @@ export default function BlackoutCourier({ locale }: { locale: Locale }) {
               </TiltBlackoutButton>
             ) : null}
             {run.phase === "won" || run.phase === "lost" ? (
-              <div className="flex flex-wrap items-center gap-2">
-                <TiltBlackoutButton onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</TiltBlackoutButton>
-                <button
-                  type="button"
-                  onClick={() => void handleShareCard()}
-                  className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-primary/40 bg-primary/20 px-4 py-2 text-xs font-bold text-primary transition-colors hover:bg-primary/30 active:scale-95"
-                >
-                  <Share2 className="size-4" />
-                  <span>{shareCopied ? "복사됨!" : "공유 카드"}</span>
-                </button>
+              <div className="flex flex-col items-center gap-3">
+                <img
+                  src={run.phase === "won" ? BLACKOUT_COURIER_UI_SPRITES.trophy : BLACKOUT_COURIER_UI_SPRITES.lantern}
+                  alt="Result"
+                  className="size-16 object-contain animate-bounce drop-shadow"
+                />
+                <div className="flex flex-wrap items-center gap-2">
+                  <TiltBlackoutButton onClick={again} className={`${CONTROL} border-primary bg-primary text-primary-foreground`}>{t.again}</TiltBlackoutButton>
+                  <button
+                    type="button"
+                    onClick={() => void handleShareCard()}
+                    className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-primary/40 bg-primary/20 px-4 py-2 text-xs font-bold text-primary transition-colors hover:bg-primary/30 active:scale-95"
+                  >
+                    <Share2 className="size-4" />
+                    <span>{shareCopied ? "복사됨!" : "공유 카드"}</span>
+                  </button>
+                </div>
               </div>
             ) : null}
             <div className="flex flex-col items-center gap-2">

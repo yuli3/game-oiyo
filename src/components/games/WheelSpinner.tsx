@@ -4,6 +4,7 @@ import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { normalizeWheelItems, parseStoredWheelItems, WHEEL_ITEM_LIMIT } from '../../lib/games/wheel-spinner';
+import { WHEEL_SPINNER_UI_SPRITES } from '../../lib/games/sprites';
 
 // ─── Physics: the wheel is a single circular body pinned at its own center
 // (zero gravity, zero linear velocity — it never moves, only spins). Matter's
@@ -330,7 +331,8 @@ const WheelSpinner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         </button>
 
                         {winner && (
-                            <div className="text-center animate-bounce motion-reduce:animate-none" role="status" aria-live="assertive">
+                            <div className="text-center animate-bounce motion-reduce:animate-none flex flex-col items-center" role="status" aria-live="assertive">
+                                <img src={WHEEL_SPINNER_UI_SPRITES.trophy} alt="Jackpot Trophy" className="size-16 object-contain mb-1 drop-shadow" />
                                 <p className="text-xs font-black text-muted-foreground uppercase mb-1">{t.result}</p>
                                 <h4 className="text-3xl font-black text-primary uppercase">{winner}</h4>
                             </div>

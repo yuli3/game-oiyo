@@ -24,7 +24,7 @@ import {
   type ScreenTraumaState,
 } from "../../lib/games/screen-shake";
 import { celebrate } from "../../lib/games/celebration";
-import { CARD_SURGE_SPRITES } from "../../lib/games/sprites";
+import { CARD_SURGE_SPRITES, CARD_SURGE_UI_SPRITES } from "../../lib/games/sprites";
 import { Button } from "../ui/button";
 
 function playWebTone(freq: number, type: OscillatorType = "sine", duration: number = 0.1, gain: number = 0.15) {
@@ -731,7 +731,7 @@ export default function CardSurge({ locale = "ko" }: CardSurgeProps) {
       {/* Game Over Modal */}
       {state.phase === "game-over" && (
         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center rounded-3xl bg-background/95 p-6 backdrop-blur-xs">
-          <span className="text-4xl">💀</span>
+          <img src={CARD_SURGE_UI_SPRITES.surge} alt="Surge Energy" className="size-16 object-contain mb-2 animate-pulse drop-shadow" />
           <h2 className="mt-2 text-2xl font-black text-destructive">
             {locale === "ko" ? "게임 오버" : "Game Over"}
           </h2>
@@ -760,7 +760,7 @@ export default function CardSurge({ locale = "ko" }: CardSurgeProps) {
       {state.phase === "victory" && (
         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center rounded-3xl bg-background/95 p-6 backdrop-blur-xs animate-in zoom-in-95">
           <img
-            src={CARD_SURGE_SPRITES.trophy}
+            src={CARD_SURGE_UI_SPRITES.trophy}
             alt="Ante Master Trophy"
             className="size-24 object-contain animate-bounce drop-shadow-2xl mb-3 select-none pointer-events-none"
             draggable={false}
