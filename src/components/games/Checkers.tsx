@@ -14,7 +14,7 @@ import { checkersApply, checkersApplyTurn, checkersBestMove, checkersMoves, chec
 import type { AiLevel, GameMode } from '../../lib/games/ai/types';
 import { getRecord, recordResult, type GameRecord } from '../../lib/games/records';
 import { clearCheckersSave, loadCheckersSave, storeCheckersSave } from '../../lib/games/active-game-save';
-import { CHECKERS_SPRITES } from '../../lib/games/sprites';
+import { CHECKERS_SPRITES, CHECKERS_UI_SPRITES } from '../../lib/games/sprites';
 import { indexToRowCol } from '../../lib/games/piece-tween';
 
 function checkersSrc(piece: CheckersPiece) {
@@ -503,6 +503,7 @@ const Checkers: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
 
             {winner && (
                 <div className="absolute inset-0 z-20 bg-background/60 backdrop-blur-sm rounded-4xl flex flex-col items-center justify-center animate-in fade-in zoom-in-95 motion-reduce:animate-none" role="status" aria-live="assertive">
+                    <img src={CHECKERS_UI_SPRITES.trophy} alt="" className="size-16 object-contain mb-3 drop-shadow-md animate-bounce" />
                     <h4 className="text-4xl font-black text-foreground mb-4">{winLabel}</h4>
                     <p className="mb-4 text-sm font-bold text-muted-foreground">{x.redLeft} {board.filter(piece => piece?.player === 1).length} · {x.blackLeft} {board.filter(piece => piece?.player === 2).length}</p>
                     <p className="mb-4 text-xs text-muted-foreground">{x.captured} {winner === 1 ? 12 - board.filter(piece => piece?.player === 2).length : 12 - board.filter(piece => piece?.player === 1).length} · {x.next} 12</p>

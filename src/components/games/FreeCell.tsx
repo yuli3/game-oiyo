@@ -4,6 +4,7 @@ import { GameContainer, PlayingCard } from '../ui/game/GamePrimitives';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { getRecord, recordResult, type GameRecord } from '../../lib/games/records';
 import { celebrate } from '../../lib/games/celebration';
+import { FREECELL_UI_SPRITES } from '../../lib/games/sprites';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import {
   createShareCardCanvas,
@@ -462,6 +463,7 @@ const FreeCell: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
       {isWon && (
         <div ref={winDialogRef} onKeyDown={trapWinFocus} className="fixed inset-0 z-30 flex flex-col items-center justify-center bg-background/90 p-6 text-center backdrop-blur-xl motion-reduce:animate-none" role="dialog" aria-modal="true" aria-labelledby="freecell-win-title">
+          <img src={FREECELL_UI_SPRITES.trophy} alt="" className="size-16 object-contain mb-3 drop-shadow-md animate-bounce" />
           <h4 id="freecell-win-title" className="mb-2 text-4xl font-black text-primary">{t.win}</h4>
           <p className="mb-6 text-sm font-bold text-muted-foreground">
             {legacyMigrated ? `${t.moves} ${moves}` : `${t.time} ${fmt(seconds)} · ${t.moves} ${moves}`}

@@ -8,7 +8,8 @@ import type { AiLevel, GameMode } from '../../lib/games/ai/types';
 import { getRecord, recordResult, type GameRecord } from '../../lib/games/records';
 import { usePrefersReducedMotion } from '../../lib/games/reduced-motion';
 import { clearReversiSave, loadReversiSave, storeReversiSave } from '../../lib/games/active-game-save';
-import { REVERSI_SPRITES, getSpriteUrl } from '../../lib/games/sprites';
+import { REVERSI_SPRITES, REVERSI_UI_SPRITES, getSpriteUrl } from '../../lib/games/sprites';
+import { celebrate } from '../../lib/games/celebration';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import {
     createShareCardCanvas,
@@ -437,9 +438,9 @@ const Reversi: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                         <div className="m-3 rounded-3xl border-4 border-primary/20 bg-card p-5 text-center shadow-xl">
                             <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/20 p-2 mx-auto mb-2">
                                 <img
-                                    src={getSpriteUrl(game.winner === 1 ? 'trophy' : 'star', 64)}
+                                    src={REVERSI_UI_SPRITES.trophy}
                                     alt="Result"
-                                    className="size-10 object-contain"
+                                    className="size-10 object-contain drop-shadow-md animate-bounce"
                                     draggable={false}
                                 />
                             </div>

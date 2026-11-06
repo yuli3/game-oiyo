@@ -20,7 +20,7 @@ import {
 import { createConnectFourBoard, dropDisc, findDropRow, type ConnectFourBoard } from "../../lib/games/connect-four";
 import { opponentBlurb, opponentName, pickOpponent } from '../../lib/games/opponents';
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
-import { CONNECT_FOUR_SPRITES } from "../../lib/games/sprites";
+import { CONNECT_FOUR_SPRITES, CONNECT_FOUR_UI_SPRITES } from "../../lib/games/sprites";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 
 function connectFourSrc(player: 1 | 2) {
@@ -718,6 +718,9 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
 
       {status !== "playing" && (
         <div className="mt-4 flex flex-col items-center gap-2">
+          {status === "won" && (
+            <img src={CONNECT_FOUR_UI_SPRITES.trophy} alt="" className="size-14 object-contain mb-1 drop-shadow-md animate-bounce" />
+          )}
           <p className="text-xs text-muted-foreground">{moveCount} {x.moves}</p>
           {status === "won" && <p className="text-xs text-muted-foreground max-w-xs text-center">{x.nextGoal}</p>}
           {status==='won'&&currentPlayer===AI_PLAYER&&lastAiReview&&<div className="max-w-xs rounded-2xl border border-amber-300/60 bg-amber-50 p-3 text-left text-xs text-stone-800"><p className="font-black text-amber-900">{aiInfo.review} · {t.column} {lastAiReview.col+1}</p><p className="mt-1">{aiInfo.kind[lastAiReview.kind]}</p><p className="mt-1 text-xs text-stone-500">{aiInfo.difficulty}: {aiInfo.level[level]}</p></div>}

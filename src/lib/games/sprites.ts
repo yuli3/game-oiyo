@@ -1328,4 +1328,75 @@ export const VOXEL_MAZE_3D_UI_SPRITES = {
   trophy: "/assets/sprites/voxel-maze-3d/trophy-voxels-3d-128.png",
 } as const;
 
+export const BLOCK_BREAKER_UI_SPRITES = {
+  paddle: "/assets/sprites/block-breaker/paddle-laser-3d-128.png",
+  ball: "/assets/sprites/block-breaker/ball-plasma-3d-128.png",
+  brick: "/assets/sprites/block-breaker/brick-crystal-3d-128.png",
+  trophy: "/assets/sprites/block-breaker/trophy-breaker-3d-128.png",
+} as const;
+
+export const DOODLE_LINE_UI_SPRITES = {
+  pen: "/assets/sprites/doodle-line/pen-stylus-3d-128.png",
+  trampoline: "/assets/sprites/doodle-line/trampoline-spring-3d-128.png",
+  gem: "/assets/sprites/doodle-line/gem-doodle-3d-128.png",
+  trophy: "/assets/sprites/doodle-line/trophy-doodle-3d-128.png",
+} as const;
+
+export const STACK_TOWER_UI_SPRITES = {
+  slab: "/assets/sprites/stack-tower/block-slab-3d-128.png",
+  trimmer: "/assets/sprites/stack-tower/trimmer-laser-3d-128.png",
+  crown: "/assets/sprites/stack-tower/crown-perfect-3d-128.png",
+  trophy: "/assets/sprites/stack-tower/trophy-stack-3d-128.png",
+} as const;
+
+export const AIM_TRAINER_UI_SPRITES = {
+  crosshair: "/assets/sprites/aim-trainer/crosshair-tactical-3d-128.png",
+  target: "/assets/sprites/aim-trainer/target-bullseye-3d-128.png",
+  watch: "/assets/sprites/aim-trainer/stopwatch-reflex-3d-128.png",
+  trophy: "/assets/sprites/aim-trainer/trophy-sniper-3d-128.png",
+} as const;
+
+export const WHACK_A_MOLE_UI_SPRITES = {
+  hammer: "/assets/sprites/whack-a-mole/hammer-mallet-3d-128.png",
+  mole: "/assets/sprites/whack-a-mole/mole-golden-3d-128.png",
+  hole: "/assets/sprites/whack-a-mole/hole-mound-3d-128.png",
+  trophy: "/assets/sprites/whack-a-mole/trophy-whack-3d-128.png",
+} as const;
+
+export const REVERSI_UI_SPRITES = {
+  blackDisc: "/assets/sprites/reversi/disc-black-3d-128.png",
+  whiteDisc: "/assets/sprites/reversi/disc-white-3d-128.png",
+  cornerStar: "/assets/sprites/reversi/corner-star-3d-128.png",
+  trophy: "/assets/sprites/reversi/trophy-reversi-3d-128.png",
+} as const;
+
+export const MEMORY_CARD_GAME_UI_SPRITES = {
+  cardBack: "/assets/sprites/memory-card-game/card-back-3d-128.png",
+  gem: "/assets/sprites/memory-card-game/card-gem-3d-128.png",
+  star: "/assets/sprites/memory-card-game/star-combo-3d-128.png",
+  trophy: "/assets/sprites/memory-card-game/trophy-memory-3d-128.png",
+} as const;
+
+export const CONNECT_FOUR_UI_SPRITES = {
+  redDisc: "/assets/sprites/connect-four/disc-red-3d-128.png",
+  yellowDisc: "/assets/sprites/connect-four/disc-yellow-3d-128.png",
+  slot: "/assets/sprites/connect-four/grid-slot-3d-128.png",
+  trophy: "/assets/sprites/connect-four/trophy-connect-3d-128.png",
+} as const;
+
+export const CHECKERS_UI_SPRITES = {
+  redPiece: "/assets/sprites/checkers/piece-red-3d-128.png",
+  blackPiece: "/assets/sprites/checkers/piece-black-3d-128.png",
+  crown: "/assets/sprites/checkers/crown-king-3d-128.png",
+  trophy: "/assets/sprites/checkers/trophy-checkers-3d-128.png",
+} as const;
+
+export const FREECELL_UI_SPRITES = {
+  king: "/assets/sprites/freecell/card-king-3d-128.png",
+  freeCell: "/assets/sprites/freecell/cell-free-3d-128.png",
+  foundation: "/assets/sprites/freecell/foundation-ace-3d-128.png",
+  trophy: "/assets/sprites/freecell/trophy-freecell-3d-128.png",
+} as const;
+
+
 

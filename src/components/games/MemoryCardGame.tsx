@@ -11,7 +11,7 @@ import {
 } from '@/lib/games/share-card';
 import { createMemoryGame, flipMemoryCard, MEMORY_GRID_CONFIG, memoryPairCount, resolveMemoryPair, type MemoryGridSize, type MemoryState } from '@/lib/games/memory-card-game';
 import { clearMemoryCardSave, loadMemoryCardSave, storeMemoryCardSave } from '@/lib/games/memory-card-game-save';
-import { MEMORY_SPRITES, memoryFaceName, memoryFaceSrc, getSpriteUrl } from '@/lib/games/sprites';
+import { MEMORY_SPRITES, MEMORY_CARD_GAME_UI_SPRITES, memoryFaceName, memoryFaceSrc, getSpriteUrl } from '@/lib/games/sprites';
 import { useCardTiltPro, MobileHapticsPro } from '@/lib/games/engine-suite-unified';
 
 function TiltMemoryButton({
@@ -387,8 +387,14 @@ const MemoryCardGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             </div>
           {/* Stats bar */}
           <div className="flex items-center justify-between mb-4 text-sm font-bold text-muted-foreground">
-            <span>{t.flips}: <span className="text-foreground">{state.flips}</span></span>
-            <span aria-live="polite">{t.matched}: <span className="text-primary">{t.pairs(state.matchedPairs, totalPairs)}</span></span>
+            <span className="inline-flex items-center gap-1">
+              <img src={MEMORY_CARD_GAME_UI_SPRITES.star} alt="" className="size-3.5 object-contain" />
+              <span>{t.flips}: <span className="text-foreground">{state.flips}</span></span>
+            </span>
+            <span aria-live="polite" className="inline-flex items-center gap-1">
+              <img src={MEMORY_CARD_GAME_UI_SPRITES.gem} alt="" className="size-3.5 object-contain" />
+              <span>{t.matched}: <span className="text-primary">{t.pairs(state.matchedPairs, totalPairs)}</span></span>
+            </span>
             <span>{t.time}: <span className="text-foreground">{formatTime(elapsedMs)}</span></span>
           </div>
 
@@ -396,10 +402,10 @@ const MemoryCardGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
           {state.status === 'won' && (
             <div className="mb-4 p-5 rounded-2xl bg-success/10 border-2 border-success/30 text-center flex flex-col items-center" role="status" aria-live="assertive">
               <img
-                src={getSpriteUrl('trophy', 64)}
+                src={MEMORY_CARD_GAME_UI_SPRITES.trophy}
                 alt="Victory Trophy"
-                width={52}
-                height={52}
+                width={56}
+                height={56}
                 className="mb-2 drop-shadow-md animate-bounce"
               />
               <p className="text-lg font-black text-foreground">{t.won}</p>
