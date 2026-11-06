@@ -1,0 +1,329 @@
+{
+  "created": "2026-11-06",
+  "assets": [
+    {
+      "id": "game-keyart-baba-rule-shifter",
+      "path": "/games/grok-20261106/game-keyart-baba-rule-shifter.webp",
+      "bytes": 18640,
+      "sha256": "5b570ed1271cb8a7b8dc521fb538687b4752ee672f06084360ac4b8a56b318e6"
+    },
+    {
+      "id": "game-keyart-backpack-hero",
+      "path": "/games/grok-20261106/game-keyart-backpack-hero.webp",
+      "bytes": 45508,
+      "sha256": "d5b66a685fc8331af75e42e629466e9cbf6ddd9fb3cb1a8dff7421c2c6f1dd41"
+    },
+    {
+      "id": "game-keyart-bad-north-tactics",
+      "path": "/games/grok-20261106/game-keyart-bad-north-tactics.webp",
+      "bytes": 21138,
+      "sha256": "234b55df8ebb8f44e58ffbaa18fcf9c720227377a5e64d268d553bd833d04528"
+    },
+    {
+      "id": "game-keyart-beat-slice-3d",
+      "path": "/games/grok-20261106/game-keyart-beat-slice-3d.webp",
+      "bytes": 12812,
+      "sha256": "8141c13f049b8fbf41a96fac2332d17964345154433c4aeec47174e140101d5f"
+    },
+    {
+      "id": "game-keyart-block-blast",
+      "path": "/games/grok-20261106/game-keyart-block-blast.webp",
+      "bytes": 24494,
+      "sha256": "9398ca8d6e2c3bafbb40de4004256a6b0c3dc80a56e0ca81a358028f05470dd7"
+    },
+    {
+      "id": "game-keyart-border-inspector",
+      "path": "/games/grok-20261106/game-keyart-border-inspector.webp",
+      "bytes": 27810,
+      "sha256": "1186dad2cbc6aea416c3226d99ffccb1f78ad03d1534ede933df1fe498d0c6c8"
+    },
+    {
+      "id": "game-keyart-candle-sacrifice",
+      "path": "/games/grok-20261106/game-keyart-candle-sacrifice.webp",
+      "bytes": 47514,
+      "sha256": "9584c49b4f3801dd1093475d8a90862e4039753931743314f1ce65240d9698c9"
+    },
+    {
+      "id": "game-keyart-card-surge",
+      "path": "/games/grok-20261106/game-keyart-card-surge.webp",
+      "bytes": 20554,
+      "sha256": "9ecc6cebd162e39f06fe9a3fbd3615293fc39bce7344eca06068ebf283830193"
+    },
+    {
+      "id": "game-keyart-chaos-kitchen",
+      "path": "/games/grok-20261106/game-keyart-chaos-kitchen.webp",
+      "bytes": 42804,
+      "sha256": "4b309bdcd88fab9bebcf9acd96b888d972e52209183908cd31d107d98563b384"
+    },
+    {
+      "id": "game-keyart-cheese-factory",
+      "path": "/games/grok-20261106/game-keyart-cheese-factory.webp",
+      "bytes": 31400,
+      "sha256": "8a37e67a09969e56527411280cdfac997d3ad0a58089c713d5769b20af6a6c7d"
+    },
+    {
+      "id": "game-keyart-chrono-detective",
+      "path": "/games/grok-20261106/game-keyart-chrono-detective.webp",
+      "bytes": 21528,
+      "sha256": "4f37fa57d6122de37ea32c32fb45ca12297eb9eee8ad4a20ef544c15adec8955"
+    },
+    {
+      "id": "game-keyart-cosmic-merge",
+      "path": "/games/grok-20261106/game-keyart-cosmic-merge.webp",
+      "bytes": 26586,
+      "sha256": "3bb8a25439f89a4c679c6cce3c2f49cd80ec307f13b8d1d4001af1b4d2c83d21"
+    },
+    {
+      "id": "game-keyart-cozy-glider",
+      "path": "/games/grok-20261106/game-keyart-cozy-glider.webp",
+      "bytes": 29760,
+      "sha256": "fd189307f403143ad02168b1b41324367967770bab9b85799bb1e3a2dd05e152"
+    },
+    {
+      "id": "game-keyart-crossy-road-3d",
+      "path": "/games/grok-20261106/game-keyart-crossy-road-3d.webp",
+      "bytes": 22154,
+      "sha256": "33e0104db2c4d18d05f23ae831ea4f09a8ae5ef3163d2fd75f32e0bb715b382c"
+    },
+    {
+      "id": "game-keyart-cyber-track",
+      "path": "/games/grok-20261106/game-keyart-cyber-track.webp",
+      "bytes": 14070,
+      "sha256": "c308f08446711b39a27205b0835f430984895bc4ce588941f2dcdb05c9fb7b0e"
+    },
+    {
+      "id": "game-keyart-darkest-torch",
+      "path": "/games/grok-20261106/game-keyart-darkest-torch.webp",
+      "bytes": 17716,
+      "sha256": "1a6172610afd23dde17a898601598882d53667adbe82a3d74b0d01c137435b0f"
+    },
+    {
+      "id": "game-keyart-dome-keeper",
+      "path": "/games/grok-20261106/game-keyart-dome-keeper.webp",
+      "bytes": 31178,
+      "sha256": "bd8c998446772bc0f0c8ea2a67a480007291ee31fa5134d8c25267ee07c0ca2c"
+    },
+    {
+      "id": "game-keyart-factorio-mini",
+      "path": "/games/grok-20261106/game-keyart-factorio-mini.webp",
+      "bytes": 24708,
+      "sha256": "df7d8b88c2dc2802fa67f2fc3ffd9d96d46c8cd0a8645de659ac4011f4d66714"
+    },
+    {
+      "id": "game-keyart-frostpunk-ring",
+      "path": "/games/grok-20261106/game-keyart-frostpunk-ring.webp",
+      "bytes": 15144,
+      "sha256": "fe2ee99ccd8732181803805b09463320ec85f43988ee398b3bb08ba0d47217df"
+    },
+    {
+      "id": "game-keyart-ftl-mini",
+      "path": "/games/grok-20261106/game-keyart-ftl-mini.webp",
+      "bytes": 19890,
+      "sha256": "1965a46c23b35f0109a8521cf5052604789e6cc06a86275f6a2855e4a21e2400"
+    },
+    {
+      "id": "game-keyart-gorogoa-frame",
+      "path": "/games/grok-20261106/game-keyart-gorogoa-frame.webp",
+      "bytes": 27064,
+      "sha256": "6d11c3d6a75d669a033d0e0e31d5f248eee23e6bf688aba3bd81eb8116253be1"
+    },
+    {
+      "id": "game-keyart-grappling-boss",
+      "path": "/games/grok-20261106/game-keyart-grappling-boss.webp",
+      "bytes": 29858,
+      "sha256": "f4ec449a2d0266b819307bf85a854b8d7b71cf463d900c17c8405e8ad832566c"
+    },
+    {
+      "id": "game-keyart-into-the-breach",
+      "path": "/games/grok-20261106/game-keyart-into-the-breach.webp",
+      "bytes": 15410,
+      "sha256": "c4eddb0b770bd5397cdee776f890191422a5f0f10b6dd4a2d6543d3fb0477e9b"
+    },
+    {
+      "id": "game-keyart-loop-hero",
+      "path": "/games/grok-20261106/game-keyart-loop-hero.webp",
+      "bytes": 23198,
+      "sha256": "366cc077ae0d0d4ef0182835f5cf2bc6e98e1e6c6a50785646f0ebdf826d1412"
+    },
+    {
+      "id": "game-keyart-merge-mansion",
+      "path": "/games/grok-20261106/game-keyart-merge-mansion.webp",
+      "bytes": 33600,
+      "sha256": "44e182526d2566bbc3cb20026128a126aa4a28ae86c9b3bdcdc1b0356f07649f"
+    },
+    {
+      "id": "game-keyart-mini-golf-3d",
+      "path": "/games/grok-20261106/game-keyart-mini-golf-3d.webp",
+      "bytes": 14840,
+      "sha256": "32428617aa2bb55f3a8b907e71a47095b1f268fac907161de9f613901b713886"
+    },
+    {
+      "id": "game-keyart-mini-metro",
+      "path": "/games/grok-20261106/game-keyart-mini-metro.webp",
+      "bytes": 29918,
+      "sha256": "23ef073285c2adc9bf6b15bc8aa0454046ddbf6863645677a9d3d576e57a345d"
+    },
+    {
+      "id": "game-keyart-mini-motorways",
+      "path": "/games/grok-20261106/game-keyart-mini-motorways.webp",
+      "bytes": 16360,
+      "sha256": "258997288525a4ab49302d5ca45a5eda92deda43b14864b0ed8c421063a67438"
+    },
+    {
+      "id": "game-keyart-neon-survivor",
+      "path": "/games/grok-20261106/game-keyart-neon-survivor.webp",
+      "bytes": 21970,
+      "sha256": "5e63fbe6fc3ed927f9f0368dc561f8fe1c3df563ac1efa62e086d1181f8beb58"
+    },
+    {
+      "id": "game-keyart-paper-flight-3d",
+      "path": "/games/grok-20261106/game-keyart-paper-flight-3d.webp",
+      "bytes": 15630,
+      "sha256": "991fe9361cd3814e13ff476fddcee2fa90f3c34a0d58f1d007ce877716d8e9ef"
+    },
+    {
+      "id": "game-keyart-peglin-rogue",
+      "path": "/games/grok-20261106/game-keyart-peglin-rogue.webp",
+      "bytes": 8858,
+      "sha256": "35dfef707c71aed83487e53400bf2932a04b270e4e22dfede75f09bcf810d1c7"
+    },
+    {
+      "id": "game-keyart-plague-mini",
+      "path": "/games/grok-20261106/game-keyart-plague-mini.webp",
+      "bytes": 26922,
+      "sha256": "5ffb0e85d4fb4533bae977967ae7a5b9c604e1e67e5b4ebb1a36271240dd1685"
+    },
+    {
+      "id": "game-keyart-poly-bridge",
+      "path": "/games/grok-20261106/game-keyart-poly-bridge.webp",
+      "bytes": 17682,
+      "sha256": "ad54b6b7e1cb843aea1f3f858dc57251085201e17b6b6ef4f7c28e7a9fafe603"
+    },
+    {
+      "id": "game-keyart-potion-craft",
+      "path": "/games/grok-20261106/game-keyart-potion-craft.webp",
+      "bytes": 32916,
+      "sha256": "7ce22944209c8424805f2b6de0c310c8923f4abf8c75c8926d8193f671950e98"
+    },
+    {
+      "id": "game-keyart-powerwash-3d",
+      "path": "/games/grok-20261106/game-keyart-powerwash-3d.webp",
+      "bytes": 18366,
+      "sha256": "26b18a48acd642acca78c5ab03877240ee63f05cf796db36756d4693f9a54a45"
+    },
+    {
+      "id": "game-keyart-sand-balls",
+      "path": "/games/grok-20261106/game-keyart-sand-balls.webp",
+      "bytes": 42816,
+      "sha256": "6aaf6df8272d2bfdaac90796d55a7e31f0c5be581ca13fb541f07a116b83982f"
+    },
+    {
+      "id": "game-keyart-shadow-stealth",
+      "path": "/games/grok-20261106/game-keyart-shadow-stealth.webp",
+      "bytes": 23738,
+      "sha256": "fd4445dd96b43426bc4a4f7bd7ce366c15b8bcadc0e9de5ab8b1ea46d08c6fe1"
+    },
+    {
+      "id": "game-keyart-shotgun-chess",
+      "path": "/games/grok-20261106/game-keyart-shotgun-chess.webp",
+      "bytes": 20438,
+      "sha256": "fca20a6c69700cb8e85bf1b7b51cb58dff3aa583d9dc5d188a4ebd141a64c41d"
+    },
+    {
+      "id": "game-keyart-slice-master",
+      "path": "/games/grok-20261106/game-keyart-slice-master.webp",
+      "bytes": 25276,
+      "sha256": "56b85da504ff4492d7127b2d1eec6bc81c7dbdc35978cc3d462769c44635ec6b"
+    },
+    {
+      "id": "game-keyart-slot-rogue",
+      "path": "/games/grok-20261106/game-keyart-slot-rogue.webp",
+      "bytes": 19478,
+      "sha256": "f54e1c882cd80bc0652a6f785aaac1fc83b7d8aa3f515d33611a9c73edac5116"
+    },
+    {
+      "id": "game-keyart-spell-tower",
+      "path": "/games/grok-20261106/game-keyart-spell-tower.webp",
+      "bytes": 10096,
+      "sha256": "db7f3367811711d9bff4c9abd285f279f1c5f9bcb43f508f700d26bfcc293f8f"
+    },
+    {
+      "id": "game-keyart-spire-rogue",
+      "path": "/games/grok-20261106/game-keyart-spire-rogue.webp",
+      "bytes": 83008,
+      "sha256": "833e8eca3d8e2bb2c8db7361543b0605c3ad51653a5fc745667d0dc0176e31d9"
+    },
+    {
+      "id": "game-keyart-stacklands-village",
+      "path": "/games/grok-20261106/game-keyart-stacklands-village.webp",
+      "bytes": 78504,
+      "sha256": "522390582e7d71fe08ca821d9b5584d28cdf095d5acb444ba58bce7cdca7d75b"
+    },
+    {
+      "id": "game-keyart-stanley-choice",
+      "path": "/games/grok-20261106/game-keyart-stanley-choice.webp",
+      "bytes": 15298,
+      "sha256": "79aaf9d14e5121299cfa12afd6f903a9cc592a6677d62f2aeb2085d5f92f68e9"
+    },
+    {
+      "id": "game-keyart-sticker-cozy",
+      "path": "/games/grok-20261106/game-keyart-sticker-cozy.webp",
+      "bytes": 20024,
+      "sha256": "89c2af936455ddaaf138eb8a7cd0fcb28cb3e8dd9c29de2a0d9a089a0a9f6c6a"
+    },
+    {
+      "id": "game-keyart-subway-runner",
+      "path": "/games/grok-20261106/game-keyart-subway-runner.webp",
+      "bytes": 11534,
+      "sha256": "9c3c1ffd7c8c18a4195b56642e676388edac2508f3fb7eb77cf0f57ffcb02147"
+    },
+    {
+      "id": "game-keyart-suika-drop",
+      "path": "/games/grok-20261106/game-keyart-suika-drop.webp",
+      "bytes": 17644,
+      "sha256": "df741426c34826baf253e87c011c4ff56f511a0c1d7a36abace2b40a9b91ef78"
+    },
+    {
+      "id": "game-keyart-sushi-conveyor",
+      "path": "/games/grok-20261106/game-keyart-sushi-conveyor.webp",
+      "bytes": 37056,
+      "sha256": "98d11e71ea11b1a6cd4df4eb5461e6db85bdac9c9d0016e501d98dc2f21c7c96"
+    },
+    {
+      "id": "game-keyart-swat-breach",
+      "path": "/games/grok-20261106/game-keyart-swat-breach.webp",
+      "bytes": 16384,
+      "sha256": "fb2ab7d82a77c7ce16704b73eb10eb206f2ac5943e6845ace6e82b084e2f652e"
+    },
+    {
+      "id": "game-keyart-townscaper-island",
+      "path": "/games/grok-20261106/game-keyart-townscaper-island.webp",
+      "bytes": 51364,
+      "sha256": "4d65500066802606652c208f6934076ed14c41e16f9e356a647b36579edbee9b"
+    },
+    {
+      "id": "game-keyart-vampire-survivor",
+      "path": "/games/grok-20261106/game-keyart-vampire-survivor.webp",
+      "bytes": 62628,
+      "sha256": "077e157baf7195d6bb68fc903b0c2ca637b93f8e18b997f6069e384e254a9422"
+    },
+    {
+      "id": "game-keyart-viking-longship",
+      "path": "/games/grok-20261106/game-keyart-viking-longship.webp",
+      "bytes": 78176,
+      "sha256": "e82fc21d5ec1b101d669098ab68589545065e1955e3358932109c276fb969b7b"
+    },
+    {
+      "id": "game-keyart-water-sort-3d",
+      "path": "/games/grok-20261106/game-keyart-water-sort-3d.webp",
+      "bytes": 33590,
+      "sha256": "a59e947810b29f7a2ab7dba7ca5145f9fdf0b575a74fd9492280d70aab659766"
+    },
+    {
+      "id": "game-keyart-word-waffle",
+      "path": "/games/grok-20261106/game-keyart-word-waffle.webp",
+      "bytes": 25680,
+      "sha256": "e1024db660f07d2a9661919c54e76707f56ebe41a8a7e1b3b3ae57186e32a2e4"
+    }
+  ]
+}

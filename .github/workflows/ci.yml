@@ -54,6 +54,9 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Generated image references and hashes
+        run: node scripts/check-grok-art.mjs
+
       # sitemap-submit only reads dist/sitemap*.xml. Handing those over costs a
       # few hundred KB and saves that job a second full site build.
       - name: Upload sitemap XML for the submit job
