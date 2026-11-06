@@ -23,7 +23,7 @@ import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import ScreenKingdomScene, { type FieldGlide } from "./ScreenKingdomScene";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
-import { getSpriteUrl } from "../../lib/games/sprites";
+import { getSpriteUrl, SCREEN_KINGDOM_UI_SPRITES } from "../../lib/games/sprites";
 import {
   createShareCardCanvas,
   copyShareCardToClipboard,
@@ -697,13 +697,18 @@ export default function ScreenKingdom({ locale = "en" }: { locale?: Locale }) {
     >
       <header className="flex items-start justify-between gap-4">
         <div className="space-y-1">
+          <div className="flex items-center gap-3 mb-2">
+            <img src={SCREEN_KINGDOM_UI_SPRITES.castle} alt="Castle" className="size-12 object-contain drop-shadow" />
+            <img src={SCREEN_KINGDOM_UI_SPRITES.crown} alt="Crown" className="size-12 object-contain drop-shadow" />
+            <img src={SCREEN_KINGDOM_UI_SPRITES.flag} alt="Flag" className="size-12 object-contain drop-shadow" />
+          </div>
           <h2 className="text-2xl font-semibold text-foreground flex items-center gap-2">
             <span>{copy.title}</span>
             {state.status === "win" && (
               <img
-                src={getSpriteUrl("trophy", 64)}
+                src={SCREEN_KINGDOM_UI_SPRITES.trophy}
                 alt="Clear"
-                className="size-7 inline-block animate-bounce drop-shadow"
+                className="size-8 inline-block animate-bounce drop-shadow object-contain"
               />
             )}
           </h2>

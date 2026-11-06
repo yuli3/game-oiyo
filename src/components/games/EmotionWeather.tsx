@@ -21,6 +21,7 @@ import {
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import EmotionWeatherScene, { type TownGlide } from "./EmotionWeatherScene";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { EMOTION_WEATHER_UI_SPRITES } from "../../lib/games/sprites";
 
 interface Copy {
   title: string;
@@ -649,7 +650,21 @@ export default function EmotionWeather({ locale = "en" }: { locale?: Locale }) {
   return (
     <div className="space-y-4" onPointerDown={arm}>
       <header className="space-y-2">
-        <h2 className="text-2xl font-semibold text-foreground">{copy.title}</h2>
+        <div className="flex items-center gap-3 mb-2">
+          <img src={EMOTION_WEATHER_UI_SPRITES.sun} alt="Sun Rainbow" className="size-12 object-contain drop-shadow" />
+          <img src={EMOTION_WEATHER_UI_SPRITES.cloud} alt="Rain Cloud" className="size-12 object-contain drop-shadow" />
+          <img src={EMOTION_WEATHER_UI_SPRITES.bolt} alt="Lightning Bolt" className="size-12 object-contain drop-shadow" />
+        </div>
+        <h2 className="text-2xl font-semibold text-foreground flex items-center gap-2">
+          <span>{copy.title}</span>
+          {state.status === "win" && (
+            <img
+              src={EMOTION_WEATHER_UI_SPRITES.trophy}
+              alt="Clear"
+              className="size-8 inline-block animate-bounce drop-shadow object-contain"
+            />
+          )}
+        </h2>
         <p className="text-sm leading-6 text-muted-foreground">{copy.lead}</p>
         <p className="text-xs leading-5 text-muted-foreground">{copy.keys}</p>
       </header>

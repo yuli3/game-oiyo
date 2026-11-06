@@ -17,7 +17,7 @@ import { useAudioContext } from '../../lib/games/use-audio-context';
 import { useClipboardShare } from '../../lib/games/use-clipboard-share';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
-import { getSpriteUrl } from '../../lib/games/sprites';
+import { getSpriteUrl, SHADOW_STEALTH_UI_SPRITES } from '../../lib/games/sprites';
 import {
   createShareCardCanvas,
   copyShareCardToClipboard,
@@ -479,7 +479,7 @@ export default function ShadowStealth() {
           <div className="space-y-0.5">
             <span className="text-xs font-medium text-muted-foreground">Infiltration Score</span>
             <div className="text-lg font-bold tabular-nums text-foreground flex items-center gap-1.5">
-              <img src={getSpriteUrl("trophy", 64)} alt="Score" className="size-5 inline-block" />
+              <img src={SHADOW_STEALTH_UI_SPRITES.trophy} alt="Score" className="size-6 inline-block object-contain drop-shadow" />
               <span>{gameState.score}</span>
             </div>
           </div>
@@ -513,9 +513,9 @@ export default function ShadowStealth() {
           {gameState.isVictory && (
             <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center p-4">
               <img
-                src={getSpriteUrl("trophy", 64)}
+                src={SHADOW_STEALTH_UI_SPRITES.trophy}
                 alt="Victory"
-                className="size-16 animate-bounce drop-shadow mb-2"
+                className="size-18 animate-bounce drop-shadow mb-2 object-contain"
               />
               <h3 className="text-xl font-bold text-foreground">Flawless Extraction!</h3>
               <p className="text-xs text-muted-foreground mt-1 max-w-sm text-center">
@@ -537,6 +537,11 @@ export default function ShadowStealth() {
 
           {gameState.isGameOver && (
             <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center p-4">
+              <img
+                src={SHADOW_STEALTH_UI_SPRITES.bomb}
+                alt="Smoke Bomb"
+                className="size-16 drop-shadow mb-2 object-contain animate-pulse"
+              />
               <h3 className="text-xl font-bold text-destructive">Shinobi Apprehended!</h3>
               <p className="text-xs text-muted-foreground mt-1">
                 The Samurai Guards cornered you in the corridor.

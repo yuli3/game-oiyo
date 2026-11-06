@@ -9,7 +9,7 @@ import { Maximize2, Minimize2, Volume2, VolumeX, Share2 } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
-import { getSpriteUrl } from "../../lib/games/sprites";
+import { getSpriteUrl, SENTENCE_DUNGEON_UI_SPRITES } from "../../lib/games/sprites";
 import {
   createShareCardCanvas,
   copyShareCardToClipboard,
@@ -754,13 +754,18 @@ export default function SentenceDungeon({ locale = "en" }: { locale?: Locale }) 
       <div className="w-full max-w-2xl mx-auto space-y-4">
         {renderHud()}
         <header className="space-y-2">
+          <div className="flex items-center gap-3 mb-2">
+            <img src={SENTENCE_DUNGEON_UI_SPRITES.rune} alt="Rune Stone" className="size-12 object-contain drop-shadow" />
+            <img src={SENTENCE_DUNGEON_UI_SPRITES.scroll} alt="Magic Scroll" className="size-12 object-contain drop-shadow" />
+            <img src={SENTENCE_DUNGEON_UI_SPRITES.book} alt="Book Tome" className="size-12 object-contain drop-shadow" />
+          </div>
           <h2 className="text-2xl font-semibold text-foreground flex items-center gap-2">
             <span>{copy.title}</span>
             {state.status === "win" && (
               <img
-                src={getSpriteUrl("trophy", 64)}
+                src={SENTENCE_DUNGEON_UI_SPRITES.trophy}
                 alt="Clear"
-                className="size-7 inline-block animate-bounce drop-shadow"
+                className="size-8 inline-block animate-bounce drop-shadow object-contain"
               />
             )}
           </h2>

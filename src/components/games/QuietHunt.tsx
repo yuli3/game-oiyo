@@ -28,7 +28,7 @@ import {
 } from "../../lib/games/quiet-hunt";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
-import { getSpriteUrl } from "../../lib/games/sprites";
+import { getSpriteUrl, QUIET_HUNT_UI_SPRITES } from "../../lib/games/sprites";
 import QuietHuntScene, { type FieldGlide } from "./QuietHuntScene";
 
 function TiltHuntButton({
@@ -709,6 +709,11 @@ export default function QuietHunt({ locale = "en" }: { locale?: Locale }) {
         >
           {isImmersive ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
         </button>
+        <div className="flex items-center gap-3 mb-2">
+          <img src={QUIET_HUNT_UI_SPRITES.cloak} alt="Leaf Cloak" className="size-12 object-contain drop-shadow" />
+          <img src={QUIET_HUNT_UI_SPRITES.bow} alt="Hunter Bow" className="size-12 object-contain drop-shadow" />
+          <img src={QUIET_HUNT_UI_SPRITES.track} alt="Footprint Track" className="size-12 object-contain drop-shadow" />
+        </div>
         <h2 className="text-2xl font-semibold text-foreground">{copy.title}</h2>
         <p className="text-sm leading-6 text-muted-foreground">{copy.lead}</p>
         <p className="text-xs leading-5 text-muted-foreground">{copy.keys}</p>
@@ -756,11 +761,11 @@ export default function QuietHunt({ locale = "en" }: { locale?: Locale }) {
       {state.status !== "play" && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="flex size-12 items-center justify-center rounded-xl bg-primary/20 p-1.5 shrink-0">
+            <div className="flex size-14 items-center justify-center rounded-xl bg-primary/20 p-1.5 shrink-0">
               <img
-                src={getSpriteUrl(state.status === "win" ? "trophy" : "star", 64)}
+                src={state.status === "win" ? QUIET_HUNT_UI_SPRITES.trophy : QUIET_HUNT_UI_SPRITES.track}
                 alt="Hunt Result"
-                className="size-8 object-contain"
+                className="size-10 object-contain drop-shadow"
                 draggable={false}
               />
             </div>

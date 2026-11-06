@@ -1630,6 +1630,112 @@ export const ISOMETRIC_CITY_UI_SPRITES = {
   trophy: "/assets/sprites/isometric-city/trophy-mayor-3d-128.png",
 } as const;
 
+export const SHADOW_STEALTH_UI_SPRITES = {
+  star: "/assets/sprites/shadow-stealth/ninja-star-3d-128.png",
+  bomb: "/assets/sprites/shadow-stealth/smoke-bomb-3d-128.png",
+  blade: "/assets/sprites/shadow-stealth/ninja-blade-3d-128.png",
+  trophy: "/assets/sprites/shadow-stealth/trophy-ninja-3d-128.png",
+} as const;
+
+export const SENTENCE_DUNGEON_UI_SPRITES = {
+  rune: "/assets/sprites/sentence-dungeon/rune-stone-3d-128.png",
+  scroll: "/assets/sprites/sentence-dungeon/magic-scroll-3d-128.png",
+  book: "/assets/sprites/sentence-dungeon/book-tome-3d-128.png",
+  trophy: "/assets/sprites/sentence-dungeon/trophy-dungeon-3d-128.png",
+} as const;
+
+export const SCREEN_KINGDOM_UI_SPRITES = {
+  castle: "/assets/sprites/screen-kingdom/castle-keep-3d-128.png",
+  crown: "/assets/sprites/screen-kingdom/gold-crown-3d-128.png",
+  flag: "/assets/sprites/screen-kingdom/knight-flag-3d-128.png",
+  trophy: "/assets/sprites/screen-kingdom/trophy-kingdom-3d-128.png",
+} as const;
+
+export const EMOTION_WEATHER_UI_SPRITES = {
+  sun: "/assets/sprites/emotion-weather/sun-rainbow-3d-128.png",
+  cloud: "/assets/sprites/emotion-weather/rain-cloud-3d-128.png",
+  bolt: "/assets/sprites/emotion-weather/lightning-bolt-3d-128.png",
+  trophy: "/assets/sprites/emotion-weather/trophy-weather-3d-128.png",
+} as const;
+
+export const QUIET_HUNT_UI_SPRITES = {
+  cloak: "/assets/sprites/quiet-hunt/leaf-cloak-3d-128.png",
+  bow: "/assets/sprites/quiet-hunt/hunter-bow-3d-128.png",
+  track: "/assets/sprites/quiet-hunt/footprint-track-3d-128.png",
+  trophy: "/assets/sprites/quiet-hunt/trophy-hunt-3d-128.png",
+} as const;
+
+export const MALLOW_ISLE_UI_SPRITES = {
+  mallow: "/assets/sprites/mallow-isle/marshmallow-cube-3d-128.png",
+  mug: "/assets/sprites/mallow-isle/cocoa-mug-3d-128.png",
+  fire: "/assets/sprites/mallow-isle/campfire-log-3d-128.png",
+  trophy: "/assets/sprites/mallow-isle/trophy-island-3d-128.png",
+} as const;
+
+export const HITORI_UI_SPRITES = {
+  tile: "/assets/sprites/hitori/black-tile-3d-128.png",
+  pencil: "/assets/sprites/hitori/eraser-pencil-3d-128.png",
+  tablet: "/assets/sprites/hitori/grid-tablet-3d-128.png",
+  trophy: "/assets/sprites/hitori/trophy-hitori-3d-128.png",
+} as const;
+
+export const LIGHT_UP_UI_SPRITES = {
+  bulb: "/assets/sprites/light-up/neon-bulb-3d-128.png",
+  mirror: "/assets/sprites/light-up/prism-mirror-3d-128.png",
+  battery: "/assets/sprites/light-up/battery-cell-3d-128.png",
+  trophy: "/assets/sprites/light-up/trophy-light-3d-128.png",
+} as const;
+
+export const KURODOKO_UI_SPRITES = {
+  blackCircle: "/assets/sprites/kurodoko/black-circle-3d-128.png",
+  whiteCircle: "/assets/sprites/kurodoko/white-circle-3d-128.png",
+  beacon: "/assets/sprites/kurodoko/laser-beacon-3d-128.png",
+  trophy: "/assets/sprites/kurodoko/trophy-kurodoko-3d-128.png",
+} as const;
+
+export const KOREAN_SEMANTLE_UI_SPRITES = {
+  cube: "/assets/sprites/korean-semantle/korean-cube-3d-128.png",
+  lens: "/assets/sprites/korean-semantle/semantic-lens-3d-128.png",
+  meter: "/assets/sprites/korean-semantle/temp-meter-3d-128.png",
+  trophy: "/assets/sprites/korean-semantle/trophy-semantle-3d-128.png",
+} as const;
+
+export const CARD_SURGE_UI_SPRITES = {
+  card: "/assets/sprites/card-surge/power-card-3d-128.png",
+  surge: "/assets/sprites/card-surge/energy-surge-3d-128.png",
+  orb: "/assets/sprites/card-surge/mana-orb-3d-128.png",
+  trophy: "/assets/sprites/card-surge/trophy-surge-3d-128.png",
+} as const;
+
+export const WATER_SORT_UI_SPRITES = {
+  flask: "/assets/sprites/water-sort/glass-flask-3d-128.png",
+  drop: "/assets/sprites/water-sort/color-drop-3d-128.png",
+  rack: "/assets/sprites/water-sort/test-rack-3d-128.png",
+  trophy: "/assets/sprites/water-sort/trophy-sort-3d-128.png",
+} as const;
+
+export const SPATIAL_MEMORY_UI_SPRITES = {
+  matrix: "/assets/sprites/spatial-memory/cube-matrix-3d-128.png",
+  brain: "/assets/sprites/spatial-memory/neuron-brain-3d-128.png",
+  beacon: "/assets/sprites/spatial-memory/hologram-beacon-3d-128.png",
+  trophy: "/assets/sprites/spatial-memory/trophy-memory-3d-128.png",
+} as const;
+
+export const BLACKOUT_COURIER_UI_SPRITES = {
+  lantern: "/assets/sprites/blackout-courier/lantern-light-3d-128.png",
+  bag: "/assets/sprites/blackout-courier/courier-bag-3d-128.png",
+  battery: "/assets/sprites/blackout-courier/battery-pack-3d-128.png",
+  trophy: "/assets/sprites/blackout-courier/trophy-courier-3d-128.png",
+} as const;
+
+export const WHEEL_SPINNER_UI_SPRITES = {
+  wheel: "/assets/sprites/wheel-spinner/roulette-wheel-3d-128.png",
+  coin: "/assets/sprites/wheel-spinner/lucky-coin-3d-128.png",
+  bell: "/assets/sprites/wheel-spinner/jackpot-bell-3d-128.png",
+  trophy: "/assets/sprites/wheel-spinner/trophy-lucky-3d-128.png",
+} as const;
+
+
 
 
 
