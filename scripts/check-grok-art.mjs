@@ -13,4 +13,8 @@ for(const asset of manifest.assets){
  assert.equal(createHash('sha256').update(readFileSync('public'+asset.path)).digest('hex'),asset.sha256);
  assert(found.has(asset.id),`No generated HTML references ${asset.id}`);
 }
+for(const lang of ['ko','en','ja','zh','fr','es']){
+ const home=readFileSync(`dist/${lang}/index.html`,'utf8');
+ for(const asset of manifest.assets)assert(home.includes(asset.id),`Home card missing ${lang}: ${asset.id}`);
+}
 console.log(`PASS: ${found.size} referenced assets and output hashes`);

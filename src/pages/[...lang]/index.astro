@@ -6,7 +6,7 @@ import type { Locale } from "../../lib/i18n";
 import gameArtDocument from "../../../config/game-art-v1.json";
 import { Image } from "astro:assets";
 import type { ImageMetadata } from "astro";
-const cardSources = import.meta.glob<ImageMetadata>(["../../../public/games/*.png", "../../../public/games/*-keyart.webp", "../../../public/prototypes/*.webp", "../../../public/assets/sprites/**/keyart.webp"], { eager: true, import: "default" });
+const cardSources = import.meta.glob<ImageMetadata>(["../../../public/games/*.png", "../../../public/games/grok-20261106/*.webp", "../../../public/games/*-keyart.webp", "../../../public/prototypes/*.webp", "../../../public/assets/sprites/**/keyart.webp"], { eager: true, import: "default" });
 const cardSource = (url: string) => cardSources[`../../../public${url}`];
 
 export async function getStaticPaths() {
