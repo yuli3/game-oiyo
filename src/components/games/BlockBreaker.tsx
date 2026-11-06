@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { celebrate } from '../../lib/games/celebration';
+import { BLOCK_BREAKER_UI_SPRITES } from '../../lib/games/sprites';
 import {
   createShareCardCanvas,
   copyShareCardToClipboard,
@@ -444,11 +445,12 @@ export default function BlockBreaker({ locale }: Props) {
           </div>
 
           <div className="flex items-center gap-1.5 rounded-xl border border-border bg-muted/40 px-3 py-1.5 text-xs font-bold text-foreground">
-            <Target className="w-4 h-4 text-primary" />
+            <img src={BLOCK_BREAKER_UI_SPRITES.brick} alt="" className="size-4 object-contain" />
             <span>{t.level} {gameState.level}</span>
           </div>
 
-          <div className="flex items-center gap-1 rounded-xl border border-border bg-muted/40 px-3 py-1.5 text-xs font-bold text-foreground">
+          <div className="flex items-center gap-1.5 rounded-xl border border-border bg-muted/40 px-3 py-1.5 text-xs font-bold text-foreground">
+            <img src={BLOCK_BREAKER_UI_SPRITES.ball} alt="" className="size-4 object-contain" />
             <Heart className="w-4 h-4 text-destructive fill-destructive" />
             <span>x{gameState.lives}</span>
           </div>
@@ -513,7 +515,7 @@ export default function BlockBreaker({ locale }: Props) {
         {/* Cleared Overlay */}
         {gameState.status === 'cleared' && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm p-4 text-center pointer-events-auto">
-            <Trophy className="w-12 h-12 text-warning mb-2 animate-bounce" />
+            <img src={BLOCK_BREAKER_UI_SPRITES.trophy} alt="" className="size-16 object-contain mb-2 animate-bounce drop-shadow-md" />
             <h3 className="text-2xl font-black text-foreground">{t.stageClear}</h3>
             <p className="mt-1 text-sm text-muted-foreground font-mono">
               {t.score}: {gameState.score.toLocaleString()}

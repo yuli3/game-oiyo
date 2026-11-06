@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { celebrate } from "../../lib/games/celebration";
+import { AIM_TRAINER_UI_SPRITES } from "../../lib/games/sprites";
 import { Maximize2, Minimize2, Share2, Volume2, VolumeX } from "lucide-react";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import type { Locale } from "../../lib/i18n";
@@ -1121,6 +1122,7 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
       {/* ── RESULT ── */}
       {phase === "result" && (
         <div className={`flex flex-col items-center gap-4 py-6 ${isImmersive ? "my-auto w-full max-w-md mx-auto" : ""}`}>
+          <img src={AIM_TRAINER_UI_SPRITES.trophy} alt="" className="size-16 object-contain drop-shadow-md animate-bounce" />
           {isNewBest && <div className="text-sm font-black text-violet-500">{t.newBest}</div>}
           <div className="flex flex-col items-center">
             <div className={`text-6xl font-black ${RANK_COLOR[rank]}`}>{rank}</div>

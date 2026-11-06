@@ -12,6 +12,7 @@ import {
 } from '../../lib/games/stack-tower';
 import { Trophy, RotateCcw, Volume2, VolumeX, Sparkles, Maximize2, Minimize2, Share2 } from 'lucide-react';
 import { celebrate } from '../../lib/games/celebration';
+import { STACK_TOWER_UI_SPRITES } from '../../lib/games/sprites';
 import {
   createShareCardCanvas,
   copyShareCardToClipboard,
@@ -340,8 +341,17 @@ export default function StackTower({ locale = 'ko' }: { locale?: string }) {
 
         {/* Live Score Overlay */}
         <div className="absolute top-4 left-4 pointer-events-none">
-          <div className="text-4xl sm:text-5xl font-black text-white/90 drop-shadow-md">
-            {score}
+          <div className="flex items-center gap-2">
+            <img src={STACK_TOWER_UI_SPRITES.slab} alt="" className="size-8 object-contain drop-shadow" />
+            <div className="text-4xl sm:text-5xl font-black text-white/90 drop-shadow-md">
+              {score}
+            </div>
+            {combo > 1 && (
+              <div className="flex items-center gap-1 bg-yellow-500/20 border border-yellow-400/40 px-2 py-0.5 rounded-full text-xs font-black text-yellow-300">
+                <img src={STACK_TOWER_UI_SPRITES.crown} alt="" className="size-3.5 object-contain" />
+                <span>x{combo}</span>
+              </div>
+            )}
           </div>
           <div className="text-xs font-semibold text-white/60 tracking-wider uppercase mt-1 flex items-center gap-1">
             <Trophy className="w-3 h-3 text-warning" />
@@ -377,6 +387,7 @@ export default function StackTower({ locale = 'ko' }: { locale?: string }) {
 
         {status === 'gameover' && (
           <div className="absolute inset-0 bg-black/60 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center text-white animate-in fade-in duration-200">
+            <img src={STACK_TOWER_UI_SPRITES.trophy} alt="" className="size-14 object-contain mb-2 animate-bounce drop-shadow-md" />
             <div className="text-destructive text-xs font-bold tracking-widest uppercase mb-1">
               GAME OVER
             </div>

@@ -8,6 +8,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { celebrate } from "../../lib/games/celebration";
+import { WHACK_A_MOLE_UI_SPRITES } from "../../lib/games/sprites";
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "../../lib/games/share-card";
 import { Share2, Check } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
@@ -549,13 +550,12 @@ const WhackAMole = ({ locale }: { locale: Locale }) => {
           >
             {!game ? (
               <>
-                <div className="w-16 h-16 bg-primary/10 rounded-3xl flex items-center justify-center mx-auto mb-2 border border-primary/20">
-                  <span className="text-3xl">⚡</span>
-                </div>
+                <img src={WHACK_A_MOLE_UI_SPRITES.mole} alt="" className="size-16 object-contain mx-auto mb-2 drop-shadow-md" />
                 <p className="max-w-xs text-xs leading-relaxed text-muted-foreground">{t.controls}</p>
               </>
             ) : (
               <>
+                <img src={WHACK_A_MOLE_UI_SPRITES.trophy} alt="" className="size-14 object-contain mx-auto mb-1 animate-bounce drop-shadow-md" />
                 <p className="text-xs font-black uppercase tracking-widest text-primary">
                   {game.score > 0 && game.score >= best ? t.newBest : t.over}
                 </p>

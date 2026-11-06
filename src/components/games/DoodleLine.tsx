@@ -8,6 +8,7 @@ import { Maximize2, Minimize2, Share2, Check } from "lucide-react";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import type { Locale } from "../../lib/i18n";
 import { celebrate } from "../../lib/games/celebration";
+import { DOODLE_LINE_UI_SPRITES } from "../../lib/games/sprites";
 import {
   createShareCardCanvas,
   copyShareCardToClipboard,
@@ -830,15 +831,19 @@ export default function DoodleLine({ locale = "en" }: { locale?: Locale }) {
       </div>
 
       <div className="grid grid-cols-2 gap-2 text-center text-sm">
-        <div className="rounded-xl bg-muted p-2">
-          <b>{copy.steps}</b>
-          <br />
-          <span className="tabular-nums">{state.steps}/{STEP_CAP}</span>
+        <div className="rounded-xl bg-muted p-2 flex flex-col items-center justify-center">
+          <div className="inline-flex items-center gap-1 font-bold text-xs text-muted-foreground">
+            <img src={DOODLE_LINE_UI_SPRITES.pen} alt="" className="size-3.5 object-contain" />
+            <span>{copy.steps}</span>
+          </div>
+          <span className="tabular-nums font-bold text-foreground">{state.steps}/{STEP_CAP}</span>
         </div>
-        <div className="rounded-xl bg-muted p-2">
-          <b>{copy.seed}</b>
-          <br />
-          <span className="tabular-nums">{seed}</span>
+        <div className="rounded-xl bg-muted p-2 flex flex-col items-center justify-center">
+          <div className="inline-flex items-center gap-1 font-bold text-xs text-muted-foreground">
+            <img src={DOODLE_LINE_UI_SPRITES.gem} alt="" className="size-3.5 object-contain" />
+            <span>{copy.seed}</span>
+          </div>
+          <span className="tabular-nums font-bold text-foreground">{seed}</span>
         </div>
       </div>
       <p className="text-sm text-muted-foreground">
@@ -854,23 +859,31 @@ export default function DoodleLine({ locale = "en" }: { locale?: Locale }) {
       </ol>
       <p role="status" aria-live="polite" className="text-sm text-foreground">{live}</p>
       {(state.status === "win" || state.status === "lose") && (
-        <div className="flex gap-2">
-          <TiltDoodleButton
-            onClick={handleShareCard}
-            className="flex-1 py-3 px-4 rounded-xl border border-border bg-card hover:bg-muted font-bold text-sm text-foreground transition-colors flex items-center justify-center gap-1.5 shadow-sm"
-          >
-            {shareCardCopied ? <Check className="w-4 h-4 text-primary" /> : <Share2 className="w-4 h-4" />}
-            {shareCardCopied ? "결과 복사 완료!" : "결과 카드 공유"}
-          </TiltDoodleButton>
-          <TiltDoodleButton
-            className="flex-1 py-3 px-4 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-sm hover:bg-primary/90 transition-colors"
-            onClick={() => {
-              arm();
-              load(nextSeed(seed));
-            }}
-          >
-            {copy.next}
-          </TiltDoodleButton>
+        <div className="space-y-2">
+          {state.status === "win" && (
+            <div className="flex items-center justify-center gap-2 p-2 rounded-xl bg-primary/10 border border-primary/20">
+              <img src={DOODLE_LINE_UI_SPRITES.trophy} alt="" className="size-6 object-contain animate-bounce" />
+              <span className="text-sm font-black text-primary">클리어 성공!</span>
+            </div>
+          )}
+          <div className="flex gap-2">
+            <TiltDoodleButton
+              onClick={handleShareCard}
+              className="flex-1 py-3 px-4 rounded-xl border border-border bg-card hover:bg-muted font-bold text-sm text-foreground transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+            >
+              {shareCardCopied ? <Check className="w-4 h-4 text-primary" /> : <Share2 className="w-4 h-4" />}
+              {shareCardCopied ? "결과 복사 완료!" : "결과 카드 공유"}
+            </TiltDoodleButton>
+            <TiltDoodleButton
+              className="flex-1 py-3 px-4 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-sm hover:bg-primary/90 transition-colors"
+              onClick={() => {
+                arm();
+                load(nextSeed(seed));
+              }}
+            >
+              {copy.next}
+            </TiltDoodleButton>
+          </div>
         </div>
       )}
       <div className={isImmersive ? "relative flex min-h-64 w-full flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-card" : "relative overflow-hidden rounded-2xl border border-border bg-card"}>
