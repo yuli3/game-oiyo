@@ -16,6 +16,7 @@ import {
   copyShareCardToClipboard,
   downloadShareCard,
 } from '../../lib/games/share-card';
+import { MARBLE_ROLL_UI_SPRITES } from '../../lib/games/sprites';
 
 interface Props {
   locale: Locale;
@@ -402,6 +403,22 @@ export default function MarbleRoll({ locale = 'ko' }: Props) {
         {/* Start / Cleared Screen Overlay */}
         {marble.status === 'ready' && (
           <div className="absolute inset-0 bg-background/60 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center">
+            <div className="flex items-center justify-center gap-3 mb-2">
+              <img
+                src={MARBLE_ROLL_UI_SPRITES.compass}
+                alt="Gyro Compass"
+                width={36}
+                height={36}
+                className="drop-shadow-sm opacity-90"
+              />
+              <img
+                src={MARBLE_ROLL_UI_SPRITES.opalMarble}
+                alt="3D Opal Marble"
+                width={48}
+                height={48}
+                className="drop-shadow-xl animate-pulse"
+              />
+            </div>
             <h3 className="text-2xl font-extrabold text-foreground mb-2">{t.title}</h3>
             <p className="text-xs text-muted-foreground max-w-md mb-6">{t.instructions}</p>
             <button
@@ -417,8 +434,31 @@ export default function MarbleRoll({ locale = 'ko' }: Props) {
         )}
 
         {marble.status === 'cleared' && (
-          <div className="absolute inset-0 bg-background/80 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center">
-            <Flag className="w-12 h-12 text-success mb-2 animate-bounce" />
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-center gap-3 mb-2">
+              <img
+                src={MARBLE_ROLL_UI_SPRITES.hole}
+                alt="Target Hole"
+                width={36}
+                height={36}
+                className="drop-shadow-sm opacity-90"
+              />
+              <div className="size-16 flex items-center justify-center rounded-2xl bg-primary/20 p-2 shadow-lg">
+                <img
+                  src={MARBLE_ROLL_UI_SPRITES.trophy}
+                  alt="Marble Master Trophy"
+                  className="size-12 object-contain animate-bounce"
+                  draggable={false}
+                />
+              </div>
+              <img
+                src={MARBLE_ROLL_UI_SPRITES.opalMarble}
+                alt="Opal Marble"
+                width={36}
+                height={36}
+                className="drop-shadow-sm opacity-90"
+              />
+            </div>
             <h3 className="text-2xl font-extrabold text-foreground mb-1">{t.clearedTitle}</h3>
             <p className="text-xs text-muted-foreground mb-4">{t.clearedDesc}</p>
             <div className="flex items-center gap-4 text-sm font-semibold text-foreground mb-6">

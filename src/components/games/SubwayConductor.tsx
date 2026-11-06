@@ -22,6 +22,7 @@ import {
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import SubwayConductorScene, { type LineGlide } from "./SubwayConductorScene";
+import { SUBWAY_CONDUCTOR_UI_SPRITES } from "../../lib/games/sprites";
 
 interface Copy {
   title: string;
@@ -693,7 +694,32 @@ export default function SubwayConductor({ locale = "en" }: { locale?: Locale }) 
         {" "}
         {spoken}
       </p>
-      <p role="status" aria-live="polite" className="text-sm text-foreground">{live}</p>
+      {state.status === "win" ? (
+        <div className="flex items-center justify-center gap-3 py-2 px-3 rounded-2xl bg-primary/10 border border-primary/30 text-center animate-in fade-in zoom-in-95">
+          <img
+            src={SUBWAY_CONDUCTOR_UI_SPRITES.train}
+            alt="Express Train"
+            width={36}
+            height={36}
+            className="drop-shadow-sm opacity-90"
+          />
+          <img
+            src={SUBWAY_CONDUCTOR_UI_SPRITES.trophy}
+            alt="Metro Captain Trophy"
+            width={48}
+            height={48}
+            className="drop-shadow-lg animate-bounce"
+          />
+          <img
+            src={SUBWAY_CONDUCTOR_UI_SPRITES.signal}
+            alt="Green Signal"
+            width={36}
+            height={36}
+            className="drop-shadow-sm opacity-90"
+          />
+        </div>
+      ) : null}
+      <p role="status" aria-live="polite" className="text-sm font-bold text-foreground">{live}</p>
       <div className="relative overflow-hidden rounded-2xl border border-border bg-card">
         <div className="h-96" aria-hidden="true">
           <SubwayConductorScene

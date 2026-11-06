@@ -24,7 +24,7 @@ import {
   downloadShareCard,
 } from '../../lib/games/share-card';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
-import { SUIKA_FRUIT_SPRITES, getSpriteUrl } from '../../lib/games/sprites';
+import { SUIKA_FRUIT_SPRITES, SUIKA_DROP_UI_SPRITES, getSpriteUrl } from '../../lib/games/sprites';
 import { Maximize2, Minimize2, Share2, Check } from 'lucide-react';
 
 function TiltSuikaButton({
@@ -630,19 +630,29 @@ export default function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
               className="block h-auto w-full max-w-sm cursor-pointer touch-none select-none"
             />
             {state.status === 'gameover' && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/90 p-6 text-center backdrop-blur-xs z-10">
-                <div className="relative flex size-20 items-center justify-center rounded-3xl bg-primary/20 p-2 mb-1 border border-primary/40 shadow-xl">
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/90 p-6 text-center backdrop-blur-xs z-10 animate-in fade-in zoom-in-95">
+                <div className="flex items-center justify-center gap-3 mb-1">
                   <img
-                    src={getSpriteUrl('trophy', 128)}
-                    alt="Trophy"
-                    className="size-14 object-contain animate-bounce"
-                    draggable={false}
+                    src={SUIKA_DROP_UI_SPRITES.melon}
+                    alt="Melon"
+                    width={36}
+                    height={36}
+                    className="drop-shadow-sm opacity-90"
                   />
+                  <div className="relative flex size-20 items-center justify-center rounded-3xl bg-primary/20 p-2 border border-primary/40 shadow-xl">
+                    <img
+                      src={SUIKA_DROP_UI_SPRITES.trophy}
+                      alt="Suika Merge Trophy"
+                      className="size-14 object-contain animate-bounce"
+                      draggable={false}
+                    />
+                  </div>
                   <img
-                    src={SUIKA_FRUIT_SPRITES[9]}
-                    alt="Watermelon"
-                    className="absolute -bottom-2 -right-2 size-8 object-contain drop-shadow"
-                    draggable={false}
+                    src={SUIKA_DROP_UI_SPRITES.watermelon}
+                    alt="Giant Watermelon"
+                    width={36}
+                    height={36}
+                    className="drop-shadow-sm opacity-90"
                   />
                 </div>
                 <h3 className="text-xl font-bold">{t.gameOverTitle}</h3>

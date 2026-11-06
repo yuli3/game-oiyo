@@ -22,7 +22,7 @@ import {
     type Difficulty,
     type FishState,
 } from '../../lib/games/cat-fishing';
-import { CAT_FISHING_KOI, CAT_FISHING_PAW } from '../../lib/games/sprites';
+import { CAT_FISHING_KOI, CAT_FISHING_PAW, CAT_FISHING_UI_SPRITES } from '../../lib/games/sprites';
 
 const BEST_KEY = 'oiyo-cat-fishing-best';
 
@@ -543,11 +543,28 @@ export default function CatFishing({ locale = 'ko' }: { locale?: string }) {
                             role="status"
                             aria-live="polite"
                         >
-                            <div className="size-16 mb-1 flex items-center justify-center">
+                            <div className="flex items-center justify-center gap-3 mb-1">
                                 <img
-                                    src={CAT_FISHING_PAW}
-                                    alt="Paw"
-                                    className="size-16 object-contain drop-shadow-xl animate-bounce"
+                                    src={CAT_FISHING_UI_SPRITES.bobber}
+                                    alt="Catnip Bobber"
+                                    width={38}
+                                    height={38}
+                                    className="drop-shadow-sm opacity-90"
+                                />
+                                <div className="size-16 flex items-center justify-center rounded-2xl bg-primary/20 p-2 shadow-lg">
+                                    <img
+                                        src={CAT_FISHING_UI_SPRITES.trophy}
+                                        alt="Cat Fishing Trophy"
+                                        className="size-12 object-contain animate-bounce"
+                                        draggable={false}
+                                    />
+                                </div>
+                                <img
+                                    src={CAT_FISHING_UI_SPRITES.fish}
+                                    alt="Salmon Catch"
+                                    width={38}
+                                    height={38}
+                                    className="drop-shadow-sm opacity-90"
                                 />
                             </div>
                             <h3 className="text-2xl sm:text-3xl font-black text-primary">{t.win}</h3>

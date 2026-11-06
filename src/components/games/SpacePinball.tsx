@@ -12,7 +12,7 @@ import type { Locale } from '../../lib/i18n';
 import { Play, RotateCcw, Trophy, CircleDot, Zap, Maximize2, Minimize2, Volume2, VolumeX, Share2, Check, Sparkles, AlertTriangle } from 'lucide-react';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
-import { getSpriteUrl } from '../../lib/games/sprites';
+import { getSpriteUrl, SPACE_PINBALL_UI_SPRITES } from '../../lib/games/sprites';
 import { celebrate } from '../../lib/games/celebration';
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from '../../lib/games/share-card';
 
@@ -542,12 +542,27 @@ export default function SpacePinball({ locale }: Props) {
         {/* Overlay for Idle / Game Over */}
         {gameState.status === "idle" && (
           <div className="absolute inset-0 bg-background/60 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center pointer-events-auto">
-            <div className="relative mb-3 flex size-16 items-center justify-center">
+            <div className="flex items-center justify-center gap-3 mb-3">
               <img
-                src={getSpriteUrl('star', 64)}
-                alt="Space Star"
-                className="size-16 object-contain drop-shadow-lg animate-pulse"
-                loading="lazy"
+                src={SPACE_PINBALL_UI_SPRITES.bumper}
+                alt="Pinball Bumper"
+                width={36}
+                height={36}
+                className="drop-shadow-sm opacity-90"
+              />
+              <img
+                src={SPACE_PINBALL_UI_SPRITES.chromeBall}
+                alt="Chrome Pinball"
+                width={48}
+                height={48}
+                className="drop-shadow-xl animate-pulse"
+              />
+              <img
+                src={SPACE_PINBALL_UI_SPRITES.flipper}
+                alt="Neon Flipper"
+                width={36}
+                height={36}
+                className="drop-shadow-sm opacity-90"
               />
             </div>
             <h2 className="text-2xl sm:text-3xl font-black text-foreground mb-2">
@@ -568,13 +583,29 @@ export default function SpacePinball({ locale }: Props) {
         )}
 
         {gameState.status === "gameover" && (
-          <div className="absolute inset-0 bg-background/80 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center pointer-events-auto">
-            <div className="relative mb-2 flex size-20 items-center justify-center">
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center pointer-events-auto animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-center gap-3 mb-2">
               <img
-                src={getSpriteUrl('trophy', 128)}
-                alt="Game Trophy"
-                className="size-20 object-contain drop-shadow-xl animate-bounce"
-                loading="lazy"
+                src={SPACE_PINBALL_UI_SPRITES.flipper}
+                alt="Neon Flipper"
+                width={38}
+                height={38}
+                className="drop-shadow-sm opacity-90"
+              />
+              <div className="relative flex size-20 items-center justify-center rounded-3xl bg-primary/20 p-2 border border-primary/40 shadow-xl">
+                <img
+                  src={SPACE_PINBALL_UI_SPRITES.trophy}
+                  alt="Pinball Wizard Trophy"
+                  className="size-14 object-contain animate-bounce"
+                  loading="lazy"
+                />
+              </div>
+              <img
+                src={SPACE_PINBALL_UI_SPRITES.chromeBall}
+                alt="Chrome Ball"
+                width={38}
+                height={38}
+                className="drop-shadow-sm opacity-90"
               />
             </div>
             <h2 className="text-3xl font-black text-destructive mb-1">{t.gameOver}</h2>
