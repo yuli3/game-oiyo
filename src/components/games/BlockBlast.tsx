@@ -18,6 +18,7 @@ import {
 import { playSyntheticTone } from "../../lib/games/audio-mixer";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import { Button } from "../ui/button";
+import { BLOCK_BLAST_UI_SPRITES } from "../../lib/games/sprites";
 
 interface BlockBlastProps {
   locale?: string;
@@ -298,9 +299,31 @@ export default function BlockBlast({ locale = "ko" }: BlockBlastProps) {
 
         {/* Game Over Modal */}
         {game.status === "game_over" && (
-          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-2xl bg-card/95 p-6 backdrop-blur-xs text-center">
-            <span className="text-5xl">💥</span>
-            <h2 className="mt-2 text-2xl font-black text-destructive">
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-2xl bg-card/95 p-6 backdrop-blur-xs text-center animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-center gap-3 mb-2">
+              <img
+                src={BLOCK_BLAST_UI_SPRITES.comboStar}
+                alt="Combo Star"
+                width={36}
+                height={36}
+                className="drop-shadow-sm opacity-90"
+              />
+              <img
+                src={BLOCK_BLAST_UI_SPRITES.trophy}
+                alt="Blast Master Trophy"
+                width={56}
+                height={56}
+                className="drop-shadow-lg animate-bounce"
+              />
+              <img
+                src={BLOCK_BLAST_UI_SPRITES.blockTrio}
+                alt="3D Trio Block"
+                width={36}
+                height={36}
+                className="drop-shadow-sm opacity-90"
+              />
+            </div>
+            <h2 className="mt-1 text-2xl font-black text-destructive">
               {locale === "ko" ? "게임 오버" : "Game Over"}
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">

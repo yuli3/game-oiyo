@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import RetroHighwayScene from './RetroHighwayScene';
 import { useGhostTimeAttackPro, useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
-import { getSpriteUrl } from '../../lib/games/sprites';
+import { getSpriteUrl, RETRO_HIGHWAY_UI_SPRITES } from '../../lib/games/sprites';
 import {
   type HighwayState,
   type HighwayInput,
@@ -525,6 +525,22 @@ export default function RetroHighway({ locale = 'ko' }: Props) {
         {/* Ready Overlay */}
         {state.player.status === 'ready' && (
           <div className="absolute inset-0 bg-background/60 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center">
+            <div className="flex items-center justify-center gap-3 mb-2">
+              <img
+                src={RETRO_HIGHWAY_UI_SPRITES.sunset}
+                alt="Retro Sunset"
+                width={40}
+                height={40}
+                className="drop-shadow-sm opacity-90"
+              />
+              <img
+                src={RETRO_HIGHWAY_UI_SPRITES.carRetro}
+                alt="80s Retro Sports Car"
+                width={48}
+                height={48}
+                className="drop-shadow-md"
+              />
+            </div>
             <h3 className="text-2xl font-extrabold text-foreground mb-2">{t.title}</h3>
             <p className="text-xs text-muted-foreground max-w-md mb-6">{t.instructions}</p>
             <button
@@ -542,8 +558,29 @@ export default function RetroHighway({ locale = 'ko' }: Props) {
         {/* Crash / Game Over Overlay */}
         {state.player.status === 'gameover' && (
           <div className="absolute inset-0 bg-background/80 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center">
-            <div className="flex size-14 items-center justify-center rounded-2xl bg-destructive/20 p-2 mb-2">
-              <ShieldAlert className="w-10 h-10 text-destructive" />
+            <div className="flex items-center justify-center gap-3 mb-2">
+              <img
+                src={RETRO_HIGHWAY_UI_SPRITES.speedometer}
+                alt="Turbo Speedometer"
+                width={36}
+                height={36}
+                className="drop-shadow-sm opacity-90"
+              />
+              <div className="flex size-16 items-center justify-center rounded-2xl bg-destructive/20 p-2 shadow-lg">
+                <img
+                  src={RETRO_HIGHWAY_UI_SPRITES.trophy}
+                  alt="OutRun Highway Trophy"
+                  className="size-12 object-contain animate-bounce"
+                  draggable={false}
+                />
+              </div>
+              <img
+                src={RETRO_HIGHWAY_UI_SPRITES.carRetro}
+                alt="Sports Car"
+                width={36}
+                height={36}
+                className="drop-shadow-sm opacity-90"
+              />
             </div>
             <h3 className="text-2xl font-extrabold text-foreground mb-1">{t.crashTitle}</h3>
             <p className="text-xs text-muted-foreground mb-4">{t.crashDesc}</p>

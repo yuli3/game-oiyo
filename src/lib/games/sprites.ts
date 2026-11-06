@@ -1398,5 +1398,94 @@ export const FREECELL_UI_SPRITES = {
   trophy: "/assets/sprites/freecell/trophy-freecell-3d-128.png",
 } as const;
 
+export const HEARTS_GAME_UI_SPRITES = {
+  queen: "/assets/sprites/hearts-game/queen-spades-3d-128.png",
+  heart: "/assets/sprites/hearts-game/heart-ruby-3d-128.png",
+  moon: "/assets/sprites/hearts-game/moon-shooting-3d-128.png",
+  trophy: "/assets/sprites/hearts-game/trophy-hearts-3d-128.png",
+} as const;
+
+export const JANGGI_BOARD_UI_SPRITES = {
+  cho: "/assets/sprites/janggi-board/general-cho-3d-128.png",
+  han: "/assets/sprites/janggi-board/general-han-3d-128.png",
+  sang: "/assets/sprites/janggi-board/horse-sang-3d-128.png",
+  trophy: "/assets/sprites/janggi-board/trophy-janggi-3d-128.png",
+} as const;
+
+export const MAHJONG_UI_SPRITES = {
+  dragon: "/assets/sprites/mahjong/tile-dragon-3d-128.png",
+  stick: "/assets/sprites/mahjong/stick-riichi-3d-128.png",
+  riichiStick: "/assets/sprites/mahjong/stick-riichi-3d-128.png",
+  bamboo: "/assets/sprites/mahjong/tile-bamboo-3d-128.png",
+  trophy: "/assets/sprites/mahjong/trophy-mahjong-3d-128.png",
+} as const;
+
+export const DOMINOES_UI_SPRITES = {
+  doubleSix: "/assets/sprites/dominoes/tile-double-six-3d-128.png",
+  tileDoubleSix: "/assets/sprites/dominoes/tile-double-six-3d-128.png",
+  spinner: "/assets/sprites/dominoes/spinner-brass-3d-128.png",
+  spinnerPin: "/assets/sprites/dominoes/spinner-brass-3d-128.png",
+  chain: "/assets/sprites/dominoes/tile-chain-3d-128.png",
+  chainLink: "/assets/sprites/dominoes/tile-chain-3d-128.png",
+  trophy: "/assets/sprites/dominoes/trophy-domino-3d-128.png",
+} as const;
+
+export const YAHTZEE_UI_SPRITES = {
+  dice: "/assets/sprites/yahtzee/dice-gold-3d-128.png",
+  goldDice: "/assets/sprites/yahtzee/dice-gold-3d-128.png",
+  cup: "/assets/sprites/yahtzee/cup-shaker-3d-128.png",
+  diceCup: "/assets/sprites/yahtzee/cup-shaker-3d-128.png",
+  scorecard: "/assets/sprites/yahtzee/card-scorecard-3d-128.png",
+  trophy: "/assets/sprites/yahtzee/trophy-yahtzee-3d-128.png",
+} as const;
+
+export const PUZZLE15_UI_SPRITES = {
+  numberTile: "/assets/sprites/puzzle15/tile-number-3d-128.png",
+  tileBevel: "/assets/sprites/puzzle15/tile-number-3d-128.png",
+  frame: "/assets/sprites/puzzle15/grid-frame-3d-128.png",
+  stopwatch: "/assets/sprites/puzzle15/stopwatch-steps-3d-128.png",
+  trophy: "/assets/sprites/puzzle15/trophy-puzzle15-3d-128.png",
+} as const;
+
+export const BLOCK_BLAST_UI_SPRITES = {
+  trio: "/assets/sprites/block-blast/block-trio-3d-128.png",
+  blockTrio: "/assets/sprites/block-blast/block-trio-3d-128.png",
+  combo: "/assets/sprites/block-blast/blast-combo-3d-128.png",
+  comboStar: "/assets/sprites/block-blast/blast-combo-3d-128.png",
+  cleared: "/assets/sprites/block-blast/grid-cleared-3d-128.png",
+  clearRim: "/assets/sprites/block-blast/grid-cleared-3d-128.png",
+  trophy: "/assets/sprites/block-blast/trophy-blast-3d-128.png",
+} as const;
+
+export const RHYTHM_TAP_UI_SPRITES = {
+  key: "/assets/sprites/rhythm-tap/key-piano-3d-128.png",
+  keyboard: "/assets/sprites/rhythm-tap/key-piano-3d-128.png",
+  note: "/assets/sprites/rhythm-tap/note-musical-3d-128.png",
+  noteHolo: "/assets/sprites/rhythm-tap/note-musical-3d-128.png",
+  fever: "/assets/sprites/rhythm-tap/gauge-fever-3d-128.png",
+  feverGauge: "/assets/sprites/rhythm-tap/gauge-fever-3d-128.png",
+  trophy: "/assets/sprites/rhythm-tap/trophy-rhythm-3d-128.png",
+} as const;
+
+export const RETRO_HIGHWAY_UI_SPRITES = {
+  car: "/assets/sprites/retro-highway/car-sports-3d-128.png",
+  carRetro: "/assets/sprites/retro-highway/car-sports-3d-128.png",
+  palm: "/assets/sprites/retro-highway/palm-sunset-3d-128.png",
+  sunset: "/assets/sprites/retro-highway/palm-sunset-3d-128.png",
+  speedo: "/assets/sprites/retro-highway/speedo-turbo-3d-128.png",
+  speedometer: "/assets/sprites/retro-highway/speedo-turbo-3d-128.png",
+  trophy: "/assets/sprites/retro-highway/trophy-highway-3d-128.png",
+} as const;
+
+export const TENTS_AND_TREES_UI_SPRITES = {
+  tent: "/assets/sprites/tents-and-trees/tent-safari-3d-128.png",
+  tentSafari: "/assets/sprites/tents-and-trees/tent-safari-3d-128.png",
+  tree: "/assets/sprites/tents-and-trees/tree-pine-3d-128.png",
+  pineTree: "/assets/sprites/tents-and-trees/tree-pine-3d-128.png",
+  grass: "/assets/sprites/tents-and-trees/grass-cleared-3d-128.png",
+  trophy: "/assets/sprites/tents-and-trees/trophy-camping-3d-128.png",
+} as const;
+
+
 
 

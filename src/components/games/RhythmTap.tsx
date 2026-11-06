@@ -8,7 +8,7 @@ import { getBest, recordBest } from "../../lib/games/records";
 import { frameDeltaSeconds } from "../../lib/games/time-contracts";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
-import { getSpriteUrl } from "../../lib/games/sprites";
+import { getSpriteUrl, RHYTHM_TAP_UI_SPRITES } from "../../lib/games/sprites";
 import {
   GOOD_MS,
   beatToSeconds,
@@ -445,12 +445,28 @@ const RhythmTap: React.FC<Props> = ({ locale }) => {
               onPointerDown={(e) => { e.preventDefault(); begin(); }}>
               {phase === "over" && (
                 <div role="status" aria-live="polite" className="flex flex-col items-center">
-                  <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/20 p-2 mb-2">
+                  <div className="flex items-center justify-center gap-3 mb-2">
                     <img
-                      src={getSpriteUrl('trophy', 64)}
-                      alt="Game Over"
-                      className="size-10 object-contain"
-                      draggable={false}
+                      src={RHYTHM_TAP_UI_SPRITES.feverGauge}
+                      alt="Fever Gauge"
+                      width={38}
+                      height={38}
+                      className="drop-shadow-sm opacity-90"
+                    />
+                    <div className="flex size-16 items-center justify-center rounded-2xl bg-primary/20 p-2 shadow-lg">
+                      <img
+                        src={RHYTHM_TAP_UI_SPRITES.trophy}
+                        alt="Beat Master Trophy"
+                        className="size-12 object-contain animate-bounce"
+                        draggable={false}
+                      />
+                    </div>
+                    <img
+                      src={RHYTHM_TAP_UI_SPRITES.noteHolo}
+                      alt="Hologram Note"
+                      width={38}
+                      height={38}
+                      className="drop-shadow-sm opacity-90"
                     />
                   </div>
                   {isNewBest && <div className="text-sm font-black text-primary">{t.newBest}</div>}
@@ -460,12 +476,20 @@ const RhythmTap: React.FC<Props> = ({ locale }) => {
               )}
               {phase === "menu" && (
                 <div className="flex flex-col items-center">
-                  <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/20 p-2 mb-2">
+                  <div className="flex items-center justify-center gap-2 mb-2">
                     <img
-                      src={getSpriteUrl('star', 64)}
-                      alt="Rhythm Star"
-                      className="size-10 object-contain"
-                      draggable={false}
+                      src={RHYTHM_TAP_UI_SPRITES.keyboard}
+                      alt="Neon Synth Keyboard"
+                      width={44}
+                      height={44}
+                      className="drop-shadow-sm"
+                    />
+                    <img
+                      src={RHYTHM_TAP_UI_SPRITES.noteHolo}
+                      alt="Hologram Beat Note"
+                      width={36}
+                      height={36}
+                      className="drop-shadow-sm"
                     />
                   </div>
                   <p className="max-w-xs text-xs leading-relaxed text-white/80">{t.controls}</p>

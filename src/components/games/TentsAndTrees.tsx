@@ -42,7 +42,7 @@ import {
     visibleHint,
     type ChaosAugmentId,
 } from '../../lib/games/tents-chaos';
-import { TENTS_SPRITES } from '../../lib/games/sprites';
+import { TENTS_SPRITES, TENTS_AND_TREES_UI_SPRITES } from '../../lib/games/sprites';
 import { tentsAnalyticsPayload, type TentsAnalyticsEvent } from '../../lib/games/tents-analytics';
 import { Maximize2, Minimize2, Volume2, VolumeX, Calendar, Share2 } from 'lucide-react';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
@@ -981,7 +981,31 @@ const TentsAndTrees: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
                 <div className="mt-4 min-h-8 text-center" role="status" aria-live="polite">
                     {validation.complete ? (
-                        <div className="animate-fade-up motion-reduce:animate-none">
+                        <div className="animate-fade-up motion-reduce:animate-none flex flex-col items-center">
+                            <div className="flex items-center justify-center gap-3 mb-2">
+                                <img
+                                    src={TENTS_AND_TREES_UI_SPRITES.pineTree}
+                                    alt="Pine Tree"
+                                    width={36}
+                                    height={36}
+                                    className="drop-shadow-sm opacity-90"
+                                />
+                                <div className="flex size-16 items-center justify-center rounded-2xl bg-primary/20 p-2 shadow-lg">
+                                    <img
+                                        src={TENTS_AND_TREES_UI_SPRITES.trophy}
+                                        alt="Camping Master Trophy"
+                                        className="size-12 object-contain animate-bounce"
+                                        draggable={false}
+                                    />
+                                </div>
+                                <img
+                                    src={TENTS_AND_TREES_UI_SPRITES.tentSafari}
+                                    alt="Safari Tent"
+                                    width={36}
+                                    height={36}
+                                    className="drop-shadow-sm opacity-90"
+                                />
+                            </div>
                             <p className="text-xl font-black text-success mb-3">🎉 {t.win}</p>
                             <div className="flex flex-wrap justify-center gap-2 mb-2">
                                 <button

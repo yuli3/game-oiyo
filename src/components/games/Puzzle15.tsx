@@ -8,7 +8,7 @@ import { getBestForConditions, recordBestForConditions, type BestConditions } fr
 import { clearPuzzle15Save, loadPuzzle15Save, storePuzzle15Save } from '../../lib/games/active-game-save';
 import { elapsedSeconds } from '../../lib/games/time-contracts';
 import { indexToRowCol } from '../../lib/games/piece-tween';
-import { PUZZLE15_SPRITES, getSpriteUrl } from '../../lib/games/sprites';
+import { PUZZLE15_SPRITES, PUZZLE15_UI_SPRITES, getSpriteUrl } from '../../lib/games/sprites';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import { celebrate } from '../../lib/games/celebration';
 import {
@@ -329,13 +329,29 @@ const Puzzle15: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     ))}
 
                     {won && (
-                        <div className={`absolute inset-0 z-10 bg-background/80 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center gap-3 ${!reducedMotion ? 'animate-in fade-in zoom-in-95' : ''}`} role="status" aria-live="polite">
-                            <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/20 p-2">
+                        <div className={`absolute inset-0 z-10 bg-background/80 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center gap-3 p-4 ${!reducedMotion ? 'animate-in fade-in zoom-in-95' : ''}`} role="status" aria-live="polite">
+                            <div className="flex items-center justify-center gap-3">
                                 <img
-                                    src={getSpriteUrl('trophy', 64)}
-                                    alt="Puzzle Solved"
-                                    className="size-10 object-contain"
-                                    draggable={false}
+                                    src={PUZZLE15_UI_SPRITES.stopwatch}
+                                    alt="Speedrun Stopwatch"
+                                    width={36}
+                                    height={36}
+                                    className="drop-shadow-sm opacity-90"
+                                />
+                                <div className="flex size-16 items-center justify-center rounded-2xl bg-primary/20 p-2 shadow-lg">
+                                    <img
+                                        src={PUZZLE15_UI_SPRITES.trophy}
+                                        alt="Slide Master Trophy"
+                                        className="size-12 object-contain animate-bounce"
+                                        draggable={false}
+                                    />
+                                </div>
+                                <img
+                                    src={PUZZLE15_UI_SPRITES.tileBevel}
+                                    alt="Beveled Puzzle Tile"
+                                    width={36}
+                                    height={36}
+                                    className="drop-shadow-sm opacity-90"
                                 />
                             </div>
                             <p className="text-2xl font-black text-primary">🎉 {t.win}</p>
