@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState, useCallback, type CSSProperties } f
 import { Maximize2, Minimize2, Volume2, VolumeX, Share2, Check } from 'lucide-react';
 import type { Locale } from '../../lib/i18n';
 import { celebrate } from '../../lib/games/celebration';
+import { JANGGI_BOARD_UI_SPRITES } from '../../lib/games/sprites';
 import {
     createShareCardCanvas,
     copyShareCardToClipboard,
@@ -467,6 +468,7 @@ const JanggiBoard: React.FC<{ locale?: Locale }> = ({ locale = 'ko' }) => {
                 {winner && (
                     <div className={`absolute inset-0 z-20 bg-background/60 backdrop-blur-xs flex flex-col items-center justify-center ${!reducedMotion ? 'animate-in fade-in zoom-in-95' : ''}`} role="status" aria-live="polite">
                         <div className="bg-card p-8 rounded-3xl shadow-xl border border-border text-center">
+                            <img src={JANGGI_BOARD_UI_SPRITES.trophy} alt="" className="size-16 object-contain mx-auto mb-3 drop-shadow-md animate-bounce" />
                             <h4 className="text-3xl font-black text-foreground mb-2">{winLabel}</h4>
                             <p className="text-muted-foreground mb-6 uppercase tracking-widest font-bold text-xs">{t.over}</p>
                             <p className="text-sm text-muted-foreground mb-4">{game.moves} {x.moves} · {analysis.captures} {x.captures} · {analysis.mobility} {x.mobility}</p>

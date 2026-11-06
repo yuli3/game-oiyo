@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { GameContainer } from "../ui/game/GamePrimitives";
-import { pipSprite } from "../../lib/games/sprites";
+import { pipSprite, DOMINOES_UI_SPRITES } from "../../lib/games/sprites";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import type { Locale } from "../../lib/i18n";
 import {
@@ -408,7 +408,40 @@ const Dominoes: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
         </div>
 
         {game.winner && (
-          <div className={`absolute inset-0 z-20 bg-background/80 backdrop-blur-md rounded-4xl flex flex-col items-center justify-center ${!reducedMotion ? "animate-in fade-in zoom-in-95" : ""}`}>
+          <div className={`absolute inset-0 z-20 bg-background/80 backdrop-blur-md rounded-4xl flex flex-col items-center justify-center p-4 ${!reducedMotion ? "animate-in fade-in zoom-in-95" : ""}`}>
+            {game.winner === "you" ? (
+              <div className="flex items-center gap-3 mb-2">
+                <img
+                  src={DOMINOES_UI_SPRITES.tileDoubleSix}
+                  alt="Double Six Tile"
+                  width={38}
+                  height={38}
+                  className="drop-shadow-sm opacity-90"
+                />
+                <img
+                  src={DOMINOES_UI_SPRITES.trophy}
+                  alt="Domino Champion Trophy"
+                  width={60}
+                  height={60}
+                  className="drop-shadow-lg animate-bounce"
+                />
+                <img
+                  src={DOMINOES_UI_SPRITES.spinnerPin}
+                  alt="Brass Spinner Pin"
+                  width={38}
+                  height={38}
+                  className="drop-shadow-sm opacity-90"
+                />
+              </div>
+            ) : (
+              <img
+                src={DOMINOES_UI_SPRITES.chainLink}
+                alt="Domino Chain"
+                width={44}
+                height={44}
+                className="opacity-70 drop-shadow-sm mb-2"
+              />
+            )}
             <h4 className="text-3xl font-black text-primary mb-2">
               {game.winner === "you" ? `🎉 ${t.youWin}` : game.winner === "cpu" ? t.cpuWins : t.blockDraw}
             </h4>

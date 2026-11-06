@@ -11,6 +11,7 @@ import { celebrate } from '../../lib/games/celebration';
 import { copyShareCardToClipboard, createShareCardCanvas, downloadShareCard } from '../../lib/games/share-card';
 import { Maximize2, Minimize2, Share2, Volume2, VolumeX } from 'lucide-react';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { YAHTZEE_UI_SPRITES } from '../../lib/games/sprites';
 
 const BEST_KEY = 'oiyo-yahtzee-best';
 const ROLL_MS = 500;
@@ -419,7 +420,30 @@ const Yahtzee: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 </div>
 
                 {state.isGameOver ? (
-                    <div className="py-10 text-center space-y-4 animate-fade-up motion-reduce:animate-none" role="status" aria-live="polite">
+                    <div className="py-10 text-center space-y-4 animate-fade-up motion-reduce:animate-none flex flex-col items-center" role="status" aria-live="polite">
+                        <div className="flex items-center justify-center gap-3 mb-1">
+                            <img
+                                src={YAHTZEE_UI_SPRITES.diceCup}
+                                alt="Leather Dice Cup"
+                                width={40}
+                                height={40}
+                                className="drop-shadow-sm opacity-90"
+                            />
+                            <img
+                                src={YAHTZEE_UI_SPRITES.trophy}
+                                alt="Yahtzee Master Trophy"
+                                width={60}
+                                height={60}
+                                className="drop-shadow-lg animate-bounce"
+                            />
+                            <img
+                                src={YAHTZEE_UI_SPRITES.goldDice}
+                                alt="Golden 3D Dice"
+                                width={40}
+                                height={40}
+                                className="drop-shadow-sm opacity-90"
+                            />
+                        </div>
                         <h4 className="text-2xl font-black text-foreground">{t.gameOver}</h4>
                         <p className="text-4xl font-black text-primary">{state.scorecard.totalScore}</p>
                         <div className="mx-auto max-w-sm rounded-2xl border border-border bg-muted/30 p-4 text-left text-sm">

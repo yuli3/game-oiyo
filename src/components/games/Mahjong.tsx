@@ -27,7 +27,7 @@ import {
 import { clearMahjongSave, loadMahjongSave, storeMahjongSave } from "../../lib/games/mahjong-save";
 import { getRecord, recordResult, type GameRecord } from "../../lib/games/records";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
-import { MAHJONG_SPRITES, mahjongTileSrc, getSpriteUrl } from "../../lib/games/sprites";
+import { MAHJONG_SPRITES, MAHJONG_UI_SPRITES, mahjongTileSrc, getSpriteUrl } from "../../lib/games/sprites";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 
@@ -437,17 +437,41 @@ const Mahjong: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
         {/* Status */}
         <div className="text-center min-h-6 flex flex-col items-center justify-center">
           {over ? (
-            <div className="flex flex-col items-center gap-1">
-              {s.winner === 0 && (
+            <div className="flex flex-col items-center gap-1.5">
+              {s.winner === 0 ? (
+                <div className="flex items-center gap-2">
+                  <img
+                    src={MAHJONG_UI_SPRITES.riichiStick}
+                    alt="Riichi Stick"
+                    width={32}
+                    height={32}
+                    className="drop-shadow-sm opacity-90"
+                  />
+                  <img
+                    src={MAHJONG_UI_SPRITES.trophy}
+                    alt="Mahjong Grandmaster Trophy"
+                    width={52}
+                    height={52}
+                    className="drop-shadow-lg animate-bounce"
+                  />
+                  <img
+                    src={MAHJONG_UI_SPRITES.dragon}
+                    alt="Dragon Tile"
+                    width={32}
+                    height={32}
+                    className="drop-shadow-sm opacity-90"
+                  />
+                </div>
+              ) : (
                 <img
-                  src={getSpriteUrl('trophy', 64)}
-                  alt="Victory Trophy"
-                  width={44}
-                  height={44}
-                  className="drop-shadow-md animate-bounce"
+                  src={MAHJONG_UI_SPRITES.bamboo}
+                  alt="Bamboo Tile"
+                  width={36}
+                  height={36}
+                  className="opacity-60 drop-shadow-sm"
                 />
               )}
-              <span className="text-lg font-black">
+              <span className="text-lg font-black tracking-tight">
                 {s.winner === 0 ? `🎉 ${t.youWin}` : s.winner === -1 ? t.exhaust
                   : `${t.ai} ${s.winner}${t.aiWin} (${s.winType === "tsumo" ? t.byTsumo : t.byRon})`}
               </span>

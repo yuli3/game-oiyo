@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Camera, Check, Maximize2, Minimize2, Sparkles, Volume2, VolumeX } from "lucide-react";
 import { celebrate } from "../../lib/games/celebration";
+import { HEARTS_GAME_UI_SPRITES } from "../../lib/games/sprites";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import { copyShareCardToClipboard, createShareCardCanvas, downloadShareCard } from "../../lib/games/share-card";
 import { GameContainer, PlayingCard } from "../ui/game/GamePrimitives";
@@ -381,10 +382,11 @@ const HeartsGame: React.FC<{ locale?: string }> = ({ locale = "ko" }) => {
 
       {(game.phase === "roundComplete" || game.phase === "gameOver") && (
         <div className="mt-8 rounded-3xl border border-primary/30 bg-primary/10 p-6 text-center" role="status" aria-live="polite">
+          <img src={HEARTS_GAME_UI_SPRITES.trophy} alt="" className="size-16 object-contain mx-auto mb-3 drop-shadow-md animate-bounce" />
           <h4 className="text-2xl font-black">{game.phase === "gameOver" ? t.gameWinner : t.roundWinner}: {(game.phase === "gameOver" ? gameWinners : roundWinners).map((player) => playerName(player, t)).join(" · ")}</h4>
           {moonShooter >= 0 && (
             <div className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/20 px-4 py-1.5 text-sm font-black text-primary animate-bounce">
-              <Sparkles className="size-4" />
+              <img src={HEARTS_GAME_UI_SPRITES.moon} alt="" className="size-4 object-contain" />
               <span>{playerName(moonShooter, t)} — 🚀 {t.moon}</span>
             </div>
           )}
