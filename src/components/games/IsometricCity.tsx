@@ -10,6 +10,7 @@ import {
   downloadShareCard,
 } from "../../lib/games/share-card";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { ISOMETRIC_CITY_UI_SPRITES } from "../../lib/games/sprites";
 import type { IsometricCitySceneCopy } from "./IsometricCityScene";
 
 function TiltCityButton({
@@ -327,6 +328,11 @@ export default function IsometricCity({ locale }: { locale: Locale }) {
       ) : (
         <div className="grid gap-8 p-5 sm:p-8 lg:grid-cols-[1.02fr_.98fr] lg:items-center lg:p-10">
           <div className="order-2 lg:order-1">
+            <div className="flex items-center gap-3 mb-3">
+              <img src={ISOMETRIC_CITY_UI_SPRITES.building} alt="City Skyscraper" className="w-14 h-14 object-contain drop-shadow-md" />
+              <img src={ISOMETRIC_CITY_UI_SPRITES.park} alt="Green Park" className="w-14 h-14 object-contain drop-shadow-md" />
+              <img src={ISOMETRIC_CITY_UI_SPRITES.hall} alt="City Hall" className="w-14 h-14 object-contain drop-shadow-md" />
+            </div>
             <p className="text-[10px] font-black tracking-[.24em] text-primary">{copy.eyebrow}</p>
             <h2 className="mt-3 text-4xl font-black tracking-[-.04em] text-foreground sm:text-6xl">{copy.title}</h2>
             <p className="mt-4 max-w-xl text-sm leading-7 text-muted-foreground sm:text-base">{copy.subtitle}</p>
@@ -339,14 +345,17 @@ export default function IsometricCity({ locale }: { locale: Locale }) {
                 </div>
               ))}
             </div>
-            <TiltCityButton
-              disabled={phase === "loading" || isStarting}
-              onClick={() => beginCity()}
-              className="mt-7 inline-flex min-h-12 items-center gap-2 rounded-full bg-primary px-6 text-sm font-black text-primary-foreground shadow-lg transition hover:-translate-y-0.5 hover:opacity-90 disabled:cursor-wait disabled:opacity-60"
-            >
-              <Sparkles size={17} aria-hidden="true" />
-              {phase === "loading" ? copy.loading : copy.start}
-            </TiltCityButton>
+            <div className="mt-7 flex items-center gap-4">
+              <TiltCityButton
+                disabled={phase === "loading" || isStarting}
+                onClick={() => beginCity()}
+                className="inline-flex min-h-12 items-center gap-2 rounded-full bg-primary px-6 text-sm font-black text-primary-foreground shadow-lg transition hover:-translate-y-0.5 hover:opacity-90 disabled:cursor-wait disabled:opacity-60"
+              >
+                <Sparkles size={17} aria-hidden="true" />
+                {phase === "loading" ? copy.loading : copy.start}
+              </TiltCityButton>
+              <img src={ISOMETRIC_CITY_UI_SPRITES.trophy} alt="Mayor Trophy" className="w-10 h-10 object-contain drop-shadow-md animate-bounce" />
+            </div>
             <p className="mt-3 flex items-center gap-2 text-[11px] font-semibold text-muted-foreground">
               <Users size={14} aria-hidden="true" /> {copy.localOnly}
             </p>

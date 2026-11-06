@@ -8,6 +8,7 @@ import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { celebrate } from '../../lib/games/celebration';
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from '../../lib/games/share-card';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { COSMIC_FLIGHT_UI_SPRITES } from '../../lib/games/sprites';
 
 const CosmicFlightScene = lazy(() => import('./CosmicFlightScene'));
 
@@ -373,8 +374,8 @@ export default function CosmicFlight({ locale = 'ko' }: { locale?: Locale }) {
           ) : (
             <div className="relative flex h-135 w-full flex-col items-center justify-center rounded-2xl border border-border bg-card p-6 text-center">
               <div className="relative mb-6">
-                <div className="relative flex h-24 w-24 items-center justify-center rounded-2xl border border-border bg-secondary">
-                  <Rocket className="h-12 w-12 text-primary" />
+                <div className="relative flex h-24 w-24 items-center justify-center rounded-2xl border border-border bg-secondary p-2">
+                  <img src={COSMIC_FLIGHT_UI_SPRITES.fighter} alt="Star Fighter" className="h-16 w-16 object-contain drop-shadow-md animate-pulse" />
                 </div>
               </div>
               <h2 className="text-xl font-bold text-foreground sm:text-2xl">{t.title}</h2>
@@ -394,6 +395,13 @@ export default function CosmicFlight({ locale = 'ko' }: { locale?: Locale }) {
         {(status === 'cleared' || status === 'crashed') && (
           <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-2xl p-6">
             <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 text-center">
+              <div className="mb-3 flex justify-center">
+                <img
+                  src={status === 'cleared' ? COSMIC_FLIGHT_UI_SPRITES.trophy : COSMIC_FLIGHT_UI_SPRITES.crystal}
+                  alt="Mission Result"
+                  className="h-16 w-16 object-contain drop-shadow-md animate-bounce"
+                />
+              </div>
               <h3 className="text-xl font-bold text-foreground mb-2">
                 {status === 'cleared' ? t.cleared : t.crashed}
               </h3>

@@ -18,6 +18,7 @@ import {
 } from '../../lib/games/gravity-roller';
 import { GravityRoller3DScene } from './GravityRoller3DScene';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { GRAVITY_ROLLER_3D_UI_SPRITES } from '../../lib/games/sprites';
 
 interface Props {
   locale?: string;
@@ -389,6 +390,10 @@ export default function GravityRoller3D({ locale = 'ko' }: Props) {
       <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
         {gameState.status === 'ready' ? (
           <div className="flex flex-col items-center justify-center gap-3 py-3 text-center">
+            <div className="flex items-center gap-3 justify-center mb-1">
+              <img src={GRAVITY_ROLLER_3D_UI_SPRITES.orb} alt="Gravity Orb" className="w-14 h-14 object-contain drop-shadow-md animate-pulse" />
+              <img src={GRAVITY_ROLLER_3D_UI_SPRITES.pad} alt="Antigrav Pad" className="w-14 h-14 object-contain drop-shadow-md" />
+            </div>
             <p className="text-sm font-semibold text-foreground">
               스테이지 {gameState.currentLevelIndex + 1}: {LEVELS[gameState.currentLevelIndex % LEVELS.length].name}
             </p>
@@ -404,6 +409,7 @@ export default function GravityRoller3D({ locale = 'ko' }: Props) {
           </div>
         ) : gameState.status === 'cleared' ? (
           <div className="flex flex-col items-center justify-center gap-3 py-3 text-center">
+            <img src={GRAVITY_ROLLER_3D_UI_SPRITES.trophy} alt="Trophy" className="w-16 h-16 object-contain drop-shadow-lg animate-bounce" />
             <p className="text-base font-bold text-chart-1">{t.cleared}</p>
             <p className="text-xs text-muted-foreground">{t.clearMessage}</p>
             <div className="flex gap-2">
@@ -439,6 +445,7 @@ export default function GravityRoller3D({ locale = 'ko' }: Props) {
           </div>
         ) : gameState.status === 'failed' ? (
           <div className="flex flex-col items-center justify-center gap-3 py-3 text-center">
+            <img src={GRAVITY_ROLLER_3D_UI_SPRITES.loop} alt="Loop Track" className="w-14 h-14 object-contain drop-shadow-md" />
             <p className="text-base font-bold text-destructive">{t.failed}</p>
             <p className="text-xs text-muted-foreground">{t.trapMessage}</p>
             <div className="flex gap-2">

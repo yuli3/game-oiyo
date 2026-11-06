@@ -7,6 +7,7 @@ import type { InfernalResult, InfernalSceneCopy } from "./InfernalVelocityScene"
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { celebrate } from "../../lib/games/celebration";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { INFERNAL_VELOCITY_UI_SPRITES } from "../../lib/games/sprites";
 import {
   createShareCardCanvas,
   copyShareCardToClipboard,
@@ -198,6 +199,10 @@ export default function InfernalVelocity({ locale }: { locale: Locale }) {
       <div className="absolute inset-0 opacity-80 [background:radial-gradient(circle_at_75%_18%,rgba(255,70,0,.2),transparent_28%),repeating-linear-gradient(125deg,transparent_0_36px,rgba(255,50,0,.025)_37px_38px)]" />
       <div className="relative grid gap-9 p-6 sm:p-10 lg:grid-cols-[1.12fr_.88fr] lg:p-14">
         <div>
+          <div className="flex items-center gap-3 mb-3">
+            <img src={INFERNAL_VELOCITY_UI_SPRITES.car} alt="Infernal Car" className="h-16 w-16 object-contain drop-shadow-md animate-pulse" />
+            <img src={INFERNAL_VELOCITY_UI_SPRITES.flame} alt="Nitro Flame" className="h-14 w-14 object-contain drop-shadow-md" />
+          </div>
           <p className="font-mono text-[11px] font-black tracking-[.28em] text-orange-500">{t.eyebrow}</p>
           <h2 className="mt-4 text-5xl font-black uppercase leading-[.86] tracking-[-.055em] sm:text-7xl">{t.title}</h2>
           <p className="mt-6 max-w-2xl text-sm leading-7 text-zinc-300 sm:text-base">{t.subtitle}</p>
@@ -231,7 +236,10 @@ export default function InfernalVelocity({ locale }: { locale: Locale }) {
           {!available && <p role="alert" className="mt-4 text-sm font-bold text-orange-300">{t.unavailable}</p>}
           {result && (
             <>
-              <dl role="status" aria-live="polite" className="mt-7 grid grid-cols-4 gap-2 border border-white/10 bg-black/40 p-4 text-center">
+              <div className="mt-6 flex justify-center">
+                <img src={INFERNAL_VELOCITY_UI_SPRITES.trophy} alt="Trophy" className="h-16 w-16 object-contain drop-shadow-lg animate-bounce" />
+              </div>
+              <dl role="status" aria-live="polite" className="mt-4 grid grid-cols-4 gap-2 border border-white/10 bg-black/40 p-4 text-center">
                 {[[t.score, result.score], [t.kills, result.kills], [t.wave, result.wave], [t.accuracy, `${result.accuracy}%`]].map(([label, value]) => (
                   <div key={label}>
                     <dt className="text-[9px] font-bold uppercase text-zinc-500">{label}</dt>

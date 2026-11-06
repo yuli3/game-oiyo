@@ -13,6 +13,7 @@ import {
 } from "../../lib/games/cyber-track";
 import CyberTrack3DScene from "./CyberTrack3DScene";
 import { Button } from "../ui/button";
+import { CYBER_TRACK_3D_UI_SPRITES } from "../../lib/games/sprites";
 
 function TiltTrackSelectButton({
   active,
@@ -366,6 +367,9 @@ export default function CyberTrack3D({ locale = "ko" }: CyberTrack3DProps) {
         {/* Start Game Prompt Overlay */}
         {car.status === "ready" && (
           <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center bg-background/40 backdrop-blur-xs">
+            <div className="mb-3 flex justify-center">
+              <img src={CYBER_TRACK_3D_UI_SPRITES.bike} alt="Cyber Bike" className="h-20 w-20 object-contain drop-shadow-lg animate-pulse" />
+            </div>
             <span className="rounded-full bg-primary px-5 py-2 text-sm font-black text-primary-foreground shadow-lg">
               {locale === "ko" ? "W / 방향키로 가속하여 출발!" : "Press W / Up Arrow to Race!"}
             </span>
@@ -375,7 +379,7 @@ export default function CyberTrack3D({ locale = "ko" }: CyberTrack3DProps) {
         {/* Race Finished Modal Overlay */}
         {car.status === "finished" && (
           <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-card/90 p-6 backdrop-blur-xs text-foreground">
-            <span className="text-5xl">🏆</span>
+            <img src={CYBER_TRACK_3D_UI_SPRITES.trophy} alt="Trophy" className="h-20 w-20 object-contain drop-shadow-lg animate-bounce" />
             <h2 className="mt-2 text-2xl font-black text-warning">
               {locale === "ko" ? "레이스 완주!" : "Lap Completed!"}
             </h2>
