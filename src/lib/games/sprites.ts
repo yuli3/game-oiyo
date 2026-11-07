@@ -437,6 +437,9 @@ export const BEAT_SLICE_SPRITES = {
   saberMagenta: "/assets/sprites/beat-slice/saber-magenta-3d-128.png",
   cube: "/assets/sprites/beat-slice/cube-beat-3d-128.png",
   trophy: "/assets/sprites/beat-slice/trophy-beat-3d-128.png",
+  objectsSheet: "/assets/sprites/beat-slice/beat-slice-3d-objects-1024.png",
+  fxSheet: "/assets/sprites/beat-slice/beat-slice-3d-fx-1024.png",
+  boardBgSheet: "/assets/sprites/beat-slice/beat-slice-3d-board-bg-1024.png",
 } as const;
 
 export const COZY_GLIDER_SPRITES = {
@@ -873,6 +876,9 @@ export const BABA_IS_YOU_SPRITES = {
   flag: "/assets/sprites/baba-is-you/golden-flag-3d-128.png",
   rock: "/assets/sprites/baba-is-you/magic-rock-3d-128.png",
   trophy: "/assets/sprites/baba-is-you/trophy-baba-3d-128.png",
+  objectsSheet: "/assets/sprites/baba-is-you/baba-rule-shifter-objects-1024.png",
+  fxSheet: "/assets/sprites/baba-is-you/baba-rule-shifter-fx-1024.png",
+  boardBgSheet: "/assets/sprites/baba-is-you/baba-rule-shifter-board-bg-1024.png",
 } as const;
 
 export const PLAGUE_MINI_SPRITES = {
@@ -1552,6 +1558,9 @@ export const BLIND_PILOT_UI_SPRITES = {
   radar: "/assets/sprites/blind-pilot/radar-scope-3d-128.png",
   headset: "/assets/sprites/blind-pilot/radio-headset-3d-128.png",
   trophy: "/assets/sprites/blind-pilot/trophy-pilot-3d-128.png",
+  objectsSheet: "/assets/sprites/blind-pilot/blind-pilot-objects-1024.png",
+  fxSheet: "/assets/sprites/blind-pilot/blind-pilot-fx-1024.png",
+  boardBgSheet: "/assets/sprites/blind-pilot/blind-pilot-board-bg-1024.png",
 } as const;
 
 export const DEEP_PHOTOGRAPHER_UI_SPRITES = {
