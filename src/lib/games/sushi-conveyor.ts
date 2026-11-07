@@ -4,7 +4,9 @@ import {
   type PoolableItem,
 } from "./engine";
 
-export type SushiType = "tuna" | "salmon" | "shrimp" | "tamago" | "unagi";
+export type SushiType = "tuna" | "salmon" | "shrimp" | "tamago" | "unagi" | "golden_tuna";
+
+export type CustomerType = "normal" | "sumo" | "inspector" | "gourmet";
 
 export interface SushiRecipe {
   id: SushiType;
@@ -20,6 +22,7 @@ export const SUSHI_RECIPES: Record<SushiType, SushiRecipe> = {
   shrimp: { id: "shrimp", name: "Ebi (Shrimp)", price: 110, color: "#f43f5e", craftTimeSec: 0.6 },
   tamago: { id: "tamago", name: "Tamago (Egg)", price: 90, color: "#eab308", craftTimeSec: 0.5 },
   unagi: { id: "unagi", name: "Unagi (Eel)", price: 200, color: "#78350f", craftTimeSec: 1.2 },
+  golden_tuna: { id: "golden_tuna", name: "★Golden Otoro★", price: 380, color: "#fbbf24", craftTimeSec: 1.5 },
 };
 
 export interface SushiPlateItem extends PoolableItem {
@@ -29,6 +32,7 @@ export interface SushiPlateItem extends PoolableItem {
   freshnessTimeSec: number;
   maxFreshnessSec: number;
   lapsCompleted: number;
+  isGolden?: boolean;
 }
 
 export interface CustomerSeat {
@@ -44,6 +48,7 @@ export interface CustomerSeat {
   targetPlates: number;
   mood: "happy" | "neutral" | "impatient" | "eating";
   eatingTimerSec: number;
+  customerType?: CustomerType;
 }
 
 export interface ConveyorKitchenUpgrades {
@@ -59,8 +64,16 @@ export interface SushiConveyorState {
   totalDiscarded: number;
   comboCount: number;
   feverTimeSec: number;
+  wasabiEarned: number;
 
   upgrades: ConveyorKitchenUpgrades;
+  metaModifiers?: {
+    priceMultiplier: number;
+    extraFreshnessSec: number;
+    speedBonus: number;
+    tipBonus: number;
+    goldenRate: number;
+  };
   seats: CustomerSeat[];
   activePlates: SushiPlateItem[];
 
@@ -72,6 +85,7 @@ export interface SushiConveyorState {
   gameTimeSec: number;
   customerSpawnCooldown: number;
   activeLog: string;
+  activeDialogueId?: string;
   status: "playing" | "fever" | "day_cleared" | "bankrupt";
 }
 
@@ -130,7 +144,7 @@ export function createInitialSeats(): CustomerSeat[] {
   });
 }
 
-export function initializeSushiConveyor(): SushiConveyorState {
+export function initializeSushiConveyor(metaModifiers?: SushiConveyorState['metaModifiers']): SushiConveyorState {
   // Reset plate pool for fresh game
   platePool.forEachActive((p) => {
     p.active = false;
@@ -143,12 +157,17 @@ export function initializeSushiConveyor(): SushiConveyorState {
   seats[0].patienceTimerSec = 25;
   seats[0].maxPatienceSec = 25;
   seats[0].targetPlates = 2;
+  seats[0].customerType = "normal";
 
   seats[1].occupied = true;
   seats[1].wantedSushi = "tuna";
   seats[1].patienceTimerSec = 25;
   seats[1].maxPatienceSec = 25;
   seats[1].targetPlates = 3;
+  seats[1].customerType = "normal";
+
+  const baseSpeed = 65;
+  const speedBonus = metaModifiers?.speedBonus ?? 0;
 
   return {
     cash: 500,
@@ -157,39 +176,62 @@ export function initializeSushiConveyor(): SushiConveyorState {
     totalDiscarded: 0,
     comboCount: 0,
     feverTimeSec: 0,
+    wasabiEarned: 0,
 
     upgrades: {
       beltSpeedLevel: 1,
       plateValueLevel: 1,
       autoPrepLevel: 0,
     },
+    metaModifiers,
     seats,
     activePlates: [],
 
-    beltSpeedPxPerSec: 65,
+    beltSpeedPxPerSec: baseSpeed * (1 + speedBonus),
     splineTotalLength: conveyorSpline.totalLength,
 
     gameTimeSec: 0,
     customerSpawnCooldown: 4.0,
     activeLog: "Welcome to Ginza Conveyor Sushi! Prepare fresh nigiri on the spline belt.",
+    activeDialogueId: "welcome_ginza",
     status: "playing",
   };
 }
 
-export function spawnCustomerInEmptySeat(seats: CustomerSeat[]): boolean {
+export function spawnCustomerInEmptySeat(seats: CustomerSeat[], goldenRate = 0): boolean {
   const emptySeats = seats.filter((s) => !s.occupied);
   if (emptySeats.length === 0) return false;
 
   const targetSeat = emptySeats[Math.floor(Math.random() * emptySeats.length)];
-  const sushiTypes: SushiType[] = ["tuna", "salmon", "shrimp", "tamago", "unagi"];
-  const wanted = sushiTypes[Math.floor(Math.random() * sushiTypes.length)];
+  const roll = Math.random();
+  let custType: CustomerType = "normal";
+
+  if (roll < 0.12) {
+    custType = "sumo";
+  } else if (roll < 0.22) {
+    custType = "gourmet";
+  } else if (roll < 0.28) {
+    custType = "inspector";
+  }
+
+  const standardSushi: SushiType[] = ["tuna", "salmon", "shrimp", "tamago", "unagi"];
+  let wanted: SushiType;
+
+  if (custType === "gourmet" && (Math.random() < goldenRate || Math.random() < 0.35)) {
+    wanted = Math.random() < goldenRate ? "golden_tuna" : "tuna";
+  } else if (custType === "sumo") {
+    wanted = Math.random() < 0.5 ? "tuna" : "salmon";
+  } else {
+    wanted = standardSushi[Math.floor(Math.random() * standardSushi.length)];
+  }
 
   targetSeat.occupied = true;
   targetSeat.wantedSushi = wanted;
-  targetSeat.patienceTimerSec = 22 + Math.floor(Math.random() * 8);
+  targetSeat.customerType = custType;
+  targetSeat.patienceTimerSec = custType === "sumo" ? 30 : custType === "inspector" ? 18 : 24;
   targetSeat.maxPatienceSec = targetSeat.patienceTimerSec;
   targetSeat.platesEaten = 0;
-  targetSeat.targetPlates = 2 + Math.floor(Math.random() * 2);
+  targetSeat.targetPlates = custType === "sumo" ? 5 : custType === "inspector" ? 1 : 2 + Math.floor(Math.random() * 2);
   targetSeat.mood = "happy";
   targetSeat.eatingTimerSec = 0;
   return true;
@@ -209,13 +251,16 @@ export function craftAndPlaceSushiPlate(
     };
   }
 
+  const extraFreshness = state.metaModifiers?.extraFreshnessSec ?? 0;
+
   // Acquire plate from ZeroGcObjectPool at chef spawn position (spline distance 0)
   const plate = platePool.acquire((item) => {
     item.sushiType = type;
     item.distanceAlongSpline = 0;
     item.freshnessTimeSec = 0;
-    item.maxFreshnessSec = 55;
+    item.maxFreshnessSec = 55 + extraFreshness;
     item.lapsCompleted = 0;
+    item.isGolden = type === "golden_tuna";
   });
 
   return {
@@ -296,7 +341,7 @@ export function stepSushiConveyor(
   // 1. Customer Spawner
   nextState.customerSpawnCooldown -= dt;
   if (nextState.customerSpawnCooldown <= 0) {
-    spawnCustomerInEmptySeat(nextState.seats);
+    spawnCustomerInEmptySeat(nextState.seats, nextState.metaModifiers?.goldenRate ?? 0);
     nextState.customerSpawnCooldown = 3.5 + Math.random() * 3.5;
   }
 
@@ -335,12 +380,30 @@ export function stepSushiConveyor(
         seat.platesEaten++;
         if (seat.platesEaten >= seat.targetPlates) {
           // Customer satisfied! Leaves tip
-          const tip = 50 + Math.floor(nextState.reputation * 0.5);
+          const tipBonus = nextState.metaModifiers?.tipBonus ?? 0;
+          let tip = Math.floor((50 + Math.floor(nextState.reputation * 0.5)) * (1 + tipBonus));
+          let repGain = 3;
+
+          if (seat.customerType === 'sumo') {
+            tip *= 2;
+            nextState.wasabiEarned += 2;
+            nextState.activeDialogueId = 'sumo_wrestler';
+          } else if (seat.customerType === 'inspector') {
+            repGain = 20;
+            nextState.wasabiEarned += 3;
+            nextState.activeDialogueId = 'inspector_alert';
+          } else if (seat.customerType === 'gourmet') {
+            tip = Math.floor(tip * 1.5);
+            nextState.wasabiEarned += 2;
+            nextState.activeDialogueId = 'fever_kuroda';
+          }
+
           nextState.cash += tip;
-          nextState.reputation = Math.min(100, nextState.reputation + 3);
+          nextState.reputation = Math.min(100, nextState.reputation + repGain);
+          nextState.wasabiEarned++;
           seat.occupied = false;
           seat.wantedSushi = null;
-          nextState.activeLog = `Customer finished meal happily! Left ¥${tip} tip (+3 Rep).`;
+          nextState.activeLog = `Customer finished meal happily! Left ¥${tip} tip (+${repGain} Rep).`;
         } else {
           // Ready for next plate
           const sushiList: SushiType[] = ["tuna", "salmon", "shrimp", "tamago", "unagi"];
@@ -392,19 +455,31 @@ export function stepSushiConveyor(
 
           const basePrice = SUSHI_RECIPES[plate.sushiType].price;
           const valueMultiplier = 1 + (nextState.upgrades.plateValueLevel - 1) * 0.2;
+          const priceBonus = nextState.metaModifiers?.priceMultiplier ?? 1.0;
           const feverMultiplier = nextState.feverTimeSec > 0 ? 2.0 : 1.0;
-          const earned = Math.floor(basePrice * valueMultiplier * feverMultiplier);
+          const earned = Math.floor(basePrice * valueMultiplier * priceBonus * feverMultiplier);
 
           nextState.cash += earned;
           nextState.totalServed++;
           nextState.comboCount++;
 
+          if (plate.sushiType === "golden_tuna") {
+            nextState.feverTimeSec = 20.0;
+            nextState.status = "fever";
+            nextState.wasabiEarned += 5;
+            nextState.activeDialogueId = "fever_kuroda";
+            nextState.activeLog = "👑 GOLDEN OTORO SERVED! Massive +¥" + earned + " and 20s Fever Time triggered!";
+          } else if (plate.sushiType === "salmon" && Math.random() < 0.3) {
+            nextState.activeDialogueId = "cat_miho";
+          }
+
           // Trigger Fever mode at 5 combos
           if (nextState.comboCount >= 5 && nextState.feverTimeSec <= 0) {
             nextState.feverTimeSec = 12.0;
             nextState.status = "fever";
+            nextState.activeDialogueId = "fever_kuroda";
             nextState.activeLog = "🔥 FEVER TIME! Double revenue and patience freeze for 12 seconds!";
-          } else {
+          } else if (plate.sushiType !== "golden_tuna") {
             nextState.activeLog = `Served ${SUSHI_RECIPES[plate.sushiType].name}! (+¥${earned}, Combo x${nextState.comboCount})`;
           }
         }

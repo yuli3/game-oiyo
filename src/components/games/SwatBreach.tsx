@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
-import { useDynamicDifficultyPro, useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
-import { getSpriteUrl } from "../../lib/games/sprites";
-import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "../../lib/games/share-card";
+import { useDynamicDifficultyPro, useCardTiltPro } from "../../lib/games/engine-suite-unified";
 import { celebrate } from "../../lib/games/celebration";
-import { Maximize2, Minimize2, Camera, Check } from "lucide-react";
+import { Maximize2, Minimize2, Award, Wrench, X, Shield, Crosshair } from "lucide-react";
 import {
   loadArcadePassProgress,
   reportMissionProgress,
@@ -20,6 +18,20 @@ import {
   stepSwatBreach,
   type SwatBreachState,
 } from "../../lib/games/swat-breach";
+import { INITIAL_SWAT_QUESTS, type SwatQuest } from "../../lib/games/swat-breach-quests";
+import { SWAT_COMMS_LOGS } from "../../lib/games/swat-breach-lore";
+import {
+  SWAT_META_UPGRADE_DEFS,
+  loadSwatMetaState,
+  purchaseSwatMetaUpgrade,
+  saveSwatMetaState,
+  type SwatPlayerMetaState,
+} from "../../lib/games/swat-breach-meta";
+import { nativeHaptics } from "../../lib/haptics/native-bridge";
+import { GameStatTile } from "../ui/game/GameStatTile";
+
+const CANVAS_W = 700;
+const CANVAS_H = 540;
 
 function TiltSwatButton({
   children,
@@ -190,8 +202,6 @@ const I18N: Record<
   },
 };
 
-const CANVAS_W = 700;
-const CANVAS_H = 540;
 const CELL_SIZE = 62;
 const OFFSET_X = 40;
 const OFFSET_Y = 22;
@@ -201,36 +211,81 @@ export default function SwatBreach({ locale = "ko" }: Props) {
   const lang: Locale = (locale in I18N ? locale : "en") as Locale;
   const t = I18N[lang];
 
+  const [metaState, setMetaState] = useState<SwatPlayerMetaState>(() => loadSwatMetaState());
+  const [quests, setQuests] = useState<SwatQuest[]>(() => [...INITIAL_SWAT_QUESTS]);
+  const [showArmoryModal, setShowArmoryModal] = useState(false);
+  const [showQuestModal, setShowQuestModal] = useState(false);
+
+  const buildMetaModifiers = useCallback((meta: SwatPlayerMetaState) => {
+    return {
+      kevlarHp: meta.upgrades.kevlarPlating * 20,
+      fireCooldownReduction: meta.upgrades.slickBarrel * 0.12,
+      reactionBonus: meta.upgrades.reflexSight * 0.15,
+      extraFlashbangs: meta.upgrades.flashbangBelt >= 3 ? 2 : meta.upgrades.flashbangBelt >= 1 ? 1 : 0,
+      speedMultiplier: meta.upgrades.breacherBoots * 0.1,
+    };
+  }, []);
+
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const stateRef = useRef<SwatBreachState>(createSwatBreachState(0));
+  const stateRef = useRef<SwatBreachState>(
+    createSwatBreachState(0, buildMetaModifiers(loadSwatMetaState()))
+  );
   const audioCtxRef = useRef<AudioContext | null>(null);
 
   const [uiMissionIdx, setUiMissionIdx] = useState(0);
   const [uiPhase, setUiPhase] = useState<SwatBreachState["phase"]>("planning");
   const [uiSelectedOp, setUiSelectedOp] = useState<"alpha" | "bravo">("alpha");
-  const [uiToolMode, setUiToolMode] = useState<"waypoint" | "flashbang">(
-    "waypoint"
-  );
+  const [uiToolMode, setUiToolMode] = useState<"waypoint" | "flashbang">("waypoint");
   const [uiSuspectsLeft, setUiSuspectsLeft] = useState(3);
   const [uiHostagesRescued, setUiHostagesRescued] = useState(0);
   const [uiHostagesTotal, setUiHostagesTotal] = useState(1);
-  const [isCopied, setIsCopied] = useState(false);
+  const [uiCommsLogId, setUiCommsLogId] = useState<string>("planning_brief");
 
   const {
-    flowState,
-    currentMultiplier,
     recordHit: recordDdaHit,
     recordKill: recordDdaKill,
     recordDeath: recordDdaDeath,
   } = useDynamicDifficultyPro();
+
+  // Sync tactical tokens from game state
+  useEffect(() => {
+    const st = stateRef.current;
+    if (st.tokensEarned > 0) {
+      setMetaState((prev) => {
+        const next = { ...prev, tacticalTokens: prev.tacticalTokens + st.tokensEarned };
+        saveSwatMetaState(next);
+        return next;
+      });
+      st.tokensEarned = 0;
+    }
+  }, [uiPhase, uiHostagesRescued, uiSuspectsLeft]);
+
+  // Check quest progress
+  useEffect(() => {
+    const st = stateRef.current;
+    setQuests((prevQuests) =>
+      prevQuests.map((q) => {
+        if (q.completed) return q;
+        const progress = q.check(st);
+        const completed = progress >= q.target;
+        if (completed && !q.completed) {
+          nativeHaptics.trigger("success");
+        }
+        return {
+          ...q,
+          current: Math.min(q.target, progress),
+          completed,
+        };
+      })
+    );
+  }, [uiPhase, uiHostagesRescued, uiSuspectsLeft]);
 
   const ensureAudio = useCallback(() => {
     if (typeof window === "undefined") return null;
     if (!audioCtxRef.current) {
       const Ctx =
         window.AudioContext ||
-        (window as unknown as { webkitAudioContext: typeof AudioContext })
-          .webkitAudioContext;
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (Ctx) audioCtxRef.current = new Ctx();
     }
     if (audioCtxRef.current?.state === "suspended") {
@@ -300,56 +355,30 @@ export default function SwatBreach({ locale = "ko" }: Props) {
     setUiSuspectsLeft(st.suspects.filter((s) => !s.neutralized).length);
     setUiHostagesRescued(st.hostages.filter((h) => h.rescued).length);
     setUiHostagesTotal(st.hostages.length);
+    if (st.activeCommsLogId) {
+      setUiCommsLogId(st.activeCommsLogId);
+    }
 
     if (st.phase === "victory") {
       const dateKey = new Date().toISOString().slice(0, 10);
       const pass = loadArcadePassProgress(dateKey);
-      const updated = reportMissionProgress(
-        pass,
-        "swat-breach",
-        st.missionIndex + 1
-      );
+      const updated = reportMissionProgress(pass, "swat-breach", st.missionIndex + 1);
       saveArcadePassProgress(updated);
     }
   }, []);
 
   const loadMission = useCallback(
     (idx: number) => {
-      stateRef.current = createSwatBreachState(idx);
+      stateRef.current = createSwatBreachState(idx, buildMetaModifiers(metaState));
       syncUi();
     },
-    [syncUi]
+    [buildMetaModifiers, metaState, syncUi]
   );
-
-  const handleShareCard = useCallback(async () => {
-    MobileHapticsPro.click();
-    const curMission = MISSIONS[uiMissionIdx];
-    const canvas = await createShareCardCanvas({
-      title: "TACTICAL SWAT BREACH",
-      subtitle: `${curMission.title[lang]} 작전 완료`,
-      score: `${uiHostagesRescued}/${uiHostagesTotal}`,
-      slug: "swat-breach",
-      customStats: [
-        { label: "작전 번호", value: `Op.${curMission.missionNum}` },
-        { label: "인질 구출", value: `${uiHostagesRescued} / ${uiHostagesTotal}명` },
-        { label: "DDA 템포", value: flowState.toUpperCase() },
-      ],
-      playerTitle: "SWAT TACTICAL COMMANDER",
-    });
-
-    const ok = await copyShareCardToClipboard(canvas);
-    if (ok) {
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 2000);
-    } else {
-      downloadShareCard(canvas, `swat-breach-op${curMission.missionNum}-cleared.png`);
-    }
-  }, [flowState, lang, uiHostagesRescued, uiHostagesTotal, uiMissionIdx]);
 
   const handleSelectOp = useCallback(
     (opId: "alpha" | "bravo") => {
       stateRef.current.selectedOpId = opId;
-      MobileHapticsPro.light();
+      nativeHaptics.trigger("light");
       playSoundEffect("click");
       syncUi();
     },
@@ -359,7 +388,7 @@ export default function SwatBreach({ locale = "ko" }: Props) {
   const handleSelectTool = useCallback(
     (mode: "waypoint" | "flashbang") => {
       stateRef.current.toolMode = mode;
-      MobileHapticsPro.light();
+      nativeHaptics.trigger("light");
       playSoundEffect("click");
       syncUi();
     },
@@ -368,10 +397,41 @@ export default function SwatBreach({ locale = "ko" }: Props) {
 
   const handleExecuteBreach = useCallback(() => {
     startBreachExecution(stateRef.current);
-    MobileHapticsPro.heavy();
+    nativeHaptics.trigger("heavy");
     playSoundEffect("door");
     syncUi();
   }, [playSoundEffect, syncUi]);
+
+  const handleClaimQuest = (questId: string) => {
+    setQuests((prev) =>
+      prev.map((q) => {
+        if (q.id === questId && q.completed && !q.claimed) {
+          setMetaState((m) => {
+            const next = { ...m, tacticalTokens: m.tacticalTokens + q.rewardTokens };
+            saveSwatMetaState(next);
+            return next;
+          });
+          nativeHaptics.trigger("success");
+          return { ...q, claimed: true };
+        }
+        return q;
+      })
+    );
+  };
+
+  const handlePurchaseMeta = (upgradeId: keyof SwatPlayerMetaState["upgrades"]) => {
+    setMetaState((prev) => {
+      const next = { ...prev };
+      const success = purchaseSwatMetaUpgrade(next, upgradeId);
+      if (success) {
+        nativeHaptics.trigger("success");
+        playSoundEffect("click");
+        // apply to running game
+        stateRef.current.metaModifiers = buildMetaModifiers(next);
+      }
+      return next;
+    });
+  };
 
   // 60fps CQB simulation & tactical blueprint renderer
   useEffect(() => {
@@ -384,448 +444,246 @@ export default function SwatBreach({ locale = "ko" }: Props) {
       const st = stateRef.current;
 
       if (st.phase === "executing") {
-        const prevPhase = st.phase;
+        const prevPhase = st.phase as string;
         const prevSuspects = st.suspects.filter((s) => !s.neutralized).length;
         const events = stepSwatBreach(st, dt);
 
         if (events.flashDetonated) {
           playSoundEffect("flash");
-          MobileHapticsPro.impact();
+          nativeHaptics.trigger("warning");
         } else if (events.doorBreached) {
           playSoundEffect("door");
-          MobileHapticsPro.light();
+          nativeHaptics.trigger("heavy");
         } else if (events.shotsFired > 0) {
           playSoundEffect("shot");
-          MobileHapticsPro.light();
+          nativeHaptics.trigger("light");
+          recordDdaHit();
         }
 
         const nowSuspects = st.suspects.filter((s) => !s.neutralized).length;
         if (nowSuspects < prevSuspects) {
           recordDdaKill();
-          MobileHapticsPro.light();
         }
 
         const currentPhase = st.phase as string;
-        if (currentPhase !== prevPhase || nowSuspects !== prevSuspects) {
-          if (currentPhase === "victory") {
-            MobileHapticsPro.success();
-            if (containerRef.current) {
-              celebrate(containerRef.current, { preset: "sparks" });
-            }
-          } else if (currentPhase === "failed") {
-            recordDdaDeath();
-            MobileHapticsPro.heavy();
-          }
-          syncUi();
+        if (currentPhase === "victory" && prevPhase !== "victory") {
+          celebrate(canvasRef.current, { preset: "sparks" });
+          nativeHaptics.trigger("success");
+        } else if (currentPhase === "failed" && prevPhase !== "failed") {
+          recordDdaDeath();
+          nativeHaptics.trigger("error");
         }
+
+        syncUi();
       }
 
-      // Render blueprint canvas
+      // Render tactical floorplan canvas
       const canvas = canvasRef.current;
-      const ctx = canvas?.getContext("2d");
-      if (canvas && ctx) {
-        ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+      if (canvas) {
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          // Clear blueprint floor
+          ctx.fillStyle = "#090d16";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Tactical dark navy background
-        ctx.fillStyle = "#090d16";
-        ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+          // Grid Tiles
+          for (let y = 0; y < st.gridH; y++) {
+            for (let x = 0; x < st.gridW; x++) {
+              const px = OFFSET_X + x * CELL_SIZE;
+              const py = OFFSET_Y + y * CELL_SIZE;
+              const tile = st.tiles[y][x];
 
-        // Draw floorplan tiles
-        for (let y = 0; y < st.gridH; y++) {
-          for (let x = 0; x < st.gridW; x++) {
-            const tile = st.tiles[y][x];
-            const px = OFFSET_X + x * CELL_SIZE;
-            const py = OFFSET_Y + y * CELL_SIZE;
-
-            if (tile === "wall") {
-              ctx.fillStyle = "#334155";
-              ctx.fillRect(px, py, CELL_SIZE, CELL_SIZE);
-              ctx.strokeStyle = "#64748b";
-              ctx.lineWidth = 2;
-              ctx.strokeRect(px + 2, py + 2, CELL_SIZE - 4, CELL_SIZE - 4);
-            } else {
-              // Tactical blueprint grid tile
-              ctx.fillStyle = (x + y) % 2 === 0 ? "#0f172a" : "#131c31";
-              ctx.fillRect(px, py, CELL_SIZE, CELL_SIZE);
-              ctx.strokeStyle = "rgba(56, 189, 248, 0.12)";
-              ctx.lineWidth = 1;
-              ctx.strokeRect(px, py, CELL_SIZE, CELL_SIZE);
-
-              if (tile === "door_closed") {
-                ctx.fillStyle = "#d97706";
-                ctx.fillRect(px + 8, py + 18, CELL_SIZE - 16, CELL_SIZE - 36);
-                ctx.strokeStyle = "#fef08a";
-                ctx.lineWidth = 2;
-                ctx.strokeRect(px + 8, py + 18, CELL_SIZE - 16, CELL_SIZE - 36);
+              if (tile === "wall") {
+                ctx.fillStyle = "#1e293b";
+                ctx.fillRect(px, py, CELL_SIZE, CELL_SIZE);
+                ctx.strokeStyle = "#334155";
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(px, py, CELL_SIZE, CELL_SIZE);
+              } else if (tile === "door_closed") {
+                ctx.fillStyle = "#334155";
+                ctx.fillRect(px, py, CELL_SIZE, CELL_SIZE);
+                ctx.fillStyle = "#ef4444";
+                ctx.fillRect(px + 4, py + CELL_SIZE / 2 - 6, CELL_SIZE - 8, 12);
                 ctx.fillStyle = "#ffffff";
-                ctx.font = "bold 11px monospace";
+                ctx.font = "bold 10px monospace";
                 ctx.textAlign = "center";
                 ctx.fillText("DOOR", px + CELL_SIZE / 2, py + CELL_SIZE / 2 + 4);
               } else if (tile === "door_open") {
-                // Breached door frame & wooden splinter debris
-                ctx.strokeStyle = "#b45309";
-                ctx.lineWidth = 1.5;
-                ctx.strokeRect(px + 4, py + 4, CELL_SIZE - 8, CELL_SIZE - 8);
-
-                // Broken hinge & door swing
-                ctx.fillStyle = "#78350f";
-                ctx.fillRect(px + 4, py + 4, 4, CELL_SIZE - 8);
-
-                // Wood splinters / debris shards
-                ctx.fillStyle = "#d97706";
-                ctx.fillRect(px + 14, py + 12, 6, 2.5);
-                ctx.fillRect(px + 24, py + 22, 5, 2);
-                ctx.fillRect(px + 18, py + 32, 7, 3);
-              } else if (tile === "cover") {
                 ctx.fillStyle = "#1e293b";
-                ctx.beginPath();
-                ctx.roundRect(px + 10, py + 14, CELL_SIZE - 20, CELL_SIZE - 28, 6);
-                ctx.fill();
-                ctx.strokeStyle = "#475569";
-                ctx.stroke();
+                ctx.fillRect(px, py, CELL_SIZE, CELL_SIZE);
+                ctx.strokeStyle = "#22c55e";
+                ctx.lineWidth = 2;
+                ctx.strokeRect(px + 4, py + 4, CELL_SIZE - 8, CELL_SIZE - 8);
+              } else if (tile === "cover") {
+                ctx.fillStyle = "#0f172a";
+                ctx.fillRect(px, py, CELL_SIZE, CELL_SIZE);
+                ctx.fillStyle = "#475569";
+                ctx.fillRect(px + 10, py + 10, CELL_SIZE - 20, CELL_SIZE - 20);
+              } else {
+                ctx.fillStyle = "#0f172a";
+                ctx.fillRect(px, py, CELL_SIZE, CELL_SIZE);
+                ctx.strokeStyle = "#1e293b";
+                ctx.lineWidth = 1;
+                ctx.strokeRect(px, py, CELL_SIZE, CELL_SIZE);
               }
             }
           }
-        }
 
-        // Draw planned waypoint lines & flashbang markers
-        for (const op of st.operators) {
-          const color = op.id === "alpha" ? "#38bdf8" : "#4ade80";
-          if (op.waypoints.length > 0) {
+          // CodePen Curved Spacetime shockwave distortions
+          for (const sw of st.activeShockwaves) {
             ctx.save();
-            ctx.strokeStyle = color;
-            ctx.lineWidth = 3;
-            ctx.setLineDash([6, 5]);
+            const sx = OFFSET_X + sw.x * CELL_SIZE + CELL_SIZE / 2;
+            const sy = OFFSET_Y + sw.y * CELL_SIZE + CELL_SIZE / 2;
+            const rPx = sw.radius * CELL_SIZE;
+
+            const grad = ctx.createRadialGradient(sx, sy, Math.max(0, rPx - 15), sx, sy, rPx + 10);
+            grad.addColorStop(0, "rgba(56, 189, 248, 0)");
+            grad.addColorStop(0.5, "rgba(251, 191, 36, 0.45)");
+            grad.addColorStop(1, "rgba(56, 189, 248, 0)");
+
+            ctx.fillStyle = grad;
             ctx.beginPath();
-            ctx.moveTo(
-              OFFSET_X + (op.x + 0.5) * CELL_SIZE,
-              OFFSET_Y + (op.y + 0.5) * CELL_SIZE
-            );
-            for (const wp of op.waypoints) {
-              ctx.lineTo(
-                OFFSET_X + (wp.x + 0.5) * CELL_SIZE,
-                OFFSET_Y + (wp.y + 0.5) * CELL_SIZE
-              );
-            }
+            ctx.arc(sx, sy, rPx + 10, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = "rgba(254, 240, 138, 0.8)";
+            ctx.lineWidth = 2.5;
             ctx.stroke();
             ctx.restore();
-
-            for (const wp of op.waypoints) {
-              ctx.fillStyle = color;
-              ctx.beginPath();
-              ctx.arc(
-                OFFSET_X + (wp.x + 0.5) * CELL_SIZE,
-                OFFSET_Y + (wp.y + 0.5) * CELL_SIZE,
-                5,
-                0,
-                Math.PI * 2
-              );
-              ctx.fill();
-            }
           }
 
-          if (op.flashbangTarget && !op.flashbangThrown) {
-            const fx = OFFSET_X + (op.flashbangTarget.x + 0.5) * CELL_SIZE;
-            const fy = OFFSET_Y + (op.flashbangTarget.y + 0.5) * CELL_SIZE;
-            ctx.strokeStyle = "#facc15";
-            ctx.lineWidth = 2;
+          // Flash bursts
+          for (const b of st.activeFlashBursts) {
+            ctx.save();
+            const bx = OFFSET_X + b.x * CELL_SIZE + CELL_SIZE / 2;
+            const by = OFFSET_Y + b.y * CELL_SIZE + CELL_SIZE / 2;
+            ctx.fillStyle = "rgba(255, 255, 255, 0.75)";
             ctx.beginPath();
-            ctx.arc(fx, fy, 16, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.font = "14px sans-serif";
-            ctx.textAlign = "center";
-            ctx.fillText("💥", fx, fy + 5);
-          }
-        }
-
-        // Draw Hostages (Tactical Civilian VIPs)
-        for (const h of st.hostages) {
-          const hx = OFFSET_X + (h.x + 0.5) * CELL_SIZE;
-          const hy = OFFSET_Y + (h.y + 0.5) * CELL_SIZE;
-
-          ctx.save();
-          ctx.translate(hx, hy);
-
-          // Soft drop shadow
-          ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
-          ctx.beginPath();
-          ctx.ellipse(0, 2, 14, 10, 0, 0, Math.PI * 2);
-          ctx.fill();
-
-          if (h.rescued) {
-            // Secured civilian: green aura + untied hands
-            ctx.fillStyle = "rgba(34, 197, 94, 0.25)";
-            ctx.beginPath();
-            ctx.arc(0, 0, 20, 0, Math.PI * 2);
+            ctx.arc(bx, by, 3.5 * CELL_SIZE, 0, Math.PI * 2);
             ctx.fill();
-
-            // Civilian body
-            ctx.fillStyle = "#22c55e";
-            ctx.beginPath();
-            ctx.roundRect(-8, -10, 16, 20, 6);
-            ctx.fill();
-
-            // Head
-            ctx.fillStyle = "#fde047";
-            ctx.beginPath();
-            ctx.arc(0, -2, 7, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.fillStyle = "#ffffff";
-            ctx.font = "bold 9px monospace";
-            ctx.textAlign = "center";
-            ctx.fillText("SAFE", 0, 15);
-          } else {
-            // Bound hostage: kneeling, hands tied behind back
-            ctx.strokeStyle = "rgba(250, 204, 21, 0.6)";
-            ctx.lineWidth = 1.5;
-            ctx.setLineDash([3, 3]);
-            ctx.beginPath();
-            ctx.arc(0, 0, 18, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.setLineDash([]);
-
-            // Civilian clothes (bright orange/amber vest for high visibility)
-            ctx.fillStyle = "#f59e0b";
-            ctx.beginPath();
-            ctx.roundRect(-7, -8, 14, 16, 5);
-            ctx.fill();
-
-            // Head
-            ctx.fillStyle = "#fef08a";
-            ctx.beginPath();
-            ctx.arc(0, -1, 6, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Zip-tie on wrists (behind back)
-            ctx.fillStyle = "#ffffff";
-            ctx.fillRect(-3, 6, 6, 2);
-
-            ctx.fillStyle = "#090d16";
-            ctx.font = "bold 9px monospace";
-            ctx.textAlign = "center";
-            ctx.fillText("VIP", 0, 3);
-          }
-
-          ctx.restore();
-        }
-
-        // Draw Suspects (Armed Insurgents)
-        for (const sus of st.suspects) {
-          const sx = OFFSET_X + (sus.x + 0.5) * CELL_SIZE;
-          const sy = OFFSET_Y + (sus.y + 0.5) * CELL_SIZE;
-
-          ctx.save();
-          ctx.translate(sx, sy);
-
-          if (sus.neutralized) {
-            // Neutralized suspect: fallen body outline & mark
-            ctx.strokeStyle = "rgba(100, 116, 139, 0.6)";
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.arc(0, 0, 12, 0, Math.PI * 2);
-            ctx.stroke();
-
-            ctx.strokeStyle = "#ef4444";
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(-6, -6);
-            ctx.lineTo(6, 6);
-            ctx.moveTo(6, -6);
-            ctx.lineTo(-6, 6);
-            ctx.stroke();
-
             ctx.restore();
-            continue;
           }
 
-          // Aim angle towards nearest operator
-          let aimAngle = 0;
-          let nearestDist = 999;
+          // Tracers
+          for (const tLine of st.tracerLines) {
+            ctx.save();
+            ctx.strokeStyle = tLine.color;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(OFFSET_X + tLine.x1 * CELL_SIZE + CELL_SIZE / 2, OFFSET_Y + tLine.y1 * CELL_SIZE + CELL_SIZE / 2);
+            ctx.lineTo(OFFSET_X + tLine.x2 * CELL_SIZE + CELL_SIZE / 2, OFFSET_Y + tLine.y2 * CELL_SIZE + CELL_SIZE / 2);
+            ctx.stroke();
+            ctx.restore();
+          }
+
+          // Waypoint lines
           for (const op of st.operators) {
-            if (op.hp > 0) {
-              const dx = op.x - sus.x;
-              const dy = op.y - sus.y;
-              const dist = Math.hypot(dx, dy);
-              if (dist < nearestDist) {
-                nearestDist = dist;
-                aimAngle = Math.atan2(dy, dx);
+            if (op.waypoints.length > 0) {
+              ctx.save();
+              ctx.strokeStyle = op.id === "alpha" ? "#38bdf8" : "#a855f7";
+              ctx.lineWidth = 2;
+              ctx.setLineDash([4, 4]);
+              ctx.beginPath();
+              ctx.moveTo(OFFSET_X + op.x * CELL_SIZE + CELL_SIZE / 2, OFFSET_Y + op.y * CELL_SIZE + CELL_SIZE / 2);
+              for (const pt of op.waypoints) {
+                ctx.lineTo(OFFSET_X + pt.x * CELL_SIZE + CELL_SIZE / 2, OFFSET_Y + pt.y * CELL_SIZE + CELL_SIZE / 2);
               }
+              ctx.stroke();
+              ctx.restore();
+            }
+
+            // Flashbang target mark
+            if (op.flashbangTarget && !op.flashbangThrown) {
+              ctx.save();
+              const fx = OFFSET_X + op.flashbangTarget.x * CELL_SIZE + CELL_SIZE / 2;
+              const fy = OFFSET_Y + op.flashbangTarget.y * CELL_SIZE + CELL_SIZE / 2;
+              ctx.fillStyle = "rgba(245, 158, 11, 0.35)";
+              ctx.beginPath();
+              ctx.arc(fx, fy, CELL_SIZE * 0.45, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.strokeStyle = "#f59e0b";
+              ctx.lineWidth = 1.5;
+              ctx.stroke();
+              ctx.font = "14px sans-serif";
+              ctx.textAlign = "center";
+              ctx.fillText("💥", fx, fy + 5);
+              ctx.restore();
             }
           }
 
-          // Soft drop shadow
-          ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
-          ctx.beginPath();
-          ctx.ellipse(0, 2, 16, 11, 0, 0, Math.PI * 2);
-          ctx.fill();
-
-          ctx.rotate(aimAngle);
-
-          // Guerilla vest & shoulders
-          ctx.fillStyle = sus.stunTimer > 0 ? "#b45309" : "#7f1d1d";
-          ctx.beginPath();
-          ctx.roundRect(-9, -12, 18, 24, 4);
-          ctx.fill();
-
-          // AK-47 Assault Rifle barrel extending forward
-          ctx.fillStyle = "#1e293b";
-          ctx.fillRect(4, 2, 15, 3.5); // Gun barrel
-          ctx.fillStyle = "#b45309";
-          ctx.fillRect(8, 3, 6, 4);   // Curved banana magazine (wood/bakelite)
-
-          // Arms holding weapon
-          ctx.fillStyle = sus.stunTimer > 0 ? "#d97706" : "#dc2626";
-          ctx.beginPath();
-          ctx.arc(5, -6, 4, 0, Math.PI * 2);
-          ctx.arc(4, 4, 4, 0, Math.PI * 2);
-          ctx.fill();
-
-          // Balaclava mask / Head
-          ctx.fillStyle = "#18181b";
-          ctx.beginPath();
-          ctx.arc(0, 0, 8, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.strokeStyle = sus.stunTimer > 0 ? "#facc15" : "#ef4444";
-          ctx.lineWidth = 1.5;
-          ctx.stroke();
-
-          // Headband / eye slit
-          ctx.fillStyle = "#ef4444";
-          ctx.fillRect(3, -3, 3, 6);
-
-          ctx.restore();
-
-          // Stun effect overlay
-          if (sus.stunTimer > 0) {
+          // Hostages
+          for (const h of st.hostages) {
+            const hx = OFFSET_X + h.x * CELL_SIZE + CELL_SIZE / 2;
+            const hy = OFFSET_Y + h.y * CELL_SIZE + CELL_SIZE / 2;
             ctx.save();
-            ctx.translate(sx, sy);
+            ctx.fillStyle = h.rescued ? "#22c55e" : "#f59e0b";
+            ctx.beginPath();
+            ctx.arc(hx, hy, 14, 0, Math.PI * 2);
+            ctx.fill();
             ctx.font = "14px sans-serif";
             ctx.textAlign = "center";
-            ctx.fillText("💫", 0, -20);
+            ctx.fillText(h.rescued ? "🕊️" : "🤝", hx, hy + 5);
             ctx.restore();
           }
-        }
 
-        // Draw SWAT Operators & FOV Vision Cones
-        for (const op of st.operators) {
-          if (op.hp <= 0) continue;
-          const ox = OFFSET_X + (op.x + 0.5) * CELL_SIZE;
-          const oy = OFFSET_Y + (op.y + 0.5) * CELL_SIZE;
-          const color = op.id === "alpha" ? "#38bdf8" : "#4ade80";
+          // Suspects
+          for (const s of st.suspects) {
+            const sx = OFFSET_X + s.x * CELL_SIZE + CELL_SIZE / 2;
+            const sy = OFFSET_Y + s.y * CELL_SIZE + CELL_SIZE / 2;
+            ctx.save();
 
-          // Vision Cone
-          ctx.save();
-          ctx.fillStyle =
-            op.id === "alpha"
-              ? "rgba(56, 189, 248, 0.16)"
-              : "rgba(74, 222, 128, 0.16)";
-          ctx.beginPath();
-          ctx.moveTo(ox, oy);
-          ctx.arc(ox, oy, 130, op.angle - 0.45, op.angle + 0.45);
-          ctx.closePath();
-          ctx.fill();
-          ctx.restore();
+            // Sniper laser pointer
+            if (s.suspectType === "sniper" && !s.neutralized && s.stunTimer <= 0) {
+              ctx.strokeStyle = "rgba(239, 68, 68, 0.4)";
+              ctx.lineWidth = 1;
+              ctx.beginPath();
+              ctx.moveTo(sx, sy);
+              ctx.lineTo(sx + Math.cos(s.angle) * CELL_SIZE * 5, sy + Math.sin(s.angle) * CELL_SIZE * 5);
+              ctx.stroke();
+            }
 
-          // High-Fidelity Tactical Operator Silhouette
-          ctx.save();
-          ctx.translate(ox, oy);
+            ctx.fillStyle = s.neutralized ? "#475569" : s.stunTimer > 0 ? "#eab308" : "#ef4444";
+            ctx.beginPath();
+            ctx.arc(sx, sy, 15, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = s.suspectType === "shielded" ? "#38bdf8" : "#ffffff";
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
 
-          // Soft drop shadow
-          ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-          ctx.beginPath();
-          ctx.ellipse(0, 2, 17, 12, 0, 0, Math.PI * 2);
-          ctx.fill();
+            ctx.font = "14px sans-serif";
+            ctx.textAlign = "center";
+            let sIcon = "👺";
+            if (s.suspectType === "shielded") sIcon = "🛡️";
+            else if (s.suspectType === "bomber") sIcon = "💣";
+            else if (s.suspectType === "sniper") sIcon = "🎯";
+            ctx.fillText(s.neutralized ? "☠️" : s.stunTimer > 0 ? "💫" : sIcon, sx, sy + 5);
+            ctx.restore();
+          }
 
-          ctx.rotate(op.angle);
+          // Operators
+          for (const op of st.operators) {
+            if (op.hp <= 0) continue;
+            const ox = OFFSET_X + op.x * CELL_SIZE + CELL_SIZE / 2;
+            const oy = OFFSET_Y + op.y * CELL_SIZE + CELL_SIZE / 2;
+            ctx.save();
+            ctx.fillStyle = op.id === "alpha" ? "#0284c7" : "#9333ea";
+            ctx.beginPath();
+            ctx.arc(ox, oy, 16, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = op.id === st.selectedOpId ? "#ffffff" : "#cbd5e1";
+            ctx.lineWidth = op.id === st.selectedOpId ? 3 : 1.5;
+            ctx.stroke();
 
-          // Tactical Plate Carrier (Dark Navy/Slate armor)
-          ctx.fillStyle = "#0f172a";
-          ctx.beginPath();
-          ctx.roundRect(-10, -13, 20, 26, 4);
-          ctx.fill();
-          ctx.strokeStyle = "#334155";
-          ctx.lineWidth = 1;
-          ctx.stroke();
+            ctx.font = "bold 10px monospace";
+            ctx.fillStyle = "#ffffff";
+            ctx.textAlign = "center";
+            ctx.fillText(op.id === "alpha" ? "A1" : "B2", ox, oy + 4);
 
-          // Tactical Assault Rifle (M4/HK416 with suppressor & rail)
-          ctx.fillStyle = "#020617";
-          ctx.fillRect(5, 2, 17, 3.5); // Barrel & suppressor
-          ctx.fillStyle = "#475569";
-          ctx.fillRect(8, 0, 7, 3);    // Picatinny rail / EOTech holo sight
-          ctx.fillStyle = "#1e293b";
-          ctx.fillRect(3, 4, 3, 4);    // Magazine
-
-          // Arms gripping weapon (colored uniform sleeves)
-          ctx.fillStyle = color;
-          ctx.beginPath();
-          ctx.arc(6, -6, 4.5, 0, Math.PI * 2); // Left hand on foregrip
-          ctx.arc(4, 4, 4.5, 0, Math.PI * 2);  // Right hand on trigger
-          ctx.fill();
-
-          // Ballistic FAST Helmet
-          ctx.fillStyle = "#1e293b";
-          ctx.beginPath();
-          ctx.arc(0, 0, 9, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.strokeStyle = color;
-          ctx.lineWidth = 2;
-          ctx.stroke();
-
-          // NVG mount / Goggle visor rim
-          ctx.fillStyle = color;
-          ctx.fillRect(5, -4, 3.5, 8);
-
-          // Tactical IR Laser Line (aiming indicator)
-          ctx.strokeStyle = op.id === "alpha" ? "rgba(56, 189, 248, 0.4)" : "rgba(74, 222, 128, 0.4)";
-          ctx.lineWidth = 1;
-          ctx.setLineDash([2, 4]);
-          ctx.beginPath();
-          ctx.moveTo(22, 4);
-          ctx.lineTo(80, 4);
-          ctx.stroke();
-          ctx.setLineDash([]);
-
-          ctx.restore();
-
-          // Team Badge ID Text
-          ctx.save();
-          ctx.translate(ox, oy);
-          ctx.fillStyle = "#ffffff";
-          ctx.font = "bold 9px monospace";
-          ctx.textAlign = "center";
-          ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
-          ctx.shadowBlur = 3;
-          ctx.fillText(op.id === "alpha" ? "ALPHA" : "BRAVO", 0, 18);
-          ctx.restore();
-        }
-
-        // Draw Flashbang shockwaves
-        for (const b of st.activeFlashBursts) {
-          const bx = OFFSET_X + (b.x + 0.5) * CELL_SIZE;
-          const by = OFFSET_Y + (b.y + 0.5) * CELL_SIZE;
-          ctx.save();
-          ctx.fillStyle = `rgba(254, 240, 138, ${b.timer})`;
-          ctx.beginPath();
-          ctx.arc(bx, by, (1 - b.timer) * 180 + 25, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.restore();
-        }
-
-        // Draw Bullet Tracers
-        for (const tr of st.tracerLines) {
-          ctx.strokeStyle = tr.color;
-          ctx.lineWidth = 2.5;
-          ctx.beginPath();
-          ctx.moveTo(
-            OFFSET_X + (tr.x1 + 0.5) * CELL_SIZE,
-            OFFSET_Y + (tr.y1 + 0.5) * CELL_SIZE
-          );
-          ctx.lineTo(
-            OFFSET_X + (tr.x2 + 0.5) * CELL_SIZE,
-            OFFSET_Y + (tr.y2 + 0.5) * CELL_SIZE
-          );
-          ctx.stroke();
+            // HP bar
+            const hpRatio = Math.max(0, op.hp / op.maxHp);
+            ctx.fillStyle = hpRatio > 0.5 ? "#22c55e" : "#ef4444";
+            ctx.fillRect(ox - 14, oy - 22, 28 * hpRatio, 3.5);
+            ctx.restore();
+          }
         }
       }
 
@@ -834,275 +692,346 @@ export default function SwatBreach({ locale = "ko" }: Props) {
 
     rafId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafId);
-  }, [playSoundEffect, syncUi]);
+  }, [ensureAudio, playSoundEffect, recordDdaDeath, recordDdaHit, recordDdaKill, syncUi]);
 
-  const handleCanvasClick = useCallback(
-    (clientX: number, clientY: number) => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const rect = canvas.getBoundingClientRect();
-      const cx = ((clientX - rect.left) / rect.width) * CANVAS_W;
-      const cy = ((clientY - rect.top) / rect.height) * CANVAS_H;
+  const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const clickX = (e.clientX - rect.left) * scaleX;
+    const clickY = (e.clientY - rect.top) * scaleY;
 
-      const gx = Math.floor((cx - OFFSET_X) / CELL_SIZE);
-      const gy = Math.floor((cy - OFFSET_Y) / CELL_SIZE);
+    const gx = Math.floor((clickX - OFFSET_X) / CELL_SIZE);
+    const gy = Math.floor((clickY - OFFSET_Y) / CELL_SIZE);
 
-      if (addWaypointOrFlash(stateRef.current, gx, gy)) {
-        playSoundEffect("click");
-        syncUi();
-      }
-    },
-    [playSoundEffect, syncUi]
-  );
+    if (addWaypointOrFlash(stateRef.current, gx, gy)) {
+      nativeHaptics.trigger("light");
+      playSoundEffect("click");
+      syncUi();
+    }
+  };
 
-  const spec = MISSIONS[uiMissionIdx];
+  const curMission = MISSIONS[uiMissionIdx];
+  const curComms = SWAT_COMMS_LOGS.find((c) => c.id === uiCommsLogId) ?? SWAT_COMMS_LOGS[0];
 
   return (
     <div
       ref={containerRef}
-      className={`flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 text-card-foreground shadow-sm transition-all ${
-        isImmersive
-          ? "fixed inset-0 z-50 overflow-y-auto bg-background/95 backdrop-blur-md max-w-none w-full h-full p-6 justify-center"
-          : ""
+      className={`relative w-full max-w-4xl mx-auto flex flex-col items-center bg-card text-foreground rounded-2xl border border-border shadow-2xl overflow-hidden ${
+        isImmersive ? "fixed inset-0 z-50 rounded-none border-none max-w-none justify-center" : "my-4"
       }`}
     >
-      {/* Top Tactical Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="rounded-md bg-primary/15 px-2.5 py-0.5 text-xs font-bold text-primary">
-              {spec.title[lang]}
-            </span>
-            <span
-              className={`rounded-full border px-2.5 py-0.5 font-mono text-xs font-black ${
-                flowState === 'flow'
-                  ? 'border-primary/40 bg-primary/20 text-primary'
-                  : flowState === 'danger'
-                    ? 'border-destructive/40 bg-destructive/20 text-destructive'
-                    : 'border-chart-3/40 bg-chart-3/20 text-chart-3'
-              }`}
-            >
-              DDA: {flowState.toUpperCase()}
-            </span>
-            <span className="text-xs font-bold text-muted-foreground">
-              {uiPhase === "planning"
-                ? t.phasePlanning
-                : uiPhase === "executing"
-                  ? t.phaseExecuting
-                  : uiPhase === "victory"
-                    ? t.phaseVictory
-                    : t.phaseFailed}
-            </span>
+      {/* Top Header Bar */}
+      <div className="w-full flex items-center justify-between px-4 py-2.5 bg-muted/40 border-b border-border">
+        <div className="flex items-center gap-2">
+          <Shield className="w-5 h-5 text-primary" />
+          <div>
+            <h2 className="text-sm font-bold tracking-tight text-primary">{t.title}</h2>
+            <p className="text-xs text-muted-foreground">{curMission.title[lang]}</p>
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {spec.briefing[lang]}
-          </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          {MISSIONS.map((m, idx) => (
-            <button
-              key={m.id}
-              type="button"
-              onClick={() => loadMission(idx)}
-              className={`rounded-lg px-2.5 py-1 text-xs font-bold transition ${
-                idx === uiMissionIdx
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Op.{m.missionNum}
-            </button>
-          ))}
+        {/* Action Modals & Tokens */}
+        <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => loadMission(uiMissionIdx)}
-            className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-semibold text-muted-foreground transition hover:bg-muted"
+            onClick={() => setShowQuestModal(true)}
+            className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg bg-primary/20 text-primary border border-primary/40 hover:bg-primary/30 transition-colors"
           >
-            {t.resetBtn}
+            <Award className="w-3.5 h-3.5" />
+            <span>작전지령 ({quests.filter((q) => q.completed && !q.claimed).length})</span>
           </button>
+
+          <button
+            type="button"
+            onClick={() => setShowArmoryModal(true)}
+            className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg bg-chart-4/20 text-chart-4 border border-chart-4/40 hover:bg-chart-4/30 transition-colors"
+          >
+            <Wrench className="w-3.5 h-3.5" />
+            <span>무기고 ({metaState.tacticalTokens} 🎖️)</span>
+          </button>
+
           <button
             type="button"
             onClick={togglePortal}
-            className="p-1.5 rounded-lg bg-card border border-border text-foreground hover:bg-muted/80 transition-colors"
-            title={isImmersive ? "포털 축소" : "100dvh 전체화면"}
+            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
           >
             {isImmersive ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
           </button>
         </div>
       </div>
 
-      {/* Status & Go-Code Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-muted/60 px-3.5 py-2.5">
-        <div className="flex flex-wrap items-center gap-4 text-xs font-bold">
-          <span className="text-destructive">
-            🎯 {t.suspectsLabel}: {uiSuspectsLeft}
-          </span>
-          <span className="text-success">
-            🛟 {t.hostagesLabel}: {uiHostagesRescued} / {uiHostagesTotal}
-          </span>
+      {/* TOC Radio Comms HUD */}
+      <div className="w-full px-4 py-1.5 bg-muted/20 border-b border-border/80 flex items-center gap-2 text-xs">
+        <span className="font-bold text-primary whitespace-nowrap">[{curComms.sender.ko}]</span>
+        <span className="text-foreground/90 truncate">{curComms.message.ko}</span>
+      </div>
+
+      {/* Stats Bar */}
+      <div className="w-full grid grid-cols-4 gap-2 px-4 py-2 bg-muted/10 border-b border-border/40 text-center">
+        <GameStatTile
+          label="작전 상태"
+          value={
+            uiPhase === "planning"
+              ? "설계 중"
+              : uiPhase === "executing"
+              ? "돌입 교전"
+              : uiPhase === "victory"
+              ? "확보 완료"
+              : "작전 실패"
+          }
+          icon="📋"
+        />
+        <GameStatTile label={t.suspectsLabel} value={`${uiSuspectsLeft}명 잔여`} icon="👺" />
+        <GameStatTile label={t.hostagesLabel} value={`${uiHostagesRescued} / ${uiHostagesTotal}명`} icon="🕊️" />
+        <GameStatTile label="작전 훈장" value={`${metaState.tacticalTokens} 🎖️`} icon="⭐" />
+      </div>
+
+      {/* Floorplan Canvas Viewport */}
+      <div className="relative w-full aspect-video max-h-120 bg-background flex items-center justify-center">
+        <canvas
+          ref={canvasRef}
+          width={CANVAS_W}
+          height={CANVAS_H}
+          onClick={handleCanvasClick}
+          className="w-full h-full object-contain cursor-crosshair"
+        />
+      </div>
+
+      {/* Tactical Planning Control Pad */}
+      <div className="w-full p-3 bg-muted/30 border-t border-border flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          {/* Operator Selection */}
+          <TiltSwatButton
+            type="button"
+            onClick={() => handleSelectOp("alpha")}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-colors ${
+              uiSelectedOp === "alpha"
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-card text-foreground border-border hover:bg-muted"
+            }`}
+          >
+            🛡️ ALPHA-1
+          </TiltSwatButton>
+
+          <TiltSwatButton
+            type="button"
+            onClick={() => handleSelectOp("bravo")}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-colors ${
+              uiSelectedOp === "bravo"
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-card text-foreground border-border hover:bg-muted"
+            }`}
+          >
+            ⚡ BRAVO-2
+          </TiltSwatButton>
+
+          {/* Tool Mode */}
+          <button
+            type="button"
+            onClick={() => handleSelectTool("waypoint")}
+            className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+              uiToolMode === "waypoint"
+                ? "bg-muted text-foreground border-primary"
+                : "bg-card text-muted-foreground border-border hover:bg-muted"
+            }`}
+          >
+            📍 경로 지정
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleSelectTool("flashbang")}
+            className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+              uiToolMode === "flashbang"
+                ? "bg-chart-4/20 text-chart-4 border-chart-4"
+                : "bg-card text-muted-foreground border-border hover:bg-muted"
+            }`}
+          >
+            💥 섬광탄
+          </button>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          {uiPhase === "planning" && (
+        <div className="flex items-center gap-2">
+          {uiPhase === "planning" ? (
             <>
-              <TiltSwatButton
+              <button
                 type="button"
                 onClick={() => {
                   applyAutoTacticalPlan(stateRef.current);
-                  playSoundEffect("click");
                   syncUi();
                 }}
-                className="rounded-lg bg-secondary px-3 py-1.5 text-xs font-bold text-secondary-foreground transition hover:opacity-90 shadow-xs"
+                className="px-2.5 py-1.5 rounded-lg bg-card text-muted-foreground hover:text-foreground border border-border text-xs transition-colors"
               >
                 {t.autoPlanBtn}
-              </TiltSwatButton>
-              <TiltSwatButton
+              </button>
+
+              <button
                 type="button"
                 onClick={() => {
                   clearOperatorWaypoints(stateRef.current);
-                  playSoundEffect("click");
                   syncUi();
                 }}
-                className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-muted shadow-xs"
+                className="px-2.5 py-1.5 rounded-lg bg-card text-muted-foreground hover:text-foreground border border-border text-xs transition-colors"
               >
                 {t.clearPathBtn}
-              </TiltSwatButton>
+              </button>
+
               <TiltSwatButton
                 type="button"
                 onClick={handleExecuteBreach}
-                className="rounded-lg bg-primary px-4 py-1.5 text-xs font-bold text-primary-foreground shadow-sm transition hover:opacity-90"
+                className="px-4 py-1.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs shadow-md transition-colors"
               >
                 {t.goCodeBtn}
               </TiltSwatButton>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => loadMission(uiMissionIdx)}
+                className="px-3 py-1.5 rounded-lg bg-card text-foreground border border-border text-xs font-bold hover:bg-muted transition-colors"
+              >
+                {t.resetBtn}
+              </button>
+
+              {uiPhase === "victory" && (
+                <button
+                  type="button"
+                  onClick={() => loadMission((uiMissionIdx + 1) % MISSIONS.length)}
+                  className="px-3 py-1.5 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold transition-colors"
+                >
+                  {t.nextMissionBtn}
+                </button>
+              )}
             </>
           )}
         </div>
       </div>
 
-      {uiPhase === "victory" && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary/40 bg-primary/10 p-4 shadow-md">
-          <div className="flex items-center gap-3">
-            <img
-              src={getSpriteUrl("trophy")}
-              alt="3D Gold Trophy"
-              className="w-12 h-12 drop-shadow-md animate-bounce"
-            />
-            <div>
-              <span className="text-sm font-bold text-primary block">
-                {t.victoryBanner}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                인질 {uiHostagesRescued}명 전원 구출 및 용의자 무력화 완료!
-              </span>
+      {/* Quests Modal */}
+      {showQuestModal && (
+        <div className="absolute inset-0 z-50 bg-background/80 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-card border border-border rounded-2xl p-5 shadow-2xl flex flex-col gap-4">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div className="flex items-center gap-2">
+                <Award className="w-5 h-5 text-primary" />
+                <h3 className="font-bold text-foreground">SWAT 전술 작전 지령</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowQuestModal(false)}
+                className="text-muted-foreground hover:text-foreground p-1 rounded-lg"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-3 max-h-72 overflow-y-auto pr-1">
+              {quests.map((q) => (
+                <div
+                  key={q.id}
+                  className={`p-3 rounded-xl border flex flex-col gap-2 ${
+                    q.claimed
+                      ? "bg-muted/20 border-border/40 opacity-60"
+                      : q.completed
+                      ? "bg-primary/10 border-primary/60"
+                      : "bg-muted/40 border-border"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-foreground">{q.title.ko}</span>
+                    <span className="text-xs font-semibold text-chart-4">+{q.rewardTokens} 🎖️</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{q.description.ko}</p>
+                  <div className="flex items-center justify-between pt-1">
+                    <div className="text-xs text-muted-foreground">
+                      진행도: {q.current} / {q.target}
+                    </div>
+                    {q.completed && !q.claimed ? (
+                      <button
+                        type="button"
+                        onClick={() => handleClaimQuest(q.id)}
+                        className="px-2.5 py-1 rounded bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold transition-colors"
+                      >
+                        보상 수령
+                      </button>
+                    ) : q.claimed ? (
+                      <span className="text-xs text-muted-foreground font-semibold">수령 완료</span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">진행 중</span>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
+        </div>
+      )}
 
-          <div className="flex items-center gap-2">
-            <TiltSwatButton
-              type="button"
-              onClick={handleShareCard}
-              className="rounded-lg bg-secondary px-4 py-2 text-xs font-bold text-secondary-foreground border border-border flex items-center gap-1.5 shadow-sm"
-            >
-              {isCopied ? <Check className="w-4 h-4 text-primary" /> : <Camera className="w-4 h-4" />}
-              <span>{isCopied ? "복사 완료!" : "작전 기록 공유"}</span>
-            </TiltSwatButton>
+      {/* SWAT Armory Modal */}
+      {showArmoryModal && (
+        <div className="absolute inset-0 z-50 bg-background/80 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="w-full max-w-lg bg-card border border-border rounded-2xl p-5 shadow-2xl flex flex-col gap-4">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div className="flex items-center gap-2">
+                <Wrench className="w-5 h-5 text-chart-4" />
+                <h3 className="font-bold text-foreground">SWAT 본부 무기고 5대 영구 연구소</h3>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-bold text-chart-4">{metaState.tacticalTokens} 🎖️ 작전 훈장</span>
+                <button
+                  type="button"
+                  onClick={() => setShowArmoryModal(false)}
+                  className="text-muted-foreground hover:text-foreground p-1 rounded-lg"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
 
-            {uiMissionIdx < MISSIONS.length - 1 && (
-              <TiltSwatButton
-                type="button"
-                onClick={() => loadMission(uiMissionIdx + 1)}
-                className="rounded-lg bg-primary px-4 py-2 text-xs font-bold text-primary-foreground shadow-sm transition hover:opacity-90"
-              >
-                {t.nextMissionBtn}
-              </TiltSwatButton>
-            )}
+            <div className="flex flex-col gap-3 max-h-80 overflow-y-auto pr-1">
+              {SWAT_META_UPGRADE_DEFS.map((def) => {
+                const currentLvl = metaState.upgrades[def.id];
+                const isMax = currentLvl >= def.maxLevel;
+                const cost = isMax ? 0 : def.costPerLevel[currentLvl];
+                const canAfford = metaState.tacticalTokens >= cost;
+
+                return (
+                  <div
+                    key={def.id}
+                    className="p-3 rounded-xl bg-muted/40 border border-border flex items-center justify-between gap-3"
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <span className="text-2xl">{def.icon}</span>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-foreground">{def.name.ko}</span>
+                          <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-bold">
+                            Lv.{currentLvl}/{def.maxLevel}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">{def.desc.ko}</p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handlePurchaseMeta(def.id)}
+                      disabled={isMax || !canAfford}
+                      className="whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {isMax ? "최대 레벨" : `${cost} 🎖️ 연구`}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}
-
-      {uiPhase === "failed" && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-destructive/10 px-4 py-3">
-          <span className="text-sm font-bold text-destructive">
-            {t.failedBanner}
-          </span>
-          <button
-            type="button"
-            onClick={() => loadMission(uiMissionIdx)}
-            className="rounded-lg bg-primary px-4 py-1.5 text-xs font-bold text-primary-foreground"
-          >
-            {t.resetBtn}
-          </button>
-        </div>
-      )}
-
-      {/* Main Tactical Blueprint Canvas */}
-      <div className="relative mx-auto w-full max-w-2xl overflow-hidden rounded-xl border border-border bg-background shadow-inner">
-        <canvas
-          ref={canvasRef}
-          width={CANVAS_W}
-          height={CANVAS_H}
-          onPointerDown={(e) => handleCanvasClick(e.clientX, e.clientY)}
-          className="block h-auto w-full cursor-pointer touch-none select-none"
-        />
-      </div>
-
-      {/* Operator & Tool Selector */}
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-muted/60 p-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => handleSelectOp("alpha")}
-            className={`rounded-lg px-3.5 py-2 text-xs font-bold transition ${
-              uiSelectedOp === "alpha"
-                ? "bg-primary text-primary-foreground shadow-xs"
-                : "bg-card text-foreground hover:bg-muted"
-            }`}
-          >
-            🛡️ ALPHA-1 (Shield)
-          </button>
-          <button
-            type="button"
-            onClick={() => handleSelectOp("bravo")}
-            className={`rounded-lg px-3.5 py-2 text-xs font-bold transition ${
-              uiSelectedOp === "bravo"
-                ? "bg-primary text-primary-foreground shadow-xs"
-                : "bg-card text-foreground hover:bg-muted"
-            }`}
-          >
-            ⚡ BRAVO-2 (Assault)
-          </button>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => handleSelectTool("waypoint")}
-            className={`rounded-lg px-3 py-2 text-xs font-bold transition ${
-              uiToolMode === "waypoint"
-                ? "bg-secondary text-secondary-foreground"
-                : "bg-card text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {t.waypointTool}
-          </button>
-          <button
-            type="button"
-            onClick={() => handleSelectTool("flashbang")}
-            className={`rounded-lg px-3 py-2 text-xs font-bold transition ${
-              uiToolMode === "flashbang"
-                ? "bg-secondary text-secondary-foreground"
-                : "bg-card text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {t.flashbangTool}
-          </button>
-        </div>
-      </div>
-
-      <p className="text-center text-xs text-muted-foreground">
-        {t.controlsHint}
-      </p>
     </div>
   );
 }

@@ -10,6 +10,8 @@
 
 export type TileType = "floor" | "wall" | "door_closed" | "door_open" | "cover";
 
+export type SuspectType = "normal" | "shielded" | "bomber" | "sniper";
+
 export interface GridPoint {
   x: number;
   y: number;
@@ -35,10 +37,13 @@ export interface SuspectState {
   x: number;
   y: number;
   hp: number;
+  maxHp?: number;
   angle: number;
   stunTimer: number;
   reactionTimer: number;
   neutralized: boolean;
+  suspectType?: SuspectType;
+  bombTimer?: number;
 }
 
 export interface HostageState {
@@ -63,7 +68,7 @@ export interface SwatMissionSpec {
     autoPath: GridPoint[];
     autoFlash: GridPoint;
   }>;
-  suspects: Array<{ id: string; x: number; y: number }>;
+  suspects: Array<{ id: string; x: number; y: number; type?: SuspectType }>;
   hostages: Array<{ id: string; x: number; y: number }>;
 }
 
@@ -80,9 +85,19 @@ export interface SwatBreachState {
   hostages: HostageState[];
   flashbangsRemaining: number;
   activeFlashBursts: Array<{ x: number; y: number; timer: number }>;
+  activeShockwaves: Array<{ x: number; y: number; radius: number; maxRadius: number; timer: number }>;
   tracerLines: Array<{ x1: number; y1: number; x2: number; y2: number; color: string; timer: number }>;
   elapsedTime: number;
   score: number;
+  tokensEarned: number;
+  activeCommsLogId?: string;
+  metaModifiers?: {
+    kevlarHp: number;
+    fireCooldownReduction: number;
+    reactionBonus: number;
+    extraFlashbangs: number;
+    speedMultiplier: number;
+  };
 }
 
 export const GRID_W = 10;
@@ -298,7 +313,10 @@ export const MISSIONS: SwatMissionSpec[] = [
   },
 ];
 
-export function createSwatBreachState(missionIndex = 0): SwatBreachState {
+export function createSwatBreachState(
+  missionIndex = 0,
+  metaModifiers?: SwatBreachState["metaModifiers"]
+): SwatBreachState {
   const safeIdx = Math.max(0, Math.min(MISSIONS.length - 1, missionIndex));
   const spec = MISSIONS[safeIdx];
 
@@ -316,6 +334,9 @@ export function createSwatBreachState(missionIndex = 0): SwatBreachState {
     tiles.push(row);
   }
 
+  const extraHp = metaModifiers?.kevlarHp ?? 0;
+  const extraFlashes = metaModifiers?.extraFlashbangs ?? 0;
+
   return {
     missionIndex: safeIdx,
     gridW: GRID_W,
@@ -324,38 +345,60 @@ export function createSwatBreachState(missionIndex = 0): SwatBreachState {
     phase: "planning",
     selectedOpId: "alpha",
     toolMode: "waypoint",
-    operators: spec.operators.map((op) => ({
-      id: op.id,
-      callsign: op.callsign,
-      role: op.role,
-      x: op.x,
-      y: op.y,
-      hp: op.role === "shield" ? 160 : 120,
-      maxHp: op.role === "shield" ? 160 : 120,
-      angle: 0,
-      waypoints: [...op.autoPath],
-      flashbangTarget: { ...op.autoFlash },
-      flashbangThrown: false,
-      fireCooldown: 0,
-    })),
-    suspects: spec.suspects.map((s) => ({
-      id: s.id,
-      x: s.x,
-      y: s.y,
-      hp: 60,
-      angle: Math.PI,
-      stunTimer: 0,
-      reactionTimer: 0.55,
-      neutralized: false,
-    })),
+    activeCommsLogId: "planning_brief",
+    metaModifiers,
+    tokensEarned: 0,
+    operators: spec.operators.map((op) => {
+      const baseHp = op.role === "shield" ? 160 : 120;
+      const totalHp = baseHp + extraHp;
+      return {
+        id: op.id,
+        callsign: op.callsign,
+        role: op.role,
+        x: op.x,
+        y: op.y,
+        hp: totalHp,
+        maxHp: totalHp,
+        angle: 0,
+        waypoints: [...op.autoPath],
+        flashbangTarget: { ...op.autoFlash },
+        flashbangThrown: false,
+        fireCooldown: 0,
+      };
+    }),
+    suspects: spec.suspects.map((s, idx) => {
+      // Assign elite mutations on some suspects
+      let sType: SuspectType = s.type ?? "normal";
+      if (!s.type) {
+        if (idx === 0) sType = "shielded";
+        else if (idx === 1 && spec.suspects.length > 2) sType = "bomber";
+        else if (idx === 2 && spec.suspects.length > 3) sType = "sniper";
+      }
+
+      const hp = sType === "shielded" ? 90 : sType === "sniper" ? 45 : 60;
+      return {
+        id: s.id,
+        x: s.x,
+        y: s.y,
+        hp,
+        maxHp: hp,
+        angle: Math.PI,
+        stunTimer: 0,
+        reactionTimer: sType === "sniper" ? 0.35 : 0.55,
+        neutralized: false,
+        suspectType: sType,
+        bombTimer: sType === "bomber" ? 0 : undefined,
+      };
+    }),
     hostages: spec.hostages.map((h) => ({
       id: h.id,
       x: h.x,
       y: h.y,
       rescued: false,
     })),
-    flashbangsRemaining: 2,
+    flashbangsRemaining: 2 + extraFlashes,
     activeFlashBursts: [],
+    activeShockwaves: [],
     tracerLines: [],
     elapsedTime: 0,
     score: 0,
@@ -454,13 +497,23 @@ export function stepSwatBreach(
   let flashDetonated = false;
   let doorBreached = false;
 
-  // Decay visual bursts & tracers
+  // Decay visual bursts & tracers & shockwaves
   state.activeFlashBursts = state.activeFlashBursts
     .map((b) => ({ ...b, timer: b.timer - dtSeconds }))
     .filter((b) => b.timer > 0);
   state.tracerLines = state.tracerLines
     .map((t) => ({ ...t, timer: t.timer - dtSeconds }))
     .filter((t) => t.timer > 0);
+  state.activeShockwaves = state.activeShockwaves
+    .map((s) => ({
+      ...s,
+      timer: s.timer - dtSeconds,
+      radius: s.radius + (s.maxRadius / 0.6) * dtSeconds,
+    }))
+    .filter((s) => s.timer > 0);
+
+  const speedMult = 1 + (state.metaModifiers?.speedMultiplier ?? 0);
+  const cdReduction = state.metaModifiers?.fireCooldownReduction ?? 0;
 
   // Move operators along waypoints & breach doors
   for (const op of state.operators) {
@@ -486,6 +539,14 @@ export function stepSwatBreach(
       ) {
         state.tiles[ty][tx] = "door_open";
         doorBreached = true;
+        state.activeCommsLogId = "breach_go";
+        state.activeShockwaves.push({
+          x: tx,
+          y: ty,
+          radius: 0.2,
+          maxRadius: 2.2,
+          timer: 0.5,
+        });
 
         // Deploy queued flashbang on door breach!
         if (op.flashbangTarget && !op.flashbangThrown) {
@@ -493,6 +554,13 @@ export function stepSwatBreach(
           const fx = op.flashbangTarget.x;
           const fy = op.flashbangTarget.y;
           state.activeFlashBursts.push({ x: fx, y: fy, timer: 0.65 });
+          state.activeShockwaves.push({
+            x: fx,
+            y: fy,
+            radius: 0.3,
+            maxRadius: 3.5,
+            timer: 0.75,
+          });
           flashDetonated = true;
           for (const sus of state.suspects) {
             if (!sus.neutralized && Math.hypot(sus.x - fx, sus.y - fy) <= 3.5) {
@@ -502,7 +570,7 @@ export function stepSwatBreach(
         }
       }
 
-      const speed = 2.6;
+      const speed = 2.6 * speedMult;
       if (dist <= speed * dtSeconds) {
         op.x = target.x;
         op.y = target.y;
@@ -519,6 +587,8 @@ export function stepSwatBreach(
       if (!h.rescued && Math.hypot(h.x - op.x, h.y - op.y) <= 1.6) {
         h.rescued = true;
         state.score += 200;
+        state.tokensEarned += 5;
+        state.activeCommsLogId = "hostage_secure";
       }
     }
 
@@ -528,8 +598,19 @@ export function stepSwatBreach(
         if (sus.neutralized) continue;
         if (hasLineOfSight(state, op.x, op.y, sus.x, sus.y)) {
           op.angle = Math.atan2(sus.y - op.y, sus.x - op.x);
-          op.fireCooldown = 0.25;
-          sus.hp -= 35;
+          op.fireCooldown = Math.max(0.12, 0.25 * (1 - cdReduction));
+
+          // Shielded suspect damage reduction from front
+          let dmg = 35;
+          if (sus.suspectType === "shielded" && sus.stunTimer <= 0) {
+            const angleDiff = Math.abs(op.angle - sus.angle);
+            // If facing each other (near 180 degrees diff)
+            if (Math.abs(angleDiff - Math.PI) < 0.8) {
+              dmg = Math.floor(dmg * 0.3); // 70% deflected by shield
+            }
+          }
+
+          sus.hp -= dmg;
           shotsFired++;
           state.tracerLines.push({
             x1: op.x,
@@ -539,9 +620,29 @@ export function stepSwatBreach(
             color: "#38bdf8",
             timer: 0.14,
           });
+
           if (sus.hp <= 0) {
             sus.neutralized = true;
             state.score += 150;
+            state.tokensEarned += 2;
+            state.activeCommsLogId = "suspect_spotted";
+
+            // Bomber suicide explosion shockwave
+            if (sus.suspectType === "bomber") {
+              state.activeShockwaves.push({
+                x: sus.x,
+                y: sus.y,
+                radius: 0.4,
+                maxRadius: 2.8,
+                timer: 0.6,
+              });
+              // Splash damage to nearby ops
+              for (const o of state.operators) {
+                if (Math.hypot(o.x - sus.x, o.y - sus.y) <= 2.0) {
+                  o.hp = Math.max(0, o.hp - 25);
+                }
+              }
+            }
           }
           break;
         }
@@ -591,8 +692,11 @@ export function stepSwatBreach(
       if (!h.rescued) {
         h.rescued = true;
         state.score += 200;
+        state.tokensEarned += 5;
       }
     }
+    state.tokensEarned += 15;
+    state.activeCommsLogId = "all_clear";
     state.phase = "victory";
   } else if (allOpsDown) {
     state.phase = "failed";

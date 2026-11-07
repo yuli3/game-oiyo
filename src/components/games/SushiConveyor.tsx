@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
-import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
-import { getSpriteUrl, SUSHI_CONVEYOR_SPRITES } from "../../lib/games/sprites";
-import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "../../lib/games/share-card";
-import { celebrate } from "../../lib/games/celebration";
-import { Maximize2, Minimize2, Camera, Check } from "lucide-react";
+import { useCardTiltPro } from "../../lib/games/engine-suite-unified";
+import { SUSHI_CONVEYOR_SPRITES } from "../../lib/games/sprites";
+import { Maximize2, Minimize2, Award, Wrench, X } from "lucide-react";
 import {
   initializeSushiConveyor,
   stepSushiConveyor,
@@ -13,6 +11,16 @@ import {
   type SushiConveyorState,
   type SushiType,
 } from "../../lib/games/sushi-conveyor";
+import { INITIAL_SUSHI_QUESTS, type SushiQuest } from "../../lib/games/sushi-conveyor-quests";
+import { SUSHI_DIALOGUES } from "../../lib/games/sushi-conveyor-lore";
+import {
+  SUSHI_META_UPGRADE_DEFS,
+  loadSushiMetaState,
+  purchaseSushiMetaUpgrade,
+  saveSushiMetaState,
+  type SushiPlayerMetaState,
+} from "../../lib/games/sushi-conveyor-meta";
+import { nativeHaptics } from "../../lib/haptics/native-bridge";
 import { useAudioContext } from "../../lib/games/use-audio-context";
 import { GameStatTile } from "../ui/game/GameStatTile";
 
@@ -37,14 +45,63 @@ function TiltSushiButton({
 
 export function SushiConveyor() {
   const { isImmersive, containerRef, togglePortal } = useArcadePortal();
-  const [gameState, setGameState] = useState<SushiConveyorState>(() => initializeSushiConveyor());
-  const [isCopied, setIsCopied] = useState(false);
+  const [metaState, setMetaState] = useState<SushiPlayerMetaState>(() => loadSushiMetaState());
+  const [quests, setQuests] = useState<SushiQuest[]>(() => [...INITIAL_SUSHI_QUESTS]);
+  const [showResearchModal, setShowResearchModal] = useState(false);
+  const [showQuestModal, setShowQuestModal] = useState(false);
+
+  const buildMetaModifiers = useCallback((meta: SushiPlayerMetaState) => {
+    return {
+      priceMultiplier: 1 + meta.upgrades.goldenRiceCooker * 0.1,
+      extraFreshnessSec: meta.upgrades.knifeHoning * 5,
+      speedBonus: meta.upgrades.expressBelt * 0.12,
+      tipBonus: meta.upgrades.vipTatami * 0.25,
+      goldenRate: meta.upgrades.agingFreezer * 0.04,
+    };
+  }, []);
+
+  const [gameState, setGameState] = useState<SushiConveyorState>(() =>
+    initializeSushiConveyor(buildMetaModifiers(loadSushiMetaState()))
+  );
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const bgCanvasRef = useRef<HTMLCanvasElement | null>(null); // Palm Run style background cache
   const sushiImagesRef = useRef<Record<string, HTMLImageElement>>({});
   const inputRef = useRef<{
     craftSushi?: SushiType;
     buyUpgrade?: "beltSpeed" | "plateValue" | "autoPrep";
   }>({});
+
+  // Sync meta state wasabi earnings from game
+  useEffect(() => {
+    if (gameState.wasabiEarned > 0) {
+      setMetaState((prev) => {
+        const next = { ...prev, wasabiCores: prev.wasabiCores + gameState.wasabiEarned };
+        saveSushiMetaState(next);
+        return next;
+      });
+      // reset in gameState
+      setGameState((prev) => ({ ...prev, wasabiEarned: 0 }));
+    }
+  }, [gameState.wasabiEarned]);
+
+  // Check quest progress in run
+  useEffect(() => {
+    setQuests((prevQuests) =>
+      prevQuests.map((q) => {
+        if (q.completed) return q;
+        const progress = q.check(gameState);
+        const completed = progress >= q.target;
+        if (completed && !q.completed) {
+          nativeHaptics.trigger("success");
+        }
+        return {
+          ...q,
+          current: Math.min(q.target, progress),
+          completed,
+        };
+      })
+    );
+  }, [gameState]);
 
   // Preload sushi 3D sprites
   useEffect(() => {
@@ -76,30 +133,40 @@ export function SushiConveyor() {
     [getAudioContext]
   );
 
-  // Keyboard shortcut listener for crafting (1-5)
+  // Keyboard shortcut listener for crafting (1-6)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.repeat) return;
       switch (e.key) {
         case "1":
           inputRef.current.craftSushi = "tuna";
+          nativeHaptics.trigger("light");
           playTone(440, "sine", 0.08);
           break;
         case "2":
           inputRef.current.craftSushi = "salmon";
+          nativeHaptics.trigger("light");
           playTone(493, "sine", 0.08);
           break;
         case "3":
           inputRef.current.craftSushi = "shrimp";
+          nativeHaptics.trigger("light");
           playTone(554, "sine", 0.08);
           break;
         case "4":
           inputRef.current.craftSushi = "tamago";
+          nativeHaptics.trigger("light");
           playTone(587, "sine", 0.08);
           break;
         case "5":
           inputRef.current.craftSushi = "unagi";
+          nativeHaptics.trigger("light");
           playTone(659, "triangle", 0.1);
+          break;
+        case "6":
+          inputRef.current.craftSushi = "golden_tuna";
+          nativeHaptics.trigger("heavy");
+          playTone(880, "sine", 0.15);
           break;
       }
     };
@@ -137,7 +204,50 @@ export function SushiConveyor() {
     return () => cancelAnimationFrame(animId);
   }, []);
 
-  // 2D Canvas rendering of Spline Conveyor Belt
+  // Pre-render static background (Palm Run architecture pattern)
+  useEffect(() => {
+    const bgCanvas = document.createElement("canvas");
+    bgCanvas.width = 720;
+    bgCanvas.height = 480;
+    const bgCtx = bgCanvas.getContext("2d");
+    if (!bgCtx) return;
+
+    // Tatami wooden floor
+    bgCtx.fillStyle = "#18181b";
+    bgCtx.fillRect(0, 0, 720, 480);
+
+    // Outer rich wooden counter bar
+    bgCtx.save();
+    bgCtx.lineWidth = 42;
+    bgCtx.strokeStyle = "#451a03";
+    bgCtx.lineCap = "round";
+    bgCtx.lineJoin = "round";
+    bgCtx.beginPath();
+    const splineL = conveyorSpline.totalLength;
+    for (let d = 0; d <= splineL; d += 15) {
+      const pt = conveyorSpline.sampleAtDistance(d);
+      if (d === 0) bgCtx.moveTo(pt.x, pt.y);
+      else bgCtx.lineTo(pt.x, pt.y);
+    }
+    bgCtx.closePath();
+    bgCtx.stroke();
+    bgCtx.restore();
+
+    // Center chef kitchen island
+    bgCtx.save();
+    bgCtx.fillStyle = "#27272a";
+    bgCtx.beginPath();
+    bgCtx.ellipse(360, 240, 160, 80, 0, 0, Math.PI * 2);
+    bgCtx.fill();
+    bgCtx.strokeStyle = "#52525b";
+    bgCtx.lineWidth = 2;
+    bgCtx.stroke();
+    bgCtx.restore();
+
+    bgCanvasRef.current = bgCanvas;
+  }, []);
+
+  // 2D Canvas rendering of Conveyor Belt & Customers
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -150,18 +260,21 @@ export function SushiConveyor() {
     ctx.save();
     ctx.clearRect(0, 0, width, height);
 
-    // Warm Japanese Wooden Tatami / Restaurant Floor
-    ctx.fillStyle = "#1e1e24";
-    ctx.fillRect(0, 0, width, height);
+    // Blit pre-cached background (Palm Run optimization)
+    if (bgCanvasRef.current) {
+      ctx.drawImage(bgCanvasRef.current, 0, 0);
+    } else {
+      ctx.fillStyle = "#18181b";
+      ctx.fillRect(0, 0, width, height);
+    }
 
-    // Counter Bar Area (Outer Table Rim)
-    ctx.save();
-    ctx.lineWidth = 42;
-    ctx.strokeStyle = "#451a03"; // Dark rich wood
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctx.beginPath();
     const splineL = conveyorSpline.totalLength;
+
+    // Dynamic Conveyor Rail Track
+    ctx.save();
+    ctx.lineWidth = 20;
+    ctx.strokeStyle = gameState.status === "fever" ? "#ca8a04" : "#1f2937";
+    ctx.beginPath();
     for (let d = 0; d <= splineL; d += 15) {
       const pt = conveyorSpline.sampleAtDistance(d);
       if (d === 0) ctx.moveTo(pt.x, pt.y);
@@ -170,14 +283,9 @@ export function SushiConveyor() {
     ctx.closePath();
     ctx.stroke();
 
-    // Conveyor Rail Track
-    ctx.lineWidth = 20;
-    ctx.strokeStyle = gameState.status === "fever" ? "#ca8a04" : "#1f2937";
-    ctx.stroke();
-
-    // Moving Rail Slats (Conveyor Belt texture)
+    // Moving Rail Slats
     ctx.lineWidth = 2;
-    ctx.strokeStyle = "#4b5563";
+    ctx.strokeStyle = gameState.status === "fever" ? "#fef08a" : "#4b5563";
     const moveOffset = (gameState.gameTimeSec * gameState.beltSpeedPxPerSec) % 20;
     for (let d = moveOffset; d <= splineL; d += 20) {
       const pt = conveyorSpline.sampleAtDistance(d);
@@ -190,17 +298,8 @@ export function SushiConveyor() {
     }
     ctx.restore();
 
-    // Center Kitchen Stage & Chef
-    ctx.save();
-    ctx.fillStyle = "#27272a";
-    ctx.beginPath();
-    ctx.ellipse(360, 240, 160, 80, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = "#52525b";
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
     // Chef Avatar in Center
+    ctx.save();
     ctx.fillStyle = "#f8fafc";
     ctx.beginPath();
     ctx.arc(360, 240, 18, 0, Math.PI * 2);
@@ -219,130 +318,95 @@ export function SushiConveyor() {
       // Chair Base
       ctx.beginPath();
       ctx.arc(0, 0, 18, 0, Math.PI * 2);
-      ctx.fillStyle = seat.occupied ? "#3b82f6" : "#3f3f46";
+      ctx.fillStyle = seat.occupied ? "#3b82f6" : "#27272a";
+      if (seat.customerType === "sumo") ctx.fillStyle = "#e11d48";
+      else if (seat.customerType === "inspector") ctx.fillStyle = "#8b5cf6";
+      else if (seat.customerType === "gourmet") ctx.fillStyle = "#d97706";
       ctx.fill();
+      ctx.strokeStyle = "#52525b";
       ctx.lineWidth = 2;
-      ctx.strokeStyle = "#71717a";
       ctx.stroke();
 
       if (seat.occupied) {
-        // Customer Avatar
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "14px sans-serif";
+        // Customer emoji
+        ctx.font = "16px sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText(seat.mood === "eating" ? "😋" : seat.mood === "impatient" ? "😤" : "🧑", 0, 5);
+        let icon = "🧑";
+        if (seat.customerType === "sumo") icon = "🥋";
+        else if (seat.customerType === "inspector") icon = "📋";
+        else if (seat.customerType === "gourmet") icon = "🎩";
+        else if (seat.mood === "eating") icon = "😋";
+        else if (seat.mood === "impatient") icon = "😤";
+        ctx.fillText(icon, 0, 6);
 
-        // Patience Meter (Arc around chair)
-        const pRatio = seat.patienceTimerSec / seat.maxPatienceSec;
-        ctx.beginPath();
-        ctx.arc(0, 0, 22, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * pRatio);
-        ctx.strokeStyle = pRatio > 0.5 ? "#22c55e" : pRatio > 0.25 ? "#eab308" : "#ef4444";
-        ctx.lineWidth = 3;
-        ctx.stroke();
-
-        // Order Speech Bubble
+        // Speech Bubble: Desired Sushi Plate
         if (seat.wantedSushi && seat.mood !== "eating") {
-          const recipe = SUSHI_RECIPES[seat.wantedSushi];
           ctx.save();
           ctx.translate(0, -32);
-          // Bubble background
-          ctx.fillStyle = "#ffffff";
+          ctx.fillStyle = "rgba(15, 23, 42, 0.9)";
           ctx.beginPath();
-          ctx.roundRect(-24, -14, 48, 22, 6);
+          ctx.roundRect(-22, -14, 44, 26, 6);
           ctx.fill();
-          ctx.strokeStyle = "#0f172a";
-          ctx.lineWidth = 1.5;
+          ctx.strokeStyle = seat.wantedSushi === "golden_tuna" ? "#fbbf24" : "#cbd5e1";
+          ctx.lineWidth = seat.wantedSushi === "golden_tuna" ? 2 : 1;
           ctx.stroke();
 
-          // Bubble small tail
-          ctx.beginPath();
-          ctx.moveTo(-4, 8);
-          ctx.lineTo(0, 14);
-          ctx.lineTo(4, 8);
-          ctx.closePath();
-          ctx.fill();
-          ctx.stroke();
-
-          // Mini Sushi Icon & Name
-          const bubbleSprite = sushiImagesRef.current[seat.wantedSushi];
-          if (bubbleSprite) {
-            ctx.drawImage(bubbleSprite, -20, -12, 16, 16);
+          // Sushi Sprite icon in speech bubble
+          const spr = sushiImagesRef.current[seat.wantedSushi];
+          if (spr && spr.complete) {
+            ctx.drawImage(spr, -10, -10, 20, 20);
           } else {
-            ctx.fillStyle = recipe.color;
+            ctx.fillStyle = SUSHI_RECIPES[seat.wantedSushi].color;
             ctx.beginPath();
-            ctx.roundRect(-16, -10, 14, 8, 2);
+            ctx.arc(0, 0, 7, 0, Math.PI * 2);
             ctx.fill();
           }
 
-          ctx.fillStyle = "#0f172a";
-          ctx.font = "bold 9px sans-serif";
-          ctx.textAlign = "left";
-          ctx.fillText(seat.wantedSushi.slice(0, 3).toUpperCase(), 0, -3);
-
+          // Patience bar below bubble
+          const pRatio = Math.max(0, seat.patienceTimerSec / seat.maxPatienceSec);
+          ctx.fillStyle = pRatio > 0.5 ? "#22c55e" : pRatio > 0.25 ? "#eab308" : "#ef4444";
+          ctx.fillRect(-18, 14, 36 * pRatio, 3);
           ctx.restore();
         }
       }
-
       ctx.restore();
     }
 
-    // Render Sushi Plates on Spline
+    // Render Moving Sushi Plates on the Belt
     for (const plate of gameState.activePlates) {
-      const sample = conveyorSpline.sampleAtDistance(plate.distanceAlongSpline);
-      const recipe = SUSHI_RECIPES[plate.sushiType];
-
+      const pt = conveyorSpline.sampleAtDistance(plate.distanceAlongSpline);
       ctx.save();
-      ctx.translate(sample.x, sample.y);
-      ctx.rotate(sample.headingRad);
+      ctx.translate(pt.x, pt.y);
 
-      // Ceramic Plate Base with 3D Bevel
+      // Plate Rim
       ctx.beginPath();
       ctx.arc(0, 0, 16, 0, Math.PI * 2);
-      ctx.fillStyle = "#f8fafc";
+      ctx.fillStyle = plate.isGolden ? "#fef08a" : "#f1f5f9";
       ctx.fill();
-      ctx.lineWidth = 2.5;
-      ctx.strokeStyle = recipe.color;
+      ctx.strokeStyle = plate.isGolden ? "#eab308" : SUSHI_RECIPES[plate.sushiType].color;
+      ctx.lineWidth = plate.isGolden ? 3 : 2;
       ctx.stroke();
 
-      // Inner plate rim
-      ctx.beginPath();
-      ctx.arc(0, 0, 12, 0, Math.PI * 2);
-      ctx.strokeStyle = "rgba(148, 163, 184, 0.4)";
-      ctx.lineWidth = 1;
-      ctx.stroke();
-
-      const spriteImg = sushiImagesRef.current[plate.sushiType];
-      if (spriteImg) {
-        // High-res 3D Isometric Sushi Sprite
-        ctx.drawImage(spriteImg, -14, -14, 28, 28);
+      // Draw 3D Sushi Sprite
+      const spr = sushiImagesRef.current[plate.sushiType];
+      if (spr && spr.complete) {
+        ctx.drawImage(spr, -12, -12, 24, 24);
       } else {
-        // Procedural Sushi Fallback
-        // Rice Bed (Shari)
-        ctx.fillStyle = "#ffffff";
+        ctx.fillStyle = SUSHI_RECIPES[plate.sushiType].color;
         ctx.beginPath();
-        ctx.roundRect(-7, -4, 14, 8, 3);
+        ctx.ellipse(0, 0, 10, 6, pt.headingRad, 0, Math.PI * 2);
         ctx.fill();
-
-        // Fish Topping (Neta)
-        ctx.fillStyle = recipe.color;
-        ctx.beginPath();
-        ctx.roundRect(-8, -5, 16, 7, 2);
-        ctx.fill();
-
-        // Nori Seaweed Ribbon for Tamago & Unagi
-        if (plate.sushiType === "tamago" || plate.sushiType === "unagi") {
-          ctx.fillStyle = "#0f172a";
-          ctx.fillRect(-2, -5, 4, 10);
-        }
       }
 
       // Freshness Ring
-      const freshRatio = 1 - plate.freshnessTimeSec / plate.maxFreshnessSec;
-      ctx.beginPath();
-      ctx.arc(0, 0, 17, 0, Math.PI * 2 * freshRatio);
-      ctx.strokeStyle = freshRatio > 0.4 ? "rgba(34, 197, 94, 0.8)" : "rgba(239, 68, 68, 0.8)";
-      ctx.lineWidth = 2;
-      ctx.stroke();
+      const freshRatio = Math.max(0, 1 - plate.freshnessTimeSec / plate.maxFreshnessSec);
+      if (freshRatio < 0.35) {
+        ctx.strokeStyle = "#ef4444";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, 0, 18, 0, Math.PI * 2 * freshRatio);
+        ctx.stroke();
+      }
 
       ctx.restore();
     }
@@ -350,282 +414,268 @@ export function SushiConveyor() {
     ctx.restore();
   }, [gameState]);
 
+  // Current Lore Dialogue
+  const currentDialogue = SUSHI_DIALOGUES.find((d) => d.id === gameState.activeDialogueId) ?? SUSHI_DIALOGUES[0];
+
   const handleCraft = (type: SushiType) => {
     inputRef.current.craftSushi = type;
-    MobileHapticsPro.light();
-    playTone(520, "sine", 0.08);
+    nativeHaptics.trigger(type === "golden_tuna" ? "heavy" : "light");
+    playTone(type === "golden_tuna" ? 880 : 520, "sine", 0.08);
   };
 
-  const handleUpgrade = (type: "beltSpeed" | "plateValue" | "autoPrep") => {
-    inputRef.current.buyUpgrade = type;
-    MobileHapticsPro.medium();
-    playTone(660, "triangle", 0.12);
+  const handleClaimQuest = (questId: string) => {
+    setQuests((prev) =>
+      prev.map((q) => {
+        if (q.id === questId && q.completed && !q.claimed) {
+          setMetaState((m) => {
+            const next = { ...m, wasabiCores: m.wasabiCores + q.rewardWasabi };
+            saveSushiMetaState(next);
+            return next;
+          });
+          nativeHaptics.trigger("success");
+          return { ...q, claimed: true };
+        }
+        return q;
+      })
+    );
   };
 
-  const handleReset = () => {
-    MobileHapticsPro.click();
-    setGameState(initializeSushiConveyor());
-    playTone(440, "sine", 0.15);
-  };
-
-  const handleShareCard = useCallback(async () => {
-    MobileHapticsPro.click();
-    const canvas = await createShareCardCanvas({
-      title: "GINZA SUSHI TYCOON",
-      subtitle: gameState.status === "day_cleared" ? "긴자 스타 셰프 선정!" : "회전초밥 영업 결산",
-      score: `¥${gameState.cash}`,
-      slug: "sushi-conveyor",
-      customStats: [
-        { label: "누적 매출", value: `¥${gameState.cash}` },
-        { label: "판매 접시", value: `${gameState.totalServed}접시` },
-        { label: "가게 평판", value: `${gameState.reputation}%` },
-      ],
-      playerTitle: "GINZA MASTER CHEF",
-    });
-
-    const ok = await copyShareCardToClipboard(canvas);
-    if (ok) {
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 2000);
-    } else {
-      downloadShareCard(canvas, `sushi-tycoon-revenue-¥${gameState.cash}.png`);
-    }
-  }, [gameState.cash, gameState.reputation, gameState.status, gameState.totalServed]);
-
-  useEffect(() => {
-    if (gameState.status === "day_cleared") {
-      MobileHapticsPro.success();
-      if (containerRef.current) {
-        celebrate(containerRef.current, { preset: "coins" });
+  const handlePurchaseMeta = (upgradeId: keyof SushiPlayerMetaState["upgrades"]) => {
+    setMetaState((prev) => {
+      const next = { ...prev };
+      const success = purchaseSushiMetaUpgrade(next, upgradeId);
+      if (success) {
+        nativeHaptics.trigger("success");
+        playTone(660, "sine", 0.12);
+        // apply to running game
+        setGameState((cur) => ({
+          ...cur,
+          metaModifiers: buildMetaModifiers(next),
+        }));
       }
-    }
-  }, [gameState.status]);
+      return next;
+    });
+  };
 
   return (
     <div
       ref={containerRef}
-      className={`flex flex-col gap-4 max-w-4xl mx-auto p-4 bg-background text-foreground rounded-xl border border-border shadow-sm transition-all ${
-        isImmersive
-          ? "fixed inset-0 z-50 overflow-y-auto bg-background/95 backdrop-blur-md max-w-none w-full h-full p-6 justify-center"
-          : ""
+      className={`relative w-full max-w-4xl mx-auto flex flex-col items-center bg-card text-foreground rounded-2xl border border-border shadow-2xl overflow-hidden ${
+        isImmersive ? "fixed inset-0 z-50 rounded-none border-none max-w-none justify-center" : "my-4"
       }`}
     >
-      {/* Top Banner */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight">Ginza Conveyor Sushi Tycoon</h1>
-          <p className="text-xs text-muted-foreground">
-            Zero-GC pooled sushi plates moving on an arc-length spline loop counter.
-          </p>
-        </div>
+      {/* Top Header Bar */}
+      <div className="w-full flex items-center justify-between px-4 py-2.5 bg-muted/40 border-b border-border">
         <div className="flex items-center gap-2">
-          <TiltSushiButton
+          <span className="text-xl">🍣</span>
+          <div>
+            <h2 className="text-sm font-bold tracking-tight text-primary">Ginza Sushi Conveyor</h2>
+            <p className="text-xs text-muted-foreground">Tycoon & Spline Conveyor</p>
+          </div>
+        </div>
+
+        {/* Wasabi Cores & Directives / Research Buttons */}
+        <div className="flex items-center gap-2">
+          <button
             type="button"
-            onClick={handleShareCard}
-            className="px-3 py-1.5 text-xs font-semibold rounded-md border border-border bg-secondary hover:bg-secondary/80 transition-colors flex items-center gap-1.5"
+            onClick={() => setShowQuestModal(true)}
+            className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg bg-primary/20 text-primary border border-primary/40 hover:bg-primary/30 transition-colors"
           >
-            {isCopied ? <Check className="w-3.5 h-3.5 text-primary" /> : <Camera className="w-3.5 h-3.5" />}
-            <span>{isCopied ? "복사 완료!" : "결과 카드 공유"}</span>
-          </TiltSushiButton>
-          <TiltSushiButton
+            <Award className="w-3.5 h-3.5" />
+            <span>지령 ({quests.filter((q) => q.completed && !q.claimed).length})</span>
+          </button>
+
+          <button
             type="button"
-            onClick={handleReset}
-            className="px-3 py-1.5 text-xs font-semibold rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+            onClick={() => setShowResearchModal(true)}
+            className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg bg-chart-4/20 text-chart-4 border border-chart-4/40 hover:bg-chart-4/30 transition-colors"
           >
-            New Shift ↺
-          </TiltSushiButton>
+            <Wrench className="w-3.5 h-3.5" />
+            <span>설비연구 ({metaState.wasabiCores} 🍵)</span>
+          </button>
+
           <button
             type="button"
             onClick={togglePortal}
-            className="p-1.5 rounded-lg bg-card border border-border text-foreground hover:bg-muted/80 transition-colors"
-            title={isImmersive ? "포털 축소" : "100dvh 전체화면"}
+            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
           >
             {isImmersive ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
           </button>
         </div>
       </div>
 
-      {/* Telemetry Stat Tiles */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      {/* Story & Lore Transmission HUD */}
+      <div className="w-full px-4 py-1.5 bg-muted/20 border-b border-border/80 flex items-center gap-2 text-xs">
+        <span className="font-bold text-primary whitespace-nowrap">[{currentDialogue.sender.ko}]</span>
+        <span className="text-foreground/90 truncate">{currentDialogue.message.ko}</span>
+      </div>
+
+      {/* Stats Bar */}
+      <div className="w-full grid grid-cols-4 gap-2 px-4 py-2 bg-muted/10 border-b border-border/40 text-center">
+        <GameStatTile label="자금" value={`¥${gameState.cash}`} icon="💰" />
+        <GameStatTile label="명성치" value={`${gameState.reputation}%`} icon="⭐" />
+        <GameStatTile label="서빙 완료" value={`${gameState.totalServed}접시`} icon="🍣" />
         <GameStatTile
-          label="Cash & Revenue"
-          value={`¥${gameState.cash}`}
-          highlight={gameState.cash >= 2500}
-        />
-        <GameStatTile
-          label="Reputation"
-          value={`${gameState.reputation}%`}
-          highlight={gameState.reputation > 90}
-        />
-        <GameStatTile
-          label="Plates Served"
-          value={`${gameState.totalServed} (Combo x${gameState.comboCount})`}
-          highlight={gameState.status === "fever"}
-        />
-        <GameStatTile
-          label="Belt Speed"
-          value={`${gameState.beltSpeedPxPerSec} px/s`}
+          label="상태"
+          value={gameState.status === "fever" ? `🔥 피버 (${gameState.feverTimeSec.toFixed(0)}s)` : `콤보 x${gameState.comboCount}`}
+          icon="⚡"
         />
       </div>
 
-      {/* Conveyor Canvas Area */}
-      <div className="relative w-full rounded-lg overflow-hidden border border-border bg-card flex justify-center">
-        <canvas
-          ref={canvasRef}
-          width={720}
-          height={480}
-          className="w-full max-w-full aspect-video block"
-        />
-
-        {/* Floating Log Banner */}
-        <div className="absolute top-2 left-2 bg-card/90 backdrop-blur-xs px-2.5 py-1 rounded text-xs text-card-foreground border border-border pointer-events-none">
-          {gameState.activeLog}
-        </div>
-
-        {/* Fever Indicator */}
-        {gameState.status === "fever" && (
-          <div className="absolute top-2 right-2 bg-chart-5/90 text-primary-foreground font-black px-3 py-1 rounded text-xs animate-pulse">
-            🔥 FEVER MODE ({gameState.feverTimeSec.toFixed(1)}s) 2x Revenue
-          </div>
-        )}
-
-        {/* Game Over / Day Cleared Overlay */}
-        {(gameState.status === "bankrupt" || gameState.status === "day_cleared") && (
-          <div className="absolute inset-0 bg-background/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center gap-3 z-20">
-            <div className="relative mb-1 flex items-center justify-center">
-              <img
-                src={getSpriteUrl("trophy")}
-                alt="3D Trophy"
-                className="w-16 h-16 drop-shadow-xl animate-bounce"
-              />
-            </div>
-            <h2 className="text-2xl font-black">
-              {gameState.status === "day_cleared" ? "⭐ Ginza Star Rating Awarded!" : "💸 Restaurant Bankrupt"}
-            </h2>
-            <p className="text-sm text-muted-foreground max-w-md">
-              {gameState.status === "day_cleared"
-                ? `Sensational service! Served ${gameState.totalServed} guests and accumulated ¥${gameState.cash}.`
-                : "Funds and reputation collapsed from discarded spoiled plates and angry customers."}
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-3">
-              <TiltSushiButton
-                type="button"
-                onClick={handleReset}
-                className="px-5 py-2 font-bold text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-lg"
-              >
-                Open Next Shift ↺
-              </TiltSushiButton>
-              <TiltSushiButton
-                type="button"
-                onClick={handleShareCard}
-                className="px-4 py-2 font-semibold text-sm rounded-lg border border-border bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors flex items-center gap-1.5 shadow-sm"
-              >
-                {isCopied ? <Check className="w-4 h-4 text-primary" /> : <Camera className="w-4 h-4" />}
-                <span>{isCopied ? "복사 완료!" : "결과 카드 공유"}</span>
-              </TiltSushiButton>
-            </div>
-          </div>
-        )}
+      {/* Canvas Spline Viewport */}
+      <div className="relative w-full aspect-video max-h-120 bg-background flex items-center justify-center">
+        <canvas ref={canvasRef} width={720} height={480} className="w-full h-full object-contain" />
       </div>
 
-      {/* Chef Prep Bench: 5 Nigiri Types */}
-      <div className="p-3 bg-muted/40 rounded-lg border border-border flex flex-col gap-2">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold text-muted-foreground">
-            Chef Prep Bench (Press 1-5 to craft):
-          </span>
-          <span className="text-xs text-muted-foreground">
-            Active Plates on Belt: {gameState.activePlates.length} / 40
-          </span>
-        </div>
+      {/* Crafting Action Pad */}
+      <div className="w-full p-3 bg-muted/30 border-t border-border flex flex-wrap items-center justify-center gap-2">
+        {(["tuna", "salmon", "shrimp", "tamago", "unagi", "golden_tuna"] as SushiType[]).map((type, idx) => {
+          const recipe = SUSHI_RECIPES[type];
+          const cost = Math.floor(recipe.price * 0.3);
+          const isGold = type === "golden_tuna";
 
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-          {(Object.keys(SUSHI_RECIPES) as SushiType[]).map((type, idx) => {
-            const recipe = SUSHI_RECIPES[type];
-            const cost = Math.floor(recipe.price * 0.3);
-            return (
-              <TiltSushiButton
-                key={type}
+          return (
+            <TiltSushiButton
+              key={type}
+              onClick={() => handleCraft(type)}
+              disabled={gameState.cash < cost}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
+                isGold
+                  ? "bg-chart-4/20 text-chart-4 border-chart-4 hover:bg-chart-4/30"
+                  : "bg-card text-foreground border-border hover:bg-muted"
+              } disabled:opacity-40 disabled:cursor-not-allowed`}
+            >
+              <span className="text-base">{isGold ? "👑" : idx === 0 ? "🐟" : idx === 1 ? "🍣" : idx === 2 ? "🦐" : idx === 3 ? "🍳" : "🍱"}</span>
+              <div className="text-left">
+                <div className="leading-tight">{recipe.name}</div>
+                <div className="text-xs text-muted-foreground">¥{cost} 준비 (단축키 {idx + 1})</div>
+              </div>
+            </TiltSushiButton>
+          );
+        })}
+      </div>
+
+      {/* Quests / Directives Modal */}
+      {showQuestModal && (
+        <div className="absolute inset-0 z-50 bg-background/80 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-card border border-border rounded-2xl p-5 shadow-2xl flex flex-col gap-4">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div className="flex items-center gap-2">
+                <Award className="w-5 h-5 text-primary" />
+                <h3 className="font-bold text-foreground">긴자 명인 작전 지령</h3>
+              </div>
+              <button
                 type="button"
-                onClick={() => handleCraft(type)}
-                className="flex flex-col items-center p-2 rounded-lg border border-border bg-card hover:bg-accent transition-all text-left shadow-xs"
+                onClick={() => setShowQuestModal(false)}
+                className="text-muted-foreground hover:text-foreground p-1 rounded-lg"
               >
-                <div className="flex items-center gap-1.5 w-full">
-                  <span className="font-bold text-xs bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
-                    {idx + 1}
-                  </span>
-                  <span className="font-bold text-xs truncate">{recipe.name}</span>
-                </div>
-                {SUSHI_CONVEYOR_SPRITES[type as keyof typeof SUSHI_CONVEYOR_SPRITES] ? (
-                  <div className="my-1 flex items-center justify-center">
-                    <img
-                      src={SUSHI_CONVEYOR_SPRITES[type as keyof typeof SUSHI_CONVEYOR_SPRITES]}
-                      alt={recipe.name}
-                      className="w-8 h-8 object-contain drop-shadow-sm"
-                    />
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-3 max-h-72 overflow-y-auto pr-1">
+              {quests.map((q) => (
+                <div
+                  key={q.id}
+                  className={`p-3 rounded-xl border flex flex-col gap-2 ${
+                    q.claimed
+                      ? "bg-muted/20 border-border/40 opacity-60"
+                      : q.completed
+                      ? "bg-primary/10 border-primary/60"
+                      : "bg-muted/40 border-border"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-foreground">{q.title.ko}</span>
+                    <span className="text-xs font-semibold text-chart-4">+{q.rewardWasabi} 🍵</span>
                   </div>
-                ) : (
-                  <div
-                    className="w-8 h-4 my-3 rounded-xs border border-border/40 bg-(--item-color)"
-                    style={{ "--item-color": recipe.color } as React.CSSProperties}
-                  />
-                )}
-                <div className="flex items-center justify-between w-full mt-1 text-xs text-muted-foreground">
-                  <span>-¥{cost}</span>
-                  <span className="text-primary font-bold">+¥{recipe.price}</span>
+                  <p className="text-xs text-muted-foreground">{q.description.ko}</p>
+                  <div className="flex items-center justify-between pt-1">
+                    <div className="text-xs text-muted-foreground">
+                      진행도: {q.current} / {q.target}
+                    </div>
+                    {q.completed && !q.claimed ? (
+                      <button
+                        type="button"
+                        onClick={() => handleClaimQuest(q.id)}
+                        className="px-2.5 py-1 rounded bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold transition-colors"
+                      >
+                        보상 수령
+                      </button>
+                    ) : q.claimed ? (
+                      <span className="text-xs text-muted-foreground font-semibold">수령 완료</span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">진행 중</span>
+                    )}
+                  </div>
                 </div>
-              </TiltSushiButton>
-            );
-          })}
+              ))}
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Kitchen Upgrades */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-        <TiltSushiButton
-          type="button"
-          onClick={() => handleUpgrade("beltSpeed")}
-          disabled={gameState.upgrades.beltSpeedLevel >= 5 || gameState.cash < gameState.upgrades.beltSpeedLevel * 300}
-          className="p-2.5 rounded-lg border border-border bg-card hover:bg-accent disabled:opacity-50 transition-colors text-left shadow-xs"
-        >
-          <div className="font-bold text-xs">⚡ Faster Belt Motor (Lv.{gameState.upgrades.beltSpeedLevel}/5)</div>
-          <div className="text-xs text-muted-foreground mt-0.5">
-            {gameState.upgrades.beltSpeedLevel < 5
-              ? `¥${gameState.upgrades.beltSpeedLevel * 300} (+20 px/s speed)`
-              : "MAX LEVEL"}
-          </div>
-        </TiltSushiButton>
+      {/* Kitchen Research Lab Modal */}
+      {showResearchModal && (
+        <div className="absolute inset-0 z-50 bg-background/80 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="w-full max-w-lg bg-card border border-border rounded-2xl p-5 shadow-2xl flex flex-col gap-4">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div className="flex items-center gap-2">
+                <Wrench className="w-5 h-5 text-chart-4" />
+                <h3 className="font-bold text-foreground">주방 5대 영구 설비 연구소</h3>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-bold text-chart-4">{metaState.wasabiCores} 🍵 황금 와사비</span>
+                <button
+                  type="button"
+                  onClick={() => setShowResearchModal(false)}
+                  className="text-muted-foreground hover:text-foreground p-1 rounded-lg"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
 
-        <TiltSushiButton
-          type="button"
-          onClick={() => handleUpgrade("plateValue")}
-          disabled={gameState.upgrades.plateValueLevel >= 5 || gameState.cash < gameState.upgrades.plateValueLevel * 350}
-          className="p-2.5 rounded-lg border border-border bg-card hover:bg-accent disabled:opacity-50 transition-colors text-left shadow-xs"
-        >
-          <div className="font-bold text-xs">🍣 Premium Ingredients (Lv.{gameState.upgrades.plateValueLevel}/5)</div>
-          <div className="text-xs text-muted-foreground mt-0.5">
-            {gameState.upgrades.plateValueLevel < 5
-              ? `¥${gameState.upgrades.plateValueLevel * 350} (+20% plate value)`
-              : "MAX LEVEL"}
-          </div>
-        </TiltSushiButton>
+            <div className="flex flex-col gap-3 max-h-80 overflow-y-auto pr-1">
+              {SUSHI_META_UPGRADE_DEFS.map((def) => {
+                const currentLvl = metaState.upgrades[def.id];
+                const isMax = currentLvl >= def.maxLevel;
+                const cost = isMax ? 0 : def.costPerLevel[currentLvl];
+                const canAfford = metaState.wasabiCores >= cost;
 
-        <TiltSushiButton
-          type="button"
-          onClick={() => handleUpgrade("autoPrep")}
-          disabled={gameState.upgrades.autoPrepLevel >= 3 || gameState.cash < (gameState.upgrades.autoPrepLevel + 1) * 600}
-          className="p-2.5 rounded-lg border border-border bg-card hover:bg-accent disabled:opacity-50 transition-colors text-left shadow-xs"
-        >
-          <div className="font-bold text-xs">🤖 Auto Rice Shaper (Lv.{gameState.upgrades.autoPrepLevel}/3)</div>
-          <div className="text-xs text-muted-foreground mt-0.5">
-            {gameState.upgrades.autoPrepLevel < 3
-              ? `¥${(gameState.upgrades.autoPrepLevel + 1) * 600} (Auto-makes nigiri)`
-              : "MAX LEVEL"}
+                return (
+                  <div
+                    key={def.id}
+                    className="p-3 rounded-xl bg-muted/40 border border-border flex items-center justify-between gap-3"
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <span className="text-2xl">{def.icon}</span>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-foreground">{def.name.ko}</span>
+                          <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-bold">
+                            Lv.{currentLvl}/{def.maxLevel}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">{def.desc.ko}</p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handlePurchaseMeta(def.id)}
+                      disabled={isMax || !canAfford}
+                      className="whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {isMax ? "최대 레벨" : `${cost} 🍵 강화`}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </TiltSushiButton>
-      </div>
+        </div>
+      )}
     </div>
   );
 }
-
-export default SushiConveyor;
