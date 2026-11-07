@@ -1,5 +1,15 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Maximize2,
+  Minimize2,
+  Volume2,
+  VolumeX,
+  ScrollText,
+  Wrench,
+  X,
+  ShieldAlert,
+  Sparkles,
+} from "lucide-react";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import { GameContainer } from "../ui/game/GamePrimitives";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
@@ -17,6 +27,25 @@ import {
   getColorblindSymbol,
   type ColorblindMode,
 } from "../../lib/games/accessibility";
+import {
+  type BlockBurstQuest,
+  loadBlockBurstQuests,
+  saveBlockBurstQuests,
+} from "../../lib/games/block-burst-quests";
+import {
+  type BlockBurstTrigger,
+  type BlockBurstDialogue,
+  pickBlockBurstDialogue,
+} from "../../lib/games/block-burst-lore";
+import {
+  type BlockBurstMetaSave,
+  type BlockBurstUpgradeDef,
+  BLOCK_BURST_UPGRADES,
+  loadBlockBurstMeta,
+  saveBlockBurstMeta,
+  getBlockBurstUpgradeCost,
+  computeBlockBurstModifiers,
+} from "../../lib/games/block-burst-meta";
 
 declare global {
   interface Window {
@@ -432,7 +461,7 @@ function Gem({ color, ghost, bursting, bomb, colorblind }: { color: BurstColor; 
   );
 }
 
-export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
+export function BlockBurst({ locale = "ko" }: { locale?: string }) {
   const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
   const reducedMotion = usePrefersReducedMotion();
   const [phase, setPhase] = useState<"briefing" | "playing" | "paused" | "picking" | "over">("briefing");
@@ -442,6 +471,15 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
   const [game, setGame] = useState<BurstState>(() => createBlockBurst(1));
   const [best, setBest] = useState(0);
   const [colorblind, setColorblind] = useState<ColorblindMode>(getColorblindMode);
+
+  // 6대 상용 심화 시스템 상태 (퀘스트, 로어, 메타 세이브, 비상 정화 룬)
+  const [quests, setQuests] = useState<BlockBurstQuest[]>(loadBlockBurstQuests);
+  const [metaSave, setMetaSave] = useState<BlockBurstMetaSave>(loadBlockBurstMeta);
+  const metaMods = useMemo(() => computeBlockBurstModifiers(metaSave), [metaSave]);
+  const [emergencyCleansesRemaining, setEmergencyCleansesRemaining] = useState<number>(() => metaMods.emergencyCleanses);
+  const [loreDialogue, setLoreDialogue] = useState<BlockBurstDialogue>(() => pickBlockBurstDialogue("game_start"));
+  const [isQuestModalOpen, setIsQuestModalOpen] = useState(false);
+  const [isMetaModalOpen, setIsMetaModalOpen] = useState(false);
 
   useEffect(() => {
     const onCb = (e: Event) => {
@@ -510,6 +548,101 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
     osc.start();
     osc.stop(ctx.currentTime + dur);
   }, [sound]);
+
+  // 퀘스트 진척도 갱신
+  const updateQuestProgress = useCallback((questId: string, delta: number, isAbsolute = false) => {
+    setQuests((prev) => {
+      const next = prev.map((q) => {
+        if (q.id !== questId) return q;
+        const newProg = isAbsolute ? delta : q.progress + delta;
+        return {
+          ...q,
+          progress: Math.min(q.maxProgress, Math.max(q.progress, newProg)),
+        };
+      });
+      saveBlockBurstQuests(next);
+      return next;
+    });
+  }, []);
+
+  // 퀘스트 보상 수령
+  const handleClaimQuest = useCallback((questId: string) => {
+    const q = quests.find((item) => item.id === questId);
+    if (!q || q.isClaimed || q.progress < q.maxProgress) return;
+
+    setQuests((prev) => {
+      const next = prev.map((item) => (item.id === questId ? { ...item, isClaimed: true } : item));
+      saveBlockBurstQuests(next);
+      return next;
+    });
+
+    setMetaSave((prev) => {
+      const next = {
+        ...prev,
+        walletRunes: prev.walletRunes + q.rewardRunes,
+      };
+      saveBlockBurstMeta(next);
+      return next;
+    });
+
+    MobileHapticsPro.success();
+    tone(880, 0.2);
+  }, [quests, tone]);
+
+  // 성소 업그레이드
+  const handleBuyUpgrade = useCallback((upgradeId: string) => {
+    const def = BLOCK_BURST_UPGRADES.find((u) => u.id === upgradeId);
+    if (!def) return;
+    const currentLv = metaSave.upgradeLevels[upgradeId] || 0;
+    if (currentLv >= def.maxLevel) return;
+    const cost = getBlockBurstUpgradeCost(def, currentLv);
+    if (metaSave.walletRunes < cost) return;
+
+    setMetaSave((prev) => {
+      const next = {
+        ...prev,
+        walletRunes: prev.walletRunes - cost,
+        upgradeLevels: {
+          ...prev.upgradeLevels,
+          [upgradeId]: currentLv + 1,
+        },
+      };
+      saveBlockBurstMeta(next);
+      return next;
+    });
+
+    MobileHapticsPro.medium();
+    tone(750, 0.15);
+  }, [metaSave, tone]);
+
+  // 비상 정화 룬 발동
+  const handleEmergencyCleanse = useCallback(() => {
+    if (emergencyCleansesRemaining <= 0 || phase !== "playing" || resolvingRef.current) return;
+    setEmergencyCleansesRemaining((prev) => prev - 1);
+
+    setGame((prev) => {
+      const newBoard = prev.board.map((row) => [...row]);
+      for (let r = ROWS - 1; r >= 2; r--) {
+        newBoard[r] = [...newBoard[r - 2]];
+      }
+      for (let r = 0; r < 2; r++) {
+        newBoard[r] = Array(COLS).fill(null);
+      }
+      return {
+        ...prev,
+        board: newBoard,
+      };
+    });
+
+    shakeEngineRef.current = addTrauma(shakeEngineRef.current, 0.85);
+    MobileHapticsPro.heavy();
+    if (containerRef?.current) {
+      celebrate(containerRef.current, { preset: "sparks", scale: 1.5 });
+    }
+    setBanner("EMERGENCY CLEANSE!");
+    tone(300, 0.3);
+    window.setTimeout(() => setBanner(""), 1200);
+  }, [emergencyCleansesRemaining, phase, containerRef, tone]);
 
   const playClearChime = useCallback((combo = 1) => {
     if (!sound) return;
@@ -695,6 +828,8 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
     setRun(nextMode === "augment" ? createBurstRun(seed) : null);
     setGame(createBlockBurst(seed));
     setHasRerolled(false);
+    setEmergencyCleansesRemaining(metaMods.emergencyCleanses);
+    setLoreDialogue(pickBlockBurstDialogue("game_start"));
     // An augment run opens on its first draft; gravity waits for the pick.
     setPhase(nextMode === "augment" ? "picking" : "playing");
     setRestored(false);
@@ -718,6 +853,12 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
     setGame(next);
     if (next.status !== "over") return;
     setPhase("over");
+    setLoreDialogue(pickBlockBurstDialogue("game_over"));
+    setMetaSave((prev) => {
+      const nextSave = { ...prev, totalGamesPlayed: prev.totalGamesPlayed + 1 };
+      saveBlockBurstMeta(nextSave);
+      return nextSave;
+    });
     recordAchievementEvent(GAME, "played");
     if (modeRef.current === "augment") {
       // Augment scores never touch the classic best: the rules are not the same game.
@@ -734,7 +875,7 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
       if (next.score > previousBest) recordAchievementEvent(GAME, "personal-best");
     }
     tone(140, 0.28);
-  }, [tone]);
+  }, [tone, best]);
 
   /** Spawns the next piece. In augment mode this is also where dots, bombs, the revive and the next draft happen. */
   const spawnNext = useCallback((base: BurstState) => {
@@ -761,9 +902,10 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
     const picked = offerBurstAugments(pickBurstAugment(current, id), gameRef.current.level);
     runStateRef.current = picked;
     setRun(picked);
+    updateQuestProgress("quest_augment_draft", Object.keys(picked.owned).length, true);
     tone(700, 0.12);
     if (!picked.offer) setPhase("playing");
-  }, [tone]);
+  }, [tone, updateQuestProgress]);
 
   const playWaves = useCallback(async (base: BurstState, waves: BurstWave[], merged: (BurstColor | null)[][], gain: number) => {
     const run = ++runRef.current;
@@ -783,11 +925,34 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
       const clearedCount = wave.clear.rows.length + wave.clear.cols.length;
       if (clearedCount >= 3) {
         MobileHapticsPro.heavy();
+        updateQuestProgress("quest_triple_clear", 1, true);
       } else if (clearedCount >= 2) {
         MobileHapticsPro.impact();
       } else {
         MobileHapticsPro.medium();
       }
+      updateQuestProgress("quest_combo_master", i + 1, false);
+
+      // 룬 크리스탈 재화 획득
+      const runesEarned = Math.round(clearedCount * 12 * metaMods.runeHarvestMult);
+      if (runesEarned > 0) {
+        setMetaSave((prev) => {
+          const next = {
+            ...prev,
+            walletRunes: prev.walletRunes + runesEarned,
+            totalLinesCleared: prev.totalLinesCleared + clearedCount,
+          };
+          saveBlockBurstMeta(next);
+          return next;
+        });
+      }
+
+      if (i >= 2) {
+        setLoreDialogue(pickBlockBurstDialogue("combo_fever"));
+      } else {
+        setLoreDialogue(pickBlockBurstDialogue("line_cleared"));
+      }
+
       if (clearedCount >= 2 || i >= 1) {
         triggerCameraShake(clearedCount >= 3 ? 0.75 : clearedCount >= 2 ? 0.5 : 0.35);
       }
@@ -823,8 +988,14 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
       setBanner("");
     }
 
+    const isDanger = finalBase.board.slice(0, 4).some((row) => row.some((cell) => cell !== null));
+    if (isDanger) {
+      setLoreDialogue(pickBlockBurstDialogue("grid_danger"));
+    }
+    updateQuestProgress("quest_high_score", finalBase.score, true);
+
     spawnNext(finalBase);
-  }, [burstFx, spawnNext, reducedMotion, tone, triggerCameraShake, containerRef]);
+  }, [burstFx, spawnNext, reducedMotion, tone, triggerCameraShake, containerRef, metaMods.runeHarvestMult, updateQuestProgress]);
 
   const lockNow = useCallback(async (state: BurstState) => {
     if (resolvingRef.current || state.status !== "playing" || !state.active) return;
@@ -1083,7 +1254,24 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
     >
       <GameContainer title={t.title} subtitle={mode === "augment" ? t.modeAugment : t.sub} resetLabel={t.again} onReset={() => start()}>
         <div aria-live="polite" className="sr-only">{banner || (phase === "over" ? t.over : "")}</div>
-        <div className="mb-3 flex items-center justify-between gap-2">
+
+        {/* 상단 통신 대사 HUD 바 */}
+        <div className="mb-2 flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-2.5 py-1.5 text-xs">
+          <span className="text-base select-none" aria-hidden="true">
+            {loreDialogue.avatar}
+          </span>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="font-bold text-primary">{loreDialogue.name.ko || loreDialogue.name.en}</span>
+              <span className="text-muted-foreground text-xs opacity-75">
+                • {loreDialogue.title.ko || loreDialogue.title.en}
+              </span>
+            </div>
+            <p className="truncate text-foreground text-xs">{loreDialogue.text.ko || loreDialogue.text.en}</p>
+          </div>
+        </div>
+
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <div className="grid grid-cols-3 gap-2 text-center text-xs font-bold uppercase tracking-wider text-muted-foreground flex-1">
             <div className="rounded-xl border border-border bg-card px-2 py-2 flex items-center justify-center gap-2">
               <img src={BLOCK_BURST_UI_SPRITES.topaz} alt="Gem" className="h-6 w-6 object-contain hidden sm:inline" />
@@ -1098,7 +1286,48 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
               <div><div>{t.level}</div><div className="text-lg text-foreground">{game.level}</div></div>
             </div>
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {/* 비상 정화 룬 버튼 */}
+            {emergencyCleansesRemaining > 0 && phase === "playing" && (
+              <button
+                type="button"
+                onClick={handleEmergencyCleanse}
+                className="min-h-11 px-2.5 py-1 rounded-xl border border-destructive/40 bg-destructive/10 text-xs font-bold text-destructive hover:bg-destructive/20 flex items-center gap-1 transition-colors"
+                title="Emergency Cleanse (Clears bottom 2 rows)"
+              >
+                <ShieldAlert className="size-4 text-destructive" />
+                <span>정화 ({emergencyCleansesRemaining})</span>
+              </button>
+            )}
+
+            {/* 퀘스트 지령 버튼 */}
+            <button
+              type="button"
+              onClick={() => setIsQuestModalOpen(true)}
+              className="relative min-h-11 px-2.5 py-1 rounded-xl border border-border text-xs font-bold text-muted-foreground hover:bg-muted flex items-center gap-1"
+              title="Quests"
+            >
+              <ScrollText className="size-4 text-primary" />
+              <span className="hidden sm:inline">퀘스트</span>
+              {quests.some((q) => !q.isClaimed && q.progress >= q.maxProgress) && (
+                <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-chart-5 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-destructive" />
+                </span>
+              )}
+            </button>
+
+            {/* 룬 성소 버튼 */}
+            <button
+              type="button"
+              onClick={() => setIsMetaModalOpen(true)}
+              className="min-h-11 px-2.5 py-1 rounded-xl border border-warning/40 bg-warning/10 text-xs font-bold text-warning hover:bg-warning/20 flex items-center gap-1"
+              title="Rune Sanctuary"
+            >
+              <Wrench className="size-4 text-warning" />
+              <span>💎 {metaSave.walletRunes}</span>
+            </button>
+
             <button
               type="button"
               onClick={() => setSound((v) => !v)}
@@ -1265,6 +1494,159 @@ export default function BlockBurst({ locale = "ko" }: { locale?: string }) {
           @media (prefers-reduced-motion: reduce) { .burst-sheet { animation: none; background-position: 0 0; } }
         `}</style>
       </GameContainer>
+
+      {/* 퀘스트 지령 모달 */}
+      {isQuestModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+          <div className="relative w-full max-w-md rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-2xl">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div className="flex items-center gap-2">
+                <ScrollText className="h-5 w-5 text-primary" />
+                <h3 className="text-base font-black">룬 아케이드 마인드 지령</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsQuestModalOpen(false)}
+                className="rounded-lg p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="my-4 flex flex-col gap-3">
+              {quests.map((q) => {
+                const canClaim = !q.isClaimed && q.progress >= q.maxProgress;
+                return (
+                  <div
+                    key={q.id}
+                    className="flex items-center justify-between rounded-xl border border-border bg-muted/20 p-3"
+                  >
+                    <div className="flex-1 pr-2">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-bold text-foreground">{q.title[locale] || q.title.ko}</span>
+                        <span className="text-xs font-bold text-warning">+{q.rewardRunes} 💎</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5">{q.desc[locale] || q.desc.ko}</p>
+                      <div className="mt-1.5 flex items-center gap-2">
+                        <div className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden">
+                          <div
+                            className="h-full bg-primary transition-all duration-300 w-(--prog-pct)"
+                            style={{ "--prog-pct": `${Math.min(100, (q.progress / q.maxProgress) * 100)}%` } as React.CSSProperties}
+                          />
+                        </div>
+                        <span className="text-xs font-mono text-muted-foreground">
+                          {q.progress}/{q.maxProgress}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div>
+                      {q.isClaimed ? (
+                        <span className="rounded-lg bg-muted px-2.5 py-1 text-xs font-bold text-muted-foreground">
+                          수령 완료
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled={!canClaim}
+                          onClick={() => handleClaimQuest(q.id)}
+                          className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+                            canClaim
+                              ? "bg-primary text-primary-foreground shadow hover:opacity-90"
+                              : "bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
+                          }`}
+                        >
+                          보상 수령
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 룬 성소 5대 영구 강화 모달 */}
+      {isMetaModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+          <div className="relative w-full max-w-lg rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-2xl">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div className="flex items-center gap-2">
+                <Wrench className="h-5 w-5 text-warning" />
+                <h3 className="text-base font-black">엘드리치의 룬 성소</h3>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1 rounded-lg border border-warning/40 bg-warning/10 px-2 py-0.5 text-xs font-bold text-warning">
+                  <span>💎 {metaSave.walletRunes}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsMetaModalOpen(false)}
+                  className="rounded-lg p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            <div className="my-4 flex max-h-[60vh] flex-col gap-2.5 overflow-y-auto pr-1">
+              {BLOCK_BURST_UPGRADES.map((upg) => {
+                const currentLv = metaSave.upgradeLevels[upg.id] || 0;
+                const isMax = currentLv >= upg.maxLevel;
+                const cost = getBlockBurstUpgradeCost(upg, currentLv);
+                const canAfford = !isMax && metaSave.walletRunes >= cost;
+
+                return (
+                  <div
+                    key={upg.id}
+                    className="flex items-center justify-between rounded-xl border border-border bg-muted/20 p-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl select-none" aria-hidden="true">{upg.icon}</span>
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-bold text-foreground">{upg.name[locale] || upg.name.ko}</span>
+                          <span className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono font-semibold text-muted-foreground">
+                            Lv.{currentLv}/{upg.maxLevel}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">{upg.desc[locale] || upg.desc.ko}</p>
+                      </div>
+                    </div>
+
+                    <div>
+                      {isMax ? (
+                        <span className="rounded-lg bg-muted px-3 py-1.5 text-xs font-bold text-muted-foreground">
+                          MAX
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled={!canAfford}
+                          onClick={() => handleBuyUpgrade(upg.id)}
+                          className={`rounded-lg px-3 py-1.5 text-xs font-bold transition flex items-center gap-1 ${
+                            canAfford
+                              ? "bg-warning text-warning-foreground shadow hover:opacity-90"
+                              : "bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
+                          }`}
+                        >
+                          <span>강화</span>
+                          <span className="font-mono">({cost}💎)</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+export default BlockBurst;
+

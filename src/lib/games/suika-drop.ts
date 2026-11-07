@@ -8,6 +8,10 @@
  * - Overfill deadline warning timer & gentle container nudge ("Shake") mechanic
  */
 
+import { type SuikaModifiers } from "./suika-drop-meta";
+
+export type FruitSpecialType = "normal" | "joker_rainbow" | "bomb_pineapple";
+
 export interface FruitTierDef {
   tier: number;
   nameKey: string;
@@ -47,6 +51,7 @@ export interface FruitBody {
   omega: number;
   age: number;
   popScale: number;
+  specialType?: FruitSpecialType;
 }
 
 export interface MergeBurst {
@@ -76,6 +81,9 @@ export interface SuikaState {
   shakesLeft: number;
   overfillTimer: number;
   nextId: number;
+  juiceEarned: number;
+  doubleWatermelonCount: number;
+  modifiers?: SuikaModifiers;
 }
 
 function deterministicSpawnTier(seed: number): number {
@@ -84,7 +92,8 @@ function deterministicSpawnTier(seed: number): number {
   return weights[Math.abs(seed) % weights.length];
 }
 
-export function createInitialSuikaState(bestScore = 0): SuikaState {
+export function createInitialSuikaState(bestScore = 0, modifiers?: SuikaModifiers): SuikaState {
+  const extraShakes = modifiers?.extraShakes || 0;
   return {
     status: 'playing',
     fruits: [],
@@ -99,9 +108,12 @@ export function createInitialSuikaState(bestScore = 0): SuikaState {
     maxTierReached: 0,
     comboCount: 0,
     comboTimer: 0,
-    shakesLeft: 2,
+    shakesLeft: 2 + extraShakes,
     overfillTimer: 0,
     nextId: 1,
+    juiceEarned: 0,
+    doubleWatermelonCount: 0,
+    modifiers,
   };
 }
 
@@ -124,6 +136,14 @@ export function dropSuikaFruit(state: SuikaState): SuikaState {
     Math.min(CONTAINER_WIDTH - def.radius - 8, state.dropperX)
   );
 
+  const seed = (state.nextId * 17 + state.score) % 25;
+  let specialType: FruitSpecialType = 'normal';
+  if (seed === 0 && state.mergesCount >= 2) {
+    specialType = 'joker_rainbow';
+  } else if (seed === 1 && state.mergesCount >= 4) {
+    specialType = 'bomb_pineapple';
+  }
+
   const newFruit: FruitBody = {
     id: state.nextId,
     tier: state.currentTier,
@@ -136,6 +156,7 @@ export function dropSuikaFruit(state: SuikaState): SuikaState {
     omega: 0,
     age: 0,
     popScale: 1,
+    specialType,
   };
 
   const upcomingTier = deterministicSpawnTier(state.nextId * 7 + state.score);
@@ -196,6 +217,8 @@ export function stepSuikaPhysics(state: SuikaState, dt: number): SuikaState {
   let comboCount = state.comboTimer > 0 ? state.comboCount : 0;
   let comboTimer = Math.max(0, state.comboTimer - clampedDt);
   let nextId = state.nextId;
+  let extraJuice = 0;
+  let isNewWatermelon = 0;
 
   for (let step = 0; step < substeps; step++) {
     // 1. Integrate gravity & velocities
@@ -230,6 +253,7 @@ export function stepSuikaPhysics(state: SuikaState, dt: number): SuikaState {
 
     // 2. Pairwise collision & same-tier merge check
     let mergedPair: [number, number] | null = null;
+    let bombTriggerIdx: number | null = null;
 
     for (let i = 0; i < fruits.length; i++) {
       for (let j = i + 1; j < fruits.length; j++) {
@@ -241,8 +265,15 @@ export function stepSuikaPhysics(state: SuikaState, dt: number): SuikaState {
         const minDist = a.radius + b.radius;
 
         if (distSq < minDist * minDist) {
-          // Check if same tier and below max tier (9 = Watermelon)
-          if (a.tier === b.tier && a.tier < FRUIT_TIERS.length - 1 && !mergedPair) {
+          // Check for Bomb Pineapple trigger
+          if (a.specialType === 'bomb_pineapple' || b.specialType === 'bomb_pineapple') {
+            bombTriggerIdx = a.specialType === 'bomb_pineapple' ? i : j;
+            break;
+          }
+
+          // Check if same tier or Joker Rainbow merge
+          const isJoker = a.specialType === 'joker_rainbow' || b.specialType === 'joker_rainbow';
+          if ((a.tier === b.tier || isJoker) && (a.tier < FRUIT_TIERS.length - 1 || b.tier < FRUIT_TIERS.length - 1) && !mergedPair) {
             mergedPair = [i, j];
             break;
           }
@@ -288,14 +319,40 @@ export function stepSuikaPhysics(state: SuikaState, dt: number): SuikaState {
           }
         }
       }
-      if (mergedPair) break;
+      if (bombTriggerIdx !== null || mergedPair) break;
     }
 
-    if (mergedPair) {
+    if (bombTriggerIdx !== null) {
+      const bombFruit = fruits[bombTriggerIdx];
+      const bx = bombFruit.x;
+      const by = bombFruit.y;
+      const blastRadius = 115;
+
+      fruits = fruits.filter((f, idx) => {
+        if (idx === bombTriggerIdx) return false;
+        const d = Math.hypot(f.x - bx, f.y - by);
+        return d > blastRadius;
+      });
+
+      const bombReward = 250;
+      score += bombReward;
+      mergesCount += 1;
+
+      bursts.push({
+        id: nextId++,
+        x: bx,
+        y: by,
+        radius: blastRadius * 0.8,
+        color: '#facc15',
+        alpha: 1.0,
+        text: `BOOM! +${bombReward}`,
+      });
+    } else if (mergedPair) {
       const [idxA, idxB] = mergedPair;
       const a = fruits[idxA];
       const b = fruits[idxB];
-      const nextTier = a.tier + 1;
+      const baseTier = Math.max(a.tier, b.tier);
+      const nextTier = Math.min(FRUIT_TIERS.length - 1, baseTier + 1);
       const nextDef = FRUIT_TIERS[nextTier];
       const mx = (a.x + b.x) * 0.5;
       const my = (a.y + b.y) * 0.5;
@@ -331,7 +388,9 @@ export function stepSuikaPhysics(state: SuikaState, dt: number): SuikaState {
 
       comboCount += 1;
       comboTimer = 2.2;
-      const gained = nextDef.score * Math.min(4, comboCount);
+      const scoreMult = state.modifiers?.scoreMult || 1.0;
+      const comboBonus = comboCount > 1 ? (state.modifiers?.comboBonusMult || 1.0) : 1.0;
+      const gained = Math.round(nextDef.score * Math.min(4, comboCount) * scoreMult * comboBonus);
       score += gained;
       mergesCount += 1;
       maxTierReached = Math.max(maxTierReached, nextTier);
@@ -345,13 +404,24 @@ export function stepSuikaPhysics(state: SuikaState, dt: number): SuikaState {
         alpha: 1,
         text: comboCount > 1 ? `+${gained} (${comboCount}x!)` : `+${gained}`,
       });
+
+      const juiceYieldMult = state.modifiers?.juiceYieldMult || 1.0;
+      const juiceGained = Math.max(1, Math.round(gained * 0.25 * juiceYieldMult));
+      extraJuice += juiceGained;
+      if (nextTier === 9) {
+        isNewWatermelon = 1;
+      }
     }
   }
+
+  const juiceYield = extraJuice;
+  const newWatermelon = isNewWatermelon;
 
   // Check overfill deadline violation for settled fruits (age > 1.2s)
   const isOverfilled = fruits.some((f) => f.age > 1.2 && f.y - f.radius < DEADLINE_Y);
   const overfillTimer = isOverfilled ? state.overfillTimer + clampedDt : Math.max(0, state.overfillTimer - clampedDt * 2);
-  const status = overfillTimer >= 2.2 ? 'gameover' : 'playing';
+  const graceBonus = state.modifiers?.graceTimerBonus || 0;
+  const status = overfillTimer >= (2.2 + graceBonus) ? 'gameover' : 'playing';
 
   return {
     ...state,
@@ -367,5 +437,7 @@ export function stepSuikaPhysics(state: SuikaState, dt: number): SuikaState {
     comboTimer,
     overfillTimer,
     nextId,
+    juiceEarned: state.juiceEarned + juiceYield,
+    doubleWatermelonCount: state.doubleWatermelonCount + newWatermelon,
   };
 }

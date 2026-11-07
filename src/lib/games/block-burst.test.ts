@@ -20,6 +20,18 @@ import {
   type BurstColor,
   type BurstState,
 } from "./block-burst";
+import {
+  INITIAL_BLOCK_BURST_QUESTS,
+} from "./block-burst-quests";
+import {
+  pickBlockBurstDialogue,
+} from "./block-burst-lore";
+import {
+  BLOCK_BURST_UPGRADES,
+  computeBlockBurstModifiers,
+  getBlockBurstUpgradeCost,
+  type BlockBurstMetaSave,
+} from "./block-burst-meta";
 
 function paint(cells: Array<[number, number]>, color: BurstColor = 1) {
   const board = Array.from({ length: ROWS }, () => Array<BurstColor | null>(COLS).fill(null));
@@ -125,3 +137,68 @@ describe("block burst engine", () => {
     expect(PERFECT_CLEAR_BONUS).toBe(1000);
   });
 });
+
+describe("block burst deepening systems (quests, lore, meta)", () => {
+  it("defines 4 arcade mind quests with 6 locales", () => {
+    expect(INITIAL_BLOCK_BURST_QUESTS).toHaveLength(4);
+    for (const q of INITIAL_BLOCK_BURST_QUESTS) {
+      expect(q.title.ko).toBeDefined();
+      expect(q.title.en).toBeDefined();
+      expect(q.desc.ko).toBeDefined();
+      expect(q.rewardRunes).toBeGreaterThan(0);
+      expect(q.maxProgress).toBeGreaterThan(0);
+    }
+  });
+
+  it("picks lore dialogues across all 5 game triggers", () => {
+    const triggers = ["game_start", "line_cleared", "combo_fever", "grid_danger", "game_over"] as const;
+    for (const tr of triggers) {
+      const dialogue = pickBlockBurstDialogue(tr);
+      expect(dialogue).toBeDefined();
+      expect(dialogue.speaker).toBeDefined();
+      expect(dialogue.name.ko).toBeDefined();
+      expect(dialogue.text.ko).toBeDefined();
+      expect(dialogue.avatar).toBeDefined();
+    }
+  });
+
+  it("calculates 5-tier sanctuary upgrades and cost progression", () => {
+    expect(BLOCK_BURST_UPGRADES).toHaveLength(5);
+    const resonance = BLOCK_BURST_UPGRADES.find((u) => u.id === "crystal_resonance")!;
+    expect(resonance.maxLevel).toBe(5);
+    expect(getBlockBurstUpgradeCost(resonance, 0)).toBe(150);
+    expect(getBlockBurstUpgradeCost(resonance, 1)).toBe(Math.round(150 * 1.6));
+    expect(getBlockBurstUpgradeCost(resonance, 5)).toBe(0);
+  });
+
+  it("computes active modifiers from upgrade levels", () => {
+    const emptySave: BlockBurstMetaSave = {
+      version: 1,
+      walletRunes: 0,
+      upgradeLevels: {},
+      totalLinesCleared: 0,
+      totalGamesPlayed: 0,
+    };
+    const baseMods = computeBlockBurstModifiers(emptySave);
+    expect(baseMods.scoreMult).toBe(1.0);
+    expect(baseMods.emergencyCleanses).toBe(0);
+    expect(baseMods.runeHarvestMult).toBe(1.0);
+
+    const upgradedSave: BlockBurstMetaSave = {
+      version: 1,
+      walletRunes: 500,
+      upgradeLevels: {
+        crystal_resonance: 2,
+        emergency_cleanse: 1,
+        crystal_harvest: 3,
+      },
+      totalLinesCleared: 10,
+      totalGamesPlayed: 2,
+    };
+    const mods = computeBlockBurstModifiers(upgradedSave);
+    expect(mods.scoreMult).toBeCloseTo(1.3);
+    expect(mods.emergencyCleanses).toBe(1);
+    expect(mods.runeHarvestMult).toBeCloseTo(1.75);
+  });
+});
+

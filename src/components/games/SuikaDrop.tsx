@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   CONTAINER_HEIGHT,
   CONTAINER_WIDTH,
@@ -12,6 +12,23 @@ import {
   type SuikaState,
 } from '../../lib/games/suika-drop';
 import {
+  INITIAL_SUIKA_QUESTS,
+  type SuikaQuest,
+} from '../../lib/games/suika-drop-quests';
+import {
+  pickSuikaDialogue,
+  type SuikaDialogue,
+  type SuikaTrigger,
+} from '../../lib/games/suika-drop-lore';
+import {
+  SUIKA_UPGRADES,
+  loadSuikaMeta,
+  saveSuikaMeta,
+  computeSuikaModifiers,
+  getSuikaUpgradeCost,
+  type SuikaMetaSave,
+} from '../../lib/games/suika-drop-meta';
+import {
   loadArcadePassProgress,
   reportMissionProgress,
   saveArcadePassProgress,
@@ -24,8 +41,18 @@ import {
   downloadShareCard,
 } from '../../lib/games/share-card';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
-import { SUIKA_FRUIT_SPRITES, SUIKA_DROP_UI_SPRITES, getSpriteUrl } from '../../lib/games/sprites';
-import { Maximize2, Minimize2, Share2, Check } from 'lucide-react';
+import { SUIKA_FRUIT_SPRITES, SUIKA_DROP_UI_SPRITES } from '../../lib/games/sprites';
+import {
+  Maximize2,
+  Minimize2,
+  Share2,
+  Check,
+  ScrollText,
+  Wrench,
+  X,
+  Droplets,
+  Sparkles,
+} from 'lucide-react';
 
 function TiltSuikaButton({
   children,
@@ -251,14 +278,32 @@ function resolveLocale(lang?: string): LocaleCode {
   return COPY[code] ? code : 'ko';
 }
 
-export default function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
+export function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
   const locale = resolveLocale(lang);
   const t = COPY[locale];
 
   const { isImmersive, containerRef, togglePortal } = useArcadePortal({ locale: locale as any });
-  const [state, setState] = useState<SuikaState>(() => createInitialSuikaState());
+
+  // 1. 영구 세이브 로드 및 모디파이어 산출
+  const [metaSave, setMetaSave] = useState<SuikaMetaSave>(() => loadSuikaMeta());
+  const modifiers = computeSuikaModifiers(metaSave);
+
+  // 2. 초기 게임 상태
+  const [state, setState] = useState<SuikaState>(() => createInitialSuikaState(0, modifiers));
   const stateRef = useRef<SuikaState>(state);
   stateRef.current = state;
+
+  // 3. 퀘스트 지령
+  const [quests, setQuests] = useState<SuikaQuest[]>(() => INITIAL_SUIKA_QUESTS);
+  const [isQuestModalOpen, setIsQuestModalOpen] = useState(false);
+
+  // 4. 과수원 연구소 모달
+  const [isMetaModalOpen, setIsMetaModalOpen] = useState(false);
+
+  // 5. 로어 통신 대사
+  const [currentDialogue, setCurrentDialogue] = useState<SuikaDialogue>(() =>
+    pickSuikaDialogue('game_start')
+  );
 
   const [isCopied, setIsCopied] = useState(false);
   const celebratedWatermelonRef = useRef(false);
@@ -267,6 +312,7 @@ export default function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
   const lastMergeCountRef = useRef(0);
   const fruitImgsRef = useRef<Map<number, HTMLImageElement>>(new Map());
 
+  // 이미지 프리로드
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const map = new Map<number, HTMLImageElement>();
@@ -278,6 +324,73 @@ export default function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
     });
     fruitImgsRef.current = map;
   }, []);
+
+  // 메타 세이브 동기화
+  const updateMetaSave = useCallback((updater: (prev: SuikaMetaSave) => SuikaMetaSave) => {
+    setMetaSave((prev) => {
+      const next = updater(prev);
+      saveSuikaMeta(next);
+      return next;
+    });
+  }, []);
+
+  const triggerDialogue = useCallback((trigger: SuikaTrigger) => {
+    setCurrentDialogue(pickSuikaDialogue(trigger));
+  }, []);
+
+  // 퀘스트 진행도 갱신
+  const checkQuestProgress = useCallback((nextState: SuikaState) => {
+    setQuests((prev) =>
+      prev.map((q) => {
+        if (q.isClaimed) return q;
+        let newProg = q.progress;
+        if (q.id === 'quest_first_merge') {
+          newProg = Math.min(q.maxProgress, nextState.mergesCount);
+        } else if (q.id === 'quest_combo_chain') {
+          newProg = Math.max(newProg, nextState.comboCount);
+        } else if (q.id === 'quest_big_watermelon') {
+          newProg = Math.min(q.maxProgress, nextState.maxTierReached >= 9 ? 1 : 0);
+        } else if (q.id === 'quest_high_score') {
+          newProg = Math.min(q.maxProgress, nextState.score);
+        }
+        return { ...q, progress: newProg };
+      })
+    );
+  }, []);
+
+  const handleClaimQuest = (questId: string) => {
+    const q = quests.find((item) => item.id === questId);
+    if (!q || q.isClaimed || q.progress < q.maxProgress) return;
+
+    setQuests((prev) =>
+      prev.map((item) => (item.id === questId ? { ...item, isClaimed: true } : item))
+    );
+    updateMetaSave((prev) => ({
+      ...prev,
+      walletJuice: prev.walletJuice + q.rewardJuice,
+    }));
+    MobileHapticsPro.mediumImpact();
+  };
+
+  const handleBuyUpgrade = (upgradeId: string) => {
+    const def = SUIKA_UPGRADES.find((u) => u.id === upgradeId);
+    if (!def) return;
+    const curLv = metaSave.upgradeLevels[upgradeId] || 0;
+    if (curLv >= def.maxLevel) return;
+
+    const cost = getSuikaUpgradeCost(def, curLv);
+    if (metaSave.walletJuice < cost) return;
+
+    updateMetaSave((prev) => ({
+      ...prev,
+      walletJuice: prev.walletJuice - cost,
+      upgradeLevels: {
+        ...prev.upgradeLevels,
+        [upgradeId]: curLv + 1,
+      },
+    }));
+    MobileHapticsPro.mediumImpact();
+  };
 
   const handleShareScore = useCallback(async () => {
     MobileHapticsPro.mediumImpact();
@@ -310,11 +423,9 @@ export default function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
       if (ctx.state === 'suspended') ctx.resume();
 
       const now = ctx.currentTime;
-      // Pentatonic xylophone scale for fruit merge progression
       const PENTATONIC = [261.63, 293.66, 329.63, 392.0, 440.0, 523.25, 587.33, 659.25, 783.99, 1046.5];
       const baseFreq = PENTATONIC[Math.min(tier, PENTATONIC.length - 1)] || 330;
 
-      // Primary marimba fundamental
       const osc1 = ctx.createOscillator();
       const gain1 = ctx.createGain();
       osc1.type = 'sine';
@@ -324,7 +435,6 @@ export default function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
       gain1.gain.setValueAtTime(0.24, now);
       gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
 
-      // Wooden/crystal overtone harmonic
       const osc2 = ctx.createOscillator();
       const gain2 = ctx.createGain();
       osc2.type = 'triangle';
@@ -369,21 +479,46 @@ export default function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
         const next = stepSuikaPhysics(prev, dt);
         if (prev.status === 'playing' && next.status === 'gameover') {
           MobileHapticsPro.warningPattern();
+          triggerDialogue('game_over');
+        } else if (next.overfillTimer > 1.2 && prev.overfillTimer <= 1.2) {
+          triggerDialogue('overfill_danger');
         }
+
         if (next.mergesCount > lastMergeCountRef.current) {
           lastMergeCountRef.current = next.mergesCount;
           playPopSfx(next.maxTierReached);
+          checkQuestProgress(next);
+
+          // 착즙 즙을 지갑에 누적
+          const juiceDelta = next.juiceEarned - prev.juiceEarned;
+          if (juiceDelta > 0) {
+            updateMetaSave((m) => ({
+              ...m,
+              walletJuice: m.walletJuice + juiceDelta,
+              totalMerges: m.totalMerges + 1,
+            }));
+          }
+
           if (next.maxTierReached >= 9) {
             MobileHapticsPro.heavyImpact();
+            triggerDialogue('watermelon_made');
             if (!celebratedWatermelonRef.current) {
               celebratedWatermelonRef.current = true;
               celebrate(containerRef.current, { preset: 'sparks' });
+              updateMetaSave((m) => ({
+                ...m,
+                totalWatermelons: m.totalWatermelons + 1,
+              }));
             }
-          } else if (next.maxTierReached >= 5) {
-            MobileHapticsPro.mediumImpact();
           } else {
-            MobileHapticsPro.lightImpact();
+            triggerDialogue('merge_success');
+            if (next.maxTierReached >= 5) {
+              MobileHapticsPro.mediumImpact();
+            } else {
+              MobileHapticsPro.lightImpact();
+            }
           }
+
           const dateKey = new Date().toISOString().slice(0, 10);
           const progress = loadArcadePassProgress(dateKey);
           saveArcadePassProgress(
@@ -400,7 +535,7 @@ export default function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
           const cur = stateRef.current;
           ctx.clearRect(0, 0, CONTAINER_WIDTH, CONTAINER_HEIGHT);
 
-          // Warm wooden/cream fruit box background
+          // Background
           const grad = ctx.createLinearGradient(0, 0, 0, CONTAINER_HEIGHT);
           grad.addColorStop(0, '#fffbeb');
           grad.addColorStop(1, '#fef3c7');
@@ -435,7 +570,6 @@ export default function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
             ctx.stroke();
             ctx.restore();
 
-            // Cloud dropper mascot & preview 3D fruit
             const dropSprite = fruitImgsRef.current.get(cur.currentTier);
             if (dropSprite && dropSprite.complete) {
               const d = dropDef.radius * 2.25;
@@ -455,7 +589,7 @@ export default function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
             }
           }
 
-          // Render all active fruits with 3D specular gloss, shadow and rotation
+          // Render all active fruits with 3D specular gloss & special aura
           for (const f of cur.fruits) {
             const def = FRUIT_TIERS[f.tier];
             const r = f.radius * f.popScale;
@@ -469,13 +603,26 @@ export default function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
             ctx.ellipse(0, r * 0.15, r * 0.95, r * 0.85, 0, 0, Math.PI * 2);
             ctx.fill();
 
+            // Special Joker or Bomb Aura
+            if (f.specialType === 'joker_rainbow') {
+              ctx.strokeStyle = '#38bdf8';
+              ctx.lineWidth = 4;
+              ctx.beginPath();
+              ctx.arc(0, 0, r + 4, 0, Math.PI * 2);
+              ctx.stroke();
+            } else if (f.specialType === 'bomb_pineapple') {
+              ctx.strokeStyle = '#ef4444';
+              ctx.lineWidth = 4;
+              ctx.beginPath();
+              ctx.arc(0, 0, r + 4, 0, Math.PI * 2);
+              ctx.stroke();
+            }
+
             const spriteImg = fruitImgsRef.current.get(f.tier);
             if (spriteImg && spriteImg.complete) {
-              // High-resolution 3D Fruit Sprite Render
               const drawD = r * 2.2;
               ctx.drawImage(spriteImg, -drawD / 2, -drawD / 2, drawD, drawD);
             } else {
-              // Fallback procedural sphere
               const sphereGrad = ctx.createRadialGradient(-r * 0.3, -r * 0.3, r * 0.1, 0, 0, r);
               sphereGrad.addColorStop(0, '#ffffff');
               sphereGrad.addColorStop(0.28, def.color);
@@ -493,6 +640,17 @@ export default function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
               ctx.textAlign = 'center';
               ctx.textBaseline = 'middle';
               ctx.fillText(def.emoji, 0, 2);
+            }
+
+            // Special emoji tag overlay
+            if (f.specialType === 'joker_rainbow') {
+              ctx.font = '16px sans-serif';
+              ctx.textAlign = 'center';
+              ctx.fillText('🌈', 0, -r * 0.6);
+            } else if (f.specialType === 'bomb_pineapple') {
+              ctx.font = '16px sans-serif';
+              ctx.textAlign = 'center';
+              ctx.fillText('💣', 0, -r * 0.6);
             }
 
             ctx.restore();
@@ -522,7 +680,7 @@ export default function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
 
     animId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(animId);
-  }, [playPopSfx]);
+  }, [playPopSfx, checkQuestProgress, triggerDialogue, updateMetaSave]);
 
   // Keyboard support
   useEffect(() => {
@@ -550,6 +708,8 @@ export default function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
     setState((prev) => moveSuikaDropper(prev, x));
   };
 
+  const unclaimedQuestsCount = quests.filter((q) => !q.isClaimed && q.progress >= q.maxProgress).length;
+
   return (
     <div
       ref={containerRef}
@@ -560,10 +720,45 @@ export default function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
         <div>
-          <h2 className="text-lg font-bold tracking-tight">🍉 {t.title}</h2>
+          <h2 className="text-lg font-bold tracking-tight flex items-center gap-1.5">
+            <span>🍉 {t.title}</span>
+            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+              PRO 6-SYSTEM
+            </span>
+          </h2>
           <p className="text-xs text-muted-foreground">{t.subtitle}</p>
         </div>
+
         <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
+          {/* 퀘스트 지령 버튼 */}
+          <TiltSuikaButton
+            onClick={() => setIsQuestModalOpen(true)}
+            className="relative flex items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-accent"
+          >
+            <ScrollText className="h-4 w-4 text-primary" />
+            <span>과수원 지령</span>
+            {unclaimedQuestsCount > 0 && (
+              <span className="flex size-4 items-center justify-center rounded-full bg-destructive text-xs text-destructive-foreground animate-pulse">
+                {unclaimedQuestsCount}
+              </span>
+            )}
+          </TiltSuikaButton>
+
+          {/* 과수원 연구소 버튼 */}
+          <TiltSuikaButton
+            onClick={() => setIsMetaModalOpen(true)}
+            className="flex items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-accent"
+          >
+            <Wrench className="h-4 w-4 text-warning" />
+            <span>과수원 강화</span>
+          </TiltSuikaButton>
+
+          {/* 과일 즙 재화 배지 */}
+          <div className="flex items-center gap-1 rounded-lg border border-warning/40 bg-warning/10 px-2.5 py-1 text-xs font-bold text-warning">
+            <Droplets className="h-3.5 w-3.5" />
+            <span>{metaSave.walletJuice} 즙</span>
+          </div>
+
           <span className="rounded-lg bg-secondary px-2.5 py-1 text-secondary-foreground">
             {t.scoreLabel}: {state.score}
           </span>
@@ -589,7 +784,7 @@ export default function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
             onClick={() => {
               lastMergeCountRef.current = 0;
               celebratedWatermelonRef.current = false;
-              setState((prev) => createInitialSuikaState(prev.bestScore));
+              setState((prev) => createInitialSuikaState(prev.bestScore, modifiers));
             }}
             className="rounded-lg bg-primary px-3 py-1 text-xs font-bold text-primary-foreground shadow-sm transition hover:opacity-90"
           >
@@ -611,6 +806,24 @@ export default function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
           >
             {isImmersive ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
           </TiltSuikaButton>
+        </div>
+      </div>
+
+      {/* 스토리 로어 통신 HUD */}
+      <div className="flex items-center gap-3 rounded-xl border border-primary/30 bg-primary/5 p-3">
+        <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-card border border-primary/30 text-2xl shadow-xs">
+          {currentDialogue.avatar}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-black text-primary">{currentDialogue.name.ko}</span>
+            <span className="rounded-full bg-primary/20 px-1.5 py-0.5 text-xs font-semibold text-primary">
+              {currentDialogue.title.ko}
+            </span>
+          </div>
+          <p className="text-xs text-foreground mt-0.5 line-clamp-2">
+            "{currentDialogue.text.ko}"
+          </p>
         </div>
       </div>
 
@@ -672,7 +885,7 @@ export default function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
                     onClick={() => {
                       lastMergeCountRef.current = 0;
                       celebratedWatermelonRef.current = false;
-                      setState((prev) => createInitialSuikaState(prev.bestScore));
+                      setState((prev) => createInitialSuikaState(prev.bestScore, modifiers));
                     }}
                     className="rounded-xl bg-primary px-5 py-2 text-sm font-bold text-primary-foreground shadow-sm"
                   >
@@ -739,6 +952,157 @@ export default function SuikaDrop({ lang = 'ko' }: SuikaDropProps) {
           </div>
         </div>
       </div>
+
+      {/* 퀘스트 지령 모달 */}
+      {isQuestModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+          <div className="relative w-full max-w-md rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-2xl">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div className="flex items-center gap-2">
+                <ScrollText className="h-5 w-5 text-primary" />
+                <h3 className="text-base font-black">과수원 수확 지령서</h3>
+              </div>
+              <TiltSuikaButton
+                onClick={() => setIsQuestModalOpen(false)}
+                className="rounded-lg p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                <X className="h-5 w-5" />
+              </TiltSuikaButton>
+            </div>
+
+            <div className="my-4 flex flex-col gap-3">
+              {quests.map((q) => {
+                const canClaim = !q.isClaimed && q.progress >= q.maxProgress;
+                return (
+                  <div
+                    key={q.id}
+                    className="flex items-center justify-between rounded-xl border border-border bg-muted/20 p-3"
+                  >
+                    <div className="flex-1 pr-2">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-bold text-foreground">{q.title.ko}</span>
+                        <span className="text-xs font-bold text-warning">+{q.rewardJuice} 즙</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5">{q.desc.ko}</p>
+                      <div className="mt-1.5 flex items-center gap-2">
+                        <div className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden">
+                          <div
+                            className="h-full bg-primary transition-all duration-300 w-(--prog-pct)"
+                            style={{ '--prog-pct': `${Math.min(100, (q.progress / q.maxProgress) * 100)}%` } as React.CSSProperties}
+                          />
+                        </div>
+                        <span className="text-xs font-mono text-muted-foreground">
+                          {q.progress}/{q.maxProgress}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div>
+                      {q.isClaimed ? (
+                        <span className="rounded-lg bg-muted px-2.5 py-1 text-xs font-bold text-muted-foreground">
+                          수령 완료
+                        </span>
+                      ) : (
+                        <TiltSuikaButton
+                          disabled={!canClaim}
+                          onClick={() => handleClaimQuest(q.id)}
+                          className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+                            canClaim
+                              ? 'bg-primary text-primary-foreground shadow hover:opacity-90'
+                              : 'bg-muted text-muted-foreground opacity-50 cursor-not-allowed'
+                          }`}
+                        >
+                          보상 수령
+                        </TiltSuikaButton>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 과수원 5대 영구 강화 모달 */}
+      {isMetaModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+          <div className="relative w-full max-w-lg rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-2xl">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div className="flex items-center gap-2">
+                <Wrench className="h-5 w-5 text-warning" />
+                <h3 className="text-base font-black">포모도르의 과수원 연구소</h3>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1 rounded-lg border border-warning/40 bg-warning/10 px-2 py-0.5 text-xs font-bold text-warning">
+                  <Droplets className="h-3.5 w-3.5" />
+                  <span>{metaSave.walletJuice} 즙</span>
+                </div>
+                <TiltSuikaButton
+                  onClick={() => setIsMetaModalOpen(false)}
+                  className="rounded-lg p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                >
+                  <X className="h-5 w-5" />
+                </TiltSuikaButton>
+              </div>
+            </div>
+
+            <div className="my-4 flex flex-col gap-2.5 max-h-96 overflow-y-auto pr-1">
+              {SUIKA_UPGRADES.map((def) => {
+                const curLv = metaSave.upgradeLevels[def.id] || 0;
+                const isMax = curLv >= def.maxLevel;
+                const cost = getSuikaUpgradeCost(def, curLv);
+                const canAfford = !isMax && metaSave.walletJuice >= cost;
+
+                return (
+                  <div
+                    key={def.id}
+                    className="flex items-center justify-between rounded-xl border border-border bg-muted/20 p-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex size-10 items-center justify-center rounded-xl bg-card border border-border text-xl">
+                        {def.icon}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-foreground">{def.name.ko}</span>
+                          <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-xs font-bold text-primary">
+                            LV {curLv} / {def.maxLevel}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">{def.desc.ko}</p>
+                      </div>
+                    </div>
+
+                    <div>
+                      {isMax ? (
+                        <span className="rounded-lg bg-muted px-2.5 py-1 text-xs font-bold text-muted-foreground">
+                          MAX
+                        </span>
+                      ) : (
+                        <TiltSuikaButton
+                          disabled={!canAfford}
+                          onClick={() => handleBuyUpgrade(def.id)}
+                          className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-bold transition ${
+                            canAfford
+                              ? 'bg-warning text-warning-foreground shadow hover:opacity-90'
+                              : 'bg-muted text-muted-foreground opacity-50 cursor-not-allowed'
+                          }`}
+                        >
+                          <Droplets className="h-3.5 w-3.5" />
+                          <span>{cost} 즙</span>
+                        </TiltSuikaButton>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+export default SuikaDrop;
