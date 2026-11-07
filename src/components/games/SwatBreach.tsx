@@ -3,6 +3,7 @@ import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { useDynamicDifficultyPro, useCardTiltPro } from "../../lib/games/engine-suite-unified";
 import { celebrate } from "../../lib/games/celebration";
 import { Maximize2, Minimize2, Award, Wrench, X, Shield, Crosshair } from "lucide-react";
+import { SWAT_BREACH_SPRITES } from "../../lib/games/sprites";
 import {
   loadArcadePassProgress,
   reportMissionProgress,
@@ -231,6 +232,22 @@ export default function SwatBreach({ locale = "ko" }: Props) {
     createSwatBreachState(0, buildMetaModifiers(loadSwatMetaState()))
   );
   const audioCtxRef = useRef<AudioContext | null>(null);
+
+  const spritesRef = useRef<{
+    shield: HTMLImageElement | null;
+    c4: HTMLImageElement | null;
+    siren: HTMLImageElement | null;
+    breachCharge: HTMLImageElement | null;
+  }>({ shield: null, c4: null, siren: null, breachCharge: null });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const sh = new Image(); sh.src = SWAT_BREACH_SPRITES.shield;
+    const c = new Image(); c.src = SWAT_BREACH_SPRITES.c4;
+    const si = new Image(); si.src = SWAT_BREACH_SPRITES.siren;
+    const br = new Image(); br.src = SWAT_BREACH_SPRITES.breachCharge;
+    spritesRef.current = { shield: sh, c4: c, siren: si, breachCharge: br };
+  }, []);
 
   const [uiMissionIdx, setUiMissionIdx] = useState(0);
   const [uiPhase, setUiPhase] = useState<SwatBreachState["phase"]>("planning");
@@ -502,12 +519,22 @@ export default function SwatBreach({ locale = "ko" }: Props) {
               } else if (tile === "door_closed") {
                 ctx.fillStyle = "#334155";
                 ctx.fillRect(px, py, CELL_SIZE, CELL_SIZE);
-                ctx.fillStyle = "#ef4444";
-                ctx.fillRect(px + 4, py + CELL_SIZE / 2 - 6, CELL_SIZE - 8, 12);
-                ctx.fillStyle = "#ffffff";
-                ctx.font = "bold 10px monospace";
-                ctx.textAlign = "center";
-                ctx.fillText("DOOR", px + CELL_SIZE / 2, py + CELL_SIZE / 2 + 4);
+                if (spritesRef.current.breachCharge?.complete) {
+                  ctx.drawImage(
+                    spritesRef.current.breachCharge,
+                    px + CELL_SIZE / 2 - 12,
+                    py + CELL_SIZE / 2 - 12,
+                    24,
+                    24
+                  );
+                } else {
+                  ctx.fillStyle = "#ef4444";
+                  ctx.fillRect(px + 4, py + CELL_SIZE / 2 - 6, CELL_SIZE - 8, 12);
+                  ctx.fillStyle = "#ffffff";
+                  ctx.font = "bold 10px monospace";
+                  ctx.textAlign = "center";
+                  ctx.fillText("DOOR", px + CELL_SIZE / 2, py + CELL_SIZE / 2 + 4);
+                }
               } else if (tile === "door_open") {
                 ctx.fillStyle = "#1e293b";
                 ctx.fillRect(px, py, CELL_SIZE, CELL_SIZE);
@@ -651,11 +678,21 @@ export default function SwatBreach({ locale = "ko" }: Props) {
 
             ctx.font = "14px sans-serif";
             ctx.textAlign = "center";
-            let sIcon = "👺";
-            if (s.suspectType === "shielded") sIcon = "🛡️";
-            else if (s.suspectType === "bomber") sIcon = "💣";
-            else if (s.suspectType === "sniper") sIcon = "🎯";
-            ctx.fillText(s.neutralized ? "☠️" : s.stunTimer > 0 ? "💫" : sIcon, sx, sy + 5);
+            if (s.neutralized) {
+              ctx.fillText("☠️", sx, sy + 5);
+            } else if (s.stunTimer > 0) {
+              ctx.fillText("💫", sx, sy + 5);
+            } else if (s.suspectType === "shielded" && spritesRef.current.shield?.complete) {
+              ctx.drawImage(spritesRef.current.shield, sx - 11, sy - 11, 22, 22);
+            } else if (s.suspectType === "bomber" && spritesRef.current.c4?.complete) {
+              ctx.drawImage(spritesRef.current.c4, sx - 11, sy - 11, 22, 22);
+            } else {
+              let sIcon = "👺";
+              if (s.suspectType === "shielded") sIcon = "🛡️";
+              else if (s.suspectType === "bomber") sIcon = "💣";
+              else if (s.suspectType === "sniper") sIcon = "🎯";
+              ctx.fillText(sIcon, sx, sy + 5);
+            }
             ctx.restore();
           }
 
