@@ -8,12 +8,25 @@ import {
   stepSliceMaster,
   tapFlipKnife,
 } from "@/lib/games/slice-master";
-import { addTrauma, createShakeState, triggerHaptic, updateShake } from "@/lib/games/juice-engine";
-import { useDynamicDifficultyPro, MobileHapticsPro } from "@/lib/games/engine-suite-unified";
+import { addTrauma, createShakeState, updateShake } from "@/lib/games/juice-engine";
+import { useDynamicDifficultyPro } from "@/lib/games/engine-suite-unified";
 import { useArcadePortal } from "@/lib/games/arcade-portal";
-import { getSpriteUrl, SLICE_MASTER_SPRITES } from "@/lib/games/sprites";
+import { SLICE_MASTER_SPRITES } from "@/lib/games/sprites";
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "@/lib/games/share-card";
-import { Maximize2, Minimize2, Share2, Check, Sparkles } from "lucide-react";
+import { Maximize2, Minimize2, Share2, Check, Sparkles, Award, Wrench, X } from "lucide-react";
+import { INITIAL_SLICE_QUESTS, type SliceQuest } from "@/lib/games/slice-master-quests";
+import { SLICE_COMMS_LOGS, SLICE_SPEAKERS } from "@/lib/games/slice-master-lore";
+import {
+  buildSliceMetaModifiers,
+  getSliceUpgradeCost,
+  loadSliceMetaState,
+  purchaseSliceMetaUpgrade,
+  saveSliceMetaState,
+  SLICE_META_UPGRADES,
+  type SlicePlayerMetaState,
+} from "@/lib/games/slice-master-meta";
+import { nativeHaptics } from "@/lib/haptics/native-bridge";
+import { GameStatTile } from "../ui/game/GameStatTile";
 
 interface SliceMasterProps {
   locale?: string;
@@ -45,7 +58,6 @@ class SliceMasterAudio {
     if (!ctx) return;
     const now = ctx.currentTime;
 
-    // Filtered noise swoosh
     const bufferSize = Math.floor(ctx.sampleRate * 0.08);
     const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
     const data = buffer.getChannelData(0);
@@ -78,11 +90,9 @@ class SliceMasterAudio {
     if (!ctx) return;
     const now = ctx.currentTime;
 
-    // Harmonic pentatonic frequencies C5-D5-E5-G5-A5
     const pentatonic = [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5];
     const baseFreq = pentatonic[Math.min(combo - 1, pentatonic.length - 1)];
 
-    // Crisp high slice attack
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = "sine";
@@ -92,29 +102,35 @@ class SliceMasterAudio {
     gain.gain.setValueAtTime(0.2, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
 
-    // Juice crunch noise transient
     const noiseLen = Math.floor(ctx.sampleRate * 0.03);
     const noiseBuf = ctx.createBuffer(1, noiseLen, ctx.sampleRate);
     const nData = noiseBuf.getChannelData(0);
     for (let i = 0; i < noiseLen; i++) nData[i] = (Math.random() * 2 - 1) * (1 - i / noiseLen);
     const nSrc = ctx.createBufferSource();
     nSrc.buffer = noiseBuf;
+
+    const nFilter = ctx.createBiquadFilter();
+    nFilter.type = "highpass";
+    nFilter.frequency.setValueAtTime(2400, now);
+
     const nGain = ctx.createGain();
-    nGain.gain.setValueAtTime(0.18, now);
-    nGain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+    nGain.gain.setValueAtTime(0.15, now);
+    nGain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+
+    nSrc.connect(nFilter);
+    nFilter.connect(nGain);
+    nGain.connect(ctx.destination);
 
     osc.connect(gain);
     gain.connect(ctx.destination);
-    nSrc.connect(nGain);
-    nGain.connect(ctx.destination);
 
     osc.start(now);
-    osc.stop(now + 0.1);
+    osc.stop(now + 0.09);
     nSrc.start(now);
   }
 
-  /** Deep wood chop impact */
-  playWood() {
+  /** Solid thud when knife sticks cleanly into the board/floor */
+  playStick() {
     const ctx = this.ensure();
     if (!ctx) return;
     const now = ctx.currentTime;
@@ -122,74 +138,47 @@ class SliceMasterAudio {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = "triangle";
-    osc.frequency.setValueAtTime(180, now);
-    osc.frequency.exponentialRampToValueAtTime(60, now + 0.07);
+    osc.frequency.setValueAtTime(140, now);
+    osc.frequency.exponentialRampToValueAtTime(45, now + 0.12);
 
     gain.gain.setValueAtTime(0.25, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
 
     osc.connect(gain);
     gain.connect(ctx.destination);
     osc.start(now);
-    osc.stop(now + 0.09);
+    osc.stop(now + 0.12);
   }
 
-  /** Metallic clank impact when hitting hazard */
-  playHazard() {
+  /** Metallic clatter on hazard hit or flat landing */
+  playHazardClank() {
     const ctx = this.ensure();
     if (!ctx) return;
     const now = ctx.currentTime;
 
-    const osc1 = ctx.createOscillator();
-    const osc2 = ctx.createOscillator();
-    const gain = ctx.createGain();
-
-    osc1.type = "sawtooth";
-    osc2.type = "sine";
-    osc1.frequency.setValueAtTime(920, now);
-    osc2.frequency.setValueAtTime(1430, now);
-
-    gain.gain.setValueAtTime(0.3, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
-
-    osc1.connect(gain);
-    osc2.connect(gain);
-    gain.connect(ctx.destination);
-
-    osc1.start(now);
-    osc2.start(now);
-    osc1.stop(now + 0.26);
-    osc2.stop(now + 0.26);
+    [420, 780, 1140].forEach((freq, i) => {
+      if (!ctx) return;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, now + i * 0.015);
+      gain.gain.setValueAtTime(0.18, now + i * 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.015 + 0.14);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now + i * 0.015);
+      osc.stop(now + i * 0.015 + 0.15);
+    });
   }
 
-  /** Thump stick when embedded in floor */
-  playStuck() {
-    const ctx = this.ensure();
-    if (!ctx) return;
-    const now = ctx.currentTime;
-
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(160, now);
-    osc.frequency.exponentialRampToValueAtTime(40, now + 0.05);
-
-    gain.gain.setValueAtTime(0.18, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
-
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.07);
-  }
-
-  /** Victory fanfare arpeggio */
-  playClear() {
+  /** Celebratory fanfares on reaching bonus board */
+  playVictory() {
     const ctx = this.ensure();
     if (!ctx) return;
     const now = ctx.currentTime;
     const notes = [523.25, 659.25, 783.99, 1046.5]; // C5-E5-G5-C6
     notes.forEach((freq, i) => {
+      if (!ctx) return;
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = "sine";
@@ -208,10 +197,16 @@ class SliceMasterAudio {
   }
 }
 
-export default function SliceMaster({ locale = "ko" }: SliceMasterProps) {
+export function SliceMaster({ locale = "ko" }: SliceMasterProps) {
   const { isImmersive, containerRef, togglePortal } = useArcadePortal({ locale: (locale as any) || "ko" });
   const [level, setLevel] = useState(1);
-  const [game, setGame] = useState<SliceMasterGame>(() => createSliceMasterLevel(1));
+  const [metaState, setMetaState] = useState<SlicePlayerMetaState>(() => loadSliceMetaState());
+  const [quests, setQuests] = useState<SliceQuest[]>(() => INITIAL_SLICE_QUESTS);
+  const [showForgeModal, setShowForgeModal] = useState(false);
+  const [showQuestModal, setShowQuestModal] = useState(false);
+
+  const modifiers = buildSliceMetaModifiers(metaState);
+  const [game, setGame] = useState<SliceMasterGame>(() => createSliceMasterLevel(1, modifiers));
   const [bestScore, setBestScore] = useState(0);
   const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0 });
   const [shareCardCopied, setShareCardCopied] = useState(false);
@@ -223,15 +218,58 @@ export default function SliceMaster({ locale = "ko" }: SliceMasterProps) {
   const shakeStateRef = useRef(createShakeState());
   const audioRef = useRef<SliceMasterAudio | null>(null);
 
+  // Sync quest progress on score/slice/center/finish
+  const checkQuests = useCallback((st: SliceMasterGame) => {
+    setQuests((prev) =>
+      prev.map((q) => {
+        if (q.completed) return q;
+        let cur = q.current;
+        if (q.id === "perfect_center") cur = st.perfectCenterCount;
+        else if (q.id === "fever_combo") cur = Math.max(cur, st.combo);
+        else if (q.id === "golden_pinata") cur = st.hasEncounteredGolden && st.stonesEarned >= 15 ? 1 : 0;
+        else if (q.id === "master_course") cur = st.status === "completed" ? 1 : 0;
+
+        const completed = cur >= q.target;
+        if (completed && !q.completed) {
+          nativeHaptics.trigger("success");
+        }
+        return { ...q, current: cur, completed };
+      })
+    );
+  }, []);
+
+  const handleClaimQuest = (questId: string) => {
+    const q = quests.find((item) => item.id === questId);
+    if (!q || !q.completed || q.claimed) return;
+
+    setQuests((prev) => prev.map((item) => (item.id === questId ? { ...item, claimed: true } : item)));
+    setMetaState((prev) => {
+      const next = { ...prev, sharpnessStones: prev.sharpnessStones + q.rewardStones };
+      saveSliceMetaState(next);
+      return next;
+    });
+    nativeHaptics.trigger("success");
+  };
+
+  const handlePurchaseUpgrade = (upgradeId: string) => {
+    const res = purchaseSliceMetaUpgrade(metaState, upgradeId);
+    if (res.success) {
+      setMetaState(res.nextState);
+      nativeHaptics.trigger("heavy");
+    } else {
+      nativeHaptics.trigger("error");
+    }
+  };
+
   const handleShareCard = useCallback(async () => {
-    MobileHapticsPro.selection();
+    nativeHaptics.trigger("light");
     const canvas = createShareCardCanvas({
       title: "Slice Master 3D",
       score: `${game.score} PTS`,
       customStats: [
         { label: "Level", value: `Stage ${level}` },
         { label: "Sliced", value: `${game.sliceCount}` },
-        { label: "Best", value: `${bestScore}` },
+        { label: "Stones", value: `${metaState.sharpnessStones} 🪨` },
       ],
       slug: "slice-master",
     });
@@ -242,7 +280,7 @@ export default function SliceMaster({ locale = "ko" }: SliceMasterProps) {
     } else {
       downloadShareCard(canvas, `slice-master-lvl${level}.png`);
     }
-  }, [game.score, game.sliceCount, level, bestScore]);
+  }, [game.score, game.sliceCount, level, metaState.sharpnessStones]);
 
   // Initialize Web Audio Synthesizer
   useEffect(() => {
@@ -258,345 +296,492 @@ export default function SliceMaster({ locale = "ko" }: SliceMasterProps) {
     let lastTime = performance.now();
 
     const loop = (time: number) => {
-      const dt = Math.min(0.04, (time - lastTime) / 1000);
+      const dt = Math.min((time - lastTime) / 1000, 0.05);
       lastTime = time;
 
-      // Update screen shake
-      if (shakeStateRef.current.trauma > 0.001) {
-        const { state, offset } = updateShake(shakeStateRef.current, dt, time / 1000);
-        shakeStateRef.current = state;
-        setShakeOffset({ x: offset.x, y: offset.y });
-      } else if (shakeOffset.x !== 0 || shakeOffset.y !== 0) {
-        setShakeOffset({ x: 0, y: 0 });
-      }
-
-      // Update physics if flying
       const current = gameRef.current;
       if (current.status === "flying" || current.hitStopRemaining > 0) {
         const step = stepSliceMaster(current, dt);
 
         if (step.slicedObstacles.length > 0) {
-          // Trigger juice
-          shakeStateRef.current = addTrauma(shakeStateRef.current, 0.35);
-          MobileHapticsPro.impact();
-          triggerHaptic("medium");
-          reportSuccess();
-
-          const isWood = step.slicedObstacles.some((o) => o.type === "wood");
-          if (isWood) {
-            audioRef.current?.playWood();
-          } else {
-            audioRef.current?.playSlice(current.combo);
-          }
-        }
-
-        if (step.hitTarget) {
-          shakeStateRef.current = addTrauma(shakeStateRef.current, 0.7);
-          MobileHapticsPro.success();
-          triggerHaptic("combo");
-          reportSuccess();
-          audioRef.current?.playClear();
-        }
-
-        if (step.hitHazard) {
-          shakeStateRef.current = addTrauma(shakeStateRef.current, 0.8);
-          MobileHapticsPro.heavy();
-          triggerHaptic("heavy");
-          reportFailure();
-          audioRef.current?.playHazard();
+          audioRef.current?.playSlice(step.state.combo);
+          nativeHaptics.trigger(step.state.combo >= 3 ? "heavy" : "medium");
+          addTrauma(shakeStateRef.current, 0.28);
         }
 
         if (step.stuckFloor) {
-          MobileHapticsPro.click();
-          triggerHaptic("light");
-          audioRef.current?.playStuck();
+          audioRef.current?.playStick();
+          nativeHaptics.trigger("light");
         }
 
-        if (step.state.score > bestScore) {
-          setBestScore(step.state.score);
+        if (step.hitHazard) {
+          audioRef.current?.playHazardClank();
+          nativeHaptics.trigger("error");
+          addTrauma(shakeStateRef.current, 0.6);
+          reportFailure();
         }
 
+        if (step.hitTarget) {
+          audioRef.current?.playVictory();
+          nativeHaptics.trigger("success");
+          addTrauma(shakeStateRef.current, 0.45);
+          reportSuccess();
+
+          // Sync earned stones to player meta state
+          setMetaState((prev) => {
+            const next = { ...prev, sharpnessStones: prev.sharpnessStones + step.state.stonesEarned };
+            saveSliceMetaState(next);
+            return next;
+          });
+        }
+
+        checkQuests(step.state);
         setGame(step.state);
       }
+
+      // Update Screen Shake trauma
+      const shake = updateShake(shakeStateRef.current, dt);
+      shakeStateRef.current = shake.state;
+      setShakeOffset({ x: shake.offset.x, y: shake.offset.y });
 
       animId = requestAnimationFrame(loop);
     };
 
     animId = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(animId);
-  }, [bestScore, shakeOffset.x, shakeOffset.y, reportSuccess, reportFailure]);
+  }, [reportSuccess, reportFailure, checkQuests]);
 
-  const handleTap = () => {
-    if (game.status === "gameover" || game.status === "completed") {
+  // Update best score
+  useEffect(() => {
+    if (game.score > bestScore) {
+      setBestScore(game.score);
+    }
+  }, [game.score, bestScore]);
+
+  // User input handling (Click / Tap / Spacebar)
+  const handleFlip = useCallback(() => {
+    const current = gameRef.current;
+    if (current.status === "gameover") {
+      // Restart current level
+      const mods = buildSliceMetaModifiers(metaState);
+      const nextGame = createSliceMasterLevel(level, mods);
+      setGame(nextGame);
       return;
     }
 
-    const flipped = tapFlipKnife(game);
-    setGame(flipped);
+    if (current.status === "completed") {
+      // Advance to next level
+      const nextLvl = level + 1;
+      setLevel(nextLvl);
+      const mods = buildSliceMetaModifiers(metaState);
+      const nextGame = createSliceMasterLevel(nextLvl, mods);
+      setGame(nextGame);
+      return;
+    }
 
-    // Flip whoosh
     audioRef.current?.playSwish();
-    MobileHapticsPro.light();
-    triggerHaptic("light");
-  };
+    nativeHaptics.trigger("light");
+    const nextGame = tapFlipKnife(current);
+    setGame(nextGame);
+  }, [level, metaState]);
 
-  const handleRestart = () => {
-    MobileHapticsPro.light();
-    const fresh = createSliceMasterLevel(level);
-    setGame(fresh);
-  };
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === "Space" || e.code === "ArrowUp") {
+        e.preventDefault();
+        handleFlip();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleFlip]);
 
-  const handleNextLevel = () => {
-    MobileHapticsPro.success();
-    const nextLvl = level + 1;
-    setLevel(nextLvl);
-    setGame(createSliceMasterLevel(nextLvl));
-  };
-
-  const knife = game.knife;
-  const cameraX = game.cameraX;
+  const activeComms = SLICE_COMMS_LOGS[game.activeCommsLogId] || SLICE_COMMS_LOGS.start;
+  const speaker = SLICE_SPEAKERS[activeComms.speakerId] || SLICE_SPEAKERS.hanzo;
 
   return (
     <div
       ref={containerRef}
-      style={
-        {
-          "--shake-x": `${shakeOffset.x}px`,
-          "--shake-y": `${shakeOffset.y}px`,
-        } as React.CSSProperties
-      }
-      className={`${
-        isImmersive
-          ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col items-center overflow-y-auto bg-background p-4 sm:p-6"
-          : "mx-auto flex w-full max-w-2xl translate-x-(--shake-x) translate-y-(--shake-y) flex-col items-center gap-4 p-4 select-none"
+      className={`relative w-full max-w-4xl mx-auto flex flex-col items-center select-none overflow-hidden rounded-2xl border border-border bg-card shadow-2xl transition-all duration-300 ${
+        isImmersive ? "fixed inset-0 z-50 max-w-none rounded-none border-none h-screen bg-background" : "aspect-4/3 min-h-120"
       }`}
     >
-      {/* Header HUD */}
-      <div className="flex w-full flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
-        <div>
-          <h2 className="text-xl font-bold tracking-tight">
-            {locale === "ko" ? "슬라이스 마스터 3D" : "Slice Master 3D"}
-          </h2>
-          <p className="text-xs text-muted-foreground">
-            {locale === "ko"
-              ? "탭하여 칼을 회전시키고 장애물을 베어내세요!"
-              : "Tap to flip the knife and slice through everything!"}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <div className="text-right">
-            <span className="block text-xs font-semibold uppercase text-muted-foreground">
-              {locale === "ko" ? "점수" : "Score"}
-            </span>
-            <span className="text-xl font-black text-primary">{game.score}</span>
-          </div>
-
-          <div className="text-right">
-            <span className="block text-xs font-semibold uppercase text-muted-foreground">
-              {locale === "ko" ? "최고" : "Best"}
-            </span>
-            <span className="text-xl font-black text-foreground flex items-center gap-1">
-              <img src={getSpriteUrl("star", 64)} alt="Best" className="size-4 inline-block" />
-              {bestScore}
-            </span>
-          </div>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleShareCard}
-            title={shareCardCopied ? "Copied!" : "Share"}
-          >
-            {shareCardCopied ? <Check className="h-4 w-4 text-primary" /> : <Share2 className="h-4 w-4" />}
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={togglePortal}
-            title={isImmersive ? "Exit Focus" : "Focus"}
-          >
-            {isImmersive ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-          </Button>
-        </div>
-      </div>
-
-      {/* Main Game Stage SVG Viewport */}
-      <div
-        className="relative w-full overflow-hidden rounded-2xl border border-border bg-card shadow-lg cursor-pointer"
-        onClick={handleTap}
-      >
-        <svg
-          viewBox="0 0 600 400"
-          className="h-auto w-full touch-none select-none bg-muted/30"
-        >
-          {/* Camera World Group */}
-          <g transform={`translate(${-cameraX}, 0)`}>
-            {/* Floor Plane with Bevel Track */}
-            <rect x="0" y="360" width="8000" height="40" className="fill-muted stroke-border" strokeWidth="2" />
-            <line x1="0" y1="360" x2="8000" y2="360" className="stroke-primary/40" strokeWidth="3" />
-
-            {/* Obstacles */}
-            {game.obstacles.map((obs) => (
-              <RenderObstacleSvg key={obs.id} obstacle={obs} />
-            ))}
-
-            {/* 3D Knife */}
-            <RenderKnifeSvg knife={knife} />
-          </g>
-        </svg>
-
-        {/* Level & Combo HUD Overlay */}
-        <div className="pointer-events-none absolute top-4 left-4 flex flex-col gap-1">
-          <span className="text-xs font-bold text-muted-foreground">
-            {locale === "ko" ? `레벨 ${level}` : `Level ${level}`}
+      {/* ──────────────── Top HUD Bar ──────────────── */}
+      <div className="w-full flex items-center justify-between px-4 py-2 bg-muted/40 border-b border-border z-10">
+        <div className="flex items-center gap-2">
+          <span className="font-black text-sm tracking-wide text-foreground">
+            STAGE {level}
           </span>
           {game.combo > 1 && (
-            <span className="animate-pulse text-lg font-black text-primary drop-shadow flex items-center gap-1">
-              <Sparkles className="size-4 inline text-warning" />
-              {game.combo}x COMBO! 🔥
+            <span className="text-xs font-black px-2 py-0.5 rounded-full bg-chart-4/20 text-chart-4 border border-chart-4/30 animate-pulse">
+              {game.combo}x COMBO!
             </span>
           )}
         </div>
 
-        {/* Tap Prompt */}
-        {game.status === "stuck" && (
-          <div className="pointer-events-none absolute bottom-16 left-1/2 -translate-x-1/2 rounded-full bg-background/85 px-4 py-1.5 text-xs font-bold shadow backdrop-blur-sm">
-            {locale === "ko" ? "화면을 탭하여 점프 & 회전!" : "Tap screen to flip knife!"}
-          </div>
-        )}
+        {/* Tactical Sub-Modals & Action Buttons */}
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setShowQuestModal(true)}
+          >
+            <Award className="w-3.5 h-3.5 text-chart-4 mr-1" />
+            <span className="hidden sm:inline">장인 의뢰</span>
+          </Button>
 
-        {/* Game Over Modal */}
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setShowForgeModal(true)}
+          >
+            <Wrench className="w-3.5 h-3.5 text-primary mr-1" />
+            <span className="hidden sm:inline">대장간 연구</span>
+          </Button>
+
+          <Button
+            size="icon-sm"
+            variant="ghost"
+            onClick={handleShareCard}
+            title="공유 카드"
+          >
+            {shareCardCopied ? <Check className="w-4 h-4 text-chart-2" /> : <Share2 className="w-4 h-4" />}
+          </Button>
+
+          <Button
+            size="icon-sm"
+            variant="ghost"
+            onClick={togglePortal}
+            title="전체화면"
+          >
+            {isImmersive ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </Button>
+        </div>
+      </div>
+
+      {/* ──────────────── Comms Lore Dialogue Strip ──────────────── */}
+      <div className="w-full px-4 py-1.5 bg-muted/20 border-b border-border/50 flex items-center gap-2 text-xs z-10">
+        <span className="text-base">{speaker.avatar}</span>
+        <span className="font-bold text-foreground shrink-0">{speaker.name.ko || speaker.name.en}:</span>
+        <span className="text-muted-foreground truncate">{activeComms.message.ko || activeComms.message.en}</span>
+      </div>
+
+      {/* ──────────────── Stat Tiles Bar ──────────────── */}
+      <div className="w-full grid grid-cols-4 gap-2 px-3 py-2 bg-muted/10 border-b border-border/30 z-10">
+        <GameStatTile label="현재 점수" value={`${game.score}`} icon="🎯" />
+        <GameStatTile label="최고 점수" value={`${bestScore}`} icon="🏆" />
+        <GameStatTile label="절단 사물" value={`${game.sliceCount}`} icon="🍎" />
+        <GameStatTile label="보유 연마석" value={`${metaState.sharpnessStones} 🪨`} icon="✨" />
+      </div>
+
+      {/* ──────────────── Main SVG Viewport ──────────────── */}
+      <div
+        onClick={handleFlip}
+        style={{
+          "--shake-x": `${shakeOffset.x}px`,
+          "--shake-y": `${shakeOffset.y}px`,
+        } as React.CSSProperties}
+        className="relative w-full flex-1 cursor-pointer overflow-hidden flex items-center justify-center bg-muted/5 translate-x-(--shake-x) translate-y-(--shake-y)"
+      >
+        <svg
+          viewBox={`${game.cameraX} 0 800 450`}
+          className="w-full h-full object-cover"
+          preserveAspectRatio="xMidYMid meet"
+        >
+          {/* Background Grid Pattern */}
+          <defs>
+            <pattern id="slice-grid" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M 40 0 L 0 0 0 40" fill="none" className="stroke-border/40" strokeWidth="0.8" />
+            </pattern>
+            {/* Subtle Gradient for Slicing Line */}
+            <linearGradient id="blade-glow" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.8" />
+              <stop offset="100%" stopColor="transparent" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+
+          <rect x={game.cameraX} y="0" width="800" height="450" fill="url(#slice-grid)" />
+
+          {/* Floor & Chopping Board Base */}
+          <rect
+            x={game.cameraX - 100}
+            y="360"
+            width="1000"
+            height="90"
+            className="fill-muted/70 stroke-border"
+            strokeWidth="2"
+          />
+          {/* Wood Cutting Mat Grain Lines */}
+          <line
+            x1={game.cameraX - 100}
+            y1="362"
+            x2={game.cameraX + 900}
+            y2="362"
+            className="stroke-primary/40"
+            strokeWidth="3"
+          />
+
+          {/* Finish Line Indicator */}
+          <g transform={`translate(${game.finishX + 30}, 270)`}>
+            <line x1="0" y1="0" x2="0" y2="90" className="stroke-chart-4" strokeWidth="2" strokeDasharray="4 4" />
+            <text x="0" y="-12" textAnchor="middle" fontSize="11" fontWeight="bold" className="fill-chart-4">
+              FINISH LINE
+            </text>
+          </g>
+
+          {/* Render All Obstacles (Fruits, Wood, Hazards, Target) */}
+          {game.obstacles.map((obs) => (
+            <RenderObstacleSvg key={obs.id} obstacle={obs} />
+          ))}
+
+          {/* Render Knife with 3D Shadow & High-Gloss Blade */}
+          <RenderKnifeSvg knife={game.knife} />
+        </svg>
+
+        {/* Overlay Modals for Game Over / Victory */}
         {game.status === "gameover" && (
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-background/85 p-6 text-center backdrop-blur-sm">
-            <span className="mb-2 text-4xl">💥</span>
-            <h3 className="mb-1 text-2xl font-black tracking-tight text-destructive">
-              {locale === "ko" ? "칼이 튕겨나갔습니다!" : "Knife Failed!"}
-            </h3>
-            <p className="mb-6 text-sm text-muted-foreground">
-              {locale === "ko"
-                ? `최종 점수: ${game.score}점 (슬라이스: ${game.sliceCount}회)`
-                : `Final Score: ${game.score} (${game.sliceCount} sliced)`}
+          <div className="absolute inset-0 bg-background/85 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-200">
+            <span className="text-5xl mb-2">💥</span>
+            <h2 className="text-2xl font-black tracking-tight text-foreground mb-1">
+              칼날이 튕겨나갔습니다!
+            </h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              칼자루로 바닥에 떨어지거나 장애물에 부딪혔습니다. 칼날 각도를 유지하세요!
             </p>
             <div className="flex gap-3">
-              <Button onClick={handleRestart} size="lg">
-                {locale === "ko" ? "다시 도전" : "Try Again"}
-              </Button>
-              <Button onClick={handleShareCard} variant="outline" size="lg">
-                {shareCardCopied ? "복사됨!" : "기록 공유"}
+              <Button onClick={handleFlip} size="lg">
+                다시 도전하기 (Tap / Space)
               </Button>
             </div>
           </div>
         )}
 
-        {/* Level Complete Modal */}
         {game.status === "completed" && (
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-background/85 p-6 text-center backdrop-blur-sm">
-            <img
-              src={getSpriteUrl("trophy", 64)}
-              alt="Clear"
-              className="size-16 animate-bounce drop-shadow mb-2"
-            />
-            <h3 className="mb-1 text-2xl font-black tracking-tight text-primary">
-              {locale === "ko" ? "스테이지 클리어! 🎉" : "Stage Cleared! 🎉"}
-            </h3>
-            <p className="mb-6 text-sm text-muted-foreground">
-              {locale === "ko"
-                ? `보너스 획득! 총 점수: ${game.score}점 (슬라이스: ${game.sliceCount}회)`
-                : `Target Hit! Score: ${game.score} (${game.sliceCount} sliced)`}
+          <div className="absolute inset-0 bg-background/85 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center animate-in zoom-in-95 duration-200">
+            <span className="text-5xl mb-2">🎯</span>
+            <h2 className="text-2xl font-black tracking-tight text-foreground mb-1">
+              과녁 정중앙 명중!
+            </h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              스테이지를 완벽히 통과했습니다! 획득 연마석: +{game.stonesEarned} 🪨
             </p>
             <div className="flex gap-3">
-              <Button onClick={handleNextLevel} size="lg">
-                {locale === "ko" ? "다음 레벨" : "Next Level"}
-              </Button>
-              <Button onClick={handleShareCard} variant="outline" size="lg">
-                {shareCardCopied ? "복사됨!" : "기록 공유"}
+              <Button onClick={handleFlip} size="lg">
+                <Sparkles className="w-4 h-4 mr-2" />
+                다음 스테이지로 (Stage {level + 1})
               </Button>
             </div>
           </div>
         )}
       </div>
 
-      {/* Footer Instructions */}
-      <div className="w-full text-center text-xs text-muted-foreground">
-        {locale === "ko"
-          ? "칼날(뾰족한 끝)로 물체를 자르고 안전하게 착지하세요. 칼자루가 닿거나 가시에 부딪히면 게임오버입니다."
-          : "Slice targets with the sharp knife tip and stick the landing. Hitting hazards or landing on the handle causes game over."}
+      {/* ──────────────── Footer Action / Controls Bar ──────────────── */}
+      <div className="w-full p-3 bg-muted/30 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
+        <span>🖱️ 화면 탭 또는 [스페이스바]로 칼을 뒤집어 날리세요</span>
+        <span className="font-medium">ASMR Knife Slicing 3D</span>
       </div>
+
+      {/* ──────────────── 대장간 명검 각성 연구소 모달 ──────────────── */}
+      {showForgeModal && (
+        <div className="absolute inset-0 z-50 bg-background/90 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="w-full max-w-lg bg-card border border-border rounded-xl p-5 shadow-2xl flex flex-col max-h-5/6 overflow-hidden">
+            <div className="flex items-center justify-between pb-3 border-b border-border">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">⚔️</span>
+                <div>
+                  <h3 className="text-base font-bold text-foreground">대장간 명검 각성 연구소</h3>
+                  <p className="text-xs text-muted-foreground">보유 연마석: {metaState.sharpnessStones} 🪨</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowForgeModal(false)}
+                className="p-1 rounded-lg hover:bg-muted text-muted-foreground"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto py-3 space-y-3">
+              {Object.values(SLICE_META_UPGRADES).map((def) => {
+                const currentLvl = metaState.upgrades[def.id] || 0;
+                const cost = getSliceUpgradeCost(def.id, currentLvl);
+                const isMax = currentLvl >= def.maxLevel;
+                const canAfford = metaState.sharpnessStones >= cost;
+
+                return (
+                  <div
+                    key={def.id}
+                    className="flex items-center justify-between p-3 rounded-lg bg-muted/40 border border-border"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{def.icon}</span>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-sm text-foreground">{def.name.ko}</span>
+                          <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-mono">
+                            Lv.{currentLvl}/{def.maxLevel}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">{def.desc.ko}</p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handlePurchaseUpgrade(def.id)}
+                      disabled={isMax || !canAfford}
+                      className="whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {isMax ? "최대 레벨" : `${cost} 🪨 연마`}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ──────────────── 장인 작전 지령 모달 ──────────────── */}
+      {showQuestModal && (
+        <div className="absolute inset-0 z-50 bg-background/90 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="w-full max-w-lg bg-card border border-border rounded-xl p-5 shadow-2xl flex flex-col max-h-5/6 overflow-hidden">
+            <div className="flex items-center justify-between pb-3 border-b border-border">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">📜</span>
+                <div>
+                  <h3 className="text-base font-bold text-foreground">장인 한조의 작전 지령</h3>
+                  <p className="text-xs text-muted-foreground">도검 수련 의뢰를 완수하고 연마석을 획득하세요</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowQuestModal(false)}
+                className="p-1 rounded-lg hover:bg-muted text-muted-foreground"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto py-3 space-y-3">
+              {quests.map((q) => {
+                const pct = Math.min(100, Math.round((q.current / q.target) * 100));
+                return (
+                  <div
+                    key={q.id}
+                    className="flex items-center justify-between p-3 rounded-lg bg-muted/40 border border-border"
+                  >
+                    <div className="flex-1 mr-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-bold text-sm text-foreground">{q.title.ko}</span>
+                        <span className="text-xs font-mono text-muted-foreground">
+                          {q.current}/{q.target}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">{q.desc.ko}</p>
+                      <div className="w-full h-1.5 rounded-full bg-muted mt-2 overflow-hidden">
+                        <div
+                          style={{ "--prog-pct": `${pct}%` } as React.CSSProperties}
+                          className="h-full bg-primary transition-all duration-300 w-(--prog-pct)"
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleClaimQuest(q.id)}
+                      disabled={!q.completed || q.claimed}
+                      className="whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-chart-4 hover:bg-chart-4/90 text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {q.claimed ? "수령 완료" : q.completed ? `+${q.rewardStones} 🪨 보상` : "진행 중"}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
- * RenderObstacleSvg — High-fidelity 3D Asset Slicing Renderers
+ * RenderObstacleSvg — CodePen Floating Block Quarter-view Slice Effect
  * ────────────────────────────────────────────────────────────────────────── */
 function RenderObstacleSvg({ obstacle }: { obstacle: SliceObstacle }) {
-  const { x, y, width, height, type, label, sliced, color } = obstacle;
+  const { x, y, width, height, type, label, sliced, color, mutation } = obstacle;
 
-  // Finish Target: 3D Golden Podium with Trophy
+  // Finish Target: Huge Dartboard / Bell
   if (type === "finish_target") {
     return (
       <g transform={`translate(${x}, ${y})`}>
-        {/* Podium Base */}
         <rect
           x="0"
-          y="20"
+          y="0"
           width={width}
-          height={height - 20}
-          rx="6"
-          className="fill-warning/30 stroke-warning"
-          strokeWidth="2"
+          height={height}
+          rx="12"
+          className={sliced ? "fill-primary/60 stroke-primary" : "fill-card stroke-chart-4"}
+          strokeWidth="3"
         />
-        {/* 3D Trophy on top */}
-        <image
-          href={getSpriteUrl("trophy", 128)}
-          x={width / 2 - 24}
-          y="-16"
-          width="48"
-          height="48"
-          preserveAspectRatio="xMidYMid meet"
-        />
+        <circle cx={width / 2} cy={height / 2} r="20" className="fill-chart-4/20 stroke-chart-4" strokeWidth="2" />
+        <circle cx={width / 2} cy={height / 2} r="8" className="fill-chart-4" />
         <text
           x={width / 2}
-          y={height - 10}
+          y={height - 8}
           textAnchor="middle"
-          fontSize="12"
+          fontSize="10"
           fontWeight="bold"
-          className="fill-warning"
+          className="fill-foreground"
         >
-          {label}
+          {label.split(" ")[0]}
         </text>
       </g>
     );
   }
 
-  // Tactical Spiked Mine Hazard: 3D Gunmetal Hazard Render
+  // Metal Hazard: Spiked Cogwheel
   if (type === "metal_hazard") {
     return (
       <g transform={`translate(${x}, ${y})`}>
-        <image
-          href={SLICE_MASTER_SPRITES.hazard}
-          x="-4"
-          y="-4"
-          width={width + 8}
-          height={height + 8}
-          preserveAspectRatio="xMidYMid meet"
+        <circle
+          cx={width / 2}
+          cy={height / 2}
+          r={width / 2 - 2}
+          className="fill-muted stroke-destructive"
+          strokeWidth="3"
         />
+        <text
+          x={width / 2}
+          y={height / 2 + 5}
+          textAnchor="middle"
+          fontSize="18"
+          className="fill-foreground pointer-events-none"
+        >
+          ⚙️
+        </text>
       </g>
     );
   }
 
-  // Fruit & Wood 3D Assets: Orange or Watermelon
-  const isWatermelon = label.includes("수박");
-  const fruitSprite = isWatermelon ? SLICE_MASTER_SPRITES.watermelon : SLICE_MASTER_SPRITES.orange;
+  // Fruit or Mutated item with CodePen 3D Quarter-view Slicing Split
+  const fruitSprite =
+    mutation === "golden"
+      ? SLICE_MASTER_SPRITES.orange
+      : label.includes("수박")
+      ? SLICE_MASTER_SPRITES.watermelon
+      : label.includes("오렌지") || label.includes("사과") || label.includes("레몬")
+      ? SLICE_MASTER_SPRITES.orange
+      : undefined;
 
-  if (type === "fruit") {
+  if (fruitSprite) {
     if (sliced) {
       return (
         <g transform={`translate(${x}, ${y})`}>
-          {/* Left / Top Sliced Half Flying Left */}
-          <g transform="translate(-10, -12) rotate(-22)">
+          {/* Top Half flying left-up with 3D cut bevel */}
+          <g transform="translate(-10, -12) rotate(-16)">
             <image
               href={fruitSprite}
               x="0"
@@ -604,11 +789,19 @@ function RenderObstacleSvg({ obstacle }: { obstacle: SliceObstacle }) {
               width={width}
               height={height}
               preserveAspectRatio="xMidYMid meet"
-              opacity={0.9}
+              clipPath="polygon(0 0, 100% 0, 100% 50%, 0 50%)"
+            />
+            {/* 3D Meat Bevel */}
+            <ellipse
+              cx={width / 2}
+              cy={height / 2}
+              rx={width / 2 - 4}
+              ry="3"
+              className={mutation === "golden" ? "fill-chart-4" : "fill-primary/60"}
             />
           </g>
-          {/* Right / Bottom Sliced Half Flying Right */}
-          <g transform="translate(10, 8) rotate(18)">
+          {/* Bottom Half falling right-down */}
+          <g transform="translate(10, 8) rotate(14)">
             <image
               href={fruitSprite}
               x="0"
@@ -616,7 +809,14 @@ function RenderObstacleSvg({ obstacle }: { obstacle: SliceObstacle }) {
               width={width}
               height={height}
               preserveAspectRatio="xMidYMid meet"
-              opacity={0.9}
+              clipPath="polygon(0 50%, 100% 50%, 100% 100%, 0 100%)"
+            />
+            <ellipse
+              cx={width / 2}
+              cy={height / 2}
+              rx={width / 2 - 4}
+              ry="3"
+              className={mutation === "golden" ? "fill-chart-4" : "fill-primary/60"}
             />
           </g>
         </g>
@@ -625,6 +825,9 @@ function RenderObstacleSvg({ obstacle }: { obstacle: SliceObstacle }) {
 
     return (
       <g transform={`translate(${x}, ${y})`}>
+        {mutation === "golden" && (
+          <circle cx={width / 2} cy={height / 2} r={width / 2 + 4} className="fill-chart-4/30 animate-pulse" />
+        )}
         <image
           href={fruitSprite}
           x="0"
@@ -637,14 +840,11 @@ function RenderObstacleSvg({ obstacle }: { obstacle: SliceObstacle }) {
     );
   }
 
-  // Wood Block: Beveled Wood texture
+  // Wood / Diamond / Bomb Block
   if (sliced) {
     return (
-      <g
-        transform={`translate(${x}, ${y})`}
-        style={{ "--item-color": color } as React.CSSProperties}
-      >
-        <g transform="translate(-6, -10) rotate(-14)">
+      <g transform={`translate(${x}, ${y})`} style={{ "--item-color": color } as React.CSSProperties}>
+        <g transform="translate(-8, -12) rotate(-14)">
           <rect
             x="0"
             y="0"
@@ -656,7 +856,7 @@ function RenderObstacleSvg({ obstacle }: { obstacle: SliceObstacle }) {
             strokeWidth="1.5"
           />
         </g>
-        <g transform="translate(6, 6) rotate(10)">
+        <g transform="translate(8, 8) rotate(12)">
           <rect
             x="0"
             y={height / 2}
@@ -673,10 +873,7 @@ function RenderObstacleSvg({ obstacle }: { obstacle: SliceObstacle }) {
   }
 
   return (
-    <g
-      transform={`translate(${x}, ${y})`}
-      style={{ "--item-color": color } as React.CSSProperties}
-    >
+    <g transform={`translate(${x}, ${y})`} style={{ "--item-color": color } as React.CSSProperties}>
       <rect
         x="0"
         y="0"
@@ -723,7 +920,6 @@ function RenderKnifeSvg({ knife }: { knife: Knife }) {
 
       {/* 3D Japanese Chef Knife: Rotated around knife handle pivot */}
       <g transform={`translate(${x}, ${y}) rotate(${deg})`}>
-        {/* High-resolution 3D Knife Sprite (horizontal, pointing right) */}
         <image
           href={SLICE_MASTER_SPRITES.knife}
           x="-8"
@@ -737,3 +933,5 @@ function RenderKnifeSvg({ knife }: { knife: Knife }) {
     </>
   );
 }
+
+export default SliceMaster;

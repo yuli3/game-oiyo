@@ -1,7 +1,15 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { PowerWashEngine } from "./powerwash-3d";
+import { INITIAL_POWERWASH_QUESTS } from "./powerwash-3d-quests";
+import { pickPowerWashDialogue } from "./powerwash-3d-lore";
+import {
+  POWERWASH_UPGRADES,
+  computePowerWashModifiers,
+  getPowerWashUpgradeCost,
+  type PowerWashMetaSave,
+} from "./powerwash-3d-meta";
 
-describe("PowerWashEngine", () => {
+describe("PowerWashEngine & 6-System Deepening Suite", () => {
   let engine: PowerWashEngine;
 
   beforeEach(() => {
@@ -16,11 +24,13 @@ describe("PowerWashEngine", () => {
     expect(state.selectedNozzle).toBe("15deg");
     expect(state.orientation).toBe("horizontal");
     expect(state.status).toBe("washing");
+    expect(state.usedNozzles).toContain("15deg");
   });
 
   it("노즐 변경 및 분사 방향(수평/수직) 회전이 정상 작동해야 함", () => {
     engine.selectNozzle("0deg");
     expect(engine.getState().selectedNozzle).toBe("0deg");
+    expect(engine.getState().usedNozzles).toContain("0deg");
 
     engine.toggleOrientation();
     expect(engine.getState().orientation).toBe("vertical");
@@ -79,5 +89,67 @@ describe("PowerWashEngine", () => {
 
     engine.update(3.0);
     expect(engine.getState().isHighlightingDirt).toBe(false);
+  });
+
+  it("정화 의뢰서 퀘스트 4종이 올바르게 정의되어 있어야 함", () => {
+    expect(INITIAL_POWERWASH_QUESTS.length).toBe(4);
+    const firstClean = INITIAL_POWERWASH_QUESTS.find((q) => q.id === "quest_first_clean");
+    expect(firstClean).toBeDefined();
+    expect(firstClean?.rewardCash).toBe(120);
+    expect(firstClean?.title.ko).toBe("첫 광택의 쾌감");
+  });
+
+  it("의뢰인 로어 통신 대사가 각 트리거별로 올바르게 추출되어야 함", () => {
+    const triggers = ["game_start", "part_cleared", "soap_applied", "mutant_spotted", "stage_cleared"] as const;
+    for (const trig of triggers) {
+      const dialogue = pickPowerWashDialogue(trig);
+      expect(dialogue).toBeDefined();
+      expect(dialogue.text.ko.length).toBeGreaterThan(5);
+      expect(dialogue.avatar.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("정비소 메타 업그레이드 비용 산출 및 모디파이어 계산이 정확해야 함", () => {
+    const pump = POWERWASH_UPGRADES.find((u) => u.id === "turbo_pump")!;
+    expect(getPowerWashUpgradeCost(pump, 0)).toBe(150);
+    expect(getPowerWashUpgradeCost(pump, 1)).toBe(Math.round(150 * 1.6));
+    expect(getPowerWashUpgradeCost(pump, 5)).toBe(0); // Max level
+
+    const save: PowerWashMetaSave = {
+      version: 1,
+      walletCash: 1000,
+      upgradeLevels: {
+        turbo_pump: 2, // 1.0 + 0.3 = 1.3
+        wide_lance: 1, // 1.0 + 0.12 = 1.12
+        eco_collector: 2, // 1.0 + 0.3 = 1.3
+      },
+      totalPartsCleaned: 10,
+      totalStagesCleared: 2,
+    };
+
+    const mods = computePowerWashModifiers(save);
+    expect(mods.powerMult).toBeCloseTo(1.3, 2);
+    expect(mods.radiusMult).toBeCloseTo(1.12, 2);
+    expect(mods.cashRewardMult).toBeCloseTo(1.3, 2);
+  });
+
+  it("특수 고착 오염원(tar, rust, moss)이 그리드에 생성되고 박리 시 카운트되어야 함", () => {
+    const parts = engine.getState().parts;
+    let foundMutant = false;
+
+    for (const p of parts) {
+      for (let r = 0; r < p.gridRows; r++) {
+        for (let c = 0; c < p.gridCols; c++) {
+          if (p.grimeTypeGrid[r][c] !== "normal") {
+            foundMutant = true;
+            break;
+          }
+        }
+        if (foundMutant) break;
+      }
+      if (foundMutant) break;
+    }
+
+    expect(foundMutant).toBe(true);
   });
 });

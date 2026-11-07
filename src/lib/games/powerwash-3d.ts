@@ -9,8 +9,11 @@
  * - 잔여 오염 하이라이트(Show Dirt) 스캔 기능
  */
 
+import { type PowerWashModifiers } from "./powerwash-3d-meta";
+
 export type NozzleType = "0deg" | "15deg" | "40deg" | "soap";
 export type SprayOrientation = "horizontal" | "vertical";
+export type GrimeType = "normal" | "tar" | "rust" | "moss";
 
 export interface NozzleSpec {
   id: NozzleType;
@@ -73,6 +76,8 @@ export interface WashablePart {
   dirtGrid: number[][];
   /** 비누 거품 도포 여부 */
   soapGrid: boolean[][];
+  /** 셀별 오염 속성 (일반, 타르, 녹, 이끼) */
+  grimeTypeGrid: GrimeType[][];
   cleanPercent: number;
   isCompleted: boolean;
 }
@@ -96,6 +101,8 @@ export interface PowerWashState {
   hoveredPartId: string | null;
   justCompletedPart: { id: string; name: string; reward: number } | null;
   status: "washing" | "stage_clear";
+  mutantStrippedCount: number;
+  usedNozzles: string[];
 }
 
 const CELL_RESOLUTION = 8; // 8px 단위 오염 셀
@@ -116,13 +123,27 @@ function createPart(
   const rows = Math.max(1, Math.ceil(h / CELL_RESOLUTION));
   const dirtGrid: number[][] = [];
   const soapGrid: boolean[][] = [];
+  const grimeTypeGrid: GrimeType[][] = [];
 
   for (let r = 0; r < rows; r++) {
     dirtGrid[r] = [];
     soapGrid[r] = [];
+    grimeTypeGrid[r] = [];
     for (let c = 0; c < cols; c++) {
       dirtGrid[r][c] = 1.0;
       soapGrid[r][c] = false;
+
+      // 결정론적 변이 고착 오염원 스폰 (약 12% 밀도)
+      const seed = (r * 13 + c * 19 + id.charCodeAt(0)) % 25;
+      if (seed === 0) {
+        grimeTypeGrid[r][c] = "tar";
+      } else if (seed === 1) {
+        grimeTypeGrid[r][c] = "rust";
+      } else if (seed === 2) {
+        grimeTypeGrid[r][c] = "moss";
+      } else {
+        grimeTypeGrid[r][c] = "normal";
+      }
     }
   }
 
@@ -141,6 +162,7 @@ function createPart(
     gridRows: rows,
     dirtGrid,
     soapGrid,
+    grimeTypeGrid,
     cleanPercent: 0,
     isCompleted: false,
   };
@@ -188,13 +210,31 @@ export function buildStageParts(stageIndex: number): { title: string; parts: Was
 
 export class PowerWashEngine {
   private state: PowerWashState;
+  private modifiers: PowerWashModifiers = {
+    powerMult: 1.0,
+    radiusMult: 1.0,
+    soapSpeedMult: 1.0,
+    thermalStubbornMult: 1.0,
+    cashRewardMult: 1.0,
+  };
 
-  constructor(stageIndex = 0) {
+  constructor(stageIndex = 0, modifiers?: PowerWashModifiers) {
+    if (modifiers) {
+      this.modifiers = modifiers;
+    }
     this.state = this.initStage(stageIndex);
   }
 
   public getState(): PowerWashState {
     return this.state;
+  }
+
+  public setModifiers(modifiers: PowerWashModifiers): void {
+    this.modifiers = modifiers;
+  }
+
+  public getModifiers(): PowerWashModifiers {
+    return this.modifiers;
   }
 
   public initStage(stageIndex: number): PowerWashState {
@@ -212,11 +252,16 @@ export class PowerWashEngine {
       hoveredPartId: null,
       justCompletedPart: null,
       status: "washing",
+      mutantStrippedCount: this.state ? this.state.mutantStrippedCount : 0,
+      usedNozzles: this.state ? [...this.state.usedNozzles] : ["15deg"],
     };
   }
 
   public selectNozzle(nozzle: NozzleType): void {
     this.state.selectedNozzle = nozzle;
+    if (!this.state.usedNozzles.includes(nozzle)) {
+      this.state.usedNozzles.push(nozzle);
+    }
   }
 
   public toggleOrientation(): void {
@@ -248,8 +293,9 @@ export class PowerWashEngine {
     if (this.state.status !== "washing") return null;
 
     const spec = NOZZLE_SPECS[this.state.selectedNozzle];
-    const rx = this.state.orientation === "horizontal" ? spec.radiusX : spec.radiusY;
-    const ry = this.state.orientation === "horizontal" ? spec.radiusY : spec.radiusX;
+    const rx = (this.state.orientation === "horizontal" ? spec.radiusX : spec.radiusY) * this.modifiers.radiusMult;
+    const ry = (this.state.orientation === "horizontal" ? spec.radiusY : spec.radiusX) * this.modifiers.radiusMult;
+    const basePower = spec.power * this.modifiers.powerMult;
 
     let newlyCompleted: { id: string; name: string; reward: number } | null = null;
 
@@ -280,17 +326,32 @@ export class PowerWashEngine {
 
           if (distSq <= 1.0 && part.dirtGrid[r][c] > 0) {
             const falloff = 1.0 - distSq * 0.4;
+            const grimeType = part.grimeTypeGrid[r][c];
+
+            let typeMult = 1.0;
+            if (grimeType === "tar") {
+              typeMult = this.state.selectedNozzle === "0deg" ? 1.6 * this.modifiers.thermalStubbornMult : 0.35;
+            } else if (grimeType === "rust") {
+              typeMult = part.soapGrid[r][c] ? 2.5 * this.modifiers.thermalStubbornMult : 0.45;
+            } else if (grimeType === "moss") {
+              typeMult = this.state.selectedNozzle === "40deg" ? 1.7 * this.modifiers.thermalStubbornMult : 0.7;
+            }
+
             if (this.state.selectedNozzle === "soap") {
               part.soapGrid[r][c] = true;
               // 비누 거품은 오염도를 40%까지 부드럽게 불려줌
-              part.dirtGrid[r][c] = Math.max(0.35, part.dirtGrid[r][c] - spec.power * dt * falloff);
+              part.dirtGrid[r][c] = Math.max(0.35, part.dirtGrid[r][c] - basePower * this.modifiers.soapSpeedMult * dt * falloff);
               modified = true;
             } else {
-              const soapBonus = part.soapGrid[r][c] ? 2.2 : 1.0;
-              const cleanDelta = ((spec.power * soapBonus) / part.toughness) * dt * falloff;
+              const soapBonus = part.soapGrid[r][c] ? (2.2 * this.modifiers.soapSpeedMult) : 1.0;
+              const cleanDelta = ((basePower * soapBonus * typeMult) / part.toughness) * dt * falloff;
+              const prevDirt = part.dirtGrid[r][c];
               part.dirtGrid[r][c] = Math.max(0, part.dirtGrid[r][c] - cleanDelta);
-              if (part.dirtGrid[r][c] === 0) {
+              if (prevDirt > 0 && part.dirtGrid[r][c] === 0) {
                 part.soapGrid[r][c] = false;
+                if (grimeType !== "normal") {
+                  this.state.mutantStrippedCount += 1;
+                }
               }
               modified = true;
             }
@@ -301,9 +362,10 @@ export class PowerWashEngine {
       if (modified) {
         this.recalculatePartCleanliness(part);
         if (part.isCompleted) {
-          newlyCompleted = { id: part.id, name: part.name, reward: part.rewardCash };
+          const finalReward = Math.round(part.rewardCash * this.modifiers.cashRewardMult);
+          newlyCompleted = { id: part.id, name: part.name, reward: finalReward };
           this.state.justCompletedPart = newlyCompleted;
-          this.state.cashEarned += part.rewardCash;
+          this.state.cashEarned += finalReward;
         }
       }
     }

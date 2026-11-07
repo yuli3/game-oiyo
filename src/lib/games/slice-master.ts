@@ -5,7 +5,11 @@
  * One-touch knife flip, target slicing, hit-stop feedback, and physics-driven stick mechanics.
  */
 
+import { type SliceMetaModifiers } from "./slice-master-meta";
+
 export type ObstacleType = "fruit" | "wood" | "metal_hazard" | "finish_target";
+
+export type ObstacleMutation = "golden" | "diamond" | "bomb";
 
 export interface SliceObstacle {
   id: string;
@@ -14,6 +18,7 @@ export interface SliceObstacle {
   width: number;
   height: number;
   type: ObstacleType;
+  mutation?: ObstacleMutation;
   label: string;
   points: number;
   sliced: boolean;
@@ -43,6 +48,11 @@ export interface SliceMasterGame {
   status: KnifeState;
   finishX: number;
   hitStopRemaining: number; // seconds
+  stonesEarned: number;
+  perfectCenterCount: number;
+  hasEncounteredGolden: boolean;
+  activeCommsLogId: string;
+  metaModifiers?: SliceMetaModifiers;
 }
 
 export const GRAVITY = 1100; // px/s^2
@@ -55,10 +65,14 @@ export const FLOOR_Y = 360;
 /**
  * Creates level layout deterministically based on level number
  */
-export function createSliceMasterLevel(level: number = 1): SliceMasterGame {
+export function createSliceMasterLevel(
+  level: number = 1,
+  modifiers?: SliceMetaModifiers
+): SliceMasterGame {
   const obstacles: SliceObstacle[] = [];
   const obstacleSpacing = 160;
   const numObjects = 12 + level * 2;
+  let hasEncounteredGolden = false;
 
   const itemTypes: { type: ObstacleType; label: string; color: string; points: number }[] = [
     { type: "fruit", label: "🍎 사과", color: "#ef4444", points: 100 },
@@ -72,7 +86,22 @@ export function createSliceMasterLevel(level: number = 1): SliceMasterGame {
   let curX = 300;
   for (let i = 0; i < numObjects; i++) {
     const isHazard = i > 2 && i % 4 === 3;
-    const template = isHazard ? itemTypes[5] : itemTypes[i % 5];
+    let template = isHazard ? itemTypes[5] : itemTypes[i % 5];
+    let mutation: ObstacleMutation | undefined = undefined;
+
+    // Mutated objects: Golden Piñata, Diamond, or Bomb
+    if (i === Math.floor(numObjects / 2)) {
+      mutation = "golden";
+      template = { type: "fruit", label: "✨ 황금 피냐타", color: "#eab308", points: 500 };
+      hasEncounteredGolden = true;
+    } else if (!isHazard && i % 6 === 2) {
+      mutation = "diamond";
+      template = { type: "wood", label: "💎 다이아몬드", color: "#38bdf8", points: 300 };
+    } else if (!isHazard && i > 3 && i % 7 === 5) {
+      mutation = "bomb";
+      template = { type: "wood", label: "💣 폭탄 피냐타", color: "#f43f5e", points: 150 };
+    }
+
     const itemHeight = template.type === "metal_hazard" ? 50 : 44;
     const itemY = FLOOR_Y - itemHeight;
 
@@ -83,6 +112,7 @@ export function createSliceMasterLevel(level: number = 1): SliceMasterGame {
       width: 44,
       height: itemHeight,
       type: template.type,
+      mutation,
       label: template.label,
       points: template.points,
       sliced: false,
@@ -125,6 +155,11 @@ export function createSliceMasterLevel(level: number = 1): SliceMasterGame {
     status: "stuck",
     finishX,
     hitStopRemaining: 0,
+    stonesEarned: 0,
+    perfectCenterCount: 0,
+    hasEncounteredGolden,
+    activeCommsLogId: "start",
+    metaModifiers: modifiers,
   };
 }
 
@@ -197,7 +232,15 @@ export function stepSliceMaster(state: SliceMasterGame, dt: number): StepResult 
   let score = state.score;
   let combo = state.combo;
   let sliceCount = state.sliceCount;
+  let stonesEarned = state.stonesEarned;
+  let perfectCenterCount = state.perfectCenterCount;
+  let activeCommsLogId = state.activeCommsLogId;
   let hitStop = 0;
+
+  const mods = state.metaModifiers;
+  const windPadding = mods?.windSlashPadding || 0;
+  const rewardMult = mods?.rewardMultiplier || 1;
+  const hitStopMult = mods?.hitStopMultiplier || 1;
 
   // Integrate velocity & angular velocity
   knife.vy += GRAVITY * dt;
@@ -211,33 +254,62 @@ export function stepSliceMaster(state: SliceMasterGame, dt: number): StepResult 
   const updatedObstacles = state.obstacles.map((obs) => {
     if (obs.sliced) return obs;
 
-    const inX = tip.x >= obs.x && tip.x <= obs.x + obs.width;
-    const inY = tip.y >= obs.y && tip.y <= obs.y + obs.height;
+    const inX = tip.x >= obs.x - windPadding && tip.x <= obs.x + obs.width + windPadding;
+    const inY = tip.y >= obs.y - windPadding && tip.y <= obs.y + obs.height + windPadding;
 
     if (inX && inY) {
       if (obs.type === "metal_hazard") {
         result.hitHazard = true;
         status = "gameover";
+        activeCommsLogId = "failed";
         return obs;
       }
 
       if (obs.type === "finish_target") {
         result.hitTarget = true;
         status = "completed";
-        score += obs.points * Math.max(1, combo);
-        hitStop = 0.12; // satisfying finish freeze
+        score += Math.round(obs.points * Math.max(1, combo) * rewardMult);
+        stonesEarned += Math.round(25 * rewardMult);
+        hitStop = 0.14 * hitStopMult; // satisfying finish freeze
+        activeCommsLogId = "finish";
         return { ...obs, sliced: true };
       }
 
-      // Sliceable fruit or wood
+      // Check center cut
+      const targetCenterY = obs.y + obs.height / 2;
+      const isCenter = Math.abs(tip.y - targetCenterY) <= 10;
+      if (isCenter) {
+        perfectCenterCount += 1;
+        activeCommsLogId = "center_cut";
+      }
+
+      // Sliceable fruit or wood or mutation
       result.slicedObstacles.push(obs);
       combo += 1;
       sliceCount += 1;
-      score += obs.points * combo;
-      hitStop = 0.06; // 60ms micro hit-stop
+      score += Math.round(obs.points * combo * rewardMult);
+
+      let stoneReward = 1;
+      if (obs.mutation === "golden") {
+        stoneReward = 15;
+        activeCommsLogId = "golden_found";
+      } else if (obs.mutation === "diamond") {
+        stoneReward = 4;
+      } else if (obs.mutation === "bomb") {
+        // Bomb knocks knife upward violently
+        knife.vy = -350;
+      }
+
+      stonesEarned += Math.round(stoneReward * rewardMult);
+
+      if (combo >= 4 && activeCommsLogId !== "golden_found") {
+        activeCommsLogId = "combo_streak";
+      }
+
+      hitStop = (isCenter ? 0.09 : 0.06) * hitStopMult;
 
       // Small bounce/boost upon clean slicing
-      knife.vy = Math.min(knife.vy, -120);
+      knife.vy = Math.min(knife.vy, -130);
 
       return {
         ...obs,
@@ -254,8 +326,12 @@ export function stepSliceMaster(state: SliceMasterGame, dt: number): StepResult 
     knife.y = FLOOR_Y;
     // Normalize angle to [0, 2pi)
     const normalizedAngle = ((knife.angle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-    // Tip pointing downward roughly between 45 deg and 135 deg
-    const isBladeSticking = normalizedAngle >= Math.PI * 0.15 && normalizedAngle <= Math.PI * 0.85;
+    
+    // Angle tolerance expanded with ebony_hilt upgrade
+    const angleToleranceMod = mods?.landingAngleToleranceMultiplier || 1;
+    const minAngle = Math.max(0.08, Math.PI * (0.15 - (angleToleranceMod - 1) * 0.05));
+    const maxAngle = Math.min(Math.PI * 0.95, Math.PI * (0.85 + (angleToleranceMod - 1) * 0.05));
+    const isBladeSticking = normalizedAngle >= minAngle && normalizedAngle <= maxAngle;
 
     if (isBladeSticking) {
       status = "stuck";
@@ -270,6 +346,7 @@ export function stepSliceMaster(state: SliceMasterGame, dt: number): StepResult 
       knife.vx = 0;
       knife.vy = 0;
       knife.angularVelocity = 0;
+      activeCommsLogId = "failed";
     }
   }
 
@@ -286,6 +363,9 @@ export function stepSliceMaster(state: SliceMasterGame, dt: number): StepResult 
     sliceCount,
     status,
     hitStopRemaining: hitStop,
+    stonesEarned,
+    perfectCenterCount,
+    activeCommsLogId,
   };
 
   return result;
