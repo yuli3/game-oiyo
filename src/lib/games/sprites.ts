@@ -703,23 +703,35 @@ export const POWER_WASH_SPRITES = {
 } as const;
 
 export const SUIKA_FRUIT_SPRITES: Record<number, string> = {
-  0: "/assets/sprites/suika-drop/cherry-128.png",
-  1: "/assets/sprites/suika-drop/strawberry-128.png",
-  2: "/assets/sprites/suika-drop/grape-128.png",
-  3: "/assets/sprites/suika-drop/dekopon-128.png",
-  4: "/assets/sprites/suika-drop/apple-128.png",
-  5: "/assets/sprites/suika-drop/apple-128.png",
-  6: "/assets/sprites/suika-drop/peach-128.png",
-  7: "/assets/sprites/suika-drop/peach-128.png",
-  8: "/assets/sprites/suika-drop/pineapple-128.png",
-  9: "/assets/sprites/suika-drop/watermelon-128.png",
+  0: "/assets/sprites/suika-drop/fruit-1-cherry-128.png",
+  1: "/assets/sprites/suika-drop/fruit-2-strawberry-128.png",
+  2: "/assets/sprites/suika-drop/fruit-3-grape-128.png",
+  3: "/assets/sprites/suika-drop/fruit-4-orange-128.png",
+  4: "/assets/sprites/suika-drop/fruit-5-apple-128.png",
+  5: "/assets/sprites/suika-drop/fruit-6-peach-128.png",
+  6: "/assets/sprites/suika-drop/fruit-7-pineapple-128.png",
+  7: "/assets/sprites/suika-drop/fruit-melon-3d-128.png",
+  8: "/assets/sprites/suika-drop/fruit-8-watermelon-128.png",
+  9: "/assets/sprites/suika-drop/fruit-watermelon-3d-128.png",
 };
+export const SUIKA_BOMB_SPRITE = "/assets/sprites/suika-drop/bomb-mine-128.png";
 
 export const CHAOS_KITCHEN_SPRITES = {
   burger: "/assets/sprites/chaos-kitchen/burger-dish-128.png",
   knife: "/assets/sprites/chaos-kitchen/chef-knife-128.png",
   tomato: "/assets/sprites/chaos-kitchen/tomato-fresh-128.png",
   salad: "/assets/sprites/chaos-kitchen/salad-dish-128.png",
+  lettuce: "/assets/sprites/chaos-kitchen/lettuce-fresh-128.png",
+  patty: "/assets/sprites/chaos-kitchen/patty-raw-128.png",
+  plate: "/assets/sprites/chaos-kitchen/plate-clean-128.png",
+  pan: "/assets/sprites/chaos-kitchen/cooking-pan-128.png",
+} as const;
+
+export const SWAT_BREACH_SPRITES = {
+  shield: "/assets/sprites/swat-breach/shield-tactical-128.png",
+  c4: "/assets/sprites/swat-breach/c4-explosive-128.png",
+  siren: "/assets/sprites/swat-breach/siren-beacon-128.png",
+  breachCharge: "/assets/sprites/swat-breach/breach-charge-128.png",
 } as const;
 
 export const POTION_CRAFT_SPRITES = {

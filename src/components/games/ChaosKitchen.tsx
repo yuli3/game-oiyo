@@ -77,7 +77,20 @@ export function ChaosKitchen({ lang = "ko" }: { lang?: string }) {
     knife: HTMLImageElement | null;
     tomato: HTMLImageElement | null;
     salad: HTMLImageElement | null;
-  }>({ burger: null, knife: null, tomato: null, salad: null });
+    lettuce: HTMLImageElement | null;
+    patty: HTMLImageElement | null;
+    plate: HTMLImageElement | null;
+    pan: HTMLImageElement | null;
+  }>({
+    burger: null,
+    knife: null,
+    tomato: null,
+    salad: null,
+    lettuce: null,
+    patty: null,
+    plate: null,
+    pan: null,
+  });
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -85,7 +98,20 @@ export function ChaosKitchen({ lang = "ko" }: { lang?: string }) {
     const k = new Image(); k.src = CHAOS_KITCHEN_SPRITES.knife;
     const t = new Image(); t.src = CHAOS_KITCHEN_SPRITES.tomato;
     const s = new Image(); s.src = CHAOS_KITCHEN_SPRITES.salad;
-    spritesRef.current = { burger: b, knife: k, tomato: t, salad: s };
+    const l = new Image(); l.src = CHAOS_KITCHEN_SPRITES.lettuce;
+    const p = new Image(); p.src = CHAOS_KITCHEN_SPRITES.patty;
+    const pl = new Image(); pl.src = CHAOS_KITCHEN_SPRITES.plate;
+    const pn = new Image(); pn.src = CHAOS_KITCHEN_SPRITES.pan;
+    spritesRef.current = {
+      burger: b,
+      knife: k,
+      tomato: t,
+      salad: s,
+      lettuce: l,
+      patty: p,
+      plate: pl,
+      pan: pn,
+    };
   }, []);
 
   const getAudioContext = useAudioContext();
@@ -370,16 +396,32 @@ export function ChaosKitchen({ lang = "ko" }: { lang?: string }) {
           ctx.font = "bold 13px sans-serif";
           if (tile === "crate_tomato") {
             ctx.fillStyle = "#ef4444";
-            ctx.fillText("🍅", px + tileW / 2, py + tileH / 2 + 5);
+            if (spritesRef.current.tomato?.complete) {
+              ctx.drawImage(spritesRef.current.tomato, px + 5, py + 5, tileW - 10, tileH - 10);
+            } else {
+              ctx.fillText("🍅", px + tileW / 2, py + tileH / 2 + 5);
+            }
           } else if (tile === "crate_lettuce") {
             ctx.fillStyle = "#22c55e";
-            ctx.fillText("🥬", px + tileW / 2, py + tileH / 2 + 5);
+            if (spritesRef.current.lettuce?.complete) {
+              ctx.drawImage(spritesRef.current.lettuce, px + 5, py + 5, tileW - 10, tileH - 10);
+            } else {
+              ctx.fillText("🥬", px + tileW / 2, py + tileH / 2 + 5);
+            }
           } else if (tile === "crate_meat") {
             ctx.fillStyle = "#ea580c";
-            ctx.fillText("🥩", px + tileW / 2, py + tileH / 2 + 5);
+            if (spritesRef.current.patty?.complete) {
+              ctx.drawImage(spritesRef.current.patty, px + 5, py + 5, tileW - 10, tileH - 10);
+            } else {
+              ctx.fillText("🥩", px + tileW / 2, py + tileH / 2 + 5);
+            }
           } else if (tile === "plate_dispenser") {
             ctx.fillStyle = "#f8fafc";
-            ctx.fillText("🍽️", px + tileW / 2, py + tileH / 2 + 5);
+            if (spritesRef.current.plate?.complete) {
+              ctx.drawImage(spritesRef.current.plate, px + 5, py + 5, tileW - 10, tileH - 10);
+            } else {
+              ctx.fillText("🍽️", px + tileW / 2, py + tileH / 2 + 5);
+            }
           } else if (tile === "cutting_board") {
             ctx.fillStyle = "#ca8a04";
             ctx.fillRect(px + 4, py + 4, tileW - 8, tileH - 8);
@@ -392,8 +434,12 @@ export function ChaosKitchen({ lang = "ko" }: { lang?: string }) {
           } else if (tile === "stove") {
             ctx.fillStyle = "#b91c1c";
             ctx.fillRect(px + 4, py + 4, tileW - 8, tileH - 8);
-            ctx.fillStyle = "#fef08a";
-            ctx.fillText("🔥", px + tileW / 2, py + tileH / 2 + 5);
+            if (spritesRef.current.pan?.complete) {
+              ctx.drawImage(spritesRef.current.pan, px + 6, py + 6, tileW - 12, tileH - 12);
+            } else {
+              ctx.fillStyle = "#fef08a";
+              ctx.fillText("🔥", px + tileW / 2, py + tileH / 2 + 5);
+            }
           } else if (tile === "delivery") {
             ctx.fillStyle = "#0284c7";
             ctx.fillRect(px + 2, py + 2, tileW - 4, tileH - 4);
@@ -428,6 +474,12 @@ export function ChaosKitchen({ lang = "ko" }: { lang?: string }) {
         ctx.drawImage(spritesRef.current.salad, -12, -12, 24, 24);
       } else if (item.type === "tomato_raw" && spritesRef.current.tomato?.complete) {
         ctx.drawImage(spritesRef.current.tomato, -10, -10, 20, 20);
+      } else if (item.type === "lettuce_raw" && spritesRef.current.lettuce?.complete) {
+        ctx.drawImage(spritesRef.current.lettuce, -10, -10, 20, 20);
+      } else if (item.type === "meat_raw" && spritesRef.current.patty?.complete) {
+        ctx.drawImage(spritesRef.current.patty, -10, -10, 20, 20);
+      } else if (item.type === "plate_clean" && spritesRef.current.plate?.complete) {
+        ctx.drawImage(spritesRef.current.plate, -10, -10, 20, 20);
       } else {
         ctx.textAlign = "center";
         ctx.font = "14px sans-serif";
@@ -500,20 +552,34 @@ export function ChaosKitchen({ lang = "ko" }: { lang?: string }) {
 
       // Held item floating above chef
       if (chef.heldItem) {
-        ctx.font = "16px sans-serif";
-        let heldIcon = "📦";
-        if (chef.heldItem.type === "tomato_raw") heldIcon = "🍅";
-        else if (chef.heldItem.type === "tomato_chopped") heldIcon = "🥫";
-        else if (chef.heldItem.type === "lettuce_raw") heldIcon = "🥬";
-        else if (chef.heldItem.type === "lettuce_chopped") heldIcon = "🥗";
-        else if (chef.heldItem.type === "meat_raw") heldIcon = "🥩";
-        else if (chef.heldItem.type === "meat_cooked") heldIcon = "🍖";
-        else if (chef.heldItem.type === "plate_clean") heldIcon = "🍽️";
-        else if (chef.heldItem.type === "salad_dish") heldIcon = "🥗";
-        else if (chef.heldItem.type === "burger_dish") heldIcon = "🍔";
-        else if (chef.heldItem.type === "extinguisher") heldIcon = "🧯";
+        if (chef.heldItem.type === "burger_dish" && spritesRef.current.burger?.complete) {
+          ctx.drawImage(spritesRef.current.burger, -12, -34, 24, 24);
+        } else if (chef.heldItem.type === "salad_dish" && spritesRef.current.salad?.complete) {
+          ctx.drawImage(spritesRef.current.salad, -12, -34, 24, 24);
+        } else if (chef.heldItem.type === "tomato_raw" && spritesRef.current.tomato?.complete) {
+          ctx.drawImage(spritesRef.current.tomato, -10, -32, 20, 20);
+        } else if (chef.heldItem.type === "lettuce_raw" && spritesRef.current.lettuce?.complete) {
+          ctx.drawImage(spritesRef.current.lettuce, -10, -32, 20, 20);
+        } else if (chef.heldItem.type === "meat_raw" && spritesRef.current.patty?.complete) {
+          ctx.drawImage(spritesRef.current.patty, -10, -32, 20, 20);
+        } else if (chef.heldItem.type === "plate_clean" && spritesRef.current.plate?.complete) {
+          ctx.drawImage(spritesRef.current.plate, -10, -32, 20, 20);
+        } else {
+          ctx.font = "16px sans-serif";
+          let heldIcon = "📦";
+          if (chef.heldItem.type === "tomato_raw") heldIcon = "🍅";
+          else if (chef.heldItem.type === "tomato_chopped") heldIcon = "🥫";
+          else if (chef.heldItem.type === "lettuce_raw") heldIcon = "🥬";
+          else if (chef.heldItem.type === "lettuce_chopped") heldIcon = "🥗";
+          else if (chef.heldItem.type === "meat_raw") heldIcon = "🥩";
+          else if (chef.heldItem.type === "meat_cooked") heldIcon = "🍖";
+          else if (chef.heldItem.type === "plate_clean") heldIcon = "🍽️";
+          else if (chef.heldItem.type === "salad_dish") heldIcon = "🥗";
+          else if (chef.heldItem.type === "burger_dish") heldIcon = "🍔";
+          else if (chef.heldItem.type === "extinguisher") heldIcon = "🧯";
 
-        ctx.fillText(heldIcon, 0, -22);
+          ctx.fillText(heldIcon, 0, -22);
+        }
       }
 
       // Chopping progress indicator
