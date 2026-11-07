@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Check } from 'lucide-react';
+import { Check, Sparkles, Shield, Zap, Target, Rocket } from 'lucide-react';
 import { celebrate } from "../../lib/games/celebration";
 import {
   type NeonSurvivorState,
@@ -10,6 +10,26 @@ import {
   updateNeonSurvivor,
   selectUpgrade,
 } from '../../lib/games/neon-survivor';
+import {
+  loadMetaState,
+  saveMetaState,
+  purchaseMetaUpgrade,
+  META_UPGRADE_DEFS,
+  type PlayerMetaState,
+} from '../../lib/games/neon-survivor-meta';
+import {
+  createInitialQuests,
+  updateQuestsOnKill,
+  updateQuestsOnTime,
+  updateQuestsOnEvolution,
+  updateQuestsOnBossDefeat,
+  type Quest,
+} from '../../lib/games/neon-survivor-quests';
+import {
+  getTriggeredLore,
+  type LoreEntry,
+} from '../../lib/games/neon-survivor-lore';
+import { nativeHaptics } from '../../lib/haptics/native-bridge';
 import type { Locale } from '../../lib/i18n';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { VirtualJoystick, type JoystickVector } from '../ui/game/VirtualJoystick';
@@ -65,6 +85,14 @@ const COPY = {
     close: '닫기',
     ready: '진화 가능!',
     evolved: '진화 완료',
+    hangar: '⚡ 연구소 (격납고)',
+    hangarDesc: '모은 네온 코어로 기체 성능을 영구 강화합니다',
+    directives: '🎯 지령 (퀘스트)',
+    directivesDesc: '전장 목표를 달성하고 네온 코어를 획득하십시오',
+    crystals: '네온 코어',
+    upgradeSuccess: '강화 완료!',
+    maxLevel: '최대 레벨',
+    cost: '비용',
   },
   en: {
     title: 'Neon Survivor',
@@ -84,6 +112,14 @@ const COPY = {
     close: 'Close',
     ready: 'Ready!',
     evolved: 'Evolved',
+    hangar: '⚡ Hangar Research',
+    hangarDesc: 'Permanently upgrade your ship stats with Neon Crystals',
+    directives: '🎯 Directives',
+    directivesDesc: 'Complete combat directives to earn permanent crystals',
+    crystals: 'Neon Crystals',
+    upgradeSuccess: 'Upgraded!',
+    maxLevel: 'MAX',
+    cost: 'Cost',
   },
   ja: {
     title: 'ネオン・サバイバー',
@@ -103,6 +139,14 @@ const COPY = {
     close: '閉じる',
     ready: '進化可能！',
     evolved: '進化完了',
+    hangar: '⚡ 格納庫研究所',
+    hangarDesc: 'ネオンクリスタルで機体性能を永続強化',
+    directives: '🎯 作戦指令',
+    directivesDesc: '作戦目標を達成してクリスタルを獲得',
+    crystals: 'ネオンクリスタル',
+    upgradeSuccess: '強化完了！',
+    maxLevel: '最大',
+    cost: '費用',
   },
   zh: {
     title: '霓虹幸存者',
@@ -122,6 +166,14 @@ const COPY = {
     close: '关闭',
     ready: '可进化！',
     evolved: '已进化',
+    hangar: '⚡ 机库研究所',
+    hangarDesc: '使用霓虹核心永久强化机体各项机能',
+    directives: '🎯 作战指令',
+    directivesDesc: '达成战场目标并获取霓虹核心',
+    crystals: '霓虹核心',
+    upgradeSuccess: '强化成功！',
+    maxLevel: '满级',
+    cost: '消耗',
   },
   fr: {
     title: 'Neon Survivor',
@@ -141,6 +193,14 @@ const COPY = {
     close: 'Fermer',
     ready: 'Prêt !',
     evolved: 'Évolué',
+    hangar: '⚡ Hangar de Recherche',
+    hangarDesc: 'Améliorez définitivement votre vaisseau avec les Cristaux',
+    directives: '🎯 Directives',
+    directivesDesc: 'Remplissez les objectifs pour gagner des cristaux',
+    crystals: 'Cristaux Néon',
+    upgradeSuccess: 'Amélioré !',
+    maxLevel: 'MAX',
+    cost: 'Coût',
   },
   es: {
     title: 'Neon Survivor',
@@ -160,13 +220,32 @@ const COPY = {
     close: 'Cerrar',
     ready: '¡Listo!',
     evolved: 'Evolucionado',
+    hangar: '⚡ Hangar de Investigación',
+    hangarDesc: 'Mejora tu nave de forma permanente con Cristales de Neón',
+    directives: '🎯 Directivas',
+    directivesDesc: 'Cumple objetivos para ganar cristales permanentes',
+    crystals: 'Cristales Neón',
+    upgradeSuccess: '¡Mejorado!',
+    maxLevel: 'MÁX',
+    cost: 'Coste',
   },
 };
 
 export default function NeonSurvivor({ locale = 'ko' }: Props) {
   const t = COPY[locale] ?? COPY.en;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [gameState, setGameState] = useState<NeonSurvivorState>(createInitialNeonSurvivorState);
+
+  // Meta Progression State
+  const [metaState, setMetaState] = useState<PlayerMetaState>(() => loadMetaState());
+  const [showHangar, setShowHangar] = useState(false);
+  const [showQuests, setShowQuests] = useState(false);
+  const [quests, setQuests] = useState<Quest[]>(() => createInitialQuests());
+  const [activeLore, setActiveLore] = useState<LoreEntry | null>(null);
+  const triggeredLoreIds = useRef<Set<string>>(new Set());
+
+  const [gameState, setGameState] = useState<NeonSurvivorState>(() =>
+    createInitialNeonSurvivorState(metaState.upgrades)
+  );
   const stateRef = useRef<NeonSurvivorState>(gameState);
   stateRef.current = gameState;
 
@@ -412,13 +491,15 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
         const prevExp = stateRef.current.player.exp;
         const prevLevelUp = stateRef.current.levelUpPending;
         const prevGameOver = stateRef.current.gameOver;
+        const prevKills = stateRef.current.kills;
         const next = updateNeonSurvivor(stateRef.current, dt, inputVectorRef.current);
 
-        // Sound & FX triggers
+        // Sound & FX triggers & CoreHaptics
         if (next.player.hp < prevHp) {
           shakeRef.current = 10;
           playHitSound();
           vibrate([60, 40]);
+          nativeHaptics.hit();
         }
 
         if (next.player.exp > prevExp) {
@@ -427,22 +508,55 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
 
         if (next.levelUpPending && !prevLevelUp) {
           playLevelUpSound();
+          nativeHaptics.levelUp();
           celebrate(canvasRef.current, { preset: "sparks", colors: ['#38bdf8', '#10b981', '#f43f5e', '#fbbf24'], origin: { x: 0.5, y: 0.5 }, scale: 0.8 });
+        }
+
+        if (next.recentSupplyJackpot) {
+          playLevelUpSound();
+          nativeHaptics.chest();
+          celebrate(canvasRef.current, { preset: "stardust" });
         }
 
         if (next.gameOver && !prevGameOver) {
           vibrate([100, 50, 100]);
+          nativeHaptics.trigger('error');
+          if (next.crystals > 0) {
+            setMetaState((prev) => {
+              const updated = { ...prev, crystals: prev.crystals + next.crystals };
+              saveMetaState(updated);
+              return updated;
+            });
+          }
         }
 
         if ((next.bossWarningTimer ?? 0) > 0 && (stateRef.current.bossWarningTimer ?? 0) <= 0) {
           playBossSirenSound();
           vibrate([100, 50, 100, 50, 100]);
+          nativeHaptics.boss();
         }
 
         bulletSoundCooldown += dt;
         if (next.projectiles.length > prevProjCount && bulletSoundCooldown > 0.15) {
           bulletSoundCooldown = 0;
           playZapSound();
+          nativeHaptics.fire();
+        }
+
+        // Quests tracking update
+        if (next.kills > prevKills) {
+          setQuests((q) => updateQuestsOnKill(q, next.kills - prevKills));
+        }
+        setQuests((q) => updateQuestsOnTime(q, next.survivalTime));
+
+        // Lore Storyline transmission check
+        const loreEntry = getTriggeredLore(next.survivalTime, triggeredLoreIds.current);
+        if (loreEntry) {
+          triggeredLoreIds.current.add(loreEntry.id);
+          setActiveLore(loreEntry);
+          setTimeout(() => {
+            setActiveLore((cur) => (cur?.id === loreEntry.id ? null : cur));
+          }, 5500);
         }
 
         setGameState(next);
@@ -610,6 +724,42 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
       ctx.restore();
     }
 
+    // Draw Supply Drop Golden Capsules
+    if (state.supplyDrops) {
+      for (const drop of state.supplyDrops) {
+        const dx = drop.x - camX;
+        const dy = drop.y - camY;
+        if (dx < -40 || dx > displayW + 40 || dy < -40 || dy > displayH + 40) continue;
+
+        ctx.save();
+        // Golden Pulsing Beacons
+        const pulseR = drop.radius + Math.sin(drop.beaconPulse) * 8 + 4;
+        ctx.strokeStyle = '#fbbf24';
+        ctx.shadowColor = '#fbbf24';
+        ctx.shadowBlur = 15;
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(dx, dy, pulseR, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Capsule Body
+        ctx.fillStyle = '#f59e0b';
+        ctx.beginPath();
+        drawRoundRect(ctx, dx - 12, dy - 12, 24, 24, 6);
+        ctx.fill();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 12px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('📦', dx, dy + 4);
+
+        ctx.font = 'bold 9px monospace';
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillText('SUPPLY', dx, dy + 22);
+        ctx.restore();
+      }
+    }
+
     // Draw Enemies
     for (const e of state.enemies) {
       const ex = e.x - camX;
@@ -713,6 +863,31 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
           ctx.fillText(e.bossTitle, 0, barY - 4);
           ctx.textAlign = 'left';
         }
+      }
+
+      // Draw Mutation Auras
+      if (e.mutation === 'shielded') {
+        ctx.strokeStyle = '#06b6d4';
+        ctx.lineWidth = 2.5;
+        ctx.shadowColor = '#06b6d4';
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.arc(0, 0, e.radius + 7, 0, Math.PI * 2);
+        ctx.stroke();
+      } else if (e.mutation === 'speedster') {
+        ctx.strokeStyle = '#22c55e';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath();
+        ctx.arc(0, 0, e.radius + 6, 0, Math.PI * 2);
+        ctx.stroke();
+      } else if (e.mutation === 'explosive') {
+        const flash = Math.sin(state.survivalTime * 12) > 0;
+        ctx.strokeStyle = flash ? '#ef4444' : '#f97316';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(0, 0, e.radius + 6, 0, Math.PI * 2);
+        ctx.stroke();
       }
 
       ctx.restore();
@@ -877,12 +1052,26 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
   };
 
   const handleRestart = useCallback(() => {
-    setGameState(createInitialNeonSurvivorState());
-  }, []);
+    setGameState(createInitialNeonSurvivorState(metaState.upgrades));
+  }, [metaState.upgrades]);
+
+  const handleBuyUpgrade = (upgradeId: keyof PlayerMetaState['upgrades']) => {
+    const res = purchaseMetaUpgrade(metaState, upgradeId);
+    if (res.success) {
+      setMetaState(res.newState);
+      playLevelUpSound();
+      nativeHaptics.levelUp();
+    }
+  };
 
   const handleCardClick = (cardId: UpgradeCard['id']) => {
     setGameState((s) => selectUpgrade(s, cardId));
     vibrate(25);
+    nativeHaptics.trigger('medium');
+    if (cardId === 'hyperBlaster' || cardId === 'aegisShield' || cardId === 'supernovaVortex') {
+      nativeHaptics.evolution();
+      setQuests((q) => updateQuestsOnEvolution(q));
+    }
   };
 
   // Format survival time MM:SS
@@ -949,8 +1138,49 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
         />
       )}
 
+      {/* Hologram Storyline Operator Lore Banner */}
+      {activeLore && (
+        <div className="absolute top-16 left-4 right-4 sm:left-auto sm:right-4 sm:max-w-md z-20 pointer-events-none animate-in fade-in slide-in-from-top-3 duration-200">
+          <div className="rounded-xl border border-primary/50 bg-background/90 backdrop-blur-md p-3 shadow-xl flex items-start gap-2.5">
+            <span className="text-xl shrink-0 p-1 rounded-lg bg-primary/20">📡</span>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between text-xs font-black text-primary uppercase tracking-wider mb-0.5">
+                <span>{activeLore.sender[locale] ?? activeLore.sender.en}</span>
+                <span className="text-xs px-1.5 py-0.5 rounded bg-primary/20 font-mono">COMMS</span>
+              </div>
+              <p className="text-xs text-foreground font-semibold leading-relaxed">
+                {activeLore.message[locale] ?? activeLore.message.en}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Top Controls: Immersion Portal & Sound Mute Toggle */}
-      <div className="absolute top-4 right-4 z-10 pointer-events-auto flex items-center gap-2">
+      <div className="absolute top-4 right-4 z-10 pointer-events-auto flex items-center gap-1.5">
+        {/* Crystal Inventory Badge */}
+        <button
+          type="button"
+          onClick={() => setShowHangar(true)}
+          title={t.hangar}
+          className="min-h-11 px-2.5 py-2 rounded-xl border border-chart-4/50 bg-background/80 backdrop-blur-md shadow-xs text-xs font-black text-chart-4 hover:bg-background transition-colors flex items-center gap-1"
+        >
+          <span>💎</span>
+          <span>{metaState.crystals + (gameState.crystals || 0)}</span>
+        </button>
+
+        {/* Directives Quests Button */}
+        <button
+          type="button"
+          onClick={() => setShowQuests(true)}
+          title={t.directives}
+          aria-label={t.directives}
+          className="min-h-11 px-2.5 py-2 rounded-xl border border-border bg-background/80 backdrop-blur-md shadow-xs text-xs font-black text-foreground hover:bg-background transition-colors flex items-center gap-1"
+        >
+          <span>🎯</span>
+          <span className="hidden sm:inline">{t.directives}</span>
+        </button>
+
         {/* Active Evolutions Strip */}
         {gameState.evolutions.hyperBlaster && (
           <span className="px-2 py-1 rounded-lg border border-chart-4/60 bg-chart-4/20 text-chart-4 font-black text-xs animate-pulse">
@@ -1103,7 +1333,30 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
               </div>
             </div>
 
+            {/* Neon Crystal Reward Banner */}
+            <div className="p-3 rounded-xl border border-chart-4/50 bg-chart-4/10 flex items-center justify-between text-left">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">💎</span>
+                <div>
+                  <div className="text-xs font-bold text-foreground">{t.crystals} 획득</div>
+                  <div className="text-xs text-muted-foreground">누적 보관: {metaState.crystals}개</div>
+                </div>
+              </div>
+              <span className="text-base font-mono font-black text-chart-4">
+                +{gameState.crystals || 0}
+              </span>
+            </div>
+
             <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => setShowHangar(true)}
+                className="w-full min-h-11 rounded-xl border border-chart-4/60 bg-chart-4/15 shadow-xs text-xs font-black text-chart-4 hover:bg-chart-4/25 transition-colors flex items-center justify-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chart-4"
+              >
+                <span>⚡</span>
+                <span>{t.hangar}</span>
+              </button>
+
               <button
                 type="button"
                 onClick={handleShareCard}
@@ -1222,6 +1475,215 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
             <button
               type="button"
               onClick={() => setShowEvoGuide(false)}
+              className="w-full py-2.5 rounded-xl border border-border bg-muted/60 hover:bg-muted font-black text-xs text-foreground transition-colors"
+            >
+              {t.close}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Directives Quests Modal */}
+      {showQuests && (
+        <div className="absolute inset-0 bg-background/90 backdrop-blur-md flex items-center justify-center p-4 z-30 animate-in fade-in zoom-in-95 duration-150">
+          <div className="max-w-md w-full max-h-full overflow-y-auto rounded-2xl border border-border bg-card p-5 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div className="text-left">
+                <div className="text-lg font-black text-foreground flex items-center gap-2">
+                  <span>🎯</span>
+                  <span>{t.directives}</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {t.directivesDesc}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowQuests(false)}
+                className="min-h-11 min-w-11 rounded-xl border border-border bg-muted/60 hover:bg-muted text-foreground flex items-center justify-center text-sm font-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                aria-label={t.close}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="grid gap-2.5">
+              {quests.map((q) => {
+                const ratio = Math.min(1, q.progress / q.target);
+                return (
+                  <div
+                    key={q.id}
+                    className={`p-3.5 rounded-xl border text-left space-y-2 transition-all ${
+                      q.completed
+                        ? 'border-chart-4/80 bg-chart-4/10'
+                        : 'border-border bg-muted/30'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-xl shrink-0">{q.icon}</span>
+                        <div>
+                          <div className="font-black text-sm text-foreground">
+                            {q.title[locale] ?? q.title.en}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {q.desc[locale] ?? q.desc.en}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="text-xs font-mono font-black text-chart-4">
+                          +💎{q.rewardCrystals}
+                        </div>
+                        <span
+                          className={`text-xs px-2 py-0.5 rounded-full font-black ${
+                            q.completed
+                              ? 'bg-chart-4/20 text-chart-4'
+                              : 'bg-muted text-muted-foreground'
+                          }`}
+                        >
+                          {q.completed ? '달성 완료!' : `${q.progress}/${q.target}`}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="w-full h-2 rounded-full bg-background/80 overflow-hidden border border-border/50">
+                      <div
+                        className={`h-full w-(--p-width) transition-all duration-300 ${q.completed ? 'bg-chart-4' : 'bg-primary'}`}
+                        style={{ '--p-width': `${Math.round(ratio * 100)}%` } as React.CSSProperties}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowQuests(false)}
+              className="w-full py-2.5 rounded-xl border border-border bg-muted/60 hover:bg-muted font-black text-xs text-foreground transition-colors"
+            >
+              {t.close}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Hangar Permanent Meta Upgrades Modal */}
+      {showHangar && (
+        <div className="absolute inset-0 bg-background/90 backdrop-blur-md flex items-center justify-center p-4 z-30 animate-in fade-in zoom-in-95 duration-150">
+          <div className="max-w-md w-full max-h-full overflow-y-auto rounded-2xl border border-border bg-card p-5 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div className="text-left">
+                <div className="text-lg font-black text-foreground flex items-center gap-2">
+                  <span>⚡</span>
+                  <span>{t.hangar}</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {t.hangarDesc}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowHangar(false)}
+                className="min-h-11 min-w-11 rounded-xl border border-border bg-muted/60 hover:bg-muted text-foreground flex items-center justify-center text-sm font-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                aria-label={t.close}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Crystal Balance Bar */}
+            <div className="p-3 rounded-xl border border-chart-4/50 bg-chart-4/15 flex items-center justify-between">
+              <span className="text-xs font-black text-foreground flex items-center gap-1.5">
+                <span>보유 네온 코어</span>
+              </span>
+              <span className="text-lg font-mono font-black text-chart-4 flex items-center gap-1">
+                <span>💎</span>
+                <span>{metaState.crystals}</span>
+              </span>
+            </div>
+
+            <div className="grid gap-2.5">
+              {META_UPGRADE_DEFS.map((def) => {
+                const curLvl = metaState.upgrades[def.id];
+                const isMax = curLvl >= def.maxLevel;
+                const cost = isMax ? 0 : def.costPerLevel[curLvl];
+                const canAfford = !isMax && metaState.crystals >= cost;
+
+                return (
+                  <div
+                    key={def.id}
+                    className="p-3.5 rounded-xl border border-border bg-muted/30 text-left space-y-2"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-2xl shrink-0 p-1.5 rounded-lg bg-background border border-border">
+                          {def.icon}
+                        </span>
+                        <div>
+                          <div className="font-black text-sm text-foreground">
+                            {def.name[locale] ?? def.name.en}
+                          </div>
+                          <div className="text-xs text-muted-foreground line-clamp-1">
+                            {def.desc[locale] ?? def.desc.en}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="text-right shrink-0">
+                        <span className="text-xs font-mono font-black text-primary">
+                          LV.{curLvl}/{def.maxLevel}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Level Blocks and Buy Button */}
+                    <div className="flex items-center justify-between pt-1 gap-2">
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: def.maxLevel }).map((_, idx) => (
+                          <div
+                            key={idx}
+                            className={`w-3.5 h-3.5 rounded-xs border ${
+                              idx < curLvl
+                                ? 'bg-primary border-primary shadow-xs'
+                                : 'bg-background/80 border-border'
+                            }`}
+                          />
+                        ))}
+                      </div>
+
+                      <button
+                        type="button"
+                        disabled={isMax || !canAfford}
+                        onClick={() => handleBuyUpgrade(def.id)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1 shadow-xs ${
+                          isMax
+                            ? 'bg-muted text-muted-foreground cursor-default'
+                            : canAfford
+                            ? 'bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95'
+                            : 'bg-muted text-muted-foreground/60 cursor-not-allowed border border-border'
+                        }`}
+                      >
+                        {isMax ? (
+                          <span>{t.maxLevel}</span>
+                        ) : (
+                          <>
+                            <span>💎 {cost}</span>
+                            <span>강화</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowHangar(false)}
               className="w-full py-2.5 rounded-xl border border-border bg-muted/60 hover:bg-muted font-black text-xs text-foreground transition-colors"
             >
               {t.close}

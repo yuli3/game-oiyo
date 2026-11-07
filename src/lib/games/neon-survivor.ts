@@ -29,6 +29,17 @@ export interface Enemy {
   color: string;
   isElite?: boolean;
   bossTitle?: string;
+  mutation?: 'speedster' | 'shielded' | 'explosive';
+  shieldHp?: number;
+}
+
+export interface SupplyDrop {
+  id: number;
+  x: number;
+  y: number;
+  radius: number;
+  life: number;
+  beaconPulse: number;
 }
 
 export interface Projectile {
@@ -210,6 +221,17 @@ export interface NeonSurvivorState {
   bossWarningTimer?: number;
   activeBossName?: string | null;
   nextEntityId: number;
+  crystals: number;
+  supplyDrops: SupplyDrop[];
+  supplyDropTimer: number;
+  metaMultipliers?: {
+    damageMult: number;
+    extraHp: number;
+    magnetMult: number;
+    speedMult: number;
+    critChance: number;
+  };
+  recentSupplyJackpot?: string | null;
 }
 
 export const ARENA_WIDTH = 1600;
@@ -342,7 +364,23 @@ export const UPGRADE_CATALOG: UpgradeCard[] = [
   },
 ];
 
-export function createInitialNeonSurvivorState(): NeonSurvivorState {
+export interface MetaBonusConfig {
+  reactorPower?: number; // 0~5
+  hullPlating?: number;  // 0~5
+  magnetCoil?: number;   // 0~5
+  warpThrust?: number;   // 0~5
+  critAlgorithm?: number;// 0~5
+}
+
+export function createInitialNeonSurvivorState(meta?: MetaBonusConfig): NeonSurvivorState {
+  const extraHp = (meta?.hullPlating || 0) * 25;
+  const damageMult = 1 + (meta?.reactorPower || 0) * 0.06;
+  const magnetMult = 1 + (meta?.magnetCoil || 0) * 0.20;
+  const speedMult = 1 + (meta?.warpThrust || 0) * 0.05;
+  const critChance = (meta?.critAlgorithm || 0) * 0.04;
+
+  const baseHp = 100 + extraHp;
+
   return {
     arenaWidth: ARENA_WIDTH,
     arenaHeight: ARENA_HEIGHT,
@@ -351,15 +389,15 @@ export function createInitialNeonSurvivorState(): NeonSurvivorState {
       y: ARENA_HEIGHT / 2,
       vx: 0,
       vy: 0,
-      hp: 100,
-      maxHp: 100,
-      speed: 240,
+      hp: baseHp,
+      maxHp: baseHp,
+      speed: 240 * speedMult,
       level: 1,
       exp: 0,
       nextExp: expThresholdForLevel(1),
       facing: 0,
       invulnTimer: 0,
-      magnetRadius: 130,
+      magnetRadius: 130 * magnetMult,
     },
     weapons: {
       blaster: 1,
@@ -393,6 +431,17 @@ export function createInitialNeonSurvivorState(): NeonSurvivorState {
     bossWarningTimer: 0,
     activeBossName: null,
     nextEntityId: 1,
+    crystals: 0,
+    supplyDrops: [],
+    supplyDropTimer: 0,
+    metaMultipliers: {
+      damageMult,
+      extraHp,
+      magnetMult,
+      speedMult,
+      critChance,
+    },
+    recentSupplyJackpot: null,
   };
 }
 
@@ -543,7 +592,10 @@ export function updateNeonSurvivor(
     if (nearest) {
       const angle = Math.atan2(nearest.y - player.y, nearest.x - player.x);
       const bulletSpeed = isHyper ? 850 : 650;
-      const baseDamage = (28 + blasterLevel * 8) * (isHyper ? 2.2 : 1.0);
+      const dmgMult = state.metaMultipliers?.damageMult ?? 1.0;
+      const critChance = state.metaMultipliers?.critChance ?? 0.05;
+      const isCrit = Math.random() < critChance;
+      const baseDamage = (28 + blasterLevel * 8) * (isHyper ? 2.2 : 1.0) * dmgMult * (isCrit ? 2.0 : 1.0);
 
       if (isHyper) {
         // 8-way omnidirectional hyper salvo
@@ -558,7 +610,7 @@ export function updateNeonSurvivor(
             damage: Math.round(baseDamage),
             pierce: 4,
             radius: 7,
-            color: '#fbbf24',
+            color: isCrit ? '#f59e0b' : '#fbbf24',
             life: 1.5,
           });
         }
@@ -574,10 +626,10 @@ export function updateNeonSurvivor(
             y: player.y,
             vx: Math.cos(bAngle) * bulletSpeed,
             vy: Math.sin(bAngle) * bulletSpeed,
-            damage: baseDamage,
+            damage: Math.round(baseDamage),
             pierce: blasterLevel >= 3 ? 2 : 1,
             radius: 5,
-            color: '#38bdf8',
+            color: isCrit ? '#f59e0b' : '#38bdf8',
             life: 1.2,
           });
         }
@@ -654,15 +706,28 @@ export function updateNeonSurvivor(
       if (e.hp <= 0) continue;
       const dist = Math.hypot(e.x - p.x, e.y - p.y);
       if (dist <= e.radius + p.radius) {
-        e.hp -= p.damage;
+        let actualDamage = p.damage;
+        if (e.mutation === 'shielded' && (e.shieldHp ?? 0) > 0) {
+          e.shieldHp = (e.shieldHp ?? 1) - 1;
+          actualDamage = Math.round(p.damage * 0.25);
+          floatingTexts.push({
+            id: nextEntityId++,
+            text: 'SHIELDED!',
+            x: e.x,
+            y: e.y - 18,
+            life: 0.4,
+            color: '#06b6d4',
+          });
+        }
+        e.hp -= actualDamage;
         hitCount++;
         floatingTexts.push({
           id: nextEntityId++,
-          text: `${Math.round(p.damage)}`,
+          text: p.color === '#f59e0b' ? `CRIT! ${Math.round(actualDamage)}` : `${Math.round(actualDamage)}`,
           x: e.x + (Math.random() - 0.5) * 10,
           y: e.y - 10,
-          life: 0.5,
-          color: '#38bdf8',
+          life: p.color === '#f59e0b' ? 0.7 : 0.5,
+          color: p.color === '#f59e0b' ? '#f59e0b' : '#38bdf8',
         });
         if (hitCount >= p.pierce) break;
       }
@@ -678,11 +743,49 @@ export function updateNeonSurvivor(
   const survivingEnemies: Enemy[] = [];
   let kills = state.kills;
   let score = state.score;
+  let crystals = state.crystals || 0;
 
   for (const e of state.enemies) {
     if (e.hp <= 0) {
       kills++;
       score += e.isElite ? 2500 : e.kind === 'boss' ? 500 : e.kind === 'brute' ? 60 : 20;
+
+      // Explosive mutation detonation
+      if (e.mutation === 'explosive') {
+        const boomRadius = 140;
+        for (const other of state.enemies) {
+          if (other.id !== e.id && other.hp > 0) {
+            const d = Math.hypot(other.x - e.x, other.y - e.y);
+            if (d <= boomRadius) {
+              other.hp -= 60;
+            }
+          }
+        }
+        floatingTexts.push({
+          id: nextEntityId++,
+          text: '💥 EXPLOSION!',
+          x: e.x,
+          y: e.y - 20,
+          life: 0.7,
+          color: '#ef4444',
+        });
+      }
+
+      // Neon Crystal permanent resource drops
+      const crystalDropChance = e.kind === 'boss' ? 1.0 : e.isElite ? 1.0 : 0.12;
+      if (Math.random() < crystalDropChance) {
+        const count = e.kind === 'boss' ? 10 : e.isElite ? 3 : 1;
+        crystals += count;
+        floatingTexts.push({
+          id: nextEntityId++,
+          text: `+${count} 💎 CORE`,
+          x: e.x + (Math.random() - 0.5) * 20,
+          y: e.y - 22,
+          life: 0.8,
+          color: '#a855f7',
+        });
+      }
+
       if (e.isElite) {
         for (let i = 0; i < 5; i++) {
           const a = (i * Math.PI * 2) / 5;
@@ -763,11 +866,55 @@ export function updateNeonSurvivor(
     upgradeChoices = pickRandomUpgrades(state.weapons, state.evolutions);
   }
 
-  // 6. Spawning Logic
+  // 6. Supply Drops & Spawning Logic
   const survivalTime = state.survivalTime + boundedDt;
   let spawnTimer = state.spawnTimer + boundedDt;
   const spawnInterval = Math.max(0.4, 1.8 - survivalTime * 0.015);
   let bossSpawned = state.bossSpawned;
+
+  // Supply Drop Capsule Spawning (every 65s or at 30s)
+  let supplyDropTimer = (state.supplyDropTimer ?? 0) + boundedDt;
+  const supplyDrops: SupplyDrop[] = [];
+  let recentSupplyJackpot: string | null = null;
+
+  if (supplyDropTimer >= 65 || (survivalTime >= 30 && (state.supplyDrops?.length ?? 0) === 0 && supplyDropTimer >= 30)) {
+    supplyDropTimer = 0;
+    const a = Math.random() * Math.PI * 2;
+    const dist = 320 + Math.random() * 120;
+    supplyDrops.push({
+      id: nextEntityId++,
+      x: Math.max(80, Math.min(state.arenaWidth - 80, player.x + Math.cos(a) * dist)),
+      y: Math.max(80, Math.min(state.arenaHeight - 80, player.y + Math.sin(a) * dist)),
+      radius: 20,
+      life: 60,
+      beaconPulse: 0,
+    });
+  }
+
+  // Update existing supply drops and check player pickup
+  for (const drop of [...(state.supplyDrops ?? []), ...supplyDrops]) {
+    drop.life -= boundedDt;
+    drop.beaconPulse = (drop.beaconPulse + boundedDt * 4) % (Math.PI * 2);
+    const d = Math.hypot(player.x - drop.x, player.y - drop.y);
+    if (d <= drop.radius + 20) {
+      // Picked up!
+      const healAmount = Math.round(player.maxHp * 0.45);
+      player.hp = Math.min(player.maxHp, player.hp + healAmount);
+      crystals += 5;
+      score += 200;
+      recentSupplyJackpot = 'SUPPLY_JACKPOT';
+      floatingTexts.push({
+        id: nextEntityId++,
+        text: `SUPPLY JACKPOT! +${healAmount}HP +5💎`,
+        x: player.x,
+        y: player.y - 30,
+        life: 1.2,
+        color: '#fbbf24',
+      });
+    } else if (drop.life > 0) {
+      supplyDrops.push(drop);
+    }
+  }
 
   if (spawnTimer >= spawnInterval && survivingEnemies.length < 120) {
     spawnTimer = 0;
@@ -784,6 +931,9 @@ export function updateNeonSurvivor(
     let damage = 8;
     let radius = 12;
     let color = '#f43f5e';
+    let isElite = false;
+    let mutation: 'speedster' | 'shielded' | 'explosive' | undefined = undefined;
+    let shieldHp: number | undefined = undefined;
 
     if (rand < 0.35) {
       kind = 'swarmer';
@@ -799,6 +949,24 @@ export function updateNeonSurvivor(
       damage = 18;
       radius = 20;
       color = '#38bdf8';
+
+      // 40% chance of mutation for brutes after 45s
+      if (survivalTime > 45 && Math.random() < 0.45) {
+        isElite = true;
+        const mutRand = Math.random();
+        if (mutRand < 0.33) {
+          mutation = 'speedster';
+          speed = Math.round(speed * 1.45);
+          color = '#22c55e';
+        } else if (mutRand < 0.66) {
+          mutation = 'shielded';
+          shieldHp = 3;
+          color = '#06b6d4';
+        } else {
+          mutation = 'explosive';
+          color = '#ef4444';
+        }
+      }
     }
 
     survivingEnemies.push({
@@ -812,6 +980,9 @@ export function updateNeonSurvivor(
       damage,
       radius,
       color,
+      isElite,
+      mutation,
+      shieldHp,
     });
   }
 
@@ -920,5 +1091,9 @@ export function updateNeonSurvivor(
     bossWarningTimer,
     activeBossName,
     nextEntityId,
+    crystals,
+    supplyDrops,
+    supplyDropTimer,
+    recentSupplyJackpot,
   };
 }
