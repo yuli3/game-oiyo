@@ -3,6 +3,7 @@ import { siteConfig } from "../config/site.config";
 import { getAuthor } from "../lib/authors";
 import noindexSlugs from "../config/noindex-slugs.json";
 import deindexedLocales from "../config/deindexed-locales.json";
+import { buildGameMetaDescription } from "../lib/seo/meta-description";
 
 // Locale deindex list — see astro.config.mjs. Empty since 2026-09-24 (all six
 // locales indexable); a listed locale would leave the index, the sitemap, and
@@ -50,6 +51,16 @@ const supportedLocales = siteConfig.locales;
 const currentLocale = supportedLocales.includes(currentPathname.split("/")[1])
   ? currentPathname.split("/")[1]
   : siteConfig.locale;
+
+// 2026-11-07: SEO(Google·Bing) 및 AIEO 골든 레인지(110~140자) 메타 설명 빌더 (Phase A: 기본값 중복 원천 차단)
+const resolvedDescription = buildGameMetaDescription({
+  title,
+  description: Astro.props.description,
+  locale: currentLocale,
+  pathname: currentPathname,
+  category,
+  tags,
+});
 // Multilingual hreflang logic.
 // Article routes pass availableLocales from actual content siblings.
 // Pages generated from the full locale list (home, static tool/listing slugs
@@ -179,7 +190,7 @@ const hreflangMap: Record<string, string> = {
 <!-- Primary Meta Tags -->
 <title>{siteTitle}</title>
 <meta name="title" content={siteTitle} />
-<meta name="description" content={description} />
+<meta name="description" content={resolvedDescription} />
 <meta name="author" content={author} />
 {tags && tags.length > 0 && <meta name="keywords" content={tags.join(", ")} />}
 
@@ -188,14 +199,14 @@ const hreflangMap: Record<string, string> = {
 <meta property="og:url" content={Astro.url} />
 <meta property="og:site_name" content={siteConfig.name} />
 <meta property="og:title" content={siteTitle} />
-<meta property="og:description" content={description} />
+<meta property="og:description" content={resolvedDescription} />
 {/* 2026-09-29: 상대 경로 og:image 는 카카오톡·페이스북 미리보기가 풀지 못한다. 절대 URL 로 낸다. */}
 {image && <meta property="og:image" content={new URL(image, siteConfig.url).href} />}
 {image && <meta property="og:image:width" content="1200" />}
 {image && <meta property="og:image:height" content="630" />}
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content={siteTitle} />
-<meta name="twitter:description" content={description} />
+<meta name="twitter:description" content={resolvedDescription} />
 {image && <meta name="twitter:image" content={new URL(image, siteConfig.url).href} />}
 <!-- og:locale uses BCP-47 with underscore notation -->
 <meta property="og:locale" content={(hreflangMap[currentLocale] ?? "en").replace("-", "_")} />
