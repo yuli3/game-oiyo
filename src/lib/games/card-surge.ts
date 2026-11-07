@@ -767,10 +767,21 @@ export function getRandomBossBlind(_ante: number, seed: number = Date.now()): Bo
   return BOSS_BLINDS[prng];
 }
 
-export function initGame(_seed: number = Date.now()): CardSurgeState {
+export interface CardSurgeInitModifiers {
+  bonusStartingMoney?: number;
+  bonusHandSize?: number;
+  bonusDiscards?: number;
+  bonusHands?: number;
+}
+
+export function initGame(
+  _seed: number = Date.now(),
+  modifiers?: CardSurgeInitModifiers
+): CardSurgeState {
   const fullDeck = shuffleDeck(createDeck());
   const hand: SurgeCard[] = [];
-  for (let i = 0; i < 8 && fullDeck.length > 0; i++) {
+  const maxHand = 8 + (modifiers?.bonusHandSize ?? 0);
+  for (let i = 0; i < maxHand && fullDeck.length > 0; i++) {
     hand.push(fullDeck.pop()!);
   }
 
@@ -788,9 +799,9 @@ export function initGame(_seed: number = Date.now()): CardSurgeState {
     blindType: "small",
     targetScore,
     currentRoundScore: 0,
-    handsRemaining: 4,
-    discardsRemaining: 3,
-    money: 4,
+    handsRemaining: 4 + (modifiers?.bonusHands ?? 0),
+    discardsRemaining: 3 + (modifiers?.bonusDiscards ?? 0),
+    money: 4 + (modifiers?.bonusStartingMoney ?? 0),
     deck: fullDeck,
     hand,
     discardPile: [],

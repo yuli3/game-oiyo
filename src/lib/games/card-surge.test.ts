@@ -301,5 +301,76 @@ describe("Card Surge Engine", () => {
       expect(state.hand).toHaveLength(8);
       expect(state.handsRemaining).toBe(4);
     });
+
+    it("applies voucher modifiers to initial game state", () => {
+      const state = initGame(12345, {
+        bonusStartingMoney: 10,
+        bonusHandSize: 2,
+        bonusDiscards: 1,
+        bonusHands: 1,
+      });
+
+      expect(state.money).toBe(14); // 4 + 10
+      expect(state.hand).toHaveLength(10); // 8 + 2
+      expect(state.discardsRemaining).toBe(4); // 3 + 1
+      expect(state.handsRemaining).toBe(5); // 4 + 1
+    });
+
+    it("handles card surge meta voucher purchases and save system", async () => {
+      const {
+        INITIAL_CARD_SURGE_META_SAVE,
+        calculateCardSurgeModifiers,
+        buySurgeVoucher,
+      } = await import("./card-surge-meta");
+
+      const baseMods = calculateCardSurgeModifiers(INITIAL_CARD_SURGE_META_SAVE);
+      expect(baseMods.bonusStartingMoney).toBe(0);
+      expect(baseMods.bonusHandSize).toBe(0);
+
+      const richSave = {
+        ...INITIAL_CARD_SURGE_META_SAVE,
+        neonChips: 1000,
+      };
+
+      const res = buySurgeVoucher("startingBank", richSave);
+      expect(res.success).toBe(true);
+      expect(res.newSave.startingBankLvl).toBe(1);
+      expect(res.newSave.neonChips).toBe(850);
+
+      const upgradedMods = calculateCardSurgeModifiers(res.newSave);
+      expect(upgradedMods.bonusStartingMoney).toBe(5);
+    });
+
+    it("loads 4 underground casino quests and claims rewards", async () => {
+      const {
+        INITIAL_CARD_SURGE_QUESTS,
+        claimCardSurgeQuestReward,
+      } = await import("./card-surge-quests");
+
+      expect(INITIAL_CARD_SURGE_QUESTS.length).toBe(4);
+      const flushQuest = INITIAL_CARD_SURGE_QUESTS[0];
+      expect(flushQuest.title.ko).toBe("플러시의 지배자");
+
+      const readyQuest = { ...flushQuest, progress: flushQuest.maxProgress };
+      let chipsGiven = 0;
+      const updated = claimCardSurgeQuestReward(flushQuest.id, [readyQuest], (c) => {
+        chipsGiven = c;
+      });
+
+      expect(chipsGiven).toBe(flushQuest.rewardNeonChips);
+      expect(updated[0].isClaimed).toBe(true);
+    });
+
+    it("provides 3 casino personas and transmission lore HUD", async () => {
+      const { SURGE_SPEAKERS, SURGE_TRANSMISSIONS } = await import("./card-surge-lore");
+
+      expect(SURGE_SPEAKERS.ace.name.ko).toBe("네온 딜러 에이스");
+      expect(SURGE_SPEAKERS.jack.name.ko).toBe("암시장 브로커 잭");
+      expect(SURGE_SPEAKERS.specter.name.ko).toBe("네온 보스 스펙터");
+
+      expect(SURGE_TRANSMISSIONS.blind_start.length).toBeGreaterThanOrEqual(1);
+      expect(SURGE_TRANSMISSIONS.surge_mult.length).toBeGreaterThanOrEqual(1);
+      expect(SURGE_TRANSMISSIONS.boss_encounter.length).toBeGreaterThanOrEqual(1);
+    });
   });
 });

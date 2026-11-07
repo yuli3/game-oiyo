@@ -98,6 +98,64 @@ describe("chaos-kitchen engine", () => {
     expect(state.score).toBeGreaterThan(0);
   });
 
+  it("applies kitchen meta modifiers and saves upgrades", async () => {
+    const {
+      INITIAL_KITCHEN_META_SAVE,
+      calculateKitchenModifiers,
+      buyKitchenUpgrade,
+    } = await import("./chaos-kitchen-meta");
+
+    const baseMods = calculateKitchenModifiers(INITIAL_KITCHEN_META_SAVE);
+    expect(baseMods.chopSpeedMult).toBe(1.0);
+    expect(baseMods.cookSpeedMult).toBe(1.0);
+
+    const richSave = {
+      ...INITIAL_KITCHEN_META_SAVE,
+      goldStars: 1000,
+    };
+
+    const res = buyKitchenUpgrade("knifeSharpness", richSave);
+    expect(res.success).toBe(true);
+    expect(res.newSave.knifeSharpnessLvl).toBe(1);
+    expect(res.newSave.goldStars).toBe(850);
+
+    const upgradedMods = calculateKitchenModifiers(res.newSave);
+    expect(upgradedMods.chopSpeedMult).toBeCloseTo(1.2);
+  });
+
+  it("loads 4 kitchen quests and handles reward claims", async () => {
+    const {
+      INITIAL_KITCHEN_QUESTS,
+      claimKitchenQuestReward,
+    } = await import("./chaos-kitchen-quests");
+
+    expect(INITIAL_KITCHEN_QUESTS.length).toBe(4);
+    const saladQuest = INITIAL_KITCHEN_QUESTS[0];
+    expect(saladQuest.title.ko).toBe("신선한 샐러드 장인");
+
+    // Test claim flow
+    const finishedQuest = { ...saladQuest, progress: saladQuest.maxProgress };
+    let starsAwarded = 0;
+    const updated = claimKitchenQuestReward(saladQuest.id, [finishedQuest], (s) => {
+      starsAwarded = s;
+    });
+
+    expect(starsAwarded).toBe(saladQuest.rewardStars);
+    expect(updated[0].isClaimed).toBe(true);
+  });
+
+  it("provides 3 kitchen personas and transmission lore HUD", async () => {
+    const { KITCHEN_SPEAKERS, KITCHEN_TRANSMISSIONS } = await import("./chaos-kitchen-lore");
+
+    expect(KITCHEN_SPEAKERS.gordon.name.ko).toBe("마스터 고든");
+    expect(KITCHEN_SPEAKERS.olivia.name.ko).toBe("수셰프 올리비아");
+    expect(KITCHEN_SPEAKERS.charlie.name.ko).toBe("인턴 찰리");
+
+    expect(KITCHEN_TRANSMISSIONS.kitchen_open.length).toBeGreaterThanOrEqual(1);
+    expect(KITCHEN_TRANSMISSIONS.fire_hazard.length).toBeGreaterThanOrEqual(1);
+    expect(KITCHEN_TRANSMISSIONS.order_delivered.length).toBeGreaterThanOrEqual(1);
+  });
+
   it("runs Monte Carlo audit and verifies kitchen operational viability", () => {
     const audit = runChaosKitchenMonteCarloAudit(15);
     expect(audit.successTrials).toBeGreaterThan(0);

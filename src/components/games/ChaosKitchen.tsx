@@ -8,6 +8,24 @@ import {
   KITCHEN_HEIGHT,
   type ChaosKitchenState,
 } from "../../lib/games/chaos-kitchen";
+import {
+  loadKitchenQuests,
+  saveKitchenQuests,
+  claimKitchenQuestReward,
+  type ChaosKitchenQuest,
+} from "../../lib/games/chaos-kitchen-quests";
+import {
+  loadKitchenMetaSave,
+  saveKitchenMetaSave,
+  calculateKitchenModifiers,
+  buyKitchenUpgrade,
+  KITCHEN_UPGRADES,
+  type KitchenMetaSave,
+} from "../../lib/games/chaos-kitchen-meta";
+import {
+  KITCHEN_TRANSMISSIONS,
+  type KitchenTransmission,
+} from "../../lib/games/chaos-kitchen-lore";
 import { useAudioContext } from "../../lib/games/use-audio-context";
 import { useClipboardShare } from "../../lib/games/use-clipboard-share";
 import { GameStatTile } from "../ui/game/GameStatTile";
@@ -40,8 +58,14 @@ function TiltKitchenButton({
   );
 }
 
-export function ChaosKitchen() {
+export function ChaosKitchen({ lang = "ko" }: { lang?: string }) {
   const [gameState, setGameState] = useState<ChaosKitchenState>(() => initializeChaosKitchen());
+  const [metaSave, setMetaSave] = useState<KitchenMetaSave>(() => loadKitchenMetaSave());
+  const [quests, setQuests] = useState<ChaosKitchenQuest[]>(() => loadKitchenQuests());
+  const [showQuests, setShowQuests] = useState(false);
+  const [showUpgrades, setShowUpgrades] = useState(false);
+  const [transmission, setTransmission] = useState<KitchenTransmission | null>(null);
+
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const inputRef = useRef({
     chef1Mask: 0,
@@ -83,28 +107,6 @@ export function ChaosKitchen() {
     [getAudioContext]
   );
 
-  const playSizzle = useCallback(() => {
-    const ctx = getAudioContext();
-    if (!ctx) return;
-    const t = ctx.currentTime;
-    const bufferSize = Math.floor(ctx.sampleRate * 0.08);
-    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-      data[i] = (Math.random() * 2 - 1) * 0.25;
-    }
-    const noise = ctx.createBufferSource();
-    noise.buffer = buffer;
-    const filter = ctx.createBiquadFilter();
-    filter.type = "bandpass";
-    filter.frequency.value = 3200;
-    const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0.05, t);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
-    noise.connect(filter).connect(gain).connect(ctx.destination);
-    noise.start(t);
-  }, [getAudioContext]);
-
   const playChop = useCallback(() => {
     const ctx = getAudioContext();
     if (!ctx) return;
@@ -123,13 +125,101 @@ export function ChaosKitchen() {
 
   const { copied, shareText } = useClipboardShare();
 
+  // Initial greeting lore transmission
   useEffect(() => {
+    const opens = KITCHEN_TRANSMISSIONS.kitchen_open;
+    if (opens && opens.length > 0) {
+      setTransmission(opens[0]);
+    }
+  }, []);
+
+  // Sync state changes with quests & lore transmissions
+  const prevServedRef = useRef(0);
+  const prevFireRef = useRef(false);
+
+  useEffect(() => {
+    // 1. Serving order event
+    if (gameState.servedOrders > prevServedRef.current) {
+      const diff = gameState.servedOrders - prevServedRef.current;
+      prevServedRef.current = gameState.servedOrders;
+
+      // Add earned stars to meta save
+      const earnedStars = diff * 25;
+      setMetaSave((prev) => {
+        const next = {
+          ...prev,
+          goldStars: prev.goldStars + earnedStars,
+          lifetimeDishesServed: prev.lifetimeDishesServed + diff,
+        };
+        saveKitchenMetaSave(next);
+        return next;
+      });
+
+      // Update quests progress
+      setQuests((prevQ) => {
+        const nextQ = prevQ.map((q) => {
+          if (q.id === "quest_salad_specialist" || q.id === "quest_steak_perfection") {
+            return { ...q, progress: Math.min(q.maxProgress, q.progress + diff) };
+          }
+          if (q.id === "quest_michelin_combo") {
+            return { ...q, progress: Math.min(q.maxProgress, gameState.comboCount) };
+          }
+          return q;
+        });
+        saveKitchenQuests(nextQ);
+        return nextQ;
+      });
+
+      // Play serve sound and haptic
+      playTone(587.33, "sine", 0.15);
+      MobileHapticsPro.success();
+
+      // Trigger delivery transmission
+      const delivs = KITCHEN_TRANSMISSIONS.order_delivered;
+      if (delivs && delivs.length > 0) {
+        setTransmission(delivs[Math.floor(Math.random() * delivs.length)]);
+      }
+    }
+
+    // 2. Fire alert event
+    if (gameState.hasFire && !prevFireRef.current) {
+      prevFireRef.current = true;
+      MobileHapticsPro.heavy();
+      playTone(220, "sawtooth", 0.3);
+
+      const fires = KITCHEN_TRANSMISSIONS.fire_hazard;
+      if (fires && fires.length > 0) {
+        setTransmission(fires[0]);
+      }
+    } else if (!gameState.hasFire && prevFireRef.current) {
+      prevFireRef.current = false;
+      // Fire suppressed
+      setMetaSave((prev) => {
+        const next = { ...prev, lifetimeFiresExtinguished: prev.lifetimeFiresExtinguished + 1 };
+        saveKitchenMetaSave(next);
+        return next;
+      });
+      setQuests((prevQ) => {
+        const nextQ = prevQ.map((q) => {
+          if (q.id === "quest_fire_safety") {
+            return { ...q, progress: Math.min(q.maxProgress, q.progress + 1) };
+          }
+          return q;
+        });
+        saveKitchenQuests(nextQ);
+        return nextQ;
+      });
+    }
+
+    // Win/Loss Haptics
     if (gameState.status === "cleared") {
       MobileHapticsPro.success();
+      const shifts = KITCHEN_TRANSMISSIONS.shift_ended;
+      if (shifts && shifts.length > 0) setTransmission(shifts[0]);
     } else if (gameState.status === "failed") {
       MobileHapticsPro.warning();
     }
-  }, [gameState.status]);
+  }, [gameState.servedOrders, gameState.comboCount, gameState.hasFire, gameState.status, playTone]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -204,7 +294,9 @@ export function ChaosKitchen() {
     };
   }, [playTone, playChop]);
 
-  // Main 60FPS tick
+  // Main 60FPS tick with Meta Modifiers
+  const modifiers = calculateKitchenModifiers(metaSave);
+
   useEffect(() => {
     let lastTime = performance.now();
     let animId: number;
@@ -214,10 +306,15 @@ export function ChaosKitchen() {
       lastTime = now;
 
       setGameState((prev) => {
-        const next = stepChaosKitchen(prev, dt, {
-          chef1Mask: inputRef.current.chef1Mask,
-          chef2Mask: inputRef.current.chef2Mask,
-        });
+        const next = stepChaosKitchen(
+          prev,
+          dt,
+          {
+            chef1Mask: inputRef.current.chef1Mask,
+            chef2Mask: inputRef.current.chef2Mask,
+          },
+          modifiers
+        );
 
         // Single-pulse input clearance for space/f
         if (inputRef.current.chef1Mask & 16) {
@@ -232,7 +329,7 @@ export function ChaosKitchen() {
 
     animId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(animId);
-  }, []);
+  }, [modifiers.chopSpeedMult, modifiers.cookSpeedMult, modifiers.fireDelayMult, modifiers.moveSpeedMult, modifiers.starBonusMult]);
 
   // 2D Canvas rendering
   useEffect(() => {
@@ -314,7 +411,7 @@ export function ChaosKitchen() {
       }
     }
 
-    // 2. Render Counter Slot Items (Items placed on tables)
+    // 2. Render Counter Slot Items
     for (const [key, item] of gameState.counterSlots.entries()) {
       if (!item) continue;
       const [gx, gy] = key.split(",").map(Number);
@@ -398,42 +495,33 @@ export function ChaosKitchen() {
       ctx.moveTo(chef.dirX * 18, chef.dirY * 18);
       ctx.lineTo(chef.dirX * 12 - chef.dirY * 4, chef.dirY * 12 + chef.dirX * 4);
       ctx.lineTo(chef.dirX * 12 + chef.dirY * 4, chef.dirY * 12 - chef.dirX * 4);
-      ctx.closePath();
-      ctx.fillStyle = "#facc15";
+      ctx.fillStyle = "#ffffff";
       ctx.fill();
 
       // Held item floating above chef
       if (chef.heldItem) {
-        if (chef.heldItem.type === "burger_dish" && spritesRef.current.burger?.complete) {
-          ctx.drawImage(spritesRef.current.burger, -12, -34, 24, 24);
-        } else if (chef.heldItem.type === "salad_dish" && spritesRef.current.salad?.complete) {
-          ctx.drawImage(spritesRef.current.salad, -12, -34, 24, 24);
-        } else if (chef.heldItem.type === "tomato_raw" && spritesRef.current.tomato?.complete) {
-          ctx.drawImage(spritesRef.current.tomato, -10, -32, 20, 20);
-        } else {
-          let heldIcon = "📦";
-          if (chef.heldItem.type === "tomato_raw") heldIcon = "🍅";
-          else if (chef.heldItem.type === "tomato_chopped") heldIcon = "🥫";
-          else if (chef.heldItem.type === "lettuce_raw") heldIcon = "🥬";
-          else if (chef.heldItem.type === "lettuce_chopped") heldIcon = "🥗";
-          else if (chef.heldItem.type === "meat_raw") heldIcon = "🥩";
-          else if (chef.heldItem.type === "meat_cooked") heldIcon = "🍖";
-          else if (chef.heldItem.type === "plate_clean") heldIcon = "🍽️";
-          else if (chef.heldItem.type === "salad_dish") heldIcon = "🥗";
-          else if (chef.heldItem.type === "burger_dish") heldIcon = "🍔";
-          else if (chef.heldItem.type === "extinguisher") heldIcon = "🧯";
+        ctx.font = "16px sans-serif";
+        let heldIcon = "📦";
+        if (chef.heldItem.type === "tomato_raw") heldIcon = "🍅";
+        else if (chef.heldItem.type === "tomato_chopped") heldIcon = "🥫";
+        else if (chef.heldItem.type === "lettuce_raw") heldIcon = "🥬";
+        else if (chef.heldItem.type === "lettuce_chopped") heldIcon = "🥗";
+        else if (chef.heldItem.type === "meat_raw") heldIcon = "🥩";
+        else if (chef.heldItem.type === "meat_cooked") heldIcon = "🍖";
+        else if (chef.heldItem.type === "plate_clean") heldIcon = "🍽️";
+        else if (chef.heldItem.type === "salad_dish") heldIcon = "🥗";
+        else if (chef.heldItem.type === "burger_dish") heldIcon = "🍔";
+        else if (chef.heldItem.type === "extinguisher") heldIcon = "🧯";
 
-          ctx.font = "14px sans-serif";
-          ctx.fillText(heldIcon, 0, -22);
-        }
+        ctx.fillText(heldIcon, 0, -22);
       }
 
-      // Chopping gauge
+      // Chopping progress indicator
       if (chef.isChopping) {
-        ctx.fillStyle = "rgba(0,0,0,0.6)";
-        ctx.fillRect(-12, -32, 24, 4);
+        ctx.fillStyle = "rgba(0,0,0,0.7)";
+        ctx.fillRect(-12, 20, 24, 4);
         ctx.fillStyle = "#22c55e";
-        ctx.fillRect(-12, -32, 24 * chef.chopProgress, 4);
+        ctx.fillRect(-12, 20, 24 * chef.chopProgress, 4);
       }
 
       ctx.restore();
@@ -442,136 +530,148 @@ export function ChaosKitchen() {
     ctx.restore();
   }, [gameState]);
 
-  const handleReset = () => {
-    setGameState(initializeChaosKitchen());
-    playTone(440, "sine", 0.15);
-  };
-
-  const handleShare = () => {
-    shareText(
-      `Chaos Kitchen Overcooked: Cleared shift with score ¥${gameState.score}, served ${gameState.servedOrders} orders! Play free: https://game.oiyo.net/chaos-kitchen`
-    );
-    playTone(660, "triangle", 0.1);
-  };
-
   return (
-    <div className="flex flex-col gap-4 max-w-4xl mx-auto p-4 bg-background text-foreground rounded-xl border border-border shadow-sm">
-      {/* Top Banner */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight">Chaos Kitchen: Overcooked Rush</h1>
-          <p className="text-xs text-muted-foreground">
-            Dijkstra Flow-Field pathfinding & deterministic lockstep co-op kitchen simulation.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleShare}
-            className="px-3 py-1.5 text-xs font-semibold rounded-md border border-border bg-secondary hover:bg-secondary/80 transition-colors"
-          >
-            {copied ? "Copied!" : "Share Shift"}
-          </button>
-          <button
-            type="button"
-            onClick={handleReset}
-            className="px-3 py-1.5 text-xs font-semibold rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-          >
-            Restart Kitchen
-          </button>
-        </div>
-      </div>
-
-      {/* Telemetry Stat Tiles */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        <GameStatTile
-          label="Kitchen Revenue"
-          value={`¥${gameState.score}`}
-          highlight={gameState.score >= 1500}
-        />
-        <GameStatTile
-          label="Orders Served"
-          value={`${gameState.servedOrders} (Combo x${gameState.comboCount})`}
-          highlight={gameState.comboCount >= 3}
-        />
-        <GameStatTile
-          label="Failed Orders"
-          value={`${gameState.failedOrders} / 5`}
-          highlight={gameState.failedOrders >= 3}
-        />
-        <GameStatTile
-          label="Kitchen State"
-          value={gameState.hasFire ? "🚨 ON FIRE!" : "All Stations Clean"}
-          highlight={gameState.hasFire}
-        />
-      </div>
-
-      {/* Active Order Tickets Header */}
-      <div className="flex flex-wrap items-center gap-2 p-2.5 bg-muted/30 rounded-lg border border-border">
-        <span className="text-xs font-semibold text-muted-foreground mr-1">Active Tickets:</span>
-        {gameState.orders.length === 0 ? (
-          <span className="text-xs text-muted-foreground italic">No tickets in queue</span>
-        ) : (
-          gameState.orders.map((o) => (
-            <div
-              key={o.id}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-card border border-border text-xs shadow-xs"
-            >
-              <img
-                src={o.recipe === "salad" ? CHAOS_KITCHEN_SPRITES.salad : CHAOS_KITCHEN_SPRITES.burger}
-                alt={o.recipe}
-                className="w-4 h-4 object-contain inline-block"
-              />
-              <span className="font-bold capitalize">
-                {o.recipe}
+    <div className="flex flex-col items-center gap-4 w-full max-w-4xl mx-auto p-4 select-none">
+      {/* 3-Chef Communication Transmission HUD */}
+      {transmission && (
+        <div className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg border border-border bg-card shadow-sm text-sm transition-all animate-in fade-in">
+          <span className="text-2xl">{transmission.speaker.avatar}</span>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-foreground text-xs">
+                {transmission.speaker.name[lang] || transmission.speaker.name.ko}
               </span>
-              <span className="text-muted-foreground">({Math.ceil(o.timeRemainingSec)}s)</span>
-              <span className="text-primary font-semibold">¥{o.reward}</span>
+              <span className="text-xs text-muted-foreground">
+                ({transmission.speaker.role[lang] || transmission.speaker.role.ko})
+              </span>
             </div>
-          ))
+            <p className="text-xs text-muted-foreground truncate">
+              {transmission.text[lang] || transmission.text.ko}
+            </p>
+          </div>
+          <span
+            className={`px-2 py-0.5 rounded text-xs font-semibold tracking-wider ${
+              transmission.tag === "fire"
+                ? "bg-destructive text-destructive-foreground animate-pulse"
+                : transmission.tag === "cheer"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground"
+            }`}
+          >
+            {transmission.tag.toUpperCase()}
+          </span>
+        </div>
+      )}
+
+      {/* Stats Bar */}
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 w-full">
+        <GameStatTile
+          label="Score"
+          value={`¥${gameState.score.toLocaleString()}`}
+          icon="💰"
+        />
+        <GameStatTile
+          label="Combo"
+          value={`x${gameState.comboCount}`}
+          icon="⚡"
+        />
+        <GameStatTile
+          label="Kitchen Stars"
+          value={`⭐ ${metaSave.goldStars}`}
+          icon="🌟"
+        />
+        <GameStatTile
+          label="Status"
+          value={gameState.hasFire ? "🚨 FIRE!" : gameState.status.toUpperCase()}
+          icon="🍳"
+        />
+        <div className="flex items-center gap-2 col-span-2 sm:col-span-1">
+          <TiltKitchenButton
+            onClick={() => setShowQuests(true)}
+            className="flex-1 py-2 px-2.5 rounded-md border border-border bg-card text-xs font-semibold hover:bg-accent transition-colors"
+          >
+            📜 Quests
+          </TiltKitchenButton>
+          <TiltKitchenButton
+            onClick={() => setShowUpgrades(true)}
+            className="flex-1 py-2 px-2.5 rounded-md border border-border bg-card text-xs font-semibold hover:bg-accent transition-colors"
+          >
+            🔬 Lab
+          </TiltKitchenButton>
+        </div>
+      </div>
+
+      {/* Orders Bar */}
+      <div className="flex flex-wrap items-center gap-2 w-full p-2.5 rounded-lg border border-border bg-card">
+        <span className="text-xs font-bold text-muted-foreground mr-1">ORDERS:</span>
+        {gameState.orders.length === 0 ? (
+          <span className="text-xs text-muted-foreground">Waiting for tickets...</span>
+        ) : (
+          gameState.orders.map((order) => {
+            const pct = Math.max(0, (order.timeRemainingSec / order.maxTimeSec) * 100);
+            return (
+              <div
+                key={order.id}
+                className="flex flex-col gap-1 px-3 py-1.5 rounded border border-border bg-background min-w-28"
+              >
+                <div className="flex items-center justify-between text-xs font-bold">
+                  <span>
+                    {order.recipe === "salad" ? "🥗 Salad" : order.recipe === "burger" ? "🍔 Burger" : "🥩 Steak"}
+                  </span>
+                  <span className="text-xs text-muted-foreground">¥{order.reward}</span>
+                </div>
+                <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
+                  <div
+                    style={{ "--progress-pct": `${pct}%` } as React.CSSProperties}
+                    className={`h-full w-(--progress-pct) transition-all ${pct < 30 ? "bg-destructive" : pct < 60 ? "bg-warning" : "bg-primary"}`}
+                  />
+                </div>
+              </div>
+            );
+          })
         )}
       </div>
 
-      {/* Canvas Viewport */}
-      <div className="relative w-full rounded-lg overflow-hidden border border-border bg-card flex justify-center">
+      {/* 2D Kitchen Canvas */}
+      <div className="relative w-full aspect-4/3 rounded-xl overflow-hidden border border-border shadow-md bg-black">
         <canvas
           ref={canvasRef}
-          width={700}
-          height={490}
-          className="w-full max-w-full aspect-video block"
+          width={640}
+          height={448}
+          className="w-full h-full object-contain"
         />
 
-        {/* Floating Log Banner */}
-        <div className="absolute top-2 left-2 bg-card/90 backdrop-blur-xs px-2.5 py-1 rounded text-xs text-card-foreground border border-border pointer-events-none">
-          {gameState.activeLog}
-        </div>
-
-        {/* Game Clear / Failed Overlay */}
-        {(gameState.status === "cleared" || gameState.status === "failed") && (
-          <div className="absolute inset-0 bg-background/85 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center gap-3">
-            <h2 className="text-2xl font-black">
-              {gameState.status === "cleared" ? "⭐ 3-Star Michelin Kitchen Cleared!" : "🔥 Kitchen Closed"}
-            </h2>
+        {gameState.status !== "playing" && (
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center gap-3 p-6 text-center animate-in fade-in">
+            <h3 className="text-2xl font-bold tracking-tight text-foreground">
+              {gameState.status === "cleared" ? "🎉 3-Star Michelin Victory!" : "💀 Kitchen Overwhelmed"}
+            </h3>
             <p className="text-sm text-muted-foreground max-w-md">
               {gameState.status === "cleared"
-                ? `Incredible teamwork! Served ${gameState.servedOrders} orders and earned ¥${gameState.score}.`
-                : "The kitchen descended into unmanageable chaos and too many orders expired."}
+                ? `You served ${gameState.servedOrders} orders with ¥${gameState.score.toLocaleString()} revenue! Great teamwork!`
+                : "Too many orders were burned or neglected. Re-sharpen knives and try again!"}
             </p>
-            <button
-              type="button"
-              onClick={handleReset}
-              className="px-4 py-2 font-bold text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-            >
-              Play Again
-            </button>
+            <div className="flex gap-2 mt-2">
+              <TiltKitchenButton
+                onClick={() => setGameState(initializeChaosKitchen())}
+                className="px-4 py-2 rounded-md bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors"
+              >
+                Play Again
+              </TiltKitchenButton>
+              <TiltKitchenButton
+                onClick={() => shareText(`Chaos Kitchen Score: ¥${gameState.score.toLocaleString()}`)}
+                className="px-4 py-2 rounded-md border border-border bg-card font-semibold hover:bg-accent transition-colors"
+              >
+                {copied ? "Copied!" : "Share"}
+              </TiltKitchenButton>
+            </div>
           </div>
         )}
       </div>
 
-      {/* Controls & Action Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-muted/40 rounded-lg border border-border text-xs">
+      {/* Controls Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 w-full text-xs">
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="font-semibold text-muted-foreground mr-1">Controls:</span>
           <TiltKitchenButton
             onClick={() => {
               inputRef.current.chef1Mask |= 1;
@@ -648,6 +748,167 @@ export function ChaosKitchen() {
           </TiltKitchenButton>
         </div>
       </div>
+
+      {/* Quests Modal */}
+      {showQuests && (
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-lg rounded-xl border border-border bg-card p-5 shadow-lg flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <h4 className="text-lg font-bold text-foreground">📜 Kitchen Michelin Directives</h4>
+              <button
+                type="button"
+                onClick={() => setShowQuests(false)}
+                className="text-muted-foreground hover:text-foreground text-sm font-semibold"
+              >
+                ✕ Close
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-2.5 max-h-96 overflow-y-auto pr-1">
+              {quests.map((q) => {
+                const isReady = q.progress >= q.maxProgress && !q.isClaimed;
+                return (
+                  <div
+                    key={q.id}
+                    className="p-3 rounded-lg border border-border bg-background flex flex-col gap-2"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <h5 className="text-sm font-bold text-foreground">
+                          {q.title[lang] || q.title.ko}
+                        </h5>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {q.desc[lang] || q.desc.ko}
+                        </p>
+                      </div>
+                      <span className="text-xs font-bold text-warning whitespace-nowrap">
+                        +{q.rewardStars} ⭐
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-3 pt-1">
+                      <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+                        <div
+                          style={{
+                            "--quest-pct": `${Math.min(100, (q.progress / q.maxProgress) * 100)}%`,
+                          } as React.CSSProperties}
+                          className="h-full w-(--quest-pct) bg-primary transition-all"
+                        />
+                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        {q.progress}/{q.maxProgress}
+                      </span>
+                      {q.isClaimed ? (
+                        <span className="text-xs font-semibold text-muted-foreground">Claimed</span>
+                      ) : isReady ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = claimKitchenQuestReward(q.id, quests, (stars) => {
+                              setMetaSave((prev) => {
+                                const next = { ...prev, goldStars: prev.goldStars + stars };
+                                saveKitchenMetaSave(next);
+                                return next;
+                              });
+                            });
+                            setQuests(updated);
+                            saveKitchenQuests(updated);
+                            MobileHapticsPro.success();
+                          }}
+                          className="px-2.5 py-1 rounded bg-primary text-primary-foreground text-xs font-bold hover:bg-primary/90 transition-colors"
+                        >
+                          Claim
+                        </button>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">In Progress</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Upgrades Modal */}
+      {showUpgrades && (
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-lg rounded-xl border border-border bg-card p-5 shadow-lg flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <h4 className="text-lg font-bold text-foreground">🔬 Kitchen Equipment Lab</h4>
+                <span className="text-xs font-bold text-warning">
+                  ⭐ {metaSave.goldStars}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowUpgrades(false)}
+                className="text-muted-foreground hover:text-foreground text-sm font-semibold"
+              >
+                ✕ Close
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-2.5 max-h-96 overflow-y-auto pr-1">
+              {Object.keys(KITCHEN_UPGRADES).map((key) => {
+                const up = KITCHEN_UPGRADES[key];
+                const currentLvlKey = `${key}Lvl` as keyof KitchenMetaSave;
+                const currentLvl = (metaSave[currentLvlKey] as number) || 0;
+                const cost = Math.round(up.cost * Math.pow(up.costMult, currentLvl));
+                const isMax = currentLvl >= up.maxLevel;
+                const canAfford = metaSave.goldStars >= cost && !isMax;
+
+                return (
+                  <div
+                    key={key}
+                    className="p-3 rounded-lg border border-border bg-background flex items-center justify-between gap-3"
+                  >
+                    <div className="flex items-start gap-3">
+                      <span className="text-2xl">{up.icon}</span>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h5 className="text-sm font-bold text-foreground">
+                            {up.name[lang] || up.name.ko}
+                          </h5>
+                          <span className="text-xs font-semibold text-muted-foreground">
+                            Lv.{currentLvl}/{up.maxLevel}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {up.desc[lang] || up.desc.ko}
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={!canAfford}
+                      onClick={() => {
+                        const res = buyKitchenUpgrade(key as keyof typeof KITCHEN_UPGRADES, metaSave);
+                        if (res.success) {
+                          setMetaSave(res.newSave);
+                          MobileHapticsPro.success();
+                        }
+                      }}
+                      className={`px-3 py-1.5 rounded text-xs font-bold transition-colors whitespace-nowrap ${
+                        isMax
+                          ? "bg-muted text-muted-foreground cursor-not-allowed"
+                          : canAfford
+                            ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                            : "bg-muted text-muted-foreground opacity-60 cursor-not-allowed"
+                      }`}
+                    >
+                      {isMax ? "MAX" : `⭐ ${cost}`}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

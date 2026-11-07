@@ -183,6 +183,14 @@ export function computeTargetFlowField(targetTile: { x: number; y: number }): Fl
   );
 }
 
+export interface KitchenStepModifiers {
+  chopSpeedMult?: number;
+  cookSpeedMult?: number;
+  fireDelayMult?: number;
+  starBonusMult?: number;
+  moveSpeedMult?: number;
+}
+
 // Input mask bits:
 // 1: UP, 2: DOWN, 4: LEFT, 8: RIGHT, 16: PICK_DROP, 32: ACTION_CHOP
 export function stepChefWithInput(
@@ -190,7 +198,8 @@ export function stepChefWithInput(
   inputMask: number,
   dt: number,
   counterSlots: Map<string, KitchenItem | null>,
-  stateRef: { score: number; servedOrders: number; comboCount: number; activeLog: string }
+  stateRef: { score: number; servedOrders: number; comboCount: number; activeLog: string },
+  modifiers?: KitchenStepModifiers
 ): void {
   let moveX = 0;
   let moveY = 0;
@@ -206,7 +215,8 @@ export function stepChefWithInput(
     chef.isChopping = false;
     chef.chopProgress = 0;
 
-    const speed = 3.6; // tiles per second
+    const baseSpeed = 3.6; // tiles per second
+    const speed = baseSpeed * (modifiers?.moveSpeedMult ?? 1.0);
     const nextX = chef.x + moveX * speed * dt;
     const nextY = chef.y + moveY * speed * dt;
 
@@ -321,9 +331,10 @@ export function stepChefWithInput(
     if (frontTile === "cutting_board") {
       const itemOnBoard = counterSlots.get(frontKey);
       if (itemOnBoard) {
+        const chopMult = modifiers?.chopSpeedMult ?? 1.0;
         if (itemOnBoard.type === "tomato_raw") {
           chef.isChopping = true;
-          chef.chopProgress += dt * 0.9;
+          chef.chopProgress += dt * 0.9 * chopMult;
           if (chef.chopProgress >= 1.0) {
             itemOnBoard.type = "tomato_chopped";
             chef.isChopping = false;
@@ -332,7 +343,7 @@ export function stepChefWithInput(
           }
         } else if (itemOnBoard.type === "lettuce_raw") {
           chef.isChopping = true;
-          chef.chopProgress += dt * 0.9;
+          chef.chopProgress += dt * 0.9 * chopMult;
           if (chef.chopProgress >= 1.0) {
             itemOnBoard.type = "lettuce_chopped";
             chef.isChopping = false;
@@ -351,7 +362,8 @@ export function stepChaosKitchen(
   inputs: {
     chef1Mask: number;
     chef2Mask?: number;
-  }
+  },
+  modifiers?: KitchenStepModifiers
 ): ChaosKitchenState {
   if (state.status === "cleared" || state.status === "failed") {
     return state;
@@ -378,7 +390,7 @@ export function stepChaosKitchen(
   };
 
   // 1. Step Chef 1 (Player)
-  stepChefWithInput(nextState.chefs[0], inputs.chef1Mask, dt, nextState.counterSlots, stateRef);
+  stepChefWithInput(nextState.chefs[0], inputs.chef1Mask, dt, nextState.counterSlots, stateRef, modifiers);
 
   // 2. Step Chef 2 (AI Assistant via Dijkstra Flow Field or 2P)
   let chef2Mask = inputs.chef2Mask ?? 0;
@@ -413,7 +425,7 @@ export function stepChaosKitchen(
       }
     }
   }
-  stepChefWithInput(nextState.chefs[1], chef2Mask, dt, nextState.counterSlots, stateRef);
+  stepChefWithInput(nextState.chefs[1], chef2Mask, dt, nextState.counterSlots, stateRef, modifiers);
 
   // 3. Stove Sizzle & Fire Mechanics
   let hasFire = false;
@@ -423,11 +435,13 @@ export function stepChaosKitchen(
     const tile = KITCHEN_GRID[gy]?.[gx];
 
     if (tile === "stove" && item.isCooking) {
-      item.cookProgress += dt * 0.25; // 4 seconds to cook
+      const cookMult = modifiers?.cookSpeedMult ?? 1.0;
+      item.cookProgress += dt * 0.25 * cookMult; // 4 seconds to cook base
+      const burnThreshold = 2.0 * (modifiers?.fireDelayMult ?? 1.0);
       if (item.cookProgress >= 1.0 && item.type === "meat_raw") {
         item.type = "meat_cooked";
         stateRef.activeLog = "Beef patty sizzling and cooked to perfection!";
-      } else if (item.cookProgress >= 2.0 && item.type === "meat_cooked") {
+      } else if (item.cookProgress >= burnThreshold && item.type === "meat_cooked") {
         item.type = "meat_burned";
         item.isOnFire = true;
         stateRef.activeLog = "🚨 Stove caught fire! Grab extinguisher!";
@@ -457,7 +471,7 @@ export function stepChaosKitchen(
 
         if (matchedIdx !== -1) {
           const matchedOrder = nextState.orders[matchedIdx];
-          const tip = Math.floor(matchedOrder.timeRemainingSec * 3);
+          const tip = Math.floor(matchedOrder.timeRemainingSec * 3 * (modifiers?.starBonusMult ?? 1.0));
           const earned = matchedOrder.reward + tip;
 
           stateRef.score += earned;
