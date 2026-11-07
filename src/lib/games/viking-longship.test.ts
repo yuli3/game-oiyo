@@ -4,6 +4,18 @@ import {
   stepVikingLongship,
   runVikingMonteCarloSimulation,
 } from "./viking-longship";
+import {
+  INITIAL_VIKING_QUESTS,
+} from "./viking-longship-quests";
+import {
+  pickVikingLongshipDialogue,
+} from "./viking-longship-lore";
+import {
+  VIKING_UPGRADES,
+  computeVikingLongshipModifiers,
+  getVikingUpgradeCost,
+  type VikingLongshipMetaSave,
+} from "./viking-longship-meta";
 
 describe("viking-longship engine", () => {
   it("initializes state with Voronoi archipelago islands, monsters and bifrost gateway", () => {
@@ -86,3 +98,75 @@ describe("viking-longship engine", () => {
     expect(result.averageTimeSec).toBeGreaterThan(0);
   });
 });
+
+describe("viking longship deepening systems (quests, lore, meta)", () => {
+  it("defines 4 voyage survival quests with 6 locales", () => {
+    expect(INITIAL_VIKING_QUESTS).toHaveLength(4);
+    for (const q of INITIAL_VIKING_QUESTS) {
+      expect(q.title.ko).toBeDefined();
+      expect(q.title.en).toBeDefined();
+      expect(q.desc.ko).toBeDefined();
+      expect(q.rewardSilver).toBeGreaterThan(0);
+      expect(q.maxProgress).toBeGreaterThan(0);
+    }
+  });
+
+  it("picks lore dialogues across all 5 nautical triggers", () => {
+    const triggers = ["voyage_start", "island_explore", "monster_attack", "storm_danger", "bifrost_victory"] as const;
+    for (const tr of triggers) {
+      const dialogue = pickVikingLongshipDialogue(tr);
+      expect(dialogue).toBeDefined();
+      expect(dialogue.speaker).toBeDefined();
+      expect(dialogue.name.ko).toBeDefined();
+      expect(dialogue.text.ko).toBeDefined();
+      expect(dialogue.avatar).toBeDefined();
+    }
+  });
+
+  it("calculates 5 shipyard upgrades and upgrade costs", () => {
+    expect(VIKING_UPGRADES).toHaveLength(5);
+    const hull = VIKING_UPGRADES.find((u) => u.id === "ironclad_hull")!;
+    expect(hull.maxLevel).toBe(5);
+    expect(getVikingUpgradeCost(hull, 0)).toBe(150);
+    expect(getVikingUpgradeCost(hull, 1)).toBe(Math.round(150 * 1.6));
+    expect(getVikingUpgradeCost(hull, 5)).toBe(0); // maxed
+  });
+
+  it("computes active modifiers from upgrade levels", () => {
+    const emptySave: VikingLongshipMetaSave = {
+      version: 1,
+      walletSilver: 0,
+      upgradeLevels: {},
+      totalIslandsExplored: 0,
+      totalMonstersDefeated: 0,
+      totalVoyagesCompleted: 0,
+    };
+    const baseMods = computeVikingLongshipModifiers(emptySave);
+    expect(baseMods.maxHpBonus).toBe(0);
+    expect(baseMods.sailEfficiencyBonus).toBe(1.0);
+    expect(baseMods.emergencyRepairs).toBe(0);
+    expect(baseMods.silverDredgeMult).toBe(1.0);
+
+    const upgradedSave: VikingLongshipMetaSave = {
+      version: 1,
+      walletSilver: 1000,
+      upgradeLevels: {
+        ironclad_hull: 2,
+        silk_sail: 3,
+        valkyrie_harpoon: 2,
+        emergency_planks: 1,
+        silver_dredge: 4,
+      },
+      totalIslandsExplored: 5,
+      totalMonstersDefeated: 3,
+      totalVoyagesCompleted: 1,
+    };
+    const mods = computeVikingLongshipModifiers(upgradedSave);
+    expect(mods.maxHpBonus).toBe(40);
+    expect(mods.sailEfficiencyBonus).toBeCloseTo(1.45);
+    expect(mods.harpoonDamageMult).toBeCloseTo(1.4);
+    expect(mods.emergencyRepairs).toBe(1);
+    expect(mods.silverDredgeMult).toBeCloseTo(2.0);
+  });
+});
+

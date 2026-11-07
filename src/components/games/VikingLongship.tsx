@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import { getSpriteUrl } from "../../lib/games/sprites";
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "../../lib/games/share-card";
 import { celebrate } from "../../lib/games/celebration";
-import { Maximize2, Minimize2, Camera, Check } from "lucide-react";
+import { Maximize2, Minimize2, Camera, Check, ScrollText, Wrench, X, ShieldAlert } from "lucide-react";
 import {
   initializeVikingLongship,
   stepVikingLongship,
@@ -12,6 +12,24 @@ import {
 } from "../../lib/games/viking-longship";
 import { useAudioContext } from "../../lib/games/use-audio-context";
 import { GameStatTile } from "../ui/game/GameStatTile";
+import {
+  type VikingLongshipQuest,
+  loadVikingLongshipQuests,
+  saveVikingLongshipQuests,
+} from "../../lib/games/viking-longship-quests";
+import {
+  type VikingLongshipDialogue,
+  pickVikingLongshipDialogue,
+} from "../../lib/games/viking-longship-lore";
+import {
+  type VikingLongshipMetaSave,
+  type VikingUpgradeDef,
+  VIKING_UPGRADES,
+  loadVikingLongshipMeta,
+  saveVikingLongshipMeta,
+  getVikingUpgradeCost,
+  computeVikingLongshipModifiers,
+} from "../../lib/games/viking-longship-meta";
 
 function TiltVikingButton({
   children,
@@ -32,7 +50,7 @@ function TiltVikingButton({
   );
 }
 
-export function VikingLongship() {
+export function VikingLongship({ locale = "ko" }: { locale?: string }) {
   const { isImmersive, containerRef, togglePortal } = useArcadePortal();
   const [gameState, setGameState] = useState<VikingLongshipState>(() => initializeVikingLongship());
   const [isCopied, setIsCopied] = useState(false);
@@ -47,6 +65,94 @@ export function VikingLongship() {
     interactIsland: false,
     repairShip: false,
   });
+
+  // 6대 상용 심화 시스템 상태
+  const [quests, setQuests] = useState<VikingLongshipQuest[]>(loadVikingLongshipQuests);
+  const [metaSave, setMetaSave] = useState<VikingLongshipMetaSave>(loadVikingLongshipMeta);
+  const metaMods = useMemo(() => computeVikingLongshipModifiers(metaSave), [metaSave]);
+  const [emergencyRepairsRemaining, setEmergencyRepairsRemaining] = useState<number>(() => metaMods.emergencyRepairs);
+  const [loreDialogue, setLoreDialogue] = useState<VikingLongshipDialogue>(() => pickVikingLongshipDialogue("voyage_start"));
+  const [isQuestModalOpen, setIsQuestModalOpen] = useState(false);
+  const [isMetaModalOpen, setIsMetaModalOpen] = useState(false);
+
+  // 퀘스트 진척도 갱신
+  const updateQuestProgress = useCallback((questId: string, delta: number, isAbsolute = false) => {
+    setQuests((prev) => {
+      const next = prev.map((q) => {
+        if (q.id !== questId) return q;
+        const newProg = isAbsolute ? delta : q.progress + delta;
+        return {
+          ...q,
+          progress: Math.min(q.maxProgress, Math.max(q.progress, newProg)),
+        };
+      });
+      saveVikingLongshipQuests(next);
+      return next;
+    });
+  }, []);
+
+  // 퀘스트 보상 수령
+  const handleClaimQuest = useCallback((questId: string) => {
+    const q = quests.find((item) => item.id === questId);
+    if (!q || q.isClaimed || q.progress < q.maxProgress) return;
+
+    setQuests((prev) => {
+      const next = prev.map((item) => (item.id === questId ? { ...item, isClaimed: true } : item));
+      saveVikingLongshipQuests(next);
+      return next;
+    });
+
+    setMetaSave((prev) => {
+      const next = {
+        ...prev,
+        walletSilver: prev.walletSilver + q.rewardSilver,
+      };
+      saveVikingLongshipMeta(next);
+      return next;
+    });
+
+    MobileHapticsPro.success();
+  }, [quests]);
+
+  // 조선소 영구 업그레이드
+  const handleBuyUpgrade = useCallback((upgradeId: string) => {
+    const def = VIKING_UPGRADES.find((u) => u.id === upgradeId);
+    if (!def) return;
+    const currentLv = metaSave.upgradeLevels[upgradeId] || 0;
+    if (currentLv >= def.maxLevel) return;
+    const cost = getVikingUpgradeCost(def, currentLv);
+    if (metaSave.walletSilver < cost) return;
+
+    setMetaSave((prev) => {
+      const next = {
+        ...prev,
+        walletSilver: prev.walletSilver - cost,
+        upgradeLevels: {
+          ...prev.upgradeLevels,
+          [upgradeId]: currentLv + 1,
+        },
+      };
+      saveVikingLongshipMeta(next);
+      return next;
+    });
+
+    MobileHapticsPro.medium();
+  }, [metaSave]);
+
+  // 비상 수리 키트 발동
+  const handleEmergencyRepair = useCallback(() => {
+    if (emergencyRepairsRemaining <= 0) return;
+    setEmergencyRepairsRemaining((prev) => prev - 1);
+    setGameState((prev) => ({
+      ...prev,
+      hullHp: Math.min(prev.maxHullHp + metaMods.maxHpBonus, prev.hullHp + 45),
+      activeLog: " 긴급 수리 키트로 선체 +45 HP를 즉시 복구했습니다!",
+    }));
+    MobileHapticsPro.heavy();
+    if (containerRef?.current) {
+      celebrate(containerRef.current, { preset: "sparks", scale: 1.2 });
+    }
+  }, [emergencyRepairsRemaining, metaMods.maxHpBonus, containerRef]);
 
   const getAudioContext = useAudioContext();
   const playVikingSound = useCallback(
@@ -160,8 +266,6 @@ export function VikingLongship() {
           inputRef.current.interactIsland = true;
           playVikingSound("rune");
           break;
-          playTone(440, "sine", 0.12);
-          break;
         case "c":
           inputRef.current.repairShip = true;
           playTone(392, "triangle", 0.15);
@@ -215,6 +319,80 @@ export function VikingLongship() {
           interactIsland: inputRef.current.interactIsland,
           repairShip: inputRef.current.repairShip,
         });
+
+        // 6대 심화 시스템: 룬스톤 발견 이벤트
+        if (next.runestonesFound > prev.runestonesFound) {
+          updateQuestProgress("quest_runestone_voyage", next.runestonesFound, true);
+          setLoreDialogue(pickVikingLongshipDialogue("island_explore"));
+          const silverBonus = Math.round(50 * metaMods.silverDredgeMult);
+          setMetaSave((s) => {
+            const nextSave = {
+              ...s,
+              walletSilver: s.walletSilver + silverBonus,
+              totalIslandsExplored: s.totalIslandsExplored + 1,
+            };
+            saveVikingLongshipMeta(nextSave);
+            return nextSave;
+          });
+          MobileHapticsPro.success();
+        }
+
+        // 6대 심화 시스템: 몬스터 처치 이벤트
+        if (next.monsters.length < prev.monsters.length) {
+          updateQuestProgress("quest_sea_slayer", 1, false);
+          const silverBonus = Math.round(60 * metaMods.silverDredgeMult);
+          setMetaSave((s) => {
+            const nextSave = {
+              ...s,
+              walletSilver: s.walletSilver + silverBonus,
+              totalMonstersDefeated: s.totalMonstersDefeated + 1,
+            };
+            saveVikingLongshipMeta(nextSave);
+            return nextSave;
+          });
+          MobileHapticsPro.heavy();
+        }
+
+        // 6대 심화 시스템: 자원 수확 이벤트
+        const prevRes = prev.wood + prev.iron;
+        const nextRes = next.wood + next.iron;
+        if (nextRes > prevRes) {
+          const diff = nextRes - prevRes;
+          updateQuestProgress("quest_timber_salvage", diff, false);
+          const silverBonus = Math.round(diff * 4 * metaMods.silverDredgeMult);
+          setMetaSave((s) => {
+            const nextSave = { ...s, walletSilver: s.walletSilver + silverBonus };
+            saveVikingLongshipMeta(nextSave);
+            return nextSave;
+          });
+          MobileHapticsPro.medium();
+        }
+
+        // 6대 심화 시스템: 비프로스트 승리 이벤트
+        if (next.status === "victory" && prev.status !== "victory") {
+          updateQuestProgress("quest_bifrost_ascent", 1, true);
+          setLoreDialogue(pickVikingLongshipDialogue("bifrost_victory"));
+          const silverBonus = Math.round(200 * metaMods.silverDredgeMult);
+          setMetaSave((s) => {
+            const nextSave = {
+              ...s,
+              walletSilver: s.walletSilver + silverBonus,
+              totalVoyagesCompleted: s.totalVoyagesCompleted + 1,
+            };
+            saveVikingLongshipMeta(nextSave);
+            return nextSave;
+          });
+          MobileHapticsPro.success();
+          if (containerRef?.current) {
+            celebrate(containerRef.current, { preset: "sparks", scale: 1.4 });
+          }
+        }
+
+        // 6대 심화 시스템: 선체 위기 이벤트
+        if (next.hullHp < 30 && prev.hullHp >= 30) {
+          setLoreDialogue(pickVikingLongshipDialogue("storm_danger"));
+          MobileHapticsPro.selection();
+        }
 
         // Reset single-pulse inputs
         inputRef.current.fireHarpoon = false;
@@ -612,7 +790,48 @@ export function VikingLongship() {
             Aero-dynamic sailing, Voronoi archipelagos, sea serpents & runestones.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5">
+          {/* 비상 수리 키트 버튼 */}
+          {emergencyRepairsRemaining > 0 && gameState.status === "sailing" && (
+            <TiltVikingButton
+              type="button"
+              onClick={handleEmergencyRepair}
+              className="px-2.5 py-1 text-xs font-semibold rounded-md border border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors flex items-center gap-1"
+              title="Emergency Planks"
+            >
+              <ShieldAlert className="w-3.5 h-3.5" />
+              <span>긴급 수리 ({emergencyRepairsRemaining})</span>
+            </TiltVikingButton>
+          )}
+
+          {/* 퀘스트 지령 버튼 */}
+          <TiltVikingButton
+            type="button"
+            onClick={() => setIsQuestModalOpen(true)}
+            className="relative px-2.5 py-1 text-xs font-semibold rounded-md border border-border bg-secondary hover:bg-secondary/80 transition-colors flex items-center gap-1"
+            title="Quests"
+          >
+            <ScrollText className="w-3.5 h-3.5 text-primary" />
+            <span className="hidden sm:inline">항해 지령</span>
+            {quests.some((q) => !q.isClaimed && q.progress >= q.maxProgress) && (
+              <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-chart-5 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-destructive" />
+              </span>
+            )}
+          </TiltVikingButton>
+
+          {/* 조선소 강화 버튼 */}
+          <TiltVikingButton
+            type="button"
+            onClick={() => setIsMetaModalOpen(true)}
+            className="px-2.5 py-1 text-xs font-semibold rounded-md border border-warning/40 bg-warning/10 text-warning hover:bg-warning/20 transition-colors flex items-center gap-1"
+            title="Shipyard Upgrades"
+          >
+            <Wrench className="w-3.5 h-3.5 text-warning" />
+            <span>🪙 {metaSave.walletSilver}</span>
+          </TiltVikingButton>
+
           <TiltVikingButton
             type="button"
             onClick={handleShareCard}
@@ -636,6 +855,22 @@ export function VikingLongship() {
           >
             {isImmersive ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
           </button>
+        </div>
+      </div>
+
+      {/* 노르드 선원 통신 대사 HUD 바 */}
+      <div className="flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-3 py-1.5 text-xs">
+        <span className="text-base select-none" aria-hidden="true">
+          {loreDialogue.avatar}
+        </span>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <span className="font-bold text-primary">{loreDialogue.name[locale] || loreDialogue.name.ko}</span>
+            <span className="text-muted-foreground text-xs opacity-75">
+              • {loreDialogue.title[locale] || loreDialogue.title.ko}
+            </span>
+          </div>
+          <p className="truncate text-foreground text-xs">{loreDialogue.text[locale] || loreDialogue.text.ko}</p>
         </div>
       </div>
 
@@ -819,6 +1054,156 @@ export function VikingLongship() {
           </TiltVikingButton>
         </div>
       </div>
+
+      {/* 퀘스트 지령 모달 */}
+      {isQuestModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+          <div className="relative w-full max-w-md rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-2xl">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div className="flex items-center gap-2">
+                <ScrollText className="h-5 w-5 text-primary" />
+                <h3 className="text-base font-black">바이킹 항해 생존 지령서</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsQuestModalOpen(false)}
+                className="rounded-lg p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="my-4 flex flex-col gap-3">
+              {quests.map((q) => {
+                const canClaim = !q.isClaimed && q.progress >= q.maxProgress;
+                return (
+                  <div
+                    key={q.id}
+                    className="flex items-center justify-between rounded-xl border border-border bg-muted/20 p-3"
+                  >
+                    <div className="flex-1 pr-2">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-bold text-foreground">{q.title[locale] || q.title.ko}</span>
+                        <span className="text-xs font-bold text-warning">+{q.rewardSilver} 🪙</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5">{q.desc[locale] || q.desc.ko}</p>
+                      <div className="mt-1.5 flex items-center gap-2">
+                        <div className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden">
+                          <div
+                            className="h-full bg-primary transition-all duration-300 w-(--prog-pct)"
+                            style={{ "--prog-pct": `${Math.min(100, (q.progress / q.maxProgress) * 100)}%` } as React.CSSProperties}
+                          />
+                        </div>
+                        <span className="text-xs font-mono text-muted-foreground">
+                          {q.progress}/{q.maxProgress}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div>
+                      {q.isClaimed ? (
+                        <span className="rounded-lg bg-muted px-2.5 py-1 text-xs font-bold text-muted-foreground">
+                          수령 완료
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled={!canClaim}
+                          onClick={() => handleClaimQuest(q.id)}
+                          className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+                            canClaim
+                              ? "bg-primary text-primary-foreground shadow hover:opacity-90"
+                              : "bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
+                          }`}
+                        >
+                          보상 수령
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 바이킹 조선소 5대 영구 강화 모달 */}
+      {isMetaModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+          <div className="relative w-full max-w-lg rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-2xl">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div className="flex items-center gap-2">
+                <Wrench className="h-5 w-5 text-warning" />
+                <h3 className="text-base font-black">에이릭의 바이킹 조선소</h3>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1 rounded-lg border border-warning/40 bg-warning/10 px-2 py-0.5 text-xs font-bold text-warning">
+                  <span>🪙 {metaSave.walletSilver}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsMetaModalOpen(false)}
+                  className="rounded-lg p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            <div className="my-4 flex max-h-96 flex-col gap-2.5 overflow-y-auto pr-1">
+              {VIKING_UPGRADES.map((upg) => {
+                const currentLv = metaSave.upgradeLevels[upg.id] || 0;
+                const isMax = currentLv >= upg.maxLevel;
+                const cost = getVikingUpgradeCost(upg, currentLv);
+                const canAfford = !isMax && metaSave.walletSilver >= cost;
+
+                return (
+                  <div
+                    key={upg.id}
+                    className="flex items-center justify-between rounded-xl border border-border bg-muted/20 p-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl select-none" aria-hidden="true">{upg.icon}</span>
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-bold text-foreground">{upg.name[locale] || upg.name.ko}</span>
+                          <span className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono font-semibold text-muted-foreground">
+                            Lv.{currentLv}/{upg.maxLevel}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">{upg.desc[locale] || upg.desc.ko}</p>
+                      </div>
+                    </div>
+
+                    <div>
+                      {isMax ? (
+                        <span className="rounded-lg bg-muted px-3 py-1.5 text-xs font-bold text-muted-foreground">
+                          MAX
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled={!canAfford}
+                          onClick={() => handleBuyUpgrade(upg.id)}
+                          className={`rounded-lg px-3 py-1.5 text-xs font-bold transition flex items-center gap-1 ${
+                            canAfford
+                              ? "bg-warning text-warning-foreground shadow hover:opacity-90"
+                              : "bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
+                          }`}
+                        >
+                          <span>강화</span>
+                          <span className="font-mono">({cost}🪙)</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

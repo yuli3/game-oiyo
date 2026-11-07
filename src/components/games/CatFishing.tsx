@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Volume2, VolumeX, Maximize2, Minimize2, Share2, Trophy, Sparkles } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Volume2, VolumeX, Maximize2, Minimize2, Share2, Trophy, Sparkles, ScrollText, Wrench, X, ShieldAlert } from 'lucide-react';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
@@ -23,6 +23,24 @@ import {
     type FishState,
 } from '../../lib/games/cat-fishing';
 import { CAT_FISHING_KOI, CAT_FISHING_PAW, CAT_FISHING_UI_SPRITES } from '../../lib/games/sprites';
+import {
+    type CatFishingQuest,
+    loadCatFishingQuests,
+    saveCatFishingQuests,
+} from '../../lib/games/cat-fishing-quests';
+import {
+    type CatFishingDialogue,
+    pickCatFishingDialogue,
+} from '../../lib/games/cat-fishing-lore';
+import {
+    type CatFishingMetaSave,
+    type CatUpgradeDef,
+    CAT_UPGRADES,
+    loadCatFishingMeta,
+    saveCatFishingMeta,
+    getCatUpgradeCost,
+    computeCatFishingModifiers,
+} from '../../lib/games/cat-fishing-meta';
 
 const BEST_KEY = 'oiyo-cat-fishing-best';
 
@@ -200,7 +218,7 @@ const COPY = {
     es: { title: 'Pesca gatuna 3D', subtitle: 'Cat Fishing 3D', normal: 'Normal', hard: 'Difícil', hell: 'Infierno', caught: 'Atrapados', time: 'Tiempo', best: 'Récord', win: '¡Todos atrapados! 🐱', winSub: 'Tus gatitos festejan esta noche.', hintNormal: '¡Toca los peces para atraparlos!', hintHard: '¡Cuidado! ¡Se escapan!', hintHell: '¡Modo super velocidad!', again: 'Jugar otra vez', same: 'Mismo estanque', sound: 'Sonido', rankS: '👑 Gato Pescador Maestro', rankA: '🐟 Gato Experto', rankB: '🐾 Gatito Curioso', rankC: '💤 Gato Perezoso' },
 } as const;
 
-export default function CatFishing({ locale = 'ko' }: { locale?: string }) {
+export function CatFishing({ locale = 'ko' }: { locale?: string }) {
     const t = COPY[(locale as keyof typeof COPY)] ?? COPY.en;
     const prefersReducedMotion = usePrefersReducedMotion();
     const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: (locale as any) || 'ko' });
@@ -217,6 +235,94 @@ export default function CatFishing({ locale = 'ko' }: { locale?: string }) {
             return false;
         }
     });
+
+    // 6대 상용 심화 시스템 상태 (퀘스트, 로어, 메타 강화, 얼음 레이저)
+    const [quests, setQuests] = useState<CatFishingQuest[]>(loadCatFishingQuests);
+    const [metaSave, setMetaSave] = useState<CatFishingMetaSave>(loadCatFishingMeta);
+    const metaMods = useMemo(() => computeCatFishingModifiers(metaSave), [metaSave]);
+    const [freezeChargesRemaining, setFreezeChargesRemaining] = useState<number>(() => metaMods.freezeCharges);
+    const [isFrozen, setIsFrozen] = useState(false);
+    const [loreDialogue, setLoreDialogue] = useState<CatFishingDialogue>(() => pickCatFishingDialogue("pond_start"));
+    const [isQuestModalOpen, setIsQuestModalOpen] = useState(false);
+    const [isMetaModalOpen, setIsMetaModalOpen] = useState(false);
+
+    // 퀘스트 진척도 갱신
+    const updateQuestProgress = useCallback((questId: string, delta: number, isAbsolute = false) => {
+        setQuests((prev) => {
+            const next = prev.map((q) => {
+                if (q.id !== questId) return q;
+                const newProg = isAbsolute ? delta : q.progress + delta;
+                return {
+                    ...q,
+                    progress: Math.min(q.maxProgress, Math.max(q.progress, newProg)),
+                };
+            });
+            saveCatFishingQuests(next);
+            return next;
+        });
+    }, []);
+
+    // 퀘스트 보상 수령
+    const handleClaimQuest = useCallback((questId: string) => {
+        const q = quests.find((item) => item.id === questId);
+        if (!q || q.isClaimed || q.progress < q.maxProgress) return;
+
+        setQuests((prev) => {
+            const next = prev.map((item) => (item.id === questId ? { ...item, isClaimed: true } : item));
+            saveCatFishingQuests(next);
+            return next;
+        });
+
+        setMetaSave((prev) => {
+            const next = {
+                ...prev,
+                walletChuru: prev.walletChuru + q.rewardChuru,
+            };
+            saveCatFishingMeta(next);
+            return next;
+        });
+
+        MobileHapticsPro.success();
+    }, [quests]);
+
+    // 연구소 영구 업그레이드
+    const handleBuyUpgrade = useCallback((upgradeId: string) => {
+        const def = CAT_UPGRADES.find((u) => u.id === upgradeId);
+        if (!def) return;
+        const currentLv = metaSave.upgradeLevels[upgradeId] || 0;
+        if (currentLv >= def.maxLevel) return;
+        const cost = getCatUpgradeCost(def, currentLv);
+        if (metaSave.walletChuru < cost) return;
+
+        setMetaSave((prev) => {
+            const next = {
+                ...prev,
+                walletChuru: prev.walletChuru - cost,
+                upgradeLevels: {
+                    ...prev.upgradeLevels,
+                    [upgradeId]: currentLv + 1,
+                },
+            };
+            saveCatFishingMeta(next);
+            return next;
+        });
+
+        MobileHapticsPro.medium();
+    }, [metaSave]);
+
+    // 얼음 레이저 포인터 발동 (모든 물고기 3초간 정지)
+    const handleFreezeLaser = useCallback(() => {
+        if (freezeChargesRemaining <= 0 || isFrozen) return;
+        setFreezeChargesRemaining((prev) => prev - 1);
+        setIsFrozen(true);
+        MobileHapticsPro.heavy();
+        if (containerRef?.current) {
+            celebrate(containerRef.current, { preset: "shards", scale: 1.2 });
+        }
+        setTimeout(() => {
+            setIsFrozen(false);
+        }, 3000);
+    }, [freezeChargesRemaining, isFrozen, containerRef]);
 
     useEffect(() => {
         try {
@@ -274,10 +380,11 @@ export default function CatFishing({ locale = 'ko' }: { locale?: string }) {
 
     // Fish swimming movement loop with heading rotation
     useEffect(() => {
-        if (won) return;
+        if (won || isFrozen) return;
         const cfg = CONFIGS[difficulty];
+        const slowedCfg = { ...cfg, baseSpeed: cfg.baseSpeed * metaMods.catnipSlowMult };
         const loop = createDeltaLoop((deltaSeconds) => {
-            const next = fishRef.current.map((f) => stepFish(f, cfg, pointer.current, deltaSeconds * 60, rngRef.current));
+            const next = fishRef.current.map((f) => stepFish(f, slowedCfg, pointer.current, deltaSeconds * 60, rngRef.current));
             fishRef.current = next;
             for (const f of next) {
                 const node = fishNodes.current.get(f.id);
@@ -291,7 +398,7 @@ export default function CatFishing({ locale = 'ko' }: { locale?: string }) {
         });
         loop.start();
         return () => loop.stop();
-    }, [difficulty, won]);
+    }, [difficulty, won, isFrozen, metaMods.catnipSlowMult]);
 
     const trackPointer = (clientX: number, clientY: number) => {
         const rect = areaRef.current?.getBoundingClientRect();
@@ -359,6 +466,20 @@ export default function CatFishing({ locale = 'ko' }: { locale?: string }) {
             setTimeout(() => setStrikes((prev) => prev.filter((s) => s.id !== sid)), 550);
         }
 
+        // 6대 심화 시스템: 퀘스트 & 츄르 재화 적립
+        updateQuestProgress("quest_first_catch", 1, false);
+        updateQuestProgress("quest_grand_master", 1, false);
+        const churuGained = Math.round(15 * metaMods.churuYieldMult);
+        setMetaSave((s) => {
+            const nextSave = {
+                ...s,
+                walletChuru: s.walletChuru + churuGained,
+                totalFishCaught: s.totalFishCaught + 1,
+            };
+            saveCatFishingMeta(nextSave);
+            return nextSave;
+        });
+
         setFish((prev) => {
             const next = catchFishAt(prev, id);
             if (allCaught(next)) {
@@ -367,6 +488,27 @@ export default function CatFishing({ locale = 'ko' }: { locale?: string }) {
                 if (containerRef.current) {
                     celebrate(containerRef.current, { preset: "stardust" });
                 }
+
+                // 승리 퀘스트 판정
+                if (seconds <= 12) {
+                    updateQuestProgress("quest_speed_paws", 1, true);
+                }
+                if (difficulty === "hard" || difficulty === "hell") {
+                    updateQuestProgress("quest_hard_tangle", 1, true);
+                }
+                setLoreDialogue(pickCatFishingDialogue("pond_cleared"));
+
+                const bonusChuru = Math.round(50 * metaMods.victoryBonusMult);
+                setMetaSave((s) => {
+                    const nextSave = {
+                        ...s,
+                        walletChuru: s.walletChuru + bonusChuru,
+                        totalPondsCleared: s.totalPondsCleared + 1,
+                    };
+                    saveCatFishingMeta(nextSave);
+                    return nextSave;
+                });
+
                 setBest((b) => {
                     if (b[difficulty] !== undefined && b[difficulty] <= seconds) return b;
                     const nb = { ...b, [difficulty]: seconds };
@@ -376,6 +518,7 @@ export default function CatFishing({ locale = 'ko' }: { locale?: string }) {
             } else {
                 MobileHapticsPro.heavy();
                 audio.current?.playCatchSplash();
+                setLoreDialogue(pickCatFishingDialogue("paw_catch"));
             }
             return next;
         });
@@ -391,7 +534,10 @@ export default function CatFishing({ locale = 'ko' }: { locale?: string }) {
         setSeconds(0);
         started.current = false;
         startedAt.current = null;
-    }, [difficulty]);
+        setFreezeChargesRemaining(metaMods.freezeCharges);
+        setIsFrozen(false);
+        setLoreDialogue(pickCatFishingDialogue("pond_start"));
+    }, [difficulty, metaMods.freezeCharges]);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -417,7 +563,69 @@ export default function CatFishing({ locale = 'ko' }: { locale?: string }) {
                 isImmersive ? 'fixed inset-0 z-50 flex flex-col items-center justify-center bg-background overflow-y-auto p-4' : ''
             }`}
         >
-            <div className="w-full max-w-xl mx-auto mb-2 flex items-center justify-end gap-2 px-1">
+            {/* 상단 통신 대사 HUD 바 */}
+            <div className="w-full max-w-xl mx-auto mb-2 flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-3 py-1.5 text-xs">
+                <span className="text-base select-none" aria-hidden="true">
+                    {loreDialogue.avatar}
+                </span>
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-primary">{loreDialogue.name[locale] || loreDialogue.name.ko}</span>
+                        <span className="text-muted-foreground text-xs opacity-75">
+                            • {loreDialogue.title[locale] || loreDialogue.title.ko}
+                        </span>
+                    </div>
+                    <p className="truncate text-foreground text-xs">{loreDialogue.text[locale] || loreDialogue.text.ko}</p>
+                </div>
+            </div>
+
+            <div className="w-full max-w-xl mx-auto mb-2 flex flex-wrap items-center justify-end gap-1.5 px-1">
+                {/* 비상 얼음 레이저 버튼 */}
+                {freezeChargesRemaining > 0 && !won && (
+                    <button
+                        type="button"
+                        onClick={handleFreezeLaser}
+                        disabled={isFrozen}
+                        className={`flex min-h-11 items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs font-bold transition-colors ${
+                            isFrozen
+                                ? "border-chart-4 bg-chart-4/20 text-chart-4"
+                                : "border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/20"
+                        }`}
+                        title="Freeze Laser (3s pause)"
+                    >
+                        <ShieldAlert className="h-4 w-4" />
+                        <span>{isFrozen ? "빙결 중!" : `얼음 (${freezeChargesRemaining})`}</span>
+                    </button>
+                )}
+
+                {/* 퀘스트 지령 버튼 */}
+                <button
+                    type="button"
+                    onClick={() => setIsQuestModalOpen(true)}
+                    className="relative flex min-h-11 items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-bold text-foreground shadow-sm hover:bg-muted"
+                    title="Quests"
+                >
+                    <ScrollText className="h-4 w-4 text-primary" />
+                    <span className="hidden sm:inline">퀘스트</span>
+                    {quests.some((q) => !q.isClaimed && q.progress >= q.maxProgress) && (
+                        <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-chart-5 opacity-75" />
+                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-destructive" />
+                        </span>
+                    )}
+                </button>
+
+                {/* 냥이 낚시터 연구소 버튼 */}
+                <button
+                    type="button"
+                    onClick={() => setIsMetaModalOpen(true)}
+                    className="flex min-h-11 items-center gap-1 rounded-lg border border-warning/40 bg-warning/10 px-2.5 py-1.5 text-xs font-bold text-warning hover:bg-warning/20"
+                    title="Upgrades"
+                >
+                    <Wrench className="h-4 w-4 text-warning" />
+                    <span>🐟 {metaSave.walletChuru}</span>
+                </button>
+
                 <button
                     type="button"
                     onClick={() => setMuted((v) => !v)}
@@ -608,6 +816,158 @@ export default function CatFishing({ locale = 'ko' }: { locale?: string }) {
 
                 <p className="mt-3 text-center text-xs text-muted-foreground font-medium">{hint}</p>
             </GameContainer>
+
+            {/* 퀘스트 지령 모달 */}
+            {isQuestModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+                    <div className="relative w-full max-w-md rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-2xl">
+                        <div className="flex items-center justify-between border-b border-border pb-3">
+                            <div className="flex items-center gap-2">
+                                <ScrollText className="h-5 w-5 text-primary" />
+                                <h3 className="text-base font-black">냥이 낚시터 일일 의뢰서</h3>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setIsQuestModalOpen(false)}
+                                className="rounded-lg p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                            >
+                                <X className="h-5 w-5" />
+                            </button>
+                        </div>
+
+                        <div className="my-4 flex flex-col gap-3">
+                            {quests.map((q) => {
+                                const canClaim = !q.isClaimed && q.progress >= q.maxProgress;
+                                return (
+                                    <div
+                                        key={q.id}
+                                        className="flex items-center justify-between rounded-xl border border-border bg-muted/20 p-3"
+                                    >
+                                        <div className="flex-1 pr-2">
+                                            <div className="flex items-center gap-1.5">
+                                                <span className="text-xs font-bold text-foreground">{q.title[locale] || q.title.ko}</span>
+                                                <span className="text-xs font-bold text-warning">+{q.rewardChuru} 🐟</span>
+                                            </div>
+                                            <p className="text-xs text-muted-foreground mt-0.5">{q.desc[locale] || q.desc.ko}</p>
+                                            <div className="mt-1.5 flex items-center gap-2">
+                                                <div className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden">
+                                                    <div
+                                                        className="h-full bg-primary transition-all duration-300 w-(--prog-pct)"
+                                                        style={{ "--prog-pct": `${Math.min(100, (q.progress / q.maxProgress) * 100)}%` } as React.CSSProperties}
+                                                    />
+                                                </div>
+                                                <span className="text-xs font-mono text-muted-foreground">
+                                                    {q.progress}/{q.maxProgress}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            {q.isClaimed ? (
+                                                <span className="rounded-lg bg-muted px-2.5 py-1 text-xs font-bold text-muted-foreground">
+                                                    수령 완료
+                                                </span>
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    disabled={!canClaim}
+                                                    onClick={() => handleClaimQuest(q.id)}
+                                                    className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+                                                        canClaim
+                                                            ? "bg-primary text-primary-foreground shadow hover:opacity-90"
+                                                            : "bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
+                                                    }`}
+                                                >
+                                                    보상 수령
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 냥이 낚시터 5대 영구 강화 모달 */}
+            {isMetaModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+                    <div className="relative w-full max-w-lg rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-2xl">
+                        <div className="flex items-center justify-between border-b border-border pb-3">
+                            <div className="flex items-center gap-2">
+                                <Wrench className="h-5 w-5 text-warning" />
+                                <h3 className="text-base font-black">나비 선장의 낚시터 연구소</h3>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-1 rounded-lg border border-warning/40 bg-warning/10 px-2 py-0.5 text-xs font-bold text-warning">
+                                    <span>🐟 {metaSave.walletChuru}</span>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsMetaModalOpen(false)}
+                                    className="rounded-lg p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                                >
+                                    <X className="h-5 w-5" />
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="my-4 flex max-h-96 flex-col gap-2.5 overflow-y-auto pr-1">
+                            {CAT_UPGRADES.map((upg) => {
+                                const currentLv = metaSave.upgradeLevels[upg.id] || 0;
+                                const isMax = currentLv >= upg.maxLevel;
+                                const cost = getCatUpgradeCost(upg, currentLv);
+                                const canAfford = !isMax && metaSave.walletChuru >= cost;
+
+                                return (
+                                    <div
+                                        key={upg.id}
+                                        className="flex items-center justify-between rounded-xl border border-border bg-muted/20 p-3"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-2xl select-none" aria-hidden="true">{upg.icon}</span>
+                                            <div>
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="text-xs font-bold text-foreground">{upg.name[locale] || upg.name.ko}</span>
+                                                    <span className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono font-semibold text-muted-foreground">
+                                                        Lv.{currentLv}/{upg.maxLevel}
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs text-muted-foreground mt-0.5">{upg.desc[locale] || upg.desc.ko}</p>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            {isMax ? (
+                                                <span className="rounded-lg bg-muted px-3 py-1.5 text-xs font-bold text-muted-foreground">
+                                                    MAX
+                                                </span>
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    disabled={!canAfford}
+                                                    onClick={() => handleBuyUpgrade(upg.id)}
+                                                    className={`rounded-lg px-3 py-1.5 text-xs font-bold transition flex items-center gap-1 ${
+                                                        canAfford
+                                                            ? "bg-warning text-warning-foreground shadow hover:opacity-90"
+                                                            : "bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
+                                                    }`}
+                                                >
+                                                    <span>강화</span>
+                                                    <span className="font-mono">({cost}🐟)</span>
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
+
+export default CatFishing;

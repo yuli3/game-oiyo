@@ -9,6 +9,18 @@ import {
   stepFish,
   type FishState,
 } from "./cat-fishing";
+import {
+  INITIAL_CAT_QUESTS,
+} from "./cat-fishing-quests";
+import {
+  pickCatFishingDialogue,
+} from "./cat-fishing-lore";
+import {
+  CAT_UPGRADES,
+  computeCatFishingModifiers,
+  getCatUpgradeCost,
+  type CatFishingMetaSave,
+} from "./cat-fishing-meta";
 
 function fixedRng(sequence: number[]): () => number {
   let index = 0;
@@ -124,3 +136,73 @@ describe("cat fishing time format", () => {
     expect(formatElapsed(125)).toBe("2:05");
   });
 });
+
+describe("cat fishing deepening systems (quests, lore, meta)", () => {
+  it("defines 4 pond fishing quests with 6 locales", () => {
+    expect(INITIAL_CAT_QUESTS).toHaveLength(4);
+    for (const q of INITIAL_CAT_QUESTS) {
+      expect(q.title.ko).toBeDefined();
+      expect(q.title.en).toBeDefined();
+      expect(q.desc.ko).toBeDefined();
+      expect(q.rewardChuru).toBeGreaterThan(0);
+      expect(q.maxProgress).toBeGreaterThan(0);
+    }
+  });
+
+  it("picks lore dialogues across all 5 fishing triggers", () => {
+    const triggers = ["pond_start", "paw_catch", "fish_escape", "frenzy_rush", "pond_cleared"] as const;
+    for (const tr of triggers) {
+      const dialogue = pickCatFishingDialogue(tr);
+      expect(dialogue).toBeDefined();
+      expect(dialogue.speaker).toBeDefined();
+      expect(dialogue.name.ko).toBeDefined();
+      expect(dialogue.text.ko).toBeDefined();
+      expect(dialogue.avatar).toBeDefined();
+    }
+  });
+
+  it("calculates 5 cat upgrades and upgrade costs", () => {
+    expect(CAT_UPGRADES).toHaveLength(5);
+    const paw = CAT_UPGRADES.find((u) => u.id === "paw_agility")!;
+    expect(paw.maxLevel).toBe(5);
+    expect(getCatUpgradeCost(paw, 0)).toBe(150);
+    expect(getCatUpgradeCost(paw, 1)).toBe(Math.round(150 * 1.6));
+    expect(getCatUpgradeCost(paw, 5)).toBe(0); // maxed
+  });
+
+  it("computes active modifiers from upgrade levels", () => {
+    const emptySave: CatFishingMetaSave = {
+      version: 1,
+      walletChuru: 0,
+      upgradeLevels: {},
+      totalFishCaught: 0,
+      totalPondsCleared: 0,
+    };
+    const baseMods = computeCatFishingModifiers(emptySave);
+    expect(baseMods.pawRadiusBonus).toBe(1.0);
+    expect(baseMods.catnipSlowMult).toBe(1.0);
+    expect(baseMods.freezeCharges).toBe(0);
+    expect(baseMods.victoryBonusMult).toBe(1.0);
+
+    const upgradedSave: CatFishingMetaSave = {
+      version: 1,
+      walletChuru: 800,
+      upgradeLevels: {
+        paw_agility: 2,
+        catnip_aura: 2,
+        golden_rod: 3,
+        freeze_laser: 1,
+        feline_luck: 2,
+      },
+      totalFishCaught: 20,
+      totalPondsCleared: 3,
+    };
+    const mods = computeCatFishingModifiers(upgradedSave);
+    expect(mods.pawRadiusBonus).toBeCloseTo(1.3);
+    expect(mods.catnipSlowMult).toBeCloseTo(0.76);
+    expect(mods.churuYieldMult).toBeCloseTo(1.75);
+    expect(mods.freezeCharges).toBe(1);
+    expect(mods.victoryBonusMult).toBeCloseTo(1.4);
+  });
+});
+
