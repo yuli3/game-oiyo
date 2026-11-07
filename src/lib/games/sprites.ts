@@ -1366,6 +1366,8 @@ export const AIM_TRAINER_UI_SPRITES = {
   target: "/assets/sprites/aim-trainer/target-bullseye-3d-128.png",
   watch: "/assets/sprites/aim-trainer/stopwatch-reflex-3d-128.png",
   trophy: "/assets/sprites/aim-trainer/trophy-sniper-3d-128.png",
+  objectsSheet: "/assets/sprites/aim-trainer/aim-trainer-objects-1024.png",
+  fxSheet: "/assets/sprites/aim-trainer/aim-trainer-fx-1024.png",
 } as const;
 
 export const WHACK_A_MOLE_UI_SPRITES = {
@@ -1467,6 +1469,8 @@ export const BLOCK_BLAST_UI_SPRITES = {
   cleared: "/assets/sprites/block-blast/grid-cleared-3d-128.png",
   clearRim: "/assets/sprites/block-blast/grid-cleared-3d-128.png",
   trophy: "/assets/sprites/block-blast/trophy-blast-3d-128.png",
+  objectsSheet: "/assets/sprites/block-blast/block-blast-objects-1024.png",
+  fxSheet: "/assets/sprites/block-blast/block-blast-fx-1024.png",
 } as const;
 
 export const RHYTHM_TAP_UI_SPRITES = {
