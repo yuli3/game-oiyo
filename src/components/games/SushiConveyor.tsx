@@ -679,3 +679,5 @@ export function SushiConveyor() {
     </div>
   );
 }
+
+export default SushiConveyor;
