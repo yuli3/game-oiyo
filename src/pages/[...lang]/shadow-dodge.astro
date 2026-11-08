@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ShadowDodge from "../../components/games/ShadowDodge";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "섀도우 닷지 — 불릿타임 탄막 회피 그레이징 아케이드",
+    description: "브라우저에서 설치 없이 즐기는 불릿타임 탄막 회피 생존 게임. 쏟아지는 네온 탄막을 아슬아슬하게 스쳐(Graze) 시간을 느리게 만들고, 섀도우 펄스로 화면 전체 탄막을 정화하세요.",
+  },
+  en: {
+    title: "Shadow Dodge — Bullet-Time Grazing Survival Arcade",
+    description: "Free browser bullet-hell survival game with near-miss grazing mechanics. Graze past incoming projectiles to trigger Bullet-Time slow-mo and unleash Shadow Pulse to clear the arena.",
+  },
+  ja: {
+    title: "シャドウドッジ — バレットタイム弾幕回避グレイズアクション",
+    description: "ブラウザで今すぐ遊べるバレットタイム弾幕回避サバイバルゲーム。迫り来る弾幕を紙一重でかすめて（グレイズ）時間をスローにし、シャドウパルスで全弾を一掃しよう。",
+  },
+  zh: {
+    title: "暗影闪避 — 子弹时间极限擦弹生存街机",
+    description: "在浏览器中免费畅玩的子弹时间弹幕生存游戏。极限贴近飞来的弹幕触发慢动作擦弹连击，蓄满暗影能量释放脉冲瞬间清空全场。",
+  },
+  fr: {
+    title: "Shadow Dodge — Arcade de Survie et Esquive Bullet-Time",
+    description: "Jeu d'esquive bullet-hell gratuit dans votre navigateur. Frôlez les projectiles pour activer le ralenti Bullet-Time et libérez l'Impulsion d'Ombre pour purifier l'arène.",
+  },
+  es: {
+    title: "Shadow Dodge — Arcade de Supervivencia y Roce Bullet-Time",
+    description: "Juego de supervivencia bullet-hell gratuito en el navegador. Roza los proyectiles al límite para activar la cámara lenta Bullet-Time y desata el Pulso Sombrío.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-4xl px-4 py-8">
+    <ShadowDodge client:load locale={locale} />
+    <GameGuide slug="shadow-dodge" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>

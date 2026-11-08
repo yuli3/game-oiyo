@@ -1154,6 +1154,20 @@ export const MISSION_CATALOG: Array<{
     goal: 10,
     xpReward: 50,
   },
+  {
+    id: "shadow-dodge-graze-15",
+    gameSlug: "shadow-dodge",
+    title: {
+      ko: "섀도우 닷지에서 불릿타임 그레이징 15회 달성 및 섀도우 펄스 발동",
+      en: "Achieve 15 Bullet-Time Grazes and unleash Shadow Pulse in Shadow Dodge",
+      ja: "シャドウドッジでバレットタイム・グレイズを15回達成しパルスを放つ",
+      zh: "在暗影闪避中完成15次子弹时间极限擦弹并释放暗影脉冲",
+      fr: "Réalisez 15 frôlements Bullet-Time et libérez l'Impulsion dans Shadow Dodge",
+      es: "Logra 15 roces Bullet-Time y desata el Pulso Sombrío en Shadow Dodge",
+    },
+    goal: 15,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {

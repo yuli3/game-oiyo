@@ -7024,4 +7024,42 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "shadow-dodge": {
+    origin: {
+      ko: "섀도우 닷지는 탄막 슈팅 장르의 핵심 쾌감인 '그레이징(아슬아슬하게 스치기)'과 불릿타임(슬로우모션) 연출을 결합한 하이스피드 회피 생존 아케이드입니다.",
+      en: "Shadow Dodge is a high-speed bullet-hell survival arcade game that blends near-miss grazing mechanics with cinematic Bullet-Time slow-motion.",
+      ja: "シャドウドッジは、弾幕シューティングの醍醐味である「グレイズ（かすり回避）」とバレットタイム演出を融合させた高速回避サバイバルアーケードです。",
+      zh: "暗影闪避是一款将弹幕射击核心乐趣“极限擦弹（Grazing）”与子弹时间慢动作特效完美结合的高速闪避生存街机游戏。",
+      fr: "Shadow Dodge est un jeu d'arcade de survie bullet-hell alliant l'esquive millimétrée (grazing) et le ralenti Bullet-Time.",
+      es: "Shadow Dodge es un arcade de supervivencia bullet-hell que combina el roce al límite (grazing) con la cámara lenta Bullet-Time.",
+    },
+    how: {
+      ko: "1) 마우스/터치 드래그나 WASD/방향키로 코어를 이동시켜 사방에서 날아오는 탄막을 피하세요. 2) 코어 바깥쪽 점선 원(그레이즈 링) 안으로 탄막을 아슬아슬하게 스치면 시간이 느려지는 불릿타임이 발동되고 섀도우 에너지가 18% 충전됩니다. 3) 에너지 100% 완충 시 스페이스바나 섀도우 펄스 버튼을 눌러 화면의 모든 탄막을 소멸시키고 대량 보너스 점수를 획득하세요.",
+      en: "1) Move your core via pointer drag or WASD/Arrow keys to evade incoming projectiles. 2) Let projectiles pass through your outer dashed Graze Ring without hitting your inner core to trigger Bullet-Time slow-mo and charge 18% Shadow Energy. 3) At 100% energy, press Space or tap Shadow Pulse to vaporize all hazards into bonus points.",
+      ja: "1) マウス/タッチ操作またはWASD/矢印キーでコアを動かし、四方から迫る弾幕を避けます。2) 外側の点線リング（グレイズ圏）で弾幕をかすめるとバレットタイムが発動し、エネルギーが18%チャージされます。3) エネルギー100%でスペースキーまたはシャドウパルスを発動し、画面内の全弾幕を消去して大量得点を獲得しましょう。",
+      zh: "1) 使用鼠标/触屏拖动或WASD/方向键移动核心，躲避四面八方袭来的弹幕。2) 让弹幕掠过外圈虚线判定环而不触碰内圈核心即可触发擦弹慢动作，并充能18%暗影能量。3) 能量满100%时按空格键或点击暗影脉冲，瞬间蒸发全场弹幕并转化为高额加分。",
+      fr: "1) Déplacez votre noyau à la souris, au toucher ou avec WASD/Flèches. 2) Frôlez les projectiles dans l'anneau pointillé externe pour activer le ralenti et charger 18% d'énergie. 3) À 100%, appuyez sur Espace pour libérer l'Impulsion d'Ombre et tout nettoyer.",
+      es: "1) Mueve tu núcleo arrastrando o con WASD/Flechas para esquivar proyectiles. 2) Roza los disparos con el anillo exterior punteado para activar cámara lenta y cargar un 18% de energía. 3) Al 100%, pulsa Espacio para lanzar el Pulso Sombrío y limpiar la pantalla.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "추적 유도탄(Seeker)과 사방에서 포위된 위기 상황은 어떻게 돌파하나요?",
+          en: "How do I escape when surrounded by homing Seekers and dense弹幕 waves?",
+          ja: "追尾弾（シーカー）や全方位弾幕に囲まれた危機はどう突破すればいいですか？",
+          zh: "被追踪导弹（Seeker）与密集弹幕包围时该如何突围？",
+          fr: "Comment s'échapper lorsqu'on est encerclé par des missiles à tête chercheuse ?",
+          es: "¿Cómo escapar cuando estás rodeado de proyectiles rastreadores y oleadas densas?",
+        },
+        a: {
+          ko: "구석에 몰리지 않도록 아레나 중앙 부근을 맴돌며 유도탄을 한곳으로 뭉치게 유도한 뒤, Shift 키(페이즈 대시)를 사용해 0.4초 무적 상태로 탄막 너머로 순간이동하세요. 또한 탄막이 화면에 가장 많이 쌓였을 때 섀도우 펄스(Space)를 터뜨리면 탄막 1개당 150점의 추가 점수와 콤보를 한꺼번에 얻을 수 있습니다.",
+          en: "Circle near the center of the arena to group homing Seekers together, then trigger Phase Dash (Shift) to blink through the barrage with 0.4s invulnerability. Wait until the screen is packed with projectiles before unleashing Shadow Pulse (Space) to convert every orb into +150 bonus score.",
+          ja: "隅に追い詰められないよう中央付近で円を描くように誘導弾をまとめ、Shiftキー（フェーズダッシュ）の0.4秒無敵ブリンクで弾幕の向こう側へ抜け出しましょう。また、画面に弾が最も溜まった瞬間にシャドウパルスを放つと1発あたり150点のボーナスが一気に手に入ります。",
+          zh: "尽量在场地中央区域迂回走位将追踪弹聚拢，随后按 Shift 键释放相位冲刺，利用 0.4 秒无敌瞬移直接穿透弹幕包围网。此外，忍耐到屏幕上弹幕最密集的时刻再开启暗影脉冲（Space），可将每颗弹幕都转化为 150 分的高额连击奖励。",
+          fr: "Restez près du centre pour regrouper les tirs, puis utilisez le Dash Phasique (Shift) pour traverser les projectiles avec 0,4s d'invulnérabilité. Attendez que l'écran soit saturé avant de lancer l'Impulsion d'Ombre pour maximiser le score.",
+          es: "Mantente cerca del centro para agrupar los proyectiles y usa el Dash de Fase (Shift) para atravesarlos con 0.4s de invulnerabilidad. Espera a que haya muchos proyectiles en pantalla antes de activar el Pulso Sombrío para maximizar tus puntos.",
+        },
+      },
+    ],
+  },
 };
