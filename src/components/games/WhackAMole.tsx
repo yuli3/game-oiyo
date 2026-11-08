@@ -15,6 +15,7 @@ import type { Locale } from "../../lib/i18n";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { getBest, recordBest } from "../../lib/games/records";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
+import { HitStopController } from "../../lib/games/game-juice";
 import {
   advanceWhack,
   createWhackGame,
@@ -97,6 +98,7 @@ const WhackAMole = ({ locale }: { locale: Locale }) => {
   const shockwavesRef = useRef<WhackShockwave[]>([]);
   const floatingScoresRef = useRef<WhackFloatingScore[]>([]);
   const recoilShakeRef = useRef<number>(0);
+  const hitStopRef = useRef(new HitStopController());
 
   const resumedAt = useRef(0);
   const baseElapsed = useRef(0);
@@ -241,9 +243,11 @@ const WhackAMole = ({ locale }: { locale: Locale }) => {
       const delta = lastTime === null ? 0 : Math.min(50, Math.max(0, now - lastTime));
       lastTime = now;
 
-      // Update game elapsed time if playing
+      const { isFrozen } = hitStopRef.current.update(delta / 1000);
+
+      // Update game elapsed time if playing and not frozen by hit-stop
       const current = gameRef.current;
-      if (current && !paused && current.status === "playing") {
+      if (current && !paused && !isFrozen && current.status === "playing") {
         const elapsed = baseElapsed.current + performance.now() - resumedAt.current;
         const next = advanceWhack(current, elapsed);
         if (next !== current) {
@@ -372,6 +376,7 @@ const WhackAMole = ({ locale }: { locale: Locale }) => {
           tone("mole", nextGame.combo);
           vibrate(12);
           recoilShakeRef.current = 4;
+          if (nextGame.combo >= 3) hitStopRef.current.trigger(0.04);
           particlesRef.current.push(...createWhackParticles(center.x, center.y, "mole", 22));
           shockwavesRef.current.push(createWhackShockwave(center.x, center.y, "mole"));
           const scoreDelta = nextGame.combo > 1 ? `+10 (x${nextGame.combo})` : "+10";
@@ -380,6 +385,7 @@ const WhackAMole = ({ locale }: { locale: Locale }) => {
           tone("bomb");
           vibrate([40, 40, 80]);
           recoilShakeRef.current = 10;
+          hitStopRef.current.trigger(0.08);
           particlesRef.current.push(...createWhackParticles(center.x, center.y, "bomb", 32));
           shockwavesRef.current.push(createWhackShockwave(center.x, center.y, "bomb"));
           floatingScoresRef.current.push(createFloatingScore(center.x, center.y, "-10 BOMB!", "#ef4444"));

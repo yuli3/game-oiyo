@@ -15,6 +15,8 @@ import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-u
 import { getSpriteUrl, SPACE_PINBALL_UI_SPRITES } from '../../lib/games/sprites';
 import { celebrate } from '../../lib/games/celebration';
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from '../../lib/games/share-card';
+import { HitStopController } from '../../lib/games/game-juice';
+import { loadHighScore, saveHighScore } from '../../lib/games/game-save';
 
 interface Props {
   locale: Locale;
@@ -171,7 +173,9 @@ function TiltPinballButton({ children, className = '', ...props }: React.ButtonH
 }
 
 export default function SpacePinball({ locale }: Props) {
-  const [gameState, setGameState] = useState<PinballGameState>(() => createInitialPinballState());
+  const [gameState, setGameState] = useState<PinballGameState>(() =>
+    createInitialPinballState(loadHighScore('space-pinball', 0))
+  );
   const [muted, setMuted] = useState<boolean>(() => {
     try {
       return localStorage.getItem('space_pinball_muted') === 'true';
@@ -182,6 +186,7 @@ export default function SpacePinball({ locale }: Props) {
 
   const stateRef = useRef(gameState);
   stateRef.current = gameState;
+  const hitStopRef = useRef(new HitStopController());
   const audioCtxRef = useRef<AudioContext | null>(null);
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale });
   const [shareCardCopied, setShareCardCopied] = useState(false);
@@ -355,6 +360,9 @@ export default function SpacePinball({ locale }: Props) {
       const dt = Math.min((now - lastTime) / 1000, 0.05);
       lastTime = now;
 
+      const { isFrozen } = hitStopRef.current.update(dt);
+      if (isFrozen) return;
+
       if (stateRef.current.status === "playing" && stateRef.current.ball.active) {
         setGameState((prev) => {
           const next = updatePinballPhysics(prev, dt);
@@ -365,21 +373,28 @@ export default function SpacePinball({ locale }: Props) {
           } else if (next.lastEvent === "slingshot") {
             playSound('slingshot');
             MobileHapticsPro.heavy();
+            hitStopRef.current.trigger(0.04);
           } else if (next.lastEvent === "lane") {
             playSound('lane');
             MobileHapticsPro.light();
           } else if (next.lastEvent === "jackpot") {
             playSound('jackpot');
             MobileHapticsPro.success();
+            hitStopRef.current.trigger(0.08);
             if (containerRef.current) celebrate(containerRef.current, { preset: "stardust" });
           } else if (next.lastEvent === "tilt") {
             playSound('tilt');
             MobileHapticsPro.error();
           }
 
+          if (next.score > next.highScore) {
+            saveHighScore('space-pinball', next.score);
+          }
+
           if (next.status === "gameover" && prev.status !== "gameover") {
             playSound('gameover');
             MobileHapticsPro.error();
+            saveHighScore('space-pinball', next.score);
             if (containerRef.current) celebrate(containerRef.current, { preset: "sparks" });
           }
           return next;

@@ -8,6 +8,7 @@ import { getBest, recordBest } from "../../lib/games/records";
 import { frameDeltaSeconds } from "../../lib/games/time-contracts";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { CameraShake2D, HitStopController } from "../../lib/games/game-juice";
 import { getSpriteUrl, RHYTHM_TAP_UI_SPRITES } from "../../lib/games/sprites";
 import {
   GOOD_MS,
@@ -173,6 +174,8 @@ const RhythmTap: React.FC<Props> = ({ locale }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const gsRef = useRef<GS | null>(null);
   const rafRef = useRef<number | undefined>(undefined);
+  const cameraShakeRef = useRef(new CameraShake2D());
+  const hitStopRef = useRef(new HitStopController());
   const lastFrame = useRef<number | null>(null);
   const phaseRef = useRef<Phase>("menu");
   phaseRef.current = phase;
@@ -241,8 +244,15 @@ const RhythmTap: React.FC<Props> = ({ locale }) => {
     if (bestIdx < 0 || Math.abs(bestOffsetMs) > GOOD_MS) return;
 
     const judgement = judgeOffset(bestOffsetMs);
-    if (judgement === "perfect") MobileHapticsPro.medium();
-    else MobileHapticsPro.light();
+    if (judgement === "perfect") {
+      MobileHapticsPro.medium();
+      if (gs.combo > 0 && gs.combo % 10 === 0) {
+        cameraShakeRef.current.addTrauma(0.3);
+        hitStopRef.current.trigger(0.03);
+      }
+    } else {
+      MobileHapticsPro.light();
+    }
     gs.notes.splice(bestIdx, 1);
     gs.score += scoreForJudgement(judgement, gs.combo);
     gs.judge = judgement === "perfect" ? t.perfect : t.good;
@@ -262,7 +272,12 @@ const RhythmTap: React.FC<Props> = ({ locale }) => {
     // Clamped delta, so a backgrounded tab resumes the song instead of skipping
     // a chunk of the chart and handing the player unavoidable misses.
     const dt = Math.min(frameDeltaSeconds(lastFrame.current, frameNow), 0.05);
-    gs.songSeconds += dt;
+    const { isFrozen } = hitStopRef.current.update(dt);
+    cameraShakeRef.current.update(dt);
+
+    if (!isFrozen) {
+      gs.songSeconds += dt;
+    }
     lastFrame.current = frameNow;
 
     // Miss detection: a note is gone once the GOOD window has fully passed.
@@ -276,6 +291,8 @@ const RhythmTap: React.FC<Props> = ({ locale }) => {
     if (gs.notes.length === 0) { endGame(gs.score); return; }
     if (missed) {
       MobileHapticsPro.error();
+      cameraShakeRef.current.addTrauma(0.4);
+      hitStopRef.current.trigger(0.04);
       gs.judge = t.missed;
       gs.judgeT = 20;
       setMiss(gs.miss);
@@ -284,6 +301,10 @@ const RhythmTap: React.FC<Props> = ({ locale }) => {
 
     // draw
     ctx.fillStyle = "#0b1020"; ctx.fillRect(0, 0, W, H);
+    ctx.save();
+    if (cameraShakeRef.current.trauma > 0) {
+      ctx.translate(cameraShakeRef.current.x, cameraShakeRef.current.y);
+    }
     // lanes
     for (let l = 0; l < LANES; l++) {
       ctx.fillStyle = l % 2 ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.06)";
@@ -319,7 +340,8 @@ const RhythmTap: React.FC<Props> = ({ locale }) => {
       ctx.globalAlpha = 1; ctx.textAlign = "left"; gs.judgeT -= 1;
     }
 
-    if (gs.miss >= MAX_MISS) { endGame(gs.score); return; }
+    if (gs.miss >= MAX_MISS) { ctx.restore(); endGame(gs.score); return; }
+    ctx.restore();
     rafRef.current = requestAnimationFrame(loop);
   }, [endGame, t.missed, t.combo]);
 

@@ -5,6 +5,7 @@ import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-u
 import { SUBWAY_RUNNER_SPRITES } from "../../lib/games/sprites";
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "../../lib/games/share-card";
 import { celebrate } from "../../lib/games/celebration";
+import { loadHighScore, saveHighScore } from "../../lib/games/game-save";
 import { Maximize2, Minimize2, Camera, Check } from "lucide-react";
 import {
   changeRunnerLane,
@@ -45,7 +46,7 @@ interface SubwayRunnerProps {
 export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
   const { isImmersive, containerRef, togglePortal } = useArcadePortal();
   const [game, setGame] = useState<SubwayRunnerGame>(() => createInitialSubwayRunnerGame());
-  const [bestScore, setBestScore] = useState(0);
+  const [bestScore, setBestScore] = useState(() => loadHighScore('subway-runner', 0));
   const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0 });
   const [isCopied, setIsCopied] = useState(false);
 
@@ -154,8 +155,13 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
           });
         }
 
+        if (step.crashed) {
+          saveHighScore('subway-runner', step.game.score);
+        }
+
         if (step.game.score > bestScore) {
           setBestScore(step.game.score);
+          saveHighScore('subway-runner', step.game.score);
           if (step.game.score > 200 && step.game.score % 100 === 0 && containerRef.current) {
             celebrate(containerRef.current, { preset: "stardust" });
           }

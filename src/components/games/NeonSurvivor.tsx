@@ -33,6 +33,8 @@ import { nativeHaptics } from '../../lib/haptics/native-bridge';
 import type { Locale } from '../../lib/i18n';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { VirtualJoystick, type JoystickVector } from '../ui/game/VirtualJoystick';
+import { CameraShake2D, HitStopController } from '../../lib/games/game-juice';
+import { loadHighScore, saveHighScore } from '../../lib/games/game-save';
 import {
   createShareCardCanvas,
   copyShareCardToClipboard,
@@ -246,6 +248,7 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
   const [gameState, setGameState] = useState<NeonSurvivorState>(() =>
     createInitialNeonSurvivorState(metaState.upgrades)
   );
+  const [highScore, setHighScore] = useState(() => loadHighScore('neon-survivor', 0));
   const stateRef = useRef<NeonSurvivorState>(gameState);
   stateRef.current = gameState;
 
@@ -428,6 +431,8 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
   const inputVectorRef = useRef({ x: 0, y: 0 });
   const joystickVectorRef = useRef<JoystickVector>({ x: 0, y: 0, magnitude: 0, angle: 0, knobDistance: 0 });
   const shakeRef = useRef(0);
+  const cameraShakeRef = useRef(new CameraShake2D());
+  const hitStopRef = useRef(new HitStopController());
   const keysDownRef = useRef<Record<string, boolean>>({});
 
   // Keyboard handling
@@ -463,8 +468,11 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
     let bulletSoundCooldown = 0;
 
     const loop = (now: number) => {
-      const dt = Math.min(0.05, (now - lastTime) / 1000);
+      const rawDt = Math.min(0.05, (now - lastTime) / 1000);
       lastTime = now;
+
+      const { isFrozen, effectiveDt } = hitStopRef.current.update(rawDt);
+      cameraShakeRef.current.update(rawDt);
 
       // 1. Calculate keyboard vector
       let kx = 0;
@@ -484,22 +492,31 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
 
       inputVectorRef.current = { x: activeX, y: activeY };
 
-      // 2. Step game state if not paused
-      if (!stateRef.current.gameOver && !stateRef.current.levelUpPending && !showEvoGuideRef.current) {
+      const dt = effectiveDt;
+
+      // 2. Step game state if not paused and not frozen by hit-stop
+      if (!isFrozen && !stateRef.current.gameOver && !stateRef.current.levelUpPending && !showEvoGuideRef.current) {
         const prevHp = stateRef.current.player.hp;
         const prevProjCount = stateRef.current.projectiles.length;
         const prevExp = stateRef.current.player.exp;
         const prevLevelUp = stateRef.current.levelUpPending;
         const prevGameOver = stateRef.current.gameOver;
         const prevKills = stateRef.current.kills;
-        const next = updateNeonSurvivor(stateRef.current, dt, inputVectorRef.current);
+        const next = updateNeonSurvivor(stateRef.current, effectiveDt, inputVectorRef.current);
 
         // Sound & FX triggers & CoreHaptics
         if (next.player.hp < prevHp) {
           shakeRef.current = 10;
+          cameraShakeRef.current.addTrauma(0.5);
+          hitStopRef.current.trigger(0.06);
           playHitSound();
           vibrate([60, 40]);
           nativeHaptics.hit();
+        }
+
+        if (next.kills >= prevKills + 5) {
+          cameraShakeRef.current.addTrauma(0.35);
+          hitStopRef.current.trigger(0.03);
         }
 
         if (next.player.exp > prevExp) {
@@ -519,8 +536,14 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
         }
 
         if (next.gameOver && !prevGameOver) {
+          cameraShakeRef.current.addTrauma(0.7);
+          hitStopRef.current.trigger(0.1);
           vibrate([100, 50, 100]);
           nativeHaptics.trigger('error');
+          saveHighScore('neon-survivor', next.score);
+          if (next.score > highScore) {
+            setHighScore(next.score);
+          }
           if (next.crystals > 0) {
             setMetaState((prev) => {
               const updated = { ...prev, crystals: prev.crystals + next.crystals };
@@ -596,8 +619,10 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
     const camX = Math.round(state.player.x - displayW / 2);
     const camY = Math.round(state.player.y - displayH / 2);
 
-    // Apply Screen Shake
-    if (shakeRef.current > 0) {
+    // Apply Screen Shake (Trauma^2 & legacy)
+    if (cameraShakeRef.current.trauma > 0) {
+      ctx.translate(cameraShakeRef.current.x, cameraShakeRef.current.y);
+    } else if (shakeRef.current > 0) {
       const shakeMag = shakeRef.current;
       ctx.translate((Math.random() - 0.5) * shakeMag, (Math.random() - 0.5) * shakeMag);
       shakeRef.current = Math.max(0, shakeRef.current - 0.5);

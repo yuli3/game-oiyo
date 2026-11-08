@@ -9,6 +9,7 @@ import { loadReplayEnvelope, saveReplayEnvelope, verifyReplayEnvelope, type Repl
 import { frameDeltaSeconds } from "../../lib/games/time-contracts";
 import { createStarBlasterReplay, replayStarBlaster, starBlasterGhostTrack, type StarBlasterReplayAction } from "../../lib/games/star-blaster-replay";
 import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
+import { HitStopController } from "../../lib/games/game-juice";
 import {
   STAR_BLASTER_HEIGHT as H,
   STAR_BLASTER_STEP_SECONDS,
@@ -348,6 +349,7 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
   const simulationRef = useRef<StarBlasterState | null>(null);
   const particlesRef = useRef<Particle[]>([]);
   const shakeRef = useRef(0);
+  const hitStopRef = useRef(new HitStopController());
   const targetXRef = useRef(W / 2);
   const rafRef = useRef<number | undefined>(undefined);
   const previousFrameRef = useRef<number | null>(null);
@@ -432,27 +434,33 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
 
     if (!pausedRef.current) {
       const dt = Math.min(frameDeltaSeconds(previousFrameRef.current, now), 0.05);
-      accumulatorRef.current += dt;
-      let steps = 0;
-      while (accumulatorRef.current >= STAR_BLASTER_STEP_SECONDS && steps < MAX_STEPS_PER_FRAME) {
-        const replayTarget = Math.round(targetXRef.current * 2) / 2;
-        if (lastReplayTargetRef.current !== replayTarget) {
-          replayInputsRef.current.push({ tick: state.tick, input: { type: "target", value: replayTarget } });
-          lastReplayTargetRef.current = replayTarget;
-        }
-        stepStarBlaster(state, { targetX: replayTarget });
-        accumulatorRef.current -= STAR_BLASTER_STEP_SECONDS;
-        steps += 1;
-        for (const event of state.events) {
-          if (event.type === "shot" && state.tick % 3 === 0) playTone(state.weapon === "arc" ? 760 : state.weapon === "scatter" ? 220 : 440, 0.035, "square", 0.012);
-          if (event.type === "enemy-hit" || event.type === "boss-hit") playTone(event.type === "boss-hit" ? 110 : 160, 0.04, "sawtooth", 0.018);
-          if (event.type === "player-hit") {
-            playTone(72, 0.18, "sawtooth", 0.06);
-            if (event.hitCause) lastHitRef.current = { cause: event.hitCause, kind: event.enemyKind ?? "enemy" };
+      const { isFrozen } = hitStopRef.current.update(dt);
+      if (!isFrozen) {
+        accumulatorRef.current += dt;
+        let steps = 0;
+        while (accumulatorRef.current >= STAR_BLASTER_STEP_SECONDS && steps < MAX_STEPS_PER_FRAME) {
+          const replayTarget = Math.round(targetXRef.current * 2) / 2;
+          if (lastReplayTargetRef.current !== replayTarget) {
+            replayInputsRef.current.push({ tick: state.tick, input: { type: "target", value: replayTarget } });
+            lastReplayTargetRef.current = replayTarget;
           }
-          if (event.type === "boss-start" || event.type === "boss-phase") playTone(event.type === "boss-start" ? 92 : 138, 0.35, "sawtooth", 0.06);
-          if (event.type === "enemy-destroyed" && !reducedMotionRef.current) shakeRef.current = Math.max(shakeRef.current, 6);
-          if (event.type !== "enemy-destroyed" && event.type !== "player-hit") continue;
+          stepStarBlaster(state, { targetX: replayTarget });
+          accumulatorRef.current -= STAR_BLASTER_STEP_SECONDS;
+          steps += 1;
+          for (const event of state.events) {
+            if (event.type === "shot" && state.tick % 3 === 0) playTone(state.weapon === "arc" ? 760 : state.weapon === "scatter" ? 220 : 440, 0.035, "square", 0.012);
+            if (event.type === "enemy-hit" || event.type === "boss-hit") playTone(event.type === "boss-hit" ? 110 : 160, 0.04, "sawtooth", 0.018);
+            if (event.type === "player-hit") {
+              playTone(72, 0.18, "sawtooth", 0.06);
+              hitStopRef.current.trigger(0.06);
+              if (event.hitCause) lastHitRef.current = { cause: event.hitCause, kind: event.enemyKind ?? "enemy" };
+            }
+            if (event.type === "boss-start" || event.type === "boss-phase") {
+              playTone(event.type === "boss-start" ? 92 : 138, 0.35, "sawtooth", 0.06);
+              hitStopRef.current.trigger(0.08);
+            }
+            if (event.type === "enemy-destroyed" && !reducedMotionRef.current) shakeRef.current = Math.max(shakeRef.current, 6);
+            if (event.type !== "enemy-destroyed" && event.type !== "player-hit") continue;
           const originX = event.x ?? state.shipX;
           const originY = event.y ?? H - 44;
           if (!reducedMotionRef.current) {
@@ -502,6 +510,7 @@ const StarBlaster: React.FC<Props> = ({ locale }) => {
         setLives((current) => current === state.lives ? current : state.lives);
         setWave((current) => current === state.wave ? current : state.wave);
         setWeapon((current) => current === state.weapon ? current : state.weapon);
+      }
       }
     }
 

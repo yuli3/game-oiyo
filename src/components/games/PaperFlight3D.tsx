@@ -31,6 +31,7 @@ import {
   downloadShareCard,
 } from '../../lib/games/share-card';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { loadHighScore, saveHighScore } from '../../lib/games/game-save';
 import { PAPER_FLIGHT_UI_SPRITES } from '../../lib/games/sprites';
 
 function TiltFlightButton({
@@ -100,6 +101,7 @@ export default function PaperFlight3D() {
   const [plane, setPlane] = useState<PaperPlaneState>(() => ({ ...engine.plane }));
   const [status, setStatus] = useState<'ready' | 'flying' | 'landed' | 'cleared'>('ready');
   const [score, setScore] = useState(0);
+  const [bestScore, setBestScore] = useState(() => loadHighScore('paper-flight', 0));
   const [distance, setDistance] = useState(0);
   const [rings, setRings] = useState(0);
   const [cranes, setCranes] = useState(0);
@@ -299,11 +301,15 @@ export default function PaperFlight3D() {
         if (wasFlying && nowLanded) {
           playSfx('land');
           MobileHapticsPro.heavyImpact();
+          saveHighScore('paper-flight', engine.score);
+          if (engine.score > bestScore) setBestScore(engine.score);
         }
 
         if ((engine.status as string) === 'cleared' && !clearedCelebratedRef.current) {
           clearedCelebratedRef.current = true;
           MobileHapticsPro.heavyImpact();
+          saveHighScore('paper-flight', engine.score);
+          if (engine.score > bestScore) setBestScore(engine.score);
           celebrate(containerRef.current, { preset: 'stardust' });
         }
       }

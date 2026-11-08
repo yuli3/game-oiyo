@@ -41,6 +41,7 @@ import {
   updateCameraShake,
   type ScreenTraumaState,
 } from "../../lib/games/screen-shake";
+import { HitStopController } from "../../lib/games/game-juice";
 import { celebrate } from "../../lib/games/celebration";
 import { CARD_SURGE_SPRITES, CARD_SURGE_UI_SPRITES } from "../../lib/games/sprites";
 import { Button } from "../ui/button";
@@ -211,6 +212,7 @@ export function CardSurge({ locale = "ko", lang }: CardSurgeProps) {
   }, [state.phase]);
 
   const shakeEngineRef = useRef<ScreenTraumaState>(createCameraShake());
+  const hitStopRef = useRef(new HitStopController());
   const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0 });
 
   const triggerShake = useCallback((amount: number) => {
@@ -333,6 +335,9 @@ export function CardSurge({ locale = "ko", lang }: CardSurgeProps) {
         setActiveStep(curStep);
         playScoreStepSound(stepIndex);
         MobileHapticsPro.medium();
+        if (curStep.type === "joker" || curStep.multMultiplier > 1 || curStep.multAdded > 0) {
+          hitStopRef.current.trigger(0.04);
+        }
         stepIndex++;
       } else {
         clearInterval(interval);
@@ -343,6 +348,7 @@ export function CardSurge({ locale = "ko", lang }: CardSurgeProps) {
         if (breakdown.totalScore >= 3000) {
           playBigScoreSound();
           triggerShake(0.4);
+          hitStopRef.current.trigger(0.08);
           MobileHapticsPro.heavy();
 
           const surges = SURGE_TRANSMISSIONS.surge_mult;

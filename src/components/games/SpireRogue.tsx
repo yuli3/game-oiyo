@@ -26,6 +26,7 @@ import {
   reportMissionProgress,
   saveArcadePassProgress,
 } from '../../lib/games/arcade-pass';
+import { loadHighScore, saveHighScore } from '../../lib/games/game-save';
 
 interface SpireRogueProps {
   lang?: string;
@@ -466,6 +467,7 @@ export default function SpireRogue({ lang = 'ko' }: SpireRogueProps) {
   const [shareCardCopied, setShareCardCopied] = useState(false);
 
   const [state, setState] = useState<SpireState>(() => createInitialSpireState());
+  const [bestScore, setBestScore] = useState(() => loadHighScore('spire-rogue', 0));
   const [hoveredCardUid, setHoveredCardUid] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -493,6 +495,15 @@ export default function SpireRogue({ lang = 'ko' }: SpireRogueProps) {
       }
     } catch {}
   }, [state.floor, state.masterDeck.length, state.map, state.phase, state.player.hp]);
+
+  useEffect(() => {
+    if (state.phase === 'victory' || state.phase === 'defeat') {
+      const clearedCount = state.map.filter((n) => n.cleared).length;
+      const score = clearedCount * 120 + Math.max(0, state.player.hp) * 10;
+      saveHighScore('spire-rogue', score);
+      if (score > bestScore) setBestScore(score);
+    }
+  }, [state.phase, state.map, state.player.hp, bestScore]);
 
   const playSfx = useCallback((kind: 'attack' | 'block' | 'power' | 'turn' | 'victory') => {
     try {

@@ -32,6 +32,7 @@ import { createDebrisWorld, type DebrisMatterLike, type DebrisWorld } from "../.
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { playSpatialTone } from "../../lib/games/spatial-audio";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { CameraShake2D, HitStopController } from "../../lib/games/game-juice";
 
 function TiltBrickBreakerButton({
   ref,
@@ -197,6 +198,8 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const gsRef = useRef<GS | null>(null);
   const rafRef = useRef<number | undefined>(undefined);
+  const cameraShakeRef = useRef(new CameraShake2D());
+  const hitStopRef = useRef(new HitStopController());
   const phaseRef = useRef<Phase>("menu");
   phaseRef.current = phase;
   const scoreRef = useRef(0);
@@ -318,16 +321,23 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
       }
     }
 
+    const deltaSeconds = Math.min(Math.max(0, deltaMs) / 1000, 0.05);
+    const { isFrozen } = hitStopRef.current.update(deltaSeconds);
+    cameraShakeRef.current.update(deltaSeconds);
+
     const scale = pausedRef.current ? 0 : Math.min(Math.max(0, deltaMs), BRICK_BREAKER_TIME.maxDeltaMs) / BRICK_BREAKER_TIME.fixedStepMs;
     lastFrame.current = frameNow;
-    const events = pausedRef.current ? [] : stepBrickBreaker(gs, deltaMs);
+    const events = pausedRef.current || isFrozen ? [] : stepBrickBreaker(gs, deltaMs);
     for (const event of events) {
       if (event.type === "brick-hit") {
         if (event.destroyed) {
           if (gs.combo >= 3) {
             MobileHapticsPro.heavy();
+            cameraShakeRef.current.addTrauma(0.45);
+            hitStopRef.current.trigger(0.04);
           } else {
             MobileHapticsPro.impact();
+            cameraShakeRef.current.addTrauma(0.2);
           }
         } else {
           MobileHapticsPro.light();
@@ -357,6 +367,8 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
       }
       if (event.type === "level-clear") {
         MobileHapticsPro.success();
+        cameraShakeRef.current.addTrauma(0.5);
+        hitStopRef.current.trigger(0.06);
         levelRef.current = event.level;
         debrisRef.current?.clear();
         playTone(523, 0.12, "triangle", 0.045);
@@ -368,11 +380,15 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
       }
       if (event.type === "life-lost") {
         MobileHapticsPro.warning();
+        cameraShakeRef.current.addTrauma(0.65);
+        hitStopRef.current.trigger(0.08);
         playTone(82, 0.2, "sawtooth", 0.05);
         setLiveSummary(`${bb2.lifeLost}. ${t.lives} ${event.lives}. ${bb2.ready}.`);
       }
       if (event.type === "game-over") {
         MobileHapticsPro.heavy();
+        cameraShakeRef.current.addTrauma(0.8);
+        hitStopRef.current.trigger(0.1);
         playTone(65, 0.28, "sawtooth", 0.055);
         endGame(event.score);
         return;
@@ -429,6 +445,10 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
 
     // draw
     ctx.fillStyle = "#1a2416"; ctx.fillRect(0, 0, W, H);
+    ctx.save();
+    if (cameraShakeRef.current.trauma > 0) {
+      ctx.translate(cameraShakeRef.current.x, cameraShakeRef.current.y);
+    }
     const art = artRef.current;
     for (const br of gs.bricks) {
       if (br.hits <= 0) continue;
@@ -528,6 +548,7 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
     if (isFireball) {
       ctx.shadowBlur = 0;
     }
+    ctx.restore();
 
     rafRef.current = requestAnimationFrame(loop);
   }, [bb2.lifeLost, bb2.ready, endGame, playTone, t.level, t.levelClear, t.lives]);
