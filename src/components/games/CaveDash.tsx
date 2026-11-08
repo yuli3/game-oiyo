@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { Maximize2, Minimize2, Share2, Volume2, VolumeX } from "lucide-react";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import { celebrate } from "../../lib/games/celebration";
+import { GameJuice } from "../../lib/games/game-juice";
 import type { Locale } from "../../lib/i18n";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { getBest, recordBest } from "../../lib/games/records";
@@ -197,6 +198,7 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
   const audioContext = useRef<AudioContext | null>(null);
   const artRef = useRef<CaveArt | null>(null);
   if (artRef.current === null) artRef.current = loadCaveArt();
+  const juiceRef = useRef<GameJuice>(new GameJuice(320));
 
   // matter.js "juice" — the ship shatters into shards on impact and the loop
   // holds for ~0.55s of debris before the Game Over card. Lazy-loaded on Start,
@@ -283,6 +285,11 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
   }, [prefersReducedMotion]);
 
   const drawScene = useCallback((ctx: CanvasRenderingContext2D, gs: CaveDashState, drawShip: boolean) => {
+    ctx.save();
+    if (!pmRef.current && juiceRef.current.camera.trauma > 0) {
+      ctx.translate(juiceRef.current.camera.x, juiceRef.current.camera.y);
+      ctx.rotate(juiceRef.current.camera.angleRad);
+    }
     ctx.fillStyle = "#0b1020"; ctx.fillRect(0, 0, CAVE_WIDTH, CAVE_HEIGHT);
     ctx.fillStyle = "rgba(255,255,255,0.4)";
     for (let i = 0; i < 24; i++) ctx.fillRect((i * 97 - gs.elapsedFrames * 0.6) % CAVE_WIDTH + (((i * 97 - gs.elapsedFrames * 0.6) % CAVE_WIDTH) < 0 ? CAVE_WIDTH : 0), (i * 71) % CAVE_HEIGHT, 1.5, 1.5);
@@ -327,6 +334,8 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
       }
       ctx.globalAlpha = 1;
     }
+    juiceRef.current.render(ctx);
+    ctx.restore();
   }, []);
 
   const handleShareCard = useCallback(async () => {
@@ -359,6 +368,9 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
     const scale = frameScale(lastFrame.current, frameNow);
     lastFrame.current = frameNow;
 
+    const dtSec = Math.min(deltaMs / 1000, 0.05);
+    juiceRef.current.update(dtSec);
+
     // ship-shatter hold: no more simulation, just debris settling on the frozen scene
     if (deathAnimRef.current !== null) {
       debrisRef.current?.update(deltaMs, frameNow);
@@ -375,10 +387,17 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
 
     const gs = stepCaveDash(current, scale);
     gsRef.current = gs;
-    if (gs.score !== scoreRef.current) { scoreRef.current = gs.score; setScore(gs.score); playTone("point"); }
+    if (gs.score !== scoreRef.current) {
+      scoreRef.current = gs.score;
+      setScore(gs.score);
+      playTone("point");
+      juiceRef.current.combatText.spawn(CAVE_SHIP_X + 28, gs.y - 12, "+1 GAP", false);
+      juiceRef.current.particles.emit(CAVE_SHIP_X, gs.y, { count: 8, kind: "spark", color: "#38bdf8", speedMin: 40, speedMax: 120 });
+    }
 
     if (gs.status === "over") {
       playTone("crash");
+      juiceRef.current.impact(CAVE_SHIP_X, gs.y, "heavy", "CRASH!");
       if (!pmRef.current && debrisRef.current) {
         debrisRef.current.spawn(CAVE_SHIP_X, gs.y, 258, 9);
         deathScoreRef.current = gs.score;
@@ -417,6 +436,7 @@ const CaveDash: React.FC<Props> = ({ locale }) => {
     const gs = gsRef.current;
     if (!gs || phaseRef.current !== "playing") return;
     gsRef.current = flapCaveDash(gs);
+    juiceRef.current.particles.emit(CAVE_SHIP_X - 16, gs.y, { count: 4, kind: "spark", color: "#38bdf8", speedMin: 30, speedMax: 90 });
     playTone("flap");
   }, [playTone]);
 

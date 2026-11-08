@@ -5,6 +5,7 @@ import { copyShareCardToClipboard, createShareCardCanvas, downloadShareCard } fr
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { GameJuice } from '../../lib/games/game-juice';
 import { frameScale } from '../../lib/games/time-contracts';
 
 function TiltRunnerButton({
@@ -161,6 +162,7 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const wasJumpingRef = useRef(false);
     const dashBoosterRef = useRef(0);
     const perfectCountRef = useRef(0);
+    const juiceRef = useRef<GameJuice>(new GameJuice(320));
 
     const playTone = useCallback((kind: 'jump' | 'coin' | 'crash') => {
         if (mutedRef.current || typeof window === 'undefined') return;
@@ -241,6 +243,11 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 replayInputsRef.current.push({ tick: Math.floor(current.elapsedFrames), input: { type: 'jump' } });
                 MobileHapticsPro.light();
                 playTone('jump');
+                juiceRef.current.particles.emit(
+                    DOT_RUNNER_PLAYER_X + DOT_RUNNER_PLAYER_SIZE / 2,
+                    DOT_RUNNER_HEIGHT - DOT_RUNNER_GROUND,
+                    { count: 6, kind: 'spark', color: '#94a3b8', speedMin: 20, speedMax: 60 }
+                );
             }
         }
     }, [playTone, reset]);
@@ -266,7 +273,9 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         let accumulator = 0;
         const loop = (now: number) => {
             const scale = frameScale(lastFrame, now);
+            const dtSec = Math.min((lastFrame === null ? 16 : now - lastFrame) / 1000, 0.05);
             lastFrame = now;
+            juiceRef.current.update(dtSec);
 
             if (statusRef.current === 'playing' && game.current) {
                 accumulator += scale;
@@ -290,11 +299,23 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                         setCoins(next.coins);
                         MobileHapticsPro.selection();
                         playTone('coin');
+                        juiceRef.current.combatText.spawn(
+                            DOT_RUNNER_PLAYER_X + DOT_RUNNER_PLAYER_SIZE + 8,
+                            next.playerY - 8,
+                            "+COIN!",
+                            false
+                        );
+                        juiceRef.current.particles.emit(
+                            DOT_RUNNER_PLAYER_X + DOT_RUNNER_PLAYER_SIZE / 2,
+                            next.playerY + DOT_RUNNER_PLAYER_SIZE / 2,
+                            { count: 8, kind: 'spark', color: '#facc15', speedMin: 30, speedMax: 90 }
+                        );
                     }
                     if (next.status === 'over') {
                         clearDotRunnerSave();
                         statusRef.current = 'over';
                         setStatus('over');
+                        juiceRef.current.impact(DOT_RUNNER_PLAYER_X + DOT_RUNNER_PLAYER_SIZE / 2, next.playerY, 'heavy', 'CRASH!');
                         const beat = next.score > bestRef.current;
                         if (beat && next.score > 0) {
                             MobileHapticsPro.success();
@@ -341,6 +362,11 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
             // draw
             ctx.clearRect(0, 0, DOT_RUNNER_WIDTH, DOT_RUNNER_HEIGHT);
+            ctx.save();
+            if (!prefersReducedMotion && juiceRef.current.camera.trauma > 0) {
+                ctx.translate(juiceRef.current.camera.x, juiceRef.current.camera.y);
+                ctx.rotate(juiceRef.current.camera.angleRad);
+            }
             ctx.fillStyle = '#f8fafc';
             ctx.fillRect(0, 0, DOT_RUNNER_WIDTH, DOT_RUNNER_HEIGHT);
             ctx.fillStyle = 'rgba(100,116,139,0.25)';
@@ -390,6 +416,12 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
             if (wasJumpingRef.current && !current?.jumping) {
                 landingRingsRef.current.push({ x: DOT_RUNNER_PLAYER_X + DOT_RUNNER_PLAYER_SIZE / 2, y: DOT_RUNNER_HEIGHT - DOT_RUNNER_GROUND, r: 4, alpha: 0.8 });
+                juiceRef.current.camera.addTrauma(0.12);
+                juiceRef.current.particles.emit(
+                    DOT_RUNNER_PLAYER_X + DOT_RUNNER_PLAYER_SIZE / 2,
+                    DOT_RUNNER_HEIGHT - DOT_RUNNER_GROUND,
+                    { count: 4, kind: 'spark', color: '#cbd5e1', speedMin: 15, speedMax: 45 }
+                );
             }
             wasJumpingRef.current = !!current?.jumping;
 
@@ -437,6 +469,9 @@ const DotRunner: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 ctx.arc(it.x + it.w / 2, it.y + it.h / 2, it.w / 2, 0, Math.PI * 2);
                 ctx.fill();
             }
+
+            juiceRef.current.render(ctx);
+            ctx.restore();
 
             raf = requestAnimationFrame(loop);
         };

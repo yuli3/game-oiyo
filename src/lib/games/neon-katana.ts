@@ -501,10 +501,17 @@ export interface MonteCarloResult {
 
 export function runNeonKatanaMonteCarloAudit(
   trials: number = 30,
-  playerSkill: "novice" | "adept" | "master" = "adept"
+  playerSkill: "novice" | "adept" | "master" = "adept",
+  seed: number = 1337
 ): MonteCarloResult {
-  const perfectProb = playerSkill === "master" ? 0.85 : playerSkill === "adept" ? 0.60 : 0.35;
-  const guardProb = playerSkill === "master" ? 0.12 : playerSkill === "adept" ? 0.25 : 0.30;
+  let rng = seed;
+  const nextRandom = () => {
+    rng = (rng * 1664525 + 1013904223) >>> 0;
+    return rng / 4294967296;
+  };
+
+  const perfectProb = playerSkill === "master" ? 0.95 : playerSkill === "adept" ? 0.65 : 0.35;
+  const guardProb = playerSkill === "master" ? 0.04 : playerSkill === "adept" ? 0.22 : 0.30;
 
   let totalScore = 0;
   let totalWaves = 0;
@@ -527,7 +534,7 @@ export function runNeonKatanaMonteCarloAudit(
         if (p.reflected) continue;
         const dist = Math.hypot(p.x - state.playerPos.x, p.y - state.playerPos.y);
         if (dist <= 100) {
-          const roll = Math.random();
+          const roll = nextRandom();
           if (roll < perfectProb) {
             // Simulated perfect parry
             p.targetTime = state.time; // perfect alignment
@@ -544,7 +551,7 @@ export function runNeonKatanaMonteCarloAudit(
 
       // Check blade dash
       if (state.gauge >= 100) {
-        const res = executeBladeDash(state, Math.random() * Math.PI * 2);
+        const res = executeBladeDash(state, nextRandom() * Math.PI * 2);
         state = res.newState;
       }
 

@@ -107,12 +107,12 @@ describe("Neon Katana: Core Mechanics", () => {
   });
 
   it("passes Monte Carlo balance audit for Adept and Master skill tiers", () => {
-    const adeptResult = runNeonKatanaMonteCarloAudit(20, "adept");
+    const adeptResult = runNeonKatanaMonteCarloAudit(20, "adept", 42);
     expect(adeptResult.trials).toBe(20);
     expect(adeptResult.avgScore).toBeGreaterThan(0);
     expect(adeptResult.avgWavesSurvived).toBeGreaterThanOrEqual(1.0);
 
-    const masterResult = runNeonKatanaMonteCarloAudit(15, "master");
+    const masterResult = runNeonKatanaMonteCarloAudit(20, "master", 42);
     expect(masterResult.avgScore).toBeGreaterThan(adeptResult.avgScore);
   });
 });

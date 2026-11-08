@@ -390,9 +390,10 @@ class AnimalPopAudio {
     const now = ctx.currentTime;
     const scale = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50, 1174.66, 1318.51, 1567.98];
     const freq = scale[Math.min(wave - 1, scale.length - 1)] || 523.25;
-    const dur = 0.22;
+    const dur = 0.24;
     const vol = count >= 6 ? 0.35 : 0.22;
 
+    // Layer 1: Melody Pentatonic Tone
     const osc1 = ctx.createOscillator();
     const gain1 = ctx.createGain();
     osc1.type = "sine";
@@ -403,6 +404,7 @@ class AnimalPopAudio {
     osc1.start(now);
     osc1.stop(now + dur);
 
+    // Layer 2: Harmonic Sparkle Bell
     const osc2 = ctx.createOscillator();
     const gain2 = ctx.createGain();
     osc2.type = "triangle";
@@ -412,6 +414,18 @@ class AnimalPopAudio {
     osc2.connect(gain2).connect(ctx.destination);
     osc2.start(now);
     osc2.stop(now + dur * 0.35);
+
+    // Layer 3: Sub-bass tactile punch for visceral tactile feel
+    const osc3 = ctx.createOscillator();
+    const gain3 = ctx.createGain();
+    osc3.type = "sine";
+    osc3.frequency.setValueAtTime(95, now);
+    osc3.frequency.exponentialRampToValueAtTime(45, now + 0.12);
+    gain3.gain.setValueAtTime(count >= 5 || wave >= 2 ? 0.28 : 0.14, now);
+    gain3.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+    osc3.connect(gain3).connect(ctx.destination);
+    osc3.start(now);
+    osc3.stop(now + 0.12);
   }
 
   playPop(freq = 480) {
@@ -1053,7 +1067,7 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
         </div>
         <div
           ref={boardRef}
-          className={`relative grid grid-cols-7 gap-1 overflow-hidden rounded-3xl border border-border bg-muted/40 p-2 transition-all duration-300 ${bursting.length ? "animal-board-hit" : ""} ${feverSeconds > 0 ? "ring-4 ring-warning shadow-lg shadow-warning/30" : ""}`}
+          className={`relative grid grid-cols-7 gap-1 overflow-hidden rounded-3xl border border-border bg-muted/40 p-2 transition-all duration-300 ${bursting.length >= 6 || waveLabel >= 2 ? "animal-board-hit-heavy" : bursting.length ? "animal-board-hit" : ""} ${feverSeconds > 0 ? "ring-4 ring-warning shadow-lg shadow-warning/30" : ""}`}
           role="grid"
           aria-label={t.title}
         >
@@ -1194,7 +1208,9 @@ export default function AnimalPop({ locale = "ko" }: { locale?: string }) {
           @keyframes animalSquash { 0%, 100% { transform: scale(1.06, 0.95); } 50% { transform: scale(0.96, 1.06); } }
           .animal-fall{animation-name:animalFall;animation-timing-function:cubic-bezier(.18,.72,.22,1.08);animation-fill-mode:both}
           .animal-board-hit{animation:animalBoardHit 150ms ease-out}
-          @media(prefers-reduced-motion:reduce){.animal-burst{animation-duration:55ms;box-shadow:none}.animal-ring,.animal-spark-sheet{display:none}.animal-board-hit{animation:none}.animal-fall{animation-duration:65ms!important}}
+          .animal-board-hit-heavy{animation:animalBoardHitHeavy 220ms ease-out}
+          @keyframes animalBoardHitHeavy { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-5px) translateY(2px) rotate(-1deg)} 40%{transform:translateX(5px) translateY(-2px) rotate(1deg)} 60%{transform:translateX(-3px) rotate(-0.5deg)} 80%{transform:translateX(3px) rotate(0.5deg)} }
+          @media(prefers-reduced-motion:reduce){.animal-burst{animation-duration:55ms;box-shadow:none}.animal-ring,.animal-spark-sheet{display:none}.animal-board-hit,.animal-board-hit-heavy{animation:none}.animal-fall{animation-duration:65ms!important}}
         `}</style>
         <p className="mt-3 text-center text-xs text-muted-foreground">
           {t.hint}
