@@ -116,8 +116,8 @@ export default function VoxelRunner({ locale = 'ko' }: { locale?: string }) {
     }
   }, []);
 
-  // Web Audio synth
-  const playSound = useCallback((type: 'jump' | 'duck' | 'collect' | 'gameover') => {
+  // Web Audio synth (multi-layered cyber audio)
+  const playSound = useCallback((type: 'jump' | 'duck' | 'collect' | 'gameover' | 'lane') => {
     if (!audioEnabled) return;
     try {
       if (!audioCtxRef.current) {
@@ -125,45 +125,99 @@ export default function VoxelRunner({ locale = 'ko' }: { locale?: string }) {
       }
       const ctx = audioCtxRef.current;
       if (ctx.state === 'suspended') ctx.resume();
-
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
       const now = ctx.currentTime;
 
       if (type === 'jump') {
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(300, now);
-        osc.frequency.exponentialRampToValueAtTime(600, now + 0.15);
-        gain.gain.setValueAtTime(0.2, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
-        osc.start(now);
-        osc.stop(now + 0.15);
+        // Layer 1: Jet booster sweep
+        const osc1 = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(320, now);
+        osc1.frequency.exponentialRampToValueAtTime(740, now + 0.16);
+        gain1.gain.setValueAtTime(0.22, now);
+        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+        osc1.connect(gain1);
+        gain1.connect(ctx.destination);
+        osc1.start(now);
+        osc1.stop(now + 0.16);
+
+        // Layer 2: Sub-bass takeoff thump
+        const oscSub = ctx.createOscillator();
+        const gainSub = ctx.createGain();
+        oscSub.type = 'triangle';
+        oscSub.frequency.setValueAtTime(110, now);
+        oscSub.frequency.exponentialRampToValueAtTime(45, now + 0.12);
+        gainSub.gain.setValueAtTime(0.3, now);
+        gainSub.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+        oscSub.connect(gainSub);
+        gainSub.connect(ctx.destination);
+        oscSub.start(now);
+        oscSub.stop(now + 0.12);
       } else if (type === 'duck') {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
         osc.type = 'triangle';
-        osc.frequency.setValueAtTime(450, now);
-        osc.frequency.exponentialRampToValueAtTime(200, now + 0.12);
-        gain.gain.setValueAtTime(0.15, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+        osc.frequency.setValueAtTime(420, now);
+        osc.frequency.exponentialRampToValueAtTime(160, now + 0.14);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
         osc.start(now);
-        osc.stop(now + 0.12);
+        osc.stop(now + 0.14);
       } else if (type === 'collect') {
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(880, now);
-        osc.frequency.exponentialRampToValueAtTime(1760, now + 0.18);
-        gain.gain.setValueAtTime(0.25, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-        osc.start(now);
-        osc.stop(now + 0.2);
+        // Dual harmonic crystal chime (A5 + E6)
+        [880, 1320].forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.04);
+          osc.frequency.exponentialRampToValueAtTime(freq * 1.5, now + idx * 0.04 + 0.18);
+          gain.gain.setValueAtTime(0.18, now + idx * 0.04);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.04 + 0.18);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + idx * 0.04);
+          osc.stop(now + idx * 0.04 + 0.18);
+        });
       } else if (type === 'gameover') {
+        // Layer 1: Electric crash sawtooth
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
         osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(260, now);
-        osc.frequency.exponentialRampToValueAtTime(60, now + 0.4);
-        gain.gain.setValueAtTime(0.3, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
+        osc.frequency.setValueAtTime(280, now);
+        osc.frequency.exponentialRampToValueAtTime(50, now + 0.45);
+        gain.gain.setValueAtTime(0.32, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
         osc.start(now);
         osc.stop(now + 0.45);
+
+        // Layer 2: Deep sub rumble (80Hz -> 20Hz)
+        const sub = ctx.createOscillator();
+        const subGain = ctx.createGain();
+        sub.type = 'sine';
+        sub.frequency.setValueAtTime(80, now);
+        sub.frequency.exponentialRampToValueAtTime(20, now + 0.5);
+        subGain.gain.setValueAtTime(0.4, now);
+        subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+        sub.connect(subGain);
+        subGain.connect(ctx.destination);
+        sub.start(now);
+        sub.stop(now + 0.5);
+      } else if (type === 'lane') {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(520, now);
+        osc.frequency.exponentialRampToValueAtTime(260, now + 0.05);
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.05);
       }
     } catch {
       // ignore
@@ -185,17 +239,22 @@ export default function VoxelRunner({ locale = 'ko' }: { locale?: string }) {
 
   const handleAction = useCallback((act: 'left' | 'right' | 'jump' | 'duck') => {
     if (status !== 'playing') return;
-    MobileHapticsPro.light();
     if (act === 'left') {
+      MobileHapticsPro.selection();
+      playSound('lane');
       setPlayer((p) => switchLane(p, 'left'));
     } else if (act === 'right') {
+      MobileHapticsPro.selection();
+      playSound('lane');
       setPlayer((p) => switchLane(p, 'right'));
     } else if (act === 'jump') {
+      MobileHapticsPro.impact();
       setPlayer((p) => {
         if (!p.isJumping) playSound('jump');
         return jump(p);
       });
     } else if (act === 'duck') {
+      MobileHapticsPro.light();
       playSound('duck');
       setPlayer((p) => duck(p));
     }

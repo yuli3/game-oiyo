@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import MazeRunnerScene from './MazeRunnerScene';
 import {
   type MazeRunnerState,
@@ -183,6 +184,73 @@ export default function MazeRunner({ locale }: Props) {
     }
   }, [gameState.status, gameState.level, gameState.score, gameState.gemsCollected, gameState.totalGems, gameState.timeLeft, gameState.highScore]);
 
+  const audioCtxRef = useRef<AudioContext | null>(null);
+
+  const playSound = useCallback((type: 'step' | 'gem' | 'escape' | 'timeout') => {
+    if (muted) return;
+    try {
+      if (!audioCtxRef.current) {
+        audioCtxRef.current = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      }
+      const ctx = audioCtxRef.current;
+      if (ctx.state === 'suspended') ctx.resume();
+      const now = ctx.currentTime;
+
+      if (type === 'step') {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(140, now);
+        osc.frequency.exponentialRampToValueAtTime(70, now + 0.04);
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.04);
+      } else if (type === 'gem') {
+        // High crystal chime (1046Hz -> 1568Hz)
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1046, now);
+        osc.frequency.exponentialRampToValueAtTime(1568, now + 0.16);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.18);
+      } else if (type === 'escape') {
+        // Celestial portal chord (E5 -> G#5 -> B5)
+        [659.25, 830.61, 987.77].forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+          gain.gain.setValueAtTime(0.2, now + idx * 0.08);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.35);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + idx * 0.08);
+          osc.stop(now + idx * 0.08 + 0.35);
+        });
+      } else if (type === 'timeout') {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(220, now);
+        osc.frequency.exponentialRampToValueAtTime(45, now + 0.4);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.4);
+      }
+    } catch {}
+  }, [muted]);
+
   const moveQueueRef = useRef<{ dx: number; dz: number } | null>(null);
 
   // Keyboard navigation
@@ -213,13 +281,24 @@ export default function MazeRunner({ locale }: Props) {
 
       if (dx !== 0 || dz !== 0) {
         e.preventDefault();
-        setGameState((prev) => tryMovePlayer(prev, dx, dz));
+        setGameState((prev) => {
+          const next = tryMovePlayer(prev, dx, dz);
+          if (next.playerX !== prev.playerX || next.playerZ !== prev.playerZ) {
+            playSound('step');
+            MobileHapticsPro.selection();
+          }
+          if (next.gemsCollected > prev.gemsCollected) {
+            playSound('gem');
+            MobileHapticsPro.impact();
+          }
+          return next;
+        });
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [togglePortal, toggleMute]);
+  }, [togglePortal, toggleMute, playSound]);
 
   // Game loop
   useEffect(() => {
@@ -233,12 +312,26 @@ export default function MazeRunner({ locale }: Props) {
       setGameState((prev) => {
         let current = prev;
         if (moveQueueRef.current) {
-          current = tryMovePlayer(current, moveQueueRef.current.dx, moveQueueRef.current.dz);
+          const moved = tryMovePlayer(current, moveQueueRef.current.dx, moveQueueRef.current.dz);
+          if (moved.playerX !== current.playerX || moved.playerZ !== current.playerZ) {
+            playSound('step');
+            MobileHapticsPro.selection();
+          }
+          if (moved.gemsCollected > current.gemsCollected) {
+            playSound('gem');
+            MobileHapticsPro.impact();
+          }
+          current = moved;
           moveQueueRef.current = null;
         }
         const next = updateMazeRunner(current, dt);
         if (prev.status !== 'escaped' && next.status === 'escaped') {
+          playSound('escape');
+          MobileHapticsPro.success();
           if (containerRef.current) celebrate(containerRef.current, { preset: "shards" });
+        } else if (prev.status !== 'timeout' && next.status === 'timeout') {
+          playSound('timeout');
+          MobileHapticsPro.heavy();
         }
         return next;
       });
@@ -248,10 +341,21 @@ export default function MazeRunner({ locale }: Props) {
 
     animId = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(animId);
-  }, []);
+  }, [playSound]);
 
   const queueMove = (dx: number, dz: number) => {
-    setGameState((prev) => tryMovePlayer(prev, dx, dz));
+    setGameState((prev) => {
+      const next = tryMovePlayer(prev, dx, dz);
+      if (next.playerX !== prev.playerX || next.playerZ !== prev.playerZ) {
+        playSound('step');
+        MobileHapticsPro.selection();
+      }
+      if (next.gemsCollected > prev.gemsCollected) {
+        playSound('gem');
+        MobileHapticsPro.impact();
+      }
+      return next;
+    });
   };
 
   return (
