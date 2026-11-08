@@ -14,6 +14,7 @@ import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from "../../
 import { createHaptics } from "../../lib/games/haptics";
 import { celebrate } from "../../lib/games/celebration";
 import { UNTRANSLATABLE_CREATURE_SPRITES } from "../../lib/games/sprites";
+import { useGameJuicePro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import {
   GAME_ID,
   MISSES,
@@ -160,6 +161,7 @@ export default function UntranslatableCreature({ locale }: { locale: Locale }) {
   const t = COPY[loc];
   const reducedMotion = usePrefersReducedMotion();
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: loc });
+  const { shakeCssVars, addTrauma } = useGameJuicePro();
   const [dateKey, setDateKey] = useState<string | null>(null);
   const [run, setRun] = useState<Run | null>(null);
   const [attempt, setAttempt] = useState(0);
@@ -214,9 +216,13 @@ export default function UntranslatableCreature({ locale }: { locale: Locale }) {
         return;
       }
       setBeat(index);
+      if (rhythm[index] === 1) {
+        addTrauma(0.14);
+        MobileHapticsPro.light();
+      }
     }, BEAT_MS);
     return () => window.clearInterval(id);
-  }, [run?.phase, run?.step, signal, reducedMotion, rhythm]);
+  }, [run?.phase, run?.step, signal, reducedMotion, rhythm, addTrauma]);
 
   const choose = (picked: Signal) => {
     if (!shown) return;
@@ -224,8 +230,22 @@ export default function UntranslatableCreature({ locale }: { locale: Locale }) {
     hapticsRef.current.fire("place");
     setRun((current) => {
       if (!current) return current;
-      if (current.phase === "teach" && current.lesson.teach[current.step] === picked) return nextTeach(current);
-      if (current.phase === "ask") return answer(current, picked);
+      if (current.phase === "teach" && current.lesson.teach[current.step] === picked) {
+        addTrauma(0.15);
+        MobileHapticsPro.selection();
+        return nextTeach(current);
+      }
+      if (current.phase === "ask") {
+        const next = answer(current, picked);
+        if (next.misses > current.misses) {
+          addTrauma(0.55);
+          MobileHapticsPro.error();
+        } else {
+          addTrauma(0.22);
+          MobileHapticsPro.impact();
+        }
+        return next;
+      }
       return current;
     });
   };
@@ -269,12 +289,14 @@ export default function UntranslatableCreature({ locale }: { locale: Locale }) {
     if (run.phase === "won") {
       cue("win");
       hapticsRef.current.fire("win");
+      addTrauma(0.4);
       if (containerRef.current) celebrate(containerRef.current, { preset: "stardust" });
     } else if (run.phase === "lost") {
       cue("fail");
       hapticsRef.current.fire("fail");
+      addTrauma(0.65);
     }
-  }, [run, dateKey, attempt, muted, reducedMotion]);
+  }, [run, dateKey, attempt, muted, reducedMotion, addTrauma]);
 
   const again = () => {
     cue("tap");
@@ -288,7 +310,15 @@ export default function UntranslatableCreature({ locale }: { locale: Locale }) {
   const teachTarget = run?.phase === "teach" && shown ? run.lesson.teach[run.step] : null;
 
   return (
-    <div ref={containerRef} className={isImmersive ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-y-auto bg-background p-3 sm:p-5" : "relative"}>
+    <div
+      ref={containerRef}
+      style={{
+        '--shake-x': shakeCssVars['--shake-x'] ?? '0px',
+        '--shake-y': shakeCssVars['--shake-y'] ?? '0px',
+        '--shake-rot': shakeCssVars['--shake-rot'] ?? '0deg',
+      } as React.CSSProperties}
+      className={`${isImmersive ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-y-auto bg-background p-3 sm:p-5" : "relative"} transform translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot)`}
+    >
       <GameContainer title={t.title} subtitle={run ? t.subtitle : t.preparing}>
         <div className="mb-3 overflow-hidden rounded-xl border border-border bg-muted">
           <img src={UNTRANSLATABLE_CREATURE_SPRITES.keyart} alt={t.title} className="h-32 w-full object-cover sm:h-44" />
@@ -313,8 +343,22 @@ export default function UntranslatableCreature({ locale }: { locale: Locale }) {
                 <p className="text-sm font-bold text-foreground">{t.won}</p>
               </div>
             ) : null}
-            <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-primary/15 p-2 text-2xl text-foreground" aria-hidden="true">
-              <img src={UNTRANSLATABLE_CREATURE_SPRITES.orb} alt="●" className="size-12 object-contain" draggable={false} />
+            <div className="relative mx-auto flex size-24 items-center justify-center" aria-hidden="true">
+              <div
+                className={`absolute inset-0 rounded-full bg-primary/20 transition-all duration-300 ${
+                  !shown && rhythm?.[beat] === 1 ? "scale-125 bg-primary/40 ring-4 ring-primary/60 animate-ping" : "scale-100"
+                }`}
+              />
+              <div className="relative flex size-20 items-center justify-center rounded-full border border-border bg-card p-3 shadow-md">
+                <img
+                  src={UNTRANSLATABLE_CREATURE_SPRITES.orb}
+                  alt="●"
+                  className={`size-14 object-contain transition-transform duration-200 ${
+                    !shown && rhythm?.[beat] === 1 ? "scale-115" : "scale-100"
+                  }`}
+                  draggable={false}
+                />
+              </div>
             </div>
             {rhythm ? (
               <div className="mx-auto grid w-full max-w-xs grid-cols-4 gap-2" aria-hidden="true">

@@ -14,6 +14,7 @@ import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from "../../
 import { createHaptics } from "../../lib/games/haptics";
 import { celebrate } from "../../lib/games/celebration";
 import { TIME_COUNSEL_SPRITES } from "../../lib/games/sprites";
+import { useGameJuicePro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import {
   COLUMN_CARDS,
   COLUMN_FACT,
@@ -210,6 +211,7 @@ export default function TimeCounsel({ locale }: { locale: Locale }) {
   const t = COPY[loc];
   const reducedMotion = usePrefersReducedMotion();
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: loc });
+  const { shakeCssVars, addTrauma } = useGameJuicePro();
   const [dateKey, setDateKey] = useState<string | null>(null);
   const [run, setRun] = useState<Run | null>(null);
   const [attempt, setAttempt] = useState(0);
@@ -283,22 +285,28 @@ export default function TimeCounsel({ locale }: { locale: Locale }) {
     if (run.phase === "won") {
       cue("win");
       hapticsRef.current.fire("win");
+      addTrauma(0.45);
       if (containerRef.current) celebrate(containerRef.current, { preset: "stardust" });
     } else if (run.phase === "lost") {
       cue("fail");
       hapticsRef.current.fire("fail");
+      addTrauma(0.65);
+      MobileHapticsPro.error();
     }
-  }, [run, dateKey, attempt, muted, reducedMotion]);
+  }, [run, dateKey, attempt, muted, reducedMotion, addTrauma]);
 
   const onToggle = (card: Card) => {
     cue("place");
     hapticsRef.current.fire("place");
+    MobileHapticsPro.selection();
     setRun((current) => (current ? toggle(current, card) : current));
   };
 
   const onFile = () => {
     cue("tap");
     hapticsRef.current.fire("tap");
+    MobileHapticsPro.heavy();
+    addTrauma(0.25);
     setRun((current) => (current ? file(current) : current));
   };
 
@@ -314,7 +322,15 @@ export default function TimeCounsel({ locale }: { locale: Locale }) {
   const playing = run?.phase === "play";
 
   return (
-    <div ref={containerRef} className={isImmersive ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-y-auto bg-background p-3 sm:p-5" : "relative"}>
+    <div
+      ref={containerRef}
+      style={{
+        '--shake-x': shakeCssVars['--shake-x'] ?? '0px',
+        '--shake-y': shakeCssVars['--shake-y'] ?? '0px',
+        '--shake-rot': shakeCssVars['--shake-rot'] ?? '0deg',
+      } as React.CSSProperties}
+      className={`${isImmersive ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-y-auto bg-background p-3 sm:p-5" : "relative"} transform translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot)`}
+    >
       <GameContainer title={t.title} subtitle={run ? t.subtitle : t.preparing}>
         <div className="mb-3 overflow-hidden rounded-xl border border-border bg-muted">
           <img src={TIME_COUNSEL_SPRITES.keyart} alt={t.title} className="h-32 w-full object-cover sm:h-44" />

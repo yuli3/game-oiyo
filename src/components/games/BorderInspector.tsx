@@ -10,7 +10,13 @@ import {
   selectInspectField,
   stampApplicantDecision,
 } from '../../lib/games/border-inspector';
-import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import {
+  useCardTiltPro,
+  MobileHapticsPro,
+  useGameJuicePro,
+  getSharedAudioContext,
+  playComboSfx,
+} from "../../lib/games/engine-suite-unified";
 
 function TiltStampButton({
   children,
@@ -399,9 +405,10 @@ export default function BorderInspector({ lang = 'ko' }: BorderInspectorProps) {
   const t = COPY[locale];
 
   const [state, setState] = useState<BorderInspectorState>(() => createInitialBorderState());
+  const { shakeCssVars, addTrauma, triggerHitStop } = useGameJuicePro();
+  const [stampFeedback, setStampFeedback] = useState<{ decision: 'approved' | 'denied'; rot: number } | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const audioCtxRef = useRef<AudioContext | null>(null);
   const spritesRef = useRef<Record<keyof typeof BORDER_INSPECTOR_SPRITES, HTMLImageElement | null>>({
     passport: null,
     stamp: null,
@@ -423,10 +430,8 @@ export default function BorderInspector({ lang = 'ko' }: BorderInspectorProps) {
 
   const playSfx = useCallback((kind: 'stamp' | 'inspect' | 'buzzer') => {
     try {
-      const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      if (!Ctx) return;
-      if (!audioCtxRef.current) audioCtxRef.current = new Ctx();
-      const ctx = audioCtxRef.current;
+      const ctx = getSharedAudioContext();
+      if (!ctx) return;
       if (ctx.state === 'suspended') ctx.resume();
 
       const now = ctx.currentTime;
@@ -473,13 +478,22 @@ export default function BorderInspector({ lang = 'ko' }: BorderInspectorProps) {
   const handleStamp = (decision: 'approved' | 'denied') => {
     playSfx('stamp');
     MobileHapticsPro.medium();
+    addTrauma(0.35);
+    const rot = -10 + Math.random() * 20;
+    setStampFeedback({ decision, rot });
+    setTimeout(() => setStampFeedback(null), 900);
+
     setState((prev) => {
       const next = stampApplicantDecision(prev, decision);
       if (next.citations > prev.citations) {
         setTimeout(() => playSfx('buzzer'), 120);
         MobileHapticsPro.error();
-      }
-      if (next.correctCount > prev.correctCount) {
+        addTrauma(0.7);
+        triggerHitStop(140);
+      } else if (next.correctCount > prev.correctCount) {
+        MobileHapticsPro.impact();
+        const ctx = getSharedAudioContext();
+        if (ctx) playComboSfx(ctx, 'powerup', next.correctCount);
         const dateKey = new Date().toISOString().slice(0, 10);
         const progress = loadArcadePassProgress(dateKey);
         saveArcadePassProgress(
@@ -488,6 +502,7 @@ export default function BorderInspector({ lang = 'ko' }: BorderInspectorProps) {
       }
       if (next.status === 'shift_complete' && prev.status !== 'shift_complete') {
         MobileHapticsPro.heavy();
+        addTrauma(0.5);
         celebrate(containerRef.current, { preset: 'stardust' });
       }
       return next;
@@ -606,7 +621,15 @@ export default function BorderInspector({ lang = 'ko' }: BorderInspectorProps) {
   };
 
   return (
-    <div ref={containerRef} className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 text-card-foreground shadow-sm">
+    <div
+      ref={containerRef}
+      style={{
+        '--shake-x': shakeCssVars['--shake-x'] ?? '0px',
+        '--shake-y': shakeCssVars['--shake-y'] ?? '0px',
+        '--shake-rot': shakeCssVars['--shake-rot'] ?? '0deg',
+      } as React.CSSProperties}
+      className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 text-card-foreground shadow-sm transform translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot)"
+    >
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
         <div className="flex items-center gap-2.5">
@@ -686,7 +709,21 @@ export default function BorderInspector({ lang = 'ko' }: BorderInspectorProps) {
       {/* 3-Column Desk: Passport | Entry Permit | Ministry Rulebook */}
       {state.status === 'playing' ? (
         <>
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+          <div className="relative grid grid-cols-1 gap-3 md:grid-cols-3">
+            {stampFeedback && (
+              <div
+                style={{
+                  '--stamp-rot': `${stampFeedback.rot}deg`,
+                } as React.CSSProperties}
+                className={`pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 rounded-2xl border-4 px-8 py-4 font-black text-3xl tracking-widest uppercase transform rotate-(--stamp-rot) animate-in zoom-in-75 duration-150 drop-shadow-2xl ${
+                  stampFeedback.decision === 'approved'
+                    ? 'border-success text-success bg-background/95'
+                    : 'border-destructive text-destructive bg-background/95'
+                }`}
+              >
+                {stampFeedback.decision === 'approved' ? '✓ APPROVED' : '✖ DENIED'}
+              </div>
+            )}
             {/* Document 1: Passport */}
             <div className="flex flex-col gap-2 rounded-xl border border-border bg-muted/20 p-3.5">
               <div className="border-b border-border pb-1.5 text-xs font-bold tracking-wider">
