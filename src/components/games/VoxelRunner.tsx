@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useGhostTimeAttackPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { createInputGenerosity } from '../../lib/games/input-generosity';
 import VoxelRunnerScene from './VoxelRunnerScene';
 import {
   type PlayerState,
@@ -105,6 +106,7 @@ export default function VoxelRunner({ locale = 'ko' }: { locale?: string }) {
   const lastTimeRef = useRef<number>(0);
   const spawnTimerRef = useRef(0);
   const waveSeedRef = useRef(1);
+  const inputGenerosityRef = useRef(createInputGenerosity());
 
   // Load high score
   useEffect(() => {
@@ -248,10 +250,14 @@ export default function VoxelRunner({ locale = 'ko' }: { locale?: string }) {
       playSound('lane');
       setPlayer((p) => switchLane(p, 'right'));
     } else if (act === 'jump') {
+      inputGenerosityRef.current.bufferPress('jump', 0.16);
       MobileHapticsPro.impact();
       setPlayer((p) => {
-        if (!p.isJumping) playSound('jump');
-        return jump(p);
+        if (!p.isJumping || inputGenerosityRef.current.consumeCoyote('ground')) {
+          playSound('jump');
+          return jump(p);
+        }
+        return p;
       });
     } else if (act === 'duck') {
       MobileHapticsPro.light();
@@ -281,9 +287,17 @@ export default function VoxelRunner({ locale = 'ko' }: { locale?: string }) {
       });
       setScore((s) => s + Math.round(curSpeed * delta * 2));
 
-      // Update player physics
+      // Update player physics with generous input buffering and coyote time
+      inputGenerosityRef.current.update(delta);
       setPlayer((p) => {
-        const updated = updatePlayer(p, delta);
+        let updated = updatePlayer(p, delta);
+        if (!updated.isJumping) {
+          inputGenerosityRef.current.startCoyote('ground', 0.14);
+          if (inputGenerosityRef.current.consumeBufferedPress('jump')) {
+            playSound('jump');
+            updated = jump(updated);
+          }
+        }
         return updated;
       });
 

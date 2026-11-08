@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import RetroHighwayScene from './RetroHighwayScene';
 import { useGhostTimeAttackPro, useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { createInputGenerosity } from '../../lib/games/input-generosity';
 import { getSpriteUrl, RETRO_HIGHWAY_UI_SPRITES } from '../../lib/games/sprites';
 import {
   type HighwayState,
@@ -186,6 +187,7 @@ export default function RetroHighway({ locale = 'ko' }: Props) {
   });
 
   const inputRef = useRef<HighwayInput>({ steer: 0, boost: false, brake: false });
+  const inputGenerosityRef = useRef(createInputGenerosity());
   const animRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number>(0);
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -358,7 +360,9 @@ export default function RetroHighway({ locale = 'ko' }: Props) {
           return prev;
         }
 
-        const next = updateHighway(prev, inputRef.current, dt);
+        inputGenerosityRef.current.update(dt);
+        const activeBoost = inputRef.current.boost || inputGenerosityRef.current.consumeBufferedPress('boost');
+        const next = updateHighway(prev, { ...inputRef.current, boost: activeBoost }, dt);
 
         if (next.player.status === 'playing') {
           if (next.player.nearMissCount > prev.player.nearMissCount) {
@@ -636,7 +640,10 @@ export default function RetroHighway({ locale = 'ko' }: Props) {
           <ArrowRight className="w-6 h-6" />
         </button>
         <button
-          onPointerDown={() => { inputRef.current.boost = true; }}
+          onPointerDown={() => {
+            inputRef.current.boost = true;
+            inputGenerosityRef.current.bufferPress('boost', 0.16);
+          }}
           onPointerUp={() => { inputRef.current.boost = false; }}
           className="p-4 rounded-lg bg-primary text-primary-foreground font-bold flex justify-center items-center active:opacity-80"
         >

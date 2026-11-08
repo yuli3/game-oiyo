@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import StackTowerScene from './StackTowerScene';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { createInputGenerosity } from '../../lib/games/input-generosity';
 import {
   type TowerBlock,
   type MovingBlock,
@@ -73,6 +74,7 @@ export default function StackTower({ locale = 'ko' }: { locale?: string }) {
   const audioCtxRef = useRef<AudioContext | null>(null);
   const animFrameRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number>(0);
+  const inputGenerosityRef = useRef(createInputGenerosity());
 
   // Load high score
   useEffect(() => {
@@ -184,8 +186,9 @@ export default function StackTower({ locale = 'ko' }: { locale?: string }) {
     lastTimeRef.current = performance.now();
   }, [baseBlock]);
 
-  // Place block on tap / click
+  // Place block on tap / click with input buffering
   const placeBlock = useCallback(() => {
+    inputGenerosityRef.current.bufferPress('place', 0.14);
     if (status !== 'playing' || !movingBlock) return;
 
     const top = blocks[blocks.length - 1];

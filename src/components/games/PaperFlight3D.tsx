@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
+import { createInputGenerosity } from '../../lib/games/input-generosity';
 import {
   PaperFlightEngine,
   type PaperPlaneState,
@@ -202,9 +203,13 @@ export default function PaperFlight3D() {
     rollRight: false,
     boost: false,
   });
+  const inputGenerosityRef = useRef(createInputGenerosity());
 
   const handleTouchControl = useCallback((control: keyof typeof keysRef.current, active: boolean) => {
     keysRef.current[control] = active;
+    if (control === 'boost' && active) {
+      inputGenerosityRef.current.bufferPress('boost', 0.18);
+    }
   }, []);
 
   useEffect(() => {
@@ -227,6 +232,7 @@ export default function PaperFlight3D() {
       }
       if (e.key === ' ') {
         keysRef.current.boost = true;
+        inputGenerosityRef.current.bufferPress('boost', 0.18);
       }
     };
 
@@ -276,8 +282,10 @@ export default function PaperFlight3D() {
         if (k.rollLeft) rollInput -= 1;
         if (k.rollRight) rollInput += 1;
 
+        inputGenerosityRef.current.update(dt);
+        const isBoost = k.boost || inputGenerosityRef.current.consumeBufferedPress('boost');
         const wasFlying = engine.status === 'flying';
-        engine.update(dt, pitchInput, rollInput, k.boost);
+        engine.update(dt, pitchInput, rollInput, isBoost);
         const nowLanded = (engine.status as 'ready' | 'flying' | 'landed' | 'cleared') === 'landed';
 
         if (engine.ringsCount > prevRings) {

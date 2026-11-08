@@ -13,6 +13,7 @@ import {
 import { useAudioContext } from "../../lib/games/use-audio-context";
 import { useClipboardShare } from "../../lib/games/use-clipboard-share";
 import { MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { createInputGenerosity } from "../../lib/games/input-generosity";
 import { GameStatTile } from "../ui/game/GameStatTile";
 import { Button } from "../ui/button";
 
@@ -180,6 +181,7 @@ export function ShadowDodge({ locale = "ko" }: ShadowDodgeProps) {
   const stateRef = useRef<ShadowDodgeState>(gameState);
   stateRef.current = gameState;
   const activeKeysRef = useRef<Set<string>>(new Set());
+  const inputGenerosityRef = useRef(createInputGenerosity());
 
   // Multi-layered procedural Web Audio synth (game-audio-design)
   const playSound = useCallback(
@@ -271,8 +273,10 @@ export function ShadowDodge({ locale = "ko" }: ShadowDodgeProps) {
   }, []);
 
   const handleDash = useCallback(() => {
+    inputGenerosityRef.current.bufferPress("dash", 0.16);
     setGameState((prev) => {
       if (prev.status !== "playing" || prev.player.dashCooldown > 0) return prev;
+      inputGenerosityRef.current.consumeBufferedPress("dash");
       MobileHapticsPro.light();
       playSound("dash");
       return triggerShadowDash(prev);
@@ -347,7 +351,14 @@ export function ShadowDodge({ locale = "ko" }: ShadowDodgeProps) {
           );
         }
 
-        const next = stepShadowDodge(cur, dt);
+        inputGenerosityRef.current.update(dt);
+        let next = stepShadowDodge(cur, dt);
+
+        if (next.status === "playing" && next.player.dashCooldown <= 0 && inputGenerosityRef.current.consumeBufferedPress("dash")) {
+          MobileHapticsPro.light();
+          playSound("dash");
+          next = triggerShadowDash(next);
+        }
 
         if (next.lastEvent === "graze") {
           MobileHapticsPro.selection();

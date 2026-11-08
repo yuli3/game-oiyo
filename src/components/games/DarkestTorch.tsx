@@ -8,6 +8,7 @@ import {
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { celebrate } from '../../lib/games/celebration';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { createInputGenerosity } from '../../lib/games/input-generosity';
 import { recordResult } from '../../lib/games/records';
 import { DARKEST_TORCH_SPRITES, getSpriteUrl } from '../../lib/games/sprites';
 import {
@@ -65,6 +66,7 @@ export default function DarkestTorch({ locale = 'en' }: Props) {
   );
   const [copied, setCopied] = useState(false);
   const audioRef = useRef<AudioContext | null>(null);
+  const inputGenerosityRef = useRef(createInputGenerosity());
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } =
     useArcadePortal({ locale });
 
@@ -103,6 +105,7 @@ export default function DarkestTorch({ locale = 'en' }: Props) {
   const torchTier = getTorchLightTier(state.torch);
 
   const onSkill = (skillId: HeroSkillId) => {
+    inputGenerosityRef.current.bufferPress(`skill-${skillId}`, 0.16);
     if (skillId === 'smite' || skillId === 'point-blank') {
       MobileHapticsPro.heavy();
     } else if (skillId === 'plague-grenade') {

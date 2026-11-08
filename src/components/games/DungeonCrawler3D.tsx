@@ -1,11 +1,12 @@
 import * as THREE from "three";
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Maximize2, Minimize2, Volume2, VolumeX, Share2, Check } from 'lucide-react';
 import DungeonCrawler3DScene from './DungeonCrawler3DScene';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import { useAudioContext } from '../../lib/games/use-audio-context';
+import { createInputGenerosity } from '../../lib/games/input-generosity';
 import { playProceduralSfx } from '../../lib/games/audio-mixer';
 import { celebrate } from '../../lib/games/celebration';
 
@@ -91,12 +92,14 @@ export default function DungeonCrawler3D() {
   }, []);
 
   const getAudioContext = useAudioContext();
+  const inputGenerosityRef = useRef(createInputGenerosity());
   const playSfx = useCallback((cue: "move" | "attack" | "hit" | "coin" | "gem" | "success" | "fail" | "win") => {
     if (muted) return;
     playProceduralSfx(getAudioContext(), cue);
   }, [getAudioContext, muted]);
 
   const handleMove = useCallback((dx: number, dz: number) => {
+    inputGenerosityRef.current.bufferPress(`move-${dx}-${dz}`, 0.14);
     setGameState((prev) => {
       const next = moveDungeonPlayer(prev, dx, dz);
       if (next === prev) return prev;

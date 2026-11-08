@@ -6,6 +6,7 @@ import { SUBWAY_RUNNER_SPRITES } from "../../lib/games/sprites";
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "../../lib/games/share-card";
 import { celebrate } from "../../lib/games/celebration";
 import { loadHighScore, saveHighScore } from "../../lib/games/game-save";
+import { createInputGenerosity } from "../../lib/games/input-generosity";
 import { Maximize2, Minimize2, Camera, Check } from "lucide-react";
 import {
   changeRunnerLane,
@@ -56,6 +57,7 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
   const shakeStateRef = useRef(createShakeState());
   const audioCtxRef = useRef<AudioContext | null>(null);
   const trainHornCooldownRef = useRef(0);
+  const inputGenerosityRef = useRef(createInputGenerosity());
 
   const handleShareCard = useCallback(async () => {
     MobileHapticsPro.click();
@@ -167,7 +169,18 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
           }
         }
 
-        setGame(step.game);
+        // Generous input buffering and coyote time for jump
+        inputGenerosityRef.current.update(dt);
+        let nextGame = step.game;
+        if (nextGame.player.y <= 0.05) {
+          inputGenerosityRef.current.startCoyote("ground", 0.14);
+          if (inputGenerosityRef.current.consumeBufferedPress("jump")) {
+            nextGame = jumpRunner(nextGame);
+            playSyntheticTone(audioCtxRef.current, { freq: 440, duration: 0.08, type: "triangle" });
+            MobileHapticsPro.medium();
+          }
+        }
+        setGame(nextGame);
       }
 
       animId = requestAnimationFrame(loop);
@@ -192,9 +205,15 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
         MobileHapticsPro.light();
       } else if (e.key === "ArrowUp" || e.key === "w" || e.key === "W" || e.key === " ") {
         e.preventDefault();
-        setGame((prev) => jumpRunner(prev));
-        playSyntheticTone(audioCtxRef.current, { freq: 440, duration: 0.08, type: "triangle" });
-        MobileHapticsPro.medium();
+        inputGenerosityRef.current.bufferPress("jump", 0.16);
+        setGame((prev) => {
+          if (prev.player.y <= 0.05 || inputGenerosityRef.current.consumeCoyote("ground")) {
+            playSyntheticTone(audioCtxRef.current, { freq: 440, duration: 0.08, type: "triangle" });
+            MobileHapticsPro.medium();
+            return jumpRunner(prev);
+          }
+          return prev;
+        });
       } else if (e.key === "ArrowDown" || e.key === "s" || e.key === "S") {
         e.preventDefault();
         setGame((prev) => slideRunner(prev));
@@ -237,9 +256,15 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
       }
     } else {
       if (dy < 0) {
-        setGame((prev) => jumpRunner(prev));
-        playSyntheticTone(audioCtxRef.current, { freq: 440, duration: 0.08, type: "triangle" });
-        MobileHapticsPro.medium();
+        inputGenerosityRef.current.bufferPress("jump", 0.16);
+        setGame((prev) => {
+          if (prev.player.y <= 0.05 || inputGenerosityRef.current.consumeCoyote("ground")) {
+            playSyntheticTone(audioCtxRef.current, { freq: 440, duration: 0.08, type: "triangle" });
+            MobileHapticsPro.medium();
+            return jumpRunner(prev);
+          }
+          return prev;
+        });
       } else {
         setGame((prev) => slideRunner(prev));
         playSyntheticTone(audioCtxRef.current, { freq: 220, duration: 0.08, type: "sawtooth" });

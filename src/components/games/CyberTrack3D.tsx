@@ -2,6 +2,7 @@ import * as THREE from "three";
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Canvas } from "@react-three/fiber";
 import { useGhostTimeAttackPro, MobileHapticsPro, useCardTiltPro } from "../../lib/games/engine-suite-unified";
+import { createInputGenerosity } from "../../lib/games/input-generosity";
 import {
   OFFICIAL_TRACKS,
   createInitialCarState,
@@ -90,6 +91,7 @@ export default function CyberTrack3D({ locale = "ko" }: CyberTrack3DProps) {
 
   // Active key state
   const keysRef = useRef<Record<string, boolean>>({});
+  const inputGenerosityRef = useRef(createInputGenerosity());
   const recordedGhostRef = useRef<GhostFrame[]>([]);
   const carStateRef = useRef<CarPhysicsState>(car);
   carStateRef.current = car;
@@ -132,6 +134,12 @@ export default function CyberTrack3D({ locale = "ko" }: CyberTrack3DProps) {
       if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space"].includes(e.code)) {
         e.preventDefault();
       }
+      if (e.code === "Space" || e.code === "ShiftLeft") {
+        inputGenerosityRef.current.bufferPress("drift", 0.16);
+      }
+      if (e.code === "KeyE") {
+        inputGenerosityRef.current.bufferPress("boost", 0.16);
+      }
     };
     const handleKeyUp = (e: KeyboardEvent) => {
       keysRef.current[e.code] = false;
@@ -166,8 +174,9 @@ export default function CyberTrack3D({ locale = "ko" }: CyberTrack3DProps) {
         if (keys["KeyA"] || keys["ArrowLeft"]) steer -= 1;
         if (keys["KeyD"] || keys["ArrowRight"]) steer += 1;
 
-        const drift = Boolean(keys["Space"] || keys["ShiftLeft"]);
-        const boost = Boolean(keys["KeyE"]);
+        inputGenerosityRef.current.update(dt);
+        const drift = Boolean(keys["Space"] || keys["ShiftLeft"] || inputGenerosityRef.current.consumeBufferedPress("drift"));
+        const boost = Boolean(keys["KeyE"] || inputGenerosityRef.current.consumeBufferedPress("boost"));
 
         const input: CarInput = { throttle, steer, drift, boost };
         const { nextCar, checkpointPassed, isLapFinished } = stepCarPhysics(

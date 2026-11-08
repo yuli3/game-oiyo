@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { celebrate } from "../../lib/games/celebration";
 import { BEAT_SLICE_SPRITES } from "../../lib/games/sprites";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { createInputGenerosity } from "../../lib/games/input-generosity";
 import {
   Play,
   RotateCcw,
@@ -127,6 +128,7 @@ export default function BeatSlice3D() {
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const engineRef = useRef<BeatSliceEngine | null>(null);
+  const inputGenerosityRef = useRef(createInputGenerosity());
   const audioCtxRef = useRef<AudioContext | null>(null);
   const isMutedRef = useRef(isMuted);
   isMutedRef.current = isMuted;
@@ -282,6 +284,7 @@ export default function BeatSlice3D() {
 
   const handleTriggerSlice = useCallback((lane: number, direction: SliceDirection) => {
     if (!engineRef.current) return;
+    inputGenerosityRef.current.bufferPress(`slice-${lane}`, 0.14);
     const res = engineRef.current.slice(lane, direction);
     if (!res) return;
 
