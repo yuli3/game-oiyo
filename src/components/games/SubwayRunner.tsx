@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { ArcadeTouchControls } from "../ui/game/ArcadeTouchControls";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
-import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { useCardTiltPro, MobileHapticsPro, playProceduralSfx, playComboSfx } from "../../lib/games/engine-suite-unified";
 import { SUBWAY_RUNNER_SPRITES } from "../../lib/games/sprites";
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "../../lib/games/share-card";
 import { celebrate } from "../../lib/games/celebration";
@@ -122,13 +122,7 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
 
         if (step.collectedCoinCount > 0) {
           MobileHapticsPro.light();
-          const coinFreq = 587.33 + (step.game.coins % 8) * 60;
-          playSyntheticTone(audioCtxRef.current, {
-            freq: coinFreq,
-            duration: 0.07,
-            type: "sine",
-            gain: 0.12,
-          });
+          playComboSfx(audioCtxRef.current, "coin", step.game.coins);
         }
 
         // Dynamic train approach warning horn (game-ai / audio feel)
@@ -150,15 +144,7 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
         if (step.crashed) {
           shakeStateRef.current = addTrauma(shakeStateRef.current, 0.85);
           MobileHapticsPro.heavy();
-          playSyntheticTone(audioCtxRef.current, {
-            freq: 110,
-            duration: 0.35,
-            type: "sawtooth",
-            gain: 0.25,
-          });
-        }
-
-        if (step.crashed) {
+          playProceduralSfx(audioCtxRef.current, "hit");
           saveHighScore('subway-runner', step.game.score);
         }
 
@@ -177,7 +163,7 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
           inputGenerosityRef.current.startCoyote("ground", 0.14);
           if (inputGenerosityRef.current.consumeBufferedPress("jump")) {
             nextGame = jumpRunner(nextGame);
-            playSyntheticTone(audioCtxRef.current, { freq: 440, duration: 0.08, type: "triangle" });
+            playProceduralSfx(audioCtxRef.current, "jump");
             MobileHapticsPro.medium();
           }
         }
@@ -290,7 +276,7 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
           "--shake-y": `${shakeOffset.y}px`,
         } as React.CSSProperties
       }
-      className={`mx-auto flex w-full max-w-5xl translate-x-(--shake-x) translate-y-(--shake-y) flex-col items-center gap-4 p-2 sm:p-4 select-none transition-all ${
+      className={`mx-auto flex w-full max-w-5xl translate-x-(--shake-x) translate-y-(--shake-y) flex-col items-center gap-2 sm:gap-4 p-0 sm:p-4 select-none transition-all ${
         isImmersive
           ? "fixed inset-0 z-50 overflow-y-auto bg-background/95 backdrop-blur-md max-w-none w-full h-full justify-center"
           : ""
@@ -348,7 +334,7 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
 
       {/* Main 3D Runner SVG Viewport */}
       <div
-        className="relative w-full overflow-hidden rounded-2xl border border-border bg-card shadow-lg select-none touch-none"
+        className="relative w-full overflow-hidden rounded-none sm:rounded-2xl border-x-0 sm:border border-border bg-card shadow-lg select-none touch-none"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >

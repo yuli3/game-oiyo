@@ -351,11 +351,11 @@ export const GameShell: React.FC<GameShellProps> = ({
       className={
         isImmersive
           ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-hidden bg-background p-3 sm:p-5 select-none touch-none"
-          : `relative mx-auto my-3 sm:my-6 w-full max-w-5xl sm:max-w-6xl h-full min-h-145 sm:min-h-165 max-h-220 flex flex-col rounded-3xl border border-border bg-card p-2 sm:p-5 shadow-xl ${className}`
+          : `relative mx-auto my-0 sm:my-6 w-full max-w-5xl sm:max-w-6xl h-full min-h-145 sm:min-h-165 max-h-220 flex flex-col rounded-none sm:rounded-3xl border-x-0 sm:border border-border bg-card p-0 sm:p-5 shadow-xl ${className}`
       }
     >
       {/* ── Top Header Bar ── */}
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 shrink-0">
+      <div className="mb-2 sm:mb-3 flex flex-wrap items-center justify-between gap-2 shrink-0 px-3 sm:px-0 pt-2 sm:pt-0">
         <div className="flex items-center gap-2">
           {onExit && phase !== "title" && (
             <button
@@ -650,7 +650,7 @@ export const GameShell: React.FC<GameShellProps> = ({
       )}
 
       {/* ── Main Viewport Wrapper ── */}
-      <div className="relative flex-1 min-h-0 w-full overflow-hidden rounded-2xl border border-border/80 bg-background/95">
+      <div className="relative flex-1 min-h-0 w-full overflow-hidden rounded-none sm:rounded-2xl border-y sm:border border-border/80 bg-background/95">
         {/* In-Game Children (Canvas or UI Grid) */}
         {children}
 

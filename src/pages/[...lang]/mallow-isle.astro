@@ -47,9 +47,9 @@ const m = meta[locale] ?? meta.en;
   image="/games/mallow-isle-social.png"
   heading={m.title}
 >
-  <div class="mx-auto max-w-7xl px-2 py-6 sm:px-4 sm:py-8">
+  <div class="mx-auto max-w-7xl px-0 py-2 sm:px-4 sm:py-6">
     <MallowIsle client:visible locale={locale} />
-    <div class="mx-auto max-w-3xl px-2">
+    <div class="mx-auto max-w-3xl px-4 mt-8">
       <GameGuide slug="mallow-isle" locale={locale} name="Mallow Isle" />
     </div>
   </div>

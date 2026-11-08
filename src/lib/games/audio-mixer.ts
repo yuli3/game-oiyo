@@ -124,7 +124,9 @@ export type SfxCue =
   | "roll"
   | "success"
   | "fail"
-  | "win";
+  | "win"
+  | "laser"
+  | "powerup";
 
 export interface SfxOptions {
   volume?: number;
@@ -252,8 +254,76 @@ export function playProceduralSfx(
         createLayer(784, 0.3, "sine", 0.9);
         createLayer(1046, 0.45, "triangle", 1.0);
         break;
+      case "laser":
+        // Sci-fi zap (sweeping down fast)
+        createLayer(880, 0.06, "sawtooth", 0.7, 1800);
+        createLayer(440, 0.08, "triangle", 0.5);
+        break;
+      case "powerup":
+        // Uplifting energetic powerup
+        createLayer(350, 0.1, "sine", 0.7);
+        createLayer(523, 0.16, "triangle", 0.8);
+        createLayer(880, 0.24, "sine", 0.9);
+        break;
     }
   } catch {
     // Sound is decoration
   }
+}
+
+let sharedAudioCtx: AudioContext | null = null;
+
+export function getSharedAudioContext(): AudioContext | null {
+  if (typeof window === "undefined") return null;
+  const AudioCtx =
+    window.AudioContext ||
+    (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+  if (!AudioCtx) return null;
+  if (!sharedAudioCtx) {
+    try {
+      sharedAudioCtx = new AudioCtx();
+    } catch {
+      return null;
+    }
+  }
+  if (sharedAudioCtx.state === "suspended") {
+    sharedAudioCtx.resume().catch(() => {});
+  }
+  return sharedAudioCtx;
+}
+
+/**
+ * Universal 1-line procedural SFX dispatcher using the shared AudioContext.
+ */
+export function playGlobalSfx(cue: SfxCue, options?: SfxOptions): void {
+  const ctx = getSharedAudioContext();
+  if (ctx) {
+    playProceduralSfx(ctx, cue, options);
+  }
+}
+
+/**
+ * Pentatonic scale semitone offsets for arcade combo chains (C, D, E, G, A, C...).
+ */
+const PENTATONIC_SCALE = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21, 24];
+
+/**
+ * Plays a procedural SFX with an escalating combo pitch shift.
+ */
+export function playComboSfx(
+  audioCtx: AudioContext | null,
+  cue: SfxCue,
+  comboIndex: number = 0,
+  options?: SfxOptions
+): void {
+  const semitones = PENTATONIC_SCALE[Math.min(Math.max(0, comboIndex), PENTATONIC_SCALE.length - 1)];
+  const pitchMultiplier = Math.pow(2, semitones / 12);
+  const baseFreq = options?.customFreq;
+  const shiftedFreq = baseFreq ? baseFreq * pitchMultiplier : undefined;
+
+  playProceduralSfx(audioCtx, cue, {
+    ...options,
+    customFreq: shiftedFreq,
+    pitchVariance: (options?.pitchVariance ?? 0.04) + 0.01,
+  });
 }

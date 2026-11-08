@@ -121,3 +121,14 @@ export function triggerHaptic(style: HapticStyle = "light"): boolean {
     return false;
   }
 }
+
+/**
+ * Returns CSS custom properties for hardware-accelerated transform shaking.
+ */
+export function getShakeCssVars(offset: { x: number; y: number; angle?: number }): Record<string, string> {
+  return {
+    "--shake-x": `${Math.round(offset.x * 10) / 10}px`,
+    "--shake-y": `${Math.round(offset.y * 10) / 10}px`,
+    "--shake-rot": `${Math.round((offset.angle ?? 0) * 10) / 10}deg`,
+  };
+}

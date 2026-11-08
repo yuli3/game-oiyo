@@ -15,6 +15,28 @@ import { DynamicDifficultyAdjustmentEngine, type DifficultyModifiers } from "./d
 import { GhostReplayRecorder, GhostReplayPlayer, TimeAttackDeltaSolver, type ReplayPayload } from "./ghost-replay-engine";
 import { DynamicStemMixer, ProceduralPatternSequencer } from "./generative-dynamic-bgm";
 import { MotionGestureController } from "./motion-gesture-controller";
+import { InputGenerosity, createInputGenerosity } from "./input-generosity";
+import {
+  createShakeState,
+  addTrauma,
+  updateShake,
+  createHitStopState,
+  triggerHitStop,
+  updateHitStop,
+  getShakeCssVars,
+  triggerHaptic,
+  type ScreenShakeState,
+  type HitStopState,
+  type HapticStyle,
+} from "./juice-engine";
+import {
+  playProceduralSfx,
+  playGlobalSfx,
+  playComboSfx,
+  getSharedAudioContext,
+  type SfxCue,
+  type SfxOptions,
+} from "./audio-mixer";
 
 export class MobileHapticsPro {
   public static lightImpact(): void {
@@ -307,6 +329,132 @@ export function useProceduralBgmPro() {
   };
 }
 
+export interface InputGenerosityOptions {
+  bufferTtlSeconds?: number;
+  coyoteSeconds?: number;
+}
+
+/**
+ * 5. Universal Coyote Time & Input Buffering Hook (game-input-systems)
+ * Eliminates missed jumps / action drops on mobile touch and high-refresh displays.
+ */
+export function useInputGenerosityPro(options?: InputGenerosityOptions) {
+  const engineRef = useRef<InputGenerosity | null>(null);
+  if (!engineRef.current) engineRef.current = createInputGenerosity();
+
+  const bufferTtl = options?.bufferTtlSeconds ?? 0.16;
+  const coyoteDuration = options?.coyoteSeconds ?? 0.14;
+
+  const bufferAction = useCallback(
+    (action: string = "jump", ttl?: number) => {
+      engineRef.current?.bufferPress(action, ttl ?? bufferTtl);
+    },
+    [bufferTtl]
+  );
+
+  const startCoyote = useCallback(
+    (timerName: string = "ground", duration?: number) => {
+      engineRef.current?.startCoyote(timerName, duration ?? coyoteDuration);
+    },
+    [coyoteDuration]
+  );
+
+  const canExecute = useCallback((action: string = "jump", isGrounded: boolean = false) => {
+    if (!engineRef.current) return false;
+    const hasBuffered = engineRef.current.consumeBufferedPress(action);
+    if (!hasBuffered) return false;
+
+    if (isGrounded) return true;
+    return engineRef.current.consumeCoyote("ground");
+  }, []);
+
+  const update = useCallback((dtSeconds: number) => {
+    engineRef.current?.update(dtSeconds);
+  }, []);
+
+  const reset = useCallback(() => {
+    engineRef.current?.reset();
+  }, []);
+
+  return {
+    bufferAction,
+    startCoyote,
+    canExecute,
+    update,
+    reset,
+    engine: engineRef.current,
+  };
+}
+
+/**
+ * 6. Unified Game Feel Juice Hook (game-feel)
+ * 1-line screen shake (Trauma^2), micro hit-stop, and haptics orchestration.
+ */
+export function useGameJuicePro(options?: { decay?: number; maxOffset?: number }) {
+  const shakeRef = useRef<ScreenShakeState>(createShakeState(options));
+  const hitStopRef = useRef<HitStopState>(createHitStopState());
+
+  const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0, angle: 0 });
+  const [isHitStopped, setIsHitStopped] = useState(false);
+
+  const applyTrauma = useCallback((amount: number = 0.35) => {
+    shakeRef.current = addTrauma(shakeRef.current, amount);
+  }, []);
+
+  const applyHitStop = useCallback((durationMs: number = 50) => {
+    hitStopRef.current = triggerHitStop(hitStopRef.current, durationMs);
+    setIsHitStopped(true);
+  }, []);
+
+  const triggerImpact = useCallback(
+    (config?: { trauma?: number; hitStopMs?: number; haptic?: HapticStyle }) => {
+      const t = config?.trauma ?? 0.4;
+      const hs = config?.hitStopMs ?? 50;
+      const hap = config?.haptic ?? "medium";
+
+      shakeRef.current = addTrauma(shakeRef.current, t);
+      hitStopRef.current = triggerHitStop(hitStopRef.current, hs);
+      setIsHitStopped(true);
+      triggerHaptic(hap);
+    },
+    []
+  );
+
+  const updateJuice = useCallback(
+    (dtSeconds: number) => {
+      if (hitStopRef.current.active) {
+        const res = updateHitStop(hitStopRef.current, dtSeconds * 1000);
+        hitStopRef.current = res.state;
+        setIsHitStopped(res.isPaused);
+        if (res.isPaused) {
+          return { isHitStopped: true, offset: shakeOffset };
+        }
+      } else if (isHitStopped) {
+        setIsHitStopped(false);
+      }
+
+      const shakeRes = updateShake(shakeRef.current, dtSeconds);
+      shakeRef.current = shakeRes.state;
+      setShakeOffset(shakeRes.offset);
+
+      return { isHitStopped: false, offset: shakeRes.offset };
+    },
+    [isHitStopped, shakeOffset]
+  );
+
+  const shakeStyle = getShakeCssVars(shakeOffset);
+
+  return {
+    shakeOffset,
+    shakeStyle,
+    isHitStopped,
+    applyTrauma,
+    applyHitStop,
+    triggerImpact,
+    updateJuice,
+  };
+}
+
 export {
   JellySquashStretch2D,
   Card3DTiltSolver,
@@ -314,4 +462,13 @@ export {
   GhostReplayRecorder,
   GhostReplayPlayer,
   TimeAttackDeltaSolver,
+  InputGenerosity,
+  createInputGenerosity,
+  playProceduralSfx,
+  playGlobalSfx,
+  playComboSfx,
+  getSharedAudioContext,
+  getShakeCssVars,
+  triggerHaptic,
 };
+export type { SfxCue, SfxOptions, HapticStyle };

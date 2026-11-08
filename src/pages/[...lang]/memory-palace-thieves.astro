@@ -15,6 +15,6 @@ const meta:Record<Locale,{title:string;description:string;name:string}>={
  es:{title:"Ladrones del palacio mental — sigilo 3D de memoria",description:"Estudia la patrulla, infíltrate de memoria en el museo oscuro, roba la pieza y escapa en este juego 3D gratuito.",name:"Ladrones del palacio mental"}
 }; const m=meta[locale]??meta.en;
 ---
-<BaseLayout title={m.title} description={m.description} heading={m.title}><div class="mx-auto max-w-7xl px-2 py-4 sm:px-4 sm:py-6"><MemoryPalaceThieves client:load locale={locale}/><div class="mx-auto max-w-3xl px-2 mt-8">
+<BaseLayout title={m.title} description={m.description} heading={m.title}><div class="mx-auto max-w-7xl px-0 py-2 sm:px-4 sm:py-6"><MemoryPalaceThieves client:load locale={locale}/><div class="mx-auto max-w-3xl px-4 mt-8">
   <GameGuide slug="memory-palace-thieves" locale={locale} name={m.name}/>
 </div></div></BaseLayout>

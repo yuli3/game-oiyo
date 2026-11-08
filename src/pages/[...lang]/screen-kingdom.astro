@@ -25,13 +25,13 @@ const m = meta[locale] ?? meta.en;
 ---
 
 <BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["screen-kingdom"]}>
-  <div class="mx-auto max-w-7xl px-2 py-4 sm:px-4 sm:py-6">
+  <div class="mx-auto max-w-7xl px-0 py-2 sm:px-4 sm:py-6">
     {/*
       client:visible — the three.js chunk stays out of the first paint until
       the page is actually on screen.
     */}
     <ScreenKingdom client:visible locale={locale} />
-    <div class="mx-auto max-w-3xl px-2 mt-8">
+    <div class="mx-auto max-w-3xl px-4 mt-8">
       <GameGuide slug="screen-kingdom" locale={locale} name={m.title.split(" — ")[0]} />
     </div>
   </div>

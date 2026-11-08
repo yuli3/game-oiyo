@@ -402,7 +402,7 @@ export function SliceMaster({ locale = "ko" }: SliceMasterProps) {
   return (
     <div
       ref={containerRef}
-      className={`relative w-full max-w-4xl mx-auto flex flex-col items-center select-none overflow-hidden rounded-2xl border border-border bg-card shadow-2xl transition-all duration-300 ${
+      className={`relative w-full max-w-4xl mx-auto flex flex-col items-center select-none overflow-hidden rounded-none sm:rounded-2xl border-x-0 sm:border border-border bg-card shadow-2xl transition-all duration-300 ${
         isImmersive ? "fixed inset-0 z-50 max-w-none rounded-none border-none h-screen bg-background" : "w-full h-full min-h-135 max-h-210"
       }`}
     >

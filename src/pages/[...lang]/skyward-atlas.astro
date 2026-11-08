@@ -21,8 +21,8 @@ const meta: Record<Locale, { title: string; description: string }> = {
 const m = meta[locale] ?? meta.en;
 ---
 <BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["skyward-atlas"]}>
-  <div class="mx-auto max-w-7xl px-2 py-6 sm:px-4 sm:py-8">
+  <div class="mx-auto max-w-7xl px-0 py-2 sm:px-4 sm:py-6">
     <SkywardAtlas client:visible locale={locale} />
-    <div class="mx-auto max-w-3xl px-2"><GameGuide slug="skyward-atlas" locale={locale} name="Skyward Atlas" /></div>
+    <div class="mx-auto max-w-3xl px-4 mt-8"><GameGuide slug="skyward-atlas" locale={locale} name="Skyward Atlas" /></div>
   </div>
 </BaseLayout>

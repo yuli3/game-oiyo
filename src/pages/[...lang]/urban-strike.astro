@@ -43,14 +43,14 @@ const m = meta[locale] ?? meta.en;
 ---
 
 <BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["urban-strike"]}>
-  <div class="mx-auto max-w-7xl px-2 py-6 sm:px-4 sm:py-8">
+  <div class="mx-auto max-w-7xl px-0 py-2 sm:px-4 sm:py-6">
     {/*
       The React shell is visible-first, and the Three.js combat scene is a
       second lazy boundary behind the Deploy button. The arcade homepage and
       visitors who only read the guide never download the 3D engine.
     */}
     <UrbanStrike client:visible locale={locale} />
-    <div class="mx-auto max-w-3xl px-2">
+    <div class="mx-auto max-w-3xl px-4 mt-8">
       <GameGuide slug="urban-strike" locale={locale} name="Urban Strike" />
     </div>
   </div>

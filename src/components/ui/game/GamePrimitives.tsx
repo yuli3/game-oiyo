@@ -98,7 +98,7 @@ export const Die: React.FC<{ type: DieType; value?: number | null; rolling?: boo
 
 export const GameContainer: React.FC<{ title: string; subtitle?: string; resetLabel?: string; onReset?: () => void; children: React.ReactNode }> = ({ title, subtitle, resetLabel = 'RESET', onReset, children }) => {
     return (
-        <div className="not-prose my-6 sm:my-10 p-3 sm:p-8 bg-card border border-border rounded-3xl sm:rounded-4xl shadow-sm w-full max-w-5xl mx-auto">
+        <div className="not-prose my-2 sm:my-10 p-2 sm:p-8 bg-card border-x-0 sm:border border-border rounded-none sm:rounded-4xl shadow-sm w-full max-w-5xl mx-auto">
             <div className="flex justify-between items-end mb-8">
                 <div>
                     <h3 className="text-2xl font-black text-foreground">{title}</h3>

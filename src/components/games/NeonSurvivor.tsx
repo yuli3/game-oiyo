@@ -30,7 +30,12 @@ import {
   type LoreEntry,
 } from '../../lib/games/neon-survivor-lore';
 import { nativeHaptics } from '../../lib/haptics/native-bridge';
-import { MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import {
+  MobileHapticsPro,
+  getSharedAudioContext,
+  playProceduralSfx,
+  playComboSfx,
+} from '../../lib/games/engine-suite-unified';
 import type { Locale } from '../../lib/i18n';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { ArcadeTouchControls } from '../ui/game/ArcadeTouchControls';
@@ -319,18 +324,9 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
   const [muted, setMuted] = useState(false);
   const mutedRef = useRef(false);
   useEffect(() => { mutedRef.current = muted; }, [muted]);
-  const audioCtxRef = useRef<AudioContext | null>(null);
 
   const getAudioContext = useCallback(() => {
-    if (typeof window === 'undefined') return null;
-    if (!audioCtxRef.current) {
-      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      if (AudioCtx) audioCtxRef.current = new AudioCtx();
-    }
-    if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
-      void audioCtxRef.current.resume();
-    }
-    return audioCtxRef.current;
+    return getSharedAudioContext();
   }, []);
 
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({
@@ -354,70 +350,28 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
     if (mutedRef.current) return;
     const ctx = getAudioContext();
     if (!ctx) return;
-    const now = ctx.currentTime;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(800, now);
-    osc.frequency.exponentialRampToValueAtTime(200, now + 0.05);
-    gain.gain.setValueAtTime(0.04, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
-    osc.connect(gain).connect(ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.05);
+    playProceduralSfx(ctx, 'laser');
   }, [getAudioContext]);
 
   const playGemSound = useCallback(() => {
     if (mutedRef.current) return;
     const ctx = getAudioContext();
     if (!ctx) return;
-    const now = ctx.currentTime;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(1400, now);
-    osc.frequency.exponentialRampToValueAtTime(1900, now + 0.06);
-    gain.gain.setValueAtTime(0.06, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
-    osc.connect(gain).connect(ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.06);
+    playComboSfx(ctx, 'gem', stateRef.current?.player.exp ?? 0);
   }, [getAudioContext]);
 
   const playLevelUpSound = useCallback(() => {
     if (mutedRef.current) return;
     const ctx = getAudioContext();
     if (!ctx) return;
-    const now = ctx.currentTime;
-    [523.25, 659.25, 783.99, 1046.50, 1318.51].forEach((freq, idx) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      const start = now + idx * 0.06;
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(freq, start);
-      gain.gain.setValueAtTime(0.12, start);
-      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.2);
-      osc.connect(gain).connect(ctx.destination);
-      osc.start(start);
-      osc.stop(start + 0.2);
-    });
+    playProceduralSfx(ctx, 'powerup');
   }, [getAudioContext]);
 
   const playHitSound = useCallback(() => {
     if (mutedRef.current) return;
     const ctx = getAudioContext();
     if (!ctx) return;
-    const now = ctx.currentTime;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(160, now);
-    osc.frequency.exponentialRampToValueAtTime(40, now + 0.15);
-    gain.gain.setValueAtTime(0.18, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
-    osc.connect(gain).connect(ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.15);
+    playProceduralSfx(ctx, 'hit');
   }, [getAudioContext]);
 
   const playBossSirenSound = useCallback(() => {
@@ -1205,7 +1159,7 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
       className={
         isImmersive
           ? "fixed inset-0 z-50 w-screen h-dvh bg-black m-0 p-0 rounded-none border-none select-none touch-none flex items-center justify-center overflow-hidden"
-          : "relative w-full h-full min-h-145 max-h-220 rounded-2xl overflow-hidden border border-border bg-card shadow-2xl select-none touch-none"
+          : "relative w-full h-full min-h-145 max-h-220 rounded-none sm:rounded-2xl overflow-hidden border-x-0 sm:border border-border bg-card shadow-2xl select-none touch-none"
       }
     >
       {phase === 'briefing' ? (

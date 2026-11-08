@@ -44,7 +44,7 @@ const m = meta[locale] ?? meta.en;
 ---
 
 <BaseLayout title={m.title} heading={m.title} description={m.description}>
-  <div class="mx-auto max-w-7xl px-2 py-4 sm:px-4 sm:py-6">
+  <div class="mx-auto max-w-7xl px-0 py-2 sm:px-4 sm:py-6">
     <HanjaQuizComp client:load locale={locale} />
   </div>
 </BaseLayout>

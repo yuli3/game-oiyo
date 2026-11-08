@@ -1,7 +1,14 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import RetroHighwayScene from './RetroHighwayScene';
 import { ArcadeTouchControls } from '../ui/game/ArcadeTouchControls';
-import { useGhostTimeAttackPro, useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import {
+  useGhostTimeAttackPro,
+  useCardTiltPro,
+  MobileHapticsPro,
+  getSharedAudioContext,
+  playProceduralSfx,
+  playComboSfx,
+} from '../../lib/games/engine-suite-unified';
 import { createInputGenerosity } from '../../lib/games/input-generosity';
 import { getSpriteUrl, RETRO_HIGHWAY_UI_SPRITES } from '../../lib/games/sprites';
 import {
@@ -191,54 +198,19 @@ export default function RetroHighway({ locale = 'ko' }: Props) {
   const inputGenerosityRef = useRef(createInputGenerosity());
   const animRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number>(0);
-  const audioCtxRef = useRef<AudioContext | null>(null);
-
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale });
 
-  const playSound = useCallback((type: 'crash' | 'pickup' | 'boost') => {
+  const playSound = useCallback((type: 'crash' | 'pickup' | 'boost', combo = 0) => {
     if (muted) return;
-    try {
-      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      if (!audioCtxRef.current && AudioCtx) {
-        audioCtxRef.current = new AudioCtx();
-      }
-      const ctx = audioCtxRef.current;
-      if (!ctx) return;
-      if (ctx.state === 'suspended') void ctx.resume();
+    const ctx = getSharedAudioContext();
+    if (!ctx) return;
 
-      const now = ctx.currentTime;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-
-      if (type === 'crash') {
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(140, now);
-        osc.frequency.exponentialRampToValueAtTime(30, now + 0.35);
-        gain.gain.setValueAtTime(0.3, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
-        osc.start(now);
-        osc.stop(now + 0.35);
-      } else if (type === 'pickup') {
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(587.33, now); // D5
-        osc.frequency.exponentialRampToValueAtTime(880, now + 0.15); // A5
-        gain.gain.setValueAtTime(0.15, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
-        osc.start(now);
-        osc.stop(now + 0.15);
-      } else if (type === 'boost') {
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(220, now);
-        osc.frequency.exponentialRampToValueAtTime(440, now + 0.2);
-        gain.gain.setValueAtTime(0.1, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-        osc.start(now);
-        osc.stop(now + 0.2);
-      }
-    } catch {
-      // AudioContext unavailable
+    if (type === 'crash') {
+      playProceduralSfx(ctx, 'fail');
+    } else if (type === 'pickup') {
+      playComboSfx(ctx, 'gem', combo);
+    } else if (type === 'boost') {
+      playProceduralSfx(ctx, 'powerup');
     }
   }, [muted]);
 
@@ -368,6 +340,7 @@ export default function RetroHighway({ locale = 'ko' }: Props) {
         if (next.player.status === 'playing') {
           if (next.player.nearMissCount > prev.player.nearMissCount) {
             MobileHapticsPro.light();
+            playSound('pickup', next.player.nearMissCount);
           }
           const prog = Math.min(1.0, next.player.distance / 5000);
           recordFrame(dt * 1000, {
@@ -491,7 +464,7 @@ export default function RetroHighway({ locale = 'ko' }: Props) {
       </div>
 
       {/* Main 3D Canvas Viewport */}
-      <div className={`relative w-full overflow-hidden rounded-xl border border-border bg-card shadow-lg ${
+      <div className={`relative w-full overflow-hidden rounded-none sm:rounded-xl border-x-0 sm:border border-border bg-card shadow-lg ${
         isImmersive ? 'flex-1 min-h-0' : 'w-full h-full min-h-130 max-h-205'
       }`}>
         <RetroHighwayScene state={state} />

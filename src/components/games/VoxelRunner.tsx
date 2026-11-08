@@ -1,6 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { ArcadeTouchControls } from '../ui/game/ArcadeTouchControls';
-import { useGhostTimeAttackPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import {
+  useGhostTimeAttackPro,
+  MobileHapticsPro,
+  playProceduralSfx,
+  playComboSfx,
+  getSharedAudioContext,
+} from '../../lib/games/engine-suite-unified';
 import { createInputGenerosity } from '../../lib/games/input-generosity';
 import VoxelRunnerScene from './VoxelRunnerScene';
 import {
@@ -102,7 +108,6 @@ export default function VoxelRunner({ locale = 'ko' }: { locale?: string }) {
   const [obstacles, setObstacles] = useState<Obstacle[]>([]);
   const speedRef = useRef(18);
 
-  const audioCtxRef = useRef<AudioContext | null>(null);
   const animFrameRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number>(0);
   const spawnTimerRef = useRef(0);
@@ -119,113 +124,30 @@ export default function VoxelRunner({ locale = 'ko' }: { locale?: string }) {
     }
   }, []);
 
-  // Web Audio synth (multi-layered cyber audio)
+  // Web Audio synth (multi-layered cyber audio via unified engine audio-mixer)
   const playSound = useCallback((type: 'jump' | 'duck' | 'collect' | 'gameover' | 'lane') => {
     if (!audioEnabled) return;
-    try {
-      if (!audioCtxRef.current) {
-        audioCtxRef.current = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-      }
-      const ctx = audioCtxRef.current;
-      if (ctx.state === 'suspended') ctx.resume();
-      const now = ctx.currentTime;
+    const ctx = getSharedAudioContext();
+    if (!ctx) return;
 
-      if (type === 'jump') {
-        // Layer 1: Jet booster sweep
-        const osc1 = ctx.createOscillator();
-        const gain1 = ctx.createGain();
-        osc1.type = 'sine';
-        osc1.frequency.setValueAtTime(320, now);
-        osc1.frequency.exponentialRampToValueAtTime(740, now + 0.16);
-        gain1.gain.setValueAtTime(0.22, now);
-        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
-        osc1.connect(gain1);
-        gain1.connect(ctx.destination);
-        osc1.start(now);
-        osc1.stop(now + 0.16);
-
-        // Layer 2: Sub-bass takeoff thump
-        const oscSub = ctx.createOscillator();
-        const gainSub = ctx.createGain();
-        oscSub.type = 'triangle';
-        oscSub.frequency.setValueAtTime(110, now);
-        oscSub.frequency.exponentialRampToValueAtTime(45, now + 0.12);
-        gainSub.gain.setValueAtTime(0.3, now);
-        gainSub.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-        oscSub.connect(gainSub);
-        gainSub.connect(ctx.destination);
-        oscSub.start(now);
-        oscSub.stop(now + 0.12);
-      } else if (type === 'duck') {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(420, now);
-        osc.frequency.exponentialRampToValueAtTime(160, now + 0.14);
-        gain.gain.setValueAtTime(0.2, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(now);
-        osc.stop(now + 0.14);
-      } else if (type === 'collect') {
-        // Dual harmonic crystal chime (A5 + E6)
-        [880, 1320].forEach((freq, idx) => {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(freq, now + idx * 0.04);
-          osc.frequency.exponentialRampToValueAtTime(freq * 1.5, now + idx * 0.04 + 0.18);
-          gain.gain.setValueAtTime(0.18, now + idx * 0.04);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.04 + 0.18);
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start(now + idx * 0.04);
-          osc.stop(now + idx * 0.04 + 0.18);
-        });
-      } else if (type === 'gameover') {
-        // Layer 1: Electric crash sawtooth
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(280, now);
-        osc.frequency.exponentialRampToValueAtTime(50, now + 0.45);
-        gain.gain.setValueAtTime(0.32, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(now);
-        osc.stop(now + 0.45);
-
-        // Layer 2: Deep sub rumble (80Hz -> 20Hz)
-        const sub = ctx.createOscillator();
-        const subGain = ctx.createGain();
-        sub.type = 'sine';
-        sub.frequency.setValueAtTime(80, now);
-        sub.frequency.exponentialRampToValueAtTime(20, now + 0.5);
-        subGain.gain.setValueAtTime(0.4, now);
-        subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
-        sub.connect(subGain);
-        subGain.connect(ctx.destination);
-        sub.start(now);
-        sub.stop(now + 0.5);
-      } else if (type === 'lane') {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(520, now);
-        osc.frequency.exponentialRampToValueAtTime(260, now + 0.05);
-        gain.gain.setValueAtTime(0.12, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(now);
-        osc.stop(now + 0.05);
-      }
-    } catch {
-      // ignore
+    switch (type) {
+      case 'jump':
+        playProceduralSfx(ctx, 'jump');
+        break;
+      case 'duck':
+        playProceduralSfx(ctx, 'move');
+        break;
+      case 'collect':
+        playComboSfx(ctx, 'gem', crystals);
+        break;
+      case 'gameover':
+        playProceduralSfx(ctx, 'fail');
+        break;
+      case 'lane':
+        playProceduralSfx(ctx, 'tap');
+        break;
     }
-  }, [audioEnabled]);
+  }, [audioEnabled, crystals]);
 
   const startGame = useCallback(() => {
     setPlayer(createInitialPlayer());
@@ -407,7 +329,7 @@ export default function VoxelRunner({ locale = 'ko' }: { locale?: string }) {
       className={`mx-auto w-full transition-all duration-200 ${
         isImmersive
           ? 'fixed inset-0 z-50 flex flex-col justify-between bg-background p-3 sm:p-5 h-dvh w-screen overflow-hidden'
-          : 'w-full max-w-5xl mx-auto p-2 sm:p-6 space-y-4'
+          : 'w-full max-w-5xl mx-auto p-0 sm:p-6 space-y-2 sm:space-y-4'
       }`}
     >
       {/* Header bar */}
@@ -447,7 +369,7 @@ export default function VoxelRunner({ locale = 'ko' }: { locale?: string }) {
       </div>
 
       {/* Main 3D Canvas Box */}
-      <div className={`relative rounded-2xl overflow-hidden shadow-lg border border-border ${
+      <div className={`relative rounded-none sm:rounded-2xl overflow-hidden shadow-lg border-x-0 sm:border border-border ${
         isImmersive ? 'flex-1 min-h-0' : 'h-full min-h-130 max-h-205'
       }`}>
         <VoxelRunnerScene
