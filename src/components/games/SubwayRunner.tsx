@@ -54,6 +54,7 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
 
   const shakeStateRef = useRef(createShakeState());
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const trainHornCooldownRef = useRef(0);
 
   const handleShareCard = useCallback(async () => {
     MobileHapticsPro.click();
@@ -124,6 +125,22 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
             type: "sine",
             gain: 0.12,
           });
+        }
+
+        // Dynamic train approach warning horn (game-ai / audio feel)
+        if (trainHornCooldownRef.current > 0) {
+          trainHornCooldownRef.current -= dt;
+        } else {
+          const hasTrainNearby = step.game.obstacles.some(
+            (o) => o.type === "train_block" && o.z > 8 && o.z < 35
+          );
+          if (hasTrainNearby) {
+            trainHornCooldownRef.current = 4.0; // Cooldown between horns
+            playSyntheticTone(audioCtxRef.current, { freq: 311.13, duration: 0.16, type: "sawtooth", gain: 0.14 });
+            setTimeout(() => {
+              playSyntheticTone(audioCtxRef.current, { freq: 415.3, duration: 0.22, type: "sawtooth", gain: 0.14 });
+            }, 60);
+          }
         }
 
         if (step.crashed) {

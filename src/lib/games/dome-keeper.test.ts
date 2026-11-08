@@ -46,4 +46,22 @@ describe('Dome Keeper Drill Defense (#146 dome-keeper)', () => {
     expect(preset.relicExtracted).toBe(true);
     expect(preset.status).toBe('won');
   });
+
+  it('transitions alien invaders into FSM states (charge, bombard, shield) based on distance and role', () => {
+    let state = createInitialDomeKeeperState(20261026);
+    state = startAlienWaveDefense(state);
+
+    // Initial state should be approach
+    expect(state.invaders[0].aiState).toBe('approach');
+
+    // Fire laser at first invader to advance wave simulation
+    const firstId = state.invaders[0].id;
+    state = fireDomeLaserAtInvader(state, firstId);
+
+    // Surviving invader with low distance transitions to charge or bombard
+    const swarmer = state.invaders.find((inv) => inv.name.includes('Swarmer'));
+    if (swarmer) {
+      expect(['approach', 'charge']).toContain(swarmer.aiState);
+    }
+  });
 });

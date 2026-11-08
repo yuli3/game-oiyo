@@ -223,7 +223,9 @@ export function stepSubwayRunner(game: SubwayRunnerGame, dt: number): RunnerStep
   const updatedObstacles: RunnerObstacle[] = [];
 
   for (const obs of game.obstacles) {
-    const nextZ = obs.z - speed * dt;
+    // Dynamic incoming train movement (game-ai / physics-tuning)
+    const extraSpeed = obs.type === "train_block" ? 8.0 : 0;
+    const nextZ = obs.z - (speed + extraSpeed) * dt;
 
     if (nextZ > -10) {
       // Check collision window when obstacle reaches player Z (-0.8m to +0.8m)
@@ -252,9 +254,11 @@ export function stepSubwayRunner(game: SubwayRunnerGame, dt: number): RunnerStep
             status = "gameover";
           }
         } else if (obs.type === "train_block") {
-          // Solid block
-          result.crashed = true;
-          status = "gameover";
+          // Train Roof-run parkour: if jumping high enough (y >= 1.4), player lands on roof
+          if (player.y < 1.4) {
+            result.crashed = true;
+            status = "gameover";
+          }
         }
       }
 

@@ -277,20 +277,38 @@ export function updateBlockBreaker(state: BlockBreakerState, dt: number): BlockB
       vy = -Math.abs(vy);
     }
 
-    // Paddle bounce
-    if (
-      nextY - ball.radius <= state.paddleY + paddleHalfH &&
-      nextY + ball.radius >= state.paddleY - paddleHalfH &&
-      nextX >= state.paddleX - paddleHalfW - 0.1 &&
-      nextX <= state.paddleX + paddleHalfW + 0.1 &&
-      vy < 0
-    ) {
-      nextY = state.paddleY + paddleHalfH + ball.radius;
-      const hitOffset = (nextX - state.paddleX) / paddleHalfW; // -1.0 to 1.0
-      const maxAngle = Math.PI * 0.42; // Up to ~75 degrees
-      const bounceAngle = (Math.PI / 2) - hitOffset * maxAngle;
+    // Paddle bounce with Continuous Collision Detection (CCD swept segment)
+    const paddleTop = state.paddleY + paddleHalfH;
+    const paddleBottom = state.paddleY - paddleHalfH;
+    const isPassingPaddlePlane =
+      vy < 0 &&
+      ball.y - ball.radius >= paddleBottom &&
+      nextY - ball.radius <= paddleTop;
 
-      const currentSpeed = Math.min(ball.speed * 1.02, 14.0); // Slight speed up on paddle hit
+    const crossT =
+      ball.y !== nextY ? Math.max(0, Math.min(1, (ball.y - ball.radius - paddleTop) / (ball.y - nextY))) : 0;
+    const crossX = ball.x + (nextX - ball.x) * crossT;
+
+    const isHitByAABB =
+      nextY - ball.radius <= paddleTop &&
+      nextY + ball.radius >= paddleBottom &&
+      nextX >= state.paddleX - paddleHalfW - 0.15 &&
+      nextX <= state.paddleX + paddleHalfW + 0.15;
+
+    const isHitBySweptCCD =
+      isPassingPaddlePlane &&
+      crossX >= state.paddleX - paddleHalfW - 0.15 &&
+      crossX <= state.paddleX + paddleHalfW + 0.15;
+
+    if ((isHitByAABB || isHitBySweptCCD) && vy < 0) {
+      nextY = paddleTop + ball.radius;
+      const effectiveX = isHitBySweptCCD ? crossX : nextX;
+      const hitOffset = (effectiveX - state.paddleX) / paddleHalfW; // -1.0 to 1.0
+      const clampedOffset = Math.max(-0.95, Math.min(0.95, hitOffset));
+      const maxAngle = Math.PI * 0.42; // Up to ~75 degrees
+      const bounceAngle = Math.PI / 2 - clampedOffset * maxAngle;
+
+      const currentSpeed = Math.min(Math.max(ball.speed * 1.02, Math.hypot(vx, vy)), 16.0); // Preserves physics speed
       vx = Math.cos(bounceAngle) * currentSpeed;
       vy = Math.sin(bounceAngle) * currentSpeed;
       combo = 0; // Reset combo on paddle touch

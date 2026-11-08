@@ -115,4 +115,30 @@ describe('BlockBreaker Engine', () => {
     expect(state.lives).toBe(2);
     expect(state.status).toBe('ready');
   });
+
+  it('prevents tunneling via CCD when high-speed ball leaps across paddle in one frame', () => {
+    let state = createInitialBlockBreakerState();
+    state.status = 'playing';
+    state.paddleX = 0;
+    // Ball moving downward at high speed directly toward paddle
+    // In a 0.05s step, ball leaps from y=2.0 to y=0.5, crossing paddle top
+    state.balls = [
+      {
+        id: 1,
+        x: 0,
+        y: 2.0,
+        vx: 0,
+        vy: -30.0,
+        radius: 0.2,
+        speed: 30.0,
+      },
+    ];
+
+    state = updateBlockBreaker(state, 0.05);
+
+    // Ball should be caught by CCD and reflected upwards, avoiding fall-through
+    expect(state.balls.length).toBe(1);
+    expect(state.balls[0].vy).toBeGreaterThan(0);
+    expect(state.lives).toBe(3);
+  });
 });

@@ -101,4 +101,22 @@ describe("Subway Mini-Parkour 3D Core Physics", () => {
     expect(nextGame.coins).toBe(1);
     expect(nextGame.score).toBeGreaterThan(game.score);
   });
+
+  it("allows train roof-run parkour when player jumps high enough (y >= 1.4)", () => {
+    let game = createInitialSubwayRunnerGame();
+    // Simulate high jump above train roof
+    game.player.y = 1.5;
+    game.obstacles = [
+      {
+        id: "test-train",
+        lane: 0,
+        z: 0.1,
+        type: "train_block",
+      },
+    ];
+
+    const { game: nextGame, crashed } = stepSubwayRunner(game, 0.02);
+    expect(crashed).toBe(false);
+    expect(nextGame.status).toBe("running");
+  });
 });

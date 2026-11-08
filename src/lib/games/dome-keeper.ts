@@ -20,6 +20,8 @@ export interface MineCell {
   cobaltYield: number;
 }
 
+export type InvaderAIState = 'approach' | 'charge' | 'bombard' | 'shield';
+
 export interface AlienInvader {
   id: string;
   name: string;
@@ -30,6 +32,7 @@ export interface AlienInvader {
   attackDamage: number;
   speed: number;
   isBoss: boolean;
+  aiState?: InvaderAIState;
 }
 
 export interface DomeKeeperState {
@@ -323,6 +326,7 @@ export function startAlienWaveDefense(state: DomeKeeperState): DomeKeeperState {
       attackDamage: 12 + w * 4,
       speed: 20,
       isBoss: false,
+      aiState: 'approach',
     },
     {
       id: `w${w}-spitter-R`,
@@ -334,6 +338,7 @@ export function startAlienWaveDefense(state: DomeKeeperState): DomeKeeperState {
       attackDamage: 15 + w * 5,
       speed: 18,
       isBoss: false,
+      aiState: 'approach',
     },
   ];
 
@@ -348,6 +353,7 @@ export function startAlienWaveDefense(state: DomeKeeperState): DomeKeeperState {
       attackDamage: 22 + w * 6,
       speed: 15,
       isBoss: w === state.maxWaves,
+      aiState: 'approach',
     });
   }
 
@@ -368,7 +374,7 @@ export function fireDomeLaserAtInvader(state: DomeKeeperState, invaderId: string
   const targetIdx = state.invaders.findIndex((inv) => inv.id === invaderId);
   if (targetIdx === -1) return state;
 
-  const laserDmg = 22 + state.laserCannonLv * 14;
+  const rawLaserDmg = 22 + state.laserCannonLv * 14;
   const target = state.invaders[targetIdx];
   const nextInvaders: AlienInvader[] = [];
   let totalAliensDefeated = state.totalAliensDefeated;
@@ -377,23 +383,49 @@ export function fireDomeLaserAtInvader(state: DomeKeeperState, invaderId: string
   for (let i = 0; i < state.invaders.length; i++) {
     const inv = { ...state.invaders[i] };
     if (i === targetIdx) {
-      inv.hp = Math.max(0, inv.hp - laserDmg);
+      // Shield FSM mitigation: Boss absorbs 25% if shielded
+      const effectiveDmg = inv.aiState === 'shield' ? Math.round(rawLaserDmg * 0.75) : rawLaserDmg;
+      inv.hp = Math.max(0, inv.hp - effectiveDmg);
     }
     if (inv.hp === 0) {
       totalAliensDefeated += 1;
       iron += inv.isBoss ? 8 : 3;
     } else {
-      inv.distance = Math.max(0, inv.distance - inv.speed);
+      // FSM State Transition & Autonomous Steering (game-ai)
+      let effectiveSpeed = inv.speed;
+      if (inv.name.includes('Swarmer')) {
+        if (inv.distance <= 45) {
+          inv.aiState = 'charge';
+          effectiveSpeed = Math.round(inv.speed * 1.35); // Rush surge
+        } else {
+          inv.aiState = 'approach';
+        }
+      } else if (inv.name.includes('Spitter')) {
+        if (inv.distance <= 50) {
+          inv.aiState = 'bombard';
+          effectiveSpeed = Math.round(inv.speed * 0.5); // Hold range to bombard
+        } else {
+          inv.aiState = 'approach';
+        }
+      } else if (inv.isBoss) {
+        if (inv.hp <= inv.maxHp * 0.5) {
+          inv.aiState = 'shield';
+        } else {
+          inv.aiState = 'approach';
+        }
+      }
+
+      inv.distance = Math.max(0, inv.distance - effectiveSpeed);
       nextInvaders.push(inv);
     }
   }
 
-  // Remaining invaders at distance === 0 strike the dome
+  // Remaining invaders strike or bombard the dome
   let domeShield = state.domeShield;
   let domeHp = state.domeHp;
   for (const inv of nextInvaders) {
-    if (inv.distance === 0) {
-      let dmg = inv.attackDamage;
+    if (inv.distance === 0 || inv.aiState === 'bombard') {
+      let dmg = inv.distance === 0 ? inv.attackDamage : Math.round(inv.attackDamage * 0.4);
       const absorbed = Math.min(domeShield, dmg);
       domeShield -= absorbed;
       dmg -= absorbed;
@@ -449,7 +481,7 @@ export function fireDomeLaserAtInvader(state: DomeKeeperState, invaderId: string
     invaders: nextInvaders,
     totalAliensDefeated,
     turretAngleDeg: target.angleDeg,
-    lastEvent: `Fired Dome Laser (${laserDmg} DMG) at ${target.name}!`,
+    lastEvent: `Fired Dome Laser (${rawLaserDmg} DMG) at ${target.name}!`,
   };
 }
 

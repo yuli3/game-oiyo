@@ -205,8 +205,8 @@ export default function BlockBreaker({ locale }: Props) {
 
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale });
 
-  // Web Audio procedural sound synthesizer
-  const playSound = useCallback((type: 'bounce' | 'brick' | 'laser' | 'die' | 'clear') => {
+  // Web Audio procedural sound synthesizer (game-audio-design multi-layered)
+  const playSound = useCallback((type: 'bounce' | 'brick' | 'laser' | 'die' | 'clear', comboCount = 0) => {
     if (type === 'bounce') MobileHapticsPro.light();
     else if (type === 'brick') MobileHapticsPro.impact();
     else if (type === 'laser') MobileHapticsPro.click();
@@ -230,25 +230,28 @@ export default function BlockBreaker({ locale }: Props) {
       gain.connect(ctx.destination);
 
       if (type === 'bounce') {
+        // High elastic ping bounce
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(440, now);
-        osc.frequency.exponentialRampToValueAtTime(554.37, now + 0.08);
-        gain.gain.setValueAtTime(0.12, now);
+        osc.frequency.setValueAtTime(480, now);
+        osc.frequency.exponentialRampToValueAtTime(640, now + 0.08);
+        gain.gain.setValueAtTime(0.15, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
         osc.start(now);
         osc.stop(now + 0.08);
       } else if (type === 'brick') {
+        // Pitch-escalating combo arpeggio chime
+        const baseFreq = 587.33 * Math.pow(1.059, Math.min(12, comboCount)); // Semitone ascending scale
         osc.type = 'triangle';
-        osc.frequency.setValueAtTime(659.25, now);
-        osc.frequency.exponentialRampToValueAtTime(880, now + 0.09);
-        gain.gain.setValueAtTime(0.18, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+        osc.frequency.setValueAtTime(baseFreq, now);
+        osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.35, now + 0.1);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
         osc.start(now);
-        osc.stop(now + 0.09);
+        osc.stop(now + 0.1);
       } else if (type === 'laser') {
         osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(880, now);
-        osc.frequency.exponentialRampToValueAtTime(220, now + 0.1);
+        osc.frequency.setValueAtTime(960, now);
+        osc.frequency.exponentialRampToValueAtTime(240, now + 0.1);
         gain.gain.setValueAtTime(0.12, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
         osc.start(now);
@@ -262,18 +265,20 @@ export default function BlockBreaker({ locale }: Props) {
         osc.start(now);
         osc.stop(now + 0.3);
       } else if (type === 'clear') {
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(523.25, now);
-        osc.frequency.setValueAtTime(659.25, now + 0.08);
-        osc.frequency.setValueAtTime(783.99, now + 0.16);
-        gain.gain.setValueAtTime(0.18, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
-        osc.start(now);
-        osc.stop(now + 0.28);
+        [523.25, 659.25, 783.99, 1046.5].forEach((freq, idx) => {
+          const o = ctx.createOscillator();
+          const g = ctx.createGain();
+          o.type = 'sine';
+          o.frequency.setValueAtTime(freq, now + idx * 0.07);
+          g.gain.setValueAtTime(0.16, now + idx * 0.07);
+          g.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.07 + 0.28);
+          o.connect(g);
+          g.connect(ctx.destination);
+          o.start(now + idx * 0.07);
+          o.stop(now + idx * 0.07 + 0.28);
+        });
       }
-    } catch {
-      // AudioContext unavailable
-    }
+    } catch {}
   }, [muted]);
 
   const toggleMute = useCallback(() => {
@@ -392,7 +397,7 @@ export default function BlockBreaker({ locale }: Props) {
         const updated = updateBlockBreaker(current, dt);
 
         if (updated.score > prev.score) {
-          playSound('brick');
+          playSound('brick', updated.combo);
         }
         if (updated.lives < prev.lives) {
           playSound('die');
