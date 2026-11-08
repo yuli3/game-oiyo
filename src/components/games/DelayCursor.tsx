@@ -12,7 +12,7 @@ import { getBest, getRecord, recordBest, recordResult, type BestRecord, type Gam
 import { dateKeyIndex, kstDateKey } from "../../lib/games/todays-game";
 import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from "../../lib/games/game-audio";
 import { createHaptics } from "../../lib/games/haptics";
-import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { useCardTiltPro, MobileHapticsPro, useGameJuicePro } from "../../lib/games/engine-suite-unified";
 import { celebrate } from "../../lib/games/celebration";
 import { DELAY_CURSOR_SPRITES } from "../../lib/games/sprites";
 import {
@@ -200,6 +200,7 @@ export default function DelayCursor({ locale }: { locale: Locale }) {
   const t = COPY[loc];
   const reducedMotion = usePrefersReducedMotion();
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: loc });
+  const { shakeCssVars, addTrauma } = useGameJuicePro();
   const [dateKey, setDateKey] = useState<string | null>(null);
   const [run, setRun] = useState<Run | null>(null);
   const [attempt, setAttempt] = useState(0);
@@ -238,12 +239,14 @@ export default function DelayCursor({ locale }: { locale: Locale }) {
     const onKey = (event: KeyboardEvent) => {
       const root = containerRef.current;
       if (!root || !(event.target instanceof Node) || !root.contains(event.target)) return;
-      const dir: Record<string, Dir | undefined> = { ArrowUp: "n", ArrowDown: "s", ArrowLeft: "w", ArrowRight: "e" };
+      const dir: Record<string, Dir | undefined> = {
+        ArrowUp: "n", ArrowDown: "s", ArrowLeft: "w", ArrowRight: "e",
+        w: "n", W: "n", s: "s", S: "s", a: "w", A: "w", d: "e", D: "e",
+      };
       const next = dir[event.key];
       if (next) {
         event.preventDefault();
-        setRun((current) => (current ? tick(current, next) : current));
-        setPulse((value) => value + 1);
+        move(next);
         return;
       }
       if (event.key === "f" || event.key === "F") {
@@ -284,13 +287,15 @@ export default function DelayCursor({ locale }: { locale: Locale }) {
       cue("win");
       hapticsRef.current.fire("win");
       MobileHapticsPro.success();
+      addTrauma(0.55);
       if (containerRef.current) celebrate(containerRef.current, { preset: "stardust" });
     } else if (run.phase === "lost") {
       cue("fail");
       hapticsRef.current.fire("fail");
       MobileHapticsPro.warning();
+      addTrauma(0.65);
     }
-  }, [run, dateKey, attempt, muted, reducedMotion]);
+  }, [run, dateKey, attempt, muted, reducedMotion, addTrauma]);
 
   const again = () => {
     MobileHapticsPro.selection();
@@ -304,7 +309,16 @@ export default function DelayCursor({ locale }: { locale: Locale }) {
     cue("place");
     hapticsRef.current.fire("place");
     MobileHapticsPro.light();
-    setRun((current) => (current ? tick(current, dir) : current));
+    addTrauma(0.08);
+    setRun((current) => {
+      if (!current) return current;
+      const next = tick(current, dir);
+      if (next.at === next.puzzle.livePlate) {
+        addTrauma(0.2);
+        MobileHapticsPro.selection();
+      }
+      return next;
+    });
     setPulse((value) => value + 1);
   };
 
@@ -312,7 +326,15 @@ export default function DelayCursor({ locale }: { locale: Locale }) {
   const ghost = run ? ghostAt(run) : null;
 
   return (
-    <div ref={containerRef} className={isImmersive ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-y-auto bg-background p-3 sm:p-5" : "relative"}>
+    <div
+      ref={containerRef}
+      style={{
+        '--shake-x': shakeCssVars['--shake-x'] ?? '0px',
+        '--shake-y': shakeCssVars['--shake-y'] ?? '0px',
+        '--shake-rot': shakeCssVars['--shake-rot'] ?? '0deg',
+      } as React.CSSProperties}
+      className={`${isImmersive ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-y-auto bg-background p-3 sm:p-5" : "relative"} transform translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot)`}
+    >
       <GameContainer title={t.title} subtitle={run ? t.subtitle : t.preparing}>
         <div className="mb-3 overflow-hidden rounded-xl border border-border bg-muted">
           <img src={DELAY_CURSOR_SPRITES.keyart} alt={t.title} className="h-32 w-full object-cover sm:h-44" />
@@ -416,12 +438,40 @@ export default function DelayCursor({ locale }: { locale: Locale }) {
                 <TiltCursorButton onClick={again} className={`${CONTROL} w-full border-primary bg-primary text-primary-foreground`}>{t.again}</TiltCursorButton>
               </div>
             ) : null}
-            <div className="flex flex-col items-center gap-2">
-              <TiltCursorButton disabled={!playing} onClick={() => move("n")} aria-label={t.north} className={`${CONTROL} border-border bg-card text-foreground disabled:opacity-40`}>{t.north}</TiltCursorButton>
+            <div className="flex flex-col items-center gap-1.5 pt-2">
+              <TiltCursorButton
+                disabled={!playing}
+                onClick={() => move("n")}
+                aria-label={`${t.north} (W/↑)`}
+                className="size-14 rounded-2xl border border-border bg-card text-foreground font-black text-lg shadow-sm hover:border-primary hover:bg-accent disabled:opacity-40 flex items-center justify-center transition active:scale-95"
+              >
+                ▲
+              </TiltCursorButton>
               <div className="flex gap-2">
-                <TiltCursorButton disabled={!playing} onClick={() => move("w")} aria-label={t.west} className={`${CONTROL} border-border bg-card text-foreground disabled:opacity-40`}>{t.west}</TiltCursorButton>
-                <TiltCursorButton disabled={!playing} onClick={() => move("s")} aria-label={t.south} className={`${CONTROL} border-border bg-card text-foreground disabled:opacity-40`}>{t.south}</TiltCursorButton>
-                <TiltCursorButton disabled={!playing} onClick={() => move("e")} aria-label={t.east} className={`${CONTROL} border-border bg-card text-foreground disabled:opacity-40`}>{t.east}</TiltCursorButton>
+                <TiltCursorButton
+                  disabled={!playing}
+                  onClick={() => move("w")}
+                  aria-label={`${t.west} (A/←)`}
+                  className="size-14 rounded-2xl border border-border bg-card text-foreground font-black text-lg shadow-sm hover:border-primary hover:bg-accent disabled:opacity-40 flex items-center justify-center transition active:scale-95"
+                >
+                  ◀
+                </TiltCursorButton>
+                <TiltCursorButton
+                  disabled={!playing}
+                  onClick={() => move("s")}
+                  aria-label={`${t.south} (S/↓)`}
+                  className="size-14 rounded-2xl border border-border bg-card text-foreground font-black text-lg shadow-sm hover:border-primary hover:bg-accent disabled:opacity-40 flex items-center justify-center transition active:scale-95"
+                >
+                  ▼
+                </TiltCursorButton>
+                <TiltCursorButton
+                  disabled={!playing}
+                  onClick={() => move("e")}
+                  aria-label={`${t.east} (D/→)`}
+                  className="size-14 rounded-2xl border border-border bg-card text-foreground font-black text-lg shadow-sm hover:border-primary hover:bg-accent disabled:opacity-40 flex items-center justify-center transition active:scale-95"
+                >
+                  ▶
+                </TiltCursorButton>
               </div>
             </div>
             <p className="text-sm text-muted-foreground">{t.record(record?.w ?? 0, record?.l ?? 0)}{best?.unit === "seconds" ? ` · ${t.best(best.value)}` : ""}</p>

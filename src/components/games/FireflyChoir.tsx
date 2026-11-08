@@ -13,7 +13,13 @@ import { dateKeyIndex, kstDateKey } from "../../lib/games/todays-game";
 import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from "../../lib/games/game-audio";
 import { createHaptics } from "../../lib/games/haptics";
 import { celebrate } from "../../lib/games/celebration";
-import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import {
+  useCardTiltPro,
+  MobileHapticsPro,
+  useGameJuicePro,
+  getSharedAudioContext,
+  playComboSfx,
+} from "../../lib/games/engine-suite-unified";
 import { FIREFLY_CHOIR_SPRITES } from "../../lib/games/sprites";
 import {
   FLIES,
@@ -239,6 +245,7 @@ export default function FireflyChoir({ locale }: { locale: Locale }) {
   const t = COPY[loc];
   const reducedMotion = usePrefersReducedMotion();
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: loc });
+  const { shakeCssVars, addTrauma } = useGameJuicePro();
   const [dateKey, setDateKey] = useState<string | null>(null);
   const [run, setRun] = useState<Run | null>(null);
   const [attempt, setAttempt] = useState(0);
@@ -305,6 +312,9 @@ export default function FireflyChoir({ locale }: { locale: Locale }) {
       heardTick.current = run.tick;
       cue("tap");
       MobileHapticsPro.impact();
+      addTrauma(0.28);
+      const ctx = getSharedAudioContext();
+      if (ctx) playComboSfx(ctx, "powerup", run.sounds);
       return;
     }
     if (previous === run.phase || (run.phase !== "won" && run.phase !== "lost")) return;
@@ -319,12 +329,14 @@ export default function FireflyChoir({ locale }: { locale: Locale }) {
     if (run.phase === "won") {
       cue("win");
       MobileHapticsPro.success();
+      addTrauma(0.5);
       if (containerRef.current) celebrate(containerRef.current, { preset: "stardust" });
     } else if (run.phase === "lost") {
       cue("fail");
       MobileHapticsPro.heavy();
+      addTrauma(0.65);
     }
-  }, [run, dateKey, attempt, muted, reducedMotion]);
+  }, [run, dateKey, attempt, muted, reducedMotion, addTrauma]);
 
   const again = () => {
     if (!dateKey) return;
@@ -344,7 +356,15 @@ export default function FireflyChoir({ locale }: { locale: Locale }) {
   const ticks = run ? Array.from({ length: run.tick + 1 }, (_, index) => index).slice(-6) : [];
 
   return (
-    <div ref={containerRef} className={isImmersive ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-y-auto bg-background p-3 sm:p-5" : "relative"}>
+    <div
+      ref={containerRef}
+      style={{
+        '--shake-x': shakeCssVars['--shake-x'] ?? '0px',
+        '--shake-y': shakeCssVars['--shake-y'] ?? '0px',
+        '--shake-rot': shakeCssVars['--shake-rot'] ?? '0deg',
+      } as React.CSSProperties}
+      className={`${isImmersive ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-y-auto bg-background p-3 sm:p-5" : "relative"} transform translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot)`}
+    >
       <GameContainer title={t.title} subtitle={run ? t.subtitle : t.preparing}>
         <div className="mb-3 overflow-hidden rounded-xl border border-border bg-muted">
           <img src={FIREFLY_CHOIR_SPRITES.keyart} alt={t.title} className="h-32 w-full object-cover sm:h-44" />
@@ -384,7 +404,7 @@ export default function FireflyChoir({ locale }: { locale: Locale }) {
                 </div>
               ))}
             </div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {run.puzzle.flies.map((fly, index) => {
                 const lit = blinks(fly.period, run.tick);
                 const grouped = run.partner[index] !== null;
@@ -397,10 +417,32 @@ export default function FireflyChoir({ locale }: { locale: Locale }) {
                     onClick={() => onPair(index)}
                     aria-pressed={selected}
                     aria-label={`${t.fly(index + 1)}. ${lit ? t.lit : t.dim}. ${grouped ? t.grouped : t.open}`}
-                    className={`flex min-h-16 items-center justify-center gap-1.5 rounded-xl border text-2xl font-bold motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60 ${selected ? "border-primary bg-primary text-primary-foreground shadow-md" : lit ? "border-primary bg-foreground/15 text-foreground" : "border-border bg-card text-muted-foreground"}`}
+                    className={`relative flex min-h-24 flex-col items-center justify-center gap-1.5 rounded-2xl border p-3 text-sm font-bold motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60 transition-all ${
+                      selected
+                        ? "border-primary bg-primary/20 text-foreground ring-2 ring-primary shadow-lg scale-105"
+                        : lit
+                          ? "border-primary/80 bg-primary/10 text-foreground ring-1 ring-primary/40 shadow-md shadow-primary/20"
+                          : "border-border bg-card text-muted-foreground hover:border-primary/50"
+                    }`}
                   >
-                    <img src={lit ? FIREFLY_CHOIR_SPRITES.lit : FIREFLY_CHOIR_SPRITES.dim} alt="" className="size-7 object-contain" />
-                    <span>{lit ? "●" : "○"}{mark ? ` ${mark}` : ""}</span>
+                    {lit && (
+                      <span className="absolute inset-0 rounded-2xl bg-primary/10 animate-pulse pointer-events-none" />
+                    )}
+                    <div className="relative">
+                      <img
+                        src={lit ? FIREFLY_CHOIR_SPRITES.lit : FIREFLY_CHOIR_SPRITES.dim}
+                        alt=""
+                        className={`size-9 object-contain transition-transform duration-300 ${lit ? "scale-115 drop-shadow-md" : "opacity-60"}`}
+                      />
+                    </div>
+                    <div className="flex items-center gap-1 font-mono text-xs font-bold text-foreground">
+                      <span>{t.fly(index + 1)}</span>
+                      {mark && (
+                        <span className="rounded-full bg-primary/20 px-1.5 py-0.5 text-xs text-primary font-black">
+                          #{mark}
+                        </span>
+                      )}
+                    </div>
                   </TiltFireflyButton>
                 );
               })}
