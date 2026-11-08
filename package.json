@@ -18,6 +18,7 @@
     "cap:copy": "npx cap copy",
     "cap:open:ios": "npx cap open ios",
     "cap:open:android": "npx cap open android",
+    "audit:capacitor": "node scripts/audit-capacitor-native.mjs",
     "validate:i18n": "node scripts/audit-i18n.mjs",
     "audit:localization": "node scripts/audit-localization.mjs",
     "audit:seo": "node scripts/audit-seo-output.mjs",

@@ -476,12 +476,15 @@ export function SliceMaster({ locale = "ko" }: SliceMasterProps) {
 
       {/* ──────────────── Main SVG Viewport ──────────────── */}
       <div
-        onClick={handleFlip}
+        onPointerDown={(e) => {
+          e.preventDefault();
+          handleFlip();
+        }}
         style={{
           "--shake-x": `${shakeOffset.x}px`,
           "--shake-y": `${shakeOffset.y}px`,
         } as React.CSSProperties}
-        className="relative w-full flex-1 cursor-pointer overflow-hidden flex items-center justify-center bg-muted/5 translate-x-(--shake-x) translate-y-(--shake-y)"
+        className="relative w-full flex-1 cursor-pointer overflow-hidden flex items-center justify-center bg-muted/5 select-none touch-none translate-x-(--shake-x) translate-y-(--shake-y)"
       >
         <svg
           viewBox={`${game.cameraX} 0 800 450`}

@@ -30,9 +30,18 @@ import {
   type LoreEntry,
 } from '../../lib/games/neon-survivor-lore';
 import { nativeHaptics } from '../../lib/haptics/native-bridge';
+import { MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import type { Locale } from '../../lib/i18n';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
-import { VirtualJoystick, type JoystickVector } from '../ui/game/VirtualJoystick';
+import { ArcadeTouchControls } from '../ui/game/ArcadeTouchControls';
+
+export interface JoystickVector {
+  x: number;
+  y: number;
+  magnitude: number;
+  angle: number;
+  knobDistance: number;
+}
 import { CameraShake2D, HitStopController } from '../../lib/games/game-juice';
 import { loadHighScore, saveHighScore } from '../../lib/games/game-save';
 import {
@@ -236,6 +245,8 @@ const COPY = {
 export default function NeonSurvivor({ locale = 'ko' }: Props) {
   const t = COPY[locale] ?? COPY.en;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [phase, setPhase] = useState<'briefing' | 'playing'>('briefing');
+  const touchOriginRef = useRef<{ id: number; x: number; y: number } | null>(null);
 
   // Meta Progression State
   const [metaState, setMetaState] = useState<PlayerMetaState>(() => loadMetaState());
@@ -471,6 +482,11 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
       const rawDt = Math.min(0.05, (now - lastTime) / 1000);
       lastTime = now;
 
+      if (phase !== 'playing') {
+        animId = requestAnimationFrame(loop);
+        return;
+      }
+
       const { isFrozen, effectiveDt } = hitStopRef.current.update(rawDt);
       cameraShakeRef.current.update(rawDt);
 
@@ -599,7 +615,7 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
 
     animId = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(animId);
-  }, [playHitSound, playZapSound, playGemSound, playLevelUpSound, vibrate]);
+  }, [playHitSound, playZapSound, playGemSound, playLevelUpSound, vibrate, phase]);
 
   // Canvas drawing function
   const renderCanvas = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, state: NeonSurvivorState) => {
@@ -1135,6 +1151,53 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
     }
   }, [formatTime, gameState.kills, gameState.player.level, gameState.score, gameState.survivalTime, t.title]);
 
+  const handleCanvasPointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (touchOriginRef.current !== null) return;
+    e.preventDefault();
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      // fallback
+    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    touchOriginRef.current = {
+      id: e.pointerId,
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    };
+    nativeHaptics.trigger('light');
+    MobileHapticsPro.light();
+  };
+
+  const handleCanvasPointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!touchOriginRef.current || touchOriginRef.current.id !== e.pointerId) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const curX = e.clientX - rect.left;
+    const curY = e.clientY - rect.top;
+    const dx = curX - touchOriginRef.current.x;
+    const dy = curY - touchOriginRef.current.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist > 8) {
+      const maxRadius = 60;
+      const norm = Math.min(1.0, dist / maxRadius);
+      const angle = Math.atan2(dy, dx);
+      joystickVectorRef.current = {
+        x: Math.cos(angle) * norm,
+        y: Math.sin(angle) * norm,
+        magnitude: norm,
+        angle,
+        knobDistance: Math.min(dist, maxRadius),
+      };
+    }
+  };
+
+  const handleCanvasPointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (touchOriginRef.current?.id === e.pointerId) {
+      touchOriginRef.current = null;
+      joystickVectorRef.current = { x: 0, y: 0, magnitude: 0, angle: 0, knobDistance: 0 };
+    }
+  };
+
   return (
     <div
       ref={containerRef}
@@ -1145,21 +1208,206 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
           : "relative w-full aspect-16/10 min-h-120 max-h-180 rounded-2xl overflow-hidden border border-border bg-card shadow-2xl select-none touch-none"
       }
     >
-      {/* 100% Canvas Surface */}
+      {phase === 'briefing' ? (
+        <div className="relative w-full h-full min-h-125 overflow-y-auto bg-card text-foreground p-6 sm:p-10 flex flex-col justify-between">
+          <img
+            src="/games/grok-20261106/game-keyart-neon-survivor.webp"
+            alt="Neon Survivor Key Art"
+            className="absolute inset-0 h-full w-full object-cover opacity-20 filter blur-xs pointer-events-none"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-background via-background/90 to-background/30 pointer-events-none" />
+
+          <div className="relative z-10 grid gap-6 lg:grid-cols-2 items-center">
+            <div>
+              <p className="inline-flex items-center gap-2 font-mono text-xs font-black tracking-widest text-primary">
+                <span className="size-2 rounded-full bg-primary animate-ping" />
+                SECTOR 0 / CYBERPUNK ROGUELIKE
+              </p>
+              <h2 className="mt-3 text-4xl sm:text-6xl font-black uppercase leading-tight tracking-tight text-foreground">
+                {t.title}
+              </h2>
+              <p className="mt-4 max-w-xl text-xs sm:text-sm leading-relaxed text-muted-foreground">
+                {locale === 'ko'
+                  ? '빛나는 사이버 탄막 속을 돌파하세요. 적 기체를 격추해 네온 크리스탈을 흡수하고, 무기를 진화시켜 섹터 0의 수호자를 격파하세요.'
+                  : 'Weave through hyper-dense cybernetic bullet swarms. Absorb neon crystals, evolve legendary weapon recipes, and conquer Sector 0.'}
+              </p>
+
+              {/* Status Badges */}
+              <div className="mt-5 flex flex-wrap items-center gap-2 sm:gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowHangar(true)}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-primary/40 bg-primary/10 px-3.5 py-2 text-xs font-black text-primary hover:bg-primary/20 transition-colors"
+                >
+                  <span>💎 {metaState.crystals}</span>
+                  <span className="text-muted-foreground">· {t.hangar}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowQuests(true)}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card/60 px-3.5 py-2 text-xs font-black text-foreground hover:bg-muted transition-colors"
+                >
+                  <span>🎯 {quests.filter((q) => q.completed).length}/{quests.length}</span>
+                  <span className="text-muted-foreground">· {t.directives}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowEvoGuide(true)}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-warning/40 bg-warning/10 px-3.5 py-2 text-xs font-black text-warning hover:bg-warning/20 transition-colors"
+                >
+                  <span>⚡ {t.evoGuide}</span>
+                </button>
+              </div>
+
+              {/* Start Button & High Score */}
+              <div className="mt-6 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    nativeHaptics.trigger('heavy');
+                    MobileHapticsPro.heavy();
+                    setGameState(createInitialNeonSurvivorState(metaState.upgrades));
+                    setPhase('playing');
+                  }}
+                  className="min-h-14 rounded-xl bg-primary px-7 py-3 text-sm font-black uppercase tracking-wider text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary/90 active:scale-95 transition-all flex items-center gap-2"
+                >
+                  <Zap className="size-5 fill-current" />
+                  <span>{locale === 'ko' ? '작전 개시' : 'LAUNCH MISSION'}</span>
+                </button>
+
+                <span className="inline-flex items-center gap-1.5 border border-border bg-card/60 px-4 py-3 rounded-xl font-mono text-xs">
+                  <Target className="size-4 text-primary" />
+                  <span>PB: <strong className="text-foreground">{highScore.toLocaleString()}</strong> PTS</span>
+                </span>
+              </div>
+            </div>
+
+            {/* Right Side: Features */}
+            <div className="grid gap-2.5">
+              <div className="flex gap-3 border-l-2 border-primary bg-card/60 p-4 backdrop-blur-sm rounded-r-xl border border-border">
+                <Rocket className="size-5 shrink-0 text-primary mt-0.5" />
+                <div>
+                  <h3 className="text-xs font-black uppercase tracking-wider text-foreground">
+                    {locale === 'ko' ? '3대 전설 무기 진화' : '3 Legendary Evolutions'}
+                  </h3>
+                  <p className="mt-0.5 text-xs text-muted-foreground leading-normal">
+                    {locale === 'ko'
+                      ? '하이퍼 블래스터, 이지스 쉴드, 슈퍼노바 볼텍스를 조합하여 전장을 정복하세요.'
+                      : 'Combine Hyper Blaster, Aegis Shield, and Supernova Vortex to conquer the swarm.'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 border-l-2 border-secondary-foreground/60 bg-card/60 p-4 backdrop-blur-sm rounded-r-xl border border-border">
+                <Shield className="size-5 shrink-0 text-secondary-foreground mt-0.5" />
+                <div>
+                  <h3 className="text-xs font-black uppercase tracking-wider text-foreground">
+                    {locale === 'ko' ? '영구 강화 연구 격납고' : 'Hangar Meta Upgrades'}
+                  </h3>
+                  <p className="mt-0.5 text-xs text-muted-foreground leading-normal">
+                    {locale === 'ko'
+                      ? '수집한 네온 크리스탈로 기체 내구도, 공격력, 이동 속도를 영구히 강화하세요.'
+                      : 'Permanently boost Max HP, Firepower, and Move Speed with crystals.'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 border-l-2 border-warning bg-card/60 p-4 backdrop-blur-sm rounded-r-xl border border-border">
+                <Sparkles className="size-5 shrink-0 text-warning mt-0.5" />
+                <div>
+                  <h3 className="text-xs font-black uppercase tracking-wider text-foreground">
+                    {locale === 'ko' ? '정밀 Taptic CoreHaptics' : 'CoreHaptics Taptic Engine'}
+                  </h3>
+                  <p className="mt-0.5 text-xs text-muted-foreground leading-normal">
+                    {locale === 'ko'
+                      ? '피격, 보스 등장, 레벨업, 초진화마다 손끝에 전해지는 물리적 진동 체감.'
+                      : 'Physical haptic vibrations on every hit, evolution, and boss encounter.'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Bar: Controls Guide */}
+          <div className="relative z-10 mt-6 grid gap-2 border-t border-border pt-4 text-xs text-muted-foreground sm:grid-cols-2">
+            <div>
+              <strong className="flex items-center gap-1.5 text-foreground">
+                🕹️ DESKTOP CONTROLS
+              </strong>
+              <span className="text-muted-foreground">
+                {locale === 'ko' ? 'WASD / 방향키 이동 · 자동 조준 발사 · 스페이스바 부스트' : 'WASD / Arrow keys to move · Auto-aim · Space to dash'}
+              </span>
+            </div>
+            <div>
+              <strong className="flex items-center gap-1.5 text-foreground">
+                📱 MOBILE & TOUCH
+              </strong>
+              <span className="text-muted-foreground">
+                {locale === 'ko' ? '터치 D-패드 이동 · DASH 회피 · 화면 어디든 직접 드래그 이동' : 'Touch D-Pad · DASH pill · Fluid 360° screen drag'}
+              </span>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
+      {/* 100% Canvas Surface with direct touch & pointer tracking */}
       <canvas
         ref={canvasRef}
-        className="w-full h-full block cursor-crosshair touch-none"
+        onPointerDown={handleCanvasPointerDown}
+        onPointerMove={handleCanvasPointerMove}
+        onPointerUp={handleCanvasPointerUp}
+        onPointerCancel={handleCanvasPointerUp}
+        className="w-full h-full block cursor-crosshair touch-none select-none"
       />
 
-      {/* Mobile Floating Virtual Joystick */}
+      {/* Emberdeep-Grade In-Viewport Mobile Touch Controls */}
       {!gameState.levelUpPending && !gameState.gameOver && (
-        <VirtualJoystick
-          onMove={(vector) => {
-            joystickVectorRef.current = vector;
+        <ArcadeTouchControls
+          showDPad={true}
+          onDirection={(dir, active) => {
+            if (!active) {
+              joystickVectorRef.current = { x: 0, y: 0, magnitude: 0, angle: 0, knobDistance: 0 };
+              return;
+            }
+            switch (dir) {
+              case 'up':
+                joystickVectorRef.current = { x: 0, y: -1, magnitude: 1, angle: -Math.PI / 2, knobDistance: 60 };
+                break;
+              case 'down':
+                joystickVectorRef.current = { x: 0, y: 1, magnitude: 1, angle: Math.PI / 2, knobDistance: 60 };
+                break;
+              case 'left':
+                joystickVectorRef.current = { x: -1, y: 0, magnitude: 1, angle: Math.PI, knobDistance: 60 };
+                break;
+              case 'right':
+                joystickVectorRef.current = { x: 1, y: 0, magnitude: 1, angle: 0, knobDistance: 60 };
+                break;
+            }
           }}
-          onRelease={() => {
-            joystickVectorRef.current = { x: 0, y: 0, magnitude: 0, angle: 0, knobDistance: 0 };
-          }}
+          actions={[
+            {
+              id: 'dash',
+              label: 'DASH',
+              variant: 'primary',
+              icon: <Zap className="size-4" />,
+              onPress: () => {
+                nativeHaptics.trigger('medium');
+                if (stateRef.current) {
+                  const baseSpeed = stateRef.current.player.speed;
+                  stateRef.current.player.speed = baseSpeed * 1.75;
+                  setTimeout(() => {
+                    if (stateRef.current) stateRef.current.player.speed = baseSpeed;
+                  }, 350);
+                }
+              },
+            },
+            {
+              id: 'evo',
+              label: 'EVO',
+              variant: 'info',
+              onPress: () => setShowEvoGuide(true),
+            },
+          ]}
         />
       )}
 
@@ -1398,9 +1646,19 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
               >
                 {t.restart}
               </button>
+
+              <button
+                type="button"
+                onClick={() => setPhase('briefing')}
+                className="w-full py-3 rounded-xl border border-border bg-muted/60 text-foreground font-bold text-xs hover:bg-muted transition-colors"
+              >
+                {locale === 'ko' ? '격납고 로비 복귀' : 'RETURN TO BRIEFING'}
+              </button>
             </div>
           </div>
         </div>
+      )}
+        </>
       )}
 
       {/* Evolution Guide Modal */}

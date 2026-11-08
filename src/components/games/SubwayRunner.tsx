@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
+import { ArcadeTouchControls } from "../ui/game/ArcadeTouchControls";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import { SUBWAY_RUNNER_SPRITES } from "../../lib/games/sprites";
@@ -347,7 +348,7 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
 
       {/* Main 3D Runner SVG Viewport */}
       <div
-        className="relative w-full overflow-hidden rounded-2xl border border-border bg-card shadow-lg"
+        className="relative w-full overflow-hidden rounded-2xl border border-border bg-card shadow-lg select-none touch-none"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
@@ -413,56 +414,49 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
           </span>
         </div>
 
-        {/* Mobile On-Screen Controls */}
-        <div className="absolute bottom-3 inset-x-4 flex justify-between items-center pointer-events-auto">
-          <div className="flex gap-2">
-            <TiltRunnerButton
-              type="button"
-              className="px-3.5 py-1.5 rounded-lg border border-border bg-card/90 text-foreground font-bold text-sm shadow-sm hover:bg-muted"
-              onClick={() => {
-                setGame((prev) => changeRunnerLane(prev, -1));
-                MobileHapticsPro.light();
-              }}
-            >
-              ◀
-            </TiltRunnerButton>
-            <TiltRunnerButton
-              type="button"
-              className="px-3.5 py-1.5 rounded-lg border border-border bg-card/90 text-foreground font-bold text-sm shadow-sm hover:bg-muted"
-              onClick={() => {
-                setGame((prev) => changeRunnerLane(prev, 1));
-                MobileHapticsPro.light();
-              }}
-            >
-              ▶
-            </TiltRunnerButton>
-          </div>
-
-          <div className="flex gap-2">
-            <TiltRunnerButton
-              type="button"
-              className="px-3.5 py-1.5 rounded-lg border border-border bg-card/90 text-foreground font-bold text-sm shadow-sm hover:bg-muted"
-              onClick={() => {
-                setGame((prev) => jumpRunner(prev));
-                playSyntheticTone(audioCtxRef.current, { freq: 440, duration: 0.08, type: "triangle" });
-                MobileHapticsPro.medium();
-              }}
-            >
-              ▲ 점프
-            </TiltRunnerButton>
-            <TiltRunnerButton
-              type="button"
-              className="px-3.5 py-1.5 rounded-lg border border-border bg-card/90 text-foreground font-bold text-sm shadow-sm hover:bg-muted"
-              onClick={() => {
+        {/* Emberdeep-Grade Mobile Touch Controls */}
+        <ArcadeTouchControls
+          showDPad={true}
+          dPadMode="horizontal-only"
+          onDirection={(dir, active) => {
+            if (!active) return;
+            if (dir === "left") {
+              setGame((prev) => changeRunnerLane(prev, -1));
+              MobileHapticsPro.light();
+            } else if (dir === "right") {
+              setGame((prev) => changeRunnerLane(prev, 1));
+              MobileHapticsPro.light();
+            }
+          }}
+          actions={[
+            {
+              id: "jump",
+              label: locale === "ko" ? "점프" : "JUMP",
+              variant: "primary",
+              onPress: () => {
+                inputGenerosityRef.current.bufferPress("jump", 0.16);
+                setGame((prev) => {
+                  if (prev.player.y <= 0.05 || inputGenerosityRef.current.consumeCoyote("ground")) {
+                    playSyntheticTone(audioCtxRef.current, { freq: 440, duration: 0.08, type: "triangle" });
+                    MobileHapticsPro.medium();
+                    return jumpRunner(prev);
+                  }
+                  return prev;
+                });
+              },
+            },
+            {
+              id: "slide",
+              label: locale === "ko" ? "슬라이드" : "SLIDE",
+              variant: "secondary",
+              onPress: () => {
                 setGame((prev) => slideRunner(prev));
                 playSyntheticTone(audioCtxRef.current, { freq: 220, duration: 0.08, type: "sawtooth" });
                 MobileHapticsPro.medium();
-              }}
-            >
-              ▼ 슬라이딩
-            </TiltRunnerButton>
-          </div>
-        </div>
+              },
+            },
+          ]}
+        />
 
         {/* Game Over Modal */}
         {game.status === "gameover" && (

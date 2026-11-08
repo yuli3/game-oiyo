@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { ArcadeTouchControls } from '../ui/game/ArcadeTouchControls';
 import { useGhostTimeAttackPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import { createInputGenerosity } from '../../lib/games/input-generosity';
 import VoxelRunnerScene from './VoxelRunnerScene';
@@ -506,73 +507,32 @@ export default function VoxelRunner({ locale = 'ko' }: { locale?: string }) {
           </div>
         )}
 
-        {status === 'gameover' && (
-          <div className="absolute inset-0 bg-background/85 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center text-foreground animate-in fade-in duration-200">
-            <div className="text-destructive text-xs font-bold tracking-widest uppercase mb-1">
-              CRASHED!
-            </div>
-            <div className="text-4xl font-black mb-2">{score} PTS</div>
-            <p className="text-xs text-muted-foreground mb-6">
-              {score >= highScore && score > 0
-                ? (isKo ? '🎉 최고 점수 갱신!' : '🎉 New High Score!')
-                : (isKo ? `최고 기록: ${highScore}점 | 거리: ${Math.round(distance)}m` : `Best: ${highScore} | Dist: ${Math.round(distance)}m`)}
-            </p>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={handleShareCard}
-                className="px-4 py-3 rounded-xl border border-border bg-card hover:bg-muted font-bold text-sm text-foreground transition-colors flex items-center gap-1.5"
-              >
-                {shareCardCopied ? <Check className="w-4 h-4 text-primary" /> : <Share2 className="w-4 h-4" />}
-                {shareCardCopied ? (isKo ? '복사됨!' : 'Copied!') : (isKo ? '카드 공유' : 'Share Card')}
-              </button>
-              <button
-                type="button"
-                onClick={startGame}
-                className="px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold shadow-lg hover:scale-105 transition-transform flex items-center gap-2"
-              >
-                <RotateCcw className="w-4 h-4" />
-                {isKo ? '다시 도전' : 'RETRY'}
-              </button>
-            </div>
-          </div>
+        {/* Emberdeep-Grade In-Viewport Mobile Touch Controls */}
+        {status === "playing" && (
+          <ArcadeTouchControls
+            showDPad={true}
+            dPadMode="horizontal-only"
+            onDirection={(dir, active) => {
+              if (!active) return;
+              if (dir === "left") handleAction("left");
+              else if (dir === "right") handleAction("right");
+            }}
+            actions={[
+              {
+                id: "jump",
+                label: isKo ? "점프" : "JUMP",
+                variant: "primary",
+                onPress: () => handleAction("jump"),
+              },
+              {
+                id: "slide",
+                label: isKo ? "슬라이드" : "SLIDE",
+                variant: "warning",
+                onPress: () => handleAction("duck"),
+              },
+            ]}
+          />
         )}
-      </div>
-
-      {/* Mobile-friendly on-screen Touch Controls */}
-      <div className="grid grid-cols-4 gap-2 bg-card p-3 rounded-xl border border-border shrink-0 select-none touch-none">
-        <button
-          onClick={() => handleAction('left')}
-          className="p-3 rounded-lg border border-border bg-background hover:bg-muted font-bold flex flex-col items-center justify-center gap-1 active:scale-95"
-          aria-label="Move Left"
-        >
-          <ArrowLeft className="w-5 h-5 text-foreground" />
-          <span className="text-xs text-muted-foreground">LEFT</span>
-        </button>
-        <button
-          onClick={() => handleAction('jump')}
-          className="p-3 rounded-lg border border-border bg-background hover:bg-muted font-bold flex flex-col items-center justify-center gap-1 active:scale-95"
-          aria-label="Jump"
-        >
-          <ArrowUp className="w-5 h-5 text-primary" />
-          <span className="text-xs text-muted-foreground">JUMP</span>
-        </button>
-        <button
-          onClick={() => handleAction('duck')}
-          className="p-3 rounded-lg border border-border bg-background hover:bg-muted font-bold flex flex-col items-center justify-center gap-1 active:scale-95"
-          aria-label="Slide Duck"
-        >
-          <ArrowDown className="w-5 h-5 text-warning" />
-          <span className="text-xs text-muted-foreground">SLIDE</span>
-        </button>
-        <button
-          onClick={() => handleAction('right')}
-          className="p-3 rounded-lg border border-border bg-background hover:bg-muted font-bold flex flex-col items-center justify-center gap-1 active:scale-95"
-          aria-label="Move Right"
-        >
-          <ArrowRight className="w-5 h-5 text-foreground" />
-          <span className="text-xs text-muted-foreground">RIGHT</span>
-        </button>
       </div>
     </div>
   );

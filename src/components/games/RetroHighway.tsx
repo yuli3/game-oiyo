@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import RetroHighwayScene from './RetroHighwayScene';
+import { ArcadeTouchControls } from '../ui/game/ArcadeTouchControls';
 import { useGhostTimeAttackPro, useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import { createInputGenerosity } from '../../lib/games/input-generosity';
 import { getSpriteUrl, RETRO_HIGHWAY_UI_SPRITES } from '../../lib/games/sprites';
@@ -611,51 +612,54 @@ export default function RetroHighway({ locale = 'ko' }: Props) {
             </div>
           </div>
         )}
-      </div>
 
-      {/* Mobile Touch Controls */}
-      <div className={`grid grid-cols-4 gap-2 sm:hidden p-2 bg-card/90 backdrop-blur-md rounded-xl border border-border ${
-        isImmersive ? 'w-full max-w-lg shrink-0 mt-2' : 'w-full'
-      }`}>
-        <button
-          onClick={() => {
-            setState((prev) => {
-              const target = Math.max(-1, prev.player.targetLane - 1) as -1 | 0 | 1;
-              return { ...prev, player: { ...prev.player, targetLane: target } };
-            });
-          }}
-          className="p-4 rounded-lg bg-muted text-foreground flex justify-center items-center active:bg-primary active:text-primary-foreground"
-        >
-          <ArrowLeft className="w-6 h-6" />
-        </button>
-        <button
-          onClick={() => {
-            setState((prev) => {
-              const target = Math.min(1, prev.player.targetLane + 1) as -1 | 0 | 1;
-              return { ...prev, player: { ...prev.player, targetLane: target } };
-            });
-          }}
-          className="p-4 rounded-lg bg-muted text-foreground flex justify-center items-center active:bg-primary active:text-primary-foreground"
-        >
-          <ArrowRight className="w-6 h-6" />
-        </button>
-        <button
-          onPointerDown={() => {
-            inputRef.current.boost = true;
-            inputGenerosityRef.current.bufferPress('boost', 0.16);
-          }}
-          onPointerUp={() => { inputRef.current.boost = false; }}
-          className="p-4 rounded-lg bg-primary text-primary-foreground font-bold flex justify-center items-center active:opacity-80"
-        >
-          <Flame className="w-6 h-6" />
-        </button>
-        <button
-          onPointerDown={() => { inputRef.current.brake = true; }}
-          onPointerUp={() => { inputRef.current.brake = false; }}
-          className="p-4 rounded-lg bg-muted text-muted-foreground font-bold flex justify-center items-center active:bg-destructive active:text-destructive-foreground"
-        >
-          {t.speed === '속도' ? '감속' : 'Brake'}
-        </button>
+        {/* Emberdeep-Grade In-Viewport Mobile Touch Controls */}
+        {state.player.status === "playing" && (
+          <ArcadeTouchControls
+            showDPad={true}
+            dPadMode="horizontal-only"
+            onDirection={(dir, active) => {
+              if (!active) return;
+              if (dir === "left") {
+                setState((prev) => {
+                  const target = Math.max(-1, prev.player.targetLane - 1) as -1 | 0 | 1;
+                  return { ...prev, player: { ...prev.player, targetLane: target } };
+                });
+              } else if (dir === "right") {
+                setState((prev) => {
+                  const target = Math.min(1, prev.player.targetLane + 1) as -1 | 0 | 1;
+                  return { ...prev, player: { ...prev.player, targetLane: target } };
+                });
+              }
+            }}
+            actions={[
+              {
+                id: "boost",
+                label: "BOOST",
+                variant: "primary",
+                icon: <Flame className="w-4 h-4" />,
+                onPress: () => {
+                  inputRef.current.boost = true;
+                  inputGenerosityRef.current.bufferPress("boost", 0.16);
+                },
+                onRelease: () => {
+                  inputRef.current.boost = false;
+                },
+              },
+              {
+                id: "brake",
+                label: t.speed === "속도" ? "감속" : "BRAKE",
+                variant: "muted",
+                onPress: () => {
+                  inputRef.current.brake = true;
+                },
+                onRelease: () => {
+                  inputRef.current.brake = false;
+                },
+              },
+            ]}
+          />
+        )}
       </div>
     </div>
   );
