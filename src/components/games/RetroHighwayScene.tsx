@@ -217,7 +217,7 @@ export default function RetroHighwayScene({ state }: SceneProps) {
         shadows
         dpr={[1, 2]}
         camera={{ position: [0, 3.8, -5.5], fov: 65 }}
-        gl={{ antialias: true, alpha: false }}
+        gl={{ antialias: true, alpha: false , toneMapping: THREE.ACESFilmicToneMapping }}
       >
         <color attach="background" args={["#050510"]} />
         <fog attach="fog" args={["#050510", 30, 140]} />

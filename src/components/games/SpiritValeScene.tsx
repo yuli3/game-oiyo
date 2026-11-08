@@ -900,7 +900,7 @@ export default function SpiritValeScene(props: SceneProps) {
       // detail nobody can resolve.
       dpr={[1, 1.75]}
       camera={{ fov: 34, near: 0.5, far: 220, position: [0, 16, 13] }}
-      gl={{ antialias: true, powerPreference: "high-performance" }}
+      gl={{ antialias: true, powerPreference: "high-performance" , toneMapping: THREE.ACESFilmicToneMapping }}
     >
       <Valley {...props} />
     </Canvas>

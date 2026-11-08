@@ -111,7 +111,7 @@ export default function StackTowerScene({
         shadows
         dpr={[1, 2]}
         camera={{ position: [8, 8, 8], fov: 45 }}
-        gl={{ antialias: true, alpha: false }}
+        gl={{ antialias: true, alpha: false , toneMapping: THREE.ACESFilmicToneMapping }}
       >
         <color attach="background" args={['#090d16']} />
         <fog attach="fog" args={['#090d16', 15, 35]} />

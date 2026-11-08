@@ -1,3 +1,4 @@
+import * as THREE from "three";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { ContactShadows, useTexture } from "@react-three/drei";
 import { Suspense, useLayoutEffect, useRef, useState } from "react";
@@ -275,7 +276,7 @@ export default function ConstellationShepherdScene({
 }) {
   const frameloop = usePlayFrameloop(!paused);
   return (
-    <Canvas frameloop={frameloop} shadows dpr={[1, 1.5]} camera={{ position: [CAMERA_POSES[0][0], CAMERA_POSES[0][1], CAMERA_POSES[0][2]], fov: 38 }}>
+    <Canvas gl={{ toneMapping: THREE.ACESFilmicToneMapping }} frameloop={frameloop} shadows dpr={[1, 1.5]} camera={{ position: [CAMERA_POSES[0][0], CAMERA_POSES[0][1], CAMERA_POSES[0][2]], fov: 38 }}>
       <color attach="background" args={[0.03, 0.04, 0.08]} />
       <ambientLight intensity={0.38} />
       <directionalLight

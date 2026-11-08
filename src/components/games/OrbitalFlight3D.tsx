@@ -1,3 +1,4 @@
+import * as THREE from "three";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Maximize2, Minimize2, Volume2, VolumeX, Share2, Check } from 'lucide-react';
 import { Canvas } from '@react-three/fiber';
@@ -340,7 +341,7 @@ export default function OrbitalFlight3D() {
         shadows
         dpr={[1, 2]}
         camera={{ position: [50, 6, -12], fov: 60 }}
-        gl={{ antialias: true }}
+        gl={{ antialias: true , toneMapping: THREE.ACESFilmicToneMapping }}
       >
         <OrbitalFlight3DScene
           state={gameState}

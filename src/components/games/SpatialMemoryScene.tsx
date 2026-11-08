@@ -1,3 +1,4 @@
+import * as THREE from "three";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { usePlayFrameloop } from "../../lib/games/play-frameloop";
 import { Html } from "@react-three/drei";
@@ -114,7 +115,7 @@ export default function SpatialMemoryScene(props: SceneProps) {
       // Capped for phones: an uncapped pixel ratio is the usual cause of a
       // handset heating up on a 3D page.
       dpr={[1, 1.6]}
-      gl={{ antialias: false, powerPreference: "low-power" }}
+      gl={{ antialias: false, powerPreference: "low-power" , toneMapping: THREE.ACESFilmicToneMapping }}
       style={{ width: "100%", height: "100%" }}
     >
       <color attach="background" args={["#070b16"]} />

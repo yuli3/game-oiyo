@@ -1,3 +1,4 @@
+import * as THREE from "three";
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
 import {
@@ -393,7 +394,7 @@ export default function PaperFlight3D() {
           : 'relative w-full h-160 md:h-180 bg-background rounded-2xl overflow-hidden border border-border shadow-2xl'
       }`}
     >
-      <Canvas
+      <Canvas gl={{ toneMapping: THREE.ACESFilmicToneMapping }}
         shadows
         dpr={[1, 2]}
         camera={{ position: [0, 22, 7], fov: 55, near: 0.1, far: 1200 }}

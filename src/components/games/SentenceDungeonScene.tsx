@@ -1,3 +1,4 @@
+import * as THREE from "three";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { ContactShadows, useTexture } from "@react-three/drei";
 import { Suspense, useLayoutEffect, useRef, useState } from "react";
@@ -225,7 +226,7 @@ export default function SentenceDungeonScene({
 }) {
   const frameloop = usePlayFrameloop(!paused);
   return (
-    <Canvas frameloop={frameloop} shadows dpr={[1, 1.5]} camera={{ position: [CAMERA_POSES[0][0], CAMERA_POSES[0][1], CAMERA_POSES[0][2]], fov: 36 }}>
+    <Canvas gl={{ toneMapping: THREE.ACESFilmicToneMapping }} frameloop={frameloop} shadows dpr={[1, 1.5]} camera={{ position: [CAMERA_POSES[0][0], CAMERA_POSES[0][1], CAMERA_POSES[0][2]], fov: 36 }}>
       <color attach="background" args={[0.14, 0.12, 0.12]} />
       <ambientLight intensity={0.36} />
       <directionalLight position={[KEY_LIGHT[0] * 8, KEY_LIGHT[1] * 8, KEY_LIGHT[2] * 8]} intensity={1.5} castShadow shadow-mapSize={[1024, 1024]} />

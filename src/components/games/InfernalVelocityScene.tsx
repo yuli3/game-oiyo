@@ -1,3 +1,4 @@
+import * as THREE from "three";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { usePlayFrameloop } from "../../lib/games/play-frameloop";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -106,7 +107,7 @@ export default function InfernalVelocityScene({ copy, onFinish }: Props) {
 
   return (
     <div ref={root} className="relative h-full min-h-[560px] select-none overflow-hidden bg-black text-white" onClick={lock}>
-      <Canvas frameloop={frameloop} shadows={!coarse} dpr={[1, coarse ? 1 : 1.45]} camera={{ fov: 76, near: 0.06, far: 120, position: [0, 1.7, 12] }} gl={{ antialias: !coarse }}>
+      <Canvas frameloop={frameloop} shadows={!coarse} dpr={[1, coarse ? 1 : 1.45]} camera={{ fov: 76, near: 0.06, far: 120, position: [0, 1.7, 12] }} gl={{ antialias: !coarse , toneMapping: THREE.ACESFilmicToneMapping }}>
         <color attach="background" args={["#050001"]} />
         <fog attach="fog" args={["#160003", 12, 56]} />
         <InfernalWorld controls={controls} setHud={setHud} onFinish={onFinish} coarse={coarse} muted={muted} />

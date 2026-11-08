@@ -1,3 +1,4 @@
+import * as THREE from "three";
 import {Canvas, useFrame, useThree} from "@react-three/fiber";
 import {useEffect, useMemo, useRef, useState} from "react";
 import {OrthographicCamera, TextureLoader, SRGBColorSpace, type Texture, type Group, type Mesh} from "three";
@@ -42,5 +43,5 @@ function Museum({state,mapVisible,reducedMotion}:MemoryPalaceSceneProps){
 
 export default function MemoryPalaceThievesScene(props:MemoryPalaceSceneProps){
   const frameloop=usePlayFrameloop(true);
-  return <Canvas orthographic frameloop={frameloop} camera={{position:[7,10,9],zoom:30}} shadows dpr={[1,1.5]}><FitMuseumCamera/><Museum {...props}/></Canvas>;
+  return <Canvas gl={{ toneMapping: THREE.ACESFilmicToneMapping }} orthographic frameloop={frameloop} camera={{position:[7,10,9],zoom:30}} shadows dpr={[1,1.5]}><FitMuseumCamera/><Museum {...props}/></Canvas>;
 }

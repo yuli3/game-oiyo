@@ -1,3 +1,4 @@
+import * as THREE from "three";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { celebrate } from "../../lib/games/celebration";
@@ -307,7 +308,7 @@ export default function VoxelMaze3D() {
         shadows
         dpr={[1, 2]}
         camera={{ position: [7, 16, 20], fov: 50 }}
-        gl={{ antialias: true }}
+        gl={{ antialias: true , toneMapping: THREE.ACESFilmicToneMapping }}
       >
         <VoxelMaze3DScene state={gameState} />
       </Canvas>

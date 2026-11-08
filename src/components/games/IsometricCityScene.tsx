@@ -350,7 +350,7 @@ export default function IsometricCityScene({ copy }: Props) {
         frameloop={frameloop}
         shadows={coarse ? false : "basic"}
         dpr={coarse ? 1 : [1, 1.65]}
-        gl={{ antialias: !coarse, powerPreference: coarse ? "default" : "high-performance", alpha: false }}
+        gl={{ antialias: !coarse, powerPreference: coarse ? "default" : "high-performance", alpha: false , toneMapping: THREE.ACESFilmicToneMapping }}
         onPointerMissed={() => setSelected(null)}
       >
         <OrthographicCamera makeDefault position={[28, 28, 28]} zoom={coarse ? 20 : 26} near={0.1} far={180} />

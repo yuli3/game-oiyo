@@ -494,7 +494,7 @@ export default function RunABusinessScene({
         frameloop={frameloop}
         shadows={coarse ? false : "basic"}
         dpr={coarse ? 1 : [1, 1.5]}
-        gl={{ antialias: !coarse, alpha: false }}
+        gl={{ antialias: !coarse, alpha: false , toneMapping: THREE.ACESFilmicToneMapping }}
       >
         <OrthographicCamera makeDefault position={[9, 8.5, 10]} zoom={coarse ? 49 : 58} near={0.1} far={80} />
         <World

@@ -168,7 +168,7 @@ export default function MarbleRollScene({ marble, className }: SceneProps & { cl
         dpr={[1, 2]}
         camera={{ position: [0, 5, -8], fov: 60 }}
         shadows
-        gl={{ antialias: true, alpha: false }}
+        gl={{ antialias: true, alpha: false , toneMapping: THREE.ACESFilmicToneMapping }}
       >
         <color attach="background" args={["#090d16"]} />
         <fog attach="fog" args={["#090d16", 40, 160]} />

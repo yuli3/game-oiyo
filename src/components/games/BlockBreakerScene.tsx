@@ -207,7 +207,7 @@ export default function BlockBreakerScene({ state }: Props) {
       className="w-full h-full touch-none select-none"
       camera={{ position: [0, 4.5, 13.5], fov: 52 }}
       dpr={[1, 2]}
-      gl={{ antialias: true, powerPreference: 'low-power' }}
+      gl={{ antialias: true, powerPreference: 'low-power' , toneMapping: THREE.ACESFilmicToneMapping }}
       frameloop={reducedMotion ? 'demand' : 'always'}
     >
       <color attach="background" args={["#030712"]} />

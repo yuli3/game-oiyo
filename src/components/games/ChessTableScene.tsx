@@ -1,3 +1,4 @@
+import * as THREE from "three";
 import { useEffect } from "react";
 import { Canvas, useThree, type ThreeEvent } from "@react-three/fiber";
 import type { ChessTableState } from "../../lib/games/chess-table";
@@ -36,7 +37,7 @@ export default function ChessTableScene({
   onPick: (square: [number, number]) => void;
 }) {
   return (
-    <Canvas shadows camera={{ fov: 32, near: 0.1, far: 40 }} dpr={[1, 1.5]} gl={{ antialias: true, powerPreference: "low-power" }}>
+    <Canvas shadows camera={{ fov: 32, near: 0.1, far: 40 }} dpr={[1, 1.5]} gl={{ antialias: true, powerPreference: "low-power" , toneMapping: THREE.ACESFilmicToneMapping }}>
       <FixedCamera />
       <color attach="background" args={["#1a2430"]} />
       <ambientLight intensity={0.7} />

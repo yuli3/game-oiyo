@@ -240,7 +240,7 @@ export default function CosmicFlightScene({
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
     >
-      <Canvas shadows dpr={[1, 2]} camera={{ fov: 60, position: [0, 3, 7] }} gl={{ antialias: true }}>
+      <Canvas shadows dpr={[1, 2]} camera={{ fov: 60, position: [0, 3, 7] }} gl={{ antialias: true , toneMapping: THREE.ACESFilmicToneMapping }}>
         <color attach="background" args={['#030712']} />
         <ambientLight intensity={0.5} />
         <directionalLight position={[10, 20, 10]} intensity={1.5} color="#e0f2fe" />

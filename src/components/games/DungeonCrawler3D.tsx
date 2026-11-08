@@ -1,3 +1,4 @@
+import * as THREE from "three";
 import React, { useState, useEffect, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Maximize2, Minimize2, Volume2, VolumeX, Share2, Check } from 'lucide-react';
@@ -226,7 +227,7 @@ export default function DungeonCrawler3D() {
       }`}
     >
       {/* 3D Canvas with isometric action camera following player */}
-      <Canvas
+      <Canvas gl={{ toneMapping: THREE.ACESFilmicToneMapping }}
         shadows
         dpr={[1, 2]}
         camera={{

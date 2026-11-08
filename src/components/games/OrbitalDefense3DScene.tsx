@@ -293,7 +293,7 @@ function Starfield() {
 export function OrbitalDefense3DScene(props: Props) {
   return (
     <div className="relative h-155 w-full overflow-hidden rounded-2xl border border-border bg-slate-950 shadow-inner">
-      <Canvas
+      <Canvas gl={{ toneMapping: THREE.ACESFilmicToneMapping }}
         shadows
         dpr={[1, 2]}
         camera={{ position: [0, 11, 13], fov: 45 }}

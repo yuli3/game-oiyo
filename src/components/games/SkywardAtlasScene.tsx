@@ -89,7 +89,7 @@ export default function SkywardAtlasScene({ copy, audioEnabled, onToggleAudio, o
     onPointerDown={e => { if ((e.target as HTMLElement).closest("button")) return; drag.current={id:e.pointerId,x:e.clientX,y:e.clientY}; e.currentTarget.setPointerCapture(e.pointerId); }}
     onPointerMove={e => { const d=drag.current;if(!d||d.id!==e.pointerId)return;controls.current.lookX=THREE.MathUtils.clamp(controls.current.lookX-(e.clientX-d.x)*.004,-.8,.8);controls.current.lookY=THREE.MathUtils.clamp(controls.current.lookY+(e.clientY-d.y)*.003,-.35,.4);d.x=e.clientX;d.y=e.clientY; }}
     onPointerUp={() => { drag.current=null; }}>
-    <Canvas frameloop={frameloop} dpr={coarse ? 1 : [1, 1.45]} shadows={!coarse} camera={{ fov: 62, near: .2, far: 8500 }}>
+    <Canvas gl={{ toneMapping: THREE.ACESFilmicToneMapping }} frameloop={frameloop} dpr={coarse ? 1 : [1, 1.45]} shadows={!coarse} camera={{ fov: 62, near: .2, far: 8500 }}>
       <color attach="background" args={["#a9ced5"]}/><fogExp2 attach="fog" args={["#b9d2d1", .00032]}/>
       <Sky distance={7000} sunPosition={[350, 480, -500]} inclination={.51} azimuth={.18}/>
       <ambientLight intensity={.72}/><AtmosphereRig shadows={!coarse}/>

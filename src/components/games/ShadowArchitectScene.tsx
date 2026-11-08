@@ -1,3 +1,4 @@
+import * as THREE from "three";
 import { Canvas } from "@react-three/fiber";
 import { Html, OrbitControls, useTexture } from "@react-three/drei";
 import { Suspense, useLayoutEffect, useMemo } from "react";
@@ -54,7 +55,7 @@ function Studio({ state }: { state: ShadowArchitectState }) {
 export default function ShadowArchitectScene({ state }: { state: ShadowArchitectState }) {
   const frameloop = usePlayFrameloop(true);
   return (
-    <Canvas frameloop={frameloop} camera={{ position: [8, 7, 11], fov: 38 }} shadows dpr={[1, 1.5]}>
+    <Canvas gl={{ toneMapping: THREE.ACESFilmicToneMapping }} frameloop={frameloop} camera={{ position: [8, 7, 11], fov: 38 }} shadows dpr={[1, 1.5]}>
       <color attach="background" args={["#11160f"]} />
       <ambientLight intensity={0.75} />
       <directionalLight position={[2, 8, 10]} intensity={2.2} castShadow shadow-mapSize={[1024, 1024]} />

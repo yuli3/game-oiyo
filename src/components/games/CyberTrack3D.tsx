@@ -1,3 +1,4 @@
+import * as THREE from "three";
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Canvas } from "@react-three/fiber";
 import { useGhostTimeAttackPro, MobileHapticsPro, useCardTiltPro } from "../../lib/games/engine-suite-unified";
@@ -288,7 +289,7 @@ export default function CyberTrack3D({ locale = "ko" }: CyberTrack3DProps) {
 
       {/* 3D Canvas Viewport */}
       <div className="relative h-96 w-full overflow-hidden rounded-2xl border border-border bg-background shadow-inner">
-        <Canvas camera={{ position: [0, 5, -10], fov: 60 }} shadows dpr={[1, 2]}>
+        <Canvas gl={{ toneMapping: THREE.ACESFilmicToneMapping }} camera={{ position: [0, 5, -10], fov: 60 }} shadows dpr={[1, 2]}>
           <CyberTrack3DScene track={track} car={car} ghostFrames={ghostFrames} />
         </Canvas>
 

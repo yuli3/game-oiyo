@@ -1,3 +1,4 @@
+import * as THREE from "three";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Share2 } from 'lucide-react';
 import { Canvas } from '@react-three/fiber';
@@ -289,7 +290,7 @@ export default function CyberHighway3D() {
       }`}
     >
       {/* 3D Canvas */}
-      <Canvas
+      <Canvas gl={{ toneMapping: THREE.ACESFilmicToneMapping }}
         shadows
         dpr={[1, 2]}
         camera={{ position: [0, 4.2, -6.5], fov: 60, rotation: [0.15, Math.PI, 0] }}

@@ -1,3 +1,4 @@
+import * as THREE from "three";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { ContactShadows, useTexture } from "@react-three/drei";
 import { Suspense, useLayoutEffect, useRef, useState } from "react";
@@ -299,7 +300,7 @@ export default function ReverseDungeonScene({
 }) {
   const frameloop = usePlayFrameloop(!paused);
   return (
-    <Canvas frameloop={frameloop} shadows dpr={[1, 1.5]} camera={{ position: [4.5, 3.4, 4.7], fov: 38 }}>
+    <Canvas gl={{ toneMapping: THREE.ACESFilmicToneMapping }} frameloop={frameloop} shadows dpr={[1, 1.5]} camera={{ position: [4.5, 3.4, 4.7], fov: 38 }}>
       <color attach="background" args={[0.07, 0.08, 0.06]} />
       <ambientLight intensity={0.32} />
       <directionalLight

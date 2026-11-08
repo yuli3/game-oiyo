@@ -1,3 +1,4 @@
+import * as THREE from "three";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { usePlayFrameloop } from "../../lib/games/play-frameloop";
 import {
@@ -296,7 +297,7 @@ export default function UrbanStrikeScene({ copy, onFinish, muted, onToggleMute }
         shadows={coarse ? false : "percentage"}
         dpr={coarse ? 1 : [1, 1.5]}
         camera={{ fov: 72, near: 0.06, far: 180, position: [0, 1.72, 16] }}
-        gl={{ antialias: !coarse, alpha: false, powerPreference: coarse ? "default" : "high-performance" }}
+        gl={{ antialias: !coarse, alpha: false, powerPreference: coarse ? "default" : "high-performance" , toneMapping: THREE.ACESFilmicToneMapping }}
         onCreated={({ gl }) => {
           gl.setClearColor("#0b1015");
         }}
