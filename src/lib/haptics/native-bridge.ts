@@ -18,26 +18,32 @@ export type HapticPattern =
   | 'boss'
   | 'chest';
 
-class NativeHapticsBridge {
-  private isCapacitorAvailable: boolean = false;
-  private isVibrationAvailable: boolean = false;
+export class NativeHapticsBridge {
+  public checkCapacitor(): boolean {
+    if (typeof window === 'undefined') return false;
+    const win = window as unknown as {
+      Capacitor?: { isNativePlatform?: () => boolean };
+    };
+    return Boolean(win.Capacitor?.isNativePlatform?.());
+  }
 
-  constructor() {
-    if (typeof window !== 'undefined') {
-      // Check for Capacitor native runtime
-      const win = window as unknown as {
-        Capacitor?: { isNativePlatform?: () => boolean };
-      };
-      this.isCapacitorAvailable = Boolean(win.Capacitor?.isNativePlatform?.());
-      this.isVibrationAvailable = typeof navigator !== 'undefined' && 'vibrate' in navigator;
-    }
+  public checkVibration(): boolean {
+    return typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function';
+  }
+
+  public isNative(): boolean {
+    return this.checkCapacitor();
+  }
+
+  public isAvailable(): boolean {
+    return this.checkCapacitor() || this.checkVibration();
   }
 
   public trigger(pattern: HapticPattern): void {
     if (typeof window === 'undefined') return;
 
     // 1. Try Native Capacitor CoreHaptics if present
-    if (this.isCapacitorAvailable) {
+    if (this.checkCapacitor()) {
       try {
         const win = window as unknown as {
           Capacitor?: {
@@ -87,7 +93,7 @@ class NativeHapticsBridge {
     }
 
     // 2. Fallback to Web Vibration API
-    if (this.isVibrationAvailable) {
+    if (this.checkVibration()) {
       try {
         switch (pattern) {
           case 'fire':

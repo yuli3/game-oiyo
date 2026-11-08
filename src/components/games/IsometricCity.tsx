@@ -299,7 +299,7 @@ export default function IsometricCity({ locale }: { locale: Locale }) {
       data-game-surface
       className={`relative select-none ${
         isImmersive
-          ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-y-auto bg-background p-2"
+          ? "arcade-shell fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-y-auto overscroll-none bg-background p-2"
           : "overflow-hidden rounded-[2rem] border border-border bg-card shadow-xl"
       }`}
     >

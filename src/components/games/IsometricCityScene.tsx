@@ -46,6 +46,7 @@ import { VerticalTiltShiftShader } from "three/addons/shaders/VerticalTiltShiftS
 import { createTonePlayer, type TonePlayer } from "../../lib/games/tone";
 import { celebrate } from "../../lib/games/celebration";
 import { MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { nativeHaptics } from "../../lib/haptics/native-bridge";
 import {
   createShareCardCanvas,
   copyShareCardToClipboard,
@@ -277,6 +278,7 @@ export default function IsometricCityScene({ copy }: Props) {
     const pop = summary.population;
     if (pop >= 100 && pop > lastMilestoneRef.current + 100 && containerRef.current) {
       celebrate(containerRef.current, { preset: "coins" });
+      nativeHaptics.trigger("levelUp");
       lastMilestoneRef.current = Math.floor(pop / 100) * 100;
     }
   }, [summary.population]);
@@ -293,6 +295,7 @@ export default function IsometricCityScene({ copy }: Props) {
     const result = placeCell(city, tool, x, z);
     if (!result.ok) {
       MobileHapticsPro.warningPattern();
+      nativeHaptics.trigger("error");
       playCitySfx("error");
       setNotice(reasonMessage(result.reason, copy));
       return;
@@ -300,9 +303,11 @@ export default function IsometricCityScene({ copy }: Props) {
     setCity(result.state);
     if (tool === "bulldoze") {
       MobileHapticsPro.heavyImpact();
+      nativeHaptics.trigger("heavy");
       playCitySfx("bulldoze");
     } else {
       MobileHapticsPro.mediumImpact();
+      nativeHaptics.trigger("light");
       playCitySfx("place");
     }
     setNotice(tool === "bulldoze" ? copy.demolished : copy.built);
@@ -313,12 +318,14 @@ export default function IsometricCityScene({ copy }: Props) {
     const result = upgradeCell(city, selected.x, selected.z);
     if (!result.ok) {
       MobileHapticsPro.warningPattern();
+      nativeHaptics.trigger("warning");
       playCitySfx("error");
       setNotice(result.reason === "funds" ? copy.insufficient : copy.maxLevel);
       return;
     }
     setCity(result.state);
     MobileHapticsPro.successPattern();
+    nativeHaptics.trigger("success");
     playCitySfx("upgrade");
     if (containerRef.current) {
       celebrate(containerRef.current, { preset: "sparks" });
