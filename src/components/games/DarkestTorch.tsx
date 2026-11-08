@@ -7,7 +7,11 @@ import {
 } from '../../lib/games/arcade-pass';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { celebrate } from '../../lib/games/celebration';
-import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import {
+  useCardTiltPro,
+  MobileHapticsPro,
+  useGameJuicePro,
+} from '../../lib/games/engine-suite-unified';
 import { createInputGenerosity } from '../../lib/games/input-generosity';
 import { recordResult } from '../../lib/games/records';
 import { DARKEST_TORCH_SPRITES, getSpriteUrl } from '../../lib/games/sprites';
@@ -70,6 +74,9 @@ export default function DarkestTorch({ locale = 'en' }: Props) {
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } =
     useArcadePortal({ locale });
 
+  const { shakeCssVars, addTrauma, triggerHitStop } = useGameJuicePro();
+  const [combatPops, setCombatPops] = useState<Array<{ id: number; enemyId?: string; text: string; color: string }>>([]);
+
   const ensureAudio = useCallback(() => {
     if (typeof window === 'undefined') return null;
     if (!audioRef.current) {
@@ -119,7 +126,46 @@ export default function DarkestTorch({ locale = 'en' }: Props) {
       type: 'sawtooth',
       gain: 0.14,
     });
-    setState((prev) => executeHeroSkill(prev, skillId, selectedEnemyId));
+
+    const prevEnemies = state.enemies;
+    const targetId = selectedEnemyId ?? prevEnemies[0]?.id;
+    const nextState = executeHeroSkill(state, skillId, selectedEnemyId);
+
+    const prevTarget = prevEnemies.find((e) => e.id === targetId);
+    const nextTarget = nextState.enemies.find((e) => e.id === targetId);
+    const dmg = (prevTarget?.hp ?? 0) - (nextTarget?.hp ?? 0);
+
+    if (dmg > 0) {
+      addTrauma(Math.min(0.8, 0.35 + dmg * 0.015));
+      triggerHitStop(dmg >= 25 ? 90 : 50);
+      const isKill = (nextTarget?.hp ?? 0) <= 0;
+      const popText = isKill
+        ? `-${dmg} 처치! 💀`
+        : `-${dmg}${dmg >= 25 ? ' 치명타! 💥' : ''}`;
+      const newPop = {
+        id: Date.now() + Math.random(),
+        enemyId: targetId,
+        text: popText,
+        color: dmg >= 25 ? 'text-destructive font-black' : 'text-primary font-bold',
+      };
+      setCombatPops((prev) => [...prev, newPop]);
+      setTimeout(() => {
+        setCombatPops((prev) => prev.filter((p) => p.id !== newPop.id));
+      }, 1200);
+    } else if (skillId === 'divine-comfort') {
+      addTrauma(0.12);
+      const newPop = {
+        id: Date.now() + Math.random(),
+        text: '+14 전체 치유! ✨',
+        color: 'text-success font-black',
+      };
+      setCombatPops((prev) => [...prev, newPop]);
+      setTimeout(() => {
+        setCombatPops((prev) => prev.filter((p) => p.id !== newPop.id));
+      }, 1200);
+    }
+
+    setState(nextState);
   };
 
   const onRelightTorch = () => {
@@ -150,7 +196,12 @@ export default function DarkestTorch({ locale = 'en' }: Props) {
   return (
     <div
       ref={containerRef}
-      className={`mx-auto max-w-4xl rounded-3xl border border-border bg-card p-4 text-card-foreground shadow-xl md:p-6 ${
+      style={{
+        '--shake-x': shakeCssVars['--shake-x'] ?? '0px',
+        '--shake-y': shakeCssVars['--shake-y'] ?? '0px',
+        '--shake-rot': shakeCssVars['--shake-rot'] ?? '0deg',
+      } as React.CSSProperties}
+      className={`mx-auto max-w-4xl rounded-3xl border border-border bg-card p-4 text-card-foreground shadow-xl md:p-6 transform translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot) ${
         isImmersive
           ? 'fixed inset-0 z-50 max-w-none overflow-y-auto rounded-none'
           : ''
@@ -426,12 +477,27 @@ export default function DarkestTorch({ locale = 'en' }: Props) {
                       MobileHapticsPro.light();
                       setSelectedEnemyId(enemy.id);
                     }}
-                    className={`flex w-full items-center justify-between rounded-xl border p-3 text-left transition ${
+                    className={`relative flex w-full items-center justify-between rounded-xl border p-3 text-left transition ${
                       isTarget
-                        ? 'border-primary bg-primary/15'
+                        ? 'border-destructive bg-destructive/10 ring-2 ring-destructive/40 shadow-sm'
                         : 'border-border bg-card hover:border-primary/50'
                     }`}
                   >
+                    {isTarget && (
+                      <span className="absolute -top-2.5 right-3 text-xs bg-destructive text-destructive-foreground px-2 py-0.5 rounded-full font-black animate-pulse shadow-sm">
+                        🎯 TARGET
+                      </span>
+                    )}
+                    {combatPops
+                      .filter((p) => p.enemyId === enemy.id)
+                      .map((pop) => (
+                        <span
+                          key={pop.id}
+                          className={`absolute -top-5 left-1/2 -translate-x-1/2 text-sm drop-shadow-md z-20 animate-fade-up ${pop.color}`}
+                        >
+                          {pop.text}
+                        </span>
+                      ))}
                     <div className="flex items-center gap-2.5">
                       <span className="text-2xl">{enemy.emoji}</span>
                       <div>

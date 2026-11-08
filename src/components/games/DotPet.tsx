@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Maximize2, Minimize2 } from 'lucide-react';
+import { Maximize2, Minimize2, Moon, Sun } from 'lucide-react';
 import { GameContainer } from '../ui/game/GamePrimitives';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { celebrate } from '../../lib/games/celebration';
@@ -7,7 +7,8 @@ import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-u
 import { useAudioContext } from '../../lib/games/use-audio-context';
 import { playProceduralSfx } from '../../lib/games/audio-mixer';
 import { explainDotPetAction, type DotPetAction } from '../../lib/games/dot-pet';
-import { DOT_PET_SPRITES, DOT_PET_UI_SPRITES, dotPetSprite } from '../../lib/games/sprites';
+import { DOT_PET_SPRITES, DOT_PET_UI_SPRITES } from '../../lib/games/sprites';
+import { DotPetCanvas } from './DotPetCanvas';
 
 function TiltPetButton({
   children,
@@ -178,6 +179,7 @@ const DotPet: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [loaded, setLoaded] = useState(false);
     const [confirmReset, setConfirmReset] = useState(false);
     const [grewUp, setGrewUp] = useState(false);
+    const [isSleeping, setIsSleeping] = useState(false);
     const [notice, setNotice] = useState<string | null>(null);
     const grewTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const getAudioContext = useAudioContext();
@@ -243,6 +245,25 @@ const DotPet: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         pet && care('rest', { energy: Math.min(100, pet.energy + 30), happiness: Math.max(0, pet.happiness - 5) }, 3);
     };
 
+    const handlePetStroke = () => {
+        if (!pet) return;
+        if (isSleeping) {
+            setIsSleeping(false);
+            setNotice(null);
+        }
+        care('play', { happiness: Math.min(100, pet.happiness + 2), energy: Math.max(0, pet.energy - 0.5) }, 1);
+    };
+
+    const toggleSleep = () => {
+        setIsSleeping((prev) => {
+            const next = !prev;
+            if (next) {
+                rest();
+            }
+            return next;
+        });
+    };
+
     const care = (action: DotPetAction, delta: Partial<Pet>, xp: number) => {
         if (!pet) return;
         const reason = explainDotPetAction(pet, action);
@@ -304,9 +325,6 @@ const DotPet: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
     const stageIdx = STAGES.indexOf(pet.stage);
     const xpMax = (stageIdx + 1) * 100;
-    const petSprite = dotPetSprite(pet.type, pet.stage);
-    const mood = pet.happiness > 50 && pet.hunger > 30 ? '' : pet.hunger <= 30 ? '💦' : '💧';
-    const spriteSize = ['h-16 w-16', 'h-20 w-20', 'h-24 w-24', 'h-28 w-28'][stageIdx];
 
     return (
         <div
@@ -325,48 +343,58 @@ const DotPet: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 </button>
             </div>
             <GameContainer title={t.title} subtitle={t.subtitle}>
-                {/* Pet stage area */}
-                <div className="relative min-h-56 rounded-2xl border-2 border-primary/30 bg-gradient-to-b from-muted/20 to-muted/60 flex flex-col items-center justify-center mb-6 overflow-hidden">
-                    <div className={`${spriteSize} relative animate-bounce motion-reduce:animate-none`} role="img" aria-label={t.types[pet.type]}>
-                        <img src={petSprite} alt="" draggable={false} className="h-full w-full object-contain" />
-                        {mood && <span className="absolute -right-2 -top-1 text-xl">{mood}</span>}
-                    </div>
-                    <div className="absolute bottom-3 text-xs font-black text-muted-foreground bg-background/70 px-3 py-1 rounded-full uppercase tracking-widest">
+                {/* Pet Stage Header with Sleep Mode Toggle */}
+                <div className="flex items-center justify-between mb-3 px-1">
+                    <span className="text-xs font-black uppercase tracking-wider text-muted-foreground bg-muted/60 px-3 py-1 rounded-full">
                         {t.stages[pet.stage]} · {t.types[pet.type]}
-                    </div>
-                    {grewUp && (
-                        <div className="absolute top-3 left-1/2 -translate-x-1/2 inline-flex items-center gap-1.5 px-4 py-1.5 bg-success text-success-foreground rounded-full text-xs font-black shadow-lg animate-fade-up motion-reduce:animate-none" role="status">
-                            <img src={DOT_PET_UI_SPRITES.trophy} alt="" aria-hidden="true" className="h-4 w-4 object-contain" />
-                            <span>✨ {t.grown}</span>
-                        </div>
-                    )}
+                    </span>
+                    <button
+                        type="button"
+                        onClick={toggleSleep}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black border transition-all ${
+                            isSleeping
+                                ? 'bg-secondary text-primary border-primary shadow-sm'
+                                : 'bg-card text-foreground border-border hover:border-primary'
+                        }`}
+                        aria-pressed={isSleeping}
+                    >
+                        {isSleeping ? <Sun className="size-3.5 text-warning" /> : <Moon className="size-3.5 text-primary" />}
+                        <span>{isSleeping ? '깨우기' : '재우기 (수면 모드)'}</span>
+                    </button>
                 </div>
 
+                {/* 2D Tactile Canvas Arena */}
+                <DotPetCanvas
+                    petType={pet.type}
+                    stage={pet.stage}
+                    happiness={pet.happiness}
+                    hunger={pet.hunger}
+                    energy={pet.energy}
+                    isSleeping={isSleeping}
+                    onPetStroke={handlePetStroke}
+                    onFeedDrop={feed}
+                    onPlayFetch={play}
+                    getAudioContext={getAudioContext}
+                    className="mb-4"
+                />
+
+                {/* Growth Alert */}
+                {grewUp && (
+                    <div className="mb-4 inline-flex w-full items-center justify-center gap-1.5 px-4 py-2 bg-success text-success-foreground rounded-2xl text-sm font-black shadow-lg animate-fade-up motion-reduce:animate-none" role="status">
+                        <img src={DOT_PET_UI_SPRITES.trophy} alt="" aria-hidden="true" className="size-5 object-contain" />
+                        <span>✨ {t.grown}</span>
+                    </div>
+                )}
+
                 {/* Stats */}
-                <div className="space-y-3 mb-6">
+                <div className="space-y-3 mb-6 p-4 rounded-2xl bg-card border border-border/60 shadow-xs">
                     <StatBar label={t.happiness} icon="💗" value={pet.happiness} />
                     <StatBar label={t.hunger} icon="🍚" value={pet.hunger} />
                     <StatBar label={t.energy} icon="⚡" value={pet.energy} />
+                    <StatBar label={t.xp} icon="⭐" value={pet.experience} max={xpMax} />
                 </div>
 
-                {/* Actions */}
-                <div className="grid grid-cols-3 gap-3 mb-6">
-                    <TiltPetButton onClick={feed} className="inline-flex items-center justify-center gap-1.5 py-3 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-sm hover:opacity-90 transition-all">
-                        <img src={DOT_PET_UI_SPRITES.bowl} alt="" aria-hidden="true" className="h-4 w-4 object-contain" />
-                        <span>{t.feed}</span>
-                    </TiltPetButton>
-                    <TiltPetButton onClick={play} className="inline-flex items-center justify-center gap-1.5 py-3 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-sm hover:opacity-90 transition-all">
-                        <img src={DOT_PET_UI_SPRITES.ball} alt="" aria-hidden="true" className="h-4 w-4 object-contain" />
-                        <span>{t.play}</span>
-                    </TiltPetButton>
-                    <TiltPetButton onClick={rest} className="py-3 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-sm hover:opacity-90 transition-all">
-                        🛏️ {t.rest}
-                    </TiltPetButton>
-                </div>
                 {notice && <p className="mb-4 text-center text-xs font-bold text-warning" role="status">{notice}</p>}
-
-                {/* XP */}
-                <StatBar label={t.xp} icon="⭐" value={pet.experience} max={xpMax} />
 
                 {/* Reset */}
                 <div className="mt-6 text-center">
