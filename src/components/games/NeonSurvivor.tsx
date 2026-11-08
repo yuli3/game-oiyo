@@ -1205,7 +1205,7 @@ export default function NeonSurvivor({ locale = 'ko' }: Props) {
       className={
         isImmersive
           ? "fixed inset-0 z-50 w-screen h-dvh bg-black m-0 p-0 rounded-none border-none select-none touch-none flex items-center justify-center overflow-hidden"
-          : "relative w-full aspect-16/10 min-h-120 max-h-180 rounded-2xl overflow-hidden border border-border bg-card shadow-2xl select-none touch-none"
+          : "relative w-full h-full min-h-145 max-h-220 rounded-2xl overflow-hidden border border-border bg-card shadow-2xl select-none touch-none"
       }
     >
       {phase === 'briefing' ? (

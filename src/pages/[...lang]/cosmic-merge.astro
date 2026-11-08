@@ -45,7 +45,7 @@ const coverArt = gameArt["cosmic-merge"] ?? "/games/cosmic-flight-social.png";
 ---
 
 <BaseLayout title={m.title} description={m.description} heading={m.title} image={coverArt}>
-  <div class="mx-auto max-w-4xl px-2 py-4 sm:px-4 sm:py-6">
+  <div class="mx-auto max-w-7xl px-2 py-4 sm:px-4 sm:py-6">
     <CosmicMerge client:load locale={locale} />
     <div class="mx-auto max-w-3xl px-2">
       <GameGuide slug="cosmic-merge" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />

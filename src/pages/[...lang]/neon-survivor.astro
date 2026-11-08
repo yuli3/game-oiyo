@@ -45,7 +45,7 @@ const coverArt = gameArt["neon-survivor"] ?? gameArt["neon-formation"] ?? "/game
 ---
 
 <BaseLayout title={m.title} description={m.description} heading={m.title} image={coverArt}>
-  <div class="mx-auto max-w-4xl px-2 py-4 sm:px-4 sm:py-6">
+  <div class="mx-auto max-w-7xl px-2 py-4 sm:px-4 sm:py-6">
     <NeonSurvivor client:load locale={locale} />
     <div class="mx-auto max-w-3xl px-2">
       <GameGuide slug="neon-survivor" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />

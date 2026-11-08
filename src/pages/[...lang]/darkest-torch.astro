@@ -48,5 +48,7 @@ const m = meta[locale] || meta.en;
 
 <BaseLayout title={m.title} description={m.description} heading={m.title}>
   <DarkestTorch client:load locale={locale} />
-  <GameGuide slug="darkest-torch" locale={locale} name={m.title.split(" — ")[0]} />
+  <div class="mx-auto max-w-3xl px-2 mt-8">
+    <GameGuide slug="darkest-torch" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
 </BaseLayout>

@@ -290,7 +290,7 @@ export default function SubwayRunner({ locale = "ko" }: SubwayRunnerProps) {
           "--shake-y": `${shakeOffset.y}px`,
         } as React.CSSProperties
       }
-      className={`mx-auto flex w-full max-w-xl translate-x-(--shake-x) translate-y-(--shake-y) flex-col items-center gap-4 p-4 select-none transition-all ${
+      className={`mx-auto flex w-full max-w-5xl translate-x-(--shake-x) translate-y-(--shake-y) flex-col items-center gap-4 p-2 sm:p-4 select-none transition-all ${
         isImmersive
           ? "fixed inset-0 z-50 overflow-y-auto bg-background/95 backdrop-blur-md max-w-none w-full h-full justify-center"
           : ""

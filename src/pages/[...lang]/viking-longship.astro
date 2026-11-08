@@ -48,5 +48,7 @@ const m = meta[locale] || meta.en;
 
 <BaseLayout title={m.title} description={m.description} heading={m.title}>
   <VikingLongship client:load />
-  <GameGuide slug="viking-longship" locale={locale} name={m.title.split(" — ")[0]} />
+  <div class="mx-auto max-w-3xl px-2 mt-8">
+    <GameGuide slug="viking-longship" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
 </BaseLayout>

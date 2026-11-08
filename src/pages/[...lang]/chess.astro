@@ -52,9 +52,11 @@ const ruleCopy = officialRuleCopy[locale];
 ---
 
 <BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games.chess}>
-  <div class="mx-auto max-w-2xl px-4 py-8">
+  <div class="mx-auto max-w-7xl px-2 py-4 sm:px-4 sm:py-6">
     <ChessBoardComp client:load locale={locale} />
-    <GameGuide slug="chess" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
+    <div class="mx-auto max-w-3xl px-2 mt-8">
+      <GameGuide slug="chess" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
+    </div>
     <p class="mt-6 text-sm leading-6 text-slate-600">
       {ruleCopy.label}: {' '}
       <a class="underline underline-offset-2" href="https://handbook.fide.com/chapter/E012023" rel="noopener noreferrer" target="_blank">FIDE Laws of Chess</a>

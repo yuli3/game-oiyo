@@ -492,7 +492,7 @@ export default function RetroHighway({ locale = 'ko' }: Props) {
 
       {/* Main 3D Canvas Viewport */}
       <div className={`relative w-full overflow-hidden rounded-xl border border-border bg-card shadow-lg ${
-        isImmersive ? 'flex-1 min-h-0' : 'aspect-video max-h-160'
+        isImmersive ? 'flex-1 min-h-0' : 'w-full h-full min-h-130 max-h-205'
       }`}>
         <RetroHighwayScene state={state} />
 

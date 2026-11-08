@@ -407,7 +407,7 @@ export default function VoxelRunner({ locale = 'ko' }: { locale?: string }) {
       className={`mx-auto w-full transition-all duration-200 ${
         isImmersive
           ? 'fixed inset-0 z-50 flex flex-col justify-between bg-background p-3 sm:p-5 h-dvh w-screen overflow-hidden'
-          : 'max-w-2xl mx-auto p-4 sm:p-6 space-y-4'
+          : 'w-full max-w-5xl mx-auto p-2 sm:p-6 space-y-4'
       }`}
     >
       {/* Header bar */}
@@ -448,7 +448,7 @@ export default function VoxelRunner({ locale = 'ko' }: { locale?: string }) {
 
       {/* Main 3D Canvas Box */}
       <div className={`relative rounded-2xl overflow-hidden shadow-lg border border-border ${
-        isImmersive ? 'flex-1 min-h-0' : 'h-130'
+        isImmersive ? 'flex-1 min-h-0' : 'h-full min-h-130 max-h-205'
       }`}>
         <VoxelRunnerScene
           player={player}

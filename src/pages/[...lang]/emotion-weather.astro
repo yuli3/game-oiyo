@@ -25,12 +25,14 @@ const m = meta[locale] ?? meta.en;
 ---
 
 <BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games["emotion-weather"]}>
-  <div class="mx-auto max-w-3xl px-4 py-8">
+  <div class="mx-auto max-w-7xl px-2 py-4 sm:px-4 sm:py-6">
     {/*
       client:visible — the three.js chunk stays out of the first paint until
       the page is actually on screen.
     */}
     <EmotionWeather client:visible locale={locale} />
-    <GameGuide slug="emotion-weather" locale={locale} name={m.title.split(" — ")[0]} />
+    <div class="mx-auto max-w-3xl px-2 mt-8">
+      <GameGuide slug="emotion-weather" locale={locale} name={m.title.split(" — ")[0]} />
+    </div>
   </div>
 </BaseLayout>

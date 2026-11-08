@@ -351,7 +351,7 @@ export const GameShell: React.FC<GameShellProps> = ({
       className={
         isImmersive
           ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-hidden bg-background p-3 sm:p-5 select-none touch-none"
-          : `relative mx-auto my-6 w-full max-w-2xl rounded-3xl border border-border bg-card p-4 sm:p-6 shadow-md ${className}`
+          : `relative mx-auto my-3 sm:my-6 w-full max-w-5xl sm:max-w-6xl h-full min-h-145 sm:min-h-165 max-h-220 flex flex-col rounded-3xl border border-border bg-card p-2 sm:p-5 shadow-xl ${className}`
       }
     >
       {/* ── Top Header Bar ── */}

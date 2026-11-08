@@ -48,5 +48,7 @@ const t = meta[locale] || meta.en;
 
 <BaseLayout title={t.title} description={t.description} heading={t.title}>
   <CheeseFactory client:load />
-  <GameGuide slug="cheese-factory" locale={locale} name={t.title.split(" — ")[0]} />
+  <div class="mx-auto max-w-3xl px-2 mt-8">
+    <GameGuide slug="cheese-factory" locale={locale} name={t.title.split(" — ")[0]} />
+  </div>
 </BaseLayout>

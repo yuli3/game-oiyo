@@ -43,8 +43,10 @@ const m = meta[locale] ?? meta.en;
 ---
 
 <BaseLayout title={m.title} description={m.description} heading={m.title} image={gameArtDocument.games.checkers}>
-  <div class="mx-auto max-w-2xl px-4 py-8">
+  <div class="mx-auto max-w-7xl px-2 py-4 sm:px-4 sm:py-6">
     <CheckersComp client:load locale={locale} />
-    <GameGuide slug="checkers" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
+    <div class="mx-auto max-w-3xl px-2 mt-8">
+      <GameGuide slug="checkers" locale={locale} name={m.title.split(' — ')[0].split(' | ')[0]} />
+    </div>
   </div>
 </BaseLayout>
