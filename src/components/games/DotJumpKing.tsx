@@ -4,6 +4,8 @@ import { GameContainer } from "../ui/game/GamePrimitives";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import { frameScale } from "../../lib/games/time-contracts";
+import { GameJuice } from "../../lib/games/game-juice";
+import { usePrefersReducedMotion } from "../../lib/games/reduced-motion";
 
 function TiltJumpKingButton({
   children,
@@ -185,6 +187,9 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
     state = useRef<JumpState>(createJumpState());
   const artRef = useRef<JumpArt | null>(null);
   if (artRef.current === null) artRef.current = loadJumpArt();
+  const juiceRef = useRef<GameJuice>(new GameJuice(320));
+  const wasOnGroundRef = useRef(true);
+  const prefersReducedMotion = usePrefersReducedMotion();
   const [phase, setPhase] = useState<
       "briefing" | "playing" | "paused" | "over"
     >("briefing"),
@@ -261,6 +266,7 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
     if (phaseRef.current !== "playing") return;
     aim(clientX);
     MobileHapticsPro.light();
+    juiceRef.current.spring.punch(0.85, 1.15);
     state.current = chargeJump(state.current, 0.1, state.current.aim);
   };
   const up = () => {
@@ -270,6 +276,9 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
     if (state.current !== before) {
       MobileHapticsPro.impact();
       tone(520);
+      juiceRef.current.spring.punch(1.3, 0.7);
+      const sy = (y: number) => y - state.current.camY;
+      juiceRef.current.particles.emit(state.current.x, sy(state.current.y) + 12, { count: 8, kind: 'spark', color: '#cbd5e1', speedMin: 20, speedMax: 60 });
     }
   };
   useEffect(() => {
@@ -316,7 +325,11 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
       saveTick = 0;
     const loop = (now: number) => {
       const scale = frameScale(last, now);
+      const dtSec = Math.min((last === null ? 16 : now - last) / 1000, 0.05);
       last = now;
+
+      juiceRef.current.update(dtSec);
+
       if (phaseRef.current === "playing") {
         if (state.current.charge > 0 && state.current.onGround)
           state.current = chargeJump(
@@ -328,6 +341,15 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
         const h = jumpHeight(state.current);
         setHeight((v) => (v === h ? v : h));
         setCharge(Math.round(state.current.charge));
+
+        // Landing impact detection
+        if (!wasOnGroundRef.current && state.current.onGround) {
+          juiceRef.current.camera.addTrauma(0.16);
+          const sy = (y: number) => y - state.current.camY;
+          juiceRef.current.particles.emit(state.current.x, sy(state.current.y) + 12, { count: 6, kind: 'spark', color: '#9eb66d', speedMin: 15, speedMax: 45 });
+        }
+        wasOnGroundRef.current = state.current.onGround;
+
         if (now - saveTick > 1000) {
           saveTick = now;
           localStorage.setItem(SAVE_KEY, serializeJump(state.current));
@@ -336,6 +358,8 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
           setPhase("over");
           localStorage.removeItem(SAVE_KEY);
           tone(120);
+          const sy = (y: number) => y - state.current.camY;
+          juiceRef.current.impact(state.current.x, sy(state.current.y), 'heavy', 'FALL!');
           if (h > best) {
             setBest(h);
             localStorage.setItem(BEST_KEY, String(h));
@@ -346,7 +370,7 @@ export default function DotJumpKing({ locale = "ko" }: { locale?: string }) {
           }
         }
       }
-      draw(ctx, state.current, artRef.current);
+      draw(ctx, state.current, artRef.current, juiceRef.current, prefersReducedMotion);
       if (phaseRef.current === "playing") raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
@@ -577,7 +601,12 @@ function Stat({ label, value, icon }: { label: string; value: string; icon?: str
     </div>
   );
 }
-function draw(ctx: CanvasRenderingContext2D, s: JumpState, art: JumpArt | null) {
+function draw(ctx: CanvasRenderingContext2D, s: JumpState, art: JumpArt | null, juice: GameJuice, reducedMotion: boolean) {
+  ctx.save();
+  if (!reducedMotion && juice.camera.trauma > 0) {
+    ctx.translate(juice.camera.x, juice.camera.y);
+    ctx.rotate(juice.camera.angleRad);
+  }
   const sky = ctx.createLinearGradient(0, 0, 0, 600);
   sky.addColorStop(0, "#9fd4f0");
   sky.addColorStop(1, "#fff4c8");
@@ -595,18 +624,25 @@ function draw(ctx: CanvasRenderingContext2D, s: JumpState, art: JumpArt | null) 
   }
   const y = sy(s.y);
   const jumperFrame = s.charge > 8 ? 1 : s.vy < -1.5 ? 2 : s.vy > 3 ? 1 : 0;
+
+  // Spring squash & stretch
+  ctx.save();
+  ctx.translate(s.x, y);
+  ctx.scale(juice.spring.scaleX, juice.spring.scaleY);
   const jumperDrawn = art?.jumperSheet
-    ? blitSheetFrame(ctx, art.jumperSheet, JUMP_KING_JUMPER_SHEET, jumperFrame, s.x - 18, y - 20, 36, 36)
-    : paintCentered(ctx, art?.jumper, s.x, y - 2, 36, 36);
+    ? blitSheetFrame(ctx, art.jumperSheet, JUMP_KING_JUMPER_SHEET, jumperFrame, -18, -20, 36, 36)
+    : paintCentered(ctx, art?.jumper, 0, -2, 36, 36);
   if (!jumperDrawn) {
     ctx.beginPath();
-    ctx.arc(s.x, y, 12, 0, Math.PI * 2);
+    ctx.arc(0, 0, 12, 0, Math.PI * 2);
     ctx.fillStyle = s.charge ? "#e67f51" : "#708447";
     ctx.fill();
     ctx.strokeStyle = "#fff";
     ctx.lineWidth = 3;
     ctx.stroke();
   }
+  ctx.restore();
+
   if (s.charge) {
     ctx.fillStyle = "#ead39b";
     ctx.fillRect(s.x - 25, y - 28, 50, 6);
@@ -618,6 +654,9 @@ function draw(ctx: CanvasRenderingContext2D, s: JumpState, art: JumpArt | null) 
     ctx.lineTo(s.x + (s.aim - s.x) * 0.2, y - 45);
     ctx.stroke();
   }
+
+  juice.render(ctx);
+  ctx.restore();
 }
 declare global {
   interface Window {

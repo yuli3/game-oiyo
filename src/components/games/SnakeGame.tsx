@@ -209,35 +209,66 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         if (muted || !audioRef.current) return;
         const ctx = audioRef.current;
         if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+        const now = ctx.currentTime;
         const note = PENTATONIC[(streak - 1) % PENTATONIC.length];
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(note, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(note * 1.4, ctx.currentTime + 0.1);
-        gain.gain.setValueAtTime(0.08, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
-        osc.connect(gain).connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.12);
-        MobileHapticsPro.light();
+
+        // Layer 1: Pentatonic melody
+        const osc1 = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(note, now);
+        osc1.frequency.exponentialRampToValueAtTime(note * 1.4, now + 0.1);
+        gain1.gain.setValueAtTime(0.09, now);
+        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+        osc1.connect(gain1).connect(ctx.destination);
+        osc1.start(now);
+        osc1.stop(now + 0.12);
+
+        // Layer 2: Tactile sub-bass bounce
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(95, now);
+        osc2.frequency.exponentialRampToValueAtTime(45, now + 0.09);
+        gain2.gain.setValueAtTime(0.12, now);
+        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+        osc2.connect(gain2).connect(ctx.destination);
+        osc2.start(now);
+        osc2.stop(now + 0.09);
+
+        MobileHapticsPro.selection();
     }, [muted]);
 
     const playDeathSound = useCallback(() => {
-        MobileHapticsPro.error();
+        MobileHapticsPro.heavy();
         if (muted || !audioRef.current) return;
         const ctx = audioRef.current;
         if (ctx.state === 'suspended') ctx.resume().catch(() => {});
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(140, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(30, ctx.currentTime + 0.35);
-        gain.gain.setValueAtTime(0.12, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
-        osc.connect(gain).connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.35);
+        const now = ctx.currentTime;
+
+        // Layer 1: Descending saw
+        const osc1 = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        osc1.type = 'sawtooth';
+        osc1.frequency.setValueAtTime(140, now);
+        osc1.frequency.exponentialRampToValueAtTime(30, now + 0.35);
+        gain1.gain.setValueAtTime(0.14, now);
+        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        osc1.connect(gain1).connect(ctx.destination);
+        osc1.start(now);
+        osc1.stop(now + 0.35);
+
+        // Layer 2: Deep sub rumble
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(65, now);
+        osc2.frequency.exponentialRampToValueAtTime(25, now + 0.4);
+        gain2.gain.setValueAtTime(0.2, now);
+        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+        osc2.connect(gain2).connect(ctx.destination);
+        osc2.start(now);
+        osc2.stop(now + 0.4);
     }, [muted]);
 
     const vibrate = useCallback((pattern: number | number[]) => {
@@ -609,7 +640,7 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             streakRef.current += 1;
             playEatSound(streakRef.current);
             vibrate(12);
-            recoilShakeRef.current = 4;
+            recoilShakeRef.current = 6;
             getGlobalBgmController('arcade').duck(180, 0.5);
 
             // Check Augment Draft Milestone (every 50 points)
@@ -638,7 +669,7 @@ const SnakeGame: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             }
             playDeathSound();
             vibrate([40, 40, 80]);
-            recoilShakeRef.current = 10;
+            recoilShakeRef.current = 16;
             getGlobalBgmController('arcade').duck(2000, 0.2);
             recordAchievementEvent('snake-game', 'played');
 

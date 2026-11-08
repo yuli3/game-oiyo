@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import StackTowerScene from './StackTowerScene';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
+import { MobileHapticsPro } from '../../lib/games/engine-suite-unified';
 import {
   type TowerBlock,
   type MovingBlock,
@@ -53,6 +54,8 @@ export default function StackTower({ locale = 'ko' }: { locale?: string }) {
   }, [audioEnabled]);
 
   const [perfectFlash, setPerfectFlash] = useState(false);
+  const [cutShake, setCutShake] = useState(false);
+  const [comboBanner, setComboBanner] = useState<string | null>(null);
 
   const baseBlock: TowerBlock = {
     x: 0,
@@ -81,7 +84,7 @@ export default function StackTower({ locale = 'ko' }: { locale?: string }) {
     }
   }, []);
 
-  // Web Audio chime
+  // Web Audio chime with multi-layered sound design
   const playSound = useCallback((type: 'drop' | 'perfect' | 'gameover', comboLevel = 0) => {
     if (!audioEnabled) return;
     try {
@@ -91,36 +94,78 @@ export default function StackTower({ locale = 'ko' }: { locale?: string }) {
       const ctx = audioCtxRef.current;
       if (ctx.state === 'suspended') ctx.resume();
 
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-
       const now = ctx.currentTime;
       if (type === 'perfect') {
         const baseFreq = 440 * Math.pow(2, (comboLevel % 12) / 12);
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(baseFreq, now);
-        osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.5, now + 0.18);
-        gain.gain.setValueAtTime(0.2, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
-        osc.start(now);
-        osc.stop(now + 0.25);
+        // Layer 1: Core bell
+        const osc1 = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        osc1.type = 'triangle';
+        osc1.frequency.setValueAtTime(baseFreq, now);
+        osc1.frequency.exponentialRampToValueAtTime(baseFreq * 1.5, now + 0.18);
+        gain1.gain.setValueAtTime(0.2, now);
+        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+        osc1.connect(gain1).connect(ctx.destination);
+        osc1.start(now);
+        osc1.stop(now + 0.25);
+
+        // Layer 2: Harmonic Sparkle
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(baseFreq * 3.8, now);
+        gain2.gain.setValueAtTime(0.08, now);
+        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+        osc2.connect(gain2).connect(ctx.destination);
+        osc2.start(now);
+        osc2.stop(now + 0.16);
       } else if (type === 'drop') {
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(320, now);
-        gain.gain.setValueAtTime(0.15, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-        osc.start(now);
-        osc.stop(now + 0.12);
+        // Layer 1: Mid tap
+        const osc1 = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(320, now);
+        gain1.gain.setValueAtTime(0.15, now);
+        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+        osc1.connect(gain1).connect(ctx.destination);
+        osc1.start(now);
+        osc1.stop(now + 0.12);
+
+        // Layer 2: Sub-bass cut impact
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(95, now);
+        osc2.frequency.exponentialRampToValueAtTime(45, now + 0.1);
+        gain2.gain.setValueAtTime(0.18, now);
+        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+        osc2.connect(gain2).connect(ctx.destination);
+        osc2.start(now);
+        osc2.stop(now + 0.1);
       } else if (type === 'gameover') {
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(220, now);
-        osc.frequency.exponentialRampToValueAtTime(90, now + 0.4);
-        gain.gain.setValueAtTime(0.25, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
-        osc.start(now);
-        osc.stop(now + 0.45);
+        // Layer 1: Descending saw
+        const osc1 = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        osc1.type = 'sawtooth';
+        osc1.frequency.setValueAtTime(220, now);
+        osc1.frequency.exponentialRampToValueAtTime(80, now + 0.4);
+        gain1.gain.setValueAtTime(0.25, now);
+        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+        osc1.connect(gain1).connect(ctx.destination);
+        osc1.start(now);
+        osc1.stop(now + 0.45);
+
+        // Layer 2: Sub rumble
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(65, now);
+        osc2.frequency.exponentialRampToValueAtTime(35, now + 0.4);
+        gain2.gain.setValueAtTime(0.25, now);
+        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+        osc2.connect(gain2).connect(ctx.destination);
+        osc2.start(now);
+        osc2.stop(now + 0.45);
       }
     } catch {
       // audio disabled/failed
@@ -151,6 +196,9 @@ export default function StackTower({ locale = 'ko' }: { locale?: string }) {
       setStatus('gameover');
       setMovingBlock(null);
       playSound('gameover');
+      MobileHapticsPro.heavy();
+      setCutShake(true);
+      setTimeout(() => setCutShake(false), 350);
       if (score > highScore) {
         setHighScore(score);
         try { localStorage.setItem(STORAGE_KEY, String(score)); } catch { /* ignore */ }
@@ -166,11 +214,17 @@ export default function StackTower({ locale = 'ko' }: { locale?: string }) {
       const nextCombo = combo + 1;
       setCombo(nextCombo);
       playSound('perfect', nextCombo);
+      MobileHapticsPro.success();
       setPerfectFlash(true);
+      setComboBanner(`PERFECT! x${nextCombo}`);
       setTimeout(() => setPerfectFlash(false), 300);
+      setTimeout(() => setComboBanner(null), 700);
     } else {
       setCombo(0);
       playSound('drop');
+      MobileHapticsPro.impact();
+      setCutShake(true);
+      setTimeout(() => setCutShake(false), 160);
     }
 
     const nextBlocks = [...blocks, res.placedBlock!];
@@ -326,7 +380,7 @@ export default function StackTower({ locale = 'ko' }: { locale?: string }) {
 
       {/* Main 3D Canvas Area */}
       <div
-        className="relative cursor-pointer rounded-2xl overflow-hidden shadow-lg border border-border group"
+        className={`relative cursor-pointer rounded-2xl overflow-hidden shadow-lg border border-border group transition-transform duration-100 ${cutShake ? 'translate-x-1 -rotate-1' : ''}`}
         onClick={() => {
           if (status === 'playing') placeBlock();
           else if (status === 'idle' || status === 'gameover') startGame();
@@ -347,7 +401,7 @@ export default function StackTower({ locale = 'ko' }: { locale?: string }) {
               {score}
             </div>
             {combo > 1 && (
-              <div className="flex items-center gap-1 bg-yellow-500/20 border border-yellow-400/40 px-2 py-0.5 rounded-full text-xs font-black text-yellow-300">
+              <div className="flex items-center gap-1 bg-warning/20 border border-warning/40 px-2 py-0.5 rounded-full text-xs font-black text-warning">
                 <img src={STACK_TOWER_UI_SPRITES.crown} alt="" className="size-3.5 object-contain" />
                 <span>x{combo}</span>
               </div>
@@ -358,6 +412,16 @@ export default function StackTower({ locale = 'ko' }: { locale?: string }) {
             BEST: {highScore}
           </div>
         </div>
+
+        {/* Floating Combo Popup */}
+        {comboBanner && (
+          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-30 animate-in fade-in zoom-in-75 duration-200">
+            <div className="px-5 py-2 rounded-2xl bg-gradient-to-r from-warning/90 to-warning/70 text-warning-foreground font-black text-xl sm:text-2xl shadow-xl border-2 border-white/60 tracking-wider uppercase flex items-center gap-2 backdrop-blur-xs">
+              <Sparkles className="size-5 text-warning-foreground" />
+              <span>{comboBanner}</span>
+            </div>
+          </div>
+        )}
 
         {/* Perfect Placement Pulse Effect */}
         {perfectFlash && (
