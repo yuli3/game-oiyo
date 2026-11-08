@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import NeonKatana from "../../components/games/NeonKatana";
+import { locales } from "../../lib/i18n";
+import type { Locale } from "../../lib/i18n";
+import GameGuide from "../../components/GameGuide.astro";
+
+export async function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang }, props: { locale: lang } }));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const meta: Record<Locale, { title: string; description: string }> = {
+  ko: {
+    title: "네온 카타나: 패링 마스터 — 사이버펑크 반사신경 아케이드",
+    description: "브라우저에서 설치 없이 즐기는 사이버펑크 카타나 패링 액션 게임. 날아오는 네온 탄환을 칼끝으로 튕겨내고 일섬(Blade-Dash)으로 적 드론 부대를 일도양단하세요.",
+  },
+  en: {
+    title: "Neon Katana: Parry Master — Cyberpunk Reflex Arcade",
+    description: "Free cyberpunk katana parry action game right in your browser. Deflect incoming cyber-rounds with precision timing and unleash Blade-Dash to slice through enemy waves.",
+  },
+  ja: {
+    title: "ネオン・カタナ：パリィマスター — サイバーパンク反射神経アクション",
+    description: "ブラウザで今すぐ遊べるサイバーパンク刀パリィアクションゲーム。迫り来るネオン弾幕を刀で弾き返し、必殺の一閃（Blade-Dash）で敵ドローンを一刀両断しよう。",
+  },
+  zh: {
+    title: "霓虹武士刀：弹反大师 — 赛博朋克极速反应街机",
+    description: "在浏览器中即刻畅玩的赛博朋克武士刀弹反动作游戏。精准弹反飞驰而来的激光与弹幕，蓄力释放绝命一闪（Blade-Dash）瞬间斩碎敌方无人机群。",
+  },
+  fr: {
+    title: "Neon Katana: Maître de la Parade — Arcade Réflexe Cyberpunk",
+    description: "Jeu d'action et de parade au katana cyberpunk gratuit dans votre navigateur. Déviez les tirs au millième de seconde et tranchez les drones avec Blade-Dash.",
+  },
+  es: {
+    title: "Neon Katana: Maestro del Desvío — Arcade de Reflejos Cyberpunk",
+    description: "Juego de acción y desvío con katana cyberpunk gratuito en el navegador. Desvía proyectiles con precisión milimétrica y arrasa oleadas enemigas con Blade-Dash.",
+  },
+};
+
+const m = meta[locale] ?? meta.en;
+---
+
+<BaseLayout title={m.title} description={m.description} heading={m.title}>
+  <div class="mx-auto max-w-4xl px-4 py-8">
+    <NeonKatana client:load locale={locale} />
+    <GameGuide slug="neon-katana" locale={locale} name={m.title.split(" — ")[0]} />
+  </div>
+</BaseLayout>

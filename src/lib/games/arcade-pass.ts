@@ -1140,6 +1140,20 @@ export const MISSION_CATALOG: Array<{
     goal: 1,
     xpReward: 50,
   },
+  {
+    id: "neon-katana-parry-10",
+    gameSlug: "neon-katana",
+    title: {
+      ko: "네온 카타나에서 퍼펙트 패링 10회 달성 및 드론 탄환 반사",
+      en: "Perform 10 Perfect Parries and reflect drone bullets in Neon Katana",
+      ja: "ネオン・カタナでパーフェクトパリィを10回成功させ弾を反射する",
+      zh: "在霓虹武士刀中完成10次完美弹反并反弹无人机弹幕",
+      fr: "Réalisez 10 parades parfaites et renvoyez les tirs dans Neon Katana",
+      es: "Realiza 10 desvíos perfectos y refleja proyectiles en Neon Katana",
+    },
+    goal: 10,
+    xpReward: 50,
+  },
 ];
 
 export function calculateArcadeTier(xp: number): ArcadeRankTier {

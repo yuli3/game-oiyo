@@ -6986,4 +6986,42 @@ export const GAME_GUIDES: Record<string, GameGuide> = {
       },
     ],
   },
+  "neon-katana": {
+    origin: {
+      ko: "네온 카타나는 사이버펑크 디스토피아를 배경으로 세키로와 고스트러너의 정밀 패링 손맛을 브라우저에 이식한 초감각 반사신경 아케이드입니다.",
+      en: "Neon Katana is an ultra-reflex arcade game set in a cyberpunk dystopia, bringing Sekiro-grade precision parrying and Blade-Dash action to the browser.",
+      ja: "ネオン・カタナはサイバーパンクな世界観を舞台に、SEKIROやGhostrunnerのような精密パリィの快感をブラウザ上で再現した超感覚反射アクションです。",
+      zh: "霓虹武士刀以赛博朋克反乌托邦为背景，将类似只狼的极致精准弹反与瞬间拔刀斩体验移植至网页端。",
+      fr: "Neon Katana est un jeu d'arcade cyberpunk ultra-réactif inspiré des mécaniques de parade précise de Sekiro et Ghostrunner.",
+      es: "Neon Katana es un arcade cyberpunk de reflejos rápidos inspirado en la precisión de desvío al estilo Sekiro y Ghostrunner.",
+    },
+    how: {
+      ko: "1) 날아오는 네온 탄환이 중앙 점선 원(패링 타이밍 존)에 도달하는 순간 마우스 클릭이나 화면 탭으로 칼을 휘두르세요. 2) 타이밍 오차 140ms 이내의 퍼펙트 패링은 탄환을 반사하여 적 드론을 격추하고 게이지를 25% 충전합니다. 3) 게이지 100% 도달 시 스페이스바나 일섬 버튼을 눌러 슬로우모션 불릿 타임과 함께 화면 전체를 가르는 참격을 발동하세요.",
+      en: "1) Tap or click the moment an incoming projectile touches the dashed timing circle around your character. 2) Perfect parries (within 140ms) reflect bullets to take down drones and charge 25% dash energy. 3) When gauge hits 100%, press Space or tap Blade-Dash to trigger bullet time and slice through all enemies.",
+      ja: "1) 飛来するネオン弾が点線のタイミングゾーンに触れた瞬間にクリックまたはタップして刀を振ります。2) 140ms以内のパーフェクトパリィで弾を反射し、敵ドローンを撃墜してゲージを25%チャージします。3) ゲージが100%になったらスペースキーまたは一閃ボタンでバレットタイムを発動し、敵群を一刀両断しましょう。",
+      zh: "1) 当来袭激光弹触及周围虚线判定环的瞬间，点击鼠标或轻触屏幕挥刀。2) 140毫秒内的完美弹反将直接反弹子弹击落无人机，并充能25%能量。3) 能量达100%时按下空格键或一闪按钮，进入子弹时间瞬间斩灭全屏敌军。",
+      fr: "1) Cliquez ou touchez l'écran dès que le tir atteint le cercle de parade en pointillés. 2) Une parade parfaite (140 ms) renvoie le projectile et charge 25% d'énergie. 3) À 100%, appuyez sur Espace pour déclencher le ralenti et trancher tous les ennemis.",
+      es: "1) Haz clic o toca la pantalla cuando el proyectil toque el círculo de desvío. 2) El desvío perfecto (140 ms) refleja la bala y carga un 25% de energía. 3) Al 100%, pulsa Espacio para activar el tiempo bala y cortar a todos los enemigos.",
+    },
+    faqs: [
+      {
+        q: {
+          ko: "고득점과 긴 콤보를 유지하는 핵심 비결은 무엇인가요?",
+          en: "What is the key to maintaining high scores and long combo chains?",
+          ja: "高得点とロングコンボを維持する最大のコツは何ですか？",
+          zh: "保持高连击与冲击排行榜高分的核心技巧是什么？",
+          fr: "Quel est le secret pour maintenir un combo élevé et un score record ?",
+          es: "¿Cuál es la clave para mantener un combo alto y una puntuación récord?",
+        },
+        a: {
+          ko: "퍼펙트 패링(140ms) 시 콤보 배율이 최대 5배까지 증폭되며 1회당 150×배율 점수를 획득합니다. 조준 레이저를 쏘는 스나이퍼 드론의 고속 탄환을 퍼펙트로 튕겨내면 일격에 스나이퍼를 파괴할 수 있으며, 일섬 게이지가 차자마자 웨이브 시작 시 몰려오는 잡몹들을 한 번에 일섬으로 쓸어담아 콤보 보너스를 극대화하세요.",
+          en: "Perfect parries scale the combo multiplier up to 5x. Reflecting high-speed sniper shots instantly destroys sniper bots. Trigger Blade-Dash as soon as a new wave spawns to eliminate multiple drones at once for massive combo multipliers.",
+          ja: "パーフェクトパリィを成功させるとコンボ倍率が最大5倍まで上昇します。スナイパーボットの高速弾を反射すれば一撃で撃破できます。新ウェーブ開始直後に一閃を発動して群がる敵を一掃するのが最高効率です。",
+          zh: "完美弹反可将连击倍率最高提升至5倍。精准弹反狙击机的高速光束可直接将其反杀。每当新一波敌人刷新时立即开启一闪斩击，能最大化连击加成并冲击数万分极限。",
+          fr: "Les parades parfaites augmentent le multiplicateur jusqu'à 5x. Renvoyer les tirs des tireurs d'élite les détruit instantanément. Lancez Blade-Dash dès le début d'une nouvelle vague pour éliminer plusieurs cibles.",
+          es: "Los desvíos perfectos aumentan el multiplicador hasta 5x. Reflejar los disparos del francotirador los destruye al instante. Usa Blade-Dash al inicio de cada oleada para encadenar combos masivos.",
+        },
+      },
+    ],
+  },
 };
