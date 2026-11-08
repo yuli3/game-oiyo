@@ -13,6 +13,7 @@ import {
 } from '@/lib/games/vampire-survivor';
 import { FloatingJoystick } from '@/lib/games/floating-joystick';
 import { addTrauma, createShakeState, triggerHaptic, updateShake } from '@/lib/games/juice-engine';
+import { GameJuice } from '@/lib/games/game-juice';
 import { playSyntheticTone } from '@/lib/games/audio-mixer';
 import { useArcadePortal } from '@/lib/games/arcade-portal';
 import { celebrate } from '@/lib/games/celebration';
@@ -121,6 +122,8 @@ export default function VampireSurvivor({ locale = 'ko' }: VampireSurvivorProps)
 
   const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0 });
   const shakeStateRef = useRef(createShakeState());
+  const juiceRef = useRef(new GameJuice(512));
+  const lastKillsRef = useRef<number>(0);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const lastHpRef = useRef<number>(100);
 
@@ -265,16 +268,11 @@ export default function VampireSurvivor({ locale = 'ko' }: VampireSurvivorProps)
       const engine = engineRef.current;
       const curState = engine.getState();
 
-      // Screen Shake
-      if (shakeStateRef.current.trauma > 0.001) {
-        const { state, offset } = updateShake(shakeStateRef.current, dt, time / 1000);
-        shakeStateRef.current = state;
-        setShakeOffset({ x: offset.x, y: offset.y });
-      } else if (shakeOffset.x !== 0 || shakeOffset.y !== 0) {
-        setShakeOffset({ x: 0, y: 0 });
-      }
+      // GameJuice step (Screen Shake, Hit-Stop, Particles, Combat Text)
+      const effectiveDt = juiceRef.current.update(dt);
+      const isFrozen = juiceRef.current.hitStop.isFreezing();
 
-      if (curState.gameState === 'playing') {
+      if (curState.gameState === 'playing' && !isFrozen) {
         // Compute movement input: Joystick or Keyboard
         let vx = 0;
         let vy = 0;
@@ -291,9 +289,9 @@ export default function VampireSurvivor({ locale = 'ko' }: VampireSurvivorProps)
           if (keys['d'] || keys['arrowright']) vx += 1;
         }
 
-        engine.movePlayer(vx, vy, dt);
-        engine.update(dt);
-        updateDdaTime(dt);
+        engine.movePlayer(vx, vy, effectiveDt);
+        engine.update(effectiveDt);
+        updateDdaTime(effectiveDt);
 
         // Throttle React state updates to ~10Hz
         hudTimer += dt;
@@ -301,12 +299,20 @@ export default function VampireSurvivor({ locale = 'ko' }: VampireSurvivorProps)
           hudTimer = 0;
           const s = engine.getState();
 
-          // HP 감소 감지 시 DDA 피격 리포트 및 햅틱
+          // HP 감소 감지 시 묵직한 타격감(피격 히트스톱, 셰이크, 파티클, 팝업)
           if (s.playerHp < lastHpRef.current) {
             reportHit();
-            MobileHapticsPro.lightImpact();
+            MobileHapticsPro.heavyImpact();
+            juiceRef.current.impact(s.playerX, s.playerY, 'heavy', '-HP');
           }
           lastHpRef.current = s.playerHp;
+
+          // 킬 수 증가 감지 시 스파크 비산 & 콤보 팝업 & 타격 사운드
+          if (s.killCount > lastKillsRef.current) {
+            const killsDiff = s.killCount - lastKillsRef.current;
+            juiceRef.current.impact(s.playerX, s.playerY, killsDiff >= 3 ? 'heavy' : 'medium', `+${killsDiff} KILL!`);
+          }
+          lastKillsRef.current = s.killCount;
 
           if (s.gameState !== gameState) {
             setGameState(s.gameState);
@@ -352,6 +358,7 @@ export default function VampireSurvivor({ locale = 'ko' }: VampireSurvivorProps)
       const camY = p.playerY - height / 2;
 
       ctx.save();
+      juiceRef.current.camera.applyToContext(ctx, width / 2, height / 2);
       ctx.translate(-camX, -camY);
 
       // 1. Grid Background
@@ -509,6 +516,9 @@ export default function VampireSurvivor({ locale = 'ko' }: VampireSurvivorProps)
       ctx.stroke();
 
       ctx.restore();
+
+      // 9. GameJuice Particles & Floating Combat Text
+      juiceRef.current.render(ctx);
 
       ctx.restore();
 

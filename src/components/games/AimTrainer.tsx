@@ -493,12 +493,23 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
 
-    const scale = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50];
+    const scale = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50, 1318.51, 1567.98];
     const freq = scale[Math.min(streak, scale.length - 1)];
 
     osc.type = "sine";
     osc.frequency.setValueAtTime(freq, now);
     osc.frequency.exponentialRampToValueAtTime(freq * 1.25, now + 0.05);
+
+    // Layer 2: Sub-bass punch & acoustic tick for tactile feedback
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = "triangle";
+    osc2.frequency.setValueAtTime(freq * 0.5, now);
+    gain2.gain.setValueAtTime(0.07, now);
+    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+    osc2.connect(gain2).connect(ctx.destination);
+    osc2.start();
+    osc2.stop(now + 0.07);
 
     gain.gain.setValueAtTime(0.09, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
@@ -897,7 +908,7 @@ const AimTrainer: React.FC<Props> = ({ locale }) => {
 
       playHitSound(streakRef.current);
       vibrate(10);
-      recoilShakeRef.current = 4;
+      recoilShakeRef.current = Math.min(8, 3.5 + streakRef.current * 0.4);
 
       const hitColor = MODE_COLORS[mode]?.primary ?? "#38bdf8";
       const hitPxX = (hitTg.x / 100) * rect.width;

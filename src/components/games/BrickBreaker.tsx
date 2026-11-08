@@ -324,14 +324,26 @@ const BrickBreaker: React.FC<Props> = ({ locale }) => {
     for (const event of events) {
       if (event.type === "brick-hit") {
         if (event.destroyed) {
-          MobileHapticsPro.impact();
+          if (gs.combo >= 3) {
+            MobileHapticsPro.heavy();
+          } else {
+            MobileHapticsPro.impact();
+          }
         } else {
           MobileHapticsPro.light();
         }
         scoreRef.current = gs.score;
         maxComboRef.current = Math.max(maxComboRef.current, gs.combo);
         if (event.destroyed) destroyedRef.current += 1;
-        playTone(event.destroyed ? 330 + Math.min(gs.combo, 8) * 24 : 180, 0.045, event.destroyed ? "square" : "triangle", 0.018, event.x);
+
+        if (event.destroyed) {
+          const comboScale = [330, 392, 440, 523, 587, 659, 784, 880, 1046];
+          const freq = comboScale[Math.min(gs.combo, comboScale.length - 1)];
+          playTone(freq, 0.055, "square", 0.024, event.x);
+          playTone(freq * 0.5, 0.065, "triangle", 0.016, event.x);
+        } else {
+          playTone(180, 0.045, "triangle", 0.018, event.x);
+        }
         if (event.destroyed && !reducedMotionRef.current) {
           debrisRef.current?.spawn(event.x, event.y, event.hue, qualityRef.current === "balanced" ? 4 : 7);
           const particleCount = qualityRef.current === "balanced" ? 3 : 5;
