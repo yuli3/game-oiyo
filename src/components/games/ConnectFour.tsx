@@ -1,4 +1,8 @@
-import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import {
+  useCardTiltPro,
+  MobileHapticsPro,
+  useGameJuicePro,
+} from "../../lib/games/engine-suite-unified";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Check, Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
@@ -204,6 +208,7 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
     });
   }, []);
   const { isImmersive, containerRef, togglePortal } = useArcadePortal({ locale: locale as Locale });
+  const { shakeCssVars, addTrauma } = useGameJuicePro();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -365,6 +370,8 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
         setMoveCount((count) => count + 1);
 
         playBounceSound(dropRow);
+        MobileHapticsPro.impact();
+        addTrauma(0.12 + dropRow * 0.03);
         if (move.result !== null) {
           clearConnectFourSaveV2();
           if (move.result === 0) {
@@ -375,6 +382,8 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
             setWinCells(move.winCells);
             setStatus("won");
             tone(660, 0.18);
+            addTrauma(0.5);
+            MobileHapticsPro.heavy();
             if (containerRef.current) celebrate(containerRef.current, { preset: "shards" });
             if (mode === "ai") setRecord(recordResult("connectfour", currentPlayer === AI_PLAYER ? "l" : "w"));
           }
@@ -475,7 +484,14 @@ const ConnectFour: React.FC<Props> = ({ locale }) => {
 
   return (
     <div ref={containerRef} className="w-full flex flex-col items-center justify-center">
-      <div className="not-prose my-12 p-4 sm:p-6 bg-card text-card-foreground rounded-3xl border border-border shadow-sm max-w-xl mx-auto select-none">
+      <div
+        style={{
+          '--shake-x': shakeCssVars['--shake-x'] ?? '0px',
+          '--shake-y': shakeCssVars['--shake-y'] ?? '0px',
+          '--shake-rot': shakeCssVars['--shake-rot'] ?? '0deg',
+        } as React.CSSProperties}
+        className="not-prose my-12 p-4 sm:p-6 bg-card text-card-foreground rounded-3xl border border-border shadow-sm max-w-xl mx-auto select-none transform translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot)"
+      >
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <span className="text-sm font-bold text-muted-foreground uppercase tracking-widest">

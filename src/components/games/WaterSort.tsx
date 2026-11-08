@@ -19,6 +19,12 @@ import { WATER_SORT_SPRITES, WATER_SORT_UI_SPRITES } from '../../lib/games/sprit
 import { buildChallengeUrl } from '../../lib/games/seed-challenge';
 import { generateChallengeQrSvg } from '../../lib/games/challenge-qr';
 import { getColorblindMode, getColorblindSymbol, type ColorblindMode } from '../../lib/games/accessibility';
+import {
+    getSharedAudioContext,
+    playComboSfx,
+    MobileHapticsPro,
+    useGameJuicePro,
+} from '../../lib/games/engine-suite-unified';
 
 const COLORS = ['#ef4444', '#2563eb', '#059669', '#d97706', '#7c3aed'];
 const PATTERNS = [
@@ -42,6 +48,7 @@ const WaterSort: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({
         locale: loc,
     });
+    const { shakeCssVars, addTrauma } = useGameJuicePro();
     const t = COPY[locale as keyof typeof COPY] ?? COPY.en;
     const reducedMotion = usePrefersReducedMotion();
     const [game, setGame] = useState<WaterSortState | null>(null);
@@ -55,6 +62,8 @@ const WaterSort: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [muted, setMuted] = useState(false);
     const [best, setBest] = useState<ConditionalBestRecord | null>(null);
     const [lastPour, setLastPour] = useState<{ to: number; count: number } | null>(null);
+    const [pouringAnim, setPouringAnim] = useState<{ from: number; to: number; color: number } | null>(null);
+    const [dragOverTube, setDragOverTube] = useState<number | null>(null);
     const [showQrModal, setShowQrModal] = useState(false);
     const [copied, setCopied] = useState(false);
     const [shareCardCopied, setShareCardCopied] = useState(false);
@@ -71,9 +80,8 @@ const WaterSort: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const playPourTone = useCallback((fillLevel: number) => {
         if (muted) return;
         try {
-            const AudioContextClass = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-            if (!AudioContextClass) return;
-            const ctx = new AudioContextClass();
+            const ctx = getSharedAudioContext();
+            if (!ctx) return;
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();
             const freq = 380 + fillLevel * 90;
@@ -84,6 +92,7 @@ const WaterSort: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
             osc.connect(gain).connect(ctx.destination);
             osc.start();
             osc.stop(ctx.currentTime + 0.12);
+            playComboSfx(ctx, 'gem', fillLevel);
         } catch {}
     }, [muted]);
     const cuesRef = useRef<CuePlayer<CoreCue> | null>(null);
@@ -136,38 +145,57 @@ const WaterSort: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         if (containerRef.current) celebrate(containerRef.current, { preset: 'shards' });
     }, [game, elapsedSeconds, assist, cue, containerRef]);
 
+    const executeMove = (fromIndex: number, toIndex: number) => {
+        if (!game || game.status === 'solved' || fromIndex === toIndex) return;
+        const next = moveWaterSort(game, { from: fromIndex, to: toIndex });
+        if (next !== game) {
+            const topColor = game.tubes[fromIndex][game.tubes[fromIndex].length - 1];
+            setPouringAnim({ from: fromIndex, to: toIndex, color: topColor });
+            setTimeout(() => setPouringAnim(null), 360);
+
+            setUndo((history) => [...history.slice(-49), game]);
+            setLastPour({ to: toIndex, count: pouredLayerCount(game.tubes, next.tubes, toIndex) });
+            setGame(next);
+            cue('combo');
+            playPourTone(next.tubes[toIndex].length);
+            MobileHapticsPro.impact();
+
+            const isCompleted = next.tubes[toIndex].length === 4 && next.tubes[toIndex].every((c) => c === next.tubes[toIndex][0]);
+            if (isCompleted) {
+                addTrauma(0.25);
+                MobileHapticsPro.heavy();
+            } else {
+                addTrauma(0.08);
+            }
+        } else {
+            cue('fail');
+            MobileHapticsPro.light();
+        }
+        setHint(null);
+        setSelectedTube(null);
+        setDragOverTube(null);
+    };
+
     const handleTubeClick = (index: number) => {
         if (!game || game.status === 'solved') return;
         if (selectedTube === null) {
             if (game.tubes[index].length > 0) {
                 setSelectedTube(index);
                 cue('tap');
-                hapticsRef.current.fire('tap');
+                MobileHapticsPro.selection();
             } else {
                 cue('fail');
-                hapticsRef.current.fire('fail');
+                MobileHapticsPro.light();
             }
             return;
         }
         if (selectedTube === index) {
             setSelectedTube(null);
             cue('tap');
-            hapticsRef.current.fire('tap');
+            MobileHapticsPro.light();
             return;
         }
-        const next = moveWaterSort(game, { from: selectedTube, to: index });
-        if (next !== game) {
-            setUndo((history) => [...history.slice(-49), game]);
-            setLastPour({ to: index, count: pouredLayerCount(game.tubes, next.tubes, index) });
-            setGame(next);
-            cue('combo');
-            playPourTone(next.tubes[index].length);
-            hapticsRef.current.fire('combo');
-        } else {
-            cue('fail');
-            hapticsRef.current.fire('fail');
-        }
-        setHint(null); setSelectedTube(null);
+        executeMove(selectedTube, index);
     };
 
     const undoMove = () => {
@@ -257,11 +285,12 @@ const WaterSort: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         <div
             ref={containerRef}
             data-game-surface
-            className={
-                isImmersive
-                    ? "fixed inset-0 z-50 w-screen h-dvh bg-background p-4 sm:p-6 overflow-y-auto flex flex-col items-center justify-center m-0 select-none"
-                    : "relative"
-            }
+            style={{
+                '--shake-x': shakeCssVars['--shake-x'] ?? '0px',
+                '--shake-y': shakeCssVars['--shake-y'] ?? '0px',
+                '--shake-rot': shakeCssVars['--shake-rot'] ?? '0deg',
+            } as React.CSSProperties}
+            className={`${isImmersive ? "fixed inset-0 z-50 w-screen h-dvh bg-background p-4 sm:p-6 overflow-y-auto flex flex-col items-center justify-center m-0 select-none" : "relative"} transform translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot)`}
         >
             <GameContainer title={t.title} subtitle={t.subtitle} onReset={() => startGame(difficulty)}>
                 <div className="mb-3 overflow-hidden rounded-xl border border-border bg-muted">
@@ -295,10 +324,39 @@ const WaterSort: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                     <div className="mb-8 grid grid-cols-4 gap-3 sm:grid-cols-8 sm:gap-4 justify-items-center" role="group" aria-label={t.title}>
                         {tubes.map((tube, i) => {
                             const isCompleted = tube.length === 4 && tube.every((c) => c === tube[0]);
+                            const isPouringSource = pouringAnim?.from === i;
+                            const isDragTarget = dragOverTube === i;
+                            const pourAngle = isPouringSource
+                                ? pouringAnim.from < pouringAnim.to
+                                    ? '35deg'
+                                    : '-35deg'
+                                : '0deg';
+
                             return (
                                 <button
                                     type="button"
                                     key={i}
+                                    draggable={tube.length > 0 && !isWon}
+                                    onDragStart={(e) => {
+                                        e.dataTransfer.setData('text/plain', String(i));
+                                        setSelectedTube(i);
+                                        MobileHapticsPro.selection();
+                                    }}
+                                    onDragOver={(e) => {
+                                        e.preventDefault();
+                                        if (dragOverTube !== i) setDragOverTube(i);
+                                    }}
+                                    onDragLeave={() => {
+                                        if (dragOverTube === i) setDragOverTube(null);
+                                    }}
+                                    onDrop={(e) => {
+                                        e.preventDefault();
+                                        const from = Number(e.dataTransfer.getData('text/plain'));
+                                        if (!isNaN(from) && from !== i) {
+                                            executeMove(from, i);
+                                        }
+                                        setDragOverTube(null);
+                                    }}
                                     ref={(element) => { tubeRefs.current[i] = element; }}
                                     tabIndex={focusedTube === i ? 0 : -1}
                                     onFocus={() => setFocusedTube(i)}
@@ -306,7 +364,10 @@ const WaterSort: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                                     onClick={() => handleTubeClick(i)}
                                     aria-pressed={selectedTube === i}
                                     aria-label={`${t.tube(i + 1, tube.length, tube.map((color) => String(color + 1)).join('-'))}${selectedTube === i ? `, ${t.selected}` : ''}${isCompleted ? ', 완료' : ''}`}
-                                    className={`relative h-32 w-12 cursor-pointer overflow-hidden rounded-b-3xl border-4 ${isCompleted ? 'border-primary ring-2 ring-primary/40 shadow-md shadow-primary/20' : 'border-muted'} sm:h-40 sm:w-14 ${!reducedMotion ? 'transition-all' : ''} focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary focus-visible:ring-offset-4 ${selectedTube === i ? `ring-4 ring-primary ring-offset-4 ${!reducedMotion ? '-translate-y-3' : ''}` : (!reducedMotion ? 'hover:-translate-y-1' : '')}`}
+                                    style={{
+                                        '--pour-rot': pourAngle,
+                                    } as React.CSSProperties}
+                                    className={`relative h-32 w-12 cursor-pointer overflow-hidden rounded-b-3xl border-4 ${isCompleted ? 'border-primary ring-2 ring-primary/40 shadow-md shadow-primary/20' : 'border-muted'} sm:h-40 sm:w-14 ${!reducedMotion ? 'transition-all duration-300' : ''} focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary focus-visible:ring-offset-4 ${isDragTarget ? 'scale-105 border-primary ring-2 ring-primary' : ''} ${selectedTube === i ? `ring-4 ring-primary ring-offset-4 ${!reducedMotion ? '-translate-y-3' : ''}` : (!reducedMotion ? 'hover:-translate-y-1' : '')} ${isPouringSource ? 'transform rotate-(--pour-rot) -translate-y-4 z-30' : ''}`}
                                 >
                                     {isCompleted && (
                                         <span className="absolute top-1 right-1 z-10 size-2 rounded-full bg-primary animate-pulse" aria-hidden="true" />

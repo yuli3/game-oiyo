@@ -14,6 +14,8 @@ import { CORE_CUES, createCuePlayer, type CoreCue, type CuePlayer } from "../../
 import { createHaptics } from "../../lib/games/haptics";
 import { celebrate } from "../../lib/games/celebration";
 import { UNSEEN_BOSS_SPRITES } from "../../lib/games/sprites";
+import { useGameJuicePro } from "../../lib/games/engine-suite-unified";
+import { UnseenBossRadar } from "./UnseenBossRadar";
 import {
   GAME_ID,
   MISSES,
@@ -214,6 +216,7 @@ export default function UnseenBoss({ locale }: { locale: Locale }) {
   const t = COPY[loc];
   const reducedMotion = usePrefersReducedMotion();
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal({ locale: loc });
+  const { shakeCssVars, addTrauma } = useGameJuicePro();
   const [dateKey, setDateKey] = useState<string | null>(null);
   const [run, setRun] = useState<Run | null>(null);
   const [attempt, setAttempt] = useState(0);
@@ -290,7 +293,8 @@ export default function UnseenBoss({ locale }: { locale: Locale }) {
     heard.current = run.seen;
     cue("tap");
     hapticsRef.current.fire("place");
-  }, [run, muted, reducedMotion]);
+    addTrauma(0.3);
+  }, [run, muted, reducedMotion, addTrauma]);
 
   useEffect(() => {
     if (!run || !dateKey) return;
@@ -309,17 +313,26 @@ export default function UnseenBoss({ locale }: { locale: Locale }) {
     if (run.phase === "won") {
       cue("win");
       hapticsRef.current.fire("win");
+      addTrauma(0.4);
       if (containerRef.current) celebrate(containerRef.current, { preset: "stardust" });
     } else if (run.phase === "lost") {
       cue("fail");
       hapticsRef.current.fire("fail");
+      addTrauma(0.65);
     }
-  }, [run, dateKey, attempt, muted, reducedMotion]);
+  }, [run, dateKey, attempt, muted, reducedMotion, addTrauma]);
 
   const onGuess = (rule: Rule) => {
     cue("place");
     hapticsRef.current.fire("tap");
-    setRun((current) => (current ? guess(current, rule) : current));
+    setRun((current) => {
+      if (!current) return current;
+      const next = guess(current, rule);
+      if (next.misses > current.misses) {
+        addTrauma(0.6);
+      }
+      return next;
+    });
   };
 
   const again = () => {
@@ -337,7 +350,15 @@ export default function UnseenBoss({ locale }: { locale: Locale }) {
   const laneName = (lane: Lane) => t.lanes[lane];
 
   return (
-    <div ref={containerRef} className={isImmersive ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-y-auto bg-background p-3 sm:p-5" : "relative"}>
+    <div
+      ref={containerRef}
+      style={{
+        '--shake-x': shakeCssVars['--shake-x'] ?? '0px',
+        '--shake-y': shakeCssVars['--shake-y'] ?? '0px',
+        '--shake-rot': shakeCssVars['--shake-rot'] ?? '0deg',
+      } as React.CSSProperties}
+      className={`${isImmersive ? "fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-y-auto bg-background p-3 sm:p-5" : "relative"} transform translate-x-(--shake-x) translate-y-(--shake-y) rotate-(--shake-rot)`}
+    >
       <GameContainer title={t.title} subtitle={run ? t.subtitle : t.preparing}>
         <div className="mb-3 overflow-hidden rounded-xl border border-border bg-muted">
           <img src={UNSEEN_BOSS_SPRITES.keyart} alt={t.title} className="h-32 w-full object-cover sm:h-44" />
@@ -362,10 +383,21 @@ export default function UnseenBoss({ locale }: { locale: Locale }) {
                 <p className="text-sm font-bold text-foreground">{t.won}</p>
               </div>
             ) : null}
-            <div className="mx-auto grid w-full max-w-sm grid-cols-3 gap-2">
+            <UnseenBossRadar
+              activeLane={latest}
+              phase={run.phase}
+              isWon={run.phase === "won"}
+              isLost={run.phase === "lost"}
+              reducedMotion={reducedMotion}
+              onPingNode={(_lane) => {
+                cue("tap");
+                hapticsRef.current.fire("place");
+                addTrauma(0.18);
+              }}
+            />
+            <div className="sr-only" aria-label="Lanes">
               {([0, 1, 2] as const).map((lane) => (
-                <div key={lane} className={`flex aspect-square flex-col items-center justify-center gap-1 rounded-xl text-2xl ${latest === lane ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"}`} aria-label={t.lanes[lane]}>
-                  <img src={latest === lane ? UNSEEN_BOSS_SPRITES.pulse : UNSEEN_BOSS_SPRITES.eye} alt="" className="size-7 object-contain" draggable={false} />
+                <div key={lane} aria-label={t.lanes[lane]}>
                   <span>{GLYPH[lane]}</span>
                 </div>
               ))}
