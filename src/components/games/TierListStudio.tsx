@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent as ReactDragEvent, type PointerEvent as ReactPointerEvent } from "react";
 import { useArcadePortal } from "../../lib/games/arcade-portal";
 import { useCardTiltPro, MobileHapticsPro } from "../../lib/games/engine-suite-unified";
+import { useAudioContext } from "../../lib/games/use-audio-context";
+import { playProceduralSfx } from "../../lib/games/audio-mixer";
 import { TIER_LIST_SPRITES } from "../../lib/games/sprites";
 import { createShareCardCanvas, copyShareCardToClipboard, downloadShareCard } from "../../lib/games/share-card";
 import { celebrate } from "../../lib/games/celebration";
@@ -434,6 +436,10 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
   const [savesProtected, setSavesProtected] = useState(true);
   const boardRevision = useRef<string | null>(null);
   const savesRevision = useRef<string | null>(null);
+  const getAudioContext = useAudioContext();
+  const playSfx = useCallback((cue: "place" | "tap" | "win" | "coin") => {
+    playProceduralSfx(getAudioContext(), cue);
+  }, [getAudioContext]);
 
   useEffect(() => {
     const boardRead = readTierStorage(() => window.localStorage, TIER_LIST_STORAGE_KEY);
@@ -488,9 +494,10 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
 
   const moveItem = useCallback((itemId: string, tierId: TierId, index = Number.MAX_SAFE_INTEGER) => {
     MobileHapticsPro.light();
+    playSfx('place');
     setDoc((prev) => moveTierItem(prev, itemId, tierId, index));
     setSelected(null);
-  }, []);
+  }, [playSfx]);
 
   const moveTo = useCallback((tierId: TierId) => {
     if (selected) moveItem(selected, tierId);
@@ -504,6 +511,8 @@ export default function TierListStudio({ locale = "ko" as Locale }: { locale?: L
       setStatus(copy.imageHint);
       return;
     }
+    MobileHapticsPro.medium();
+    playSfx('coin');
     const item: TierItem = { id: newId("i"), label: name, ...(image ? { imageUrl: image } : {}) };
     setDoc((prev) => ({
       ...prev,

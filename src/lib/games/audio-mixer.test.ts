@@ -52,4 +52,57 @@ describe("audio-mixer", () => {
       expect(calculateFilterCutoff(true, 500, 20000)).toBe(500);
     });
   });
+
+  describe("playProceduralSfx", () => {
+    it("safely handles null audio context without throwing", async () => {
+      const { playProceduralSfx } = await import("./audio-mixer");
+      expect(() => playProceduralSfx(null, "tap")).not.toThrow();
+      expect(() => playProceduralSfx(null, "coin")).not.toThrow();
+      expect(() => playProceduralSfx(null, "win")).not.toThrow();
+    });
+
+    it("creates multi-layer oscillators on fake audio context", async () => {
+      const { playProceduralSfx } = await import("./audio-mixer");
+      let oscCount = 0;
+      let gainCount = 0;
+      let filterCount = 0;
+      const fakeCtx = {
+        state: "running",
+        currentTime: 0,
+        destination: {},
+        createOscillator() {
+          oscCount++;
+          return {
+            type: "sine",
+            frequency: { setValueAtTime: () => {} },
+            connect: (n: unknown) => n,
+            start: () => {},
+            stop: () => {},
+          };
+        },
+        createGain() {
+          gainCount++;
+          return {
+            gain: { setValueAtTime: () => {}, exponentialRampToValueAtTime: () => {} },
+            connect: (n: unknown) => n,
+          };
+        },
+        createBiquadFilter() {
+          filterCount++;
+          return {
+            type: "lowpass",
+            frequency: { setValueAtTime: () => {} },
+            connect: (n: unknown) => n,
+          };
+        },
+      } as unknown as AudioContext;
+
+      playProceduralSfx(fakeCtx, "tap");
+      expect(oscCount).toBe(2);
+      expect(gainCount).toBe(2);
+
+      playProceduralSfx(fakeCtx, "card");
+      expect(filterCount).toBeGreaterThan(0);
+    });
+  });
 });

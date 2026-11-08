@@ -10,6 +10,8 @@ import {
 } from '../../lib/games/tents';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { celebrate } from '../../lib/games/celebration';
+import { useAudioContext } from '../../lib/games/use-audio-context';
+import { playProceduralSfx } from '../../lib/games/audio-mixer';
 import { TENTS_ISLAND_3D_UI_SPRITES } from '../../lib/games/sprites';
 import {
   createShareCardCanvas,
@@ -211,21 +213,34 @@ export function TentsIsland3D({ lang = 'ko' }: Props) {
   }, [timerActive, isComplete]);
 
   const prevCompleteRef = useRef(false);
+  const getAudioContext = useAudioContext();
+  const playSfx = useCallback((cue: "place" | "tap" | "move" | "win" | "fail") => {
+    playProceduralSfx(getAudioContext(), cue);
+  }, [getAudioContext]);
+
   useEffect(() => {
     if (isComplete && !prevCompleteRef.current && containerRef.current) {
+      playSfx('win');
       celebrate(containerRef.current, { preset: "leaves" });
     }
     prevCompleteRef.current = isComplete;
-  }, [isComplete, containerRef]);
+  }, [isComplete, containerRef, playSfx]);
 
   const handleCellClick = (r: number, c: number) => {
     if (isComplete) return;
     setMarks((prev) => {
       const next = prev.map((row) => [...row]);
       const cur = next[r][c];
-      if (cur === 'empty') next[r][c] = 'tent';
-      else if (cur === 'tent') next[r][c] = 'grass';
-      else next[r][c] = 'empty';
+      if (cur === 'empty') {
+        playSfx('place');
+        next[r][c] = 'tent';
+      } else if (cur === 'tent') {
+        playSfx('tap');
+        next[r][c] = 'grass';
+      } else {
+        playSfx('move');
+        next[r][c] = 'empty';
+      }
       return next;
     });
   };

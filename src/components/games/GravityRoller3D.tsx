@@ -4,6 +4,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Maximize2, Minimize2, Volume2, VolumeX, Share2, Check } from 'lucide-react';
 import { celebrate } from '../../lib/games/celebration';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { useAudioContext } from '../../lib/games/use-audio-context';
+import { playProceduralSfx } from '../../lib/games/audio-mixer';
 import {
   createShareCardCanvas,
   copyShareCardToClipboard,
@@ -117,6 +119,32 @@ export default function GravityRoller3D({ locale = 'ko' }: Props) {
   const { isImmersive, containerRef, togglePortal, labels: portalLabels } = useArcadePortal();
   const [gameState, setGameState] = useState<GravityRollerState>(() => createInitialState(0));
   const [shareCardCopied, setShareCardCopied] = useState(false);
+  const [muted, setMuted] = useState(() => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        return window.localStorage.getItem('gravity_roller_muted') === 'true';
+      }
+    } catch {}
+    return false;
+  });
+
+  const getAudioContext = useAudioContext();
+  const playSfx = useCallback((cue: "gem" | "win" | "fail" | "tap" | "roll") => {
+    if (muted) return;
+    playProceduralSfx(getAudioContext(), cue);
+  }, [getAudioContext, muted]);
+
+  const toggleMute = useCallback(() => {
+    setMuted((m) => {
+      const next = !m;
+      try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          window.localStorage.setItem('gravity_roller_muted', String(next));
+        }
+      } catch {}
+      return next;
+    });
+  }, []);
 
   const handleShareCard = useCallback(async () => {
     const gemsCount = gameState.gems.filter((g) => g.collected).length;
@@ -144,35 +172,17 @@ export default function GravityRoller3D({ locale = 'ko' }: Props) {
   useEffect(() => {
     if (gameState.status !== prevStatusRef.current && containerRef.current) {
       if (gameState.status === 'cleared') {
+        playSfx('win');
         celebrate(containerRef.current, { preset: "coins" });
         MobileHapticsPro.success();
       } else if (gameState.status === 'failed') {
+        playSfx('fail');
         celebrate(containerRef.current, { preset: "shards" });
         MobileHapticsPro.heavy();
       }
     }
     prevStatusRef.current = gameState.status;
-  }, [gameState.status, containerRef]);
-  const [muted, setMuted] = useState(() => {
-    try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        return window.localStorage.getItem('gravity_roller_muted') === 'true';
-      }
-    } catch {}
-    return false;
-  });
-
-  const toggleMute = useCallback(() => {
-    setMuted((m) => {
-      const next = !m;
-      try {
-        if (typeof window !== 'undefined' && window.localStorage) {
-          window.localStorage.setItem('gravity_roller_muted', String(next));
-        }
-      } catch {}
-      return next;
-    });
-  }, []);
+  }, [gameState.status, containerRef, playSfx]);
 
   const keysPressed = useRef<Record<string, boolean>>({});
 
@@ -238,7 +248,12 @@ export default function GravityRoller3D({ locale = 'ko' }: Props) {
         if (prev.status !== 'playing') return prev;
         const next = { ...prev };
         setTilt(next, targetPitch, targetRoll);
+        const prevCollected = prev.gems.filter((g) => g.collected).length;
         updatePhysics(next, dt);
+        const nextCollected = next.gems.filter((g) => g.collected).length;
+        if (nextCollected > prevCollected) {
+          playSfx('gem');
+        }
         return next;
       });
 

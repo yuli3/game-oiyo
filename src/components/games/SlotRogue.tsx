@@ -1,5 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { useAudioContext } from '../../lib/games/use-audio-context';
+import { playProceduralSfx } from '../../lib/games/audio-mixer';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { getSpriteUrl, SLOT_ROGUE_SPRITES } from '../../lib/games/sprites';
 import { celebrate } from '../../lib/games/celebration';
@@ -110,6 +112,10 @@ export default function SlotRogue({ locale }: Props) {
   const { isImmersive, containerRef, togglePortal } = useArcadePortal({ locale: (locale as any) || "ko" });
   const [state, setState] = useState<SlotRogueState>(() => createSlotRogueState());
   const [shareCardCopied, setShareCardCopied] = useState(false);
+  const getAudioContext = useAudioContext();
+  const playSfx = useCallback((cue: "spin" | "coin" | "gem" | "win" | "fail" | "place" | "tap") => {
+    playProceduralSfx(getAudioContext(), cue);
+  }, [getAudioContext]);
 
   const recordArcadePass = (rentCyclesCleared: number) => {
     try {
@@ -124,13 +130,20 @@ export default function SlotRogue({ locale }: Props) {
 
   const handleSpin = () => {
     MobileHapticsPro.impact();
+    playSfx('spin');
     const next = spinSlotGrid(state);
     setState(next);
     if (next.status === 'victory') {
       MobileHapticsPro.success();
+      playSfx('win');
       celebrate(containerRef.current, { preset: 'stardust' });
     } else if (next.status === 'evicted') {
       MobileHapticsPro.error();
+      playSfx('fail');
+    } else if (next.synergyEvents.length > 0) {
+      playSfx('gem');
+    } else if (next.lastSpinPayout > 0) {
+      playSfx('coin');
     }
     if (next.rentCycle > state.rentCycle) {
       recordArcadePass(next.rentCycle);
@@ -139,16 +152,19 @@ export default function SlotRogue({ locale }: Props) {
 
   const handleDraft = (symbol: SymbolKey | 'skip') => {
     MobileHapticsPro.light();
+    playSfx(symbol === 'skip' ? 'tap' : 'place');
     setState(draftSymbol(state, symbol));
   };
 
   const handleReroll = () => {
     MobileHapticsPro.medium();
+    playSfx('tap');
     setState(rerollDraftChoices(state));
   };
 
   const handleInjectCombo = () => {
     MobileHapticsPro.selection();
+    playSfx('gem');
     setState(injectSynergyComboPreset(state));
   };
 

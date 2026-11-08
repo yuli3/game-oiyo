@@ -1,7 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { celebrate } from '../../lib/games/celebration';
 import { COZY_GLIDER_SPRITES } from '../../lib/games/sprites';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { useAudioContext } from '../../lib/games/use-audio-context';
+import { playProceduralSfx } from '../../lib/games/audio-mixer';
 import {
   loadArcadePassProgress,
   reportMissionProgress,
@@ -62,6 +64,10 @@ export default function CozyGlider({ locale }: Props) {
     createCozyGliderState()
   );
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const getAudioContext = useAudioContext();
+  const playSfx = useCallback((cue: "move" | "jump" | "success" | "fail" | "win" | "tap") => {
+    playProceduralSfx(getAudioContext(), cue);
+  }, [getAudioContext]);
 
   const recordArcadePass = (summits: number) => {
     try {
@@ -171,17 +177,21 @@ export default function CozyGlider({ locale }: Props) {
     const next = moveOrGlideToNode(state, targetId);
     if (next.currentNodeId === state.currentNodeId) {
       MobileHapticsPro.warning();
+      playSfx('fail');
     } else {
       const isGlide = currentNode.glideTargets.includes(targetId);
       if (isGlide) {
         MobileHapticsPro.medium();
+        playSfx('jump');
       } else {
         MobileHapticsPro.light();
+        playSfx('move');
       }
     }
     setState(next);
     if (next.status === 'summit-reached') {
       MobileHapticsPro.success();
+      playSfx('win');
       if (canvasRef.current) {
         celebrate(canvasRef.current, { preset: 'stardust' });
       }

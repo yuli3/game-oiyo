@@ -11,6 +11,8 @@ import {
   downloadShareCard,
 } from '../../lib/games/share-card';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { useAudioContext } from '../../lib/games/use-audio-context';
+import { playProceduralSfx } from '../../lib/games/audio-mixer';
 import type { Locale } from '../../lib/i18n';
 
 function TiltCardButton({
@@ -191,14 +193,19 @@ export function CardTable3D({ lang = 'ko' }: Props) {
   const [timerActive, setTimerActive] = useState(true);
   const [isCopied, setIsCopied] = useState(false);
   const celebratedRef = useRef(false);
+  const getAudioContext = useAudioContext();
+  const playSfx = useCallback((cue: "card" | "place" | "tap" | "success" | "win") => {
+    playProceduralSfx(getAudioContext(), cue);
+  }, [getAudioContext]);
 
   useEffect(() => {
     if (state.isWon && !celebratedRef.current) {
       celebratedRef.current = true;
+      playSfx('win');
       MobileHapticsPro.heavyImpact();
       celebrate(containerRef.current, { preset: 'sparks' });
     }
-  }, [state.isWon, containerRef]);
+  }, [state.isWon, containerRef, playSfx]);
 
   const handleShareScore = useCallback(async () => {
     MobileHapticsPro.mediumImpact();
@@ -249,6 +256,7 @@ export function CardTable3D({ lang = 'ko' }: Props) {
   }, [state]);
 
   const handleStockClick = () => {
+    playSfx('card');
     setSelectedCard(null);
     const next = drawFromStock(state);
     setState(recordHistory(next));
@@ -256,6 +264,7 @@ export function CardTable3D({ lang = 'ko' }: Props) {
 
   const handleWasteClick = () => {
     if (state.waste.length === 0) return;
+    playSfx('tap');
     const top = state.waste[state.waste.length - 1];
     if (selectedCard?.source === 'waste') {
       setSelectedCard(null);
@@ -316,6 +325,7 @@ export function CardTable3D({ lang = 'ko' }: Props) {
           colIndex
         );
         if (next) {
+          playSfx('place');
           setState(recordHistory(next));
           setSelectedCard(null);
         } else {
@@ -336,6 +346,7 @@ export function CardTable3D({ lang = 'ko' }: Props) {
     if (selectedCard.source === 'waste') {
       const next = moveWasteToTableau(state, colIndex);
       if (next) {
+        playSfx('place');
         setState(recordHistory(next));
         setSelectedCard(null);
       }
@@ -347,6 +358,7 @@ export function CardTable3D({ lang = 'ko' }: Props) {
         colIndex
       );
       if (next) {
+        playSfx('place');
         setState(recordHistory(next));
         setSelectedCard(null);
       }
@@ -359,6 +371,7 @@ export function CardTable3D({ lang = 'ko' }: Props) {
     if (selectedCard.source === 'waste') {
       const next = moveWasteToFoundation(state, foundationIndex);
       if (next) {
+        playSfx('success');
         setState(recordHistory(next));
         setSelectedCard(null);
       }
@@ -368,6 +381,7 @@ export function CardTable3D({ lang = 'ko' }: Props) {
       if (selectedCard.cardIndex === col.length - 1) {
         const next = moveTableauToFoundation(state, selectedCard.colIndex!, foundationIndex);
         if (next) {
+          playSfx('success');
           setState(recordHistory(next));
           setSelectedCard(null);
         }

@@ -109,3 +109,151 @@ export function playSyntheticTone(
     // Ignore audio playback failure
   }
 }
+
+export type SfxCue =
+  | "tap"
+  | "place"
+  | "card"
+  | "move"
+  | "attack"
+  | "hit"
+  | "coin"
+  | "gem"
+  | "spin"
+  | "jump"
+  | "roll"
+  | "success"
+  | "fail"
+  | "win";
+
+export interface SfxOptions {
+  volume?: number;
+  pitchVariance?: number;
+  customFreq?: number;
+}
+
+/**
+ * Universal multi-layer procedural SFX synthesizer.
+ * Creates rich dual-layer audio with harmonics, lowpass filtering, and automatic pitch jitter (±4%).
+ */
+export function playProceduralSfx(
+  audioCtx: AudioContext | null,
+  cue: SfxCue,
+  options?: SfxOptions
+): void {
+  if (!audioCtx) return;
+  if (audioCtx.state === "suspended") {
+    audioCtx.resume().catch(() => {});
+  }
+
+  try {
+    const now = audioCtx.currentTime;
+    const vol = options?.volume ?? 0.12;
+    const pVar = options?.pitchVariance ?? 0.04;
+
+    const createLayer = (
+      freq: number,
+      duration: number,
+      type: OscillatorType,
+      gainRatio: number,
+      filterFreq?: number
+    ) => {
+      const pitched = calculatePitchedFrequency(options?.customFreq ?? freq, pVar);
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(pitched, now);
+
+      gain.gain.setValueAtTime(vol * gainRatio, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+      if (filterFreq) {
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = "lowpass";
+        filter.frequency.setValueAtTime(filterFreq, now);
+        osc.connect(filter);
+        filter.connect(gain);
+      } else {
+        osc.connect(gain);
+      }
+
+      gain.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + duration);
+    };
+
+    switch (cue) {
+      case "tap":
+        createLayer(1400, 0.03, "triangle", 0.6);
+        createLayer(700, 0.04, "sine", 0.8);
+        break;
+      case "place":
+      case "card":
+        // Crisp card snap or piece place with sub body and overtone
+        createLayer(380, 0.06, "triangle", 0.9, 1200);
+        createLayer(1100, 0.04, "sine", 0.5);
+        break;
+      case "move":
+        // Smooth slide / whoosh
+        createLayer(320, 0.07, "triangle", 0.7, 800);
+        createLayer(240, 0.08, "sine", 0.6);
+        break;
+      case "attack":
+        // Punchy slash with saw/triangle drop
+        createLayer(420, 0.08, "sawtooth", 0.8, 1500);
+        createLayer(180, 0.12, "triangle", 1.0);
+        break;
+      case "hit":
+        // Heavy impact thud
+        createLayer(160, 0.15, "triangle", 1.0, 400);
+        createLayer(80, 0.2, "sine", 1.2);
+        break;
+      case "coin":
+        // Metallic ping (B5 + E6 dual overtone)
+        createLayer(988, 0.1, "sine", 0.9);
+        createLayer(1318, 0.12, "triangle", 0.7);
+        break;
+      case "gem":
+        // Celestial chime
+        createLayer(1046, 0.15, "sine", 0.8);
+        createLayer(1568, 0.18, "triangle", 0.7);
+        createLayer(2093, 0.22, "sine", 0.5);
+        break;
+      case "spin":
+        // Rapid mechanical reel tick
+        createLayer(880, 0.03, "triangle", 0.7);
+        createLayer(1200, 0.02, "sine", 0.5);
+        break;
+      case "jump":
+        // Uplifting spring
+        createLayer(220, 0.12, "triangle", 0.8);
+        createLayer(440, 0.1, "sine", 0.6);
+        break;
+      case "roll":
+        // Soft rolling resonance
+        createLayer(150, 0.06, "triangle", 0.5, 300);
+        createLayer(220, 0.05, "sine", 0.4);
+        break;
+      case "success":
+        // Ascending major chord (C5 -> E5 -> G5)
+        createLayer(523, 0.12, "sine", 0.8);
+        createLayer(659, 0.16, "triangle", 0.8);
+        createLayer(784, 0.22, "sine", 0.9);
+        break;
+      case "fail":
+        // Descending detuned chime
+        createLayer(280, 0.18, "sawtooth", 0.7, 600);
+        createLayer(180, 0.24, "triangle", 0.9);
+        break;
+      case "win":
+        // Triumphant fanfare
+        createLayer(523, 0.2, "sine", 0.8);
+        createLayer(659, 0.25, "triangle", 0.8);
+        createLayer(784, 0.3, "sine", 0.9);
+        createLayer(1046, 0.45, "triangle", 1.0);
+        break;
+    }
+  } catch {
+    // Sound is decoration
+  }
+}

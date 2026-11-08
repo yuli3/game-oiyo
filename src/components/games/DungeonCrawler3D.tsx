@@ -4,6 +4,8 @@ import { Maximize2, Minimize2, Volume2, VolumeX, Share2, Check } from 'lucide-re
 import DungeonCrawler3DScene from './DungeonCrawler3DScene';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { useAudioContext } from '../../lib/games/use-audio-context';
+import { playProceduralSfx } from '../../lib/games/audio-mixer';
 import { celebrate } from '../../lib/games/celebration';
 
 function TiltDungeonButton({
@@ -87,6 +89,33 @@ export default function DungeonCrawler3D() {
     });
   }, []);
 
+  const getAudioContext = useAudioContext();
+  const playSfx = useCallback((cue: "move" | "attack" | "hit" | "coin" | "gem" | "success" | "fail" | "win") => {
+    if (muted) return;
+    playProceduralSfx(getAudioContext(), cue);
+  }, [getAudioContext, muted]);
+
+  const handleMove = useCallback((dx: number, dz: number) => {
+    setGameState((prev) => {
+      const next = moveDungeonPlayer(prev, dx, dz);
+      if (next === prev) return prev;
+      if (next.gameOver) {
+        playSfx('fail');
+      } else if (next.floorCleared) {
+        playSfx('win');
+      } else if (next.kills > prev.kills) {
+        playSfx('attack');
+      } else if (next.gold > prev.gold) {
+        playSfx('coin');
+      } else if (next.hp < prev.hp) {
+        playSfx('hit');
+      } else if (next.playerX !== prev.playerX || next.playerZ !== prev.playerZ) {
+        playSfx('move');
+      }
+      return next;
+    });
+  }, [playSfx]);
+
   // Keyboard controls
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -108,25 +137,26 @@ export default function DungeonCrawler3D() {
 
       if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
         MobileHapticsPro.light();
-        setGameState((s) => moveDungeonPlayer(s, 0, -1));
+        handleMove(0, -1);
       } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
         MobileHapticsPro.light();
-        setGameState((s) => moveDungeonPlayer(s, 0, 1));
+        handleMove(0, 1);
       } else if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
         MobileHapticsPro.light();
-        setGameState((s) => moveDungeonPlayer(s, -1, 0));
+        handleMove(-1, 0);
       } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
         MobileHapticsPro.light();
-        setGameState((s) => moveDungeonPlayer(s, 1, 0));
+        handleMove(1, 0);
       } else if (e.key === 'p' || e.key === 'P' || e.key === '1') {
         MobileHapticsPro.medium();
+        playSfx('gem');
         setGameState((s) => useDungeonPotion(s));
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [togglePortal, toggleMute]);
+  }, [togglePortal, toggleMute, handleMove, playSfx]);
 
   const handleNextFloor = useCallback(() => {
     MobileHapticsPro.selection();
@@ -293,7 +323,7 @@ export default function DungeonCrawler3D() {
         <TiltDungeonButton
           onClick={() => {
             MobileHapticsPro.light();
-            setGameState((s) => moveDungeonPlayer(s, 0, -1));
+            handleMove(0, -1);
           }}
           className="w-14 h-14 rounded-2xl bg-background/90 backdrop-blur-md border border-border flex items-center justify-center text-lg font-bold text-foreground shadow-lg"
           aria-label="북쪽 이동"
@@ -304,7 +334,7 @@ export default function DungeonCrawler3D() {
           <TiltDungeonButton
             onClick={() => {
               MobileHapticsPro.light();
-              setGameState((s) => moveDungeonPlayer(s, -1, 0));
+              handleMove(-1, 0);
             }}
             className="w-14 h-14 rounded-2xl bg-background/90 backdrop-blur-md border border-border flex items-center justify-center text-lg font-bold text-foreground shadow-lg"
             aria-label="서쪽 이동"
@@ -314,7 +344,7 @@ export default function DungeonCrawler3D() {
           <TiltDungeonButton
             onClick={() => {
               MobileHapticsPro.light();
-              setGameState((s) => moveDungeonPlayer(s, 0, 1));
+              handleMove(0, 1);
             }}
             className="w-14 h-14 rounded-2xl bg-background/90 backdrop-blur-md border border-border flex items-center justify-center text-lg font-bold text-foreground shadow-lg"
             aria-label="남쪽 이동"
@@ -324,7 +354,7 @@ export default function DungeonCrawler3D() {
           <TiltDungeonButton
             onClick={() => {
               MobileHapticsPro.light();
-              setGameState((s) => moveDungeonPlayer(s, 1, 0));
+              handleMove(1, 0);
             }}
             className="w-14 h-14 rounded-2xl bg-background/90 backdrop-blur-md border border-border flex items-center justify-center text-lg font-bold text-foreground shadow-lg"
             aria-label="동쪽 이동"

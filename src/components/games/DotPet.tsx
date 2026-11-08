@@ -4,6 +4,8 @@ import { GameContainer } from '../ui/game/GamePrimitives';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { celebrate } from '../../lib/games/celebration';
 import { useCardTiltPro, MobileHapticsPro } from '../../lib/games/engine-suite-unified';
+import { useAudioContext } from '../../lib/games/use-audio-context';
+import { playProceduralSfx } from '../../lib/games/audio-mixer';
 import { explainDotPetAction, type DotPetAction } from '../../lib/games/dot-pet';
 import { DOT_PET_SPRITES, DOT_PET_UI_SPRITES, dotPetSprite } from '../../lib/games/sprites';
 
@@ -178,6 +180,10 @@ const DotPet: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
     const [grewUp, setGrewUp] = useState(false);
     const [notice, setNotice] = useState<string | null>(null);
     const grewTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const getAudioContext = useAudioContext();
+    const playSfx = useCallback((cue: "coin" | "jump" | "move" | "win" | "fail" | "success") => {
+        playProceduralSfx(getAudioContext(), cue);
+    }, [getAudioContext]);
 
     useEffect(() => {
         setPet(loadPet());
@@ -212,24 +218,28 @@ const DotPet: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
                 next = { ...next, stage: STAGES[stageIdx + 1], experience: next.experience - threshold };
                 setGrewUp(true);
                 MobileHapticsPro.success();
+                playSfx('win');
                 if (containerRef.current) celebrate(containerRef.current, { preset: "stardust" });
                 if (grewTimer.current) clearTimeout(grewTimer.current);
                 grewTimer.current = setTimeout(() => setGrewUp(false), 2500);
             }
             return next;
         });
-    }, [containerRef]);
+    }, [containerRef, playSfx]);
 
     const feed = () => {
         MobileHapticsPro.light();
+        playSfx('coin');
         pet && care('feed', { hunger: Math.min(100, pet.hunger + 20), energy: Math.min(100, pet.energy + 5) }, 5);
     };
     const play = () => {
         MobileHapticsPro.medium();
+        playSfx('jump');
         pet && care('play', { happiness: Math.min(100, pet.happiness + 20), hunger: Math.max(0, pet.hunger - 10), energy: Math.max(0, pet.energy - 15) }, 10);
     };
     const rest = () => {
         MobileHapticsPro.selection();
+        playSfx('move');
         pet && care('rest', { energy: Math.min(100, pet.energy + 30), happiness: Math.max(0, pet.happiness - 5) }, 3);
     };
 
@@ -238,6 +248,7 @@ const DotPet: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
         const reason = explainDotPetAction(pet, action);
         if (reason) {
             MobileHapticsPro.warning();
+            playSfx('fail');
             setNotice(t[reason]);
             return;
         }
@@ -247,6 +258,7 @@ const DotPet: React.FC<{ locale?: string }> = ({ locale = 'ko' }) => {
 
     const adopt = (type: PetType) => {
         MobileHapticsPro.selection();
+        playSfx('success');
         setPet({ type, stage: 'baby', happiness: 80, hunger: 80, energy: 80, experience: 0, lastInteraction: Date.now() });
         setConfirmReset(false);
     };

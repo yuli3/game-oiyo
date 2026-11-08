@@ -11,6 +11,8 @@ import type { Locale } from '../../lib/i18n';
 import { Play, RotateCcw, Trophy, Zap, Star, Flag, ArrowUp, ArrowLeft, ArrowRight, Maximize2, Minimize2, Share2, Volume2, VolumeX } from 'lucide-react';
 import { useArcadePortal } from '../../lib/games/arcade-portal';
 import { celebrate } from '../../lib/games/celebration';
+import { useAudioContext } from '../../lib/games/use-audio-context';
+import { playProceduralSfx } from '../../lib/games/audio-mixer';
 import {
   createShareCardCanvas,
   copyShareCardToClipboard,
@@ -158,6 +160,12 @@ export default function MarbleRoll({ locale = 'ko' }: Props) {
     });
   }, []);
 
+  const getAudioContext = useAudioContext();
+  const playSfx = useCallback((cue: "coin" | "jump" | "win" | "fail" | "tap" | "roll") => {
+    if (muted) return;
+    playProceduralSfx(getAudioContext(), cue);
+  }, [getAudioContext, muted]);
+
   const inputRef = useRef<MarbleInput>({ steerX: 0, throttleZ: 0, jump: false });
   const animRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number>(0);
@@ -277,6 +285,7 @@ export default function MarbleRoll({ locale = 'ko' }: Props) {
         const next = updateMarblePhysics(prev, inputRef.current, dt);
 
         if (next.status === 'cleared') {
+          playSfx('win');
           if (containerRef.current) celebrate(containerRef.current, { preset: "coins" });
           // Check best time
           const time = next.elapsedTime;
@@ -291,6 +300,12 @@ export default function MarbleRoll({ locale = 'ko' }: Props) {
             }
             return cur;
           });
+        } else if (next.status === 'failed') {
+          playSfx('fail');
+        }
+
+        if (next.starsCollected > prev.starsCollected) {
+          playSfx('coin');
         }
 
         return next;
