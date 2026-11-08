@@ -45,6 +45,7 @@ import { HorizontalTiltShiftShader } from "three/addons/shaders/HorizontalTiltSh
 import { VerticalTiltShiftShader } from "three/addons/shaders/VerticalTiltShiftShader.js";
 import { createTonePlayer, type TonePlayer } from "../../lib/games/tone";
 import { celebrate } from "../../lib/games/celebration";
+import { MobileHapticsPro } from "../../lib/games/engine-suite-unified";
 import {
   createShareCardCanvas,
   copyShareCardToClipboard,
@@ -210,12 +211,35 @@ export default function IsometricCityScene({ copy }: Props) {
 
   const summary = useMemo(() => citySummary(city), [city]);
   const player = useRef<TonePlayer | null>(null);
-  const tone = useCallback((frequency: number) => {
-    if (!sound) return;
-    player.current ??= createTonePlayer();
-    player.current.play(frequency, 0.14, 0.025);
-  }, [sound]);
+  const playCitySfx = useCallback(
+    (kind: "place" | "upgrade" | "bulldoze" | "error") => {
+      if (!sound) return;
+      player.current ??= createTonePlayer();
+      if (kind === "place") {
+        player.current.play(110, 0.09, 0.03);
+        window.setTimeout(() => player.current?.play(440, 0.11, 0.025), 25);
+        window.setTimeout(() => player.current?.play(660, 0.12, 0.02), 65);
+      } else if (kind === "upgrade") {
+        player.current.play(523.25, 0.12, 0.028);
+        window.setTimeout(() => player.current?.play(659.25, 0.12, 0.028), 60);
+        window.setTimeout(() => player.current?.play(783.99, 0.18, 0.03), 120);
+      } else if (kind === "bulldoze") {
+        player.current.play(160, 0.16, 0.035);
+        window.setTimeout(() => player.current?.play(82, 0.2, 0.035), 45);
+      } else {
+        player.current.play(210, 0.1, 0.02);
+      }
+    },
+    [sound]
+  );
   useEffect(() => () => player.current?.close(), []);
+  const mayorMilestone = useMemo(() => {
+    const pop = summary.population;
+    if (pop < 50) return { tier: "Lv.1 Hamlet", nextGoal: 50 };
+    if (pop < 150) return { tier: "Lv.2 Town", nextGoal: 150 };
+    if (pop < 300) return { tier: "Lv.3 City", nextGoal: 300 };
+    return { tier: "Lv.4 Metropolis", nextGoal: 500 };
+  }, [summary.population]);
   const clock = formatClock(city);
   const selectedCell = selected ? getCell(city, selected.x, selected.z) : undefined;
   const weatherLabel = city.weather === "rain" ? copy.rain : city.weather === "fog" ? copy.fog : copy.clear;
@@ -268,25 +292,39 @@ export default function IsometricCityScene({ copy }: Props) {
     setSelected({ x, z });
     const result = placeCell(city, tool, x, z);
     if (!result.ok) {
+      MobileHapticsPro.warningPattern();
+      playCitySfx("error");
       setNotice(reasonMessage(result.reason, copy));
       return;
     }
     setCity(result.state);
-    tone(tool === "bulldoze" ? 160 : 420);
+    if (tool === "bulldoze") {
+      MobileHapticsPro.heavyImpact();
+      playCitySfx("bulldoze");
+    } else {
+      MobileHapticsPro.mediumImpact();
+      playCitySfx("place");
+    }
     setNotice(tool === "bulldoze" ? copy.demolished : copy.built);
-  }, [city, copy, tool, tone]);
+  }, [city, copy, playCitySfx, tool]);
 
   const handleUpgrade = useCallback(() => {
     if (!selected) return;
     const result = upgradeCell(city, selected.x, selected.z);
     if (!result.ok) {
+      MobileHapticsPro.warningPattern();
+      playCitySfx("error");
       setNotice(result.reason === "funds" ? copy.insufficient : copy.maxLevel);
       return;
     }
     setCity(result.state);
-    tone(620);
+    MobileHapticsPro.successPattern();
+    playCitySfx("upgrade");
+    if (containerRef.current) {
+      celebrate(containerRef.current, { preset: "sparks" });
+    }
     setNotice(copy.built);
-  }, [city, copy, selected, tone]);
+  }, [city, copy, playCitySfx, selected]);
 
   const changeSpeed = (speed: SimulationSpeed) => setCity((current) => ({ ...current, speed }));
   const toggleTime = () => setCity((current) => jumpToTime(current, night ? 9 * 60 : 21 * 60));
@@ -340,8 +378,12 @@ export default function IsometricCityScene({ copy }: Props) {
             <div className="flex items-center gap-2">
               <span className="grid h-7 w-7 place-items-center rounded-lg bg-[#526b48] text-white"><Sparkles size={14} /></span>
               <div>
-                <p className="text-[9px] font-black tracking-[.18em] text-[#83907d]">{copy.cityName}</p>
-                <p className="text-xs font-black text-[#344033]">{copy.day} {clock.day} · {clock.text}</p>
+                <p className="text-[9px] font-black tracking-[.18em] text-[#83907d]">
+                  {copy.cityName} · {mayorMilestone.tier}
+                </p>
+                <p className="text-xs font-black text-[#344033]">
+                  {copy.day} {clock.day} · {clock.text} · {summary.population}/{mayorMilestone.nextGoal}
+                </p>
               </div>
             </div>
           </div>

@@ -124,17 +124,48 @@ const Dominoes: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
   }, []);
 
   const audio = useRef<AudioContext|null>(null);
-  const tone = (hz: number) => {
+  const [doubleBanner, setDoubleBanner] = useState<string | null>(null);
+  const tone = (hz: number, isDouble = false, isWin = false) => {
     if (muted) return;
-    const c = audio.current ?? new AudioContext();
-    audio.current = c;
-    const o = c.createOscillator(), g = c.createGain();
-    o.frequency.value = hz;
-    g.gain.setValueAtTime(.04, c.currentTime);
-    g.gain.exponentialRampToValueAtTime(.001, c.currentTime + .07);
-    o.connect(g).connect(c.destination);
-    o.start();
-    o.stop(c.currentTime + .07);
+    try {
+      const c = audio.current ?? new AudioContext();
+      audio.current = c;
+      const now = c.currentTime;
+      // Layer 1: Ivory tile transient clack
+      const o = c.createOscillator(), g = c.createGain();
+      o.type = isDouble ? "triangle" : "sine";
+      o.frequency.setValueAtTime(hz * 1.4, now);
+      o.frequency.exponentialRampToValueAtTime(hz, now + 0.045);
+      g.gain.setValueAtTime(isDouble ? 0.075 : 0.045, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + (isDouble ? 0.14 : 0.08));
+      o.connect(g).connect(c.destination);
+      o.start(now);
+      o.stop(now + (isDouble ? 0.14 : 0.08));
+
+      // Layer 2: Low wooden table thud on tile placement or double slam
+      const sub = c.createOscillator(), subG = c.createGain();
+      sub.type = "sine";
+      sub.frequency.setValueAtTime(isDouble ? 135 : 110, now);
+      sub.frequency.exponentialRampToValueAtTime(52, now + 0.09);
+      subG.gain.setValueAtTime(isDouble ? 0.08 : 0.035, now);
+      subG.gain.exponentialRampToValueAtTime(0.001, now + 0.095);
+      sub.connect(subG).connect(c.destination);
+      sub.start(now);
+      sub.stop(now + 0.095);
+
+      if (isWin) {
+        [523.25, 659.25, 783.99, 1046.5].forEach((freq, idx) => {
+          const wOsc = c.createOscillator(), wGain = c.createGain();
+          wOsc.type = "triangle";
+          wOsc.frequency.setValueAtTime(freq, now + idx * 0.07);
+          wGain.gain.setValueAtTime(0.05, now + idx * 0.07);
+          wGain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.07 + 0.18);
+          wOsc.connect(wGain).connect(c.destination);
+          wOsc.start(now + idx * 0.07);
+          wOsc.stop(now + idx * 0.07 + 0.18);
+        });
+      }
+    } catch {}
   };
 
   useEffect(() => {
@@ -223,8 +254,17 @@ const Dominoes: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
 
   const humanPlay = (tile: Tile, end: End) => {
     if (!game || paused) return; const next = playDominoes(game, tile.id, end); if (next === game) return;
-    MobileHapticsPro.mediumImpact();
-    landNewTile(game, next); setGame(next); setPendingTile(null);tone(next.winner?660:320); if (next.winner) recordWinner(next.winner);
+    const isDouble = tile.a === tile.b;
+    if (isDouble) {
+      MobileHapticsPro.heavyImpact();
+      setDoubleBanner(`DOUBLE [${tile.a}|${tile.b}]!`);
+      window.setTimeout(() => setDoubleBanner(null), 1300);
+    } else {
+      MobileHapticsPro.mediumImpact();
+    }
+    landNewTile(game, next); setGame(next); setPendingTile(null);
+    tone(next.winner ? 660 : isDouble ? 440 : 320, isDouble, next.winner === "you");
+    if (next.winner) recordWinner(next.winner);
   };
 
   const clickHandTile = (tile: Tile) => {
@@ -361,6 +401,21 @@ const Dominoes: React.FC<{ locale?: Locale }> = ({ locale = "ko" }) => {
         {(paused||restored)&&<p className="mb-3 text-center text-xs font-bold text-muted-foreground" role="status">{restored?`${x.restored} · `:""}{x.paused}</p>}
 
         {/* Board */}
+        {game.board.length > 0 && (
+          <div className="mb-2 flex items-center justify-between px-2 text-xs font-bold text-muted-foreground">
+            <span className="rounded-full border border-border bg-card px-2.5 py-0.5 text-foreground">
+              {t.left}: <strong className="text-primary">{ends.left}</strong>
+            </span>
+            {doubleBanner && (
+              <span className="animate-bounce rounded-full bg-primary/15 px-3 py-0.5 font-black text-primary">
+                ⚡ {doubleBanner}
+              </span>
+            )}
+            <span className="rounded-full border border-border bg-card px-2.5 py-0.5 text-foreground">
+              {t.right}: <strong className="text-primary">{ends.right}</strong>
+            </span>
+          </div>
+        )}
         <div className="h-40 bg-muted/40 rounded-3xl border border-border flex items-center p-4 overflow-x-auto gap-1 shadow-inner mb-6">
           {game.board.map((d) => (
             <div key={d.id} className={`flex flex-shrink-0 bg-card border border-border rounded-md shadow-sm divide-x divide-border ${d.id === freshId && !reducedMotion ? "oiyo-tile-land" : ""}`}>
